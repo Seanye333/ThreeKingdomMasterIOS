@@ -25,6 +25,7 @@ import { VictoryModal } from '../components/VictoryModal';
 import { WishesModal } from '../components/WishesModal';
 import { TacticalBattleScreen } from './TacticalBattleScreen';
 import { HudMenu } from '../components/HudMenu';
+import { THEMES, getStoredTheme, applyTheme, type ThemeId } from '../theme';
 import styles from './MapScreen.module.css';
 
 // Code-split heavy / rarely-opened modals. They are loaded on demand the
@@ -53,6 +54,11 @@ export function MapScreen() {
   const [showEspionage, setShowEspionage] = useState(false);
   const [showCourt, setShowCourt] = useState(false);
   const [showSave, setShowSave] = useState<'save' | 'load' | null>(null);
+  const [theme, setTheme] = useState<ThemeId>(getStoredTheme());
+  const handleSetTheme = (id: ThemeId) => {
+    setTheme(id);
+    applyTheme(id);
+  };
   const [showWishes, setShowWishes] = useState(false);
   const [showEnding, setShowEnding] = useState(false);
   const [showReplays, setShowReplays] = useState(false);
@@ -229,6 +235,29 @@ export function MapScreen() {
             { label: '保存 Save',                    onClick: () => setShowSave('save') },
             { label: '読込 Load',                    onClick: () => setShowSave('load') },
             { label: soundEnabled ? '🔊 Sound: On' : '🔇 Sound: Off', onClick: () => setSoundEnabled(!soundEnabled) },
+            ...THEMES.map((t) => ({
+              label: (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      width: 30,
+                      height: 14,
+                      borderRadius: 2,
+                      overflow: 'hidden',
+                      border: '1px solid rgba(0,0,0,0.3)',
+                    }}
+                  >
+                    <span style={{ flex: 1, background: t.swatch[0] }} />
+                    <span style={{ flex: 1, background: t.swatch[1] }} />
+                    <span style={{ flex: 1, background: t.swatch[2] }} />
+                  </span>
+                  {theme === t.id ? '✓ ' : '  '}
+                  {t.zh} {t.en}
+                </span>
+              ),
+              onClick: () => handleSetTheme(t.id),
+            })),
           ]}
         />
         <button

@@ -1,21 +1,112 @@
 /* ─── Phase 51: Design tokens — single source of truth ──────────── */
-:root {
-  /* Backgrounds */
+:root,
+:root[data-theme="parchment"] {
+  /* 古樸棕 — default dark parchment / RTK14 style */
   --tkm-bg:           #1a1410;
   --tkm-bg-raised:    #251c14;
   --tkm-bg-sunken:    #110d09;
   --tkm-bg-modal:     #1f1610;
 
-  /* Borders */
   --tkm-border:       #4a3520;
   --tkm-border-soft:  #3a2818;
   --tkm-border-gold:  #6a4f2a;
 
-  /* Text hierarchy — 3 tiers */
   --tkm-text-h1:      #f0e0b0;
   --tkm-text-h2:      #d4a84a;
   --tkm-text-body:    #c9b89a;
   --tkm-text-muted:   #8c7a5a;
+}
+
+:root[data-theme="ink"] {
+  /* 靑墨 — cool ink wash / scholarly */
+  --tkm-bg:           #0e1419;
+  --tkm-bg-raised:    #18222c;
+  --tkm-bg-sunken:    #080c10;
+  --tkm-bg-modal:     #131c25;
+
+  --tkm-border:       #2a4458;
+  --tkm-border-soft:  #1c2e3a;
+  --tkm-border-gold:  #3a5e78;
+
+  --tkm-text-h1:      #d8e8f0;
+  --tkm-text-h2:      #88c8e8;
+  --tkm-text-body:    #a8c0d0;
+  --tkm-text-muted:   #688090;
+}
+
+:root[data-theme="vermilion"] {
+  /* 赤焰 — warm vermilion / Wei imperial */
+  --tkm-bg:           #1a0c0c;
+  --tkm-bg-raised:    #2a1414;
+  --tkm-bg-sunken:    #0e0606;
+  --tkm-bg-modal:     #221010;
+
+  --tkm-border:       #5a2828;
+  --tkm-border-soft:  #3a1c1c;
+  --tkm-border-gold:  #8a4a3a;
+
+  --tkm-text-h1:      #f0d8c0;
+  --tkm-text-h2:      #e8a060;
+  --tkm-text-body:    #d4a888;
+  --tkm-text-muted:   #946850;
+}
+
+:root[data-theme="bamboo"] {
+  /* 竹林 — bamboo green / hermit retreat */
+  --tkm-bg:           #0e160e;
+  --tkm-bg-raised:    #1a2818;
+  --tkm-bg-sunken:    #060c06;
+  --tkm-bg-modal:     #142014;
+
+  --tkm-border:       #2c4828;
+  --tkm-border-soft:  #1c321c;
+  --tkm-border-gold:  #4a7048;
+
+  --tkm-text-h1:      #d8e8c8;
+  --tkm-text-h2:      #b8d878;
+  --tkm-text-body:    #a8c098;
+  --tkm-text-muted:   #688060;
+}
+
+:root[data-theme="moonlight"] {
+  /* 月華 — moonlit grey / refined minimalist */
+  --tkm-bg:           #14141a;
+  --tkm-bg-raised:    #1e1e28;
+  --tkm-bg-sunken:    #0a0a10;
+  --tkm-bg-modal:     #181820;
+
+  --tkm-border:       #404050;
+  --tkm-border-soft:  #2a2a36;
+  --tkm-border-gold:  #5a5a72;
+
+  --tkm-text-h1:      #e8e8f0;
+  --tkm-text-h2:      #c0a8e0;
+  --tkm-text-body:    #b8b8c8;
+  --tkm-text-muted:   #707080;
+}
+
+/* ─── Theme filters — tint hardcoded colors in legacy components ─── */
+/* Most components still hardcode warm parchment hex codes. A subtle
+ * hue-rotate makes the new theme actually visible everywhere, not just
+ * in the few components that use the variables. */
+html[data-theme="ink"] body {
+  filter: hue-rotate(170deg) saturate(0.85) brightness(0.95);
+}
+html[data-theme="vermilion"] body {
+  filter: hue-rotate(-15deg) saturate(1.15) brightness(0.95);
+}
+html[data-theme="bamboo"] body {
+  filter: hue-rotate(60deg) saturate(0.95) brightness(0.95);
+}
+html[data-theme="moonlight"] body {
+  filter: hue-rotate(220deg) saturate(0.55) brightness(0.95);
+}
+/* Smooth crossfade when switching */
+body {
+  transition: filter 0.5s ease;
+}
+
+:root {
 
   /* State colors — consistent across all UI */
   --tkm-success:      #b8c87a;
