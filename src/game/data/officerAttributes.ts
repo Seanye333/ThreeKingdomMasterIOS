@@ -266,7 +266,41 @@ export type TacticId =
   | 'burn-yiling' // 火燒連營 (Lu Xun at Yiling)
   | 'know-self'   // 知己知彼 (Sun Tzu)
   | 'fast-strike' // 兵貴神速 (Sun Tzu — speed)
-  | 'deception';  // 兵不厭詐 (Sun Tzu — deception is permitted)
+  | 'deception'   // 兵不厭詐 (Sun Tzu — deception is permitted)
+  // ── Phase 59: 100 grand tactics edition ──
+  // 孫子兵法 / 兵書
+  | 'attack-plans'   // 上兵伐謀
+  | 'attack-heart'   // 攻心為上
+  | 'surround-three' // 圍三闕一
+  | 'subdue-no-fight'// 不戰而屈人之兵
+  | 'hide-light'     // 韜光養晦
+  | 'total-victory'  // 全勝之道
+  | 'water-form'     // 兵形象水
+  | 'ortho-extra'    // 以正合奇勝
+  // 道家奇術
+  | 'qimen-dunjia'   // 奇門遁甲 (vs 八門遁甲 which is military)
+  | 'star-prayer'    // 諸葛禳星 (life-extending ritual)
+  | 'he-luo-tu'      // 河圖洛書
+  | 'five-thunder'   // 五雷正法
+  // 三國後期
+  | 'sneak-yinping'  // 鄧艾偷渡陰平
+  | 'nine-campaigns' // 姜維九伐中原
+  | 'xiling-stand'   // 陸抗西陵
+  | 'feign-illness'  // 司馬懿裝病奪權
+  | 'iron-chain'     // 王濬鐵索橫江
+  | 'two-tigers'     // 二虎競食 (Cao Cao)
+  | 'lure-tiger-wolf'// 驅虎吞狼 (Cao Cao)
+  | 'sow-discord-2'  // 離間挑撥
+  // 名場面
+  | 'thousand-ride'  // 千里走單騎 (Guan Yu)
+  | 'lone-blade'     // 單刀赴會 (Guan Yu)
+  | 'pass-six'       // 過五關斬六將
+  | 'burn-xinye'     // 火燒新野
+  // 戰國 & 古典
+  | 'solid-camp'     // 結硬寨打呆仗 (Zeng Guofan, late Qing)
+  | 'death-ground'   // 置之死地而後生
+  | 'siege-relief'   // 圍點打援
+  | 'bloodless';     // 兵不血刃
 
 export const TACTIC_DEFS: Record<TacticId, { zh: string; en: string }> = {
   charge:        { zh: '突擊', en: 'Charge' },
@@ -341,6 +375,34 @@ export const TACTIC_DEFS: Record<TacticId, { zh: string; en: string }> = {
   'know-self':   { zh: '知己知彼', en: 'Know Yourself, Know the Enemy' },
   'fast-strike': { zh: '兵貴神速', en: 'Speed is the Soul of War' },
   deception:     { zh: '兵不厭詐', en: 'In War, Deception Is Welcome' },
+  'attack-plans':   { zh: '上兵伐謀',     en: "Defeat the Enemy's Plans First" },
+  'attack-heart':   { zh: '攻心為上',     en: 'Attack the Enemy Mind, Above All' },
+  'surround-three': { zh: '圍三闕一',     en: 'Surround Three Sides, Leave One Open' },
+  'subdue-no-fight':{ zh: '不戰而屈人之兵', en: 'Subdue the Enemy Without Fighting' },
+  'hide-light':     { zh: '韜光養晦',     en: 'Hide the Light, Bide the Time' },
+  'total-victory':  { zh: '全勝之道',     en: 'The Way of Total Victory' },
+  'water-form':     { zh: '兵形象水',     en: 'War Takes Shape Like Water' },
+  'ortho-extra':    { zh: '以正合奇勝',   en: 'Orthodox to Engage, Extraordinary to Win' },
+  'qimen-dunjia':   { zh: '奇門遁甲',     en: 'Strange Gates, Hidden Stems' },
+  'star-prayer':    { zh: '諸葛禳星',     en: "Zhuge's Star Ritual" },
+  'he-luo-tu':      { zh: '河圖洛書',     en: 'River Chart and Luo Writing' },
+  'five-thunder':   { zh: '五雷正法',     en: 'Five-Thunder Orthodox Rite' },
+  'sneak-yinping':  { zh: '偷渡陰平',     en: 'Sneak Across Yinping (Deng Ai)' },
+  'nine-campaigns': { zh: '九伐中原',     en: 'Nine Campaigns Against the Plain (Jiang Wei)' },
+  'xiling-stand':   { zh: '西陵之戰',     en: 'The Stand at Xiling (Lu Kang)' },
+  'feign-illness':  { zh: '裝病奪權',     en: 'Feign Illness to Seize Power (Sima Yi)' },
+  'iron-chain':     { zh: '鐵索橫江',     en: 'Iron Chains Across the River' },
+  'two-tigers':     { zh: '二虎競食',     en: 'Two Tigers Fight Over Meat' },
+  'lure-tiger-wolf':{ zh: '驅虎吞狼',     en: 'Drive the Tiger to Devour the Wolf' },
+  'sow-discord-2':  { zh: '離間挑撥',     en: 'Sow Discord Between Allies' },
+  'thousand-ride':  { zh: '千里走單騎',   en: 'Ride a Thousand Li Alone' },
+  'lone-blade':     { zh: '單刀赴會',     en: 'Attend the Banquet with a Single Blade' },
+  'pass-six':       { zh: '過五關斬六將', en: 'Pass Five Forts, Slay Six Captains' },
+  'burn-xinye':     { zh: '火燒新野',     en: 'Burn Xinye' },
+  'solid-camp':     { zh: '結硬寨打呆仗', en: 'Build Solid Camps, Fight Stupid Battles' },
+  'death-ground':   { zh: '置之死地而後生', en: 'Place on Death-Ground, Then Survive' },
+  'siege-relief':   { zh: '圍點打援',     en: 'Besiege a Point to Strike the Relief' },
+  bloodless:        { zh: '兵不血刃',     en: 'A Sword that Draws No Blood' },
 };
 
 export const OFFICER_TACTICS: Record<string, TacticId[]> = {
