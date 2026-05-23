@@ -362,7 +362,34 @@ export type TacticId =
   | 'mi-fang-betray' | 'wei-yan-back' | 'guan-yu-pardon' | 'zhang-fei-poker'
   | 'eight-immortals' | 'phoenix-rise' | 'dragon-claw' | 'turtle-shell'
   | 'xiongnu-raid' | 'qiang-horse' | 'wuhuan-mounted-tac' | 'shanyue-mountain' | 'wuge-rattan-tac'
-  | 'yellow-turban-mob' | 'black-mountain-bandit' | 'water-bandit' | 'sworn-brothers' | 'rebel-uprising';
+  | 'yellow-turban-mob' | 'black-mountain-bandit' | 'water-bandit' | 'sworn-brothers' | 'rebel-uprising'
+  // ── Phase 63: 400-tactic edition ──
+  | 'twin-spear' | 'long-halberd' | 'twin-axe' | 'short-blade' | 'long-whip'
+  | 'meteor-hammer' | 'hidden-weapon' | 'bagua-palm' | 'whip-13' | 'iron-sand-palm'
+  | 'flying-knife' | 'duck-axe' | 'crescent-shovel' | 'hand-hook' | 'iron-pipa'
+  | 'yi-jin-jing' | 'xi-sui-jing' | 'nine-yin' | 'nine-yang' | 'turtle-breath'
+  | 'iron-shirt' | 'golden-bell' | 'vajra-finger' | 'crane-stance' | 'child-kungfu'
+  | 'caesar-cross' | 'napoleon-flank' | 'hannibal-cannae' | 'macedonian-phalanx'
+  | 'mongol-whirlwind' | 'viking-raid' | 'roman-legion' | 'english-longbow'
+  | 'greek-fire' | 'spartan-300'
+  | 'heavy-cav' | 'light-cav' | 'sniper-bow' | 'repeat-crossbow-cart'
+  | 'siege-tower' | 'fire-boat' | 'heavy-foot' | 'three-stage'
+  | 'wandering-knight' | 'death-squad' | 'honor-guard' | 'mountain-militia'
+  | 'mixed-barbarian' | 'boy-soldier' | 'veteran-cohort'
+  | 'burn-talisman' | 'five-thunder-roof' | 'soul-snatch' | 'gu-poison'
+  | 'wood-puppet' | 'reverse-soul' | 'long-sound' | 'mind-link'
+  | 'geomancy-formation' | 'maoshan-rite'
+  | 'faction-manipulate' | 'regent-power' | 'depose-elder' | 'imperial-inlaw'
+  | 'eunuch-power' | 'false-edict' | 'court-debate' | 'petition-campaign'
+  | 'rumor-spread' | 'smear-opponent'
+  | 'wang-lang-cursed' | 'pang-de-coffin' | 'six-expeditions' | 'sima-eight'
+  | 'le-jin-raid' | 'zhang-liao-xiaoyao' | 'gan-ning-100' | 'taishi-ci-vs-sunce'
+  | 'zhao-yun-courage' | 'ma-chao-han-sui' | 'huang-gai-fake' | 'zhou-cang-blade'
+  | 'wuchao-grain' | 'cao-cao-mengjin' | 'lu-bu-yuan-gate'
+  | 'iron-guard' | 'ballista-emplace' | 'feather-arrow' | 'chain-mail-foot'
+  | 'wooden-ox-mk2' | 'zhuge-bow-mk2' | 'thousand-arrows' | 'chain-machines'
+  | 'fire-crow' | 'one-nest-bees' | 'sky-fire-crow' | 'cannon-man-slayer'
+  | 'red-cannon' | 'iron-cart-train' | 'flame-thrower';
 
 export const TACTIC_DEFS: Record<TacticId, { zh: string; en: string }> = {
   charge:        { zh: '突擊', en: 'Charge' },
@@ -657,6 +684,107 @@ export const TACTIC_DEFS: Record<TacticId, { zh: string; en: string }> = {
   'water-bandit':       { zh: '水寇橫行', en: 'River Pirates Run Amok' },
   'sworn-brothers':     { zh: '結拜兄弟', en: 'Sworn-Brother Pact' },
   'rebel-uprising':     { zh: '揭竿而起', en: 'Raise the Banner of Rebellion' },
+  // ── Phase 63 (100 new) ──
+  'twin-spear':     { zh: '雙槍流', en: 'Twin-Spear School' },
+  'long-halberd':   { zh: '長戟術', en: 'Long Halberd Art' },
+  'twin-axe':       { zh: '雙斧法', en: 'Twin-Axe Style' },
+  'short-blade':    { zh: '短刀絕技', en: 'Short-Blade Mastery' },
+  'long-whip':      { zh: '長鞭舞', en: 'Long-Whip Dance' },
+  'meteor-hammer':  { zh: '流星錘', en: 'Meteor Hammer' },
+  'hidden-weapon':  { zh: '暗器手裡劍', en: 'Hidden Weapons' },
+  'bagua-palm':     { zh: '八卦掌', en: 'Eight-Trigram Palm' },
+  'whip-13':        { zh: '鞭法十三式', en: 'Thirteen Whip Forms' },
+  'iron-sand-palm': { zh: '鐵砂掌', en: 'Iron-Sand Palm' },
+  'flying-knife':   { zh: '飛刀術', en: 'Flying Knife' },
+  'duck-axe':       { zh: '鴛鴦鉞', en: 'Mandarin-Duck Axes' },
+  'crescent-shovel':{ zh: '月牙鏟', en: 'Crescent-Moon Shovel' },
+  'hand-hook':      { zh: '護手鉤', en: 'Hand-Guard Hooks' },
+  'iron-pipa':      { zh: '鐵琵琶', en: 'Iron Pipa (concealed weapon)' },
+  'yi-jin-jing':    { zh: '易筋經', en: 'Yi Jin Jing' },
+  'xi-sui-jing':    { zh: '洗髓經', en: 'Xi Sui Jing' },
+  'nine-yin':       { zh: '九陰真經', en: 'Nine Yin Manual' },
+  'nine-yang':      { zh: '九陽神功', en: 'Nine Yang Divine Skill' },
+  'turtle-breath':  { zh: '龜息神功', en: 'Turtle-Breath Mastery' },
+  'iron-shirt':     { zh: '鐵布衫', en: 'Iron Shirt' },
+  'golden-bell':    { zh: '金鐘罩', en: 'Golden Bell' },
+  'vajra-finger':   { zh: '大力金剛指', en: 'Vajra Finger' },
+  'crane-stance':   { zh: '鶴翔樁', en: 'Crane Stance' },
+  'child-kungfu':   { zh: '童子功', en: 'Child Body Mastery' },
+  'caesar-cross':   { zh: '凱撒越境', en: 'Caesar Crosses the Rubicon' },
+  'napoleon-flank': { zh: '拿破崙包抄', en: 'Napoleonic Encirclement' },
+  'hannibal-cannae':{ zh: '漢尼拔坎尼', en: 'Hannibal at Cannae' },
+  'macedonian-phalanx':{ zh: '馬其頓方陣', en: 'Macedonian Phalanx' },
+  'mongol-whirlwind':{ zh: '蒙古旋風', en: 'Mongol Whirlwind' },
+  'viking-raid':    { zh: '維京突襲', en: 'Viking Raid' },
+  'roman-legion':   { zh: '羅馬軍團', en: 'Roman Legion' },
+  'english-longbow':{ zh: '英格蘭長弓', en: 'English Longbow' },
+  'greek-fire':     { zh: '希臘火', en: 'Greek Fire' },
+  'spartan-300':    { zh: '斯巴達三百', en: 'Spartan 300' },
+  'heavy-cav':      { zh: '重甲鐵騎', en: 'Heavy Armored Cavalry' },
+  'light-cav':      { zh: '輕騎突擊', en: 'Light Cavalry Charge' },
+  'sniper-bow':     { zh: '神弓隊', en: 'Sniper-Bow Squad' },
+  'repeat-crossbow-cart':{ zh: '連弩車', en: 'Repeating-Crossbow Cart' },
+  'siege-tower':    { zh: '攻城塔陣', en: 'Siege-Tower Formation' },
+  'fire-boat':      { zh: '火攻船陣', en: 'Fire-Boat Fleet' },
+  'heavy-foot':     { zh: '鐵塔重步', en: 'Iron-Tower Heavy Infantry' },
+  'three-stage':    { zh: '弓馬槍三段', en: 'Three-Stage Bow-Cav-Spear' },
+  'wandering-knight':{ zh: '浪人遊俠', en: 'Wandering Swordsmen' },
+  'death-squad':    { zh: '死士隊', en: 'Death Squad' },
+  'honor-guard':    { zh: '親衛精銳', en: 'Honor Guard Elite' },
+  'mountain-militia':{ zh: '山民兵', en: 'Mountain Militia' },
+  'mixed-barbarian':{ zh: '蕃漢兵', en: 'Mixed Han-Barbarian Force' },
+  'boy-soldier':    { zh: '童子軍', en: 'Boy Soldiers' },
+  'veteran-cohort': { zh: '老兵團', en: 'Veteran Cohort' },
+  'burn-talisman':  { zh: '燒符引神', en: 'Burn Talisman, Summon Spirit' },
+  'five-thunder-roof':{ zh: '五雷轟頂', en: 'Five Thunder Strikes the Roof' },
+  'soul-snatch':    { zh: '攝魂奪魄', en: 'Soul-Snatching' },
+  'gu-poison':      { zh: '蠱毒之術', en: 'Gu Poison' },
+  'wood-puppet':    { zh: '木甲傀儡', en: 'Wooden Armor Puppet' },
+  'reverse-soul':   { zh: '反魂香', en: 'Reverse-Soul Incense' },
+  'long-sound':     { zh: '千里傳音', en: 'Thousand-Li Voice' },
+  'mind-link':      { zh: '心電感應', en: 'Telepathic Bond' },
+  'geomancy-formation':{ zh: '風水佈陣', en: 'Geomantic Formation' },
+  'maoshan-rite':   { zh: '茅山道術', en: 'Maoshan Daoist Rite' },
+  'faction-manipulate':{ zh: '黨爭操控', en: 'Faction Manipulation' },
+  'regent-power':   { zh: '攝政專權', en: 'Regent Seizes Power' },
+  'depose-elder':   { zh: '廢長立幼', en: 'Depose the Elder, Install the Young' },
+  'imperial-inlaw': { zh: '外戚干政', en: 'Imperial In-Laws Meddle' },
+  'eunuch-power':   { zh: '宦官弄權', en: 'Eunuchs Hold the Power' },
+  'false-edict':    { zh: '矯詔行事', en: 'Forge an Imperial Edict' },
+  'court-debate':   { zh: '廷議辯論', en: 'Court Debate' },
+  'petition-campaign':{ zh: '民眾請願', en: 'Popular Petition' },
+  'rumor-spread':   { zh: '流言惑眾', en: 'Spread Rumors' },
+  'smear-opponent': { zh: '抹黑對手', en: 'Smear the Opponent' },
+  'wang-lang-cursed':{ zh: '王朗罵死諸葛', en: 'Zhuge Curses Wang Lang to Death' },
+  'pang-de-coffin': { zh: '龐德抬棺', en: 'Pang De Brings His Own Coffin' },
+  'six-expeditions':{ zh: '諸葛六出祁山', en: 'Zhuge Six Times to Mount Qi' },
+  'sima-eight':     { zh: '司馬八陣', en: "Sima Yi's Eight-Array Counter" },
+  'le-jin-raid':    { zh: '樂進偷襲', en: 'Le Jin Night Raid' },
+  'zhang-liao-xiaoyao':{ zh: '張遼威震逍遙津', en: 'Zhang Liao Shakes Xiaoyao Crossing' },
+  'gan-ning-100':   { zh: '甘寧百騎劫營', en: "Gan Ning's 100-Horse Raid" },
+  'taishi-ci-vs-sunce':{ zh: '太史慈鬥孫策', en: 'Tai Shi Ci Duels Sun Ce' },
+  'zhao-yun-courage':{ zh: '趙雲一身是膽', en: 'Zhao Yun Is Made of Courage' },
+  'ma-chao-han-sui':{ zh: '錦袍韓遂', en: 'Ma Chao Brocade Robe vs Han Sui' },
+  'huang-gai-fake': { zh: '黃蓋詐降', en: "Huang Gai's False Surrender" },
+  'zhou-cang-blade':{ zh: '周倉扛刀', en: 'Zhou Cang Bears the Blade' },
+  'wuchao-grain':   { zh: '烏巢糧倉', en: 'Burn the Wuchao Granary' },
+  'cao-cao-mengjin':{ zh: '曹操過孟津', en: 'Cao Cao Crosses Mengjin' },
+  'lu-bu-yuan-gate':{ zh: '呂布轅門射戟', en: 'Lu Bu Splits a Halberd at the Gate' },
+  'iron-guard':     { zh: '親軍鐵衛', en: 'Iron-Sworn Personal Guard' },
+  'ballista-emplace':{ zh: '弩砲陣地', en: 'Ballista Emplacement' },
+  'feather-arrow':  { zh: '鳥羽箭隊', en: 'Feathered-Arrow Squad' },
+  'chain-mail-foot':{ zh: '鎖子甲步兵', en: 'Chain-Mail Infantry' },
+  'wooden-ox-mk2':  { zh: '木牛流馬改', en: 'Wooden-Ox Mk II' },
+  'zhuge-bow-mk2':  { zh: '諸葛弩改', en: 'Zhuge Crossbow Mk II' },
+  'thousand-arrows':{ zh: '連弩萬箭', en: 'Ten-Thousand Arrows' },
+  'chain-machines': { zh: '連環機關', en: 'Chained War Machines' },
+  'fire-crow':      { zh: '神火飛鴉', en: 'Divine Fire Crow' },
+  'one-nest-bees':  { zh: '一窩蜂', en: "Hornet's Nest Rocket Battery" },
+  'sky-fire-crow':  { zh: '神火鴉', en: 'Sky-Fire Crow Rocket' },
+  'cannon-man-slayer':{ zh: '萬人敵', en: 'Ten-Thousand-Man Slayer Cannon' },
+  'red-cannon':     { zh: '紅夷大炮', en: 'Red-Barbarian Cannon' },
+  'iron-cart-train':{ zh: '鐵車連營', en: 'Iron-Cart Linked Camp' },
+  'flame-thrower':  { zh: '猛火油櫃', en: 'Naphtha Flame-Thrower' },
 };
 
 export const OFFICER_TACTICS: Record<string, TacticId[]> = {
