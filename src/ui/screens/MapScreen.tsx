@@ -42,6 +42,7 @@ const EncyclopediaModal = lazy(() => import('../components/EncyclopediaModal').t
 const EspionageModal = lazy(() => import('../components/EspionageModal').then(m => ({ default: m.EspionageModal })));
 const TitlesModal = lazy(() => import('../components/TitlesModal').then(m => ({ default: m.TitlesModal })));
 const GovernorsModal = lazy(() => import('../components/GovernorsModal').then(m => ({ default: m.GovernorsModal })));
+const FormationsModal = lazy(() => import('../components/FormationsModal').then(m => ({ default: m.FormationsModal })));
 
 export function MapScreen() {
   const [showForces, setShowForces] = useState(false);
@@ -54,6 +55,7 @@ export function MapScreen() {
   const [showEspionage, setShowEspionage] = useState(false);
   const [showCourt, setShowCourt] = useState(false);
   const [showSave, setShowSave] = useState<'save' | 'load' | null>(null);
+  const [showFormations, setShowFormations] = useState(false);
   const [theme, setTheme] = useState<ThemeId>(getStoredTheme());
   const handleSetTheme = (id: ThemeId) => {
     setTheme(id);
@@ -202,11 +204,12 @@ export function MapScreen() {
         />
         <HudMenu
           label="军务"
-          title="Military — battles, espionage"
+          title="Military — battles, espionage, formations"
           items={[
-            { label: '戰史 Battles',   onClick: () => setShowHistory(true) },
-            { label: '戰史 Replays',   onClick: () => setShowReplays(true) },
-            { label: '密偵 Espionage', onClick: () => setShowEspionage(true) },
+            { label: '戰史 Battles',    onClick: () => setShowHistory(true) },
+            { label: '戰史 Replays',    onClick: () => setShowReplays(true) },
+            { label: '密偵 Espionage',  onClick: () => setShowEspionage(true) },
+            { label: '陣形 Formations', onClick: () => setShowFormations(true) },
           ]}
         />
         <HudMenu
@@ -325,6 +328,7 @@ export function MapScreen() {
         {showArmoury && <ArmouryModal onClose={() => setShowArmoury(false)} />}
         {showTitles && <TitlesModal onClose={() => setShowTitles(false)} />}
         {showGovernors && <GovernorsModal onClose={() => setShowGovernors(false)} />}
+        {showFormations && <FormationsModal onClose={() => setShowFormations(false)} />}
         {showEspionage && <EspionageModal onClose={() => setShowEspionage(false)} />}
         {showDeeds && <DeedsModal onClose={() => setShowDeeds(false)} />}
         {showReplays && <BattleReplayModal onClose={() => setShowReplays(false)} />}
