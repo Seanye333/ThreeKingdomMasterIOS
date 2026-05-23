@@ -7,6 +7,10 @@ import { AchievementsModal } from '../components/AchievementsModal';
 import { CustomOfficerCreator } from '../components/CustomOfficerCreator';
 import { ItemsBrowser } from '../components/ItemsBrowser';
 import { FormationsModal } from '../components/FormationsModal';
+import { TacticsModal } from '../components/TacticsModal';
+import { PoliciesModal } from '../components/PoliciesModal';
+import { TraitsModal } from '../components/TraitsModal';
+import { SkillsModal } from '../components/SkillsModal';
 import { SaveSlotsModal } from '../components/SaveSlotsModal';
 import { ScenarioOfficersBrowser } from '../components/ScenarioOfficersBrowser';
 import styles from './TitleScreen.module.css';
@@ -34,6 +38,10 @@ export function TitleScreen() {
   const [showAchievements, setShowAchievements] = useState(false);
   const [showItems, setShowItems] = useState(false);
   const [showFormations, setShowFormations] = useState(false);
+  const [showTactics, setShowTactics] = useState(false);
+  const [showPolicies, setShowPolicies] = useState(false);
+  const [showTraits, setShowTraits] = useState(false);
+  const [showSkills, setShowSkills] = useState(false);
   const enterCareerMode = useGameStore((s) => s.enterCareerMode);
   const setRomanceMode = useGameStore((s) => s.setRomanceMode);
   const setRoguelikeMode = useGameStore((s) => s.setRoguelikeMode);
@@ -130,6 +138,34 @@ export function TitleScreen() {
             style={{ marginTop: '0.5rem' }}
           >
             陣形一覽 · Browse All Formations
+          </button>
+          <button
+            className={styles.officersButton}
+            onClick={() => setShowTactics(true)}
+            style={{ marginTop: '0.5rem' }}
+          >
+            戰法一覽 · Browse All Tactics
+          </button>
+          <button
+            className={styles.officersButton}
+            onClick={() => setShowPolicies(true)}
+            style={{ marginTop: '0.5rem' }}
+          >
+            政策一覽 · Browse All Policies
+          </button>
+          <button
+            className={styles.officersButton}
+            onClick={() => setShowTraits(true)}
+            style={{ marginTop: '0.5rem' }}
+          >
+            性格一覽 · Browse All Traits
+          </button>
+          <button
+            className={styles.officersButton}
+            onClick={() => setShowSkills(true)}
+            style={{ marginTop: '0.5rem' }}
+          >
+            特技一覽 · Browse All Skills
           </button>
           <button
             className={styles.officersButton}
@@ -326,6 +362,10 @@ export function TitleScreen() {
       )}
       {showItems && <ItemsBrowser onClose={() => setShowItems(false)} />}
       {showFormations && <FormationsModal onClose={() => setShowFormations(false)} />}
+      {showTactics && <TacticsModal onClose={() => setShowTactics(false)} />}
+      {showPolicies && <PoliciesModal onClose={() => setShowPolicies(false)} />}
+      {showTraits && <TraitsModal onClose={() => setShowTraits(false)} />}
+      {showSkills && <SkillsModal onClose={() => setShowSkills(false)} />}
     </div>
   );
 }
