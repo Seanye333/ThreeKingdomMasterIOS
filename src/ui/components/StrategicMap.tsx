@@ -85,7 +85,11 @@ export function StrategicMap() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const dpr = window.devicePixelRatio || 1;
+    // Cap DPR on phones — iPhone DPR 3 means 6.5M-pixel canvas which
+    // tanks framerate. 1.5 looks plenty crisp at typical viewing distance.
+    const isPhone = window.innerWidth <= 640;
+    const rawDpr = window.devicePixelRatio || 1;
+    const dpr = isPhone ? Math.min(rawDpr, 1.5) : rawDpr;
     canvas.width = MAP_WIDTH * dpr;
     canvas.height = MAP_HEIGHT * dpr;
     canvas.style.width = `${MAP_WIDTH}px`;
@@ -122,11 +126,16 @@ export function StrategicMap() {
       drawOverlay(ctx, date);
     };
     render();
-    // Season particles need a continuous loop so they drift. Also runs when
-    // there are pending marches or a selected city (pulse).
+    // Throttle: 60fps on desktop, ~25fps on phones (~40ms frame budget).
+    // Keep particles drifting + selected-city pulse + march arrows animated.
     let raf = 0;
-    const tick = () => {
-      render();
+    let lastFrame = 0;
+    const minFrameMs = isPhone ? 40 : 0;
+    const tick = (now: number) => {
+      if (now - lastFrame >= minFrameMs) {
+        render();
+        lastFrame = now;
+      }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -267,33 +276,41 @@ export function StrategicMap() {
 
   const handleDoubleClick = () => setViewport(DEFAULT_VIEWPORT);
 
-  // ── Touch / pinch zoom ──
+  // ── Touch / pinch zoom + tap-to-select ──
   const touchStateRef = useRef<{
     mode: 'pan' | 'pinch' | null;
+    startX: number;
+    startY: number;
     lastX: number;
     lastY: number;
     dist: number;
     startScale: number;
-  }>({ mode: null, lastX: 0, lastY: 0, dist: 0, startScale: 1 });
+    moved: boolean;
+  }>({ mode: null, startX: 0, startY: 0, lastX: 0, lastY: 0, dist: 0, startScale: 1, moved: false });
 
   const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
     if (e.touches.length === 1) {
       touchStateRef.current = {
         mode: 'pan',
+        startX: e.touches[0].clientX,
+        startY: e.touches[0].clientY,
         lastX: e.touches[0].clientX,
         lastY: e.touches[0].clientY,
         dist: 0,
         startScale: viewport.scale,
+        moved: false,
       };
     } else if (e.touches.length === 2) {
       const [a, b] = [e.touches[0], e.touches[1]];
       const d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
       touchStateRef.current = {
         mode: 'pinch',
+        startX: 0, startY: 0,
         lastX: (a.clientX + b.clientX) / 2,
         lastY: (a.clientY + b.clientY) / 2,
         dist: d,
         startScale: viewport.scale,
+        moved: true,
       };
     }
   };
@@ -306,9 +323,14 @@ export function StrategicMap() {
       const t = e.touches[0];
       const dx = t.clientX - s.lastX;
       const dy = t.clientY - s.lastY;
+      if (Math.abs(t.clientX - s.startX) > 5 || Math.abs(t.clientY - s.startY) > 5) {
+        s.moved = true;
+      }
       s.lastX = t.clientX;
       s.lastY = t.clientY;
-      setViewport((v) => ({ ...v, x: v.x + dx, y: v.y + dy }));
+      if (s.moved) {
+        setViewport((v) => ({ ...v, x: v.x + dx, y: v.y + dy }));
+      }
     } else if (s.mode === 'pinch' && e.touches.length === 2) {
       const [a, b] = [e.touches[0], e.touches[1]];
       const d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
@@ -333,8 +355,31 @@ export function StrategicMap() {
     }
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    const s = touchStateRef.current;
     touchStateRef.current.mode = null;
+    // Tap-to-select: only when single-touch and didn't drag.
+    if (s.mode === 'pan' && !s.moved) {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      // Use changedTouches because all touches have lifted on touchend
+      const t = e.changedTouches[0];
+      if (!t) return;
+      const cssX = t.clientX - rect.left;
+      const cssY = t.clientY - rect.top;
+      // Convert from CSS pixels to canvas (world) coords via current viewport
+      // The canvas display size may differ from internal size; adjust by ratio.
+      const scaleX = MAP_WIDTH / rect.width;
+      const scaleY = MAP_HEIGHT / rect.height;
+      const cx = cssX * scaleX;
+      const cy = cssY * scaleY;
+      const { x: wx, y: wy } = toWorld(cx, cy);
+      const effMap: Record<EntityId, City> = {};
+      for (const c of Object.values(cities)) effMap[c.id] = effectiveCity(c.id)!;
+      const hit = hitTestCity(wx, wy, effMap);
+      selectCity(hit);
+    }
   };
 
   return (
