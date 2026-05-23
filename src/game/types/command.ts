@@ -62,6 +62,13 @@ export interface BattleSideDetail {
   power: number; // blendedStat × √troops (defender × defenseFactor)
 }
 
+export interface BattlePhaseSummary {
+  phase: 'formation' | 'skirmish' | 'mainEngagement' | 'pursuit';
+  attackerMorale: number;
+  defenderMorale: number;
+  text: string;
+}
+
 export interface BattleDetail {
   cityId: EntityId;
   attacker: BattleSideDetail;
@@ -74,6 +81,14 @@ export interface BattleDetail {
   defenderLosses: number;
   duelWinnerId?: EntityId;
   duelLoserId?: EntityId;
+  // ── Phase 68: Battle theater data ──
+  phases?: BattlePhaseSummary[];
+  stratagem?: { id: string; nameZh: string; nameEn: string; succeeded: boolean };
+  attackerMoraleEnd?: number;
+  defenderMoraleEnd?: number;
+  woundedIds?: EntityId[];
+  capturedIds?: EntityId[];
+  pursued?: boolean;
 }
 
 export interface HistoricBattle extends BattleDetail {

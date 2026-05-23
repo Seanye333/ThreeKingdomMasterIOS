@@ -162,6 +162,11 @@ export interface GameState {
     seasons: number;
     perSeason: number;
   }>;
+  /**
+   * Player-side battles queued for theater playback. Shown one at a time
+   * after the season report is dismissed.
+   */
+  pendingBattleTheaters: import('../types').HistoricBattle[];
 }
 
 export const EMPTY_STATE: GameState = {
@@ -222,6 +227,7 @@ export const EMPTY_STATE: GameState = {
   burningCities: [],
   mandate: { byForce: {} },
   pendingDelayedEffects: [],
+  pendingBattleTheaters: [],
 };
 
 export interface CustomOfficerInit {
@@ -361,6 +367,7 @@ export function loadScenario(
     burningCities: [],
     mandate: createInitialMandate(scenario.forces.map((f) => f.id)),
     pendingDelayedEffects: [],
+    pendingBattleTheaters: [],
   };
 }
 

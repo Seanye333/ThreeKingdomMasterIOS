@@ -755,6 +755,25 @@ export function handleMarch(
     defenderLosses: result.defenderLosses,
     duelWinnerId: result.duel?.winner.id,
     duelLoserId: result.duel?.loser.id,
+    phases: result.phases?.map((p) => ({
+      phase: p.phase,
+      attackerMorale: p.attackerMorale,
+      defenderMorale: p.defenderMorale,
+      text: p.text,
+    })),
+    stratagem: result.stratagem
+      ? {
+          id: result.stratagem.id,
+          nameZh: result.stratagem.name.zh,
+          nameEn: result.stratagem.name.en,
+          succeeded: result.stratagem.succeeded,
+        }
+      : undefined,
+    attackerMoraleEnd: result.attackerMoraleEnd,
+    defenderMoraleEnd: result.defenderMoraleEnd,
+    woundedIds: result.wounded?.map((w) => w.officerId),
+    capturedIds: result.captured,
+    pursued: result.pursued,
   };
 
   entries.push({

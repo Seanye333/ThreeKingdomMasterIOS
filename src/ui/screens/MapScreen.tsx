@@ -19,6 +19,7 @@ import { ForcesOverview } from '../components/ForcesOverview';
 import { OfficersTab } from '../components/OfficersTab';
 import { SaveSlotsModal } from '../components/SaveSlotsModal';
 import { SeasonReportModal } from '../components/SeasonReportModal';
+import { BattleTheaterModal } from '../components/BattleTheaterModal';
 import { StrategicMap } from '../components/StrategicMap';
 import { TutorialOverlay } from '../components/TutorialOverlay';
 import { VictoryModal } from '../components/VictoryModal';
@@ -309,6 +310,9 @@ export function MapScreen() {
       <ErrorBoundary fallbackLabel="Season report panel crashed">
         <SeasonReportModal />
       </ErrorBoundary>
+      <ErrorBoundary fallbackLabel="Battle theater crashed">
+        <BattleTheaterMount />
+      </ErrorBoundary>
       {showForces && <ForcesOverview onClose={() => setShowForces(false)} />}
       {showDiplomacy && (
         <DiplomacyModal onClose={() => setShowDiplomacy(false)} />
@@ -384,4 +388,15 @@ export function MapScreen() {
       {tacticalBattle && <TacticalBattleScreen />}
     </div>
   );
+}
+
+function BattleTheaterMount() {
+  const queue = useGameStore((s) => s.pendingBattleTheaters);
+  const lastReport = useGameStore((s) => s.lastReport);
+  const dismiss = useGameStore((s) => s.dismissBattleTheater);
+  // Only show after the season report has been dismissed.
+  if (lastReport) return null;
+  const next = queue[0];
+  if (!next) return null;
+  return <BattleTheaterModal battle={next} onClose={dismiss} />;
 }

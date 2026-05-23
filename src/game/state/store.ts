@@ -130,6 +130,7 @@ interface GameStore extends GameState {
   cancelCommand: (cityId: EntityId) => void;
   endSeason: () => void;
   dismissReport: () => void;
+  dismissBattleTheater: () => void;
   recruitOfficer: (
     officerId: EntityId,
     cityId: EntityId,
@@ -489,6 +490,13 @@ export const useGameStore = create<GameStore>()(
             id: `${state.date.year}-${state.date.season}-${idx}`,
             date: { year: state.date.year, season: state.date.season },
           }));
+
+        // Queue player-involved battles for theater playback.
+        const playerBattleTheaters = newBattles.filter(
+          (b) =>
+            b.attacker.forceId === state.playerForceId ||
+            b.defender.forceId === state.playerForceId,
+        );
 
         // Resolve espionage ops.
         const espResult = resolveEspionage({
@@ -881,6 +889,10 @@ export const useGameStore = create<GameStore>()(
           selectedCityId: stillOwned ? state.selectedCityId : fallback,
           victoryStatus: endVS,
           battleHistory: [...state.battleHistory, ...newBattles],
+          pendingBattleTheaters: [
+            ...state.pendingBattleTheaters,
+            ...playerBattleTheaters,
+          ],
           eventFlags: postFlags,
           firedEventIds: postFiredIds,
           pendingEspionage: [],
@@ -917,6 +929,12 @@ export const useGameStore = create<GameStore>()(
       },
 
       dismissReport: () => set(() => ({ lastReport: null })),
+
+      dismissBattleTheater: () => {
+        const state = get();
+        const rest = state.pendingBattleTheaters.slice(1);
+        set({ pendingBattleTheaters: rest });
+      },
 
       recruitOfficer: (officerId, cityId) => {
         const state = get();
