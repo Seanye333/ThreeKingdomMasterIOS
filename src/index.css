@@ -248,24 +248,124 @@ button:not(:disabled):active {
 
 /* ─── Phase 34: responsive — tablet/mobile fallbacks ──────────── */
 
+/* Tablet (≤900px): tighter buttons, modals wider */
 @media (max-width: 900px) {
   [class*="modal"]:not([class*="backdrop"]) {
     width: 96vw !important;
     max-width: 96vw !important;
+    max-height: 95vh !important;
   }
   [class*="topBar"] {
-    flex-wrap: wrap;
+    flex-wrap: wrap !important;
     gap: 4px !important;
+    padding: 0.4rem 0.6rem !important;
   }
   [class*="forcesButton"] {
     font-size: 0.72rem !important;
-    padding: 0.25rem 0.5rem !important;
+    padding: 0.3rem 0.55rem !important;
   }
 }
 
+/* Phone (≤640px): stack everything, full-screen modals, larger touch targets */
+@media (max-width: 640px) {
+  body {
+    font-size: 0.92rem;
+  }
+
+  /* MapScreen: stack map on top, CityPanel below — break the side-by-side */
+  [class*="MapScreen_main"],
+  [class*="main_"] {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    padding: 0.5rem !important;
+    overflow-y: auto !important;
+  }
+  [class*="mapWrap"] {
+    min-height: 50vh;
+    max-height: 60vh;
+  }
+  [class*="CityPanel"] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* TopBar: scroll horizontally, never wrap awkwardly */
+  [class*="topBar"] {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.35rem 0.5rem !important;
+  }
+  [class*="dateBlock"] {
+    padding: 0.1rem 0.5rem !important;
+    min-width: auto !important;
+  }
+  [class*="year"] {
+    font-size: 0.9rem !important;
+  }
+  [class*="season"] {
+    font-size: 0.62rem !important;
+  }
+  [class*="playerBlock"],
+  [class*="orderBlock"] {
+    display: none !important;  /* save horizontal space on phone */
+  }
+  [class*="forcesButton"] {
+    font-size: 0.7rem !important;
+    padding: 0.4rem 0.6rem !important;
+    letter-spacing: 0.05rem !important;
+  }
+  [class*="advanceButton"] {
+    font-size: 0.78rem !important;
+    padding: 0.45rem 0.7rem !important;
+  }
+  [class*="backButton"] {
+    padding: 0.35rem 0.6rem !important;
+    font-size: 0.72rem !important;
+  }
+
+  /* Modals: full-screen on phone */
+  [class*="backdrop"] {
+    padding: 0 !important;
+  }
+  [class*="modal"]:not([class*="backdrop"]) {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+    border: none !important;
+  }
+
+  /* Officer rows: stack stats on second line */
+  [class*="row_"] {
+    flex-wrap: wrap !important;
+  }
+  [class*="rowMeta"],
+  [class*="stats"] {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    margin-top: 0.2rem;
+    font-size: 0.7rem !important;
+  }
+
+  /* Tables / grids: shrink padding */
+  th, td { padding: 0.3rem !important; font-size: 0.78rem; }
+
+  /* Hide some decorative corners on phone (they overlap content) */
+  [data-corners]::before, [data-corners]::after { display: none; }
+}
+
+/* Touch devices: bigger tap targets */
 @media (pointer: coarse) {
   button {
-    min-height: 36px;
+    min-height: 38px;
+    min-width: 38px;
+  }
+  /* Officer cards / row items get a bit more vertical room */
+  [class*="row_"], [class*="officerCard"] {
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
   }
 }
 

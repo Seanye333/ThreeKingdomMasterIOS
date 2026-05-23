@@ -43,7 +43,10 @@
       "Bash(./node_modules/.bin/vite:*)",
       "Bash(/Users/sean/Developer/ThreeKingdomMasters/node_modules/.bin/tsc:*)",
       "Bash(/Users/sean/Developer/ThreeKingdomMasters/node_modules/.bin/vite:*)",
-      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code} · %{size_download} bytes · %{time_total}s\\\\n\" https://three-kingdom-masters.vercel.app/)"
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code} · %{size_download} bytes · %{time_total}s\\\\n\" https://three-kingdom-masters.vercel.app/)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)"
     ],
     "additionalDirectories": [
       "/private/tmp/tkm-scaffold"
