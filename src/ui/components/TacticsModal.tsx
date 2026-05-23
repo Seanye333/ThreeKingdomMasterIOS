@@ -1,5 +1,16 @@
-import { TACTIC_DEFS } from '../../game/data/officerAttributes';
+import { TACTIC_DEFS, tacticBonus } from '../../game/data/officerAttributes';
 import { CatalogModal, type CatalogItem, type CatalogCategory } from './CatalogModal';
+
+function bonusBadge(id: string): string {
+  const b = tacticBonus(id);
+  const parts: string[] = [];
+  if (b.war) parts.push(`武+${b.war}`);
+  if (b.leadership) parts.push(`統+${b.leadership}`);
+  if (b.intelligence) parts.push(`知+${b.intelligence}`);
+  if (b.politics) parts.push(`政+${b.politics}`);
+  if (b.charisma) parts.push(`魅+${b.charisma}`);
+  return parts.join(' ');
+}
 
 // Classify 24 tactics into 4 categories.
 const TACTIC_CATEGORY: Record<string, string> = {
@@ -750,6 +761,7 @@ export function TacticsModal({ onClose }: Props) {
     en: def.en,
     description: TACTIC_DESC[id] ?? '',
     category: TACTIC_CATEGORY[id] ?? 'melee',
+    badge: bonusBadge(id),
   }));
   return (
     <CatalogModal
