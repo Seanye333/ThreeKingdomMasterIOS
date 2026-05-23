@@ -300,7 +300,25 @@ export type TacticId =
   | 'solid-camp'     // 結硬寨打呆仗 (Zeng Guofan, late Qing)
   | 'death-ground'   // 置之死地而後生
   | 'siege-relief'   // 圍點打援
-  | 'bloodless';     // 兵不血刃
+  | 'bloodless'      // 兵不血刃
+  // ── Phase 60: 150 grand edition (百戰奇法 + 戰國奇計 + 名場面 + 古典) ──
+  // 百戰奇法
+  | 'plan-war' | 'cavalry-war' | 'naval-war' | 'trust-war' | 'many-war'
+  | 'few-war' | 'mountain-war' | 'night-war' | 'supply-war' | 'defend-war'
+  // 戰國 & 漢
+  | 'fire-ox' | 'sand-dam' | 'ban-chao' | 'mass-burial' | 'long-ride'
+  // 孫子兵法
+  | 'surprise' | 'unguarded' | 'wind-forest' | 'quick-decision' | 'protracted'
+  // 三國名場面
+  | 'warm-wine' | 'three-fight-lubu' | 'plum-wine' | 'longzhong' | 'burn-chibi'
+  | 'lose-jingzhou' | 'flee-maicheng' | 'white-emperor' | 'tearful-ma'
+  | 'wuzhang-star' | 'memorial' | 'edict-belt' | 'borrow-jingzhou' | 'diaochan'
+  | 'liu-bei-share-meat' // 推食食人
+  // 古典 & 軍略
+  | 'no-clash' | 'mind-might' | 'reverse-encircle' | 'flower-bloom'
+  | 'annihilate' | 'attrition' | 'scorched-earth' | 'siege-starve'
+  | 'break-encircle' | 'bait-trap' | 'encircle-no-attack' | 'heart-war'
+  | 'counter-plot' | 'press-pursuit' | 'still-vs-motion';
 
 export const TACTIC_DEFS: Record<TacticId, { zh: string; en: string }> = {
   charge:        { zh: '突擊', en: 'Charge' },
@@ -403,6 +421,57 @@ export const TACTIC_DEFS: Record<TacticId, { zh: string; en: string }> = {
   'death-ground':   { zh: '置之死地而後生', en: 'Place on Death-Ground, Then Survive' },
   'siege-relief':   { zh: '圍點打援',     en: 'Besiege a Point to Strike the Relief' },
   bloodless:        { zh: '兵不血刃',     en: 'A Sword that Draws No Blood' },
+  // ── Phase 60 ──
+  'plan-war':       { zh: '計戰', en: 'War of Plans' },
+  'cavalry-war':    { zh: '騎戰', en: 'Cavalry War' },
+  'naval-war':      { zh: '舟戰', en: 'Naval War' },
+  'trust-war':      { zh: '信戰', en: 'War of Trust' },
+  'many-war':       { zh: '眾戰', en: 'War with Numbers' },
+  'few-war':        { zh: '寡戰', en: 'War with Few' },
+  'mountain-war':   { zh: '山戰', en: 'Mountain War' },
+  'night-war':      { zh: '夜戰', en: 'Night War' },
+  'supply-war':     { zh: '糧戰', en: 'Supply War' },
+  'defend-war':     { zh: '守戰', en: 'War of Defense' },
+  'fire-ox':        { zh: '火牛陣', en: "Tian Dan's Fire-Oxen" },
+  'sand-dam':       { zh: '韓信囊沙', en: "Han Xin's Sand-Dam" },
+  'ban-chao':       { zh: '班超三十六', en: "Ban Chao's Thirty-Six" },
+  'mass-burial':    { zh: '白起坑卒', en: "Bai Qi's Mass Burial" },
+  'long-ride':      { zh: '霍去病千里', en: "Huo Qubing's Thousand-Li Ride" },
+  surprise:         { zh: '出其不意', en: 'Strike When Unexpected' },
+  unguarded:        { zh: '攻其無備', en: "Attack Where They're Unguarded" },
+  'wind-forest':    { zh: '風林火山', en: 'Swift, Silent, Fierce, Immovable' },
+  'quick-decision': { zh: '速戰速決', en: 'Quick War, Quick End' },
+  protracted:       { zh: '持久戰', en: 'Protracted War' },
+  'warm-wine':      { zh: '溫酒斬華雄', en: 'Slay Hua Xiong with Wine Still Warm' },
+  'three-fight-lubu':{ zh: '三英戰呂布', en: 'Three Heroes Battle Lü Bu' },
+  'plum-wine':      { zh: '煮酒論英雄', en: 'Brewed Wine, Heroes Discussed' },
+  longzhong:        { zh: '隆中對', en: 'The Longzhong Plan' },
+  'burn-chibi':     { zh: '火燒赤壁', en: 'Burn the Red Cliffs' },
+  'lose-jingzhou':  { zh: '大意失荊州', en: 'Lose Jingzhou to Carelessness' },
+  'flee-maicheng':  { zh: '走麥城', en: 'Flee to Maicheng' },
+  'white-emperor':  { zh: '白帝託孤', en: 'Entrust the Orphan at White Emperor City' },
+  'tearful-ma':     { zh: '揮淚斬馬謖', en: 'Execute Ma Su with Tears' },
+  'wuzhang-star':   { zh: '五丈原星隕', en: 'A Star Falls at Wuzhang Plain' },
+  memorial:         { zh: '出師表', en: 'Memorial Before the Campaign' },
+  'edict-belt':     { zh: '衣帶詔', en: 'Edict in the Sash' },
+  'borrow-jingzhou':{ zh: '借荊州', en: 'Borrow Jingzhou' },
+  diaochan:         { zh: '貂蟬連環', en: "Diaochan's Chain Plot" },
+  'liu-bei-share-meat': { zh: '推食食人', en: 'Share Your Meat with the Soldiers' },
+  'no-clash':       { zh: '兵不接刃', en: 'Victory Without Crossing Blades' },
+  'mind-might':     { zh: '將謀重於兵勇', en: 'A Mind Worth More Than Brave Soldiers' },
+  'reverse-encircle':{ zh: '反包圍', en: 'Reverse Encirclement' },
+  'flower-bloom':   { zh: '中心開花', en: 'Bloom from the Center' },
+  annihilate:       { zh: '殲滅戰', en: 'War of Annihilation' },
+  attrition:        { zh: '消耗戰', en: 'War of Attrition' },
+  'scorched-earth': { zh: '焦土戰術', en: 'Scorched-Earth Strategy' },
+  'siege-starve':   { zh: '圍困飢戰', en: 'Siege by Starvation' },
+  'break-encircle': { zh: '突圍戰', en: 'Break the Encirclement' },
+  'bait-trap':      { zh: '釣餌戰術', en: 'Bait-and-Trap' },
+  'encircle-no-attack':{ zh: '圍而不攻', en: 'Encircle Without Engaging' },
+  'heart-war':      { zh: '心戰為上', en: 'War of the Heart Above All' },
+  'counter-plot':   { zh: '將計就計', en: "Counter-Stratagem on Their Stratagem" },
+  'press-pursuit':  { zh: '趁勢追擊', en: 'Press the Advantage in Pursuit' },
+  'still-vs-motion':{ zh: '以靜制動', en: 'Stillness Defeats Motion' },
 };
 
 export const OFFICER_TACTICS: Record<string, TacticId[]> = {
