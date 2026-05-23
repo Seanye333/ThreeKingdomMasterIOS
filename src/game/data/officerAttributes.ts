@@ -337,7 +337,32 @@ export type TacticId =
   | 'star-reading' | 'tortoise-shell' | 'elements-counter' | 'talisman' | 'summon-spirits'
   // 名戰
   | 'julu-battle' | 'muye-battle' | 'chengpu-battle' | 'hanzhong-battle' | 'lose-jieting'
-  | 'zhao-yun-baby' | 'huang-zhong-dingjun' | 'zhou-yu-plan' | 'seek-talent' | 'he-jin-blunder';
+  | 'zhao-yun-baby' | 'huang-zhong-dingjun' | 'zhou-yu-plan' | 'seek-talent' | 'he-jin-blunder'
+  // ── Phase 62: 300-tactic grand collection ──
+  | 'form-squads' | 'drill-troops' | 'march-camp' | 'field-camp'
+  | 'inspect-army' | 'train-officers' | 'use-blade' | 'short-long'
+  | 'firearm-tactics' | 'banner-signals' | 'cart-camp' | 'wolf-claw'
+  | 'combat-awe' | 'attack-authority' | 'defense-authority' | 'general-command' | 'soldier-command'
+  | 'upper-strategy' | 'middle-strategy' | 'lower-strategy'
+  | 'orth-extra-use' | 'tang-li-arts'
+  | 'fan-lihua' | 'mu-guiying' | 'mulan' | 'sun-shangxiang'
+  | 'huang-yueying' | 'lu-lingqi' | 'ma-yunlu' | 'lady-zhurong-tac'
+  | 'beans-to-soldiers' | 'ride-clouds' | 'wind-walk' | 'mist-shroud'
+  | 'jade-edict' | 'summon-gods' | 'multi-body' | 'gate-of-life'
+  | 'royal-way' | 'daoist-wuwei' | 'legalist-strict' | 'mohist-defense'
+  | 'diplomat-debate' | 'yinyang-divine' | 'confucian-rite' | 'strategist-way'
+  | 'qi-cart-camp' | 'yu-wolf-claw' | 'yuan-ningyuan' | 'sun-guanning'
+  | 'zheng-taiwan' | 'dorgon-pass' | 'zuo-xinjiang' | 'lin-anti-opium'
+  | 'nian-rebellion' | 'wu-sangui'
+  | 'retreat-no-block' | 'desperate-no-pursue' | 'siege-leave-gap'
+  | 'no-uphill-attack' | 'no-hillback-fight' | 'no-bait-take'
+  | 'no-elite-attack' | 'half-formed-no-strike' | 'avoid-strong-strike-weak'
+  | 'silent-killer' | 'feign-coward' | 'lone-wolf'
+  | 'peach-garden-tac' | 'whip-postman' | 'protect-people' | 'sun-quan-bow'
+  | 'mi-fang-betray' | 'wei-yan-back' | 'guan-yu-pardon' | 'zhang-fei-poker'
+  | 'eight-immortals' | 'phoenix-rise' | 'dragon-claw' | 'turtle-shell'
+  | 'xiongnu-raid' | 'qiang-horse' | 'wuhuan-mounted-tac' | 'shanyue-mountain' | 'wuge-rattan-tac'
+  | 'yellow-turban-mob' | 'black-mountain-bandit' | 'water-bandit' | 'sworn-brothers' | 'rebel-uprising';
 
 export const TACTIC_DEFS: Record<TacticId, { zh: string; en: string }> = {
   charge:        { zh: '突擊', en: 'Charge' },
@@ -541,6 +566,97 @@ export const TACTIC_DEFS: Record<TacticId, { zh: string; en: string }> = {
   'zhou-yu-plan':       { zh: '周郎妙計', en: "Zhou Yu's Brilliant Plan" },
   'seek-talent':        { zh: '求賢令',   en: 'Edict to Seek Talent (Cao Cao)' },
   'he-jin-blunder':     { zh: '何進召董', en: "He Jin Summons Dong Zhuo" },
+  // ── Phase 62 ──
+  'form-squads':        { zh: '束伍篇', en: 'Form Squads (Qi Jiguang)' },
+  'drill-troops':       { zh: '操練篇', en: 'Drill the Troops' },
+  'march-camp':         { zh: '行營篇', en: 'March-Camp Doctrine' },
+  'field-camp':         { zh: '野營篇', en: 'Field-Camp Doctrine' },
+  'inspect-army':       { zh: '校閱篇', en: 'Army Inspection' },
+  'train-officers':     { zh: '練將篇', en: 'Train the Officers' },
+  'use-blade':          { zh: '用刃篇', en: 'Bladework Doctrine' },
+  'short-long':         { zh: '短器長用', en: 'Short Weapons Used Long' },
+  'firearm-tactics':    { zh: '鳥銃篇', en: 'Firearm Tactics' },
+  'banner-signals':     { zh: '揭旗篇', en: 'Banner Signals' },
+  'cart-camp':          { zh: '車營制', en: "Cart-Camp System (Qi)" },
+  'wolf-claw':          { zh: '狼筅陣', en: "Wolf-Claw Spear (Yu Dayou)" },
+  'combat-awe':         { zh: '戰威', en: 'Combat Awe (Weiliaozi)' },
+  'attack-authority':   { zh: '攻權', en: 'Authority in Attack' },
+  'defense-authority':  { zh: '守權', en: 'Authority in Defense' },
+  'general-command':    { zh: '將令', en: "General's Decree" },
+  'soldier-command':    { zh: '兵令', en: "Soldier's Decree" },
+  'upper-strategy':     { zh: '上略', en: 'Upper Strategy (Huang Shigong)' },
+  'middle-strategy':    { zh: '中略', en: 'Middle Strategy' },
+  'lower-strategy':     { zh: '下略', en: 'Lower Strategy' },
+  'orth-extra-use':     { zh: '奇正之用', en: 'Use of Orthodox and Extraordinary' },
+  'tang-li-arts':       { zh: '太宗武略', en: "Tang Taizong's Martial Arts" },
+  'fan-lihua':          { zh: '樊梨花術', en: "Fan Lihua's Sorcery" },
+  'mu-guiying':         { zh: '穆桂英陣', en: "Mu Guiying's Heavenly Door" },
+  mulan:                { zh: '木蘭從軍', en: 'Mulan Joins the Army' },
+  'sun-shangxiang':     { zh: '尚香擲戟', en: "Sun Shangxiang's Spear-Toss" },
+  'huang-yueying':      { zh: '黃月英巧器', en: "Huang Yueying's Devices" },
+  'lu-lingqi':          { zh: '呂玲綺斷流', en: "Lu Lingqi's Severing Stroke" },
+  'ma-yunlu':           { zh: '馬雲祿夜襲', en: "Ma Yunlu's Night Raid" },
+  'lady-zhurong-tac':   { zh: '祝融飛刀', en: "Lady Zhurong's Flying Knives" },
+  'beans-to-soldiers':  { zh: '撒豆成兵', en: 'Scatter Beans, Summon Soldiers' },
+  'ride-clouds':        { zh: '騰雲駕霧', en: 'Ride Clouds and Mist' },
+  'wind-walk':          { zh: '御風行走', en: 'Walk on the Wind' },
+  'mist-shroud':        { zh: '變幻雲霧', en: 'Conjure a Mist' },
+  'jade-edict':         { zh: '玉皇敕令', en: "Jade Emperor's Decree" },
+  'summon-gods':        { zh: '招神召將', en: 'Summon Gods and Generals' },
+  'multi-body':         { zh: '化身百出', en: 'A Hundred Manifestations' },
+  'gate-of-life':       { zh: '生門開啟', en: 'Open the Gate of Life' },
+  'royal-way':          { zh: '王道征伐', en: 'Conquest by the Royal Way (Confucian)' },
+  'daoist-wuwei':       { zh: '道家無為', en: 'Daoist Non-Action' },
+  'legalist-strict':    { zh: '法家峻法', en: "Legalist Severity" },
+  'mohist-defense':     { zh: '墨家非攻', en: 'Mohist Defense, Anti-Aggression' },
+  'diplomat-debate':    { zh: '縱橫家辯', en: 'Diplomat-Strategist Debate' },
+  'yinyang-divine':     { zh: '陰陽家占', en: 'Yin-Yang Divination' },
+  'confucian-rite':     { zh: '儒家禮治', en: 'Confucian Rule by Rites' },
+  'strategist-way':     { zh: '兵家詭道', en: 'Strategist Way of Deception' },
+  'qi-cart-camp':       { zh: '戚家車營', en: "Qi Jiguang's Cart Camp" },
+  'yu-wolf-claw':       { zh: '俞家狼筅', en: "Yu Dayou's Wolf-Claw" },
+  'yuan-ningyuan':      { zh: '袁崇煥寧遠', en: "Yuan Chonghuan at Ningyuan" },
+  'sun-guanning':       { zh: '孫承宗關寧', en: "Sun Chengzong's Guanning Line" },
+  'zheng-taiwan':       { zh: '鄭成功收台', en: 'Zheng Chenggong Retakes Taiwan' },
+  'dorgon-pass':        { zh: '多爾袞入關', en: 'Dorgon Enters the Pass' },
+  'zuo-xinjiang':       { zh: '左宗棠新疆', en: "Zuo Zongtang's Xinjiang Campaign" },
+  'lin-anti-opium':     { zh: '林則徐禁煙', en: "Lin Zexu's Anti-Opium Blockade" },
+  'nian-rebellion':     { zh: '捻軍騎襲', en: 'Nian Rebel Mounted Raid' },
+  'wu-sangui':          { zh: '吳三桂引清', en: 'Wu Sangui Opens the Pass' },
+  'retreat-no-block':   { zh: '歸師勿遏', en: "Don't Block a Retreating Army" },
+  'desperate-no-pursue':{ zh: '窮寇勿追', en: "Don't Pursue a Desperate Foe" },
+  'siege-leave-gap':    { zh: '圍師必闕', en: 'Encircling, Always Leave a Gap' },
+  'no-uphill-attack':   { zh: '高陵勿向', en: "Don't Attack Uphill" },
+  'no-hillback-fight':  { zh: '背丘勿逆', en: "Don't Fight with a Hill at Your Back" },
+  'no-bait-take':       { zh: '餌兵勿食', en: "Don't Take the Bait" },
+  'no-elite-attack':    { zh: '銳卒勿攻', en: "Don't Attack the Elite Vanguard" },
+  'half-formed-no-strike':{ zh: '半成勿擊', en: "Don't Strike a Half-Formed Army" },
+  'avoid-strong-strike-weak':{ zh: '避實擊虛', en: 'Avoid Strength, Strike the Weak' },
+  'silent-killer':      { zh: '靜中取勝', en: 'Victory in Stillness' },
+  'feign-coward':       { zh: '示弱誘敵', en: 'Show Weakness to Lure' },
+  'lone-wolf':          { zh: '孤狼戰術', en: 'Lone-Wolf Tactic' },
+  'peach-garden-tac':   { zh: '桃園結義之力', en: 'Power of the Peach Garden Oath' },
+  'whip-postman':       { zh: '怒鞭督郵', en: 'Whip the Inspector (Zhang Fei)' },
+  'protect-people':     { zh: '攜民渡江', en: 'Liu Bei Brings the People Across' },
+  'sun-quan-bow':       { zh: '孫權射虎', en: 'Sun Quan Shoots the Tiger' },
+  'mi-fang-betray':     { zh: '糜芳投吳', en: 'Mi Fang Defects to Wu' },
+  'wei-yan-back':       { zh: '魏延反骨', en: "Wei Yan's Bone of Treason" },
+  'guan-yu-pardon':     { zh: '華容道義', en: 'Guan Yu Releases Cao at Huarong' },
+  'zhang-fei-poker':    { zh: '張飛粗中有細', en: "Zhang Fei's Cunning Within Roughness" },
+  'eight-immortals':    { zh: '八仙過海', en: 'Eight Immortals Cross the Sea' },
+  'phoenix-rise':       { zh: '鳳凰涅槃', en: 'Phoenix Reborn from Ashes' },
+  'dragon-claw':        { zh: '神龍擺尾', en: "Divine Dragon's Tail Sweep" },
+  'turtle-shell':       { zh: '玄武龜甲', en: 'Black-Turtle Shell Defense' },
+  'xiongnu-raid':       { zh: '匈奴突騎', en: 'Xiongnu Mounted Raid' },
+  'qiang-horse':        { zh: '羌人騎射', en: 'Qiang Horse-Archery' },
+  'wuhuan-mounted-tac': { zh: '烏丸突騎陣', en: 'Wuhuan Mounted Vanguard Tactic' },
+  'shanyue-mountain':   { zh: '山越伏擊', en: 'Shanyue Mountain Ambush' },
+  'wuge-rattan-tac':    { zh: '烏戈藤甲陣', en: 'Wuge Rattan-Armor Tactic' },
+  'yellow-turban-mob':  { zh: '黃巾人海', en: 'Yellow-Turban Human Wave' },
+  'black-mountain-bandit':{ zh: '黑山賊蜂起', en: 'Black-Mountain Bandit Swarm' },
+  'water-bandit':       { zh: '水寇橫行', en: 'River Pirates Run Amok' },
+  'sworn-brothers':     { zh: '結拜兄弟', en: 'Sworn-Brother Pact' },
+  'rebel-uprising':     { zh: '揭竿而起', en: 'Raise the Banner of Rebellion' },
 };
 
 export const OFFICER_TACTICS: Record<string, TacticId[]> = {
