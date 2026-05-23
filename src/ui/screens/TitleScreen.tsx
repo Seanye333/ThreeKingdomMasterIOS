@@ -6,6 +6,7 @@ import type { Scenario } from '../../game/types';
 import { AchievementsModal } from '../components/AchievementsModal';
 import { CustomOfficerCreator } from '../components/CustomOfficerCreator';
 import { ItemsBrowser } from '../components/ItemsBrowser';
+import { FormationsModal } from '../components/FormationsModal';
 import { SaveSlotsModal } from '../components/SaveSlotsModal';
 import { ScenarioOfficersBrowser } from '../components/ScenarioOfficersBrowser';
 import styles from './TitleScreen.module.css';
@@ -32,6 +33,7 @@ export function TitleScreen() {
   const [roguelike, setRoguelike] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
   const [showItems, setShowItems] = useState(false);
+  const [showFormations, setShowFormations] = useState(false);
   const enterCareerMode = useGameStore((s) => s.enterCareerMode);
   const setRomanceMode = useGameStore((s) => s.setRomanceMode);
   const setRoguelikeMode = useGameStore((s) => s.setRoguelikeMode);
@@ -121,6 +123,13 @@ export function TitleScreen() {
             style={{ marginTop: '0.5rem' }}
           >
             名品一覧 · Browse All Famous Items
+          </button>
+          <button
+            className={styles.officersButton}
+            onClick={() => setShowFormations(true)}
+            style={{ marginTop: '0.5rem' }}
+          >
+            陣形一覽 · Browse All Formations
           </button>
           <button
             className={styles.officersButton}
@@ -316,6 +325,7 @@ export function TitleScreen() {
         <AchievementsModal onClose={() => setShowAchievements(false)} />
       )}
       {showItems && <ItemsBrowser onClose={() => setShowItems(false)} />}
+      {showFormations && <FormationsModal onClose={() => setShowFormations(false)} />}
     </div>
   );
 }
