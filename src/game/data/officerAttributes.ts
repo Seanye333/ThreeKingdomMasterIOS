@@ -318,7 +318,26 @@ export type TacticId =
   | 'no-clash' | 'mind-might' | 'reverse-encircle' | 'flower-bloom'
   | 'annihilate' | 'attrition' | 'scorched-earth' | 'siege-starve'
   | 'break-encircle' | 'bait-trap' | 'encircle-no-attack' | 'heart-war'
-  | 'counter-plot' | 'press-pursuit' | 'still-vs-motion';
+  | 'counter-plot' | 'press-pursuit' | 'still-vs-motion'
+  // ── Phase 61: 200-tactic edition ──
+  // 吳起兵法 / 吳子六篇
+  | 'plan-state' | 'assess-enemy' | 'govern-troops' | 'on-generalship'
+  | 'adapt-change' | 'inspire-soldiers'
+  // 司馬法
+  | 'benevolence-root' | 'emperor-duty' | 'set-ranks' | 'strict-position' | 'use-many'
+  // 諸葛將苑 / 心書
+  | 'five-virtues' | 'authority-war' | 'know-nature' | 'when-not-fight' | 'observe-general'
+  // 獸形戰術
+  | 'eagle-strike' | 'tiger-crouch' | 'leopard-wolf' | 'crane-chickens'
+  | 'snake-rat' | 'bee-swarm' | 'ant-siege' | 'whale-silk'
+  // 戰術細節
+  | 'half-cross' | 'array-wait' | 'conserve-strength' | 'high-ground' | 'mountain-back'
+  | 'intercept-relief' | 'rush-supply' | 'feign-defeat' | 'set-ambush-path' | 'quick-night'
+  // 道家占卜
+  | 'star-reading' | 'tortoise-shell' | 'elements-counter' | 'talisman' | 'summon-spirits'
+  // 名戰
+  | 'julu-battle' | 'muye-battle' | 'chengpu-battle' | 'hanzhong-battle' | 'lose-jieting'
+  | 'zhao-yun-baby' | 'huang-zhong-dingjun' | 'zhou-yu-plan' | 'seek-talent' | 'he-jin-blunder';
 
 export const TACTIC_DEFS: Record<TacticId, { zh: string; en: string }> = {
   charge:        { zh: '突擊', en: 'Charge' },
@@ -472,6 +491,56 @@ export const TACTIC_DEFS: Record<TacticId, { zh: string; en: string }> = {
   'counter-plot':   { zh: '將計就計', en: "Counter-Stratagem on Their Stratagem" },
   'press-pursuit':  { zh: '趁勢追擊', en: 'Press the Advantage in Pursuit' },
   'still-vs-motion':{ zh: '以靜制動', en: 'Stillness Defeats Motion' },
+  // ── Phase 61 ──
+  'plan-state':         { zh: '圖國',     en: 'Plan for the State (Wuzi)' },
+  'assess-enemy':       { zh: '料敵',     en: "Assess the Enemy" },
+  'govern-troops':      { zh: '治兵',     en: 'Govern the Troops' },
+  'on-generalship':     { zh: '論將',     en: 'On Generalship' },
+  'adapt-change':       { zh: '應變',     en: 'Adapt to Change' },
+  'inspire-soldiers':   { zh: '勵士',     en: 'Inspire the Soldiers' },
+  'benevolence-root':   { zh: '仁本',     en: 'Benevolence as the Root (Sima Fa)' },
+  'emperor-duty':       { zh: '天子之義', en: "The Emperor's Duty" },
+  'set-ranks':          { zh: '定爵',     en: 'Set the Ranks' },
+  'strict-position':    { zh: '嚴位',     en: 'Strict Discipline of Position' },
+  'use-many':           { zh: '用眾',     en: 'Wield the Multitude' },
+  'five-virtues':       { zh: '將之五善', en: "General's Five Virtues (Zhuge)" },
+  'authority-war':      { zh: '兵權',     en: 'Authority Over Soldiers' },
+  'know-nature':        { zh: '知人性',   en: 'Know Human Nature' },
+  'when-not-fight':     { zh: '不戰之機', en: 'Know When Not to Fight' },
+  'observe-general':    { zh: '觀將',     en: 'Observe Generals (Zhuge)' },
+  'eagle-strike':       { zh: '鷹擊長空', en: 'Eagle Strikes the Sky' },
+  'tiger-crouch':       { zh: '虎踞龍盤', en: 'Tiger Crouches, Dragon Coils' },
+  'leopard-wolf':       { zh: '豹突狼奔', en: 'Leopard Lunges, Wolf Runs' },
+  'crane-chickens':     { zh: '鶴立雞群', en: 'Crane Stands Among Chickens' },
+  'snake-rat':          { zh: '蛇行鼠竄', en: 'Snake Slithers, Rat Scurries' },
+  'bee-swarm':          { zh: '蜂擁而上', en: 'Swarm Like Bees' },
+  'ant-siege':          { zh: '蟻附攻城', en: 'Ants Swarm the Walls' },
+  'whale-silk':         { zh: '鯨吞蠶食', en: 'Whale-Swallow, Silkworm-Nibble' },
+  'half-cross':         { zh: '半渡而擊', en: 'Strike When They Are Half-Crossed' },
+  'array-wait':         { zh: '列陣以待', en: 'Array Lines and Wait' },
+  'conserve-strength':  { zh: '養精蓄銳', en: 'Conserve Spirit, Store Strength' },
+  'high-ground':        { zh: '居高臨下', en: 'Hold the High Ground' },
+  'mountain-back':      { zh: '背山臨水', en: 'Mountain at Back, River in Front' },
+  'intercept-relief':   { zh: '截擊援軍', en: 'Intercept the Relief Army' },
+  'rush-supply':        { zh: '急襲糧道', en: 'Rush the Supply Road' },
+  'feign-defeat':       { zh: '詐敗誘敵', en: 'Feign Defeat to Lure the Enemy' },
+  'set-ambush-path':    { zh: '設伏要道', en: 'Set Ambush on the Vital Road' },
+  'quick-night':        { zh: '速戰夜襲', en: 'Quick Strike Night Raid' },
+  'star-reading':       { zh: '占星望氣', en: 'Read the Stars and Vital Airs' },
+  'tortoise-shell':     { zh: '卜筮龜甲', en: 'Tortoise-Shell Divination' },
+  'elements-counter':   { zh: '五行相剋', en: 'Five-Elements Counter' },
+  talisman:             { zh: '護身符',   en: 'Talisman of Protection' },
+  'summon-spirits':     { zh: '招神召將', en: 'Summon Spirits and Generals' },
+  'julu-battle':        { zh: '鉅鹿之戰', en: 'Battle of Julu (Xiang Yu)' },
+  'muye-battle':        { zh: '牧野之戰', en: 'Battle of Muye' },
+  'chengpu-battle':     { zh: '城濮之戰', en: 'Battle of Chengpu' },
+  'hanzhong-battle':    { zh: '漢中之戰', en: 'Battle of Hanzhong' },
+  'lose-jieting':       { zh: '街亭失守', en: 'Lose Jieting (Ma Su)' },
+  'zhao-yun-baby':      { zh: '趙雲懷主', en: "Zhao Yun Carries the Heir" },
+  'huang-zhong-dingjun':{ zh: '黃忠定軍山', en: 'Huang Zhong at Dingjun Mountain' },
+  'zhou-yu-plan':       { zh: '周郎妙計', en: "Zhou Yu's Brilliant Plan" },
+  'seek-talent':        { zh: '求賢令',   en: 'Edict to Seek Talent (Cao Cao)' },
+  'he-jin-blunder':     { zh: '何進召董', en: "He Jin Summons Dong Zhuo" },
 };
 
 export const OFFICER_TACTICS: Record<string, TacticId[]> = {
