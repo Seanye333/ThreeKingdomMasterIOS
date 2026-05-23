@@ -1069,9 +1069,105 @@ export function categoryOfTactic(id: string): TacticCategory {
   return 'strategy';
 }
 
-/** Bonus from a single tactic id. */
+/**
+ * Signature bonuses — famous named tactics get larger, often unique buffs.
+ * These override the category default in tacticBonus().
+ */
+export const TACTIC_SIGNATURE: Partial<Record<string, TacticBonus>> = {
+  // ── 諸葛 ──
+  'seven-grab':      { war: 5, leadership: 10, intelligence: 8, politics: 5, charisma: 10 },
+  'borrow-wind':     { war: 0, leadership: 5, intelligence: 20, politics: 0, charisma: 0 },
+  'borrow-arrow':    { war: 3, leadership: 5, intelligence: 15, politics: 0, charisma: 5 },
+  'star-prayer':     { war: 0, leadership: 0, intelligence: 18, politics: 0, charisma: 5 },
+  'seven-lamp':      { war: 0, leadership: 0, intelligence: 18, politics: 0, charisma: 5 },
+  'six-expeditions': { war: 5, leadership: 12, intelligence: 10, politics: 5, charisma: 8 },
+  'wooden-ox':       { war: 0, leadership: 8, intelligence: 10, politics: 8, charisma: 0 },
+  'zhuge-bow':       { war: 5, leadership: 5, intelligence: 10, politics: 0, charisma: 0 },
+  'burn-bowang':     { war: 5, leadership: 5, intelligence: 12, politics: 0, charisma: 5 },
+  'burn-xinye':      { war: 5, leadership: 5, intelligence: 12, politics: 0, charisma: 5 },
+  'longzhong':       { war: 0, leadership: 10, intelligence: 15, politics: 10, charisma: 5 },
+  memorial:          { war: 0, leadership: 8, intelligence: 8, politics: 12, charisma: 10 },
+  'tearful-ma':      { war: 0, leadership: 10, intelligence: 5, politics: 8, charisma: 5 },
+  'tongue-war':      { war: 0, leadership: 0, intelligence: 12, politics: 10, charisma: 12 },
+  'empty-fort-tac':  { war: 0, leadership: 5, intelligence: 20, politics: 0, charisma: 8 },
+
+  // ── 陸遜 / 周瑜 / 東吳 ──
+  'luxun-fire':      { war: 5, leadership: 8, intelligence: 15, politics: 0, charisma: 5 },
+  'burn-yiling':     { war: 5, leadership: 8, intelligence: 15, politics: 0, charisma: 5 },
+  'burn-chibi':      { war: 5, leadership: 10, intelligence: 15, politics: 0, charisma: 8 },
+  'zhou-yu-plan':    { war: 5, leadership: 10, intelligence: 12, politics: 0, charisma: 10 },
+  'zhouyu-music':    { war: 0, leadership: 8, intelligence: 12, politics: 5, charisma: 15 },
+  'chain-ship':      { war: 3, leadership: 5, intelligence: 12, politics: 0, charisma: 0 },
+  'pang-tong-chain': { war: 0, leadership: 5, intelligence: 18, politics: 5, charisma: 0 },
+  'white-robe':      { war: 8, leadership: 8, intelligence: 12, politics: 0, charisma: 0 },
+  'lumeng-study':    { war: 5, leadership: 10, intelligence: 15, politics: 0, charisma: 0 },
+
+  // ── 曹操 / 司馬 ──
+  'caocao-poetry':   { war: 5, leadership: 10, intelligence: 10, politics: 5, charisma: 15 },
+  'plum-wine':       { war: 5, leadership: 8, intelligence: 10, politics: 8, charisma: 10 },
+  'plum-thirst':     { war: 5, leadership: 12, intelligence: 5, politics: 0, charisma: 10 },
+  'seek-talent':     { war: 0, leadership: 5, intelligence: 10, politics: 15, charisma: 10 },
+  'wuchao-grain':    { war: 5, leadership: 10, intelligence: 15, politics: 0, charisma: 0 },
+  'simayi-tortoise': { war: 0, leadership: 12, intelligence: 15, politics: 5, charisma: 0 },
+  'feign-illness':   { war: 0, leadership: 5, intelligence: 18, politics: 8, charisma: 0 },
+  'sima-eight':      { war: 5, leadership: 10, intelligence: 15, politics: 0, charisma: 0 },
+  'two-tigers':      { war: 0, leadership: 5, intelligence: 12, politics: 8, charisma: 0 },
+  'lure-tiger-wolf': { war: 0, leadership: 5, intelligence: 12, politics: 8, charisma: 0 },
+
+  // ── 關羽 / 張飛 / 趙雲 / 馬超 / 黃忠 ──
+  'guanyu-greendragon':{ war: 18, leadership: 8, intelligence: 0, politics: 0, charisma: 5 },
+  'warm-wine':       { war: 15, leadership: 5, intelligence: 0, politics: 0, charisma: 8 },
+  'lone-blade':      { war: 15, leadership: 8, intelligence: 0, politics: 0, charisma: 5 },
+  'guan-yu-pardon':  { war: 10, leadership: 5, intelligence: 0, politics: 0, charisma: 12 },
+  'thousand-ride':   { war: 12, leadership: 8, intelligence: 0, politics: 0, charisma: 8 },
+  'pass-six':        { war: 15, leadership: 5, intelligence: 0, politics: 0, charisma: 5 },
+  'zhangfei-yelling':{ war: 15, leadership: 5, intelligence: 0, politics: 0, charisma: 0 },
+  'whip-postman':    { war: 10, leadership: 0, intelligence: 0, politics: 0, charisma: 8 },
+  'three-fight-lubu':{ war: 15, leadership: 5, intelligence: 0, politics: 0, charisma: 5 },
+  'changban':        { war: 18, leadership: 5, intelligence: 0, politics: 0, charisma: 5 },
+  'zhaoyun-shadow':  { war: 15, leadership: 5, intelligence: 0, politics: 0, charisma: 5 },
+  'zhao-yun-courage':{ war: 15, leadership: 8, intelligence: 0, politics: 0, charisma: 5 },
+  'zhao-yun-baby':   { war: 15, leadership: 8, intelligence: 0, politics: 0, charisma: 8 },
+  'changban-bridge': { war: 15, leadership: 5, intelligence: 0, politics: 0, charisma: 5 },
+  'machao-spear':    { war: 15, leadership: 5, intelligence: 0, politics: 0, charisma: 5 },
+  'huangzhong-bow':  { war: 12, leadership: 5, intelligence: 5, politics: 0, charisma: 0 },
+  'huangzhong-old-bow':{ war: 12, leadership: 5, intelligence: 5, politics: 0, charisma: 0 },
+  'dingjun-mtn':     { war: 12, leadership: 5, intelligence: 0, politics: 0, charisma: 5 },
+
+  // ── 呂布 / 典韋 / 許褚 ──
+  'lubu-flying':     { war: 20, leadership: 5, intelligence: 0, politics: 0, charisma: 0 },
+  'lu-bu-yuan-gate': { war: 18, leadership: 0, intelligence: 5, politics: 0, charisma: 0 },
+  'dianwei-double-axe':{ war: 15, leadership: 0, intelligence: 0, politics: 0, charisma: 0 },
+  'xuchu-iron-fist': { war: 15, leadership: 0, intelligence: 0, politics: 0, charisma: 0 },
+  'gan-ning-100':    { war: 12, leadership: 8, intelligence: 0, politics: 0, charisma: 5 },
+  'gan-ning-bell':   { war: 12, leadership: 5, intelligence: 0, politics: 0, charisma: 5 },
+  'zhang-liao-xiaoyao':{ war: 15, leadership: 12, intelligence: 0, politics: 0, charisma: 5 },
+  'taishi-ci-vs-sunce':{ war: 15, leadership: 5, intelligence: 0, politics: 0, charisma: 5 },
+
+  // ── 韓信 / 古名將 ──
+  'han-xin-count':   { war: 5, leadership: 15, intelligence: 18, politics: 0, charisma: 5 },
+  'sand-dam':        { war: 0, leadership: 10, intelligence: 15, politics: 0, charisma: 0 },
+  'chu-songs':       { war: 0, leadership: 8, intelligence: 15, politics: 0, charisma: 10 },
+  'fire-ox':         { war: 8, leadership: 10, intelligence: 12, politics: 0, charisma: 0 },
+  'xiang-yu-horse':  { war: 18, leadership: 10, intelligence: 0, politics: 0, charisma: 8 },
+  'julu-battle':     { war: 12, leadership: 12, intelligence: 0, politics: 0, charisma: 10 },
+
+  // ── 孫子 ──
+  'know-self':       { war: 0, leadership: 10, intelligence: 18, politics: 5, charisma: 0 },
+  'wind-forest':     { war: 5, leadership: 12, intelligence: 12, politics: 0, charisma: 0 },
+  'attack-plans':    { war: 0, leadership: 8, intelligence: 15, politics: 0, charisma: 0 },
+  'attack-heart':    { war: 0, leadership: 8, intelligence: 15, politics: 0, charisma: 5 },
+  'subdue-no-fight': { war: 0, leadership: 12, intelligence: 18, politics: 0, charisma: 5 },
+};
+
+/** Bonus from a single tactic id (signature takes priority). */
 export function tacticBonus(id: string): TacticBonus {
-  return CATEGORY_BONUS[categoryOfTactic(id)];
+  return TACTIC_SIGNATURE[id] ?? CATEGORY_BONUS[categoryOfTactic(id)];
+}
+
+/** Whether a tactic has a signature (named) bonus rather than category default. */
+export function isTacticSignature(id: string): boolean {
+  return id in TACTIC_SIGNATURE;
 }
 
 /** Sum bonuses across all tactics an officer knows. */

@@ -1,4 +1,4 @@
-import { TACTIC_DEFS, tacticBonus } from '../../game/data/officerAttributes';
+import { TACTIC_DEFS, tacticBonus, isTacticSignature } from '../../game/data/officerAttributes';
 import { CatalogModal, type CatalogItem, type CatalogCategory } from './CatalogModal';
 
 function bonusBadge(id: string): string {
@@ -9,7 +9,8 @@ function bonusBadge(id: string): string {
   if (b.intelligence) parts.push(`知+${b.intelligence}`);
   if (b.politics) parts.push(`政+${b.politics}`);
   if (b.charisma) parts.push(`魅+${b.charisma}`);
-  return parts.join(' ');
+  const sig = isTacticSignature(id) ? '★ ' : '';
+  return sig + parts.join(' ');
 }
 
 // Classify 24 tactics into 4 categories.
