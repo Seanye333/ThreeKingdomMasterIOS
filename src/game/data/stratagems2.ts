@@ -11,14 +11,30 @@ import type { Officer, City } from '../types';
 import type { Weather } from '../systems/weather';
 
 export type BattleStratagemId =
-  | 'fire-attack'        // 火攻 — wind required, devastating
-  | 'flood-attack'       // 水攻 — river-adjacent, drowning
-  | 'ambush'             // 埋伏 — terrain forest/mountain, surprise damage
-  | 'feigned-retreat'    // 偽退 — INT-roll, leads enemy out of fortifications
-  | 'sow-discord'        // 反間 — pre-battle bond debuff to enemy
-  | 'night-raid'         // 偷營 — surprise + low defense
-  | 'cut-supply'         // 截糧 — drains enemy troops gradually next 3 seasons
-  | 'false-surrender';   // 詐降 — lure enemy ruler in, then betray
+  | 'fire-attack'        // 火攻
+  | 'flood-attack'       // 水攻
+  | 'ambush'             // 埋伏
+  | 'feigned-retreat'    // 偽退
+  | 'sow-discord'        // 反間
+  | 'night-raid'         // 偷營
+  | 'cut-supply'         // 截糧
+  | 'false-surrender'    // 詐降
+  // ── Phase 65: 15 more battle stratagems with real effects ──
+  | 'last-stand'         // 死戰 — when own troops low, +30% power
+  | 'iron-wall'          // 鐵壁 — defensive boost when defending
+  | 'rush'               // 突進 — cavalry charge bonus
+  | 'fire-arrow'         // 火矢 — mild fire attack
+  | 'thunder'            // 雷震 — stun debuff to defender
+  | 'beauty-plot'        // 美人計 — defender low-loyalty
+  | 'chain-stratagem'    // 連環計 — multiple defender debuffs
+  | 'half-cross'         // 半渡而擊 — river crossing strike
+  | 'set-ambush-path'    // 設伏要道 — terrain ambush
+  | 'press-pursuit'      // 趁勢追擊 — when defender weak
+  | 'sneak-cross'        // 暗渡陳倉 — INT-superior flank
+  | 'lure-tiger'         // 調虎離山 — lure commander out
+  | 'cut-supply-strike'  // 釜底抽薪 — supply strike
+  | 'besiege-relief'     // 圍魏救趙 — indirect pressure
+  | 'wait-tired';        // 以逸待勞 — counter-attack bonus
 
 export interface StratagemDef {
   id: BattleStratagemId;
@@ -162,6 +178,136 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
       captureBonus: 1.5,
       surpriseRoll: 0.18,
     },
+  },
+  // ── Phase 65: 15 more ──
+  'last-stand': {
+    id: 'last-stand',
+    name: { zh: '死戰', en: 'Last Stand' },
+    description: '背水一戰 — only when own troops less than enemy. +30% attacker power.',
+    minIntelligence: 60,
+    isApplicable: (ctx) => ctx.attackerTroops < ctx.defenderTroops,
+    successEffect: { attackerPowerMul: 1.30, ownLossMul: 0.85 },
+  },
+  'iron-wall': {
+    id: 'iron-wall',
+    name: { zh: '鐵壁', en: 'Iron Wall' },
+    description: '重甲列陣 — turns attack into siege mode: −defender power (slower but safer).',
+    minIntelligence: 65,
+    isApplicable: () => true,
+    successEffect: { defenderPowerMul: 0.85, ownLossMul: 0.70 },
+  },
+  rush: {
+    id: 'rush',
+    name: { zh: '突進', en: 'Cavalry Surge' },
+    description: '騎兵衝鋒 — requires attacker War >= 80. Heavy first-strike.',
+    minIntelligence: 60,
+    isApplicable: (ctx) => ctx.attacker.stats.war >= 80,
+    successEffect: { attackerPowerMul: 1.25, surpriseRoll: 0.10 },
+  },
+  'fire-arrow': {
+    id: 'fire-arrow',
+    name: { zh: '火矢', en: 'Fire Arrows' },
+    description: '弓裹火油 — moderate fire attack, less wind-dependent than 火攻.',
+    minIntelligence: 65,
+    isApplicable: (ctx) =>
+      ctx.weather.kind !== 'rain' && ctx.weather.kind !== 'snow',
+    successEffect: { attackerPowerMul: 1.18, enemyLossMul: 1.20 },
+    failurePenalty: { ownLossMul: 1.08 },
+  },
+  thunder: {
+    id: 'thunder',
+    name: { zh: '雷震', en: 'Thunder Strike' },
+    description: '雷霆萬鈞 — Daoist thunder stuns defender. INT 80+ required.',
+    minIntelligence: 80,
+    isApplicable: () => true,
+    successEffect: { defenderPowerMul: 0.75 },
+  },
+  'beauty-plot': {
+    id: 'beauty-plot',
+    name: { zh: '美人計', en: 'Beauty Plot' },
+    description: '美人計 — defender CHA bound roll. Stronger when loyalty < 60.',
+    minIntelligence: 70,
+    isApplicable: (ctx) => ctx.defenderAvgLoyalty < 60,
+    successEffect: { defenderPowerMul: 0.80, captureBonus: 1.3 },
+  },
+  'chain-stratagem': {
+    id: 'chain-stratagem',
+    name: { zh: '連環計', en: 'Chain Stratagem' },
+    description: '龐統之計 — chained debuffs, defender attack and defense drop.',
+    minIntelligence: 90,
+    isApplicable: () => true,
+    successEffect: { defenderPowerMul: 0.70 },
+  },
+  'half-cross': {
+    id: 'half-cross',
+    name: { zh: '半渡而擊', en: 'Strike Mid-River' },
+    description: '半渡而擊 — best when target is a port city (river crossing).',
+    minIntelligence: 70,
+    isApplicable: (ctx) => !!ctx.city.port,
+    successEffect: { attackerPowerMul: 1.30, enemyLossMul: 1.40, surpriseRoll: 0.12 },
+  },
+  'set-ambush-path': {
+    id: 'set-ambush-path',
+    name: { zh: '設伏要道', en: 'Ambush the Path' },
+    description: '路徑設伏 — terrain must be mountain/forest/pass.',
+    minIntelligence: 75,
+    isApplicable: (ctx) =>
+      ctx.city.terrain === 'mountain' ||
+      ctx.city.terrain === 'forest' ||
+      ctx.city.terrain === 'pass',
+    successEffect: { attackerPowerMul: 1.22, ownLossMul: 0.60, surpriseRoll: 0.15 },
+  },
+  'press-pursuit': {
+    id: 'press-pursuit',
+    name: { zh: '趁勢追擊', en: 'Press the Pursuit' },
+    description: '趁勢追擊 — when defender significantly weaker. Annihilation strike.',
+    minIntelligence: 65,
+    isApplicable: (ctx) => ctx.defenderTroops < ctx.attackerTroops * 0.4,
+    successEffect: { enemyLossMul: 1.60, captureBonus: 1.4 },
+  },
+  'sneak-cross': {
+    id: 'sneak-cross',
+    name: { zh: '暗渡陳倉', en: 'Sneak Across Chen Cang' },
+    description: '明修棧道暗渡 — attacker INT must exceed defender by 15+.',
+    minIntelligence: 80,
+    isApplicable: (ctx) =>
+      ctx.attackerIntelligence > ctx.defenderIntelligence + 15,
+    successEffect: { defenderPowerMul: 0.70, surpriseRoll: 0.20 },
+  },
+  'lure-tiger': {
+    id: 'lure-tiger',
+    name: { zh: '調虎離山', en: 'Lure the Tiger' },
+    description: '調虎離山 — only against high-war defenders. Draws them out of position.',
+    minIntelligence: 75,
+    isApplicable: (ctx) => !!ctx.defender && ctx.defender.stats.war >= 80,
+    successEffect: { defenderPowerMul: 0.65 },
+  },
+  'cut-supply-strike': {
+    id: 'cut-supply-strike',
+    name: { zh: '釜底抽薪', en: 'Pull Wood From the Cauldron' },
+    description: '釜底抽薪 — cripple enemy supplies. Drain over time.',
+    minIntelligence: 75,
+    isApplicable: (ctx) => ctx.defenderTroops > 4000,
+    successEffect: {
+      defenderPowerMul: 0.85,
+      delayedDrain: { seasons: 3, troopsPerSeason: 600 },
+    },
+  },
+  'besiege-relief': {
+    id: 'besiege-relief',
+    name: { zh: '圍魏救趙', en: 'Besiege Wei to Save Zhao' },
+    description: '圍魏救趙 — indirect pressure. Strong with INT 80+.',
+    minIntelligence: 80,
+    isApplicable: () => true,
+    successEffect: { defenderPowerMul: 0.82, attackerPowerMul: 1.10 },
+  },
+  'wait-tired': {
+    id: 'wait-tired',
+    name: { zh: '以逸待勞', en: 'Wait for the Exhausted' },
+    description: '以逸待勞 — when defender has more troops, exhaust them first.',
+    minIntelligence: 70,
+    isApplicable: (ctx) => ctx.defenderTroops > ctx.attackerTroops * 1.3,
+    successEffect: { defenderPowerMul: 0.75, ownLossMul: 0.80 },
   },
 };
 

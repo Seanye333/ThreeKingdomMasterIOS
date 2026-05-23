@@ -1009,6 +1009,86 @@ export function deriveTactics(stats: OfficerStats, id?: string): TacticId[] {
 }
 
 // ──────────────────────────────────────────────────────────────────────
+// Tactic bonuses — each tactic an officer knows gives a small stat buff
+// applied during combat (combat.ts reads via tacticsTotalBonus).
+// ──────────────────────────────────────────────────────────────────────
+
+export type TacticCategory = 'melee' | 'ranged' | 'mystic' | 'disrupt' | 'strategy';
+
+export interface TacticBonus {
+  war: number;
+  leadership: number;
+  intelligence: number;
+  politics: number;
+  charisma: number;
+}
+
+const ZERO_BONUS: TacticBonus = { war: 0, leadership: 0, intelligence: 0, politics: 0, charisma: 0 };
+
+/** Category-based default bonus — applied to every tactic by category. */
+const CATEGORY_BONUS: Record<TacticCategory, TacticBonus> = {
+  melee:    { war: 2, leadership: 1, intelligence: 0, politics: 0, charisma: 0 },
+  ranged:   { war: 1, leadership: 1, intelligence: 1, politics: 0, charisma: 0 },
+  mystic:   { war: 0, leadership: 0, intelligence: 3, politics: 0, charisma: 1 },
+  disrupt:  { war: 0, leadership: 0, intelligence: 2, politics: 1, charisma: 1 },
+  strategy: { war: 0, leadership: 2, intelligence: 1, politics: 1, charisma: 0 },
+};
+
+/**
+ * Heuristic categorizer — for the 600+ TacticIds. Most have keywords that
+ * map cleanly to a category. Falls back to 'strategy'.
+ */
+export function categoryOfTactic(id: string): TacticCategory {
+  // Explicit overrides for tactics whose name doesn't match a pattern.
+  const EXPLICIT: Record<string, TacticCategory> = {
+    charge: 'melee', rouse: 'melee', ambush: 'melee', 'last-stand': 'melee',
+    'iron-wall': 'melee', rush: 'melee', changban: 'melee', 'pass-six': 'melee',
+    'lone-blade': 'melee', 'thousand-ride': 'melee',
+    volley: 'ranged', crossbow: 'ranged', catapult: 'ranged', 'fire-arrow': 'ranged',
+    meteor: 'ranged', 'borrow-arrow': 'ranged', 'zhuge-bow': 'ranged',
+    'fire-attack': 'mystic', 'water-attack': 'mystic', thunder: 'mystic',
+    'borrow-wind': 'mystic', 'eight-gates': 'mystic', 'burn-yiling': 'mystic',
+    'burn-bowang': 'mystic', 'star-prayer': 'mystic', 'he-luo-tu': 'mystic',
+    'five-thunder': 'mystic', 'qimen-dunjia': 'mystic', 'seven-lamp': 'mystic',
+    'wuzhang-star': 'mystic',
+    ruse: 'disrupt', disorder: 'disrupt', pitfall: 'disrupt', curse: 'disrupt',
+    beauty: 'disrupt', chain: 'disrupt', 'self-injury': 'disrupt', retreat: 'disrupt',
+    'hide-knife': 'disrupt', 'tree-flower': 'disrupt', 'feign-mad': 'disrupt',
+    'borrow-knife': 'disrupt', 'switch-beam': 'disrupt', 'point-curse': 'disrupt',
+    'white-robe': 'disrupt', 'edict-belt': 'disrupt', diaochan: 'disrupt',
+    'chu-songs': 'disrupt', deception: 'disrupt',
+  };
+  if (EXPLICIT[id]) return EXPLICIT[id];
+
+  // Keyword-based fallback.
+  if (/fire|burn|chibi|wind|thunder|star|spirit|gate-of|jade|summon|talisman|mist|clouds|reverse-soul|gu-poison|maoshan|wood-puppet|five-thunder|alchemy|divine|crow|nine-yin|nine-yang|easi-jing|sui-jing|yinyang|geomancy|sun-ce-mirror/.test(id)) return 'mystic';
+  if (/arrow|bow|crossbow|ballista|cannon|gun|firearm|sniper|longbow|projectile|ranged|hidden-weapon|flying-knife/.test(id)) return 'ranged';
+  if (/spy|defector|smear|rumor|discord|spread|intercept|maid|sleeper|bribe|false|forge|edict|hide-knife|chu-songs|silent|coward|fake|deception|disrupt|pang-de-coffin|le-jin-raid|gan-ning-100/.test(id)) return 'disrupt';
+  if (/charge|cav|melee|strike|blade|spear|halberd|axe|whip|sword|hammer|fist|palm|kungfu|stance|legion|phalanx|cohort|guard|infantry|foot|knight|squad|raid|attack-h|pursue|press|battle|fight|warrior|brave|courage|tiger|wolf|eagle|leopard|crane|shadow|guardian|champion|hero|valor|fury|berserker/.test(id)) return 'melee';
+
+  return 'strategy';
+}
+
+/** Bonus from a single tactic id. */
+export function tacticBonus(id: string): TacticBonus {
+  return CATEGORY_BONUS[categoryOfTactic(id)];
+}
+
+/** Sum bonuses across all tactics an officer knows. */
+export function tacticsTotalBonus(ids: ReadonlyArray<string>): TacticBonus {
+  const sum = { ...ZERO_BONUS };
+  for (const id of ids) {
+    const b = tacticBonus(id);
+    sum.war += b.war;
+    sum.leadership += b.leadership;
+    sum.intelligence += b.intelligence;
+    sum.politics += b.politics;
+    sum.charisma += b.charisma;
+  }
+  return sum;
+}
+
+// ──────────────────────────────────────────────────────────────────────
 // 政策 (Civil Policies)
 // ──────────────────────────────────────────────────────────────────────
 

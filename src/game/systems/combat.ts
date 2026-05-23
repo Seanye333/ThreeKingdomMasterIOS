@@ -12,6 +12,7 @@ import { ITEMS_BY_ID } from '../data/items';
 import { OFFICER_RELATIONSHIPS } from '../data/relationships';
 import { SKILLS_BY_ID } from '../data/skills';
 import { getEliteTroop } from '../data/eliteTroops';
+import { deriveTactics, tacticsTotalBonus } from '../data/officerAttributes';
 import { selectSiegeEngine } from '../data/siegeEngines';
 import {
   STRATAGEM_DEFS,
@@ -190,9 +191,13 @@ export function resolveBattle(
       itemWar += item.effects.war ?? 0;
       itemLead += item.effects.leadership ?? 0;
     }
+    // Tactic bonuses — each tactic the officer knows gives a small stat buff.
+    const tactics = (o as Officer & { tactics?: string[] }).tactics
+      ?? deriveTactics(o.stats, o.id);
+    const tb = tacticsTotalBonus(tactics);
     return (
-      (o.stats.war + itemWar + bond) * 0.6 +
-      (o.stats.leadership + itemLead + bond) * 0.4
+      (o.stats.war + itemWar + bond + tb.war) * 0.6 +
+      (o.stats.leadership + itemLead + bond + tb.leadership) * 0.4
     );
   };
 
