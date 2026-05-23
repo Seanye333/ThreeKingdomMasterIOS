@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 interface MenuItem {
   label: ReactNode;
@@ -18,25 +19,50 @@ interface Props {
 /**
  * A simple HUD dropdown menu. Click the label to open; click outside to close.
  * Used to group related top-bar buttons into a single trigger.
+ *
+ * The dropdown is rendered via React portal so a parent's `overflow: hidden`
+ * (e.g. on the topBar) can never clip it.
  */
 export function HudMenu({ label, items, title }: Props) {
   const [open, setOpen] = useState(false);
-  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const [pos, setPos] = useState<{ left: number; top: number; width: number }>({
+    left: 0, top: 0, width: 0,
+  });
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const dropRef = useRef<HTMLDivElement | null>(null);
+
+  useLayoutEffect(() => {
+    if (!open || !triggerRef.current) return;
+    const r = triggerRef.current.getBoundingClientRect();
+    setPos({ left: r.left, top: r.bottom + 4, width: r.width });
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+      const t = e.target as Node;
+      if (
+        triggerRef.current && !triggerRef.current.contains(t) &&
+        dropRef.current && !dropRef.current.contains(t)
+      ) {
         setOpen(false);
       }
     };
+    const onResize = () => setOpen(false);
     document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    window.addEventListener('resize', onResize);
+    window.addEventListener('scroll', onResize, true);
+    return () => {
+      document.removeEventListener('mousedown', handler);
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('scroll', onResize, true);
+    };
   }, [open]);
 
   return (
-    <div ref={wrapRef} style={{ position: 'relative', display: 'inline-block' }}>
+    <>
       <button
+        ref={triggerRef}
         className="hud-menu-trigger"
         onClick={() => setOpen((o) => !o)}
         title={title}
@@ -50,21 +76,23 @@ export function HudMenu({ label, items, title }: Props) {
           cursor: 'pointer',
           letterSpacing: '0.1rem',
           transition: 'background 0.15s, border-color 0.15s',
+          whiteSpace: 'nowrap',
         }}
       >
         {label} <span style={{ fontSize: '0.6rem', opacity: 0.6 }}>▾</span>
       </button>
-      {open && (
+      {open && createPortal(
         <div
+          ref={dropRef}
           style={{
-            position: 'absolute',
-            top: 'calc(100% + 4px)',
-            left: 0,
-            minWidth: 180,
+            position: 'fixed',
+            top: pos.top,
+            left: pos.left,
+            minWidth: Math.max(200, pos.width),
             background: 'var(--tkm-bg-modal)',
             border: '1px solid var(--tkm-text-h2)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-            zIndex: 100,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.7)',
+            zIndex: 9999,
             animation: 'tkmFadeIn 0.12s ease-out',
           }}
         >
@@ -118,8 +146,9 @@ export function HudMenu({ label, items, title }: Props) {
               )}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }
