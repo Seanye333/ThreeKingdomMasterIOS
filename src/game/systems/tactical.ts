@@ -19,6 +19,7 @@ import type {
 } from '../types';
 import { NAMED_MAPS_BY_CITY, NAMED_MAPS_BY_ID } from '../data/namedMaps';
 import { pickVoiceLine } from '../data/voiceLines';
+import { generateTerrain, type TerrainHint } from './battlefieldTerrain';
 
 /**
  * Unit-type counter matrix. counterBonus[attacker][defender] = multiplier on
@@ -122,20 +123,12 @@ export interface SetupParams {
   namedMapId?: EntityId;
   /** Build slots from the defender's city — placed on the hex grid as fixed structures. */
   buildSlots?: ReadonlyArray<{ slot: number; buildingId?: import('../data/defenseBuildings').DefenseBuildingId; level: number }>;
+  /** Geography hint (terrain category, port flag, coords) — drives terrain generation. */
+  terrainHint?: TerrainHint;
 }
 
-const TERRAIN_RNG_SEED = (cityId: string) => {
-  let h = 2166136261;
-  for (let i = 0; i < cityId.length; i++) {
-    h = Math.imul(h ^ cityId.charCodeAt(i), 16777619);
-  }
-  return () => {
-    h = Math.imul(h ^ (h >>> 16), 2246822507);
-    h = Math.imul(h ^ (h >>> 13), 3266489909);
-    h ^= h >>> 16;
-    return ((h >>> 0) % 10000) / 10000;
-  };
-};
+// (Legacy TERRAIN_RNG_SEED removed — terrain generation now lives in
+// battlefieldTerrain.ts which seeds its own RNG from the cityId.)
 
 /**
  * Peace-time preview of the same battlefield a tactical battle would use,
@@ -154,31 +147,19 @@ export interface BattlefieldPreview {
   namedMapName?: { zh: string; en: string };
 }
 
-export function previewBattlefield(cityId: EntityId, fallbackWidth = 14, fallbackHeight = 10): BattlefieldPreview {
+export function previewBattlefield(
+  cityId: EntityId,
+  hint: TerrainHint = {},
+  fallbackWidth = 14,
+  fallbackHeight = 10,
+): BattlefieldPreview {
   const namedMapId = NAMED_MAPS_BY_CITY[cityId];
   const namedMap: NamedBattleMap | undefined = namedMapId
     ? NAMED_MAPS_BY_ID[namedMapId]
     : undefined;
   const width = namedMap?.width ?? fallbackWidth;
   const height = namedMap?.height ?? fallbackHeight;
-  const rng = TERRAIN_RNG_SEED(cityId);
-  const tiles: TacticalTile[] = [];
-  for (let row = 0; row < height; row++) {
-    for (let col = 0; col < width; col++) {
-      const key = `${col},${row}`;
-      let terrain: TerrainKind = 'plain';
-      if (namedMap?.terrainOverrides[key]) {
-        terrain = namedMap.terrainOverrides[key];
-      } else {
-        const r = rng();
-        if (r < 0.08) terrain = 'mountain';
-        else if (r < 0.22) terrain = 'forest';
-        else if (r < 0.28) terrain = 'river';
-        else if (row === Math.floor(height / 2) && r < 0.5) terrain = 'road';
-      }
-      tiles.push({ coord: { col, row }, terrain });
-    }
-  }
+  const tiles = generateTerrain(cityId, width, height, hint, namedMap?.terrainOverrides);
   return {
     width, height, tiles,
     weather: namedMap?.weather ?? 'clear',
@@ -188,6 +169,7 @@ export function previewBattlefield(cityId: EntityId, fallbackWidth = 14, fallbac
     namedMapName: namedMap?.name,
   };
 }
+
 
 export function setupTacticalBattle(p: SetupParams): TacticalBattle {
   // Named map override?
@@ -200,25 +182,8 @@ export function setupTacticalBattle(p: SetupParams): TacticalBattle {
   const weather: Weather = namedMap?.weather ?? p.weather ?? 'clear';
   const timeOfDay: TimeOfDay = namedMap?.timeOfDay ?? p.timeOfDay ?? 'day';
 
-  // Deterministic per-city terrain so revisits look the same.
-  const rng = TERRAIN_RNG_SEED(p.cityId);
-  const tiles: TacticalTile[] = [];
-  for (let row = 0; row < height; row++) {
-    for (let col = 0; col < width; col++) {
-      const key = `${col},${row}`;
-      let terrain: TerrainKind = 'plain';
-      if (namedMap?.terrainOverrides[key]) {
-        terrain = namedMap.terrainOverrides[key];
-      } else {
-        const r = rng();
-        if (r < 0.08) terrain = 'mountain';
-        else if (r < 0.22) terrain = 'forest';
-        else if (r < 0.28) terrain = 'river';
-        else if (row === Math.floor(height / 2) && r < 0.5) terrain = 'road';
-      }
-      tiles.push({ coord: { col, row }, terrain });
-    }
-  }
+  // Geography-aware terrain — uses the city's terrain/port/coords if provided.
+  const tiles = generateTerrain(p.cityId, width, height, p.terrainHint ?? {}, namedMap?.terrainOverrides);
 
   const placeUnits = (
     pool: Array<{ officer: Officer; troops: number; unitType?: UnitType }>,

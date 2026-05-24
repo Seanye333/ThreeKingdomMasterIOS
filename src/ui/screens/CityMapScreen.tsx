@@ -56,8 +56,16 @@ export function CityMapScreen({ cityId, onClose }: { cityId: EntityId; onClose: 
   const [error, setError] = useState<string | null>(null);
 
   // Reuse the SAME battlefield setup tactical battles use — terrain procedurally
-  // generated deterministically per-city, same width/height as the actual battle.
-  const preview = useMemo(() => previewBattlefield(cityId), [cityId]);
+  // generated from the city's real terrain category, port flag, and coords.
+  const preview = useMemo(
+    () => previewBattlefield(cityId, {
+      terrain: city?.terrain,
+      port: city?.port,
+      x: city?.coords.x,
+      y: city?.coords.y,
+    }),
+    [cityId, city?.terrain, city?.port, city?.coords.x, city?.coords.y],
+  );
 
   if (!city) return null;
 

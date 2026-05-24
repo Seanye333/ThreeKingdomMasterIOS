@@ -185,6 +185,13 @@ export function BattlePrepModal({
       attackerFormation: formation,
       // Carry the defender city's perimeter defense structures into the battle.
       buildSlots: target.buildSlots,
+      // Geography hints — battlefield matches the defender city's real terrain.
+      terrainHint: {
+        terrain: target.terrain,
+        port: target.port,
+        x: target.coords.x,
+        y: target.coords.y,
+      },
     });
 
     // 舌戰 — if both sides have an officer with INT ≥ 80, run a war of words first.
