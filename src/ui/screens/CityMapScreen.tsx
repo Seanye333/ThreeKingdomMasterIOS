@@ -8,7 +8,7 @@ import {
 } from '../../game/data/defenseBuildings';
 import { previewBattlefield } from '../../game/systems/tactical';
 import { citySize } from '../../game/systems/citySize';
-import type { City, EntityId } from '../../game/types';
+import type { City, EntityId, BuildingId } from '../../game/types';
 import { MapDefs, MapFrame, CompassRose, TerrainArt, TERRAIN_FILL_URL } from '../components/hexMapShared';
 
 /**
@@ -39,15 +39,39 @@ function hexPoints(cx: number, cy: number, size = HEX_SIZE): string {
   return pts.join(' ');
 }
 
+/** Hex Chebyshev/axial distance (same as TacticalBattleScreen's hexDistance). */
+function hexDistAxial(a: { col: number; row: number }, b: { col: number; row: number }): number {
+  const ax = a.col, az = a.row - (a.col - (a.col & 1)) / 2;
+  const ay = -ax - az;
+  const bx = b.col, bz = b.row - (b.col - (b.col & 1)) / 2;
+  const by = -bx - bz;
+  return Math.max(Math.abs(ax - bx), Math.abs(ay - by), Math.abs(az - bz));
+}
+
+/** Building → zh glyph + color (mirrors CityStructureIcon kind). */
+const INSIDE_BUILDING_GLYPH: Record<BuildingId, { glyph: string; color: string }> = {
+  barracks: { glyph: '營', color: '#a87858' },
+  market:   { glyph: '市', color: '#d4a84a' },
+  foundry:  { glyph: '鐵', color: '#7a6750' },
+  academy:  { glyph: '書', color: '#88b7e8' },
+  temple:   { glyph: '寺', color: '#c19a3b' },
+  farm:     { glyph: '田', color: '#b8c87a' },
+  wall:     { glyph: '壁', color: '#5a4530' },
+  shipyard: { glyph: '渠', color: '#3a6a98' },
+};
+
 
 export function CityMapScreen({ cityId, onClose }: { cityId: EntityId; onClose: () => void }) {
   const city = useGameStore((s) => s.cities[cityId]);
   const playerForceId = useGameStore((s) => s.playerForceId);
+  const forces = useGameStore((s) => s.forces);
+  const allBuildings = useGameStore((s) => s.buildings);
   const buildAction = useGameStore((s) => s.buildDefenseStructure);
   const upgradeAction = useGameStore((s) => s.upgradeDefenseStructure);
   const demolishAction = useGameStore((s) => s.demolishDefenseStructure);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showOverlays, setShowOverlays] = useState(true);
 
   // Reuse the SAME battlefield setup tactical battles use — terrain procedurally
   // generated from the city's real terrain category, port flag, and coords.
@@ -82,6 +106,75 @@ export function CityMapScreen({ cityId, onClose }: { cityId: EntityId; onClose: 
 
   // City walls: the right-most column where the city sits.
   const cityWallCol = preview.width - 1;
+
+  // ── Inside-city building placements ──
+  // The non-slot hexes on the wall column become "inside the walls". We
+  // distribute the city's actual buildings into these spots so they're
+  // spatially visible (not just a sidebar list).
+  const cityBuildings = useMemo(() => {
+    return allBuildings.filter((b) => b.cityId === cityId && b.level > 0);
+  }, [allBuildings, cityId]);
+  const insideHexes: Array<{ coord: { col: number; row: number }; buildingId: BuildingId; level: number }> = [];
+  const occupiedInWallCol = new Set(
+    preview.slotPositions.filter((p) => p.col === cityWallCol).map((p) => p.row),
+  );
+  const availableWallRows: number[] = [];
+  for (let r = 0; r < preview.height; r++) {
+    if (!occupiedInWallCol.has(r)) availableWallRows.push(r);
+  }
+  cityBuildings.forEach((b, i) => {
+    const row = availableWallRows[i];
+    if (row !== undefined) {
+      insideHexes.push({ coord: { col: cityWallCol, row }, buildingId: b.id, level: b.level });
+    }
+  });
+  const insideMap = new Map(insideHexes.map((h) => [`${h.coord.col},${h.coord.row}`, h]));
+
+  // ── Range coverage map ──
+  // For each defensive structure, mark which hexes are within attack range.
+  // Used to render gold range circles and to identify uncovered hexes.
+  const coveredHexes = new Set<string>();
+  const towerRanges: Array<{ coord: { col: number; row: number }; range: number; color: string }> = [];
+  for (const slot of slots) {
+    if (!slot.buildingId) continue;
+    const pos = preview.slotPositions[slot.slot];
+    if (!pos) continue;
+    let range = 0, color = '#d4a84a';
+    switch (slot.buildingId) {
+      case 'watchtower':      range = 4; color = '#d4a84a'; break;
+      case 'arrow-platform':  range = 5; color = '#c19a3b'; break;
+      case 'rockfall':        range = 1; color = '#4a3a30'; break;
+      case 'caltrops':        range = 1; color = '#7a6750'; break;
+      case 'iron-chains':     range = 1; color = '#3a6a98'; break;
+    }
+    if (range > 0) {
+      towerRanges.push({ coord: pos, range, color });
+      for (let r = 0; r < preview.height; r++) {
+        for (let c = 0; c < preview.width; c++) {
+          if (hexDistAxial(pos, { col: c, row: r }) <= range) {
+            coveredHexes.add(`${c},${r}`);
+          }
+        }
+      }
+    }
+  }
+
+  // ── Coverage gaps ── attacker-half hexes that NO tower can hit
+  const gapHexes = new Set<string>();
+  for (let r = 0; r < preview.height; r++) {
+    // Only flag hexes in the defender-facing half (closer to the city than midfield)
+    for (let c = Math.floor(preview.width * 0.5); c < cityWallCol - 1; c++) {
+      const key = `${c},${r}`;
+      if (!coveredHexes.has(key)) gapHexes.add(key);
+    }
+  }
+
+  // ── Force banner color ──
+  const ownerForce = city.ownerForceId ? forces[city.ownerForceId] : null;
+  const bannerColor = ownerForce?.color ?? '#5a4530';
+
+  // ── Garrison icon count (capped) ──
+  const garrisonIconCount = Math.min(5, Math.floor(city.troops / 5000));
 
   const ALL_BUILDINGS: DefenseBuildingId[] = [
     'watchtower', 'beacon', 'caltrops', 'lookout',
@@ -146,10 +239,26 @@ export function CityMapScreen({ cityId, onClose }: { cityId: EntityId; onClose: 
               {total.rangedPrestrike > 0 && ` · 預射 ${total.rangedPrestrike}`}
             </div>
           </div>
-          <button onClick={onClose} style={{
-            background: 'transparent', border: 'none', color: 'var(--tkm-text-h2)',
-            fontSize: '1.5rem', cursor: 'pointer', padding: '0 0.5rem',
-          }}>×</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <button
+              onClick={() => setShowOverlays(!showOverlays)}
+              style={{
+                background: showOverlays ? 'rgba(212, 168, 74, 0.2)' : 'transparent',
+                border: '1px solid var(--tkm-border-soft)',
+                color: showOverlays ? '#d4a84a' : '#8a7050',
+                padding: '0.3rem 0.55rem',
+                fontFamily: 'inherit', fontSize: '0.7rem', cursor: 'pointer',
+                letterSpacing: '0.1rem',
+              }}
+              title="Toggle range circles + coverage gap warnings + approach roads"
+            >
+              {showOverlays ? '✓ 戰術疊加' : '戰術疊加'}
+            </button>
+            <button onClick={onClose} style={{
+              background: 'transparent', border: 'none', color: 'var(--tkm-text-h2)',
+              fontSize: '1.5rem', cursor: 'pointer', padding: '0 0.5rem',
+            }}>×</button>
+          </div>
         </header>
 
         <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
@@ -167,15 +276,51 @@ export function CityMapScreen({ cityId, onClose }: { cityId: EntityId; onClose: 
               {/* Sky backdrop + vignette */}
               <rect width={svgWidth} height={svgHeight} fill="url(#tkmMapBg)" />
               <rect width={svgWidth} height={svgHeight} fill="url(#tkmVignette)" pointerEvents="none" />
+              {/* Attacker spawn zone tint — leftmost 2 columns */}
+              <rect x={0} y={0} width={HEX_COL_STEP * 2.2} height={svgHeight}
+                fill="rgba(184, 68, 46, 0.08)" pointerEvents="none" />
+              {/* Approach roads from attacker side toward city — dashed amber */}
+              {showOverlays && (
+                <g pointerEvents="none" stroke="#d4a84a" strokeWidth="1.2" fill="none"
+                   strokeDasharray="4 4" opacity="0.4">
+                  <path d={`M ${HEX_W * 0.5} ${svgHeight * 0.35}
+                            Q ${svgWidth * 0.4} ${svgHeight * 0.3}
+                              ${(cityWallCol - 2) * HEX_COL_STEP} ${svgHeight * 0.4}`} />
+                  <path d={`M ${HEX_W * 0.5} ${svgHeight * 0.65}
+                            Q ${svgWidth * 0.4} ${svgHeight * 0.7}
+                              ${(cityWallCol - 2) * HEX_COL_STEP} ${svgHeight * 0.6}`} />
+                </g>
+              )}
+              {/* Range coverage circles — drawn first so hexes overlay on top */}
+              {showOverlays && towerRanges.map((tr, i) => {
+                const { x, y } = hexCenter(tr.coord.col, tr.coord.row);
+                return (
+                  <circle
+                    key={`range-${i}`}
+                    cx={x} cy={y}
+                    r={tr.range * HEX_COL_STEP * 0.95}
+                    fill={tr.color}
+                    fillOpacity={0.06}
+                    stroke={tr.color}
+                    strokeOpacity={0.25}
+                    strokeWidth="0.8"
+                    strokeDasharray="3 3"
+                    pointerEvents="none"
+                  />
+                );
+              })}
               {/* Terrain hexes */}
               {preview.tiles.map((t) => {
                 const { x, y } = hexCenter(t.coord.col, t.coord.row);
                 const slotIdx = slotIndexAtHex.get(`${t.coord.col},${t.coord.row}`);
                 const slotData = slotIdx !== undefined ? slotMap.get(slotIdx) : undefined;
                 const isSlot = slotIdx !== undefined;
-                const isCityWall = t.coord.col === cityWallCol && !isSlot;
+                const inside = insideMap.get(`${t.coord.col},${t.coord.row}`);
+                const isCityWall = t.coord.col === cityWallCol && !isSlot && !inside;
+                const isInsideBld = !!inside;
                 const isSel = selectedSlot === slotIdx;
                 const interactive = isPlayer && isSlot;
+                const isGap = showOverlays && gapHexes.has(`${t.coord.col},${t.coord.row}`);
                 return (
                   <g
                     key={`${t.coord.col},${t.coord.row}`}
@@ -188,24 +333,103 @@ export function CityMapScreen({ cityId, onClose }: { cityId: EntityId; onClose: 
                   >
                     <polygon
                       points={hexPoints(x, y)}
-                      fill={isCityWall ? '#5a4530' : TERRAIN_FILL_URL[t.terrain]}
+                      fill={
+                        isCityWall ? 'url(#tkmMountainGrad)'
+                        : isInsideBld ? '#3a2818'
+                        : TERRAIN_FILL_URL[t.terrain]
+                      }
                       stroke={
                         isSel ? '#f0e0b0'
                         : isSlot ? '#d4a84a'
                         : isCityWall ? '#d4a84a'
+                        : isInsideBld ? '#c19a3b'
                         : '#1a1410'
                       }
-                      strokeWidth={isSel ? 2.5 : isSlot ? 2 : isCityWall ? 1.5 : 1}
+                      strokeWidth={isSel ? 2.5 : isSlot ? 2 : isCityWall || isInsideBld ? 1.8 : 1}
                       opacity={0.94}
                       filter={isSel ? 'url(#tkmHexGlow)' : undefined}
                     />
-                    <TerrainArt x={x} y={y} terrain={t.terrain} />
-                    {/* City wall mark */}
+                    {/* Coverage-gap warning overlay */}
+                    {isGap && (
+                      <g pointerEvents="none">
+                        <polygon
+                          points={hexPoints(x, y)}
+                          fill="rgba(184, 68, 46, 0.18)"
+                          stroke="#b8442e"
+                          strokeWidth="0.8"
+                          strokeDasharray="2 2"
+                          opacity="0.7"
+                        />
+                      </g>
+                    )}
+                    {!isInsideBld && <TerrainArt x={x} y={y} terrain={t.terrain} />}
+                    {/* City wall — real wall + parapets */}
                     {isCityWall && (
-                      <text x={x} y={y + 4} textAnchor="middle"
-                        fontSize="14" fill="#f0e0b0" fontFamily="Songti SC, serif" fontWeight="bold">
-                        城
-                      </text>
+                      <g pointerEvents="none">
+                        {/* Crenellated top edge */}
+                        <rect x={x - 12} y={y - 14} width="3" height="3" fill="#d4a84a" />
+                        <rect x={x - 6}  y={y - 14} width="3" height="3" fill="#d4a84a" />
+                        <rect x={x}      y={y - 14} width="3" height="3" fill="#d4a84a" />
+                        <rect x={x + 6}  y={y - 14} width="3" height="3" fill="#d4a84a" />
+                        <rect x={x + 9}  y={y - 14} width="3" height="3" fill="#d4a84a" />
+                        {/* Wall main body */}
+                        <rect x={x - 13} y={y - 11} width="26" height="14" fill="#5a4530" stroke="#3a2818" strokeWidth="0.6" />
+                        {/* Stone block lines */}
+                        <line x1={x - 13} y1={y - 7} x2={x + 13} y2={y - 7} stroke="#3a2818" strokeWidth="0.3" opacity="0.6" />
+                        <line x1={x - 13} y1={y - 3} x2={x + 13} y2={y - 3} stroke="#3a2818" strokeWidth="0.3" opacity="0.6" />
+                        <line x1={x} y1={y - 11} x2={x} y2={y - 7} stroke="#3a2818" strokeWidth="0.3" opacity="0.5" />
+                        <line x1={x - 6} y1={y - 7} x2={x - 6} y2={y - 3} stroke="#3a2818" strokeWidth="0.3" opacity="0.5" />
+                        <line x1={x + 6} y1={y - 7} x2={x + 6} y2={y - 3} stroke="#3a2818" strokeWidth="0.3" opacity="0.5" />
+                        {/* Banner flying over walls (force color) */}
+                        <line x1={x + 7} y1={y - 16} x2={x + 7} y2={y - 22} stroke="#1a1410" strokeWidth="0.8" />
+                        <path
+                          className="tkm-pennant"
+                          d={`M ${x + 7} ${y - 22} L ${x + 13} ${y - 20} L ${x + 7} ${y - 18} Z`}
+                          fill={bannerColor}
+                          stroke="#1a1410"
+                          strokeWidth="0.4"
+                        />
+                        {/* Garrison soldier silhouettes — show on the top wall hex only */}
+                        {t.coord.row === 0 && garrisonIconCount > 0 && (
+                          <g>
+                            {Array.from({ length: garrisonIconCount }).map((_, i) => {
+                              const sx = x - 11 + i * 5;
+                              return (
+                                <g key={i}>
+                                  {/* Head */}
+                                  <circle cx={sx} cy={y - 8} r="1.2" fill="#f0e0b0" />
+                                  {/* Body */}
+                                  <line x1={sx} y1={y - 7} x2={sx} y2={y - 4}
+                                    stroke="#f0e0b0" strokeWidth="1.4" strokeLinecap="round" />
+                                  {/* Spear */}
+                                  <line x1={sx + 1.5} y1={y - 11} x2={sx + 1.5} y2={y - 4}
+                                    stroke="#8a7050" strokeWidth="0.5" />
+                                </g>
+                              );
+                            })}
+                          </g>
+                        )}
+                      </g>
+                    )}
+                    {/* Inside-city building icon */}
+                    {isInsideBld && inside && (
+                      <g pointerEvents="none">
+                        <rect x={x - 10} y={y - 11} width="20" height="20"
+                          fill={INSIDE_BUILDING_GLYPH[inside.buildingId]?.color ?? '#5a4530'}
+                          stroke="#1a1410" strokeWidth="0.8" opacity={0.85} />
+                        {/* Pointed roof */}
+                        <path d={`M ${x - 12} ${y - 11} L ${x} ${y - 17} L ${x + 12} ${y - 11} Z`}
+                          fill="#3a2818" stroke="#1a1410" strokeWidth="0.4" />
+                        <text x={x} y={y + 2} textAnchor="middle"
+                          fontSize="11" fill="#fff" fontWeight="bold"
+                          fontFamily="Songti SC, serif" stroke="#1a1410" strokeWidth="0.3">
+                          {INSIDE_BUILDING_GLYPH[inside.buildingId]?.glyph ?? '?'}
+                        </text>
+                        <text x={x} y={y + 13} textAnchor="middle"
+                          fontSize="6" fill="#f0e0b0">
+                          Lv {inside.level}
+                        </text>
+                      </g>
                     )}
                     {/* Empty slot indicator */}
                     {isSlot && !slotData?.buildingId && (
