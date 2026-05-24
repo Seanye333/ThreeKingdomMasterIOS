@@ -951,14 +951,14 @@ export const TACTIC_DEFS: Record<TacticId, { zh: string; en: string }> = {
 
 export const OFFICER_TACTICS: Record<string, TacticId[]> = {
   // ─── 蜀 Shu ───
-  'liu-bei':        ['peach-garden-tac', 'sworn-brothers', 'protect-people', 'liu-bei-tears', 'liu-bei-share-meat', 'rouse'],
+  'liu-bei':        ['peach-garden-tac', 'sworn-brothers', 'protect-people', 'liu-bei-tears', 'liu-bei-share-meat', 'seek-talent', 'rouse'],
   'guan-yu':        ['guanyu-greendragon', 'warm-wine', 'lone-blade', 'guan-yu-pardon', 'thousand-ride', 'pass-six', 'charge', 'volley'],
-  'zhang-fei':      ['zhangfei-yelling', 'changban-bridge', 'whip-postman', 'three-fight-lubu', 'charge', 'rouse'],
-  'zhao-yun':       ['changban', 'zhaoyun-shadow', 'zhao-yun-courage', 'zhao-yun-baby', 'charge', 'rouse', 'ambush'],
+  'zhang-fei':      ['zhangfei-yelling', 'changban-bridge', 'whip-postman', 'three-fight-lubu', 'long-halberd', 'charge', 'rouse', 'curse'],  // 丈八蛇矛 + 大粗哥粗暴
+  'zhao-yun':       ['changban', 'zhaoyun-shadow', 'zhao-yun-courage', 'zhao-yun-baby', 'twin-spear', 'iron-shirt', 'charge', 'rouse', 'ambush'],  // 龍膽槍 + 一身是膽
   'ma-chao':        ['machao-spear', 'twin-spear', 'charge', 'rouse', 'ambush'],
   'huang-zhong':    ['huangzhong-bow', 'huangzhong-old-bow', 'dingjun-mtn', 'volley', 'charge', 'fire-arrow'],
   'zhuge-liang':    ['seven-grab', 'borrow-wind', 'borrow-arrow', 'star-prayer', 'seven-lamp', 'longzhong', 'zhuge-bow', 'burn-bowang', 'burn-xinye', 'six-expeditions', 'wooden-ox', 'memorial', 'tearful-ma', 'eight-gates', 'fire-attack'],
-  'pang-tong':      ['pang-tong-chain', 'chain', 'fire-attack', 'ruse', 'pitfall', 'attack-plans'],
+  'pang-tong':      ['pang-tong-chain', 'chain-ship', 'fire-attack', 'ruse', 'pitfall', 'attack-plans', 'panghong-sleep'],
   'fa-zheng':       ['attack-plans', 'ruse', 'pitfall', 'ambush'],
   'jiang-wei':      ['six-expeditions', 'ruse', 'pitfall', 'fire-attack', 'ambush', 'charge'],
   'wei-yan':        ['charge', 'ambush', 'rouse', 'twin-spear'],
@@ -978,7 +978,7 @@ export const OFFICER_TACTICS: Record<string, TacticId[]> = {
   'sun-qian':       ['tongue-war', 'court-debate'],
   'mi-zhu':         ['salt-monopoly', 'tea-trade', 'silk-road'],
   'xu-shu':         ['ruse', 'pitfall', 'attack-plans', 'ambush'],
-  'huo-jun':        ['attack-plans', 'court-debate'],
+  'huo-jun':        ['charge', 'iron-wall', 'last-stand', 'rouse'],  // 葭萌關死守
 
   // ─── 魏 Wei ───
   'cao-cao':        ['caocao-poetry', 'plum-wine', 'plum-thirst', 'seek-talent', 'wuchao-grain', 'two-tigers', 'lure-tiger-wolf', 'fire-attack', 'ambush', 'rouse'],
@@ -1030,9 +1030,9 @@ export const OFFICER_TACTICS: Record<string, TacticId[]> = {
 
   // ─── 吳 Wu ───
   'sun-jian':       ['sun-jian-tiger', 'charge', 'rouse', 'ambush'],
-  'sun-ce':         ['sunce-blade', 'charge', 'rouse', 'twin-spear'],
-  'sun-quan':       ['sunquan-blue-eye', 'sun-quan-bow', 'seek-talent', 'court-debate'],
-  'zhou-yu':        ['burn-chibi', 'zhou-yu-plan', 'zhouyu-music', 'chain-ship', 'fire-attack', 'rouse', 'attack-plans'],
+  'sun-ce':         ['sunce-blade', 'sun-ce-mirror', 'charge', 'rouse', 'twin-spear', 'thousand-ride'],  // 江東小霸王 + 鏡破
+  'sun-quan':       ['sunquan-blue-eye', 'sun-quan-bow', 'seek-talent', 'court-debate', 'protect-people', 'tongue-war'],
+  'zhou-yu':        ['burn-chibi', 'zhou-yu-plan', 'zhouyu-music', 'chain-ship', 'fire-attack', 'rouse', 'attack-plans', 'tongue-war'],  // 智激孫權出兵
   'lu-xun':         ['luxun-fire', 'burn-yiling', 'fire-attack', 'ruse', 'ambush', 'pitfall'],
   'lu-meng':        ['white-robe', 'lumeng-study', 'ambush', 'ruse', 'charge', 'attack-plans'],
   'lu-su':          ['attack-plans', 'tongue-war', 'seek-talent'],
@@ -1074,11 +1074,11 @@ export const OFFICER_TACTICS: Record<string, TacticId[]> = {
   'liu-zhang':      ['court-debate'],
   'wang-yun':       ['wang-yun-plot', 'diaochan', 'faction-manipulate', 'court-debate'],
   'dong-zhuo':      ['dong-zhuo-fat', 'dong-zhuo-tyrant', 'charge', 'eunuch-power'],
-  'lu-bu':          ['lubu-flying', 'lu-bu-yuan-gate', 'three-fight-lubu', 'long-halberd', 'charge', 'rouse'],
-  'diaochan':       ['diaochan', 'beauty'],
-  'cai-yong':       ['cai-yong-lute'],
-  'cai-wenji':      ['cai-yong-lute'],
-  'mi-heng':        ['mi-heng-drum'],
+  'lu-bu':          ['lubu-flying', 'lu-bu-yuan-gate', 'three-fight-lubu', 'long-halberd', 'thousand-ride', 'charge', 'rouse', 'ambush'],  // 方天畫戟 + 赤兔馬
+  'diaochan':       ['diaochan', 'beauty', 'two-tigers'],   // 連環美人計
+  'cai-yong':       ['cai-yong-lute', 'court-debate', 'memorial', 'seek-talent'],   // 飛白書 + 焦尾琴 + 漢史
+  'cai-wenji':      ['cai-yong-lute', 'chu-songs', 'mi-heng-drum', 'attack-heart'],  // 悲憤詩 + 胡笳十八拍
+  'mi-heng':        ['mi-heng-drum', 'tongue-war', 'court-debate'],                  // 擊鼓罵曹
   'tian-feng':      ['ruse', 'pitfall', 'attack-plans'],
   'ju-shou':        ['ruse', 'rouse', 'attack-plans'],
   'shen-pei':       ['volley', 'catapult', 'iron-wall'],
@@ -1138,6 +1138,19 @@ export const OFFICER_TACTICS: Record<string, TacticId[]> = {
   'lu-dai':         ['charge', 'water-bandit'],
   'sun-hao':        ['eunuch-power', 'liu-shan-stupid'],
   'sun-xiu':        ['court-debate'],
+  // ─── Sages, recluses, historians, scholars ──
+  'sima-hui':       ['seek-talent', 'attack-plans', 'know-self', 'wind-forest'],     // 水鏡先生 — recommended Sleeping Dragon/Fledgling Phoenix
+  'pang-degong':    ['attack-plans', 'attack-heart', 'seek-talent', 'know-self'],    // 龐德公 — named 諸葛亮 "Sleeping Dragon"
+  'cui-zhouping':   ['attack-plans', 'attack-heart', 'court-debate'],                // Zhuge Liang's friend, recluse scholar
+  'huang-chengyan': ['attack-plans', 'court-debate', 'seek-talent'],                 // Huang Yueying's father
+  'zheng-xuan':     ['court-debate', 'attack-heart', 'seek-talent'],                 // Han classicist scholar
+  'xu-shao':        ['attack-heart', 'court-debate', 'tongue-war'],                  // 月旦評 — coined 治世之能臣亂世之奸雄 about Cao Cao
+  'chen-shou':      ['memorial', 'court-debate', 'attack-heart'],                    // 三國志 historian
+  // ─── Han royalty / late-era emperors ──
+  'liu-xie':        ['protect-people', 'court-debate'],                              // Emperor Xian — puppet
+  'liu-yu':         ['protect-people', 'court-debate', 'tax-cut'],                   // Han loyalist warlord, killed by Gongsun Zan
+  'han-sui':        ['charge', 'thousand-ride', 'rouse', 'ambush'],                  // 涼州十年叛 — Liang warlord, Ma Chao's ally
+  'sima-yan':       ['seek-talent', 'court-debate', 'faction-manipulate', 'attack-plans'], // founded Jin, ended Three Kingdoms
 
   // ─── 黃巾 / 妖道 Yellow Turbans & Mystics ───
   'zhang-jiao':     ['zhang-jiao-yellow', 'yellow-turban-mob', 'summon-gods', 'beans-to-soldiers', 'ride-clouds'],
