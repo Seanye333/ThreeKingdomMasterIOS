@@ -7,6 +7,7 @@ import type {
   ReportEntry,
 } from '../types';
 import { ITEMS_BY_ID } from '../data/items';
+import { cityStatCap, citySize } from './citySize';
 
 export interface CommandDef {
   type: CommandType;
@@ -97,38 +98,52 @@ export function resolveInternalAffairs(
   const def = COMMAND_DEFS[type];
   const statValue = officer.stats[def.stat];
 
+  const size = citySize(city);
+  const cap = cityStatCap(city);
+
   switch (type) {
     case 'develop-agriculture': {
-      const gain = applyDevelopment(city.agriculture, statValue, rng);
+      const gain = applyDevelopment(city.agriculture, statValue, rng, cap);
+      const capHit = city.agriculture + gain >= cap && gain === 0;
       return {
         success: gain > 0,
         delta: { agriculture: gain },
-        message: `${officer.name.en} raised Agriculture by ${gain} (now ${city.agriculture + gain}).`,
+        message: capHit
+          ? `${officer.name.en}: Agriculture already at ${size.name.zh}'s cap (${cap}). Promote the city first.`
+          : `${officer.name.en} raised Agriculture by ${gain} (now ${city.agriculture + gain}/${cap}).`,
       };
     }
     case 'develop-commerce': {
-      const gain = applyDevelopment(city.commerce, statValue, rng);
+      const gain = applyDevelopment(city.commerce, statValue, rng, cap);
+      const capHit = city.commerce + gain >= cap && gain === 0;
       return {
         success: gain > 0,
         delta: { commerce: gain },
-        message: `${officer.name.en} raised Commerce by ${gain} (now ${city.commerce + gain}).`,
+        message: capHit
+          ? `${officer.name.en}: Commerce already at ${size.name.zh}'s cap (${cap}).`
+          : `${officer.name.en} raised Commerce by ${gain} (now ${city.commerce + gain}/${cap}).`,
       };
     }
     case 'build-defense': {
-      const gain = applyDevelopment(city.defense, statValue, rng);
+      const gain = applyDevelopment(city.defense, statValue, rng, cap);
+      const capHit = city.defense + gain >= cap && gain === 0;
       return {
         success: gain > 0,
         delta: { defense: gain },
-        message: `${officer.name.en} reinforced Defense by ${gain} (now ${city.defense + gain}).`,
+        message: capHit
+          ? `${officer.name.en}: Defense already at ${size.name.zh}'s cap (${cap}).`
+          : `${officer.name.en} reinforced Defense by ${gain} (now ${city.defense + gain}/${cap}).`,
       };
     }
     case 'recruit-troops': {
       const max = Math.floor(statValue * 20) + 200;
-      const fromPop = Math.min(max, Math.floor(city.population / 100));
+      // City size also limits the per-action max so a Hamlet can't recruit huge armies.
+      const sizeMax = Math.floor(size.troopCap / 10);
+      const fromPop = Math.min(max, sizeMax, Math.floor(city.population / 100));
       return {
         success: fromPop > 0,
         delta: { troops: fromPop, population: -fromPop * 2 },
-        message: `${officer.name.en} recruited ${fromPop} troops (population −${fromPop * 2}).`,
+        message: `${officer.name.en} recruited ${fromPop} troops (${size.name.zh} cap ${sizeMax}/turn; population −${fromPop * 2}).`,
       };
     }
     case 'improve-loyalty': {
@@ -145,11 +160,11 @@ export function resolveInternalAffairs(
   }
 }
 
-function applyDevelopment(current: number, stat: number, rng: () => number): number {
-  if (current >= 100) return 0;
+function applyDevelopment(current: number, stat: number, rng: () => number, cap: number): number {
+  if (current >= cap) return 0;
   const base = Math.floor(stat / 20);
   const variance = Math.floor(rng() * 3);
-  return Math.min(100 - current, base + variance + 1);
+  return Math.min(cap - current, base + variance + 1);
 }
 
 export interface LostItemRef {

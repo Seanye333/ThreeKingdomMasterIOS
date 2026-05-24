@@ -115,8 +115,16 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       food: Math.max(0, city.food + tick.foodIncome - tick.foodUpkeep),
       troops: Math.max(0, city.troops - tick.desertion),
       loyalty: Math.max(0, Math.min(100, city.loyalty + tick.loyaltyDelta)),
+      population: Math.max(1000, city.population + tick.populationDelta),
     };
     cities[city.id] = updated;
+    if (tick.populationDelta !== 0) {
+      entries.push({
+        cityId: city.id,
+        kind: tick.populationDelta > 0 ? 'income' : 'desertion',
+        text: `${city.name.en}: 人口 ${tick.populationDelta > 0 ? '+' : ''}${tick.populationDelta.toLocaleString()}.`,
+      });
+    }
 
     if (tick.goldIncome > 0 || tick.foodIncome > 0) {
       entries.push({

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { COMMAND_DEFS } from '../../game/systems/commands';
 import { cityPolicyEffects } from '../../game/systems/policyEffects';
+import { citySize, nextTierPop } from '../../game/systems/citySize';
 import type { EntityId, Officer } from '../../game/types';
 import { BuildingsPanel } from './BuildingsPanel';
 import { CaptivesSection } from './CaptivesSection';
@@ -89,20 +90,23 @@ export function CityPanel() {
         })()}
       </header>
 
+      {/* City size badge — derived from population */}
+      <CitySizeBadge city={city} />
+
       <section className={styles.section}>
         <h3 className={styles.sectionTitle}>Resources</h3>
         <Stat label="Population" zh="人口" value={city.population.toLocaleString()} />
         <Stat label="Gold" zh="金" value={city.gold.toLocaleString()} />
         <Stat label="Food" zh="兵糧" value={city.food.toLocaleString()} />
-        <Stat label="Troops" zh="兵士" value={city.troops.toLocaleString()} />
+        <Stat label="Troops" zh="兵士" value={`${city.troops.toLocaleString()} / ${citySize(city).troopCap.toLocaleString()}`} />
       </section>
 
       <section className={styles.section}>
         <h3 className={styles.sectionTitle}>Development</h3>
-        <Bar label="Agriculture" zh="農業" value={city.agriculture} />
-        <Bar label="Commerce" zh="商業" value={city.commerce} />
-        <Bar label="Defense" zh="守備" value={city.defense} />
-        <Bar label="Loyalty" zh="民忠" value={city.loyalty} />
+        <Bar label="Agriculture" zh="農業" value={city.agriculture} cap={citySize(city).statCap} />
+        <Bar label="Commerce" zh="商業" value={city.commerce} cap={citySize(city).statCap} />
+        <Bar label="Defense" zh="守備" value={city.defense} cap={citySize(city).statCap} />
+        <Bar label="Loyalty" zh="民忠" value={city.loyalty} cap={100} />
       </section>
 
       {/* Active policy effects from resident officers — REAL gameplay impact */}
@@ -261,22 +265,67 @@ function Stat({ label, zh, value }: { label: string; zh: string; value: string }
   );
 }
 
-function Bar({ label, zh, value }: { label: string; zh: string; value: number }) {
+function Bar({ label, zh, value, cap = 100 }: { label: string; zh: string; value: number; cap?: number }) {
+  const atCap = value >= cap;
   return (
     <div className={styles.barRow}>
       <div className={styles.barHeader}>
         <span className={styles.statLabel}>
           {label} <span className={styles.statZh}>{zh}</span>
         </span>
-        <span className={styles.barValue}>{value}</span>
+        <span className={styles.barValue}>
+          {value} / {cap}
+          {atCap && <span style={{ marginLeft: 4, color: '#d4a84a' }}>★</span>}
+        </span>
       </div>
       <div className={styles.barTrack}>
         <div
           className={styles.barFill}
-          style={{ width: `${Math.min(100, value)}%` }}
+          style={{
+            width: `${Math.min(100, (value / cap) * 100)}%`,
+            background: atCap ? 'linear-gradient(90deg, #d4a84a, #f0e0b0)' : undefined,
+          }}
         />
       </div>
     </div>
+  );
+}
+
+function CitySizeBadge({ city }: { city: import('../../game/types').City }) {
+  const size = citySize(city);
+  const next = nextTierPop(city);
+  return (
+    <section className={styles.section}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <span style={{
+          fontFamily: 'var(--tkm-font-zh)',
+          fontSize: '1.4rem',
+          color: size.color,
+          letterSpacing: '0.25rem',
+          padding: '0.15rem 0.55rem',
+          border: `1px solid ${size.color}`,
+          borderRadius: 2,
+          background: 'rgba(212, 168, 74, 0.08)',
+        }}>
+          {size.name.zh}
+        </span>
+        <div style={{ fontSize: '0.7rem', color: '#8a7050', letterSpacing: '0.1rem' }}>
+          <div>{size.name.en}</div>
+          <div>Cap {size.statCap} · Slots {size.buildingSlots} · {size.troopCap.toLocaleString()} troops</div>
+        </div>
+      </div>
+      {next && (
+        <div style={{
+          marginTop: '0.4rem',
+          fontSize: '0.65rem',
+          color: '#8a7050',
+          letterSpacing: '0.05rem',
+        }}>
+          → <span style={{ color: next.def.color }}>{next.def.name.zh}</span> at {next.def.popMin.toLocaleString()} pop
+          ({next.popNeeded > 0 ? `${next.popNeeded.toLocaleString()} more needed` : 'ready'})
+        </div>
+      )}
+    </section>
   );
 }
 
