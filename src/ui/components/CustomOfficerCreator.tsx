@@ -6,6 +6,7 @@ import type {
   Scenario,
 } from '../../game/types';
 import styles from './CustomOfficerCreator.module.css';
+import { useDesc, useLanguage } from '../i18n';
 
 interface Props {
   scenario: Scenario;
@@ -31,6 +32,8 @@ const STAT_MAX = 150;
 const MAX_SKILLS = 3;
 
 export function CustomOfficerCreator({ scenario, onClose, onCreate }: Props) {
+  const desc = useDesc();
+  const lang = useLanguage();
   const [zhName, setZhName] = useState('我君');
   const [enName, setEnName] = useState('Wo Jun');
   const [courtesyZh, setCourtesyZh] = useState('');
@@ -177,9 +180,9 @@ export function CustomOfficerCreator({ scenario, onClose, onCreate }: Props) {
                     key={s.id}
                     className={`${styles.skillChip} ${skills.includes(s.id) ? styles.skillChipActive : ''}`}
                     onClick={() => toggleSkill(s.id)}
-                    title={s.description}
+                    title={desc(s)}
                   >
-                    {s.name.zh} {s.name.en}
+                    {lang === 'en' ? s.name.en : s.name.zh}{lang === 'both' ? ` ${s.name.en}` : ''}
                   </button>
                 ))}
               </div>

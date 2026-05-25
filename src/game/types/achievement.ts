@@ -34,6 +34,9 @@ export interface Achievement {
   id: EntityId;
   name: BilingualName;
   description: string;
+  descriptionZh?: string;
+  description: string;
+  descriptionZh?: string;
   /** Visual tier — sets the gold/silver/bronze glow on the badge. */
   tier: 'bronze' | 'silver' | 'gold' | 'legendary';
   trigger: AchievementTrigger;

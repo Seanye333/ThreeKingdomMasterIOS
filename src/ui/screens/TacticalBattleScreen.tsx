@@ -32,6 +32,8 @@ import type {
 import { BattleResultsModal } from '../components/BattleResultsModal';
 import { DuelModal } from '../components/DuelModal';
 import { MapDefs as SharedMapDefs, MapFrame as SharedMapFrame, CompassRose as SharedCompassRose, TerrainArt as SharedTerrainArt } from '../components/hexMapShared';
+import { TacticalBattleScreen3D } from './TacticalBattleScreen3D';
+import { useT, useDesc } from '../i18n';
 
 const UNIT_TYPE_GLYPH: Record<UnitType, string> = {
   infantry: '歩',
@@ -120,6 +122,9 @@ export function TacticalBattleScreen() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [actionMode, setActionMode] = useState<ActionMode>({ kind: 'none' });
   const [showCinematic, setShowCinematic] = useState(true);
+  const [show3D, setShow3D] = useState(true);
+  const t = useT();
+  const desc = useDesc();
   const [showResults, setShowResults] = useState(false);
   const [voiceLine, setVoiceLine] = useState<{ text: string; key: number } | null>(null);
   const [duelResult, setDuelResult] = useState<DuelResult | null>(null);
@@ -298,7 +303,7 @@ export function TacticalBattleScreen() {
             <div className={styles.cinematicTitleZh}>{battleTitleZh}</div>
             <div className={styles.cinematicTitleEn}>{battleTitleEn}</div>
             {namedMap && (
-              <div className={styles.cinematicDesc}>{namedMap.description}</div>
+              <div className={styles.cinematicDesc}>{desc(namedMap)}</div>
             )}
           </div>
         </div>
@@ -309,7 +314,7 @@ export function TacticalBattleScreen() {
           <span className={styles.titleEn}>{battleTitleEn}</span>
         </div>
         <div className={styles.turnBlock}>
-          Turn {battle.turn} · {battle.activeSide === playerSide ? 'YOUR TURN' : 'ENEMY TURN'}
+          {t('第', 'Turn')} {battle.turn} {t('回', '')} · {battle.activeSide === playerSide ? t('我方回合', 'YOUR TURN') : t('敵方回合', 'ENEMY TURN')}
           <span className={styles.weatherChip} style={{ marginLeft: '0.6rem' }}>
             {WEATHER_LABEL[battle.weather]}
           </span>
@@ -325,10 +330,22 @@ export function TacticalBattleScreen() {
             </span>
           )}
         </div>
+        <button
+          onClick={() => setShow3D(true)}
+          style={{
+            background: '#1a3a5a', color: '#88b7e8',
+            border: '1px solid #88b7e8', padding: '0.3rem 0.6rem',
+            cursor: 'pointer', fontFamily: 'Songti SC, serif',
+            marginRight: '0.5rem',
+          }}
+          title="Switch to 3D view"
+        >{t('切換 3D', 'Switch 3D')} ⇄</button>
         <button className={styles.exitBtn} onClick={close}>
-          Exit
+          {t('退出', 'Exit')}
         </button>
       </header>
+
+      {show3D && <TacticalBattleScreen3D onClose={() => setShow3D(false)} />}
 
       {(battle.attackerObjective || battle.defenderObjective) && (
         <div style={{ display: 'flex', gap: '0.5rem', padding: '0 0.75rem' }}>
@@ -357,8 +374,8 @@ export function TacticalBattleScreen() {
         </div>
       )}
 
-      <div className={styles.battlefield}>
-        <div className={styles.gridWrap} style={{ position: 'relative' }}>
+      <div className={`${styles.battlefield} tkm-iso-stage`}>
+        <div className={`${styles.gridWrap} tkm-iso-svg`} style={{ position: 'relative' }}>
           {/* Weather overlay */}
           {battle.weather === 'rain' && <div className={`${styles.weatherOverlay} ${styles.weatherRain}`} />}
           {battle.weather === 'snow' && <div className={`${styles.weatherOverlay} ${styles.weatherSnow}`} />}
@@ -761,7 +778,7 @@ export function TacticalBattleScreen() {
             onClick={onEndTurn}
             disabled={!myTurn}
           >
-            終了 End Turn
+            {t('結束回合', 'End Turn')}
           </button>
 
           {/* Battle speed control */}
@@ -828,6 +845,8 @@ function UnitPanel({
   canAct: boolean;
   battle: TacticalBattle;
 }) {
+  const t = useT();
+  const desc = useDesc();
   // Each officer's personal 戰法 list, mapped to runtime tactical-battle actions.
   const personalTactics = personalTacticsForUnit(officer, unit);
 
@@ -885,7 +904,7 @@ function UnitPanel({
           onClick={() => setActionMode({ kind: actionMode.kind === 'move' ? 'none' : 'move' })}
         >
           <div className={styles.actionTitle}>
-            <span><span className={styles.actionLabel}>移動</span><span className={styles.actionLabelEn}>Move</span></span>
+            <span><span className={styles.actionLabel}>{t('移動', 'Move')}</span></span>
             <span style={{ fontSize: '0.7rem', color: '#8a7050' }}>1 AP / hex</span>
           </div>
           <div className={styles.actionDesc}>Step to an adjacent hex.</div>
@@ -896,7 +915,7 @@ function UnitPanel({
           onClick={() => setActionMode({ kind: actionMode.kind === 'attack' ? 'none' : 'attack' })}
         >
           <div className={styles.actionTitle}>
-            <span><span className={styles.actionLabel}>攻撃</span><span className={styles.actionLabelEn}>Attack</span></span>
+            <span><span className={styles.actionLabel}>{t('攻擊', 'Attack')}</span></span>
             <span style={{ fontSize: '0.7rem', color: '#8a7050' }}>1 AP</span>
           </div>
           <div className={styles.actionDesc}>Strike an adjacent enemy.</div>
@@ -907,7 +926,7 @@ function UnitPanel({
           onClick={() => setActionMode({ kind: actionMode.kind === 'duel' ? 'none' : 'duel' })}
         >
           <div className={styles.actionTitle}>
-            <span><span className={styles.actionLabel}>一騎打</span><span className={styles.actionLabelEn}>Duel</span></span>
+            <span><span className={styles.actionLabel}>{t('一騎打', 'Duel')}</span></span>
             <span style={{ fontSize: '0.7rem', color: '#d4a84a' }}>winner kills loser</span>
           </div>
           <div className={styles.actionDesc}>
@@ -939,15 +958,14 @@ function UnitPanel({
                 <span>
                   <span className={styles.actionLabel}>
                     {isSignature && <span style={{ color: '#d4a84a' }}>★ </span>}
-                    {s.name.zh}
+                    {t(s.name.zh, s.name.en)}
                   </span>
-                  <span className={styles.actionLabelEn}>{s.name.en}</span>
                 </span>
                 <span style={{ fontSize: '0.7rem', color: '#8a7050' }}>
                   {onCd ? `CD ${(battle.stratagemCooldowns[cdKey] ?? 0) - battle.turn}t` : `rng ${s.range}`}
                 </span>
               </div>
-              <div className={styles.actionDesc}>{s.description}</div>
+              <div className={styles.actionDesc}>{desc(s)}</div>
             </button>
           );
         })}
@@ -965,37 +983,36 @@ function UnitPanel({
               borderTop: '1px solid #4a3520',
               borderBottom: '1px dotted #3a2d20',
             }}>
-              ★ 個人戰法 · Personal Tactics
+              ★ {t('個人戰法', 'Personal Tactics')}
             </div>
-            {personalTactics.map((t) => {
-              const cdKey = `${unit.id}-${t.underlying}`;
+            {personalTactics.map((pt) => {
+              const cdKey = `${unit.id}-${pt.underlying}`;
               const onCd = (battle.stratagemCooldowns[cdKey] ?? 0) > battle.turn;
-              const active = actionMode.kind === 'stratagem' && actionMode.id === t.underlying;
+              const active = actionMode.kind === 'stratagem' && actionMode.id === pt.underlying;
               return (
                 <button
-                  key={t.id}
+                  key={pt.id}
                   className={`${styles.actionButton} ${active ? styles.actionButtonActive : ''}`}
                   disabled={!canAct || unit.ap === 0 || onCd}
-                  onClick={() => setActionMode(active ? { kind: 'none' } : { kind: 'stratagem', id: t.underlying })}
-                  style={t.isSignature
+                  onClick={() => setActionMode(active ? { kind: 'none' } : { kind: 'stratagem', id: pt.underlying })}
+                  style={pt.isSignature
                     ? { borderColor: '#d4a84a', boxShadow: 'inset 0 0 6px rgba(212,168,74,0.18)' }
                     : { borderColor: '#5a4530' }}
-                  title={`${t.description} · via ${t.underlying}`}
+                  title={`${pt.description} · via ${pt.underlying}`}
                 >
                   <div className={styles.actionTitle}>
                     <span>
                       <span className={styles.actionLabel}>
-                        {t.isSignature && <span style={{ color: '#d4a84a' }}>★ </span>}
-                        {t.nameZh}
+                        {pt.isSignature && <span style={{ color: '#d4a84a' }}>★ </span>}
+                        {t(pt.nameZh, pt.nameEn)}
                       </span>
-                      <span className={styles.actionLabelEn}>{t.nameEn}</span>
                     </span>
                     <span style={{ fontSize: '0.7rem', color: '#8a7050' }}>
-                      {onCd ? `CD ${(battle.stratagemCooldowns[cdKey] ?? 0) - battle.turn}t` : `rng ${t.range}`}
+                      {onCd ? `CD ${(battle.stratagemCooldowns[cdKey] ?? 0) - battle.turn}t` : `rng ${pt.range}`}
                     </span>
                   </div>
                   <div className={styles.actionDesc} style={{ fontStyle: 'italic' }}>
-                    <span style={{ color: '#8a7050' }}>{CATEGORY_LABEL[t.category]}</span> · {t.nameEn}
+                    <span style={{ color: '#8a7050' }}>{CATEGORY_LABEL[pt.category]}</span> · {pt.nameEn}
                   </div>
                 </button>
               );
@@ -1232,6 +1249,8 @@ function CityStructureIcon({
 
   return (
     <g pointerEvents="none">
+      {/* Ground shadow under structure — anchors tall tower in iso view */}
+      <ellipse cx={x + 2} cy={y + 12} rx="14" ry="3" fill="rgba(0,0,0,0.55)" />
       {/* Structure base — small tower-shape silhouette */}
       <rect
         x={x - 11} y={y - 14} width="22" height="22"

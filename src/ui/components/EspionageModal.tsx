@@ -3,6 +3,7 @@ import { ESPIONAGE_DEFS } from '../../game/data';
 import { useGameStore } from '../../game/state/store';
 import type { EntityId, EspionageKind, Officer } from '../../game/types';
 import styles from './EspionageModal.module.css';
+import { useLanguage, useDesc } from '../i18n';
 
 interface Props {
   onClose: () => void;
@@ -16,6 +17,8 @@ export function EspionageModal({ onClose }: Props) {
   const pendingEspionage = useGameStore((s) => s.pendingEspionage);
   const queueEspionage = useGameStore((s) => s.queueEspionage);
   const cancelEspionage = useGameStore((s) => s.cancelEspionage);
+  const lang = useLanguage();
+  const desc = useDesc();
 
   const [pickedKind, setPickedKind] = useState<EspionageKind | null>(null);
   const [pickedAgentId, setPickedAgentId] = useState<EntityId | null>(null);
@@ -117,10 +120,10 @@ export function EspionageModal({ onClose }: Props) {
                 }}
               >
                 <div>
-                  <span className={styles.opName}>{d.name.zh}</span>
-                  <span className={styles.opNameEn}>{d.name.en}</span>
+                  {lang !== 'en' && <span className={styles.opName}>{d.name.zh}</span>}
+                  {lang !== 'zh' && <span className={styles.opNameEn}>{d.name.en}</span>}
                 </div>
-                <div className={styles.opDesc}>{d.description}</div>
+                <div className={styles.opDesc}>{desc(d)}</div>
                 <div className={styles.opMeta}>
                   <span className={styles.opMetaGold}>{d.goldCost}g</span>
                   <span className={styles.opMetaInt}>INT {d.minIntelligence}+</span>

@@ -18,6 +18,7 @@ import {
 import { WEAPON_TYPE_DEFS, deriveWeaponType } from '../../game/data/weaponTypes';
 import type { City, Force, Officer, Skill } from '../../game/types';
 import styles from './OfficerDetail.module.css';
+import { useT, useLanguage } from '../i18n';
 
 type PortraitArchetype = 'warrior' | 'strategist' | 'civil' | 'ruler' | 'lady' | 'sage';
 
@@ -93,6 +94,8 @@ export function OfficerDetail({
   const storeForces = useGameStore((s) => s.forces);
   const storeCities = useGameStore((s) => s.cities);
   const storeYear = useGameStore((s) => s.date.year);
+  const t = useT();
+  const lang = useLanguage();
   const playerForceId = useGameStore((s) => s.playerForceId);
   const appointments = useGameStore((s) => s.appointments);
 
@@ -122,16 +125,21 @@ export function OfficerDetail({
             age={age}
           />
           <div className={styles.titleBlock}>
-            <div className={styles.titleZh}>{officer.name.zh}</div>
-            <div className={styles.titleEn}>
-              {officer.name.en}
-              {officer.courtesyName && (
-                <span className={styles.courtesy}>
-                  {' '}· {officer.courtesyName.zh}{' '}
-                  {officer.courtesyName.en}
-                </span>
-              )}
-            </div>
+            {lang !== 'en' && <div className={styles.titleZh}>{officer.name.zh}</div>}
+            {lang === 'en' && <div className={styles.titleZh}>{officer.name.en}</div>}
+            {(lang !== 'zh' || officer.courtesyName) && (
+              <div className={styles.titleEn}>
+                {lang === 'both' && officer.name.en}
+                {officer.courtesyName && (
+                  <span className={styles.courtesy}>
+                    {lang === 'both' && ' · '}
+                    {lang === 'zh' && '字 '}
+                    {lang === 'en' ? officer.courtesyName.en : officer.courtesyName.zh}
+                    {lang === 'both' && <> {officer.courtesyName.en}</>}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
           <button className={styles.closeButton} onClick={onClose}>
             ×
@@ -140,7 +148,7 @@ export function OfficerDetail({
 
         <section className={styles.identity}>
           <div className={styles.identityRow}>
-            <span className={styles.idLabel}>Force 勢力</span>
+            <span className={styles.idLabel}>{t('勢力', 'Force')}</span>
             <span>
               {force ? (
                 <>
@@ -148,32 +156,47 @@ export function OfficerDetail({
                     className={styles.dot}
                     style={{ background: force.color }}
                   />
-                  <span className={styles.idValue}>{force.name.zh}</span>
-                  <span className={styles.idValueEn}>· {force.name.en}</span>
-                  {isMine && <span className={styles.youTag}>YOU</span>}
+                  <span className={styles.idValue}>{lang === 'en' ? force.name.en : force.name.zh}</span>
+                  {lang === 'both' && <span className={styles.idValueEn}>· {force.name.en}</span>}
+                  {isMine && <span className={styles.youTag}>{t('我方', 'YOU')}</span>}
                 </>
               ) : officer.status === 'imprisoned' ? (
-                <span className={styles.captiveTag}>捕虜 Captive</span>
+                <span className={styles.captiveTag}>{t('俘虜', 'Captive')}</span>
               ) : (
-                <span className={styles.freeTag}>浪人 Free Agent</span>
+                <span className={styles.freeTag}>{t('浪人', 'Free Agent')}</span>
               )}
             </span>
           </div>
           <div className={styles.identityRow}>
-            <span className={styles.idLabel}>Location 居所</span>
+            <span className={styles.idLabel}>{t('居所', 'Location')}</span>
             <span>
               {city ? (
                 <>
-                  <span className={styles.idValue}>{city.name.zh}</span>
-                  <span className={styles.idValueEn}>· {city.name.en}</span>
+                  <span className={styles.idValue}>{lang === 'en' ? city.name.en : city.name.zh}</span>
+                  {lang === 'both' && <span className={styles.idValueEn}>· {city.name.en}</span>}
                 </>
               ) : (
                 <span className={styles.muted}>—</span>
               )}
             </span>
           </div>
+          {officer.hometownCityId && cities[officer.hometownCityId] && (
+            <div className={styles.identityRow}>
+              <span className={styles.idLabel}>{t('籍貫', 'Hometown')}</span>
+              <span>
+                <span className={styles.idValue}>
+                  {lang === 'en'
+                    ? cities[officer.hometownCityId].name.en
+                    : cities[officer.hometownCityId].name.zh}
+                </span>
+                {lang === 'both' && (
+                  <span className={styles.idValueEn}>· {cities[officer.hometownCityId].name.en}</span>
+                )}
+              </span>
+            </div>
+          )}
           <div className={styles.identityRow}>
-            <span className={styles.idLabel}>Age 年齢</span>
+            <span className={styles.idLabel}>{t('年齡', 'Age')}</span>
             <span className={styles.idValue}>
               {age}{' '}
               <span className={styles.muted}>
@@ -184,25 +207,25 @@ export function OfficerDetail({
           </div>
           {taskDef && (
             <div className={styles.identityRow}>
-              <span className={styles.idLabel}>Current Order</span>
+              <span className={styles.idLabel}>{t('現任命令', 'Current Order')}</span>
               <span className={styles.idValue}>
-                {taskDef.label.zh} {taskDef.label.en}
+                {lang === 'en' ? taskDef.label.en : lang === 'both' ? `${taskDef.label.zh} ${taskDef.label.en}` : taskDef.label.zh}
               </span>
             </div>
           )}
           <div className={styles.identityRow}>
-            <span className={styles.idLabel}>Title 官位</span>
+            <span className={styles.idLabel}>{t('官位', 'Title')}</span>
             <span>
               {titleDef && (
                 <span className={styles.titleBadge}>
-                  <span className={styles.titleBadgeZh}>{titleDef.name.zh}</span>
-                  <span className={styles.rankEn}>{titleDef.name.en}</span>
+                  <span className={styles.titleBadgeZh}>{lang === 'en' ? titleDef.name.en : titleDef.name.zh}</span>
+                  {lang === 'both' && <span className={styles.rankEn}>{titleDef.name.en}</span>}
                 </span>
               )}
               {rankDef && (
                 <span className={styles.rankBadge}>
-                  <span className={styles.rankZh}>{rankDef.name.zh}</span>
-                  <span className={styles.rankEn}>{rankDef.name.en}</span>
+                  <span className={styles.rankZh}>{lang === 'en' ? rankDef.name.en : rankDef.name.zh}</span>
+                  {lang === 'both' && <span className={styles.rankEn}>{rankDef.name.en}</span>}
                 </span>
               )}
             </span>
@@ -210,33 +233,33 @@ export function OfficerDetail({
         </section>
 
         <section className={styles.statsSection}>
-          <h3 className={styles.sectionTitle}>Statistics 能力</h3>
+          <h3 className={styles.sectionTitle}>{t('能力', 'Statistics')}</h3>
           {(() => {
             const b = effectiveStatBonuses(officer);
             return (
               <>
-                <StatBar label="統率 Leadership"   value={officer.stats.leadership}   bonus={b.leadership} />
-                <StatBar label="武力 War"          value={officer.stats.war}          bonus={b.war} />
-                <StatBar label="知力 Intelligence" value={officer.stats.intelligence} bonus={b.intelligence} />
-                <StatBar label="政治 Politics"     value={officer.stats.politics}     bonus={b.politics} />
-                <StatBar label="魅力 Charisma"     value={officer.stats.charisma}     bonus={b.charisma} />
+                <StatBar label={t('統率', 'Leadership')}   value={officer.stats.leadership}   bonus={b.leadership} />
+                <StatBar label={t('武力', 'War')}          value={officer.stats.war}          bonus={b.war} />
+                <StatBar label={t('知力', 'Intelligence')} value={officer.stats.intelligence} bonus={b.intelligence} />
+                <StatBar label={t('政治', 'Politics')}     value={officer.stats.politics}     bonus={b.politics} />
+                <StatBar label={t('魅力', 'Charisma')}     value={officer.stats.charisma}     bonus={b.charisma} />
               </>
             );
           })()}
         </section>
 
         <section className={styles.statsSection}>
-          <h3 className={styles.sectionTitle}>Disposition 心情</h3>
-          <StatBar label="忠誠 Loyalty" value={officer.loyalty} mode="loyalty" />
+          <h3 className={styles.sectionTitle}>{t('心情', 'Disposition')}</h3>
+          <StatBar label={t('忠誠', 'Loyalty')} value={officer.loyalty} mode="loyalty" />
         </section>
 
         {(officer.doctrine || officer.level) && (
           <section className={styles.statsSection}>
-            <h3 className={styles.sectionTitle}>Officer Profile 武将録</h3>
+            <h3 className={styles.sectionTitle}>{t('武將錄', 'Officer Profile')}</h3>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem 1.5rem', alignItems: 'baseline' }}>
               {officer.level !== undefined && (
                 <div>
-                  <span style={{ fontSize: '0.65rem', color: '#8a7050', letterSpacing: '0.15rem' }}>Lv. </span>
+                  <span style={{ fontSize: '0.65rem', color: '#8a7050', letterSpacing: '0.15rem' }}>{t('等級', 'Lv.')} </span>
                   <span style={{ fontSize: '1.1rem', color: '#d4a84a', fontFamily: 'ui-monospace, monospace' }}>
                     {officer.level}
                   </span>
@@ -246,12 +269,13 @@ export function OfficerDetail({
                 const d = DOCTRINE_DEFS[officer.doctrine];
                 return (
                   <div>
-                    <span style={{ fontSize: '0.65rem', color: '#8a7050', letterSpacing: '0.15rem' }}>主義 </span>
+                    <span style={{ fontSize: '0.65rem', color: '#8a7050', letterSpacing: '0.15rem' }}>{t('主義', 'Doctrine')} </span>
                     <span style={{
                       background: '#1a1410', border: `1px solid ${d.color}`, color: d.color,
                       padding: '0.2rem 0.55rem', fontSize: '0.8rem', letterSpacing: '0.1rem',
                     }}>
-                      {d.zh} <span style={{ fontSize: '0.65rem', color: '#8a7050', fontStyle: 'italic' }}>{d.en}</span>
+                      {lang === 'en' ? d.en : d.zh}
+                      {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#8a7050', fontStyle: 'italic' }}>{d.en}</span></>}
                     </span>
                   </div>
                 );
@@ -261,12 +285,13 @@ export function OfficerDetail({
                 const w = WEAPON_TYPE_DEFS[wt];
                 return (
                   <div>
-                    <span style={{ fontSize: '0.65rem', color: '#8a7050', letterSpacing: '0.15rem' }}>兵装 </span>
+                    <span style={{ fontSize: '0.65rem', color: '#8a7050', letterSpacing: '0.15rem' }}>{t('兵裝', 'Weapon')} </span>
                     <span style={{
                       background: '#1a1410', border: `1px solid ${w.color}`, color: w.color,
                       padding: '0.2rem 0.55rem', fontSize: '0.8rem', letterSpacing: '0.1rem',
                     }}>
-                      {w.zh} <span style={{ fontSize: '0.65rem', color: '#8a7050', fontStyle: 'italic' }}>{w.en}</span>
+                      {lang === 'en' ? w.en : w.zh}
+                      {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#8a7050', fontStyle: 'italic' }}>{w.en}</span></>}
                     </span>
                   </div>
                 );
@@ -277,7 +302,7 @@ export function OfficerDetail({
 
         {officer.formations && officer.formations.length > 0 && (
           <section className={styles.statsSection}>
-            <h3 className={styles.sectionTitle}>Formations 陣形</h3>
+            <h3 className={styles.sectionTitle}>{t('陣形', 'Formations')}</h3>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
               {officer.formations.map((fid) => {
                 const f = FORMATION_DEFS[fid];
@@ -286,7 +311,8 @@ export function OfficerDetail({
                     background: '#1a1410', border: '1px solid #88b7e8', color: '#88b7e8',
                     padding: '0.3rem 0.55rem', fontSize: '0.78rem', letterSpacing: '0.1rem',
                   }}>
-                    {f.zh} <span style={{ fontSize: '0.65rem', color: '#5a7090', fontStyle: 'italic' }}>{f.en}</span>
+                    {lang === 'en' ? f.en : f.zh}
+                    {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#5a7090', fontStyle: 'italic' }}>{f.en}</span></>}
                   </span>
                 );
               })}
@@ -296,16 +322,17 @@ export function OfficerDetail({
 
         {officer.tactics && officer.tactics.length > 0 && (
           <section className={styles.statsSection}>
-            <h3 className={styles.sectionTitle}>Tactics 戰法</h3>
+            <h3 className={styles.sectionTitle}>{t('戰法', 'Tactics')}</h3>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
               {officer.tactics.map((tid) => {
-                const t = TACTIC_DEFS[tid];
+                const tac = TACTIC_DEFS[tid];
                 return (
                   <span key={tid} style={{
                     background: '#1a1410', border: '1px solid #b8442e', color: '#b8442e',
                     padding: '0.3rem 0.55rem', fontSize: '0.78rem', letterSpacing: '0.1rem',
                   }}>
-                    {t.zh} <span style={{ fontSize: '0.65rem', color: '#8a4530', fontStyle: 'italic' }}>{t.en}</span>
+                    {lang === 'en' ? tac.en : tac.zh}
+                    {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#8a4530', fontStyle: 'italic' }}>{tac.en}</span></>}
                   </span>
                 );
               })}
@@ -315,7 +342,7 @@ export function OfficerDetail({
 
         {officer.policies && officer.policies.length > 0 && (
           <section className={styles.statsSection}>
-            <h3 className={styles.sectionTitle}>Policies 政策</h3>
+            <h3 className={styles.sectionTitle}>{t('政策', 'Policies')}</h3>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
               {officer.policies.map((pid) => {
                 const p = POLICY_DEFS[pid];
@@ -324,7 +351,8 @@ export function OfficerDetail({
                     background: '#1a1410', border: '1px solid #7a9a5a', color: '#7a9a5a',
                     padding: '0.3rem 0.55rem', fontSize: '0.78rem', letterSpacing: '0.1rem',
                   }}>
-                    {p.zh} <span style={{ fontSize: '0.65rem', color: '#5a7a4a', fontStyle: 'italic' }}>{p.en}</span>
+                    {lang === 'en' ? p.en : p.zh}
+                    {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#5a7a4a', fontStyle: 'italic' }}>{p.en}</span></>}
                   </span>
                 );
               })}
@@ -334,26 +362,27 @@ export function OfficerDetail({
 
         {officer.traits && officer.traits.length > 0 && (
           <section className={styles.statsSection}>
-            <h3 className={styles.sectionTitle}>Personality 性格</h3>
+            <h3 className={styles.sectionTitle}>{t('性格', 'Personality')}</h3>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
               {officer.traits.map((tid) => {
-                const t = TRAIT_DEFS_BY_ID[tid];
-                if (!t) return null;
+                const tr = TRAIT_DEFS_BY_ID[tid];
+                if (!tr) return null;
                 return (
                   <span
                     key={tid}
-                    title={t.description}
+                    title={lang === 'zh' && tr.descriptionZh ? tr.descriptionZh : tr.description}
                     style={{
                       background: '#1a1410',
-                      border: `1px solid ${t.color}`,
-                      color: t.color,
+                      border: `1px solid ${tr.color}`,
+                      color: tr.color,
                       padding: '0.3rem 0.55rem',
                       fontSize: '0.78rem',
                       fontFamily: '"Songti SC", serif',
                       letterSpacing: '0.1rem',
                     }}
                   >
-                    {t.name.zh} <span style={{ fontSize: '0.65rem', color: '#8a7050', fontStyle: 'italic' }}>{t.name.en}</span>
+                    {lang === 'en' ? tr.name.en : tr.name.zh}
+                    {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#8a7050', fontStyle: 'italic' }}>{tr.name.en}</span></>}
                   </span>
                 );
               })}
@@ -363,7 +392,7 @@ export function OfficerDetail({
 
         {officer.skills.length > 0 && (
           <section className={styles.statsSection}>
-            <h3 className={styles.sectionTitle}>Skills 特技</h3>
+            <h3 className={styles.sectionTitle}>{t('特技', 'Skills')}</h3>
             <div className={styles.skillsList}>
               {officer.skills
                 .map((id) => SKILLS_BY_ID[id])
@@ -380,7 +409,7 @@ export function OfficerDetail({
         {officer.equipment.length > 0 && (
           <section className={styles.statsSection}>
             <h3 className={styles.sectionTitle}>
-              Equipment 持有 ({officer.equipment.length})
+              {t('持有', 'Equipment')} ({officer.equipment.length})
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               {/* Group items by kind for readability, but render every one. */}
@@ -401,13 +430,13 @@ export function OfficerDetail({
         )}
 
         <section className={styles.statsSection}>
-          <h3 className={styles.sectionTitle}>Biography 列傳</h3>
+          <h3 className={styles.sectionTitle}>{t('列傳', 'Biography')}</h3>
           <BiographyBlock officer={officer} />
         </section>
 
         {officer.deathYear && (
           <p className={styles.footnote}>
-            * Historical death year. Aging rolls cluster around this date.
+            {t('* 歷史卒年。衰老擲骰集中於此日期前後。', '* Historical death year. Aging rolls cluster around this date.')}
           </p>
         )}
       </div>
@@ -426,11 +455,13 @@ const REL_KIND_LABEL: Record<string, { zh: string; en: string; color: string }> 
 
 function RelationshipsSection({ officerId }: { officerId: string }) {
   const officers = useGameStore((s) => s.officers);
+  const t = useT();
+  const lang = useLanguage();
   const rels = OFFICER_RELATIONSHIPS.filter((r) => r.a === officerId || r.b === officerId);
   if (rels.length === 0) return null;
   return (
     <section className={styles.statsSection}>
-      <h3 className={styles.sectionTitle}>Relationships 因縁</h3>
+      <h3 className={styles.sectionTitle}>{t('因緣', 'Relationships')}</h3>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
         {rels.map((r) => {
           const otherId = r.a === officerId ? r.b : r.a;
@@ -449,18 +480,18 @@ function RelationshipsSection({ officerId }: { officerId: string }) {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <span>
-                  <span style={{ color: '#d4a84a' }}>{other.name.zh}</span>{' '}
-                  <span style={{ fontSize: '0.7rem', color: '#8a7050', fontStyle: 'italic' }}>{other.name.en}</span>
+                  <span style={{ color: '#d4a84a' }}>{lang === 'en' ? other.name.en : other.name.zh}</span>
+                  {lang === 'both' && <> <span style={{ fontSize: '0.7rem', color: '#8a7050', fontStyle: 'italic' }}>{other.name.en}</span></>}
                 </span>
                 <span style={{
                   fontSize: '0.65rem', letterSpacing: '0.15rem', textTransform: 'uppercase',
                   color: meta.color,
                 }}>
-                  {meta.zh} {meta.en}
+                  {lang === 'en' ? meta.en : lang === 'both' ? `${meta.zh} ${meta.en}` : meta.zh}
                 </span>
               </div>
               <div style={{ fontSize: '0.72rem', color: '#c0a878', fontStyle: 'italic', marginTop: '0.2rem' }}>
-                {r.note.zh} · {r.note.en}
+                {lang === 'en' ? r.note.en : lang === 'both' ? `${r.note.zh} · ${r.note.en}` : r.note.zh}
               </div>
             </div>
           );
@@ -472,6 +503,7 @@ function RelationshipsSection({ officerId }: { officerId: string }) {
 
 function BiographyBlock({ officer }: { officer: Officer }) {
   const bio = getBiography(officer.id, officer.name.en, officer.name.zh, officer.stats);
+  const lang = useLanguage();
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
       {bio.era && (
@@ -484,35 +516,39 @@ function BiographyBlock({ officer }: { officer: Officer }) {
             fontFamily: 'ui-monospace, monospace',
           }}
         >
-          {bio.era.zh} · {bio.era.en}
+          {lang === 'en' ? bio.era.en : lang === 'both' ? `${bio.era.zh} · ${bio.era.en}` : bio.era.zh}
         </div>
       )}
-      <div
-        style={{
-          background: '#1a1410',
-          borderLeft: '3px solid #d4a84a',
-          padding: '0.6rem 0.85rem',
-          fontSize: '0.85rem',
-          lineHeight: 1.7,
-          color: '#d4a84a',
-          fontFamily: '"Songti SC","Noto Serif SC",serif',
-        }}
-      >
-        {bio.zh}
-      </div>
-      <div
-        style={{
-          background: '#1a1410',
-          borderLeft: '3px solid #5a4530',
-          padding: '0.6rem 0.85rem',
-          fontSize: '0.82rem',
-          lineHeight: 1.6,
-          color: '#c0a878',
-          fontStyle: 'italic',
-        }}
-      >
-        {bio.en}
-      </div>
+      {lang !== 'en' && (
+        <div
+          style={{
+            background: '#1a1410',
+            borderLeft: '3px solid #d4a84a',
+            padding: '0.6rem 0.85rem',
+            fontSize: '0.85rem',
+            lineHeight: 1.7,
+            color: '#d4a84a',
+            fontFamily: '"Songti SC","Noto Serif SC",serif',
+          }}
+        >
+          {bio.zh}
+        </div>
+      )}
+      {lang !== 'zh' && (
+        <div
+          style={{
+            background: '#1a1410',
+            borderLeft: '3px solid #5a4530',
+            padding: '0.6rem 0.85rem',
+            fontSize: '0.82rem',
+            lineHeight: 1.6,
+            color: '#c0a878',
+            fontStyle: 'italic',
+          }}
+        >
+          {bio.en}
+        </div>
+      )}
       {bio.quote && (
         <div
           style={{
@@ -526,10 +562,12 @@ function BiographyBlock({ officer }: { officer: Officer }) {
             fontStyle: 'italic',
           }}
         >
-          &ldquo; {bio.quote.zh} &rdquo;
-          <div style={{ fontSize: '0.7rem', color: '#8a7050', marginTop: '0.3rem' }}>
-            — {bio.quote.en}
-          </div>
+          &ldquo; {lang === 'en' ? bio.quote.en : bio.quote.zh} &rdquo;
+          {lang === 'both' && (
+            <div style={{ fontSize: '0.7rem', color: '#8a7050', marginTop: '0.3rem' }}>
+              — {bio.quote.en}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -743,6 +781,7 @@ function Portrait({
 }
 
 function SkillCard({ skill }: { skill: Skill }) {
+  const lang = useLanguage();
   const catClass =
     skill.category === 'combat' ? styles.skillCategoryCombat
     : skill.category === 'command' ? styles.skillCategoryCommand
@@ -753,20 +792,21 @@ function SkillCard({ skill }: { skill: Skill }) {
     <div className={styles.skillCard}>
       <div className={styles.skillHeader}>
         <div>
-          <span className={styles.skillName}>{skill.name.zh}</span>
-          <span className={styles.skillNameEn}>{skill.name.en}</span>
+          {lang !== 'en' && <span className={styles.skillName}>{skill.name.zh}</span>}
+          {lang !== 'zh' && <span className={styles.skillNameEn}>{skill.name.en}</span>}
         </div>
         <span className={`${styles.skillCategory} ${catClass}`}>
           {skill.category}
         </span>
       </div>
-      <div className={styles.skillDesc}>{skill.description}</div>
+      <div className={styles.skillDesc}>{lang === 'zh' && skill.descriptionZh ? skill.descriptionZh : skill.description}</div>
     </div>
   );
 }
 
 function ItemCard({ itemId }: { itemId: string }) {
   const item = ITEMS_BY_ID[itemId];
+  const lang = useLanguage();
   if (!item) return null;
   const kindColor =
     item.kind === 'weapon'   ? '#b8442e'
@@ -789,11 +829,13 @@ function ItemCard({ itemId }: { itemId: string }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
         <div>
           <span style={{ color: '#d4a84a', fontSize: '1.05rem' }}>
-            {item.name.zh}
+            {lang === 'en' ? item.name.en : item.name.zh}
           </span>
-          <span style={{ color: '#8a7050', fontSize: '0.75rem', marginLeft: '0.5rem' }}>
-            {item.name.en}
-          </span>
+          {lang === 'both' && (
+            <span style={{ color: '#8a7050', fontSize: '0.75rem', marginLeft: '0.5rem' }}>
+              {item.name.en}
+            </span>
+          )}
         </div>
         <span
           style={{
@@ -810,7 +852,7 @@ function ItemCard({ itemId }: { itemId: string }) {
         </span>
       </div>
       <div style={{ fontSize: '0.78rem', color: '#c0a878', fontStyle: 'italic', lineHeight: 1.4 }}>
-        {item.description}
+        {lang === 'zh' && item.descriptionZh ? item.descriptionZh : item.description}
       </div>
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
         {Object.entries(item.effects).map(([stat, val]) => (

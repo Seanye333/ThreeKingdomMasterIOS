@@ -4,6 +4,7 @@ import { useGameStore } from '../../game/state/store';
 import type { Officer } from '../../game/types';
 import { OfficerDetail } from './OfficerDetail';
 import styles from './BondsModal.module.css';
+import { useT, useLanguage } from '../i18n';
 
 interface Props {
   onClose: () => void;
@@ -25,6 +26,7 @@ export function BondsModal({ onClose }: Props) {
   const forces = useGameStore((s) => s.forces);
   const runtimeBonds = useGameStore((s) => s.runtimeBonds);
   const [selectedOfficer, setSelectedOfficer] = useState<Officer | null>(null);
+  const t = useT();
 
   const rows = useMemo<BondRow[]>(() => {
     return [...OATH_BONDS, ...runtimeBonds].map((bond) => {
@@ -53,10 +55,12 @@ export function BondsModal({ onClose }: Props) {
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <header className={styles.header}>
           <div>
-            <div className={styles.titleZh}>絆</div>
+            <div className={styles.titleZh}>{t('絆', 'Bonds')}</div>
             <div className={styles.titleEn}>
-              Bonds & Allegiances — {grouped.active.length} active ·{' '}
-              {grouped.dormant.length} dormant · {grouped.broken.length} broken
+              {t(
+                `現役 ${grouped.active.length} · 沉寂 ${grouped.dormant.length} · 斷絕 ${grouped.broken.length}`,
+                `Bonds & Allegiances — ${grouped.active.length} active · ${grouped.dormant.length} dormant · ${grouped.broken.length} broken`,
+              )}
             </div>
           </div>
           <button className={styles.closeButton} onClick={onClose}>
@@ -65,24 +69,24 @@ export function BondsModal({ onClose }: Props) {
         </header>
 
         <Section
-          title={`Active 現役 — both officers in the same force`}
+          title={t('現役 — 兩位武將同屬一勢力', 'Active — both officers in the same force')}
           rows={grouped.active}
           forces={forces}
-          emptyMsg="No bonds are currently active."
+          emptyMsg={t('目前無啟動中之羈絆。', 'No bonds are currently active.')}
           onPickOfficer={setSelectedOfficer}
         />
         <Section
-          title={`Dormant 沈黙 — separated by allegiance or location`}
+          title={t('沉寂 — 因效忠或所在地而暫絕', 'Dormant — separated by allegiance or location')}
           rows={grouped.dormant}
           forces={forces}
-          emptyMsg="No dormant bonds."
+          emptyMsg={t('無沉寂之羈絆。', 'No dormant bonds.')}
           onPickOfficer={setSelectedOfficer}
         />
         <Section
-          title={`Broken 斷絕 — at least one party has died`}
+          title={t('斷絕 — 至少一方已亡', 'Broken — at least one party has died')}
           rows={grouped.broken}
           forces={forces}
-          emptyMsg="No broken bonds."
+          emptyMsg={t('無斷絕之羈絆。', 'No broken bonds.')}
           onPickOfficer={setSelectedOfficer}
           dim
         />
@@ -145,13 +149,14 @@ function BondRowView({
 }) {
   const aForce = row.officerA?.forceId ? forces[row.officerA.forceId] : null;
   const bForce = row.officerB?.forceId ? forces[row.officerB.forceId] : null;
+  const t = useT();
   return (
     <li className={styles.row}>
       <OfficerCell officer={row.officerA} force={aForce} onClick={onPickOfficer} />
       <div className={styles.linkBlock}>
         <div className={styles.bondLabel}>{row.label}</div>
         <div className={styles.bondFloor}>
-          ≥ {row.floor} loyalty
+          ≥ {row.floor} {t('忠誠', 'loyalty')}
         </div>
         <div className={`${styles.bondKind} ${styles[`kind_${row.kind}`]}`}>
           {row.kind}
@@ -171,6 +176,7 @@ function OfficerCell({
   force: { color: string; name: { en: string; zh: string } } | null;
   onClick: (o: Officer) => void;
 }) {
+  const lang = useLanguage();
   if (!officer) return <div className={styles.cellMissing}>—</div>;
   const dead = officer.status === 'dead';
   return (
@@ -181,9 +187,9 @@ function OfficerCell({
     >
       <div className={styles.cellName}>
         <span className={`${styles.cellNameZh} ${dead ? styles.dead : ''}`}>
-          {officer.name.zh}
+          {lang === 'en' ? officer.name.en : officer.name.zh}
         </span>
-        <span className={styles.cellNameEn}>{officer.name.en}</span>
+        {lang === 'both' && <span className={styles.cellNameEn}>{officer.name.en}</span>}
       </div>
       <div className={styles.cellFooter}>
         <span
@@ -191,7 +197,7 @@ function OfficerCell({
           style={{ background: force?.color ?? '#5a4530' }}
         />
         <span className={styles.cellForce}>
-          {force?.name.zh ?? (dead ? '亡' : '浪人')}
+          {force ? (lang === 'en' ? force.name.en : force.name.zh) : (dead ? '亡' : '浪人')}
         </span>
         <span className={styles.cellLoy}>L{officer.loyalty}</span>
       </div>

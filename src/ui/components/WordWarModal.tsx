@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { WordWarResult } from '../../game/systems/wordWar';
 import { useGameStore } from '../../game/state/store';
+import { useT, useLanguage } from '../i18n';
 
 interface Props {
   result: WordWarResult;
@@ -13,6 +14,8 @@ export function WordWarModal({ result, onClose }: Props) {
   const total = result.lines.length;
   const cur = idx < total ? result.lines[idx] : null;
   const speaker = cur ? officers[cur.speakerId] : null;
+  const t = useT();
+  const lang = useLanguage();
 
   return (
     <div
@@ -45,13 +48,14 @@ export function WordWarModal({ result, onClose }: Props) {
             marginBottom: '1rem',
           }}
         >
-          War of Words · 舌戰
+          {t('舌戰', 'War of Words')}
         </div>
 
         {cur ? (
           <>
             <div style={{ fontSize: '1.1rem', color: '#d4a84a', letterSpacing: '0.2rem' }}>
-              {speaker?.name.zh} {speaker?.name.en}
+              {lang === 'en' ? speaker?.name.en : speaker?.name.zh}
+              {lang === 'both' && <> <span style={{ fontSize: '0.85rem', color: '#8a7050', fontStyle: 'italic' }}>{speaker?.name.en}</span></>}
             </div>
             <hr
               style={{
@@ -70,18 +74,20 @@ export function WordWarModal({ result, onClose }: Props) {
                 fontStyle: 'italic',
               }}
             >
-              「 {cur.text.zh} 」
+              「 {lang === 'en' ? cur.text.en : cur.text.zh} 」
             </div>
-            <div
-              style={{
-                fontSize: '0.85rem',
-                color: '#8a7050',
-                marginTop: '0.5rem',
-                fontStyle: 'italic',
-              }}
-            >
-              {cur.text.en}
-            </div>
+            {lang === 'both' && (
+              <div
+                style={{
+                  fontSize: '0.85rem',
+                  color: '#8a7050',
+                  marginTop: '0.5rem',
+                  fontStyle: 'italic',
+                }}
+              >
+                {cur.text.en}
+              </div>
+            )}
             <div style={{ marginTop: '1.5rem', fontSize: '0.75rem', color: '#8a7050' }}>
               {idx + 1} / {total}
             </div>
@@ -98,7 +104,7 @@ export function WordWarModal({ result, onClose }: Props) {
                 letterSpacing: '0.2rem',
               }}
             >
-              {idx + 1 < total ? '次 Next' : '見終 Reveal'}
+              {idx + 1 < total ? t('下一句', 'Next') : t('見分曉', 'Reveal')}
             </button>
           </>
         ) : (
@@ -111,16 +117,16 @@ export function WordWarModal({ result, onClose }: Props) {
                 margin: '1.5rem 0',
               }}
             >
-              {result.winnerSide === 'attacker' && '攻方勝舌'}
-              {result.winnerSide === 'defender' && '守方勝舌'}
-              {result.winnerSide === 'draw' && '平分秋色'}
+              {result.winnerSide === 'attacker' && t('攻方勝舌', 'Attackers prevail')}
+              {result.winnerSide === 'defender' && t('守方勝舌', 'Defenders prevail')}
+              {result.winnerSide === 'draw' && t('平分秋色', 'A stalemate')}
             </div>
             <div style={{ fontSize: '0.85rem', color: '#c0a878', marginBottom: '1rem' }}>
               {result.winnerSide === 'attacker' &&
-                'The defenders\' morale wavers — they begin the battle at −10.'}
+                t('守方士氣動搖——開戰時士氣 −10。', "The defenders' morale wavers — they begin the battle at −10.")}
               {result.winnerSide === 'defender' &&
-                'The attackers\' morale wavers — they begin the battle at −10.'}
-              {result.winnerSide === 'draw' && 'Neither side concedes. Battle begins as planned.'}
+                t('攻方士氣動搖——開戰時士氣 −10。', "The attackers' morale wavers — they begin the battle at −10.")}
+              {result.winnerSide === 'draw' && t('雙方各執一詞,戰事如期而起。', 'Neither side concedes. Battle begins as planned.')}
             </div>
             <button
               onClick={onClose}
@@ -134,7 +140,7 @@ export function WordWarModal({ result, onClose }: Props) {
                 letterSpacing: '0.3rem',
               }}
             >
-              開戰 Begin Battle
+              {t('開戰', 'Begin Battle')}
             </button>
           </>
         )}

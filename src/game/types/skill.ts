@@ -42,6 +42,7 @@ export interface Skill {
   name: BilingualName;
   category: SkillCategory;
   description: string;
+  descriptionZh?: string;
   combat?: SkillCombatEffects;
   civil?: SkillCivilEffects;
 }

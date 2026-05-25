@@ -21,12 +21,14 @@ import { SaveSlotsModal } from '../components/SaveSlotsModal';
 import { SeasonReportModal } from '../components/SeasonReportModal';
 import { BattleTheaterModal } from '../components/BattleTheaterModal';
 import { StrategicMap } from '../components/StrategicMap';
+import { StrategicMap3D } from '../components/StrategicMap3D';
 import { TutorialOverlay } from '../components/TutorialOverlay';
 import { VictoryModal } from '../components/VictoryModal';
 import { WishesModal } from '../components/WishesModal';
 import { TacticalBattleScreen } from './TacticalBattleScreen';
 import { HudMenu } from '../components/HudMenu';
 import { THEMES, getStoredTheme, applyTheme, type ThemeId } from '../theme';
+import { useT } from '../i18n';
 import styles from './MapScreen.module.css';
 
 // Code-split heavy / rarely-opened modals. They are loaded on demand the
@@ -46,6 +48,8 @@ const GovernorsModal = lazy(() => import('../components/GovernorsModal').then(m 
 const FormationsModal = lazy(() => import('../components/FormationsModal').then(m => ({ default: m.FormationsModal })));
 
 export function MapScreen() {
+  const [use3DMap, setUse3DMap] = useState(true);
+  const t = useT();
   const [showForces, setShowForces] = useState(false);
   const [showDiplomacy, setShowDiplomacy] = useState(false);
   const [showOfficers, setShowOfficers] = useState(false);
@@ -122,7 +126,7 @@ export function MapScreen() {
     <div className={styles.root}>
       <header className={styles.topBar}>
         <button className={styles.backButton} onClick={reset}>
-          ← Title
+          ← {t('標題', 'Title')}
         </button>
         <div className={styles.dateBlock}>
           <span className={styles.year}>{date.year} AD</span>
@@ -152,94 +156,94 @@ export function MapScreen() {
                 style={{ background: playerForce.color }}
               />
               <span className={styles.playerName}>{playerForce.name.zh}</span>
-              <span className={styles.playerNameEn}>{playerForce.name.en}</span>
+              <span className={styles.playerNameEn}>{t('', playerForce.name.en)}</span>
             </>
           )}
         </div>
         <div className={styles.orderBlock}>
-          Orders: <strong>{pendingCount}/{playerCityCount}</strong>
+          {t('指令', 'Orders')}: <strong>{pendingCount}/{playerCityCount}</strong>
         </div>
         {/* Top-tier (always visible — most clicked) */}
         <button
           className={styles.forcesButton}
           onClick={() => setShowOfficers(true)}
         >
-          武将 Officers
+          {t('武將', 'Officers')}
         </button>
         <button
           className={styles.forcesButton}
           onClick={() => setShowDiplomacy(true)}
         >
-          外交 Diplomacy
+          {t('外交', 'Diplomacy')}
         </button>
         <button
           className={styles.forcesButton}
           onClick={() => setShowForces(true)}
         >
-          群雄 Forces
+          {t('群雄', 'Forces')}
         </button>
 
         {/* ── Grouped dropdowns ── */}
         <HudMenu
-          label="人才"
-          title="Personnel — bonds, deeds, biographies"
+          label={t('人才', 'Personnel')}
+          title={t('人才 — 絆、武功、列傳', 'Personnel — bonds, deeds, biographies')}
           items={[
-            { label: '絆 Bonds',     onClick: () => setShowBonds(true) },
-            { label: '武功 Deeds',   onClick: () => setShowDeeds(true) },
-            { label: '列傳 Wiki',    onClick: () => setShowEncyclopedia(true) },
-            { label: '關係図 Graph', onClick: () => setShowDipGraph(true) },
+            { label: t('絆', 'Bonds'),       onClick: () => setShowBonds(true) },
+            { label: t('武功', 'Deeds'),     onClick: () => setShowDeeds(true) },
+            { label: t('列傳', 'Wiki'),      onClick: () => setShowEncyclopedia(true) },
+            { label: t('關係図', 'Graph'),   onClick: () => setShowDipGraph(true) },
             ...(careerMode
-              ? [{ label: '列傳 Career', onClick: () => setShowCareer(true) }]
+              ? [{ label: t('列傳', 'Career'), onClick: () => setShowCareer(true) }]
               : []),
           ]}
         />
         <HudMenu
-          label="朝堂"
-          title="Court — appointments, governors, edicts"
+          label={t('朝堂', 'Court')}
+          title={t('朝堂 — 任官、州牧、朝廷', 'Court — appointments, governors, edicts')}
           items={[
-            { label: '任官 Titles',    onClick: () => setShowTitles(true) },
-            { label: '州牧 Governors', onClick: () => setShowGovernors(true) },
-            { label: '朝廷 Court',     onClick: () => setShowCourt(true) },
-            { label: '書信 Letters',   onClick: () => setShowWishes(true), badge: wishes.length },
+            { label: t('任官', 'Titles'),    onClick: () => setShowTitles(true) },
+            { label: t('州牧', 'Governors'), onClick: () => setShowGovernors(true) },
+            { label: t('朝廷', 'Court'),     onClick: () => setShowCourt(true) },
+            { label: t('書信', 'Letters'),   onClick: () => setShowWishes(true), badge: wishes.length },
           ]}
         />
         <HudMenu
-          label="军务"
-          title="Military — battles, espionage, formations"
+          label={t('軍務', 'Military')}
+          title={t('軍務 — 戰史、密偵、陣形', 'Military — battles, espionage, formations')}
           items={[
-            { label: '戰史 Battles',    onClick: () => setShowHistory(true) },
-            { label: '戰史 Replays',    onClick: () => setShowReplays(true) },
-            { label: '密偵 Espionage',  onClick: () => setShowEspionage(true) },
-            { label: '陣形 Formations', onClick: () => setShowFormations(true) },
+            { label: t('戰史', 'Battles'),    onClick: () => setShowHistory(true) },
+            { label: t('戰錄', 'Replays'),    onClick: () => setShowReplays(true) },
+            { label: t('密偵', 'Espionage'),  onClick: () => setShowEspionage(true) },
+            { label: t('陣形', 'Formations'), onClick: () => setShowFormations(true) },
           ]}
         />
         <HudMenu
-          label="匠工"
-          title="Crafting — armoury and forge"
+          label={t('匠工', 'Crafting')}
+          title={t('匠工 — 寶物、鍛造', 'Crafting — armoury and forge')}
           items={[
-            { label: '宝物 Armoury', onClick: () => setShowArmoury(true) },
-            { label: '鍛造 Forge',   onClick: () => setShowForge(true) },
+            { label: t('寶物', 'Armoury'), onClick: () => setShowArmoury(true) },
+            { label: t('鍛造', 'Forge'),   onClick: () => setShowForge(true) },
           ]}
         />
         <HudMenu
-          label="记录"
-          title="Records — achievements & stats"
+          label={t('記錄', 'Records')}
+          title={t('記錄 — 勳功、戰記', 'Records — achievements & stats')}
           items={[
-            { label: '勳功 Achievements', onClick: () => setShowAch(true) },
-            { label: '戰記 Stats',        onClick: () => setShowCampaignStats(true) },
+            { label: t('勳功', 'Achievements'), onClick: () => setShowAch(true) },
+            { label: t('戰記', 'Stats'),        onClick: () => setShowCampaignStats(true) },
           ]}
         />
         <HudMenu
-          label="設定"
-          title="System — settings, save/load, sound"
+          label={t('設定', 'System')}
+          title={t('系統 — 設定、存讀、音效', 'System — settings, save/load, sound')}
           items={[
-            { label: '⚙ Settings',                   onClick: () => setShowSettings(true) },
-            { label: fogOfWar ? '🌫 Fog: On' : '☀ Fog: Off', onClick: () => setFogOfWar(!fogOfWar) },
-            { label: '📖 Tutorial',                  onClick: () => setTutorialStep(0) },
-            { label: '保存 Save',                    onClick: () => setShowSave('save') },
-            { label: '載入 Load',                    onClick: () => setShowSave('load') },
-            { label: soundEnabled ? '🔊 Sound: On' : '🔇 Sound: Off', onClick: () => setSoundEnabled(!soundEnabled) },
-            ...THEMES.map((t) => ({
+            { label: t('⚙ 設定', '⚙ Settings'),                onClick: () => setShowSettings(true) },
+            { label: fogOfWar ? t('🌫 戰霧：開', '🌫 Fog: On') : t('☀ 戰霧：關', '☀ Fog: Off'), onClick: () => setFogOfWar(!fogOfWar) },
+            { label: t('📖 教學', '📖 Tutorial'),               onClick: () => setTutorialStep(0) },
+            { label: t('保存', 'Save'),                        onClick: () => setShowSave('save') },
+            { label: t('載入', 'Load'),                        onClick: () => setShowSave('load') },
+            { label: soundEnabled ? t('🔊 音效：開', '🔊 Sound: On') : t('🔇 音效：關', '🔇 Sound: Off'), onClick: () => setSoundEnabled(!soundEnabled) },
+            ...THEMES.map((th) => ({
               label: (
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
                   <span
@@ -252,15 +256,15 @@ export function MapScreen() {
                       border: '1px solid rgba(0,0,0,0.3)',
                     }}
                   >
-                    <span style={{ flex: 1, background: t.swatch[0] }} />
-                    <span style={{ flex: 1, background: t.swatch[1] }} />
-                    <span style={{ flex: 1, background: t.swatch[2] }} />
+                    <span style={{ flex: 1, background: th.swatch[0] }} />
+                    <span style={{ flex: 1, background: th.swatch[1] }} />
+                    <span style={{ flex: 1, background: th.swatch[2] }} />
                   </span>
-                  {theme === t.id ? '✓ ' : '  '}
-                  {t.zh} {t.en}
+                  {theme === th.id ? '✓ ' : '  '}
+                  {t(th.zh, th.en)}
                 </span>
               ),
-              onClick: () => handleSetTheme(t.id),
+              onClick: () => handleSetTheme(th.id),
             })),
           ]}
         />
@@ -281,28 +285,48 @@ export function MapScreen() {
           }}
         >
           {hotSeatPlayers.length > 1
-            ? `End ${hotSeatPlayers[hotSeatActiveIndex]?.label ?? 'Turn'} →`
-            : `下旬 ${monthNum}月${phaseInfo.zh} →`}
+            ? t(`結束 ${hotSeatPlayers[hotSeatActiveIndex]?.label ?? '回合'} →`,
+                `End ${hotSeatPlayers[hotSeatActiveIndex]?.label ?? 'Turn'} →`)
+            : t(`下旬 ${monthNum}月${phaseInfo.zh} →`,
+                `End ${monthNum}m ${phaseInfo.zh} →`)}
         </button>
       </header>
 
       <main className={styles.main}>
         <div className={styles.mapWrap} style={{ position: 'relative' }}>
-          <StrategicMap />
-          {/* Seasonal palette overlay */}
-          <div
-            className={`seasonal-${currentSeasonKey}`}
-            style={{
-              position: 'absolute',
-              inset: 0,
-              pointerEvents: 'none',
-              mixBlendMode: 'overlay',
-            }}
-          />
-          {/* Objective tracker in the top-left corner of the map */}
-          <div style={{ position: 'absolute', top: 8, left: 8, pointerEvents: 'none' }}>
-            <ObjectivePanel />
-          </div>
+          {use3DMap ? (
+            <StrategicMap3D onSwitch2D={() => setUse3DMap(false)} />
+          ) : (
+            <>
+              <StrategicMap />
+              {/* Seasonal palette overlay */}
+              <div
+                className={`seasonal-${currentSeasonKey}`}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  pointerEvents: 'none',
+                  mixBlendMode: 'overlay',
+                }}
+              />
+              {/* Objective tracker in the top-left corner of the map */}
+              <div style={{ position: 'absolute', top: 8, left: 8, pointerEvents: 'none' }}>
+                <ObjectivePanel />
+              </div>
+              {/* Switch to 3D button */}
+              <button
+                onClick={() => setUse3DMap(true)}
+                style={{
+                  position: 'absolute', top: 12, right: 12,
+                  background: '#1a3a5a', color: '#88b7e8',
+                  border: '1px solid #88b7e8', padding: '0.35rem 0.7rem',
+                  cursor: 'pointer', fontFamily: 'Songti SC, serif',
+                  boxShadow: '0 0 8px rgba(0,0,0,0.6)',
+                }}
+                title={t('切換 3D 地圖', 'Switch to 3D map')}
+              >{t('切換 3D', 'Switch 3D')} ⇄</button>
+            </>
+          )}
         </div>
         <CityPanel />
       </main>

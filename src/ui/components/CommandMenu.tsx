@@ -6,6 +6,7 @@ import type { EntityId, InternalAffairsType } from '../../game/types';
 import { MarchPicker } from './MarchPicker';
 import { OfficerPicker } from './OfficerPicker';
 import styles from './CommandMenu.module.css';
+import { useT, useLanguage, useDesc } from '../i18n';
 
 interface Props {
   cityId: EntityId;
@@ -47,6 +48,9 @@ export function CommandMenu({ cityId, onOpenCityMap }: Props) {
   const officersMap = useGameStore((s) => s.officers);
   const citiesMap = useGameStore((s) => s.cities);
   const cancelCommand = useGameStore((s) => s.cancelCommand);
+  const t = useT();
+  const lang = useLanguage();
+  const desc = useDesc();
 
   if (!city) return null;
 
@@ -68,16 +72,16 @@ export function CommandMenu({ cityId, onOpenCityMap }: Props) {
                 <div className={styles.activeRow}>
                   <div className={styles.activeText}>
                     <span className={styles.activeLabel}>
-                      {def.label.zh} · {def.label.en}
+                      {lang === 'en' ? def.label.en : lang === 'both' ? `${def.label.zh} · ${def.label.en}` : def.label.zh}
                     </span>
                     <span className={styles.activeOfficer}>
-                      by {officer.name.zh} {officer.name.en}
+                      {t('由', 'by')} {lang === 'en' ? officer.name.en : officer.name.zh}
                       {cmd.type === 'march' && targetCity && (
                         <>
                           {' → '}
-                          <strong>{targetCity.name.zh}</strong>
-                          {' with '}
-                          {cmd.troops.toLocaleString()} troops
+                          <strong>{lang === 'en' ? targetCity.name.en : targetCity.name.zh}</strong>
+                          {' '}{t('率', 'with')}{' '}
+                          {cmd.troops.toLocaleString()} {t('兵', 'troops')}
                         </>
                       )}
                     </span>
@@ -85,7 +89,7 @@ export function CommandMenu({ cityId, onOpenCityMap }: Props) {
                   <button
                     className={styles.cancelButton}
                     onClick={() => cancelCommand(cmd.officerId)}
-                    title="Cancel command (refund gold)"
+                    title={t('取消命令 (退還金錢)', 'Cancel command (refund gold)')}
                   >
                     ×
                   </button>
@@ -103,8 +107,10 @@ export function CommandMenu({ cityId, onOpenCityMap }: Props) {
           const currentSize = citySize(city);
           const tierOk = meetsMinSize(currentSize.id, def.minSize);
           const minSizeDef = def.minSize ? CITY_SIZES_BY_ID[def.minSize] : null;
-          const lockedReason = !tierOk && minSizeDef ? `Requires ${minSizeDef.name.zh}+ tier` : null;
-          const reason = lockedReason ?? (!canAfford ? 'Not enough gold' : def.description);
+          const lockedReason = !tierOk && minSizeDef
+            ? t(`需要 ${minSizeDef.name.zh}+ 級城市`, `Requires ${minSizeDef.name.en}+ tier`)
+            : null;
+          const reason = lockedReason ?? (!canAfford ? t('金錢不足', 'Not enough gold') : desc(def));
           return (
             <button
               key={type}
@@ -115,10 +121,10 @@ export function CommandMenu({ cityId, onOpenCityMap }: Props) {
               style={!tierOk ? { opacity: 0.45 } : undefined}
             >
               <span className={styles.cmdLabelZh}>
-                {def.label.zh}
-                {def.minSize && <span style={{ fontSize: '0.55rem', color: '#8a7050', marginLeft: 4 }}>★{minSizeDef?.name.zh}+</span>}
+                {lang === 'en' ? def.label.en : def.label.zh}
+                {def.minSize && <span style={{ fontSize: '0.55rem', color: '#8a7050', marginLeft: 4 }}>★{lang === 'en' ? minSizeDef?.name.en : minSizeDef?.name.zh}+</span>}
               </span>
-              <span className={styles.cmdLabelEn}>{def.label.en}</span>
+              {lang === 'both' && <span className={styles.cmdLabelEn}>{def.label.en}</span>}
               <span className={styles.cmdCost}>{def.goldCost}g</span>
             </button>
           );
@@ -130,25 +136,25 @@ export function CommandMenu({ cityId, onOpenCityMap }: Props) {
           title={
             !canMarch
               ? city.troops === 0
-                ? 'No troops to march'
-                : 'Not enough gold'
-              : marchDef.description
+                ? t('無兵可出', 'No troops to march')
+                : t('金錢不足', 'Not enough gold')
+              : desc(marchDef)
           }
         >
-          <span className={styles.cmdLabelZh}>{marchDef.label.zh}</span>
-          <span className={styles.cmdLabelEn}>{marchDef.label.en}</span>
+          <span className={styles.cmdLabelZh}>{lang === 'en' ? marchDef.label.en : marchDef.label.zh}</span>
+          {lang === 'both' && <span className={styles.cmdLabelEn}>{marchDef.label.en}</span>}
           <span className={styles.cmdCost}>{marchDef.goldCost}g</span>
         </button>
         {onOpenCityMap && (
           <button
             className={styles.cmdButton}
             onClick={onOpenCityMap}
-            title="Open city map — build outer defenses (箭樓 / 拒馬 / 鐵索 / 落石…)"
+            title={t('開啟城邑地圖 — 建造外圍防禦 (箭樓 / 拒馬 / 鐵索 / 落石…)', 'Open city map — build outer defenses (箭樓 / 拒馬 / 鐵索 / 落石…)')}
             style={{ borderColor: '#d4a84a' }}
           >
-            <span className={styles.cmdLabelZh}>★ 城邑地圖</span>
-            <span className={styles.cmdLabelEn}>City Map</span>
-            <span className={styles.cmdCost}>open</span>
+            <span className={styles.cmdLabelZh}>★ {t('城邑地圖', 'City Map')}</span>
+            {lang === 'both' && <span className={styles.cmdLabelEn}>City Map</span>}
+            <span className={styles.cmdCost}>{t('開', 'open')}</span>
           </button>
         )}
       </div>

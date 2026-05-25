@@ -169,6 +169,39 @@ export function breakAlliance(
 }
 
 // ──────────────────────────────────────────────────────────────────────
+// Hostage exchange — surrender one of your officers to live at the
+// target's court as guarantor of peace. Big relation boost (50) + NAP.
+// ──────────────────────────────────────────────────────────────────────
+export const HOSTAGE_RELATION_BONUS = 50;
+
+export function proposeHostage(
+  ctx: DiplomaticContext,
+): DiplomaticOutcome {
+  const current = getRelation(ctx.diplomacy, ctx.player.id, ctx.target.id);
+  if (current.status === 'allied') {
+    return {
+      ok: false,
+      message: `Already allied with ${ctx.target.name.en} — no hostage needed.`,
+      diplomacy: ctx.diplomacy,
+    };
+  }
+  // Acceptance: high — hostages are a near-guaranteed peace signal
+  const next = setRelation(ctx.diplomacy, ctx.player.id, ctx.target.id, (r) => ({
+    ...r,
+    status: 'non-aggression',
+    score: clamp(-100, 100, r.score + HOSTAGE_RELATION_BONUS),
+    expiresAt: addSeasons(ctx.date, NAP_DURATION_SEASONS * 2),
+  }));
+  return {
+    ok: true,
+    accepted: true,
+    message: `${ctx.target.name.en} accepts the hostage. A long peace is sworn (${NAP_DURATION_SEASONS * 2} seasons).`,
+    diplomacy: next,
+    scoreDelta: HOSTAGE_RELATION_BONUS,
+  };
+}
+
+// ──────────────────────────────────────────────────────────────────────
 // Per-season tick: expire NAPs and decay relations gently.
 // ──────────────────────────────────────────────────────────────────────
 

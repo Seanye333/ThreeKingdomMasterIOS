@@ -1,4 +1,5 @@
 import { useGameStore } from '../../game/state/store';
+import { useT, useLanguage } from '../i18n';
 
 const TUTORIAL_STEPS: Array<{ titleZh: string; titleEn: string; bodyZh: string; bodyEn: string }> = [
   {
@@ -36,6 +37,8 @@ const TUTORIAL_STEPS: Array<{ titleZh: string; titleEn: string; bodyZh: string; 
 export function TutorialOverlay() {
   const step = useGameStore((s) => s.tutorialStep);
   const setStep = useGameStore((s) => s.setTutorialStep);
+  const t = useT();
+  const lang = useLanguage();
   if (step === null) return null;
   const safeStep = Math.max(0, Math.min(TUTORIAL_STEPS.length - 1, step));
   const cur = TUTORIAL_STEPS[safeStep];
@@ -66,27 +69,33 @@ export function TutorialOverlay() {
           marginBottom: '0.3rem',
         }}
       >
-        Tutorial {safeStep + 1} / {TUTORIAL_STEPS.length}
+        {t('教學', 'Tutorial')} {safeStep + 1} / {TUTORIAL_STEPS.length}
       </div>
       <div style={{ fontSize: '1.2rem', color: '#d4a84a', letterSpacing: '0.2rem' }}>
-        {cur.titleZh}
+        {lang === 'en' ? cur.titleEn : cur.titleZh}
       </div>
-      <div style={{ fontSize: '0.78rem', color: '#8a7050', fontStyle: 'italic', marginBottom: '0.5rem' }}>
-        {cur.titleEn}
-      </div>
+      {lang === 'both' && (
+        <div style={{ fontSize: '0.78rem', color: '#8a7050', fontStyle: 'italic', marginBottom: '0.5rem' }}>
+          {cur.titleEn}
+        </div>
+      )}
       <hr style={{ border: 'none', height: 1, background: '#4a3520', margin: '0.5rem 0' }} />
-      <div style={{ fontSize: '0.88rem', lineHeight: 1.7, color: '#d4a84a' }}>{cur.bodyZh}</div>
-      <div
-        style={{
-          fontSize: '0.78rem',
-          color: '#c0a878',
-          fontStyle: 'italic',
-          marginTop: '0.4rem',
-          lineHeight: 1.5,
-        }}
-      >
-        {cur.bodyEn}
+      <div style={{ fontSize: '0.88rem', lineHeight: 1.7, color: '#d4a84a' }}>
+        {lang === 'en' ? cur.bodyEn : cur.bodyZh}
       </div>
+      {lang === 'both' && (
+        <div
+          style={{
+            fontSize: '0.78rem',
+            color: '#c0a878',
+            fontStyle: 'italic',
+            marginTop: '0.4rem',
+            lineHeight: 1.5,
+          }}
+        >
+          {cur.bodyEn}
+        </div>
+      )}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.8rem' }}>
         <button
           onClick={() => setStep(null)}
@@ -100,7 +109,7 @@ export function TutorialOverlay() {
             fontSize: '0.78rem',
           }}
         >
-          Skip
+          {t('略過', 'Skip')}
         </button>
         <button
           onClick={() => {
@@ -117,7 +126,7 @@ export function TutorialOverlay() {
             letterSpacing: '0.15rem',
           }}
         >
-          {isLast ? '完了 Done' : '次 Next'}
+          {isLast ? t('完了', 'Done') : t('下一步', 'Next')}
         </button>
       </div>
     </div>

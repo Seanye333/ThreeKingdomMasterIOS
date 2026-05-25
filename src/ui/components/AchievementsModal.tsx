@@ -4,6 +4,7 @@ import {
   loadAchievementProgress,
 } from '../../game/systems/achievements';
 import type { AchievementProgress } from '../../game/types';
+import { useDesc } from '../i18n';
 
 interface Props {
   onClose: () => void;
@@ -18,6 +19,7 @@ const TIER_COLORS = {
 
 export function AchievementsModal({ onClose }: Props) {
   const [progress, setProgress] = useState<AchievementProgress | null>(null);
+  const desc = useDesc();
 
   useEffect(() => {
     setProgress(loadAchievementProgress());
@@ -114,7 +116,7 @@ export function AchievementsModal({ onClose }: Props) {
                   }}>{a.tier}</span>
                 </div>
                 <div style={{ fontSize: '0.72rem', color: '#c0a878', marginTop: '0.2rem', fontStyle: 'italic', lineHeight: 1.4 }}>
-                  {a.description}
+                  {desc(a)}
                 </div>
               </div>
             );

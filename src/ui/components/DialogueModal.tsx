@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { useGameStore } from '../../game/state/store';
+import { useT, useLanguage } from '../i18n';
 
 export function DialogueModal() {
   const dlg = useGameStore((s) => s.pendingDialogue);
   const accept = useGameStore((s) => s.acceptDialogue);
   const officers = useGameStore((s) => s.officers);
   const [choseIdx, setChoseIdx] = useState<number | null>(null);
+  const t = useT();
+  const lang = useLanguage();
   if (!dlg) return null;
   const speaker = dlg.speakerOfficerId ? officers[dlg.speakerOfficerId] : null;
   const speakerName = speaker
@@ -40,14 +43,16 @@ export function DialogueModal() {
           marginBottom: '0.7rem',
           textAlign: 'center',
         }}>
-          書信 · Court Event
+          {t('書信', 'Court Event')}
         </div>
         <div style={{ fontSize: '1.2rem', color: '#d4a84a', letterSpacing: '0.2rem', textAlign: 'center' }}>
-          {speakerName.zh}
+          {lang === 'en' ? speakerName.en : speakerName.zh}
         </div>
-        <div style={{ fontSize: '0.78rem', color: '#8a7050', fontStyle: 'italic', textAlign: 'center', marginBottom: '1rem' }}>
-          {speakerName.en}
-        </div>
+        {lang === 'both' && (
+          <div style={{ fontSize: '0.78rem', color: '#8a7050', fontStyle: 'italic', textAlign: 'center', marginBottom: '1rem' }}>
+            {speakerName.en}
+          </div>
+        )}
         <hr style={{
           border: 'none', height: 1,
           background: 'linear-gradient(90deg, transparent, #d4a84a, transparent)',
@@ -60,10 +65,12 @@ export function DialogueModal() {
           textAlign: 'justify',
           fontStyle: 'italic',
           margin: 0,
-        }}>{dlg.text.zh}</p>
-        <p style={{ fontSize: '0.85rem', color: '#c0a878', textAlign: 'justify', marginTop: '0.5rem' }}>
-          {dlg.text.en}
-        </p>
+        }}>{lang === 'en' ? dlg.text.en : dlg.text.zh}</p>
+        {lang === 'both' && (
+          <p style={{ fontSize: '0.85rem', color: '#c0a878', textAlign: 'justify', marginTop: '0.5rem' }}>
+            {dlg.text.en}
+          </p>
+        )}
 
         {!chosen ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '1.5rem' }}>
@@ -83,10 +90,8 @@ export function DialogueModal() {
                   letterSpacing: '0.1rem',
                 }}
               >
-                {c.label.zh}{' '}
-                <span style={{ color: '#8a7050', fontSize: '0.75rem', fontStyle: 'italic' }}>
-                  {c.label.en}
-                </span>
+                {lang === 'en' ? c.label.en : c.label.zh}
+                {lang === 'both' && <> <span style={{ color: '#8a7050', fontSize: '0.75rem', fontStyle: 'italic' }}>{c.label.en}</span></>}
               </button>
             ))}
           </div>
@@ -94,8 +99,8 @@ export function DialogueModal() {
           <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
             {chosen.outcome && (
               <>
-                <p style={{ fontSize: '0.95rem', color: '#d4a84a' }}>{chosen.outcome.zh}</p>
-                <p style={{ fontSize: '0.8rem', color: '#c0a878', fontStyle: 'italic' }}>{chosen.outcome.en}</p>
+                <p style={{ fontSize: '0.95rem', color: '#d4a84a' }}>{lang === 'en' ? chosen.outcome.en : chosen.outcome.zh}</p>
+                {lang === 'both' && <p style={{ fontSize: '0.8rem', color: '#c0a878', fontStyle: 'italic' }}>{chosen.outcome.en}</p>}
               </>
             )}
             <button
@@ -111,7 +116,7 @@ export function DialogueModal() {
                 marginTop: '0.5rem',
               }}
             >
-              続行 Continue
+              {t('續行', 'Continue')}
             </button>
           </div>
         )}

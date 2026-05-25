@@ -5,6 +5,7 @@ import {
 } from '../../game/data/officerAttributes';
 import { OfficerDetail } from './OfficerDetail';
 import styles from './OfficersTab.module.css';
+import { useT, useLanguage } from '../i18n';
 
 function topStatKey(s: OfficerStats): keyof OfficerStats {
   let key: keyof OfficerStats = 'leadership';
@@ -30,7 +31,17 @@ type SortKey =
   | 'charisma'
   | 'age';
 
-const SORT_LABEL: Record<SortKey, string> = {
+const SORT_LABEL_ZH: Record<SortKey, string> = {
+  name:         '姓名',
+  total:        '總計',
+  leadership:   '統率',
+  war:          '武力',
+  intelligence: '知力',
+  politics:     '政治',
+  charisma:     '魅力',
+  age:          '年齡',
+};
+const SORT_LABEL_EN: Record<SortKey, string> = {
   name:         'Name',
   total:        'Total',
   leadership:   'LED',
@@ -51,6 +62,9 @@ export function ScenarioOfficersBrowser({ scenario, onClose }: Props) {
   const [search, setSearch] = useState('');
   const [minStat, setMinStat] = useState<number>(0);
   const [statKey, setStatKey] = useState<keyof OfficerStats | 'any'>('any');
+  const t = useT();
+  const lang = useLanguage();
+  const SORT_LABEL = lang === 'en' ? SORT_LABEL_EN : SORT_LABEL_ZH;
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -131,10 +145,10 @@ export function ScenarioOfficersBrowser({ scenario, onClose }: Props) {
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <header className={styles.header}>
           <div>
-            <div className={styles.titleZh}>武将一覧</div>
+            <div className={styles.titleZh}>{t('武將一覽', 'Officers')}</div>
             <div className={styles.titleEn}>
-              {scenario.name.en} ({scenario.startDate.year} AD) ·{' '}
-              {visibleOfficers.length} of {total} shown · {unsearched} hidden
+              {lang === 'en' ? scenario.name.en : scenario.name.zh} ({scenario.startDate.year} AD) ·{' '}
+              {t(`顯示 ${visibleOfficers.length} / ${total}`, `${visibleOfficers.length} of ${total} shown`)} · {t(`隱藏 ${unsearched}`, `${unsearched} hidden`)}
             </div>
           </div>
           <button className={styles.closeButton} onClick={onClose}>
@@ -144,31 +158,31 @@ export function ScenarioOfficersBrowser({ scenario, onClose }: Props) {
 
         <div className={styles.controls}>
           <div className={styles.controlRow}>
-            <span className={styles.controlLabel}>Filter</span>
+            <span className={styles.controlLabel}>{t('篩選', 'Filter')}</span>
             <button
               className={`${styles.chip} ${filter === 'all' ? styles.chipActive : ''}`}
               onClick={() => setFilter('all')}
             >
-              All ({total})
+              {t('全部', 'All')} ({total})
             </button>
             <button
               className={`${styles.chip} ${filter === 'unsearched' ? styles.chipActive : ''}`}
               onClick={() => setFilter('unsearched')}
             >
-              Unsearched ({unsearched})
+              {t('未發現', 'Unsearched')} ({unsearched})
             </button>
             <button
               className={`${styles.chip} ${filter === 'free-agent' ? styles.chipActive : ''}`}
               onClick={() => setFilter('free-agent')}
             >
-              Free
+              {t('在野', 'Free')}
             </button>
             <button
               className={`${styles.chip} ${filter === 'elite' ? styles.chipActive : ''}`}
               onClick={() => setFilter('elite')}
-              title="Officers with any stat ≥ 90"
+              title={t('任一能力 ≥ 90 的武將', 'Officers with any stat ≥ 90')}
             >
-              ★ Elite
+              ★ {t('精英', 'Elite')}
             </button>
             {scenario.forces.map((f) => (
               <button
@@ -180,23 +194,23 @@ export function ScenarioOfficersBrowser({ scenario, onClose }: Props) {
                   className={styles.chipDot}
                   style={{ background: f.color }}
                 />
-                {f.name.zh}
+                {lang === 'en' ? f.name.en : f.name.zh}
               </button>
             ))}
           </div>
 
           <div className={styles.controlRow}>
-            <span className={styles.controlLabel}>Search</span>
+            <span className={styles.controlLabel}>{t('搜尋', 'Search')}</span>
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Name / 名 / courtesy"
+              placeholder={t('姓名 / 名 / 字', 'Name / 名 / courtesy')}
               style={{
                 background: '#1a1410', border: '1px solid #4a3520', color: '#d4a84a',
                 padding: '0.3rem 0.5rem', fontFamily: 'inherit', flex: 1, maxWidth: 220,
               }}
             />
-            <span className={styles.controlLabel} style={{ marginLeft: '0.5rem' }}>Min</span>
+            <span className={styles.controlLabel} style={{ marginLeft: '0.5rem' }}>{t('下限', 'Min')}</span>
             <select
               value={statKey}
               onChange={(e) => setStatKey(e.target.value as keyof OfficerStats | 'any')}
@@ -205,7 +219,7 @@ export function ScenarioOfficersBrowser({ scenario, onClose }: Props) {
                 padding: '0.3rem', fontFamily: 'inherit',
               }}
             >
-              <option value="any">any</option>
+              <option value="any">{t('任一', 'any')}</option>
               <option value="leadership">統率</option>
               <option value="war">武力</option>
               <option value="intelligence">知力</option>
@@ -225,7 +239,7 @@ export function ScenarioOfficersBrowser({ scenario, onClose }: Props) {
           </div>
 
           <div className={styles.controlRow}>
-            <span className={styles.controlLabel}>Sort</span>
+            <span className={styles.controlLabel}>{t('排序', 'Sort')}</span>
             {(['name', 'total', 'leadership', 'war', 'intelligence', 'politics', 'charisma', 'age'] as SortKey[]).map((k) => (
               <button
                 key={k}
@@ -239,20 +253,20 @@ export function ScenarioOfficersBrowser({ scenario, onClose }: Props) {
         </div>
 
         <div className={styles.header2}>
-          <span className={styles.h2name}>Officer</span>
-          <span className={styles.h2force}>Force · Location</span>
-          <SortHeader label="LED" col="leadership" sortKey={sortKey} sortDir={sortDir} onClick={handleSort} />
-          <SortHeader label="WAR" col="war" sortKey={sortKey} sortDir={sortDir} onClick={handleSort} />
-          <SortHeader label="INT" col="intelligence" sortKey={sortKey} sortDir={sortDir} onClick={handleSort} />
-          <SortHeader label="POL" col="politics" sortKey={sortKey} sortDir={sortDir} onClick={handleSort} />
-          <SortHeader label="CHA" col="charisma" sortKey={sortKey} sortDir={sortDir} onClick={handleSort} />
-          <span className={styles.h2meta} title="Tactics · Formations · Policies">戰·陣·政</span>
-          <SortHeader label="Age" col="age" sortKey={sortKey} sortDir={sortDir} onClick={handleSort} />
+          <span className={styles.h2name}>{t('武將', 'Officer')}</span>
+          <span className={styles.h2force}>{t('勢力 · 居所', 'Force · Location')}</span>
+          <SortHeader label={SORT_LABEL.leadership}   col="leadership"   sortKey={sortKey} sortDir={sortDir} onClick={handleSort} />
+          <SortHeader label={SORT_LABEL.war}          col="war"          sortKey={sortKey} sortDir={sortDir} onClick={handleSort} />
+          <SortHeader label={SORT_LABEL.intelligence} col="intelligence" sortKey={sortKey} sortDir={sortDir} onClick={handleSort} />
+          <SortHeader label={SORT_LABEL.politics}     col="politics"     sortKey={sortKey} sortDir={sortDir} onClick={handleSort} />
+          <SortHeader label={SORT_LABEL.charisma}     col="charisma"     sortKey={sortKey} sortDir={sortDir} onClick={handleSort} />
+          <span className={styles.h2meta} title={t('戰法 · 陣形 · 政策', 'Tactics · Formations · Policies')}>戰·陣·政</span>
+          <SortHeader label={SORT_LABEL.age}          col="age"          sortKey={sortKey} sortDir={sortDir} onClick={handleSort} />
         </div>
 
         <ul className={styles.list}>
           {visibleOfficers.length === 0 ? (
-            <li className={styles.empty}>No officers match this filter.</li>
+            <li className={styles.empty}>{t('沒有符合條件的武將。', 'No officers match this filter.')}</li>
           ) : (
             visibleOfficers.map((o) => {
               const force = o.forceId ? forcesById[o.forceId] : null;
@@ -270,8 +284,8 @@ export function ScenarioOfficersBrowser({ scenario, onClose }: Props) {
                   onClick={() => setSelectedOfficer(o)}
                 >
                   <span className={styles.rowName}>
-                    <span className={styles.rowNameZh}>{o.name.zh}</span>
-                    <span className={styles.rowNameEn}>{o.name.en}</span>
+                    {lang !== 'en' && <span className={styles.rowNameZh}>{o.name.zh}</span>}
+                    {lang !== 'zh' && <span className={styles.rowNameEn}>{o.name.en}</span>}
                   </span>
                   <span className={styles.rowForce}>
                     <span
@@ -279,10 +293,10 @@ export function ScenarioOfficersBrowser({ scenario, onClose }: Props) {
                       style={{ background: force?.color ?? '#5a4530' }}
                     />
                     <span className={styles.rowForceText}>
-                      {force?.name.zh ?? (o.status === 'unsearched' ? '在野' : '浪人')}
+                      {force ? (lang === 'en' ? force.name.en : force.name.zh) : (o.status === 'unsearched' ? t('未發現', 'unsearched') : t('在野', 'free agent'))}
                       {city && (
                         <span className={styles.rowLocation}>
-                          · {city.name.zh}
+                          · {lang === 'en' ? city.name.en : city.name.zh}
                         </span>
                       )}
                     </span>

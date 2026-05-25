@@ -1,4 +1,5 @@
 import { useGameStore } from '../../game/state/store';
+import { useT } from '../i18n';
 
 interface Props {
   onClose: () => void;
@@ -22,6 +23,11 @@ export function SettingsModal({ onClose }: Props) {
   const setBattleSpeed = useGameStore((s) => s.setBattleSpeed);
   const musicTrack = useGameStore((s) => s.musicTrack);
   const setMusicTrack = useGameStore((s) => s.setMusicTrack);
+  const language = useGameStore((s) => s.language ?? 'zh');
+  const setLanguage = useGameStore((s) => s.setLanguage);
+  const placementMode = useGameStore((s) => s.placementMode ?? 'historical');
+  const setPlacementMode = useGameStore((s) => s.setPlacementMode);
+  const t = useT();
 
   return (
     <div
@@ -52,52 +58,80 @@ export function SettingsModal({ onClose }: Props) {
           }}
         >
           <div>
-            <div style={{ fontSize: '1.4rem', color: '#d4a84a', letterSpacing: '0.2rem' }}>設定</div>
-            <div style={{ fontSize: '0.85rem', color: '#8a7050', fontStyle: 'italic' }}>Settings</div>
+            <div style={{ fontSize: '1.4rem', color: '#d4a84a', letterSpacing: '0.2rem' }}>{t('設定', 'Settings')}</div>
+            <div style={{ fontSize: '0.85rem', color: '#8a7050', fontStyle: 'italic' }}>{t('遊戲偏好', 'Preferences')}</div>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#d4a84a', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
         </header>
         <div style={{ padding: '1rem 1.5rem', overflowY: 'auto', flex: 1 }}>
-          <Section title="音響 Audio">
-            <Toggle label="音響 Sound effects" hint="UI clicks, swords, horns" checked={soundEnabled} onChange={setSoundEnabled} />
-            <Row label="背景音楽 Music">
+          <Section title={t('音響', 'Audio')}>
+            <Toggle label={t('音效', 'Sound effects')} hint={t('UI 點擊、刀劍、號角', 'UI clicks, swords, horns')} checked={soundEnabled} onChange={setSoundEnabled} />
+            <Row label={t('背景音樂', 'Music')}>
               <select
                 value={musicTrack ?? 'auto'}
                 onChange={(e) => setMusicTrack(e.target.value === 'auto' ? null : e.target.value)}
                 style={selectStyle}
               >
-                <option value="auto">自動 Auto (by scene)</option>
-                <option value="peace">平時 Peace</option>
-                <option value="tension">緊張 Tension</option>
-                <option value="battle">戰闘 Battle</option>
-                <option value="victory">勝利 Victory</option>
-                <option value="defeat">敗北 Defeat</option>
+                <option value="auto">{t('自動（依場景）', 'Auto (by scene)')}</option>
+                <option value="peace">{t('平時', 'Peace')}</option>
+                <option value="tension">{t('緊張', 'Tension')}</option>
+                <option value="battle">{t('戰鬥', 'Battle')}</option>
+                <option value="victory">{t('勝利', 'Victory')}</option>
+                <option value="defeat">{t('敗北', 'Defeat')}</option>
               </select>
             </Row>
           </Section>
 
-          <Section title="画面 Display">
-            <Toggle label="戰霧 Fog of war" hint="Hide unscouted cities" checked={fogOfWar} onChange={setFogOfWar} />
+          <Section title={t('畫面', 'Display')}>
+            <Toggle label={t('戰霧', 'Fog of war')} hint={t('隱藏未偵察的城邑', 'Hide unscouted cities')} checked={fogOfWar} onChange={setFogOfWar} />
+            <Row label={t('語言', 'Language')}>
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value as 'zh' | 'en' | 'both')}
+                style={selectStyle}
+              >
+                <option value="zh">中文</option>
+                <option value="en">English</option>
+                <option value="both">中英 Both</option>
+              </select>
+            </Row>
           </Section>
 
-          <Section title=" Gameplay">
+          <Section title={t('遊戲', 'Gameplay')}>
             <Toggle
-              label="演義 Romance mode"
-              hint="Historical events fire 100% on schedule"
+              label={t('演義模式', 'Romance mode')}
+              hint={t('歷史事件 100% 按時觸發', 'Historical events fire 100% on schedule')}
               checked={romanceMode}
               onChange={setRomanceMode}
             />
             <Toggle
-              label=" Roguelike"
-              hint={careerMode ? 'Career officer death ends the campaign' : 'Requires Career mode'}
+              label={t('永久死亡', 'Roguelike')}
+              hint={careerMode ? t('武將生涯死亡即結束戰役', 'Career officer death ends the campaign') : t('需先開啟「武將生涯」模式', 'Requires Career mode')}
               checked={roguelikeMode}
               onChange={setRoguelikeMode}
               disabled={!careerMode}
             />
+            <Row
+              label={t('武將與名品出現位置', 'Talent & item placement')}
+              hint={
+                placementMode === 'historical'
+                  ? t('依歷史:諸葛亮在琅琊,倚天劍在許昌…', 'Historical: Zhuge Liang waits in Langya, Yitian Sword in Xuchang…')
+                  : t('虛構:全隨機散落,每局都不同', 'Fictional: scattered randomly, every campaign plays differently')
+              }
+            >
+              <select
+                value={placementMode}
+                onChange={(e) => setPlacementMode(e.target.value as 'historical' | 'random')}
+                style={selectStyle}
+              >
+                <option value="historical">{t('歷史', 'Historical')}</option>
+                <option value="random">{t('虛構', 'Fictional')}</option>
+              </select>
+            </Row>
           </Section>
 
-          <Section title="戰闘 Combat">
-            <Row label="戰闘速度 Battle speed">
+          <Section title={t('戰鬥', 'Combat')}>
+            <Row label={t('戰鬥速度', 'Battle speed')}>
               <div style={{ display: 'flex', gap: 4 }}>
                 {[1, 2, 4].map((s) => (
                   <button
@@ -168,20 +202,26 @@ function Toggle({ label, hint, checked, onChange, disabled }: { label: string; h
   );
 }
 
-function Row({ label, children }: { label: string; children: import('react').ReactNode }) {
+function Row({ label, hint, children }: { label: string; hint?: string; children: import('react').ReactNode }) {
   return (
     <div
       style={{
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'center',
+        alignItems: hint ? 'flex-start' : 'center',
         padding: '0.5rem 0.65rem',
         background: '#1a1410',
         border: '1px solid #3a2d20',
         marginBottom: '0.3rem',
+        gap: '0.6rem',
       }}
     >
-      <span style={{ fontSize: '0.9rem', color: '#d4a84a' }}>{label}</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: '0.9rem', color: '#d4a84a' }}>{label}</div>
+        {hint && (
+          <div style={{ fontSize: '0.72rem', color: '#8a7050', marginTop: 2, lineHeight: 1.3 }}>{hint}</div>
+        )}
+      </div>
       {children}
     </div>
   );

@@ -38,6 +38,7 @@ import {
   computeTotalTroops,
   payTribute,
   proposeAlliance,
+  proposeHostage,
   proposeNonAggression,
 } from '../systems/diplomacy';
 import {
@@ -51,6 +52,10 @@ import {
 import { resolveSeason } from '../systems/resolution';
 import { BUILDING_DEFS_BY_ID } from '../data/buildings';
 import { DEFENSE_BUILDINGS } from '../data/defenseBuildings';
+import { SHIP_CLASSES_BY_ID } from '../data/ships';
+import { canPlayerAttackPort, migratePorts } from '../data/ports';
+import { canPlayerAttackFort, migrateForts } from '../data/forts';
+import { fortMaxHpForLevel } from '../types';
 import { awardBattleXp } from '../systems/growth';
 import { tickBuildings } from '../systems/buildings';
 import { evaluateCoalition } from '../systems/coalition';
@@ -163,6 +168,12 @@ interface GameStore extends GameState {
     amount: number,
   ) => { ok: boolean; message: string };
   breakAlliance: (targetForceId: EntityId) => void;
+  /** Send a hostage to seal a long peace. The officer becomes 'imprisoned'
+   *  at the target's court; the relation jumps and a 16-season NAP is sworn. */
+  proposeHostage: (
+    targetForceId: EntityId,
+    officerId: EntityId,
+  ) => { ok: boolean; message: string; accepted?: boolean };
   proposeMarriage: (
     targetForceId: EntityId,
     yourOfficerId: EntityId,
@@ -222,6 +233,8 @@ interface GameStore extends GameState {
   ) => { ok: boolean; reason?: string };
   setSoundEnabled: (enabled: boolean) => void;
   setMusicTrack: (track: string | null) => void;
+  setLanguage: (lang: 'zh' | 'en' | 'both') => void;
+  setPlacementMode: (mode: 'historical' | 'random') => void;
   setFogOfWar: (on: boolean) => void;
   saveCommandTemplate: (label: string) => void;
   applyCommandTemplate: (id: EntityId) => void;
@@ -240,6 +253,49 @@ interface GameStore extends GameState {
     recipeId: EntityId,
   ) => { ok: boolean; reason?: string };
   acknowledgeAchievements: () => void;
+  // ─── Port (港) actions ────────────────────────────────────────────
+  /** Queue a ship build at the given port. Player pays gold from capital
+   *  immediately; ship is added to dockedShips when seasonsLeft hits 0. */
+  buildShipAtPort: (
+    portId: EntityId,
+    shipClass: import('../types').ShipClass,
+  ) => { ok: boolean; message: string };
+  /** Build a player stockade (塢/壘) near a city. Costs 300g + 1 season.
+   *  Stockade rots after 10 seasons unless garrisoned. */
+  buildStockade: (
+    nearCityId: EntityId,
+    label: string,
+  ) => { ok: boolean; message: string };
+  /** Officer-led attack on a fort. Same pattern as attackPort. */
+  attackFort: (
+    fortId: EntityId,
+    attackerOfficerId: EntityId,
+    troops: number,
+  ) => { ok: boolean; captured?: boolean; message: string };
+  /** Spend gold from capital to restore fort HP (own fort only). */
+  repairFort: (fortId: EntityId) => { ok: boolean; message: string };
+  /** Upgrade an owned fort one level (max 3). Lv2: 500g, Lv3: 1200g.
+   *  Each level adds +50% to maxHp. */
+  upgradeFort: (fortId: EntityId) => { ok: boolean; message: string };
+  /** Officer-led attack on a port. Damage scales with attacker WAR + LED;
+   *  attacker takes casualties proportional to defender officer's WAR.
+   *  Captures the port if HP drops to 0. */
+  attackPort: (
+    portId: EntityId,
+    attackerOfficerId: EntityId,
+    troops: number,
+  ) => {
+    ok: boolean;
+    captured?: boolean;
+    message: string;
+    /** Battle outcome details for the report. */
+    report?: {
+      attacker: { officerName: string; troopsSent: number; troopsLost: number };
+      defender: { officerName: string | null; portHpBefore: number; portHpAfter: number };
+    };
+  };
+  /** Spend gold from the player's capital to restore port HP. */
+  repairPort: (portId: EntityId) => { ok: boolean; message: string };
   saveSlot: (slotId: string, label: string) => void;
   loadSlot: (slotId: string) => boolean;
   deleteSlot: (slotId: string) => void;
@@ -967,6 +1023,53 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // Port ship-build queue tick — decrement seasonsLeft, complete on 0
+        const nextPorts: typeof state.ports = {};
+        for (const [id, port] of Object.entries(state.ports)) {
+          if (!port.buildQueue || port.buildQueue.length === 0) {
+            nextPorts[id] = port;
+            continue;
+          }
+          const ticked = port.buildQueue.map((b) => ({
+            ...b, seasonsLeft: b.seasonsLeft - 1,
+          }));
+          const completed = ticked.filter((b) => b.seasonsLeft <= 0);
+          const stillBuilding = ticked.filter((b) => b.seasonsLeft > 0);
+          const docked = { ...(port.dockedShips ?? {}) };
+          for (const c of completed) {
+            docked[c.shipClass] = (docked[c.shipClass] ?? 0) + 1;
+          }
+          nextPorts[id] = { ...port, buildQueue: stillBuilding, dockedShips: docked };
+          if (completed.length > 0 && port.ownerForceId === state.playerForceId) {
+            result.report.entries.push({
+              kind: 'command-success',
+              cityId: port.linkedCityId,
+              text: `${port.name.zh}: ${completed.length} ship${completed.length > 1 ? 's' : ''} ready.`,
+            });
+          }
+        }
+
+        // Fort tick — stockades rot if their timer hits 0 (skip permanent forts)
+        const nextForts: typeof state.forts = {};
+        for (const [id, fort] of Object.entries(state.forts)) {
+          if (fort.subtype === 'stockade' && fort.seasonsRemaining !== undefined) {
+            const seasonsLeft = fort.seasonsRemaining - 1;
+            if (seasonsLeft <= 0) {
+              if (fort.ownerForceId === state.playerForceId) {
+                result.report.entries.push({
+                  kind: 'command-failure',
+                  cityId: fort.guards[0] ?? null,
+                  text: `${fort.name.zh} has rotted away.`,
+                });
+              }
+              continue;   // remove
+            }
+            nextForts[id] = { ...fort, seasonsRemaining: seasonsLeft };
+          } else {
+            nextForts[id] = fort;
+          }
+        }
+
         set({
           date: result.date,
           cities: postCities,
@@ -992,6 +1095,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           officerWishes: newWishes,
           shipOrders: remainingOrders,
           fleets: updatedFleets,
+          ports: nextPorts,
+          forts: nextForts,
           endingsAchieved,
           campaignStats: {
             ...state.campaignStats,
@@ -1036,11 +1141,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (!officer || !city || !force || !ruler)
           return { ok: false, message: 'Invalid state.' };
 
+        const citiesOwned = Object.values(state.cities).filter(
+          (c) => c.ownerForceId === state.playerForceId,
+        ).length;
         const result = attemptRecruit({
           officer,
           city,
           recruiterForce: force,
           recruiterRuler: ruler,
+          recruiterReputation: { citiesOwned },
         });
 
         const updates: Partial<GameState> = {
@@ -1086,11 +1195,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (city.ownerForceId !== state.playerForceId)
           return { ok: false, message: 'Not your city.' };
 
+        const citiesOwned2 = Object.values(state.cities).filter(
+          (c) => c.ownerForceId === state.playerForceId,
+        ).length;
         const result = attemptFreeAgentRecruit({
           officer,
           city,
           recruiterForce: force,
           recruiterRuler: ruler,
+          recruiterReputation: { citiesOwned: citiesOwned2 },
         });
 
         const updates: Partial<GameState> = {
@@ -1272,6 +1385,54 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             targetForceId,
           ),
         });
+      },
+
+      proposeHostage: (targetForceId, officerId) => {
+        const state = get();
+        if (!state.playerForceId)
+          return { ok: false, message: 'No player force.' };
+        const player = state.forces[state.playerForceId];
+        const target = state.forces[targetForceId];
+        const ruler = state.officers[player?.rulerOfficerId ?? ''];
+        const hostage = state.officers[officerId];
+        if (!player || !target || !ruler || !hostage)
+          return { ok: false, message: 'Invalid forces or officer.' };
+        if (hostage.forceId !== state.playerForceId)
+          return { ok: false, message: 'Hostage must be your own officer.' };
+        if (hostage.status !== 'idle' && hostage.status !== 'active')
+          return { ok: false, message: 'Officer is not available to send.' };
+        if (hostage.id === player.rulerOfficerId)
+          return { ok: false, message: 'You cannot send your ruler as a hostage.' };
+
+        const outcome = proposeHostage({
+          player,
+          playerRulerCharisma: ruler.stats.charisma,
+          target,
+          targetTotalTroops: computeTotalTroops(target.id, state.cities),
+          playerTotalTroops: computeTotalTroops(player.id, state.cities),
+          diplomacy: state.diplomacy,
+          date: state.date,
+        });
+
+        if (!outcome.ok) {
+          return { ok: false, message: outcome.message };
+        }
+        set({
+          diplomacy: outcome.diplomacy,
+          officers: {
+            ...state.officers,
+            [hostage.id]: {
+              ...hostage,
+              status: 'imprisoned',
+              locationCityId: target.capitalCityId,
+            },
+          },
+        });
+        return {
+          ok: true,
+          accepted: outcome.accepted,
+          message: `${hostage.name.en} is sent as hostage to ${target.name.en}. ${outcome.message}`,
+        };
       },
 
       proposeMarriage: (targetForceId, yourOfficerId, theirOfficerId) => {
@@ -1969,6 +2130,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
 
       setSoundEnabled: (enabled) => set({ soundEnabled: enabled }),
       setMusicTrack: (track) => set({ musicTrack: track }),
+      setLanguage: (lang) => set({ language: lang }),
+      setPlacementMode: (mode) => set({ placementMode: mode }),
       setFogOfWar: (on) => set({ fogOfWar: on }),
 
       saveCommandTemplate: (label) => {
@@ -2148,6 +2311,372 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
 
       acknowledgeAchievements: () => set({ recentAchievementUnlocks: [] }),
 
+      attackPort: (portId, attackerOfficerId, troops) => {
+        const state = get();
+        const port = state.ports[portId];
+        if (!port) return { ok: false, message: 'Port not found.' };
+        if (!state.playerForceId)
+          return { ok: false, message: 'No player force.' };
+        if (port.ownerForceId === state.playerForceId)
+          return { ok: false, message: 'You already own this port.' };
+        // Reachability gate — must have a path (land-adjacent or sea-connected)
+        const reach = canPlayerAttackPort(port, state.cities, state.ports, state.playerForceId);
+        if (!reach.ok)
+          return { ok: false, message: reach.reason ?? 'Cannot reach this port.' };
+        const attacker = state.officers[attackerOfficerId];
+        if (!attacker || attacker.forceId !== state.playerForceId)
+          return { ok: false, message: 'Attacker officer must be yours.' };
+        if (attacker.status !== 'idle' && attacker.status !== 'active')
+          return { ok: false, message: 'Officer is not available.' };
+
+        // Source city = the city the attacker is at (must own enough troops)
+        const sourceCity = attacker.locationCityId ? state.cities[attacker.locationCityId] : null;
+        if (!sourceCity)
+          return { ok: false, message: 'Attacker has no current city.' };
+        if (sourceCity.ownerForceId !== state.playerForceId)
+          return { ok: false, message: 'Attacker is not in your city.' };
+        if (sourceCity.troops < troops || troops <= 0)
+          return { ok: false, message: `Need at least ${troops} troops in ${sourceCity.name.en}.` };
+
+        // The attacker's own city must also be a valid launching point — either
+        // adjacent to the linked city (land), the linked city itself, or have
+        // a port that's sea-connected to the target.
+        const linkedCity = state.cities[port.linkedCityId];
+        const landAdjacent = !!linkedCity && (
+          linkedCity.id === sourceCity.id
+          || (linkedCity.adjacentCityIds ?? []).includes(sourceCity.id)
+        );
+        const sourcePort = Object.values(state.ports).find(
+          (p) => p.linkedCityId === sourceCity.id
+            && p.ownerForceId === state.playerForceId
+            && p.connectedPortIds.includes(port.id),
+        );
+        if (!landAdjacent && !sourcePort) {
+          return {
+            ok: false,
+            message: `${sourceCity.name.zh} is not a valid launching point — it must neighbor ${linkedCity?.name.zh ?? port.linkedCityId} or own a sea-connected port.`,
+          };
+        }
+
+        // Defender: pick the highest-WAR officer at the port's linked city
+        // belonging to the port's owner force.
+        const defenderOfficer = port.ownerForceId
+          ? Object.values(state.officers)
+              .filter((o) =>
+                o.forceId === port.ownerForceId
+                && o.locationCityId === port.linkedCityId
+                && (o.status === 'idle' || o.status === 'active'),
+              )
+              .sort((a, b) => b.stats.war - a.stats.war)[0]
+          : null;
+
+        // Damage calc — atk WAR boosts, def WAR + docked ships resist
+        const atkWar = attacker.stats.war;
+        const atkLed = attacker.stats.leadership;
+        const defWar = defenderOfficer?.stats.war ?? 30;   // neutral defenders fight at 30
+        // Ship defense — sum of (count × combatStrength) of all docked ships
+        const dockedShips = port.dockedShips ?? {};
+        let shipDefense = 0;
+        for (const [cls, count] of Object.entries(dockedShips)) {
+          const def = SHIP_CLASSES_BY_ID[cls as import('../types').ShipClass];
+          if (def && count) shipDefense += def.combatStrength * count;
+        }
+        const effectiveTroops = Math.floor(troops * (1 + atkLed / 200));  // LED boosts effective strength
+        const baseDmg = Math.floor(effectiveTroops / 6);               // base ~16% of troops as dmg
+        const warBonus = Math.floor(baseDmg * (atkWar - defWar) / 100);  // skill differential
+        // Ships absorb damage — each shipDefense point shaves ~0.5 dmg
+        const shipMitigation = Math.floor(shipDefense * 0.5);
+        const portDmg = Math.max(20, baseDmg + warBonus - shipMitigation + Math.floor(Math.random() * 80));
+        // Attacker casualties — higher when defender is skilled or has ships
+        const attackerLosses = Math.floor(
+          troops * (0.05 + (defWar / 400) + (shipDefense / 10000) + (Math.random() * 0.08))
+        );
+
+        const hpBefore = port.hp;
+        const newHp = Math.max(0, port.hp - portDmg);
+        const captured = newHp === 0;
+
+        const nextPort = {
+          ...port,
+          hp: captured ? Math.floor(port.maxHp * 0.5) : newHp,
+          ownerForceId: captured ? state.playerForceId : port.ownerForceId,
+        };
+        const sentBack = Math.max(0, troops - attackerLosses);
+        // Net troop change to source city: send out `troops`, get back `sentBack`
+        const nextCity = {
+          ...sourceCity,
+          troops: sourceCity.troops - troops + sentBack,
+        };
+        set({
+          ports: { ...state.ports, [portId]: nextPort },
+          cities: { ...state.cities, [sourceCity.id]: nextCity },
+        });
+        return {
+          ok: true,
+          captured,
+          message: captured
+            ? `${attacker.name.zh} captures ${port.name.zh}! Lost ${attackerLosses} troops.`
+            : `${attacker.name.zh} damages ${port.name.zh}: −${portDmg} HP. Lost ${attackerLosses} troops.`,
+          report: {
+            attacker: {
+              officerName: attacker.name.zh,
+              troopsSent: troops,
+              troopsLost: attackerLosses,
+            },
+            defender: {
+              officerName: defenderOfficer?.name.zh ?? null,
+              portHpBefore: hpBefore,
+              portHpAfter: nextPort.hp,
+            },
+          },
+        };
+      },
+
+      buildStockade: (nearCityId, label) => {
+        const STOCKADE_COST = 300;
+        const STOCKADE_HP = 350;
+        const STOCKADE_SEASONS = 10;
+        const state = get();
+        if (!state.playerForceId)
+          return { ok: false, message: 'No player force.' };
+        const city = state.cities[nearCityId];
+        if (!city) return { ok: false, message: 'City not found.' };
+        if (city.ownerForceId !== state.playerForceId)
+          return { ok: false, message: 'You must own the host city.' };
+        const player = state.forces[state.playerForceId];
+        const capital = player ? state.cities[player.capitalCityId] : null;
+        if (!capital || capital.gold < STOCKADE_COST)
+          return { ok: false, message: `Need ${STOCKADE_COST}g in capital.` };
+        // Place ~0.4° offset from city center in a random compass direction
+        const angle = Math.random() * Math.PI * 2;
+        // City coords are in painted px; we need geo. Use the GEO calibration
+        // helper that lives in StrategicMap3D… actually we want geo here.
+        // Reverse the geoToPixel calibration: lon = 96 + px/1000 * 29 etc.
+        const cityLon = 96 + (city.coords.x / 1000) * 29;
+        const cityLat = 43 - (city.coords.y / 720) * 26;
+        const lon = cityLon + Math.cos(angle) * 0.4;
+        const lat = cityLat + Math.sin(angle) * 0.4;
+        const id = `stockade-${Date.now()}`;
+        set({
+          cities: {
+            ...state.cities,
+            [capital.id]: { ...capital, gold: capital.gold - STOCKADE_COST },
+          },
+          forts: {
+            ...state.forts,
+            [id]: {
+              id,
+              name: { zh: label || '壘', en: label || 'Stockade' },
+              subtype: 'stockade',
+              coords: { lon, lat },
+              ownerForceId: state.playerForceId,
+              hp: STOCKADE_HP,
+              maxHp: STOCKADE_HP,
+              guards: [nearCityId],
+              seasonsRemaining: STOCKADE_SEASONS,
+            },
+          },
+        });
+        return {
+          ok: true,
+          message: `Stockade "${label || '壘'}" built near ${city.name.zh} (10 seasons before rot).`,
+        };
+      },
+
+      buildShipAtPort: (portId, shipClass) => {
+        const state = get();
+        const port = state.ports[portId];
+        if (!port) return { ok: false, message: 'Port not found.' };
+        if (!state.playerForceId)
+          return { ok: false, message: 'No player force.' };
+        if (port.ownerForceId !== state.playerForceId)
+          return { ok: false, message: 'You do not own this port.' };
+        const def = SHIP_CLASSES_BY_ID[shipClass];
+        if (!def) return { ok: false, message: 'Unknown ship class.' };
+        const player = state.forces[state.playerForceId];
+        const capital = player ? state.cities[player.capitalCityId] : null;
+        if (!capital || capital.gold < def.goldCost)
+          return { ok: false, message: `Need ${def.goldCost} gold in capital.` };
+        const queue = [...(port.buildQueue ?? []), { shipClass, seasonsLeft: def.seasonsToBuild }];
+        set({
+          cities: {
+            ...state.cities,
+            [capital.id]: { ...capital, gold: capital.gold - def.goldCost },
+          },
+          ports: {
+            ...state.ports,
+            [portId]: { ...port, buildQueue: queue },
+          },
+        });
+        return {
+          ok: true,
+          message: `${def.name.zh} build started at ${port.name.zh} (${def.seasonsToBuild} seasons, −${def.goldCost}g).`,
+        };
+      },
+
+      repairPort: (portId) => {
+        const REPAIR_COST = 200;
+        const REPAIR_HP = 400;
+        const state = get();
+        const port = state.ports[portId];
+        if (!port) return { ok: false, message: 'Port not found.' };
+        if (!state.playerForceId)
+          return { ok: false, message: 'No player force.' };
+        if (port.ownerForceId !== state.playerForceId)
+          return { ok: false, message: 'You do not own this port.' };
+        if (port.hp >= port.maxHp)
+          return { ok: false, message: 'Port is already at full HP.' };
+        const player = state.forces[state.playerForceId];
+        const capital = player ? state.cities[player.capitalCityId] : null;
+        if (!capital || capital.gold < REPAIR_COST)
+          return { ok: false, message: `Need ${REPAIR_COST} gold in capital.` };
+        const newHp = Math.min(port.maxHp, port.hp + REPAIR_HP);
+        set({
+          cities: {
+            ...state.cities,
+            [capital.id]: { ...capital, gold: capital.gold - REPAIR_COST },
+          },
+          ports: { ...state.ports, [portId]: { ...port, hp: newHp } },
+        });
+        return {
+          ok: true,
+          message: `${port.name.zh} repaired (+${newHp - port.hp} HP, −${REPAIR_COST}g).`,
+        };
+      },
+
+      attackFort: (fortId, attackerOfficerId, troops) => {
+        const state = get();
+        const fort = state.forts[fortId];
+        if (!fort) return { ok: false, message: 'Fort not found.' };
+        if (!state.playerForceId)
+          return { ok: false, message: 'No player force.' };
+        if (fort.ownerForceId === state.playerForceId)
+          return { ok: false, message: 'You already own this fort.' };
+        const reach = canPlayerAttackFort(fort, state.cities, state.playerForceId);
+        if (!reach.ok) return { ok: false, message: reach.reason ?? 'Cannot reach.' };
+        const attacker = state.officers[attackerOfficerId];
+        if (!attacker || attacker.forceId !== state.playerForceId)
+          return { ok: false, message: 'Attacker officer must be yours.' };
+        if (attacker.status !== 'idle' && attacker.status !== 'active')
+          return { ok: false, message: 'Officer is not available.' };
+        const sourceCity = attacker.locationCityId ? state.cities[attacker.locationCityId] : null;
+        if (!sourceCity || sourceCity.ownerForceId !== state.playerForceId)
+          return { ok: false, message: 'Attacker is not in your city.' };
+        if (sourceCity.troops < troops || troops <= 0)
+          return { ok: false, message: `Need at least ${troops} troops in ${sourceCity.name.en}.` };
+
+        // Defender: best-WAR officer at any of fort.guards owned by fort owner
+        const defenderOfficer = fort.ownerForceId
+          ? Object.values(state.officers)
+              .filter((o) =>
+                o.forceId === fort.ownerForceId
+                && o.locationCityId
+                && fort.guards.includes(o.locationCityId)
+                && (o.status === 'idle' || o.status === 'active'),
+              )
+              .sort((a, b) => b.stats.war - a.stats.war)[0]
+          : null;
+
+        const atkWar = attacker.stats.war;
+        const atkLed = attacker.stats.leadership;
+        const defWar = defenderOfficer?.stats.war ?? 25;
+        const effectiveTroops = Math.floor(troops * (1 + atkLed / 200));
+        const baseDmg = Math.floor(effectiveTroops / 6);
+        const warBonus = Math.floor(baseDmg * (atkWar - defWar) / 100);
+        const fortDmg = Math.max(20, baseDmg + warBonus + Math.floor(Math.random() * 80));
+        const attackerLosses = Math.floor(
+          troops * (0.04 + (defWar / 400) + (Math.random() * 0.07))
+        );
+        const newHp = Math.max(0, fort.hp - fortDmg);
+        const captured = newHp === 0;
+        const nextFort = {
+          ...fort,
+          hp: captured ? Math.floor(fort.maxHp * 0.5) : newHp,
+          ownerForceId: captured ? state.playerForceId : fort.ownerForceId,
+        };
+        const sentBack = Math.max(0, troops - attackerLosses);
+        set({
+          forts: { ...state.forts, [fortId]: nextFort },
+          cities: {
+            ...state.cities,
+            [sourceCity.id]: { ...sourceCity, troops: sourceCity.troops - troops + sentBack },
+          },
+        });
+        return {
+          ok: true,
+          captured,
+          message: captured
+            ? `${attacker.name.zh} seizes ${fort.name.zh}! Lost ${attackerLosses} troops.`
+            : `${attacker.name.zh} batters ${fort.name.zh}: −${fortDmg} HP. Lost ${attackerLosses} troops.`,
+        };
+      },
+
+      repairFort: (fortId) => {
+        const REPAIR_COST = 150;
+        const REPAIR_HP = 300;
+        const state = get();
+        const fort = state.forts[fortId];
+        if (!fort) return { ok: false, message: 'Fort not found.' };
+        if (!state.playerForceId)
+          return { ok: false, message: 'No player force.' };
+        if (fort.ownerForceId !== state.playerForceId)
+          return { ok: false, message: 'You do not own this fort.' };
+        if (fort.hp >= fort.maxHp)
+          return { ok: false, message: 'Fort is at full HP.' };
+        const player = state.forces[state.playerForceId];
+        const capital = player ? state.cities[player.capitalCityId] : null;
+        if (!capital || capital.gold < REPAIR_COST)
+          return { ok: false, message: `Need ${REPAIR_COST}g in capital.` };
+        const newHp = Math.min(fort.maxHp, fort.hp + REPAIR_HP);
+        set({
+          cities: {
+            ...state.cities,
+            [capital.id]: { ...capital, gold: capital.gold - REPAIR_COST },
+          },
+          forts: { ...state.forts, [fortId]: { ...fort, hp: newHp } },
+        });
+        return {
+          ok: true,
+          message: `${fort.name.zh} repaired (+${newHp - fort.hp} HP, −${REPAIR_COST}g).`,
+        };
+      },
+
+      upgradeFort: (fortId) => {
+        const state = get();
+        const fort = state.forts[fortId];
+        if (!fort) return { ok: false, message: 'Fort not found.' };
+        if (!state.playerForceId)
+          return { ok: false, message: 'No player force.' };
+        if (fort.ownerForceId !== state.playerForceId)
+          return { ok: false, message: 'You do not own this fort.' };
+        const currentLevel = (fort.level ?? 1) as 1 | 2 | 3;
+        if (currentLevel >= 3)
+          return { ok: false, message: 'Fort already at max level.' };
+        // Determine the BASE maxHp (level 1) so we can recompute for new level
+        const baseMaxHp = Math.floor(fort.maxHp / (1 + 0.5 * (currentLevel - 1)));
+        const nextLevel = (currentLevel + 1) as 2 | 3;
+        const upgradeCost = nextLevel === 2 ? 500 : 1200;
+        const player = state.forces[state.playerForceId];
+        const capital = player ? state.cities[player.capitalCityId] : null;
+        if (!capital || capital.gold < upgradeCost)
+          return { ok: false, message: `Need ${upgradeCost}g in capital.` };
+        const newMaxHp = fortMaxHpForLevel(baseMaxHp, nextLevel);
+        set({
+          cities: {
+            ...state.cities,
+            [capital.id]: { ...capital, gold: capital.gold - upgradeCost },
+          },
+          forts: {
+            ...state.forts,
+            [fortId]: { ...fort, level: nextLevel, maxHp: newMaxHp, hp: newMaxHp },
+          },
+        });
+        return {
+          ok: true,
+          message: `${fort.name.zh} upgraded to Lv${nextLevel} (maxHp ${newMaxHp}, −${upgradeCost}g).`,
+        };
+      },
+
       startBuilding: (cityId, buildingId) => {
         const state = get();
         const city = state.cities[cityId];
@@ -2298,6 +2827,18 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           appointments: loaded.appointments ?? [],
           eventFlags: loaded.eventFlags ?? {},
           firedEventIds: loaded.firedEventIds ?? [],
+          ports: migratePorts(
+            loaded.ports,
+            Object.fromEntries(
+              Object.values(loaded.cities ?? {}).map((c) => [c.id, c.ownerForceId]),
+            ),
+          ),
+          forts: migrateForts(
+            loaded.forts,
+            Object.fromEntries(
+              Object.values(loaded.cities ?? {}).map((c) => [c.id, c.ownerForceId]),
+            ),
+          ),
         };
         set(fresh);
         return true;
@@ -2339,6 +2880,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         provinceGovernors: state.provinceGovernors,
         fleets: state.fleets,
         shipOrders: state.shipOrders,
+        ports: state.ports,
+        forts: state.forts,
         family: state.family,
         pendingHeirs: state.pendingHeirs,
         officerWishes: state.officerWishes,
@@ -2346,6 +2889,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         hotSeatPlayers: state.hotSeatPlayers,
         hotSeatActiveIndex: state.hotSeatActiveIndex,
         musicTrack: state.musicTrack,
+        language: state.language,
+        placementMode: state.placementMode,
         lostItems: state.lostItems,
         battleReplays: state.battleReplays,
         deeds: state.deeds,
@@ -2360,6 +2905,17 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         roguelikeMode: state.roguelikeMode,
         campaignStats: state.campaignStats,
       }),
+      onRehydrateStorage: () => (state) => {
+        // Always rebuild ports from PORT_TEMPLATES on auto-load, preserving
+        // only owner + hp from the persisted snapshot. This lets us tweak
+        // port coords / connections / maxHp without breaking existing saves.
+        if (!state) return;
+        const cityOwnerByCityId = Object.fromEntries(
+          Object.values(state.cities ?? {}).map((c) => [c.id, c.ownerForceId]),
+        );
+        state.ports = migratePorts(state.ports, cityOwnerByCityId);
+        state.forts = migrateForts(state.forts, cityOwnerByCityId);
+      },
     },
   ),
 );

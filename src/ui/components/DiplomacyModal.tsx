@@ -13,6 +13,8 @@ import type {
 } from '../../game/types';
 import { getRelation } from '../../game/types';
 import { MarriagePicker } from './MarriagePicker';
+import { HostagePicker } from './HostagePicker';
+import { useT } from '../i18n';
 import styles from './DiplomacyModal.module.css';
 
 interface Props {
@@ -50,6 +52,8 @@ export function DiplomacyModal({ onClose }: Props) {
     accepted?: boolean;
   } | null>(null);
   const [marriageTarget, setMarriageTarget] = useState<EntityId | null>(null);
+  const [hostageTarget, setHostageTarget] = useState<EntityId | null>(null);
+  const t = useT();
 
   const rows = useMemo<ForceRow[]>(() => {
     if (!playerForceId) return [];
@@ -91,7 +95,7 @@ export function DiplomacyModal({ onClose }: Props) {
           <div>
             <div className={styles.titleZh}>外交</div>
             <div className={styles.titleEn}>
-              Diplomacy — Capital Gold:{' '}
+              {t('國庫金：', 'Diplomacy — Capital Gold:')}{' '}
               <strong>{playerCapitalGold.toLocaleString()}</strong>
             </div>
           </div>
@@ -101,7 +105,7 @@ export function DiplomacyModal({ onClose }: Props) {
         </header>
 
         {rows.length === 0 ? (
-          <div className={styles.empty}>No other forces remain in the realm.</div>
+          <div className={styles.empty}>{t('天下唯餘一勢力。', 'No other forces remain in the realm.')}</div>
         ) : (
           <ul className={styles.list}>
             {rows.map((row) => (
@@ -123,10 +127,10 @@ export function DiplomacyModal({ onClose }: Props) {
 
                 <div className={styles.metaRow}>
                   <span>
-                    Cities <strong>{row.cities}</strong>
+                    {t('城', 'Cities')} <strong>{row.cities}</strong>
                   </span>
                   <span>
-                    Troops <strong>{row.troops.toLocaleString()}</strong>
+                    {t('兵', 'Troops')} <strong>{row.troops.toLocaleString()}</strong>
                   </span>
                 </div>
 
@@ -152,9 +156,9 @@ export function DiplomacyModal({ onClose }: Props) {
                       row.relation.status === 'allied' ||
                       playerCapitalGold < ALLIANCE_PROPOSAL_COST
                     }
-                    title="Form a binding alliance — both sides forbidden from attacking."
+                    title={t('結成同盟 — 雙方禁止互攻。', 'Form a binding alliance — both sides forbidden from attacking.')}
                   >
-                    同盟 Alliance ({ALLIANCE_PROPOSAL_COST}g)
+                    {t('同盟', 'Alliance')} ({ALLIANCE_PROPOSAL_COST}{t('金', 'g')})
                   </button>
                   <button
                     className={styles.napBtn}
@@ -163,9 +167,9 @@ export function DiplomacyModal({ onClose }: Props) {
                       row.relation.status !== 'neutral' ||
                       playerCapitalGold < NAP_PROPOSAL_COST
                     }
-                    title="Temporary peace for 8 seasons."
+                    title={t('暫時和平 8 季。', 'Temporary peace for 8 seasons.')}
                   >
-                    不戰 NAP ({NAP_PROPOSAL_COST}g)
+                    {t('不戰', 'NAP')} ({NAP_PROPOSAL_COST}{t('金', 'g')})
                   </button>
                   <button
                     className={styles.tributeBtn}
@@ -188,9 +192,17 @@ export function DiplomacyModal({ onClose }: Props) {
                   <button
                     className={styles.tributeBtn}
                     onClick={() => setMarriageTarget(row.id)}
-                    title="Forge a marriage bond between an officer of yours and one of theirs (1000g)"
+                    title={t('將自己武將與對方武將締姻 (1000金)', 'Forge a marriage bond between an officer of yours and one of theirs (1000g)')}
                   >
-                    婚姻 Marry
+                    {t('婚姻', 'Marry')}
+                  </button>
+                  <button
+                    className={styles.tributeBtn}
+                    onClick={() => setHostageTarget(row.id)}
+                    disabled={row.relation.status === 'allied'}
+                    title={t('送人質締結長期和約 (+50 好感、16 季 NAP)', 'Send a hostage to secure a long peace (+50 relation, 16-season NAP)')}
+                  >
+                    {t('人質', 'Hostage')}
                   </button>
                   {row.relation.status === 'allied' && (
                     <button
@@ -199,13 +211,13 @@ export function DiplomacyModal({ onClose }: Props) {
                         breakAlliance(row.id);
                         setFeedback({
                           forceId: row.id,
-                          text: 'Alliance broken. Relations damaged.',
+                          text: t('盟約已破，邦交受損。', 'Alliance broken. Relations damaged.'),
                           accepted: false,
                         });
                       }}
-                      title="Break the alliance (−50 relation)"
+                      title={t('破棄同盟（−50 好感）', 'Break the alliance (−50 relation)')}
                     >
-                      絶交 Break
+                      {t('絕交', 'Break')}
                     </button>
                   )}
                 </div>
@@ -218,6 +230,12 @@ export function DiplomacyModal({ onClose }: Props) {
           <MarriagePicker
             targetForceId={marriageTarget}
             onClose={() => setMarriageTarget(null)}
+          />
+        )}
+        {hostageTarget && (
+          <HostagePicker
+            targetForceId={hostageTarget}
+            onClose={() => setHostageTarget(null)}
           />
         )}
       </div>
@@ -247,17 +265,18 @@ function RelationBar({ score }: { score: number }) {
 }
 
 function StatusTag({ relation }: { relation: Relation }) {
+  const t = useT();
   if (relation.status === 'allied')
-    return <span className={`${styles.tag} ${styles.tagAllied}`}>同盟 Allied</span>;
+    return <span className={`${styles.tag} ${styles.tagAllied}`}>{t('同盟', 'Allied')}</span>;
   if (relation.status === 'non-aggression') {
     const expires = formatDate(relation.expiresAt);
     return (
       <span className={`${styles.tag} ${styles.tagNap}`}>
-        不戰 NAP {expires && `→ ${expires}`}
+        {t('不戰', 'NAP')} {expires && `→ ${expires}`}
       </span>
     );
   }
-  return <span className={`${styles.tag} ${styles.tagNeutral}`}>中立 Neutral</span>;
+  return <span className={`${styles.tag} ${styles.tagNeutral}`}>{t('中立', 'Neutral')}</span>;
 }
 
 function formatDate(date?: GameDate): string {

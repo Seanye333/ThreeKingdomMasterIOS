@@ -82,6 +82,7 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
     id: 'fire-attack',
     name: { zh: '火攻', en: 'Fire Attack' },
     description: '借風縱火 — only viable with strong wind, no rain. Devastating if successful.',
+    descriptionZh: "藉風縱火，焚敵營寨。中計者每回合損兵八分，持續三回合；風起倍之，雨中減半。",
     minIntelligence: 75,
     isApplicable: (ctx) =>
       ctx.weather.windPower >= 2 &&
@@ -98,6 +99,7 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
     id: 'flood-attack',
     name: { zh: '水攻', en: 'Flood Attack' },
     description: '掘堤淹城 — port/river city required. Reduces defender troops outright.',
+    descriptionZh: "掘堤淹城。須臨水之城方可施行，成則大削敵兵。",
     minIntelligence: 80,
     isApplicable: (ctx) => !!ctx.city.port || ctx.city.terrain === 'plain',
     successEffect: {
@@ -110,6 +112,7 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
     id: 'ambush',
     name: { zh: '埋伏', en: 'Ambush' },
     description: '林中設伏 — forest/mountain terrain only. Surprise damage + low own losses.',
+    descriptionZh: "林中設伏。限山林之地，奇襲建功而我軍損失甚微。",
     minIntelligence: 70,
     isApplicable: (ctx) =>
       ctx.city.terrain === 'mountain' || ctx.city.terrain === 'forest',
@@ -123,6 +126,7 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
     id: 'feigned-retreat',
     name: { zh: '偽退', en: 'Feigned Retreat' },
     description: '誘敵深入 — needs attacker INT > defender INT. Reduces defender bonus.',
+    descriptionZh: "誘敵深入。我軍智謀須勝敵方，方可削減敵勢。",
     minIntelligence: 78,
     isApplicable: (ctx) =>
       ctx.attackerIntelligence > ctx.defenderIntelligence + 10,
@@ -136,6 +140,7 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
     id: 'sow-discord',
     name: { zh: '反間', en: 'Sow Discord' },
     description: '反間之計 — works on any defender. Reduces enemy bond bonuses + power.',
+    descriptionZh: "反間之計。離間敵將之心，削弱其同袍羈絆與戰力。",
     minIntelligence: 82,
     isApplicable: () => true,
     successEffect: {
@@ -146,6 +151,7 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
     id: 'night-raid',
     name: { zh: '偷營', en: 'Night Raid' },
     description: '夜襲敵營 — attacker INT roll. Bypasses city defense partially.',
+    descriptionZh: "夜襲敵營。憑智謀一搏，可部分繞過城防。",
     minIntelligence: 70,
     isApplicable: (ctx) => ctx.attackerTroops >= 1000,
     successEffect: {
@@ -159,6 +165,7 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
     id: 'cut-supply',
     name: { zh: '截糧', en: 'Cut Supply Line' },
     description: '斷其糧道 — drains enemy troops next 3 seasons (delayed effect).',
+    descriptionZh: "斷其糧道。三季之內敵軍兵力日漸消耗。",
     minIntelligence: 75,
     isApplicable: (ctx) => ctx.defenderTroops > 3000,
     successEffect: {
@@ -170,6 +177,7 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
     id: 'false-surrender',
     name: { zh: '詐降', en: 'False Surrender' },
     description: '詐降之計 — defender loyalty < 50 required. Surprise hit + capture chance.',
+    descriptionZh: "詐降之計。須敵將忠誠低於五十，奇襲建功且可俘獲敵將。",
     minIntelligence: 80,
     isApplicable: (ctx) => ctx.defenderAvgLoyalty < 50,
     successEffect: {
@@ -184,6 +192,7 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
     id: 'last-stand',
     name: { zh: '死戰', en: 'Last Stand' },
     description: '背水一戰 — only when own troops less than enemy. +30% attacker power.',
+    descriptionZh: "背水一戰。我寡敵眾之時，戰力增三成。",
     minIntelligence: 60,
     isApplicable: (ctx) => ctx.attackerTroops < ctx.defenderTroops,
     successEffect: { attackerPowerMul: 1.30, ownLossMul: 0.85 },
@@ -192,6 +201,7 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
     id: 'iron-wall',
     name: { zh: '鐵壁', en: 'Iron Wall' },
     description: '重甲列陣 — turns attack into siege mode: −defender power (slower but safer).',
+    descriptionZh: "重甲列陣。轉攻為圍，削敵戰力，雖緩而穩。",
     minIntelligence: 65,
     isApplicable: () => true,
     successEffect: { defenderPowerMul: 0.85, ownLossMul: 0.70 },
@@ -200,6 +210,7 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
     id: 'rush',
     name: { zh: '突進', en: 'Cavalry Surge' },
     description: '騎兵衝鋒 — requires attacker War >= 80. Heavy first-strike.',
+    descriptionZh: "騎兵衝鋒。武力八十以上方可施展，破陣於一擊。",
     minIntelligence: 60,
     isApplicable: (ctx) => ctx.attacker.stats.war >= 80,
     successEffect: { attackerPowerMul: 1.25, surpriseRoll: 0.10 },
@@ -208,6 +219,7 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
     id: 'fire-arrow',
     name: { zh: '火矢', en: 'Fire Arrows' },
     description: '弓裹火油 — moderate fire attack, less wind-dependent than 火攻.',
+    descriptionZh: "弓裹火油。較火攻為輕，受風候影響亦較少。",
     minIntelligence: 65,
     isApplicable: (ctx) =>
       ctx.weather.kind !== 'rain' && ctx.weather.kind !== 'snow',
@@ -218,6 +230,7 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
     id: 'thunder',
     name: { zh: '雷震', en: 'Thunder Strike' },
     description: '雷霆萬鈞 — Daoist thunder stuns defender. INT 80+ required.',
+    descriptionZh: "雷霆萬鈞。道法召雷震懾敵將，須智謀八十以上。",
     minIntelligence: 80,
     isApplicable: () => true,
     successEffect: { defenderPowerMul: 0.75 },
@@ -226,6 +239,7 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
     id: 'beauty-plot',
     name: { zh: '美人計', en: 'Beauty Plot' },
     description: '美人計 — defender CHA bound roll. Stronger when loyalty < 60.',
+    descriptionZh: "美人計。以姿色亂敵心，敵將忠誠低於六十時尤為奏效。",
     minIntelligence: 70,
     isApplicable: (ctx) => ctx.defenderAvgLoyalty < 60,
     successEffect: { defenderPowerMul: 0.80, captureBonus: 1.3 },
@@ -234,6 +248,7 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
     id: 'chain-stratagem',
     name: { zh: '連環計', en: 'Chain Stratagem' },
     description: '龐統之計 — chained debuffs, defender attack and defense drop.',
+    descriptionZh: "龐統之連環計。多重削弱，使敵攻守俱減。",
     minIntelligence: 90,
     isApplicable: () => true,
     successEffect: { defenderPowerMul: 0.70 },
@@ -242,6 +257,7 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
     id: 'half-cross',
     name: { zh: '半渡而擊', en: 'Strike Mid-River' },
     description: '半渡而擊 — best when target is a port city (river crossing).',
+    descriptionZh: "半渡而擊。臨水之城施之，趁敵渡河之半而擊之。",
     minIntelligence: 70,
     isApplicable: (ctx) => !!ctx.city.port,
     successEffect: { attackerPowerMul: 1.30, enemyLossMul: 1.40, surpriseRoll: 0.12 },
@@ -250,6 +266,7 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
     id: 'set-ambush-path',
     name: { zh: '設伏要道', en: 'Ambush the Path' },
     description: '路徑設伏 — terrain must be mountain/forest/pass.',
+    descriptionZh: "設伏要道。須地處山林或關隘，伏兵建功。",
     minIntelligence: 75,
     isApplicable: (ctx) =>
       ctx.city.terrain === 'mountain' ||
@@ -261,6 +278,7 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
     id: 'press-pursuit',
     name: { zh: '趁勢追擊', en: 'Press the Pursuit' },
     description: '趁勢追擊 — when defender significantly weaker. Annihilation strike.',
+    descriptionZh: "趁勢追擊。敵兵已弱之時，一鼓而殲之。",
     minIntelligence: 65,
     isApplicable: (ctx) => ctx.defenderTroops < ctx.attackerTroops * 0.4,
     successEffect: { enemyLossMul: 1.60, captureBonus: 1.4 },
@@ -269,6 +287,7 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
     id: 'sneak-cross',
     name: { zh: '暗渡陳倉', en: 'Sneak Across Chen Cang' },
     description: '明修棧道暗渡 — attacker INT must exceed defender by 15+.',
+    descriptionZh: "明修棧道，暗渡陳倉。我軍智謀須勝敵方十五以上。",
     minIntelligence: 80,
     isApplicable: (ctx) =>
       ctx.attackerIntelligence > ctx.defenderIntelligence + 15,
@@ -278,6 +297,7 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
     id: 'lure-tiger',
     name: { zh: '調虎離山', en: 'Lure the Tiger' },
     description: '調虎離山 — only against high-war defenders. Draws them out of position.',
+    descriptionZh: "調虎離山。專制武力八十以上之猛將，誘其離守。",
     minIntelligence: 75,
     isApplicable: (ctx) => !!ctx.defender && ctx.defender.stats.war >= 80,
     successEffect: { defenderPowerMul: 0.65 },
@@ -286,6 +306,7 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
     id: 'cut-supply-strike',
     name: { zh: '釜底抽薪', en: 'Pull Wood From the Cauldron' },
     description: '釜底抽薪 — cripple enemy supplies. Drain over time.',
+    descriptionZh: "釜底抽薪。斷敵糧秣根本，使其兵力日益耗損。",
     minIntelligence: 75,
     isApplicable: (ctx) => ctx.defenderTroops > 4000,
     successEffect: {
@@ -297,6 +318,7 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
     id: 'besiege-relief',
     name: { zh: '圍魏救趙', en: 'Besiege Wei to Save Zhao' },
     description: '圍魏救趙 — indirect pressure. Strong with INT 80+.',
+    descriptionZh: "圍魏救趙。以迂為直，智謀八十以上者尤為厲害。",
     minIntelligence: 80,
     isApplicable: () => true,
     successEffect: { defenderPowerMul: 0.82, attackerPowerMul: 1.10 },
@@ -305,6 +327,7 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
     id: 'wait-tired',
     name: { zh: '以逸待勞', en: 'Wait for the Exhausted' },
     description: '以逸待勞 — when defender has more troops, exhaust them first.',
+    descriptionZh: "以逸待勞。敵眾我寡之時，先疲其師而後擊之。",
     minIntelligence: 70,
     isApplicable: (ctx) => ctx.defenderTroops > ctx.attackerTroops * 1.3,
     successEffect: { defenderPowerMul: 0.75, ownLossMul: 0.80 },

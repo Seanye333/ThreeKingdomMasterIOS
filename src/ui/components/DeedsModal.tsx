@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
+import { useT, useLanguage } from '../i18n';
 
 interface Props {
   onClose: () => void;
@@ -21,6 +22,8 @@ export function DeedsModal({ onClose }: Props) {
   const deeds = useGameStore((s) => s.deeds);
   const officers = useGameStore((s) => s.officers);
   const [sortBy, setSortBy] = useState<SortKey>('killsTroops');
+  const t = useT();
+  const lang = useLanguage();
 
   const rows = useMemo(() => {
     return Object.values(deeds)
@@ -66,8 +69,8 @@ export function DeedsModal({ onClose }: Props) {
           }}
         >
           <div>
-            <div style={{ fontSize: '1.4rem', color: '#d4a84a', letterSpacing: '0.2rem' }}>武功榜</div>
-            <div style={{ fontSize: '0.85rem', color: '#8a7050', fontStyle: 'italic' }}>Heroic Deeds Leaderboard</div>
+            <div style={{ fontSize: '1.4rem', color: '#d4a84a', letterSpacing: '0.2rem' }}>{t('武功榜', 'Heroic Deeds')}</div>
+            {lang === 'both' && <div style={{ fontSize: '0.85rem', color: '#8a7050', fontStyle: 'italic' }}>Heroic Deeds Leaderboard</div>}
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#d4a84a', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
         </header>
@@ -75,22 +78,22 @@ export function DeedsModal({ onClose }: Props) {
         <div style={{ overflow: 'auto', padding: '1rem 1.5rem' }}>
           {rows.length === 0 ? (
             <div style={{ color: '#6a5238', fontStyle: 'italic', padding: '2rem', textAlign: 'center' }}>
-              No deeds recorded yet. Wage battles, build, scheme.
+              {t('尚無功業記載。征戰、興邦、謀略,皆待後人傳頌。', 'No deeds recorded yet. Wage battles, build, scheme.')}
             </div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid #4a3520' }}>
-                  <th style={th()}>順位</th>
-                  <th style={th()}>武将 Officer</th>
+                  <th style={th()}>{t('名次', 'Rank')}</th>
+                  <th style={th()}>{t('武將', 'Officer')}</th>
                   {COL_LABELS.map((c) => (
                     <th
                       key={c.key}
                       style={{ ...th(), cursor: 'pointer', color: sortBy === c.key ? '#d4a84a' : '#8a7050' }}
                       onClick={() => setSortBy(c.key)}
                     >
-                      {c.zh}
-                      <div style={{ fontSize: '0.6rem', fontStyle: 'italic' }}>{c.en}</div>
+                      {lang === 'en' ? c.en : c.zh}
+                      {lang === 'both' && <div style={{ fontSize: '0.6rem', fontStyle: 'italic' }}>{c.en}</div>}
                     </th>
                   ))}
                 </tr>
@@ -104,10 +107,8 @@ export function DeedsModal({ onClose }: Props) {
                       </span>
                     </td>
                     <td style={td()}>
-                      <span style={{ color: '#d4a84a' }}>{r.officer.name.zh}</span>{' '}
-                      <span style={{ color: '#8a7050', fontSize: '0.72rem', fontStyle: 'italic' }}>
-                        {r.officer.name.en}
-                      </span>
+                      <span style={{ color: '#d4a84a' }}>{lang === 'en' ? r.officer.name.en : r.officer.name.zh}</span>
+                      {lang === 'both' && <> <span style={{ color: '#8a7050', fontSize: '0.72rem', fontStyle: 'italic' }}>{r.officer.name.en}</span></>}
                     </td>
                     {COL_LABELS.map((c) => (
                       <td

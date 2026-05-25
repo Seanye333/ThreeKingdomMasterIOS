@@ -12,6 +12,8 @@ export * from './tribes';
 export * from './building';
 export * from './province';
 export * from './naval';
+export * from './port';
+export * from './fort';
 export * from './family';
 export * from './personality';
 export * from './replay';

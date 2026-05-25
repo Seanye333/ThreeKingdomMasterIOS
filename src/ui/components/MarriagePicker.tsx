@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import type { EntityId, Officer } from '../../game/types';
 import styles from './MarriagePicker.module.css';
+import { useT } from '../i18n';
 
 interface Props {
   targetForceId: EntityId;
@@ -16,6 +17,7 @@ export function MarriagePicker({ targetForceId, onClose }: Props) {
   const officers = useGameStore((s) => s.officers);
   const cities = useGameStore((s) => s.cities);
   const proposeMarriage = useGameStore((s) => s.proposeMarriage);
+  const t = useT();
   const playerCapitalGold = useGameStore((s) => {
     const f = playerForceId ? s.forces[playerForceId] : null;
     const c = f ? s.cities[f.capitalCityId] : null;
@@ -63,7 +65,7 @@ export function MarriagePicker({ targetForceId, onClose }: Props) {
           <div>
             <div className={styles.titleZh}>婚姻外交</div>
             <div className={styles.titleEn}>
-              Marriage Diplomacy with {targetForce?.name.en}
+              {t(`與 ${targetForce?.name.zh ?? ''} 聯姻`, `Marriage Diplomacy with ${targetForce?.name.en ?? ''}`)}
             </div>
           </div>
           <button className={styles.closeButton} onClick={onClose}>
@@ -72,13 +74,13 @@ export function MarriagePicker({ targetForceId, onClose }: Props) {
         </header>
 
         <div className={styles.meta}>
-          Cost: <strong>{MARRIAGE_COST}g</strong> from capital · Your gold:{' '}
+          {t('費用：', 'Cost:')} <strong>{MARRIAGE_COST}{t('金', 'g')}</strong> {t('（國庫）', 'from capital')} · {t('現有：', 'Your gold:')}{' '}
           <strong>{playerCapitalGold}g</strong>
         </div>
 
         <div className={styles.columns}>
           <Column
-            label={`${playerForce?.name.zh ?? 'You'} 自軍`}
+            label={`${playerForce?.name.zh ?? t('我方', 'You')} ${t('自軍', '(self)')}`}
             color={playerForce?.color ?? '#5a4530'}
             officers={yourOfficers}
             cities={cities}
@@ -87,7 +89,7 @@ export function MarriagePicker({ targetForceId, onClose }: Props) {
           />
           <div className={styles.linkIcon}>⚭</div>
           <Column
-            label={`${targetForce?.name.zh ?? 'Target'} 相手軍`}
+            label={`${targetForce?.name.zh ?? t('對方', 'Target')} ${t('相手軍', '(other)')}`}
             color={targetForce?.color ?? '#5a4530'}
             officers={theirOfficers}
             cities={cities}
@@ -112,7 +114,7 @@ export function MarriagePicker({ targetForceId, onClose }: Props) {
               !yourPick || !theirPick || playerCapitalGold < MARRIAGE_COST
             }
           >
-            締結 Forge Marriage Bond
+            {t('締結婚姻', 'Forge Marriage Bond')}
           </button>
         </footer>
       </div>
@@ -130,6 +132,7 @@ interface ColumnProps {
 }
 
 function Column({ label, color, officers, cities, picked, onPick }: ColumnProps) {
+  const t = useT();
   return (
     <div className={styles.column}>
       <div className={styles.columnHeader}>
@@ -140,7 +143,7 @@ function Column({ label, color, officers, cities, picked, onPick }: ColumnProps)
         <span>{label}</span>
       </div>
       {officers.length === 0 ? (
-        <div className={styles.empty}>No available officers.</div>
+        <div className={styles.empty}>{t('無可用武將。', 'No available officers.')}</div>
       ) : (
         <ul className={styles.officerList}>
           {officers.map((o) => {
@@ -154,7 +157,7 @@ function Column({ label, color, officers, cities, picked, onPick }: ColumnProps)
                   <span className={styles.officerNameZh}>{o.name.zh}</span>
                   <span className={styles.officerNameEn}>{o.name.en}</span>
                   <span className={styles.officerCha}>
-                    CHA <strong>{o.stats.charisma}</strong>
+                    {t('魅', 'CHA')} <strong>{o.stats.charisma}</strong>
                   </span>
                   {city && (
                     <span className={styles.officerCity}>{city.name.zh}</span>

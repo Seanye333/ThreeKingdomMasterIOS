@@ -16,6 +16,7 @@ export function SkillsModal({ onClose }: Props) {
     zh: s.name.zh,
     en: s.name.en,
     description: s.description,
+    descriptionZh: s.descriptionZh,
     category: s.category,
   }));
   return (

@@ -13,6 +13,7 @@ import { OfficerHoverCard } from './OfficerHoverCard';
 import { TERRAIN_DEFS } from '../../game/data/cities';
 import { PROVINCE_BY_CITY, PROVINCES_BY_ID } from '../../game/data';
 import styles from './CityPanel.module.css';
+import { useT, useLanguage } from '../i18n';
 
 export function CityPanel() {
   const selectedCityId = useGameStore((s) => s.selectedCityId);
@@ -37,11 +38,13 @@ export function CityPanel() {
   );
 
   const [showCityMap, setShowCityMap] = useState(false);
+  const t = useT();
+  const lang = useLanguage();
 
   if (!city) {
     return (
       <aside className={styles.root}>
-        <div className={styles.empty}>Select a city on the map</div>
+        <div className={styles.empty}>{t('於地圖選擇城市', 'Select a city on the map')}</div>
       </aside>
     );
   }
@@ -51,8 +54,8 @@ export function CityPanel() {
   return (
     <aside className={styles.root}>
       <header className={styles.header}>
-        <div className={styles.nameZh}>{city.name.zh}</div>
-        <div className={styles.nameEn}>{city.name.en}</div>
+        {lang !== 'en' && <div className={styles.nameZh}>{city.name.zh}</div>}
+        {lang !== 'zh' && <div className={styles.nameEn}>{city.name.en}</div>}
         <div className={styles.owner}>
           {force ? (
             <>
@@ -60,12 +63,12 @@ export function CityPanel() {
                 className={styles.colorDot}
                 style={{ background: force.color }}
               />
-              {force.name.zh}
-              <span className={styles.ownerEn}>· {force.name.en}</span>
-              {isPlayerCity && <span className={styles.playerTag}>YOU</span>}
+              {lang === 'en' ? force.name.en : force.name.zh}
+              {lang === 'both' && <span className={styles.ownerEn}>· {force.name.en}</span>}
+              {isPlayerCity && <span className={styles.playerTag}>{t('我方', 'YOU')}</span>}
             </>
           ) : (
-            <span className={styles.neutral}>Neutral</span>
+            <span className={styles.neutral}>{t('中立', 'Neutral')}</span>
           )}
         </div>
         {(() => {
@@ -76,16 +79,19 @@ export function CityPanel() {
           return (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.4rem', fontSize: '0.72rem' }}>
               <span style={{ background: '#1a1410', border: `1px solid ${terrain.color}`, color: terrain.color, padding: '0.15rem 0.4rem', letterSpacing: '0.1rem' }}>
-                {terrain.zh} <span style={{ fontSize: '0.6rem', color: '#8a7050', fontStyle: 'italic' }}>{terrain.en}</span>
+                {lang === 'en' ? terrain.en : terrain.zh}
+                {lang === 'both' && <> <span style={{ fontSize: '0.6rem', color: '#8a7050', fontStyle: 'italic' }}>{terrain.en}</span></>}
               </span>
               {city.port && (
                 <span style={{ background: '#1a1410', border: '1px solid #88b7e8', color: '#88b7e8', padding: '0.15rem 0.4rem', letterSpacing: '0.1rem' }}>
-                  港 <span style={{ fontSize: '0.6rem', color: '#5a7090', fontStyle: 'italic' }}>Port</span>
+                  {lang === 'en' ? 'Port' : '港'}
+                  {lang === 'both' && <> <span style={{ fontSize: '0.6rem', color: '#5a7090', fontStyle: 'italic' }}>Port</span></>}
                 </span>
               )}
               {province && (
                 <span style={{ background: '#1a1410', border: `1px solid ${province.color}`, color: province.color, padding: '0.15rem 0.4rem', letterSpacing: '0.1rem' }}>
-                  {province.name.zh} <span style={{ fontSize: '0.6rem', color: '#8a7050', fontStyle: 'italic' }}>{province.name.en}</span>
+                  {lang === 'en' ? province.name.en : province.name.zh}
+                  {lang === 'both' && <> <span style={{ fontSize: '0.6rem', color: '#8a7050', fontStyle: 'italic' }}>{province.name.en}</span></>}
                 </span>
               )}
             </div>
@@ -102,7 +108,7 @@ export function CityPanel() {
       <CityMiniMap city={city} onClick={() => setShowCityMap(true)} />
 
       <section className={styles.section}>
-        <h3 className={styles.sectionTitle}>Resources</h3>
+        <h3 className={styles.sectionTitle}>{t('資源', 'Resources')}</h3>
         <Stat label="Population" zh="人口" value={city.population.toLocaleString()} />
         <Stat label="Gold" zh="金" value={city.gold.toLocaleString()} />
         <Stat label="Food" zh="兵糧" value={city.food.toLocaleString()} />
@@ -110,7 +116,7 @@ export function CityPanel() {
       </section>
 
       <section className={styles.section}>
-        <h3 className={styles.sectionTitle}>Development</h3>
+        <h3 className={styles.sectionTitle}>{t('內政', 'Development')}</h3>
         <Bar label="Agriculture" zh="農業" value={city.agriculture} cap={citySize(city).statCap} />
         <Bar label="Commerce" zh="商業" value={city.commerce} cap={citySize(city).statCap} />
         <Bar label="Defense" zh="守備" value={city.defense} cap={citySize(city).statCap} />
@@ -122,7 +128,7 @@ export function CityPanel() {
 
       {isPlayerCity && (
         <section className={styles.section}>
-          <h3 className={styles.sectionTitle}>Orders 命令</h3>
+          <h3 className={styles.sectionTitle}>{t('命令', 'Orders')}</h3>
           <CommandMenu cityId={city.id} onOpenCityMap={() => setShowCityMap(true)} />
         </section>
       )}
@@ -135,10 +141,10 @@ export function CityPanel() {
 
       <section className={styles.section}>
         <h3 className={styles.sectionTitle}>
-          Officers ({officers.length})
+          {t('武將', 'Officers')} ({officers.length})
         </h3>
         {officers.length === 0 ? (
-          <div className={styles.muted}>No officers stationed.</div>
+          <div className={styles.muted}>{t('無武將駐紮。', 'No officers stationed.')}</div>
         ) : (
           <ul className={styles.officerList}>
             {officers.map((o) => (
@@ -182,20 +188,22 @@ function OfficerListItem({
   const cityGold = useGameStore((s) => s.cities[cityId]?.gold ?? 0);
   const taskDef = o.task ? COMMAND_DEFS[o.task] : null;
   const canTransfer = isPlayerCity && !o.task && o.status === 'idle';
+  const t = useT();
+  const lang = useLanguage();
 
   return (
     <li className={styles.officerRow}>
       <OfficerHoverCard officer={o}>
-        <span className={styles.officerNameZh}>{o.name.zh}</span>
-        <span className={styles.officerNameEn}>{o.name.en}</span>
+        {lang !== 'en' && <span className={styles.officerNameZh}>{o.name.zh}</span>}
+        {lang !== 'zh' && <span className={styles.officerNameEn}>{o.name.en}</span>}
       </OfficerHoverCard>
       <span className={styles.officerStats}>
         {taskDef ? (
-          <span className={styles.officerTask}>▸ {taskDef.label.zh}</span>
+          <span className={styles.officerTask}>▸ {lang === 'en' ? taskDef.label.en : taskDef.label.zh}</span>
         ) : canTransfer ? (
           <button
             onClick={() => setTransferOpen((v) => !v)}
-            title={`Transfer to adjacent city (50g)`}
+            title={t('移送至相鄰城池 (50金)', 'Transfer to adjacent city (50g)')}
             style={{
               background: 'transparent',
               border: '1px solid #4a3520',
@@ -208,7 +216,7 @@ function OfficerListItem({
             }}
             disabled={cityGold < 50}
           >
-            移送 ⇨
+            {t('移送', 'Transfer')} ⇨
           </button>
         ) : (
           `W${o.stats.war} I${o.stats.intelligence} P${o.stats.politics} C${o.stats.charisma}`
@@ -235,7 +243,7 @@ function OfficerListItem({
                 fontStyle: 'italic',
               }}
             >
-              No adjacent friendly cities
+              {t('無相鄰友城', 'No adjacent friendly cities')}
             </span>
           ) : (
             adjacent.map((dest) => (
@@ -255,7 +263,7 @@ function OfficerListItem({
                   cursor: 'pointer',
                 }}
               >
-                → {dest.name.zh}
+                → {lang === 'en' ? dest.name.en : dest.name.zh}
               </button>
             ))
           )}
@@ -266,10 +274,12 @@ function OfficerListItem({
 }
 
 function Stat({ label, zh, value }: { label: string; zh: string; value: string }) {
+  const lang = useLanguage();
   return (
     <div className={styles.statRow}>
       <span className={styles.statLabel}>
-        {label} <span className={styles.statZh}>{zh}</span>
+        {lang === 'en' ? label : zh}
+        {lang === 'both' && <> <span className={styles.statZh}>{label}</span></>}
       </span>
       <span className={styles.statValue}>{value}</span>
     </div>
@@ -342,32 +352,41 @@ function CityMiniMap({
           );
         })}
       </svg>
-      <div style={{ textAlign: 'left', flex: 1 }}>
-        <div style={{
-          color: '#d4a84a', fontSize: '0.85rem',
-          letterSpacing: '0.2rem', fontWeight: 'bold',
-          fontFamily: 'var(--tkm-font-zh)',
-        }}>
-          ★ 城邑地圖
-        </div>
-        <div style={{ color: '#c0a878', fontSize: '0.68rem', letterSpacing: '0.1rem' }}>
-          {builtCount}/8 建築 · 城壁 Tier {city.wallTier ?? 1}
-        </div>
-        <div style={{ color: '#8a7050', fontSize: '0.6rem', marginTop: '0.15rem' }}>
-          點擊建造 箭樓 / 拒馬 / 鐵索 / 落石…
-        </div>
-      </div>
+      <CityMiniMapText builtCount={builtCount} wallTier={city.wallTier ?? 1} />
     </button>
   );
 }
 
+function CityMiniMapText({ builtCount, wallTier }: { builtCount: number; wallTier: number }) {
+  const t = useT();
+  return (
+    <div style={{ textAlign: 'left', flex: 1 }}>
+      <div style={{
+        color: '#d4a84a', fontSize: '0.85rem',
+        letterSpacing: '0.2rem', fontWeight: 'bold',
+        fontFamily: 'var(--tkm-font-zh)',
+      }}>
+        ★ {t('城邑地圖', 'City Map')}
+      </div>
+      <div style={{ color: '#c0a878', fontSize: '0.68rem', letterSpacing: '0.1rem' }}>
+        {builtCount}/8 {t('建築', 'buildings')} · {t('城壁', 'Wall')} Tier {wallTier}
+      </div>
+      <div style={{ color: '#8a7050', fontSize: '0.6rem', marginTop: '0.15rem' }}>
+        {t('點擊建造 箭樓 / 拒馬 / 鐵索 / 落石…', 'Click to build towers / caltrops / chains / boulders…')}
+      </div>
+    </div>
+  );
+}
+
 function Bar({ label, zh, value, cap = 100 }: { label: string; zh: string; value: number; cap?: number }) {
+  const lang = useLanguage();
   const atCap = value >= cap;
   return (
     <div className={styles.barRow}>
       <div className={styles.barHeader}>
         <span className={styles.statLabel}>
-          {label} <span className={styles.statZh}>{zh}</span>
+          {lang === 'en' ? label : zh}
+          {lang === 'both' && <> <span className={styles.statZh}>{label}</span></>}
         </span>
         <span className={styles.barValue}>
           {value} / {cap}
@@ -390,6 +409,8 @@ function Bar({ label, zh, value, cap = 100 }: { label: string; zh: string; value
 function CitySizeBadge({ city }: { city: import('../../game/types').City }) {
   const size = citySize(city);
   const next = nextTierPop(city);
+  const t = useT();
+  const lang = useLanguage();
   return (
     <section className={styles.section}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -403,11 +424,13 @@ function CitySizeBadge({ city }: { city: import('../../game/types').City }) {
           borderRadius: 2,
           background: 'rgba(212, 168, 74, 0.08)',
         }}>
-          {size.name.zh}
+          {lang === 'en' ? size.name.en : size.name.zh}
         </span>
         <div style={{ fontSize: '0.7rem', color: '#8a7050', letterSpacing: '0.1rem' }}>
-          <div>{size.name.en}</div>
-          <div>Cap {size.statCap} · Slots {size.buildingSlots} · {size.troopCap.toLocaleString()} troops</div>
+          {lang === 'both' && <div>{size.name.en}</div>}
+          <div>
+            {t('上限', 'Cap')} {size.statCap} · {t('建設位', 'Slots')} {size.buildingSlots} · {size.troopCap.toLocaleString()} {t('兵', 'troops')}
+          </div>
         </div>
       </div>
       {next && (
@@ -417,8 +440,9 @@ function CitySizeBadge({ city }: { city: import('../../game/types').City }) {
           color: '#8a7050',
           letterSpacing: '0.05rem',
         }}>
-          → <span style={{ color: next.def.color }}>{next.def.name.zh}</span> at {next.def.popMin.toLocaleString()} pop
-          ({next.popNeeded > 0 ? `${next.popNeeded.toLocaleString()} more needed` : 'ready'})
+          → <span style={{ color: next.def.color }}>{lang === 'en' ? next.def.name.en : next.def.name.zh}</span>
+          {' '}{t('於', 'at')} {next.def.popMin.toLocaleString()} {t('人口', 'pop')}
+          {' '}({next.popNeeded > 0 ? t(`尚需 ${next.popNeeded.toLocaleString()}`, `${next.popNeeded.toLocaleString()} more needed`) : t('已達成', 'ready')})
         </div>
       )}
     </section>
@@ -429,10 +453,11 @@ function PolicyEffectsSection({
   city, cityOfficers,
 }: { city: import('../../game/types').City; cityOfficers: Officer[] }) {
   const eff = cityPolicyEffects(city, cityOfficers);
+  const t = useT();
   if (eff.badges.length === 0) return null;
   return (
     <section className={styles.section}>
-      <h3 className={styles.sectionTitle}>★ 政策效果 Policy Effects</h3>
+      <h3 className={styles.sectionTitle}>★ {t('政策效果', 'Policy Effects')}</h3>
       <div style={{
         display: 'flex', flexWrap: 'wrap', gap: '0.3rem',
         fontSize: '0.7rem',
@@ -458,7 +483,7 @@ function PolicyEffectsSection({
         marginTop: '0.4rem', fontSize: '0.65rem', color: '#8a7050',
         letterSpacing: '0.1rem',
       }}>
-        {cityOfficers.length} 武將在城 · 政策由其個人專業聚合而成
+        {cityOfficers.length} {t('武將在城 · 政策由其個人專業聚合而成', 'officers stationed · policies emerge from their personal specialties')}
       </div>
     </section>
   );

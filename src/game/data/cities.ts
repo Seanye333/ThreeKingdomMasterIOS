@@ -798,3 +798,9 @@ export function buildInitialCities(
 }
 
 export const CITY_IDS = CITY_TEMPLATES.map((t) => t.id);
+
+/** Static city-id → bilingual name lookup. Used by UI components that
+ *  show city names without access to the runtime game state (e.g.
+ *  the items browser on the title screen referencing each item's origin). */
+export const CITY_NAMES_BY_ID: Record<string, { zh: string; en: string }> =
+  Object.fromEntries(CITY_TEMPLATES.map((t) => [t.id, t.name]));

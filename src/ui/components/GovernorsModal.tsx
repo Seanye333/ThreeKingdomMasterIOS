@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { PROVINCES } from '../../game/data';
 import { useGameStore } from '../../game/state/store';
 import type { Officer } from '../../game/types';
+import { useT, useLanguage, useDesc } from '../i18n';
 
 interface Props {
   onClose: () => void;
@@ -18,6 +19,9 @@ export function GovernorsModal({ onClose }: Props) {
   const officers = useGameStore((s) => s.officers);
   const provinceGovernors = useGameStore((s) => s.provinceGovernors);
   const appointGovernor = useGameStore((s) => s.appointGovernor);
+  const t = useT();
+  const lang = useLanguage();
+  const desc = useDesc();
 
   const [pickerForProvince, setPickerForProvince] = useState<string | null>(null);
 
@@ -83,8 +87,8 @@ export function GovernorsModal({ onClose }: Props) {
                   <li key={p.id} style={{ background: '#1a1410', border: `1px solid ${p.color}`, padding: '0.7rem 1rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
                       <div>
-                        <span style={{ fontSize: '1rem', color: p.color, letterSpacing: '0.2rem' }}>{p.name.zh}</span>
-                        <span style={{ fontSize: '0.72rem', color: '#8a7050', fontStyle: 'italic', marginLeft: '0.6rem' }}>{p.name.en}</span>
+                        <span style={{ fontSize: '1rem', color: p.color, letterSpacing: '0.2rem' }}>{lang === 'en' ? p.name.en : p.name.zh}</span>
+                        {lang === 'both' && <span style={{ fontSize: '0.72rem', color: '#8a7050', fontStyle: 'italic', marginLeft: '0.6rem' }}>{p.name.en}</span>}
                         <span style={{ fontSize: '0.7rem', color: '#c0a878', marginLeft: '0.6rem' }}>
                           ({ownedCount} / {p.cityIds.length} cities held)
                         </span>
@@ -106,21 +110,21 @@ export function GovernorsModal({ onClose }: Props) {
                             fontFamily: 'inherit', fontSize: '0.7rem', cursor: 'pointer',
                           }}
                         >
-                          {pickerForProvince === p.id ? 'Cancel' : (governor ? 'Reassign' : 'Appoint')}
+                          {pickerForProvince === p.id ? t('取消', 'Cancel') : (governor ? t('改任', 'Reassign') : t('任命', 'Appoint'))}
                         </button>
                       </div>
                     </div>
                     <p style={{ fontSize: '0.72rem', color: '#8a7050', margin: '0.4rem 0 0 0', lineHeight: 1.5 }}>
-                      {p.description}
+                      {desc(p)}
                     </p>
                     {pickerForProvince === p.id && (
                       <div style={{ marginTop: '0.6rem', padding: '0.6rem', background: '#2a1f15', border: '1px solid #4a3520' }}>
                         <div style={{ fontSize: '0.7rem', color: '#8a7050', marginBottom: '0.4rem', letterSpacing: '0.1rem' }}>
-                          Idle officers ({idleOfficers.length}):
+                          {t('閒置武將', 'Idle officers')} ({idleOfficers.length}):
                         </div>
                         {idleOfficers.length === 0 ? (
                           <div style={{ fontSize: '0.78rem', color: '#5a4530', fontStyle: 'italic' }}>
-                            No idle officers — recall some from city duties first.
+                            {t('無閒置武將——請先從城內職務召回。', 'No idle officers — recall some from city duties first.')}
                           </div>
                         ) : (
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.3rem' }}>

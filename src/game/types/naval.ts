@@ -14,6 +14,9 @@ export interface ShipClassDef {
   id: ShipClass;
   name: BilingualName;
   description: string;
+  descriptionZh?: string;
+  description: string;
+  descriptionZh?: string;
   goldCost: number;
   seasonsToBuild: number;
   /** Combat strength of one ship in naval battle. */

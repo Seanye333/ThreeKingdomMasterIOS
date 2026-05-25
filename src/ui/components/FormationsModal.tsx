@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { FORMATIONS } from '../../game/data';
 import type { FormationDef } from '../../game/types';
+import { useT, useLanguage, useDesc } from '../i18n';
 
 interface Props {
   onClose: () => void;
@@ -56,6 +57,9 @@ const CATEGORY_COLOR: Record<Category, string> = {
 
 export function FormationsModal({ onClose }: Props) {
   const [cat, setCat] = useState<Category>('all');
+  const t = useT();
+  const lang = useLanguage();
+  const desc = useDesc();
 
   const list: FormationDef[] = useMemo(() => {
     if (cat === 'all') return FORMATIONS;
@@ -101,7 +105,7 @@ export function FormationsModal({ onClose }: Props) {
             陣形
           </div>
           <div style={{ fontSize: '0.78rem', color: 'var(--tkm-text-muted, #8c7a5a)', letterSpacing: '0.2rem', flex: 1 }}>
-            FORMATIONS · {FORMATIONS.length} 種
+            {t(`${FORMATIONS.length} 種`, `FORMATIONS · ${FORMATIONS.length}`)}
           </div>
           <button
             onClick={onClose}
@@ -137,7 +141,8 @@ export function FormationsModal({ onClose }: Props) {
                   cursor: 'pointer',
                 }}
               >
-                {CATEGORY_LABEL[c].zh} <span style={{ fontSize: '0.65rem', opacity: 0.7 }}>{CATEGORY_LABEL[c].en}</span>
+                {lang === 'en' ? CATEGORY_LABEL[c].en : CATEGORY_LABEL[c].zh}
+                {lang === 'both' && <> <span style={{ fontSize: '0.65rem', opacity: 0.7 }}>{CATEGORY_LABEL[c].en}</span></>}
               </button>
             );
           })}
@@ -185,16 +190,18 @@ export function FormationsModal({ onClose }: Props) {
                     color: 'var(--tkm-text-h1, #f0e0b0)',
                     letterSpacing: '0.2rem',
                   }}>
-                    {f.name.zh}
+                    {lang === 'en' ? f.name.en : f.name.zh}
                   </span>
-                  <span style={{
-                    fontSize: '0.7rem',
-                    color: 'var(--tkm-text-muted)',
-                    fontStyle: 'italic',
-                    letterSpacing: '0.1rem',
-                  }}>
-                    {f.name.en}
-                  </span>
+                  {lang === 'both' && (
+                    <span style={{
+                      fontSize: '0.7rem',
+                      color: 'var(--tkm-text-muted)',
+                      fontStyle: 'italic',
+                      letterSpacing: '0.1rem',
+                    }}>
+                      {f.name.en}
+                    </span>
+                  )}
                 </div>
                 <div style={{
                   fontSize: '0.78rem',
@@ -202,7 +209,7 @@ export function FormationsModal({ onClose }: Props) {
                   lineHeight: 1.55,
                   marginBottom: '0.5rem',
                 }}>
-                  {f.description}
+                  {desc(f)}
                 </div>
                 <div style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -211,7 +218,7 @@ export function FormationsModal({ onClose }: Props) {
                   borderTop: '1px solid var(--tkm-border-soft)',
                   paddingTop: '0.4rem',
                 }}>
-                  <span>智力 ≥ <span style={{
+                  <span>{t('知力', 'INT')} ≥ <span style={{
                     color: f.minIntelligence >= 85 ? 'var(--tkm-danger)' :
                            f.minIntelligence >= 70 ? 'var(--tkm-warn)' :
                            'var(--tkm-success)',
@@ -222,7 +229,7 @@ export function FormationsModal({ onClose }: Props) {
                     color: accent,
                     letterSpacing: '0.15rem',
                   }}>
-                    {CATEGORY_LABEL[c].zh}
+                    {lang === 'en' ? CATEGORY_LABEL[c].en : CATEGORY_LABEL[c].zh}
                   </span>
                 </div>
               </div>
@@ -237,7 +244,7 @@ export function FormationsModal({ onClose }: Props) {
           color: 'var(--tkm-text-muted)',
           letterSpacing: '0.1rem',
         }}>
-          展示 {list.length} / {FORMATIONS.length} · 戰術戰時於 BattlePrepModal 中選用
+          {t(`展示 ${list.length} / ${FORMATIONS.length} · 戰時於 BattlePrepModal 中選用`, `Showing ${list.length} / ${FORMATIONS.length} · selectable in BattlePrepModal at battle time`)}
         </footer>
       </div>
     </div>

@@ -12,13 +12,15 @@ import { PoliciesModal } from '../components/PoliciesModal';
 import { TraitsModal } from '../components/TraitsModal';
 import { SkillsModal } from '../components/SkillsModal';
 import { SaveSlotsModal } from '../components/SaveSlotsModal';
+import { SettingsModal } from '../components/SettingsModal';
 import { ScenarioOfficersBrowser } from '../components/ScenarioOfficersBrowser';
+import { useT, useLanguage, useDesc } from '../i18n';
 import styles from './TitleScreen.module.css';
 
-const DIFFICULTIES: Array<{ id: Difficulty; en: string; zh: string; note: string }> = [
-  { id: 'easy',   en: 'Easy',   zh: '初級', note: 'Your starting troops +20%. AI attacks more cautiously.' },
-  { id: 'normal', en: 'Normal', zh: '中級', note: 'Default balance.' },
-  { id: 'hard',   en: 'Hard',   zh: '上級', note: 'AI starting troops +20%. AI attacks aggressively.' },
+const DIFFICULTIES: Array<{ id: Difficulty; en: string; zh: string; noteZh: string; noteEn: string }> = [
+  { id: 'easy',   en: 'Easy',   zh: '初級', noteZh: '我方初始兵力 +20%。AI 攻擊較保守。', noteEn: 'Your starting troops +20%. AI attacks more cautiously.' },
+  { id: 'normal', en: 'Normal', zh: '中級', noteZh: '預設平衡。',                              noteEn: 'Default balance.' },
+  { id: 'hard',   en: 'Hard',   zh: '上級', noteZh: 'AI 初始兵力 +20%。AI 攻擊較積極。',     noteEn: 'AI starting troops +20%. AI attacks aggressively.' },
 ];
 
 export function TitleScreen() {
@@ -42,9 +44,13 @@ export function TitleScreen() {
   const [showPolicies, setShowPolicies] = useState(false);
   const [showTraits, setShowTraits] = useState(false);
   const [showSkills, setShowSkills] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const enterCareerMode = useGameStore((s) => s.enterCareerMode);
   const setRomanceMode = useGameStore((s) => s.setRomanceMode);
   const setRoguelikeMode = useGameStore((s) => s.setRoguelikeMode);
+  const t = useT();
+  const lang = useLanguage();
+  const desc = useDesc();
 
   const scenario = useMemo<Scenario>(
     () => SCENARIOS.find((s) => s.id === scenarioId) ?? SCENARIOS[0],
@@ -56,8 +62,8 @@ export function TitleScreen() {
     <div className={styles.root}>
       <header className={styles.header}>
         <h1 className={styles.title}>
-          <span className={styles.titleZh}>三國志</span>
-          <span className={styles.titleEn}>Three Kingdom Masters</span>
+          {lang !== 'en' && <span className={styles.titleZh}>三國志</span>}
+          {lang !== 'zh' && <span className={styles.titleEn}>Three Kingdom Masters</span>}
           <svg
             className="tkm-brush-stroke"
             viewBox="0 0 300 80"
@@ -79,7 +85,7 @@ export function TitleScreen() {
 
       <main className={styles.main}>
         <section className={styles.scenarioCard}>
-          <div className={styles.scenarioLabel}>Scenario 戰役</div>
+          <div className={styles.scenarioLabel}>{t('戰役', 'Scenario')}</div>
           <ul className={styles.scenarioList}>
             {SCENARIOS.map((s) => (
               <li key={s.id}>
@@ -91,108 +97,127 @@ export function TitleScreen() {
                     {s.startDate.year} AD
                   </span>
                   <span className={styles.scenarioName}>
-                    <span className={styles.scenarioNameZh}>{s.name.zh}</span>
-                    <span className={styles.scenarioNameEn}>{s.name.en}</span>
+                    {lang !== 'en' && <span className={styles.scenarioNameZh}>{s.name.zh}</span>}
+                    {lang !== 'zh' && <span className={styles.scenarioNameEn}>{s.name.en}</span>}
                   </span>
+                  {s.kind === 'whatif' && (
+                    <span
+                      style={{
+                        marginLeft: 'auto',
+                        background: '#3a2d20',
+                        color: '#c178c7',
+                        border: '1px solid #c178c7',
+                        padding: '0.08rem 0.4rem',
+                        fontSize: '0.6rem',
+                        letterSpacing: '0.15rem',
+                        borderRadius: 2,
+                      }}
+                    >
+                      {t('假想', 'WHAT-IF')}
+                    </span>
+                  )}
                 </button>
               </li>
             ))}
           </ul>
 
-          <p className={styles.scenarioDesc}>{scenario.description}</p>
+          <p className={styles.scenarioDesc}>{desc(scenario)}</p>
 
-          <div className={styles.difficultyLabel}>Difficulty 難易度</div>
+          <div className={styles.difficultyLabel}>{t('難易度', 'Difficulty')}</div>
           <div className={styles.difficultyRow}>
             {DIFFICULTIES.map((d) => (
               <button
                 key={d.id}
                 className={`${styles.diffButton} ${difficulty === d.id ? styles.diffSelected : ''}`}
                 onClick={() => setDifficulty(d.id)}
-                title={d.note}
+                title={t(d.noteZh, d.noteEn)}
               >
-                <span className={styles.diffZh}>{d.zh}</span>
-                <span className={styles.diffEn}>{d.en}</span>
+                {lang !== 'en' && <span className={styles.diffZh}>{d.zh}</span>}
+                {lang !== 'zh' && <span className={styles.diffEn}>{d.en}</span>}
               </button>
             ))}
           </div>
           <p className={styles.difficultyNote}>
-            {DIFFICULTIES.find((d) => d.id === difficulty)?.note}
+            {(() => {
+              const d = DIFFICULTIES.find((x) => x.id === difficulty);
+              return d ? t(d.noteZh, d.noteEn) : '';
+            })()}
           </p>
 
           <button
             className={styles.officersButton}
             onClick={() => setShowOfficers(true)}
           >
-            武将一覧 · Browse All Officers
+            {t('武將一覽', 'Browse All Officers')}
           </button>
           <button
             className={styles.officersButton}
             onClick={() => setShowItems(true)}
             style={{ marginTop: '0.5rem' }}
           >
-            名品一覧 · Browse All Famous Items
+            {t('名品一覽', 'Browse All Famous Items')}
           </button>
           <button
             className={styles.officersButton}
             onClick={() => setShowFormations(true)}
             style={{ marginTop: '0.5rem' }}
           >
-            陣形一覽 · Browse All Formations
+            {t('陣形一覽', 'Browse All Formations')}
           </button>
           <button
             className={styles.officersButton}
             onClick={() => setShowTactics(true)}
             style={{ marginTop: '0.5rem' }}
           >
-            戰法一覽 · Browse All Tactics
+            {t('戰法一覽', 'Browse All Tactics')}
           </button>
           <button
             className={styles.officersButton}
             onClick={() => setShowPolicies(true)}
             style={{ marginTop: '0.5rem' }}
           >
-            政策一覽 · Browse All Policies
+            {t('政策一覽', 'Browse All Policies')}
           </button>
           <button
             className={styles.officersButton}
             onClick={() => setShowTraits(true)}
             style={{ marginTop: '0.5rem' }}
           >
-            性格一覽 · Browse All Traits
+            {t('性格一覽', 'Browse All Traits')}
           </button>
           <button
             className={styles.officersButton}
             onClick={() => setShowSkills(true)}
             style={{ marginTop: '0.5rem' }}
           >
-            特技一覽 · Browse All Skills
+            {t('特技一覽', 'Browse All Skills')}
           </button>
           <button
             className={styles.officersButton}
             onClick={() => setShowCustomOfficer(true)}
             style={{ marginTop: '0.5rem' }}
           >
-            自定義武將 · Create Your Own Officer
+            {t('自定義武將', 'Create Your Own Officer')}
           </button>
           <button
             className={styles.officersButton}
             onClick={() => setShowLoad(true)}
             style={{ marginTop: '0.5rem' }}
           >
-            載入 · Load Saved Game
+            {t('載入存檔', 'Load Saved Game')}
           </button>
           <button
             className={styles.officersButton}
             onClick={() => {
-              const count = Number(prompt('How many forces? (3–8)', '5') ?? '5');
-              const year = Number(prompt('Year? (180–240)', '200') ?? '200');
+              const count = Number(prompt(t('勢力數量？(3–8)', 'How many forces? (3–8)'), '5') ?? '5');
+              const year = Number(prompt(t('年份？(180–240)', 'Year? (180–240)'), '200') ?? '200');
               if (count >= 2 && count <= 10 && year >= 100 && year <= 280) {
                 loadRandom(count, year);
               }
             }}
             style={{ marginTop: '0.5rem' }}
           >
-            随机剧本 · Random Scenario
+            {t('隨機劇本', 'Random Scenario')}
           </button>
           <label
             style={{
@@ -209,7 +234,7 @@ export function TitleScreen() {
               onChange={(e) => setHotSeatMode(e.target.checked)}
               style={{ marginRight: '0.4rem' }}
             />
-             Hot-seat (players share keyboard)
+             {t('輪流模式（多人共用鍵盤）', 'Hot-seat (players share keyboard)')}
           </label>
           <label
             style={{
@@ -226,7 +251,7 @@ export function TitleScreen() {
               onChange={(e) => setCareerMode(e.target.checked)}
               style={{ marginRight: '0.4rem' }}
             />
-            列傳 Career mode (pick one officer as your avatar)
+            {t('列傳模式（選擇一位武將為主角）', 'Career mode (pick one officer as your avatar)')}
           </label>
           <label style={{ display: 'block', marginTop: '0.3rem', fontSize: '0.78rem', color: '#8a7050', cursor: 'pointer' }}>
             <input
@@ -235,7 +260,7 @@ export function TitleScreen() {
               onChange={(e) => { setRomance(e.target.checked); setRomanceMode(e.target.checked); }}
               style={{ marginRight: '0.4rem' }}
             />
-            演義 Romance mode (historical events fire on schedule)
+            {t('演義模式（歷史事件按時觸發）', 'Romance mode (historical events fire on schedule)')}
           </label>
           <label style={{ display: 'block', marginTop: '0.3rem', fontSize: '0.78rem', color: '#8a7050', cursor: 'pointer' }}>
             <input
@@ -245,20 +270,20 @@ export function TitleScreen() {
               style={{ marginRight: '0.4rem' }}
               disabled={!careerMode}
             />
-             Roguelike (career officer death = game over; requires Career mode)
+             {t('Roguelike 模式（主角陣亡即遊戲結束；需開啟列傳）', 'Roguelike (career officer death = game over; requires Career mode)')}
           </label>
           <button
             onClick={() => setShowAchievements(true)}
             className={styles.officersButton}
             style={{ marginTop: '0.5rem' }}
           >
-            勳功 · Achievements
+            {t('勳功', 'Achievements')}
           </button>
         </section>
 
         <section className={styles.forceSection}>
           <div className={styles.forceLabel}>
-            Choose your force 君主選択 · {startYear} AD
+            {t('君主選擇', 'Choose your force')} · {startYear} AD
           </div>
           <ul className={styles.forceList}>
             {scenario.forces.map((force) => {
@@ -273,7 +298,7 @@ export function TitleScreen() {
                     onClick={() => {
                       if (hotSeatMode) {
                         const human = prompt(
-                          'How many human players? (2–4)',
+                          t('人類玩家數量？(2–4)', 'How many human players? (2–4)'),
                           '2',
                         );
                         const n = Math.max(2, Math.min(4, Number(human) || 2));
@@ -281,7 +306,7 @@ export function TitleScreen() {
                         setHotSeatPlayers(
                           allForces.map((f, i) => ({
                             forceId: f.id,
-                            label: `P${i + 1}: ${f.name.en}`,
+                            label: `P${i + 1}: ${lang === 'zh' ? f.name.zh : f.name.en}`,
                           })),
                         );
                         loadScenario(scenario, allForces[0].id, difficulty);
@@ -295,10 +320,10 @@ export function TitleScreen() {
                           (o) => o.forceId === force.id,
                         );
                         const list = officersInForce
-                          .map((o, i) => `${i + 1}. ${o.name.zh} ${o.name.en} (W${o.stats.war} I${o.stats.intelligence})`)
+                          .map((o, i) => `${i + 1}. ${lang === 'zh' ? o.name.zh : `${o.name.zh} ${o.name.en}`} (W${o.stats.war} I${o.stats.intelligence})`)
                           .join('\n');
                         const choice = prompt(
-                          `Career officer — pick a number:\n\n${list}`,
+                          `${t('列傳主角 — 請輸入編號：', 'Career officer — pick a number:')}\n\n${list}`,
                           '1',
                         );
                         const idx = Math.max(0, Math.min(officersInForce.length - 1, Number(choice) - 1));
@@ -313,8 +338,9 @@ export function TitleScreen() {
                       style={{ background: force.color }}
                     />
                     <span className={styles.forceText}>
-                      <span className={styles.forceNameZh}>{force.name.zh}</span>
-                      <span className={styles.forceNameEn}>{ruler.name.en}</span>
+                      {lang !== 'en' && <span className={styles.forceNameZh}>{force.name.zh}</span>}
+                      {lang !== 'zh' && <span className={styles.forceNameEn}>{ruler.name.en}</span>}
+                      {lang === 'zh' && <span className={styles.forceNameEn}>{ruler.name.zh}</span>}
                     </span>
                     <span className={styles.forceStats}>
                       W{ruler.stats.war} · I{ruler.stats.intelligence} · P
@@ -366,6 +392,26 @@ export function TitleScreen() {
       {showPolicies && <PoliciesModal onClose={() => setShowPolicies(false)} />}
       {showTraits && <TraitsModal onClose={() => setShowTraits(false)} />}
       {showSkills && <SkillsModal onClose={() => setShowSkills(false)} />}
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+
+      {/* Settings gear in top-right corner */}
+      <button
+        onClick={() => setShowSettings(true)}
+        title="設定 / Settings"
+        style={{
+          position: 'fixed',
+          top: 16, right: 16,
+          width: 44, height: 44,
+          background: 'rgba(20, 14, 8, 0.85)',
+          border: '1px solid #d4a84a',
+          color: '#d4a84a',
+          fontSize: '1.4rem',
+          cursor: 'pointer',
+          fontFamily: 'serif',
+          boxShadow: '0 0 8px rgba(0,0,0,0.6)',
+          zIndex: 50,
+        }}
+      >⚙</button>
     </div>
   );
 }

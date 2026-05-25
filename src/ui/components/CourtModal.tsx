@@ -3,6 +3,7 @@ import { EDICTS, IMPERIAL_RANKS, IMPERIAL_RANKS_BY_ID } from '../../game/data';
 import { useGameStore } from '../../game/state/store';
 import type { EdictKind, EntityId } from '../../game/types';
 import styles from './CourtModal.module.css';
+import { useLanguage, useDesc } from '../i18n';
 
 interface Props {
   onClose: () => void;
@@ -16,6 +17,8 @@ export function CourtModal({ onClose }: Props) {
   const date = useGameStore((s) => s.date);
   const issueEdict = useGameStore((s) => s.issueEdict);
   const promoteImperialRank = useGameStore((s) => s.promoteImperialRank);
+  const lang = useLanguage();
+  const desc = useDesc();
 
   const playerForce = playerForceId ? forces[playerForceId] : null;
   const currentRank = playerForce?.imperialRank ?? 'commoner';
@@ -100,10 +103,10 @@ export function CourtModal({ onClose }: Props) {
               <div key={e.kind} className={styles.edictCard}>
                 <div className={styles.edictBody}>
                   <div>
-                    <span className={styles.edictName}>{e.name.zh}</span>
-                    <span className={styles.edictNameEn}>{e.name.en}</span>
+                    {lang !== 'en' && <span className={styles.edictName}>{e.name.zh}</span>}
+                    {lang !== 'zh' && <span className={styles.edictNameEn}>{e.name.en}</span>}
                   </div>
-                  <div className={styles.edictDesc}>{e.description}</div>
+                  <div className={styles.edictDesc}>{desc(e)}</div>
                   <div className={styles.edictMeta}>
                     <span className={styles.metaGold}>{e.goldCost}g</span>
                     <span className={styles.metaRank}>req {minRankDef.name.en}</span>

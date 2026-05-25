@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { ITEMS } from '../../game/data';
 import type { Item } from '../../game/data/items';
+import { CITY_NAMES_BY_ID } from '../../game/data/cities';
+import { useT, useLanguage } from '../i18n';
 
 interface Props {
   onClose: () => void;
@@ -30,6 +32,8 @@ const KIND_COLOR: Record<Item['kind'], string> = {
 export function ItemsBrowser({ onClose }: Props) {
   const [kind, setKind] = useState<Kind>('all');
   const [search, setSearch] = useState('');
+  const t = useT();
+  const lang = useLanguage();
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -79,9 +83,9 @@ export function ItemsBrowser({ onClose }: Props) {
           }}
         >
           <div>
-            <div style={{ fontSize: '1.4rem', color: '#d4a84a', letterSpacing: '0.3rem' }}>名品</div>
+            <div style={{ fontSize: '1.4rem', color: '#d4a84a', letterSpacing: '0.3rem' }}>{t('名品', 'Items')}</div>
             <div style={{ fontSize: '0.85rem', color: '#8a7050', fontStyle: 'italic' }}>
-              Famous Items · {ITEMS.length} catalogued
+              {t(`收錄 ${ITEMS.length} 件`, `Famous Items · ${ITEMS.length} catalogued`)}
             </div>
           </div>
           <button
@@ -115,13 +119,14 @@ export function ItemsBrowser({ onClose }: Props) {
                 letterSpacing: '0.1rem',
               }}
             >
-              {KIND_LABEL[k].zh} <span style={{ fontSize: '0.7rem', color: '#5a4530' }}>{KIND_LABEL[k].en}</span>
+              {lang === 'en' ? KIND_LABEL[k].en : KIND_LABEL[k].zh}
+              {lang === 'both' && <> <span style={{ fontSize: '0.7rem', color: '#5a4530' }}>{KIND_LABEL[k].en}</span></>}
             </button>
           ))}
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name or description…"
+            placeholder={t('依名稱或描述搜尋…', 'Search by name or description…')}
             style={{
               background: '#1a1410',
               border: '1px solid #4a3520',
@@ -148,7 +153,7 @@ export function ItemsBrowser({ onClose }: Props) {
         >
           {visible.length === 0 ? (
             <div style={{ color: '#8a7050', fontStyle: 'italic', padding: '2rem' }}>
-              No items match.
+              {t('沒有符合的物品。', 'No items match.')}
             </div>
           ) : (
             visible.map((i) => <ItemCard key={i.id} item={i} />)
@@ -161,6 +166,7 @@ export function ItemsBrowser({ onClose }: Props) {
 
 function ItemCard({ item }: { item: Item }) {
   const color = KIND_COLOR[item.kind];
+  const lang = useLanguage();
   const stats: Array<[string, number | undefined]> = [
     ['統', item.effects.leadership],
     ['武', item.effects.war],
@@ -179,25 +185,27 @@ function ItemCard({ item }: { item: Item }) {
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
         <div style={{ fontSize: '0.95rem', color: '#d4a84a', letterSpacing: '0.15rem' }}>
-          {item.name.zh}
+          {lang === 'en' ? item.name.en : item.name.zh}
         </div>
         <div
           style={{
             fontSize: '0.6rem', color, letterSpacing: '0.15rem', textTransform: 'uppercase',
           }}
         >
-          {KIND_LABEL[item.kind].en}
+          {lang === 'en' ? KIND_LABEL[item.kind].en : KIND_LABEL[item.kind].zh}
         </div>
       </div>
-      <div style={{ fontSize: '0.7rem', color: '#8a7050', fontStyle: 'italic', marginBottom: '0.4rem' }}>
-        {item.name.en}
-      </div>
+      {lang === 'both' && (
+        <div style={{ fontSize: '0.7rem', color: '#8a7050', fontStyle: 'italic', marginBottom: '0.4rem' }}>
+          {item.name.en}
+        </div>
+      )}
       <div style={{ fontSize: '0.78rem', color: '#c0a878', lineHeight: 1.45, marginBottom: '0.5rem' }}>
-        {item.description}
+        {lang === 'zh' && item.descriptionZh ? item.descriptionZh : item.description}
       </div>
       <div
         style={{
-          display: 'flex', gap: '0.4rem', flexWrap: 'wrap',
+          display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center',
           fontFamily: 'ui-monospace, monospace', fontSize: '0.72rem',
         }}
       >
@@ -207,6 +215,13 @@ function ItemCard({ item }: { item: Item }) {
               {label} +{value}
             </span>
           ) : null,
+        )}
+        {item.originCityId && CITY_NAMES_BY_ID[item.originCityId] && (
+          <span style={{ color: '#8a7050', marginLeft: 'auto', fontStyle: 'italic' }}>
+            {lang === 'en' ? 'from' : '出'} {lang === 'en'
+              ? CITY_NAMES_BY_ID[item.originCityId].en
+              : CITY_NAMES_BY_ID[item.originCityId].zh}
+          </span>
         )}
       </div>
     </div>

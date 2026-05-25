@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { checkEndings } from '../../game/systems/endings';
 import type { EndingKind } from '../../game/state/gameState';
+import { useT, useLanguage } from '../i18n';
 
 /**
  * Small SVG vignettes for each ending — water-ink style.
@@ -115,6 +116,8 @@ export function EndingsModal({ onClose }: Props) {
     () => checkEndings({ cities, officers, forces, playerForceId, date }),
     [cities, officers, forces, playerForceId, date],
   );
+  const t = useT();
+  const lang = useLanguage();
 
   useEffect(() => {
     if (!ending || ending.kind === 'defeat') return;
@@ -156,20 +159,22 @@ export function EndingsModal({ onClose }: Props) {
             marginTop: '1.5rem',
           }}
         >
-          {ending.titleZh}
+          {lang === 'en' ? ending.titleEn : ending.titleZh}
         </div>
-        <div
-          style={{
-            fontSize: '0.9rem',
-            color: '#c0a878',
-            textAlign: 'center',
-            fontStyle: 'italic',
-            marginTop: '0.5rem',
-            letterSpacing: '0.3rem',
-          }}
-        >
-          {ending.titleEn}
-        </div>
+        {lang === 'both' && (
+          <div
+            style={{
+              fontSize: '0.9rem',
+              color: '#c0a878',
+              textAlign: 'center',
+              fontStyle: 'italic',
+              marginTop: '0.5rem',
+              letterSpacing: '0.3rem',
+            }}
+          >
+            {ending.titleEn}
+          </div>
+        )}
         <hr
           style={{
             border: 'none',
@@ -178,30 +183,34 @@ export function EndingsModal({ onClose }: Props) {
             margin: '1.5rem 0',
           }}
         />
-        <p
-          style={{
-            fontSize: '1rem',
-            lineHeight: 1.8,
-            color: '#d4a84a',
-            textAlign: 'justify',
-            margin: 0,
-            marginBottom: '1rem',
-          }}
-        >
-          {ending.textZh}
-        </p>
-        <p
-          style={{
-            fontSize: '0.88rem',
-            lineHeight: 1.7,
-            color: '#c0a878',
-            fontStyle: 'italic',
-            textAlign: 'justify',
-            margin: 0,
-          }}
-        >
-          {ending.textEn}
-        </p>
+        {lang !== 'en' && (
+          <p
+            style={{
+              fontSize: '1rem',
+              lineHeight: 1.8,
+              color: '#d4a84a',
+              textAlign: 'justify',
+              margin: 0,
+              marginBottom: '1rem',
+            }}
+          >
+            {ending.textZh}
+          </p>
+        )}
+        {lang !== 'zh' && (
+          <p
+            style={{
+              fontSize: '0.88rem',
+              lineHeight: 1.7,
+              color: '#c0a878',
+              fontStyle: 'italic',
+              textAlign: 'justify',
+              margin: 0,
+            }}
+          >
+            {ending.textEn}
+          </p>
+        )}
         <div style={{ textAlign: 'center', marginTop: '2rem' }}>
           <button
             onClick={onClose}
@@ -215,7 +224,7 @@ export function EndingsModal({ onClose }: Props) {
               cursor: 'pointer',
             }}
           >
-            続行 Continue
+            {t('續行', 'Continue')}
           </button>
         </div>
       </div>

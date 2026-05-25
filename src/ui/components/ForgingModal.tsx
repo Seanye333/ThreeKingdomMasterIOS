@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { FORGE_RECIPES, ITEMS_BY_ID } from '../../game/data';
 import { useGameStore } from '../../game/state/store';
 import type { EntityId } from '../../game/types';
+import { useDesc } from '../i18n';
 
 interface Props {
   onClose: () => void;
@@ -13,6 +14,7 @@ export function ForgingModal({ onClose }: Props) {
   const lostItems = useGameStore((s) => s.lostItems);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const forgeItem = useGameStore((s) => s.forgeItem);
+  const desc = useDesc();
 
   // Find player cities with a foundry.
   const foundryCities = useMemo(() => {
@@ -153,7 +155,7 @@ export function ForgingModal({ onClose }: Props) {
                       </button>
                     </div>
                     <div style={{ fontSize: '0.78rem', color: '#c0a878', fontStyle: 'italic', marginTop: '0.3rem' }}>
-                      {r.description}
+                      {desc(r)}
                     </div>
                     <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.72rem', color: '#8a7050', marginTop: '0.3rem' }}>
                       Ingredients: {r.ingredients.map((id) => (

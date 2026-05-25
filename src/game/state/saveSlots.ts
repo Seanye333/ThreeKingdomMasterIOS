@@ -25,7 +25,7 @@ export interface SaveSlot {
 
 const SLOT_INDEX_KEY = 'tkm-slot-index';
 
-interface SlotMeta {
+export interface SlotMeta {
   id: string;
   label: string;
   savedAt: number;
@@ -33,6 +33,12 @@ interface SlotMeta {
   year: number;
   season: string;
   playerForceName: string;
+  /** Force theme color for visual identification (added in v27). */
+  forceColor?: string;
+  /** Number of cities the player owns at save time. */
+  cityCount?: number;
+  /** Total troops across player cities at save time. */
+  troopTotal?: number;
 }
 
 function readIndex(): SlotMeta[] {
@@ -61,6 +67,11 @@ export function saveToSlot(
   state: GameState,
   playerForceName: string,
 ): void {
+  // Derive a few summary stats so the slot list reads informatively.
+  const force = state.playerForceId ? state.forces[state.playerForceId] : null;
+  const playerCities = Object.values(state.cities).filter(
+    (c) => state.playerForceId && c.ownerForceId === state.playerForceId,
+  );
   const meta: SlotMeta = {
     id: slotId,
     label,
@@ -69,11 +80,24 @@ export function saveToSlot(
     year: state.date.year,
     season: state.date.season,
     playerForceName,
+    forceColor: force?.color,
+    cityCount: playerCities.length,
+    troopTotal: playerCities.reduce((sum, c) => sum + c.troops, 0),
   };
   localStorage.setItem(SLOT_PREFIX + slotId, JSON.stringify(state));
   const idx = readIndex().filter((s) => s.id !== slotId);
   idx.push(meta);
   writeIndex(idx);
+}
+
+/** Update only the label on an existing slot (without touching state). */
+export function renameSlot(slotId: string, newLabel: string): boolean {
+  const idx = readIndex();
+  const entry = idx.find((s) => s.id === slotId);
+  if (!entry) return false;
+  entry.label = newLabel;
+  writeIndex(idx);
+  return true;
 }
 
 export function loadFromSlot(slotId: string): GameState | null {

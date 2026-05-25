@@ -26,24 +26,28 @@ export const SIEGE_ENGINES: Record<SiegeEngineId, SiegeEngine> = {
     name: { zh: '衝車', en: 'Battering Ram' },
     defenseMultiplier: 0.85,
     description: 'Iron-headed ram on rollers. Best against gates of stone-wall cities (tier 2+).',
+    descriptionZh: "鐵首滾輪攻城車。最宜攻破二級以上石牆城池之城門。",
   },
   'yun-ti': {
     id: 'yun-ti',
     name: { zh: '雲梯', en: 'Scaling Ladder' },
     defenseMultiplier: 0.90,
     description: 'Tall wheeled ladder for direct wall assault. Useful at any tier.',
+    descriptionZh: "高大有輪之攻城梯,用以直攻城牆。各等級城池皆適用。",
   },
   'tou-shi-ji': {
     id: 'tou-shi-ji',
     name: { zh: '投石機', en: 'Trebuchet' },
     defenseMultiplier: 0.78,
     description: 'Counterweight stone-thrower. Devastates citadel walls (tier 3).',
+    descriptionZh: "配重式投石機。專破三級堅城之牆垣。",
   },
   'lou-che': {
     id: 'lou-che',
     name: { zh: '樓車', en: 'Siege Tower' },
     defenseMultiplier: 0.82,
     description: 'Wheeled tower allowing archers to fire down on defenders.',
+    descriptionZh: "有輪之高樓,可讓弓手居高臨下射擊守軍。",
   },
 };
 

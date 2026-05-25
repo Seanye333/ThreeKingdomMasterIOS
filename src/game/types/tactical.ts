@@ -35,6 +35,9 @@ export interface FormationDef {
   id: FormationId;
   name: BilingualName;
   description: string;
+  descriptionZh?: string;
+  description: string;
+  descriptionZh?: string;
   minIntelligence: number;
 }
 
@@ -83,6 +86,9 @@ export interface NamedBattleMap {
   id: EntityId;
   name: BilingualName;
   description: string;
+  descriptionZh?: string;
+  description: string;
+  descriptionZh?: string;
   width: number;
   height: number;
   /** Special terrain overrides keyed by `col,row`. */
@@ -192,6 +198,9 @@ export interface Stratagem {
   id: StratagemId;
   name: BilingualName;
   description: string;
+  descriptionZh?: string;
+  description: string;
+  descriptionZh?: string;
   /** Min intelligence to use. */
   minIntelligence: number;
   /** Range in hexes (Chebyshev). */

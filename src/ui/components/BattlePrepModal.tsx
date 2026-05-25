@@ -11,6 +11,7 @@ import type {
 } from '../../game/types';
 import { WordWarModal } from './WordWarModal';
 import styles from './BattlePrepModal.module.css';
+import { useLanguage, useDesc } from '../i18n';
 
 interface Props {
   sourceCityId: EntityId;
@@ -22,13 +23,13 @@ interface Props {
 }
 
 const UNIT_TYPES: UnitType[] = ['infantry', 'spearmen', 'cavalry', 'archers', 'siege', 'navy'];
-const UNIT_TYPE_LABEL: Record<UnitType, string> = {
-  infantry: '歩 Infantry',
-  spearmen: '槍 Spearmen',
-  cavalry: '騎 Cavalry',
-  archers: '弓 Archers',
-  siege: '攻 Siege',
-  navy: '水 Navy',
+const UNIT_TYPE_LABEL: Record<UnitType, { zh: string; en: string }> = {
+  infantry: { zh: '步兵',   en: 'Infantry' },
+  spearmen: { zh: '槍兵',   en: 'Spearmen' },
+  cavalry:  { zh: '騎兵',   en: 'Cavalry'  },
+  archers:  { zh: '弓兵',   en: 'Archers'  },
+  siege:    { zh: '攻城',   en: 'Siege'    },
+  navy:     { zh: '水軍',   en: 'Navy'     },
 };
 
 // 5-dot normalized [0..1]² layout per formation — the commander is the gold dot (first).
@@ -101,6 +102,8 @@ export function BattlePrepModal({
   const officers = useGameStore((s) => s.officers);
   const cities = useGameStore((s) => s.cities);
   const startTactical = useGameStore((s) => s.startTacticalBattle);
+  const lang = useLanguage();
+  const desc = useDesc();
 
   const source = cities[sourceCityId];
   const target = cities[targetCityId];
@@ -265,9 +268,12 @@ export function BattlePrepModal({
                   value={unitTypes[o.id]}
                   onChange={(e) => setUnitTypes((u) => ({ ...u, [o.id]: e.target.value as UnitType }))}
                 >
-                  {UNIT_TYPES.map((t) => (
-                    <option key={t} value={t}>{UNIT_TYPE_LABEL[t]}</option>
-                  ))}
+                  {UNIT_TYPES.map((utype) => {
+                    const lbl = UNIT_TYPE_LABEL[utype];
+                    return (
+                      <option key={utype} value={utype}>{lang === 'en' ? lbl.en : lbl.zh}</option>
+                    );
+                  })}
                 </select>
                 <input
                   className={styles.troopInput}
@@ -304,11 +310,11 @@ export function BattlePrepModal({
                     style={!eligible ? { opacity: 0.45 } : undefined}
                   >
                     <div>
-                      <span className={styles.formName}>{f.name.zh}</span>
-                      <span className={styles.formNameEn}>{f.name.en}</span>
+                      {lang !== 'en' && <span className={styles.formName}>{f.name.zh}</span>}
+                      {lang !== 'zh' && <span className={styles.formNameEn}>{f.name.en}</span>}
                     </div>
                     <FormationDiagram id={f.id} />
-                    <div className={styles.formDesc}>{f.description}</div>
+                    <div className={styles.formDesc}>{desc(f)}</div>
                     <div style={{ fontSize: '0.65rem', color: '#8a7050' }}>
                       req INT {f.minIntelligence}
                     </div>

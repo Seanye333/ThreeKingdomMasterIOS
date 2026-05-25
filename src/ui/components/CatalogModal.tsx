@@ -1,10 +1,12 @@
 import { useMemo, useState, type ReactNode } from 'react';
+import { useT, useLanguage } from '../i18n';
 
 export interface CatalogItem {
   id: string;
   zh: string;
   en: string;
   description?: string;
+  descriptionZh?: string;
   /** Free-form category — used to filter and color cards. */
   category?: string;
   /** Optional accent color (e.g., trait color). Overrides category color. */
@@ -32,6 +34,8 @@ interface Props {
 
 export function CatalogModal({ onClose, title, items, categories = [] }: Props) {
   const [cat, setCat] = useState<string>('all');
+  const t = useT();
+  const lang = useLanguage();
 
   const list: CatalogItem[] = useMemo(() => {
     if (cat === 'all') return items;
@@ -80,7 +84,7 @@ export function CatalogModal({ onClose, title, items, categories = [] }: Props) 
             color: 'var(--tkm-text-h2, #d4a84a)',
             letterSpacing: '0.3rem',
           }}>
-            {title.zh}
+            {lang === 'en' ? title.en : title.zh}
           </div>
           <div style={{
             fontSize: '0.78rem',
@@ -88,7 +92,7 @@ export function CatalogModal({ onClose, title, items, categories = [] }: Props) 
             letterSpacing: '0.2rem',
             flex: 1,
           }}>
-            {title.en.toUpperCase()} · {items.length} 種
+            {lang === 'zh' ? `${items.length} 種` : lang === 'en' ? `${title.en.toUpperCase()} · ${items.length}` : `${title.en.toUpperCase()} · ${items.length} 種`}
           </div>
           <button
             onClick={onClose}
@@ -123,7 +127,8 @@ export function CatalogModal({ onClose, title, items, categories = [] }: Props) 
                     cursor: 'pointer',
                   }}
                 >
-                  {c.zh} <span style={{ fontSize: '0.65rem', opacity: 0.7 }}>{c.en}</span>
+                  {lang === 'en' ? c.en : c.zh}
+                  {lang === 'both' && <> <span style={{ fontSize: '0.65rem', opacity: 0.7 }}>{c.en}</span></>}
                 </button>
               );
             })}
@@ -172,16 +177,18 @@ export function CatalogModal({ onClose, title, items, categories = [] }: Props) 
                     color: 'var(--tkm-text-h1, #f0e0b0)',
                     letterSpacing: '0.2rem',
                   }}>
-                    {it.zh}
+                    {lang === 'en' ? it.en : it.zh}
                   </span>
-                  <span style={{
-                    fontSize: '0.7rem',
-                    color: 'var(--tkm-text-muted)',
-                    fontStyle: 'italic',
-                    letterSpacing: '0.1rem',
-                  }}>
-                    {it.en}
-                  </span>
+                  {lang === 'both' && (
+                    <span style={{
+                      fontSize: '0.7rem',
+                      color: 'var(--tkm-text-muted)',
+                      fontStyle: 'italic',
+                      letterSpacing: '0.1rem',
+                    }}>
+                      {it.en}
+                    </span>
+                  )}
                   {it.badge && (
                     <span style={{
                       marginLeft: 'auto',
@@ -193,14 +200,14 @@ export function CatalogModal({ onClose, title, items, categories = [] }: Props) 
                     </span>
                   )}
                 </div>
-                {it.description && (
+                {(it.description || it.descriptionZh) && (
                   <div style={{
                     fontSize: '0.78rem',
                     color: 'var(--tkm-text-body)',
                     lineHeight: 1.55,
                     flex: 1,
                   }}>
-                    {it.description}
+                    {lang === 'zh' && it.descriptionZh ? it.descriptionZh : it.description}
                   </div>
                 )}
                 {it.tag && (
@@ -228,7 +235,7 @@ export function CatalogModal({ onClose, title, items, categories = [] }: Props) 
           color: 'var(--tkm-text-muted)',
           letterSpacing: '0.1rem',
         }}>
-          展示 {list.length} / {items.length}
+          {t(`展示 ${list.length} / ${items.length}`, `Showing ${list.length} / ${items.length}`)}
         </footer>
       </div>
     </div>

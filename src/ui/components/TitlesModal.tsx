@@ -3,6 +3,7 @@ import { CIVIC_TITLES, MILITARY_RANKS } from '../../game/data';
 import { useGameStore } from '../../game/state/store';
 import type { CivicTitleId, EntityId, MilitaryRankId, Officer } from '../../game/types';
 import styles from './TitlesModal.module.css';
+import { useDesc } from '../i18n';
 
 interface Props {
   onClose: () => void;
@@ -22,6 +23,7 @@ export function TitlesModal({ onClose }: Props) {
   const [tab, setTab] = useState<Tab>('civic');
   const [pickingTitle, setPickingTitle] = useState<CivicTitleId | null>(null);
   const [prefectCityId, setPrefectCityId] = useState<EntityId | null>(null);
+  const desc = useDesc();
 
   const ownOfficers = useMemo(
     () =>
@@ -153,7 +155,7 @@ function CivicTab({
                 </div>
                 <span className={styles.officerStats}>{t.primaryStat.slice(0, 3).toUpperCase()}</span>
               </div>
-              <div className={styles.titleDesc}>{t.description}</div>
+              <div className={styles.titleDesc}>{desc(t)}</div>
               <div className={styles.pickerLabel}>Prefects of your cities</div>
               {ownCities.map((c) => {
                 const holder = titleHolders[`prefect-${c.id}`];
@@ -225,7 +227,7 @@ function CivicTab({
               </div>
               <span className={styles.officerStats}>{t.primaryStat.slice(0, 3).toUpperCase()}</span>
             </div>
-            <div className={styles.titleDesc}>{t.description}</div>
+            <div className={styles.titleDesc}>{desc(t)}</div>
             <div className={styles.holderRow}>
               <span className={styles.holder}>
                 {holder ? (

@@ -3,6 +3,7 @@ import { ITEMS } from '../../game/data';
 import { useGameStore } from '../../game/state/store';
 import type { EntityId, Officer } from '../../game/types';
 import styles from './ArmouryModal.module.css';
+import { useT, useDesc } from '../i18n';
 
 interface Props {
   onClose: () => void;
@@ -19,6 +20,8 @@ export function ArmouryModal({ onClose }: Props) {
 
   const [filter, setFilter] = useState<KindFilter>('all');
   const [assigningItemId, setAssigningItemId] = useState<string | null>(null);
+  const t = useT();
+  const d = useDesc();
 
   const itemHolders = useMemo(() => {
     const map: Record<string, Officer | null> = {};
@@ -84,11 +87,11 @@ export function ArmouryModal({ onClose }: Props) {
           <span className={styles.filterLabel}>Kind</span>
           {(
             [
-              ['all', 'All'],
-              ['weapon', '武器 Weapon'],
-              ['horse', '駿馬 Horse'],
-              ['treasure', '宝物 Treasure'],
-              ['book', '兵書 Book'],
+              ['all',      t('全部', 'All')],
+              ['weapon',   t('武器', 'Weapon')],
+              ['horse',    t('駿馬', 'Horse')],
+              ['treasure', t('寶物', 'Treasure')],
+              ['book',     t('兵書', 'Book')],
             ] as Array<[KindFilter, string]>
           ).map(([k, label]) => (
             <button
@@ -120,7 +123,7 @@ export function ArmouryModal({ onClose }: Props) {
                       {item.kind}
                     </span>
                   </div>
-                  <div className={styles.itemDesc}>{item.description}</div>
+                  <div className={styles.itemDesc}>{d(item)}</div>
                   <div className={styles.itemEffects}>
                     {Object.entries(item.effects).map(([stat, val]) => (
                       <span key={stat} className={styles.effectChip}>
@@ -168,7 +171,7 @@ export function ArmouryModal({ onClose }: Props) {
                   ) : (
                     <>
                       <div className={styles.holderName}>
-                        <span className={styles.unclaimed}>無 Unclaimed</span>
+                        <span className={styles.unclaimed}>{t('未持', 'Unclaimed')}</span>
                       </div>
                       {playerForceId && (
                         <button

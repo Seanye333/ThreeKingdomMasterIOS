@@ -1,5 +1,6 @@
 import { useGameStore } from '../../game/state/store';
 import { SEASON_LABEL } from '../../game/types';
+import { useT, useLanguage } from '../i18n';
 
 interface Props {
   onClose: () => void;
@@ -16,6 +17,8 @@ export function CareerModal({ onClose }: Props) {
   const officers = useGameStore((s) => s.officers);
   const deeds = useGameStore((s) => s.deeds);
   const forces = useGameStore((s) => s.forces);
+  const t = useT();
+  const lang = useLanguage();
 
   if (!career) {
     return (
@@ -32,7 +35,7 @@ export function CareerModal({ onClose }: Props) {
             color: '#c0a878', fontFamily: '"Songti SC", serif', textAlign: 'center',
           }}
         >
-          Career mode is not active. Start a new game with a career officer.
+          {t('列傳模式未啟用。請於新遊戲中選擇主角武將。', 'Career mode is not active. Start a new game with a career officer.')}
         </div>
       </div>
     );
@@ -70,9 +73,9 @@ export function CareerModal({ onClose }: Props) {
           }}
         >
           <div>
-            <div style={{ fontSize: '1.4rem', color: '#d4a84a', letterSpacing: '0.2rem' }}>列傳</div>
+            <div style={{ fontSize: '1.4rem', color: '#d4a84a', letterSpacing: '0.2rem' }}>{t('列傳', 'Career')}</div>
             <div style={{ fontSize: '0.85rem', color: '#8a7050', fontStyle: 'italic' }}>
-              Career: {officer?.name.en ?? '?'}
+              {lang === 'en' ? `Career: ${officer?.name.en ?? '?'}` : `主角 ${officer?.name.zh ?? '?'}`}
             </div>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#d4a84a', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
@@ -89,22 +92,23 @@ export function CareerModal({ onClose }: Props) {
             }}
           >
             <div style={{ fontSize: '1.8rem', color: '#d4a84a', letterSpacing: '0.3rem' }}>
-              {officer?.name.zh}{' '}
-              <span style={{ fontSize: '0.95rem', color: '#8a7050', fontStyle: 'italic' }}>
-                {officer?.name.en}
-              </span>
+              {lang === 'en' ? officer?.name.en : officer?.name.zh}
+              {lang === 'both' && <> <span style={{ fontSize: '0.95rem', color: '#8a7050', fontStyle: 'italic' }}>{officer?.name.en}</span></>}
             </div>
             {officer?.courtesyName && (
               <div style={{ fontSize: '0.85rem', color: '#c0a878' }}>
-                字 {officer.courtesyName.zh} · {officer.courtesyName.en}
+                {t('字', 'Courtesy')} {lang === 'en' ? officer.courtesyName.en : officer.courtesyName.zh}
+                {lang === 'both' && ` · ${officer.courtesyName.en}`}
               </div>
             )}
             <div style={{ fontSize: '0.78rem', color: '#8a7050', marginTop: '0.5rem' }}>
-              {force ? <>Serving <strong style={{ color: force.color }}>{force.name.zh} {force.name.en}</strong></> : 'Free agent'}
+              {force
+                ? <>{t('效忠', 'Serving')} <strong style={{ color: force.color }}>{lang === 'en' ? force.name.en : force.name.zh}</strong></>
+                : t('浪人', 'Free agent')}
               {officer && (
                 <>
-                  {' · '}Rank: <strong style={{ color: '#d4a84a' }}>{officer.rank}</strong>
-                  {' · '}War {officer.stats.war} · Lead {officer.stats.leadership} · Int {officer.stats.intelligence}
+                  {' · '}{t('官位', 'Rank')}: <strong style={{ color: '#d4a84a' }}>{officer.rank}</strong>
+                  {' · '}{t('武', 'War')} {officer.stats.war} · {t('統', 'Lead')} {officer.stats.leadership} · {t('智', 'Int')} {officer.stats.intelligence}
                 </>
               )}
             </div>
@@ -114,7 +118,7 @@ export function CareerModal({ onClose }: Props) {
           {d && (
             <div style={{ background: '#1a1410', border: '1px solid #4a3520', padding: '0.85rem', marginBottom: '1rem' }}>
               <div style={{ fontSize: '0.7rem', letterSpacing: '0.2rem', color: '#8a7050', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
-                武功 Deeds
+                {t('武功', 'Deeds')}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem' }}>
                 <span><span style={{ color: '#8a7050' }}>殲敵</span> {d.killsTroops.toLocaleString()}</span>
@@ -132,10 +136,10 @@ export function CareerModal({ onClose }: Props) {
           {/* Milestone timeline */}
           <div style={{ background: '#1a1410', border: '1px solid #4a3520', padding: '0.85rem' }}>
             <div style={{ fontSize: '0.7rem', letterSpacing: '0.2rem', color: '#8a7050', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
-              年譜 Chronicle ({career.milestones.length})
+              {t('年譜', 'Chronicle')} ({career.milestones.length})
             </div>
             {career.milestones.length === 0 ? (
-              <div style={{ color: '#6a5238', fontStyle: 'italic' }}>No milestones recorded yet.</div>
+              <div style={{ color: '#6a5238', fontStyle: 'italic' }}>{t('尚無里程碑記錄。', 'No milestones recorded yet.')}</div>
             ) : (
               <div style={{ position: 'relative', paddingLeft: '1.5rem', borderLeft: '2px solid #4a3520' }}>
                 {[...career.milestones].reverse().map((m, i) => {
@@ -149,14 +153,16 @@ export function CareerModal({ onClose }: Props) {
                         boxShadow: '0 0 6px #d4a84a',
                       }} />
                       <div style={{ fontSize: '0.7rem', color: '#8a7050', fontFamily: 'ui-monospace, monospace' }}>
-                        {m.year} {season.zh}
+                        {m.year} {lang === 'en' ? season.en : season.zh}
                       </div>
                       <div style={{ fontSize: '0.95rem', color: '#d4a84a' }}>
-                        {m.title.zh}
+                        {lang === 'en' ? m.title.en : m.title.zh}
                       </div>
-                      <div style={{ fontSize: '0.78rem', color: '#c0a878', fontStyle: 'italic' }}>
-                        {m.title.en}
-                      </div>
+                      {lang === 'both' && (
+                        <div style={{ fontSize: '0.78rem', color: '#c0a878', fontStyle: 'italic' }}>
+                          {m.title.en}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

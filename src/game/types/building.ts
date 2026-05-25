@@ -18,6 +18,9 @@ export interface BuildingDef {
   id: BuildingId;
   name: BilingualName;
   description: string;
+  descriptionZh?: string;
+  description: string;
+  descriptionZh?: string;
   /** Gold cost per level. */
   goldPerLevel: number;
   /** Seasons to build one level. */

@@ -16,7 +16,9 @@ import type {
   IssuedEdict,
   Officer,
   OfficerWish,
+  Fort,
   PendingHeir,
+  Port,
   ProvinceId,
   Scenario,
   SeasonReport,
@@ -32,6 +34,8 @@ import { createInitialTribeState } from '../systems/tribes';
 import { rollWeather, type Weather } from '../systems/weather';
 import { createInitialMandate, type MandateState } from '../systems/mandate';
 import { ITEMS } from '../data/items';
+import { buildInitialPorts } from '../data/ports';
+import { buildInitialForts } from '../data/forts';
 
 export type VictoryStatus = 'playing' | 'victory' | 'defeat' | 'observing';
 export type Difficulty = 'easy' | 'normal' | 'hard';
@@ -97,6 +101,10 @@ export interface GameState {
   fleets: Fleet[];
   /** Pending ship build orders. */
   shipOrders: ShipBuildOrder[];
+  /** Independent ports (RTK 14-style — captured separately from cities). */
+  ports: Record<EntityId, Port>;
+  /** Forts: historical 砦/關 + player-built 塢/壘. */
+  forts: Record<EntityId, Fort>;
   /** Family relationships. */
   family: FamilyRelation[];
   /** Pending heirs that will activate when they come of age. */
@@ -113,6 +121,15 @@ export interface GameState {
   tutorialStep: number | null;
   /** Background music track name (null = ambience only). */
   musicTrack: string | null;
+  /** UI language: 'zh' shows only Chinese, 'en' shows only English, 'both'
+   *  (legacy default) shows the bilingual mix. */
+  language: 'zh' | 'en' | 'both';
+  /** Where talents and famous items start.
+   *  'historical' (default) — undiscovered officers wait at their hometown;
+   *    items not held by any starting officer fall to their origin city.
+   *  'random' — both are scattered uniformly. Same scenario plays out
+   *    very differently because Zhuge Liang isn't waiting in Langya, etc. */
+  placementMode: 'historical' | 'random';
   /** Items hidden in cities, awaiting discovery via Search. */
   lostItems: Array<{ itemId: EntityId; cityId: EntityId }>;
   /** Saved battle replays. */
@@ -199,6 +216,8 @@ export const EMPTY_STATE: GameState = {
   provinceGovernors: {},
   fleets: [],
   shipOrders: [],
+  ports: {},
+  forts: {},
   family: [],
   pendingHeirs: [],
   officerWishes: [],
@@ -207,6 +226,8 @@ export const EMPTY_STATE: GameState = {
   hotSeatActiveIndex: 0,
   tutorialStep: null,
   musicTrack: null,
+  language: 'zh',
+  placementMode: 'historical',
   lostItems: [],
   battleReplays: [],
   deeds: {},
@@ -262,7 +283,18 @@ export function loadScenario(
     return { ...base, wallTier };
   });
 
-  let officers = scenario.officers;
+  // If the player chose 'random' placement, scrub the historical hometowns
+  // off undiscovered officers so they don't all sit at Langya / Tianshui etc.
+  // Officers waiting at hometown have `status: 'unsearched'` and
+  // `locationCityId === hometownCityId`; setting `locationCityId: null`
+  // puts them in the "rootless wanderer" pool so search finds them anywhere.
+  let officers = state.placementMode === 'random'
+    ? scenario.officers.map((o) =>
+        o.status === 'unsearched' && o.locationCityId === o.hometownCityId
+          ? { ...o, locationCityId: null }
+          : o,
+      )
+    : scenario.officers;
   if (customOfficer) {
     // Place custom officer either in their chosen force's capital, or in a
     // random owned city as a free agent.
@@ -339,6 +371,12 @@ export function loadScenario(
     provinceGovernors: {},
     fleets: [],
     shipOrders: [],
+    ports: buildInitialPorts(
+      Object.fromEntries(scaledCities.map((c) => [c.id, c.ownerForceId])),
+    ),
+    forts: buildInitialForts(
+      Object.fromEntries(scaledCities.map((c) => [c.id, c.ownerForceId])),
+    ),
     family: [],
     pendingHeirs: [],
     officerWishes: [],
@@ -347,7 +385,7 @@ export function loadScenario(
     hotSeatActiveIndex: 0,
     tutorialStep: null,
     musicTrack: state.musicTrack,
-    lostItems: computeLostItems(officers, scaledCities),
+    lostItems: computeLostItems(officers, scaledCities, state.placementMode),
     battleReplays: [],
     deeds: {},
     fogOfWar: state.fogOfWar,
@@ -378,6 +416,7 @@ export function loadScenario(
 function computeLostItems(
   officers: import('../types').Officer[],
   cities: import('../types').City[],
+  placementMode: 'historical' | 'random' = 'historical',
 ): Array<{ itemId: import('../types').EntityId; cityId: import('../types').EntityId }> {
   const equippedIds = new Set<string>();
   for (const o of officers) {
@@ -387,6 +426,8 @@ function computeLostItems(
   }
   const cityIds = cities.filter((c) => c.ownerForceId !== null).map((c) => c.id);
   const ownedCityIds = cityIds.length > 0 ? cityIds : cities.map((c) => c.id);
+  const ownedCitySet = new Set(ownedCityIds);
+  const allCityIds = new Set(cities.map((c) => c.id));
   const lost: Array<{ itemId: string; cityId: string }> = [];
   // Stable LCG so the same scenario hides items the same way each run.
   let seed = 1;
@@ -397,7 +438,17 @@ function computeLostItems(
   for (const item of ITEMS) {
     if (equippedIds.has(item.id)) continue;
     if (ownedCityIds.length === 0) continue;
-    const cityId = ownedCityIds[Math.floor(rand() * ownedCityIds.length)];
+    // In 'historical' mode, prefer the item's recorded origin city
+    // (whether currently owned or not). In 'random' mode, ignore origins
+    // entirely and let the LCG decide for full surprise.
+    let cityId: string;
+    if (placementMode === 'historical' && item.originCityId && ownedCitySet.has(item.originCityId)) {
+      cityId = item.originCityId;
+    } else if (placementMode === 'historical' && item.originCityId && allCityIds.has(item.originCityId)) {
+      cityId = item.originCityId;
+    } else {
+      cityId = ownedCityIds[Math.floor(rand() * ownedCityIds.length)];
+    }
     lost.push({ itemId: item.id, cityId });
   }
   return lost;

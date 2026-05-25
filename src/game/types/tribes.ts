@@ -17,6 +17,9 @@ export interface Tribe {
   name: BilingualName;
   /** Lore — short description shown when raid event fires. */
   description: string;
+  descriptionZh?: string;
+  description: string;
+  descriptionZh?: string;
   /** Color stripe used in raid notification. */
   color: string;
   /** Cities the tribe can raid (border cities adjacent to their lands). */

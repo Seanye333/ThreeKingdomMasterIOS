@@ -49,7 +49,10 @@
       "Bash(git push *)",
       "Bash(xargs -0 sed -i '' -e s/将軍同士が酒席で衝突し了/兩員大將酒後相爭/g -e s/同士が酒席で衝突し了/相對飲爭執不下/g -e s/両者罰す/兩造皆罰/g -e s/酒は売れ/酒水變賣/g -e s/と告知/而宣/g -e s/とし了無視/，視之無物/g -e s/として無視/，置之不理/g -e s/山賊が,/山賊／g -e s/，払えば撤退/索賄方退/g -e s/と前來請求/，前來請求/g -e s/は約束通り/果如約定/g -e s/約束通り/如約/g -e s/しかし/然而/g -e s/根絶/根除/g -e s/が国庫に/，入庫/g -e s/国庫に/入庫/g -e s/国庫，/國庫，/g -e s/国庫/國庫/g -e s/将来/將來/g -e s/将軍/將軍/g -e s/将/將/g -e 's/に\\\\\\([^t]\\\\\\)/於\\\\1/g' -e s/しが//g -e s/しを//g -e s/しと//g -e s/し了/了/g -e s/し，/，/g -e s/し。/。/g -e s/と無視/，置之不理/g -e s/とし了/則/g -e s/として/作為/g -e s/、しかし/，然而/g)",
       "Bash(perl -pe 's/[\\\\x{3040}-\\\\x{309F}\\\\x{30A0}-\\\\x{30FF}]+//g')",
-      "Bash(xxd)"
+      "Bash(xxd)",
+      "Bash(curl -s http://localhost:5173/ -o /dev/null -w \"%{http_code}\\\\n\")",
+      "Bash(node verify-sort.mjs)",
+      "Bash(node verify-bigger-battles.mjs)"
     ],
     "additionalDirectories": [
       "/private/tmp/tkm-scaffold"

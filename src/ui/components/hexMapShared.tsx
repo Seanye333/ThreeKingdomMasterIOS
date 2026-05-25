@@ -123,12 +123,18 @@ export function TerrainArt({ x, y, terrain }: { x: number; y: number; terrain: T
     case 'forest':
       return (
         <g pointerEvents="none" className="tkm-hex-sway">
-          <ellipse cx={x - 5} cy={y + 2} rx="5" ry="4" fill="#152812" opacity="0.7" />
-          <ellipse cx={x + 5} cy={y + 1} rx="5" ry="4" fill="#152812" opacity="0.7" />
-          <path d={`M ${x - 8 + jitter} ${y + 8} L ${x - 5 + jitter} ${y - 6} L ${x - 2 + jitter} ${y + 8} Z`} fill="#2d4a28" stroke="#0a1808" strokeWidth="0.5" />
-          <path d={`M ${x - 8 + jitter} ${y + 4} L ${x - 5 + jitter} ${y - 3} L ${x - 2 + jitter} ${y + 4} Z`} fill="#3a5a32" stroke="#0a1808" strokeWidth="0.3" opacity="0.85" />
-          <path d={`M ${x + 1 + jitter2} ${y + 8} L ${x + 4 + jitter2} ${y - 8} L ${x + 7 + jitter2} ${y + 8} Z`} fill="#2d4a28" stroke="#0a1808" strokeWidth="0.5" />
-          <path d={`M ${x + 1 + jitter2} ${y + 4} L ${x + 4 + jitter2} ${y - 4} L ${x + 7 + jitter2} ${y + 4} Z`} fill="#3a5a32" stroke="#0a1808" strokeWidth="0.3" opacity="0.85" />
+          {/* Ground shadow under tree cluster */}
+          <ellipse cx={x} cy={y + 10} rx="10" ry="2.5" fill="rgba(0,0,0,0.4)" />
+          {/* Layered canopy — back row (darker), shifted up to stand taller */}
+          <ellipse cx={x - 5} cy={y - 2} rx="5" ry="4" fill="#152812" opacity="0.7" />
+          <ellipse cx={x + 5} cy={y - 3} rx="5" ry="4" fill="#152812" opacity="0.7" />
+          {/* Three taller pines with depth — each extends up to y-14 */}
+          <path d={`M ${x - 8 + jitter} ${y + 8} L ${x - 5 + jitter} ${y - 14} L ${x - 2 + jitter} ${y + 8} Z`} fill="#2d4a28" stroke="#0a1808" strokeWidth="0.5" />
+          <path d={`M ${x - 8 + jitter} ${y + 2} L ${x - 5 + jitter} ${y - 8} L ${x - 2 + jitter} ${y + 2} Z`} fill="#3a5a32" stroke="#0a1808" strokeWidth="0.3" opacity="0.9" />
+          <path d={`M ${x - 8 + jitter} ${y - 4} L ${x - 5 + jitter} ${y - 12} L ${x - 2 + jitter} ${y - 4} Z`} fill="#4a7038" stroke="#0a1808" strokeWidth="0.3" opacity="0.85" />
+          <path d={`M ${x + 1 + jitter2} ${y + 8} L ${x + 4 + jitter2} ${y - 16} L ${x + 7 + jitter2} ${y + 8} Z`} fill="#2d4a28" stroke="#0a1808" strokeWidth="0.5" />
+          <path d={`M ${x + 1 + jitter2} ${y + 2} L ${x + 4 + jitter2} ${y - 9} L ${x + 7 + jitter2} ${y + 2} Z`} fill="#3a5a32" stroke="#0a1808" strokeWidth="0.3" opacity="0.9" />
+          <path d={`M ${x + 1 + jitter2} ${y - 4} L ${x + 4 + jitter2} ${y - 14} L ${x + 7 + jitter2} ${y - 4} Z`} fill="#4a7038" stroke="#0a1808" strokeWidth="0.3" opacity="0.85" />
           <line x1={x - 5 + jitter} y1={y + 8} x2={x - 5 + jitter} y2={y + 10} stroke="#3a2818" strokeWidth="1" />
           <line x1={x + 4 + jitter2} y1={y + 8} x2={x + 4 + jitter2} y2={y + 10} stroke="#3a2818" strokeWidth="1" />
         </g>
@@ -136,12 +142,20 @@ export function TerrainArt({ x, y, terrain }: { x: number; y: number; terrain: T
     case 'mountain':
       return (
         <g pointerEvents="none">
-          <ellipse cx={x} cy={y + 9} rx="11" ry="2.5" fill="rgba(0,0,0,0.35)" />
-          <path d={`M ${x - 6} ${y + 7} L ${x - 1} ${y - 12} L ${x + 4} ${y + 7} Z`} fill="#3a2d20" stroke="#0a0805" strokeWidth="0.5" />
-          <path d={`M ${x - 2} ${y + 8} L ${x + 4} ${y - 6} L ${x + 10} ${y + 8} Z`} fill="#5a4530" stroke="#0a0805" strokeWidth="0.5" />
-          <path d={`M ${x + 4} ${y - 6} L ${x + 10} ${y + 8} L ${x + 7} ${y + 8} Z`} fill="#3a2818" opacity="0.7" />
-          <path d={`M ${x - 2.5} ${y - 5} L ${x - 1} ${y - 12} L ${x + 0.5} ${y - 5} L ${x - 0.5} ${y - 3.5} L ${x - 1.5} ${y - 3.5} Z`} fill="#f0e0b0" stroke="#a89878" strokeWidth="0.2" />
-          <path d={`M ${x + 2.5} ${y - 2} L ${x + 4} ${y - 6} L ${x + 5.5} ${y - 2} Z`} fill="#f0e0b0" stroke="#a89878" strokeWidth="0.2" />
+          {/* Cast shadow — long, towards the south-east */}
+          <ellipse cx={x + 3} cy={y + 11} rx="13" ry="3" fill="rgba(0,0,0,0.5)" />
+          {/* Back peak — taller, in deeper shadow, extends to y-22 */}
+          <path d={`M ${x - 8} ${y + 8} L ${x - 1} ${y - 22} L ${x + 6} ${y + 8} Z`} fill="#2a1f15" stroke="#0a0805" strokeWidth="0.5" />
+          {/* Mid peak */}
+          <path d={`M ${x - 4} ${y + 8} L ${x + 3} ${y - 18} L ${x + 10} ${y + 8} Z`} fill="#3a2d20" stroke="#0a0805" strokeWidth="0.5" />
+          {/* Front peak — lighter, with visible face */}
+          <path d={`M ${x - 2} ${y + 8} L ${x + 5} ${y - 12} L ${x + 12} ${y + 8} Z`} fill="#5a4530" stroke="#0a0805" strokeWidth="0.5" />
+          {/* Right (shadow) face */}
+          <path d={`M ${x + 5} ${y - 12} L ${x + 12} ${y + 8} L ${x + 8} ${y + 8} Z`} fill="#3a2818" opacity="0.85" />
+          {/* Snow caps — bigger now */}
+          <path d={`M ${x - 3} ${y - 14} L ${x - 1} ${y - 22} L ${x + 1} ${y - 14} L ${x} ${y - 12} L ${x - 2} ${y - 12} Z`} fill="#f0e0b0" stroke="#a89878" strokeWidth="0.3" />
+          <path d={`M ${x + 1} ${y - 10} L ${x + 3} ${y - 18} L ${x + 5} ${y - 10} L ${x + 4} ${y - 8} L ${x + 2} ${y - 8} Z`} fill="#f0e0b0" stroke="#a89878" strokeWidth="0.3" />
+          <path d={`M ${x + 3} ${y - 5} L ${x + 5} ${y - 12} L ${x + 7} ${y - 5} Z`} fill="#f0e0b0" stroke="#a89878" strokeWidth="0.2" />
         </g>
       );
     case 'river':

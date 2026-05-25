@@ -18,6 +18,9 @@ export interface EspionageDef {
   kind: EspionageKind;
   name: BilingualName;
   description: string;
+  descriptionZh?: string;
+  description: string;
+  descriptionZh?: string;
   /** Base gold cost paid up-front. */
   goldCost: number;
   /** Min intelligence the executing officer needs. */

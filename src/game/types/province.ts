@@ -24,6 +24,9 @@ export interface Province {
   id: ProvinceId;
   name: BilingualName;
   description: string;
+  descriptionZh?: string;
+  description: string;
+  descriptionZh?: string;
   /** Color stripe used for province overlays. */
   color: string;
   /** City IDs that belong to this province. */

@@ -342,22 +342,31 @@ export function handleSearch(input: SearchInput): SearchOutput {
     };
   }
 
-  const unsearched = Object.values(officers).filter(
+  // Prefer officers whose historical hometown matches this city.
+  // Officers without a hometown (locationCityId === null) form the fallback
+  // pool — they can be discovered anywhere as before.
+  const allUnsearched = Object.values(officers).filter(
     (o) => o.status === 'unsearched',
   );
-  if (unsearched.length === 0) {
+  const localUnsearched = allUnsearched.filter((o) => o.locationCityId === city.id);
+  const rootlessUnsearched = allUnsearched.filter((o) => o.locationCityId === null);
+
+  // Pick from local hometown pool first; fall back to rootless wanderers.
+  // If both empty, we may be in a fully-known region — give up gracefully.
+  const pool = localUnsearched.length > 0 ? localUnsearched : rootlessUnsearched;
+  if (pool.length === 0) {
     return {
       officers,
       lostItems,
       entry: {
         cityId: city.id,
         kind: 'command-failure',
-        text: `${officer.name.en} searched ${city.name.en} but no hidden talent remains in the realm.`,
+        text: `${officer.name.en} searched ${city.name.en} but found no hidden talent here.`,
       },
     };
   }
 
-  const discovered = unsearched[Math.floor(rng() * unsearched.length)];
+  const discovered = pool[Math.floor(rng() * pool.length)];
   const updated: Officer = {
     ...discovered,
     status: 'idle',
@@ -365,13 +374,16 @@ export function handleSearch(input: SearchInput): SearchOutput {
     forceId: null,
     loyalty: 0,
   };
+  const localFlavor = discovered.locationCityId === city.id
+    ? ` ${discovered.name.en} hails from ${city.name.en}!`
+    : '';
   return {
     officers: { ...officers, [discovered.id]: updated },
     lostItems,
     entry: {
       cityId: city.id,
       kind: 'talent',
-      text: `${officer.name.en} discovered ${discovered.name.en} (${discovered.name.zh}) in ${city.name.en}!`,
+      text: `${officer.name.en} discovered ${discovered.name.en} (${discovered.name.zh}) in ${city.name.en}!${localFlavor}`,
     },
   };
 }

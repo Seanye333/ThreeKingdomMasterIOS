@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { COMMAND_DEFS } from '../../game/systems/commands';
+import { navalReachableCityIds } from '../../game/data/ports';
+import { useT } from '../i18n';
 import { BattlePrepModal } from './BattlePrepModal';
 import type { EntityId } from '../../game/types';
 import { OfficerHoverCard } from './OfficerHoverCard';
@@ -36,12 +38,34 @@ export function MarchPicker({ cityId, onClose }: Props) {
     [officersMap, cityId, source?.ownerForceId],
   );
 
+  const ports = useGameStore((s) => s.ports);
+
   const adjacentCities = useMemo(
     () =>
       (source?.adjacentCityIds ?? [])
         .map((id) => cities[id])
         .filter((c) => !!c),
     [source?.adjacentCityIds, cities],
+  );
+
+  /** Cities reachable from `cityId` by sea via the port graph. Each comes
+   *  with isNaval=true so the dropdown can mark them with 🚢. */
+  const navalCities = useMemo(() => {
+    const navalIds = navalReachableCityIds(cityId, ports);
+    const adjacentSet = new Set(adjacentCities.map((c) => c.id));
+    return [...navalIds]
+      .filter((id) => !adjacentSet.has(id))   // don't double-list
+      .map((id) => cities[id])
+      .filter((c) => !!c);
+  }, [cityId, ports, adjacentCities, cities]);
+
+  /** Combined target candidates (land + sea). */
+  const targetCandidates = useMemo(
+    () => [
+      ...adjacentCities.map((c) => ({ city: c, naval: false })),
+      ...navalCities.map((c) => ({ city: c, naval: true })),
+    ],
+    [adjacentCities, navalCities],
   );
 
   const [targetId, setTargetId] = useState<EntityId | null>(
@@ -92,6 +116,7 @@ export function MarchPicker({ cityId, onClose }: Props) {
     setShowPrep(true);
   };
 
+  const t = useT();
   const adjustTroops = (delta: number) => {
     setTroops((t) => Math.max(0, Math.min(maxTroops, t + delta)));
   };
@@ -110,22 +135,22 @@ export function MarchPicker({ cityId, onClose }: Props) {
         </header>
 
         <div className={styles.row}>
-          <span className={styles.rowLabel}>From</span>
+          <span className={styles.rowLabel}>{t('出兵自', 'From')}</span>
           <span className={styles.rowValue}>
-            {source.name.zh} {source.name.en}
+            {source.name.zh}
             <span className={styles.muted}>
-              {' '}· {source.troops.toLocaleString()} troops · {source.gold.toLocaleString()} gold
+              {' '}· {source.troops.toLocaleString()} {t('兵', 'troops')} · {source.gold.toLocaleString()} {t('金', 'gold')}
             </span>
           </span>
         </div>
 
         <section className={styles.section}>
-          <h3 className={styles.sectionTitle}>Target 目標</h3>
-          {adjacentCities.length === 0 ? (
-            <div className={styles.empty}>No adjacent cities.</div>
+          <h3 className={styles.sectionTitle}>{t('目標', 'Target')}</h3>
+          {targetCandidates.length === 0 ? (
+            <div className={styles.empty}>{t('無相鄰或海路可達之城。', 'No adjacent or sea-reachable cities.')}</div>
           ) : (
             <ul className={styles.targetList}>
-              {adjacentCities.map((c) => {
+              {targetCandidates.map(({ city: c, naval }) => {
                 const f = c.ownerForceId ? forces[c.ownerForceId] : null;
                 const hostile = c.ownerForceId !== source.ownerForceId;
                 return (
@@ -139,16 +164,20 @@ export function MarchPicker({ cityId, onClose }: Props) {
                         style={{ background: f?.color ?? '#5a4530' }}
                       />
                       <span className={styles.targetText}>
-                        <span className={styles.targetNameZh}>{c.name.zh}</span>
+                        <span className={styles.targetNameZh}>
+                          {naval && <span style={{ color: '#5a9bc8', marginRight: 4 }}>🚢</span>}
+                          {c.name.zh}
+                        </span>
                         <span className={styles.targetNameEn}>
-                          {c.name.en} · {f?.name.en ?? 'Neutral'}
+                          {t(f?.name.zh ?? '無主', `${c.name.en} · ${f?.name.en ?? 'Neutral'}`)}
+                          {naval && <span style={{ color: '#5a9bc8', marginLeft: 6 }}>{t('海路', 'by sea')}</span>}
                         </span>
                       </span>
                       <span className={styles.targetMeta}>
                         {hostile ? (
-                          <span className={styles.hostile}>ATK</span>
+                          <span className={styles.hostile}>{t('攻', 'ATK')}</span>
                         ) : (
-                          <span className={styles.friendly}>MOVE</span>
+                          <span className={styles.friendly}>{t('移', 'MOVE')}</span>
                         )}
                         <span className={styles.muted}>
                           {c.troops.toLocaleString()}t · D{c.defense}
@@ -163,9 +192,9 @@ export function MarchPicker({ cityId, onClose }: Props) {
         </section>
 
         <section className={styles.section}>
-          <h3 className={styles.sectionTitle}>Commander 大将</h3>
+          <h3 className={styles.sectionTitle}>{t('大將', 'Commander')}</h3>
           {officers.length === 0 ? (
-            <div className={styles.empty}>No available officers.</div>
+            <div className={styles.empty}>{t('無可用武將。', 'No available officers.')}</div>
           ) : (
             <div className={styles.officerGrid}>
               {officers.map((o) => (
@@ -189,7 +218,7 @@ export function MarchPicker({ cityId, onClose }: Props) {
 
         <section className={styles.section}>
           <h3 className={styles.sectionTitle}>
-            Accompanying Officers 副将 — {additionalIds.length} / {MAX_COMPANIONS}
+            {t('副將', 'Accompanying Officers')} — {additionalIds.length} / {MAX_COMPANIONS}
           </h3>
           <div className={styles.officerGrid}>
             {officers
@@ -223,7 +252,7 @@ export function MarchPicker({ cityId, onClose }: Props) {
 
         <section className={styles.section}>
           <h3 className={styles.sectionTitle}>
-            Troops 兵力 — {troops.toLocaleString()} / {maxTroops.toLocaleString()}
+            {t('兵力', 'Troops')} — {troops.toLocaleString()} / {maxTroops.toLocaleString()}
           </h3>
           <div className={styles.troopRow}>
             <button onClick={() => adjustTroops(-1000)}>−1k</button>
@@ -243,21 +272,21 @@ export function MarchPicker({ cityId, onClose }: Props) {
               className={styles.allButton}
               onClick={() => setTroops(maxTroops)}
             >
-              ALL
+              {t('全部', 'ALL')}
             </button>
           </div>
         </section>
 
         <footer className={styles.footer}>
           <div className={styles.footerMeta}>
-            Cost: <strong>{def.goldCost}g</strong>
+            {t('費用', 'Cost')}: <strong>{def.goldCost}{t('金', 'g')}</strong>
             {target && officer && (
               <>
-                {' '}· {isHostile ? 'Attack' : 'Transfer'}{' '}
-                <strong>{target.name.en}</strong>
+                {' '}· {isHostile ? t('攻擊', 'Attack') : t('移防', 'Transfer')}{' '}
+                <strong>{target.name.zh}</strong>
                 {targetForce && (
                   <span className={styles.muted}>
-                    {' '}({targetForce.name.en})
+                    {' '}({targetForce.name.zh})
                   </span>
                 )}
               </>
@@ -270,9 +299,9 @@ export function MarchPicker({ cityId, onClose }: Props) {
                 onClick={handleTactical}
                 disabled={!valid}
                 style={{ background: '#3a2d20', borderColor: '#88b7e8', color: '#88b7e8' }}
-                title="Resolve as turn-based tactical battle"
+                title={t('以回合制戰術戰鬥決勝', 'Resolve as turn-based tactical battle')}
               >
-                戰術 Tactical
+                {t('戰術', 'Tactical')}
               </button>
             )}
             <button
@@ -280,7 +309,7 @@ export function MarchPicker({ cityId, onClose }: Props) {
               onClick={handleConfirm}
               disabled={!valid}
             >
-              {isHostile ? '出陣 March!' : '移動 Move'}
+              {isHostile ? t('出陣！', 'March!') : t('移動', 'Move')}
             </button>
           </div>
         </footer>

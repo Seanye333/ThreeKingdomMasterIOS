@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { DuelResult } from '../../game/systems/duel';
 import { useGameStore } from '../../game/state/store';
+import { useT, useLanguage } from '../i18n';
 
 interface Props {
   result: DuelResult;
@@ -16,6 +17,8 @@ interface Props {
 export function DuelModal({ result, onClose }: Props) {
   const officers = useGameStore((s) => s.officers);
   const [phase, setPhase] = useState<'standoff' | 'strike' | 'reveal'>('standoff');
+  const t = useT();
+  const lang = useLanguage();
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase('strike'), 1500);
@@ -29,10 +32,11 @@ export function DuelModal({ result, onClose }: Props) {
   const a = officers[result.attackerRoll.officerId];
   const d = officers[result.defenderRoll.officerId];
 
+  const nameStr = (o: typeof a) => o ? (lang === 'en' ? o.name.en : lang === 'both' ? `${o.name.zh} ${o.name.en}` : o.name.zh) : '?';
   const winnerLabel =
-    result.winner === 'attacker' ? `${a?.name.zh} ${a?.name.en}` :
-    result.winner === 'defender' ? `${d?.name.zh} ${d?.name.en}` :
-    '互角';
+    result.winner === 'attacker' ? nameStr(a) :
+    result.winner === 'defender' ? nameStr(d) :
+    t('互不相讓', 'a stalemate');
 
   return (
     <div
@@ -86,7 +90,7 @@ export function DuelModal({ result, onClose }: Props) {
             marginBottom: '1.5rem',
           }}
         >
-          一騎打 · Single Combat
+          {t('一騎打', 'Single Combat')}
         </div>
 
         {/* Stand-off */}
@@ -109,11 +113,11 @@ export function DuelModal({ result, onClose }: Props) {
           >
             <DuelPortrait zh={a?.name.zh ?? '?'} color="#b8442e" side="attacker" />
             <div className="duel-name" style={{ fontSize: '1.6rem', color: '#d4a84a', letterSpacing: '0.3rem', marginTop: '0.5rem' }}>
-              {a?.name.zh}
+              {lang === 'en' ? a?.name.en : a?.name.zh}
             </div>
-            <div style={{ fontSize: '0.8rem', color: '#8a7050', fontStyle: 'italic' }}>{a?.name.en}</div>
+            {lang === 'both' && <div style={{ fontSize: '0.8rem', color: '#8a7050', fontStyle: 'italic' }}>{a?.name.en}</div>}
             <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.85rem', color: '#c0a878', marginTop: '0.3rem' }}>
-              War {a?.stats.war}
+              {t('武力', 'War')} {a?.stats.war}
             </div>
           </div>
 
@@ -144,9 +148,9 @@ export function DuelModal({ result, onClose }: Props) {
               '⚔'
             ) : (
               <div style={{ fontSize: '1.4rem', color: '#d4a84a', letterSpacing: '0.3rem' }}>
-                {result.winner === 'attacker' && '右勝'}
-                {result.winner === 'defender' && '左勝'}
-                {result.winner === 'draw' && '互角'}
+                {result.winner === 'attacker' && t('攻方勝', 'Attacker')}
+                {result.winner === 'defender' && t('守方勝', 'Defender')}
+                {result.winner === 'draw' && t('平手', 'Draw')}
               </div>
             )}
           </div>
@@ -160,11 +164,11 @@ export function DuelModal({ result, onClose }: Props) {
           >
             <DuelPortrait zh={d?.name.zh ?? '?'} color="#3a7dd9" side="defender" />
             <div className="duel-name" style={{ fontSize: '1.6rem', color: '#d4a84a', letterSpacing: '0.3rem', marginTop: '0.5rem' }}>
-              {d?.name.zh}
+              {lang === 'en' ? d?.name.en : d?.name.zh}
             </div>
-            <div style={{ fontSize: '0.8rem', color: '#8a7050', fontStyle: 'italic' }}>{d?.name.en}</div>
+            {lang === 'both' && <div style={{ fontSize: '0.8rem', color: '#8a7050', fontStyle: 'italic' }}>{d?.name.en}</div>}
             <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.85rem', color: '#c0a878', marginTop: '0.3rem' }}>
-              War {d?.stats.war}
+              {t('武力', 'War')} {d?.stats.war}
             </div>
           </div>
         </div>
@@ -181,18 +185,18 @@ export function DuelModal({ result, onClose }: Props) {
                 textShadow: '0 0 14px rgba(212,168,74,0.4)',
               }}
             >
-              {result.winner === 'draw' ? '勢均力敵' : '勝!'}
+              {result.winner === 'draw' ? t('勢均力敵', 'Stalemate') : t('勝!', 'Victory!')}
             </div>
             <div style={{ textAlign: 'center', color: '#c0a878', fontStyle: 'italic', marginTop: '0.5rem' }}>
               {result.winner === 'draw'
-                ? 'Both warriors retreat, wounded and bloodied. The duel is a draw.'
-                : `${winnerLabel} prevails. The loser falls on the field.`}
+                ? t('兩將皆負傷而退,本場一騎打不分勝負。', 'Both warriors retreat, wounded and bloodied. The duel is a draw.')
+                : t(`${winnerLabel} 力斬對手,敗者倒於沙場。`, `${winnerLabel} prevails. The loser falls on the field.`)}
             </div>
 
             {/* Roll breakdown */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1.5rem', fontSize: '0.78rem' }}>
-              <RollBox label={`${a?.name.zh ?? '?'}`} roll={result.attackerRoll} winner={result.winner === 'attacker'} />
-              <RollBox label={`${d?.name.zh ?? '?'}`} roll={result.defenderRoll} winner={result.winner === 'defender'} />
+              <RollBox label={lang === 'en' ? (a?.name.en ?? '?') : (a?.name.zh ?? '?')} roll={result.attackerRoll} winner={result.winner === 'attacker'} />
+              <RollBox label={lang === 'en' ? (d?.name.en ?? '?') : (d?.name.zh ?? '?')} roll={result.defenderRoll} winner={result.winner === 'defender'} />
             </div>
 
             <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
@@ -208,7 +212,7 @@ export function DuelModal({ result, onClose }: Props) {
                   cursor: 'pointer',
                 }}
               >
-                続行 Continue
+                {t('續行', 'Continue')}
               </button>
             </div>
           </>
@@ -219,6 +223,7 @@ export function DuelModal({ result, onClose }: Props) {
 }
 
 function RollBox({ label, roll, winner }: { label: string; roll: import('../../game/systems/duel').DuelRoll; winner: boolean }) {
+  const t = useT();
   return (
     <div
       style={{
@@ -232,17 +237,17 @@ function RollBox({ label, roll, winner }: { label: string; roll: import('../../g
       <div style={{ color: '#d4a84a', fontSize: '0.95rem', fontFamily: '"Songti SC", serif', marginBottom: '0.3rem' }}>
         {label}
       </div>
-      <div style={{ color: '#c0a878' }}>War: {roll.base}</div>
-      {roll.itemBonus > 0 && <div style={{ color: '#88b7e8' }}>Items: +{roll.itemBonus}</div>}
-      {roll.skillBonus !== 0 && <div style={{ color: '#3a7dd9' }}>Skills: +{roll.skillBonus}</div>}
+      <div style={{ color: '#c0a878' }}>{t('武力', 'War')}: {roll.base}</div>
+      {roll.itemBonus > 0 && <div style={{ color: '#88b7e8' }}>{t('寶物', 'Items')}: +{roll.itemBonus}</div>}
+      {roll.skillBonus !== 0 && <div style={{ color: '#3a7dd9' }}>{t('特技', 'Skills')}: +{roll.skillBonus}</div>}
       {roll.traitBonus !== 0 && (
         <div style={{ color: roll.traitBonus > 0 ? '#7ed68a' : '#b8442e' }}>
-          Traits: {roll.traitBonus > 0 ? '+' : ''}{roll.traitBonus}
+          {t('性格', 'Traits')}: {roll.traitBonus > 0 ? '+' : ''}{roll.traitBonus}
         </div>
       )}
       <div style={{ color: '#8a7050' }}>d30: {roll.diceRoll}</div>
       <div style={{ borderTop: '1px solid #3a2d20', marginTop: '0.3rem', paddingTop: '0.3rem', color: '#d4a84a' }}>
-        Total: <strong>{roll.total}</strong>
+        {t('總計', 'Total')}: <strong>{roll.total}</strong>
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import {
   getBiography,
 } from '../../game/data';
 import { useGameStore } from '../../game/state/store';
+import { useDesc } from '../i18n';
 
 interface Props {
   onClose: () => void;
@@ -20,6 +21,7 @@ export function EncyclopediaModal({ onClose }: Props) {
   const cities = useGameStore((s) => s.cities);
   const [section, setSection] = useState<Section>('officers');
   const [search, setSearch] = useState('');
+  const desc = useDesc();
 
   const matches = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -148,7 +150,7 @@ export function EncyclopediaModal({ onClose }: Props) {
                 {it.name.zh} <span style={{ fontSize: '0.78rem', color: '#8a7050', fontStyle: 'italic' }}>{it.name.en}</span>
                 <span style={{ marginLeft: '0.4rem', fontFamily: 'ui-monospace,monospace', fontSize: '0.7rem', color: '#c19a3b' }}>· {it.kind}</span>
               </div>
-              <div style={{ fontSize: '0.82rem', color: '#c0a878', marginTop: '0.3rem', fontStyle: 'italic' }}>{it.description}</div>
+              <div style={{ fontSize: '0.82rem', color: '#c0a878', marginTop: '0.3rem', fontStyle: 'italic' }}>{desc(it)}</div>
               <div style={metaLine}>
                 {Object.entries(it.effects).map(([k, v]) => `${k.slice(0, 3).toUpperCase()} +${v}`).join(' · ')}
               </div>
@@ -160,7 +162,7 @@ export function EncyclopediaModal({ onClose }: Props) {
                 {s.name.zh} <span style={{ fontSize: '0.78rem', color: '#8a7050', fontStyle: 'italic' }}>{s.name.en}</span>
                 <span style={{ marginLeft: '0.4rem', color: '#c19a3b', fontFamily: 'ui-monospace,monospace', fontSize: '0.7rem' }}>· {s.category}</span>
               </div>
-              <div style={{ fontSize: '0.82rem', color: '#c0a878', marginTop: '0.3rem', fontStyle: 'italic' }}>{s.description}</div>
+              <div style={{ fontSize: '0.82rem', color: '#c0a878', marginTop: '0.3rem', fontStyle: 'italic' }}>{desc(s)}</div>
             </div>
           ))}
           {section === 'traits' && (matches as typeof TRAIT_DEFS).map((t) => (
@@ -168,7 +170,7 @@ export function EncyclopediaModal({ onClose }: Props) {
               <div style={{ fontSize: '1rem', color: t.color }}>
                 {t.name.zh} <span style={{ fontSize: '0.78rem', color: '#8a7050', fontStyle: 'italic' }}>{t.name.en}</span>
               </div>
-              <div style={{ fontSize: '0.82rem', color: '#c0a878', marginTop: '0.3rem', fontStyle: 'italic' }}>{t.description}</div>
+              <div style={{ fontSize: '0.82rem', color: '#c0a878', marginTop: '0.3rem', fontStyle: 'italic' }}>{desc(t)}</div>
             </div>
           ))}
           {section === 'events' && (matches as typeof HISTORICAL_EVENTS).map((e) => (
@@ -179,7 +181,7 @@ export function EncyclopediaModal({ onClose }: Props) {
                   {e.yearMin}{e.yearMax !== e.yearMin ? `–${e.yearMax}` : ''}
                 </span>
               </div>
-              <div style={{ fontSize: '0.85rem', color: '#c0a878', marginTop: '0.4rem', lineHeight: 1.7 }}>{e.description}</div>
+              <div style={{ fontSize: '0.85rem', color: '#c0a878', marginTop: '0.4rem', lineHeight: 1.7 }}>{desc(e)}</div>
             </div>
           ))}
           {section === 'provinces' && (matches as typeof PROVINCES).map((p) => (
@@ -187,7 +189,7 @@ export function EncyclopediaModal({ onClose }: Props) {
               <div style={{ fontSize: '1rem', color: p.color }}>
                 {p.name.zh} <span style={{ fontSize: '0.78rem', color: '#8a7050', fontStyle: 'italic' }}>{p.name.en}</span>
               </div>
-              <div style={{ fontSize: '0.82rem', color: '#c0a878', marginTop: '0.3rem', fontStyle: 'italic' }}>{p.description}</div>
+              <div style={{ fontSize: '0.82rem', color: '#c0a878', marginTop: '0.3rem', fontStyle: 'italic' }}>{desc(p)}</div>
               <div style={metaLine}>
                 Cities: {p.cityIds.map((cid) => cities[cid]?.name.zh ?? cid).join(' · ')}
               </div>

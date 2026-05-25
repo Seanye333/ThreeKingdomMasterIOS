@@ -10,6 +10,7 @@ import { previewBattlefield } from '../../game/systems/tactical';
 import { citySize } from '../../game/systems/citySize';
 import type { City, EntityId, BuildingId } from '../../game/types';
 import { MapDefs, MapFrame, CompassRose, TerrainArt, TERRAIN_FILL_URL } from '../components/hexMapShared';
+import { useDesc, useLanguage } from '../i18n';
 
 /**
  * Full-screen city map — renders the SAME hex battlefield that tactical
@@ -71,6 +72,8 @@ export function CityMapScreen({ cityId, onClose }: { cityId: EntityId; onClose: 
   const demolishAction = useGameStore((s) => s.demolishDefenseStructure);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const desc = useDesc();
+  const lang = useLanguage();
   const [showOverlays, setShowOverlays] = useState(true);
 
   // Reuse the SAME battlefield setup tactical battles use — terrain procedurally
@@ -263,7 +266,7 @@ export function CityMapScreen({ cityId, onClose }: { cityId: EntityId; onClose: 
 
         <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
           {/* Hex battlefield */}
-          <div style={{
+          <div className="tkm-iso-stage" style={{
             flex: '1.4',
             overflow: 'auto',
             padding: '0.5rem',
@@ -271,7 +274,7 @@ export function CityMapScreen({ cityId, onClose }: { cityId: EntityId; onClose: 
               'radial-gradient(circle at 50% 50%, rgba(80, 65, 45, 0.12) 0%, transparent 70%), ' +
               'linear-gradient(180deg, #1a1408 0%, #0a0805 100%)',
           }}>
-            <svg width={svgWidth} height={svgHeight} viewBox={`0 0 ${svgWidth} ${svgHeight}`}>
+            <svg className="tkm-iso-svg" width={svgWidth} height={svgHeight} viewBox={`0 0 ${svgWidth} ${svgHeight}`}>
               <MapDefs />
               {/* Sky backdrop + vignette */}
               <rect width={svgWidth} height={svgHeight} fill="url(#tkmMapBg)" />
@@ -366,6 +369,8 @@ export function CityMapScreen({ cityId, onClose }: { cityId: EntityId; onClose: 
                     {/* City wall — real wall + parapets */}
                     {isCityWall && (
                       <g pointerEvents="none">
+                        {/* Ground shadow beneath wall — anchors it to the terrain */}
+                        <ellipse cx={x + 2} cy={y + 11} rx="15" ry="3" fill="rgba(0,0,0,0.55)" />
                         {/* Crenellated top edge */}
                         <rect x={x - 12} y={y - 14} width="3" height="3" fill="#d4a84a" />
                         <rect x={x - 6}  y={y - 14} width="3" height="3" fill="#d4a84a" />
@@ -414,6 +419,8 @@ export function CityMapScreen({ cityId, onClose }: { cityId: EntityId; onClose: 
                     {/* Inside-city building icon */}
                     {isInsideBld && inside && (
                       <g pointerEvents="none">
+                        {/* Ground shadow under building — anchors it to the hex */}
+                        <ellipse cx={x + 2} cy={y + 11} rx="13" ry="2.8" fill="rgba(0,0,0,0.5)" />
                         <rect x={x - 10} y={y - 11} width="20" height="20"
                           fill={INSIDE_BUILDING_GLYPH[inside.buildingId]?.color ?? '#5a4530'}
                           stroke="#1a1410" strokeWidth="0.8" opacity={0.85} />
@@ -612,7 +619,7 @@ function SlotEditor({
             {cur.name.zh} Lv {current.level}/{cur.maxLevel}
           </div>
           <div style={{ fontSize: '0.66rem', color: 'var(--tkm-text-muted)', marginTop: 3 }}>
-            {cur.description}
+            {desc(cur)}
           </div>
           <div style={{
             marginTop: '0.4rem', fontSize: '0.66rem',
@@ -694,14 +701,15 @@ function SlotEditor({
                   color: locked ? '#5a4530' : def.color,
                   letterSpacing: '0.1rem',
                 }}>
-                  {def.name.zh} <span style={{ fontSize: '0.58rem', color: '#8a7050' }}>{def.name.en}</span>
+                  {lang === 'en' ? def.name.en : def.name.zh}
+                  {lang === 'both' && <> <span style={{ fontSize: '0.58rem', color: '#8a7050' }}>{def.name.en}</span></>}
                 </span>
                 <span style={{ fontSize: '0.62rem', color: '#c0a878' }}>
                   {def.goldCost}g{lockReason && <span style={{ color: '#b8442e' }}> · {lockReason}</span>}
                 </span>
               </div>
               <div style={{ fontSize: '0.62rem', color: 'var(--tkm-text-muted)', marginTop: 2 }}>
-                {def.description}
+                {desc(def)}
               </div>
             </button>
           );

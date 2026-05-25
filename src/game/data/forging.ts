@@ -25,6 +25,7 @@ export const FORGE_RECIPES: ForgeRecipe[] = [
     minFoundryLevel: 2,
     ingredients: ['hanyue-dao', 'panlong-gun'],
     description: 'Combine a moon-blade and a coiled-dragon staff into the legendary Eight-Trigrams Halberd.',
+    descriptionZh: "以漢月刀與蟠龍棍合鑄，煉成傳奇神兵「八卦戟」。",
   },
   {
     id: 'recipe-fengchi',
@@ -33,6 +34,7 @@ export const FORGE_RECIPES: ForgeRecipe[] = [
     minFoundryLevel: 2,
     ingredients: ['liujin-chui', 'sanjian-liangren'],
     description: 'Forge the imperial Phoenix-Wing Gilt Trident from twin maces and a three-pointed blade.',
+    descriptionZh: "以流金鎚與三尖兩刃刀鍛成御用「鳳翅金鏜」。",
   },
   {
     id: 'recipe-zhuge-crossbow',
@@ -41,6 +43,7 @@ export const FORGE_RECIPES: ForgeRecipe[] = [
     minFoundryLevel: 3,
     ingredients: ['lian-nu', 'wujin-gong'],
     description: "Master Zhuge's repeating crossbow design — needs a repeating crossbow and a black-gold bow as base.",
+    descriptionZh: "依諸葛先生連弩之制，以連弩與烏金弓為基，鑄成「諸葛連弩」。",
   },
   {
     id: 'recipe-xuanjia',
@@ -49,6 +52,7 @@ export const FORGE_RECIPES: ForgeRecipe[] = [
     minFoundryLevel: 1,
     ingredients: ['chain-mail'],
     description: 'Lacquer chain mail into the Tiger-and-Leopard Cavalry\'s signature black armor.',
+    descriptionZh: "將鎖子甲漆塗烏黑，鑄成虎豹騎專屬「玄甲」。",
   },
   {
     id: 'recipe-qixing-deng',
@@ -57,6 +61,7 @@ export const FORGE_RECIPES: ForgeRecipe[] = [
     minFoundryLevel: 2,
     ingredients: ['taichi-diagram', 'yu-bi'],
     description: "Construct Zhuge Liang's life-extending Seven-Star Lamp ritual array.",
+    descriptionZh: "築起諸葛亮續命之「七星燈」法陣。",
   },
   {
     id: 'recipe-tiger-talisman',
@@ -65,6 +70,7 @@ export const FORGE_RECIPES: ForgeRecipe[] = [
     minFoundryLevel: 2,
     ingredients: ['tiger-talisman'],
     description: 'Refine a tiger talisman into the imperial Tiger Tally that commands troops.',
+    descriptionZh: "提煉虎符，精製成可號令三軍之御用「斑馬符」。",
   },
 ];
 

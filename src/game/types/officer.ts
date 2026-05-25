@@ -35,6 +35,9 @@ export interface Officer {
   locationCityId: EntityId | null;
   forceId: EntityId | null;
   status: 'active' | 'idle' | 'imprisoned' | 'dead' | 'unsearched' | 'wounded';
+  /** Historical hometown — fixed at scenario load from the template. Doesn't
+   *  change as the officer moves around. Used by UI + search bonuses. */
+  hometownCityId?: EntityId;
   /** Seasons remaining before a wounded officer recovers to idle. */
   woundedSeasons?: number;
   task: CommandType | null;
