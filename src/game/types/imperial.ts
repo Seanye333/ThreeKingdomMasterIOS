@@ -41,8 +41,6 @@ export interface EdictDef {
   name: BilingualName;
   description: string;
   descriptionZh?: string;
-  description: string;
-  descriptionZh?: string;
   /** Minimum imperial rank required to issue. */
   minRank: ImperialRank;
   /** Gold cost paid by the issuing force's capital. */

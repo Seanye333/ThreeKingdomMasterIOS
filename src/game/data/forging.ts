@@ -15,6 +15,7 @@ export interface ForgeRecipe {
   /** Item IDs that must be in the same city's "lost items" pool to be sacrificed. */
   ingredients: EntityId[];
   description: string;
+  descriptionZh?: string;
 }
 
 export const FORGE_RECIPES: ForgeRecipe[] = [

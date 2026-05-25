@@ -23,7 +23,6 @@ export function TitlesModal({ onClose }: Props) {
   const [tab, setTab] = useState<Tab>('civic');
   const [pickingTitle, setPickingTitle] = useState<CivicTitleId | null>(null);
   const [prefectCityId, setPrefectCityId] = useState<EntityId | null>(null);
-  const desc = useDesc();
 
   const ownOfficers = useMemo(
     () =>
@@ -142,6 +141,7 @@ function CivicTab({
   onAppoint: (officerId: EntityId, titleId: CivicTitleId, cityId?: EntityId) => void;
   onRevoke: (officerId: EntityId) => void;
 }) {
+  const desc = useDesc();
   return (
     <div className={styles.titleGrid}>
       {CIVIC_TITLES.map((t) => {

@@ -18,6 +18,7 @@ export interface SiegeEngine {
   defenseMultiplier: number;
   /** Description for UI / tooltip. */
   description: string;
+  descriptionZh?: string;
 }
 
 export const SIEGE_ENGINES: Record<SiegeEngineId, SiegeEngine> = {

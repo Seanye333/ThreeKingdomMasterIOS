@@ -26,7 +26,5 @@ export interface ScenarioGoal {
   title: BilingualName;
   description: string;
   descriptionZh?: string;
-  description: string;
-  descriptionZh?: string;
   goal: ObjectiveGoal;
 }

@@ -40,6 +40,7 @@ export interface StratagemDef {
   id: BattleStratagemId;
   name: { zh: string; en: string };
   description: string;
+  descriptionZh?: string;
   /** Officer INT threshold to even attempt. */
   minIntelligence: number;
   /** Per-condition gate — returns true if usable in this battle context. */

@@ -12,6 +12,7 @@ export interface EliteTroop {
   id: string;
   name: { zh: string; en: string };
   description: string;
+  descriptionZh?: string;
   /** Officer IDs that summon this troop type when commanding. */
   commanderIds: EntityId[];
   /** Multiplier on commander's blended stat (war+lead). */

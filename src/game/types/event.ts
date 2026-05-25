@@ -41,7 +41,5 @@ export interface HistoricalEvent {
   /** Narrative description shown in the event modal. */
   description: string;
   descriptionZh?: string;
-  description: string;
-  descriptionZh?: string;
   effects: EventEffect[];
 }

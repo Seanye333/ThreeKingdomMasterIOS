@@ -45,8 +45,6 @@ export interface CivicTitle {
   name: BilingualName;
   description: string;
   descriptionZh?: string;
-  description: string;
-  descriptionZh?: string;
   /** Unique per force (true) or per city (false — prefect is per-city). */
   uniquePerForce: boolean;
   /** Stat focus for bonuses. */

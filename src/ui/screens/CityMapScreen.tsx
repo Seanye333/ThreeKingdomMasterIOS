@@ -72,8 +72,6 @@ export function CityMapScreen({ cityId, onClose }: { cityId: EntityId; onClose: 
   const demolishAction = useGameStore((s) => s.demolishDefenseStructure);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const desc = useDesc();
-  const lang = useLanguage();
   const [showOverlays, setShowOverlays] = useState(true);
 
   // Reuse the SAME battlefield setup tactical battles use — terrain procedurally
@@ -593,6 +591,8 @@ function SlotEditor({
   onDemolish: () => void;
   allBuildings: DefenseBuildingId[];
 }) {
+  const desc = useDesc();
+  const lang = useLanguage();
   const cur = current?.buildingId ? DEFENSE_BUILDINGS[current.buildingId] : null;
   if (cur && current) {
     const eff = cur.effect(current.level);
