@@ -169,7 +169,11 @@ export function CityPanel() {
           onSwitch2D={() => setUse3DCityMap(false)}
         />
       ) : (
-        <CityMapScreen cityId={city.id} onClose={() => setShowCityMap(false)} />
+        <CityMapScreen
+          cityId={city.id}
+          onClose={() => setShowCityMap(false)}
+          onSwitch3D={() => setUse3DCityMap(true)}
+        />
       ))}
     </aside>
   );

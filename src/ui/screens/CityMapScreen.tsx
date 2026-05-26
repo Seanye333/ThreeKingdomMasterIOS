@@ -62,7 +62,7 @@ const INSIDE_BUILDING_GLYPH: Record<BuildingId, { glyph: string; color: string }
 };
 
 
-export function CityMapScreen({ cityId, onClose }: { cityId: EntityId; onClose: () => void }) {
+export function CityMapScreen({ cityId, onClose, onSwitch3D }: { cityId: EntityId; onClose: () => void; onSwitch3D?: () => void }) {
   const city = useGameStore((s) => s.cities[cityId]);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const forces = useGameStore((s) => s.forces);
@@ -255,6 +255,21 @@ export function CityMapScreen({ cityId, onClose }: { cityId: EntityId; onClose: 
             >
               {showOverlays ? '✓ 戰術疊加' : '戰術疊加'}
             </button>
+            {onSwitch3D && (
+              <button
+                onClick={onSwitch3D}
+                style={{
+                  background: '#1a3a5a', color: '#88b7e8',
+                  border: '1px solid #88b7e8',
+                  padding: '0.3rem 0.7rem',
+                  fontFamily: 'inherit', fontSize: '0.7rem', cursor: 'pointer',
+                  letterSpacing: '0.1rem',
+                }}
+                title="Switch to 3D view"
+              >
+                切換 3D ⇄
+              </button>
+            )}
             <button onClick={onClose} style={{
               background: 'transparent', border: 'none', color: 'var(--tkm-text-h2)',
               fontSize: '1.5rem', cursor: 'pointer', padding: '0 0.5rem',
