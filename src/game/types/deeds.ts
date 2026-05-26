@@ -6,22 +6,20 @@ import type { EntityId } from './common';
  */
 export interface HeroicDeeds {
   officerId: EntityId;
-  /** Total enemy troops their armies have killed. */
   killsTroops: number;
-  /** Number of enemy commanders defeated in duels. */
   duelsWon: number;
-  /** Number of named officers personally captured. */
   captured: number;
-  /** Cities they personally led the conquest of. */
   citiesTaken: number;
-  /** Successful espionage ops they ran. */
   espionageSuccess: number;
-  /** Internal-affairs commands successfully executed. */
   civicWorks: number;
-  /** Times they have survived a battle as commander. */
   battlesWon: number;
-  /** Tactical battles they lost. */
   battlesLost: number;
+  /** Training programs they completed (as the trainee, or as mentor). */
+  trainingsCompleted: number;
+  /** Children they sired (or birthed). */
+  childrenSired: number;
+  /** Earned deed-titles (epithets), e.g. '万人敌', '百城将'. */
+  titles?: string[];
 }
 
 export function createDeeds(officerId: EntityId): HeroicDeeds {
@@ -35,5 +33,7 @@ export function createDeeds(officerId: EntityId): HeroicDeeds {
     civicWorks: 0,
     battlesWon: 0,
     battlesLost: 0,
+    trainingsCompleted: 0,
+    childrenSired: 0,
   };
 }

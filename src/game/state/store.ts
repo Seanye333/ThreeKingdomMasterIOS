@@ -18,6 +18,8 @@ import type {
   TacticalBattle,
 } from '../types';
 import { isHostilePermitted } from '../types';
+import { createDeeds } from '../types/deeds';
+import { grantDeedTitles } from '../systems/deedTitles';
 import type { Difficulty } from './gameState';
 import { CIVIC_TITLES_BY_ID, MILITARY_RANKS_BY_ID } from '../data/titles';
 import { FORGE_RECIPES_BY_ID } from '../data/forging';
@@ -1603,6 +1605,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             });
           }
         }
+        // Officers (and mentors) credited with completing a training this
+        // season — fed into 武功榜 (育成 column) below.
+        const trainingsCompletedIds: EntityId[] = [];
         // Trainings only count down on season boundaries (every 9 periods).
         // When a training completes, push the policy onto the officer.
         if (seasonBoundary && nextTrainings.length > 0) {
@@ -1632,6 +1637,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             for (const t of ticked.completed) {
               const o = officersUpd[t.officerId];
               if (!o || o.status === 'dead') continue;
+              // Credit the trainee — and mentor, if any — with the 育成 deed.
+              trainingsCompletedIds.push(t.officerId);
+              if (t.mentorOfficerId) trainingsCompletedIds.push(t.mentorOfficerId);
               // Tactic completion path
               if (t.kind === 'tactic' && t.tacticId) {
                 const haveT = o.tactics ?? [];
@@ -1695,23 +1703,76 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
-        // Merge deed deltas from resolveSeason + espionage successes into
-        // 武功榜 tracking. Mirrors the bumpDeeds helper in applyTacticalResolution.
+        // Merge deed deltas from resolveSeason + espionage successes +
+        // training completions + births into 武功榜 tracking.
         const nextDeeds = { ...state.deeds };
+        // Track per-season deltas separately so we can crown season MVPs.
+        const seasonDeltas: Record<EntityId, Partial<import('../types').HeroicDeeds>> = {};
         const bumpDeed = (id: string, patch: Partial<import('../types').HeroicDeeds>) => {
-          const cur = nextDeeds[id] ?? {
-            officerId: id, killsTroops: 0, duelsWon: 0, captured: 0, citiesTaken: 0,
-            espionageSuccess: 0, civicWorks: 0, battlesWon: 0, battlesLost: 0,
-          };
+          const cur = nextDeeds[id] ?? createDeeds(id);
           nextDeeds[id] = { ...cur, ...Object.fromEntries(
-            Object.entries(patch).map(([k, v]) => [k, (cur[k as keyof typeof cur] as number) + (v as number)]),
+            Object.entries(patch).map(([k, v]) => [k, ((cur[k as keyof typeof cur] as number) ?? 0) + (v as number)]),
           ) } as import('../types').HeroicDeeds;
+          const prev = seasonDeltas[id] ?? {};
+          const merged: Partial<import('../types').HeroicDeeds> = { ...prev };
+          for (const [k, v] of Object.entries(patch)) {
+            const prevVal = (prev[k as keyof typeof prev] as number) ?? 0;
+            (merged as Record<string, number>)[k] = prevVal + (v as number);
+          }
+          seasonDeltas[id] = merged;
         };
         for (const delta of result.deedDeltas ?? []) {
           bumpDeed(delta.officerId, delta.patch);
         }
         for (const agentId of espionageSuccesses) {
           bumpDeed(agentId, { espionageSuccess: 1 });
+        }
+        for (const officerId of trainingsCompletedIds) {
+          bumpDeed(officerId, { trainingsCompleted: 1 });
+        }
+        for (const heir of fam.pendingHeirs) {
+          // Credit only newly-added heirs this tick (not the carryover).
+          if (state.pendingHeirs.some((h) => h.id === heir.id)) continue;
+          bumpDeed(heir.parentAId, { childrenSired: 1 });
+          bumpDeed(heir.parentBId, { childrenSired: 1 });
+        }
+        // Season-MVP highlights: for each category that saw activity this
+        // tick, name the top officer. Surfaces in the season report.
+        if (seasonBoundary) {
+          const mvpCategories: Array<{
+            key: keyof import('../types').HeroicDeeds;
+            labelZh: string; labelEn: string; min: number;
+          }> = [
+            { key: 'duelsWon',           labelZh: '一騎之最', labelEn: 'Duel MVP',     min: 1 },
+            { key: 'civicWorks',         labelZh: '内政之最', labelEn: 'Civic MVP',    min: 2 },
+            { key: 'espionageSuccess',   labelZh: '謀略之最', labelEn: 'Plot MVP',     min: 1 },
+            { key: 'trainingsCompleted', labelZh: '育才之最', labelEn: 'Training MVP', min: 1 },
+            { key: 'childrenSired',      labelZh: '麟趾之慶', labelEn: 'Heir MVP',     min: 1 },
+          ];
+          for (const cat of mvpCategories) {
+            let bestId: EntityId | null = null;
+            let bestVal = 0;
+            for (const [id, delta] of Object.entries(seasonDeltas)) {
+              const v = (delta[cat.key] as number) ?? 0;
+              if (v > bestVal) { bestVal = v; bestId = id; }
+            }
+            if (!bestId || bestVal < cat.min) continue;
+            const winner = postOfficers[bestId];
+            if (!winner) continue;
+            result.report.entries.push({
+              cityId: winner.locationCityId,
+              kind: 'talent',
+              text: `${cat.labelEn}: ${winner.name.en} (${bestVal} this season).`,
+              textZh: `「${cat.labelZh}」: ${winner.name.zh} (本季 ${bestVal})。`,
+            });
+          }
+        }
+        // After deed bumps, grant any newly-earned epithets.
+        const titleGrant = grantDeedTitles(nextDeeds, postOfficers);
+        Object.assign(nextDeeds, titleGrant.deeds);
+        postOfficers = titleGrant.officers;
+        if (titleGrant.entries.length > 0) {
+          result.report.entries.push(...titleGrant.entries);
         }
 
         set({
@@ -2376,12 +2437,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // Heroic deeds tracking.
         const deeds = { ...state.deeds };
         const bumpDeeds = (id: string, patch: Partial<import('../types').HeroicDeeds>) => {
-          const cur = deeds[id] ?? {
-            officerId: id, killsTroops: 0, duelsWon: 0, captured: 0, citiesTaken: 0,
-            espionageSuccess: 0, civicWorks: 0, battlesWon: 0, battlesLost: 0,
-          };
+          const cur = deeds[id] ?? createDeeds(id);
           deeds[id] = { ...cur, ...Object.fromEntries(
-            Object.entries(patch).map(([k, v]) => [k, (cur[k as keyof typeof cur] as number) + (v as number)]),
+            Object.entries(patch).map(([k, v]) => [k, ((cur[k as keyof typeof cur] as number) ?? 0) + (v as number)]),
           ) } as import('../types').HeroicDeeds;
         };
         const enemyLosses = winner === 'attacker' ? tb.defenderLosses : winner === 'defender' ? tb.attackerLosses : 0;
@@ -2576,11 +2634,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         newlyAch.push(...cum.newlyUnlocked);
         saveAchievementProgress(ach);
 
+        // Grant any newly-earned deed-titles from this battle's deed bumps.
+        const titleGrant = grantDeedTitles(deeds, officers);
+
         set({
-          officers,
+          officers: titleGrant.officers,
           cities,
           tacticalBattle: null,
-          deeds,
+          deeds: titleGrant.deeds,
           battleReplays: replays,
           careerMode,
           campaignStats: newStats,

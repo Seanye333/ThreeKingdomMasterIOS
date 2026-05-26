@@ -4,6 +4,7 @@ import { COMMAND_DEFS } from '../../game/systems/commands';
 import { durationBreakdown, isParentMentor } from '../../game/systems/training';
 import { effectiveStats, traitMechanicalEffects } from '../../game/systems/traitEffects';
 import { FAMILY_LINEAGE } from '../../game/data/familyLineage';
+import { DEED_TITLES_BY_ID } from '../../game/systems/deedTitles';
 import {
   CIVIC_TITLES_BY_ID,
   ITEMS_BY_ID,
@@ -123,6 +124,7 @@ export function OfficerDetail({
   const allOfficers = useGameStore((s) => s.officers);
   const buildings = useGameStore((s) => s.buildings);
   const family = useGameStore((s) => s.family);
+  const officerDeeds = useGameStore((s) => s.deeds[officer.id]);
   const activeTraining = pendingTrainings.find((tr) => tr.officerId === officer.id);
 
   const forces = forcesOverride ?? storeForces;
@@ -608,6 +610,56 @@ export function OfficerDetail({
 
         <FamilyTreeSection officerId={officer.id} officersOverride={officersOverride} />
         <RelationshipsSection officerId={officer.id} officersOverride={officersOverride} />
+
+        {officerDeeds && (officerDeeds.titles?.length ?? 0) + officerDeeds.killsTroops + officerDeeds.duelsWon + officerDeeds.citiesTaken + officerDeeds.espionageSuccess + officerDeeds.civicWorks + officerDeeds.battlesWon > 0 && (
+          <section className={styles.statsSection}>
+            <h3 className={styles.sectionTitle}>
+              {t('武功', 'Deeds')}
+            </h3>
+            {(officerDeeds.titles?.length ?? 0) > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '0.5rem' }}>
+                {(officerDeeds.titles ?? []).map((tid) => {
+                  const tDef = DEED_TITLES_BY_ID[tid];
+                  if (!tDef) return null;
+                  return (
+                    <span key={tid} title={lang === 'zh' ? tDef.name.zh : tDef.name.en}
+                      style={{
+                        background: 'linear-gradient(135deg,#3a2818,#1a1208)',
+                        border: '1px solid #d4a84a', color: '#d4a84a',
+                        padding: '0.3rem 0.6rem', fontSize: '0.78rem', letterSpacing: '0.1rem',
+                      }}
+                    >
+                      {lang === 'en' ? tDef.name.en : tDef.name.zh}
+                      {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#8a7050', fontStyle: 'italic' }}>{tDef.name.en}</span></>}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(110px,1fr))', gap: '0.4rem', fontSize: '0.78rem' }}>
+              {([
+                ['killsTroops',       t('殲敵', 'Kills')],
+                ['duelsWon',          t('一騎', 'Duels')],
+                ['captured',          t('生擒', 'Captures')],
+                ['citiesTaken',       t('攻陷', 'Cities')],
+                ['espionageSuccess',  t('謀略', 'Plots')],
+                ['civicWorks',        t('内政', 'Civil')],
+                ['battlesWon',        t('勝戰', 'Wins')],
+                ['trainingsCompleted',t('育成', 'Training')],
+                ['childrenSired',     t('子嗣', 'Heirs')],
+              ] as const).map(([k, label]) => {
+                const v = (officerDeeds[k as keyof typeof officerDeeds] as number) ?? 0;
+                if (v === 0) return null;
+                return (
+                  <div key={k} style={{ color: '#c0a878' }}>
+                    <span style={{ color: '#8a7050', fontSize: '0.7rem' }}>{label}</span>{' '}
+                    <span style={{ fontFamily: 'ui-monospace, monospace' }}>{v.toLocaleString()}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {officer.equipment.length > 0 && (
           <section className={styles.statsSection}>
