@@ -1145,8 +1145,11 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           for (const o of Object.values(postOfficers)) {
             if (o.status === 'dead' || !o.forceId) continue;
             const drift = loyaltyDriftPerSeason(o);
-            // R1 — Master-servant loyalty floor (server can't drop below 80 if master is alive in same force)
-            const floor = loyaltyFloor(o, postOfficers);
+            // R1 — Relationship-based loyalty floor (folds in what 絆/OATH_BONDS
+            // used to do): sworn brothers 95, close family 95, siblings 90,
+            // master-servant 90, mentor-student 90 — all conditional on the
+            // bonded officer being alive in the same force.
+            const floor = loyaltyFloor(o, postOfficers, state.family);
             const next = Math.max(floor, Math.max(0, Math.min(100, o.loyalty + drift)));
             if (next !== o.loyalty) {
               driftedOfficers[o.id] = { ...o, loyalty: next };

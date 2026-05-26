@@ -231,18 +231,50 @@ export function rivalShowdownMultiplier(commanderA: Officer | null, commanderB: 
 // Loyalty floor + grief
 // ─────────────────────────────────────────────────────────────────────
 
-/** Returns the minimum loyalty floor this officer should never fall below
- *  while their master is alive. Master-servant relationships give a hard 80. */
+/**
+ * Returns the minimum loyalty floor this officer should never fall below
+ * while their bonded counterpart is alive and serves the same force.
+ * Folds in what the old OATH_BONDS system used to do (loyalty floor for
+ * sworn brothers, family ties, master-servant) — now driven entirely by
+ * FAMILY_LINEAGE + OFFICER_RELATIONSHIPS.
+ *
+ * Tiers:
+ *   95 — sworn-brothers, parent/child, spouse
+ *   90 — siblings, master-servant (servant side), mentor-student
+ *   80 — sworn-brother passively (kept for backward compat)
+ */
 export function loyaltyFloor(
   officer: Officer,
   officersById: Record<EntityId, Officer>,
+  family: FamilyRelation[] = [],
 ): number {
   let floor = 0;
-  for (const masterId of mastersOf(officer.id)) {
-    const m = officersById[masterId];
-    if (m && m.status !== 'dead' && m.forceId === officer.forceId) {
-      floor = Math.max(floor, 80);
+  const sameForceAlive = (id: EntityId) => {
+    const o = officersById[id];
+    return !!o && o.status !== 'dead' && o.forceId === officer.forceId;
+  };
+  // Strongest: sworn brothers — 95 (桃園 / 江東小霸王 etc.)
+  for (const id of swornBrothersOf(officer.id)) {
+    if (sameForceAlive(id)) floor = Math.max(floor, 95);
+  }
+  // Family ties — close kin keep loyalty high
+  for (const f of [...family, ...FAMILY_LINEAGE]) {
+    if (f.officerA !== officer.id && f.officerB !== officer.id) continue;
+    const otherId = f.officerA === officer.id ? f.officerB : f.officerA;
+    if (!sameForceAlive(otherId)) continue;
+    if (f.kind === 'spouse' || f.kind === 'parent-child') {
+      floor = Math.max(floor, 95);
+    } else if (f.kind === 'sibling') {
+      floor = Math.max(floor, 90);
     }
+  }
+  // Master-servant — servant side gets 90
+  for (const masterId of mastersOf(officer.id)) {
+    if (sameForceAlive(masterId)) floor = Math.max(floor, 90);
+  }
+  // Mentor-student — student loyalty floor
+  for (const mentorId of mentorsOf(officer.id)) {
+    if (sameForceAlive(mentorId)) floor = Math.max(floor, 90);
   }
   return floor;
 }
