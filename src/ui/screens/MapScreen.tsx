@@ -6,6 +6,7 @@ import { WEATHER_LABEL, WIND_LABEL } from '../../game/systems/weather';
 import { MANDATE_LABEL } from '../../game/systems/mandate';
 import { CityPanel } from '../components/CityPanel';
 import { BondsModal } from '../components/BondsModal';
+import { RelationshipBrowserModal } from '../components/RelationshipBrowserModal';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { SettingsModal } from '../components/SettingsModal';
 import { CareerModal } from '../components/CareerModal';
@@ -54,6 +55,7 @@ export function MapScreen() {
   const [showDiplomacy, setShowDiplomacy] = useState(false);
   const [showOfficers, setShowOfficers] = useState(false);
   const [showBonds, setShowBonds] = useState(false);
+  const [showRelationships, setShowRelationships] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showArmoury, setShowArmoury] = useState(false);
   const [showTitles, setShowTitles] = useState(false);
@@ -203,6 +205,7 @@ export function MapScreen() {
           title={t('人才 — 絆、武功、列傳', 'Personnel — bonds, deeds, biographies')}
           items={[
             { label: t('絆', 'Bonds'),       onClick: () => setShowBonds(true) },
+            { label: t('因緣', 'Relations'), onClick: () => setShowRelationships(true) },
             { label: t('武功', 'Deeds'),     onClick: () => setShowDeeds(true) },
             { label: t('列傳', 'Wiki'),      onClick: () => setShowEncyclopedia(true) },
             { label: t('關係図', 'Graph'),   onClick: () => setShowDipGraph(true) },
@@ -359,6 +362,7 @@ export function MapScreen() {
         <OfficersTab onClose={() => setShowOfficers(false)} />
       )}
       {showBonds && <BondsModal onClose={() => setShowBonds(false)} />}
+      {showRelationships && <RelationshipBrowserModal onClose={() => setShowRelationships(false)} />}
       {showCourt && <CourtModal onClose={() => setShowCourt(false)} />}
       {showWishes && <WishesModal onClose={() => setShowWishes(false)} />}
       {showCareer && <CareerModal onClose={() => setShowCareer(false)} />}

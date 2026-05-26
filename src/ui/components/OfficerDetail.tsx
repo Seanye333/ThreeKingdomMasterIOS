@@ -606,6 +606,7 @@ export function OfficerDetail({
           </section>
         )}
 
+        <FamilyTreeSection officerId={officer.id} officersOverride={officersOverride} />
         <RelationshipsSection officerId={officer.id} officersOverride={officersOverride} />
 
         {officer.equipment.length > 0 && (
@@ -1225,5 +1226,172 @@ function StatBar({
         </span>
       </div>
     </div>
+  );
+}
+
+/* ─── R4 — Family tree mini-visualization ──────────────────────────────
+ * Shows parent(s) above, self in center, spouse to the side, children
+ * below — all clickable to drill-down. Uses static FAMILY_LINEAGE +
+ * runtime state.family.
+ */
+function FamilyTreeSection({ officerId, officersOverride }: {
+  officerId: string;
+  officersOverride?: Record<string, Officer>;
+}) {
+  const storeOfficers = useGameStore((s) => s.officers);
+  const officers = officersOverride ?? storeOfficers;
+  const family = useGameStore((s) => s.family);
+  const t = useT();
+  const lang = useLanguage();
+  const [drillId, setDrillId] = useState<string | null>(null);
+
+  const allFamily = [...family, ...FAMILY_LINEAGE.filter(
+    (f) => f.officerA === officerId || f.officerB === officerId,
+  )];
+  // Dedup
+  const seen = new Set<string>();
+  const familyPool = allFamily.filter((f) => {
+    const k = `${f.officerA}|${f.officerB}|${f.kind}`;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+
+  const parents: string[] = [];
+  const children: string[] = [];
+  const spouses: string[] = [];
+  const siblings: string[] = [];
+  for (const f of familyPool) {
+    if (f.officerA !== officerId && f.officerB !== officerId) continue;
+    if (f.kind === 'parent-child') {
+      if (f.officerA === officerId) children.push(f.officerB);
+      else parents.push(f.officerA);
+    } else if (f.kind === 'spouse') {
+      spouses.push(f.officerA === officerId ? f.officerB : f.officerA);
+    } else if (f.kind === 'sibling') {
+      siblings.push(f.officerA === officerId ? f.officerB : f.officerA);
+    }
+  }
+
+  if (parents.length === 0 && children.length === 0 && spouses.length === 0 && siblings.length === 0) {
+    return null;
+  }
+
+  const node = (id: string, color: string, role: string) => {
+    const o = officers[id];
+    if (!o) return null;
+    return (
+      <div
+        key={`${role}-${id}`}
+        onClick={() => setDrillId(id)}
+        title={lang === 'en' ? `Open ${o.name.en}` : `查看 ${o.name.zh}`}
+        style={{
+          display: 'inline-flex', flexDirection: 'column', alignItems: 'center',
+          background: '#1a1410',
+          border: `1px solid ${color}`,
+          padding: '0.35rem 0.55rem',
+          minWidth: 75,
+          cursor: 'pointer',
+          margin: 2,
+          transition: 'background 0.1s',
+        }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = '#2a1f15'; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = '#1a1410'; }}
+      >
+        <span style={{ color, fontSize: '0.62rem', letterSpacing: '0.1rem' }}>{role}</span>
+        <span style={{ color: '#d4a84a', fontSize: '0.82rem', marginTop: 2 }}>
+          {lang === 'en' ? o.name.en : o.name.zh}
+        </span>
+        {o.status === 'dead' && (
+          <span style={{ fontSize: '0.6rem', color: '#6b3a3a', marginTop: 1 }}>† {t('卒', 'dec.')}</span>
+        )}
+      </div>
+    );
+  };
+
+  const drillOfficer = drillId ? officers[drillId] : null;
+
+  return (
+    <section className={styles.statsSection}>
+      <h3 className={styles.sectionTitle}>{t('家系図', 'Family Tree')}</h3>
+      <div style={{
+        background: 'linear-gradient(180deg, rgba(212,168,74,0.04) 0%, transparent 100%)',
+        padding: '0.6rem 0.4rem',
+        border: '1px solid #4a3520',
+      }}>
+        {/* Parents */}
+        {parents.length > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {parents.map((p) => node(p, '#88b7e8', t('父母', 'Parent')))}
+          </div>
+        )}
+        {/* Vertical line if has parents */}
+        {parents.length > 0 && (
+          <div style={{ width: 2, height: 12, background: '#5a4530', margin: '2px auto' }} />
+        )}
+        {/* Self + spouses + siblings */}
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
+          {siblings.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+              {siblings.slice(0, 4).map((s) => node(s, '#c19a3b', t('兄弟', 'Sibling')))}
+              {siblings.length > 4 && (
+                <span style={{ color: '#8a7050', fontSize: '0.72rem', alignSelf: 'center', margin: '0 4px' }}>
+                  +{siblings.length - 4}
+                </span>
+              )}
+            </div>
+          )}
+          {/* Self */}
+          <div
+            style={{
+              display: 'inline-flex', flexDirection: 'column', alignItems: 'center',
+              background: '#3a2818',
+              border: '2px solid #d4a84a',
+              padding: '0.5rem 0.8rem',
+              minWidth: 90,
+              margin: 2,
+              boxShadow: '0 0 12px rgba(212,168,74,0.4)',
+            }}
+          >
+            <span style={{ color: '#d4a84a', fontSize: '0.62rem', letterSpacing: '0.15rem' }}>
+              {t('本人', 'Self')}
+            </span>
+            <span style={{ color: '#ffd47a', fontSize: '0.95rem', marginTop: 2, fontWeight: 600 }}>
+              {(() => {
+                const me = officers[officerId];
+                return me ? (lang === 'en' ? me.name.en : me.name.zh) : officerId;
+              })()}
+            </span>
+          </div>
+          {spouses.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+              {spouses.map((s) => node(s, '#e8a8c8', t('配偶', 'Spouse')))}
+            </div>
+          )}
+        </div>
+        {/* Vertical line down to children */}
+        {children.length > 0 && (
+          <div style={{ width: 2, height: 12, background: '#5a4530', margin: '2px auto' }} />
+        )}
+        {/* Children */}
+        {children.length > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {children.slice(0, 8).map((c) => node(c, '#7ed68a', t('子嗣', 'Child')))}
+            {children.length > 8 && (
+              <span style={{ color: '#8a7050', fontSize: '0.72rem', alignSelf: 'center', margin: '0 4px' }}>
+                +{children.length - 8}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+      {drillOfficer && (
+        <OfficerDetail
+          officer={drillOfficer}
+          onClose={() => setDrillId(null)}
+          officersOverride={officersOverride}
+        />
+      )}
+    </section>
   );
 }
