@@ -1,5 +1,5 @@
-import { useMemo, useState, useRef, useEffect } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useMemo, useState, useEffect } from 'react';
+import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { useGameStore } from '../../game/state/store';
@@ -10,129 +10,37 @@ import {
 } from '../../game/data/defenseBuildings';
 import { previewBattlefield } from '../../game/systems/tactical';
 import { citySize } from '../../game/systems/citySize';
-import type { EntityId, BuildingId, TacticalTile, TerrainKind } from '../../game/types';
+import type { EntityId, BuildingId } from '../../game/types';
 import { useLanguage } from '../i18n';
+// Reuse the polished 3D primitives from the tactical battle scene so the
+// city map matches its visual fidelity — terrain art, lighting, walls.
+import {
+  hexWorld,
+  HEX_COL_STEP,
+  HEX_ROW_STEP,
+  HexTile,
+  CityWall,
+  DefenseStructure,
+} from './TacticalBattleScreen3D';
 
 /**
- * 3D version of CityMapScreen — renders the same hex battlefield where
- * defense structures will land when the city is sieged, but in Three.js
- * with terrain heights, building meshes, walls, and orbit camera.
+ * 3D version of CityMapScreen — uses the same hex tile / lighting /
+ * structure primitives as the live tactical battle, so what you see
+ * planning defenses is what you get when sieged.
  */
 
-const R = 1;
-const COL_STEP = 1.5 * R;
-const ROW_STEP = Math.sqrt(3) * R;
-function hexWorld(col: number, row: number): [number, number] {
-  const x = col * COL_STEP;
-  const z = row * ROW_STEP + (col & 1 ? ROW_STEP / 2 : 0);
-  return [x, z];
-}
-
-const TERRAIN_HEIGHT: Record<TerrainKind, number> = {
-  river:    -0.08, road:  0.04, plain: 0.10, forest: 0.14, mountain: 0.20,
-};
-const TERRAIN_COLOR: Record<TerrainKind, string> = {
-  river:    '#2c5882', road: '#7a6038', plain: '#4a5e30',
-  forest:   '#2a4220', mountain: '#5a4838',
+const INSIDE_BUILDING_DEF: Record<BuildingId, { glyph: string; color: string; height: number; nameZh: string }> = {
+  barracks: { glyph: '營', color: '#a87858', height: 1.4, nameZh: '兵營' },
+  market:   { glyph: '市', color: '#d4a84a', height: 1.0, nameZh: '市場' },
+  foundry:  { glyph: '鐵', color: '#7a6750', height: 1.5, nameZh: '鐵工坊' },
+  academy:  { glyph: '書', color: '#88b7e8', height: 1.6, nameZh: '書院' },
+  temple:   { glyph: '寺', color: '#c19a3b', height: 1.8, nameZh: '寺院' },
+  farm:     { glyph: '田', color: '#b8c87a', height: 0.5, nameZh: '農田' },
+  wall:     { glyph: '壁', color: '#5a4530', height: 0.8, nameZh: '城壁' },
+  shipyard: { glyph: '渠', color: '#3a6a98', height: 1.0, nameZh: '船廠' },
 };
 
-const INSIDE_BUILDING_DEF: Record<BuildingId, { glyph: string; color: string; height: number }> = {
-  barracks: { glyph: '營', color: '#a87858', height: 0.9 },
-  market:   { glyph: '市', color: '#d4a84a', height: 0.7 },
-  foundry:  { glyph: '鐵', color: '#7a6750', height: 1.0 },
-  academy:  { glyph: '書', color: '#88b7e8', height: 1.1 },
-  temple:   { glyph: '寺', color: '#c19a3b', height: 1.2 },
-  farm:     { glyph: '田', color: '#b8c87a', height: 0.4 },
-  wall:     { glyph: '壁', color: '#5a4530', height: 0.6 },
-  shipyard: { glyph: '渠', color: '#3a6a98', height: 0.7 },
-};
-
-/* ─── Single hex tile mesh ──────────────────────────────────────────── */
-function HexTile3D({ tile, hovered, onHover, onClick, slotIndex, isWall }: {
-  tile: TacticalTile;
-  hovered: boolean;
-  onHover: (hovering: boolean) => void;
-  onClick: () => void;
-  slotIndex: number | null;
-  isWall: boolean;
-}) {
-  const [x, z] = hexWorld(tile.coord.col, tile.coord.row);
-  const h = TERRAIN_HEIGHT[tile.terrain];
-  const baseColor = TERRAIN_COLOR[tile.terrain];
-  const color = hovered ? '#d4a84a' : isWall ? '#3a2818' : slotIndex !== null ? '#b8a070' : baseColor;
-  return (
-    <group position={[x, 0, z]}>
-      <mesh
-        position={[0, h / 2, 0]}
-        rotation={[0, Math.PI / 6, 0]}
-        onPointerOver={(e) => { e.stopPropagation(); onHover(true); }}
-        onPointerOut={(e) => { e.stopPropagation(); onHover(false); }}
-        onClick={(e) => { e.stopPropagation(); onClick(); }}
-      >
-        <cylinderGeometry args={[R, R, Math.max(0.02, h), 6]} />
-        <meshStandardMaterial color={color} roughness={0.85} />
-      </mesh>
-      {/* Outline ring on top */}
-      <mesh position={[0, h + 0.01, 0]} rotation={[-Math.PI / 2, 0, Math.PI / 6]}>
-        <ringGeometry args={[R * 0.95, R * 0.99, 6]} />
-        <meshBasicMaterial
-          color={hovered ? '#ffd060' : slotIndex !== null ? '#d4a84a' : '#1a1208'}
-          transparent
-          opacity={hovered ? 0.9 : slotIndex !== null ? 0.6 : 0.4}
-          side={THREE.DoubleSide}
-        />
-      </mesh>
-    </group>
-  );
-}
-
-/* ─── Defense structure visual (icon glyph on hex) ──────────────────── */
-function DefenseStructureMesh({ coord, def, level }: {
-  coord: { col: number; row: number };
-  def: typeof DEFENSE_BUILDINGS[DefenseBuildingId];
-  level: number;
-}) {
-  const [x, z] = hexWorld(coord.col, coord.row);
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame(({ clock }) => {
-    if (!groupRef.current) return;
-    // gentle bob
-    groupRef.current.position.y = 0.3 + Math.sin(clock.elapsedTime * 1.5 + x) * 0.04;
-  });
-  const heightByLevel = 0.5 + level * 0.25;
-  return (
-    <group ref={groupRef} position={[x, 0.3, z]}>
-      {/* Base block */}
-      <mesh>
-        <boxGeometry args={[0.7, heightByLevel, 0.7]} />
-        <meshStandardMaterial color={def.color} roughness={0.7} />
-      </mesh>
-      {/* Roof / cap */}
-      <mesh position={[0, heightByLevel / 2 + 0.12, 0]}>
-        <coneGeometry args={[0.55, 0.22, 4]} />
-        <meshStandardMaterial color={def.color} roughness={0.7} />
-      </mesh>
-      {/* Floating glyph + level chips */}
-      <Html center distanceFactor={8} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
-        <div style={{
-          background: 'rgba(20, 14, 8, 0.85)',
-          border: `1px solid ${def.color}`,
-          color: def.color,
-          fontFamily: 'Songti SC, serif',
-          fontSize: '14px',
-          padding: '0.15rem 0.4rem',
-          letterSpacing: '0.1rem',
-          whiteSpace: 'nowrap',
-          textShadow: '0 0 4px #000',
-        }}>
-          {def.name.zh} <span style={{ opacity: 0.7, fontSize: '11px' }}>lv{level}</span>
-        </div>
-      </Html>
-    </group>
-  );
-}
-
-/* ─── Inside-city building (taller block with glyph) ─────────────────── */
+/* ─── Inside-city building (3D block + roof + glyph label) ──────────── */
 function InsideBuilding3D({ coord, buildingId, level }: {
   coord: { col: number; row: number };
   buildingId: BuildingId;
@@ -142,71 +50,35 @@ function InsideBuilding3D({ coord, buildingId, level }: {
   const def = INSIDE_BUILDING_DEF[buildingId];
   const h = def.height + level * 0.15;
   return (
-    <group position={[x, h / 2, z]}>
-      <mesh>
-        <boxGeometry args={[0.85, h, 0.85]} />
-        <meshStandardMaterial color={def.color} roughness={0.6} />
+    <group position={[x, 0, z]}>
+      {/* Main block */}
+      <mesh position={[0, h / 2 + 0.1, 0]} castShadow receiveShadow>
+        <boxGeometry args={[1.05, h, 1.05]} />
+        <meshStandardMaterial color={def.color} roughness={0.7} />
       </mesh>
-      <mesh position={[0, h / 2 + 0.1, 0]}>
-        <coneGeometry args={[0.65, 0.2, 4]} />
-        <meshStandardMaterial color={def.color} roughness={0.6} />
+      {/* Pyramidal Chinese-style roof */}
+      <mesh position={[0, h + 0.3, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
+        <coneGeometry args={[0.8, 0.5, 4]} />
+        <meshStandardMaterial color="#3a2818" roughness={0.85} />
       </mesh>
-      <Html center distanceFactor={8} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
+      {/* Floating label */}
+      <Html position={[0, h + 0.9, 0]} center distanceFactor={9} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
         <div style={{
-          background: 'rgba(20, 14, 8, 0.8)',
+          background: 'rgba(20, 14, 8, 0.85)',
           border: `1px solid ${def.color}`,
-          color: def.color,
+          padding: '1px 5px',
           fontFamily: 'Songti SC, serif',
-          fontSize: '15px',
-          padding: '0.1rem 0.3rem',
-          letterSpacing: '0.1rem',
+          fontSize: '11px',
+          color: def.color,
+          textAlign: 'center',
+          borderRadius: 2,
           whiteSpace: 'nowrap',
         }}>
-          {def.glyph}{level}
+          {def.nameZh} <span style={{ opacity: 0.7 }}>lv{level}</span>
         </div>
       </Html>
     </group>
   );
-}
-
-/* ─── City wall slab along the rightmost column ─────────────────────── */
-function CityWall3D({ col, rowMax, color, wallTier }: {
-  col: number; rowMax: number; color: string; wallTier: 1 | 2 | 3;
-}) {
-  const slabs: React.JSX.Element[] = [];
-  const wallHeight = wallTier === 3 ? 1.4 : wallTier === 2 ? 1.0 : 0.7;
-  for (let r = 0; r < rowMax; r++) {
-    const [x, z] = hexWorld(col, r);
-    slabs.push(
-      <group key={r} position={[x + 0.5, wallHeight / 2, z]}>
-        <mesh>
-          <boxGeometry args={[0.4, wallHeight, ROW_STEP * 1.05]} />
-          <meshStandardMaterial color="#3a2a1a" roughness={0.85} />
-        </mesh>
-        {/* Crenellations */}
-        <mesh position={[0, wallHeight / 2 + 0.1, 0]}>
-          <boxGeometry args={[0.4, 0.18, ROW_STEP * 1.05]} />
-          <meshStandardMaterial color="#2a1f15" roughness={0.85} />
-        </mesh>
-      </group>
-    );
-  }
-  // Banner above the wall midpoint
-  const midRow = Math.floor(rowMax / 2);
-  const [bx, bz] = hexWorld(col, midRow);
-  slabs.push(
-    <group key="banner" position={[bx + 0.5, wallHeight + 0.7, bz]}>
-      <mesh>
-        <cylinderGeometry args={[0.04, 0.04, 1.4, 6]} />
-        <meshStandardMaterial color="#2a1f15" />
-      </mesh>
-      <mesh position={[0.3, 0.15, 0]}>
-        <planeGeometry args={[0.6, 0.9]} />
-        <meshStandardMaterial color={color} side={THREE.DoubleSide} />
-      </mesh>
-    </group>
-  );
-  return <>{slabs}</>;
 }
 
 /* ─── Tower range ring (gold circle on the ground) ──────────────────── */
@@ -216,26 +88,39 @@ function RangeRing3D({ coord, range, color }: {
   color: string;
 }) {
   const [x, z] = hexWorld(coord.col, coord.row);
-  // Range in hex distance → approximate world radius
-  const radius = range * ROW_STEP * 0.95;
+  const radius = range * HEX_ROW_STEP * 0.95;
   return (
-    <mesh position={[x, 0.18, z]} rotation={[-Math.PI / 2, 0, 0]}>
+    <mesh position={[x, 0.22, z]} rotation={[-Math.PI / 2, 0, 0]}>
       <ringGeometry args={[radius - 0.05, radius, 48]} />
       <meshBasicMaterial color={color} transparent opacity={0.4} side={THREE.DoubleSide} />
     </mesh>
   );
 }
 
+/* ─── Available-slot marker (golden octagonal floor disc) ───────────── */
+function SlotMarker3D({ coord, occupied }: {
+  coord: { col: number; row: number };
+  occupied: boolean;
+}) {
+  const [x, z] = hexWorld(coord.col, coord.row);
+  if (occupied) return null;
+  return (
+    <mesh position={[x, 0.22, z]} rotation={[-Math.PI / 2, 0, Math.PI / 8]}>
+      <ringGeometry args={[0.55, 0.78, 8]} />
+      <meshBasicMaterial color="#d4a84a" transparent opacity={0.55} side={THREE.DoubleSide} />
+    </mesh>
+  );
+}
+
 /* ─── The full 3D scene ─────────────────────────────────────────────── */
 function CityScene({
-  preview, slots, buildings, cityWallCol, wallTier, bannerColor,
+  preview, slots, buildings, cityWallCol, bannerColor,
   hovered, onHover, onClick, showOverlays,
 }: {
   preview: ReturnType<typeof previewBattlefield>;
   slots: ReturnType<typeof useGameStore.getState>['cities'][string]['buildSlots'];
   buildings: Array<{ coord: { col: number; row: number }; buildingId: BuildingId; level: number }>;
   cityWallCol: number;
-  wallTier: 1 | 2 | 3;
   bannerColor: string;
   hovered: { col: number; row: number } | null;
   onHover: (c: { col: number; row: number } | null) => void;
@@ -244,8 +129,9 @@ function CityScene({
 }) {
   const slotIndexAtHex = new Map<string, number>();
   preview.slotPositions.forEach((pos, idx) => slotIndexAtHex.set(`${pos.col},${pos.row}`, idx));
+  const slotMap = new Map((slots ?? []).map((s) => [s.slot, s]));
 
-  // Compute tower range rings
+  // Tower range circles for visualization
   const towerRanges: Array<{ coord: { col: number; row: number }; range: number; color: string }> = [];
   for (const s of slots ?? []) {
     if (!s.buildingId) continue;
@@ -262,63 +148,89 @@ function CityScene({
     if (range > 0) towerRanges.push({ coord: pos, range, color });
   }
 
+  // Day-time lighting (matches TacticalBattleScreen3D 'day' preset)
   return (
     <>
-      {/* Ground + sky */}
       <ambientLight intensity={0.6} />
-      <directionalLight position={[12, 18, 8]} intensity={1.1} color="#fff5e0" castShadow />
-      <directionalLight position={[-8, 6, -6]} intensity={0.3} color="#a0c0ff" />
-      <fog attach="fog" args={['#b0a080', 28, 70]} />
+      <directionalLight
+        position={[10, 18, 6]} intensity={1.2} color="#fff5e0"
+        castShadow
+        shadow-mapSize-width={1024} shadow-mapSize-height={1024}
+      />
+      <directionalLight position={[-8, 6, -6]} intensity={0.25} color="#f0c890" />
+      <fog attach="fog" args={['#a8bfd0', 35, 80]} />
 
-      {/* Terrain tiles */}
+      {/* Terrain tiles — uses shared HexTile from tactical for full fidelity */}
       {preview.tiles.map((tile) => {
-        const slotIdx = slotIndexAtHex.get(`${tile.coord.col},${tile.coord.row}`) ?? null;
-        const isWall = tile.coord.col === cityWallCol;
         const isHovered = !!hovered && hovered.col === tile.coord.col && hovered.row === tile.coord.row;
+        const slotIdx = slotIndexAtHex.get(`${tile.coord.col},${tile.coord.row}`);
         return (
-          <HexTile3D
+          <group
             key={`${tile.coord.col},${tile.coord.row}`}
-            tile={tile}
-            hovered={isHovered}
-            slotIndex={slotIdx}
-            isWall={isWall}
-            onHover={(h) => onHover(h ? tile.coord : null)}
-            onClick={() => onClick(tile.coord)}
-          />
+            onPointerOver={(e) => { e.stopPropagation(); onHover(tile.coord); }}
+            onPointerOut={(e) => { e.stopPropagation(); onHover(null); }}
+          >
+            <HexTile
+              tile={tile}
+              hovered={isHovered}
+              highlight={slotIdx !== undefined && !slotMap.get(slotIdx)?.buildingId ? 'move' : undefined}
+              windStrength={0.4}
+              onClick={() => onClick(tile.coord)}
+            />
+          </group>
         );
       })}
 
-      {/* City walls along rightmost column */}
-      <CityWall3D col={cityWallCol} rowMax={preview.height} color={bannerColor} wallTier={wallTier} />
+      {/* City walls along rightmost column — same as tactical battle scene */}
+      {Array.from({ length: preview.height }).map((_, r) => (
+        <CityWall
+          key={`wall-${r}`}
+          coord={{ col: cityWallCol, row: r }}
+          bannerColor={bannerColor}
+        />
+      ))}
 
-      {/* Inside buildings */}
+      {/* Slot markers — golden octagon discs showing buildable hexes */}
+      {preview.slotPositions.map((pos, idx) => (
+        <SlotMarker3D
+          key={`slot-${idx}`}
+          coord={pos}
+          occupied={!!slotMap.get(idx)?.buildingId}
+        />
+      ))}
+
+      {/* Inside-city buildings */}
       {buildings.map((b) => (
         <InsideBuilding3D
-          key={`${b.coord.col},${b.coord.row}`}
+          key={`bld-${b.coord.col},${b.coord.row}`}
           coord={b.coord}
           buildingId={b.buildingId}
           level={b.level}
         />
       ))}
 
-      {/* Defense structures on slots */}
+      {/* Defense structures on slots — reuse tactical's DefenseStructure */}
       {(slots ?? []).map((s) => {
         if (!s.buildingId) return null;
         const pos = preview.slotPositions[s.slot];
         if (!pos) return null;
+        // Synthesize hp/maxHp from level for the shared component.
+        const maxHp = 100 * s.level + 100;
         return (
-          <DefenseStructureMesh
-            key={s.slot}
+          <DefenseStructure
+            key={`def-${s.slot}`}
             coord={pos}
-            def={DEFENSE_BUILDINGS[s.buildingId]}
+            buildingId={s.buildingId}
             level={s.level}
+            hp={maxHp}
+            maxHp={maxHp}
           />
         );
       })}
 
-      {/* Range rings */}
+      {/* Range rings overlay */}
       {showOverlays && towerRanges.map((tr, i) => (
-        <RangeRing3D key={i} coord={tr.coord} range={tr.range} color={tr.color} />
+        <RangeRing3D key={`rr-${i}`} coord={tr.coord} range={tr.range} color={tr.color} />
       ))}
     </>
   );
@@ -361,24 +273,24 @@ export function CityMapScreen3D({ cityId, onClose, onSwitch2D }: {
   const ownerForce = city.ownerForceId ? forces[city.ownerForceId] : null;
   const bannerColor = ownerForce?.color ?? '#5a4530';
 
-  // Inside-city buildings (placed on the wall column rows)
   const cityBuildings = useMemo(
     () => allBuildings.filter((b) => b.cityId === cityId && b.level > 0),
     [allBuildings, cityId],
   );
-  const insideBuildings: Array<{ coord: { col: number; row: number }; buildingId: BuildingId; level: number }> = useMemo(() => {
+  const insideBuildings = useMemo(() => {
     const occupiedRows = new Set(
       preview.slotPositions.filter((p) => p.col === cityWallCol).map((p) => p.row),
     );
     const freeRows: number[] = [];
     for (let r = 0; r < preview.height; r++) if (!occupiedRows.has(r)) freeRows.push(r);
-    return cityBuildings.map((b, i) => ({
-      coord: { col: cityWallCol, row: freeRows[i] ?? 0 },
-      buildingId: b.id, level: b.level,
-    })).filter((b) => b.coord.row !== undefined);
+    return cityBuildings
+      .map((b, i) => ({
+        coord: { col: cityWallCol, row: freeRows[i] ?? -1 },
+        buildingId: b.id, level: b.level,
+      }))
+      .filter((b) => b.coord.row >= 0);
   }, [cityBuildings, preview, cityWallCol]);
 
-  // Map slot coord → index for click handling
   const slotIndexAtHex = useMemo(() => {
     const m = new Map<string, number>();
     preview.slotPositions.forEach((p, i) => m.set(`${p.col},${p.row}`, i));
@@ -412,9 +324,8 @@ export function CityMapScreen3D({ cityId, onClose, onSwitch2D }: {
     setSelectedSlot(null);
   };
 
-  // Center the camera on the map
-  const centerX = (preview.width * COL_STEP) / 2;
-  const centerZ = (preview.height * ROW_STEP) / 2;
+  const centerX = (preview.width * HEX_COL_STEP) / 2;
+  const centerZ = (preview.height * HEX_ROW_STEP) / 2;
 
   const ALL_BUILDINGS: DefenseBuildingId[] = [
     'watchtower', 'beacon', 'caltrops', 'lookout',
@@ -422,10 +333,8 @@ export function CityMapScreen3D({ cityId, onClose, onSwitch2D }: {
     'iron-chains', 'rockfall', 'arrow-platform',
   ];
 
-  const wallTier = (city.wallTier ?? 1) as 1 | 2 | 3;
   const currentSlot = selectedSlot !== null ? slots.find((s) => s.slot === selectedSlot) : null;
 
-  // ESC closes
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
@@ -489,16 +398,15 @@ export function CityMapScreen3D({ cityId, onClose, onSwitch2D }: {
       {/* 3D canvas */}
       <div style={{ flex: 1, position: 'relative' }}>
         <Canvas
-          camera={{ position: [centerX, 14, centerZ + 14], fov: 50 }}
+          camera={{ position: [centerX, 16, centerZ + 16], fov: 50 }}
           shadows
-          style={{ background: 'linear-gradient(180deg, #1a2440 0%, #5a8acf 100%)' }}
+          style={{ background: 'linear-gradient(180deg, #5a8acf 0%, #8aafd0 100%)' }}
         >
           <CityScene
             preview={preview}
             slots={slots}
             buildings={insideBuildings}
             cityWallCol={cityWallCol}
-            wallTier={wallTier}
             bannerColor={bannerColor}
             hovered={hovered}
             onHover={setHovered}
@@ -604,7 +512,7 @@ export function CityMapScreen3D({ cityId, onClose, onSwitch2D }: {
         )}
 
         {/* Hint when nothing selected */}
-        {!selectedSlot && isPlayer && (
+        {selectedSlot === null && isPlayer && (
           <div style={{
             position: 'absolute', bottom: 14, left: 14,
             background: 'rgba(20, 14, 8, 0.8)',
@@ -613,7 +521,7 @@ export function CityMapScreen3D({ cityId, onClose, onSwitch2D }: {
             color: '#8a7050', fontFamily: 'Songti SC, serif',
             fontSize: '0.7rem', letterSpacing: '0.15rem',
           }}>
-            點擊地圖上的金色八角位 → 建造城外防禦
+            點擊金色八角位 → 建造城外防禦
           </div>
         )}
       </div>

@@ -87,20 +87,24 @@ function targetTypeBadge(type: 'enemy' | 'ally' | 'self' | 'aoe', langZh: boolea
   }
 }
 
-function hexWorld(col: number, row: number): [number, number] {
+export function hexWorld(col: number, row: number): [number, number] {
   const x = col * COL_STEP;
   const z = row * ROW_STEP + (col & 1 ? ROW_STEP / 2 : 0);
   return [x, z];
 }
 
-const TERRAIN_HEIGHT: Record<TerrainKind, number> = {
+export const HEX_R = R;
+export const HEX_COL_STEP = COL_STEP;
+export const HEX_ROW_STEP = ROW_STEP;
+
+export const TERRAIN_HEIGHT: Record<TerrainKind, number> = {
   river:    -0.08,
   road:      0.04,
   plain:     0.10,
   forest:    0.14,
   mountain:  0.18,
 };
-const TERRAIN_COLOR: Record<TerrainKind, string> = {
+export const TERRAIN_COLOR: Record<TerrainKind, string> = {
   river:    '#2c5882',
   road:     '#7a6038',
   plain:    '#4a5e30',
@@ -167,7 +171,7 @@ const WEATHER_FOG_MUL: Record<Weather, number> = {
 };
 
 /* ─── A single hex tile + its terrain art (trees, peaks, water) ─────── */
-function HexTile({
+export function HexTile({
   tile, onClick, hovered, highlight, windStrength,
 }: {
   tile: TacticalTile;
@@ -224,7 +228,7 @@ function HexTile({
   );
 }
 
-function ForestArt({ y, windStrength }: { y: number; windStrength: number }) {
+export function ForestArt({ y, windStrength }: { y: number; windStrength: number }) {
   const ref = useRef<THREE.Group>(null);
   useFrame(({ clock }) => {
     if (ref.current && windStrength > 0) {
@@ -250,7 +254,7 @@ function ForestArt({ y, windStrength }: { y: number; windStrength: number }) {
   );
 }
 
-function MountainArt({ y }: { y: number }) {
+export function MountainArt({ y }: { y: number }) {
   return (
     <group position={[0, y, 0]}>
       <mesh position={[0, 0.55, 0]} castShadow>
@@ -266,7 +270,7 @@ function MountainArt({ y }: { y: number }) {
   );
 }
 
-function RiverArt({ y }: { y: number }) {
+export function RiverArt({ y }: { y: number }) {
   const matRef = useRef<THREE.MeshStandardMaterial>(null);
   useFrame(({ clock }) => {
     if (matRef.current) {
@@ -552,7 +556,7 @@ function UnitMesh({
 }
 
 /* ─── City wall — thick stone wall block standing on a hex ──────── */
-function CityWall({ coord, bannerColor }: { coord: HexCoord; bannerColor: string }) {
+export function CityWall({ coord, bannerColor }: { coord: HexCoord; bannerColor: string }) {
   const [x, z] = hexWorld(coord.col, coord.row);
   const pennantRef = useRef<THREE.Mesh>(null);
   useFrame(({ clock }) => {
@@ -605,7 +609,7 @@ const DEFENSE_BUILDING_VISUAL: Record<DefenseBuildingId, { color: string; height
   'rockfall':       { color: '#4a3a30', height: 1.2, glyph: '石' },
   'arrow-platform': { color: '#c19a3b', height: 1.4, glyph: '台' },
 };
-function DefenseStructure({
+export function DefenseStructure({
   coord, buildingId, level, hp, maxHp,
 }: {
   coord: HexCoord;
