@@ -840,6 +840,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (espResult.entries.length > 0) {
           result.report.entries.push(...espResult.entries);
         }
+        // Track espionage successes for 武功榜 (謀略 column).
+        const espionageSuccesses: EntityId[] = espResult.results
+          .filter((r) => r.success)
+          .map((r) => r.op.agentOfficerId);
 
         // Resolve tribe raids.
         const tribeResult = resolveTribeRaids({
@@ -1691,6 +1695,25 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // Merge deed deltas from resolveSeason + espionage successes into
+        // 武功榜 tracking. Mirrors the bumpDeeds helper in applyTacticalResolution.
+        const nextDeeds = { ...state.deeds };
+        const bumpDeed = (id: string, patch: Partial<import('../types').HeroicDeeds>) => {
+          const cur = nextDeeds[id] ?? {
+            officerId: id, killsTroops: 0, duelsWon: 0, captured: 0, citiesTaken: 0,
+            espionageSuccess: 0, civicWorks: 0, battlesWon: 0, battlesLost: 0,
+          };
+          nextDeeds[id] = { ...cur, ...Object.fromEntries(
+            Object.entries(patch).map(([k, v]) => [k, (cur[k as keyof typeof cur] as number) + (v as number)]),
+          ) } as import('../types').HeroicDeeds;
+        };
+        for (const delta of result.deedDeltas ?? []) {
+          bumpDeed(delta.officerId, delta.patch);
+        }
+        for (const agentId of espionageSuccesses) {
+          bumpDeed(agentId, { espionageSuccess: 1 });
+        }
+
         set({
           date: result.date,
           cities: postCities,
@@ -1700,6 +1723,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           pendingCommands: {},
           pendingTrainings: nextTrainings,
           lastReport: result.report,
+          deeds: nextDeeds,
           selectedCityId: stillOwned ? state.selectedCityId : fallback,
           victoryStatus: endVS,
           battleHistory: [...state.battleHistory, ...newBattles],

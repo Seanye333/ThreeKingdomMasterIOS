@@ -49,6 +49,12 @@ export interface ResolutionOutput {
   report: SeasonReport;
   /** Pending delayed effects from stratagems (e.g. 截糧 troop drain). */
   delayedEffects?: Array<{ targetCityId?: EntityId; seasons: number; perSeason: number }>;
+  /**
+   * Heroic-deed deltas to apply this turn — bumped by individual systems
+   * (combat duels, espionage successes, civic affairs commands, etc.).
+   * Store aggregates and applies to state.deeds.
+   */
+  deedDeltas?: Array<{ officerId: EntityId; patch: Partial<import('../types').HeroicDeeds> }>;
 }
 
 export function resolveSeason(input: ResolutionInput): ResolutionOutput {
@@ -58,6 +64,11 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   let forces: Record<EntityId, Force> = { ...input.forces };
   let lostItems: LostItemRef[] = [...input.lostItems];
   const entries: ReportEntry[] = [];
+  // 武功 — deed deltas accumulated this turn
+  const deedDeltas: Array<{ officerId: EntityId; patch: Partial<import('../types').HeroicDeeds> }> = [];
+  const bumpDeed = (officerId: EntityId, patch: Partial<import('../types').HeroicDeeds>) => {
+    deedDeltas.push({ officerId, patch });
+  };
 
   // 1. Process commands. Marches first, then internal affairs.
   const allCmds = Object.values(input.pendingCommands);
@@ -79,6 +90,12 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     cities = outcome.cities;
     officers = outcome.officers;
     entries.push(...outcome.entries);
+    // 武功 — duels: scan battle entries for duel winners
+    for (const e of outcome.entries) {
+      if (e.battle && e.battle.duelWinnerId) {
+        bumpDeed(e.battle.duelWinnerId, { duelsWon: 1 });
+      }
+    }
   }
 
   for (const cmd of internals) {
@@ -101,6 +118,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       text: result.message,
       textZh: result.messageZh,
     });
+    // 武功 — civicWorks bump on successful internal affairs
+    if (result.success) bumpDeed(cmd.officerId, { civicWorks: 1 });
   }
 
   const seasonBoundary = input.seasonBoundary ?? true;
@@ -302,6 +321,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     lostItems,
     report: { date: { year: input.date.year, season: input.date.season }, entries },
     delayedEffects: delayedEffects.length > 0 ? delayedEffects : undefined,
+    deedDeltas: deedDeltas.length > 0 ? deedDeltas : undefined,
   };
 }
 
