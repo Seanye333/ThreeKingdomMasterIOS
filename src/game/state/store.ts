@@ -38,6 +38,7 @@ import { planAITurn } from '../systems/ai';
 import { planAIAppointments } from '../systems/aiAppointments';
 import { planAICourt } from '../systems/aiCourt';
 import { rollFactionEvents } from '../systems/factionEvents';
+import { rollAIWishFlavor } from '../systems/aiWishesFlavor';
 import { appointmentBonusFor, pruneStaleAppointments, traitRefusal, isOnCooldown } from '../systems/appointmentEffects';
 import { canPromoteToRank } from '../systems/imperialEffects';
 import { COMMAND_DEFS } from '../systems/commands';
@@ -88,7 +89,7 @@ import {
   saveAchievementProgress,
 } from '../systems/achievements';
 import { tickFamily, addSpouse } from '../systems/family';
-import { rollWishes, applyWishGrant, applyWishReject } from '../systems/wishes';
+import { rollWishes, applyWishGrant, applyWishReject, expireWishes, maybeWoundedRetireWish } from '../systems/wishes';
 import { checkEndings } from '../systems/endings';
 import { generateRandomScenario } from '../systems/randomScenario';
 import { rollWeather, describeWeather } from '../systems/weather';
@@ -830,6 +831,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (aiCourt.entries.length > 0) {
           result.report.entries.unshift(...aiCourt.entries);
         }
+        // Flush any wish grant/reject entries queued mid-season.
+        if ((state.pendingWishEntries ?? []).length > 0) {
+          result.report.entries.unshift(...(state.pendingWishEntries ?? []));
+        }
         // Surface AI appointment/promotion changes so the player can see
         // what rival courts did this season. Also log to appointmentHistory.
         const aiHistoryAppends: import('../types').AppointmentHistoryEntry[] = [];
@@ -1060,12 +1065,17 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         postOfficers = fam.officers;
         if (fam.entries.length > 0) result.report.entries.push(...fam.entries);
 
+        // Expire stale wishes (6+ seasons old) with a small loyalty penalty.
+        const expireOut = expireWishes(state.officerWishes, postOfficers, result.date.year, result.date.season);
+        postOfficers = expireOut.officers;
+        if (expireOut.entries.length > 0) result.report.entries.push(...expireOut.entries);
+
         // Roll new wishes.
         const newWishes = rollWishes({
           officers: postOfficers,
           cities: postCities,
           playerForceId: state.playerForceId,
-          existing: state.officerWishes,
+          existing: expireOut.wishes,
           date: result.date,
           rng: Math.random,
         });
@@ -1216,10 +1226,17 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           postCities = facOut.cities;
           nextMandate = facOut.mandate;
           if (facOut.entries.length > 0) result.report.entries.push(...facOut.entries);
+          // AI court wish flavor: 0-2 random AI petitions resolved per season.
+          const aiWishFlavor = rollAIWishFlavor(postOfficers, postForces, state.playerForceId, Math.random);
+          postOfficers = aiWishFlavor.officers;
+          if (aiWishFlavor.entries.length > 0) result.report.entries.push(...aiWishFlavor.entries);
         }
 
         // ── Wounded recovery tick: decrement woundedSeasons, restore to idle at 0 ──
+        // Newly wounded with cautious/sickly trait or age ≥ 55 may petition
+        // to retire — generated as a `retire` wish for the player only.
         const tickedOfficers: Record<string, typeof postOfficers[string]> = {};
+        const woundedRetireWishes: import('../types').OfficerWish[] = [];
         for (const o of Object.values(postOfficers)) {
           if (o.status === 'wounded' && o.woundedSeasons !== undefined) {
             const left = o.woundedSeasons - 1;
@@ -1232,6 +1249,16 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               });
             } else {
               tickedOfficers[o.id] = { ...o, woundedSeasons: left };
+              // First season after the wound, roll for retirement petition.
+              if (
+                o.forceId === state.playerForceId &&
+                left === o.woundedSeasons - 1 &&
+                left > 0 &&
+                !newWishes.some((w) => w.officerId === o.id)
+              ) {
+                const retire = maybeWoundedRetireWish(o, result.date, Math.random);
+                if (retire) woundedRetireWishes.push(retire);
+              }
             }
           } else {
             tickedOfficers[o.id] = o;
@@ -1996,9 +2023,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           buildings: bld.buildings,
           family: fam.family,
           pendingHeirs: fam.pendingHeirs,
-          officerWishes: consumedWishIds.size > 0
-            ? newWishes.filter((w) => !consumedWishIds.has(w.id))
-            : newWishes,
+          officerWishes: [
+            ...(consumedWishIds.size > 0
+              ? newWishes.filter((w) => !consumedWishIds.has(w.id))
+              : newWishes),
+            ...woundedRetireWishes,
+          ],
+          pendingWishEntries: [],
           shipOrders: remainingOrders,
           fleets: updatedFleets,
           ports: nextPorts,
@@ -3949,7 +3980,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         });
         set({
           officers: r.officers,
+          cities: r.cities,
           officerWishes: state.officerWishes.filter((w) => w.id !== wishId),
+          // Queue the report entry so it shows up in the next season report.
+          pendingWishEntries: [...(state.pendingWishEntries ?? []), r.entry],
         });
       },
 
@@ -3960,7 +3994,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const r = applyWishReject(wish, { officers: state.officers, cities: state.cities });
         set({
           officers: r.officers,
+          cities: r.cities,
           officerWishes: state.officerWishes.filter((w) => w.id !== wishId),
+          pendingWishEntries: [...(state.pendingWishEntries ?? []), r.entry],
         });
       },
 
@@ -4038,6 +4074,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           appointmentHistory: loaded.appointmentHistory ?? [],
           casusBelliMarks: loaded.casusBelliMarks ?? [],
           recruitBonusSeasons: loaded.recruitBonusSeasons ?? {},
+          pendingWishEntries: loaded.pendingWishEntries ?? [],
           eventFlags: loaded.eventFlags ?? {},
           firedEventIds: loaded.firedEventIds ?? [],
           ports: migratePorts(
@@ -4102,6 +4139,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         family: state.family,
         pendingHeirs: state.pendingHeirs,
         officerWishes: state.officerWishes,
+        pendingWishEntries: state.pendingWishEntries,
         endingsAchieved: state.endingsAchieved,
         hotSeatPlayers: state.hotSeatPlayers,
         hotSeatActiveIndex: state.hotSeatActiveIndex,

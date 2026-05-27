@@ -121,6 +121,8 @@ export interface GameState {
   pendingHeirs: PendingHeir[];
   /** Officer wishes awaiting player response. */
   officerWishes: OfficerWish[];
+  /** Pending grant/reject report entries to prepend to next season report. */
+  pendingWishEntries: import('../types').ReportEntry[];
   /** Realized endings (for repeat-playthrough tracking). */
   endingsAchieved: EndingKind[];
   /** Hot-seat: which player slots are active (1 = solo). */
@@ -240,6 +242,7 @@ export const EMPTY_STATE: GameState = {
   family: [],
   pendingHeirs: [],
   officerWishes: [],
+  pendingWishEntries: [],
   endingsAchieved: [],
   hotSeatPlayers: [],
   hotSeatActiveIndex: 0,
@@ -410,6 +413,7 @@ export function loadScenario(
     })(),
     pendingHeirs: [],
     officerWishes: [],
+  pendingWishEntries: [],
     endingsAchieved: state.endingsAchieved,
     hotSeatPlayers: state.hotSeatPlayers,
     hotSeatActiveIndex: 0,

@@ -42,7 +42,9 @@ export type WishKind =
   | 'item'             // wants a specific item
   | 'promote'          // wants a higher rank
   | 'dismiss-rival'    // wants a rival officer dismissed
-  | 'learn-policy';    // wants to be trained in a specific policy
+  | 'learn-policy'     // wants to be trained in a specific policy
+  | 'retire'           // wants to retire (only old / wounded officers)
+  | 'info';            // 上書 — informational letter, no grant/reject choice
 
 export interface OfficerWish {
   id: EntityId;
@@ -58,4 +60,6 @@ export interface OfficerWish {
   rejectPenalty: number;
   /** Loyalty bonus if granted. */
   grantBonus: number;
+  /** Auto-expires after this many seasons of inaction (default 6). */
+  expiresAfterSeasons?: number;
 }
