@@ -194,6 +194,7 @@ export function BattlePrepModal({
       defenders: defenderEntries,
       attackerFormation: formation,
       weather: tacticalWeather as 'clear' | 'rain' | 'wind' | 'fog' | 'snow',
+      windDirection: currentWeather?.wind ?? 'calm',
       // Carry the defender city's perimeter defense structures into the battle.
       buildSlots: target.buildSlots,
       // Geography hints — battlefield matches the defender city's real terrain.

@@ -1349,6 +1349,45 @@ export function TacticalBattleScreen3D({ onClose }: { onClose: () => void }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hovered, setHovered] = useState<HexCoord | null>(null);
   const [actionMode, setActionMode] = useState<ActionMode>({ kind: 'none' });
+
+  // Keyboard shortcuts: mirror the 2D screen.
+  // 1=move, 2=attack, 3=duel, Esc=cancel, Space=end turn, Tab=cycle.
+  useEffect(() => {
+    if (!battle) return;
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      const playerSideNow = battle.attackerForceId === useGameStore.getState().playerForceId
+        ? 'attacker'
+        : battle.defenderForceId === useGameStore.getState().playerForceId
+          ? 'defender'
+          : null;
+      if (!playerSideNow || battle.activeSide !== playerSideNow || battle.winner) return;
+      if (e.key === 'Escape') { setActionMode({ kind: 'none' }); return; }
+      if (e.key === ' ') {
+        e.preventDefault();
+        start(endTurn(battle));
+        setSelectedId(null);
+        setActionMode({ kind: 'none' });
+        return;
+      }
+      if (!selectedId) return;
+      if (e.key === '1') setActionMode({ kind: actionMode.kind === 'move' ? 'none' : 'move' });
+      else if (e.key === '2') setActionMode({ kind: actionMode.kind === 'attack' ? 'none' : 'attack' });
+      else if (e.key === '3') setActionMode({ kind: actionMode.kind === 'duel' ? 'none' : 'duel' });
+      else if (e.key === 'Tab') {
+        e.preventDefault();
+        const myUnits = battle.units.filter((u) => u.side === playerSideNow && u.ap > 0);
+        if (myUnits.length === 0) return;
+        const idx = myUnits.findIndex((u) => u.id === selectedId);
+        const next = myUnits[(idx + 1) % myUnits.length];
+        setSelectedId(next.id);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [battle, selectedId, actionMode, start]);
+
   const [attackArcs, setAttackArcs] = useState<{ id: number; from: HexCoord; to: HexCoord; kind: 'melee' | 'ranged'; spawnedAt: number }[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [duelResult, setDuelResult] = useState<DuelResult | null>(null);

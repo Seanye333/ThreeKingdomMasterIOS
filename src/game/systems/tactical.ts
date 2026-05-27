@@ -119,6 +119,8 @@ export function hexNeighbours(h: HexCoord): HexCoord[] {
 
 // ─── Battle setup ─────────────────────────────────────────────────────
 
+export type WindDirection = 'north' | 'south' | 'east' | 'west' | 'calm';
+
 export interface SetupParams {
   cityId: EntityId;
   width: number;
@@ -133,6 +135,8 @@ export interface SetupParams {
   defenderObjective?: BattleObjective;
   weather?: Weather;
   timeOfDay?: TimeOfDay;
+  /** Wind direction (snapshot of strategic weather). Biases fire spread. */
+  windDirection?: WindDirection;
   reinforcements?: Reinforcement[];
   /** Pre-rolled scripted map (overrides city-based lookup). */
   namedMapId?: EntityId;
@@ -316,6 +320,7 @@ export function setupTacticalBattle(p: SetupParams): TacticalBattle {
     defenderObjective: p.defenderObjective,
     weather,
     timeOfDay,
+    windDirection: p.windDirection ?? 'calm',
     reinforcements: [...(namedMap?.reinforcements ?? []), ...(p.reinforcements ?? [])],
     specialTiles: namedMap?.specialTiles ?? [],
     damagePopups: [],
@@ -1139,10 +1144,21 @@ export function endTurn(b: TacticalBattle): TacticalBattle {
   });
 
   // ── Fire spread: each burning unit may set an adjacent unit alight.
-  // Rain blocks spread entirely; wind doubles the chance. Forest hexes
-  // and rattan-armor units catch fire most readily.
+  // Rain blocks spread entirely; wind doubles the chance and biases the
+  // spread direction. Forest hexes and rattan-armor units catch fire most
+  // readily.
   if (b.weather !== 'rain') {
     const baseSpreadChance = b.weather === 'wind' ? 0.45 : 0.22;
+    // Map wind direction to a delta vector preference. East wind = fire
+    // spreads west-to-east; south wind = north-to-south, etc.
+    const windDelta: Record<NonNullable<TacticalBattle['windDirection']>, { col: number; row: number }> = {
+      north: { col: 0, row: -1 },
+      south: { col: 0, row: 1 },
+      east:  { col: 1, row: 0 },
+      west:  { col: -1, row: 0 },
+      calm:  { col: 0, row: 0 },
+    };
+    const wd = windDelta[b.windDirection ?? 'calm'];
     const burningIds = tickedUnits
       .filter((u) => u.effects.some((e) => e.kind === 'burning'))
       .map((u) => u.id);
@@ -1150,11 +1166,22 @@ export function endTurn(b: TacticalBattle): TacticalBattle {
       const src = tickedUnits.find((u) => u.id === bid);
       if (!src) continue;
       const neighbours = hexNeighbours(src.coord);
-      const adjUnit = tickedUnits.find(
-        (u) => neighbours.some((n) => n.col === u.coord.col && n.row === u.coord.row),
+      // Score each adjacent occupied hex by alignment with wind, then pick
+      // the highest-scored to bias spread direction.
+      const adjUnits = tickedUnits.filter(
+        (u) => neighbours.some((n) => n.col === u.coord.col && n.row === u.coord.row) &&
+               !u.effects.some((e) => e.kind === 'burning'),
       );
-      if (!adjUnit) continue;
-      if (adjUnit.effects.some((e) => e.kind === 'burning')) continue;
+      if (adjUnits.length === 0) continue;
+      // Higher score = better match with wind direction.
+      const scored = adjUnits.map((u) => {
+        const dx = u.coord.col - src.coord.col;
+        const dy = u.coord.row - src.coord.row;
+        const align = wd.col * dx + wd.row * dy;
+        return { u, score: align };
+      });
+      scored.sort((a, b1) => b1.score - a.score);
+      const adjUnit = scored[0].u;
       const tile = b.tiles.find(
         (t) => t.coord.col === adjUnit.coord.col && t.coord.row === adjUnit.coord.row,
       );
@@ -1162,6 +1189,8 @@ export function endTurn(b: TacticalBattle): TacticalBattle {
       let chance = baseSpreadChance;
       if (tile?.terrain === 'forest') chance *= 1.6;
       if (adjFormation === 'rattan-armor') chance *= 2.0;
+      // Strong wind alignment bonus when picked unit is downwind.
+      if (scored[0].score > 0 && b.windDirection !== 'calm') chance *= 1.3;
       if (Math.random() < chance) {
         tickedUnits = tickedUnits.map((u) =>
           u.id === adjUnit.id
@@ -1261,6 +1290,17 @@ export function endTurn(b: TacticalBattle): TacticalBattle {
   else if (defenderObj?.resolved === 'success') winner = 'defender';
   else if (!attackerLeft || attackerCommanderDown) winner = 'defender';
   else if (!defenderLeft || defenderCommanderDown) winner = 'attacker';
+  else if (b.turn + 1 > 30) {
+    // 糧盡兵疲 — beyond turn 30, force resolution by remaining troop strength.
+    // Tie favors defender (they held).
+    const aTroops = surviving
+      .filter((u) => u.side === 'attacker')
+      .reduce((s, u) => s + u.troops, 0);
+    const dTroops = surviving
+      .filter((u) => u.side === 'defender')
+      .reduce((s, u) => s + u.troops, 0);
+    winner = aTroops > dTroops * 1.1 ? 'attacker' : 'defender';
+  }
 
   // ── City defense structures auto-act at end of attacker's turn ──
   // Watchtowers + arrow-platforms fire at closest attacker.
@@ -1613,6 +1653,29 @@ export function aiTakeTurn(
         cur = stratResult;
         acted = true;
         break;
+      }
+      // Beaten unit retreats: non-commander, < 30% troops AND < 30 morale,
+      // within reach of own edge. Prevents pointless death animations.
+      if (!unit.isCommander &&
+          unit.troops < unit.maxTroops * 0.3 &&
+          unit.morale < 30) {
+        const ownEdgeCol = unit.side === 'attacker' ? 0 : cur.width - 1;
+        if (Math.abs(unit.coord.col - ownEdgeCol) <= 2) {
+          cur = retreatUnit(cur, unit.id);
+          acted = true;
+          break;
+        }
+      }
+      // Siege unit adjacent to a gate hex: break it open instead.
+      if (unit.unitType === 'siege') {
+        const gateNeighbour = hexNeighbours(unit.coord)
+          .map((c) => cur.tiles.find((t) => t.coord.col === c.col && t.coord.row === c.row))
+          .find((t) => t?.terrain === 'gate');
+        if (gateNeighbour) {
+          cur = breakGate(cur, unit.id, gateNeighbour.coord);
+          acted = true;
+          break;
+        }
       }
       // Find target: prefer enemies we counter, avoid those who counter us.
       // Hidden enemies are invisible to the AI.

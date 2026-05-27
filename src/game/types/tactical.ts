@@ -249,6 +249,8 @@ export interface TacticalBattle {
   /** Weather & time of day. */
   weather: Weather;
   timeOfDay: TimeOfDay;
+  /** Wind direction (snapshot of strategic weather). Biases fire spread. */
+  windDirection?: 'north' | 'south' | 'east' | 'west' | 'calm';
   /** Scripted reinforcements (consumed when they arrive). */
   reinforcements?: Reinforcement[];
   /** Special tiles for objectives (supply, bridge, etc). */

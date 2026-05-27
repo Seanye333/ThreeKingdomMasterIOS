@@ -4,12 +4,15 @@ import {
   aiTakeTurn,
   applyStratagem,
   attackUnits,
+  breakGate,
   canAttack,
   canMove,
   endTurn,
   hexDistance,
+  hexNeighbours,
   moveUnit,
   resolveBattleEnd,
+  retreatUnit,
   unitAt,
 } from '../../game/systems/tactical';
 import { canDuel, resolveDuel, type DuelResult } from '../../game/systems/duel';
@@ -1249,6 +1252,7 @@ export function TacticalBattleScreen() {
               setActionMode={setActionMode}
               canAct={!!myTurn && selected.side === playerSide}
               battle={battle}
+              start={start}
             />
           ) : (
             <div className={styles.sidePanel}>
@@ -1328,6 +1332,7 @@ function UnitPanel({
   setActionMode,
   canAct,
   battle,
+  start,
 }: {
   unit: TacticalUnit;
   officer: Officer | null;
@@ -1335,6 +1340,7 @@ function UnitPanel({
   setActionMode: (m: ActionMode) => void;
   canAct: boolean;
   battle: TacticalBattle;
+  start: (b: TacticalBattle) => void;
 }) {
   const t = useT();
   const desc = useDesc();
@@ -1424,6 +1430,58 @@ function UnitPanel({
             Challenge an adjacent enemy commander to single combat. Decisive — the loser dies.
           </div>
         </button>
+        {/* Retreat — non-commander within 2 hexes of own edge */}
+        {!unit.isCommander && (() => {
+          const ownEdgeCol = unit.side === 'attacker' ? 0 : battle.width - 1;
+          const canRetreat = Math.abs(unit.coord.col - ownEdgeCol) <= 2;
+          return (
+            <button
+              className={styles.actionButton}
+              disabled={!canAct || !canRetreat}
+              onClick={() => {
+                if (!canAct || !canRetreat) return;
+                if (!confirm(t('撤退此武將？此戰中將不能再用。', 'Withdraw this unit from battle? They cannot rejoin.'))) return;
+                start(retreatUnit(battle, unit.id));
+                setActionMode({ kind: 'none' });
+              }}
+              title={canRetreat ? '' : '需在己方邊緣 2 格內'}
+            >
+              <div className={styles.actionTitle}>
+                <span><span className={styles.actionLabel}>{t('撤退', 'Retreat')}</span></span>
+                <span style={{ fontSize: '0.7rem', color: '#8a7050' }}>−10% troops</span>
+              </div>
+              <div className={styles.actionDesc}>
+                Withdraw with most of your troops. {canRetreat ? '' : '(out of range)'}
+              </div>
+            </button>
+          );
+        })()}
+        {/* Break Gate — siege unit adjacent to a gate hex */}
+        {unit.unitType === 'siege' && (() => {
+          const adj = hexNeighbours(unit.coord);
+          const gateCoord = adj.map((c) => battle.tiles.find((t) => t.coord.col === c.col && t.coord.row === c.row))
+            .find((t) => t?.terrain === 'gate');
+          if (!gateCoord) return null;
+          return (
+            <button
+              className={styles.actionButton}
+              disabled={!canAct || unit.ap === 0}
+              onClick={() => {
+                if (!canAct || unit.ap === 0) return;
+                start(breakGate(battle, unit.id, gateCoord.coord));
+                setActionMode({ kind: 'none' });
+              }}
+            >
+              <div className={styles.actionTitle}>
+                <span><span className={styles.actionLabel}>{t('破城門', 'Break Gate')}</span></span>
+                <span style={{ fontSize: '0.7rem', color: '#b8442e' }}>siege only</span>
+              </div>
+              <div className={styles.actionDesc}>
+                Smash an adjacent gate hex open into plain terrain. Consumes all AP.
+              </div>
+            </button>
+          );
+        })()}
         {availableStratagems.length === 0 && (
           <div style={{
             fontSize: '0.72rem', color: '#8a7050', fontStyle: 'italic',
