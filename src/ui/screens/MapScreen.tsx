@@ -388,7 +388,9 @@ export function MapScreen() {
       {/* Achievement toast — bottom-right when something just unlocked */}
       {recentAchievementUnlocks.length > 0 && (
         <div
+          key={recentAchievementUnlocks.length}
           onClick={acknowledgeAchievements}
+          className="tkm-ach-toast"
           style={{
             position: 'fixed',
             bottom: 20,
@@ -400,11 +402,9 @@ export function MapScreen() {
             fontFamily: '"Songti SC", serif',
             cursor: 'pointer',
             zIndex: 980,
-            boxShadow: '0 0 14px rgba(212, 168, 74, 0.5)',
-            animation: 'tkmFadeIn 0.4s ease-out',
           }}
         >
-          <div style={{ fontSize: '0.65rem', letterSpacing: '0.3rem', color: '#c19a3b' }}>
+          <div className="tkm-ach-toast-title" style={{ fontSize: '0.7rem', color: '#c19a3b' }}>
             勳功 UNLOCKED
           </div>
           <div style={{ fontSize: '0.95rem', marginTop: '0.2rem' }}>

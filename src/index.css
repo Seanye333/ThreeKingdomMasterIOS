@@ -713,6 +713,33 @@ button:not(:disabled):active {
   transform-box: fill-box;
 }
 
+/* Scroll-unfurl entrance — used by SeasonReportModal + DialogueModal. */
+@keyframes tkmScrollUnfurl {
+  0%   { opacity: 0; transform: scaleY(0.02) translateY(-30px); filter: blur(2px); }
+  60%  { opacity: 1; transform: scaleY(1) translateY(0); filter: blur(0); }
+  80%  { transform: scaleY(0.98) translateY(0); }
+  100% { transform: scaleY(1) translateY(0); }
+}
+
+/* Achievement toast fanfare: outer glow burst + breathing inner glow. */
+@keyframes tkmAchToastBurst {
+  0%   { box-shadow: 0 0 0 0 rgba(212, 168, 74, 0.6),
+                     0 0 0 0 rgba(212, 168, 74, 0.4); }
+  60%  { box-shadow: 0 0 24px 8px rgba(212, 168, 74, 0.35),
+                     0 0 48px 16px rgba(212, 168, 74, 0.18); }
+  100% { box-shadow: 0 0 14px 0 rgba(212, 168, 74, 0.5); }
+}
+@keyframes tkmAchTitlePulse {
+  0%, 100% { letter-spacing: 0.3rem; text-shadow: 0 0 4px rgba(193, 154, 59, 0.4); }
+  50%      { letter-spacing: 0.4rem; text-shadow: 0 0 12px rgba(193, 154, 59, 0.95); }
+}
+.tkm-ach-toast {
+  animation: tkmAchToastBurst 1.2s ease-out forwards;
+}
+.tkm-ach-toast-title {
+  animation: tkmAchTitlePulse 2.4s ease-in-out infinite;
+}
+
 /* Camera shake — applied to battlefield container on heavy impact. */
 @keyframes tkmShake {
   0%, 100% { transform: translate(0, 0); }

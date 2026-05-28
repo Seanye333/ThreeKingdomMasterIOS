@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { useT, useLanguage } from '../i18n';
 
@@ -7,9 +7,30 @@ export function DialogueModal() {
   const accept = useGameStore((s) => s.acceptDialogue);
   const officers = useGameStore((s) => s.officers);
   const [choseIdx, setChoseIdx] = useState<number | null>(null);
+  // Typewriter reveal — characters fade in over ~1s for narrative gravitas.
+  const [revealedChars, setRevealedChars] = useState(0);
   const t = useT();
   const lang = useLanguage();
+  useEffect(() => {
+    if (!dlg) return;
+    setRevealedChars(0);
+    const fullText = lang === 'en' ? dlg.text.en : dlg.text.zh;
+    const total = fullText.length;
+    const start = Date.now();
+    const duration = Math.min(1400, 40 * total); // ~40ms per char, capped
+    let raf = 0;
+    const tick = () => {
+      const elapsed = Date.now() - start;
+      const pct = Math.min(1, elapsed / duration);
+      setRevealedChars(Math.floor(total * pct));
+      if (pct < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [dlg, lang]);
   if (!dlg) return null;
+  const displayText = (lang === 'en' ? dlg.text.en : dlg.text.zh).slice(0, revealedChars);
+  const isFullyRevealed = revealedChars >= (lang === 'en' ? dlg.text.en.length : dlg.text.zh.length);
   const speaker = dlg.speakerOfficerId ? officers[dlg.speakerOfficerId] : null;
   const speakerName = speaker
     ? { zh: speaker.name.zh, en: speaker.name.en }
@@ -26,6 +47,13 @@ export function DialogueModal() {
       }}
     >
       <div
+        onClick={(e) => {
+          // Click to skip to fully revealed text.
+          e.stopPropagation();
+          if (!isFullyRevealed) {
+            setRevealedChars(lang === 'en' ? dlg.text.en.length : dlg.text.zh.length);
+          }
+        }}
         style={{
           background: 'linear-gradient(160deg,#2a1f15,#1a1410)',
           border: '2px solid #d4a84a',
@@ -33,8 +61,23 @@ export function DialogueModal() {
           padding: '2rem',
           color: '#e8d9b0',
           fontFamily: '"Songti SC","Noto Serif SC",serif',
+          animation: 'tkmScrollUnfurl 0.7s cubic-bezier(0.16,1,0.3,1) both',
+          transformOrigin: 'top center',
+          position: 'relative',
+          boxShadow: '0 0 32px rgba(212,168,74,0.25), 0 4px 16px rgba(0,0,0,0.6)',
         }}
       >
+        {/* Scroll rod decoration at top + bottom edges */}
+        <div style={{
+          position: 'absolute', left: 0, right: 0, top: -2, height: 4,
+          background: 'linear-gradient(90deg, #6a4828 0%, #d4a84a 50%, #6a4828 100%)',
+          borderRadius: 2, pointerEvents: 'none',
+        }} />
+        <div style={{
+          position: 'absolute', left: 0, right: 0, bottom: -2, height: 4,
+          background: 'linear-gradient(90deg, #6a4828 0%, #d4a84a 50%, #6a4828 100%)',
+          borderRadius: 2, pointerEvents: 'none',
+        }} />
         <div style={{
           fontSize: '0.65rem',
           letterSpacing: '0.3rem',
@@ -65,8 +108,12 @@ export function DialogueModal() {
           textAlign: 'justify',
           fontStyle: 'italic',
           margin: 0,
-        }}>{lang === 'en' ? dlg.text.en : dlg.text.zh}</p>
-        {lang === 'both' && (
+          minHeight: '2.5em',
+        }}>
+          {displayText}
+          {!isFullyRevealed && <span style={{ opacity: 0.6 }}>▎</span>}
+        </p>
+        {lang === 'both' && isFullyRevealed && (
           <p style={{ fontSize: '0.85rem', color: '#c0a878', textAlign: 'justify', marginTop: '0.5rem' }}>
             {dlg.text.en}
           </p>

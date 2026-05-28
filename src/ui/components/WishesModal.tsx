@@ -1,4 +1,5 @@
 import { useGameStore } from '../../game/state/store';
+import { OfficerAvatar } from './OfficerAvatar';
 
 interface Props {
   onClose: () => void;
@@ -32,11 +33,13 @@ export function WishesModal({ onClose }: Props) {
         style={{
           background: 'linear-gradient(160deg,#2a1f15 0%,#1a1410 100%)',
           border: '1px solid #5a4530',
+          borderTop: '3px solid #e8c878',  // parchment yellow — 紙卷
           width: 'min(620px,100%)',
           maxHeight: '88vh',
           overflow: 'auto',
           color: '#e8d9b0',
           fontFamily: '"Songti SC","Noto Serif SC",serif',
+          boxShadow: '0 0 16px rgba(232,200,120,0.12)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -107,8 +110,15 @@ export function WishesModal({ onClose }: Props) {
                     border: `1px solid ${isInfo ? '#3a5a4a' : '#4a3520'}`,
                     padding: '0.75rem 1rem',
                     marginBottom: '0.5rem',
+                    display: 'flex', gap: '0.75rem', alignItems: 'flex-start',
                   }}
                 >
+                  {o && (
+                    <div style={{ flexShrink: 0, border: '1px solid #5a4530', borderRadius: 2, overflow: 'hidden' }}>
+                      <OfficerAvatar officer={o} size={56} />
+                    </div>
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                     <div style={{ fontSize: '0.9rem', color: isInfo ? '#7ed68a' : '#d4a84a' }}>
                       {isInfo && <span style={{ marginRight: '0.4rem', letterSpacing: '0.2rem' }}>上書</span>}
@@ -178,6 +188,7 @@ export function WishesModal({ onClose }: Props) {
                         </button>
                       </>
                     )}
+                  </div>
                   </div>
                 </div>
               );

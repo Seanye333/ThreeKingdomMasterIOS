@@ -2,14 +2,38 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #1a1410;
+  /* Atmospheric backdrop: warm sky → dark earth + radial vignette. */
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 30%, rgba(212,168,74,0.10) 0%, transparent 70%),
+    radial-gradient(ellipse 80% 60% at 50% 100%, rgba(30,20,12,0.85) 0%, rgba(10,8,4,1) 100%),
+    linear-gradient(180deg, #1a1410 0%, #0a0805 100%);
   color: #e8d9b0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Far-mountain silhouette as decorative top frame. */
+.root::before {
+  content: '';
+  position: absolute;
+  top: 60px; left: 0; right: 0; height: 120px;
+  background: linear-gradient(180deg, transparent 0%, rgba(40, 30, 22, 0.55) 80%, transparent 100%);
+  clip-path: polygon(0% 100%, 6% 60%, 12% 80%, 20% 40%, 28% 70%, 36% 30%, 44% 65%, 52% 25%, 60% 55%, 68% 20%, 76% 60%, 84% 35%, 92% 70%, 100% 50%, 100% 100%);
+  pointer-events: none;
+  opacity: 0.45;
 }
 
 .header {
   padding: 1.5rem 2rem;
   border-bottom: 1px solid #4a3520;
   text-align: center;
+  position: relative;
+  animation: tkmTitleFadeIn 1.2s ease-out both;
+}
+
+@keyframes tkmTitleFadeIn {
+  0%   { opacity: 0; transform: translateY(-20px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 .title {
@@ -24,6 +48,16 @@
   font-size: 2.75rem;
   letter-spacing: 0.5rem;
   color: #d4a84a;
+  text-shadow:
+    0 0 24px rgba(212, 168, 74, 0.5),
+    0 0 8px rgba(184, 68, 46, 0.3);
+  animation: tkmTitleZhReveal 1.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes tkmTitleZhReveal {
+  0%   { opacity: 0; letter-spacing: 2.5rem; filter: blur(16px); }
+  60%  { opacity: 1; letter-spacing: 0.5rem; filter: blur(0); }
+  100% { opacity: 1; letter-spacing: 0.5rem; filter: blur(0); }
 }
 
 .titleEn {
@@ -31,6 +65,8 @@
   letter-spacing: 0.2rem;
   text-transform: uppercase;
   color: #8a7050;
+  animation: tkmTitleFadeIn 1.4s ease-out 0.6s both;
+  opacity: 0;
 }
 
 .main {

@@ -9,6 +9,7 @@
 }
 
 .modal {
+  position: relative;
   background: #2a1f15;
   border: 1px solid #d4a84a;
   width: 600px;
@@ -17,7 +18,47 @@
   display: flex;
   flex-direction: column;
   padding: 1.5rem;
+  /* Scroll unfurl entrance — a parchment slides down from above. */
+  transform-origin: top center;
+  animation: tkmScrollUnfurl 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.5),
+    0 0 24px rgba(212, 168, 74, 0.2),
+    inset 0 0 32px rgba(0, 0, 0, 0.3);
 }
+
+@keyframes tkmScrollUnfurl {
+  0%   {
+    opacity: 0;
+    transform: scaleY(0.02) translateY(-30px);
+    filter: blur(2px);
+  }
+  60%  {
+    opacity: 1;
+    transform: scaleY(1) translateY(0);
+    filter: blur(0);
+  }
+  80%  {
+    transform: scaleY(0.98) translateY(0);
+  }
+  100% {
+    transform: scaleY(1) translateY(0);
+  }
+}
+
+/* Pseudo-element scroll rod at top + bottom edges. */
+.modal::before,
+.modal::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #6a4828 0%, #d4a84a 50%, #6a4828 100%);
+  border-radius: 2px;
+  pointer-events: none;
+}
+.modal::before { top: -2px; }
+.modal::after  { bottom: -2px; }
 
 .header {
   border-bottom: 1px solid #4a3520;
