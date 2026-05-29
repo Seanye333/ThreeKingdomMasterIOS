@@ -1,5 +1,10 @@
 import type { OfficerStats } from '../types';
-import { HISTORICAL_DOCTRINES, HISTORICAL_FORMATIONS } from './historicalAttributes';
+import {
+  HISTORICAL_DOCTRINES,
+  HISTORICAL_FORMATIONS,
+  HISTORICAL_TACTICS,
+  HISTORICAL_POLICIES,
+} from './historicalAttributes';
 
 // ──────────────────────────────────────────────────────────────────────
 // 主義 (Doctrine / Ideology)
@@ -1177,6 +1182,8 @@ export const OFFICER_TACTICS: Record<string, TacticId[]> = {
   //  whose signature tactics live in TACTIC_SIGNATURE for stat bonuses but
   //  who are not in the playable roster, so they don't appear here.)
   'sun-zi':         ['attack-plans', 'court-debate'],  // 孫資 — Wei official, not Sun Tzu
+  // ─── 歷代名將 ───
+  ...HISTORICAL_TACTICS,
 };
 
 /** Hash an officer id into a small bucket for deterministic per-officer variance. */
@@ -2346,6 +2353,8 @@ export const OFFICER_POLICIES: Record<string, PolicyId[]> = {
   // ── Liu Yan in Shu had jiao-pacification too (later expanded by Zhuge southern campaign) ──
   // ── Military academy ──
   'xun-yu':       ['legalism', 'scholarship', 'rites', 'ancestor-rites', 'nine-grade', 'military-academy', 'examination'],
+  // ─── 歷代名將 ───
+  ...HISTORICAL_POLICIES,
 };
 
 function policyBucket(id: string | undefined, mod: number): number {

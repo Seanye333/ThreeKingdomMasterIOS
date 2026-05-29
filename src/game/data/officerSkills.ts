@@ -1,4 +1,5 @@
 import type { MilitaryRankId, OfficerStats } from '../types';
+import { HISTORICAL_SKILLS } from './historicalAttributes';
 
 /**
  * Mapping of officer ID → their innate skill IDs.
@@ -249,6 +250,8 @@ export const OFFICER_SKILLS: Record<string, string[]> = {
   'kebi-neng':    ['cavalry-master', 'celestial-tactician', 'ambush-master'],
   'budugen':      ['cavalry-master'],
   'gongsun-yuan': ['wallwarden'],
+  // ─── 歷代名將 ───
+  ...HISTORICAL_SKILLS,
 };
 
 /**
