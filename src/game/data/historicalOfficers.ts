@@ -173,6 +173,11 @@ const TPL_SPRING_AUTUMN: HistoricalOfficerTemplate[] = [
   { id: 'hist-zhonghang-linfu',dynasty: 'spring-autumn', name: { en: 'Zhonghang Linfu', zh: '中行林父' },                                         birthYear: 138, hometownCityId: 'taiyuan',   stats: { leadership: 78, war: 70, intelligence: 80,  politics: 75, charisma: 78 } },
   { id: 'hist-dou-kehuang', dynasty: 'spring-autumn', name: { en: 'Dou Kehuang', zh: '鬭克黃' },                                                  birthYear: 142, hometownCityId: 'wancheng',  stats: { leadership: 65, war: 60, intelligence: 80,  politics: 70, charisma: 75 } },
   { id: 'hist-zhixuanzi',   dynasty: 'spring-autumn', name: { en: 'Zhi Xuanzi',  zh: '智宣子' },                                                  birthYear: 138, hometownCityId: 'taiyuan',   stats: { leadership: 75, war: 65, intelligence: 80,  politics: 75, charisma: 72 } },
+  { id: 'hist-zheng-zhaogong',dynasty: 'spring-autumn', name: { en: 'Duke Zhao of Zheng', zh: '鄭昭公' },                                          birthYear: 142, hometownCityId: 'xuchang',   stats: { leadership: 65, war: 55, intelligence: 70,  politics: 65, charisma: 70 } },
+  { id: 'hist-gongzi-bi',   dynasty: 'spring-autumn', name: { en: 'Gongzi Bi',   zh: '公子比' },                                                  birthYear: 144, hometownCityId: 'wancheng',  stats: { leadership: 60, war: 55, intelligence: 65,  politics: 60, charisma: 65 } },
+  { id: 'hist-gongsun-ao',  dynasty: 'spring-autumn', name: { en: 'Gongsun Ao',  zh: '公孫敖' },                                                  birthYear: 140, hometownCityId: 'linzi',     stats: { leadership: 65, war: 60, intelligence: 70,  politics: 70, charisma: 70 } },
+  { id: 'hist-yan-jiangjun',dynasty: 'spring-autumn', name: { en: 'General Yan', zh: '鄢將軍' },                                                  birthYear: 144, hometownCityId: 'wancheng',  stats: { leadership: 75, war: 78, intelligence: 65,  politics: 55, charisma: 68 } },
+  { id: 'hist-qing-hu',     dynasty: 'spring-autumn', name: { en: 'Qing Hu',     zh: '慶虎'   },                                                  birthYear: 144, hometownCityId: 'linzi',     stats: { leadership: 65, war: 65, intelligence: 65,  politics: 60, charisma: 60 } },
 
 ];
 const TPL_WARRING_STATES: HistoricalOfficerTemplate[] = [
@@ -310,6 +315,8 @@ const TPL_WARRING_STATES: HistoricalOfficerTemplate[] = [
   { id: 'hist-qu-yijiu',    dynasty: 'warring-states', name: { en: 'Qu Yijiu',       zh: '屈宜咎' },                                              birthYear: 144, hometownCityId: 'wancheng', stats: { leadership: 60, war: 45, intelligence: 88,  politics: 78, charisma: 78 } },
   { id: 'hist-gongzi-zhu',  dynasty: 'warring-states', name: { en: 'Gongzi Zhu',     zh: '公子柱' },                                              birthYear: 148, hometownCityId: 'changan',  stats: { leadership: 60, war: 50, intelligence: 65,  politics: 60, charisma: 60 } },
   { id: 'hist-chu-taizi',   dynasty: 'warring-states', name: { en: 'Crown Prince of Chu', zh: '楚太子質秦' },                                     birthYear: 152, hometownCityId: 'wancheng', stats: { leadership: 55, war: 45, intelligence: 65,  politics: 55, charisma: 65 } },
+  { id: 'hist-ying-zhu',    dynasty: 'warring-states', name: { en: 'King Xiaowen of Qin', zh: '嬴柱' },                                            birthYear: 146, hometownCityId: 'changan',  stats: { leadership: 65, war: 55, intelligence: 70,  politics: 70, charisma: 72 } },
+  { id: 'hist-ying-xi',     dynasty: 'warring-states', name: { en: 'Ying Xi',        zh: '嬴傒'   },                                              birthYear: 146, hometownCityId: 'changan',  stats: { leadership: 70, war: 65, intelligence: 70,  politics: 65, charisma: 70 } },
 
 ];
 const TPL_QIN: HistoricalOfficerTemplate[] = [
@@ -511,6 +518,10 @@ const TPL_WESTERN_HAN: HistoricalOfficerTemplate[] = [
   { id: 'hist-wang-cheng', dynasty: 'western-han', name: { en: 'Wang Cheng',   zh: '王成'   },                                                birthYear: 142, hometownCityId: 'linzi',   stats: { leadership: 65, war: 50, intelligence: 82, politics: 90, charisma: 80 } },
   { id: 'hist-shao-xinchen',dynasty: 'western-han', name: { en: 'Shao Xinchen', zh: '召信臣' }, courtesyName: { en: 'Wengqing', zh: '翁卿' }, birthYear: 144, hometownCityId: 'shouchun',stats: { leadership: 65, war: 45, intelligence: 88, politics: 92, charisma: 85 } },
   { id: 'hist-ren-yan',    dynasty: 'western-han', name: { en: 'Ren Yan',      zh: '任延'   }, courtesyName: { en: 'Changsun', zh: '長孫' }, birthYear: 152, hometownCityId: 'wancheng',stats: { leadership: 78, war: 65, intelligence: 85, politics: 88, charisma: 82 } },
+  { id: 'hist-zheng-ji',   dynasty: 'western-han', name: { en: 'Zheng Ji',     zh: '鄭吉'   },                                                birthYear: 144, hometownCityId: 'kuaiji',  stats: { leadership: 82, war: 78, intelligence: 82, politics: 78, charisma: 78 } },
+  { id: 'hist-du-yannian', dynasty: 'western-han', name: { en: 'Du Yannian',   zh: '杜延年' }, courtesyName: { en: 'Youqing',  zh: '幼公' }, birthYear: 142, hometownCityId: 'changan', stats: { leadership: 70, war: 50, intelligence: 88, politics: 92, charisma: 82 } },
+  { id: 'hist-wei-xuancheng',dynasty: 'western-han', name: { en: 'Wei Xuancheng', zh: '韋玄成' }, courtesyName: { en: 'Shaoweng', zh: '少翁' }, birthYear: 142, hometownCityId: 'changan', stats: { leadership: 55, war: 35, intelligence: 88, politics: 88, charisma: 82 } },
+  { id: 'hist-zhai-fangjin',dynasty: 'western-han', name: { en: 'Zhai Fangjin', zh: '翟方進' }, courtesyName: { en: 'Zihui',   zh: '子威' }, birthYear: 140, hometownCityId: 'wancheng',stats: { leadership: 60, war: 40, intelligence: 92, politics: 92, charisma: 82 } },
 
 ];
 const TPL_JIN: HistoricalOfficerTemplate[] = [
@@ -583,6 +594,10 @@ const TPL_JIN: HistoricalOfficerTemplate[] = [
   { id: 'hist-fu-xiong',   dynasty: 'jin', name: { en: 'Fu Xiong',   zh: '苻雄' }, courtesyName: { en: 'Yuancai',  zh: '元才' }, birthYear: 138, hometownCityId: 'tianshui', stats: { leadership: 82, war: 82, intelligence: 78, politics: 72, charisma: 80 } },
   { id: 'hist-fu-hong',    dynasty: 'jin', name: { en: 'Fu Hong',    zh: '苻洪' }, courtesyName: { en: 'Guangshi', zh: '廣世' }, birthYear: 130, hometownCityId: 'tianshui', stats: { leadership: 85, war: 80, intelligence: 80, politics: 75, charisma: 82 } },
   { id: 'hist-wang-biaozhi',dynasty: 'jin', name: { en: 'Wang Biaozhi', zh: '王彪之' }, courtesyName: { en: 'Shuhu', zh: '叔虎' }, birthYear: 144, hometownCityId: 'langya',   stats: { leadership: 65, war: 50, intelligence: 88, politics: 88, charisma: 80 } },
+  { id: 'hist-sima-dewen', dynasty: 'jin', name: { en: 'Sima Dewen', zh: '司馬德文' }, courtesyName: { en: 'Dewen',     zh: '德文' }, birthYear: 158, hometownCityId: 'luoyang',  stats: { leadership: 55, war: 40, intelligence: 70, politics: 65, charisma: 70 } },
+  { id: 'hist-sima-dezong',dynasty: 'jin', name: { en: 'Sima Dezong', zh: '司馬德宗' },                                                          birthYear: 156, hometownCityId: 'luoyang',  stats: { leadership: 40, war: 30, intelligence: 50, politics: 45, charisma: 55 } },
+  { id: 'hist-wang-tanzhi',dynasty: 'jin', name: { en: 'Wang Tanzhi', zh: '王坦之' }, courtesyName: { en: 'Wendu',     zh: '文度' }, birthYear: 148, hometownCityId: 'taiyuan',  stats: { leadership: 60, war: 45, intelligence: 88, politics: 85, charisma: 82 } },
+  { id: 'hist-fan-ning',   dynasty: 'jin', name: { en: 'Fan Ning',   zh: '范甯' }, courtesyName: { en: 'Wuzi',       zh: '武子' }, birthYear: 144, hometownCityId: 'wancheng', stats: { leadership: 55, war: 35, intelligence: 92, politics: 78, charisma: 82 } },
 
 ];
 const TPL_SOUTHERN_NORTHERN: HistoricalOfficerTemplate[] = [
@@ -657,6 +672,11 @@ const TPL_SOUTHERN_NORTHERN: HistoricalOfficerTemplate[] = [
   { id: 'hist-zhang-zhaoda',dynasty: 'southern-northern', name: { en: 'Zhang Zhaoda', zh: '章昭達' }, courtesyName: { en: 'Boyu',    zh: '伯通' }, birthYear: 144, hometownCityId: 'wuxi',     stats: { leadership: 85, war: 82, intelligence: 78, politics: 70, charisma: 78 } },
   { id: 'hist-wu-mingche', dynasty: 'southern-northern', name: { en: 'Wu Mingche',  zh: '吳明徹' }, courtesyName: { en: 'Tongzhao', zh: '通昭' }, birthYear: 142, hometownCityId: 'guangling',stats: { leadership: 88, war: 82, intelligence: 80, politics: 75, charisma: 80 } },
   { id: 'hist-yuan-xin',   dynasty: 'southern-northern', name: { en: 'Yuan Xin',    zh: '元欣'   },                                                  birthYear: 142, hometownCityId: 'yanmen',   stats: { leadership: 75, war: 65, intelligence: 78, politics: 78, charisma: 75 } },
+  { id: 'hist-yuwen-shenju',dynasty: 'southern-northern', name: { en: 'Yuwen Shenju', zh: '宇文神舉' },                                            birthYear: 146, hometownCityId: 'shuofang', stats: { leadership: 85, war: 82, intelligence: 78, politics: 72, charisma: 75 } },
+  { id: 'hist-zhu-lingshi',dynasty: 'southern-northern', name: { en: 'Zhu Lingshi', zh: '朱齡石' }, courtesyName: { en: 'Bo’er',    zh: '伯兒' }, birthYear: 148, hometownCityId: 'xiaopei',  stats: { leadership: 88, war: 85, intelligence: 78, politics: 70, charisma: 78 } },
+  { id: 'hist-he-chengtian',dynasty: 'southern-northern', name: { en: 'He Chengtian', zh: '何承天' },                                              birthYear: 142, hometownCityId: 'linzi',    stats: { leadership: 50, war: 30, intelligence: 95, politics: 80, charisma: 82 } },
+  { id: 'hist-wei-can',    dynasty: 'southern-northern', name: { en: 'Wei Can',     zh: '韋粲'   },                                                  birthYear: 150, hometownCityId: 'changan',  stats: { leadership: 78, war: 75, intelligence: 78, politics: 72, charisma: 78 } },
+  { id: 'hist-shen-wenji', dynasty: 'southern-northern', name: { en: 'Shen Wenji',  zh: '沈文季' }, courtesyName: { en: 'Zhongdao', zh: '仲道' }, birthYear: 144, hometownCityId: 'wuxi',     stats: { leadership: 75, war: 70, intelligence: 80, politics: 75, charisma: 75 } },
 
 ];
 const TPL_SUI: HistoricalOfficerTemplate[] = [
@@ -703,6 +723,9 @@ const TPL_SUI: HistoricalOfficerTemplate[] = [
   { id: 'hist-yang-wensi', dynasty: 'sui', name: { en: 'Yang Wensi',  zh: '楊文思' },                                              birthYear: 142, hometownCityId: 'luoyang',  stats: { leadership: 70, war: 55, intelligence: 80, politics: 78, charisma: 72 } },
   { id: 'hist-yang-shidao',dynasty: 'sui', name: { en: 'Yang Shidao', zh: '楊師道' }, courtesyName: { en: 'Jingyou',  zh: '景猷' }, birthYear: 148, hometownCityId: 'luoyang',  stats: { leadership: 65, war: 50, intelligence: 85, politics: 82, charisma: 80 } },
   { id: 'hist-yuan-baozang',dynasty: 'sui', name: { en: 'Yuan Baozang', zh: '元寶藏' },                                            birthYear: 146, hometownCityId: 'yanmen',   stats: { leadership: 70, war: 65, intelligence: 75, politics: 70, charisma: 70 } },
+  { id: 'hist-liu-shu',    dynasty: 'sui', name: { en: 'Liu Shu',     zh: '柳述'   },                                              birthYear: 152, hometownCityId: 'taiyuan',  stats: { leadership: 60, war: 50, intelligence: 78, politics: 75, charisma: 70 } },
+  { id: 'hist-su-xiaoci',  dynasty: 'sui', name: { en: 'Su Xiaoci',   zh: '蘇孝慈' },                                              birthYear: 138, hometownCityId: 'changan',  stats: { leadership: 75, war: 65, intelligence: 82, politics: 78, charisma: 72 } },
+  { id: 'hist-wang-kui',   dynasty: 'sui', name: { en: 'Wang Kui',    zh: '王頍'   },                                              birthYear: 146, hometownCityId: 'taiyuan',  stats: { leadership: 55, war: 40, intelligence: 88, politics: 75, charisma: 75 } },
 
 ];
 const TPL_TANG: HistoricalOfficerTemplate[] = [
@@ -817,6 +840,11 @@ const TPL_TANG: HistoricalOfficerTemplate[] = [
   { id: 'hist-li-baozhen', dynasty: 'tang', name: { en: 'Li Baozhen',  zh: '李抱真' }, courtesyName: { en: 'Taixuan', zh: '太玄' }, birthYear: 144, hometownCityId: 'changan',  stats: { leadership: 85, war: 78, intelligence: 85, politics: 80, charisma: 80 } },
   { id: 'hist-hun-hao',    dynasty: 'tang', name: { en: 'Hun Hao',     zh: '渾鎬'   },                                              birthYear: 160, hometownCityId: 'dunhuang', stats: { leadership: 80, war: 80, intelligence: 78, politics: 70, charisma: 75 } },
   { id: 'hist-wei-chan',   dynasty: 'tang', name: { en: 'Wei Chan',    zh: '韋蟾'   }, courtesyName: { en: 'Yinge',   zh: '隱珪' }, birthYear: 148, hometownCityId: 'changan',  stats: { leadership: 55, war: 35, intelligence: 88, politics: 80, charisma: 78 } },
+  { id: 'hist-liu-gongquan',dynasty: 'tang', name: { en: 'Liu Gongquan', zh: '柳公權' }, courtesyName: { en: 'Chengxuan', zh: '誠懸' }, birthYear: 148, hometownCityId: 'changan',  stats: { leadership: 50, war: 30, intelligence: 90, politics: 78, charisma: 95 } },
+  { id: 'hist-geshu-yao',  dynasty: 'tang', name: { en: 'Geshu Yao',   zh: '哥舒曜' },                                              birthYear: 158, hometownCityId: 'dunhuang', stats: { leadership: 82, war: 80, intelligence: 75, politics: 65, charisma: 75 } },
+  { id: 'hist-yang-shou',  dynasty: 'tang', name: { en: 'Yang Shou',   zh: '楊收'   }, courtesyName: { en: 'Zangzhi',  zh: '藏之' }, birthYear: 146, hometownCityId: 'mei',      stats: { leadership: 55, war: 35, intelligence: 88, politics: 82, charisma: 78 } },
+  { id: 'hist-wei-yuangui',dynasty: 'tang', name: { en: 'Wei Yuangui', zh: '韋元珪' },                                              birthYear: 158, hometownCityId: 'changan',  stats: { leadership: 65, war: 50, intelligence: 80, politics: 75, charisma: 72 } },
+  { id: 'hist-wang-zhixing',dynasty: 'tang', name: { en: 'Wang Zhixing', zh: '王智興' }, courtesyName: { en: 'Kuaiwu',  zh: '匡諫' }, birthYear: 146, hometownCityId: 'mei',      stats: { leadership: 78, war: 80, intelligence: 72, politics: 65, charisma: 72 } },
 
 ];
 const TPL_FIVE_DYNASTIES: HistoricalOfficerTemplate[] = [
@@ -876,6 +904,9 @@ const TPL_FIVE_DYNASTIES: HistoricalOfficerTemplate[] = [
   { id: 'hist-wang-yanqiu',dynasty: 'five-dynasties', name: { en: 'Wang Yanqiu', zh: '王晏球' },                                                  birthYear: 142, hometownCityId: 'yanmen',   stats: { leadership: 85, war: 82, intelligence: 78, politics: 72, charisma: 78 } },
   { id: 'hist-du-chongwei',dynasty: 'five-dynasties', name: { en: 'Du Chongwei', zh: '杜重威' },                                                  birthYear: 144, hometownCityId: 'yanmen',   stats: { leadership: 75, war: 75, intelligence: 70, politics: 65, charisma: 65 } },
   { id: 'hist-an-zhonghui',dynasty: 'five-dynasties', name: { en: 'An Zhonghui', zh: '安重誨' },                                                  birthYear: 138, hometownCityId: 'yanmen',   stats: { leadership: 75, war: 65, intelligence: 85, politics: 88, charisma: 75 } },
+  { id: 'hist-wang-chuzhi',dynasty: 'five-dynasties', name: { en: 'Wang Chuzhi', zh: '王處直' },                                                  birthYear: 140, hometownCityId: 'ye',       stats: { leadership: 78, war: 75, intelligence: 75, politics: 70, charisma: 72 } },
+  { id: 'hist-zhao-dejun', dynasty: 'five-dynasties', name: { en: 'Zhao Dejun',  zh: '趙德鈞' },                                                  birthYear: 138, hometownCityId: 'beiping',  stats: { leadership: 80, war: 78, intelligence: 75, politics: 70, charisma: 72 } },
+  { id: 'hist-zhu-youqian',dynasty: 'five-dynasties', name: { en: 'Zhu Youqian', zh: '朱友謙' },                                                  birthYear: 142, hometownCityId: 'ye',       stats: { leadership: 78, war: 75, intelligence: 70, politics: 65, charisma: 70 } },
 
 ];
 const TPL_SONG: HistoricalOfficerTemplate[] = [
@@ -1004,6 +1035,11 @@ const TPL_SONG: HistoricalOfficerTemplate[] = [
   { id: 'hist-liu-mengyan',dynasty: 'song', name: { en: 'Liu Mengyan', zh: '留夢炎' }, courtesyName: { en: 'Hancheng', zh: '漢輔' }, birthYear: 148, hometownCityId: 'kuaiji',   stats: { leadership: 55, war: 35, intelligence: 78, politics: 78, charisma: 62 } },
   { id: 'hist-chen-kangbo',dynasty: 'song', name: { en: 'Chen Kangbo', zh: '陳康伯' }, courtesyName: { en: 'Changqing', zh: '長卿' }, birthYear: 140, hometownCityId: 'luling',   stats: { leadership: 75, war: 55, intelligence: 88, politics: 92, charisma: 85 } },
   { id: 'hist-wu-qian',    dynasty: 'song', name: { en: 'Wu Qian',     zh: '吳潛'   }, courtesyName: { en: 'Yifu',    zh: '毅夫' }, birthYear: 144, hometownCityId: 'wuxi',     stats: { leadership: 70, war: 55, intelligence: 88, politics: 88, charisma: 82 } },
+  { id: 'hist-pang-ji',    dynasty: 'song', name: { en: 'Pang Ji',     zh: '龐籍'   }, courtesyName: { en: 'Zuiquan',  zh: '醇之' }, birthYear: 140, hometownCityId: 'puyang',   stats: { leadership: 75, war: 55, intelligence: 88, politics: 92, charisma: 82 } },
+  { id: 'hist-tian-kuang', dynasty: 'song', name: { en: 'Tian Kuang',  zh: '田況'   }, courtesyName: { en: 'Yuanjun',  zh: '元均' }, birthYear: 144, hometownCityId: 'ye',       stats: { leadership: 80, war: 75, intelligence: 82, politics: 78, charisma: 75 } },
+  { id: 'hist-chen-yaozuo',dynasty: 'song', name: { en: 'Chen Yaozuo', zh: '陳堯佐' }, courtesyName: { en: 'Xiyuan',   zh: '希元' }, birthYear: 138, hometownCityId: 'baxi',     stats: { leadership: 65, war: 45, intelligence: 88, politics: 92, charisma: 85 } },
+  { id: 'hist-ma-yuan-song',dynasty: 'song', name: { en: 'Ma Yuan',    zh: '馬遠'   }, courtesyName: { en: 'Yaofu',    zh: '欽山' }, birthYear: 150, hometownCityId: 'kuaiji',   stats: { leadership: 40, war: 25, intelligence: 88, politics: 60, charisma: 92 } },
+  { id: 'hist-liang-shicheng',dynasty: 'song', name: { en: 'Liang Shicheng', zh: '梁師成' },                                              birthYear: 144, hometownCityId: 'puyang',   stats: { leadership: 55, war: 40, intelligence: 78, politics: 80, charisma: 70 } },
 
 ];
 const TPL_YUAN: HistoricalOfficerTemplate[] = [
@@ -1069,6 +1105,9 @@ const TPL_YUAN: HistoricalOfficerTemplate[] = [
   { id: 'hist-buhumu',     dynasty: 'yuan', name: { en: 'Buhumu',      zh: '不忽木' },                                              birthYear: 144, hometownCityId: 'wuhuan',  stats: { leadership: 65, war: 50, intelligence: 92, politics: 88, charisma: 82 } },
   { id: 'hist-tieshi',     dynasty: 'yuan', name: { en: 'Tieshi',      zh: '鐵失'   },                                              birthYear: 150, hometownCityId: 'wuhuan',  stats: { leadership: 65, war: 60, intelligence: 70, politics: 65, charisma: 60 } },
   { id: 'hist-tiemudieer', dynasty: 'yuan', name: { en: 'Temüder',     zh: '鐵木迭兒' },                                            birthYear: 142, hometownCityId: 'wuhuan',  stats: { leadership: 60, war: 50, intelligence: 80, politics: 82, charisma: 65 } },
+  { id: 'hist-ashabuhua',  dynasty: 'yuan', name: { en: 'Ashabuhua',   zh: '阿沙不花' },                                            birthYear: 144, hometownCityId: 'wuhuan',  stats: { leadership: 75, war: 70, intelligence: 80, politics: 78, charisma: 75 } },
+  { id: 'hist-yahudu',     dynasty: 'yuan', name: { en: 'Yahudu',      zh: '牙忽都' },                                              birthYear: 148, hometownCityId: 'wuhuan',  stats: { leadership: 78, war: 75, intelligence: 75, politics: 70, charisma: 72 } },
+  { id: 'hist-temur-buhua',dynasty: 'yuan', name: { en: 'Temür Buqa',  zh: '帖木兒不花' },                                          birthYear: 148, hometownCityId: 'wuhuan',  stats: { leadership: 80, war: 78, intelligence: 75, politics: 70, charisma: 75 } },
 
 ];
 const TPL_MING: HistoricalOfficerTemplate[] = [
@@ -1177,6 +1216,12 @@ const TPL_MING: HistoricalOfficerTemplate[] = [
   { id: 'hist-zhai-luan',  dynasty: 'ming', name: { en: 'Zhai Luan',     zh: '翟鑾'   }, courtesyName: { en: 'Zhongming', zh: '仲鳴' }, birthYear: 142, hometownCityId: 'linzi',    stats: { leadership: 55, war: 35, intelligence: 85, politics: 88, charisma: 75 } },
   { id: 'hist-xing-tong',  dynasty: 'ming', name: { en: 'Xing Tong',     zh: '邢侗'   }, courtesyName: { en: 'Ziyuan',  zh: '子愿' }, birthYear: 144, hometownCityId: 'linzi',    stats: { leadership: 40, war: 25, intelligence: 88, politics: 70, charisma: 92 } },
   { id: 'hist-li-tingji',  dynasty: 'ming', name: { en: 'Li Tingji',     zh: '李廷機' }, courtesyName: { en: 'Erzhang', zh: '爾張' }, birthYear: 144, hometownCityId: 'cangwu',   stats: { leadership: 55, war: 35, intelligence: 88, politics: 90, charisma: 82 } },
+  { id: 'hist-wang-yue',   dynasty: 'ming', name: { en: 'Wang Yue',       zh: '王越'   }, courtesyName: { en: 'Shichang', zh: '世昌' }, birthYear: 142, hometownCityId: 'ye',       stats: { leadership: 88, war: 82, intelligence: 88, politics: 80, charisma: 82 } },
+  { id: 'hist-han-yong',   dynasty: 'ming', name: { en: 'Han Yong',       zh: '韓雍'   }, courtesyName: { en: 'Yongxi',  zh: '永熙' }, birthYear: 142, hometownCityId: 'wu',       stats: { leadership: 85, war: 75, intelligence: 88, politics: 88, charisma: 82 } },
+  { id: 'hist-chen-xianzhang',dynasty: 'ming', name: { en: 'Chen Xianzhang', zh: '陳獻章' }, courtesyName: { en: 'Gongfu', zh: '公甫' }, birthYear: 144, hometownCityId: 'cangwu',   stats: { leadership: 50, war: 30, intelligence: 95, politics: 78, charisma: 92 } },
+  { id: 'hist-qiu-e',      dynasty: 'ming', name: { en: 'Qiu E',          zh: '仇諤'   },                                              birthYear: 146, hometownCityId: 'wu',       stats: { leadership: 60, war: 50, intelligence: 80, politics: 70, charisma: 72 } },
+  { id: 'hist-wen-jia',    dynasty: 'ming', name: { en: 'Wen Jia',        zh: '文嘉'   }, courtesyName: { en: 'Xiucheng', zh: '休承' }, birthYear: 148, hometownCityId: 'wuxi',     stats: { leadership: 40, war: 25, intelligence: 88, politics: 65, charisma: 90 } },
+  { id: 'hist-shen-zhou',  dynasty: 'ming', name: { en: 'Shen Zhou',      zh: '沈周'   }, courtesyName: { en: 'Qinan',   zh: '啟南' }, birthYear: 140, hometownCityId: 'wuxi',     stats: { leadership: 40, war: 25, intelligence: 92, politics: 65, charisma: 95 } },
 
 ];
 const TPL_QING: HistoricalOfficerTemplate[] = [
@@ -1284,6 +1329,11 @@ const TPL_QING: HistoricalOfficerTemplate[] = [
   { id: 'hist-luo-bingzhang',dynasty: 'qing', name: { en: 'Luo Bingzhang', zh: '駱秉章' }, courtesyName: { en: 'Yumen', zh: '籲門' }, birthYear: 138, hometownCityId: 'cangwu',   stats: { leadership: 85, war: 70, intelligence: 88, politics: 90, charisma: 85 } },
   { id: 'hist-saishang-a', dynasty: 'qing', name: { en: 'Sai Shang’a', zh: '賽尚阿' },                                              birthYear: 142, hometownCityId: 'wuhuan',   stats: { leadership: 65, war: 60, intelligence: 70, politics: 70, charisma: 65 } },
   { id: 'hist-wulantai',   dynasty: 'qing', name: { en: 'Wulantai',    zh: '烏蘭泰' },                                              birthYear: 148, hometownCityId: 'liaodong', stats: { leadership: 80, war: 80, intelligence: 75, politics: 65, charisma: 72 } },
+  { id: 'hist-yu-chenglong',dynasty: 'qing', name: { en: 'Yu Chenglong', zh: '于成龍' }, courtesyName: { en: 'Beiming', zh: '北溟' }, birthYear: 138, hometownCityId: 'taiyuan',  stats: { leadership: 70, war: 50, intelligence: 88, politics: 95, charisma: 92 } },
+  { id: 'hist-nalan-xingde',dynasty: 'qing', name: { en: 'Nalan Xingde', zh: '納蘭性德' }, courtesyName: { en: 'Rongruo', zh: '容若' }, birthYear: 156, hometownCityId: 'liaodong', stats: { leadership: 50, war: 50, intelligence: 92, politics: 70, charisma: 95 } },
+  { id: 'hist-wang-shizhen-qing',dynasty: 'qing', name: { en: 'Wang Shizhen (Qing)', zh: '王士禛' }, courtesyName: { en: 'Yishang', zh: '貽上' }, birthYear: 142, hometownCityId: 'linzi',    stats: { leadership: 50, war: 30, intelligence: 92, politics: 80, charisma: 92 } },
+  { id: 'hist-fan-chengmo',dynasty: 'qing', name: { en: 'Fan Chengmo',  zh: '範承謨' }, courtesyName: { en: 'Yu’an',   zh: '覲公' }, birthYear: 144, hometownCityId: 'liaodong', stats: { leadership: 75, war: 65, intelligence: 85, politics: 88, charisma: 95 } },
+  { id: 'hist-guiliang',   dynasty: 'qing', name: { en: 'Guiliang',     zh: '桂良'   }, courtesyName: { en: 'Yanyan',  zh: '燕山' }, birthYear: 140, hometownCityId: 'liaodong', stats: { leadership: 70, war: 50, intelligence: 85, politics: 88, charisma: 80 } },
 ];
 
 // Split into per-dynasty arrays above to keep TypeScript's union inference
