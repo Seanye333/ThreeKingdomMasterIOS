@@ -2111,13 +2111,17 @@ const CANONICAL_ITEMS_SECONDARY: Record<string, string[]> = {
   ],
   'hist-yue-fei': [
     'man-jiang-hong',      // 滿江紅
+    'shi-er-jin-pai',      // 十二金牌
   ],
   'hist-confucius': [
     'shi-jing-shanding',   // 詩經刪定
     'chun-qiu-bi-shu',     // 春秋筆削
+    'xing-tan-jiang-xue',  // 杏壇講學
+    'wei-bian-san-jue',    // 韋編三絕
   ],
   'hist-jiang-ziya': [
     'feng-shen-bang',      // 封神榜
+    'diao-yu-wei-shui',    // 釣魚渭水
   ],
   // ─── batch 13 — more multi-artifact heroes ───
   'liu-shan': [
@@ -2211,8 +2215,104 @@ const CANONICAL_ITEMS_SECONDARY: Record<string, string[]> = {
   'hist-yan-ying': [
     'yan-zi-shi-chu',      // 晏子使楚
   ],
-  // 諸葛亮 extra secondary (合併到原本的條目 — 加 空城計)
-  // 由於物件字面量不能重複 key，這個我們得手動把空城計加到原本 zhuge-liang 條目
+  // ─── batch 14 — even more multi-artifact heroes ───
+  'lu-meng': [
+    'wu-xia-a-meng',       // 吳下阿蒙
+  ],
+  'jiang-wei': [
+    'jiu-fa-zhong-yuan',   // 九伐中原
+  ],
+  'ma-dai': [
+    'hui-lei-zhan-wei-yan',// 揮淚斬魏延
+  ],
+  'zhang-fei': [
+    'chang-ban-qiao-hou',  // 長坂橋一吼
+    'yi-shi-yan-yan',      // 義釋嚴顏
+  ],
+  'sun-jian': [
+    'jiang-dong-meng-hu',  // 江東猛虎
+  ],
+  'sun-ce': [
+    'xiao-ba-wang',        // 小霸王
+    'shen-ting-zhi-zhan',  // 神亭嶺之戰
+  ],
+  'pang-tong': [
+    'luo-feng-po-jian',    // 落鳳坡
+  ],
+  'sima-hui': [
+    'wo-long-feng-chu',    // 臥龍鳳雛
+  ],
+  'jia-xu': [
+    'wan-cheng-xian-ji',   // 宛城獻計
+  ],
+  'xun-yu': [
+    'feng-tian-yi-ling',   // 奉天子以令不臣
+  ],
+  'zhou-yu': [
+    'ji-sheng-yu-he-sheng-liang',// 既生瑜何生亮
+    'qun-ying-hui',        // 群英會
+  ],
+  'lu-xun': [
+    'huo-shao-lian-ying',  // 火燒連營
+    'shu-sheng-tong-bing', // 書生統兵
+  ],
+  'diaochan': [
+    'lian-huan-mei-ren-ji',// 連環美人計
+  ],
+  // 春秋戰國
+  'hist-sun-wu': [
+    'wu-gong-jiao-zhan',   // 吳宮教戰
+  ],
+  'hist-mozi': [
+    'zhi-chu-gong-song',   // 止楚攻宋
+  ],
+  'hist-yue-yi': [
+    'bao-yan-hui-wang-shu',// 報燕惠王書
+  ],
+  'hist-bai-qi': [
+    'chang-ping-zhi-keng', // 長平之坑
+  ],
+  'hist-lin-xiangru': [
+    'mian-chi-hui',        // 澠池會
+  ],
+  'hist-lian-po': [
+    'lian-po-lao-yi',      // 廉頗老矣
+  ],
+  // 漢
+  'hist-dong-zhongshu': [
+    'chun-qiu-fan-lu',     // 春秋繁露
+  ],
+  'hist-zhang-qian': [
+    'xi-yu-san-shi-liu',   // 西域三十六國
+  ],
+  // 唐
+  'hist-tang-taizong': [
+    'zhen-guan-zheng-yao', // 貞觀政要
+  ],
+  'hist-wu-zetian': [
+    'shang-guan-wan-er',   // 上官婉兒
+  ],
+  // 宋
+  'hist-bao-zheng': [
+    'bao-gong-duan-an',    // 包公斷案
+  ],
+  // 明
+  'hist-wang-shouren': [
+    'xin-xue-si-ju-jiao',  // 心學四句教
+    'long-chang-wu-dao',   // 龍場悟道
+  ],
+  // 清
+  'hist-lin-zexu': [
+    'hu-men-xiao-yan',     // 虎門銷煙
+  ],
+  'hist-zeng-guofan': [
+    'xiang-jun-zhi-fa',    // 湘軍治法
+  ],
+  'hist-qianlong': [
+    'shi-quan-wu-gong',    // 十全武功
+  ],
+  // 姜子牙 extra (合入原條目 — 釣魚渭水)
+  // (jiang-ziya 原 secondary 只有 feng-shen-bang;由於 key 不能重複, 把 diao-yu-wei-shui 加在原條目)
 };
 
 // Pre-220 canonical items reassign on death. We'll keep this simple
