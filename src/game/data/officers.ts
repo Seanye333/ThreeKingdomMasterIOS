@@ -1805,6 +1805,43 @@ const CANONICAL_ITEMS_PRIMARY: Record<string, string> = {
   // 太平天國
   'hist-hong-xiuquan':'tian-wang-yu-zhi',   // 天王御製 — 洪秀全
   'hist-li-xiucheng': 'zhong-wang-zi-zhuan',// 忠王自述 — 李秀成
+  // ─── 名品擴充第八批 (Phase 38 — Wei court & late dynasties) ───
+  // 三國
+  'cao-zhi':          'qi-bu-shi',          // 七步詩
+  'yu-jin':           'yu-jin-jin-jian',    // 于禁節制印
+  'li-dian':          'li-dian-shu-shi',    // 李典書識
+  'lu-kang':          'lu-kang-shu-shu',    // 陸抗書疏
+  'gu-yong':          'gu-yong-mo-ran',     // 顧雍默然
+  'yu-fan':           'yu-fan-yi-zhu',      // 虞翻易注
+  'liu-ye':           'liu-ye-mou',         // 劉曄謀
+  'chen-tai':         'chen-tai-yong-zhou', // 陳泰雍州
+  'du-ji':            'du-ji-zhi-min',      // 杜畿治民
+  'gao-rou':          'gao-rou-fa-li',      // 高柔法理
+  'cao-rui':          'wei-ming-zhao',      // 魏明帝詔
+  'cao-shuang':       'cao-shuang-zhuan-quan',// 曹爽專權
+  'cui-yan':          'cui-yan-zhi-yan',    // 崔琰直言
+  'jiang-wan':        'jiang-wan-zai-fu',   // 蔣琬宰輔
+  'fei-yi':           'fei-yi-zai-fu',      // 費禕宰輔
+  'wang-yan':         'qing-tan-wu-guo',    // 清談誤國
+  // 春秋
+  'hist-bian-que':    'bian-que-yi-shu',    // 扁鵲醫術
+  'hist-yan-hui':     'yan-zi-yi-piao',     // 一簞食一瓢飲
+  'hist-sima-rangju': 'sima-fa',            // 司馬法 — 司馬穰苴 (用既有物品)
+  // 漢
+  'hist-huo-guang':   'huo-guang-fu-han',   // 霍光輔漢
+  'hist-chen-tang':   'ming-fan-qiang-han', // 明犯強漢者雖遠必誅
+  // 晉/南北朝
+  'hist-murong-chui': 'murong-fei-long',    // 慕容飛龍
+  'hist-shi-le':      'shi-le-jian-guo',    // 石勒建國
+  'hist-shi-hu':      'shi-hu-bao-zheng',   // 石虎暴政
+  'hist-gao-huan':    'gao-huan-jin-yong',  // 高歡盟主
+  'hist-gao-yang':    'bei-qi-kuang-di',    // 北齊狂帝
+  'hist-yuwen-tai':   'fu-bing-zhi',        // 府兵制
+  // 唐
+  'hist-yang-jiong':  'cong-jun-xing',      // 從軍行
+  'hist-lu-zhaolin':  'chang-an-gu-yi',     // 長安古意
+  'hist-li-deyu':     'li-deyu-xiang',      // 李德裕宰相
+  'hist-liu-yuxi':    'lou-shi-ming',       // 陋室銘 — 劉禹錫
 };
 
 // Sun family sword passes Sun Jian → Sun Ce → Sun Quan.
