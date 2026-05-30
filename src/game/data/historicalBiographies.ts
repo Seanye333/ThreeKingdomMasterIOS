@@ -3812,6 +3812,274 @@ export const HISTORICAL_BIOGRAPHIES: Record<string, OfficerBiography> = {
     zh: '字伯玉,梓州射洪人。初唐詩人。古文運動先驅。「前不見古人,後不見來者,念天地之悠悠,獨愴然而涕下」千古絕唱,《登幽州台歌》出此。',
     en: 'Style Boyu, of Shehong in Zizhou. An early-Tang poet, a forerunner of the Classical Prose Movement. "Before me, I see no ancient; behind me, no one to come / I think of the vastness of heaven and earth, and alone in grief I shed tears" rang forever — from the Song on Climbing Youzhou Tower.',
   },
+  // ─── 歷代名將 新增第十四批 (Historical biographies — batch 14: Late dynasties) ───
+  // Five Dynasties
+  'hist-li-jiqian': {
+    era: { zh: '西夏始祖', en: 'Founder of the Western Xia Line' },
+    zh: '党項族,夏州人。北宋初年起兵反宋,據河西。其孫李元昊正式稱帝,建西夏。',
+    en: 'Of the Tangut people, of Xiazhou. In early Northern Song he rose against Song and held Hexi. His grandson Li Yuanhao formally took the title of emperor and founded the Western Xia.',
+  },
+  'hist-li-yuanhao': {
+    era: { zh: '西夏景宗', en: 'Emperor Jingzong of Western Xia' },
+    zh: '党項族李繼遷之孫。寶元元年稱帝,建大夏(西夏)。創西夏文字,行漢制。三川口、好水川、定川寨三大戰勝宋,迫宋議和。後被太子寧令哥所弒,年四十六。',
+    en: 'Tangut, grandson of Li Jiqian. In 1038 he took the imperial title and founded Great Xia (Western Xia). He created the Western Xia script and applied Chinese institutions. At the Three-River Pass, Haoshui River, and Dingchuan Fort he broke the Song three times, forcing peace. His heir Ningling Ge later killed him at forty-six.',
+  },
+  'hist-li-maozhen': {
+    zh: '唐末五代藩鎮。岐王。據關中,屢與後梁朱溫相爭。後依後唐。',
+    en: 'A late-Tang and Five Dynasties military governor, King of Qi. He held Guanzhong and contested often with Zhu Wen of Later Liang, then leaned on Later Tang.',
+  },
+  'hist-an-zhongrong': {
+    zh: '後晉時權臣。安重榮反晉,自稱「相天子」。後敗於石敬瑭,被斬。',
+    en: 'A great power-holder of Later Jin. An Zhongrong rose against Jin, calling himself "Heaven\'s Helper." He was broken by Shi Jingtang and beheaded.',
+  },
+  'hist-sang-weihan': {
+    zh: '河南洛陽人。後晉宰相。性勤儉公正。後晉亡,被亂兵所殺。',
+    en: 'Of Luoyang in Henan. A Later Jin chancellor. Diligent, frugal, just. When Later Jin fell, he was killed in the mutiny.',
+  },
+  'hist-feng-yansi': {
+    zh: '南唐後主之父李璟時宰相。詞人。著《陽春集》。「風乍起,吹皺一池春水」千古絕唱。',
+    en: 'A chancellor under Li Jing, father of the Last Ruler of Southern Tang. A ci poet, of the Yangchun Collection. "A sudden gust of wind — wrinkling a pool of spring water" rang forever.',
+  },
+  // Song
+  'hist-li-deming': {
+    zh: '李繼遷之子。承父業,經營河西,為西夏建國奠定基礎。',
+    en: 'Son of Li Jiqian. He carried on his father\'s work in Hexi, laying the foundation for the Western Xia.',
+  },
+  'hist-lu-yijian': {
+    zh: '字坦夫,壽州人。北宋仁宗朝宰相。在位十年,以保守見稱。與范仲淹「慶曆新政」相對。',
+    en: 'Style Tanfu, of Shouzhou. Chancellor under Renzong of Northern Song for ten years; known for conservatism, against Fan Zhongyan\'s Qingli New Policies.',
+  },
+  'hist-zhao-bian': {
+    zh: '字閱道,衢州西安人。北宋名臣。性公正,號「鐵面御史」。後位至參知政事。',
+    en: 'Style Yuedao, of Xi\'an in Quzhou. A famed Northern Song minister. Upright by nature — called the "Iron-Faced Censor." He rose to Vice Director of the Imperial Secretariat.',
+  },
+  'hist-zhao-ding': {
+    zh: '字元鎮,解州聞喜人。南宋初年名相。輔高宗渡江,定都建康,主張抗金。後與秦檜不合,被貶死於潮州。',
+    en: 'Style Yuanzhen, of Wenxi in Xiezhou. A famed early Southern Song chancellor. He helped Gaozong cross the river and set the capital at Jiankang, urging war on the Jin. Falling out with Qin Hui, he was thrust down to die at Chaozhou.',
+  },
+  'hist-zhao-ruyu': {
+    zh: '字子直,饒州餘干人。南宋名相。發動「紹熙內禪」,擁寧宗即位。後被韓侂胄構陷,貶死於衡州。',
+    en: 'Style Zizhi, of Yugan in Raozhou. A famed Southern Song chancellor. He led the Shaoxi internal abdication and set Ningzong on the throne. Han Tuozhou later framed him, and he was thrust down to die at Hengzhou.',
+  },
+  'hist-zhe-deyi': {
+    zh: '北宋名將。折家世將,鎮西北邊疆。屢破西夏。',
+    en: 'A famed Northern Song general of the Zhe house of hereditary commanders. He held the northwest border and broke the Western Xia many times.',
+  },
+  'hist-zhong-shiheng': {
+    zh: '北宋名將。鎮西北,抗西夏。與其孫种師道、种師中世稱「種家將」。',
+    en: 'A famed Northern Song general. He held the northwest against Western Xia. With his grandsons Zhong Shidao and Zhong Shizhong he formed the "Zhong family generals."',
+  },
+  'hist-wen-tong': {
+    era: { zh: '胸有成竹', en: '"Bamboo in His Breast"' },
+    zh: '字與可,梓州永泰人。北宋畫家、詩人。蘇軾表兄。畫竹一絕,世稱「文湖州」。「胸有成竹」之典出此。',
+    en: 'Style Yuke, of Yongtai in Zizhou. A Northern Song painter and poet, cousin of Su Shi. His bamboo was peerless — called "Wen of Huzhou." "Bamboo in his breast" comes from him.',
+  },
+  'hist-he-zhu': {
+    zh: '字方回,衛州人。北宋詞人。「試問閒愁都幾許?一川煙草,滿城風絮,梅子黃時雨」千古絕唱。',
+    en: 'Style Fanghui, of Weizhou. A Northern Song ci poet. "Ask, how much idle sorrow is there? — a river of misty grass, a city of wind-blown willow-down, the plum-rain when the fruit turns yellow" rang forever.',
+  },
+  'hist-han-zhongyan': {
+    zh: '字魯卿,北宋學者。撰《五代史補》。',
+    en: 'Style Luqing, a Northern Song scholar. He wrote the Supplement to the History of the Five Dynasties.',
+  },
+  'hist-mi-youren': {
+    zh: '米芾之子。承父業,亦工書畫,號「小米」。',
+    en: 'Son of Mi Fu. He carried on his father\'s art in writing and painting, called the "Little Mi."',
+  },
+  'hist-lu-jiuyuan': {
+    era: { zh: '心學先驅', en: 'Forerunner of the Mind-Heart School' },
+    zh: '字子靜,號象山,撫州金溪人。南宋哲學家。心學祖師。與朱熹「鵝湖之會」,論「尊德性」與「道問學」。為王陽明心學之先驅。',
+    en: 'Style Zijing, called Xiangshan, of Jinxi in Fuzhou. A Southern Song philosopher, founder of the Mind-Heart school. With Zhu Xi he held the Goose Lake debate on "honoring the moral nature" against "pursuing learning." A forerunner of Wang Yangming.',
+  },
+  'hist-ye-shi': {
+    zh: '字正則,號水心,溫州人。南宋永嘉學派代表。主功利之學,反對朱熹理學。著《水心文集》。',
+    en: 'Style Zhengze, called Shuixin, of Wenzhou. A representative of the Southern Song Yongjia school. He championed practical statecraft against Zhu Xi\'s school of principle. His Shuixin Collection is his.',
+  },
+  'hist-wang-yinglin': {
+    zh: '字伯厚,慶元府鄞縣人。南宋末年大學者。著《困學紀聞》、《玉海》二百卷,中華類書之大者。又傳為《三字經》作者。',
+    en: 'Style Bohou, of Yin county in Qingyuan Prefecture. A great scholar of late Southern Song. He wrote the Notes from My Difficulties in Learning and the Jade Sea in two hundred fascicles — a great Chinese encyclopedia. Tradition also names him author of the Three-Character Classic.',
+  },
+  // Yuan
+  'hist-hoelun': {
+    zh: '蒙古族,鐵木真之母。早寡。獨力撫養鐵木真四子,鐵木真稱帝,尊為「太祖訶額侖太皇太后」。',
+    en: 'Mongol, mother of Temüjin. Widowed early, she alone raised Temüjin and his four brothers. When Temüjin took the imperial title, she was honored as "Empress Great Dowager Hoelun of the Founding Emperor."',
+  },
+  'hist-yesugei': {
+    zh: '蒙古乞顏部首領。鐵木真之父。為塔塔兒人所毒殺,鐵木真自此遭難,後復興蒙古。',
+    en: 'Chieftain of the Mongol Kiyad. Father of Temüjin. Poisoned by the Tatars; from there Temüjin\'s trials began, and from there he later rose to restore the Mongols.',
+  },
+  'hist-aju': {
+    zh: '蒙古名將。元世祖時為大將軍。圍襄陽五年,破之,為宋亡前奏。後從伯顏伐宋,直撲臨安。',
+    en: 'A famed Mongol general. Under Kublai he was Grand Marshal. He laid siege to Xiangyang for five years and broke it — the prelude to the fall of Song. With Bayan he later marched on Song and rode straight at Lin\'an.',
+  },
+  'hist-shi-tianze': {
+    zh: '元朝漢人世侯。事窩闊台、蒙哥、忽必烈三朝。鎮真定四十年,治民有方。',
+    en: 'A hereditary Han lord of Yuan. He served Ögedei, Möngke, and Kublai. Forty years he held Zhending and ruled the people well.',
+  },
+  'hist-ahmad': {
+    zh: '回回人。元世祖忽必烈寵臣。專管理財。性貪暴,大盜公財,卒於王著之亂中被殺。死後忽必烈方知其貪,剖棺戮屍。',
+    en: 'A Muslim. A favored minister of Kublai. He held the finances. Grasping and cruel, he stole greatly from the public coffers; in Wang Zhu\'s revolt he was killed. After his death Kublai learned of his greed, opened the coffin, and abused the corpse.',
+  },
+  'hist-saidianchi': {
+    zh: '中亞布哈拉人,賽典赤·贍思丁。元世祖忽必烈時雲南行省平章政事。鎮雲南六年,興水利,辦學校,使雲南安定,夷漢咸服。卒於任,雲南人感其德,為立祠。',
+    en: 'Sayyid Ajall Shams al-Din, of Bukhara in Central Asia. Pacification Commissioner of Yunnan under Kublai. Six years he held Yunnan, raising the waterworks, opening schools, and the province was settled — tribes and Han alike obeyed. He died in office; the people of Yunnan, mindful of his grace, built a shrine for him.',
+  },
+  'hist-bai-pu': {
+    zh: '字仁甫,號蘭谷,真定人。元曲四大家之一。著雜劇《牆頭馬上》、《梧桐雨》等。',
+    en: 'Style Renfu, called Langu, of Zhending. One of the Four Great Masters of Yuan drama. He wrote the zaju plays Over the Wall and on Horseback, Rain on the Wutong Tree, and others.',
+  },
+  'hist-ma-zhiyuan': {
+    era: { zh: '秋思之祖', en: '"The Father of Autumn Thoughts"' },
+    zh: '字千里,號東籬,大都人。元曲四大家之一。「枯藤老樹昏鴉,小橋流水人家,古道西風瘦馬,夕陽西下,斷腸人在天涯」千古絕唱,《天淨沙·秋思》出此。',
+    en: 'Style Qianli, called Dongli, of Dadu. One of the Four Great Masters of Yuan drama. "Withered vine, old tree, evening crows / a small bridge, flowing water, a household / an old road, the west wind, a lean horse / the sunset sinks west / and a heart-broken man is at the world\'s end." From his Heavenly Pure Sand: Autumn Thoughts.',
+  },
+  'hist-zheng-guangzu': {
+    zh: '字德輝,平陽襄陵人。元曲四大家之一。著《倩女離魂》、《王粲登樓》等。',
+    en: 'Style Dehui, of Xiangling in Pingyang. One of the Four Great Masters of Yuan drama. He wrote The Soul of Lady Qian Leaves Her Body, Wang Can Climbs the Tower, and others.',
+  },
+  'hist-lian-xixian': {
+    zh: '字希憲,畏兀兒人。元世祖時宰相。漢學家,封魏國公。卒於至元十七年。',
+    en: 'Style Xixian, an Uyghur. A chancellor under Kublai. A Sinologist, made Duke of Wei. He died in 1280.',
+  },
+  'hist-li-meng': {
+    zh: '元朝樞密使。從伯顏滅宋,有功。',
+    en: 'Commissioner of Military Affairs under Yuan. With Bayan he marched in the conquest of Song.',
+  },
+  // Ming
+  'hist-deng-yu-ming': {
+    zh: '字伯顏,泗州虹縣人。明朝開國名將。隨朱元璋起兵,西平四川。封衛國公。後因坐藍玉案被誅。',
+    en: 'Style Boyan, of Hong county in Sizhou. A founding general of Ming. He rose with Zhu Yuanzhang and pacified Sichuan in the west. Made Duke of Wei. He was killed in the Lan Yu case.',
+  },
+  'hist-jiajing': {
+    era: { zh: '嘉靖帝', en: 'The Jiajing Emperor' },
+    zh: '名朱厚熜,明武宗堂弟。在位四十五年。早期勤政,後期沉迷道教,二十餘年不上朝,任嚴嵩專權。海瑞《直言天下第一事疏》即諫之。後因丹藥而崩。',
+    en: 'Personal name Zhu Houcong, cousin of Wuzong of Ming. Forty-five years he reigned. Diligent at first, in his later years he drowned in Daoism and did not hold court for twenty years, letting Yan Song hold all power. Hai Rui\'s Memorial on the First Affair of the Realm was sent to him. He died of his elixirs.',
+  },
+  'hist-wanli': {
+    era: { zh: '萬曆帝', en: 'The Wanli Emperor' },
+    zh: '名朱翊鈞,明穆宗第三子。在位四十八年,中國史上在位最久之帝王之一。早期張居正輔政,稱「萬曆中興」。後期沉湎酒色,二十八年不上朝。三大征(寧夏、朝鮮、播州)雖勝,然國庫空虛,明由是衰。',
+    en: 'Personal name Zhu Yijun, third son of Muzong of Ming. Forty-eight years he reigned — one of the longest reigns in Chinese history. In the early years Zhang Juzheng was regent — the "Wanli Restoration." In his later years he drowned in wine and women and did not hold court for twenty-eight years. The Three Great Campaigns (Ningxia, Korea, Bozhou) were won, but the treasury was emptied, and from him Ming declined.',
+  },
+  'hist-liu-bowen': {
+    era: { zh: '前知五百年', en: 'He Saw Five Hundred Years Ahead' },
+    zh: '參見「hist-liu-bowen」。',
+    en: 'See hist-liu-bowen.',
+  },
+  'hist-huang-zicheng': {
+    zh: '字子澄,分宜人。建文帝謀士。倡削藩,引燕王朱棣靖難之變。事敗,被磔殺於市,夷三族。',
+    en: 'Style Zicheng, of Fenyi. A counselor of Emperor Jianwen. He urged the cutting down of the princes — and stirred the Jingnan war of Zhu Di Prince of Yan. When the cause fell, he was torn apart in the marketplace and his clan exterminated.',
+  },
+  'hist-qi-tai': {
+    zh: '溧水人。建文帝兵部尚書。與黃子澄共倡削藩。事敗,被朱棣所殺,夷三族。',
+    en: 'Of Lishui. Minister of War under Emperor Jianwen. With Huang Zicheng he urged the cutting down of the princes. When the cause fell, Zhu Di killed him and his clan was exterminated.',
+  },
+  'hist-tie-xuan': {
+    era: { zh: '鐵鉉', en: 'Tie Xuan the Loyal' },
+    zh: '鄧州人。建文帝時山東參政。靖難之變,朱棣攻濟南,鐵鉉以孤城拒之,大破朱棣於白溝河。後朱棣即位,鐵鉉被擒,大罵不屈,被磔死,妻女沒入教坊。一門忠烈。',
+    en: 'Of Dengzhou. Under Emperor Jianwen, Vice-Commissioner of Shandong. In the Jingnan war when Zhu Di attacked Ji\'nan, Tie Xuan held the lone city against him and broke him at the White Ditch River. When Zhu Di took the throne, Tie Xuan was taken; he cursed without yielding and was torn apart; his wife and daughters were given to the courtesan bureau. A loyal house.',
+  },
+  'hist-jian-yi': {
+    zh: '字宜之,湖廣巴陵人。明初名臣。事建文、永樂、洪熙、宣德、正統五朝。位至吏部尚書。',
+    en: 'Style Yizhi, of Baling in Huguang. A famed early-Ming minister, serving Jianwen, Yongle, Hongxi, Xuande, and Zhengtong. He rose to Minister of Personnel.',
+  },
+  'hist-xia-yuanji': {
+    zh: '字維喆,湘陰人。明初名臣。事建文、永樂、洪熙、宣德、正統五朝,皆為戶部尚書。明朝財政之大家。',
+    en: 'Style Weizhe, of Xiangyin. A famed early-Ming minister. Through five reigns — Jianwen to Zhengtong — he was Minister of Revenue. The great financier of Ming.',
+  },
+  'hist-yang-shen': {
+    zh: '字用修,號升庵,新都人。明朝大才子。狀元,然嘉靖朝大禮議事件中被貶謫雲南三十五年。著《升庵集》。「滾滾長江東逝水,浪花淘盡英雄」千古絕唱,《二十一史彈詞》出此(後人移入《三國演義》卷首)。',
+    en: 'Style Yongxiu, called Sheng\'an, of Xindu. A great talent of Ming. He was zhuangyuan; in the Great Rites Controversy of Jiajing\'s reign he was thrust down to Yunnan for thirty-five years. The Sheng\'an Collection is his. "On rolls the long Yangzi, flowing east / its waves wash away the heroes" rang forever — from his Ballads on the Twenty-One Histories (later moved into the opening of the Romance of the Three Kingdoms).',
+  },
+  'hist-feng-menglong': {
+    era: { zh: '三言', en: 'Author of the Three Yans' },
+    zh: '字猶龍,長洲人。明末文學家。輯《喻世明言》、《警世通言》、《醒世恆言》,號「三言」,中華短篇小說之大成。',
+    en: 'Style Youlong, of Changzhou. A late-Ming writer. He compiled the Stories to Enlighten the World, Stories to Warn the World, and Stories to Awaken the World — the "Three Yans," a great gathering of Chinese short fiction.',
+  },
+  'hist-mao-wenlong': {
+    zh: '杭州人。明末東江鎮總兵。據皮島,擾後金後方。袁崇煥以「擅權」為罪,矯詔斬之,後金由是無後顧之憂。',
+    en: 'Of Hangzhou. Commander of the Dongjiang command at the end of Ming. He held Pi Island and harassed the Later Jin rear. Yuan Chonghuan, on a charge of "abuse of power," beheaded him by forged edict — and the Later Jin had no enemy behind.',
+  },
+  'hist-zou-yuanbiao': {
+    zh: '字爾瞻,號南皋,吉水人。明末東林黨領袖。性剛直,屢忤宦官,被廷杖罷職。鄉里講學二十年。',
+    en: 'Style Erzhan, called Nangao, of Jishui. A leader of the late-Ming Donglin party. Stiff and upright, he clashed often with the eunuchs and was beaten in court and dismissed. For twenty years he taught in his village.',
+  },
+  'hist-gu-xiancheng': {
+    era: { zh: '東林書院', en: 'Founder of the Donglin Academy' },
+    zh: '字叔時,號涇陽,無錫人。明末東林黨領袖。創東林書院,「風聲、雨聲、讀書聲,聲聲入耳;家事、國事、天下事,事事關心」千古絕唱。',
+    en: 'Style Shushi, called Jingyang, of Wuxi. A leader of the late-Ming Donglin party. He founded the Donglin Academy. "The sound of wind, the sound of rain, the sound of reading — every sound enters the ear; family affairs, state affairs, the affairs of the realm — every affair concerns us" rang forever.',
+  },
+  'hist-gao-panlong': {
+    zh: '字存之,號景逸,無錫人。東林黨領袖,與顧憲成共主東林書院。後被魏忠賢構陷,投水自盡。',
+    en: 'Style Cunzhi, called Jingyi, of Wuxi. A leader of the Donglin party, with Gu Xiancheng head of the Donglin Academy. Framed later by Wei Zhongxian, he drowned himself.',
+  },
+  'hist-sun-chuanting': {
+    zh: '字伯雅,代州振武衛人。明末名將。鎮陝西,屢破李自成。後崇禎逼其出戰,潼關之戰大敗,孫傳庭戰死於亂軍,明遂無人可禦李自成。',
+    en: 'Style Boya, of Zhenwu Guard in Daizhou. A famed late-Ming general. Holding Shaanxi he broke Li Zicheng many times. When Chongzhen forced him to march out, he was utterly broken at Tongguan and died in the rout; Ming had no one left to stop Li Zicheng.',
+  },
+  'hist-sun-kewang': {
+    zh: '陝西米脂人。明末張獻忠養子。張獻忠死後,孫可望率部歸南明永曆帝。後與李定國爭權,終降清,封義王。',
+    en: 'Of Mizhi in Shaanxi. An adopted son of Zhang Xianzhong at the end of Ming. When Zhang Xianzhong died, Sun Kewang led his men to the Southern Ming Yongli emperor. He contested with Li Dingguo and at last submitted to Qing, made King Yi.',
+  },
+  'hist-shen-shixing': {
+    zh: '字汝默,長洲人。明萬曆朝首輔。狀元。性溫和,後因國本之爭辭歸。',
+    en: 'Style Rumo, of Changzhou. Grand Secretary under Wanli of Ming, a zhuangyuan. Mild in temper, he resigned after the "root of the state" dispute.',
+  },
+  'hist-yang-sichang': {
+    zh: '字文弱,湖廣武陵人。明末兵部尚書。獻「四正六隅,十面張網」剿張獻忠之策,初有效,後敗於襄陽,憂憤而卒。',
+    en: 'Style Wenruo, of Wuling in Huguang. Minister of War at the end of Ming. He gave the strategy of "four straight sides and six corners, the ten-faced net" against Zhang Xianzhong; it worked at first, then failed at Xiangyang, and he died of grief and rage.',
+  },
+  'hist-mao-yuanyi': {
+    era: { zh: '武備志', en: 'Author of the Treatise on Military Preparation' },
+    zh: '字止生,號鹿門,歸安人。明末軍事家。著《武備志》二百四十卷,中華第一部大型兵書集,涉兵法、陣圖、武器、戰史。世界軍事史之珍。',
+    en: 'Style Zhisheng, called Lumen, of Gui\'an. A late-Ming military theorist. He wrote the Treatise on Military Preparation in 240 fascicles — the first great Chinese collection of military books, covering strategy, formations, weapons, and military history. A treasure of world military history.',
+  },
+  // Qing
+  'hist-gao-shiqi': {
+    zh: '字澹人,號江村,錢塘人。康熙寵臣。以詩書畫見幸,號「江村四友」之首。',
+    en: 'Style Danren, called Jiangcun, of Qiantang. A favored minister of Kangxi, raised up for his poetry, calligraphy, and painting — first of the "Four Friends of Jiangcun."',
+  },
+  'hist-yu-chenglong': {
+    era: { zh: '天下第一廉吏', en: '"First Clean Official Under Heaven"' },
+    zh: '字北溟,山西永寧人。清康熙朝名臣。歷任知縣、知府、巡撫、總督,以清廉著稱,康熙譽為「天下第一廉吏」。卒,百姓哭之至慟。',
+    en: 'Style Beiming, of Yongning in Shanxi. A famed minister under Kangxi. He served as Magistrate, Prefect, Governor, and Governor-General, famed for clean hands — Kangxi called him "the first clean official under heaven." At his death the people wept till their voices broke.',
+  },
+  'hist-bao-chao': {
+    zh: '字春霆,四川奉節人。清末湘軍名將。從曾國藩平太平天國,所向披靡,「霆軍」威震一時。後因病解職。',
+    en: 'Style Chunting, of Fengjie in Sichuan. A famed late-Qing general of the Hunan Army. With Zeng Guofan he marched against the Taiping and none stood before him; the "Ting Army" shook the age. He later resigned for illness.',
+  },
+  'hist-hu-linyi': {
+    zh: '字貺生,湖南益陽人。清末湘軍三大員之一。鎮湖北,籌軍餉,助曾國藩平太平天國。卒於軍中。',
+    en: 'Style Kuangsheng, of Yiyang in Hunan. One of the three great men of the late-Qing Hunan Army. Holding Hubei he raised the army\'s pay and helped Zeng Guofan against the Taiping. He died in camp.',
+  },
+  'hist-jiang-zhongyuan': {
+    zh: '字常孺,湖南新寧人。清末湘軍名將。原為塾師,起兵討太平軍。後在廬州之戰中被殺。',
+    en: 'Style Changru, of Xinning in Hunan. A famed late-Qing general of the Hunan Army. Once a village schoolmaster, he rose to fight the Taiping. He was killed at the battle of Luzhou.',
+  },
+  'hist-liu-yong': {
+    era: { zh: '劉羅鍋', en: '"Hunchback Liu"' },
+    zh: '字崇如,號石庵,山東諸城人。乾隆、嘉慶兩朝名臣。性詼諧公正,以剛直見稱。後人以「劉羅鍋」稱之,演義甚多。',
+    en: 'Style Chongru, called Shi\'an, of Zhucheng in Shandong. A famed minister of Qianlong and Jiaqing. Witty and upright, known for stiff straightness. Later ages called him "Hunchback Liu" and many tales told of him.',
+  },
+  'hist-peng-yulin': {
+    zh: '字雪琴,湖南衡陽人。清末湘軍水師統帥。組湘軍水師,與太平軍水戰於長江,屢勝。後位至兵部尚書。性清廉,號「彭青天」。',
+    en: 'Style Xueqin, of Hengyang in Hunan. Commander of the Hunan Army\'s river fleet at the end of Qing. He raised the Hunan river fleet and broke the Taiping fleet on the Yangzi many times. He rose to Minister of War. Clean in temper, called "Peng the Blue Sky."',
+  },
+  'hist-tang-jingsong': {
+    zh: '字維卿,廣西灌陽人。清末名將。中法戰爭中守台灣,與劉永福共抗法軍。日本割台,任臺灣民主國首任大總統。後流落上海。',
+    en: 'Style Weiqing, of Guanyang in Guangxi. A famed late-Qing general. In the Sino-French War he held Taiwan with Liu Yongfu against the French. When Japan took Taiwan he served as the first president of the Republic of Taiwan. He later wandered to Shanghai.',
+  },
+  'hist-nie-shicheng': {
+    zh: '字功亭,安徽合肥人。清末武毅軍統帥。中日甲午戰爭中守牛莊,後守天津。八國聯軍之役,聶士成於八里台力戰而死,身被數彈,血流如注。',
+    en: 'Style Gongting, of Hefei in Anhui. Commander of the late-Qing Wuyi Army. In the Sino-Japanese War he held Niuzhuang and then Tianjin. In the Eight-Nation Army war he died fighting at Balitai, struck by many bullets, blood streaming.',
+  },
+  'hist-ma-yukun': {
+    zh: '清末名將。隨左宗棠西征,平回亂,收復新疆。後在中日甲午戰爭中守平壤。',
+    en: 'A famed late-Qing general. With Zuo Zongtang he marched west, put down the Hui revolt, and recovered Xinjiang. In the Sino-Japanese War he held Pyongyang.',
+  },
+  'hist-zhao-liangdong': {
+    zh: '字西垣,甘肅寧夏人。清康熙時名將。從圖海平三藩,鎮西北。封一等公。',
+    en: 'Style Xiyuan, of Ningxia in Gansu. A famed Kangxi general. With Tuhai he put down the Three Feudatories and held the northwest. Made a Duke of the First Class.',
+  },
   // ─── 歷代名將 新增第十批 (Historical biographies — batch 10: Qing) ───
   'hist-hong-taiji': {
     zh: '參見「hist-huangtaiji」。',
