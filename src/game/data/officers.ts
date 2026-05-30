@@ -1549,7 +1549,7 @@ const CANONICAL_ITEMS_PRIMARY: Record<string, string> = {
   // 三國
   'sima-zhao':        'si-ma-zhao-zhi-xin', // 司馬昭之心
   'zhuge-ke':         'zhuge-ke-lun',       // 諸葛恪論
-  'chen-gong':        'chen-gong-ce',       // 陳宮策
+  'chen-gong':        'chen-gong-ce',       // 陳宮策 (secondary 在 SECONDARY map 中)
   'tian-feng':        'tian-feng-shu',      // 田豐疏
   'ju-shou':          'ju-shou-jian-yi',    // 沮授諫議
   'yang-xiu':         'yi-he-su',           // 一合酥
@@ -2067,15 +2067,19 @@ const CANONICAL_ITEMS_SECONDARY: Record<string, string[]> = {
     'jing-ye-si',          // 靜夜思
     'yue-xia-du-zhuo',     // 月下獨酌
     'shu-dao-nan',         // 蜀道難
+    'lu-shan-yao',         // 廬山謠
   ],
   'hist-du-fu': [
     'chun-wang',           // 春望
     'mao-wu-qiu-feng',     // 茅屋為秋風所破歌
     'bing-che-xing',       // 兵車行
+    'san-li-san-bie',      // 三吏三別
   ],
   'hist-su-shi': [
     'nian-nu-jiao-chibi',  // 念奴嬌·赤壁懷古
     'huang-zhou-han-shi',  // 黃州寒食帖
+    'shui-diao-ge-tou',    // 水調歌頭·明月幾時有
+    'dong-po-rou',         // 東坡肉
   ],
   'hist-wang-xizhi': [
     'shi-qi-tie',          // 十七帖
@@ -2097,9 +2101,12 @@ const CANONICAL_ITEMS_SECONDARY: Record<string, string[]> = {
   ],
   'hist-li-qingzhao': [
     'sheng-sheng-man',     // 聲聲慢
+    'ru-meng-ling',        // 如夢令
+    'zui-hua-yin',         // 醉花陰
   ],
   'hist-xin-qiji': [
     'po-zhen-zi',          // 破陣子
+    'yong-yu-le-jingkou',  // 永遇樂·京口
   ],
   'hist-wang-anshi': [
     'bo-chuan-gua-zhou',   // 泊船瓜洲
@@ -2139,6 +2146,7 @@ const CANONICAL_ITEMS_SECONDARY: Record<string, string[]> = {
   ],
   'huang-zhong': [
     'lao-dang-yi-zhuang',  // 老當益壯
+    'wu-hu-shang-jiang',   // 五虎上將印
   ],
   'zhao-yun': [
     'chang-ban-po',        // 長坂坡七進七出
@@ -2175,6 +2183,7 @@ const CANONICAL_ITEMS_SECONDARY: Record<string, string[]> = {
     'kua-xia-zhi-ru',      // 跨下之辱
     'bei-shui-yi-zhan',    // 背水一戰
     'ming-xiu-zhan-dao',   // 明修棧道暗渡陳倉
+    'piao-mu-fan-xin',     // 漂母飯信
   ],
   'hist-xiang-yu': [
     'ba-wang-bie-ji',      // 霸王別姬
@@ -2205,6 +2214,7 @@ const CANONICAL_ITEMS_SECONDARY: Record<string, string[]> = {
   ],
   'hist-wen-tianxiang': [
     'guo-ling-ding-yang',  // 過零丁洋
+    'yi-dai-zhao-shu',     // 衣帶詔書
   ],
   'hist-sun-bin': [
     'wei-wei-jiu-zhao',    // 圍魏救趙
@@ -2320,6 +2330,7 @@ const CANONICAL_ITEMS_SECONDARY: Record<string, string[]> = {
   ],
   'hist-zeng-guofan': [
     'xiang-jun-zhi-fa',    // 湘軍治法
+    'jie-ying-zhai-da-dai-zhang',// 結硬寨打呆仗
   ],
   'hist-qianlong': [
     'shi-quan-wu-gong',    // 十全武功
@@ -2379,6 +2390,7 @@ const CANONICAL_ITEMS_SECONDARY: Record<string, string[]> = {
   'hist-fan-li': [
     'ji-ran-zhi-ce',       // 計然之策
     'fan-li-fu-hai',       // 范蠡浮海
+    'san-ju-san-san',      // 三聚三散
   ],
   'hist-zhang-yi': [
     'lian-heng-zhi-shu',   // 連橫之術
@@ -2441,6 +2453,74 @@ const CANONICAL_ITEMS_SECONDARY: Record<string, string[]> = {
   ],
   'zhuge-jin': [
     'zi-yu-mian-chang',    // 子瑜面長
+  ],
+  'he-jin': [
+    'tu-hu-wei-xiang',     // 屠戶為相
+  ],
+  'dong-zhuo': [
+    'huo-shao-luo-yang',   // 火燒洛陽
+  ],
+  'chen-gong': [
+    'kang-kai-jiu-xing',   // 慷慨就刑
+  ],
+  'tian-feng': [
+    'tian-feng-zhi-si',    // 田豐之死
+  ],
+  'ju-shou': [
+    'ju-shou-bu-jiang',    // 沮授不降
+  ],
+  'wang-can': [
+    'deng-lou-fu',         // 登樓賦
+  ],
+  'chen-lin': [
+    'yin-ma-chang-cheng-ku',// 飲馬長城窟行
+  ],
+  'cai-yan': [
+    'hu-jia-shi-ba-pai',   // 胡笳十八拍
+    'bei-fen-shi',         // 悲憤詩
+  ],
+  'yang-xiu': [
+    'ji-lei',              // 雞肋
+  ],
+  'zhuge-ke': [
+    'dong-xing-da-jie',    // 東興大捷
+  ],
+  'zhou-cang': [
+    'mai-cheng-xun-zhu',   // 麥城殉主
+  ],
+  'zhong-hui': [
+    'zhong-hui-zhi-luan',  // 鍾會之亂
+  ],
+  'sima-shi': [
+    'fei-cao-fang',        // 廢曹芳
+  ],
+  // 歷代
+  'hist-guan-zhong': [
+    'lao-ma-shi-tu',       // 老馬識途
+  ],
+  'hist-xishi': [
+    'chen-yu-luo-yan',     // 沉魚落雁
+  ],
+  'hist-jia-yi': [
+    'diao-qu-yuan-fu',     // 弔屈原賦
+  ],
+  'hist-zhang-heng': [
+    'hun-tian-yi',         // 渾天儀
+  ],
+  'hist-wang-wei': [
+    'shan-ju-qiu-ming',    // 山居秋暝
+  ],
+  'hist-jianzhen': [
+    'dong-du-ri-ben',      // 東渡日本
+  ],
+  'hist-xuanzang': [
+    'qu-jing-xi-tian',     // 取經西天
+  ],
+  'hist-yongle': [
+    'jing-nan-zhi-yi',     // 靖難之役
+  ],
+  'hist-zhang-juzheng': [
+    'wan-li-xin-zheng',    // 萬曆新政
   ],
   'wang-ping': [
     'xing-shi-zhi-zhan',   // 興勢之戰
