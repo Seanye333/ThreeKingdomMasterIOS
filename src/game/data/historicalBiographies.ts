@@ -2203,4 +2203,268 @@ export const HISTORICAL_BIOGRAPHIES: Record<string, OfficerBiography> = {
     zh: '字濬沖,琅琊臨沂人,王戎,竹林七賢中最年少者。父早卒,以孝聞。事晉,位至司徒。性貪吝,自種好李,鬻之而恐人得其種,鑽其核。世以為儉吝之最。',
     en: 'Style Junchong, of Linyi in Langya, the youngest of the Seven Sages of the Bamboo Grove. His father died young and he was famed for filial piety. Under Jin he rose to Excellency over the Masses. Yet of grasping temper — he grew fine plums, and when he sold them he bored out the pits for fear others would plant his stock. The world held him the meanest miser of the age.',
   },
+  // ─── 歷代名將 新增第七批 (Historical biographies — batch 7: Sui & Tang) ───
+  'hist-gao-jiong': {
+    zh: '字昭玄,渤海蓚人。隋朝開國名相。輔楊堅篡周建隋,定典章制度,平陳統一,功冠群臣。後與獨孤皇后不睦,被廢黜。煬帝時為太常,坐諫被殺。',
+    en: 'Style Zhaoxuan, of Tiao in Bohai. A founding great chancellor of Sui. He helped Yang Jian take the Northern Zhou throne and found Sui, set the institutions and laws, broke Chen to unify the realm — his merit above all. He later fell out with Empress Dugu and was deposed. Under Emperor Yang he was Minister of Ceremonies; killed for remonstrating.',
+  },
+  'hist-yang-yong': {
+    zh: '隋文帝楊堅長子,初立為太子。性寬厚,然好奢侈,與獨孤皇后不諧。煬帝楊廣設計奪嫡,廢楊勇為庶人。煬帝即位,賜死之。',
+    en: 'Eldest son of Yang Jian of Sui, first heir. Broad and kind, but lavish — at odds with Empress Dugu. Yang Guang laid the plot to steal the heirship, and Yang Yong was deposed to commoner. When Yang Guang took the throne he sent down a draught of death.',
+  },
+  'hist-yang-xuangan': {
+    zh: '楊素之子。隋末起兵反煬帝,圍洛陽,失敗自殺,夷其族。',
+    en: 'Son of Yang Su. In late Sui he raised troops against Emperor Yang and laid siege to Luoyang; broken, he killed himself, and his clan was exterminated.',
+  },
+  'hist-yuwen-huaji': {
+    zh: '隋末權臣。江都之變,弒煬帝楊廣於江都行宮。後稱許帝,旋為竇建德所擒,被斬。',
+    en: 'A great power-holder at the end of Sui. In the Jiangdu mutiny he strangled Emperor Yang at the Jiangdu travel-palace. He then called himself Emperor of Xu; soon caught by Dou Jiande and beheaded.',
+  },
+  'hist-zhai-rang': {
+    zh: '韋城人。隋末瓦崗軍創始人。後李密入軍,翟讓讓位於李密。李密疑之,使人殺翟讓於宴上。瓦崗軍由是亂。',
+    en: 'Of Weicheng. Founder of the Wagang army at the end of Sui. When Li Mi joined, Zhai Rang yielded the leadership to him. Li Mi grew suspicious and had Zhai Rang killed at a banquet; the Wagang army was thrown into chaos.',
+  },
+  'hist-dou-jiande': {
+    era: { zh: '夏王', en: 'King of Xia' },
+    zh: '貝州漳南人。隋末群雄之一。據河北,稱夏王,治民有方,百姓擁戴。後援王世充被李世民擒於虎牢關,押至長安斬之。河北民懷之,立廟祭祀。',
+    en: 'Of Zhangnan in Beizhou. One of the great rebels at the end of Sui. He held the north of the river and called himself King of Xia, ruling the people well and beloved by them. When he marched to relieve Wang Shichong he was taken by Li Shimin at Hulao Pass, sent to Chang\'an, and beheaded. The people of the north remembered him and built shrines for the offerings.',
+  },
+  'hist-wang-shichong': {
+    zh: '字行滿,西域胡人,後遷洛陽。隋末權臣。鎮洛陽,以楊侗為帝。後篡之,自稱鄭帝。為李世民所破,被擒。本應赦免,獨孤修德為父報仇殺之。',
+    en: 'Style Xingman, a Hu of the Western Regions, later moved to Luoyang. A great power-holder at the end of Sui. Holding Luoyang he set up Yang Tong as emperor and then took the throne himself, calling himself Emperor of Zheng. Broken by Li Shimin and taken alive, he was to be pardoned — but Dugu Xiude killed him to avenge his father.',
+  },
+  'hist-liu-wuzhou': {
+    zh: '隋末群雄之一。據馬邑,稱定楊可汗。後敗於李世民,奔突厥被殺。其將尉遲恭歸唐,為名將。',
+    en: 'One of the great rebels at the end of Sui. He held Mayi and called himself the Dingyang Khagan. Broken by Li Shimin he fled to the Türks and was killed. His captain Yuchi Gong came to Tang and became a famed general.',
+  },
+  'hist-xue-ju': {
+    zh: '隋末群雄之一。據隴右,稱秦帝。子薛仁杲繼立。後被李世民所破,薛仁杲被斬,薛氏遂亡。',
+    en: 'One of the great rebels at the end of Sui. He held the western marches and called himself Emperor of Qin. His son Xue Rengao took over; broken by Li Shimin, Xue Rengao was beheaded and the Xue line ended.',
+  },
+  'hist-li-jiancheng': {
+    zh: '唐高祖李淵長子。初立為太子。與李世民爭嫡,玄武門之變被李世民射殺,年三十八。',
+    en: 'Eldest son of Gaozu of Tang, first heir. He contested the heirship with Li Shimin; in the Xuanwu Gate incident Li Shimin shot him down at thirty-eight.',
+  },
+  'hist-zhangsun-wuji': {
+    zh: '字輔機,河南洛陽人。唐太宗皇后長孫氏之兄。玄武門之變預謀,唐初第一功臣。後因反對立武則天為后,被許敬宗構陷,流黔州,自縊而死。',
+    en: 'Style Fuji, of Luoyang in Henan. Elder brother of Empress Zhangsun of Taizong. In the Xuanwu Gate incident he was the chief planner — first founding minister of Tang. Later, opposing Wu Zetian\'s elevation as empress, he was framed by Xu Jingzong, exiled to Qianzhou, and hanged himself.',
+  },
+  'hist-hou-junji': {
+    zh: '字伯通,豳州三水人。唐太宗名將。平吐谷渾、伐高昌,有大功。後與李承乾謀反,被誅,夷其家。',
+    en: 'Style Botong, of Sanshui in Binzhou. A famed general of Taizong. He pacified the Tuyuhun and broke Gaochang with great merit. Later he plotted revolt with the Crown Prince Li Chengqian and was killed, his household exterminated.',
+  },
+  'hist-li-chengqian': {
+    zh: '唐太宗長子。初立為太子。性放縱,與漢王李元昌、駙馬都尉杜荷、侯君集謀反,事敗被廢為庶人,流黔州而卒。',
+    en: 'Eldest son of Taizong, first heir. Loose in life, he plotted revolt with Prince Yuanchang of Han, the Imperial Son-in-Law Du He, and Hou Junji; the plot failed and he was reduced to commoner, exiled to Qianzhou, where he died.',
+  },
+  'hist-su-dingfang': {
+    era: { zh: '初唐二虎', en: 'One of the Two Tigers of Early Tang' },
+    zh: '字定方,冀州武邑人。唐初名將。前後滅國三,執其主。平西突厥、滅百濟、伐高句麗,功冠一時。與李靖並稱「初唐二虎」。卒年七十六。',
+    en: 'Style Dingfang, of Wuyi in Jizhou. A famed early-Tang general. He destroyed three kingdoms and took three rulers — Western Türks, Baekje, Goguryeo — his merit above the age. With Li Jing he was named one of the Two Tigers of early Tang. He died at seventy-six.',
+  },
+  'hist-yao-chong': {
+    era: { zh: '救時宰相', en: '"Chancellor Who Saves the Age"' },
+    zh: '字元之,陝州硤石人。唐玄宗開元名相。獻「十事要說」,治蝗有方,理財有道,開創開元盛世。世稱「救時宰相」。卒年七十二。',
+    en: 'Style Yuanzhi, of Xiashi in Shaanzhou. A famed chancellor of Xuanzong\'s Kaiyuan reign. He gave the "Ten Affairs Memorial," tamed the locust plague, ordered the treasury — and opened the Kaiyuan golden age. The world called him the "Chancellor Who Saves the Age." He died at seventy-two.',
+  },
+  'hist-song-jing': {
+    zh: '字廣平,邢州南和人。唐玄宗開元名相。繼姚崇為相,直言敢諫。剛正不阿,如石之堅,故有「有腳陽春」之稱。卒年七十五。',
+    en: 'Style Guangping, of Nanhe in Xingzhou. A famed chancellor of Xuanzong\'s Kaiyuan reign, succeeding Yao Chong. Straight of speech, upright, hard as stone — they called him "spring on legs." He died at seventy-five.',
+  },
+  'hist-zhang-jiuling': {
+    zh: '字子壽,韶州曲江人。唐玄宗時宰相。風儀俊美,文采斐然。屢諫玄宗勿用李林甫、安祿山,玄宗不聽,後悔之。「海上生明月,天涯共此時」千古絕唱。',
+    en: 'Style Zishou, of Qujiang in Shaozhou. A chancellor under Xuanzong of Tang. Of handsome bearing and splendid in letters. He often warned the emperor against using Li Linfu and An Lushan; the emperor would not hear, and afterwards repented. "The bright moon rises over the sea / from a far horizon, we share this hour" rings forever.',
+  },
+  'hist-li-linfu': {
+    era: { zh: '口蜜腹劍', en: '"Honey on the Lips, Sword in the Belly"' },
+    zh: '唐玄宗宰相。表面溫和,背後陰險,世稱「口蜜腹劍」。專權十九年,排擠賢臣,引安祿山入朝,埋安史之亂之禍根。卒後被楊國忠所構,削官奪爵,棺槨被毀。',
+    en: 'A chancellor of Xuanzong of Tang. Sweet on the surface, sinister beneath — the world said: "Honey on the lips, a sword in the belly." Nineteen years he held power, pushing aside the worthy and bringing An Lushan to court — the seed of the An Lushan rebellion. After his death Yang Guozhong framed him: his office was stripped, his rank taken, and his coffin destroyed.',
+  },
+  'hist-yang-guozhong': {
+    zh: '楊貴妃之堂兄。唐玄宗末年宰相。專權跋扈,與安祿山相忌。馬嵬坡之變,陳玄禮率眾誅之,楊貴妃亦被縊。',
+    en: 'Cousin of Yang Guifei. Chancellor at the end of Xuanzong\'s reign. Overbearing, and at odds with An Lushan. At Mawei Slope, Chen Xuanli led the men to kill him, and Yang Guifei was hanged.',
+  },
+  'hist-li-longji': {
+    era: { zh: '唐玄宗', en: 'Emperor Xuanzong of Tang' },
+    zh: '名李隆基,唐睿宗第三子。誅韋后、太平公主,即位。在位四十四年,前期任姚崇、宋璟,開「開元盛世」,唐極盛之時。後期寵楊貴妃,任李林甫、楊國忠,引安史之亂。奔蜀,馬嵬坡縊貴妃。返京後為太上皇,憂憤而卒。',
+    en: 'Personal name Li Longji, third son of Ruizong of Tang. He killed Empress Wei and the Taiping Princess and took the throne. Forty-four years he reigned: in the early years with Yao Chong and Song Jing he opened the Kaiyuan golden age, the peak of Tang. In the later years he doted on Yang Guifei and used Li Linfu and Yang Guozhong, bringing on the An Lushan rebellion. He fled to Shu and at Mawei Slope had Yang Guifei hanged. Back in the capital as Grand Emperor, he died of grief and rage.',
+  },
+  'hist-tang-gaozong': {
+    zh: '名李治,唐太宗第九子。在位三十四年。平百濟、滅高句麗,唐疆極盛。然身體孱弱,武則天參政,終致武則天稱帝。',
+    en: 'Personal name Li Zhi, ninth son of Taizong of Tang. Thirty-four years he reigned. He pacified Baekje and ended Goguryeo — Tang reached its widest. Yet weak in body, he let Wu Zetian share in government — and at last she took the throne.',
+  },
+  'hist-shangguan-waner': {
+    era: { zh: '巾幗宰相', en: 'Chancellor in Women\'s Garb' },
+    zh: '陝州陝縣人,上官儀之孫女。武則天時昭容。掌詔誥,巾幗宰相。後事中宗韋后,神龍之變後被殺,年四十六。著《全唐詩》存其詩三十二首。',
+    en: 'Of Shaan county in Shaanzhou, granddaughter of Shangguan Yi. A Lady Zhaorong of Wu Zetian. She held the imperial edicts — a chancellor in women\'s garb. She later served Empress Wei of Zhongzong; after the Shenlong incident she was killed at forty-six. The Complete Tang Poems hold thirty-two of her pieces.',
+  },
+  'hist-taiping': {
+    zh: '太平公主,武則天之女。性聰慧而野心勃勃。神龍之變後,屢預朝政。後與李隆基爭權,事敗被賜死於家。',
+    en: 'The Taiping Princess, daughter of Wu Zetian. Sharp and ambitious. After the Shenlong incident she joined in court affairs again and again. Locked in struggle with Li Longji, she was beaten and given a draught of death at her home.',
+  },
+  'hist-wang-bo': {
+    era: { zh: '初唐四傑', en: 'One of the Four Greats of Early Tang' },
+    zh: '字子安,絳州龍門人。初唐四傑之首,與楊炯、盧照鄰、駱賓王並稱。年十四即作《滕王閣序》,「落霞與孤鶩齊飛,秋水共長天一色」千古絕唱。年二十七渡海溺死。',
+    en: 'Style Zi\'an, of Longmen in Jiangzhou. First of the Four Greats of early Tang, with Yang Jiong, Lu Zhaolin, and Luo Binwang. At fourteen he wrote the Preface to the Tengwang Pavilion: "The fallen rosy clouds and the lone wild goose fly together / the autumn waters and the long sky are of one color." At twenty-seven he was drowned crossing the sea.',
+  },
+  'hist-luo-binwang': {
+    zh: '初唐四傑之一。年七歲作《詠鵝》,千古傳誦。徐敬業起兵討武則天,駱賓王作《討武曌檄》,武則天讀之歎曰:「宰相安得失此人!」 後失敗下落不明。',
+    en: 'One of the Four Greats of early Tang. At seven he wrote the Ode to the Goose, still read today. When Xu Jingye rose against Wu Zetian, Luo Binwang wrote the Proclamation Against Wu Zhao. Wu Zetian read it and sighed: "How could the chancellor have let this man slip!" After the rising failed, his fate was unknown.',
+  },
+  'hist-yang-jiong': {
+    zh: '初唐四傑之一。「寧為百夫長,勝作一書生」千古傳誦,《從軍行》之名句。',
+    en: 'One of the Four Greats of early Tang. "Better be the captain of a hundred than a single scholar" — the famous line from his Marching to War.',
+  },
+  'hist-lu-zhaolin': {
+    zh: '初唐四傑之一。久病不愈,投潁水而死。《長安古意》傳世。',
+    en: 'One of the Four Greats of early Tang. After long incurable illness he threw himself into the Ying River. The Ancient Meanings of Chang\'an is his.',
+  },
+  'hist-meng-haoran': {
+    era: { zh: '山水田園詩派', en: 'Master of Pastoral Verse' },
+    zh: '字浩然,襄州襄陽人。盛唐詩人。與王維齊名,山水田園詩派之祖。隱於鹿門山,終身不仕。「春眠不覺曉,處處聞啼鳥」千古傳誦。',
+    en: 'Style Haoran, of Xiangyang in Xiangzhou. A poet of the High Tang. With Wang Wei he was the founder of the school of landscape and pastoral verse. He hid himself on Mount Lumen and never took office. "Spring sleep — I do not feel the dawn / everywhere I hear the calling birds" rings forever.',
+  },
+  'hist-wang-wei': {
+    era: { zh: '詩佛', en: 'Buddha of Poetry' },
+    zh: '字摩詰,蒲州人。盛唐詩人、畫家。山水田園詩派代表,與孟浩然並稱。蘇軾贊其「詩中有畫,畫中有詩」。「大漠孤煙直,長河落日圓」、「明月松間照,清泉石上流」千古傳誦。',
+    en: 'Style Mojie, of Puzhou. A poet and painter of the High Tang. Representative of the landscape-pastoral school, ranked with Meng Haoran. Su Shi praised him: "In his poems there is painting; in his paintings, poetry." "On the great desert, the lone column of smoke straight / on the long river, the falling sun round" and "the bright moon shines among the pines / the clear spring flows on the stones" — read forever.',
+  },
+  'hist-wang-changling': {
+    zh: '字少伯,京兆萬年人。盛唐詩人,「七絕聖手」。邊塞詩名世。「秦時明月漢時關,萬里長征人未還」、「但使龍城飛將在,不教胡馬度陰山」千古絕唱。',
+    en: 'Style Shaobo, of Wannian in the metropolitan region. A High Tang poet, "Sage of the Seven-Character Quatrain." Famed for frontier verse. "The bright moon of Qin, the pass of Han / on the ten-thousand-li march men do not come back" and "If only the Flying General of Dragon City were still there / no Hu horse would cross Mount Yin" rang forever.',
+  },
+  'hist-wang-zhihuan': {
+    zh: '字季陵,絳州人。盛唐邊塞詩人。「黃河遠上白雲間,一片孤城萬仞山」、「欲窮千里目,更上一層樓」千古絕唱。',
+    en: 'Style Jiling, of Jiangzhou. A High Tang frontier poet. "The Yellow River climbs far to the white clouds / a lone wall in ten-thousand-ren hills" and "Would you exhaust a thousand li of sight? / Climb one more story of the tower" rang forever.',
+  },
+  'hist-wang-han': {
+    zh: '盛唐詩人。《涼州詞》:「葡萄美酒夜光杯,欲飲琵琶馬上催。醉臥沙場君莫笑,古來征戰幾人回?」 千古絕唱。',
+    en: 'A High Tang poet. His Liangzhou Song: "Grape wine in the moonlight-shining cup / I would drink, but the pipa hurries from the saddle. / If I lie drunk on the sand, do not laugh — / from ancient times, how many have come back from war?" Rang forever.',
+  },
+  'hist-cen-shen': {
+    zh: '盛唐邊塞詩人,與高適並稱「高岑」。「忽如一夜春風來,千樹萬樹梨花開」千古絕唱。出使邊塞,作《白雪歌》、《走馬川行》傳世。',
+    en: 'A High Tang frontier poet, ranked with Gao Shi as "Gao and Cen." "Suddenly, as if in one night a spring wind had come / on a thousand trees, ten thousand trees, the pear blossoms had opened" rang forever. Sent to the frontier he wrote the White Snow Song and the Marching on the Zouma River.',
+  },
+  'hist-gao-shi': {
+    zh: '字達夫,渤海蓚人。盛唐邊塞詩人。與岑參齊名。為將有威略,平哥舒翰之亂。位至刑部侍郎。',
+    en: 'Style Dafu, of Tiao in Bohai. A High Tang frontier poet, ranked with Cen Shen. As a general he carried weight and was bold of counsel — he put down the trouble of Geshu Han. He rose to Vice-Minister of Justice.',
+  },
+  'hist-he-zhizhang': {
+    era: { zh: '四明狂客', en: 'The Mad Guest of Siming' },
+    zh: '字季真,號四明狂客,越州永興人。盛唐詩人。見李白於長安,稱之為「謫仙人」。性放達好酒,與李白為忘年交。「少小離家老大回,鄉音無改鬢毛衰」千古傳誦。',
+    en: 'Style Jizhen, called the Mad Guest of Siming, of Yongxing in Yuezhou. A High Tang poet. He met Li Bai at Chang\'an and called him "an immortal banished to earth." Free of temper and fond of wine, sworn friend to Li Bai despite the years between them. "Young I left my home, old I return — / my village tongue unchanged, my hair gone thin" rang forever.',
+  },
+  'hist-li-shangyin': {
+    era: { zh: '小李', en: 'The Lesser Li' },
+    zh: '字義山,號玉谿生,懷州河內人。晚唐詩人。與杜牧並稱「小李杜」。詩風朦朧瑰麗。「相見時難別亦難,東風無力百花殘」、「春蠶到死絲方盡,蠟炬成灰淚始乾」千古絕唱。',
+    en: 'Style Yishan, called Yuxisheng, of Henei in Huaizhou. A late-Tang poet. With Du Mu he was called the "Lesser Li-Du." His verse was misted and splendid. "To meet is hard, to part hard too / the east wind has no strength, the hundred flowers wither" and "the spring silkworm spins until death stops its thread / the wax candle, turned to ash, only then dries its tears" rang forever.',
+  },
+  'hist-wen-tingyun': {
+    zh: '字飛卿,太原祁人。晚唐詩人、詞人。詞風華麗,為「花間派」之祖。性放達不羈,屢試不第。',
+    en: 'Style Feiqing, of Qi in Taiyuan. A late-Tang poet and ci poet. His ci was splendid — founder of the "Among the Flowers" school. Free and unbridled, he failed the examinations again and again.',
+  },
+  'hist-shi-siming': {
+    zh: '營州寧夷州突厥人。安祿山部將,與安祿山並稱「安史」。安祿山死後,史思明繼領叛軍,稱大燕皇帝。後為其子史朝義所弒。',
+    en: 'A Türk of Ningyi in Yingzhou. A captain of An Lushan, his name set with An\'s as "An and Shi." When An Lushan died, Shi Siming took up the rebel army and called himself emperor of Great Yan. He was killed by his son Shi Chaoyi.',
+  },
+  'hist-yang-fugong': {
+    zh: '唐末權宦。掌神策軍,擁立昭宗。後與田令孜爭權。',
+    en: 'A great eunuch of the late Tang. He held the Shence army and set up Emperor Zhao. He later contested power with Tian Lingzi.',
+  },
+  'hist-tian-lingzi': {
+    zh: '唐末權宦。僖宗時掌神策軍。黃巢攻長安,僖宗奔蜀,皆田令孜謀。後失勢,被王建殺於成都。',
+    en: 'A great eunuch of the late Tang. Under Emperor Xizong he held the Shence army. When Huang Chao took Chang\'an and Xizong fled to Shu, it was all Tian Lingzi\'s plan. He later fell from power and was killed by Wang Jian at Chengdu.',
+  },
+  'hist-li-mi-sui': {
+    zh: '字玄邃,趙郡平棘人。隋末瓦崗軍領袖。出身關隴貴族,博學多才。瓦崗軍鼎盛時,擁兵三十萬,號稱要奪天下。後敗於王世充,投唐,又叛唐,被誅。',
+    en: 'Style Xuansui, of Pingji in Zhaojun. Leader of the Wagang army in late Sui. Of the Guan-Long aristocracy, broadly learned. At its peak the Wagang army was three hundred thousand strong and meant to take the realm. Broken by Wang Shichong, he came to Tang, then rose against Tang, and was killed.',
+  },
+  'hist-li-jing-tangts': {
+    zh: '參見「hist-li-jing」(唐衛公李靖)。',
+    en: 'See hist-li-jing — Duke Wei of Tang.',
+  },
+  'hist-pugu-huai’en': {
+    zh: '鐵勒族,唐肅宗時名將。從郭子儀平安史之亂,功冠群臣,封大寧王。後為宦官駱奉先所讒,反叛,引吐蕃、回紇圍長安。後病死於軍中。',
+    en: 'Of the Tiele people, a famed general under Suzong of Tang. With Guo Ziyi he put down the An Lushan rebellion, his merit above all the ministers; made Prince of Daning. Slandered later by the eunuch Luo Fengxian, he rose in revolt and brought Tibet and the Uyghurs to besiege Chang\'an. He died of illness in camp.',
+  },
+  'hist-zhang-xun': {
+    era: { zh: '睢陽守將', en: 'Defender of Suiyang' },
+    zh: '安史之亂中,張巡與許遠以五千兵守睢陽十月,大小戰四百餘次,殺敵十二萬。城陷被俘,寧死不降,從容就義。古來忠烈第一。',
+    en: 'In the An Lushan rebellion, Zhang Xun with Xu Yuan held Suiyang for ten months with five thousand men — four hundred fights large and small, a hundred and twenty thousand of the enemy killed. When the city fell he was taken; refusing to bend, he went calmly to his death. The first martyr of all ages.',
+  },
+  'hist-yan-gaoqing': {
+    era: { zh: '罵賊不屈', en: 'Cursed the Rebels to the End' },
+    zh: '顏真卿之兄。安史之亂,顏杲卿與顏真卿首倡義兵抗安祿山。城陷被執,顏杲卿大罵安祿山,被剮舌而死。一門忠烈,千古傳誦。',
+    en: 'Elder brother of Yan Zhenqing. In the An Lushan rebellion, Yan Gaoqing with Yan Zhenqing first raised the righteous host against An Lushan. When his city fell and he was taken, he cursed An Lushan; they cut out his tongue and he died. The loyal house has rung down the ages.',
+  },
+  'hist-zhang-xu': {
+    era: { zh: '草聖', en: 'Sage of Cursive Calligraphy' },
+    zh: '字伯高,吳郡人。盛唐書法家,張旭草書,世稱「草聖」。性嗜酒,醉後揮毫,如有神助。與李白詩、裴旻劍舞並稱「三絕」。',
+    en: 'Style Bogao, of Wujun. A High Tang calligrapher; his cursive script the "Sage of Cursive." Fond of wine, he wrote in his cups as if divinely guided. With Li Bai\'s poems and Pei Min\'s sword-dance he made the "Three Wonders."',
+  },
+  'hist-liu-gongquan': {
+    era: { zh: '楷書四大家', en: 'One of the Four Great Masters of Regular Script' },
+    zh: '字誠懸,京兆華原人。唐代書法家,楷書四大家之一。筆力遒勁,世稱「柳體」。其書如鐵畫銀鉤,千古傳為書法之典。',
+    en: 'Style Chengxuan, of Huayuan in the metropolitan region. A Tang calligrapher, one of the Four Great Masters of Regular Script. His brush had iron strength — the "Liu style." Like iron strokes and silver hooks, his calligraphy is held forever as a model.',
+  },
+  'hist-zhang-jianzhi': {
+    zh: '字孟將,襄州襄陽人。武則天時宰相。神龍元年發動「神龍之變」,逼武則天禪位於中宗,恢復李唐。封漢陽郡王。後為武三思所構,流瀧州而死。',
+    en: 'Style Mengjiang, of Xiangyang in Xiangzhou. A chancellor under Wu Zetian. In 705 he led the Shenlong incident, forcing Wu Zetian to yield the throne to Zhongzong, restoring the Li Tang. Made Prince of Hanyang commandery. Later framed by Wu Sansi, he was exiled to Longzhou and died.',
+  },
+  'hist-lou-shide': {
+    era: { zh: '唾面自乾', en: '"Let the Spittle Dry on Its Own"' },
+    zh: '字宗仁,鄭州原武人。武則天時宰相。性寬厚,弟出仕,告之曰:「人唾汝面,汝拭之,是逆其意也,當待其自乾。」',
+    en: 'Style Zongren, of Yuanwu in Zhengzhou. A chancellor under Wu Zetian. Broad and gentle. When his brother went out to office he told him: "If a man spits in your face and you wipe it off, you go against his will; you should let the spittle dry on its own."',
+  },
+  'hist-lai-junchen': {
+    era: { zh: '請君入甕', en: '"Please Sir, Step into the Jar"' },
+    zh: '武則天時酷吏。著《羅織經》,教人陷害他人之術。設「請君入甕」之計使周興服罪。後反為周興黨所構,被武則天斬於市,百姓爭啖其肉。',
+    en: 'A cruel inquisitor under Wu Zetian. He wrote the Classic of Weaving Snares, teaching the arts of framing men. He laid the "Please Sir, step into the jar" trick that made Zhou Xing confess. Later framed by Zhou Xing\'s party, Wu Zetian had him beheaded in the marketplace, and the people fought to bite his flesh.',
+  },
+  'hist-yuan-zhen': {
+    zh: '字微之,河南洛陽人。中唐詩人。與白居易並稱「元白」。《會真記》(《鶯鶯傳》)後成《西廂記》之祖。「曾經滄海難為水,除卻巫山不是雲」千古絕唱。',
+    en: 'Style Weizhi, of Luoyang in Henan. A mid-Tang poet, ranked with Bai Juyi as "Yuan and Bai." His Hui Zhen ji (Tale of Yingying) later became the source of the Romance of the Western Chamber. "Having seen the great sea, the rest is not water / except for Mount Wu, no cloud is a cloud" rang forever.',
+  },
+  'hist-li-deyu': {
+    zh: '字文饒,趙郡贊皇人。晚唐宰相。牛李黨爭李黨之首。武宗時平回紇、滅佛(會昌滅佛),功業赫赫。宣宗即位,被牛黨所構,貶死崖州。',
+    en: 'Style Wenrao, of Zanhuang in Zhaojun. A late-Tang chancellor; head of the Li faction in the Niu-Li factional war. Under Emperor Wu he broke the Uyghurs and persecuted the Buddhists (the Huichang persecution) with great merit. When Xuanzong took the throne, the Niu faction framed him and he was exiled to die at Yazhou.',
+  },
+  'hist-niu-sengru': {
+    zh: '字思黯,安定鶉觚人。晚唐宰相。牛李黨爭牛黨之首。與李德裕針鋒相對,黨爭四十年,唐朝由是衰。',
+    en: 'Style Si\'an, of Chungu in Anding. A late-Tang chancellor; head of the Niu faction in the Niu-Li factional war. Against Li Deyu he stood point for point, and the factional war lasted forty years — and Tang declined from it.',
+  },
+  'hist-jianzhen': {
+    era: { zh: '東渡日本', en: 'East to Japan' },
+    zh: '俗姓淳于,揚州人。唐代律宗高僧。應日本留學僧之請,東渡傳法,五次失敗,雙目失明,第六次終至日本,於東大寺授戒,日本佛教自此大興。卒於日本唐招提寺。',
+    en: 'Lay surname Chunyu, of Yangzhou. A great Tang monk of the Vinaya school. At the request of Japanese student-monks he set sail east to teach the Law. Five times he failed and lost his sight; on the sixth he reached Japan, gave the precepts at Todai-ji, and Japanese Buddhism flourished from him. He died at Toshodai-ji in Japan.',
+  },
+  'hist-li-bi': {
+    zh: '字長源,京兆人。唐肅宗、代宗、德宗三朝宰相。少時即有「神童」之名,從容於政,輔肅宗平安史之亂。性恬淡,屢辭爵位,世以為高士。',
+    en: 'Style Changyuan, of the metropolitan region. A chancellor under three reigns — Suzong, Daizong, Dezong. From youth named a "divine child." Calm in government, he helped Suzong put down the An Lushan rebellion. Quiet by temper, he refused titles again and again — the world held him a high recluse.',
+  },
+  'hist-li-bao zhen': {
+    zh: '參見「hist-li-baozhen」。',
+    en: 'See hist-li-baozhen.',
+  },
+  'hist-yin-kaishan': {
+    zh: '字開山,雍州鄠人。唐初名將,凌煙閣二十四功臣之一。隨李世民征戰,有功。封郿國公。',
+    en: 'Style Kaishan, of Hu in Yongzhou. A famed early-Tang general, one of the Twenty-Four Meritorious Officers of the Lingyan Pavilion. He marched with Li Shimin and earned credit. Made Duke of Mei.',
+  },
+  'hist-chai-shao': {
+    zh: '字嗣昌,晉州臨汾人。唐初名將,凌煙閣二十四功臣之一。娶李淵之女平陽公主。隨李世民征戰立功。',
+    en: 'Style Sichang, of Linfen in Jinzhou. A famed early-Tang general, one of the Twenty-Four Meritorious Officers of the Lingyan Pavilion. He married Princess Pingyang, daughter of Li Yuan. He marched with Li Shimin and earned credit.',
+  },
+  'hist-princess-pingyang': {
+    era: { zh: '娘子軍', en: 'The Lady\'s Army' },
+    zh: '李淵之三女。隋末隨夫柴紹起兵,招集娘子軍七萬,助父定關中。卒年僅二十餘,以軍禮葬之,中華第一以軍禮葬之女子。',
+    en: 'Third daughter of Li Yuan. In late Sui with her husband Chai Shao she raised troops, gathered the seventy-thousand-strong "Lady\'s Army," and helped her father settle Guanzhong. She died in her twenties, buried with military honors — the first woman in China so honored.',
+  },
+  'hist-xiao-yu': {
+    zh: '字時文,後梁明帝之孫。唐初宰相,凌煙閣二十四功臣之一。性剛直,屢諫太宗。後因諫不從,辭官歸隱。',
+    en: 'Style Shiwen, grandson of Emperor Ming of the Later Liang. An early-Tang chancellor, one of the Twenty-Four Meritorious Officers of the Lingyan Pavilion. Stiff and upright, he often remonstrated with Taizong. When his words were not heeded, he resigned and went into retirement.',
+  },
+  'hist-ma-zhou': {
+    zh: '字賓王,博州茌平人。唐太宗時宰相。出身寒微,以才華自顯。事太宗,屢進奇策,深得器重。卒年四十八,太宗痛悼。',
+    en: 'Style Binwang, of Chiping in Bozhou. A chancellor under Taizong of Tang. Of humble birth, he made himself by sheer talent. He served Taizong and offered many bold counsels, deeply trusted. He died at forty-eight; Taizong mourned bitterly.',
+  },
 };
