@@ -1550,4 +1550,272 @@ export const HISTORICAL_BIOGRAPHIES: Record<string, OfficerBiography> = {
     zh: '名載湉,同治帝堂弟。同治死無嗣,慈禧立之為帝,時年四歲。長大欲變法圖強,行戊戌變法,被慈禧囚於瀛臺十年。光緒三十四年十月二十一日卒,二十二日慈禧亦卒,世傳慈禧鴆光緒。',
     en: 'Personal name Zaitian, cousin of Tongzhi. When Tongzhi died without heir, Cixi set him on the throne at four. As an adult he wished to reform the state and led the Hundred Days\' Reform; Cixi imprisoned him at Yingtai for ten years. On the twenty-first day of the tenth month of 1908 he died; on the twenty-second Cixi died too — and the world says Cixi poisoned Guangxu.',
   },
+  // ─── 歷代名將 新增第四批 (Historical biographies — batch 4: Warring States) ───
+  'hist-mengchang-jun': {
+    era: { zh: '雞鳴狗盜', en: '"Cock-Crowing, Dog-Thievery"' },
+    zh: '名田文,齊國貴族,薛公田嬰之子。戰國四公子之首。食客三千,以雞鳴、狗盜之徒脫秦昭王之獄,故有「雞鳴狗盜之雄」之語。後為齊湣王所忌,奔魏,封於薛。',
+    en: 'Personal name Tian Wen, of the Qi nobility, son of Tian Ying Duke of Xue. First of the Four Lords of the Warring States. He kept three thousand retainers; with men who could crow like roosters and steal like dogs he slipped from the prison of King Zhao of Qin — hence "the lord of cock-crowing and dog-thievery." King Min of Qi grew suspicious; he fled to Wei and was enfeoffed at Xue.',
+  },
+  'hist-pingyuan-jun': {
+    era: { zh: '毛遂自薦', en: '"Mao Sui Recommended Himself"' },
+    zh: '名趙勝,趙武靈王之子,惠文王之弟。戰國四公子之一,食客數千。長平之後秦圍邯鄲,趙勝奉命求救於楚,毛遂自薦從行,於楚廷按劍說楚王,定縱約。後楚、魏救趙,大破秦軍於邯鄲城下。',
+    en: 'Personal name Zhao Sheng, son of King Wuling of Zhao and brother of King Huiwen. One of the Four Lords of the Warring States, with thousands of retainers. After Changping when Qin besieged Handan, Zhao Sheng was sent to ask Chu for help; Mao Sui recommended himself to follow. At the Chu court, hand on his sword, Mao Sui persuaded the king of Chu and sealed the league. Chu and Wei came to Zhao\'s aid and broke the Qin army at the foot of Handan\'s walls.',
+  },
+  'hist-xinling-jun': {
+    era: { zh: '竊符救趙', en: 'Stole the Token to Save Zhao' },
+    zh: '名魏無忌,魏昭王少子,安釐王之異母弟。戰國四公子之一,食客三千。秦圍趙邯鄲,魏王懼秦不發兵,信陵君納侯嬴之計,使如姬竊兵符,朱亥以鐵錐椎殺魏將晉鄙,奪兵權救趙,大破秦軍。',
+    en: 'Personal name Wei Wuji, youngest son of King Zhao of Wei and half-brother of King Anli. One of the Four Lords of the Warring States, with three thousand retainers. When Qin besieged Handan and the King of Wei in fear would not send troops, Xinling-jun took Hou Ying\'s counsel: Lady Ru stole the army-token, Zhu Hai with an iron mace killed the Wei general Jin Bi, and he seized command, marched to relieve Zhao, and broke the Qin army.',
+  },
+  'hist-chunshen-jun': {
+    zh: '名黃歇,楚國貴族。戰國四公子之一,食客三千。事楚考烈王,任令尹二十餘年。後立李園之妹所生者為太子,李園恐事洩,於棘門埋伏殺之,夷其族。',
+    en: 'Personal name Huang Xie, of the Chu nobility. One of the Four Lords of the Warring States, with three thousand retainers. He served King Kaolie of Chu as chancellor for over twenty years. He later set up as crown prince the son borne by Li Yuan\'s sister; Li Yuan, fearing the matter would leak, laid an ambush at the Ji gate and killed him, and wiped out his clan.',
+  },
+  'hist-mao-sui': {
+    era: { zh: '毛遂自薦', en: '"Mao Sui Recommended Himself"' },
+    zh: '平原君食客。秦圍邯鄲,平原君欲合縱於楚,從食客中選二十人,缺一,毛遂自薦曰:「臣乃今請處囊中耳。」 平原君攜之入楚。楚王猶豫,毛遂按劍歷階而上,曰:「合縱之利害,兩言而決;今日從之,在汝!」 楚王懼而從之,合縱遂定。',
+    en: 'A retainer of Pingyuan-jun. When Qin besieged Handan and Pingyuan-jun wished to bind Chu in the league, he chose twenty men from his retainers — one short, Mao Sui recommended himself: "I beg today to be placed in the bag." Pingyuan-jun took him to Chu. The king of Chu hesitated; Mao Sui, hand on sword, mounted the steps: "The good and the harm of the league — two words decide it. The matter today is yours to choose!" The king in fear agreed, and the league was set.',
+  },
+  'hist-hou-ying': {
+    zh: '魏國隱士。年七十為大梁夷門監者。信陵君折節下交,以上賓之禮事之。秦圍邯鄲,侯嬴獻竊符之計,使信陵君奪晉鄙之兵以救趙。信陵君既行,侯嬴自刎以送之。',
+    en: 'A recluse of Wei. At seventy he kept the Yi gate of Daliang. Xinling-jun lowered himself to befriend him and treated him with the rite of an honored guest. When Qin besieged Handan, Hou Ying gave the plan of stealing the army-token, so that Xinling-jun could seize Jin Bi\'s troops and save Zhao. When Xinling-jun had marched, Hou Ying cut his own throat to see him off.',
+  },
+  'hist-zhu-hai': {
+    zh: '大梁屠者。侯嬴薦之於信陵君。竊符救趙之役,朱亥袖四十斤鐵錐,擊殺晉鄙,奪兵權。後從信陵君破秦師。',
+    en: 'A butcher of Daliang. Hou Ying recommended him to Xinling-jun. In the stealing of the token and saving of Zhao, Zhu Hai with a forty-jin iron mace in his sleeve killed Jin Bi and seized command. He then marched with Xinling-jun to break the Qin army.',
+  },
+  'hist-zhao-wuling': {
+    era: { zh: '胡服騎射', en: '"Hu Dress, Horse and Bow"' },
+    zh: '趙武靈王,名雍。在位二十七年,行「胡服騎射」之變,棄寬衣為短衣,棄戰車為騎兵,趙由是強。北滅中山,西破林胡、樓煩,開地千里。後傳位於子惠文王,自稱主父。其後沙丘宮變,被子餓死於沙丘行宮。',
+    en: 'King Wuling of Zhao, personal name Yong. Twenty-seven years he reigned. He carried through the reform of "Hu dress, horse and bow" — putting off the wide robe for the short, the chariot for the cavalry — and Zhao grew strong. He swallowed Zhongshan in the north, broke the Linhu and Loufan in the west, and opened a thousand li of new land. He passed the throne to his son King Huiwen and called himself the "Father-Lord." In the Shaqiu palace coup his son starved him to death in the Shaqiu travel-palace.',
+  },
+  'hist-zhao-huiwen': {
+    zh: '趙惠文王,武靈王之子。任用藺相如、廉頗、趙奢,趙國中興。澠池之會折秦昭王之威。',
+    en: 'King Huiwen of Zhao, son of King Wuling. He raised Lin Xiangru, Lian Po, and Zhao She, and Zhao rose again. At the meeting of Mianchi he broke the awe of King Zhao of Qin.',
+  },
+  'hist-zhao-xiaocheng': {
+    zh: '趙孝成王,惠文王之子。長平之戰,易廉頗為趙括,中秦反間計,趙軍四十萬被坑於長平,趙國自此衰。',
+    en: 'King Xiaocheng of Zhao, son of King Huiwen. At Changping he swapped Lian Po for Zhao Kuo, falling for Qin\'s counter-trick; four hundred thousand of Zhao\'s host were buried alive at Changping, and Zhao began its decline.',
+  },
+  'hist-zhao-kuo': {
+    era: { zh: '紙上談兵', en: '"Strategy on Paper"' },
+    zh: '趙奢之子。少時習兵書,辯論無人能及,然「紙上談兵」。長平之戰,趙王易廉頗為趙括,趙括變更廉頗之軍法,出戰,被白起圍於長平,絕糧四十六日,趙括親率精兵衝殺,中流矢而死,趙軍四十萬皆降而被坑。',
+    en: 'Son of Zhao She. From youth he studied military books; in debate none could match him, but only "strategy on paper." At Changping the King of Zhao swapped Lian Po for him; Zhao Kuo overturned Lian Po\'s laws, marched out, was surrounded by Bai Qi at Changping. Cut off from grain for forty-six days, Zhao Kuo himself led the elite to charge and was struck by a stray arrow and killed; four hundred thousand Zhao soldiers surrendered and were buried alive.',
+  },
+  'hist-zhao-wangqian': {
+    zh: '趙王遷,趙幽繆王。在位八年,信讒言殺李牧,秦將王翦遂破趙都邯鄲,趙王遷被擄,趙亡。',
+    en: 'King Qian of Zhao, posthumous name King Youmiao. Eight years he reigned; on slander he killed Li Mu, and Wang Jian of Qin broke the Zhao capital Handan, took King Qian, and ended Zhao.',
+  },
+  'hist-qin-xiaogong': {
+    era: { zh: '秦孝公', en: 'Duke Xiao of Qin' },
+    zh: '秦孝公,名渠梁。在位二十四年,下《求賢令》,用商鞅變法,廢井田,開阡陌,獎軍功,立郡縣。秦由是強,東出之基實基於此。',
+    en: 'Duke Xiao of Qin, personal name Quliang. Twenty-four years he reigned. He issued the Edict Calling for Worthies, raised Shang Yang to lead the reforms — abolished the well-field, opened the paths, rewarded military merit, set up commanderies and counties. Qin grew strong from him; the foundation of the march eastward was here.',
+  },
+  'hist-qin-huiwen': {
+    zh: '秦惠文王,孝公之子。即位殺商鞅以悅貴族,然新法不廢。任用張儀,行連橫之策,大破六國合縱。又南滅蜀,得天府之國。',
+    en: 'King Huiwen of Qin, son of Duke Xiao. On taking the throne he killed Shang Yang to please the nobles — but the new laws he did not abolish. He raised Zhang Yi to lead the Horizontal League, breaking the Six States\' Vertical Alliance. He also took Shu in the south — and Qin gained the "Land of Abundance."',
+  },
+  'hist-qin-wuwang': {
+    zh: '秦武王,惠文王之子。雄武好力,問鼎周室,於洛陽舉雍州鼎,絕脛而死,年二十三。',
+    en: 'King Wu of Qin, son of King Huiwen. Bold and fond of strength, he marched on the Zhou royal house and asked the weight of the cauldrons. At Luoyang he lifted the Yongzhou tripod, broke his shin-bone, and died at twenty-three.',
+  },
+  'hist-qin-zhaoxiang': {
+    era: { zh: '秦昭襄王', en: 'King Zhaoxiang of Qin' },
+    zh: '秦昭襄王,在位五十六年,中國史上在位最久之帝王之一。任白起,殺六國精兵百餘萬。長平之戰坑趙卒四十萬,六國畏秦。範雎為相,行遠交近攻之策。為秦掃六合鋪平道路。',
+    en: 'King Zhaoxiang of Qin. Fifty-six years he reigned — one of the longest reigns in Chinese history. He raised Bai Qi, who killed over a million of the picked troops of the six states. At Changping he buried alive four hundred thousand of Zhao\'s soldiers, and the six states feared Qin. With Fan Ju as chancellor he followed "make friends with the distant, strike the near," paving the way for the conquest.',
+  },
+  'hist-qin-zhuangxiang': {
+    zh: '秦莊襄王,名子楚,異人,孝文王之子。少質於趙,為呂不韋所識,助之歸秦。即位三年崩,子嬴政繼立,即秦始皇。',
+    en: 'King Zhuangxiang of Qin, personal name Zichu (formerly Yiren), son of King Xiaowen. In youth held hostage at Zhao, he was discovered by Lü Buwei, who helped him return to Qin. He reigned three years and died; his son Ying Zheng took the throne — the First Emperor.',
+  },
+  'hist-lu-buwei': {
+    era: { zh: '奇貨可居', en: '"A Rare Treasure Worth Hoarding"' },
+    zh: '陽翟大商人。見子楚質於趙,曰:「此奇貨可居。」 散家財助子楚歸秦即位,以己妾趙姬獻之,生嬴政,即秦始皇。莊襄王立,呂不韋為相,封文信侯,食邑十萬戶。始皇親政,呂不韋被免相,飲鴆而死。著《呂氏春秋》,號「一字千金」。',
+    en: 'A great merchant of Yangzhai. Seeing Zichu held hostage at Zhao, he said: "This is a rare treasure worth hoarding." He poured out his fortune to help Zichu return to Qin and take the throne, and gave him his own concubine Lady Zhao, who bore Ying Zheng — the First Emperor. When King Zhuangxiang took the throne, Lü Buwei became chancellor and was made Marquis of Wenxin with a fief of a hundred thousand households. When the First Emperor took power he dismissed Lü Buwei, who drank a draught of death. He wrote the Annals of Master Lü — "a thousand pieces of gold for a word."',
+  },
+  'hist-zou-yan': {
+    era: { zh: '五行終始', en: 'Cycles of the Five Elements' },
+    zh: '齊國人。戰國陰陽家代表,五行學派之祖。著《大九州》,提「赤縣神州」之說,以為中國乃大九州之一。又創「五德終始說」,以五行相生相剋解王朝更迭。',
+    en: 'Of Qi. Foremost of the Warring States Yin-Yang thinkers, founder of the Five Elements school. He wrote the Great Nine Continents, holding that China was but one of nine; he also created the theory of the Five Powers cycling, explaining the change of dynasties by the rise and fall of the five elements.',
+  },
+  'hist-zou-ji': {
+    era: { zh: '鄒忌諷齊王納諫', en: '"Zou Ji Urged the King of Qi to Heed Counsel"' },
+    zh: '齊威王相。以己美貌與徐公比,旦日問妻、妾、客,皆云己美。後見徐公,自愧不如。乃悟「妻之美我者私我也,妾之美我者畏我也,客之美我者有求於我也」,以此諷齊威王納諫。齊國大治。',
+    en: 'Chancellor under King Wei of Qi. Comparing his looks to Lord Xu, he asked his wife, concubine, and guest in the morning; all said he was the more handsome. Then he saw Lord Xu and knew himself the lesser. He understood: "My wife praises me because she favors me; my concubine because she fears me; my guest because he seeks something from me." With this he urged King Wei of Qi to heed counsel — and Qi was well ruled.',
+  },
+  'hist-qi-weiwang': {
+    zh: '齊威王,名因齊。任用鄒忌、田忌、孫臏,齊國大治。桂陵、馬陵兩戰大破魏軍,齊由是強。在位三十六年。',
+    en: 'King Wei of Qi, personal name Yinqi. He raised Zou Ji, Tian Ji, and Sun Bin — and Qi was well ruled. At Guiling and Maling he broke the Wei host, and Qi grew strong. Thirty-six years he reigned.',
+  },
+  'hist-qi-xuanwang': {
+    zh: '齊宣王,威王之子。與孟子論政,「五十步笑百步」之語出此。又有「南郭吹竽」之事,千古為俗語。',
+    en: 'King Xuan of Qi, son of King Wei. He discoursed on government with Mencius — "fifty paces laughing at a hundred" comes from this. The tale of "Nanguo blowing the yu" — pretending to play in a band — also comes from him, and has become a saying for the ages.',
+  },
+  'hist-wei-huiwang': {
+    era: { zh: '梁惠王', en: 'King Hui of Liang' },
+    zh: '魏惠王,亦稱梁惠王。在位五十二年。與孟子論「何以利吾國」,孟子答:「王何必曰利?亦有仁義而已矣!」 又遷都大梁,故稱梁惠王。桂陵、馬陵兩敗於齊,魏由是衰。',
+    en: 'King Hui of Wei, also known as King Hui of Liang. Fifty-two years he reigned. To Mencius he asked: "How shall I profit my state?" Mencius answered: "Why must Your Majesty speak of profit? There is humaneness and right, and that is all." He moved his capital to Daliang — hence King Hui of Liang. Broken twice by Qi at Guiling and Maling, Wei began its decline.',
+  },
+  'hist-yan-zhaowang': {
+    era: { zh: '築黃金台', en: 'Built the Golden Terrace' },
+    zh: '燕昭王,名職。即位後欲報齊湣王破燕之仇,築黃金台招賢,以郭隗為師。樂毅、鄒衍、劇辛皆來歸。任樂毅為大將,合五國之兵伐齊,連下七十餘城,齊幾亡。在位三十三年。',
+    en: 'King Zhao of Yan, personal name Zhi. Taking the throne, he wished to avenge King Min of Qi\'s breaking of Yan. He built the Golden Terrace to call worthies, making Guo Wei his teacher; Yue Yi, Zou Yan, and Ju Xin all came. With Yue Yi as commander he gathered the troops of five states against Qi and took over seventy cities in a stroke — Qi was nearly ended. Thirty-three years he reigned.',
+  },
+  'hist-yan-huiwang': {
+    zh: '燕惠王,昭王之子。中田單反間計,以騎劫代樂毅。即墨之戰,田單火牛陣大破騎劫,盡復齊七十餘城。樂毅奔趙,惠王悔之,以《報燕王書》傳千古。',
+    en: 'King Hui of Yan, son of King Zhao. He fell for Tian Dan\'s counter-trick and replaced Yue Yi with Qi Jie. At Jimo, Tian Dan with the Fire-Ox stratagem broke Qi Jie utterly and recovered all seventy cities of Qi. Yue Yi fled to Zhao; King Hui repented, and the "Letter in Response to the King of Yan" has rung down the ages.',
+  },
+  'hist-taizi-dan': {
+    era: { zh: '荊軻刺秦', en: '"Jing Ke\'s Attempt on Qin"' },
+    zh: '燕王喜之子。質於秦,逃歸。秦兵壓境,太子丹遣荊軻往秦,以督亢地圖獻秦王,圖窮匕首見,刺秦王不中。秦怒,大舉伐燕,燕王喜獻太子丹之首於秦以求和,秦不允,終滅燕。',
+    en: 'Son of King Xi of Yan. Held hostage in Qin, he escaped. With Qin\'s armies on his border, Crown Prince Dan sent Jing Ke to Qin with the Dukang map; when the scroll ran out the dagger showed, and Jing Ke struck at the King of Qin and missed. Qin in fury marched on Yan; King Xi offered the head of Crown Prince Dan to Qin for peace; Qin refused and at last swallowed Yan.',
+  },
+  'hist-gao-jianli': {
+    zh: '燕國築琴師。荊軻友。荊軻刺秦不成被殺,高漸離為復仇,變姓名為宋子人家傭。後以善擊筑名,秦始皇召之入宮,熏其目使盲,以為樂工。漸離鉛灌於筑中,擊秦始皇不中,被誅。',
+    en: 'A zhu-lute master of Yan, friend of Jing Ke. When Jing Ke failed and was killed, Gao Jianli, to avenge him, changed his name and became servant in the household at Songzi. His fame on the zhu spread, and the First Emperor summoned him to the palace, blinding his eyes to make him court musician. Gao Jianli loaded the zhu with lead and struck at the First Emperor and missed — and was killed.',
+  },
+  'hist-nie-zheng': {
+    era: { zh: '士為知己者死', en: '"A Man Dies for One Who Knows Him"' },
+    zh: '韓國刺客。為韓人嚴仲子所聘,刺殺韓相俠累於相府之上。聶政自知必死,自皮其面、抉其目、屠出腸,以恐人識其面,連累其姊。後姊聶榮聞之,認屍而死於屍上。',
+    en: 'An assassin of Han. Hired by Yan Zhongzi of Han, he stabbed the Han chancellor Xia Lei in his own hall. Knowing death was certain, Nie Zheng flayed his own face, gouged out his eyes, and tore out his bowels, lest any recognize him and bring trouble on his sister. His sister Nie Rong heard, came and identified the body, and died upon it.',
+  },
+  'hist-feng-xuan': {
+    zh: '齊國孟嘗君食客。為孟嘗君收債於薛,將債契盡燒之,曰:「市義以歸。」 後孟嘗君失勢,薛人迎之,孟嘗君方知馮諼之賢。馮諼又為孟嘗君「狡兔三窟」之計,使孟嘗君穩居相位。',
+    en: 'A retainer of Mengchang-jun of Qi. Sent to collect debts at Xue, he burned all the contracts and said: "I have bought back righteousness for you." When Mengchang-jun fell from power and the people of Xue welcomed him home, he saw at last Feng Xuan\'s worth. Feng Xuan also made for him the "three burrows of the wily hare," keeping him steady in the chancellorship.',
+  },
+  'hist-zhuang-xin': {
+    era: { zh: '亡羊補牢', en: '"Mending the Pen After the Sheep Is Lost"' },
+    zh: '楚襄王臣。屢諫襄王勿沉湎酒色,不聽。秦破楚都郢,襄王悔之,使人求莊辛於趙。莊辛曰:「亡羊而補牢,未為遲也!」 楚復興。',
+    en: 'A minister of King Xiang of Chu. He often warned the king against drowning in wine and women; the king would not hear. When Qin broke Ying, the Chu capital, the king repented and sent for Zhuang Xin in Zhao. Zhuang Xin said: "To mend the pen after the sheep is lost — it is not yet too late!" And Chu rose again.',
+  },
+  'hist-chu-huaiwang': {
+    zh: '楚懷王,名熊槐。屢被張儀所騙。先信張儀「商於六百里」之諾,絕齊楚之盟,後僅得六里。後秦昭王邀其武關之會,遂被扣留秦國,客死於秦。屈原《離騷》為此而作。',
+    en: 'King Huai of Chu, personal name Xiong Huai. Zhang Yi cheated him again and again. First trusting Zhang Yi\'s promise of "six hundred li at Shangyu," he broke the Qi-Chu alliance — and got only six li. King Zhao of Qin then summoned him to a meeting at Wuguan and held him; he died in exile in Qin. Qu Yuan\'s Li Sao was written for this.',
+  },
+  'hist-shen-buhai': {
+    zh: '鄭國人,法家「術」派之祖。事韓昭侯,行變法,十五年韓國治。著《申子》二篇,主以「術」治臣,即君主以權術駕馭群臣,為韓非「法、術、勢」三派之一源。',
+    en: 'Of Zheng. Founder of the "shu" (method) school of Legalism. Under Marquis Zhao of Han he led the reforms; in fifteen years Han was well ruled. The Shenzi in two pieces is his — he held that "shu" rules ministers, the lord using the arts of power to drive his servants. He was one of the three founts of Han Fei\'s "law, method, position."',
+  },
+  'hist-shendao': {
+    zh: '趙國人,法家「勢」派之祖。著《慎子》。主以「勢」治國,即君主以權位威勢駕馭群臣,韓非「法、術、勢」三派之一源。',
+    en: 'Of Zhao. Founder of the "shi" (position) school of Legalism. The Shenzi is his. He held that "shi" rules the state, the lord using the awe of his throne to drive his servants — one of the three founts of Han Fei\'s "law, method, position."',
+  },
+  'hist-gongsun-long': {
+    era: { zh: '白馬非馬', en: '"A White Horse Is Not a Horse"' },
+    zh: '趙國人,戰國名家代表。著《公孫龍子》。提出「白馬非馬」、「離堅白」之辯,以為名實之辯。為中華邏輯學之先聲。',
+    en: 'Of Zhao. The great representative of the School of Names in the Warring States. The Gongsun Longzi is his. He propounded "a white horse is not a horse" and "separating the hard and the white" — the debate of names and substance, an early voice of Chinese logic.',
+  },
+  'hist-yang-zhu': {
+    era: { zh: '楊朱', en: 'Yang Zhu' },
+    zh: '魏國人。戰國思想家。主「為我」、「貴生」、「重己」,曰:「拔一毛而利天下,不為也。」 與墨家「兼愛」相對,孟子斥之為「無君」。',
+    en: 'Of Wei. A Warring States thinker. He held "for the self," "valuing life," "honoring oneself" — and said: "To pluck out a single hair to benefit the realm, I would not do it." Against the Mohist "universal love," Mencius condemned him as denying the lord.',
+  },
+  'hist-zisi': {
+    zh: '名孔伋,孔子之孫。著《中庸》,為儒家「思孟學派」之祖。受業於曾子,傳孟子,儒家道統由是而傳。',
+    en: 'Personal name Kong Ji, grandson of Confucius. He wrote the Doctrine of the Mean and founded the "Si-Meng school" of Confucianism. He studied under Master Zeng and passed the line to Mencius — and so the orthodox Confucian transmission was kept.',
+  },
+  'hist-zixia': {
+    zh: '名卜商,字子夏,孔子弟子。長於文學。孔子歿後,在西河講學,為魏文侯之師。',
+    en: 'Personal name Bu Shang, style Zixia, disciple of Confucius. Master of letters. After the Master\'s death he taught at the Western River and was teacher to Marquis Wen of Wei.',
+  },
+  'hist-tian-dan': {
+    era: { zh: '火牛陣', en: 'The Fire-Ox Stratagem' },
+    zh: '齊國臨淄人。樂毅破齊七十餘城,獨即墨、莒不下。田單守即墨,用反間使燕易將,又設「火牛陣」夜襲燕軍,千牛尾束燃葦突陣,齊軍隨之大破燕。盡復七十餘城,迎齊襄王還國。',
+    en: 'Of Linzi in Qi. When Yue Yi had taken over seventy cities of Qi, only Jimo and Ju still held; Tian Dan defended Jimo. He sowed the counter-trick that made Yan swap commanders, then set the Fire-Ox stratagem — a thousand oxen with burning reeds tied to their tails charged the Yan camp by night, and the Qi army broke them all. He recovered every one of the seventy cities and brought King Xiang back to his throne.',
+  },
+  'hist-lin-xiangru': {
+    era: { zh: '完璧歸趙', en: 'Returned the Jade Whole to Zhao' },
+    zh: '趙國上卿。秦王索和氏璧,藺相如奉璧入秦,終以智謀完璧歸趙。澠池之會,折秦昭王之威,迫之擊缶。與廉頗將相和,共扶趙國。「負荊請罪」「將相和」千古傳為美談。',
+    en: 'Senior Counselor of Zhao. When the King of Qin sought the He Jade, Lin Xiangru carried it to Qin and by sheer wit brought it back whole to Zhao. At the meeting of Mianchi he broke the awe of King Zhao of Qin, forcing him to strike a clay pot. With Lian Po he made up the General-and-Chancellor pair that upheld Zhao. "Bearing the rod for pardon" and "the harmony of general and chancellor" are tales of all ages.',
+  },
+  'hist-meng-ao': {
+    zh: '齊國蒙山人,蒙恬、蒙毅之祖。仕秦昭王、孝文王、莊襄王、始皇四朝,屢破六國,為秦掃六合之先驅。',
+    en: 'Of Mengshan in Qi, ancestor of Meng Tian and Meng Yi. He served four reigns of Qin — Zhaoxiang, Xiaowen, Zhuangxiang, the First Emperor — broke the six states many times, the forerunner of Qin\'s conquest.',
+  },
+  'hist-meng-wei': {
+    zh: '蒙驁之子,蒙恬、蒙毅之父。事秦,征伐有功。',
+    en: 'Son of Meng Ao, father of Meng Tian and Meng Yi. He served Qin and won credit in war.',
+  },
+  'hist-sima-cuo': {
+    zh: '秦惠文王、昭襄王將。獻策伐蜀,自率兵入蜀,平之,秦得天府之國。後又破楚黔中。',
+    en: 'A general under Kings Huiwen and Zhaoxiang of Qin. He counseled the conquest of Shu and led the army in himself; Qin gained the "Land of Abundance." He later broke the Chu Qianzhong.',
+  },
+  'hist-gan-mao': {
+    zh: '秦左丞相。事秦惠文王、武王。武王欲通三川,甘茂率兵下宜陽,五月不克,後力諫得續,終下之,為秦東出之門戶。',
+    en: 'Left Chancellor of Qin. He served Kings Huiwen and Wu. When King Wu wished to open the Sanchuan, Gan Mao led the troops down to Yiyang; five months without success — by his stiff remonstrance he was allowed to go on, and at last took it, opening the eastern gate for Qin.',
+  },
+  'hist-gan-luo': {
+    era: { zh: '十二為上卿', en: 'Chancellor at Twelve' },
+    zh: '甘茂之孫。十二歲入秦,為呂不韋家僮。獻策使趙國割五城予秦,以解秦趙之爭。秦始皇拜為上卿,千古第一神童。',
+    en: 'Grandson of Gan Mao. At twelve he came to Qin as a boy in Lü Buwei\'s household. He gave the counsel that made Zhao cede five cities to Qin, easing the conflict; the First Emperor made him Senior Counselor — the first divine child of the ages.',
+  },
+  'hist-fan-yuqi': {
+    zh: '秦將。獲罪秦始皇,亡命燕。荊軻刺秦,以樊於期之首為信物獻於秦王,樊於期自刎以助荊軻。',
+    en: 'A Qin general. Having committed an offense against the First Emperor, he fled to Yan. When Jing Ke went to assassinate the king of Qin, he carried Fan Yuqi\'s head as a token; Fan Yuqi cut his own throat to help Jing Ke.',
+  },
+  'hist-yue-yang': {
+    zh: '魏文侯將。攻中山三年克之,中山君烹其子以餉樂羊,樂羊食之,以表忠魏。魏文侯雖加封賞,然疑其忍而疏之。',
+    en: 'A general under Marquis Wen of Wei. After three years he took Zhongshan; the lord of Zhongshan boiled his son and sent the broth to him, and Yue Yang ate it to show his loyalty to Wei. Marquis Wen rewarded him, but distrusted his cruelty and kept him at a distance.',
+  },
+  'hist-li-yuan': {
+    zh: '楚國人,春申君門客。獻其妹於春申君,有娠後使春申君獻於楚考烈王,生悍,立為太子。考烈王崩,李園恐春申君洩之,於棘門埋伏殺春申君,夷其族。',
+    en: 'Of Chu, a retainer of Chunshen-jun. He gave his sister to Chunshen-jun; when she was with child, he had Chunshen-jun present her to King Kaolie of Chu. She bore Han, who was made crown prince. When the king died, Li Yuan, fearing Chunshen-jun would speak, laid an ambush at the Ji gate, killed Chunshen-jun, and wiped out his clan.',
+  },
+  'hist-laoai': {
+    zh: '秦相呂不韋進獻於太后趙姬。趙姬寵之,封長信侯,僭以二國之君自居。後謀反被秦始皇平之,車裂於市,夷三族。趙姬亦被遷出咸陽。',
+    en: 'Presented by Chancellor Lü Buwei to Empress Dowager Zhao. She doted on him and made him Marquis of Changxin, and he carried himself as a lord of two states. He plotted revolt; the First Emperor put it down, tore him apart by chariots in the marketplace, and wiped out three branches of his clan. The empress dowager too was sent away from Xianyang.',
+  },
+  'hist-tang-sui': {
+    era: { zh: '布衣之怒', en: '"The Wrath of a Common Man"' },
+    zh: '魏國使者。秦始皇使人說魏王,以五百里地易安陵,安陵君不允,使唐雎使秦。秦王恃強,唐雎按劍而起,曰:「布衣之怒,亦免冠徒跣,以頭搶地耳!若士必怒,伏屍二人,流血五步,天下縞素!」 秦王色撓,謝之,安陵得全。',
+    en: 'An envoy of Wei. When the First Emperor sent to ask the King of Wei to swap Anling for five hundred li, the Lord of Anling refused and sent Tang Sui to Qin. The king of Qin trusted in his strength; Tang Sui rose with hand on sword: "The wrath of a common man? He doffs his cap, bares his feet, and beats his head on the ground! When a man of resolve is wroth, two corpses fall, blood spreads five paces — the realm wears mourning white!" The king\'s color paled and he apologized; Anling was kept whole.',
+  },
+  'hist-kuang-zhang': {
+    zh: '齊國將。為齊威王將,大破秦於桑丘。又破燕、楚有功。為人剛直,孟嘗君薦之,齊閔王疑而不用,鬱鬱而卒。',
+    en: 'A general of Qi. Under King Wei he broke Qin at Sangqiu utterly. He also broke Yan and Chu. Stiff and upright; Mengchang-jun recommended him, but King Min suspected him and did not use him, and he died in despair.',
+  },
+  'hist-su-dai': {
+    zh: '蘇秦之弟。承兄業,游說列國,以縱橫之術立身。',
+    en: 'Younger brother of Su Qin. He carried on his brother\'s work, travelling the states and making himself a name in the arts of league and counter-league.',
+  },
+  'hist-su-li': {
+    zh: '蘇秦之弟,蘇代之兄。亦習縱橫之術。',
+    en: 'Younger brother of Su Qin, elder of Su Dai. He too learned the arts of league and counter-league.',
+  },
+  'hist-gongsun-yan': {
+    zh: '魏國人,與張儀齊名之縱橫家。提合縱五國伐秦之策,孟子稱「公孫衍、張儀豈不誠大丈夫哉?一怒而諸侯懼,安居而天下熄」。',
+    en: 'Of Wei, a master of the league-arts ranked with Zhang Yi. He proposed the league of five states against Qin; Mencius said: "Were Gongsun Yan and Zhang Yi not truly great men? One word of wrath and the lords feared; in their ease the realm fell quiet."',
+  },
+  'hist-pang-juan': {
+    zh: '魏國名將,與孫臏同學於鬼谷子。妒孫臏之才,設計刖其雙足。後齊魏戰於桂陵、馬陵,龐涓中孫臏伏弩,自刎於樹下,曰:「遂成豎子之名!」',
+    en: 'A famed general of Wei, fellow student of Sun Bin under Master Guigu. In jealousy of his talent he had Sun Bin\'s feet cut off. Later, when Qi and Wei fought at Guiling and Maling, Pang Juan walked into Sun Bin\'s ambush and cut his own throat beneath a tree: "So have I made that boy\'s name!"',
+  },
+  'hist-qi-jie': {
+    zh: '燕國將。燕惠王中田單反間計,以騎劫代樂毅。即墨之戰,被田單火牛陣大破,陣亡。',
+    en: 'A general of Yan. When King Hui of Yan fell for Tian Dan\'s counter-trick, Qi Jie replaced Yue Yi. At Jimo, Tian Dan\'s Fire-Ox stratagem broke him and he was killed in the line.',
+  },
+  'hist-zheng-xiu': {
+    zh: '楚懷王寵妃。性陰險。新得鄭袖之美而懷王寵之,鄭袖佯善,使新妃掩鼻見王,又使懷王怒而劓之。後人以「鄭袖巧詐」為宮闈陰險之典。',
+    en: 'A favorite of King Huai of Chu. Sinister in nature. When a new beauty was sent to the king and he doted on her, Zheng Xiu feigned friendship, then had the new consort cover her nose when she met the king, and made the king in anger cut off her nose. Later ages took "Zheng Xiu\'s wile" as the very type of palace intrigue.',
+  },
+  'hist-mao-jiao': {
+    zh: '秦客茅焦。秦始皇遷母趙姬出咸陽,殺諫者二十七人。茅焦以「天下之大,惟陛下不可失母」諫之,秦始皇感悟,迎母還咸陽,封茅焦為仲父。',
+    en: 'Mao Jiao, a guest of Qin. When the First Emperor moved his mother Lady Zhao from Xianyang and killed twenty-seven who remonstrated, Mao Jiao said: "Of all the world, only Your Majesty cannot afford to lose his mother." The emperor was moved, brought his mother back, and made Mao Jiao "Second Father."',
+  },
+  'hist-tian-pian': {
+    zh: '齊國稷下學宮先生。道家、黃老學派代表,與慎到、環淵齊名。',
+    en: 'A master of the Jixia Academy of Qi. A representative of the Daoist Huang-Lao school, ranked with Shen Dao and Huan Yuan.',
+  },
+  'hist-huan-yuan': {
+    zh: '齊國稷下學宮先生。道家代表,以黃老之學名於齊。',
+    en: 'A master of the Jixia Academy of Qi, a representative of Daoism, famed in Qi for the Huang-Lao learning.',
+  },
+  'hist-xue-gong': {
+    zh: '參見「hist-mengchang-jun」(田文,薛公)。',
+    en: 'See hist-mengchang-jun — Tian Wen, Duke of Xue.',
+  },
+  'hist-huangshigong': {
+    era: { zh: '黃石公', en: 'The Yellow Stone Lord' },
+    zh: '秦末隱者。下邳橋上以履授張良,張良跪取之,黃石公遂授以《太公兵法》,曰:「讀此則為王者師矣。」 後張良果以此佐劉邦定天下。',
+    en: 'A recluse of late Qin. On the bridge at Xiapi he dropped his shoe to Zhang Liang; Zhang Liang knelt to fetch it, and the Yellow Stone Lord gave him the Taigong Bingfa: "Read this and you shall be teacher to a king." With it Zhang Liang would later help Liu Bang gain the realm.',
+  },
 };
