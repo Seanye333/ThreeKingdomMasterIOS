@@ -2467,4 +2467,259 @@ export const HISTORICAL_BIOGRAPHIES: Record<string, OfficerBiography> = {
     zh: '字賓王,博州茌平人。唐太宗時宰相。出身寒微,以才華自顯。事太宗,屢進奇策,深得器重。卒年四十八,太宗痛悼。',
     en: 'Style Binwang, of Chiping in Bozhou. A chancellor under Taizong of Tang. Of humble birth, he made himself by sheer talent. He served Taizong and offered many bold counsels, deeply trusted. He died at forty-eight; Taizong mourned bitterly.',
   },
+  // ─── 歷代名將 新增第八批 (Historical biographies — batch 8: Five Dynasties & Song) ───
+  'hist-li-keyong': {
+    era: { zh: '獨眼龍', en: 'The One-Eyed Dragon' },
+    zh: '字翼聖,沙陀人。後唐莊宗李存勖之父。一目眇,號「獨眼龍」。屢破朱溫,為唐勤王之雄。臨終以三矢付李存勖,囑滅梁、燕、契丹。',
+    en: 'Style Yisheng, of the Shatuo people. Father of Li Cunxu of Later Tang. Blind in one eye — the "One-Eyed Dragon." He broke Zhu Wen many times, the hero loyal to Tang. On his deathbed he gave three arrows to Li Cunxu, charging him to destroy Liang, Yan, and Khitan.',
+  },
+  'hist-li-cunxu': {
+    era: { zh: '後唐莊宗', en: 'Emperor Zhuang of Later Tang' },
+    zh: '李克用之子。承父志,十年滅後梁、北平燕、東敗契丹,實踐三矢之囑。建後唐,號莊宗。然好聽戲,寵伶人,從中作亂,興教門之變被弒,年四十二。',
+    en: 'Son of Li Keyong. Carrying out his father\'s charge, in ten years he destroyed Later Liang, pacified Yan in the north, and beat the Khitan in the east — completing the three arrows. He founded Later Tang as Emperor Zhuang. But fond of the theatre and doting on the actors, he let them stir trouble; in the Xingjiao Gate mutiny he was killed at forty-two.',
+  },
+  'hist-li-siyuan': {
+    era: { zh: '後唐明宗', en: 'Emperor Ming of Later Tang' },
+    zh: '李克用養子。莊宗被弒,即位為明宗。在位八年,夜祝天保人民,五代少有之賢君。',
+    en: 'Adopted son of Li Keyong. After Emperor Zhuang was killed, he took the throne as Emperor Ming. Eight years he reigned. By night he prayed for the people\'s peace — a rare worthy ruler in the Five Dynasties.',
+  },
+  'hist-shi-jingtang': {
+    era: { zh: '兒皇帝', en: 'Son-Emperor' },
+    zh: '後晉開國皇帝。沙陀人。為謀奪位,以燕雲十六州割讓契丹,自稱「兒皇帝」,千古辱國之事。',
+    en: 'Founder of Later Jin, of the Shatuo people. To win the throne he ceded the Sixteen Prefectures of Yan-Yun to the Khitan and called himself "son-emperor" — a shame upon the state for the ages.',
+  },
+  'hist-liu-zhiyuan': {
+    zh: '後漢開國皇帝。沙陀人。後晉滅後,劉知遠起兵建後漢。在位一年崩。',
+    en: 'Founder of the Later Han, of the Shatuo people. After Later Jin fell, Liu Zhiyuan raised troops and founded the Later Han. One year he reigned and died.',
+  },
+  'hist-guo-wei': {
+    zh: '後周開國皇帝。原為後漢將,後因隱帝忌之欲殺,起兵奪位,建後周。在位三年崩,養子柴榮繼立。',
+    en: 'Founder of the Later Zhou. Originally a general of Later Han, when Emperor Yin distrusted him and meant to kill him, he raised troops, seized the throne, and founded Later Zhou. Three years he reigned and died; his adopted son Chai Rong took up the line.',
+  },
+  'hist-chai-rong': {
+    era: { zh: '周世宗', en: 'Emperor Shizong of Later Zhou' },
+    zh: '後周第二代皇帝。郭威養子。在位六年,征討四方,北擊契丹,南平淮南,有志一統。然年僅三十九早卒,趙匡胤繼之而建宋。世稱五代第一明君。',
+    en: 'Second emperor of Later Zhou, adopted son of Guo Wei. Six years he reigned, marching in all directions: in the north against Khitan, in the south against Huainan — resolved to unify the realm. But he died at thirty-nine, and Zhao Kuangyin took up the work and founded Song. Held as the first enlightened ruler of the Five Dynasties.',
+  },
+  'hist-feng-dao': {
+    era: { zh: '五朝元老', en: 'Elder of Five Dynasties' },
+    zh: '字可道,瀛州景城人。五代名臣,事後唐、後晉、後漢、後周、契丹遼五朝十帝。皆為宰相。歐陽修譏其無節,然其護民於亂世之功,千古史家評之不一。',
+    en: 'Style Kedao, of Jingcheng in Yingzhou. A famed minister of the Five Dynasties, serving five reigns and ten emperors of Later Tang, Later Jin, Later Han, Later Zhou, and Khitan Liao. Each made him chancellor. Ouyang Xiu mocked his lack of principle, yet the historians of the ages have not been of one mind — for his work protecting the people in chaos was great.',
+  },
+  'hist-qian-liu': {
+    era: { zh: '吳越錢王', en: 'King Qian of Wuyue' },
+    zh: '字具美,杭州臨安人。吳越國開國國君。據兩浙,築錢塘江堤,興水利,通海貿,杭州大興。在位四十一年,壽八十一。後人感其德,築錢王祠以祀。',
+    en: 'Style Jumei, of Lin\'an in Hangzhou. Founding ruler of the Wuyue kingdom. Holding the two Zhejiangs, he raised the Qiantang River dike, opened the waterworks, and traded by sea — Hangzhou flourished. Forty-one years he ruled and lived to eighty-one. The people, mindful of his grace, built King Qian\'s Shrine.',
+  },
+  'hist-ma-yin': {
+    zh: '字霸圖,許州鄢陵人。十國楚國開國國君。據湖南,治民有方,商賈通行。在位二十六年,壽七十九。',
+    en: 'Style Batu, of Yanling in Xuzhou. Founding ruler of the Chu kingdom of the Ten Kingdoms. Holding Hunan, he ruled the people well and trade flowed. Twenty-six years he ruled and lived to seventy-nine.',
+  },
+  'hist-meng-zhixiang': {
+    zh: '後蜀開國皇帝。原為後唐將,後據蜀稱帝,建後蜀。在位一年崩,子孟昶繼立。',
+    en: 'Founder of the Later Shu. Originally a general of Later Tang, he held Shu and called himself emperor, founding Later Shu. One year he reigned and died; his son Meng Chang took the line.',
+  },
+  'hist-meng-chang': {
+    zh: '後蜀第二代皇帝。在位三十一年。性奢侈,寵花蕊夫人。後降宋,被宋太祖賜死,在位末年蜀人為其作詩:「十四萬人齊解甲,更無一個是男兒。」',
+    en: 'Second emperor of Later Shu. Thirty-one years he reigned. Lavish in life, doting on Lady Huarui. He later submitted to Song; Taizu of Song gave him a draught of death. In his last year a Shu poet wrote: "A hundred and forty thousand at once laid down their arms — not one of them a man."',
+  },
+  'hist-yang-yanzhao': {
+    era: { zh: '楊六郎', en: 'Yang Sixth-Brother' },
+    zh: '字延朗,後改延昭。楊業之六子,世稱「楊六郎」。北宋名將。鎮三關二十餘年,契丹畏之。其子楊文廣亦為名將,楊家將之名千古傳誦。',
+    en: 'Style Yanlang, later Yanzhao. Sixth son of Yang Ye — the world called him "Yang Sixth-Brother." A famed Northern Song general. He held the Three Passes for over twenty years, and the Khitan feared him. His son Yang Wenguang was also a famed general; the fame of the Yang family generals has rung down the ages.',
+  },
+  'hist-yang-ye': {
+    era: { zh: '楊無敵', en: 'Yang the Invincible' },
+    zh: '字繼業,麟州人。原北漢名將,降宋後鎮代州。號「楊無敵」,契丹聞名畏之。雍熙北伐,潘美、王侁陷之,陳家谷一戰被俘,絕食三日而死。',
+    en: 'Style Jiye, of Linzhou. Originally a famed general of Northern Han, he submitted to Song and held Daizhou. Called "Yang the Invincible," the Khitan feared his name. In the Yongxi northern campaign, Pan Mei and Wang Shen trapped him; at Chenjiagu he was taken alive, and starved himself to death in three days.',
+  },
+  'hist-she-taijun': {
+    era: { zh: '佘太君', en: 'Old Lady She' },
+    zh: '楊業之妻。世稱「佘太君」、「百歲掛帥」。傳楊家將盡死於沙場後,佘太君年百歲,挺身掛帥,率楊家女將出征。世以為楊家將之核。',
+    en: 'Wife of Yang Ye. The world called her "Old Lady She" — "took up the banner at a hundred." Tradition says that when the men of the Yang house had all died in battle, Old Lady She at a hundred stood forth and took up the command, leading the women of the Yang house to war. The world holds her the soul of the Yang generals.',
+  },
+  'hist-yang-zongbao': {
+    zh: '楊延昭之子。傳娶穆桂英為妻。後從父征戰,有戰功。',
+    en: 'Son of Yang Yanzhao. Tradition says he wed Mu Guiying. He marched with his father with credit in war.',
+  },
+  'hist-yang-wenguang': {
+    zh: '字仲容,楊延昭之子。北宋名將。鎮西夏邊境,屢卻夏軍。卒於官。',
+    en: 'Style Zhongrong, son of Yang Yanzhao. A famed Northern Song general. He held the Xixia border and turned back the Xia army many times. He died in office.',
+  },
+  'hist-pan-mei': {
+    zh: '字仲詢,大名人。北宋開國名將。隨宋太祖平定後蜀、南唐,功冠群臣。雍熙北伐,因處置失當,致楊業死於陳家谷,為世所譏。',
+    en: 'Style Zhongxun, of Daming. A famed founding general of Northern Song. With Taizu he pacified Later Shu and Southern Tang, his merit above the ministers. In the Yongxi northern campaign, by his mishandling Yang Ye died at Chenjiagu — and the world mocked him for it.',
+  },
+  'hist-shi-shouxin': {
+    zh: '北宋開國名將。陳橋兵變預謀。後杯酒釋兵權,辭歸故里。',
+    en: 'A founding general of Northern Song; one of the planners of the Chenqiao mutiny. Later in the wine-and-release of the generals he gave up his command and went home.',
+  },
+  'hist-zhao-guangyi': {
+    era: { zh: '宋太宗', en: 'Emperor Taizong of Song' },
+    zh: '宋太祖之弟,「燭影斧聲」之疑後即位。北滅北漢,二次北伐契丹皆敗。在位二十一年,平定割據之局,然軍事失利,使遼宋之爭延續百年。',
+    en: 'Younger brother of Taizu of Song. After the mystery of "candle-shadow and axe-sound" he took the throne. He destroyed Northern Han, but twice marched north against Khitan and twice was broken. Twenty-one years he reigned, settling the feudatories — yet military failure let the Song-Liao struggle endure a hundred years.',
+  },
+  'hist-zhao-gou': {
+    era: { zh: '宋高宗', en: 'Emperor Gaozong of Song' },
+    zh: '宋徽宗第九子。靖康之變,徽、欽二帝被擄,趙構於應天府即位,建南宋。任秦檜為相,以「莫須有」害岳飛,主和於金,以歲幣換偏安。在位三十五年,後讓位於孝宗。壽八十一。',
+    en: 'Ninth son of Emperor Huizong of Song. In the Jingkang disaster, when the two emperors Hui and Qin were carried off, Zhao Gou took the throne at Yingtianfu and founded the Southern Song. He made Qin Hui chancellor, killed Yue Fei on "perhaps there is," and bought peace from the Jin with yearly tribute. Thirty-five years he reigned, then yielded the throne to Xiaozong. He lived to eighty-one.',
+  },
+  'hist-song-huizong': {
+    era: { zh: '宋徽宗', en: 'Emperor Huizong of Song' },
+    zh: '名趙佶,神宗第十一子。在位二十五年。書畫絕世,創「瘦金體」書法,然好聲色,寵蔡京、童貫,致花石綱、方臘起義。靖康二年被金擄,客死五國城。',
+    en: 'Personal name Zhao Ji, eleventh son of Shenzong. Twenty-five years he reigned. Of peerless brush in painting and writing, founder of the "Slender Gold" calligraphy. Yet fond of pleasure, doting on Cai Jing and Tong Guan — bringing on the Flower-and-Stone tribute trains and the rising of Fang La. In 1127 he was taken by the Jin and died in exile in the City of Five Kingdoms.',
+  },
+  'hist-cai-jing': {
+    zh: '字元長,興化仙游人。宋徽宗時宰相。專權十五年,與童貫共禍北宋,徽宗書畫雖盛而政事大壞。靖康後被流嶺南,死於潭州。',
+    en: 'Style Yuanchang, of Xianyou in Xinghua. Chancellor under Emperor Huizong of Song. Fifteen years he held power, with Tong Guan he ruined the Northern Song; Huizong\'s painting and writing flourished but government rotted. After Jingkang he was exiled to Lingnan and died at Tanzhou.',
+  },
+  'hist-tong-guan': {
+    zh: '宋徽宗時權宦。執兵權二十年,平方臘起義,然北伐契丹屢敗,終致金兵南下。靖康元年被高宗趙構斬。',
+    en: 'A great eunuch of Emperor Huizong of Song. Twenty years he held the army. He put down the rising of Fang La, but his northern campaigns against Khitan failed again and again, and the Jin came south. In 1126 Zhao Gou had him beheaded.',
+  },
+  'hist-gao-qiu': {
+    zh: '宋徽宗時權臣。原為蘇軾家僮,以善蹴鞠得寵於徽宗,任太尉。執政腐敗,《水滸傳》以其為大反派。',
+    en: 'A great minister of Emperor Huizong of Song. Originally a servant of Su Shi, his skill at cuju football won him the emperor\'s favor, and he was made Grand Marshal. His government was corrupt; the Water Margin makes him the great villain.',
+  },
+  'hist-jia-sidao': {
+    era: { zh: '蟋蟀宰相', en: '"Cricket Chancellor"' },
+    zh: '字師憲,台州天台人。南宋末權臣。專權二十年,以鬥蟋蟀為樂,號「蟋蟀宰相」。蒙古攻宋,賈似道私和。後鄂州之戰隱瞞敗績。德祐元年蒙古大舉南下,賈似道親率軍,大敗於丁家洲,被貶崖州,途中被殺。',
+    en: 'Style Shixian, of Tiantai in Taizhou. The great power-holder at the end of Southern Song. Twenty years he held power, fond of cricket-fighting — "the Cricket Chancellor." When the Mongols pressed, he secretly made peace; after Ezhou he hid the loss. In 1275 the Mongols came south in force; Jia Sidao led the army in person and was broken at Dingjiazhou. Exiled to Yazhou, he was killed on the road.',
+  },
+  'hist-wen-yanbo': {
+    zh: '字寬夫,汾州介休人。北宋名相。事仁宗、英宗、神宗、哲宗四朝五十年,位至宰相。性溫和持重,壽九十二。',
+    en: 'Style Kuanfu, of Jiexiu in Fenzhou. A famed chancellor of Northern Song. He served four reigns — Renzong, Yingzong, Shenzong, Zhezong — for fifty years and rose to chancellor. Mild and weighty in temper, he lived to ninety-two.',
+  },
+  'hist-han-qi': {
+    zh: '字稚圭,相州安陽人。北宋名相。與范仲淹、富弼共主慶曆新政。後事仁宗、英宗、神宗,位至宰相。鎮西夏,軍中有「軍中有一韓,西夏聞之心膽寒」之語。',
+    en: 'Style Zhigui, of Anyang in Xiangzhou. A famed Northern Song chancellor. With Fan Zhongyan and Fu Bi he led the Qingli New Policies. He served Renzong, Yingzong, and Shenzong, rising to chancellor. Holding the Xixia front, the army said: "While there is one Han in the army, the Xixia hear and their hearts and gall freeze."',
+  },
+  'hist-li-gang': {
+    era: { zh: '汴京保衛戰', en: 'Defender of Bianjing' },
+    zh: '字伯紀,邵武人。北宋末年抗金名臣。靖康元年金兵圍汴京,李綱主戰,組織京城保衛戰,金兵退。然徽欽二帝再用主和派,李綱被貶,金兵再來,京師遂陷。南宋初為相七十五日,被罷。卒,壽五十八。',
+    en: 'Style Boji, of Shaowu. A famed minister of the late Northern Song against the Jin. In 1126 when the Jin besieged Bianjing, Li Gang urged war, organized the defense, and the Jin withdrew. But Hui and Qin then turned again to the peace party; Li Gang was thrust down, the Jin came again, and the capital fell. In early Southern Song he was chancellor for seventy-five days and was dismissed. He died at fifty-eight.',
+  },
+  'hist-zong-ze': {
+    era: { zh: '過河!過河!', en: '"Across the River! Across the River!"' },
+    zh: '字汝霖,婺州義烏人。南宋初年抗金名將。鎮東京留守,招集兩河義軍百萬,連敗金兵。屢上奏請高宗北渡收復中原,高宗主和不允。臨終呼「過河!過河!過河!」 三聲而卒,年七十。',
+    en: 'Style Rulin, of Yiwu in Wuzhou. A famed Southern Song general against the Jin. Holding Dongjing he gathered the righteous host of the two rivers, a million strong, and broke the Jin many times. He sent memorial after memorial begging the emperor to cross the river and recover the central plains; the emperor refused for peace. On his deathbed he cried out: "Across the river! Across the river! Across the river!" — three times — and died at seventy.',
+  },
+  'hist-niu-gao': {
+    zh: '岳飛部將。隨岳飛抗金,屢立戰功。岳飛被害,牛皋憤而卒(一說被秦檜害)。',
+    en: 'A captain of Yue Fei. He marched with him against the Jin and won many laurels. When Yue Fei was killed, Niu Gao died in rage (some say killed by Qin Hui).',
+  },
+  'hist-yu-yunwen': {
+    era: { zh: '采石之戰', en: 'Victor of Caishi' },
+    zh: '字彬甫,隆州井研人。南宋名臣。紹興三十一年,金主完顏亮率六十萬眾南侵,虞允文以一萬八千宋軍於采石大破金兵,完顏亮被部下所殺,金軍北撤。後位至宰相,卒。',
+    en: 'Style Binfu, of Jingyan in Longzhou. A famed Southern Song minister. In 1161 when Wanyan Liang the Jin ruler led six hundred thousand south, Yu Yunwen with eighteen thousand Song troops broke the Jin at Caishi; Wanyan Liang was killed by his own men, and the Jin pulled back. He rose to chancellor and died.',
+  },
+  'hist-wanyan-liang': {
+    zh: '金海陵王。弒熙宗自立。性殘忍,殺宗室甚多。紹興三十一年率大軍南侵宋,采石之敗,被部下完顏元宜所弒。',
+    en: 'Prince Hailing of Jin. He killed Emperor Xizong and took the throne. Cruel in nature, he killed many of the clan. In 1161 he led a great army south against Song; after the Caishi defeat his man Wanyan Yuanyi killed him.',
+  },
+  'hist-mi-fu': {
+    era: { zh: '米癲', en: '"Mi the Mad"' },
+    zh: '字元章,號海岳外史,襄陽人。北宋書畫家。性放達不羈,世稱「米癲」。書法為宋四家之一(蘇黃米蔡)。畫風開創「米點山水」。',
+    en: 'Style Yuanzhang, called the Recluse of Hai-Yue, of Xiangyang. A Northern Song calligrapher and painter. Free and unbridled, the world called him "Mi the Mad." His calligraphy was one of the Four Masters of Song (Su, Huang, Mi, Cai). His painting opened the "Mi-dot landscape" school.',
+  },
+  'hist-huang-tingjian': {
+    zh: '字魯直,號山谷道人,洪州分寧人。北宋詩人、書法家。蘇門四學士之首。詩開江西詩派,書為宋四家之一。',
+    en: 'Style Luzhi, called the Daoist of the Mountain Valley, of Fenning in Hongzhou. A Northern Song poet and calligrapher. First of the Four Scholars of Su Shi\'s gate. His verse opened the Jiangxi school of poetry; his calligraphy was one of the Four Masters of Song.',
+  },
+  'hist-su-xun': {
+    zh: '字明允,號老泉,眉山人。北宋文學家。蘇軾、蘇轍之父。三蘇之一,唐宋八大家之一。著《六國論》、《辨姦論》。',
+    en: 'Style Mingyun, called the Old Spring, of Meishan. A Northern Song writer. Father of Su Shi and Su Zhe. One of the Three Sus, one of the Eight Masters of Tang and Song. He wrote the Discourse on the Six States and the Discourse on Recognizing the Wicked.',
+  },
+  'hist-su-zhe': {
+    zh: '字子由,蘇軾之弟。北宋文學家,唐宋八大家之一。位至門下侍郎(副相)。與兄手足情深,「但願人長久」即蘇軾為弟所作。',
+    en: 'Style Ziyou, younger brother of Su Shi. A Northern Song writer, one of the Eight Masters of Tang and Song. He rose to Vice Director of the Chancellery. Brotherly love between them ran deep — "Wish only that we may live long" was Su Shi\'s song for him.',
+  },
+  'hist-shen-kuo': {
+    era: { zh: '夢溪筆談', en: 'Author of the Dream Pool Essays' },
+    zh: '字存中,號夢溪丈人,杭州錢塘人。北宋科學家、政治家。著《夢溪筆談》,記中華科技、天文、地理、生物之大成,世界科學史之珍。發現磁偏角,測定北極星位置,皆早於歐洲。',
+    en: 'Style Cunzhong, called the Old Man of the Dream Pool, of Qiantang in Hangzhou. A Northern Song scientist and statesman. He wrote the Dream Pool Essays, gathering Chinese technology, astronomy, geography, and biology — a treasure of world science history. He discovered magnetic declination and measured the position of the Pole Star, both before Europe.',
+  },
+  'hist-yan-shu': {
+    zh: '字同叔,撫州臨川人。北宋詞人、宰相。「無可奈何花落去,似曾相識燕歸來」千古絕唱。提拔范仲淹、歐陽修等賢才。',
+    en: 'Style Tongshu, of Linchuan in Fuzhou. A Northern Song ci poet and chancellor. "No use against the falling flowers / familiar still, the swallows return" rang forever. He lifted up Fan Zhongyan, Ouyang Xiu, and other worthies.',
+  },
+  'hist-liu-yong-song': {
+    era: { zh: '凡有井水處,皆能歌柳詞', en: '"Wherever There Is a Well, There Songs of Liu Are Sung"' },
+    zh: '字耆卿,崇安人。北宋詞人。婉約派代表。詞風通俗,「凡有井水處,皆能歌柳詞」千古傳為盛況。「楊柳岸,曉風殘月」、「衣帶漸寬終不悔」千古絕唱。',
+    en: 'Style Qiqing, of Chong\'an. A Northern Song ci poet, representative of the graceful school. His ci was plain — "Wherever there is a well, there songs of Liu are sung" tells of his fame. "The willow bank, the dawn wind, the waning moon" and "Though my belt grows ever looser, I shall never regret" rang forever.',
+  },
+  'hist-qin-guan': {
+    zh: '字少游,號淮海居士,揚州高郵人。北宋詞人。蘇門四學士之一。「兩情若是久長時,又豈在朝朝暮暮」千古絕唱。',
+    en: 'Style Shaoyou, called the Recluse of Huaihai, of Gaoyou in Yangzhou. A Northern Song ci poet, one of the Four Scholars of Su Shi\'s gate. "If the two hearts last long enough — does it matter that they meet at dawn and dusk?" rang forever.',
+  },
+  'hist-jiang-kui': {
+    zh: '字堯章,號白石道人,饒州鄱陽人。南宋詞人、音樂家。一生未仕,以文為生。詞風清空,自製曲調。',
+    en: 'Style Yaozhang, called the Daoist of the White Stone, of Poyang in Raozhou. A Southern Song ci poet and musician. He never took office and lived by his writing. His ci was clear and free, and he composed his own melodies.',
+  },
+  'hist-zhou-bangyan': {
+    zh: '字美成,號清真居士,錢塘人。北宋詞人,周邦彥。詞律精嚴,集婉約詞之大成。徽宗時提舉大晟府,主修宮廷音樂。',
+    en: 'Style Meicheng, called the Recluse of Pure Truth, of Qiantang. A Northern Song ci poet — Zhou Bangyan. His prosody was strict, the synthesizer of the graceful school. Under Huizong he led the Dasheng Bureau, in charge of the palace music.',
+  },
+  'hist-mei-yaochen': {
+    zh: '字聖俞,號宛陵先生,宣州宣城人。北宋詩人。與蘇舜欽齊名,世稱「蘇梅」。詩風樸實,為宋詩之祖。',
+    en: 'Style Shengyu, called the Master of Wanling, of Xuancheng in Xuanzhou. A Northern Song poet, ranked with Su Shunqin as "Su and Mei." Plain in style, an ancestor of Song poetry.',
+  },
+  'hist-su-shunqin': {
+    zh: '字子美,銅山人。北宋詩人。與梅堯臣並稱「蘇梅」。性放達好酒。後遭黨爭被貶,鬱卒於蘇州。',
+    en: 'Style Zimei, of Tongshan. A Northern Song poet, ranked with Mei Yaochen as "Su and Mei." Free and fond of wine. Caught up later in the factional war and thrust down, he died in despair at Suzhou.',
+  },
+  'hist-shi-hao': {
+    zh: '字直翁,明州鄞縣人。南宋名相。事高宗、孝宗、光宗。為相時力主和議,亦保全岳飛家屬。',
+    en: 'Style Zhiweng, of Yin county in Mingzhou. A famed Southern Song chancellor. He served Gaozong, Xiaozong, and Guangzong. As chancellor he urged peace, and also kept whole the household of Yue Fei.',
+  },
+  'hist-shi-miyuan': {
+    zh: '南宋宰相,史浩之子。專權二十五年,廢濟王,立理宗。世以為奸臣。',
+    en: 'A Southern Song chancellor, son of Shi Hao. Twenty-five years he held power, deposing the Prince of Ji and setting up Emperor Li. The world held him a wicked minister.',
+  },
+  'hist-han-tuozhou': {
+    zh: '南宋寧宗時權臣。慶元黨禁,禁理學。後謀北伐金,大敗,被楊皇后與史彌遠合謀殺於玉津園,函首送金以求和。',
+    en: 'A great power-holder under Ningzong of Southern Song. In the Qingyuan party-proscription he banned neo-Confucianism. Later he plotted the northern campaign against Jin and was utterly broken; Empress Yang and Shi Miyuan together had him killed at the Yujin Garden, and his head was sent in a box to Jin to make peace.',
+  },
+  'hist-liang-hongyu': {
+    era: { zh: '梁紅玉擊鼓', en: 'Liang Hongyu Beat the War-Drum' },
+    zh: '韓世忠之妻。原為京口娼女。黃天蕩之戰,梁紅玉親自擊鼓助戰,韓世忠以八千兵困金兀朮十萬於江中四十八日。古來巾幗英雄之冠。',
+    en: 'Wife of Han Shizhong. Originally a courtesan of Jingkou. At the Yellow Sky Pool she beat the war-drum in person, and Han Shizhong with eight thousand trapped Wuzhu\'s hundred thousand Jin on the river for forty-eight days. The first heroine of the ages.',
+  },
+  'hist-wu-jie': {
+    zh: '字晉卿,德順軍隴幹人。南宋抗金名將。與弟吳璘共守川陝,屢破金兵,使金不能越大散關。封涪王。卒年四十七。',
+    en: 'Style Jinqing, of Longgan in Deshun Army. A famed Southern Song general against the Jin. With his brother Wu Lin he held Sichuan and Shaanxi, broke the Jin many times, and the Jin could not cross the Great Sanguan. Made Prince of Fu. He died at forty-seven.',
+  },
+  'hist-meng-gong': {
+    zh: '字璞玉,隨州棗陽人。南宋抗蒙古名將。連敗蒙古軍,收復襄陽,抵抗四十年。卒於官,蒙古聞之大喜。',
+    en: 'Style Puyu, of Zaoyang in Suizhou. A famed Southern Song general against the Mongols. He broke the Mongols many times, recovered Xiangyang, and resisted for forty years. He died in office, and the Mongols rejoiced when they heard.',
+  },
+  'hist-yu-jie': {
+    era: { zh: '釣魚城', en: 'Defender of Diaoyu City' },
+    zh: '字義甫,瀘州人。南宋抗蒙古名將。在合州築釣魚城,以扼蒙古入川之路。蒙哥汗親征,於釣魚城下中流矢而死,蒙古撤兵,世界歷史為之轉折。卒於官,蒙古軍三十六年攻釣魚城不下。',
+    en: 'Style Yifu, of Luzhou. A famed Southern Song general against the Mongols. At Hezhou he built Diaoyu City to block the Mongol road into Sichuan. Möngke Khan came in person and was struck by a stray arrow at the walls of Diaoyu — the Mongols withdrew, and world history turned. Yu Jie died in office; the Mongols laid siege to Diaoyu for thirty-six years without success.',
+  },
+  'hist-li-cunxiao': {
+    era: { zh: '王不過項,將不過李', en: '"No King Like Xiang; No General Like Li"' },
+    zh: '字義成,代州飛狐人。李克用養子。武勇絕倫,號「飛虎將」、「五代第一猛將」。後因克用愛馬之事被讒,以五馬分屍而死。「王不過項,將不過李」之語出此。',
+    en: 'Style Yicheng, of Feihu in Daizhou. Adopted son of Li Keyong. Of peerless prowess — "the Flying Tiger General" and "first warrior of the Five Dynasties." Through a slander over Keyong\'s prized horse he was torn apart by five chariots. "No king like Xiang Yu; no general like Li Cunxiao" comes from this.',
+  },
+  'hist-li-cunxin': {
+    zh: '李克用養子,十三太保之一。從李存勖征戰。',
+    en: 'An adopted son of Li Keyong, one of the Thirteen Adopted Sons. He marched with Li Cunxu in war.',
+  },
+  'hist-yelu-deguang': {
+    era: { zh: '遼太宗', en: 'Emperor Taizong of Liao' },
+    zh: '耶律阿保機次子。在位二十年。受石敬瑭割燕雲十六州,改國號大遼。後攻後晉,入汴京,然中原人不附,北歸途中卒於欒城,屍體被剖去腸胃,以鹽塗腹,號「帝羓」,千古笑談。',
+    en: 'Second son of Yelu Abaoji. Twenty years he reigned. He received the Sixteen Prefectures from Shi Jingtang and changed the dynasty name to Great Liao. Marching on Later Jin, he entered Bianjing — but the people of the central plains would not follow, and on the road north he died at Luancheng. His belly was cut open, his bowels removed, the cavity packed with salt — they called him the "Emperor Jerky," a tale of laughter for the ages.',
+  },
+  'hist-xiao-taihou': {
+    era: { zh: '蕭太后', en: 'Empress Dowager Xiao' },
+    zh: '名綽,字燕燕,遼景宗皇后。景宗死,聖宗即位,蕭太后臨朝攝政二十七年。內修文治,外與宋戰,澶淵之盟由是而成。世稱遼朝第一賢后。',
+    en: 'Personal name Chuo, style Yanyan, empress of Emperor Jingzong of Liao. When the emperor died and Shengzong took the throne, Empress Dowager Xiao held court for twenty-seven years. Within she ordered the civil arts; without she fought Song — and from her came the Chanyuan treaty. Held as the first worthy empress of Liao.',
+  },
+  'hist-wanyan-yong': {
+    era: { zh: '金世宗', en: 'Emperor Shizong of Jin' },
+    zh: '金第五代皇帝,完顏雍。在位二十九年。誅完顏亮,迎宋還孔孟,行漢制,號「大定之治」,金朝最盛之時。',
+    en: 'Fifth emperor of Jin, Wanyan Yong. Twenty-nine years he reigned. He killed Wanyan Liang, restored Confucius and Mencius to Song honor, applied Chinese institutions — the "Reign of Dading," the peak of Jin.',
+  },
 };
