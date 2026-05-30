@@ -1750,6 +1750,61 @@ const CANONICAL_ITEMS_PRIMARY: Record<string, string> = {
   'hist-kang-youwei': 'da-tong-shu',        // 大同書 — 康有為
   'hist-liang-qichao':'yin-bing-shi',       // 飲冰室合集 — 梁啟超
   'hist-yuan-shikai': 'bei-yang-liu-zhen',  // 北洋六鎮 — 袁世凱
+  // ─── 名品擴充第七批 (Phase 37 — late-TK, philosophers, late dynasties) ───
+  // 三國
+  'zhuge-zhan':       'wu-xiang-hou-jian',  // 武鄉侯佩劍
+  'zhuge-shang':      'mian-zhu-xun-guo',   // 綿竹殉國
+  'ma-zhong':         'ma-zhong-fu-yu',     // 馬忠擒羽
+  'mi-zhu':           'mi-zhu-mu-cai',      // 糜竺募財
+  'mi-fang':          'mi-fang-jiang-jingzhou',// 糜芳降荊州
+  'zhuge-dan':        'shouchun-bian',      // 壽春叛
+  'jia-kui':          'jia-kui-yu-jian',    // 賈逵餘箭
+  'tian-yu':          'tian-yu-bei-bian',   // 田豫北邊
+  'qian-zhao':        'qian-zhao-fu-hu',    // 牽招撫胡
+  'guo-huai':         'guo-huai-xi-fang',   // 郭淮西方
+  'lady-sun':         'sun-fu-ren-jian',    // 孫夫人佩劍
+  'wang-ling':        'huai-nan-yi-pan',    // 淮南一叛
+  'liu-shan':         'le-bu-si-shu',       // 樂不思蜀
+  'lu-meng':          'bai-yi-du-jiang',    // 白衣渡江
+  'zhang-zhao':       'zhang-zhao-fu-yan',  // 張昭輔言
+  // 春秋
+  'hist-shao-gong-shi':'gan-tang',          // 甘棠 — 召公
+  'hist-qin-mugong':  'wu-gu-da-fu',        // 五羖大夫
+  'hist-zheng-zhuanggong':'ke-duan-yu-yan', // 克段於鄢
+  'hist-song-xianggong':'song-xiang-zhi-ren',// 宋襄之仁
+  'hist-zou-yan':     'wu-de-zhong-shi',    // 五德終始 — 鄒衍
+  // 戰國
+  'hist-tian-ji':     'tian-ji-sai-ma',     // 田忌賽馬
+  'hist-chu-long':    'chu-long-shuo',      // 觸龍說太后
+  'hist-yang-zhu':    'yang-zhu-zhi-li',    // 楊朱為我
+  'hist-shen-buhai':  'shen-zi-fa',         // 申子 — 法家術派
+  // 唐
+  'hist-li-linfu':    'kou-mi-fu-jian',     // 口蜜腹劍
+  'hist-yang-guozhong':'yang-zai-xiang-yin',// 楊國忠相印
+  // 宋
+  'hist-su-xun':      'liu-guo-lun',        // 六國論 — 蘇洵
+  'hist-cheng-hao':   'er-cheng-yu-lu',     // 二程語錄 — 程顥
+  'hist-cheng-yi':    'cheng-yi-zhu-yi',    // 主敬窮理 — 程頤
+  'hist-lu-jiuyuan':  'xin-ji-li',          // 心即理 — 陸九淵
+  'hist-qin-hui':     'qin-hui-gui-xiang',  // 秦檜跪像
+  'hist-zhao-gou':    'pian-an-jiang-nan',  // 偏安江南 — 宋高宗
+  // 隋
+  'hist-shi-wansui':  'shi-wansui-qiang',   // 史萬歲槍
+  'hist-mai-tiezhang':'mai-tie-bang',       // 麥鐵杖
+  'hist-dou-jiande':  'da-xia-wang',        // 大夏王
+  // 明
+  'hist-yan-song':    'qing-ci-zai-xiang',  // 青詞宰相 — 嚴嵩
+  'hist-xu-jie':      'xu-jie-dao-yan',     // 徐階倒嚴
+  'hist-wei-zhongxian':'jiu-qian-sui',      // 九千歲 — 魏忠賢
+  'hist-shen-zhou':   'lushan-gao',         // 廬山高 — 沈周
+  'hist-qiu-ying':    'han-gong-chunxiao',  // 漢宮春曉圖 — 仇英
+  // 清
+  'hist-zheng-zhilong':'zhilong-shang-chuan',// 鄭芝龍商船
+  'hist-dai-zhen':    'dai-shi-kao-ju',     // 戴氏考據
+  'hist-shen-baozhen':'fu-zhou-chuan-zheng',// 福州船政
+  // 太平天國
+  'hist-hong-xiuquan':'tian-wang-yu-zhi',   // 天王御製 — 洪秀全
+  'hist-li-xiucheng': 'zhong-wang-zi-zhuan',// 忠王自述 — 李秀成
 };
 
 // Sun family sword passes Sun Jian → Sun Ce → Sun Quan.
