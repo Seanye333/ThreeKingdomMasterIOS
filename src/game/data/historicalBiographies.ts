@@ -1020,4 +1020,214 @@ export const HISTORICAL_BIOGRAPHIES: Record<string, OfficerBiography> = {
     zh: '字致齋,鈕祜祿氏。乾隆寵臣。專權二十年,貪贓枉法,聚財富甲天下。家產八億兩白銀,相當於清廷十五年國庫收入。嘉慶四年,乾隆死後十五日,嘉慶賜其自盡,抄家盡入內庫,故有「和珅跌倒,嘉慶吃飽」之語。',
     en: 'Style Zhizhai, of the Niohuru clan. A favored minister of Qianlong. Twenty years he held power, taking bribes and bending the law, gathering wealth above all the realm. His house held eight hundred million taels of silver — fifteen years of the Qing treasury\'s income. In 1799, fifteen days after Qianlong\'s death, Jiaqing gave him a draught of death; his estate went to the inner treasury — and so the saying: "Heshen falls, Jiaqing eats full."',
   },
+  // ─── 歷代名將 新增第二批 (Historical biographies — batch 2) ───
+  'hist-an-lushan': {
+    era: { zh: '安史之亂', en: 'The An Lushan Rebellion' },
+    zh: '營州柳城雜胡,粟特、突厥混血。唐玄宗時三鎮節度使,擁兵十五萬。天寶十四載冬,以誅楊國忠為名,起兵范陽,陷洛陽、長安,玄宗奔蜀,楊貴妃縊死於馬嵬坡。安祿山稱大燕皇帝。次年為其子安慶緒所弒。安史之亂前後八年,唐由是衰。',
+    en: 'A mixed-blood Hu of Liucheng in Yingzhou, of Sogdian and Türk descent. Under Xuanzong he held three military governorships with a hundred and fifty thousand under arms. In the winter of 755, under the pretext of striking down Yang Guozhong, he rose at Fanyang, took Luoyang and Chang\'an; the emperor fled to Shu and Yang Guifei was hanged at Mawei Slope. He called himself emperor of Great Yan. The next year his son An Qingxu killed him. The eight-year revolt brought Tang into decline.',
+  },
+  'hist-xue-rengui': {
+    era: { zh: '三箭定天山', en: 'Three Arrows Settled Mount Tian' },
+    zh: '字仁貴,絳州龍門人。唐太宗東征高句麗,白袍持戟,單騎陷陣,太宗驚曰:「朕不喜得遼東,喜得卿!」 後征九姓鐵勒,三箭射殺三將,胡人歌曰:「將軍三箭定天山,壯士長歌入漢關。」 平高句麗,封平陽郡公。',
+    en: 'Style Rengui, of Longmen in Jiangzhou. When Taizong marched east against Goguryeo, in a white robe with a halberd he rode alone into the line; Taizong was startled: "I am not so glad to have Liaodong as I am to have you!" Later, on the campaign against the Nine Tribes of the Tiele, three arrows killed three generals, and the Hu sang: "The general with three arrows settled Mount Tian; the brave men in long song came back through the Han gate." He pacified Goguryeo and was made Duke of Pingyang commandery.',
+  },
+  'hist-hai-rui': {
+    era: { zh: '海青天', en: 'Hai the Blue Sky' },
+    zh: '字汝賢,號剛峰,瓊山人。明朝清官。性剛直,持身清苦,妻女衣食粗惡。任淳安知縣,觸權貴胡宗憲。後上《直言天下第一事疏》,備棺木以對嘉靖帝,世稱「海青天」。萬曆時為南京右都御史,卒於官,家無餘財。',
+    en: 'Style Ruxian, called Gangfeng, of Qiongshan. A clean official of Ming. Stiff and upright in temper, austere in life — his wife and daughters in coarse cloth and poor food. As Magistrate of Chun\'an he clashed with the great in-laws Hu Zongxian. He sent up the Memorial on the First Affair of the Realm, brought a coffin to face Emperor Jiajing — and the world called him "Hai the Blue Sky." Under Wanli he was Censor-in-Chief of Nanjing and died in office; his house held nothing.',
+  },
+  'hist-zhang-juzheng': {
+    era: { zh: '明朝第一改革家', en: 'First Reformer of Ming' },
+    zh: '字叔大,號太岳,湖廣江陵人。萬曆首輔。萬曆元年至十年,主持「一條鞭法」改革,簡化賦稅,清查田畝,國庫充實。又用戚繼光、李成梁鎮邊,北疆無事。卒,神宗親政,反對者構陷,張居正被抄家,長子自殺,改革成果盡毀。',
+    en: 'Style Shuda, called Taiyue, of Jiangling in Huguang. First Grand Secretary under Wanli. From 1573 to 1582 he led the Single-Whip reform, simplifying the taxes and surveying the fields; the treasury was filled. With Qi Jiguang and Li Chengliang on the frontier, the north was at peace. At his death, when Wanli took up rule himself, his enemies framed him; his house was confiscated, his eldest son took his own life, and the work of reform was destroyed.',
+  },
+  'hist-di-qing': {
+    era: { zh: '面涅將軍', en: 'The Tattooed-Face General' },
+    zh: '字漢臣,汾州西河人。北宋名將。出身行伍,面有刺字,猶不肯洗去,曰:「此天子之惠,願以此勵諸軍。」 與西夏戰,屢勝。後平儂智高之亂,夜襲崑崙關,大破之。封彰化軍節度使。狄青出身行伍而位至樞密使,千古傳為軍人之榮。',
+    en: 'Style Hanchen, of Xihe in Fenzhou. A famed Northern Song general. Born to the ranks, his face was branded — and he would not wash it off: "This is the grace of the Son of Heaven; let it spur the army." Against the Xixia he won many fights. He later put down Nong Zhigao\'s revolt with a night attack on Kunlun Pass and broke it utterly. Made Military Commissioner of Zhanghua, he rose from the ranks to Bureau of Military Affairs Director — a glory for soldiers across the ages.',
+  },
+  'hist-ouyang-xiu': {
+    era: { zh: '醉翁', en: 'The Drunken Old Man' },
+    zh: '字永叔,號醉翁,廬陵人。北宋文壇盟主,唐宋八大家之一。主持嘉祐年間貢舉,拔蘇軾、蘇轍兄弟,獎掖後進。著《醉翁亭記》、《秋聲賦》、《新五代史》、《新唐書》。「醉翁之意不在酒,在乎山水之間」千古絕唱。',
+    en: 'Style Yongshu, called the Drunken Old Man, of Luling. Master of the Northern Song literary world, one of the Eight Masters of Tang and Song. He led the Jiayou imperial examination and lifted up the Su Shi and Su Zhe brothers, nurturing the next generation. The Pavilion of the Drunken Old Man, the Sounds of Autumn Rhapsody, the New History of the Five Dynasties, and the New Book of Tang are his. "The Drunken Old Man\'s heart is not in the wine — it is in the hills and waters" rings forever.',
+  },
+  'hist-zhou-dunyi': {
+    era: { zh: '理學之祖', en: 'Founder of Neo-Confucianism' },
+    zh: '字茂叔,號濂溪,道州人。北宋理學開山祖師。著《太極圖說》、《通書》,以「無極而太極」立宋學之本。為程顥、程頤之師。一生愛蓮,作《愛蓮說》:「予獨愛蓮之出淤泥而不染,濯清漣而不妖。」 千古絕唱。',
+    en: 'Style Maoshu, called Lianxi, of Daozhou. The founding master of Northern Song neo-Confucianism. He wrote the Diagram of the Supreme Ultimate and the Comprehending the Changes, fixing the root of Song learning in "from Wuji to Taiji." Teacher of Cheng Hao and Cheng Yi. All his life he loved the lotus, writing in the Discourse on Loving the Lotus: "I alone love the lotus that rises from the mud unstained, washed by the clear ripples and yet not seductive." It rings forever.',
+  },
+  'hist-zhang-zai': {
+    era: { zh: '橫渠四句', en: 'The Four Sentences of Hengqu' },
+    zh: '字子厚,號橫渠,鳳翔郿人。北宋理學家。「為天地立心,為生民立命,為往聖繼絕學,為萬世開太平」橫渠四句,千古儒者之志。著《正蒙》、《西銘》。',
+    en: 'Style Zihou, called Hengqu, of Mei in Fengxiang. A Northern Song neo-Confucian. "To set the heart for Heaven and Earth, to set the destiny for the living people, to carry on the lost learning of past sages, to open the great peace for ten thousand ages" — the Four Sentences of Hengqu, the will of Confucians for all ages. The Correcting the Ignorant and the Western Inscription are his.',
+  },
+  'hist-shao-yong': {
+    zh: '字堯夫,謚康節,共城人。北宋理學家。精易學,著《皇極經世》、《觀物內外篇》。以象數推天地萬物之變,世稱「邵子神數」。隱於洛陽安樂窩,日飲一壺酒,號「安樂先生」。',
+    en: 'Style Yaofu, posthumous Kangjie, of Gongcheng. A Northern Song neo-Confucian. A master of the Book of Changes, he wrote the Supreme Principles Governing the World and the Inner and Outer Pieces on Observing Things. By image and number he traced the changes of heaven, earth, and the ten thousand things — the world spoke of "Master Shao\'s divine numerology." He hid himself at Anle Cottage in Luoyang, a daily jug of wine, called the "Master of Happy Peace."',
+  },
+  'hist-fu-bi': {
+    zh: '字彥國,洛陽人。北宋名相。出使遼國,折遼興宗之氣,使宋遼之盟得以續。又佐范仲淹行慶曆新政。位至宰相。卒,謚文忠。',
+    en: 'Style Yanguo, of Luoyang. A famed chancellor of Northern Song. Sent as envoy to the Liao, he bent the spirit of Liao Xingzong and renewed the Song-Liao treaty. With Fan Zhongyan he helped lead the Qingli New Policies. He rose to chancellor. He died, posthumous name Wenzhong.',
+  },
+  'hist-fan-zhi': {
+    zh: '字文素,大名宗城人。北宋初宰相。事周、宋兩朝,以清廉著稱。位至司空,封魯國公。',
+    en: 'Style Wensu, of Zongcheng in Daming. An early Northern Song chancellor, serving both Zhou and Song; known for clean hands. He rose to Excellency over the Works and was made Duke of Lu.',
+  },
+  'hist-fan-chengda': {
+    zh: '字至能,號石湖居士,蘇州吳縣人。南宋詩人。與陸游、楊萬里、尤袤並稱「中興四大詩人」。出使金國,氣節凜然,金人服之。著《石湖居士詩集》、《吳郡志》。',
+    en: 'Style Zhineng, called the Recluse of Stone Lake, of Wu county in Suzhou. A Southern Song poet, with Lu You, Yang Wanli, and You Mao the "Four Great Poets of the Restoration." Sent as envoy to the Jin, he stood with rigid honor and the Jin yielded. The Collected Poems of the Stone Lake Recluse and the Gazetteer of Wujun are his.',
+  },
+  'hist-fan-kuai': {
+    zh: '沛縣人,劉邦妻舅。出身屠狗。鴻門宴中持劍盾闖入,瞋目視項羽,助劉邦脫險。漢定,封舞陽侯。性勇悍,然忠心耿耿,劉邦病重時欲殺之,賴呂后保之。',
+    en: 'Of Pei county, brother-in-law of Liu Bang, born to a dog-butcher\'s house. At the Hongmen Banquet he burst in bearing sword and shield and glared at Xiang Yu, helping Liu Bang escape. After Han was set he was made Marquis of Wuyang. Bold and rough, but utterly loyal; when Liu Bang on his sickbed would have killed him, Empress Lü saved him.',
+  },
+  'hist-chen-ping': {
+    era: { zh: '六出奇計', en: 'Six Wonders of Counsel' },
+    zh: '陽武戶牖人。事項羽,後歸劉邦。獻六奇計:離間項羽范增、解滎陽圍、許韓信為齊王、使劉邦脫白登之圍等。漢定,位至丞相。性巧詐,以智謀名。',
+    en: 'Of Huyou in Yangwu. He first served Xiang Yu, then went over to Liu Bang. He gave six wonders of counsel — driving Fan Zeng away from Xiang Yu, lifting the siege of Yingyang, letting Han Xin be made King of Qi, freeing Liu Bang from Baideng. When Han was set he rose to chancellor. Wily and clever, famed for his stratagems.',
+  },
+  'hist-chen-liang': {
+    zh: '字同甫,號龍川,婺州永康人。南宋思想家、詞人。主張抗金,屢上書孝宗,意氣豪邁。與朱熹有「義利之辯」,主功利之學。詞風豪放,與辛棄疾為摯友。卒於紹熙五年,年五十二。',
+    en: 'Style Tongfu, called Longchuan, of Yongkang in Wuzhou. A Southern Song thinker and ci poet. He urged war against the Jin and sent memorial after memorial to Emperor Xiaozong, bold and spirited. With Zhu Xi he held the great debate on righteousness and profit, championing the practical school. His ci was wild and grand; he was sworn friend to Xin Qiji. He died in 1194 at fifty-two.',
+  },
+  'hist-chen-xuanli': {
+    zh: '唐玄宗禁軍將領。安史之亂中,隨玄宗西奔。馬嵬坡,陳玄禮率眾誅楊國忠,逼縊楊貴妃,千古馬嵬之變實主之。',
+    en: 'A commander of the imperial guard under Emperor Xuanzong of Tang. In the An Lushan rebellion he fled west with the emperor. At Mawei Slope, Chen Xuanli led the men to kill Yang Guozhong and force the hanging of Yang Guifei — the Mawei mutiny of the ages was his.',
+  },
+  'hist-chen-youliang': {
+    zh: '沔陽人。元末群雄之一。據江漢,自稱漢帝。鄱陽湖大戰,與朱元璋決戰,水戰三十六日,陳友諒中流矢而死,漢國遂亡,朱元璋遂得天下。',
+    en: 'Of Mianyang. One of the great rebels of late Yuan. He held the Han-Jiang region and called himself emperor of Han. At Poyang Lake he fought Zhu Yuanzhang in a thirty-six-day naval battle; Chen Youliang was struck by a stray arrow and died, his Han kingdom ended, and Zhu Yuanzhang gained the realm.',
+  },
+  'hist-du-fuwei': {
+    zh: '齊郡章丘人。隋末群雄之一。據江淮,號為「江淮霸主」。後降唐,封吳王。武德五年入朝,為李淵所殺。',
+    en: 'Of Zhangqiu in Qijun. One of the great rebels of late Sui. He held the Huai region and called himself "Hegemon of the Huai." Later he submitted to Tang and was made King of Wu. When he came to court in 622, Li Yuan killed him.',
+  },
+  'hist-du-you': {
+    era: { zh: '通典作者', en: 'Author of the Tongdian' },
+    zh: '字君卿,京兆萬年人。唐代史學家。歷時三十六年,著《通典》二百卷,中華第一部典章制度通史。位至宰相。',
+    en: 'Style Junqing, of Wannian in the metropolitan region. A Tang historian. For thirty-six years he laboured on the Tongdian in two hundred fascicles — China\'s first connected history of institutions and laws. He rose to chancellor.',
+  },
+  'hist-du-yu': {
+    era: { zh: '武庫', en: 'The Armory' },
+    zh: '字元凱,京兆杜陵人。西晉名將。博學多通,世稱「杜武庫」。鎮西大將軍,主謀伐吳。咸寧五年率軍渡江,連克江陵、武昌,長驅直入,旬月之間吳亡。著《春秋左氏經傳集解》,千古不刊。',
+    en: 'Style Yuankai, of Duling in the metropolitan region. A famed general of Western Jin. Vastly learned, the world called him "Du the Armory." As Grand General Who Garrisons the West, he was chief planner of the war on Wu. In 279 he led his army across the river, took Jiangling and Wuchang in one breath, drove straight on, and within a month Wu was undone. His Collected Notes on the Spring and Autumn Annals and Its Zuo Tradition has never gone out of use.',
+  },
+  'hist-ji-xiaolan': {
+    zh: '名昀,字曉嵐,獻縣人。乾隆寵臣。主編《四庫全書》,凡十年,七萬九千卷。性風趣,常與乾隆對句,世傳趣事甚多。著《閱微草堂筆記》傳世。',
+    en: 'Personal name Yun, style Xiaolan, of Xian county. A favored minister of Qianlong. He led the compilation of the Complete Library in Four Treasuries — ten years, seventy-nine thousand fascicles. Witty by temper, he often matched couplets with Qianlong, and many stories survive. The Notes from the Yuewei Cottage is his.',
+  },
+  'hist-zheng-banqiao': {
+    era: { zh: '揚州八怪', en: 'One of the Eight Eccentrics of Yangzhou' },
+    zh: '名燮,字克柔,號板橋,興化人。清代書畫家。揚州八怪之一。善畫竹蘭石,書法獨創「六分半書」。為官清廉,任濰縣令時開倉賑災,救民無數。「難得糊塗」、「一枝一葉總關情」千古傳為人生境界。',
+    en: 'Personal name Xie, style Keruo, called Banqiao, of Xinghua. A Qing painter and calligrapher, one of the Eight Eccentrics of Yangzhou. Master of bamboo, orchid, and stone; in calligraphy he created the "six-and-a-half-tenths script." A clean official, as Magistrate of Wei county he opened the granaries to relieve famine and saved countless lives. "Difficult to be muddled" and "every branch and leaf is feeling" are read forever as states of life.',
+  },
+  'hist-yan-ying': {
+    era: { zh: '齊國賢相', en: 'Worthy Chancellor of Qi' },
+    zh: '字仲,夷維人。春秋齊國名相,事齊靈公、莊公、景公三朝。身不滿六尺,而智冠群臣。出使楚國,以辭辯折楚靈王,「橘生淮南則為橘,生淮北則為枳」千古傳為佳話。著《晏子春秋》。',
+    en: 'Style Zhong, of Yiwei. A famed chancellor of Qi in the Spring and Autumn, serving Dukes Ling, Zhuang, and Jing. Less than six chi tall, but his wit stood above all the ministers. Sent as envoy to Chu, he bested King Ling of Chu by argument: "The orange grown south of the Huai is an orange; grown north of the Huai it is a wild thorn-apple" — read forever as a fine tale. The Spring and Autumn Annals of Master Yan is his.',
+  },
+  'hist-ji-zha': {
+    zh: '吳王壽夢第四子,封於延陵。父兄三讓其位,皆不就。觀周樂於魯,評之精當,知音之祖。掛劍徐君墓樹之典,千古傳為信義之高。',
+    en: 'Fourth son of King Shoumeng of Wu, enfeoffed at Yanling. His father and brothers three times tried to give him the throne; he would not take it. He watched the music of Zhou at Lu and judged it perfectly — the founder of the connoisseur of music. The tale of hanging his sword on the tree by the tomb of the Lord of Xu is told forever as the height of faith and honor.',
+  },
+  'hist-li-shi': {
+    zh: '魏國名將。少有勇略。從魏文侯征戰。後事秦,以軍功封侯。',
+    en: 'A famed general of Wei. From youth bold of counsel; he marched with Marquis Wen of Wei. He later served Qin and was made marquis for military merit.',
+  },
+  'hist-fan-ju': {
+    era: { zh: '遠交近攻', en: '"Make Friends with the Distant, Strike the Near"' },
+    zh: '字叔,魏國人。本為魏中大夫須賈門客,被誣以洩密,鞭笞折肋,棄之廁中。後逃秦,獻「遠交近攻」之策,事秦昭王,位至應侯。其後讒害白起,賜死於杜郵。',
+    en: 'Style Shu, of Wei. First a retainer of the Wei Grand Master Xu Jia, falsely accused of leaking secrets he was beaten until his ribs broke and thrown into the latrine. He fled to Qin, gave the strategy "make friends with the distant, strike the near," served King Zhao of Qin, and rose to Marquis of Ying. He later slandered Bai Qi into a draught at Duyou.',
+  },
+  'hist-fanchi': {
+    zh: '名須,孔子弟子。學稼於孔子,孔子曰:「吾不如老農。」 又問為仁,孔子曰:「愛人。」 為孔門七十二賢之一。',
+    en: 'Personal name Xu, disciple of Confucius. He asked to learn farming; the Master said: "I am not the equal of an old farmer." He asked about humaneness; the Master said: "Loving men." One of the Seventy-Two Sages of the Confucian school.',
+  },
+  'hist-fan-zhen': {
+    zh: '字子真,南陽舞陰人。南朝齊梁間思想家。著《神滅論》,主張「形即神,神即形」,反對佛教因果輪迴之說,中華唯物論之先聲。',
+    en: 'Style Zizhen, of Wuyin in Nanyang. A thinker of the Southern Qi and Liang. He wrote the Discourse on the Extinction of the Spirit, holding that "form is spirit, spirit is form," against the Buddhist doctrines of karma and rebirth — an early voice of Chinese materialism.',
+  },
+  'hist-fan-chunren': {
+    zh: '字堯夫,蘇州吳縣人,范仲淹次子。北宋名臣。位至宰相。性溫和,有父之風。',
+    en: 'Style Yaofu, of Wu county in Suzhou, second son of Fan Zhongyan. A famed Northern Song minister; he rose to chancellor. Mild in temper, in the manner of his father.',
+  },
+  'hist-fan-wencheng': {
+    zh: '字憲斗,瀋陽人。清初開國名臣。歸後金,佐皇太極建制度,定典章,謚文程。',
+    en: 'Style Xiandou, of Shenyang. A famed founding minister of the Qing. He went over to Later Jin and helped Hongtaiji build the institutions and laws — posthumous name Wencheng.',
+  },
+  'hist-fang-guozhen': {
+    zh: '台州黃岩人。元末群雄之一。海上漁民出身,以海舶起家,據浙東二十年。後降明,封廣西行省左丞,病卒。',
+    en: 'Of Huangyan in Taizhou. A great rebel of late Yuan. Born to fishermen and rising by sea-trade, he held the eastern Zhejiang coast for twenty years. He later submitted to Ming and was made Left Vice-Director of Guangxi Province; he died of illness.',
+  },
+  'hist-fu-youde': {
+    zh: '宿州人。明初名將。隨徐達、常遇春北伐,後平雲南,定西南。封潁國公。後為朱元璋所忌,賜死於家。',
+    en: 'Of Suzhou. A famed early-Ming general. He marched north with Xu Da and Chang Yuchun, then pacified Yunnan and settled the southwest. Made Duke of Ying. Later, distrusted by Zhu Yuanzhang, he was given a draught at his home.',
+  },
+  'hist-mu-ying': {
+    zh: '字英,號景文,鳳陽人。明初名將。朱元璋義子。平雲南後鎮之十年,築昆明城,通驛道,撫綏夷漢。卒,沐氏世鎮雲南二百八十年。',
+    en: 'Style Ying, called Jingwen, of Fengyang. A famed early-Ming general, adopted son of Zhu Yuanzhang. After pacifying Yunnan he held it for a decade, raised the wall of Kunming, opened the post-roads, and gentled tribes and Han alike. At his death the Mu line held Yunnan for two hundred and eighty years.',
+  },
+  'hist-tang-he': {
+    zh: '字鼎臣,濠州鍾離人。明初名將。隨朱元璋起兵,平陳友諒,擒方國珍、陳友定,平定東南。封信國公。功成乞骸骨,得善終,壽七十,謚襄武。',
+    en: 'Style Dingchen, of Zhongli in Haozhou. A famed early-Ming general. He rose with Zhu Yuanzhang, broke Chen Youliang, took Fang Guozhen and Chen Youding, and pacified the southeast. Made Duke of Xin. Asking leave to retire, he died peacefully at seventy, posthumous name Xiangwu.',
+  },
+  'hist-lan-yu': {
+    zh: '定遠人,常遇春妻弟。明初名將。北伐元都,捕魚兒海大破北元,擒其后妃、官屬七萬餘人。封涼國公。後被朱元璋以「謀反」之罪族誅,藍玉案連坐一萬五千人,千古慘案。',
+    en: 'Of Dingyuan, brother-in-law of Chang Yuchun. A famed early-Ming general. He marched north against the Yuan and at the Buyur Lake broke the Northern Yuan utterly, taking its empresses, consorts, and officers — over seventy thousand. Made Duke of Liang. Later Zhu Yuanzhang killed him on a charge of revolt and wiped out his clan; the Lan Yu case caught up fifteen thousand — a great horror of the ages.',
+  },
+  'hist-zhu-yunwen': {
+    era: { zh: '建文帝', en: 'The Jianwen Emperor' },
+    zh: '名朱允炆,朱元璋之孫,懿文太子之子。在位四年,行削藩,逼燕王朱棣起兵。靖難之變,京師陷,朱允炆失蹤,世有「焚於宮」、「為僧」二說,千古之謎。',
+    en: 'Personal name Zhu Yunwen, grandson of Zhu Yuanzhang, son of the late Crown Prince Yiwen. Four years he reigned, cutting down the princes — and forced Zhu Di of Yan into revolt. In the Jingnan war when the capital fell, Zhu Yunwen vanished; the world tells of "burned in the palace" or "became a monk" — a mystery for the ages.',
+  },
+  'hist-wu-sangui': {
+    era: { zh: '衝冠一怒為紅顏', en: 'In Rage for the Beauty His Crown Stood on End' },
+    zh: '字長伯,遼東人。明末山海關總兵。本欲降李自成,聞愛妾陳圓圓被劉宗敏所擄,大怒,「衝冠一怒為紅顏」,引清兵入關。封平西王,鎮雲南。康熙削藩,三藩之亂起,吳三桂稱周帝。三年敗,憂憤而卒於衡州。',
+    en: 'Style Zhangbo, of Liaodong. Commander of the Shanhai Pass at the end of Ming. He meant to surrender to Li Zicheng — but hearing that his beloved Chen Yuanyuan had been taken by Liu Zongmin, his anger rose: "In rage for the beauty his crown stood on end," and he brought the Qing in through the wall. Made Prince of Pingxi, holding Yunnan. When Kangxi cut down the feudatories, the Three Feudatories\' Revolt broke out; Wu Sangui called himself Emperor of Zhou. Three years and broken, he died of grief and rage at Hengzhou.',
+  },
+  'hist-zheng-zhilong': {
+    zh: '字飛黃,福建南安人,鄭成功之父。明末東南海上巨梟。據台海之間,擁海舶千艘,號令半世紀。後降清,封同安侯。順治年間因子鄭成功抗清,被清廷誅於北京。',
+    en: 'Style Feihuang, of Nan\'an in Fujian, father of Zheng Chenggong. A great sea-lord of the southeast at the end of Ming. He held the seas between Taiwan and the coast with a thousand ships, commanding for half a century. He later submitted to Qing and was made Marquis of Tong\'an. In the Shunzhi years, because his son Zheng Chenggong resisted the Qing, the court had him killed at Beijing.',
+  },
+  'hist-shi-lang': {
+    era: { zh: '收復臺灣', en: 'Conqueror of Taiwan for Qing' },
+    zh: '字尊侯,號琢公,福建晉江人。原鄭成功部,後降清。康熙二十二年,率水師渡海,大破鄭氏,收復臺灣。封靖海侯。中華自此將臺灣置於版圖,直至甲午。',
+    en: 'Style Zunhou, called Zhuogong, of Jinjiang in Fujian. Originally with Zheng Chenggong, he submitted to the Qing. In 1683 he led the fleet across the sea, broke the Zheng house, and took Taiwan. Made Marquis of Jinghai. From this China placed Taiwan within her map, until the year jiawu.',
+  },
+  'hist-jiaqing': {
+    zh: '名顒琰,乾隆第十五子。在位二十五年。誅和珅,然國勢衰頹,白蓮教、天理教起義不斷,英國使團來華,鴉片漸入。卒,壽六十一。',
+    en: 'Personal name Yongyan, fifteenth son of Qianlong. Twenty-five years he reigned. He killed Heshen — yet the dynasty waned: the White Lotus and Tianli risings broke out one after another, the British embassy came, and opium began to flow in. He died at sixty-one.',
+  },
+  'hist-daoguang': {
+    zh: '名旻寧,嘉慶第二子。在位三十年。鴉片戰爭中清廷大敗,簽訂《南京條約》,割香港、開五口、賠二千一百萬銀元,中華近代屈辱之始。',
+    en: 'Personal name Minning, second son of Jiaqing. Thirty years he reigned. In the Opium War the Qing court was utterly broken and signed the Treaty of Nanjing — ceding Hong Kong, opening five ports, paying twenty-one million silver dollars. The age of modern humiliation for China began here.',
+  },
+  'hist-xianfeng': {
+    zh: '名奕詝,道光第四子。在位十一年,值多事之秋。太平天國起,英法聯軍火燒圓明園,咸豐奔熱河,憂憤成疾,卒於避暑山莊,年三十一。',
+    en: 'Personal name Yizhu, fourth son of Daoguang. Eleven years he reigned, in an age of trouble. The Taiping Heavenly Kingdom rose; the Anglo-French army burned the Yuanmingyuan; Xianfeng fled to Rehe, fell ill of grief and rage, and died at the Mountain Resort at thirty-one.',
+  },
+  'hist-hong-xiuquan': {
+    era: { zh: '太平天王', en: 'Heavenly King of the Taiping' },
+    zh: '本名仁坤,廣東花縣人。屢試不第,鬱鬱不平。讀基督教傳道書,自稱為耶穌之弟,創拜上帝會。咸豐元年於金田起義,號太平天國。十四年間據江南半壁,定都天京(南京)。後內訌、清廷反攻,1864年天京陷,洪秀全絕食死於天王府。',
+    en: 'Originally named Renkun, of Hua county in Guangdong. He failed the examinations again and again and bore deep discontent. After reading Christian tracts he called himself the brother of Jesus and founded the God-Worshipping Society. In 1851 at Jintian he raised the rising under the name of the Taiping Heavenly Kingdom. For fourteen years he held half of Jiangnan with his capital at Tianjing (Nanjing). Internal strife and Qing counter-attack came; in 1864 Tianjing fell, and Hong Xiuquan starved himself to death in the Heavenly King\'s palace.',
+  },
+  'hist-shi-dakai': {
+    era: { zh: '翼王', en: 'The Wing King' },
+    zh: '廣西貴縣人。太平天國翼王。十六歲輔洪秀全起義,以勇略稱。天京之變後出走西征,轉戰四川,被困大渡河,以己一身換全軍,清軍不守信,凌遲處死於成都,年三十二。',
+    en: 'Of Guixian in Guangxi. Wing King of the Taiping Heavenly Kingdom. At sixteen he stood with Hong Xiuquan in the rising, famed for bold counsel. After the Tianjing incident he marched west, fighting through to Sichuan; cornered at the Dadu River, he offered his own life to save his army — but the Qing did not keep faith, and he was torn apart at Chengdu at thirty-two.',
+  },
+  'hist-chen-yucheng': {
+    era: { zh: '英王', en: 'The Hero King' },
+    zh: '廣西藤縣人,太平天國英王。少年英勇,屢破清軍。安慶之戰,陳玉成援救不及,城陷。後被叛徒苗沛霖出賣,被清軍凌遲處死於河南延津,年二十六。',
+    en: 'Of Tengxian in Guangxi, Hero King of the Taiping. Brave in his youth, he broke the Qing many times. At the battle of Anqing his relief came too late and the city fell. Later betrayed by Miao Peilin, he was torn apart by the Qing at Yanjin in Henan at twenty-six.',
+  },
+  'hist-li-xiucheng': {
+    era: { zh: '忠王', en: 'The Loyal King' },
+    zh: '廣西藤縣人,太平天國忠王。後期軍事支柱。曾國藩攻天京,李秀成苦守數年,終城陷被擒。寫《李秀成自述》數萬言而後就死,千古迷案。',
+    en: 'Of Tengxian in Guangxi, Loyal King of the Taiping. The military pillar of its later years. When Zeng Guofan laid siege to Tianjing, Li Xiucheng held it bitterly for years; when the city fell at last he was taken. He wrote the Autobiography of Li Xiucheng in tens of thousands of characters and went to his death — a mystery of the ages.',
+  },
+  'hist-guangxu': {
+    zh: '名載湉,同治帝堂弟。同治死無嗣,慈禧立之為帝,時年四歲。長大欲變法圖強,行戊戌變法,被慈禧囚於瀛臺十年。光緒三十四年十月二十一日卒,二十二日慈禧亦卒,世傳慈禧鴆光緒。',
+    en: 'Personal name Zaitian, cousin of Tongzhi. When Tongzhi died without heir, Cixi set him on the throne at four. As an adult he wished to reform the state and led the Hundred Days\' Reform; Cixi imprisoned him at Yingtai for ten years. On the twenty-first day of the tenth month of 1908 he died; on the twenty-second Cixi died too — and the world says Cixi poisoned Guangxu.',
+  },
 };
