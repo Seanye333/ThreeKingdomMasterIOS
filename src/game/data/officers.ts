@@ -1466,6 +1466,85 @@ const CANONICAL_ITEMS_PRIMARY: Record<string, string> = {
   'hist-ji-xiaolan':  'yuewei-caotang',     // 閱微草堂筆記 — 紀曉嵐
   'hist-yuan-mei':    'suiyuan-shihua',     // 隨園詩話 — 袁枚
   'hist-nurhaci':     'baqi-zhi',           // 八旗制度 — 努爾哈赤
+  // ─── 名品擴充第三批 (Phase 33 — more attested gear) ───
+  // 三國
+  'zhou-yu':          'zhou-lang-gu-qu',    // 周郎顧曲 — 周瑜精通音樂
+  'zhang-liao':       'xiaoyaojin-ji',      // 逍遙津戟 — 八百破十萬
+  'zhang-he':         'qiao-bian-bingfa',   // 巧變兵法 — 張郃善巧變
+  'xu-huang':         'kaishan-fu',         // 開山大斧 — 徐晃
+  'xiahou-dun':       'ba-shi-dan-jing',    // 拔矢啖睛 — 夏侯惇
+  'xiahou-yuan':      'miao-cai-fei-qi',    // 妙才飛騎 — 三日五百六日千里
+  'cao-ren':          'cao-ren-da-dun',     // 曹仁大盾 — 守城名將
+  'xu-chu':           'hu-chi-shuang-ji',   // 虎癡雙戟 — 許褚
+  'gao-shun':         'xian-zhen-ying',     // 陷陣營 — 高順七百精兵
+  'pan-zhang':        'pan-zhang-dao',      // 潘璋雪刃 — 擒關羽
+  // 春秋
+  'hist-confucius':   'lunyu',              // 論語 — 孔子
+  'hist-mozi':        'mojing',             // 墨經 — 墨子
+  'hist-lu-ban':      'luban-suo',          // 魯班鎖 — 公輸般
+  'hist-guan-zhong':  'guanzi-shu',         // 管子 — 管仲
+  'hist-fan-li':      'taozhu-shu',         // 陶朱公書 — 范蠡
+  // 戰國
+  'hist-lian-po':     'fu-jing-zhang',      // 負荊請罪 — 廉頗
+  'hist-bai-qi':      'bai-qi-shen-qiang',  // 殺神槍 — 白起
+  'hist-tian-dan':    'huo-niu-zhen-qi',    // 火牛陣 — 田單
+  'hist-zhao-wuling': 'hu-fu-qi-she',       // 胡服騎射 — 趙武靈王
+  // 秦 (qin-shihuang already holds 太阿劍; 泰山刻石 stays in catalog unassigned)
+  'hist-li-si':       'jian-zhu-ke-shu',    // 諫逐客書 — 李斯
+  // 漢
+  'hist-zhang-qian':  'zhang-qian-jie',     // 張騫節 — 鑿空
+  'hist-cai-lun':     'cai-hou-zhi',        // 蔡侯紙 — 蔡倫造紙
+  'hist-zhang-heng':  'di-dong-yi',         // 地動儀 — 張衡
+  'hist-ma-yuan':     'ma-yuan-tongzhu',    // 馬援銅柱 — 平交趾
+  'hist-jia-yi':      'guo-qin-lun',        // 過秦論 — 賈誼
+  'hist-chao-cuo':    'xiao-fan-ce',        // 削藩策 — 晁錯
+  // 晉/南北朝
+  'hist-xie-an':      'fei-shui-wei-qi',    // 淝水圍棋 — 謝安
+  'hist-xie-xuan':    'bei-fu-jun-qi',      // 北府軍 — 謝玄
+  'hist-liu-yu':      'ji-nu-jian',         // 寄奴劍 — 劉裕
+  'hist-wang-meng':   'men-shi-er-tan',     // 捫蝨而談 — 王猛
+  // 隋
+  'hist-sui-wendi':   'kai-huang-lü',       // 開皇律 — 隋文帝
+  'hist-sui-yangdi':  'da-yun-he-tu',       // 大運河 — 隋煬帝
+  // 唐 (tang-taizong already holds 軒轅劍; 帝範 stays in catalog unassigned)
+  'hist-zhangsun-wuji':'tang-lü-shu-yi',    // 唐律疏議 — 長孫無忌
+  'hist-yan-zhenqing':'ji-zhi-wen-gao',     // 祭侄文稿 — 顏真卿
+  'hist-liu-gongquan':'xuan-mi-ta-bei',     // 玄秘塔碑 — 柳公權
+  'hist-wang-wei':    'wang-chuan-tu',      // 輞川圖 — 王維
+  'hist-du-mu':       'e-pang-gong-fu',     // 阿房宮賦 — 杜牧
+  'hist-li-shangyin': 'jin-se',             // 錦瑟 — 李商隱
+  'hist-qin-qiong':   'qin-qiong-shuang-jian',// 秦瓊雙鐧
+  'hist-xue-rengui':  'san-jian-tian-shan', // 三箭定天山 — 薛仁貴
+  'hist-guo-ziyi':    'fenyang-wang-yin',   // 汾陽王印 — 郭子儀
+  // 五代
+  'hist-li-yu':       'yumeiren-ci',        // 虞美人詞 — 李煜
+  'hist-feng-dao':    'wu-chao-hu',         // 五朝元老 — 馮道
+  // 宋
+  'hist-zhao-kuangyin':'huang-pao',         // 黃袍 — 陳橋兵變
+  'hist-zhao-pu':     'ban-lunyu',          // 半部論語 — 趙普
+  'hist-su-shi':      'chibi-fu',           // 前後赤壁賦 — 蘇軾
+  'hist-mi-fu':       'mi-dian-shanshui',   // 米點山水 — 米芾
+  'hist-zhou-dunyi':  'ai-lian-shuo',       // 愛蓮說 — 周敦頤
+  'hist-zhang-zai':   'heng-qu-si-ju',      // 橫渠四句 — 張載
+  'hist-liang-hongyu':'liang-hongyu-gu',    // 梁紅玉戰鼓 — 黃天蕩
+  // 元
+  'hist-genghis':     'genghis-bow',        // 成吉思汗弓
+  'hist-yelu-chucai': 'jing-shi-yin',       // 經世奇才 — 耶律楚材
+  'hist-wang-shifu':  'xixiang-ji',         // 西廂記 — 王實甫
+  // 明
+  'hist-liu-bowen':   'shao-bing-ge',       // 燒餅歌 — 劉伯溫
+  'hist-xu-da':       'zhong-shan-wang-yin',// 中山王印 — 徐達
+  'hist-yu-qian':     'shi-hui-yin',        // 石灰吟 — 于謙
+  'hist-tang-xianzu': 'mu-dan-ting',        // 牡丹亭 — 湯顯祖
+  'hist-feng-menglong':'san-yan',           // 三言 — 馮夢龍
+  // 清
+  'hist-dorgon':      'shezheng-wang-yin',  // 攝政王印 — 多爾袞
+  'hist-liu-yong':    'liu-rong-bei',       // 劉墉碑帖 — 劉羅鍋
+  'hist-heshen':      'heshen-fu',          // 和珅家業 — 嘉慶吃飽
+  'hist-zuo-zongtang':'zuo-gong-liu',       // 左公柳 — 收復新疆
+  'hist-li-hongzhang':'bei-yang-yin',       // 北洋艦隊 — 李鴻章
+  'hist-zheng-banqiao':'nan-de-hu-tu',      // 難得糊塗 — 鄭板橋
+  'hist-gong-zizhen': 'ji-hai-zashi',       // 己亥雜詩 — 龔自珍
 };
 
 // Sun family sword passes Sun Jian → Sun Ce → Sun Quan.
