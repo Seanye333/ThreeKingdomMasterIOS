@@ -1321,6 +1321,50 @@ const CANONICAL_ITEMS_PRIMARY: Record<string, string> = {
   'lu-xun':      'yue-jue-shu',         // Lost Annals of Yue
   'lu-kai':      'houhan-ji',           // Annals of the Later Han
   'wei-guan':    'banma-fu',            // Tiger Tally
+  // ─── 歷代名將 — historically-canonical items ───
+  // 春秋戰國
+  'hist-jiang-ziya':  'taigong-liutao',     // 太公兵法 / 六韜 (he wrote it)
+  'hist-laozi':       'dao-de-jing',        // 道德經 — author owns it
+  'hist-guiguzi':     'guiguzi',            // 鬼谷子 book
+  'hist-han-fei':     'hanfeizi',           // 韓非子 — author
+  'hist-shang-yang':  'shangjun-shu',       // 商君書 — author
+  'hist-sun-bin':     'sunbin-bingfa',      // 孫臏兵法 — author
+  'hist-zhuan-zhu':   'yuchang-jian',       // 魚腸劍 — 專諸藏魚腹刺王僚
+  'hist-helu':        'ganjiang-jian',      // 干將莫邪為闔閭鑄劍
+  'hist-fuchai':      'moye-jian',          // 莫邪雌劍 — 夫差
+  'hist-goujian':     'zhanlu-jian',        // 越王勾踐劍
+  'hist-yang-youji':  'vermilion-bow',      // 彤弓 — 神射手養由基
+  // 秦楚漢
+  'hist-qin-shihuang':'taiya-jian',         // 太阿劍 — 秦皇佩劍
+  'hist-xiang-yu':    'baqiang',            // 霸王槍
+  'hist-han-xin':     'qixing-jian',        // 七星龍泉劍
+  // 兩漢
+  'hist-sima-qian':   'shi-ji',             // 史記 — author
+  'hist-wang-chong':  'lunheng',            // 論衡 — author (override Confucius placeholder above)
+  'hist-ban-gu':      'han-shu',            // 漢書 — author
+  // 兩晉 / 南北朝
+  'hist-wang-xizhi':  'lanting-xu',         // 蘭亭集序 — author (overriding zhong-yao TKM)
+  'hist-liu-yiqing':  'shi-shuo-xinyu',     // 世說新語 — author
+  // 唐
+  'hist-tang-taizong':'xuanyuan-jian',      // 軒轅劍 — 天子佩 (legendary)
+  'hist-li-jing':     'mingguang-armor',    // 明光鎧 — 唐將
+  'hist-yuchi-gong':  'lion-helm',          // 獅頭盔 — 唐將
+  // 五代/遼/西夏
+  // (canonical chains for these can be added later if needed)
+  // 宋
+  'hist-yue-fei':     'liquan-qiang',       // 瀝泉槍
+  'hist-han-shizhong':'shuang-jian',        // 雙鐧
+  'hist-yang-ye':     'jin-dao',            // 金刀
+  'hist-yang-zongbao':'yangjia-qiang',      // 楊家槍
+  'hist-mu-guiying':  'jianglong-mu',       // 降龍木
+  // 明
+  'hist-zheng-he':    'baochuan',           // 寶船
+  'hist-qi-jiguang':  'qijia-dao',          // 戚家刀 (and 紀效新書 via chain)
+  'hist-yu-dayou':    'jixiao-xinshu',      // 紀效新書 — 戚繼光 主, 但俞大猷亦兵書家
+  'hist-zheng-chenggong': 'guoxing-jian',   // 國姓爺寶劍
+  // 清
+  'hist-zeng-guofan': 'zeng-jiaxun',        // 曾文正公家書
+  'hist-lin-zexu':    'fenglu-shen-shou',   // 銷煙劍
 };
 
 // Sun family sword passes Sun Jian → Sun Ce → Sun Quan.
@@ -1332,6 +1376,27 @@ const ITEM_CHAINS: Array<{ itemId: string; ownerChain: string[] }> = [
   { itemId: 'imperial-seal', ownerChain: ['sun-jian', 'yuan-shu', 'cao-cao', 'sun-quan'] },
   { itemId: 'red-hare',      ownerChain: ['lu-bu', 'guan-yu'] },
   { itemId: 'dilu',          ownerChain: ['liu-bei'] },
+  // ─── 歷代名將 chains — classics get the historical author first ───
+  // 烏騅 — 項羽 first, then unowned across history
+  { itemId: 'wuzhui',        ownerChain: ['hist-xiang-yu'] },
+  // 孫子兵法 — 孫武 (春秋) first then 韓信 then Tang 李靖 then 鍾會 (TKM)
+  { itemId: 'sunzi-bingfa',  ownerChain: ['hist-sun-wu', 'hist-han-xin', 'hist-li-jing', 'zhong-hui'] },
+  // 太公兵法 — 姜子牙 (already CANONICAL) → fallback chain 張良 → 司馬師
+  { itemId: 'taigong-bingfa',ownerChain: ['hist-jiang-ziya', 'hist-zhang-liang', 'sima-shi'] },
+  // 道德經 — 老子 → 莊周 → 嵇康 → 陶弘景 → 魯肅
+  { itemId: 'dao-de-jing',   ownerChain: ['hist-laozi', 'hist-zhuangzi', 'hist-ji-kang', 'hist-tao-hongjing', 'lu-su'] },
+  // 史記 — 司馬遷 (author) → 班固 → 司馬懿
+  { itemId: 'shi-ji',        ownerChain: ['hist-sima-qian', 'hist-ban-gu', 'sima-yi'] },
+  // 漢書 — 班固 (author) → 班昭 → 鄭玄
+  { itemId: 'han-shu',       ownerChain: ['hist-ban-gu', 'hist-ban-zhao', 'zheng-xuan'] },
+  // 戰國策 — 蘇秦 → 張儀 → 徐庶
+  { itemId: 'zhanguo-ce',    ownerChain: ['hist-su-qin', 'hist-zhang-yi', 'xu-shu'] },
+  // 左傳 — 春秋史 → 子產 → 陳群
+  { itemId: 'zuozhuan',      ownerChain: ['hist-zi-chan', 'hist-confucius', 'chen-qun'] },
+  // 韓非子 — already primary for hist-han-fei
+  // 鬼谷子 — already primary
+  // 商君書 — already primary
+  // 蘭亭集序 — already primary for hist-wang-xizhi (overrides zhong-yao)
 ];
 
 // Pre-220 canonical items reassign on death. We'll keep this simple
