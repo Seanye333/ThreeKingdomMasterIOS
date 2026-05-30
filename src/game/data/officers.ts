@@ -1687,6 +1687,69 @@ const CANONICAL_ITEMS_PRIMARY: Record<string, string> = {
   'hist-wang-fuzhi':  'chuan-shan-yi-shu',  // 船山遺書 — 王夫之
   'hist-duan-yucai':  'shuowen-jiezi-zhu',  // 說文解字注 — 段玉裁
   'hist-yongzheng':   'zhu-pi-yu-zhi',      // 硃批諭旨 — 雍正
+  // ─── 名品擴充第六批 (Phase 36 — warlords, late-Tang, Song & late-Qing) ───
+  // 三國
+  'ma-teng':          'ma-teng-xi-liang-qiang',// 西涼槍
+  'han-sui':          'han-sui-shi-bu',     // 西州十部
+  'gongsun-zan':      'bai-ma-yi-cong',     // 白馬義從
+  'yuan-shao':        'si-shi-san-gong',    // 四世三公
+  'yuan-shu':         'zhong-jia-wei-di',   // 仲家偽帝
+  'liu-biao':         'jing-zhou-mu-yin',   // 荊州牧
+  'liu-zhang':        'yi-zhou-mu',         // 益州牧
+  'han-fu':           'han-fu-rang-zhou',   // 韓馥讓冀
+  'tao-qian':         'tao-qian-rang-xu',   // 陶謙讓徐
+  'kong-rong':        'kong-rong-rang-li',  // 孔融讓梨
+  'he-jin':           'da-jiang-jun-yin',   // 大將軍印
+  'dong-zhuo':        'fei-xiong-jun',      // 飛熊軍
+  'wang-yun':         'lian-huan-ji',       // 連環計
+  'chen-lin':         'wei-yuan-shao-xi',   // 為袁紹檄豫州
+  'wang-can':         'qi-ai-shi',          // 七哀詩
+  // 唐
+  'hist-gao-xianzhi': 'gao-xianzhi-bing-pian',// 高仙芝兵篇
+  'hist-geshu-han':   'geshu-ye-dai-dao',   // 哥舒夜帶刀
+  'hist-feng-changqing':'an-xi-jie-du-yin', // 安西節度
+  'hist-an-lushan':   'fan-yang-jie-yin',   // 範陽節
+  'hist-shi-siming':  'he-bei-tian-xia',    // 河北天下
+  'hist-du-you':      'tong-dian',          // 通典 — 杜佑
+  'hist-yan-gaoqing': 'ma-lu-shan-shi',     // 罵祿山 — 顏杲卿
+  'hist-duan-xiushi': 'hu-ji-zhu-ci',       // 笏擊朱泚 — 段秀實
+  'hist-wei-gao':     'ping-nan-zhao',      // 平南詔 — 韋皋
+  // 宋
+  'hist-kou-zhun':    'shanyuan-meng',      // 澶淵之盟 — 寇準
+  'hist-han-qi':      'san-chao-zai-fu',    // 三朝宰輔 — 韓琦
+  'hist-fu-bi':       'fu-bi-yu-liao',      // 富弼諭遼
+  'hist-wen-yanbo':   'wen-yanbo-si-chao',  // 四朝元老 — 文彥博
+  'hist-cai-jing':    'yuan-you-dang-bei',  // 元祐黨碑 — 蔡京
+  'hist-tong-guan':   'tong-guan-yan-yun',  // 童貫燕雲
+  'hist-zong-ze':     'guo-he-guo-he',      // 過河過河過河 — 宗澤
+  'hist-li-gang':     'jing-kang-shou-cheng',// 靖康守城 — 李綱
+  'hist-liu-yong-song':'yu-lin-ling',       // 雨霖鈴 — 柳永
+  'hist-qin-guan':    'que-qiao-xian',      // 鵲橋仙 — 秦觀
+  'hist-zhou-bangyan':'su-mu-zhe',          // 蘇幕遮 — 周邦彥
+  'hist-jiang-kui':   'an-xiang-shu-ying',  // 暗香疏影 — 姜夔
+  'hist-fan-chengda': 'si-shi-tian-yuan',   // 四時田園雜興 — 范成大
+  'hist-yang-wanli':  'cheng-zhai-shi',     // 誠齋體 — 楊萬里
+  // 元
+  'hist-bai-pu':      'wu-tong-yu-zaju',    // 梧桐雨 — 白樸
+  'hist-zheng-guangzu':'qian-nü-li-hun',    // 倩女離魂 — 鄭光祖
+  'hist-wang-meng-yuan':'qing-bian-yin-ju', // 青卞隱居 — 王蒙
+  'hist-wu-zhen':     'yu-fu-tu',           // 漁父圖 — 吳鎮
+  // 明
+  'hist-tang-he':     'tang-he-kai-guo',    // 湯和開國印
+  'hist-lan-yu':      'lan-yu-an',          // 藍玉案
+  'hist-mu-ying':     'mu-wang-fu',         // 沐王府
+  // 清
+  'hist-oboi':        'oboi-zhua',          // 鰲拜鐵爪
+  'hist-songgotu':    'suo-dang-yin',       // 索黨印
+  'hist-mingju':      'ming-dang-yin',      // 明黨印
+  'hist-nian-gengyao':'nian-da-jiang-jun',  // 年大將軍印
+  'hist-fukanggan':   'fu-jiang-jun-yin',   // 福將軍印
+  'hist-agui':        'agui-ping-jin-chuan',// 阿桂平金川
+  // 晚清
+  'hist-tan-sitong':  'ren-xue',            // 仁學 — 譚嗣同
+  'hist-kang-youwei': 'da-tong-shu',        // 大同書 — 康有為
+  'hist-liang-qichao':'yin-bing-shi',       // 飲冰室合集 — 梁啟超
+  'hist-yuan-shikai': 'bei-yang-liu-zhen',  // 北洋六鎮 — 袁世凱
 };
 
 // Sun family sword passes Sun Jian → Sun Ce → Sun Quan.
