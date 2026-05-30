@@ -11,10 +11,13 @@ import { HISTORICAL_BIOGRAPHIES } from './historicalBiographies';
 export interface OfficerBiography {
   zh: string;
   en: string;
-  /** Optional era/period label. */
+  /** Optional era/period label (e.g., honorific or dynasty role). */
   era?: { zh: string; en: string };
   /** Famous quote attributed to the officer. */
   quote?: { zh: string; en: string };
+  /** Real-history lifespan (BC/AD) for the 歷代名將 cross-over feature.
+   *  Shown in UI separate from the playable birthYear (~150 AD). */
+  lifespan?: { zh: string; en: string };
 }
 
 export const BIOGRAPHIES: Record<string, OfficerBiography> = {
@@ -271,6 +274,418 @@ export const BIOGRAPHIES: Record<string, OfficerBiography> = {
   'yang-xiu': {
     zh: '字德祖,弘農華陰人。 才思敏捷,曹操謀士,常解其心意而招忌。 「雞肋」之語,終被曹操所殺。',
     en: "Style name Dezu, of Huayin in Hongnong. So nimble of mind that Cao Cao's hidden meanings could not stay hidden from him — which earned him hatred. When he read Cao Cao's password 'chicken-ribs' as a sign the campaign was finished, Cao Cao at last had him executed.",
+  },
+  // ─── 三國新增列傳 (Three Kingdoms — expanded biographies) ───
+  'xiahou-yuan': {
+    era: { zh: '征西將軍', en: 'General Who Conquers the West' },
+    zh: '字妙才,沛國譙縣人,曹操族弟,夏侯惇之從弟。早年代曹操坐罪繫獄,曹操竭力救之得免,自此心服。隨曹操征戰二十餘年,長於奔襲,號「虎步關右」。破馬超於渭南,平宋建於枹罕,克氐羌諸部,曹操贊曰:「典軍校尉夏侯淵,三日五百,六日一千。」 後鎮漢中,定軍山之戰輕兵應急修鹿角,為黃忠所斬,時年六十有餘。',
+    en: 'Style name Miaocai, cousin of Cao Cao and younger kinsman of Xiahou Dun. In his youth he took the blame for a crime of Cao Cao and was imprisoned; Cao Cao saved him at great cost, and his loyalty was thereafter unshakable. For more than twenty years he campaigned at Cao Cao\'s side, famed for lightning marches — "Tiger-Strider of Guanyou." He broke Ma Chao at Weinan, crushed Song Jian at Fuhan, and pacified the Di and Qiang. Cao Cao praised: "My Colonel-Director Xiahou Yuan — five hundred li in three days, a thousand li in six." Garrisoned at Hanzhong, he rode out lightly armed to repair the antlers at Mount Dingjun and was struck down by Huang Zhong, past sixty years of age.',
+  },
+  'xiahou-ba': {
+    zh: '字仲權,夏侯淵之子。父死於蜀漢,銜恨二十年。司馬懿發高平陵之變,夏侯氏為司馬氏所忌,夏侯霸獨自西奔投蜀。後主以姨表之親厚待之,姜維引以為副,屢從北伐。卒於蜀中,蜀人感其投誠之義。',
+    en: 'Style name Zhongquan, son of Xiahou Yuan. He carried twenty years of grief for his father, killed by Shu. When Sima Yi seized power in the Gaopingling coup and the Xiahou clan was marked, Xiahou Ba alone fled west and surrendered to Shu. The Second Emperor — his cousin by marriage — received him warmly; Jiang Wei made him a deputy and he marched in many northern campaigns. He died in Shu, mourned for his bold defection.',
+  },
+  'xiahou-xuan': {
+    era: { zh: '玄學名士', en: 'Master of the Mysterious Learning' },
+    zh: '字泰初,夏侯尚之子。少有名望,風儀爽朗,玄學三宗之一,與何晏，王弼齊名。歷任散騎常侍，征西將軍,有清談之才。司馬師執政,以與李豐謀廢之事,被誅夷三族。臨刑神色不變,世人歎其雅量。',
+    en: 'Style name Taichu, son of Xiahou Shang. From youth a name of high repute, of luminous bearing, one of the three founders of the Mysterious Learning — set beside He Yan and Wang Bi. He served as Cavalier Attendant and General Who Conquers the West, peerless in pure conversation. When Sima Shi held power, his part in Li Feng\'s plot to depose the regent brought death to three branches of his clan. At the block his colour did not change; the world long admired his composure.',
+  },
+  'xiahou-mao': {
+    zh: '字子林,夏侯惇之子。娶曹操女清河公主,駙馬都尉。鎮守長安。性懦怯,諸葛亮首出祁山,聞之喪膽,賴關中諸將支吾。後以怠職免歸。',
+    en: 'Style name Zilin, son of Xiahou Dun. He married the Princess of Qinghe, Cao Cao\'s daughter, and bore the title of Imperial Son-in-Law. Governor of Chang\'an. Of timid nature, when Zhuge Liang first marched out of Mount Qi he lost his nerve; the Guanzhong generals had to hold the line. Eventually he was removed for negligence and sent home.',
+  },
+  'sima-yan': {
+    era: { zh: '晉武帝', en: 'Emperor Wu of Jin' },
+    zh: '字安世,司馬昭嫡長子。承父祖之業,代魏建晉,為晉開國之君。咸寧五年遣杜預，王濬，王渾分道伐吳,次年金陵草木皆破,三國歸於一統。前期省刑薄賦,號「太康之治」;後期沉湎酒色,大封同姓,埋下八王之亂之禍。在位二十五年,壽五十五。',
+    en: 'Style name Anshi, eldest legitimate son of Sima Zhao. He inherited his father\'s and grandfather\'s work, replaced Wei, and founded Jin. In 279 he sent Du Yu, Wang Jun, and Wang Hun down three roads against Wu; the next year Jinling fell and the threefold split was ended. His early reign was lenient in punishment and light in taxation — the "Taikang prosperity." Late in life he drowned in wine and women, and his lavish enfeoffment of kinsmen planted the seed of the War of Eight Princes. Twenty-five years he reigned; fifty-five he lived.',
+  },
+  'sima-fu': {
+    era: { zh: '安平獻王', en: 'Prince Xian of Anping' },
+    zh: '字叔達,司馬懿之弟,司馬八達之一。歷仕魏晉兩朝,以清儉持身,身列三公而家無餘財。高平陵之變,佐兄定大計;甘露事變,曹髦遇害,獨撫屍而哭,曰:「殺陛下者,臣之罪也!」 武帝即位,封安平王,壽九十三,謚獻。',
+    en: 'Style name Shuda, brother of Sima Yi, one of the eight gifted "Da" brothers of the Sima clan. He served both Wei and Jin, austere and frugal — though enrolled among the Three Excellencies, his household kept no surplus. He helped his brother plan the Gaopingling coup. When Emperor Mao was struck down in the Ganlu incident, Sima Fu alone cradled the body and wept: "He who killed the emperor — the crime is mine!" Under Emperor Wu he was made Prince of Anping. He lived ninety-three years; his posthumous name was Xian — "The Devoted."',
+  },
+  'sima-lang': {
+    zh: '字伯達,司馬懿長兄,八達之首。少時避亂溫縣,治家有方。事曹操為主簿,鎮守冀州，兗州,平諸荒;隨夏侯惇征吳,於行間病卒,年四十七。臨終遺令薄葬,士林歎其廉。',
+    en: 'Style name Boda, eldest brother of Sima Yi and first of the eight "Da." In youth he sheltered his clan from the chaos at Wen county and managed the household with iron care. He served Cao Cao as Master of Records, governed Jizhou and Yanzhou, and tamed many famine districts. Marching against Wu under Xiahou Dun, he died of plague in camp at forty-seven. His will commanded a frugal burial; the gentry mourned his clean hands.',
+  },
+  'sima-zhi': {
+    zh: '字子華,司馬懿從弟,河內溫縣人。出仕魏室,以勤政著稱。歷任典農中郎將，大司農,管度支屯田,務在富國。在位敦厚不二,凡事執法,雖大臣權貴亦無所撓。',
+    en: 'Style name Zihua, cousin of Sima Yi, of Wen in Henei. He took office under Wei and was known for diligence. As Director of Agricultural Colonies and Grand Minister of Agriculture he ran the granary and tuntian fields, his only aim the enrichment of the state. Solid and unyielding, he applied the law without exception, even against great ministers and favourites.',
+  },
+  'sima-fang': {
+    zh: '字建公,河內溫縣人,司馬懿之父。漢京兆尹,以儀範稱於世。教子有方,八子皆登顯位,號司馬八達。年七十一卒於漢末。',
+    en: 'Style name Jiangong, of Wen in Henei, father of Sima Yi. Under Han he served as Intendant of the Capital and was known throughout the realm for stately bearing. He raised his sons in strict order; all eight rose to high office and were called the Eight "Da" of Sima. He died at seventy-one in the closing years of Han.',
+  },
+  'sima-you': {
+    era: { zh: '齊獻王', en: 'Prince Xian of Qi' },
+    zh: '字大猷,司馬昭次子,司馬炎之同母弟。少有令德,聲望出炎之上,司馬昭嘗欲立之為嗣。武帝忌之,封齊王出鎮。後召還京師,憂憤而卒,年三十六。死後三日,士民哭聲滿洛陽。',
+    en: 'Style name Dayou, second son of Sima Zhao and full brother of Sima Yan. Of luminous virtue from youth, his repute outshone his elder; Sima Zhao once thought of naming him heir. Emperor Wu, jealous, made him Prince of Qi and sent him to a frontier post. Later recalled to the capital, he died of grief and rage at thirty-six. For three days after his death the streets of Luoyang were filled with weeping.',
+  },
+  'sima-biao': {
+    zh: '字紹統,西晉宗室,亦為史家。撰《續漢書》八十卷,補光武以下事,後范曄修《後漢書》多本於此。學問博洽,清貧自守,卒於洛陽。',
+    en: 'Style name Shaotong, a Jin prince and also a historian. He compiled the Continued Han History in eighty fascicles, taking up the record from Emperor Guangwu onward; later Fan Ye, in writing his own Book of the Later Han, drew heavily upon it. Broad in learning and clean in poverty, he died at Luoyang.',
+  },
+  'sima-jun': {
+    era: { zh: '扶風武王', en: 'Prince Wu of Fufeng' },
+    zh: '字子臧,司馬懿之子,武帝叔父。鎮守關中,撫綏羌戎,有撫遠之略。性節儉,飲食衣服不貴於民。卒,武帝為之發哀,贈大司馬,謚武。',
+    en: 'Style name Zicang, son of Sima Yi and uncle of Emperor Wu. Garrisoned in Guanzhong, he soothed the Qiang and Rong tribes and showed long sight in distant policy. Frugal in life — his food and dress no finer than the common folk\'s. At his death Emperor Wu mourned in person; he was granted the title Grand Marshal and the posthumous name Wu.',
+  },
+  'sima-zhou': {
+    era: { zh: '琅琊武王', en: 'Prince Wu of Langya' },
+    zh: '字子將,司馬懿之子。征伐淮南,以振武威,鎮東將軍,封琅琊王。其孫即東晉中興之主元帝司馬睿。',
+    en: 'Style name Zijiang, son of Sima Yi. He campaigned in Huainan to extend the martial fame of the clan, and was made General Who Subdues the East and Prince of Langya. His grandson would become Emperor Yuan of the Eastern Jin, the restorer of the dynasty.',
+  },
+  'sima-liang': {
+    era: { zh: '汝南文成王', en: 'Prince Wencheng of Runan' },
+    zh: '字子翼,司馬懿四子。武帝臨終以之輔政,八王之亂首禍者。永平元年為汝南王;與楚王瑋構隙,瑋矯詔殺之,夷三族。',
+    en: 'Style name Ziyi, fourth son of Sima Yi. Emperor Wu on his deathbed named him regent; he was the first to bring on the War of Eight Princes. In 291 he was made Prince of Runan. Falling out with Prince Wei of Chu, he was killed and his clan exterminated by Wei\'s forged edict — three branches.',
+  },
+  'sima-lun': {
+    zh: '字子彝,司馬懿九子。性貪詐,八王之亂中弒賈后,廢惠帝自立。眾叛親離,旋為齊王冏所敗,賜死金墉。',
+    en: 'Style name Ziyi (the lower), ninth son of Sima Yi. Grasping and false, in the War of Eight Princes he killed Empress Jia, deposed Emperor Hui, and made himself emperor. Cast off by men and kin alike, he was quickly broken by Prince Jiong of Qi and was ordered to die at Jinyong palace.',
+  },
+  'sima-ai': {
+    era: { zh: '長沙厲王', en: 'Prince Li of Changsha' },
+    zh: '字士度,武帝之子。八王之亂中破成都王穎、河間王顒於洛陽,以孤軍守京城百日。後為東海王越所執,焚於金墉,年二十八。',
+    en: 'Style name Shidu, son of Emperor Wu. In the War of Eight Princes he broke the armies of Prince Ying of Chengdu and Prince Yong of Hejian outside Luoyang and held the capital with a lone force for a hundred days. Eventually seized by Prince Yue of Donghai, he was burned alive at Jinyong palace at twenty-eight.',
+  },
+  'sima-ying': {
+    era: { zh: '成都王', en: 'Prince of Chengdu' },
+    zh: '字章度,武帝之子。素得人望,八王亂中一度入洛專政。後敗於王浚之鮮卑騎,挾帝奔長安。永興二年被殺。',
+    en: 'Style name Zhangdu, son of Emperor Wu. Long popular with men, in the War of Eight Princes he held Luoyang for a season. Defeated by Wang Jun and his Xianbei riders, he carried the emperor in flight to Chang\'an. In 306 he was killed.',
+  },
+  'sima-jiong': {
+    era: { zh: '齊王', en: 'Prince of Qi' },
+    zh: '字景治,司馬攸之子。糾合宗室誅趙王倫,迎惠帝復位,專政洛陽。日日宴樂,失人心,為長沙王乂所殺。',
+    en: 'Style name Jingzhi, son of Sima You. He rallied the clan to put down Prince Lun of Zhao, restored Emperor Hui, and ruled at Luoyang. Day after day in banquet and music, he lost the hearts of men, and was killed by Prince Ai of Changsha.',
+  },
+  'sima-yong': {
+    era: { zh: '河間王', en: 'Prince of Hejian' },
+    zh: '字文載,司馬孚之孫。據關中,聯成都王穎攻洛陽。八王之亂中諸黨輾轉相殺,顒晚為南陽王模所迫,死於就國途中。',
+    en: 'Style name Wenzai, grandson of Sima Fu. Master of Guanzhong, he joined Prince Ying of Chengdu in assaulting Luoyang. As the eight princes devoured each other, he was at last cornered by Prince Mo of Nanyang and died on the road to his appanage.',
+  },
+  'sima-yu': {
+    zh: '字熙祖,惠帝太子。聰敏絕倫,賈后所忌,密召使醉,執手書反詞,廢為庶人,旋鴆殺於許昌。年二十三,天下冤之。',
+    en: 'Style name Xizu, crown prince of Emperor Hui. Of preternatural intellect, hated by Empress Jia. She had him drugged with wine and made to copy a seditious draft; he was deposed to commoner and then poisoned at Xuchang. Twenty-three years old — the realm called it a great injustice.',
+  },
+  'sima-zhong': {
+    era: { zh: '晉惠帝', en: 'Emperor Hui of Jin' },
+    zh: '字正度,武帝次子。生而蒙昧,聞蝦蟆之鳴問:「為官乎,為私乎?」 在位十七年,八王之亂起,五胡入華,西晉自此亂亡。',
+    en: 'Style name Zhengdu, second son of Emperor Wu. He came into the world dim. Hearing frogs at night, he asked: "Do they croak for the state, or for themselves?" Seventeen years he reigned: the War of Eight Princes broke out, the Five Hu poured into China, and the Western Jin fell into ruin.',
+  },
+  'wang-yuanji': {
+    era: { zh: '文明皇后', en: 'Empress Wenming' },
+    zh: '東海郯人,王肅之女,司馬昭夫人。聰明賢慧,有母儀之德。十五年生司馬炎，司馬攸。早察鍾會「見利忘義」必反,昭未深聽,後果應其言。武帝即位,尊為皇太后,壽五十二而崩。',
+    en: 'Of Tan in Donghai, daughter of Wang Su and wife of Sima Zhao. Brilliant and wise, she carried the dignity of a mother of state. Over fifteen years she bore Sima Yan and Sima You. She saw early that Zhong Hui — "greedy and faithless" — would rebel, but Sima Zhao did not heed; afterwards her word came true. Under Emperor Wu she was honored as Grand Empress Dowager. She lived to fifty-two.',
+  },
+  'lady-zhen': {
+    era: { zh: '甄夫人', en: 'Lady Zhen' },
+    zh: '中山無極人,容色傾城。初為袁紹次子袁熙之婦。曹操克鄴,曹丕納之,寵冠後宮,生明帝叡。後為郭夫人所讒,被賜死,以髮覆面，糠塞口而葬。明帝即位,追尊為文昭皇后。曹植《洛神賦》傳為悼之而作。',
+    en: 'Of Wuji in Zhongshan, of city-toppling beauty. She was first wife to Yuan Xi, second son of Yuan Shao. When Cao Cao took Ye, Cao Pi took her — and her favor outshone the rest of his harem. She bore the future Emperor Ming, Cao Rui. Later, slandered by Lady Guo, she was ordered to die; she was buried with her hair across her face and chaff stuffed in her mouth. When her son took the throne, she was raised to Empress Wenzhao. The "Rhapsody of the Goddess of the Luo" is said to have been Cao Zhi\'s elegy for her.',
+  },
+  'lady-sun': {
+    era: { zh: '孫夫人', en: 'Lady Sun' },
+    zh: '吳郡富春人,孫堅之女,孫權之妹。性剛猛,有兄風,侍婢百餘人皆執刀劍立侍。赤壁後孫劉聯姻,嫁劉備於荊州。後劉備入蜀,孫權密迎之歸,並欲攜阿斗,為趙雲、張飛截江奪回。傳夷陵之敗聞先主死訊,投江自盡。',
+    en: 'Of Fuchun in Wu, daughter of Sun Jian and younger sister of Sun Quan. Fierce as her brothers — over a hundred maids attended her with sword and blade at the belt. After Red Cliffs the Sun-Liu marriage alliance gave her to Liu Bei at Jingzhou. When Liu Bei marched into Shu, Sun Quan sent a covert boat to bring her back, and she tried to take the infant heir A-dou with her; Zhao Yun and Zhang Fei blocked the river and snatched him back. Tradition says that when she heard of Liu Bei\'s death after Yiling, she threw herself into the Yangzi.',
+  },
+  'lady-huang': {
+    zh: '黃承彥之女,諸葛亮之妻。容貌雖不甚美,然博通經史,巧思絕倫。能制木牛流馬，連弩之屬,助孔明定蜀興漢。傳襄陽童謠云:「莫作孔明擇婦,正得阿承醜女。」',
+    en: 'Daughter of Huang Chengyan, wife of Zhuge Liang. Her face was no great beauty, but she was learned in the classics and histories and matchless in craft. She built the wooden ox and gliding horse and the repeating crossbow, and helped Kongming pacify Shu and uphold the Han. A ditty in Xiangyang ran: "Choose no wife as Kongming did — he got A-Cheng\'s plain-faced daughter."',
+  },
+  'cai-wenji': {
+    era: { zh: '文姬', en: 'Wenji' },
+    zh: '陳留人,蔡邕之女,名琰字文姬。博學能文,通音律。漢末為南匈奴所擄,留居匈奴十二年,生二子。曹操念與蔡邕舊交,以金璧贖歸,作《悲憤詩》、《胡笳十八拍》傳世。後嫁董祀,以記憶補書千卷。',
+    en: 'Of Chenliu, daughter of Cai Yong, named Yan, styled Wenji. Vastly learned, a poet, and master of music. In the closing years of Han she was carried off by the Southern Xiongnu and lived among them for twelve years, bearing two sons. Cao Cao, mindful of his old friendship with her father, ransomed her back with gold and jade. She wrote the "Poem of Grief and Indignation" and the "Eighteen Songs of the Nomad Reed-Pipe," works that survive to this day. After her return she married Dong Si and restored a thousand lost volumes from memory.',
+  },
+  'bu-lianshi': {
+    zh: '臨淮淮陰人,孫權之寵姬。性不妒忌,所薦皆寵。生孫魯班，孫魯育二女。權數欲立為后,以未生子辭。卒,權追贈皇后位,有寵終身。',
+    en: 'Of Huaiyin in Linhuai, the beloved consort of Sun Quan. She was without jealousy — all the women she recommended became favorites in their turn. She bore Sun Luban and Sun Luyu. Sun Quan often wished to make her empress; she refused, having borne no son. After her death he posthumously raised her to that rank — the favor lasted all her life.',
+  },
+  'lady-bian': {
+    era: { zh: '武宣皇后', en: 'Empress Wuxuan' },
+    zh: '琅琊開陽人,出倡家。初為曹操妾,後正室丁夫人去,立為繼室。生曹丕，曹彰，曹植，曹熊四子。性節儉,衣食粗惡,謙抑無妒。曹丕即位尊為太后,武帝亦尊為太皇太后,壽七十一。',
+    en: 'Of Kaiyang in Langya, born to a family of musicians. First a concubine of Cao Cao, she was raised to chief wife when Lady Ding was dismissed. She bore Cao Pi, Cao Zhang, Cao Zhi, and Cao Xiong. Frugal and self-effacing, her dress and food were coarse and she nursed no jealousy. Under Cao Pi she was Grand Empress Dowager; under Emperor Ming, Great Grand Empress Dowager. She lived seventy-one years.',
+  },
+  'lady-gan': {
+    zh: '沛人,劉備之妾。沛縣聘為小妻,以禮自持,容色端麗。生後主劉禪。當陽長坂之難,趙雲懷阿斗於戰陣中救出,而甘夫人遂歿。蜀漢追尊為昭烈皇后。',
+    en: 'Of Pei, concubine of Liu Bei. Taken as junior wife at Pei county, she bore herself with dignity, beautiful and grave. She gave Liu Bei his heir, the future Second Emperor. In the rout at Changban she perished even as Zhao Yun bore the infant A-dou out through the host. She was posthumously raised to Empress Zhaolie of Shu Han.',
+  },
+  'lady-mi': {
+    zh: '徐州人,糜竺之妹,劉備夫人。當陽之難,抱阿斗投井而死,以全趙雲之志。趙雲推井牆而掩之,身負阿斗突出重圍。後人傷其節烈。',
+    en: 'Of Xuzhou, sister of Mi Zhu and wife of Liu Bei. In the rout at Changban, clutching the infant A-dou, she leapt down a well to free Zhao Yun from divided care. Zhao Yun pushed the well-wall over to cover her body and, with the child at his breast, cut his way out of the host. Later ages mourned her courage and resolve.',
+  },
+  'lady-wu': {
+    era: { zh: '吳國太', en: 'Lady Wu of the Sun House' },
+    zh: '吳郡吳人,吳夫人之妹。孫堅死後,孫策、孫權之姨母兼養母。性慈而識大體,當勸權「外事不決問周瑜,內事不決問張昭」。劉備過江娶親,於甘露寺相親,定孫劉之好。',
+    en: 'Of Wu county in Wujun, younger sister of Lady Wu the elder. After Sun Jian\'s death she was aunt and foster-mother to Sun Ce and Sun Quan. Kind in heart but firm in judgment, it was she who urged Sun Quan: "For matters abroad, ask Zhou Yu; for matters at home, ask Zhang Zhao." When Liu Bei crossed the river to wed, she met him at Ganlu Monastery and sealed the Sun-Liu match.',
+  },
+  'empress-guo': {
+    era: { zh: '文德皇后', en: 'Empress Wende' },
+    zh: '安平人,郭永之女,字女王。少而聰惠,曹操喜之,以賜曹丕。曹丕即位,與甄夫人爭寵,讒言甄被賜死。明帝立,亦無所出,養曹叡為己子。性節儉,卒於洛陽。',
+    en: 'Of Anping, daughter of Guo Yong, courtesy name "Nü-wang" — Queen of Women. Bright from youth, Cao Cao prized her and gave her to Cao Pi. After his accession she contested favor with Lady Zhen and her slanders brought about the latter\'s death by edict. Childless herself, she raised Cao Rui as her own. Frugal of life, she died at Luoyang.',
+  },
+  'empress-mao': {
+    zh: '河內人,明帝曹叡之后。少以姿色入宮。叡寵之既久,移情虞嬪,毛后怏怨,叡怒,賜死。',
+    en: 'Of Henei, empress of Cao Rui, Emperor Ming. She entered the palace through her beauty. After long favor, the emperor\'s love passed to a Lady Yu; she complained openly, and the emperor in his anger sent down a draught of poison.',
+  },
+  'empress-pan': {
+    zh: '會稽句章人,孫權之后。父為小吏,坐法死,姊妹沒入織室。權見而異之,納為宮人,寵冠後宮,生少子孫亮。權崩前立為皇后,旋為宮人所縊。',
+    en: 'Of Juzhang in Kuaiji, empress of Sun Quan. Her father, a petty clerk, had been condemned to death; she and her sister were thrown into the palace weaving rooms. Sun Quan saw her, marked her out, brought her in as a palace woman, and raised her above the rest of his harem. She bore the youngest son Sun Liang. Just before Sun Quan\'s death she was made empress; soon after she was strangled by palace women.',
+  },
+  'cao-jie': {
+    zh: '曹操之女,漢獻帝皇后。曹丕篡漢,遣使索玉璽,曹節怒擲璽於地曰:「上天不祚爾!」 隨獻帝出居山陽,後封山陽公夫人,於封地以禮自持,終其身。',
+    en: 'Daughter of Cao Cao, empress of Emperor Xian of Han. When her brother Cao Pi seized the throne and sent for the imperial seal, she flung it to the ground crying: "Heaven will deny you good fortune!" She went into exile with the deposed emperor to Shanyang and there, as Lady of the Duke of Shanyang, kept her dignity to the end of her life.',
+  },
+  'cao-hua': {
+    zh: '曹操之女,獻帝貴人。曹丕代漢,姊妹同居山陽公第,終身不再入魏宮。',
+    en: 'Daughter of Cao Cao, Honored Lady of Emperor Xian. After Cao Pi replaced Han, she lived with her sister in the household of the Duke of Shanyang and never again set foot in a palace of Wei.',
+  },
+  'sun-luban': {
+    era: { zh: '全公主', en: 'Princess Quan' },
+    zh: '字大虎,孫權與步夫人長女。初嫁周瑜子周循,早寡;再嫁全琮,號全公主。慧黠而善讒,與步家、全氏專弄宮闈,構陷太子孫和,廢之為庶人。後孫綝起,謀殺之事敗,流徙豫章而卒。',
+    en: 'Style name Dahu, elder daughter of Sun Quan and Lady Bu. First married to Zhou Xun, son of Zhou Yu, and widowed young; she married again to Quan Zong and became known as Princess Quan. Sharp and slanderous, with the Bu and Quan clans she dominated the inner palace and brought down the crown prince Sun He, sending him into commoner exile. When Sun Chen rose, her plot against him failed and she was exiled to Yuzhang, where she died.',
+  },
+  'sun-luyu': {
+    era: { zh: '朱公主', en: 'Princess Zhu' },
+    zh: '字小虎,孫權與步夫人次女,孫魯班之妹。嫁朱據,稱朱公主。性恬靜,與姊不睦,姊讒之,孫峻誅之於諸暨,夷其家。',
+    en: 'Style name Xiaohu, younger daughter of Sun Quan and Lady Bu, sister of Sun Luban. Married to Zhu Ju, she was called Princess Zhu. Quiet and gentle, she fell out with her elder sister, who slandered her; Sun Jun put her to death at Zhuji and wiped out her household.',
+  },
+  'lady-cai': {
+    zh: '襄陽人,劉表續弦。蔡瑁之姊。性嫉妒,陷劉琦,寵幼子劉琮。表卒,矯遺命立琮為主。曹操南下,琮降,蔡氏被遷青州,鬱卒。',
+    en: 'Of Xiangyang, second wife of Liu Biao and elder sister of Cai Mao. Jealous and grasping, she undermined the elder son Liu Qi and pushed the younger Liu Cong forward. At Liu Biao\'s death she forged the will and made Cong master; when Cao Cao came south, Cong surrendered, and the Cai clan was moved to Qingzhou, where she died in despair.',
+  },
+  'lady-ding': {
+    zh: '譙人,曹操原配。生曹昂。曹昂死於宛城張繡之變,丁夫人哭曰:「君殺吾子,而吾無恨乎!」 怒歸娘家。曹操親往迎,終不還。憂念終身,以妾卞夫人代為正室。',
+    en: 'Of Qiao, first wife of Cao Cao. She bore Cao Ang, who fell in the Wancheng mutiny. She wept: "You killed my son, how can I not grieve?" and stormed back to her natal house. Cao Cao went in person to bring her home; she would not return. He grieved for her ever after and at length raised his concubine Lady Bian as principal wife in her stead.',
+  },
+  'lady-xiahou': {
+    zh: '夏侯霸之女,夏侯淵從姪女。建安五年從父叔,於沛縣外採薪為張飛所獲,飛知其士族,納為夫人。生二女,皆為後主之后。',
+    en: 'Daughter of Xiahou Ba (the elder line) and great-niece of Xiahou Yuan. In the year 200, gathering firewood beyond Pei county, she was caught by Zhang Fei; learning that she was of gentry blood, he made her his wife. She bore two daughters, both of whom became empresses of Liu Shan.',
+  },
+  'he-hou': {
+    era: { zh: '何皇后', en: 'Empress He' },
+    zh: '南陽宛人,屠家之女,以采女入宮。生少帝劉辯。父屠夫,兄何進為大將軍。靈帝崩,進謀誅宦官,反為十常侍所殺,董卓入京,廢辯為弘農王,鴆殺之,並逼何后服毒。',
+    en: 'Of Wan in Nanyang, daughter of a butcher, entered the palace as a selected woman. She bore Liu Bian, the Young Emperor. Her father slaughtered cattle; her brother He Jin became Grand Marshal. When Emperor Ling died and He Jin plotted to wipe out the eunuchs, he was instead cut down by the Ten Attendants; Dong Zhuo entered the capital, deposed Bian as Prince of Hongnong and poisoned him, then forced the Empress He to drink the same draught.',
+  },
+  'dong-taihou': {
+    zh: '河間人,漢桓帝皇后,靈帝之母。攬權多年,與何后爭嫡。靈帝崩,何進當權,逼董太后歸河間,憂憤暴卒。',
+    en: 'Of Hejian, empress of Emperor Huan and mother of Emperor Ling of Han. For many years she held power and contested precedence with Empress He. After Emperor Ling died, He Jin in his rise forced her to return to Hejian, where she died of grief and rage.',
+  },
+  'wang-meiren': {
+    zh: '趙人,漢靈帝美人,陳留王劉協(後獻帝)生母。何皇后忌之,鴆之而死。靈帝痛悼,追尊為靈懷皇后。',
+    en: 'Of Zhao, a Lady of Honor of Emperor Ling and birth mother of Liu Xie, Prince of Chenliu — the future Emperor Xian. Empress He, jealous of her, poisoned her. The emperor mourned grievously and raised her posthumously to Empress Linghuai.',
+  },
+  'xiahou-hui': {
+    zh: '夏侯尚之女,司馬師之妻。少有姿色,聰慧過人。司馬師潛謀大事,以慧察其機,後為師所鴆,年二十四。其女即晉武帝皇后楊艷之姑。',
+    en: 'Daughter of Xiahou Shang and wife of Sima Shi. Beautiful and brilliant. When Sima Shi was laying his quiet schemes, she divined them through her wit; he had her poisoned at twenty-four. Her aunt-line led to Empress Yang Yan of Emperor Wu of Jin.',
+  },
+  'empress-mu': {
+    zh: '陳留人,吳壹之妹,劉備之繼后。先嫁劉瑁,瑁早卒。劉備入蜀,法正勸納之,以結益州大姓,遂立為后。後主即位尊為皇太后。蜀漢亡後遷洛陽,卒。',
+    en: 'Of Chenliu, sister of Wu Yi and second empress of Liu Bei. First married to Liu Mao, who died young. When Liu Bei entered Shu, Fa Zheng urged him to take her, to bind the great families of Yi province; she was made empress. Under the Second Emperor she was Grand Empress Dowager. After Shu fell she was moved to Luoyang and died there.',
+  },
+  'guan-yinping': {
+    zh: '關羽之女。父守荊州時,孫權遣使求婚為子,羽辱使曰:「虎女焉嫁犬子!」 婚事不成,孫劉遂裂。荊州陷,銀屏隨諸葛瞻入蜀。',
+    en: 'Daughter of Guan Yu. When her father held Jingzhou, Sun Quan sent envoys to propose marriage for his own son; Guan Yu insulted them: "Shall a tiger\'s daughter wed a dog\'s son?" The match fell through and the Sun-Liu alliance broke. After Jingzhou fell she went with Zhuge Zhan into Shu.',
+  },
+  'guan-suo': {
+    zh: '關羽第三子,演義人物。荊州陷時為母所匿,流落山中,得異人傳武藝。後南中起兵,助諸葛亮七擒孟獲,屢立戰功。其妻鮑三娘亦女中豪傑。',
+    en: 'Third son of Guan Yu (chiefly a Romance figure). When Jingzhou fell his mother hid him; he grew up in the hills and learned arms from a hermit master. Later he raised troops in the south and helped Zhuge Liang capture Meng Huo seven times. His wife Bao Sanniang was herself a heroine of the spear.',
+  },
+  'shamoke': {
+    zh: '五溪蠻王。劉備伐吳,沙摩柯助蜀,以鐵蒺藜骨朵見長。夷陵之火,死於亂軍。',
+    en: 'King of the Wuxi tribes. When Liu Bei marched against Wu, Shamoke joined the Shu host, famed for the iron-mace caltrop. He fell in the fire of Yiling, lost in the confusion of armies.',
+  },
+  'zhuge-zhan': {
+    era: { zh: '蜀漢忠烈', en: 'Loyal Martyr of Shu' },
+    zh: '字思遠,諸葛亮之子。父歿時年八歲,聰慧過人。長承父業,為衛將軍。鄧艾偷渡陰平,瞻領軍迎於綿竹,拒降書,戰死,年三十七。其子諸葛尚同陣陣亡。',
+    en: 'Style name Siyuan, son of Zhuge Liang. He was eight when his father died — bright beyond his years. He rose to be General of the Guard. When Deng Ai broke through at Yinping, Zhuge Zhan led the host out to meet him at Mianzhu, refused the surrender letter, and fell in battle at thirty-seven. His son Zhuge Shang died at his side.',
+  },
+  'zhuge-shang': {
+    zh: '諸葛亮之孫,諸葛瞻之子。年十九,綿竹之戰見父兵敗,歎曰:「父子荷國重恩,不早斬黃皓,以致敗國殄民,用生何為!」 拍馬入陣戰死。',
+    en: 'Grandson of Zhuge Liang and son of Zhuge Zhan. At nineteen, watching his father\'s army break at Mianzhu, he sighed: "Father and son have borne the kingdom\'s heavy favor — and we did not cut off Huang Hao early enough. The state is ruined, the people undone. What is life for?" He whipped his horse into the lines and died fighting.',
+  },
+  'zhuge-dan': {
+    zh: '字公休,諸葛亮族弟,曹魏鎮東大將軍。鎮淮南,治壽春。司馬昭專政,夏侯玄、李豐先後被誅,誕懼,起兵聚眾十餘萬,引吳為援。司馬昭親率二十六萬眾圍之,半歲城陷,誕被斬,夷三族。',
+    en: 'Style name Gongxiu, cousin of Zhuge Liang and Wei\'s General Who Pacifies the East. He garrisoned Huainan and ruled at Shouchun. When Sima Zhao seized power and Xiahou Xuan and Li Feng were killed one after the other, Zhuge Dan, in fear, raised more than a hundred thousand men and called Wu to his aid. Sima Zhao took the field at the head of two hundred and sixty thousand and laid siege; after half a year the city fell, Zhuge Dan was beheaded, and three branches of his clan were exterminated.',
+  },
+  'zhuge-xu-wei': {
+    zh: '字德林,諸葛誕之姪,魏將。曾從鄧艾、鍾會伐蜀,出武都道,被姜維所紿,失機而還,為鍾會收兵權。',
+    en: 'Style name Delin, nephew of Zhuge Dan, a Wei general. In the Shu campaign with Deng Ai and Zhong Hui he marched out by the Wudu road; Jiang Wei deceived him and he missed his chance, drawing back — at which Zhong Hui took his troops away from him.',
+  },
+  'zhuge-xuan': {
+    zh: '諸葛亮叔父。建安二年攜亮兄弟避亂荊州,依劉表。後病卒於襄陽,亮遂躬耕南陽。',
+    en: 'Uncle of Zhuge Liang. In 197, fleeing the chaos of the north, he brought the young Zhuge brothers to Jingzhou and took shelter with Liu Biao. He died of illness at Xiangyang, and Zhuge Liang thereafter tilled the fields at Nanyang.',
+  },
+  'liu-chen': {
+    era: { zh: '北地王', en: 'Prince of Beidi' },
+    zh: '蜀漢後主第五子。鄧艾兵臨成都,後主議降,北地王諶力諫:「縱不能保,當父子君臣背城一戰,同死社稷!」 諫不納,赴昭烈廟哭祭,殺妻子,自刎於廟前,蜀漢君臣聞之莫不痛悼。',
+    en: 'Fifth son of the Second Emperor of Shu. When Deng Ai brought his army to the gates of Chengdu and the emperor moved to surrender, the Prince of Beidi pressed his protest: "Even if we cannot hold, let father and son, lord and minister, stand back-to-wall and die together for the altars of state!" His words were not heeded. He went to the temple of the founding emperor, wept the rites, killed his wife and children, and cut his own throat at the temple gate; the court of Shu wept for him to a man.',
+  },
+  'pang-lin': {
+    zh: '龐統之弟。隨劉備入蜀,荊州陷,妻子被擄。後黃權降魏,林父子隨之,後復歸蜀。',
+    en: 'Younger brother of Pang Tong. He followed Liu Bei into Shu. When Jingzhou fell, his wife and children were taken captive. Later, when Huang Quan surrendered to Wei, Pang Lin and his sons went with him, and afterward returned to Shu.',
+  },
+  'zuo-ci': {
+    era: { zh: '烏角先生', en: 'Master Black-Horn' },
+    zh: '廬江人,字元放,著名方士。曹操召之而戲弄之,擲杯化魚,呵酒成霜。最終隱於山林,世傳得長生道。演義中多以神異之筆描其術。',
+    en: 'Of Lujiang, courtesy name Yuanfang, a famed Daoist adept. Summoned by Cao Cao, he made sport of him — flinging the cup to turn into a fish, hailing the wine to freeze into frost. He vanished into the hills at the last and folk said he had won the Tao of long life. The Romance heaps marvels upon his arts.',
+  },
+  'wutugu': {
+    zh: '南蠻烏戈國主。身長一丈二尺,披藤甲不畏刀箭。助孟獲拒蜀。諸葛亮以火攻焚於盤蛇谷,藤甲皆灰,孔明歎曰:「吾雖有功於社稷,必損陽壽矣!」',
+    en: 'Lord of the Wuge tribe of the southern barbarians. He stood twelve chi tall and wore rattan armor that turned both blade and arrow. He came to Meng Huo\'s aid against Shu. Zhuge Liang burned them in the Coiled-Snake Valley; the rattan plates turned to ash. Kongming sighed: "Though I do my state a service, I must shorten my own years for it."',
+  },
+  'mu-lu': {
+    zh: '南蠻八納洞主。能呼風喚雨,驅猛獸應敵。諸葛亮南征以木牛流馬制之,亦敗。',
+    en: 'Lord of the Bana grotto among the southern tribes. He could summon wind and rain and drive wild beasts against the enemy. Zhuge Liang met him with wooden ox and gliding horse on the southern campaign, and he too was broken.',
+  },
+  'duosi': {
+    zh: '禿龍洞主。據惡水四泉,蜀軍誤飲皆啞,瀕於潰。賴山中孟節指引,飲安樂泉而解,終擒朵思。',
+    en: 'Lord of the Tulong grotto. He held four poisoned springs in his fastness; the Shu soldiers who drank from them were struck dumb and the army nearly broke. Only when the mountain hermit Meng Jie guided them to the Sweet-Joy Spring were they restored — and Duosi was at last taken.',
+  },
+  'daolaidong': {
+    zh: '銀坑洞主帶來。孟獲之妻舅,助獲拒蜀。後被生擒。',
+    en: 'Daolai, lord of the Silver-Pit grotto. Brother-in-law to Meng Huo, he came to his aid against Shu. He was taken alive.',
+  },
+  'dongtu-na': {
+    zh: '建寧三洞元帥之一,先助孟獲拒蜀,被擒釋之,後與孟獲反目,為其所殺。',
+    en: 'One of the three commanders of the Jianning grottoes. He first helped Meng Huo against Shu and was caught and freed; later he fell out with Meng Huo and was killed by him.',
+  },
+  'ahui-nan': {
+    zh: '建寧元帥,孟獲部將。為馬岱所敗,降蜀。',
+    en: 'A Jianning commander, captain under Meng Huo. He was broken by Ma Dai and surrendered to Shu.',
+  },
+  'zhurong': {
+    era: { zh: '祝融夫人', en: 'Lady Zhurong' },
+    zh: '南蠻王孟獲之妻,自稱祝融氏後裔。善飛刀,百發百中。生擒蜀將張嶷、馬忠,與孟獲偕被諸葛亮七擒七縱。終隨夫歸附蜀漢。',
+    en: 'Wife of Meng Huo, claiming descent from the fire-god Zhurong. Mistress of the flying knife — never a missed mark. She took the Shu generals Zhang Ni and Ma Zhong alive. With her husband she was caught and freed by Zhuge Liang seven times and seven times again. In the end she submitted to Shu at her husband\'s side.',
+  },
+  'xi-zhicai': {
+    zh: '潁川人,曹操早年第一謀士。荀彧薦之,操甚禮之,參謀軍機。建安初病卒,曹操痛失股肱,書與荀彧曰:「自志才亡後,莫可與計事者。」 後荀彧復薦郭嘉。',
+    en: 'Of Yingchuan, Cao Cao\'s first chief counselor in his early years. Xun Yu recommended him; Cao Cao took him in great honor and shared the secrets of war. He died of illness early in the Jian\'an reign. Cao Cao, robbed of a right arm, wrote to Xun Yu: "Since Zhicai is gone, there is no one with whom I can plan." Soon after, Xun Yu recommended Guo Jia.',
+  },
+  'sima-hui': {
+    era: { zh: '水鏡先生', en: 'Master Water-Mirror' },
+    zh: '潁川陽翟人,字德操,世稱水鏡先生。隱於襄陽,不仕亂世,品評人物無虛。劉備走馬薦諸葛,水鏡語之:「臥龍鳳雛,得一可安天下。」 一語定三分。',
+    en: 'Of Yangzhai in Yingchuan, style name Decao, known to the world as Master Water-Mirror. He hid himself at Xiangyang, refusing office in a broken age, his judgments of men never wrong. When Liu Bei rode in search of talent, Water-Mirror told him: "The Sleeping Dragon and the Young Phoenix — gain but one of them, and the realm shall be at peace." One sentence settled the threefold split.',
+  },
+  'cui-zhouping': {
+    zh: '博陵人,崔烈之子,諸葛亮少年至交。隱於荊州,不仕。劉備三顧之中,先遇崔州平於郊野,聞其論古今治亂,知南陽果有高士。',
+    en: 'Of Boling, son of Cui Lie and a friend of Zhuge Liang\'s youth. He lived in seclusion at Jingzhou and would not serve. On Liu Bei\'s three visits, he first met Cui Zhouping out on the road; hearing him discourse on the rise and fall of past ages, Liu Bei knew that Nanyang held men of real stature.',
+  },
+  'pang-degong': {
+    zh: '襄陽人,龐統之叔父,司馬徽、諸葛亮皆敬之為師。隱於峴山之南,躬耕讀書。號諸葛亮為「臥龍」,龐統為「鳳雛」,司馬徽為「水鏡」,後世名士之名皆出此老。',
+    en: 'Of Xiangyang, uncle of Pang Tong; both Sima Hui and Zhuge Liang revered him as teacher. He hid himself south of Mount Xian, tilling and reading. It was he who named Zhuge Liang "Sleeping Dragon," Pang Tong "Young Phoenix," and Sima Hui "Water-Mirror" — the great names of the age all came from this old man.',
+  },
+  'zhou-buyi': {
+    zh: '南陽人,劉先之外甥。少有奇才,曹操稱「神童」。與曹沖友善,沖卒,操恐其智不可制,密遣人刺殺之,年僅十七。曹丕為之請命不得。',
+    en: 'Of Nanyang, nephew of Liu Xian. A prodigy from childhood; Cao Cao called him a "divine child." He was the friend of Cao Chong. When Chong died, Cao Cao, fearing that no one could ever rein in such an intellect, sent men in secret to kill him — at seventeen. Cao Pi pleaded for his life and was refused.',
+  },
+  'gao-tang-long': {
+    zh: '字升平,泰山平陽人。明帝時諫官,直言極諫,屢諍宮室之奢、籍田之廢。每有災異,必上書言天人感應。卒,明帝痛悼,贈關內侯。',
+    en: 'Style name Shengping, of Pingyang in Taishan. A remonstrator under Emperor Ming, he spoke without fear, repeatedly opposing the lavishness of the palaces and the lapse of the imperial plowing. At each natural omen he submitted memorials on the response between heaven and man. At his death the emperor mourned and granted him the rank of Marquis within the Pass.',
+  },
+  'lu-ji': {
+    era: { zh: '太康文宗', en: 'Master of Letters of Taikang' },
+    zh: '字士衡,吳郡華亭人,陸遜之孫,陸抗之子。吳亡後與弟陸雲入洛,文名滿天下,世稱「二陸入洛,三張(張載、張協、張亢)減價」。作《文賦》,為中國文論之宗。後從成都王穎,八王之亂兵敗,讒於孟玖,被殺,臨刑歎:「華亭鶴唳,可復聞乎!」',
+    en: 'Style name Shiheng, of Huating in Wu, grandson of Lu Xun and son of Lu Kang. After the fall of Wu he came with his brother Lu Yun to Luoyang, where their fame filled the realm — "the Two Lu came to the capital and the three Zhangs lost half their price." His Rhapsody on Literature is the foundation of Chinese literary criticism. Later, serving Prince Ying of Chengdu, he was beaten in the War of Eight Princes; slandered by Meng Jiu, he was put to death. At the block he sighed: "The cry of the cranes at Huating — shall I ever hear it again?"',
+  },
+  'gongsun-zan': {
+    era: { zh: '白馬將軍', en: 'The White Horse General' },
+    zh: '字伯珪,遼西令支人。少美姿貌,聲如洪鐘。鎮幽州,以白馬義從聞名,胡人畏之,語不敢南顧。後與袁紹相爭於河北,易京一戰,築樓百重以自固。袁紹圍數年,糧盡力竭,妻子俱被殺,自焚於樓上。',
+    en: 'Style name Bogui, of Lingzhi in Liaoxi. In youth handsome, his voice like a bronze bell. Garrisoned in You province, he was famed for his White Horse Volunteers; the Hu tribes feared him and would not look south. Later he fought Yuan Shao for the north. At Yijing he built a hundred terraces to hold him fast. Yuan Shao laid siege for years; grain and men failed, his wife and children were killed, and he set fire to the tower upon himself.',
+  },
+  'gongsun-du': {
+    zh: '字升濟,遼東襄平人。漢末為遼東太守,東伐高句麗,西擊烏丸,南取山東之地,自立為遼東侯。割據海東四十年,傳子康，淵,終為司馬懿所滅。',
+    en: 'Style name Shengji, of Xiangping in Liaodong. In the closing years of Han he served as governor of Liaodong; he marched east against Goguryeo, west against the Wuhuan, took land south of the Shandong sea, and made himself Marquis of Liaodong. For forty years his house held the eastern seaboard apart from the realm, passed to his son Kang and grandson Yuan — at last destroyed by Sima Yi.',
+  },
+  'kebi-neng': {
+    zh: '鮮卑大人。漢末興起於塞外,合諸部為一,擁眾十餘萬,屢犯邊塞。曹魏屢征不能克。終為幽州刺史王雄遣刺客所殺,鮮卑復散。',
+    en: 'Great Chief of the Xianbei. In the closing years of Han he rose beyond the wall, gathered many tribes into one, mustered a hundred thousand, and raided the border again and again. Wei marched out many times without success. In the end Wang Xiong, governor of You province, sent an assassin to kill him, and the Xianbei dispersed once more.',
+  },
+  'budugen': {
+    zh: '鮮卑小帥。中部鮮卑首領,軻比能興起前曾與相爭,後合而又離。屢通使於魏,封王,終為軻比能所殺。',
+    en: 'A lesser Xianbei chief who led the central tribes; before Kebi Neng\'s rise he fought him, then joined and parted again. He sent envoys often to Wei and was made a king. In the end Kebi Neng killed him.',
+  },
+  'beigong-boyu': {
+    zh: '羌人。中平元年起兵涼州,殺護羌校尉冷徵,推韓遂、邊章為主,擾關隴十餘年,為漢末涼州之亂之始。',
+    en: 'A Qiang chieftain. In 184 he raised troops in Liang province, killed the Colonel-Protector of the Qiang Leng Zheng, and put Han Sui and Bian Zhang at his head; the Guan-Long region was thrown into turmoil for more than a decade — the beginning of the Liang revolt in the closing years of Han.',
+  },
+  'ma-yuanyi': {
+    zh: '冀州黃巾大方渠帥。預謀內應洛陽,事洩,為馬日磾所誅,黃巾起義因之提前。',
+    en: 'Great commander of one of the Yellow Turban "fang" hosts in Jizhou. He plotted to rise as an inner agent at Luoyang; the plot was uncovered, and Ma Ridi put him to death — which forced the Yellow Turban uprising to break out earlier than planned.',
+  },
+  'cheng-yuanzhi': {
+    zh: '黃巾賊將。中平元年攻幽州涿郡,首遇劉、關、張三人桃園結義後初出茅廬之軍,為張飛所斬。',
+    en: 'A Yellow Turban captain. In 184 he attacked Zhuojun in You province and was the first foe of Liu Bei, Guan Yu, and Zhang Fei after the Peach Garden Oath — Zhang Fei cut him down.',
+  },
+  'zhang-shiping': {
+    zh: '中山販馬大商人。資助劉備起兵,贈以良馬五十匹，金銀五百兩、鑌鐵一千斤,劉備得以鍛雙股劍,招募鄉勇。',
+    en: 'A great horse-trader of Zhongshan. He gave Liu Bei his beginning — fifty good horses, five hundred taels of gold and silver, a thousand jin of fine iron — with which Liu Bei forged his twin swords and gathered the lads of his village.',
+  },
+  'liu-cong': {
+    zh: '荊州牧劉表幼子。表卒,蔡氏矯命立之為主。曹操南下,蔡瑁、蒯越力主降,琮從之,以荊州九郡降曹。後操遷之為青州刺史,途中為于禁所殺。',
+    en: 'Younger son of Liu Biao, Inspector of Jingzhou. When his father died, Lady Cai forged the will to set him up. As Cao Cao came south, Cai Mao and Kuai Yue pressed surrender; Liu Cong yielded, giving Cao Cao the nine commanderies of Jingzhou. Cao Cao moved him to Inspector of Qingzhou; on the road Yu Jin killed him.',
+  },
+  'liu-hong-em': {
+    era: { zh: '漢靈帝', en: 'Emperor Ling of Han' },
+    zh: '名劉宏,東漢第十二代皇帝。少時為解瀆亭侯,延熹年入承大統。在位二十一年,任用宦官十常侍,賣官鬻爵,徵收西園錢,致天下沸騰。中平元年黃巾大起,漢室自此一蹶不振。中平六年崩,年三十四。',
+    en: 'Personal name Liu Hong, twelfth emperor of the Eastern Han. As a boy he was Marquis of Jiedu Pavilion; he was raised to the throne in the Yanxi years. Twenty-one years he reigned, listening to the Ten Attendants — eunuchs — selling office and rank, levying the Western Park monies, until the realm boiled over. In 184 the Yellow Turbans rose, and Han never recovered. He died in 189, thirty-four years old.',
+  },
+  'wu-pu': {
+    zh: '廣陵人,華佗弟子。傳五禽戲之養生術,年九十餘耳目聰明,齒牙完堅。',
+    en: 'Of Guangling, disciple of Hua Tuo. He carried on the Five Animal Exercises of long life; at over ninety his eyes and ears were clear and his teeth still whole.',
+  },
+  'zhang-yu': {
+    zh: '蜀郡人。善風角占候,劉備入蜀重之。後因進讒言謂劉備:「明年歲在庚子,有大喪。」 劉備惡之,殺之,並燒其著《太玄》。後諸葛亮悔之,曰:「裕之死,亮之罪也。」',
+    en: 'Of Shujun. A master of the divination of the winds and stars, much honored by Liu Bei in Shu. Later, daring to whisper: "Next year, when Geng-zi comes round, there shall be a great mourning," he was killed by Liu Bei, who also burned his Taixuan writings. Zhuge Liang afterwards regretted it: "Yu\'s death was Liang\'s fault."',
+  },
+  'cao-anmin': {
+    zh: '曹操之姪。從操征張繡,宛城之變中,獻馬於操使脫險,自死於亂兵。',
+    en: 'Nephew of Cao Cao. He marched with him against Zhang Xiu. In the Wancheng mutiny he gave his own horse to Cao Cao for escape and died in the chaos of weapons.',
+  },
+  'cao-de': {
+    zh: '曹操之弟,字德祖。徐州之難,隨父曹嵩避禍,為陶謙所遣張闓所殺,曹操由此屠徐州。',
+    en: 'Younger brother of Cao Cao, style name Dezu. In the Xuzhou disaster he fled with their father Cao Song; Zhang Kai, sent by Tao Qian, killed him — and Cao Cao, in fury, put Xuzhou to the sword.',
+  },
+  'fu-shi-ren': {
+    zh: '蜀漢將。守公安,與糜芳同。呂蒙白衣渡江,二人不戰而降。關羽腹背受敵,荊州盡失。後劉備伐吳,士仁懼罪,殺糜芳投先主而被斬。',
+    en: 'A Shu officer who held Gong\'an together with Mi Fang. When Lü Meng made his white-robed crossing, both yielded without a blow; Guan Yu was caught front and back and Jingzhou was lost. Later, in Liu Bei\'s campaign against Wu, Shi Ren in fear killed Mi Fang and offered his head to the founding emperor — and was himself beheaded for it.',
+  },
+  'wang-zifu': {
+    zh: '漢室忠臣。建安五年,與董承、種輯等受獻帝衣帶詔,謀誅曹操。事敗,夷三族。',
+    en: 'A loyal minister of Han. In 200, with Dong Cheng and Zhong Ji, he received the secret edict in the silk sash from Emperor Xian and laid the plot against Cao Cao. The plot was uncovered; three branches of his clan were exterminated.',
+  },
+  'hu-ban': {
+    zh: '荊州人,胡華之子。關羽過五關時,胡華以家書托之,班遇關羽於滎陽,夜半放羽出城,以全父友之交。',
+    en: 'Of Jingzhou, son of Hu Hua. When Guan Yu crossed the five passes, Hu Hua had entrusted him with a family letter; Hu Ban met him at Xingyang and at midnight let him out of the city, honoring his father\'s friendship.',
+  },
+  'yan-baihu': {
+    zh: '吳郡賊帥,自號東吳德王。據吳會數縣,孫策渡江,屢被破擊,終被殺。',
+    en: 'A bandit chief of Wu commandery who styled himself "Virtuous King of the East Wu." He held several counties; when Sun Ce crossed the river he was broken again and again, and at last killed.',
+  },
+  'yan-yu': {
+    zh: '嚴白虎之弟。從兄拒孫策,被孫策一矛刺殺。',
+    en: 'Younger brother of Yan Baihu. He fought with his elder against Sun Ce and was killed by Sun Ce\'s spear in a single thrust.',
+  },
+  'sun-jing': {
+    zh: '字幼台,孫堅之弟。從堅、策征戰江東。獻計策破王朗,大破會稽,功著吳國。後辭官歸隱富春。',
+    en: 'Style name Youtai, younger brother of Sun Jian. He campaigned in Jiangdong with Sun Jian and Sun Ce, advised the strategy that broke Wang Lang, and shattered Kuaiji — great merit for the house of Wu. In old age he resigned office and retired to Fuchun.',
+  },
+  'sun-jiao': {
+    zh: '字叔朗,孫堅弟孫靜之子,孫權堂兄。隨呂蒙襲荊州,有功。性豪健,飲酒擊劍,自比甘寧。',
+    en: 'Style name Shulang, son of Sun Jing and cousin of Sun Quan. He took part with Lü Meng in the seizure of Jingzhou and won credit. Bold and strong, he loved wine and the sword; he compared himself to Gan Ning.',
+  },
+  'sun-lu': {
+    zh: '孫權第三子。為建昌侯,早卒,年二十。',
+    en: 'Third son of Sun Quan. Made Marquis of Jianchang, he died young at twenty.',
+  },
+  'sun-ba': {
+    zh: '孫權第四子,封魯王。與太子和爭嫡,搆訌經年,號「二宮之爭」,東吳元氣大傷。權怒,賜霸死。',
+    en: 'Fourth son of Sun Quan, Prince of Lu. He contested the heirship with the crown prince Sun He; their wrangling — the "Strife of the Two Palaces" — lasted years and drained the strength of Wu. Sun Quan in his rage ordered him to die.',
+  },
+  'sun-fen': {
+    zh: '孫權第五子,封齊王。性兇暴,多殺戮。後孫綝廢之為庶人,卒被誅。',
+    en: 'Fifth son of Sun Quan, Prince of Qi. Cruel and bloody. Sun Chen later reduced him to commoner and at last had him killed.',
   },
   // ─── 歷代名將 (Historical Officers, 14 dynasties) ───
   ...HISTORICAL_BIOGRAPHIES,
