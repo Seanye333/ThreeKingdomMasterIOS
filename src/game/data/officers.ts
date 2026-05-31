@@ -2150,6 +2150,7 @@ const CANONICAL_ITEMS_SECONDARY: Record<string, string[]> = {
   ],
   'hist-li-jing': [
     'wei-gong-bing-fa',    // 衛公兵法
+    'li-jing-bing-yin',
   ],
   'hist-wen-tianxiang': [
     'guo-ling-ding-yang',  // 過零丁洋
@@ -2230,6 +2231,7 @@ const CANONICAL_ITEMS_SECONDARY: Record<string, string[]> = {
   'hist-han-yu': [
     'han-yu-shu-tie',      // 韓愈手帖
     'jian-ying-fo-gu-biao',// 諫迎佛骨表
+    'han-yu-wen-ji',
   ],
   'hist-liu-zongyuan': [
     'liu-zongyuan-mo-yan', // 柳宗元永州硯
@@ -2258,6 +2260,7 @@ const CANONICAL_ITEMS_SECONDARY: Record<string, string[]> = {
   ],
   'hist-zhao-mengfu': [
     'zhao-mengfu-shu-tie', // 趙孟頫書帖
+    'zhao-mengfu-qiu-jiao-ma',
   ],
   'hist-mozi': [
     'zhi-chu-gong-song',   // 止楚攻宋
@@ -2475,6 +2478,7 @@ const CANONICAL_ITEMS_SECONDARY: Record<string, string[]> = {
   ],
   'hist-zhang-heng': [
     'hun-tian-yi',         // 渾天儀
+    'zhang-heng-hun-yi',
   ],
   'hist-wang-wei': [
     'shan-ju-qiu-ming',    // 山居秋暝
@@ -2505,6 +2509,7 @@ const CANONICAL_ITEMS_SECONDARY: Record<string, string[]> = {
   ],
   'hist-huo-qubing': [
     'feng-lang-ju-xu',     // 封狼居胥
+    'huo-qubing-jia',
   ],
   'hist-li-guang': [
     'tao-li-bu-yan',       // 桃李不言下自成蹊
@@ -2542,6 +2547,7 @@ const CANONICAL_ITEMS_SECONDARY: Record<string, string[]> = {
   ],
   'hist-xie-an': [
     'xie-an-wei-qi',
+    'xie-an-bao-jian',
   ],
   'hist-wang-meng': [
     'wang-meng-bu-yi',
@@ -2566,6 +2572,54 @@ const CANONICAL_ITEMS_SECONDARY: Record<string, string[]> = {
   ],
   'hist-yongzheng': [
     'yongzheng-mi-zhe',
+  ],
+  'yan-yan': [
+    'yan-yan-shou-zhang',
+  ],
+  'ma-teng': [
+    'ma-teng-bao-jian',
+  ],
+  'han-sui': [
+    'han-sui-jin-yin',
+  ],
+  'gongsun-zan': [
+    'gongsun-zan-bai-pao',
+  ],
+  'huang-zu': [
+    'huang-zu-jin-gong',
+  ],
+  'tian-yu': [
+    'tian-yu-chao-fu',
+  ],
+  'qian-zhao': [
+    'qian-zhao-tong-yin',
+  ],
+  'guo-huai': [
+    'guo-huai-yin',
+  ],
+  'zhuge-zhan': [
+    'zhuge-zhan-pei-jian',
+  ],
+  'hist-ji-zha': [
+    'ji-zha-pei-jian',
+  ],
+  'hist-wei-qing': [
+    'wei-qing-hu-fu',
+  ],
+  'hist-shi-le': [
+    'shi-le-tong-fu',
+  ],
+  'hist-yuchi-gong': [
+    'yuchi-gong-bian',
+  ],
+  'hist-liu-yuxi': [
+    'liu-yuxi-mo-yan',
+  ],
+  'hist-shen-kuo': [
+    'shen-kuo-xun-tian',
+  ],
+  'hist-wen-zhengming': [
+    'wen-zhengming-shu-tie',
   ],
 };
 
