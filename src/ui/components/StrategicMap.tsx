@@ -1031,9 +1031,12 @@ function drawCityLayer(
       drawCapitalSeal(ctx, cx + 7, cy - 7);
     }
 
-    // Single-line label, smaller. EN name & extra icons hidden at default
-    // zoom to reduce clutter (they were RTK14-style maximum-density).
-    drawCalligraphyLabel(ctx, city.name.zh, cx, cy + 7, 9, '#f0e0b0');
+    // Permanent city label — sized by importance so the map stays readable
+    // at default zoom. Capitals biggest, then large cities, then ordinary
+    // ones. Heavy outline keeps labels legible over busy terrain.
+    const labelSize = isCapital ? 17 : city.population >= 150_000 ? 14 : 12;
+    const labelColor = isCapital ? '#ffe9a8' : '#f0e0b0';
+    drawCalligraphyLabel(ctx, city.name.zh, cx, cy + 10, labelSize, labelColor);
   }
 }
 
