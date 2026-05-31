@@ -25,6 +25,49 @@ const KIND_COLOR: Record<Item['kind'], string> = {
   book:     '#7a9a5a',
 };
 
+type SortKey =
+  | 'name'
+  | 'kind'
+  | 'total'
+  | 'leadership'
+  | 'war'
+  | 'intelligence'
+  | 'politics'
+  | 'charisma'
+  | 'origin';
+
+const SORT_LABEL_ZH: Record<SortKey, string> = {
+  name:         '名稱',
+  kind:         '類別',
+  total:        '總計',
+  leadership:   '統率',
+  war:          '武力',
+  intelligence: '知力',
+  politics:     '政治',
+  charisma:     '魅力',
+  origin:       '出處',
+};
+const SORT_LABEL_EN: Record<SortKey, string> = {
+  name:         'Name',
+  kind:         'Kind',
+  total:        'Total',
+  leadership:   'LED',
+  war:          'WAR',
+  intelligence: 'INT',
+  politics:     'POL',
+  charisma:     'CHA',
+  origin:       'From',
+};
+
+const KIND_ORDER: Record<Item['kind'], number> = {
+  weapon: 0, horse: 1, treasure: 2, book: 3,
+};
+
+function itemTotal(item: Item): number {
+  const e = item.effects;
+  return (e.leadership ?? 0) + (e.war ?? 0) + (e.intelligence ?? 0) + (e.politics ?? 0) + (e.charisma ?? 0);
+}
+
 /**
  * Standalone all-items browser. Usable from the title screen without a
  * game state, since it reads only from the static ITEMS catalog.
@@ -32,13 +75,26 @@ const KIND_COLOR: Record<Item['kind'], string> = {
 export function ItemsBrowser({ onClose }: Props) {
   const [kind, setKind] = useState<Kind>('all');
   const [search, setSearch] = useState('');
+  const [sortKey, setSortKey] = useState<SortKey>('total');
+  const [sortDir, setSortDir] = useState<'desc' | 'asc'>('desc');
   const t = useT();
   const lang = useLanguage();
+  const SORT_LABEL = lang === 'en' ? SORT_LABEL_EN : SORT_LABEL_ZH;
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'));
+    } else {
+      setSortKey(key);
+      // Name and origin default to ascending; stats and total default to desc.
+      setSortDir(key === 'name' || key === 'origin' || key === 'kind' ? 'asc' : 'desc');
+    }
+  };
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
     const qZh = search.trim();
-    return ITEMS.filter((i) => {
+    const filtered = ITEMS.filter((i) => {
       if (kind !== 'all' && i.kind !== kind) return false;
       if (!q) return true;
       return (
@@ -47,7 +103,30 @@ export function ItemsBrowser({ onClose }: Props) {
         i.description.toLowerCase().includes(q)
       );
     });
-  }, [kind, search]);
+
+    const primary = (a: Item, b: Item): number => {
+      if (sortKey === 'name') {
+        // Sort by zh name (Unicode codepoint order) for Chinese, en for English
+        if (lang === 'en') return a.name.en.localeCompare(b.name.en);
+        return a.name.zh.localeCompare(b.name.zh, 'zh-CN');
+      }
+      if (sortKey === 'kind') return KIND_ORDER[a.kind] - KIND_ORDER[b.kind];
+      if (sortKey === 'origin') {
+        const ao = a.originCityId ?? '';
+        const bo = b.originCityId ?? '';
+        return ao.localeCompare(bo);
+      }
+      if (sortKey === 'total') return itemTotal(a) - itemTotal(b);
+      // Stat keys: leadership/war/intelligence/politics/charisma
+      return (a.effects[sortKey] ?? 0) - (b.effects[sortKey] ?? 0);
+    };
+    // Tie-breaker: total stats then name
+    const cmp = (a: Item, b: Item): number =>
+      primary(a, b) ||
+      (itemTotal(a) - itemTotal(b)) ||
+      a.name.zh.localeCompare(b.name.zh, 'zh-CN');
+    return [...filtered].sort((a, b) => (sortDir === 'desc' ? -cmp(a, b) : cmp(a, b)));
+  }, [kind, search, sortKey, sortDir, lang]);
 
   return (
     <div
@@ -85,7 +164,10 @@ export function ItemsBrowser({ onClose }: Props) {
           <div>
             <div style={{ fontSize: '1.4rem', color: '#d4a84a', letterSpacing: '0.3rem' }}>{t('名品', 'Items')}</div>
             <div style={{ fontSize: '0.85rem', color: '#8a7050', fontStyle: 'italic' }}>
-              {t(`收錄 ${ITEMS.length} 件`, `Famous Items · ${ITEMS.length} catalogued`)}
+              {t(
+                `顯示 ${visible.length} / ${ITEMS.length}`,
+                `${visible.length} of ${ITEMS.length} shown`,
+              )}
             </div>
           </div>
           <button
@@ -138,6 +220,38 @@ export function ItemsBrowser({ onClose }: Props) {
               minWidth: 200,
             }}
           />
+        </div>
+
+        <div
+          style={{
+            display: 'flex', gap: '0.4rem', padding: '0.5rem 1.5rem',
+            borderBottom: '1px solid #4a3520', flexWrap: 'wrap', alignItems: 'center',
+          }}
+        >
+          <span style={{ fontSize: '0.75rem', color: '#8a7050', letterSpacing: '0.1rem', marginRight: '0.3rem' }}>
+            {t('排序', 'Sort')}
+          </span>
+          {(['name', 'kind', 'total', 'leadership', 'war', 'intelligence', 'politics', 'charisma', 'origin'] as SortKey[]).map((k) => {
+            const active = sortKey === k;
+            return (
+              <button
+                key={k}
+                onClick={() => handleSort(k)}
+                style={{
+                  background: active ? '#3a2d20' : 'transparent',
+                  border: '1px solid ' + (active ? '#d4a84a' : '#4a3520'),
+                  color: active ? '#d4a84a' : '#8a7050',
+                  padding: '0.25rem 0.7rem',
+                  fontSize: '0.78rem',
+                  fontFamily: 'inherit',
+                  cursor: 'pointer',
+                  letterSpacing: '0.08rem',
+                }}
+              >
+                {SORT_LABEL[k]} {active && (sortDir === 'desc' ? '↓' : '↑')}
+              </button>
+            );
+          })}
         </div>
 
         <div
