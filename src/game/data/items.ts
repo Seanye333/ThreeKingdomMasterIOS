@@ -3043,15 +3043,6 @@ export const ITEMS: Item[] = [
     descriptionZh: "諸葛亮白羽扇。運籌帷幄之物，千古軍師之像。",
     effects: { intelligence: 7, leadership: 4 },
   },
-  {
-    id: 'lian-nu',
-    name: { en: 'Repeating Crossbow', zh: '諸葛連弩' },
-    kind: 'weapon',
-    originCityId: 'chengdu',
-    description: "Zhuge Liang's repeating crossbow — one drawing of the string sent ten bolts in succession. The Wei feared every march up Mount Qi for it.",
-    descriptionZh: "諸葛亮改良連弩，一張十矢。北伐之利器。",
-    effects: { war: 7, leadership: 3 },
-  },
   // 唐
   {
     id: 'li-bai-poem-scroll',
@@ -3734,15 +3725,6 @@ export const ITEMS: Item[] = [
     effects: { war: 5, intelligence: 6, leadership: 4 },
   },
   {
-    id: 'kaishan-fu',
-    name: { en: "Xu Huang's Mountain-Splitter", zh: '開山大斧' },
-    kind: 'weapon',
-    originCityId: 'wancheng',
-    description: "Xu Huang's great axe — at Fancheng he drove through the encirclement and broke Guan Yu's last hope. Cao Cao said his march was that of Zhou Yafu reborn.",
-    descriptionZh: "徐晃開山大斧。樊城之戰,長驅直入,連破關羽諸屯。曹操比之周亞夫。",
-    effects: { war: 8, leadership: 5 },
-  },
-  {
     id: 'miao-cai-fei-qi',
     name: { en: "Xiahou Yuan's Lightning Cavalry", zh: '妙才飛騎' },
     kind: 'treasure',
@@ -3788,16 +3770,6 @@ export const ITEMS: Item[] = [
     effects: { war: 7, leadership: 4 },
   },
   // 春秋
-  {
-    id: 'lunyu',
-    name: { en: 'The Analects', zh: '論語' },
-    kind: 'book',
-    originCityId: 'linzi',
-    description: "Confucius's recorded sayings — 'At fifteen I set my heart on learning; at seventy I could follow what my heart desired without crossing the line.' The foundation of two thousand years of Chinese governance.",
-    descriptionZh: "孔子言行錄。「吾十有五而志於學,七十而從心所欲不踰矩」。儒學第一經。",
-    effects: { intelligence: 8, politics: 8, charisma: 5 },
-    grants: { policy: 'rites' },
-  },
   {
     id: 'mojing',
     name: { en: 'The Mohist Canon', zh: '墨經' },
@@ -4792,15 +4764,6 @@ export const ITEMS: Item[] = [
     effects: { war: 6, leadership: 5 },
   },
   // 春秋
-  {
-    id: 'yi-jing',
-    name: { en: 'The Book of Changes', zh: '周易' },
-    kind: 'book',
-    originCityId: 'haojing',
-    description: "King Wen of Zhou, imprisoned at Youli, brooded over the sixty-four hexagrams and arranged them into the book that would shape Chinese thought for three thousand years. The deepest single text in the Chinese canon.",
-    descriptionZh: "周文王演《易》於羑里。六十四卦,中華思想之源。",
-    effects: { intelligence: 10, politics: 6, charisma: 5 },
-  },
   {
     id: 'er-tao-sha-san-shi',
     name: { en: 'Two Peaches that Killed Three Warriors', zh: '二桃殺三士' },
@@ -10165,15 +10128,6 @@ export const ITEMS: Item[] = [
   },
   // 玉器
   {
-    id: 'yu-bi',
-    name: { en: 'Ritual Jade Disc', zh: '玉璧' },
-    kind: 'treasure',
-    originCityId: 'haojing',
-    description: "The flat circular ritual jade — central hole, used in Zhou state sacrifices to Heaven. Color and size graded by office: blue for the king, white for the nobles. The He Shi Bi famously was a particularly large bi.",
-    descriptionZh: "玉璧。圓形扁平,中孔。周代祭天禮器,大小色按爵分。和氏璧即玉璧之大者。",
-    effects: { politics: 6, charisma: 6 },
-  },
-  {
     id: 'yu-cong',
     name: { en: 'Ritual Jade Tube', zh: '玉琮' },
     kind: 'treasure',
@@ -10657,24 +10611,6 @@ export const ITEMS: Item[] = [
     effects: { intelligence: 9, charisma: 7 },
   },
   // 儒家經
-  {
-    id: 'shi-jing',
-    name: { en: 'Book of Songs', zh: '詩經' },
-    kind: 'book',
-    originCityId: 'haojing',
-    description: "The earliest collection of Chinese poetry — 305 poems from the Western Zhou through the early Spring and Autumn. Confucius is traditionally credited with selecting them from a pool of three thousand. The Mao Commentary became the standard text.",
-    descriptionZh: "詩經三百零五篇。西周至春秋初五百年詩歌。傳孔子刪三千存三百。毛詩為定本。儒家五經之首。",
-    effects: { intelligence: 8, charisma: 8 },
-  },
-  {
-    id: 'shang-shu',
-    name: { en: 'Book of Documents', zh: '尚書' },
-    kind: 'book',
-    originCityId: 'haojing',
-    description: "The earliest collection of Chinese political documents — edicts, speeches, and addresses from Yao and Shun through the early Spring and Autumn. The Old Text and New Text controversies divided Confucian schools for two thousand years.",
-    descriptionZh: "尚書。古中華政治文書集。堯舜至春秋初。古文今文之爭分儒家學派二千年。五經之一。",
-    effects: { politics: 9, intelligence: 7 },
-  },
   {
     id: 'li-ji',
     name: { en: 'Book of Rites', zh: '禮記' },
