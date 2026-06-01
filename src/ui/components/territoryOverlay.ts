@@ -116,6 +116,17 @@ function computeOverlay(
       }
       if (best >= 0 && ring >= 1) break;
     }
+    // Fallback: a hex farther than the ring reach from every bucket (remote
+    // frontier / far west) still gets its true nearest, so no land hex is
+    // left unpainted (which would show the bare parchment as a "white" cell).
+    if (best < 0) {
+      for (let i = 0; i < territories.length; i++) {
+        const ddx = x - tx[i];
+        const ddy = y - ty[i];
+        const d = ddx * ddx + ddy * ddy;
+        if (d < bestD) { bestD = d; best = i; }
+      }
+    }
     return best;
   };
 
