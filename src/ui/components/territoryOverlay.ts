@@ -8,20 +8,18 @@
 
 import type { City, EntityId, Force } from '../../game/types';
 import { generateTerritories, type Territory } from '../../game/data/territories';
+import { isLand } from '../../game/data/geography';
 
 const W = 1000;
 const H = 720;
 const NEUTRAL_COLOR = '#5a4530';
-const FILL_ALPHA = 0.5;
+const FILL_ALPHA = 0.4;
 
 // Hex grid geometry (pointy-top). HEX_SIZE = centre→corner.
 const HEX_SIZE = 19;
 const SQRT3 = Math.sqrt(3);
 const HEX_W = SQRT3 * HEX_SIZE;        // horizontal centre spacing
 const HEX_V = 1.5 * HEX_SIZE;          // vertical centre spacing
-// A hex only paints if a territory centroid is within this radius —
-// keeps oceans / deep frontier clear instead of flooding the whole map.
-const PAINT_RADIUS_2 = 82 * 82;
 
 let cachedCanvas: HTMLCanvasElement | null = null;
 let cachedSignature = '';
@@ -93,15 +91,21 @@ function computeOverlay(
     const xOff = (((row % 2) + 2) % 2) * (HEX_W / 2);
     const line: Hex[] = [];
     for (let col = -1, x = -HEX_W + xOff; x < W + HEX_W; col++, x = col * HEX_W + xOff) {
+      // Only land hexes paint — the SE ocean wedge stays clear. Whole
+      // landmass is divided among forces by nearest-territory (Voronoi),
+      // RTK-XIV style, instead of small blobs around each city.
+      const onLand = isLand(x, y, 2);
       let best = -1;
       let bestD = Infinity;
-      for (let i = 0; i < territories.length; i++) {
-        const dx = x - tx[i];
-        const dy = y - ty[i];
-        const d = dx * dx + dy * dy;
-        if (d < bestD) { bestD = d; best = i; }
+      if (onLand) {
+        for (let i = 0; i < territories.length; i++) {
+          const dx = x - tx[i];
+          const dy = y - ty[i];
+          const d = dx * dx + dy * dy;
+          if (d < bestD) { bestD = d; best = i; }
+        }
       }
-      const painted = best >= 0 && bestD <= PAINT_RADIUS_2;
+      const painted = onLand && best >= 0;
       line.push({ cx: x, cy: y, owner: painted ? ownerOf[best] : null, painted });
     }
     grid.push(line);
