@@ -1146,8 +1146,10 @@ function City3D({
           </Html>
         </>
       )}
-      {/* HTML label — Chinese name + strength bars */}
-      <Html position={[0, height + 0.6, 0]} center distanceFactor={8} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
+      {/* HTML label — Chinese name + strength bars. drei scales Html by
+       *  ~distanceFactor/distance, so a smaller distanceFactor keeps the
+       *  label from ballooning when the camera zooms in close. */}
+      <Html position={[0, height + 0.6, 0]} center distanceFactor={5} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
         <div style={{
           fontFamily: 'Songti SC, serif',
           textAlign: 'center',

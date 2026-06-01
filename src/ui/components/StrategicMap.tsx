@@ -171,7 +171,7 @@ export function StrategicMap() {
         const ov = coordOverrides[c.id];
         effectiveCities[c.id] = ov ? { ...c, coords: ov } : c;
       }
-      drawMap(ctx, effectiveCities, forces, officers, territoryOwnership, selectedCityId, pendingCommands, date, bgImageRef.current);
+      drawMap(ctx, effectiveCities, forces, officers, territoryOwnership, selectedCityId, pendingCommands, date, bgImageRef.current, viewport.scale);
       // Hovered territory cell outline (drawn in world space, above the grid).
       const hh = hoverHexRef.current;
       if (hh) {
@@ -985,6 +985,7 @@ function drawMap(
   pendingCommands: Record<EntityId, Command>,
   date: GameDate,
   bgImage: HTMLImageElement | null,
+  scale: number,
 ) {
   // Sea / void
   ctx.fillStyle = '#0a0e16';
@@ -1001,7 +1002,7 @@ function drawMap(
     drawProvinceTints(ctx, cities);
     drawTerrainGlyphs(ctx, cities);
     // Roads + march arrows + cities are drawn by the shared block below.
-    drawCityLayer(ctx, cities, forces, officers, selectedCityId, pendingCommands);
+    drawCityLayer(ctx, cities, forces, officers, selectedCityId, pendingCommands, scale);
     return;
   }
 
@@ -1150,7 +1151,7 @@ function drawMap(
   // ── Ambient terrain glyphs near each city ──
   drawTerrainGlyphs(ctx, cities);
 
-  drawCityLayer(ctx, cities, forces, officers, selectedCityId, pendingCommands);
+  drawCityLayer(ctx, cities, forces, officers, selectedCityId, pendingCommands, scale);
 
   // (Compass rose and decorative border are drawn separately in
   //  drawOverlay so they don't pan/zoom with the map.)
@@ -1164,6 +1165,7 @@ function drawCityLayer(
   officers: Record<EntityId, Officer>,
   selectedCityId: EntityId | null,
   pendingCommands: Record<EntityId, Command>,
+  viewScale: number,
 ) {
   // Adjacency lines — curving Bezier "trade roads" instead of straight lines.
   ctx.strokeStyle = 'rgba(180, 140, 90, 0.55)';
@@ -1246,7 +1248,10 @@ function drawCityLayer(
     // ones. Heavy outline keeps labels legible over busy terrain.
     const labelSize = isCapital ? 17 : city.population >= 150_000 ? 14 : 12;
     const labelColor = isCapital ? '#ffe9a8' : '#f0e0b0';
-    drawCalligraphyLabel(ctx, city.name.zh, cx, cy + 10, labelSize, labelColor);
+    // Keep labels a constant screen size once zoomed in (viewScale > 1) so
+    // they don't balloon; below 1× they shrink with the map as usual.
+    const effLabel = labelSize / Math.max(1, viewScale);
+    drawCalligraphyLabel(ctx, city.name.zh, cx, cy + 10, effLabel, labelColor);
   }
 }
 
