@@ -10,7 +10,7 @@ import type {
   SeasonReport,
 } from '../types';
 import { OATH_BONDS, type OathBond } from '../data/bonds';
-import { generateTerritories, computeMarchRoute } from '../data/territories';
+import { generateTerritories, computeMarchRoute, type Territory } from '../data/territories';
 import { advanceSeason } from '../state/gameState';
 import { processAging } from './aging';
 import { handleSearch, resolveInternalAffairs, type LostItemRef } from './commands';
@@ -309,6 +309,48 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         kind: 'desertion',
         text: `${city.name.en}: ${tick.desertion} troops deserted from starvation.`,
         textZh: `${city.name.zh}：因缺糧，逃兵 ${tick.desertion} 名。`,
+      });
+    }
+  }
+
+  // Phase 3f — territory supply pressure. If a city's own satellite
+  // territories are occupied by an enemy force, the city loses some
+  // troops + gold each season from supply disruption / morale damage.
+  // Captured cells around an enemy city → enemy city slowly starves.
+  if (seasonBoundary) {
+    const territoriesForSupply = generateTerritories(Object.values(cities));
+    const byCity: Record<EntityId, Territory[]> = {};
+    for (const ter of territoriesForSupply) {
+      // Skip cell 0 — it's the city itself, ownership tied to the city
+      // by definition. Only satellites count for supply pressure.
+      if (ter.id.endsWith('-0')) continue;
+      (byCity[ter.parentCityId] ??= []).push(ter);
+    }
+    for (const city of Object.values(cities)) {
+      if (!city.ownerForceId) continue;
+      const sats = byCity[city.id] ?? [];
+      if (sats.length === 0) continue;
+      let enemyCount = 0;
+      for (const ter of sats) {
+        const owner = territoryOwnership[ter.id];
+        if (owner && owner !== city.ownerForceId) enemyCount++;
+      }
+      if (enemyCount === 0) continue;
+      const ratio = enemyCount / sats.length;
+      const troopLoss = Math.floor(city.troops * ratio * 0.05);
+      const goldLoss = Math.floor(city.gold * ratio * 0.15);
+      if (troopLoss === 0 && goldLoss === 0) continue;
+      cities[city.id] = {
+        ...city,
+        troops: Math.max(0, city.troops - troopLoss),
+        gold: Math.max(0, city.gold - goldLoss),
+      };
+      const fully = ratio >= 1;
+      entries.push({
+        cityId: city.id,
+        kind: 'desertion',
+        text: `${city.name.en} ${fully ? 'is fully encircled' : 'is harassed'} — ${enemyCount}/${sats.length} surrounding territories enemy-held. −${troopLoss} troops, −${goldLoss}g.`,
+        textZh: `${city.name.zh}${fully ? '被圍困' : '受騷擾'}：外圍 ${enemyCount}/${sats.length} 格陷敵。兵 −${troopLoss}、金 −${goldLoss}。`,
       });
     }
   }
