@@ -7,6 +7,7 @@ import type {
   EntityId,
   Force,
   GameDate,
+  Officer,
 } from '../../game/types';
 import type { Weather } from '../../game/systems/weather';
 
@@ -38,6 +39,7 @@ export function StrategicMap() {
   const [bgReady, setBgReady] = useState(false);
   const cities = useGameStore((s) => s.cities);
   const forces = useGameStore((s) => s.forces);
+  const officers = useGameStore((s) => s.officers);
   const selectedCityId = useGameStore((s) => s.selectedCityId);
   const pendingCommands = useGameStore((s) => s.pendingCommands);
   const selectCity = useGameStore((s) => s.selectCity);
@@ -110,7 +112,7 @@ export function StrategicMap() {
         const ov = coordOverrides[c.id];
         effectiveCities[c.id] = ov ? { ...c, coords: ov } : c;
       }
-      drawMap(ctx, effectiveCities, forces, selectedCityId, pendingCommands, date, bgImageRef.current);
+      drawMap(ctx, effectiveCities, forces, officers, selectedCityId, pendingCommands, date, bgImageRef.current);
       if (overlayMode !== 'none') {
         drawHeatmap(ctx, effectiveCities, overlayMode);
       }
@@ -140,7 +142,7 @@ export function StrategicMap() {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [cities, forces, selectedCityId, pendingCommands, viewport, overlayMode, fogOfWar, playerForceId, date, bgReady, coordOverrides, weather, burningCities]);
+  }, [cities, forces, officers, selectedCityId, pendingCommands, viewport, overlayMode, fogOfWar, playerForceId, date, bgReady, coordOverrides, weather, burningCities]);
 
   // Convert canvas (CSS px) coords → world (map) coords.
   const toWorld = (cx: number, cy: number) => ({
@@ -794,6 +796,7 @@ function drawMap(
   ctx: CanvasRenderingContext2D,
   cities: Record<EntityId, City>,
   forces: Record<EntityId, Force>,
+  officers: Record<EntityId, Officer>,
   selectedCityId: EntityId | null,
   pendingCommands: Record<EntityId, Command>,
   date: GameDate,
@@ -813,7 +816,7 @@ function drawMap(
     drawProvinceTints(ctx, cities);
     drawTerrainGlyphs(ctx, cities);
     // Roads + march arrows + cities are drawn by the shared block below.
-    drawCityLayer(ctx, cities, forces, selectedCityId, pendingCommands);
+    drawCityLayer(ctx, cities, forces, officers, selectedCityId, pendingCommands);
     return;
   }
 
@@ -959,7 +962,7 @@ function drawMap(
   // ── Ambient terrain glyphs near each city ──
   drawTerrainGlyphs(ctx, cities);
 
-  drawCityLayer(ctx, cities, forces, selectedCityId, pendingCommands);
+  drawCityLayer(ctx, cities, forces, officers, selectedCityId, pendingCommands);
 
   // (Compass rose and decorative border are drawn separately in
   //  drawOverlay so they don't pan/zoom with the map.)
@@ -970,6 +973,7 @@ function drawCityLayer(
   ctx: CanvasRenderingContext2D,
   cities: Record<EntityId, City>,
   forces: Record<EntityId, Force>,
+  officers: Record<EntityId, Officer>,
   selectedCityId: EntityId | null,
   pendingCommands: Record<EntityId, Command>,
 ) {
@@ -986,7 +990,7 @@ function drawCityLayer(
     }
   }
 
-  // March arrows for pending commands
+  // March arrows + in-transit unit markers for pending commands
   for (const cmd of Object.values(pendingCommands)) {
     if (cmd.type !== 'march') continue;
     const from = cities[cmd.cityId];
@@ -994,14 +998,18 @@ function drawCityLayer(
     if (!from || !to) continue;
     const fromForce = from.ownerForceId ? forces[from.ownerForceId] : null;
     const hostile = to.ownerForceId !== from.ownerForceId;
-    drawArrow(
-      ctx,
-      from.coords.x,
-      from.coords.y,
-      to.coords.x,
-      to.coords.y,
-      hostile ? '#b8442e' : fromForce?.color ?? '#d4a84a',
-    );
+    const color = hostile ? '#b8442e' : fromForce?.color ?? '#d4a84a';
+    drawArrow(ctx, from.coords.x, from.coords.y, to.coords.x, to.coords.y, color);
+
+    const commander = officers[cmd.officerId];
+    if (commander) {
+      // Slide the unit slowly toward the destination so it visibly creeps
+      // along the road; reaches the city right around season end.
+      const t = 0.30 + ((Date.now() / 1000) % 30) / 30 * 0.55;
+      const ux = from.coords.x + (to.coords.x - from.coords.x) * t;
+      const uy = from.coords.y + (to.coords.y - from.coords.y) * t;
+      drawMarchUnit(ctx, ux, uy, color, commander.name.zh, cmd.troops);
+    }
   }
 
   // Cities
@@ -1241,6 +1249,68 @@ function drawRiver(
   ctx.lineWidth = width;
   ctx.lineCap = 'round';
   ctx.stroke();
+}
+
+/** In-transit army marker: pennant on a pole with commander + troop label. */
+function drawMarchUnit(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  color: string,
+  commanderName: string,
+  troops: number,
+) {
+  ctx.save();
+  // Subtle bob so the unit looks alive.
+  const bob = Math.sin(Date.now() / 300) * 0.6;
+  const cy = y + bob;
+
+  // Banner pole
+  ctx.strokeStyle = '#3a2818';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x, cy + 7);
+  ctx.lineTo(x, cy - 11);
+  ctx.stroke();
+
+  // Pennant
+  ctx.fillStyle = color;
+  ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x, cy - 11);
+  ctx.lineTo(x + 11, cy - 8);
+  ctx.lineTo(x, cy - 5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Round base showing the force color
+  ctx.fillStyle = color;
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(x, cy + 4, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Commander name + troop count, stacked below the marker
+  ctx.font = 'bold 10px "Ma Shan Zheng", "Songti SC", "Noto Serif SC", serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+  ctx.lineWidth = 3;
+  ctx.lineJoin = 'round';
+  ctx.fillStyle = '#ffe9a8';
+  ctx.strokeText(commanderName, x, cy + 11);
+  ctx.fillText(commanderName, x, cy + 11);
+
+  ctx.font = '9px ui-monospace, monospace';
+  const troopLabel = troops >= 1000 ? `${(troops / 1000).toFixed(1)}k` : `${troops}`;
+  ctx.fillStyle = '#f0e0b0';
+  ctx.strokeText(troopLabel, x, cy + 23);
+  ctx.fillText(troopLabel, x, cy + 23);
+  ctx.restore();
 }
 
 function drawArrow(

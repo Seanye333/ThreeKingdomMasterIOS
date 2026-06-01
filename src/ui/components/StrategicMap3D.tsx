@@ -1174,15 +1174,16 @@ function Roads({ cities }: { cities: Record<string, City> }) {
 }
 
 /* ─── Marching army arrows (animated) ──────────────────────── */
-function MarchingArmies({ cities, pendingCommands, forces, ports }: {
+function MarchingArmies({ cities, pendingCommands, forces, officers, ports }: {
   cities: Record<string, City>;
-  pendingCommands: Record<string, { cityId?: string; type: string; targetCityId?: string; troops?: number }>;
+  pendingCommands: Record<string, { cityId?: string; type: string; targetCityId?: string; troops?: number; officerId?: string }>;
   forces: Record<string, { color: string }>;
+  officers: Record<string, import('../../game/types').Officer>;
   ports: Record<string, import('../../game/types').Port>;
 }) {
   const armies = useMemo(() => {
     return Object.values(pendingCommands)
-      .filter((cmd): cmd is { cityId: string; type: string; targetCityId: string; troops: number } =>
+      .filter((cmd): cmd is { cityId: string; type: string; targetCityId: string; troops: number; officerId: string } =>
         cmd.type === 'march' && !!cmd.targetCityId && !!cmd.cityId)
       .map((cmd) => {
         const from = cities[cmd.cityId];
@@ -1190,22 +1191,31 @@ function MarchingArmies({ cities, pendingCommands, forces, ports }: {
         if (!from || !to) return null;
         const force = forces[from.ownerForceId ?? ''];
         const hostile = to.ownerForceId !== from.ownerForceId;
-        return { from, to, color: hostile ? '#b8442e' : (force?.color ?? '#d4a84a') };
+        const commander = officers[cmd.officerId];
+        return {
+          from,
+          to,
+          color: hostile ? '#b8442e' : (force?.color ?? '#d4a84a'),
+          commanderName: commander?.name.zh ?? '',
+          troops: cmd.troops,
+        };
       })
       .filter((a): a is NonNullable<typeof a> => !!a);
-  }, [cities, pendingCommands, forces]);
+  }, [cities, pendingCommands, forces, officers]);
 
   return (
     <group>
       {armies.map((a, i) => (
-        <MarchingArmy key={i} from={a.from} to={a.to} color={a.color} ports={ports} />
+        <MarchingArmy key={i} from={a.from} to={a.to} color={a.color}
+          commanderName={a.commanderName} troops={a.troops} ports={ports} />
       ))}
     </group>
   );
 }
 
-function MarchingArmy({ from, to, color, ports }: {
+function MarchingArmy({ from, to, color, commanderName, troops, ports }: {
   from: City; to: City; color: string;
+  commanderName: string; troops: number;
   ports: Record<string, import('../../game/types').Port>;
 }) {
   const [fpx, fpy] = cityPixel(from.id, from.coords.x, from.coords.y);
@@ -1287,11 +1297,30 @@ function MarchingArmy({ from, to, color, ports }: {
     [-0.36, -0.50], [0.36, -0.50],
   ];
 
+  const troopLabel = troops >= 1000 ? `${(troops / 1000).toFixed(1)}k` : `${troops}`;
   return (
     <group ref={groupRef}>
       {FORMATION.map(([sx, sz], i) => (
         <Soldier key={i} dx={sx} dz={sz} color={color} phase={i * 0.6} isLeader={i === 0} />
       ))}
+      {commanderName && (
+        <Html position={[0, 0.45, 0]} center distanceFactor={10} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
+          <div style={{
+            background: 'rgba(15, 10, 5, 0.82)',
+            border: `1px solid ${color}`,
+            padding: '2px 6px',
+            color: '#ffe9a8',
+            fontFamily: '"Ma Shan Zheng", "Songti SC", serif',
+            fontSize: '11px',
+            whiteSpace: 'nowrap',
+            textShadow: '0 0 4px rgba(0,0,0,0.9)',
+            boxShadow: `0 0 6px ${color}66`,
+          }}>
+            <span style={{ color: '#ffe9a8' }}>{commanderName}</span>
+            <span style={{ color: '#c0a878', marginLeft: 5, fontSize: '9px', fontFamily: 'ui-monospace, monospace' }}>{troopLabel}</span>
+          </div>
+        </Html>
+      )}
     </group>
   );
 }
@@ -1758,6 +1787,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick }: {
 }) {
   const cities = useGameStore((s) => s.cities);
   const forces = useGameStore((s) => s.forces);
+  const officers = useGameStore((s) => s.officers);
   const selectedCityId = useGameStore((s) => s.selectedCityId);
   const selectCity = useGameStore((s) => s.selectCity);
   const pendingCommands = useGameStore((s) => s.pendingCommands);
@@ -1827,7 +1857,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick }: {
       <Forest3D />
 
       <Roads cities={cities} />
-      <MarchingArmies cities={cities} pendingCommands={pendingCommands} forces={forces} ports={portsForMarch} />
+      <MarchingArmies cities={cities} pendingCommands={pendingCommands} forces={forces} officers={officers} ports={portsForMarch} />
       <Ports3D onPortClick={onPortClick} />
       <Forts3D onFortClick={onFortClick} />
 
