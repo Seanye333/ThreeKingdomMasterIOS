@@ -12,7 +12,7 @@ import { isLand, hexCorners, HEX_W, HEX_V, HEX_SIZE } from '../../game/data/geog
 
 const W = 1000;
 const H = 720;
-const SS = 2; // supersample factor for crisp fine-grid lines
+const SS = 3; // supersample factor for crisp fine-grid lines
 const NEUTRAL_COLOR = '#5a4530';
 const FILL_ALPHA = 0.42;
 
@@ -82,8 +82,45 @@ function computeOverlay(
   const colorOf = (id: EntityId | null): string =>
     (id ? forces[id]?.color : null) ?? NEUTRAL_COLOR;
 
+  // Spatial hash over territory centroids so the per-hex nearest search is
+  // ~O(1) instead of O(territories). Lets the grid go very fine without the
+  // recompute cost blowing up.
+  const BUCKET = 70;
+  const cols = Math.ceil(W / BUCKET) + 2;
+  const buckets = new Map<number, number[]>();
+  const bkey = (bx: number, by: number) => by * cols + bx;
+  for (let i = 0; i < territories.length; i++) {
+    const k = bkey(Math.floor(tx[i] / BUCKET) + 1, Math.floor(ty[i] / BUCKET) + 1);
+    const arr = buckets.get(k);
+    if (arr) arr.push(i); else buckets.set(k, [i]);
+  }
+  const nearestTerritory = (x: number, y: number): number => {
+    const bx = Math.floor(x / BUCKET) + 1;
+    const by = Math.floor(y / BUCKET) + 1;
+    let best = -1;
+    let bestD = Infinity;
+    // Expand rings until a candidate is found, then one extra ring to be safe.
+    for (let ring = 0; ring <= 6; ring++) {
+      for (let dx = -ring; dx <= ring; dx++) {
+        for (let dy = -ring; dy <= ring; dy++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== ring) continue;
+          const arr = buckets.get(bkey(bx + dx, by + dy));
+          if (!arr) continue;
+          for (const i of arr) {
+            const ddx = x - tx[i];
+            const ddy = y - ty[i];
+            const d = ddx * ddx + ddy * ddy;
+            if (d < bestD) { bestD = d; best = i; }
+          }
+        }
+      }
+      if (best >= 0 && ring >= 1) break;
+    }
+    return best;
+  };
+
   // Build the hex grid, tagging each hex with the owner of its nearest
-  // territory (or null if none is within PAINT_RADIUS_2).
+  // territory. Ocean hexes (off the landmass) stay clear.
   type Hex = { cx: number; cy: number; owner: EntityId | null; painted: boolean };
   const grid: Hex[][] = [];
   for (let row = -1, y = -HEX_V; y < H + HEX_SIZE; row++, y = row * HEX_V) {
@@ -92,18 +129,9 @@ function computeOverlay(
     for (let col = -1, x = -HEX_W + xOff; x < W + HEX_W; col++, x = col * HEX_W + xOff) {
       // Only land hexes paint — the SE ocean wedge stays clear. Whole
       // landmass is divided among forces by nearest-territory (Voronoi),
-      // RTK-XIV style, instead of small blobs around each city.
+      // RTK-XIV style.
       const onLand = isLand(x, y, 2);
-      let best = -1;
-      let bestD = Infinity;
-      if (onLand) {
-        for (let i = 0; i < territories.length; i++) {
-          const dx = x - tx[i];
-          const dy = y - ty[i];
-          const d = dx * dx + dy * dy;
-          if (d < bestD) { bestD = d; best = i; }
-        }
-      }
+      const best = onLand ? nearestTerritory(x, y) : -1;
       const painted = onLand && best >= 0;
       line.push({ cx: x, cy: y, owner: painted ? ownerOf[best] : null, painted });
     }

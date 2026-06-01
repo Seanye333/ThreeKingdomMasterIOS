@@ -70,8 +70,8 @@ export function isLand(x: number, y: number, margin = 0): boolean {
 // Shared by the territory overlay (which draws the grid) and the army
 // movement code (which snaps units to hex centres), so they always
 // agree on cell positions.
-// Fine RTK-XIV-style grid: ~89 hexes across the 1000px map width.
-export const HEX_SIZE = 6.5;                      // centre → corner
+// Fine RTK-XIV-style grid: ~116 hexes across the 1000px map width.
+export const HEX_SIZE = 5;                        // centre → corner
 export const HEX_W = Math.sqrt(3) * HEX_SIZE;     // horizontal spacing
 export const HEX_V = 1.5 * HEX_SIZE;              // vertical (row) spacing
 
