@@ -6,11 +6,17 @@ import type { BilingualName, EntityId } from './common';
  * periodically launch raids into specific border cities.
  */
 export type TribeId =
-  | 'nanban'   // 南蛮 — south (Meng Huo)
-  | 'wuhuan'   // 烏桓 — north-east
-  | 'xianbei'  // 鮮卑 — far north
-  | 'qiang'   // 羌 — north-west
-  | 'shanyue'; // 山越 — south-east mountains
+  | 'nanban'    // 南蛮 — south (Meng Huo)
+  | 'wuhuan'    // 烏桓 — north-east
+  | 'xianbei'   // 鮮卑 — far north
+  | 'qiang'     // 羌 — north-west
+  | 'shanyue'   // 山越 — south-east mountains
+  // ── D-set additions ──
+  | 'di'        // 氐 — north-west highlands, 白馬氐 / 楊千萬
+  | 'xiongnu'   // 南匈奴 — 并州 residual, 於夫羅 → 呼廚泉
+  | 'goguryeo'  // 高句麗 — Korean peninsula
+  | 'buyeo'     // 扶餘 — Manchuria, north of Liaodong
+  | 'linyi';    // 林邑 — Champa, south of 日南
 
 export interface Tribe {
   id: TribeId;

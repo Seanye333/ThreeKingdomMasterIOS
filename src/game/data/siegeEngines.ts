@@ -9,7 +9,13 @@ export type SiegeEngineId =
   | 'chong-che'     // 衝車 — battering ram
   | 'yun-ti'        // 雲梯 — scaling ladder
   | 'tou-shi-ji'    // 投石機 — trebuchet
-  | 'lou-che';      // 樓車 — siege tower
+  | 'lou-che'       // 樓車 — siege tower
+  // ── D-set additions ──
+  | 'jing-lan'      // 井闌 — high archer platform (曹操官渡 used these)
+  | 'huo-jian-che'  // 火箭車 — fire-arrow cart, ignites wooden palisades
+  | 'lian-nu-che'   // 連弩車 — cart-mounted repeating crossbow (Zhuge-improved)
+  | 'fen-yun'       // 轒轀 — armored covered ram-cart, shelters sappers
+  | 'fei-lou';      // 飛樓 — flying tower, taller than 樓車, archers + men dropped onto wall
 
 export interface SiegeEngine {
   id: SiegeEngineId;
@@ -49,6 +55,43 @@ export const SIEGE_ENGINES: Record<SiegeEngineId, SiegeEngine> = {
     defenseMultiplier: 0.82,
     description: 'Wheeled tower allowing archers to fire down on defenders.',
     descriptionZh: "有輪之高樓,可讓弓手居高臨下射擊守軍。",
+  },
+
+  // ── D-set: classic Three Kingdoms siege engines ──
+  'jing-lan': {
+    id: 'jing-lan',
+    name: { zh: '井闌', en: 'Well-Tower' },
+    defenseMultiplier: 0.88,
+    description: 'Tall fixed archer platform — Cao Cao built rows of these at Guandu to suppress Yuan Shao\'s walls.',
+    descriptionZh: "井闌——曹操官渡之戰列陣此器,壓制袁軍城牆。固定式高臺,弓手居高遠射。",
+  },
+  'huo-jian-che': {
+    id: 'huo-jian-che',
+    name: { zh: '火箭車', en: 'Fire-Arrow Cart' },
+    defenseMultiplier: 0.80,
+    description: 'Volley fire-arrow cart. Devastating against wooden palisades and tier-1 walls; less useful against citadels.',
+    descriptionZh: "齊射火矢之車。對木柵與一級城牆破壞極大,對堅城效果有限。",
+  },
+  'lian-nu-che': {
+    id: 'lian-nu-che',
+    name: { zh: '連弩車', en: 'Repeating Crossbow Cart' },
+    defenseMultiplier: 0.84,
+    description: 'Cart-mounted repeating crossbow, Zhuge Liang\'s improved design. Suppresses defenders during assault.',
+    descriptionZh: "車載連弩,諸葛亮改良之制。攻城時壓制守軍弓矢還擊。",
+  },
+  'fen-yun': {
+    id: 'fen-yun',
+    name: { zh: '轒轀', en: 'Armored Sapper-Cart' },
+    defenseMultiplier: 0.86,
+    description: 'Roofed wheeled hut covering sappers as they undermine walls or fill in moats.',
+    descriptionZh: "頂上加蓋之輪車,掩護工兵於城下掘地、填壕。",
+  },
+  'fei-lou': {
+    id: 'fei-lou',
+    name: { zh: '飛樓', en: 'Flying Tower' },
+    defenseMultiplier: 0.76,
+    description: 'Taller than 樓車; archers + men dropped directly onto the wall. Slow to build, decisive in a siege.',
+    descriptionZh: "高於樓車之巨型攻城樓,弓手與步卒可直接踏上城牆。建造緩慢但常為破城關鍵。",
   },
 };
 
