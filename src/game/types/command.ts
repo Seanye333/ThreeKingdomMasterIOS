@@ -105,6 +105,9 @@ export interface BattleDetail {
   woundedIds?: EntityId[];
   capturedIds?: EntityId[];
   pursued?: boolean;
+  /** True for a mid-march interception (no city/walls); cityId is the
+   *  victor's objective, used only as a location label. */
+  field?: boolean;
 }
 
 export interface HistoricBattle extends BattleDetail {

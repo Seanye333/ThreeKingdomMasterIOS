@@ -19,9 +19,9 @@ export function BattleDetailModal({ battle, onClose }: Props) {
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <header className={styles.header}>
           <div>
-            <div className={styles.titleZh}>戰況</div>
+            <div className={styles.titleZh}>{battle.field ? '野戰' : '戰況'}</div>
             <div className={styles.titleEn}>
-              Battle Report — {city?.name.en ?? battle.cityId}
+              {battle.field ? 'Field Battle — near ' : 'Battle Report — '}{city?.name.en ?? battle.cityId}
             </div>
           </div>
           <button className={styles.closeButton} onClick={onClose}>
@@ -30,7 +30,11 @@ export function BattleDetailModal({ battle, onClose }: Props) {
         </header>
 
         <div className={styles.banner}>
-          {battle.cityFalls ? (
+          {battle.field ? (
+            <span className={`${styles.outcome} ${styles.victory}`}>
+              截擊得勝 Interception — victor routs the column
+            </span>
+          ) : battle.cityFalls ? (
             <span className={`${styles.outcome} ${styles.conquest}`}>
               城陷 City Fell
             </span>
@@ -77,7 +81,9 @@ export function BattleDetailModal({ battle, onClose }: Props) {
             blended={battle.defender.blendedStat}
             troops={battle.defender.troops}
             power={battle.defender.power}
-            extra={`defense ${battle.cityDefense} (×${battle.defenseFactor}) ${battle.defender.bondBonus > 0 ? `· bond +${battle.defender.bondBonus}` : ''}`}
+            extra={battle.field
+              ? (battle.defender.bondBonus > 0 ? `bond +${battle.defender.bondBonus}` : 'open field')
+              : `defense ${battle.cityDefense} (×${battle.defenseFactor}) ${battle.defender.bondBonus > 0 ? `· bond +${battle.defender.bondBonus}` : ''}`}
           />
           <div className={styles.shareRow}>
             <PowerShareBar

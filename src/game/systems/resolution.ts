@@ -117,14 +117,14 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const t = Math.min(0.95, Math.max(0.05, (elapsed + 0.5) / total));
     return positionAlongRoute(route, t);
   };
-  const blendedFieldPower = (cmd: Extract<Command, { type: 'march' }>) => {
+  const fieldStats = (cmd: Extract<Command, { type: 'march' }>) => {
     const cmdr = officers[cmd.officerId];
-    if (!cmdr) return 0;
+    if (!cmdr) return { blended: 0, power: 0 };
     const pool = [cmdr, ...(cmd.additionalOfficerIds ?? [])
       .map((id) => officers[id])
       .filter((o): o is Officer => !!o)];
-    const avg = pool.reduce((s, o) => s + o.stats.war * 0.6 + o.stats.leadership * 0.4, 0) / pool.length;
-    return avg * Math.sqrt(Math.max(1, cmd.troops));
+    const blended = pool.reduce((s, o) => s + o.stats.war * 0.6 + o.stats.leadership * 0.4, 0) / pool.length;
+    return { blended, power: blended * Math.sqrt(Math.max(1, cmd.troops)) };
   };
   const cancelledMarchOfficers = new Set<EntityId>();
   const troopOverride: Record<EntityId, number> = {};
@@ -144,11 +144,13 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       if (Math.hypot(pa.x - pb.x, pa.y - pb.y) > INTERCEPT_DIST) continue;
 
       // Field clash — higher blended power wins (ties to first army).
-      const powerA = blendedFieldPower(a);
-      const powerB = blendedFieldPower(b);
-      const aWins = powerA >= powerB;
+      const statsA = fieldStats(a);
+      const statsB = fieldStats(b);
+      const aWins = statsA.power >= statsB.power;
       const winner = aWins ? a : b;
       const loser = aWins ? b : a;
+      const wStats = aWins ? statsA : statsB;
+      const lStats = aWins ? statsB : statsA;
       const winnerCmdr = officers[winner.officerId];
       const loserCmdr = officers[loser.officerId];
       const winnerCasualty = Math.floor(winner.troops * 0.2);
@@ -168,11 +170,44 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       }
       const wName = winnerCmdr?.name ?? { en: '?', zh: '？' };
       const lName = loserCmdr?.name ?? { en: '?', zh: '？' };
+      // Structured detail so the report entry is clickable → full battle
+      // breakdown, reusing the city-battle report UI. Field battle: no
+      // walls, so defenseFactor 1 / cityDefense 0. Nominal location = the
+      // victor's objective city.
+      const fieldBattle = {
+        cityId: winner.targetCityId,
+        attacker: {
+          forceId: winnerCmdr?.forceId ?? null,
+          commanderId: winner.officerId,
+          companionIds: winner.additionalOfficerIds ?? [],
+          troops: winner.troops,
+          bondBonus: 0,
+          blendedStat: Math.round(wStats.blended * 10) / 10,
+          power: Math.round(wStats.power),
+        },
+        defender: {
+          forceId: loserCmdr?.forceId ?? null,
+          commanderId: loser.officerId,
+          companionIds: loser.additionalOfficerIds ?? [],
+          troops: loser.troops,
+          bondBonus: 0,
+          blendedStat: Math.round(lStats.blended * 10) / 10,
+          power: Math.round(lStats.power),
+        },
+        cityDefense: 0,
+        defenseFactor: 1,
+        attackerWins: true,
+        cityFalls: false,
+        attackerLosses: winnerCasualty,
+        defenderLosses: loserCasualty,
+        field: true,
+      };
       entries.push({
         cityId: winner.targetCityId,
         kind: 'battle',
         text: `Field clash: ${wName.en} intercepted ${lName.en} on the march and routed them (−${winnerCasualty} vs −${loserCasualty}). ${lName.en}'s advance is broken.`,
         textZh: `野戰：${wName.zh}於行軍途中截擊${lName.zh}並擊潰之（我軍 −${winnerCasualty}，敵軍 −${loserCasualty}）。${lName.zh}之進軍受挫。`,
+        battle: fieldBattle,
       });
     }
   }
