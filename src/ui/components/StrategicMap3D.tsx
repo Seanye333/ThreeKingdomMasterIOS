@@ -624,7 +624,7 @@ function TerritoryGroundLayer({
       <meshBasicMaterial
         map={texture}
         transparent
-        opacity={0.55}
+        opacity={0.85}
         depthWrite={false}
       />
     </mesh>

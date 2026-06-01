@@ -13,7 +13,8 @@ import { generateTerritories, type Territory } from '../../game/data/territories
 const W = 1000;
 const H = 720;
 const NEUTRAL_COLOR = '#5a4530';
-const FILL_ALPHA = 0.22;
+const FILL_ALPHA = 0.45;
+const EDGE_ALPHA = 0.75;
 
 let cachedCanvas: HTMLCanvasElement | null = null;
 let cachedSignature = '';
@@ -66,14 +67,22 @@ function computeOverlay(
     const force = city?.ownerForceId ? forces[city.ownerForceId] : null;
     return hexToRgb(force?.color ?? NEUTRAL_COLOR);
   });
+  // Group by parent city — the EDGE is between cells with *different
+  // parent forces*, not between same-force sub-cells of the same city.
+  const forceKey: string[] = territories.map((t) => {
+    const city = cities[t.parentCityId];
+    return city?.ownerForceId ?? '_';
+  });
   const tx = territories.map((t) => t.coords.x);
   const ty = territories.map((t) => t.coords.y);
   const a = Math.round(FILL_ALPHA * 255);
+  const edgeA = Math.round(EDGE_ALPHA * 255);
 
+  // Pass 1: assign each pixel to its nearest territory + paint fill colour.
+  // Save the assigned key in a side buffer so pass 2 can compute borders.
+  const keyBuf = new Uint16Array(W * H);
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
-      // Nearest-territory search. Squared distance is enough; bail out as
-      // soon as we know a territory is the winner.
       let bestIdx = 0;
       let bestD = Infinity;
       for (let i = 0; i < territories.length; i++) {
@@ -85,12 +94,31 @@ function computeOverlay(
           bestIdx = i;
         }
       }
+      keyBuf[y * W + x] = bestIdx;
       const [r, g, b] = colorRgb[bestIdx];
       const offset = (y * W + x) * 4;
       px[offset] = r;
       px[offset + 1] = g;
       px[offset + 2] = b;
       px[offset + 3] = a;
+    }
+  }
+  // Pass 2: paint dark borders wherever the assigned force differs from
+  // a neighbour. Borders only on inter-force boundaries — same-force
+  // city sub-territories merge into one visible block.
+  for (let y = 1; y < H; y++) {
+    for (let x = 1; x < W; x++) {
+      const here = forceKey[keyBuf[y * W + x]];
+      const left = forceKey[keyBuf[y * W + (x - 1)]];
+      const up = forceKey[keyBuf[(y - 1) * W + x]];
+      if (here !== left || here !== up) {
+        const offset = (y * W + x) * 4;
+        // Dark warm-brown edge that reads against any force colour.
+        px[offset] = 25;
+        px[offset + 1] = 18;
+        px[offset + 2] = 10;
+        px[offset + 3] = edgeA;
+      }
     }
   }
   octx.putImageData(img, 0, 0);
