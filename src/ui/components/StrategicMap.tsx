@@ -10,7 +10,7 @@ import type {
   Officer,
 } from '../../game/types';
 import type { Weather } from '../../game/systems/weather';
-import { drawTerritoryOverlay } from './territoryOverlay';
+import { drawTerritoryOverlay, getTerritoryCanvas } from './territoryOverlay';
 import { computeMarchRoute, generateTerritories, positionAlongRoute } from '../../game/data/territories';
 import { snapToHexCenter, hexCorners, isLand } from '../../game/data/geography';
 import { deriveWeaponType, type WeaponType } from '../../game/data/weaponTypes';
@@ -39,6 +39,46 @@ interface Viewport {
 
 const DEFAULT_VIEWPORT: Viewport = { x: 0, y: 0, scale: 1 };
 
+// Corner minimap dimensions (preserve the 1000×720 aspect).
+const MINI_W = 172;
+const MINI_H = Math.round((MINI_W * 720) / 1000); // 124
+
+/** Draw the whole-nation minimap: territory colours, city dots, and the
+ *  current viewport rectangle. */
+function drawMinimap(
+  mctx: CanvasRenderingContext2D,
+  cities: Record<EntityId, City>,
+  forces: Record<EntityId, Force>,
+  territoryOwnership: Record<EntityId, EntityId | null>,
+  viewport: Viewport,
+) {
+  mctx.clearRect(0, 0, MINI_W, MINI_H);
+  mctx.fillStyle = '#0c0a07';
+  mctx.fillRect(0, 0, MINI_W, MINI_H);
+  // Territory hex colours, scaled down.
+  mctx.globalAlpha = 0.92;
+  mctx.drawImage(getTerritoryCanvas(cities, forces, territoryOwnership), 0, 0, MINI_W, MINI_H);
+  mctx.globalAlpha = 1;
+  // City dots by owner.
+  const sx = MINI_W / MAP_WIDTH;
+  const sy = MINI_H / MAP_HEIGHT;
+  for (const c of Object.values(cities)) {
+    const f = c.ownerForceId ? forces[c.ownerForceId] : null;
+    mctx.fillStyle = f?.color ?? '#6a5536';
+    mctx.beginPath();
+    mctx.arc(c.coords.x * sx, c.coords.y * sy, 1.3, 0, Math.PI * 2);
+    mctx.fill();
+  }
+  // Current viewport rectangle (the slice of world the main canvas shows).
+  const wl = -viewport.x / viewport.scale;
+  const wt = -viewport.y / viewport.scale;
+  const ww = MAP_WIDTH / viewport.scale;
+  const wh = MAP_HEIGHT / viewport.scale;
+  mctx.strokeStyle = '#fff4d0';
+  mctx.lineWidth = 1.2;
+  mctx.strokeRect(wl * sx, wt * sy, ww * sx, wh * sy);
+}
+
 type OverlayMode = 'none' | 'gold' | 'food' | 'troops' | 'loyalty' | 'province';
 
 // Public-domain (1903) Three Kingdoms map by Francis Lister Hawks Pott,
@@ -48,6 +88,7 @@ const BG_IMAGE_URL = '/map-bg.jpg';
 
 export function StrategicMap() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const minimapRef = useRef<HTMLCanvasElement>(null);
   const bgImageRef = useRef<HTMLImageElement | null>(null);
   const [bgReady, setBgReady] = useState(false);
   const cities = useGameStore((s) => s.cities);
@@ -165,6 +206,11 @@ export function StrategicMap() {
       ctx.restore();
 
       drawOverlay(ctx, date);
+
+      // Corner minimap (separate canvas).
+      const mcanvas = minimapRef.current;
+      const mctx = mcanvas?.getContext('2d');
+      if (mctx) drawMinimap(mctx, cities, forces, territoryOwnership, viewport);
     };
     render();
     // Throttle: 60fps on desktop, ~25fps on phones (~40ms frame budget).
@@ -358,6 +404,24 @@ export function StrategicMap() {
 
   const handleDoubleClick = () => setViewport(DEFAULT_VIEWPORT);
 
+  // Click the minimap to recentre the main view on that world point.
+  const handleMinimapClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const mc = minimapRef.current;
+    if (!mc) return;
+    const rect = mc.getBoundingClientRect();
+    const worldX = ((e.clientX - rect.left) / rect.width) * MAP_WIDTH;
+    const worldY = ((e.clientY - rect.top) / rect.height) * MAP_HEIGHT;
+    setViewport((v) => {
+      const px = MAP_WIDTH / 2 - worldX * v.scale;
+      const py = MAP_HEIGHT / 2 - worldY * v.scale;
+      const loX = MAP_WIDTH * (1 - v.scale);
+      const loY = MAP_HEIGHT * (1 - v.scale);
+      const clamp = (val: number, a: number, b: number) =>
+        Math.max(Math.min(a, b), Math.min(Math.max(a, b), val));
+      return { ...v, x: clamp(px, loX, 0), y: clamp(py, loY, 0) };
+    });
+  };
+
   // ── Touch / pinch zoom + tap-to-select ──
   const touchStateRef = useRef<{
     mode: 'pan' | 'pinch' | null;
@@ -476,6 +540,25 @@ export function StrategicMap() {
 
   return (
     <div style={{ position: 'relative', width: MAP_WIDTH, height: MAP_HEIGHT, maxWidth: '100%' }}>
+      {/* Corner minimap — whole-nation overview + click-to-jump. */}
+      <canvas
+        ref={minimapRef}
+        width={MINI_W}
+        height={MINI_H}
+        onClick={handleMinimapClick}
+        style={{
+          position: 'absolute',
+          left: 8,
+          bottom: 8,
+          width: MINI_W,
+          height: MINI_H,
+          border: '1px solid #6a5536',
+          boxShadow: '0 0 10px rgba(0,0,0,0.7)',
+          cursor: 'crosshair',
+          zIndex: 20,
+          background: '#0c0a07',
+        }}
+      />
       <canvas
         ref={canvasRef}
         onWheel={handleWheel}
