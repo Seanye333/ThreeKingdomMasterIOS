@@ -13,10 +13,20 @@ import { isLand, hexCorners, HEX_W, HEX_V, HEX_SIZE } from '../../game/data/geog
 const W = 1000;
 const H = 720;
 const NEUTRAL_COLOR = '#5a4530';
-const FILL_ALPHA = 0.4;
+const FILL_ALPHA = 0.42;
 
 let cachedCanvas: HTMLCanvasElement | null = null;
 let cachedSignature = '';
+
+/** Lighten a #rrggbb toward white by amount (0..1) — for border cores. */
+function lighten(hex: string, amount: number): string {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  const mix = (c: number) => Math.round(c + (255 - c) * amount);
+  return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
+}
 
 function buildSignature(
   territories: Territory[],
@@ -95,54 +105,61 @@ function computeOverlay(
     grid.push(line);
   }
 
+  const tracePath = (cx: number, cy: number) => {
+    const c = hexCorners(cx, cy);
+    ctx.beginPath();
+    ctx.moveTo(c[0][0], c[0][1]);
+    for (let i = 1; i < 6; i++) ctx.lineTo(c[i][0], c[i][1]);
+    ctx.closePath();
+  };
+
   // Pass 1 — fills + thin per-hex grid line.
   ctx.lineJoin = 'round';
   for (const line of grid) {
     for (const h of line) {
       if (!h.painted) continue;
-      const c = hexCorners(h.cx, h.cy);
-      ctx.beginPath();
-      ctx.moveTo(c[0][0], c[0][1]);
-      for (let i = 1; i < 6; i++) ctx.lineTo(c[i][0], c[i][1]);
-      ctx.closePath();
+      tracePath(h.cx, h.cy);
       ctx.globalAlpha = FILL_ALPHA;
       ctx.fillStyle = colorOf(h.owner);
       ctx.fill();
-      ctx.globalAlpha = 0.16;
+      ctx.globalAlpha = 0.2;
       ctx.lineWidth = 1;
       ctx.strokeStyle = '#1a120a';
       ctx.stroke();
     }
   }
 
-  // Pass 2 — bold frontier seams. For each painted hex, draw a heavier
-  // outline if any of its 6 odd-r neighbours has a different owner. Same
-  // -force interiors keep only the thin grid line from pass 1.
-  ctx.globalAlpha = 0.7;
-  ctx.lineWidth = 2.25;
-  ctx.strokeStyle = '#140d06';
+  // Collect frontier hexes (any odd-r neighbour has a different owner).
+  const frontier: Hex[] = [];
   for (let r = 0; r < grid.length; r++) {
     const even = r % 2 === 0;
-    // odd-r offset neighbour deltas
     const deltas = even
       ? [[+1, 0], [-1, 0], [0, -1], [-1, -1], [0, +1], [-1, +1]]
       : [[+1, 0], [-1, 0], [+1, -1], [0, -1], [+1, +1], [0, +1]];
     for (let q = 0; q < grid[r].length; q++) {
       const h = grid[r][q];
       if (!h.painted) continue;
-      let frontier = false;
       for (const [dq, dr] of deltas) {
         const nb = grid[r + dr]?.[q + dq];
-        if (!nb || !nb.painted || nb.owner !== h.owner) { frontier = true; break; }
+        if (!nb || !nb.painted || nb.owner !== h.owner) { frontier.push(h); break; }
       }
-      if (!frontier) continue;
-      const c = hexCorners(h.cx, h.cy);
-      ctx.beginPath();
-      ctx.moveTo(c[0][0], c[0][1]);
-      for (let i = 1; i < 6; i++) ctx.lineTo(c[i][0], c[i][1]);
-      ctx.closePath();
-      ctx.stroke();
     }
+  }
+
+  // Pass 2a — dark base seam under every frontier hex (the "carved" edge).
+  ctx.globalAlpha = 0.82;
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#120b05';
+  for (const h of frontier) { tracePath(h.cx, h.cy); ctx.stroke(); }
+
+  // Pass 2b — bright force-tinted core on top, so each frontier reads as a
+  // crisp coloured border with a dark outline (RTK-style official lines).
+  ctx.globalAlpha = 0.9;
+  ctx.lineWidth = 1.2;
+  for (const h of frontier) {
+    ctx.strokeStyle = lighten(colorOf(h.owner), 0.45);
+    tracePath(h.cx, h.cy);
+    ctx.stroke();
   }
   ctx.globalAlpha = 1;
   return off;
