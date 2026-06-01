@@ -719,6 +719,66 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       { kind: 'flag', key: 'china-reunified' },
     ],
   },
+
+  // ── Added iconic early-period events ──
+  {
+    id: 'evt-peach-garden-oath',
+    name: { en: 'The Peach Garden Oath', zh: '桃園結義' },
+    yearMin: 184,
+    yearMax: 185,
+    requires: [{ kind: 'officer-active', officerId: 'liu-bei' }],
+    description:
+      'In a blossoming peach garden, Liu Bei, Guan Yu and Zhang Fei swear to be brothers — "not born on the same day, but to die on the same day." The bond that will found a kingdom is sealed.',
+    descriptionZh: "桃花盛開之園中,劉備、關羽、張飛結為兄弟——「不求同年同月同日生,但求同年同月同日死」。立國之義,自此而始。",
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'guan-yu', delta: 15 },
+      { kind: 'officer-loyalty', officerId: 'zhang-fei', delta: 15 },
+      { kind: 'flag', key: 'peach-garden-oath' },
+    ],
+  },
+  {
+    id: 'evt-heroes-over-wine',
+    name: { en: 'Heroes Discussed Over Warm Wine', zh: '煮酒論英雄' },
+    yearMin: 199,
+    yearMax: 200,
+    requires: [
+      { kind: 'officer-active', officerId: 'cao-cao' },
+      { kind: 'officer-active', officerId: 'liu-bei' },
+    ],
+    description:
+      'Cao Cao, sharing warm wine with Liu Bei, declares: "The only heroes of this age are you and I." Liu Bei, startled, drops his chopsticks as thunder cracks — and masks his ambition a while longer.',
+    descriptionZh: "曹操與劉備青梅煮酒,曰:「今天下英雄,唯使君與操耳。」劉備驚而失箸,賴雷聲掩飾,韜光養晦又得些時日。",
+    effects: [{ kind: 'flag', key: 'heroes-over-wine' }],
+  },
+  {
+    id: 'evt-bowang-slope-fire',
+    name: { en: 'Fire at Bowang Slope', zh: '火燒博望坡' },
+    yearMin: 207,
+    yearMax: 209,
+    requires: [{ kind: 'officer-active', officerId: 'zhuge-liang' }],
+    description:
+      'In his first command, Zhuge Liang lures Xiahou Dun\'s army into the narrow defile at Bowang and sets the brush ablaze. The doubters among Liu Bei\'s generals fall silent.',
+    descriptionZh: "諸葛亮初掌兵權,誘夏侯惇之軍入博望狹道,縱火焚之。劉備帳下原本不服的諸將,自此噤聲。",
+    effects: [{ kind: 'flag', key: 'bowang-fire' }],
+  },
+  {
+    id: 'evt-huarong-path',
+    name: { en: 'Mercy on the Huarong Path', zh: '華容道義釋曹操' },
+    yearMin: 208,
+    yearMax: 210,
+    season: 'winter',
+    requires: [
+      { kind: 'officer-active', officerId: 'guan-yu' },
+      { kind: 'officer-active', officerId: 'cao-cao' },
+    ],
+    description:
+      'Fleeing the inferno of Red Cliffs, Cao Cao\'s broken army stumbles onto the Huarong path — where Guan Yu waits. Remembering past kindness, Guan Yu lowers his blade and lets the warlord pass, a debt of honour repaid.',
+    descriptionZh: "赤壁火後,曹操殘軍敗走華容道,正遇關羽當道。關羽念及昔日之恩,橫刀立馬,放曹操過關——義重如山,舊恩得償。",
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'guan-yu', delta: 5 },
+      { kind: 'flag', key: 'huarong-mercy' },
+    ],
+  },
 ];
 
 export const EVENTS_BY_ID: Record<string, HistoricalEvent> = Object.fromEntries(
