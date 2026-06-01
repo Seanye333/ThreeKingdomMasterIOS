@@ -11,6 +11,7 @@ import type {
 } from '../../game/types';
 import type { Weather } from '../../game/systems/weather';
 import { drawTerritoryOverlay } from './territoryOverlay';
+import { computeMarchRoute, generateTerritories, positionAlongRoute } from '../../game/data/territories';
 
 const MAP_WIDTH = 1000;
 const MAP_HEIGHT = 720;
@@ -995,7 +996,10 @@ function drawCityLayer(
     }
   }
 
-  // March arrows + in-transit unit markers for pending commands
+  // March arrows + in-transit unit markers for pending commands. Phase 3b:
+  // armies follow a territory poly-route from source to destination instead
+  // of flying along the straight road.
+  const territoriesForRoutes = generateTerritories(Object.values(cities));
   for (const cmd of Object.values(pendingCommands)) {
     if (cmd.type !== 'march') continue;
     const from = cities[cmd.cityId];
@@ -1004,19 +1008,22 @@ function drawCityLayer(
     const fromForce = from.ownerForceId ? forces[from.ownerForceId] : null;
     const hostile = to.ownerForceId !== from.ownerForceId;
     const color = hostile ? '#b8442e' : fromForce?.color ?? '#d4a84a';
-    drawArrow(ctx, from.coords.x, from.coords.y, to.coords.x, to.coords.y, color);
+
+    const route = computeMarchRoute(
+      territoriesForRoutes,
+      { id: from.id, coords: from.coords },
+      { id: to.id, coords: to.coords },
+    );
+    drawRoutePolyline(ctx, route, color);
 
     const commander = officers[cmd.officerId];
     if (commander) {
-      // Real progress from seasonsRemaining (Phase 2 multi-season marches).
-      // Army sits at (elapsed+0.5)/total along the road, plus a small wobble.
       const total = Math.max(1, cmd.totalSeasons ?? 1);
       const remaining = cmd.seasonsRemaining ?? 1;
       const elapsed = total - remaining;
-      const wobble = Math.sin(Date.now() / 800) * 0.03;
+      const wobble = Math.sin(Date.now() / 800) * 0.02;
       const t = Math.min(0.95, Math.max(0.05, (elapsed + 0.5) / total + wobble));
-      const ux = from.coords.x + (to.coords.x - from.coords.x) * t;
-      const uy = from.coords.y + (to.coords.y - from.coords.y) * t;
+      const { x: ux, y: uy } = positionAlongRoute(route, t);
       drawMarchUnit(ctx, ux, uy, color, commander.name.zh, cmd.troops, remaining, total);
     }
   }
@@ -1258,6 +1265,51 @@ function drawRiver(
   ctx.lineWidth = width;
   ctx.lineCap = 'round';
   ctx.stroke();
+}
+
+/** Animated poly-line route through territory waypoints (Phase 3b). */
+function drawRoutePolyline(
+  ctx: CanvasRenderingContext2D,
+  route: Array<{ x: number; y: number }>,
+  color: string,
+) {
+  if (route.length < 2) return;
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 6;
+  // Animated dashes so the route reads as a moving column.
+  const phase = (Date.now() / 70) % 14;
+  ctx.setLineDash([7, 7]);
+  ctx.lineDashOffset = -phase;
+  ctx.beginPath();
+  ctx.moveTo(route[0].x, route[0].y);
+  for (let i = 1; i < route.length; i++) ctx.lineTo(route[i].x, route[i].y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // Arrowhead at the destination end.
+  const last = route[route.length - 1];
+  const prev = route[route.length - 2];
+  const dx = last.x - prev.x;
+  const dy = last.y - prev.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const ux = dx / len, uy = dy / len;
+  const tipX = last.x - ux * 10;
+  const tipY = last.y - uy * 10;
+  const headSize = 9;
+  ctx.beginPath();
+  ctx.moveTo(tipX, tipY);
+  ctx.lineTo(tipX - ux * headSize + uy * headSize * 0.5,
+             tipY - uy * headSize - ux * headSize * 0.5);
+  ctx.lineTo(tipX - ux * headSize - uy * headSize * 0.5,
+             tipY - uy * headSize + ux * headSize * 0.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
 }
 
 /** In-transit army marker: pennant on a pole with commander + troop label. */

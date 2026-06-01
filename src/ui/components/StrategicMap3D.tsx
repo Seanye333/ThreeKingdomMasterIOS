@@ -2,6 +2,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Html, OrbitControls } from '@react-three/drei';
 import { getTerritoryCanvas, getTerritorySignature } from './territoryOverlay';
+import { computeMarchRoute, generateTerritories } from '../../game/data/territories';
 import * as THREE from 'three';
 import { useGameStore } from '../../game/state/store';
 import { PROVINCE_BY_CITY } from '../../game/data';
@@ -1240,6 +1241,7 @@ function MarchingArmies({ cities, pendingCommands, forces, officers, ports }: {
   ports: Record<string, import('../../game/types').Port>;
 }) {
   const armies = useMemo(() => {
+    const territories = generateTerritories(Object.values(cities));
     return Object.values(pendingCommands)
       .filter((cmd): cmd is { cityId: string; type: string; targetCityId: string; troops: number; officerId: string; seasonsRemaining?: number; totalSeasons?: number } =>
         cmd.type === 'march' && !!cmd.targetCityId && !!cmd.cityId)
@@ -1252,6 +1254,13 @@ function MarchingArmies({ cities, pendingCommands, forces, officers, ports }: {
         const commander = officers[cmd.officerId];
         const totalSeasons = Math.max(1, cmd.totalSeasons ?? 1);
         const seasonsRemaining = cmd.seasonsRemaining ?? 1;
+        // Phase 3b — pre-compute the land route through territories so the
+        // 3D squad can follow the same poly-line as the 2D pennant.
+        const landRoute = computeMarchRoute(
+          territories,
+          { id: from.id, coords: from.coords },
+          { id: to.id, coords: to.coords },
+        );
         return {
           from,
           to,
@@ -1260,6 +1269,7 @@ function MarchingArmies({ cities, pendingCommands, forces, officers, ports }: {
           troops: cmd.troops,
           seasonsRemaining,
           totalSeasons,
+          landRoute,
         };
       })
       .filter((a): a is NonNullable<typeof a> => !!a);
@@ -1271,16 +1281,18 @@ function MarchingArmies({ cities, pendingCommands, forces, officers, ports }: {
         <MarchingArmy key={i} from={a.from} to={a.to} color={a.color}
           commanderName={a.commanderName} troops={a.troops}
           seasonsRemaining={a.seasonsRemaining} totalSeasons={a.totalSeasons}
+          landRoute={a.landRoute}
           ports={ports} />
       ))}
     </group>
   );
 }
 
-function MarchingArmy({ from, to, color, commanderName, troops, seasonsRemaining, totalSeasons, ports }: {
+function MarchingArmy({ from, to, color, commanderName, troops, seasonsRemaining, totalSeasons, landRoute, ports }: {
   from: City; to: City; color: string;
   commanderName: string; troops: number;
   seasonsRemaining: number; totalSeasons: number;
+  landRoute: Array<{ x: number; y: number }>;
   ports: Record<string, import('../../game/types').Port>;
 }) {
   const [fpx, fpy] = cityPixel(from.id, from.coords.x, from.coords.y);
@@ -1299,32 +1311,26 @@ function MarchingArmy({ from, to, color, commanderName, troops, seasonsRemaining
     return { srcPort, dstPort };
   }, [from, to, ports]);
 
-  // Build waypoint list — for land marches: [from, to] using Bezier mid.
-  // For naval: [from, srcPort, dstPort, to] — 3 linear segments.
+  // Build waypoint list — for naval marches: [from, srcPort, dstPort, to].
+  // For land marches (Phase 3b): the territory poly-route passed in via
+  // props. Both end up as piecewise-linear segments so useFrame below
+  // shares one interpolation path.
   const path = useMemo(() => {
     if (naval) {
       const [spx, spy] = pxToWorld(...geoToPixel(naval.srcPort.coords.lon, naval.srcPort.coords.lat));
       const [dpx, dpy] = pxToWorld(...geoToPixel(naval.dstPort.coords.lon, naval.dstPort.coords.lat));
       return {
-        kind: 'naval' as const,
+        kind: 'piecewise' as const,
         pts: [[fx, fz], [spx, spy], [dpx, dpy], [tx, tz]] as Array<[number, number]>,
       };
     }
-    // Land — same Bezier as roads
-    const dx = tx - fx, dz = tz - fz;
-    const len = Math.hypot(dx, dz);
-    const perpX = -dz / len;
-    const perpZ = dx / len;
-    const seed = from.id < to.id ? from.id + to.id : to.id + from.id;
-    const h = hashStr(seed);
-    const sign = h < 0.5 ? -1 : 1;
-    const amt = (0.10 + (h * 0.15)) * len * sign;
-    return {
-      kind: 'land' as const,
-      mx: (fx + tx) / 2 + perpX * amt,
-      mz: (fz + tz) / 2 + perpZ * amt,
-    };
-  }, [naval, from.id, to.id, fx, fz, tx, tz]);
+    // Land — follow the territory route through ~4-8 waypoints. Map the
+    // 1000×720 canvas coords through pxToWorld so they land on the 3D plane.
+    const pts: Array<[number, number]> = landRoute.length >= 2
+      ? landRoute.map((p) => pxToWorld(...cityPixel('_', p.x, p.y)))
+      : [[fx, fz], [tx, tz]];
+    return { kind: 'piecewise' as const, pts };
+  }, [naval, fx, fz, tx, tz, landRoute]);
 
   const groupRef = useRef<THREE.Group>(null);
   useFrame(({ clock }) => {
@@ -1334,27 +1340,20 @@ function MarchingArmy({ from, to, color, commanderName, troops, seasonsRemaining
     const elapsed = totalSeasons - seasonsRemaining;
     const wobble = Math.sin(clock.elapsedTime * 0.6) * 0.04;
     const t = Math.min(0.95, Math.max(0.05, (elapsed + 0.5) / totalSeasons + wobble));
-    let x: number, z: number, heading: number;
-    if (path.kind === 'land') {
-      const { mx, mz } = path;
-      const it = 1 - t;
-      x = it * it * fx + 2 * it * t * mx + t * t * tx;
-      z = it * it * fz + 2 * it * t * mz + t * t * tz;
-      const tx_t = 2 * (1 - t) * (mx - fx) + 2 * t * (tx - mx);
-      const tz_t = 2 * (1 - t) * (mz - fz) + 2 * t * (tz - mz);
-      heading = Math.atan2(tx_t, tz_t);
-    } else {
-      // Naval — piecewise linear across 3 segments
-      const segCount = path.pts.length - 1;
-      const segT = t * segCount;
-      const segIdx = Math.min(segCount - 1, Math.floor(segT));
-      const localT = segT - segIdx;
-      const [ax, az] = path.pts[segIdx];
-      const [bx, bz] = path.pts[segIdx + 1];
-      x = ax + (bx - ax) * localT;
-      z = az + (bz - az) * localT;
-      heading = Math.atan2(bx - ax, bz - az);
-    }
+    // All paths are piecewise linear now (naval = 3 segments via ports;
+    // land = ~5-8 segments through territory waypoints). Find which
+    // segment t lands in and interpolate locally — uniform speed across
+    // total path length would be nicer but constant-speed-per-segment is
+    // close enough at human read distance.
+    const segCount = path.pts.length - 1;
+    const segT = t * segCount;
+    const segIdx = Math.min(segCount - 1, Math.floor(segT));
+    const localT = segT - segIdx;
+    const [ax, az] = path.pts[segIdx];
+    const [bx, bz] = path.pts[segIdx + 1];
+    const x = ax + (bx - ax) * localT;
+    const z = az + (bz - az) * localT;
+    const heading = Math.atan2(bx - ax, bz - az);
     groupRef.current.position.set(x, sampleTerrainHeight(x, z) + 0.05, z);
     groupRef.current.rotation.y = heading;
   });
