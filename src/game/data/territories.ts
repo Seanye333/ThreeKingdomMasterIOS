@@ -157,6 +157,19 @@ const SATELLITE_RADIUS = 28;
  * it uniform.
  */
 /**
+ * Destination pixel coords of a march — an open-cell target (targetX/Y)
+ * if set, otherwise the target city's coords. Returns null if neither
+ * resolves.
+ */
+export function marchDestCoords(
+  cmd: { targetCityId: string; targetX?: number; targetY?: number },
+  cities: Record<string, { coords: { x: number; y: number } }>,
+): { x: number; y: number } | null {
+  if (cmd.targetX != null && cmd.targetY != null) return { x: cmd.targetX, y: cmd.targetY };
+  return cities[cmd.targetCityId]?.coords ?? null;
+}
+
+/**
  * Phase 3b — march route through territory cells.
  *
  * Given a from-city and a to-city, returns the sequence of territory

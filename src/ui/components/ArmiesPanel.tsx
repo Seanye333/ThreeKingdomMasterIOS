@@ -36,7 +36,7 @@ export function ArmiesPanel() {
       </div>
       {selectedArmyId && armies[selectedArmyId] && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4, marginBottom: 3 }}>
-          <span style={{ fontSize: '0.58rem', color: '#d4a84a' }}>點城改道</span>
+          <span style={{ fontSize: '0.58rem', color: '#d4a84a' }}>點城改道 · 點野地進駐</span>
           <div style={{ display: 'flex', gap: 4 }}>
             <button
               onClick={() => holdArmy(selectedArmyId)}
@@ -81,7 +81,9 @@ export function ArmiesPanel() {
               <span style={{ color: '#8a7050', marginLeft: 4, fontSize: '0.62rem', fontFamily: 'ui-monospace, monospace' }}>{troopLabel}</span>
             </span>
             <span style={{ color: a.holding ? '#a8c87a' : '#c0a878', whiteSpace: 'nowrap' }}>
-              {a.holding ? '駐守中' : `▸${target?.name.zh ?? '?'} ${a.totalSeasons > 1 ? `${remaining}季` : ''}`}
+              {a.holding ? '駐守中'
+                : a.cellTarget ? `▸野地 ${a.totalSeasons > 1 ? `${remaining}季` : ''}`
+                : `▸${target?.name.zh ?? '?'} ${a.totalSeasons > 1 ? `${remaining}季` : ''}`}
             </span>
           </div>
         );

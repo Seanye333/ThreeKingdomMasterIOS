@@ -2,7 +2,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Html, OrbitControls } from '@react-three/drei';
 import { getTerritoryCanvas, getTerritorySignature } from './territoryOverlay';
-import { positionAlongRoute, terrainRoute } from '../../game/data/territories';
+import { positionAlongRoute, terrainRoute, marchDestCoords } from '../../game/data/territories';
 import { snapToHexCenter } from '../../game/data/geography';
 import { deriveWeaponType, type WeaponType } from '../../game/data/weaponTypes';
 import * as THREE from 'three';
@@ -1284,20 +1284,21 @@ function MarchingArmies({ cities, pendingCommands, forces, officers, ports, sele
 }) {
   const armies = useMemo(() => {
     return Object.values(pendingCommands)
-      .filter((cmd): cmd is { cityId: string; type: string; targetCityId: string; troops: number; officerId: string; seasonsRemaining?: number; totalSeasons?: number } =>
-        cmd.type === 'march' && !!cmd.targetCityId && !!cmd.cityId)
+      .filter((cmd): cmd is { cityId: string; type: string; targetCityId: string; troops: number; officerId: string; seasonsRemaining?: number; totalSeasons?: number; targetX?: number; targetY?: number } =>
+        cmd.type === 'march' && !!cmd.cityId)
       .map((cmd) => {
         const from = cities[cmd.cityId];
+        const dest = marchDestCoords(cmd, cities);
+        if (!from || !dest) return null;
         const to = cities[cmd.targetCityId];
-        if (!from || !to) return null;
         const force = forces[from.ownerForceId ?? ''];
-        const hostile = to.ownerForceId !== from.ownerForceId;
+        const hostile = !cmd.targetX && to ? to.ownerForceId !== from.ownerForceId : false;
         const commander = officers[cmd.officerId];
         const totalSeasons = Math.max(1, cmd.totalSeasons ?? 1);
         const seasonsRemaining = cmd.seasonsRemaining ?? 1;
         // Terrain-weighted route (bends around mountains) — same path the
         // 2D pennant follows.
-        const landRoute = terrainRoute(from.coords.x, from.coords.y, to.coords.x, to.coords.y);
+        const landRoute = terrainRoute(from.coords.x, from.coords.y, dest.x, dest.y);
         const weaponType: WeaponType = commander ? deriveWeaponType(commander) : 'none';
         return {
           from,

@@ -27,4 +27,6 @@ export interface Army {
   naval?: boolean;
   /** Holding its current cell as a garrison (not advancing). */
   holding?: boolean;
+  /** True if marching to an open cell (targetX/Y) rather than a city. */
+  cellTarget?: boolean;
 }

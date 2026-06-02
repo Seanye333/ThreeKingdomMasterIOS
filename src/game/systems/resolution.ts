@@ -11,7 +11,7 @@ import type {
 } from '../types';
 import { OATH_BONDS, type OathBond } from '../data/bonds';
 import { isHostilePermitted } from '../types';
-import { generateTerritories, terrainRoute, positionAlongRoute, type Territory } from '../data/territories';
+import { generateTerritories, terrainRoute, positionAlongRoute, marchDestCoords, type Territory } from '../data/territories';
 import { advanceSeason } from '../state/gameState';
 import { processAging } from './aging';
 import { handleSearch, resolveInternalAffairs, type LostItemRef } from './commands';
@@ -111,9 +111,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   // back to source); winner takes lighter losses and marches on.
   const armyPosition = (cmd: Extract<Command, { type: 'march' }>) => {
     const src = cities[cmd.cityId];
-    const dst = cities[cmd.targetCityId];
+    const dst = marchDestCoords(cmd, cities);
     if (!src || !dst) return null;
-    const route = terrainRoute(src.coords.x, src.coords.y, dst.coords.x, dst.coords.y);
+    const route = terrainRoute(src.coords.x, src.coords.y, dst.x, dst.y);
     const total = Math.max(1, cmd.totalSeasons ?? 1);
     const remaining = cmd.seasonsRemaining ?? 1;
     const elapsed = total - remaining;
@@ -308,9 +308,16 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   const withTroops = (c: Extract<Command, { type: 'march' }>) =>
     troopOverride[c.officerId] !== undefined ? { ...c, troops: troopOverride[c.officerId] } : c;
   // Held armies garrison their cell — they don't advance or resolve.
-  const held = liveMarches.filter((c) => c.holding).map(withTroops);
+  const explicitlyHeld = liveMarches.filter((c) => c.holding).map(withTroops);
   const moving = liveMarches.filter((c) => !c.holding);
-  const marches = moving.filter((c) => (c.seasonsRemaining ?? 1) <= 1).map(withTroops);
+  const arriving = moving.filter((c) => (c.seasonsRemaining ?? 1) <= 1);
+  // City-target arrivals assault/merge; open-cell arrivals become garrisons.
+  const marches = arriving.filter((c) => c.targetX == null).map(withTroops);
+  const arrivedCells = arriving
+    .filter((c) => c.targetX != null)
+    .map(withTroops)
+    .map((c) => ({ ...c, holding: true }));
+  const held = [...explicitlyHeld, ...arrivedCells];
   const inTransit = moving.filter((c) => (c.seasonsRemaining ?? 1) > 1).map(withTroops);
   const keptCommands: Record<EntityId, Command> = {};
   for (const cmd of inTransit) {
@@ -329,7 +336,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   const outArmies: Record<EntityId, import('../types').Army> = {};
   const deriveArmy = (cmd: Extract<Command, { type: 'march' }>, remainingNext: number, holding: boolean) => {
     const src = cities[cmd.cityId];
-    const dst = cities[cmd.targetCityId];
+    const dst = marchDestCoords(cmd, cities);
     const cmdr = officers[cmd.officerId];
     if (!src || !dst || !cmdr?.forceId) return;
     const total = Math.max(1, cmd.totalSeasons ?? 1);
@@ -348,6 +355,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       progress,
       totalSeasons: total,
       holding,
+      cellTarget: cmd.targetX != null,
     };
   };
   for (const cmd of inTransit) deriveArmy(cmd, (cmd.seasonsRemaining ?? 1) - 1, false);
@@ -361,11 +369,11 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   };
   const stampRouteSlice = (cmd: Extract<Command, { type: 'march' }>, tStart: number, tEnd: number) => {
     const src = cities[cmd.cityId];
-    const dst = cities[cmd.targetCityId];
+    const dst = marchDestCoords(cmd, cities);
     const cmdr = officers[cmd.officerId];
     if (!src || !dst || !cmdr || !cmdr.forceId) return;
     const territories = generateTerritories(Object.values(cities));
-    const route = terrainRoute(src.coords.x, src.coords.y, dst.coords.x, dst.coords.y);
+    const route = terrainRoute(src.coords.x, src.coords.y, dst.x, dst.y);
     if (route.length < 2) return;
     // For each territory whose centroid projects between [tStart, tEnd]
     // along the polyline length, claim it for the marching force.

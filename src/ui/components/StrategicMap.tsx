@@ -11,7 +11,7 @@ import type {
 } from '../../game/types';
 import type { Weather } from '../../game/systems/weather';
 import { drawTerritoryOverlay, getTerritoryCanvas } from './territoryOverlay';
-import { generateTerritories, positionAlongRoute, terrainRoute } from '../../game/data/territories';
+import { generateTerritories, positionAlongRoute, terrainRoute, marchDestCoords } from '../../game/data/territories';
 import { snapToHexCenter, hexCorners, isLand } from '../../game/data/geography';
 import { deriveWeaponType, type WeaponType } from '../../game/data/weaponTypes';
 
@@ -101,6 +101,7 @@ export function StrategicMap() {
   const selectCity = useGameStore((s) => s.selectCity);
   const selectArmy = useGameStore((s) => s.selectArmy);
   const redirectArmy = useGameStore((s) => s.redirectArmy);
+  const moveArmyToCell = useGameStore((s) => s.moveArmyToCell);
 
   const fogOfWar = useGameStore((s) => s.fogOfWar);
   const playerForceId = useGameStore((s) => s.playerForceId);
@@ -262,9 +263,9 @@ export function StrategicMap() {
     for (const cmd of Object.values(pendingCommands)) {
       if (cmd.type !== 'march') continue;
       const from = cities[cmd.cityId];
-      const to = cities[cmd.targetCityId];
-      if (!from || !to) continue;
-      const route = terrainRoute(from.coords.x, from.coords.y, to.coords.x, to.coords.y);
+      const dest = marchDestCoords(cmd, cities);
+      if (!from || !dest) continue;
+      const route = terrainRoute(from.coords.x, from.coords.y, dest.x, dest.y);
       const total = Math.max(1, cmd.totalSeasons ?? 1);
       const remaining = cmd.seasonsRemaining ?? 1;
       const t = Math.min(0.95, Math.max(0.05, (total - remaining + 0.5) / total));
@@ -425,10 +426,15 @@ export function StrategicMap() {
     const effMap: Record<EntityId, City> = {};
     for (const c of Object.values(cities)) effMap[c.id] = effectiveCity(c.id)!;
     const hit = hitTestCity(x, y, effMap);
-    // If an army is selected, clicking a city re-routes it there (RTS-style:
-    // unit selected → click destination). Otherwise normal city selection.
-    if (selectedArmyId && hit) {
-      if (redirectArmy(selectedArmyId, hit)) { selectArmy(null); return; }
+    // If an army is selected (RTS-style: unit → click destination):
+    //  • click a city → re-route there;
+    //  • click open land → march to that cell and garrison it.
+    if (selectedArmyId) {
+      if (hit) {
+        if (redirectArmy(selectedArmyId, hit)) { selectArmy(null); return; }
+      } else if (isLand(x, y, 2)) {
+        if (moveArmyToCell(selectedArmyId, x, y)) { selectArmy(null); return; }
+      }
     }
     selectArmy(null);
     selectCity(hit);
@@ -568,8 +574,12 @@ export function StrategicMap() {
       const effMap: Record<EntityId, City> = {};
       for (const c of Object.values(cities)) effMap[c.id] = effectiveCity(c.id)!;
       const hit = hitTestCity(wx, wy, effMap);
-      if (selectedArmyId && hit) {
-        if (redirectArmy(selectedArmyId, hit)) { selectArmy(null); return; }
+      if (selectedArmyId) {
+        if (hit) {
+          if (redirectArmy(selectedArmyId, hit)) { selectArmy(null); return; }
+        } else if (isLand(wx, wy, 2)) {
+          if (moveArmyToCell(selectedArmyId, wx, wy)) { selectArmy(null); return; }
+        }
       }
       selectArmy(null);
       selectCity(hit);
@@ -1225,14 +1235,15 @@ function drawCityLayer(
   for (const cmd of Object.values(pendingCommands)) {
     if (cmd.type !== 'march') continue;
     const from = cities[cmd.cityId];
+    const dest = marchDestCoords(cmd, cities);
+    if (!from || !dest) continue;
     const to = cities[cmd.targetCityId];
-    if (!from || !to) continue;
     const fromForce = from.ownerForceId ? forces[from.ownerForceId] : null;
-    const hostile = to.ownerForceId !== from.ownerForceId;
+    const hostile = !cmd.targetX && to ? to.ownerForceId !== from.ownerForceId : false;
     const color = hostile ? '#b8442e' : fromForce?.color ?? '#d4a84a';
 
     const selected = cmd.officerId === selectedArmyId;
-    const route = terrainRoute(from.coords.x, from.coords.y, to.coords.x, to.coords.y);
+    const route = terrainRoute(from.coords.x, from.coords.y, dest.x, dest.y);
     drawRoutePolyline(ctx, route, selected ? '#fff4d0' : color);
 
     const commander = officers[cmd.officerId];

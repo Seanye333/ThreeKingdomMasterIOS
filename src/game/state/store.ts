@@ -142,6 +142,7 @@ interface GameStore extends GameState {
   selectArmy: (armyId: EntityId | null) => void;
   redirectArmy: (armyId: EntityId, newTargetId: EntityId) => boolean;
   holdArmy: (armyId: EntityId) => boolean;
+  moveArmyToCell: (armyId: EntityId, x: number, y: number) => boolean;
   issueCommand: (
     cityId: EntityId,
     type: InternalAffairsType,
@@ -402,6 +403,30 @@ export const useGameStore = create<GameStore>()(
           armies: {
             ...state.armies,
             [armyId]: { ...army, targetCityId: newTargetId, totalSeasons: total, holding: false },
+          },
+        });
+        return true;
+      },
+
+      moveArmyToCell: (armyId, x, y) => {
+        const state = get();
+        const cmd = state.pendingCommands[armyId];
+        const army = state.armies[armyId];
+        if (!cmd || cmd.type !== 'march' || !army) return false;
+        if (army.forceId !== state.playerForceId) return false;
+        const src = state.cities[cmd.cityId];
+        if (!src) return false;
+        const dist = Math.hypot(x - src.coords.x, y - src.coords.y);
+        const total = dist < 80 ? 1 : dist < 150 ? 2 : dist < 240 ? 3 : 4;
+        const remaining = Math.max(1, Math.ceil((1 - army.progress) * total));
+        set({
+          pendingCommands: {
+            ...state.pendingCommands,
+            [armyId]: { ...cmd, targetX: x, targetY: y, totalSeasons: total, seasonsRemaining: remaining, holding: false },
+          },
+          armies: {
+            ...state.armies,
+            [armyId]: { ...army, totalSeasons: total, holding: false, cellTarget: true },
           },
         });
         return true;

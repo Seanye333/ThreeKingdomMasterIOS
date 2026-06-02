@@ -45,6 +45,11 @@ export interface MarchCommand extends CommandBase {
    *  garrisons it (still fights enemies that reach it). Cleared on
    *  redirect. */
   holding?: boolean;
+  /** Free-cell destination (pixel coords). When set the army marches to
+   *  this open cell instead of `targetCityId` and garrisons it on arrival
+   *  rather than assaulting a city. */
+  targetX?: number;
+  targetY?: number;
 }
 
 export type Command = InternalAffairsCommand | MarchCommand;
