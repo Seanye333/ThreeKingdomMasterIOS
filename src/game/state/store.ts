@@ -2084,6 +2084,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           ports: nextPorts,
           forts: nextForts,
           territoryOwnership: result.territoryOwnership ?? state.territoryOwnership ?? {},
+          armies: result.armies ?? {},
           endingsAchieved,
           campaignStats: {
             ...state.campaignStats,

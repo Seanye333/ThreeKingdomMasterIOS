@@ -70,6 +70,9 @@ export interface ResolutionOutput {
   keptCommands?: Record<EntityId, Command>;
   /** Phase 3c — territory ownership map after capture stamps applied. */
   territoryOwnership?: Record<EntityId, EntityId | null>;
+  /** Persistent field armies still on the map after this season (derived
+   *  from in-transit marches — the canonical "unit on the map" layer). */
+  armies?: Record<EntityId, import('../types').Army>;
   /** Pending delayed effects from stratagems (e.g. 截糧 troop drain). */
   delayedEffects?: Array<{ targetCityId?: EntityId; seasons: number; perSeason: number }>;
   /**
@@ -311,6 +314,35 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     keptCommands[cmd.officerId] = {
       ...cmd,
       seasonsRemaining: (cmd.seasonsRemaining ?? 1) - 1,
+    };
+  }
+
+  // Derive the persistent Army layer from the in-transit marches that will
+  // keep marching next season. Each is positioned at its current point on
+  // the terrain route. This is the canonical "unit on the map" entity the
+  // renderers + future selection/redirect build on.
+  const outArmies: Record<EntityId, import('../types').Army> = {};
+  for (const cmd of inTransit) {
+    const src = cities[cmd.cityId];
+    const dst = cities[cmd.targetCityId];
+    const cmdr = officers[cmd.officerId];
+    if (!src || !dst || !cmdr?.forceId) continue;
+    const total = Math.max(1, cmd.totalSeasons ?? 1);
+    const remainingNext = (cmd.seasonsRemaining ?? 1) - 1; // after this season's step
+    const progress = Math.min(0.95, Math.max(0.05, (total - remainingNext) / total));
+    const pos = armyPosition({ ...cmd, seasonsRemaining: remainingNext });
+    outArmies[cmd.officerId] = {
+      id: cmd.officerId,
+      forceId: cmdr.forceId,
+      commanderId: cmd.officerId,
+      companionIds: cmd.additionalOfficerIds ?? [],
+      troops: cmd.troops,
+      fromCityId: cmd.cityId,
+      targetCityId: cmd.targetCityId,
+      x: pos?.x ?? src.coords.x,
+      y: pos?.y ?? src.coords.y,
+      progress,
+      totalSeasons: total,
     };
   }
 
@@ -840,6 +872,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     lostItems,
     report: { date: { year: input.date.year, season: input.date.season }, entries },
     keptCommands: Object.keys(keptCommands).length > 0 ? keptCommands : undefined,
+    armies: outArmies,
     territoryOwnership,
     delayedEffects: delayedEffects.length > 0 ? delayedEffects : undefined,
     deedDeltas: deedDeltas.length > 0 ? deedDeltas : undefined,

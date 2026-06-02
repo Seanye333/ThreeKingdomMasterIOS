@@ -121,6 +121,8 @@ export interface GameState {
    *  means the cell inherits from its parent city. Set explicitly when
    *  an army marches through it, regardless of march outcome. */
   territoryOwnership: Record<EntityId, EntityId | null>;
+  /** Persistent field armies marching on the map (keyed by army id). */
+  armies: Record<EntityId, import('../types').Army>;
   /** Family relationships. */
   family: FamilyRelation[];
   /** Pending heirs that will activate when they come of age. */
@@ -258,6 +260,7 @@ export const EMPTY_STATE: GameState = {
   ports: {},
   forts: {},
   territoryOwnership: {},
+  armies: {},
   family: [],
   pendingHeirs: [],
   officerWishes: [],
@@ -434,6 +437,7 @@ export function loadScenario(
       Object.fromEntries(scaledCities.map((c) => [c.id, c.ownerForceId])),
     ),
     territoryOwnership: {},
+    armies: {},
     // Pre-populate canonical Three Kingdoms family lineages — filtered
     // to entries where BOTH officers are in the loaded roster.
     family: (() => {
