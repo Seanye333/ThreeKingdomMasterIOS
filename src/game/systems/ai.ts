@@ -485,6 +485,56 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
     }
   }
 
+  // ── AI split (分兵) ───────────────────────────────────────────────
+  // An oversized dug-in field camp divides to cover more ground, planting a
+  // second ambush under a spare officer at a nearby covered cell. The
+  // counterpart to the automatic 合流 (co-located camps merge in
+  // resolveSeason). One split per force per season, kept conservative.
+  for (const forceId of aiForceIds) {
+    if (rng() > 0.4) continue;
+    // Largest holding camp of this force that has a spare officer to lead
+    // the detachment and enough troops to leave both halves viable.
+    let bestCmd: MarchCommand | null = null;
+    let bestTroops = 9000;
+    for (const cmd of Object.values(pendingCommands)) {
+      if (cmd.type !== 'march' || !cmd.holding) continue;
+      if (officers[cmd.officerId]?.forceId !== forceId) continue;
+      if ((cmd.additionalOfficerIds?.length ?? 0) < 1) continue;
+      if ((cmd.troops ?? 0) > bestTroops) { bestTroops = cmd.troops; bestCmd = cmd; }
+    }
+    if (!bestCmd) continue;
+    const detachTroops = Math.floor(bestCmd.troops / 2);
+    if (detachTroops < 3000) continue;
+    const army = input.armies?.[bestCmd.officerId];
+    const cx = army?.x ?? cities[bestCmd.cityId]?.coords.x;
+    const cy = army?.y ?? cities[bestCmd.cityId]?.coords.y;
+    if (cx == null || cy == null) continue;
+    // Plant the detachment on the best-covered nearby land cell.
+    let bx = cx, by = cy, bestCover = -1;
+    for (let k = 0; k < 8; k++) {
+      const ang = (k / 8) * Math.PI * 2;
+      const tx = cx + Math.cos(ang) * 36, ty = cy + Math.sin(ang) * 36;
+      if (!isLand(tx, ty, 2)) continue;
+      const cover = terrainMarchCost(tx, ty);
+      if (cover > bestCover) { bestCover = cover; bx = tx; by = ty; }
+    }
+    const companions = bestCmd.additionalOfficerIds ?? [];
+    const detachId = companions[0];
+    const remain = companions.slice(1);
+    pendingCommands[bestCmd.officerId] = {
+      ...bestCmd,
+      troops: bestCmd.troops - detachTroops,
+      additionalOfficerIds: remain.length > 0 ? remain : undefined,
+    };
+    pendingCommands[detachId] = {
+      type: 'march', cityId: bestCmd.cityId, officerId: detachId,
+      targetCityId: bestCmd.targetCityId, targetX: bx, targetY: by,
+      troops: detachTroops, holding: true, seasonsRemaining: 1, totalSeasons: 1,
+    };
+    const dOff = officers[detachId];
+    if (dOff) officers[detachId] = { ...dOff, task: 'march' };
+  }
+
   return { cities, officers, pendingCommands, newTrainings, diplomacy, runtimeBonds, entries };
 }
 

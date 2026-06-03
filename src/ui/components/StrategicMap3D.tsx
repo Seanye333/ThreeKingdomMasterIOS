@@ -1312,6 +1312,7 @@ function MarchingArmies({ cities, pendingCommands, forces, officers, ports, sele
           weaponType,
           selected: cmd.officerId === selectedArmyId,
           holding: !!cmd.holding,
+          cellTarget: cmd.targetX != null,
         };
       })
       .filter((a): a is NonNullable<typeof a> => !!a);
@@ -1324,7 +1325,7 @@ function MarchingArmies({ cities, pendingCommands, forces, officers, ports, sele
           commanderName={a.commanderName} troops={a.troops}
           seasonsRemaining={a.seasonsRemaining} totalSeasons={a.totalSeasons}
           landRoute={a.landRoute} weaponType={a.weaponType}
-          selected={a.selected} holding={a.holding}
+          selected={a.selected} holding={a.holding} cellTarget={a.cellTarget}
           ports={ports} />
       ))}
     </group>
@@ -1337,7 +1338,7 @@ const UNIT_TAG: Record<WeaponType, string> = {
   sabre: '刀', sword: '劍', fan: '師', siege: '械', none: '步',
 };
 
-function MarchingArmy({ from, to, color, commanderName, troops, seasonsRemaining, totalSeasons, landRoute, weaponType, selected, holding, ports }: {
+function MarchingArmy({ from, to, color, commanderName, troops, seasonsRemaining, totalSeasons, landRoute, weaponType, selected, holding, cellTarget, ports }: {
   from: City; to: City; color: string;
   commanderName: string; troops: number;
   seasonsRemaining: number; totalSeasons: number;
@@ -1345,6 +1346,7 @@ function MarchingArmy({ from, to, color, commanderName, troops, seasonsRemaining
   weaponType: WeaponType;
   selected: boolean;
   holding: boolean;
+  cellTarget: boolean;
   ports: Record<string, import('../../game/types').Port>;
 }) {
   const [fpx, fpy] = cityPixel(from.id, from.coords.x, from.coords.y);
@@ -1403,9 +1405,11 @@ function MarchingArmy({ from, to, color, commanderName, troops, seasonsRemaining
       heading = Math.atan2(bx - ax, bz - az);
     } else {
       // Land — snap to the hex the army occupies this season so it sits
-      // on a cell and steps cell-to-cell (RTK-XIV grid march). Heading
-      // points toward the next hex along the route.
-      const raw = positionAlongRoute(landRoute, t);
+      // on a cell and steps cell-to-cell (RTK-XIV grid march). A dug-in
+      // garrison sits on the cell it holds (route end), not a fraction along.
+      const raw = (holding && cellTarget && landRoute.length > 0)
+        ? landRoute[landRoute.length - 1]
+        : positionAlongRoute(landRoute, t);
       const s = snapToHexCenter(raw.x, raw.y);
       const [wx, wz] = pxToWorld(s.x, s.y);
       const rawAhead = positionAlongRoute(landRoute, Math.min(0.99, t + 0.06));
@@ -1439,7 +1443,7 @@ function MarchingArmy({ from, to, color, commanderName, troops, seasonsRemaining
         </mesh>
       )}
       {holding ? (
-        <FieldCamp color={color} />
+        <FieldCamp color={color} troops={troops} />
       ) : (
         <>
           {FORMATION.map(([sx, sz], i) => (
@@ -1508,7 +1512,13 @@ function MarchDust() {
  * holding an open cell — a palisade ring, a cluster of tents, and a banner
  * pole flying the force colour, so a dug-in field army reads at a glance.
  */
-function FieldCamp({ color }: { color: string }) {
+// Tent slots in a rough cluster — bigger camps light up more of them.
+const CAMP_TENTS: ReadonlyArray<readonly [number, number]> = [
+  [0, 0.15], [-0.13, -0.04], [0.13, -0.04], [-0.07, 0.06], [0.07, 0.06],
+  [-0.18, 0.1], [0.18, 0.1], [0, -0.14], [-0.1, -0.12], [0.1, -0.12],
+];
+
+function FieldCamp({ color, troops = 0 }: { color: string; troops?: number }) {
   const flagRef = useRef<THREE.Mesh>(null);
   useFrame(({ clock }) => {
     if (flagRef.current) {
@@ -1516,21 +1526,21 @@ function FieldCamp({ color }: { color: string }) {
       flagRef.current.rotation.y = Math.sin(clock.elapsedTime * 2.2) * 0.25;
     }
   });
-  const tents: ReadonlyArray<readonly [number, number]> = [
-    [-0.13, -0.04], [0.13, -0.04], [0, 0.15], [-0.07, 0.06], [0.07, 0.06],
-  ];
+  // Camp footprint scales with the size of the garrison holding it.
+  const tentCount = Math.max(3, Math.min(CAMP_TENTS.length, 3 + Math.floor(troops / 2500)));
+  const s = Math.max(0.8, Math.min(1.7, 0.8 + troops / 16000));
   return (
-    <group>
+    <group scale={[s, 1, s]}>
       {/* Palisade / earthwork ring. */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]}>
         <ringGeometry args={[0.33, 0.4, 24]} />
         <meshStandardMaterial color="#6b4f2a" roughness={0.9} side={THREE.DoubleSide} />
       </mesh>
-      {/* Tents — four-sided canvas pyramids. */}
-      {tents.map(([x, z], i) => (
+      {/* Tents — four-sided canvas pyramids; count scales with troops. */}
+      {CAMP_TENTS.slice(0, tentCount).map(([x, z], i) => (
         <mesh key={i} position={[x, 0.085, z]} rotation={[0, Math.PI / 4, 0]}>
           <coneGeometry args={[0.1, 0.17, 4]} />
-          <meshStandardMaterial color={i === 2 ? '#d8c79a' : '#c4b187'} roughness={0.8} />
+          <meshStandardMaterial color={i === 0 ? '#d8c79a' : '#c4b187'} roughness={0.8} />
         </mesh>
       ))}
       {/* Banner pole + force-colour flag at the centre of the camp. */}

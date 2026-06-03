@@ -1266,7 +1266,11 @@ function drawCityLayer(
       // Snap the army to the hex it occupies this season — it sits on a
       // cell and steps cell-to-cell across seasons (RTK-XIV grid march).
       const t = Math.min(0.95, Math.max(0.05, (elapsed + 0.5) / total));
-      const raw = positionAlongRoute(route, t);
+      // A dug-in garrison sits on the cell it holds; a marching column at the
+      // route fraction it has reached this season.
+      const raw = (cmd.holding && cmd.targetX != null && cmd.targetY != null)
+        ? { x: cmd.targetX, y: cmd.targetY }
+        : positionAlongRoute(route, t);
       const { x: ux, y: uy } = snapToHexCenter(raw.x, raw.y);
       const unitTag = UNIT_TAG_2D[deriveWeaponType(commander)];
       drawOccupiedHex(ctx, ux, uy, color);
@@ -1623,7 +1627,10 @@ function drawMarchUnit(
   const cy = y + bob;
 
   if (holding) {
-    // ── Field camp: two canvas tents + a centre banner pole/flag. ──
+    // ── Field camp: canvas tents + a centre banner pole/flag. The camp
+    // footprint grows with the garrison holding it. ──
+    const big = troops >= 8000;
+    const huge = troops >= 16000;
     const tent = (tx: number, baseY: number, w: number, h: number, fill: string) => {
       ctx.beginPath();
       ctx.moveTo(tx, baseY - h);
@@ -1636,8 +1643,10 @@ function drawMarchUnit(
       ctx.lineWidth = 1;
       ctx.stroke();
     };
+    if (huge) { tent(x - 11, cy + 7, 4, 6, '#c4b187'); tent(x + 11, cy + 7, 4, 6, '#c4b187'); }
     tent(x - 6, cy + 6, 4.5, 7, '#c4b187');
     tent(x + 6, cy + 6, 4.5, 7, '#c4b187');
+    if (big) { tent(x, cy + 4, 4, 6, '#c4b187'); }
     tent(x, cy + 7, 5.5, 9, '#d8c79a');
     // Banner pole + flag in the force colour.
     ctx.strokeStyle = '#3a2818';

@@ -111,6 +111,13 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   // reaches its destination. Loser's march is cancelled (survivors stream
   // back to source); winner takes lighter losses and marches on.
   const armyPosition = (cmd: Extract<Command, { type: 'march' }>) => {
+    // A dug-in garrison sits exactly on the cell it is holding, not at a
+    // fraction along a route — so split detachments and arrived garrisons
+    // stay put where they were placed (otherwise they snap to the route
+    // midpoint and re-merge with their parent).
+    if (cmd.holding && cmd.targetX != null && cmd.targetY != null) {
+      return { x: cmd.targetX, y: cmd.targetY };
+    }
     const src = cities[cmd.cityId];
     const dst = marchDestCoords(cmd, cities);
     if (!src || !dst) return null;
@@ -354,6 +361,48 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     }
   }
 
+  // ── Scout warning ────────────────────────────────────────────────
+  // A player column's outriders spot a dug-in enemy camp on the road ahead
+  // (a potential ambush) before contact. Sight range scales with the
+  // commander's intelligence, so a wise general gets earlier warning — and
+  // pairs with the 识破 detection that blunts the ambush if it's sprung.
+  if (input.playerForceId) {
+    const enemyCamps = allMarches.filter((c) =>
+      c.holding && !cancelledMarchOfficers.has(c.officerId)
+      && officers[c.officerId]?.forceId
+      && officers[c.officerId]!.forceId !== input.playerForceId);
+    for (const m of allMarches) {
+      if (m.holding || cancelledMarchOfficers.has(m.officerId)) continue;
+      const mo = officers[m.officerId];
+      if (!mo?.forceId || mo.forceId !== input.playerForceId) continue;
+      const mp = armyPosition(m);
+      if (!mp) continue;
+      const scoutRange = 50 + Math.min(60, Math.max(0, armyMaxIntel(m) - 50) * 1.2);
+      let best: Extract<Command, { type: 'march' }> | null = null;
+      let bestD = Infinity;
+      for (const camp of enemyCamps) {
+        const co = officers[camp.officerId];
+        if (!co?.forceId || !isHostilePermitted(input.diplomacy, mo.forceId, co.forceId)) continue;
+        const cp = armyPosition(camp);
+        if (!cp) continue;
+        const d = Math.hypot(mp.x - cp.x, mp.y - cp.y);
+        if (d > INTERCEPT_DIST && d < scoutRange && d < bestD) { bestD = d; best = camp; }
+      }
+      if (best) {
+        const co = officers[best.officerId];
+        const cName = co?.name ?? { en: '?', zh: '？' };
+        const eForce = co?.forceId ? forces[co.forceId]?.name ?? { en: '?', zh: '？' } : { en: '?', zh: '？' };
+        const approx = Math.round((best.troops ?? 0) / 100) * 100;
+        entries.push({
+          cityId: null,
+          kind: 'note',
+          text: `Scouts report: ${mo.name.en}'s outriders spotted ${eForce.en}'s dug-in camp ahead (${cName.en}, ~${approx}). Possible ambush — beware.`,
+          textZh: `斥候回報：${mo.name.zh}前方發現${eForce.zh}之營寨（${cName.zh}部,約${approx}）,恐有埋伏,宜慎之。`,
+        });
+      }
+    }
+  }
+
   const liveMarches = allMarches.filter((c) => !cancelledMarchOfficers.has(c.officerId));
   const withTroops = (c: Extract<Command, { type: 'march' }>) =>
     troopOverride[c.officerId] !== undefined ? { ...c, troops: troopOverride[c.officerId] } : c;
@@ -523,8 +572,11 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const total = Math.max(1, cmd.totalSeasons ?? 1);
     if (cmd.holding) {
       // A garrison holds the cell it sits on — stamp a small slice around
-      // its frozen position so it keeps the ground it's standing on.
-      const t = (total - (cmd.seasonsRemaining ?? 1) + 0.5) / total;
+      // its frozen position. A cell-target camp holds the route's end cell;
+      // a mid-route hold freezes at the fraction it reached.
+      const t = cmd.targetX != null
+        ? 0.98
+        : (total - (cmd.seasonsRemaining ?? 1) + 0.5) / total;
       stampRouteSlice(cmd, Math.max(0, t - 0.04), Math.min(1, t + 0.04));
       continue;
     }
