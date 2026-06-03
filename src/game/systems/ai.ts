@@ -17,7 +17,7 @@ import type { Difficulty } from '../state/gameState';
 import { OATH_BONDS, type OathBond } from '../data/bonds';
 import { COMMAND_DEFS } from './commands';
 import { marchDurationFor } from '../data/cities';
-import { isLand } from '../data/geography';
+import { isLand, terrainMarchCost } from '../data/geography';
 import {
   NAP_PROPOSAL_COST,
   computeTotalTroops,
@@ -587,14 +587,18 @@ function decideCommand(
             city.troops - keep,
           );
           if (sendTroops >= 2000) {
-            // Intercept cell ≈ 45% of the way from the city to the column,
-            // nudged back toward the city until it lands on solid ground.
+            // Intercept cell ≈ 25–50% of the way from the city to the column.
+            // Among the land candidates on that line, pick the one with the
+            // best terrain cover so the column springs its ambush from rough
+            // ground (mountains/river crossings amplify the ambush bonus).
             const cx = city.coords.x, cy = city.coords.y;
-            let ix = cx, iy = cy;
-            for (let f = 0.45; f >= 0.12; f -= 0.08) {
+            let ix = cx, iy = cy, bestCover = -1;
+            for (let f = 0.5; f >= 0.18; f -= 0.06) {
               const tx = cx + (threat.x - cx) * f;
               const ty = cy + (threat.y - cy) * f;
-              if (isLand(tx, ty, 2)) { ix = tx; iy = ty; break; }
+              if (!isLand(tx, ty, 2)) continue;
+              const cover = terrainMarchCost(tx, ty);
+              if (cover > bestCover) { bestCover = cover; ix = tx; iy = ty; }
             }
             const companion = marchPool
               .filter((c) => c.id !== o.id)

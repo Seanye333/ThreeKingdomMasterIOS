@@ -19,9 +19,9 @@ export function BattleDetailModal({ battle, onClose }: Props) {
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <header className={styles.header}>
           <div>
-            <div className={styles.titleZh}>{battle.field ? '野戰' : '戰況'}</div>
+            <div className={styles.titleZh}>{battle.ambush ? '伏擊' : battle.field ? '野戰' : '戰況'}</div>
             <div className={styles.titleEn}>
-              {battle.field ? 'Field Battle — near ' : 'Battle Report — '}{city?.name.en ?? battle.cityId}
+              {battle.ambush ? 'Ambush — near ' : battle.field ? 'Field Battle — near ' : 'Battle Report — '}{city?.name.en ?? battle.cityId}
             </div>
           </div>
           <button className={styles.closeButton} onClick={onClose}>
@@ -32,7 +32,9 @@ export function BattleDetailModal({ battle, onClose }: Props) {
         <div className={styles.banner}>
           {battle.field ? (
             <span className={`${styles.outcome} ${styles.victory}`}>
-              截擊得勝 Interception — victor routs the column
+              {battle.ambush
+                ? '設伏破敵 Ambush — sprung from cover, column shattered'
+                : '截擊得勝 Interception — victor routs the column'}
             </span>
           ) : battle.cityFalls ? (
             <span className={`${styles.outcome} ${styles.conquest}`}>

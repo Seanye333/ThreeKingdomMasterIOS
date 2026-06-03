@@ -12,6 +12,7 @@ import type {
 import { OATH_BONDS, type OathBond } from '../data/bonds';
 import { isHostilePermitted } from '../types';
 import { generateTerritories, terrainRoute, positionAlongRoute, marchDestCoords, type Territory } from '../data/territories';
+import { terrainMarchCost } from '../data/geography';
 import { advanceSeason } from '../state/gameState';
 import { processAging } from './aging';
 import { handleSearch, resolveInternalAffairs, type LostItemRef } from './commands';
@@ -158,18 +159,32 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       if (!pa || !pb) continue;
       if (Math.hypot(pa.x - pb.x, pa.y - pb.y) > INTERCEPT_DIST) continue;
 
-      // Field clash — higher blended power wins (ties to first army).
+      // Field clash. A dug-in army (holding) that catches a moving column is
+      // lying in wait — an ambush. It fights with a power bonus that grows
+      // with terrain cover (mountains/forest/river crossings), so holding a
+      // rough chokepoint and springing on a passing army is a real tactic.
       const statsA = fieldStats(a);
       const statsB = fieldStats(b);
-      const aWins = statsA.power >= statsB.power;
+      const aAmbush = !!a.holding && !b.holding;
+      const bAmbush = !!b.holding && !a.holding;
+      const AMBUSH_BASE = 0.3, COVER_SCALE = 0.45, COVER_CAP = 0.55;
+      const ambushMult = (isAmb: boolean, p: { x: number; y: number }) =>
+        isAmb ? 1 + AMBUSH_BASE + Math.min(COVER_CAP, terrainMarchCost(p.x, p.y) * COVER_SCALE) : 1;
+      const multA = ambushMult(aAmbush, pa);
+      const multB = ambushMult(bAmbush, pb);
+      const aWins = statsA.power * multA >= statsB.power * multB;
       const winner = aWins ? a : b;
       const loser = aWins ? b : a;
       const wStats = aWins ? statsA : statsB;
       const lStats = aWins ? statsB : statsA;
+      // The clash was an ambush if the *victor* was the one lying in wait.
+      const ambush = aWins ? aAmbush : bAmbush;
       const winnerCmdr = officers[winner.officerId];
       const loserCmdr = officers[loser.officerId];
-      const winnerCasualty = Math.floor(winner.troops * 0.2);
-      const loserCasualty = Math.floor(loser.troops * 0.6);
+      // A sprung ambush is lopsided: the ambusher bleeds little, the
+      // surprised column is shattered.
+      const winnerCasualty = Math.floor(winner.troops * (ambush ? 0.12 : 0.2));
+      const loserCasualty = Math.floor(loser.troops * (ambush ? 0.72 : 0.6));
       // Casualties are drawn from each army's source city (troops are
       // notionally still there until the march resolves).
       const winSrc = cities[winner.cityId];
@@ -216,12 +231,17 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         attackerLosses: winnerCasualty,
         defenderLosses: loserCasualty,
         field: true,
+        ambush,
       };
       entries.push({
         cityId: winner.targetCityId,
         kind: 'battle',
-        text: `Field clash: ${wName.en} intercepted ${lName.en} on the march and routed them (−${winnerCasualty} vs −${loserCasualty}). ${lName.en}'s advance is broken.`,
-        textZh: `野戰：${wName.zh}於行軍途中截擊${lName.zh}並擊潰之（我軍 −${winnerCasualty}，敵軍 −${loserCasualty}）。${lName.zh}之進軍受挫。`,
+        text: ambush
+          ? `Ambush: ${wName.en} lay in wait and fell upon ${lName.en}'s column, shattering it (−${winnerCasualty} vs −${loserCasualty}). ${lName.en}'s advance is broken.`
+          : `Field clash: ${wName.en} intercepted ${lName.en} on the march and routed them (−${winnerCasualty} vs −${loserCasualty}). ${lName.en}'s advance is broken.`,
+        textZh: ambush
+          ? `伏擊：${wName.zh}設伏以待,驟擊${lName.zh}之軍而潰之（我軍 −${winnerCasualty}，敵軍 −${loserCasualty}）。${lName.zh}之進軍受挫。`
+          : `野戰：${wName.zh}於行軍途中截擊${lName.zh}並擊潰之（我軍 −${winnerCasualty}，敵軍 −${loserCasualty}）。${lName.zh}之進軍受挫。`,
         battle: fieldBattle,
       });
     }

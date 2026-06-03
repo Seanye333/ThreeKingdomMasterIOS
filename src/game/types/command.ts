@@ -117,6 +117,9 @@ export interface BattleDetail {
   /** True for a mid-march interception (no city/walls); cityId is the
    *  victor's objective, used only as a location label. */
   field?: boolean;
+  /** True when the victor was a dug-in army lying in wait — a sprung
+   *  ambush (terrain-amplified field clash). */
+  ambush?: boolean;
 }
 
 export interface HistoricBattle extends BattleDetail {
