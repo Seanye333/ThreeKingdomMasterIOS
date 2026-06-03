@@ -36,7 +36,7 @@ export function ArmiesPanel() {
       </div>
       {selectedArmyId && armies[selectedArmyId] && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4, marginBottom: 3 }}>
-          <span style={{ fontSize: '0.58rem', color: '#d4a84a' }}>點城改道 · 點野地進駐</span>
+          <span style={{ fontSize: '0.58rem', color: '#d4a84a' }}>點城改道 · 點野地進駐 · 點近處友軍合流</span>
           <div style={{ display: 'flex', gap: 4 }}>
             <button
               onClick={() => holdArmy(selectedArmyId)}

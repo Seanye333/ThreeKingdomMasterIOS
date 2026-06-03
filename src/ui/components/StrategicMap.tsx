@@ -102,6 +102,7 @@ export function StrategicMap() {
   const selectArmy = useGameStore((s) => s.selectArmy);
   const redirectArmy = useGameStore((s) => s.redirectArmy);
   const moveArmyToCell = useGameStore((s) => s.moveArmyToCell);
+  const mergeArmyInto = useGameStore((s) => s.mergeArmyInto);
 
   const fogOfWar = useGameStore((s) => s.fogOfWar);
   const playerForceId = useGameStore((s) => s.playerForceId);
@@ -422,7 +423,13 @@ export function StrategicMap() {
     const { x, y } = toWorld(e.clientX - rect.left, e.clientY - rect.top);
     // A marching unit under the cursor takes priority over the city beneath.
     const armyHit = armyAtPoint(x, y);
-    if (armyHit) { selectArmy(armyHit); return; }
+    if (armyHit) {
+      // Selected army + click another friendly army nearby → merge columns.
+      if (selectedArmyId && armyHit !== selectedArmyId
+        && mergeArmyInto(selectedArmyId, armyHit)) return;
+      selectArmy(armyHit);
+      return;
+    }
     const effMap: Record<EntityId, City> = {};
     for (const c of Object.values(cities)) effMap[c.id] = effectiveCity(c.id)!;
     const hit = hitTestCity(x, y, effMap);
@@ -570,7 +577,12 @@ export function StrategicMap() {
       const cy = cssY * scaleY;
       const { x: wx, y: wy } = toWorld(cx, cy);
       const armyHit = armyAtPoint(wx, wy);
-      if (armyHit) { selectArmy(armyHit); return; }
+      if (armyHit) {
+        if (selectedArmyId && armyHit !== selectedArmyId
+          && mergeArmyInto(selectedArmyId, armyHit)) return;
+        selectArmy(armyHit);
+        return;
+      }
       const effMap: Record<EntityId, City> = {};
       for (const c of Object.values(cities)) effMap[c.id] = effectiveCity(c.id)!;
       const hit = hitTestCity(wx, wy, effMap);

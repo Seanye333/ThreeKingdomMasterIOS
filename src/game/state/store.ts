@@ -28,6 +28,7 @@ import { EDICTS_BY_KIND, IMPERIAL_RANKS_BY_ID } from '../data/imperial';
 import { ESPIONAGE_DEFS_BY_KIND } from '../data/espionage';
 import { ITEMS_BY_ID } from '../data/items';
 import { marchDurationFor } from '../data/cities';
+import { terrainRoute, positionAlongRoute, marchDestCoords } from '../data/territories';
 import { FAMILY_LINEAGE } from '../data/familyLineage';
 import { POLICY_DEFS, TACTIC_DEFS } from '../data/officerAttributes';
 import {
@@ -143,6 +144,9 @@ interface GameStore extends GameState {
   redirectArmy: (armyId: EntityId, newTargetId: EntityId) => boolean;
   holdArmy: (armyId: EntityId) => boolean;
   moveArmyToCell: (armyId: EntityId, x: number, y: number) => boolean;
+  /** Merge the source army into the destination army (both must be the
+   *  player's and close enough to rendezvous). Returns false if not allowed. */
+  mergeArmyInto: (sourceArmyId: EntityId, destArmyId: EntityId) => boolean;
   issueCommand: (
     cityId: EntityId,
     type: InternalAffairsType,
@@ -442,6 +446,67 @@ export const useGameStore = create<GameStore>()(
         set({
           pendingCommands: { ...state.pendingCommands, [armyId]: { ...cmd, holding: next } },
           armies: { ...state.armies, [armyId]: { ...army, holding: next } },
+        });
+        return true;
+      },
+
+      mergeArmyInto: (sourceArmyId, destArmyId) => {
+        const state = get();
+        if (sourceArmyId === destArmyId) return false;
+        const srcCmd = state.pendingCommands[sourceArmyId];
+        const dstCmd = state.pendingCommands[destArmyId];
+        const srcArmy = state.armies[sourceArmyId];
+        const dstArmy = state.armies[destArmyId];
+        if (!srcCmd || srcCmd.type !== 'march' || !srcArmy) return false;
+        if (!dstCmd || dstCmd.type !== 'march' || !dstArmy) return false;
+        if (srcArmy.forceId !== state.playerForceId) return false;
+        if (dstArmy.forceId !== state.playerForceId) return false;
+
+        // Current on-map positions (same math the renderer uses) — the two
+        // columns must be close enough to rendezvous this season.
+        const armyPos = (cmd: typeof srcCmd, army: typeof srcArmy) => {
+          const from = state.cities[cmd.cityId];
+          const dest = marchDestCoords(cmd, state.cities);
+          if (!from || !dest) return { x: army.x, y: army.y };
+          const route = terrainRoute(from.coords.x, from.coords.y, dest.x, dest.y);
+          const total = Math.max(1, cmd.totalSeasons ?? 1);
+          const remaining = cmd.seasonsRemaining ?? 1;
+          const t = Math.min(0.95, Math.max(0.05, (total - remaining + 0.5) / total));
+          return positionAlongRoute(route, t);
+        };
+        const ps = armyPos(srcCmd, srcArmy);
+        const pd = armyPos(dstCmd, dstArmy);
+        const MERGE_RANGE = 120; // a few cells — bring them together first
+        if (Math.hypot(ps.x - pd.x, ps.y - pd.y) > MERGE_RANGE) return false;
+
+        // Fold source troops + officers into the destination column. The
+        // source's commander and companions become destination companions
+        // (they stay busy — the carry-forward loop keeps their march task).
+        const mergedCompanions = [
+          ...(dstCmd.additionalOfficerIds ?? []),
+          srcCmd.officerId,
+          ...(srcCmd.additionalOfficerIds ?? []),
+        ];
+        const mergedTroops = dstArmy.troops + srcArmy.troops;
+
+        const nextCommands = { ...state.pendingCommands };
+        delete nextCommands[sourceArmyId];
+        nextCommands[destArmyId] = {
+          ...dstCmd,
+          troops: mergedTroops,
+          additionalOfficerIds: mergedCompanions,
+        };
+        const nextArmies = { ...state.armies };
+        delete nextArmies[sourceArmyId];
+        nextArmies[destArmyId] = {
+          ...dstArmy,
+          troops: mergedTroops,
+          companionIds: mergedCompanions,
+        };
+        set({
+          pendingCommands: nextCommands,
+          armies: nextArmies,
+          selectedArmyId: destArmyId,
         });
         return true;
       },
