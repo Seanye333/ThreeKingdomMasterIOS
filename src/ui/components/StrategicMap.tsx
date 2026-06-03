@@ -1271,7 +1271,7 @@ function drawCityLayer(
         ctx.stroke();
         ctx.restore();
       }
-      drawMarchUnit(ctx, ux, uy, color, commander.name.zh, cmd.troops, remaining, total, unitTag);
+      drawMarchUnit(ctx, ux, uy, color, commander.name.zh, cmd.troops, remaining, total, unitTag, !!cmd.holding);
     }
   }
 
@@ -1590,7 +1590,9 @@ function drawOccupiedHex(
   ctx.restore();
 }
 
-/** In-transit army marker: pennant on a pole with commander + troop label. */
+/** In-transit army marker: pennant on a pole with commander + troop label.
+ *  When `holding`, the column is dug in — draw a small tented camp with a
+ *  banner instead of the marching pennant. */
 function drawMarchUnit(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -1601,12 +1603,54 @@ function drawMarchUnit(
   seasonsRemaining: number,
   totalSeasons: number,
   unitTag: string,
+  holding: boolean = false,
 ) {
   ctx.save();
-  // Subtle bob so the unit looks alive.
-  const bob = Math.sin(Date.now() / 300) * 0.6;
+  // Marching columns bob; a dug-in camp sits still.
+  const bob = holding ? 0 : Math.sin(Date.now() / 300) * 0.6;
   const cy = y + bob;
 
+  if (holding) {
+    // ── Field camp: two canvas tents + a centre banner pole/flag. ──
+    const tent = (tx: number, baseY: number, w: number, h: number, fill: string) => {
+      ctx.beginPath();
+      ctx.moveTo(tx, baseY - h);
+      ctx.lineTo(tx + w, baseY);
+      ctx.lineTo(tx - w, baseY);
+      ctx.closePath();
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    };
+    tent(x - 6, cy + 6, 4.5, 7, '#c4b187');
+    tent(x + 6, cy + 6, 4.5, 7, '#c4b187');
+    tent(x, cy + 7, 5.5, 9, '#d8c79a');
+    // Banner pole + flag in the force colour.
+    ctx.strokeStyle = '#3a2818';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x, cy + 7);
+    ctx.lineTo(x, cy - 12);
+    ctx.stroke();
+    ctx.fillStyle = color;
+    ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, cy - 12);
+    ctx.lineTo(x + 10, cy - 9.5);
+    ctx.lineTo(x, cy - 7);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Unit-type glyph badge at the flag root.
+    ctx.fillStyle = '#1a120a';
+    ctx.font = 'bold 7px "Songti SC", serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(unitTag, x, cy - 9.5);
+  } else {
   // Banner pole
   ctx.strokeStyle = '#3a2818';
   ctx.lineWidth = 1.5;
@@ -1640,6 +1684,7 @@ function drawMarchUnit(
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(unitTag, x, cy + 4.5);
+  }
 
   // Commander name + troop count, stacked below the marker
   ctx.font = 'bold 10px "Ma Shan Zheng", "Songti SC", "Noto Serif SC", serif';
@@ -1655,7 +1700,7 @@ function drawMarchUnit(
   ctx.font = '9px ui-monospace, monospace';
   const troopLabel = troops >= 1000 ? `${(troops / 1000).toFixed(1)}k` : `${troops}`;
   // Append ETA for multi-season marches so the player can read remaining seasons.
-  const eta = totalSeasons > 1 ? `  ${seasonsRemaining}/${totalSeasons}季` : '';
+  const eta = holding ? '  駐守' : totalSeasons > 1 ? `  ${seasonsRemaining}/${totalSeasons}季` : '';
   const fullLabel = `${troopLabel}${eta}`;
   ctx.fillStyle = '#f0e0b0';
   ctx.strokeText(fullLabel, x, cy + 23);

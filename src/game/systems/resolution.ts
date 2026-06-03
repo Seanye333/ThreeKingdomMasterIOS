@@ -317,8 +317,67 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     .filter((c) => c.targetX != null)
     .map(withTroops)
     .map((c) => ({ ...c, holding: true }));
-  const held = [...explicitlyHeld, ...arrivedCells];
+  const heldRaw = [...explicitlyHeld, ...arrivedCells];
   const inTransit = moving.filter((c) => (c.seasonsRemaining ?? 1) > 1).map(withTroops);
+
+  // ── Field army merge ────────────────────────────────────────────
+  // Friendly holding armies that end the season on the same cell
+  // consolidate into one column: the largest absorbs the others' troops
+  // and officers, so you can mass garrisons in the open field and they
+  // fight (and capture territory) as a single, stronger unit.
+  const MERGE_DIST = 24;
+  const heldPos = heldRaw.map((c) =>
+    armyPosition(c) ?? marchDestCoords(c, cities) ?? { x: 0, y: 0 },
+  );
+  // Greedy spatial clustering by force.
+  const clusters: number[][] = [];
+  for (let i = 0; i < heldRaw.length; i++) {
+    const oi = officers[heldRaw[i].officerId];
+    if (!oi?.forceId) { clusters.push([i]); continue; }
+    let placed = false;
+    for (const cl of clusters) {
+      const head = officers[heldRaw[cl[0]].officerId];
+      if (head?.forceId !== oi.forceId) continue;
+      if (cl.some((mi) =>
+        Math.hypot(heldPos[i].x - heldPos[mi].x, heldPos[i].y - heldPos[mi].y) <= MERGE_DIST)) {
+        cl.push(i); placed = true; break;
+      }
+    }
+    if (!placed) clusters.push([i]);
+  }
+  const absorbed = new Set<EntityId>();
+  const mergeTroops: Record<EntityId, number> = {};
+  const mergeCompanions: Record<EntityId, EntityId[]> = {};
+  for (const cl of clusters) {
+    if (cl.length < 2) continue;
+    // Host = the member with the most troops; the rest fold into it.
+    const ordered = [...cl].sort((a, b) => heldRaw[b].troops - heldRaw[a].troops);
+    const host = heldRaw[ordered[0]];
+    let troops = host.troops;
+    const companions = [...(host.additionalOfficerIds ?? [])];
+    for (const mi of ordered.slice(1)) {
+      const sub = heldRaw[mi];
+      troops += sub.troops;
+      companions.push(sub.officerId, ...(sub.additionalOfficerIds ?? []));
+      absorbed.add(sub.officerId);
+    }
+    mergeTroops[host.officerId] = troops;
+    mergeCompanions[host.officerId] = companions;
+    const hostName = officers[host.officerId]?.name ?? { en: '?', zh: '？' };
+    const foldedCount = cl.length - 1;
+    entries.push({
+      cityId: host.targetX != null ? null : host.targetCityId,
+      kind: 'note',
+      text: `${hostName.en}'s column absorbed ${foldedCount} friendly ${foldedCount > 1 ? 'units' : 'unit'} in the field — now ${troops} strong.`,
+      textZh: `${hostName.zh}於野地併合友軍${foldedCount}支,合兵${troops}。`,
+    });
+  }
+  const held = heldRaw
+    .filter((c) => !absorbed.has(c.officerId))
+    .map((c) => mergeTroops[c.officerId] != null
+      ? { ...c, troops: mergeTroops[c.officerId], additionalOfficerIds: mergeCompanions[c.officerId] }
+      : c);
+
   const keptCommands: Record<EntityId, Command> = {};
   for (const cmd of inTransit) {
     keptCommands[cmd.officerId] = {

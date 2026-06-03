@@ -17,6 +17,7 @@ import type { Difficulty } from '../state/gameState';
 import { OATH_BONDS, type OathBond } from '../data/bonds';
 import { COMMAND_DEFS } from './commands';
 import { marchDurationFor } from '../data/cities';
+import { isLand } from '../data/geography';
 import {
   NAP_PROPOSAL_COST,
   computeTotalTroops,
@@ -64,6 +65,9 @@ export interface AIPlanInput {
   /** Phase 3d — per-territory owner overrides. AI uses this to spot
    *  targets that currently hold its captured cells (reclaim priority). */
   territoryOwnership?: Record<EntityId, EntityId | null>;
+  /** Persistent field armies — so the AI can dispatch interceptors to meet
+   *  hostile columns in the open field rather than only at city walls. */
+  armies?: Record<EntityId, import('../types').Army>;
   date: GameDate;
   difficulty?: Difficulty;
   rng?: () => number;
@@ -136,6 +140,7 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
         input.family ?? [],
         prefectId,
         input.territoryOwnership ?? {},
+        input.armies ?? {},
       );
       if (!decision) continue;
 
@@ -509,6 +514,7 @@ function decideCommand(
   family: import('../types/family').FamilyRelation[],
   prefectId: EntityId | null = null,
   territoryOwnership: Record<EntityId, EntityId | null> = {},
+  armies: Record<EntityId, import('../types').Army> = {},
 ): Decision | null {
   const ownRulerId = forces[forceId]?.rulerOfficerId;
   // 1. Food crisis — develop agriculture
@@ -532,6 +538,88 @@ function decideCommand(
     const o = bestForCommand(officersHere, 'charisma', 'improve-loyalty', prefectId);
     if (o && canAfford(city, 'improve-loyalty')) {
       return internalDecision('improve-loyalty', city, o);
+    }
+  }
+
+  // 3.5 Field interception — a hostile column is bearing down on this city
+  // (or threatening it from nearby open ground). Rather than wait behind the
+  // walls, sally a field army to meet them in the open: dispatch to an
+  // intercept cell on the line between the city and the incoming army, so the
+  // two columns clash mid-route (resolveSeason's INTERCEPT_DIST handles the
+  // actual battle). This is how the AI uses the persistent-army layer.
+  if (city.troops >= 6000 && city.gold >= COMMAND_DEFS['march'].goldCost) {
+    const armyList = Object.values(armies);
+    // Don't pile on: if we already have a column out near this city, the
+    // response is underway — let it play out instead of stacking interceptors.
+    const ownColumnNearby = armyList.some(
+      (a) => a.forceId === forceId && !a.holding &&
+        Math.hypot(a.x - city.coords.x, a.y - city.coords.y) < 130,
+    );
+    if (!ownColumnNearby) {
+      const THREAT_DIST = 210;   // how close a hostile column must be to react
+      let threat: import('../types').Army | null = null;
+      let threatScore = Infinity;
+      for (const a of armyList) {
+        if (a.forceId === forceId) continue;
+        if (!isHostilePermitted(diplomacy, forceId, a.forceId)) continue;
+        if (a.troops < 1500) continue; // not worth a sally
+        const d = Math.hypot(a.x - city.coords.x, a.y - city.coords.y);
+        const aimsHere = a.targetCityId === city.id && !a.cellTarget;
+        if (!aimsHere && d > THREAT_DIST) continue;
+        // Prefer the nearest; a column explicitly targeting us jumps the queue.
+        const score = d - (aimsHere ? 400 : 0);
+        if (score < threatScore) { threatScore = score; threat = a; }
+      }
+      // Someone already engaging this threat? Then don't double up.
+      const alreadyEngaged = threat && armyList.some(
+        (a) => a.forceId === forceId &&
+          Math.hypot(a.x - threat!.x, a.y - threat!.y) < 50,
+      );
+      if (threat && !alreadyEngaged) {
+        const marchPool = officersHere.filter((c) => !isCombatLiability(c));
+        const o = bestForCommand(marchPool, 'war', 'march');
+        if (o && o.stats.war >= 62) {
+          // Keep the city defensible: never send so much that the remaining
+          // garrison can't cover the incoming column.
+          const keep = Math.max(3000, Math.floor(threat.troops * 0.5));
+          const sendTroops = Math.min(
+            Math.floor(city.troops * 0.6),
+            city.troops - keep,
+          );
+          if (sendTroops >= 2000) {
+            // Intercept cell ≈ 45% of the way from the city to the column,
+            // nudged back toward the city until it lands on solid ground.
+            const cx = city.coords.x, cy = city.coords.y;
+            let ix = cx, iy = cy;
+            for (let f = 0.45; f >= 0.12; f -= 0.08) {
+              const tx = cx + (threat.x - cx) * f;
+              const ty = cy + (threat.y - cy) * f;
+              if (isLand(tx, ty, 2)) { ix = tx; iy = ty; break; }
+            }
+            const companion = marchPool
+              .filter((c) => c.id !== o.id)
+              .sort((p, q) =>
+                (q.stats.war * 0.6 + q.stats.leadership * 0.4) -
+                (p.stats.war * 0.6 + p.stats.leadership * 0.4))[0];
+            const companions = companion ? [companion.id] : [];
+            const dist = Math.hypot(ix - cx, iy - cy);
+            const dur = dist < 80 ? 1 : dist < 150 ? 2 : dist < 240 ? 3 : 4;
+            const cmd: MarchCommand = {
+              type: 'march',
+              cityId: city.id,
+              officerId: o.id,
+              targetCityId: city.id,
+              targetX: ix,
+              targetY: iy,
+              troops: sendTroops,
+              additionalOfficerIds: companions.length > 0 ? companions : undefined,
+              seasonsRemaining: dur,
+              totalSeasons: dur,
+            };
+            return { command: cmd, officer: o, companions };
+          }
+        }
+      }
     }
   }
 

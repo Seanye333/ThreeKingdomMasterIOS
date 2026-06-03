@@ -1284,7 +1284,7 @@ function MarchingArmies({ cities, pendingCommands, forces, officers, ports, sele
 }) {
   const armies = useMemo(() => {
     return Object.values(pendingCommands)
-      .filter((cmd): cmd is { cityId: string; type: string; targetCityId: string; troops: number; officerId: string; seasonsRemaining?: number; totalSeasons?: number; targetX?: number; targetY?: number } =>
+      .filter((cmd): cmd is { cityId: string; type: string; targetCityId: string; troops: number; officerId: string; seasonsRemaining?: number; totalSeasons?: number; targetX?: number; targetY?: number; holding?: boolean } =>
         cmd.type === 'march' && !!cmd.cityId)
       .map((cmd) => {
         const from = cities[cmd.cityId];
@@ -1311,6 +1311,7 @@ function MarchingArmies({ cities, pendingCommands, forces, officers, ports, sele
           landRoute,
           weaponType,
           selected: cmd.officerId === selectedArmyId,
+          holding: !!cmd.holding,
         };
       })
       .filter((a): a is NonNullable<typeof a> => !!a);
@@ -1323,7 +1324,7 @@ function MarchingArmies({ cities, pendingCommands, forces, officers, ports, sele
           commanderName={a.commanderName} troops={a.troops}
           seasonsRemaining={a.seasonsRemaining} totalSeasons={a.totalSeasons}
           landRoute={a.landRoute} weaponType={a.weaponType}
-          selected={a.selected}
+          selected={a.selected} holding={a.holding}
           ports={ports} />
       ))}
     </group>
@@ -1336,13 +1337,14 @@ const UNIT_TAG: Record<WeaponType, string> = {
   sabre: '刀', sword: '劍', fan: '師', siege: '械', none: '步',
 };
 
-function MarchingArmy({ from, to, color, commanderName, troops, seasonsRemaining, totalSeasons, landRoute, weaponType, selected, ports }: {
+function MarchingArmy({ from, to, color, commanderName, troops, seasonsRemaining, totalSeasons, landRoute, weaponType, selected, holding, ports }: {
   from: City; to: City; color: string;
   commanderName: string; troops: number;
   seasonsRemaining: number; totalSeasons: number;
   landRoute: Array<{ x: number; y: number }>;
   weaponType: WeaponType;
   selected: boolean;
+  holding: boolean;
   ports: Record<string, import('../../game/types').Port>;
 }) {
   const [fpx, fpy] = cityPixel(from.id, from.coords.x, from.coords.y);
@@ -1426,7 +1428,7 @@ function MarchingArmy({ from, to, color, commanderName, troops, seasonsRemaining
   ];
 
   const troopLabel = troops >= 1000 ? `${(troops / 1000).toFixed(1)}k` : `${troops}`;
-  const etaLabel = totalSeasons > 1 ? `  ${seasonsRemaining}/${totalSeasons}季` : '';
+  const etaLabel = holding ? '  駐' : totalSeasons > 1 ? `  ${seasonsRemaining}/${totalSeasons}季` : '';
   return (
     <group ref={groupRef}>
       {/* Selection ring on the ground under the squad. */}
@@ -1436,11 +1438,17 @@ function MarchingArmy({ from, to, color, commanderName, troops, seasonsRemaining
           <meshBasicMaterial color="#fff4d0" transparent opacity={0.85} side={THREE.DoubleSide} />
         </mesh>
       )}
-      {FORMATION.map(([sx, sz], i) => (
-        <Soldier key={i} dx={sx} dz={sz} color={color} phase={i * 0.6}
-          isLeader={i === 0} weaponType={weaponType} />
-      ))}
-      <MarchDust />
+      {holding ? (
+        <FieldCamp color={color} />
+      ) : (
+        <>
+          {FORMATION.map(([sx, sz], i) => (
+            <Soldier key={i} dx={sx} dz={sz} color={color} phase={i * 0.6}
+              isLeader={i === 0} weaponType={weaponType} />
+          ))}
+          <MarchDust />
+        </>
+      )}
       {commanderName && (
         <Html position={[0, 0.5, 0]} center distanceFactor={10} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
           <div style={{
@@ -1491,6 +1499,49 @@ function MarchDust() {
           <meshBasicMaterial color="#b8a888" transparent opacity={0.2} depthWrite={false} />
         </mesh>
       ))}
+    </group>
+  );
+}
+
+/**
+ * A garrison camp drawn in place of the marching column when an army is
+ * holding an open cell — a palisade ring, a cluster of tents, and a banner
+ * pole flying the force colour, so a dug-in field army reads at a glance.
+ */
+function FieldCamp({ color }: { color: string }) {
+  const flagRef = useRef<THREE.Mesh>(null);
+  useFrame(({ clock }) => {
+    if (flagRef.current) {
+      // Gentle flag flutter.
+      flagRef.current.rotation.y = Math.sin(clock.elapsedTime * 2.2) * 0.25;
+    }
+  });
+  const tents: ReadonlyArray<readonly [number, number]> = [
+    [-0.13, -0.04], [0.13, -0.04], [0, 0.15], [-0.07, 0.06], [0.07, 0.06],
+  ];
+  return (
+    <group>
+      {/* Palisade / earthwork ring. */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]}>
+        <ringGeometry args={[0.33, 0.4, 24]} />
+        <meshStandardMaterial color="#6b4f2a" roughness={0.9} side={THREE.DoubleSide} />
+      </mesh>
+      {/* Tents — four-sided canvas pyramids. */}
+      {tents.map(([x, z], i) => (
+        <mesh key={i} position={[x, 0.085, z]} rotation={[0, Math.PI / 4, 0]}>
+          <coneGeometry args={[0.1, 0.17, 4]} />
+          <meshStandardMaterial color={i === 2 ? '#d8c79a' : '#c4b187'} roughness={0.8} />
+        </mesh>
+      ))}
+      {/* Banner pole + force-colour flag at the centre of the camp. */}
+      <mesh position={[0, 0.2, -0.02]}>
+        <cylinderGeometry args={[0.012, 0.012, 0.4, 6]} />
+        <meshStandardMaterial color="#3a2a18" />
+      </mesh>
+      <mesh ref={flagRef} position={[0.07, 0.34, -0.02]}>
+        <planeGeometry args={[0.15, 0.1]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.25} side={THREE.DoubleSide} />
+      </mesh>
     </group>
   );
 }

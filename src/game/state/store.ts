@@ -898,6 +898,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           family: state.family,
           appointments: appointmentsAfterAI,
           territoryOwnership: state.territoryOwnership ?? {},
+          armies: state.armies,
           date: state.date,
         });
         // Compute whether this period transition crosses a season boundary.
