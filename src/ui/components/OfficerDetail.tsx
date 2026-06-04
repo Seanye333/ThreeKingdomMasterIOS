@@ -24,6 +24,7 @@ import {
   TACTIC_COMBOS,
 } from '../../game/data/officerAttributes';
 import { WEAPON_TYPE_DEFS, deriveWeaponType } from '../../game/data/weaponTypes';
+import { HISTORICAL_LIFESPANS } from '../../game/data/historicalLifespans';
 import type { City, Force, Officer, Skill } from '../../game/types';
 import { FORMATIONS_BY_ID } from '../../game/data/formations';
 import { TACTIC_DESC } from './TacticsModal';
@@ -974,6 +975,9 @@ function RelationshipsSection({ officerId, officersOverride }: { officerId: stri
 function BiographyBlock({ officer }: { officer: Officer }) {
   const bio = getBiography(officer.id, officer.name.en, officer.name.zh, officer.stats);
   const lang = useLanguage();
+  // 歷代名將 cross-over generals carry their real historical lifespan as a
+  // display-only line (their playable birthYear is shifted to ~150 AD).
+  const lifespan = HISTORICAL_LIFESPANS[officer.id];
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
       {bio.era && (
@@ -987,6 +991,18 @@ function BiographyBlock({ officer }: { officer: Officer }) {
           }}
         >
           {lang === 'en' ? bio.era.en : lang === 'both' ? `${bio.era.zh} · ${bio.era.en}` : bio.era.zh}
+        </div>
+      )}
+      {lifespan && (
+        <div
+          style={{
+            fontSize: '0.7rem',
+            color: '#8a7050',
+            fontFamily: '"Songti SC", serif',
+          }}
+          title={lang === 'en' ? 'Historical lifespan' : '歷史生卒'}
+        >
+          ◷ {lang === 'en' ? lifespan.en : lang === 'both' ? `${lifespan.zh} · ${lifespan.en}` : lifespan.zh}
         </div>
       )}
       {lang !== 'en' && (
