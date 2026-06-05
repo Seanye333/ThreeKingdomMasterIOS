@@ -6611,6 +6611,89 @@ export const SCENARIO_WHATIF_WOMEN: Scenario = {
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_WOMEN, DEAD_BY_WOMEN, 200),
 };
 
+// ── What-if helper ─────────────────────────────────────────────────────
+// Reuse a base year's officer-assignment table under altered city ownership:
+// any officer whose assigned city is no longer held by their own force is
+// pulled back to that force's capital, so nobody is left stranded in what is
+// now enemy territory after the map is redrawn.
+function whatIfOfficers(
+  base: Record<string, { forceId: string; cityId: string }>,
+  ownership: Record<string, string>,
+  forces: Force[],
+): Record<string, { forceId: string; cityId: string }> {
+  const capital: Record<string, string> = {};
+  for (const f of forces) capital[f.id] = f.capitalCityId;
+  const out: Record<string, { forceId: string; cityId: string }> = {};
+  for (const [id, a] of Object.entries(base)) {
+    const held = ownership[a.cityId] === a.forceId;
+    out[id] = { forceId: a.forceId, cityId: held ? a.cityId : (capital[a.forceId] ?? a.cityId) };
+  }
+  return out;
+}
+
+// ── What-if: 若袁紹勝官渡 (201) ─ Yuan Shao breaks through and takes the
+//    central plains; Cao Cao is driven back to a southern remnant. ──
+const CITY_OWNERSHIP_YUAN_GUANDU: Record<string, string> = {
+  ...CITY_OWNERSHIP_200,
+  xuchang: 'yuan-shao', luoyang: 'yuan-shao', chenliu: 'yuan-shao', guandu: 'yuan-shao',
+};
+const FORCES_YUAN_GUANDU: Force[] = FORCES_200.map((f) =>
+  f.id === 'cao' ? { ...f, name: { en: 'Cao Cao (Remnant)', zh: '曹操軍（殘）' }, capitalCityId: 'wancheng' } : f,
+);
+export const SCENARIO_WHATIF_YUAN_GUANDU: Scenario = {
+  id: 'scn-whatif-yuan-guandu',
+  name: { en: 'If Yuan Shao Had Won Guandu', zh: '若袁紹勝官渡' },
+  kind: 'whatif',
+  description:
+    'Autumn 201. At Guandu, Yuan Shao heeded Tian Feng and ground Cao Cao down by attrition rather than gambling on a single battle. Cao\'s granaries burned, his lines broke, and the lord of the four northern provinces poured south to seize Xuchang and the Emperor. Cao Cao clings to a southern remnant around Wancheng — can he claw his way back, or will the Yuan house unify the realm?',
+  descriptionZh: "建安六年秋。官渡之役，袁紹納田豐之諫，持重以耗，不賭一陣之勝負。曹操糧盡，烏巢先焚，戰線終潰。河北四州之主揮軍南下，取許昌、挾天子。曹操僅餘宛城一隅殘部——是絕地反撲，抑或袁氏一統天下？",
+  startDate: { year: 201, season: 'autumn' },
+  cities: buildInitialCities(CITY_OWNERSHIP_YUAN_GUANDU),
+  forces: FORCES_YUAN_GUANDU,
+  officers: buildInitialOfficers(whatIfOfficers(OFFICER_ASSIGNMENTS_200, CITY_OWNERSHIP_YUAN_GUANDU, FORCES_YUAN_GUANDU), DEAD_BY_200, 201),
+};
+
+// ── What-if: 呂布割據徐州 (198) ─ Lü Bu holds out at Xiapi and welds all
+//    of Xuzhou into his own domain instead of falling to Cao Cao. ──
+const CITY_OWNERSHIP_LUBU_XUZHOU: Record<string, string> = {
+  ...CITY_OWNERSHIP_198,
+  pengcheng: 'lubu', xiaopei: 'lubu', langya: 'lubu', guangling: 'lubu',
+};
+export const SCENARIO_WHATIF_LUBU_XUZHOU: Scenario = {
+  id: 'scn-whatif-lubu-xuzhou',
+  name: { en: 'If Lü Bu Had Held Xuzhou', zh: '若呂布割據徐州' },
+  kind: 'whatif',
+  description:
+    'Winter 198. The flood-waters never broke Xiapi\'s walls; Chen Gong\'s counsel held, the gates stayed shut, and Cao Cao\'s exhausted host withdrew. The Flying General now commands all of Xuzhou — Xiapi, Pengcheng, Xiaopei, Langya, Guangling — Red Hare and the Sky-Piercer poised between Cao Cao and the sea. The mightiest warrior alive has a base at last. What will he do with it?',
+  descriptionZh: "建安三年冬。泗水未潰下邳之牆；陳宮之謀得行，城門緊閉，曹操疲師終退。飛將軍據有全徐州——下邳、彭城、小沛、琅琊、廣陵——赤兔方天，雄踞曹操與東海之間。天下第一猛將，終得一方基業。猛虎得地，將何為哉？",
+  startDate: { year: 198, season: 'winter' },
+  cities: buildInitialCities(CITY_OWNERSHIP_LUBU_XUZHOU),
+  forces: FORCES_198,
+  officers: buildInitialOfficers(whatIfOfficers(OFFICER_ASSIGNMENTS_198, CITY_OWNERSHIP_LUBU_XUZHOU, FORCES_198), DEAD_BY_198, 198),
+};
+
+// ── What-if: 馬超盡得關中 (211) ─ Ma Chao storms Tongguan and seizes the
+//    Guanzhong heartland instead of being routed by Cao Cao. ──
+const CITY_OWNERSHIP_MACHAO_GUANZHONG: Record<string, string> = {
+  ...CITY_OWNERSHIP_211,
+  changan: 'ma-chao', tongguan: 'ma-chao', xiaoguan: 'ma-chao',
+};
+const FORCES_MACHAO_GUANZHONG: Force[] = FORCES_211.map((f) =>
+  f.id === 'ma-chao' ? { ...f, capitalCityId: 'changan' } : f,
+);
+export const SCENARIO_WHATIF_MACHAO_GUANZHONG: Scenario = {
+  id: 'scn-whatif-machao-guanzhong',
+  name: { en: 'If Ma Chao Had Taken Guanzhong', zh: '若馬超盡得關中' },
+  kind: 'whatif',
+  description:
+    'Spring 211. The forged-letter ruse failed; Ma Chao and Han Sui kept their alliance, stormed Tongguan, and drove Cao Cao back across the passes. The Splendid Ma Chao now holds Chang\'an and all the Guanzhong, the warlords of Liang at his back and the road to the central plains open before him. The lance of Xiliang is loosed upon the empire.',
+  descriptionZh: "建安十六年春。離間之計未成，馬超與韓遂盟好不疑，強攻潼關，逼退曹操於關隘之東。錦馬超盡得長安與關中之地，涼州群雄為其後盾，中原之路豁然在前。西涼之槍，自此縱橫天下。",
+  startDate: { year: 211, season: 'spring' },
+  cities: buildInitialCities(CITY_OWNERSHIP_MACHAO_GUANZHONG),
+  forces: FORCES_MACHAO_GUANZHONG,
+  officers: buildInitialOfficers(whatIfOfficers(OFFICER_ASSIGNMENTS_211, CITY_OWNERSHIP_MACHAO_GUANZHONG, FORCES_MACHAO_GUANZHONG), DEAD_BY_211, 211),
+};
+
 export const SCENARIOS: Scenario[] = [
   // ── Historical (chronological 184–280 AD) ──
   SCENARIO_184_YELLOW_TURBAN,
@@ -6648,6 +6731,9 @@ export const SCENARIOS: Scenario[] = [
   SCENARIO_WHATIF_ZHUGE_LIVES,
   SCENARIO_WHATIF_CAO_WINS_CHIBI,
   SCENARIO_WHATIF_WOMEN,
+  SCENARIO_WHATIF_YUAN_GUANDU,
+  SCENARIO_WHATIF_LUBU_XUZHOU,
+  SCENARIO_WHATIF_MACHAO_GUANZHONG,
 ];
 
 // ── Death-year normalization ───────────────────────────────────────────
