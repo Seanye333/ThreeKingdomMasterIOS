@@ -85,6 +85,7 @@ const CITY_TEMPLATES: CityTemplate[] = [
     name: { en: 'Bohai', zh: '渤海' },
     coords: { x: 730, y: 270 },
     adjacentCityIds: ['beiping', 'ye', 'beihai', 'pengcheng', 'pingyuan', 'linzi', 'nanpi', 'liyang'],
+    port: true,
     base: { population: 150_000, gold: 3000, food: 65_000, troops: 11_000, agriculture: 55, commerce: 60, defense: 50, loyalty: 70 },
   },
   {
@@ -194,6 +195,7 @@ const CITY_TEMPLATES: CityTemplate[] = [
     name: { en: "Yong'an", zh: '永安' },
     coords: { x: 510, y: 440 },
     adjacentCityIds: ['chengdu', 'xiangyang', 'jiangzhou', 'yiling', 'xiaoting'],
+    port: true,
     base: { population: 100_000, gold: 1500, food: 50_000, troops: 7000, agriculture: 55, commerce: 30, defense: 70, loyalty: 75 },
   },
 
@@ -228,6 +230,7 @@ const CITY_TEMPLATES: CityTemplate[] = [
     name: { en: 'Hefei', zh: '合肥' },
     coords: { x: 720, y: 425 },
     adjacentCityIds: ['xiapi', 'shouchun', 'jianye', 'lujiang', 'ruxu'],
+    port: true,
     base: { population: 130_000, gold: 2500, food: 60_000, troops: 10_000, agriculture: 60, commerce: 55, defense: 60, loyalty: 65 },
   },
   {
@@ -294,6 +297,7 @@ const CITY_TEMPLATES: CityTemplate[] = [
     name: { en: 'Pingyuan', zh: '平原' },
     coords: { x: 735, y: 295 },
     adjacentCityIds: ['beiping', 'bohai', 'beihai', 'ye', 'linzi', 'boling'],
+    port: true,
     base: { population: 140_000, gold: 2500, food: 60_000, troops: 10_000, agriculture: 55, commerce: 50, defense: 45, loyalty: 70 },
   },
   {
@@ -655,6 +659,7 @@ const CITY_TEMPLATES: CityTemplate[] = [
     name: { en: 'Guangling', zh: '廣陵' },
     coords: { x: 760, y: 410 },
     adjacentCityIds: ['xiapi', 'jianye', 'shouchun'],
+    port: true,
     base: { population: 110_000, gold: 2200, food: 50_000, troops: 8500, agriculture: 60, commerce: 60, defense: 55, loyalty: 70 },
   },
 
@@ -770,6 +775,7 @@ const CITY_TEMPLATES: CityTemplate[] = [
     name: { en: 'Danyang', zh: '丹陽' },
     coords: { x: 730, y: 445 },
     adjacentCityIds: ['jianye', 'wu', 'shouchun', 'lujiang'],
+    port: true,
     terrain: 'mountain',
     base: { population: 120_000, gold: 2200, food: 55_000, troops: 9500, agriculture: 60, commerce: 50, defense: 60, loyalty: 72 },
   },
