@@ -6694,6 +6694,63 @@ export const SCENARIO_WHATIF_MACHAO_GUANZHONG: Scenario = {
   officers: buildInitialOfficers(whatIfOfficers(OFFICER_ASSIGNMENTS_211, CITY_OWNERSHIP_MACHAO_GUANZHONG, FORCES_MACHAO_GUANZHONG), DEAD_BY_211, 211),
 };
 
+// ── What-if: 若孫策不死 (201) ─ The young conqueror survives the assassins'
+//    arrows and drives his Jiangdong tigers north against the central plains. ──
+const CITY_OWNERSHIP_SUNCE_LIVES: Record<string, string> = {
+  ...CITY_OWNERSHIP_200,
+  lujiang: 'sun', guangling: 'sun',
+};
+export const SCENARIO_WHATIF_SUNCE_LIVES: Scenario = {
+  id: 'scn-whatif-sunce-lives',
+  name: { en: 'If Sun Ce Had Lived', zh: '若孫策不死' },
+  kind: 'whatif',
+  description:
+    'Spring 201. The assassins of Xu Gong\'s retainers missed; the Little Conqueror healed and lived. While Cao Cao and Yuan Shao bled each other white at Guandu, Sun Ce did what he had always planned — march north on Xuchang to seize the Emperor. The tiger of Jiangdong, age twenty-six and unbeaten, holds the southeast and eyes the throne. Sun Quan must wait; this is his brother\'s war.',
+  descriptionZh: "建安六年春。許貢門客之刺未中，小霸王傷愈而生。當曹操與袁紹於官渡相持血戰之際，孫策行其夙志——揮師北上，襲許昌以迎天子。江東之虎，年方二十六而未嘗一敗，據東南而窺神器。仲謀且待，此乃其兄之天下。",
+  startDate: { year: 201, season: 'spring' },
+  cities: buildInitialCities(CITY_OWNERSHIP_SUNCE_LIVES),
+  forces: FORCES_200,
+  officers: buildInitialOfficers(whatIfOfficers(OFFICER_ASSIGNMENTS_200, CITY_OWNERSHIP_SUNCE_LIVES, FORCES_200), DEAD_BY_200, 201),
+};
+
+// ── What-if: 若董卓未亡 (192) ─ Wang Yun's chain-plot fails, Lü Bu stays
+//    loyal, and the tyrant of Mei crushes the coalition and rules the Han. ──
+const CITY_OWNERSHIP_DONG_LIVES: Record<string, string> = {
+  ...CITY_OWNERSHIP_190,
+  hulao: 'dong', chenliu: 'dong',
+};
+export const SCENARIO_WHATIF_DONG_LIVES: Scenario = {
+  id: 'scn-whatif-dong-lives',
+  name: { en: 'If Dong Zhuo Had Not Fallen', zh: '若董卓未亡' },
+  kind: 'whatif',
+  description:
+    'Year 192. Diaochan\'s ploy never turned Lü Bu; Wang Yun\'s plot was uncovered and crushed. With the Flying General still at his side and Hulao held against the eastern lords, Dong Zhuo broke the anti-Dong coalition and rules the Han court by terror from Luoyang to Chang\'an. The tyrant\'s grip tightens — and every warlord east of the passes must decide whether to bow or burn.',
+  descriptionZh: "初平三年。連環美人之計未能離間呂布，王允之謀事泄而敗。飛將軍仍在側，虎牢拒東諸侯於關外，董卓遂破反董聯軍，自洛陽至長安，以暴威挾持漢室。暴君之手愈收愈緊——關東群雄，俯首抑或焚身，各自抉擇。",
+  startDate: { year: 192, season: 'summer' },
+  cities: buildInitialCities(CITY_OWNERSHIP_DONG_LIVES),
+  forces: FORCES_190,
+  officers: buildInitialOfficers(whatIfOfficers(OFFICER_ASSIGNMENTS_190, CITY_OWNERSHIP_DONG_LIVES, FORCES_190), [], 192),
+};
+
+// ── What-if: 若袁術稱帝成 (198) ─ The Zhongjia emperor's claim does not
+//    collapse; Yuan Shu's Huainan empire stands astride the southeast. ──
+const CITY_OWNERSHIP_YUANSHU_EMPIRE: Record<string, string> = {
+  ...CITY_OWNERSHIP_198,
+  runan: 'yuan-shu', guangling: 'yuan-shu',
+};
+export const SCENARIO_WHATIF_YUANSHU_EMPIRE: Scenario = {
+  id: 'scn-whatif-yuanshu-empire',
+  name: { en: 'If Yuan Shu\'s Empire Had Stood', zh: '若袁術稱帝成' },
+  kind: 'whatif',
+  description:
+    'Year 198. Holding the Imperial Seal, Yuan Shu proclaimed the Zhongjia dynasty — and this time the harvest did not fail, the generals did not desert, and the Huainan granaries stayed full. The self-made emperor holds Shouchun, Runan and the Huai with a real army at his back, the southeast in his grip and the Han pretenders surrounding him. A false throne, defended at last.',
+  descriptionZh: "建安三年。袁術手握傳國玉璽，僭號仲家——而這一回，淮南未逢大旱，部將未叛，府庫充盈如舊。自立之帝據壽春、汝南、淮水之地，麾下實有強兵，雄踞東南，四面皆漢室之臣。一座僭越之龍座，終得守全。",
+  startDate: { year: 198, season: 'spring' },
+  cities: buildInitialCities(CITY_OWNERSHIP_YUANSHU_EMPIRE),
+  forces: FORCES_198,
+  officers: buildInitialOfficers(whatIfOfficers(OFFICER_ASSIGNMENTS_198, CITY_OWNERSHIP_YUANSHU_EMPIRE, FORCES_198), DEAD_BY_198, 198),
+};
+
 export const SCENARIOS: Scenario[] = [
   // ── Historical (chronological 184–280 AD) ──
   SCENARIO_184_YELLOW_TURBAN,
@@ -6734,6 +6791,9 @@ export const SCENARIOS: Scenario[] = [
   SCENARIO_WHATIF_YUAN_GUANDU,
   SCENARIO_WHATIF_LUBU_XUZHOU,
   SCENARIO_WHATIF_MACHAO_GUANZHONG,
+  SCENARIO_WHATIF_SUNCE_LIVES,
+  SCENARIO_WHATIF_DONG_LIVES,
+  SCENARIO_WHATIF_YUANSHU_EMPIRE,
 ];
 
 // ── Death-year normalization ───────────────────────────────────────────
