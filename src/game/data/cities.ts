@@ -327,7 +327,7 @@ const CITY_TEMPLATES: CityTemplate[] = [
   {
     id: 'nanhai',
     name: { en: 'Nanhai', zh: '南海' },
-    coords: { x: 660, y: 615 },
+    coords: { x: 649, y: 572 },
     adjacentCityIds: ['guiyang', 'hepu', 'jiaozhi', 'cangwu', 'zhuyai'],
     terrain: 'water',
     port: true,
@@ -336,7 +336,7 @@ const CITY_TEMPLATES: CityTemplate[] = [
   {
     id: 'hepu',
     name: { en: 'Hepu', zh: '合浦' },
-    coords: { x: 555, y: 605 },
+    coords: { x: 547, y: 591 },
     adjacentCityIds: ['lingling', 'nanhai', 'jiaozhi', 'cangwu', 'guilin', 'zhuyai'],
     terrain: 'water',
     port: true,
@@ -506,7 +506,7 @@ const CITY_TEMPLATES: CityTemplate[] = [
   {
     id: 'linhai',
     name: { en: 'Linhai', zh: '臨海' },
-    coords: { x: 800, y: 520 },
+    coords: { x: 784, y: 504 },
     adjacentCityIds: ['wu', 'kuaiji'],
     terrain: 'water',
     port: true,
@@ -584,7 +584,7 @@ const CITY_TEMPLATES: CityTemplate[] = [
   {
     id: 'fancheng',
     name: { en: 'Fancheng', zh: '樊城' },
-    coords: { x: 590, y: 445 },
+    coords: { x: 599, y: 441 },
     adjacentCityIds: ['xiangyang', 'wancheng'],
     base: { population: 130_000, gold: 2500, food: 55_000, troops: 9500, agriculture: 60, commerce: 50, defense: 75, loyalty: 70 },
   },
@@ -607,14 +607,14 @@ const CITY_TEMPLATES: CityTemplate[] = [
   {
     id: 'xiling',
     name: { en: 'Xiling', zh: '西陵' },
-    coords: { x: 580, y: 470 },
+    coords: { x: 571, y: 466 },
     adjacentCityIds: ['jiangling', 'yiling', 'gongan'],
     base: { population: 100_000, gold: 1900, food: 48_000, troops: 8500, agriculture: 55, commerce: 45, defense: 80, loyalty: 75 },
   },
   {
     id: 'xiaoting',
     name: { en: 'Xiaoting', zh: '猇亭' },
-    coords: { x: 585, y: 480 },
+    coords: { x: 594, y: 484 },
     adjacentCityIds: ['yiling', 'yongan'],
     base: { population: 50_000, gold: 1000, food: 30_000, troops: 5000, agriculture: 40, commerce: 30, defense: 70, loyalty: 65 },
   },
@@ -676,7 +676,7 @@ const CITY_TEMPLATES: CityTemplate[] = [
   {
     id: 'xincheng',
     name: { en: 'Xincheng', zh: '新城' },
-    coords: { x: 545, y: 430 },
+    coords: { x: 552, y: 437 },
     adjacentCityIds: ['shangyong', 'hanzhong'],
     base: { population: 75_000, gold: 1500, food: 38_000, troops: 6500, agriculture: 50, commerce: 35, defense: 70, loyalty: 65 },
   },
@@ -707,7 +707,7 @@ const CITY_TEMPLATES: CityTemplate[] = [
   {
     id: 'shanggui',
     name: { en: 'Shanggui', zh: '上邽' },
-    coords: { x: 385, y: 355 },
+    coords: { x: 376, y: 359 },
     adjacentCityIds: ['tianshui', 'chencang', 'jieting'],
     base: { population: 70_000, gold: 1400, food: 35_000, troops: 6500, agriculture: 45, commerce: 35, defense: 70, loyalty: 65 },
   },
@@ -760,7 +760,7 @@ const CITY_TEMPLATES: CityTemplate[] = [
   {
     id: 'cangwu',
     name: { en: 'Cangwu', zh: '蒼梧' },
-    coords: { x: 615, y: 605 },
+    coords: { x: 622, y: 580 },
     adjacentCityIds: ['hepu', 'nanhai', 'lingling', 'jiaozhi', 'guilin'],
     terrain: 'forest',
     base: { population: 100_000, gold: 1800, food: 50_000, troops: 7500, agriculture: 60, commerce: 50, defense: 45, loyalty: 65 },
@@ -796,7 +796,7 @@ const CITY_TEMPLATES: CityTemplate[] = [
   {
     id: 'zitong',
     name: { en: 'Zitong', zh: '梓潼' },
-    coords: { x: 405, y: 428 },
+    coords: { x: 397, y: 422 },
     adjacentCityIds: ['jiameng', 'fucheng', 'jianmen'],
     terrain: 'mountain',
     base: { population: 50_000, gold: 1100, food: 32_000, troops: 4500, agriculture: 45, commerce: 25, defense: 55, loyalty: 70 },
@@ -827,7 +827,7 @@ const CITY_TEMPLATES: CityTemplate[] = [
   {
     id: 'ji',
     name: { en: 'Ji', zh: '薊' },
-    coords: { x: 688, y: 235 },
+    coords: { x: 679, y: 231 },
     adjacentCityIds: ['beiping', 'yi-county', 'yuyang', 'wuhuan'],
     base: { population: 150_000, gold: 2800, food: 55_000, troops: 10_000, agriculture: 50, commerce: 45, defense: 60, loyalty: 70 },
   },
@@ -853,7 +853,7 @@ const CITY_TEMPLATES: CityTemplate[] = [
   {
     id: 'wan',
     name: { en: 'Wan', zh: '皖城' },
-    coords: { x: 665, y: 465 },
+    coords: { x: 656, y: 461 },
     adjacentCityIds: ['lujiang', 'chaisang', 'ruxu'],
     terrain: 'water',
     base: { population: 80_000, gold: 1600, food: 45_000, troops: 6500, agriculture: 55, commerce: 40, defense: 55, loyalty: 70 },
@@ -863,7 +863,7 @@ const CITY_TEMPLATES: CityTemplate[] = [
   {
     id: 'gongan',
     name: { en: "Gong'an", zh: '公安' },
-    coords: { x: 580, y: 480 },
+    coords: { x: 587, y: 473 },
     adjacentCityIds: ['jiangling', 'wuling', 'baqiu', 'xiling'],
     terrain: 'water',
     port: true,
@@ -904,7 +904,7 @@ const CITY_TEMPLATES: CityTemplate[] = [
   {
     id: 'jianmen',
     name: { en: 'Jianmen Pass', zh: '劍閣' },
-    coords: { x: 418, y: 425 },
+    coords: { x: 425, y: 432 },
     adjacentCityIds: ['jiameng', 'zitong', 'baxi'],
     terrain: 'pass',
     base: { population: 25_000, gold: 700, food: 15_000, troops: 6500, agriculture: 30, commerce: 15, defense: 95, loyalty: 75 },
@@ -938,7 +938,7 @@ const CITY_TEMPLATES: CityTemplate[] = [
   {
     id: 'chibi',
     name: { en: 'Chibi', zh: '赤壁' },
-    coords: { x: 618, y: 478 },
+    coords: { x: 609, y: 474 },
     adjacentCityIds: ['jiangling', 'jiangxia', 'wuchang', 'baqiu'],
     terrain: 'water',
     port: true,
@@ -947,7 +947,7 @@ const CITY_TEMPLATES: CityTemplate[] = [
   {
     id: 'changban',
     name: { en: 'Changban', zh: '長阪坡' },
-    coords: { x: 588, y: 450 },
+    coords: { x: 579, y: 454 },
     adjacentCityIds: ['xinye', 'jiangling', 'xiangyang'],
     base: { population: 35_000, gold: 700, food: 18_000, troops: 4500, agriculture: 40, commerce: 25, defense: 50, loyalty: 70 },
   },
