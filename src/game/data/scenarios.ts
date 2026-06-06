@@ -7790,18 +7790,93 @@ export const SCENARIO_WS_TIANDAN: Scenario = {
   officers: buildWarringStatesOfficers(ASSIGN_WS_TIANDAN),
 };
 
+// ── 魏文侯·戰國首霸 (Warring States). The dawn of the age: Jin freshly carved in
+//    three, and Wei rises first under the model lord Marquis Wen — Li Kui's law,
+//    Wu Qi's armoured foot, Ximen Bao taming Ye, Yue Yang swallowing Zhongshan. ──
+const FORCES_WS_WEIWEN: Force[] = FORCES_WS_SEVEN.map((f) => {
+  if (f.id === 'wei') return { ...f, rulerOfficerId: 'hist-wei-wenhou' };
+  if (f.id === 'zhao') return { ...f, rulerOfficerId: 'hist-zhao-liehou', capitalCityId: 'taiyuan' };
+  if (f.id === 'qin') return { ...f, rulerOfficerId: 'hist-qin-xiaogong' }; // a weak, pre-reform Qin
+  return f;
+});
+const CITY_OWNERSHIP_WS_WEIWEN: Record<string, string> = {
+  ...CITY_OWNERSHIP_WS_SEVEN,
+  ye: 'wei',     // Ye is Wei's, where Ximen Bao tames the Zhang and its witches
+  boling: 'wei', // Yue Yang has swallowed Zhongshan
+};
+const ASSIGN_WS_WEIWEN: Record<string, { forceId: string; cityId: string }> = {
+  ...ASSIGN_WS_SEVEN,
+  'hist-wei-wenhou':  { forceId: 'wei', cityId: 'chenliu' },
+  'hist-li-kui-ws':   { forceId: 'wei', cityId: 'chenliu' }, // the first Legalist reformer
+  'hist-ximen-bao':   { forceId: 'wei', cityId: 'ye' },      // governor of Ye
+  // (Wu Qi @ puyang and Yue Yang @ chenliu already serve Wei in the base)
+  'hist-qin-xiaogong':{ forceId: 'qin', cityId: 'changan' }, // weak Qin, reforms yet to come
+  // Zhao under Marquis Lie regroups at Jinyang, Handan being Wei's
+  'hist-zhao-liehou':  { forceId: 'zhao', cityId: 'taiyuan' },
+  'hist-zhao-wuling':  { forceId: 'zhao', cityId: 'taiyuan' },
+  'hist-lian-po':      { forceId: 'zhao', cityId: 'taiyuan' },
+  'hist-zhao-she':     { forceId: 'zhao', cityId: 'taiyuan' },
+  'hist-lin-xiangru':  { forceId: 'zhao', cityId: 'taiyuan' },
+  'hist-pingyuan-jun': { forceId: 'zhao', cityId: 'taiyuan' },
+  'hist-zhao-kuo':     { forceId: 'zhao', cityId: 'taiyuan' },
+  'hist-mao-sui':      { forceId: 'zhao', cityId: 'taiyuan' },
+  'hist-pang-xuan':    { forceId: 'zhao', cityId: 'taiyuan' },
+  'hist-yue-cheng':    { forceId: 'zhao', cityId: 'taiyuan' },
+};
+export const SCENARIO_WS_WEIWEN: Scenario = {
+  id: 'scn-ws-weiwen',
+  name: { en: 'Marquis Wen, First Hegemon', zh: '戰國·魏文侯首霸' },
+  description:
+    'The dawn of the warring age. The house of Jin has been carved in three, and of the three heirs Wei rises first and fastest. Marquis Wen, the model lord of the era, gathers a court no rival can match: Li Kui writes the first code of Legalist reform and "wrings the earth dry" to fill the granaries; Wu Qi forges the armoured foot-soldiers of Wei who do not lose; Ximen Bao tames the Zhang River and breaks the witch-cult of Ye; Yue Yang marches out and swallows the kingdom of Zhongshan. For one generation Wei is the first power under heaven, and a still-feudal Qin cowers behind the passes — before Wei\'s heirs throw the whole inheritance away.',
+  descriptionZh: "大爭之世的黎明。晉室既三分，三晉之中魏興最先、最速。文侯，一世之賢君，聚天下無雙之朝：李悝著法家變法之首典，盡地力之教以實倉廩；吳起鑄魏之重甲武卒，戰而不敗；西門豹治漳水、破鄴之巫風；樂羊出師，吞中山之國。魏為天下首強者，凡一世，而尚行封建之秦瑟縮於關隘之後——直至文侯之子孫，將此基業盡棄。",
+  startDate: { year: 178, season: 'spring' },
+  cities: buildInitialCities(CITY_OWNERSHIP_WS_WEIWEN),
+  forces: FORCES_WS_WEIWEN,
+  officers: buildWarringStatesOfficers(ASSIGN_WS_WEIWEN),
+};
+
+// ── 齊湣王·稱東帝 (Warring States). Qi at its zenith and its hubris: King Min has
+//    devoured Song, styled himself Emperor of the East to match Qin's West, while
+//    Su Qin whispers him toward ever more war as a secret agent of Yan. ──
+const FORCES_WS_QIMIN: Force[] = FORCES_WS_SEVEN.map((f) =>
+  f.id === 'qi' ? { ...f, rulerOfficerId: 'hist-qi-minwang' } : f,
+);
+const CITY_OWNERSHIP_WS_QIMIN: Record<string, string> = {
+  ...CITY_OWNERSHIP_WS_SEVEN,
+  lujiang: 'qi', // Qi has pushed into the Huai, beyond swallowed Song
+};
+const ASSIGN_WS_QIMIN: Record<string, { forceId: string; cityId: string }> = {
+  ...ASSIGN_WS_SEVEN,
+  'hist-qi-minwang': { forceId: 'qi', cityId: 'linzi' }, // Emperor of the East
+  'hist-tian-ji':    { forceId: 'qi', cityId: 'linzi' },
+  'hist-su-qin':     { forceId: 'qi', cityId: 'linzi' }, // Yan's agent, urging Qi to overreach
+};
+export const SCENARIO_WS_QIMIN: Scenario = {
+  id: 'scn-ws-qimin',
+  name: { en: 'King Min, Emperor of the East', zh: '戰國·齊湣王稱帝' },
+  description:
+    'Qi at the noon of its power, and its pride. King Min has swallowed the rich state of Song, humbled Chu and battered Qin, and now takes the title Di — Emperor of the East — to stand level with Qin\'s Emperor of the West. Linzi is the wealthiest city under heaven and its Jixia academy the brightest gathering of minds in the age. But at his court sits the persuader Su Qin, secretly an agent of Yan, forever urging him into one more war to bleed Qi white; and beyond the horizon five kingdoms are quietly agreeing that the East has grown too proud to be borne. This is the high noon before the avalanche of Yue Yi.',
+  descriptionZh: "齊之日中，與其驕。湣王既吞富宋，辱楚摧秦，遂取帝號，稱東帝，以與秦之西帝並立。臨淄為天下最富之城，稷下學宮為當世最盛之士林。然其朝中坐著說客蘇秦，實為燕之間者，日誘之於再一場兵戈以疲齊；而天際之外，五國正悄然議定：東方已驕橫得不可復容。此乃樂毅之雪崩前，最盛的正午。",
+  startDate: { year: 178, season: 'summer' },
+  cities: buildInitialCities(CITY_OWNERSHIP_WS_QIMIN),
+  forces: FORCES_WS_QIMIN,
+  officers: buildWarringStatesOfficers(ASSIGN_WS_QIMIN),
+};
+
 export const SCENARIOS: Scenario[] = [
   // ── Warring States (parallel timeline) ──
   SCENARIO_WS_SEVEN,
+  SCENARIO_WS_WEIWEN,
   SCENARIO_WS_SHANGYANG,
   SCENARIO_WS_GUILING,
   SCENARIO_WS_HANGU,
   SCENARIO_WS_YIQUE,
   SCENARIO_WS_YANYING,
   SCENARIO_WS_YUYU,
+  SCENARIO_WS_QIMIN,
+  SCENARIO_WS_YUEYI,
   SCENARIO_WS_CHANGPING,
   SCENARIO_WS_HANDAN,
-  SCENARIO_WS_YUEYI,
   SCENARIO_WS_TIANDAN,
   SCENARIO_WS_QIN_UNIFY,
   // ── Historical (chronological 184–280 AD) ──

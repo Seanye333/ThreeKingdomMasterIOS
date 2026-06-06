@@ -70,7 +70,7 @@ export const HISTORICAL_LIFESPANS: Record<string, { zh: string; en: string }> = 
   'hist-wei-anxiwang':    { zh: '戰國 ?–前243',          en: 'Warring States ?–243 BCE' },
   'hist-qi-minwang':      { zh: '戰國 ?–前284',          en: 'Warring States ?–284 BCE' },
   'hist-xiang-yan':       { zh: '戰國 ?–前223',          en: 'Warring States ?–223 BCE' },
-  'hist-li-kui':          { zh: '戰國 前455–前395',      en: 'Warring States 455–395 BCE' },
+  'hist-li-kui-ws':       { zh: '戰國 前455–前395',      en: 'Warring States 455–395 BCE' },
   'hist-ximen-bao':       { zh: '戰國 ?–?（魏文侯時）',   en: 'Warring States (Marquis Wen era)' },
   'hist-qin-kai':         { zh: '戰國 ?–?',              en: 'Warring States ?–?' },
   'hist-gongsun-xi':      { zh: '戰國 ?–前293',          en: 'Warring States ?–293 BCE' },
