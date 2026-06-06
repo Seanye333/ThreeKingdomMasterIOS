@@ -8065,11 +8065,116 @@ export const SCENARIO_CH_GAIXIA: Scenario = {
   officers: buildWarringStatesOfficers(ASSIGN_CH_GAIXIA, ['chu-han', 'qin']),
 };
 
+// ── 井陘之戰 (Chu-Han). Han Xin, sent north with a few green thousands, has
+//    already swallowed Wei; now he arrays his men with a river at their backs
+//    against Chen Yu's two hundred thousand — and wins the impossible. ──
+const FORCES_CH_JINGXING: Force[] = FORCES_CHUHAN.filter((f) => f.id !== 'wei');
+const CITY_OWNERSHIP_CH_JINGXING: Record<string, string> = {
+  ...CITY_OWNERSHIP_CHUHAN,
+  // Han Xin has already conquered Wei on his way north
+  puyang: 'han', luoyang: 'han', baima: 'han', yanjin: 'han', liyang: 'han',
+};
+const ASSIGN_CH_JINGXING: Record<string, { forceId: string; cityId: string }> = {
+  ...ASSIGN_CHUHAN,
+  'hist-han-xin':   { forceId: 'han', cityId: 'taiyuan' }, // backed against the river
+  'hist-zhang-er':  { forceId: 'han', cityId: 'taiyuan' }, // turned on Chen Yu, marches with Han
+  'hist-wei-bao':   { forceId: 'han', cityId: 'puyang' },  // Wei conquered, its king taken
+  'hist-wei-jiu':   { forceId: 'han', cityId: 'luoyang' },
+  'hist-chen-yu':   { forceId: 'zhao', cityId: 'ye' },     // 200,000 holding the pass
+  'hist-li-zuoche': { forceId: 'zhao', cityId: 'ye' },     // his counsel to hold, scorned
+};
+export const SCENARIO_CH_JINGXING: Scenario = {
+  id: 'scn-ch-jingxing',
+  name: { en: 'The Battle of Jingxing', zh: '楚漢·井陘之戰' },
+  description:
+    'Han Xin\'s impossible victory. Sent north with a few tens of thousands of raw troops to open a second front, he has already swallowed Wei; now he faces Chen Yu\'s two hundred thousand at the mouth of the Jingxing pass. He does the thing every manual forbids — drawing up his men with a river at their backs and no line of retreat — so that, with nowhere to run, they fight like cornered demons; meanwhile two thousand light horse slip round and tear the Zhao banners from their emptied camp. Chen Yu, who scorned Li Zuoche\'s plea to simply hold the pass, dies in the rout. "Throw them onto dead ground, and they live."',
+  descriptionZh: "韓信不可能之勝。受命北出，將數萬新卒以開第二戰場，他已並魏；今於井陘口面對陳餘二十萬之眾。他行兵家所禁——背水列陣、無退路可走——使士卒無所逃而人人死戰；同時遣輕騎二千繞出，拔趙幟於空壁。陳餘輕李左車守關之策，死於亂軍。「陷之死地而後生。」",
+  startDate: { year: 178, season: 'autumn' },
+  cities: buildInitialCities(CITY_OWNERSHIP_CH_JINGXING),
+  forces: FORCES_CH_JINGXING,
+  officers: buildWarringStatesOfficers(ASSIGN_CH_JINGXING, ['chu-han', 'qin']),
+};
+
+// ── 鉅鹿之戰 (Qin's end). The empire's last armies have the rebellion by the
+//    throat: Wang Li rings Zhao in Julu, Zhang Han guards the supply road. Then
+//    Xiang Yu smashes the cauldrons, sinks the boats, and annihilates them. ──
+const JULU_ZHAO = ['ye', 'bohai', 'pingyuan', 'nanpi', 'boling'];
+const JULU_QI = ['linzi', 'beihai', 'langya'];
+const JULU_CHU = [
+  'pengcheng', 'xiapi', 'xiaopei', 'jianye', 'wu', 'wuxi', 'kuaiji', 'danyang',
+  'yuzhang', 'chaisang', 'poyang', 'hukou', 'shouchun', 'hefei', 'lujiang', 'ruxu',
+  'jiangling', 'wancheng', 'wan', 'xinye', 'xiangyang', 'fancheng', 'jiangxia',
+  'yiling', 'xiling', 'xiaoting', 'maicheng', 'gongan', 'bowang', 'guangling',
+  'changsha', 'lingling', 'wuling', 'guiyang', 'baqiu', 'wuchang', 'luling',
+  'nanhai', 'hepu', 'jiaozhi', 'guilin', 'cangwu', 'jiuzhen', 'rinan', 'zhuyai',
+  'linhai', 'yi-county', 'chibi', 'changban',
+];
+const CITY_OWNERSHIP_CH_JULU: Record<string, string> = Object.fromEntries(
+  Object.keys(CITY_OWNERSHIP_CHUHAN).map((c) => {
+    if (JULU_ZHAO.includes(c)) return [c, 'zhao'];
+    if (JULU_QI.includes(c)) return [c, 'qi'];
+    if (JULU_CHU.includes(c)) return [c, 'chu'];
+    if (c === 'puyang') return [c, 'wei'];
+    return [c, 'qin']; // the empire still holds Guanzhong, Ba-Shu and the central plain
+  }),
+);
+const FORCES_CH_JULU: Force[] = [
+  { id: 'qin',  name: { en: 'Qin Empire', zh: '秦' }, rulerOfficerId: 'hist-zhang-han',     capitalCityId: 'changan',   color: '#3a3a4a', isPlayer: false },
+  { id: 'chu',  name: { en: 'Chu',        zh: '楚' }, rulerOfficerId: 'hist-xiang-yu',      capitalCityId: 'pengcheng', color: '#c0392b', isPlayer: false },
+  { id: 'zhao', name: { en: 'Zhao',       zh: '趙' }, rulerOfficerId: 'hist-zhang-er',      capitalCityId: 'ye',        color: '#e07b39', isPlayer: false },
+  { id: 'qi',   name: { en: 'Qi',         zh: '齊' }, rulerOfficerId: 'hist-tian-dan-chu',  capitalCityId: 'linzi',     color: '#2aa8c0', isPlayer: false },
+  { id: 'wei',  name: { en: 'Wei',        zh: '魏' }, rulerOfficerId: 'hist-wei-bao',       capitalCityId: 'puyang',    color: '#2f8e6f', isPlayer: false },
+];
+const ASSIGN_CH_JULU: Record<string, { forceId: string; cityId: string }> = {
+  // 秦 — the empire's two great armies
+  'hist-zhang-han':   { forceId: 'qin', cityId: 'changan' }, // guarding the supply road
+  'hist-wang-li':     { forceId: 'qin', cityId: 'ye' },      // the Great Wall corps ringing Julu
+  'hist-she-jian':    { forceId: 'qin', cityId: 'ye' },
+  'hist-su-jiao':     { forceId: 'qin', cityId: 'ye' },
+  'hist-sima-xin':    { forceId: 'qin', cityId: 'changan' },
+  'hist-dong-yi':     { forceId: 'qin', cityId: 'mei' },
+  // 楚 — Xiang Yu's host, with the western column under Liu Bang (also Huai-king's man)
+  'hist-xiang-yu':    { forceId: 'chu', cityId: 'pengcheng' },
+  'hist-fan-zeng':    { forceId: 'chu', cityId: 'pengcheng' },
+  'hist-ying-bu':     { forceId: 'chu', cityId: 'pengcheng' }, // the vanguard across the river
+  'hist-long-qu':     { forceId: 'chu', cityId: 'pengcheng' },
+  'hist-zhongli-mei': { forceId: 'chu', cityId: 'pengcheng' },
+  'hist-ji-bu':       { forceId: 'chu', cityId: 'xiapi' },
+  'hist-liu-bang':    { forceId: 'chu', cityId: 'xiaopei' }, // the Lord of Pei, on the western road
+  'hist-xiao-he':     { forceId: 'chu', cityId: 'xiaopei' },
+  'hist-cao-can':     { forceId: 'chu', cityId: 'xiaopei' },
+  'hist-fan-kuai':    { forceId: 'chu', cityId: 'xiaopei' },
+  // 趙 — besieged in Julu, and Chen Yu sitting outside who will not move
+  'hist-zhang-er':    { forceId: 'zhao', cityId: 'ye' },     // trapped within the walls
+  'hist-chen-yu':     { forceId: 'zhao', cityId: 'bohai' },  // his army outside, frozen
+  'hist-li-zuoche':   { forceId: 'zhao', cityId: 'ye' },
+  // 齊
+  'hist-tian-dan-chu':{ forceId: 'qi', cityId: 'linzi' },
+  'hist-tian-rong':   { forceId: 'qi', cityId: 'linzi' },
+  'hist-tian-heng':   { forceId: 'qi', cityId: 'beihai' },
+  // 魏
+  'hist-wei-bao':     { forceId: 'wei', cityId: 'puyang' },
+  'hist-wei-jiu':     { forceId: 'wei', cityId: 'puyang' },
+};
+export const SCENARIO_CH_JULU: Scenario = {
+  id: 'scn-ch-julu',
+  name: { en: 'The Battle of Julu', zh: '鉅鹿之戰' },
+  description:
+    'Break the cauldrons, sink the boats. The Qin empire\'s last great armies have the rebellion by the throat: Wang Li\'s Great Wall corps rings the King of Zhao inside Julu while Zhang Han\'s host guards the supply road, and Zhang Er within the walls screams for a rescue no one dares give — Chen Yu sits outside with his whole army and will not move. Then Xiang Yu murders the dithering Song Yi, seizes command, crosses the river, and orders every cauldron smashed and every boat sunk: three days\' rations and no way back, win or die. In nine furious charges he annihilates the Qin host before a dozen frozen lords too afraid to leave their walls — and walks out, at twenty-six, the master of them all.',
+  descriptionZh: "破釜沉舟。秦帝國最後之大軍扼住了起義之咽喉：王離之長城軍圍趙王於鉅鹿，章邯之眾守其甬道糧路，城中張耳呼救而無人敢應——陳餘擁兵於外，按兵不動。於是項羽斬猶豫之宋義，奪其軍，渡河，下令盡破釜甑、盡沉舟船：持三日糧、無還之路，非勝即死。九戰之間，他於十餘壁上諸侯目瞪口呆之注視下，殲秦軍主力——而後步出轅門，年方二十六，諸侯膝行，莫敢仰視。",
+  startDate: { year: 178, season: 'winter' },
+  cities: buildInitialCities(CITY_OWNERSHIP_CH_JULU),
+  forces: FORCES_CH_JULU,
+  officers: buildWarringStatesOfficers(ASSIGN_CH_JULU, ['chu-han', 'qin']),
+};
+
 export const SCENARIOS: Scenario[] = [
   // ── Chu-Han Contention (parallel timeline) ──
+  SCENARIO_CH_JULU,
   SCENARIO_CH_CHUHAN,
   SCENARIO_CH_SANQIN,
   SCENARIO_CH_PENGCHENG,
+  SCENARIO_CH_JINGXING,
   SCENARIO_CH_GAIXIA,
   // ── Warring States (parallel timeline) ──
   SCENARIO_WS_SEVEN,
