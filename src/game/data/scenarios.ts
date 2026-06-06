@@ -1,6 +1,7 @@
 import type { Force, Scenario, Officer } from '../types';
 import { buildInitialCities } from './cities';
 import { buildInitialOfficers, buildHistoricalOfficers } from './officers';
+import type { Dynasty } from './dynasties';
 
 // ──────────────────────────────────────────────────────────────────────
 // Scenario 0 — 184 AD The Yellow Turban Rebellion
@@ -7266,8 +7267,9 @@ export const SCENARIO_WHATIF_LUXUN_LIVES: Scenario = {
 // ════════════════════════════════════════════════════════════════════════
 function buildWarringStatesOfficers(
   assignments: Record<string, { forceId: string; cityId: string }>,
+  dynasties: Dynasty[] = ['warring-states'],
 ): Officer[] {
-  return buildHistoricalOfficers(['warring-states']).map((o) => {
+  return buildHistoricalOfficers(dynasties).map((o) => {
     const a = assignments[o.id];
     return a
       ? { ...o, forceId: a.forceId, locationCityId: a.cityId, status: 'idle' as const, loyalty: 100 }
@@ -7473,11 +7475,131 @@ export const SCENARIO_WS_YUEYI: Scenario = {
   officers: buildWarringStatesOfficers(ASSIGN_WS_YUEYI),
 };
 
+// ── 圍魏救趙·桂陵馬陵 (Warring States). Wei is at its zenith — Pang Juan has
+//    stormed Handan and Zhao reels back to Jinyang; but Sun Bin sits in Qi's
+//    war-chariot, and the road to Daliang lies open behind the Wei host. ──
+const FORCES_WS_GUILING: Force[] = FORCES_WS_SEVEN.map((f) => {
+  if (f.id === 'qi') return { ...f, rulerOfficerId: 'hist-qi-weiwang' };
+  if (f.id === 'zhao') return { ...f, capitalCityId: 'taiyuan' }; // Handan fallen, court at Jinyang
+  return f;
+});
+const CITY_OWNERSHIP_WS_GUILING: Record<string, string> = {
+  ...CITY_OWNERSHIP_WS_SEVEN,
+  ye: 'wei', // Pang Juan has stormed Handan
+};
+const ASSIGN_WS_GUILING: Record<string, { forceId: string; cityId: string }> = {
+  ...ASSIGN_WS_SEVEN,
+  'hist-qi-weiwang': { forceId: 'qi', cityId: 'linzi' },
+  'hist-pang-juan':  { forceId: 'wei',  cityId: 'ye' },      // holds taken Handan, far from home
+  'hist-sun-bin':    { forceId: 'qi',   cityId: 'linzi' },   // the crippled strategist
+  'hist-kuang-zhang':{ forceId: 'qi',   cityId: 'linzi' },   // Qi's field commander
+  // Zhao, thrown out of Handan, regroups at Jinyang (Taiyuan)
+  'hist-zhao-wuling': { forceId: 'zhao', cityId: 'taiyuan' },
+  'hist-lian-po':     { forceId: 'zhao', cityId: 'taiyuan' },
+  'hist-zhao-she':    { forceId: 'zhao', cityId: 'taiyuan' },
+  'hist-lin-xiangru': { forceId: 'zhao', cityId: 'taiyuan' },
+  'hist-pingyuan-jun':{ forceId: 'zhao', cityId: 'taiyuan' },
+  'hist-zhao-kuo':    { forceId: 'zhao', cityId: 'taiyuan' },
+  'hist-mao-sui':     { forceId: 'zhao', cityId: 'taiyuan' },
+  'hist-pang-xuan':   { forceId: 'zhao', cityId: 'taiyuan' },
+  'hist-yue-cheng':   { forceId: 'zhao', cityId: 'taiyuan' },
+};
+export const SCENARIO_WS_GUILING: Scenario = {
+  id: 'scn-ws-guiling',
+  name: { en: 'Save Zhao by Besieging Wei', zh: '戰國·圍魏救趙' },
+  description:
+    'Wei stands at its zenith under King Hui, first hegemon of the age. Pang Juan has stormed the Zhao capital of Handan and the house of Zhao reels back to Jinyang. But Zhao\'s cry for help has reached Linzi, and in the war-chariot of Qi sits Pang Juan\'s old schoolmate — Sun Bin, crippled and disgraced by him years ago, now waiting with a cold patience. Strike not at the relieving army but at undefended Daliang, and the Wei host must race home into the ambush. The road runs to Guiling, and one day to Maling, where Pang Juan will read his own name carved on a tree by torchlight.',
+  descriptionZh: "魏當極盛，惠王為一世之雄。龐涓既拔趙都邯鄲，趙氏退保晉陽。然趙之求救已達臨淄——齊之戎車上，正坐著龐涓的同窗：孫臏，昔年為其所刖、所辱，今以冷酷之耐心待之。不擊救兵而擊空虛之大梁，魏師必回師自投伏中。其路通桂陵，他日通馬陵——龐涓將於火光下，讀到刻於樹上的自己之名。",
+  startDate: { year: 178, season: 'spring' },
+  cities: buildInitialCities(CITY_OWNERSHIP_WS_GUILING),
+  forces: FORCES_WS_GUILING,
+  officers: buildWarringStatesOfficers(ASSIGN_WS_GUILING),
+};
+
+// ── 合縱·邯鄲之戰 (Warring States). After Changping, Qin lays siege to Handan;
+//    Lord Pingyuan holds the walls, Lord Xinling steals the tally to bring the
+//    Wei army, and Lord Chunshen marches up from Chu. The vertical alliance. ──
+const FORCES_WS_HANDAN: Force[] = FORCES_WS_SEVEN.map((f) =>
+  f.id === 'zhao' ? { ...f, rulerOfficerId: 'hist-zhao-xiaocheng' } : f,
+);
+const CITY_OWNERSHIP_WS_HANDAN: Record<string, string> = {
+  ...CITY_OWNERSHIP_WS_SEVEN,
+  shangdang: 'qin', // taken at Changping; the noose around Handan
+};
+const ASSIGN_WS_HANDAN: Record<string, { forceId: string; cityId: string }> = {
+  ...ASSIGN_WS_SEVEN,
+  'hist-zhao-xiaocheng': { forceId: 'zhao', cityId: 'ye' },
+  // Qin's siege army pressing down from Shangdang
+  'hist-bai-qi':    { forceId: 'qin',  cityId: 'shangdang' },
+  'hist-wang-jian': { forceId: 'qin',  cityId: 'shangdang' },
+  // Zhao holds Handan to the last
+  'hist-pingyuan-jun': { forceId: 'zhao', cityId: 'ye' },
+  'hist-lian-po':      { forceId: 'zhao', cityId: 'ye' },
+  // The alliance rides in: Xinling (with Zhu Hai's hammer) and Chunshen reach Handan
+  'hist-xinling-jun': { forceId: 'wei', cityId: 'ye' },
+  'hist-zhu-hai':     { forceId: 'wei', cityId: 'ye' },
+  'hist-chunshen-jun':{ forceId: 'chu', cityId: 'ye' },
+};
+export const SCENARIO_WS_HANDAN: Scenario = {
+  id: 'scn-ws-handan',
+  name: { en: 'The Siege of Handan', zh: '戰國·邯鄲之戰' },
+  description:
+    'The year after Changping, where four hundred thousand of Zhao were buried, Qin comes for the kill: its army grinds down from Shangdang to ring the Zhao capital of Handan. Within, Lord Pingyuan strips his household to man the walls and sends his desperate plea across the realm. The answer is the vertical alliance made flesh — Lord Xinling of Wei murders the general Jin Bi with Zhu Hai\'s forty-pound hammer to seize his army by a stolen tally, and Lord Chunshen marches the men of Chu north. If the three armies hold, Qin\'s tide breaks on Handan\'s walls; if not, the first empire comes a generation early.',
+  descriptionZh: "長平坑趙四十萬之次年，秦來取命：其軍自上黨碾壓而下，環圍趙都邯鄲。城中，平原君散盡家財以守，遣使泣血求援於天下。而回應者，乃合縱之化身——魏公子信陵君以朱亥四十斤鐵椎擊殺晉鄙，竊符奪其軍；楚春申君亦提江東之眾北上。三軍若能拒守，秦之大潮將碎於邯鄲城下；若其不能，天下第一帝國，將早一世而至。",
+  startDate: { year: 178, season: 'winter' },
+  cities: buildInitialCities(CITY_OWNERSHIP_WS_HANDAN),
+  forces: FORCES_WS_HANDAN,
+  officers: buildWarringStatesOfficers(ASSIGN_WS_HANDAN),
+};
+
+// ── 秦滅六國 (Warring States → Qin). The First Emperor's generation: Ying Zheng
+//    on the throne, Wang Jian & Wang Ben & Li Xin in the field, Li Si & Wei Liao
+//    in the cabinet. The six kingdoms hold their cores; Jing Ke sharpens a dagger.
+//    Pulls in both the Warring-States roster and the Qin dynasty. ──
+const FORCES_WS_QIN_UNIFY: Force[] = FORCES_WS_SEVEN.map((f) =>
+  f.id === 'qin' ? { ...f, rulerOfficerId: 'hist-qin-shihuang' } : f,
+);
+const CITY_OWNERSHIP_WS_QIN_UNIFY: Record<string, string> = {
+  ...CITY_OWNERSHIP_WS_SEVEN,
+  shangdang: 'qin', // the eastern marches already swallowed
+  luoyang: 'qin',   // Yiyang and the Zhou heartland taken
+};
+const ASSIGN_WS_QIN_UNIFY: Record<string, { forceId: string; cityId: string }> = {
+  ...ASSIGN_WS_SEVEN,
+  // The conquest cabinet
+  'hist-qin-shihuang': { forceId: 'qin', cityId: 'changan' },
+  'hist-wang-jian':    { forceId: 'qin', cityId: 'changan' }, // takes Zhao and Chu
+  'hist-wang-ben':     { forceId: 'qin', cityId: 'mei' },     // takes Wei, Yan, Qi
+  'hist-li-xin':       { forceId: 'qin', cityId: 'changan' },
+  'hist-meng-tian':    { forceId: 'qin', cityId: 'shangdang' },
+  'hist-li-si':        { forceId: 'qin', cityId: 'changan' }, // chancellor
+  'hist-wei-liao':     { forceId: 'qin', cityId: 'changan' }, // grand commandant
+  // The last defenders of the six: Li Mu for Zhao, and the assassins of Yan
+  'hist-li-mu':     { forceId: 'zhao', cityId: 'yanmen' },
+  'hist-taizi-dan': { forceId: 'yan',  cityId: 'ji' },
+  'hist-jing-ke':   { forceId: 'yan',  cityId: 'beiping' }, // the dagger in the map-scroll
+  'hist-gao-jianli':{ forceId: 'yan',  cityId: 'beiping' },
+};
+export const SCENARIO_WS_QIN_UNIFY: Scenario = {
+  id: 'scn-ws-qin-unify',
+  name: { en: 'Qin Devours the Six', zh: '戰國·秦滅六國' },
+  description:
+    'The endgame. Ying Zheng, King of Qin, sits behind the laws of Shang Yang and the cabinet of Li Si and Wei Liao, and his generals — old Wang Jian, his son Wang Ben, the bold Li Xin, Meng Tian of the frontier — are loosed to swallow all under heaven one kingdom at a time. The six hold only their hearts now: Zhao behind Li Mu, the last great shield of the north; Chu behind Xiang Yan; and in Yan, Crown Prince Dan whispers with Jing Ke over a map of Dukang with a poisoned dagger rolled inside. Within a decade the realm is one, or the dagger finds the king first.',
+  descriptionZh: "終局。秦王嬴政恃商鞅之法、李斯尉繚之謀，縱其諸將——老將王翦、其子王賁、驍勇李信、戍邊蒙恬——以逐一吞滅天下。六國今所守者，唯其腹心：趙有李牧，北方最後之盾；楚有項燕；而燕之太子丹，正與荊軻密語於督亢之圖前，圖窮而匕首藏焉。十年之內，天下歸一——或匕首先尋上秦王。",
+  startDate: { year: 178, season: 'autumn' },
+  cities: buildInitialCities(CITY_OWNERSHIP_WS_QIN_UNIFY),
+  forces: FORCES_WS_QIN_UNIFY,
+  officers: buildWarringStatesOfficers(ASSIGN_WS_QIN_UNIFY, ['warring-states', 'qin']),
+};
+
 export const SCENARIOS: Scenario[] = [
   // ── Warring States (parallel timeline) ──
   SCENARIO_WS_SEVEN,
+  SCENARIO_WS_GUILING,
   SCENARIO_WS_CHANGPING,
+  SCENARIO_WS_HANDAN,
   SCENARIO_WS_YUEYI,
+  SCENARIO_WS_QIN_UNIFY,
   // ── Historical (chronological 184–280 AD) ──
   SCENARIO_184_YELLOW_TURBAN,
   SCENARIO_189_EUNUCHS,
