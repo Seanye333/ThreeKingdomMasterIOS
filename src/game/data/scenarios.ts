@@ -6985,6 +6985,104 @@ export const SCENARIO_257_HUAINAN3: Scenario = {
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_257, DEAD_BY_252, 257),
 };
 
+// ── Historical: 易京之戰 (199). Lü Bu lies strangled at the White Gate and
+//    Xuzhou has fallen to Cao Cao; Yuan Shao turns north to finish his last
+//    rival, Gongsun Zan, walled into the iron towers of Yijing. The battle that
+//    hands Yuan Shao all four provinces. (198 board, Lü Bu's Xiapi gone to Cao.) ──
+const CITY_OWNERSHIP_199: Record<string, string> = {
+  ...CITY_OWNERSHIP_198,
+  xiapi: 'cao', // Lü Bu strangled at the White Gate Tower; Xuzhou passes to Cao Cao
+};
+const FORCES_199: Force[] = FORCES_198.filter((f) => f.id !== 'lubu');
+const OFFICER_ASSIGNMENTS_199 = {
+  ...OFFICER_ASSIGNMENTS_198,
+  // Lü Bu's faction is broken: the dead (Lü Bu, Chen Gong, Gao Shun) are swept
+  // out by date; the survivors and the turncoat Chens go over to Cao Cao.
+  'lu-bu': { forceId: 'cao', cityId: 'xiapi' },
+  'chen-gong': { forceId: 'cao', cityId: 'xiapi' },
+  'gao-shun': { forceId: 'cao', cityId: 'xiapi' },
+  'cao-xing': { forceId: 'cao', cityId: 'xiapi' },
+  'song-xian': { forceId: 'cao', cityId: 'xiapi' },
+  'hou-cheng': { forceId: 'cao', cityId: 'xiapi' },
+  'wei-xu': { forceId: 'cao', cityId: 'xiapi' },
+  'diaochan': { forceId: 'cao', cityId: 'xiapi' },
+  'chen-deng': { forceId: 'cao', cityId: 'xiapi' },
+  'chen-gui': { forceId: 'cao', cityId: 'xiapi' },
+};
+export const SCENARIO_199_YIJING: Scenario = {
+  id: 'scn-199-yijing',
+  name: { en: 'The Siege of Yijing', zh: '易京之戰' },
+  description:
+    'Spring 199. Lü Bu lies strangled at the White Gate Tower and Xuzhou has passed to Cao Cao — but in the north, Yuan Shao turns to finish the last rival barring his path to the four provinces: Gongsun Zan, the White Horse General, sealed inside the iron towers of Yijing with a mountain of grain and ten years\' resolve. Yuan Shao\'s host rings the walls and tunnels beneath them. When the towers fall, Gongsun Zan will burn his own household and himself — and all the north will be Yuan Shao\'s, save one man at Xuchang.',
+  descriptionZh: "建安四年春。呂布既縊死於白門樓，徐州歸於曹操——而河北之地，袁紹回師以了結其取四州路上最後之勁敵：白馬將軍公孫瓚，自閉於易京鐵壘，積穀如山、誓守十年。袁紹大軍環其城而穿地道以攻之。樓壘既破，公孫瓚將自焚妻孥而後自盡——河北自此盡歸袁紹，唯許昌一人尚為其敵。",
+  startDate: { year: 199, season: 'spring' },
+  cities: buildInitialCities(CITY_OWNERSHIP_199),
+  forces: FORCES_199,
+  officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_199, DEAD_BY_198, 199),
+};
+
+// ── Historical: 白狼山·北征烏桓 (207). The Yuan brothers have fled to the
+//    Wuhuan chieftain Tadun on the steppe; Cao Cao gambles on a waterless forced
+//    march to fall on them at White Wolf Mountain, where Zhang Liao's charge cuts
+//    down Tadun and makes the north whole. (207 board + new 'wuhuan' force.) ──
+const CITY_OWNERSHIP_207_WUHUAN: Record<string, string> = {
+  ...CITY_OWNERSHIP_207,
+  liucheng: 'wuhuan',
+  wuhuan: 'wuhuan',
+};
+const FORCES_207_WUHUAN: Force[] = [
+  ...FORCES_207,
+  { id: 'wuhuan', name: { en: 'Wuhuan', zh: '烏桓' }, rulerOfficerId: 'tadun', capitalCityId: 'liucheng', color: '#8a6d3b', isPlayer: false },
+];
+const OFFICER_ASSIGNMENTS_207_WUHUAN = {
+  ...OFFICER_ASSIGNMENTS_207,
+  'tadun': { forceId: 'wuhuan', cityId: 'liucheng' },
+  'yuan-shang': { forceId: 'wuhuan', cityId: 'liucheng' }, // fled to the steppe
+  'yuan-xi': { forceId: 'wuhuan', cityId: 'liucheng' },
+};
+export const SCENARIO_207_BAILANG: Scenario = {
+  id: 'scn-207-bailang',
+  name: { en: 'White Wolf Mountain', zh: '白狼山·北征烏桓' },
+  description:
+    'Autumn 207. The brothers Yuan Shang and Yuan Xi, beaten out of Hebei, have fled to the Wuhuan chieftain Tadun on the steppe, and the northern frontier festers. Against every counsel, Cao Cao leaves his baggage and drives his army on a desperate forced march through three hundred li of waterless waste — guided by Tian Chou over the abandoned Lulong passes — to burst upon the Wuhuan host at White Wolf Mountain. Zhang Liao leads the charge that cuts down Tadun himself. With this stroke the last embers of the house of Yuan are stamped out and the north made whole.',
+  descriptionZh: "建安十二年秋。袁尚、袁熙兄弟為河北所敗，亡奔塞外烏桓單于蹋頓，北疆遂成腹心之患。曹操不顧眾諫，棄輜重而驅軍疾行，穿三百里無水之荒，賴田疇引由廢棄之盧龍故道——驟臨白狼山，掩殺烏桓之眾。張遼率鋒陷陣，臨陣斬蹋頓於馬下。此一擊既出，袁氏最後之餘燼盡熄，北方自此混一。",
+  startDate: { year: 207, season: 'autumn' },
+  cities: buildInitialCities(CITY_OWNERSHIP_207_WUHUAN),
+  forces: FORCES_207_WUHUAN,
+  // The base 207 death-list buries Tadun and the Yuan brothers (they perish in
+  // this very campaign); here they must start alive to fight it.
+  officers: buildInitialOfficers(
+    OFFICER_ASSIGNMENTS_207_WUHUAN,
+    DEAD_BY_207.filter((id) => id !== 'tadun' && id !== 'yuan-shang' && id !== 'yuan-xi'),
+    207,
+  ),
+};
+
+// ── Historical: 石亭之戰 (228). The same year as Jieting, but in the east: Zhou
+//    Fang's feigned surrender lures Cao Xiu deep into Wu at Wan, where Lu Xun
+//    springs the trap at Shiting and shatters the Wei army — the wound that kills
+//    Cao Xiu and crowns Lu Xun supreme commander. (228 board, eastern front.) ──
+const CITY_OWNERSHIP_228_SHITING: Record<string, string> = {
+  ...CITY_OWNERSHIP_228,
+  wan: 'cao', // Cao Xiu, gulled by Zhou Fang, has pushed deep into Wu and taken Wan
+};
+const OFFICER_ASSIGNMENTS_228_SHITING = {
+  ...OFFICER_ASSIGNMENTS_228,
+  'cao-xiu': { forceId: 'cao', cityId: 'wan' }, // lured deep into Wu
+  'lu-xun': { forceId: 'sun', cityId: 'yuzhang' }, // grand commander, about to spring Shiting
+};
+export const SCENARIO_228_SHITING: Scenario = {
+  id: 'scn-228-shiting',
+  name: { en: 'The Battle of Shiting', zh: '石亭之戰' },
+  description:
+    'Summer 228. The same season Ma Su lost Jieting in the west, the war blazes in the east. Zhou Fang, governor of Poyang, shaves his own head to make his feigned surrender ring true, and lures the Wei general Cao Xiu with a hundred thousand men deep into Wu at Wan. There the Grand Commander Lu Xun lies waiting: at Shiting he springs three armies upon the trapped Cao Xiu and routs him utterly. The Wei general flees, his back broken with shame, and is dead within months — while Lu Xun stands unrivalled as the sword of Wu.',
+  descriptionZh: "建興六年夏（魏太和二年）。正當馬謖失街亭於西陲之際，戰火亦熾於東。鄱陽太守周魴斷髮以堅其詐降，誘魏將曹休提十萬之眾深入吳境至皖。大都督陸遜伏候於此：石亭一役，縱三軍掩擊困頓之曹休，大破之。魏將狼狽而遁，憤恚成疾，數月而卒——陸遜遂為東吳之利劍，一時無兩。",
+  startDate: { year: 228, season: 'summer' },
+  cities: buildInitialCities(CITY_OWNERSHIP_228_SHITING),
+  forces: FORCES_228,
+  officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_228_SHITING, DEAD_BY_228, 228),
+};
+
 // ── What-if: 水淹七軍·威震華夏 (219). Guan Yu's drowning of Yu Jin's seven
 //    armies is pressed to the hilt: Fan and Xiangyang fall, and the corridor
 //    up the Han River — Xiangyang, Xinye, Wancheng — becomes a dagger aimed at
@@ -7083,9 +7181,11 @@ export const SCENARIOS: Scenario[] = [
   SCENARIO_194_XUZHOU,
   SCENARIO_197_BOHAI,
   SCENARIO_198_XIAPI,
+  SCENARIO_199_YIJING,
   SCENARIO_200_GUANDU,
   SCENARIO_204_YECHENG,
   SCENARIO_207_THREE_VISITS,
+  SCENARIO_207_BAILANG,
   SCENARIO_208_CHIBI,
   SCENARIO_211_WEINAN,
   SCENARIO_213_FENGPO,
@@ -7097,6 +7197,7 @@ export const SCENARIOS: Scenario[] = [
   SCENARIO_222_YILING,
   SCENARIO_225_SOUTHERN,
   SCENARIO_228_JIETING,
+  SCENARIO_228_SHITING,
   SCENARIO_229_THREE_EMPERORS,
   SCENARIO_231_LUCHENG,
   SCENARIO_234_WUZHANG,
