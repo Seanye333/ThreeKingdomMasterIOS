@@ -7863,7 +7863,115 @@ export const SCENARIO_WS_QIMIN: Scenario = {
   officers: buildWarringStatesOfficers(ASSIGN_WS_QIMIN),
 };
 
+// ════════════════════════════════════════════════════════════════════════
+// 楚漢爭霸 — Chu-Han Contention (parallel timeline on the AD engine). The same
+// buildWarringStatesOfficers machinery, fed the Chu-Han + Qin rosters: after
+// Xiang Yu carved the realm into eighteen fiefs, the Hegemon-King of Western Chu
+// against the King of Han, with the Three Qin (the surrendered Qin generals) and
+// the restored eastern kingdoms (Qi, Zhao, Wei, Jiujiang) between them.
+// ════════════════════════════════════════════════════════════════════════
+const FORCES_CHUHAN: Force[] = [
+  { id: 'chu',      name: { en: 'Western Chu', zh: '西楚'   }, rulerOfficerId: 'hist-xiang-yu',  capitalCityId: 'pengcheng', color: '#c0392b', isPlayer: false },
+  { id: 'han',      name: { en: 'Han',         zh: '漢'     }, rulerOfficerId: 'hist-liu-bang',  capitalCityId: 'hanzhong',  color: '#3a7dd9', isPlayer: false },
+  { id: 'yong',     name: { en: 'Three Qin',   zh: '三秦'   }, rulerOfficerId: 'hist-zhang-han', capitalCityId: 'changan',   color: '#8a6d3b', isPlayer: false },
+  { id: 'qi',       name: { en: 'Qi',          zh: '齊'     }, rulerOfficerId: 'hist-tian-rong', capitalCityId: 'linzi',     color: '#2aa8c0', isPlayer: false },
+  { id: 'zhao',     name: { en: 'Zhao',        zh: '趙'     }, rulerOfficerId: 'hist-chen-yu',   capitalCityId: 'ye',        color: '#e07b39', isPlayer: false },
+  { id: 'wei',      name: { en: 'Wei',         zh: '魏'     }, rulerOfficerId: 'hist-wei-bao',   capitalCityId: 'puyang',    color: '#2f8e6f', isPlayer: false },
+  { id: 'jiujiang', name: { en: 'Jiujiang',    zh: '九江'   }, rulerOfficerId: 'hist-ying-bu',   capitalCityId: 'shouchun',  color: '#9a5a9a', isPlayer: false },
+];
+const CITY_OWNERSHIP_CHUHAN: Record<string, string> = {
+  // 漢 — Liu Bang, banished to Hanzhong and the Ba-Shu basin
+  hanzhong: 'han', yangping: 'han', xincheng: 'han', shangyong: 'han', wudu: 'han',
+  chengdu: 'han', jiangzhou: 'han', yongan: 'han', zitong: 'han', fucheng: 'han',
+  mianzhu: 'han', luocheng: 'han', jiameng: 'han', jianmen: 'han', baishuiguan: 'han',
+  baxi: 'han', yinping: 'han', nanzhong: 'han', jianning: 'han', yunnan: 'han',
+  yongchang: 'han', yuexi: 'han',
+  // 三秦 — the surrendered Qin generals walling Liu Bang into the west
+  changan: 'yong', mei: 'yong', chencang: 'yong', tongguan: 'yong', wuguan: 'yong',
+  sanguan: 'yong', xiaoguan: 'yong', anding: 'yong', tianshui: 'yong', longxi: 'yong',
+  shanggui: 'yong', jincheng: 'yong', wuwei: 'yong', jiuquan: 'yong', dunhuang: 'yong',
+  jieting: 'yong',
+  // 齊 — Tian Rong's Qi on the Shandong peninsula
+  linzi: 'qi', beihai: 'qi', langya: 'qi',
+  // 趙 — Chen Yu's Zhao, the north and the old Yan lands
+  ye: 'zhao', taiyuan: 'zhao', shangdang: 'zhao', yanmen: 'zhao', yunzhong: 'zhao',
+  wuyuan: 'zhao', shuofang: 'zhao', bohai: 'zhao', pingyuan: 'zhao', nanpi: 'zhao',
+  boling: 'zhao', ji: 'zhao', beiping: 'zhao', yuyang: 'zhao', liaodong: 'zhao',
+  xiangping: 'zhao', liucheng: 'zhao', wuhuan: 'zhao', lelang: 'zhao', daifang: 'zhao',
+  // 魏 — Wei Bao's Wei in the Hedong / old Wei heartland
+  puyang: 'wei', luoyang: 'wei', baima: 'wei', yanjin: 'wei', liyang: 'wei',
+  // 九江 — Ying Bu's Jiujiang on the Huai
+  shouchun: 'jiujiang', hefei: 'jiujiang', lujiang: 'jiujiang', ruxu: 'jiujiang',
+  // 西楚 — Xiang Yu's Western Chu: Pengcheng, the Jiangdong homeland and the south
+  pengcheng: 'chu', xiapi: 'chu', xiaopei: 'chu', xuchang: 'chu', chenliu: 'chu',
+  runan: 'chu', hulao: 'chu', guandu: 'chu', jianye: 'chu', wu: 'chu', wuxi: 'chu',
+  kuaiji: 'chu', danyang: 'chu', yuzhang: 'chu', chaisang: 'chu', poyang: 'chu',
+  hukou: 'chu', jiangling: 'chu', wancheng: 'chu', wan: 'chu', xinye: 'chu',
+  xiangyang: 'chu', fancheng: 'chu', jiangxia: 'chu', yiling: 'chu', xiling: 'chu',
+  xiaoting: 'chu', maicheng: 'chu', gongan: 'chu', bowang: 'chu', guangling: 'chu',
+  changsha: 'chu', lingling: 'chu', wuling: 'chu', guiyang: 'chu', baqiu: 'chu',
+  wuchang: 'chu', luling: 'chu', nanhai: 'chu', hepu: 'chu', jiaozhi: 'chu',
+  guilin: 'chu', cangwu: 'chu', jiuzhen: 'chu', rinan: 'chu', zhuyai: 'chu',
+  linhai: 'chu', 'yi-county': 'chu', chibi: 'chu', changban: 'chu',
+};
+const ASSIGN_CHUHAN: Record<string, { forceId: string; cityId: string }> = {
+  // 西楚 — the Hegemon-King and his marshals
+  'hist-xiang-yu':    { forceId: 'chu', cityId: 'pengcheng' },
+  'hist-fan-zeng':    { forceId: 'chu', cityId: 'pengcheng' }, // the one adviser he ignores
+  'hist-long-qu':     { forceId: 'chu', cityId: 'pengcheng' },
+  'hist-zhongli-mei': { forceId: 'chu', cityId: 'pengcheng' },
+  'hist-ji-bu':       { forceId: 'chu', cityId: 'xiapi' },
+  'hist-xiang-bo':    { forceId: 'chu', cityId: 'xiapi' },
+  'hist-huan-chu':    { forceId: 'chu', cityId: 'jianye' },
+  'hist-pu-jiangjun': { forceId: 'chu', cityId: 'jianye' },
+  'hist-cao-jiu':     { forceId: 'chu', cityId: 'chenliu' },
+  'hist-yu-ji':       { forceId: 'chu', cityId: 'pengcheng' },
+  // 漢 — the King of Han and the three heroes of the early Han
+  'hist-liu-bang':    { forceId: 'han', cityId: 'hanzhong' },
+  'hist-han-xin':     { forceId: 'han', cityId: 'hanzhong' }, // the marshal who will turn the war
+  'hist-zhang-liang': { forceId: 'han', cityId: 'hanzhong' },
+  'hist-xiao-he':     { forceId: 'han', cityId: 'hanzhong' },
+  'hist-chen-ping':   { forceId: 'han', cityId: 'hanzhong' },
+  'hist-fan-kuai':    { forceId: 'han', cityId: 'hanzhong' },
+  'hist-cao-can':     { forceId: 'han', cityId: 'hanzhong' },
+  'hist-zhou-bo':     { forceId: 'han', cityId: 'hanzhong' },
+  'hist-guan-ying':   { forceId: 'han', cityId: 'chengdu' },
+  'hist-xiahou-ying': { forceId: 'han', cityId: 'hanzhong' },
+  'hist-wang-ling':   { forceId: 'han', cityId: 'chengdu' },
+  'hist-lu-wan':      { forceId: 'han', cityId: 'hanzhong' },
+  // 三秦 — the surrendered Qin generals
+  'hist-zhang-han':   { forceId: 'yong', cityId: 'changan' },
+  'hist-sima-xin':    { forceId: 'yong', cityId: 'tongguan' },
+  'hist-dong-yi':     { forceId: 'yong', cityId: 'mei' },
+  // 齊 — the Tian clan
+  'hist-tian-rong':   { forceId: 'qi', cityId: 'linzi' },
+  'hist-tian-heng':   { forceId: 'qi', cityId: 'linzi' },
+  'hist-tian-guang':  { forceId: 'qi', cityId: 'beihai' },
+  // 趙 — Chen Yu and Zhang Er (soon to fall out), with Li Zuoche
+  'hist-chen-yu':     { forceId: 'zhao', cityId: 'ye' },
+  'hist-zhang-er':    { forceId: 'zhao', cityId: 'taiyuan' },
+  'hist-li-zuoche':   { forceId: 'zhao', cityId: 'ye' },
+  // 魏 — Wei Bao
+  'hist-wei-bao':     { forceId: 'wei', cityId: 'puyang' },
+  'hist-wei-jiu':     { forceId: 'wei', cityId: 'luoyang' },
+  // 九江 — Ying Bu, the tattooed king
+  'hist-ying-bu':     { forceId: 'jiujiang', cityId: 'shouchun' },
+};
+export const SCENARIO_CH_CHUHAN: Scenario = {
+  id: 'scn-ch-chuhan',
+  name: { en: 'Chu-Han Contention', zh: '楚漢爭霸' },
+  description:
+    'The empire of Qin is ash, and Xiang Yu — Hegemon-King of Western Chu, the strongest man of the age — has carved all under heaven into eighteen fiefs to suit himself. He has banished his rival Liu Bang to the dead end of Hanzhong behind the Three Qin, the surrendered Qin generals set to wall him in. But Liu Bang has the three greatest talents of the era — Han Xin to command, Zhang Liang to plan, Xiao He to supply — and means to burn his retreat-galleries as a lie, march out of the west, and contend for it all. Qi already rebels in the east, the restored kingdoms eye each other, and Fan Zeng warns a Hegemon who will not listen. The four years that decide a dynasty begin now.',
+  descriptionZh: "秦之帝國已成灰燼，而項羽——西楚霸王、當世第一之人——已按己意裂天下為十八國。他將勁敵劉邦逐於漢中之絕地，以三秦降將圍堵之。然劉邦握有當世三傑——韓信將兵、張良運籌、蕭何足食——意欲明燒棧道以為餌，暗度而出，爭奪天下。齊已叛於東，諸復國者彼此相窺，而范增之諫，霸王不聽。決定一代王朝的四年，自此刻始。",
+  startDate: { year: 178, season: 'spring' },
+  cities: buildInitialCities(CITY_OWNERSHIP_CHUHAN),
+  forces: FORCES_CHUHAN,
+  officers: buildWarringStatesOfficers(ASSIGN_CHUHAN, ['chu-han', 'qin']),
+};
+
 export const SCENARIOS: Scenario[] = [
+  // ── Chu-Han Contention (parallel timeline) ──
+  SCENARIO_CH_CHUHAN,
   // ── Warring States (parallel timeline) ──
   SCENARIO_WS_SEVEN,
   SCENARIO_WS_WEIWEN,
