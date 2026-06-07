@@ -189,8 +189,29 @@ export function DuelModal({ result, onClose }: Props) {
             </div>
             <div style={{ textAlign: 'center', color: '#c0a878', fontStyle: 'italic', marginTop: '0.5rem' }}>
               {result.winner === 'draw'
-                ? t('兩將皆負傷而退,本場一騎打不分勝負。', 'Both warriors retreat, wounded and bloodied. The duel is a draw.')
-                : t(`${winnerLabel} 力斬對手,敗者倒於沙場。`, `${winnerLabel} prevails. The loser falls on the field.`)}
+                ? t('兩將皆力竭負傷,本場一騎打不分勝負。', 'Both warriors fight to exhaustion, wounded and bloodied. The duel is a draw.')
+                : result.killedId
+                  ? t(`${winnerLabel} 力斬對手,敗者倒於沙場。`, `${winnerLabel} prevails. The loser falls on the field.`)
+                  : t(`${winnerLabel} 佔得上風,敗者力戰得脫。`, `${winnerLabel} gains the upper hand; the loser fights free, wounded.`)}
+            </div>
+
+            {/* 氣力 bout — stamina bars + round-by-round exchanges */}
+            <div style={{ marginTop: '1.25rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <StaminaBar label={t('氣力', 'Stamina')} value={result.attackerStamina} color="#b8442e" align="right" />
+                <StaminaBar label={t('氣力', 'Stamina')} value={result.defenderStamina} color="#3a7dd9" align="left" />
+              </div>
+              <div style={{ marginTop: '0.75rem', maxHeight: 140, overflowY: 'auto', fontSize: '0.7rem', fontFamily: 'ui-monospace, monospace' }}>
+                {result.rounds.map((r) => (
+                  <div key={r.round} style={{ display: 'grid', gridTemplateColumns: '2.5rem 1fr 2.5rem', gap: '0.4rem', alignItems: 'center', padding: '0.15rem 0.3rem', borderBottom: '1px dotted #2a2018' }}>
+                    <span style={{ textAlign: 'right', color: r.roundWinner === 'attacker' ? '#e8987a' : '#8a7050' }}>{r.attackerScore}</span>
+                    <span style={{ textAlign: 'center', color: '#a89878' }}>
+                      {t(`第${r.round}合`, `Rd ${r.round}`)} · {lang === 'en' ? r.text.en : r.text.zh}
+                    </span>
+                    <span style={{ textAlign: 'left', color: r.roundWinner === 'defender' ? '#8ab7e8' : '#8a7050' }}>{r.defenderScore}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Roll breakdown */}
@@ -217,6 +238,26 @@ export function DuelModal({ result, onClose }: Props) {
             </div>
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+function StaminaBar({ label, value, color, align }: { label: string; value: number; color: string; align: 'left' | 'right' }) {
+  const pct = Math.max(0, Math.min(100, value));
+  return (
+    <div style={{ textAlign: align }}>
+      <div style={{ fontSize: '0.62rem', color: '#8a7050', letterSpacing: '0.1rem', marginBottom: '0.2rem' }}>
+        {label} {pct}
+      </div>
+      <div style={{ height: 8, background: '#0a0805', border: '1px solid #3a2d20', position: 'relative' }}>
+        <div style={{
+          position: 'absolute', top: 0, bottom: 0,
+          left: align === 'left' ? 0 : undefined,
+          right: align === 'right' ? 0 : undefined,
+          width: `${pct}%`,
+          background: `linear-gradient(90deg, ${color}, ${color}aa)`,
+        }} />
       </div>
     </div>
   );
