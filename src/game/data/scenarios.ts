@@ -8352,12 +8352,57 @@ export const SCENARIO_ST_HULAO: Scenario = {
   officers: buildWarringStatesOfficers(ASSIGN_ST_HULAO, ['sui', 'tang']),
 };
 
+// ── 安史之亂 (Tang, the golden age ending). An Lushan raises 150,000 at Fanyang
+//    and the unblooded heartland folds — Luoyang, the Tong pass, Chang'an. Against
+//    him: Guo Ziyi and Li Guangbi from Shuofang, Yan Zhenqing in Hebei, Zhang Xun
+//    holding the door to the south at Suiyang. (Tang roster.) ──
+const ANSHI_YAN = [
+  'beiping', 'yuyang', 'ye', 'bohai', 'nanpi', 'boling',
+  'luoyang', 'chenliu', 'xuchang', 'guandu', 'hulao', 'baima', 'yanjin', 'liyang',
+];
+const CITY_OWNERSHIP_ST_ANSHI: Record<string, string> = Object.fromEntries(
+  Object.keys(CITY_OWNERSHIP_CHUHAN).map((c) => [c, ANSHI_YAN.includes(c) ? 'yan' : 'tang']),
+);
+const FORCES_ST_ANSHI: Force[] = [
+  { id: 'tang', name: { en: 'Tang',     zh: '唐'   }, rulerOfficerId: 'hist-li-longji', capitalCityId: 'changan', color: '#d4af37', isPlayer: false },
+  { id: 'yan',  name: { en: 'Great Yan', zh: '大燕' }, rulerOfficerId: 'hist-an-lushan', capitalCityId: 'beiping', color: '#8b2e2e', isPlayer: false },
+];
+const ASSIGN_ST_ANSHI: Record<string, { forceId: string; cityId: string }> = {
+  // 唐 — the dozing emperor, and the loyal commanders who must save the dynasty
+  'hist-li-longji':     { forceId: 'tang', cityId: 'changan' },  // Xuanzong, soon fleeing to Shu
+  'hist-yang-guifei':   { forceId: 'tang', cityId: 'changan' },  // doomed at Mawei
+  'hist-guo-ziyi':      { forceId: 'tang', cityId: 'anding' },   // Shuofang's saviour-general
+  'hist-li-guangbi':    { forceId: 'tang', cityId: 'taiyuan' },  // his equal in the field
+  'hist-yan-zhenqing':  { forceId: 'tang', cityId: 'pingyuan' }, // Hebei's commanderies rise
+  'hist-yan-gaoqing':   { forceId: 'tang', cityId: 'pingyuan' }, // his cousin, martyred at Changshan
+  'hist-geshu-han':     { forceId: 'tang', cityId: 'tongguan' }, // holding the Tong pass
+  'hist-gao-xianzhi':   { forceId: 'tang', cityId: 'tongguan' },
+  'hist-feng-changqing':{ forceId: 'tang', cityId: 'tongguan' },
+  'hist-zhang-xun':     { forceId: 'tang', cityId: 'runan' },    // the door to the south, Suiyang
+  'hist-li-bai':        { forceId: 'tang', cityId: 'jianye' },   // the poet, adrift in the south
+  // 大燕 — the rebel emperor and his marshal
+  'hist-an-lushan':     { forceId: 'yan', cityId: 'beiping' },   // 150,000 risen at Fanyang
+  'hist-shi-siming':    { forceId: 'yan', cityId: 'ye' },        // who will outlast him
+};
+export const SCENARIO_ST_ANSHI: Scenario = {
+  id: 'scn-st-anshi',
+  name: { en: 'The An Lushan Rebellion', zh: '安史之亂' },
+  description:
+    'The mountains break. For forty years Emperor Xuanzong has reigned over the most brilliant court the world had ever seen — then drowsed into the arms of Yang Guifei while real power slid to the frontier. Now An Lushan, the vast general who commands three border armies, raises a hundred and fifty thousand at Fanyang and marches south crying treason against the chief minister. The unblooded heartland folds: Luoyang falls, then the Tong pass, then Chang\'an itself, as Xuanzong flees toward Shu and his own guards strangle Yang Guifei at Mawei. But in Hebei the commanderies of Yan Zhenqing rise behind the rebels; in the passes Guo Ziyi and Li Guangbi gather the Shuofang veterans; and at Suiyang one man named Zhang Xun prepares to hold the door to the south with his life. The eight years that end the golden age begin.',
+  descriptionZh: "山河崩裂。玄宗御宇四十年，開元天寶之盛曠古未有——而後醉臥於楊貴妃之懷，實權旁落於邊鎮。今安祿山，統三鎮之胡將，擁兵十五萬起於范陽，以討權相為名，長驅南下。承平已久的中原望風而潰：洛陽陷，潼關破，長安亦失，玄宗西奔入蜀，禁軍縊殺楊貴妃於馬嵬。然河北顏真卿之諸郡並起於賊後，關塞間郭子儀、李光弼聚朔方之勁卒，睢陽城中一人名張巡者，將以性命守住通往江南之門。終結盛世的八年，自此而始。",
+  startDate: { year: 178, season: 'winter' },
+  cities: buildInitialCities(CITY_OWNERSHIP_ST_ANSHI),
+  forces: FORCES_ST_ANSHI,
+  officers: buildWarringStatesOfficers(ASSIGN_ST_ANSHI, ['tang']),
+};
+
 export const SCENARIOS: Scenario[] = [
   // ── Sui-end Warlords (parallel timeline) ──
   SCENARIO_ST_SUIEND,
   SCENARIO_ST_QIANSHUI,
   SCENARIO_ST_BOBI,
   SCENARIO_ST_HULAO,
+  SCENARIO_ST_ANSHI,
   // ── Chu-Han Contention (parallel timeline) ──
   SCENARIO_CH_JULU,
   SCENARIO_CH_CHUHAN,
