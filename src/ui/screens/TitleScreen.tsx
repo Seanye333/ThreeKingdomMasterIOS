@@ -251,7 +251,7 @@ export function TitleScreen() {
                 <div style={{ fontSize: '0.78rem', color: '#8a7050', marginBottom: '0.5rem' }}>
                   {startYear} AD · {scenario.forces.length} {t('勢力', 'forces')}
                 </div>
-                <MiniMap scenario={scenario} />
+                <MiniMap scenario={scenario} labelCapitals />
               </div>
             </div>
 
@@ -378,7 +378,7 @@ export function TitleScreen() {
                       </div>
                       {/* mini territory map spotlighting this force's holdings */}
                       <div style={{ marginTop: '0.7rem', borderTop: '1px solid #3a2818', paddingTop: '0.6rem' }}>
-                        <MiniMap scenario={scenario} highlightForceId={selectedForce.id} />
+                        <MiniMap scenario={scenario} highlightForceId={selectedForce.id} labelCapitals />
                       </div>
                     </div>
                   );
@@ -586,7 +586,7 @@ function miniBtn(disabled: boolean): CSSProperties {
 // A compact territory map of a scenario: every city a dot coloured by its owning
 // force (neutral = dark), with adjacency lines for a sense of the road network.
 // Pass highlightForceId to spotlight one force's holdings.
-function MiniMap({ scenario, highlightForceId }: { scenario: Scenario; highlightForceId?: string | null }) {
+function MiniMap({ scenario, highlightForceId, labelCapitals }: { scenario: Scenario; highlightForceId?: string | null; labelCapitals?: boolean }) {
   const colorOf = (fid: string | null) =>
     fid ? (scenario.forces.find((f) => f.id === fid)?.color ?? '#4a3a28') : '#4a3a28';
   return (
@@ -595,6 +595,9 @@ function MiniMap({ scenario, highlightForceId }: { scenario: Scenario; highlight
       preserveAspectRatio="xMidYMid meet"
       style={{ width: '100%', height: 'auto', display: 'block', background: '#14100c', border: '1px solid #3a2818', borderRadius: 4 }}
     >
+      {/* Schematic rivers — the Yellow (north) and Yangtze (south) */}
+      <path d="M 150 380 Q 330 300 500 322 Q 660 342 808 306" stroke="#33424f" strokeWidth={5} fill="none" opacity={0.5} strokeLinecap="round" />
+      <path d="M 320 590 Q 510 548 670 548 Q 790 540 866 500" stroke="#33424f" strokeWidth={5} fill="none" opacity={0.5} strokeLinecap="round" />
       {scenario.cities.map((c) =>
         c.adjacentCityIds.map((aid) => {
           if (aid <= c.id) return null; // draw each edge once
@@ -623,6 +626,24 @@ function MiniMap({ scenario, highlightForceId }: { scenario: Scenario; highlight
             strokeWidth={hl ? 1.6 : 0.8}
             opacity={dim ? 0.4 : 1}
           />
+        );
+      })}
+      {/* Capital labels — each force's seat, in its own colour */}
+      {labelCapitals && scenario.forces.map((f) => {
+        const cap = scenario.cities.find((c) => c.id === f.capitalCityId);
+        if (!cap) return null;
+        const dim = !!highlightForceId && f.id !== highlightForceId;
+        return (
+          <text
+            key={f.id}
+            x={cap.coords.x} y={cap.coords.y - 11}
+            fontSize={22} textAnchor="middle"
+            fill={f.color} stroke="#14100c" strokeWidth={0.7}
+            opacity={dim ? 0.4 : 1}
+            style={{ paintOrder: 'stroke', fontWeight: 'bold' }}
+          >
+            {cap.name.zh}
+          </text>
         );
       })}
     </svg>
