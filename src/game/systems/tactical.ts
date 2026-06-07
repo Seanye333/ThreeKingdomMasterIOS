@@ -65,6 +65,7 @@ export function defenderTerrainShield(terrain: TerrainKind): number {
     case 'mountain':   return 0.85;
     case 'forest':     return 0.92;
     case 'gate':       return 0.6;  // city gate is tough to crack
+    case 'wall':       return 0.5;  // rampart — brutal to assault directly
     default:           return 1.0;
   }
 }
@@ -172,6 +173,8 @@ export interface SetupParams {
   buildSlots?: ReadonlyArray<{ slot: number; buildingId?: import('../data/defenseBuildings').DefenseBuildingId; level: number }>;
   /** Geography hint (terrain category, port flag, coords) — drives terrain generation. */
   terrainHint?: TerrainHint;
+  /** Field battle (army vs army in the open) — no city, so no rampart wall. */
+  field?: boolean;
 }
 
 // (Legacy TERRAIN_RNG_SEED removed — terrain generation now lives in
@@ -343,6 +346,34 @@ export function setupTacticalBattle(p: SetupParams): TacticalBattle {
     return next;
   });
 
+  // ── City rampart: procedural sieges get a battered wall line just in front
+  // of the defender with a central gate. The wall spans only the middle rows,
+  // so an army without siege gear can still flow around the flanks (just
+  // slower) and the fight never hard-stalls. Named maps (their own terrain),
+  // field battles and naval engagements stay unwalled.
+  let battleTiles = tiles;
+  let wallHp: Record<string, number> | undefined;
+  if (!isNaval && !p.field && !namedMap && width >= 8 && height >= 6) {
+    const wallCol = Math.max(2, width - 3);
+    const r0 = Math.floor(height * 0.28);
+    const r1 = Math.ceil(height * 0.72) - 1;
+    const gateRow = Math.floor(height / 2);
+    const occupied = new Set(finalUnits.map((u) => `${u.coord.col},${u.coord.row}`));
+    const hp: Record<string, number> = {};
+    battleTiles = tiles.map((t) => {
+      if (t.coord.col !== wallCol || t.coord.row < r0 || t.coord.row > r1) return t;
+      const key = `${t.coord.col},${t.coord.row}`;
+      if (occupied.has(key)) return t; // never wall over a unit
+      if (t.coord.row === gateRow) {
+        hp[key] = 700;
+        return { ...t, terrain: 'gate' as TerrainKind };
+      }
+      hp[key] = 1000;
+      return { ...t, terrain: 'wall' as TerrainKind };
+    });
+    if (Object.keys(hp).length > 0) wallHp = hp;
+  }
+
   return {
     id: `tac-${p.cityId}-${Date.now()}`,
     cityId: p.cityId,
@@ -350,7 +381,7 @@ export function setupTacticalBattle(p: SetupParams): TacticalBattle {
     defenderForceId: p.defenderForceId,
     width,
     height,
-    tiles,
+    tiles: battleTiles,
     units: finalUnits,
     turn: 1,
     activeSide: 'attacker',
@@ -370,6 +401,8 @@ export function setupTacticalBattle(p: SetupParams): TacticalBattle {
     log,
     cityStructures: cityStructures.length > 0 ? cityStructures : undefined,
     naval: isNaval || undefined,
+    wallHp,
+    field: p.field || undefined,
   };
 }
 
@@ -413,6 +446,7 @@ const TERRAIN_MOVE_COST: Record<TerrainKind, number> = {
   chokepoint: 1,  // narrow but flat
   bridge: 1,      // crosses river cheaply
   gate: 99,       // impassable until siege breaks it (handled elsewhere)
+  wall: 99,       // impassable rampart until battered down (handled elsewhere)
   watchtower: 2,  // climbable
 };
 
@@ -475,33 +509,106 @@ export function moveUnit(
 }
 
 /**
- * Siege units adjacent to a gate hex can spend an attack action to break
- * it open — converts the gate tile to plain (passable) and consumes AP.
- * Non-siege units cannot break gates.
+ * Battering power a siege contingent brings to bear on a wall or gate per
+ * assault — scales with the size of the engine crew.
  */
-export function breakGate(b: TacticalBattle, unitId: EntityId, gateCoord: HexCoord): TacticalBattle {
+export function siegeAssaultPower(troops: number): number {
+  return Math.floor(troops * 0.15) + 120;
+}
+
+/**
+ * Siege units adjacent to a 城門 gate or 城牆 wall hex spend an attack action to
+ * batter it. Destructible hexes (those tracked in `wallHp`) chip down over
+ * several assaults and only become a passable breach at 0 HP; hexes without
+ * tracked HP (e.g. named-map gates) break in a single hit, as they always did.
+ * Non-siege units cannot batter fortifications.
+ *
+ * Kept named `breakGate` for its existing callers; it now handles walls too.
+ */
+export function breakGate(b: TacticalBattle, unitId: EntityId, coord: HexCoord): TacticalBattle {
   const unit = b.units.find((u) => u.id === unitId);
   if (!unit || unit.unitType !== 'siege') return b;
   if (unit.ap <= 0) return b;
-  const tile = tileAt(b, gateCoord);
-  if (!tile || tile.terrain !== 'gate') return b;
-  if (hexDistance(unit.coord, gateCoord) !== 1) return b;
+  const tile = tileAt(b, coord);
+  if (!tile || (tile.terrain !== 'gate' && tile.terrain !== 'wall')) return b;
+  if (hexDistance(unit.coord, coord) !== 1) return b;
+
+  const key = `${coord.col},${coord.row}`;
+  const isGate = tile.terrain === 'gate';
+  const curHp = b.wallHp?.[key];
+  const spendAp = (u: TacticalUnit) => (u.id === unitId ? { ...u, ap: 0 } : u);
+
+  // Tracked HP — chip it down; breach only at 0.
+  if (curHp !== undefined) {
+    const newHp = curHp - siegeAssaultPower(unit.troops);
+    if (newHp > 0) {
+      return {
+        ...b,
+        wallHp: { ...b.wallHp, [key]: newHp },
+        units: b.units.map(spendAp),
+        log: [
+          ...(b.log ?? []),
+          { turn: b.turn, text: isGate ? '攻城槌猛撞城門！' : '投石轟擊城牆！', kind: 'event' },
+        ],
+      };
+    }
+    const nextWallHp = { ...(b.wallHp ?? {}) };
+    delete nextWallHp[key];
+    return {
+      ...b,
+      tiles: b.tiles.map((t) =>
+        t.coord.col === coord.col && t.coord.row === coord.row ? { ...t, terrain: 'plain' } : t,
+      ),
+      wallHp: Object.keys(nextWallHp).length > 0 ? nextWallHp : undefined,
+      units: b.units.map(spendAp),
+      log: [
+        ...(b.log ?? []),
+        { turn: b.turn, text: isGate ? '城門告破！' : '城牆崩塌，缺口洞開！', kind: 'event' },
+      ],
+    };
+  }
+
+  // No tracked HP — one-shot (legacy named-map gate behaviour).
   return {
     ...b,
     tiles: b.tiles.map((t) =>
-      t.coord.col === gateCoord.col && t.coord.row === gateCoord.row
-        ? { ...t, terrain: 'plain' }
-        : t,
+      t.coord.col === coord.col && t.coord.row === coord.row ? { ...t, terrain: 'plain' } : t,
     ),
-    units: b.units.map((u) => u.id === unitId ? { ...u, ap: 0 } : u),
-    log: [
-      ...(b.log ?? []),
-      {
-        turn: b.turn,
-        text: `Siege engine smashes the gate down!`,
-        kind: 'event',
-      },
-    ],
+    units: b.units.map(spendAp),
+    log: [...(b.log ?? []), { turn: b.turn, text: 'Siege engine smashes the gate down!', kind: 'event' }],
+  };
+}
+
+/**
+ * 雲梯登城 — a (non-siege) foot unit adjacent to a 城牆 wall can scale it and
+ * drop onto the far side, *if* a friendly siege engine (the ladder/tower) is
+ * also adjacent to that same wall hex. Spends all AP. Lets an assault pour
+ * through the rampart without first reducing it to rubble.
+ */
+export function scaleWall(b: TacticalBattle, unitId: EntityId, wallCoord: HexCoord): TacticalBattle {
+  const unit = b.units.find((u) => u.id === unitId);
+  if (!unit || unit.ap <= 0 || unit.unitType === 'siege') return b;
+  const tile = tileAt(b, wallCoord);
+  if (!tile || tile.terrain !== 'wall') return b;
+  if (hexDistance(unit.coord, wallCoord) !== 1) return b;
+  // Need a siege engine of our side braced against the same wall.
+  const hasLadder = b.units.some(
+    (u) => u.side === unit.side && u.unitType === 'siege' && u.troops > 0 &&
+      hexDistance(u.coord, wallCoord) === 1,
+  );
+  if (!hasLadder) return b;
+  // Land on a free, passable hex on the far side of the wall.
+  const landing = hexNeighbours(wallCoord).find((c) => {
+    const t = tileAt(b, c);
+    if (!t || TERRAIN_MOVE_COST[t.terrain] >= 99) return false;
+    if (unitAt(b, c)) return false;
+    return unit.side === 'attacker' ? c.col > wallCoord.col : c.col < wallCoord.col;
+  });
+  if (!landing) return b;
+  return {
+    ...b,
+    units: b.units.map((u) => (u.id === unitId ? { ...u, coord: landing, ap: 0 } : u)),
+    log: [...(b.log ?? []), { turn: b.turn, text: '雲梯架起，士卒踏牆而入！', kind: 'event' }],
   };
 }
 
@@ -1997,12 +2104,12 @@ function aiActOnce(
     return { battle: stratResult, acted: true, signatures: detectSignature(b, stratResult, unit, officers) };
   }
 
-  // Siege engines make for the gate.
+  // Siege engines batter an adjacent wall or gate.
   if (unit.unitType === 'siege') {
-    const gate = hexNeighbours(unit.coord)
+    const fort = hexNeighbours(unit.coord)
       .map((c) => tileAt(b, c))
-      .find((t) => t?.terrain === 'gate');
-    if (gate) return { battle: breakGate(b, unit.id, gate.coord), acted: true, signatures: [] };
+      .find((t) => t?.terrain === 'gate' || t?.terrain === 'wall');
+    if (fort) return { battle: breakGate(b, unit.id, fort.coord), acted: true, signatures: [] };
   }
 
   // Broken units flee off their own edge instead of dying in place.
@@ -2041,6 +2148,17 @@ function aiActOnce(
   if (adjEnemies.length > 0) {
     const t = pickAiTarget(unit, adjEnemies);
     if (t) return { battle: attackUnits(b, unit.id, t.id, officers, rng), acted: true, signatures: [] };
+  }
+
+  // Foot troops scale an adjacent wall when a friendly engine braces it.
+  if (!fragile) {
+    const wall = hexNeighbours(unit.coord)
+      .map((c) => tileAt(b, c))
+      .find((t) => t?.terrain === 'wall');
+    if (wall) {
+      const scaled = scaleWall(b, unit.id, wall.coord);
+      if (scaled !== b) return { battle: scaled, acted: true, signatures: [] };
+    }
   }
 
   // Pursue a battlefield objective (commander only) before chasing kills.

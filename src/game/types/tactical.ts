@@ -130,6 +130,7 @@ export type TerrainKind =
   | 'chokepoint'  // 隘口 — only 1 unit can pass; defenders +30% defense
   | 'bridge'      // 橋樑 — river-crossing bridge; allows non-navy over rivers
   | 'gate'        // 城門 — siege-only; tougher than wall but a bottleneck
+  | 'wall'        // 城牆 — impassable rampart; siege engines batter it down (HP)
   | 'watchtower'; // 瞭望台 — +1 range + reveals hidden adjacent units
 
 /**
@@ -305,6 +306,13 @@ export interface TacticalBattle {
    * the contested city's terrain is `water`.
    */
   naval?: boolean;
+  /**
+   * Hit points of destructible 城牆 / 城門 hexes, keyed by "col,row". Siege
+   * units batter these down (assaultStructure); at 0 HP the hex becomes a
+   * passable breach. Hexes absent from this map (e.g. named-map gates) break
+   * in a single hit, preserving the old behaviour.
+   */
+  wallHp?: Record<string, number>;
 }
 
 export interface TacticalCityStructure {

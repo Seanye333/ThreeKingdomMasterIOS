@@ -109,6 +109,7 @@ const TERRAIN_FILL: Record<TerrainKind, string> = {
   chokepoint: 'url(#tkmChokepointGrad)',
   bridge:     'url(#tkmBridgeGrad)',
   gate:       'url(#tkmGateGrad)',
+  wall:       'url(#tkmGateGrad)',
   watchtower: 'url(#tkmWatchtowerGrad)',
 };
 
@@ -1594,28 +1595,32 @@ function UnitPanel({
             </button>
           );
         })()}
-        {/* Break Gate — siege unit adjacent to a gate hex */}
+        {/* Assault Wall/Gate — siege unit adjacent to a gate or wall hex */}
         {unit.unitType === 'siege' && (() => {
           const adj = hexNeighbours(unit.coord);
-          const gateCoord = adj.map((c) => battle.tiles.find((t) => t.coord.col === c.col && t.coord.row === c.row))
-            .find((t) => t?.terrain === 'gate');
-          if (!gateCoord) return null;
+          const fort = adj.map((c) => battle.tiles.find((t) => t.coord.col === c.col && t.coord.row === c.row))
+            .find((t) => t?.terrain === 'gate' || t?.terrain === 'wall');
+          if (!fort) return null;
+          const isGate = fort.terrain === 'gate';
+          const hp = battle.wallHp?.[`${fort.coord.col},${fort.coord.row}`];
           return (
             <button
               className={styles.actionButton}
               disabled={!canAct || unit.ap === 0}
               onClick={() => {
                 if (!canAct || unit.ap === 0) return;
-                start(breakGate(battle, unit.id, gateCoord.coord));
+                start(breakGate(battle, unit.id, fort.coord));
                 setActionMode({ kind: 'none' });
               }}
             >
               <div className={styles.actionTitle}>
-                <span><span className={styles.actionLabel}>{t('破城門', 'Break Gate')}</span></span>
+                <span><span className={styles.actionLabel}>{isGate ? t('破城門', 'Assault Gate') : t('攻城牆', 'Assault Wall')}</span></span>
                 <span style={{ fontSize: '0.7rem', color: '#b8442e' }}>siege only</span>
               </div>
               <div className={styles.actionDesc}>
-                Smash an adjacent gate hex open into plain terrain. Consumes all AP.
+                {hp !== undefined
+                  ? `Batter the ${isGate ? 'gate' : 'wall'} — ${hp.toLocaleString()} HP left. Breaches at 0. Consumes all AP.`
+                  : `Smash an adjacent ${isGate ? 'gate' : 'wall'} hex open into a breach. Consumes all AP.`}
               </div>
             </button>
           );

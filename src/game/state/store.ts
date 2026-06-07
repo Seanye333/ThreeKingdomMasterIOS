@@ -443,8 +443,8 @@ function buildFieldBattle(
     weather: tacticalWeather as 'clear' | 'rain' | 'wind' | 'fog' | 'snow',
     windDirection: s.weather?.wind ?? 'calm',
     terrainHint: { terrain: terrainTypeAt(midX, midY), x: midX, y: midY },
+    field: true,
   });
-  battle.field = true;
   battle.attackerArmyId = playerArmyId;
   battle.defenderArmyId = enemyArmyId;
   return battle;

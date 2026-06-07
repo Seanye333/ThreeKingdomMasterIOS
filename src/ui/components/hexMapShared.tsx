@@ -146,6 +146,7 @@ export const TERRAIN_FILL_URL: Record<TerrainKind, string> = {
   chokepoint: 'url(#tkmChokepointGrad)',
   bridge:     'url(#tkmBridgeGrad)',
   gate:       'url(#tkmGateGrad)',
+  wall:       'url(#tkmGateGrad)',
   watchtower: 'url(#tkmWatchtowerGrad)',
 };
 

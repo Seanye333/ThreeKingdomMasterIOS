@@ -108,6 +108,7 @@ export const TERRAIN_HEIGHT: Record<TerrainKind, number> = {
   chokepoint: 0.04,
   bridge:     0.06,
   gate:       0.20,
+  wall:       0.32,
   watchtower: 0.20,
 };
 export const TERRAIN_COLOR: Record<TerrainKind, string> = {
@@ -121,6 +122,7 @@ export const TERRAIN_COLOR: Record<TerrainKind, string> = {
   chokepoint: '#5a4530',  // narrow defile (darker road)
   bridge:     '#8a6840',  // timber
   gate:       '#4a2820',  // dark masonry
+  wall:       '#6a5650',  // grey rampart stone
   watchtower: '#8a7050',  // stone platform
 };
 
