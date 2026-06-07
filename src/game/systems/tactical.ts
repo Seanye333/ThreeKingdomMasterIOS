@@ -1620,6 +1620,24 @@ function inferSignatureTactic(
   return stratagemId;
 }
 
+/** A 軍師-type officer: leans on stratagems, not melee. The AI keeps these
+ *  out of harm's way so they survive to keep casting. */
+function isStrategist(o: Officer): boolean {
+  return o.stats.intelligence >= 80 && o.stats.war < 70;
+}
+
+/** Terrain of a tile (defaults to plain off-map / on missing tiles). */
+function tileTerrain(b: TacticalBattle, c: HexCoord): TerrainKind {
+  return tileAt(b, c)?.terrain ?? 'plain';
+}
+
+/** How good a tile is for THIS unit to stand on: damage it deals there ÷
+ *  damage it takes there. >1 = advantageous ground (hill/chokepoint, river for
+ *  navy), <1 = poor footing (marsh/forest for cavalry, land for navy). */
+function tileValueFor(unit: TacticalUnit, terrain: TerrainKind): number {
+  return terrainDamageMod(unit.unitType, terrain) / defenderTerrainShield(terrain);
+}
+
 export function aiTakeTurn(
   b: TacticalBattle,
   officers: Record<EntityId, Officer>,
@@ -1628,8 +1646,11 @@ export function aiTakeTurn(
   let cur = b;
   const signatures: AITurnResult['signatures'] = [];
   let safety = 30;
+  // Units that have chosen to hold position this turn — excluded from further
+  // passes so a defender on good ground / a kiting strategist isn't re-polled.
+  const passed = new Set<EntityId>();
   while (safety-- > 0) {
-    const myUnits = cur.units.filter((u) => u.side === cur.activeSide && u.ap > 0);
+    const myUnits = cur.units.filter((u) => u.side === cur.activeSide && u.ap > 0 && !passed.has(u.id));
     if (myUnits.length === 0) break;
     let acted = false;
     for (const unit of myUnits) {
@@ -1695,6 +1716,32 @@ export function aiTakeTurn(
       // Hidden enemies are invisible to the AI.
       const enemies = cur.units.filter((u) => u.side !== unit.side && !u.hidden);
       if (enemies.length === 0) break;
+      // 軍師 self-preservation: a strategist never wades into melee. If a foe is
+      // closing (≤2 hexes), sidestep to the reachable tile that maximises the
+      // gap to enemies (and the footing); otherwise it holds at casting range so
+      // it keeps throwing stratagems on later turns instead of trading blows.
+      const me = officers[unit.officerId];
+      if (me && isStrategist(me)) {
+        const nearestD = Math.min(...enemies.map((e) => hexDistance(unit.coord, e.coord)));
+        if (nearestD <= 5) {
+          if (nearestD <= 2) {
+            const safety = (c: HexCoord) =>
+              Math.min(...enemies.map((e) => hexDistance(c, e.coord))) +
+              (tileValueFor(unit, tileTerrain(cur, c)) - 1) * 0.5;
+            const hereSafety = safety(unit.coord);
+            const escape = hexNeighbours(unit.coord)
+              .filter((c) => canMove(cur, unit, c))
+              .sort((a, b1) => safety(b1) - safety(a))[0];
+            if (escape && safety(escape) > hereSafety) {
+              cur = moveUnit(cur, unit.id, escape);
+              acted = true;
+              break;
+            }
+          }
+          passed.add(unit.id); // hold at range, keep casting
+          continue;
+        }
+      }
       const targetScore = (e: TacticalUnit): number => {
         const counter = counterMultiplier(unit.unitType, e.unitType);
         const dist = hexDistance(unit.coord, e.coord);
@@ -1716,11 +1763,28 @@ export function aiTakeTurn(
         acted = true;
         break;
       }
-      // Try to step closer along neighbours.
-      const candidates = hexNeighbours(unit.coord)
-        .filter((c) => canMove(cur, unit, c))
-        .sort((a, b1) => hexDistance(a, target.coord) - hexDistance(b1, target.coord));
+      // Defender holds advantageous ground: if already on strong footing
+      // (chokepoint/hill/gate/river-for-navy) with no enemy adjacent, stand fast
+      // rather than abandon the terrain edge to chase — let the attacker assault
+      // into it.
+      if (unit.side === 'defender' &&
+          tileValueFor(unit, tileTerrain(cur, unit.coord)) >= 1.2 &&
+          !enemies.some((e) => hexDistance(unit.coord, e.coord) === 1)) {
+        passed.add(unit.id);
+        continue;
+      }
+      // Step toward the target, but weight terrain so the unit favours good
+      // ground on the way in and shuns poor footing — progress still dominates
+      // so it keeps closing, terrain only sways otherwise-equal steps and steers
+      // it off marsh/forest (cavalry) or onto hills/chokepoints/rivers (navy).
+      const candidates = hexNeighbours(unit.coord).filter((c) => canMove(cur, unit, c));
       if (candidates.length > 0) {
+        const stepScore = (c: HexCoord) => {
+          const progress = dist - hexDistance(c, target.coord); // +1 closer, −1 farther
+          const terrainVal = tileValueFor(unit, tileTerrain(cur, c));
+          return progress * 1.0 + (terrainVal - 1) * 0.6;
+        };
+        candidates.sort((a, b1) => stepScore(b1) - stepScore(a));
         cur = moveUnit(cur, unit.id, candidates[0]);
         acted = true;
         break;
