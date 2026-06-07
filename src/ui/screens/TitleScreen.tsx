@@ -13,6 +13,7 @@ import { IndividualitiesModal } from '../components/IndividualitiesModal';
 import { SaveSlotsModal } from '../components/SaveSlotsModal';
 import { SettingsModal } from '../components/SettingsModal';
 import { ScenarioOfficersBrowser } from '../components/ScenarioOfficersBrowser';
+import { OfficerPortrait } from '../components/OfficerPortrait';
 import { DYNASTY_DEFS, type Dynasty } from '../../game/data/dynasties';
 import { useT, useLanguage, useDesc } from '../i18n';
 import styles from './TitleScreen.module.css';
@@ -116,6 +117,16 @@ export function TitleScreen() {
       if (picked) enterCareerMode(picked.id);
     }
     setTutorialStep(0);
+  };
+
+  // Per-force snapshot for the force-selection detail panel.
+  const forceStats = (forceId: string) => {
+    const cities = scenario.cities.filter((c) => c.ownerForceId === forceId);
+    const officers = scenario.officers.filter((o) => o.forceId === forceId && o.status !== 'dead');
+    const troops = cities.reduce((s, c) => s + (c.troops || 0), 0);
+    const gold = cities.reduce((s, c) => s + (c.gold || 0), 0);
+    const food = cities.reduce((s, c) => s + (c.food || 0), 0);
+    return { cities: cities.length, officers, troops, gold, food };
   };
 
   const STEPS = [
@@ -279,34 +290,95 @@ export function TitleScreen() {
 
         {/* ───────────────── STEP 2 — Force ───────────────── */}
         {step === 'force' && (
-          <section className={styles.forceSection} style={{ width: 'min(920px, 94vw)', maxWidth: 'none' }}>
+          <section className={styles.forceSection} style={{ width: 'min(1000px, 96vw)', maxWidth: 'none' }}>
             <div className={styles.forceLabel}>
               {lang === 'en' ? scenario.name.en : scenario.name.zh} · {startYear} AD · {t('君主選擇', 'Choose your force')}
             </div>
-            <ul className={styles.forceList}>
-              {scenario.forces.map((force) => {
-                const ruler = scenario.officers.find((o) => o.id === force.rulerOfficerId);
-                if (!ruler) return null;
-                return (
-                  <li key={force.id}>
-                    <button
-                      className={`${styles.forceButton} ${selectedForceId === force.id ? styles.scenarioSelected : ''}`}
-                      onClick={() => setSelectedForceId(force.id)}
-                    >
-                      <span className={styles.forceColor} style={{ background: force.color }} />
-                      <span className={styles.forceText}>
-                        {lang !== 'en' && <span className={styles.forceNameZh}>{force.name.zh}</span>}
-                        {lang !== 'zh' && <span className={styles.forceNameEn}>{ruler.name.en}</span>}
-                        {lang === 'zh' && <span className={styles.forceNameEn}>{ruler.name.zh}</span>}
-                      </span>
-                      <span className={styles.forceStats}>
-                        W{ruler.stats.war} · I{ruler.stats.intelligence} · P{ruler.stats.politics} · C{ruler.stats.charisma}
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+              {/* Left — force list */}
+              <ul className={styles.forceList} style={{ flex: '1 1 0', minWidth: 0 }}>
+                {scenario.forces.map((force) => {
+                  const ruler = scenario.officers.find((o) => o.id === force.rulerOfficerId);
+                  if (!ruler) return null;
+                  const st = forceStats(force.id);
+                  return (
+                    <li key={force.id}>
+                      <button
+                        className={`${styles.forceButton} ${selectedForceId === force.id ? styles.scenarioSelected : ''}`}
+                        onClick={() => setSelectedForceId(force.id)}
+                      >
+                        <span className={styles.forceColor} style={{ background: force.color }} />
+                        <span className={styles.forceText}>
+                          {lang !== 'en' && <span className={styles.forceNameZh}>{force.name.zh}</span>}
+                          {lang !== 'zh' && <span className={styles.forceNameEn}>{ruler.name.en}</span>}
+                          {lang === 'zh' && <span className={styles.forceNameEn}>{ruler.name.zh}</span>}
+                        </span>
+                        <span className={styles.forceStats}>
+                          {st.cities}{t('城', 'c')} · {st.officers.length}{t('將', 'o')}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              {/* Right — detail panel for the highlighted force */}
+              <div style={{ flex: '1 1 0', minWidth: 0, border: '1px solid #4a3520', background: 'rgba(20,16,12,0.5)', padding: '1rem', minHeight: 340 }}>
+                {selectedForce && selectedRuler ? (() => {
+                  const st = forceStats(selectedForce.id);
+                  const top = [...st.officers]
+                    .sort((a, b) => (b.stats.war + b.stats.leadership + b.stats.intelligence) - (a.stats.war + a.stats.leadership + a.stats.intelligence))
+                    .slice(0, 6);
+                  const strength = st.cities >= 8 ? t('強', 'Strong') : st.cities >= 3 ? t('中', 'Moderate') : t('弱（高難度）', 'Weak (hard)');
+                  return (
+                    <div>
+                      <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
+                        <OfficerPortrait officer={selectedRuler} size={72} forceColor={selectedForce.color} year={startYear} />
+                        <div>
+                          <div style={{ fontSize: '1.1rem', color: '#d4a84a' }}>{lang === 'en' ? selectedForce.name.en : selectedForce.name.zh}</div>
+                          <div style={{ fontSize: '0.85rem', color: '#a08c6a' }}>
+                            {lang === 'en' ? selectedRuler.name.en : selectedRuler.name.zh}
+                            {selectedRuler.courtesyName && (
+                              <span style={{ opacity: 0.6 }}> {lang === 'en' ? selectedRuler.courtesyName.en : selectedRuler.courtesyName.zh}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      {/* ruler abilities */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: '0.3rem', margin: '0.8rem 0', textAlign: 'center', fontSize: '0.75rem' }}>
+                        {([['統', selectedRuler.stats.leadership], ['武', selectedRuler.stats.war], ['智', selectedRuler.stats.intelligence], ['政', selectedRuler.stats.politics], ['魅', selectedRuler.stats.charisma]] as const).map(([k, v]) => (
+                          <div key={k}><div style={{ color: '#8a7050' }}>{k}</div><div style={{ color: '#d4a84a', fontSize: '0.95rem' }}>{v}</div></div>
+                        ))}
+                      </div>
+                      {/* force data */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.3rem 1rem', fontSize: '0.78rem', color: '#a08c6a', borderTop: '1px solid #3a2818', paddingTop: '0.6rem' }}>
+                        <div>{t('城池', 'Cities')}: <b style={{ color: '#d4a84a' }}>{st.cities}</b></div>
+                        <div>{t('武將', 'Officers')}: <b style={{ color: '#d4a84a' }}>{st.officers.length}</b></div>
+                        <div>{t('兵力', 'Troops')}: <b style={{ color: '#d4a84a' }}>{st.troops.toLocaleString()}</b></div>
+                        <div>{t('資金', 'Gold')}: <b style={{ color: '#d4a84a' }}>{st.gold.toLocaleString()}</b></div>
+                        <div>{t('兵糧', 'Food')}: <b style={{ color: '#d4a84a' }}>{st.food.toLocaleString()}</b></div>
+                        <div>{t('勢力', 'Strength')}: <b style={{ color: '#d4a84a' }}>{strength}</b></div>
+                      </div>
+                      {/* notable officers */}
+                      <div style={{ marginTop: '0.7rem', borderTop: '1px solid #3a2818', paddingTop: '0.6rem' }}>
+                        <div style={{ fontSize: '0.7rem', color: '#8a7050', marginBottom: '0.4rem' }}>{t('主要武將', 'Notable Officers')}</div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                          {top.map((o) => (
+                            <div key={o.id} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.75rem', color: '#a08c6a' }}>
+                              <OfficerPortrait officer={o} size={26} forceColor={selectedForce.color} year={startYear} />
+                              {lang === 'en' ? o.name.en : o.name.zh}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })() : (
+                  <div style={{ color: '#6a5238', textAlign: 'center', paddingTop: '7rem', fontSize: '0.9rem' }}>
+                    {t('← 選擇一個勢力查看詳情', '← Select a force to see details')}
+                  </div>
+                )}
+              </div>
+            </div>
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.9rem' }}>
               <button className={styles.officersButton} style={{ flex: 1 }} onClick={() => setStep('scenario')}>
                 {t('← 返回劇本', '← Back')}
