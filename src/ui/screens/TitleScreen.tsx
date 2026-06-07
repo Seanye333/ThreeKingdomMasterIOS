@@ -618,11 +618,13 @@ function MiniMap({ scenario, highlightForceId, labelCapitals, onSelectForce }: {
         const hl = !!highlightForceId && c.ownerForceId === highlightForceId;
         const dim = !!highlightForceId && !hl;
         const isHover = hoverId === c.id;
+        // Dot size scales with city stature (population), so the great cities read big.
+        const baseR = c.population >= 200000 ? 8 : c.population >= 100000 ? 6.2 : c.population >= 40000 ? 4.8 : 3.6;
         return (
           <circle
             key={c.id}
             cx={c.coords.x} cy={c.coords.y}
-            r={isHover ? 10 : hl ? 9 : 6}
+            r={isHover ? baseR + 3 : hl ? baseR + 2 : baseR}
             fill={colorOf(c.ownerForceId)}
             stroke={isHover ? '#ffffff' : hl ? '#fff5e0' : '#1a1410'}
             strokeWidth={isHover ? 2 : hl ? 1.6 : 0.8}
