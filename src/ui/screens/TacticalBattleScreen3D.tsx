@@ -1981,10 +1981,14 @@ function UnitPanel3D({
               border: `1px solid ${
                 e.kind === 'burning' ? '#ff7050'
                 : e.kind === 'confused' ? '#c19a3b'
+                : e.kind === 'starving' ? '#d8b24a'
+                : e.kind === 'demoralized' ? '#c89090'
                 : '#88b7e8'
               }`,
               color: e.kind === 'burning' ? '#ff7050'
                 : e.kind === 'confused' ? '#c19a3b'
+                : e.kind === 'starving' ? '#d8b24a'
+                : e.kind === 'demoralized' ? '#c89090'
                 : '#88b7e8',
               borderRadius: 2,
             }}>{e.kind} {e.turnsLeft}t</span>

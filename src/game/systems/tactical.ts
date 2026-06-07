@@ -1542,8 +1542,8 @@ export function endTurn(b: TacticalBattle): TacticalBattle {
   // Objective progress.
   let attackerObj = b.attackerObjective;
   let defenderObj = b.defenderObjective;
-  attackerObj = tickObjective(attackerObj, surviving, 'attacker', b.turn + 1);
-  defenderObj = tickObjective(defenderObj, surviving, 'defender', b.turn + 1);
+  attackerObj = tickObjective(attackerObj, surviving, 'attacker');
+  defenderObj = tickObjective(defenderObj, surviving, 'defender');
 
   // Winner check.
   const attackerLeft = surviving.some((u) => u.side === 'attacker');
@@ -1589,7 +1589,9 @@ export function endTurn(b: TacticalBattle): TacticalBattle {
       const attackerUnits = unitsAfterStructures.filter((u) => u.side === 'attacker' && u.troops > 0);
       if (attackerUnits.length === 0) continue;
       // Range and damage per kind.
-      let range = 0, dmg = 0, oneShot = false;
+      let range: number;
+      let dmg: number;
+      let oneShot = false;
       switch (s.buildingId) {
         case 'watchtower':       range = 4; dmg = 80 * s.level; break;
         case 'arrow-platform':   range = 5; dmg = 100 * s.level; break;
@@ -1659,7 +1661,6 @@ function tickObjective(
   obj: BattleObjective | undefined,
   units: TacticalUnit[],
   side: 'attacker' | 'defender',
-  _nextTurn: number,
 ): BattleObjective | undefined {
   if (!obj || obj.resolved) return obj;
   if (obj.kind === 'hold-tile' && obj.tileCoord) {

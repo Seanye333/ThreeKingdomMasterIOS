@@ -982,6 +982,27 @@ export function TacticalBattleScreen() {
                     }
                   />
                   <SharedTerrainArt x={x} y={y} terrain={t.terrain} />
+                  {(t.terrain === 'wall' || t.terrain === 'gate') &&
+                    battle.wallHp?.[`${t.coord.col},${t.coord.row}`] !== undefined &&
+                    (() => {
+                      const hp = battle.wallHp![`${t.coord.col},${t.coord.row}`];
+                      const max = t.terrain === 'gate' ? 700 : 1000;
+                      const frac = Math.max(0, Math.min(1, hp / max));
+                      const bw = 28;
+                      return (
+                        <g pointerEvents="none">
+                          <rect x={x - bw / 2} y={y + 16} width={bw} height={4} rx={1} fill="#1a1410" opacity={0.85} />
+                          <rect
+                            x={x - bw / 2}
+                            y={y + 16}
+                            width={bw * frac}
+                            height={4}
+                            rx={1}
+                            fill={frac > 0.5 ? '#8a9a6a' : frac > 0.25 ? '#d4a84a' : '#b8442e'}
+                          />
+                        </g>
+                      );
+                    })()}
                 </g>
               );
             })}
@@ -1525,6 +1546,9 @@ function UnitPanel({
               className={`${styles.statusChip} ${
                 e.kind === 'burning' ? styles.statusBurning
                 : e.kind === 'confused' ? styles.statusConfused
+                : e.kind === 'starving' ? styles.statusStarving
+                : e.kind === 'demoralized' ? styles.statusDemoralized
+                : e.kind === 'chained' ? styles.statusChained
                 : styles.statusDefending
               }`}
             >

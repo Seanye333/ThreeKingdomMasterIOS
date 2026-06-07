@@ -290,6 +290,8 @@
 .statusConfused { background: #3a2c55; color: #b39de8; }
 .statusDefending { background: #2a4a3a; color: #7ed68a; }
 .statusChained { background: #4a3520; color: #e0d090; }
+.statusStarving { background: #4a3a18; color: #d8b24a; }
+.statusDemoralized { background: #3a2a2a; color: #c89090; }
 .statusRevealed { background: #2a3a55; color: #88b7e8; }
 .statusDemoralized { background: #2a1a1a; color: #c0a878; }
 
