@@ -4,6 +4,8 @@ import {
   aiSkillForDifficulty,
   unitRole,
   pickAiTarget,
+  pickAdjacentTarget,
+  tileValueFor,
   bestStepToward,
   bandRepositionStep,
   hexDistance,
@@ -47,6 +49,33 @@ describe('pickAiTarget (focus fire)', () => {
   it('returns undefined with no candidates', () => {
     const me = mkUnit({ id: 'A1', officerId: 'oA1' });
     expect(pickAiTarget(me, [])).toBeUndefined();
+  });
+});
+
+describe('tileValueFor', () => {
+  it('rates strong footing above open ground for the unit', () => {
+    expect(tileValueFor(mkUnit({ id: 'u', officerId: 'o', unitType: 'archers' }), 'hill'))
+      .toBeGreaterThan(tileValueFor(mkUnit({ id: 'u', officerId: 'o', unitType: 'archers' }), 'plain'));
+    expect(tileValueFor(mkUnit({ id: 'n', officerId: 'o', unitType: 'navy' }), 'river'))
+      .toBeGreaterThan(tileValueFor(mkUnit({ id: 'n', officerId: 'o', unitType: 'navy' }), 'plain'));
+  });
+});
+
+describe('pickAdjacentTarget (kill-secure)', () => {
+  it('prefers a foe it can finish this hit over a healthier one', () => {
+    const me = mkUnit({ id: 'A1', officerId: 'oA1', side: 'attacker', coord: { col: 1, row: 1 }, troops: 8000 });
+    const killable = mkUnit({ id: 'D1', officerId: 'oD1', side: 'defender', coord: { col: 2, row: 1 }, troops: 200, maxTroops: 8000 });
+    const healthy = mkUnit({ id: 'D2', officerId: 'oD2', side: 'defender', coord: { col: 1, row: 2 }, troops: 8000, maxTroops: 8000 });
+    const b = mkBattle({ units: [me, killable, healthy], tiles: mkTiles(6, 6) });
+    expect(pickAdjacentTarget(b, me, [killable, healthy], officerMap([me, killable, healthy]))!.id).toBe('D1');
+  });
+
+  it('prioritises an adjacent enemy commander', () => {
+    const me = mkUnit({ id: 'A1', officerId: 'oA1', side: 'attacker', coord: { col: 1, row: 1 }, troops: 8000 });
+    const cmd = mkUnit({ id: 'D1', officerId: 'oD1', side: 'defender', isCommander: true, coord: { col: 2, row: 1 }, troops: 8000, maxTroops: 8000 });
+    const grunt = mkUnit({ id: 'D2', officerId: 'oD2', side: 'defender', coord: { col: 1, row: 2 }, troops: 8000, maxTroops: 8000 });
+    const b = mkBattle({ units: [me, cmd, grunt], tiles: mkTiles(6, 6) });
+    expect(pickAdjacentTarget(b, me, [cmd, grunt], officerMap([me, cmd, grunt]))!.id).toBe('D1');
   });
 });
 

@@ -24,6 +24,7 @@ import { pickVoiceLine } from '../data/voiceLines';
 import { generateTerrain, type TerrainHint } from './battlefieldTerrain';
 import { effectiveStats } from './traitEffects';
 import { SIGNATURE_OVERRIDES } from './personalTactics';
+import { predictAttackDamage } from './damagePredict';
 
 /**
  * Unit-type counter matrix. counterBonus[attacker][defender] = multiplier on
@@ -2030,6 +2031,13 @@ function terrainAffinity(type: UnitType, terrain: TerrainKind): number {
   return terrainDamageMod(type, terrain) + (1 - defenderTerrainShield(terrain));
 }
 
+/** Standing value of a tile for a unit: damage it deals there ÷ damage it
+ *  takes there. ≥1.2 = advantageous ground worth holding (hill/chokepoint,
+ *  river for navy); <1 = poor footing. */
+export function tileValueFor(unit: TacticalUnit, terrain: TerrainKind): number {
+  return terrainDamageMod(unit.unitType, terrain) / defenderTerrainShield(terrain);
+}
+
 /**
  * Dijkstra cost field flowing outward from `goal` over passable terrain.
  * Other units block their hex (you can't march through a stack) — except the
@@ -2078,6 +2086,7 @@ export function bestStepToward(
   b: TacticalBattle,
   unit: TacticalUnit,
   goal: HexCoord,
+  bonus?: (c: HexCoord) => number,
 ): HexCoord | null {
   const field = costFieldTo(b, goal, unit);
   const key = (c: HexCoord) => `${c.col},${c.row}`;
@@ -2089,7 +2098,9 @@ export function bestStepToward(
     if (d === undefined) continue;
     const tile = tileAt(b, n);
     const aff = tile ? terrainAffinity(unit.unitType, tile.terrain) : 0;
-    const score = d - aff * 0.1; // mild terrain tie-break
+    // Lower score wins; terrain affinity and the optional bonus (cohesion /
+    // escort) shave it so the unit drifts toward good ground and its allies.
+    const score = d - aff * 0.1 - (bonus ? bonus(n) : 0);
     if (score < bestScore) {
       bestScore = score;
       best = n;
@@ -2151,6 +2162,39 @@ export function pickAiTarget(
     return s;
   };
   return [...candidates].sort((a, c) => score(a) - score(c))[0];
+}
+
+/**
+ * Choose which *adjacent* enemy to actually strike — never walk past a free
+ * hit. Mechanically grounded via predictAttackDamage + the same terrain/counter
+ * multipliers attackUnits applies, so the AI: (1) secures kills (a foe it can
+ * finish this hit deals no counter-attack — hugely valuable), (2) maximises the
+ * net troop swing (damage dealt − counter taken), and (3) decapitates enemy
+ * commanders.
+ */
+export function pickAdjacentTarget(
+  b: TacticalBattle,
+  unit: TacticalUnit,
+  adjEnemies: TacticalUnit[],
+  officers: Record<EntityId, Officer>,
+): TacticalUnit | undefined {
+  if (adjEnemies.length === 0) return undefined;
+  const aTerr = tileAt(b, unit.coord)?.terrain ?? 'plain';
+  const aTerrMod = terrainDamageMod(unit.unitType, aTerr);
+  const value = (e: TacticalUnit): number => {
+    const p = predictAttackDamage(b, unit, e, officers);
+    const eTerr = tileAt(b, e.coord)?.terrain ?? 'plain';
+    const fwdMul = counterMultiplier(unit.unitType, e.unitType) * aTerrMod * defenderTerrainShield(eTerr);
+    const expDmg = ((p.min + p.max) / 2) * fwdMul;
+    const willKill = p.max * fwdMul >= e.troops;
+    const ctrMul = counterMultiplier(e.unitType, unit.unitType);
+    const expCounter = willKill ? 0 : ((p.counterMin + p.counterMax) / 2) * ctrMul;
+    let v = expDmg - expCounter; // net troop swing in our favour
+    if (willKill) v += e.troops * 0.5 + 500; // remove a unit AND dodge the counter
+    if (e.isCommander) v += 800; // decapitation strike
+    return v;
+  };
+  return adjEnemies.reduce((a, c) => (value(c) > value(a) ? c : a));
 }
 
 /** A commander steers toward an unresolved movement objective. */
@@ -2263,9 +2307,10 @@ function aiActOnce(
     return hold; // in a good spot — don't charge into melee
   }
 
-  // Melee: strike an adjacent target if there is one.
+  // Melee: never walk past a free hit. Strike the best adjacent foe —
+  // kill-secure / best net troop swing / decapitation (pickAdjacentTarget).
   if (adjEnemies.length > 0) {
-    const t = pickAiTarget(unit, adjEnemies);
+    const t = pickAdjacentTarget(b, unit, adjEnemies, officers);
     if (t) return { battle: attackUnits(b, unit.id, t.id, officers, rng), acted: true, signatures: [] };
   }
 
@@ -2303,10 +2348,30 @@ function aiActOnce(
   const objStep = objectiveStep(b, unit);
   if (objStep) return { battle: moveUnit(b, unit.id, objStep), acted: true, signatures: [] };
 
-  // Approach the best target via terrain-aware pathfinding.
+  // A defender already dug into advantageous ground (chokepoint / hill / gate /
+  // river-for-navy) stands fast rather than abandon the edge to chase — let the
+  // attacker assault into it.
+  if (unit.side === 'defender' && tileValueFor(unit, tileAt(b, unit.coord)?.terrain ?? 'plain') >= 1.2) {
+    return hold;
+  }
+
+  // Approach the best target via terrain-aware pathfinding, weighted toward
+  // cohesion (advance as a body, not piecemeal) and escorting a pressed 軍師.
   const target = pickAiTarget(unit, enemies);
   if (target) {
-    const step = bestStepToward(b, unit, target.coord);
+    const friends = b.units.filter((u) => u.side === unit.side && u.id !== unit.id && u.troops > 0);
+    const guard = friends.find((f) => {
+      const fo = officers[f.officerId];
+      return fo && unitRole(fo, f.unitType) === 'strategist' &&
+        enemies.some((e) => hexDistance(f.coord, e.coord) <= 3);
+    });
+    const bonus = (c: HexCoord): number => {
+      let bdg = 0;
+      if (friends.some((f) => hexDistance(c, f.coord) === 1)) bdg += 0.25; // cohesion
+      if (guard && hexDistance(c, guard.coord) <= 1) bdg += 0.3; // escort the 軍師
+      return bdg;
+    };
+    const step = bestStepToward(b, unit, target.coord, bonus);
     if (step) return { battle: moveUnit(b, unit.id, step), acted: true, signatures: [] };
   }
 
