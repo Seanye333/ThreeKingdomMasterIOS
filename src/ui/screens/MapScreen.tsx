@@ -10,6 +10,8 @@ import { RelationshipBrowserModal } from '../components/RelationshipBrowserModal
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { SettingsModal } from '../components/SettingsModal';
 import { CareerModal } from '../components/CareerModal';
+import { BondsModal } from '../components/BondsModal';
+import { PrivateForcesModal } from '../components/PrivateForcesModal';
 import { DialogueModal } from '../components/DialogueModal';
 import { ObjectivePanel } from '../components/ObjectivePanel';
 import { ArmiesPanel } from '../components/ArmiesPanel';
@@ -75,6 +77,8 @@ export function MapScreen() {
   const [showEncyclopedia, setShowEncyclopedia] = useState(false);
   const [showDipGraph, setShowDipGraph] = useState(false);
   const [showCareer, setShowCareer] = useState(false);
+  const [showBonds, setShowBonds] = useState(false);
+  const [showPrivateForces, setShowPrivateForces] = useState(false);
   const [showForge, setShowForge] = useState(false);
   const [showAch, setShowAch] = useState(false);
   const [showGovernors, setShowGovernors] = useState(false);
@@ -210,6 +214,7 @@ export function MapScreen() {
           title={t('人才 — 因緣、武功、列傳', 'Personnel — bonds, deeds, biographies')}
           items={[
             { label: t('因緣', 'Relations'), onClick: () => setShowRelationships(true) },
+            { label: t('結義', 'Bonds'),     onClick: () => setShowBonds(true) },
             { label: t('武功', 'Deeds'),     onClick: () => setShowDeeds(true) },
             { label: t('列傳', 'Wiki'),      onClick: () => setShowEncyclopedia(true) },
             ...(careerMode
@@ -233,6 +238,7 @@ export function MapScreen() {
           items={[
             { label: t('戰史', 'Battles'),    onClick: () => setShowHistory(true) },
             { label: t('戰錄', 'Replays'),    onClick: () => setShowReplays(true) },
+            { label: t('私兵', 'Guard'),      onClick: () => setShowPrivateForces(true) },
             { label: t('密偵', 'Espionage'),  onClick: () => setShowEspionage(true) },
             { label: t('陣形', 'Formations'), onClick: () => setShowFormations(true) },
           ]}
@@ -370,6 +376,8 @@ export function MapScreen() {
         <OfficersTab onClose={() => setShowOfficers(false)} />
       )}
       {showRelationships && <RelationshipBrowserModal onClose={() => setShowRelationships(false)} />}
+      {showBonds && <BondsModal onClose={() => setShowBonds(false)} />}
+      {showPrivateForces && <PrivateForcesModal onClose={() => setShowPrivateForces(false)} />}
       {showCourt && <CourtModal onClose={() => setShowCourt(false)} />}
       {showWishes && <WishesModal onClose={() => setShowWishes(false)} />}
       {showCareer && <CareerModal onClose={() => setShowCareer(false)} />}

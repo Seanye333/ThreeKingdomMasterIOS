@@ -387,6 +387,11 @@ interface GameStore extends GameState {
   /** 結拜 — two of your officers swear brotherhood (義兄弟): a permanent runtime
    *  bond granting same-side combat synergy + a 90 loyalty floor. Costs gold. */
   swearBrotherhood: (aId: EntityId, bId: EntityId) => { ok: boolean; message: string };
+  /** 私兵 — fund a personal-guard corps for one of your officers (2 gold/unit,
+   *  drawn from their current city; capped at leadership×100). */
+  levyPrivateTroops: (officerId: EntityId, amount: number) => { ok: boolean; message: string };
+  /** Disband an officer's 私兵 back into nothing (no refund). */
+  disbandPrivateTroops: (officerId: EntityId) => { ok: boolean; message: string };
   /** 事件編輯器 — add a player-authored event (caps at MAX_CUSTOM_EVENTS). */
   addCustomEvent: (event: import('../types/event').HistoricalEvent) => { ok: boolean; message: string };
   /** Remove a player-authored event by id. */
@@ -4653,6 +4658,43 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - COST } },
         });
         return { ok: true, message: `${a.name.en} and ${b.name.en} swear an oath of brotherhood! 義結金蘭` };
+      },
+
+      levyPrivateTroops: (officerId, amount) => {
+        const state = get();
+        const officer = state.officers[officerId];
+        if (!officer || officer.status === 'dead') return { ok: false, message: 'Invalid officer.' };
+        if (!state.playerForceId || officer.forceId !== state.playerForceId)
+          return { ok: false, message: 'Not your officer.' };
+        const cityId = officer.locationCityId;
+        const city = cityId ? state.cities[cityId] : null;
+        if (!city || city.ownerForceId !== state.playerForceId)
+          return { ok: false, message: 'Officer must be in one of your cities.' };
+        const amt = Math.floor(amount);
+        if (!Number.isFinite(amt) || amt <= 0) return { ok: false, message: 'Enter a positive amount.' };
+        const cap = officer.stats.leadership * 100;
+        const current = officer.privateTroops ?? 0;
+        const room = cap - current;
+        if (room <= 0) return { ok: false, message: `${officer.name.en}'s guard is already at capacity (${cap}).` };
+        const take = Math.min(amt, room);
+        const GOLD_PER_UNIT = 2;
+        const cost = take * GOLD_PER_UNIT;
+        if (city.gold < cost) return { ok: false, message: `Need ${cost} gold here (have ${city.gold}).` };
+        set({
+          officers: { ...state.officers, [officerId]: { ...officer, privateTroops: current + take } },
+          cities: { ...state.cities, [city.id]: { ...city, gold: city.gold - cost } },
+        });
+        return { ok: true, message: `${officer.name.en} levies ${take} 私兵 (now ${current + take}/${cap}).` };
+      },
+
+      disbandPrivateTroops: (officerId) => {
+        const state = get();
+        const officer = state.officers[officerId];
+        if (!officer) return { ok: false, message: 'Invalid officer.' };
+        const current = officer.privateTroops ?? 0;
+        if (current <= 0) return { ok: false, message: 'No private guard to disband.' };
+        set({ officers: { ...state.officers, [officerId]: { ...officer, privateTroops: 0 } } });
+        return { ok: true, message: `${officer.name.en} disbands ${current} 私兵.` };
       },
 
       addCustomEvent: (event) => {

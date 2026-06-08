@@ -63,6 +63,18 @@ function navalProwessMul(pool: Officer[], ctx?: { city?: City }): number {
 }
 
 /**
+ * 私兵 / 部曲 — a side's pooled personal-guard corps lends its commanders'
+ * household troops to the fight. +1% power per 1,000 私兵 across the side,
+ * capped at +18% so a guard-heavy general hits notably harder on attack or
+ * defence without dwarfing troop counts.
+ */
+export function privateGuardMultiplier(pool: Officer[]): number {
+  const total = pool.reduce((s, o) => s + Math.max(0, o.privateTroops ?? 0), 0);
+  if (total <= 0) return 1;
+  return 1 + Math.min(0.18, total / 100_000);
+}
+
+/**
  * Resolve a city's conditional defence-building effects for one siege. These
  * fields used to be aggregated and shown in the UI but never applied:
  *  - navalDefense (鐵索): +defence, water sieges only.
@@ -416,10 +428,13 @@ export function resolveBattle(
   // 水戰 — navy specialists dominate a river/coastal engagement.
   const aNavalMul = navalProwessMul(attackerPool, ctx);
   const dNavalMul = navalProwessMul(defenderPool, ctx);
+  // 私兵 — pooled personal-guard corps lend their household troops.
+  const aGuardMul = privateGuardMultiplier(attackerPool);
+  const dGuardMul = privateGuardMultiplier(defenderPool);
   const aPower =
     aBlended * Math.sqrt(attacker.troops) * aSkillEffects.powerMultiplier * aElitePower *
     (stratEffect.attackerPowerMul ?? 1) * aPolicy.attackMul * aTraitMods.attackMul * aComboMul *
-    aRelBonus.powerMul * rivalMul * aTitlePowerMul * aCasusMul * aNavalMul;
+    aRelBonus.powerMul * rivalMul * aTitlePowerMul * aCasusMul * aNavalMul * aGuardMul;
 
   const defenderIds = defenderPool.map((o) => o.id);
   const dBaseBlended =
@@ -455,7 +470,7 @@ export function resolveBattle(
     dElitePower *
     (stratEffect.defenderPowerMul ?? 1) *
     dPolicy.attackMul * dTraitMods.attackMul * dComboMul * dRelBonus.powerMul * rivalMul *
-    dTitlePowerMul * dCasusMul * dNavalMul / Math.max(0.5, dPolicy.defenseMul);
+    dTitlePowerMul * dCasusMul * dNavalMul * dGuardMul / Math.max(0.5, dPolicy.defenseMul);
 
   const total = aPower + dPower || 1;
   const aRatio = aPower / total;

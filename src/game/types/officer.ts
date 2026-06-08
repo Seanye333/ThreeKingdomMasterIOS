@@ -71,4 +71,8 @@ export interface Officer {
    *  Three-Kingdoms roster; set for officers from other eras pulled in via
    *  the "Historical Officers" toggles on the title screen. */
   dynasty?: import('../data/dynasties').Dynasty;
+  /** 私兵 / 部曲 — a gold-funded personal guard corps. Strengthens whatever
+   *  army this officer commands (attack or defend). Capped at leadership×100;
+   *  disperses if the officer dies. Default/omitted = 0. */
+  privateTroops?: number;
 }
