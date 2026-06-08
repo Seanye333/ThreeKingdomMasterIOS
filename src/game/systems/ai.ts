@@ -598,6 +598,37 @@ export function pickForceTarget(
   return best;
 }
 
+/**
+ * Rear-to-front reinforcement: for a *safe* city (not itself bordering an enemy),
+ * find a friendly neighbour that IS on the front (borders an enemy) and is
+ * notably weaker, to ferry surplus troops to. Returns that city id, or null if
+ * this city is on the front itself or has no weak bordering neighbour. A march
+ * to a friendly city reinforces it (handleMarch merges the troops).
+ */
+export function pickReinforcementTarget(
+  city: City,
+  allCities: Record<EntityId, City>,
+  forceId: EntityId,
+  diplomacy: DiplomaticState,
+): EntityId | null {
+  const bordersEnemy = (c: City) => c.adjacentCityIds.some((id) => {
+    const e = allCities[id];
+    return !!e && e.ownerForceId !== forceId &&
+      (e.ownerForceId === null || isHostilePermitted(diplomacy, forceId, e.ownerForceId));
+  });
+  if (bordersEnemy(city)) return null; // a front-line city keeps its garrison
+  let best: EntityId | null = null;
+  let bestTroops = Infinity;
+  for (const id of city.adjacentCityIds) {
+    const c = allCities[id];
+    if (!c || c.ownerForceId !== forceId || c.id === city.id) continue;
+    if (c.troops >= city.troops * 0.6) continue; // not notably weaker
+    if (!bordersEnemy(c)) continue;              // not actually on the front
+    if (c.troops < bestTroops) { bestTroops = c.troops; best = c.id; }
+  }
+  return best;
+}
+
 function decideCommand(
   city: City,
   officersHere: Officer[],
@@ -829,6 +860,29 @@ function decideCommand(
         totalSeasons: dur,
       };
       return { command: cmd, officer: o, companions };
+    }
+  }
+
+  // 4.5 Rear reinforcement — a safe, troop-rich city (no enemy on its own
+  // border) ferries surplus troops to a weak front-line neighbour. A friendly-
+  // target march reinforces rather than assaults, so the front thickens up
+  // instead of the rear hoarding an idle army.
+  if (city.troops >= 8000 && city.gold >= COMMAND_DEFS['march'].goldCost) {
+    const destId = pickReinforcementTarget(city, allCities, forceId, diplomacy);
+    const dest = destId ? allCities[destId] : null;
+    if (dest) {
+      const send = Math.floor((city.troops - 5000) * 0.8); // keep a 5000 garrison
+      if (send >= 2000) {
+        const o = officersHere.find((c) => !isCombatLiability(c)) ?? officersHere[0];
+        if (o) {
+          const dur = marchDurationFor(city, dest);
+          const cmd: MarchCommand = {
+            type: 'march', cityId: city.id, officerId: o.id, targetCityId: dest.id,
+            troops: send, seasonsRemaining: dur, totalSeasons: dur,
+          };
+          return { command: cmd, officer: o };
+        }
+      }
     }
   }
 

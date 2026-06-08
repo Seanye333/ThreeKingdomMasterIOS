@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { pickForceTarget } from './ai';
+import { pickForceTarget, pickReinforcementTarget } from './ai';
 import type { City } from '../types';
-import type { DiplomaticState } from './diplomacy';
+import type { DiplomaticState } from '../types/diplomacy';
 
 const NO_DIPLO = {} as DiplomaticState; // neutral targets never consult it
 
@@ -41,5 +41,27 @@ describe('pickForceTarget — force-level offensive focus', () => {
     const weak = mkCity({ id: 'weak', troops: 2000, defense: 10 });
     const farAway = mkCity({ id: 'farAway', troops: 100 }); // not adjacent to anyone
     expect(pickForceTarget('A', [c1], { c1, ally, weak, farAway }, NO_DIPLO)).toBe('weak');
+  });
+});
+
+describe('pickReinforcementTarget — rear-to-front reinforcement', () => {
+  it('sends a safe rear city\'s surplus to a weak front-line neighbour', () => {
+    const rear = mkCity({ id: 'rear', ownerForceId: 'A', troops: 12000, adjacentCityIds: ['front'] });
+    const front = mkCity({ id: 'front', ownerForceId: 'A', troops: 2000, adjacentCityIds: ['rear', 'neutral'] });
+    const neutral = mkCity({ id: 'neutral', troops: 5000 }); // enemy on the front's border
+    expect(pickReinforcementTarget(rear, { rear, front, neutral }, 'A', NO_DIPLO)).toBe('front');
+  });
+
+  it('keeps a front-line city\'s garrison (returns null)', () => {
+    const front = mkCity({ id: 'front', ownerForceId: 'A', troops: 12000, adjacentCityIds: ['neutral', 'rear'] });
+    const neutral = mkCity({ id: 'neutral', troops: 5000 });
+    const rear = mkCity({ id: 'rear', ownerForceId: 'A', troops: 1000, adjacentCityIds: ['front'] });
+    expect(pickReinforcementTarget(front, { front, neutral, rear }, 'A', NO_DIPLO)).toBeNull();
+  });
+
+  it('does not reinforce a neighbour that is neither weak nor on the front', () => {
+    const rear = mkCity({ id: 'rear', ownerForceId: 'A', troops: 12000, adjacentCityIds: ['strong'] });
+    const strong = mkCity({ id: 'strong', ownerForceId: 'A', troops: 10000, adjacentCityIds: ['rear'] });
+    expect(pickReinforcementTarget(rear, { rear, strong }, 'A', NO_DIPLO)).toBeNull();
   });
 });
