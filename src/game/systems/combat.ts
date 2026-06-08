@@ -83,9 +83,11 @@ const ZERO_EFFECTS: AggregatedSkillEffects = {
 };
 
 /** Aggregate combat effects from one officer's skill list. */
-function effectsForOfficer(o: Officer): AggregatedSkillEffects {
+function effectsForOfficer(o: Officer, isWater = false): AggregatedSkillEffects {
   const out: AggregatedSkillEffects = { ...ZERO_EFFECTS };
   for (const sid of o.skills) {
+    // 水軍 (navy-master) only musters its bonus on the water — on land it's inert.
+    if (sid === 'navy-master' && !isWater) continue;
     const s: Skill | undefined = SKILLS_BY_ID[sid];
     if (!s?.combat) continue;
     out.warBonus += s.combat.warBonus ?? 0;
@@ -100,10 +102,10 @@ function effectsForOfficer(o: Officer): AggregatedSkillEffects {
 }
 
 /** Aggregate combat effects from an entire side (commander + companions). */
-function effectsForSide(pool: Officer[]): AggregatedSkillEffects {
+function effectsForSide(pool: Officer[], isWater = false): AggregatedSkillEffects {
   const out: AggregatedSkillEffects = { ...ZERO_EFFECTS };
   for (const o of pool) {
-    const e = effectsForOfficer(o);
+    const e = effectsForOfficer(o, isWater);
     out.warBonus += e.warBonus;
     out.leadershipBonus += e.leadershipBonus;
     out.powerMultiplier *= e.powerMultiplier;
@@ -228,8 +230,9 @@ export function resolveBattle(
     ...(defender.companions ?? []),
   ].filter((o) => !!o);
 
-  const aSkillEffects = effectsForSide(attackerPool);
-  const dSkillEffects = effectsForSide(defenderPool);
+  const water = isWaterBattle(ctx);
+  const aSkillEffects = effectsForSide(attackerPool, water);
+  const dSkillEffects = effectsForSide(defenderPool, water);
 
   const blended = (o: Officer, sameSideIds: EntityId[]) => {
     const bond = bondBonus(o.id, sameSideIds);

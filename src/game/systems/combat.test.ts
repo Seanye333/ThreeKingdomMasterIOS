@@ -77,4 +77,15 @@ describe('resolveBattle — naval prowess', () => {
     const onLand = resolveBattle(side(20000, plain), side(20000, foe), 20, seededRng(5), { city: cityOf({ terrain: 'plain', name: { zh: '許都', en: 'Xuchang' } }) });
     expect(onWater.aPower).toBeCloseTo(onLand.aPower, 5);
   });
+
+  it('grants navy-master no edge on land (water-only skill)', () => {
+    const stats = { war: 80, leadership: 80, intelligence: 70, politics: 50, charisma: 60 };
+    const navy = mkOfficer({ id: 'a', skills: ['navy-master'], stats });
+    const plain = mkOfficer({ id: 'a', skills: [], stats });
+    const foe = () => side(20000, mkOfficer({ id: 'foe', stats }));
+    const land = { city: cityOf({ terrain: 'plain', name: { zh: '許都', en: 'Xuchang' } }) };
+    const withNavy = resolveBattle(side(20000, navy), foe(), 20, seededRng(5), land);
+    const noNavy = resolveBattle(side(20000, plain), foe(), 20, seededRng(5), land);
+    expect(withNavy.aPower).toBeCloseTo(noNavy.aPower, 5);
+  });
 });
