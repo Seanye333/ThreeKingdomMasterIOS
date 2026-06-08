@@ -113,3 +113,119 @@ export function resolveWordWar(
   }
   return { ...base, winnerSide: 'defender', attackerMoraleDelta: -10, defenderMoraleDelta: 0 };
 }
+
+// ─── Interactive debate (player-played 論/諷/駁/詰 round game) ──────────────
+//
+// Mirrors the duel minigame for the war of words. 論>諷, 諷>駁, 駁>論; a
+// successful 駁 (retort) banks 氣勢 toward 詰 (Press, costs 2), which beats 論
+// and 諷 but is turned aside by 駁. Prowess = INT + CHA/2; drain a foe's 沉著
+// (composure) to 0 to rout them in debate, else win on points. The loser's side
+// starts the battle demoralized.
+
+export type DebateMove = 'assert' | 'provoke' | 'retort' | 'press';
+
+export interface DebateBout {
+  aComposure: number;
+  dComposure: number;
+  aMomentum: number; // banked retorts toward 詰
+  dMomentum: number;
+  aProwess: number;
+  dProwess: number;
+  round: number;
+  over: boolean;
+  winner?: 'a' | 'd' | 'draw';
+}
+
+export const PRESS_MOMENTUM_COST = 2;
+const DEBATE_ROUNDS = 6;
+
+function debateProwess(o: Officer): number {
+  return Math.round(o.stats.intelligence + o.stats.charisma * 0.5);
+}
+
+export function initDebate(me: Officer, foe: Officer): DebateBout {
+  return {
+    aComposure: 100, dComposure: 100, aMomentum: 0, dMomentum: 0,
+    aProwess: debateProwess(me), dProwess: debateProwess(foe),
+    round: 0, over: false,
+  };
+}
+
+// 論>諷, 諷>駁, 駁>論; 詰 beats 論 & 諷 but loses to 駁.
+const DEBATE_BEATS: Record<Exclude<DebateMove, 'press'>, DebateMove> = {
+  assert: 'provoke', provoke: 'retort', retort: 'assert',
+};
+function debateMoveBeats(x: DebateMove, y: DebateMove): boolean {
+  if (x === 'press') return y === 'assert' || y === 'provoke';
+  if (y === 'press') return x === 'retort';
+  return DEBATE_BEATS[x] === y;
+}
+
+export interface DebateRoundResult {
+  bout: DebateBout;
+  roundWinner: 'a' | 'd' | 'draw';
+  dmgToA: number;
+  dmgToD: number;
+}
+
+export function debateRound(
+  bout: DebateBout,
+  aMove: DebateMove,
+  dMove: DebateMove,
+  rng: () => number = Math.random,
+): DebateRoundResult {
+  const b: DebateBout = { ...bout };
+  if (b.over) return { bout: b, roundWinner: 'draw', dmgToA: 0, dmgToD: 0 };
+  if (aMove === 'press') b.aMomentum = Math.max(0, b.aMomentum - PRESS_MOMENTUM_COST);
+  if (dMove === 'press') b.dMomentum = Math.max(0, b.dMomentum - PRESS_MOMENTUM_COST);
+
+  const dmgFrom = (move: DebateMove, winP: number, loseP: number): number => {
+    const base = move === 'retort' ? 10 : move === 'press' ? 30 : 18;
+    const adv = Math.max(-6, Math.min(20, (winP - loseP) * 0.4));
+    return Math.max(6, Math.round(base + adv + rng() * 8));
+  };
+
+  let roundWinner: 'a' | 'd' | 'draw' = 'draw';
+  let dmgToA = 0, dmgToD = 0;
+  if (debateMoveBeats(aMove, dMove)) {
+    roundWinner = 'a';
+    dmgToD = dmgFrom(aMove, b.aProwess, b.dProwess);
+    if (aMove === 'retort') b.aMomentum += 1;
+  } else if (debateMoveBeats(dMove, aMove)) {
+    roundWinner = 'd';
+    dmgToA = dmgFrom(dMove, b.dProwess, b.aProwess);
+    if (dMove === 'retort') b.dMomentum += 1;
+  } else if (aMove === 'retort' && dMove === 'retort') {
+    b.aMomentum += 1; b.dMomentum += 1;
+  }
+  b.aComposure = Math.max(0, b.aComposure - dmgToA);
+  b.dComposure = Math.max(0, b.dComposure - dmgToD);
+  b.round += 1;
+
+  if (b.aComposure <= 0 || b.dComposure <= 0 || b.round >= DEBATE_ROUNDS) {
+    b.over = true;
+    if (b.aComposure <= 0 && b.dComposure <= 0) b.winner = 'draw';
+    else if (b.aComposure <= 0) b.winner = 'd';
+    else if (b.dComposure <= 0) b.winner = 'a';
+    else {
+      const gap = Math.abs(b.aComposure - b.dComposure);
+      b.winner = gap < 12 ? 'draw' : b.aComposure > b.dComposure ? 'a' : 'd';
+    }
+  }
+  return { bout: b, roundWinner, dmgToA, dmgToD };
+}
+
+export function aiDebateMove(bout: DebateBout, side: 'a' | 'd', rng: () => number = Math.random): DebateMove {
+  const momentum = side === 'a' ? bout.aMomentum : bout.dMomentum;
+  const composure = side === 'a' ? bout.aComposure : bout.dComposure;
+  if (momentum >= PRESS_MOMENTUM_COST && rng() < 0.55) return 'press';
+  const r = rng();
+  if (composure < 35) return r < 0.5 ? 'retort' : r < 0.78 ? 'provoke' : 'assert';
+  return r < 0.45 ? 'assert' : r < 0.72 ? 'provoke' : 'retort';
+}
+
+/** Morale deltas from a finished debate, from the player ('a' = me) viewpoint. */
+export function debateMoraleDeltas(bout: DebateBout): { meDelta: number; foeDelta: number } {
+  if (!bout.over || bout.winner === 'draw') return { meDelta: 0, foeDelta: 0 };
+  return bout.winner === 'a' ? { meDelta: 5, foeDelta: -10 } : { meDelta: -10, foeDelta: 5 };
+}

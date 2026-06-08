@@ -39,8 +39,7 @@ import { OfficerPortrait } from '../components/OfficerPortrait';
 import { MapDefs as SharedMapDefs, MapFrame as SharedMapFrame, CompassRose as SharedCompassRose, TerrainArt as SharedTerrainArt } from '../components/hexMapShared';
 import { TacticalBattleScreen3D } from './TacticalBattleScreen3D';
 import { ErrorBoundary } from '../components/ErrorBoundary';
-import { resolveWordWar, type WordWarResult } from '../../game/systems/wordWar';
-import { WordWarModal } from '../components/WordWarModal';
+import { DebateGameModal } from '../components/DebateGameModal';
 import { useT, useDesc } from '../i18n';
 
 const UNIT_TYPE_GLYPH: Record<UnitType, string> = {
@@ -144,7 +143,7 @@ export function TacticalBattleScreen() {
   // can revert mis-clicks within the same turn. Cleared on End-Turn.
   const [undoSnapshot, setUndoSnapshot] = useState<typeof battle | null>(null);
   // 舌戰 — opens after the opening cinematic when both sides have INT ≥ 80.
-  const [wordWar, setWordWar] = useState<WordWarResult | null>(null);
+  const [interactiveDebate, setInteractiveDebate] = useState<{ me: Officer; foe: Officer } | null>(null);
   // Track whether we've already evaluated word war this battle, so it
   // doesn't re-fire on each re-render after the cinematic.
   const [wordWarChecked, setWordWarChecked] = useState(false);
@@ -181,23 +180,20 @@ export function TacticalBattleScreen() {
   useEffect(() => {
     if (!battle || showCinematic || wordWarChecked) return;
     setWordWarChecked(true);
-    const attackerOfficers = battle.units
-      .filter((u) => u.side === 'attacker')
+    const sideOfficers = (side: 'attacker' | 'defender') => battle.units
+      .filter((u) => u.side === side)
       .map((u) => officers[u.officerId])
-      .filter((o): o is import('../../game/types').Officer => !!o);
-    const defenderOfficers = battle.units
-      .filter((u) => u.side === 'defender')
-      .map((u) => officers[u.officerId])
-      .filter((o): o is import('../../game/types').Officer => !!o);
-    const aLead = attackerOfficers.find((o) => o.stats.intelligence >= 80);
-    const dLead = defenderOfficers.find((o) => o.stats.intelligence >= 80);
-    if (!aLead || !dLead) return;
-    const ww = resolveWordWar(
-      attackerOfficers[0], defenderOfficers[0],
-      attackerOfficers.slice(1), defenderOfficers.slice(1),
-    );
-    setWordWar(ww);
-  }, [battle, showCinematic, wordWarChecked, officers]);
+      .filter((o): o is Officer => !!o);
+    const best = (arr: Officer[]) =>
+      [...arr].sort((a, b) => (b.stats.intelligence + b.stats.charisma) - (a.stats.intelligence + a.stats.charisma))[0];
+    const aOff = sideOfficers('attacker');
+    const dOff = sideOfficers('defender');
+    if (!aOff.some((o) => o.stats.intelligence >= 80) || !dOff.some((o) => o.stats.intelligence >= 80)) return;
+    const me = best(playerSide === 'attacker' ? aOff : dOff);
+    const foe = best(playerSide === 'attacker' ? dOff : aOff);
+    if (!me || !foe) return;
+    setInteractiveDebate({ me, foe });
+  }, [battle, showCinematic, wordWarChecked, officers, playerSide]);
 
   // Hide cinematic after 3.6s.
   useEffect(() => {
@@ -1477,25 +1473,21 @@ export function TacticalBattleScreen() {
           }}
         />
       )}
-      {/* 舌戰 — fires once at battle start, after the opening cinematic.
-          On dismiss, applies the loser's −10 morale across all their units. */}
-      {wordWar && (
-        <WordWarModal
-          result={wordWar}
-          onClose={() => {
-            // Apply morale delta to live battle units, then clear.
-            const next = {
+      {/* 舌戰 — playable war of words at battle start; the result shifts unit
+          morale (player's side by meDelta, the enemy by foeDelta). */}
+      {interactiveDebate && (
+        <DebateGameModal
+          me={interactiveDebate.me}
+          foe={interactiveDebate.foe}
+          onComplete={({ meDelta, foeDelta }) => {
+            start({
               ...battle,
               units: battle.units.map((u) => ({
                 ...u,
-                morale: Math.max(0, Math.min(100, u.morale +
-                  (u.side === 'attacker'
-                    ? wordWar.attackerMoraleDelta
-                    : wordWar.defenderMoraleDelta))),
+                morale: Math.max(0, Math.min(100, u.morale + (u.side === playerSide ? meDelta : foeDelta))),
               })),
-            };
-            start(next);
-            setWordWar(null);
+            });
+            setInteractiveDebate(null);
           }}
         />
       )}

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { resolveDuel, canDuel, initDuelBout, duelRound, staticProwess, aiDuelMove } from './duel';
-import { resolveWordWar } from './wordWar';
+import { resolveWordWar, initDebate, debateRound, aiDebateMove } from './wordWar';
 import { mkOfficer, seededRng } from '../../test/factories';
 
 describe('canDuel', () => {
@@ -140,5 +140,41 @@ describe('interactive duel engine', () => {
   it('aiDuelMove spends 奮 when guard is banked', () => {
     const b = { ...initDuelBout(mk(80), mk(80)), aGuard: 2 };
     expect(aiDuelMove(b, 'attacker', () => 0.1)).toBe('power');
+  });
+});
+
+describe('interactive debate engine', () => {
+  const mk = (intel: number) => mkOfficer({ stats: { war: 50, leadership: 60, intelligence: intel, politics: 60, charisma: 60 } });
+  const fixed = () => 0.5;
+
+  it('respects the debate cycle (論>諷, 諷>駁, 駁>論, 詰>論, 駁>詰)', () => {
+    const b = initDebate(mk(80), mk(80));
+    expect(debateRound(b, 'assert', 'provoke', fixed).roundWinner).toBe('a');
+    expect(debateRound(b, 'provoke', 'retort', fixed).roundWinner).toBe('a');
+    expect(debateRound(b, 'retort', 'assert', fixed).roundWinner).toBe('a');
+    expect(debateRound(b, 'press', 'assert', fixed).roundWinner).toBe('a');
+    expect(debateRound(b, 'press', 'retort', fixed).roundWinner).toBe('d'); // 駁 turns aside 詰
+  });
+
+  it('a successful 駁 banks 氣勢 and takes no damage', () => {
+    const b = initDebate(mk(80), mk(80));
+    const r = debateRound(b, 'provoke', 'retort', fixed); // defender retorts a provoke? provoke>retort so attacker wins...
+    // Use a clean case: defender retorts an assert (駁>論 is false; 論>諷>駁>論 → assert beats... ) -> instead test retort beating press:
+    const r2 = debateRound(b, 'press', 'retort', fixed);
+    expect(r2.dmgToD).toBe(0);
+    expect(r2.bout.dMomentum).toBe(1);
+    void r;
+  });
+
+  it('the bout ends and names a winner', () => {
+    let cur = initDebate(mk(95), mk(55));
+    for (let i = 0; i < 10 && !cur.over; i++) cur = debateRound(cur, 'assert', 'provoke', fixed).bout;
+    expect(cur.over).toBe(true);
+    expect(cur.winner).toBe('a');
+  });
+
+  it('aiDebateMove spends 詰 when 氣勢 is banked', () => {
+    const b = { ...initDebate(mk(80), mk(80)), aMomentum: 2 };
+    expect(aiDebateMove(b, 'a', () => 0.1)).toBe('press');
   });
 });
