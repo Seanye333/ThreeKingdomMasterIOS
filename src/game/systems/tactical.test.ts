@@ -209,6 +209,16 @@ describe('endTurn', () => {
     expect(after.units.find((u) => u.id === 'A1')).toBeUndefined(); // and left the field
   });
 
+  it('resolves a capture-supply objective once the dump is held', () => {
+    const cmd = mkUnit({ id: 'A1', officerId: 'oA1', side: 'attacker', isCommander: true, coord: { col: 4, row: 4 } });
+    const foe = mkUnit({ id: 'D1', officerId: 'oD1', side: 'defender', isCommander: true, coord: { col: 9, row: 9 } });
+    const after = endTurn(mkBattle({
+      units: [cmd, foe],
+      attackerObjective: { kind: 'capture-supply', tileCoord: { col: 4, row: 4 }, turnsRequired: 1 },
+    }));
+    expect(after.attackerObjective?.resolved).toBe('success');
+  });
+
   it('counts damage to surviving units as losses (not only routed ones)', () => {
     // Attacker fielded 10000 and ends the turn bloodied but standing at 7000.
     // The old tally only counted *removed* units, so this damage was invisible.

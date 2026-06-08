@@ -498,7 +498,7 @@ export function resolveBattle(
   if (
     attacker.commander.stats.war >= 80 &&
     defender.commander.stats.war >= 80 &&
-    rng() < 0.18
+    rng() < 0.12
   ) {
     const aCmd = effectsForOfficer(attacker.commander);
     const dCmd = effectsForOfficer(defender.commander);

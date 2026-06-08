@@ -750,7 +750,7 @@ export function attackUnits(
     (u) => u.side === attacker.side && u.id !== attacker.id && u.troops > 0 &&
       hexDistance(u.coord, target.coord) === 1,
   ).length;
-  const pincerMul = 1 + Math.min(0.36, 0.12 * pincers);
+  const pincerMul = 1 + Math.min(0.28, 0.10 * pincers);
 
   const base =
     Math.floor((attacker.troops * (aWar + 30) * (0.85 + rng() * 0.3)) / (dLead + 50));
@@ -1427,7 +1427,9 @@ export function endTurn(b: TacticalBattle): TacticalBattle {
     // Rattan-armor doubles fire damage (oil-cured rattan ignites); so do
     // pitch-caulked wooden ships — fire is death on the water (赤壁).
     const uSideFormation = u.side === 'attacker' ? b.attackerFormation : b.defenderFormation;
-    const fireMul = uSideFormation === 'rattan-armor' || u.unitType === 'navy' ? 2.0 : 1.0;
+    // 藤甲 burns catastrophically (canonical); ships burn hard but a touch less,
+    // so a single fire-ship cast no longer near-auto-wipes a clumped fleet.
+    const fireMul = uSideFormation === 'rattan-armor' ? 2.0 : u.unitType === 'navy' ? 1.6 : 1.0;
     for (const e of u.effects) {
       if (e.kind === 'burning') {
         const burn = Math.floor(u.maxTroops * 0.08 * fireMul);
@@ -1495,7 +1497,7 @@ export function endTurn(b: TacticalBattle): TacticalBattle {
       let chance = baseSpreadChance;
       if (tile?.terrain === 'forest') chance *= 1.6;
       if (adjFormation === 'rattan-armor') chance *= 2.0;
-      if (adjUnit.unitType === 'navy') chance *= 2.0; // fire leaps hull to hull
+      if (adjUnit.unitType === 'navy') chance *= 1.5; // fire leaps hull to hull
       // Strong wind alignment bonus when picked unit is downwind.
       if (scored[0].score > 0 && b.windDirection !== 'calm') chance *= 1.3;
       if (Math.random() < chance) {
@@ -1805,7 +1807,7 @@ function tickObjective(
   width: number,
 ): BattleObjective | undefined {
   if (!obj || obj.resolved) return obj;
-  if (obj.kind === 'hold-tile' && obj.tileCoord) {
+  if ((obj.kind === 'hold-tile' || obj.kind === 'capture-supply') && obj.tileCoord) {
     const holding = units.some(
       (u) =>
         u.side === side &&
@@ -1813,7 +1815,9 @@ function tickObjective(
         u.coord.row === obj.tileCoord!.row,
     );
     const progress = (obj.progress ?? 0) + (holding ? 1 : 0);
-    if (progress >= (obj.turnsRequired ?? 5)) {
+    // hold-tile defaults to 5 turns; seizing a supply dump is quicker (2).
+    const need = obj.turnsRequired ?? (obj.kind === 'capture-supply' ? 2 : 5);
+    if (progress >= need) {
       return { ...obj, progress, resolved: 'success' };
     }
     return { ...obj, progress };

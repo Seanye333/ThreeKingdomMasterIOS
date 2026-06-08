@@ -862,8 +862,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       }
       if (enemyCount === 0) continue;
       const ratio = enemyCount / sats.length;
-      const troopLoss = Math.floor(city.troops * ratio * 0.05);
-      const goldLoss = Math.floor(city.gold * ratio * 0.15);
+      // Encirclement primarily starves the garrison — troop drain up, the steep
+      // treasury bleed down, so a siege attrits soldiers more than coin.
+      const troopLoss = Math.floor(city.troops * ratio * 0.07);
+      const goldLoss = Math.floor(city.gold * ratio * 0.10);
       if (troopLoss === 0 && goldLoss === 0) continue;
       cities[city.id] = {
         ...city,
