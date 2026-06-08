@@ -2,6 +2,7 @@ import type { City, Force, Officer } from '../types';
 import type { FamilyRelation } from '../types/family';
 import { recruiterBonus } from './traitEffects';
 import { recruitRefusalPenalty, recruitKinshipBonus } from './relationshipEffects';
+import { effectivePrestige } from '../data/prestige';
 
 export const RECRUIT_COST = 200;
 export const FREE_AGENT_COST = 100;
@@ -87,6 +88,14 @@ function reputationBonus(rep: { citiesOwned: number } | undefined): number {
   return Math.min(0.20, rep.citiesOwned * 0.01);
 }
 
+/** Famous names draw talent — a lord's own 威名 eases recruitment. */
+const TOP_PRESTIGE = new Set(['tiger-general', 'royal-aide', 'able-minister', 'famed-general']);
+export function prestigeRecruitBonus(recruiterRuler: Officer): number {
+  const title = effectivePrestige(recruiterRuler);
+  if (!title) return 0;
+  return TOP_PRESTIGE.has(title.id) ? 0.08 : 0.04;
+}
+
 export function attemptRecruit(input: RecruitInput): RecruitOutput {
   const rng = input.rng ?? Math.random;
   const { officer, city, recruiterForce, recruiterRuler, recruiterReputation } = input;
@@ -105,6 +114,7 @@ export function attemptRecruit(input: RecruitInput): RecruitOutput {
   chance += traitBonus(officer.traits as string[] | undefined);
   chance += hometownBonus(officer, city);
   chance += reputationBonus(recruiterReputation);
+  chance += prestigeRecruitBonus(recruiterRuler);
   // 'noble' trait makes gold-based recruitment impossible.
   if ((officer.traits ?? []).includes('noble')) {
     chance = Math.min(chance, 0.15);
@@ -165,6 +175,7 @@ export function attemptFreeAgentRecruit(
   chance += traitBonus(officer.traits as string[] | undefined);
   chance += hometownBonus(officer, city);
   chance += reputationBonus(recruiterReputation);
+  chance += prestigeRecruitBonus(recruiterRuler);
   // T9 — recruiter's own personality (charming/noble/imperial-blood)
   chance += recruiterBonus(recruiterRuler);
   // R1 — relationship-based: personal enemy refuses, sworn brother / family eager
@@ -215,6 +226,7 @@ export function previewRecruitChance(
   chance += traitBonus(officer.traits as string[] | undefined);
   chance += hometownBonus(officer, city);
   chance += reputationBonus(recruiterReputation);
+  chance += prestigeRecruitBonus(recruiterRuler);
   if ((officer.traits ?? []).includes('noble')) {
     chance = mode === 'captive' ? Math.min(chance, 0.15) : chance - 0.10;
   }

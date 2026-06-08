@@ -45,7 +45,7 @@ import {
 } from './training';
 import { TACTIC_DEFS, type TacticId } from '../data/officerAttributes';
 import { commandFitMultiplier, isCombatLiability } from './traitEffects';
-import { attackDeterrence, recruitPreferenceScore } from './relationshipEffects';
+import { attackDeterrence, recruitPreferenceScore, runtimeSwornPair } from './relationshipEffects';
 
 export interface AIPlanInput {
   cities: Record<EntityId, City>;
@@ -367,6 +367,71 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
         textZh: `聯姻既成：${aPick.name.zh}（${force.name.zh}）⚭ ${bPick.name.zh}（${other.name.zh}），兩家情誼日深。`,
       });
       break; // only one marriage per force per season
+    }
+  }
+
+  // ── AI 義兄弟 / 私兵: forces invest their renown + treasury into their own
+  //    officers, mirroring what the player can do — so the systems are
+  //    two-sided. Sworn brotherhood binds two strong generals (combat synergy
+  //    + loyalty floor); 私兵 funds a top commander's household guard. ──
+  for (const forceId of aiForceIds) {
+    const force = input.forces[forceId];
+    if (!force) continue;
+    const capital = cities[force.capitalCityId];
+    if (!capital) continue;
+    let capitalGold = capital.gold;
+
+    const forceOfficers = Object.values(officers).filter(
+      (o) => o.forceId === forceId && o.status !== 'dead' && o.status !== 'imprisoned',
+    );
+    if (forceOfficers.length === 0) continue;
+
+    // 結拜 — bind the two strongest unbonded warriors (~7%/season, needs gold).
+    if (capitalGold >= 500 && rng() < 0.07) {
+      const warriors = [...forceOfficers]
+        .filter((o) => o.stats.war >= 75)
+        .sort((a, b) => b.stats.war - a.stats.war);
+      outer: for (let i = 0; i < warriors.length; i++) {
+        for (let j = i + 1; j < warriors.length; j++) {
+          const a = warriors[i], b = warriors[j];
+          if (runtimeSwornPair(a.id, b.id, runtimeBonds)) continue;
+          runtimeBonds.push({
+            officerA: a.id, officerB: b.id, floor: 90, kind: 'sibling',
+            label: `${a.name.en} & ${b.name.en} 義兄弟`,
+          });
+          capitalGold -= 300;
+          officers[a.id] = { ...officers[a.id], loyalty: Math.max(officers[a.id].loyalty ?? 0, 90) };
+          officers[b.id] = { ...officers[b.id], loyalty: Math.max(officers[b.id].loyalty ?? 0, 90) };
+          entries.push({
+            cityId: null, kind: 'note',
+            text: `${a.name.en} and ${b.name.en} of ${force.name.en} swear brotherhood.`,
+            textZh: `${force.name.zh}麾下${a.name.zh}與${b.name.zh}義結金蘭。`,
+          });
+          break outer;
+        }
+      }
+    }
+
+    // 私兵 — fund the top commander's guard when the treasury is flush.
+    if (capitalGold >= 4000) {
+      const top = [...forceOfficers].sort((a, b) => b.stats.war - a.stats.war)[0];
+      if (top) {
+        const cap = top.stats.leadership * 100;
+        const room = cap - (top.privateTroops ?? 0);
+        if (room > 0) {
+          // Spend up to a quarter of the spare treasury, 2 gold/unit.
+          const affordable = Math.floor((capitalGold - 2000) / 2);
+          const take = Math.max(0, Math.min(room, affordable, 4000));
+          if (take > 0) {
+            officers[top.id] = { ...officers[top.id], privateTroops: (top.privateTroops ?? 0) + take };
+            capitalGold -= take * 2;
+          }
+        }
+      }
+    }
+
+    if (capitalGold !== capital.gold) {
+      cities[capital.id] = { ...cities[capital.id], gold: capitalGold };
     }
   }
 
