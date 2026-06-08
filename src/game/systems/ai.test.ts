@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { pickForceTarget, pickReinforcementTarget, forcePosture, findHegemon } from './ai';
+import { pickForceTarget, pickReinforcementTarget, forcePosture, findHegemon, chooseDevelopment } from './ai';
 import type { City } from '../types';
 import type { DiplomaticState } from '../types/diplomacy';
 
@@ -120,5 +120,22 @@ describe('pickForceTarget — 合縱抗霸 hegemon bias', () => {
     const hcity = mkCity({ id: 'hcity', ownerForceId: 'H', troops: 1500, defense: 0, population: 100_000 });
     const ncity = mkCity({ id: 'ncity', ownerForceId: 'N', troops: 1500, defense: 0, population: 100_000 });
     expect(pickForceTarget('A', [c1], { c1, hcity, ncity }, NO_DIPLO, 'H')).toBe('hcity');
+  });
+});
+
+describe('chooseDevelopment — front fortifies, rear grows', () => {
+  it('a poorly-walled front city builds defence', () => {
+    const c = mkCity({ id: 'c', defense: 40, commerce: 60, agriculture: 50 });
+    expect(chooseDevelopment(c, true)).toBe('build-defense');
+  });
+
+  it('a well-walled front city funds the economy', () => {
+    const c = mkCity({ id: 'c', defense: 90, commerce: 30, agriculture: 50 });
+    expect(chooseDevelopment(c, true)).toBe('develop-commerce'); // commerce is the lower
+  });
+
+  it('a rear city grows the economy even with weak walls', () => {
+    const c = mkCity({ id: 'c', defense: 10, commerce: 60, agriculture: 40 });
+    expect(chooseDevelopment(c, false)).toBe('develop-agriculture'); // never wastes on walls
   });
 });

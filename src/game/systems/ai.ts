@@ -955,8 +955,13 @@ function decideCommand(
     }
   }
 
-  // 5. Routine — develop the lowest of agriculture/commerce/defense
-  const devType = lowestDevCommand(city);
+  // 5. Routine — front-line cities fortify, rear cities grow the economy.
+  const onFront = city.adjacentCityIds.some((id) => {
+    const e = allCities[id];
+    return !!e && e.ownerForceId !== forceId &&
+      (e.ownerForceId === null || isHostilePermitted(diplomacy, forceId, e.ownerForceId));
+  });
+  const devType = chooseDevelopment(city, onFront);
   const o = bestBy(officersHere, 'politics', prefectId);
   if (o && canAfford(city, devType)) {
     return internalDecision(devType, city, o);
@@ -1025,17 +1030,18 @@ function bestForCommand(
   })[0];
 }
 
-function lowestDevCommand(
+/**
+ * Position-aware development (force-level economic division of labour): a
+ * front-line city (bordering an enemy) walls up first and only funds the economy
+ * once well-fortified; a rear city is a pure economic engine, pumping whichever
+ * of commerce/agriculture is lower and never wasting effort on walls it'll never
+ * need. Replaces the old position-blind "raise the lowest stat".
+ */
+export function chooseDevelopment(
   city: City,
+  onFront: boolean,
 ): 'develop-agriculture' | 'develop-commerce' | 'build-defense' {
-  const stats: Array<[
-    'develop-agriculture' | 'develop-commerce' | 'build-defense',
-    number,
-  ]> = [
-    ['develop-agriculture', city.agriculture],
-    ['develop-commerce', city.commerce],
-    ['build-defense', city.defense],
-  ];
-  stats.sort((a, b) => a[1] - b[1]);
-  return stats[0][0];
+  const econ = city.commerce <= city.agriculture ? 'develop-commerce' : 'develop-agriculture';
+  if (onFront) return city.defense < 75 ? 'build-defense' : econ;
+  return econ;
 }
