@@ -91,6 +91,7 @@ import { SCENARIOS } from '../data';
 import { findChallenge, evaluateChallenge } from '../data/challenges';
 import { MAX_CUSTOM_EVENTS } from '../systems/customEvents';
 import { refreshPrestige, prestigeTitleById } from '../data/prestige';
+import { careerStanding, careerGuardCapBonus } from '../systems/career';
 import { evaluateGoal, findObjectiveFor } from '../systems/objectives';
 import { applySuccession } from '../systems/succession';
 import {
@@ -2425,6 +2426,39 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           });
         }
 
+        // 一代記 — auto-record chronicle milestones: prestige attained and
+        // career rank promotions for the player's chronicle hero.
+        let careerModeAfterSeason = state.careerMode;
+        if (state.careerMode) {
+          const cid = state.careerMode.officerId;
+          const ms: Array<{ title: { zh: string; en: string }; year: number; season: 'spring' | 'summer' | 'autumn' | 'winter' }> = [];
+          const pr = newPrestige.find((a) => a.officerId === cid);
+          if (pr) {
+            const title = prestigeTitleById(pr.titleId);
+            if (title) ms.push({
+              title: { zh: `威名 — ${title.name.zh}`, en: `Prestige: ${title.name.en}` },
+              year: result.date.year, season: result.date.season,
+            });
+          }
+          const oldRank = careerStanding(state.deeds[cid]).rank;
+          const newStanding = careerStanding(nextDeeds[cid]);
+          if (newStanding.rank < oldRank) {
+            ms.push({
+              title: { zh: `晉升 — ${newStanding.status.zh}（品 ${newStanding.rank}）`, en: `Promoted: ${newStanding.status.en} (rank ${newStanding.rank})` },
+              year: result.date.year, season: result.date.season,
+            });
+            result.report.entries.push({
+              cityId: postOfficers[cid]?.locationCityId ?? null,
+              kind: 'note',
+              text: `${postOfficers[cid]?.name.en ?? 'You'} rise to ${newStanding.status.en}.`,
+              textZh: `${postOfficers[cid]?.name.zh ?? '主角'}晉升為${newStanding.status.zh}。`,
+            });
+          }
+          if (ms.length > 0) {
+            careerModeAfterSeason = { ...state.careerMode, milestones: [...state.careerMode.milestones, ...ms] };
+          }
+        }
+
         // Prune appointments whose holders died / were captured / defected
         // / lost their city this season. Emit a vacancy notice + history.
         const prune = pruneStaleAppointments(appointmentsAfterAI, postOfficers, postCities);
@@ -2489,6 +2523,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           deeds: nextDeeds,
           recentDeedTitles: [...state.recentDeedTitles, ...titleGrant.grants],
           recentPrestige: [...state.recentPrestige, ...newPrestige],
+          careerMode: careerModeAfterSeason,
           // Battle deltas only feed MVPs at season boundaries — reset
           // then so the next season starts fresh; otherwise keep them
           // accumulating across mid-season ticks.
@@ -4693,7 +4728,11 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           return { ok: false, message: 'Officer must be in one of your cities.' };
         const amt = Math.floor(amount);
         if (!Number.isFinite(amt) || amt <= 0) return { ok: false, message: 'Enter a positive amount.' };
-        const cap = officer.stats.leadership * 100;
+        // Chronicle heroes raise a larger household guard as they rise in rank.
+        const careerBonus = state.careerMode?.officerId === officerId
+          ? careerGuardCapBonus(careerStanding(state.deeds[officerId]))
+          : 0;
+        const cap = officer.stats.leadership * 100 + careerBonus;
         const current = officer.privateTroops ?? 0;
         const room = cap - current;
         if (room <= 0) return { ok: false, message: `${officer.name.en}'s guard is already at capacity (${cap}).` };

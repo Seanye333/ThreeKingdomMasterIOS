@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { careerStanding, meritFromDeeds, rankForMerit, canInheritForce } from './career';
+import { careerStanding, meritFromDeeds, rankForMerit, canInheritForce, careerPrivileges, careerGuardCapBonus } from './career';
 
 const deeds = (over: Partial<import('../types/deeds').HeroicDeeds>) =>
   ({ officerId: 'x', killsTroops: 0, duelsWon: 0, captured: 0, citiesTaken: 0,
@@ -32,6 +32,27 @@ describe('career standing (一代記 ladder)', () => {
     const s = careerStanding({ battlesWon: 3 } as never); // 15 merit → rank 8 (floor 10), next is 30
     expect(s.rank).toBe(8);
     expect(s.nextRankMerit).toBe(30);
+  });
+});
+
+describe('career rank privileges (品階特權)', () => {
+  it('unlocks more perks as the hero rises', () => {
+    const rookie = careerPrivileges(careerStanding(undefined)); // rank 9
+    const viceroy = careerPrivileges(careerStanding({ citiesTaken: 12 } as never)); // 360 → rank 3
+    const rookieOn = rookie.filter((p) => p.unlocked).length;
+    const viceroyOn = viceroy.filter((p) => p.unlocked).length;
+    expect(rookieOn).toBeGreaterThanOrEqual(1);
+    expect(viceroyOn).toBeGreaterThan(rookieOn);
+    // The Viceroy 都督 inherit-perk is unlocked; the Grand-Marshal one is not.
+    expect(viceroy.find((p) => /Viceroy/.test(p.en))?.unlocked).toBe(true);
+    expect(viceroy.find((p) => /Grand Marshal/.test(p.en))?.unlocked).toBe(false);
+  });
+
+  it('grants a 私兵 cap bonus that scales with rank', () => {
+    expect(careerGuardCapBonus(careerStanding(undefined))).toBe(0);          // 武官 (rank 9)
+    expect(careerGuardCapBonus(careerStanding({ battlesWon: 6 } as never))).toBe(1000); // 30 merit → rank 7 大臣
+    expect(careerGuardCapBonus(careerStanding({ citiesTaken: 5, battlesWon: 10, killsTroops: 5000 } as never))).toBe(3000); // rank 4 太守
+    expect(careerGuardCapBonus(careerStanding({ citiesTaken: 20 } as never))).toBe(6000); // rank 1
   });
 });
 

@@ -59,3 +59,39 @@ export function careerStanding(deeds: HeroicDeeds | undefined): CareerStanding {
 export function canInheritForce(standing: CareerStanding): boolean {
   return standing.rank <= 3;
 }
+
+/**
+ * 品階特權 — concrete perks unlocked as the chronicle hero climbs the ladder.
+ * Each entry is shown in the Chronicle screen; the mechanical ones are wired
+ * where noted.
+ */
+export interface CareerPrivilege {
+  zh: string;
+  en: string;
+  /** True once the officer's rank has unlocked it. */
+  unlocked: boolean;
+}
+
+export function careerPrivileges(standing: CareerStanding): CareerPrivilege[] {
+  const r = standing.rank;
+  return [
+    { zh: '統兵征戰', en: 'Lead troops in the field', unlocked: true },
+    { zh: '私兵 +1000(大臣)', en: 'Private guard +1,000 (Minister)', unlocked: r <= 7 },
+    { zh: '私兵 +3000(太守)', en: 'Private guard +3,000 (Governor)', unlocked: r <= 5 },
+    { zh: '私兵 +6000、可繼承勢力(都督)', en: 'Private guard +6,000, may inherit a force (Viceroy)', unlocked: r <= 3 },
+    { zh: '一方諸侯,獨斷專行', en: 'A lord in your own right (Grand Marshal)', unlocked: r === 1 },
+  ];
+}
+
+/**
+ * Extra 私兵 capacity the chronicle hero earns from their standing — a
+ * renowned commander raises a larger household guard. Added on top of the
+ * usual leadership×100 cap, for the career officer only.
+ */
+export function careerGuardCapBonus(standing: CareerStanding): number {
+  const r = standing.rank;
+  if (r <= 3) return 6000;
+  if (r <= 5) return 3000;
+  if (r <= 7) return 1000;
+  return 0;
+}

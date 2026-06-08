@@ -1,6 +1,6 @@
 import { useGameStore } from '../../game/state/store';
 import { SEASON_LABEL } from '../../game/types';
-import { careerStanding } from '../../game/systems/career';
+import { careerStanding, careerPrivileges } from '../../game/systems/career';
 import { useT, useLanguage } from '../i18n';
 
 interface Props {
@@ -137,6 +137,15 @@ export function CareerModal({ onClose }: Props) {
                 </div>
                 <div style={{ fontSize: '0.68rem', color: '#6a5238', marginTop: '0.35rem' }}>
                   {t('武官 → 大臣 → 太守 → 都督 → 一方諸侯', 'Officer → Minister → Governor → Viceroy → Grand Marshal')}
+                </div>
+                {/* 品階特權 — unlocked perks light up as the hero climbs */}
+                <div style={{ marginTop: '0.6rem', borderTop: '1px solid #3a2818', paddingTop: '0.5rem' }}>
+                  <div style={{ fontSize: '0.66rem', letterSpacing: '0.15rem', color: '#8a7050', marginBottom: '0.3rem' }}>{t('品階特權', 'Rank Privileges')}</div>
+                  {careerPrivileges(s).map((p, i) => (
+                    <div key={i} style={{ fontSize: '0.76rem', color: p.unlocked ? '#7ed68a' : '#6a5238', marginTop: '0.15rem' }}>
+                      {p.unlocked ? '✓' : '○'} {lang === 'en' ? p.en : p.zh}
+                    </div>
+                  ))}
                 </div>
               </div>
             );
