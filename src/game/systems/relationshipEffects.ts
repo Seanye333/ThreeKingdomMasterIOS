@@ -16,8 +16,25 @@
  */
 import type { EntityId, Officer } from '../types';
 import type { FamilyRelation } from '../types/family';
+import type { OathBond } from '../data/bonds';
 import { OFFICER_RELATIONSHIPS, type OfficerRelationship } from '../data/relationships';
 import { FAMILY_LINEAGE } from '../data/familyLineage';
+
+/** Runtime bond kinds that count as a sworn-brother tie (義兄弟): the 結拜
+ *  ceremony forges 'sibling', rapport milestones forge 'oath'. Both grant the
+ *  same-side combat synergy and loyalty floor a hard-coded sworn pair would. */
+function isSwornBondKind(kind: OathBond['kind']): boolean {
+  return kind === 'sibling' || kind === 'oath';
+}
+
+/** True if a runtime bond list ties A and B as sworn brothers. */
+export function runtimeSwornPair(a: EntityId, b: EntityId, bonds: OathBond[] = []): boolean {
+  return bonds.some(
+    (bd) =>
+      isSwornBondKind(bd.kind) &&
+      ((bd.officerA === a && bd.officerB === b) || (bd.officerA === b && bd.officerB === a)),
+  );
+}
 
 /** Build a map of {officerId → all relationships involving them}. Memoized
  *  on first call; OFFICER_RELATIONSHIPS is static so this is safe. */
@@ -149,8 +166,9 @@ export function areFamily(a: EntityId, b: EntityId, family: FamilyRelation[]): b
   );
 }
 
-/** True if A and B sworn brothers. */
-export function areSwornBrothers(a: EntityId, b: EntityId): boolean {
+/** True if A and B sworn brothers — by static lore OR a runtime 結拜 bond. */
+export function areSwornBrothers(a: EntityId, b: EntityId, runtimeBonds: OathBond[] = []): boolean {
+  if (runtimeSwornPair(a, b, runtimeBonds)) return true;
   return OFFICER_RELATIONSHIPS.some(
     (r) =>
       r.kind === 'sworn-brothers' &&
@@ -195,6 +213,7 @@ export interface RelationshipCombatBonus {
 export function sidePoolRelationshipBonus(
   pool: Officer[],
   family: FamilyRelation[],
+  runtimeBonds: OathBond[] = [],
 ): RelationshipCombatBonus {
   if (pool.length < 2) return { powerMul: 1.0, moraleResist: 0 };
   let powerMul = 1.0;
@@ -203,7 +222,7 @@ export function sidePoolRelationshipBonus(
   for (let i = 0; i < pool.length; i++) {
     for (let j = i + 1; j < pool.length; j++) {
       const a = pool[i].id, b = pool[j].id;
-      if (areSwornBrothers(a, b)) {
+      if (areSwornBrothers(a, b, runtimeBonds)) {
         powerMul *= 1.06;
         moraleResist += 0.10;
       }
@@ -247,6 +266,7 @@ export function loyaltyFloor(
   officer: Officer,
   officersById: Record<EntityId, Officer>,
   family: FamilyRelation[] = [],
+  runtimeBonds: OathBond[] = [],
 ): number {
   let floor = 0;
   const sameForceAlive = (id: EntityId) => {
@@ -256,6 +276,13 @@ export function loyaltyFloor(
   // Strongest: sworn brothers — 95 (桃園 / 江東小霸王 etc.)
   for (const id of swornBrothersOf(officer.id)) {
     if (sameForceAlive(id)) floor = Math.max(floor, 95);
+  }
+  // Runtime 結拜 sworn brothers (義兄弟 forged in-game) — 90.
+  for (const bd of runtimeBonds) {
+    if (!isSwornBondKind(bd.kind)) continue;
+    const otherId = bd.officerA === officer.id ? bd.officerB
+      : bd.officerB === officer.id ? bd.officerA : null;
+    if (otherId && sameForceAlive(otherId)) floor = Math.max(floor, 90);
   }
   // Family ties — close kin keep loyalty high
   for (const f of [...family, ...FAMILY_LINEAGE]) {

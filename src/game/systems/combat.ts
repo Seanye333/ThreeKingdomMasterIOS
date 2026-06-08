@@ -195,6 +195,8 @@ export interface BattleContext {
   attackerDamageMul?: number;
   /** Runtime family relations — used for relationship combat bonuses. */
   family?: import('../types/family').FamilyRelation[];
+  /** Runtime oath bonds (義兄弟 結拜 / rapport) — sworn-brother combat synergy. */
+  runtimeBonds?: import('../data/bonds').OathBond[];
   /** Civic-title power multipliers per side (軍師/太尉/丞相 etc.). */
   attackerTitlePowerMul?: number;
   defenderTitlePowerMul?: number;
@@ -401,8 +403,9 @@ export function resolveBattle(
 
   // R1 — Relationship bonuses
   const family = ctx?.family ?? [];
-  const aRelBonus = sidePoolRelationshipBonus(attackerPool, family);
-  const dRelBonus = sidePoolRelationshipBonus(defenderPool, family);
+  const bonds = ctx?.runtimeBonds ?? [];
+  const aRelBonus = sidePoolRelationshipBonus(attackerPool, family, bonds);
+  const dRelBonus = sidePoolRelationshipBonus(defenderPool, family, bonds);
   // Rival showdown (commanders are rivals) — both sides get an attack boost
   const rivalMul = rivalShowdownMultiplier(attacker.commander, defender.commander);
 
@@ -716,6 +719,8 @@ export interface MarchContext {
   delayedEffectsOut?: Array<{ targetCityId?: EntityId; seasons: number; perSeason: number }>;
   /** Runtime family relations — used for relationship combat bonuses. */
   family?: import('../types/family').FamilyRelation[];
+  /** Runtime oath bonds (義兄弟 結拜 / rapport) — sworn-brother combat synergy. */
+  runtimeBonds?: import('../data/bonds').OathBond[];
   /** Civic-title appointments — derive per-force power multiplier per battle. */
   appointments?: import('../types').Appointment[];
   /** Active casus-belli marks (from 討伐令). Attacker gets +10% vs target. */
@@ -859,6 +864,7 @@ export function handleMarch(
       allowPursuit: true,
       attackerDamageMul: slotEffects.attackerDamageMul,
       family: ctx.family,
+      runtimeBonds: ctx.runtimeBonds,
       attackerTitlePowerMul: attackerTitlePowerMul * siegeMods.attackerPowerMul,
       defenderTitlePowerMul: defenderTitlePowerMul * siegeMods.defenderPowerMul,
       attackerCasusBelliMul,

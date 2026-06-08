@@ -96,6 +96,9 @@ export interface GameState {
   eventFlags: Record<string, boolean>;
   /** IDs of historical events that have already fired. */
   firedEventIds: EntityId[];
+  /** Player-authored events (事件編輯器). Shaped like HistoricalEvent with a
+   *  `custom-` id; fire through the same engine. Persist across scenarios. */
+  customEvents: import('../types/event').HistoricalEvent[];
   /** Event currently displayed to the player; null if none. */
   pendingEvent: PendingEvent | null;
   /** Active tactical battle screen, if any. */
@@ -267,6 +270,7 @@ export const EMPTY_STATE: GameState = {
   edictHistory: [],
   edictCooldowns: {},
   tribeState: createInitialTribeState(),
+  customEvents: [],
   soundEnabled: true,
   buildings: [],
   tradeRoutes: [],
@@ -442,6 +446,9 @@ export function loadScenario(
   recruitBonusSeasons: {},
     eventFlags: {},
     firedEventIds: [],
+    // Authored events carry across scenarios (firedEventIds resets, so they
+    // can fire again in the new game).
+    customEvents: state.customEvents ?? [],
     pendingEvent: null,
     tacticalBattle: null,
     pendingEspionage: [],

@@ -31,6 +31,7 @@ export function BondsModal({ onClose }: Props) {
   const rapport = useGameStore((s) => s.rapport);
   const socializeOfficers = useGameStore((s) => s.socializeOfficers);
   const hostBanquet = useGameStore((s) => s.hostBanquet);
+  const swearBrotherhood = useGameStore((s) => s.swearBrotherhood);
   const [selectedOfficer, setSelectedOfficer] = useState<Officer | null>(null);
   const [aSel, setASel] = useState('');
   const [bSel, setBSel] = useState('');
@@ -114,6 +115,14 @@ export function BondsModal({ onClose }: Props) {
               style={btnStyle(!(!aSel || !bSel || aSel === bSel))}
             >
               {t('結交 (100金)', 'Socialize (100g)')}
+            </button>
+            <button
+              onClick={() => { const r = swearBrotherhood(aSel, bSel); setSocialMsg(r.message); }}
+              disabled={!aSel || !bSel || aSel === bSel}
+              style={{ ...btnStyle(!(!aSel || !bSel || aSel === bSel)), borderColor: '#c0504a', color: aSel && bSel && aSel !== bSel ? '#e2a07a' : undefined }}
+              title={t('義結金蘭 — 永久羈絆，戰場同陣加成 + 忠誠下限90', 'Sworn brotherhood — permanent bond: same-side combat synergy + loyalty floor 90')}
+            >
+              {t('結拜 (300金)', 'Swear Oath (300g)')}
             </button>
           </div>
           <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap' }}>

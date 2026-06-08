@@ -14,6 +14,7 @@ import { SaveSlotsModal } from '../components/SaveSlotsModal';
 import { SettingsModal } from '../components/SettingsModal';
 import { ScenarioOfficersBrowser } from '../components/ScenarioOfficersBrowser';
 import { HeroModeModal } from '../components/HeroModeModal';
+import { EventEditorModal } from '../components/EventEditorModal';
 import { OfficerPortrait } from '../components/OfficerPortrait';
 import { DYNASTY_DEFS, type Dynasty } from '../../game/data/dynasties';
 import { useT, useLanguage, useDesc } from '../i18n';
@@ -47,6 +48,7 @@ export function TitleScreen() {
   const [showIndividualities, setShowIndividualities] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showHeroMode, setShowHeroMode] = useState(false);
+  const [showEventEditor, setShowEventEditor] = useState(false);
   const [showDynasties, setShowDynasties] = useState(false);
   const enterCareerMode = useGameStore((s) => s.enterCareerMode);
   const setRomanceMode = useGameStore((s) => s.setRomanceMode);
@@ -315,6 +317,7 @@ export function TitleScreen() {
               <button className={styles.officersButton} onClick={() => setShowIndividualities(true)}>{t('個性一覽', 'Traits')}</button>
               <button className={styles.officersButton} onClick={() => setShowCustomOfficer(true)}>{t('自定義武將', 'Custom Officer')}</button>
               <button className={styles.officersButton} onClick={() => setShowAchievements(true)}>{t('勳功', 'Achievements')}</button>
+              <button className={styles.officersButton} onClick={() => setShowEventEditor(true)}>{t('事件編輯器', 'Event Editor')}</button>
             </div>
           </section>
         )}
@@ -586,6 +589,7 @@ export function TitleScreen() {
         />
       )}
       {showHeroMode && <HeroModeModal onClose={() => setShowHeroMode(false)} />}
+      {showEventEditor && <EventEditorModal scenario={scenario} onClose={() => setShowEventEditor(false)} />}
       {showLoad && <SaveSlotsModal mode="load" onClose={() => setShowLoad(false)} />}
       {showAchievements && <AchievementsModal onClose={() => setShowAchievements(false)} />}
       {showItems && <ItemsBrowser onClose={() => setShowItems(false)} />}

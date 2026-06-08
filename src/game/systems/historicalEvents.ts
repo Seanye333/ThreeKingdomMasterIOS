@@ -65,9 +65,22 @@ export interface HistoricalEventContext {
 export function findFiringEvent(
   ctx: HistoricalEventContext,
 ): HistoricalEvent | null {
+  return findFiringEventIn(HISTORICAL_EVENTS, ctx);
+}
+
+/**
+ * Like {@link findFiringEvent} but over an explicit event list — used for
+ * player-authored custom events (Event Editor). `alwaysFire` skips the 60%
+ * per-season roll so authored events fire deterministically once eligible.
+ */
+export function findFiringEventIn(
+  events: HistoricalEvent[],
+  ctx: HistoricalEventContext,
+  opts?: { alwaysFire?: boolean },
+): HistoricalEvent | null {
   const fired = new Set(ctx.firedEventIds);
   const rng = ctx.rng ?? Math.random;
-  for (const evt of HISTORICAL_EVENTS) {
+  for (const evt of events) {
     if (fired.has(evt.id)) continue;
     if (ctx.date.year < evt.yearMin || ctx.date.year > evt.yearMax) continue;
     if (evt.season && ctx.date.season !== evt.season) continue;
@@ -75,7 +88,7 @@ export function findFiringEvent(
     // Romance mode: fire every eligible event. Default: 60% per season
     // (so the next eligible season has another chance, but the campaign
     // doesn't get a monolithic event-list overlay).
-    if (!ctx.romanceMode && rng() > 0.6) continue;
+    if (!opts?.alwaysFire && !ctx.romanceMode && rng() > 0.6) continue;
     return evt;
   }
   return null;

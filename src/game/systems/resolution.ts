@@ -653,6 +653,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       weather: input.weather,
       delayedEffectsOut: delayedEffects,
       family: input.family,
+      runtimeBonds: input.runtimeBonds,
       appointments: input.appointments,
       casusBelliMarks: input.casusBelliMarks,
       date: input.date,

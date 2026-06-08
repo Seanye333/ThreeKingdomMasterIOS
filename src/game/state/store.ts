@@ -35,6 +35,7 @@ import { POLICY_DEFS, TACTIC_DEFS } from '../data/officerAttributes';
 import {
   applyEventEffects,
   findFiringEvent,
+  findFiringEventIn,
 } from '../systems/historicalEvents';
 import { resolveEspionage } from '../systems/espionage';
 import { resolveTribeRaids } from '../systems/tribes';
@@ -88,6 +89,7 @@ import { planAIBuildOrders } from '../systems/aiBuild';
 import { SCENARIO_OBJECTIVES } from '../data/objectives';
 import { SCENARIOS } from '../data';
 import { findChallenge, evaluateChallenge } from '../data/challenges';
+import { MAX_CUSTOM_EVENTS } from '../systems/customEvents';
 import { evaluateGoal, findObjectiveFor } from '../systems/objectives';
 import { applySuccession } from '../systems/succession';
 import {
@@ -382,6 +384,13 @@ interface GameStore extends GameState {
   socializeOfficers: (aId: EntityId, bId: EntityId) => { ok: boolean; message: string; forged?: boolean };
   /** 宴請 — host a banquet at an owned city: mingles rapport + lifts loyalty. */
   hostBanquet: (cityId: EntityId) => { ok: boolean; message: string };
+  /** 結拜 — two of your officers swear brotherhood (義兄弟): a permanent runtime
+   *  bond granting same-side combat synergy + a 90 loyalty floor. Costs gold. */
+  swearBrotherhood: (aId: EntityId, bId: EntityId) => { ok: boolean; message: string };
+  /** 事件編輯器 — add a player-authored event (caps at MAX_CUSTOM_EVENTS). */
+  addCustomEvent: (event: import('../types/event').HistoricalEvent) => { ok: boolean; message: string };
+  /** Remove a player-authored event by id. */
+  removeCustomEvent: (id: EntityId) => void;
   grantWish: (wishId: EntityId) => void;
   rejectWish: (wishId: EntityId) => void;
   setTutorialStep: (step: number | null) => void;
@@ -1313,7 +1322,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         let postFlags = eventFlagsAfterCourt;
         let postFiredIds = state.firedEventIds;
         const forcedEventWishes: import('../types').OfficerWish[] = [];
-        const eventCheck = findFiringEvent({
+        const eventCtx = {
           date: result.date,
           cities: postCities,
           officers: postOfficers,
@@ -1321,7 +1330,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           eventFlags: state.eventFlags,
           firedEventIds: state.firedEventIds,
           romanceMode: state.romanceMode,
-        });
+        };
+        // Historical events first; player-authored custom events fill the
+        // season if none scripted fired, and fire deterministically.
+        const eventCheck =
+          findFiringEvent(eventCtx) ??
+          (state.customEvents.length > 0
+            ? findFiringEventIn(state.customEvents, eventCtx, { alwaysFire: true })
+            : null);
         if (eventCheck) {
           // Achievement trigger.
           let ach = loadAchievementProgress();
@@ -1696,7 +1712,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             // used to do): sworn brothers 95, close family 95, siblings 90,
             // master-servant 90, mentor-student 90 — all conditional on the
             // bonded officer being alive in the same force.
-            const floor = loyaltyFloor(o, postOfficers, state.family);
+            const floor = loyaltyFloor(o, postOfficers, state.family, state.runtimeBonds);
             const next = Math.max(floor, Math.max(0, Math.min(100, o.loyalty + drift)));
             if (next !== o.loyalty) {
               driftedOfficers[o.id] = { ...o, loyalty: next };
@@ -4604,6 +4620,53 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         return { ok: true, message: `Banquet at ${city.name.en} — ${here.length} officers mingle (+loyalty, +rapport).` };
       },
 
+      swearBrotherhood: (aId, bId) => {
+        const state = get();
+        const a = state.officers[aId];
+        const b = state.officers[bId];
+        if (!a || !b || aId === bId) return { ok: false, message: 'Invalid officers.' };
+        if (!state.playerForceId || a.forceId !== state.playerForceId || b.forceId !== state.playerForceId)
+          return { ok: false, message: 'Both must be your officers.' };
+        if (a.status === 'dead' || b.status === 'dead') return { ok: false, message: 'Both must be living.' };
+        const already = [...OATH_BONDS, ...state.runtimeBonds].some((bd) =>
+          (bd.kind === 'sibling' || bd.kind === 'oath') &&
+          ((bd.officerA === aId && bd.officerB === bId) || (bd.officerA === bId && bd.officerB === aId)));
+        if (already) return { ok: false, message: `${a.name.en} and ${b.name.en} are already sworn brothers.` };
+        const player = state.forces[state.playerForceId];
+        const capital = player ? state.cities[player.capitalCityId] : null;
+        const COST = 300;
+        if (!capital || capital.gold < COST) return { ok: false, message: `Need ${COST} gold in the capital.` };
+        const newBond = {
+          officerA: aId,
+          officerB: bId,
+          floor: 90,
+          kind: 'sibling' as const,
+          label: `${a.name.en} & ${b.name.en} 義兄弟`,
+        };
+        // Forging a brotherhood also lifts both officers to the loyalty floor now.
+        const officers = { ...state.officers };
+        officers[aId] = { ...a, loyalty: Math.max(a.loyalty ?? 0, 90) };
+        officers[bId] = { ...b, loyalty: Math.max(b.loyalty ?? 0, 90) };
+        set({
+          officers,
+          runtimeBonds: [...state.runtimeBonds, newBond],
+          cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - COST } },
+        });
+        return { ok: true, message: `${a.name.en} and ${b.name.en} swear an oath of brotherhood! 義結金蘭` };
+      },
+
+      addCustomEvent: (event) => {
+        const state = get();
+        if (state.customEvents.length >= MAX_CUSTOM_EVENTS) {
+          return { ok: false, message: `Reached the ${MAX_CUSTOM_EVENTS}-event limit.` };
+        }
+        set({ customEvents: [...state.customEvents, event] });
+        return { ok: true, message: `Custom event saved: ${event.name.en}` };
+      },
+
+      removeCustomEvent: (id) =>
+        set((s) => ({ customEvents: s.customEvents.filter((e) => e.id !== id) })),
+
       grantWish: (wishId) => {
         const state = get();
         const wish = state.officerWishes.find((w) => w.id === wishId);
@@ -4789,6 +4852,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         recruitBonusSeasons: state.recruitBonusSeasons,
         eventFlags: state.eventFlags,
         firedEventIds: state.firedEventIds,
+        customEvents: state.customEvents,
         pendingEspionage: state.pendingEspionage,
         edictHistory: state.edictHistory,
         edictCooldowns: state.edictCooldowns,
@@ -4835,6 +4899,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (!state.enabledDynasties) state.enabledDynasties = [];
         if (!state.rapport) state.rapport = {};
         if (state.activeChallenge === undefined) state.activeChallenge = null;
+        if (!state.customEvents) state.customEvents = [];
         const cityOwnerByCityId = Object.fromEntries(
           Object.values(state.cities ?? {}).map((c) => [c.id, c.ownerForceId]),
         );
