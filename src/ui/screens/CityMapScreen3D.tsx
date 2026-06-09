@@ -481,6 +481,7 @@ function ChineseRoof3D({ size, color, ornament = false, beasts = false }: {
  *  corner posts, a door, recessed windows and a swept tiled roof. Three
  *  archetypes (cottage / merchant house / two-storey) chosen by hash. */
 function Dwelling({ x, z, seed }: { x: number; z: number; seed: number }) {
+  const season = useContext(SeasonCtx);
   const wall = HOUSE_WALL[seed % HOUSE_WALL.length];
   const roof = HOUSE_ROOF[(seed >> 3) % HOUSE_ROOF.length];
   const type = (seed >> 6) % 3;
@@ -489,6 +490,11 @@ function Dwelling({ x, z, seed }: { x: number; z: number; seed: number }) {
   const rot = ((seed >> 4) % 4) * (Math.PI / 12);
   const post = '#5a4530';
   const front = w / 2 + 0.01;
+  // Windows glow warm in the dusky seasons (autumn/winter) — lamplit homes.
+  const lit = (season === 'winter' || season === 'autumn') && (seed % 5 !== 0);
+  const winColor = lit ? '#ffce82' : '#2a2018';
+  const winEmissive = lit ? '#ff9c3a' : '#000000';
+  const winGlow = lit ? 0.9 : 0;
   return (
     <group position={[x, 0, z]} rotation={[0, rot, 0]}>
       {/* Stone plinth */}
@@ -515,12 +521,12 @@ function Dwelling({ x, z, seed }: { x: number; z: number; seed: number }) {
       </mesh>
       <mesh position={[w * 0.28, bodyH * 0.66 + 0.12, front]}>
         <boxGeometry args={[0.14, 0.14, 0.04]} />
-        <meshStandardMaterial color="#2a2018" roughness={0.6} />
+        <meshStandardMaterial color={winColor} emissive={winEmissive} emissiveIntensity={winGlow} roughness={0.6} />
       </mesh>
       {type >= 1 && (
         <mesh position={[-w * 0.28, bodyH * 0.66 + 0.12, front]}>
           <boxGeometry args={[0.14, 0.14, 0.04]} />
-          <meshStandardMaterial color="#2a2018" roughness={0.6} />
+          <meshStandardMaterial color={winColor} emissive={winEmissive} emissiveIntensity={winGlow} roughness={0.6} />
         </mesh>
       )}
       {/* Lower roof */}
@@ -536,7 +542,7 @@ function Dwelling({ x, z, seed }: { x: number; z: number; seed: number }) {
           </mesh>
           <mesh position={[0, bodyH + 0.42, w * 0.39 + 0.01]}>
             <boxGeometry args={[0.13, 0.13, 0.04]} />
-            <meshStandardMaterial color="#2a2018" roughness={0.6} />
+            <meshStandardMaterial color={winColor} emissive={winEmissive} emissiveIntensity={winGlow} roughness={0.6} />
           </mesh>
           <group position={[0, bodyH + 0.64, 0]}>
             <ChineseRoof3D size={w * 0.78} color={roof} />
@@ -725,6 +731,14 @@ function GovernmentHall3D({ x, z, bannerColor }: { x: number; z: number; bannerC
  *  for the season (gold in autumn, snow-dusted/bare in winter). */
 function GardenTree3D({ x, z, seed }: { x: number; z: number; seed: number }) {
   const season = useContext(SeasonCtx);
+  const sway = useRef<THREE.Group>(null);
+  const phase = x * 0.8 + z;
+  useFrame((s2) => {
+    const g = sway.current; if (!g) return;
+    const t = s2.clock.elapsedTime;
+    g.rotation.z = Math.sin(t * 1.3 + phase) * 0.028;
+    g.rotation.x = Math.sin(t * 1.1 + phase) * 0.018;
+  });
   const s = 0.82 + (seed % 4) * 0.08;
   const type = (seed >> 5) % 5; // 0-2 leafy, 3 blossom, 4 pine
   const trunk = (
@@ -736,7 +750,7 @@ function GardenTree3D({ x, z, seed }: { x: number; z: number; seed: number }) {
   if (type === 4) {
     // Pine — evergreen, with a snow cap in winter.
     return (
-      <group position={[x, 0, z]} scale={[s, s, s]}>
+      <group ref={sway} position={[x, 0, z]} scale={[s, s, s]}>
         {trunk}
         {[[0.7, 0.55], [1.05, 0.42], [1.35, 0.3]].map(([y, r], i) => (
           <mesh key={i} position={[0, y, 0]} castShadow>
@@ -762,7 +776,7 @@ function GardenTree3D({ x, z, seed }: { x: number; z: number; seed: number }) {
   else canopy = ['#3f6a32', '#4a7a3a', '#356030'][(seed >> 2) % 3];              // green
   const bare = season === 'winter';
   return (
-    <group position={[x, 0, z]} scale={[s, s, s]}>
+    <group ref={sway} position={[x, 0, z]} scale={[s, s, s]}>
       {trunk}
       <mesh position={[0, 0.98, 0]} castShadow>
         <icosahedronGeometry args={[bare ? 0.4 : 0.5, 0]} />
@@ -949,6 +963,118 @@ function Cart3D({ x, z, seed }: { x: number; z: number; seed: number }) {
           <boxGeometry args={[0.42, 0.03, 0.03]} />
           <meshStandardMaterial color="#5a4530" />
         </mesh>
+      ))}
+    </group>
+  );
+}
+
+/** A townsfolk figure that strolls back and forth between two points along a
+ *  street, facing the way it walks with a little gait bob. */
+function Walker3D({ ax, az, bx, bz, seed }: { ax: number; az: number; bx: number; bz: number; seed: number }) {
+  const ref = useRef<THREE.Group>(null);
+  const robe = ROBE[seed % ROBE.length];
+  const hat = (seed >> 3) % 2 === 0;
+  const speed = 0.16 + (seed % 5) * 0.02;
+  useFrame((s) => {
+    const g = ref.current; if (!g) return;
+    const t = s.clock.elapsedTime * speed + seed;
+    const u = (Math.sin(t) + 1) / 2;
+    g.position.x = ax + (bx - ax) * u;
+    g.position.z = az + (bz - az) * u;
+    g.position.y = Math.abs(Math.sin(t * 8)) * 0.04;
+    const fwd = Math.cos(t) >= 0 ? 1 : -1;
+    g.rotation.y = Math.atan2((bx - ax) * fwd, (bz - az) * fwd);
+  });
+  return (
+    <group ref={ref}>
+      <mesh position={[0, 0.17, 0]} castShadow><cylinderGeometry args={[0.08, 0.13, 0.34, 7]} /><meshStandardMaterial color={robe} roughness={0.85} /></mesh>
+      <mesh position={[0, 0.4, 0]} castShadow><sphereGeometry args={[0.07, 8, 7]} /><meshStandardMaterial color="#e6c39a" roughness={0.8} /></mesh>
+      {hat
+        ? <mesh position={[0, 0.47, 0]} castShadow><coneGeometry args={[0.12, 0.1, 10]} /><meshStandardMaterial color="#9a8050" roughness={0.8} /></mesh>
+        : <mesh position={[0, 0.46, 0]}><sphereGeometry args={[0.035, 6, 5]} /><meshStandardMaterial color="#2a2018" /></mesh>}
+    </group>
+  );
+}
+
+/** An ox-cart trundling along the avenue between two points. */
+function MovingCart3D({ ax, az, bx, bz, seed }: { ax: number; az: number; bx: number; bz: number; seed: number }) {
+  const ref = useRef<THREE.Group>(null);
+  useFrame((s) => {
+    const g = ref.current; if (!g) return;
+    const t = s.clock.elapsedTime * 0.05 + seed;
+    const u = (Math.sin(t) + 1) / 2;
+    g.position.x = ax + (bx - ax) * u;
+    g.position.z = az + (bz - az) * u;
+    const fwd = Math.cos(t) >= 0 ? 1 : -1;
+    g.rotation.y = Math.atan2((bx - ax) * fwd, (bz - az) * fwd);
+  });
+  return (
+    <group ref={ref}>
+      {/* Ox */}
+      <mesh position={[0, 0.34, 0.7]} castShadow><boxGeometry args={[0.34, 0.34, 0.6]} /><meshStandardMaterial color="#6a5440" roughness={0.9} /></mesh>
+      <mesh position={[0, 0.4, 1.05]} castShadow><boxGeometry args={[0.26, 0.24, 0.24]} /><meshStandardMaterial color="#5a4530" roughness={0.9} /></mesh>
+      {[-0.12, 0.12].map((hx, i) => (
+        <mesh key={i} position={[hx, 0.54, 1.12]} rotation={[0, 0, hx > 0 ? -0.5 : 0.5]}><cylinderGeometry args={[0.02, 0.02, 0.18, 5]} /><meshStandardMaterial color="#e8e0d0" /></mesh>
+      ))}
+      {[[-0.12, 0.5], [0.12, 0.5], [-0.12, 0.9], [0.12, 0.9]].map(([lx, lz], i) => (
+        <mesh key={`lg${i}`} position={[lx, 0.12, lz]}><cylinderGeometry args={[0.04, 0.04, 0.24, 5]} /><meshStandardMaterial color="#4a3826" /></mesh>
+      ))}
+      {/* Cart bed + wheels + load */}
+      <mesh position={[0, 0.32, 0]} castShadow><boxGeometry args={[0.7, 0.14, 0.5]} /><meshStandardMaterial color="#7a5a38" roughness={0.85} /></mesh>
+      <mesh position={[0, 0.5, 0]} castShadow><boxGeometry args={[0.5, 0.22, 0.36]} /><meshStandardMaterial color="#b89050" roughness={0.8} /></mesh>
+      {[-0.27, 0.27].map((wz, i) => (
+        <mesh key={`w${i}`} position={[0, 0.18, wz]} rotation={[Math.PI / 2, 0, 0]} castShadow><cylinderGeometry args={[0.18, 0.18, 0.05, 12]} /><meshStandardMaterial color="#3a2818" /></mesh>
+      ))}
+    </group>
+  );
+}
+
+/** A wisp of opaque chimney smoke — three puffs rise and shrink, then recycle
+ *  (no transparency; they just dwindle to nothing). */
+function Smoke3D({ x, z, base = 1.0 }: { x: number; z: number; base?: number }) {
+  const grp = useRef<THREE.Group>(null);
+  useFrame((s) => {
+    const g = grp.current; if (!g) return;
+    g.children.forEach((m, i) => {
+      const t = (s.clock.elapsedTime * 0.32 + i * 0.34) % 1;
+      m.position.set(Math.sin(t * 4 + i) * 0.12, base + t * 1.4, 0);
+      const sc = Math.sin(t * Math.PI) * 0.36 + 0.03;
+      m.scale.setScalar(sc);
+    });
+  });
+  return (
+    <group ref={grp} position={[x, 0, z]}>
+      {[0, 1, 2].map((i) => (
+        <mesh key={i}><sphereGeometry args={[0.5, 7, 6]} /><meshStandardMaterial color="#bcb6ac" roughness={1} /></mesh>
+      ))}
+    </group>
+  );
+}
+
+/** A few birds wheeling slowly over the city, wings flapping. */
+function Birds3D({ cx, cz, radius, y }: { cx: number; cz: number; radius: number; y: number }) {
+  const grp = useRef<THREE.Group>(null);
+  const N = 5;
+  useFrame((s) => {
+    const g = grp.current; if (!g) return;
+    const t = s.clock.elapsedTime * 0.22;
+    g.children.forEach((b, i) => {
+      const a = t + (i * Math.PI * 2) / N;
+      b.position.set(cx + Math.cos(a) * radius, y + Math.sin(a * 1.7 + i) * 0.8, cz + Math.sin(a) * radius);
+      b.rotation.y = -a;
+      const flap = Math.sin(s.clock.elapsedTime * 7 + i) * 0.5;
+      const wings = b as THREE.Object3D;
+      if (wings.children[0]) wings.children[0].rotation.z = 0.3 + flap;
+      if (wings.children[1]) wings.children[1].rotation.z = -0.3 - flap;
+    });
+  });
+  return (
+    <group ref={grp}>
+      {Array.from({ length: N }).map((_, i) => (
+        <group key={i}>
+          <mesh position={[0.13, 0, 0]}><boxGeometry args={[0.26, 0.02, 0.1]} /><meshStandardMaterial color="#2a2620" /></mesh>
+          <mesh position={[-0.13, 0, 0]}><boxGeometry args={[0.26, 0.02, 0.1]} /><meshStandardMaterial color="#2a2620" /></mesh>
+        </group>
       ))}
     </group>
   );
@@ -1696,7 +1822,19 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats }:
         avenueLanterns.push({ x: a.x + 0.92, z: a.z });
       }
     });
-    return { braziers, well, cart, folk, paifang, avenueLanterns };
+    // Pedestrians strolling the main avenue (more when populous) + an ox-cart.
+    const avZ = [...avenue].sort((a, b) => a.z - b.z);
+    const walkerN = Math.round(3 + stats.fPop * 8);
+    const walkers: Array<{ ax: number; az: number; bx: number; bz: number; seed: number }> = [];
+    for (let i = 0; i + 3 < avZ.length && walkers.length < walkerN; i += 2) {
+      const a = avZ[i], b = avZ[i + 3];
+      const side = i % 4 < 2 ? -0.5 : 0.5;
+      walkers.push({ ax: a.x + side, az: a.z, bx: b.x + side, bz: b.z, seed: i * 13 + 5 });
+    }
+    const oxcart = avZ.length > 3
+      ? { ax: avZ[1].x + 0.1, az: avZ[1].z, bx: avZ[avZ.length - 2].x + 0.1, bz: avZ[avZ.length - 2].z, seed: 1.7 }
+      : null;
+    return { braziers, well, cart, folk, paifang, avenueLanterns, walkers, oxcart };
   }, [hall, market, avenue, stats.fPop, stats.fLoyalty]);
 
   return (
@@ -1716,6 +1854,12 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats }:
       {market.map((m) => <MarketStall3D key={`mk-${m.key}`} x={m.x} z={m.z} seed={m.seed} />)}
       {villagers.map((v) => <Villager3D key={`vl-${v.key}`} x={v.x} z={v.z} seed={v.seed} />)}
       {props.folk.map((v, i) => <Villager3D key={`mf-${i}`} x={v.x} z={v.z} seed={v.seed} />)}
+      {props.walkers.map((wk, i) => <Walker3D key={`wk-${i}`} ax={wk.ax} az={wk.az} bx={wk.bx} bz={wk.bz} seed={wk.seed} />)}
+      {props.oxcart && <MovingCart3D ax={props.oxcart.ax} az={props.oxcart.az} bx={props.oxcart.bx} bz={props.oxcart.bz} seed={props.oxcart.seed} />}
+      {/* Chimney smoke from a scattering of homes */}
+      {houses.filter((_, i) => i % 8 === 0).slice(0, 5).map((h) => (
+        <Smoke3D key={`sm-${h.key}`} x={h.x} z={h.z} base={1.15} />
+      ))}
       {props.cart && <Cart3D x={props.cart.x} z={props.cart.z} seed={props.cart.seed} />}
       <Well3D x={props.well.x} z={props.well.z} />
       {props.braziers.map((b, i) => <Brazier3D key={`bz-${i}`} x={b.x} z={b.z} />)}
@@ -1941,6 +2085,14 @@ function CityScene({
 
       {/* Living-city dwellings + central 府衙 (cosmetic) */}
       <CityDwellings3D preview={preview} cityWallCol={cityWallCol} occupied={occupiedHexes} bannerColor={bannerColor} stats={stats} />
+
+      {/* A few birds wheeling over the rooftops */}
+      <Birds3D
+        cx={(preview.width * HEX_COL_STEP) / 2}
+        cz={(preview.height * HEX_ROW_STEP) / 2}
+        radius={Math.min(preview.width * HEX_COL_STEP, preview.height * HEX_ROW_STEP) * 0.32}
+        y={8}
+      />
 
       {/* Inside-city buildings */}
       {buildings.map((b) => (
