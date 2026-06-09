@@ -1,5 +1,5 @@
-import { useMemo, useState, useEffect, createContext, useContext } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { useMemo, useState, useEffect, useRef, createContext, useContext } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Html, Instances, Instance } from '@react-three/drei';
 import * as THREE from 'three';
 import { useGameStore } from '../../game/state/store';
@@ -39,6 +39,41 @@ const INSIDE_BUILDING_DEF: Record<BuildingId, { glyph: string; color: string; he
   wall:     { glyph: '壁', color: '#5a4530', height: 0.8, nameZh: '城壁' },
   shipyard: { glyph: '渠', color: '#3a6a98', height: 1.0, nameZh: '船廠' },
 };
+
+/* ─── Gentle ambient motion ──────────────────────────────────────────
+ * The city canvas already redraws every frame (r3f frameloop="always"),
+ * so these pure-transform tweens add life at essentially no extra GPU cost.
+ * No textures, transparency or geometry churn — unrelated to the volumetric
+ * cloud that once misbehaved. */
+
+/** Oscillate a group like cloth caught in a breeze. Returns a ref to attach to
+ *  the pivot group; phase de-syncs instances so they don't move in unison. */
+function useFlutter(phase: number, amp = 0.25, speed = 2.2) {
+  const ref = useRef<THREE.Group>(null);
+  useFrame((s) => {
+    const g = ref.current;
+    if (!g) return;
+    const t = s.clock.elapsedTime;
+    g.rotation.y = Math.sin(t * speed + phase) * amp;
+    g.rotation.z = Math.sin(t * speed * 1.4 + phase) * amp * 0.22;
+  });
+  return ref;
+}
+
+/** A fluttering banner cloth pivoted at a pole. */
+function Banner3D({ color, w, h, phase, faceX = 0 }: {
+  color: string; w: number; h: number; phase: number; faceX?: number;
+}) {
+  const ref = useFlutter(phase, 0.28, 2.0);
+  return (
+    <group ref={ref}>
+      <mesh position={[faceX, 0, 0]}>
+        <boxGeometry args={[w, h, 0.02]} />
+        <meshStandardMaterial color={color} side={THREE.DoubleSide} roughness={0.75} />
+      </mesh>
+    </group>
+  );
+}
 
 /* ─── Inside-city building (3D block + roof + glyph label) ──────────── */
 function InsideBuilding3D({ coord, buildingId, level }: {
@@ -194,15 +229,14 @@ function CityGate3D({ x, z, bannerColor }: { x: number; z: number; bannerColor: 
         <boxGeometry args={[0.62, 1.3, 0.16]} />
         <meshStandardMaterial color="#4a2f1a" roughness={0.8} />
       </mesh>
-      {/* Pennant on the ridge */}
+      {/* Pennant on the ridge — flutters */}
       <mesh position={[0, 4.05, 0]} castShadow>
         <cylinderGeometry args={[0.03, 0.03, 0.7, 6]} />
         <meshStandardMaterial color="#1a1410" />
       </mesh>
-      <mesh position={[0.18, 4.18, 0]}>
-        <boxGeometry args={[0.32, 0.34, 0.02]} />
-        <meshStandardMaterial color={bannerColor} side={THREE.DoubleSide} />
-      </mesh>
+      <group position={[0, 4.2, 0]}>
+        <Banner3D color={bannerColor} w={0.32} h={0.34} phase={x + z} faceX={0.16} />
+      </group>
     </group>
   );
 }
@@ -225,15 +259,14 @@ function CornerTower3D({ x, z, bannerColor }: { x: number; z: number; bannerColo
       <group position={[0, 2.62, 0]}>
         <ChineseRoof3D size={1.95} color="#33404e" ornament beasts />
       </group>
-      {/* Flag mast + banner */}
+      {/* Flag mast + fluttering banner */}
       <mesh position={[0, 3.85, 0]} castShadow>
         <cylinderGeometry args={[0.04, 0.04, 1.1, 6]} />
         <meshStandardMaterial color="#1a1410" />
       </mesh>
-      <mesh position={[0.22, 4.05, 0]}>
-        <boxGeometry args={[0.4, 0.34, 0.02]} />
-        <meshStandardMaterial color={bannerColor} side={THREE.DoubleSide} />
-      </mesh>
+      <group position={[0, 4.05, 0]}>
+        <Banner3D color={bannerColor} w={0.4} h={0.34} phase={x + z * 1.2} faceX={0.2} />
+      </group>
     </group>
   );
 }
@@ -555,11 +588,10 @@ function FlagPole3D({ x, z, color, h = 2.4 }: { x: number; z: number; color: str
         <sphereGeometry args={[0.06, 8, 6]} />
         <meshStandardMaterial color="#d4a84a" metalness={0.4} roughness={0.4} />
       </mesh>
-      {/* Vertical hanging banner */}
-      <mesh position={[0.16, h - 0.5, 0]} castShadow>
-        <boxGeometry args={[0.26, 0.8, 0.03]} />
-        <meshStandardMaterial color={color} roughness={0.75} side={THREE.DoubleSide} />
-      </mesh>
+      {/* Vertical hanging banner — flutters in the breeze */}
+      <group position={[0, h - 0.5, 0]}>
+        <Banner3D color={color} w={0.26} h={0.8} phase={x + z} faceX={0.13} />
+      </group>
     </group>
   );
 }
@@ -745,8 +777,13 @@ function GardenTree3D({ x, z, seed }: { x: number; z: number; seed: number }) {
   );
 }
 
-/** A warm street lantern — post + glowing lamp + cap. */
+/** A warm street lantern — post + glowing lamp + cap, with a soft flicker. */
 function Lantern3D({ x, z }: { x: number; z: number }) {
+  const lamp = useRef<THREE.MeshStandardMaterial>(null);
+  const phase = x + z * 1.7;
+  useFrame((s) => {
+    if (lamp.current) lamp.current.emissiveIntensity = 0.55 + Math.sin(s.clock.elapsedTime * 4 + phase) * 0.18;
+  });
   return (
     <group position={[x, 0, z]}>
       <mesh position={[0, 0.4, 0]} castShadow>
@@ -755,7 +792,7 @@ function Lantern3D({ x, z }: { x: number; z: number }) {
       </mesh>
       <mesh position={[0, 0.92, 0]} castShadow>
         <boxGeometry args={[0.2, 0.26, 0.2]} />
-        <meshStandardMaterial color="#d4502a" emissive="#e07020" emissiveIntensity={0.6} roughness={0.6} />
+        <meshStandardMaterial ref={lamp} color="#d4502a" emissive="#e07020" emissiveIntensity={0.6} roughness={0.6} />
       </mesh>
       <mesh position={[0, 1.08, 0]} rotation={[0, Math.PI / 4, 0]}>
         <coneGeometry args={[0.18, 0.12, 4]} />
@@ -914,8 +951,17 @@ function Cart3D({ x, z, seed }: { x: number; z: number; seed: number }) {
   );
 }
 
-/** A glowing brazier (opaque emissive coals — no transparency). */
+/** A glowing brazier with a flickering flame (opaque emissive — no transparency). */
 function Brazier3D({ x, z }: { x: number; z: number }) {
+  const flame = useRef<THREE.Mesh>(null);
+  const coals = useRef<THREE.MeshStandardMaterial>(null);
+  const phase = x * 1.7 + z;
+  useFrame((s) => {
+    const t = s.clock.elapsedTime;
+    const f = 0.85 + Math.sin(t * 9 + phase) * 0.12 + Math.sin(t * 17 + phase) * 0.06;
+    if (flame.current) { flame.current.scale.set(0.9 + (f - 0.9) * 0.5, f, 0.9 + (f - 0.9) * 0.5); }
+    if (coals.current) { coals.current.emissiveIntensity = 1.0 + (f - 0.9) * 1.2; }
+  });
   return (
     <group position={[x, 0, z]}>
       {[[-0.1, -0.1], [0.1, -0.1], [-0.1, 0.1], [0.1, 0.1]].map(([px, pz], i) => (
@@ -930,9 +976,9 @@ function Brazier3D({ x, z }: { x: number; z: number }) {
       </mesh>
       <mesh position={[0, 0.47, 0]}>
         <cylinderGeometry args={[0.14, 0.14, 0.05, 10]} />
-        <meshStandardMaterial color="#e0641e" emissive="#ff7a1e" emissiveIntensity={1.1} roughness={0.5} />
+        <meshStandardMaterial ref={coals} color="#e0641e" emissive="#ff7a1e" emissiveIntensity={1.1} roughness={0.5} />
       </mesh>
-      <mesh position={[0, 0.58, 0]}>
+      <mesh ref={flame} position={[0, 0.58, 0]}>
         <coneGeometry args={[0.08, 0.2, 7]} />
         <meshStandardMaterial color="#ffb43a" emissive="#ff8a1e" emissiveIntensity={1.2} />
       </mesh>
@@ -1046,10 +1092,19 @@ function Reed3D({ x, z, seed }: { x: number; z: number; seed: number }) {
   );
 }
 
-/** A little sampan drifting on the moat. */
+/** A little sampan drifting and bobbing on the moat. */
 function SmallBoat3D({ x, z, seed }: { x: number; z: number; seed: number }) {
+  const ref = useRef<THREE.Group>(null);
+  useFrame((s) => {
+    const g = ref.current;
+    if (!g) return;
+    const t = s.clock.elapsedTime;
+    g.position.y = -0.04 + Math.sin(t * 1.1 + seed) * 0.04;
+    g.rotation.z = Math.sin(t * 0.9 + seed) * 0.05;
+    g.rotation.x = Math.sin(t * 1.3 + seed) * 0.04;
+  });
   return (
-    <group position={[x, -0.04, z]} rotation={[0, seed, 0]}>
+    <group ref={ref} position={[x, -0.04, z]} rotation={[0, seed, 0]}>
       <mesh position={[0, 0.05, 0]} castShadow>
         <boxGeometry args={[0.4, 0.12, 1.0]} />
         <meshStandardMaterial color="#6e5230" roughness={0.85} />
@@ -1124,10 +1179,9 @@ function WallBanner3D({ x, z, color }: { x: number; z: number; color: string }) 
         <cylinderGeometry args={[0.03, 0.03, 0.9, 6]} />
         <meshStandardMaterial color="#1a1410" />
       </mesh>
-      <mesh position={[0.13, 1.95, 0]}>
-        <boxGeometry args={[0.22, 0.55, 0.02]} />
-        <meshStandardMaterial color={color} side={THREE.DoubleSide} roughness={0.75} />
-      </mesh>
+      <group position={[0, 1.98, 0]}>
+        <Banner3D color={color} w={0.22} h={0.55} phase={x * 1.3 + z} faceX={0.11} />
+      </group>
     </group>
   );
 }
