@@ -235,19 +235,79 @@ function Dwelling({ x, z, seed }: { x: number; z: number; seed: number }) {
 function GovernmentHall3D({ x, z }: { x: number; z: number }) {
   return (
     <group position={[x, 0, z]}>
-      <mesh position={[0, 0.7, 0]} castShadow receiveShadow>
-        <boxGeometry args={[1.5, 1.2, 1.2]} />
+      {/* Paved plaza */}
+      <mesh position={[0, 0.06, 0]} receiveShadow>
+        <boxGeometry args={[3.4, 0.12, 3.4]} />
+        <meshStandardMaterial color="#9a8f78" roughness={0.95} />
+      </mesh>
+      {/* Hall on a stone podium */}
+      <mesh position={[0, 0.26, 0]} receiveShadow castShadow>
+        <boxGeometry args={[1.9, 0.3, 1.6]} />
+        <meshStandardMaterial color="#b0a078" roughness={0.9} />
+      </mesh>
+      <mesh position={[0, 0.95, 0]} castShadow receiveShadow>
+        <boxGeometry args={[1.5, 1.0, 1.2]} />
         <meshStandardMaterial color="#8a3030" roughness={0.7} />
       </mesh>
-      <mesh position={[0, 1.55, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
-        <coneGeometry args={[1.25, 0.6, 4]} />
-        <meshStandardMaterial color="#2a1a12" roughness={0.85} />
+      {/* Red columns across the front */}
+      {[-0.6, -0.2, 0.2, 0.6].map((px, i) => (
+        <mesh key={i} position={[px, 0.95, 0.62]} castShadow>
+          <cylinderGeometry args={[0.07, 0.07, 1.0, 8]} />
+          <meshStandardMaterial color="#a84838" roughness={0.6} />
+        </mesh>
+      ))}
+      {/* Sweeping roof + ridge */}
+      <mesh position={[0, 1.7, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
+        <coneGeometry args={[1.35, 0.65, 4]} />
+        <meshStandardMaterial color="#2f3a48" roughness={0.7} metalness={0.2} />
       </mesh>
-      <Html position={[0, 2.1, 0]} center distanceFactor={9} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
+      <Html position={[0, 2.3, 0]} center distanceFactor={9} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
         <div style={{ background: 'rgba(20,14,8,0.85)', border: '1px solid #d4a84a', padding: '1px 6px', fontFamily: 'Songti SC, serif', fontSize: '11px', color: '#f0d98a', borderRadius: 2, whiteSpace: 'nowrap' }}>
           府衙
         </div>
       </Html>
+    </group>
+  );
+}
+
+/** A stylised low-poly garden tree — trunk + two leafy blobs. */
+function GardenTree3D({ x, z, seed }: { x: number; z: number; seed: number }) {
+  const s = 0.82 + (seed % 4) * 0.08;
+  const green = ['#3f6a32', '#4a7a3a', '#356030', '#52803f'][(seed >> 2) % 4];
+  return (
+    <group position={[x, 0, z]} scale={[s, s, s]}>
+      <mesh position={[0, 0.35, 0]} castShadow>
+        <cylinderGeometry args={[0.09, 0.13, 0.7, 6]} />
+        <meshStandardMaterial color="#5a3f28" roughness={0.9} />
+      </mesh>
+      <mesh position={[0, 0.95, 0]} castShadow>
+        <icosahedronGeometry args={[0.5, 0]} />
+        <meshStandardMaterial color={green} roughness={0.85} flatShading />
+      </mesh>
+      <mesh position={[0.18, 0.74, 0.08]} castShadow>
+        <icosahedronGeometry args={[0.32, 0]} />
+        <meshStandardMaterial color={green} roughness={0.85} flatShading />
+      </mesh>
+    </group>
+  );
+}
+
+/** A warm street lantern — post + glowing lamp + cap. */
+function Lantern3D({ x, z }: { x: number; z: number }) {
+  return (
+    <group position={[x, 0, z]}>
+      <mesh position={[0, 0.4, 0]} castShadow>
+        <cylinderGeometry args={[0.05, 0.06, 0.8, 6]} />
+        <meshStandardMaterial color="#2a1d12" roughness={0.9} />
+      </mesh>
+      <mesh position={[0, 0.92, 0]} castShadow>
+        <boxGeometry args={[0.2, 0.26, 0.2]} />
+        <meshStandardMaterial color="#d4502a" emissive="#e07020" emissiveIntensity={0.6} roughness={0.6} />
+      </mesh>
+      <mesh position={[0, 1.08, 0]} rotation={[0, Math.PI / 4, 0]}>
+        <coneGeometry args={[0.18, 0.12, 4]} />
+        <meshStandardMaterial color="#2a1d12" />
+      </mesh>
     </group>
   );
 }
@@ -258,8 +318,9 @@ function CityDwellings3D({ preview, cityWallCol, occupied }: {
   cityWallCol: number;
   occupied: Set<string>;
 }) {
-  const houses = useMemo(() => {
-    const out: Array<{ x: number; z: number; seed: number; key: string }> = [];
+  const { houses, trees } = useMemo(() => {
+    const houses: Array<{ x: number; z: number; seed: number; key: string }> = [];
+    const trees: Array<{ x: number; z: number; seed: number; key: string }> = [];
     const W = preview.width, H = preview.height;
     for (const tile of preview.tiles) {
       const { col, row } = tile.coord;
@@ -269,13 +330,14 @@ function CityDwellings3D({ preview, cityWallCol, occupied }: {
       const key = `${col},${row}`;
       if (occupied.has(key)) continue;                     // slots + real buildings
       const seed = dwellingHash(col, row);
-      if (seed % 100 < 45) continue;                       // ~55% density; gaps = streets
+      const bucket = seed % 100;
+      if (bucket < 42) continue;                           // gaps = streets / open ground
       const [x, z] = hexWorld(col, row);
-      out.push({ x, z, seed, key });
-      if (out.length >= 36) break;                         // safety cap
+      if (bucket < 80 && houses.length < 34) houses.push({ x, z, seed, key }); // ~38% houses
+      else if (trees.length < 16) trees.push({ x, z, seed, key });             // ~20% gardens
     }
-    return out;
-  }, [preview, cityWallCol, occupied]);
+    return { houses, trees };
+  }, [preview, occupied]);
 
   const hall = useMemo(() => {
     const col = Math.max(1, Math.round(cityWallCol * 0.42));
@@ -284,9 +346,27 @@ function CityDwellings3D({ preview, cityWallCol, occupied }: {
     return { x, z };
   }, [preview.height, cityWallCol]);
 
+  // A few lanterns flanking the hall + just inside the gate.
+  const lanterns = useMemo(() => {
+    const W = preview.width, H = preview.height;
+    const spots: Array<[number, number]> = [
+      [Math.round(cityWallCol * 0.42) - 2, Math.round(H / 2)],
+      [Math.round(cityWallCol * 0.42) + 2, Math.round(H / 2)],
+      [Math.floor(W / 2), H - 3], // inside the south gate
+    ];
+    return spots.map(([c, r]) => {
+      const cc = Math.max(1, Math.min(W - 2, c));
+      const rr = Math.max(1, Math.min(H - 2, r));
+      const [x, z] = hexWorld(cc, rr);
+      return { x, z, key: `${cc},${rr}` };
+    });
+  }, [preview.width, preview.height, cityWallCol]);
+
   return (
     <>
       {houses.map((h) => <Dwelling key={`dw-${h.key}`} x={h.x} z={h.z} seed={h.seed} />)}
+      {trees.map((tr) => <GardenTree3D key={`tr-${tr.key}`} x={tr.x} z={tr.z} seed={tr.seed} />)}
+      {lanterns.map((l) => <Lantern3D key={`ln-${l.key}`} x={l.x} z={l.z} />)}
       <GovernmentHall3D x={hall.x} z={hall.z} />
     </>
   );
