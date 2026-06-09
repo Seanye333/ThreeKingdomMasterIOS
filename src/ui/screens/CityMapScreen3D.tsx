@@ -117,6 +117,16 @@ function InsideBuilding3D({ coord, buildingId, level }: {
       <group position={[0, h + 0.18, 0]}>
         <ChineseRoof3D size={1.05} color={roofColor} ornament={grand} />
       </group>
+      {/* The foundry has a smoking chimney */}
+      {buildingId === 'foundry' && (
+        <>
+          <mesh position={[0.34, h + 0.45, -0.34]} castShadow>
+            <cylinderGeometry args={[0.1, 0.12, 0.6, 8]} />
+            <meshStandardMaterial color="#3a2e22" roughness={0.9} />
+          </mesh>
+          <Smoke3D x={0.34} z={-0.34} base={h + 0.7} />
+        </>
+      )}
       {/* Floating label */}
       <Html position={[0, h + 0.9, 0]} center distanceFactor={9} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
         <div style={{
@@ -452,6 +462,21 @@ function ChineseRoof3D({ size, color, ornament = false, beasts = false }: {
           <meshStandardMaterial color={ridgeC} roughness={0.6} />
         </mesh>
       ))}
+      {/* Hip ridges (戗脊) running apex→corners on grand roofs — the tiled look */}
+      {ornament && !snowy && [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz], i) => {
+        const a = new THREE.Vector3(0, roofH + 0.06, 0);
+        const c = new THREE.Vector3(sx * eave * 0.46, 0.12, sz * eave * 0.46);
+        const d = c.clone().sub(a);
+        const len = d.length();
+        const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.clone().normalize());
+        const mid = a.clone().add(c).multiplyScalar(0.5);
+        return (
+          <mesh key={`hip${i}`} position={[mid.x, mid.y, mid.z]} quaternion={[q.x, q.y, q.z, q.w]} castShadow>
+            <boxGeometry args={[0.07, len, 0.07]} />
+            <meshStandardMaterial color={ridgeC} roughness={0.58} />
+          </mesh>
+        );
+      })}
       {/* 鴟吻 ridge-end ornaments for important halls */}
       {ornament && [-1, 1].map((s, i) => (
         <mesh key={`o${i}`} position={[s * eave * 0.24, roofH + 0.16, 0]} rotation={[0, 0, s * 0.5]}>
@@ -713,6 +738,31 @@ function GovernmentHall3D({ x, z, bannerColor }: { x: number; z: number; bannerC
           </mesh>
         </group>
       ))}
+      {/* 影壁 spirit screen facing the approach */}
+      <group position={[0, 0, 3.4]}>
+        <mesh position={[0, 0.1, 0]} receiveShadow castShadow>
+          <boxGeometry args={[2.1, 0.2, 0.34]} />
+          <meshStandardMaterial color="#9a8f78" roughness={0.92} />
+        </mesh>
+        <mesh position={[0, 0.85, 0]} castShadow receiveShadow>
+          <boxGeometry args={[1.9, 1.3, 0.16]} />
+          <meshStandardMaterial color="#a83a30" roughness={0.7} />
+        </mesh>
+        <mesh position={[0, 0.85, 0.09]}>
+          <boxGeometry args={[1.0, 0.82, 0.04]} />
+          <meshStandardMaterial color="#caa24a" emissive="#5a4010" emissiveIntensity={0.25} roughness={0.5} />
+        </mesh>
+        <mesh position={[0, 1.6, 0]} castShadow>
+          <boxGeometry args={[2.1, 0.12, 0.42]} />
+          <meshStandardMaterial color="#39444f" roughness={0.6} />
+        </mesh>
+        {[-1, 1].map((s, i) => (
+          <mesh key={i} position={[s * 1.0, 1.7, 0]} rotation={[0, 0, -s * 0.5]}>
+            <coneGeometry args={[0.07, 0.2, 4]} />
+            <meshStandardMaterial color="#566472" roughness={0.6} />
+          </mesh>
+        ))}
+      </group>
       {/* Guardian lions + banner poles flanking the steps */}
       <StoneLion3D x={-0.7} z={1.15} faceZ={1} />
       <StoneLion3D x={0.7} z={1.15} faceZ={1} />
@@ -1714,7 +1764,7 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats }:
     return { keys, pagoda: { x: px, z: pz }, drum: { x: dx, z: dz }, bell: { x: bx, z: bz }, garden: { x: gx2, z: gz2 }, farm: { x: fx, z: fz } };
   }, [preview.width, preview.height, cityWallCol]);
 
-  const { houses, trees, paths, villagers, flowers, avenue, grass } = useMemo(() => {
+  const { houses, trees, paths, villagers, flowers, avenue, grass, dirt, puddles } = useMemo(() => {
     const houses: Array<{ x: number; z: number; seed: number; key: string }> = [];
     const trees: Array<{ x: number; z: number; seed: number; key: string }> = [];
     const paths: Array<{ x: number; z: number; seed: number; key: string }> = [];
@@ -1722,6 +1772,8 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats }:
     const flowers: Array<{ x: number; z: number; seed: number; key: string }> = [];
     const avenue: Array<{ x: number; z: number; key: string }> = [];
     const grass: Array<{ x: number; z: number; s: number; r: number; c: string }> = [];
+    const dirt: Array<{ x: number; z: number; seed: number; key: string }> = [];
+    const puddles: Array<{ x: number; z: number; key: string }> = [];
     const GRASSC = ['#4a7a3a', '#3f6e34', '#56833f', '#5f8a44'];
     const sow = (cx: number, cz: number, seed: number) => {
       const n = 3 + (seed % 3);
@@ -1766,9 +1818,14 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats }:
       else if (bucket < 78 && trees.length < 30) { trees.push({ x, z, seed, key }); sow(x, z, seed); } // gardens
       else if (bucket < 90 && villagers.length < villagerCap) { villagers.push({ x, z, seed, key }); sow(x, z, seed); } // townsfolk
       else if (flowers.length < 20) flowers.push({ x, z, seed, key });                  // flower beds
-      else sow(x, z, seed);                                                              // courtyard grass
+      else {                                                                             // open ground
+        sow(x, z, seed);
+        const sub = (seed >> 9) % 12;
+        if (sub < 2 && dirt.length < 20) dirt.push({ x, z, seed, key });                 // bare earth
+        else if (sub === 2 && puddles.length < 10) puddles.push({ x, z, key });          // puddle
+      }
     }
-    return { houses, trees, paths, villagers, flowers, avenue, grass };
+    return { houses, trees, paths, villagers, flowers, avenue, grass, dirt, puddles };
   }, [preview, occupied, market, landmarks, stats.fPop]);
 
   const hall = useMemo(() => {
@@ -1844,6 +1901,19 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats }:
         <mesh key={`av-${a.key}`} position={[a.x, 0.045, a.z]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
           <boxGeometry args={[1.46, 1.46, 0.07]} />
           <meshStandardMaterial color="#a89c84" roughness={0.97} />
+        </mesh>
+      ))}
+      {/* Bare-earth patches + puddles break up the green ground */}
+      {dirt.map((d) => (
+        <mesh key={`dt-${d.key}`} position={[d.x, 0.035, d.z]} rotation={[-Math.PI / 2, (d.seed % 4) * 0.4, 0]} receiveShadow>
+          <boxGeometry args={[1.0 + (d.seed % 3) * 0.12, 0.9 + (d.seed % 2) * 0.2, 0.05]} />
+          <meshStandardMaterial color="#6a5740" roughness={0.98} />
+        </mesh>
+      ))}
+      {puddles.map((p) => (
+        <mesh key={`pd-${p.key}`} position={[p.x, 0.05, p.z]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+          <circleGeometry args={[0.34, 16]} />
+          <meshStandardMaterial color="#3a4a52" roughness={0.18} metalness={0.55} />
         </mesh>
       ))}
       <GrassTufts3D tufts={grass} />
