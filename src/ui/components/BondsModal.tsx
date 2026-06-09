@@ -1,9 +1,11 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, useRef, useState, type CSSProperties } from 'react';
 import { OATH_BONDS } from '../../game/data';
 import { useGameStore } from '../../game/state/store';
 import type { Officer } from '../../game/types';
 import { getRapport } from '../../game/systems/rapport';
 import { OfficerDetail } from './OfficerDetail';
+import { BondCeremony } from './BondCeremony';
+import { playSfx } from '../../game/systems/sound';
 import styles from './BondsModal.module.css';
 import { useT, useLanguage } from '../i18n';
 
@@ -32,13 +34,53 @@ export function BondsModal({ onClose }: Props) {
   const socializeOfficers = useGameStore((s) => s.socializeOfficers);
   const hostBanquet = useGameStore((s) => s.hostBanquet);
   const swearBrotherhood = useGameStore((s) => s.swearBrotherhood);
+  const year = useGameStore((s) => s.date.year);
+  const playerColor = (playerForceId ? forces[playerForceId]?.color : null) ?? '#d4a84a';
   const [selectedOfficer, setSelectedOfficer] = useState<Officer | null>(null);
   const [aSel, setASel] = useState('');
   const [bSel, setBSel] = useState('');
   const [citySel, setCitySel] = useState('');
   const [socialMsg, setSocialMsg] = useState('');
+  // Ceremony overlay (義結金蘭 flourish) + a transient floating-number cue.
+  const [ceremony, setCeremony] = useState<{ a: Officer; b: Officer; titleZh: string; titleEn: string } | null>(null);
+  const [floater, setFloater] = useState<{ key: number; text: string; color: string } | null>(null);
+  const floatId = useRef(0);
   const lang = useLanguage();
   const t = useT();
+
+  const floatFx = (text: string, color: string) => {
+    floatId.current += 1;
+    setFloater({ key: floatId.current, text, color });
+  };
+  const handleSocialize = () => {
+    const r = socializeOfficers(aSel, bSel);
+    setSocialMsg(r.message);
+    if (r.forged && officers[aSel] && officers[bSel]) {
+      playSfx('bell');
+      setCeremony({ a: officers[aSel], b: officers[bSel], titleZh: '義結金蘭', titleEn: 'A Bond is Sworn' });
+    } else if (r.ok) {
+      playSfx('coin');
+      floatFx(t('好感 +25', 'Rapport +25'), '#7ed68a');
+    } else {
+      playSfx('defeat');
+    }
+  };
+  const handleSwear = () => {
+    const r = swearBrotherhood(aSel, bSel);
+    setSocialMsg(r.message);
+    if (r.ok && officers[aSel] && officers[bSel]) {
+      playSfx('bell');
+      setCeremony({ a: officers[aSel], b: officers[bSel], titleZh: '義結金蘭 · 義兄弟', titleEn: 'Sworn Brothers' });
+    } else {
+      playSfx('defeat');
+    }
+  };
+  const handleBanquet = () => {
+    const r = hostBanquet(citySel);
+    setSocialMsg(r.message);
+    if (r.ok) { playSfx('horn'); floatFx(t('忠誠 ↑ · 好感 ↑', 'Loyalty ↑ · Rapport ↑'), '#d4a84a'); }
+    else playSfx('defeat');
+  };
 
   const myOfficers = useMemo(
     () => Object.values(officers)
@@ -112,8 +154,21 @@ export function BondsModal({ onClose }: Props) {
 
         {/* 社交 — grow rapport (好感) toward sworn bonds */}
         <div style={{ border: '1px solid #4a3520', background: 'rgba(20,16,12,0.5)', padding: '0.6rem 0.75rem', margin: '0 0 0.8rem' }}>
-          <div style={{ color: '#d4a84a', letterSpacing: '0.2rem', marginBottom: '0.5rem' }}>
+          <div style={{ color: '#d4a84a', letterSpacing: '0.2rem', marginBottom: '0.5rem', position: 'relative' }}>
             {t('結交養誼', 'Build Rapport')}
+            {floater && (
+              <span
+                key={floater.key}
+                style={{
+                  position: 'absolute', left: '6.5rem', top: '-0.1rem', whiteSpace: 'nowrap',
+                  fontSize: '0.82rem', color: floater.color, fontWeight: 'bold', pointerEvents: 'none',
+                  textShadow: '0 1px 3px rgba(0,0,0,0.7)', animation: 'tkmFloatUpFade 1s ease-out forwards',
+                }}
+                onAnimationEnd={() => setFloater(null)}
+              >
+                {floater.text}
+              </span>
+            )}
           </div>
           <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <select value={aSel} onChange={(e) => setASel(e.target.value)} style={selStyle}>
@@ -128,14 +183,14 @@ export function BondsModal({ onClose }: Props) {
               <span style={{ fontSize: '0.75rem', color: '#c0a878' }}>{t('好感', 'Rapport')} {getRapport(rapport, aSel, bSel)}/100</span>
             )}
             <button
-              onClick={() => { const r = socializeOfficers(aSel, bSel); setSocialMsg(r.message); }}
+              onClick={handleSocialize}
               disabled={!aSel || !bSel || aSel === bSel}
               style={btnStyle(!(!aSel || !bSel || aSel === bSel))}
             >
               {t('結交 (100金)', 'Socialize (100g)')}
             </button>
             <button
-              onClick={() => { const r = swearBrotherhood(aSel, bSel); setSocialMsg(r.message); }}
+              onClick={handleSwear}
               disabled={!aSel || !bSel || aSel === bSel}
               style={{ ...btnStyle(!(!aSel || !bSel || aSel === bSel)), borderColor: '#c0504a', color: aSel && bSel && aSel !== bSel ? '#e2a07a' : undefined }}
               title={t('義結金蘭 — 永久羈絆，戰場同陣加成 + 忠誠下限90', 'Sworn brotherhood — permanent bond: same-side combat synergy + loyalty floor 90')}
@@ -149,7 +204,7 @@ export function BondsModal({ onClose }: Props) {
               {myCities.map((c) => <option key={c.id} value={c.id}>{lang === 'en' ? c.name.en : c.name.zh}</option>)}
             </select>
             <button
-              onClick={() => { const r = hostBanquet(citySel); setSocialMsg(r.message); }}
+              onClick={handleBanquet}
               disabled={!citySel}
               style={btnStyle(!!citySel)}
             >
@@ -203,6 +258,17 @@ export function BondsModal({ onClose }: Props) {
           />
         )}
       </div>
+      {ceremony && (
+        <BondCeremony
+          a={ceremony.a}
+          b={ceremony.b}
+          titleZh={ceremony.titleZh}
+          titleEn={ceremony.titleEn}
+          color={playerColor}
+          year={year}
+          onDone={() => setCeremony(null)}
+        />
+      )}
     </div>
   );
 }

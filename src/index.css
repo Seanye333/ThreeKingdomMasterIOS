@@ -837,3 +837,52 @@ button:not(:disabled):active {
   margin: 0.4rem 0;
   animation: tkmFadeIn 0.5s ease-out;
 }
+
+/* ─── Bond ceremony (結拜 / 義結金蘭) animations ──────────────────────── */
+@keyframes tkmCeremonyBackdrop {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes tkmConvergeLeft {
+  0%   { transform: translateX(-160px) rotate(-9deg) scale(0.85); opacity: 0; }
+  60%  { opacity: 1; }
+  100% { transform: translateX(0) rotate(0deg) scale(1); opacity: 1; }
+}
+@keyframes tkmConvergeRight {
+  0%   { transform: translateX(160px) rotate(9deg) scale(0.85); opacity: 0; }
+  60%  { opacity: 1; }
+  100% { transform: translateX(0) rotate(0deg) scale(1); opacity: 1; }
+}
+@keyframes tkmSealStamp {
+  0%   { transform: scale(2.6) rotate(-14deg); opacity: 0; }
+  50%  { transform: scale(0.86) rotate(4deg); opacity: 1; }
+  68%  { transform: scale(1.12) rotate(-1deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+@keyframes tkmRaySpin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(360deg); }
+}
+@keyframes tkmRayPulse {
+  0%, 100% { opacity: 0.18; }
+  50%      { opacity: 0.42; }
+}
+@keyframes tkmCalligraphyReveal {
+  0%   { opacity: 0; letter-spacing: 1.4rem; filter: blur(5px); transform: translateY(8px); }
+  100% { opacity: 1; letter-spacing: 0.45rem; filter: blur(0); transform: translateY(0); }
+}
+@keyframes tkmMoteFloat {
+  0%   { transform: translateY(10px) scale(0.6); opacity: 0; }
+  25%  { opacity: 1; }
+  100% { transform: translateY(-96px) scale(1); opacity: 0; }
+}
+@keyframes tkmFloatUpFade {
+  0%   { transform: translateY(0); opacity: 0; }
+  18%  { opacity: 1; }
+  100% { transform: translateY(-34px); opacity: 0; }
+}
+@keyframes tkmRapportPop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.5); color: #7ed68a; }
+  100% { transform: scale(1); }
+}
