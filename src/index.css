@@ -886,3 +886,10 @@ button:not(:disabled):active {
   40%  { transform: scale(1.5); color: #7ed68a; }
   100% { transform: scale(1); }
 }
+
+/* 私兵 levy — 部曲列隊 glyphs sweeping into rank */
+@keyframes tkmTroopMarchIn {
+  0%   { transform: translateX(-14px) scale(0.7); opacity: 0; }
+  60%  { opacity: 1; }
+  100% { transform: translateX(0) scale(1); opacity: 1; }
+}

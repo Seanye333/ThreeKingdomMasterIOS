@@ -1,7 +1,10 @@
-import { useState, type CSSProperties } from 'react';
+import { useRef, useState, type CSSProperties } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { privateGuardMultiplier } from '../../game/systems/combat';
+import { playSfx } from '../../game/systems/sound';
 import { useT, useLanguage } from '../i18n';
+
+const MARCH_GLYPHS = ['卒', '卒', '卒', '卒', '卒'];
 
 interface Props {
   onClose: () => void;
@@ -23,6 +26,27 @@ export function PrivateForcesModal({ onClose }: Props) {
 
   const [amounts, setAmounts] = useState<Record<string, string>>({});
   const [msg, setMsg] = useState('');
+  // Per-row levy flourish: 部曲列隊 glyphs + a floating gain on the levied row.
+  const [flash, setFlash] = useState<{ officerId: string; gain: number; key: number } | null>(null);
+  const flashId = useRef(0);
+
+  const doLevy = (officerId: string, amt: string, before: number) => {
+    const r = levyPrivateTroops(officerId, Number(amt));
+    setMsg(r.message);
+    if (r.ok) {
+      const after = useGameStore.getState().officers[officerId]?.privateTroops ?? before;
+      flashId.current += 1;
+      setFlash({ officerId, gain: after - before, key: flashId.current });
+      playSfx('horn');
+    } else {
+      playSfx('defeat');
+    }
+  };
+  const doDisband = (officerId: string) => {
+    const r = disbandPrivateTroops(officerId);
+    setMsg(r.message);
+    playSfx(r.ok ? 'march' : 'defeat');
+  };
 
   const mine = Object.values(officers)
     .filter((o) => o.forceId === playerForceId && o.status !== 'dead' && o.status !== 'unsearched')
@@ -63,9 +87,27 @@ export function PrivateForcesModal({ onClose }: Props) {
                   {city && <span style={{ color: '#6a5238', fontSize: '0.68rem' }}> · {lang === 'en' ? city.name.en : city.name.zh}</span>}
                 </span>
                 <span style={{ color: '#c0a878' }}>{o.stats.leadership}</span>
-                <span style={{ fontFamily: 'ui-monospace, monospace', color: cur > 0 ? '#7ed68a' : '#8a7050' }}>
-                  {cur.toLocaleString()}/{cap.toLocaleString()}
+                <span style={{ fontFamily: 'ui-monospace, monospace', color: cur > 0 ? '#7ed68a' : '#8a7050', position: 'relative' }}>
+                  <span style={flash?.officerId === o.id ? { display: 'inline-block', animation: 'tkmRapportPop 0.7s ease-out' } : undefined}>
+                    {cur.toLocaleString()}/{cap.toLocaleString()}
+                  </span>
                   {cur > 0 && <span style={{ color: '#6a8a5a', fontSize: '0.7rem' }}> (+{pct(cur)})</span>}
+                  {flash?.officerId === o.id && (
+                    <>
+                      <span
+                        key={flash.key}
+                        style={{ position: 'absolute', left: 0, top: '-0.9rem', whiteSpace: 'nowrap', color: '#7ed68a', fontWeight: 'bold', fontSize: '0.78rem', textShadow: '0 1px 3px rgba(0,0,0,0.7)', pointerEvents: 'none', animation: 'tkmFloatUpFade 1.1s ease-out forwards' }}
+                        onAnimationEnd={() => setFlash(null)}
+                      >
+                        +{flash.gain.toLocaleString()} {t('私兵', 'guard')}
+                      </span>
+                      <span style={{ position: 'absolute', left: 0, top: '1.05rem', display: 'inline-flex', gap: 1, pointerEvents: 'none' }}>
+                        {MARCH_GLYPHS.map((g, i) => (
+                          <span key={i} style={{ color: city?.ownerForceId ? '#d4a84a' : '#d4a84a', fontSize: '0.7rem', animation: `tkmTroopMarchIn 0.5s ease-out ${i * 0.07}s both` }}>{g}</span>
+                        ))}
+                      </span>
+                    </>
+                  )}
                 </span>
                 <span style={{ display: 'flex', gap: '0.3rem', alignItems: 'center', flexWrap: 'wrap' }}>
                   <input
@@ -75,12 +117,12 @@ export function PrivateForcesModal({ onClose }: Props) {
                     style={{ width: 64, background: '#14100c', border: '1px solid #4a3520', color: '#e8d9b0', padding: '0.2rem 0.3rem', fontFamily: 'inherit', fontSize: '0.78rem' }}
                   />
                   <button style={btn(!!city)} disabled={!city}
-                    onClick={() => { const r = levyPrivateTroops(o.id, Number(amt)); setMsg(r.message); }}>
+                    onClick={() => doLevy(o.id, amt, cur)}>
                     {t('募', 'Levy')}
                   </button>
                   {cur > 0 && (
                     <button style={{ ...btn(true), borderColor: '#c0504a', color: '#e2a07a' }}
-                      onClick={() => { const r = disbandPrivateTroops(o.id); setMsg(r.message); }}>
+                      onClick={() => doDisband(o.id)}>
                       {t('解散', 'Disband')}
                     </button>
                   )}
