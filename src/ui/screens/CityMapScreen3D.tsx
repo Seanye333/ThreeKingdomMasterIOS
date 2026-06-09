@@ -205,6 +205,9 @@ const HOUSE_WALL = ['#c8b48a', '#bfa980', '#cdbb95', '#b8a276', '#d0bd97'];
 const HOUSE_ROOF = ['#3a2818', '#46342a', '#2f4a55', '#403020', '#34404a'];
 // Terrains a house can't sit on.
 const NO_BUILD_TERRAIN = new Set(['river', 'water', 'lake', 'sea', 'mountain', 'deep-water']);
+// Wilderness flattened to level city ground (no mountains/hills/trees inside
+// the walls); standing water is kept as the odd pond.
+const WILDERNESS_TERRAIN = new Set(['mountain', 'hill', 'forest', 'wetland', 'river', 'marsh', 'rocky']);
 
 /** A small earthen house: solid box + pitched roof (same primitives as the
  *  working buildings — no textures, transparency or animation). */
@@ -459,13 +462,22 @@ export function CityMapScreen3D({ cityId, onClose, onSwitch2D }: {
   const [error, setError] = useState<string | null>(null);
   const lang = useLanguage();
 
-  const preview = useMemo(
+  const rawPreview = useMemo(
     () => previewBattlefield(cityId, {
       terrain: city?.terrain, port: city?.port,
       x: city?.coords.x, y: city?.coords.y,
     }, 18, 13), // city view uses a roomier grid than a battle slice
     [cityId, city?.terrain, city?.port, city?.coords.x, city?.coords.y],
   );
+  // Inside the walls the ground is a city, not a battlefield — flatten the
+  // wilderness (mountains, hills, trees) to level ground, keeping only water
+  // as the odd pond/canal.
+  const preview = useMemo(() => ({
+    ...rawPreview,
+    tiles: rawPreview.tiles.map((tl) =>
+      WILDERNESS_TERRAIN.has(tl.terrain as string) ? { ...tl, terrain: 'plain' as typeof tl.terrain } : tl,
+    ),
+  }), [rawPreview]);
 
   if (!city) return null;
   const isPlayer = city.ownerForceId === playerForceId;
