@@ -199,7 +199,13 @@ export function StrategicMap() {
   const selectedArmyId = useGameStore((s) => s.selectedArmyId);
   const pendingCommands = useGameStore((s) => s.pendingCommands);
   const selectCity = useGameStore((s) => s.selectCity);
+  const openCityMap = useGameStore((s) => s.openCityMap);
   const selectArmy = useGameStore((s) => s.selectArmy);
+  // Re-click an already-selected city → enter its interior map.
+  const selectOrEnterCity = (hit: EntityId | null) => {
+    if (hit && hit === selectedCityId) openCityMap();
+    else selectCity(hit);
+  };
   const redirectArmy = useGameStore((s) => s.redirectArmy);
   const moveArmyToCell = useGameStore((s) => s.moveArmyToCell);
   const mergeArmyInto = useGameStore((s) => s.mergeArmyInto);
@@ -598,7 +604,7 @@ export function StrategicMap() {
       }
     }
     selectArmy(null);
-    selectCity(hit);
+    selectOrEnterCity(hit);
   };
 
   const handleDoubleClick = () => setViewport(DEFAULT_VIEWPORT);
@@ -750,7 +756,7 @@ export function StrategicMap() {
         }
       }
       selectArmy(null);
-      selectCity(hit);
+      selectOrEnterCity(hit);
     }
   };
 

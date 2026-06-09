@@ -2136,6 +2136,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick }: {
   const territoryOwnership = useGameStore((s) => s.territoryOwnership ?? EMPTY_TERRITORY_OWNERSHIP);
   const selectedCityId = useGameStore((s) => s.selectedCityId);
   const selectCity = useGameStore((s) => s.selectCity);
+  const openCityMap = useGameStore((s) => s.openCityMap);
   const pendingCommands = useGameStore((s) => s.pendingCommands);
   const selectedArmyId3D = useGameStore((s) => s.selectedArmyId);
   const fieldBattleMarks = useGameStore((s) => s.fieldBattleMarks);
@@ -2226,7 +2227,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick }: {
             isSelected={selectedCityId === city.id}
             terrainY={terrainY}
             overlay={overlayForCity(city, overlayMode, maxes)}
-            onClick={() => selectCity(city.id)}
+            onClick={() => (selectedCityId === city.id ? openCityMap() : selectCity(city.id))}
           />
         );
       })}

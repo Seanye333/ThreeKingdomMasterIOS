@@ -67,6 +67,8 @@ export interface GameState {
   selectedCityId: EntityId | null;
   /** Selected in-transit army (for map highlight), or null. */
   selectedArmyId: EntityId | null;
+  /** Whether the city-interior map is open for the selected city (UI flag). */
+  cityMapOpen: boolean;
   cities: Record<EntityId, City>;
   forces: Record<EntityId, Force>;
   officers: Record<EntityId, Officer>;
@@ -255,6 +257,7 @@ export const EMPTY_STATE: GameState = {
   playerForceId: null,
   selectedCityId: null,
   selectedArmyId: null,
+  cityMapOpen: false,
   cities: {},
   forces: {},
   officers: {},

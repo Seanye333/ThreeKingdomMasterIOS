@@ -342,7 +342,7 @@ export function CityMapScreen3D({ cityId, onClose, onSwitch2D }: {
   }, [onClose]);
 
   return (
-    <div style={{
+    <div className="tkm-city-enter" style={{
       position: 'fixed', inset: 0, background: '#0a0805', zIndex: 320,
       display: 'flex', flexDirection: 'column',
     }}>

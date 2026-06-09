@@ -40,7 +40,12 @@ export function CityPanel() {
     [officersMap, selectedCityId, city?.ownerForceId],
   );
 
-  const [showCityMap, setShowCityMap] = useState(false);
+  // City-interior map open-state lives in the store so the strategic map can
+  // trigger it (re-click a selected city to enter).
+  const showCityMap = useGameStore((s) => s.cityMapOpen);
+  const openCityMap = useGameStore((s) => s.openCityMap);
+  const closeCityMap = useGameStore((s) => s.closeCityMap);
+  const setShowCityMap = (open: boolean) => (open ? openCityMap() : closeCityMap());
   // Default to 3D city map; user can switch to 2D inside the modal.
   const [use3DCityMap, setUse3DCityMap] = useState(true);
   const t = useT();

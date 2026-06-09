@@ -154,6 +154,9 @@ interface GameStore extends GameState {
    *  recommended difficulty and arms the pass/fail season-end check. */
   startChallenge: (challengeId: string) => void;
   selectCity: (cityId: EntityId | null) => void;
+  /** Open / close the city-interior map for the selected city. */
+  openCityMap: () => void;
+  closeCityMap: () => void;
   selectArmy: (armyId: EntityId | null) => void;
   redirectArmy: (armyId: EntityId, newTargetId: EntityId) => boolean;
   holdArmy: (armyId: EntityId) => boolean;
@@ -505,6 +508,9 @@ export const useGameStore = create<GameStore>()(
       },
 
       selectCity: (cityId) => set(() => ({ selectedCityId: cityId })),
+
+      openCityMap: () => set(() => ({ cityMapOpen: true })),
+      closeCityMap: () => set(() => ({ cityMapOpen: false })),
 
       selectArmy: (armyId) => set(() => ({ selectedArmyId: armyId })),
 

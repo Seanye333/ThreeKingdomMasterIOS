@@ -207,6 +207,7 @@ export function CityMapScreen({ cityId, onClose, onSwitch3D }: { cityId: EntityI
     >
       <div
         onClick={(e) => e.stopPropagation()}
+        className="tkm-city-enter"
         style={{
           background: 'var(--tkm-bg-modal, #1f1610)',
           border: '1px solid var(--tkm-text-h2, #d4a84a)',
