@@ -14,6 +14,7 @@ import { CareerModal } from '../components/CareerModal';
 import { BondsModal } from '../components/BondsModal';
 import { PrivateForcesModal } from '../components/PrivateForcesModal';
 import { PrestigeModal } from '../components/PrestigeModal';
+import { BondCeremony } from '../components/BondCeremony';
 import { DialogueModal } from '../components/DialogueModal';
 import { ObjectivePanel } from '../components/ObjectivePanel';
 import { ArmiesPanel } from '../components/ArmiesPanel';
@@ -94,11 +95,18 @@ export function MapScreen() {
   const acknowledgeDeedTitles = useGameStore((s) => s.acknowledgeDeedTitles);
   const recentPrestige = useGameStore((s) => s.recentPrestige);
   const acknowledgePrestige = useGameStore((s) => s.acknowledgePrestige);
+  const recentBonds = useGameStore((s) => s.recentBonds);
+  const acknowledgeBond = useGameStore((s) => s.acknowledgeBond);
   const officersForToast = useGameStore((s) => s.officers);
   const currentSeasonKey = useGameStore((s) => s.date.season);
   const fogOfWar = useGameStore((s) => s.fogOfWar);
   const setFogOfWar = useGameStore((s) => s.setFogOfWar);
   const tacticalBattle = useGameStore((s) => s.tacticalBattle);
+  // Gates for the bond ceremony — it waits behind season report / events /
+  // battle playback so it plays on a clear map, not buried under a modal.
+  const ceremonyBlocked = useGameStore(
+    (s) => !!s.lastReport || !!s.pendingEvent || !!s.tacticalBattle || s.pendingBattleTheaters.length > 0,
+  );
   const soundEnabled = useGameStore((s) => s.soundEnabled);
   const setSoundEnabled = useGameStore((s) => s.setSoundEnabled);
   const wishes = useGameStore((s) => s.officerWishes);
@@ -522,6 +530,24 @@ export function MapScreen() {
           </div>
         </div>
       )}
+      {/* 義結金蘭 ceremony for a bond forged in-play (one at a time, and only
+          once the season report / events have been dismissed). */}
+      {recentBonds.length > 0 && !ceremonyBlocked && (() => {
+        const c = recentBonds[0];
+        const a = officersForToast[c.aId], b = officersForToast[c.bId];
+        if (!a || !b) { acknowledgeBond(); return null; }
+        return (
+          <BondCeremony
+            a={a}
+            b={b}
+            titleZh={c.titleZh}
+            titleEn={c.titleEn}
+            color={playerForce?.color ?? '#d4a84a'}
+            year={date.year}
+            onDone={acknowledgeBond}
+          />
+        );
+      })()}
       <DialogueModal />
       {showSave && (
         <SaveSlotsModal

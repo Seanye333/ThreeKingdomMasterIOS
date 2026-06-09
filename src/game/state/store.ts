@@ -325,6 +325,8 @@ interface GameStore extends GameState {
   acknowledgeAchievements: () => void;
   acknowledgeDeedTitles: () => void;
   acknowledgePrestige: () => void;
+  /** Dequeue the front bond awaiting its on-map 義結金蘭 ceremony. */
+  acknowledgeBond: () => void;
   // ─── Port (港) actions ────────────────────────────────────────────
   /** Queue a ship build at the given port. Player pays gold from capital
    *  immediately; ship is added to dockedShips when seasonsLeft hits 0. */
@@ -1982,6 +1984,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // bond. Adds to runtimeBonds with a moderate loyalty floor.
         let bondsAfterTraits = planned.runtimeBonds;
         let rapportAfter = state.rapport;
+        // Player-relevant bonds forged organically this season → at most one
+        // gets a ceremony on the map (kept rare so it stays momentous).
+        const seasonBonds: Array<{ aId: EntityId; bId: EntityId; titleZh: string; titleEn: string }> = [];
         if (seasonBoundary) {
           const byCity = new Map<EntityId, Officer[]>();
           for (const o of Object.values(postOfficers)) {
@@ -2021,6 +2026,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                     text: `${a.name.en} and ${b.name.en} bonded over shared ${shared} — sworn friends.`,
                     textZh: `${a.name.zh}與${b.name.zh}因同有「${shared}」之性而結為知交。`,
                   });
+                  seasonBonds.push({ aId: a.id, bId: b.id, titleZh: '義結金蘭', titleEn: 'A Bond is Sworn' });
                 }
               }
             }
@@ -2049,10 +2055,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                   text: `${a.name.en} and ${b?.name.en} forge a bond serving side by side.`,
                   textZh: `${a.name.zh}與${b?.name.zh}同袍共事,日久情深,義結金蘭。`,
                 });
+                if (b) seasonBonds.push({ aId: a.id, bId: b.id, titleZh: '義結金蘭', titleEn: 'A Bond is Sworn' });
               }
             }
           }
         }
+        // Queue at most one organic-bond ceremony onto the toast-style queue.
+        const recentBondsAfter = seasonBonds.length > 0
+          ? [...state.recentBonds, seasonBonds[0]]
+          : state.recentBonds;
 
         // ── Burning-city decay (animation lifetime) ──
         // Newly fallen cities ignite for 2 seasons; existing ones tick down.
@@ -2555,6 +2566,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           forces: postForces,
           runtimeBonds: bondsAfterTraits,
           rapport: rapportAfter,
+          recentBonds: recentBondsAfter,
           pendingCommands: carriedCommands,
           pendingTrainings: nextTrainings,
           lastReport: result.report,
@@ -4249,6 +4261,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       acknowledgeAchievements: () => set({ recentAchievementUnlocks: [] }),
       acknowledgeDeedTitles: () => set({ recentDeedTitles: [] }),
       acknowledgePrestige: () => set({ recentPrestige: [] }),
+      acknowledgeBond: () => set((s) => ({ recentBonds: s.recentBonds.slice(1) })),
 
       attackPort: (portId, attackerOfficerId, troops) => {
         const state = get();
@@ -5044,6 +5057,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (!state.challengeRecords) state.challengeRecords = {};
         if (!state.customEvents) state.customEvents = [];
         if (!state.recentPrestige) state.recentPrestige = [];
+        if (!state.recentBonds) state.recentBonds = [];
         const cityOwnerByCityId = Object.fromEntries(
           Object.values(state.cities ?? {}).map((c) => [c.id, c.ownerForceId]),
         );
