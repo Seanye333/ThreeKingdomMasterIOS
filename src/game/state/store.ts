@@ -78,7 +78,7 @@ import { setupTacticalBattle, inferUnitType, planSiegeRelief, rollTimeOfDay } fr
 import { BUILDING_DEFS_BY_ID } from '../data/buildings';
 import { DEFENSE_BUILDINGS } from '../data/defenseBuildings';
 import { SHIP_CLASSES_BY_ID } from '../data/ships';
-import { canPlayerAttackPort, migratePorts } from '../data/ports';
+import { canPlayerAttackPort, migratePorts, navalReachableCityIds } from '../data/ports';
 import { canPlayerAttackFort, migrateForts } from '../data/forts';
 import { fortMaxHpForLevel } from '../types';
 import { awardBattleXp } from '../systems/growth';
@@ -792,7 +792,11 @@ export const useGameStore = create<GameStore>()(
           return { ok: false, reason: 'invalid' };
         if (source.ownerForceId !== state.playerForceId)
           return { ok: false, reason: 'not your city' };
-        if (!source.adjacentCityIds.includes(targetId))
+        // 漕運 — non-adjacent targets are reachable when both cities have
+        // linked ports on a connected sea/river route (the picker lists
+        // them with 🚢). The fleet does the marching.
+        const isNaval = !source.adjacentCityIds.includes(targetId);
+        if (isNaval && !navalReachableCityIds(sourceId, state.ports).has(targetId))
           return { ok: false, reason: 'not adjacent' };
         if (officer.locationCityId !== sourceId)
           return { ok: false, reason: 'officer not in this city' };
@@ -847,7 +851,9 @@ export const useGameStore = create<GameStore>()(
           };
         }
 
-        const dur = marchDurationFor(source, state.cities[targetId], state.date.season);
+        // Sea legs run on the fleet's schedule — two seasons however far
+        // the route, which beats any long land march (長江是高速路).
+        const dur = isNaval ? 2 : marchDurationFor(source, state.cities[targetId], state.date.season);
         set({
           cities: {
             ...state.cities,
