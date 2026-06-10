@@ -2307,6 +2307,47 @@ function Lakes3D() {
   );
 }
 
+/* ─── 州名 — the thirteen Han provinces as faint floating watermarks so
+ *  the player can read regions at a glance. Big + translucent, behind the
+ *  city labels; they scale with distance so they recede when you zoom in. */
+const STATES_GEO: ReadonlyArray<{ zh: string; lon: number; lat: number }> = [
+  { zh: '司隸', lon: 110.0, lat: 34.7 },
+  { zh: '豫州', lon: 114.4, lat: 33.2 },
+  { zh: '冀州', lon: 114.7, lat: 37.9 },
+  { zh: '兗州', lon: 116.1, lat: 35.5 },
+  { zh: '徐州', lon: 118.4, lat: 34.1 },
+  { zh: '青州', lon: 119.4, lat: 36.9 },
+  { zh: '荊州', lon: 112.2, lat: 30.0 },
+  { zh: '揚州', lon: 118.7, lat: 30.0 },
+  { zh: '益州', lon: 104.1, lat: 30.0 },
+  { zh: '涼州', lon: 101.4, lat: 37.2 },
+  { zh: '并州', lon: 112.4, lat: 38.6 },
+  { zh: '幽州', lon: 118.8, lat: 40.6 },
+  { zh: '交州', lon: 108.0, lat: 22.6 },
+];
+function ProvinceLabels3D() {
+  return (
+    <group>
+      {STATES_GEO.map((s) => {
+        const [wx, wz] = pxToWorld(...geoToPixel(s.lon, s.lat));
+        const y = sampleTerrainHeight(wx, wz) + 1.4;
+        return (
+          <Html key={s.zh} position={[wx, y, wz]} center distanceFactor={32}
+            zIndexRange={[1, 0]} style={{ pointerEvents: 'none' }}>
+            <div style={{
+              fontFamily: '"Ma Shan Zheng", "Songti SC", serif',
+              fontSize: '46px', fontWeight: 700,
+              color: 'rgba(255, 246, 224, 0.30)',
+              textShadow: '0 2px 12px rgba(0,0,0,0.55)',
+              letterSpacing: '0.22em', whiteSpace: 'nowrap', userSelect: 'none',
+            }}>{s.zh}</div>
+          </Html>
+        );
+      })}
+    </group>
+  );
+}
+
 function MapScene({ overlayMode, onPortClick, onFortClick }: {
   overlayMode: OverlayMode;
   onPortClick: (portId: string) => void;
@@ -2389,6 +2430,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick }: {
       <RiverRibbons />
       <Forest3D />
       <GreatWall3D />
+      <ProvinceLabels3D />
 
       <Roads cities={cities} />
       <MarchingArmies cities={cities} pendingCommands={pendingCommands} forces={forces} officers={officers} ports={portsForMarch} selectedArmyId={selectedArmyId3D} />
