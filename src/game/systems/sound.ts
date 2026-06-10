@@ -232,6 +232,93 @@ export function stopAmbience(): void {
   }, 600);
 }
 
+// ─── City-interior ambience ──────────────────────────────────────────
+// A warm low drone + a soft filtered-noise murmur (crowd/breeze) + the odd
+// bird chirp. Played while the 城内 view is open. All synthesised, no assets.
+let cityAmb: {
+  sources: Array<OscillatorNode | AudioBufferSourceNode>;
+  gain: GainNode;
+  timer: ReturnType<typeof setInterval>;
+} | null = null;
+
+export function startCityAmbience(): void {
+  if (!enabled) return;
+  if (cityAmb) return;
+  const c = getCtx();
+  if (!c) return;
+  unlockAudio();
+
+  const gain = c.createGain();
+  gain.gain.setValueAtTime(0, c.currentTime);
+  gain.gain.linearRampToValueAtTime(0.05, c.currentTime + 3);
+  gain.connect(c.destination);
+
+  const sources: Array<OscillatorNode | AudioBufferSourceNode> = [];
+
+  // Warm low drone — two detuned triangles.
+  for (const f of [98, 147]) {
+    const o = c.createOscillator();
+    o.type = 'triangle';
+    o.frequency.value = f;
+    o.detune.value = (Math.random() - 0.5) * 10;
+    const g = c.createGain();
+    g.gain.value = 0.45;
+    o.connect(g); g.connect(gain); o.start();
+    sources.push(o);
+  }
+
+  // Soft murmur bed — looping low-passed noise (distant crowd + breeze).
+  const buf = c.createBuffer(1, c.sampleRate * 2, c.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.5;
+  const noise = c.createBufferSource();
+  noise.buffer = buf; noise.loop = true;
+  const lp = c.createBiquadFilter();
+  lp.type = 'lowpass'; lp.frequency.value = 520; lp.Q.value = 0.6;
+  const ng = c.createGain(); ng.gain.value = 0.5;
+  noise.connect(lp); lp.connect(ng); ng.connect(gain); noise.start();
+  sources.push(noise);
+
+  // Occasional bird chirp — a quick up-down whistle.
+  const chirp = () => {
+    if (!cityAmb) return;
+    const o = c.createOscillator(); o.type = 'sine';
+    const g = c.createGain();
+    const t = c.currentTime;
+    const base = 1600 + Math.random() * 900;
+    o.frequency.setValueAtTime(base, t);
+    o.frequency.exponentialRampToValueAtTime(base * 1.5, t + 0.06);
+    o.frequency.exponentialRampToValueAtTime(base * 0.85, t + 0.15);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.05, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+    o.connect(g); g.connect(gain); o.start(t); o.stop(t + 0.26);
+  };
+  const timer = setInterval(() => {
+    if (!enabled) return;
+    if (Math.random() < 0.5) {
+      chirp();
+      if (Math.random() < 0.4) setTimeout(chirp, 150);
+    }
+  }, 1800);
+
+  cityAmb = { sources, gain, timer };
+}
+
+export function stopCityAmbience(): void {
+  if (!cityAmb) return;
+  const old = cityAmb;
+  cityAmb = null;
+  clearInterval(old.timer);
+  const c = getCtx();
+  if (!c) return;
+  old.gain.gain.cancelScheduledValues(c.currentTime);
+  old.gain.gain.linearRampToValueAtTime(0, c.currentTime + 0.5);
+  setTimeout(() => {
+    for (const s of old.sources) { try { s.stop(); } catch { /* ignore */ } }
+  }, 600);
+}
+
 // ─── Music tracks ────────────────────────────────────────────────────
 
 let musicTimer: ReturnType<typeof setInterval> | null = null;

@@ -11,6 +11,7 @@ import {
 import { previewBattlefield } from '../../game/systems/tactical';
 import { citySize } from '../../game/systems/citySize';
 import { BUILDING_DEFS, BUILDING_DEFS_BY_ID } from '../../game/data/buildings';
+import { startCityAmbience, stopCityAmbience } from '../../game/systems/sound';
 import type { EntityId, BuildingId } from '../../game/types';
 import { useLanguage } from '../i18n';
 // Reuse the polished 3D primitives from the tactical battle scene so the
@@ -511,6 +512,10 @@ const SeasonCtx = createContext<SeasonKey>('spring');
 
 // Normalised (0..1) city stats the 3D scene scales itself by.
 type CityStats = { fCommerce: number; fAgri: number; fLoyalty: number; fPop: number };
+
+// Tapping a landmark reports a little "what is this" card up to the screen.
+type InspectInfo = { title: string; body: string; color: string };
+const InspectCtx = createContext<(info: InspectInfo) => void>(() => {});
 
 /** Multiply an #rrggbb colour by a factor (>1 lightens, <1 darkens). Cheap
  *  helper so ridges/eaves can be tinted off a base roof colour. */
@@ -1811,6 +1816,7 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, g
   stats: CityStats;
   grand: boolean;
 }) {
+  const inspect = useContext(InspectCtx);
   // The market grows with commerce — a sleepy 2-stall corner at low trade,
   // a packed bazaar when business booms.
   const market = useMemo(() => {
@@ -2021,7 +2027,9 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, g
       {flowers.map((f) => <FlowerBed3D key={`fb-${f.key}`} x={f.x} z={f.z} seed={f.seed} />)}
       {houses.map((h) => <Dwelling key={`dw-${h.key}`} x={h.x} z={h.z} seed={h.seed} />)}
       {trees.map((tr) => <GardenTree3D key={`tr-${tr.key}`} x={tr.x} z={tr.z} seed={tr.seed} />)}
-      {market.map((m) => <MarketStall3D key={`mk-${m.key}`} x={m.x} z={m.z} seed={m.seed} />)}
+      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '市集', body: `城中商市。摊肆多寡随商业荣枯而变(本城商业 ${Math.round(stats.fCommerce * 100)}%),贸易越盛越喧闹。`, color: '#d4a84a' }); }}>
+        {market.map((m) => <MarketStall3D key={`mk-${m.key}`} x={m.x} z={m.z} seed={m.seed} />)}
+      </group>
       {villagers.map((v) => <Villager3D key={`vl-${v.key}`} x={v.x} z={v.z} seed={v.seed} />)}
       {props.folk.map((v, i) => <Villager3D key={`mf-${i}`} x={v.x} z={v.z} seed={v.seed} />)}
       {props.walkers.map((wk, i) => <Walker3D key={`wk-${i}`} ax={wk.ax} az={wk.az} bx={wk.bx} bz={wk.bz} seed={wk.seed} />)}
@@ -2036,18 +2044,30 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, g
       {lanterns.map((l) => <Lantern3D key={`ln-${l.key}`} x={l.x} z={l.z} />)}
       {props.avenueLanterns.map((l, i) => <Lantern3D key={`al-${i}`} x={l.x} z={l.z} />)}
       {props.paifang && <Paifang3D x={props.paifang.x} z={props.paifang.z} />}
-      <Pagoda3D x={landmarks.pagoda.x} z={landmarks.pagoda.z} />
-      <DrumTower3D x={landmarks.drum.x} z={landmarks.drum.z} />
-      <BellTower3D x={landmarks.bell.x} z={landmarks.bell.z} />
-      <Garden3D x={landmarks.garden.x} z={landmarks.garden.z} />
-      <Farmland3D x={landmarks.farm.x} z={landmarks.farm.z} lush={stats.fAgri} />
-      <GovernmentHall3D x={hall.x} z={hall.z} bannerColor={bannerColor} />
+      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '寶塔', body: '城中佛塔,镇一方文运、为行旅指引方向,亦是登高瞭望之所。', color: '#e0c060' }); }}>
+        <Pagoda3D x={landmarks.pagoda.x} z={landmarks.pagoda.z} />
+      </group>
+      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '鼓樓', body: '暮鼓所在。击鼓报时、警急聚兵,与钟楼合为「晨钟暮鼓」。', color: '#e0c060' }); }}>
+        <DrumTower3D x={landmarks.drum.x} z={landmarks.drum.z} />
+      </group>
+      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '鐘樓', body: '晨钟所在。悬大铜钟,晓时鸣钟启市,与鼓楼相对。', color: '#e0c060' }); }}>
+        <BellTower3D x={landmarks.bell.x} z={landmarks.bell.z} />
+      </group>
+      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '園林', body: '官家园池。曲桥亭榭、莲叶垂柳,文士雅集、休憩之地。', color: '#9ac06a' }); }}>
+        <Garden3D x={landmarks.garden.x} z={landmarks.garden.z} />
+      </group>
+      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '屯田', body: `军民屯垦之田,城邑粮秣所出。农业越高,垄亩越茂(本城农业 ${Math.round(stats.fAgri * 100)}%)。`, color: '#bcd07a' }); }}>
+        <Farmland3D x={landmarks.farm.x} z={landmarks.farm.z} lush={stats.fAgri} />
+      </group>
+      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '府衙', body: '一城之治所。太守理政、聚将议事之地,门列石狮华表、前设影壁。', color: '#f0d98a' }); }}>
+        <GovernmentHall3D x={hall.x} z={hall.z} bannerColor={bannerColor} />
+      </group>
     </>
   );
 }
 
 function CityScene({
-  preview, slots, buildings, construction, plots, cityWallCol, bannerColor, light, season, stats, grand,
+  preview, slots, buildings, construction, plots, cityWallCol, bannerColor, light, season, stats, grand, onInspect,
   selectedPlot, onPlotClick, hovered, onHover, onClick, showOverlays,
 }: {
   preview: ReturnType<typeof previewBattlefield>;
@@ -2060,6 +2080,7 @@ function CityScene({
   season: SeasonKey;
   stats: CityStats;
   grand: boolean;
+  onInspect: (info: InspectInfo) => void;
   bannerColor: string;
   selectedPlot: number | null;
   onPlotClick: (plotIndex: number) => void;
@@ -2103,6 +2124,7 @@ function CityScene({
   // Season-driven lighting mood.
   return (
     <SeasonCtx.Provider value={season}>
+     <InspectCtx.Provider value={onInspect}>
       <ambientLight intensity={light.ambient * 0.7} color={light.ambientColor} />
       {/* Sky/ground hemisphere fill for richer ambient colour grading */}
       <hemisphereLight args={[light.ambientColor, '#6a5a3e', 0.45]} />
@@ -2349,6 +2371,7 @@ function CityScene({
       {showOverlays && towerRanges.map((tr, i) => (
         <RangeRing3D key={`rr-${i}`} coord={tr.coord} range={tr.range} color={tr.color} />
       ))}
+     </InspectCtx.Provider>
     </SeasonCtx.Provider>
   );
 }
@@ -2372,6 +2395,7 @@ export function CityMapScreen3D({ cityId, onClose, onSwitch2D }: {
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [selectedPlot, setSelectedPlot] = useState<number | null>(null);
   const [buildMsg, setBuildMsg] = useState<string | null>(null);
+  const [inspect, setInspect] = useState<InspectInfo | null>(null);
   const [hovered, setHovered] = useState<{ col: number; row: number } | null>(null);
   const [showOverlays, setShowOverlays] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -2559,6 +2583,12 @@ export function CityMapScreen3D({ cityId, onClose, onSwitch2D }: {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  // City soundscape while the 城内 view is open.
+  useEffect(() => {
+    startCityAmbience();
+    return () => stopCityAmbience();
+  }, []);
+
   return (
     <div className="tkm-city-enter" style={{
       position: 'fixed', inset: 0, background: '#0a0805', zIndex: 320,
@@ -2632,6 +2662,7 @@ export function CityMapScreen3D({ cityId, onClose, onSwitch2D }: {
             season={season}
             stats={cityStats}
             grand={grandCity}
+            onInspect={setInspect}
             selectedPlot={selectedPlot}
             onPlotClick={handlePlotClick}
             hovered={hovered}
@@ -2856,6 +2887,27 @@ export function CityMapScreen3D({ cityId, onClose, onSwitch2D }: {
             fontSize: '0.7rem', letterSpacing: '0.15rem',
           }}>
             點金色八角位 → 城外防禦　·　點地基(金框) → 城内營建
+          </div>
+        )}
+
+        {/* Landmark inspect card — appears when a 地标 is tapped */}
+        {inspect && (
+          <div style={{
+            position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)',
+            width: 'min(420px, 80vw)',
+            background: 'rgba(20, 14, 8, 0.94)',
+            border: `1px solid ${inspect.color}`, borderRadius: 4,
+            padding: '0.6rem 0.9rem',
+            fontFamily: 'Songti SC, serif',
+            boxShadow: '0 4px 18px rgba(0,0,0,0.5)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: inspect.color, fontSize: '1rem', letterSpacing: '0.2rem' }}>{inspect.title}</span>
+              <button onClick={() => setInspect(null)} style={{
+                background: 'transparent', border: 'none', color: '#8a7050', cursor: 'pointer', fontSize: '0.9rem',
+              }}>×</button>
+            </div>
+            <div style={{ color: '#c0a878', fontSize: '0.78rem', lineHeight: 1.6, marginTop: 4 }}>{inspect.body}</div>
           </div>
         )}
 
