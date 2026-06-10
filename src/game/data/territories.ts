@@ -10,6 +10,7 @@
 
 import type { City } from '../types';
 import { isLand, terrainMarchCost } from './geography';
+import { cityPos } from './cityGeo';
 
 // ── Terrain-weighted march pathfinding (A*) ───────────────────────
 // A coarse navigation grid over the 1000×720 map; A* finds the
@@ -148,7 +149,7 @@ function hash(s: string): number {
 }
 
 const TERRITORIES_PER_CITY = 3;
-const SATELLITE_RADIUS = 28;
+const SATELLITE_RADIUS = 34;   // ring radius scaled with the geo layout (×1.21)
 
 /**
  * Build the full territory list from the current city catalog. Returns
@@ -163,10 +164,11 @@ const SATELLITE_RADIUS = 28;
  */
 export function marchDestCoords(
   cmd: { targetCityId: string; targetX?: number; targetY?: number },
-  cities: Record<string, { coords: { x: number; y: number } }>,
+  cities: Record<string, { id: string; coords: { x: number; y: number } }>,
 ): { x: number; y: number } | null {
   if (cmd.targetX != null && cmd.targetY != null) return { x: cmd.targetX, y: cmd.targetY };
-  return cities[cmd.targetCityId]?.coords ?? null;
+  const city = cities[cmd.targetCityId];
+  return city ? cityPos(city) : null;
 }
 
 /**
@@ -187,14 +189,16 @@ export function computeMarchRoute(
   from: { id: string; coords: { x: number; y: number } },
   to: { id: string; coords: { x: number; y: number } },
 ): Array<{ x: number; y: number }> {
-  const ax = from.coords.x, ay = from.coords.y;
-  const bx = to.coords.x, by = to.coords.y;
+  const fp = cityPos(from);
+  const tp = cityPos(to);
+  const ax = fp.x, ay = fp.y;
+  const bx = tp.x, by = tp.y;
   const dx = bx - ax, dy = by - ay;
   const segLen = Math.hypot(dx, dy);
-  if (segLen < 1) return [from.coords, to.coords];
+  if (segLen < 1) return [fp, tp];
 
   const ux = dx / segLen, uy = dy / segLen;
-  const CORRIDOR = 18;
+  const CORRIDOR = 22;   // scaled ×1.21 with the geo layout
 
   // Project every territory onto the segment, keep those near the line
   // and between the endpoints.
@@ -261,11 +265,14 @@ export function positionAlongRoute(
 export function generateTerritories(cities: City[]): Territory[] {
   const out: Territory[] = [];
   for (const city of cities) {
+    // Geo-anchored centre — the same position the maps render the city at,
+    // so ownership cells, the painted hex grid and the city model agree.
+    const c = cityPos(city);
     // Cell 0: the city itself.
     out.push({
       id: `${city.id}-0`,
       parentCityId: city.id,
-      coords: { x: city.coords.x, y: city.coords.y },
+      coords: { x: c.x, y: c.y },
     });
     // Cells 1..N-1: satellites at fixed angular offsets, deterministic
     // per-city rotation so the layout is stable but cities don't all align.
@@ -277,8 +284,8 @@ export function generateTerritories(cities: City[]): Territory[] {
         id: `${city.id}-${i}`,
         parentCityId: city.id,
         coords: {
-          x: city.coords.x + Math.cos(angle) * r,
-          y: city.coords.y + Math.sin(angle) * r,
+          x: c.x + Math.cos(angle) * r,
+          y: c.y + Math.sin(angle) * r,
         },
       });
     }

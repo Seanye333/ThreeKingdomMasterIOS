@@ -50,12 +50,14 @@ function coastXAt(y: number): number {
   return px;
 }
 
-// Offshore landmasses the simple eastern-coastline model misses but the 2D
-// map already draws: the Korean peninsula (Lelang/Daifang) and Hainan
-// (Zhuyai). Each is an axis-aligned region; a point inside reads as land.
+// Offshore landmasses the simple eastern-coastline model misses: the
+// Korean peninsula (Lelang/Daifang) and Hainan (Zhuyai). Each is an
+// axis-aligned region; a point inside reads as land. Positioned to cover
+// the geo-anchored city positions (cityGeo.ts): 樂浪 ≈ (976,110),
+// 帶方 ≈ (969,130), 朱崖 ≈ (495,636).
 const ISLANDS: ReadonlyArray<{ cx: number; cy: number; hw: number; hh: number }> = [
-  { cx: 882, cy: 220, hw: 42, hh: 72 }, // Korea — Lelang (875,195), Daifang (880,245)
-  { cx: 625, cy: 697, hw: 32, hh: 24 }, // Hainan — Zhuyai (625,695)
+  { cx: 962, cy: 122, hw: 38, hh: 55 }, // Korea — hugs the NE map edge
+  { cx: 502, cy: 640, hw: 18, hh: 18 }, // Hainan — thin strait off the Leizhou coast
 ];
 function islandSDF(x: number, y: number): number {
   let best = -Infinity;

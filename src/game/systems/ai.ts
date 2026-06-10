@@ -18,6 +18,7 @@ import { OATH_BONDS, type OathBond } from '../data/bonds';
 import { COMMAND_DEFS } from './commands';
 import { marchDurationFor } from '../data/cities';
 import { isLand, terrainMarchCost } from '../data/geography';
+import { cityPos } from '../data/cityGeo';
 import {
   NAP_PROPOSAL_COST,
   computeTotalTroops,
@@ -580,14 +581,15 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
     const detachTroops = Math.floor(bestCmd.troops / 2);
     if (detachTroops < 3000) continue;
     const army = input.armies?.[bestCmd.officerId];
-    const cx = army?.x ?? cities[bestCmd.cityId]?.coords.x;
-    const cy = army?.y ?? cities[bestCmd.cityId]?.coords.y;
+    const srcCity = cities[bestCmd.cityId];
+    const cx = army?.x ?? (srcCity ? cityPos(srcCity).x : undefined);
+    const cy = army?.y ?? (srcCity ? cityPos(srcCity).y : undefined);
     if (cx == null || cy == null) continue;
     // Plant the detachment on the best-covered nearby land cell.
     let bx = cx, by = cy, bestCover = -1;
     for (let k = 0; k < 8; k++) {
       const ang = (k / 8) * Math.PI * 2;
-      const tx = cx + Math.cos(ang) * 36, ty = cy + Math.sin(ang) * 36;
+      const tx = cx + Math.cos(ang) * 44, ty = cy + Math.sin(ang) * 44;   // scaled ×1.21
       if (!isLand(tx, ty, 2)) continue;
       const cover = terrainMarchCost(tx, ty);
       if (cover > bestCover) { bestCover = cover; bx = tx; by = ty; }
@@ -809,17 +811,18 @@ function decideCommand(
     // response is underway — let it play out instead of stacking interceptors.
     const ownColumnNearby = armyList.some(
       (a) => a.forceId === forceId && !a.holding &&
-        Math.hypot(a.x - city.coords.x, a.y - city.coords.y) < 130,
+        Math.hypot(a.x - cityPos(city).x, a.y - cityPos(city).y) < 157,   // scaled ×1.21
     );
     if (!ownColumnNearby) {
-      const THREAT_DIST = 210;   // how close a hostile column must be to react
+      const THREAT_DIST = 255;   // how close a hostile column must be to react (geo scale)
       let threat: import('../types').Army | null = null;
       let threatScore = Infinity;
       for (const a of armyList) {
         if (a.forceId === forceId) continue;
         if (!isHostilePermitted(diplomacy, forceId, a.forceId)) continue;
         if (a.troops < 1500) continue; // not worth a sally
-        const d = Math.hypot(a.x - city.coords.x, a.y - city.coords.y);
+        const cp0 = cityPos(city);
+        const d = Math.hypot(a.x - cp0.x, a.y - cp0.y);
         const aimsHere = a.targetCityId === city.id && !a.cellTarget;
         if (!aimsHere && d > THREAT_DIST) continue;
         // Prefer the nearest; a column explicitly targeting us jumps the queue.
@@ -829,7 +832,7 @@ function decideCommand(
       // Someone already engaging this threat? Then don't double up.
       const alreadyEngaged = threat && armyList.some(
         (a) => a.forceId === forceId &&
-          Math.hypot(a.x - threat!.x, a.y - threat!.y) < 50,
+          Math.hypot(a.x - threat!.x, a.y - threat!.y) < 60,   // scaled ×1.21
       );
       if (threat && !alreadyEngaged) {
         const marchPool = officersHere.filter((c) => !isCombatLiability(c));
@@ -847,7 +850,8 @@ function decideCommand(
             // Among the land candidates on that line, pick the one with the
             // best terrain cover so the column springs its ambush from rough
             // ground (mountains/river crossings amplify the ambush bonus).
-            const cx = city.coords.x, cy = city.coords.y;
+            const cp1 = cityPos(city);
+            const cx = cp1.x, cy = cp1.y;
             let ix = cx, iy = cy, bestCover = -1;
             for (let f = 0.5; f >= 0.18; f -= 0.06) {
               const tx = cx + (threat.x - cx) * f;

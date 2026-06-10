@@ -29,6 +29,7 @@ import { ESPIONAGE_DEFS_BY_KIND } from '../data/espionage';
 import { ITEMS_BY_ID } from '../data/items';
 import { marchDurationFor } from '../data/cities';
 import { terrainRoute, positionAlongRoute, marchDestCoords } from '../data/territories';
+import { cityPos, CITY_GEO_OVERRIDES } from '../data/cityGeo';
 import { terrainTypeAt } from '../data/geography';
 import { FAMILY_LINEAGE } from '../data/familyLineage';
 import { POLICY_DEFS, TACTIC_DEFS } from '../data/officerAttributes';
@@ -460,7 +461,8 @@ function buildFieldBattle(
   const midX = (pArmy.x + eArmy.x) / 2, midY = (pArmy.y + eArmy.y) / 2;
   let nominalCity = pArmy.targetCityId, bestD = Infinity;
   for (const c of Object.values(s.cities)) {
-    const d = Math.hypot(c.coords.x - midX, c.coords.y - midY);
+    const cp = cityPos(c);
+    const d = Math.hypot(cp.x - midX, cp.y - midY);
     if (d < bestD) { bestD = d; nominalCity = c.id; }
   }
   const stratWeather = s.weather?.kind ?? 'clear';
@@ -551,8 +553,9 @@ export const useGameStore = create<GameStore>()(
         if (army.forceId !== state.playerForceId) return false;
         const src = state.cities[cmd.cityId];
         if (!src) return false;
-        const dist = Math.hypot(x - src.coords.x, y - src.coords.y);
-        const total = dist < 80 ? 1 : dist < 150 ? 2 : dist < 240 ? 3 : 4;
+        const sp = cityPos(src);
+        const dist = Math.hypot(x - sp.x, y - sp.y);
+        const total = dist < 100 ? 1 : dist < 195 ? 2 : dist < 275 ? 3 : 4;   // geo thresholds
         const remaining = Math.max(1, Math.ceil((1 - army.progress) * total));
         set({
           pendingCommands: {
@@ -599,7 +602,8 @@ export const useGameStore = create<GameStore>()(
           const from = state.cities[cmd.cityId];
           const dest = marchDestCoords(cmd, state.cities);
           if (!from || !dest) return { x: army.x, y: army.y };
-          const route = terrainRoute(from.coords.x, from.coords.y, dest.x, dest.y);
+          const fp = cityPos(from);
+          const route = terrainRoute(fp.x, fp.y, dest.x, dest.y);
           const total = Math.max(1, cmd.totalSeasons ?? 1);
           const remaining = cmd.seasonsRemaining ?? 1;
           const t = Math.min(0.95, Math.max(0.05, (total - remaining + 0.5) / total));
@@ -607,7 +611,7 @@ export const useGameStore = create<GameStore>()(
         };
         const ps = armyPos(srcCmd, srcArmy);
         const pd = armyPos(dstCmd, dstArmy);
-        const MERGE_RANGE = 120; // a few cells — bring them together first
+        const MERGE_RANGE = 145; // a few cells — scaled ×1.21 for the geo layout
         if (Math.hypot(ps.x - pd.x, ps.y - pd.y) > MERGE_RANGE) return false;
 
         // Fold source troops + officers into the destination column. The
@@ -664,7 +668,8 @@ export const useGameStore = create<GameStore>()(
         const dest = marchDestCoords(cmd, state.cities);
         let px = army.x, py = army.y;
         if (from && dest) {
-          const route = terrainRoute(from.coords.x, from.coords.y, dest.x, dest.y);
+          const fp = cityPos(from);
+          const route = terrainRoute(fp.x, fp.y, dest.x, dest.y);
           const total = Math.max(1, cmd.totalSeasons ?? 1);
           const remaining = cmd.seasonsRemaining ?? 1;
           const t = Math.min(0.95, Math.max(0.05, (total - remaining + 0.5) / total));
@@ -855,8 +860,8 @@ export const useGameStore = create<GameStore>()(
               troops,
               fromCityId: sourceId,
               targetCityId: targetId,
-              x: source.coords.x,
-              y: source.coords.y,
+              x: cityPos(source).x,
+              y: cityPos(source).y,
               progress: 0,
               totalSeasons: dur,
             },
@@ -4418,13 +4423,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const capital = player ? state.cities[player.capitalCityId] : null;
         if (!capital || capital.gold < STOCKADE_COST)
           return { ok: false, message: `Need ${STOCKADE_COST}g in capital.` };
-        // Place ~0.4° offset from city center in a random compass direction
+        // Place ~0.4° offset from city center in a random compass direction.
         const angle = Math.random() * Math.PI * 2;
-        // City coords are in painted px; we need geo. Use the GEO calibration
-        // helper that lives in StrategicMap3D… actually we want geo here.
-        // Reverse the geoToPixel calibration: lon = 96 + px/1000 * 29 etc.
-        const cityLon = 96 + (city.coords.x / 1000) * 29;
-        const cityLat = 43 - (city.coords.y / 720) * 26;
+        // Exact geo position from the shared table; reverse-calibrate the
+        // painted px only for cities missing an override.
+        const geo = CITY_GEO_OVERRIDES[city.id];
+        const cityLon = geo ? geo[0] : 96 + (city.coords.x / 1000) * 29;
+        const cityLat = geo ? geo[1] : 43 - (city.coords.y / 720) * 26;
         const lon = cityLon + Math.cos(angle) * 0.4;
         const lat = cityLat + Math.sin(angle) * 0.4;
         const id = `stockade-${Date.now()}`;

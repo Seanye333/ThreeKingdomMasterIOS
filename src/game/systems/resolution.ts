@@ -13,6 +13,7 @@ import { OATH_BONDS, type OathBond } from '../data/bonds';
 import { isHostilePermitted } from '../types';
 import { generateTerritories, terrainRoute, positionAlongRoute, marchDestCoords, type Territory } from '../data/territories';
 import { terrainMarchCost } from '../data/geography';
+import { cityPos } from '../data/cityGeo';
 import { advanceSeason } from '../state/gameState';
 import { processAging } from './aging';
 import { handleSearch, resolveInternalAffairs, type LostItemRef } from './commands';
@@ -127,7 +128,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const src = cities[cmd.cityId];
     const dst = marchDestCoords(cmd, cities);
     if (!src || !dst) return null;
-    const route = terrainRoute(src.coords.x, src.coords.y, dst.x, dst.y);
+    const sp = cityPos(src);
+    const route = terrainRoute(sp.x, sp.y, dst.x, dst.y);
     const total = Math.max(1, cmd.totalSeasons ?? 1);
     const remaining = cmd.seasonsRemaining ?? 1;
     const elapsed = total - remaining;
@@ -171,7 +173,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   // after the report; these officers are skipped by the abstract passes.
   const deferredOfficers = new Set<EntityId>();
   const pendingFieldBattles: Array<{ playerArmyId: EntityId; enemyArmyId: EntityId; x: number; y: number }> = [];
-  const INTERCEPT_DIST = 45;
+  const INTERCEPT_DIST = 55;   // scaled ×1.21 for the geo layout
   for (let i = 0; i < allMarches.length; i++) {
     for (let j = i + 1; j < allMarches.length; j++) {
       const a = allMarches[i];
@@ -331,7 +333,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   // garrison of a defended city it passes near (not its own target). The
   // city sallies part of its garrison under its best warrior for a field
   // battle, so you can't waltz an army past a defended stronghold.
-  const SALLY_DIST = 55;
+  const SALLY_DIST = 67;   // scaled ×1.21 for the geo layout
   const SALLY_MIN_GARRISON = 4000;
   for (const a of allMarches) {
     if (cancelledMarchOfficers.has(a.officerId) || deferredOfficers.has(a.officerId)) continue;
@@ -347,7 +349,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       if (city.id === a.targetCityId || city.id === a.cityId) continue;
       if (!isHostilePermitted(input.diplomacy, city.ownerForceId, oa.forceId)) continue;
       if (city.troops < SALLY_MIN_GARRISON) continue;
-      const d = Math.hypot(pos.x - city.coords.x, pos.y - city.coords.y);
+      const cp = cityPos(city);
+      const d = Math.hypot(pos.x - cp.x, pos.y - cp.y);
       if (d < bestD) { bestD = d; bestCity = city; }
     }
     if (!bestCity) continue;
@@ -419,7 +422,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       if (!mo?.forceId || mo.forceId !== input.playerForceId) continue;
       const mp = armyPosition(m);
       if (!mp) continue;
-      const scoutRange = 50 + Math.min(60, Math.max(0, armyMaxIntel(m) - 50) * 1.2);
+      const scoutRange = 60 + Math.min(72, Math.max(0, armyMaxIntel(m) - 50) * 1.45);   // scaled ×1.21
       let best: Extract<Command, { type: 'march' }> | null = null;
       let bestD = Infinity;
       for (const camp of enemyCamps) {
@@ -466,7 +469,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   // consolidate into one column: the largest absorbs the others' troops
   // and officers, so you can mass garrisons in the open field and they
   // fight (and capture territory) as a single, stronger unit.
-  const MERGE_DIST = 24;
+  const MERGE_DIST = 29;   // scaled ×1.21 for the geo layout
   const heldPos = heldRaw.map((c) =>
     armyPosition(c) ?? marchDestCoords(c, cities) ?? { x: 0, y: 0 },
   );
@@ -550,8 +553,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       troops: cmd.troops,
       fromCityId: cmd.cityId,
       targetCityId: cmd.targetCityId,
-      x: pos?.x ?? src.coords.x,
-      y: pos?.y ?? src.coords.y,
+      x: pos?.x ?? cityPos(src).x,
+      y: pos?.y ?? cityPos(src).y,
       progress,
       totalSeasons: total,
       holding,
@@ -573,7 +576,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const cmdr = officers[cmd.officerId];
     if (!src || !dst || !cmdr || !cmdr.forceId) return;
     const territories = generateTerritories(Object.values(cities));
-    const route = terrainRoute(src.coords.x, src.coords.y, dst.x, dst.y);
+    const sp = cityPos(src);
+    const route = terrainRoute(sp.x, sp.y, dst.x, dst.y);
     if (route.length < 2) return;
     // For each territory whose centroid projects between [tStart, tEnd]
     // along the polyline length, claim it for the marching force.
@@ -605,7 +609,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         }
         acc += sl;
       }
-      if (bestArc < 0 || bestPerp > 22) continue;
+      if (bestArc < 0 || bestPerp > 27) continue;   // corridor scaled ×1.21
       if (bestArc < sliceStart || bestArc > sliceEnd) continue;
       territoryOwnership[ter.id] = cmdr.forceId;
     }
@@ -636,7 +640,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const seizeTerr = generateTerritories(Object.values(cities));
     for (const seizure of campSeizures) {
       for (const ter of seizeTerr) {
-        if (Math.hypot(ter.coords.x - seizure.x, ter.coords.y - seizure.y) <= 26) {
+        if (Math.hypot(ter.coords.x - seizure.x, ter.coords.y - seizure.y) <= 32) {   // scaled ×1.21
           territoryOwnership[ter.id] = seizure.forceId;
         }
       }

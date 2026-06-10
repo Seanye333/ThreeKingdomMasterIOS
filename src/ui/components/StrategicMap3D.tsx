@@ -3,7 +3,8 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { Html, OrbitControls } from '@react-three/drei';
 import { getTerritoryCanvas, getTerritorySignature } from './territoryOverlay';
 import { positionAlongRoute, marchDestCoords } from '../../game/data/territories';
-import { snapToHexCenter } from '../../game/data/geography';
+import { snapToHexCenter, geoToPixel } from '../../game/data/geography';
+import { cityPixel } from '../../game/data/cityGeo';
 import { deriveWeaponType, type WeaponType } from '../../game/data/weaponTypes';
 import * as THREE from 'three';
 import { useGameStore } from '../../game/state/store';
@@ -51,156 +52,13 @@ function pxToWorld(x: number, y: number): [number, number] {
 }
 
 /* ─── Geographic coordinate system (Phase B) ───────────────────────
- * The painted map roughly covers China from ~96°E to ~125°E (29° wide)
- * and from ~43°N to ~17°N (26° tall, north→south). For each city we
- * may have either:
- *   • a real historical (lat, lon) — looked up below in CITY_GEO_OVERRIDES
- *   • or nothing, in which case we derive geo from the existing pixel
- *     coords using a linear calibration of that bbox.
- * Either way we then re-project that (lat, lon) back to pixel space
- * via the SAME calibration, so the city lands in pixel space — which
- * is what the rest of the 3D rendering (terrain, roads) expects. */
+ * The map covers China from ~96°E to ~125°E (29° wide) and from ~43°N
+ * to ~17°N (26° tall). City positions come from the shared cityGeo
+ * module (real lon/lat → pixel via geography.ts geoToPixel) — the same
+ * source the gameplay distance system uses, so the rendered map and the
+ * simulation always agree. */
 const GEO_LON_MIN = 96, GEO_LON_MAX = 125;   // 29° east-west
 const GEO_LAT_MIN = 17, GEO_LAT_MAX = 43;    // 26° north-south
-function geoToPixel(lon: number, lat: number): [number, number] {
-  const px = ((lon - GEO_LON_MIN) / (GEO_LON_MAX - GEO_LON_MIN)) * 1000;
-  const py = (1 - (lat - GEO_LAT_MIN) / (GEO_LAT_MAX - GEO_LAT_MIN)) * 720;
-  return [px, py];
-}
-
-/** Real historical positions for well-known cities. Values are modern
- *  (lon, lat) — modern equivalent city or the well-known ruin site. */
-const CITY_GEO_OVERRIDES: Record<string, [number, number]> = {
-  'luoyang': [112.45, 34.65],
-  'changan': [108.93, 34.27],
-  'xuchang': [113.81, 34.04],
-  'ye': [114.66, 36.5],
-  'chengdu': [103.98, 30.53],
-  'jianye': [118.71, 32.3],
-  'wuchang': [114.28, 30.53],
-  'jiangling': [112.24, 30.47],
-  'xiangyang': [112.2, 31.74],
-  'hanzhong': [107.08, 33.06],
-  'shouchun': [116.72, 31.93],
-  'hefei': [117.24, 31.87],
-  'chaisang': [116, 29.71],
-  'yongan': [109.41, 31.03],
-  'jiangxia': [114.67, 30.97],
-  'pengcheng': [117.22, 34.28],
-  'xiaopei': [116.77, 33.95],
-  'xiapi': [117.95, 34.3],
-  'bohai': [117.5, 37.5],
-  'pingyuan': [116.43, 37.16],
-  'beiping': [116.46, 40.17],
-  'taiyuan': [112.55, 37.87],
-  'yanmen': [112.95, 39.5],
-  'shangdang': [112.89, 36.1],
-  'guandu': [113.99, 34.65],
-  'hulao': [112.99, 34.79],
-  'wuwei': [102.64, 37.93],
-  'jincheng': [103.83, 36.06],
-  'longxi': [104.62, 35],
-  'tianshui': [105.42, 34.24],
-  'anding': [105.65, 36.55],
-  'shuofang': [107.42, 40.79],
-  'yangping': [106.56, 33.14],
-  'changsha': [112.94, 28.23],
-  'lingling': [111.62, 26.43],
-  'guiyang': [112.39, 25.78],
-  'wuling': [111.69, 29.13],
-  'jiaozhi': [105.85, 21.03],
-  'hepu': [109.2, 21.69],
-  'cangwu': [111.32, 23.48],
-  'nanhai': [113.27, 23.13],
-  'jianning': [102.73, 24.99],
-  'baxi': [105.97, 31.77],
-  'jiangzhou': [106.55, 29.56],
-  'lujiang': [117.3, 31.21],
-  'danyang': [118.88, 31.69],
-  'kuaiji': [120.58, 30],
-  'liaodong': [121.5, 41],
-  'xiangping': [122.5, 41.1],
-  'wuhuan': [120, 42],
-  'yuyang': [116.94, 40.44],
-  'yi-county': [115.5, 39.35],
-  'dunhuang': [96.2, 40.14],
-  'jiuquan': [98.51, 39.74],
-  'wudu': [105.16, 33.39],
-  'shanggui': [105.8, 34.67],
-  'chencang': [107.33, 34.39],
-  'tongguan': [110.27, 34.55],
-  'wuguan': [110.42, 33.86],
-  'mei': [107.84, 34.26],
-  'puyang': [115.06, 35.72],
-  'chenliu': [114.51, 34.67],
-  'nanpi': [116.7, 38.04],
-  'boling': [115.51, 38.23],
-  'linzi': [118.31, 36.84],
-  'langya': [118.36, 35.1],
-  'guangling': [119.42, 32.39],
-  'runan': [114.65, 32.95],
-  'wancheng': [112.75, 32.99],
-  'bowang': [112.34, 33.38],
-  'xinye': [112.41, 32.51],
-  'fancheng': [111.92, 32.28],
-  'shangyong': [110.23, 32.22],
-  'xincheng': [110.78, 32.13],
-  'xiling': [111.35, 31.1],
-  'yiling': [111.01, 30.61],
-  'xiaoting': [111.38, 30.16],
-  'maicheng': [112.1, 31.1],
-  'wuxi': [109.93, 31.07],
-  'yinping': [104.68, 32.95],
-  'baqiu': [113.13, 29.36],
-  'poyang': [116.69, 29],
-  'yuzhang': [115.89, 28.68],
-  'luling': [114.99, 27.11],
-  'wu': [120.62, 31.3],
-  'linhai': [121.13, 28.85],
-  'guilin': [110.3, 25.27],
-  'beihai': [118.82, 36.7],
-  'nanzhong': [102.48, 25.55],
-  'yongchang': [99.16, 25.12],
-  'yunnan': [101.25, 25.5],
-  'yuexi': [102.27, 27.9],
-  'hukou': [113.41, 36.1],
-  // ── newly added: cities that previously fell back to painted-map pixels ──
-  'jieting': [106.19, 35.11],   // 街亭(=壘)
-  'mianzhu': [104.14, 31.51],   // 綿竹(=壘)
-  'ruxu': [117.72, 31.63],   // 濡須(≈濡須塢)
-  'jiameng': [106.02, 32.42],   // 葭萌
-  'zitong': [105.19, 31.65],   // 梓潼
-  'fucheng': [104.68, 31.47],   // 涪城
-  'luocheng': [104.39, 30.94],   // 雒城
-  'jianmen': [105.54, 32.14],   // 劍閣
-  'ji': [116.25, 39.58],   // 薊(北京)
-  'liucheng': [120.45, 41.57],   // 柳城
-  'yunzhong': [111.2, 40.27],   // 雲中
-  'wuyuan': [109.99, 40.6],   // 五原
-  'wan': [116.58, 30.63],   // 皖城
-  'gongan': [112.26, 29.82],   // 公安
-  'lelang': [124.3, 39.02],   // 樂浪(贴东缘)
-  'daifang': [124.1, 38.3],   // 帶方(贴东缘)
-  'zhuyai': [110.35, 20.05],   // 朱崖(海南)
-  'jiuzhen': [105.78, 19.8],   // 九真
-  'rinan': [107.6, 17.3],   // 日南(贴南缘)
-  'sanguan': [106.81, 34.29],   // 散關
-  'baishuiguan': [105.22, 32.65],   // 白水關
-  'xiaoguan': [106.28, 36],   // 蕭關
-  'chibi': [113.93, 29.72],   // 赤壁
-  'changban': [111.73, 30.65],   // 長阪坡
-  'baima': [114.66, 35.29],   // 白馬
-  'yanjin': [114.12, 35.27],   // 延津
-  'liyang': [114.46, 35.9],   // 黎陽
-};
-
-/** Get pixel coords for a city, preferring the geographic override if
- *  available. Falls back to the painted-map pixel coords. */
-function cityPixel(cityId: string, fallbackX: number, fallbackY: number): [number, number] {
-  const geo = CITY_GEO_OVERRIDES[cityId];
-  if (geo) return geoToPixel(geo[0], geo[1]);
-  return [fallbackX, fallbackY];
-}
 
 /* ─── Geo-space helpers for terrain features (Phase B.2) ─────────
  * All MOUNTAINS / RIVERS / DESERTS / COASTLINE are authored in real
@@ -270,9 +128,10 @@ function coastXAt(y: number): number {
 }
 // Offshore islands the eastern-coastline model misses (Korea, Hainan) — kept
 // in sync with geography.ts so the 3D terrain raises land under those cities.
+// Positioned for the geo-anchored 樂浪/帶方/朱崖 (cityGeo.ts).
 const ISLANDS_3D: ReadonlyArray<{ cx: number; cy: number; hw: number; hh: number }> = [
-  { cx: 882, cy: 220, hw: 42, hh: 72 }, // Korea — Lelang, Daifang
-  { cx: 625, cy: 697, hw: 32, hh: 24 }, // Hainan — Zhuyai
+  { cx: 962, cy: 122, hw: 38, hh: 55 }, // Korea — hugs the NE map edge
+  { cx: 502, cy: 640, hw: 18, hh: 18 }, // Hainan — thin strait off the Leizhou coast
 ];
 
 /** Land = positive distance to coast, sea = negative. */

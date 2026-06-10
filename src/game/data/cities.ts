@@ -1,5 +1,6 @@
 import type { City } from '../types';
 import { terrainMarchCost } from './geography';
+import { cityPos } from './cityGeo';
 
 /** RTK14-style terrain category for each city. Pure-display today. */
 export type Terrain =
@@ -1050,8 +1051,13 @@ export const CITY_IDS = CITY_TEMPLATES.map((t) => t.id);
  * 散關…) add a chokepoint season. Capped at 4 seasons.
  */
 export function marchDurationFor(from: City, to: City): number {
-  const dx = to.coords.x - from.coords.x;
-  const dy = to.coords.y - from.coords.y;
+  // Geo-anchored positions — the same ones the 3D map renders and the
+  // terrain layer (geography.ts) is authored in, so the cost integral
+  // below samples the mountains the column actually crosses.
+  const a = cityPos(from);
+  const b = cityPos(to);
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
   const dist = Math.hypot(dx, dy);
 
   // Integrate terrain cost along the straight line: average extra cost
@@ -1060,17 +1066,20 @@ export function marchDurationFor(from: City, to: City): number {
   let costSum = 0;
   for (let i = 0; i < STEPS; i++) {
     const t = (i + 0.5) / STEPS;
-    costSum += terrainMarchCost(from.coords.x + dx * t, from.coords.y + dy * t);
+    costSum += terrainMarchCost(a.x + dx * t, a.y + dy * t);
   }
   const terrainMul = 1 + (costSum / STEPS); // 1 (plains) … ~2.3 (deep mountains)
   let effDist = dist * terrainMul;
 
   // A pass endpoint is a chokepoint — funnelling through it costs time.
-  if (from.terrain === 'pass' || to.terrain === 'pass') effDist += 45;
+  if (from.terrain === 'pass' || to.terrain === 'pass') effDist += 20;
 
-  if (effDist < 80) return 1;
-  if (effDist < 150) return 2;
-  if (effDist < 240) return 3;
+  // Thresholds re-tuned for the geo layout (median neighbour ≈56px vs the
+  // painted map's ≈46px) — picked by grid search to keep the duration of
+  // existing adjacent-pair marches as close to the old values as possible.
+  if (effDist < 100) return 1;
+  if (effDist < 195) return 2;
+  if (effDist < 275) return 3;
   return 4;
 }
 

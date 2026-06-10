@@ -4,6 +4,7 @@ import type {
   Scenario,
 } from '../types';
 import { OFFICER_IDS, TALENT_POOL_IDS, buildInitialCities, buildInitialOfficers } from '../data';
+import { cityPos } from '../data/cityGeo';
 
 /**
  * Procedurally generate a scenario by randomly distributing cities to N
@@ -50,7 +51,7 @@ export function generateRandomScenario(cfg: RandomScenarioConfig): Scenario {
     { length: forceCount },
     () => {
       const c = cityList[Math.floor(rng() * cityList.length)];
-      return { x: c.coords.x, y: c.coords.y };
+      return cityPos(c);
     },
   );
 
@@ -60,8 +61,9 @@ export function generateRandomScenario(cfg: RandomScenarioConfig): Scenario {
       let best = 0;
       let bestD = Infinity;
       for (let i = 0; i < centroids.length; i++) {
-        const dx = c.coords.x - centroids[i].x;
-        const dy = c.coords.y - centroids[i].y;
+        const cp = cityPos(c);
+        const dx = cp.x - centroids[i].x;
+        const dy = cp.y - centroids[i].y;
         const d = dx * dx + dy * dy;
         if (d < bestD) { bestD = d; best = i; }
       }
@@ -72,8 +74,8 @@ export function generateRandomScenario(cfg: RandomScenarioConfig): Scenario {
       const members = cityList.filter((_, idx) => assigned[idx] === i);
       if (members.length === 0) continue;
       centroids[i] = {
-        x: members.reduce((s, m) => s + m.coords.x, 0) / members.length,
-        y: members.reduce((s, m) => s + m.coords.y, 0) / members.length,
+        x: members.reduce((s, m) => s + cityPos(m).x, 0) / members.length,
+        y: members.reduce((s, m) => s + cityPos(m).y, 0) / members.length,
       };
     }
   }
