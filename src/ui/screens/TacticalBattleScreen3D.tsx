@@ -238,6 +238,42 @@ export function HexTile({
       {tile.terrain === 'forest' && <ForestArt y={h} windStrength={windStrength} />}
       {tile.terrain === 'mountain' && <MountainArt y={h} />}
       {tile.terrain === 'river' && <RiverArt y={h} />}
+      {tile.terrain === 'bridge' && <BridgeArt y={h} />}
+    </group>
+  );
+}
+
+/** 浮橋/渡口 — timber pontoon deck over the water: plank deck, side
+ *  rails and mooring posts, with water shimmering beneath the spans. */
+export function BridgeArt({ y }: { y: number }) {
+  return (
+    <group position={[0, y, 0]}>
+      {/* Water beneath the spans */}
+      <mesh position={[0, -0.03, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[R * 0.85, 6]} />
+        <meshStandardMaterial color="#3a6a98" roughness={0.35} metalness={0.45} />
+      </mesh>
+      {/* Plank deck — slats across the crossing direction */}
+      {[-0.52, -0.26, 0, 0.26, 0.52].map((px, i) => (
+        <mesh key={i} position={[px, 0.05, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.2, 0.05, 1.05]} />
+          <meshStandardMaterial color={i % 2 ? '#8a6840' : '#7a5c38'} roughness={0.85} />
+        </mesh>
+      ))}
+      {/* Side rails */}
+      {[-0.45, 0.45].map((pz, i) => (
+        <mesh key={`r${i}`} position={[0, 0.16, pz]} castShadow>
+          <boxGeometry args={[1.3, 0.04, 0.05]} />
+          <meshStandardMaterial color="#5a4226" roughness={0.85} />
+        </mesh>
+      ))}
+      {/* Mooring posts at the four rail ends */}
+      {[[-0.6, -0.45], [0.6, -0.45], [-0.6, 0.45], [0.6, 0.45]].map(([px, pz], i) => (
+        <mesh key={`p${i}`} position={[px, 0.14, pz]} castShadow>
+          <cylinderGeometry args={[0.035, 0.045, 0.26, 6]} />
+          <meshStandardMaterial color="#4a3826" roughness={0.9} />
+        </mesh>
+      ))}
     </group>
   );
 }
@@ -658,7 +694,28 @@ export function SweptRoof3D({ size, color = '#39444f' }: { size: number; color?:
   );
 }
 
-export function CityWall({ coord, bannerColor }: { coord: HexCoord; bannerColor: string }) {
+/** A humble town house inside the walls — mud-brick body + tiled pyramid
+ *  roof, size/rotation varied per coord so the streets feel lived-in. */
+export function TownHouse({ coord }: { coord: HexCoord }) {
+  const [x, z] = hexWorld(coord.col, coord.row);
+  const h = 0.34 + ((coord.col * 11 + coord.row * 17) % 4) * 0.05;
+  const w = 0.55 + ((coord.col * 5 + coord.row * 3) % 3) * 0.08;
+  const rot = ((coord.col * 13 + coord.row * 7) % 4) * (Math.PI / 8);
+  return (
+    <group position={[x, 0, z]} rotation={[0, rot, 0]}>
+      <mesh position={[0, h / 2, 0]} castShadow receiveShadow>
+        <boxGeometry args={[w, h, w * 0.8]} />
+        <meshStandardMaterial color="#9a8468" roughness={0.9} />
+      </mesh>
+      <mesh position={[0, h + 0.1, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
+        <coneGeometry args={[w * 0.78, 0.26, 4]} />
+        <meshStandardMaterial color="#39444f" roughness={0.75} />
+      </mesh>
+    </group>
+  );
+}
+
+export function CityWall({ coord, bannerColor, rotY = 0 }: { coord: HexCoord; bannerColor: string; rotY?: number }) {
   const [x, z] = hexWorld(coord.col, coord.row);
   const pennantRef = useRef<THREE.Mesh>(null);
   useFrame(({ clock }) => {
@@ -667,7 +724,7 @@ export function CityWall({ coord, bannerColor }: { coord: HexCoord; bannerColor:
     }
   });
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} rotation={[0, rotY, 0]}>
       {/* Wall body — thick stone block */}
       <mesh position={[0, 0.7, 0]} castShadow receiveShadow>
         <boxGeometry args={[1.6, 1.4, 1.6]} />
@@ -706,14 +763,14 @@ export function CityWall({ coord, bannerColor }: { coord: HexCoord; bannerColor:
 
 /** A grand gatehouse for the centre of a besieged wall — a two-storey tower
  *  with red columns, a swept double-eave roof and a fluttering banner. */
-export function WallGate3D({ coord, bannerColor }: { coord: HexCoord; bannerColor: string }) {
+export function WallGate3D({ coord, bannerColor, rotY = 0 }: { coord: HexCoord; bannerColor: string; rotY?: number }) {
   const [x, z] = hexWorld(coord.col, coord.row);
   const pennant = useRef<THREE.Mesh>(null);
   useFrame(({ clock }) => {
     if (pennant.current) pennant.current.rotation.y = Math.sin(clock.elapsedTime * 1.8) * 0.3;
   });
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} rotation={[0, rotY, 0]}>
       {/* Gate base + tiled coping */}
       <mesh position={[0, 0.85, 0]} castShadow receiveShadow>
         <boxGeometry args={[1.6, 1.7, 1.6]} />
@@ -1393,28 +1450,42 @@ function BattleScene({
         );
       })}
 
-      {/* City walls — rightmost column hexes that don't have a defense
-          structure. Suppressed for field battles (亲征野战): an open-ground
-          clash has no walls. */}
-      {!battle.field && (() => {
-        const wallCol = battle.width - 1;
-        const gateRow = Math.floor(battle.height / 2);
+      {/* City walls + gatehouses — mounted on the actual wall/gate TILES of
+          the walled-town enclosure, oriented per face (battlements toward
+          the attacker, gate doors facing outward). Breached tiles turn to
+          plain, so the masonry visibly vanishes at the breach. Town houses
+          fill the enclosure so the prize reads as a living city. */}
+      {(() => {
+        const wallTiles = tiles.filter((t) => t.terrain === 'wall' || t.terrain === 'gate');
+        if (wallTiles.length === 0) return null;
         const structureCoords = new Set(
           (battle.cityStructures ?? []).map((s) => `${s.coord.col},${s.coord.row}`),
         );
-        const unitCoords = new Set(units.map((u) => `${u.coord.col},${u.coord.row}`));
+        const westCol = Math.min(...wallTiles.map((t) => t.coord.col));
+        const r0 = Math.min(...wallTiles.map((t) => t.coord.row));
+        const r1 = Math.max(...wallTiles.map((t) => t.coord.row));
         const wallBanner = playerSide === 'defender' ? bannerColor : '#3a7dd9';
-        return tiles
-          .filter((t) =>
-            t.coord.col === wallCol &&
-            !structureCoords.has(`${t.coord.col},${t.coord.row}`) &&
-            !unitCoords.has(`${t.coord.col},${t.coord.row}`),
-          )
+        const rotFor = (t: { coord: HexCoord; terrain: string }): number => {
+          if (t.terrain === 'gate') {
+            if (t.coord.col === westCol) return 0;            // door → attacker (-x)
+            return t.coord.row === r0 ? -Math.PI / 2 : Math.PI / 2; // north / south face
+          }
+          return t.coord.col === westCol ? Math.PI / 2 : 0;   // battlements across the face
+        };
+        const pieces = wallTiles
+          .filter((t) => !structureCoords.has(`${t.coord.col},${t.coord.row}`))
           .map((t) => (
-            t.coord.row === gateRow
-              ? <WallGate3D key={`gate-${t.coord.col},${t.coord.row}`} coord={t.coord} bannerColor={wallBanner} />
-              : <CityWall key={`wall-${t.coord.col},${t.coord.row}`} coord={t.coord} bannerColor={wallBanner} />
+            t.terrain === 'gate'
+              ? <WallGate3D key={`gate-${t.coord.col},${t.coord.row}`} coord={t.coord} bannerColor={wallBanner} rotY={rotFor(t)} />
+              : <CityWall key={`wall-${t.coord.col},${t.coord.row}`} coord={t.coord} bannerColor={wallBanner} rotY={rotFor(t)} />
           ));
+        // Interior streets — sprinkle homes on plain ground inside the walls.
+        const houses = tiles
+          .filter((t) => t.terrain === 'plain'
+            && t.coord.col > westCol && t.coord.row > r0 && t.coord.row < r1
+            && ((t.coord.col * 7 + t.coord.row * 13) % 5) < 2)
+          .map((t) => <TownHouse key={`home-${t.coord.col},${t.coord.row}`} coord={t.coord} />);
+        return [...pieces, ...houses];
       })()}
 
       {/* Defense structures */}

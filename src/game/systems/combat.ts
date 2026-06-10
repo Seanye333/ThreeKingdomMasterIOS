@@ -14,6 +14,8 @@ import { SKILLS_BY_ID } from '../data/skills';
 import { getEliteTroop } from '../data/eliteTroops';
 import { deriveTactics, tacticsTotalBonus, combosPowerMultiplier, findActiveCombos } from '../data/officerAttributes';
 import { combatModifiers, conquestLoyaltyMod, type CombatMods } from './traitEffects';
+import { describeBattleSite } from '../data/geography';
+import { cityPos } from '../data/cityGeo';
 import { sidePoolRelationshipBonus, rivalShowdownMultiplier } from './relationshipEffects';
 import { effectivePrestigeEffects } from '../data/prestige';
 import { selectSiegeEngine } from '../data/siegeEngines';
@@ -1139,16 +1141,21 @@ export function handleMarch(
     pursued: result.pursued,
   };
 
+  // Name the real ground the city stands on — 「襄陽之戰（漢水之濱）」.
+  const tp = cityPos(target);
+  const site = describeBattleSite(tp.x, tp.y);
+  const siteZh = site ? `（${site.zh}）` : '';
+  const siteEn = site ? ` (${site.en})` : '';
   entries.push({
     cityId: target.id,
     kind: 'battle',
     text:
-      `Battle at ${target.name.en}: ${attackerNames} (${sentTroops.toLocaleString()}) vs ` +
+      `Battle at ${target.name.en}${siteEn}: ${attackerNames} (${sentTroops.toLocaleString()}) vs ` +
       `${defenderNames} (${target.troops.toLocaleString()}). ` +
       `Casualties — atk ${result.attackerLosses.toLocaleString()}, def ${result.defenderLosses.toLocaleString()}. ` +
       `[Click for breakdown]`,
     textZh:
-      `${target.name.zh}之戰：${attackerNamesZh}（${sentTroops.toLocaleString()}）對陣` +
+      `${target.name.zh}之戰${siteZh}：${attackerNamesZh}（${sentTroops.toLocaleString()}）對陣` +
       `${defenderNamesZh}（${target.troops.toLocaleString()}）。` +
       `折損 — 攻方 ${result.attackerLosses.toLocaleString()}、守方 ${result.defenderLosses.toLocaleString()}。` +
       `[點擊查看詳情]`,
