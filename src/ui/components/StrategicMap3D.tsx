@@ -657,6 +657,49 @@ function buildNormalMap(): THREE.Texture {
   return tex;
 }
 
+/* ─── Water alpha-mask — keeps the territory tint off the water ───
+ *  White = land (tint shows), black = sea / lake / river bed (tint
+ *  hidden). Mirrors exactly the water tests sampleTerrain paints with,
+ *  so the mask and the drawn water always agree. Built once (static). */
+let waterMaskCache: THREE.Texture | null = null;
+function buildWaterAlphaMask(): THREE.Texture {
+  if (waterMaskCache) return waterMaskCache;
+  const W = 1000, H = 720;
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d')!;
+  const img = ctx.createImageData(W, H);
+  const data = img.data;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      let water = landSDF(x, y) < 0;
+      if (!water) {
+        for (const lk of LAKES) {
+          if (Math.hypot(x - lk.x, y - lk.y) < lk.r) { water = true; break; }
+        }
+      }
+      if (!water) {
+        for (const r of RIVERS) {
+          if (distToPolyline(x, y, r.points) < r.width) { water = true; break; }
+        }
+      }
+      const i = (y * W + x) * 4;
+      const v = water ? 0 : 255;
+      data[i] = data[i + 1] = data[i + 2] = v;
+      data[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.flipY = true;
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.generateMipmaps = false;
+  waterMaskCache = tex;
+  return tex;
+}
+
 /* ─── Phase 3a — territory tint over the terrain ──────────────────
  *  Builds a sibling plane to MapTerrain, displaced to follow the same
  *  heights but lifted by 0.05 so it sits just above the ground, then
@@ -714,6 +757,9 @@ function TerritoryGroundLayer({
     >
       <meshBasicMaterial
         map={texture}
+        // Hide the ownership tint over sea / lakes / rivers — water should
+        // always read as water, not as faction colour.
+        alphaMap={buildWaterAlphaMask()}
         transparent
         opacity={0.85}
         depthWrite={false}
