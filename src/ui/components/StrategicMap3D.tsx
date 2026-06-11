@@ -1625,15 +1625,17 @@ function MarchingArmy({ from, to, color, commanderName, troops, seasonsRemaining
   const etaLabel = holding ? '  駐' : totalSeasons > 1 ? `  ${seasonsRemaining}/${totalSeasons}季` : '';
   return (
     <group ref={groupRef} scale={ARMY_TOKEN_SCALE}>
-      {/* Click target — generous invisible disc over the squad. */}
+      {/* Click target — a FAT invisible cylinder over the whole squad incl.
+          the banner, so columns are easy to tap even zoomed out / on touch.
+          (The old 0.55×0.42 disc was why armies felt uncontrollable.) */}
       {onClick && (
         <mesh
-          position={[0, 0.18, 0]}
+          position={[0, 0.5, 0]}
           onClick={(e) => { e.stopPropagation(); onClick(); }}
           onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}
           onPointerOut={() => { document.body.style.cursor = ''; }}
         >
-          <cylinderGeometry args={[0.55, 0.55, 0.42, 10]} />
+          <cylinderGeometry args={[1.1, 1.1, 1.3, 10]} />
           <meshBasicMaterial transparent opacity={0} depthWrite={false} />
         </mesh>
       )}
