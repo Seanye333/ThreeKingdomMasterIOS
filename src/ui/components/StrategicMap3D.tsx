@@ -2819,7 +2819,7 @@ function DriftingClouds() {
    hexes are skipped — the animated Ocean shows through. Toggleable; the
    painted scroll map stays as the default/backup. */
 
-type HexWorldTile = { x: number; z: number; topY: number; kind: string };
+type HexWorldTile = { x: number; z: number; topY: number; kind: string; c: number; r: number };
 
 const HEXW_R = IS_MOBILE ? 0.18 : 0.12;       // hex radius (world units) — fine quilt (~22k land tiles desktop)
 const HEXW_COL = 1.5 * HEXW_R;
@@ -2845,7 +2845,7 @@ function buildHexWorldTiles(): HexWorldTile[] {
       if (kind === 'sea') continue; // let the living ocean show through
       const water = kind === 'river' || kind === 'lake';
       const topY = water ? 0.012 : Math.max(0.05, sampleTerrainHeight(x, z));
-      out.push({ x, z, topY, kind });
+      out.push({ x, z, topY, kind, c, r });
     }
   }
   HEXWORLD_CACHE = out;
@@ -2861,14 +2861,15 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, onGroundC
 }) {
   const tiles = useMemo(() => buildHexWorldTiles(), []);
 
-  // 領土染色 — each land hex takes its nearest territory centroid's owner
+  // 領土歸屬 — each land hex takes its nearest territory centroid's owner
   // (override ?? parent city's lord), the SAME resolution the painted
   // territory layer uses, so both map styles always agree on borders.
-  const tileOwnerColor = useMemo(() => {
-    const seeds = generateTerritories(Object.values(cities)).map((t) => {
-      const owner = territoryOwnership[t.id] ?? cities[t.parentCityId]?.ownerForceId ?? null;
-      return { x: t.coords.x, y: t.coords.y, color: owner ? (forces[owner]?.color ?? null) : null };
-    });
+  const tileOwner = useMemo(() => {
+    const seeds = generateTerritories(Object.values(cities)).map((t) => ({
+      x: t.coords.x,
+      y: t.coords.y,
+      owner: territoryOwnership[t.id] ?? cities[t.parentCityId]?.ownerForceId ?? null,
+    }));
     return tiles.map((t) => {
       if (t.kind === 'river' || t.kind === 'lake') return null; // water stays water
       const px = (t.x + MAP_W / 2) / PIXEL_TO_WORLD;
@@ -2877,21 +2878,51 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, onGroundC
       let bestD = Infinity;
       for (const s of seeds) {
         const d = (s.x - px) * (s.x - px) + (s.y - py) * (s.y - py);
-        if (d < bestD) { bestD = d; best = s.color; }
+        if (d < bestD) { bestD = d; best = s.owner; }
       }
       return best;
     });
-  }, [tiles, cities, forces, territoryOwnership]);
+  }, [tiles, cities, territoryOwnership]);
 
-  // Per-tile colour — terrain base, blended toward the owning force's colour
-  // (RTK-XIV-style painted realm); seasonal: snow-dusted land in winter.
+  // 國界 — an owned hex bordering a DIFFERENT owner (or unowned wilderness)
+  // is a frontier tile: it gets a deeper, more saturated realm colour so the
+  // borders cut sharply. Sea/river neighbours don't count (coasts and rivers
+  // already outline themselves).
+  const tileBorder = useMemo(() => {
+    const idx = new Map<string, number>();
+    tiles.forEach((t, i) => idx.set(`${t.c},${t.r}`, i));
+    const isWater = (k: string) => k === 'river' || k === 'lake';
+    return tiles.map((t, i) => {
+      if (isWater(t.kind)) return false;
+      const own = tileOwner[i];
+      if (!own) return false;
+      // Flat-top hex neighbours; odd columns are shifted +half a row.
+      const nbs = t.c & 1
+        ? [[0, -1], [0, 1], [-1, 0], [1, 0], [-1, 1], [1, 1]]
+        : [[0, -1], [0, 1], [-1, 0], [1, 0], [-1, -1], [1, -1]];
+      for (const [dc, dr] of nbs) {
+        const j = idx.get(`${t.c + dc},${t.r + dr}`);
+        if (j === undefined) continue;          // sea — no edge
+        if (isWater(tiles[j].kind)) continue;   // river — no edge
+        if (tileOwner[j] !== own) return true;
+      }
+      return false;
+    });
+  }, [tiles, tileOwner]);
+
+  // Per-tile colour — terrain base blended toward the owning force's colour
+  // (deeper on frontier tiles); seasonal: snow-dusted land in winter.
   const colors = useMemo(() => tiles.map((t, i) => {
     const water = t.kind === 'river' || t.kind === 'lake';
-    const owner = tileOwnerColor[i];
+    const ownerId = tileOwner[i];
+    const owner = ownerId ? (forces[ownerId]?.color ?? null) : null;
+    const border = tileBorder[i];
     if (winter) {
       const snow = water ? '#bcd2dc' : t.kind === 'mountain' ? '#cfd4d8' : '#c9cfc3';
       if (!owner || water) return snow;
-      return `#${new THREE.Color(snow).lerp(new THREE.Color(owner), 0.26).getHexString()}`;
+      const col = new THREE.Color(snow).lerp(new THREE.Color(owner), border ? 0.5 : 0.26);
+      if (border) col.offsetHSL(0, 0, -0.06);
+      return `#${col.getHexString()}`;
     }
     const base = HEXWORLD_COLOR[t.kind] ?? HEXWORLD_COLOR.plain;
     const col = new THREE.Color(base);
@@ -2900,9 +2931,12 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, onGroundC
       const h = Math.abs(Math.sin(t.x * 12.9898 + t.z * 78.233)) * 0.12;
       col.offsetHSL(0, 0, h - 0.06);
     }
-    if (owner && !water) col.lerp(new THREE.Color(owner), 0.38);
+    if (owner && !water) {
+      col.lerp(new THREE.Color(owner), border ? 0.68 : 0.38);
+      if (border) col.offsetHSL(0, 0.05, -0.08);
+    }
     return `#${col.getHexString()}`;
-  }), [tiles, winter, tileOwnerColor]);
+  }), [tiles, winter, tileOwner, tileBorder, forces]);
 
   return (
     <group>
