@@ -1747,6 +1747,39 @@ function BattlePulseRing3D({ wx, y, wz, color, phase }: {
   );
 }
 
+/** 城防一目了然 — a city's BUILT perimeter defences (buildSlots) show as tiny
+ *  gold watch-posts around its token at their true compass positions, so the
+ *  world map reads which cities are fortified and on which approaches. */
+const CITY_SLOT_DIR: Array<[number, number]> = [
+  [0, -1], [Math.SQRT1_2, -Math.SQRT1_2], [1, 0], [Math.SQRT1_2, Math.SQRT1_2],
+  [0, 1], [-Math.SQRT1_2, Math.SQRT1_2], [-1, 0], [-Math.SQRT1_2, -Math.SQRT1_2],
+];
+function CityDefenseRing({ city, wx, wz, terrainY }: {
+  city: City; wx: number; wz: number; terrainY: number;
+}) {
+  const built = (city.buildSlots ?? []).filter((s) => s.buildingId);
+  if (built.length === 0) return null;
+  return (
+    <group position={[wx, terrainY, wz]}>
+      {built.map((s) => {
+        const dir = CITY_SLOT_DIR[s.slot] ?? [0, -1];
+        return (
+          <group key={s.slot} position={[dir[0] * 0.62, 0, dir[1] * 0.62]}>
+            <mesh position={[0, 0.07, 0]} castShadow>
+              <cylinderGeometry args={[0.025, 0.035, 0.14, 5]} />
+              <meshStandardMaterial color="#8a6f3a" roughness={0.8} />
+            </mesh>
+            <mesh position={[0, 0.16, 0]}>
+              <coneGeometry args={[0.04, 0.06, 4]} />
+              <meshStandardMaterial color="#d4a84a" emissive="#d4a84a" emissiveIntensity={0.25} />
+            </mesh>
+          </group>
+        );
+      })}
+    </group>
+  );
+}
+
 /** 待戰 — battles queued for this season (AI clashes / siege defences not yet
  *  fought) pulse red at their sites so you can see what's coming before each
  *  one ignites. */
@@ -3365,25 +3398,27 @@ function MapScene({ overlayMode, onPortClick, onFortClick, mapStyle, dioSelected
         const [wx, wz] = pxToWorld(px, py);
         const terrainY = cityElevation(wx, wz);
         return (
-          <City3D
-            key={city.id}
-            city={city}
-            forceColor={color}
-            isCapital={capitalCityIds.has(city.id)}
-            isSelected={selectedCityId === city.id}
-            terrainY={terrainY}
-            overlay={overlayForCity(city, overlayMode, maxes)}
-            onClick={() => {
-              // RTS-style: with an army selected, clicking a city re-routes
-              // the column there (the 2D map used to own this interaction).
-              if (selectedArmyId3D && redirectArmy(selectedArmyId3D, city.id)) {
-                selectArmy(null);
-                return;
-              }
-              if (selectedCityId === city.id) openCityMap();
-              else selectCity(city.id);
-            }}
-          />
+          <group key={city.id}>
+            <City3D
+              city={city}
+              forceColor={color}
+              isCapital={capitalCityIds.has(city.id)}
+              isSelected={selectedCityId === city.id}
+              terrainY={terrainY}
+              overlay={overlayForCity(city, overlayMode, maxes)}
+              onClick={() => {
+                // RTS-style: with an army selected, clicking a city re-routes
+                // the column there (the 2D map used to own this interaction).
+                if (selectedArmyId3D && redirectArmy(selectedArmyId3D, city.id)) {
+                  selectArmy(null);
+                  return;
+                }
+                if (selectedCityId === city.id) openCityMap();
+                else selectCity(city.id);
+              }}
+            />
+            <CityDefenseRing city={city} wx={wx} wz={wz} terrainY={terrainY} />
+          </group>
         );
       })}
     </>
