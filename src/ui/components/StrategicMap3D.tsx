@@ -3503,7 +3503,8 @@ function ArmyOrdersHint() {
       zIndex: 12, display: 'flex', alignItems: 'center', gap: '0.6rem',
       background: 'rgba(20, 14, 8, 0.92)', border: '1px solid #d4a84a', borderRadius: 4,
       padding: '0.4rem 0.8rem', fontFamily: 'Songti SC, serif',
-      boxShadow: '0 2px 12px rgba(0,0,0,0.55)', whiteSpace: 'nowrap',
+      boxShadow: '0 2px 12px rgba(0,0,0,0.55)',
+      flexWrap: 'wrap', justifyContent: 'center', maxWidth: '94vw',
     }}>
       <span style={{ color: '#f0d98a', letterSpacing: '0.1rem', fontSize: '0.85rem' }}>
         ⚑ {commander?.name.zh ?? '?'}{t('部', '')} {army.troops.toLocaleString()}{t('兵', '')}
@@ -3737,6 +3738,7 @@ export function StrategicMap3D() {
       <div style={{
         position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 10,
         display: 'flex', gap: 6,
+        flexWrap: 'wrap', justifyContent: 'center', maxWidth: '96vw',
         pointerEvents: 'none',
       }}>
         <span style={{
@@ -3884,10 +3886,12 @@ export function StrategicMap3D() {
         return (
           <div style={{
             position: 'absolute', bottom: 14, left: '50%', transform: 'translateX(-50%)',
-            zIndex: 13, display: 'flex', alignItems: 'center', gap: '0.55rem',
+            zIndex: 13, display: 'flex', alignItems: 'center', gap: IS_MOBILE ? '0.35rem' : '0.55rem',
             background: 'rgba(20, 14, 8, 0.94)', border: '1px solid #b8584a', borderRadius: 4,
-            padding: '0.4rem 0.8rem', fontFamily: 'Songti SC, serif',
-            boxShadow: '0 2px 14px rgba(0,0,0,0.6)', whiteSpace: 'nowrap',
+            padding: IS_MOBILE ? '0.3rem 0.5rem' : '0.4rem 0.8rem', fontFamily: 'Songti SC, serif',
+            boxShadow: '0 2px 14px rgba(0,0,0,0.6)',
+            // Phones: wrap the chips instead of overflowing off-screen.
+            flexWrap: 'wrap', justifyContent: 'center', maxWidth: '94vw',
           }}>
             <span style={{ color: '#e0a0a0', fontSize: '0.78rem', letterSpacing: '0.1rem' }}>
               ⚔ {t(`第${worldBattle.turn}回`, `T${worldBattle.turn}`)} · {worldBattle.winner
