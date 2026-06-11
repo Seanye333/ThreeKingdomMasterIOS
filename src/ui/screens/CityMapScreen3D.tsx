@@ -10,6 +10,7 @@ import {
   aggregateSlotEffects,
 } from '../../game/data/defenseBuildings';
 import { previewBattlefield } from '../../game/systems/tactical';
+import { battleGroundAt } from '../../game/data/geography';
 import { citySize } from '../../game/systems/citySize';
 import { BUILDING_DEFS, BUILDING_DEFS_BY_ID } from '../../game/data/buildings';
 import { startCityAmbience, stopCityAmbience } from '../../game/systems/sound';
@@ -155,36 +156,6 @@ function InsideBuilding3D({ coord, buildingId, level }: {
 }
 
 /* ─── Tower range ring (gold circle on the ground) ──────────────────── */
-function RangeRing3D({ coord, range, color }: {
-  coord: { col: number; row: number };
-  range: number;
-  color: string;
-}) {
-  const [x, z] = hexWorld(coord.col, coord.row);
-  const radius = range * HEX_ROW_STEP * 0.95;
-  return (
-    <mesh position={[x, 0.22, z]} rotation={[-Math.PI / 2, 0, 0]}>
-      <ringGeometry args={[radius - 0.05, radius, 48]} />
-      <meshBasicMaterial color={color} transparent opacity={0.4} side={THREE.DoubleSide} />
-    </mesh>
-  );
-}
-
-/* ─── Available-slot marker (golden octagonal floor disc) ───────────── */
-function SlotMarker3D({ coord, occupied }: {
-  coord: { col: number; row: number };
-  occupied: boolean;
-}) {
-  const [x, z] = hexWorld(coord.col, coord.row);
-  if (occupied) return null;
-  return (
-    <mesh position={[x, 0.22, z]} rotation={[-Math.PI / 2, 0, Math.PI / 8]}>
-      <ringGeometry args={[0.55, 0.78, 8]} />
-      <meshBasicMaterial color="#d4a84a" transparent opacity={0.55} side={THREE.DoubleSide} />
-    </mesh>
-  );
-}
-
 /* ─── The full 3D scene ─────────────────────────────────────────────── */
 /* ─── Perimeter wall + gate ──────────────────────────────────────────── */
 /** A lightweight crenellated wall block (no per-segment banner/animation, so
@@ -2072,9 +2043,270 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, g
   );
 }
 
+/* ─── 城外腹地 (Hinterland) ────────────────────────────────────────────
+   The walled city sits at the centre. Beyond its moat we sample the REAL
+   strategic-map geography in every direction — so the river that runs east
+   toward a neighbour appears to the east, the mountains north appear north,
+   and every approach shows the ground that actually lies between this city
+   and that neighbour. The 8 defence slots ride the outer ring at their true
+   compass bearings (directional defence), and a signed road runs out toward
+   each adjacent city. */
+
+interface Neighbor {
+  id: EntityId;
+  nameZh: string;
+  nameEn: string;
+  x: number;
+  y: number;
+  color: string;
+  rel: 'self' | 'other' | 'neutral';
+}
+
+const HINTERLAND_BELT_DEPTH = 15;    // world units of countryside beyond the moat
+const HINTERLAND_STRAT_REACH = 60;   // strategic units the belt's outer edge samples toward neighbours
+const HINTERLAND_TILE_SP = 1.7;      // belt sampling spacing (world units)
+const MOAT_PAD = 4;                  // moat half-extends this far past the grid
+
+// Real-ground → colour / relief. Water sits flat & low; hills and mountains
+// rise so the countryside reads in 3D.
+const GROUND_COLOR: Record<string, string> = {
+  sea:       '#1d4a68',
+  lake:      '#27607f',
+  river:     '#2c5882',
+  riverbank: '#8a8a5e',
+  mountain:  '#6a5b4c',
+  hill:      '#7c7250',
+  plain:     '#5f7a42',
+};
+const GROUND_HEIGHT: Record<string, number> = {
+  sea: 0.1, lake: 0.1, river: 0.1, riverbank: 0.22,
+  mountain: 1.8, hill: 0.75, plain: 0.28,
+};
+const WATER_GROUND = new Set(['sea', 'lake', 'river']);
+
+// Compass slot directions in world space (x = east, +z = south, so N = −z).
+// Index order matches computeSlotPositions / SLOT_POSITIONS: N,NE,E,SE,S,SW,W,NW.
+const S2 = Math.SQRT1_2;
+const COMPASS_DIR: Array<[number, number]> = [
+  [0, -1], [S2, -S2], [1, 0], [S2, S2],
+  [0, 1], [-S2, S2], [-1, 0], [-S2, -S2],
+];
+const COMPASS_ZH = ['北', '東北', '東', '東南', '南', '西南', '西', '西北'];
+const COMPASS_EN = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+
+/** Which compass slot (0-7) guards a given world bearing (dx east, dz south). */
+function octantForWorldDir(dx: number, dz: number): number {
+  // 0° = north (−z), increasing clockwise through east.
+  let deg = (Math.atan2(dx, -dz) * 180) / Math.PI;
+  if (deg < 0) deg += 360;
+  return Math.round(deg / 45) % 8;
+}
+
+/** A clickable octagon pad for a directional defence slot, with its compass
+ *  label. Built defences render on top via the shared DefenseStructure. */
+function HinterlandSlot3D({
+  x, z, compass, occupied, selected, onClick, showLabel,
+}: {
+  x: number; z: number; compass: string; occupied: boolean;
+  selected: boolean; onClick: () => void; showLabel: boolean;
+}) {
+  return (
+    <group position={[x, 0, z]}>
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, 0.07, 0]}
+        onClick={(e) => { e.stopPropagation(); onClick(); }}
+        onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}
+        onPointerOut={() => { document.body.style.cursor = 'auto'; }}
+      >
+        <cylinderGeometry args={[0.92, 0.92, 0.14, 8]} />
+        <meshStandardMaterial
+          color={occupied ? '#3a2d1a' : '#d4a84a'}
+          emissive={selected ? '#f0e0b0' : occupied ? '#000000' : '#6a4a18'}
+          emissiveIntensity={selected ? 0.6 : 0.25}
+          transparent
+          opacity={occupied ? 0.55 : 0.9}
+          roughness={0.6}
+        />
+      </mesh>
+      {selected && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+          <ringGeometry args={[1.05, 1.3, 24]} />
+          <meshBasicMaterial color="#f0e0b0" transparent opacity={0.8} side={THREE.DoubleSide} />
+        </mesh>
+      )}
+      {showLabel && (
+        <Html center position={[0, 1.0, 0]} distanceFactor={26} occlude={false}>
+          <div style={{
+            color: occupied ? '#c0a878' : '#f0d98a',
+            fontFamily: 'Songti SC, serif', fontSize: '13px',
+            letterSpacing: '1px', whiteSpace: 'nowrap',
+            textShadow: '0 1px 3px #000', pointerEvents: 'none',
+          }}>
+            {compass}
+          </div>
+        </Html>
+      )}
+    </group>
+  );
+}
+
+function Hinterland3D({
+  preview, city, neighbors, slots, selectedSlot, onSlotClick, showOverlays,
+}: {
+  preview: ReturnType<typeof previewBattlefield>;
+  city: { coords: { x: number; y: number } };
+  neighbors: Neighbor[];
+  slots: ReturnType<typeof useGameStore.getState>['cities'][string]['buildSlots'];
+  selectedSlot: number | null;
+  onSlotClick: (slot: number) => void;
+  showOverlays: boolean;
+}) {
+  const W = preview.width, H = preview.height;
+  const cx = (W * HEX_COL_STEP) / 2;
+  const cz = (H * HEX_ROW_STEP) / 2;
+  const innerX = (W * HEX_COL_STEP) / 2 + MOAT_PAD;
+  const innerZ = (H * HEX_ROW_STEP) / 2 + MOAT_PAD;
+  const outerX = innerX + HINTERLAND_BELT_DEPTH;
+  const outerZ = innerZ + HINTERLAND_BELT_DEPTH;
+
+  // Sample a belt of real ground around the city. Each tile's depth across the
+  // belt maps to how far out (toward the neighbours) we sample the strategic
+  // map, so the inner shore is the city's doorstep and the outer fringe is the
+  // open country on the road to its neighbours.
+  const tiles = useMemo(() => {
+    const out: Array<{ x: number; z: number; color: string; h: number; water: boolean }> = [];
+    const ellR = (ang: number, rx: number, rz: number) =>
+      1 / Math.hypot(Math.cos(ang) / rx, Math.sin(ang) / rz);
+    for (let wx = cx - outerX; wx <= cx + outerX; wx += HINTERLAND_TILE_SP) {
+      for (let wz = cz - outerZ; wz <= cz + outerZ; wz += HINTERLAND_TILE_SP) {
+        const dx = wx - cx, dz = wz - cz;
+        const r = Math.hypot(dx, dz);
+        if (r < 0.001) continue;
+        const ang = Math.atan2(dz, dx);
+        const inR = ellR(ang, innerX, innerZ);
+        const outR = ellR(ang, outerX, outerZ);
+        if (r < inR || r > outR) continue;
+        const t = (r - inR) / Math.max(0.001, outR - inR);
+        const strat = 6 + t * HINTERLAND_STRAT_REACH;
+        const ux = dx / r, uz = dz / r;
+        const g = battleGroundAt(city.coords.x + ux * strat, city.coords.y + uz * strat);
+        out.push({
+          x: wx, z: wz,
+          color: GROUND_COLOR[g] ?? GROUND_COLOR.plain,
+          h: GROUND_HEIGHT[g] ?? 0.28,
+          water: WATER_GROUND.has(g),
+        });
+      }
+    }
+    return out;
+  }, [cx, cz, innerX, innerZ, outerX, outerZ, city.coords.x, city.coords.y]);
+
+  const slotMap = new Map((slots ?? []).map((s) => [s.slot, s]));
+
+  return (
+    <group>
+      {/* Countryside belt — instanced hex prisms, coloured & raised by real ground */}
+      <Instances limit={Math.max(1, tiles.length)} castShadow receiveShadow>
+        <cylinderGeometry args={[1.0, 1.0, 1, 6]} />
+        <meshStandardMaterial roughness={0.92} metalness={0.02} />
+        {tiles.map((t, i) => (
+          <Instance
+            key={i}
+            position={[t.x, t.water ? 0.05 : t.h / 2, t.z]}
+            scale={[1, Math.max(0.12, t.h), 1]}
+            color={t.color}
+          />
+        ))}
+      </Instances>
+
+      {/* Roads + signposts out to each neighbouring city, in its true direction */}
+      {neighbors.map((n) => {
+        const dx = n.x - city.coords.x, dz = n.y - city.coords.y;
+        const len = Math.hypot(dx, dz) || 1;
+        const ux = dx / len, uz = dz / len;
+        const ang = Math.atan2(dz, dx);
+        const inR = 1 / Math.hypot(Math.cos(ang) / innerX, Math.sin(ang) / innerZ);
+        const outR = 1 / Math.hypot(Math.cos(ang) / outerX, Math.sin(ang) / outerZ);
+        const mid = (inR + outR) / 2;
+        const roadLen = outR - inR + 1.5;
+        const postX = cx + ux * (outR + 0.4);
+        const postZ = cz + uz * (outR + 0.4);
+        return (
+          <group key={n.id}>
+            {/* Packed-earth road strip aligned along the bearing */}
+            <mesh
+              position={[cx + ux * mid, 0.16, cz + uz * mid]}
+              rotation={[0, Math.atan2(-uz, ux), 0]}
+              receiveShadow
+            >
+              <boxGeometry args={[roadLen, 0.08, 1.3]} />
+              <meshStandardMaterial color="#9a8358" roughness={0.95} />
+            </mesh>
+            {/* Signpost */}
+            <mesh position={[postX, 0.7, postZ]} castShadow>
+              <cylinderGeometry args={[0.09, 0.09, 1.4, 6]} />
+              <meshStandardMaterial color="#5a4326" roughness={0.9} />
+            </mesh>
+            <Html center position={[postX, 1.7, postZ]} distanceFactor={30} occlude={false}>
+              <div style={{
+                background: 'rgba(20,14,8,0.82)',
+                border: `1px solid ${n.color}`,
+                borderRadius: 3,
+                padding: '2px 7px',
+                color: n.rel === 'self' ? '#7ed68a' : n.rel === 'other' ? '#e0a0a0' : '#c0a878',
+                fontFamily: 'Songti SC, serif', fontSize: '12px',
+                letterSpacing: '1px', whiteSpace: 'nowrap',
+                textShadow: '0 1px 2px #000', pointerEvents: 'none',
+              }}>
+                往 {n.nameZh}
+              </div>
+            </Html>
+          </group>
+        );
+      })}
+
+      {/* 8 directional defence slots on the outer ring */}
+      {COMPASS_DIR.map(([dxC, dzC], i) => {
+        const px = cx + dxC * (innerX - 0.5);
+        const pz = cz + dzC * (innerZ - 0.5);
+        const s = slotMap.get(i);
+        const occupied = !!s?.buildingId;
+        return (
+          <group key={`hslot-${i}`}>
+            <HinterlandSlot3D
+              x={px} z={pz}
+              compass={COMPASS_ZH[i]}
+              occupied={occupied}
+              selected={selectedSlot === i}
+              onClick={() => onSlotClick(i)}
+              showLabel={showOverlays}
+            />
+            {occupied && s && (() => {
+              const maxHp = 100 * s.level + 100;
+              return (
+                <group position={[px, 0, pz]}>
+                  <DefenseStructure
+                    coord={{ col: 0, row: 0 }}
+                    buildingId={s.buildingId!}
+                    level={s.level}
+                    hp={maxHp}
+                    maxHp={maxHp}
+                  />
+                </group>
+              );
+            })()}
+          </group>
+        );
+      })}
+    </group>
+  );
+}
+
 function CityScene({
   preview, slots, buildings, construction, plots, cityWallCol, bannerColor, light, season, stats, grand, onInspect,
   selectedPlot, onPlotClick, hovered, onHover, onClick, showOverlays,
+  city, neighbors, selectedSlot, onSlotClick,
 }: {
   preview: ReturnType<typeof previewBattlefield>;
   slots: ReturnType<typeof useGameStore.getState>['cities'][string]['buildSlots'];
@@ -2094,10 +2326,13 @@ function CityScene({
   onHover: (c: { col: number; row: number } | null) => void;
   onClick: (c: { col: number; row: number }) => void;
   showOverlays: boolean;
+  city: { coords: { x: number; y: number } };
+  neighbors: Neighbor[];
+  selectedSlot: number | null;
+  onSlotClick: (slot: number) => void;
 }) {
-  const slotIndexAtHex = new Map<string, number>();
-  preview.slotPositions.forEach((pos, idx) => slotIndexAtHex.set(`${pos.col},${pos.row}`, idx));
-  const slotMap = new Map((slots ?? []).map((s) => [s.slot, s]));
+  // Defence slots now ride the outer hinterland ring (directional defence),
+  // not the city-wall hexes — so they no longer occupy any grid hex here.
 
   // Hexes that already hold something — a finished building OR a site under
   // construction. Empty foundations (not in this set) stay tappable to build.
@@ -2106,26 +2341,8 @@ function CityScene({
     ...construction.map((c) => `${c.coord.col},${c.coord.row}`),
   ]);
   const occupiedHexes = new Set<string>();
-  preview.slotPositions.forEach((pos) => occupiedHexes.add(`${pos.col},${pos.row}`));
   for (const b of buildings) occupiedHexes.add(`${b.coord.col},${b.coord.row}`);
   for (const p of plots) occupiedHexes.add(`${p.col},${p.row}`); // foundations
-
-  // Tower range circles for visualization
-  const towerRanges: Array<{ coord: { col: number; row: number }; range: number; color: string }> = [];
-  for (const s of slots ?? []) {
-    if (!s.buildingId) continue;
-    const pos = preview.slotPositions[s.slot];
-    if (!pos) continue;
-    let range = 0; let color = '#d4a84a';
-    switch (s.buildingId) {
-      case 'watchtower':     range = 4; color = '#d4a84a'; break;
-      case 'arrow-platform': range = 5; color = '#c19a3b'; break;
-      case 'rockfall':       range = 1; color = '#4a3a30'; break;
-      case 'caltrops':       range = 1; color = '#7a6750'; break;
-      case 'iron-chains':    range = 1; color = '#3a6a98'; break;
-    }
-    if (range > 0) towerRanges.push({ coord: pos, range, color });
-  }
 
   // Season-driven lighting mood.
   return (
@@ -2162,7 +2379,6 @@ function CityScene({
       {/* Terrain tiles — uses shared HexTile from tactical for full fidelity */}
       {preview.tiles.map((tile) => {
         const isHovered = !!hovered && hovered.col === tile.coord.col && hovered.row === tile.coord.row;
-        const slotIdx = slotIndexAtHex.get(`${tile.coord.col},${tile.coord.row}`);
         return (
           <group
             key={`${tile.coord.col},${tile.coord.row}`}
@@ -2172,7 +2388,7 @@ function CityScene({
             <HexTile
               tile={tile}
               hovered={isHovered}
-              highlight={slotIdx !== undefined && !slotMap.get(slotIdx)?.buildingId ? 'move' : undefined}
+              highlight={undefined}
               windStrength={0.4}
               onClick={() => onClick(tile.coord)}
             />
@@ -2303,14 +2519,17 @@ function CityScene({
         );
       })()}
 
-      {/* Slot markers — golden octagon discs showing buildable hexes */}
-      {preview.slotPositions.map((pos, idx) => (
-        <SlotMarker3D
-          key={`slot-${idx}`}
-          coord={pos}
-          occupied={!!slotMap.get(idx)?.buildingId}
-        />
-      ))}
+      {/* 城外腹地 — real-geography countryside in every direction, roads to
+          each neighbour, and the 8 defence slots on their compass bearings. */}
+      <Hinterland3D
+        preview={preview}
+        city={city}
+        neighbors={neighbors}
+        slots={slots}
+        selectedSlot={selectedSlot}
+        onSlotClick={onSlotClick}
+        showOverlays={showOverlays}
+      />
 
       {/* Building foundations (地基) — real buildings sit on their plots, empty
           ones show a gold buildable ring; tap one to open the build menu. */}
@@ -2355,29 +2574,6 @@ function CityScene({
         />
       ))}
 
-      {/* Defense structures on slots — reuse tactical's DefenseStructure */}
-      {(slots ?? []).map((s) => {
-        if (!s.buildingId) return null;
-        const pos = preview.slotPositions[s.slot];
-        if (!pos) return null;
-        // Synthesize hp/maxHp from level for the shared component.
-        const maxHp = 100 * s.level + 100;
-        return (
-          <DefenseStructure
-            key={`def-${s.slot}`}
-            coord={pos}
-            buildingId={s.buildingId}
-            level={s.level}
-            hp={maxHp}
-            maxHp={maxHp}
-          />
-        );
-      })}
-
-      {/* Range rings overlay */}
-      {showOverlays && towerRanges.map((tr, i) => (
-        <RangeRing3D key={`rr-${i}`} coord={tr.coord} range={tr.range} color={tr.color} />
-      ))}
      </InspectCtx.Provider>
     </SeasonCtx.Provider>
   );
@@ -2392,6 +2588,7 @@ export function CityMapScreen3D({ cityId, onClose, onSwitch2D }: {
   const city = useGameStore((s) => s.cities[cityId]);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const forces = useGameStore((s) => s.forces);
+  const allCities = useGameStore((s) => s.cities);
   const allBuildings = useGameStore((s) => s.buildings);
   const buildAction = useGameStore((s) => s.buildDefenseStructure);
   const upgradeAction = useGameStore((s) => s.upgradeDefenseStructure);
@@ -2492,22 +2689,45 @@ export function CityMapScreen3D({ cityId, onClose, onSwitch2D }: {
     return m;
   }, [placed]);
 
-  const slotIndexAtHex = useMemo(() => {
-    const m = new Map<string, number>();
-    preview.slotPositions.forEach((p, i) => m.set(`${p.col},${p.row}`, i));
+  // Adjacent cities — used to draw a signed road in each one's true direction
+  // and to tell which compass slot guards which approach.
+  const neighbors = useMemo<Neighbor[]>(() => {
+    if (!city) return [];
+    return (city.adjacentCityIds ?? [])
+      .map((id) => allCities[id])
+      .filter((c): c is NonNullable<typeof c> => !!c)
+      .map((c) => {
+        const owner = c.ownerForceId ? forces[c.ownerForceId] : null;
+        return {
+          id: c.id,
+          nameZh: c.name.zh,
+          nameEn: c.name.en,
+          x: c.coords.x,
+          y: c.coords.y,
+          color: owner?.color ?? '#8a7050',
+          rel: (c.ownerForceId === playerForceId ? 'self'
+            : c.ownerForceId ? 'other' : 'neutral') as Neighbor['rel'],
+        };
+      });
+  }, [city, allCities, forces, playerForceId]);
+
+  // For the selected slot: which neighbour(s) lie in its compass octant.
+  const slotGuards = useMemo(() => {
+    const m = new Map<number, Neighbor[]>();
+    if (!city) return m;
+    for (const n of neighbors) {
+      const oct = octantForWorldDir(n.x - city.coords.x, n.y - city.coords.y);
+      const arr = m.get(oct) ?? [];
+      arr.push(n);
+      m.set(oct, arr);
+    }
     return m;
-  }, [preview]);
+  }, [neighbors, city]);
 
   const handleTileClick = (coord: { col: number; row: number }) => {
     if (!isPlayer) return;
-    const slotIdx = slotIndexAtHex.get(`${coord.col},${coord.row}`);
-    if (slotIdx !== undefined) {
-      setSelectedSlot(slotIdx);
-      setSelectedPlot(null);
-      setError(null);
-      return;
-    }
-    // Tapping a foundation hex opens the build menu for that plot.
+    // Defence slots live out in the hinterland now (clicked directly); tapping
+    // the city ground only opens building foundations.
     const plotIdx = plotByHex.get(`${coord.col},${coord.row}`);
     if (plotIdx !== undefined) {
       handlePlotClick(plotIdx);
@@ -2515,6 +2735,13 @@ export function CityMapScreen3D({ cityId, onClose, onSwitch2D }: {
     }
     setSelectedSlot(null);
     setSelectedPlot(null);
+  };
+
+  const handleSlotClick = (slot: number) => {
+    if (!isPlayer) return;
+    setSelectedSlot(slot);
+    setSelectedPlot(null);
+    setError(null);
   };
 
   const handlePlotClick = (plotIndex: number) => {
@@ -2677,13 +2904,17 @@ export function CityMapScreen3D({ cityId, onClose, onSwitch2D }: {
             onHover={setHovered}
             onClick={handleTileClick}
             showOverlays={showOverlays}
+            city={city}
+            neighbors={neighbors}
+            selectedSlot={selectedSlot}
+            onSlotClick={handleSlotClick}
           />
           <OrbitControls
             target={[centerX, 0, centerZ]}
             enablePan
             maxPolarAngle={Math.PI / 2.2}
             minDistance={6}
-            maxDistance={citySpan * 1.6}
+            maxDistance={citySpan * 2.4}
           />
           {/* Lanterns, braziers and water all catch a soft glow. */}
           {!IS_MOBILE && (
@@ -2710,12 +2941,31 @@ export function CityMapScreen3D({ cityId, onClose, onSwitch2D }: {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
               <div style={{ color: '#d4a84a', letterSpacing: '0.2rem' }}>
-                {lang === 'en' ? `Slot ${selectedSlot + 1}` : `第 ${selectedSlot + 1} 號位`}
+                {lang === 'en'
+                  ? `${COMPASS_EN[selectedSlot]} Gate`
+                  : `${COMPASS_ZH[selectedSlot]}面 · 第 ${selectedSlot + 1} 號位`}
               </div>
               <button onClick={() => setSelectedSlot(null)} style={{
                 background: 'transparent', border: 'none', color: '#8a7050', cursor: 'pointer',
               }}>×</button>
             </div>
+            {/* Which approach this slot covers — directional defence. */}
+            {(() => {
+              const guarded = slotGuards.get(selectedSlot) ?? [];
+              return (
+                <div style={{
+                  marginBottom: '0.5rem', fontSize: '0.72rem',
+                  color: guarded.length ? '#e0b870' : '#7a6a50',
+                  letterSpacing: '0.05rem',
+                }}>
+                  {guarded.length
+                    ? (lang === 'en'
+                        ? `Guards the road from ${guarded.map((n) => n.nameEn).join('、')}`
+                        : `扼守 ${guarded.map((n) => n.nameZh).join('、')} 方向來路`)
+                    : (lang === 'en' ? 'No neighbour lies this way' : '此方向無相鄰城池')}
+                </div>
+              );
+            })()}
             {currentSlot?.buildingId ? (
               <div>
                 <div style={{ color: DEFENSE_BUILDINGS[currentSlot.buildingId].color, marginBottom: '0.3rem' }}>
