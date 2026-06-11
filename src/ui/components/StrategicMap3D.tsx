@@ -3148,8 +3148,18 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, onGroundC
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, 0, 0]}
         onClick={(e) => {
-          if (!onGroundClick) return;
           e.stopPropagation();
+          // Touch has no hover — a tap doubles as the tile inspector
+          // (auto-dismisses; doesn't interfere with march-to-cell orders).
+          if (IS_MOBILE) {
+            const c = Math.round((e.point.x + MAP_W / 2 - HEXW_R) / HEXW_COL);
+            const zoff = c & 1 ? HEXW_ROW / 2 : 0;
+            const r = Math.round((e.point.z + MAP_D / 2 - HEXW_ROW / 2 - zoff) / HEXW_ROW);
+            const i = tileIndex.get(`${c},${r}`) ?? null;
+            setHoverIdx(i);
+            if (i != null) window.setTimeout(() => setHoverIdx((cur) => (cur === i ? null : cur)), 2600);
+          }
+          if (!onGroundClick) return;
           const px = (e.point.x + MAP_W / 2) / PIXEL_TO_WORLD;
           const py = (e.point.z + MAP_D / 2) / PIXEL_TO_WORLD;
           onGroundClick(px, py);
