@@ -412,29 +412,127 @@ export const NAMED_BATTLE_MAPS: NamedBattleMap[] = [
       { coord: { col: 7, row: 6 }, label: { en: 'Mt. Dingjun Watch', zh: '定軍山' }, role: 'hill' },
     ],
   },
+  // ─── Three more famous battlefields ─────────────────────────────────
+  {
+    id: 'map-chencang',
+    name: { en: 'Chencang', zh: '陳倉' },
+    description:
+      'Hao Zhao\'s thousand held Zhuge Liang\'s hundred thousand for twenty days — a small fortress plugging a narrow valley, every approach under the wall.',
+    width: 14,
+    height: 10,
+    weather: 'snow',
+    timeOfDay: 'day',
+    terrainOverrides: (() => {
+      const out: Record<string, import('../types').TerrainKind> = {};
+      // Steep valley sides squeeze the approach.
+      for (let col = 0; col < 14; col++) {
+        out[`${col},0`] = 'mountain';
+        out[`${col},9`] = 'mountain';
+      }
+      for (let col = 6; col < 14; col++) {
+        out[`${col},1`] = 'mountain';
+        out[`${col},8`] = 'mountain';
+      }
+      // The fortress wall ring with a single gate.
+      for (const r of [3, 4, 5, 6]) out[`11,${r}`] = 'wall';
+      out['11,4'] = 'gate';
+      // Watch positions on the wall shoulders.
+      out['10,3'] = 'watchtower';
+      out['10,6'] = 'watchtower';
+      // A frozen stream cuts the open ground.
+      for (const r of [2, 3, 4, 5, 6, 7]) out[`4,${r}`] = 'river';
+      out['4,4'] = 'bridge';
+      return out;
+    })(),
+    specialTiles: [
+      { coord: { col: 11, row: 4 }, label: { en: 'Chencang Gate', zh: '陳倉城門' }, role: 'flag' },
+      { coord: { col: 4, row: 4 }, label: { en: 'Frozen Ford', zh: '冰河渡口' }, role: 'bridge' },
+    ],
+  },
+  {
+    id: 'map-ruxukou',
+    name: { en: 'Ruxukou', zh: '濡須口' },
+    description:
+      'The fortified river mouth where Wu\'s navy checked Cao Cao again and again — "a son should be like Sun Zhongmou."',
+    width: 16,
+    height: 10,
+    weather: 'rain',
+    timeOfDay: 'dusk',
+    terrainOverrides: (() => {
+      const out: Record<string, import('../types').TerrainKind> = {};
+      // The Ruxu water runs through the middle of the field.
+      for (let col = 0; col < 16; col++) {
+        out[`${col},4`] = 'river';
+        out[`${col},5`] = 'river';
+      }
+      out['5,4'] = 'bridge';
+      out['5,5'] = 'bridge';
+      out['11,4'] = 'bridge';
+      out['11,5'] = 'bridge';
+      // Wu's fortified dock on the south bank.
+      for (const c of [12, 13, 14]) out[`${c},7`] = 'wall';
+      out['13,7'] = 'gate';
+      out['12,8'] = 'watchtower';
+      // Marshy banks.
+      for (const c of [1, 3, 7, 9]) { out[`${c},3`] = 'marsh'; out[`${c},6`] = 'marsh'; }
+      return out;
+    })(),
+    specialTiles: [
+      { coord: { col: 5, row: 4 }, label: { en: 'Upper Crossing', zh: '上渡' }, role: 'bridge' },
+      { coord: { col: 11, row: 5 }, label: { en: 'Lower Crossing', zh: '下渡' }, role: 'bridge' },
+      { coord: { col: 13, row: 7 }, label: { en: 'Ruxu Fort', zh: '濡須塢' }, role: 'flag' },
+    ],
+  },
+  {
+    id: 'map-xiapi',
+    name: { en: 'Xiapi', zh: '下邳' },
+    description:
+      'Cao Cao broke the dikes of the Yi and Si to drown Lü Bu\'s last city — the walls rise from floodwater, and the White Gate Tower waits.',
+    width: 15,
+    height: 10,
+    weather: 'rain',
+    timeOfDay: 'day',
+    terrainOverrides: (() => {
+      const out: Record<string, import('../types').TerrainKind> = {};
+      // Floodwater laps the city on three sides.
+      for (let col = 8; col < 15; col++) { out[`${col},0`] = 'river'; out[`${col},9`] = 'river'; }
+      for (const r of [1, 2, 7, 8]) out[`14,${r}`] = 'river';
+      // The city wall, gate at the White Gate Tower.
+      for (const r of [2, 3, 4, 5, 6, 7]) out[`11,${r}`] = 'wall';
+      out['11,4'] = 'gate';
+      out['12,4'] = 'watchtower';
+      // Mudflats where the flood receded.
+      for (const c of [7, 8, 9]) { out[`${c},2`] = 'marsh'; out[`${c},7`] = 'marsh'; }
+      return out;
+    })(),
+    specialTiles: [
+      { coord: { col: 12, row: 4 }, label: { en: 'White Gate Tower', zh: '白門樓' }, role: 'flag' },
+    ],
+  },
 ];
 
+// NOTE: city ids in cities.ts are BARE ('hefei', 'fancheng' …). These keys
+// used to carry a 'city-' prefix that never matched, so every named
+// battlefield was silently dead content — sieges always rolled procedural
+// terrain. Keys now match the real catalog (verified against cities.ts).
 export const NAMED_MAPS_BY_CITY: Record<string, string> = {
-  // Phase 35 additions.
-  'city-fancheng': 'map-fancheng',
-  'city-jiangling': 'map-maicheng',
-  'city-hanzhong': 'map-dingjun',
-  'city-tianshui': 'map-jieting',
-  // Map specific city IDs to a named map ID.
-  'city-chibi': 'map-red-cliffs',
-  'city-jingzhou': 'map-changban',
-  'city-changan': 'map-hulao-pass',
-  'city-luoyang': 'map-hulao-pass',
-  'city-wuzhang': 'map-wuzhang-plains',
-  'city-guandu': 'map-guandu',
-  // Phase: six new famous battles.
-  'city-hefei':    'map-hefei',
-  'city-yiling':   'map-yiling',
-  'city-yidu':     'map-yiling',     // Yidu is the modern name near Yiling
-  'city-xinye':    'map-xinye',
-  'city-bowang':   'map-bowangpo',
-  'city-tongguan': 'map-tongguan',
-  'city-hanning':  'map-hanzhong',   // Hanning was the old name for Hanzhong
+  'fancheng':  'map-fancheng',
+  'jiangling': 'map-maicheng',
+  'hanzhong':  'map-dingjun',
+  'tianshui':  'map-jieting',
+  'chibi':     'map-red-cliffs',
+  'changban':  'map-changban',
+  'changan':   'map-hulao-pass',
+  'luoyang':   'map-hulao-pass',
+  'guandu':    'map-guandu',
+  'hefei':     'map-hefei',
+  'yiling':    'map-yiling',
+  'xinye':     'map-xinye',
+  'bowang':    'map-bowangpo',
+  'tongguan':  'map-tongguan',
+  'chencang':  'map-chencang',
+  'ruxu':      'map-ruxukou',
+  'xiapi':     'map-xiapi',
 };
 
 export const NAMED_MAPS_BY_ID: Record<string, NamedBattleMap> =

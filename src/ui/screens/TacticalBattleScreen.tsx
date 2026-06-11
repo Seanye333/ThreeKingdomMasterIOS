@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { NAMED_MAPS_BY_ID } from '../../game/data';
+import { NAMED_MAPS_BY_ID, NAMED_MAPS_BY_CITY } from '../../game/data';
 import { playSfx } from '../../game/systems/sound';
 import { useGameStore } from '../../game/state/store';
 import type { Officer } from '../../game/types';
@@ -94,7 +94,9 @@ export function TacticalBattleScreen() {
 
   if (!battle) return null;
 
-  const namedMap = battle.field ? undefined : NAMED_MAPS_BY_ID[`map-${battle.cityId.replace('city-', '')}`];
+  // Resolve through the same city→map table the board generator uses (the old
+  // `map-${cityId}` derivation missed renamed maps like 赤壁/定軍山).
+  const namedMap = battle.field ? undefined : NAMED_MAPS_BY_ID[NAMED_MAPS_BY_CITY[battle.cityId] ?? ''];
   const battleTitleZh = namedMap?.name.zh ?? (battle.field ? '野戰' : '戰術戰闘');
   const battleTitleEn = namedMap?.name.en ?? (battle.field ? 'Field Battle' : 'Tactical Battle');
 
