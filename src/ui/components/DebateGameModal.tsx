@@ -64,7 +64,9 @@ export function DebateGameModal({
     : `${nm(foe)} ${t('辯勝', 'wins the exchange')}!`;
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', display: 'grid', placeItems: 'center', zIndex: 130 }}>
+    // Above the 3D battle screen (z-1000) — at its old z-130 it was silently
+    // buried whenever the 3D view was up.
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', display: 'grid', placeItems: 'center', zIndex: 1100 }}>
       <div style={{ width: 560, maxWidth: '95vw', background: '#16140f', border: '1px solid #88b7e8', padding: '1.25rem', fontFamily: 'Songti SC, serif', color: '#e8d9b0' }}>
         <div style={{ textAlign: 'center', color: '#88b7e8', letterSpacing: '0.4rem', fontSize: '1.2rem', marginBottom: '0.8rem' }}>
           舌 {t('戰', 'War of Words')}

@@ -1316,6 +1316,14 @@ const FORMATION_COLOR: Record<string, string> = {
 };
 function FormationViz({ battle, side }: { battle: TacticalBattle; side: 'attacker' | 'defender' }) {
   const formationId = side === 'attacker' ? battle.attackerFormation : battle.defenderFormation;
+  // Hooks must run unconditionally — early returns only AFTER them (a side
+  // toggling its formation on/off used to change the hook order and crash).
+  const ringRef = useRef<THREE.MeshBasicMaterial>(null);
+  useFrame(({ clock }) => {
+    if (ringRef.current) {
+      ringRef.current.opacity = 0.45 + Math.sin(clock.elapsedTime * 1.5) * 0.15;
+    }
+  });
   if (!formationId || formationId === 'none') return null;
   const units = battle.units.filter((u) => u.side === side);
   if (units.length === 0) return null;
@@ -1339,12 +1347,6 @@ function FormationViz({ battle, side }: { battle: TacticalBattle; side: 'attacke
 
   const color = FORMATION_COLOR[formationId] ?? '#d4a84a';
   const labelZh = FORMATIONS_BY_ID[formationId]?.name.zh ?? formationId;
-  const ringRef = useRef<THREE.MeshBasicMaterial>(null);
-  useFrame(({ clock }) => {
-    if (ringRef.current) {
-      ringRef.current.opacity = 0.45 + Math.sin(clock.elapsedTime * 1.5) * 0.15;
-    }
-  });
 
   return (
     <group position={[cxW, 0.02, czW]}>
@@ -1712,7 +1714,7 @@ function BattleScene({
 }
 
 /* ─── Top-level screen ──────────────────────────────────────────────── */
-export function TacticalBattleScreen3D({ onClose }: { onClose: () => void }) {
+export function TacticalBattleScreen3D() {
   const battle = useGameStore((s) => s.tacticalBattle);
   const officers = useGameStore((s) => s.officers);
   const playerForceId = useGameStore((s) => s.playerForceId);
@@ -2046,18 +2048,8 @@ export function TacticalBattleScreen3D({ onClose }: { onClose: () => void }) {
             opacity: !myTurn ? 0.4 : 1,
           }}
         >{t('結束回合', 'End Turn')}</button>
-        <button
-          onClick={onClose}
-          style={{
-            marginLeft: 'auto',
-            background: '#3a2818', color: '#f0e0b0', border: '1px solid #d4a84a',
-            padding: '0.3rem 0.8rem', cursor: 'pointer',
-            fontFamily: 'Songti SC, serif',
-          }}
-          title={t('切換 2D 視圖', 'Switch to 2D view')}
-        >{t('切換 2D', 'Switch 2D')} ⇄</button>
-        {/* Direct way out of the 3D view — instant for a drill, confirmed for a
-            real battle (forfeiting / 棄城 has consequences). */}
+        {/* Direct way out — instant for a drill, confirmed for a real battle
+            (forfeiting / 棄城 has consequences). The 2D view is retired. */}
         <button
           onClick={() => {
             if (battle.practice || window.confirm(t('確定退出此戰?', 'Leave this battle?'))) {
@@ -2065,8 +2057,9 @@ export function TacticalBattleScreen3D({ onClose }: { onClose: () => void }) {
             }
           }}
           style={{
+            marginLeft: 'auto',
             background: '#3a1a16', color: '#f0c0b0', border: '1px solid #b8584a',
-            padding: '0.3rem 0.8rem', cursor: 'pointer', marginLeft: '0.4rem',
+            padding: '0.3rem 0.8rem', cursor: 'pointer',
             fontFamily: 'Songti SC, serif',
           }}
           title={battle.practice ? t('結束演習', 'End the drill') : t('退出戰鬥', 'Leave the battle')}
@@ -2258,10 +2251,10 @@ export function TacticalBattleScreen3D({ onClose }: { onClose: () => void }) {
           playerSide={playerSide}
           onClose={() => {
             // 演習 — a drill leaves no trace: dismiss without writeback.
+            // (Clearing the battle unmounts the whole host; no extra close.)
             if (battle.practice) {
               cancelBattle();
               setShowResults(false);
-              onClose();
               return;
             }
             const resolution = resolveBattleEnd(battle, officers);
@@ -2272,7 +2265,6 @@ export function TacticalBattleScreen3D({ onClose }: { onClose: () => void }) {
               resolution.winner,
             );
             setShowResults(false);
-            onClose();
           }}
         />
       )}
