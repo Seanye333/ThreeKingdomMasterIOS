@@ -3206,7 +3206,11 @@ function MapScene({ overlayMode, onPortClick, onFortClick, mapStyle, dioSelected
   const portsForMarch = useGameStore((s) => s.ports);
   // 戰場立體微縮 — the live battle rendered in place on the world map.
   const tacticalBattle = useGameStore((s) => s.tacticalBattle);
+  const battleViewMinimizedScene = useGameStore((s) => s.battleViewMinimized);
   const setBattleViewMinimized = useGameStore((s) => s.setBattleViewMinimized);
+  // Mobile perf gate: only render the diorama when it's actually being watched
+  // (minimized view) — desktop also gets the fly-in bloom behind the screen.
+  const showDiorama = !!tacticalBattle?.geoAnchor && (!IS_MOBILE || battleViewMinimizedScene);
   const battleSitePx = tacticalBattle?.geoAnchor
     ? { x: tacticalBattle.geoAnchor.x, y: tacticalBattle.geoAnchor.y }
     : null;
@@ -3326,7 +3330,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, mapStyle, dioSelected
       {/* 戰場微縮 — the LIVE battle, embedded on the very ground it's fought
           over (same scene component, same state; rotated to its true bearing,
           anchored on its geoAnchor column). Tap to enter the fullscreen view. */}
-      {tacticalBattle?.geoAnchor && (() => {
+      {showDiorama && tacticalBattle?.geoAnchor && (() => {
         const ga = tacticalBattle.geoAnchor;
         const [bwx, bwz] = pxToWorld(ga.x, ga.y);
         const by = sampleTerrainHeight(bwx, bwz) + 0.12;
@@ -3366,7 +3370,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, mapStyle, dioSelected
           </group>
         );
       })()}
-      {tacticalBattle?.geoAnchor && (() => {
+      {showDiorama && tacticalBattle?.geoAnchor && (() => {
         const [bwx, bwz] = pxToWorld(tacticalBattle.geoAnchor.x, tacticalBattle.geoAnchor.y);
         const by = sampleTerrainHeight(bwx, bwz);
         return (
