@@ -154,7 +154,7 @@ export function CityPanel() {
       {isPlayerCity && (
         <section className={styles.section}>
           <h3 className={styles.sectionTitle}>{t('命令', 'Orders')}</h3>
-          <CommandMenu cityId={city.id} onOpenCityMap={() => setShowCityMap(true)} />
+          <CommandMenu cityId={city.id} />
         </section>
       )}
 

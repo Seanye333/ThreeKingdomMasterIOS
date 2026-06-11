@@ -323,6 +323,11 @@ export interface TacticalBattle {
    * city changes hands; casualties write back to the two armies instead.
    */
   field?: boolean;
+  /**
+   * 演習 — a sparring drill launched from a city. Casualties, captures, XP and
+   * loot are all discarded when it ends; nothing writes back to the campaign.
+   */
+  practice?: boolean;
   /** The player (attacker) army id, for field-battle casualty writeback. */
   attackerArmyId?: EntityId;
   /** The enemy (defender) army id, for field-battle casualty writeback. */

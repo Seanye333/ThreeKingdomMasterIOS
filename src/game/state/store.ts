@@ -273,6 +273,10 @@ interface GameStore extends GameState {
   /** 亲征野战 — lead a player field army into an interactive tactical battle
    *  against an adjacent enemy army. Returns false if not allowed. */
   startFieldBattle: (playerArmyId: EntityId, enemyArmyId: EntityId) => boolean;
+  /** 演習 — launch a sparring drill on the city's own battlefield using its
+   *  garrison, against a mirror sparring force. Nothing writes back to the
+   *  campaign. Returns false if the city has no officers to field. */
+  startPracticeBattle: (cityId: EntityId) => boolean;
   /** Pay for siege works (圍困糧耗 / 水攻決堤) from the attacking city's
    *  stores before an assault. Returns false (and deducts nothing) if the
    *  city can't afford it. */
@@ -3520,6 +3524,51 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const battle = buildFieldBattle(get(), playerArmyId, enemyArmyId, true);
         if (!battle) return false;
         set({ tacticalBattle: battle, selectedArmyId: null });
+        return true;
+      },
+
+      startPracticeBattle: (cityId) => {
+        const state = get();
+        if (state.tacticalBattle) return false; // one battle at a time
+        const city = state.cities[cityId];
+        if (!city || city.ownerForceId !== state.playerForceId) return false;
+        // The garrison takes the field — its best officers split into two
+        // sparring teams (紅 / 藍) on the city's own battlefield.
+        const garrison = Object.values(state.officers)
+          .filter((o) => o.locationCityId === cityId && o.forceId === state.playerForceId
+            && o.status !== 'dead' && o.status !== 'unsearched' && o.status !== 'imprisoned')
+          .sort((a, b) => (b.stats.war * 0.6 + b.stats.leadership * 0.4) - (a.stats.war * 0.6 + a.stats.leadership * 0.4))
+          .slice(0, 6);
+        if (garrison.length === 0) return false;
+        // A drill always fields a meaningful body of troops even if the city's
+        // larder is empty — split the garrison's strength evenly per officer.
+        const drillTroops = Math.max(city.troops, garrison.length * 2000);
+        const n = garrison.length;
+        const base = Math.floor(drillTroops / n);
+        const teamOf = (offs: Officer[]) => offs.map((o, i) => ({
+          officer: o,
+          troops: i === 0 ? drillTroops - base * (n - 1) : base,
+          unitType: inferUnitType(o),
+        }));
+        const tp = cityPos(city);
+        const stratWeather = state.weather?.kind ?? 'clear';
+        const battle = setupTacticalBattle({
+          cityId,
+          width: 18,
+          height: 12,
+          attackerForceId: state.playerForceId,
+          defenderForceId: state.playerForceId,
+          attackers: teamOf(garrison),
+          defenders: teamOf(garrison),
+          weather: (stratWeather === 'drought' ? 'clear' : stratWeather) as 'clear' | 'rain' | 'wind' | 'fog' | 'snow',
+          timeOfDay: rollTimeOfDay(),
+          windDirection: state.weather?.wind ?? 'calm',
+          terrainHint: { terrain: city.terrain, port: city.port, x: city.coords.x, y: city.coords.y },
+          battleGeo: { x: tp.x, y: tp.y, bearing: 0, anchorCol: 16, season: state.date.season },
+          field: true,
+        });
+        battle.practice = true;
+        set({ tacticalBattle: battle, selectedCityId: cityId });
         return true;
       },
 

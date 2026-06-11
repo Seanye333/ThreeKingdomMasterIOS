@@ -1717,6 +1717,7 @@ export function TacticalBattleScreen3D({ onClose }: { onClose: () => void }) {
   const playerForceId = useGameStore((s) => s.playerForceId);
   const start = useGameStore((s) => s.startTacticalBattle);
   const applyResolution = useGameStore((s) => s.applyTacticalResolution);
+  const cancelBattle = useGameStore((s) => s.cancelTacticalBattle);
   const battleSpeed = useGameStore((s) => s.battleSpeed);
   const difficulty = useGameStore((s) => s.difficulty);
 
@@ -2231,6 +2232,13 @@ export function TacticalBattleScreen3D({ onClose }: { onClose: () => void }) {
           battle={battle}
           playerSide={playerSide}
           onClose={() => {
+            // 演習 — a drill leaves no trace: dismiss without writeback.
+            if (battle.practice) {
+              cancelBattle();
+              setShowResults(false);
+              onClose();
+              return;
+            }
             const resolution = resolveBattleEnd(battle, officers);
             applyResolution(
               resolution.capturedOfficerIds,

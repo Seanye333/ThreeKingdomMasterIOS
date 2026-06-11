@@ -1428,6 +1428,12 @@ export function TacticalBattleScreen() {
           battle={battle}
           playerSide={playerSide}
           onClose={() => {
+            // 演習 — a drill leaves no trace: dismiss without writeback.
+            if (battle.practice) {
+              close();
+              setShowResults(false);
+              return;
+            }
             const resolution = resolveBattleEnd(battle, officers);
             applyResolution(
               resolution.capturedOfficerIds,

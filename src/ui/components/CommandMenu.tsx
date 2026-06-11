@@ -12,8 +12,6 @@ import { useT, useLanguage, useDesc } from '../i18n';
 
 interface Props {
   cityId: EntityId;
-  /** Open the city's outer-perimeter defense map. */
-  onOpenCityMap?: () => void;
 }
 
 const INTERNAL_ORDER: InternalAffairsType[] = [
@@ -39,7 +37,7 @@ type ModalState =
   | { kind: 'march' }
   | { kind: 'training' };
 
-export function CommandMenu({ cityId, onOpenCityMap }: Props) {
+export function CommandMenu({ cityId }: Props) {
   const [modal, setModal] = useState<ModalState>({ kind: 'closed' });
   const city = useGameStore((s) => s.cities[cityId]);
   // Select the map by reference (stable) — filter inside useMemo to avoid creating
@@ -54,9 +52,20 @@ export function CommandMenu({ cityId, onOpenCityMap }: Props) {
   const cancelCommand = useGameStore((s) => s.cancelCommand);
   const buildings = useGameStore((s) => s.buildings);
   const pendingTrainings = useGameStore((s) => s.pendingTrainings);
+  const playerForceId = useGameStore((s) => s.playerForceId);
+  const startPracticeBattle = useGameStore((s) => s.startPracticeBattle);
   const t = useT();
   const lang = useLanguage();
   const desc = useDesc();
+
+  // 演習 — needs at least one stationed officer to take the field.
+  const garrisonCount = useMemo(
+    () => Object.values(officersMap).filter(
+      (o) => o.locationCityId === cityId && o.forceId === playerForceId
+        && o.status !== 'dead' && o.status !== 'unsearched' && o.status !== 'imprisoned',
+    ).length,
+    [officersMap, cityId, playerForceId],
+  );
 
   if (!city) return null;
 
@@ -117,14 +126,14 @@ export function CommandMenu({ cityId, onOpenCityMap }: Props) {
             ? t(`需要 ${minSizeDef.name.zh}+ 級城市`, `Requires ${minSizeDef.name.en}+ tier`)
             : null;
           const reason = lockedReason ?? (!canAfford ? t('金錢不足', 'Not enough gold') : desc(def));
+          if (!tierOk) return null;
           return (
             <button
               key={type}
               className={styles.cmdButton}
               onClick={() => setModal({ kind: 'internal', type })}
-              disabled={!canAfford || !tierOk}
+              disabled={!canAfford}
               title={reason}
-              style={!tierOk ? { opacity: 0.45 } : undefined}
             >
               <span className={styles.cmdLabelZh}>
                 {lang === 'en' ? def.label.en : def.label.zh}
@@ -151,6 +160,21 @@ export function CommandMenu({ cityId, onOpenCityMap }: Props) {
           {lang === 'both' && <span className={styles.cmdLabelEn}>{marchDef.label.en}</span>}
           <span className={styles.cmdCost}>{marchDef.goldCost}g</span>
         </button>
+        <button
+          className={styles.cmdButton}
+          onClick={() => startPracticeBattle(cityId)}
+          disabled={garrisonCount === 0}
+          title={
+            garrisonCount === 0
+              ? t('需有武將駐城方可演習', 'Need a stationed officer to drill')
+              : t('演習 — 在城邑戰場上操演佈陣,不損兵將,純為練習戰術', 'Drill — rehearse tactics on the city battlefield. No losses; practice only.')
+          }
+          style={{ borderColor: '#7ed68a' }}
+        >
+          <span className={styles.cmdLabelZh}>{t('演習', 'Drill')}</span>
+          {lang === 'both' && <span className={styles.cmdLabelEn}>Drill</span>}
+          <span className={styles.cmdCost}>{t('練', 'free')}</span>
+        </button>
         {(cityHasAcademy(city, buildings) || cityHasMentors(city, officersMap, pendingTrainings)) && (() => {
           const hasAcad = cityHasAcademy(city, buildings);
           const label = hasAcad ? t('書院培訓', 'Academy Training') : t('師徒傳授', 'Mentor Teaching');
@@ -171,18 +195,6 @@ export function CommandMenu({ cityId, onOpenCityMap }: Props) {
             </button>
           );
         })()}
-        {onOpenCityMap && (
-          <button
-            className={styles.cmdButton}
-            onClick={onOpenCityMap}
-            title={t('開啟城邑地圖 — 建造外圍防禦 (箭樓 / 拒馬 / 鐵索 / 落石…)', 'Open city map — build outer defenses (箭樓 / 拒馬 / 鐵索 / 落石…)')}
-            style={{ borderColor: '#d4a84a' }}
-          >
-            <span className={styles.cmdLabelZh}>★ {t('城邑地圖', 'City Map')}</span>
-            {lang === 'both' && <span className={styles.cmdLabelEn}>City Map</span>}
-            <span className={styles.cmdCost}>{t('開', 'open')}</span>
-          </button>
-        )}
       </div>
 
       {modal.kind === 'internal' && (
