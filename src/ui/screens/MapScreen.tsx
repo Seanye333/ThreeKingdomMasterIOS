@@ -102,6 +102,18 @@ export function MapScreen() {
   const fogOfWar = useGameStore((s) => s.fogOfWar);
   const setFogOfWar = useGameStore((s) => s.setFogOfWar);
   const tacticalBattle = useGameStore((s) => s.tacticalBattle);
+  // 戰場引燃 — hold the battle screen back ~1s so the world camera can fly to
+  // the clash site first (BattleFocusFly); the battle then drops over that
+  // very spot and the post-battle reveal shows the scar. One camera line.
+  const battleId = tacticalBattle?.id ?? null;
+  const [revealedForBattle, setRevealedForBattle] = useState<string | null>(null);
+  useEffect(() => {
+    if (!battleId) return;
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    const id = window.setTimeout(() => setRevealedForBattle(battleId), reduced ? 0 : 1000);
+    return () => window.clearTimeout(id);
+  }, [battleId]);
+  const battleRevealed = !!battleId && revealedForBattle === battleId;
   // Gates for the bond ceremony — it waits behind season report / events /
   // battle playback so it plays on a clear map, not buried under a modal.
   const ceremonyBlocked = useGameStore(
@@ -555,7 +567,7 @@ export function MapScreen() {
         <EndingsModal onClose={() => setShowEnding(false)} />
       )}
       <TutorialOverlay />
-      {tacticalBattle && <TacticalBattleScreen />}
+      {tacticalBattle && battleRevealed && <TacticalBattleScreen />}
     </div>
   );
 }

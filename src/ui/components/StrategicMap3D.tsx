@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Html, OrbitControls } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { getTerritoryCanvas, getTerritorySignature } from './territoryOverlay';
@@ -2971,11 +2971,71 @@ const SEASON_ZH: Record<Season, string> = {
   spring: '春', summer: '夏', autumn: '秋', winter: '冬',
 };
 
+/**
+ * 戰場引燃 — when a battle ignites, fly the world camera down to the clash
+ * site (its geoAnchor) BEFORE the battle screen drops over the map, and leave
+ * it there so the post-battle reveal shows the scar you made. One continuous
+ * camera line: world → battle → world.
+ */
+function BattleFocusFly({ controlsRef, onSettled }: {
+  controlsRef: React.RefObject<{ target: THREE.Vector3; update: () => void; enabled: boolean } | null>;
+  onSettled: (target: [number, number, number]) => void;
+}) {
+  const { camera } = useThree();
+  const geoAnchor = useGameStore((s) => s.tacticalBattle?.geoAnchor ?? null);
+  const anim = useRef<null | {
+    from: THREE.Vector3; to: THREE.Vector3;
+    fromT: THREE.Vector3; toT: THREE.Vector3; t: number;
+  }>(null);
+  const lastKey = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!geoAnchor) { lastKey.current = null; return; }
+    const key = `${Math.round(geoAnchor.x)},${Math.round(geoAnchor.y)}`;
+    if (key === lastKey.current) return;
+    lastKey.current = key;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) return;
+    const [wx, wz] = pxToWorld(geoAnchor.x, geoAnchor.y);
+    const h = sampleTerrainHeight(wx, wz);
+    anim.current = {
+      from: camera.position.clone(),
+      to: new THREE.Vector3(wx, h + 2.8, wz + 2.3),
+      fromT: controlsRef.current?.target.clone() ?? new THREE.Vector3(0, 0, 0),
+      toT: new THREE.Vector3(wx, h, wz),
+      t: 0,
+    };
+  }, [geoAnchor, camera, controlsRef]);
+
+  useFrame((_, delta) => {
+    const a = anim.current;
+    if (!a) return;
+    const ctrl = controlsRef.current;
+    if (ctrl) ctrl.enabled = false;
+    a.t = Math.min(1, a.t + delta / 0.85);
+    const e = a.t < 0.5 ? 2 * a.t * a.t : 1 - Math.pow(-2 * a.t + 2, 2) / 2; // easeInOutQuad
+    camera.position.lerpVectors(a.from, a.to, e);
+    if (ctrl) {
+      ctrl.target.lerpVectors(a.fromT, a.toT, e);
+      ctrl.update();
+    }
+    if (a.t >= 1) {
+      anim.current = null;
+      if (ctrl) ctrl.enabled = true;
+      onSettled([a.toT.x, a.toT.y, a.toT.z]);
+    }
+  });
+  return null;
+}
+
 export function StrategicMap3D() {
   const [overlayMode, setOverlayMode] = useState<OverlayMode>('none');
   const [selectedPortId, setSelectedPortId] = useState<string | null>(null);
   const [selectedFortId, setSelectedFortId] = useState<string | null>(null);
   const [showStockadeBuild, setShowStockadeBuild] = useState(false);
+  // Orbit pivot — held as STATE (stable ref) so re-renders don't snap the
+  // target back; BattleFocusFly animates it to a clash site, then locks it in.
+  const controlsRef = useRef<{ target: THREE.Vector3; update: () => void; enabled: boolean } | null>(null);
+  const [orbitTarget, setOrbitTarget] = useState<[number, number, number]>([0, 0, 0]);
   const weather = useGameStore((s) => s.weather);
   const season = useGameStore((s) => s.date.season) as Season;
   const t = useT();
@@ -3072,13 +3132,16 @@ export function StrategicMap3D() {
             onFortClick={setSelectedFortId}
           />
           <OrbitControls
-            target={[0, 0, 0]}
+            ref={controlsRef as React.Ref<never>}
+            target={orbitTarget}
             maxPolarAngle={Math.PI / 2.1}
             minDistance={3}
             maxDistance={100}
             enableDamping
             dampingFactor={0.1}
           />
+          {/* Fly to a battle the moment it ignites — before its screen mounts. */}
+          <BattleFocusFly controlsRef={controlsRef} onSettled={setOrbitTarget} />
           {/* Gentle bloom — beacons, fires and water shimmer get a halo. */}
           {!IS_MOBILE && (
             <EffectComposer>
