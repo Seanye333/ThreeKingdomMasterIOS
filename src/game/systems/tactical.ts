@@ -422,10 +422,12 @@ export function setupTacticalBattle(p: SetupParams): TacticalBattle {
   // within range of this battlefield join the fight as auto-firing emplacements,
   // exactly like the city's own perimeter defences. (Built directly into the
   // cityStructures list so the existing auto-attack handles them.)
+  const facilityWallCoords: HexCoord[] = [];
   if (p.forts && p.battleGeo && p.defenderForceId) {
     const FACILITY_TO_BUILDING: Partial<Record<import('../types/fort').FacilityKind, import('../data/defenseBuildings').DefenseBuildingId>> = {
       tower: 'watchtower',
       catapult: 'arrow-platform',
+      camp: 'barracks-out', // 陣 — rallies adjacent defenders each turn
     };
     const taken = new Set([
       ...units.map((u) => `${u.coord.col},${u.coord.row}`),
@@ -441,10 +443,25 @@ export function setupTacticalBattle(p: SetupParams): TacticalBattle {
     let ci = 0;
     for (const f of Object.values(p.forts)) {
       if (!f.facility || f.ownerForceId !== p.defenderForceId) continue;
-      const buildingId = FACILITY_TO_BUILDING[f.facility];
-      if (!buildingId) continue; // only ranged facilities take the field
       const [fx, fy] = geoToPixel(f.coords.lon, f.coords.lat);
       if (Math.hypot(fx - p.battleGeo.x, fy - p.battleGeo.y) > FACILITY_DEFS[f.facility].range) continue;
+      // 防壁 — a barricade in range throws a short destructible wall line
+      // across the mid-field instead of an emplacement.
+      if (f.facility === 'wall') {
+        const wallCol = Math.max(2, width - 6);
+        const midRow = Math.floor(height / 2);
+        for (const row of [midRow - 1, midRow, midRow + 1]) {
+          const key = `${wallCol},${row}`;
+          if (taken.has(key)) continue;
+          const g = tileTerrain2.get(key);
+          if (g === 'river' || g === 'bridge' || g === 'wall' || g === 'gate') continue;
+          facilityWallCoords.push({ col: wallCol, row });
+          taken.add(key);
+        }
+        continue;
+      }
+      const buildingId = FACILITY_TO_BUILDING[f.facility];
+      if (!buildingId) continue;
       // Find the next free, dry candidate hex.
       while (ci < candidates.length) {
         const c = candidates[ci++];
@@ -603,6 +620,18 @@ export function setupTacticalBattle(p: SetupParams): TacticalBattle {
         }
       : u);
     log.push({ turn: 1, text: '決堤！洪水灌城，城牆崩毀數段 — 守軍溺損，軍心動搖。', kind: 'event' });
+  }
+
+  // 防壁參戰 — a strategic barricade in range throws a short destructible
+  // wall line across the mid-field (siege gear batters it down like any wall).
+  if (facilityWallCoords.length > 0) {
+    const wallKeys = new Set(facilityWallCoords.map((c) => `${c.col},${c.row}`));
+    battleTiles = battleTiles.map((t) =>
+      wallKeys.has(`${t.coord.col},${t.coord.row}`) ? { ...t, terrain: 'wall' as TerrainKind } : t);
+    const hp = { ...(wallHp ?? {}) };
+    for (const key of wallKeys) hp[key] = 400;
+    wallHp = hp;
+    log.push({ turn: 1, text: '防壁橫亙中野 — 敵軍須拔除方可長驅。', kind: 'event' });
   }
 
   return {
@@ -2045,6 +2074,21 @@ export function endTurn(b: TacticalBattle): TacticalBattle {
           });
           continue; // wrecked — it can't fire this turn
         }
+      }
+      // 陣 (外營) — a supply camp rallies adjacent defenders instead of firing:
+      // +4 morale per turn to defender units within 2 hexes (cap 100).
+      if (s.buildingId === 'barracks-out') {
+        let rallied = false;
+        unitsAfterStructures = unitsAfterStructures.map((u) => {
+          if (u.side !== 'defender' || u.troops <= 0 || u.morale >= 100) return u;
+          if (hexDistance(s.coord, u.coord) > 2) return u;
+          rallied = true;
+          return { ...u, morale: Math.min(100, u.morale + 4) };
+        });
+        if (rallied) {
+          structureLog.push({ turn: b.turn, text: '陣中旗鼓相聞 — 守軍士氣穩固。', kind: 'event' });
+        }
+        continue;
       }
       const attackerUnits = unitsAfterStructures.filter((u) => u.side === 'attacker' && u.troops > 0);
       if (attackerUnits.length === 0) continue;
