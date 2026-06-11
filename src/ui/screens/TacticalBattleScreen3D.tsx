@@ -1,6 +1,6 @@
 import { Suspense, createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Billboard, Html, OrbitControls, Stars, Text } from '@react-three/drei';
+import { Html, OrbitControls, Stars } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { useGameStore } from '../../game/state/store';
@@ -1041,15 +1041,20 @@ function DamagePopup3D({ coord, text, color, spawnedAt }: {
     }
   });
   if (embedded) {
-    // The diorama can't use DOM popups (they don't scale with the group) —
-    // real 3D text rides the same float-up animation instead.
+    // The diorama can't use screen-space DOM popups (they ignore the group
+    // scale) — but CSS3D Html (transform+sprite) lives IN the scene: it
+    // scales with the diorama, billboards to the camera, costs no font
+    // fetch (troika's default font is a CDN asset — blank offline/PWA),
+    // and covers CJK for free.
     return (
       <group ref={groupRef} position={[x, 1.5, z]}>
-        <Billboard>
-          <Text fontSize={1.1} color={color} outlineWidth={0.09} outlineColor="#000" anchorX="center" anchorY="middle">
-            {text}
-          </Text>
-        </Billboard>
+        <Html transform sprite distanceFactor={undefined} style={{ pointerEvents: 'none' }}>
+          <div style={{
+            color, fontFamily: 'Songti SC, serif', fontSize: '26px', fontWeight: 'bold',
+            textShadow: `0 0 5px ${color}, 1px 1px 0 #000, -1px -1px 0 #000`,
+            whiteSpace: 'nowrap', transform: 'scale(0.06)',
+          }}>{text}</div>
+        </Html>
       </group>
     );
   }
