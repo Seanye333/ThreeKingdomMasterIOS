@@ -24,7 +24,7 @@ import { personalTacticsForUnit } from '../../game/systems/personalTactics';
 import { DuelGameModal } from './DuelGameModal';
 import { MarchPicker } from './MarchPicker';
 import { OfficerPicker } from './OfficerPicker';
-import { playSfx } from '../../game/systems/sound';
+import { playSfx, startMapAmbience, setMapAmbienceMode, stopMapAmbience } from '../../game/systems/sound';
 import { STRATAGEMS } from '../../game/data';
 import type { Officer, StratagemId } from '../../game/types';
 import type { WeatherKind } from '../../game/systems/weather';
@@ -4636,6 +4636,20 @@ export function StrategicMap3D() {
   // 標籤分級 — quantized camera distance, provided to City3D labels.
   const [zoomLod, setZoomLod] = useState<'near' | 'far'>('near');
   const duskBg = useGameStore((s) => (s.date.phase ?? 'upper') === 'lower');
+
+  // 環境音 — wind under everything; birds by day, crickets at dusk, war
+  // drums while a battle burns. Follows the sound toggle live.
+  const soundOn = useGameStore((s) => s.soundEnabled);
+  useEffect(() => {
+    if (!soundOn) { stopMapAmbience(); return; }
+    startMapAmbience(battleActive ? 'war' : duskBg ? 'dusk' : 'day');
+    return () => stopMapAmbience();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [soundOn]);
+  useEffect(() => {
+    setMapAmbienceMode(battleActive ? 'war' : duskBg ? 'dusk' : 'day');
+  }, [battleActive, duskBg]);
+
   // 迷你導航 — camera view window for the corner minimap + click-to-jump.
   const [navView, setNavView] = useState<{ cx: number; cy: number; span: number } | null>(null);
   const [navJump, setNavJump] = useState<{ px: number; py: number; seq: number } | null>(null);

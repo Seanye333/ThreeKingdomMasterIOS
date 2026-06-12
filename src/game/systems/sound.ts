@@ -42,6 +42,9 @@ export function setSoundEnabled(on: boolean): void {
   if (!on && ambienceNode) {
     stopAmbience();
   }
+  if (!on) {
+    stopMapAmbience();
+  }
 }
 
 export type SfxName =
@@ -219,6 +222,141 @@ export function startAmbience(): void {
     oscs.push(osc);
   }
   ambienceNode = { oscillators: oscs, gain };
+}
+
+/* ─── 大地圖環境音 — wind, birds, crickets, war drums ──────────────────
+   A quiet bed under the strategic map: looped filtered noise as wind,
+   plus mode-dependent flourishes on a slow timer — bird chirps by day,
+   crickets at dusk, distant war drums while a battle burns. All
+   synthesized; no files, nothing to load. */
+type MapAmbienceMode = 'day' | 'dusk' | 'war';
+let mapAmb: {
+  src: AudioBufferSourceNode;
+  gain: GainNode;
+  timer: number;
+  mode: MapAmbienceMode;
+} | null = null;
+
+function noiseBuffer(c: AudioContext, seconds = 2): AudioBuffer {
+  const buf = c.createBuffer(1, c.sampleRate * seconds, c.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  return buf;
+}
+
+function birdChirp(c: AudioContext, when: number): void {
+  for (let i = 0; i < 2 + Math.floor(Math.random() * 2); i++) {
+    const t0 = when + i * 0.14 + Math.random() * 0.04;
+    const osc = c.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(2900 + Math.random() * 700, t0);
+    osc.frequency.exponentialRampToValueAtTime(2200, t0 + 0.07);
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.014, t0 + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.09);
+    osc.connect(g);
+    g.connect(c.destination);
+    osc.start(t0);
+    osc.stop(t0 + 0.12);
+  }
+}
+
+function cricketChirp(c: AudioContext, when: number): void {
+  for (let i = 0; i < 5; i++) {
+    const t0 = when + i * 0.055;
+    const osc = c.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.value = 4300;
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.01, t0 + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.04);
+    osc.connect(g);
+    g.connect(c.destination);
+    osc.start(t0);
+    osc.stop(t0 + 0.05);
+  }
+}
+
+function ambWarDrum(c: AudioContext, when: number): void {
+  for (const dt of [0, 0.42]) {
+    const t0 = when + dt;
+    const osc = c.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(82, t0);
+    osc.frequency.exponentialRampToValueAtTime(46, t0 + 0.2);
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.07, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.34);
+    osc.connect(g);
+    g.connect(c.destination);
+    osc.start(t0);
+    osc.stop(t0 + 0.4);
+  }
+}
+
+export function startMapAmbience(mode: MapAmbienceMode = 'day'): void {
+  if (!enabled || mapAmb) return;
+  const c = getCtx();
+  if (!c) return;
+  unlockAudio();
+  // Mounted outside a user gesture the context may still be suspended —
+  // resume on the next pointer tap.
+  if (c.state === 'suspended') {
+    const resume = () => {
+      c.resume().catch(() => undefined);
+      window.removeEventListener('pointerdown', resume);
+    };
+    window.addEventListener('pointerdown', resume);
+  }
+
+  // Wind bed — looped noise through a gentle bandpass.
+  const src = c.createBufferSource();
+  src.buffer = noiseBuffer(c);
+  src.loop = true;
+  const filter = c.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.value = 420;
+  filter.Q.value = 0.5;
+  const gain = c.createGain();
+  gain.gain.setValueAtTime(0, c.currentTime);
+  gain.gain.linearRampToValueAtTime(0.018, c.currentTime + 3);
+  src.connect(filter);
+  filter.connect(gain);
+  gain.connect(c.destination);
+  src.start();
+
+  const timer = window.setInterval(() => {
+    if (!mapAmb || !enabled) return;
+    const ctx2 = getCtx();
+    if (!ctx2 || ctx2.state !== 'running') return;
+    const when = ctx2.currentTime + 0.05;
+    if (mapAmb.mode === 'war') ambWarDrum(ctx2, when);
+    else if (mapAmb.mode === 'dusk') { if (Math.random() < 0.75) cricketChirp(ctx2, when); }
+    else if (Math.random() < 0.55) birdChirp(ctx2, when);
+  }, 2800);
+
+  mapAmb = { src, gain, timer, mode };
+}
+
+export function setMapAmbienceMode(mode: MapAmbienceMode): void {
+  if (mapAmb) mapAmb.mode = mode;
+}
+
+export function stopMapAmbience(): void {
+  if (!mapAmb) return;
+  const amb = mapAmb;
+  mapAmb = null;
+  window.clearInterval(amb.timer);
+  const c = getCtx();
+  if (!c) return;
+  amb.gain.gain.cancelScheduledValues(c.currentTime);
+  amb.gain.gain.linearRampToValueAtTime(0, c.currentTime + 0.5);
+  setTimeout(() => {
+    try { amb.src.stop(); } catch { /* already stopped */ }
+  }, 600);
 }
 
 export function stopAmbience(): void {
