@@ -80,3 +80,36 @@ describe('三顧茅廬 chain', () => {
     expect(maolu1.chooserRulerId).toBe('liu-bei');
   });
 });
+
+describe('新增四鏈 — 連環計/烏巢/白衣/空城', () => {
+  it('連環計: the rift gates the halberd; the legacy one-shot stands down', () => {
+    const officers = {
+      'wang-yun': mkOfficer({ id: 'wang-yun', forceId: 'dz', status: 'active' }),
+      'dong-zhuo': mkOfficer({ id: 'dong-zhuo', forceId: 'dz', status: 'active' }),
+      'lu-bu': mkOfficer({ id: 'lu-bu', forceId: 'dz', status: 'active' }),
+    };
+    const forces = {
+      dz: { id: 'dz', name: { zh: '董卓軍', en: 'Dong Zhuo' }, rulerOfficerId: 'dong-zhuo', capitalCityId: 'changan', color: '#666' },
+    } as unknown as HistoricalEventContext['forces'];
+    const cities = { changan: { id: 'changan', ownerForceId: 'dz' } } as HistoricalEventContext['cities'];
+    const c = (flags: Record<string, boolean>, fired: string[]) => ({
+      date: { year: 192, season: 'spring' } as HistoricalEventContext['date'],
+      cities, officers, forces, eventFlags: flags, firedEventIds: fired, romanceMode: true,
+    });
+    expect(findFiringEvent(c({}, []))?.id).toBe('evt-lianhuan-1');
+    expect(findFiringEvent(c({ 'lianhuan-sown': true }, ['evt-lianhuan-1']))?.id).toBe('evt-lianhuan-2');
+    // Rift path: the chain finale fires, NOT the legacy one-shot.
+    expect(findFiringEvent(c({ 'lianhuan-sown': true, 'lianhuan-rift': true }, ['evt-lianhuan-1', 'evt-lianhuan-2']))?.id).toBe('evt-lianhuan-3');
+    // Averted: neither the finale nor the legacy event (rift unset blocks one, averted means wang-yun chain spent).
+    const averted = findFiringEvent(c({ 'lianhuan-sown': true, 'lianhuan-averted': true }, ['evt-lianhuan-1', 'evt-lianhuan-2']));
+    expect(averted?.id).toBe('evt-dong-zhuo-assassinated'); // history still finds a way (fallback allowed when no rift)
+  });
+
+  it('空城計 waits for 三顧茅廬 to have delivered Kongming', () => {
+    const evt = HISTORICAL_EVENTS.find((e) => e.id === 'evt-kongcheng')!;
+    expect(evt.requires?.some((r) => r.kind === 'flag-set' && r.key === 'maolu-done')).toBe(true);
+    expect(evt.chooserRulerId).toBe('sima-yi');
+    // Historical first choice retreats — Kongming escapes.
+    expect(evt.choices?.[0].id).toBe('retreat');
+  });
+});

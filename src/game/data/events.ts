@@ -84,6 +84,179 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
   },
 
+  /* ─── 連環計 — three-step chain: the beauty, the rift, the halberd ──
+     王允獻貂蟬 sows it; at 鳳儀亭 Dong Zhuo (or his player) decides; the
+     rift path ends with Lu Bu's halberd. The legacy one-shot
+     assassination event is gated off once this chain delivers. */
+  {
+    id: 'evt-lianhuan-1',
+    name: { en: 'The Beauty Stratagem', zh: '王允獻貂蟬' },
+    yearMin: 191,
+    yearMax: 193,
+    requires: [
+      { kind: 'officer-active', officerId: 'wang-yun' },
+      { kind: 'officer-alive', officerId: 'dong-zhuo' },
+      { kind: 'officer-alive', officerId: 'lu-bu' },
+    ],
+    description:
+      'Wang Yun feasts both the tyrant and his foster son — and promises the singing girl Diaochan to each. The wedge is set.',
+    descriptionZh: '王允設宴,先許貂蟬於呂布,復獻於董卓。一女二許,楔子已下。',
+    effects: [{ kind: 'flag', key: 'lianhuan-sown' }],
+  },
+  {
+    id: 'evt-lianhuan-2',
+    name: { en: 'The Phoenix Pavilion', zh: '鳳儀亭' },
+    yearMin: 191,
+    yearMax: 194,
+    requires: [
+      { kind: 'flag-set', key: 'lianhuan-sown' },
+      { kind: 'officer-alive', officerId: 'dong-zhuo' },
+      { kind: 'officer-alive', officerId: 'lu-bu' },
+    ],
+    description:
+      'Dong Zhuo finds Lu Bu and Diaochan together at the Phoenix Pavilion and hurls a halberd at his own foster son. The woman stands between them — whose is she?',
+    descriptionZh: '董卓撞見呂布與貂蟬私會鳳儀亭,擲戟相向。美人立於父子之間 — 歸誰?',
+    effects: [],
+    chooserRulerId: 'dong-zhuo',
+    choices: [
+      {
+        id: 'keep',
+        label: { zh: '自納貂蟬,奉先算什麼東西', en: 'Keep her — Fengxian be damned' },
+        effects: [
+          { kind: 'officer-loyalty', officerId: 'lu-bu', delta: -30 },
+          { kind: 'flag', key: 'lianhuan-rift' },
+        ],
+      },
+      {
+        id: 'gift',
+        label: { zh: '忍痛賜婚,籠絡虎將', en: 'Wed her to Lu Bu — keep the tiger' },
+        effects: [
+          { kind: 'officer-loyalty', officerId: 'lu-bu', delta: 15 },
+          { kind: 'flag', key: 'lianhuan-averted' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'evt-lianhuan-3',
+    name: { en: 'The Halberd Falls', zh: '呂布弒董' },
+    yearMin: 192,
+    yearMax: 195,
+    requires: [
+      { kind: 'flag-set', key: 'lianhuan-rift' },
+      { kind: 'officer-alive', officerId: 'dong-zhuo' },
+      { kind: 'officer-alive', officerId: 'lu-bu' },
+    ],
+    description:
+      'At the palace gate Lu Bu reads the secret decree aloud — and drives his halberd through his foster father. The tyrant\'s host shatters.',
+    descriptionZh: '宮門之前,呂布宣詔於先,舉戟於後。義父殞命,涼州兵土崩瓦解。',
+    effects: [
+      { kind: 'officer-status', officerId: 'dong-zhuo', status: 'dead' },
+      { kind: 'force-troops-multiplier', forceId: 'force-dong-zhuo', multiplier: 0.5 },
+      { kind: 'flag', key: 'dong-zhuo-slain' },
+    ],
+  },
+
+  /* ─── 官渡·烏巢 — one night decides the north (chooser: 曹操) ────── */
+  {
+    id: 'evt-wuchao',
+    name: { en: 'The Granaries at Wuchao', zh: '許攸夜獻烏巢' },
+    yearMin: 200,
+    yearMax: 203,
+    requires: [
+      { kind: 'officer-alive', officerId: 'cao-cao' },
+      { kind: 'officer-alive', officerId: 'yuan-shao' },
+      { kind: 'officer-rules-cities-min', officerId: 'yuan-shao', count: 2 },
+    ],
+    description:
+      'Xu You defects barefoot in the night: every grain Yuan Shao owns sits under thin guard at Wuchao. It smells like a trap. It always does.',
+    descriptionZh: '許攸夜奔而來:袁紹屯糧盡在烏巢,守備空虛。聞着像個圈套 — 圈套向來都這個味。',
+    effects: [],
+    chooserRulerId: 'cao-cao',
+    choices: [
+      {
+        id: 'raid',
+        label: { zh: '親率輕騎,夜襲烏巢', en: 'Ride tonight — burn it all' },
+        effects: [
+          { kind: 'force-troops-multiplier', forceId: 'force-yuan-shao', multiplier: 0.65 },
+          { kind: 'flag', key: 'wuchao-burned' },
+        ],
+      },
+      {
+        id: 'doubt',
+        label: { zh: '疑有詐,按兵不動', en: 'Too neat — hold position' },
+        effects: [{ kind: 'flag', key: 'wuchao-missed' }],
+      },
+    ],
+  },
+
+  /* ─── 白衣渡江 — Jingzhou changes hands in merchant robes (chooser: 孫權) ── */
+  {
+    id: 'evt-baiyi',
+    name: { en: 'White-Robed Crossing', zh: '白衣渡江' },
+    yearMin: 212,
+    yearMax: 225,
+    requires: [
+      { kind: 'officer-active', officerId: 'lu-meng' },
+      { kind: 'officer-alive', officerId: 'guan-yu' },
+      { kind: 'officer-alive', officerId: 'sun-quan' },
+      { kind: 'flag-unset', key: 'baiyi-deferred' },
+    ],
+    description:
+      'Lü Meng pleads illness; his soldiers pole upriver dressed as merchants. Guan Yu\'s beacon towers will never light. One word from you and Jingzhou changes hands — and the oath brothers will never forgive it.',
+    descriptionZh: '呂蒙稱病,士卒白衣搖櫓,扮作商旅 — 雲長的烽火台一座也來不及點。一聲令下荊州易主,而桃園之仇不死不休。',
+    effects: [],
+    chooserRulerId: 'sun-quan',
+    choices: [
+      {
+        id: 'cross',
+        label: { zh: '白衣渡江,襲取荊州', en: 'Cross — take Jingzhou' },
+        effects: [
+          { kind: 'officer-status', officerId: 'guan-yu', status: 'dead' },
+          { kind: 'flag', key: 'baiyi-done' },
+        ],
+      },
+      {
+        id: 'wait',
+        label: { zh: '聯劉抗曹為重,暫緩', en: 'The alliance matters more — wait' },
+        effects: [{ kind: 'flag', key: 'baiyi-deferred' }],
+      },
+    ],
+  },
+
+  /* ─── 空城計 — an open gate and a guqin (chooser: 司馬懿) ────────── */
+  {
+    id: 'evt-kongcheng',
+    name: { en: 'The Empty Fort', zh: '空城計' },
+    yearMin: 205,
+    yearMax: 235,
+    requires: [
+      { kind: 'officer-active', officerId: 'zhuge-liang' },
+      { kind: 'officer-active', officerId: 'sima-yi' },
+      { kind: 'flag-set', key: 'maolu-done' },
+    ],
+    description:
+      'Your vanguard reaches Xicheng and finds the gates wide open — Kongming alone on the wall, burning incense, playing the guqin. Fifteen万 men halt at the sound of one instrument.',
+    descriptionZh: '前鋒抵西城,城門大開 — 孔明獨坐城頭,焚香操琴。十五萬大軍,被一張琴攔在城外。',
+    effects: [],
+    chooserRulerId: 'sima-yi',
+    choices: [
+      {
+        id: 'retreat',
+        label: { zh: '此中有詐,傳令退兵', en: 'A trap — sound the withdrawal' },
+        effects: [{ kind: 'flag', key: 'kongcheng-spared' }],
+      },
+      {
+        id: 'charge',
+        label: { zh: '管他有詐沒詐,給我衝', en: 'Trap or not — charge' },
+        effects: [
+          { kind: 'officer-status', officerId: 'zhuge-liang', status: 'imprisoned' },
+          { kind: 'flag', key: 'kongcheng-caught' },
+        ],
+      },
+    ],
+  },
+
   /* ─── 衣帶詔 — two-step conspiracy chain (chooser: 劉備) ─────────── */
   {
     id: 'evt-yidaizhao-1',
@@ -158,6 +331,10 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     requires: [
       { kind: 'force-alive', forceId: 'force-dong-zhuo' },
       { kind: 'officer-active', officerId: 'wang-yun' },
+      // The 連環計 chain owns this outcome now; this one-shot is the
+      // fallback when the chain hasn't delivered (or was averted).
+      { kind: 'flag-unset', key: 'dong-zhuo-slain' },
+      { kind: 'flag-unset', key: 'lianhuan-rift' },
     ],
     description:
       'Wang Yun and Diaochan turn Lü Bu against his foster father. Dong Zhuo dies under his own ward\'s halberd, and the tyrant\'s force fractures.',
