@@ -2294,7 +2294,7 @@ const FOREST_PATCHES: Array<{ lon: number; lat: number; rLon: number; rLat: numb
   // 三辅周边 — central Henan/Anhui small patches
   { lon: 115, lat: 32.5, rLon: 2.5, rLat: 1.2, trees: 250 },
 ];
-function Forest3D() {
+function Forest3D({ season }: { season: Season }) {
   const positions = useMemo(() => {
     const ps: { x: number; y: number; z: number; rot: number; scale: number }[] = [];
     for (const patch of FOREST_PATCHES) {
@@ -2337,6 +2337,25 @@ function Forest3D() {
     canopyRef.current.instanceMatrix.needsUpdate = true;
   }, [positions, dummy]);
 
+  // 春華秋實 — the canopy follows the season: spring scatters blossom
+  // through fresh green, summer is the old deep green, autumn turns the
+  // woods gold and amber with late hold-outs, winter dusts them grey-green.
+  // Deterministic per-tree hash so the same trees blossom every year.
+  useEffect(() => {
+    const canopy = canopyRef.current;
+    if (!canopy) return;
+    const c = new THREE.Color();
+    for (let i = 0; i < positions.length; i++) {
+      const h = ((i * 2654435761) >>> 0) % 100 / 100;
+      const hex = season === 'spring' ? (h < 0.28 ? '#e0a8be' : '#3d6a34')
+        : season === 'summer' ? '#2d4a28'
+        : season === 'autumn' ? (h < 0.45 ? '#c8902e' : h < 0.75 ? '#a8651f' : '#56602a')
+        : '#8e9a8c';
+      canopy.setColorAt(i, c.set(hex));
+    }
+    if (canopy.instanceColor) canopy.instanceColor.needsUpdate = true;
+  }, [positions, season]);
+
   return (
     <group>
       {/* Trunk — thin brown cylinder */}
@@ -2344,10 +2363,10 @@ function Forest3D() {
         <cylinderGeometry args={[0.008, 0.012, 0.10, 5]} />
         <meshStandardMaterial color="#3a2818" roughness={0.95} />
       </instancedMesh>
-      {/* Canopy — dark green cone */}
+      {/* Canopy — seasonal per-instance colour (white base × instanceColor) */}
       <instancedMesh ref={canopyRef} args={[undefined, undefined, positions.length]} castShadow>
         <coneGeometry args={[0.07, 0.30, 6]} />
-        <meshStandardMaterial color="#2d4a28" roughness={0.92} />
+        <meshStandardMaterial color="#ffffff" roughness={0.92} />
       </instancedMesh>
     </group>
   );
@@ -4095,7 +4114,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onQuickAction, mapSty
       {mapStyle === 'classic' && season === 'winter' && <SnowBlanket />}
       {/* Forests plant at the shared height function, so the same trees stand
           perfectly on the hex quilt too. */}
-      <Forest3D />
+      <Forest3D season={season} />
       <GreatWall3D />
       <DriftingClouds />
       <Caravans3D cities={cities} />
