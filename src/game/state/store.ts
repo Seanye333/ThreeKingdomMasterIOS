@@ -3855,6 +3855,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // Save replay (snapshot of final battle state only — turn-by-turn would
         // require more plumbing, so we record the end state.).
         const force = winner === 'attacker' ? tb.attackerForceId : tb.defenderForceId;
+        // Capped — replays carry per-turn snapshot trails now; an uncapped
+        // list (persisted on every set()) eventually torpedoes localStorage.
         const replays = [...state.battleReplays, {
           id: `replay-${tb.id}`,
           cityId: tb.cityId,
@@ -3866,7 +3868,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           finalBattle: tb,
           // The per-turn trail captured during play, closed out by the final state.
           snapshots: [...state.currentBattleSnapshots.filter((s2) => s2.id === tb.id), tb],
-        }];
+        }].slice(-10);
         void force;
 
         // Apply officer fates.
@@ -5486,7 +5488,11 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         placementMode: state.placementMode,
         enabledDynasties: state.enabledDynasties,
         lostItems: state.lostItems,
-        battleReplays: state.battleReplays,
+        // Persist replays WITHOUT their turn-by-turn trails — a single battle
+        // trail can run ~0.5-1MB and partialize stringifies on every set().
+        // The trail stays watchable for the current session; reloaded replays
+        // fall back to the final frame (the viewer already handles that).
+        battleReplays: state.battleReplays.map((r) => ({ ...r, snapshots: [] })),
         deeds: state.deeds,
         fogOfWar: state.fogOfWar,
         commandTemplates: state.commandTemplates,

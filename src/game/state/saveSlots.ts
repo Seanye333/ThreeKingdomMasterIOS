@@ -84,7 +84,15 @@ export function saveToSlot(
     cityCount: playerCities.length,
     troopTotal: playerCities.reduce((sum, c) => sum + c.troops, 0),
   };
-  localStorage.setItem(SLOT_PREFIX + slotId, JSON.stringify(state));
+  // Strip the per-turn replay trails + the live snapshot buffer before
+  // writing — they're session conveniences, and three rolling autosaves of
+  // multi-MB trails would exhaust the localStorage quota in a long campaign.
+  const slim = {
+    ...state,
+    battleReplays: (state.battleReplays ?? []).map((r) => ({ ...r, snapshots: [] })),
+    currentBattleSnapshots: [],
+  };
+  localStorage.setItem(SLOT_PREFIX + slotId, JSON.stringify(slim));
   const idx = readIndex().filter((s) => s.id !== slotId);
   idx.push(meta);
   writeIndex(idx);
