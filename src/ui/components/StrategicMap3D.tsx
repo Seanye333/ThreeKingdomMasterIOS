@@ -1,6 +1,6 @@
 import { Suspense, createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Html, OrbitControls } from '@react-three/drei';
+import { Html, Line, OrbitControls } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { getTerritoryCanvas, getTerritorySignature } from './territoryOverlay';
 import { positionAlongRoute, marchDestCoords, terrainRoute, generateTerritories } from '../../game/data/territories';
@@ -40,7 +40,7 @@ import { useT } from '../i18n';
 const IS_MOBILE = typeof window !== 'undefined'
   && (window.matchMedia?.('(pointer: coarse)')?.matches || window.innerWidth < 700);
 
-type OverlayMode = 'none' | 'gold' | 'food' | 'troops' | 'loyalty' | 'province' | 'supply';
+type OverlayMode = 'none' | 'gold' | 'food' | 'troops' | 'loyalty' | 'province' | 'supply' | 'diplomacy';
 
 const PROVINCE_COLOR: Record<string, string> = {
   sili: '#d4a84a', yu: '#c19a3b', ji: '#3a5a8a', qing: '#5a8a8a',
@@ -2249,7 +2249,7 @@ function overlayForCity(
   mode: OverlayMode,
   maxes: { gold: number; food: number; troops: number },
 ): { color: string; label: string } | null {
-  if (mode === 'none' || mode === 'supply') return null; // supply draws its own lines
+  if (mode === 'none' || mode === 'supply' || mode === 'diplomacy') return null; // these draw their own lines
   if (mode === 'province') {
     const pid = PROVINCE_BY_CITY[city.id];
     const color = pid ? (PROVINCE_COLOR[pid] ?? '#5a4530') : '#5a4530';
@@ -3148,6 +3148,105 @@ function DriftingClouds() {
   );
 }
 
+/* ─── 邦交關係線 — the web of pacts and grudges, capital to capital ────
+   The 邦交 overlay arcs every meaningful relation between living forces:
+   gold solid = alliance, green dashed = non-aggression pact, red = open
+   hostility (neutral status soured to score ≤ -40). Plain neutrals stay
+   undrawn or the map turns to spaghetti. Lines involving the player ride
+   slightly thicker; the midpoint chip carries the relation score. */
+function DiplomacyLines3D({ cities, forces }: {
+  cities: Record<string, City>;
+  forces: Record<string, Force>;
+}) {
+  const diplomacy = useGameStore((s) => s.diplomacy);
+  const playerForceId = useGameStore((s) => s.playerForceId);
+
+  const links = useMemo(() => {
+    // A force is alive if it still holds a city; anchor at its capital,
+    // falling back to any city it holds (capitals do fall).
+    const holdings = new Map<string, City[]>();
+    for (const c of Object.values(cities)) {
+      if (!c.ownerForceId) continue;
+      if (!holdings.has(c.ownerForceId)) holdings.set(c.ownerForceId, []);
+      holdings.get(c.ownerForceId)!.push(c);
+    }
+    const anchorOf = (forceId: string): City | null => {
+      const owned = holdings.get(forceId);
+      if (!owned || owned.length === 0) return null;
+      const cap = forces[forceId] ? cities[forces[forceId].capitalCityId] : null;
+      return cap && cap.ownerForceId === forceId ? cap : owned[0];
+    };
+    const out: Array<{
+      pts: THREE.Vector3[];
+      mid: THREE.Vector3;
+      kind: 'allied' | 'pact' | 'hostile';
+      score: number;
+      mine: boolean;
+    }> = [];
+    for (const rel of Object.values(diplomacy.relations)) {
+      const hostile = rel.status === 'neutral' && rel.score <= -40;
+      if (rel.status === 'neutral' && !hostile) continue;
+      const a = anchorOf(rel.forceA);
+      const b = anchorOf(rel.forceB);
+      if (!a || !b) continue;
+      const [ax, az] = pxToWorld(...cityPixel(a.id, a.coords.x, a.coords.y));
+      const [bx, bz] = pxToWorld(...cityPixel(b.id, b.coords.x, b.coords.y));
+      const ay = cityElevation(ax, az) + 0.25;
+      const by = cityElevation(bx, bz) + 0.25;
+      const dist = Math.hypot(bx - ax, bz - az);
+      const mid = new THREE.Vector3((ax + bx) / 2, Math.max(ay, by) + 0.7 + dist * 0.16, (az + bz) / 2);
+      const curve = new THREE.QuadraticBezierCurve3(
+        new THREE.Vector3(ax, ay, az), mid, new THREE.Vector3(bx, by, bz),
+      );
+      out.push({
+        pts: curve.getPoints(28),
+        mid,
+        kind: rel.status === 'allied' ? 'allied' : rel.status === 'non-aggression' ? 'pact' : 'hostile',
+        score: rel.score,
+        mine: rel.forceA === playerForceId || rel.forceB === playerForceId,
+      });
+    }
+    return out;
+  }, [diplomacy, cities, forces, playerForceId]);
+
+  const STYLE = {
+    allied:  { color: '#f0c060', zh: '盟' },
+    pact:    { color: '#9ed68a', zh: '約' },
+    hostile: { color: '#ff5040', zh: '仇' },
+  } as const;
+
+  return (
+    <group>
+      {links.map((l, i) => {
+        const st = STYLE[l.kind];
+        return (
+          <group key={i}>
+            <Line
+              points={l.pts}
+              color={st.color}
+              dashed={l.kind === 'pact'}
+              dashSize={0.4}
+              gapSize={0.22}
+              lineWidth={l.mine ? 2.2 : 1.3}
+              transparent
+              opacity={l.mine ? 0.95 : 0.65}
+            />
+            <Html position={l.mid} center distanceFactor={11} zIndexRange={[28, 18]} style={{ pointerEvents: 'none' }}>
+              <div style={{
+                background: 'rgba(20,14,8,0.88)', border: `1px solid ${st.color}`, borderRadius: 3,
+                padding: '1px 6px', fontFamily: 'Songti SC, serif', fontSize: 10,
+                color: st.color, whiteSpace: 'nowrap', letterSpacing: '1px',
+              }}>
+                {st.zh} {l.score > 0 ? `+${l.score}` : l.score}
+              </div>
+            </Html>
+          </group>
+        );
+      })}
+    </group>
+  );
+}
+
 /* ─── 事件地標 — the season's calamities and windfalls, on the map ─────
    The report scrolls past once; the land remembers. Each city the tick
    touched (饑荒/瘟疫/豐收/民變/襲擾) wears a single-character chip until
@@ -3888,6 +3987,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onQuickAction, mapSty
       {mapStyle === 'classic' && <Roads cities={cities} />}
       <MarchingArmies cities={cities} pendingCommands={pendingCommands} forces={forces} officers={officers} ports={portsForMarch} selectedArmyId={selectedArmyId3D} onArmyClick={handleArmyClick} hideNearPx={battleSitePx} />
       {overlayMode === 'supply' && <SupplyLines3D />}
+      {overlayMode === 'diplomacy' && <DiplomacyLines3D cities={cities} forces={forces} />}
       <FieldBattleMarks3D marks={fieldBattleMarks} />
       <QueuedBattles3D />
       <BeaconAlerts3D />
@@ -4211,6 +4311,7 @@ const OVERLAY_OPTIONS: Array<{ id: OverlayMode; zh: string; en: string }> = [
   { id: 'loyalty',  zh: '民忠', en: 'LOYALTY' },
   { id: 'province', zh: '州郡', en: 'PROVINCE' },
   { id: 'supply',   zh: '糧道', en: 'SUPPLY' },
+  { id: 'diplomacy', zh: '邦交', en: 'TIES' },
 ];
 
 const WEATHER_ZH: Record<WeatherKind, string> = {
