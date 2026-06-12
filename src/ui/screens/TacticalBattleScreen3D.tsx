@@ -1771,6 +1771,9 @@ export function TacticalBattleScreen3D() {
   const screenRootRef = useRef<HTMLDivElement>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const [recording, setRecording] = useState(false);
+  // 🤖 委託指揮 — the same tactical AI that drives the enemy plays YOUR
+  // side while engaged; flip it off any turn to take the reins back.
+  const [autoPilot, setAutoPilot] = useState(false);
   const toggleRecording = () => {
     if (recorderRef.current) {
       recorderRef.current.stop();
@@ -1905,10 +1908,11 @@ export function TacticalBattleScreen3D() {
     return null;
   }, [battle, playerForceId]);
 
-  // AI takes its turn after a short delay when it's not the player's side.
+  // AI takes its turn after a short delay when it's not the player's side —
+  // or on the player's side too, when 委託指揮 is engaged.
   useEffect(() => {
     if (!battle || battle.winner) return;
-    if (playerSide && battle.activeSide !== playerSide) {
+    if (playerSide && (battle.activeSide !== playerSide || autoPilot)) {
       const delay = Math.max(150, 700 / Math.max(1, battleSpeed));
       const id = setTimeout(() => {
         const result = aiTakeTurn(battle, officers, Math.random, {
@@ -1959,7 +1963,7 @@ export function TacticalBattleScreen3D() {
       }, delay);
       return () => clearTimeout(id);
     }
-  }, [battle, officers, playerSide, start, battleSpeed, difficulty]);
+  }, [battle, officers, playerSide, start, battleSpeed, difficulty, autoPilot]);
 
   // Show results modal when a winner is decided.
   useEffect(() => {
@@ -2127,6 +2131,16 @@ export function TacticalBattleScreen3D() {
             color: recording ? '#ffb0a0' : '#a89070', fontFamily: 'inherit',
           }}
         >{recording ? '⏹ 錄影中' : '🎬 錄影'}</button>
+        <button
+          onClick={() => setAutoPilot((v) => !v)}
+          title={autoPilot ? t('收回指揮權', 'Take back command') : t('委託軍師指揮 — 戰術 AI 替你打,隨時可收回', 'Let the tactical AI play your side; toggle any time')}
+          style={{
+            fontSize: '0.72rem', padding: '2px 8px', cursor: 'pointer',
+            background: autoPilot ? 'rgba(126, 214, 138, 0.25)' : 'rgba(40, 28, 18, 0.7)',
+            border: `1px solid ${autoPilot ? '#7ed68a' : '#5a4530'}`,
+            color: autoPilot ? '#c8e8a0' : '#a89070', fontFamily: 'inherit',
+          }}
+        >{autoPilot ? '🤖 軍師代戰中' : '🤖 委託指揮'}</button>
         {/* 戰前準備 — one card, played before your first move. */}
         {myTurn && battle.turn === 1 && playerSide && !battle.prepUsed?.[playerSide] && !prepDismissed && (
           <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
