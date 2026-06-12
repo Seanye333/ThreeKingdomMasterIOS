@@ -88,3 +88,30 @@ export function recordDailyResult(dateStr: string, result: DailyResult): void {
 export function dailyShareString(c: DailyChallenge, forceNameZh: string, r: DailyResult): string {
   return `三國志大師 每日挑戰 ${c.dateStr} · ${forceNameZh} · ${r.victory ? `${r.seasons}旬制霸 🏆` : '敗北 ☠'}`;
 }
+
+/** 連勝 — consecutive victorious days ending today (or yesterday, if
+ *  today hasn't been won yet). */
+export function winStreak(results: Record<string, DailyResult>, today = new Date()): number {
+  let streak = 0;
+  const day = new Date(today);
+  // Today may still be unplayed — a pending day doesn't break the streak.
+  if (!results[dailySeedString(day)]?.victory) day.setDate(day.getDate() - 1);
+  for (;;) {
+    const key = dailySeedString(day);
+    if (!results[key]?.victory) break;
+    streak++;
+    day.setDate(day.getDate() - 1);
+  }
+  return streak;
+}
+
+/** The replayable window — today and the six days before it. */
+export function recentChallengeDays(today = new Date()): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    out.push(dailySeedString(d));
+  }
+  return out;
+}

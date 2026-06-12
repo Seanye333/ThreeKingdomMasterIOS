@@ -1,7 +1,7 @@
 /** 每日挑戰 — locks determinism and best-run recording. */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Scenario } from '../types';
-import { dailyShareString, loadDailyResults, recordDailyResult, rollDailyChallenge, seededRng } from './dailyChallenge';
+import { dailyShareString, loadDailyResults, recentChallengeDays, recordDailyResult, rollDailyChallenge, seededRng, winStreak } from './dailyChallenge';
 
 const scenarios = [
   { id: 's1', forces: [{ id: 'a' }, { id: 'b' }], cities: [] },
@@ -42,5 +42,26 @@ describe('daily results', () => {
   it('share string reads like a brag', () => {
     const c = rollDailyChallenge('2026-06-12', scenarios)!;
     expect(dailyShareString(c, '曹操軍', { victory: true, seasons: 42 })).toContain('42旬制霸');
+  });
+});
+
+describe('挑戰日曆', () => {
+  it('counts the win streak, tolerating an unplayed today', () => {
+    const today = new Date('2026-06-12T12:00:00Z');
+    const results = {
+      '2026-06-11': { victory: true, seasons: 40 },
+      '2026-06-10': { victory: true, seasons: 50 },
+      '2026-06-09': { victory: false, seasons: 10 },
+    };
+    expect(winStreak(results, today)).toBe(2);
+    expect(winStreak({ ...results, '2026-06-12': { victory: true, seasons: 30 } }, today)).toBe(3);
+    expect(winStreak({}, today)).toBe(0);
+  });
+
+  it('the replay window is exactly the last seven days', () => {
+    const days = recentChallengeDays(new Date('2026-06-12T12:00:00Z'));
+    expect(days).toHaveLength(7);
+    expect(days[0]).toBe('2026-06-12');
+    expect(days[6]).toBe('2026-06-06');
   });
 });

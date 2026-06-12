@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { SCENARIOS } from '../../game/data';
-import { dailySeedString, dailyShareString, loadDailyResults, rollDailyChallenge } from '../../game/systems/dailyChallenge';
+import { dailySeedString, dailyShareString, loadDailyResults, recentChallengeDays, rollDailyChallenge, winStreak } from '../../game/systems/dailyChallenge';
 import { useGameStore } from '../../game/state/store';
 import type { Difficulty } from '../../game/state/gameState';
 import type { Scenario } from '../../game/types';
@@ -261,16 +261,23 @@ export function TitleScreen() {
           const dailyScenario = daily ? SCENARIOS.find((sc) => sc.id === daily.scenarioId) : null;
           const dailyForce = dailyScenario?.forces.find((f) => f.id === daily?.forceId);
           const dailyResult = loadDailyResults()[todayStr];
-          const launchDaily = () => {
-            if (!daily || !dailyScenario || !dailyForce) return;
+          const launchFor = (dateStr: string) => {
+            const roll = rollDailyChallenge(dateStr, SCENARIOS);
+            const scen = roll ? SCENARIOS.find((sc) => sc.id === roll.scenarioId) : null;
+            const frc = scen?.forces.find((f) => f.id === roll?.forceId);
+            if (!roll || !scen || !frc) return;
             const st = useGameStore.getState();
-            if (daily.modifiers.some((m) => m.id === 'romance')) st.setRomanceMode(true);
-            loadScenario(dailyScenario, dailyForce.id, 'hard');
+            if (roll.modifiers.some((m) => m.id === 'romance')) st.setRomanceMode(true);
+            loadScenario(scen, frc.id, 'hard');
             const st2 = useGameStore.getState();
             st2.setFogOfWar(true);
-            if (daily.modifiers.some((m) => m.id === 'poverty')) st2.applyPovertyHandicap();
-            st2.startDailyChallenge(todayStr);
+            if (roll.modifiers.some((m) => m.id === 'poverty')) st2.applyPovertyHandicap();
+            st2.startDailyChallenge(dateStr);
           };
+          const launchDaily = () => launchFor(todayStr);
+          const allResults = loadDailyResults();
+          const streak = winStreak(allResults);
+          const recent = recentChallengeDays();
           return (
           <section className={styles.scenarioCard} style={{ width: 'min(1060px, 96vw)', maxWidth: 'none' }}>
             {/* 每日挑戰橫幅 */}
@@ -297,6 +304,11 @@ export function TitleScreen() {
                     title={t('複製戰績', 'Copy result')}
                   >{dailyResult.victory ? `🏆 ${dailyResult.seasons}旬` : '☠'} {t('複製', 'Copy')}</button>
                 )}
+                {streak > 0 && (
+                  <span style={{ color: '#f0d98a', fontSize: '0.72rem' }} title={t('連勝天數', 'Win streak')}>
+                    🔥×{streak}
+                  </span>
+                )}
                 <button
                   onClick={launchDaily}
                   style={{
@@ -305,6 +317,29 @@ export function TitleScreen() {
                     cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.2rem',
                   }}
                 >{dailyResult ? t('再戰', 'Again') : t('應戰', 'Accept')}</button>
+                {/* 補打日曆 — the last seven days, replayable; older days
+                    show their result but the window has closed. */}
+                <div style={{ flexBasis: '100%', display: 'flex', gap: 4, alignItems: 'center', marginTop: 2 }}>
+                  <span style={{ fontSize: '0.62rem', color: '#8a7050' }}>{t('近七日', 'Last 7')}</span>
+                  {recent.map((d) => {
+                    const r = allResults[d];
+                    const isToday = d === todayStr;
+                    return (
+                      <button
+                        key={d}
+                        onClick={() => launchFor(d)}
+                        title={`${d}${r ? (r.victory ? ` 🏆 ${r.seasons}旬` : ' ☠') : t(' 未戰', ' unplayed')}`}
+                        style={{
+                          width: 26, height: 22, cursor: 'pointer', fontSize: '0.62rem',
+                          fontFamily: 'ui-monospace, monospace',
+                          background: r ? (r.victory ? 'rgba(212,168,74,0.3)' : 'rgba(184,68,46,0.25)') : 'transparent',
+                          border: `1px solid ${isToday ? '#ff9080' : r ? (r.victory ? '#d4a84a' : '#8a4538') : '#3a2d20'}`,
+                          color: r ? (r.victory ? '#f0d98a' : '#c08070') : '#6a5a45',
+                        }}
+                      >{Number(d.slice(8))}</button>
+                    );
+                  })}
+                </div>
               </div>
             )}
             {/* Era tabs */}
