@@ -5,6 +5,7 @@ import type {
   Officer,
   ReportEntry,
 } from '../types';
+import { grantPosthumousName } from './posthumous';
 import { getDeathPoem } from '../data/deathPoems';
 import { deathChanceMultiplier, rollAgeDrift } from './traitEffects';
 import { TRAIT_DEFS_BY_ID } from '../data/personality';
@@ -77,7 +78,8 @@ export function processAging(input: AgingInput): AgingOutput {
     const chance = deathChance(officer, input.year, age) * deathChanceMultiplier(officer);
     if (input.rng() >= chance) continue;
 
-    // Officer dies.
+    // Officer dies — and their court, if they had one, grants the 諡號.
+    const posthumous = grantPosthumousName(officer);
     officers = {
       ...officers,
       [officer.id]: {
@@ -86,15 +88,17 @@ export function processAging(input: AgingInput): AgingOutput {
         forceId: null,
         locationCityId: null,
         task: null,
+        ...(posthumous ? { posthumousName: posthumous } : {}),
       },
     };
     const poem = getDeathPoem(officer.id);
     const poemTail = poem ? ` — 絕命詩：「${poem.zh}」` : '';
+    const shiTail = posthumous ? `朝廷追諡曰「${posthumous}」。` : '';
     entries.push({
       cityId: officer.locationCityId,
       kind: 'death',
-      text: `${officer.name.en} (${officer.name.zh}) has died, aged ${age}.${poemTail}`,
-      textZh: `${officer.name.zh}卒，享年 ${age} 歲。${poemTail}`,
+      text: `${officer.name.en} (${officer.name.zh}) has died, aged ${age}.${posthumous ? ` Posthumously honored as ${posthumous}.` : ''}${poemTail}`,
+      textZh: `${officer.name.zh}卒，享年 ${age} 歲。${shiTail}${poemTail}`,
     });
 
     // R10 — Grief: apply loyalty hits to bonded officers + report

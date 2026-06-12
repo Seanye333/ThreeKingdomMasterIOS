@@ -53,9 +53,15 @@ export function composeBiography(input: {
   const serve = input.forceNameZh
     ? { zh: `仕於${input.forceNameZh}`, en: `serves ${input.forceNameZh}` }
     : { zh: '今在野', en: 'currently unaffiliated' };
+  const death = o.status === 'dead'
+    ? (o.posthumousName ? `已歿,朝廷追諡曰「${o.posthumousName}」。` : '已歿。')
+    : null;
+  const deathEn = o.status === 'dead'
+    ? (o.posthumousName ? `now deceased, posthumously honored as ${o.posthumousName}.` : 'now deceased.')
+    : null;
   out.push({
-    zh: `${o.name.zh},生於${o.birthYear}年。${arch ? arch.zh + ',' : ''}${o.status === 'dead' ? '已歿。' : serve.zh + '。'}`,
-    en: `${o.name.en}, born ${o.birthYear}${arch ? ', ' + arch.en : ''}; ${o.status === 'dead' ? 'now deceased.' : serve.en + '.'}`,
+    zh: `${o.name.zh},生於${o.birthYear}年。${arch ? arch.zh + ',' : ''}${death ?? serve.zh + '。'}`,
+    en: `${o.name.en}, born ${o.birthYear}${arch ? ', ' + arch.en : ''}; ${deathEn ?? serve.en + '.'}`,
   });
 
   // 戰績.

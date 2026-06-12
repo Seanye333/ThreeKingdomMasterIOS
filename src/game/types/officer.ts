@@ -35,6 +35,8 @@ export interface Officer {
   locationCityId: EntityId | null;
   forceId: EntityId | null;
   status: 'active' | 'idle' | 'imprisoned' | 'dead' | 'unsearched' | 'wounded' | 'retired';
+  /** 諡號 — granted by their court on a natural death (壯繆侯, 忠武侯…). */
+  posthumousName?: string;
   /** Historical hometown — fixed at scenario load from the template. Doesn't
    *  change as the officer moves around. Used by UI + search bonuses. */
   hometownCityId?: EntityId;
