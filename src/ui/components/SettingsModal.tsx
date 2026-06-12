@@ -1,4 +1,6 @@
+import { useRef, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
+import { exportAllSaves, importAllSaves } from '../../game/state/saveTransfer';
 import { useT } from '../i18n';
 
 interface Props {
@@ -130,6 +132,10 @@ export function SettingsModal({ onClose }: Props) {
             </Row>
           </Section>
 
+          <Section title={t('存檔互傳', 'Save transfer')}>
+            <SaveTransferRows />
+          </Section>
+
           <Section title={t('戰鬥', 'Combat')}>
             <Row label={t('戰鬥速度', 'Battle speed')}>
               <div style={{ display: 'flex', gap: 4 }}>
@@ -155,6 +161,67 @@ export function SettingsModal({ onClose }: Props) {
         </div>
       </div>
     </div>
+  );
+}
+
+/** 存檔互傳 — download every save as one JSON; import it on another
+ *  device. The no-backend "cloud save" that makes the PWA portable. */
+function SaveTransferRows() {
+  const t = useT();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [status, setStatus] = useState<string | null>(null);
+
+  const doExport = () => {
+    const bundle = exportAllSaves();
+    const blob = new Blob([JSON.stringify(bundle)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `三國志大師存檔-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    setStatus(t(`已導出 ${Object.keys(bundle.entries).length} 項`, `Exported ${Object.keys(bundle.entries).length} keys`));
+  };
+
+  const doImport = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const res = importAllSaves(String(reader.result ?? ''));
+      if (res.ok) {
+        setStatus(t(`已導入 ${res.count} 項,即將重新載入…`, `Imported ${res.count} keys, reloading…`));
+        window.setTimeout(() => window.location.reload(), 900);
+      } else {
+        setStatus(t('導入失敗:不是有效的存檔文件', 'Import failed: not a valid save bundle'));
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const btn: React.CSSProperties = {
+    background: '#2a1f15', border: '1px solid #5a4530', color: '#d4a84a',
+    padding: '0.3rem 0.8rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.82rem',
+  };
+
+  return (
+    <Row
+      label={t('跨設備搬家', 'Move between devices')}
+      hint={status ?? t('導出成文件 → 傳到另一台設備 → 導入即接著玩(含全部存檔槽與偏好)', 'Export to a file → send it to the other device → import and keep playing (all slots & prefs)')}
+    >
+      <div style={{ display: 'flex', gap: 6 }}>
+        <button style={btn} onClick={doExport}>⬇ {t('導出', 'Export')}</button>
+        <button style={btn} onClick={() => fileRef.current?.click()}>⬆ {t('導入', 'Import')}</button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/json,.json"
+          style={{ display: 'none' }}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) doImport(f);
+            e.target.value = '';
+          }}
+        />
+      </div>
+    </Row>
   );
 }
 
