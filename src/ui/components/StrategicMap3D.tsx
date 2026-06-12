@@ -2299,7 +2299,9 @@ function Forest3D({ season }: { season: Season }) {
   const positions = useMemo(() => {
     const ps: { x: number; y: number; z: number; rot: number; scale: number }[] = [];
     for (const patch of FOREST_PATCHES) {
-      for (let i = 0; i < patch.trees; i++) {
+      // Phones plant a thinner wood — same patches, 60% of the trees.
+      const target = IS_MOBILE ? Math.floor(patch.trees * 0.6) : patch.trees;
+      for (let i = 0; i < target; i++) {
         // Random point within ellipse (sqrt for uniform area distribution)
         const a = Math.random() * Math.PI * 2;
         const r = Math.sqrt(Math.random());
@@ -3449,7 +3451,8 @@ function DuskCityLights({ cities }: { cities: Record<string, City> }) {
       const [px, py] = cityPixel(city.id, city.coords.x, city.coords.y);
       const [wx, wz] = pxToWorld(px, py);
       const baseY = cityElevation(wx, wz);
-      const n = LAMPS_BY_TIER[citySize(city).id] ?? 4;
+      const full = LAMPS_BY_TIER[citySize(city).id] ?? 4;
+      const n = IS_MOBILE ? Math.ceil(full / 2) : full; // phones carry half the lamps
       for (let i = 0; i < n; i++) {
         // Deterministic scatter — same hash trick the quilt tint uses.
         const h1 = Math.abs(Math.sin(px * 12.9898 + i * 78.233));
@@ -5091,7 +5094,8 @@ export function StrategicMap3D() {
       )}
 
       <Canvas
-        shadows
+        // Phones: shadow maps are the single biggest GPU cost on this scene.
+        shadows={!IS_MOBILE}
         dpr={IS_MOBILE ? [1, 1.5] : [1, 2]}
         camera={{ position: [0, MAP_D * 0.9, MAP_D * 0.7], fov: 45 }}
         // preserveDrawingBuffer lets the 📷 button read the frame back.

@@ -3256,7 +3256,7 @@ function CityMapScreen3DInner({ city, cityId, onClose, onSwitch2D }: {
       <div style={{ flex: 1, position: 'relative' }}>
         <Canvas
           camera={{ position: [centerX, camHeight * 2.6, centerZ + camOffset * 0.18], fov: 50 }}
-          shadows
+          shadows={!IS_MOBILE}
           dpr={IS_MOBILE ? [1, 1.5] : [1, 2]}
           style={{ background: light.sky }}
         >

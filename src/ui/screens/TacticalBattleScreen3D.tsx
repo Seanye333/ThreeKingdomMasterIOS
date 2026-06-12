@@ -2126,7 +2126,7 @@ export function TacticalBattleScreen3D() {
       {/* 3D canvas */}
       <div style={{ flex: 1, position: 'relative' }}>
         <Canvas
-          shadows
+          shadows={!IS_MOBILE}
           dpr={IS_MOBILE ? [1, 1.5] : [1, 2]}
           camera={{ position: [target[0] - 8, 40, target[2] + 6], fov: 45 }}
           gl={{ antialias: !IS_MOBILE }}
