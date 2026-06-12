@@ -6,6 +6,7 @@ import { useT, useLanguage, useDesc } from '../i18n';
 export function EventModal() {
   const pending = useGameStore((s) => s.pendingEvent);
   const dismiss = useGameStore((s) => s.dismissEvent);
+  const resolveChoice = useGameStore((s) => s.resolveEventChoice);
   const t = useT();
   const lang = useLanguage();
   const desc = useDesc();
@@ -24,11 +25,27 @@ export function EventModal() {
         </div>
         <hr className={styles.divider} />
         <p className={styles.description}>{desc(event)}</p>
-        <div className={styles.actions}>
-          <button className={styles.ackButton} onClick={dismiss}>
-            {t('承知', 'Continue')}
-          </button>
-        </div>
+        {pending.awaitingChoice && event.choices?.length ? (
+          /* 抉擇 — history holds its breath; the player picks the branch. */
+          <div className={styles.actions} style={{ flexDirection: 'column', gap: 8 }}>
+            {event.choices.map((c) => (
+              <button
+                key={c.id}
+                className={styles.ackButton}
+                style={{ width: '100%' }}
+                onClick={() => resolveChoice(c.id)}
+              >
+                {lang === 'en' ? c.label.en : lang === 'both' ? `${c.label.zh} · ${c.label.en}` : c.label.zh}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className={styles.actions}>
+            <button className={styles.ackButton} onClick={dismiss}>
+              {t('承知', 'Continue')}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

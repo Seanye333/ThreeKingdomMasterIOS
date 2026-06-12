@@ -58,6 +58,9 @@ export interface PendingEvent {
   event: HistoricalEvent;
   year: number;
   season: GameDate['season'];
+  /** 抉擇 — the player rules the chooser's force; the modal must offer
+   *  the event's choices and the pick resolves via resolveEventChoice. */
+  awaitingChoice?: boolean;
 }
 
 export interface GameState {

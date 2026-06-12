@@ -9,6 +9,122 @@ import type { HistoricalEvent } from '../types';
  * power swings.
  */
 export const HISTORICAL_EVENTS: HistoricalEvent[] = [
+  /* ─── 三顧茅廬 — three-step chain with choices (chooser: 劉備) ─────────
+     Steps gate on flags the previous choice set; walking away at any
+     step sets maolu-abandoned and the chain never resumes. AI Liu Bei
+     walks the historical path (first choice) automatically. */
+  {
+    id: 'evt-maolu-1',
+    name: { en: 'The Sleeping Dragon', zh: '司馬徽薦臥龍' },
+    yearMin: 207,
+    yearMax: 210,
+    requires: [
+      { kind: 'officer-alive', officerId: 'liu-bei' },
+      { kind: 'officer-unaffiliated', officerId: 'zhuge-liang' },
+      { kind: 'flag-unset', key: 'maolu-abandoned' },
+    ],
+    description:
+      'Sima Hui speaks of a hermit in Longzhong: "The Sleeping Dragon - secure him, and you secure the realm." The farmhouse lies a hard ride away.',
+    descriptionZh: '司馬徽言隆中有臥龍先生:「得臥龍者得天下。」茅廬路遠,將軍親往否?',
+    effects: [],
+    chooserRulerId: 'liu-bei',
+    choices: [
+      { id: 'go', label: { zh: '親往隆中拜訪', en: 'Ride to Longzhong' }, effects: [{ kind: 'flag', key: 'maolu-visit-1' }] },
+      { id: 'skip', label: { zh: '軍務繁忙,改日再說', en: 'The wars come first' }, effects: [{ kind: 'flag', key: 'maolu-abandoned' }] },
+    ],
+  },
+  {
+    id: 'evt-maolu-2',
+    name: { en: 'The Empty Farmhouse', zh: '二顧不遇' },
+    yearMin: 207,
+    yearMax: 210,
+    requires: [
+      { kind: 'flag-set', key: 'maolu-visit-1' },
+      { kind: 'flag-unset', key: 'maolu-abandoned' },
+      { kind: 'officer-alive', officerId: 'liu-bei' },
+      { kind: 'officer-unaffiliated', officerId: 'zhuge-liang' },
+    ],
+    description:
+      'Twice now the farmhouse stands empty - the master wanders the hills. Zhang Fei fumes about burning the place down. Return a third time?',
+    descriptionZh: '兩度造訪,先生雲遊未歸。張飛怒欲焚廬。三往乎?',
+    effects: [],
+    chooserRulerId: 'liu-bei',
+    choices: [
+      { id: 'again', label: { zh: '精誠所至,金石為開 — 再訪', en: 'Sincerity moves mountains - again' }, effects: [{ kind: 'flag', key: 'maolu-visit-2' }] },
+      { id: 'enough', label: { zh: '罷了,天下何處無賢才', en: 'Enough - talent is everywhere' }, effects: [{ kind: 'flag', key: 'maolu-abandoned' }] },
+    ],
+  },
+  {
+    id: 'evt-maolu-3',
+    name: { en: 'Three Visits to the Thatched Cottage', zh: '三顧茅廬' },
+    yearMin: 207,
+    yearMax: 211,
+    requires: [
+      { kind: 'flag-set', key: 'maolu-visit-2' },
+      { kind: 'flag-unset', key: 'maolu-abandoned' },
+      { kind: 'officer-alive', officerId: 'liu-bei' },
+      { kind: 'officer-unaffiliated', officerId: 'zhuge-liang' },
+    ],
+    description:
+      'The third visit finds the Sleeping Dragon at home. He unrolls a map of the realm and speaks of three kingdoms before the tea cools. He will come - if asked with full honors.',
+    descriptionZh: '三顧而先生在廬。孔明展圖論天下三分,茶未涼而大勢已明。以師禮相請,先生可出山。',
+    effects: [],
+    chooserRulerId: 'liu-bei',
+    choices: [
+      {
+        id: 'invite',
+        label: { zh: '拜請先生出山', en: 'Beg him to take the field' },
+        effects: [
+          { kind: 'officer-join-ruler', officerId: 'zhuge-liang', rulerOfficerId: 'liu-bei' },
+          { kind: 'officer-loyalty', officerId: 'zhuge-liang', delta: 40 },
+          { kind: 'flag', key: 'maolu-done' },
+        ],
+      },
+      { id: 'leave', label: { zh: '聽罷高論,拂袖而去', en: 'Hear him out, then leave' }, effects: [{ kind: 'flag', key: 'maolu-abandoned' }] },
+    ],
+  },
+
+  /* ─── 衣帶詔 — two-step conspiracy chain (chooser: 劉備) ─────────── */
+  {
+    id: 'evt-yidaizhao-1',
+    name: { en: 'The Girdle Edict', zh: '衣帶詔' },
+    yearMin: 199,
+    yearMax: 201,
+    requires: [
+      { kind: 'officer-alive', officerId: 'liu-bei' },
+      { kind: 'officer-alive', officerId: 'cao-cao' },
+      { kind: 'flag-unset', key: 'yidai-refused' },
+    ],
+    description:
+      'A blood edict sewn into a girdle reaches you: the Emperor begs loyal men to rid him of Cao Cao. Signing it is treason - or loyalty, depending on who wins.',
+    descriptionZh: '車騎將軍董承密呈衣帶詔:天子血書,求忠臣誅曹。署名即與聞大逆 — 抑或大忠,成王敗寇而已。',
+    effects: [],
+    chooserRulerId: 'liu-bei',
+    choices: [
+      { id: 'sign', label: { zh: '泣血署名', en: 'Sign in blood' }, effects: [{ kind: 'flag', key: 'yidai-signed' }] },
+      { id: 'refuse', label: { zh: '不敢奉詔', en: 'Dare not accept' }, effects: [{ kind: 'flag', key: 'yidai-refused' }] },
+    ],
+  },
+  {
+    id: 'evt-yidaizhao-2',
+    name: { en: 'The Plot Unravels', zh: '衣帶詔事洩' },
+    yearMin: 200,
+    yearMax: 202,
+    requires: [
+      { kind: 'flag-set', key: 'yidai-signed' },
+      { kind: 'officer-alive', officerId: 'liu-bei' },
+      { kind: 'officer-alive', officerId: 'cao-cao' },
+    ],
+    description:
+      "The conspiracy is betrayed. Dong Cheng dies with his household; your name is on the list. The brothers close ranks around you - there is no kneeling back into Cao Cao's good graces now.",
+    descriptionZh: '事洩!董承闔門遇害,名冊之上赫然有將軍之名。兄弟同仇,自此與曹氏不死不休。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'guan-yu', delta: 8 },
+      { kind: 'officer-loyalty', officerId: 'zhang-fei', delta: 8 },
+      { kind: 'flag', key: 'yidai-exposed' },
+    ],
+  },
+
   {
     id: 'evt-yellow-turban-defeated',
     name: { en: 'The Yellow Turbans Crushed', zh: '黃巾之亂平定' },
@@ -139,13 +255,17 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
   },
   {
+    // Legacy one-shot, now the fallback behind the evt-maolu-* chain: if
+    // the player walked away (maolu-abandoned), history finds another way.
     id: 'evt-three-visits-to-thatched-cottage',
     name: { en: 'Three Visits to the Thatched Cottage', zh: '三顧茅廬' },
     yearMin: 207,
-    yearMax: 208,
+    yearMax: 211,
     requires: [
+      { kind: 'flag-set', key: 'maolu-abandoned' },
       { kind: 'force-alive', forceId: 'force-liu-bei' },
       { kind: 'officer-alive', officerId: 'zhuge-liang' },
+      { kind: 'officer-unaffiliated', officerId: 'zhuge-liang' },
     ],
     description:
       'Liu Bei visits the hermit Zhuge Liang three times, finally winning his service. The Sleeping Dragon rises — and presents the Longzhong Plan, mapping out the path to a divided empire.',

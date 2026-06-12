@@ -124,6 +124,11 @@ function conditionsMet(evt: HistoricalEvent, ctx: HistoricalEventContext): boole
       case 'flag-unset':
         if (ctx.eventFlags[req.key]) return false;
         break;
+      case 'officer-unaffiliated': {
+        const o = ctx.officers[req.officerId];
+        if (!o || o.status === 'dead' || o.forceId) return false;
+        break;
+      }
       case 'officer-rules-cities-min': {
         // Find the force this officer rules, then count its cities.
         const f = Object.values(ctx.forces).find(

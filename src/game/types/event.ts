@@ -43,9 +43,24 @@ export interface HistoricalEvent {
     // The force ruled by officerId owns at least `count` cities — a dynamic,
     // scenario-agnostic state predicate (resolves the force by its ruler).
     | { kind: 'officer-rules-cities-min'; officerId: EntityId; count: number }
+    // The officer serves no force (在野/未仕) — gate for recruitment chains.
+    | { kind: 'officer-unaffiliated'; officerId: EntityId }
   >;
   /** Narrative description shown in the event modal. */
   description: string;
   descriptionZh?: string;
+  effects: EventEffect[];
+  /** 抉擇 — when present the event poses a decision. If the player rules
+   *  the force led by `chooserRulerId`, the modal offers the choices and
+   *  the picked effects apply on resolution; otherwise the FIRST choice
+   *  (the historical path) applies automatically at fire time. Chains are
+   *  built by choices setting flags that later events require. */
+  chooserRulerId?: EntityId;
+  choices?: EventChoice[];
+}
+
+export interface EventChoice {
+  id: string;
+  label: BilingualName;
   effects: EventEffect[];
 }

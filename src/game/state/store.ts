@@ -281,6 +281,8 @@ interface GameStore extends GameState {
     officerId: EntityId,
     rankId: MilitaryRankId,
   ) => { ok: boolean; reason?: string };
+  /** 抉擇 — resolve a choice-bearing event with the picked branch. */
+  resolveEventChoice: (choiceId: string) => void;
   dismissEvent: () => void;
   startTacticalBattle: (battle: TacticalBattle) => void;
   /** 亲征野战 — lead a player field army into an interactive tactical battle
@@ -1452,6 +1454,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
 
         // Historical event check. Fires at most one event per season.
         let firingEvent: HistoricalEvent | null = null;
+        let playerAwaitsChoice = false;
         let postCities = tribeResult.cities;
         let postOfficers = espResult.officers;
         let postForces = result.forces;
@@ -1497,6 +1500,32 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           postFlags = after.eventFlags;
           postFiredIds = [...state.firedEventIds, eventCheck.id];
           firingEvent = eventCheck;
+          // 抉擇 — if the player rules the chooser's force the decision
+          // waits for the modal; anyone else walks the historical path
+          // (first choice) right now.
+          if (eventCheck.choices && eventCheck.choices.length > 0) {
+            const chooserForce = eventCheck.chooserRulerId
+              ? Object.values(postForces).find((f) => f.rulerOfficerId === eventCheck.chooserRulerId)
+              : null;
+            playerAwaitsChoice = !!chooserForce && chooserForce.id === state.playerForceId;
+            if (!playerAwaitsChoice) {
+              const histPath = applyEventEffects(
+                { ...eventCheck, effects: eventCheck.choices[0].effects, choices: undefined },
+                {
+                  date: result.date,
+                  cities: postCities,
+                  officers: postOfficers,
+                  forces: postForces,
+                  eventFlags: postFlags,
+                  firedEventIds: postFiredIds,
+                },
+              );
+              postCities = histPath.cities;
+              postOfficers = histPath.officers;
+              postForces = histPath.forces;
+              postFlags = histPath.eventFlags;
+            }
+          }
           // Apply any 'grant-title' effects emitted by this event. These
           // bypass cooldowns + trait refusals — scripted history wins.
           for (const grant of after.appointmentGrants ?? []) {
@@ -2805,6 +2834,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                 event: firingEvent,
                 year: result.date.year,
                 season: result.date.season,
+                awaitingChoice: playerAwaitsChoice,
               }
             : state.pendingEvent,
           weather: nextWeather,
@@ -3633,6 +3663,31 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         }
         set({ officers: nextOfficers });
         return { ok: true };
+      },
+
+      resolveEventChoice: (choiceId) => {
+        const state = get();
+        const pending = state.pendingEvent;
+        const choice = pending?.event.choices?.find((c) => c.id === choiceId);
+        if (!pending || !choice) return;
+        const after = applyEventEffects(
+          { ...pending.event, effects: choice.effects, choices: undefined },
+          {
+            date: state.date,
+            cities: state.cities,
+            officers: state.officers,
+            forces: state.forces,
+            eventFlags: state.eventFlags,
+            firedEventIds: state.firedEventIds,
+          },
+        );
+        set({
+          cities: after.cities,
+          officers: after.officers,
+          forces: after.forces,
+          eventFlags: after.eventFlags,
+          pendingEvent: null,
+        });
       },
 
       dismissEvent: () => {
