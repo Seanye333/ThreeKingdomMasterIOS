@@ -70,6 +70,7 @@ export type ReportEntryKind =
   | 'rebellion'
   | 'harvest'
   | 'famine'
+  | 'flood'
   | 'plague'
   | 'talent'
   | 'espionage'

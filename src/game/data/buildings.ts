@@ -83,6 +83,42 @@ export const BUILDING_DEFS: BuildingDef[] = [
   },
 ];
 
+/* 防災工程 — disasters stop being pure dice once you can build against
+   them. Each protects only its own city; levels stack the mitigation. */
+const DISASTER_WORKS: BuildingDef[] = [
+  {
+    id: 'granary',
+    name: { en: 'Charity Granary', zh: '義倉' },
+    description: 'Famine insurance. Each level: famine 20% rarer, losses 25% smaller.',
+    descriptionZh: '荒年之備。每等級:饑荒發生 −20%,糧損 −25%。',
+    goldPerLevel: 300,
+    seasonsPerLevel: 2,
+    maxLevel: 3,
+    effect: '-20% famine odds / -25% famine loss per level',
+  },
+  {
+    id: 'infirmary',
+    name: { en: 'Infirmary', zh: '醫館' },
+    description: 'Plague control. Each level: outbreaks 25% rarer, casualties 25% fewer.',
+    descriptionZh: '疫病之防。每等級:瘟疫發生 −25%,死傷 −25%。',
+    goldPerLevel: 350,
+    seasonsPerLevel: 2,
+    maxLevel: 3,
+    effect: '-25% plague odds & losses per level',
+  },
+  {
+    id: 'levee',
+    name: { en: 'River Levee', zh: '堤防' },
+    description: 'Flood works. Each level cuts flood odds by a third — level 3 stops the river cold.',
+    descriptionZh: '治水之功。每等級洪災機率 −1/3,三級堤防水患絕跡。',
+    goldPerLevel: 400,
+    seasonsPerLevel: 2,
+    maxLevel: 3,
+    effect: 'flood odds -1/3 per level; immune at L3',
+  },
+];
+BUILDING_DEFS.push(...DISASTER_WORKS);
+
 export const BUILDING_DEFS_BY_ID: Record<string, BuildingDef> = Object.fromEntries(
   BUILDING_DEFS.map((b) => [b.id, b]),
 );

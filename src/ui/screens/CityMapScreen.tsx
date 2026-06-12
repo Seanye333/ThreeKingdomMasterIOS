@@ -53,6 +53,9 @@ function hexDistAxial(a: { col: number; row: number }, b: { col: number; row: nu
 const INSIDE_BUILDING_GLYPH: Record<BuildingId, { glyph: string; color: string }> = {
   barracks: { glyph: '營', color: '#a87858' },
   market:   { glyph: '市', color: '#d4a84a' },
+  granary:  { glyph: '倉', color: '#c8b478' },
+  infirmary:{ glyph: '醫', color: '#88c8a8' },
+  levee:    { glyph: '堤', color: '#6a98c0' },
   foundry:  { glyph: '鐵', color: '#7a6750' },
   academy:  { glyph: '書', color: '#88b7e8' },
   temple:   { glyph: '寺', color: '#c19a3b' },

@@ -49,6 +49,8 @@ export interface ResolutionInput {
   recruitBonusSeasons?: Record<EntityId, { multiplier: number; seasonsLeft: number }>;
   /** Strategic-map installations (箭樓/投石臺/陣/防壁) that act on passing armies. */
   forts?: Record<EntityId, Fort>;
+  /** City buildings — disaster works mitigate the event rolls. */
+  buildings?: import('../types').Building[];
   rng?: () => number;
   weather?: import('./weather').Weather;
   /**
@@ -1207,6 +1209,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       season: input.date.season,
       cities,
       officers,
+      buildings: input.buildings,
       rng,
     });
     cities = eventResult.cities;

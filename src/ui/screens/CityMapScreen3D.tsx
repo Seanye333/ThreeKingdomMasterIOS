@@ -50,6 +50,9 @@ const INSIDE_BUILDING_DEF: Record<BuildingId, { glyph: string; color: string; he
   farm:     { glyph: '田', color: '#b8c87a', height: 0.5, nameZh: '農田' },
   wall:     { glyph: '壁', color: '#5a4530', height: 0.8, nameZh: '城壁' },
   shipyard: { glyph: '渠', color: '#3a6a98', height: 1.0, nameZh: '船廠' },
+  granary:  { glyph: '倉', color: '#c8b478', height: 1.1, nameZh: '義倉' },
+  infirmary:{ glyph: '醫', color: '#88c8a8', height: 1.2, nameZh: '醫館' },
+  levee:    { glyph: '堤', color: '#6a98c0', height: 0.5, nameZh: '堤防' },
 };
 
 /* ─── Gentle ambient motion ──────────────────────────────────────────

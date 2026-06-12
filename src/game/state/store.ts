@@ -1365,6 +1365,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           date: state.date,
           cities: planned.cities,
           officers: planned.officers,
+          buildings: state.buildings,
           forces: forcesAfterCourt,
           pendingCommands: planned.pendingCommands,
           diplomacy: planned.diplomacy,
@@ -2841,7 +2842,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           // 事件地標 — settle the season's per-city calamities/windfalls into
           // map marks that outlive the dismissed report (replaced each tick).
           cityEventMarks: (() => {
-            const kinds = new Set(['famine', 'plague', 'harvest', 'rebellion', 'tribe-raid']);
+            const kinds = new Set(['famine', 'flood', 'plague', 'harvest', 'rebellion', 'tribe-raid']);
             const seen = new Set<string>();
             const marks: Array<{ cityId: EntityId; kind: ReportEntryKind; text: string }> = [];
             for (const e of result.report.entries) {

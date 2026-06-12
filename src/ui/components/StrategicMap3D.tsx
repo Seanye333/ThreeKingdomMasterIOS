@@ -3276,6 +3276,7 @@ function DiplomacyLines3D({ cities, forces }: {
 const EVENT_MARK_STYLE: Record<string, { ch: string; color: string; border: string }> = {
   harvest:     { ch: '豐', color: '#f0d98a', border: '#d4a84a' },
   famine:      { ch: '饑', color: '#e0b890', border: '#a07040' },
+  flood:       { ch: '洪', color: '#9cc8e8', border: '#4a78a8' },
   plague:      { ch: '疫', color: '#d8a8e8', border: '#9060a8' },
   rebellion:   { ch: '亂', color: '#ff9080', border: '#b8584a' },
   'tribe-raid': { ch: '襲', color: '#ffb070', border: '#c87838' },

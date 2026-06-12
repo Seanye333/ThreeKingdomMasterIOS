@@ -12,7 +12,10 @@ export type BuildingId =
   | 'temple'     // 寺院 — boosts loyalty per season and resistance to instigate
   | 'farm'       // 屯田 — boosts agriculture food yield
   | 'wall'       // 城壁 — increases city defense
-  | 'shipyard';  // 船渠 — required to build ships; only on river-adjacent cities
+  | 'shipyard'   // 船渠 — required to build ships; only on river-adjacent cities
+  | 'granary'    // 義倉 — famine insurance: rarer famines, smaller losses
+  | 'infirmary'  // 醫館 — plague control: rarer outbreaks, fewer dead
+  | 'levee';     // 堤防 — flood works: a L3 levee stops the river cold
 
 export interface BuildingDef {
   id: BuildingId;

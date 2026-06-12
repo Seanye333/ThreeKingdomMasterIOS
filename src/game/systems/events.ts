@@ -10,6 +10,8 @@ export interface EventsInput {
   season: Season;
   cities: Record<EntityId, City>;
   officers: Record<EntityId, Officer>;
+  /** 防災工程 — granary/infirmary/levee levels mitigate disasters. */
+  buildings?: import('../types').Building[];
   rng: () => number;
 }
 
@@ -23,11 +25,15 @@ const REBELLION_CHANCE = 0.12; // when loyalty < 30
 const HARVEST_BOON_CHANCE = 0.12; // autumn only
 const FAMINE_CHANCE = 0.02;
 const PLAGUE_CHANCE = 0.01;
+const FLOOD_CHANCE = 0.02; // summer only — the rivers rise
 const WANDERING_TALENT_CHANCE = 0.18; // overall, per season
 
 export function rollEvents(input: EventsInput): EventsOutput {
   const cities = { ...input.cities };
   let officers = { ...input.officers };
+  // 防災工程 — building levels per city (granary/infirmary/levee).
+  const worksLevel = (cityId: EntityId, id: string): number =>
+    input.buildings?.find((b) => b.cityId === cityId && b.id === id)?.level ?? 0;
   const entries: ReportEntry[] = [];
 
   // Per-city rolls.
@@ -66,9 +72,36 @@ export function rollEvents(input: EventsInput): EventsOutput {
       continue;
     }
 
-    // Famine: spoiled stores / drought.
-    if (cities[c.id].food > 0 && input.rng() < FAMINE_CHANCE) {
-      const lost = Math.floor(cities[c.id].food * 0.4);
+    // Flood: summer only — the river takes grain and walls alike.
+    // Levees cut the odds by a third per level; a L3 levee is immune.
+    {
+      const levee = worksLevel(c.id, 'levee');
+      if (
+        input.season === 'summer' &&
+        levee < 3 &&
+        input.rng() < FLOOD_CHANCE * (1 - levee / 3)
+      ) {
+        const lost = Math.floor(cities[c.id].food * 0.3);
+        cities[c.id] = {
+          ...cities[c.id],
+          food: cities[c.id].food - lost,
+          defense: Math.max(0, cities[c.id].defense - 8),
+          loyalty: Math.max(0, cities[c.id].loyalty - 4),
+        };
+        entries.push({
+          cityId: c.id,
+          kind: 'flood',
+          text: `The river floods ${c.name.en}. ${lost.toLocaleString()} food washed away; defenses damaged.`,
+          textZh: `${c.name.zh}河水決堤,糧食損失 ${lost.toLocaleString()},城防受創。`,
+        });
+        continue;
+      }
+    }
+
+    // Famine: spoiled stores / drought. Granaries blunt both odds and loss.
+    const granary = worksLevel(c.id, 'granary');
+    if (cities[c.id].food > 0 && input.rng() < FAMINE_CHANCE * (1 - 0.2 * granary)) {
+      const lost = Math.floor(cities[c.id].food * 0.4 * (1 - 0.25 * granary));
       cities[c.id] = {
         ...cities[c.id],
         food: cities[c.id].food - lost,
@@ -83,10 +116,11 @@ export function rollEvents(input: EventsInput): EventsOutput {
       continue;
     }
 
-    // Plague: hits population & troops.
-    if (cities[c.id].population > 50_000 && input.rng() < PLAGUE_CHANCE) {
-      const popLost = Math.floor(cities[c.id].population * 0.1);
-      const troopLost = Math.floor(cities[c.id].troops * 0.05);
+    // Plague: hits population & troops. Infirmaries quarantine and treat.
+    const infirmary = worksLevel(c.id, 'infirmary');
+    if (cities[c.id].population > 50_000 && input.rng() < PLAGUE_CHANCE * (1 - 0.25 * infirmary)) {
+      const popLost = Math.floor(cities[c.id].population * 0.1 * (1 - 0.25 * infirmary));
+      const troopLost = Math.floor(cities[c.id].troops * 0.05 * (1 - 0.25 * infirmary));
       cities[c.id] = {
         ...cities[c.id],
         population: cities[c.id].population - popLost,
