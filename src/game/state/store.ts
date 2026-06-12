@@ -57,6 +57,7 @@ import { planGovernorCommand } from '../systems/governor';
 import { planLegionOrders, type Legion } from '../systems/legion';
 import { buyQuote, sellQuote } from '../systems/market';
 import { EDICT_DISCOUNT, EMPEROR_HOME, MANDATE_PER_SEASON, RESENTMENT_PER_SEASON, canWelcomeEmperor, emperorCustodian } from '../systems/emperor';
+import { COMMONER_ARRIVAL_CHANCE, commonerArrivalCity, generateCommonerOfficer } from '../systems/commonerTalent';
 import { canTrain, trainingCost, tickTrainings, trainingDurationSeasons, sweepStaleTrainings, mentorDurationSeasons, isParentMentor, canTrainTactic, tacticTrainingCost, tacticDurationSeasons, tacticMentorDurationSeasons } from '../systems/training';
 import { loyaltyDriftPerSeason, rollFlavorEvent, defectionChance, sharedBondableTrait, maritalCompatibility, itemResonanceCandidate, policyResonanceCandidate, rollMarriageAssimilation, itemTacticCandidate } from '../systems/traitEffects';
 import { loyaltyFloor, rollMentorPolicyTransfer, mentorsOf } from '../systems/relationshipEffects';
@@ -2846,6 +2847,30 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               const x = officersWithMarchTask[xId];
               if (x) officersWithMarchTask[xId] = { ...x, task: 'march' };
             }
+          }
+        }
+
+        // 求賢令出寒門 — while a force's call rings, commoners answer:
+        // a generated officer of humble birth may join one of its cities.
+        if (seasonBoundary) {
+          for (const fid of Object.keys(state.recruitBonusSeasons)) {
+            if (Math.random() >= COMMONER_ARRIVAL_CHANCE) continue;
+            const arrivalCity = commonerArrivalCity(postCities, fid, Math.random);
+            if (!arrivalCity) continue;
+            const newcomer = generateCommonerOfficer({
+              year: result.date.year,
+              forceId: fid,
+              cityId: arrivalCity.id,
+              takenIds: new Set(Object.keys(officersWithMarchTask)),
+              rng: Math.random,
+            });
+            officersWithMarchTask[newcomer.id] = newcomer;
+            result.report.entries.push({
+              cityId: arrivalCity.id,
+              kind: 'talent',
+              text: `${newcomer.name.en}, a commoner of promise, answers the Call for Talent at ${arrivalCity.name.en}.`,
+              textZh: `求賢令下,寒門之士${newcomer.name.zh}至${arrivalCity.name.zh}投效。`,
+            });
           }
         }
 
