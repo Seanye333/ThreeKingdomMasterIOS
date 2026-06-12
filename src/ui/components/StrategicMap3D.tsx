@@ -4154,9 +4154,66 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onQuickAction, mapSty
         );
       })()}
 
+      {/* 可達範圍 — with a column selected, concentric rings mark how far
+          1/2/3 旬 of marching reach (the same geo thresholds the move order
+          uses, centred on the column's source city like the order math). */}
+      {selectedArmyId3D && armiesState[selectedArmyId3D] && cities[armiesState[selectedArmyId3D]!.fromCityId] && (() => {
+        const src = cities[armiesState[selectedArmyId3D]!.fromCityId]!;
+        const sp = cityPos(src);
+        const [wx, wz] = pxToWorld(sp.x, sp.y);
+        const rings = [
+          { rpx: 100, zh: '1旬' },
+          { rpx: 195, zh: '2旬' },
+          { rpx: 275, zh: '3旬' },
+        ];
+        return (
+          <group>
+            {rings.map((r, i) => (
+              <mesh key={i} position={[wx, 0.1, wz]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={6}>
+                <ringGeometry args={[r.rpx * PIXEL_TO_WORLD - 0.045, r.rpx * PIXEL_TO_WORLD + 0.045, 96]} />
+                <meshBasicMaterial color="#f0d98a" transparent opacity={0.42 - i * 0.1} depthWrite={false} depthTest={false} side={THREE.DoubleSide} />
+              </mesh>
+            ))}
+            {rings.map((r, i) => (
+              <Html key={`l${i}`} position={[wx + r.rpx * PIXEL_TO_WORLD * 0.7071, 0.25, wz - r.rpx * PIXEL_TO_WORLD * 0.7071]} center distanceFactor={11} zIndexRange={[26, 16]} style={{ pointerEvents: 'none' }}>
+                <div style={{
+                  background: 'rgba(20,14,8,0.82)', border: '1px solid #5a4530', borderRadius: 3,
+                  padding: '0 5px', fontFamily: 'Songti SC, serif', fontSize: 10, color: '#f0d98a',
+                  whiteSpace: 'nowrap',
+                }}>{r.zh}</div>
+              </Html>
+            ))}
+          </group>
+        );
+      })()}
+
+      {/* 改道測距 — column selected + hovering a city: how long the redirect
+          would take from the column's source (the order's own math). */}
+      {selectedArmyId3D && hoverCityId && armiesState[selectedArmyId3D]
+        && cities[armiesState[selectedArmyId3D]!.fromCityId] && cities[hoverCityId] && (() => {
+        const src = cities[armiesState[selectedArmyId3D]!.fromCityId]!;
+        const to = cities[hoverCityId]!;
+        if (to.id === src.id) return null;
+        const ticks = marchDurationFor(src, to, season);
+        const [px, py] = cityPixel(to.id, to.coords.x, to.coords.y);
+        const [wx, wz] = pxToWorld(px, py);
+        const y = cityElevation(wx, wz);
+        return (
+          <Html position={[wx, y + 1.35, wz]} center distanceFactor={9} zIndexRange={[42, 32]} style={{ pointerEvents: 'none' }}>
+            <div style={{
+              background: 'rgba(20,14,8,0.9)', border: '1px solid #f0d98a', borderRadius: 3,
+              padding: '2px 8px', fontFamily: 'Songti SC, serif', fontSize: '11px',
+              color: '#f0d98a', whiteSpace: 'nowrap', letterSpacing: '1px',
+            }}>
+              改道 → {to.name.zh} · 約 {ticks} 旬
+            </div>
+          </Html>
+        );
+      })()}
+
       {/* 行程測距 — selected → hovered march time, in the same 旬 the end-turn
           button counts in. */}
-      {selectedCityId && hoverCityId && hoverCityId !== selectedCityId
+      {!selectedArmyId3D && selectedCityId && hoverCityId && hoverCityId !== selectedCityId
         && cities[selectedCityId] && cities[hoverCityId] && (() => {
         const from = cities[selectedCityId]!;
         const to = cities[hoverCityId]!;
