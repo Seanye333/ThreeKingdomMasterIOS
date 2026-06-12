@@ -3146,6 +3146,106 @@ function DriftingClouds() {
   );
 }
 
+/* ─── 商隊 — trade carts trundling the busiest roads of the realm ──────
+   Ambient life: ox-carts ping-pong along the REAL march routes between
+   adjacent same-owner cities (internal trade), the busiest first — pair
+   count scales with the cities' combined commerce. Pure flavour; carts
+   carry no state and answer to no clicks. */
+const CARAVAN_COUNT = IS_MOBILE ? 4 : 12;
+
+function Caravans3D({ cities }: { cities: Record<string, City> }) {
+  const routes = useMemo(() => {
+    // Busiest internal trade pairs — adjacent cities under the same lord
+    // (or both masterless — peddlers don't care), ranked by commerce.
+    const seen = new Set<string>();
+    const pairs: Array<{ a: City; b: City; score: number }> = [];
+    for (const a of Object.values(cities)) {
+      for (const adjId of a.adjacentCityIds ?? []) {
+        const b = cities[adjId];
+        if (!b || b.ownerForceId !== a.ownerForceId) continue;
+        const key = a.id < adjId ? a.id + adjId : adjId + a.id;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        pairs.push({ a, b, score: a.commerce + b.commerce });
+      }
+    }
+    pairs.sort((x, y) => y.score - x.score);
+    const out: Array<{ pts: THREE.Vector3[]; cum: number[]; total: number; speed: number; phase: number }> = [];
+    for (const { a, b } of pairs.slice(0, CARAVAN_COUNT)) {
+      const pa = cityPos(a);
+      const pb = cityPos(b);
+      const route = terrainRoute(pa.x, pa.y, pb.x, pb.y);
+      const pts = route.map((p) => {
+        const [wx, wz] = pxToWorld(p.x, p.y);
+        return new THREE.Vector3(wx, sampleTerrainHeight(wx, wz) + 0.045, wz);
+      });
+      if (pts.length < 2) continue;
+      const cum = [0];
+      for (let k = 1; k < pts.length; k++) cum.push(cum[k - 1] + pts[k].distanceTo(pts[k - 1]));
+      const total = cum[cum.length - 1];
+      if (total < 0.6) continue; // neighbours practically inside each other
+      out.push({
+        pts, cum, total,
+        speed: 0.22 + ((out.length * 37) % 10) * 0.012,
+        phase: ((out.length * 131) % 100) / 100,
+      });
+    }
+    return out;
+  }, [cities]);
+
+  const refs = useRef<Array<THREE.Group | null>>([]);
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    routes.forEach((r, i) => {
+      const g = refs.current[i];
+      if (!g) return;
+      // Ping-pong along the route — out with goods, back with silver.
+      const d2 = ((t * r.speed) / r.total + r.phase) % 2;
+      const back = d2 > 1;
+      const s = (back ? 2 - d2 : d2) * r.total;
+      let k = 1;
+      while (k < r.cum.length - 1 && r.cum[k] < s) k++;
+      const seg = r.cum[k] - r.cum[k - 1] || 1;
+      const f = (s - r.cum[k - 1]) / seg;
+      const p0 = r.pts[k - 1];
+      const p1 = r.pts[k];
+      g.position.lerpVectors(p0, p1, f);
+      g.rotation.y = Math.atan2((p1.x - p0.x) * (back ? -1 : 1), (p1.z - p0.z) * (back ? -1 : 1));
+    });
+  });
+
+  return (
+    <group>
+      {routes.map((_, i) => (
+        <group key={i} ref={(el) => { refs.current[i] = el; }} scale={0.8}>
+          {/* 牛 — the ox out front */}
+          <mesh position={[0, 0.045, 0.1]} castShadow>
+            <boxGeometry args={[0.05, 0.055, 0.1]} />
+            <meshStandardMaterial color="#5d4226" roughness={0.9} />
+          </mesh>
+          {/* 車板 */}
+          <mesh position={[0, 0.05, -0.04]} castShadow>
+            <boxGeometry args={[0.09, 0.03, 0.15]} />
+            <meshStandardMaterial color="#8a6a40" roughness={0.85} />
+          </mesh>
+          {/* 篷布 */}
+          <mesh position={[0, 0.09, -0.05]} castShadow>
+            <boxGeometry args={[0.08, 0.05, 0.11]} />
+            <meshStandardMaterial color="#cfc09a" roughness={0.95} />
+          </mesh>
+          {/* 車輪 */}
+          {[-0.052, 0.052].map((x) => (
+            <mesh key={x} position={[x, 0.03, -0.04]} rotation={[0, 0, Math.PI / 2]}>
+              <cylinderGeometry args={[0.03, 0.03, 0.012, 10]} />
+              <meshStandardMaterial color="#3a2a18" roughness={0.9} />
+            </mesh>
+          ))}
+        </group>
+      ))}
+    </group>
+  );
+}
+
 /* ─── ⬡ 棋盤世界 — experimental hex-tile world terrain ──────────────────
    The whole strategic map rendered as the same hex-prism quilt the battle
    board and city hinterland use — one visual language from world to battle.
@@ -3636,6 +3736,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, mapStyle, dioSelected
       <Forest3D />
       <GreatWall3D />
       <DriftingClouds />
+      <Caravans3D cities={cities} />
       {/* Province borders are flat ground decals — they'd sink into the
           raised hex prisms, so the quilt view goes without them. */}
       {mapStyle === 'classic' && <ProvinceBorders3D cities={cities} />}
