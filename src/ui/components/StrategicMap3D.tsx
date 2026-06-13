@@ -505,17 +505,31 @@ function terrainFillFor(budgetMs: number): boolean {
     const py = (y / TEX_H) * PX_H;
     for (let x = 0; x < TEX_W; x++) {
       const px = (x / TEX_W) * PX_W;
-      const { color } = sampleTerrain(px, py);
-      // High-freq pixel grain so grass and dirt look textured, not flat
-      const grain = (
-        Math.sin(px * 5.1 + py * 3.3) * 0.5
-        + Math.sin(px * 11.7 + py * 7.9) * 0.3
-        + (Math.sin(x * 1.31) * Math.cos(y * 0.97)) * 0.4
-      ) * 0.06;
+      const { h, color } = sampleTerrain(px, py);
+      let r = color.r, g = color.g, b = color.b;
+      if (h >= 0) {
+        // Biome-aware detail bake (splat-style, no external assets):
+        //  • high-freq grain so dirt/grass aren't flat,
+        //  • mid-freq mottling to break up uniform colour fields,
+        //  • rocky directional striation on slopes (scales with height),
+        //  • a fine vegetation speckle wherever green dominates.
+        const grain = (
+          Math.sin(px * 5.1 + py * 3.3) * 0.5
+          + Math.sin(px * 11.7 + py * 7.9) * 0.3
+          + (Math.sin(x * 1.31) * Math.cos(y * 0.97)) * 0.4
+        ) * 0.05;
+        const mottle = valueNoise(px * 0.5, py * 0.5) * 0.6;
+        const rock = h > 0.25 ? (h - 0.25) : 0;
+        const streak = Math.sin(px * 0.9 - py * 0.6) * Math.sin(px * 2.7 + 1.0) * rock * 0.14;
+        const green = color.g - (color.r > color.b ? color.r : color.b);
+        const veg = green > 0.02 ? Math.sin(px * 21 + 0.5) * Math.cos(py * 17) * 0.035 : 0;
+        const d = grain + mottle + streak + veg;
+        r += d; g += d * 0.96; b += d * 0.88;   // detail reads a touch warm
+      }
       const i = (y * TEX_W + x) * 4;
-      data[i]     = Math.max(0, Math.min(255, (color.r + grain) * 255));
-      data[i + 1] = Math.max(0, Math.min(255, (color.g + grain) * 255));
-      data[i + 2] = Math.max(0, Math.min(255, (color.b + grain) * 255));
+      data[i]     = Math.max(0, Math.min(255, r * 255));
+      data[i + 1] = Math.max(0, Math.min(255, g * 255));
+      data[i + 2] = Math.max(0, Math.min(255, b * 255));
       data[i + 3] = 255;
     }
   }
@@ -782,8 +796,8 @@ function MapTerrain({ onGroundClick }: { onGroundClick?: (px: number, py: number
       <meshStandardMaterial
         map={texture}
         normalMap={normalMap}
-        normalScale={new THREE.Vector2(0.7, 0.7)}
-        roughness={0.92}
+        normalScale={new THREE.Vector2(1.15, 1.15)}
+        roughness={0.9}
         metalness={0.02}
       />
     </mesh>
