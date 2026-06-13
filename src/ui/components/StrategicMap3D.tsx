@@ -4506,6 +4506,53 @@ function Bridges3D({ cities }: { cities: Record<string, City> }) {
   );
 }
 
+/* ─── 村落 — scattered countryside hamlets (mud-brick body + thatch roof),
+ *  instanced across the land so the realm feels inhabited between cities. ── */
+function Villages3D() {
+  const houses = useMemo(() => {
+    const out: Array<{ x: number; y: number; z: number; rot: number; s: number }> = [];
+    const N = IS_MOBILE ? 130 : 300;
+    let tries = 0;
+    while (out.length < N && tries < N * 14) {
+      tries++;
+      const [wx, wz] = pxToWorld(Math.random() * PX_W, Math.random() * PX_H);
+      const y = sampleTerrainHeight(wx, wz);
+      if (y < 0.05 || y > 0.30) continue;   // skip sea + steep mountain
+      out.push({ x: wx, y, z: wz, rot: Math.random() * Math.PI * 2, s: 0.55 + Math.random() * 0.5 });
+    }
+    return out;
+  }, []);
+  const bodyRef = useRef<THREE.InstancedMesh>(null);
+  const roofRef = useRef<THREE.InstancedMesh>(null);
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+  useEffect(() => {
+    if (!bodyRef.current || !roofRef.current) return;
+    for (let i = 0; i < houses.length; i++) {
+      const h = houses[i];
+      dummy.position.set(h.x, h.y + 0.018 * h.s, h.z);
+      dummy.rotation.y = h.rot; dummy.scale.setScalar(h.s);
+      dummy.updateMatrix(); bodyRef.current.setMatrixAt(i, dummy.matrix);
+      dummy.position.set(h.x, h.y + 0.05 * h.s, h.z);
+      dummy.updateMatrix(); roofRef.current.setMatrixAt(i, dummy.matrix);
+    }
+    bodyRef.current.instanceMatrix.needsUpdate = true;
+    roofRef.current.instanceMatrix.needsUpdate = true;
+  }, [houses, dummy]);
+  if (houses.length === 0) return null;
+  return (
+    <group>
+      <instancedMesh ref={bodyRef} args={[undefined, undefined, houses.length]} castShadow>
+        <boxGeometry args={[0.045, 0.04, 0.055]} />
+        <meshStandardMaterial color="#9a8462" roughness={0.9} />
+      </instancedMesh>
+      <instancedMesh ref={roofRef} args={[undefined, undefined, houses.length]} castShadow>
+        <coneGeometry args={[0.045, 0.03, 4]} />
+        <meshStandardMaterial color="#6a5238" roughness={0.85} />
+      </instancedMesh>
+    </group>
+  );
+}
+
 /* ─── 名勝古戰場 — a stone stele + label marking the famous battlefields the
  *  named-map data records (赤壁/官渡/長坂/定軍山…). One per battle. ── */
 function Landmarks3D({ cities }: { cities: Record<string, City> }) {
@@ -4765,6 +4812,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onQuickAction, mapSty
       {/* Forests plant at the shared height function, so the same trees stand
           perfectly on the hex quilt too. */}
       <Forest3D season={season} />
+      <Villages3D />
       <GreatWall3D />
       <DriftingClouds />
       <Caravans3D cities={cities} />
