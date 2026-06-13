@@ -3,6 +3,7 @@ import { cityPolicyEffects } from './policyEffects';
 import { citySize, populationDelta } from './citySize';
 import { aggregateSlotEffects } from '../data/defenseBuildings';
 import { effectivePrestigeEffects } from '../data/prestige';
+import { specialtyEconomy } from '../data/specialties';
 
 export const FOOD_PER_TROOP_PER_SEASON = 0.25;
 
@@ -29,13 +30,16 @@ export function tickCityEconomy(
 ): CityEconomyTick {
   const eff = cityPolicyEffects(city, cityOfficers);
   const size = citySize(city);
+  // 特產／名產 — a salt town, horse market or brocade workshop trades richer;
+  // a rice basin harvests heavier. A small permanent regional edge.
+  const spec = specialtyEconomy(city.id);
 
   // 稅入基數 — divisor lowered 5000→4000 (≈ +25% gold across the board) to
   // ease the early-game cash crunch. Applies to every force, AI included.
   const baseGold = Math.floor(city.commerce * (city.population / 4000));
   // 能臣/良吏/巨賈 prestige — the ablest administrator present fattens the coffers.
   const prestigeMul = cityOfficers.reduce((m, o) => Math.max(m, effectivePrestigeEffects(o).incomeMul), 1);
-  const goldIncome = Math.max(0, Math.floor(baseGold * eff.goldMul * size.goldMul * prestigeMul + eff.goldFlat));
+  const goldIncome = Math.max(0, Math.floor(baseGold * eff.goldMul * size.goldMul * prestigeMul * spec.goldMul + eff.goldFlat));
 
   const baseFood =
     season === 'autumn'
@@ -46,7 +50,7 @@ export function tickCityEconomy(
   const granaryFood = season === 'autumn'
     ? aggregateSlotEffects(city.buildSlots ?? []).extraFood
     : 0;
-  const foodIncome = Math.floor(baseFood * eff.foodMul * size.foodMul) + granaryFood;
+  const foodIncome = Math.floor(baseFood * eff.foodMul * size.foodMul * spec.foodMul) + granaryFood;
 
   const foodUpkeep = Math.ceil(city.troops * FOOD_PER_TROOP_PER_SEASON);
 

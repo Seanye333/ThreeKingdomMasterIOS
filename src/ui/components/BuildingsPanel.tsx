@@ -1,5 +1,6 @@
 import { BUILDING_DEFS } from '../../game/data';
 import { buildingBonuses } from '../../game/systems/buildings';
+import { citySpecialty } from '../../game/data/specialties';
 import { useGameStore } from '../../game/state/store';
 import type { BuildingId, EntityId } from '../../game/types';
 import { useT, useLanguage, useDesc } from '../i18n';
@@ -26,12 +27,25 @@ export function BuildingsPanel({ cityId }: Props) {
   const desc = useDesc();
   if (!city) return null;
   const bonuses = buildingBonuses(cityId, buildings);
+  const specialty = citySpecialty(cityId);
 
   return (
     <div style={{ background: '#1a1410', border: '1px solid #4a3520', padding: '0.6rem', marginTop: '0.6rem' }}>
       <div style={{ fontSize: '0.7rem', letterSpacing: '0.2rem', color: '#8a7050', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
         {t('建設', 'Buildings')}
       </div>
+      {specialty && (
+        <div style={{ fontSize: '0.72rem', color: '#e0c070', marginBottom: '0.45rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            width: '1.25rem', height: '1.25rem', borderRadius: 3,
+            background: '#3a2c14', border: '1px solid #c9a23c',
+            fontFamily: '"Songti SC", serif', fontSize: '0.8rem',
+          }}>{specialty.glyph}</span>
+          <span>{t('特產', 'Specialty')}：{specialty.zh}</span>
+          <span style={{ color: '#9a8a60', fontSize: '0.66rem' }}>{specialty.noteZh}</span>
+        </div>
+      )}
       <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.7rem', color: '#c0a878', marginBottom: '0.5rem' }}>
         {t('徵兵', 'Recruit')} ×{bonuses.recruitMul.toFixed(2)} · {t('商業', 'Commerce')} ×{bonuses.commerceMul.toFixed(2)} · {t('糧草', 'Food')} ×{bonuses.agricultureMul.toFixed(2)} · {t('民忠', 'Loyalty')} +{bonuses.loyaltyPerSeason}/{t('季', 'season')} · {t('守備', 'Defense')} +{bonuses.defenseAdd}
       </div>
