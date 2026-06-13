@@ -10,7 +10,7 @@
 
 | # | 章節 | 涵蓋系統 | 狀態 |
 |---|---|---|---|
-| 1 | [城市・內政・經濟](#第一章-城市內政經濟) | citySize, economy, commands, market, buildings, autoBuild, policyEffects, growth | ✅ |
+| 1 | [城市・內政・經濟](#第一章-城市內政經濟) | citySize, economy, commands, market, buildings, autoBuild, policyEffects, forging, growth | ✅ |
 | 2 | [武將・成長・家族](#第二章-武將成長家族) | officerFate, traitEffects, personality, biography, posthumous, aging, family, wishes, rapport, relationshipEffects, career, codex | ✅ |
 | 3 | [人才・招攬・舌戰](#第三章-人才招攬舌戰) | commands(search), officerFate, debate, wordWar, commonerTalent | ✅ |
 | 4 | [軍事指揮・委任](#第四章-軍事指揮委任) | muster, legion, governor, advisor | ✅ |
@@ -126,6 +126,26 @@
 4. **攻城掠金**:打下敵城得其國庫。
 5. **巨賈/能臣** 威名武將駐錢城(+6~15% 收入)。
 6. **人材探訪免費** + 多選,別省這一步。
+
+### 1.8 鍛造合成(forging.ts,14 配方)
+
+在建有 **鐵工坊**(foundry)的城,花金 + **獻祭已有名品**,按配方鍛出更強的指定名品(store `forgeItem`)。
+
+- **材料**:配方所需名品須在該城的「藏寶池」(失落名品池)裡;鍛成後消耗材料,新名品入池,城中任一武將可裝備。
+- **工坊門檻**:配方分 lv1~3,鐵工坊(每級 500 金 / 3 季 / 上限 4 級)須達標等級才能開鍛。
+- **代表配方**(共 14):
+
+| 成品 | 金 | 工坊級 | 材料 |
+|---|---|---|---|
+| 玄甲 | 600 | 1 | 鎖子連環甲 |
+| 孟德新書 | 600 | 1 | 孫子兵法 |
+| 八卦戟 | 800 | 2 | 寒月刀 + 蟠龍棍 |
+| 七星燈 | 900 | 2 | 太極圖 + 玉璧 |
+| 諸葛連弩 | 1200 | 3 | 連弩 + 烏金弓 |
+| 青龍偃月刀 | 2000 | 3 | 鳳嘴刀 + 開山斧 |
+| 方天畫戟 | 2500 | 3 | 骨穿雙戟 + 雙鐵戟 |
+
+> 用途:把開局散落、屬性平庸的雜兵器熔成關羽/呂布級神兵 —— 神兵不再只能靠探訪挖到,有錢有工坊就能自己造。
 
 ---
 
