@@ -79,7 +79,6 @@ import {
   proposeNonAggression,
 } from '../systems/diplomacy';
 import {
-  FREE_AGENT_COST,
   applyExecute,
   applyRelease,
   attemptFreeAgentRecruit,
@@ -279,10 +278,15 @@ interface GameStore extends GameState {
     cityId: EntityId,
     approach?: import('../systems/officerFate').PersuasionApproach,
   ) => number;
+  /** 訪賢招攬 — invite a free agent (free). opts: a won debate or a paid
+   *  bribe raises the odds after a first refusal. */
   recruitFreeAgent: (
     officerId: EntityId,
     cityId: EntityId,
+    opts?: { debateWon?: boolean; bribe?: number },
   ) => { ok: boolean; message: string };
+  /** 舌戰失利 — lock a free agent until next season (lost the war of words). */
+  lockFreeAgentRecruit: (officerId: EntityId) => void;
   executeOfficer: (officerId: EntityId) => void;
   releaseOfficer: (officerId: EntityId) => void;
   acknowledgeVictory: () => void;
@@ -3282,7 +3286,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         });
       },
 
-      recruitFreeAgent: (officerId, cityId) => {
+      recruitFreeAgent: (officerId, cityId, opts) => {
         const state = get();
         const officer = state.officers[officerId];
         const city = state.cities[cityId];
@@ -3295,6 +3299,18 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (city.ownerForceId !== state.playerForceId)
           return { ok: false, message: 'Not your city.' };
 
+        const seasonKey = `${state.date.year}|${state.date.season}`;
+        const rec = state.recruitState[officerId];
+        // 舌戰失利後本季不可再訪。
+        if (rec && rec.season === seasonKey && rec.stage === 'locked')
+          return { ok: false, message: '舌戰失利,此人本回合不願再見 — 下回合再訪。' };
+
+        // 賄賂 — pay now (must afford); gold buys flat goodwill.
+        const bribe = Math.max(0, Math.floor(opts?.bribe ?? 0));
+        if (bribe > 0 && city.gold < bribe)
+          return { ok: false, message: '國庫不足以行賄。' };
+        const bribeBonus = bribe > 0 ? Math.min(0.35, bribe / 1200) : 0;
+
         const citiesOwned2 = Object.values(state.cities).filter(
           (c) => c.ownerForceId === state.playerForceId,
         ).length;
@@ -3304,23 +3320,34 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           recruiterForce: force,
           recruiterRuler: ruler,
           recruiterReputation: { citiesOwned: citiesOwned2 },
+          family: state.family,
+          free: true,            // 邀請免費 — only a bribe spends gold.
+          debateWon: opts?.debateWon,
+          bribeBonus,
         });
 
-        const updates: Partial<GameState> = {
-          cities: {
-            ...state.cities,
-            [cityId]: { ...city, gold: city.gold - FREE_AGENT_COST },
-          },
-        };
+        const updates: Partial<GameState> = {};
+        if (bribe > 0) {
+          updates.cities = { ...state.cities, [cityId]: { ...city, gold: city.gold - bribe } };
+        }
+        const nextRecruitState = { ...state.recruitState };
         if (result.ok && result.recruitedOfficer) {
           codexMarkRecruited(officerId);
-          updates.officers = {
-            ...state.officers,
-            [officerId]: result.recruitedOfficer,
-          };
+          updates.officers = { ...state.officers, [officerId]: result.recruitedOfficer };
+          delete nextRecruitState[officerId];
+        } else {
+          // A refusal opens the escalation options (舌戰/賄賂) for this season.
+          nextRecruitState[officerId] = { season: seasonKey, stage: 'declined' };
         }
+        updates.recruitState = nextRecruitState;
         set(updates);
         return { ok: result.ok, message: result.message };
+      },
+
+      lockFreeAgentRecruit: (officerId) => {
+        const state = get();
+        const seasonKey = `${state.date.year}|${state.date.season}`;
+        set({ recruitState: { ...state.recruitState, [officerId]: { season: seasonKey, stage: 'locked' } } });
       },
 
       executeOfficer: (officerId) => {
@@ -5941,6 +5968,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         emperorCityId: state.emperorCityId,
         dailyChallengeDate: state.dailyChallengeDate,
         powerHistory: state.powerHistory,
+        recruitState: state.recruitState,
         commandTemplates: state.commandTemplates,
         autoBuildQueues: state.autoBuildQueues,
         dialogueFollowups: state.dialogueFollowups,

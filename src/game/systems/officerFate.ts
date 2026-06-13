@@ -203,6 +203,12 @@ export interface FreeAgentRecruitInput {
   recruiterReputation?: { citiesOwned: number };
   /** Runtime family for kinship recruit bonus (R1). */
   family?: FamilyRelation[];
+  /** Player invites are free (the AI still pays); skip the cost gate. */
+  free?: boolean;
+  /** 舌戰得勝 — a won war of words sways even the reluctant (one shot). */
+  debateWon?: boolean;
+  /** 賄賂 — gold-bought goodwill (already paid by the caller); flat odds. */
+  bribeBonus?: number;
   rng?: () => number;
 }
 
@@ -215,7 +221,7 @@ export function attemptFreeAgentRecruit(
   if (officer.status !== 'idle' || officer.forceId !== null) {
     return { ok: false, message: 'Officer is not a free agent.' };
   }
-  if (city.gold < FREE_AGENT_COST) {
+  if (!input.free && city.gold < FREE_AGENT_COST) {
     return { ok: false, message: 'Not enough gold to offer them service.' };
   }
 
@@ -232,6 +238,9 @@ export function attemptFreeAgentRecruit(
   chance += recruitKinshipBonus(officer.id, recruiterRuler.id, family ?? []);
   // 'noble' free agent: harder, won't accept just because you're rich.
   if ((officer.traits ?? []).includes('noble')) chance -= 0.10;
+  // 舌戰 / 賄賂 escalation after a first refusal.
+  if (input.debateWon) chance += 0.28;
+  chance += input.bribeBonus ?? 0;
   chance = clamp01(chance);
 
   if (rng() < chance) {

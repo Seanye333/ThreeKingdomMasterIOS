@@ -216,6 +216,10 @@ export interface GameState {
   dailyChallengeDate: string | null;
   /** 勢力消長 — one power snapshot per season, capped, for the graph. */
   powerHistory: import('../systems/powerHistory').PowerSnapshot[];
+  /** 訪賢招攬 — per free-agent recruit state, keyed by season:
+   *  'declined' (offer escalation this season) / 'locked' (lost a debate,
+   *  no retry until next season). Stale entries (old season) are ignored. */
+  recruitState: Record<EntityId, { season: string; stage: 'declined' | 'locked' }>;
   /** Saved command templates the player can re-apply each season. */
   commandTemplates: Array<{
     id: EntityId;
@@ -362,6 +366,7 @@ export const EMPTY_STATE: GameState = {
   emperorCityId: 'luoyang',
   dailyChallengeDate: null,
   powerHistory: [],
+  recruitState: {},
   commandTemplates: [],
   autoBuildQueues: {},
   pendingDialogue: null,
@@ -551,6 +556,7 @@ export function loadScenario(
     emperorCityId: 'luoyang',
     dailyChallengeDate: null,
     powerHistory: [],
+    recruitState: {},
     edictHistory: [],
     edictCooldowns: {},
     tribeState: createInitialTribeState(),
