@@ -973,6 +973,67 @@ function ChineseCity({ city, radius, height, forceColor, onClick }: {
   );
 }
 
+/** A flared Chinese eave — wide tile slab, raised ridge, four upturned
+ *  corner tips (戧脊). The silhouette that says "Chinese roof" at a glance. */
+function SweptEave({ y, w, d, h }: { y: number; w: number; d: number; h: number }) {
+  return (
+    <group position={[0, y, 0]}>
+      <mesh castShadow>
+        <boxGeometry args={[w, h, d]} />
+        <meshStandardMaterial color="#2a2a35" roughness={0.72} />
+      </mesh>
+      <mesh position={[0, h * 0.7, 0]} castShadow>
+        <boxGeometry args={[w * 0.62, h * 0.5, d * 0.16]} />
+        <meshStandardMaterial color="#1d1d27" roughness={0.6} />
+      </mesh>
+      {([[-1, -1], [1, -1], [-1, 1], [1, 1]] as const).map(([sx, sz], i) => (
+        <mesh key={i} position={[sx * w * 0.46, h * 0.32, sz * d * 0.4]} rotation={[sz * 0.45, 0, -sx * 0.45]} castShadow>
+          <coneGeometry args={[h * 0.5, h * 1.3, 4]} />
+          <meshStandardMaterial color="#2a2a35" roughness={0.7} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+/** 城門樓 — a gate opening recessed in the front wall, crowned by a roofed
+ *  gatehouse with swept eaves. Grand cities get a double eave (重檐). */
+function GateTower({ radius: r, height, wallH, grand }: {
+  radius: number; height: number; wallH: number; grand: boolean;
+}) {
+  const hallH = height * 0.17;
+  const hallY = wallH + height * 0.045 + hallH / 2;
+  return (
+    <group position={[0, 0, r * 1.04]}>
+      {/* Gate opening — dark recess in the wall base */}
+      <mesh position={[0, wallH * 0.33, -r * 0.04]}>
+        <boxGeometry args={[r * 0.5, wallH * 0.6, r * 0.16]} />
+        <meshStandardMaterial color="#140f09" roughness={0.95} />
+      </mesh>
+      {/* Stone platform crowning the wall over the gate */}
+      <mesh position={[0, wallH + height * 0.02, 0]} castShadow>
+        <boxGeometry args={[r * 1.02, height * 0.045, r * 0.52]} />
+        <meshStandardMaterial color="#4a4a56" roughness={0.7} />
+      </mesh>
+      {/* Wooden gatehouse hall */}
+      <mesh position={[0, hallY, 0]} castShadow>
+        <boxGeometry args={[r * 0.8, hallH, r * 0.4]} />
+        <meshStandardMaterial color="#8a5630" roughness={0.78} />
+      </mesh>
+      <SweptEave y={wallH + height * 0.045 + hallH} w={r * 1.06} d={r * 0.6} h={height * 0.05} />
+      {grand && (
+        <>
+          <mesh position={[0, wallH + height * 0.045 + hallH + height * 0.08, 0]} castShadow>
+            <boxGeometry args={[r * 0.52, height * 0.1, r * 0.3]} />
+            <meshStandardMaterial color="#8a5630" roughness={0.78} />
+          </mesh>
+          <SweptEave y={wallH + height * 0.045 + hallH + height * 0.16} w={r * 0.72} d={r * 0.42} h={height * 0.045} />
+        </>
+      )}
+    </group>
+  );
+}
+
 /** Chinese brick wall: low rectangular wall, optional corner towers,
  *  with tiled-tile crenellations. */
 function ChineseBrickWall({ radius, height, wallHigh, towers, forceColor, onClick }: {
@@ -1039,6 +1100,8 @@ function ChineseBrickWall({ radius, height, wallHigh, towers, forceColor, onClic
           </mesh>
         </group>
       ))}
+      {/* 城門樓 — gate + roofed gatehouse on the front wall (重檐 for grand cities) */}
+      <GateTower radius={radius} height={height} wallH={wallH} grand={towers === 4} />
     </>
   );
 }
