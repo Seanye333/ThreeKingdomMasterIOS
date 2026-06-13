@@ -436,7 +436,7 @@
 > 以下摘要由 `scripts/gen-catalog.ts` 從 `src/game/data/` 直接抽取,確保與遊戲一致。完整全量見 [docs/CATALOG.md](CATALOG.md)。重新生成:`npm run docs:catalog`。
 
 <!-- CATALOG:START -->
-> 完整全量(全部 1273 名品 / 政策 / 戰法逐條)見 **[docs/CATALOG.md](CATALOG.md)**;此處為可讀摘要。
+> 完整全量(全部 1273 名品逐條 / 全 589 戰法 / 全部政策科技節點)見 **[docs/CATALOG.md](CATALOG.md)**;此處為可讀摘要,但政策與戰法的**效果數字皆為全量**。
 
 ### 內容總量
 
@@ -455,7 +455,7 @@
 | 英雄挑戰 Challenges | 11 |
 | 劇本 Scenarios | 86 |
 
-### 名品精選(加成最高 30 件,全表見 CATALOG)
+### 名品精選(加成最高 30 件,全 1273 件見 CATALOG)
 
 | 名 | 類 | 出處城 | 加成 |
 |---|---|---|---|
@@ -489,6 +489,119 @@
 | 陸抗書疏 | book | jianye | LEA+9 WAR+8 INT+7 |
 | 霍光輔漢 | treasure | changan | POL+10 LEA+7 INT+7 |
 | 明犯強漢者雖遠必誅 | treasure | changan | WAR+9 LEA+8 CHA+7 |
+
+### 政策 Policies — 效果一覽(161 項,科技節點全表見 CATALOG)
+
+#### 內政效果 City Effects(36)— 駐城武將持有即生效
+
+| 政策 | 效果 | 前置 |
+|---|---|---|
+| 屯田 Tuntian | 屯田 +25% 糧 | — |
+| 牛耕 Ox Plowing | 牛耕 +12% 糧 | 屯田 |
+| 鐵具 Iron Tools | 鐵具 +20% 糧 | 屯田、鍛造 |
+| 水車 Water Mill | 水車 +12% 糧 | 治水 |
+| 治水 Hydraulics | 治水 +15% 糧 | — |
+| 商業 Commerce | 商業 +20% 金 | — |
+| 絲綢之路 Silk Road Trade | 絲綢 +25% 金 | 商業 |
+| 海貿 Maritime Trade | 海貿 +30% 金 | 商業、水軍 |
+| 鹽政 Salt Monopoly | 鹽政 +60 金/-1 忠 | 法治 |
+| 鐵政 Iron Monopoly | 鐵政 +40 金 | 鐵具 |
+| 金礦 Gold Mining | 金礦 +120 金 | 工兵 |
+| 銀礦 Silver Mining | 銀礦 +90 金 | 工兵 |
+| 銅礦 Copper Mining | 銅礦 +50 金 | 工兵 |
+| 珍珠貿 Pearl Trade | 珍珠貿 +60 金 | 海貿 |
+| 玉貿 Jade Trade | 玉貿 +40 金 | 絲綢之路 |
+| 関稅 River Tolls | 関稅 +50 金 | 商業 |
+| 茶馬貿易 Tea-Horse Trade | 茶馬 +10% 金 | 商業 |
+| 漁鹽 Fishery & Salt | 漁鹽 +40 金 +15% 糧 | — |
+| 礼楽 Rites | 禮樂 +1 忠/季 | — |
+| 賑災 Famine Relief | 賑災 +1 忠/季 | 礼楽 |
+| 義倉 Community Granary | 義倉 +2 忠/季 | 屯田 |
+| 養濟院 Charity House | 養濟院 +1 忠 | 賑災 |
+| 鄉約 Village Mediation | 鄉約 +1 忠 | 礼楽 |
+| 輕徭薄賦 Light Taxes | 輕徭 +2 忠/-20% 金 | 法治 |
+| 撫夷 Frontier Pacification | 撫夷 +2 忠 | 礼楽 |
+| 力役 Corvée Labor | 力役 −2 忠 | — |
+| 徵兵 Mass Conscription | 徵兵 −1 忠 +35% 兵 | — |
+| 夜禁 Night Curfew | 夜禁 −1 忠 | — |
+| 城防 Fortifications | 城防 +30 守 | 工兵、力役 |
+| 護城河 Moats | 護城河 +15 守 | 工兵 |
+| 烽燧 Beacon Towers | 烽燧 +10 守 | 工兵 |
+| 關隘 Fortified Passes | 關隘 +20 守 | 城防 |
+| 海防 Coastal Fortress | 海防 +20 守 | 城防、水軍 |
+| 禁衛 Imperial Guard | 禁衛 +25 守 | 礼楽、親衛 |
+| 養兵 Recruitment | 養兵 +20% 兵 | — |
+| 牧苑 State Stud Farm | 牧苑 +10% 兵 | 馬政 |
+
+#### 戰鬥效果 Combat Effects(13)— 出戰武將持有即生效
+
+| 政策 | 效果 | 地形 | 前置 |
+|---|---|---|---|
+| 軍学 Military Theory | 軍学 +10% 攻 | 全地形 | — |
+| 軍紀 Camp Discipline | 軍紀 士氣保底 30 | 全地形 | 養兵 |
+| 武備學堂 Military Academy | 武備堂 +8% 攻 | 全地形 | 軍学、学問 |
+| 親衛 Elite Guards | 親衛 −15% 受傷 | 全地形 | 養兵、軍紀 |
+| 馬鎧 Horse Armor | 馬鎧 −20% 受傷 | 全地形 | 鍛造、馬政 |
+| 盾陣 Shield Wall | 盾陣 抗箭 | 全地形 | 鍛造 |
+| 弩兵 Crossbow Corps | 弩兵 +30% 射 | 全地形 | 軍学 |
+| 射禮 Archery School | 射禮 +15% 射 | 全地形 | 軍学 |
+| 火船 Naval Fireships | 火船 +20% 火攻 / 水:火船 +50% 火攻 | 全地形(水戰加強) | — |
+| 輜重 Supply Train | 輜重 士氣保底 25 | 全地形 | — |
+| 撫夷 Frontier Pacification | 撫夷 山地 +15% 攻 | mountain | 礼楽 |
+| 山戰 Mountain Warfare | 山戰 山地 +20% 攻 | mountain | — |
+| 水軍 Naval Academy | 水軍 +20% 攻 | naval/river | — |
+
+#### 招募效果 Recruitment Effects(12)— 全勢力武將持有即生效
+
+| 政策 | 效果 | 前置 |
+|---|---|---|
+| 学問 Scholarship | 學問 招攬 +20% | — |
+| seek-talent  | 招攬 +15% | — |
+| 九品中正 Nine-Grade Rectifier | 九品 招攬 +15% | — |
+| 察舉 Examination System | 察舉 招攬 +10% | — |
+| 鄉學 Village Schools | 鄉學 +10% | — |
+| 太學 Imperial Academy | 太學 +15% | — |
+| 招降 Defector Reward | 招降 +10% | — |
+| 封爵 Peerage Grants | 封爵 +10% | — |
+| 檄文 Proclamations | 檄文 +5% | — |
+| 養兵 Recruitment | 兵質 +20% | — |
+| 牧苑 State Stud Farm | 兵質 +10% | 馬政 |
+| 演武 Military Drill | 演武 兵質 +5% | — |
+
+### 戰法 Tactics — 機制總覽(589 條,逐條表見 CATALOG)
+
+戰法依**類別**決定底層效果、射程與冷卻;**名戰(★)**享更強的射程/冷卻/威力。
+持有的戰法越多,全戰法威力越高(熟練度);集齊特定組合再觸發額外戰力加成。
+
+#### 類別速查 — 每個類別的屬性加成與底層戰法
+
+| 類別 | 屬性加成 | 底層戰法 | 射程 | 冷卻 |
+|---|---|---|---|---|
+| 近戰 melee | WAR+2 LEA+1 | charge | 1 | 2 |
+| 遠射 ranged | WAR+1 LEA+1 INT+1 | rain-of-arrows | 4 | 1 |
+| 玄術 mystic | INT+3 CHA+1 | fire-attack | 3 | 0 |
+| 擾敵 disrupt | INT+2 POL+1 CHA+1 | confusion | 4 | 0 |
+| 謀略 strategy | LEA+2 INT+1 POL+1 | rally | 2 | 2 |
+
+#### 戰法組合 Combos(6)— 同一方集齊全部戰法即觸發
+
+| 組合 | 需集齊 | 戰力× | 觸發 |
+|---|---|---|---|
+| 赤壁火攻 Red Cliffs Fire-Chain | fire-attack + borrow-wind + chain-ship | ×1.4 | 赤壁火攻陣陣相連 — 戰力 +40%! |
+| 火燒連營 Yiling Fire-Camp | fire-attack + burn-yiling | ×1.25 | 火燒連營,蜀軍崩潰 — 戰力 +25%! |
+| 八門奇陣 Eight Gates Trap | eight-gates + ruse | ×1.2 | 八門奇陣困敵 — 戰力 +20%! |
+| 挾天子以令諸侯 Hold the Emperor | borrow-knife + hide-knife + kill-king | ×1.3 | 借勢殺君 — 戰力 +30%! |
+| 兵聖三訣 Sun Tzu Trinity | know-self + fast-strike + deception | ×1.25 | 知己知彼 · 兵貴神速 · 兵不厭詐 — 戰力 +25%! |
+| 緩兵之計 Stalling Strategy | wait-tired + iron-wall | ×1.18 | 以逸待勞,鐵壁固守 — 戰力 +18%! |
+
+#### 熟練度 Mastery — 持有戰法數量決定全戰法威力
+
+| 階 | 條件(持有戰法數) | 戰力× |
+|---|---|---|
+| 宗師 Grandmaster | ≥ 12 | ×1.1 |
+| 老練 Veteran | 8 – 11 | ×1.06 |
+| 熟練 Adept | 4 – 7 | ×1.03 |
+| 初窺 Novice | 0 – 3 | ×1 |
 
 ### 技能 Skills(30)
 

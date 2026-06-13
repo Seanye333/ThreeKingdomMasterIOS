@@ -45,7 +45,7 @@ export interface PersonalTacticAction {
  * Each category maps to a baseline stratagem template.
  * We reuse the existing combat handlers for fire/confusion/charge etc.
  */
-const CATEGORY_TEMPLATE: Record<TacticCategory, { underlying: StratagemId; range: number; cooldown: number; descPrefix: string }> = {
+export const CATEGORY_TEMPLATE: Record<TacticCategory, { underlying: StratagemId; range: number; cooldown: number; descPrefix: string }> = {
   melee:    { underlying: 'charge',          range: 1, cooldown: 2, descPrefix: '近戰猛攻：' },
   ranged:   { underlying: 'rain-of-arrows',  range: 4, cooldown: 1, descPrefix: '遠射齊發：' },
   mystic:   { underlying: 'fire-attack',     range: 3, cooldown: 0, descPrefix: '玄妙之計：' },

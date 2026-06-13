@@ -1283,11 +1283,819 @@
 
 ## 政策 Policies(161)
 
-屯田 Tuntian · 治水 Hydraulics · 工兵 Engineering · 商業 Commerce · 学問 Scholarship · 法治 Legalism · 礼楽 Rites · 養兵 Recruitment · 鍛造 Smithing · 馬政 Horse Stewardship · 医術 Medicine · 軍学 Military Theory · 鹽政 Salt Monopoly · 鐵政 Iron Monopoly · 鑄幣 Coinage · 絲綢之路 Silk Road Trade · 茶馬貿易 Tea-Horse Trade · 水軍 Naval Academy · 弩兵 Crossbow Corps · 邊防 Border Garrison · 攻城 Siege School · 九品中正 Nine-Grade Rectifier · 均田 Equal-Field Reform · 賑災 Famine Relief · 監察 Censorate · 宗廟祭祀 Ancestor Rites · 天文 Astronomy · 曆法 Calendar Reform · 和親 Marriage Alliance · 朝貢 Tribute System · 細作 Spy Network · 檄文 Proclamations · 撫夷 Frontier Pacification · 倉廩 State Granaries · 海貿 Maritime Trade · 蠶桑 Silk Weaving · 牛耕 Ox Plowing · 漁鹽 Fishery & Salt · 城防 Fortifications · 伏兵營 Ambush Corps · 山戰 Mountain Warfare · 徵兵 Mass Conscription · 親衛 Elite Guards · 軍械庫 Arsenal · 太學 Imperial Academy · 驛站 Postal Roads · 義倉 Community Granary · 雅樂 Court Music · 佛教 Buddhism · 道教 Taoism · 卜筮 Divination · 質子 Hostage System · 刺客 Assassins · 反間 Counter-Intel · 招降 Defector Reward · 鐵具 Iron Tools · 護商 Caravan Protection · 馬市 Horse Market · 銅礦 Copper Mining · 鐵礦 Iron Mining · 林業 Timber Forestry · 珍珠貿 Pearl Trade · 玉貿 Jade Trade · 力役 Corvée Labor · 輕徭薄賦 Light Taxes · 烽燧 Beacon Towers · 番上 Garrison Rotation · 戰車 Chariot Corps · 盾陣 Shield Wall · 火船 Naval Fireships · 衝角 Naval Rams · 馬鎧 Horse Armor · 山寨 Mountain Stronghold · 戶籍 Household Register · 察舉 Examination System · 喪禮 Mourning Rites · 圖書 Imperial Library · 樂府 Music Bureau · 鄉學 Village Schools · 詔書 Imperial Edict · 五帝祭 Five-Emperor Cult · 山神祭 Mountain Spirit Rites · 河神祭 River God Rites · 鴻臚寺 Envoy Bureau · 邊市 Frontier Market · 贖俘 Ransom Captives · 金礦 Gold Mining · 護林 Forest Conservation · 陶器 Pottery · 漆器 Lacquerware · 行會 Merchant Guild · 関稅 River Tolls · 質庫 Pawn Bureau · 內庫 Palace Treasury · 竹器 Bamboo Crafts · 桑稅 Silk Tax · 射禮 Archery School · 演武 Military Drill · 輜重 Supply Train · 樓車 Siege Tower · 工程營 Engineer Corps · 邊騎 Frontier Cavalry · 關隘 Fortified Passes · 夜禁 Night Curfew · 槍隊 Pikeman Corps · 突擊隊 Shock Troopers · 封爵 Peerage Grants · 巡幸 Imperial Tour · 養濟院 Charity House · 鄉約 Village Mediation · 度量衡 Standard Measures · 文字 Standard Script · 圖經 Cartography · 大赦 Mass Amnesty · 寺廟 Temple Construction · 元正 New Year Rites · 煉丹 Daoist Alchemy · 招魂 Soul-Calling Rites · 收買 Bribery · 童謠 Political Songs · 南蠻朝貢 Nanman Tribute · 鐵冶 State Ironworks · 造船廠 Shipyard · 運河 Canal · 水車 Water Mill · 紡織 Weaving Workshop · 銀礦 Silver Mining · 茶園 Tea Plantation · 修橋 Bridge Building · 驛館 Caravansary · 浚河 River Dredging · 牧苑 State Stud Farm · 借糧 Famine Loans · 散兵 Skirmishers · 輕騎 Light Cavalry · 剿匪 Bandit Suppression · 剿海寇 Pirate Suppression · 退伍 Veteran Pension · 武備學堂 Military Academy · 護城河 Moats · 軍紀 Camp Discipline · 江樓 River Watchtower · 海防 Coastal Fortress · 三公九卿 Central Ministries · 朝儀 Court Protocol · 太醫 Royal Physicians · 禁衛 Imperial Guard · 升遷 Promotion Track · 苑囿 Royal Park · 郡縣改革 Prefecture Reform · 計畝 Land Survey · 圜丘 Altar of Heaven · 方丘 Altar of Earth · 朝山 Mountain Pilgrimage · 太廟 Ancestral Temple · 鮮卑緩衝 Xianbei Buffer · 匈奴朝貢 Xiongnu Tribute · 羌族安撫 Qiang Pacification · 烏桓緩衝 Wuhuan Buffer · 交州安撫 Jiao Pacification · 遼東緩衝 Liaodong Buffer
+#### 內政效果 City Effects(36)— 駐城武將持有即生效
+
+| 政策 | 效果 | 前置 |
+|---|---|---|
+| 屯田 Tuntian | 屯田 +25% 糧 | — |
+| 牛耕 Ox Plowing | 牛耕 +12% 糧 | 屯田 |
+| 鐵具 Iron Tools | 鐵具 +20% 糧 | 屯田、鍛造 |
+| 水車 Water Mill | 水車 +12% 糧 | 治水 |
+| 治水 Hydraulics | 治水 +15% 糧 | — |
+| 商業 Commerce | 商業 +20% 金 | — |
+| 絲綢之路 Silk Road Trade | 絲綢 +25% 金 | 商業 |
+| 海貿 Maritime Trade | 海貿 +30% 金 | 商業、水軍 |
+| 鹽政 Salt Monopoly | 鹽政 +60 金/-1 忠 | 法治 |
+| 鐵政 Iron Monopoly | 鐵政 +40 金 | 鐵具 |
+| 金礦 Gold Mining | 金礦 +120 金 | 工兵 |
+| 銀礦 Silver Mining | 銀礦 +90 金 | 工兵 |
+| 銅礦 Copper Mining | 銅礦 +50 金 | 工兵 |
+| 珍珠貿 Pearl Trade | 珍珠貿 +60 金 | 海貿 |
+| 玉貿 Jade Trade | 玉貿 +40 金 | 絲綢之路 |
+| 関稅 River Tolls | 関稅 +50 金 | 商業 |
+| 茶馬貿易 Tea-Horse Trade | 茶馬 +10% 金 | 商業 |
+| 漁鹽 Fishery & Salt | 漁鹽 +40 金 +15% 糧 | — |
+| 礼楽 Rites | 禮樂 +1 忠/季 | — |
+| 賑災 Famine Relief | 賑災 +1 忠/季 | 礼楽 |
+| 義倉 Community Granary | 義倉 +2 忠/季 | 屯田 |
+| 養濟院 Charity House | 養濟院 +1 忠 | 賑災 |
+| 鄉約 Village Mediation | 鄉約 +1 忠 | 礼楽 |
+| 輕徭薄賦 Light Taxes | 輕徭 +2 忠/-20% 金 | 法治 |
+| 撫夷 Frontier Pacification | 撫夷 +2 忠 | 礼楽 |
+| 力役 Corvée Labor | 力役 −2 忠 | — |
+| 徵兵 Mass Conscription | 徵兵 −1 忠 +35% 兵 | — |
+| 夜禁 Night Curfew | 夜禁 −1 忠 | — |
+| 城防 Fortifications | 城防 +30 守 | 工兵、力役 |
+| 護城河 Moats | 護城河 +15 守 | 工兵 |
+| 烽燧 Beacon Towers | 烽燧 +10 守 | 工兵 |
+| 關隘 Fortified Passes | 關隘 +20 守 | 城防 |
+| 海防 Coastal Fortress | 海防 +20 守 | 城防、水軍 |
+| 禁衛 Imperial Guard | 禁衛 +25 守 | 礼楽、親衛 |
+| 養兵 Recruitment | 養兵 +20% 兵 | — |
+| 牧苑 State Stud Farm | 牧苑 +10% 兵 | 馬政 |
+
+#### 戰鬥效果 Combat Effects(13)— 出戰武將持有即生效
+
+| 政策 | 效果 | 地形 | 前置 |
+|---|---|---|---|
+| 軍学 Military Theory | 軍学 +10% 攻 | 全地形 | — |
+| 軍紀 Camp Discipline | 軍紀 士氣保底 30 | 全地形 | 養兵 |
+| 武備學堂 Military Academy | 武備堂 +8% 攻 | 全地形 | 軍学、学問 |
+| 親衛 Elite Guards | 親衛 −15% 受傷 | 全地形 | 養兵、軍紀 |
+| 馬鎧 Horse Armor | 馬鎧 −20% 受傷 | 全地形 | 鍛造、馬政 |
+| 盾陣 Shield Wall | 盾陣 抗箭 | 全地形 | 鍛造 |
+| 弩兵 Crossbow Corps | 弩兵 +30% 射 | 全地形 | 軍学 |
+| 射禮 Archery School | 射禮 +15% 射 | 全地形 | 軍学 |
+| 火船 Naval Fireships | 火船 +20% 火攻 / 水:火船 +50% 火攻 | 全地形(水戰加強) | — |
+| 輜重 Supply Train | 輜重 士氣保底 25 | 全地形 | — |
+| 撫夷 Frontier Pacification | 撫夷 山地 +15% 攻 | mountain | 礼楽 |
+| 山戰 Mountain Warfare | 山戰 山地 +20% 攻 | mountain | — |
+| 水軍 Naval Academy | 水軍 +20% 攻 | naval/river | — |
+
+#### 招募效果 Recruitment Effects(12)— 全勢力武將持有即生效
+
+| 政策 | 效果 | 前置 |
+|---|---|---|
+| 学問 Scholarship | 學問 招攬 +20% | — |
+| seek-talent  | 招攬 +15% | — |
+| 九品中正 Nine-Grade Rectifier | 九品 招攬 +15% | — |
+| 察舉 Examination System | 察舉 招攬 +10% | — |
+| 鄉學 Village Schools | 鄉學 +10% | — |
+| 太學 Imperial Academy | 太學 +15% | — |
+| 招降 Defector Reward | 招降 +10% | — |
+| 封爵 Peerage Grants | 封爵 +10% | — |
+| 檄文 Proclamations | 檄文 +5% | — |
+| 養兵 Recruitment | 兵質 +20% | — |
+| 牧苑 State Stud Farm | 兵質 +10% | 馬政 |
+| 演武 Military Drill | 演武 兵質 +5% | — |
+
+#### 制度 / 科技節點(104)— 解鎖前置、提供威望或劇情效果
+
+| 政策 | 前置 |
+|---|---|
+| 工兵 Engineering | — |
+| 法治 Legalism | — |
+| 鍛造 Smithing | — |
+| 馬政 Horse Stewardship | — |
+| 医術 Medicine | — |
+| 鑄幣 Coinage | 商業、法治 |
+| 邊防 Border Garrison | — |
+| 攻城 Siege School | — |
+| 均田 Equal-Field Reform | — |
+| 監察 Censorate | — |
+| 宗廟祭祀 Ancestor Rites | — |
+| 天文 Astronomy | — |
+| 曆法 Calendar Reform | — |
+| 和親 Marriage Alliance | — |
+| 朝貢 Tribute System | — |
+| 細作 Spy Network | — |
+| 倉廩 State Granaries | — |
+| 蠶桑 Silk Weaving | — |
+| 伏兵營 Ambush Corps | — |
+| 軍械庫 Arsenal | — |
+| 驛站 Postal Roads | — |
+| 雅樂 Court Music | — |
+| 佛教 Buddhism | — |
+| 道教 Taoism | — |
+| 卜筮 Divination | — |
+| 質子 Hostage System | — |
+| 刺客 Assassins | — |
+| 反間 Counter-Intel | — |
+| 護商 Caravan Protection | — |
+| 馬市 Horse Market | — |
+| 鐵礦 Iron Mining | — |
+| 林業 Timber Forestry | — |
+| 番上 Garrison Rotation | — |
+| 戰車 Chariot Corps | — |
+| 衝角 Naval Rams | — |
+| 山寨 Mountain Stronghold | — |
+| 戶籍 Household Register | — |
+| 喪禮 Mourning Rites | — |
+| 圖書 Imperial Library | — |
+| 樂府 Music Bureau | — |
+| 詔書 Imperial Edict | — |
+| 五帝祭 Five-Emperor Cult | — |
+| 山神祭 Mountain Spirit Rites | — |
+| 河神祭 River God Rites | — |
+| 鴻臚寺 Envoy Bureau | — |
+| 邊市 Frontier Market | — |
+| 贖俘 Ransom Captives | — |
+| 護林 Forest Conservation | — |
+| 陶器 Pottery | — |
+| 漆器 Lacquerware | — |
+| 行會 Merchant Guild | — |
+| 質庫 Pawn Bureau | — |
+| 內庫 Palace Treasury | — |
+| 竹器 Bamboo Crafts | — |
+| 桑稅 Silk Tax | — |
+| 樓車 Siege Tower | — |
+| 工程營 Engineer Corps | — |
+| 邊騎 Frontier Cavalry | — |
+| 槍隊 Pikeman Corps | — |
+| 突擊隊 Shock Troopers | — |
+| 巡幸 Imperial Tour | — |
+| 度量衡 Standard Measures | — |
+| 文字 Standard Script | — |
+| 圖經 Cartography | — |
+| 大赦 Mass Amnesty | — |
+| 寺廟 Temple Construction | — |
+| 元正 New Year Rites | — |
+| 煉丹 Daoist Alchemy | — |
+| 招魂 Soul-Calling Rites | — |
+| 收買 Bribery | — |
+| 童謠 Political Songs | — |
+| 南蠻朝貢 Nanman Tribute | — |
+| 鐵冶 State Ironworks | — |
+| 造船廠 Shipyard | — |
+| 運河 Canal | — |
+| 紡織 Weaving Workshop | — |
+| 茶園 Tea Plantation | — |
+| 修橋 Bridge Building | — |
+| 驛館 Caravansary | — |
+| 浚河 River Dredging | — |
+| 借糧 Famine Loans | — |
+| 散兵 Skirmishers | — |
+| 輕騎 Light Cavalry | — |
+| 剿匪 Bandit Suppression | — |
+| 剿海寇 Pirate Suppression | — |
+| 退伍 Veteran Pension | — |
+| 江樓 River Watchtower | — |
+| 三公九卿 Central Ministries | — |
+| 朝儀 Court Protocol | — |
+| 太醫 Royal Physicians | — |
+| 升遷 Promotion Track | — |
+| 苑囿 Royal Park | — |
+| 郡縣改革 Prefecture Reform | — |
+| 計畝 Land Survey | — |
+| 圜丘 Altar of Heaven | — |
+| 方丘 Altar of Earth | — |
+| 朝山 Mountain Pilgrimage | — |
+| 太廟 Ancestral Temple | — |
+| 鮮卑緩衝 Xianbei Buffer | 撫夷 |
+| 匈奴朝貢 Xiongnu Tribute | 撫夷 |
+| 羌族安撫 Qiang Pacification | 撫夷 |
+| 烏桓緩衝 Wuhuan Buffer | 撫夷 |
+| 交州安撫 Jiao Pacification | 撫夷 |
+| 遼東緩衝 Liaodong Buffer | 撫夷 |
 
 ## 戰法 Tactics(589)
 
-突擊 Charge · 斉射 Volley · 火計 Fire · 水計 Water · 鼓舞 Rouse · 偽計 Ruse · 連弩 Crossbow · 投石 Catapult · 撹乱 Disorder · 落穴 Pitfall · 急襲 Ambush · 罵声 Curse · 死戰 Last Stand · 鐵壁 Iron Wall · 突進 Surge · 火矢 Fire Arrow · 流星 Meteor · 雷震 Thunder · 借東風 Borrow East Wind · 八門遁甲 Eight Gates · 美人計 Beauty Plot · 連環計 Chain Stratagem · 苦肉計 Self-Injury · 走為上 Strategic Retreat · 聲東擊西 Feint East Strike West · 圍魏救趙 Besiege Wei to Save Zhao · 以逸待勞 Wait for the Exhausted · 暗渡陳倉 Sneak Across Chen Cang · 打草驚蛇 Beat Grass, Startle Snake · 調虎離山 Lure the Tiger Down · 欲擒故縱 Catch by Releasing · 擒賊擒王 Capture the Ringleader · 釜底抽薪 Pull Wood From Under the Pot · 金蟬脫殼 Cicada's Empty Shell · 遠交近攻 Befriend Distant, Attack Near · 草船借箭 Borrow Arrows with Straw Boats · 瞞天過海 Deceive Heaven to Cross the Sea · 趁火打劫 Loot a Burning House · 無中生有 Create Something from Nothing · 隔岸觀火 Watch Fires Burn from Across the River · 笑裡藏刀 A Knife Behind a Smile · 拋磚引玉 Toss a Brick to Attract Jade · 渾水摸魚 Fish in Troubled Waters · 關門捉賊 Shut the Door to Catch the Thief · 樹上開花 Deck the Tree with False Blossoms · 反客為主 Turn the Guest into the Host · 假癡不癲 Feign Madness but Keep Your Wits · 上屋抽梯 Lure to the Roof, Pull the Ladder · 借刀殺人 Kill with a Borrowed Knife · 順手牽羊 Lead Away the Sheep in Passing · 借屍還魂 Borrow a Corpse to Return the Soul · 李代桃僵 Plum Tree Withers for the Peach · 假途伐虢 Borrow a Path to Conquer Guo · 偷梁換柱 Replace the Beams with Rotten Timbers · 指桑罵槐 Point at Mulberry, Curse the Locust · 望梅止渴 Quench Thirst by Hoping for Plums · 七星燈 Seven-Star Lamps · 四面楚歌 Songs of Chu from All Sides · 火燒博望 Burn Bowang · 木牛流馬 Wooden Ox & Flowing Horse · 割髮代首 Hair in Lieu of Head · 白衣渡江 Cross the River in White Robes · 張松獻圖 Zhang Song Presents the Map · 七擒孟獲 Seven Captures of Meng Huo · 舌戰群儒 Tongue-Battle with the Scholars · 長坂單騎 Single Rider at Changban · 諸葛連弩 Zhuge's Repeating Crossbow · 連環船 Chain the Ships · 火燒連營 Burn the Camps at Yiling · 知己知彼 Know Yourself, Know the Enemy · 兵貴神速 Speed is the Soul of War · 兵不厭詐 In War, Deception Is Welcome · 上兵伐謀 Defeat the Enemy's Plans First · 攻心為上 Attack the Enemy Mind, Above All · 圍三闕一 Surround Three Sides, Leave One Open · 不戰而屈人之兵 Subdue the Enemy Without Fighting · 韜光養晦 Hide the Light, Bide the Time · 全勝之道 The Way of Total Victory · 兵形象水 War Takes Shape Like Water · 以正合奇勝 Orthodox to Engage, Extraordinary to Win · 奇門遁甲 Strange Gates, Hidden Stems · 諸葛禳星 Zhuge's Star Ritual · 河圖洛書 River Chart and Luo Writing · 五雷正法 Five-Thunder Orthodox Rite · 偷渡陰平 Sneak Across Yinping (Deng Ai) · 九伐中原 Nine Campaigns Against the Plain (Jiang Wei) · 西陵之戰 The Stand at Xiling (Lu Kang) · 裝病奪權 Feign Illness to Seize Power (Sima Yi) · 鐵索橫江 Iron Chains Across the River · 二虎競食 Two Tigers Fight Over Meat · 驅虎吞狼 Drive the Tiger to Devour the Wolf · 離間挑撥 Sow Discord Between Allies · 千里走單騎 Ride a Thousand Li Alone · 單刀赴會 Attend the Banquet with a Single Blade · 過五關斬六將 Pass Five Forts, Slay Six Captains · 火燒新野 Burn Xinye · 結硬寨打呆仗 Build Solid Camps, Fight Stupid Battles · 置之死地而後生 Place on Death-Ground, Then Survive · 圍點打援 Besiege a Point to Strike the Relief · 兵不血刃 A Sword that Draws No Blood · 計戰 War of Plans · 騎戰 Cavalry War · 舟戰 Naval War · 信戰 War of Trust · 眾戰 War with Numbers · 寡戰 War with Few · 山戰 Mountain War · 夜戰 Night War · 糧戰 Supply War · 守戰 War of Defense · 火牛陣 Tian Dan's Fire-Oxen · 韓信囊沙 Han Xin's Sand-Dam · 班超三十六 Ban Chao's Thirty-Six · 白起坑卒 Bai Qi's Mass Burial · 霍去病千里 Huo Qubing's Thousand-Li Ride · 出其不意 Strike When Unexpected · 攻其無備 Attack Where They're Unguarded · 風林火山 Swift, Silent, Fierce, Immovable · 速戰速決 Quick War, Quick End · 持久戰 Protracted War · 溫酒斬華雄 Slay Hua Xiong with Wine Still Warm · 三英戰呂布 Three Heroes Battle Lü Bu · 煮酒論英雄 Brewed Wine, Heroes Discussed · 隆中對 The Longzhong Plan · 火燒赤壁 Burn the Red Cliffs · 大意失荊州 Lose Jingzhou to Carelessness · 走麥城 Flee to Maicheng · 白帝託孤 Entrust the Orphan at White Emperor City · 揮淚斬馬謖 Execute Ma Su with Tears · 五丈原星隕 A Star Falls at Wuzhang Plain · 出師表 Memorial Before the Campaign · 衣帶詔 Edict in the Sash · 借荊州 Borrow Jingzhou · 貂蟬連環 Diaochan's Chain Plot · 推食食人 Share Your Meat with the Soldiers · 兵不接刃 Victory Without Crossing Blades · 將謀重於兵勇 A Mind Worth More Than Brave Soldiers · 反包圍 Reverse Encirclement · 中心開花 Bloom from the Center · 殲滅戰 War of Annihilation · 消耗戰 War of Attrition · 焦土戰術 Scorched-Earth Strategy · 圍困飢戰 Siege by Starvation · 突圍戰 Break the Encirclement · 釣餌戰術 Bait-and-Trap · 圍而不攻 Encircle Without Engaging · 心戰為上 War of the Heart Above All · 將計就計 Counter-Stratagem on Their Stratagem · 趁勢追擊 Press the Advantage in Pursuit · 以靜制動 Stillness Defeats Motion · 圖國 Plan for the State (Wuzi) · 料敵 Assess the Enemy · 治兵 Govern the Troops · 論將 On Generalship · 應變 Adapt to Change · 勵士 Inspire the Soldiers · 仁本 Benevolence as the Root (Sima Fa) · 天子之義 The Emperor's Duty · 定爵 Set the Ranks · 嚴位 Strict Discipline of Position · 用眾 Wield the Multitude · 將之五善 General's Five Virtues (Zhuge) · 兵權 Authority Over Soldiers · 知人性 Know Human Nature · 不戰之機 Know When Not to Fight · 觀將 Observe Generals (Zhuge) · 鷹擊長空 Eagle Strikes the Sky · 虎踞龍盤 Tiger Crouches, Dragon Coils · 豹突狼奔 Leopard Lunges, Wolf Runs · 鶴立雞群 Crane Stands Among Chickens · 蛇行鼠竄 Snake Slithers, Rat Scurries · 蜂擁而上 Swarm Like Bees · 蟻附攻城 Ants Swarm the Walls · 鯨吞蠶食 Whale-Swallow, Silkworm-Nibble · 半渡而擊 Strike When They Are Half-Crossed · 列陣以待 Array Lines and Wait · 養精蓄銳 Conserve Spirit, Store Strength · 居高臨下 Hold the High Ground · 背山臨水 Mountain at Back, River in Front · 截擊援軍 Intercept the Relief Army · 急襲糧道 Rush the Supply Road · 詐敗誘敵 Feign Defeat to Lure the Enemy · 設伏要道 Set Ambush on the Vital Road · 速戰夜襲 Quick Strike Night Raid · 占星望氣 Read the Stars and Vital Airs · 卜筮龜甲 Tortoise-Shell Divination · 五行相剋 Five-Elements Counter · 護身符 Talisman of Protection · 招神召將 Summon Spirits and Generals · 鉅鹿之戰 Battle of Julu (Xiang Yu) · 牧野之戰 Battle of Muye · 城濮之戰 Battle of Chengpu · 漢中之戰 Battle of Hanzhong · 街亭失守 Lose Jieting (Ma Su) · 趙雲懷主 Zhao Yun Carries the Heir · 黃忠定軍山 Huang Zhong at Dingjun Mountain · 周郎妙計 Zhou Yu's Brilliant Plan · 求賢令 Edict to Seek Talent (Cao Cao) · 何進召董 He Jin Summons Dong Zhuo · 束伍篇 Form Squads (Qi Jiguang) · 操練篇 Drill the Troops · 行營篇 March-Camp Doctrine · 野營篇 Field-Camp Doctrine · 校閱篇 Army Inspection · 練將篇 Train the Officers · 用刃篇 Bladework Doctrine · 短器長用 Short Weapons Used Long · 鳥銃篇 Firearm Tactics · 揭旗篇 Banner Signals · 車營制 Cart-Camp System (Qi) · 狼筅陣 Wolf-Claw Spear (Yu Dayou) · 戰威 Combat Awe (Weiliaozi) · 攻權 Authority in Attack · 守權 Authority in Defense · 將令 General's Decree · 兵令 Soldier's Decree · 上略 Upper Strategy (Huang Shigong) · 中略 Middle Strategy · 下略 Lower Strategy · 奇正之用 Use of Orthodox and Extraordinary · 太宗武略 Tang Taizong's Martial Arts · 樊梨花術 Fan Lihua's Sorcery · 穆桂英陣 Mu Guiying's Heavenly Door · 木蘭從軍 Mulan Joins the Army · 尚香擲戟 Sun Shangxiang's Spear-Toss · 黃月英巧器 Huang Yueying's Devices · 呂玲綺斷流 Lu Lingqi's Severing Stroke · 馬雲祿夜襲 Ma Yunlu's Night Raid · 祝融飛刀 Lady Zhurong's Flying Knives · 撒豆成兵 Scatter Beans, Summon Soldiers · 騰雲駕霧 Ride Clouds and Mist · 御風行走 Walk on the Wind · 變幻雲霧 Conjure a Mist · 玉皇敕令 Jade Emperor's Decree · 招神召將 Summon Gods and Generals · 化身百出 A Hundred Manifestations · 生門開啟 Open the Gate of Life · 王道征伐 Conquest by the Royal Way (Confucian) · 道家無為 Daoist Non-Action · 法家峻法 Legalist Severity · 墨家非攻 Mohist Defense, Anti-Aggression · 縱橫家辯 Diplomat-Strategist Debate · 陰陽家占 Yin-Yang Divination · 儒家禮治 Confucian Rule by Rites · 兵家詭道 Strategist Way of Deception · 戚家車營 Qi Jiguang's Cart Camp · 俞家狼筅 Yu Dayou's Wolf-Claw · 袁崇煥寧遠 Yuan Chonghuan at Ningyuan · 孫承宗關寧 Sun Chengzong's Guanning Line · 鄭成功收台 Zheng Chenggong Retakes Taiwan · 多爾袞入關 Dorgon Enters the Pass · 左宗棠新疆 Zuo Zongtang's Xinjiang Campaign · 林則徐禁煙 Lin Zexu's Anti-Opium Blockade · 捻軍騎襲 Nian Rebel Mounted Raid · 吳三桂引清 Wu Sangui Opens the Pass · 歸師勿遏 Don't Block a Retreating Army · 窮寇勿追 Don't Pursue a Desperate Foe · 圍師必闕 Encircling, Always Leave a Gap · 高陵勿向 Don't Attack Uphill · 背丘勿逆 Don't Fight with a Hill at Your Back · 餌兵勿食 Don't Take the Bait · 銳卒勿攻 Don't Attack the Elite Vanguard · 半成勿擊 Don't Strike a Half-Formed Army · 避實擊虛 Avoid Strength, Strike the Weak · 靜中取勝 Victory in Stillness · 示弱誘敵 Show Weakness to Lure · 孤狼戰術 Lone-Wolf Tactic · 桃園結義之力 Power of the Peach Garden Oath · 怒鞭督郵 Whip the Inspector (Zhang Fei) · 攜民渡江 Liu Bei Brings the People Across · 孫權射虎 Sun Quan Shoots the Tiger · 糜芳投吳 Mi Fang Defects to Wu · 魏延反骨 Wei Yan's Bone of Treason · 華容道義 Guan Yu Releases Cao at Huarong · 張飛粗中有細 Zhang Fei's Cunning Within Roughness · 八仙過海 Eight Immortals Cross the Sea · 鳳凰涅槃 Phoenix Reborn from Ashes · 神龍擺尾 Divine Dragon's Tail Sweep · 玄武龜甲 Black-Turtle Shell Defense · 匈奴突騎 Xiongnu Mounted Raid · 羌人騎射 Qiang Horse-Archery · 烏丸突騎陣 Wuhuan Mounted Vanguard Tactic · 山越伏擊 Shanyue Mountain Ambush · 烏戈藤甲陣 Wuge Rattan-Armor Tactic · 黃巾人海 Yellow-Turban Human Wave · 黑山賊蜂起 Black-Mountain Bandit Swarm · 水寇橫行 River Pirates Run Amok · 結拜兄弟 Sworn-Brother Pact · 揭竿而起 Raise the Banner of Rebellion · 雙槍流 Twin-Spear School · 長戟術 Long Halberd Art · 雙斧法 Twin-Axe Style · 短刀絕技 Short-Blade Mastery · 長鞭舞 Long-Whip Dance · 流星錘 Meteor Hammer · 暗器手裡劍 Hidden Weapons · 八卦掌 Eight-Trigram Palm · 鞭法十三式 Thirteen Whip Forms · 鐵砂掌 Iron-Sand Palm · 飛刀術 Flying Knife · 鴛鴦鉞 Mandarin-Duck Axes · 月牙鏟 Crescent-Moon Shovel · 護手鉤 Hand-Guard Hooks · 鐵琵琶 Iron Pipa (concealed weapon) · 易筋經 Yi Jin Jing · 洗髓經 Xi Sui Jing · 九陰真經 Nine Yin Manual · 九陽神功 Nine Yang Divine Skill · 龜息神功 Turtle-Breath Mastery · 鐵布衫 Iron Shirt · 金鐘罩 Golden Bell · 大力金剛指 Vajra Finger · 鶴翔樁 Crane Stance · 童子功 Child Body Mastery · 凱撒越境 Caesar Crosses the Rubicon · 拿破崙包抄 Napoleonic Encirclement · 漢尼拔坎尼 Hannibal at Cannae · 馬其頓方陣 Macedonian Phalanx · 蒙古旋風 Mongol Whirlwind · 維京突襲 Viking Raid · 羅馬軍團 Roman Legion · 英格蘭長弓 English Longbow · 希臘火 Greek Fire · 斯巴達三百 Spartan 300 · 重甲鐵騎 Heavy Armored Cavalry · 輕騎突擊 Light Cavalry Charge · 神弓隊 Sniper-Bow Squad · 連弩車 Repeating-Crossbow Cart · 攻城塔陣 Siege-Tower Formation · 火攻船陣 Fire-Boat Fleet · 鐵塔重步 Iron-Tower Heavy Infantry · 弓馬槍三段 Three-Stage Bow-Cav-Spear · 浪人遊俠 Wandering Swordsmen · 死士隊 Death Squad · 親衛精銳 Honor Guard Elite · 山民兵 Mountain Militia · 蕃漢兵 Mixed Han-Barbarian Force · 童子軍 Boy Soldiers · 老兵團 Veteran Cohort · 燒符引神 Burn Talisman, Summon Spirit · 五雷轟頂 Five Thunder Strikes the Roof · 攝魂奪魄 Soul-Snatching · 蠱毒之術 Gu Poison · 木甲傀儡 Wooden Armor Puppet · 反魂香 Reverse-Soul Incense · 千里傳音 Thousand-Li Voice · 心電感應 Telepathic Bond · 風水佈陣 Geomantic Formation · 茅山道術 Maoshan Daoist Rite · 黨爭操控 Faction Manipulation · 攝政專權 Regent Seizes Power · 廢長立幼 Depose the Elder, Install the Young · 外戚干政 Imperial In-Laws Meddle · 宦官弄權 Eunuchs Hold the Power · 矯詔行事 Forge an Imperial Edict · 廷議辯論 Court Debate · 民眾請願 Popular Petition · 流言惑眾 Spread Rumors · 抹黑對手 Smear the Opponent · 王朗罵死諸葛 Zhuge Curses Wang Lang to Death · 龐德抬棺 Pang De Brings His Own Coffin · 諸葛六出祁山 Zhuge Six Times to Mount Qi · 司馬八陣 Sima Yi's Eight-Array Counter · 樂進偷襲 Le Jin Night Raid · 張遼威震逍遙津 Zhang Liao Shakes Xiaoyao Crossing · 甘寧百騎劫營 Gan Ning's 100-Horse Raid · 太史慈鬥孫策 Tai Shi Ci Duels Sun Ce · 趙雲一身是膽 Zhao Yun Is Made of Courage · 錦袍韓遂 Ma Chao Brocade Robe vs Han Sui · 黃蓋詐降 Huang Gai's False Surrender · 周倉扛刀 Zhou Cang Bears the Blade · 烏巢糧倉 Burn the Wuchao Granary · 曹操過孟津 Cao Cao Crosses Mengjin · 呂布轅門射戟 Lu Bu Splits a Halberd at the Gate · 親軍鐵衛 Iron-Sworn Personal Guard · 弩砲陣地 Ballista Emplacement · 鳥羽箭隊 Feathered-Arrow Squad · 鎖子甲步兵 Chain-Mail Infantry · 木牛流馬改 Wooden-Ox Mk II · 諸葛弩改 Zhuge Crossbow Mk II · 連弩萬箭 Ten-Thousand Arrows · 連環機關 Chained War Machines · 神火飛鴉 Divine Fire Crow · 一窩蜂 Hornet's Nest Rocket Battery · 神火鴉 Sky-Fire Crow Rocket · 萬人敵 Ten-Thousand-Man Slayer Cannon · 紅夷大炮 Red-Barbarian Cannon · 鐵車連營 Iron-Cart Linked Camp · 猛火油櫃 Naphtha Flame-Thrower · 涿鹿之戰 Battle of Zhuolu · 大澤鄉起義 Daze Uprising · 楚漢相爭 Chu-Han Contention · 漠北之戰 Battle of Mobei · 淝水之戰 Battle of Feishui · 隋滅陳 Sui Conquers Chen · 玄武門之變 Xuanwumen Incident · 安史之亂 An-Shi Rebellion · 黃巢之亂 Huang Chao Rebellion · 澶淵之盟 Treaty of Chanyuan · 靖康之恥 Jingkang Incident · 釣魚城 Diaoyu Castle · 蒙古滅宋 Mongol Destroys Song · 鄱陽湖 Battle of Lake Poyang · 土木堡 Tumu Crisis · 北京保衛戰 Defense of Beijing · 萬曆三大征 Wanli's Three Campaigns · 薩爾滸 Battle of Sarhu · 寧錦大捷 Ningjin Victory · 揚州十日 Yangzhou Ten Days · 嘉定三屠 Three Massacres at Jiading · 平定三藩 Pacify Three Feudatories · 雅克薩 Battle of Yaksa · 烏蘭布通 Battle of Ulan Butong · 孟津渡 Cross at Mengjin · 馬尾坡 Slope at Mawei · 定軍山 Mount Dingjun · 街亭之失 Loss of Jieting · 五丈原 Wuzhang Plain · 金城守 Defense of Jincheng · 上方谷 Shangfang Valley · 夷陵火 Yiling Fire · 合肥守 Defense of Hefei · 葭萌關 Jiameng Pass · 下邳水淹 Flood Xiapi · 荊州失 Fall of Jingzhou · 樊城水淹 Flood Fancheng · 長坂橋 Changban Bridge · 官渡糧 Guandu Granary · 赤壁東風 Red Cliffs East Wind · 韓信點兵 Han Xin Counts the Troops · 項羽烏騅 Xiang Yu's Wuzhui Horse · 范蠡退隱 Fan Li Retires · 廉頗負荊 Lian Po Bears Thorns · 趙奢戰韓 Zhao She vs Han · 王翦掃六合 Wang Jian Sweeps Six States · 周亞夫細柳 Zhou Yafu at Xiliu · 衛青漠北 Wei Qing North · 班超遠征 Ban Chao Far West · 馬援裹屍 Ma Yuan Wrapped in Horse-Hide · 鄧禹中興 Deng Yu Restores Han · 寇恂河內 Kou Xun at Henei · 馮異車戰 Feng Yi Cart War · 杜預破竹 Du Yu Splits Bamboo · 謝玄八千 Xie Xuan's 8000 · 劉裕北伐 Liu Yu Northern Campaign · 韋叡梁將 Wei Rui of Liang · 楊素破陳 Yang Su Breaks Chen · 韓擒虎渡江 Han Qinhu Crosses the River · 李靖破突厥 Li Jing Crushes Turks · 郭子儀單騎 Guo Ziyi Rides Alone · 岳飛槍法 Yue Fei's Spear Art · 韓世忠水戰 Han Shizhong Naval Victory · 吳玠和尚原 Wu Jie at Heshangyuan · 孟珙守城 Meng Gong Defends · 張世傑海戰 Zhang Shijie Naval · 戚繼光抗倭 Qi Jiguang vs Wokou · 俞大猷福建 Yu Dayou Fujian · 李如松援朝 Li Rusong Aids Korea · 宋應昌朝鮮 Song Yingchang in Korea · 毛文龍皮島 Mao Wenlong at Pidao · 盧象升戰清 Lu Xiangsheng vs Qing · 孫傳庭潼關 Sun Chuanting at Tongguan · 史可法揚州 Shi Kefa Yangzhou · 鄭芝龍海 Zheng Zhilong Sea Lord · 劉銘傳台灣 Liu Mingchuan Taiwan · 馮子材鎮南關 Feng Zicai at Zhennan · 聶士成天津 Nie Shicheng Tianjin · 段祺瑞皖派 Duan Qirui Anhui Clique · 馮玉祥西安 Feng Yuxiang's Xi'an · 晉派兵法 Jin School of War · 漢派兵法 Han School · 吳派兵法 Wu School · 蜀派兵法 Shu School · 魏派兵法 Wei School · 越派兵法 Yue School · 秦派兵法 Qin School · 楚派兵法 Chu School · 齊派兵法 Qi School · 燕派兵法 Yan School · 蒙古派 Mongol School · 波斯派 Persian School · 日本派 Japanese School · 朝鮮派 Korean School · 天竺派 Indian School · 吐蕃派 Tibetan School · 滿洲派 Manchu School · 西夏派 Tangut School · 女真派 Jurchen School · 契丹派 Khitan School · 呂布飛將 Lu Bu Flying General · 關羽青龍 Guan Yu's Green Dragon · 張飛吼喝 Zhang Fei's Roar · 趙雲幻影 Zhao Yun's Shadow · 馬超銀槍 Ma Chao's Silver Spear · 黃忠寶弓 Huang Zhong's Treasured Bow · 魏延突進 Wei Yan's Charge · 姜維傳人 Jiang Wei the Disciple · 曹操詩才 Cao Cao's Poetry · 夏侯惇獨眼 Xiahou Dun's Eye · 典韋雙戟 Dian Wei's Twin Halberds · 許褚虎癡 Xu Chu the Tiger · 張郃機動 Zhang He's Mobility · 張遼伏擊 Zhang Liao Ambush · 龐統假寐 Pang Tong Plays Drunk · 司馬龜縮 Sima Yi Turtles · 孫策小霸王 Sun Ce Little Conqueror · 孫權碧眼 Sun Quan Blue-Eyed · 周郎曲誤 Zhou Yu's Music · 呂蒙刮目 Lu Meng Studies · 陸遜火攻 Lu Xun's Fire · 太史慈射箭 Tai Shi Ci Archer · 黃蓋老將 Huang Gai Old General · 甘寧鈴聲 Gan Ning's Bell · 諸葛羽扇 Zhuge's Feather Fan · 龐統連環 Pang Tong's Chain · 法正謀略 Fa Zheng's Strategy · 黃忠老當益壯 Huang Zhong Stronger With Age · 蔣濟忠誠 Jiang Ji's Loyalty · 文聘盾陣 Wen Pin's Shield · 樂進輕兵 Le Jin Light Infantry · 李典儒將 Li Dian Scholar-General · 劉備淚水 Liu Bei's Tears · 孫堅猛虎 Sun Jian the Tiger · 袁紹貴族 Yuan Shao Aristocrat · 袁術玉璽 Yuan Shu Imperial Seal · 公孫瓚白馬 Gongsun Zan White Horse · 董卓暴政 Dong Zhuo Tyrant · 王允連環 Wang Yun's Plot · 曹植七步 Cao Zhi Seven Steps · 地道戰 Tunnel Warfare · 浮橋 Pontoon Bridge · 挖牆 Mining Walls · 城門樓 Gate Tower · 箭樓 Arrow Tower · 敵樓 Wall-Corner Bastion · 深溝 Deep Moat · 蒺藜 Caltrops · 弩樓 Ballista Tower · 火箭樓 Fire-Arrow Tower · 熱油鍋 Boiling Oil · 滾木 Rolling Logs · 刺穴 Spike Pit · 鐵蒺藜 Iron Stakes · 望樓 Observation Tower · 偽書信 Forged Letter · 潛伏間諜 Planted Spy · 反間之計 Reverse-Spy Plot · 策反 Turn the Defector · 士氣崩潰 Morale Collapse · 焚旗 Burn the Banner · 指名點殺 Call Names to Demoralize · 處決恐嚇 Mass Execution · 示恩懷柔 Show Mercy · 懸首示眾 Display Hostage · 設宴款軍 Public Feast · 謠言叛亂 Rumor of Defection · 羞辱降將 Shame the Defeated · 辱其先祖 Mock Their Ancestors · 家眷威脅 Threaten the Family · 鹽鐵專營 Salt Monopoly · 鐵專營 Iron Monopoly · 茶馬貿易 Tea-Horse Trade · 絲綢之路 Silk Road · 鑄幣 Mint Coinage · 輕徭薄賦 Tax Cut · 均田 Land Equalization · 商稅 Merchant Tax · 朝貢 Tribute System · 偽造錢幣 Forge Currency · 間諜網 Spy Network · 雙面間諜 Double Agent · 潛伏細胞 Sleeper Cell · 死信箱 Dead Drop · 假降 Fake Defector · 宮廷賄賂 Court Bribery · 侍女間諜 Maid Spy · 截獲書信 Intercept Letters · 信號旗 Signal Flags · 信鴿 Carrier Pigeon · 孫策鏡破 Sun Ce Mirror Break · 曹叡奢華 Cao Rui Luxury · 劉禪庸主 Liu Shan Mediocre Lord · 大喬聯姻 Da Qiao Marriage · 董卓肥油 Dong Zhuo's Fat · 盧植師教 Lu Zhi Teaches · 蔡邕焦尾 Cai Yong's Burnt-Tail Lute · 禰衡擊鼓 Mi Heng Drums · 張角黃天 Zhang Jiao Yellow Heaven · 張魯五斗 Zhang Lu Five Pecks
+戰法依**類別**決定底層效果、射程與冷卻;**名戰(★)**享更強的射程/冷卻/威力。
+持有的戰法越多,全戰法威力越高(熟練度);集齊特定組合再觸發額外戰力加成。
+
+#### 類別速查 — 每個類別的屬性加成與底層戰法
+
+| 類別 | 屬性加成 | 底層戰法 | 射程 | 冷卻 |
+|---|---|---|---|---|
+| 近戰 melee | WAR+2 LEA+1 | charge | 1 | 2 |
+| 遠射 ranged | WAR+1 LEA+1 INT+1 | rain-of-arrows | 4 | 1 |
+| 玄術 mystic | INT+3 CHA+1 | fire-attack | 3 | 0 |
+| 擾敵 disrupt | INT+2 POL+1 CHA+1 | confusion | 4 | 0 |
+| 謀略 strategy | LEA+2 INT+1 POL+1 | rally | 2 | 2 |
+
+#### 戰法組合 Combos(6)— 同一方集齊全部戰法即觸發
+
+| 組合 | 需集齊 | 戰力× | 觸發 |
+|---|---|---|---|
+| 赤壁火攻 Red Cliffs Fire-Chain | fire-attack + borrow-wind + chain-ship | ×1.4 | 赤壁火攻陣陣相連 — 戰力 +40%! |
+| 火燒連營 Yiling Fire-Camp | fire-attack + burn-yiling | ×1.25 | 火燒連營,蜀軍崩潰 — 戰力 +25%! |
+| 八門奇陣 Eight Gates Trap | eight-gates + ruse | ×1.2 | 八門奇陣困敵 — 戰力 +20%! |
+| 挾天子以令諸侯 Hold the Emperor | borrow-knife + hide-knife + kill-king | ×1.3 | 借勢殺君 — 戰力 +30%! |
+| 兵聖三訣 Sun Tzu Trinity | know-self + fast-strike + deception | ×1.25 | 知己知彼 · 兵貴神速 · 兵不厭詐 — 戰力 +25%! |
+| 緩兵之計 Stalling Strategy | wait-tired + iron-wall | ×1.18 | 以逸待勞,鐵壁固守 — 戰力 +18%! |
+
+#### 熟練度 Mastery — 持有戰法數量決定全戰法威力
+
+| 階 | 條件(持有戰法數) | 戰力× |
+|---|---|---|
+| 宗師 Grandmaster | ≥ 12 | ×1.1 |
+| 老練 Veteran | 8 – 11 | ×1.06 |
+| 熟練 Adept | 4 – 7 | ×1.03 |
+| 初窺 Novice | 0 – 3 | ×1 |
+
+#### 全戰法一覽(589)
+
+| 戰法 | 類別 | ★ | 底層戰法 | 射程 | 冷卻 |
+|---|---|---|---|---|---|
+| 突擊 Charge | 近戰 |  | charge | 1 | 2 |
+| 斉射 Volley | 遠射 |  | rain-of-arrows | 4 | 1 |
+| 火計 Fire | 玄術 |  | fire-attack | 3 | 0 |
+| 水計 Water | 玄術 |  | fire-attack | 3 | 0 |
+| 鼓舞 Rouse | 近戰 |  | rally | 2 | 2 |
+| 偽計 Ruse | 擾敵 |  | confusion | 4 | 0 |
+| 連弩 Crossbow | 遠射 |  | rain-of-arrows | 4 | 1 |
+| 投石 Catapult | 遠射 |  | rain-of-arrows | 4 | 1 |
+| 撹乱 Disorder | 擾敵 |  | confusion | 4 | 0 |
+| 落穴 Pitfall | 擾敵 |  | false-retreat | 0 | 0 |
+| 急襲 Ambush | 近戰 |  | charge | 1 | 2 |
+| 罵声 Curse | 擾敵 |  | confusion | 4 | 0 |
+| 死戰 Last Stand | 近戰 |  | defend | 0 | 0 |
+| 鐵壁 Iron Wall | 近戰 |  | defend | 0 | 0 |
+| 突進 Surge | 近戰 |  | charge | 1 | 2 |
+| 火矢 Fire Arrow | 遠射 |  | rain-of-arrows | 4 | 1 |
+| 流星 Meteor | 遠射 |  | lightning | 4 | 0 |
+| 雷震 Thunder | 玄術 |  | lightning | 4 | 0 |
+| 借東風 Borrow East Wind | 玄術 | ★ | fire-attack | 4 | 5 |
+| 八門遁甲 Eight Gates | 玄術 |  | precognition | 0 | 4 |
+| 美人計 Beauty Plot | 擾敵 |  | confusion | 3 | 0 |
+| 連環計 Chain Stratagem | 擾敵 |  | chain-ships | 3 | 0 |
+| 苦肉計 Self-Injury | 擾敵 |  | false-retreat | 0 | 0 |
+| 走為上 Strategic Retreat | 擾敵 |  | confusion | 4 | 0 |
+| 聲東擊西 Feint East Strike West | 謀略 |  | rally | 2 | 2 |
+| 圍魏救趙 Besiege Wei to Save Zhao | 謀略 |  | rally | 2 | 2 |
+| 以逸待勞 Wait for the Exhausted | 謀略 |  | rally | 2 | 2 |
+| 暗渡陳倉 Sneak Across Chen Cang | 謀略 |  | rally | 2 | 2 |
+| 打草驚蛇 Beat Grass, Startle Snake | 謀略 |  | rally | 2 | 2 |
+| 調虎離山 Lure the Tiger Down | 近戰 |  | charge | 1 | 2 |
+| 欲擒故縱 Catch by Releasing | 謀略 |  | rally | 2 | 2 |
+| 擒賊擒王 Capture the Ringleader | 謀略 |  | rally | 2 | 2 |
+| 釜底抽薪 Pull Wood From Under the Pot | 謀略 |  | rally | 2 | 2 |
+| 金蟬脫殼 Cicada's Empty Shell | 謀略 |  | rally | 2 | 2 |
+| 遠交近攻 Befriend Distant, Attack Near | 謀略 |  | rally | 2 | 2 |
+| 草船借箭 Borrow Arrows with Straw Boats | 遠射 | ★ | rain-of-arrows | 5 | 3 |
+| 瞞天過海 Deceive Heaven to Cross the Sea | 謀略 |  | rally | 2 | 2 |
+| 趁火打劫 Loot a Burning House | 玄術 |  | fire-attack | 3 | 0 |
+| 無中生有 Create Something from Nothing | 謀略 |  | rally | 2 | 2 |
+| 隔岸觀火 Watch Fires Burn from Across the River | 玄術 |  | fire-attack | 3 | 0 |
+| 笑裡藏刀 A Knife Behind a Smile | 擾敵 |  | confusion | 4 | 0 |
+| 拋磚引玉 Toss a Brick to Attract Jade | 玄術 |  | fire-attack | 3 | 0 |
+| 渾水摸魚 Fish in Troubled Waters | 謀略 |  | rally | 2 | 2 |
+| 關門捉賊 Shut the Door to Catch the Thief | 謀略 |  | rally | 2 | 2 |
+| 樹上開花 Deck the Tree with False Blossoms | 擾敵 |  | confusion | 4 | 0 |
+| 反客為主 Turn the Guest into the Host | 謀略 |  | rally | 2 | 2 |
+| 假癡不癲 Feign Madness but Keep Your Wits | 擾敵 |  | false-retreat | 0 | 0 |
+| 上屋抽梯 Lure to the Roof, Pull the Ladder | 謀略 |  | rally | 2 | 2 |
+| 借刀殺人 Kill with a Borrowed Knife | 擾敵 |  | confusion | 4 | 0 |
+| 順手牽羊 Lead Away the Sheep in Passing | 謀略 |  | rally | 2 | 2 |
+| 借屍還魂 Borrow a Corpse to Return the Soul | 謀略 |  | rally | 2 | 2 |
+| 李代桃僵 Plum Tree Withers for the Peach | 謀略 |  | rally | 2 | 2 |
+| 假途伐虢 Borrow a Path to Conquer Guo | 謀略 |  | rally | 2 | 2 |
+| 偷梁換柱 Replace the Beams with Rotten Timbers | 擾敵 |  | confusion | 4 | 0 |
+| 指桑罵槐 Point at Mulberry, Curse the Locust | 擾敵 |  | confusion | 4 | 0 |
+| 望梅止渴 Quench Thirst by Hoping for Plums | 謀略 | ★ | rally | 2 | 2 |
+| 七星燈 Seven-Star Lamps | 玄術 | ★ | precognition | 0 | 6 |
+| 四面楚歌 Songs of Chu from All Sides | 擾敵 | ★ | supply-strike | 0 | 0 |
+| 火燒博望 Burn Bowang | 玄術 | ★ | fire-attack | 4 | 4 |
+| 木牛流馬 Wooden Ox & Flowing Horse | 謀略 | ★ | rally | 2 | 2 |
+| 割髮代首 Hair in Lieu of Head | 謀略 |  | rally | 2 | 2 |
+| 白衣渡江 Cross the River in White Robes | 擾敵 | ★ | gallop | 3 | 3 |
+| 張松獻圖 Zhang Song Presents the Map | 謀略 |  | rally | 2 | 2 |
+| 七擒孟獲 Seven Captures of Meng Huo | 謀略 | ★ | rally | 3 | 5 |
+| 舌戰群儒 Tongue-Battle with the Scholars | 謀略 | ★ | rally | 2 | 2 |
+| 長坂單騎 Single Rider at Changban | 近戰 | ★ | gallop | 3 | 3 |
+| 諸葛連弩 Zhuge's Repeating Crossbow | 遠射 | ★ | rain-of-arrows | 5 | 2 |
+| 連環船 Chain the Ships | 謀略 | ★ | rally | 2 | 2 |
+| 火燒連營 Burn the Camps at Yiling | 玄術 | ★ | fire-attack | 4 | 5 |
+| 知己知彼 Know Yourself, Know the Enemy | 謀略 | ★ | rally | 2 | 2 |
+| 兵貴神速 Speed is the Soul of War | 近戰 |  | charge | 1 | 2 |
+| 兵不厭詐 In War, Deception Is Welcome | 擾敵 |  | confusion | 4 | 0 |
+| 上兵伐謀 Defeat the Enemy's Plans First | 謀略 | ★ | rally | 2 | 2 |
+| 攻心為上 Attack the Enemy Mind, Above All | 近戰 | ★ | charge | 1 | 2 |
+| 圍三闕一 Surround Three Sides, Leave One Open | 謀略 |  | rally | 2 | 2 |
+| 不戰而屈人之兵 Subdue the Enemy Without Fighting | 近戰 | ★ | charge | 1 | 2 |
+| 韜光養晦 Hide the Light, Bide the Time | 謀略 |  | rally | 2 | 2 |
+| 全勝之道 The Way of Total Victory | 謀略 |  | rally | 2 | 2 |
+| 兵形象水 War Takes Shape Like Water | 謀略 |  | rally | 2 | 2 |
+| 以正合奇勝 Orthodox to Engage, Extraordinary to Win | 謀略 |  | rally | 2 | 2 |
+| 奇門遁甲 Strange Gates, Hidden Stems | 玄術 |  | precognition | 0 | 5 |
+| 諸葛禳星 Zhuge's Star Ritual | 玄術 | ★ | precognition | 0 | 5 |
+| 河圖洛書 River Chart and Luo Writing | 玄術 |  | fire-attack | 3 | 0 |
+| 五雷正法 Five-Thunder Orthodox Rite | 玄術 |  | lightning | 5 | 0 |
+| 偷渡陰平 Sneak Across Yinping (Deng Ai) | 謀略 |  | rally | 2 | 2 |
+| 九伐中原 Nine Campaigns Against the Plain (Jiang Wei) | 謀略 |  | rally | 2 | 2 |
+| 西陵之戰 The Stand at Xiling (Lu Kang) | 謀略 |  | rally | 2 | 2 |
+| 裝病奪權 Feign Illness to Seize Power (Sima Yi) | 謀略 | ★ | rally | 2 | 2 |
+| 鐵索橫江 Iron Chains Across the River | 謀略 |  | rally | 2 | 2 |
+| 二虎競食 Two Tigers Fight Over Meat | 近戰 | ★ | charge | 1 | 2 |
+| 驅虎吞狼 Drive the Tiger to Devour the Wolf | 近戰 | ★ | charge | 1 | 2 |
+| 離間挑撥 Sow Discord Between Allies | 擾敵 |  | confusion | 4 | 0 |
+| 千里走單騎 Ride a Thousand Li Alone | 近戰 | ★ | gallop | 3 | 3 |
+| 單刀赴會 Attend the Banquet with a Single Blade | 近戰 | ★ | dragon-veil | 0 | 3 |
+| 過五關斬六將 Pass Five Forts, Slay Six Captains | 近戰 | ★ | dragon-veil | 0 | 3 |
+| 火燒新野 Burn Xinye | 玄術 | ★ | fire-attack | 3 | 0 |
+| 結硬寨打呆仗 Build Solid Camps, Fight Stupid Battles | 謀略 |  | rally | 2 | 2 |
+| 置之死地而後生 Place on Death-Ground, Then Survive | 謀略 |  | rally | 2 | 2 |
+| 圍點打援 Besiege a Point to Strike the Relief | 謀略 |  | rally | 2 | 2 |
+| 兵不血刃 A Sword that Draws No Blood | 謀略 |  | rally | 2 | 2 |
+| 計戰 War of Plans | 謀略 |  | rally | 2 | 2 |
+| 騎戰 Cavalry War | 近戰 |  | charge | 1 | 2 |
+| 舟戰 Naval War | 謀略 |  | rally | 2 | 2 |
+| 信戰 War of Trust | 謀略 |  | rally | 2 | 2 |
+| 眾戰 War with Numbers | 謀略 |  | rally | 2 | 2 |
+| 寡戰 War with Few | 謀略 |  | rally | 2 | 2 |
+| 山戰 Mountain War | 謀略 |  | rally | 2 | 2 |
+| 夜戰 Night War | 謀略 |  | rally | 2 | 2 |
+| 糧戰 Supply War | 謀略 |  | rally | 2 | 2 |
+| 守戰 War of Defense | 謀略 |  | rally | 2 | 2 |
+| 火牛陣 Tian Dan's Fire-Oxen | 玄術 | ★ | fire-attack | 3 | 0 |
+| 韓信囊沙 Han Xin's Sand-Dam | 謀略 | ★ | rally | 2 | 2 |
+| 班超三十六 Ban Chao's Thirty-Six | 謀略 |  | rally | 2 | 2 |
+| 白起坑卒 Bai Qi's Mass Burial | 謀略 |  | rally | 2 | 2 |
+| 霍去病千里 Huo Qubing's Thousand-Li Ride | 謀略 |  | rally | 2 | 2 |
+| 出其不意 Strike When Unexpected | 謀略 |  | rally | 2 | 2 |
+| 攻其無備 Attack Where They're Unguarded | 近戰 |  | charge | 1 | 2 |
+| 風林火山 Swift, Silent, Fierce, Immovable | 玄術 | ★ | fire-attack | 3 | 0 |
+| 速戰速決 Quick War, Quick End | 謀略 |  | rally | 2 | 2 |
+| 持久戰 Protracted War | 謀略 |  | rally | 2 | 2 |
+| 溫酒斬華雄 Slay Hua Xiong with Wine Still Warm | 謀略 | ★ | rally | 2 | 2 |
+| 三英戰呂布 Three Heroes Battle Lü Bu | 近戰 | ★ | charge | 1 | 2 |
+| 煮酒論英雄 Brewed Wine, Heroes Discussed | 謀略 | ★ | rally | 2 | 2 |
+| 隆中對 The Longzhong Plan | 謀略 | ★ | rally | 2 | 2 |
+| 火燒赤壁 Burn the Red Cliffs | 玄術 | ★ | fire-attack | 3 | 0 |
+| 大意失荊州 Lose Jingzhou to Carelessness | 謀略 |  | rally | 2 | 2 |
+| 走麥城 Flee to Maicheng | 謀略 |  | rally | 2 | 2 |
+| 白帝託孤 Entrust the Orphan at White Emperor City | 謀略 |  | rally | 2 | 2 |
+| 揮淚斬馬謖 Execute Ma Su with Tears | 謀略 | ★ | rally | 2 | 2 |
+| 五丈原星隕 A Star Falls at Wuzhang Plain | 玄術 |  | fire-attack | 3 | 0 |
+| 出師表 Memorial Before the Campaign | 謀略 | ★ | rally | 2 | 2 |
+| 衣帶詔 Edict in the Sash | 擾敵 |  | confusion | 4 | 0 |
+| 借荊州 Borrow Jingzhou | 謀略 |  | rally | 2 | 2 |
+| 貂蟬連環 Diaochan's Chain Plot | 擾敵 | ★ | confusion | 4 | 0 |
+| 推食食人 Share Your Meat with the Soldiers | 謀略 | ★ | rally | 2 | 2 |
+| 兵不接刃 Victory Without Crossing Blades | 謀略 |  | rally | 2 | 2 |
+| 將謀重於兵勇 A Mind Worth More Than Brave Soldiers | 謀略 |  | rally | 2 | 2 |
+| 反包圍 Reverse Encirclement | 謀略 |  | rally | 2 | 2 |
+| 中心開花 Bloom from the Center | 謀略 |  | rally | 2 | 2 |
+| 殲滅戰 War of Annihilation | 謀略 |  | rally | 2 | 2 |
+| 消耗戰 War of Attrition | 謀略 |  | rally | 2 | 2 |
+| 焦土戰術 Scorched-Earth Strategy | 謀略 |  | rally | 2 | 2 |
+| 圍困飢戰 Siege by Starvation | 玄術 |  | fire-attack | 3 | 0 |
+| 突圍戰 Break the Encirclement | 謀略 |  | rally | 2 | 2 |
+| 釣餌戰術 Bait-and-Trap | 謀略 |  | rally | 2 | 2 |
+| 圍而不攻 Encircle Without Engaging | 謀略 |  | rally | 2 | 2 |
+| 心戰為上 War of the Heart Above All | 謀略 |  | rally | 2 | 2 |
+| 將計就計 Counter-Stratagem on Their Stratagem | 謀略 |  | rally | 2 | 2 |
+| 趁勢追擊 Press the Advantage in Pursuit | 近戰 |  | charge | 1 | 2 |
+| 以靜制動 Stillness Defeats Motion | 謀略 |  | rally | 2 | 2 |
+| 圖國 Plan for the State (Wuzi) | 謀略 |  | rally | 2 | 2 |
+| 料敵 Assess the Enemy | 謀略 |  | rally | 2 | 2 |
+| 治兵 Govern the Troops | 謀略 |  | rally | 2 | 2 |
+| 論將 On Generalship | 謀略 |  | rally | 2 | 2 |
+| 應變 Adapt to Change | 謀略 |  | rally | 2 | 2 |
+| 勵士 Inspire the Soldiers | 謀略 |  | rally | 2 | 2 |
+| 仁本 Benevolence as the Root (Sima Fa) | 謀略 |  | rally | 2 | 2 |
+| 天子之義 The Emperor's Duty | 謀略 |  | rally | 2 | 2 |
+| 定爵 Set the Ranks | 謀略 |  | rally | 2 | 2 |
+| 嚴位 Strict Discipline of Position | 謀略 |  | rally | 2 | 2 |
+| 用眾 Wield the Multitude | 謀略 |  | rally | 2 | 2 |
+| 將之五善 General's Five Virtues (Zhuge) | 謀略 |  | rally | 2 | 2 |
+| 兵權 Authority Over Soldiers | 謀略 |  | rally | 2 | 2 |
+| 知人性 Know Human Nature | 謀略 |  | rally | 2 | 2 |
+| 不戰之機 Know When Not to Fight | 近戰 |  | charge | 1 | 2 |
+| 觀將 Observe Generals (Zhuge) | 謀略 |  | rally | 2 | 2 |
+| 鷹擊長空 Eagle Strikes the Sky | 近戰 |  | charge | 1 | 2 |
+| 虎踞龍盤 Tiger Crouches, Dragon Coils | 近戰 |  | charge | 1 | 2 |
+| 豹突狼奔 Leopard Lunges, Wolf Runs | 近戰 |  | charge | 1 | 2 |
+| 鶴立雞群 Crane Stands Among Chickens | 近戰 |  | charge | 1 | 2 |
+| 蛇行鼠竄 Snake Slithers, Rat Scurries | 謀略 |  | rally | 2 | 2 |
+| 蜂擁而上 Swarm Like Bees | 謀略 |  | rally | 2 | 2 |
+| 蟻附攻城 Ants Swarm the Walls | 謀略 |  | rally | 2 | 2 |
+| 鯨吞蠶食 Whale-Swallow, Silkworm-Nibble | 謀略 |  | rally | 2 | 2 |
+| 半渡而擊 Strike When They Are Half-Crossed | 謀略 |  | rally | 2 | 2 |
+| 列陣以待 Array Lines and Wait | 謀略 |  | rally | 2 | 2 |
+| 養精蓄銳 Conserve Spirit, Store Strength | 謀略 |  | rally | 2 | 2 |
+| 居高臨下 Hold the High Ground | 謀略 |  | rally | 2 | 2 |
+| 背山臨水 Mountain at Back, River in Front | 謀略 |  | rally | 2 | 2 |
+| 截擊援軍 Intercept the Relief Army | 擾敵 |  | confusion | 4 | 0 |
+| 急襲糧道 Rush the Supply Road | 謀略 |  | rally | 2 | 2 |
+| 詐敗誘敵 Feign Defeat to Lure the Enemy | 謀略 |  | rally | 2 | 2 |
+| 設伏要道 Set Ambush on the Vital Road | 謀略 |  | rally | 2 | 2 |
+| 速戰夜襲 Quick Strike Night Raid | 謀略 |  | rally | 2 | 2 |
+| 占星望氣 Read the Stars and Vital Airs | 玄術 |  | fire-attack | 3 | 0 |
+| 卜筮龜甲 Tortoise-Shell Divination | 謀略 |  | rally | 2 | 2 |
+| 五行相剋 Five-Elements Counter | 謀略 |  | rally | 2 | 2 |
+| 護身符 Talisman of Protection | 玄術 |  | fire-attack | 3 | 0 |
+| 招神召將 Summon Spirits and Generals | 玄術 |  | fire-attack | 3 | 0 |
+| 鉅鹿之戰 Battle of Julu (Xiang Yu) | 近戰 | ★ | charge | 1 | 2 |
+| 牧野之戰 Battle of Muye | 近戰 |  | charge | 1 | 2 |
+| 城濮之戰 Battle of Chengpu | 近戰 |  | charge | 1 | 2 |
+| 漢中之戰 Battle of Hanzhong | 近戰 |  | charge | 1 | 2 |
+| 街亭失守 Lose Jieting (Ma Su) | 謀略 |  | rally | 2 | 2 |
+| 趙雲懷主 Zhao Yun Carries the Heir | 謀略 | ★ | rally | 2 | 2 |
+| 黃忠定軍山 Huang Zhong at Dingjun Mountain | 謀略 |  | rally | 2 | 2 |
+| 周郎妙計 Zhou Yu's Brilliant Plan | 謀略 | ★ | rally | 2 | 2 |
+| 求賢令 Edict to Seek Talent (Cao Cao) | 謀略 | ★ | rally | 2 | 2 |
+| 何進召董 He Jin Summons Dong Zhuo | 謀略 |  | rally | 2 | 2 |
+| 束伍篇 Form Squads (Qi Jiguang) | 近戰 |  | charge | 1 | 2 |
+| 操練篇 Drill the Troops | 謀略 |  | rally | 2 | 2 |
+| 行營篇 March-Camp Doctrine | 謀略 |  | rally | 2 | 2 |
+| 野營篇 Field-Camp Doctrine | 謀略 |  | rally | 2 | 2 |
+| 校閱篇 Army Inspection | 謀略 |  | rally | 2 | 2 |
+| 練將篇 Train the Officers | 謀略 |  | rally | 2 | 2 |
+| 用刃篇 Bladework Doctrine | 近戰 |  | charge | 1 | 2 |
+| 短器長用 Short Weapons Used Long | 謀略 |  | rally | 2 | 2 |
+| 鳥銃篇 Firearm Tactics | 玄術 |  | fire-attack | 3 | 0 |
+| 揭旗篇 Banner Signals | 謀略 |  | rally | 2 | 2 |
+| 車營制 Cart-Camp System (Qi) | 謀略 |  | rally | 2 | 2 |
+| 狼筅陣 Wolf-Claw Spear (Yu Dayou) | 近戰 |  | charge | 1 | 2 |
+| 戰威 Combat Awe (Weiliaozi) | 謀略 |  | rally | 2 | 2 |
+| 攻權 Authority in Attack | 謀略 |  | rally | 2 | 2 |
+| 守權 Authority in Defense | 謀略 |  | rally | 2 | 2 |
+| 將令 General's Decree | 謀略 |  | rally | 2 | 2 |
+| 兵令 Soldier's Decree | 謀略 |  | rally | 2 | 2 |
+| 上略 Upper Strategy (Huang Shigong) | 謀略 |  | rally | 2 | 2 |
+| 中略 Middle Strategy | 謀略 |  | rally | 2 | 2 |
+| 下略 Lower Strategy | 謀略 |  | rally | 2 | 2 |
+| 奇正之用 Use of Orthodox and Extraordinary | 謀略 |  | rally | 2 | 2 |
+| 太宗武略 Tang Taizong's Martial Arts | 謀略 |  | rally | 2 | 2 |
+| 樊梨花術 Fan Lihua's Sorcery | 謀略 | ★ | rally | 2 | 2 |
+| 穆桂英陣 Mu Guiying's Heavenly Door | 謀略 | ★ | rally | 2 | 2 |
+| 木蘭從軍 Mulan Joins the Army | 謀略 | ★ | rally | 2 | 2 |
+| 尚香擲戟 Sun Shangxiang's Spear-Toss | 謀略 | ★ | rally | 2 | 2 |
+| 黃月英巧器 Huang Yueying's Devices | 謀略 | ★ | rally | 2 | 2 |
+| 呂玲綺斷流 Lu Lingqi's Severing Stroke | 謀略 | ★ | rally | 2 | 2 |
+| 馬雲祿夜襲 Ma Yunlu's Night Raid | 謀略 | ★ | rally | 2 | 2 |
+| 祝融飛刀 Lady Zhurong's Flying Knives | 謀略 | ★ | rally | 2 | 2 |
+| 撒豆成兵 Scatter Beans, Summon Soldiers | 謀略 | ★ | rally | 2 | 2 |
+| 騰雲駕霧 Ride Clouds and Mist | 玄術 | ★ | fire-attack | 3 | 0 |
+| 御風行走 Walk on the Wind | 玄術 |  | fire-attack | 3 | 0 |
+| 變幻雲霧 Conjure a Mist | 玄術 |  | fire-attack | 3 | 0 |
+| 玉皇敕令 Jade Emperor's Decree | 玄術 |  | fire-attack | 3 | 0 |
+| 招神召將 Summon Gods and Generals | 玄術 | ★ | fire-attack | 3 | 0 |
+| 化身百出 A Hundred Manifestations | 謀略 |  | rally | 2 | 2 |
+| 生門開啟 Open the Gate of Life | 玄術 |  | fire-attack | 3 | 0 |
+| 王道征伐 Conquest by the Royal Way (Confucian) | 謀略 |  | rally | 2 | 2 |
+| 道家無為 Daoist Non-Action | 謀略 |  | rally | 2 | 2 |
+| 法家峻法 Legalist Severity | 謀略 |  | rally | 2 | 2 |
+| 墨家非攻 Mohist Defense, Anti-Aggression | 謀略 |  | rally | 2 | 2 |
+| 縱橫家辯 Diplomat-Strategist Debate | 謀略 |  | rally | 2 | 2 |
+| 陰陽家占 Yin-Yang Divination | 玄術 |  | fire-attack | 3 | 0 |
+| 儒家禮治 Confucian Rule by Rites | 謀略 |  | rally | 2 | 2 |
+| 兵家詭道 Strategist Way of Deception | 謀略 |  | rally | 2 | 2 |
+| 戚家車營 Qi Jiguang's Cart Camp | 謀略 |  | rally | 2 | 2 |
+| 俞家狼筅 Yu Dayou's Wolf-Claw | 近戰 |  | charge | 1 | 2 |
+| 袁崇煥寧遠 Yuan Chonghuan at Ningyuan | 謀略 |  | rally | 2 | 2 |
+| 孫承宗關寧 Sun Chengzong's Guanning Line | 謀略 |  | rally | 2 | 2 |
+| 鄭成功收台 Zheng Chenggong Retakes Taiwan | 謀略 |  | rally | 2 | 2 |
+| 多爾袞入關 Dorgon Enters the Pass | 謀略 |  | rally | 2 | 2 |
+| 左宗棠新疆 Zuo Zongtang's Xinjiang Campaign | 謀略 |  | rally | 2 | 2 |
+| 林則徐禁煙 Lin Zexu's Anti-Opium Blockade | 謀略 |  | rally | 2 | 2 |
+| 捻軍騎襲 Nian Rebel Mounted Raid | 謀略 |  | rally | 2 | 2 |
+| 吳三桂引清 Wu Sangui Opens the Pass | 謀略 |  | rally | 2 | 2 |
+| 歸師勿遏 Don't Block a Retreating Army | 謀略 |  | rally | 2 | 2 |
+| 窮寇勿追 Don't Pursue a Desperate Foe | 近戰 |  | charge | 1 | 2 |
+| 圍師必闕 Encircling, Always Leave a Gap | 謀略 |  | rally | 2 | 2 |
+| 高陵勿向 Don't Attack Uphill | 謀略 |  | rally | 2 | 2 |
+| 背丘勿逆 Don't Fight with a Hill at Your Back | 近戰 |  | charge | 1 | 2 |
+| 餌兵勿食 Don't Take the Bait | 謀略 |  | rally | 2 | 2 |
+| 銳卒勿攻 Don't Attack the Elite Vanguard | 謀略 |  | rally | 2 | 2 |
+| 半成勿擊 Don't Strike a Half-Formed Army | 近戰 |  | charge | 1 | 2 |
+| 避實擊虛 Avoid Strength, Strike the Weak | 近戰 |  | charge | 1 | 2 |
+| 靜中取勝 Victory in Stillness | 擾敵 |  | confusion | 4 | 0 |
+| 示弱誘敵 Show Weakness to Lure | 擾敵 |  | confusion | 4 | 0 |
+| 孤狼戰術 Lone-Wolf Tactic | 近戰 |  | charge | 1 | 2 |
+| 桃園結義之力 Power of the Peach Garden Oath | 謀略 | ★ | rally | 2 | 2 |
+| 怒鞭督郵 Whip the Inspector (Zhang Fei) | 近戰 | ★ | charge | 1 | 2 |
+| 攜民渡江 Liu Bei Brings the People Across | 謀略 | ★ | rally | 2 | 2 |
+| 孫權射虎 Sun Quan Shoots the Tiger | 遠射 | ★ | rain-of-arrows | 4 | 1 |
+| 糜芳投吳 Mi Fang Defects to Wu | 謀略 |  | rally | 2 | 2 |
+| 魏延反骨 Wei Yan's Bone of Treason | 謀略 |  | rally | 2 | 2 |
+| 華容道義 Guan Yu Releases Cao at Huarong | 謀略 | ★ | rally | 2 | 2 |
+| 張飛粗中有細 Zhang Fei's Cunning Within Roughness | 謀略 |  | rally | 2 | 2 |
+| 八仙過海 Eight Immortals Cross the Sea | 謀略 |  | rally | 2 | 2 |
+| 鳳凰涅槃 Phoenix Reborn from Ashes | 謀略 |  | rally | 2 | 2 |
+| 神龍擺尾 Divine Dragon's Tail Sweep | 謀略 |  | rally | 2 | 2 |
+| 玄武龜甲 Black-Turtle Shell Defense | 謀略 |  | rally | 2 | 2 |
+| 匈奴突騎 Xiongnu Mounted Raid | 近戰 |  | charge | 1 | 2 |
+| 羌人騎射 Qiang Horse-Archery | 謀略 |  | rally | 2 | 2 |
+| 烏丸突騎陣 Wuhuan Mounted Vanguard Tactic | 謀略 |  | rally | 2 | 2 |
+| 山越伏擊 Shanyue Mountain Ambush | 謀略 |  | rally | 2 | 2 |
+| 烏戈藤甲陣 Wuge Rattan-Armor Tactic | 謀略 |  | rally | 2 | 2 |
+| 黃巾人海 Yellow-Turban Human Wave | 謀略 | ★ | rally | 2 | 2 |
+| 黑山賊蜂起 Black-Mountain Bandit Swarm | 謀略 | ★ | rally | 2 | 2 |
+| 水寇橫行 River Pirates Run Amok | 謀略 | ★ | rally | 2 | 2 |
+| 結拜兄弟 Sworn-Brother Pact | 謀略 | ★ | rally | 2 | 2 |
+| 揭竿而起 Raise the Banner of Rebellion | 謀略 | ★ | rally | 2 | 2 |
+| 雙槍流 Twin-Spear School | 近戰 | ★ | charge | 1 | 2 |
+| 長戟術 Long Halberd Art | 近戰 | ★ | charge | 1 | 2 |
+| 雙斧法 Twin-Axe Style | 近戰 | ★ | charge | 1 | 2 |
+| 短刀絕技 Short-Blade Mastery | 近戰 |  | charge | 1 | 2 |
+| 長鞭舞 Long-Whip Dance | 近戰 |  | charge | 1 | 2 |
+| 流星錘 Meteor Hammer | 近戰 | ★ | charge | 1 | 2 |
+| 暗器手裡劍 Hidden Weapons | 遠射 |  | rain-of-arrows | 4 | 1 |
+| 八卦掌 Eight-Trigram Palm | 近戰 |  | charge | 1 | 2 |
+| 鞭法十三式 Thirteen Whip Forms | 近戰 |  | charge | 1 | 2 |
+| 鐵砂掌 Iron-Sand Palm | 近戰 | ★ | charge | 1 | 2 |
+| 飛刀術 Flying Knife | 遠射 | ★ | rain-of-arrows | 4 | 1 |
+| 鴛鴦鉞 Mandarin-Duck Axes | 近戰 |  | charge | 1 | 2 |
+| 月牙鏟 Crescent-Moon Shovel | 謀略 |  | rally | 2 | 2 |
+| 護手鉤 Hand-Guard Hooks | 謀略 |  | rally | 2 | 2 |
+| 鐵琵琶 Iron Pipa (concealed weapon) | 謀略 |  | rally | 2 | 2 |
+| 易筋經 Yi Jin Jing | 謀略 | ★ | rally | 2 | 2 |
+| 洗髓經 Xi Sui Jing | 玄術 | ★ | fire-attack | 3 | 0 |
+| 九陰真經 Nine Yin Manual | 玄術 | ★ | fire-attack | 3 | 0 |
+| 九陽神功 Nine Yang Divine Skill | 玄術 | ★ | fire-attack | 3 | 0 |
+| 龜息神功 Turtle-Breath Mastery | 謀略 |  | rally | 2 | 2 |
+| 鐵布衫 Iron Shirt | 謀略 | ★ | rally | 2 | 2 |
+| 金鐘罩 Golden Bell | 謀略 | ★ | rally | 2 | 2 |
+| 大力金剛指 Vajra Finger | 謀略 | ★ | rally | 2 | 2 |
+| 鶴翔樁 Crane Stance | 近戰 |  | charge | 1 | 2 |
+| 童子功 Child Body Mastery | 近戰 |  | charge | 1 | 2 |
+| 凱撒越境 Caesar Crosses the Rubicon | 謀略 | ★ | rally | 2 | 2 |
+| 拿破崙包抄 Napoleonic Encirclement | 謀略 | ★ | rally | 2 | 2 |
+| 漢尼拔坎尼 Hannibal at Cannae | 謀略 | ★ | rally | 2 | 2 |
+| 馬其頓方陣 Macedonian Phalanx | 近戰 |  | charge | 1 | 2 |
+| 蒙古旋風 Mongol Whirlwind | 玄術 | ★ | fire-attack | 3 | 0 |
+| 維京突襲 Viking Raid | 近戰 |  | charge | 1 | 2 |
+| 羅馬軍團 Roman Legion | 近戰 |  | charge | 1 | 2 |
+| 英格蘭長弓 English Longbow | 遠射 |  | rain-of-arrows | 4 | 1 |
+| 希臘火 Greek Fire | 玄術 |  | fire-attack | 3 | 0 |
+| 斯巴達三百 Spartan 300 | 謀略 | ★ | rally | 2 | 2 |
+| 重甲鐵騎 Heavy Armored Cavalry | 近戰 |  | charge | 1 | 2 |
+| 輕騎突擊 Light Cavalry Charge | 近戰 |  | charge | 1 | 2 |
+| 神弓隊 Sniper-Bow Squad | 遠射 |  | rain-of-arrows | 4 | 1 |
+| 連弩車 Repeating-Crossbow Cart | 遠射 |  | rain-of-arrows | 4 | 1 |
+| 攻城塔陣 Siege-Tower Formation | 謀略 |  | rally | 2 | 2 |
+| 火攻船陣 Fire-Boat Fleet | 玄術 |  | fire-attack | 3 | 0 |
+| 鐵塔重步 Iron-Tower Heavy Infantry | 近戰 |  | charge | 1 | 2 |
+| 弓馬槍三段 Three-Stage Bow-Cav-Spear | 謀略 |  | rally | 2 | 2 |
+| 浪人遊俠 Wandering Swordsmen | 近戰 |  | charge | 1 | 2 |
+| 死士隊 Death Squad | 近戰 |  | charge | 1 | 2 |
+| 親衛精銳 Honor Guard Elite | 近戰 |  | charge | 1 | 2 |
+| 山民兵 Mountain Militia | 謀略 |  | rally | 2 | 2 |
+| 蕃漢兵 Mixed Han-Barbarian Force | 謀略 |  | rally | 2 | 2 |
+| 童子軍 Boy Soldiers | 謀略 |  | rally | 2 | 2 |
+| 老兵團 Veteran Cohort | 近戰 |  | charge | 1 | 2 |
+| 燒符引神 Burn Talisman, Summon Spirit | 玄術 |  | fire-attack | 3 | 0 |
+| 五雷轟頂 Five Thunder Strikes the Roof | 玄術 |  | fire-attack | 3 | 0 |
+| 攝魂奪魄 Soul-Snatching | 謀略 |  | rally | 2 | 2 |
+| 蠱毒之術 Gu Poison | 玄術 | ★ | fire-attack | 3 | 0 |
+| 木甲傀儡 Wooden Armor Puppet | 玄術 |  | fire-attack | 3 | 0 |
+| 反魂香 Reverse-Soul Incense | 玄術 |  | fire-attack | 3 | 0 |
+| 千里傳音 Thousand-Li Voice | 謀略 |  | rally | 2 | 2 |
+| 心電感應 Telepathic Bond | 謀略 |  | rally | 2 | 2 |
+| 風水佈陣 Geomantic Formation | 玄術 |  | fire-attack | 3 | 0 |
+| 茅山道術 Maoshan Daoist Rite | 玄術 | ★ | fire-attack | 3 | 0 |
+| 黨爭操控 Faction Manipulation | 謀略 | ★ | rally | 2 | 2 |
+| 攝政專權 Regent Seizes Power | 謀略 |  | rally | 2 | 2 |
+| 廢長立幼 Depose the Elder, Install the Young | 謀略 |  | rally | 2 | 2 |
+| 外戚干政 Imperial In-Laws Meddle | 謀略 | ★ | rally | 2 | 2 |
+| 宦官弄權 Eunuchs Hold the Power | 謀略 | ★ | rally | 2 | 2 |
+| 矯詔行事 Forge an Imperial Edict | 擾敵 |  | confusion | 4 | 0 |
+| 廷議辯論 Court Debate | 謀略 | ★ | rally | 2 | 2 |
+| 民眾請願 Popular Petition | 謀略 |  | rally | 2 | 2 |
+| 流言惑眾 Spread Rumors | 擾敵 |  | confusion | 4 | 0 |
+| 抹黑對手 Smear the Opponent | 擾敵 |  | confusion | 4 | 0 |
+| 王朗罵死諸葛 Zhuge Curses Wang Lang to Death | 謀略 |  | rally | 2 | 2 |
+| 龐德抬棺 Pang De Brings His Own Coffin | 擾敵 |  | confusion | 4 | 0 |
+| 諸葛六出祁山 Zhuge Six Times to Mount Qi | 謀略 | ★ | rally | 2 | 2 |
+| 司馬八陣 Sima Yi's Eight-Array Counter | 謀略 | ★ | rally | 2 | 2 |
+| 樂進偷襲 Le Jin Night Raid | 擾敵 |  | confusion | 4 | 0 |
+| 張遼威震逍遙津 Zhang Liao Shakes Xiaoyao Crossing | 謀略 | ★ | rally | 2 | 2 |
+| 甘寧百騎劫營 Gan Ning's 100-Horse Raid | 擾敵 | ★ | confusion | 4 | 0 |
+| 太史慈鬥孫策 Tai Shi Ci Duels Sun Ce | 謀略 | ★ | rally | 2 | 2 |
+| 趙雲一身是膽 Zhao Yun Is Made of Courage | 近戰 | ★ | charge | 1 | 2 |
+| 錦袍韓遂 Ma Chao Brocade Robe vs Han Sui | 謀略 |  | rally | 2 | 2 |
+| 黃蓋詐降 Huang Gai's False Surrender | 擾敵 |  | confusion | 4 | 0 |
+| 周倉扛刀 Zhou Cang Bears the Blade | 近戰 |  | charge | 1 | 2 |
+| 烏巢糧倉 Burn the Wuchao Granary | 謀略 | ★ | rally | 2 | 2 |
+| 曹操過孟津 Cao Cao Crosses Mengjin | 謀略 |  | rally | 2 | 2 |
+| 呂布轅門射戟 Lu Bu Splits a Halberd at the Gate | 謀略 | ★ | rally | 2 | 2 |
+| 親軍鐵衛 Iron-Sworn Personal Guard | 近戰 |  | charge | 1 | 2 |
+| 弩砲陣地 Ballista Emplacement | 遠射 |  | rain-of-arrows | 4 | 1 |
+| 鳥羽箭隊 Feathered-Arrow Squad | 遠射 |  | rain-of-arrows | 4 | 1 |
+| 鎖子甲步兵 Chain-Mail Infantry | 近戰 |  | charge | 1 | 2 |
+| 木牛流馬改 Wooden-Ox Mk II | 謀略 |  | rally | 2 | 2 |
+| 諸葛弩改 Zhuge Crossbow Mk II | 遠射 |  | rain-of-arrows | 4 | 1 |
+| 連弩萬箭 Ten-Thousand Arrows | 遠射 |  | rain-of-arrows | 4 | 1 |
+| 連環機關 Chained War Machines | 謀略 |  | rally | 2 | 2 |
+| 神火飛鴉 Divine Fire Crow | 玄術 |  | fire-attack | 3 | 0 |
+| 一窩蜂 Hornet's Nest Rocket Battery | 謀略 |  | rally | 2 | 2 |
+| 神火鴉 Sky-Fire Crow Rocket | 玄術 |  | fire-attack | 3 | 0 |
+| 萬人敵 Ten-Thousand-Man Slayer Cannon | 遠射 |  | rain-of-arrows | 4 | 1 |
+| 紅夷大炮 Red-Barbarian Cannon | 遠射 |  | rain-of-arrows | 4 | 1 |
+| 鐵車連營 Iron-Cart Linked Camp | 謀略 |  | rally | 2 | 2 |
+| 猛火油櫃 Naphtha Flame-Thrower | 謀略 |  | rally | 2 | 2 |
+| 涿鹿之戰 Battle of Zhuolu | 謀略 |  | rally | 2 | 2 |
+| 大澤鄉起義 Daze Uprising | 謀略 |  | rally | 2 | 2 |
+| 楚漢相爭 Chu-Han Contention | 謀略 |  | rally | 2 | 2 |
+| 漠北之戰 Battle of Mobei | 近戰 |  | charge | 1 | 2 |
+| 淝水之戰 Battle of Feishui | 謀略 |  | rally | 2 | 2 |
+| 隋滅陳 Sui Conquers Chen | 謀略 |  | rally | 2 | 2 |
+| 玄武門之變 Xuanwumen Incident | 謀略 |  | rally | 2 | 2 |
+| 安史之亂 An-Shi Rebellion | 謀略 |  | rally | 2 | 2 |
+| 黃巢之亂 Huang Chao Rebellion | 謀略 |  | rally | 2 | 2 |
+| 澶淵之盟 Treaty of Chanyuan | 謀略 |  | rally | 2 | 2 |
+| 靖康之恥 Jingkang Incident | 謀略 |  | rally | 2 | 2 |
+| 釣魚城 Diaoyu Castle | 謀略 |  | rally | 2 | 2 |
+| 蒙古滅宋 Mongol Destroys Song | 謀略 |  | rally | 2 | 2 |
+| 鄱陽湖 Battle of Lake Poyang | 謀略 |  | rally | 2 | 2 |
+| 土木堡 Tumu Crisis | 謀略 |  | rally | 2 | 2 |
+| 北京保衛戰 Defense of Beijing | 謀略 |  | rally | 2 | 2 |
+| 萬曆三大征 Wanli's Three Campaigns | 謀略 |  | rally | 2 | 2 |
+| 薩爾滸 Battle of Sarhu | 謀略 |  | rally | 2 | 2 |
+| 寧錦大捷 Ningjin Victory | 謀略 |  | rally | 2 | 2 |
+| 揚州十日 Yangzhou Ten Days | 謀略 |  | rally | 2 | 2 |
+| 嘉定三屠 Three Massacres at Jiading | 謀略 |  | rally | 2 | 2 |
+| 平定三藩 Pacify Three Feudatories | 謀略 |  | rally | 2 | 2 |
+| 雅克薩 Battle of Yaksa | 謀略 |  | rally | 2 | 2 |
+| 烏蘭布通 Battle of Ulan Butong | 謀略 |  | rally | 2 | 2 |
+| 孟津渡 Cross at Mengjin | 謀略 |  | rally | 2 | 2 |
+| 馬尾坡 Slope at Mawei | 謀略 |  | rally | 2 | 2 |
+| 定軍山 Mount Dingjun | 謀略 | ★ | rally | 2 | 2 |
+| 街亭之失 Loss of Jieting | 謀略 |  | rally | 2 | 2 |
+| 五丈原 Wuzhang Plain | 謀略 |  | rally | 2 | 2 |
+| 金城守 Defense of Jincheng | 謀略 |  | rally | 2 | 2 |
+| 上方谷 Shangfang Valley | 謀略 |  | rally | 2 | 2 |
+| 夷陵火 Yiling Fire | 玄術 |  | fire-attack | 3 | 0 |
+| 合肥守 Defense of Hefei | 謀略 |  | rally | 2 | 2 |
+| 葭萌關 Jiameng Pass | 謀略 |  | rally | 2 | 2 |
+| 下邳水淹 Flood Xiapi | 謀略 |  | rally | 2 | 2 |
+| 荊州失 Fall of Jingzhou | 謀略 |  | rally | 2 | 2 |
+| 樊城水淹 Flood Fancheng | 謀略 |  | rally | 2 | 2 |
+| 長坂橋 Changban Bridge | 謀略 | ★ | rally | 2 | 2 |
+| 官渡糧 Guandu Granary | 謀略 |  | rally | 2 | 2 |
+| 赤壁東風 Red Cliffs East Wind | 玄術 |  | fire-attack | 3 | 0 |
+| 韓信點兵 Han Xin Counts the Troops | 謀略 | ★ | rally | 2 | 2 |
+| 項羽烏騅 Xiang Yu's Wuzhui Horse | 謀略 | ★ | rally | 2 | 2 |
+| 范蠡退隱 Fan Li Retires | 謀略 |  | rally | 2 | 2 |
+| 廉頗負荊 Lian Po Bears Thorns | 謀略 |  | rally | 2 | 2 |
+| 趙奢戰韓 Zhao She vs Han | 謀略 |  | rally | 2 | 2 |
+| 王翦掃六合 Wang Jian Sweeps Six States | 謀略 |  | rally | 2 | 2 |
+| 周亞夫細柳 Zhou Yafu at Xiliu | 謀略 |  | rally | 2 | 2 |
+| 衛青漠北 Wei Qing North | 謀略 |  | rally | 2 | 2 |
+| 班超遠征 Ban Chao Far West | 謀略 |  | rally | 2 | 2 |
+| 馬援裹屍 Ma Yuan Wrapped in Horse-Hide | 謀略 |  | rally | 2 | 2 |
+| 鄧禹中興 Deng Yu Restores Han | 謀略 |  | rally | 2 | 2 |
+| 寇恂河內 Kou Xun at Henei | 謀略 |  | rally | 2 | 2 |
+| 馮異車戰 Feng Yi Cart War | 謀略 |  | rally | 2 | 2 |
+| 杜預破竹 Du Yu Splits Bamboo | 謀略 |  | rally | 2 | 2 |
+| 謝玄八千 Xie Xuan's 8000 | 謀略 |  | rally | 2 | 2 |
+| 劉裕北伐 Liu Yu Northern Campaign | 謀略 |  | rally | 2 | 2 |
+| 韋叡梁將 Wei Rui of Liang | 謀略 |  | rally | 2 | 2 |
+| 楊素破陳 Yang Su Breaks Chen | 謀略 |  | rally | 2 | 2 |
+| 韓擒虎渡江 Han Qinhu Crosses the River | 謀略 |  | rally | 2 | 2 |
+| 李靖破突厥 Li Jing Crushes Turks | 謀略 |  | rally | 2 | 2 |
+| 郭子儀單騎 Guo Ziyi Rides Alone | 謀略 |  | rally | 2 | 2 |
+| 岳飛槍法 Yue Fei's Spear Art | 謀略 |  | rally | 2 | 2 |
+| 韓世忠水戰 Han Shizhong Naval Victory | 謀略 |  | rally | 2 | 2 |
+| 吳玠和尚原 Wu Jie at Heshangyuan | 謀略 |  | rally | 2 | 2 |
+| 孟珙守城 Meng Gong Defends | 謀略 |  | rally | 2 | 2 |
+| 張世傑海戰 Zhang Shijie Naval | 謀略 |  | rally | 2 | 2 |
+| 戚繼光抗倭 Qi Jiguang vs Wokou | 謀略 |  | rally | 2 | 2 |
+| 俞大猷福建 Yu Dayou Fujian | 謀略 |  | rally | 2 | 2 |
+| 李如松援朝 Li Rusong Aids Korea | 謀略 |  | rally | 2 | 2 |
+| 宋應昌朝鮮 Song Yingchang in Korea | 謀略 |  | rally | 2 | 2 |
+| 毛文龍皮島 Mao Wenlong at Pidao | 謀略 |  | rally | 2 | 2 |
+| 盧象升戰清 Lu Xiangsheng vs Qing | 謀略 |  | rally | 2 | 2 |
+| 孫傳庭潼關 Sun Chuanting at Tongguan | 謀略 |  | rally | 2 | 2 |
+| 史可法揚州 Shi Kefa Yangzhou | 謀略 |  | rally | 2 | 2 |
+| 鄭芝龍海 Zheng Zhilong Sea Lord | 謀略 |  | rally | 2 | 2 |
+| 劉銘傳台灣 Liu Mingchuan Taiwan | 謀略 |  | rally | 2 | 2 |
+| 馮子材鎮南關 Feng Zicai at Zhennan | 謀略 |  | rally | 2 | 2 |
+| 聶士成天津 Nie Shicheng Tianjin | 謀略 |  | rally | 2 | 2 |
+| 段祺瑞皖派 Duan Qirui Anhui Clique | 謀略 |  | rally | 2 | 2 |
+| 馮玉祥西安 Feng Yuxiang's Xi'an | 謀略 |  | rally | 2 | 2 |
+| 晉派兵法 Jin School of War | 謀略 |  | rally | 2 | 2 |
+| 漢派兵法 Han School | 謀略 |  | rally | 2 | 2 |
+| 吳派兵法 Wu School | 謀略 |  | rally | 2 | 2 |
+| 蜀派兵法 Shu School | 謀略 |  | rally | 2 | 2 |
+| 魏派兵法 Wei School | 謀略 |  | rally | 2 | 2 |
+| 越派兵法 Yue School | 謀略 |  | rally | 2 | 2 |
+| 秦派兵法 Qin School | 謀略 |  | rally | 2 | 2 |
+| 楚派兵法 Chu School | 謀略 |  | rally | 2 | 2 |
+| 齊派兵法 Qi School | 謀略 |  | rally | 2 | 2 |
+| 燕派兵法 Yan School | 謀略 |  | rally | 2 | 2 |
+| 蒙古派 Mongol School | 謀略 |  | rally | 2 | 2 |
+| 波斯派 Persian School | 謀略 |  | rally | 2 | 2 |
+| 日本派 Japanese School | 謀略 |  | rally | 2 | 2 |
+| 朝鮮派 Korean School | 謀略 |  | rally | 2 | 2 |
+| 天竺派 Indian School | 謀略 |  | rally | 2 | 2 |
+| 吐蕃派 Tibetan School | 謀略 |  | rally | 2 | 2 |
+| 滿洲派 Manchu School | 謀略 |  | rally | 2 | 2 |
+| 西夏派 Tangut School | 謀略 |  | rally | 2 | 2 |
+| 女真派 Jurchen School | 謀略 |  | rally | 2 | 2 |
+| 契丹派 Khitan School | 謀略 |  | rally | 2 | 2 |
+| 呂布飛將 Lu Bu Flying General | 謀略 | ★ | rally | 2 | 2 |
+| 關羽青龍 Guan Yu's Green Dragon | 謀略 | ★ | rally | 2 | 2 |
+| 張飛吼喝 Zhang Fei's Roar | 謀略 | ★ | rally | 2 | 2 |
+| 趙雲幻影 Zhao Yun's Shadow | 近戰 | ★ | charge | 1 | 2 |
+| 馬超銀槍 Ma Chao's Silver Spear | 近戰 | ★ | charge | 1 | 2 |
+| 黃忠寶弓 Huang Zhong's Treasured Bow | 遠射 | ★ | rain-of-arrows | 4 | 1 |
+| 魏延突進 Wei Yan's Charge | 近戰 |  | charge | 1 | 2 |
+| 姜維傳人 Jiang Wei the Disciple | 謀略 |  | rally | 2 | 2 |
+| 曹操詩才 Cao Cao's Poetry | 謀略 | ★ | rally | 2 | 2 |
+| 夏侯惇獨眼 Xiahou Dun's Eye | 謀略 |  | rally | 2 | 2 |
+| 典韋雙戟 Dian Wei's Twin Halberds | 近戰 | ★ | charge | 1 | 2 |
+| 許褚虎癡 Xu Chu the Tiger | 近戰 | ★ | charge | 1 | 2 |
+| 張郃機動 Zhang He's Mobility | 謀略 |  | rally | 2 | 2 |
+| 張遼伏擊 Zhang Liao Ambush | 謀略 |  | rally | 2 | 2 |
+| 龐統假寐 Pang Tong Plays Drunk | 謀略 |  | rally | 2 | 2 |
+| 司馬龜縮 Sima Yi Turtles | 謀略 | ★ | rally | 2 | 2 |
+| 孫策小霸王 Sun Ce Little Conqueror | 近戰 | ★ | charge | 1 | 2 |
+| 孫權碧眼 Sun Quan Blue-Eyed | 謀略 | ★ | rally | 2 | 2 |
+| 周郎曲誤 Zhou Yu's Music | 謀略 | ★ | rally | 2 | 2 |
+| 呂蒙刮目 Lu Meng Studies | 謀略 | ★ | rally | 2 | 2 |
+| 陸遜火攻 Lu Xun's Fire | 玄術 | ★ | fire-attack | 3 | 0 |
+| 太史慈射箭 Tai Shi Ci Archer | 謀略 |  | rally | 2 | 2 |
+| 黃蓋老將 Huang Gai Old General | 謀略 |  | rally | 2 | 2 |
+| 甘寧鈴聲 Gan Ning's Bell | 謀略 | ★ | rally | 2 | 2 |
+| 諸葛羽扇 Zhuge's Feather Fan | 謀略 |  | rally | 2 | 2 |
+| 龐統連環 Pang Tong's Chain | 謀略 | ★ | rally | 2 | 2 |
+| 法正謀略 Fa Zheng's Strategy | 謀略 |  | rally | 2 | 2 |
+| 黃忠老當益壯 Huang Zhong Stronger With Age | 遠射 | ★ | rain-of-arrows | 4 | 1 |
+| 蔣濟忠誠 Jiang Ji's Loyalty | 謀略 |  | rally | 2 | 2 |
+| 文聘盾陣 Wen Pin's Shield | 謀略 |  | rally | 2 | 2 |
+| 樂進輕兵 Le Jin Light Infantry | 謀略 |  | rally | 2 | 2 |
+| 李典儒將 Li Dian Scholar-General | 謀略 |  | rally | 2 | 2 |
+| 劉備淚水 Liu Bei's Tears | 謀略 | ★ | rally | 2 | 2 |
+| 孫堅猛虎 Sun Jian the Tiger | 近戰 | ★ | charge | 1 | 2 |
+| 袁紹貴族 Yuan Shao Aristocrat | 謀略 | ★ | rally | 2 | 2 |
+| 袁術玉璽 Yuan Shu Imperial Seal | 玄術 | ★ | fire-attack | 3 | 0 |
+| 公孫瓚白馬 Gongsun Zan White Horse | 謀略 | ★ | rally | 2 | 2 |
+| 董卓暴政 Dong Zhuo Tyrant | 謀略 | ★ | rally | 2 | 2 |
+| 王允連環 Wang Yun's Plot | 謀略 | ★ | rally | 2 | 2 |
+| 曹植七步 Cao Zhi Seven Steps | 謀略 | ★ | rally | 2 | 2 |
+| 地道戰 Tunnel Warfare | 謀略 |  | rally | 2 | 2 |
+| 浮橋 Pontoon Bridge | 謀略 |  | rally | 2 | 2 |
+| 挖牆 Mining Walls | 謀略 |  | rally | 2 | 2 |
+| 城門樓 Gate Tower | 謀略 |  | rally | 2 | 2 |
+| 箭樓 Arrow Tower | 遠射 |  | rain-of-arrows | 4 | 1 |
+| 敵樓 Wall-Corner Bastion | 謀略 |  | rally | 2 | 2 |
+| 深溝 Deep Moat | 謀略 |  | rally | 2 | 2 |
+| 蒺藜 Caltrops | 謀略 |  | rally | 2 | 2 |
+| 弩樓 Ballista Tower | 遠射 |  | rain-of-arrows | 4 | 1 |
+| 火箭樓 Fire-Arrow Tower | 玄術 |  | fire-attack | 3 | 0 |
+| 熱油鍋 Boiling Oil | 謀略 |  | rally | 2 | 2 |
+| 滾木 Rolling Logs | 謀略 |  | rally | 2 | 2 |
+| 刺穴 Spike Pit | 謀略 |  | rally | 2 | 2 |
+| 鐵蒺藜 Iron Stakes | 謀略 |  | rally | 2 | 2 |
+| 望樓 Observation Tower | 謀略 |  | rally | 2 | 2 |
+| 偽書信 Forged Letter | 擾敵 |  | confusion | 4 | 0 |
+| 潛伏間諜 Planted Spy | 擾敵 |  | confusion | 4 | 0 |
+| 反間之計 Reverse-Spy Plot | 擾敵 |  | confusion | 4 | 0 |
+| 策反 Turn the Defector | 擾敵 |  | confusion | 4 | 0 |
+| 士氣崩潰 Morale Collapse | 謀略 |  | rally | 2 | 2 |
+| 焚旗 Burn the Banner | 玄術 |  | fire-attack | 3 | 0 |
+| 指名點殺 Call Names to Demoralize | 謀略 |  | rally | 2 | 2 |
+| 處決恐嚇 Mass Execution | 謀略 |  | rally | 2 | 2 |
+| 示恩懷柔 Show Mercy | 謀略 |  | rally | 2 | 2 |
+| 懸首示眾 Display Hostage | 謀略 |  | rally | 2 | 2 |
+| 設宴款軍 Public Feast | 謀略 |  | rally | 2 | 2 |
+| 謠言叛亂 Rumor of Defection | 擾敵 |  | confusion | 4 | 0 |
+| 羞辱降將 Shame the Defeated | 謀略 |  | rally | 2 | 2 |
+| 辱其先祖 Mock Their Ancestors | 謀略 |  | rally | 2 | 2 |
+| 家眷威脅 Threaten the Family | 謀略 |  | rally | 2 | 2 |
+| 鹽鐵專營 Salt Monopoly | 謀略 | ★ | rally | 2 | 2 |
+| 鐵專營 Iron Monopoly | 謀略 |  | rally | 2 | 2 |
+| 茶馬貿易 Tea-Horse Trade | 謀略 | ★ | rally | 2 | 2 |
+| 絲綢之路 Silk Road | 謀略 | ★ | rally | 2 | 2 |
+| 鑄幣 Mint Coinage | 謀略 |  | rally | 2 | 2 |
+| 輕徭薄賦 Tax Cut | 謀略 | ★ | rally | 2 | 2 |
+| 均田 Land Equalization | 謀略 |  | rally | 2 | 2 |
+| 商稅 Merchant Tax | 謀略 |  | rally | 2 | 2 |
+| 朝貢 Tribute System | 謀略 |  | rally | 2 | 2 |
+| 偽造錢幣 Forge Currency | 擾敵 |  | confusion | 4 | 0 |
+| 間諜網 Spy Network | 擾敵 |  | confusion | 4 | 0 |
+| 雙面間諜 Double Agent | 謀略 |  | rally | 2 | 2 |
+| 潛伏細胞 Sleeper Cell | 擾敵 |  | confusion | 4 | 0 |
+| 死信箱 Dead Drop | 謀略 |  | rally | 2 | 2 |
+| 假降 Fake Defector | 擾敵 |  | confusion | 4 | 0 |
+| 宮廷賄賂 Court Bribery | 擾敵 |  | confusion | 4 | 0 |
+| 侍女間諜 Maid Spy | 擾敵 |  | confusion | 4 | 0 |
+| 截獲書信 Intercept Letters | 擾敵 |  | confusion | 4 | 0 |
+| 信號旗 Signal Flags | 謀略 |  | rally | 2 | 2 |
+| 信鴿 Carrier Pigeon | 謀略 |  | rally | 2 | 2 |
+| 孫策鏡破 Sun Ce Mirror Break | 玄術 |  | fire-attack | 3 | 0 |
+| 曹叡奢華 Cao Rui Luxury | 謀略 | ★ | rally | 2 | 2 |
+| 劉禪庸主 Liu Shan Mediocre Lord | 謀略 | ★ | rally | 2 | 2 |
+| 大喬聯姻 Da Qiao Marriage | 謀略 | ★ | rally | 2 | 2 |
+| 董卓肥油 Dong Zhuo's Fat | 謀略 | ★ | rally | 2 | 2 |
+| 盧植師教 Lu Zhi Teaches | 謀略 | ★ | rally | 2 | 2 |
+| 蔡邕焦尾 Cai Yong's Burnt-Tail Lute | 謀略 | ★ | rally | 2 | 2 |
+| 禰衡擊鼓 Mi Heng Drums | 謀略 | ★ | rally | 2 | 2 |
+| 張角黃天 Zhang Jiao Yellow Heaven | 謀略 | ★ | rally | 2 | 2 |
+| 張魯五斗 Zhang Lu Five Pecks | 謀略 | ★ | rally | 2 | 2 |
 
 ### 技能 Skills(30)
 

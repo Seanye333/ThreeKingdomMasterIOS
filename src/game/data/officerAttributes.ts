@@ -1262,7 +1262,7 @@ export interface TacticBonus {
 const ZERO_BONUS: TacticBonus = { war: 0, leadership: 0, intelligence: 0, politics: 0, charisma: 0 };
 
 /** Category-based default bonus — applied to every tactic by category. */
-const CATEGORY_BONUS: Record<TacticCategory, TacticBonus> = {
+export const CATEGORY_BONUS: Record<TacticCategory, TacticBonus> = {
   melee:    { war: 2, leadership: 1, intelligence: 0, politics: 0, charisma: 0 },
   ranged:   { war: 1, leadership: 1, intelligence: 1, politics: 0, charisma: 0 },
   mystic:   { war: 0, leadership: 0, intelligence: 3, politics: 0, charisma: 1 },
