@@ -264,6 +264,29 @@ export function battleGroundAt(x: number, y: number): BattleGround {
   return 'plain';
 }
 
+/** Real forest regions (geo-anchored) — so a battlefield's tree density
+ *  reflects WHERE forests actually are (江南/楚/蜀/黔桂/閩贛/豫南), not a
+ *  crude latitude band. Returns 0 (open ground) … 1 (deep forest). */
+const FOREST_REGIONS: Array<{ lon: number; lat: number; rLon: number; rLat: number }> = [
+  { lon: 114, lat: 28.5, rLon: 4.0, rLat: 2.0 },   // 江南
+  { lon: 112, lat: 31.0, rLon: 2.5, rLat: 1.2 },   // 楚地(荊北)
+  { lon: 105.5, lat: 30.5, rLon: 2.0, rLat: 1.5 }, // 蜀中
+  { lon: 109, lat: 25.5, rLon: 3.0, rLat: 2.0 },   // 黔桂
+  { lon: 117, lat: 27, rLon: 1.5, rLat: 2.5 },     // 閩贛(武夷)
+  { lon: 115, lat: 32.5, rLon: 2.5, rLat: 1.2 },   // 豫南
+];
+const DEG_LAT_TO_PX = MAP_H / GEO_LAT_SPAN;
+export function forestDensityAt(x: number, y: number): number {
+  let best = 0;
+  for (const f of FOREST_REGIONS) {
+    const [cx, cy] = geoToPixel(f.lon, f.lat);
+    const dx = (x - cx) / (f.rLon * DEG_TO_PX);
+    const dy = (y - cy) / (f.rLat * DEG_LAT_TO_PX);
+    best = Math.max(best, 1 - Math.hypot(dx, dy));
+  }
+  return Math.max(0, best);
+}
+
 /**
  * Is this map point close enough to a river (or lake) for water-works —
  * gates the 水攻 (dike-breaking flood) siege option: you can only drown

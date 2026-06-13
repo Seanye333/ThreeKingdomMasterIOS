@@ -15,7 +15,7 @@
  */
 import type { TerrainKind, TacticalTile } from '../types';
 import type { Terrain } from '../data/cities';
-import { battleGroundAt, isFrozenWater, WORLD_SCALE } from '../data/geography';
+import { battleGroundAt, isFrozenWater, forestDensityAt, WORLD_SCALE } from '../data/geography';
 
 /**
  * Real-geography placement of a battle on the strategic map — when
@@ -146,10 +146,6 @@ function generateRealTerrain(
   const midRow = Math.floor(height / 2);
   const ux = Math.cos(geo.bearing), uy = Math.sin(geo.bearing);
   const vx = -uy, vy = ux;
-  // Latitude-band forest probability (no real forest layer strategically):
-  // sparse north, mild centre, lush 江南/岭南.
-  const forestP = (my: number) => (my < 250 * WORLD_SCALE ? 0.06 : my < 460 * WORLD_SCALE ? 0.10 : 0.18);
-
   const tiles: TacticalTile[] = [];
   for (let row = 0; row < height; row++) {
     for (let col = 0; col < width; col++) {
@@ -167,10 +163,12 @@ function generateRealTerrain(
       else if (g === 'mountain') terrain = 'mountain';
       else if (g === 'hill') terrain = rng() < 0.7 ? 'hill' : 'mountain';
       else {
-        // Open ground — sprinkle latitude-themed forest, light hills.
+        // Open ground — forest density follows the REAL region (lush in
+        // 江南/楚/蜀, sparse on the northern plains), plus a few light hills.
         const r = rng();
-        if (r < forestP(my)) terrain = 'forest';
-        else if (r < forestP(my) + 0.04) terrain = 'hill';
+        const fp = 0.05 + forestDensityAt(mx, my) * 0.5;   // 5% baseline … 55% in deep forest
+        if (r < fp) terrain = 'forest';
+        else if (r < fp + 0.04) terrain = 'hill';
       }
       tiles.push({ coord: { col, row }, terrain });
     }
