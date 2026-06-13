@@ -49,6 +49,8 @@ export interface ResolutionInput {
   recruitBonusSeasons?: Record<EntityId, { multiplier: number; seasonsLeft: number }>;
   /** Strategic-map installations (箭樓/投石臺/陣/防壁) that act on passing armies. */
   forts?: Record<EntityId, Fort>;
+  /** 野外據點 — a ford (渡口/津) held by a hostile force stalls crossings. */
+  sites?: Record<EntityId, import('../types').WildSite>;
   /** City buildings — disaster works mitigate the event rolls. */
   buildings?: import('../types').Building[];
   rng?: () => number;
@@ -489,8 +491,12 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   //   防壁 (block) stalls hostile columns in transit for a season.
   const blockedOfficers = new Set<EntityId>();
   const facilities = Object.values(input.forts ?? {}).filter((f) => f.facility && f.ownerForceId);
+  // 渡口扼守 — a ford held by a force hostile to the marching column stalls
+  // its crossing (same 50%/tick stall as a 防壁, applied near the ford).
+  const hostileFords = Object.values(input.sites ?? {}).filter((s) => s.subtype === 'ford' && s.ownerForceId);
+  const FORD_BLOCK_RANGE = 18 * WORLD_SCALE;
   const pf = input.playerForceId ?? null;
-  if (facilities.length > 0) {
+  if (facilities.length > 0 || hostileFords.length > 0) {
     for (const cmd of allMarches) {
       if (cancelledMarchOfficers.has(cmd.officerId) || deferredOfficers.has(cmd.officerId)) continue;
       const force = officers[cmd.officerId]?.forceId;
@@ -499,6 +505,19 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       if (!pos) continue;
       let dmg = 0, heal = 0, blocked = false;
       let byPlayer = false; // a player-owned facility contributed damage/block
+      let fordBlocked = false; // distinct messaging for a contested crossing
+      let fordName: { en: string; zh: string } | null = null;
+      for (const fd of hostileFords) {
+        const [fx, fy] = geoToPixel(fd.coords.lon, fd.coords.lat);
+        if (Math.hypot(pos.x - fx, pos.y - fy) > FORD_BLOCK_RANGE) continue;
+        if (!isHostilePermitted(input.diplomacy, fd.ownerForceId!, force)) continue;
+        if ((input.rng ?? Math.random)() < 0.5) {
+          blocked = true;
+          fordBlocked = true;
+          fordName = fd.name;
+          if (fd.ownerForceId === pf) byPlayer = true;
+        }
+      }
       for (const f of facilities) {
         const def = FACILITY_DEFS[f.facility!];
         const [fx, fy] = geoToPixel(f.coords.lon, f.coords.lat);
@@ -538,12 +557,20 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         }
         if (blocked && force === pf) {
           entries.push({ cityId: null, kind: 'command-failure',
-            text: `${nm.en}'s march was stalled half a month by an enemy barricade.`,
-            textZh: `${nm.zh}行軍為敵防壁所阻，滯留半月。` });
+            text: fordBlocked
+              ? `${nm.en}'s crossing at ${fordName?.en ?? 'a ford'} was held off by the enemy — stalled half a month.`
+              : `${nm.en}'s march was stalled half a month by an enemy barricade.`,
+            textZh: fordBlocked
+              ? `${nm.zh}渡${fordName?.zh ?? '津'}為敵所扼，滯留半月。`
+              : `${nm.zh}行軍為敵防壁所阻，滯留半月。` });
         } else if (blocked && byPlayer) {
           entries.push({ cityId: null, kind: 'command-success',
-            text: `Your barricade stalled ${nm.en}'s march half a month.`,
-            textZh: `我軍防壁攔阻${nm.zh}之師，滯其半月。` });
+            text: fordBlocked
+              ? `Your hold on ${fordName?.en ?? 'the ford'} stalled ${nm.en}'s crossing half a month.`
+              : `Your barricade stalled ${nm.en}'s march half a month.`,
+            textZh: fordBlocked
+              ? `我軍扼守${fordName?.zh ?? '津渡'}，阻${nm.zh}半月不得渡。`
+              : `我軍防壁攔阻${nm.zh}之師，滯其半月。` });
         }
       }
       if (blocked) blockedOfficers.add(cmd.officerId);

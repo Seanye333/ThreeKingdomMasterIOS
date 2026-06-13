@@ -1523,6 +1523,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           recruitBonusSeasons: state.recruitBonusSeasons,
           weather: state.weather,
           forts: state.forts,
+          sites: state.sites,
           seasonBoundary,
         });
         // Prepend AI diplomatic announcements to the report.
