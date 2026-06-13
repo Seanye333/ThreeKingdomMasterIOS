@@ -20,7 +20,7 @@
 | 8 | [事件・天命・異族・宗教](#第八章-事件天命異族宗教) | events, historicalEvents, customEvents, factionEvents, religion, tribes | ✅ |
 | 9 | [元遊戲・收藏・分享](#第九章-元遊戲收藏分享) | achievements, deedTitles, dailyChallenge, leaderboard, mods, powerHistory, historyBook, sound | ✅ |
 | 10 | [AI](#第十章-ai) | ai, aiBuild, aiCourt, aiAppointments | ✅ |
-| 11 | [核心流程・勝敗・培訓・其他模式](#第十一章-核心流程勝敗培訓其他模式) | resolution, endings, training, succession, objectives, hotSeat, spectator, heroMode, customOfficer, eventEditor | ✅ |
+| 11 | [核心流程・勝敗・培訓・其他模式](#第十一章-核心流程勝敗培訓其他模式) | resolution, endings, training, succession, objectives, hotSeat, spectator, heroMode, customOfficer, eventEditor, randomScenario, dynasties | ✅ |
 | 圖 | [流程圖 Flowcharts](#流程圖-flowcharts) | 核心循環視覺化:結算順序 / 戰鬥管線 / 招攬升級 / 培訓 / 金收公式 | ✅ |
 
 ---
@@ -473,6 +473,8 @@
 - **英雄模式挑戰**:限定開局 + 目標(見附錄 E),跨戰役保存最佳。
 - **自定義武將**:標題畫面捏人(名/字/五圍/性格/頭像),塞進任意勢力或在野。
 - **事件編輯器**:自製事件,走 customEvents 管線。
+- **隨機劇本**(randomScenario.ts):程序生成全新劇本 —— 設勢力數(2~10)與年份,K-means 依座標把城池分成 N 群,再按武將的歷史忠誠「最佳歸屬」分配到各勢力;勢力名取自 楚齊燕魏韓趙宋梁陳蜀。給隨機種子(mulberry32)可復現同一局。產物與手工劇本同構,直接可玩。
+- **歷史武將池 / 王朝**(dynasties.ts,15 朝):開局可勾選把三國以外的朝代名臣猛將(春秋→清,如戰國、楚漢、唐、宋、明)一併投入人才池;三國為預設、不在勾選清單。各朝以年代色點標記,讓武將跨越八百年同台。
 - **剧本目标 objectives.ts**:每個劇本有主目標(ObjectivePanel 顯示進度)。
 
 ---
