@@ -7,6 +7,8 @@ import type {
   FacilityKind,
   Force,
   Fort,
+  Officer,
+  Port,
   ReportEntry,
   RulerPersonality,
   WildSite,
@@ -15,6 +17,10 @@ import { BUILDING_DEFS_BY_ID } from '../data/buildings';
 import { FACILITY_DEFS, isHostilePermitted } from '../types';
 import { CITY_GEO_OVERRIDES, cityPos } from '../data/cityGeo';
 import { geoToPixel, WORLD_SCALE } from '../data/geography';
+import { TRIBES } from '../data/tribes';
+import { resolveTribePunitive } from './tribes';
+import { SCENIC_SITES, rollHermitRecruit } from '../data/scenicSites';
+import { portUpgradeCost, PORT_MAX_NAVAL_TIER } from '../data/ships';
 
 /**
  * AI building priorities per ruler personality. The list is consulted top-down;
@@ -338,4 +344,164 @@ export function planAISiteSeizures(ctx: {
   }
 
   return { cities, sites, entries };
+}
+
+// ─── AI 邊功 — frontier exploits: 訪賢 / 征討異族 / 擴建船塢 ─────────────────
+// Parity with the player's new tools. Each AI force may, once per season:
+//   訪賢 — court a reclusive worthy at a reachable 名所;
+//   征討 — punish a restless border tribe (and maybe win its chief);
+//   擴建船塢 — raise an owned port's naval tier toward bigger ships.
+// Returns patched cities/officers/ports + aggression & scenic-loot deltas.
+const AI_SCENIC_CHANCE = 0.3;
+const AI_TRIBE_CHANCE = 0.25;
+const AI_PORT_CHANCE = 0.3;
+
+export interface AIFrontierOutput {
+  cities: Record<EntityId, City>;
+  officers: Record<EntityId, Officer>;
+  ports: Record<EntityId, Port>;
+  aggression: Record<string, number>;
+  scenicLooted: Record<string, EntityId>;
+  entries: ReportEntry[];
+}
+
+export function planAIFrontierExploits(ctx: {
+  cities: Record<EntityId, City>;
+  officers: Record<EntityId, Officer>;
+  forces: Record<EntityId, Force>;
+  ports: Record<EntityId, Port>;
+  aggression: Record<string, number>;
+  scenicLooted: Record<string, EntityId>;
+  playerForceId: EntityId | null;
+  rng: () => number;
+}): AIFrontierOutput {
+  const cities = { ...ctx.cities };
+  const officers = { ...ctx.officers };
+  const ports = { ...ctx.ports };
+  const aggression = { ...ctx.aggression };
+  const scenicLooted = { ...ctx.scenicLooted };
+  const entries: ReportEntry[] = [];
+
+  // Helper: does this force own / border a guard city?
+  const reaches = (forceId: string, guards: readonly string[]): boolean => {
+    for (const gid of guards) {
+      const g = cities[gid];
+      if (!g) continue;
+      if (g.ownerForceId === forceId) return true;
+      for (const adj of g.adjacentCityIds ?? []) {
+        if (cities[adj]?.ownerForceId === forceId) return true;
+      }
+    }
+    return false;
+  };
+  // Helper: an available officer of a force in a city near `guards`, by stat.
+  const pickEnvoy = (forceId: string, guards: readonly string[], by: (o: Officer) => number): Officer | null => {
+    const valid = new Set<string>();
+    for (const gid of guards) {
+      const g = cities[gid];
+      if (!g) continue;
+      if (g.ownerForceId === forceId) valid.add(g.id);
+      for (const adj of g.adjacentCityIds ?? []) {
+        if (cities[adj]?.ownerForceId === forceId) valid.add(adj);
+      }
+    }
+    let best: Officer | null = null;
+    for (const o of Object.values(officers)) {
+      if (o.forceId !== forceId || (o.status !== 'idle' && o.status !== 'active')) continue;
+      if (!o.locationCityId || !valid.has(o.locationCityId)) continue;
+      if (!best || by(o) > by(best)) best = o;
+    }
+    return best;
+  };
+
+  for (const force of Object.values(ctx.forces)) {
+    if (force.id === ctx.playerForceId) continue;
+    const ruler = officers[force.rulerOfficerId];
+
+    // ── 訪賢 — recruit a still-free reclusive worthy ──
+    if (ctx.rng() < AI_SCENIC_CHANCE) {
+      for (const site of SCENIC_SITES) {
+        if (!site.hermitId) continue;
+        const hermit = officers[site.hermitId];
+        if (!hermit || hermit.forceId !== null) continue;
+        if (!(hermit.status === 'idle' || hermit.status === 'unsearched')) continue;
+        if (!reaches(force.id, site.guards)) continue;
+        const envoy = pickEnvoy(force.id, site.guards, (o) => o.stats.charisma);
+        if (!envoy) continue;
+        const won = rollHermitRecruit({
+          envoyCharisma: envoy.stats.charisma,
+          rulerCharisma: ruler?.stats.charisma ?? 50,
+          hermitIntelligence: hermit.stats.intelligence,
+          rng: ctx.rng,
+        });
+        if (won) {
+          officers[hermit.id] = {
+            ...hermit, forceId: force.id, locationCityId: envoy.locationCityId, status: 'idle', loyalty: 70,
+          };
+          if (!scenicLooted[site.id]) scenicLooted[site.id] = force.id;
+          // Only the player cares if a rival just bagged a famous worthy.
+          entries.push({
+            cityId: null, kind: 'talent',
+            text: `${force.name.en} won over ${hermit.name.en} at ${site.name.en}.`,
+            textZh: `${force.name.zh}於${site.name.zh}延攬${hermit.name.zh}入幕。`,
+          });
+        }
+        break; // one 訪賢 attempt per force per season
+      }
+    }
+
+    // ── 征討異族 — punish a restless border tribe ──
+    if (ctx.rng() < AI_TRIBE_CHANCE) {
+      for (const tribe of TRIBES) {
+        const agg = aggression[tribe.id] ?? tribe.baseAggression;
+        if (agg < tribe.baseAggression * 0.8) continue;   // already cowed — leave it
+        if (!reaches(force.id, tribe.raidableCityIds)) continue;
+        const general = pickEnvoy(force.id, tribe.raidableCityIds, (o) => o.stats.war);
+        if (!general || !general.locationCityId) continue;
+        const src = cities[general.locationCityId];
+        if (!src || src.troops < 8000) continue;
+        const troops = Math.min(12000, Math.floor(src.troops * 0.5));
+        const r = resolveTribePunitive({
+          tribe, aggression: agg, troops,
+          officerWar: general.stats.war, officerLeadership: general.stats.leadership, rng: ctx.rng,
+        });
+        aggression[tribe.id] = Math.max(0, agg + r.aggressionDelta);
+        cities[src.id] = {
+          ...src,
+          troops: src.troops - troops + Math.max(0, troops - r.attackerLosses) + r.auxTroops,
+          gold: src.gold + r.tributeGold,
+        };
+        // 招降 — a crushing win may bring the chief over if still free.
+        if (r.win && tribe.chieftainId) {
+          const chief = officers[tribe.chieftainId];
+          if (chief && chief.forceId === null && (chief.status === 'idle' || chief.status === 'unsearched') && ctx.rng() < 0.45) {
+            officers[chief.id] = { ...chief, forceId: force.id, locationCityId: src.id, status: 'idle', loyalty: 70 };
+          }
+        }
+        break; // one campaign per force per season
+      }
+    }
+
+    // ── 擴建船塢 — raise an owned port's naval tier ──
+    if (ctx.rng() < AI_PORT_CHANCE) {
+      const capital = cities[force.capitalCityId];
+      const owned = Object.values(ports)
+        .filter((p) => p.ownerForceId === force.id && (p.navalTier ?? 1) < PORT_MAX_NAVAL_TIER)
+        .sort((a, b) => (a.navalTier ?? 1) - (b.navalTier ?? 1));
+      const port = owned[0];
+      if (port && capital && capital.ownerForceId === force.id) {
+        const tier = port.navalTier ?? 1;
+        const cost = portUpgradeCost(tier);
+        if (capital.gold >= cost) {
+          const mult = (tt: number) => (tt === 3 ? 1.8 : tt === 2 ? 1.4 : 1);
+          const nextTier = (tier + 1) as 1 | 2 | 3;
+          const newMaxHp = Math.round(port.maxHp * (mult(nextTier) / mult(tier)));
+          ports[port.id] = { ...port, navalTier: nextTier, maxHp: newMaxHp, hp: port.hp + (newMaxHp - port.maxHp) };
+          cities[capital.id] = { ...cities[capital.id], gold: cities[capital.id].gold - cost };
+        }
+      }
+    }
+  }
+
+  return { cities, officers, ports, aggression, scenicLooted, entries };
 }

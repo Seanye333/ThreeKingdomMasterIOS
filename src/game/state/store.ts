@@ -126,7 +126,7 @@ import { evaluateCoalition } from '../systems/coalition';
 import { rollDialogue } from '../systems/dialogueRoll';
 import { DIALOGUE_EVENTS_BY_ID } from '../data/dialogues';
 import { applyAutoBuild } from '../systems/autoBuild';
-import { planAIBuildOrders, planAIFacilities, planAIFortAssaults, planAISiteSeizures } from '../systems/aiBuild';
+import { planAIBuildOrders, planAIFacilities, planAIFortAssaults, planAISiteSeizures, planAIFrontierExploits } from '../systems/aiBuild';
 import { SCENARIO_OBJECTIVES } from '../data/objectives';
 import { SCENARIOS } from '../data';
 import { findChallenge, evaluateChallenge, challengeStars } from '../data/challenges';
@@ -1688,6 +1688,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (tribeResult.entries.length > 0) {
           result.report.entries.push(...tribeResult.entries);
         }
+        // Tribe aggression carried forward; AI 征討 may beat it down below.
+        let nextAggression: Record<string, number> = { ...tribeResult.state.aggression };
 
         // 野外據點 — resource deposits pay their holders; still-hostile bandit
         // nests sack a neighbouring city. Once per season.
@@ -1707,7 +1709,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           // 異族雇傭 — thoroughly pacified tribes send auxiliaries to the
           // border city that holds their frontier quiet.
           const merc = tickTribeMercenaries({
-            aggression: tribeResult.state.aggression,
+            aggression: nextAggression,
             cities: siteCities,
             rng: Math.random,
           });
@@ -2647,6 +2649,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
 
         // 野外據點 — carried forward; AI may seize neutral ones below.
         let nextSites = state.sites;
+        // 名所 loot carried forward; AI 訪賢 may claim a recluse below.
+        let nextScenicLooted = state.scenicLooted;
         // Fort tick — stockades rot if their timer hits 0 (skip permanent forts)
         const nextForts: typeof state.forts = {};
         for (const [id, fort] of Object.entries(state.forts)) {
@@ -2711,6 +2715,26 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           postCities = aiSeize.cities;
           nextSites = aiSeize.sites;
           if (aiSeize.entries.length > 0) result.report.entries.push(...aiSeize.entries);
+
+          // AI 邊功 — rivals also 訪賢 (court recluses), 征討異族 (punish border
+          // tribes) and 擴建船塢 (grow their navy). Parity with the player.
+          const fx = planAIFrontierExploits({
+            cities: postCities,
+            officers: postOfficers,
+            forces: postForces,
+            ports: nextPorts,
+            aggression: nextAggression,
+            scenicLooted: nextScenicLooted,
+            playerForceId: state.playerForceId,
+            rng: Math.random,
+          });
+          postCities = fx.cities;
+          postOfficers = fx.officers;
+          nextAggression = fx.aggression;
+          nextScenicLooted = fx.scenicLooted;
+          for (const k of Object.keys(nextPorts)) delete nextPorts[k];
+          Object.assign(nextPorts, fx.ports);
+          if (fx.entries.length > 0) result.report.entries.push(...fx.entries);
         }
 
         // Wishes consumed by training completions this tick — filtered out
@@ -3122,7 +3146,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           eventFlags: postFlags,
           firedEventIds: postFiredIds,
           pendingEspionage: [],
-          tribeState: tribeResult.state,
+          tribeState: { ...tribeResult.state, aggression: nextAggression as typeof tribeResult.state.aggression },
+          scenicLooted: nextScenicLooted,
           buildings: bld.buildings,
           family: fam.family,
           pendingHeirs: fam.pendingHeirs,
