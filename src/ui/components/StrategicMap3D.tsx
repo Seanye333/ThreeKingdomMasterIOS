@@ -39,6 +39,7 @@ import { TRIBES } from '../../game/data/tribes';
 import { SitePanel } from './SitePanel';
 import { ScenicPanel } from './ScenicPanel';
 import { SCENIC_SITES } from '../../game/data/scenicSites';
+import { GEO_LABELS } from '../../game/data/mapLabels';
 import { BuildStockadePicker } from './BuildStockadePicker';
 import { useT } from '../i18n';
 
@@ -5031,6 +5032,39 @@ function WildSites3D({ onSiteClick }: { onSiteClick: (siteId: string) => void })
   );
 }
 
+/* ─── 地名 — named ranges, rivers and seas drawn on the map (RTK/TW style) ── */
+const GEO_LABEL_STYLE: Record<string, { color: string; glyph: string; y: number }> = {
+  mountain: { color: '#cdbb96', glyph: '⛰', y: 0.55 },
+  river:    { color: '#9fd0e6', glyph: '〜', y: 0.18 },
+  sea:      { color: '#8fc0dc', glyph: '🌊', y: 0.12 },
+};
+function GeoLabels3D() {
+  const labels = useMemo(() => GEO_LABELS.map((g) => {
+    const [px, py] = geoToPixel(g.lon, g.lat);
+    const [wx, wz] = pxToWorld(px, py);
+    const st = GEO_LABEL_STYLE[g.kind];
+    const y = g.kind === 'sea' ? st.y : sampleTerrainHeight(wx, wz) + st.y;
+    return { ...g, wx, wz, y, st };
+  }), []);
+  return (
+    <group>
+      {labels.map((l, i) => (
+        <Html key={i} position={[l.wx, l.y, l.wz]} center distanceFactor={26} zIndexRange={[5, 0]} style={{ pointerEvents: 'none' }}>
+          <div style={{
+            color: l.st.color,
+            fontFamily: '"Ma Shan Zheng", "Songti SC", serif',
+            fontSize: l.kind === 'mountain' ? '15px' : '14px',
+            fontStyle: l.kind === 'river' ? 'italic' : 'normal',
+            letterSpacing: l.kind === 'sea' ? '6px' : '3px',
+            textShadow: '0 0 4px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.9)',
+            opacity: 0.78, whiteSpace: 'nowrap', userSelect: 'none',
+          }}>{l.kind === 'mountain' ? `${l.st.glyph}${l.zh}` : l.zh}</div>
+        </Html>
+      ))}
+    </group>
+  );
+}
+
 /* ─── 名所 — legendary scenic sites (訪賢尋寶) ───────────────────────── */
 function ScenicSites3D({ onScenicClick }: { onScenicClick: (siteId: string) => void }) {
   const scenicLooted = useGameStore((s) => s.scenicLooted);
@@ -5342,6 +5376,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
       <WildSites3D onSiteClick={onSiteClick} />
       <ScenicSites3D onScenicClick={onScenicClick} />
       {mapStyle === 'classic' && <TradeRouteLines3D cities={cities} />}
+      {mapStyle === 'classic' && <GeoLabels3D />}
 
       {/* 戰場微縮 — the LIVE battle, embedded on the very ground it's fought
           over (same scene component, same state; rotated to its true bearing,
