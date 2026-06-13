@@ -2145,46 +2145,61 @@ function clashHash(x: number, y: number, i: number): number {
   return s - Math.floor(s);
 }
 
-function FieldClashMelee3D({ marks }: {
-  marks: Array<{ x: number; y: number; kind: 'ambush' | 'camp' | 'clash'; seasonsLeft: number }>;
-}) {
-  // Fresh clashes/ambushes (this season) get a live brawl; camps are stockade
-  // storms drawn as broken stakes, not an open-field melee.
-  const fresh = marks.filter((m) => m.seasonsLeft >= 2 && m.kind !== 'camp');
+type ClashMark = {
+  x: number; y: number; kind: 'ambush' | 'camp' | 'clash'; seasonsLeft: number;
+  aColor?: string; bColor?: string; winner?: -1 | 1; winName?: string;
+  aTroops?: number; bTroops?: number;
+};
+
+function FieldClashMelee3D({ marks }: { marks: ClashMark[] }) {
+  // Every fresh battle site (this season) replays as a live brawl — clash,
+  // ambush and stormed-camp alike.
+  const fresh = marks.filter((m) => m.seasonsLeft >= 2);
   if (fresh.length === 0) return null;
   return <group>{fresh.map((m) => <ClashSite key={`${m.x},${m.y}`} m={m} />)}</group>;
 }
 
-function ClashSite({ m }: { m: { x: number; y: number; kind: 'ambush' | 'camp' | 'clash' } }) {
+function ClashSite({ m }: { m: ClashMark }) {
   const startRef = useRef<number | null>(null);
   useFrame(({ clock }) => { if (startRef.current == null) startRef.current = clock.elapsedTime; });
   const [wx, wz] = pxToWorld(m.x, m.y);
   const y = sampleTerrainHeight(wx, wz) + 0.04;
-  // The side that breaks (takes more casualties) — deterministic per site.
-  const loser: -1 | 1 = clashHash(m.x, m.y, 99) < 0.5 ? -1 : 1;
+  const colA = m.aColor ?? CLASH_A;
+  const colB = m.bColor ?? CLASH_B;
+  // m.winner is the WINNING side (−1 = A/left, 1 = B/right); the loser breaks.
+  // Falls back to a deterministic pick when an old mark carries no outcome.
+  const loser: -1 | 1 = m.winner != null ? (m.winner === -1 ? 1 : -1)
+    : (clashHash(m.x, m.y, 99) < 0.5 ? -1 : 1);
+  const sizeFor = (tr?: number) => tr != null ? Math.max(3, Math.min(10, Math.round(tr / 2500))) : CLASH_PER_SIDE;
+  const nA = sizeFor(m.aTroops), nB = sizeFor(m.bTroops);
   const brawlers = useMemo(() => {
-    const out: Array<{ side: -1 | 1; lane: number; phase: number; fallAt: number | null }> = [];
-    for (const side of [-1, 1] as const) {
-      for (let k = 0; k < CLASH_PER_SIDE; k++) {
+    const out: Array<{ side: -1 | 1; lane: number; laneN: number; phase: number; fallAt: number | null }> = [];
+    const build = (side: -1 | 1, n: number) => {
+      for (let k = 0; k < n; k++) {
         const h = clashHash(m.x, m.y, side * 17 + k);
-        const odds = side === loser ? 0.6 : 0.18;   // losers fall more
+        const odds = side === loser ? 0.62 : 0.16;   // the broken side falls far more
         const fallAt = h < odds ? 0.35 + clashHash(m.x, m.y, side * 31 + k) * 0.4 : null;
-        out.push({ side, lane: k, phase: h * Math.PI * 2, fallAt });
+        out.push({ side, lane: k, laneN: n, phase: h * Math.PI * 2, fallAt });
       }
-    }
+    };
+    build(-1, nA); build(1, nB);
     return out;
-  }, [m.x, m.y, loser]);
+  }, [m.x, m.y, loser, nA, nB]);
   return (
     <group position={[wx, y, wz]}>
-      {brawlers.map((b, i) => <Brawler key={i} desc={b} loser={loser} startRef={startRef} />)}
+      {brawlers.map((b, i) => (
+        <Brawler key={i} desc={b} loser={loser} color={b.side === -1 ? colA : colB} startRef={startRef} />
+      ))}
       <ClashDust startRef={startRef} />
+      {m.winName && <ClashResultFlag name={m.winName} color={m.winner === 1 ? colB : colA} startRef={startRef} />}
     </group>
   );
 }
 
-function Brawler({ desc, loser, startRef }: {
-  desc: { side: -1 | 1; lane: number; phase: number; fallAt: number | null };
+function Brawler({ desc, loser, color, startRef }: {
+  desc: { side: -1 | 1; lane: number; laneN: number; phase: number; fallAt: number | null };
   loser: -1 | 1;
+  color: string;
   startRef: { current: number | null };
 }) {
   const ref = useRef<THREE.Group>(null);
@@ -2193,7 +2208,7 @@ function Brawler({ desc, loser, startRef }: {
   const mWpn = useRef<THREE.MeshStandardMaterial>(null);
   const startX = desc.side * 0.5;
   const meleeX = desc.side * 0.07;
-  const laneZ = (desc.lane - (CLASH_PER_SIDE - 1) / 2) * 0.085;
+  const laneZ = (desc.lane - (desc.laneN - 1) / 2) * 0.085;
   useFrame(({ clock }) => {
     const g = ref.current;
     if (!g || startRef.current == null) return;
@@ -2220,12 +2235,11 @@ function Brawler({ desc, loser, startRef }: {
     if (mHead.current) mHead.current.opacity = op;
     if (mWpn.current) mWpn.current.opacity = op;
   });
-  const body = desc.side === -1 ? CLASH_A : CLASH_B;
   return (
     <group ref={ref} position={[startX, 0, laneZ]} scale={0.9}>
       <mesh position={[0, 0.05, 0]} castShadow>
         <boxGeometry args={[0.03, 0.07, 0.025]} />
-        <meshStandardMaterial ref={mBody} color={body} transparent roughness={0.75} />
+        <meshStandardMaterial ref={mBody} color={color} transparent roughness={0.75} />
       </mesh>
       <mesh position={[0, 0.10, 0]} castShadow>
         <sphereGeometry args={[0.018, 6, 6]} />
@@ -2237,6 +2251,29 @@ function Brawler({ desc, loser, startRef }: {
         <meshStandardMaterial ref={mWpn} color="#cdd2d8" metalness={0.4} transparent />
       </mesh>
     </group>
+  );
+}
+
+/** A small「X軍 勝」flag that rises over the site as the brawl is decided. */
+function ClashResultFlag({ name, color, startRef }: {
+  name: string; color: string; startRef: { current: number | null };
+}) {
+  const [show, setShow] = useState(false);
+  useFrame(({ clock }) => {
+    if (startRef.current == null) return;
+    const t = (clock.elapsedTime - startRef.current) / CLASH_DURATION;
+    const v = t > 0.55 && t < 1.3;
+    if (v !== show) setShow(v);
+  });
+  if (!show) return null;
+  return (
+    <Html position={[0, 0.42, 0]} center distanceFactor={10} zIndexRange={[40, 30]} style={{ pointerEvents: 'none' }}>
+      <div style={{
+        background: 'rgba(15, 10, 5, 0.85)', border: `1px solid ${color}`, borderRadius: 3,
+        padding: '1px 8px', color: '#ffe9a8', fontFamily: '"Ma Shan Zheng", "Songti SC", serif',
+        fontSize: '12px', whiteSpace: 'nowrap', boxShadow: `0 0 9px ${color}99`,
+      }}>{name}軍 勝</div>
+    </Html>
   );
 }
 
