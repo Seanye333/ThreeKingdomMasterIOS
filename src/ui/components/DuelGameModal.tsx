@@ -31,6 +31,23 @@ export function DuelGameModal({
   const lang = useLanguage();
   const [bout, setBout] = useState<DuelBout>(() => initDuelBout(attacker, defender));
   const [log, setLog] = useState<string[]>([]);
+  // 罵陣 — a one-time pre-duel taunt: out-talk them (your 武+魅 vs theirs)
+  // and start with banked 氣 toward 奮; misfire and you open the round winded.
+  const [taunted, setTaunted] = useState(false);
+  const taunt = () => {
+    if (taunted || bout.round > 0 || bout.over) return;
+    setTaunted(true);
+    const mine = attacker.stats.war * 0.5 + attacker.stats.charisma * 0.5;
+    const theirs = defender.stats.war * 0.5 + defender.stats.charisma * 0.5;
+    const land = Math.random() < 0.5 + (mine - theirs) / 120;
+    if (land) {
+      setBout((b) => ({ ...b, aGuard: b.aGuard + POWER_GUARD_COST }));
+      setLog((l) => [`${nm(attacker)} ${t('罵陣搦戰,氣勢大盛 — 蓄滿一記奮擊!', 'taunts the foe and seizes the initiative — an Overpower is banked!')}`, ...l]);
+    } else {
+      setBout((b) => ({ ...b, aStamina: Math.max(1, b.aStamina - 12) }));
+      setLog((l) => [`${nm(attacker)} ${t('罵陣不成,反被激得心浮氣躁(−12 氣力)。', 'taunts and is rattled in return (−12 stamina).')}`, ...l]);
+    }
+  };
   const nm = (o: Officer) => (lang === 'en' ? o.name.en : o.name.zh);
   const moveZh = (m: DuelMove) => MOVES.find((x) => x.id === m)!.zh;
 
@@ -91,6 +108,19 @@ export function DuelGameModal({
             {guardPips(bout.dGuard)}
           </div>
         </div>
+
+        {/* 罵陣 — one shot, before blows are traded */}
+        {!bout.over && !taunted && bout.round === 0 && (
+          <button
+            onClick={taunt}
+            style={{
+              marginTop: '0.9rem', width: '100%', padding: '0.4rem',
+              background: 'rgba(184, 88, 74, 0.18)', border: '1px solid #b8584a',
+              color: '#e8b0a0', cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.2rem',
+            }}
+            title={t('開打前先罵陣搦戰 — 武力+魅力壓過對手則蓄一記奮擊,反之自亂陣腳', 'Taunt before blows — win on War+Charisma to bank an Overpower, lose and rattle yourself')}
+          >🗣 {t('罵陣搦戰', 'Taunt')}</button>
+        )}
 
         {/* Move buttons */}
         {!bout.over && (
