@@ -114,6 +114,7 @@ import { SHIP_CLASSES_BY_ID } from '../data/ships';
 import { canPlayerAttackPort, migratePorts, navalReachableCityIds } from '../data/ports';
 import { canPlayerAttackFort, migrateForts } from '../data/forts';
 import { canPlayerSeizeSite, migrateSites } from '../data/sites';
+import { tickWildSites } from '../systems/sites';
 import { fortMaxHpForLevel, FACILITY_DEFS, type FacilityKind } from '../types';
 import { awardBattleXp } from '../systems/growth';
 import { tickBuildings } from '../systems/buildings';
@@ -1669,10 +1670,25 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           result.report.entries.push(...tribeResult.entries);
         }
 
+        // 野外據點 — resource deposits pay their holders; still-hostile bandit
+        // nests sack a neighbouring city. Once per season.
+        let siteCities = tribeResult.cities;
+        if (seasonBoundary) {
+          const siteTick = tickWildSites({
+            sites: state.sites,
+            cities: tribeResult.cities,
+            rng: Math.random,
+          });
+          siteCities = siteTick.cities;
+          if (siteTick.entries.length > 0) {
+            result.report.entries.push(...siteTick.entries);
+          }
+        }
+
         // Historical event check. Fires at most one event per season.
         let firingEvent: HistoricalEvent | null = null;
         let playerAwaitsChoice = false;
-        let postCities = tribeResult.cities;
+        let postCities = siteCities;
         let postOfficers = espResult.officers;
         let postForces = result.forces;
         let postFlags = eventFlagsAfterCourt;
