@@ -74,7 +74,9 @@ export const COMMAND_DEFS: Record<CommandType, CommandDef> = {
     type: 'search',
     label: { en: 'Search for Talent', zh: '人材探訪' },
     stat: 'charisma',
-    goldCost: 250,
+    // Free, per RTK convention — searching costs the officer's season, not
+    // the treasury. Encourages talent-hunting even in a cash crunch.
+    goldCost: 0,
     description:
       'Send the officer to scour the city for unknown talent. Charisma decides success. Discovered officers appear as free agents in this city.',
   },
