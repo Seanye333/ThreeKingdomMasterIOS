@@ -29,13 +29,13 @@ export const CITY_GEO_OVERRIDES: Record<string, [number, number]> = {
   'jiangling': [112.24, 30.47],
   'xiangyang': [112.2, 31.74],
   'hanzhong': [107.08, 33.06],
-  'shouchun': [116.72, 31.93],
+  'shouchun': [116.79, 32.58],   // 壽春=壽縣,淮河邊、合肥正北(原 31.93 偏南)
   'hefei': [117.24, 31.87],
   'chaisang': [116, 29.71],
   'yongan': [109.41, 31.03],
   'jiangxia': [114.67, 30.97],
   'pengcheng': [117.22, 34.28],
-  'xiaopei': [116.77, 33.95],
+  'xiaopei': [116.94, 34.73],   // 小沛=沛縣,在徐州(彭城)正北(原 33.95 放到了南邊)
   'xiapi': [117.95, 34.3],
   'bohai': [117.5, 37.5],
   'pingyuan': [116.43, 37.16],
@@ -49,7 +49,7 @@ export const CITY_GEO_OVERRIDES: Record<string, [number, number]> = {
   'jincheng': [103.83, 36.06],
   'longxi': [104.62, 35],
   'tianshui': [105.42, 34.24],
-  'anding': [105.65, 36.55],
+  'anding': [107.2, 35.68],   // 安定郡治臨涇=鎮原(原 105.65,36.55 偏西北)
   'shuofang': [107.42, 40.79],
   'yangping': [106.56, 33.14],
   'changsha': [112.94, 28.23],
