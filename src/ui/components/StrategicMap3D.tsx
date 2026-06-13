@@ -4506,6 +4506,49 @@ function Bridges3D({ cities }: { cities: Record<string, City> }) {
   );
 }
 
+/* ─── 田疇 — cultivated fields ringing each city, so settlements sit in
+ *  farmland rather than bare ground. Instanced flat paddies. ── */
+function Farmland3D({ cities }: { cities: Record<string, City> }) {
+  const fields = useMemo(() => {
+    const out: Array<{ x: number; y: number; z: number; rot: number; s: number }> = [];
+    for (const c of Object.values(cities)) {
+      if (c.name.zh.includes('關')) continue;   // passes have no fields
+      const [px, py] = cityPixel(c.id, c.coords.x, c.coords.y);
+      const [cx, cz] = pxToWorld(px, py);
+      const n = IS_MOBILE ? 4 : 8;
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2 + (px % 1.3);
+        const r = 0.42 + (i % 2) * 0.26;       // a couple of rings just outside the wall
+        const fx = cx + Math.cos(a) * r, fz = cz + Math.sin(a) * r;
+        const y = sampleTerrainHeight(fx, fz);
+        if (y < 0.05 || y > 0.28) continue;    // no fields on water or steep ground
+        out.push({ x: fx, y, z: fz, rot: a, s: 0.85 + (i % 3) * 0.18 });
+      }
+    }
+    return out;
+  }, [cities]);
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+  useEffect(() => {
+    if (!ref.current) return;
+    for (let i = 0; i < fields.length; i++) {
+      const f = fields[i];
+      dummy.position.set(f.x, f.y + 0.02, f.z);
+      dummy.rotation.set(0, f.rot, 0);
+      dummy.scale.set(f.s, 1, f.s * 0.7);
+      dummy.updateMatrix(); ref.current.setMatrixAt(i, dummy.matrix);
+    }
+    ref.current.instanceMatrix.needsUpdate = true;
+  }, [fields, dummy]);
+  if (fields.length === 0) return null;
+  return (
+    <instancedMesh ref={ref} args={[undefined, undefined, fields.length]} receiveShadow>
+      <boxGeometry args={[0.24, 0.008, 0.18]} />
+      <meshStandardMaterial color="#94a24c" roughness={0.95} />
+    </instancedMesh>
+  );
+}
+
 /* ─── 村落 — scattered countryside hamlets (mud-brick body + thatch roof),
  *  instanced across the land so the realm feels inhabited between cities. ── */
 function Villages3D() {
@@ -4812,6 +4855,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onQuickAction, mapSty
       {/* Forests plant at the shared height function, so the same trees stand
           perfectly on the hex quilt too. */}
       <Forest3D season={season} />
+      <Farmland3D cities={cities} />
       <Villages3D />
       <GreatWall3D />
       <DriftingClouds />
