@@ -9,6 +9,7 @@ import type {
   Fort,
   ReportEntry,
   RulerPersonality,
+  WildSite,
 } from '../types';
 import { BUILDING_DEFS_BY_ID } from '../data/buildings';
 import { FACILITY_DEFS, isHostilePermitted } from '../types';
@@ -263,4 +264,78 @@ export function planAIFortAssaults(ctx: AIFacilityContext): AIFortAssaultOutput 
   }
 
   return { cities, forts, entries };
+}
+
+// ─── AI 拓野 — seizing neutral wild sites (mines, fords, bandit nests) ──────
+const SITE_SEIZE_RANGE = 50 * WORLD_SCALE;   // strategic px from an AI city to a neutral site
+const SITE_SEIZE_CHANCE = 0.25;              // per AI force per season
+
+export interface AISiteSeizureOutput {
+  cities: Record<EntityId, City>;
+  sites: Record<EntityId, WildSite>;
+  entries: ReportEntry[];
+}
+
+/**
+ * Symmetry with the player: an AI force with a strong garrison near a NEUTRAL
+ * wild site grabs it — mines & fords for the income/control, bandit nests to
+ * end the raids on its own lands. Single-season seizure (the AI doesn't
+ * HP-grind like the player), but the committing garrison bleeds for it.
+ */
+export function planAISiteSeizures(ctx: {
+  cities: Record<EntityId, City>;
+  forces: Record<EntityId, Force>;
+  sites: Record<EntityId, WildSite>;
+  playerForceId: EntityId | null;
+  rng: () => number;
+}): AISiteSeizureOutput {
+  const cities = { ...ctx.cities };
+  const sites = { ...ctx.sites };
+  const entries: ReportEntry[] = [];
+  const neutral = Object.values(sites).filter((s) => !s.ownerForceId);
+  if (neutral.length === 0) return { cities, sites, entries };
+
+  for (const force of Object.values(ctx.forces)) {
+    if (force.id === ctx.playerForceId) continue;
+    if (ctx.rng() > SITE_SEIZE_CHANCE) continue;
+    // Nearest still-neutral site within reach of one of this force's garrisons.
+    let best: { site: WildSite; city: City; d: number } | null = null;
+    for (const site of neutral) {
+      if (sites[site.id].ownerForceId) continue; // taken earlier this pass
+      const [sx, sy] = geoToPixel(site.coords.lon, site.coords.lat);
+      for (const c of Object.values(cities)) {
+        if (c.ownerForceId !== force.id || c.troops < 6000) continue;
+        const cp = cityPos(c);
+        const d = Math.hypot(cp.x - sx, cp.y - sy);
+        if (d < SITE_SEIZE_RANGE && (!best || d < best.d)) best = { site, city: c, d };
+      }
+    }
+    if (!best) continue;
+    const { site, city } = best;
+    const commit = Math.min(5000, Math.floor(city.troops * 0.3));
+    if (commit < site.strength * 0.5) continue;   // not worth the bloodshed
+    const losses = Math.floor(site.strength * (0.12 + ctx.rng() * 0.14));
+    cities[city.id] = { ...cities[city.id], troops: Math.max(0, cities[city.id].troops - losses) };
+    sites[site.id] = { ...site, ownerForceId: force.id, hostile: false, hp: site.maxHp };
+
+    // Surface only what touches the player's neighbourhood (a rival grabbing a
+    // resource at your border, or a bandit nest near you finally cleared).
+    const nearPlayer = site.guards.some((g) => {
+      const gc = cities[g];
+      if (!gc) return false;
+      if (gc.ownerForceId === ctx.playerForceId) return true;
+      return (gc.adjacentCityIds ?? []).some((a) => cities[a]?.ownerForceId === ctx.playerForceId);
+    });
+    if (nearPlayer) {
+      const what = site.subtype === 'bandit' ? 'cleared the' : 'seized the';
+      const whatZh = site.subtype === 'bandit' ? '蕩平' : '據有';
+      entries.push({
+        cityId: site.guards[0] ?? null, kind: 'battle',
+        text: `${force.name.en} ${what} ${site.name.en} (lost ${losses}).`,
+        textZh: `${force.name.zh}${whatZh}${site.name.zh}(折兵 ${losses})。`,
+      });
+    }
+  }
+
+  return { cities, sites, entries };
 }

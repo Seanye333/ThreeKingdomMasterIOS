@@ -122,7 +122,7 @@ import { evaluateCoalition } from '../systems/coalition';
 import { rollDialogue } from '../systems/dialogueRoll';
 import { DIALOGUE_EVENTS_BY_ID } from '../data/dialogues';
 import { applyAutoBuild } from '../systems/autoBuild';
-import { planAIBuildOrders, planAIFacilities, planAIFortAssaults } from '../systems/aiBuild';
+import { planAIBuildOrders, planAIFacilities, planAIFortAssaults, planAISiteSeizures } from '../systems/aiBuild';
 import { SCENARIO_OBJECTIVES } from '../data/objectives';
 import { SCENARIOS } from '../data';
 import { findChallenge, evaluateChallenge, challengeStars } from '../data/challenges';
@@ -2606,6 +2606,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // 野外據點 — carried forward; AI may seize neutral ones below.
+        let nextSites = state.sites;
         // Fort tick — stockades rot if their timer hits 0 (skip permanent forts)
         const nextForts: typeof state.forts = {};
         for (const [id, fort] of Object.entries(state.forts)) {
@@ -2657,6 +2659,19 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           for (const k of Object.keys(nextForts)) delete nextForts[k];
           Object.assign(nextForts, assault.forts);
           if (assault.entries.length > 0) result.report.entries.push(...assault.entries);
+
+          // AI 拓野 — hostile forces grab neutral mines/fords/bandit nests
+          // near their garrisons (income/control; clears raiders on their land).
+          const aiSeize = planAISiteSeizures({
+            cities: postCities,
+            forces: postForces,
+            sites: nextSites,
+            playerForceId: state.playerForceId,
+            rng: Math.random,
+          });
+          postCities = aiSeize.cities;
+          nextSites = aiSeize.sites;
+          if (aiSeize.entries.length > 0) result.report.entries.push(...aiSeize.entries);
         }
 
         // Wishes consumed by training completions this tick — filtered out
@@ -3084,6 +3099,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           fleets: updatedFleets,
           ports: nextPorts,
           forts: nextForts,
+          sites: nextSites,
           territoryOwnership: result.territoryOwnership ?? state.territoryOwnership ?? {},
           armies: result.armies ?? {},
           endingsAchieved,
