@@ -12,7 +12,8 @@ import type {
 import { OATH_BONDS, type OathBond } from '../data/bonds';
 import { isHostilePermitted } from '../types';
 import { generateTerritories, terrainRoute, positionAlongRoute, marchDestCoords, type Territory } from '../data/territories';
-import { terrainMarchCost, describeBattleSite, geoToPixel, WORLD_SCALE } from '../data/geography';
+import { terrainMarchCost, describeBattleSite, geoToPixel, WORLD_SCALE, isLand } from '../data/geography';
+import { navalEngagement } from './navalBattle';
 import { cityPos } from '../data/cityGeo';
 import { FACILITY_DEFS, type Fort } from '../types/fort';
 import { advanceSeason } from '../state/gameState';
@@ -256,7 +257,21 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         (AMBUSH_BASE + Math.min(COVER_CAP, terrainMarchCost(p.x, p.y) * COVER_SCALE)) * (1 - detect);
       const multA = aHolds ? 1 + holdBonus(pa) : 1;
       const multB = bHolds ? 1 + holdBonus(pb) : 1;
-      const aWins = statsA.power * multA >= statsB.power * multB;
+      // 水戰 — a clash on open water is a fleet engagement: the abler admiral
+      // may loose fire-ships (赤壁) and break the enemy, weather permitting.
+      const clashMidX = (pa.x + pb.x) / 2, clashMidY = (pa.y + pb.y) / 2;
+      const onWater = !isLand(clashMidX, clashMidY, 0);
+      const naval = onWater
+        ? navalEngagement({
+            aIntel: armyMaxIntel(a), bIntel: armyMaxIntel(b),
+            aName: officers[a.officerId]?.name.zh ?? '?',
+            bName: officers[b.officerId]?.name.zh ?? '?',
+            weatherKind: input.weather?.kind ?? 'clear',
+            windPower: input.weather?.windPower ?? 0,
+            rng: input.rng ?? Math.random,
+          })
+        : { aMul: 1, bMul: 1, fire: null as 'a' | 'b' | null, recapZh: undefined as string | undefined, recapEn: undefined as string | undefined };
+      const aWins = statsA.power * multA * naval.aMul >= statsB.power * multB * naval.bMul;
       const winner = aWins ? a : b;
       const loser = aWins ? b : a;
       const wStats = aWins ? statsA : statsB;
@@ -342,6 +357,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       };
       const detEn = detected ? `${wName.en}'s scouts saw the trap; ` : '';
       const detZh = detected ? `${wName.zh}早察其謀,` : '';
+      // 火攻 recap prefix when fire-ships decided a water clash.
+      const navEn = naval.fire ? `${naval.recapEn}. ` : '';
+      const navZh = naval.fire ? `${naval.recapZh}！` : '';
       // Name the ground the clash was fought on — 「漢水之濱」「秦嶺山中」.
       const site = describeBattleSite((pa.x + pb.x) / 2, (pa.y + pb.y) / 2);
       const siteZh = site ? `於${site.zh}` : '於行軍途中';
@@ -349,16 +367,16 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       entries.push({
         cityId: winner.targetCityId,
         kind: 'battle',
-        text: ambush
+        text: navEn + (ambush
           ? `Ambush: ${wName.en} lay in wait${siteEn} and fell upon ${lName.en}'s column, shattering it (−${winnerCasualty} vs −${loserCasualty}). ${lName.en}'s advance is broken.`
           : campStormed
             ? `Camp stormed: ${detEn}${wName.en} overran ${lName.en}'s dug-in camp${siteEn} and seized the ground (−${winnerCasualty} vs −${loserCasualty}).`
-            : `Field clash: ${wName.en} intercepted ${lName.en}${siteEn} and routed them (−${winnerCasualty} vs −${loserCasualty}). ${lName.en}'s advance is broken.`,
-        textZh: ambush
+            : `${onWater ? 'Naval clash' : 'Field clash'}: ${wName.en} intercepted ${lName.en}${siteEn} and routed them (−${winnerCasualty} vs −${loserCasualty}). ${lName.en}'s advance is broken.`),
+        textZh: navZh + (ambush
           ? `伏擊：${wName.zh}${siteZh}設伏以待,驟擊${lName.zh}之軍而潰之（我軍 −${winnerCasualty}，敵軍 −${loserCasualty}）。${lName.zh}之進軍受挫。`
           : campStormed
             ? `拔寨：${detZh}${wName.zh}${siteZh}強攻${lName.zh}之營寨,破之而據其地（我軍 −${winnerCasualty}，敵軍 −${loserCasualty}）。`
-            : `野戰：${wName.zh}${siteZh}截擊${lName.zh}並擊潰之（我軍 −${winnerCasualty}，敵軍 −${loserCasualty}）。${lName.zh}之進軍受挫。`,
+            : `${onWater ? '水戰' : '野戰'}：${wName.zh}${siteZh}截擊${lName.zh}並擊潰之（我軍 −${winnerCasualty}，敵軍 −${loserCasualty}）。${lName.zh}之進軍受挫。`),
         battle: fieldBattle,
       });
     }
