@@ -2129,6 +2129,145 @@ function FieldBattleMarks3D({ marks }: {
   );
 }
 
+/* ─── 野戰混戰 — a brief LIVE melee at a fresh clash site (③ causal flow):
+ *  two warbands charge together, trade blows, some fall, the loser routs,
+ *  then it fades to the static crossed-sabre mark. Plays once on mount, so a
+ *  battle you didn't command no longer resolves into a mere doodle. ── */
+const CLASH_DURATION = 4.6;   // seconds of brawl before it settles to the mark
+const CLASH_PER_SIDE = 6;
+const CLASH_A = '#3a7dd9';    // the same blue/red the battle board uses per side
+const CLASH_B = '#b8442e';
+
+/** Deterministic 0..1 from site coords + index — stable across the re-renders
+ *  the marks array triggers each season, so the brawl never re-rolls midway. */
+function clashHash(x: number, y: number, i: number): number {
+  const s = Math.sin(x * 12.9898 + y * 78.233 + i * 37.719) * 43758.5453;
+  return s - Math.floor(s);
+}
+
+function FieldClashMelee3D({ marks }: {
+  marks: Array<{ x: number; y: number; kind: 'ambush' | 'camp' | 'clash'; seasonsLeft: number }>;
+}) {
+  // Fresh clashes/ambushes (this season) get a live brawl; camps are stockade
+  // storms drawn as broken stakes, not an open-field melee.
+  const fresh = marks.filter((m) => m.seasonsLeft >= 2 && m.kind !== 'camp');
+  if (fresh.length === 0) return null;
+  return <group>{fresh.map((m) => <ClashSite key={`${m.x},${m.y}`} m={m} />)}</group>;
+}
+
+function ClashSite({ m }: { m: { x: number; y: number; kind: 'ambush' | 'camp' | 'clash' } }) {
+  const startRef = useRef<number | null>(null);
+  useFrame(({ clock }) => { if (startRef.current == null) startRef.current = clock.elapsedTime; });
+  const [wx, wz] = pxToWorld(m.x, m.y);
+  const y = sampleTerrainHeight(wx, wz) + 0.04;
+  // The side that breaks (takes more casualties) — deterministic per site.
+  const loser: -1 | 1 = clashHash(m.x, m.y, 99) < 0.5 ? -1 : 1;
+  const brawlers = useMemo(() => {
+    const out: Array<{ side: -1 | 1; lane: number; phase: number; fallAt: number | null }> = [];
+    for (const side of [-1, 1] as const) {
+      for (let k = 0; k < CLASH_PER_SIDE; k++) {
+        const h = clashHash(m.x, m.y, side * 17 + k);
+        const odds = side === loser ? 0.6 : 0.18;   // losers fall more
+        const fallAt = h < odds ? 0.35 + clashHash(m.x, m.y, side * 31 + k) * 0.4 : null;
+        out.push({ side, lane: k, phase: h * Math.PI * 2, fallAt });
+      }
+    }
+    return out;
+  }, [m.x, m.y, loser]);
+  return (
+    <group position={[wx, y, wz]}>
+      {brawlers.map((b, i) => <Brawler key={i} desc={b} loser={loser} startRef={startRef} />)}
+      <ClashDust startRef={startRef} />
+    </group>
+  );
+}
+
+function Brawler({ desc, loser, startRef }: {
+  desc: { side: -1 | 1; lane: number; phase: number; fallAt: number | null };
+  loser: -1 | 1;
+  startRef: { current: number | null };
+}) {
+  const ref = useRef<THREE.Group>(null);
+  const mBody = useRef<THREE.MeshStandardMaterial>(null);
+  const mHead = useRef<THREE.MeshStandardMaterial>(null);
+  const mWpn = useRef<THREE.MeshStandardMaterial>(null);
+  const startX = desc.side * 0.5;
+  const meleeX = desc.side * 0.07;
+  const laneZ = (desc.lane - (CLASH_PER_SIDE - 1) / 2) * 0.085;
+  useFrame(({ clock }) => {
+    const g = ref.current;
+    if (!g || startRef.current == null) return;
+    const t = (clock.elapsedTime - startRef.current) / CLASH_DURATION;
+    let x = meleeX, lunge = 0, fall = 0, op = 1;
+    if (t < 0.26) {
+      const p = t / 0.26;
+      x = startX + (meleeX - startX) * (p * p * (3 - 2 * p));   // smoothstep charge
+      op = Math.min(1, t / 0.05);
+    } else {
+      lunge = Math.sin(clock.elapsedTime * 9 + desc.phase) * 0.03;  // trading blows
+      x = meleeX + lunge;
+      if (desc.fallAt != null && t > desc.fallAt) fall = Math.min(1, (t - desc.fallAt) / 0.18);
+      if (t > 0.84) {
+        op = Math.max(0, 1 - (t - 0.84) / 0.16);                // fade to the mark
+        if (desc.side === loser && desc.fallAt == null) x += (t - 0.84) * 1.3 * desc.side; // rout
+      }
+    }
+    g.position.set(x, fall * -0.02, laneZ);
+    g.rotation.z = fall * desc.side * -1.4;             // tip over when felled
+    g.rotation.x = fall === 0 ? lunge * 4 : 0;          // lean into the lunge
+    g.visible = t < 1.02;
+    if (mBody.current) mBody.current.opacity = op;
+    if (mHead.current) mHead.current.opacity = op;
+    if (mWpn.current) mWpn.current.opacity = op;
+  });
+  const body = desc.side === -1 ? CLASH_A : CLASH_B;
+  return (
+    <group ref={ref} position={[startX, 0, laneZ]} scale={0.9}>
+      <mesh position={[0, 0.05, 0]} castShadow>
+        <boxGeometry args={[0.03, 0.07, 0.025]} />
+        <meshStandardMaterial ref={mBody} color={body} transparent roughness={0.75} />
+      </mesh>
+      <mesh position={[0, 0.10, 0]} castShadow>
+        <sphereGeometry args={[0.018, 6, 6]} />
+        <meshStandardMaterial ref={mHead} color="#e0c498" transparent roughness={0.75} />
+      </mesh>
+      {/* weapon thrust toward the enemy line */}
+      <mesh position={[-desc.side * 0.03, 0.09, 0]} rotation={[0, 0, desc.side * 0.9]} castShadow>
+        <cylinderGeometry args={[0.003, 0.003, 0.10, 4]} />
+        <meshStandardMaterial ref={mWpn} color="#cdd2d8" metalness={0.4} transparent />
+      </mesh>
+    </group>
+  );
+}
+
+/** Dust kicked up by a clash — puffs swelling and fading over the brawl. */
+function ClashDust({ startRef }: { startRef: { current: number | null } }) {
+  const ref = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    if (!ref.current || startRef.current == null) return;
+    const t = (clock.elapsedTime - startRef.current) / CLASH_DURATION;
+    ref.current.visible = t < 1.0;
+    const env = Math.min(1, t < 0.2 ? t / 0.2 : (1 - t) / 0.2);   // ease in/out
+    for (let i = 0; i < ref.current.children.length; i++) {
+      const mp = ref.current.children[i] as THREE.Mesh;
+      const lt = (clock.elapsedTime * 0.6 + i / 6) % 1;
+      mp.position.set((i - 2.5) * 0.06, 0.02 + lt * 0.1, 0);
+      mp.scale.setScalar(0.04 + lt * 0.1);
+      (mp.material as THREE.MeshBasicMaterial).opacity = 0.22 * (1 - lt) * Math.max(0, env);
+    }
+  });
+  return (
+    <group ref={ref}>
+      {Array.from({ length: 6 }, (_, i) => (
+        <mesh key={i}>
+          <sphereGeometry args={[1, 6, 6]} />
+          <meshBasicMaterial color="#cdbfa8" transparent opacity={0.18} depthWrite={false} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
 function FieldCamp({ color, troops = 0 }: { color: string; troops?: number }) {
   const flagRef = useRef<THREE.Mesh>(null);
   useFrame(({ clock }) => {
@@ -4359,6 +4498,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onQuickAction, mapSty
       {overlayMode === 'supply' && <SupplyLines3D />}
       {overlayMode === 'diplomacy' && <DiplomacyLines3D cities={cities} forces={forces} />}
       <FieldBattleMarks3D marks={fieldBattleMarks} />
+      <FieldClashMelee3D marks={fieldBattleMarks} />
       <QueuedBattles3D />
       <BeaconAlerts3D />
       <BurningCities3D />
