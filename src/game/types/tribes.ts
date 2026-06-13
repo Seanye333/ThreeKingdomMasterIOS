@@ -35,6 +35,9 @@ export interface Tribe {
   /** Real (lon, lat) of the tribe's homeland 部落 — a frontier site rendered
    *  on the strategic map, just beyond the Han cities they raid. */
   homeland: { lon: number; lat: number };
+  /** The tribe's famous chieftain (officer id). A successful 征討 may win him
+   *  over (招降) if he's still a free agent. Omitted = no named chief. */
+  chieftainId?: string;
 }
 
 export interface TribeState {

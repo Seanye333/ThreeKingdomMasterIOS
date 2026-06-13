@@ -6,7 +6,10 @@ import {
   canCampaignTribe,
   resolveTribePunitive,
   createInitialTribeState,
+  tickTribeMercenaries,
+  TRIBE_VASSAL_AGGRESSION,
 } from '../systems/tribes';
+import { OFFICER_IDS, TALENT_POOL_IDS } from './officers';
 
 const cities = buildInitialCities({ luoyang: 'f1' });
 const cityMap = Object.fromEntries(cities.map((c) => [c.id, c]));
@@ -91,5 +94,42 @@ describe('tribe campaigns', () => {
     for (const tb of TRIBES) {
       expect(st.aggression[tb.id]).toBe(tb.baseAggression);
     }
+  });
+});
+
+describe('tribe vassalage', () => {
+  const rosterIds = new Set([...OFFICER_IDS, ...TALENT_POOL_IDS]);
+
+  it('every named chieftain exists in the roster', () => {
+    for (const tb of TRIBES) {
+      if (tb.chieftainId) expect(rosterIds.has(tb.chieftainId), `${tb.id} chief ${tb.chieftainId}`).toBe(true);
+    }
+  });
+
+  it('a subdued tribe sends auxiliaries to its owned border city', () => {
+    const cm = Object.fromEntries(buildInitialCities({}).map((c) => [c.id, { ...c }]));
+    const nanban = TRIBES_BY_ID['nanban'];
+    const border = nanban.raidableCityIds[0];
+    cm[border] = { ...cm[border], ownerForceId: 'f1' };
+    const before = cm[border].troops;
+    const out = tickTribeMercenaries({
+      aggression: { nanban: TRIBE_VASSAL_AGGRESSION - 0.01 },
+      cities: cm,
+      rng: () => 0.5,
+    });
+    expect(out.cities[border].troops).toBeGreaterThan(before);
+    expect(out.entries.some((e) => e.kind === 'income')).toBe(true);
+  });
+
+  it('a restless tribe sends nothing', () => {
+    const cm = Object.fromEntries(buildInitialCities({}).map((c) => [c.id, { ...c }]));
+    const nanban = TRIBES_BY_ID['nanban'];
+    cm[nanban.raidableCityIds[0]] = { ...cm[nanban.raidableCityIds[0]], ownerForceId: 'f1' };
+    const out = tickTribeMercenaries({
+      aggression: { nanban: 0.25 },
+      cities: cm,
+      rng: () => 0.5,
+    });
+    expect(out.entries.length).toBe(0);
   });
 });

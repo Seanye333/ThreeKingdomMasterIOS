@@ -198,3 +198,42 @@ export function resolveTribePunitive(args: {
  *  and the calm is shallower & shorter-lived than a military victory. */
 export const TRIBE_PLACATE_COST = 400;
 export const TRIBE_PLACATE_AGGRESSION_DROP = 0.08;
+
+/** Below this aggression a tribe is genuinely subdued/friendly and will
+ *  furnish auxiliaries to the frontier power. */
+export const TRIBE_VASSAL_AGGRESSION = 0.06;
+
+/**
+ * 異族雇傭 — a thoroughly pacified tribe (aggression beaten low by 征討 or
+ * repeated 招撫) sends auxiliary cavalry/levies each season to whichever
+ * power garrisons the border city nearest its lands. Rewards keeping the
+ * frontier quiet rather than merely surviving raids. Pure.
+ */
+export function tickTribeMercenaries(args: {
+  aggression: Record<string, number>;
+  cities: Record<EntityId, City>;
+  rng: () => number;
+}): { cities: Record<EntityId, City>; entries: ReportEntry[] } {
+  const cities = { ...args.cities };
+  const entries: ReportEntry[] = [];
+  for (const tribe of TRIBES) {
+    const agg = args.aggression[tribe.id] ?? tribe.baseAggression;
+    if (agg > TRIBE_VASSAL_AGGRESSION) continue;
+    // Levy flows to an owned raidable (border) city — prefer the strongest.
+    const owned = tribe.raidableCityIds
+      .map((id) => cities[id])
+      .filter((c): c is City => !!c && c.ownerForceId !== null)
+      .sort((a, b) => b.troops - a.troops);
+    if (owned.length === 0) continue;
+    const target = owned[0];
+    const aux = Math.floor((120 + args.rng() * 80) * tribe.strengthMul);
+    cities[target.id] = { ...target, troops: target.troops + aux };
+    entries.push({
+      cityId: target.id,
+      kind: 'income',
+      text: `${tribe.name.en} auxiliaries (${aux}) joined ${target.name.en}.`,
+      textZh: `${tribe.name.zh}附庸發兵 ${aux} 助${target.name.zh}。`,
+    });
+  }
+  return { cities, entries };
+}

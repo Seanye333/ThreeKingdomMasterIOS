@@ -45,6 +45,7 @@ import {
   resolveTribeRaids,
   canCampaignTribe,
   resolveTribePunitive,
+  tickTribeMercenaries,
   TRIBE_PLACATE_COST,
   TRIBE_PLACATE_AGGRESSION_DROP,
 } from '../systems/tribes';
@@ -1691,6 +1692,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           if (siteTick.entries.length > 0) {
             result.report.entries.push(...siteTick.entries);
           }
+          // 異族雇傭 — thoroughly pacified tribes send auxiliaries to the
+          // border city that holds their frontier quiet.
+          const merc = tickTribeMercenaries({
+            aggression: tribeResult.state.aggression,
+            cities: siteCities,
+            rng: Math.random,
+          });
+          siteCities = merc.cities;
+          if (merc.entries.length > 0) result.report.entries.push(...merc.entries);
         }
 
         // Historical event check. Fires at most one event per season.
@@ -5586,7 +5596,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const prevAgg = state.tribeState.aggression[tribe.id] ?? tribe.baseAggression;
         const nextAgg = Math.max(0, prevAgg + r.aggressionDelta);
         const survivors = Math.max(0, troops - r.attackerLosses) + r.auxTroops;
-        set({
+        const updates: Partial<GameState> = {
           tribeState: {
             ...state.tribeState,
             aggression: { ...state.tribeState.aggression, [tribe.id]: nextAgg },
@@ -5599,12 +5609,34 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               gold: sourceCity.gold + r.tributeGold,
             },
           },
-        });
+        };
+        // 招降 — a crushing win may win the tribe's chieftain to your banner,
+        // if he's still a free agent (孟獲/蹋頓/軻比能).
+        let recruited: string | null = null;
+        if (r.win && tribe.chieftainId) {
+          const chief = state.officers[tribe.chieftainId];
+          if (chief && chief.forceId === null && (chief.status === 'idle' || chief.status === 'unsearched')
+              && Math.random() < 0.45) {
+            codexMarkRecruited(chief.id);
+            updates.officers = {
+              ...state.officers,
+              [chief.id]: {
+                ...chief,
+                forceId: state.playerForceId,
+                locationCityId: sourceCity.id,
+                status: 'idle',
+                loyalty: 70,
+              },
+            };
+            recruited = chief.name.zh;
+          }
+        }
+        set(updates);
         return {
           ok: true,
           win: r.win,
           message: r.win
-            ? `${attacker.name.zh}大破${tribe.name.zh}!獲貢金 ${r.tributeGold}、附庸騎兵 ${r.auxTroops},損兵 ${r.attackerLosses}。`
+            ? `${attacker.name.zh}大破${tribe.name.zh}!獲貢金 ${r.tributeGold}、附庸騎兵 ${r.auxTroops},損兵 ${r.attackerLosses}。${recruited ? `${recruited}感服來降!` : ''}`
             : `${attacker.name.zh}討${tribe.name.zh}不利,損兵 ${r.attackerLosses},其勢稍挫。`,
         };
       },

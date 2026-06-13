@@ -16,6 +16,7 @@ export const TRIBES: Tribe[] = [
     baseAggression: 0.18,
     strengthMul: 1.0,
     homeland: { lon: 102.0, lat: 24.0 },   // 南中叢林,建寧之南
+    chieftainId: 'meng-huo',
   },
   {
     id: 'wuhuan',
@@ -28,6 +29,7 @@ export const TRIBES: Tribe[] = [
     baseAggression: 0.22,
     strengthMul: 1.2,
     homeland: { lon: 120.8, lat: 41.3 },   // 遼西草原,柳城外
+    chieftainId: 'tadun',
   },
   {
     id: 'xianbei',
@@ -40,6 +42,7 @@ export const TRIBES: Tribe[] = [
     baseAggression: 0.20,
     strengthMul: 1.1,
     homeland: { lon: 110.4, lat: 41.4 },   // 漠南,雲中之北
+    chieftainId: 'kebi-neng',
   },
   {
     id: 'qiang',
