@@ -618,7 +618,10 @@ export function warmStrategicAssets(): boolean {
 let waterMaskCache: THREE.Texture | null = null;
 function buildWaterAlphaMask(): THREE.Texture {
   if (waterMaskCache) return waterMaskCache;
-  const W = PX_W, H = PX_H;
+  // Fixed mask resolution — coastline detail is independent of WORLD_SCALE.
+  // Sample at scaled-world coords so one mask covers the whole map at any
+  // scale without ballooning the canvas past mobile/GPU texture limits.
+  const W = 1000, H = 720;
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;
@@ -627,15 +630,17 @@ function buildWaterAlphaMask(): THREE.Texture {
   const data = img.data;
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
-      let water = landSDF(x, y) < 0;
+      const wx = (x / W) * PX_W;
+      const wy = (y / H) * PX_H;
+      let water = landSDF(wx, wy) < 0;
       if (!water) {
         for (const lk of LAKES) {
-          if (Math.hypot(x - lk.x, y - lk.y) < lk.r) { water = true; break; }
+          if (Math.hypot(wx - lk.x, wy - lk.y) < lk.r) { water = true; break; }
         }
       }
       if (!water) {
         for (const r of RIVERS) {
-          if (distToPolyline(x, y, r.points) < r.width) { water = true; break; }
+          if (distToPolyline(wx, wy, r.points) < r.width) { water = true; break; }
         }
       }
       const i = (y * W + x) * 4;
@@ -4539,7 +4544,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onQuickAction, mapSty
     <>
       {/* Distance fog — color follows season; far value pushed past max
        *  camera zoom (100) so the world stays visible when fully zoomed out. */}
-      <fog attach="fog" args={[dusk ? '#caa37e' : seasonPreset.fogColor, 60 * WORLD_SCALE, 250 * WORLD_SCALE]} />
+      <fog attach="fog" args={[dusk ? '#caa37e' : seasonPreset.fogColor, 120 * WORLD_SCALE, 500 * WORLD_SCALE]} />
 
       {/* Per-season lighting */}
       <ambientLight intensity={seasonPreset.ambient * (dusk ? 0.72 : 1)} color={dusk ? '#d8b890' : seasonPreset.ambientColor} />
@@ -5575,7 +5580,7 @@ export function StrategicMap3D() {
             target={orbitTarget}
             maxPolarAngle={Math.PI / 2.1}
             minDistance={battleActive ? 0.9 : 3}
-            maxDistance={100 * WORLD_SCALE}
+            maxDistance={200 * WORLD_SCALE}
             enableDamping
             dampingFactor={0.1}
           />

@@ -17,7 +17,7 @@
  *  downstream distance threshold (march duration, interception, sally,
  *  merge, territory, AI) multiplies by the SAME factor, and the renderer
  *  derives its size from MAP_W/MAP_H. Set to 1 to restore the old layout. */
-export const WORLD_SCALE = 3.0;
+export const WORLD_SCALE = 6.0;
 export const MAP_W = 1000 * WORLD_SCALE;
 export const MAP_H = 720 * WORLD_SCALE;
 
