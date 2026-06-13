@@ -68,6 +68,11 @@ function hashStr(s: string): number {
 const PIXEL_TO_WORLD = 1 / 24;          // pixel-space → 3D world units
 const MAP_W = PX_W * PIXEL_TO_WORLD;   // 3D width — auto-scales with WORLD_SCALE
 const MAP_D = PX_H * PIXEL_TO_WORLD;   // 3D depth — auto-scales with WORLD_SCALE
+// City models + army tokens are fixed world-size, so a bigger world makes
+// them read as tiny dots. Grow them GENTLY (sub-linear) with WORLD_SCALE so
+// they stay legible at the strategic overview without dominating up close.
+// (At WORLD_SCALE 1 → 1.0, unchanged; 6 → 1.75.) Tune the 0.15 to taste.
+const MARKER_SCALE = 1 + (WORLD_SCALE - 1) * 0.15;
 /** Stable fallback for selectors that may return undefined on old saves. */
 const EMPTY_TERRITORY_OWNERSHIP: Record<string, string | null> = {};
 function pxToWorld(x: number, y: number): [number, number] {
@@ -1326,7 +1331,7 @@ function City3D({
   // cities (min ~18px ≈ 2.6 hexes apart) stop overlapping — de-crowds the
   // dense clusters (Luoyang basin, Shu passes, Xiangyang/Fancheng) without
   // moving any city off its real-geography position.
-  const worldScale = PIXEL_TO_WORLD * 50 * 0.5;   // 0.5 → ~1.04 at 1/24
+  const worldScale = PIXEL_TO_WORLD * 50 * 0.5 * MARKER_SCALE;   // ~1.04 at base, grows gently with the world
   // Selection pulse
   const ringRef = useRef<THREE.MeshBasicMaterial>(null);
   useFrame(({ clock }) => {
@@ -1601,7 +1606,7 @@ const UNIT_TAG: Record<WeaponType, string> = {
 // Marching-token scale — kept in step with the city footprint shrink (0.7→0.5)
 // so the squad reads as a unit on the map, not larger than the cities it moves
 // between.
-const ARMY_TOKEN_SCALE = 0.7;
+const ARMY_TOKEN_SCALE = 0.7 * MARKER_SCALE;
 
 function MarchingArmy({ from, to, color, commanderName, troops, seasonsRemaining, totalSeasons, landRoute, weaponType, selected, holding, cellTarget, ports, onClick }: {
   from: City; to: City; color: string;
