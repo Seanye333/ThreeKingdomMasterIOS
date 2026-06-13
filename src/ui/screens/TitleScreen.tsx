@@ -9,6 +9,7 @@ import type { Difficulty } from '../../game/state/gameState';
 import type { Scenario } from '../../game/types';
 import { CustomOfficerCreator } from '../components/CustomOfficerCreator';
 import { InstallPrompt } from '../components/InstallPrompt';
+import { LeaderboardModal } from '../components/LeaderboardModal';
 import { WhatsNewModal } from '../components/WhatsNewModal';
 import { GAME_VERSION } from '../../game/data/changelog';
 import { ItemsBrowser } from '../components/ItemsBrowser';
@@ -41,6 +42,7 @@ const DIFFICULTIES: Array<{ id: Difficulty; en: string; zh: string; noteZh: stri
 export function TitleScreen() {
   const loadScenario = useGameStore((s) => s.loadScenario);
   const observeScenario = useGameStore((s) => s.observeScenario);
+  const [boardDate, setBoardDate] = useState<string | null>(null);
   const loadRandom = useGameStore((s) => s.loadRandomScenario);
   const setTutorialStep = useGameStore((s) => s.setTutorialStep);
   const setHotSeatPlayers = useGameStore((s) => s.setHotSeatPlayers);
@@ -203,6 +205,7 @@ export function TitleScreen() {
     <div className={styles.root}>
       <InstallPrompt />
       <WhatsNewModal />
+      {boardDate && <LeaderboardModal date={boardDate} onClose={() => setBoardDate(null)} />}
       {/* 版本號 — bottom corner, quiet */}
       <div style={{ position: 'fixed', right: 10, bottom: 6, zIndex: 5, fontSize: '0.62rem', color: '#6a5a45', fontFamily: 'ui-monospace, monospace' }}>
         v{GAME_VERSION}
@@ -321,6 +324,14 @@ export function TitleScreen() {
                     cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.2rem',
                   }}
                 >{dailyResult ? t('再戰', 'Again') : t('應戰', 'Accept')}</button>
+                <button
+                  onClick={() => setBoardDate(todayStr)}
+                  title={t('每日排行榜', 'Daily leaderboard')}
+                  style={{
+                    background: 'transparent', border: '1px solid #d4a84a', color: '#f0d98a',
+                    padding: '0.3rem 0.7rem', cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >🏆</button>
                 {/* 補打日曆 — the last seven days, replayable; older days
                     show their result but the window has closed. */}
                 <div style={{ flexBasis: '100%', display: 'flex', gap: 4, alignItems: 'center', marginTop: 2 }}>
