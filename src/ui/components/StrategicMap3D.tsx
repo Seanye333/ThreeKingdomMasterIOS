@@ -2167,78 +2167,261 @@ function FieldCamp({ color, troops = 0 }: { color: string; troops?: number }) {
   );
 }
 
+/** A warhorse for cavalry — body, neck, head, tail and four galloping legs. */
+function Horse({ color }: { color: string }) {
+  const fl = useRef<THREE.Group>(null);
+  const fr = useRef<THREE.Group>(null);
+  const bl = useRef<THREE.Group>(null);
+  const br = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    // Diagonal gait — front-left swings with back-right, etc.
+    const a = Math.sin(clock.elapsedTime * 8) * 0.5;
+    if (fl.current) fl.current.rotation.x = a;
+    if (br.current) br.current.rotation.x = a;
+    if (fr.current) fr.current.rotation.x = -a;
+    if (bl.current) bl.current.rotation.x = -a;
+  });
+  const hide = '#5a4030';
+  const leg = (ref: { current: THREE.Group | null }, x: number, z: number) => (
+    <group ref={ref} position={[x, 0.07, z]}>
+      <mesh position={[0, -0.035, 0]} castShadow>
+        <boxGeometry args={[0.016, 0.07, 0.016]} />
+        <meshStandardMaterial color={hide} roughness={0.85} />
+      </mesh>
+    </group>
+  );
+  return (
+    <group>
+      {/* Barrel */}
+      <mesh position={[0, 0.085, 0]} castShadow>
+        <boxGeometry args={[0.05, 0.05, 0.15]} />
+        <meshStandardMaterial color={hide} roughness={0.82} />
+      </mesh>
+      {/* Neck */}
+      <mesh position={[0, 0.125, 0.085]} rotation={[0.5, 0, 0]} castShadow>
+        <boxGeometry args={[0.034, 0.075, 0.03]} />
+        <meshStandardMaterial color={hide} roughness={0.82} />
+      </mesh>
+      {/* Head */}
+      <mesh position={[0, 0.155, 0.118]} rotation={[0.35, 0, 0]} castShadow>
+        <boxGeometry args={[0.026, 0.03, 0.06]} />
+        <meshStandardMaterial color={hide} roughness={0.82} />
+      </mesh>
+      {/* Tail */}
+      <mesh position={[0, 0.095, -0.085]} rotation={[-0.7, 0, 0]}>
+        <cylinderGeometry args={[0.008, 0.002, 0.06, 4]} />
+        <meshStandardMaterial color="#3a2a1a" roughness={0.9} />
+      </mesh>
+      {/* Caparison — saddle cloth in the force colour */}
+      <mesh position={[0, 0.113, 0]} castShadow>
+        <boxGeometry args={[0.056, 0.012, 0.09]} />
+        <meshStandardMaterial color={color} roughness={0.7} />
+      </mesh>
+      {leg(fl, -0.018, 0.058)}
+      {leg(fr, 0.018, 0.058)}
+      {leg(bl, -0.018, -0.058)}
+      {leg(br, 0.018, -0.058)}
+    </group>
+  );
+}
+
+/**
+ * An articulated foot/horse soldier built from primitives — head + helmet,
+ * torso, two arms (one gripping the weapon), and two legs that stride in a
+ * walk cycle. Weapon silhouette varies by class so an army's composition
+ * reads at a glance; the leader gets a plumed helm, a cape and a banner.
+ */
 function Soldier({ dx, dz, color, phase, isLeader, weaponType }: {
   dx: number; dz: number; color: string; phase: number; isLeader: boolean;
   weaponType: WeaponType;
 }) {
   const groupRef = useRef<THREE.Group>(null);
+  const lLeg = useRef<THREE.Group>(null);
+  const rLeg = useRef<THREE.Group>(null);
+  const lArm = useRef<THREE.Group>(null);
   const bannerRef = useRef<THREE.Mesh>(null);
+  const capeRef = useRef<THREE.Mesh>(null);
   const mounted = weaponType === 'cavalry';
-  const lift = mounted ? 0.10 : 0;
-  useFrame(({ clock }) => {
-    if (groupRef.current) {
-      // Walking bounce — phase-shifted; mounted units ride steadier.
-      const amp = mounted ? 0.02 : 0.04;
-      groupRef.current.position.y = Math.abs(Math.sin(clock.elapsedTime * 5 + phase)) * amp;
-    }
-    if (bannerRef.current) {
-      // Banner ripples in the wind.
-      bannerRef.current.rotation.z = Math.sin(clock.elapsedTime * 4 + phase) * 0.25;
-    }
-  });
-  return (
-    <group ref={groupRef} position={[dx, 0, dz]}>
-      {/* Mount for cavalry — a simple horse body + legs under the rider. */}
-      {mounted && (
-        <group position={[0, 0.02, 0]}>
-          <mesh position={[0, 0.07, 0]} castShadow>
-            <boxGeometry args={[0.07, 0.05, 0.14]} />
-            <meshStandardMaterial color="#5a4030" roughness={0.8} />
-          </mesh>
-          <mesh position={[0, 0.10, 0.09]} castShadow>
-            <boxGeometry args={[0.04, 0.06, 0.04]} />
-            <meshStandardMaterial color="#5a4030" roughness={0.8} />
-          </mesh>
-        </group>
-      )}
-      {/* Body — torso */}
-      <mesh position={[0, 0.07 + lift, 0]} castShadow>
-        <cylinderGeometry args={[0.04, 0.05, 0.10, 6]} />
-        <meshStandardMaterial color={weaponType === 'fan' ? '#caa' : color} roughness={0.7} />
-      </mesh>
-      {/* Head */}
-      <mesh position={[0, 0.155 + lift, 0]} castShadow>
-        <sphereGeometry args={[0.028, 6, 6]} />
-        <meshStandardMaterial color="#e0c498" roughness={0.75} />
-      </mesh>
+  const robed = weaponType === 'fan';           // strategist — robe, no helmet
+  const skin = '#e0c498';
+  const cloth = robed ? '#cdbd95' : color;
+  const dark = '#3a2818';
+  const steel = '#c8ccd2';
 
-      {/* Type-specific gear */}
-      {weaponType === 'fan' ? (
-        // Strategist — holds a round fan, no weapon pole.
-        <mesh position={[0.06, 0.15 + lift, 0]} rotation={[0, 0, 0.4]} castShadow>
-          <circleGeometry args={[0.035, 12]} />
-          <meshStandardMaterial color="#e8dcc0" side={THREE.DoubleSide} roughness={0.6} />
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime * 5.5 + phase;
+    const sw = Math.sin(t);
+    if (groupRef.current) {
+      groupRef.current.position.y = mounted
+        ? Math.abs(Math.sin(clock.elapsedTime * 8 + phase)) * 0.012   // ride bob
+        : Math.abs(Math.cos(t)) * 0.012;                              // foot bob
+    }
+    if (!mounted && !robed) {
+      // Stride: legs swing fore/aft in anti-phase, free arm counter-swings.
+      if (lLeg.current) lLeg.current.rotation.x = sw * 0.7;
+      if (rLeg.current) rLeg.current.rotation.x = -sw * 0.7;
+      if (lArm.current) lArm.current.rotation.x = -sw * 0.5;
+    }
+    if (bannerRef.current) bannerRef.current.rotation.z = Math.sin(clock.elapsedTime * 4 + phase) * 0.25;
+    if (capeRef.current) capeRef.current.rotation.x = 0.1 + Math.sin(clock.elapsedTime * 3 + phase) * 0.12;
+  });
+
+  // hips sit higher when mounted so the rider straddles the saddle.
+  const hipY = mounted ? 0.135 : 0.06;
+  const tall = isLeader ? 1.12 : 1;
+
+  // Weapon, anchored at the right hand and reaching upward.
+  const weapon = (() => {
+    if (robed) {
+      return (
+        <mesh position={[0, 0.06, 0.02]} rotation={[0, 0, 0.5]} castShadow>
+          <circleGeometry args={[0.032, 12]} />
+          <meshStandardMaterial color="#efe6cf" side={THREE.DoubleSide} roughness={0.6} />
         </mesh>
-      ) : (weaponType === 'bow' || weaponType === 'crossbow') ? (
-        // Archer — a curved bow arc.
-        <mesh position={[0.05, 0.13 + lift, 0]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+      );
+    }
+    if (weaponType === 'bow' || weaponType === 'crossbow') {
+      return (
+        <mesh position={[0, 0.02, 0.02]} rotation={[Math.PI / 2, 0, 0]} castShadow>
           <torusGeometry args={[0.05, 0.005, 6, 10, Math.PI * 1.2]} />
           <meshStandardMaterial color="#6a4a28" roughness={0.7} />
         </mesh>
+      );
+    }
+    if (weaponType === 'sabre' || weaponType === 'sword') {
+      return (
+        <mesh position={[0, 0.07, 0]} rotation={[0, 0, 0.12]} castShadow>
+          <boxGeometry args={[0.008, 0.14, 0.004]} />
+          <meshStandardMaterial color={steel} metalness={0.5} roughness={0.4} />
+        </mesh>
+      );
+    }
+    // pole arm — spear / halberd / siege / unarmed: tall shaft from the hand.
+    const len = weaponType === 'halberd' ? 0.30 : 0.24;
+    return (
+      <group>
+        <mesh position={[0, len / 2, 0]} castShadow>
+          <cylinderGeometry args={[0.004, 0.004, len, 5]} />
+          <meshStandardMaterial color={dark} roughness={0.8} />
+        </mesh>
+        <mesh position={[0, len, 0]} castShadow>
+          {weaponType === 'halberd'
+            ? <boxGeometry args={[0.03, 0.045, 0.004]} />
+            : <coneGeometry args={[0.012, 0.045, 6]} />}
+          <meshStandardMaterial color={steel} metalness={0.5} roughness={0.4} />
+        </mesh>
+      </group>
+    );
+  })();
+
+  return (
+    <group ref={groupRef} position={[dx, 0, dz]} scale={[1, tall, 1]}>
+      {mounted && <Horse color={color} />}
+
+      {/* ── Legs ── */}
+      {robed ? (
+        <mesh position={[0, hipY - 0.01, 0]} castShadow>
+          <cylinderGeometry args={[0.028, 0.05, 0.12, 8]} />
+          <meshStandardMaterial color={cloth} roughness={0.75} />
+        </mesh>
+      ) : mounted ? (
+        <>
+          <mesh position={[-0.03, hipY - 0.03, 0]} rotation={[0, 0, -0.5]} castShadow>
+            <boxGeometry args={[0.018, 0.07, 0.02]} />
+            <meshStandardMaterial color={dark} roughness={0.8} />
+          </mesh>
+          <mesh position={[0.03, hipY - 0.03, 0]} rotation={[0, 0, 0.5]} castShadow>
+            <boxGeometry args={[0.018, 0.07, 0.02]} />
+            <meshStandardMaterial color={dark} roughness={0.8} />
+          </mesh>
+        </>
       ) : (
-        // Infantry / cavalry — pole arm (taller for halberd/spear).
-        <mesh position={[0.035, (weaponType === 'halberd' ? 0.16 : 0.13) + lift, 0]} castShadow>
-          <cylinderGeometry args={[0.004, 0.004, weaponType === 'halberd' ? 0.28 : 0.22, 4]} />
-          <meshStandardMaterial color="#3a2818" />
+        <>
+          <group ref={lLeg} position={[-0.016, hipY, 0]}>
+            <mesh position={[0, -0.03, 0]} castShadow>
+              <boxGeometry args={[0.017, 0.06, 0.02]} />
+              <meshStandardMaterial color={dark} roughness={0.8} />
+            </mesh>
+          </group>
+          <group ref={rLeg} position={[0.016, hipY, 0]}>
+            <mesh position={[0, -0.03, 0]} castShadow>
+              <boxGeometry args={[0.017, 0.06, 0.02]} />
+              <meshStandardMaterial color={dark} roughness={0.8} />
+            </mesh>
+          </group>
+        </>
+      )}
+
+      {/* ── Torso + shoulder armour ── */}
+      <mesh position={[0, hipY + 0.045, 0]} castShadow>
+        <boxGeometry args={[0.05, 0.085, 0.032]} />
+        <meshStandardMaterial color={cloth} roughness={0.72} />
+      </mesh>
+      {!robed && (
+        <mesh position={[0, hipY + 0.082, 0]} castShadow>
+          <boxGeometry args={[0.072, 0.018, 0.042]} />
+          <meshStandardMaterial color="#caa86a" metalness={0.3} roughness={0.6} />
         </mesh>
       )}
 
-      {/* Leader carries the force banner (waving). */}
-      {isLeader && (
-        <mesh ref={bannerRef} position={[0.075, 0.22 + lift, 0]} castShadow>
-          <planeGeometry args={[0.09, 0.055]} />
-          <meshStandardMaterial color={color} side={THREE.DoubleSide} />
+      {/* ── Arms — left swings free, right grips the weapon ── */}
+      <group ref={lArm} position={[-0.034, hipY + 0.072, 0]}>
+        <mesh position={[0, -0.035, 0]} castShadow>
+          <boxGeometry args={[0.014, 0.07, 0.014]} />
+          <meshStandardMaterial color={cloth} roughness={0.75} />
         </mesh>
+      </group>
+      <group position={[0.038, hipY + 0.072, 0]}>
+        <mesh position={[0, -0.032, 0]} castShadow>
+          <boxGeometry args={[0.014, 0.07, 0.014]} />
+          <meshStandardMaterial color={cloth} roughness={0.75} />
+        </mesh>
+        <group position={[0, -0.062, 0]}>{weapon}</group>
+      </group>
+
+      {/* ── Head + helmet / cap ── */}
+      <mesh position={[0, hipY + 0.115, 0]} castShadow>
+        <sphereGeometry args={[0.024, 7, 7]} />
+        <meshStandardMaterial color={skin} roughness={0.75} />
+      </mesh>
+      {robed ? (
+        <mesh position={[0, hipY + 0.135, 0]} castShadow>
+          <cylinderGeometry args={[0.022, 0.026, 0.022, 8]} />
+          <meshStandardMaterial color="#2c2c34" roughness={0.8} />
+        </mesh>
+      ) : (
+        <>
+          <mesh position={[0, hipY + 0.127, 0]} castShadow>
+            <sphereGeometry args={[0.027, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2]} />
+            <meshStandardMaterial color="#8a8f98" metalness={0.5} roughness={0.45} />
+          </mesh>
+          {isLeader && (
+            <mesh position={[0, hipY + 0.162, 0]} castShadow>
+              <coneGeometry args={[0.012, 0.045, 6]} />
+              <meshStandardMaterial color="#d23a2a" roughness={0.6} />
+            </mesh>
+          )}
+        </>
+      )}
+
+      {/* ── Leader extras: fluttering cape + planted banner ── */}
+      {isLeader && (
+        <>
+          <mesh ref={capeRef} position={[0, hipY + 0.05, -0.022]}>
+            <planeGeometry args={[0.07, 0.11]} />
+            <meshStandardMaterial color={color} side={THREE.DoubleSide} roughness={0.8} />
+          </mesh>
+          <group position={[-0.052, hipY + 0.06, 0]}>
+            <mesh position={[0, 0.06, 0]}>
+              <cylinderGeometry args={[0.004, 0.004, 0.22, 5]} />
+              <meshStandardMaterial color={dark} />
+            </mesh>
+            <mesh ref={bannerRef} position={[0.05, 0.13, 0]} castShadow>
+              <planeGeometry args={[0.09, 0.06]} />
+              <meshStandardMaterial color={color} side={THREE.DoubleSide} emissive={color} emissiveIntensity={0.15} />
+            </mesh>
+          </group>
+        </>
       )}
     </group>
   );
