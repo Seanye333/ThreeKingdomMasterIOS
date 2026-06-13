@@ -4539,7 +4539,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onQuickAction, mapSty
     <>
       {/* Distance fog — color follows season; far value pushed past max
        *  camera zoom (100) so the world stays visible when fully zoomed out. */}
-      <fog attach="fog" args={[dusk ? '#caa37e' : seasonPreset.fogColor, 60, 250]} />
+      <fog attach="fog" args={[dusk ? '#caa37e' : seasonPreset.fogColor, 60 * WORLD_SCALE, 250 * WORLD_SCALE]} />
 
       {/* Per-season lighting */}
       <ambientLight intensity={seasonPreset.ambient * (dusk ? 0.72 : 1)} color={dusk ? '#d8b890' : seasonPreset.ambientColor} />
