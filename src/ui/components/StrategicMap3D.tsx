@@ -7,6 +7,7 @@ import { positionAlongRoute, marchDestCoords, terrainRoute, generateTerritories 
 import { snapToHexCenter, geoToPixel, battleGroundAt, MAP_W as PX_W, MAP_H as PX_H, WORLD_SCALE } from '../../game/data/geography';
 import { cityPixel, cityPos } from '../../game/data/cityGeo';
 import { marchDurationFor } from '../../game/data/cities';
+import { NAMED_MAPS_BY_CITY, NAMED_MAPS_BY_ID } from '../../game/data/namedMaps';
 import { deriveWeaponType, type WeaponType } from '../../game/data/weaponTypes';
 import * as THREE from 'three';
 import { useGameStore } from '../../game/state/store';
@@ -4505,6 +4506,46 @@ function Bridges3D({ cities }: { cities: Record<string, City> }) {
   );
 }
 
+/* ─── 名勝古戰場 — a stone stele + label marking the famous battlefields the
+ *  named-map data records (赤壁/官渡/長坂/定軍山…). One per battle. ── */
+function Landmarks3D({ cities }: { cities: Record<string, City> }) {
+  const sites = useMemo(() => {
+    const usedMap = new Set<string>();
+    const out: Array<{ x: number; z: number; name: string }> = [];
+    for (const [cid, mapId] of Object.entries(NAMED_MAPS_BY_CITY)) {
+      if (usedMap.has(mapId)) continue;
+      const c = cities[cid]; const m = NAMED_MAPS_BY_ID[mapId];
+      if (!c || !m) continue;
+      usedMap.add(mapId);
+      const [px, py] = cityPixel(c.id, c.coords.x, c.coords.y);
+      const [wx, wz] = pxToWorld(px, py);
+      out.push({ x: wx, z: wz, name: m.name.zh });
+    }
+    return out;
+  }, [cities]);
+  return (
+    <group>
+      {sites.map((s, i) => {
+        const x = s.x + 0.55, z = s.z + 0.55;
+        const y = sampleTerrainHeight(x, z);
+        return (
+          <group key={i} position={[x, y, z]}>
+            <mesh position={[0, 0.12, 0]} castShadow><boxGeometry args={[0.06, 0.24, 0.04]} /><meshStandardMaterial color="#5a554e" roughness={0.85} /></mesh>
+            <mesh position={[0, 0.25, 0]} castShadow><boxGeometry args={[0.085, 0.03, 0.06]} /><meshStandardMaterial color="#46423b" roughness={0.8} /></mesh>
+            <Html position={[0, 0.37, 0]} center distanceFactor={13} zIndexRange={[8, 0]} style={{ pointerEvents: 'none' }}>
+              <div style={{
+                background: 'rgba(28, 18, 10, 0.8)', border: '1px solid #8a7050', borderRadius: 3,
+                padding: '1px 6px', color: '#e0c89a', fontFamily: '"Ma Shan Zheng", "Songti SC", serif',
+                fontSize: '11px', whiteSpace: 'nowrap',
+              }}>⚔ {s.name}</div>
+            </Html>
+          </group>
+        );
+      })}
+    </group>
+  );
+}
+
 function MapScene({ overlayMode, onPortClick, onFortClick, onQuickAction, mapStyle, dioSelectedId, dioMode, dioCast, dioArcs, dioFx, dioHover, onDioHover, onDioramaTile }: {
   overlayMode: OverlayMode;
   mapStyle: 'classic' | 'hex';
@@ -4740,6 +4781,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onQuickAction, mapSty
       {/* In hex mode the road network is paved into the quilt itself. */}
       {mapStyle === 'classic' && <Roads cities={cities} />}
       {mapStyle === 'classic' && <Bridges3D cities={cities} />}
+      <Landmarks3D cities={cities} />
       <MarchingArmies cities={cities} pendingCommands={visibleCommands} forces={forces} officers={officers} ports={portsForMarch} selectedArmyId={selectedArmyId3D} onArmyClick={handleArmyClick} hideNearPx={battleSitePx} />
       {overlayMode === 'supply' && <SupplyLines3D />}
       {overlayMode === 'diplomacy' && <DiplomacyLines3D cities={cities} forces={forces} />}
