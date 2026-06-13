@@ -3,7 +3,7 @@
  * The newest entry drives the in-game「本次更新」popup: bump
  * GAME_VERSION when a batch ships and the next launch shows it once.
  */
-export const GAME_VERSION = '1.1.0';
+export const GAME_VERSION = '1.2.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -13,6 +13,23 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.2.0',
+    date: '2026-06-13',
+    title: '謀略與生態 — 舌戰、計略、模擬器、排行榜',
+    items: [
+      '💬 舌戰:四張論點牌相剋,氣勢見底者拂袖認負,可罵死性烈者',
+      '🪄 計略:驅虎吞狼、二虎競食、遠交近攻',
+      '🤖 委託指揮:後期小仗一鍵交給軍師,隨時收回',
+      '🧠 軍師錦囊已能一鍵照辦;⚔ 車輪戰 + 開打前罵陣',
+      '👁 觀戰模式:不選勢力看 AI 群雄逐鹿(演義模擬器)',
+      '📈 天下大勢曲線、戰後復盤(戰損比/最堅韌/中流砥柱)',
+      '🎓 新手五事互動教學:做到一條勾一條',
+      '📦 Mod 劇本支持:一個 JSON 重畫天下歸屬',
+      '💾 戰役本體搬上 IndexedDB,長局不再爆倉',
+      '🏆 每日挑戰全球排行榜(後端可後補)',
+    ],
+  },
   {
     version: '1.1.0',
     date: '2026-06-12',
