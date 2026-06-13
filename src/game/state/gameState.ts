@@ -36,6 +36,7 @@ import { createInitialMandate, type MandateState } from '../systems/mandate';
 import { ITEMS } from '../data/items';
 import { buildInitialPorts } from '../data/ports';
 import { buildInitialForts } from '../data/forts';
+import { buildInitialSites } from '../data/sites';
 import { FAMILY_LINEAGE } from '../data/familyLineage';
 import { buildHistoricalOfficers } from '../data/officers';
 import { loadMods, modEventsForStart, modOfficersForStart } from '../systems/mods';
@@ -144,6 +145,8 @@ export interface GameState {
   ports: Record<EntityId, Port>;
   /** Forts: historical 砦/關 + player-built 塢/壘. */
   forts: Record<EntityId, Fort>;
+  /** 野外據點 — bandit nests, river fords, resource deposits. */
+  sites: Record<EntityId, import('../types').WildSite>;
   /** Phase 3c — territory ownership keyed by territory id. Null/missing
    *  means the cell inherits from its parent city. Set explicitly when
    *  an army marches through it, regardless of march outcome. */
@@ -347,6 +350,7 @@ export const EMPTY_STATE: GameState = {
   shipOrders: [],
   ports: {},
   forts: {},
+  sites: {},
   territoryOwnership: {},
   armies: {},
   family: [],
@@ -579,6 +583,7 @@ export function loadScenario(
     forts: buildInitialForts(
       Object.fromEntries(scaledCities.map((c) => [c.id, c.ownerForceId])),
     ),
+    sites: buildInitialSites(),
     territoryOwnership: {},
     armies: {},
     // Pre-populate canonical Three Kingdoms family lineages — filtered

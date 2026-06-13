@@ -36,6 +36,7 @@ import { PortPanel } from './PortPanel';
 import { FortPanel } from './FortPanel';
 import { TribePanel } from './TribePanel';
 import { TRIBES } from '../../game/data/tribes';
+import { SitePanel } from './SitePanel';
 import { BuildStockadePicker } from './BuildStockadePicker';
 import { useT } from '../i18n';
 
@@ -4877,12 +4878,107 @@ function Tribes3D({ onTribeClick }: { onTribeClick: (tribeId: string) => void })
   );
 }
 
-function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onQuickAction, mapStyle, dioSelectedId, dioMode, dioCast, dioArcs, dioFx, dioHover, onDioHover, onDioramaTile }: {
+/* ─── 野外據點 — bandit nests, river fords, resource deposits ─────────── */
+function WildSite3D({ site, color, onClick }: {
+  site: import('../../game/types').WildSite;
+  color: string;
+  onClick: () => void;
+}) {
+  const [px, py] = geoToPixel(site.coords.lon, site.coords.lat);
+  const [wx, wz] = pxToWorld(px, py);
+  const y = sampleTerrainHeight(wx, wz);
+  const scale = PIXEL_TO_WORLD * 50 * 0.45 * MARKER_SCALE;
+  const disc = (
+    <mesh
+      position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}
+      onPointerOut={() => { document.body.style.cursor = ''; }}
+    >
+      <circleGeometry args={[0.5, 18]} />
+      <meshBasicMaterial color={color} transparent opacity={0.34} />
+    </mesh>
+  );
+  let body: React.ReactNode = null;
+  if (site.subtype === 'bandit') {
+    // Palisade ring + raised black banner.
+    body = (
+      <group>
+        {Array.from({ length: 8 }).map((_, i) => {
+          const a = (i / 8) * Math.PI * 2;
+          return (
+            <mesh key={i} position={[Math.cos(a) * 0.34, 0.16, Math.sin(a) * 0.34]} rotation={[0, -a, 0.12]} castShadow>
+              <cylinderGeometry args={[0.03, 0.04, 0.34, 5]} />
+              <meshStandardMaterial color="#4a3a28" roughness={0.95} />
+            </mesh>
+          );
+        })}
+        <mesh position={[0, 0.34, 0]} castShadow><cylinderGeometry args={[0.022, 0.022, 0.66, 6]} /><meshStandardMaterial color="#2a2018" roughness={0.9} /></mesh>
+        <mesh position={[0.1, 0.58, 0]} castShadow><boxGeometry args={[0.18, 0.13, 0.02]} /><meshStandardMaterial color="#1a1a1a" side={THREE.DoubleSide} roughness={0.6} /></mesh>
+      </group>
+    );
+  } else if (site.subtype === 'ford') {
+    // A short jetty with two pilings and a moored skiff.
+    body = (
+      <group>
+        <mesh position={[0, 0.08, 0]} castShadow receiveShadow><boxGeometry args={[0.5, 0.05, 0.16]} /><meshStandardMaterial color="#6a553a" roughness={0.9} /></mesh>
+        <mesh position={[-0.2, 0.04, 0.12]} castShadow><cylinderGeometry args={[0.025, 0.025, 0.18, 6]} /><meshStandardMaterial color="#4a3a28" roughness={0.92} /></mesh>
+        <mesh position={[0.2, 0.04, 0.12]} castShadow><cylinderGeometry args={[0.025, 0.025, 0.18, 6]} /><meshStandardMaterial color="#4a3a28" roughness={0.92} /></mesh>
+        <mesh position={[0.3, 0.1, -0.05]} rotation={[0, 0.3, 0]} castShadow><boxGeometry args={[0.34, 0.06, 0.12]} /><meshStandardMaterial color="#5a4a36" roughness={0.85} /></mesh>
+      </group>
+    );
+  } else {
+    // Resource — an ore pile + a pick-frame; tint by variant.
+    const oreColor = site.variant === 'salt' ? '#e8e4dc'
+      : site.variant === 'gold' ? '#d8b13a'
+      : site.variant === 'copper' ? '#b5703a'
+      : site.variant === 'horse' ? '#7a8a5a'
+      : '#6a6a72';   // iron
+    body = (
+      <group>
+        <mesh position={[0, 0.12, 0]} castShadow><coneGeometry args={[0.26, 0.26, 8]} /><meshStandardMaterial color={oreColor} roughness={0.85} metalness={site.variant === 'gold' || site.variant === 'copper' ? 0.4 : 0.1} /></mesh>
+        <mesh position={[-0.22, 0.16, 0.06]} rotation={[0, 0, 0.5]} castShadow><cylinderGeometry args={[0.018, 0.018, 0.34, 5]} /><meshStandardMaterial color="#5a4a36" roughness={0.9} /></mesh>
+        <mesh position={[-0.28, 0.32, 0.06]} rotation={[0, 0, 1.3]} castShadow><boxGeometry args={[0.16, 0.03, 0.03]} /><meshStandardMaterial color="#7a7a82" roughness={0.6} metalness={0.4} /></mesh>
+      </group>
+    );
+  }
+  return (
+    <group position={[wx, y, wz]} scale={scale}>
+      {disc}
+      {body}
+      <Html position={[0, 0.8, 0]} center distanceFactor={12} zIndexRange={[8, 0]} style={{ pointerEvents: 'none' }}>
+        <div style={{
+          background: 'rgba(28, 18, 10, 0.8)', border: `1px solid ${color}`, borderRadius: 3,
+          padding: '1px 6px', color: '#e8d4a0', fontFamily: '"Ma Shan Zheng", "Songti SC", serif',
+          fontSize: '10.5px', whiteSpace: 'nowrap',
+        }}>{site.subtype === 'bandit' ? '🏴' : site.subtype === 'ford' ? '⛵' : '⛏'} {site.name.zh}</div>
+      </Html>
+    </group>
+  );
+}
+
+function WildSites3D({ onSiteClick }: { onSiteClick: (siteId: string) => void }) {
+  const sites = useGameStore((s) => s.sites);
+  const forces = useGameStore((s) => s.forces);
+  return (
+    <group>
+      {Object.values(sites).map((site) => {
+        const color = site.ownerForceId
+          ? (forces[site.ownerForceId]?.color ?? '#5a4530')
+          : site.subtype === 'bandit' ? '#7a2a22' : '#6a6250';
+        return <WildSite3D key={site.id} site={site} color={color} onClick={() => onSiteClick(site.id)} />;
+      })}
+    </group>
+  );
+}
+
+function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteClick, onQuickAction, mapStyle, dioSelectedId, dioMode, dioCast, dioArcs, dioFx, dioHover, onDioHover, onDioramaTile }: {
   overlayMode: OverlayMode;
   mapStyle: 'classic' | 'hex';
   onPortClick: (portId: string) => void;
   onFortClick: (fortId: string) => void;
   onTribeClick: (tribeId: string) => void;
+  onSiteClick: (siteId: string) => void;
   /** 快捷輪盤 — open the march/recruit picker for a city (DOM modals live
    *  in the outer shell, outside the Canvas). */
   onQuickAction: (kind: 'march' | 'recruit', cityId: string) => void;
@@ -5131,6 +5227,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onQuick
       <Ports3D onPortClick={onPortClick} />
       <Forts3D onFortClick={onFortClick} hideNearPx={battleSitePx} />
       <Tribes3D onTribeClick={onTribeClick} />
+      <WildSites3D onSiteClick={onSiteClick} />
 
       {/* 戰場微縮 — the LIVE battle, embedded on the very ground it's fought
           over (same scene component, same state; rotated to its true bearing,
@@ -5652,6 +5749,7 @@ export function StrategicMap3D() {
   const [selectedPortId, setSelectedPortId] = useState<string | null>(null);
   const [selectedFortId, setSelectedFortId] = useState<string | null>(null);
   const [selectedTribeId, setSelectedTribeId] = useState<string | null>(null);
+  const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
   const [showStockadeBuild, setShowStockadeBuild] = useState(false);
   // Orbit pivot — held as STATE (stable ref) so re-renders don't snap the
   // target back; BattleFocusFly animates it to a clash site, then locks it in.
@@ -6064,6 +6162,7 @@ export function StrategicMap3D() {
             onPortClick={setSelectedPortId}
             onFortClick={setSelectedFortId}
             onTribeClick={setSelectedTribeId}
+            onSiteClick={setSelectedSiteId}
             onQuickAction={(kind, cityId) => setQuickPick({ kind, cityId })}
             dioSelectedId={worldBattleMinimized ? dioSelectedId : null}
             dioMode={dioMode}
@@ -6343,6 +6442,12 @@ export function StrategicMap3D() {
         <TribePanel
           tribeId={selectedTribeId}
           onClose={() => setSelectedTribeId(null)}
+        />
+      )}
+      {selectedSiteId && (
+        <SitePanel
+          siteId={selectedSiteId}
+          onClose={() => setSelectedSiteId(null)}
         />
       )}
       {showStockadeBuild && (

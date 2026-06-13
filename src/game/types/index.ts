@@ -14,6 +14,7 @@ export * from './province';
 export * from './naval';
 export * from './port';
 export * from './fort';
+export * from './site';
 export * from './army';
 export * from './family';
 export * from './personality';

@@ -113,6 +113,7 @@ import { DEFENSE_BUILDINGS } from '../data/defenseBuildings';
 import { SHIP_CLASSES_BY_ID } from '../data/ships';
 import { canPlayerAttackPort, migratePorts, navalReachableCityIds } from '../data/ports';
 import { canPlayerAttackFort, migrateForts } from '../data/forts';
+import { canPlayerSeizeSite, migrateSites } from '../data/sites';
 import { fortMaxHpForLevel, FACILITY_DEFS, type FacilityKind } from '../types';
 import { awardBattleXp } from '../systems/growth';
 import { tickBuildings } from '../systems/buildings';
@@ -469,6 +470,14 @@ interface GameStore extends GameState {
   /** 招撫異族 — pay tribute/gifts (gold from capital) to cool a tribe's
    *  aggression for a while. Always succeeds if gold available. */
   placateTribe: (tribeId: string) => { ok: boolean; message: string };
+  /** 剿賊/取津/佔礦 — officer-led assault on a wild site. Same flow as
+   *  attackFort; on capture the site flips to the player (bandit nests are
+   *  pacified + drop loot, fords/deposits come under control). */
+  seizeSite: (
+    siteId: EntityId,
+    attackerOfficerId: EntityId,
+    troops: number,
+  ) => { ok: boolean; captured?: boolean; message: string };
   /** Officer-led attack on a port. Damage scales with attacker WAR + LED;
    *  attacker takes casualties proportional to defender officer's WAR.
    *  Captures the port if HP drops to 0. */
@@ -5587,6 +5596,70 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         };
       },
 
+      seizeSite: (siteId, attackerOfficerId, troops) => {
+        const state = get();
+        const site = state.sites[siteId];
+        if (!site) return { ok: false, message: 'Site not found.' };
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        if (site.ownerForceId === state.playerForceId)
+          return { ok: false, message: 'You already hold this site.' };
+        const reach = canPlayerSeizeSite(site, state.cities, state.playerForceId);
+        if (!reach.ok) return { ok: false, message: reach.reason ?? 'Cannot reach.' };
+        const attacker = state.officers[attackerOfficerId];
+        if (!attacker || attacker.forceId !== state.playerForceId)
+          return { ok: false, message: 'Attacker officer must be yours.' };
+        if (attacker.status !== 'idle' && attacker.status !== 'active')
+          return { ok: false, message: 'Officer is not available.' };
+        const sourceCity = attacker.locationCityId ? state.cities[attacker.locationCityId] : null;
+        if (!sourceCity || sourceCity.ownerForceId !== state.playerForceId)
+          return { ok: false, message: 'Attacker is not in your city.' };
+        if (troops <= 0 || sourceCity.troops < troops)
+          return { ok: false, message: `Need ${troops} troops in ${sourceCity.name.zh}.` };
+
+        const atkWar = attacker.stats.war;
+        const atkLed = attacker.stats.leadership;
+        const effectiveTroops = Math.floor(troops * (1 + atkLed / 200) * (1 + (atkWar - 50) / 300));
+        const dmg = Math.max(150, Math.floor(effectiveTroops / 3) + Math.floor(Math.random() * 300));
+        const newHp = Math.max(0, site.hp - dmg);
+        const captured = newHp === 0;
+        // Casualties scale with the site's remaining defence.
+        const attackerLosses = Math.floor(troops * (0.05 + (site.strength / 40000) + Math.random() * 0.06));
+        const survivors = Math.max(0, troops - attackerLosses);
+
+        // Loot — only bandit nests pay out (sacked stockpile + freed captives).
+        const loot = captured && site.subtype === 'bandit'
+          ? Math.floor(site.strength * 0.5 + Math.random() * 400)
+          : 0;
+        const freedPeasants = captured && site.subtype === 'bandit'
+          ? Math.floor(site.strength * 2 + Math.random() * 2000)
+          : 0;
+
+        const nextSite = {
+          ...site,
+          hp: captured ? site.maxHp : newHp,
+          ownerForceId: captured ? state.playerForceId : site.ownerForceId,
+          hostile: captured ? false : site.hostile,
+        };
+        const nextSource = {
+          ...sourceCity,
+          troops: sourceCity.troops - troops + survivors,
+          gold: sourceCity.gold + loot,
+          population: sourceCity.population + freedPeasants,
+        };
+        set({
+          sites: { ...state.sites, [siteId]: nextSite },
+          cities: { ...state.cities, [sourceCity.id]: nextSource },
+        });
+        const tail = loot > 0 ? `,獲財 ${loot}、附民 ${freedPeasants.toLocaleString()}` : '';
+        return {
+          ok: true,
+          captured,
+          message: captured
+            ? `${attacker.name.zh}攻克${site.name.zh}!損兵 ${attackerLosses}${tail}。`
+            : `${attacker.name.zh}強攻${site.name.zh}:−${dmg},損兵 ${attackerLosses}。`,
+        };
+      },
+
       repairFort: (fortId) => {
         const REPAIR_COST = 150;
         const REPAIR_HP = 300;
@@ -5993,6 +6066,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               Object.values(loaded.cities ?? {}).map((c) => [c.id, c.ownerForceId]),
             ),
           ),
+          sites: migrateSites(loaded.sites),
         };
         set(fresh);
         return true;
@@ -6049,6 +6123,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         shipOrders: state.shipOrders,
         ports: state.ports,
         forts: state.forts,
+        sites: state.sites,
         family: state.family,
         pendingHeirs: state.pendingHeirs,
         officerWishes: state.officerWishes,
