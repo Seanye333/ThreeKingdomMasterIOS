@@ -4110,6 +4110,9 @@ export function TacticalBattleScreen3D() {
           );
         })()}
 
+        {/* 戰場小地圖 — corner overview of all units. */}
+        <BattleMinimap battle={battle} playerSide={playerSide} />
+
         {/* Action mode hint */}
         {actionMode.kind !== 'none' && myTurn && (() => {
           const config = {
@@ -4271,6 +4274,34 @@ export function TacticalBattleScreen3D() {
 }
 
 /* ─── Selected unit side panel — actions, stratagems, duel, etc. ─── */
+/** 戰場小地圖 — a corner overview of the whole field: dots for every standing
+ *  unit (your side blue, the foe red, commanders ringed), so a big board stays
+ *  legible at a glance. */
+function BattleMinimap({ battle, playerSide }: { battle: TacticalBattle; playerSide: 'attacker' | 'defender' | null }) {
+  const W = 150, H = Math.round(150 * (battle.height / battle.width));
+  return (
+    <div style={{
+      position: 'absolute', left: 12, bottom: 12, width: W, height: H,
+      background: 'rgba(16, 12, 8, 0.82)', border: '1px solid #5a4530', borderRadius: 3,
+      boxShadow: '0 0 10px rgba(0,0,0,0.5)', pointerEvents: 'none', overflow: 'hidden',
+    }}>
+      {battle.units.filter((u) => u.troops > 0 && !(u.hidden && u.side !== playerSide)).map((u) => {
+        const mine = playerSide ? u.side === playerSide : u.side === 'attacker';
+        const x = (u.coord.col / Math.max(1, battle.width - 1)) * (W - 8) + 4;
+        const y = (u.coord.row / Math.max(1, battle.height - 1)) * (H - 8) + 4;
+        const sz = u.isCommander ? 7 : 5;
+        return (
+          <div key={u.id} style={{
+            position: 'absolute', left: x - sz / 2, top: y - sz / 2, width: sz, height: sz,
+            borderRadius: '50%', background: mine ? '#5a9ee0' : '#e06a52',
+            border: u.isCommander ? '1.5px solid #f0d070' : 'none',
+          }} />
+        );
+      })}
+    </div>
+  );
+}
+
 function UnitPanel3D({
   unit, officer, battle, actionMode, setActionMode, canAct,
 }: {
