@@ -2348,6 +2348,92 @@ function FieldClashMelee3D({ marks }: { marks: ClashMark[] }) {
   return <group>{fresh.map((m) => <ClashSite key={`${m.x},${m.y}`} m={m} />)}</group>;
 }
 
+/* 箭雨 — both sides loose volleys of arrows at each other through the clash,
+ * arcing across the gap (matches the tactical battle's volley). Generic missile
+ * exchange — no unit data needed. */
+const CLASH_ARROW_UP = new THREE.Vector3(0, 1, 0);
+function ClashArrows({ m, startRef }: { m: ClashMark; startRef: { current: number | null } }) {
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const N = IS_MOBILE ? 12 : 24;
+  const defs = useMemo(() => Array.from({ length: N }, (_, i) => {
+    const side: -1 | 1 = i % 2 === 0 ? -1 : 1;          // alternate firing sides
+    const wave = Math.floor(i / 4) % 3;
+    const h = clashHash(m.x, m.y, i * 7 + 3);
+    const h2 = clashHash(m.x, m.y, i * 13 + 1);
+    return { side, t0: 0.04 + wave * 0.26 + h * 0.05, lat: (h2 - 0.5) * 0.5, peak: 0.9 + h * 0.5 };
+  }), [m.x, m.y, N]);
+  useFrame(({ clock }) => {
+    if (!ref.current || startRef.current == null) return;
+    const tt = (clock.elapsedTime - startRef.current) / CLASH_DURATION;
+    const m4 = new THREE.Matrix4();
+    const q = new THREE.Quaternion();
+    const p = new THREE.Vector3();
+    const sc = new THREE.Vector3();
+    const dir = new THREE.Vector3();
+    const FLIGHT = 0.16;   // fraction of the clash a single arrow is airborne
+    for (let i = 0; i < N; i++) {
+      const a = defs[i];
+      const lt = (tt - a.t0) / FLIGHT;                 // local 0→1 flight
+      const vis = lt > 0 && lt < 1;
+      const fromX = a.side * 0.55, toX = -a.side * 0.32;
+      const x = fromX + (toX - fromX) * lt;
+      const y = 0.12 + Math.sin(Math.min(1, Math.max(0, lt)) * Math.PI) * a.peak;
+      const vy = a.peak * Math.PI * Math.cos(lt * Math.PI);
+      dir.set(toX - fromX, vy, 0).normalize();
+      q.setFromUnitVectors(CLASH_ARROW_UP, dir);
+      p.set(x, y, a.lat);
+      sc.setScalar(vis ? 1 : 0.0001);
+      ref.current.setMatrixAt(i, m4.compose(p, q, sc));
+    }
+    ref.current.instanceMatrix.needsUpdate = true;
+  });
+  return (
+    <instancedMesh ref={ref} args={[undefined, undefined, N]}>
+      <cylinderGeometry args={[0.01, 0.01, 0.18, 4]} />
+      <meshBasicMaterial color="#cdbb88" />
+    </instancedMesh>
+  );
+}
+
+/* 焚營 — a stormed camp (拔寨) goes up in flames on the broken side: a cluster
+ * of fire tongues + smoke that swells, then dies down as the clash settles. */
+function ClashFire({ side, startRef }: { side: -1 | 1; startRef: { current: number | null } }) {
+  const groupRef = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    const g = groupRef.current;
+    if (!g || startRef.current == null) return;
+    const t = (clock.elapsedTime - startRef.current) / CLASH_DURATION;
+    const grow = Math.min(1, t / 0.3);
+    const die = t > 0.7 ? Math.max(0, 1 - (t - 0.7) / 0.3) : 1;
+    g.scale.setScalar(0.5 + grow * 0.7);
+    g.traverse((o) => {
+      const mm = (o as THREE.Mesh).material as THREE.MeshBasicMaterial | undefined;
+      if (mm && 'opacity' in mm) mm.opacity = (mm.userData.base ?? 1) * grow * die;
+    });
+  });
+  return (
+    <group ref={groupRef} position={[side * 0.55, 0, 0]}>
+      {Array.from({ length: 9 }).map((_, i) => {
+        const ang = (i / 9) * Math.PI * 2.4;
+        const r = 0.06 + (i % 3) * 0.08;
+        const fc = i % 3 === 0 ? '#ffd24a' : i % 3 === 1 ? '#ff7e26' : '#e0331a';
+        return (
+          <mesh key={`f${i}`} position={[Math.cos(ang) * r, 0.06 + (i % 4) * 0.09, Math.sin(ang) * r]}>
+            <sphereGeometry args={[0.07 + (i % 3) * 0.03, 6, 6]} />
+            <meshBasicMaterial color={fc} transparent opacity={1} toneMapped={false} />
+          </mesh>
+        );
+      })}
+      {Array.from({ length: 4 }).map((_, i) => (
+        <mesh key={`s${i}`} position={[(i % 2 - 0.5) * 0.1, 0.45 + i * 0.13, 0]}>
+          <sphereGeometry args={[0.12 + (i % 2) * 0.05, 6, 6]} />
+          <meshBasicMaterial color="#5a5048" transparent opacity={0.7} ref={(mm) => { if (mm) mm.userData.base = 0.7; }} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
 /* 後陣 — an instanced reserve host massed behind each side's front-line
  * brawlers (a block of soldiers + a forest of spears), so a big clash on the
  * map reads as armies colliding, not a dozen duellists. Scales with troops. */
@@ -2355,19 +2441,23 @@ const CLASH_HOST_MAX = IS_MOBILE ? 14 : 34;
 function ClashHost({ side, troops, color }: { side: -1 | 1; troops?: number; color: string }) {
   const bodyRef = useRef<THREE.InstancedMesh>(null);
   const spearRef = useRef<THREE.InstancedMesh>(null);
+  const horseRef = useRef<THREE.InstancedMesh>(null);
   const slots = useMemo(() => {
     const count = Math.min(CLASH_HOST_MAX, Math.max(8, Math.round((troops ?? 8000) / 650)));
     const cols = Math.max(5, Math.round(Math.sqrt(count * 3)));
-    const out: Array<{ x: number; z: number; ph: number }> = [];
+    const rows = Math.ceil(count / cols);
+    const mountFrom = rows - Math.max(1, Math.round(rows * 0.35));   // rear ranks ride (cavalry reserve)
+    const out: Array<{ x: number; z: number; ph: number; mounted: boolean }> = [];
     for (let i = 0; i < count; i++) {
       const r = Math.floor(i / cols), c = i % cols;
       const h = Math.abs(Math.sin(i * 12.9898 + side * 3.1));
       const z = (c - (cols - 1) / 2) * 0.065 + (h - 0.5) * 0.02;
       const x = side * (0.62 + r * 0.075);
-      out.push({ x, z, ph: (i * 0.8) % (Math.PI * 2) });
+      out.push({ x, z, ph: (i * 0.8) % (Math.PI * 2), mounted: r >= mountFrom });
     }
     return out;
   }, [troops, side]);
+  const mountedCount = useMemo(() => slots.filter((s) => s.mounted).length, [slots]);
   const spearQuat = useMemo(() => new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, side * 0.22)), [side]);
   useFrame(({ clock }) => {
     if (!bodyRef.current) return;
@@ -2376,21 +2466,32 @@ function ClashHost({ side, troops, color }: { side: -1 | 1; troops?: number; col
     const q = new THREE.Quaternion();
     const p = new THREE.Vector3();
     const sc = new THREE.Vector3().setScalar(0.9);
+    let hi = 0;
     for (let i = 0; i < slots.length; i++) {
       const sl = slots[i];
       const bob = Math.abs(Math.sin(t * 5 + sl.ph)) * 0.015;
-      p.set(sl.x, 0.05 + bob, sl.z);
+      const ride = sl.mounted ? 0.06 : 0;
+      if (sl.mounted && horseRef.current) {
+        p.set(sl.x, 0.045 + bob * 0.4, sl.z);
+        horseRef.current.setMatrixAt(hi++, m.compose(p, q, sc));
+      }
+      p.set(sl.x, 0.05 + bob + ride, sl.z);
       bodyRef.current.setMatrixAt(i, m.compose(p, q, sc));
       if (spearRef.current) {
-        p.set(sl.x - side * 0.02, 0.12 + bob, sl.z);
+        p.set(sl.x - side * 0.02, 0.12 + bob + ride, sl.z);
         spearRef.current.setMatrixAt(i, m.compose(p, spearQuat, sc));
       }
     }
     bodyRef.current.instanceMatrix.needsUpdate = true;
     if (spearRef.current) spearRef.current.instanceMatrix.needsUpdate = true;
+    if (horseRef.current) horseRef.current.instanceMatrix.needsUpdate = true;
   });
   return (
     <group>
+      <instancedMesh ref={horseRef} args={[undefined, undefined, Math.max(1, mountedCount)]} castShadow>
+        <boxGeometry args={[0.035, 0.04, 0.08] } />
+        <meshStandardMaterial color="#6a4a32" roughness={0.85} />
+      </instancedMesh>
       <instancedMesh ref={bodyRef} args={[undefined, undefined, slots.length]} castShadow>
         <boxGeometry args={[0.03, 0.07, 0.025]} />
         <meshStandardMaterial color={color} roughness={0.75} />
@@ -2437,6 +2538,9 @@ function ClashSite({ m }: { m: ClashMark }) {
       {brawlers.map((b, i) => (
         <Brawler key={i} desc={b} loser={loser} color={b.side === -1 ? colA : colB} startRef={startRef} />
       ))}
+      <ClashArrows m={m} startRef={startRef} />
+      {/* 拔寨 → the broken side's camp burns. */}
+      {m.kind === 'camp' && <ClashFire side={loser} startRef={startRef} />}
       <ClashDust startRef={startRef} />
       {m.winName && <ClashResultFlag name={m.winName} color={m.winner === 1 ? colB : colA} startRef={startRef} />}
     </group>
