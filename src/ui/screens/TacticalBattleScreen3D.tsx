@@ -11,7 +11,7 @@ import { stratagemFxKind, tacticFxKind, tacticFxSpec, FX_DURATION, FX_IMPACT, ty
 import { categoryOfTactic } from '../../game/data/officerAttributes';
 import { applyBattlePrep,
   aiTakeTurn, aiSkillForDifficulty, applyStratagem, attackUnits, canAttack, canMove, endTurn, hexDistance,
-  moveUnit, resolveBattleEnd, unitAt, forecastAttack, matchupLabel, battleStratagemSituation,
+  moveUnit, resolveBattleEnd, unitAt, forecastAttack, matchupLabel, battleStratagemSituation, eliteUnitOf,
 } from '../../game/systems/tactical';
 import { canDuel } from '../../game/systems/duel';
 import { personalTacticsForUnit } from '../../game/systems/personalTactics';
@@ -1033,6 +1033,12 @@ function UnitMesh({
               <span style={{ color: '#caa45a', marginLeft: 3 }} title="糧盡兵疲">糧</span>
             )}
           </div>
+          {/* 精銳/異族 — elite-corps banner under the name. */}
+          {eliteUnitOf(unit.officerId) && (
+            <div style={{ fontSize: '10px', color: '#e0b860', letterSpacing: '1px', marginTop: 1 }}>
+              ❖ {eliteUnitOf(unit.officerId)!.zh}
+            </div>
+          )}
           <div style={{
             height: 2,
             background: '#1a1410',

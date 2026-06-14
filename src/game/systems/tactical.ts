@@ -60,6 +60,30 @@ export function areBonded(a: string, b: string): boolean {
   return COMBO_BONDS.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
 }
 
+/** 精銳/異族 — famous elite corps & tribal hosts led by specific officers. The
+ *  unit fights above its weight: atkMul to blows dealt, defMul to blows taken
+ *  (<1 = hardier). */
+export const ELITE_UNITS: Record<string, { zh: string; atkMul: number; defMul: number }> = {
+  // 漢家精銳
+  'cao-chun': { zh: '虎豹騎', atkMul: 1.22, defMul: 0.93 },
+  'cao-cao': { zh: '虎豹騎', atkMul: 1.12, defMul: 0.95 },
+  'gao-shun': { zh: '陷陣營', atkMul: 1.22, defMul: 0.9 },
+  'gongsun-zan': { zh: '白馬義從', atkMul: 1.16, defMul: 0.98 },
+  'ma-chao': { zh: '西涼鐵騎', atkMul: 1.18, defMul: 0.95 },
+  'lu-bu': { zh: '并州狼騎', atkMul: 1.2, defMul: 0.95 },
+  'yan-liang': { zh: '河北大戟', atkMul: 1.14, defMul: 0.92 },
+  'qu-yi': { zh: '先登死士', atkMul: 1.18, defMul: 0.95 },
+  // 異族
+  'meng-huo': { zh: '南蠻象兵', atkMul: 1.2, defMul: 0.85 },
+  'wutugu': { zh: '藤甲兵', atkMul: 1.1, defMul: 0.7 },
+  'zhurong': { zh: '南蠻飛刀', atkMul: 1.14, defMul: 1.0 },
+  'kebuneng': { zh: '鮮卑突騎', atkMul: 1.16, defMul: 0.95 },
+  'tadun': { zh: '烏桓突騎', atkMul: 1.16, defMul: 0.95 },
+};
+export function eliteUnitOf(officerId: string): { zh: string; atkMul: number; defMul: number } | undefined {
+  return ELITE_UNITS[officerId];
+}
+
 /** 陣克陣 — formations play rock-paper-scissors by character: 攻陣破守陣、守陣
  *  克機動、機動繞攻陣。神陣/無陣中庸。 */
 type FormCat = 'offensive' | 'defensive' | 'mobile' | 'mystic' | 'none';
@@ -1186,6 +1210,8 @@ export function attackUnits(
   );
   // 陣克陣 — formation-vs-formation rock-paper-scissors.
   const formCounterMul = formationCounterMul(attackerFormation ?? 'none', targetFormation ?? 'none');
+  // 精銳/異族 — elite corps hit harder and shrug off blows.
+  const eliteMul = (ELITE_UNITS[attacker.officerId]?.atkMul ?? 1) * (ELITE_UNITS[target.officerId]?.defMul ?? 1);
 
   // Weather effects.
   const weatherMul = weatherDamageMul(b.weather, attacker.unitType);
@@ -1247,7 +1273,7 @@ export function attackUnits(
   let damage = Math.floor(
     base * counter * aTerrainMod * weatherMul * defenseMul * offenseMul *
     dShield * ambushBonus * fatigueMul * aWoundedMul * dWoundedMul * shipMul * pincerMul *
-    nightMul * heightMul * flankMul * crossingMul * streetMul * comboMul * formCounterMul,
+    nightMul * heightMul * flankMul * crossingMul * streetMul * comboMul * formCounterMul * eliteMul,
   );
   if (targetDefending) damage = Math.floor(damage / 2);
   if (attackerBurning) damage = Math.floor(damage * 0.9);
