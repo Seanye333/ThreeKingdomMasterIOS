@@ -8,6 +8,7 @@ import { playSfx, startBattleAmbience, stopBattleAmbience } from '../../game/sys
 import type { EntityId, HexCoord, Officer, StratagemId, TacticalBattle, TacticalTile, TacticalUnit, TerrainKind, TimeOfDay, UnitType, Weather } from '../../game/types';
 import type { DefenseBuildingId } from '../../game/data/defenseBuildings';
 import { primarySkillFx, type SkillFxArchetype } from '../../game/data/skillFx';
+import { stratagemFxKind, FX_COLOR, FX_DURATION } from '../../game/data/stratagemFx';
 import { applyBattlePrep,
   aiTakeTurn, aiSkillForDifficulty, applyStratagem, attackUnits, canAttack, canMove, endTurn, hexDistance,
   moveUnit, resolveBattleEnd, unitAt,
@@ -1339,42 +1340,9 @@ function AttackArc({ from, to, kind, spawnedAt }: {
 /* ─── Stratagem visual effects — fire / lightning / aura / swirl / etc ── */
 
 /** Map each StratagemId → FX kind. */
-export function stratagemFxKind(id: StratagemId):
-  | 'fire' | 'lightning' | 'arrows' | 'aura' | 'swirl' | 'shockwave' | 'shield' | 'chain' | null {
-  switch (id) {
-    case 'fire-attack':      return 'fire';
-    case 'lightning':        return 'lightning';
-    case 'rain-of-arrows':   return 'arrows';
-    case 'rally':            return 'aura';
-    case 'precognition':     return 'aura';
-    case 'confusion':        return 'swirl';
-    case 'dragon-veil':      return 'shockwave';
-    case 'defend':           return 'shield';
-    case 'chain-ships':      return 'chain';
-    case 'charge':           return 'shockwave';
-    case 'gallop':           return 'shockwave';
-    case 'supply-strike':    return 'fire';
-    case 'false-retreat':    return 'swirl';
-    default:                 return null;
-  }
-}
-
-const FX_COLOR: Record<string, string> = {
-  fire:      '#ff6020',
-  lightning: '#a8d4ff',
-  arrows:    '#d8c898',
-  aura:      '#ffd060',
-  swirl:     '#c178e8',
-  shockwave: '#ff8040',
-  shield:    '#ffd060',
-  chain:     '#888888',
-};
-
-/** Per-FX duration in seconds. */
-export const FX_DURATION: Record<string, number> = {
-  fire: 2.0, lightning: 0.6, arrows: 1.2, aura: 1.6,
-  swirl: 1.6, shockwave: 1.0, shield: 1.6, chain: 1.2,
-};
+// 戰法特效的純資料映射(kind / 顏色 / 壽命)抽到 game/data/stratagemFx.ts,
+// 大地圖戰鬥沿用同一份;此處 re-export 讓 StrategicMap3D 的舊 import 不必改。
+export { stratagemFxKind, FX_DURATION };
 
 function StratagemFXNode({ coord, kind, spawnedAt }: {
   coord: HexCoord; kind: NonNullable<ReturnType<typeof stratagemFxKind>>; spawnedAt: number;
@@ -1430,6 +1398,63 @@ function StratagemFXNode({ coord, kind, spawnedAt }: {
       }
       case 'chain': {
         g.rotation.y = t * Math.PI;
+        break;
+      }
+      case 'grain': {
+        // 焚糧 — climbs a little, flame flickers via scale
+        g.position.y = t * 1.0;
+        g.scale.setScalar(1 + t * 0.3 + Math.sin(t * 30) * 0.05);
+        break;
+      }
+      case 'rune': {
+        // 神算 — slow rise + steady rotation of the trigram
+        g.rotation.y = t * Math.PI * 1.5;
+        g.position.y = 0.3 + t * 0.5;
+        break;
+      }
+      case 'feint': {
+        // 偽計 — the false image pulls back and fades away
+        g.position.z = -t * 1.8;
+        g.position.x = t * 0.4;
+        break;
+      }
+      case 'streak': {
+        // 飛将 — dash forward leaving the trail behind
+        g.position.x = t * 2.4;
+        break;
+      }
+      case 'dragon': {
+        // 龍威 — the dragon coils upward fast
+        g.rotation.y = t * Math.PI * 3;
+        g.position.y = t * 2.0;
+        g.scale.setScalar(1 + t * 0.4);
+        break;
+      }
+      case 'splash': {
+        // 撞角 — water crown leaps then falls, ripple spreads
+        g.position.y = Math.sin(t * Math.PI) * 1.4;
+        g.scale.setScalar(1 + t * 1.2);
+        break;
+      }
+      case 'grapple': {
+        // 接舷 — ropes swing, sparks jitter
+        g.rotation.y = Math.sin(t * Math.PI * 4) * 0.25;
+        break;
+      }
+      case 'shipfire': {
+        // 火船 — the blaze climbs the hull
+        g.position.y = t * 0.8;
+        g.scale.setScalar(1 + t * 0.5 + Math.sin(t * 26) * 0.04);
+        break;
+      }
+      case 'scatter': {
+        // 劫糧道 — crates burst outward
+        g.scale.setScalar(0.4 + t * 2.2);
+        break;
+      }
+      case 'rocks': {
+        // 落石 — boulders plummet from above
+        g.position.y = (1 - t) * 3.5;
         break;
       }
     }
@@ -1556,6 +1581,238 @@ function StratagemFXNode({ coord, kind, spawnedAt }: {
             <meshBasicMaterial color={color} transparent opacity={1} />
           </mesh>
         ));
+      case 'grain':
+        // 兵糧攻 — 糧箱起火,火舌與穀屑齊飛
+        return (
+          <>
+            {[-0.16, 0.16].map((dx, i) => (
+              <mesh key={`box${i}`} position={[dx, 0.13, 0]}>
+                <boxGeometry args={[0.24, 0.24, 0.24]} />
+                <meshBasicMaterial color="#7a5230" transparent opacity={1} />
+              </mesh>
+            ))}
+            {Array.from({ length: 8 }).map((_, i) => {
+              const a = (i / 8) * Math.PI * 2;
+              const r = 0.08 + (i % 3) * 0.08;
+              const fc = i % 3 === 0 ? '#ffd24a' : i % 3 === 1 ? '#ff8424' : '#e0331a';
+              return (
+                <mesh key={`fl${i}`} position={[Math.cos(a) * r, 0.3 + (i % 4) * 0.15, Math.sin(a) * r]}>
+                  <sphereGeometry args={[0.07, 6, 6]} />
+                  <meshBasicMaterial color={fc} transparent opacity={1} toneMapped={false} />
+                </mesh>
+              );
+            })}
+          </>
+        );
+      case 'rune':
+        // 神算 — 八卦符陣 + 浮空符牘 + 中央慧眼
+        return (
+          <>
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
+              <ringGeometry args={[0.55, 0.72, 8]} />
+              <meshBasicMaterial color={color} transparent opacity={1} side={THREE.DoubleSide} toneMapped={false} />
+            </mesh>
+            {Array.from({ length: 8 }).map((_, i) => {
+              const a = (i / 8) * Math.PI * 2;
+              return (
+                <mesh key={i} position={[Math.cos(a) * 0.46, 0.5, Math.sin(a) * 0.46]} rotation={[0, -a, 0]}>
+                  <boxGeometry args={[0.02, 0.22, 0.02]} />
+                  <meshBasicMaterial color={color} transparent opacity={1} toneMapped={false} />
+                </mesh>
+              );
+            })}
+            <mesh position={[0, 0.72, 0]}>
+              <sphereGeometry args={[0.12, 12, 12]} />
+              <meshBasicMaterial color="#d4ecff" transparent opacity={1} toneMapped={false} />
+            </mesh>
+          </>
+        );
+      case 'feint':
+        // 偽計 — 半透明虛影連同煙塵向後撤去
+        return (
+          <>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <mesh key={`gh${i}`} position={[i * 0.2 - 0.2, 0.5, i * 0.18]}>
+                <boxGeometry args={[0.2, 0.5, 0.12]} />
+                <meshBasicMaterial color={color} transparent opacity={0.45} />
+              </mesh>
+            ))}
+            {Array.from({ length: 6 }).map((_, i) => {
+              const a = (i / 6) * Math.PI * 2;
+              return (
+                <mesh key={`d${i}`} position={[Math.cos(a) * 0.4, 0.12, Math.sin(a) * 0.4]}>
+                  <sphereGeometry args={[0.09, 5, 5]} />
+                  <meshBasicMaterial color="#a89a86" transparent opacity={0.5} />
+                </mesh>
+              );
+            })}
+          </>
+        );
+      case 'streak':
+        // 飛将 — 水平疾風線 + 揚塵尾跡
+        return (
+          <>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <mesh
+                key={`s${i}`}
+                position={[-0.5 - i * 0.18, 0.3 + (i % 2) * 0.18, (i % 3 - 1) * 0.12]}
+                rotation={[0, 0, Math.PI / 2]}
+              >
+                <cylinderGeometry args={[0.015, 0.015, 0.5, 4]} />
+                <meshBasicMaterial color={color} transparent opacity={1} />
+              </mesh>
+            ))}
+            {Array.from({ length: 6 }).map((_, i) => (
+              <mesh key={`d${i}`} position={[-0.3 - i * 0.16, 0.1, i % 2 ? 0.12 : -0.12]}>
+                <sphereGeometry args={[0.08 + (i % 2) * 0.04, 5, 5]} />
+                <meshBasicMaterial color="#bda678" transparent opacity={0.6} />
+              </mesh>
+            ))}
+          </>
+        );
+      case 'dragon':
+        // 龍威 — 青龍鱗節螺旋升騰,腳下符環
+        return (
+          <>
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
+              <ringGeometry args={[0.45, 0.6, 24]} />
+              <meshBasicMaterial color={color} transparent opacity={1} side={THREE.DoubleSide} toneMapped={false} />
+            </mesh>
+            {Array.from({ length: 12 }).map((_, i) => {
+              const a = (i / 12) * Math.PI * 4;
+              const r = 0.42 - i * 0.012;
+              return (
+                <mesh key={i} position={[Math.cos(a) * r, 0.1 + i * 0.13, Math.sin(a) * r]}>
+                  <sphereGeometry args={[Math.max(0.04, 0.1 - i * 0.004), 8, 8]} />
+                  <meshBasicMaterial color={i % 2 ? '#3a7dd9' : '#7ec8ff'} transparent opacity={1} toneMapped={false} />
+                </mesh>
+              );
+            })}
+          </>
+        );
+      case 'splash':
+        // 撞角 — 浪冠水珠四濺 + 漣漪環
+        return (
+          <>
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
+              <ringGeometry args={[0.4, 0.55, 24]} />
+              <meshBasicMaterial color={color} transparent opacity={1} side={THREE.DoubleSide} />
+            </mesh>
+            {Array.from({ length: 10 }).map((_, i) => {
+              const a = (i / 10) * Math.PI * 2;
+              const r = 0.25 + (i % 3) * 0.12;
+              return (
+                <mesh key={i} position={[Math.cos(a) * r, 0.3 + (i % 4) * 0.18, Math.sin(a) * r]}>
+                  <sphereGeometry args={[0.06, 6, 6]} />
+                  <meshBasicMaterial color={i % 2 ? '#dff2fa' : color} transparent opacity={1} />
+                </mesh>
+              );
+            })}
+          </>
+        );
+      case 'grapple':
+        // 接舷 — 飛鉤纜索鉤住敵舷,鉤尖迸火星
+        return (
+          <>
+            {Array.from({ length: 4 }).map((_, i) => {
+              const a = (i / 4) * Math.PI * 2;
+              return (
+                <mesh
+                  key={`r${i}`}
+                  position={[Math.cos(a) * 0.3, 0.45, Math.sin(a) * 0.3]}
+                  rotation={[Math.PI / 3, -a, 0]}
+                >
+                  <cylinderGeometry args={[0.012, 0.012, 0.9, 4]} />
+                  <meshBasicMaterial color={color} transparent opacity={1} />
+                </mesh>
+              );
+            })}
+            {Array.from({ length: 6 }).map((_, i) => {
+              const a = (i / 6) * Math.PI * 2;
+              return (
+                <mesh key={`sp${i}`} position={[Math.cos(a) * 0.55, 0.72, Math.sin(a) * 0.55]}>
+                  <sphereGeometry args={[0.05, 5, 5]} />
+                  <meshBasicMaterial color="#ffd24a" transparent opacity={1} toneMapped={false} />
+                </mesh>
+              );
+            })}
+          </>
+        );
+      case 'shipfire':
+        // 火船 — 黑船身載烈焰沖江,水面映漣漪
+        return (
+          <>
+            <mesh position={[0, 0.12, 0]} rotation={[0, 0.3, 0]}>
+              <boxGeometry args={[0.9, 0.18, 0.34]} />
+              <meshBasicMaterial color="#2a2018" transparent opacity={1} />
+            </mesh>
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+              <ringGeometry args={[0.6, 0.82, 24]} />
+              <meshBasicMaterial color="#3a7dd9" transparent opacity={0.5} side={THREE.DoubleSide} />
+            </mesh>
+            {Array.from({ length: 12 }).map((_, i) => {
+              const fc = i % 3 === 0 ? '#ffd24a' : i % 3 === 1 ? '#ff7e26' : '#e0331a';
+              return (
+                <mesh key={i} position={[(i % 5) * 0.18 - 0.36, 0.28 + (i % 4) * 0.16, Math.sin(i) * 0.1]}>
+                  <sphereGeometry args={[0.1, 6, 6]} />
+                  <meshBasicMaterial color={fc} transparent opacity={1} toneMapped={false} />
+                </mesh>
+              );
+            })}
+          </>
+        );
+      case 'scatter':
+        // 劫糧道 — 糧車糧箱朝四方迸飛 + 煙塵
+        return (
+          <>
+            {Array.from({ length: 6 }).map((_, i) => {
+              const a = (i / 6) * Math.PI * 2;
+              return (
+                <mesh
+                  key={`c${i}`}
+                  position={[Math.cos(a) * 0.4, 0.2 + (i % 2) * 0.2, Math.sin(a) * 0.4]}
+                  rotation={[a, a * 1.3, 0]}
+                >
+                  <boxGeometry args={[0.16, 0.16, 0.16]} />
+                  <meshBasicMaterial color={i % 2 ? '#a9763e' : '#caa45a'} transparent opacity={1} />
+                </mesh>
+              );
+            })}
+            {Array.from({ length: 6 }).map((_, i) => {
+              const a = (i / 6) * Math.PI * 2 + 0.5;
+              return (
+                <mesh key={`d${i}`} position={[Math.cos(a) * 0.5, 0.1, Math.sin(a) * 0.5]}>
+                  <sphereGeometry args={[0.1, 5, 5]} />
+                  <meshBasicMaterial color="#b3a081" transparent opacity={0.5} />
+                </mesh>
+              );
+            })}
+          </>
+        );
+      case 'rocks':
+        // 落石 — 滾石自天崩落,著地揚起塵環
+        return (
+          <>
+            {Array.from({ length: 6 }).map((_, i) => {
+              const a = (i / 6) * Math.PI * 2;
+              const r = 0.15 + (i % 3) * 0.12;
+              return (
+                <mesh
+                  key={`b${i}`}
+                  position={[Math.cos(a) * r, 0.4 + (i % 4) * 0.4, Math.sin(a) * r]}
+                  rotation={[a, a, a * 0.5]}
+                >
+                  <dodecahedronGeometry args={[0.12 + (i % 3) * 0.04, 0]} />
+                  <meshBasicMaterial color={i % 2 ? '#7c746a' : '#9a9288'} transparent opacity={1} />
+                </mesh>
+              );
+            })}
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
+              <ringGeometry args={[0.3, 0.55, 20]} />
+              <meshBasicMaterial color="#8f877b" transparent opacity={0.5} side={THREE.DoubleSide} />
+            </mesh>
+          </>
+        );
     }
   })();
 
