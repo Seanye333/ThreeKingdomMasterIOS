@@ -250,6 +250,9 @@ interface GameStore extends GameState {
    *  cargo on arrival; adjacent hauls arrive in full, longer ones lose 12% on
    *  the road. Cargo is deducted from the source at dispatch. */
   dispatchConvoy: (fromCityId: EntityId, toCityId: EntityId, food: number, gold: number, troops?: number) => { ok: boolean; seasons: number };
+  /** 召回輜重 — turn a convoy around; its cargo returns to the origin city (lost
+   *  if that city has since fallen). */
+  recallConvoy: (id: EntityId) => void;
   /** 借糧 — ask a friendly force to send grain to your capital. Allies and NAP
    *  partners (or anyone you're on good terms with) oblige; the grain comes out
    *  of their own stores. */
@@ -1277,6 +1280,24 @@ export const useGameStore = create<GameStore>()(
           `Convoy dispatched · ${from.name.en} → ${to.name.en} (${seasons} seasons)`,
         );
         return { ok: true, seasons };
+      },
+
+      recallConvoy: (id) => {
+        const state = get();
+        const c = state.convoys[id];
+        if (!c) return;
+        const convoys = { ...state.convoys };
+        delete convoys[id];
+        const home = state.cities[c.fromCityId];
+        if (home && home.ownerForceId === c.forceId) {
+          set({
+            convoys,
+            cities: { ...state.cities, [c.fromCityId]: { ...home, food: home.food + c.food, gold: home.gold + c.gold, troops: home.troops + c.troops } },
+          });
+          get().notify(`輜重召回 · 貨返 ${home.name.zh}`, `Convoy recalled to ${home.name.en}`);
+        } else {
+          set({ convoys });
+        }
       },
 
       createLegion: (legion) => {

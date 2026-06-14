@@ -62,6 +62,7 @@ const CommandPalette = lazy(() => import('../components/CommandPalette').then(m 
 const ForceCompareModal = lazy(() => import('../components/ForceCompareModal').then(m => ({ default: m.ForceCompareModal })));
 const RumorsModal = lazy(() => import('../components/RumorsModal').then(m => ({ default: m.RumorsModal })));
 const ProvinceModal = lazy(() => import('../components/ProvinceModal').then(m => ({ default: m.ProvinceModal })));
+const ConvoyModal = lazy(() => import('../components/ConvoyModal').then(m => ({ default: m.ConvoyModal })));
 type PaletteCommand = import('../components/CommandPalette').PaletteCommand;
 const DeedsModal = lazy(() => import('../components/DeedsModal').then(m => ({ default: m.DeedsModal })));
 const ForgingModal = lazy(() => import('../components/ForgingModal').then(m => ({ default: m.ForgingModal })));
@@ -118,6 +119,7 @@ export function MapScreen() {
   const [showCompare, setShowCompare] = useState(false);
   const [showRumors, setShowRumors] = useState(false);
   const [showProvinces, setShowProvinces] = useState(false);
+  const [showConvoys, setShowConvoys] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const careerMode = useGameStore((s) => s.careerMode);
   const recentAchievementUnlocks = useGameStore((s) => s.recentAchievementUnlocks);
@@ -335,6 +337,7 @@ export function MapScreen() {
       { id: 'todo', zh: '待辦', en: 'To-Do', hint: g.rec, run: () => setShowToDo(true) },
       { id: 'cities', zh: '郡縣一覽', en: 'Cities roster', hint: g.rec, run: () => setShowCityRoster(true) },
       { id: 'provinces', zh: '州域 — 各州控勢', en: 'Provinces', hint: g.rec, run: () => setShowProvinces(true) },
+      { id: 'convoys', zh: '輜重 — 運輸一覽', en: 'Convoys', hint: g.rec, run: () => setShowConvoys(true) },
       { id: 'budget', zh: '度支簿', en: 'Treasury', hint: g.rec, run: () => setShowBudget(true) },
       { id: 'power', zh: '天下大勢', en: 'Balance of power', hint: g.rec, run: () => setShowPowerGraph(true) },
       { id: 'compare', zh: '較量 — 勢力對比', en: 'Compare forces', hint: g.rec, run: () => setShowCompare(true) },
@@ -506,6 +509,7 @@ export function MapScreen() {
             { label: t('待辦', 'To-Do'),     onClick: () => setShowToDo(true) },
             { label: t('郡縣', 'Cities'),    onClick: () => setShowCityRoster(true) },
             { label: t('州域', 'Provinces'), onClick: () => setShowProvinces(true) },
+            { label: t('輜重', 'Convoys'),   onClick: () => setShowConvoys(true) },
             { label: t('度支', 'Treasury'),  onClick: () => setShowBudget(true) },
             { label: t('勳功', 'Achievements'), onClick: () => setShowAch(true) },
             { label: t('戰記', 'Stats'),        onClick: () => setShowCampaignStats(true) },
@@ -707,6 +711,7 @@ export function MapScreen() {
         {showCompare && <ForceCompareModal onClose={() => setShowCompare(false)} />}
         {showRumors && <RumorsModal onClose={() => setShowRumors(false)} />}
         {showProvinces && <ProvinceModal onClose={() => setShowProvinces(false)} />}
+        {showConvoys && <ConvoyModal onClose={() => setShowConvoys(false)} />}
       </Suspense>
       {/* 戰略層回饋 — order-confirmation toasts, top-centre */}
       <ActionToasts />
