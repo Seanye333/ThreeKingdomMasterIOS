@@ -2702,6 +2702,33 @@ function FieldDressing({ tiles }: { tiles: TacticalTile[] }) {
   );
 }
 
+/** 屍橫 — a fallen unit leaves a mound, a blood/scorch stain, a downed spear
+ *  and a scrap of its banner where it died; the field fills with carnage. */
+function Corpse({ coord, color }: { coord: HexCoord; color: string }) {
+  const [x, z] = hexWorld(coord.col, coord.row);
+  const r = (coord.col * 7 + coord.row * 13) % 7;
+  return (
+    <group position={[x, 0, z]} rotation={[0, r, 0]} raycast={() => null}>
+      <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.55, 12]} />
+        <meshBasicMaterial color="#34130f" transparent opacity={0.42} depthWrite={false} />
+      </mesh>
+      <mesh position={[0, 0.06, 0]} scale={[1, 0.4, 1]}>
+        <sphereGeometry args={[0.26, 8, 6]} />
+        <meshStandardMaterial color="#2a2018" roughness={1} />
+      </mesh>
+      <mesh position={[0.12, 0.07, 0.05]} rotation={[0, 0.6, Math.PI / 2 - 0.2]}>
+        <cylinderGeometry args={[0.015, 0.015, 0.7, 5]} />
+        <meshStandardMaterial color="#3a2818" />
+      </mesh>
+      <mesh position={[0.34, 0.04, 0.05]} rotation={[-Math.PI / 2, 0, 0.5]}>
+        <planeGeometry args={[0.18, 0.12]} />
+        <meshStandardMaterial color={color} side={THREE.DoubleSide} roughness={0.9} transparent opacity={0.7} />
+      </mesh>
+    </group>
+  );
+}
+
 export function BattleScene({
   battle, playerSide, actionMode,
   selectedId, hovered, setHovered, onTileClick,
@@ -2737,6 +2764,22 @@ export function BattleScene({
   const windStrength = battle.weather === 'wind' ? 2.2
     : battle.weather === 'rain' ? 1.3
     : 0.5;
+
+  // 屍橫遍野 — accumulate a corpse where each unit falls; persists after the
+  // wiped-out husk is pruned, so the battlefield fills with the dead.
+  const [fallen, setFallen] = useState<{ id: string; coord: HexCoord; color: string }[]>([]);
+  const fallenIds = useRef(new Set<string>());
+  useEffect(() => { fallenIds.current = new Set(); setFallen([]); }, [battle.id]);
+  useEffect(() => {
+    const add: { id: string; coord: HexCoord; color: string }[] = [];
+    for (const u of units) {
+      if (u.troops <= 0 && !fallenIds.current.has(u.id)) {
+        fallenIds.current.add(u.id);
+        add.push({ id: u.id, coord: u.coord, color: u.side === playerSide ? '#3a7dd9' : '#b8442e' });
+      }
+    }
+    if (add.length) setFallen((f) => [...f, ...add].slice(-50));
+  }, [units, playerSide]);
 
   // Compute scene bounds for weather particles
   const bounds = useMemo(() => {
@@ -2895,6 +2938,9 @@ export function BattleScene({
       {/* Formation visualizers — colored ring on the ground + label */}
       <FormationViz battle={battle} side="attacker" />
       <FormationViz battle={battle} side="defender" />
+
+      {/* 屍橫遍野 — the accumulated dead (skipped in the lightweight diorama). */}
+      {!embedded && fallen.map((c) => <Corpse key={`corpse-${c.id}`} coord={c.coord} color={c.color} />)}
 
       {/* All units — skip hidden enemy units. */}
       {units
