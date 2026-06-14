@@ -60,6 +60,25 @@ export function areBonded(a: string, b: string): boolean {
   return COMBO_BONDS.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
 }
 
+/** 陣克陣 — formations play rock-paper-scissors by character: 攻陣破守陣、守陣
+ *  克機動、機動繞攻陣。神陣/無陣中庸。 */
+type FormCat = 'offensive' | 'defensive' | 'mobile' | 'mystic' | 'none';
+const FORMATION_CAT: Record<string, FormCat> = {
+  'arrow-tip': 'offensive', 'awl': 'offensive', 'wheel': 'offensive', 'mandarin-duck': 'offensive', 'back-to-water': 'offensive',
+  'fish-scale': 'defensive', 'square': 'defensive', 'stacked': 'defensive', 'crescent-moon': 'defensive', 'rattan-armor': 'defensive', 'crescent-withdraw': 'defensive', 'armored-cart': 'defensive',
+  'crane-wing': 'mobile', 'wild-goose': 'mobile', 'yoke': 'mobile', 'spread-out': 'mobile', 'long-snake': 'mobile', 'ten-ambush': 'mobile',
+  'eight-trigrams': 'mystic', 'seven-star': 'mystic', 'five-elements': 'mystic', 'four-symbols': 'mystic', 'trinity': 'mystic',
+};
+/** Damage multiplier from the attacker's formation vs the defender's. */
+export function formationCounterMul(atk: string, def: string): number {
+  const a = FORMATION_CAT[atk] ?? 'none', d = FORMATION_CAT[def] ?? 'none';
+  if (a === 'none' || d === 'none' || a === 'mystic' || d === 'mystic') return 1.0;
+  const beats: Record<string, string> = { offensive: 'defensive', defensive: 'mobile', mobile: 'offensive' };
+  if (beats[a] === d) return 1.15;   // attacker's form counters defender's
+  if (beats[d] === a) return 0.9;    // defender's form counters attacker's
+  return 1.0;
+}
+
 /** Per-terrain multiplier on damage dealt by attacker. */
 const TERRAIN_DAMAGE_MOD: Record<UnitType, Partial<Record<TerrainKind, number>>> = {
   cavalry: { forest: 0.6, mountain: 0.4, river: 0.5, road: 1.2, plain: 1.1, hill: 1.3, marsh: 0.4, chokepoint: 0.7, bridge: 0.8 },
@@ -1165,6 +1184,8 @@ export function attackUnits(
     attacker.unitType,
     b.turn,
   );
+  // 陣克陣 — formation-vs-formation rock-paper-scissors.
+  const formCounterMul = formationCounterMul(attackerFormation ?? 'none', targetFormation ?? 'none');
 
   // Weather effects.
   const weatherMul = weatherDamageMul(b.weather, attacker.unitType);
@@ -1226,7 +1247,7 @@ export function attackUnits(
   let damage = Math.floor(
     base * counter * aTerrainMod * weatherMul * defenseMul * offenseMul *
     dShield * ambushBonus * fatigueMul * aWoundedMul * dWoundedMul * shipMul * pincerMul *
-    nightMul * heightMul * flankMul * crossingMul * streetMul * comboMul,
+    nightMul * heightMul * flankMul * crossingMul * streetMul * comboMul * formCounterMul,
   );
   if (targetDefending) damage = Math.floor(damage / 2);
   if (attackerBurning) damage = Math.floor(damage * 0.9);
