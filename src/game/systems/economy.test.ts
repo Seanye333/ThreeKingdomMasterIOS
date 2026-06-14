@@ -82,3 +82,22 @@ describe('通商條約 — trade treaty income', () => {
     expect(g['me']).toBe(TRADE_INCOME_PER_TREATY * 2);
   });
 });
+
+describe('通貨膨脹 — inflation saps tax income', () => {
+  const makeCity = (over: Partial<City> = {}): City => ({
+    id: 'c', name: { zh: '城', en: 'C' }, coords: { x: 0, y: 0 }, adjacentCityIds: [],
+    ownerForceId: 'f1', population: 100_000, gold: 1000, food: 5000, troops: 2000,
+    agriculture: 50, commerce: 50, defense: 50, loyalty: 60, ...over,
+  });
+
+  it('higher inflation yields less gold; zero inflation is the baseline', () => {
+    const c = makeCity();
+    const none = tickCityEconomy(c, 'spring', [], 'normal', 0).goldIncome;
+    const mild = tickCityEconomy(c, 'spring', [], 'normal', 40).goldIncome;
+    const peak = tickCityEconomy(c, 'spring', [], 'normal', 100).goldIncome;
+    expect(mild).toBeLessThan(none);
+    expect(peak).toBeLessThan(mild);
+    // baseline unchanged when omitted
+    expect(tickCityEconomy(c, 'spring', [], 'normal').goldIncome).toBe(none);
+  });
+});

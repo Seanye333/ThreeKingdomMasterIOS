@@ -252,6 +252,9 @@ interface GameStore extends GameState {
   /** 通商條約 — open commerce with a force you're at peace with; both earn a
    *  steady gold income each season while the peace holds. */
   proposeTradeTreaty: (targetForceId: EntityId) => { ok: boolean; accepted?: boolean; message: string };
+  /** 鑄錢 — debase the coinage for an immediate windfall in the capital at the
+   *  cost of rising inflation (which saps future tax income until it eases). */
+  mintCoin: () => { ok: boolean; gold: number; inflation: number };
   /** 委任太守 — set (or clear with null) a city's standing governor. */
   delegateCity: (cityId: EntityId, officerId: EntityId | null) => void;
   /** 軍團都督 — form a legion (id auto-assigned). */
@@ -1643,6 +1646,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           sites: state.sites,
           taxPolicy: state.taxPolicy,
           tradePartners: state.tradePartners,
+          inflation: state.inflation,
           seasonBoundary,
         });
         // Prepend AI diplomatic announcements to the report.
@@ -3237,6 +3241,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           // then so the next season starts fresh; otherwise keep them
           // accumulating across mid-season ticks.
           seasonBattleDeltas: seasonBoundary ? {} : state.seasonBattleDeltas,
+          // 通脹漸消 — inflation eases a little each season as coin re-stabilises.
+          inflation: seasonBoundary ? Math.max(0, (state.inflation ?? 0) - 3) : state.inflation,
           selectedCityId: stillOwned ? state.selectedCityId : fallback,
           victoryStatus: endVS,
           battleHistory: [...state.battleHistory, ...newBattles],
@@ -3810,6 +3816,26 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         set({ tradePartners: [...(state.tradePartners ?? []), targetForceId] });
         get().notify(`通商條約 · 與 ${target.name.zh} 互市`, `Trade treaty signed with ${target.name.en}`);
         return { ok: true, accepted: true, message: `通商條約締成 — 商旅互通,兩國歲入俱增。` };
+      },
+
+      mintCoin: () => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, gold: 0, inflation: state.inflation ?? 0 };
+        const force = state.forces[state.playerForceId];
+        const capital = force ? state.cities[force.capitalCityId] : null;
+        if (!capital) return { ok: false, gold: 0, inflation: state.inflation ?? 0 };
+        // Windfall scales with the capital's commerce; inflation jumps +18 (cap 100).
+        const windfall = 1000 + Math.floor(capital.commerce * 30);
+        const nextInflation = Math.min(100, (state.inflation ?? 0) + 18);
+        set({
+          cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold + windfall } },
+          inflation: nextInflation,
+        });
+        get().notify(
+          `鑄錢 · ${capital.name.zh} 入金 ${windfall.toLocaleString()}（通脹 ${nextInflation}）`,
+          `Minted ${windfall.toLocaleString()} gold (inflation ${nextInflation})`,
+        );
+        return { ok: true, gold: windfall, inflation: nextInflation };
       },
 
       breakAlliance: (targetForceId) => {

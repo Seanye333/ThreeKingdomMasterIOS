@@ -227,6 +227,10 @@ export interface GameState {
   /** 通商條約 — force ids the player holds a trade treaty with. Both parties
    *  earn steady commerce income each season while at peace. */
   tradePartners: EntityId[];
+  /** 通貨膨脹 — debasing the coinage (鑄小錢) buys quick gold but drives
+   *  inflation (0–100), which saps every city's tax income until it eases. 0 by
+   *  default, so a realm that never mints is wholly unaffected. */
+  inflation: number;
   /** 細作開眼 — cities lit by successful espionage, ticks of intel left.
    *  Decremented each half-month; consumed by the fog-of-war view. */
   espionageReveals: Record<EntityId, number>;
@@ -402,6 +406,7 @@ export const EMPTY_STATE: GameState = {
   credibility: {},
   grudges: {},
   tradePartners: [],
+  inflation: 0,
   espionageReveals: {},
   cityDelegations: {},
   legions: [],
@@ -645,6 +650,7 @@ export function loadScenario(
     credibility: state.credibility ?? {},
     grudges: state.grudges ?? {},
     tradePartners: state.tradePartners ?? [],
+    inflation: state.inflation ?? 0,
     commandTemplates: state.commandTemplates,
     autoBuildQueues: {},
     pendingDialogue: null,

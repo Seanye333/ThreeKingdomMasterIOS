@@ -62,9 +62,12 @@ export function tickCityEconomy(
   season: Season,
   cityOfficers: Officer[] = [],
   tax: TaxRate = 'normal',
+  inflation = 0,
 ): CityEconomyTick {
   const eff = cityPolicyEffects(city, cityOfficers);
   const taxEff = TAX_EFFECT[tax] ?? TAX_EFFECT.normal;
+  // 通貨膨脹 — debased coin buys less; tax income shrinks up to −40% at peak.
+  const inflationMul = 1 - Math.max(0, Math.min(100, inflation)) / 250;
   const size = citySize(city);
   // 特產／名產 — a salt town, horse market or brocade workshop trades richer;
   // a rice basin harvests heavier. A small permanent regional edge.
@@ -75,7 +78,7 @@ export function tickCityEconomy(
   const baseGold = Math.floor(city.commerce * (city.population / 4000));
   // 能臣/良吏/巨賈 prestige — the ablest administrator present fattens the coffers.
   const prestigeMul = cityOfficers.reduce((m, o) => Math.max(m, effectivePrestigeEffects(o).incomeMul), 1);
-  const goldIncome = Math.max(0, Math.floor((baseGold * eff.goldMul * size.goldMul * prestigeMul * spec.goldMul + eff.goldFlat) * taxEff.goldMul));
+  const goldIncome = Math.max(0, Math.floor((baseGold * eff.goldMul * size.goldMul * prestigeMul * spec.goldMul + eff.goldFlat) * taxEff.goldMul * inflationMul));
 
   const baseFood =
     season === 'autumn'

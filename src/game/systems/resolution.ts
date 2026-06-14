@@ -58,6 +58,8 @@ export interface ResolutionInput {
   taxPolicy?: Record<EntityId, import('../types').TaxRate>;
   /** 通商條約 — force ids the player has trade treaties with (mutual income). */
   tradePartners?: EntityId[];
+  /** 通貨膨脹 — the player's inflation level (0–100); saps player tax income. */
+  inflation?: number;
   rng?: () => number;
   weather?: import('./weather').Weather;
   /**
@@ -1017,7 +1019,13 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const cityOfficers = Object.values(officers).filter(
       (o) => o.locationCityId === city.id && o.status !== 'dead' && o.status !== 'unsearched',
     );
-    const tick = tickCityEconomy(city, input.date.season, cityOfficers, city.ownerForceId ? (input.taxPolicy?.[city.ownerForceId] ?? 'normal') : 'normal');
+    const tick = tickCityEconomy(
+      city,
+      input.date.season,
+      cityOfficers,
+      city.ownerForceId ? (input.taxPolicy?.[city.ownerForceId] ?? 'normal') : 'normal',
+      city.ownerForceId === input.playerForceId ? (input.inflation ?? 0) : 0,
+    );
     const territoryGold = city.ownerForceId
       ? controlledSatellites(city) * TERRITORY_GOLD
       : 0;
