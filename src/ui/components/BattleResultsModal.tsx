@@ -131,6 +131,25 @@ export function BattleResultsModal({ battle, playerSide, onClose }: Props) {
             );
           })()}
 
+          {/* 名場面 — the signature moments that fired this battle. */}
+          {(() => {
+            const moments = Array.from(new Set(
+              (battle.log ?? []).filter((e) => e.kind === 'event').map((e) => e.text),
+            )).slice(-4);
+            if (moments.length === 0) return null;
+            return (
+              <div className={styles.section}>
+                <div className={styles.sectionLabel}>名場面 Highlights</div>
+                {moments.map((m, i) => (
+                  <div key={i} style={{
+                    color: '#f0d98a', fontFamily: 'Songti SC, serif', fontSize: '0.85rem',
+                    padding: '2px 0', borderLeft: '2px solid #d4a84a', paddingLeft: 8, margin: '3px 0',
+                  }}>{m}</div>
+                ))}
+              </div>
+            );
+          })()}
+
           {resolution.capturedOfficerIds.length > 0 && (
             <div className={styles.section}>
               <div className={styles.sectionLabel}>
