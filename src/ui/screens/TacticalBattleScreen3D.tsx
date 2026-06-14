@@ -4163,6 +4163,16 @@ export function TacticalBattleScreen3D() {
           battle.units.filter((u) => u.side === side).reduce((s, u) => s + u.troops, 0);
         const me = playerSide ?? 'attacker';
         const foe = me === 'attacker' ? 'defender' : 'attacker';
+        // 自動戰鬥預覽 — a rough win estimate from troops weighted by 武+統.
+        const power = (side: 'attacker' | 'defender') =>
+          battle.units.filter((u) => u.side === side && u.troops > 0).reduce((s, u) => {
+            const o = officers[u.officerId];
+            const f = o ? 1 + ((o.stats.war + o.stats.leadership) - 100) / 220 : 1;
+            return s + u.troops * Math.max(0.5, f);
+          }, 0);
+        const mp = power(me), fp = power(foe);
+        const win = Math.round((mp / Math.max(1, mp + fp)) * 100);
+        const winColor = win >= 58 ? '#7ed68a' : win >= 42 ? '#d4a84a' : '#e8704a';
         return (
           <div className="tkm-victory-sub" style={{
             position: 'absolute', top: '30%', left: '50%', transform: 'translateX(-50%)',
@@ -4179,6 +4189,9 @@ export function TacticalBattleScreen3D() {
             </div>
             <div style={{ fontSize: '0.95rem', color: '#a89070', marginTop: '0.3rem', fontFamily: 'ui-monospace, monospace' }}>
               {tally(me).toLocaleString()} {t('對', 'vs')} {tally(foe).toLocaleString()}
+            </div>
+            <div style={{ fontSize: '0.9rem', color: winColor, marginTop: '0.35rem', letterSpacing: '0.2rem' }}>
+              {t('預估勝算', 'Est. odds')} ~{win}%
             </div>
           </div>
         );
