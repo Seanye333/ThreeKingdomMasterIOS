@@ -1,7 +1,26 @@
+import { useEffect } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { SEASON_LABEL } from '../../game/types';
+import type { HistoricalEvent } from '../../game/types/event';
+import { playEventCue, type EventCueMood } from '../../game/systems/sound';
 import styles from './EventModal.module.css';
 import { useT, useLanguage, useDesc } from '../i18n';
+
+/** 事件配樂 — classify an event's mood from its effects (language-agnostic)
+ *  with id/name keyword hints, so the right motif greets it. */
+function eventMood(event: HistoricalEvent): EventCueMood {
+  const text = `${event.id} ${event.name.en}`.toLowerCase();
+  if (event.effects.some((e) => e.kind === 'officer-status' && e.status === 'dead')) return 'somber';
+  if (/omen|star|heaven|prophe|comet|eclipse|portent|dream|天命|祥瑞|讖|彗|蝕/.test(text)) return 'mystic';
+  if (event.effects.some((e) => e.kind === 'spawn-rebel-force')) return 'martial';
+  if (event.effects.some((e) =>
+    (e.kind === 'force-gold' && e.delta < 0) ||
+    (e.kind === 'city-loyalty' && e.delta < 0) ||
+    (e.kind === 'officer-loyalty' && e.delta < 0) ||
+    (e.kind === 'force-troops-multiplier' && e.multiplier < 1))) return 'ominous';
+  if (event.effects.some((e) => e.kind === 'officer-join' || e.kind === 'officer-join-ruler' || e.kind === 'grant-title')) return 'auspicious';
+  return 'auspicious';
+}
 
 export function EventModal() {
   const pending = useGameStore((s) => s.pendingEvent);
@@ -10,6 +29,12 @@ export function EventModal() {
   const t = useT();
   const lang = useLanguage();
   const desc = useDesc();
+  // Greet each new event with its mood motif (fires once per event id).
+  const eventId = pending?.event.id;
+  useEffect(() => {
+    if (pending) playEventCue(eventMood(pending.event));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eventId]);
   if (!pending) return null;
   const { event, year, season } = pending;
   const seasonLabel = SEASON_LABEL[season];

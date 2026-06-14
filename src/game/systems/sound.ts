@@ -245,6 +245,37 @@ export function playFxSfx(kind: StratagemFxKind): void {
   }
 }
 
+/* ─── 事件配樂 — a short motif per event mood, so a death tolls low and an
+   omen shimmers. Classified from the event's effects/keywords by the caller. */
+export type EventCueMood = 'auspicious' | 'ominous' | 'martial' | 'somber' | 'mystic';
+const EVENT_CUES: Record<EventCueMood, Tone[]> = {
+  // 喜 — rising major arpeggio
+  auspicious: [{ freq: 523, duration: 0.18, type: 'triangle', gain: 0.09 }, { freq: 659, duration: 0.18, type: 'triangle', gain: 0.08 }, { freq: 784, duration: 0.34, type: 'triangle', gain: 0.08 }],
+  // 凶 — dissonant fall
+  ominous: [{ freq: 330, duration: 0.22, type: 'sine', gain: 0.1 }, { freq: 311, duration: 0.22, type: 'sine', gain: 0.09, detune: -22 }, { freq: 233, duration: 0.42, type: 'sine', gain: 0.1, sweep: -30 }],
+  // 戰 — war drums + brassy fifth
+  martial: [{ freq: 98, duration: 0.14, type: 'square', gain: 0.2 }, { freq: 98, duration: 0.14, type: 'square', gain: 0.16 }, { freq: 147, duration: 0.32, type: 'sawtooth', gain: 0.14 }],
+  // 喪 — low mourning descent
+  somber: [{ freq: 262, duration: 0.42, type: 'sine', gain: 0.09 }, { freq: 196, duration: 0.52, type: 'sine', gain: 0.1, sweep: -20 }],
+  // 玄 — shimmering high chimes
+  mystic: [{ freq: 880, duration: 0.22, type: 'triangle', gain: 0.07 }, { freq: 1175, duration: 0.22, type: 'triangle', gain: 0.06 }, { freq: 1568, duration: 0.42, type: 'triangle', gain: 0.05 }],
+};
+
+/** Play the motif for an event's mood (no-op if disabled). */
+export function playEventCue(mood: EventCueMood): void {
+  if (!enabled) return;
+  const c = getCtx();
+  if (!c) return;
+  unlockAudio();
+  const pattern = EVENT_CUES[mood];
+  if (!pattern) return;
+  let t = c.currentTime;
+  for (const tone of pattern) {
+    playTone(c, tone, t);
+    t += tone.duration;
+  }
+}
+
 function playTone(c: AudioContext, t: Tone, when: number): void {
   const osc = c.createOscillator();
   const gain = c.createGain();
