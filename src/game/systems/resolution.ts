@@ -22,7 +22,7 @@ import { handleSearch, resolveInternalAffairs, type LostItemRef } from './comman
 import { handleMarch } from './combat';
 import { tickDiplomacy } from './diplomacy';
 import { tickCityEconomy, tradeTreatyGrants } from './economy';
-import { stepConvoys, type Convoy } from './convoy';
+import { stepConvoys, resolveConvoyRaids, type Convoy } from './convoy';
 import { appointmentBonusFor } from './appointmentEffects';
 import { MILITARY_RANKS_BY_ID } from '../data/titles';
 import { rollEvents } from './events';
@@ -1379,12 +1379,55 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const parts: string[] = [];
       if (a.convoy.food > 0) parts.push(`糧 +${a.convoy.food.toLocaleString()}`);
       if (a.convoy.gold > 0) parts.push(`金 +${a.convoy.gold.toLocaleString()}`);
+      if (a.convoy.troops > 0) parts.push(`兵 +${a.convoy.troops.toLocaleString()}`);
       entries.push({
         cityId: a.convoy.toCityId,
         kind: 'income',
         text: `Supply convoy reached ${a.toName}: ${parts.join(', ') || 'empty'}.`,
         textZh: `輜重抵 ${a.toName}：${parts.join('、') || '空車'}。`,
       });
+    }
+
+    // 劫糧道 — convoys passing a hostile stronghold risk a sortie; lawless
+    // roads carry a small bandit risk. Escort troops can beat the raiders off.
+    const dangers: Record<EntityId, number> = {};
+    for (const cv of Object.values(nextConvoys)) {
+      const from = cities[cv.fromCityId];
+      const to = cities[cv.toCityId];
+      if (!from || !to) continue;
+      const sp = cityPos(from);
+      const dp = cityPos(to);
+      const route = terrainRoute(sp.x, sp.y, dp.x, dp.y);
+      const prog = Math.min(0.9, Math.max(0.1, (cv.totalSeasons - cv.seasonsRemaining + 0.5) / Math.max(1, cv.totalSeasons)));
+      const pos = positionAlongRoute(route, prog);
+      let nearest: typeof from | undefined;
+      let nd = Infinity;
+      for (const c of Object.values(cities)) {
+        const cp = cityPos(c);
+        const d = Math.hypot(cp.x - pos.x, cp.y - pos.y);
+        if (d < nd) { nd = d; nearest = c; }
+      }
+      let strength = 0;
+      if (nearest && nearest.ownerForceId && nearest.ownerForceId !== cv.forceId
+          && isHostilePermitted(input.diplomacy, cv.forceId, nearest.ownerForceId)) {
+        if (rng() < 0.4) strength = Math.max(800, Math.floor(nearest.troops * 0.1)); // sortie from the stronghold
+      } else if (rng() < 0.08) {
+        strength = 700 + Math.floor(rng() * 800); // 山賊 — lawless roads
+      }
+      if (strength > 0) dangers[cv.id] = strength;
+    }
+    if (Object.keys(dangers).length > 0) {
+      const raided = resolveConvoyRaids(nextConvoys, dangers, cities);
+      nextConvoys = raided.convoys;
+      for (const r of raided.raids) {
+        const cargo = [r.convoy.food > 0 ? `糧${r.convoy.food.toLocaleString()}` : '', r.convoy.gold > 0 ? `金${r.convoy.gold.toLocaleString()}` : '', r.convoy.troops > 0 ? `兵${r.convoy.troops.toLocaleString()}` : ''].filter(Boolean).join('、');
+        entries.push({
+          cityId: r.convoy.toCityId,
+          kind: r.repelled ? 'income' : 'desertion',
+          text: r.repelled ? `A convoy bound for ${r.toName} fought off a raid.` : `A convoy bound for ${r.toName} was raided — ${cargo} lost!`,
+          textZh: r.repelled ? `往${r.toName}之輜重擊退劫掠,押運折損。` : `往${r.toName}之輜重遭劫 — ${cargo} 盡失!`,
+        });
+      }
     }
   }
 

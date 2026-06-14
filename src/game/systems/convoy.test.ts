@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { stepConvoys, type Convoy } from './convoy';
+import { stepConvoys, resolveConvoyRaids, type Convoy } from './convoy';
 import type { City } from '../types';
 
 const mkCity = (id: string, over: Partial<City> = {}): City => ({
@@ -41,5 +41,31 @@ describe('輜重 — convoy stepping', () => {
     expect(r.convoys.cv1).toBeUndefined();       // convoy gone
     expect(r.cities.b.food).toBe(5000);          // nothing delivered
     expect(r.arrivals).toHaveLength(0);
+  });
+});
+
+describe('劫糧道 — convoy raids & escort', () => {
+  const cities = { a: mkCity('a'), b: mkCity('b') };
+
+  it('an unescorted convoy is overrun and lost', () => {
+    const convoys = { cv1: mkConvoy({ troops: 0, food: 2000 }) };
+    const r = resolveConvoyRaids(convoys, { cv1: 1200 }, cities);
+    expect(r.convoys.cv1).toBeUndefined();
+    expect(r.raids[0].repelled).toBe(false);
+  });
+
+  it('a strong-enough escort beats the raid off (bloodied)', () => {
+    const convoys = { cv1: mkConvoy({ troops: 2000, food: 2000 }) };
+    const r = resolveConvoyRaids(convoys, { cv1: 1200 }, cities);
+    expect(r.convoys.cv1).toBeDefined();
+    expect(r.convoys.cv1.troops).toBe(1600); // −20% escort
+    expect(r.raids[0].repelled).toBe(true);
+  });
+
+  it('leaves safe convoys (no danger) untouched', () => {
+    const convoys = { cv1: mkConvoy({ troops: 0 }) };
+    const r = resolveConvoyRaids(convoys, {}, cities);
+    expect(r.convoys.cv1).toEqual(convoys.cv1);
+    expect(r.raids).toHaveLength(0);
   });
 });

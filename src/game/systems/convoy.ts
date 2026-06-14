@@ -56,3 +56,37 @@ export function stepConvoys(
   }
   return { convoys: nextConvoys, cities: nextCities, arrivals };
 }
+
+export interface ConvoyRaidResult {
+  convoys: Record<EntityId, Convoy>;
+  raids: Array<{ convoy: Convoy; repelled: boolean; toName: string }>;
+}
+
+/**
+ * 劫糧道 — resolve raids on in-transit convoys. `dangers` maps a convoy id to
+ * the raid strength bearing down on it this season (absent/0 ⇒ safe). The
+ * troops a convoy carries double as its escort: an escort that matches or
+ * outnumbers the raiders beats them off (bloodied, −20%); a weaker or absent
+ * escort means the whole column — cargo and all — is lost (烏巢之鑑).
+ */
+export function resolveConvoyRaids(
+  convoys: Record<EntityId, Convoy>,
+  dangers: Record<EntityId, number>,
+  cities: Record<EntityId, City>,
+): ConvoyRaidResult {
+  const next: Record<EntityId, Convoy> = {};
+  const raids: ConvoyRaidResult['raids'] = [];
+  for (const c of Object.values(convoys)) {
+    const strength = dangers[c.id] ?? 0;
+    const toName = cities[c.toCityId]?.name.zh ?? '?';
+    if (strength <= 0) {
+      next[c.id] = c;
+    } else if (c.troops >= strength) {
+      next[c.id] = { ...c, troops: Math.max(0, c.troops - Math.floor(c.troops * 0.2)) };
+      raids.push({ convoy: c, repelled: true, toName });
+    } else {
+      raids.push({ convoy: c, repelled: false, toName });
+    }
+  }
+  return { convoys: next, raids };
+}

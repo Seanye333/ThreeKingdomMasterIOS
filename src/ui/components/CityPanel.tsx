@@ -271,6 +271,9 @@ function GrainTransferSection({ cityId, isPlayerCity }: { cityId: EntityId; isPl
             {adjacent ? t('鄰城近運,損耗極低', 'adjacent — minimal loss') : t('遠運按路程耗糧,需數季', 'loss & time scale with the haul')}
             {woodenOx && t(' · 木牛流馬減半', ' · Wooden Ox halves loss')}
           </span>
+          <span style={{ fontSize: '0.66rem', color: '#8a7050' }}>
+            {t('⚔ 隨車運兵即為護糧 — 經敵境恐遭劫,押運足則可拒', '⚔ Troops sent along escort the load — raids near enemy ground need a strong escort')}
+          </span>
         </div>
       )}
     </section>
