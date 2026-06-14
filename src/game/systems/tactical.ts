@@ -76,6 +76,19 @@ export function defenderTerrainShield(terrain: TerrainKind): number {
   }
 }
 
+/** 巷戰 — is this hex inside the walled enclosure (past the gate, among the
+ *  houses)? Defenders fighting on home streets are dug in and hard to dislodge. */
+export function insideWalls(b: TacticalBattle, coord: HexCoord): boolean {
+  const walls = b.tiles.filter((t) => t.terrain === 'wall' || t.terrain === 'gate');
+  if (walls.length < 3) return false;
+  const cols = walls.map((t) => t.coord.col);
+  const rows = walls.map((t) => t.coord.row);
+  const wWest = Math.min(...cols), wEast = Math.max(...cols);
+  const rMin = Math.min(...rows), rMax = Math.max(...rows);
+  return coord.col > wWest && coord.col <= wEast && coord.row >= rMin && coord.row <= rMax
+    && !walls.some((t) => t.coord.col === coord.col && t.coord.row === coord.row);
+}
+
 /**
  * 戰鬥預判 — the same composed math the AI uses (pickAdjacentTarget), surfaced
  * for the player: predicted damage range after unit-type counter + terrain, the
@@ -1157,6 +1170,9 @@ export function attackUnits(
   const onCrossing = target.unitType !== 'navy'
     && (dTerrainTile?.terrain === 'river' || dTerrainTile?.terrain === 'bridge');
   const crossingMul = onCrossing ? 1.25 : 1.0;
+  // 巷戰死守 — once the gate is breached, defenders fight house-to-house on
+  // their own streets; they're 18% harder to root out inside the walls.
+  const streetMul = target.side === 'defender' && insideWalls(b, target.coord) ? 0.82 : 1.0;
   // 糧道枯竭：turn ≥ 10 both sides start to suffer 5% per turn beyond,
   // capped at -40% so battles still resolve.
   const fatigueMul = b.turn >= 10
@@ -1186,7 +1202,7 @@ export function attackUnits(
   let damage = Math.floor(
     base * counter * aTerrainMod * weatherMul * defenseMul * offenseMul *
     dShield * ambushBonus * fatigueMul * aWoundedMul * dWoundedMul * shipMul * pincerMul *
-    nightMul * heightMul * flankMul * crossingMul,
+    nightMul * heightMul * flankMul * crossingMul * streetMul,
   );
   if (targetDefending) damage = Math.floor(damage / 2);
   if (attackerBurning) damage = Math.floor(damage * 0.9);
