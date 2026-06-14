@@ -144,6 +144,17 @@ export function MarchPicker({ cityId, onClose }: Props) {
   const isHostile =
     !!target && target.ownerForceId !== source.ownerForceId;
   const officer = officerId ? officersMap[officerId] : null;
+  // 戰前敵情 — what we can read of the target's garrison and its captain.
+  const enemyIntel = useMemo(() => {
+    if (!target || !isHostile) return null;
+    let captain: (typeof officersMap)[string] | null = null;
+    for (const o of Object.values(officersMap)) {
+      if (o.locationCityId !== target.id || o.forceId !== target.ownerForceId) continue;
+      if (o.status === 'dead' || o.status === 'unsearched') continue;
+      if (!captain || (o.stats.leadership + o.stats.war) > (captain.stats.leadership + captain.stats.war)) captain = o;
+    }
+    return { garrison: target.troops, captain, defense: target.defense, wallTier: target.wallTier ?? 1 };
+  }, [target, isHostile, officersMap]);
   const maxTroops = source.troops;
   const canAfford = source.gold >= def.goldCost;
   const valid =
@@ -276,6 +287,36 @@ export function MarchPicker({ cityId, onClose }: Props) {
             </div>
           </section>
         )}
+
+        {enemyIntel && (() => {
+          // Defender effective strength: garrison hardened by city defense and
+          // wall tier. A rough scout's read, not a battle oracle.
+          const wallMul = enemyIntel.wallTier >= 3 ? 1.6 : enemyIntel.wallTier === 2 ? 1.3 : 1;
+          const defEff = enemyIntel.garrison * (1 + enemyIntel.defense / 200) * wallMul;
+          const ratio = troops / Math.max(1, defEff);
+          const verdict = ratio >= 2 ? { zh: '勝算極大', en: 'Overwhelming', c: '#7ed68a' }
+            : ratio >= 1.3 ? { zh: '兵勢佔優', en: 'Favoured', c: '#a8d67e' }
+            : ratio >= 0.8 ? { zh: '勝負難料', en: 'Toss-up', c: '#d4a84a' }
+            : ratio >= 0.5 ? { zh: '略居下風', en: 'Outmatched', c: '#e0a070' }
+            : { zh: '兵力懸殊', en: 'Hopeless', c: '#e0707a' };
+          return (
+            <section className={styles.section}>
+              <h3 className={styles.sectionTitle}>{t('敵情', 'Enemy Intel')}</h3>
+              <div style={{ fontSize: '0.76rem', color: '#c0a878', display: 'flex', flexWrap: 'wrap', gap: '0.2rem 1rem' }}>
+                <span>{t('守軍', 'Garrison')} <strong style={{ color: '#e8d9b0' }}>{enemyIntel.garrison.toLocaleString()}</strong></span>
+                <span>{t('城防', 'Defense')} <strong style={{ color: '#e8d9b0' }}>{enemyIntel.defense}</strong></span>
+                <span>{t('城壁', 'Wall')} <strong style={{ color: '#e8d9b0' }}>{'★'.repeat(enemyIntel.wallTier)}</strong></span>
+                <span>{t('守將', 'Captain')} <strong style={{ color: '#e8d9b0' }}>{enemyIntel.captain ? enemyIntel.captain.name.zh : t('無', 'none')}</strong>
+                  {enemyIntel.captain && <span className={styles.muted}> (W{enemyIntel.captain.stats.war}/L{enemyIntel.captain.stats.leadership})</span>}
+                </span>
+              </div>
+              <div style={{ marginTop: '0.3rem', fontSize: '0.78rem' }}>
+                {t('兵勢評估', 'Assessment')}: <strong style={{ color: verdict.c }}>{t(verdict.zh, verdict.en)}</strong>
+                <span className={styles.muted}> · {t(`遣 ${troops.toLocaleString()} 攻 ${Math.round(defEff).toLocaleString()} 守勢`, `${troops.toLocaleString()} vs ~${Math.round(defEff).toLocaleString()} eff.`)}</span>
+              </div>
+            </section>
+          );
+        })()}
 
         <section className={styles.section}>
           <h3 className={styles.sectionTitle}>{t('大將', 'Commander')}</h3>
