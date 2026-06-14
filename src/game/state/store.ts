@@ -230,6 +230,10 @@ interface GameStore extends GameState {
     troops: number,
     additionalOfficerIds?: EntityId[],
   ) => { ok: boolean; reason?: string };
+  /** 一鍵委派 — auto-assign every idle officer in a self-run city a sensible
+   *  internal-affairs task (by city need × aptitude). Returns how many were
+   *  dispatched and the gold spent. */
+  autoAssignIdle: () => { assigned: number; goldSpent: number };
   /** 大局計略 — 驅虎吞狼 / 二虎競食 / 遠交近攻. */
   executeScheme: (schemeId: SchemeId, targetA: EntityId, targetB?: EntityId)
     => { ok: boolean; message: string };
@@ -937,6 +941,62 @@ export const useGameStore = create<GameStore>()(
           `Dispatched · ${officer.name.en} — ${def.label.en} (${city.name.en})`,
         );
         return { ok: true };
+      },
+
+      autoAssignIdle: () => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid) return { assigned: 0, goldSpent: 0 };
+        const delegated = new Set(Object.keys(state.cityDelegations ?? {}));
+        const training = new Set(state.pendingTrainings.map((tr) => tr.officerId));
+        const cities = { ...state.cities };
+        const officers = { ...state.officers };
+        const pending = { ...state.pendingCommands };
+        let assigned = 0;
+        let goldSpent = 0;
+
+        const idle = Object.values(state.officers).filter((o) =>
+          o.forceId === pid && !o.task && !pending[o.id] && !training.has(o.id) &&
+          !!o.locationCityId && cities[o.locationCityId]?.ownerForceId === pid &&
+          !delegated.has(o.locationCityId),
+        );
+
+        for (const o of idle) {
+          const cid = o.locationCityId!;
+          const c = cities[cid];
+          if (!c) continue;
+          // Candidate tasks ordered by city need × officer aptitude; 'search'
+          // (cost 0) is the guaranteed fallback so no idle hand stays idle.
+          const best = Math.max(o.stats.politics, o.stats.war, o.stats.intelligence);
+          const cand: InternalAffairsType[] = [];
+          if (c.loyalty < 50) cand.push('improve-loyalty');
+          if (o.stats.war === best) cand.push('recruit-troops', 'build-defense');
+          if (o.stats.politics === best) cand.push(c.agriculture <= c.commerce ? 'develop-agriculture' : 'develop-commerce');
+          if (o.stats.intelligence === best) cand.push('develop-commerce', 'develop-agriculture');
+          cand.push('develop-agriculture', 'develop-commerce', 'build-defense', 'recruit-troops', 'improve-loyalty', 'search');
+
+          let chosen: InternalAffairsType | null = null;
+          for (const type of [...new Set(cand)]) {
+            const def = COMMAND_DEFS[type];
+            if (def && c.gold >= def.goldCost) { chosen = type; break; }
+          }
+          if (!chosen) continue;
+          const def = COMMAND_DEFS[chosen]!;
+          cities[cid] = { ...c, gold: c.gold - def.goldCost };
+          officers[o.id] = { ...o, task: chosen };
+          pending[o.id] = { type: chosen, cityId: cid, officerId: o.id };
+          assigned++;
+          goldSpent += def.goldCost;
+        }
+
+        if (assigned > 0) {
+          set({ cities, officers, pendingCommands: pending });
+          get().notify(
+            `一鍵委派 · ${assigned} 名武將就任（耗金 ${goldSpent}）`,
+            `Auto-assigned ${assigned} officers (−${goldSpent} gold)`,
+          );
+        }
+        return { assigned, goldSpent };
       },
 
       issueMarch: (sourceId, targetId, officerId, troops, additionalOfficerIds) => {

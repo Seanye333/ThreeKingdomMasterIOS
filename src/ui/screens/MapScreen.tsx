@@ -209,6 +209,7 @@ export function MapScreen() {
     return n;
   });
   const selectCityFromHud = useGameStore((s) => s.selectCity);
+  const autoAssignIdle = useGameStore((s) => s.autoAssignIdle);
   // Jump to the first city that still has an idle commander.
   const jumpToIdle = () => {
     const s = useGameStore.getState();
@@ -318,6 +319,7 @@ export function MapScreen() {
     const g = { diplo: t('外交', 'Diplomacy'), people: t('人才', 'Personnel'), court: t('朝堂', 'Court'), mil: t('軍務', 'Military'), craft: t('匠工', 'Crafting'), rec: t('記錄', 'Records'), act: t('指令', 'Action'), sys: t('系統', 'System') };
     const c: PaletteCommand[] = [
       { id: 'idle', zh: '前往閒置武將', en: 'Go to idle commander', hint: g.act, run: jumpToIdle },
+      { id: 'autoassign', zh: '一鍵委派閒置武將', en: 'Auto-assign idle officers', hint: g.act, run: () => autoAssignIdle() },
       ...(threats.length > 0 ? [{ id: 'threat', zh: '前往受襲城池', en: 'Go to threatened city', hint: g.act, run: jumpToThreat }] : []),
       { id: 'advance', zh: '結束本旬', en: 'End the turn', hint: g.act, run: advanceTurn },
       { id: 'todo', zh: '待辦', en: 'To-Do', hint: g.rec, run: () => setShowToDo(true) },
@@ -597,6 +599,21 @@ export function MapScreen() {
             >
               {idleCount > 0 ? `⚑ ${idleCount} ${t('閒置', 'idle')}` : `✓ ${t('全員已令', 'all set')}`}
             </button>
+            {/* 一鍵委派 — auto-assign every idle officer a sensible task. */}
+            {idleCount > 0 && (
+              <button
+                onClick={() => autoAssignIdle()}
+                title={t('一鍵委派 — 依城所需與才能,自動派遣全部閒置武將', 'Auto-assign all idle officers by city need & aptitude')}
+                style={{
+                  marginRight: 8, cursor: 'pointer',
+                  background: 'rgba(126,214,138,0.16)', border: '1px solid #6fae73',
+                  color: '#9ad6a8', padding: '0.2rem 0.55rem', borderRadius: 4,
+                  fontFamily: 'Songti SC, serif', fontSize: '0.8rem', whiteSpace: 'nowrap',
+                }}
+              >
+                ⚡ {t('委派', 'Assign')}
+              </button>
+            )}
             <button
               className={styles.advanceButton}
               onClick={advanceTurn}
