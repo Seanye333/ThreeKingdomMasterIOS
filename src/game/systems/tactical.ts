@@ -2486,6 +2486,10 @@ export function endTurn(b: TacticalBattle): TacticalBattle {
   else if (b.weather === 'rain' && wroll < 0.18) nextWeather = 'clear';
   else if (b.weather === 'wind' && wroll < 0.12) nextWeather = 'clear';
   else if (b.weather === 'fog' && wroll < 0.15) nextWeather = 'clear';
+  // 雨滅火 — the moment the heavens open, ground fires gutter out fast.
+  if (nextWeather === 'rain' && b.weather !== 'rain' && nextGroundFires.length > 0) {
+    nextGroundFires = nextGroundFires.map((f) => ({ ...f, turnsLeft: Math.ceil(f.turnsLeft / 2) }));
+  }
   // 水戰 — at sea the wind is a player too: each full round it may veer,
   // and a fire set downwind can find itself upwind a turn later.
   let nextWind = b.windDirection ?? 'calm';
