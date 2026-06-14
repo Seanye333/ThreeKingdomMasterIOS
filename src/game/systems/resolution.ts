@@ -54,6 +54,8 @@ export interface ResolutionInput {
   sites?: Record<EntityId, import('../types').WildSite>;
   /** City buildings — disaster works mitigate the event rolls. */
   buildings?: import('../types').Building[];
+  /** 稅率 — per-force taxation; missing entries resolve to 'normal'. */
+  taxPolicy?: Record<EntityId, import('../types').TaxRate>;
   rng?: () => number;
   weather?: import('./weather').Weather;
   /**
@@ -1013,7 +1015,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const cityOfficers = Object.values(officers).filter(
       (o) => o.locationCityId === city.id && o.status !== 'dead' && o.status !== 'unsearched',
     );
-    const tick = tickCityEconomy(city, input.date.season, cityOfficers);
+    const tick = tickCityEconomy(city, input.date.season, cityOfficers, city.ownerForceId ? (input.taxPolicy?.[city.ownerForceId] ?? 'normal') : 'normal');
     const territoryGold = city.ownerForceId
       ? controlledSatellites(city) * TERRITORY_GOLD
       : 0;

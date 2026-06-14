@@ -1,4 +1,4 @@
-import type { City, Officer, Season } from '../types';
+import type { City, Officer, Season, TaxRate } from '../types';
 import { cityPolicyEffects } from './policyEffects';
 import { citySize, populationDelta } from './citySize';
 import { aggregateSlotEffects } from '../data/defenseBuildings';
@@ -6,6 +6,14 @@ import { effectivePrestigeEffects } from '../data/prestige';
 import { specialtyEconomy } from '../data/specialties';
 
 export const FOOD_PER_TROOP_PER_SEASON = 0.25;
+
+/** 稅率之效 — 輕稅得民心而少入,重稅厚斂而失心。'normal' is the historical
+ *  baseline, so an untouched force (and every AI) behaves exactly as before. */
+export const TAX_EFFECT: Record<TaxRate, { goldMul: number; loyalty: number; zh: string; en: string }> = {
+  light:  { goldMul: 0.7, loyalty: 2,  zh: '輕稅', en: 'Light' },
+  normal: { goldMul: 1.0, loyalty: 0,  zh: '常稅', en: 'Normal' },
+  heavy:  { goldMul: 1.4, loyalty: -3, zh: '重稅', en: 'Heavy' },
+};
 
 export interface CityEconomyTick {
   goldIncome: number;
@@ -27,8 +35,10 @@ export function tickCityEconomy(
   city: City,
   season: Season,
   cityOfficers: Officer[] = [],
+  tax: TaxRate = 'normal',
 ): CityEconomyTick {
   const eff = cityPolicyEffects(city, cityOfficers);
+  const taxEff = TAX_EFFECT[tax] ?? TAX_EFFECT.normal;
   const size = citySize(city);
   // 特產／名產 — a salt town, horse market or brocade workshop trades richer;
   // a rice basin harvests heavier. A small permanent regional edge.
@@ -39,7 +49,7 @@ export function tickCityEconomy(
   const baseGold = Math.floor(city.commerce * (city.population / 4000));
   // 能臣/良吏/巨賈 prestige — the ablest administrator present fattens the coffers.
   const prestigeMul = cityOfficers.reduce((m, o) => Math.max(m, effectivePrestigeEffects(o).incomeMul), 1);
-  const goldIncome = Math.max(0, Math.floor(baseGold * eff.goldMul * size.goldMul * prestigeMul * spec.goldMul + eff.goldFlat));
+  const goldIncome = Math.max(0, Math.floor((baseGold * eff.goldMul * size.goldMul * prestigeMul * spec.goldMul + eff.goldFlat) * taxEff.goldMul));
 
   const baseFood =
     season === 'autumn'
@@ -67,8 +77,8 @@ export function tickCityEconomy(
 
   return {
     goldIncome, foodIncome, foodUpkeep, desertion,
-    loyaltyDelta: eff.loyaltyDelta,
+    loyaltyDelta: eff.loyaltyDelta + taxEff.loyalty,
     populationDelta: popDelta,
-    policyBadges: eff.badges,
+    policyBadges: taxEff.loyalty !== 0 ? [...eff.badges, taxEff.zh] : eff.badges,
   };
 }

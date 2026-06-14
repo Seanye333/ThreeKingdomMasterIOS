@@ -213,6 +213,9 @@ export interface GameState {
   deeds: Record<EntityId, import('../types').HeroicDeeds>;
   /** Fog of war on (player-only flag, cosmetic). */
   fogOfWar: boolean;
+  /** 稅率 — per-force taxation (gold↔loyalty trade-off). Absent ⇒ 'normal',
+   *  so existing saves and every AI force keep historical behaviour. */
+  taxPolicy: Record<EntityId, import('../types').TaxRate>;
   /** 細作開眼 — cities lit by successful espionage, ticks of intel left.
    *  Decremented each half-month; consumed by the fog-of-war view. */
   espionageReveals: Record<EntityId, number>;
@@ -384,6 +387,7 @@ export const EMPTY_STATE: GameState = {
   currentBattleSnapshots: [],
   deeds: {},
   fogOfWar: false,
+  taxPolicy: {},
   espionageReveals: {},
   cityDelegations: {},
   legions: [],
@@ -623,6 +627,7 @@ export function loadScenario(
   currentBattleSnapshots: [],
     deeds: {},
     fogOfWar: state.fogOfWar,
+    taxPolicy: state.taxPolicy ?? {},
     commandTemplates: state.commandTemplates,
     autoBuildQueues: {},
     pendingDialogue: null,

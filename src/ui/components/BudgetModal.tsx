@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useGameStore } from '../../game/state/store';
-import { tickCityEconomy } from '../../game/systems/economy';
+import { tickCityEconomy, TAX_EFFECT } from '../../game/systems/economy';
+import type { TaxRate } from '../../game/types';
 import { useT } from '../i18n';
 
 /**
@@ -17,6 +18,8 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
   const season = useGameStore((s) => s.date.season);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const selectCity = useGameStore((s) => s.selectCity);
+  const tax: TaxRate = useGameStore((s) => (playerForceId ? s.taxPolicy[playerForceId] : undefined) ?? 'normal');
+  const setTaxPolicy = useGameStore((s) => s.setTaxPolicy);
 
   const { rows, totals, treasury } = useMemo(() => {
     const officersList = Object.values(officers);
@@ -27,7 +30,7 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
     }
     const mine = Object.values(cities).filter((c) => c.ownerForceId === playerForceId);
     const rs = mine.map((c) => {
-      const tick = tickCityEconomy(c, season, officersByCity[c.id] ?? []);
+      const tick = tickCityEconomy(c, season, officersByCity[c.id] ?? [], tax);
       const netFood = tick.foodIncome - tick.foodUpkeep;
       return {
         city: c,
@@ -44,7 +47,7 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
     );
     const treasury = mine.reduce((acc, c) => ({ gold: acc.gold + c.gold, food: acc.food + c.food }), { gold: 0, food: 0 });
     return { rows: rs, totals, treasury };
-  }, [cities, officers, season, playerForceId]);
+  }, [cities, officers, season, playerForceId, tax]);
 
   const netFoodTotal = totals.foodIn - totals.foodUp;
   const seasonZh = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' }[season];
@@ -83,6 +86,33 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
             <div style={{ color: '#6a5a45', fontSize: '0.7rem' }}>{t('收', 'in')} {num(totals.foodIn)} · {t('支', 'out')} {num(totals.foodUp)}</div>
           </div>
         </div>
+        {/* 定稅 — the gold↔loyalty lever. Light eases the people, heavy fills
+            the coffers and breeds resentment. */}
+        {playerForceId && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+            <span style={{ color: '#8a7050', fontSize: '0.78rem' }}>{t('稅率', 'Tax rate')}</span>
+            <div style={{ display: 'flex', gap: 3 }}>
+              {(['light', 'normal', 'heavy'] as TaxRate[]).map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setTaxPolicy(playerForceId, r)}
+                  style={{
+                    background: tax === r ? '#3a2d20' : 'transparent',
+                    border: `1px solid ${tax === r ? '#d4a84a' : '#4a3520'}`,
+                    color: tax === r ? '#f0d98a' : '#8a7050',
+                    padding: '0.2rem 0.6rem', borderRadius: 4, cursor: 'pointer',
+                    fontFamily: 'inherit', fontSize: '0.78rem',
+                  }}
+                >{t(TAX_EFFECT[r].zh, TAX_EFFECT[r].en)}</button>
+              ))}
+            </div>
+            <span style={{ color: tax === 'heavy' ? '#e0a070' : tax === 'light' ? '#9ad6a8' : '#6a5a45', fontSize: '0.72rem' }}>
+              {tax === 'heavy' ? t('入金 ×1.4,民忠 −3/季', '+40% gold, −3 loyalty/season')
+                : tax === 'light' ? t('入金 ×0.7,民忠 +2/季', '−30% gold, +2 loyalty/season')
+                : t('常制,民忠不增不減', 'baseline, loyalty steady')}
+            </span>
+          </div>
+        )}
         {season !== 'autumn' && (
           <div style={{ color: '#8a7050', fontSize: '0.72rem', marginBottom: '0.5rem' }}>
             🌾 {t('糧入僅在秋收結算,他季只支不入。', 'Grain only comes in at the autumn harvest — other seasons are upkeep-only.')}

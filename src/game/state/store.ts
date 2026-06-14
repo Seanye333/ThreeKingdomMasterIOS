@@ -419,6 +419,8 @@ interface GameStore extends GameState {
   setPlacementMode: (mode: 'historical' | 'random') => void;
   setEnabledDynasties: (dynasties: import('../data/dynasties').Dynasty[]) => void;
   setFogOfWar: (on: boolean) => void;
+  /** 定稅 — set a force's tax rate (defaults apply to the player's force). */
+  setTaxPolicy: (forceId: EntityId, rate: import('../types').TaxRate) => void;
   saveCommandTemplate: (label: string) => void;
   applyCommandTemplate: (id: EntityId) => void;
   deleteCommandTemplate: (id: EntityId) => void;
@@ -1628,6 +1630,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           weather: state.weather,
           forts: state.forts,
           sites: state.sites,
+          taxPolicy: state.taxPolicy,
           seasonBoundary,
         });
         // Prepend AI diplomatic announcements to the report.
@@ -5172,6 +5175,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       setPlacementMode: (mode) => set({ placementMode: mode }),
       setEnabledDynasties: (dynasties) => set({ enabledDynasties: dynasties }),
       setFogOfWar: (on) => set({ fogOfWar: on }),
+      setTaxPolicy: (forceId, rate) => set((s) => ({ taxPolicy: { ...s.taxPolicy, [forceId]: rate } })),
 
       saveCommandTemplate: (label) => {
         const state = get();

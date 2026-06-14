@@ -53,3 +53,6 @@ export interface BilingualName {
 }
 
 export type EntityId = string;
+
+/** 稅率 — light/normal/heavy taxation, trading gold income against loyalty. */
+export type TaxRate = 'light' | 'normal' | 'heavy';
