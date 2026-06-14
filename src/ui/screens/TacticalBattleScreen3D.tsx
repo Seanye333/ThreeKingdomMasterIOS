@@ -555,41 +555,74 @@ function UnitWeapon({ unit, yLift }: { unit: TacticalUnit; yLift: number }) {
 /* ─── 千軍萬馬 — a small block of rank-and-file behind the hero figure so a
  *  unit reads as a host, not a lone general. Count scales with troop strength;
  *  they idle-bob in formation. Skipped for navy (footmen on a boat read wrong). */
-function RetinueFig({ x, z, ph, color }: { x: number; z: number; ph: number; color: string }) {
-  const ref = useRef<THREE.Group>(null);
-  useFrame(({ clock }) => {
-    if (ref.current) ref.current.position.y = Math.abs(Math.sin(clock.elapsedTime * 4 + ph)) * 0.03;
-  });
-  return (
-    <group ref={ref} position={[x, 0, z]} scale={0.42}>
-      <mesh position={[0, 0.18, 0]} castShadow>
-        <cylinderGeometry args={[0.16, 0.22, 0.34, 7]} />
-        <meshStandardMaterial color={color} roughness={0.72} />
-      </mesh>
-      <mesh position={[0, 0.42, 0]} castShadow>
-        <sphereGeometry args={[0.1, 7, 7]} />
-        <meshStandardMaterial color="#e0c498" roughness={0.75} />
-      </mesh>
-      <mesh position={[0.12, 0.42, 0]} castShadow>
-        <cylinderGeometry args={[0.015, 0.015, 0.5, 4]} />
-        <meshStandardMaterial color="#3a2818" />
-      </mesh>
-    </group>
-  );
-}
-
+/* 千軍萬馬 — the rank-and-file host massed behind each unit's hero, rendered
+ * as one instanced crowd (bodies + heads + a forest of spears) so a strong
+ * stack reads as an ARMY, not a lone general. Count scales with troops; each
+ * soldier idle-bobs in formation. Instanced → dozens cost almost nothing. */
+const HOST_MAX = IS_MOBILE ? 16 : 48;
 function UnitRetinue({ troops, color }: { troops: number; color: string }) {
-  // One figure per ~2500 troops, clamped 3–9, ranked in a 3-wide block behind.
-  const n = Math.max(3, Math.min(9, Math.round(troops / 2500)));
-  const figs = useMemo(() => {
-    const out: Array<{ x: number; z: number; ph: number }> = [];
-    for (let i = 0; i < n; i++) {
-      const r = Math.floor(i / 3), c = i % 3;
-      out.push({ x: (c - 1) * 0.24, z: -0.55 - r * 0.24, ph: (i * 0.7) % (Math.PI * 2) });
+  const bodyRef = useRef<THREE.InstancedMesh>(null);
+  const headRef = useRef<THREE.InstancedMesh>(null);
+  const spearRef = useRef<THREE.InstancedMesh>(null);
+  const slots = useMemo(() => {
+    const count = Math.min(HOST_MAX, Math.max(6, Math.round(troops / 420)));
+    const cols = Math.max(4, Math.round(Math.sqrt(count * 2.4)));   // wide & shallow so it doesn't spill far back
+    const out: Array<{ x: number; z: number; ph: number; spear: boolean }> = [];
+    for (let i = 0; i < count; i++) {
+      const r = Math.floor(i / cols), c = i % cols;
+      const h1 = Math.abs(Math.sin(i * 12.9898 + 1.3));
+      const h2 = Math.abs(Math.sin(i * 78.233 + 0.7));
+      const x = (c - (cols - 1) / 2) * 0.165 + (h1 - 0.5) * 0.07;
+      const z = -0.5 - r * 0.17 + (h2 - 0.5) * 0.07;
+      out.push({ x, z, ph: (i * 0.9) % (Math.PI * 2), spear: i % 4 !== 0 });
     }
     return out;
-  }, [n]);
-  return <group>{figs.map((f, i) => <RetinueFig key={i} {...f} color={color} />)}</group>;
+  }, [troops]);
+  const spearCount = useMemo(() => slots.filter((s) => s.spear).length, [slots]);
+
+  useFrame(({ clock }) => {
+    if (!bodyRef.current || !headRef.current) return;
+    const t = clock.elapsedTime;
+    const m = new THREE.Matrix4();
+    const q = new THREE.Quaternion();
+    const p = new THREE.Vector3();
+    const sc = new THREE.Vector3();
+    const S = 0.42;
+    sc.setScalar(S);
+    let si = 0;
+    for (let i = 0; i < slots.length; i++) {
+      const sl = slots[i];
+      const bob = Math.abs(Math.sin(t * 4 + sl.ph)) * 0.03;
+      p.set(sl.x, 0.18 * S + bob, sl.z);
+      bodyRef.current.setMatrixAt(i, m.compose(p, q, sc));
+      p.set(sl.x, 0.42 * S + bob, sl.z);
+      headRef.current.setMatrixAt(i, m.compose(p, q, sc));
+      if (sl.spear && spearRef.current) {
+        p.set(sl.x + 0.12 * S, 0.42 * S + bob, sl.z);
+        spearRef.current.setMatrixAt(si++, m.compose(p, q, sc));
+      }
+    }
+    bodyRef.current.instanceMatrix.needsUpdate = true;
+    headRef.current.instanceMatrix.needsUpdate = true;
+    if (spearRef.current) spearRef.current.instanceMatrix.needsUpdate = true;
+  });
+
+  return (
+    <group>
+      <instancedMesh ref={bodyRef} args={[undefined, undefined, slots.length]} castShadow>
+        <cylinderGeometry args={[0.16, 0.22, 0.34, 6]} />
+        <meshStandardMaterial color={color} roughness={0.72} />
+      </instancedMesh>
+      <instancedMesh ref={headRef} args={[undefined, undefined, slots.length]} castShadow>
+        <sphereGeometry args={[0.1, 6, 6]} />
+        <meshStandardMaterial color="#e0c498" roughness={0.75} />
+      </instancedMesh>
+      <instancedMesh ref={spearRef} args={[undefined, undefined, Math.max(1, spearCount)]} castShadow>
+        <cylinderGeometry args={[0.015, 0.015, 0.5, 4]} />
+        <meshStandardMaterial color="#3a2818" />
+      </instancedMesh>
+    </group>
+  );
 }
 
 function UnitMesh({
