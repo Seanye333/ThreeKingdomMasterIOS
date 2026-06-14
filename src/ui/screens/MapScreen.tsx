@@ -262,6 +262,8 @@ export function MapScreen() {
   // (auto-dismissing the season report) until a force unifies the realm.
   const observing = playerForceId === null;
   const [autoSim, setAutoSim] = useState(observing);
+  // 觀戰倍速 — how fast the spectator sim ticks (1× = 1.4s/旬).
+  const [simSpeed, setSimSpeed] = useState(1);
   useEffect(() => {
     if (!autoSim || !observing) return;
     const id = setInterval(() => {
@@ -270,9 +272,9 @@ export function MapScreen() {
       if (s.lastReport) { s.dismissReport(); return; }
       if (s.pendingEvent) { s.dismissEvent(); return; }
       s.endSeason();
-    }, 1400);
+    }, Math.round(1400 / simSpeed));
     return () => clearInterval(id);
-  }, [autoSim, observing]);
+  }, [autoSim, observing, simSpeed]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -472,14 +474,33 @@ export function MapScreen() {
           ]}
         />
         {observing ? (
-          <button
-            className={styles.advanceButton}
-            onClick={() => setAutoSim((v) => !v)}
-            title={t('演義模擬器 — 自動推演天下大勢', 'Spectator — auto-simulating the realm')}
-            style={{ background: autoSim ? 'rgba(122,106,168,0.3)' : undefined }}
-          >
-            {autoSim ? t('⏸ 暫停推演', '⏸ Pause') : t('▶ 繼續推演', '▶ Resume')}
-          </button>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <button
+              className={styles.advanceButton}
+              onClick={() => setAutoSim((v) => !v)}
+              title={t('演義模擬器 — 自動推演天下大勢', 'Spectator — auto-simulating the realm')}
+              style={{ background: autoSim ? 'rgba(122,106,168,0.3)' : undefined }}
+            >
+              {autoSim ? t('⏸ 暫停推演', '⏸ Pause') : t('▶ 繼續推演', '▶ Resume')}
+            </button>
+            {/* 觀戰倍速 — speed up or slow the auto-advance. */}
+            <span style={{ display: 'inline-flex', gap: 2 }}>
+              {[1, 2, 4].map((sp) => (
+                <button
+                  key={sp}
+                  onClick={() => setSimSpeed(sp)}
+                  title={t(`${sp}× 速度`, `${sp}× speed`)}
+                  style={{
+                    background: simSpeed === sp ? 'rgba(122,106,168,0.4)' : 'transparent',
+                    border: `1px solid ${simSpeed === sp ? '#a890d0' : '#4a3a5a'}`,
+                    color: simSpeed === sp ? '#d0c0f0' : '#8a7aa0',
+                    padding: '0.2rem 0.5rem', borderRadius: 4, cursor: 'pointer',
+                    fontFamily: 'Songti SC, serif', fontSize: '0.78rem',
+                  }}
+                >{sp}×</button>
+              ))}
+            </span>
+          </span>
         ) : (
           <>
             {/* 敵軍逼近 — pulsing red alert when a hostile army marches on one of
