@@ -4,6 +4,7 @@
  *
  * Call `playSfx(name)` from UI events; it's a no-op if disabled or unsupported.
  */
+import type { StratagemFxKind } from '../data/stratagemFx';
 
 let ctx: AudioContext | null = null;
 let enabled = true;
@@ -168,6 +169,74 @@ export function playSfx(name: SfxName): void {
   if (!c) return;
   unlockAudio();
   const pattern = SFX_PATTERNS[name];
+  if (!pattern) return;
+  let t = c.currentTime;
+  for (const tone of pattern) {
+    playTone(c, tone, t);
+    t += tone.duration;
+  }
+}
+
+/* ─── 戰法施放音效 — one signature sting per FX archetype ─────────────────
+   Mirrors the 37 visual families in data/stratagemFx.ts. All synthesized; a
+   tactic cast plays the sting for its spec.kind, so 火계 roars, 落雷 cracks,
+   弓 whistles, 騎 thunders, 毒 wheezes, 冰 tinkles, 符/燈 chime, etc. */
+const FX_SFX: Record<StratagemFxKind, Tone[]> = {
+  // — 火 family: low crackling roar —
+  fire:     [{ freq: 80, duration: 0.5, type: 'sawtooth', gain: 0.1 }, { freq: 60, duration: 0.4, type: 'sawtooth', gain: 0.1, sweep: -40 }],
+  shipfire: [{ freq: 70, duration: 0.5, type: 'sawtooth', gain: 0.11 }, { freq: 50, duration: 0.5, type: 'sawtooth', gain: 0.1, sweep: -30 }],
+  oil:      [{ freq: 90, duration: 0.28, type: 'sawtooth', gain: 0.12, sweep: -60 }, { freq: 120, duration: 0.2, type: 'square', gain: 0.06 }],
+  grain:    [{ freq: 100, duration: 0.24, type: 'sawtooth', gain: 0.1 }, { freq: 70, duration: 0.3, type: 'sawtooth', gain: 0.08, sweep: -40 }],
+  // — 雷 family: sharp crack + low boom —
+  lightning:    [{ freq: 2000, duration: 0.05, type: 'square', gain: 0.12, sweep: -6000 }, { freq: 60, duration: 0.35, type: 'sawtooth', gain: 0.18 }],
+  thunderstorm: [{ freq: 1800, duration: 0.05, type: 'square', gain: 0.1, sweep: -5000 }, { freq: 55, duration: 0.4, type: 'sawtooth', gain: 0.2 }, { freq: 72, duration: 0.3, type: 'sawtooth', gain: 0.14 }],
+  // — 射 family: whistle / blast / scatter —
+  arrows:   [{ freq: 1500, duration: 0.12, type: 'sawtooth', gain: 0.08, sweep: -3000 }],
+  cannon:   [{ freq: 150, duration: 0.07, type: 'square', gain: 0.2, sweep: -1200 }, { freq: 60, duration: 0.3, type: 'sawtooth', gain: 0.16 }],
+  caltrops: [{ freq: 1900, duration: 0.04, type: 'square', gain: 0.05 }, { freq: 1500, duration: 0.04, type: 'square', gain: 0.05 }, { freq: 2100, duration: 0.04, type: 'square', gain: 0.05 }],
+  // — 衝/兵 family: impacts & metal —
+  shockwave: [{ freq: 200, duration: 0.08, type: 'sawtooth', gain: 0.2, sweep: -2000 }, { freq: 80, duration: 0.22, type: 'square', gain: 0.16 }],
+  beast:     [{ freq: 300, duration: 0.18, type: 'sawtooth', gain: 0.12, sweep: -420 }, { freq: 160, duration: 0.2, type: 'sawtooth', gain: 0.1, sweep: -200 }],
+  streak:    [{ freq: 500, duration: 0.14, type: 'sawtooth', gain: 0.07, sweep: -900 }, { freq: 300, duration: 0.12, type: 'sawtooth', gain: 0.05, sweep: -500 }],
+  spears:    [{ freq: 180, duration: 0.1, type: 'square', gain: 0.14 }, { freq: 240, duration: 0.1, type: 'square', gain: 0.12 }],
+  blades:    [{ freq: 900, duration: 0.06, type: 'sawtooth', gain: 0.1, sweep: -1500 }, { freq: 1200, duration: 0.05, type: 'square', gain: 0.06 }],
+  rocks:     [{ freq: 120, duration: 0.1, type: 'sawtooth', gain: 0.18, sweep: -400 }, { freq: 58, duration: 0.3, type: 'square', gain: 0.2 }],
+  // — 水 family —
+  splash: [{ freq: 600, duration: 0.12, type: 'sine', gain: 0.1, sweep: -1400 }, { freq: 300, duration: 0.18, type: 'sine', gain: 0.08, sweep: -600 }],
+  // — 守/縛 family —
+  shield:  [{ freq: 440, duration: 0.18, type: 'sine', gain: 0.1 }, { freq: 330, duration: 0.2, type: 'sine', gain: 0.08 }],
+  chain:   [{ freq: 300, duration: 0.06, type: 'square', gain: 0.1 }, { freq: 280, duration: 0.06, type: 'square', gain: 0.1 }, { freq: 330, duration: 0.06, type: 'square', gain: 0.1 }],
+  net:     [{ freq: 400, duration: 0.1, type: 'sawtooth', gain: 0.07, sweep: -600 }, { freq: 250, duration: 0.15, type: 'square', gain: 0.08 }],
+  grapple: [{ freq: 700, duration: 0.08, type: 'sawtooth', gain: 0.08, sweep: -1000 }, { freq: 200, duration: 0.1, type: 'square', gain: 0.1 }],
+  scatter: [{ freq: 200, duration: 0.06, type: 'square', gain: 0.1, sweep: -300 }, { freq: 500, duration: 0.05, type: 'triangle', gain: 0.06 }],
+  // — 計/擾 family: whoosh, hiss, queasy —
+  swirl:  [{ freq: 400, duration: 0.2, type: 'sine', gain: 0.07, sweep: 600 }, { freq: 300, duration: 0.2, type: 'sine', gain: 0.05, sweep: 400 }],
+  feint:  [{ freq: 500, duration: 0.16, type: 'sine', gain: 0.07, sweep: -900 }],
+  smoke:  [{ freq: 300, duration: 0.3, type: 'sine', gain: 0.06, sweep: -200 }],
+  poison: [{ freq: 200, duration: 0.3, type: 'sine', gain: 0.08, sweep: -150, detune: 30 }, { freq: 260, duration: 0.25, type: 'sine', gain: 0.06, detune: -30 }],
+  ice:    [{ freq: 1600, duration: 0.1, type: 'triangle', gain: 0.08, sweep: -400 }, { freq: 2100, duration: 0.08, type: 'triangle', gain: 0.06 }],
+  vortex: [{ freq: 200, duration: 0.3, type: 'sawtooth', gain: 0.08, sweep: 1200 }],
+  curse:  [{ freq: 120, duration: 0.4, type: 'sine', gain: 0.1, sweep: -60, detune: 40 }, { freq: 180, duration: 0.3, type: 'sine', gain: 0.07, detune: -25 }],
+  // — 玄/術 family: chimes & tonal swells —
+  rune:   [{ freq: 660, duration: 0.2, type: 'sine', gain: 0.09 }, { freq: 880, duration: 0.2, type: 'sine', gain: 0.07 }, { freq: 990, duration: 0.25, type: 'sine', gain: 0.06 }],
+  dragon: [{ freq: 160, duration: 0.3, type: 'sawtooth', gain: 0.12, sweep: 300 }, { freq: 240, duration: 0.25, type: 'sawtooth', gain: 0.09, sweep: 200 }],
+  wind:   [{ freq: 800, duration: 0.4, type: 'sine', gain: 0.06, sweep: -500 }, { freq: 600, duration: 0.3, type: 'sine', gain: 0.05, sweep: -300 }],
+  gate:   [{ freq: 200, duration: 0.3, type: 'sine', gain: 0.1 }, { freq: 150, duration: 0.4, type: 'sine', gain: 0.12, sweep: -30 }],
+  lamp:   [{ freq: 880, duration: 0.3, type: 'triangle', gain: 0.07 }, { freq: 1046, duration: 0.3, type: 'triangle', gain: 0.06 }, { freq: 1318, duration: 0.4, type: 'triangle', gain: 0.05 }],
+  empty:  [{ freq: 523, duration: 0.4, type: 'sine', gain: 0.06 }, { freq: 392, duration: 0.5, type: 'sine', gain: 0.05 }],
+  charm:  [{ freq: 784, duration: 0.15, type: 'triangle', gain: 0.08 }, { freq: 988, duration: 0.15, type: 'triangle', gain: 0.08 }, { freq: 1175, duration: 0.2, type: 'triangle', gain: 0.07 }],
+  // — 統率 family: rally & drums —
+  aura: [{ freq: 392, duration: 0.25, type: 'sine', gain: 0.08 }, { freq: 523, duration: 0.3, type: 'sine', gain: 0.07 }],
+  drum: [{ freq: 90, duration: 0.14, type: 'square', gain: 0.2 }, { freq: 90, duration: 0.14, type: 'square', gain: 0.15 }, { freq: 112, duration: 0.18, type: 'square', gain: 0.2 }],
+};
+
+/** Play the signature sting for a tactic's FX archetype (no-op if disabled). */
+export function playFxSfx(kind: StratagemFxKind): void {
+  if (!enabled) return;
+  const c = getCtx();
+  if (!c) return;
+  unlockAudio();
+  const pattern = FX_SFX[kind];
   if (!pattern) return;
   let t = c.currentTime;
   for (const tone of pattern) {

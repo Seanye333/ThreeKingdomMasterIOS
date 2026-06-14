@@ -27,7 +27,7 @@ import { personalTacticsForUnit } from '../../game/systems/personalTactics';
 import { DuelGameModal } from './DuelGameModal';
 import { MarchPicker } from './MarchPicker';
 import { OfficerPicker } from './OfficerPicker';
-import { playSfx, startMapAmbience, setMapAmbienceMode, stopMapAmbience } from '../../game/systems/sound';
+import { playSfx, playFxSfx, startMapAmbience, setMapAmbienceMode, stopMapAmbience } from '../../game/systems/sound';
 import { computeFog } from '../../game/systems/fogOfWar';
 import { STRATAGEMS } from '../../game/data';
 import type { Officer, StratagemId } from '../../game/types';
@@ -6605,6 +6605,7 @@ export function StrategicMap3D() {
           const isSelf = ['defend', 'precognition', 'dragon-veil'].includes(dioCast.id);
           const fxCoord = isSelf ? sel0.coord : c;
           setDioFx((arr) => [...arr, { id: fxId, coord: fxCoord, spec, spawnedAt: fxId }]);
+          playFxSfx(spec.kind);
           const lifeMs = (FX_DURATION[spec.kind] ?? 1.5) * 1000 + 200;
           setTimeout(() => setDioFx((arr) => arr.filter((f) => f.id !== fxId)), lifeMs);
         }

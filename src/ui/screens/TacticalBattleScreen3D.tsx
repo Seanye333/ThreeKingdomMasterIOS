@@ -4,7 +4,7 @@ import { Html, OrbitControls, Stars } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { useGameStore } from '../../game/state/store';
-import { playSfx, startBattleAmbience, stopBattleAmbience } from '../../game/systems/sound';
+import { playSfx, playFxSfx, startBattleAmbience, stopBattleAmbience } from '../../game/systems/sound';
 import type { EntityId, HexCoord, Officer, StratagemId, TacticalBattle, TacticalTile, TacticalUnit, TerrainKind, TimeOfDay, UnitType, Weather } from '../../game/types';
 import type { DefenseBuildingId } from '../../game/data/defenseBuildings';
 import { stratagemFxKind, tacticFxKind, tacticFxSpec, FX_DURATION, type TacticFxSpec, type StratagemFxInstance } from '../../game/data/stratagemFx';
@@ -2808,6 +2808,7 @@ export function TacticalBattleScreen3D() {
               spec,
               spawnedAt: Date.now(),
             });
+            playFxSfx(spec.kind);
           }
           // Signature flavor for AI famous-tactic usage
           const flavor = SIGNATURE_FLAVOR[sig.tacticId];
@@ -2925,6 +2926,7 @@ export function TacticalBattleScreen3D() {
           const isSelf = ['defend', 'precognition', 'dragon-veil'].includes(actionMode.id);
           const fxCoord = isSelf ? selectedUnit.coord : c;
           setStratagemFx((arr) => [...arr, { id: fxId, coord: fxCoord, spec, spawnedAt: fxId }]);
+          playFxSfx(spec.kind);
           const lifeMs = (FX_DURATION[spec.kind] ?? 1.5) * 1000 + 200;
           setTimeout(() => setStratagemFx((arr) => arr.filter((f) => f.id !== fxId)), lifeMs);
         }
