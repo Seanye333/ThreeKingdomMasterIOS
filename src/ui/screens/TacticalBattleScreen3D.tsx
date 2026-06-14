@@ -1259,6 +1259,25 @@ function WindStreaks({ bounds, dir }: { bounds: { x: number; z: number }; dir: '
   );
 }
 
+/** 威脅預警 — a pulsing red ground ring under an enemy that can reach + strike
+ *  the selected unit next turn, so you can read the danger before committing. */
+function ThreatMarker({ coord }: { coord: HexCoord }) {
+  const ref = useRef<THREE.Mesh>(null);
+  const [x, z] = hexWorld(coord.col, coord.row);
+  useFrame(({ clock }) => {
+    if (ref.current) {
+      const p = 0.82 + Math.sin(clock.elapsedTime * 4) * 0.18;
+      ref.current.scale.set(p, p, p);
+    }
+  });
+  return (
+    <mesh ref={ref} position={[x, 0.07, z]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
+      <ringGeometry args={[0.58, 0.78, 24]} />
+      <meshBasicMaterial color="#ff4030" transparent opacity={0.5} side={THREE.DoubleSide} depthWrite={false} />
+    </mesh>
+  );
+}
+
 /* ─── Damage number floating up from a hex ─────────────────────── */
 function DamagePopup3D({ coord, text, color, spawnedAt }: {
   coord: HexCoord; text: string; color: string; spawnedAt: number;
@@ -2845,6 +2864,20 @@ export function BattleScene({
           />
         );
       })}
+
+      {/* 威脅預警 — when YOUR unit is picked, ring the enemies that could reach
+          and hit it next turn (move range + attack reach, terrain-agnostic). */}
+      {(() => {
+        const sel = selectedId ? units.find((u) => u.id === selectedId) : null;
+        if (!sel || (playerSide && sel.side !== playerSide)) return null;
+        const reach = (e: TacticalUnit) =>
+          (e.unitType === 'archers' || e.unitType === 'siege' ? 4 : 1) + e.maxAp;
+        return units
+          .filter((e) => e.side !== sel.side && e.troops > 0
+            && !(e.hidden && e.side !== playerSide)
+            && hexDistance(e.coord, sel.coord) <= reach(e))
+          .map((e) => <ThreatMarker key={`threat-${e.id}`} coord={e.coord} />);
+      })()}
 
       {/* Damage popups floating up from hexes. Age-filtered at render — the
           array itself only ever grows between endTurn prunes, and a popup
