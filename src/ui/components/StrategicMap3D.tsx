@@ -17,7 +17,9 @@ import type { City, Force, HexCoord, Port, Season } from '../../game/types';
 import { FACILITY_DEFS, isHostilePermitted } from '../../game/types';
 // The battle diorama reuses the real battle scene (embedded mode) + its hex
 // coordinate helper, so the fight on the world map IS the fight.
-import { BattleScene, hexWorld as battleHexWorld, stratagemFxKind, tacticFxKind, FX_DURATION, SIGNATURE_FLAVOR } from '../screens/TacticalBattleScreen3D';
+import { BattleScene, hexWorld as battleHexWorld, FX_DURATION, SIGNATURE_FLAVOR } from '../screens/TacticalBattleScreen3D';
+import { tacticFxSpec, type StratagemFxInstance } from '../../game/data/stratagemFx';
+import { categoryOfTactic } from '../../game/data/officerAttributes';
 // In-place battle commanding — the SAME pure battle ops the fullscreen uses.
 import { unitAt, canMove, canAttack, moveUnit, attackUnits, endTurn, applyStratagem, hexDistance } from '../../game/systems/tactical';
 import { canDuel } from '../../game/systems/duel';
@@ -5657,7 +5659,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
   dioMode: 'move' | 'attack';
   dioCast: { id: StratagemId; tacticId?: string } | null;
   dioArcs: Array<{ id: number; from: HexCoord; to: HexCoord; kind: 'melee' | 'ranged'; spawnedAt: number }>;
-  dioFx: Array<{ id: number; coord: HexCoord; kind: NonNullable<ReturnType<typeof stratagemFxKind>>; spawnedAt: number }>;
+  dioFx: StratagemFxInstance[];
   dioHover: HexCoord | null;
   onDioHover: (c: HexCoord | null) => void;
   onDioramaTile: (c: HexCoord) => void;
@@ -6559,7 +6561,7 @@ export function StrategicMap3D() {
   // 計謀 — an armed stratagem waiting for its target hex; FX ride the diorama.
   // tacticId set = a personal/signature tactic riding an underlying stratagem.
   const [dioCast, setDioCast] = useState<{ id: StratagemId; tacticId?: string } | null>(null);
-  const [dioFx, setDioFx] = useState<Array<{ id: number; coord: HexCoord; kind: NonNullable<ReturnType<typeof stratagemFxKind>>; spawnedAt: number }>>([]);
+  const [dioFx, setDioFx] = useState<StratagemFxInstance[]>([]);
   // 單挑 — armed duel waiting for an adjacent enemy commander; the bout itself
   // runs in the same DuelGameModal the fullscreen uses.
   const [dioDuelArm, setDioDuelArm] = useState(false);
@@ -6597,13 +6599,13 @@ export function StrategicMap3D() {
       if (!sel0) { setDioCast(null); return; }
       const r = applyStratagem(b, sel0.id, dioCast.id, c, useGameStore.getState().officers, dioCast.tacticId);
       if (r.ok) {
-        const fxKind = tacticFxKind(dioCast.tacticId, dioCast.id);
-        if (fxKind) {
+        const spec = tacticFxSpec(dioCast.tacticId, dioCast.id, categoryOfTactic);
+        if (spec) {
           const fxId = Date.now();
           const isSelf = ['defend', 'precognition', 'dragon-veil'].includes(dioCast.id);
           const fxCoord = isSelf ? sel0.coord : c;
-          setDioFx((arr) => [...arr, { id: fxId, coord: fxCoord, kind: fxKind, spawnedAt: fxId }]);
-          const lifeMs = (FX_DURATION[fxKind] ?? 1.5) * 1000 + 200;
+          setDioFx((arr) => [...arr, { id: fxId, coord: fxCoord, spec, spawnedAt: fxId }]);
+          const lifeMs = (FX_DURATION[spec.kind] ?? 1.5) * 1000 + 200;
           setTimeout(() => setDioFx((arr) => arr.filter((f) => f.id !== fxId)), lifeMs);
         }
         // N6 — signature flavor line for famous personal tactics.

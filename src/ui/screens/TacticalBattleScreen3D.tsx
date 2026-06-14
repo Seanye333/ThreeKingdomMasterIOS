@@ -7,7 +7,8 @@ import { useGameStore } from '../../game/state/store';
 import { playSfx, startBattleAmbience, stopBattleAmbience } from '../../game/systems/sound';
 import type { EntityId, HexCoord, Officer, StratagemId, TacticalBattle, TacticalTile, TacticalUnit, TerrainKind, TimeOfDay, UnitType, Weather } from '../../game/types';
 import type { DefenseBuildingId } from '../../game/data/defenseBuildings';
-import { stratagemFxKind, tacticFxKind, FX_COLOR, FX_DURATION } from '../../game/data/stratagemFx';
+import { stratagemFxKind, tacticFxKind, tacticFxSpec, FX_DURATION, type TacticFxSpec, type StratagemFxInstance } from '../../game/data/stratagemFx';
+import { categoryOfTactic } from '../../game/data/officerAttributes';
 import { applyBattlePrep,
   aiTakeTurn, aiSkillForDifficulty, applyStratagem, attackUnits, canAttack, canMove, endTurn, hexDistance,
   moveUnit, resolveBattleEnd, unitAt,
@@ -1244,14 +1245,16 @@ function AttackArc({ from, to, kind, spawnedAt }: {
 /** Map each StratagemId → FX kind. */
 // 戰法特效的純資料映射(kind / 顏色 / 壽命)抽到 game/data/stratagemFx.ts,
 // 大地圖戰鬥沿用同一份;此處 re-export 讓 StrategicMap3D 的舊 import 不必改。
-export { stratagemFxKind, tacticFxKind, FX_DURATION };
+export { stratagemFxKind, tacticFxKind, tacticFxSpec, FX_DURATION };
 
-function StratagemFXNode({ coord, kind, spawnedAt }: {
-  coord: HexCoord; kind: NonNullable<ReturnType<typeof stratagemFxKind>>; spawnedAt: number;
+function StratagemFXNode({ coord, spec, spawnedAt }: {
+  coord: HexCoord; spec: TacticFxSpec; spawnedAt: number;
 }) {
+  const { kind, color, density, spin, scale, variant } = spec;
   const [x, z] = hexWorld(coord.col, coord.row);
-  const color = FX_COLOR[kind];
   const dur = FX_DURATION[kind];
+  /** particle count scaled by this tactic's density (min 2). */
+  const n = (base: number) => Math.max(2, Math.round(base * density));
   const groupRef = useRef<THREE.Group>(null);
 
   useFrame(() => {
@@ -1399,7 +1402,75 @@ function StratagemFXNode({ coord, kind, spawnedAt }: {
         g.scale.setScalar(1 + (1 - t) * 0.3);
         break;
       }
+      case 'poison': {
+        // 毒瘴 — the toxic cloud roils upward and swells
+        g.position.y = t * 0.7;
+        g.scale.setScalar(1 + t * 0.5);
+        break;
+      }
+      case 'ice': {
+        // 冰封 — shards lock in, a slow shiver
+        g.position.y = 0.2 + Math.sin(t * 12) * 0.02 * (1 - t);
+        break;
+      }
+      case 'blades': {
+        // 刀陣 — the blade ring whirls
+        g.rotation.y = t * Math.PI * 6;
+        break;
+      }
+      case 'spears': {
+        // 槍林 — the spear wall thrusts up
+        g.position.y = -0.4 + Math.min(1, t * 3) * 0.4;
+        break;
+      }
+      case 'caltrops': {
+        // 鐵蒺藜 — spikes scatter outward across the ground
+        g.scale.setScalar(0.3 + Math.min(1, t * 2.5) * 1.0);
+        break;
+      }
+      case 'beast': {
+        // 猛獸 — a pouncing lunge forward
+        g.position.x = Math.sin(t * Math.PI) * 0.8;
+        g.position.y = Math.sin(t * Math.PI) * 0.4;
+        break;
+      }
+      case 'drum': {
+        // 戰鼓 — pulses outward in beats
+        g.scale.setScalar(0.6 + (0.4 + Math.abs(Math.sin(t * Math.PI * 4)) * 0.6) * (0.5 + t));
+        break;
+      }
+      case 'cannon': {
+        // 火砲 — muzzle blast bursts then drifts
+        g.scale.setScalar(0.3 + Math.min(1, t * 4) * 1.4);
+        g.position.y = t * 0.4;
+        break;
+      }
+      case 'smoke': {
+        // 煙幕 — the screen billows up and spreads
+        g.position.y = t * 1.2;
+        g.scale.setScalar(1 + t * 0.9);
+        break;
+      }
+      case 'vortex': {
+        // 旋渦 — a tight fast funnel
+        g.rotation.y = t * Math.PI * 8;
+        g.position.y = 0.6 + Math.sin(t * Math.PI * 2) * 0.15;
+        break;
+      }
+      case 'oil': {
+        // 火油 — the slick splatters out low and burns
+        g.scale.setScalar(0.4 + t * 1.6);
+        break;
+      }
+      case 'curse': {
+        // 詛咒 — dark sigils orbit and sink in
+        g.rotation.y = t * Math.PI * 3;
+        g.position.y = 0.5 - t * 0.3;
+        break;
+      }
     }
+    // Per-tactic spin direction/speed (applied to whatever rotation the case set).
+    g.rotation.y *= spin;
     // Fade out
     const fade = 1 - t;
     g.traverse((obj) => {
@@ -1416,10 +1487,11 @@ function StratagemFXNode({ coord, kind, spawnedAt }: {
         // smoke billowing above; the whole column rises (赤壁 inferno).
         return (
           <>
-            {Array.from({ length: 18 }).map((_, i) => {
+            {Array.from({ length: n(18) }).map((_, i) => {
               const ang = (i / 18) * Math.PI * 3.2;
               const r = 0.12 + (i % 4) * 0.17;
-              const fc = i % 3 === 0 ? '#ffd24a' : i % 3 === 1 ? '#ff7e26' : '#e0331a';
+              // tint the flame palette toward this tactic's colour
+              const fc = i % 3 === 0 ? '#ffd24a' : i % 3 === 1 ? color : '#e0331a';
               return (
                 <mesh key={`f${i}`} position={[Math.cos(ang) * r, 0.08 + (i % 5) * 0.18, Math.sin(ang) * r]}>
                   <sphereGeometry args={[0.13 + (i % 3) * 0.05, 6, 6]} />
@@ -1453,14 +1525,18 @@ function StratagemFXNode({ coord, kind, spawnedAt }: {
           </>
         );
       case 'arrows':
-        return Array.from({ length: 8 }).map((_, i) => {
+        // variant 0/1: orbiting volley climbing a spiral; 2/3: a falling rain spread.
+        return Array.from({ length: n(8) }).map((_, i) => {
           const ang = (i / 8) * Math.PI * 2;
-          const r = 0.6;
+          const rain = variant >= 2;
+          const r = rain ? 0.25 + (i % 4) * 0.18 : 0.6;
           return (
             <mesh
               key={i}
-              position={[Math.cos(ang) * r, i * 0.3, Math.sin(ang) * r]}
-              rotation={[Math.PI / 3, 0, 0]}
+              position={rain
+                ? [Math.cos(ang) * r, 0.4 + (i % 5) * 0.42, Math.sin(ang) * r]
+                : [Math.cos(ang) * r, i * 0.3, Math.sin(ang) * r]}
+              rotation={rain ? [Math.PI / 2.2, 0, 0] : [Math.PI / 3, 0, 0]}
             >
               <cylinderGeometry args={[0.02, 0.02, 0.6, 4]} />
               <meshBasicMaterial color={color} transparent opacity={1} />
@@ -1474,8 +1550,8 @@ function StratagemFXNode({ coord, kind, spawnedAt }: {
               <ringGeometry args={[0.7, 1.1, 24]} />
               <meshBasicMaterial color={color} transparent opacity={1} side={THREE.DoubleSide} />
             </mesh>
-            {Array.from({ length: 6 }).map((_, i) => {
-              const ang = (i / 6) * Math.PI * 2;
+            {Array.from({ length: n(6) }).map((_, i) => {
+              const ang = (i / n(6)) * Math.PI * 2;
               return (
                 <mesh key={i} position={[Math.cos(ang) * 0.6, 0.5, Math.sin(ang) * 0.6]}>
                   <sphereGeometry args={[0.08, 6, 6]} />
@@ -1486,7 +1562,7 @@ function StratagemFXNode({ coord, kind, spawnedAt }: {
           </>
         );
       case 'swirl':
-        return Array.from({ length: 10 }).map((_, i) => {
+        return Array.from({ length: n(10) }).map((_, i) => {
           const ang = (i / 10) * Math.PI * 2;
           const r = 0.5 + (i % 2) * 0.2;
           return (
@@ -1497,11 +1573,20 @@ function StratagemFXNode({ coord, kind, spawnedAt }: {
           );
         });
       case 'shockwave':
+        // variant ≥2 adds a second, outer ring.
         return (
-          <mesh position={[0, 0.1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[0.5, 0.7, 32]} />
-            <meshBasicMaterial color={color} transparent opacity={1} side={THREE.DoubleSide} />
-          </mesh>
+          <>
+            <mesh position={[0, 0.1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+              <ringGeometry args={[0.5, 0.7, 32]} />
+              <meshBasicMaterial color={color} transparent opacity={1} side={THREE.DoubleSide} />
+            </mesh>
+            {variant >= 2 && (
+              <mesh position={[0, 0.12, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <ringGeometry args={[0.85, 0.98, 32]} />
+                <meshBasicMaterial color={color} transparent opacity={0.6} side={THREE.DoubleSide} />
+              </mesh>
+            )}
+          </>
         );
       case 'shield':
         return (
@@ -1900,12 +1985,209 @@ function StratagemFXNode({ coord, kind, spawnedAt }: {
             </mesh>
           </>
         );
+      case 'poison':
+        // 毒瘴 — 翻滾的綠毒雲團 + 升騰毒泡
+        return (
+          <>
+            {Array.from({ length: n(10) }).map((_, i) => {
+              const a = (i / 10) * Math.PI * 2;
+              const r = 0.18 + (i % 3) * 0.14;
+              return (
+                <mesh key={`p${i}`} position={[Math.cos(a) * r, 0.3 + (i % 4) * 0.16, Math.sin(a) * r]}>
+                  <sphereGeometry args={[0.16 + (i % 3) * 0.05, 6, 6]} />
+                  <meshBasicMaterial color={i % 2 ? color : '#6fa030'} transparent opacity={0.7} />
+                </mesh>
+              );
+            })}
+          </>
+        );
+      case 'ice':
+        // 冰封 — 放射狀冰晶碎片 + 地面寒環
+        return (
+          <>
+            {Array.from({ length: n(8) }).map((_, i) => {
+              const a = (i / 8) * Math.PI * 2;
+              const r = 0.22 + (i % 2) * 0.16;
+              return (
+                <mesh key={i} position={[Math.cos(a) * r, 0.25 + (i % 3) * 0.18, Math.sin(a) * r]} rotation={[a, a, a]}>
+                  <octahedronGeometry args={[0.1 + (i % 3) * 0.03, 0]} />
+                  <meshBasicMaterial color={color} transparent opacity={0.85} toneMapped={false} />
+                </mesh>
+              );
+            })}
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
+              <ringGeometry args={[0.35, 0.5, 6]} />
+              <meshBasicMaterial color={color} transparent opacity={0.6} side={THREE.DoubleSide} />
+            </mesh>
+          </>
+        );
+      case 'blades':
+        // 刀陣 — 環繞的刀刃輪轉
+        return Array.from({ length: n(7) }).map((_, i) => {
+          const a = (i / n(7)) * Math.PI * 2;
+          return (
+            <mesh key={i} position={[Math.cos(a) * 0.5, 0.4, Math.sin(a) * 0.5]} rotation={[0, -a, Math.PI / 2.2]}>
+              <coneGeometry args={[0.05, 0.34, 3]} />
+              <meshBasicMaterial color={color} transparent opacity={0.95} toneMapped={false} />
+            </mesh>
+          );
+        });
+      case 'spears':
+        // 槍林 — 一片向上戳刺的槍尖
+        return Array.from({ length: n(9) }).map((_, i) => {
+          const a = (i / n(9)) * Math.PI * 2;
+          const r = 0.2 + (i % 3) * 0.14;
+          return (
+            <mesh key={i} position={[Math.cos(a) * r, 0.45, Math.sin(a) * r]}>
+              <coneGeometry args={[0.04, 0.8, 4]} />
+              <meshBasicMaterial color={color} transparent opacity={0.95} />
+            </mesh>
+          );
+        });
+      case 'caltrops':
+        // 鐵蒺藜 — 地面四散的尖刺
+        return (
+          <>
+            {Array.from({ length: n(12) }).map((_, i) => {
+              const a = (i / 12) * Math.PI * 2 * 1.6;
+              const r = 0.15 + (i % 4) * 0.12;
+              return (
+                <mesh key={i} position={[Math.cos(a) * r, 0.08, Math.sin(a) * r]} rotation={[Math.PI / 4, a, 0]}>
+                  <tetrahedronGeometry args={[0.07, 0]} />
+                  <meshBasicMaterial color={color} transparent opacity={0.95} />
+                </mesh>
+              );
+            })}
+          </>
+        );
+      case 'beast':
+        // 猛獸 — 三道爪痕劃過 + 兇光
+        return (
+          <>
+            {[0, 1, 2].map((i) => (
+              <mesh key={i} position={[(i - 1) * 0.16, 0.5, 0]} rotation={[0, 0, -0.3]}>
+                <boxGeometry args={[0.04, 0.7, 0.03]} />
+                <meshBasicMaterial color={color} transparent opacity={0.95} toneMapped={false} />
+              </mesh>
+            ))}
+            <mesh position={[0, 0.5, -0.1]}>
+              <sphereGeometry args={[0.12, 8, 8]} />
+              <meshBasicMaterial color="#ffd24a" transparent opacity={0.6} toneMapped={false} />
+            </mesh>
+          </>
+        );
+      case 'drum':
+        // 戰鼓 — 同心鼓圈 + 中央鼓面
+        return (
+          <>
+            {[0.4, 0.65, 0.9].map((rr, i) => (
+              <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05 + i * 0.01, 0]}>
+                <ringGeometry args={[rr, rr + 0.08, 28]} />
+                <meshBasicMaterial color={color} transparent opacity={0.8 - i * 0.2} side={THREE.DoubleSide} />
+              </mesh>
+            ))}
+            <mesh position={[0, 0.25, 0]}>
+              <cylinderGeometry args={[0.22, 0.22, 0.3, 16]} />
+              <meshBasicMaterial color="#8a2a1a" transparent opacity={0.9} />
+            </mesh>
+          </>
+        );
+      case 'cannon':
+        // 火砲 — 砲口爆焰 + 灰煙
+        return (
+          <>
+            {Array.from({ length: n(8) }).map((_, i) => {
+              const a = (i / 8) * Math.PI * 2;
+              const r = 0.1 + (i % 3) * 0.12;
+              return (
+                <mesh key={`b${i}`} position={[Math.cos(a) * r, 0.3, Math.sin(a) * r]}>
+                  <sphereGeometry args={[0.12, 6, 6]} />
+                  <meshBasicMaterial color={i % 2 ? '#ffd24a' : color} transparent opacity={0.9} toneMapped={false} />
+                </mesh>
+              );
+            })}
+            {Array.from({ length: 5 }).map((_, i) => (
+              <mesh key={`s${i}`} position={[(i - 2) * 0.12, 0.6 + i * 0.08, 0]}>
+                <sphereGeometry args={[0.14, 6, 6]} />
+                <meshBasicMaterial color="#6a6055" transparent opacity={0.6} />
+              </mesh>
+            ))}
+          </>
+        );
+      case 'smoke':
+        // 煙幕 — 大團遮蔽灰煙
+        return Array.from({ length: n(9) }).map((_, i) => {
+          const a = (i / 9) * Math.PI * 2;
+          const r = 0.15 + (i % 4) * 0.14;
+          return (
+            <mesh key={i} position={[Math.cos(a) * r, 0.3 + (i % 4) * 0.2, Math.sin(a) * r]}>
+              <sphereGeometry args={[0.22 + (i % 3) * 0.08, 6, 6]} />
+              <meshBasicMaterial color={color} transparent opacity={0.55} />
+            </mesh>
+          );
+        });
+      case 'vortex':
+        // 旋渦 — 收緊的螺旋柱
+        return Array.from({ length: n(14) }).map((_, i) => {
+          const a = (i / 14) * Math.PI * 5;
+          const r = 0.55 - i * 0.03;
+          return (
+            <mesh key={i} position={[Math.cos(a) * Math.max(0.05, r), 0.12 + i * 0.09, Math.sin(a) * Math.max(0.05, r)]}>
+              <sphereGeometry args={[0.06, 5, 5]} />
+              <meshBasicMaterial color={color} transparent opacity={0.9} toneMapped={false} />
+            </mesh>
+          );
+        });
+      case 'oil':
+        // 火油 — 低伏黑油濺射 + 火苗
+        return (
+          <>
+            {Array.from({ length: n(10) }).map((_, i) => {
+              const a = (i / 10) * Math.PI * 2;
+              const r = 0.3 + (i % 3) * 0.14;
+              return (
+                <mesh key={`o${i}`} position={[Math.cos(a) * r, 0.06, Math.sin(a) * r]}>
+                  <sphereGeometry args={[0.1, 6, 6]} />
+                  <meshBasicMaterial color={color} transparent opacity={0.9} />
+                </mesh>
+              );
+            })}
+            {Array.from({ length: 5 }).map((_, i) => {
+              const a = (i / 5) * Math.PI * 2;
+              return (
+                <mesh key={`f${i}`} position={[Math.cos(a) * 0.25, 0.22, Math.sin(a) * 0.25]}>
+                  <coneGeometry args={[0.06, 0.2, 5]} />
+                  <meshBasicMaterial color="#ff7e26" transparent opacity={0.9} toneMapped={false} />
+                </mesh>
+              );
+            })}
+          </>
+        );
+      case 'curse':
+        // 詛咒 — 環繞的暗紫符印 + 中央邪光
+        return (
+          <>
+            {Array.from({ length: n(6) }).map((_, i) => {
+              const a = (i / n(6)) * Math.PI * 2;
+              return (
+                <mesh key={i} position={[Math.cos(a) * 0.5, 0.5, Math.sin(a) * 0.5]} rotation={[0, -a, 0]}>
+                  <torusGeometry args={[0.1, 0.02, 4, 8]} />
+                  <meshBasicMaterial color={color} transparent opacity={0.95} toneMapped={false} />
+                </mesh>
+              );
+            })}
+            <mesh position={[0, 0.5, 0]}>
+              <sphereGeometry args={[0.13, 10, 10]} />
+              <meshBasicMaterial color={color} transparent opacity={0.5} toneMapped={false} />
+            </mesh>
+          </>
+        );
     }
   })();
 
   return (
     <group ref={groupRef} position={[x, 0, z]}>
-      {visuals}
+      <group scale={scale}>{visuals}</group>
     </group>
   );
 }
@@ -2122,7 +2404,7 @@ export function BattleScene({
   setHovered: (c: HexCoord | null) => void;
   onTileClick: (c: HexCoord) => void;
   attackArcs: { id: number; from: HexCoord; to: HexCoord; kind: 'melee' | 'ranged'; spawnedAt: number }[];
-  stratagemFx: Array<{ id: number; coord: HexCoord; kind: NonNullable<ReturnType<typeof stratagemFxKind>>; spawnedAt: number }>;
+  stratagemFx: StratagemFxInstance[];
   officers: Record<EntityId, Officer>;
   /** Diorama mode — rendered inside ANOTHER scene (the strategic map): skip
    *  scene-global fog/lights/surround/ground/weather and DOM overlays. */
@@ -2347,7 +2629,7 @@ export function BattleScene({
         <StratagemFXNode
           key={f.id}
           coord={f.coord}
-          kind={f.kind}
+          spec={f.spec}
           spawnedAt={f.spawnedAt}
         />
       ))}
@@ -2490,12 +2772,7 @@ export function TacticalBattleScreen3D() {
   // N7 — signature-tactic banner overlay state
   const [signatureBanner, setSignatureBanner] = useState<{ zh: string; en: string; key: number } | null>(null);
   // Stratagem FX particles
-  const [stratagemFx, setStratagemFx] = useState<Array<{
-    id: number;
-    coord: HexCoord;
-    kind: NonNullable<ReturnType<typeof stratagemFxKind>>;
-    spawnedAt: number;
-  }>>([]);
+  const [stratagemFx, setStratagemFx] = useState<StratagemFxInstance[]>([]);
   const t = useT();
   const lang = useLanguage();
 
@@ -2518,17 +2795,17 @@ export function TacticalBattleScreen3D() {
         });
         const next = result.battle;
         // For each AI signature usage, spawn FX + banner + flavor log entry.
-        const fxToAdd: Array<{ id: number; coord: HexCoord; kind: NonNullable<ReturnType<typeof stratagemFxKind>>; spawnedAt: number }> = [];
+        const fxToAdd: StratagemFxInstance[] = [];
         let fxCounter = Date.now();
         let bannerToShow: { zh: string; en: string } | null = null;
         let battleAfterLogs = next;
         for (const sig of result.signatures) {
-          const fxKind = tacticFxKind(sig.tacticId, sig.stratagemId);
-          if (fxKind) {
+          const spec = tacticFxSpec(sig.tacticId, sig.stratagemId, categoryOfTactic);
+          if (spec) {
             fxToAdd.push({
               id: fxCounter++,
               coord: sig.coord,
-              kind: fxKind,
+              spec,
               spawnedAt: Date.now(),
             });
           }
@@ -2549,7 +2826,7 @@ export function TacticalBattleScreen3D() {
         if (fxToAdd.length > 0) {
           setStratagemFx((arr) => [...arr, ...fxToAdd]);
           for (const f of fxToAdd) {
-            const life = (FX_DURATION[f.kind] ?? 1.5) * 1000 + 200;
+            const life = (FX_DURATION[f.spec.kind] ?? 1.5) * 1000 + 200;
             setTimeout(() => setStratagemFx((arr) => arr.filter((x) => x.id !== f.id)), life);
           }
         }
@@ -2640,15 +2917,15 @@ export function TacticalBattleScreen3D() {
     if (actionMode.kind === 'stratagem') {
       const r = applyStratagem(battle, selectedUnit.id, actionMode.id, c, officers, actionMode.tacticId);
       if (r.ok) {
-        // Spawn FX at the target hex — signature tactics get their own visual.
-        const fxKind = tacticFxKind(actionMode.tacticId, actionMode.id);
-        if (fxKind) {
+        // Spawn FX at the target hex — every tactic gets its own distinct visual.
+        const spec = tacticFxSpec(actionMode.tacticId, actionMode.id, categoryOfTactic);
+        if (spec) {
           const fxId = Date.now();
           // For self-targeted (defend / precognition / dragon-veil), origin = caster
           const isSelf = ['defend', 'precognition', 'dragon-veil'].includes(actionMode.id);
           const fxCoord = isSelf ? selectedUnit.coord : c;
-          setStratagemFx((arr) => [...arr, { id: fxId, coord: fxCoord, kind: fxKind, spawnedAt: fxId }]);
-          const lifeMs = (FX_DURATION[fxKind] ?? 1.5) * 1000 + 200;
+          setStratagemFx((arr) => [...arr, { id: fxId, coord: fxCoord, spec, spawnedAt: fxId }]);
+          const lifeMs = (FX_DURATION[spec.kind] ?? 1.5) * 1000 + 200;
           setTimeout(() => setStratagemFx((arr) => arr.filter((f) => f.id !== fxId)), lifeMs);
         }
         // N6 — append a signature flavor line to the battle log if the
