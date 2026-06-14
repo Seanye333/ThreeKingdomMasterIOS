@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect } from 'react';
+import { lazy, Suspense, useState, useEffect, useMemo } from 'react';
 import { playSfx } from '../../game/systems/sound';
 import { useGameStore } from '../../game/state/store';
 import { DEED_TITLES_BY_ID } from '../../game/systems/deedTitles';
@@ -233,20 +233,24 @@ export function MapScreen() {
   };
   // 敵軍逼近 — player-owned cities a hostile field army is marching on, with
   // its combined strength and how far along the road it is. Sorted nearest-to-
-  // arrival so the chip's first jump is to the most urgent front.
-  const threats = useGameStore((s) => {
-    if (!s.playerForceId) return [] as { cityId: string; name: string; troops: number; progress: number }[];
+  // arrival so the chip's first jump is to the most urgent front. Selects the
+  // raw store maps (stable refs) and derives in useMemo — a selector that built
+  // a fresh array every call would spin React into an infinite render (#185).
+  const armiesMap = useGameStore((s) => s.armies);
+  const citiesMap = useGameStore((s) => s.cities);
+  const threats = useMemo(() => {
+    if (!playerForceId) return [] as { cityId: string; name: string; troops: number; progress: number }[];
     const byCity: Record<string, { cityId: string; name: string; troops: number; progress: number }> = {};
-    for (const a of Object.values(s.armies)) {
-      if (a.forceId === s.playerForceId || a.cellTarget) continue;
-      const city = s.cities[a.targetCityId];
-      if (!city || city.ownerForceId !== s.playerForceId) continue;
+    for (const a of Object.values(armiesMap)) {
+      if (a.forceId === playerForceId || a.cellTarget) continue;
+      const city = citiesMap[a.targetCityId];
+      if (!city || city.ownerForceId !== playerForceId) continue;
       const cur = (byCity[a.targetCityId] ??= { cityId: a.targetCityId, name: city.name.zh, troops: 0, progress: 0 });
       cur.troops += a.troops;
       cur.progress = Math.max(cur.progress, a.progress);
     }
     return Object.values(byCity).sort((x, y) => y.progress - x.progress);
-  });
+  }, [armiesMap, citiesMap, playerForceId]);
   // Jump to the most-imminent threatened city.
   const jumpToThreat = () => {
     if (threats.length > 0) selectCityFromHud(threats[0].cityId);
