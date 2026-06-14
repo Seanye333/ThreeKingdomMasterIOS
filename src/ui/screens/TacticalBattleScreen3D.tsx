@@ -7,8 +7,7 @@ import { useGameStore } from '../../game/state/store';
 import { playSfx, startBattleAmbience, stopBattleAmbience } from '../../game/systems/sound';
 import type { EntityId, HexCoord, Officer, StratagemId, TacticalBattle, TacticalTile, TacticalUnit, TerrainKind, TimeOfDay, UnitType, Weather } from '../../game/types';
 import type { DefenseBuildingId } from '../../game/data/defenseBuildings';
-import { primarySkillFx, type SkillFxArchetype } from '../../game/data/skillFx';
-import { stratagemFxKind, FX_COLOR, FX_DURATION } from '../../game/data/stratagemFx';
+import { stratagemFxKind, tacticFxKind, FX_COLOR, FX_DURATION } from '../../game/data/stratagemFx';
 import { applyBattlePrep,
   aiTakeTurn, aiSkillForDifficulty, applyStratagem, attackUnits, canAttack, canMove, endTurn, hexDistance,
   moveUnit, resolveBattleEnd, unitAt,
@@ -642,102 +641,8 @@ function UnitRetinue({ troops, color, unitType }: { troops: number; color: strin
   );
 }
 
-/* 技能光效 — a persistent signature aura under each unit's hero, its shape set
- * by the skill's archetype and tinted its colour. One per unit (the officer's
- * first skill). Cheap: a few meshes, animated by a single group transform. */
-function SkillAura({ archetype, color }: { archetype: SkillFxArchetype; color: string }) {
-  const g = useRef<THREE.Group>(null);
-  const m = useRef<THREE.MeshBasicMaterial>(null);
-  useFrame(({ clock }) => {
-    const t = clock.elapsedTime;
-    if (g.current) {
-      if (archetype === 'mystic' || archetype === 'dust' || archetype === 'ring' || archetype === 'arrows') {
-        g.current.rotation.y = t * (archetype === 'arrows' ? 1.6 : 0.8);
-      }
-      if (archetype === 'wave' || archetype === 'aura') {
-        const s = 1 + Math.sin(t * 2) * 0.12;
-        g.current.scale.set(s, 1, s);
-      }
-    }
-    if (m.current) m.current.opacity = (archetype === 'blaze' || archetype === 'embers')
-      ? 0.5 + Math.abs(Math.sin(t * 9)) * 0.4
-      : 0.4 + Math.sin(t * 2.4) * 0.18;
-  });
-  const ringMat = <meshBasicMaterial ref={m} color={color} transparent opacity={0.5} side={THREE.DoubleSide} toneMapped={false} />;
-  switch (archetype) {
-    case 'ring':
-    case 'aura':
-      return (
-        <group ref={g} position={[0, 0.03, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <mesh><ringGeometry args={[0.34, 0.42, 32]} />{ringMat}</mesh>
-        </group>
-      );
-    case 'wave':
-      return (
-        <group ref={g} position={[0, 0.03, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <mesh><ringGeometry args={[0.30, 0.36, 32]} />{ringMat}</mesh>
-          <mesh position={[0, 0, 0.001]}><ringGeometry args={[0.44, 0.48, 32]} /><meshBasicMaterial color={color} transparent opacity={0.3} side={THREE.DoubleSide} /></mesh>
-        </group>
-      );
-    case 'mystic':
-      return (
-        <group ref={g} position={[0, 0.04, 0]}>
-          <mesh rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.34, 0.40, 6]} />{ringMat}</mesh>
-          {[0, 1, 2].map((i) => {
-            const a = (i / 3) * Math.PI * 2;
-            return <mesh key={i} position={[Math.cos(a) * 0.42, 0.5, Math.sin(a) * 0.42]}><sphereGeometry args={[0.05, 8, 8]} /><meshBasicMaterial color={color} transparent opacity={0.85} toneMapped={false} /></mesh>;
-          })}
-        </group>
-      );
-    case 'blaze':
-      return (
-        <group ref={g} position={[0, 0, 0]}>
-          {[0, 1, 2, 3, 4].map((i) => {
-            const a = (i / 5) * Math.PI * 2;
-            return <mesh key={i} position={[Math.cos(a) * 0.26, 0.18, Math.sin(a) * 0.26]}><coneGeometry args={[0.08, 0.34, 5]} /><meshBasicMaterial ref={i === 0 ? m : undefined} color={color} transparent opacity={0.6} toneMapped={false} /></mesh>;
-          })}
-        </group>
-      );
-    case 'embers':
-      return (
-        <group ref={g} position={[0, 0, 0]}>
-          {[0, 1, 2, 3, 4, 5].map((i) => {
-            const a = (i / 6) * Math.PI * 2;
-            return <mesh key={i} position={[Math.cos(a) * 0.22, 0.2 + (i % 3) * 0.16, Math.sin(a) * 0.22]}><sphereGeometry args={[0.035, 6, 6]} /><meshBasicMaterial ref={i === 0 ? m : undefined} color={color} transparent opacity={0.7} toneMapped={false} /></mesh>;
-          })}
-        </group>
-      );
-    case 'arrows':
-      return (
-        <group ref={g} position={[0, 0.4, 0]}>
-          {[0, 1, 2, 3].map((i) => {
-            const a = (i / 4) * Math.PI * 2;
-            return <mesh key={i} position={[Math.cos(a) * 0.4, 0, Math.sin(a) * 0.4]} rotation={[0, -a, Math.PI / 2]}><cylinderGeometry args={[0.012, 0.012, 0.22, 4]} /><meshBasicMaterial color={color} transparent opacity={0.85} toneMapped={false} /></mesh>;
-          })}
-        </group>
-      );
-    case 'dust':
-      return (
-        <group ref={g} position={[0, 0.05, 0]}>
-          <mesh rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.3, 0.46, 24]} />{ringMat}</mesh>
-          {[0, 1, 2, 3].map((i) => {
-            const a = (i / 4) * Math.PI * 2;
-            return <mesh key={i} position={[Math.cos(a) * 0.4, 0.08, Math.sin(a) * 0.4]}><sphereGeometry args={[0.07, 6, 6]} /><meshBasicMaterial color={color} transparent opacity={0.4} /></mesh>;
-          })}
-        </group>
-      );
-    case 'banner':
-      return (
-        <group ref={g} position={[0, 0, 0]}>
-          <mesh position={[0.18, 0.55, 0]}><cylinderGeometry args={[0.015, 0.015, 0.9, 5]} /><meshStandardMaterial color="#2a1d12" /></mesh>
-          <mesh position={[0.30, 0.85, 0]}><planeGeometry args={[0.26, 0.2]} /><meshBasicMaterial ref={m} color={color} transparent opacity={0.85} side={THREE.DoubleSide} toneMapped={false} /></mesh>
-        </group>
-      );
-  }
-}
-
 function UnitMesh({
-  unit, terrainH, isPlayer, selected, onClick, isWounded, skillFx,
+  unit, terrainH, isPlayer, selected, onClick, isWounded,
 }: {
   unit: TacticalUnit;
   terrainH: number;
@@ -745,7 +650,6 @@ function UnitMesh({
   selected: boolean;
   onClick: () => void;
   isWounded?: boolean;
-  skillFx?: { archetype: SkillFxArchetype; color: string; zh: string } | null;
 }) {
   const [tx, tz] = hexWorld(unit.coord.col, unit.coord.row);
   const color = isPlayer ? '#3a7dd9' : '#b8442e';
@@ -776,8 +680,6 @@ function UnitMesh({
 
   return (
     <group ref={groupRef} position={[tx, terrainH + 0.02, tz]}>
-      {/* 技能光效 — the hero's signature skill aura. */}
-      {skillFx && <SkillAura archetype={skillFx.archetype} color={skillFx.color} />}
       {/* Mount or vehicle (cavalry horse / siege cart / navy boat) */}
       <UnitMount unit={unit} onClick={onClick} />
       {/* Rank-and-file host behind the hero (footmen read wrong on a boat). */}
@@ -1342,7 +1244,7 @@ function AttackArc({ from, to, kind, spawnedAt }: {
 /** Map each StratagemId → FX kind. */
 // 戰法特效的純資料映射(kind / 顏色 / 壽命)抽到 game/data/stratagemFx.ts,
 // 大地圖戰鬥沿用同一份;此處 re-export 讓 StrategicMap3D 的舊 import 不必改。
-export { stratagemFxKind, FX_DURATION };
+export { stratagemFxKind, tacticFxKind, FX_DURATION };
 
 function StratagemFXNode({ coord, kind, spawnedAt }: {
   coord: HexCoord; kind: NonNullable<ReturnType<typeof stratagemFxKind>>; spawnedAt: number;
@@ -1455,6 +1357,46 @@ function StratagemFXNode({ coord, kind, spawnedAt }: {
       case 'rocks': {
         // 落石 — boulders plummet from above
         g.position.y = (1 - t) * 3.5;
+        break;
+      }
+      case 'wind': {
+        // 借東風 — the wind spirals up fast
+        g.rotation.y = t * Math.PI * 4;
+        g.position.y = t * 0.6;
+        break;
+      }
+      case 'gate': {
+        // 八門遁甲 — the eight gates wheel slowly shut
+        g.rotation.y = t * Math.PI * 0.8;
+        g.position.y = t * 0.2;
+        break;
+      }
+      case 'empty': {
+        // 空城計 — the unnerving calm spreads outward, almost still
+        g.scale.setScalar(1 + t * 0.8);
+        break;
+      }
+      case 'lamp': {
+        // 七星燈 — the Dipper of lamps drifts gently upward
+        g.position.y = t * 0.5;
+        g.rotation.y = Math.sin(t * 2) * 0.1;
+        break;
+      }
+      case 'net': {
+        // 七擒 — the capture net drops over the foe
+        g.position.y = (1 - t) * 2.2;
+        break;
+      }
+      case 'charm': {
+        // 美人計 — petals swirl up and around
+        g.rotation.y = t * Math.PI * 2;
+        g.position.y = t * 0.5;
+        break;
+      }
+      case 'thunderstorm': {
+        // 五雷 — a barrage of bolts crashes down
+        g.position.y = (1 - t) * 5;
+        g.scale.setScalar(1 + (1 - t) * 0.3);
         break;
       }
     }
@@ -1810,6 +1752,151 @@ function StratagemFXNode({ coord, kind, spawnedAt }: {
             <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
               <ringGeometry args={[0.3, 0.55, 20]} />
               <meshBasicMaterial color="#8f877b" transparent opacity={0.5} side={THREE.DoubleSide} />
+            </mesh>
+          </>
+        );
+      case 'wind':
+        // 借東風 — 螺旋風弧捲起,綠葉隨風旋飛
+        return (
+          <>
+            {[0, 1, 2].map((i) => (
+              <mesh key={`arc${i}`} position={[0, 0.3 + i * 0.4, 0]} rotation={[Math.PI / 2 - 0.3 * i, 0, i * 0.6]}>
+                <torusGeometry args={[0.4 + i * 0.12, 0.025, 6, 16, Math.PI * 1.4]} />
+                <meshBasicMaterial color={color} transparent opacity={1} toneMapped={false} />
+              </mesh>
+            ))}
+            {Array.from({ length: 6 }).map((_, i) => {
+              const a = (i / 6) * Math.PI * 2;
+              return (
+                <mesh key={`lf${i}`} position={[Math.cos(a) * 0.45, 0.3 + (i % 3) * 0.3, Math.sin(a) * 0.45]} rotation={[a, a, 0]}>
+                  <boxGeometry args={[0.07, 0.03, 0.02]} />
+                  <meshBasicMaterial color="#9ad6a8" transparent opacity={1} />
+                </mesh>
+              );
+            })}
+          </>
+        );
+      case 'gate':
+        // 八門遁甲 — 八根光柱環成八門,死門(其一)染赤
+        return (
+          <>
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
+              <ringGeometry args={[0.7, 0.85, 8]} />
+              <meshBasicMaterial color={color} transparent opacity={1} side={THREE.DoubleSide} toneMapped={false} />
+            </mesh>
+            {Array.from({ length: 8 }).map((_, i) => {
+              const a = (i / 8) * Math.PI * 2;
+              return (
+                <mesh key={i} position={[Math.cos(a) * 0.78, 0.45, Math.sin(a) * 0.78]}>
+                  <boxGeometry args={[0.08, 0.9, 0.08]} />
+                  <meshBasicMaterial color={i === 5 ? '#ff5530' : color} transparent opacity={1} toneMapped={false} />
+                </mesh>
+              );
+            })}
+          </>
+        );
+      case 'empty':
+        // 空城計 — 城門大開,撫琴退兵,蕩開兩圈靜謐漣漪
+        return (
+          <>
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
+              <ringGeometry args={[0.5, 0.62, 40]} />
+              <meshBasicMaterial color={color} transparent opacity={0.7} side={THREE.DoubleSide} />
+            </mesh>
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
+              <ringGeometry args={[0.85, 0.92, 40]} />
+              <meshBasicMaterial color={color} transparent opacity={0.4} side={THREE.DoubleSide} />
+            </mesh>
+            <mesh position={[0, 0.5, 0]} rotation={[0, 0, 0]}>
+              <torusGeometry args={[0.22, 0.04, 6, 12, Math.PI]} />
+              <meshBasicMaterial color="#c9b48a" transparent opacity={1} />
+            </mesh>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <mesh key={i} position={[(i - 2) * 0.18, 0.7 + Math.abs(i - 2) * 0.06, 0]}>
+                <sphereGeometry args={[0.03, 6, 6]} />
+                <meshBasicMaterial color="#fff4d8" transparent opacity={1} toneMapped={false} />
+              </mesh>
+            ))}
+          </>
+        );
+      case 'lamp': {
+        // 七星燈 — 七盞燈擺成北斗,祈壽延命
+        const DIPPER: Array<[number, number]> = [
+          [-0.6, 0.3], [-0.32, 0.22], [-0.03, 0.26], [0.26, 0.16], [0.42, -0.05], [0.22, -0.32], [-0.05, -0.34],
+        ];
+        return (
+          <>
+            {DIPPER.map(([px, pz], i) => (
+              <mesh key={`l${i}`} position={[px, 0.4 + (i % 2) * 0.08, pz]}>
+                <sphereGeometry args={[0.07, 8, 8]} />
+                <meshBasicMaterial color={color} transparent opacity={1} toneMapped={false} />
+              </mesh>
+            ))}
+            {DIPPER.map(([px, pz], i) => (
+              <mesh key={`st${i}`} position={[px, 0.18, pz]}>
+                <cylinderGeometry args={[0.012, 0.012, 0.4, 4]} />
+                <meshBasicMaterial color="#6a5230" transparent opacity={1} />
+              </mesh>
+            ))}
+          </>
+        );
+      }
+      case 'net':
+        // 七擒孟獲 — 擒縱之網自天罩落
+        return (
+          <>
+            {Array.from({ length: 6 }).map((_, i) => {
+              const a = (i / 6) * Math.PI * 2;
+              return (
+                <mesh key={`m${i}`} position={[Math.cos(a) * 0.3, 0.5, Math.sin(a) * 0.3]} rotation={[Math.PI / 2.5, -a, 0]}>
+                  <cylinderGeometry args={[0.01, 0.01, 0.9, 4]} />
+                  <meshBasicMaterial color={color} transparent opacity={1} />
+                </mesh>
+              );
+            })}
+            <mesh position={[0, 0.7, 0]}>
+              <sphereGeometry args={[0.5, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2]} />
+              <meshBasicMaterial color={color} transparent opacity={0.3} wireframe />
+            </mesh>
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.06, 0]}>
+              <ringGeometry args={[0.45, 0.5, 18]} />
+              <meshBasicMaterial color={color} transparent opacity={1} side={THREE.DoubleSide} />
+            </mesh>
+          </>
+        );
+      case 'charm':
+        // 美人計 — 桃色花瓣繞旋媚惑
+        return (
+          <>
+            {Array.from({ length: 8 }).map((_, i) => {
+              const a = (i / 8) * Math.PI * 2;
+              const r = 0.35 + (i % 3) * 0.1;
+              return (
+                <mesh key={i} position={[Math.cos(a) * r, 0.3 + (i % 4) * 0.18, Math.sin(a) * r]} rotation={[a, a, 0]}>
+                  <coneGeometry args={[0.06, 0.12, 4]} />
+                  <meshBasicMaterial color={i % 2 ? '#ff9ec4' : '#ffd0e0'} transparent opacity={1} toneMapped={false} />
+                </mesh>
+              );
+            })}
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
+              <ringGeometry args={[0.3, 0.42, 24]} />
+              <meshBasicMaterial color={color} transparent opacity={0.7} side={THREE.DoubleSide} />
+            </mesh>
+          </>
+        );
+      case 'thunderstorm':
+        // 五雷正法 — 五道天雷齊落,焦土成環
+        return (
+          <>
+            {([[-0.4, 0.2], [0.3, -0.3], [0.0, 0.0], [0.45, 0.35], [-0.3, -0.4]] as Array<[number, number]>).map(([px, pz], i) => (
+              <mesh key={i} position={[px, 2.4, pz]}>
+                <cylinderGeometry args={[0.03, 0.07, 5, 5]} />
+                <meshBasicMaterial color={color} transparent opacity={1} toneMapped={false} />
+              </mesh>
+            ))}
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
+              <ringGeometry args={[0.5, 0.85, 24]} />
+              <meshBasicMaterial color={color} transparent opacity={1} side={THREE.DoubleSide} toneMapped={false} />
             </mesh>
           </>
         );
@@ -2221,7 +2308,6 @@ export function BattleScene({
         const h = tile ? TERRAIN_HEIGHT[tile.terrain] : 0.1;
         const isPlayer = playerSide ? u.side === playerSide : u.side === 'attacker';
         const isWounded = officers[u.officerId]?.status === 'wounded';
-        const skillFx = primarySkillFx(officers[u.officerId]?.skills);
         return (
           <UnitMesh
             key={u.id}
@@ -2231,7 +2317,6 @@ export function BattleScene({
             selected={selectedId === u.id}
             onClick={() => onTileClick(u.coord)}
             isWounded={isWounded}
-            skillFx={skillFx}
           />
         );
       })}
@@ -2438,7 +2523,7 @@ export function TacticalBattleScreen3D() {
         let bannerToShow: { zh: string; en: string } | null = null;
         let battleAfterLogs = next;
         for (const sig of result.signatures) {
-          const fxKind = stratagemFxKind(sig.stratagemId);
+          const fxKind = tacticFxKind(sig.tacticId, sig.stratagemId);
           if (fxKind) {
             fxToAdd.push({
               id: fxCounter++,
@@ -2555,8 +2640,8 @@ export function TacticalBattleScreen3D() {
     if (actionMode.kind === 'stratagem') {
       const r = applyStratagem(battle, selectedUnit.id, actionMode.id, c, officers, actionMode.tacticId);
       if (r.ok) {
-        // Spawn FX at the target hex.
-        const fxKind = stratagemFxKind(actionMode.id);
+        // Spawn FX at the target hex — signature tactics get their own visual.
+        const fxKind = tacticFxKind(actionMode.tacticId, actionMode.id);
         if (fxKind) {
           const fxId = Date.now();
           // For self-targeted (defend / precognition / dragon-veil), origin = caster

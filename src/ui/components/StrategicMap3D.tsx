@@ -17,7 +17,7 @@ import type { City, Force, HexCoord, Port, Season } from '../../game/types';
 import { FACILITY_DEFS, isHostilePermitted } from '../../game/types';
 // The battle diorama reuses the real battle scene (embedded mode) + its hex
 // coordinate helper, so the fight on the world map IS the fight.
-import { BattleScene, hexWorld as battleHexWorld, stratagemFxKind, FX_DURATION, SIGNATURE_FLAVOR } from '../screens/TacticalBattleScreen3D';
+import { BattleScene, hexWorld as battleHexWorld, stratagemFxKind, tacticFxKind, FX_DURATION, SIGNATURE_FLAVOR } from '../screens/TacticalBattleScreen3D';
 // In-place battle commanding — the SAME pure battle ops the fullscreen uses.
 import { unitAt, canMove, canAttack, moveUnit, attackUnits, endTurn, applyStratagem, hexDistance } from '../../game/systems/tactical';
 import { canDuel } from '../../game/systems/duel';
@@ -6597,7 +6597,7 @@ export function StrategicMap3D() {
       if (!sel0) { setDioCast(null); return; }
       const r = applyStratagem(b, sel0.id, dioCast.id, c, useGameStore.getState().officers, dioCast.tacticId);
       if (r.ok) {
-        const fxKind = stratagemFxKind(dioCast.id);
+        const fxKind = tacticFxKind(dioCast.tacticId, dioCast.id);
         if (fxKind) {
           const fxId = Date.now();
           const isSelf = ['defend', 'precognition', 'dragon-veil'].includes(dioCast.id);
