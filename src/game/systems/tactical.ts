@@ -1169,12 +1169,19 @@ export function attackUnits(
   ).length;
   const pincerMul = 1 + Math.min(0.28, 0.10 * pincers);
 
+  // 背刺/側擊 — units face toward the enemy edge (attacker-side faces +col,
+  // defender-side faces −col). Striking from the foe's rear arc catches it
+  // unguarded: +25% damage and it can barely counter.
+  const targetFacing = target.side === 'attacker' ? 1 : -1;
+  const fromRear = (attacker.coord.col - target.coord.col) * targetFacing < 0;
+  const flankMul = fromRear ? 1.25 : 1.0;
+
   const base =
     Math.floor((attacker.troops * (aWar + 30) * (0.85 + rng() * 0.3)) / (dLead + 50));
   let damage = Math.floor(
     base * counter * aTerrainMod * weatherMul * defenseMul * offenseMul *
     dShield * ambushBonus * fatigueMul * aWoundedMul * dWoundedMul * shipMul * pincerMul *
-    nightMul * heightMul,
+    nightMul * heightMul * flankMul,
   );
   if (targetDefending) damage = Math.floor(damage / 2);
   if (attackerBurning) damage = Math.floor(damage * 0.9);
@@ -1195,7 +1202,8 @@ export function attackUnits(
     const dWar = To ? effectiveStats(To).war : 50;
     const aLead = ao ? effectiveStats(ao).leadership : 50;
     const counterBase = Math.floor(
-      (target.troops * (dWar + 30) * (0.85 + rng() * 0.3) * 0.4) / (aLead + 50),
+      (target.troops * (dWar + 30) * (0.85 + rng() * 0.3) * 0.4) / (aLead + 50)
+        * (fromRear ? 0.4 : 1),  // a foe struck in the rear can barely retaliate
     );
     counterTroops = Math.max(0, attacker.troops - counterBase);
     counterDamage = counterBase;
@@ -1206,8 +1214,8 @@ export function attackUnits(
     {
       id: `dmg-${Date.now()}-1`,
       coord: target.coord,
-      text: `-${damage.toLocaleString()}${isCrit ? '!' : ''}`,
-      color: isCrit ? '#ffce4a' : '#ff6a4a',
+      text: `${fromRear ? '背 ' : ''}-${damage.toLocaleString()}${isCrit ? '!' : ''}`,
+      color: isCrit ? '#ffce4a' : fromRear ? '#ff9a3a' : '#ff6a4a',
       spawnedAt: Date.now(),
     },
   ];
