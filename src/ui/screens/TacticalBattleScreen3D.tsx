@@ -560,10 +560,13 @@ function UnitWeapon({ unit, yLift }: { unit: TacticalUnit; yLift: number }) {
  * stack reads as an ARMY, not a lone general. Count scales with troops; each
  * soldier idle-bobs in formation. Instanced → dozens cost almost nothing. */
 const HOST_MAX = IS_MOBILE ? 16 : 48;
-function UnitRetinue({ troops, color }: { troops: number; color: string }) {
+function UnitRetinue({ troops, color, unitType }: { troops: number; color: string; unitType?: string }) {
   const bodyRef = useRef<THREE.InstancedMesh>(null);
   const headRef = useRef<THREE.InstancedMesh>(null);
   const spearRef = useRef<THREE.InstancedMesh>(null);
+  const horseRef = useRef<THREE.InstancedMesh>(null);
+  const mounted = unitType === 'cavalry';
+  const rideLift = mounted ? 0.26 : 0;   // riders sit above their horses
   const slots = useMemo(() => {
     const count = Math.min(HOST_MAX, Math.max(6, Math.round(troops / 420)));
     const cols = Math.max(4, Math.round(Math.sqrt(count * 2.4)));   // wide & shallow so it doesn't spill far back
@@ -593,22 +596,34 @@ function UnitRetinue({ troops, color }: { troops: number; color: string }) {
     for (let i = 0; i < slots.length; i++) {
       const sl = slots[i];
       const bob = Math.abs(Math.sin(t * 4 + sl.ph)) * 0.03;
-      p.set(sl.x, 0.18 * S + bob, sl.z);
+      const lift = bob + rideLift * S;
+      if (horseRef.current) {
+        p.set(sl.x, 0.13 * S + bob * 0.4, sl.z);
+        horseRef.current.setMatrixAt(i, m.compose(p, q, sc));
+      }
+      p.set(sl.x, 0.18 * S + lift, sl.z);
       bodyRef.current.setMatrixAt(i, m.compose(p, q, sc));
-      p.set(sl.x, 0.42 * S + bob, sl.z);
+      p.set(sl.x, 0.42 * S + lift, sl.z);
       headRef.current.setMatrixAt(i, m.compose(p, q, sc));
       if (sl.spear && spearRef.current) {
-        p.set(sl.x + 0.12 * S, 0.42 * S + bob, sl.z);
+        p.set(sl.x + 0.12 * S, 0.42 * S + lift, sl.z);
         spearRef.current.setMatrixAt(si++, m.compose(p, q, sc));
       }
     }
     bodyRef.current.instanceMatrix.needsUpdate = true;
     headRef.current.instanceMatrix.needsUpdate = true;
     if (spearRef.current) spearRef.current.instanceMatrix.needsUpdate = true;
+    if (horseRef.current) horseRef.current.instanceMatrix.needsUpdate = true;
   });
 
   return (
     <group>
+      {mounted && (
+        <instancedMesh ref={horseRef} args={[undefined, undefined, slots.length]} castShadow>
+          <boxGeometry args={[0.16, 0.18, 0.42]} />
+          <meshStandardMaterial color="#6a4a32" roughness={0.85} />
+        </instancedMesh>
+      )}
       <instancedMesh ref={bodyRef} args={[undefined, undefined, slots.length]} castShadow>
         <cylinderGeometry args={[0.16, 0.22, 0.34, 6]} />
         <meshStandardMaterial color={color} roughness={0.72} />
@@ -667,7 +682,7 @@ function UnitMesh({
       {/* Mount or vehicle (cavalry horse / siege cart / navy boat) */}
       <UnitMount unit={unit} onClick={onClick} />
       {/* Rank-and-file host behind the hero (footmen read wrong on a boat). */}
-      {unit.unitType !== 'navy' && <UnitRetinue troops={unit.troops} color={color} />}
+      {unit.unitType !== 'navy' && <UnitRetinue troops={unit.troops} color={color} unitType={unit.unitType} />}
       {/* Lower robe / hakama — wider at the bottom, gives armored silhouette. */}
       <mesh
         position={[0, 0.18 + yLift, 0]}
@@ -1150,6 +1165,53 @@ function DamagePopup3D({ coord, text, color, spawnedAt }: {
 }
 
 /* ─── Attack arc visual ─────────────────────────────────────────── */
+const ARROW_UP = new THREE.Vector3(0, 1, 0);
+/** 箭雨 — a ranged attack looses an instanced volley of arrows, each on its
+ *  own staggered high arc with lateral spread, oriented along its flight. */
+function ArrowVolley({ fx, fz, tx, tz, spawnedAt }: {
+  fx: number; fz: number; tx: number; tz: number; spawnedAt: number;
+}) {
+  const N = IS_MOBILE ? 10 : 20;
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const arrows = useMemo(() => Array.from({ length: N }, (_, i) => ({
+    lat: Math.sin(i * 12.9898) * 0.42,
+    stagger: Math.abs(Math.sin(i * 78.233)) * 0.13,
+    peak: 1.5 + Math.abs(Math.sin(i * 4.1)) * 0.7,
+  })), [N]);
+  useFrame(() => {
+    if (!ref.current) return;
+    const age = (Date.now() - spawnedAt) / 1000;
+    const dx = tx - fx, dz = tz - fz;
+    const len = Math.hypot(dx, dz) || 1;
+    const px = -dz / len, pz = dx / len;   // perpendicular for the spread
+    const m = new THREE.Matrix4();
+    const q = new THREE.Quaternion();
+    const pos = new THREE.Vector3();
+    const sc = new THREE.Vector3();
+    const dir = new THREE.Vector3();
+    for (let i = 0; i < N; i++) {
+      const a = arrows[i];
+      const t = Math.min(1, Math.max(0, (age - a.stagger) / 0.55));
+      const vis = t > 0 && t < 1;
+      const y = 1.0 + Math.sin(t * Math.PI) * a.peak;
+      const vy = a.peak * Math.PI * Math.cos(t * Math.PI);
+      dir.set(dx, vy, dz).normalize();
+      q.setFromUnitVectors(ARROW_UP, dir);
+      pos.set(fx + dx * t + px * a.lat, y, fz + dz * t + pz * a.lat);
+      sc.setScalar(vis ? 1 : 0.0001);
+      m.compose(pos, q, sc);
+      ref.current.setMatrixAt(i, m);
+    }
+    ref.current.instanceMatrix.needsUpdate = true;
+  });
+  return (
+    <instancedMesh ref={ref} args={[undefined, undefined, N]}>
+      <cylinderGeometry args={[0.012, 0.012, 0.34, 4]} />
+      <meshBasicMaterial color="#cdbb88" />
+    </instancedMesh>
+  );
+}
+
 function AttackArc({ from, to, kind, spawnedAt }: {
   from: HexCoord; to: HexCoord; kind: 'melee' | 'ranged'; spawnedAt: number;
 }) {
@@ -1160,18 +1222,18 @@ function AttackArc({ from, to, kind, spawnedAt }: {
     if (!projRef.current) return;
     const age = (Date.now() - spawnedAt) / 1000;
     const t = Math.min(1, age / 0.5);
-    // Arc: lerp x/z, parabolic y
     projRef.current.position.x = fx + (tx - fx) * t;
     projRef.current.position.z = fz + (tz - fz) * t;
-    projRef.current.position.y = 1.0 + Math.sin(t * Math.PI) * (kind === 'ranged' ? 1.8 : 0.4);
+    projRef.current.position.y = 1.0 + Math.sin(t * Math.PI) * 0.4;
     const mat = projRef.current.material as THREE.MeshBasicMaterial;
     mat.opacity = 1 - t;
   });
-  const color = kind === 'ranged' ? '#a8c8e8' : '#ff8050';
+  // Ranged attacks loose a whole volley; melee throws a single arcing strike.
+  if (kind === 'ranged') return <ArrowVolley fx={fx} fz={fz} tx={tx} tz={tz} spawnedAt={spawnedAt} />;
   return (
     <mesh ref={projRef} position={[fx, 1, fz]}>
       <sphereGeometry args={[0.1, 8, 8]} />
-      <meshBasicMaterial color={color} transparent opacity={1} />
+      <meshBasicMaterial color="#ff8050" transparent opacity={1} />
     </mesh>
   );
 }
