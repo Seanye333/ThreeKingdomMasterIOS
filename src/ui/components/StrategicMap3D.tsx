@@ -21,7 +21,7 @@ import { BattleScene, BattleCinematics, hexWorld as battleHexWorld, FX_DURATION,
 import { tacticFxSpec, FX_IMPACT, type StratagemFxInstance, type StratagemFxKind, type TacticFxSpec } from '../../game/data/stratagemFx';
 import { categoryOfTactic } from '../../game/data/officerAttributes';
 // In-place battle commanding — the SAME pure battle ops the fullscreen uses.
-import { unitAt, canMove, canAttack, moveUnit, attackUnits, endTurn, applyStratagem, hexDistance } from '../../game/systems/tactical';
+import { unitAt, canMove, canAttack, moveUnit, attackUnits, endTurn, applyStratagem, hexDistance, forecastAttack, matchupLabel } from '../../game/systems/tactical';
 import { canDuel } from '../../game/systems/duel';
 import { personalTacticsForUnit } from '../../game/systems/personalTactics';
 import { DuelGameModal } from './DuelGameModal';
@@ -7076,6 +7076,23 @@ export function StrategicMap3D() {
                 {hovIsOwn ? '' : '敵 '}{hovOff.name.zh} · {hovUnit.troops.toLocaleString()}{t('兵', '')} · AP {hovUnit.ap}/{hovUnit.maxAp}
               </span>
             )}
+            {/* 戰鬥預判 — same forecast as the fullscreen screen, on the diorama. */}
+            {sel && !hovIsOwn && hovUnit && hovUnit.troops > 0 && worldPlayerSide && sel.side === worldPlayerSide
+              && canAttack(worldBattle, sel, hovUnit) && (() => {
+              const f = forecastAttack(worldBattle, sel, hovUnit, officersAll);
+              const ml = matchupLabel(sel.unitType, hovUnit.unitType);
+              const bad = matchupLabel(hovUnit.unitType, sel.unitType);
+              const col = f.willKill ? '#7ed68a' : f.matchup === 'strong' ? '#d4e88a' : f.matchup === 'weak' ? '#e8a07a' : '#d4a84a';
+              return (
+                <span style={{
+                  color: col, fontSize: '0.74rem', borderLeft: '1px solid #4a3520', paddingLeft: '0.55rem',
+                }}>
+                  ⚔ {f.dmgMin.toLocaleString()}–{f.dmgMax.toLocaleString()}
+                  {f.willKill ? ` · ${t('可殲滅', 'LETHAL')}` : f.counterMax > 0 ? ` · ${t('反', 'ca')}${f.counterMax.toLocaleString()}` : ''}
+                  {ml ? ` · ↑${ml.zh}` : bad ? ` · ↓被${bad.zh}` : ''}
+                </span>
+              );
+            })()}
             <button
               onClick={() => {
                 const b = useGameStore.getState().tacticalBattle;
