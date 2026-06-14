@@ -2776,6 +2776,52 @@ function SkyBody({ position, color, night }: { position: [number, number, number
   );
 }
 
+/** 攻城 — garrison silhouettes man the battlements, and assault ladders lean
+ *  against any wall an attacker has reached. A first-pass siege dressing. */
+function SiegeOverlay({ battle, playerSide }: { battle: TacticalBattle; playerSide: 'attacker' | 'defender' | null }) {
+  const wallTiles = battle.tiles.filter((t) => t.terrain === 'wall' || t.terrain === 'gate');
+  if (wallTiles.length === 0) return null;
+  const defColor = playerSide === 'defender' ? '#3a7dd9' : '#b8442e';
+  const attackers = battle.units.filter((u) => u.side === 'attacker' && u.troops > 0);
+  return (
+    <>
+      {wallTiles.map((t) => {
+        const [x, z] = hexWorld(t.coord.col, t.coord.row);
+        const adj = attackers.find((a) => hexDistance(a.coord, t.coord) === 1);
+        return (
+          <group key={`siege-${t.coord.col},${t.coord.row}`} position={[x, 0, z]} raycast={() => null}>
+            {/* Defenders on the rampart (walls only — gate is the breach). */}
+            {t.terrain === 'wall' && [-0.42, 0.42].map((dx, i) => (
+              <group key={i} position={[dx, 1.55, 0]}>
+                <mesh><cylinderGeometry args={[0.1, 0.13, 0.32, 6]} /><meshStandardMaterial color={defColor} roughness={0.7} /></mesh>
+                <mesh position={[0, 0.24, 0]}><sphereGeometry args={[0.09, 6, 6]} /><meshStandardMaterial color="#e0c498" /></mesh>
+                <mesh position={[0.12, 0.26, 0]}><cylinderGeometry args={[0.012, 0.012, 0.62, 4]} /><meshStandardMaterial color="#3a2818" /></mesh>
+              </group>
+            ))}
+            {/* Assault ladder, yawed toward the attacker pressing this wall. */}
+            {adj && (() => {
+              const [ax, az] = hexWorld(adj.coord.col, adj.coord.row);
+              const yaw = Math.atan2(ax - x, az - z);
+              return (
+                <group rotation={[0, yaw, 0]}>
+                  <group position={[0, 0, 0.82]} rotation={[-0.5, 0, 0]}>
+                    {[-0.13, 0.13].map((rx, i) => (
+                      <mesh key={i} position={[rx, 0.78, 0]}><boxGeometry args={[0.04, 1.7, 0.04]} /><meshStandardMaterial color="#5a4028" roughness={0.9} /></mesh>
+                    ))}
+                    {[0.2, 0.55, 0.9, 1.25, 1.55].map((ry, i) => (
+                      <mesh key={`r${i}`} position={[0, ry, 0]}><boxGeometry args={[0.3, 0.03, 0.03]} /><meshStandardMaterial color="#6a4a30" /></mesh>
+                    ))}
+                  </group>
+                </group>
+              );
+            })()}
+          </group>
+        );
+      })}
+    </>
+  );
+}
+
 /** 伏兵 — a purple shock-ring + flung debris bursts where a hidden unit springs
  *  its ambush, so the reveal reads as a sudden sally from cover. */
 function AmbushBurst({ coord, at }: { coord: HexCoord; at: number }) {
@@ -3070,6 +3116,8 @@ export function BattleScene({
       {!embedded && fallen.map((c) => <Corpse key={`corpse-${c.id}`} coord={c.coord} color={c.color} />)}
       {/* 伏兵奇襲 — reveal bursts where ambushers sprang. */}
       {ambushFx.map((a) => <AmbushBurst key={a.id} coord={a.coord} at={a.at} />)}
+      {/* 攻城 — wall defenders + assault ladders (siege battles only). */}
+      {!embedded && <SiegeOverlay battle={battle} playerSide={playerSide} />}
 
       {/* All units — skip hidden enemy units. */}
       {units
