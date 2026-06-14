@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { fetchLeaderboard, savedPlayerName, submitScore, type LeaderRow } from '../../game/systems/leaderboard';
 import { loadDailyResults } from '../../game/systems/dailyChallenge';
 import { useT } from '../i18n';
+import { Modal } from './Modal';
 
 /**
  * 每日排行榜 — today's global board (when the backend KV is attached)
@@ -42,25 +43,16 @@ export function LeaderboardModal({ date, onClose }: { date: string; onClose: () 
   };
 
   return (
-    <div
-      onClick={onClose}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'grid', placeItems: 'center', zIndex: 950, padding: '1rem' }}
+    <Modal
+      onClose={onClose}
+      zIndex={950}
+      width="min(420px, 100%)"
+      maxHeight="82vh"
+      frameStyle={{ border: '1px solid #e6c473' }}
+      icon="🏆"
+      title={t('每日排行', 'Daily Leaderboard')}
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: 'linear-gradient(160deg,#1b2531,#10161e)', border: '1px solid #e6c473',
-          width: 'min(420px,100%)', maxHeight: '82vh', display: 'flex', flexDirection: 'column',
-          color: '#e6edf3', fontFamily: 'var(--tkm-font-body)', padding: '1rem 1.2rem',
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.6rem' }}>
-          <div>
-            <div style={{ fontSize: '1.15rem', color: '#e6c473', letterSpacing: '0.07rem' }}>🏆 {t('每日排行', 'Daily Leaderboard')}</div>
-            <div style={{ fontSize: '0.7rem', color: '#7a8893' }}>{date} · {t('旬數越少越前', 'fewer ticks ranks higher')}</div>
-          </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.3rem', cursor: 'pointer' }}>×</button>
-        </div>
+        <div style={{ fontSize: '0.7rem', color: '#7a8893', marginBottom: '0.6rem' }}>{date} · {t('旬數越少越前', 'fewer ticks ranks higher')}</div>
 
         {configured === false && (
           <div style={{ fontSize: '0.78rem', color: '#7a8893', padding: '0.8rem 0', lineHeight: 1.6 }}>
@@ -69,7 +61,7 @@ export function LeaderboardModal({ date, onClose }: { date: string; onClose: () 
           </div>
         )}
 
-        <div style={{ overflowY: 'auto', flex: 1, minHeight: 80 }}>
+        <div style={{ overflowY: 'auto', maxHeight: '52vh', minHeight: 80 }}>
           {rows == null ? (
             <div style={{ color: '#7a8893', fontSize: '0.8rem', padding: '0.8rem 0' }}>{t('載入中…', 'Loading…')}</div>
           ) : rows.length === 0 && configured ? (
@@ -107,7 +99,6 @@ export function LeaderboardModal({ date, onClose }: { date: string; onClose: () 
             {t('先在今日挑戰中取勝,方可上榜。', 'Win today\'s challenge to submit a score.')}
           </div>
         )}
-      </div>
-    </div>
+    </Modal>
   );
 }

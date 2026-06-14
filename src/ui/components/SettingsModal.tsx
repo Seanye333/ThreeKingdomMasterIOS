@@ -4,6 +4,7 @@ import { exportAllSaves, importAllSaves } from '../../game/state/saveTransfer';
 import { installMod, loadMods, parseModBundle, removeMod } from '../../game/systems/mods';
 import { applyUiPrefs, getStoredUiPrefs, type UiPrefs, type UiScale } from '../uiPrefs';
 import { useT } from '../i18n';
+import { Modal } from './Modal';
 
 interface Props {
   onClose: () => void;
@@ -41,40 +42,15 @@ export function SettingsModal({ onClose }: Props) {
   const t = useT();
 
   return (
-    <div
-      style={{
-        position: 'fixed', inset: 0,
-        background: 'rgba(0,0,0,0.65)',
-        display: 'grid', placeItems: 'center',
-        zIndex: 900, padding: '1rem',
-      }}
-      onClick={onClose}
+    <Modal
+      onClose={onClose}
+      scrollBody
+      padding="1rem 1.5rem"
+      width="min(520px, 100%)"
+      maxHeight="90vh"
+      title={t('設定', 'Settings')}
+      badge={t('遊戲偏好', 'Preferences')}
     >
-      <div
-        style={{
-          background: 'linear-gradient(160deg,#1b2531,#10161e)',
-          border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
-          width: 'min(520px,100%)',
-          maxHeight: '90vh',
-          display: 'flex', flexDirection: 'column',
-          color: '#e6edf3',
-          fontFamily: 'var(--tkm-font-body)',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <header
-          style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
-            padding: '1rem 1.5rem', borderBottom: '1px solid #2b3845',
-          }}
-        >
-          <div>
-            <div style={{ fontSize: '1.4rem', color: '#e6c473', letterSpacing: '0.07rem' }}>{t('設定', 'Settings')}</div>
-            <div style={{ fontSize: '0.85rem', color: '#7a8893', fontStyle: 'italic' }}>{t('遊戲偏好', 'Preferences')}</div>
-          </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
-        </header>
-        <div style={{ padding: '1rem 1.5rem', overflowY: 'auto', flex: 1 }}>
           <Section title={t('音響', 'Audio')}>
             <Toggle label={t('音效', 'Sound effects')} hint={t('UI 點擊、刀劍、號角', 'UI clicks, swords, horns')} checked={soundEnabled} onChange={setSoundEnabled} />
             <Row label={t('背景音樂', 'Music')}>
@@ -204,9 +180,7 @@ export function SettingsModal({ onClose }: Props) {
               </div>
             </Row>
           </Section>
-        </div>
-      </div>
-    </div>
+    </Modal>
   );
 }
 

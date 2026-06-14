@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { useT } from '../i18n';
+import { Modal } from './Modal';
 
 type Col = 'agriculture' | 'commerce' | 'troops' | 'population' | 'loyalty' | 'gold';
 
@@ -35,16 +36,7 @@ export function CityRosterModal({ onClose }: { onClose: () => void }) {
   const sum = (k: Col) => rows.reduce((s, c) => s + (c[k] as number), 0);
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'grid', placeItems: 'center', zIndex: 900, padding: '1rem' }}>
-      <div onClick={(e) => e.stopPropagation()} style={{
-        background: 'linear-gradient(160deg,#1b2531,#10161e)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
-        width: 'min(720px,100%)', maxHeight: '86vh', overflowY: 'auto', color: '#e6edf3',
-        fontFamily: 'var(--tkm-font-body)', padding: '1rem 1.2rem',
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.6rem' }}>
-          <div style={{ fontSize: '1.15rem', color: '#e6c473', letterSpacing: '0.07rem' }}>🏯 {t('郡縣一覽', 'Cities')} <span style={{ color: '#7a8893', fontSize: '0.8rem' }}>({rows.length})</span></div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.4rem', cursor: 'pointer' }}>×</button>
-        </div>
+    <Modal onClose={onClose} width="min(720px, 100%)" icon="🏯" title={t('郡縣一覽', 'Cities')} badge={`(${rows.length})`}>
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -93,7 +85,6 @@ export function CityRosterModal({ onClose }: { onClose: () => void }) {
             </tfoot>
           )}
         </table>
-      </div>
-    </div>
+    </Modal>
   );
 }
