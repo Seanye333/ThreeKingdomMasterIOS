@@ -39,6 +39,7 @@ export function ToDoModal({ onClose, onOpenLetters }: { onClose: () => void; onO
   const pendingTrainings = useGameStore((s) => s.pendingTrainings);
   const wishCount = useGameStore((s) => s.officerWishes.length);
   const selectCity = useGameStore((s) => s.selectCity);
+  const dispatchConvoy = useGameStore((s) => s.dispatchConvoy);
 
   const todos = useMemo<Todo[]>(() => {
     if (!playerForceId) return [];
@@ -75,11 +76,21 @@ export function ToDoModal({ onClose, onOpenLetters }: { onClose: () => void; onO
       const tick = tickCityEconomy(c, season, officersByCity[c.id] ?? []);
       const net = tick.foodIncome - tick.foodUpkeep;
       if (c.food + net < 0) {
+        // 一鍵調糧 — the richest adjacent friendly city with grain to spare
+        // can relieve the famine in one click; else just jump there.
+        const relief = c.adjacentCityIds
+          .map((id) => cities[id])
+          .filter((s) => s && s.ownerForceId === playerForceId && s.food > 4000)
+          .sort((a, b) => b.food - a.food)[0];
         list.push({
           key: `food:${c.id}`, icon: '🌾', tone: 'urgent',
           zh: `${c.name.zh} 糧秣告急`, en: `${c.name.en} running out of grain`,
-          sub: t(`存糧 ${c.food.toLocaleString()},下季缺糧逃兵`, `${c.food.toLocaleString()} stored — desertion next season`),
-          onClick: jump(c.id),
+          sub: relief
+            ? t(`存糧 ${c.food.toLocaleString()} — 點擊由 ${relief.name.zh} 調糧`, `${c.food.toLocaleString()} stored — click to ship grain from ${relief.name.en}`)
+            : t(`存糧 ${c.food.toLocaleString()},下季缺糧逃兵`, `${c.food.toLocaleString()} stored — desertion next season`),
+          onClick: relief
+            ? () => { dispatchConvoy(relief.id, c.id, Math.min(relief.food - 3000, 5000), 0); onClose(); }
+            : jump(c.id),
         });
       }
     }
@@ -148,7 +159,7 @@ export function ToDoModal({ onClose, onOpenLetters }: { onClose: () => void; onO
 
     const rank: Record<Tone, number> = { urgent: 0, warn: 1, info: 2 };
     return list.sort((a, b) => rank[a.tone] - rank[b.tone]);
-  }, [cities, officers, armies, season, playerForceId, cityDelegations, pendingTrainings, wishCount, onOpenLetters, selectCity, onClose, t]);
+  }, [cities, officers, armies, season, playerForceId, cityDelegations, pendingTrainings, wishCount, onOpenLetters, selectCity, dispatchConvoy, onClose, t]);
 
   const urgent = todos.filter((td) => td.tone === 'urgent').length;
 
