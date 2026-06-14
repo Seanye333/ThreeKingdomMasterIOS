@@ -2706,6 +2706,19 @@ function FieldDressing({ tiles }: { tiles: TacticalTile[] }) {
   );
 }
 
+/** 日月 — a glowing sun (day/dawn/dusk) or pale moon (night) hung in the sky at
+ *  the light's direction; Bloom gives it a halo. */
+function SkyBody({ position, color, night }: { position: [number, number, number]; color: string; night: boolean }) {
+  const p: [number, number, number] = [position[0] * 4, position[1] * 3 + 12, position[2] * 4];
+  const core = night ? 2.6 : 4;
+  return (
+    <group position={p} raycast={() => null}>
+      <mesh><sphereGeometry args={[core, 20, 20]} /><meshBasicMaterial color={color} toneMapped={false} /></mesh>
+      <mesh><sphereGeometry args={[core * 1.7, 20, 20]} /><meshBasicMaterial color={color} transparent opacity={0.16} toneMapped={false} depthWrite={false} /></mesh>
+    </group>
+  );
+}
+
 /** 屍橫 — a fallen unit leaves a mound, a blood/scorch stain, a downed spear
  *  and a scrap of its banner where it died; the field fills with carnage. */
 function Corpse({ coord, color }: { coord: HexCoord; color: string }) {
@@ -2826,6 +2839,7 @@ export function BattleScene({
           <fog attach="fog" args={[lighting.fog[0], fogNear, fogFar]} />
           <BattleSurround width={battle.width} height={battle.height} timeOfDay={battle.timeOfDay} />
           {lighting.showStars && <Stars radius={80} depth={50} count={2500} factor={3} fade speed={0.5} />}
+          <SkyBody position={lighting.sun.position} color={lighting.sun.color} night={lighting.showStars} />
 
           {/* Lighting per time-of-day */}
           <ambientLight intensity={lighting.ambient} />
