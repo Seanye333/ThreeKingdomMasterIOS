@@ -629,6 +629,352 @@ export const DIALOGUE_EVENTS: DialogueEvent[] = [
     ],
     conditions: { requiresFlag: 'opened-granaries' },
   },
+
+  // ─── 天時地利 — omens, weather, calamity ───────────────────────────
+  {
+    id: 'dlg-drought-prayer',
+    speaker: { zh: '農正', en: 'Master of Husbandry' },
+    text: {
+      zh: '亢旱經旬,禾苗盡枯。府庫尚有餘糧,然民已嗷嗷。',
+      en: 'A long drought has withered the crops. The granaries still hold something, but the people are already crying out.',
+    },
+    choices: [
+      {
+        label: { zh: '開倉賑濟', en: 'Open the granaries' },
+        effects: [{ kind: 'gold', delta: -120 }],
+        outcome: { zh: '糧出而民安,皆頌君之仁。', en: 'Grain flows out, the people settle. They praise your benevolence.' },
+      },
+      {
+        label: { zh: '設壇祈雨', en: 'Build an altar and pray for rain' },
+        effects: [{ kind: 'gold', delta: -40 }],
+        outcome: { zh: '築壇祭天,數日後果得甘霖。', en: 'You raise an altar — and days later, the sweet rain comes.' },
+      },
+      {
+        label: { zh: '聽天由命', en: 'Leave it to Heaven' },
+        effects: [{ kind: 'none' }],
+        outcome: { zh: '官府不動,鄉里怨聲漸起。', en: 'The offices stay shut. Resentment stirs in the villages.' },
+      },
+    ],
+  },
+  {
+    id: 'dlg-locust-swarm',
+    speaker: { zh: '驛使', en: 'Post Rider' },
+    text: {
+      zh: '蝗自東來,蔽日如雲,所過田畝立成赤地。',
+      en: 'Locusts came out of the east, a cloud that blotted the sun. Where they pass, the fields turn to bare earth.',
+    },
+    choices: [
+      {
+        label: { zh: '懸賞募民捕蝗', en: 'Pay a bounty for every catch' },
+        effects: [{ kind: 'gold', delta: -90 }],
+        outcome: { zh: '萬人出動,焚瘞無算,蝗勢遂衰。', en: 'Thousands turn out; the swarm is beaten back basketful by basketful.' },
+      },
+      {
+        label: { zh: '焚田絕其食', en: 'Burn the worst fields to starve them' },
+        effects: [{ kind: 'none' }],
+        outcome: { zh: '忍痛焚田,蝗無所食而散,然秋收已損。', en: 'You burn to deny them food. The swarm scatters — but the harvest is already gutted.' },
+      },
+    ],
+  },
+  {
+    id: 'dlg-white-deer',
+    speaker: { zh: '獵戶', en: 'Huntsman' },
+    text: {
+      zh: '山中得一白鹿,通體如雪,古以為瑞。獻於君前。',
+      en: 'In the hills we took a white deer, snow-pale from hoof to horn — the ancients called such a beast an omen. We bring it before you.',
+    },
+    choices: [
+      {
+        label: { zh: '宣告祥瑞', en: 'Proclaim it auspicious' },
+        effects: [{ kind: 'none' }],
+        outcome: { zh: '榜告四方,民以為新世將至,人心稍振。', en: 'Word goes out; the people take heart that a new age dawns.' },
+      },
+      {
+        label: { zh: '縱之歸山', en: 'Set it free' },
+        effects: [{ kind: 'none' }],
+        outcome: { zh: '君曰:「瑞在德不在獸。」放之,士論稱善。', en: '"The omen is in virtue, not in beasts," you say, and release it. The scholars approve.' },
+      },
+      {
+        label: { zh: '厚賞獵戶', en: 'Reward the huntsman richly' },
+        effects: [{ kind: 'gold', delta: -50 }],
+        outcome: { zh: '賞金五十,獵戶感泣,鄉里傳君之慷慨。', en: 'Fifty in gold; the huntsman weeps. Your generosity is the talk of the district.' },
+      },
+    ],
+  },
+  {
+    id: 'dlg-street-rhyme',
+    speaker: { zh: '校事', en: 'Intelligence Officer' },
+    text: {
+      zh: '市井童謠忽起,辭多隱語,似指府中將有變故。',
+      en: 'A children\'s rhyme has sprung up in the markets — full of riddles that seem to hint at upheaval in your court.',
+    },
+    choices: [
+      {
+        label: { zh: '暗中查訪', en: 'Investigate quietly' },
+        effects: [{ kind: 'gold', delta: -30 }],
+        outcome: { zh: '查得乃他鎮細作所散,謠言遂止。', en: 'Agents trace it to a rival\'s spies. The whispers fade.' },
+      },
+      {
+        label: { zh: '一笑置之', en: 'Laugh it off' },
+        effects: [{ kind: 'none' }],
+        outcome: { zh: '君曰:「童謠豈足懼?」數日後果自息。', en: '"What ruler fears a nursery rhyme?" In days it dies on its own.' },
+      },
+    ],
+  },
+
+  // ─── 市井人情 — petitions, merchants, folk ─────────────────────────
+  {
+    id: 'dlg-refugee-column',
+    speaker: { zh: '城門吏', en: 'Gate Warden' },
+    text: {
+      zh: '城外流民數千,扶老攜幼,皆避兵亂而來,跪請收容。',
+      en: 'Thousands of refugees crowd the gate — old and young, fleeing the wars — kneeling to beg shelter.',
+    },
+    choices: [
+      {
+        label: { zh: '開城安置,授田屯墾', en: 'Admit them; give them land to till' },
+        effects: [{ kind: 'gold', delta: -100 }],
+        outcome: { zh: '流民得安,墾荒成田,數年後反為富庶。', en: 'Settled and given fields, in a few years they make the marches rich.' },
+      },
+      {
+        label: { zh: '揀壯者充軍', en: 'Take the able-bodied as soldiers' },
+        effects: [{ kind: 'none' }],
+        outcome: { zh: '壯者入伍,老弱自去,軍中略增,然有議其不仁。', en: 'The strong are enrolled; the rest drift on. Your ranks grow — and some call it heartless.' },
+      },
+      {
+        label: { zh: '閉門謝之', en: 'Bar the gate' },
+        effects: [{ kind: 'none' }],
+        outcome: { zh: '流民他往,然「閉門拒流民」之語,終傳天下。', en: 'They move on — but the tale of the barred gate travels with them.' },
+      },
+    ],
+  },
+  {
+    id: 'dlg-foreign-tribute',
+    speaker: { zh: '譯官', en: 'Interpreter' },
+    text: {
+      zh: '遠方部族遣使來貢,獻良馬與皮貨,願通互市。',
+      en: 'Envoys of a distant tribe arrive bearing fine horses and furs, seeking to open trade.',
+    },
+    choices: [
+      {
+        label: { zh: '厚禮回贈,結其歡心', en: 'Return rich gifts to win their favour' },
+        effects: [{ kind: 'gold', delta: -60 }],
+        outcome: { zh: '禮尚往來,自此邊市不絕,良馬歲至。', en: 'Gifts pass both ways; the border market thrives, and good horses come yearly.' },
+      },
+      {
+        label: { zh: '受貢而薄報', en: 'Accept the tribute, give little back' },
+        effects: [{ kind: 'gold', delta: 80 }],
+        outcome: { zh: '府庫得實,然使者怏怏而歸。', en: 'The treasury gains — but the envoys leave sullen.' },
+      },
+    ],
+  },
+  {
+    id: 'dlg-curio-merchant',
+    speaker: { zh: '行商', en: 'Travelling Merchant' },
+    text: {
+      zh: '西域奇珍一函,商賈言乃前朝舊物,索價不菲。',
+      en: 'A merchant offers a casket of curios from the west — relics of a fallen age, he claims, and not cheap.',
+    },
+    choices: [
+      {
+        label: { zh: '購之藏於府庫', en: 'Buy it for the treasury' },
+        effects: [{ kind: 'gold', delta: -70 }],
+        outcome: { zh: '所購果為真品,後值連城。', en: 'It proves genuine — worth a city in years to come.' },
+      },
+      {
+        label: { zh: '討價還價', en: 'Haggle hard' },
+        effects: [{ kind: 'gold', delta: -30 }],
+        outcome: { zh: '幾番折衝,半價而得,商賈苦笑。', en: 'After much wrangling you take it at half price; the merchant smiles thinly.' },
+      },
+      {
+        label: { zh: '婉拒', en: 'Decline politely' },
+        effects: [{ kind: 'none' }],
+        outcome: { zh: '君曰:「玩物喪志。」商賈悻悻去。', en: '"Such trifles sap a ruler\'s will," you say. He shuffles off, disappointed.' },
+      },
+    ],
+  },
+  {
+    id: 'dlg-old-veteran',
+    speaker: { zh: '老卒', en: 'Old Soldier' },
+    text: {
+      zh: '一老卒拄杖求見,言隨先主征戰半生,今老病無依,乞一活路。',
+      en: 'An old soldier hobbles in on a cane — half a life spent in your campaigns, now sick and destitute, begging a way to live.',
+    },
+    choices: [
+      {
+        label: { zh: '賜田養老', en: 'Grant him a pension and land' },
+        effects: [{ kind: 'gold', delta: -40 }],
+        outcome: { zh: '老卒泣謝,軍中聞之,皆感君不忘舊。', en: 'He weeps his thanks. The army hears, and loves you for not forgetting the old guard.' },
+      },
+      {
+        label: { zh: '署為教頭', en: 'Make him a drill instructor' },
+        effects: [{ kind: 'none' }],
+        outcome: { zh: '老卒授新兵以實戰之法,軍習為之一精。', en: 'He teaches the recruits the hard lessons of real war; the drilling sharpens.' },
+      },
+    ],
+  },
+
+  // ─── 朝堂風議 — court, scholars, discipline ────────────────────────
+  {
+    id: 'dlg-remonstrance',
+    speaker: { zh: '直臣', en: 'Outspoken Official' },
+    text: {
+      zh: '一臣當廷直諫,歷數近政之失,辭頗激切,左右為之色變。',
+      en: 'An official rebukes your recent rule to your face, listing its failings — so bluntly the court goes pale.',
+    },
+    choices: [
+      {
+        label: { zh: '虛心納諫', en: 'Hear him out and amend' },
+        effects: [{ kind: 'none' }],
+        outcome: { zh: '君改其過,賢者聞之,多有來投。', en: 'You mend what he named. Hearing it, worthies come to your banner.' },
+      },
+      {
+        label: { zh: '賞其敢言', en: 'Reward his courage' },
+        effects: [{ kind: 'gold', delta: -30 }],
+        outcome: { zh: '賜帛旌直,自此朝中敢言者眾。', en: 'You reward the candour with silk. Now the court dares to speak.' },
+      },
+      {
+        label: { zh: '斥退之', en: 'Dismiss him from your sight' },
+        effects: [{ kind: 'none' }],
+        outcome: { zh: '直臣拂袖去,自此進諫者寡。', en: 'He storms out. After that, few bring you hard truths.' },
+      },
+    ],
+  },
+  {
+    id: 'dlg-wandering-monk',
+    speaker: { zh: '雲遊僧', en: 'Wandering Monk' },
+    text: {
+      zh: '一僧持缽至,言能觀氣數,願為君卜一卦,只乞些許香火。',
+      en: 'A monk arrives with his alms-bowl, claiming to read the tides of fortune — asking only a little for incense in return for a reading.',
+    },
+    choices: [
+      {
+        label: { zh: '施以香火', en: 'Give alms and hear him' },
+        effects: [{ kind: 'gold', delta: -20 }],
+        outcome: { zh: '僧言「積善之家必有餘慶」,飄然而去。', en: '"A house that hoards good deeds reaps surplus joy," he says, and drifts away.' },
+      },
+      {
+        label: { zh: '與之論道', en: 'Debate doctrine with him' },
+        effects: [{ kind: 'none' }],
+        outcome: { zh: '君與僧辯難半日,左右歎服。', en: 'You spar over scripture half a day; the court is impressed.' },
+      },
+      {
+        label: { zh: '遣之', en: 'Send him on his way' },
+        effects: [{ kind: 'none' }],
+        outcome: { zh: '君曰:「氣數在人不在卦。」僧頷首去。', en: '"Fortune is made by men, not foretold," you say. He nods and goes.' },
+      },
+    ],
+  },
+  {
+    id: 'dlg-gambling-soldiers',
+    speaker: { zh: '軍法官', en: 'Provost' },
+    text: {
+      zh: '營中私設賭坊,士卒擲骰至深夜,屢禁不止。',
+      en: 'The men have set up a gambling den in camp, throwing dice past midnight. Bans have not stopped it.',
+    },
+    choices: [
+      {
+        label: { zh: '抽其賭資入庫', en: 'Tax the table for the treasury' },
+        effects: [{ kind: 'gold', delta: 50 }],
+        outcome: { zh: '官抽一成,賭風雖在,府庫小盈。', en: 'A tithe off every pot — the dice still roll, but the coffers gain.' },
+      },
+      {
+        label: { zh: '嚴禁重罰', en: 'Ban it and flog the ringleaders' },
+        effects: [{ kind: 'none' }],
+        outcome: { zh: '杖其首者,賭坊遂散,軍紀肅然。', en: 'The ringleaders are caned; the den breaks up; discipline tightens.' },
+      },
+    ],
+  },
+  {
+    id: 'dlg-master-smith',
+    speaker: { zh: '鑄劍師', en: 'Master Smith' },
+    text: {
+      zh: '一鑄劍名匠來投,言能鍛百煉之鋼,願為君造利兵,然非重金不可。',
+      en: 'A famed swordsmith presents himself — he can forge hundred-fold steel, he says, and arm your guard, but only for serious gold.',
+    },
+    choices: [
+      {
+        label: { zh: '出資命其開爐', en: 'Fund his forge' },
+        effects: [{ kind: 'gold', delta: -80 }],
+        outcome: { zh: '匠人開爐三月,所出之刃削鐵如泥。', en: 'Three months at the furnace, and his blades cut iron like clay.' },
+      },
+      {
+        label: { zh: '先試其技', en: 'Test his skill first' },
+        effects: [{ kind: 'none' }],
+        outcome: { zh: '命鑄一劍以驗,果非凡品,乃留之。', en: 'You bid him forge one to prove it. It is no common steel — you keep him on.' },
+      },
+      {
+        label: { zh: '辭之', en: 'Turn him away' },
+        effects: [{ kind: 'none' }],
+        outcome: { zh: '匠人嘆「明珠暗投」,負槌而去。', en: '"A pearl cast into the dark," he sighs, and shoulders his hammer away.' },
+      },
+    ],
+  },
+  {
+    id: 'dlg-tomb-unearthed',
+    speaker: { zh: '屯田吏', en: 'Field Overseer' },
+    text: {
+      zh: '屯墾掘地,得一古塚,中有金玉禮器,似前朝王侯之葬。',
+      en: 'Breaking new ground for farms, the labourers struck an ancient tomb — gold and jade ritual vessels within, a lord of some fallen age.',
+    },
+    choices: [
+      {
+        label: { zh: '取器入庫', en: 'Take the treasures for the state' },
+        effects: [{ kind: 'gold', delta: 100 }],
+        outcome: { zh: '器入府庫,然鄉老竊議掘墓不祥。', en: 'The vessels enter the treasury — though the village elders mutter that grave-robbing brings ill luck.' },
+      },
+      {
+        label: { zh: '封塚改屯他處', en: 'Reseal the tomb and farm elsewhere' },
+        effects: [{ kind: 'gold', delta: -30 }],
+        outcome: { zh: '君命厚封之,徙屯別所,士民稱其有禮。', en: 'You order it sealed with honour and move the farms. The people call you a man of rites.' },
+      },
+    ],
+  },
+  {
+    id: 'dlg-festival-petition',
+    speaker: { zh: '里正', en: 'Village Elder' },
+    text: {
+      zh: '父老聯名,請於秋收後辦一社祭,以酬神而樂民。',
+      en: 'The elders petition together: after the autumn harvest, hold a village festival to thank the gods and gladden the people.',
+    },
+    choices: [
+      {
+        label: { zh: '撥款大辦', en: 'Fund a grand festival' },
+        effects: [{ kind: 'gold', delta: -70 }],
+        outcome: { zh: '社祭三日,民歌載道,皆頌君之德。', en: 'Three days of feasting and song; the roads ring with praise of your rule.' },
+      },
+      {
+        label: { zh: '從簡而行', en: 'Allow a modest one' },
+        effects: [{ kind: 'gold', delta: -20 }],
+        outcome: { zh: '小祭一日,民亦歡然。', en: 'A single day, simply done — and still the people rejoice.' },
+      },
+      {
+        label: { zh: '以農時為重,止之', en: 'Forbid it — the fields come first' },
+        effects: [{ kind: 'none' }],
+        outcome: { zh: '父老怏怏而退,然農事不廢。', en: 'The elders withdraw, downcast — but no work-day is lost.' },
+      },
+    ],
+  },
+  {
+    id: 'dlg-traveling-physician',
+    speaker: { zh: '遊方醫', en: 'Itinerant Physician' },
+    text: {
+      zh: '一遊方醫求見,言精岐黃之術,願留軍中療傷病,然須備藥資。',
+      en: 'A travelling physician seeks audience — versed in the healing arts, he says, and willing to tend your sick and wounded, if you stock his medicines.',
+    },
+    choices: [
+      {
+        label: { zh: '留之,供其藥材', en: 'Retain him and supply the herbs' },
+        effects: [{ kind: 'gold', delta: -50 }],
+        outcome: { zh: '軍中傷病多愈,士卒感其活命之恩。', en: 'The sick and wounded mend; the soldiers bless the man who pulled them back.' },
+      },
+      {
+        label: { zh: '聽其自去', en: 'Let him pass on' },
+        effects: [{ kind: 'none' }],
+        outcome: { zh: '醫者另投他處,後聞其名動一方。', en: 'He seeks another patron; later you hear his fame has spread far.' },
+      },
+    ],
+  },
 ];
 
 /** Lookup by id for branching follow-ups. */
