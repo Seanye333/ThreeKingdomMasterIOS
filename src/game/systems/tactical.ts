@@ -48,6 +48,18 @@ export function counterMultiplier(a: UnitType, d: UnitType): number {
   return COUNTER_MATRIX[a][d] ?? 1.0;
 }
 
+/** 連携合擊 — sworn brothers / famous bonded pairs who strike a foe together
+ *  land a combined blow. Keyed by officer id. */
+const COMBO_BONDS: ReadonlyArray<readonly [string, string]> = [
+  ['liu-bei', 'guan-yu'], ['liu-bei', 'zhang-fei'], ['guan-yu', 'zhang-fei'],
+  ['sun-ce', 'zhou-yu'], ['sun-quan', 'zhou-yu'], ['zhou-yu', 'huang-gai'],
+  ['xiahou-dun', 'xiahou-yuan'], ['cao-cao', 'xiahou-dun'],
+  ['ma-chao', 'pang-de'], ['zhuge-liang', 'liu-bei'], ['lu-meng', 'lu-xun'],
+];
+export function areBonded(a: string, b: string): boolean {
+  return COMBO_BONDS.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
+}
+
 /** Per-terrain multiplier on damage dealt by attacker. */
 const TERRAIN_DAMAGE_MOD: Record<UnitType, Partial<Record<TerrainKind, number>>> = {
   cavalry: { forest: 0.6, mountain: 0.4, river: 0.5, road: 1.2, plain: 1.1, hill: 1.3, marsh: 0.4, chokepoint: 0.7, bridge: 0.8 },
@@ -1194,6 +1206,14 @@ export function attackUnits(
   ).length;
   const pincerMul = 1 + Math.min(0.28, 0.10 * pincers);
 
+  // 合擊 — a sworn brother pressing the same foe lands a combined blow (+30%).
+  const comboAlly = b.units.find(
+    (u) => u.side === attacker.side && u.id !== attacker.id && u.troops > 0
+      && hexDistance(u.coord, target.coord) === 1
+      && areBonded(attacker.officerId, u.officerId),
+  );
+  const comboMul = comboAlly ? 1.3 : 1.0;
+
   // 背刺/側擊 — units face toward the enemy edge (attacker-side faces +col,
   // defender-side faces −col). Striking from the foe's rear arc catches it
   // unguarded: +25% damage and it can barely counter.
@@ -1206,7 +1226,7 @@ export function attackUnits(
   let damage = Math.floor(
     base * counter * aTerrainMod * weatherMul * defenseMul * offenseMul *
     dShield * ambushBonus * fatigueMul * aWoundedMul * dWoundedMul * shipMul * pincerMul *
-    nightMul * heightMul * flankMul * crossingMul * streetMul,
+    nightMul * heightMul * flankMul * crossingMul * streetMul * comboMul,
   );
   if (targetDefending) damage = Math.floor(damage / 2);
   if (attackerBurning) damage = Math.floor(damage * 0.9);
@@ -1259,6 +1279,9 @@ export function attackUnits(
 
   // Voice lines.
   const log = b.log ? [...b.log] : [];
+  if (comboAlly && ao) {
+    log.push({ turn: b.turn, text: `${ao.name.zh} × ${officers[comboAlly.officerId]?.name.zh ?? '友軍'} 合擊!`, kind: 'event' });
+  }
   if (isCrit && martialSkill && ao) {
     const SKILL_ZH: Record<string, string> = {
       'god-of-war': '武神', 'flying-general': '飛將', 'sage-of-war': '兵聖', 'brave': '勇猛',
