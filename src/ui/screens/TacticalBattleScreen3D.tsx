@@ -1347,16 +1347,33 @@ function StratagemFXNode({ coord, kind, spawnedAt }: {
   const visuals = (() => {
     switch (kind) {
       case 'fire':
-        return Array.from({ length: 12 }).map((_, i) => {
-          const ang = (i / 12) * Math.PI * 2;
-          const r = 0.4 + (i % 3) * 0.2;
-          return (
-            <mesh key={i} position={[Math.cos(ang) * r, i * 0.15, Math.sin(ang) * r]}>
-              <sphereGeometry args={[0.15 + (i % 3) * 0.03, 6, 6]} />
-              <meshBasicMaterial color={color} transparent opacity={1} />
-            </mesh>
-          );
-        });
+        // 烈焰 + 濃煙柱 — orange/yellow/red flame tongues at the base, dark
+        // smoke billowing above; the whole column rises (赤壁 inferno).
+        return (
+          <>
+            {Array.from({ length: 18 }).map((_, i) => {
+              const ang = (i / 18) * Math.PI * 3.2;
+              const r = 0.12 + (i % 4) * 0.17;
+              const fc = i % 3 === 0 ? '#ffd24a' : i % 3 === 1 ? '#ff7e26' : '#e0331a';
+              return (
+                <mesh key={`f${i}`} position={[Math.cos(ang) * r, 0.08 + (i % 5) * 0.18, Math.sin(ang) * r]}>
+                  <sphereGeometry args={[0.13 + (i % 3) * 0.05, 6, 6]} />
+                  <meshBasicMaterial color={fc} transparent opacity={1} toneMapped={false} />
+                </mesh>
+              );
+            })}
+            {Array.from({ length: 8 }).map((_, i) => {
+              const ang = (i / 8) * Math.PI * 2;
+              const r = 0.18 + (i % 3) * 0.16;
+              return (
+                <mesh key={`s${i}`} position={[Math.cos(ang) * r, 1.05 + i * 0.24, Math.sin(ang) * r]}>
+                  <sphereGeometry args={[0.24 + (i % 3) * 0.09, 6, 6]} />
+                  <meshBasicMaterial color={i % 2 ? '#52493f' : '#6a6055'} transparent opacity={1} />
+                </mesh>
+              );
+            })}
+          </>
+        );
       case 'lightning':
         return (
           <>
