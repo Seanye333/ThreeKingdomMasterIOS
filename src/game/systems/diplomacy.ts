@@ -44,6 +44,15 @@ export interface DiplomaticContext {
   rng?: () => number;
   /** Multiplier on relation score deltas — driven by 大鴻臚 (Herald) title. */
   diplomacyMultiplier?: number;
+  /** 信譽 — the proposer's reputation (0–100, default 100). Below 100 it shaves
+   *  the odds of any pact: a known oath-breaker is harder to trust. */
+  proposerCredibility?: number;
+}
+
+/** Credibility's drag on acceptance odds: 0 at full repute, −0.4 at zero. */
+function credibilityMod(ctx: DiplomaticContext): number {
+  const cred = ctx.proposerCredibility ?? 100;
+  return (Math.max(0, Math.min(100, cred)) - 100) / 250;
 }
 
 /** Round-half-up so a 1.2 multiplier on a +5 base still feels generous. */
@@ -79,7 +88,8 @@ export function proposeAlliance(ctx: DiplomaticContext): DiplomaticOutcome {
       ctx.playerRulerCharisma / 400 +
       Math.max(-0.3, Math.min(0.3, strengthFactor * 0.2)) +
       traitBonus -
-      targetResist,
+      targetResist +
+      credibilityMod(ctx),
   );
   const roll = rng();
 
@@ -132,7 +142,7 @@ export function proposeNonAggression(
 
   const napTraitBonus = ctx.playerRuler ? diplomacyProposalBonus(ctx.playerRuler) : 0;
   const napTargetResist = ctx.targetRuler ? diplomacyResistance(ctx.targetRuler) : 0;
-  const chance = clamp(0.1, 0.95, current.score / 150 + 0.55 + napTraitBonus - napTargetResist);
+  const chance = clamp(0.1, 0.95, current.score / 150 + 0.55 + napTraitBonus - napTargetResist + credibilityMod(ctx));
   const roll = rng();
   if (roll < chance) {
     const delta = scaleDelta(15, ctx.diplomacyMultiplier);

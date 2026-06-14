@@ -45,6 +45,7 @@ export function DiplomacyModal({ onClose }: Props) {
   const proposeNAP = useGameStore((s) => s.proposeNonAggression);
   const payTribute = useGameStore((s) => s.payTribute);
   const breakAlliance = useGameStore((s) => s.breakAlliance);
+  const credibility = useGameStore((s) => (playerForceId ? s.credibility[playerForceId] : undefined) ?? 100);
 
   const [feedback, setFeedback] = useState<{
     forceId: EntityId;
@@ -97,6 +98,13 @@ export function DiplomacyModal({ onClose }: Props) {
             <div className={styles.titleEn}>
               {t('國庫金：', 'Diplomacy — Capital Gold:')}{' '}
               <strong>{playerCapitalGold.toLocaleString()}</strong>
+              {' · '}
+              <span title={t('背盟則損,守信漸復;低信譽他國難與結盟。', 'Falls when you break pacts, recovers as you honour them; low credibility makes others wary.')}>
+                {t('信譽', 'Credibility')}{' '}
+                <strong style={{ color: credibility >= 80 ? '#7ed68a' : credibility >= 50 ? '#d4a84a' : '#e0707a' }}>
+                  {credibility}
+                </strong>
+              </span>
             </div>
           </div>
           <button className={styles.closeButton} onClick={onClose}>

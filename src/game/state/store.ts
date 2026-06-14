@@ -3619,6 +3619,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           diplomacy: state.diplomacy,
           date: state.date,
           diplomacyMultiplier: appointmentBonusFor(player.id, state.appointments, state.officers).diplomacyMultiplier,
+          proposerCredibility: state.credibility[state.playerForceId] ?? 100,
         });
 
         if (outcome.ok) {
@@ -3631,6 +3632,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               },
             },
             diplomacy: outcome.diplomacy,
+            // Honoured dealings slowly rebuild a tarnished name.
+            ...(outcome.accepted ? { credibility: { ...state.credibility, [state.playerForceId]: Math.min(100, (state.credibility[state.playerForceId] ?? 100) + 5) } } : {}),
           });
         }
         return {
@@ -3667,6 +3670,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           diplomacy: state.diplomacy,
           date: state.date,
           diplomacyMultiplier: appointmentBonusFor(player.id, state.appointments, state.officers).diplomacyMultiplier,
+          proposerCredibility: state.credibility[state.playerForceId] ?? 100,
         });
 
         if (outcome.ok) {
@@ -3679,6 +3683,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               },
             },
             diplomacy: outcome.diplomacy,
+            ...(outcome.accepted ? { credibility: { ...state.credibility, [state.playerForceId]: Math.min(100, (state.credibility[state.playerForceId] ?? 100) + 5) } } : {}),
           });
         }
         return {
@@ -3728,12 +3733,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       breakAlliance: (targetForceId) => {
         const state = get();
         if (!state.playerForceId) return;
+        // 背盟 — tearing up a pact brands you an oath-breaker: −25 信譽.
+        const cur = state.credibility[state.playerForceId] ?? 100;
         set({
           diplomacy: breakAlliance(
             state.diplomacy,
             state.playerForceId,
             targetForceId,
           ),
+          credibility: { ...state.credibility, [state.playerForceId]: Math.max(0, cur - 25) },
         });
       },
 

@@ -216,6 +216,10 @@ export interface GameState {
   /** 稅率 — per-force taxation (gold↔loyalty trade-off). Absent ⇒ 'normal',
    *  so existing saves and every AI force keep historical behaviour. */
   taxPolicy: Record<EntityId, import('../types').TaxRate>;
+  /** 信譽 — a force's reputation for keeping its word (0–100, absent ⇒ 100).
+   *  Breaking an alliance burns it; honoured pacts slowly rebuild it. Low
+   *  credibility makes others wary of the player's future proposals. */
+  credibility: Record<EntityId, number>;
   /** 細作開眼 — cities lit by successful espionage, ticks of intel left.
    *  Decremented each half-month; consumed by the fog-of-war view. */
   espionageReveals: Record<EntityId, number>;
@@ -388,6 +392,7 @@ export const EMPTY_STATE: GameState = {
   deeds: {},
   fogOfWar: false,
   taxPolicy: {},
+  credibility: {},
   espionageReveals: {},
   cityDelegations: {},
   legions: [],
@@ -628,6 +633,7 @@ export function loadScenario(
     deeds: {},
     fogOfWar: state.fogOfWar,
     taxPolicy: state.taxPolicy ?? {},
+    credibility: state.credibility ?? {},
     commandTemplates: state.commandTemplates,
     autoBuildQueues: {},
     pendingDialogue: null,
