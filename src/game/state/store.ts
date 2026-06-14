@@ -249,7 +249,7 @@ interface GameStore extends GameState {
    *  your cities to another. It crawls the map over `seasons` and empties its
    *  cargo on arrival; adjacent hauls arrive in full, longer ones lose 12% on
    *  the road. Cargo is deducted from the source at dispatch. */
-  dispatchConvoy: (fromCityId: EntityId, toCityId: EntityId, food: number, gold: number) => { ok: boolean; seasons: number };
+  dispatchConvoy: (fromCityId: EntityId, toCityId: EntityId, food: number, gold: number, troops?: number) => { ok: boolean; seasons: number };
   /** 借糧 — ask a friendly force to send grain to your capital. Allies and NAP
    *  partners (or anyone you're on good terms with) oblige; the grain comes out
    *  of their own stores. */
@@ -1234,7 +1234,7 @@ export const useGameStore = create<GameStore>()(
         return { ok: true, got: gold };
       },
 
-      dispatchConvoy: (fromCityId, toCityId, food, gold) => {
+      dispatchConvoy: (fromCityId, toCityId, food, gold, troops = 0) => {
         const state = get();
         const pid = state.playerForceId;
         if (!pid) return { ok: false, seasons: 0 };
@@ -1244,31 +1244,34 @@ export const useGameStore = create<GameStore>()(
         if (from.ownerForceId !== pid || to.ownerForceId !== pid) return { ok: false, seasons: 0 };
         const shipFood = Math.min(Math.max(0, Math.floor(food)), from.food);
         const shipGold = Math.min(Math.max(0, Math.floor(gold)), from.gold);
-        if (shipFood <= 0 && shipGold <= 0) return { ok: false, seasons: 0 };
+        // Keep a token garrison behind — never ship the city's last 100 men.
+        const shipTroops = Math.min(Math.max(0, Math.floor(troops)), Math.max(0, from.troops - 100));
+        if (shipFood <= 0 && shipGold <= 0 && shipTroops <= 0) return { ok: false, seasons: 0 };
         // 漕運損耗 — adjacent cities ship along the supply network with no loss;
-        // a longer overland haul spills 12% to spoilage and escort rations.
+        // a longer overland haul spills 12% to spoilage, attrition, escort rations.
         const adjacent = from.adjacentCityIds.includes(toCityId);
         const keep = adjacent ? 1 : 0.88;
         const arriveFood = Math.floor(shipFood * keep);
         const arriveGold = Math.floor(shipGold * keep);
+        const arriveTroops = Math.floor(shipTroops * keep);
         const seasons = Math.max(1, marchDurationFor(from, to, state.date.season));
         const id = `convoy-${fromCityId}-${toCityId}-${state.date.year}-${state.date.season}-${Object.keys(state.convoys ?? {}).length}`;
         set({
           cities: {
             ...state.cities,
-            [fromCityId]: { ...from, food: from.food - shipFood, gold: from.gold - shipGold },
+            [fromCityId]: { ...from, food: from.food - shipFood, gold: from.gold - shipGold, troops: from.troops - shipTroops },
           },
           convoys: {
             ...state.convoys,
             [id]: {
               id, forceId: pid,
               fromCityId, toCityId,
-              food: arriveFood, gold: arriveGold,
+              food: arriveFood, gold: arriveGold, troops: arriveTroops,
               seasonsRemaining: seasons, totalSeasons: seasons,
             },
           },
         });
-        const cargo = [arriveFood > 0 ? `糧 ${arriveFood.toLocaleString()}` : '', arriveGold > 0 ? `金 ${arriveGold.toLocaleString()}` : ''].filter(Boolean).join('、');
+        const cargo = [arriveFood > 0 ? `糧 ${arriveFood.toLocaleString()}` : '', arriveGold > 0 ? `金 ${arriveGold.toLocaleString()}` : '', arriveTroops > 0 ? `兵 ${arriveTroops.toLocaleString()}` : ''].filter(Boolean).join('、');
         get().notify(
           `輜重啟運 · ${from.name.zh} → ${to.name.zh}(${cargo},${seasons}季抵達)`,
           `Convoy dispatched · ${from.name.en} → ${to.name.en} (${seasons} seasons)`,

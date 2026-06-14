@@ -10,7 +10,7 @@ const mkCity = (id: string, over: Partial<City> = {}): City => ({
 
 const mkConvoy = (over: Partial<Convoy> = {}): Convoy => ({
   id: 'cv1', forceId: 'me', fromCityId: 'a', toCityId: 'b',
-  food: 1000, gold: 200, seasonsRemaining: 1, totalSeasons: 1, ...over,
+  food: 1000, gold: 200, troops: 0, seasonsRemaining: 1, totalSeasons: 1, ...over,
 });
 
 describe('輜重 — convoy stepping', () => {
@@ -23,13 +23,14 @@ describe('輜重 — convoy stepping', () => {
     expect(r.arrivals).toHaveLength(0);
   });
 
-  it('a convoy arriving this season empties its cargo into the destination', () => {
-    const convoys = { cv1: mkConvoy({ seasonsRemaining: 1, food: 1000, gold: 200 }) };
-    const cities = { a: mkCity('a'), b: mkCity('b', { food: 5000, gold: 300 }) };
+  it('a convoy arriving this season empties its cargo (grain/gold/troops) into the destination', () => {
+    const convoys = { cv1: mkConvoy({ seasonsRemaining: 1, food: 1000, gold: 200, troops: 500 }) };
+    const cities = { a: mkCity('a'), b: mkCity('b', { food: 5000, gold: 300, troops: 2000 }) };
     const r = stepConvoys(convoys, cities);
     expect(r.convoys.cv1).toBeUndefined();       // retired
     expect(r.cities.b.food).toBe(6000);          // +1000
     expect(r.cities.b.gold).toBe(500);           // +200
+    expect(r.cities.b.troops).toBe(2500);        // +500
     expect(r.arrivals).toHaveLength(1);
   });
 

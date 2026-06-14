@@ -14,6 +14,8 @@ export interface Convoy {
   /** Cargo as it will ARRIVE. */
   food: number;
   gold: number;
+  /** 援兵 — soldiers ferried to reinforce the destination's garrison. */
+  troops: number;
   seasonsRemaining: number;
   totalSeasons: number;
 }
@@ -46,7 +48,7 @@ export function stepConvoys(
     if (dest && dest.ownerForceId === c.forceId) {
       nextCities = {
         ...nextCities,
-        [c.toCityId]: { ...dest, food: dest.food + c.food, gold: dest.gold + c.gold },
+        [c.toCityId]: { ...dest, food: dest.food + c.food, gold: dest.gold + c.gold, troops: dest.troops + c.troops },
       };
       arrivals.push({ convoy: c, toName: dest.name.zh });
     }

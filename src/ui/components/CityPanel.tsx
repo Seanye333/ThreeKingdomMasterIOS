@@ -217,15 +217,21 @@ function GrainTransferSection({ cityId, isPlayerCity }: { cityId: EntityId; isPl
   const adjacent = dest ? city.adjacentCityIds.includes(dest.id) : false;
   const foodAmts = [1000, 5000, Math.floor(city.food / 2)].filter((a) => a >= 500);
   const goldAmts = [500, 2000, Math.floor(city.gold / 2)].filter((a) => a >= 200);
+  const troopAmts = [1000, 3000, Math.floor((city.troops - 100) / 2)].filter((a) => a >= 500);
   const btn: CSSProperties = {
     background: '#2a1f15', border: '1px solid #3a2d20', color: '#d4a84a',
     padding: '0.2rem 0.55rem', fontFamily: 'inherit', fontSize: '0.72rem', cursor: 'pointer',
   };
-  const row = (label: string, amts: number[], have: number, cargo: 'food' | 'gold') => (
+  const row = (label: string, amts: number[], have: number, cargo: 'food' | 'gold' | 'troops') => (
     <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', alignItems: 'center' }}>
       <span style={{ fontSize: '0.72rem', color: '#8a7050', minWidth: '2.2rem' }}>{label}</span>
       {amts.map((a) => (
-        <button key={a} style={btn} disabled={have < a} onClick={() => dest && dispatchConvoy(cityId, dest.id, cargo === 'food' ? a : 0, cargo === 'gold' ? a : 0)}>
+        <button
+          key={a}
+          style={btn}
+          disabled={have < a}
+          onClick={() => dest && dispatchConvoy(cityId, dest.id, cargo === 'food' ? a : 0, cargo === 'gold' ? a : 0, cargo === 'troops' ? a : 0)}
+        >
           {a.toLocaleString()}
         </button>
       ))}
@@ -255,6 +261,7 @@ function GrainTransferSection({ cityId, isPlayerCity }: { cityId: EntityId; isPl
           </select>
           {row(t('運糧', 'Grain'), foodAmts, city.food, 'food')}
           {row(t('運金', 'Gold'), goldAmts, city.gold, 'gold')}
+          {row(t('運兵', 'Troops'), troopAmts, Math.max(0, city.troops - 100), 'troops')}
           <span style={{ fontSize: '0.68rem', color: adjacent ? '#7ed68a' : '#e0a070' }}>
             {adjacent ? t('鄰城直運,無耗,1 季抵達', 'adjacent — no loss, ~1 season') : t('遠運耗 12%,需數季', '−12% en route, a few seasons')}
           </span>

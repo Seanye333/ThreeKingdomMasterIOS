@@ -1957,7 +1957,7 @@ function Convoys({
   convoys: Record<string, import('../../game/systems/convoy').Convoy>;
 }) {
   const list = useMemo(() => {
-    const out: Array<{ id: string; route: Array<{ x: number; y: number }>; t: number; gold: boolean }> = [];
+    const out: Array<{ id: string; route: Array<{ x: number; y: number }>; t: number; kind: 'food' | 'gold' | 'troops' }> = [];
     for (const c of Object.values(convoys)) {
       const from = cities[c.fromCityId];
       const to = cities[c.toCityId];
@@ -1967,7 +1967,8 @@ function Convoys({
       const route = terrainRoute(fx, fy, tx, ty);
       const elapsed = c.totalSeasons - c.seasonsRemaining;
       const t = Math.min(0.96, Math.max(0.04, (elapsed + 0.5) / Math.max(1, c.totalSeasons)));
-      out.push({ id: c.id, route, t, gold: c.gold > 0 && c.food <= 0 });
+      const kind: 'food' | 'gold' | 'troops' = c.food > 0 ? 'food' : c.gold > 0 ? 'gold' : 'troops';
+      out.push({ id: c.id, route, t, kind });
     }
     return out;
   }, [cities, convoys]);
@@ -1975,13 +1976,13 @@ function Convoys({
   return (
     <>
       {list.map((c) => (
-        <ConvoyCart key={c.id} route={c.route} t={c.t} gold={c.gold} />
+        <ConvoyCart key={c.id} route={c.route} t={c.t} kind={c.kind} />
       ))}
     </>
   );
 }
 
-function ConvoyCart({ route, t, gold }: { route: Array<{ x: number; y: number }>; t: number; gold: boolean }) {
+function ConvoyCart({ route, t, kind }: { route: Array<{ x: number; y: number }>; t: number; kind: 'food' | 'gold' | 'troops' }) {
   const groupRef = useRef<THREE.Group>(null);
   useFrame(() => {
     if (!groupRef.current || route.length === 0) return;
@@ -1992,7 +1993,7 @@ function ConvoyCart({ route, t, gold }: { route: Array<{ x: number; y: number }>
     groupRef.current.position.set(wx, sampleTerrainHeight(wx, wz) + 0.05, wz);
     if (wx2 !== wx || wz2 !== wz) groupRef.current.rotation.y = Math.atan2(wx2 - wx, wz2 - wz);
   });
-  const cargoColor = gold ? '#e8c84a' : '#d8c88a';
+  const cargoColor = kind === 'gold' ? '#e8c84a' : kind === 'troops' ? '#9aa8b0' : '#d8c88a';
   return (
     <group ref={groupRef} scale={ARMY_TOKEN_SCALE * 0.8}>
       {/* cart bed */}
