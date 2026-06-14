@@ -18,6 +18,7 @@ export function ArmiesPanel() {
   const selectArmy = useGameStore((s) => s.selectArmy);
   const cancelCommand = useGameStore((s) => s.cancelCommand);
   const holdArmy = useGameStore((s) => s.holdArmy);
+  const resupplyArmy = useGameStore((s) => s.resupplyArmy);
   const splitArmy = useGameStore((s) => s.splitArmy);
 
   // 手機收納 — folded to a chip by default; the list is a tap away.
@@ -76,6 +77,15 @@ export function ArmiesPanel() {
                 fontFamily: '"Songti SC", serif',
               }}
             >{armies[selectedArmyId].holding ? '解除' : '駐守'}</button>
+            <button
+              onClick={() => resupplyArmy(selectedArmyId)}
+              style={{
+                background: '#2a2410', border: '1px solid #b89a4a', color: '#e8d09a',
+                fontSize: '0.6rem', padding: '1px 6px', cursor: 'pointer',
+                fontFamily: '"Songti SC", serif',
+              }}
+              title="從最近的友城輸糧補給此軍(免其糧盡逃散)"
+            >補給</button>
             {(armies[selectedArmyId].companionIds?.length ?? 0) > 0 && (
               <button
                 onClick={() => splitArmy(selectedArmyId)}
@@ -128,6 +138,14 @@ export function ArmiesPanel() {
               <span style={{ color: '#ffe9a8', whiteSpace: 'nowrap' }}>
                 {cmdr?.name.zh ?? '？'}
                 <span style={{ color: '#8a7050', marginLeft: 4, fontSize: '0.62rem', fontFamily: 'ui-monospace, monospace' }}>{troopLabel}</span>
+                {a.food !== undefined && (() => {
+                  const seasons = Math.floor(a.food / Math.max(1, a.troops * 0.25));
+                  return (
+                    <span style={{ marginLeft: 4, fontSize: '0.58rem', color: seasons <= 1 ? '#e0707a' : seasons <= 3 ? '#e0a070' : '#8a9a6a' }} title={`隨軍糧 ${a.food.toLocaleString()} — 足 ${seasons} 季`}>
+                      🌾{seasons}
+                    </span>
+                  );
+                })()}
               </span>
               <span style={{ color: status.color, whiteSpace: 'nowrap' }}>
                 {status.icon} {status.text}

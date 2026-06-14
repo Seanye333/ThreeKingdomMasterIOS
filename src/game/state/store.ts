@@ -32,6 +32,7 @@ import { ITEMS_BY_ID } from '../data/items';
 import { marchDurationFor } from '../data/cities';
 import { terrainRoute, positionAlongRoute, marchDestCoords } from '../data/territories';
 import { cityPos, CITY_GEO_OVERRIDES } from '../data/cityGeo';
+import { provisionNeeded } from '../systems/convoy';
 import { terrainTypeAt, isRiverside, WORLD_SCALE } from '../data/geography';
 import { FAMILY_LINEAGE } from '../data/familyLineage';
 import { POLICY_DEFS, TACTIC_DEFS } from '../data/officerAttributes';
@@ -210,6 +211,9 @@ interface GameStore extends GameState {
   selectArmy: (armyId: EntityId | null) => void;
   redirectArmy: (armyId: EntityId, newTargetId: EntityId) => boolean;
   holdArmy: (armyId: EntityId) => boolean;
+  /** 補給野戰軍 — rush provisions from the nearest stocked friendly city to a
+   *  field army, topping up its baggage so it doesn't starve in the field. */
+  resupplyArmy: (armyId: EntityId) => { ok: boolean; sent: number };
   moveArmyToCell: (armyId: EntityId, x: number, y: number) => boolean;
   /** Merge the source army into the destination army (both must be the
    *  player's and close enough to rendezvous). Returns false if not allowed. */
@@ -782,6 +786,34 @@ export const useGameStore = create<GameStore>()(
           armies: { ...state.armies, [armyId]: { ...army, holding: next } },
         });
         return true;
+      },
+
+      resupplyArmy: (armyId) => {
+        const state = get();
+        const army = state.armies[armyId];
+        const cmd = state.pendingCommands[armyId];
+        if (!army || !cmd || cmd.type !== 'march' || army.forceId !== state.playerForceId) return { ok: false, sent: 0 };
+        // Nearest stocked friendly city sends a baggage train.
+        let best: (typeof state.cities)[string] | null = null;
+        let bd = Infinity;
+        for (const c of Object.values(state.cities)) {
+          if (c.ownerForceId !== state.playerForceId || c.food < 1000) continue;
+          const cp = cityPos(c);
+          const d = Math.hypot(cp.x - army.x, cp.y - army.y);
+          if (d < bd) { bd = d; best = c; }
+        }
+        if (!best) return { ok: false, sent: 0 };
+        const want = provisionNeeded(army.troops, 3); // top up ~3 seasons' worth
+        const draw = Math.min(best.food - 500, want);
+        if (draw < 200) return { ok: false, sent: 0 };
+        const sent = Math.floor(draw * (bd < 120 ? 1 : 0.85)); // distance spoilage
+        set({
+          cities: { ...state.cities, [best.id]: { ...best, food: best.food - draw } },
+          armies: { ...state.armies, [armyId]: { ...army, food: (army.food ?? 0) + sent } },
+          pendingCommands: { ...state.pendingCommands, [armyId]: { ...cmd, food: (cmd.food ?? 0) + sent } },
+        });
+        get().notify(`補給 · ${best.name.zh} 輸糧 ${sent.toLocaleString()} 至前軍`, `Supplied the army with ${sent.toLocaleString()} grain from ${best.name.en}`);
+        return { ok: true, sent };
       },
 
       mergeArmyInto: (sourceArmyId, destArmyId) => {
