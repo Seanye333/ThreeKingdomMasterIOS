@@ -2618,30 +2618,42 @@ export function resolveBattleEnd(
   const lostOfficers = (side: 'attacker' | 'defender'): EntityId[] =>
     [...new Set(battle.casualties?.[side] ?? [])].filter((id) => !survivorSet.has(id));
 
+  // 追擊掩殺 — a victor who ends the day still strong runs the broken foe down:
+  // more fleeing officers are caught, and the spoils swell. A bloody narrow win
+  // (winner also gutted) yields a thin pursuit.
+  const winnerStrength = winner
+    ? surviving.filter((u) => u.side === winner).reduce((s, u) => s + u.troops, 0)
+    : 0;
+  const loserLoss = winner === 'attacker' ? battle.defenderLosses
+    : winner === 'defender' ? battle.attackerLosses : 0;
+  const hotPursuit = !!winner && winnerStrength > loserLoss * 0.5;
+  const pursuitCapMul = hotPursuit ? 1.35 : 1;
+  const pursuitLootMul = hotPursuit ? 1.5 : 1;
+
   if (winner === 'attacker') {
     for (const id of lostOfficers('defender')) {
       const o = officers[id];
       if (!o) continue;
-      // Capture chance based on attacker's charisma (commander).
+      // Capture chance based on attacker's charisma (commander) + pursuit.
       const acc = surviving.find((u) => u.side === 'attacker' && u.isCommander);
       const cmdCha = acc ? (officers[acc.officerId]?.stats.charisma ?? 60) : 60;
-      if (Math.random() < cmdCha / 130) captured.push(id);
+      if (Math.random() < (cmdCha / 130) * pursuitCapMul) captured.push(id);
       else dead.push(id);
     }
   } else if (winner === 'defender') {
     for (const id of lostOfficers('attacker')) {
       const dc = surviving.find((u) => u.side === 'defender' && u.isCommander);
       const cmdCha = dc ? (officers[dc.officerId]?.stats.charisma ?? 60) : 60;
-      if (Math.random() < cmdCha / 130) captured.push(id);
+      if (Math.random() < (cmdCha / 130) * pursuitCapMul) captured.push(id);
       else dead.push(id);
     }
   }
 
-  // Loot: 10–25% of loser's troop value as gold-equivalent.
+  // Loot: 10–25% of loser's troop value as gold-equivalent, swollen by pursuit.
   const lootGold = winner
     ? Math.floor(
         ((winner === 'attacker' ? battle.defenderLosses : battle.attackerLosses) *
-          (0.1 + Math.random() * 0.15)) /
+          (0.1 + Math.random() * 0.15) * pursuitLootMul) /
           10,
       )
     : 0;
