@@ -1315,6 +1315,44 @@ function ArrowVolley({ fx, fz, tx, tz, spawnedAt }: {
   );
 }
 
+/** 命中爆點 — when a volley lands (~0.46s after release), kick a dust ring +
+ *  scattered splinters at the target tile so ranged hits have a point of impact. */
+function ArrowImpact({ x, z, spawnedAt }: { x: number; z: number; spawnedAt: number }) {
+  const ref = useRef<THREE.Group>(null);
+  const DELAY = 0.46, DUR = 0.42;
+  useFrame(() => {
+    const g = ref.current;
+    if (!g) return;
+    const age = (Date.now() - spawnedAt) / 1000 - DELAY;
+    const vis = age >= 0 && age <= DUR;
+    g.visible = vis;
+    if (!vis) return;
+    const t = age / DUR;
+    g.scale.setScalar(0.4 + t * 1.3);
+    g.traverse((o) => {
+      const m = (o as THREE.Mesh).material as THREE.MeshBasicMaterial | undefined;
+      if (m && 'opacity' in m) m.opacity = (1 - t) * 0.7;
+    });
+  });
+  return (
+    <group ref={ref} position={[x, 0.1, z]} visible={false} raycast={() => null}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.18, 0.46, 18]} />
+        <meshBasicMaterial color="#b6a079" transparent opacity={0.6} side={THREE.DoubleSide} depthWrite={false} />
+      </mesh>
+      {Array.from({ length: 7 }).map((_, i) => {
+        const a = (i / 7) * Math.PI * 2;
+        return (
+          <mesh key={i} position={[Math.cos(a) * 0.28, 0.12, Math.sin(a) * 0.28]} rotation={[Math.PI / 3, -a, 0]}>
+            <cylinderGeometry args={[0.012, 0.012, 0.2, 4]} />
+            <meshBasicMaterial color="#caa45a" transparent opacity={0.8} depthWrite={false} />
+          </mesh>
+        );
+      })}
+    </group>
+  );
+}
+
 function AttackArc({ from, to, kind, spawnedAt }: {
   from: HexCoord; to: HexCoord; kind: 'melee' | 'ranged'; spawnedAt: number;
 }) {
@@ -1332,7 +1370,12 @@ function AttackArc({ from, to, kind, spawnedAt }: {
     mat.opacity = 1 - t;
   });
   // Ranged attacks loose a whole volley; melee throws a single arcing strike.
-  if (kind === 'ranged') return <ArrowVolley fx={fx} fz={fz} tx={tx} tz={tz} spawnedAt={spawnedAt} />;
+  if (kind === 'ranged') return (
+    <>
+      <ArrowVolley fx={fx} fz={fz} tx={tx} tz={tz} spawnedAt={spawnedAt} />
+      <ArrowImpact x={tx} z={tz} spawnedAt={spawnedAt} />
+    </>
+  );
   return (
     <mesh ref={projRef} position={[fx, 1, fz]}>
       <sphereGeometry args={[0.1, 8, 8]} />
