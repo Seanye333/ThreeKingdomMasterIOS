@@ -4,7 +4,7 @@ import { Html, OrbitControls, Stars } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { useGameStore } from '../../game/state/store';
-import { playSfx, playFxSfx, startBattleAmbience, stopBattleAmbience } from '../../game/systems/sound';
+import { playSfx, playFxSfx, startBattleAmbience, stopBattleAmbience, playMusic, stopMusic, type MusicTrack } from '../../game/systems/sound';
 import type { EntityId, HexCoord, Officer, StratagemId, TacticalBattle, TacticalTile, TacticalUnit, TerrainKind, TimeOfDay, UnitType, Weather } from '../../game/types';
 import type { DefenseBuildingId } from '../../game/data/defenseBuildings';
 import { stratagemFxKind, tacticFxKind, tacticFxSpec, FX_DURATION, FX_IMPACT, type TacticFxSpec, type StratagemFxInstance, type StratagemFxKind } from '../../game/data/stratagemFx';
@@ -3355,8 +3355,9 @@ export function TacticalBattleScreen3D() {
   // ── 战场音效 — ambience for the duration, log-driven stings for events.
   useEffect(() => {
     startBattleAmbience();
-    return () => stopBattleAmbience();
+    return () => { stopBattleAmbience(); stopMusic(); };
   }, []);
+  const musicPhase = useRef<MusicTrack | null>(null);
   const sfxCursor = useRef(0);
   useEffect(() => {
     const log = battle?.log ?? [];
@@ -3471,6 +3472,24 @@ export function TacticalBattleScreen3D() {
     if (battle.defenderForceId === playerForceId) return 'defender';
     return null;
   }, [battle, playerForceId]);
+
+  // 音樂分層 — the score climbs with the battle: 緊張 → 鏖戰(climax)→ 勝/敗.
+  // Deduped (playMusic restarts the track), so it only switches on a phase change.
+  useEffect(() => {
+    if (!battle) return;
+    let track: MusicTrack;
+    if (battle.winner) {
+      track = battle.winner === playerSide ? 'victory' : 'defeat';
+    } else {
+      const frac = (side: 'attacker' | 'defender') => {
+        const st = battle.startTroops?.[side] ?? 1;
+        const cur = battle.units.filter((u) => u.side === side && u.troops > 0).reduce((s, u) => s + u.troops, 0);
+        return cur / Math.max(1, st);
+      };
+      track = (Math.min(frac('attacker'), frac('defender')) < 0.5 || battle.turn >= 8) ? 'battle' : 'tension';
+    }
+    if (musicPhase.current !== track) { musicPhase.current = track; playMusic(track); }
+  }, [battle?.winner, battle?.turn, battle?.units, playerSide]);
 
   // AI takes its turn after a short delay when it's not the player's side —
   // or on the player's side too, when 委託指揮 is engaged.
