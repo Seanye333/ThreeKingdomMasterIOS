@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { Tip } from './Tip';
 
 interface MenuItem {
   label: ReactNode;
@@ -61,26 +62,27 @@ export function HudMenu({ label, items, title }: Props) {
 
   return (
     <>
-      <button
-        ref={triggerRef}
-        className="hud-menu-trigger"
-        onClick={() => setOpen((o) => !o)}
-        title={title}
-        style={{
-          background: open ? 'var(--tkm-bg-raised)' : 'transparent',
-          color: 'var(--tkm-text-h2)',
-          border: `1px solid ${open ? 'var(--tkm-text-h2)' : 'var(--tkm-border)'}`,
-          padding: '0.35rem 0.7rem',
-          fontFamily: 'var(--tkm-font-body)',
-          fontSize: '0.82rem',
-          cursor: 'pointer',
-          letterSpacing: '0.1rem',
-          transition: 'background 0.15s, border-color 0.15s',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {label} <span style={{ fontSize: '0.6rem', opacity: 0.6 }}>▾</span>
-      </button>
+      <Tip text={title} placement="bottom">
+        <button
+          ref={triggerRef}
+          className="hud-menu-trigger"
+          onClick={() => setOpen((o) => !o)}
+          style={{
+            background: open ? 'var(--tkm-bg-raised)' : 'transparent',
+            color: 'var(--tkm-text-h2)',
+            border: `1px solid ${open ? 'var(--tkm-text-h2)' : 'var(--tkm-border)'}`,
+            padding: '0.35rem 0.7rem',
+            fontFamily: 'var(--tkm-font-body)',
+            fontSize: '0.82rem',
+            cursor: 'pointer',
+            letterSpacing: '0.1rem',
+            transition: 'background 0.15s, border-color 0.15s',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {label} <span style={{ fontSize: '0.6rem', opacity: 0.6 }}>▾</span>
+        </button>
+      </Tip>
       {open && createPortal(
         <div
           ref={dropRef}
