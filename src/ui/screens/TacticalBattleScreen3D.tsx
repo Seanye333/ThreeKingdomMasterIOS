@@ -3551,10 +3551,18 @@ export function TacticalBattleScreen3D() {
       setTimeout(() => setAttackArcs((a) => a.filter((x) => x.id !== aid)), 600);
       const afterAtk = attackUnits(battle, selectedUnit.id, u.id, officers, Math.random);
       start(afterAtk);
-      // 殲滅頓幀 — a killing blow gets the full impact (shake + flash + hitstop).
+      // 殲滅頓幀 — a killing blow gets the full impact; slaying a COMMANDER gets
+      // the kill-cam beat: the longest hitstop + a 「斬將」 banner.
       const slain = afterAtk.units.find((x) => x.id === u.id);
       if (u.troops > 0 && (!slain || slain.troops <= 0)) {
-        setCine({ key: ++cineCount.current, weight: 2, color: '#ff5030' });
+        if (u.isCommander) {
+          setCine({ key: ++cineCount.current, weight: 3, color: '#ff5030' });
+          const nm = officers[u.officerId]?.name.zh ?? '敵將';
+          setSignatureBanner({ zh: `斬 ${nm}！`, en: `${officers[u.officerId]?.name.en ?? 'Commander'} slain!`, key: Date.now() });
+          setTimeout(() => setSignatureBanner(null), 2200);
+        } else {
+          setCine({ key: ++cineCount.current, weight: 2, color: '#ff5030' });
+        }
       }
       setActionMode({ kind: 'none' });
       return;
