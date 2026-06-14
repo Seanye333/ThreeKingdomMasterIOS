@@ -296,6 +296,20 @@ export const FX_COLOR: Record<StratagemFxKind, string> = {
   curse:       '#9a5ad0',
 };
 
+/**
+ * Cinematic impact weight per FX archetype — drives the battle camera's
+ * reaction when a tactic is cast: 0 = none (soft auras/calm計), 1 = a small
+ * shake + flash, 2 = heavy shake + flash + a zoom-punch (天雷/落石/火계/砲).
+ */
+export const FX_IMPACT: Record<StratagemFxKind, 0 | 1 | 2> = {
+  fire: 2, shipfire: 2, oil: 2, lightning: 2, thunderstorm: 2, cannon: 2,
+  rocks: 2, shockwave: 2, dragon: 2, gate: 2,
+  arrows: 1, caltrops: 1, beast: 1, spears: 1, blades: 1, splash: 1, grain: 1,
+  scatter: 1, grapple: 1, net: 1, wind: 1, drum: 1, poison: 1,
+  aura: 0, swirl: 0, rune: 0, lamp: 0, empty: 0, charm: 0, feint: 0, smoke: 0,
+  ice: 0, vortex: 0, curse: 0, chain: 0, shield: 0, streak: 0,
+};
+
 /** Per-FX lifetime in seconds. */
 export const FX_DURATION: Record<StratagemFxKind, number> = {
   fire: 2.0, lightning: 0.6, arrows: 1.2, aura: 1.6,

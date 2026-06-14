@@ -1,5 +1,5 @@
-import { Suspense, createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Suspense, createContext, useContext, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Html, OrbitControls, Stars } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
@@ -7,7 +7,7 @@ import { useGameStore } from '../../game/state/store';
 import { playSfx, playFxSfx, startBattleAmbience, stopBattleAmbience } from '../../game/systems/sound';
 import type { EntityId, HexCoord, Officer, StratagemId, TacticalBattle, TacticalTile, TacticalUnit, TerrainKind, TimeOfDay, UnitType, Weather } from '../../game/types';
 import type { DefenseBuildingId } from '../../game/data/defenseBuildings';
-import { stratagemFxKind, tacticFxKind, tacticFxSpec, FX_DURATION, type TacticFxSpec, type StratagemFxInstance } from '../../game/data/stratagemFx';
+import { stratagemFxKind, tacticFxKind, tacticFxSpec, FX_DURATION, FX_IMPACT, type TacticFxSpec, type StratagemFxInstance, type StratagemFxKind } from '../../game/data/stratagemFx';
 import { categoryOfTactic } from '../../game/data/officerAttributes';
 import { applyBattlePrep,
   aiTakeTurn, aiSkillForDifficulty, applyStratagem, attackUnits, canAttack, canMove, endTurn, hexDistance,
@@ -1246,6 +1246,31 @@ function AttackArc({ from, to, kind, spawnedAt }: {
 // 戰法特效的純資料映射(kind / 顏色 / 壽命)抽到 game/data/stratagemFx.ts,
 // 大地圖戰鬥沿用同一份;此處 re-export 讓 StrategicMap3D 的舊 import 不必改。
 export { stratagemFxKind, tacticFxKind, tacticFxSpec, FX_DURATION };
+
+/* 戰鬥運鏡 — a quick zoom-punch on heavy casts. Lives in the Canvas; dips the
+ * camera FOV inward then eases it back, so 天雷/落石/火계 land with a kick.
+ * FOV-only, so it never fights OrbitControls (which drives position/target). */
+function BattleCinematics({ trigger }: { trigger: { key: number; weight: number } | null }) {
+  const { camera } = useThree();
+  const baseFov = useRef<number | null>(null);
+  const pulse = useRef(0);
+  const lastKey = useRef(0);
+  useFrame((_, delta) => {
+    const cam = camera as THREE.PerspectiveCamera;
+    if (baseFov.current == null) baseFov.current = cam.fov;
+    if (trigger && trigger.key !== lastKey.current) {
+      lastKey.current = trigger.key;
+      if (trigger.weight >= 2) pulse.current = 1;
+    }
+    if (pulse.current > 0) {
+      pulse.current = Math.max(0, pulse.current - delta * 2.6);
+      const dip = Math.sin(pulse.current * Math.PI) * (baseFov.current * 0.13);
+      cam.fov = baseFov.current - dip;
+      cam.updateProjectionMatrix();
+    }
+  });
+  return null;
+}
 
 function StratagemFXNode({ coord, spec, spawnedAt }: {
   coord: HexCoord; spec: TacticFxSpec; spawnedAt: number;
@@ -2773,6 +2798,33 @@ export function TacticalBattleScreen3D() {
   const [signatureBanner, setSignatureBanner] = useState<{ zh: string; en: string; key: number } | null>(null);
   // Stratagem FX particles
   const [stratagemFx, setStratagemFx] = useState<StratagemFxInstance[]>([]);
+  // 戰鬥運鏡 — impact event driving screen-shake / flash / zoom-punch.
+  const [cine, setCine] = useState<{ key: number; weight: number; color: string } | null>(null);
+  const cineCount = useRef(0);
+  const canvasWrapRef = useRef<HTMLDivElement>(null);
+  /** Fire a cinematic kick for an FX archetype (no-op for soft auras). */
+  const punch = (kind: StratagemFxKind, color: string) => {
+    const weight = FX_IMPACT[kind];
+    if (weight > 0) setCine({ key: ++cineCount.current, weight, color });
+  };
+  // Run the screen-shake on the canvas wrapper whenever a cinematic fires.
+  useEffect(() => {
+    if (!cine || cine.weight <= 0) return;
+    const el = canvasWrapRef.current;
+    if (!el || typeof el.animate !== 'function') return;
+    const a = cine.weight >= 2 ? 11 : 5;
+    el.animate(
+      [
+        { transform: 'translate(0,0) scale(1)' },
+        { transform: `translate(${a}px,${-a * 0.7}px) scale(1.03)` },
+        { transform: `translate(${-a}px,${a * 0.6}px) scale(1.03)` },
+        { transform: `translate(${a * 0.6}px,${a * 0.5}px) scale(1.02)` },
+        { transform: `translate(${-a * 0.4}px,${-a * 0.3}px) scale(1.01)` },
+        { transform: 'translate(0,0) scale(1)' },
+      ],
+      { duration: cine.weight >= 2 ? 430 : 260, easing: 'ease-out' },
+    );
+  }, [cine?.key]);  // eslint-disable-line react-hooks/exhaustive-deps
   const t = useT();
   const lang = useLanguage();
 
@@ -2809,6 +2861,7 @@ export function TacticalBattleScreen3D() {
               spawnedAt: Date.now(),
             });
             playFxSfx(spec.kind);
+            punch(spec.kind, spec.color);
           }
           // Signature flavor for AI famous-tactic usage
           const flavor = SIGNATURE_FLAVOR[sig.tacticId];
@@ -2927,6 +2980,7 @@ export function TacticalBattleScreen3D() {
           const fxCoord = isSelf ? selectedUnit.coord : c;
           setStratagemFx((arr) => [...arr, { id: fxId, coord: fxCoord, spec, spawnedAt: fxId }]);
           playFxSfx(spec.kind);
+          punch(spec.kind, spec.color);
           const lifeMs = (FX_DURATION[spec.kind] ?? 1.5) * 1000 + 200;
           setTimeout(() => setStratagemFx((arr) => arr.filter((f) => f.id !== fxId)), lifeMs);
         }
@@ -3102,12 +3156,26 @@ export function TacticalBattleScreen3D() {
 
       {/* 3D canvas */}
       <div style={{ flex: 1, position: 'relative' }}>
+       <div ref={canvasWrapRef} style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+        {/* 戰鬥運鏡 — impact flash, remounted per cast to replay its fade */}
+        {cine && cine.weight > 0 && (
+          <div
+            key={cine.key}
+            className="tkm-fx-flash"
+            style={{
+              ['--fx-color' as string]: cine.color,
+              ['--fx-peak' as string]: cine.weight >= 2 ? 0.42 : 0.24,
+              ['--fx-dur' as string]: cine.weight >= 2 ? '0.42s' : '0.3s',
+            } as CSSProperties}
+          />
+        )}
         <Canvas
           shadows={!IS_MOBILE}
           dpr={IS_MOBILE ? [1, 1.5] : [1, 2]}
           camera={{ position: [target[0] - 8, 40, target[2] + 6], fov: 45 }}
           gl={{ antialias: !IS_MOBILE }}
         >
+          <BattleCinematics trigger={cine} />
           {/* Swoop down onto the field from overhead when the battle opens. */}
           <IntroDive
             start={[target[0] - 8, 40, target[2] + 6]}
@@ -3145,6 +3213,7 @@ export function TacticalBattleScreen3D() {
             )}
           </Suspense>
         </Canvas>
+       </div>
 
         {/* Selected unit side panel — full action menu */}
         {selectedUnit && playerSide && selectedUnit.side === playerSide && (

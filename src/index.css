@@ -912,3 +912,27 @@ button:not(:disabled):active {
 }
 .tkm-city-enter { animation: tkmCityEnter 0.42s cubic-bezier(0.2, 0.8, 0.25, 1) both; }
 @media (prefers-reduced-motion: reduce) { .tkm-city-enter { animation: none; } }
+
+/* ─── 戰鬥運鏡 — impact flash overlay for tactic casts ───────────────────
+   A brief tinted bloom over the battlefield when a heavy 戰法 lands; the
+   colour comes from the FX's own --fx-color. Replayed by remounting (key). */
+@keyframes tkmFxFlash {
+  0%   { opacity: 0; }
+  12%  { opacity: var(--fx-peak, 0.5); }
+  100% { opacity: 0; }
+}
+.tkm-fx-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  mix-blend-mode: screen;
+  background: radial-gradient(
+    ellipse at center,
+    var(--fx-color, #ffffff) 0%,
+    rgba(0, 0, 0, 0) 65%
+  );
+  opacity: 0;
+  animation: tkmFxFlash var(--fx-dur, 0.34s) ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) { .tkm-fx-flash { animation: none; } }

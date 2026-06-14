@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { stratagemFxKind, tacticFxKind, tacticFxSpec, FX_COLOR, FX_DURATION, type StratagemFxKind } from './stratagemFx';
+import { stratagemFxKind, tacticFxKind, tacticFxSpec, FX_COLOR, FX_DURATION, FX_IMPACT, type StratagemFxKind } from './stratagemFx';
 import { STRATAGEMS } from './stratagems';
 import { TACTIC_DEFS, categoryOfTactic } from './officerAttributes';
 
@@ -22,6 +22,20 @@ describe('戰法可視化 — stratagem battle FX', () => {
       if (!kind) continue;
       expect(FX_COLOR[kind], `${kind} missing colour`).toMatch(/^#[0-9a-f]{6}$/i);
       expect(FX_DURATION[kind], `${kind} missing/zero duration`).toBeGreaterThan(0);
+    }
+  });
+
+  it('every FX kind has a cinematic impact weight (0/1/2), heavies kick hardest', () => {
+    for (const k of Object.keys(FX_COLOR) as StratagemFxKind[]) {
+      expect([0, 1, 2], `${k} impact out of range`).toContain(FX_IMPACT[k]);
+    }
+    // the spectacle 戰法 must trigger the full zoom-punch
+    for (const k of ['thunderstorm', 'rocks', 'fire', 'cannon'] as StratagemFxKind[]) {
+      expect(FX_IMPACT[k], `${k} should be a heavy (2) impact`).toBe(2);
+    }
+    // soft 計 must NOT shake the screen
+    for (const k of ['empty', 'aura', 'rune'] as StratagemFxKind[]) {
+      expect(FX_IMPACT[k], `${k} should be a soft (0) impact`).toBe(0);
     }
   });
 
