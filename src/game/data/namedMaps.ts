@@ -103,6 +103,9 @@ export const NAMED_BATTLE_MAPS: NamedBattleMap[] = [
       { coord: { col: 5, row: 4 }, label: { en: 'Changban Bridge', zh: '長坂橋' }, role: 'bridge' },
       { coord: { col: 5, row: 6 }, label: { en: 'Civilian Wagons', zh: '民之車' }, role: 'wagon' },
     ],
+    defenderObjective: { kind: 'survive-turns', turnsRequired: 5 },
+    introZh: '長坂橋頭,張飛據水斷橋、趙雲七進七出。掩護百姓,撐到援軍即可。',
+    introEn: 'Changban — hold the bridge and cover the people until relief comes.',
   },
   {
     id: 'map-wuzhang-plains',
@@ -178,6 +181,9 @@ export const NAMED_BATTLE_MAPS: NamedBattleMap[] = [
     specialTiles: [
       { coord: { col: 0, row: 2 }, label: { en: 'West Gate (escape)', zh: '西門' }, role: 'flag' },
     ],
+    defenderObjective: { kind: 'escape' },
+    introZh: '關羽走麥城,四面楚歌。殺出重圍、自西門突圍而走,方有生路。',
+    introEn: 'Maicheng — surrounded. Cut your commander free out the west gate.',
   },
   {
     id: 'map-fancheng',
@@ -228,6 +234,9 @@ export const NAMED_BATTLE_MAPS: NamedBattleMap[] = [
     specialTiles: [
       { coord: { col: 4, row: 3 }, label: { en: 'High Plateau', zh: '山頂' }, role: 'hill' },
     ],
+    attackerObjective: { kind: 'destroy-commander' },
+    introZh: '定軍山,老黃忠居高臨下、一刀斬夏侯淵。取敵主將首級者勝。',
+    introEn: 'Mt. Dingjun — strike from the heights and cut down the enemy commander.',
   },
   {
     id: 'map-jieting',
@@ -254,6 +263,9 @@ export const NAMED_BATTLE_MAPS: NamedBattleMap[] = [
       { coord: { col: 4, row: 2 }, label: { en: 'Lone Hill (Ma Su\'s mistake)', zh: '孤山' }, role: 'hill' },
       { coord: { col: 3, row: 3 }, label: { en: 'Spring', zh: '水源' }, role: 'supply' },
     ],
+    defenderObjective: { kind: 'hold-tile', tileCoord: { col: 3, row: 3 }, turnsRequired: 5 },
+    introZh: '街亭當道,守住水源即守住糧道。莫學馬謖舍水上山,自陷絕地。',
+    introEn: 'Jieting — hold the spring astride the road; do not abandon the water for the hill.',
   },
   // ─── Six new famous battlefields ──────────────────────────────────
   {
@@ -282,6 +294,9 @@ export const NAMED_BATTLE_MAPS: NamedBattleMap[] = [
     specialTiles: [
       { coord: { col: 7, row: 0 }, label: { en: 'Xiaoyao Ford', zh: '逍遙津' }, role: 'bridge' },
     ],
+    defenderObjective: { kind: 'survive-turns', turnsRequired: 6 },
+    introZh: '合肥逍遙津,張遼八百破十萬。孤城拒眾,守得住便是威震江東。',
+    introEn: 'Hefei — 800 against a host. Hold the lone fort and shatter their nerve.',
   },
   {
     id: 'map-yiling',
@@ -309,6 +324,9 @@ export const NAMED_BATTLE_MAPS: NamedBattleMap[] = [
     specialTiles: [
       { coord: { col: 10, row: 4 }, label: { en: 'Lu Xun\'s Observation Hill', zh: '陸遜瞭望' }, role: 'hill' },
     ],
+    defenderObjective: { kind: 'survive-turns', turnsRequired: 6 },
+    introZh: '夷陵連營七百里,皆紮林間。陸遜按兵不動,只待東風一炬 — 火燒連營。',
+    introEn: 'Yiling — 700 li of camps in the woods. Bide your time for the wind and the fire.',
   },
   {
     id: 'map-bowangpo',
