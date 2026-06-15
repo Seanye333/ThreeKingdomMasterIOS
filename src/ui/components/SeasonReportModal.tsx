@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useGameStore } from '../../game/state/store';
+import { Icon } from './Icon';
 import { SEASON_LABEL } from '../../game/types';
 import type { BattleDetail, Season } from '../../game/types';
 import { BattleDetailModal } from './BattleDetailModal';
@@ -60,12 +61,12 @@ export function SeasonReportModal() {
   // ── 摘要 — a one-line scannable tally so the season's signal isn't buried in
   // a 40-line scroll. Counts are taken over the same player-relevant slice.
   const n = (k: string) => playerEntries.filter((e) => e.kind === k).length;
-  const summary: Array<{ icon: string; label: string; count: number; color: string }> = [
+  const summary: Array<{ icon: ReactNode; label: string; count: number; color: string }> = [
     { icon: '✓', label: t('令成', 'done'), count: n('command-success'), color: '#9ad6a8' },
     { icon: '✗', label: t('令敗', 'failed'), count: n('command-failure'), color: '#e8a07a' },
-    { icon: '⚔', label: t('戰', 'battles'), count: n('battle'), color: '#e0b070' },
-    { icon: '★', label: t('克城', 'taken'), count: n('conquest'), color: '#7ed68a' },
-    { icon: '🛡', label: t('失地', 'lost'), count: n('defeat'), color: '#e0707a' },
+    { icon: <Icon name="war" size={13} color="#e0b070" />, label: t('戰', 'battles'), count: n('battle'), color: '#e0b070' },
+    { icon: <Icon name="city" size={13} color="#7ed68a" />, label: t('克城', 'taken'), count: n('conquest'), color: '#7ed68a' },
+    { icon: <Icon name="shield" size={13} color="#e0707a" />, label: t('失地', 'lost'), count: n('defeat'), color: '#e0707a' },
     { icon: '✦', label: t('賢才', 'talent'), count: n('talent'), color: '#c0a0e8' },
     { icon: '☠', label: t('殞', 'deaths'), count: n('death'), color: '#b0a090' },
   ].filter((s) => s.count > 0);
@@ -127,7 +128,7 @@ export function SeasonReportModal() {
                 borderRadius: 12, padding: '0.12rem 0.6rem',
                 color: s.color, fontSize: '0.82rem', fontFamily: 'var(--tkm-font-body)',
               }}>
-                <b style={{ fontSize: '0.95rem' }}>{s.icon}{s.count}</b>
+                <b style={{ fontSize: '0.95rem', display: 'inline-flex', alignItems: 'center', gap: 3 }}>{s.icon}{s.count}</b>
                 <span style={{ opacity: 0.8 }}>{s.label}</span>
               </span>
             ))}
