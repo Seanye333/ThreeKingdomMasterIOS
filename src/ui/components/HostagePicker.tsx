@@ -50,7 +50,7 @@ export function HostagePicker({ targetForceId, onClose }: Props) {
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <header className={styles.header}>
           <div>
-            <div className={styles.titleZh}>人質交換</div>
+            <div className={styles.titleZh}>{t('人質交換', 'Hostage Exchange')}</div>
             <div className={styles.titleEn}>
               {t(`送往 ${targetForce?.name.zh ?? ''}`, `Send Hostage to ${targetForce?.name.en ?? ''}`)}
             </div>

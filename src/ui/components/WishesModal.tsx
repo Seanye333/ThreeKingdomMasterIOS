@@ -55,10 +55,10 @@ export function WishesModal({ onClose }: Props) {
           }}
         >
           <div>
-            <div style={{ fontSize: '1.4rem', color: '#e6c473', letterSpacing: '0.07rem' }}>書信</div>
-            <div style={{ fontSize: '0.85rem', color: '#7a8893', fontStyle: 'italic' }}>
+            {lang !== 'en' && <div style={{ fontSize: '1.4rem', color: '#e6c473', letterSpacing: '0.07rem' }}>書信</div>}
+            {lang !== 'zh' && <div style={{ fontSize: '0.85rem', color: '#7a8893', fontStyle: 'italic' }}>
               Officer Letters
-            </div>
+            </div>}
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             {wishes.filter((w) => w.kind !== 'info').length >= 3 && (
@@ -71,7 +71,7 @@ export function WishesModal({ onClose }: Props) {
                     background: '#26323e', border: '1px solid #7ed68a', color: '#7ed68a',
                     padding: '0.3rem 0.7rem', fontFamily: 'inherit', cursor: 'pointer', fontSize: '0.8rem',
                   }}
-                >全部準許</button>
+                >{lang === 'en' ? 'Grant all' : '全部準許'}</button>
                 <button
                   onClick={() => {
                     for (const w of wishes.filter((x) => x.kind !== 'info')) reject(w.id);
@@ -80,7 +80,7 @@ export function WishesModal({ onClose }: Props) {
                     background: 'none', border: '1px solid #b8442e', color: '#b8442e',
                     padding: '0.3rem 0.7rem', fontFamily: 'inherit', cursor: 'pointer', fontSize: '0.8rem',
                   }}
-                >全部却下</button>
+                >{lang === 'en' ? 'Reject all' : '全部却下'}</button>
               </>
             )}
             <button

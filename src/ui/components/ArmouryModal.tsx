@@ -136,7 +136,7 @@ export function ArmouryModal({ onClose }: Props) {
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <header className={styles.header}>
           <div>
-            <div className={styles.titleZh}>宝物庫</div>
+            <div className={styles.titleZh}>{t('宝物庫', 'Armoury')}</div>
             <div className={styles.titleEn}>
               Armoury — {ITEMS.length} items
             </div>

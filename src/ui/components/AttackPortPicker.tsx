@@ -77,7 +77,7 @@ export function AttackPortPicker({ portId, onClose, onCommit }: Props) {
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <header className={styles.header}>
           <div>
-            <div className={styles.titleZh}>攻港</div>
+            <div className={styles.titleZh}>{t('攻港', 'Attack Port')}</div>
             <div className={styles.titleEn}>{t(`攻擊 ${port.name.zh}`, `Attack ${port.name.zh}`)}</div>
           </div>
           <button className={styles.closeButton} onClick={onClose}>×</button>

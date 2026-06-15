@@ -78,8 +78,8 @@ export function BattleReplayModal({ onClose }: Props) {
           }}
         >
           <div>
-            <div style={{ fontSize: '1.4rem', color: '#e6c473', letterSpacing: '0.07rem' }}>戰史</div>
-            <div style={{ fontSize: '0.85rem', color: '#7a8893', fontStyle: 'italic' }}>Battle Replays</div>
+            {lang !== 'en' && <div style={{ fontSize: '1.4rem', color: '#e6c473', letterSpacing: '0.07rem' }}>戰史</div>}
+            {lang !== 'zh' && <div style={{ fontSize: '0.85rem', color: '#7a8893', fontStyle: 'italic' }}>Battle Replays</div>}
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
         </header>

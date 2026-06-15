@@ -4,6 +4,7 @@ import { SEASON_LABEL } from '../../game/types';
 import type { HistoricBattle, Season } from '../../game/types';
 import { BattleDetailModal } from './BattleDetailModal';
 import { Name } from './Name';
+import { useLanguage } from '../i18n';
 import styles from './BattleHistoryModal.module.css';
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
 type OutcomeFilter = 'all' | 'won' | 'lost' | 'conquest';
 
 export function BattleHistoryModal({ onClose }: Props) {
+  const lang = useLanguage();
   const battles = useGameStore((s) => s.battleHistory);
   const cities = useGameStore((s) => s.cities);
   const officers = useGameStore((s) => s.officers);
@@ -75,10 +77,10 @@ export function BattleHistoryModal({ onClose }: Props) {
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <header className={styles.header}>
           <div>
-            <div className={styles.titleZh}>戰史</div>
-            <div className={styles.titleEn}>
+            {lang !== 'en' && <div className={styles.titleZh}>戰史</div>}
+            {lang !== 'zh' && <div className={styles.titleEn}>
               Battle History — {battles.length} battle{battles.length === 1 ? '' : 's'} recorded
-            </div>
+            </div>}
           </div>
           <button className={styles.closeButton} onClick={onClose}>
             ×
@@ -127,7 +129,7 @@ export function BattleHistoryModal({ onClose }: Props) {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="搜尋城名/年份…"
+            placeholder={lang === 'en' ? 'Search city / year…' : '搜尋城名/年份…'}
             style={{
               flex: 1, minWidth: '140px',
               background: '#10161e', border: '1px solid #2b3845',

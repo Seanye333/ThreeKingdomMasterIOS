@@ -147,7 +147,7 @@ export function EspionageModal({ onClose }: Props) {
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <header className={styles.header}>
           <div>
-            <div className={styles.titleZh}>密偵</div>
+            <div className={styles.titleZh}>{lang === 'en' ? 'Espionage' : '密偵'}</div>
             <div className={styles.titleEn}>Espionage</div>
           </div>
           <button className={styles.closeButton} onClick={onClose}>×</button>

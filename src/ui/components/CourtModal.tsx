@@ -66,7 +66,7 @@ export function CourtModal({ onClose }: Props) {
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <header className={styles.header}>
           <div>
-            <div className={styles.titleZh}>朝廷</div>
+            <div className={styles.titleZh}>{lang === 'en' ? 'Imperial Court' : '朝廷'}</div>
             <div className={styles.titleEn}>Imperial Court</div>
           </div>
           <button className={styles.closeButton} onClick={onClose}>×</button>
@@ -104,7 +104,7 @@ export function CourtModal({ onClose }: Props) {
                     fontFamily: 'inherit', letterSpacing: '0.05rem', whiteSpace: 'nowrap',
                   }}
                   title={lang === 'en' ? 'Move the emperor into your capital (+10 Mandate)' : '奉迎天子入都 — 天命 +10,自此國都即帝都'}
-                >奉迎天子</button>
+                >{lang === 'en' ? 'Welcome the Emperor' : '奉迎天子'}</button>
               )}
             </div>
           );
@@ -155,7 +155,7 @@ export function CourtModal({ onClose }: Props) {
                   <div style={{ fontSize: '0.7rem', color: '#7a8893' }}>{(check as { reason: string }).reason}</div>
                 )}
                 {isEmperorPath && (
-                  <div style={{ fontSize: '0.7rem', color: '#7a8893' }}>需頒「即位」詔令</div>
+                  <div style={{ fontSize: '0.7rem', color: '#7a8893' }}>{lang === 'en' ? 'Requires the “Enthronement” edict' : '需頒「即位」詔令'}</div>
                 )}
               </div>
             );
@@ -170,7 +170,7 @@ export function CourtModal({ onClose }: Props) {
           const total = factions.length;
           return (
             <div style={{ padding: '0.6rem 1rem', borderBottom: '1px solid #2b3845', display: 'flex', flexWrap: 'wrap', gap: '0.6rem', fontSize: '0.78rem' }}>
-              <span style={{ color: '#7a8893', letterSpacing: '0.07rem' }}>朝堂派系：</span>
+              <span style={{ color: '#7a8893', letterSpacing: '0.07rem' }}>{lang === 'en' ? 'Court factions:' : '朝堂派系:'}</span>
               {(['military', 'gentry', 'reformer', 'eunuch'] as const).map((fid) => {
                 const n = counts[fid] ?? 0;
                 if (n === 0) return null;
@@ -240,7 +240,7 @@ export function CourtModal({ onClose }: Props) {
 
         {edictHistory.length > 0 && (
           <div className={styles.history} style={{ maxHeight: 200, overflow: 'auto' }}>
-            <div className={styles.historyTitle}>詔令履歷 · Edict History ({edictHistory.length})</div>
+            <div className={styles.historyTitle}>{lang === 'en' ? 'Edict History' : '詔令履歷'} ({edictHistory.length})</div>
             {[...edictHistory].reverse().map((h) => {
               const def = EDICTS.find((d) => d.kind === h.kind);
               const target = h.targetForceId ? forces[h.targetForceId] : null;

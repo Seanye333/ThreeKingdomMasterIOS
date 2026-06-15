@@ -100,8 +100,8 @@ export function CustomOfficerCreator({ scenario, onClose, onCreate }: Props) {
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <header className={styles.header}>
           <div>
-            <div className={styles.titleZh}>自定義武將$</div>
-            <div className={styles.titleEn}>Create Your Officer</div>
+            {lang !== 'en' && <div className={styles.titleZh}>自定義武將</div>}
+            {lang !== 'zh' && <div className={styles.titleEn}>Create Your Officer</div>}
           </div>
           <button className={styles.closeButton} onClick={onClose}>×</button>
         </header>

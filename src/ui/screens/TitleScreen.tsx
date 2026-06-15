@@ -217,7 +217,7 @@ export function TitleScreen() {
           chars="鼎"
           size={58}
           rotate={-8}
-          title="鼎 — 三足鼎立"
+          title={lang === 'en' ? 'Ding — the three-legged cauldron' : '鼎 — 三足鼎立'}
           style={{ position: 'absolute', top: '1rem', right: 'clamp(0.75rem, 8vw, 5rem)', zIndex: 2 }}
         />
         <h1 className={styles.title}>

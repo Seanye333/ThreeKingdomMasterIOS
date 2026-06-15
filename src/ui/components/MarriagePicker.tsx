@@ -65,7 +65,7 @@ export function MarriagePicker({ targetForceId, onClose }: Props) {
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <header className={styles.header}>
           <div>
-            <div className={styles.titleZh}>婚姻外交</div>
+            <div className={styles.titleZh}>{t('婚姻外交', 'Marriage Diplomacy')}</div>
             <div className={styles.titleEn}>
               {t(`與 ${targetForce?.name.zh ?? ''} 聯姻`, `Marriage Diplomacy with ${targetForce?.name.en ?? ''}`)}
             </div>

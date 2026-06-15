@@ -39,22 +39,22 @@ export function BattleDetailModal({ battle, onClose }: Props) {
           {battle.field ? (
             <span className={`${styles.outcome} ${styles.victory}`}>
               {battle.ambush
-                ? `設伏破敵 Ambush — sprung from cover, column shattered${battle.detected ? '（敵已有備）' : ''}`
+                ? (lang === 'en' ? `Ambush — sprung from cover, column shattered${battle.detected ? ' (enemy ready)' : ''}` : `設伏破敵${battle.detected ? '(敵已有備)' : ''}`)
                 : battle.campAssault
-                  ? `拔寨破營 Camp stormed — earthworks overrun, ground seized${battle.detected ? '（識破伏兵）' : ''}`
-                  : '截擊得勝 Interception — victor routs the column'}
+                  ? (lang === 'en' ? `Camp stormed — earthworks overrun, ground seized${battle.detected ? ' (ambush detected)' : ''}` : `拔寨破營${battle.detected ? '(識破伏兵)' : ''}`)
+                  : (lang === 'en' ? 'Interception — victor routs the column' : '截擊得勝')}
             </span>
           ) : battle.cityFalls ? (
             <span className={`${styles.outcome} ${styles.conquest}`}>
-              城陷 City Fell
+              {lang === 'en' ? 'City Fell' : '城陷'}
             </span>
           ) : battle.attackerWins ? (
             <span className={`${styles.outcome} ${styles.victory}`}>
-              戰勝 Attacker won (no breach)
+              {lang === 'en' ? 'Attacker won (no breach)' : '戰勝'}
             </span>
           ) : (
             <span className={`${styles.outcome} ${styles.defeat}`}>
-              退却 Attacker repulsed
+              {lang === 'en' ? 'Attacker repulsed' : '退却'}
             </span>
           )}
         </div>

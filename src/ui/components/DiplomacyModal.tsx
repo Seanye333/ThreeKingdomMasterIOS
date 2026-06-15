@@ -100,7 +100,7 @@ export function DiplomacyModal({ onClose }: Props) {
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <header className={styles.header}>
           <div>
-            <div className={styles.titleZh}>外交</div>
+            <div className={styles.titleZh}>{t('外交', 'Diplomacy')}</div>
             <div className={styles.titleEn}>
               {t('國庫金：', 'Diplomacy — Capital Gold:')}{' '}
               <Icon name="gold" size={13} color="#e6c473" style={{ verticalAlign: '-0.12em' }} /> <strong>{playerCapitalGold.toLocaleString()}</strong>

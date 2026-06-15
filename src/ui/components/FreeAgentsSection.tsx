@@ -95,27 +95,27 @@ export function FreeAgentsSection({ cityId, isPlayerCity }: Props) {
               {isPlayerCity && (
                 <div className={styles.actions}>
                   {stage === 'locked' ? (
-                    <span style={{ fontSize: '0.72rem', color: '#a8825a' }}>舌戰失利 · 下回合再訪</span>
+                    <span style={{ fontSize: '0.72rem', color: '#a8825a' }}>{t('舌戰失利 · 下回合再訪', 'Lost the debate — try next turn')}</span>
                   ) : stage === 'fresh' ? (
                     <button className={styles.recruitBtn} onClick={() => invite(o.id)} title={t('禮聘出仕(免費)', 'Invite to serve (free)')}>
                       {t('招聘', 'Invite')}
                     </button>
                   ) : (
                     <>
-                      <span style={{ fontSize: '0.7rem', color: '#a8825a', marginRight: 4 }}>婉拒 —</span>
+                      <span style={{ fontSize: '0.7rem', color: '#a8825a', marginRight: 4 }}>{t('婉拒 —', 'Declined —')}</span>
                       {orator && (
                         <button
                           className={styles.recruitBtn}
                           onClick={() => setDebating(o.id)}
-                          title={`遣${orator.name.zh}與其舌戰,勝則機率大增,負則本回合不再見`}
-                        >💬 舌戰</button>
+                          title={t(`遣${orator.name.zh}與其舌戰,勝則機率大增,負則本回合不再見`, `Send ${orator.name.en} to debate — win to greatly boost odds, lose and they won't see you this turn`)}
+                        >💬 {t('舌戰', 'Debate')}</button>
                       )}
                       <button
                         className={styles.recruitBtn}
                         onClick={() => invite(o.id, { bribe: BRIBE_AMOUNT })}
                         disabled={cityGold < BRIBE_AMOUNT}
                         title={cityGold < BRIBE_AMOUNT ? `需 ${BRIBE_AMOUNT} 金` : `贈金 ${BRIBE_AMOUNT} 以動其心`}
-                      ><Icon name="gold" size={11} /> 賄賂 ({BRIBE_AMOUNT}g)</button>
+                      ><Icon name="gold" size={11} /> {t('賄賂', 'Bribe')} ({BRIBE_AMOUNT}g)</button>
                     </>
                   )}
                 </div>

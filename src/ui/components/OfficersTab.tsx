@@ -169,7 +169,7 @@ export function OfficersTab({ onClose }: Props) {
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <header className={styles.header}>
           <div>
-            <div className={styles.titleZh}>武将</div>
+            <div className={styles.titleZh}>{lang === 'en' ? 'Officers' : '武将'}</div>
             <div className={styles.titleEn}>
               Officers — {visibleOfficers.length} of {totalKnown} shown ·{' '}
               {totalUnsearched} hidden · {totalDead} fallen
@@ -279,15 +279,15 @@ export function OfficersTab({ onClose }: Props) {
 
           {presentDynasties.length > 0 && (
             <div className={styles.controlRow}>
-              <span className={styles.controlLabel}>朝代</span>
+              <span className={styles.controlLabel}>{lang === 'en' ? 'Dynasty' : '朝代'}</span>
               <button
                 className={`${styles.chip} ${dynastyFilter === 'all' ? styles.chipActive : ''}`}
                 onClick={() => setDynastyFilter('all')}
-              >全部</button>
+              >{lang === 'en' ? 'All' : '全部'}</button>
               <button
                 className={`${styles.chip} ${dynastyFilter === 'three-kingdoms' ? styles.chipActive : ''}`}
                 onClick={() => setDynastyFilter('three-kingdoms')}
-              >三國</button>
+              >{lang === 'en' ? 'Three Kingdoms' : '三國'}</button>
               {presentDynasties.map((d) => (
                 <button
                   key={d.id}

@@ -28,6 +28,7 @@ interface Props {
 type Tab = 'civic' | 'military' | 'history';
 
 export function TitlesModal({ onClose }: Props) {
+  const lang = useLanguage();
   const officers = useGameStore((s) => s.officers);
   const cities = useGameStore((s) => s.cities);
   const playerForceId = useGameStore((s) => s.playerForceId);
@@ -95,8 +96,8 @@ export function TitlesModal({ onClose }: Props) {
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <header className={styles.header}>
           <div>
-            <div className={styles.titleZh}>任官</div>
-            <div className={styles.titleEn}>Titles &amp; Appointments</div>
+            {lang !== 'en' && <div className={styles.titleZh}>任官</div>}
+            {lang !== 'zh' && <div className={styles.titleEn}>Titles &amp; Appointments</div>}
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             <button
@@ -135,10 +136,10 @@ export function TitlesModal({ onClose }: Props) {
                   const r = promoteOfficer(o.id, top.id);
                   if (r.ok) promoted++;
                 }
-                alert(`一鍵任官：appointed ${appointed}, promoted ${promoted}.`);
+                alert(lang === 'en' ? `Auto-appoint: appointed ${appointed}, promoted ${promoted}.` : `一鍵任官:已任 ${appointed}、晉 ${promoted}。`);
               }}
             >
-              一鍵任官
+              {lang === 'en' ? 'Auto-appoint' : '一鍵任官'}
             </button>
             <button className={styles.closeButton} onClick={onClose}>×</button>
           </div>
@@ -469,7 +470,7 @@ function MilitaryTab({
         </div>
       )}
       {!selected && (
-        <div className={styles.empty}>Pick an officer to promote.</div>
+        <div className={styles.empty}>{lang === 'en' ? 'Pick an officer to promote.' : '選一名武將授銜。'}</div>
       )}
     </div>
   );
@@ -517,7 +518,7 @@ function HistoryTab({
         >{lang === 'en' ? 'All' : '全部'}</button>
       </div>
       {rows.length === 0 ? (
-        <div className={styles.empty}>尚無任官紀錄。</div>
+        <div className={styles.empty}>{lang === 'en' ? 'No appointment records yet.' : '尚無任官紀錄。'}</div>
       ) : (
         <div>
           {rows.map((h, i) => {

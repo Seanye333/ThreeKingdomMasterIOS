@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { Icon } from './Icon';
+import { useLanguage } from '../i18n';
 
 const IS_MOBILE = typeof window !== 'undefined'
   && (window.matchMedia?.('(pointer: coarse)')?.matches || window.innerWidth < 700);
@@ -21,6 +22,7 @@ export function ArmiesPanel() {
   const holdArmy = useGameStore((s) => s.holdArmy);
   const resupplyArmy = useGameStore((s) => s.resupplyArmy);
   const splitArmy = useGameStore((s) => s.splitArmy);
+  const lang = useLanguage();
 
   // 手機收納 — folded to a chip by default; the list is a tap away.
   const [open, setOpen] = useState(!IS_MOBILE);
@@ -38,7 +40,7 @@ export function ArmiesPanel() {
           fontFamily: 'var(--tkm-font-body)', fontSize: '0.72rem',
           pointerEvents: 'auto',
         }}
-      ><Icon name="war" size={12} /> 在途 {mine.length}</button>
+      ><Icon name="war" size={12} /> {lang === 'en' ? 'In transit' : '在途'} {mine.length}</button>
     );
   }
 
@@ -56,7 +58,7 @@ export function ArmiesPanel() {
       pointerEvents: 'auto',
     }}>
       <div style={{ fontSize: '0.62rem', letterSpacing: '0.05rem', color: '#7a8893', textTransform: 'uppercase', marginBottom: 3, display: 'flex', justifyContent: 'space-between' }}>
-        <span>在途部隊 · Armies</span>
+        <span>{lang === 'en' ? 'Armies in transit' : '在途部隊'}</span>
         {IS_MOBILE && (
           <button
             onClick={() => setOpen(false)}
@@ -66,7 +68,7 @@ export function ArmiesPanel() {
       </div>
       {selectedArmyId && armies[selectedArmyId] && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4, marginBottom: 3 }}>
-          <span style={{ fontSize: '0.58rem', color: '#e6c473' }}>點城改道 · 點野地進駐 · 點友軍合流 · 點近敵亲征</span>
+          <span style={{ fontSize: '0.58rem', color: '#e6c473' }}>{lang === 'en' ? 'Tap city to reroute · field to garrison · ally to merge · enemy to attack' : '點城改道 · 點野地進駐 · 點友軍合流 · 點近敵親征'}</span>
           <div style={{ display: 'flex', gap: 4 }}>
             <button
               onClick={() => holdArmy(selectedArmyId)}
