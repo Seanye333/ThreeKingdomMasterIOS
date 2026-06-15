@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useGameStore } from '../../game/state/store';
 import type { City, EntityId, Officer } from '../../game/types';
 import { AnimatedNumber } from './AnimatedNumber';
+import { OfficerStats } from './OfficerStats';
 import styles from './ForcesOverview.module.css';
 
 interface Props {
@@ -115,8 +116,7 @@ export function ForcesOverview({ onClose }: Props) {
                       <span className={styles.officerNameZh}>{o.name.zh}</span>
                       <span className={styles.officerNameEn}>{o.name.en}</span>
                       <span className={styles.officerStats}>
-                        W{o.stats.war} I{o.stats.intelligence} P
-                        {o.stats.politics} C{o.stats.charisma}
+                        <OfficerStats officer={o} keys={['war', 'intelligence', 'politics', 'charisma']} />
                       </span>
                     </span>
                   ))}

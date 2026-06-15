@@ -8,6 +8,7 @@ import { useT } from '../i18n';
 import { BattlePrepModal } from './BattlePrepModal';
 import type { EntityId } from '../../game/types';
 import { OfficerHoverCard } from './OfficerHoverCard';
+import { OfficerStats } from './OfficerStats';
 import styles from './MarchPicker.module.css';
 
 interface Props {
@@ -307,7 +308,7 @@ export function MarchPicker({ cityId, onClose }: Props) {
                 <span>{t('城防', 'Defense')} <strong style={{ color: '#e6edf3' }}>{enemyIntel.defense}</strong></span>
                 <span>{t('城壁', 'Wall')} <strong style={{ color: '#e6edf3' }}>{'★'.repeat(enemyIntel.wallTier)}</strong></span>
                 <span>{t('守將', 'Captain')} <strong style={{ color: '#e6edf3' }}>{enemyIntel.captain ? enemyIntel.captain.name.zh : t('無', 'none')}</strong>
-                  {enemyIntel.captain && <span className={styles.muted}> (W{enemyIntel.captain.stats.war}/L{enemyIntel.captain.stats.leadership})</span>}
+                  {enemyIntel.captain && <span style={{ marginLeft: 5 }}><OfficerStats officer={enemyIntel.captain} keys={['leadership', 'war']} /></span>}
                 </span>
               </div>
               <div style={{ marginTop: '0.3rem', fontSize: '0.78rem' }}>
@@ -333,8 +334,7 @@ export function MarchPicker({ cityId, onClose }: Props) {
                     <span className={styles.officerNameZh}>{o.name.zh}</span>
                     <span className={styles.officerNameEn}>{o.name.en}</span>
                     <span className={styles.officerWar}>
-                      LED <strong>{o.stats.leadership}</strong> · WAR{' '}
-                      <strong>{o.stats.war}</strong>
+                      <OfficerStats officer={o} keys={['leadership', 'war']} />
                     </span>
                   </button>
                 </OfficerHoverCard>
@@ -367,8 +367,7 @@ export function MarchPicker({ cityId, onClose }: Props) {
                       </span>
                       <span className={styles.officerNameEn}>{o.name.en}</span>
                       <span className={styles.officerWar}>
-                        LED <strong>{o.stats.leadership}</strong> · WAR{' '}
-                        <strong>{o.stats.war}</strong>
+                        <OfficerStats officer={o} keys={['leadership', 'war']} />
                       </span>
                     </button>
                   </OfficerHoverCard>

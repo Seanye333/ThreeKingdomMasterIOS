@@ -1,5 +1,6 @@
 import { useGameStore } from '../../game/state/store';
 import type { BattleDetail, BattleSideDetail, Officer } from '../../game/types';
+import { OfficerStats } from './OfficerStats';
 import styles from './BattleDetailModal.module.css';
 
 interface Props {
@@ -177,7 +178,7 @@ function Side({
             </span>
             <span className={styles.officerNameEn}>{o.name.en}</span>
             <span className={styles.officerStats}>
-              W{o.stats.war} · L{o.stats.leadership}
+              <OfficerStats officer={o} keys={['war', 'leadership']} />
             </span>
           </li>
         ))}
