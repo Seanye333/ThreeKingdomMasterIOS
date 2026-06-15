@@ -4,6 +4,7 @@ import { recruitCostFor, type PersuasionApproach } from '../../game/systems/offi
 import { playSfx } from '../../game/systems/sound';
 import type { EntityId } from '../../game/types';
 import { OfficerHoverCard } from './OfficerHoverCard';
+import { OfficerStats } from './OfficerStats';
 import { DebateModal } from './DebateModal';
 import { RecruitSuccessModal } from './RecruitSuccessModal';
 import { eloquence } from '../../game/systems/debate';
@@ -77,8 +78,8 @@ export function CaptivesSection({ cityId }: Props) {
                 <span className={styles.nameZh}>{o.name.zh}</span>
                 <span className={styles.nameEn}>{o.name.en}</span>
                 <span className={styles.stats}>
-                  W{o.stats.war} I{o.stats.intelligence} P{o.stats.politics} C
-                  {o.stats.charisma} · Loyalty {o.loyalty}
+                  <OfficerStats officer={o} keys={['war', 'intelligence', 'politics', 'charisma']} />
+                  <span style={{ color: '#a8825a', marginLeft: 6 }}>· 忠 {o.loyalty}</span>
                 </span>
               </div>
             </OfficerHoverCard>

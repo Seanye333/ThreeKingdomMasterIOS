@@ -4,6 +4,7 @@ import { playSfx } from '../../game/systems/sound';
 import { eloquence } from '../../game/systems/debate';
 import type { EntityId } from '../../game/types';
 import { OfficerHoverCard } from './OfficerHoverCard';
+import { OfficerStats } from './OfficerStats';
 import { DebateModal } from './DebateModal';
 import { RecruitSuccessModal } from './RecruitSuccessModal';
 import styles from './FreeAgentsSection.module.css';
@@ -76,7 +77,7 @@ export function FreeAgentsSection({ cityId, isPlayerCity }: Props) {
                     {o.courtesyName && <span className={styles.courtesy}> ({o.courtesyName.en})</span>}
                   </span>
                   <span className={styles.stats}>
-                    W{o.stats.war} I{o.stats.intelligence} P{o.stats.politics} C{o.stats.charisma}
+                    <OfficerStats officer={o} keys={['war', 'intelligence', 'politics', 'charisma']} />
                   </span>
                 </div>
               </OfficerHoverCard>

@@ -16,6 +16,7 @@ import { CommandMenu } from './CommandMenu';
 import { ConvoyDispatchModal } from './ConvoyDispatchModal';
 import { FreeAgentsSection } from './FreeAgentsSection';
 import { Icon, type IconName } from './Icon';
+import { OfficerStats } from './OfficerStats';
 import { OfficerHoverCard } from './OfficerHoverCard';
 import { TERRAIN_DEFS } from '../../game/data/cities';
 import { PROVINCE_BY_CITY, PROVINCES_BY_ID } from '../../game/data';
@@ -335,7 +336,7 @@ function OfficerListItem({
             {t('移送', 'Transfer')} ⇨
           </button>
         ) : (
-          `W${o.stats.war} I${o.stats.intelligence} P${o.stats.politics} C${o.stats.charisma}`
+          <OfficerStats officer={o} keys={['war', 'intelligence', 'politics', 'charisma']} lang={lang === 'en' ? 'en' : 'zh'} />
         )}
       </span>
       {transferOpen && canTransfer && (

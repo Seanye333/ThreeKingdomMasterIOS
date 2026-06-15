@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { TRAIT_DEFS_BY_ID, SKILLS_BY_ID, ITEMS_BY_ID } from '../../game/data';
 import type { Officer } from '../../game/types';
 import { OfficerPortrait } from './OfficerPortrait';
+import { OfficerStats } from './OfficerStats';
 import { useGameStore } from '../../game/state/store';
 
 interface Props {
@@ -71,9 +72,8 @@ export function OfficerHoverCard({ officer, children }: Props) {
               )}
             </div>
           </div>
-          <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.78rem', color: '#aab6c0', marginTop: '0.3rem' }}>
-            統 {officer.stats.leadership} · 武 {officer.stats.war} · 知 {officer.stats.intelligence} ·
-            政 {officer.stats.politics} · 魅 {officer.stats.charisma}
+          <div style={{ marginTop: '0.4rem' }}>
+            <OfficerStats officer={officer} size="md" />
           </div>
           {t.length > 0 && (
             <div style={{ marginTop: '0.3rem' }}>
