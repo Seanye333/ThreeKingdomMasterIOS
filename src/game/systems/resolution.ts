@@ -1490,6 +1490,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     // 劫糧道 — convoys passing a hostile stronghold risk a sortie; lawless
     // roads carry a small bandit risk. Escort troops can beat the raiders off.
     const dangers: Record<EntityId, number> = {};
+    const raiderByConvoy: Record<EntityId, EntityId> = {};
     for (const cv of Object.values(nextConvoys)) {
       const from = cities[cv.fromCityId];
       const to = cities[cv.toCityId];
@@ -1512,33 +1513,53 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       let strength = 0;
       if (nearest && nearest.ownerForceId && nearest.ownerForceId !== cv.forceId
           && isHostilePermitted(input.diplomacy, cv.forceId, nearest.ownerForceId)) {
-        if (rng() < sortieChance) strength = Math.max(800, Math.floor(nearest.troops * 0.1)); // sortie from the stronghold
+        if (rng() < sortieChance) { strength = Math.max(800, Math.floor(nearest.troops * 0.1)); raiderByConvoy[cv.id] = nearest.id; } // sortie from the stronghold
       } else if (rng() < banditChance) {
         strength = 700 + Math.floor(rng() * 800); // 山賊 — lawless roads
       }
       if (strength > 0) dangers[cv.id] = strength;
     }
     if (Object.keys(dangers).length > 0) {
-      const raided = resolveConvoyRaids(nextConvoys, dangers, cities);
+      const raided = resolveConvoyRaids(nextConvoys, dangers, cities, raiderByConvoy);
       nextConvoys = raided.convoys;
       for (const r of raided.raids) {
-        // A column overrun in a raid loses its escort to capture.
-        if (!r.repelled && r.convoy.officerId && officers[r.convoy.officerId]) {
-          officers[r.convoy.officerId] = { ...officers[r.convoy.officerId], status: 'imprisoned', locationCityId: r.convoy.toCityId, task: null };
+        const escortId = r.convoy.officerId;
+        const raiderCity = r.raiderCityId ? cities[r.raiderCityId] : undefined;
+        const captureAt = r.raiderCityId ?? r.convoy.toCityId;
+        // A column overrun in a raid loses its escort to capture by the raider.
+        if (!r.repelled && escortId && officers[escortId]) {
+          officers[escortId] = { ...officers[escortId], status: 'imprisoned', locationCityId: captureAt, task: null };
         }
-        if (r.convoy.forceId !== input.playerForceId) continue; // only surface the player's own convoys
-        const esc = r.convoy.officerId ? officers[r.convoy.officerId] : null;
+        // 劫糧得財 — gold is looted by the raiding stronghold; grain is burned.
+        if (!r.repelled && raiderCity && r.convoy.gold > 0 && raiderCity.ownerForceId) {
+          cities[raiderCity.id] = { ...cities[raiderCity.id], gold: cities[raiderCity.id].gold + r.convoy.gold };
+        }
+        const esc = escortId ? officers[escortId] : null;
         const cargo = [r.convoy.food > 0 ? `糧${r.convoy.food.toLocaleString()}` : '', r.convoy.gold > 0 ? `金${r.convoy.gold.toLocaleString()}` : '', r.convoy.troops > 0 ? `兵${r.convoy.troops.toLocaleString()}` : ''].filter(Boolean).join('、');
-        entries.push({
-          cityId: r.convoy.toCityId,
-          kind: r.repelled ? 'income' : 'desertion',
-          text: r.repelled
-            ? `A convoy bound for ${r.toName} fought off a raid.`
-            : `A convoy bound for ${r.toName} was raided — ${cargo} lost${esc ? ` and ${esc.name.en} taken` : ''}!`,
-          textZh: r.repelled
-            ? `往${r.toName}之輜重擊退劫掠,押運折損。`
-            : `往${r.toName}之輜重遭劫 — ${cargo} 盡失${esc ? `,${esc.name.zh}被擒` : ''}!`,
-        });
+        const playerRaided = r.convoy.forceId === input.playerForceId;       // our column was hit
+        const playerCut = !r.repelled && raiderCity?.ownerForceId === input.playerForceId; // we cut enemy supply
+
+        if (playerRaided) {
+          entries.push({
+            cityId: r.convoy.toCityId,
+            kind: r.repelled ? 'income' : 'desertion',
+            text: r.repelled
+              ? `A convoy bound for ${r.toName} fought off a raid.`
+              : `A convoy bound for ${r.toName} was raided — ${cargo} lost${esc ? ` and ${esc.name.en} taken` : ''}!`,
+            textZh: r.repelled
+              ? `往${r.toName}之輜重擊退劫掠,押運折損。`
+              : `往${r.toName}之輜重遭劫 — ${cargo} 盡失${esc ? `,${esc.name.zh}被擒` : ''}!`,
+          });
+        } else if (playerCut && raiderCity) {
+          // 劫糧道 — your garrison cut an enemy supply train (the 烏巢 move).
+          const enemy = forces[r.convoy.forceId]?.name;
+          entries.push({
+            cityId: raiderCity.id,
+            kind: 'conquest',
+            text: `Your garrison at ${raiderCity.name.en} fell on ${enemy?.en ?? 'an enemy'} supply train — ${cargo} destroyed${esc ? `, ${esc.name.en} captured` : ''}!`,
+            textZh: `${raiderCity.name.zh}守軍劫了${enemy?.zh ?? '敵'}糧道 — ${cargo}${esc ? `,生擒${esc.name.zh}` : ''}!`,
+          });
+        }
       }
     }
 

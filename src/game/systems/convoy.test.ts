@@ -116,3 +116,13 @@ describe('押運武将 — capacity & pace set by the officer', () => {
     expect(r.forfeited.map((c) => c.id)).toContain('cv1');
   });
 });
+
+describe('劫糧道 — raider attribution (for loot & capture)', () => {
+  it('reports which stronghold overran a column', () => {
+    const cities = { a: mkCity('a'), b: mkCity('b'), fort: mkCity('fort', { ownerForceId: 'me', troops: 9000 }) };
+    const convoys = { cv1: mkConvoy({ id: 'cv1', forceId: 'enemy', troops: 0, gold: 500 }) };
+    const r = resolveConvoyRaids(convoys, { cv1: 1500 }, cities, { cv1: 'fort' });
+    expect(r.raids[0].repelled).toBe(false);
+    expect(r.raids[0].raiderCityId).toBe('fort');
+  });
+});

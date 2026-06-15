@@ -1952,12 +1952,14 @@ function MarchingArmy({ from, to, color, commanderName, troops, seasonsRemaining
 function Convoys({
   cities,
   convoys,
+  forces,
 }: {
   cities: Record<string, import('../../game/types').City>;
   convoys: Record<string, import('../../game/systems/convoy').Convoy>;
+  forces: Record<string, import('../../game/types').Force>;
 }) {
   const list = useMemo(() => {
-    const out: Array<{ id: string; route: Array<{ x: number; y: number }>; t: number; kind: 'food' | 'gold' | 'troops'; naval: boolean }> = [];
+    const out: Array<{ id: string; route: Array<{ x: number; y: number }>; t: number; kind: 'food' | 'gold' | 'troops'; naval: boolean; color: string }> = [];
     for (const c of Object.values(convoys)) {
       const from = cities[c.fromCityId];
       const to = cities[c.toCityId];
@@ -1969,21 +1971,21 @@ function Convoys({
       const elapsed = c.totalSeasons - c.seasonsRemaining;
       const t = Math.min(0.96, Math.max(0.04, (elapsed + 0.5) / Math.max(1, c.totalSeasons)));
       const kind: 'food' | 'gold' | 'troops' = c.food > 0 ? 'food' : c.gold > 0 ? 'gold' : 'troops';
-      out.push({ id: c.id, route, t, kind, naval: !!c.naval });
+      out.push({ id: c.id, route, t, kind, naval: !!c.naval, color: forces[c.forceId]?.color ?? '#9a8a6a' });
     }
     return out;
-  }, [cities, convoys]);
+  }, [cities, convoys, forces]);
 
   return (
     <>
       {list.map((c) => (
-        <ConvoyCart key={c.id} route={c.route} t={c.t} kind={c.kind} naval={c.naval} />
+        <ConvoyCart key={c.id} route={c.route} t={c.t} kind={c.kind} naval={c.naval} color={c.color} />
       ))}
     </>
   );
 }
 
-function ConvoyCart({ route, t, kind, naval }: { route: Array<{ x: number; y: number }>; t: number; kind: 'food' | 'gold' | 'troops'; naval?: boolean }) {
+function ConvoyCart({ route, t, kind, naval, color = '#9a8a6a' }: { route: Array<{ x: number; y: number }>; t: number; kind: 'food' | 'gold' | 'troops'; naval?: boolean; color?: string }) {
   const groupRef = useRef<THREE.Group>(null);
   useFrame(() => {
     if (!groupRef.current || route.length === 0) return;
@@ -2017,6 +2019,11 @@ function ConvoyCart({ route, t, kind, naval }: { route: Array<{ x: number; y: nu
           <boxGeometry args={[0.01, 0.34, 0.26]} />
           <meshStandardMaterial color="#d8cdb0" roughness={1} side={THREE.DoubleSide} />
         </mesh>
+        {/* 旗 — a banner pennant in the owner's colour, atop the mast. */}
+        <mesh position={[0.07, 0.6, -0.05]}>
+          <boxGeometry args={[0.012, 0.11, 0.13]} />
+          <meshStandardMaterial color={color} side={THREE.DoubleSide} />
+        </mesh>
       </group>
     );
   }
@@ -2043,6 +2050,16 @@ function ConvoyCart({ route, t, kind, naval }: { route: Array<{ x: number; y: nu
       <mesh position={[0, 0.16, -0.42]} castShadow>
         <boxGeometry args={[0.18, 0.18, 0.3]} />
         <meshStandardMaterial color="#4a3420" roughness={0.9} />
+      </mesh>
+      {/* 旗 — a banner pole flying the owner's colours, so you can tell whose
+          column it is (and which to raid). */}
+      <mesh position={[0.1, 0.46, 0.12]}>
+        <cylinderGeometry args={[0.01, 0.01, 0.36, 5]} />
+        <meshStandardMaterial color="#3a2818" />
+      </mesh>
+      <mesh position={[0.17, 0.56, 0.12]}>
+        <boxGeometry args={[0.13, 0.09, 0.012]} />
+        <meshStandardMaterial color={color} side={THREE.DoubleSide} />
       </mesh>
     </group>
   );
@@ -6007,7 +6024,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
       <Landmarks3D cities={cities} />
       <UniqueLandmarks3D cities={cities} />
       <MarchingArmies cities={cities} pendingCommands={visibleCommands} forces={forces} officers={officers} ports={portsForMarch} selectedArmyId={selectedArmyId3D} onArmyClick={handleArmyClick} hideNearPx={battleSitePx} />
-      <Convoys cities={cities} convoys={convoysState} />
+      <Convoys cities={cities} convoys={convoysState} forces={forces} />
       {overlayMode === 'supply' && <SupplyLines3D />}
       {overlayMode === 'diplomacy' && <DiplomacyLines3D cities={cities} forces={forces} />}
       <FieldBattleMarks3D marks={fieldBattleMarks} />

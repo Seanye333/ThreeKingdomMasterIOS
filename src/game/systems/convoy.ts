@@ -111,7 +111,7 @@ export function stepConvoys(
 
 export interface ConvoyRaidResult {
   convoys: Record<EntityId, Convoy>;
-  raids: Array<{ convoy: Convoy; repelled: boolean; toName: string }>;
+  raids: Array<{ convoy: Convoy; repelled: boolean; toName: string; raiderCityId?: EntityId }>;
 }
 
 /**
@@ -125,19 +125,21 @@ export function resolveConvoyRaids(
   convoys: Record<EntityId, Convoy>,
   dangers: Record<EntityId, number>,
   cities: Record<EntityId, City>,
+  raiders: Record<EntityId, EntityId> = {},
 ): ConvoyRaidResult {
   const next: Record<EntityId, Convoy> = {};
   const raids: ConvoyRaidResult['raids'] = [];
   for (const c of Object.values(convoys)) {
     const strength = dangers[c.id] ?? 0;
     const toName = cities[c.toCityId]?.name.zh ?? '?';
+    const raiderCityId = raiders[c.id];
     if (strength <= 0) {
       next[c.id] = c;
     } else if (c.troops >= strength) {
       next[c.id] = { ...c, troops: Math.max(0, c.troops - Math.floor(c.troops * 0.2)) };
-      raids.push({ convoy: c, repelled: true, toName });
+      raids.push({ convoy: c, repelled: true, toName, raiderCityId });
     } else {
-      raids.push({ convoy: c, repelled: false, toName });
+      raids.push({ convoy: c, repelled: false, toName, raiderCityId });
     }
   }
   return { convoys: next, raids };
