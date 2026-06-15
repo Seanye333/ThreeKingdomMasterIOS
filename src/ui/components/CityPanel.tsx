@@ -127,13 +127,7 @@ export function CityPanel() {
 
       <GrainTransferSection cityId={city.id} isPlayerCity={isPlayerCity} />
 
-      <section className={styles.section}>
-        <h3 className={styles.sectionTitle}>{t('內政', 'Development')}</h3>
-        <Bar label="Agriculture" zh="農業" value={city.agriculture} cap={cityEconCap(city)} />
-        <Bar label="Commerce" zh="商業" value={city.commerce} cap={cityEconCap(city)} />
-        <Bar label="Defense" zh="守備" value={city.defense} cap={citySize(city).statCap} />
-        <Bar label="Loyalty" zh="民忠" value={city.loyalty} cap={100} />
-      </section>
+      <DevelopmentSection city={city} isPlayerCity={isPlayerCity} />
 
       {/* Active policy effects from resident officers — REAL gameplay impact */}
       <PolicyEffectsSection city={city} cityOfficers={officers} />
@@ -575,15 +569,73 @@ function CityMiniMapText({ builtCount, wallTier }: { builtCount: number; wallTie
   );
 }
 
-function Bar({ label, zh, value, cap = 100 }: { label: string; zh: string; value: number; cap?: number }) {
+/**
+ * 內政 — the four development bars, colour-coded by stat with at-a-glance
+ * context: a ★ + "升城可破" hint when a stat is pinned at its size cap, an
+ * amber/red loyalty warning when the populace grows restive (revolt risk),
+ * and a "▸ 施政中" marker on whichever stat an officer is working this tick.
+ */
+function DevelopmentSection({ city, isPlayerCity }: { city: City; isPlayerCity: boolean }) {
+  const t = useT();
+  const econCap = cityEconCap(city);
+  const statCap = citySize(city).statCap;
+  const allPending = useGameStore((s) => s.pendingCommands);
+  // Which dev stats have an order queued in this city this tick.
+  const working = useMemo(() => {
+    const w = { agriculture: false, commerce: false, defense: false, loyalty: false };
+    if (!isPlayerCity) return w;
+    for (const c of Object.values(allPending)) {
+      if (c.cityId !== city.id) continue;
+      if (c.type === 'develop-agriculture' || c.type === 'major-agriculture') w.agriculture = true;
+      else if (c.type === 'develop-commerce' || c.type === 'major-commerce') w.commerce = true;
+      else if (c.type === 'build-defense' || c.type === 'major-defense' || c.type === 'upgrade-wall') w.defense = true;
+      else if (c.type === 'improve-loyalty') w.loyalty = true;
+    }
+    return w;
+  }, [allPending, city.id, isPlayerCity]);
+
+  const atCapNote = t('已達上限 · 升城可破', 'at cap · grow the city to raise it');
+  const loyaltyNote = city.loyalty < 25
+    ? t('民心離散 — 隨時生變,速安民!', 'populace in revolt — riots imminent, restore order!')
+    : city.loyalty < 45
+      ? t('民心浮動 — 謹防叛亂', 'restive — guard against revolt')
+      : undefined;
+
+  return (
+    <section className={styles.section}>
+      <h3 className={styles.sectionTitle}>{t('內政', 'Development')}</h3>
+      <Bar icon="grain" label="Agriculture" zh="農業" value={city.agriculture} cap={econCap} tone="#7ed68a"
+        working={working.agriculture} note={city.agriculture >= econCap ? atCapNote : undefined} />
+      <Bar icon="gold" label="Commerce" zh="商業" value={city.commerce} cap={econCap} tone="#e6c473"
+        working={working.commerce} note={city.commerce >= econCap ? atCapNote : undefined} />
+      <Bar icon="shield" label="Defense" zh="守備" value={city.defense} cap={statCap} tone="#88b7e8"
+        working={working.defense} note={city.defense >= statCap ? atCapNote : undefined} />
+      <Bar icon="flag" label="Loyalty" zh="民忠" value={city.loyalty} cap={100} tone="#e08aa0"
+        warn={city.loyalty < 45} working={working.loyalty} note={loyaltyNote} />
+    </section>
+  );
+}
+
+function Bar({ icon, label, zh, value, cap = 100, tone = '#9fb0bd', warn = false, working = false, note }: {
+  icon?: IconName; label: string; zh: string; value: number; cap?: number;
+  tone?: string; warn?: boolean; working?: boolean; note?: ReactNode;
+}) {
   const lang = useLanguage();
+  const t = useT();
   const atCap = value >= cap;
+  const fill = warn
+    ? 'linear-gradient(90deg, #8a2e22, #e0707a)'
+    : atCap
+      ? 'linear-gradient(90deg, #e6c473, #eef4f8)'
+      : `linear-gradient(90deg, ${tone}55, ${tone})`;
   return (
     <div className={styles.barRow}>
       <div className={styles.barHeader}>
-        <span className={styles.statLabel}>
+        <span className={styles.statLabel} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          {icon && <Icon name={icon} size={12} color={warn ? '#e0707a' : '#8a98a4'} />}
           {lang === 'en' ? label : zh}
-          {lang === 'both' && <> <span className={styles.statZh}>{label}</span></>}
+          {lang === 'both' && <span className={styles.statZh}>{label}</span>}
+          {working && <span style={{ fontSize: '0.6rem', color: '#7ed68a', letterSpacing: '0.05rem' }}>▸ {t('施政中', 'in progress')}</span>}
         </span>
         <span className={styles.barValue}>
           <AnimatedNumber value={value} flash /> / {cap}
@@ -591,14 +643,9 @@ function Bar({ label, zh, value, cap = 100 }: { label: string; zh: string; value
         </span>
       </div>
       <div className={styles.barTrack}>
-        <div
-          className={styles.barFill}
-          style={{
-            width: `${Math.min(100, (value / cap) * 100)}%`,
-            background: atCap ? 'linear-gradient(90deg, #e6c473, #eef4f8)' : undefined,
-          }}
-        />
+        <div className={styles.barFill} style={{ width: `${Math.min(100, (value / cap) * 100)}%`, background: fill }} />
       </div>
+      {note && <div style={{ fontSize: '0.66rem', marginTop: 2, color: warn ? '#e0a0a0' : '#7a8893' }}>{note}</div>}
     </div>
   );
 }
