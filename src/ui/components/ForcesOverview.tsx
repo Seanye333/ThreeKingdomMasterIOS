@@ -3,6 +3,7 @@ import { useGameStore } from '../../game/state/store';
 import type { City, EntityId, Officer } from '../../game/types';
 import { AnimatedNumber } from './AnimatedNumber';
 import { OfficerStats } from './OfficerStats';
+import { useT, useLanguage } from '../i18n';
 import styles from './ForcesOverview.module.css';
 
 interface Props {
@@ -28,6 +29,8 @@ interface ForceSummary {
 export function ForcesOverview({ onClose }: Props) {
   const forces = useGameStore((s) => s.forces);
   const cities = useGameStore((s) => s.cities);
+  const t = useT();
+  const lang = useLanguage();
   const officers = useGameStore((s) => s.officers);
   const playerForceId = useGameStore((s) => s.playerForceId);
 
@@ -75,8 +78,8 @@ export function ForcesOverview({ onClose }: Props) {
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <header className={styles.header}>
           <div>
-            <div className={styles.titleZh}>群雄</div>
-            <div className={styles.titleEn}>Forces of the Realm</div>
+            {lang !== 'en' && <div className={styles.titleZh}>群雄</div>}
+            {lang !== 'zh' && <div className={styles.titleEn}>Forces of the Realm</div>}
           </div>
           <button className={styles.closeButton} onClick={onClose}>
             ×
@@ -93,28 +96,28 @@ export function ForcesOverview({ onClose }: Props) {
                 />
                 <div className={styles.nameBlock}>
                   <span className={styles.nameZh}>
-                    {f.zh}
-                    {f.isPlayer && <span className={styles.playerTag}>YOU</span>}
+                    {lang === 'en' ? f.en : f.zh}
+                    {f.isPlayer && <span className={styles.playerTag}>{t('我方', 'YOU')}</span>}
                     {f.cityCount === 0 && (
-                      <span className={styles.eliminatedTag}>ELIMINATED</span>
+                      <span className={styles.eliminatedTag}>{t('覆滅', 'OUT')}</span>
                     )}
                   </span>
-                  <span className={styles.nameEn}>{f.en}</span>
+                  {lang === 'both' && <span className={styles.nameEn}>{f.en}</span>}
                 </div>
                 <div className={styles.stats}>
-                  <Stat label="Cities" num={f.cityCount} />
-                  <Stat label="Troops" num={f.troops} flash />
-                  <Stat label="Gold" num={f.gold} flash />
-                  <Stat label="Food" num={f.food} flash />
-                  <Stat label="Officers" num={f.officerCount} />
+                  <Stat label={t('城', 'Cities')} num={f.cityCount} />
+                  <Stat label={t('兵', 'Troops')} num={f.troops} flash />
+                  <Stat label={t('金', 'Gold')} num={f.gold} flash />
+                  <Stat label={t('糧', 'Food')} num={f.food} flash />
+                  <Stat label={t('將', 'Officers')} num={f.officerCount} />
                 </div>
               </div>
               {f.topOfficers.length > 0 && (
                 <div className={styles.topOfficers}>
                   {f.topOfficers.map((o) => (
                     <span key={o.id} className={styles.topOfficer}>
-                      <span className={styles.officerNameZh}>{o.name.zh}</span>
-                      <span className={styles.officerNameEn}>{o.name.en}</span>
+                      {lang !== 'en' && <span className={styles.officerNameZh}>{o.name.zh}</span>}
+                      {lang !== 'zh' && <span className={styles.officerNameEn}>{o.name.en}</span>}
                       <span className={styles.officerStats}>
                         <OfficerStats officer={o} keys={['war', 'intelligence', 'politics', 'charisma']} />
                       </span>
