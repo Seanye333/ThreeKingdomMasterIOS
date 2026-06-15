@@ -27,6 +27,7 @@ import { stepConvoys, resolveConvoyRaids, provisionNeeded, consumeRations, type 
 import { appointmentBonusFor } from './appointmentEffects';
 import { MILITARY_RANKS_BY_ID } from '../data/titles';
 import { rollEvents } from './events';
+import { resolveAmbitions } from './ambition';
 
 export interface ResolutionInput {
   date: GameDate;
@@ -1371,6 +1372,23 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
           textZh: `${o.name.zh}背棄${formerForce?.name.zh ?? '主公'}，飄然而去，自此為一介游俠。`,
         });
       }
+    }
+  }
+
+  // 權謀 — ambition: once per season, a discontented landed general may usurp
+  // his weak lord or break away with the city he holds. Uses its own
+  // date-seeded rng (off the main stream), so determinism elsewhere is intact.
+  if (seasonBoundary) {
+    const seasonIdx = { spring: 0, summer: 1, autumn: 2, winter: 3 }[input.date.season];
+    const ambitionEvents = resolveAmbitions({
+      officers,
+      cities,
+      forces,
+      playerForceId: input.playerForceId,
+      seed: (input.date.year * 4 + seasonIdx) >>> 0,
+    });
+    for (const ev of ambitionEvents) {
+      entries.push({ cityId: ev.cityId, kind: ev.kind, text: ev.text, textZh: ev.textZh });
     }
   }
 
