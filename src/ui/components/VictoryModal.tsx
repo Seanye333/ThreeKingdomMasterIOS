@@ -3,6 +3,8 @@ import { Seal } from './Seal';
 import { useLanguage, pickName } from '../i18n';
 import styles from './VictoryModal.module.css';
 
+const MOTES = Array.from({ length: 14 }, (_, i) => i);
+
 export function VictoryModal() {
   const victoryStatus = useGameStore((s) => s.victoryStatus);
   const date = useGameStore((s) => s.date);
@@ -21,6 +23,23 @@ export function VictoryModal() {
   return (
     <div className={styles.backdrop}>
       <div className={`${styles.modal} ${isVictory ? styles.victory : styles.defeat}`}>
+        {/* 凱旋光芒 + 金粉 — only triumph gets the rotating rays and rising motes. */}
+        {isVictory && (
+          <>
+            <div className={styles.rays} />
+            {MOTES.map((i) => (
+              <span
+                key={i}
+                className={styles.mote}
+                style={{
+                  left: `calc(50% + ${(i - 7) * 22}px)`,
+                  ['--mote-dur' as string]: `${2 + (i % 4) * 0.4}s`,
+                  ['--mote-delay' as string]: `${(i % 5) * 0.3}s`,
+                }}
+              />
+            ))}
+          </>
+        )}
         <div className={styles.banner} style={{ position: 'relative' }}>
           {isVictory ? (
             <>
@@ -34,14 +53,15 @@ export function VictoryModal() {
             </>
           )}
           {/* 朱印 — the record is stamped: 「統一」 in triumph, 「終」 at the end. */}
-          <Seal
-            chars={isVictory ? '統一' : '終'}
-            size={88}
-            rotate={isVictory ? 7 : -8}
-            color={isVictory ? '#b5302c' : '#6f2723'}
-            title={isVictory ? '天下統一' : '滅亡'}
-            style={{ position: 'absolute', top: -18, right: -6 }}
-          />
+          <span className={styles.sealStamp}>
+            <Seal
+              chars={isVictory ? '統一' : '終'}
+              size={88}
+              rotate={isVictory ? 7 : -8}
+              color={isVictory ? '#b5302c' : '#6f2723'}
+              title={isVictory ? '天下統一' : '滅亡'}
+            />
+          </span>
         </div>
 
         <p className={styles.body}>
@@ -86,7 +106,7 @@ export function VictoryModal() {
               };
               let lastYear = 0;
               return chronicle.map((c, i) => (
-                <div key={i} style={{ fontSize: '0.82rem', lineHeight: 1.7, color: '#e8d8b0' }}>
+                <div key={i} style={{ fontSize: '0.82rem', lineHeight: 1.7, color: '#e8d8b0', animation: `tkmVictorySub 0.4s ease-out ${0.6 + i * 0.04}s both` }}>
                   {c.year !== lastYear && (lastYear = c.year) && (
                     <div style={{ color: '#a08050', marginTop: 6, fontFamily: 'ui-monospace, monospace' }}>— {c.year} —</div>
                   )}
