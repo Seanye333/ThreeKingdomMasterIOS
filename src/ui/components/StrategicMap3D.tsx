@@ -1399,6 +1399,43 @@ function CityBanner({ color, baseY, isCapital }: {
   );
 }
 
+/** 軍旗 — a colours pole carried over a column on the march: the flag ripples
+ *  and the whole standard bobs with the marching gait, so an army on the move
+ *  flies its banner and reads as a real column, not just a cluster of markers. */
+function MarchBanner({ color }: { color: string }) {
+  const flagRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    const tm = clock.elapsedTime;
+    if (flagRef.current) flagRef.current.rotation.z = Math.sin(tm * 4.2) * 0.24;
+    if (groupRef.current) groupRef.current.position.y = Math.abs(Math.sin(tm * 3.4)) * 0.035; // marching bob
+  });
+  const poleH = 0.5;
+  const flagW = 0.2, flagH = 0.13;
+  const flagY = poleH - flagH * 0.7;
+  return (
+    <group ref={groupRef}>
+      <mesh position={[0, poleH / 2, 0]} castShadow>
+        <cylinderGeometry args={[0.012, 0.012, poleH, 5]} />
+        <meshStandardMaterial color="#1a1410" />
+      </mesh>
+      <mesh position={[0, poleH + 0.015, 0]} castShadow>
+        <sphereGeometry args={[0.02, 8, 8]} />
+        <meshStandardMaterial color="#e0c060" metalness={0.5} roughness={0.4} />
+      </mesh>
+      <mesh ref={flagRef} position={[flagW / 2, flagY, 0]} castShadow>
+        <planeGeometry args={[flagW, flagH]} />
+        <meshStandardMaterial color={color} side={THREE.DoubleSide} roughness={0.6} />
+      </mesh>
+      {/* Pennant tail catches the motion. */}
+      <mesh position={[flagW + 0.03, flagY, 0]}>
+        <planeGeometry args={[0.07, flagH * 0.45]} />
+        <meshStandardMaterial color={color} side={THREE.DoubleSide} transparent opacity={0.8} />
+      </mesh>
+    </group>
+  );
+}
+
 /** City pillar group: walled city / pagoda / pass / hamlet by tier, with
  *  a force-colored base disk, banner, name label and selection ring. */
 /* ─── 標籤分級 — when the camera is pulled far out, the ~120 city name+bar
@@ -1916,7 +1953,10 @@ function MarchingArmy({ from, to, color, commanderName, troops, seasonsRemaining
         </mesh>
       )}
       {holding ? (
-        <FieldCamp color={color} troops={troops} />
+        <>
+          <FieldCamp color={color} troops={troops} />
+          <MarchBanner color={color} />
+        </>
       ) : (
         <>
           {FORMATION.map(([sx, sz], i) => (
@@ -1924,6 +1964,7 @@ function MarchingArmy({ from, to, color, commanderName, troops, seasonsRemaining
               isLeader={i === 0} weaponType={weaponType} />
           ))}
           <MarchDust />
+          <MarchBanner color={color} />
         </>
       )}
       {commanderName && (
