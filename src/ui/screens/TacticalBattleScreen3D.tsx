@@ -3407,6 +3407,10 @@ export function TacticalBattleScreen3D() {
       else if (t.includes('夜襲') || t.includes('殺到')) playSfx('shout');
       else if (t.includes('搶修') || t.includes('猛撞') || t.includes('轟擊')) playSfx('thud');
       else if (t.includes('傾下') || t.includes('射出')) playSfx('arrow');
+      // 衝鋒陷陣 — a war cry when a line storms in, scales a wall, or breaks through.
+      else if (t.includes('突貫') || t.includes('踏牆') || t.includes('先登') || t.includes('陷陣') || t.includes('突騎')) playSfx('shout');
+      // 鳴金 — a struck gong when morale collapses or a line is shattered.
+      else if (t.includes('士氣大墮') || t.includes('士氣大挫') || t.includes('軍心動搖') || t.includes('軍心惶惶') || t.includes('大亂') || t.includes('潰')) playSfx('retreat');
     }
     sfxCursor.current = log.length;
   }, [battle?.log]);

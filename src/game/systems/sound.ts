@@ -68,7 +68,8 @@ export type SfxName =
   | 'quake'         // critical event
   | 'thud'          // ram hits a gate / repair hammering
   | 'shout'         // war cry — charge, sally, rout
-  | 'wardrum';      // battle ignition — pounding war drums
+  | 'wardrum'       // battle ignition — pounding war drums
+  | 'retreat';      // 鳴金 — a struck gong sinking: a line breaks / morale collapses
 
 interface Tone {
   freq: number;
@@ -160,6 +161,13 @@ const SFX_PATTERNS: Record<SfxName, Tone[]> = {
     { freq: 90, duration: 0.14, type: 'square', gain: 0.15 },
     { freq: 112, duration: 0.14, type: 'square', gain: 0.20 },
     { freq: 90, duration: 0.22, type: 'square', gain: 0.24, sweep: -60 },
+  ],
+  // 鳴金收兵 — a bright struck gong that rings out and sinks, the sound of a
+  // line breaking and falling back.
+  retreat: [
+    { freq: 540, duration: 0.16, type: 'triangle', gain: 0.16, sweep: -260 },
+    { freq: 400, duration: 0.5, type: 'sine', gain: 0.14, sweep: -140 },
+    { freq: 270, duration: 0.6, type: 'sine', gain: 0.1, sweep: -70 },
   ],
 };
 
