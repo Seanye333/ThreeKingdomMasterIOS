@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
+import { OfficerPortrait } from './OfficerPortrait';
 import { useT, useLanguage } from '../i18n';
 
 export function DialogueModal() {
   const dlg = useGameStore((s) => s.pendingDialogue);
   const accept = useGameStore((s) => s.acceptDialogue);
   const officers = useGameStore((s) => s.officers);
+  const forces = useGameStore((s) => s.forces);
+  const year = useGameStore((s) => s.date.year);
+  const reduced = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const [choseIdx, setChoseIdx] = useState<number | null>(null);
   // Typewriter reveal — characters fade in over ~1s for narrative gravitas.
   const [revealedChars, setRevealedChars] = useState(0);
@@ -32,6 +36,7 @@ export function DialogueModal() {
   const displayText = (lang === 'en' ? dlg.text.en : dlg.text.zh).slice(0, revealedChars);
   const isFullyRevealed = revealedChars >= (lang === 'en' ? dlg.text.en.length : dlg.text.zh.length);
   const speaker = dlg.speakerOfficerId ? officers[dlg.speakerOfficerId] : null;
+  const speakerForce = speaker?.forceId ? forces[speaker.forceId] : null;
   const speakerName = speaker
     ? { zh: speaker.name.zh, en: speaker.name.en }
     : dlg.speaker ?? { zh: '?', en: '?' };
@@ -88,6 +93,19 @@ export function DialogueModal() {
         }}>
           {t('書信', 'Court Event')}
         </div>
+        {/* 說話者立繪 — the speaker rises into a soft accent glow above their name. */}
+        {speaker && (
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.6rem' }}>
+            <div style={{
+              borderRadius: '50%',
+              border: `2px solid ${speakerForce?.color ?? '#e6c473'}`,
+              boxShadow: `0 0 20px ${speakerForce?.color ?? '#e6c473'}88`,
+              animation: reduced ? undefined : 'tkmPortraitRise 0.7s cubic-bezier(0.2,0.9,0.3,1) both',
+            }}>
+              <OfficerPortrait officer={speaker} size={84} forceColor={speakerForce?.color} year={year} />
+            </div>
+          </div>
+        )}
         <div style={{ fontSize: '1.2rem', color: '#e6c473', letterSpacing: '0.07rem', textAlign: 'center' }}>
           {lang === 'en' ? speakerName.en : speakerName.zh}
         </div>
