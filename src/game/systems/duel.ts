@@ -215,9 +215,18 @@ export interface DuelBout {
 
 export const POWER_GUARD_COST = 2;
 
-export function initDuelBout(attacker: Officer, defender: Officer): DuelBout {
+/** Starting-stamina penalties (車輪戰): an officer who has already dueled this
+ *  battle opens the next bout winded. Clamped so they can still put up a fight. */
+export function initDuelBout(
+  attacker: Officer,
+  defender: Officer,
+  aStaminaPenalty = 0,
+  dStaminaPenalty = 0,
+): DuelBout {
   return {
-    aStamina: 100, dStamina: 100, aGuard: 0, dGuard: 0,
+    aStamina: Math.max(30, 100 - aStaminaPenalty),
+    dStamina: Math.max(30, 100 - dStaminaPenalty),
+    aGuard: 0, dGuard: 0,
     aStatic: staticProwess(attacker), dStatic: staticProwess(defender),
     aInt: attacker.stats.intelligence, dInt: defender.stats.intelligence,
     aMoves: [], dMoves: [],

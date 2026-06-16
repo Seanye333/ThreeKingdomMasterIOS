@@ -202,6 +202,17 @@ describe('aiDuelMove — 料敵 (intelligence reads the foe)', () => {
     expect(aiDuelMove(dull, 'defender', () => 0.1)).toBe('attack');
   });
 
+  it('車輪戰 — fatigue penalties open the bout winded (clamped to 30)', () => {
+    const fresh = initDuelBout(mkO(80), mkO(80));
+    expect(fresh.aStamina).toBe(100);
+    expect(fresh.dStamina).toBe(100);
+    const worn = initDuelBout(mkO(80), mkO(80), 24, 48);
+    expect(worn.aStamina).toBe(76);
+    expect(worn.dStamina).toBe(52);
+    // A foe who has fought many bouts can't drop below a fighting floor of 30.
+    expect(initDuelBout(mkO(80), mkO(80), 0, 200).dStamina).toBe(30);
+  });
+
   it('a sharp mind guards against a foe loaded for an Overpower', () => {
     const base = initDuelBout(mkO(80), mkO(110));
     // Foe (attacker) has 2 guard banked → threatens 奮; the reader plays 守.

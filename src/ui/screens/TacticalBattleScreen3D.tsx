@@ -3545,7 +3545,7 @@ export function TacticalBattleScreen3D() {
     const id = setTimeout(() => setShowOpening(false), 2800);
     return () => clearTimeout(id);
   }, []);
-  const [interactiveDuel, setInteractiveDuel] = useState<{ me: Officer; foe: Officer } | null>(null);
+  const [interactiveDuel, setInteractiveDuel] = useState<{ me: Officer; foe: Officer; meFatigue: number; foeFatigue: number } | null>(null);
   const [voiceLine, setVoiceLine] = useState<{ text: string; key: number } | null>(null);
   // N7 — signature-tactic banner overlay state
   const [signatureBanner, setSignatureBanner] = useState<{ zh: string; en: string; key: number } | null>(null);
@@ -3786,7 +3786,8 @@ export function TacticalBattleScreen3D() {
       if (!foeCheck.ok) { alert(`Enemy cannot duel: ${foeCheck.reason}`); return; }
       // Spend AP and open the interactive bout; the kill is applied on finish.
       start({ ...battle, units: battle.units.map((unit) => unit.id === selectedUnit.id ? { ...unit, ap: 0 } : unit) });
-      setInteractiveDuel({ me, foe });
+      // 車輪戰 — each fighter opens winded by the bouts they've already fought.
+      setInteractiveDuel({ me, foe, meFatigue: selectedUnit.duelFatigue ?? 0, foeFatigue: u.duelFatigue ?? 0 });
       setActionMode({ kind: 'none' });
       return;
     }
@@ -4414,6 +4415,8 @@ export function TacticalBattleScreen3D() {
         <DuelGameModal
           attacker={interactiveDuel.me}
           defender={interactiveDuel.foe}
+          meFatigue={interactiveDuel.meFatigue}
+          foeFatigue={interactiveDuel.foeFatigue}
           onComplete={(outcome) => {
             const { me, foe } = interactiveDuel;
             const killedId = outcome.killedId === 'defender' ? foe.id
@@ -4468,6 +4471,8 @@ export function TacticalBattleScreen3D() {
               // 兩敗俱傷 — a draw mauls both: each loses ~10% of its troops.
               next = { ...next, units: next.units.map((u) => (u.officerId === me.id || u.officerId === foe.id) ? { ...u, troops: Math.round(u.troops * 0.9) } : u) };
             }
+            // 車輪戰 — both surviving fighters are more winded for any next bout.
+            next = { ...next, units: next.units.map((u) => (u.officerId === me.id || u.officerId === foe.id) ? { ...u, duelFatigue: (u.duelFatigue ?? 0) + 24 } : u) };
             start(next);
             setInteractiveDuel(null);
           }}

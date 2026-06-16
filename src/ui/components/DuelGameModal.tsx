@@ -45,16 +45,19 @@ const MOVES: Array<{ id: DuelMove; zh: string; en: string; hint: { zh: string; e
 ];
 
 export function DuelGameModal({
-  attacker, defender, onComplete,
+  attacker, defender, onComplete, meFatigue = 0, foeFatigue = 0,
 }: {
   attacker: Officer;
   defender: Officer;
   onComplete: (outcome: { winner: 'attacker' | 'defender' | 'draw'; killedId?: 'attacker' | 'defender' }) => void;
+  /** 車輪戰 — starting-stamina penalties from bouts already fought this battle. */
+  meFatigue?: number;
+  foeFatigue?: number;
 }) {
   const t = useT();
   const lang = useLanguage();
   const reduced = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  const [bout, setBout] = useState<DuelBout>(() => initDuelBout(attacker, defender));
+  const [bout, setBout] = useState<DuelBout>(() => initDuelBout(attacker, defender, meFatigue, foeFatigue));
   const [log, setLog] = useState<string[]>([]);
   // 命中演出 — per-round strike feedback: which side was hit, by how much, and
   // a key so the clash glint / shake / damage-float replay even on a repeat hit.
@@ -144,9 +147,16 @@ export function DuelGameModal({
         {/* 受創血暈 — the card edges flush red when *you* (the attacker) take a blow. */}
         {fx && !reduced && fx.hit === 'a' && <div key={`v${fx.key}`} className="tkm-blood-vignette" />}
 
-        <div style={{ textAlign: 'center', color: '#e6c473', letterSpacing: '0.14rem', fontSize: '1.2rem', marginBottom: '0.8rem' }}>
+        <div style={{ textAlign: 'center', color: '#e6c473', letterSpacing: '0.14rem', fontSize: '1.2rem', marginBottom: foeFatigue > 0 || meFatigue > 0 ? '0.2rem' : '0.8rem' }}>
           ⚔ {t('單挑', 'Single Combat')}
         </div>
+        {(foeFatigue > 0 || meFatigue > 0) && (
+          <div style={{ textAlign: 'center', fontSize: '0.72rem', color: '#e0a060', marginBottom: '0.7rem', letterSpacing: '0.05rem' }}>
+            🌀 {foeFatigue >= meFatigue
+              ? t('車輪戰 — 敵將連戰力竭,氣力大損!', 'Gauntlet — the foe is worn down from earlier bouts!')
+              : t('車輪戰 — 我將連戰力竭,氣力大損!', 'Gauntlet — your officer is winded from earlier bouts!')}
+          </div>
+        )}
 
         {/* 必殺技 — the signature move slams across the bout. */}
         {signature && (

@@ -187,6 +187,9 @@ export interface TacticalUnit {
    *  the unit attacks. Set when starting in forest with the
    *  ten-ambush formation. */
   hidden?: boolean;
+  /** 車輪戰 — duels fought this battle. Each prior bout leaves the officer
+   *  more winded, so successive fresh challengers can wear down a strong foe. */
+  duelFatigue?: number;
   /** 行軍路線 — queued waypoints from a multi-step move order. The unit walks
    *  these within the turn as AP allows; any leftover auto-resumes at the start
    *  of its side's next turn (unless it's pinned in melee). Cleared on arrival,
