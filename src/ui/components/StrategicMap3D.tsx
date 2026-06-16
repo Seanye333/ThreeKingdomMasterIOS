@@ -737,23 +737,48 @@ function TerritoryGroundLayer({
     return g;
   }, []);
 
-  // CanvasTexture wrapping the cached hex-grid image. Rebuild only when
-  // the ownership signature changes. Anisotropic + linear-no-mipmap
-  // filtering keeps the crisp hex edges sharp when stretched across the
-  // tilted terrain plane instead of mip-blurring into mush.
-  const sig = getTerritorySignature(cities, territoryOwnership);
-  const texture = useMemo(() => {
-    const tex = new THREE.CanvasTexture(getTerritoryCanvas(cities, forces, territoryOwnership));
-    tex.flipY = true;
-    tex.minFilter = THREE.LinearFilter;   // crisp (no mipmap); the z-fight fix (camera near + lift) is what removed the far-zoom striping, not mipmaps
-    tex.magFilter = THREE.LinearFilter;
-    tex.anisotropy = 8;
-    tex.generateMipmaps = false;
-    tex.needsUpdate = true;
-    return tex;
+  // CanvasTexture wrapping the cached hex-grid image. Rebuilds only when the
+  // ownership signature changes — and the rebuild (a 2× supersampled paint) is
+  // pushed off the critical path into an idle callback, so neither the first
+  // map load nor a conquest's turn-tick stalls a frame waiting on the paint.
+  // The new tint just swaps in a moment later; the previous one stays up until
+  // then. Anisotropic + linear-no-mipmap filtering keeps the hex edges crisp.
+  const sig = useMemo(
+    () => getTerritorySignature(cities, territoryOwnership),
+    [cities, territoryOwnership],
+  );
+  const [texture, setTexture] = useState<THREE.CanvasTexture | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const build = () => {
+      if (cancelled) return;
+      const tex = new THREE.CanvasTexture(getTerritoryCanvas(cities, forces, territoryOwnership));
+      tex.flipY = true;
+      tex.minFilter = THREE.LinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      tex.anisotropy = 8;
+      tex.generateMipmaps = false;
+      tex.needsUpdate = true;
+      setTexture((old) => { old?.dispose(); return tex; });
+    };
+    const win = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    const id = win.requestIdleCallback
+      ? win.requestIdleCallback(build, { timeout: 300 })
+      : (window.setTimeout(build, 1) as unknown as number);
+    return () => {
+      cancelled = true;
+      if (win.cancelIdleCallback) win.cancelIdleCallback(id);
+      else window.clearTimeout(id);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sig]);
 
+  // Until the first tint is painted, render nothing (the bare terrain shows);
+  // the overlay fades in a frame later without ever blocking the load.
+  if (!texture) return null;
   return (
     <mesh
       rotation={[-Math.PI / 2, 0, 0]}
