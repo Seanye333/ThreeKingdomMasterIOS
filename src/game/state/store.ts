@@ -60,6 +60,7 @@ import { planAITurn } from '../systems/ai';
 import { planAIAppointments } from '../systems/aiAppointments';
 import { planAICourt } from '../systems/aiCourt';
 import { rollFactionEvents } from '../systems/factionEvents';
+import { rollBehaviorEvent } from '../systems/behaviorEvents';
 import { rollAIWishFlavor } from '../systems/aiWishesFlavor';
 import { appointmentBonusFor, pruneStaleAppointments, traitRefusal, isOnCooldown } from '../systems/appointmentEffects';
 import { canPromoteToRank } from '../systems/imperialEffects';
@@ -2047,6 +2048,18 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // season if none scripted fired, and fire deterministically.
         const eventCheck =
           findFiringEvent(eventCtx) ??
+          // 動態事件 — emergent beats from how the player governs (treasury,
+          // taxation, idle talent). Behind scripted history, ahead of custom.
+          rollBehaviorEvent({
+            date: result.date,
+            cities: postCities,
+            officers: postOfficers,
+            forces: postForces,
+            taxPolicy: state.taxPolicy,
+            playerForceId: state.playerForceId,
+            firedEventIds: state.firedEventIds,
+            rng: Math.random,
+          }) ??
           (state.customEvents.length > 0
             ? findFiringEventIn(state.customEvents, eventCtx, { alwaysFire: true })
             : null);
