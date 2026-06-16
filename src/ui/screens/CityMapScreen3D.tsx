@@ -22,7 +22,7 @@ import { cityViewWindow } from '../viewWindow';
 import { BUILDING_DEFS, BUILDING_DEFS_BY_ID } from '../../game/data/buildings';
 import { startCityAmbience, stopCityAmbience } from '../../game/systems/sound';
 import type { EntityId, BuildingId } from '../../game/types';
-import { useLanguage } from '../i18n';
+import { useLanguage, pickName, useT } from '../i18n';
 // Reuse the polished 3D primitives from the tactical battle scene so the
 // city map matches its visual fidelity — terrain art, lighting, walls.
 import {
@@ -2291,6 +2291,7 @@ function Hinterland3D({
   onSlotClick: (slot: number) => void;
   showOverlays: boolean;
 }) {
+  const lang = useLanguage();
   const W = preview.width, H = preview.height;
   const cx = (W * HEX_COL_STEP) / 2;
   const cz = (H * HEX_ROW_STEP) / 2;
@@ -2483,7 +2484,7 @@ function Hinterland3D({
                   fontFamily: 'var(--tkm-font-body)', fontSize: '12px',
                   letterSpacing: '1px', whiteSpace: 'nowrap',
                   textShadow: '0 1px 3px #000', pointerEvents: 'none',
-                }}>{def.name.zh}</div>
+                }}>{pickName(def.name, lang)}</div>
               </Html>
             )}
           </group>
@@ -2965,6 +2966,7 @@ function CityMapScreen3DInner({ city, cityId, onClose, onSwitch2D }: {
     window.setTimeout(onClose, 480);
   };
   const lang = useLanguage();
+  const t = useT();
 
   const rawPreview = useMemo(
     () => previewBattlefield(cityId, {
@@ -3061,7 +3063,7 @@ function CityMapScreen3DInner({ city, cityId, onClose, onSwitch2D }: {
         const owner = c.ownerForceId ? forces[c.ownerForceId] : null;
         return {
           id: c.id,
-          nameZh: c.name.zh,
+          nameZh: pickName(c.name, lang),
           nameEn: c.name.en,
           x: c.coords.x,
           y: c.coords.y,
@@ -3070,7 +3072,7 @@ function CityMapScreen3DInner({ city, cityId, onClose, onSwitch2D }: {
             : c.ownerForceId ? 'other' : 'neutral') as Neighbor['rel'],
         };
       });
-  }, [city, allCities, forces, playerForceId]);
+  }, [city, allCities, forces, playerForceId, lang]);
 
   // Strategic 施設 near this city — projected into the hinterland so the same
   // building shows on the world map, here, and (in range) on the battlefield.
@@ -3098,10 +3100,10 @@ function CityMapScreen3DInner({ city, cityId, onClose, onSwitch2D }: {
       .map((f) => {
         const [fx, fy] = geoToPixel(f.coords.lon, f.coords.lat);
         const dx = fx - city.coords.x, dy = fy - city.coords.y;
-        return { id: f.id, dx, dy, dist: Math.hypot(dx, dy), nameZh: f.name.zh, owned: f.ownerForceId === playerForceId };
+        return { id: f.id, dx, dy, dist: Math.hypot(dx, dy), nameZh: pickName(f.name, lang), owned: f.ownerForceId === playerForceId };
       })
       .filter((f) => f.dist < 95);
-  }, [allForts, city, playerForceId]);
+  }, [allForts, city, playerForceId, lang]);
 
   // 港口 near this city — anchored at their true bearing.
   const allPorts = useGameStore((s) => s.ports);
@@ -3111,10 +3113,10 @@ function CityMapScreen3DInner({ city, cityId, onClose, onSwitch2D }: {
       .map((p) => {
         const [ppx, ppy] = geoToPixel(p.coords.lon, p.coords.lat);
         const dx = ppx - city.coords.x, dy = ppy - city.coords.y;
-        return { id: p.id, dx, dy, dist: Math.hypot(dx, dy), nameZh: p.name.zh, owned: p.ownerForceId === playerForceId };
+        return { id: p.id, dx, dy, dist: Math.hypot(dx, dy), nameZh: pickName(p.name, lang), owned: p.ownerForceId === playerForceId };
       })
       .filter((p) => p.dist < 95);
-  }, [allPorts, city, playerForceId]);
+  }, [allPorts, city, playerForceId, lang]);
 
   // 戰痕 — recent battle sites near this city pulse on the hinterland too.
   const fieldBattleMarks = useGameStore((s) => s.fieldBattleMarks);
@@ -3140,14 +3142,14 @@ function CityMapScreen3DInner({ city, cityId, onClose, onSwitch2D }: {
           id: a.id, dx, dy, dist: Math.hypot(dx, dy),
           color: force?.color ?? '#8a7050',
           troops: a.troops,
-          nameZh: force?.name.zh ?? '',
+          nameZh: force ? pickName(force.name, lang) : '',
           own: a.forceId === playerForceId,
           incoming: a.targetCityId === cityId,
         };
       })
       // Skip columns sitting on the city itself (garrison) and far-off ones.
       .filter((a) => a.dist > 4 && a.dist < 95);
-  }, [allArmies, city, forces, playerForceId, cityId]);
+  }, [allArmies, city, forces, playerForceId, cityId, lang]);
 
   // For the selected slot: which neighbour(s) lie in its compass octant.
   const slotGuards = useMemo(() => {
@@ -3287,8 +3289,8 @@ function CityMapScreen3DInner({ city, cityId, onClose, onSwitch2D }: {
         zIndex: 10,
       }}>
         <div style={{ color: '#d4a84a', fontFamily: 'var(--tkm-font-body)', letterSpacing: '0.1rem' }}>
-          <span style={{ fontSize: '1.3rem' }}>{city.name.zh}</span>
-          <span style={{ fontSize: '0.85rem', color: size.color, marginLeft: '0.6rem' }}>{size.name.zh}</span>
+          <span style={{ fontSize: '1.3rem' }}>{pickName(city.name, lang)}</span>
+          <span style={{ fontSize: '0.85rem', color: size.color, marginLeft: '0.6rem' }}>{pickName(size.name, lang)}</span>
           <span style={{ fontSize: '0.7rem', color: '#8a7050', marginLeft: '0.8rem' }}>
             {builtCount}/8 防禦
             {total.defenseBonus > 0 && ` · +${total.defenseBonus} 守備`}
@@ -3471,7 +3473,7 @@ function CityMapScreen3DInner({ city, cityId, onClose, onSwitch2D }: {
             {currentSlot?.buildingId ? (
               <div>
                 <div style={{ color: DEFENSE_BUILDINGS[currentSlot.buildingId].color, marginBottom: '0.3rem' }}>
-                  {DEFENSE_BUILDINGS[currentSlot.buildingId].name.zh} lv{currentSlot.level}
+                  {pickName(DEFENSE_BUILDINGS[currentSlot.buildingId].name, lang)} lv{currentSlot.level}
                 </div>
                 <div style={{ color: '#8a7050', fontSize: '0.72rem', marginBottom: '0.5rem' }}>
                   {DEFENSE_BUILDINGS[currentSlot.buildingId].description}
@@ -3521,7 +3523,7 @@ function CityMapScreen3DInner({ city, cityId, onClose, onSwitch2D }: {
                           cursor: 'pointer', textAlign: 'left',
                         }}
                       >
-                        {def.name.zh} <span style={{ float: 'right', opacity: 0.7 }}>{def.goldCost}g</span>
+                        {pickName(def.name, lang)} <span style={{ float: 'right', opacity: 0.7 }}>{def.goldCost}g</span>
                       </button>
                     );
                   })}
@@ -3703,7 +3705,7 @@ function CityMapScreen3DInner({ city, cityId, onClose, onSwitch2D }: {
                           key={ct}
                           onClick={() => { setPickerCmd(ct); setInspect(null); }}
                           disabled={!canAfford}
-                          title={canAfford ? def.description : '金錢不足'}
+                          title={canAfford ? def.description : t('金錢不足', 'Not enough gold')}
                           style={{
                             background: canAfford ? '#2a1f14' : 'transparent',
                             border: `1px solid ${canAfford ? inspect.color : '#3a2d20'}`,
@@ -3711,7 +3713,7 @@ function CityMapScreen3DInner({ city, cityId, onClose, onSwitch2D }: {
                             padding: '0.3rem 0.6rem', cursor: canAfford ? 'pointer' : 'not-allowed',
                             fontFamily: 'inherit', fontSize: '0.76rem',
                           }}
-                        >{def.label.zh} <span style={{ color: '#8a7050' }}>{def.goldCost > 0 ? `${def.goldCost}g` : '免'}</span></button>
+                        >{pickName(def.label, lang)} <span style={{ color: '#8a7050' }}>{def.goldCost > 0 ? `${def.goldCost}g` : '免'}</span></button>
                       );
                     })}
                   </div>
