@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveDuel, canDuel, initDuelBout, duelRound, staticProwess, aiDuelMove } from './duel';
+import { resolveDuel, canDuel, initDuelBout, duelRound, staticProwess, aiDuelMove, type DuelMove } from './duel';
 import { resolveWordWar, initDebate, debateRound, aiDebateMove } from './wordWar';
 import { mkOfficer, seededRng } from '../../test/factories';
 
@@ -184,5 +184,28 @@ describe('prestige folds into duel prowess', () => {
     const tiger = mkOfficer({ stats: { war: 90, leadership: 60, intelligence: 60, politics: 60, charisma: 60 } });
     // 90 war + 12 虎將 duel bonus, no items/skills/traits.
     expect(staticProwess(tiger)).toBe(102);
+  });
+});
+
+describe('aiDuelMove — 料敵 (intelligence reads the foe)', () => {
+  const mkO = (intel: number) => mkOfficer({ stats: { war: 80, leadership: 60, intelligence: intel, politics: 60, charisma: 60 } });
+  const habit = ['attack', 'attack', 'attack'] as DuelMove[];
+
+  it('a sharp mind counters a predictable attacker; a bruiser fights on instinct', () => {
+    const base = initDuelBout(mkO(80), mkO(110));
+    // Defender INT 110 → reads ~70%; with the foe always attacking, it guards.
+    const sharp = { ...base, aMoves: habit, dInt: 110, aGuard: 0, dGuard: 0 };
+    expect(aiDuelMove(sharp, 'defender', () => 0.1)).toBe('defend');
+
+    // Defender INT 40 → never reads; falls back to instinct (attack on rng 0.1).
+    const dull = { ...base, aMoves: habit, dInt: 40, aGuard: 0, dGuard: 0 };
+    expect(aiDuelMove(dull, 'defender', () => 0.1)).toBe('attack');
+  });
+
+  it('a sharp mind guards against a foe loaded for an Overpower', () => {
+    const base = initDuelBout(mkO(80), mkO(110));
+    // Foe (attacker) has 2 guard banked → threatens 奮; the reader plays 守.
+    const bout = { ...base, dInt: 110, aGuard: 2, dGuard: 0, aMoves: [] as DuelMove[] };
+    expect(aiDuelMove(bout, 'defender', () => 0.1)).toBe('defend');
   });
 });

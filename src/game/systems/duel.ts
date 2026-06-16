@@ -203,6 +203,10 @@ export interface DuelBout {
   dGuard: number;
   aStatic: number;  // fixed prowess
   dStatic: number;
+  aInt: number;     // intelligence — drives how well each side reads the foe
+  dInt: number;
+  aMoves: DuelMove[]; // move history, so a sharp mind can read a habit
+  dMoves: DuelMove[];
   round: number;    // rounds played
   over: boolean;
   winner?: 'attacker' | 'defender' | 'draw';
@@ -215,6 +219,8 @@ export function initDuelBout(attacker: Officer, defender: Officer): DuelBout {
   return {
     aStamina: 100, dStamina: 100, aGuard: 0, dGuard: 0,
     aStatic: staticProwess(attacker), dStatic: staticProwess(defender),
+    aInt: attacker.stats.intelligence, dInt: defender.stats.intelligence,
+    aMoves: [], dMoves: [],
     round: 0, over: false,
   };
 }
@@ -245,6 +251,9 @@ export function duelRound(
 ): DuelRoundResult {
   const b: DuelBout = { ...bout };
   if (b.over) return { bout: b, roundWinner: 'draw', dmgToAttacker: 0, dmgToDefender: 0 };
+  // Record the exchange so a reading mind has a habit to exploit next round.
+  b.aMoves = [...bout.aMoves, aMove];
+  b.dMoves = [...bout.dMoves, dMove];
   if (aMove === 'power') b.aGuard = Math.max(0, b.aGuard - POWER_GUARD_COST);
   if (dMove === 'power') b.dGuard = Math.max(0, b.dGuard - POWER_GUARD_COST);
 
@@ -287,11 +296,50 @@ export function duelRound(
   return { bout: b, roundWinner, dmgToAttacker, dmgToDefender };
 }
 
-/** AI picks a move: spend 奮 when banked, otherwise favour attack, mix in
- *  defend/scheme; a battered fighter guards more. */
+// To BEAT a predicted move, play its counter (守>攻, 攻>計, 計>守, 守>奮).
+const COUNTER: Record<DuelMove, DuelMove> = {
+  attack: 'defend',
+  scheme: 'attack',
+  defend: 'scheme',
+  power: 'defend',
+};
+
+/** The foe's prevailing habit over their last few moves (random among ties). */
+function readHabit(moves: DuelMove[], rng: () => number): DuelMove | null {
+  const recent = moves.slice(-4);
+  if (recent.length === 0) return null;
+  const counts: Partial<Record<DuelMove, number>> = {};
+  for (const m of recent) counts[m] = (counts[m] ?? 0) + 1;
+  let best: DuelMove[] = [];
+  let max = 0;
+  for (const m of recent) {
+    const c = counts[m] ?? 0;
+    if (c > max) { max = c; best = [m]; }
+    else if (c === max && !best.includes(m)) best.push(m);
+  }
+  return best[Math.floor(rng() * best.length)] ?? null;
+}
+
+/** AI picks a move. 料敵 — a sharp mind (high 智力) reads the foe's habit (or a
+ *  loaded guard threatening 奮) and plays the counter; a 武夫 just fights on
+ *  instinct: spend 奮 when banked, otherwise favour attack, guard when battered. */
 export function aiDuelMove(bout: DuelBout, side: 'attacker' | 'defender', rng: () => number = Math.random): DuelMove {
   const guard = side === 'attacker' ? bout.aGuard : bout.dGuard;
   const stamina = side === 'attacker' ? bout.aStamina : bout.dStamina;
+  const myInt = side === 'attacker' ? bout.aInt : bout.dInt;
+  const foeMoves = side === 'attacker' ? bout.dMoves : bout.aMoves;
+  const foeGuard = side === 'attacker' ? bout.dGuard : bout.aGuard;
+
+  // Reading the foe scales with intelligence: a 40-INT bruiser never reads;
+  // a 110-INT strategist counters ~70% of the time (still beatable by varying).
+  const readChance = Math.min(0.72, Math.max(0, (myInt - 40) / 100));
+  if (rng() < readChance) {
+    let predicted: DuelMove | null = null;
+    if (foeGuard >= POWER_GUARD_COST && rng() < 0.45) predicted = 'power';
+    else predicted = readHabit(foeMoves, rng);
+    if (predicted) return COUNTER[predicted];
+  }
+
   if (guard >= POWER_GUARD_COST && rng() < 0.55) return 'power';
   const r = rng();
   if (stamina < 35) return r < 0.5 ? 'defend' : r < 0.78 ? 'scheme' : 'attack';
