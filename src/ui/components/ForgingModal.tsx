@@ -2,11 +2,64 @@ import { useMemo, useState } from 'react';
 import { FORGE_RECIPES, ITEMS_BY_ID } from '../../game/data';
 import { useGameStore } from '../../game/state/store';
 import type { EntityId } from '../../game/types';
-import { useDesc, useLanguage } from '../i18n';
+import { useDesc, useLanguage, useT } from '../i18n';
 import { Name } from './Name';
 
 interface Props {
   onClose: () => void;
+}
+
+const SPARKS = Array.from({ length: 14 }, (_, i) => i);
+
+/** 鑄成 — the reveal when a weapon leaves the anvil: the name slams in over
+ *  the forge's glow as embers fly up. Dismiss on click. */
+function ForgedReveal({ name, onDone }: { name?: { zh: string; en: string }; onDone: () => void }) {
+  const t = useT();
+  const reduced = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  return (
+    <div
+      onClick={onDone}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 1000, cursor: 'pointer',
+        display: 'grid', placeItems: 'center',
+        background: 'radial-gradient(ellipse at center, rgba(60,22,6,0.6), rgba(0,0,0,0.9))',
+        animation: reduced ? undefined : 'tkmCeremonyBackdrop 0.35s ease-out',
+      }}
+    >
+      {!reduced && (
+        <div style={{
+          position: 'absolute', left: '50%', top: '46%', width: 560, height: 560,
+          transform: 'translate(-50%,-50%)', pointerEvents: 'none', borderRadius: '50%',
+          background: 'repeating-conic-gradient(from 0deg, rgba(245,90,32,0) 0deg, rgba(245,140,40,0.5) 6deg, rgba(245,90,32,0) 12deg)',
+          WebkitMaskImage: 'radial-gradient(circle, #000 0%, transparent 60%)',
+          maskImage: 'radial-gradient(circle, #000 0%, transparent 60%)',
+          animation: 'tkmRaySpin 16s linear infinite, tkmRayPulse 2.6s ease-in-out infinite',
+        }} />
+      )}
+      <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.6rem' }}>
+        <div style={{ fontSize: '0.78rem', letterSpacing: '0.5rem', color: '#e8a878', ...(reduced ? {} : { animation: 'tkmVictorySub 0.5s ease-out 0.15s both' }) }}>
+          {t('鑄成', 'FORGED')}
+        </div>
+        <div style={{ fontSize: '3rem', lineHeight: 1, ...(reduced ? {} : { animation: 'tkmVictorySlam 0.7s cubic-bezier(0.2,0.9,0.3,1) both' }) }}>⚒</div>
+        <div style={{
+          fontSize: '2rem', color: '#ffd9a0', fontFamily: 'var(--tkm-font-body)', letterSpacing: '0.1rem',
+          textShadow: '0 0 22px rgba(245,140,40,0.7)',
+          ...(reduced ? {} : { animation: 'tkmVictorySub 0.5s ease-out 0.35s both' }),
+        }}>
+          <Name pair={name} />
+        </div>
+        {!reduced && SPARKS.map((i) => (
+          <span key={i} style={{
+            position: 'absolute', left: `calc(50% + ${(i - 7) * 16}px)`, bottom: '30%',
+            width: 3 + (i % 3), height: 3 + (i % 3), borderRadius: '50%',
+            background: i % 2 ? '#ffd9a0' : '#f5781f', pointerEvents: 'none',
+            boxShadow: '0 0 6px rgba(245,140,40,0.9)',
+            animation: `tkmMoteFloat ${1.6 + (i % 4) * 0.35}s ease-out ${(i % 5) * 0.18}s infinite`,
+          }} />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function ForgingModal({ onClose }: Props) {
@@ -29,6 +82,8 @@ export function ForgingModal({ onClose }: Props) {
   const [pickedCityId, setPickedCityId] = useState<EntityId | null>(
     foundryCities[0]?.id ?? null,
   );
+  // The just-forged weapon, shown in a brief reveal over the smithy.
+  const [forged, setForged] = useState<{ zh: string; en: string } | null>(null);
 
   const pickedCity = pickedCityId ? cities[pickedCityId] : null;
   const foundryLevel = pickedCityId
@@ -41,10 +96,14 @@ export function ForgingModal({ onClose }: Props) {
   const handle = (recipeId: string) => {
     if (!pickedCityId) return;
     const r = forgeItem(pickedCityId, recipeId);
-    if (!r.ok) alert(r.reason);
+    if (!r.ok) { alert(r.reason); return; }
+    const recipe = FORGE_RECIPES.find((x) => x.id === recipeId);
+    const item = recipe ? ITEMS_BY_ID[recipe.resultItemId] : null;
+    if (item) setForged(item.name);
   };
 
   return (
+    <>
     <div
       style={{
         position: 'fixed', inset: 0,
@@ -176,5 +235,7 @@ export function ForgingModal({ onClose }: Props) {
         </div>
       </div>
     </div>
+    {forged && <ForgedReveal name={forged} onDone={() => setForged(null)} />}
+    </>
   );
 }
