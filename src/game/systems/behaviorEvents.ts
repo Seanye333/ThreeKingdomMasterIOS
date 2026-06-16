@@ -56,6 +56,14 @@ export function rollBehaviorEvent(ctx: BehaviorEventContext): HistoricalEvent | 
   const idleTalent = Object.values(ctx.officers)
     .filter((o) => o.forceId === playerForceId && o.status === 'idle' && statAvg(o) >= 70)
     .sort((a, b) => statAvg(b) - statAvg(a));
+  // Restless officers — your own men (not the ruler) whose loyalty has sunk
+  // into defection territory.
+  const restless = Object.values(ctx.officers)
+    .filter((o) =>
+      o.forceId === playerForceId && o.id !== rulerId &&
+      o.status !== 'dead' && o.status !== 'imprisoned' &&
+      o.loyalty < 30)
+    .sort((a, b) => a.loyalty - b.loyalty);
 
   const cityLoyaltyAll = (delta: number): EventEffect[] =>
     cities.map((c) => ({ kind: 'city-loyalty', cityId: c.id, delta }));
@@ -199,6 +207,41 @@ export function rollBehaviorEvent(ctx: BehaviorEventContext): HistoricalEvent | 
             en: 'Just rule has won the people; worthy men come from afar to serve. As they say: "Win the people, and you win all under heaven."',
           },
           'auspicious',
+          choices,
+        );
+      },
+    },
+
+    // 人心思變 — officers whose loyalty has rotted are a defection waiting to
+    // happen. Buy them back, or gamble on holding them.
+    {
+      id: 'behavior-restless',
+      build: () => {
+        if (restless.length < 2) return null;
+        const atRisk = restless.slice(0, 6);
+        const choices: EventChoice[] = [
+          {
+            id: 'appease',
+            label: { zh: '厚賜安撫,以恩結之', en: 'Win them back with rewards' },
+            effects: [
+              ...atRisk.map((o): EventEffect => ({ kind: 'officer-loyalty', officerId: o.id, delta: 12 })),
+              { kind: 'force-gold', forceId: playerForceId, delta: -1500 },
+            ],
+          },
+          {
+            id: 'hold',
+            label: { zh: '不為所動,靜觀其變', en: 'Hold firm and watch them' },
+            effects: [],
+          },
+        ];
+        return event(
+          'behavior-restless', rulerId,
+          { zh: '人心思變', en: 'Restless Hearts' },
+          {
+            zh: '帳下數將,怏怏不樂,頗有去意。細作密報:「主公,恐生肘腋之變。」',
+            en: 'Several of your officers grow sullen and look to the door. A spy warns quietly: "My lord — trouble may stir from within."',
+          },
+          'ominous',
           choices,
         );
       },

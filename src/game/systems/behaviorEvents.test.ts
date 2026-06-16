@@ -95,6 +95,19 @@ describe('rollBehaviorEvent', () => {
     expect(ev?.mood).toBe('auspicious');
   });
 
+  it('fires the restless-officers event when loyalty rots (excluding the ruler)', () => {
+    const lowLoyal = (id: string): Officer => ({
+      ...idleOfficer(id, 'p', 60), loyalty: 20,
+    } as unknown as Officer);
+    const ev = rollBehaviorEvent(ctx({
+      officers: { r: ruler('r', 'p'), a: lowLoyal('a'), b: lowLoyal('b') },
+    }));
+    expect(ev?.id).toBe('behavior-restless');
+    expect(ev?.mood).toBe('ominous');
+    const appease = ev?.choices?.find((c) => c.id === 'appease');
+    expect(appease?.effects.some((e) => e.kind === 'officer-loyalty')).toBe(true);
+  });
+
   it('fires the idle-talent event with 3+ idle high-stat officers', () => {
     const ev = rollBehaviorEvent(ctx({
       officers: {
