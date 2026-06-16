@@ -43,7 +43,7 @@ import { ScenicPanel } from './ScenicPanel';
 import { SCENIC_SITES } from '../../game/data/scenicSites';
 import { GEO_LABELS } from '../../game/data/mapLabels';
 import { BuildStockadePicker } from './BuildStockadePicker';
-import { useT } from '../i18n';
+import { useT, useLanguage, pickName } from '../i18n';
 
 /** Coarse-pointer / small-screen device — drop pixel ratio and skip the
  *  post-processing pass so phones keep a playable framerate. */
@@ -1486,6 +1486,7 @@ function City3D({
   // Selection pulse + own-city beacon pulse
   const ringRef = useRef<THREE.MeshBasicMaterial>(null);
   const ownRingRef = useRef<THREE.MeshBasicMaterial>(null);
+  const lang = useLanguage();
   useFrame(({ clock }) => {
     if (ringRef.current && isSelected) {
       ringRef.current.opacity = 0.5 + Math.sin(clock.elapsedTime * 3) * 0.3;
@@ -1590,7 +1591,7 @@ function City3D({
               marginBottom: 2,
               transform: isSelected ? 'scale(1.08)' : 'scale(1)',
               transition: 'transform 0.16s cubic-bezier(0.2,0.9,0.3,1), box-shadow 0.16s ease, border-color 0.16s ease',
-            }}>{isOwn ? '★ ' : ''}{city.name.zh}</div>
+            }}>{isOwn ? '★ ' : ''}{pickName(city.name, lang)}</div>
             {/* Strength bars only on the selected city — keeps the map clean. */}
             {isSelected && <CityStrengthBars city={city} />}
           </div>
@@ -1718,6 +1719,7 @@ function MarchingArmies({ cities, pendingCommands, forces, officers, ports, sele
   /** Suppress tokens near an active battle site (they're IN the diorama). */
   hideNearPx?: { x: number; y: number } | null;
 }) {
+  const lang = useLanguage();
   const armies = useMemo(() => {
     return Object.values(pendingCommands)
       .filter((cmd): cmd is { cityId: string; type: string; targetCityId: string; troops: number; officerId: string; seasonsRemaining?: number; totalSeasons?: number; targetX?: number; targetY?: number; holding?: boolean } =>
@@ -1755,7 +1757,7 @@ function MarchingArmies({ cities, pendingCommands, forces, officers, ports, sele
           from,
           to,
           color: hostile ? '#b8442e' : (force?.color ?? '#d4a84a'),
-          commanderName: commander?.name.zh ?? '',
+          commanderName: commander ? pickName(commander.name, lang) : '',
           troops: cmd.troops,
           seasonsRemaining,
           totalSeasons,
@@ -1767,7 +1769,7 @@ function MarchingArmies({ cities, pendingCommands, forces, officers, ports, sele
         };
       })
       .filter((a): a is NonNullable<typeof a> => !!a);
-  }, [cities, pendingCommands, forces, officers, selectedArmyId, hideNearPx]);
+  }, [cities, pendingCommands, forces, officers, selectedArmyId, hideNearPx, lang]);
 
   return (
     <group>
@@ -2791,6 +2793,7 @@ function BattleIgnitionCard() {
   const cities = useGameStore((s) => s.cities);
   const [card, setCard] = useState<{ a: string; b: string; ac: string; bc: string } | null>(null);
   const lastId = useRef<string | null>(null);
+  const lang = useLanguage();
   useEffect(() => {
     if (!battleId || battleId === lastId.current) return;
     lastId.current = battleId;
@@ -2798,9 +2801,10 @@ function BattleIgnitionCard() {
     if (!b) return;
     const af = b.attackerForceId ? forces[b.attackerForceId] : undefined;
     const df = b.defenderForceId ? forces[b.defenderForceId] : undefined;
+    const defCity = cities[b.cityId];
     setCard({
-      a: af?.name.zh ?? '討伐軍',
-      b: df?.name.zh ?? (cities[b.cityId]?.name.zh ?? '守軍'),
+      a: af ? pickName(af.name, lang) : (lang === 'en' ? 'Punitive Force' : '討伐軍'),
+      b: df ? pickName(df.name, lang) : (defCity ? pickName(defCity.name, lang) : (lang === 'en' ? 'Garrison' : '守軍')),
       ac: af?.color ?? '#3a7dd9',
       bc: df?.color ?? '#b8442e',
     });
@@ -2808,7 +2812,7 @@ function BattleIgnitionCard() {
     const t1 = setTimeout(() => playSfx('horn'), 260);
     const t2 = setTimeout(() => setCard(null), 2200);
     return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, [battleId, forces, cities]);
+  }, [battleId, forces, cities, lang]);
   if (!card) return null;
   const side = (c: string): React.CSSProperties => ({
     background: 'rgba(15, 10, 5, 0.86)', border: `2px solid ${c}`, borderRadius: 4,
@@ -3423,6 +3427,7 @@ function Forts3D({ onFortClick, hideNearPx }: {
   const forts = useGameStore((s) => s.forts);
   const forces = useGameStore((s) => s.forces);
   const playerForceId = useGameStore((s) => s.playerForceId);
+  const lang = useLanguage();
   return (
     <group>
       {Object.values(forts).map((fort) => {
@@ -3501,7 +3506,7 @@ function Forts3D({ onFortClick, hideNearPx }: {
                 whiteSpace: 'nowrap',
                 textAlign: 'center',
               }}>
-                <div>⚔ {fort.name.zh} <span style={{ color: '#d4a84a' }}>{'★'.repeat(fort.level ?? 1)}</span></div>
+                <div>⚔ {pickName(fort.name, lang)} <span style={{ color: '#d4a84a' }}>{'★'.repeat(fort.level ?? 1)}</span></div>
                 <div style={{ height: 2, marginTop: 2, background: '#1a1410' }}>
                   <div style={{
                     height: '100%',
@@ -3570,6 +3575,7 @@ function Port3D({ port, color, onClick }: {
   color: string;
   onClick: () => void;
 }) {
+  const lang = useLanguage();
   const [wx, wz] = pxToWorld(...geoToPixel(port.coords.lon, port.coords.lat));
   // Scale to match enlarged world
   const s = PIXEL_TO_WORLD * 50 * 0.6;
@@ -3676,7 +3682,7 @@ function Port3D({ port, color, onClick }: {
           textAlign: 'center',
           minWidth: 40,
         }}>
-          <div>⚓ {port.name.zh}</div>
+          <div>⚓ {pickName(port.name, lang)}</div>
           <div style={{ height: 2, marginTop: 2, background: '#1a1410' }}>
             <div style={{
               height: '100%',
@@ -3940,6 +3946,7 @@ function FactionLabels3D({ cities, forces, officers }: {
   officers: Record<string, { name: { zh: string; en: string } }>;
 }) {
   // Own zoom gate (hysteresis) so the names persist until you zoom in close.
+  const lang = useLanguage();
   const { camera } = useThree();
   const [show, setShow] = useState(true);
   const shownRef = useRef(true);
@@ -3965,14 +3972,14 @@ function FactionLabels3D({ cities, forces, officers }: {
       const force = forces[fid];
       if (!force || e.n === 0) continue;
       const ruler = force.rulerOfficerId ? officers[force.rulerOfficerId] : null;
-      const name = ruler?.name.zh ?? force.name.zh;
+      const name = ruler ? pickName(ruler.name, lang) : pickName(force.name, lang);
       // Brighten the realm colour for legible text on the dark chip — keeps the
       // faction's hue but guarantees contrast even for dark/terrain-green lords.
       const bright = '#' + new THREE.Color(force.color).lerp(new THREE.Color('#ffffff'), 0.45).getHexString();
       out.push({ x: e.sx / e.n, z: e.sz / e.n, name, color: force.color, bright, n: e.n });
     }
     return out;
-  }, [cities, forces, officers]);
+  }, [cities, forces, officers, lang]);
   if (!show) return null;   // pulled in close → city detail takes over
   return (
     <group>
@@ -5046,9 +5053,11 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, fogCityId
   // 地塊資訊 — hover (desktop) names the tile: terrain, road, owning realm.
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   const hoverTile = hoverIdx != null ? tiles[hoverIdx] : null;
-  const KIND_ZH: Record<string, string> = {
-    plain: '平原', hill: '丘陵', mountain: '山地', river: '大河', lake: '湖泊', riverbank: '河岸',
-  };
+  const lang = useLanguage();
+  const t = useT();
+  const KIND_ZH: Record<string, string> = lang === 'en'
+    ? { plain: 'Plain', hill: 'Hills', mountain: 'Mountain', river: 'River', lake: 'Lake', riverbank: 'Riverbank' }
+    : { plain: '平原', hill: '丘陵', mountain: '山地', river: '大河', lake: '湖泊', riverbank: '河岸' };
 
   return (
     <group>
@@ -5088,7 +5097,8 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, fogCityId
       <HexQuilt tiles={tiles} colors={colors} />
       {hoverTile && (() => {
         const ownerId = tileOwner[hoverIdx!];
-        const ownerName = ownerId ? forces[ownerId]?.name.zh : null;
+        const ownerForce = ownerId ? forces[ownerId] : null;
+        const ownerName = ownerForce ? pickName(ownerForce.name, lang) : null;
         const road = roadTiles.has(hoverIdx!);
         return (
           <Html position={[hoverTile.x, hoverTile.topY + 0.35, hoverTile.z]} center distanceFactor={9} zIndexRange={[30, 20]} style={{ pointerEvents: 'none' }}>
@@ -5097,8 +5107,8 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, fogCityId
               padding: '2px 7px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px',
               color: '#e8d9b0', whiteSpace: 'nowrap', letterSpacing: '0.5px',
             }}>
-              {KIND_ZH[hoverTile.kind] ?? hoverTile.kind}{road ? ' · 道' : ''}
-              {ownerName ? <span style={{ color: forces[ownerId!]?.color ?? '#c0a878' }}> · {ownerName}領</span> : ' · 無主之地'}
+              {KIND_ZH[hoverTile.kind] ?? hoverTile.kind}{road ? t(' · 道', ' · Road') : ''}
+              {ownerName ? <span style={{ color: forces[ownerId!]?.color ?? '#c0a878' }}> · {ownerName}{t('領', '')}</span> : t(' · 無主之地', ' · Unclaimed')}
             </div>
           </Html>
         );
@@ -5290,6 +5300,7 @@ function PostStations3D({ cities }: { cities: Record<string, City> }) {
 /* ─── 名勝古戰場 — a stone stele + label marking the famous battlefields the
  *  named-map data records (赤壁/官渡/長坂/定軍山…). One per battle. ── */
 function Landmarks3D({ cities }: { cities: Record<string, City> }) {
+  const lang = useLanguage();
   const sites = useMemo(() => {
     const usedMap = new Set<string>();
     const out: Array<{ x: number; z: number; name: string }> = [];
@@ -5300,10 +5311,10 @@ function Landmarks3D({ cities }: { cities: Record<string, City> }) {
       usedMap.add(mapId);
       const [px, py] = cityPixel(c.id, c.coords.x, c.coords.y);
       const [wx, wz] = pxToWorld(px, py);
-      out.push({ x: wx, z: wz, name: m.name.zh });
+      out.push({ x: wx, z: wz, name: pickName(m.name, lang) });
     }
     return out;
-  }, [cities]);
+  }, [cities, lang]);
   return (
     <group>
       {sites.map((s, i) => {
@@ -5334,13 +5345,13 @@ function Landmarks3D({ cities }: { cities: Record<string, City> }) {
  * 成都 the brocade-roofed Shu palace. Purely cosmetic, geo-anchored to the
  * real city pixel so it sits right beside the city marker. */
 type LandmarkKind = 'terrace' | 'palace' | 'brocade';
-const UNIQUE_LANDMARKS: ReadonlyArray<{ cityId: string; zh: string; kind: LandmarkKind }> = [
-  { cityId: 'ye',      zh: '銅雀臺', kind: 'terrace' },  // 曹操鄴城,銅雀／金鳳／冰井三臺
-  { cityId: 'luoyang', zh: '漢宮',   kind: 'palace'  },  // 後漢南北宮、魏都宮城
-  { cityId: 'changan', zh: '未央宮', kind: 'palace'  },  // 前漢宮室、董卓遷都
-  { cityId: 'xuchang', zh: '許都',   kind: 'palace'  },  // 獻帝行在、曹魏發跡
-  { cityId: 'jianye',  zh: '太初宮', kind: 'palace'  },  // 孫吳宮城
-  { cityId: 'chengdu', zh: '錦官城', kind: 'brocade' },  // 蜀宮、錦官織造
+const UNIQUE_LANDMARKS: ReadonlyArray<{ cityId: string; zh: string; en: string; kind: LandmarkKind }> = [
+  { cityId: 'ye',      zh: '銅雀臺', en: 'Bronze Sparrow Terrace', kind: 'terrace' },  // 曹操鄴城,銅雀／金鳳／冰井三臺
+  { cityId: 'luoyang', zh: '漢宮',   en: 'Han Palace',             kind: 'palace'  },  // 後漢南北宮、魏都宮城
+  { cityId: 'changan', zh: '未央宮', en: 'Weiyang Palace',         kind: 'palace'  },  // 前漢宮室、董卓遷都
+  { cityId: 'xuchang', zh: '許都',   en: 'Xudu Capital',           kind: 'palace'  },  // 獻帝行在、曹魏發跡
+  { cityId: 'jianye',  zh: '太初宮', en: 'Taichu Palace',          kind: 'palace'  },  // 孫吳宮城
+  { cityId: 'chengdu', zh: '錦官城', en: 'Brocade City',           kind: 'brocade' },  // 蜀宮、錦官織造
 ];
 
 /** A twin-eaved swept roof in a chosen palette (重檐廡殿頂). */
@@ -5414,6 +5425,7 @@ function BronzeTerrace3D() {
 }
 
 function UniqueLandmarks3D({ cities }: { cities: Record<string, City> }) {
+  const lang = useLanguage();
   const sites = useMemo(() => {
     const out: Array<{ x: number; z: number; zh: string; kind: LandmarkKind }> = [];
     for (const lm of UNIQUE_LANDMARKS) {
@@ -5421,10 +5433,10 @@ function UniqueLandmarks3D({ cities }: { cities: Record<string, City> }) {
       if (!c) continue;
       const [px, py] = cityPixel(c.id, c.coords.x, c.coords.y);
       const [wx, wz] = pxToWorld(px, py);
-      out.push({ x: wx, z: wz, zh: lm.zh, kind: lm.kind });
+      out.push({ x: wx, z: wz, zh: pickName(lm, lang), kind: lm.kind });
     }
     return out;
-  }, [cities]);
+  }, [cities, lang]);
   const scale = PIXEL_TO_WORLD * 50 * 0.5 * MARKER_SCALE;
   return (
     <group>
@@ -5457,11 +5469,12 @@ function UniqueLandmarks3D({ cities }: { cities: Record<string, City> }) {
  * it harries. Clicking opens the 征討/招撫 panel. */
 function Tribes3D({ onTribeClick }: { onTribeClick: (tribeId: string) => void }) {
   const aggression = useGameStore((s) => s.tribeState.aggression);
+  const lang = useLanguage();
   const sites = useMemo(() => TRIBES.map((tb) => {
     const [px, py] = geoToPixel(tb.homeland.lon, tb.homeland.lat);
     const [wx, wz] = pxToWorld(px, py);
-    return { id: tb.id, zh: tb.name.zh, color: tb.color, wx, wz };
-  }), []);
+    return { id: tb.id, zh: pickName(tb.name, lang), color: tb.color, wx, wz };
+  }), [lang]);
   const scale = PIXEL_TO_WORLD * 50 * 0.5 * MARKER_SCALE;
   return (
     <group>
@@ -5531,6 +5544,7 @@ function WildSite3D({ site, color, onClick }: {
   color: string;
   onClick: () => void;
 }) {
+  const lang = useLanguage();
   const [px, py] = geoToPixel(site.coords.lon, site.coords.lat);
   const [wx, wz] = pxToWorld(px, py);
   const y = sampleTerrainHeight(wx, wz);
@@ -5598,7 +5612,7 @@ function WildSite3D({ site, color, onClick }: {
           background: 'rgba(28, 18, 10, 0.8)', border: `1px solid ${color}`, borderRadius: 3,
           padding: '1px 6px', color: '#e8d4a0', fontFamily: '"Ma Shan Zheng", "Songti SC", serif',
           fontSize: '10.5px', whiteSpace: 'nowrap',
-        }}>{site.subtype === 'bandit' ? '🏴' : site.subtype === 'ford' ? '⛵' : '⛏'} {site.name.zh}</div>
+        }}>{site.subtype === 'bandit' ? '🏴' : site.subtype === 'ford' ? '⛵' : '⛏'} {pickName(site.name, lang)}</div>
       </Html>
     </group>
   );
@@ -5627,6 +5641,7 @@ function EspionageAgents3D({ cities }: { cities: Record<string, City> }) {
   const ops = useGameStore((s) => s.pendingEspionage);
   const officers = useGameStore((s) => s.officers);
   const playerForceId = useGameStore((s) => s.playerForceId);
+  const lang = useLanguage();
   const routes = useMemo(() => {
     const out: Array<{ pts: THREE.Vector3[]; cum: number[]; total: number; phase: number; label: string }> = [];
     for (const op of ops) {
@@ -5642,10 +5657,10 @@ function EspionageAgents3D({ cities }: { cities: Record<string, City> }) {
       for (let k = 1; k < pts.length; k++) cum.push(cum[k - 1] + pts[k].distanceTo(pts[k - 1]));
       const total = cum[cum.length - 1];
       if (total < 0.5) continue;
-      out.push({ pts, cum, total, phase: (out.length * 0.37) % 1, label: agent.name.zh });
+      out.push({ pts, cum, total, phase: (out.length * 0.37) % 1, label: pickName(agent.name, lang) });
     }
     return out;
-  }, [ops, officers, cities, playerForceId]);
+  }, [ops, officers, cities, playerForceId, lang]);
 
   const refs = useRef<Array<THREE.Group | null>>([]);
   useFrame(({ clock }) => {
@@ -5689,13 +5704,14 @@ const GEO_LABEL_STYLE: Record<string, { color: string; glyph: string; y: number 
   sea:      { color: '#8fc0dc', glyph: '🌊', y: 0.12 },
 };
 function GeoLabels3D() {
+  const lang = useLanguage();
   const labels = useMemo(() => GEO_LABELS.map((g) => {
     const [px, py] = geoToPixel(g.lon, g.lat);
     const [wx, wz] = pxToWorld(px, py);
     const st = GEO_LABEL_STYLE[g.kind];
     const y = g.kind === 'sea' ? st.y : sampleTerrainHeight(wx, wz) + st.y;
-    return { ...g, wx, wz, y, st };
-  }), []);
+    return { ...g, label: pickName(g, lang), wx, wz, y, st };
+  }), [lang]);
   return (
     <group>
       {labels.map((l, i) => (
@@ -5708,7 +5724,7 @@ function GeoLabels3D() {
             letterSpacing: l.kind === 'sea' ? '6px' : '3px',
             textShadow: '0 0 4px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.9)',
             opacity: 0.78, whiteSpace: 'nowrap', userSelect: 'none',
-          }}>{l.kind === 'mountain' ? `${l.st.glyph}${l.zh}` : l.zh}</div>
+          }}>{l.kind === 'mountain' ? `${l.st.glyph}${l.label}` : l.label}</div>
         </Html>
       ))}
     </group>
@@ -5718,11 +5734,12 @@ function GeoLabels3D() {
 /* ─── 名所 — legendary scenic sites (訪賢尋寶) ───────────────────────── */
 function ScenicSites3D({ onScenicClick }: { onScenicClick: (siteId: string) => void }) {
   const scenicLooted = useGameStore((s) => s.scenicLooted);
+  const lang = useLanguage();
   const sites = useMemo(() => SCENIC_SITES.map((s) => {
     const [px, py] = geoToPixel(s.coords.lon, s.coords.lat);
     const [wx, wz] = pxToWorld(px, py);
-    return { id: s.id, zh: s.name.zh, wx, wz };
-  }), []);
+    return { id: s.id, zh: pickName(s.name, lang), wx, wz };
+  }), [lang]);
   const scale = PIXEL_TO_WORLD * 50 * 0.45 * MARKER_SCALE;
   return (
     <group>
@@ -5806,6 +5823,8 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
   const armiesState = useGameStore((s) => s.armies);
   const convoysState = useGameStore((s) => s.convoys);
   const playerForceId = useGameStore((s) => s.playerForceId);
+  const lang = useLanguage();
+  const t = useT();
   const handleArmyClick = (officerId: string) => {
     const clicked = armiesState[officerId];
     if (!clicked) return;
@@ -6186,9 +6205,9 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
         const sp = cityPos(src);
         const [wx, wz] = pxToWorld(sp.x, sp.y);
         const rings = [
-          { rpx: 100, zh: '1旬' },
-          { rpx: 195, zh: '2旬' },
-          { rpx: 275, zh: '3旬' },
+          { rpx: 100, zh: t('1旬', '1 wk') },
+          { rpx: 195, zh: t('2旬', '2 wk') },
+          { rpx: 275, zh: t('3旬', '3 wk') },
         ];
         return (
           <group>
@@ -6229,7 +6248,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
               padding: '2px 8px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px',
               color: '#f0d98a', whiteSpace: 'nowrap', letterSpacing: '1px',
             }}>
-              改道 → {to.name.zh} · 約 {ticks} 旬
+              {t('改道 → ', 'Reroute → ')}{pickName(to.name, lang)}{t(` · 約 ${ticks} 旬`, ` · ~${ticks} wk`)}
             </div>
           </Html>
         );
@@ -6252,7 +6271,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
               padding: '2px 8px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px',
               color: '#f0d98a', whiteSpace: 'nowrap', letterSpacing: '1px',
             }}>
-              {from.name.zh} → {to.name.zh} · 行軍約 {ticks} 旬
+              {pickName(from.name, lang)} → {pickName(to.name, lang)}{t(` · 行軍約 ${ticks} 旬`, ` · march ~${ticks} wk`)}
             </div>
           </Html>
         );
@@ -6359,6 +6378,7 @@ function CitySearchBox({ onJump, compact }: {
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
   const t = useT();
+  const lang = useLanguage();
   const matches = useMemo(() => {
     const needle = q.trim().toLowerCase();
     if (!needle) return [];
@@ -6434,9 +6454,9 @@ function CitySearchBox({ onJump, compact }: {
                 onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(212,168,74,0.14)'; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
               >
-                <span>{c.name.zh} <span style={{ color: '#8a7050', fontSize: '0.68rem' }}>{c.name.en}</span></span>
+                <span>{pickName(c.name, lang)}</span>
                 <span style={{ color: owner?.color ?? '#6a6050', fontSize: '0.7rem' }}>
-                  {owner ? owner.name.zh : t('無主', 'free')}
+                  {owner ? pickName(owner.name, lang) : t('無主', 'free')}
                 </span>
               </div>
             );
@@ -6480,6 +6500,7 @@ function ArmyOrdersHint() {
   // The in-place battle commander bar owns the bottom slot when up.
   const battleBarUp = useGameStore((s) => !!s.tacticalBattle && s.battleViewMinimized);
   const t = useT();
+  const lang = useLanguage();
   if (!selectedArmyId || !army) return null;
   const commander = officers[army.commanderId];
   return (
@@ -6492,7 +6513,7 @@ function ArmyOrdersHint() {
       flexWrap: 'wrap', justifyContent: 'center', maxWidth: '94vw',
     }}>
       <span style={{ color: '#f0d98a', letterSpacing: '0.1rem', fontSize: '0.85rem' }}>
-        ⚑ {commander?.name.zh ?? '?'}{t('部', '')} {army.troops.toLocaleString()}{t('兵', '')}
+        ⚑ {commander ? pickName(commander.name, lang) : '?'}{t('部', '')} {army.troops.toLocaleString()}{t('兵', '')}
       </span>
       <span style={{ color: '#8a7050', fontSize: '0.72rem', letterSpacing: '0.05rem' }}>
         {t('點城市:改道 · 點空地:進駐 · 點友軍:合流 · 點敵軍:野戰',
@@ -6834,6 +6855,7 @@ export function StrategicMap3D() {
   const weather = useGameStore((s) => s.weather);
   const season = useGameStore((s) => s.date.season) as Season;
   const t = useT();
+  const lang = useLanguage();
 
   return (
     <div ref={mapRootRef} style={{
@@ -7125,7 +7147,7 @@ export function StrategicMap3D() {
             {sel && off ? (
               <>
                 <span style={{ color: '#f0d98a', fontSize: '0.8rem' }}>
-                  {off.name.zh} · AP {sel.ap}/{sel.maxAp} · {sel.troops.toLocaleString()}{t('兵', '')}
+                  {pickName(off.name, lang)} · AP {sel.ap}/{sel.maxAp} · {sel.troops.toLocaleString()}{t('兵', '')}
                 </span>
                 {modeBtn('move', '移動', 'Move')}
                 {modeBtn('attack', '攻擊', 'Attack')}
@@ -7156,7 +7178,7 @@ export function StrategicMap3D() {
                         padding: '0.15rem 0.45rem', cursor: 'pointer',
                         fontFamily: 'inherit', fontSize: '0.72rem',
                       }}
-                    >{pt.nameZh}</button>
+                    >{lang === 'en' ? pt.nameEn : pt.nameZh}</button>
                   );
                 })}
                 {/* 計謀 — same availability rules as the fullscreen panel. */}
@@ -7180,7 +7202,7 @@ export function StrategicMap3D() {
                         padding: '0.15rem 0.45rem', cursor: 'pointer',
                         fontFamily: 'inherit', fontSize: '0.72rem',
                       }}
-                    >{s.name.zh}</button>
+                    >{pickName(s.name, lang)}</button>
                   );
                 })}
                 {(dioCast || dioDuelArm) && (
@@ -7209,7 +7231,7 @@ export function StrategicMap3D() {
                 color: hovIsOwn ? '#9ec9f0' : '#f0a0a0', fontSize: '0.74rem',
                 borderLeft: '1px solid #4a3520', paddingLeft: '0.55rem',
               }}>
-                {hovIsOwn ? '' : '敵 '}{hovOff.name.zh} · {hovUnit.troops.toLocaleString()}{t('兵', '')} · AP {hovUnit.ap}/{hovUnit.maxAp}
+                {hovIsOwn ? '' : t('敵 ', 'Enemy ')}{pickName(hovOff.name, lang)} · {hovUnit.troops.toLocaleString()}{t('兵', '')} · AP {hovUnit.ap}/{hovUnit.maxAp}
               </span>
             )}
             {/* 戰鬥預判 — same forecast as the fullscreen screen, on the diorama. */}
@@ -7225,7 +7247,7 @@ export function StrategicMap3D() {
                 }}>
                   ⚔ {f.dmgMin.toLocaleString()}–{f.dmgMax.toLocaleString()}
                   {f.willKill ? ` · ${t('可殲滅', 'LETHAL')}` : f.counterMax > 0 ? ` · ${t('反', 'ca')}${f.counterMax.toLocaleString()}` : ''}
-                  {ml ? ` · ↑${ml.zh}` : bad ? ` · ↓被${bad.zh}` : ''}
+                  {ml ? ` · ↑${lang === 'en' ? ml.en : ml.zh}` : bad ? ` · ↓${t('被', 'vs ')}${lang === 'en' ? bad.en : bad.zh}` : ''}
                 </span>
               );
             })()}
@@ -7286,7 +7308,7 @@ export function StrategicMap3D() {
                 boxShadow: '0 0 10px rgba(224,85,42,0.35)',
               }}
             >
-              🔥 {t('烽火示警', 'Beacons lit')} · {beaconCities[id]?.name.zh ?? id}{t('告急', ' under threat')}
+              🔥 {t('烽火示警', 'Beacons lit')} · {beaconCities[id] ? pickName(beaconCities[id].name, lang) : id}{t('告急', ' under threat')}
             </button>
           ))}
         </div>
