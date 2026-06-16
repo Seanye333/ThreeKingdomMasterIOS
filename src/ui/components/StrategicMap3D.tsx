@@ -7713,6 +7713,16 @@ export function StrategicMap3D() {
                 kind: 'event' as const,
               }],
             };
+            // 負傷 — the bested fighter's own unit is mauled (~18%); a draw
+            // mauls both (~10%). Feeds the post-battle wound roll.
+            if (outcome.winner !== 'draw') {
+              const loserId = outcome.winner === 'attacker' ? foe.id : me.id;
+              if (loserId !== killedId) {
+                next = { ...next, units: next.units.map((u) => u.officerId === loserId ? { ...u, troops: Math.round(u.troops * 0.82) } : u) };
+              }
+            } else {
+              next = { ...next, units: next.units.map((u) => (u.officerId === me.id || u.officerId === foe.id) ? { ...u, troops: Math.round(u.troops * 0.9) } : u) };
+            }
             startBattleUpdate(next);
           }}
         />

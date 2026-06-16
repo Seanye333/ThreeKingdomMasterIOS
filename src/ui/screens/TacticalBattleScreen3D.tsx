@@ -4453,10 +4453,20 @@ export function TacticalBattleScreen3D() {
                     : u.side === loseSide ? { ...u, morale: Math.max(0, u.morale - 15) } : u),
                 };
               }
+              // 負傷 — the bested fighter is personally mauled: their own unit
+              // loses ~18% of its troops (on top of the side-wide morale hit),
+              // which also makes the post-battle wound roll likelier.
+              const loserId = outcome.winner === 'attacker' ? foe.id : me.id;
+              if (loserId !== killedId) {
+                next = { ...next, units: next.units.map((u) => u.officerId === loserId ? { ...u, troops: Math.round(u.troops * 0.82) } : u) };
+              }
               const wn = outcome.winner === 'attacker' ? me : foe;
               setSignatureBanner({ zh: `一騎討 — ${wn.name.zh} 力克強敵!`, en: `${wn.name.en} wins the duel!`, key: Date.now() });
               setCine({ key: ++cineCount.current, weight: 3, color: '#ffd54a' });
               setTimeout(() => setSignatureBanner(null), 2200);
+            } else {
+              // 兩敗俱傷 — a draw mauls both: each loses ~10% of its troops.
+              next = { ...next, units: next.units.map((u) => (u.officerId === me.id || u.officerId === foe.id) ? { ...u, troops: Math.round(u.troops * 0.9) } : u) };
             }
             start(next);
             setInteractiveDuel(null);
