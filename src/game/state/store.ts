@@ -124,7 +124,7 @@ import { SCENIC_BY_ID, canVisitScenic, rollHermitRecruit } from '../data/scenicS
 import { razedCity, rebuiltCity, rebuildCost } from '../systems/cityRuin';
 import { buildSpecialtyTradeRoutes, tickSpecialtyTrade } from '../systems/tradeRoutes';
 import { fortMaxHpForLevel, FACILITY_DEFS, type FacilityKind } from '../types';
-import { awardBattleXp } from '../systems/growth';
+import { awardBattleXp, grantXp } from '../systems/growth';
 import { tickBuildings } from '../systems/buildings';
 import { evaluateCoalition } from '../systems/coalition';
 import { rollDialogue } from '../systems/dialogueRoll';
@@ -398,6 +398,12 @@ interface GameStore extends GameState {
    *  that direction's real terrain. Nothing writes back to the campaign.
    *  Returns false if the city has no officers to field. */
   startPracticeBattle: (cityId: EntityId, bearing?: number, officerIds?: EntityId[]) => boolean;
+  /** 演武 — two of your officers spar (non-lethal). Both gain XP (the winner
+   *  more), which can grow stats / learn skills via the normal growth path.
+   *  Returns a summary for the UI; null if either officer is missing. */
+  grantSparXp: (winnerId: EntityId, loserId: EntityId, draw?: boolean) => {
+    winnerName: string; loserName: string; winnerLeveled: boolean; loserLeveled: boolean; notes: string[];
+  } | null;
   /** Pay for siege works (圍困糧耗 / 水攻決堤) from the attacking city's
    *  stores before an assault. Returns false (and deducts nothing) if the
    *  city can't afford it. */
@@ -4629,6 +4635,22 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         return true;
       },
 
+      grantSparXp: (winnerId, loserId, draw = false) => {
+        const state = get();
+        const w = state.officers[winnerId];
+        const l = state.officers[loserId];
+        if (!w || !l) return null;
+        // 演武 — a non-lethal bout. Both improve; the winner a little more. A
+        // draw splits the middle. Growth is still capped by each officer's latent.
+        const rw = grantXp(w, draw ? 32 : 42);
+        const rl = grantXp(l, draw ? 32 : 26);
+        set({ officers: { ...state.officers, [winnerId]: rw.officer, [loserId]: rl.officer } });
+        return {
+          winnerName: w.name.zh, loserName: l.name.zh,
+          winnerLeveled: rw.leveled, loserLeveled: rl.leveled,
+          notes: [...rw.entries, ...rl.entries].map((e) => e.textZh ?? e.text),
+        };
+      },
       startPracticeBattle: (cityId, bearing = 0, officerIds) => {
         const state = get();
         if (state.tacticalBattle) return false; // one battle at a time

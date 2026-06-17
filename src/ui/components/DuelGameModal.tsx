@@ -45,7 +45,7 @@ const MOVES: Array<{ id: DuelMove; zh: string; en: string; hint: { zh: string; e
 ];
 
 export function DuelGameModal({
-  attacker, defender, onComplete, meFatigue = 0, foeFatigue = 0,
+  attacker, defender, onComplete, meFatigue = 0, foeFatigue = 0, lethal = true,
 }: {
   attacker: Officer;
   defender: Officer;
@@ -53,6 +53,8 @@ export function DuelGameModal({
   /** 車輪戰 — starting-stamina penalties from bouts already fought this battle. */
   meFatigue?: number;
   foeFatigue?: number;
+  /** 演武 — a non-lethal sparring bout: a knockout reads as "yields", not death. */
+  lethal?: boolean;
 }) {
   const t = useT();
   const lang = useLanguage();
@@ -136,10 +138,10 @@ export function DuelGameModal({
   );
 
   const resultText = !bout.over ? '' :
-    bout.winner === 'draw' ? t('平手 — 各自負傷', 'Draw — both wounded')
+    bout.winner === 'draw' ? (lethal ? t('平手 — 各自負傷', 'Draw — both wounded') : t('平手 — 點到為止', 'A draw — well matched'))
     : bout.winner === 'attacker'
-      ? (bout.killedId ? `${nm(attacker)} ${t('斬', 'cut down')} ${nm(defender)}!` : `${nm(attacker)} ${t('佔上風', 'prevails')}`)
-      : (bout.killedId ? `${nm(defender)} ${t('斬', 'cut down')} ${nm(attacker)}!` : `${nm(defender)} ${t('佔上風', 'prevails')}`);
+      ? (lethal && bout.killedId ? `${nm(attacker)} ${t('斬', 'cut down')} ${nm(defender)}!` : `${nm(attacker)} ${t('佔上風', 'prevails')}`)
+      : (lethal && bout.killedId ? `${nm(defender)} ${t('斬', 'cut down')} ${nm(attacker)}!` : `${nm(defender)} ${t('佔上風', 'prevails')}`);
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', display: 'grid', placeItems: 'center', zIndex: 130 }}>
@@ -264,7 +266,7 @@ export function DuelGameModal({
 
         {bout.over && (
           <div style={{ marginTop: '0.6rem', textAlign: 'center' }}>
-            <div className={reduced ? undefined : 'tkm-victory-slam'} style={{ color: bout.killedId ? '#b8442e' : '#e6c473', fontSize: '1.15rem', letterSpacing: '0.07rem', marginBottom: '0.6rem', textShadow: bout.killedId ? '0 0 14px rgba(184,68,46,0.6)' : '0 0 12px rgba(212,168,74,0.45)' }}>{resultText}</div>
+            <div className={reduced ? undefined : 'tkm-victory-slam'} style={{ color: lethal && bout.killedId ? '#b8442e' : '#e6c473', fontSize: '1.15rem', letterSpacing: '0.07rem', marginBottom: '0.6rem', textShadow: lethal && bout.killedId ? '0 0 14px rgba(184,68,46,0.6)' : '0 0 12px rgba(212,168,74,0.45)' }}>{resultText}</div>
             <button
               onClick={() => onComplete({ winner: bout.winner ?? 'draw', killedId: bout.killedId as 'attacker' | 'defender' | undefined })}
               style={{ padding: '0.45rem 1.6rem', background: '#1e2832', border: '1px solid #e6c473', color: '#e6c473', cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.07rem' }}

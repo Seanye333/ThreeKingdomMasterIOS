@@ -76,6 +76,7 @@ const EspionageModal = lazy(() => import('../components/EspionageModal').then(m 
 const TitlesModal = lazy(() => import('../components/TitlesModal').then(m => ({ default: m.TitlesModal })));
 const GovernorsModal = lazy(() => import('../components/GovernorsModal').then(m => ({ default: m.GovernorsModal })));
 const FormationsModal = lazy(() => import('../components/FormationsModal').then(m => ({ default: m.FormationsModal })));
+const TrainingGroundModal = lazy(() => import('../components/TrainingGroundModal').then(m => ({ default: m.TrainingGroundModal })));
 
 export function MapScreen() {
   const t = useT();
@@ -90,6 +91,7 @@ export function MapScreen() {
   const [showCourt, setShowCourt] = useState(false);
   const [showSave, setShowSave] = useState<'save' | 'load' | null>(null);
   const [showFormations, setShowFormations] = useState(false);
+  const [showTraining, setShowTraining] = useState(false);
   const [theme, setTheme] = useState<ThemeId>(getStoredTheme());
   const handleSetTheme = (id: ThemeId) => {
     setTheme(id);
@@ -381,6 +383,7 @@ export function MapScreen() {
       { id: 'guard', zh: '私兵', en: 'Private guard', hint: g.mil, run: () => setShowPrivateForces(true) },
       { id: 'espionage', zh: '密偵', en: 'Espionage', hint: g.mil, run: () => setShowEspionage(true) },
       { id: 'formations', zh: '陣形', en: 'Formations', hint: g.mil, run: () => setShowFormations(true) },
+      { id: 'training', zh: '演武場', en: 'Sparring ground', hint: g.mil, run: () => setShowTraining(true) },
       { id: 'armoury', zh: '寶物', en: 'Armoury', hint: g.craft, run: () => setShowArmoury(true) },
       { id: 'forge', zh: '鍛造', en: 'Forge', hint: g.craft, run: () => setShowForge(true) },
       { id: 'settings', zh: '設定', en: 'Settings', hint: g.sys, run: () => setShowSettings(true) },
@@ -497,6 +500,7 @@ export function MapScreen() {
           title={t('軍務 — 戰史、密偵、陣形', 'Military — battles, espionage, formations')}
           items={[
             { label: t('錦囊', 'Advisor'),    onClick: () => setShowAdvisor(true) },
+            { label: t('演武', 'Sparring'),   onClick: () => setShowTraining(true) },
             { label: t('計略', 'Schemes'),    onClick: () => setShowSchemes(true) },
             { label: t('軍團', 'Legions'),    onClick: () => setShowLegions(true) },
             { label: t('戰史', 'Battles'),    onClick: () => setShowHistory(true) },
@@ -701,6 +705,7 @@ export function MapScreen() {
         {showTitles && <TitlesModal onClose={() => setShowTitles(false)} />}
         {showGovernors && <GovernorsModal onClose={() => setShowGovernors(false)} />}
         {showFormations && <FormationsModal onClose={() => setShowFormations(false)} />}
+        {showTraining && <TrainingGroundModal onClose={() => setShowTraining(false)} />}
         {showEspionage && <EspionageModal onClose={() => setShowEspionage(false)} />}
         {showDeeds && <DeedsModal onClose={() => setShowDeeds(false)} />}
         {showReplays && <BattleReplayModal onClose={() => setShowReplays(false)} />}
