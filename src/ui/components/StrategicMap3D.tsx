@@ -7694,6 +7694,20 @@ export function StrategicMap3D() {
           meFatigue={worldDuel.meFatigue}
           foeFatigue={worldDuel.foeFatigue}
           reinforcements={worldDuel.reinforcements}
+          staged
+          onRound={() => {
+            // 戰場原地對決 — the two diorama units lunge at each other each round.
+            const bt = useGameStore.getState().tacticalBattle;
+            const ua = bt?.units.find((u) => u.officerId === worldDuel.me.id);
+            const ub = bt?.units.find((u) => u.officerId === worldDuel.foe.id);
+            if (!ua || !ub) return;
+            const now = Date.now();
+            setDioArcs((a) => [...a,
+              { id: now, from: ua.coord, to: ub.coord, kind: 'melee' as const, spawnedAt: now },
+              { id: now + 1, from: ub.coord, to: ua.coord, kind: 'melee' as const, spawnedAt: now },
+            ]);
+            setTimeout(() => setDioArcs((a) => a.filter((x) => x.id !== now && x.id !== now + 1)), 600);
+          }}
           onComplete={(outcome) => {
             const { foe } = worldDuel;
             const b = useGameStore.getState().tacticalBattle;
