@@ -1,0 +1,166 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 900;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.modal {
+  background: linear-gradient(160deg, #1b2531 0%, #10161e 100%);
+  border: 1px solid #364654;
+  width: min(640px, 100%);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  color: #e6edf3;
+  font-family: var(--tkm-font-body);
+}
+
+.header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #2b3845;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.titleZh {
+  font-size: 1.4rem;
+  color: #e6c473;
+  letter-spacing: 0.07rem;
+}
+
+.titleEn {
+  font-size: 0.85rem;
+  color: #7a8893;
+  font-style: italic;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: #e6c473;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+}
+
+.body {
+  padding: 1rem 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.tabRow {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tab {
+  background: none;
+  border: 1px solid #2b3845;
+  color: #7a8893;
+  padding: 0.4rem 1rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.tabActive {
+  border-color: #e6c473;
+  color: #e6c473;
+}
+
+.newSlot {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.newSlotInput {
+  flex: 1;
+  background: #10161e;
+  border: 1px solid #2b3845;
+  color: #e6c473;
+  padding: 0.5rem;
+  font-family: inherit;
+}
+
+.actionBtn {
+  background: #26323e;
+  border: 1px solid #e6c473;
+  color: #e6c473;
+  padding: 0.5rem 1rem;
+  font-family: inherit;
+  cursor: pointer;
+  letter-spacing: 0.05rem;
+}
+
+.actionBtn:hover:not(:disabled) {
+  background: #364654;
+}
+
+.actionBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.slotRow {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  background: #10161e;
+  border: 1px solid #2b3845;
+  margin-bottom: 0.4rem;
+  align-items: center;
+}
+
+.slotInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.slotLabel {
+  font-size: 0.95rem;
+  color: #e6c473;
+}
+
+.slotMeta {
+  font-family: ui-monospace, monospace;
+  font-size: 0.72rem;
+  color: #7a8893;
+}
+
+.loadBtn {
+  background: #26323e;
+  border: 1px solid #e6c473;
+  color: #e6c473;
+  padding: 0.35rem 0.8rem;
+  font-family: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.delBtn {
+  background: none;
+  border: 1px solid #b8442e;
+  color: #b8442e;
+  padding: 0.35rem 0.8rem;
+  font-family: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.empty {
+  text-align: center;
+  color: #6a5238;
+  font-style: italic;
+  padding: 2rem;
+}

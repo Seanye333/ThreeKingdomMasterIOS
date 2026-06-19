@@ -1,0 +1,375 @@
+.root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  /* Atmospheric backdrop: warm sky → dark earth + radial vignette. */
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 30%, rgba(212,168,74,0.10) 0%, transparent 70%),
+    radial-gradient(ellipse 80% 60% at 50% 100%, rgba(30,20,12,0.85) 0%, rgba(10,8,4,1) 100%),
+    linear-gradient(180deg, #10161e 0%, #080b0e 100%);
+  color: #e6edf3;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Far-mountain silhouette as decorative top frame. */
+.root::before {
+  content: '';
+  position: absolute;
+  top: 60px; left: 0; right: 0; height: 120px;
+  background: linear-gradient(180deg, transparent 0%, rgba(40, 30, 22, 0.55) 80%, transparent 100%);
+  clip-path: polygon(0% 100%, 6% 60%, 12% 80%, 20% 40%, 28% 70%, 36% 30%, 44% 65%, 52% 25%, 60% 55%, 68% 20%, 76% 60%, 84% 35%, 92% 70%, 100% 50%, 100% 100%);
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+/* 氛圍層 — a slow ambient wash behind the menu: drifting ink clouds and a few
+   embers rising. Sits behind the content (pointer-events: none). */
+.ambient {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.cloud {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(46px);
+  opacity: 0.5;
+  background: radial-gradient(circle, rgba(212, 168, 74, 0.1) 0%, transparent 70%);
+  animation: tkmTitleDrift var(--c-dur, 70s) ease-in-out infinite alternate;
+}
+
+@keyframes tkmTitleDrift {
+  from { transform: translateX(-11vw); }
+  to   { transform: translateX(11vw); }
+}
+
+.mote {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(230, 196, 115, 0.7);
+  box-shadow: 0 0 6px rgba(230, 196, 115, 0.6);
+  animation: tkmTitleMote var(--m-dur, 14s) linear var(--m-delay, 0s) infinite;
+}
+
+@keyframes tkmTitleMote {
+  0%   { opacity: 0; transform: translateY(0); }
+  12%  { opacity: 0.8; }
+  88%  { opacity: 0.8; }
+  100% { opacity: 0; transform: translateY(-64vh); }
+}
+
+.header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #2b3845;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  animation: tkmTitleFadeIn 1.2s ease-out both;
+}
+
+@keyframes tkmTitleFadeIn {
+  0%   { opacity: 0; transform: translateY(-20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.title {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.titleZh {
+  font-size: 2.75rem;
+  letter-spacing: 0.5rem;
+  color: #e6c473;
+  text-shadow:
+    0 0 24px rgba(212, 168, 74, 0.5),
+    0 0 8px rgba(184, 68, 46, 0.3);
+  /* Reveal once, then breathe a slow glow. */
+  animation:
+    tkmTitleZhReveal 1.8s cubic-bezier(0.16, 1, 0.3, 1) both,
+    tkmTitleGlow 5s ease-in-out 2s infinite;
+}
+
+@keyframes tkmTitleZhReveal {
+  0%   { opacity: 0; letter-spacing: 2.5rem; filter: blur(16px); }
+  60%  { opacity: 1; letter-spacing: 0.5rem; filter: blur(0); }
+  100% { opacity: 1; letter-spacing: 0.5rem; filter: blur(0); }
+}
+
+@keyframes tkmTitleGlow {
+  0%, 100% { text-shadow: 0 0 24px rgba(212, 168, 74, 0.5), 0 0 8px rgba(184, 68, 46, 0.3); }
+  50%      { text-shadow: 0 0 36px rgba(212, 168, 74, 0.8), 0 0 16px rgba(184, 68, 46, 0.45); }
+}
+
+.titleEn {
+  font-size: 0.9rem;
+  letter-spacing: 0.07rem;
+  text-transform: uppercase;
+  color: #7a8893;
+  animation: tkmTitleFadeIn 1.4s ease-out 0.6s both;
+  opacity: 0;
+}
+
+.main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  padding: 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cloud { animation: none; }
+  .mote { display: none; }
+  .titleZh { animation: tkmTitleZhReveal 1.8s ease-out both; }
+}
+
+.scenarioCard {
+  background: rgba(27, 37, 49, 0.72);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--tkm-hairline, rgba(255, 255, 255, 0.08));
+  border-radius: var(--tkm-radius, 8px);
+  box-shadow: var(--tkm-elev-2, 0 10px 34px rgba(0, 0, 0, 0.5));
+  padding: 1.5rem;
+}
+
+.scenarioLabel,
+.forceLabel,
+.difficultyLabel {
+  font-size: 0.7rem;
+  letter-spacing: 0.07rem;
+  text-transform: uppercase;
+  color: #7a8893;
+  margin-bottom: 0.5rem;
+}
+
+.scenarioList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.scenarioButton {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--tkm-hairline, rgba(255, 255, 255, 0.08));
+  border-radius: var(--tkm-radius-sm, 5px);
+  color: #e6edf3;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.scenarioButton:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(230, 196, 115, 0.6);
+}
+
+.scenarioSelected {
+  border-color: #e6c473;
+  background: rgba(230, 196, 115, 0.12);
+}
+
+.scenarioYear {
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+  color: #aab6c0;
+}
+
+.scenarioName {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.scenarioNameZh {
+  font-size: 1rem;
+  color: #e6c473;
+}
+
+.scenarioNameEn {
+  font-size: 0.75rem;
+  color: #7a8893;
+}
+
+.scenarioDesc {
+  margin: 0 0 1rem 0;
+  font-size: 0.85rem;
+  color: #aab6c0;
+  line-height: 1.6;
+  font-style: italic;
+}
+
+.difficultyLabel {
+  margin-top: 0.75rem;
+}
+
+.difficultyRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+
+.diffButton {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--tkm-hairline, rgba(255, 255, 255, 0.08));
+  border-radius: var(--tkm-radius-sm, 5px);
+  color: #aab6c0;
+  padding: 0.5rem 0.6rem;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.diffButton:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(230, 196, 115, 0.6);
+}
+
+.diffSelected {
+  border-color: #e6c473;
+  background: rgba(230, 196, 115, 0.12);
+  color: #e6c473;
+}
+
+.diffZh {
+  font-size: 0.9rem;
+  letter-spacing: 0.1rem;
+}
+
+.diffEn {
+  font-size: 0.7rem;
+  color: #7a8893;
+}
+
+.diffSelected .diffEn {
+  color: #aab6c0;
+}
+
+.difficultyNote {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #7a8893;
+  font-style: italic;
+  min-height: 1rem;
+}
+
+.officersButton {
+  margin-top: 1rem;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  color: #e6c473;
+  border: 1px solid var(--tkm-hairline, rgba(255, 255, 255, 0.08));
+  border-radius: var(--tkm-radius-sm, 5px);
+  padding: 0.6rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  letter-spacing: 0.07rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.officersButton:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: #e6c473;
+}
+
+.forceList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.forceButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--tkm-hairline, rgba(255, 255, 255, 0.08));
+  border-radius: var(--tkm-radius-sm, 5px);
+  color: #e6edf3;
+  padding: 0.6rem 0.85rem;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.forceButton:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(230, 196, 115, 0.6);
+}
+
+.forceColor {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+.forceText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.forceNameZh {
+  font-size: 1rem;
+  color: #e6c473;
+}
+
+.forceNameEn {
+  font-size: 0.8rem;
+  color: #7a8893;
+}
+
+.forceStats {
+  font-size: 0.75rem;
+  color: #7a8893;
+  font-family: ui-monospace, monospace;
+  letter-spacing: 0.05rem;
+}
+
+@media (max-width: 900px) {
+  .main {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding: 1.5rem;
+  }
+}

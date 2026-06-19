@@ -1,0 +1,201 @@
+.root {
+  width: 320px;
+  min-width: 320px;
+  /* 紙紋 — faint paper grain over the themed panel ground. */
+  background-color: var(--tkm-bg-raised, #1b2531);
+  background-image: var(--tkm-paper);
+  background-blend-mode: soft-light;
+  border: 1px solid var(--tkm-border, #2b3845);
+  padding: 1.25rem;
+  overflow-y: auto;
+  max-height: 100%;
+  font-size: 0.875rem;
+}
+
+.empty {
+  color: #7a8893;
+  text-align: center;
+  padding: 2rem 1rem;
+  font-style: italic;
+}
+
+.header {
+  border-bottom: 1px solid #2b3845;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.nameZh {
+  font-size: 1.75rem;
+  color: #e6c473;
+  letter-spacing: 0.07rem;
+}
+
+.nameEn {
+  font-size: 0.8rem;
+  color: #7a8893;
+  letter-spacing: 0.1rem;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.owner {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #e6edf3;
+  font-size: 0.875rem;
+}
+
+.ownerEn {
+  color: #7a8893;
+  font-size: 0.75rem;
+}
+
+.colorDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+.neutral {
+  color: #7a8893;
+  font-style: italic;
+}
+
+.playerTag {
+  margin-left: auto;
+  font-family: ui-monospace, monospace;
+  font-size: 0.65rem;
+  color: #10161e;
+  background: #e6c473;
+  padding: 0.1rem 0.4rem;
+  letter-spacing: 0.1rem;
+}
+
+.officerTask {
+  color: #e6c473;
+}
+
+.section {
+  margin-bottom: 1.25rem;
+}
+
+.sectionTitle {
+  font-size: 0.7rem;
+  letter-spacing: 0.07rem;
+  text-transform: uppercase;
+  color: #7a8893;
+  margin: 0 0 0.5rem 0;
+  font-weight: normal;
+}
+
+.statRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.25rem 0;
+  border-bottom: 1px dotted #26323e;
+}
+
+.statRow:last-child {
+  border-bottom: none;
+}
+
+.statLabel {
+  color: #aab6c0;
+}
+
+.statZh {
+  color: #7a8893;
+  font-size: 0.75rem;
+  margin-left: 0.25rem;
+}
+
+.statValue {
+  color: #e6edf3;
+  font-family: ui-monospace, monospace;
+}
+
+.barRow {
+  margin-bottom: 0.5rem;
+}
+
+.barHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.25rem;
+}
+
+.barValue {
+  font-family: ui-monospace, monospace;
+  color: #e6edf3;
+  font-size: 0.8rem;
+}
+
+.barTrack {
+  height: 6px;
+  background: #10161e;
+  border: 1px solid #26323e;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  background: linear-gradient(90deg, #8a6530, #e6c473);
+  transition: width 0.6s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.officerList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.officerRow {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.5rem;
+  align-items: baseline;
+  padding: 0.35rem 0.5rem;
+  background: #10161e;
+  border: 1px solid #26323e;
+}
+
+.officerNameZh {
+  color: #e6c473;
+  font-size: 0.95rem;
+}
+
+.officerNameEn {
+  color: #7a8893;
+  font-size: 0.7rem;
+}
+
+.officerStats {
+  color: #aab6c0;
+  font-family: ui-monospace, monospace;
+  font-size: 0.7rem;
+}
+
+.muted {
+  color: #7a8893;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* ─── Mobile (≤640px) ─── */
+@media (max-width: 640px) {
+  .root {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    padding: 0.7rem !important;
+    max-height: none !important;
+  }
+}

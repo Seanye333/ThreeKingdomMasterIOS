@@ -1,0 +1,138 @@
+/* 統一弹窗外殼 — the one true modal shell. Every dialog that used to hand-roll
+   the `linear-gradient(160deg,#1b2531,#10161e)` frame + black backdrop now
+   borrows this, so the look, the entrance motion, Esc-to-close and the close
+   button stay identical everywhere. */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  /* A whisper of blur lifts the dialog off whatever's behind it. */
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  animation: tkmBackdropIn 0.18s ease-out;
+}
+
+.frame {
+  /* 紙紋 — paper grain rides the ink gradient at low contrast (soft-light).
+     Gradient stops are themed tokens, so a theme re-tints the modal. */
+  background-color: var(--tkm-bg, #10161e);
+  background-image: var(--tkm-paper), linear-gradient(160deg, var(--tkm-bg-raised, #1b2531), var(--tkm-bg, #10161e));
+  background-blend-mode: soft-light, normal;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #e6edf3;
+  font-family: var(--tkm-font-body, system-ui, sans-serif);
+  box-shadow: var(--tkm-elev-2, 0 10px 34px rgba(0, 0, 0, 0.5));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Settle in: rise + fade, eased so it lands rather than snaps. */
+  animation: tkmModalIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* scrollBody mode: a fixed header sits above a body that scrolls on its own,
+   so long lists don't carry the title away. The frame itself stops scrolling. */
+.frameScroll {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.frameScroll .headerBar {
+  padding: 0.9rem 1.3rem;
+  border-bottom: 1px solid var(--tkm-border, #2b3845);
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.bodyScroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  flex: 1;
+  min-height: 0;
+}
+
+@keyframes tkmBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes tkmModalIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.975); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Exit — fade the backdrop and sink/shrink the frame, then the parent unmounts. */
+.backdrop.closing { animation: tkmBackdropOut 0.17s ease-in forwards; }
+.frame.closing { animation: tkmModalOut 0.17s ease-in forwards; }
+
+@keyframes tkmBackdropOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes tkmModalOut {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(6px) scale(0.98); }
+}
+
+/* Respect the user who'd rather not have things move. */
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .frame { animation-duration: 0.01ms; }
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.7rem;
+}
+
+.title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-size: 1.12rem;
+  color: var(--tkm-text-h2, #e6c473);
+  letter-spacing: 0.07rem;
+  min-width: 0;
+}
+
+.icon { font-size: 1.05em; flex-shrink: 0; }
+
+.badge {
+  color: var(--tkm-text-muted, #7a8893);
+  font-size: 0.8rem;
+  letter-spacing: 0.04rem;
+  font-weight: normal;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: var(--tkm-text-h2, #e6c473);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.15rem;
+  transition: color 0.15s, transform 0.15s;
+}
+
+.closeBtn:hover {
+  color: #fff;
+  transform: scale(1.15);
+}
+
+.closeBtn:active { transform: scale(0.95); }

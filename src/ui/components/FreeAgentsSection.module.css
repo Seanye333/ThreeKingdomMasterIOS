@@ -1,0 +1,100 @@
+.root {
+  margin-bottom: 1.25rem;
+}
+
+.title {
+  font-size: 0.7rem;
+  letter-spacing: 0.07rem;
+  text-transform: uppercase;
+  color: #88b7e8;
+  margin: 0 0 0.5rem 0;
+  font-weight: normal;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.row {
+  background: #10161e;
+  border: 1px solid #3a5a7d;
+  padding: 0.5rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.head {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem;
+  align-items: baseline;
+}
+
+.nameZh {
+  font-size: 0.95rem;
+  color: #e6c473;
+}
+
+.nameEn {
+  font-size: 0.7rem;
+  color: #7a8893;
+}
+
+.courtesy {
+  color: #5a7a9a;
+}
+
+.stats {
+  grid-column: 1 / -1;
+  font-family: ui-monospace, monospace;
+  font-size: 0.7rem;
+  color: #aab6c0;
+}
+
+.actions {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.recruitBtn {
+  flex: 1;
+  background: #10161e;
+  color: #88b7e8;
+  border: 1px solid #3a7dd9;
+  padding: 0.3rem 0.5rem;
+  font-family: inherit;
+  font-size: 0.75rem;
+  letter-spacing: 0.05rem;
+  cursor: pointer;
+}
+
+.recruitBtn:hover:not(:disabled) {
+  background: #1a2030;
+}
+
+.recruitBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.feedback {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.4rem;
+  font-style: italic;
+}
+
+.feedbackOk {
+  background: rgba(58, 125, 217, 0.15);
+  color: #88b7e8;
+}
+
+.feedbackFail {
+  background: rgba(184, 68, 46, 0.15);
+  color: #e09b6c;
+}

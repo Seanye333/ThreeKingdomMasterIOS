@@ -1,0 +1,216 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 900;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.modal {
+  background: linear-gradient(160deg, #1b2531 0%, #10161e 100%);
+  border: 1px solid #364654;
+  border-top: 3px solid #6a8a6a;  /* jade green — 玉璽 */
+  width: min(820px, 100%);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  color: #e6edf3;
+  font-family: var(--tkm-font-body);
+  box-shadow: 0 0 18px rgba(106, 138, 106, 0.15);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #2b3845;
+}
+
+.titleZh {
+  font-size: 1.4rem;
+  color: #e6c473;
+  letter-spacing: 0.07rem;
+}
+
+.titleEn {
+  font-size: 0.85rem;
+  color: #7a8893;
+  font-style: italic;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: #e6c473;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+}
+
+.rankSummary {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #2b3845;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.rankCurrent {
+  font-size: 1.8rem;
+  color: #e6c473;
+  letter-spacing: 0.14rem;
+}
+
+.rankCurrentEn {
+  color: #7a8893;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.rankDesc {
+  flex: 1;
+  font-size: 0.78rem;
+  color: #aab6c0;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.body {
+  padding: 1rem 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.edictCard {
+  background: #10161e;
+  border: 1px solid #2b3845;
+  padding: 0.75rem 1rem;
+  display: grid;
+  grid-template-columns: 1fr 110px;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.edictBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.edictName {
+  color: #e6c473;
+  font-size: 1.05rem;
+}
+
+.edictNameEn {
+  color: #7a8893;
+  font-size: 0.72rem;
+  font-style: italic;
+  margin-left: 0.4rem;
+}
+
+.edictDesc {
+  font-size: 0.78rem;
+  color: #aab6c0;
+  font-style: italic;
+}
+
+.edictMeta {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.2rem;
+  font-family: ui-monospace, monospace;
+  font-size: 0.7rem;
+}
+
+.metaGold { color: #c9a64e; }
+.metaRank { color: #e6c473; }
+.metaCd { color: #7a8893; }
+
+.issueBtn {
+  background: #26323e;
+  border: 1px solid #e6c473;
+  color: #e6c473;
+  padding: 0.5rem 0.6rem;
+  font-family: inherit;
+  cursor: pointer;
+  letter-spacing: 0.05rem;
+  font-size: 0.85rem;
+}
+
+.issueBtn:hover:not(:disabled) {
+  background: #364654;
+}
+
+.issueBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.targetPick {
+  margin-top: 0.5rem;
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.targetChip {
+  background: #080b0e;
+  border: 1px solid #26323e;
+  color: #aab6c0;
+  font-family: inherit;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+}
+
+.targetChip:hover {
+  border-color: #e6c473;
+}
+
+.targetChipActive {
+  border-color: #e6c473;
+  color: #e6c473;
+}
+
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 0.3rem;
+}
+
+.history {
+  padding: 0.75rem 1.5rem;
+  border-top: 1px solid #2b3845;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.historyTitle {
+  font-size: 0.7rem;
+  letter-spacing: 0.07rem;
+  color: #7a8893;
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+
+.historyItem {
+  font-size: 0.78rem;
+  color: #aab6c0;
+  margin-bottom: 0.2rem;
+}
+
+.historyDate {
+  font-family: ui-monospace, monospace;
+  color: #7a8893;
+}

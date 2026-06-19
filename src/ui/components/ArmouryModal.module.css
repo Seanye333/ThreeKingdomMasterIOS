@@ -1,0 +1,305 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  background: #1b2531;
+  border: 1px solid #e6c473;
+  width: 900px;
+  max-width: 96vw;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem 1.5rem;
+  overflow-y: auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid #2b3845;
+  padding-bottom: 0.65rem;
+  margin-bottom: 0.75rem;
+}
+
+.titleZh {
+  font-size: 1.75rem;
+  color: #e6c473;
+  letter-spacing: 0.14rem;
+}
+
+.titleEn {
+  font-size: 0.8rem;
+  color: #7a8893;
+  letter-spacing: 0.1rem;
+  text-transform: uppercase;
+}
+
+.closeButton {
+  background: transparent;
+  border: none;
+  color: #7a8893;
+  font-size: 1.5rem;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1;
+}
+
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.filterLabel {
+  font-size: 0.7rem;
+  color: #7a8893;
+  letter-spacing: 0.05rem;
+  text-transform: uppercase;
+  min-width: 40px;
+}
+
+.chip {
+  background: #10161e;
+  color: #aab6c0;
+  border: 1px solid #26323e;
+  padding: 0.3rem 0.6rem;
+  font-family: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.chip:hover {
+  background: #26323e;
+  border-color: #e6c473;
+}
+
+.chipActive {
+  background: #26323e;
+  border-color: #e6c473;
+  color: #e6c473;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.row {
+  background: #10161e;
+  border: 1px solid #26323e;
+  border-left-width: 3px;
+  padding: 0.5rem 0.75rem;
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  gap: 0.75rem;
+}
+
+.kind_weapon   { border-left-color: #b8442e; }
+.kind_horse    { border-left-color: #c9a64e; }
+.kind_treasure { border-left-color: #e6c473; }
+.kind_book     { border-left-color: #3a7dd9; }
+
+.itemBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.itemNameRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.itemNameZh {
+  color: #e6c473;
+  font-size: 1rem;
+}
+
+.itemNameEn {
+  color: #7a8893;
+  font-size: 0.75rem;
+}
+
+.kindTag {
+  font-family: ui-monospace, monospace;
+  font-size: 0.6rem;
+  padding: 0.05rem 0.4rem;
+  letter-spacing: 0.1rem;
+  text-transform: uppercase;
+  color: #10161e;
+}
+
+.kindTag_weapon   { background: #b8442e; }
+.kindTag_horse    { background: #c9a64e; }
+.kindTag_treasure { background: #e6c473; }
+.kindTag_book     { background: #3a7dd9; }
+
+.itemDesc {
+  color: #aab6c0;
+  font-size: 0.78rem;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.itemEffects {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.effectChip {
+  font-family: ui-monospace, monospace;
+  font-size: 0.7rem;
+  color: #88b7e8;
+  background: #1b2531;
+  border: 1px solid #26323e;
+  padding: 0.1rem 0.4rem;
+}
+
+.holderBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.holderName {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: #e6edf3;
+}
+
+.colorDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+.holderEn {
+  color: #7a8893;
+  font-size: 0.7rem;
+}
+
+.holderForce {
+  font-size: 0.7rem;
+  color: #7a8893;
+}
+
+.unclaimed {
+  color: #364654;
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.actionBtn {
+  background: #2b3845;
+  color: #e6edf3;
+  border: 1px solid #e6c473;
+  padding: 0.25rem 0.6rem;
+  font-family: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.actionBtn:hover {
+  background: #364654;
+}
+
+.actionBtnDanger {
+  background: #10161e;
+  color: #e09b6c;
+  border: 1px solid #b8442e;
+  padding: 0.25rem 0.6rem;
+  font-family: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.actionBtnDanger:hover {
+  background: #3a1a16;
+}
+
+.officerPicker {
+  grid-column: 1 / -1;
+  margin-top: 0.4rem;
+  padding-top: 0.4rem;
+  border-top: 1px dotted #26323e;
+}
+
+.pickerLabel {
+  font-size: 0.7rem;
+  letter-spacing: 0.1rem;
+  text-transform: uppercase;
+  color: #7a8893;
+  margin-bottom: 0.3rem;
+}
+
+.officerGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.3rem;
+}
+
+.officerBtn {
+  background: #1b2531;
+  color: #e6c473;
+  border: 1px solid #26323e;
+  padding: 0.3rem 0.5rem;
+  font-family: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.officerBtn:hover {
+  background: #26323e;
+  border-color: #e6c473;
+}
+
+.officerZh {
+  color: #e6c473;
+}
+
+.officerStats {
+  font-family: ui-monospace, monospace;
+  font-size: 0.65rem;
+  color: #7a8893;
+}
+
+.officerHas {
+  color: #e09b6c;
+}
+
+.muted {
+  color: #7a8893;
+  font-size: 0.78rem;
+  font-style: italic;
+}

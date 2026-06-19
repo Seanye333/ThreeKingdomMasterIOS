@@ -1,0 +1,224 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  background: #1b2531;
+  border: 1px solid #e6c473;
+  width: 720px;
+  max-width: 95vw;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid #2b3845;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.titleZh {
+  font-size: 1.75rem;
+  color: #e6c473;
+  letter-spacing: 0.14rem;
+}
+
+.titleEn {
+  font-size: 0.85rem;
+  color: #7a8893;
+  letter-spacing: 0.1rem;
+  text-transform: uppercase;
+}
+
+.titleEn strong {
+  color: #e6c473;
+  font-weight: normal;
+}
+
+.closeButton {
+  background: transparent;
+  border: none;
+  color: #7a8893;
+  font-size: 1.5rem;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1;
+}
+
+.closeButton:hover {
+  color: #e6c473;
+}
+
+.empty {
+  color: #7a8893;
+  font-style: italic;
+  padding: 2rem;
+  text-align: center;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.row {
+  background: #10161e;
+  border: 1px solid #26323e;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.forceHead {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.colorDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+.forceNames {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.nameZh {
+  font-size: 1.05rem;
+  color: #e6c473;
+}
+
+.nameEn {
+  font-size: 0.75rem;
+  color: #7a8893;
+}
+
+.relationBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+  min-width: 200px;
+}
+
+.relTrack {
+  position: relative;
+  width: 200px;
+  height: 14px;
+  background: #1b2531;
+  border: 1px solid #26323e;
+}
+
+.relCenter {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #7a8893;
+}
+
+.relFill {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+}
+
+.relValue {
+  position: absolute;
+  right: 4px;
+  top: 0;
+  font-family: ui-monospace, monospace;
+  font-size: 0.7rem;
+  color: #aab6c0;
+  line-height: 14px;
+}
+
+.tag {
+  font-size: 0.7rem;
+  letter-spacing: 0.05rem;
+  padding: 0.1rem 0.4rem;
+  font-family: ui-monospace, monospace;
+}
+
+.tagAllied   { background: #3a7dd9; color: #10161e; }
+.tagNap      { background: #5a9b3a; color: #10161e; }
+.tagNeutral  { background: #2b3845; color: #aab6c0; }
+
+.metaRow {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 0.75rem;
+  color: #7a8893;
+  font-family: ui-monospace, monospace;
+}
+
+.metaRow strong {
+  color: #e6edf3;
+  font-weight: normal;
+}
+
+.feedback {
+  font-size: 0.75rem;
+  padding: 0.3rem 0.5rem;
+  font-style: italic;
+  border-left: 3px solid #2b3845;
+}
+
+.feedbackOk   { background: rgba(58, 125, 217, 0.15); color: #88b7e8; border-left-color: #3a7dd9; }
+.feedbackFail { background: rgba(184, 68, 46, 0.15); color: #e09b6c; border-left-color: #b8442e; }
+.feedbackInfo { background: rgba(212, 168, 74, 0.1); color: #aab6c0; border-left-color: #e6c473; }
+
+.actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.actions button {
+  background: #10161e;
+  color: #e6edf3;
+  border: 1px solid #26323e;
+  padding: 0.35rem 0.6rem;
+  font-family: inherit;
+  font-size: 0.75rem;
+  letter-spacing: 0.05rem;
+  cursor: pointer;
+}
+
+.actions button:hover:not(:disabled) {
+  background: #26323e;
+}
+
+.actions button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.allianceBtn { border-color: #3a7dd9; color: #88b7e8; }
+.napBtn      { border-color: #5a9b3a; color: #88c060; }
+.tributeBtn  { border-color: #e6c473; color: #e6c473; }
+.breakBtn    { border-color: #b8442e; color: #e09b6c; margin-left: auto; }

@@ -1,0 +1,87 @@
+/* 品牌加載頁 — the brand splash shown while the realm's heavy 3D chunks load.
+   A breathing 鼎 seal, the wordmark, and an indeterminate ink sweep. */
+
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(ellipse 60% 45% at 50% 42%, rgba(212, 168, 74, 0.10) 0%, transparent 70%),
+    linear-gradient(180deg, #10161e 0%, #080b0e 100%);
+  color: var(--tkm-text-h2, #e6c473);
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+  animation: tkmSplashFade 0.5s ease-out both;
+}
+
+.seal {
+  animation: tkmSplashBreathe 2.4s ease-in-out infinite;
+}
+
+.wordmark {
+  font-family: var(--tkm-font-serif, 'Songti SC', serif);
+  font-size: 2rem;
+  letter-spacing: 0.5rem;
+  color: var(--tkm-text-h2, #e6c473);
+  text-shadow: 0 0 22px rgba(212, 168, 74, 0.4);
+  /* the indent balances the trailing letter-spacing so it reads centered */
+  text-indent: 0.5rem;
+}
+
+.caption {
+  font-family: var(--tkm-font-serif, 'Songti SC', serif);
+  font-size: 0.95rem;
+  letter-spacing: 0.4rem;
+  text-indent: 0.4rem;
+  color: var(--tkm-text-muted, #7a8893);
+}
+
+/* Indeterminate ink sweep — a bright segment sliding under a faint rail. */
+.bar {
+  position: relative;
+  width: 170px;
+  height: 2px;
+  background: rgba(212, 168, 74, 0.14);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 45%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, #e6c473, transparent);
+  animation: tkmSplashSweep 1.25s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+@keyframes tkmSplashFade {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes tkmSplashBreathe {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(181, 48, 44, 0)); }
+  50% { transform: scale(1.06); filter: drop-shadow(0 4px 14px rgba(181, 48, 44, 0.5)); }
+}
+
+@keyframes tkmSplashSweep {
+  0% { left: -45%; }
+  100% { left: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seal,
+  .inner { animation: none; }
+  .bar::after { animation-duration: 2.5s; }
+}

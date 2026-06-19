@@ -1,0 +1,1617 @@
+import { useMemo, useState } from 'react';
+import { useGameStore } from '../../game/state/store';
+import { COMMAND_DEFS } from '../../game/systems/commands';
+import { composeBiography } from '../../game/systems/biography';
+import { durationBreakdown, isParentMentor } from '../../game/systems/training';
+import { effectiveStats, traitMechanicalEffects } from '../../game/systems/traitEffects';
+import { FAMILY_LINEAGE } from '../../game/data/familyLineage';
+import { DEED_TITLES_BY_ID } from '../../game/systems/deedTitles';
+import {
+  CIVIC_TITLES_BY_ID,
+  ITEMS_BY_ID,
+  MILITARY_RANKS_BY_ID,
+  OFFICER_RELATIONSHIPS,
+  SKILLS_BY_ID,
+  TRAIT_DEFS_BY_ID,
+  getBiography,
+} from '../../game/data';
+import {
+  DOCTRINE_DEFS,
+  FORMATION_DEFS,
+  TACTIC_DEFS,
+  POLICY_DEFS,
+  tacticBonus,
+  isTacticSignature,
+  TACTIC_COMBOS,
+} from '../../game/data/officerAttributes';
+import { WEAPON_TYPE_DEFS, deriveWeaponType } from '../../game/data/weaponTypes';
+import { HISTORICAL_LIFESPANS } from '../../game/data/historicalLifespans';
+import { effectivePrestige } from '../../game/data/prestige';
+import type { City, Force, Officer, Skill } from '../../game/types';
+import { FORMATIONS_BY_ID } from '../../game/data/formations';
+import { TACTIC_DESC } from './TacticsModal';
+import { POLICY_DESC } from './PoliciesModal';
+import styles from './OfficerDetail.module.css';
+import { useT, useLanguage } from '../i18n';
+
+type PortraitArchetype = 'warrior' | 'strategist' | 'civil' | 'ruler' | 'lady' | 'sage';
+
+const KNOWN_LADIES = new Set<string>([
+  'diaochan', 'huang-yueying', 'lady-sun', 'lady-gan', 'lady-mi',
+  'empress-cao', 'empress-zhang', 'empress-pan', 'lady-wu', 'lady-yan',
+  'sun-lu',
+]);
+
+const KNOWN_RULERS = new Set<string>([
+  'cao-cao', 'liu-bei', 'sun-jian', 'sun-ce', 'sun-quan', 'yuan-shao',
+  'yuan-shu', 'dong-zhuo', 'liu-biao', 'liu-yan', 'liu-zhang',
+  'gongsun-zan', 'tao-qian', 'kong-rong', 'ma-teng', 'zhang-jiao',
+  'cao-pi', 'cao-rui',
+]);
+
+/**
+ * Sum item.effects into a per-stat delta so the UI can show "base + items"
+ * on every stat bar. Skills are NOT added — they're separate active/passive
+ * combat abilities, not stat boosters.
+ */
+function effectiveStatBonuses(o: Officer): {
+  leadership: number;
+  war: number;
+  intelligence: number;
+  politics: number;
+  charisma: number;
+} {
+  const bonus = { leadership: 0, war: 0, intelligence: 0, politics: 0, charisma: 0 };
+  // Item bonuses
+  for (const itemId of o.equipment) {
+    const item = ITEMS_BY_ID[itemId];
+    if (!item) continue;
+    bonus.leadership += item.effects.leadership ?? 0;
+    bonus.war += item.effects.war ?? 0;
+    bonus.intelligence += item.effects.intelligence ?? 0;
+    bonus.politics += item.effects.politics ?? 0;
+    bonus.charisma += item.effects.charisma ?? 0;
+  }
+  // T2 — trait bonuses (delta from base stats)
+  const eff = effectiveStats(o);
+  bonus.leadership += eff.leadership - o.stats.leadership;
+  bonus.war += eff.war - o.stats.war;
+  bonus.intelligence += eff.intelligence - o.stats.intelligence;
+  bonus.politics += eff.politics - o.stats.politics;
+  bonus.charisma += eff.charisma - o.stats.charisma;
+  return bonus;
+}
+
+function inferArchetype(o: Officer): PortraitArchetype {
+  if (KNOWN_LADIES.has(o.id)) return 'lady';
+  if (KNOWN_RULERS.has(o.id)) return 'ruler';
+  const s = o.stats;
+  // Sage tier: very high intelligence (Zhuge, Pang Tong, Sima Yi after growth)
+  if (s.intelligence >= 95) return 'sage';
+  if (s.war >= s.intelligence + 10 && s.war >= 75) return 'warrior';
+  if (s.intelligence >= s.war + 10 && s.intelligence >= 80) return 'strategist';
+  if (s.politics >= 80 && s.war < 70) return 'civil';
+  if (s.war >= 80) return 'warrior';
+  if (s.intelligence >= 75) return 'strategist';
+  return 'civil';
+}
+
+interface Props {
+  officer: Officer;
+  onClose: () => void;
+  // Optional context overrides (used by the title-screen scenario browser
+  // before any game state is loaded).
+  forcesOverride?: Record<string, Force>;
+  citiesOverride?: Record<string, City>;
+  yearOverride?: number;
+  officersOverride?: Record<string, Officer>;
+}
+
+export function OfficerDetail({
+  officer,
+  onClose,
+  forcesOverride,
+  citiesOverride,
+  yearOverride,
+  officersOverride,
+}: Props) {
+  const storeForces = useGameStore((s) => s.forces);
+  const storeCities = useGameStore((s) => s.cities);
+  const storeYear = useGameStore((s) => s.date.year);
+  const t = useT();
+  const lang = useLanguage();
+  const playerForceId = useGameStore((s) => s.playerForceId);
+  const appointments = useGameStore((s) => s.appointments);
+  const pendingTrainings = useGameStore((s) => s.pendingTrainings);
+  const cancelTrainingFn = useGameStore((s) => s.cancelTraining);
+  const allOfficers = useGameStore((s) => s.officers);
+  const buildings = useGameStore((s) => s.buildings);
+  const family = useGameStore((s) => s.family);
+  const officerDeeds = useGameStore((s) => s.deeds[officer.id]);
+  const officerWishes = useGameStore((s) => s.officerWishes);
+  const openWish = officerWishes.find((w) => w.officerId === officer.id);
+  const unequipItemFn = useGameStore((s) => s.unequipItem);
+  const activeTraining = pendingTrainings.find((tr) => tr.officerId === officer.id);
+  const isPlayerOfficer = officer.forceId === playerForceId;
+
+  const forces = forcesOverride ?? storeForces;
+  const cities = citiesOverride ?? storeCities;
+  const currentYear = yearOverride ?? storeYear;
+
+  const force = officer.forceId ? forces[officer.forceId] : null;
+  const city = officer.locationCityId
+    ? cities[officer.locationCityId]
+    : null;
+  const age = currentYear - officer.birthYear;
+  const isMine = officer.forceId === playerForceId;
+  const taskDef = officer.task ? COMMAND_DEFS[officer.task] : null;
+  const rankDef = MILITARY_RANKS_BY_ID[officer.rank];
+  const appointment = appointments.find((a) => a.officerId === officer.id);
+  const titleDef = appointment ? CIVIC_TITLES_BY_ID[appointment.titleId] : null;
+
+  return (
+    <div className={styles.backdrop} onClick={onClose}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <PortraitColumn
+          officer={officer}
+          zh={officer.name.zh}
+          color={force?.color ?? '#364654'}
+          archetype={inferArchetype(officer)}
+          age={age}
+        />
+        <div className={styles.detailBody}>
+        <header className={styles.header}>
+          <div className={styles.titleBlock}>
+            {lang !== 'en' && <div className={styles.titleZh}>{officer.name.zh}</div>}
+            {lang === 'en' && <div className={styles.titleZh}>{officer.name.en}</div>}
+            {(lang !== 'zh' || officer.courtesyName) && (
+              <div className={styles.titleEn}>
+                {lang === 'both' && officer.name.en}
+                {officer.courtesyName && (
+                  <span className={styles.courtesy}>
+                    {lang === 'both' && ' · '}
+                    {lang === 'zh' && '字 '}
+                    {lang === 'en' ? officer.courtesyName.en : officer.courtesyName.zh}
+                    {lang === 'both' && <> {officer.courtesyName.en}</>}
+                  </span>
+                )}
+              </div>
+            )}
+            {(() => {
+              const prestige = effectivePrestige(officer);
+              if (!prestige) return null;
+              return (
+                <div style={{
+                  display: 'inline-block', marginTop: '0.3rem', padding: '0.12rem 0.5rem',
+                  background: 'linear-gradient(180deg, #4a3a1a, #2a2010)', border: '1px solid #e6c473',
+                  color: '#f0d890', fontSize: '0.82rem', letterSpacing: '0.05rem', borderRadius: 2,
+                }}>
+                  威名 · {lang === 'en' ? prestige.name.en : prestige.name.zh}
+                </div>
+              );
+            })()}
+            {openWish && (
+              <div style={{
+                marginTop: '0.3rem', fontSize: '0.78rem',
+                color: openWish.kind === 'info' ? '#7ed68a' : '#e6c473',
+                letterSpacing: '0.1rem',
+              }}>
+                📜 {openWish.kind === 'info' ? (lang === 'en' ? 'A memorial awaits your review' : '一封上書待覽') : (lang === 'en' ? 'A letter awaits your reply' : '一封書信待覆')}
+              </div>
+            )}
+            {(officer.grievanceCount ?? 0) >= 2 && (
+              <div style={{ marginTop: '0.2rem', fontSize: '0.72rem', color: '#b8442e' }}>
+                ⚠ {lang === 'en' ? `Growing resentment (×${officer.grievanceCount})` : `怨望日深(怨次 ${officer.grievanceCount})`}
+              </div>
+            )}
+          </div>
+          <button className={styles.closeButton} onClick={onClose}>
+            ×
+          </button>
+        </header>
+
+        <section className={styles.identity}>
+          <div className={styles.identityRow}>
+            <span className={styles.idLabel}>{t('勢力', 'Force')}</span>
+            <span>
+              {force ? (
+                <>
+                  <span
+                    className={styles.dot}
+                    style={{ background: force.color }}
+                  />
+                  <span className={styles.idValue}>{lang === 'en' ? force.name.en : force.name.zh}</span>
+                  {lang === 'both' && <span className={styles.idValueEn}>· {force.name.en}</span>}
+                  {isMine && <span className={styles.youTag}>{t('我方', 'YOU')}</span>}
+                </>
+              ) : officer.status === 'imprisoned' ? (
+                <span className={styles.captiveTag}>{t('俘虜', 'Captive')}</span>
+              ) : (
+                <span className={styles.freeTag}>{t('浪人', 'Free Agent')}</span>
+              )}
+            </span>
+          </div>
+          <div className={styles.identityRow}>
+            <span className={styles.idLabel}>{t('居所', 'Location')}</span>
+            <span>
+              {city ? (
+                <>
+                  <span className={styles.idValue}>{lang === 'en' ? city.name.en : city.name.zh}</span>
+                  {lang === 'both' && <span className={styles.idValueEn}>· {city.name.en}</span>}
+                </>
+              ) : (
+                <span className={styles.muted}>—</span>
+              )}
+            </span>
+          </div>
+          {officer.hometownCityId && cities[officer.hometownCityId] && (
+            <div className={styles.identityRow}>
+              <span className={styles.idLabel}>{t('籍貫', 'Hometown')}</span>
+              <span>
+                <span className={styles.idValue}>
+                  {lang === 'en'
+                    ? cities[officer.hometownCityId].name.en
+                    : cities[officer.hometownCityId].name.zh}
+                </span>
+                {lang === 'both' && (
+                  <span className={styles.idValueEn}>· {cities[officer.hometownCityId].name.en}</span>
+                )}
+              </span>
+            </div>
+          )}
+          <div className={styles.identityRow}>
+            <span className={styles.idLabel}>{t('年齡', 'Age')}</span>
+            <span className={styles.idValue}>
+              {age}{' '}
+              <span className={styles.muted}>
+                ({officer.birthYear}
+                {officer.deathYear ? ` – ${officer.deathYear}*` : ''})
+              </span>
+            </span>
+          </div>
+          {taskDef && (
+            <div className={styles.identityRow}>
+              <span className={styles.idLabel}>{t('現任命令', 'Current Order')}</span>
+              <span className={styles.idValue}>
+                {lang === 'en' ? taskDef.label.en : lang === 'both' ? `${taskDef.label.zh} ${taskDef.label.en}` : taskDef.label.zh}
+              </span>
+            </div>
+          )}
+          <div className={styles.identityRow}>
+            <span className={styles.idLabel}>{t('官位', 'Title')}</span>
+            <span>
+              {titleDef && (
+                <span className={styles.titleBadge}>
+                  <span className={styles.titleBadgeZh}>{lang === 'en' ? titleDef.name.en : titleDef.name.zh}</span>
+                  {lang === 'both' && <span className={styles.rankEn}>{titleDef.name.en}</span>}
+                </span>
+              )}
+              {rankDef && (
+                <span className={styles.rankBadge}>
+                  <span className={styles.rankZh}>{lang === 'en' ? rankDef.name.en : rankDef.name.zh}</span>
+                  {lang === 'both' && <span className={styles.rankEn}>{rankDef.name.en}</span>}
+                </span>
+              )}
+            </span>
+          </div>
+        </section>
+
+        <section className={styles.statsSection}>
+          <h3 className={styles.sectionTitle}>{t('能力', 'Statistics')}</h3>
+          {(() => {
+            const b = effectiveStatBonuses(officer);
+            return (
+              <>
+                <StatBar label={t('統率', 'Leadership')}   value={officer.stats.leadership}   bonus={b.leadership} />
+                <StatBar label={t('武力', 'War')}          value={officer.stats.war}          bonus={b.war} />
+                <StatBar label={t('知力', 'Intelligence')} value={officer.stats.intelligence} bonus={b.intelligence} />
+                <StatBar label={t('政治', 'Politics')}     value={officer.stats.politics}     bonus={b.politics} />
+                <StatBar label={t('魅力', 'Charisma')}     value={officer.stats.charisma}     bonus={b.charisma} />
+              </>
+            );
+          })()}
+        </section>
+
+        <section className={styles.statsSection}>
+          <h3 className={styles.sectionTitle}>{t('心情', 'Disposition')}</h3>
+          <StatBar label={t('忠誠', 'Loyalty')} value={officer.loyalty} mode="loyalty" />
+        </section>
+
+        {(officer.doctrine || officer.level) && (
+          <section className={styles.statsSection}>
+            <h3 className={styles.sectionTitle}>{t('武將錄', 'Officer Profile')}</h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem 1.5rem', alignItems: 'baseline' }}>
+              {officer.level !== undefined && (
+                <div>
+                  <span style={{ fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('等級', 'Lv.')} </span>
+                  <span style={{ fontSize: '1.1rem', color: '#e6c473', fontFamily: 'ui-monospace, monospace' }}>
+                    {officer.level}
+                  </span>
+                </div>
+              )}
+              {officer.doctrine && (() => {
+                const d = DOCTRINE_DEFS[officer.doctrine];
+                return (
+                  <div>
+                    <span style={{ fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('主義', 'Doctrine')} </span>
+                    <span
+                      title={`${d.zh} · ${d.en}`}
+                      style={{
+                        background: '#10161e', border: `1px solid ${d.color}`, color: d.color,
+                        padding: '0.2rem 0.55rem', fontSize: '0.8rem', letterSpacing: '0.1rem',
+                        }}
+                    >
+                      {lang === 'en' ? d.en : d.zh}
+                      {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#7a8893', fontStyle: 'italic' }}>{d.en}</span></>}
+                    </span>
+                  </div>
+                );
+              })()}
+              {(() => {
+                const wt = deriveWeaponType(officer);
+                const w = WEAPON_TYPE_DEFS[wt];
+                return (
+                  <div>
+                    <span style={{ fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('兵裝', 'Weapon')} </span>
+                    <span
+                      title={`${w.zh} · ${w.en}`}
+                      style={{
+                        background: '#10161e', border: `1px solid ${w.color}`, color: w.color,
+                        padding: '0.2rem 0.55rem', fontSize: '0.8rem', letterSpacing: '0.1rem',
+                        }}
+                    >
+                      {lang === 'en' ? w.en : w.zh}
+                      {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#7a8893', fontStyle: 'italic' }}>{w.en}</span></>}
+                    </span>
+                  </div>
+                );
+              })()}
+            </div>
+          </section>
+        )}
+
+        {officer.formations && officer.formations.length > 0 && (
+          <section className={styles.statsSection}>
+            <h3 className={styles.sectionTitle}>{t('陣形', 'Formations')}</h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+              {officer.formations.map((fid) => {
+                const f = FORMATION_DEFS[fid];
+                const fdef = FORMATIONS_BY_ID[fid];
+                const fullDesc =
+                  (lang === 'zh' && fdef?.descriptionZh) ||
+                  fdef?.description ||
+                  `${f.zh} · ${f.en}`;
+                return (
+                  <span
+                    key={fid}
+                    title={fullDesc}
+                    style={{
+                      background: '#10161e', border: '1px solid #88b7e8', color: '#88b7e8',
+                      padding: '0.3rem 0.55rem', fontSize: '0.78rem', letterSpacing: '0.1rem',
+                    }}
+                  >
+                    {lang === 'en' ? f.en : f.zh}
+                    {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#5a7090', fontStyle: 'italic' }}>{f.en}</span></>}
+                  </span>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {officer.tactics && officer.tactics.length > 0 && (
+          <section className={styles.statsSection}>
+            <h3 className={styles.sectionTitle}>{t('戰法', 'Tactics')}</h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+              {officer.tactics.map((tid) => {
+                const tac = TACTIC_DEFS[tid];
+                const b = tacticBonus(tid);
+                const bonuses = [
+                  b.war         && `武 +${b.war}`,
+                  b.leadership  && `統 +${b.leadership}`,
+                  b.intelligence&& `知 +${b.intelligence}`,
+                  b.politics    && `政 +${b.politics}`,
+                  b.charisma    && `魅 +${b.charisma}`,
+                ].filter(Boolean).join(' · ');
+                const sig = isTacticSignature(tid) ? '★ ' : '';
+                const desc = TACTIC_DESC[tid] ?? `${tac.zh} · ${tac.en}`;
+                const tooltip = bonuses
+                  ? `${sig}${desc}\n${bonuses}`
+                  : `${sig}${desc}`;
+                return (
+                  <span
+                    key={tid}
+                    title={tooltip}
+                    style={{
+                      background: '#10161e', border: '1px solid #b8442e', color: '#b8442e',
+                      padding: '0.3rem 0.55rem', fontSize: '0.78rem', letterSpacing: '0.1rem',
+                    }}
+                  >
+                    {isTacticSignature(tid) && <span style={{ color: '#e6c473', marginRight: 2 }}>★</span>}
+                    {lang === 'en' ? tac.en : tac.zh}
+                    {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#8a4530', fontStyle: 'italic' }}>{tac.en}</span></>}
+                  </span>
+                );
+              })}
+            </div>
+            {/* N2 — Combo progress: which combos this officer has fully / partially completed */}
+            {(() => {
+              const ownTactics = new Set((officer.tactics ?? []) as string[]);
+              const combos = TACTIC_COMBOS
+                .map((c) => ({
+                  combo: c,
+                  have: c.tactics.filter((t) => ownTactics.has(t)),
+                  miss: c.tactics.filter((t) => !ownTactics.has(t)),
+                }))
+                .filter((r) => r.have.length > 0);
+              if (combos.length === 0) return null;
+              return (
+                <div style={{ marginTop: '0.5rem', fontSize: '0.72rem', color: '#7a8893' }}>
+                  <div style={{ color: '#e6c473', marginBottom: '0.2rem', letterSpacing: '0.05rem' }}>
+                    {t('連環戰法進度', 'Combo Progress')}
+                  </div>
+                  {combos.map(({ combo, have, miss }) => (
+                    <div key={combo.id} style={{ marginBottom: '0.2rem' }}>
+                      <span style={{ color: miss.length === 0 ? '#7ed68a' : '#aab6c0' }}>
+                        {miss.length === 0 ? '✓' : '◐'} {lang === 'en' ? combo.nameEn : combo.nameZh}
+                        {' '}({have.length}/{combo.tactics.length})
+                      </span>
+                      {miss.length > 0 && (
+                        <span style={{ color: '#7a8893', marginLeft: '0.4rem' }}>
+                          {t('缺', 'need')}: {miss.map((m) => TACTIC_DEFS[m as keyof typeof TACTIC_DEFS]?.zh ?? m).join('、')}
+                        </span>
+                      )}
+                      {miss.length === 0 && (
+                        <span style={{ color: '#7ed68a', marginLeft: '0.4rem' }}>
+                          {t(`戰力 ×${combo.powerMul.toFixed(2)}`, `power ×${combo.powerMul.toFixed(2)}`)}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </section>
+        )}
+
+        {((officer.policies && officer.policies.length > 0) || activeTraining) && (
+          <section className={styles.statsSection}>
+            <h3 className={styles.sectionTitle}>{t('政策', 'Policies')}</h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+              {(officer.policies ?? []).map((pid) => {
+                const p = POLICY_DEFS[pid];
+                const desc = POLICY_DESC[pid] ?? `${p.zh} · ${p.en}`;
+                return (
+                  <span
+                    key={pid}
+                    title={desc}
+                    style={{
+                      background: '#10161e', border: '1px solid #7a9a5a', color: '#7a9a5a',
+                      padding: '0.3rem 0.55rem', fontSize: '0.78rem', letterSpacing: '0.1rem',
+                    }}
+                  >
+                    {lang === 'en' ? p.en : p.zh}
+                    {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#5a7a4a', fontStyle: 'italic' }}>{p.en}</span></>}
+                  </span>
+                );
+              })}
+              {activeTraining && (() => {
+                const p = POLICY_DEFS[activeTraining.policyId];
+                const handleCancel = (e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  if (!isMine) return;
+                  const refund = Math.floor(activeTraining.goldSpent / 2);
+                  const ok = window.confirm(
+                    t(
+                      `取消「${p?.zh ?? activeTraining.policyId}」培訓?\n退還 ${refund} 金 (原費 ${activeTraining.goldSpent} 金的一半)。`,
+                      `Cancel training of ${p?.en ?? activeTraining.policyId}?\nRefund ${refund} gold (half of ${activeTraining.goldSpent} spent).`,
+                    ),
+                  );
+                  if (ok) cancelTrainingFn(officer.id);
+                };
+                const trainCity = activeTraining ? storeCities[activeTraining.cityId] : null;
+                const mentor = activeTraining.mentorOfficerId
+                  ? allOfficers[activeTraining.mentorOfficerId]
+                  : null;
+                const bd = trainCity
+                  ? durationBreakdown(officer, trainCity, activeTraining.policyId, buildings)
+                  : null;
+                const formulaLines: string[] = [];
+                if (bd) {
+                  const tierZh = bd.tier === 1 ? '基礎' : bd.tier === 2 ? '進階' : '高階';
+                  const tierEn = bd.tier === 1 ? 'Base' : bd.tier === 2 ? 'Adv' : 'High';
+                  if (mentor) {
+                    formulaLines.push(t(
+                      `師徒制 — 由 ${mentor.name.zh} 傳授`,
+                      `Mentor mode — taught by ${mentor.name.en}`,
+                    ));
+                  }
+                  const parts: string[] = [];
+                  parts.push(t(`${tierZh}(${bd.tier})`, `${tierEn}(${bd.tier})`));
+                  if (bd.academyModifier) parts.push(t(`書院 lv${bd.academyLevel}(+1)`, `Acad lv${bd.academyLevel}(+1)`));
+                  if (bd.intelligenceBonus) parts.push(t('知力≥80(−1)', 'Int≥80(−1)'));
+                  if (bd.studiousBonus) parts.push(t('博學(−1)', 'Scholar(−1)'));
+                  if (bd.lazyPenalty) parts.push(t('懶惰(+1)', 'Lazy(+1)'));
+                  if (bd.bookSpeedup > 0) parts.push(t(`兵書(−${bd.bookSpeedup})`, `Books(−${bd.bookSpeedup})`));
+                  if (mentor) parts.push(t('師徒(+1)', 'Mentor(+1)'));
+                  if (mentor && isParentMentor(mentor, officer, family)) parts.push(t('親屬(−1)', 'Family(−1)'));
+                  formulaLines.push(t(
+                    `公式:${parts.join(' ')} = ${activeTraining.seasonsLeft} 季 (起算)`,
+                    `Formula: ${parts.join(' ')} = ${activeTraining.seasonsLeft} season(s) (orig)`,
+                  ));
+                }
+                const tooltipBody = [
+                  t(
+                    `培訓中:${p?.zh ?? activeTraining.policyId} — 剩餘 ${activeTraining.seasonsLeft} 季`,
+                    `Training: ${p?.en ?? activeTraining.policyId} — ${activeTraining.seasonsLeft} season(s) left`,
+                  ),
+                  ...formulaLines,
+                  isMine ? t('按 × 退訂 (退還一半金錢)', 'Click × to cancel (50% refund)') : '',
+                ].filter(Boolean).join('\n');
+                return (
+                  <span
+                    title={tooltipBody}
+                    style={{
+                      background: 'rgba(136, 183, 232, 0.12)',
+                      border: '1px dashed #88b7e8', color: '#88b7e8',
+                      padding: '0.3rem 0.55rem', fontSize: '0.78rem', letterSpacing: '0.1rem',
+                      fontStyle: 'italic',
+                      display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                    }}
+                  >
+                    ⏳ {lang === 'en' ? p?.en : p?.zh} ({activeTraining.seasonsLeft})
+                    {isMine && (
+                      <button
+                        type="button"
+                        onClick={handleCancel}
+                        title={t('取消培訓 (退還一半金錢)', 'Cancel training (50% refund)')}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#88b7e8',
+                          cursor: 'pointer',
+                          padding: '0 0.15rem',
+                          fontSize: '0.95rem',
+                          lineHeight: 1,
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </span>
+                );
+              })()}
+            </div>
+          </section>
+        )}
+
+        {((officer.traits && officer.traits.length > 0) || officer.skills.length > 0) && (
+          <section className={styles.statsSection}>
+            <h3 className={styles.sectionTitle}>{t('個性', 'Individualities')}</h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+              {officer.skills
+                .map((id) => SKILLS_BY_ID[id])
+                .filter((s): s is Skill => !!s)
+                .map((s) => {
+                  // Skill border + text color by category
+                  const color =
+                    s.category === 'combat'  ? '#b8442e'
+                    : s.category === 'command' ? '#e6c473'
+                    : s.category === 'wisdom'  ? '#88b7e8'
+                    : s.category === 'civil'   ? '#b8c87a'
+                    : '#c178c7';
+                  const desc = lang === 'zh' && s.descriptionZh ? s.descriptionZh : s.description;
+                  return (
+                    <span
+                      key={`skill-${s.id}`}
+                      title={desc}
+                      style={{
+                        background: '#10161e', border: `1px solid ${color}`, color,
+                        padding: '0.3rem 0.55rem', fontSize: '0.78rem', letterSpacing: '0.1rem',
+                        }}
+                    >
+                      {lang === 'en' ? s.name.en : s.name.zh}
+                      {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#7a8893', fontStyle: 'italic' }}>{s.name.en}</span></>}
+                    </span>
+                  );
+                })}
+              {(officer.traits ?? [])
+                .map((tid) => TRAIT_DEFS_BY_ID[tid])
+                .filter((tr): tr is import('../../game/types').PersonalityTraitDef => !!tr)
+                .map((tr) => {
+                  const desc = lang === 'zh' && tr.descriptionZh ? tr.descriptionZh : tr.description;
+                  // P5 — append actual mechanical effects to the tooltip
+                  const effects = traitMechanicalEffects(tr.id);
+                  const effectLines = effects.length > 0
+                    ? '\n\n' + effects.map((e) => `• ${lang === 'en' ? e.en : e.zh}`).join('\n')
+                    : '';
+                  return (
+                    <span
+                      key={`trait-${tr.id}`}
+                      title={desc + effectLines}
+                      style={{
+                        background: '#10161e', border: `1px solid ${tr.color}`, color: tr.color,
+                        padding: '0.3rem 0.55rem', fontSize: '0.78rem', letterSpacing: '0.1rem',
+                        }}
+                    >
+                      {lang === 'en' ? tr.name.en : tr.name.zh}
+                      {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#7a8893', fontStyle: 'italic' }}>{tr.name.en}</span></>}
+                    </span>
+                  );
+                })}
+            </div>
+          </section>
+        )}
+
+        <FamilyTreeSection officerId={officer.id} officersOverride={officersOverride} />
+        <RelationshipsSection officerId={officer.id} officersOverride={officersOverride} />
+
+        {officerDeeds && (officerDeeds.titles?.length ?? 0) + officerDeeds.killsTroops + officerDeeds.duelsWon + officerDeeds.citiesTaken + officerDeeds.espionageSuccess + officerDeeds.civicWorks + officerDeeds.battlesWon > 0 && (
+          <section className={styles.statsSection}>
+            <h3 className={styles.sectionTitle}>
+              {t('武功', 'Deeds')}
+            </h3>
+            {(officerDeeds.titles?.length ?? 0) > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '0.5rem' }}>
+                {(officerDeeds.titles ?? []).map((tid) => {
+                  const tDef = DEED_TITLES_BY_ID[tid];
+                  if (!tDef) return null;
+                  return (
+                    <span key={tid} title={lang === 'zh' ? tDef.name.zh : tDef.name.en}
+                      style={{
+                        background: 'linear-gradient(135deg,#1e2832,#1a1208)',
+                        border: '1px solid #e6c473', color: '#e6c473',
+                        padding: '0.3rem 0.6rem', fontSize: '0.78rem', letterSpacing: '0.1rem',
+                      }}
+                    >
+                      {lang === 'en' ? tDef.name.en : tDef.name.zh}
+                      {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#7a8893', fontStyle: 'italic' }}>{tDef.name.en}</span></>}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(110px,1fr))', gap: '0.4rem', fontSize: '0.78rem' }}>
+              {([
+                ['killsTroops',       t('殲敵', 'Kills')],
+                ['duelsWon',          t('一騎', 'Duels')],
+                ['captured',          t('生擒', 'Captures')],
+                ['citiesTaken',       t('攻陷', 'Cities')],
+                ['espionageSuccess',  t('謀略', 'Plots')],
+                ['civicWorks',        t('内政', 'Civil')],
+                ['battlesWon',        t('勝戰', 'Wins')],
+                ['trainingsCompleted',t('育成', 'Training')],
+                ['childrenSired',     t('子嗣', 'Heirs')],
+              ] as const).map(([k, label]) => {
+                const v = (officerDeeds[k as keyof typeof officerDeeds] as number) ?? 0;
+                if (v === 0) return null;
+                return (
+                  <div key={k} style={{ color: '#aab6c0' }}>
+                    <span style={{ color: '#7a8893', fontSize: '0.7rem' }}>{label}</span>{' '}
+                    <span style={{ fontFamily: 'ui-monospace, monospace' }}>{v.toLocaleString()}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {officer.equipment.length > 0 && (() => {
+          // Aggregate all item stat bonuses.
+          const total: Record<string, number> = {};
+          for (const id of officer.equipment) {
+            const item = ITEMS_BY_ID[id];
+            if (!item) continue;
+            for (const [k, v] of Object.entries(item.effects)) {
+              total[k] = (total[k] ?? 0) + (v as number);
+            }
+          }
+          const totalStr = Object.entries(total)
+            .filter(([, v]) => v > 0)
+            .map(([k, v]) => `${k.slice(0, 3).toUpperCase()} +${v}`)
+            .join(' · ');
+          return (
+            <section className={styles.statsSection}>
+              <h3 className={styles.sectionTitle}>
+                {t('持有', 'Equipment')} ({officer.equipment.length})
+                {totalStr && (
+                  <span style={{ marginLeft: '0.8rem', fontSize: '0.75rem', color: '#e6c473', letterSpacing: '0.1rem' }}>
+                    {t('合計', 'Total')}: {totalStr}
+                  </span>
+                )}
+              </h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                {officer.equipment.map((id) => {
+                  const item = ITEMS_BY_ID[id];
+                  if (!item) return null;
+                  const kindColor =
+                    item.kind === 'weapon'   ? '#b8442e'
+                    : item.kind === 'horse'    ? '#c9a64e'
+                    : item.kind === 'treasure' ? '#e6c473'
+                    : item.kind === 'book'     ? '#3a7dd9'
+                    : '#364654';
+                  const desc = lang === 'zh' && item.descriptionZh ? item.descriptionZh : item.description;
+                  const effects = Object.entries(item.effects)
+                    .map(([stat, val]) => `${stat.slice(0, 3).toUpperCase()} +${val}`)
+                    .join(' · ');
+                  const grantSummary = item.grants ? Object.entries(item.grants)
+                    .map(([k, v]) => `+${k}:${v}`).join(' · ') : '';
+                  return (
+                    <span
+                      key={id}
+                      title={`${desc}\n${effects}${grantSummary ? '\n' + grantSummary : ''}`}
+                      style={{
+                        background: '#10161e', border: `1px solid ${kindColor}`, color: kindColor,
+                        padding: '0.3rem 0.55rem', fontSize: '0.78rem', letterSpacing: '0.1rem',
+                        display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                      }}
+                    >
+                      <span>
+                        {lang === 'en' ? item.name.en : item.name.zh}
+                        {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#7a8893', fontStyle: 'italic' }}>{item.name.en}</span></>}
+                      </span>
+                      {isPlayerOfficer && (
+                        <button
+                          onClick={() => unequipItemFn(officer.id, id)}
+                          title={t('卸下', 'Unequip')}
+                          style={{
+                            background: 'none', border: 'none', color: '#7a8893',
+                            cursor: 'pointer', padding: '0 0.1rem', fontSize: '0.75rem',
+                          }}
+                        >×</button>
+                      )}
+                    </span>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })()}
+
+        <section className={styles.statsSection}>
+          <h3 className={styles.sectionTitle}>{t('列傳', 'Biography')}</h3>
+          <BiographyBlock officer={officer} />
+          <CampaignChronicleBlock officer={officer} />
+        </section>
+
+        {officer.deathYear && (
+          <p className={styles.footnote}>
+            {t('* 歷史卒年。衰老擲骰集中於此日期前後。', '* Historical death year. Aging rolls cluster around this date.')}
+          </p>
+        )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const REL_KIND_LABEL: Record<string, { zh: string; en: string; color: string }> = {
+  'sworn-brothers': { zh: '義兄弟', en: 'Sworn Brothers', color: '#e6c473' },
+  'rival':          { zh: '宿敵',   en: 'Rival',          color: '#b8442e' },
+  'mentor-student': { zh: '師弟',   en: 'Mentor / Student', color: '#3a7dd9' },
+  'master-servant': { zh: '主従',   en: 'Master / Servant', color: '#c9a64e' },
+  'romantic':       { zh: '恋人',   en: 'Romantic',         color: '#c178c7' },
+  'enemy':          { zh: '私仇',   en: 'Personal Enemy',   color: '#5a2025' },
+  // Family kinds (from FamilyRelation type)
+  'spouse':         { zh: '配偶',   en: 'Spouse',          color: '#e8a8c8' },
+  'parent':         { zh: '父母',   en: 'Parent',          color: '#88b7e8' },
+  'child':          { zh: '子嗣',   en: 'Child',           color: '#7ed68a' },
+  'sibling':        { zh: '兄弟',   en: 'Sibling',         color: '#c9a64e' },
+};
+
+function RelationshipsSection({ officerId, officersOverride }: { officerId: string; officersOverride?: Record<string, Officer> }) {
+  const storeOfficers = useGameStore((s) => s.officers);
+  const officers = officersOverride ?? storeOfficers;
+  const family = useGameStore((s) => s.family);
+  const t = useT();
+  const lang = useLanguage();
+  // R2 — local state for drill-down: clicking a related officer chip
+  // opens THEIR detail in a stacked modal.
+  const [drillOfficerId, setDrillOfficerId] = useState<string | null>(null);
+  // R5 — local collapse state per category. Default expanded.
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const toggleCollapse = (k: string) => {
+    setCollapsed((s) => {
+      const next = new Set(s);
+      if (next.has(k)) next.delete(k);
+      else next.add(k);
+      return next;
+    });
+  };
+  const rels = OFFICER_RELATIONSHIPS.filter((r) => r.a === officerId || r.b === officerId);
+  type FamilyDisplay = { otherId: string; kind: 'spouse' | 'parent' | 'child' | 'sibling'; note: { zh: string; en: string } };
+  const seenFamilyKeys = new Set<string>();
+  const familyPool = [
+    ...family,
+    ...FAMILY_LINEAGE.filter((f) => f.officerA === officerId || f.officerB === officerId),
+  ].filter((f) => {
+    const key = `${f.officerA}|${f.officerB}|${f.kind}`;
+    if (seenFamilyKeys.has(key)) return false;
+    seenFamilyKeys.add(key);
+    return true;
+  });
+  const familyRels: FamilyDisplay[] = familyPool
+    .filter((f) => f.officerA === officerId || f.officerB === officerId)
+    .map((f) => {
+      const isA = f.officerA === officerId;
+      const otherId = isA ? f.officerB : f.officerA;
+      let kind: FamilyDisplay['kind'];
+      if (f.kind === 'spouse') kind = 'spouse';
+      else if (f.kind === 'sibling') kind = 'sibling';
+      else kind = isA ? 'child' : 'parent';
+      const otherName = officers[otherId]?.name.zh ?? otherId;
+      const note = (() => {
+        switch (kind) {
+          case 'spouse':  return { zh: `結髮 · ${otherName}`,     en: `Spouse of ${otherName}` };
+          case 'parent':  return { zh: `${otherName}之父母`,      en: `Parent of ${otherName}` };
+          case 'child':   return { zh: `${otherName}之子嗣`,      en: `Child of ${otherName}` };
+          case 'sibling': return { zh: `與${otherName}兄弟`,      en: `Sibling of ${otherName}` };
+        }
+      })();
+      return { otherId, kind, note };
+    });
+  if (rels.length === 0 && familyRels.length === 0) return null;
+
+  // R5 — Group entries by category for collapsible display.
+  type Entry = {
+    key: string;
+    otherId: string;
+    kind: string;
+    noteZh: string;
+    noteEn: string;
+  };
+  const groups: Record<string, Entry[]> = {};
+  // Order priority — family kinds first, then bond kinds
+  const CATEGORY_ORDER = [
+    'spouse', 'parent', 'child', 'sibling',
+    'sworn-brothers', 'master-servant', 'mentor-student',
+    'romantic', 'rival', 'enemy',
+  ];
+  const addEntry = (kind: string, e: Entry) => {
+    if (!groups[kind]) groups[kind] = [];
+    groups[kind].push(e);
+  };
+  for (const fr of familyRels) {
+    addEntry(fr.kind, {
+      key: `fam-${fr.otherId}-${fr.kind}`,
+      otherId: fr.otherId,
+      kind: fr.kind,
+      noteZh: fr.note.zh,
+      noteEn: fr.note.en,
+    });
+  }
+  for (const r of rels) {
+    const otherId = r.a === officerId ? r.b : r.a;
+    addEntry(r.kind, {
+      key: `${r.a}-${r.b}-${r.kind}`,
+      otherId,
+      kind: r.kind,
+      noteZh: r.note.zh,
+      noteEn: r.note.en,
+    });
+  }
+  const totalCount = Object.values(groups).reduce((n, arr) => n + arr.length, 0);
+
+  const renderEntry = (entry: Entry) => {
+    const other = officers[entry.otherId];
+    const meta = REL_KIND_LABEL[entry.kind];
+    if (!other || !meta) return null;
+    return (
+      <div
+        key={entry.key}
+        onClick={() => setDrillOfficerId(entry.otherId)}
+        title={lang === 'en' ? `Open ${other.name.en}` : `查看 ${other.name.zh}`}
+        style={{
+          background: '#10161e',
+          borderLeft: `3px solid ${meta.color}`,
+          padding: '0.4rem 0.6rem',
+          fontSize: '0.8rem',
+          cursor: 'pointer',
+          transition: 'background 0.1s',
+        }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = '#1b2531'; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = '#10161e'; }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <span>
+            <span style={{ color: '#e6c473' }}>{lang === 'en' ? other.name.en : other.name.zh}</span>
+            {lang === 'both' && <> <span style={{ fontSize: '0.7rem', color: '#7a8893', fontStyle: 'italic' }}>{other.name.en}</span></>}
+          </span>
+          <span style={{
+            fontSize: '0.65rem', letterSpacing: '0.05rem', textTransform: 'uppercase',
+            color: meta.color,
+          }}>
+            {lang === 'en' ? meta.en : lang === 'both' ? `${meta.zh} ${meta.en}` : meta.zh}
+          </span>
+        </div>
+        <div style={{ fontSize: '0.72rem', color: '#aab6c0', fontStyle: 'italic', marginTop: '0.2rem' }}>
+          {lang === 'en' ? entry.noteEn : lang === 'both' ? `${entry.noteZh} · ${entry.noteEn}` : entry.noteZh}
+        </div>
+      </div>
+    );
+  };
+
+  const drillOfficer = drillOfficerId ? officers[drillOfficerId] : null;
+
+  return (
+    <section className={styles.statsSection}>
+      <h3 className={styles.sectionTitle}>
+        {t('因緣', 'Relationships')}
+        <span style={{ marginLeft: '0.6rem', fontSize: '0.7rem', color: '#7a8893' }}>
+          {totalCount}
+        </span>
+      </h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        {CATEGORY_ORDER.map((cat) => {
+          const arr = groups[cat];
+          if (!arr || arr.length === 0) return null;
+          const meta = REL_KIND_LABEL[cat];
+          if (!meta) return null;
+          const isCollapsed = collapsed.has(cat);
+          return (
+            <div key={cat}>
+              <div
+                onClick={() => toggleCollapse(cat)}
+                style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  cursor: 'pointer',
+                  padding: '0.15rem 0.3rem',
+                  borderBottom: `1px dashed ${meta.color}`,
+                  marginBottom: '0.25rem',
+                }}
+              >
+                <span style={{
+                  color: meta.color,
+                  fontSize: '0.72rem',
+                  letterSpacing: '0.07rem',
+                }}>
+                  {isCollapsed ? '▸' : '▾'} {lang === 'en' ? meta.en : meta.zh}
+                  <span style={{ marginLeft: 4, fontSize: '0.62rem', opacity: 0.7 }}>({arr.length})</span>
+                </span>
+              </div>
+              {!isCollapsed && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  {arr.map(renderEntry)}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {/* R2 — Drill-down: clicking a chip opens that officer's full detail */}
+      {drillOfficer && (
+        <OfficerDetail
+          officer={drillOfficer}
+          onClose={() => setDrillOfficerId(null)}
+          officersOverride={officersOverride}
+        />
+      )}
+    </section>
+  );
+}
+
+/** 本朝實錄 — the biography THIS campaign wrote: composed live from the
+ *  officer's deeds, epithets and battle history. The static lore above is
+ *  who they were; this is who they're becoming in your game. */
+function CampaignChronicleBlock({ officer }: { officer: Officer }) {
+  const deeds = useGameStore((s) => s.deeds[officer.id] ?? null);
+  const battleHistory = useGameStore((s) => s.battleHistory);
+  const forces = useGameStore((s) => s.forces);
+  const cities = useGameStore((s) => s.cities);
+  const lang = useLanguage();
+  const t = useT();
+  const paragraphs = useMemo(() => composeBiography({
+    officer,
+    deeds,
+    battleHistory,
+    forceNameZh: officer.forceId ? forces[officer.forceId]?.name.zh ?? null : null,
+    cityNameZhById: Object.fromEntries(Object.values(cities).map((c) => [c.id, c.name.zh])),
+  }), [officer, deeds, battleHistory, forces, cities]);
+  return (
+    <div style={{ marginTop: '0.6rem', borderTop: '1px dashed #26323e', paddingTop: '0.5rem' }}>
+      <div style={{
+        fontSize: '0.66rem', color: '#c9a64e', letterSpacing: '0.08rem',
+        textTransform: 'uppercase', fontFamily: 'ui-monospace, monospace', marginBottom: 4,
+      }}>{t('本朝實錄', 'This campaign')}</div>
+      {paragraphs.map((p, i) => (
+        <p key={i} style={{
+          margin: '0 0 0.35rem', fontSize: '0.8rem', lineHeight: 1.7,
+          color: '#cdb88f', fontFamily: 'var(--tkm-font-body)',
+        }}>
+          {lang === 'en' ? p.en : lang === 'both' ? `${p.zh} — ${p.en}` : p.zh}
+        </p>
+      ))}
+    </div>
+  );
+}
+
+function BiographyBlock({ officer }: { officer: Officer }) {
+  const bio = getBiography(officer.id, officer.name.en, officer.name.zh, officer.stats);
+  const lang = useLanguage();
+  // 歷代名將 cross-over generals carry their real historical lifespan as a
+  // display-only line (their playable birthYear is shifted to ~150 AD).
+  const lifespan = HISTORICAL_LIFESPANS[officer.id];
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      {bio.era && (
+        <div
+          style={{
+            fontSize: '0.72rem',
+            color: '#c9a64e',
+            letterSpacing: '0.07rem',
+            textTransform: 'uppercase',
+            fontFamily: 'ui-monospace, monospace',
+          }}
+        >
+          {lang === 'en' ? bio.era.en : lang === 'both' ? `${bio.era.zh} · ${bio.era.en}` : bio.era.zh}
+        </div>
+      )}
+      {lifespan && (
+        <div
+          style={{
+            fontSize: '0.7rem',
+            color: '#7a8893',
+            fontFamily: 'var(--tkm-font-body)',
+          }}
+          title={lang === 'en' ? 'Historical lifespan' : '歷史生卒'}
+        >
+          ◷ {lang === 'en' ? lifespan.en : lang === 'both' ? `${lifespan.zh} · ${lifespan.en}` : lifespan.zh}
+        </div>
+      )}
+      {lang !== 'en' && (
+        <div
+          style={{
+            background: '#10161e',
+            borderLeft: '3px solid #e6c473',
+            padding: '0.6rem 0.85rem',
+            fontSize: '0.85rem',
+            lineHeight: 1.7,
+            color: '#e6c473',
+            fontFamily: 'var(--tkm-font-body)',
+          }}
+        >
+          {bio.zh}
+        </div>
+      )}
+      {lang !== 'zh' && (
+        <div
+          style={{
+            background: '#10161e',
+            borderLeft: '3px solid #364654',
+            padding: '0.6rem 0.85rem',
+            fontSize: '0.82rem',
+            lineHeight: 1.6,
+            color: '#aab6c0',
+            fontStyle: 'italic',
+          }}
+        >
+          {bio.en}
+        </div>
+      )}
+      {bio.quote && (
+        <div
+          style={{
+            background: '#080b0e',
+            border: '1px dashed #2b3845',
+            padding: '0.6rem 0.85rem',
+            fontSize: '0.85rem',
+            lineHeight: 1.6,
+            color: '#e6edf3',
+            textAlign: 'center',
+            fontStyle: 'italic',
+          }}
+        >
+          &ldquo; {lang === 'en' ? bio.quote.en : bio.quote.zh} &rdquo;
+          {lang === 'both' && (
+            <div style={{ fontSize: '0.7rem', color: '#7a8893', marginTop: '0.3rem' }}>
+              — {bio.quote.en}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Known Chinese compound surnames present in the roster.
+const COMPOUND_SURNAMES = [
+  '諸葛', '司馬', '夏侯', '太史', '公孫', '上官', '歐陽',
+];
+
+function getSurname(zh: string): string {
+  for (const s of COMPOUND_SURNAMES) {
+    if (zh.startsWith(s)) return s;
+  }
+  return zh.charAt(0);
+}
+
+// Officer ids whose full-body portrait (public/portraits/<id>-full.webp) 404'd
+// this session — skip re-requesting so we don't re-fire a failing GET.
+const missingFullPortraits = new Set<string>();
+
+/**
+ * Left column of the officer-detail modal. Shows a hand-drawn full-body
+ * portrait (public/portraits/<id>-full.webp) at its natural proportions when
+ * one exists; otherwise falls back to the procedural circular Portrait.
+ */
+function PortraitColumn({
+  officer,
+  zh,
+  color,
+  archetype,
+  age,
+}: {
+  officer: Officer;
+  zh: string;
+  color: string;
+  archetype: PortraitArchetype;
+  age: number;
+}) {
+  const [imgFailed, setImgFailed] = useState(() => missingFullPortraits.has(officer.id));
+  const src = `${import.meta.env.BASE_URL}portraits/${officer.id}-full.webp`;
+
+  return (
+    <div className={styles.portraitColumn}>
+      {imgFailed ? (
+        <Portrait zh={zh} color={color} archetype={archetype} age={age} />
+      ) : (
+        <img
+          className={styles.portraitFull}
+          src={src}
+          alt={zh}
+          loading="lazy"
+          onError={() => { missingFullPortraits.add(officer.id); setImgFailed(true); }}
+        />
+      )}
+    </div>
+  );
+}
+
+function Portrait({
+  zh,
+  color,
+  archetype,
+  age,
+}: {
+  zh: string;
+  color: string;
+  archetype: PortraitArchetype;
+  age: number;
+}) {
+  const surname = getSurname(zh);
+  const isCompound = surname.length === 2;
+  const gradId = `grad-${zh.charCodeAt(0)}-${zh.charCodeAt(1) ?? 0}-${archetype}`;
+  const isOld = age >= 55;
+
+  // Archetype-specific accent color.
+  const accent: Record<PortraitArchetype, string> = {
+    warrior: '#b8442e',
+    strategist: '#3a7dd9',
+    civil: '#6abf6a',
+    ruler: '#e6c473',
+    lady: '#c178c7',
+    sage: '#88b7e8',
+  };
+  const acc = accent[archetype];
+
+  return (
+    <svg
+      width="84"
+      height="84"
+      viewBox="0 0 84 84"
+      className={styles.portrait}
+    >
+      <defs>
+        <radialGradient id={gradId} cx="42%" cy="38%" r="68%">
+          <stop offset="0%" stopColor={color} stopOpacity="0.95" />
+          <stop offset="60%" stopColor={color} stopOpacity="0.55" />
+          <stop offset="100%" stopColor="#10161e" stopOpacity="1" />
+        </radialGradient>
+        <linearGradient id={`${gradId}-frame`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#e6c473" />
+          <stop offset="100%" stopColor="#8a6a3a" />
+        </linearGradient>
+      </defs>
+
+      {/* Outer frame ring with archetype color */}
+      <circle cx="42" cy="42" r="40" fill="none" stroke={acc} strokeWidth="1" opacity="0.5" />
+      <circle cx="42" cy="42" r="38" fill={`url(#${gradId})`} stroke={`url(#${gradId}-frame)`} strokeWidth="1.8" />
+
+      {/* Archetype ornaments */}
+      {archetype === 'warrior' && (
+        <g>
+          {/* Helmet sweep over the top */}
+          <path d="M 14 30 Q 42 8 70 30 L 66 32 Q 42 14 18 32 Z" fill="#5a2025" opacity="0.9" stroke="#b8442e" strokeWidth="0.6" />
+          {/* Plume */}
+          <path d="M 42 8 L 38 2 L 42 4 L 46 2 Z" fill="#b8442e" />
+          {/* Cheek guards */}
+          <path d="M 14 38 L 14 50 L 20 52" fill="none" stroke="#5a2025" strokeWidth="1.5" opacity="0.7" />
+          <path d="M 70 38 L 70 50 L 64 52" fill="none" stroke="#5a2025" strokeWidth="1.5" opacity="0.7" />
+        </g>
+      )}
+      {archetype === 'strategist' && (
+        <g>
+          {/* Scholar's cap (冠) - boxy with a tassel */}
+          <rect x="28" y="14" width="28" height="10" rx="1" fill="#1a3052" stroke="#3a7dd9" strokeWidth="0.6" />
+          <path d="M 28 14 L 32 8 L 52 8 L 56 14 Z" fill="#1a3052" opacity="0.7" />
+          <line x1="42" y1="8" x2="42" y2="4" stroke="#88b7e8" strokeWidth="0.8" />
+          <circle cx="42" cy="3" r="1" fill="#e6c473" />
+        </g>
+      )}
+      {archetype === 'sage' && (
+        <g>
+          {/* Daoist headdress with star */}
+          <path d="M 22 22 Q 42 6 62 22 L 58 26 Q 42 12 26 26 Z" fill="#0a1a2a" opacity="0.85" />
+          <path d="M 42 6 L 44 10 L 48 11 L 45 14 L 46 18 L 42 16 L 38 18 L 39 14 L 36 11 L 40 10 Z" fill="#e6c473" opacity="0.9" />
+          {/* Feathered fan accent */}
+          <path d="M 64 50 Q 76 46 72 60 Q 66 56 64 50 Z" fill="#e6edf3" opacity="0.7" stroke="#7a8893" strokeWidth="0.3" />
+        </g>
+      )}
+      {archetype === 'civil' && (
+        <g>
+          {/* Tall civil hat */}
+          <rect x="32" y="10" width="20" height="14" rx="1" fill="#2a3a2a" stroke="#6abf6a" strokeWidth="0.6" />
+          <line x1="42" y1="10" x2="42" y2="6" stroke="#6abf6a" strokeWidth="0.6" />
+          <circle cx="42" cy="5" r="0.8" fill="#e6c473" />
+        </g>
+      )}
+      {archetype === 'ruler' && (
+        <g>
+          {/* Imperial crown with bead curtain */}
+          <rect x="22" y="14" width="40" height="6" fill="#26323e" stroke="#e6c473" strokeWidth="1" />
+          <rect x="22" y="10" width="40" height="6" fill="#10161e" stroke="#e6c473" strokeWidth="0.6" />
+          {/* Hanging beads */}
+          {[26, 31, 36, 42, 48, 53, 58].map((x, i) => (
+            <g key={i}>
+              <line x1={x} y1="20" x2={x} y2="26" stroke="#e6c473" strokeWidth="0.4" />
+              <circle cx={x} cy="27" r="1.2" fill="#e6c473" />
+            </g>
+          ))}
+          {/* Top dragon ornament */}
+          <path d="M 38 10 L 42 4 L 46 10 Z" fill="#b8442e" />
+        </g>
+      )}
+      {archetype === 'lady' && (
+        <g>
+          {/* Hair coil with hairpin and ornament */}
+          <ellipse cx="42" cy="20" rx="22" ry="10" fill="#10161e" opacity="0.85" />
+          <ellipse cx="42" cy="18" rx="14" ry="6" fill="#1b2531" />
+          {/* Hairpin with flower */}
+          <line x1="48" y1="22" x2="58" y2="14" stroke="#e6c473" strokeWidth="0.6" />
+          <circle cx="58" cy="14" r="2.5" fill="#c178c7" stroke="#e6c473" strokeWidth="0.4" />
+          <circle cx="58" cy="14" r="1" fill="#e6c473" />
+          {/* Side hair locks */}
+          <path d="M 22 24 Q 18 38 22 50" fill="none" stroke="#10161e" strokeWidth="2.5" opacity="0.7" />
+          <path d="M 62 24 Q 66 38 62 50" fill="none" stroke="#10161e" strokeWidth="2.5" opacity="0.7" />
+        </g>
+      )}
+
+      {/* Beard for older male officers */}
+      {isOld && archetype !== 'lady' && (
+        <path
+          d="M 30 56 Q 42 78 54 56 Q 50 70 42 72 Q 34 70 30 56 Z"
+          fill="#26323e"
+          opacity="0.7"
+        />
+      )}
+
+      {/* Surname character */}
+      {isCompound ? (
+        <>
+          <text
+            x="42" y="40"
+            textAnchor="middle"
+            fontSize="18"
+            fontFamily='"Songti SC","Noto Serif SC",serif'
+            fontWeight="bold"
+            fill="#e6edf3"
+            stroke="#10161e"
+            strokeWidth="0.4"
+          >
+            {surname.charAt(0)}
+          </text>
+          <text
+            x="42" y="60"
+            textAnchor="middle"
+            fontSize="18"
+            fontFamily='"Songti SC","Noto Serif SC",serif'
+            fontWeight="bold"
+            fill="#e6edf3"
+            stroke="#10161e"
+            strokeWidth="0.4"
+          >
+            {surname.charAt(1)}
+          </text>
+        </>
+      ) : (
+        <text
+          x="42" y="56"
+          textAnchor="middle"
+          fontSize="28"
+          fontFamily='"Songti SC","Noto Serif SC",serif'
+          fontWeight="bold"
+          fill="#e6edf3"
+          stroke="#10161e"
+          strokeWidth="0.5"
+        >
+          {surname}
+        </text>
+      )}
+
+      {/* Archetype seal in corner */}
+      <g transform="translate(64, 64)">
+        <rect x="-7" y="-7" width="14" height="14" fill={acc} stroke="#10161e" strokeWidth="0.8" rx="1" />
+        <text
+          x="0" y="3"
+          textAnchor="middle"
+          fontSize="9"
+          fontFamily='"Songti SC","Noto Serif SC",serif'
+          fontWeight="bold"
+          fill="#fff"
+        >
+          {archetype === 'warrior' ? '武'
+          : archetype === 'strategist' ? '智'
+          : archetype === 'sage' ? '聖'
+          : archetype === 'civil' ? '文'
+          : archetype === 'ruler' ? '君'
+          : '麗'}
+        </text>
+      </g>
+    </svg>
+  );
+}
+
+function StatBar({
+  label,
+  value,
+  bonus = 0,
+  mode = 'stat',
+}: {
+  label: string;
+  value: number;
+  /** Bonuses from items + skills (drawn as a separate fill segment). */
+  bonus?: number;
+  mode?: 'stat' | 'loyalty';
+}) {
+  // Loyalty: 0–100 scale. Stats: 0–150 scale (max possible after XP growth).
+  // Past 100, glow gold ("transcendent"). Past 130, glow brighter.
+  const scaleMax = mode === 'loyalty' ? 100 : 150;
+  const effective = value + bonus;
+  const baseWidthPct = Math.min(100, (value / scaleMax) * 100);
+  const bonusWidthPct = Math.min(100, ((value + bonus) / scaleMax) * 100) - baseWidthPct;
+  const fillColor =
+    mode === 'loyalty'
+      ? effective >= 80 ? '#3a7dd9' : effective >= 50 ? '#c9a64e' : '#b8442e'
+      : effective >= 130 ? '#ffce4a'
+      : effective >= 100 ? '#e6c473'
+      : effective >= 80 ? '#c9a64e'
+      : effective >= 60 ? '#7a8893'
+      : '#364654';
+  const glow = mode === 'stat' && effective > 100;
+  return (
+    <div className={styles.statRow}>
+      <span className={styles.statLabel}>{label}</span>
+      <div className={styles.statBarTrack}>
+        {/* Hundred-mark tick — shows the old "natural" cap */}
+        {mode === 'stat' && (
+          <div
+            style={{
+              position: 'absolute',
+              left: `${(100 / scaleMax) * 100}%`,
+              top: 0,
+              bottom: 0,
+              width: 1,
+              background: 'rgba(212, 168, 74, 0.5)',
+              pointerEvents: 'none',
+            }}
+          />
+        )}
+        {/* Base stat fill */}
+        <div
+          className={styles.statBarFill}
+          style={{
+            width: `${baseWidthPct}%`,
+            background: fillColor,
+            boxShadow: glow ? `0 0 6px ${fillColor}` : undefined,
+          }}
+        />
+        {/* Item + skill bonus fill — striped/lighter to show it's external */}
+        {bonus > 0 && (
+          <div
+            className={styles.statBarFill}
+            style={{
+              left: `calc(1px + ${baseWidthPct}%)`,
+              width: `${bonusWidthPct}%`,
+              background:
+                `repeating-linear-gradient(45deg, #88b7e8 0, #88b7e8 4px, #5a8ab8 4px, #5a8ab8 8px)`,
+              boxShadow: '0 0 6px #88b7e8',
+            }}
+          />
+        )}
+        <span
+          className={styles.statBarValue}
+          style={glow ? { color: '#ffce4a', textShadow: '0 0 4px #000, 0 0 6px #ffce4a' } : undefined}
+          title={bonus > 0 ? `Base ${value} + ${bonus} from items/skills` : undefined}
+        >
+          {effective}
+          {bonus > 0 && (
+            <span style={{ color: '#88b7e8', fontSize: '0.7em', marginLeft: 4 }}>
+              ({value}+{bonus})
+            </span>
+          )}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* ─── R4 — Family tree mini-visualization ──────────────────────────────
+ * Shows parent(s) above, self in center, spouse to the side, children
+ * below — all clickable to drill-down. Uses static FAMILY_LINEAGE +
+ * runtime state.family.
+ */
+function FamilyTreeSection({ officerId, officersOverride }: {
+  officerId: string;
+  officersOverride?: Record<string, Officer>;
+}) {
+  const storeOfficers = useGameStore((s) => s.officers);
+  const officers = officersOverride ?? storeOfficers;
+  const family = useGameStore((s) => s.family);
+  const t = useT();
+  const lang = useLanguage();
+  const [drillId, setDrillId] = useState<string | null>(null);
+
+  const allFamily = [...family, ...FAMILY_LINEAGE.filter(
+    (f) => f.officerA === officerId || f.officerB === officerId,
+  )];
+  // Dedup
+  const seen = new Set<string>();
+  const familyPool = allFamily.filter((f) => {
+    const k = `${f.officerA}|${f.officerB}|${f.kind}`;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+
+  const parents: string[] = [];
+  const children: string[] = [];
+  const spouses: string[] = [];
+  const siblings: string[] = [];
+  for (const f of familyPool) {
+    if (f.officerA !== officerId && f.officerB !== officerId) continue;
+    if (f.kind === 'parent-child') {
+      if (f.officerA === officerId) children.push(f.officerB);
+      else parents.push(f.officerA);
+    } else if (f.kind === 'spouse') {
+      spouses.push(f.officerA === officerId ? f.officerB : f.officerA);
+    } else if (f.kind === 'sibling') {
+      siblings.push(f.officerA === officerId ? f.officerB : f.officerA);
+    }
+  }
+
+  if (parents.length === 0 && children.length === 0 && spouses.length === 0 && siblings.length === 0) {
+    return null;
+  }
+
+  const node = (id: string, color: string, role: string) => {
+    const o = officers[id];
+    if (!o) return null;
+    return (
+      <div
+        key={`${role}-${id}`}
+        onClick={() => setDrillId(id)}
+        title={lang === 'en' ? `Open ${o.name.en}` : `查看 ${o.name.zh}`}
+        style={{
+          display: 'inline-flex', flexDirection: 'column', alignItems: 'center',
+          background: '#10161e',
+          border: `1px solid ${color}`,
+          padding: '0.35rem 0.55rem',
+          minWidth: 75,
+          cursor: 'pointer',
+          margin: 2,
+          transition: 'background 0.1s',
+        }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = '#1b2531'; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = '#10161e'; }}
+      >
+        <span style={{ color, fontSize: '0.62rem', letterSpacing: '0.1rem' }}>{role}</span>
+        <span style={{ color: '#e6c473', fontSize: '0.82rem', marginTop: 2 }}>
+          {lang === 'en' ? o.name.en : o.name.zh}
+        </span>
+        {o.status === 'dead' && (
+          <span style={{ fontSize: '0.6rem', color: '#6b3a3a', marginTop: 1 }}>† {t('卒', 'dec.')}</span>
+        )}
+        {o.status === 'retired' && (
+          <span style={{ fontSize: '0.6rem', color: '#7a8a5a', marginTop: 1 }}>{t('歸隱', 'retired')}</span>
+        )}
+      </div>
+    );
+  };
+
+  const drillOfficer = drillId ? officers[drillId] : null;
+
+  return (
+    <section className={styles.statsSection}>
+      <h3 className={styles.sectionTitle}>{t('家系図', 'Family Tree')}</h3>
+      <div style={{
+        background: 'linear-gradient(180deg, rgba(212,168,74,0.04) 0%, transparent 100%)',
+        padding: '0.6rem 0.4rem',
+        border: '1px solid #2b3845',
+      }}>
+        {/* Parents */}
+        {parents.length > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {parents.map((p) => node(p, '#88b7e8', t('父母', 'Parent')))}
+          </div>
+        )}
+        {/* Vertical line if has parents */}
+        {parents.length > 0 && (
+          <div style={{ width: 2, height: 12, background: '#364654', margin: '2px auto' }} />
+        )}
+        {/* Self + spouses + siblings */}
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
+          {siblings.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+              {siblings.slice(0, 4).map((s) => node(s, '#c9a64e', t('兄弟', 'Sibling')))}
+              {siblings.length > 4 && (
+                <span style={{ color: '#7a8893', fontSize: '0.72rem', alignSelf: 'center', margin: '0 4px' }}>
+                  +{siblings.length - 4}
+                </span>
+              )}
+            </div>
+          )}
+          {/* Self */}
+          <div
+            style={{
+              display: 'inline-flex', flexDirection: 'column', alignItems: 'center',
+              background: '#1e2832',
+              border: '2px solid #e6c473',
+              padding: '0.5rem 0.8rem',
+              minWidth: 90,
+              margin: 2,
+              boxShadow: '0 0 12px rgba(212,168,74,0.4)',
+            }}
+          >
+            <span style={{ color: '#e6c473', fontSize: '0.62rem', letterSpacing: '0.05rem' }}>
+              {t('本人', 'Self')}
+            </span>
+            <span style={{ color: '#ffd47a', fontSize: '0.95rem', marginTop: 2, fontWeight: 600 }}>
+              {(() => {
+                const me = officers[officerId];
+                return me ? (lang === 'en' ? me.name.en : me.name.zh) : officerId;
+              })()}
+            </span>
+          </div>
+          {spouses.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+              {spouses.map((s) => node(s, '#e8a8c8', t('配偶', 'Spouse')))}
+            </div>
+          )}
+        </div>
+        {/* Vertical line down to children */}
+        {children.length > 0 && (
+          <div style={{ width: 2, height: 12, background: '#364654', margin: '2px auto' }} />
+        )}
+        {/* Children */}
+        {children.length > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {children.slice(0, 8).map((c) => node(c, '#7ed68a', t('子嗣', 'Child')))}
+            {children.length > 8 && (
+              <span style={{ color: '#7a8893', fontSize: '0.72rem', alignSelf: 'center', margin: '0 4px' }}>
+                +{children.length - 8}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+      {drillOfficer && (
+        <OfficerDetail
+          officer={drillOfficer}
+          onClose={() => setDrillId(null)}
+          officersOverride={officersOverride}
+        />
+      )}
+    </section>
+  );
+}

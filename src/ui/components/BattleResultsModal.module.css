@@ -1,0 +1,179 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 970;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.modal {
+  background: linear-gradient(160deg, #1b2531 0%, #10161e 100%);
+  border: 2px solid #e6c473;
+  width: min(680px, 100%);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  color: #e6edf3;
+  font-family: var(--tkm-font-body);
+  box-shadow: 0 0 40px rgba(212, 168, 74, 0.3);
+}
+
+.headerBanner {
+  position: relative;
+  padding: 2rem 1.5rem 1rem;
+  text-align: center;
+  border-bottom: 1px solid #2b3845;
+}
+
+/* 朱印砸下 — the verdict is chopped onto the dispatch after the banner lands. */
+.sealStamp {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.9rem;
+  animation: tkmResultSeal 0.5s cubic-bezier(0.3, 1.5, 0.6, 1) 0.45s both;
+}
+
+@keyframes tkmResultSeal {
+  0% { opacity: 0; transform: scale(2.4); }
+  60% { opacity: 1; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.bannerZh {
+  font-size: 2.5rem;
+  letter-spacing: 0.6rem;
+  text-shadow: 0 0 16px rgba(212, 168, 74, 0.4);
+  animation: tkmVictorySlam 0.7s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sealStamp, .bannerZh { animation: none; }
+}
+
+.bannerZhVictory { color: #e6c473; }
+.bannerZhDefeat { color: #b8442e; }
+
+.bannerEn {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #aab6c0;
+  font-style: italic;
+  letter-spacing: 0.1rem;
+}
+
+.body {
+  padding: 1rem 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.section {
+  margin-bottom: 1rem;
+}
+
+.sectionLabel {
+  font-size: 0.7rem;
+  letter-spacing: 0.07rem;
+  color: #7a8893;
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+
+.statRow {
+  display: grid;
+  grid-template-columns: 1fr 80px 80px;
+  align-items: center;
+  padding: 0.4rem 0.55rem;
+  background: #10161e;
+  border: 1px solid #26323e;
+  margin-bottom: 0.3rem;
+  font-size: 0.85rem;
+}
+
+.statSide {
+  color: #aab6c0;
+}
+
+.statValue {
+  font-family: ui-monospace, monospace;
+  text-align: right;
+}
+
+.statValueAttack { color: #b8442e; }
+.statValueDefend { color: #3a7dd9; }
+
+.officerCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.4rem 0.55rem;
+  background: #10161e;
+  border: 1px solid #26323e;
+  margin-bottom: 0.3rem;
+  font-size: 0.85rem;
+}
+
+.officerName {
+  color: #e6c473;
+}
+
+.officerNameEn {
+  color: #7a8893;
+  font-size: 0.72rem;
+  font-style: italic;
+  margin-left: 0.3rem;
+}
+
+.officerStat {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  color: #aab6c0;
+}
+
+.captureCard {
+  border-color: #c9a64e;
+}
+
+.deadCard {
+  border-color: #b8442e;
+}
+
+.lootRow {
+  display: flex;
+  gap: 1.5rem;
+  padding: 0.5rem 0.6rem;
+  background: #10161e;
+  border: 1px solid #c9a64e;
+  font-family: ui-monospace, monospace;
+}
+
+.lootValue {
+  color: #c9a64e;
+}
+
+.footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #2b3845;
+  display: flex;
+  justify-content: space-between;
+}
+
+.btn {
+  background: #26323e;
+  border: 1px solid #e6c473;
+  color: #e6c473;
+  padding: 0.5rem 1.2rem;
+  font-family: inherit;
+  cursor: pointer;
+  letter-spacing: 0.05rem;
+}
+
+.btnPrimary {
+  background: linear-gradient(180deg, #364654, #26323e);
+}
+
+.btn:hover {
+  background: #364654;
+}

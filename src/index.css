@@ -1,0 +1,1076 @@
+/* ─── Phase 51: Design tokens — single source of truth ──────────── */
+:root,
+:root[data-theme="parchment"] {
+  /* 水墨 — modern ink: cool near-black ground, crisp text, jin-gold + jade
+     accents. (Kept under the "parchment" key so the default selection picks it.) */
+  --tkm-bg:           #0e1216;
+  --tkm-bg-raised:    #18212b;
+  --tkm-bg-sunken:    #0a0e12;
+  --tkm-bg-modal:     #141c25;
+
+  --tkm-border:       #2b3845;
+  --tkm-border-soft:  #1e2832;
+  --tkm-border-gold:  #3c4f5e;
+
+  --tkm-text-h1:      #eef3f7;
+  --tkm-text-h2:      #e6c473;   /* 金 — crisp jin accent */
+  --tkm-text-body:    #b6c2cc;
+  --tkm-text-muted:   #7a8893;
+
+  /* Modern chrome primitives */
+  --tkm-radius:       8px;
+  --tkm-radius-sm:    5px;
+  --tkm-hairline:     rgba(255, 255, 255, 0.08);
+  --tkm-elev-1:       0 2px 10px rgba(0, 0, 0, 0.35);
+  --tkm-elev-2:       0 10px 34px rgba(0, 0, 0, 0.5);
+  --tkm-jade:         #6fbf9f;
+
+  /* 紙紋 — a seamless, desaturated fractal-noise grain (opaque gray, ~50%
+     average) meant to ride a panel's gradient via `background-blend-mode:
+     soft-light`. Inline SVG, so no asset request. Tiles at 220px. */
+  --tkm-paper: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0.33 0.33 0.33 0 0 0.33 0.33 0.33 0 0 0.33 0.33 0.33 0 0 0 0 0 0 1'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23p)'/%3E%3C/svg%3E");
+}
+
+:root[data-theme="ink"] {
+  /* 靑墨 — cool ink wash / scholarly */
+  --tkm-bg:           #0e1419;
+  --tkm-bg-raised:    #18222c;
+  --tkm-bg-sunken:    #080c10;
+  --tkm-bg-modal:     #131c25;
+
+  --tkm-border:       #2a4458;
+  --tkm-border-soft:  #1c2e3a;
+  --tkm-border-gold:  #3a5e78;
+
+  --tkm-text-h1:      #d8e8f0;
+  --tkm-text-h2:      #88c8e8;
+  --tkm-text-body:    #a8c0d0;
+  --tkm-text-muted:   #688090;
+}
+
+:root[data-theme="vermilion"] {
+  /* 赤焰 — warm vermilion / Wei imperial */
+  --tkm-bg:           #1a0c0c;
+  --tkm-bg-raised:    #2a1414;
+  --tkm-bg-sunken:    #0e0606;
+  --tkm-bg-modal:     #221010;
+
+  --tkm-border:       #5a2828;
+  --tkm-border-soft:  #3a1c1c;
+  --tkm-border-gold:  #8a4a3a;
+
+  --tkm-text-h1:      #f0d8c0;
+  --tkm-text-h2:      #e8a060;
+  --tkm-text-body:    #d4a888;
+  --tkm-text-muted:   #946850;
+}
+
+:root[data-theme="bamboo"] {
+  /* 竹林 — bamboo green / hermit retreat */
+  --tkm-bg:           #0e160e;
+  --tkm-bg-raised:    #1a2818;
+  --tkm-bg-sunken:    #060c06;
+  --tkm-bg-modal:     #142014;
+
+  --tkm-border:       #2c4828;
+  --tkm-border-soft:  #1c321c;
+  --tkm-border-gold:  #4a7048;
+
+  --tkm-text-h1:      #d8e8c8;
+  --tkm-text-h2:      #b8d878;
+  --tkm-text-body:    #a8c098;
+  --tkm-text-muted:   #688060;
+}
+
+:root[data-theme="moonlight"] {
+  /* 月華 — moonlit grey / refined minimalist */
+  --tkm-bg:           #14141a;
+  --tkm-bg-raised:    #1e1e28;
+  --tkm-bg-sunken:    #0a0a10;
+  --tkm-bg-modal:     #181820;
+
+  --tkm-border:       #404050;
+  --tkm-border-soft:  #2a2a36;
+  --tkm-border-gold:  #5a5a72;
+
+  --tkm-text-h1:      #e8e8f0;
+  --tkm-text-h2:      #c0a8e0;
+  --tkm-text-body:    #b8b8c8;
+  --tkm-text-muted:   #707080;
+}
+
+/* ─── Theming — token-driven, no filter hack ───────────────────────────
+ * Each theme just swaps the `--tkm-*` palette on <html data-theme>; the
+ * shared chrome (top bar, <Modal>, <Chip>, city panel, …) reads those
+ * tokens, so a theme re-tints the UI cleanly. The old `filter: hue-rotate`
+ * on <body> is gone: it distorted portraits, seals, icons and the 3D map,
+ * and a filter on <body> also reparents every position:fixed overlay. */
+
+:root {
+
+  /* State colors — consistent across all UI */
+  --tkm-success:      #b8c87a;
+  --tkm-warn:         #d4a84a;
+  --tkm-danger:       #b8442e;
+  --tkm-info:         #88b7e8;
+  --tkm-magic:        #c178c7;
+
+  /* Faction palette — pop colors */
+  --tkm-wei:          #8a2832;
+  --tkm-shu:          #d4842a;
+  --tkm-wu:           #2a8a5c;
+  --tkm-warlord:      #6a4a8a;
+
+  /* Stat tones for the 5 attributes */
+  --tkm-stat-lead:    #d4a84a;
+  --tkm-stat-war:     #b8442e;
+  --tkm-stat-int:     #88b7e8;
+  --tkm-stat-pol:     #b8c87a;
+  --tkm-stat-cha:     #c178c7;
+
+  /* Spacing scale */
+  --tkm-gap-xs: 0.25rem;
+  --tkm-gap-sm: 0.5rem;
+  --tkm-gap-md: 0.75rem;
+  --tkm-gap-lg: 1rem;
+  --tkm-gap-xl: 1.5rem;
+
+  /* Type — a clean modern CJK sans for the UI, serif kept for flavour, a
+     calligraphic brush face for grand titles, tabular mono for numbers. */
+  --tkm-font-zh: 'Ma Shan Zheng', 'Songti SC', 'Noto Serif SC', serif;
+  --tkm-font-body: system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', 'Hiragino Sans GB', sans-serif;
+  --tkm-font-serif: 'Songti SC', 'Noto Serif SC', Georgia, serif;
+  --tkm-font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Type scale — one ladder so headings/body/captions stay in proportion. */
+  --tkm-fs-h1:   1.35rem;
+  --tkm-fs-h2:   1.05rem;
+  --tkm-fs-body: 0.9rem;
+  --tkm-fs-sm:   0.78rem;
+  --tkm-fs-xs:   0.68rem;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--tkm-bg);
+  color: var(--tkm-text-body);
+  font-family: var(--tkm-font-body);
+  /* Comfortable measure for CJK; the default ~1.2 read cramped. */
+  line-height: 1.55;
+  /* Lining, tabular figures so every column of numbers lines up. */
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ─── Phase 32: shared visual polish ───────────────────────────────── */
+
+/* Any element whose class name ends with "backdrop" (modal overlays
+ * use that convention across our components) fades in. The matching
+ * "modal" element gets a subtle scale-up. */
+[class*="backdrop"] {
+  animation: tkmFadeIn 0.18s ease-out;
+}
+[class*="modal"]:not([class*="backdrop"]) {
+  animation: tkmModalIn 0.22s ease-out;
+}
+
+@keyframes tkmFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes tkmModalIn {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Decorative corner motif applied to elements with [data-corners].
+ * Four faint gold cloud-curl ornaments at each corner of the box. */
+[data-corners] {
+  position: relative;
+}
+[data-corners]::before,
+[data-corners]::after {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border: 1px solid #d4a84a;
+  opacity: 0.6;
+  pointer-events: none;
+}
+[data-corners]::before {
+  top: -2px;
+  left: -2px;
+  border-right: none;
+  border-bottom: none;
+}
+[data-corners]::after {
+  bottom: -2px;
+  right: -2px;
+  border-left: none;
+  border-top: none;
+}
+
+/* B6 — consistent interactive feedback across every button, hand-styled or
+   not. Transform/filter/outline are never set inline, so these lift the many
+   inline-styled buttons too, without fighting their bespoke colours. */
+button { cursor: pointer; }
+button:disabled,
+button[aria-disabled="true"] { cursor: not-allowed; opacity: 0.55; }
+
+@media (prefers-reduced-motion: no-preference) {
+  button:not(:disabled) {
+    transition: box-shadow 0.15s ease, transform 0.1s ease, filter 0.15s ease;
+  }
+  button:not(:disabled):hover { filter: brightness(1.08); }
+  button:not(:disabled):active { transform: translateY(1px) scale(0.985); }
+}
+
+/* Keyboard focus ring — only for keyboard users (focus-visible), so mouse
+   clicks stay clean. Covers every interactive surface. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--tkm-text-h2, #e6c473);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* 按壓回饋 — every enabled button dips a touch darker on press. Uses filter,
+   not transform, so it never disturbs layout or a button's own centering.
+   A button that sets its own :active transform still gets that too. */
+button:not(:disabled):active,
+[role="button"]:active {
+  filter: brightness(0.9);
+}
+
+/* 浮層微動 — hover cards ease in with a hair of rise instead of snapping. */
+@keyframes tkmTipPop {
+  from { opacity: 0; transform: translateY(4px) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  button:not(:disabled):active,
+  [role="button"]:active { filter: none; }
+}
+
+/* Title-screen brush stroke calligraphy intro. */
+@keyframes tkmBrushStroke {
+  0%   { stroke-dashoffset: 200; opacity: 0; }
+  10%  { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 1; }
+}
+
+.tkm-brush-stroke path {
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  animation: tkmBrushStroke 2s ease-out forwards;
+}
+.tkm-brush-stroke path:nth-child(2) { animation-delay: 0.3s; }
+.tkm-brush-stroke path:nth-child(3) { animation-delay: 0.6s; }
+
+/* Seasonal map tint overlay — applied to .seasonal-overlay div. */
+.seasonal-spring { background: rgba(120, 200, 100, 0.06); }
+.seasonal-summer { background: rgba(255, 220, 100, 0.05); }
+.seasonal-autumn { background: rgba(220, 130, 60, 0.10); }
+.seasonal-winter {
+  background: rgba(220, 230, 255, 0.10);
+  background-image: radial-gradient(circle, rgba(255,255,255,0.3) 1px, transparent 1.5px);
+  background-size: 24px 24px;
+}
+
+/* ─── Phase 34: responsive — tablet/mobile fallbacks ──────────── */
+
+/* Tablet (≤900px): tighter buttons, modals wider */
+@media (max-width: 900px) {
+  [class*="modal"]:not([class*="backdrop"]) {
+    width: 96vw !important;
+    max-width: 96vw !important;
+    max-height: 95vh !important;
+  }
+  [class*="topBar"] {
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    padding: 0.4rem 0.6rem !important;
+  }
+  [class*="forcesButton"] {
+    font-size: 0.72rem !important;
+    padding: 0.3rem 0.55rem !important;
+  }
+}
+
+/* Phone (≤640px): stack everything, full-screen modals, larger touch targets */
+@media (max-width: 640px) {
+  body {
+    font-size: 0.92rem;
+  }
+
+  /* MapScreen: stack map on top, CityPanel below — break the side-by-side */
+  [class*="MapScreen_main"],
+  [class*="main_"] {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    padding: 0.5rem !important;
+    overflow-y: auto !important;
+  }
+  [class*="mapWrap"] {
+    min-height: auto !important;
+    max-height: none !important;
+    flex: 0 0 auto !important;
+  }
+  [class*="CityPanel"] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* TopBar: scroll horizontally, never wrap, all kids keep natural width */
+  [class*="topBar"] {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.35rem 0.5rem !important;
+    align-items: stretch !important;
+  }
+  /* CRITICAL: every direct child of topBar must NOT shrink (otherwise
+   * flex squeezes buttons to ~1 character wide and text overlaps). */
+  [class*="topBar"] > * {
+    flex-shrink: 0 !important;
+    flex-grow: 0 !important;
+  }
+
+  /* Date block: horizontal layout, smaller, single short line */
+  [class*="dateBlock"] {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 0.3rem !important;
+    padding: 0.1rem 0.5rem !important;
+    min-width: auto !important;
+    border: none !important;
+  }
+  [class*="dateBlock"] > * { white-space: nowrap !important; }
+  [class*="year"] {
+    font-size: 0.85rem !important;
+    line-height: 1 !important;
+  }
+  [class*="season"] {
+    font-size: 0.6rem !important;
+    line-height: 1 !important;
+  }
+  /* Hide bulky info; the dropdowns can still show details */
+  [class*="playerBlock"],
+  [class*="orderBlock"] {
+    display: none !important;
+  }
+  /* Hide weather + mandate chips on tiny screens (date stays) */
+  [class*="dateBlock"] > [class*="season"]:nth-of-type(n+3) {
+    display: none !important;
+  }
+
+  /* Buttons: tight padding, never wrap, never shrink */
+  [class*="forcesButton"] {
+    font-size: 0.72rem !important;
+    padding: 0.4rem 0.55rem !important;
+    letter-spacing: 0.05rem !important;
+    white-space: nowrap !important;
+  }
+  [class*="advanceButton"] {
+    font-size: 0.74rem !important;
+    padding: 0.45rem 0.65rem !important;
+    white-space: nowrap !important;
+  }
+  [class*="backButton"] {
+    padding: 0.35rem 0.5rem !important;
+    font-size: 0.7rem !important;
+    white-space: nowrap !important;
+  }
+  /* HUD dropdown triggers (the 6 ▾ menus) */
+  .hud-menu-trigger {
+    font-size: 0.74rem !important;
+    padding: 0.4rem 0.55rem !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Modals: full-screen on phone */
+  [class*="backdrop"] {
+    padding: 0 !important;
+  }
+  [class*="modal"]:not([class*="backdrop"]) {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+    border: none !important;
+  }
+
+  /* Officer rows: stack stats on second line */
+  [class*="row_"] {
+    flex-wrap: wrap !important;
+  }
+  [class*="rowMeta"],
+  [class*="stats"] {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    margin-top: 0.2rem;
+    font-size: 0.7rem !important;
+  }
+
+  /* Tables / grids: shrink padding */
+  th, td { padding: 0.3rem !important; font-size: 0.78rem; }
+
+  /* Hide some decorative corners on phone (they overlap content) */
+  [data-corners]::before, [data-corners]::after { display: none; }
+}
+
+/* Touch devices: bigger tap targets */
+@media (pointer: coarse) {
+  button {
+    min-height: 38px;
+    min-width: 38px;
+  }
+  /* Officer cards / row items get a bit more vertical room */
+  [class*="row_"], [class*="officerCard"] {
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
+  }
+}
+
+/* ─── Phase 51: Battle drama — animations & motion ───────────────── */
+
+/* Damage / morale numbers flying off the field */
+@keyframes tkmDamageFly {
+  0%   { opacity: 0; transform: translateY(0) scale(0.5); }
+  20%  { opacity: 1; transform: translateY(-10px) scale(1.1); }
+  100% { opacity: 0; transform: translateY(-40px) scale(0.9); }
+}
+.tkm-damage-num {
+  display: inline-block;
+  font-family: var(--tkm-font-mono);
+  font-weight: bold;
+  color: var(--tkm-danger);
+  animation: tkmDamageFly 1.6s ease-out forwards;
+}
+
+/* Morale-bar fill smooth transition */
+.tkm-morale-bar {
+  position: relative;
+  height: 10px;
+  background: var(--tkm-bg-sunken);
+  border: 1px solid var(--tkm-border-soft);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.tkm-morale-bar > .fill {
+  height: 100%;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+              background 0.4s ease;
+}
+
+/* Sword-clash flash at main engagement */
+@keyframes tkmClash {
+  0%   { opacity: 0; transform: scale(0.6) rotate(-10deg); }
+  35%  { opacity: 1; transform: scale(1.4) rotate(0deg); }
+  100% { opacity: 0; transform: scale(1.6) rotate(15deg); }
+}
+.tkm-clash {
+  display: inline-block;
+  animation: tkmClash 0.9s ease-out forwards;
+  font-size: 2.5rem;
+  filter: drop-shadow(0 0 12px var(--tkm-warn));
+}
+
+/* Fire wave for successful 火攻 */
+@keyframes tkmFireWave {
+  0%   { opacity: 0; background-position: 0 100%; }
+  20%  { opacity: 0.7; }
+  100% { opacity: 0; background-position: 0 -50%; }
+}
+.tkm-fire-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    rgba(232, 96, 42, 0.7) 0%,
+    rgba(255, 208, 96, 0.4) 50%,
+    transparent 100%
+  );
+  animation: tkmFireWave 1.2s ease-out forwards;
+}
+
+/* ── BattleTheater: animated battlefield strip ─────────────────── */
+.tkm-battlefield {
+  position: relative;
+  height: 96px;
+  background:
+    linear-gradient(to bottom,
+      rgba(212, 168, 74, 0.05) 0%,
+      rgba(50, 38, 25, 0.4) 60%,
+      rgba(20, 14, 8, 0.85) 100%),
+    repeating-linear-gradient(90deg,
+      transparent 0px,
+      transparent 18px,
+      rgba(74, 53, 32, 0.18) 19px,
+      transparent 20px);
+  border-top: 1px solid var(--tkm-border-soft, #3a2818);
+  border-bottom: 1px solid var(--tkm-border-soft, #3a2818);
+  overflow: hidden;
+}
+.tkm-battlefield::before {
+  /* horizon mountains silhouette */
+  content: '';
+  position: absolute;
+  inset: 0 0 30px 0;
+  background:
+    radial-gradient(ellipse at 15% 100%, rgba(80, 65, 45, 0.6) 0%, transparent 35%),
+    radial-gradient(ellipse at 50% 110%, rgba(60, 50, 35, 0.5) 0%, transparent 40%),
+    radial-gradient(ellipse at 85% 100%, rgba(80, 65, 45, 0.6) 0%, transparent 35%);
+  pointer-events: none;
+}
+
+.tkm-soldier {
+  position: absolute;
+  bottom: 14px;
+  width: 14px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--tkm-font-zh);
+  font-size: 12px;
+  color: var(--tkm-text-h1);
+  text-shadow: 0 0 3px rgba(0,0,0,0.9), 0 1px 0 rgba(0,0,0,0.7);
+  pointer-events: none;
+}
+.tkm-soldier.attacker { color: #ffb494; }
+.tkm-soldier.defender { color: #94beff; }
+
+@keyframes tkmMarchRight {
+  0%   { transform: translateX(0)    translateY(0); }
+  25%  { transform: translateX(0)    translateY(-2px); }
+  50%  { transform: translateX(2px)  translateY(0); }
+  75%  { transform: translateX(2px)  translateY(-2px); }
+  100% { transform: translateX(0)    translateY(0); }
+}
+@keyframes tkmMarchLeft {
+  0%   { transform: translateX(0)    translateY(0)    scaleX(-1); }
+  25%  { transform: translateX(0)    translateY(-2px) scaleX(-1); }
+  50%  { transform: translateX(-2px) translateY(0)    scaleX(-1); }
+  75%  { transform: translateX(-2px) translateY(-2px) scaleX(-1); }
+  100% { transform: translateX(0)    translateY(0)    scaleX(-1); }
+}
+.tkm-soldier.attacker { animation: tkmMarchRight 0.7s ease-in-out infinite; }
+.tkm-soldier.defender { animation: tkmMarchLeft  0.7s ease-in-out infinite; }
+
+/* Phase: closing-in advance */
+@keyframes tkmAdvanceRight { from { transform: translateX(-40px); } to { transform: translateX(0); } }
+@keyframes tkmAdvanceLeft  { from { transform: translateX(40px);  } to { transform: translateX(0); } }
+.tkm-advance-r { animation: tkmAdvanceRight 1.4s ease-out forwards; }
+.tkm-advance-l { animation: tkmAdvanceLeft  1.4s ease-out forwards; }
+
+/* Arrow volley */
+@keyframes tkmArrowFly {
+  0%   { transform: translateX(0)   translateY(0)   rotate(var(--ang, 0deg)); opacity: 0; }
+  10%  { opacity: 1; }
+  100% { transform: translateX(var(--dx, 100px)) translateY(var(--dy, -30px)) rotate(var(--ang, 0deg)); opacity: 0; }
+}
+.tkm-arrow {
+  position: absolute;
+  width: 14px;
+  height: 2px;
+  background: linear-gradient(to right, transparent 0%, #d4a84a 30%, #f0e0b0 100%);
+  pointer-events: none;
+  transform-origin: center;
+  animation: tkmArrowFly 0.9s ease-out forwards;
+}
+
+/* Pursuit dust cloud */
+@keyframes tkmDustPuff {
+  0%   { transform: scale(0.3); opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+.tkm-dust {
+  position: absolute;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(180, 150, 110, 0.7) 0%, transparent 70%);
+  pointer-events: none;
+  animation: tkmDustPuff 0.8s ease-out forwards;
+}
+
+/* Mid-screen flash (stratagem success / city falls) */
+@keyframes tkmFlashWipe {
+  0%   { opacity: 0; }
+  20%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+.tkm-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(255, 230, 140, 0.65) 0%, transparent 60%);
+  animation: tkmFlashWipe 0.7s ease-out forwards;
+}
+
+/* Casualty counter floats up */
+@keyframes tkmCasualtyFloat {
+  0%   { transform: translateY(8px); opacity: 0; }
+  25%  { transform: translateY(0);   opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateY(-20px); opacity: 0; }
+}
+.tkm-casualty {
+  position: absolute;
+  top: 6px;
+  font-family: var(--tkm-font-mono, ui-monospace, monospace);
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: var(--tkm-danger, #b8442e);
+  text-shadow: 0 0 4px rgba(0,0,0,0.8);
+  pointer-events: none;
+  animation: tkmCasualtyFloat 1.6s ease-out forwards;
+}
+
+/* Phase progress dots */
+.tkm-phase-dots {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin: 0.5rem 0 0.2rem 0;
+}
+.tkm-phase-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--tkm-border-soft, #3a2818);
+  transition: all 0.3s ease;
+}
+.tkm-phase-dot.active {
+  background: var(--tkm-text-h2, #d4a84a);
+  box-shadow: 0 0 6px var(--tkm-text-h2, #d4a84a);
+  transform: scale(1.3);
+}
+.tkm-phase-dot.past {
+  background: var(--tkm-text-muted, #8a7050);
+}
+
+/* ── Voice ticker for 3D battle screen ─────────────────────────────── */
+@keyframes tkmVoiceFade {
+  0%   { opacity: 0; transform: translate(-50%, 10px); }
+  15%  { opacity: 1; transform: translate(-50%, 0); }
+  80%  { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -10px); }
+}
+
+/* ── N7 — Signature tactic banner overlay ─────────────────────────── */
+@keyframes tkmSignatureBanner {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4) rotateX(60deg); filter: blur(8px); }
+  20%  { opacity: 1; transform: translate(-50%, -50%) scale(1.15) rotateX(0deg); filter: blur(0px); }
+  60%  { opacity: 1; transform: translate(-50%, -50%) scale(1.0) rotateX(0deg); }
+  100% { opacity: 0; transform: translate(-50%, -55%) scale(1.05) rotateX(-15deg); }
+}
+
+/* ── Isometric tilt for hex battlefield (3D feel) ───────────────────── */
+.tkm-iso-stage {
+  perspective: 1200px;
+  perspective-origin: 50% 30%;
+}
+.tkm-iso-svg {
+  transform: rotateX(38deg) scaleY(1.05);
+  transform-origin: center center;
+  transition: transform 0.4s ease;
+}
+/* Allow the user to toggle a flat view (no tilt) via class swap. */
+.tkm-iso-svg.tkm-flat {
+  transform: none;
+}
+
+/* ── Hex map animations: water waves + tree sway + hover glow ──────── */
+
+/* River hex: gentle continuous wave motion */
+@keyframes tkmHexWave {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(1.5px); }
+}
+.tkm-hex-wave {
+  animation: tkmHexWave 3.2s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+/* Forest hex: subtle sway like wind */
+@keyframes tkmHexSway {
+  0%, 100% { transform: rotate(0deg); }
+  50%      { transform: rotate(0.6deg); }
+}
+.tkm-hex-sway {
+  animation: tkmHexSway 4.5s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+/* Water glint: subtle twinkle */
+@keyframes tkmGlint {
+  0%, 100% { opacity: 0.3; }
+  50%      { opacity: 1; }
+}
+.tkm-glint {
+  animation: tkmGlint 1.8s ease-in-out infinite;
+}
+
+/* Fire flicker for burning units — quick wobble + alpha. */
+@keyframes tkmFireFlicker {
+  0%   { transform: translateY(0) scaleX(1);    opacity: 0.85; }
+  25%  { transform: translateY(-0.6px) scaleX(1.06); opacity: 0.95; }
+  50%  { transform: translateY(0.3px)  scaleX(0.94); opacity: 0.80; }
+  75%  { transform: translateY(-0.4px) scaleX(1.08); opacity: 0.92; }
+  100% { transform: translateY(0)      scaleX(1);    opacity: 0.85; }
+}
+.tkm-fire-flicker {
+  animation: tkmFireFlicker 0.45s ease-in-out infinite;
+  transform-origin: center bottom;
+  transform-box: fill-box;
+}
+
+/* Watchtower flag ripple. */
+@keyframes tkmFlagRipple {
+  0%, 100% { transform: skewX(0deg); }
+  50%      { transform: skewX(-8deg); }
+}
+.tkm-flag-ripple {
+  animation: tkmFlagRipple 1.6s ease-in-out infinite;
+  transform-origin: left center;
+  transform-box: fill-box;
+}
+
+/* Battle unit idle breathing — subtle vertical sway to bring units to life. */
+@keyframes tkmUnitIdle {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-0.6px); }
+}
+.tkm-unit-idle {
+  animation: tkmUnitIdle 2.6s ease-in-out infinite;
+  transform-box: fill-box;
+}
+
+/* Scroll-unfurl entrance — used by SeasonReportModal + DialogueModal. */
+@keyframes tkmScrollUnfurl {
+  0%   { opacity: 0; transform: scaleY(0.02) translateY(-30px); filter: blur(2px); }
+  60%  { opacity: 1; transform: scaleY(1) translateY(0); filter: blur(0); }
+  80%  { transform: scaleY(0.98) translateY(0); }
+  100% { transform: scaleY(1) translateY(0); }
+}
+
+/* Achievement toast fanfare: outer glow burst + breathing inner glow. */
+@keyframes tkmAchToastBurst {
+  0%   { box-shadow: 0 0 0 0 rgba(212, 168, 74, 0.6),
+                     0 0 0 0 rgba(212, 168, 74, 0.4); }
+  60%  { box-shadow: 0 0 24px 8px rgba(212, 168, 74, 0.35),
+                     0 0 48px 16px rgba(212, 168, 74, 0.18); }
+  100% { box-shadow: 0 0 14px 0 rgba(212, 168, 74, 0.5); }
+}
+@keyframes tkmAchTitlePulse {
+  0%, 100% { letter-spacing: 0.1rem; text-shadow: 0 0 4px rgba(193, 154, 59, 0.4); }
+  50%      { letter-spacing: 0.14rem; text-shadow: 0 0 12px rgba(193, 154, 59, 0.95); }
+}
+.tkm-ach-toast {
+  animation: tkmAchToastBurst 1.2s ease-out forwards;
+}
+.tkm-ach-toast-title {
+  animation: tkmAchTitlePulse 2.4s ease-in-out infinite;
+}
+
+/* Camera shake — applied to battlefield container on heavy impact. */
+@keyframes tkmShake {
+  0%, 100% { transform: translate(0, 0); }
+  10%      { transform: translate(-3px, 1px); }
+  20%      { transform: translate(2px, -2px); }
+  30%      { transform: translate(-2px, 2px); }
+  40%      { transform: translate(3px, 1px); }
+  50%      { transform: translate(-1px, -1px); }
+  60%      { transform: translate(2px, 0); }
+  70%      { transform: translate(-2px, 1px); }
+  80%      { transform: translate(1px, -1px); }
+  90%      { transform: translate(-1px, 0); }
+}
+.tkm-shake { animation: tkmShake 0.4s ease-out; }
+
+/* Signature stratagem flash — fullscreen radial burst with the officer's
+ * tactic name. Used for matchless / signature moves. */
+@keyframes tkmSigFlash {
+  0%   { opacity: 0; transform: scale(0.7); }
+  20%  { opacity: 1; transform: scale(1); }
+  85%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.15); }
+}
+.tkm-sig-flash {
+  animation: tkmSigFlash 1.6s ease-out forwards;
+}
+
+/* Casualty smoke column — drifts upward and fades. */
+@keyframes tkmSmokeRise {
+  0%   { transform: translateY(0) scale(1);   opacity: 0.8; }
+  50%  { transform: translateY(-6px) scale(1.2); opacity: 0.5; }
+  100% { transform: translateY(-14px) scale(1.6); opacity: 0; }
+}
+.tkm-smoke {
+  animation: tkmSmokeRise 2.4s ease-out infinite;
+  transform-origin: center bottom;
+  transform-box: fill-box;
+}
+
+/* Hover glow on interactive hex polygons. */
+.tkm-hex-interactive {
+  cursor: pointer;
+  transition: filter 0.18s ease-out, transform 0.18s ease-out;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+.tkm-hex-interactive:hover {
+  filter: drop-shadow(0 0 4px #f0e0b0) drop-shadow(0 0 2px #d4a84a);
+  transform: scale(1.04);
+}
+
+/* Pennant flag: slight wave animation. */
+@keyframes tkmPennant {
+  0%, 100% { transform: skewY(0deg) scaleX(1); }
+  50%      { transform: skewY(-2deg) scaleX(0.95); }
+}
+.tkm-pennant {
+  animation: tkmPennant 2.2s ease-in-out infinite;
+  transform-origin: left center;
+  transform-box: fill-box;
+}
+
+/* Officer portrait base */
+.tkm-portrait {
+  display: inline-block;
+  position: relative;
+  background: var(--tkm-bg-sunken);
+  border: 2px solid var(--tkm-border-gold);
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.tkm-portrait svg,
+.tkm-portrait img { display: block; width: 100%; height: 100%; }
+.tkm-portrait[data-faction-wei]    { border-color: var(--tkm-wei); }
+.tkm-portrait[data-faction-shu]    { border-color: var(--tkm-shu); }
+.tkm-portrait[data-faction-wu]     { border-color: var(--tkm-wu); }
+.tkm-portrait[data-faction-warlord] { border-color: var(--tkm-warlord); }
+
+/* D13 — a faction-tinted frame that lifts and gently zooms its portrait on
+   hover. The inner art scales within the clipped frame (a small ken-burns),
+   while the frame itself gains a soft drop shadow. */
+@media (prefers-reduced-motion: no-preference) {
+  .tkm-portrait { transition: box-shadow 0.18s ease, transform 0.18s ease; }
+  .tkm-portrait svg,
+  .tkm-portrait img { transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1); }
+  .tkm-portrait:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    z-index: 1;
+  }
+  .tkm-portrait:hover svg,
+  .tkm-portrait:hover img { transform: scale(1.12); }
+}
+
+/* Officer quote — appears below portrait when voice line fires */
+.tkm-voiceline {
+  font-family: var(--tkm-font-zh);
+  font-style: italic;
+  color: var(--tkm-text-h1);
+  border-left: 2px solid var(--tkm-text-h2);
+  padding-left: 0.5rem;
+  margin: 0.4rem 0;
+  animation: tkmFadeIn 0.5s ease-out;
+}
+
+/* ─── Bond ceremony (結拜 / 義結金蘭) animations ──────────────────────── */
+@keyframes tkmCeremonyBackdrop {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes tkmConvergeLeft {
+  0%   { transform: translateX(-160px) rotate(-9deg) scale(0.85); opacity: 0; }
+  60%  { opacity: 1; }
+  100% { transform: translateX(0) rotate(0deg) scale(1); opacity: 1; }
+}
+@keyframes tkmConvergeRight {
+  0%   { transform: translateX(160px) rotate(9deg) scale(0.85); opacity: 0; }
+  60%  { opacity: 1; }
+  100% { transform: translateX(0) rotate(0deg) scale(1); opacity: 1; }
+}
+@keyframes tkmSealStamp {
+  0%   { transform: scale(2.6) rotate(-14deg); opacity: 0; }
+  50%  { transform: scale(0.86) rotate(4deg); opacity: 1; }
+  68%  { transform: scale(1.12) rotate(-1deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+@keyframes tkmRaySpin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(360deg); }
+}
+@keyframes tkmRayPulse {
+  0%, 100% { opacity: 0.18; }
+  50%      { opacity: 0.42; }
+}
+@keyframes tkmCalligraphyReveal {
+  0%   { opacity: 0; letter-spacing: 1.4rem; filter: blur(5px); transform: translateY(8px); }
+  100% { opacity: 1; letter-spacing: 0.45rem; filter: blur(0); transform: translateY(0); }
+}
+@keyframes tkmMoteFloat {
+  0%   { transform: translateY(10px) scale(0.6); opacity: 0; }
+  25%  { opacity: 1; }
+  100% { transform: translateY(-96px) scale(1); opacity: 0; }
+}
+@keyframes tkmFloatUpFade {
+  0%   { transform: translateY(0); opacity: 0; }
+  18%  { opacity: 1; }
+  100% { transform: translateY(-34px); opacity: 0; }
+}
+@keyframes tkmRapportPop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.5); color: #7ed68a; }
+  100% { transform: scale(1); }
+}
+
+/* 私兵 levy — 部曲列隊 glyphs sweeping into rank */
+@keyframes tkmTroopMarchIn {
+  0%   { transform: translateX(-14px) scale(0.7); opacity: 0; }
+  60%  { opacity: 1; }
+  100% { transform: translateX(0) scale(1); opacity: 1; }
+}
+
+/* 威名 封號 ceremony — title plaque unfurling + portrait rising */
+@keyframes tkmBannerUnfurl {
+  0%   { transform: scaleX(0); opacity: 0; }
+  55%  { transform: scaleX(1.06); opacity: 1; }
+  100% { transform: scaleX(1); opacity: 1; }
+}
+@keyframes tkmPortraitRise {
+  0%   { transform: translateY(28px) scale(0.8); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* 進城 — city-interior map entrance (zoom + fade, like flying in) */
+@keyframes tkmCityEnter {
+  0%   { opacity: 0; transform: scale(1.14); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.tkm-city-enter { animation: tkmCityEnter 0.42s cubic-bezier(0.2, 0.8, 0.25, 1) both; }
+@media (prefers-reduced-motion: reduce) { .tkm-city-enter { animation: none; } }
+
+/* ─── 戰鬥運鏡 — impact flash overlay for tactic casts ───────────────────
+   A brief tinted bloom over the battlefield when a heavy 戰法 lands; the
+   colour comes from the FX's own --fx-color. Replayed by remounting (key). */
+@keyframes tkmFxFlash {
+  0%   { opacity: 0; }
+  12%  { opacity: var(--fx-peak, 0.5); }
+  100% { opacity: 0; }
+}
+.tkm-fx-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  mix-blend-mode: screen;
+  background: radial-gradient(
+    ellipse at center,
+    var(--fx-color, #ffffff) 0%,
+    rgba(0, 0, 0, 0) 65%
+  );
+  opacity: 0;
+  animation: tkmFxFlash var(--fx-dur, 0.34s) ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) { .tkm-fx-flash { animation: none; } }
+
+/* 戰略層回饋 — order-confirmation toast slides down + fades in, then holds. */
+@keyframes tkmActionToast {
+  0%   { opacity: 0; transform: translateY(-8px); }
+  12%  { opacity: 1; transform: translateY(0); }
+  82%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-4px); }
+}
+.tkm-action-toast { animation: tkmActionToast 2.4s ease-out forwards; }
+@media (prefers-reduced-motion: reduce) { .tkm-action-toast { animation: none; } }
+
+/* 朱印盖章 — a confirmed order's seal presses down with a little overshoot,
+   the way a real chop thumps onto a dispatch. */
+@keyframes tkmSealStamp {
+  0%   { opacity: 0; transform: scale(1.55) rotate(-14deg); }
+  55%  { opacity: 1; transform: scale(0.9) rotate(-6deg); }
+  76%  { transform: scale(1.05) rotate(-6deg); }
+  100% { opacity: 1; transform: scale(1) rotate(-6deg); }
+}
+.tkm-seal-stamp { animation: tkmSealStamp 0.42s cubic-bezier(0.3, 1.5, 0.6, 1) both; }
+@media (prefers-reduced-motion: reduce) { .tkm-seal-stamp { animation: none; } }
+
+/* 戰鬥定格 — victory/defeat character slams in over the frozen battlefield. */
+@keyframes tkmVictorySlam {
+  0%   { opacity: 0; transform: scale(2.6); filter: blur(6px); }
+  55%  { opacity: 1; transform: scale(0.92); filter: blur(0); }
+  70%  { transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.tkm-victory-slam { animation: tkmVictorySlam 0.7s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+@keyframes tkmVictorySub { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: translateY(0); } }
+.tkm-victory-sub { animation: tkmVictorySub 0.5s ease-out 0.45s both; }
+@media (prefers-reduced-motion: reduce) {
+  .tkm-victory-slam, .tkm-victory-sub { animation: none; opacity: 1; }
+}
+
+/* 受創血暈 — red edges flash when the player's army takes losses. */
+@keyframes tkmBloodVignette { 0% { opacity: 0; } 15% { opacity: 1; } 100% { opacity: 0; } }
+.tkm-blood-vignette {
+  position: absolute; inset: 0; pointer-events: none; z-index: 6;
+  box-shadow: inset 0 0 110px 36px rgba(176, 18, 10, 0.55);
+  opacity: 0; animation: tkmBloodVignette 0.7s ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) { .tkm-blood-vignette { animation: none; } }
+
+/* 敵軍逼近 — the threat chip breathes a red glow so a marching enemy never
+   goes unnoticed at the edge of your attention. */
+@keyframes tkmThreatPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(224, 96, 58, 0); }
+  50% { box-shadow: 0 0 8px 2px rgba(224, 96, 58, 0.55); }
+}
+.tkm-threat-chip { animation: tkmThreatPulse 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .tkm-threat-chip { animation: none; } }
+
+/* 輔助設定 — manual "reduce motion" toggle (uiPrefs.ts). Kills the pulsing /
+   flashing screen FX for motion-sensitive players, independent of the OS
+   media query so it works even where that isn't set. */
+html[data-tkm-reduce-motion="1"] .tkm-blood-vignette,
+html[data-tkm-reduce-motion="1"] .tkm-threat-chip,
+html[data-tkm-reduce-motion="1"] .tkm-fx-flash,
+html[data-tkm-reduce-motion="1"] .tkm-action-toast,
+html[data-tkm-reduce-motion="1"] .tkm-ach-toast,
+html[data-tkm-reduce-motion="1"] .tkm-victory-slam {
+  animation: none !important;
+}
+/* 血腥畫面 — hide the on-damage blood vignette when gore is turned off. */
+html[data-tkm-gore="off"] .tkm-blood-vignette { display: none !important; }

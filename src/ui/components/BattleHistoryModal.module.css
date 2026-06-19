@@ -1,0 +1,141 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  background: #1b2531;
+  border: 1px solid #e6c473;
+  width: 840px;
+  max-width: 96vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem 1.5rem;
+  overflow-y: auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid #2b3845;
+  padding-bottom: 0.65rem;
+  margin-bottom: 0.75rem;
+}
+
+.titleZh {
+  font-size: 1.75rem;
+  color: #e6c473;
+  letter-spacing: 0.14rem;
+}
+
+.titleEn {
+  font-size: 0.8rem;
+  color: #7a8893;
+  letter-spacing: 0.1rem;
+  text-transform: uppercase;
+}
+
+.closeButton {
+  background: transparent;
+  border: none;
+  color: #7a8893;
+  font-size: 1.5rem;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1;
+}
+
+.empty {
+  color: #7a8893;
+  font-style: italic;
+  text-align: center;
+  padding: 2rem;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 88px 110px 1fr 90px 110px;
+  gap: 0.5rem;
+  align-items: center;
+  background: #10161e;
+  border: 1px solid #26323e;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.row:hover {
+  background: #26323e;
+  border-color: #e6c473;
+}
+
+.dateCell {
+  color: #7a8893;
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+}
+
+.cityCell {
+  color: #e6c473;
+}
+
+.sidesCell {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #aab6c0;
+  font-size: 0.78rem;
+}
+
+.sideTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+.versus {
+  color: #7a8893;
+  font-size: 0.7rem;
+}
+
+.outcomeCell {
+  font-size: 0.75rem;
+  letter-spacing: 0.1rem;
+  text-align: center;
+  padding: 0.1rem 0.4rem;
+  font-family: ui-monospace, monospace;
+}
+
+.outcomeConquest { background: #e6c473; color: #10161e; }
+.outcomeWon      { background: #c9a64e; color: #10161e; }
+.outcomeRepulsed { background: #b8442e; color: #10161e; }
+
+.casualtiesCell {
+  font-family: ui-monospace, monospace;
+  font-size: 0.72rem;
+  color: #e09b6c;
+  text-align: right;
+}

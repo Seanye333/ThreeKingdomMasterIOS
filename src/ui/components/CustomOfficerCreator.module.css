@@ -1,0 +1,249 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  z-index: 900;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.modal {
+  background: linear-gradient(160deg, #1b2531 0%, #10161e 100%);
+  border: 1px solid #e6c473;
+  width: min(720px, 100%);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  color: #e6edf3;
+  font-family: var(--tkm-font-body);
+}
+
+.header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #2b3845;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.titleZh {
+  font-size: 1.4rem;
+  color: #e6c473;
+  letter-spacing: 0.07rem;
+}
+
+.titleEn {
+  font-size: 0.85rem;
+  color: #7a8893;
+  font-style: italic;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: #e6c473;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+}
+
+.body {
+  padding: 1rem 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.label {
+  font-size: 0.75rem;
+  letter-spacing: 0.05rem;
+  color: #7a8893;
+  text-transform: uppercase;
+}
+
+.input {
+  background: #10161e;
+  border: 1px solid #2b3845;
+  color: #e6c473;
+  padding: 0.5rem;
+  font-family: inherit;
+  font-size: 1rem;
+  letter-spacing: 0.1rem;
+}
+
+.statRow {
+  display: grid;
+  grid-template-columns: 130px 1fr 50px 80px 80px;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.statName {
+  font-size: 0.85rem;
+  color: #aab6c0;
+}
+
+.statRange {
+  appearance: none;
+  background: transparent;
+  width: 100%;
+}
+
+.statRange::-webkit-slider-runnable-track {
+  height: 6px;
+  background: #2b3845;
+  border-radius: 3px;
+}
+
+.statRange::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #e6c473;
+  margin-top: -6px;
+  cursor: pointer;
+}
+
+.statValue {
+  text-align: center;
+  font-family: ui-monospace, monospace;
+  color: #e6c473;
+  font-size: 0.95rem;
+}
+
+.statBudget {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+  color: #c9a64e;
+  text-align: right;
+}
+
+.budgetWarn {
+  color: #b8442e;
+}
+
+.skillsRow {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.skillGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.3rem;
+}
+
+.skillChip {
+  background: #10161e;
+  border: 1px solid #26323e;
+  color: #aab6c0;
+  padding: 0.3rem 0.5rem;
+  font-family: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.skillChip:hover {
+  border-color: #e6c473;
+}
+
+.skillChipActive {
+  border-color: #e6c473;
+  color: #e6c473;
+  background: #1b2531;
+}
+
+.skillCapWarn {
+  font-size: 0.7rem;
+  color: #7a8893;
+  margin-top: 0.3rem;
+}
+
+.affiliationRow {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 0.75rem;
+}
+
+.affChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.affChip {
+  background: #10161e;
+  border: 1px solid #26323e;
+  color: #aab6c0;
+  font-family: inherit;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.affChip:hover {
+  border-color: #e6c473;
+}
+
+.affChipActive {
+  border-color: #e6c473;
+  color: #e6c473;
+  background: #1b2531;
+}
+
+.affChipFA {
+  border-style: dashed;
+}
+
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 0.3rem;
+}
+
+.footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #2b3845;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.startBtn {
+  background: linear-gradient(180deg, #364654, #26323e);
+  border: 1px solid #e6c473;
+  color: #e6c473;
+  padding: 0.6rem 2rem;
+  font-family: inherit;
+  font-size: 1rem;
+  letter-spacing: 0.07rem;
+  cursor: pointer;
+}
+
+.startBtn:hover:not(:disabled) {
+  background: linear-gradient(180deg, #6a5538, #4a3528);
+  box-shadow: 0 0 10px rgba(212, 168, 74, 0.4);
+}
+
+.startBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

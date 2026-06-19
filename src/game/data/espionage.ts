@@ -1,0 +1,67 @@
+import type { EspionageDef } from '../types';
+
+export const ESPIONAGE_DEFS: EspionageDef[] = [
+  {
+    kind: 'gather-intel',
+    name: { en: 'Gather Intelligence', zh: '諜報' },
+    description: 'Send a spy to survey enemy resources, troop counts, and officer placements.',
+    descriptionZh: "派遣細作刺探敵方資源、兵員數量與武將佈署。",
+    goldCost: 80,
+    minIntelligence: 50,
+    targetsOfficer: false,
+    baseSuccess: 0.75,
+  },
+  {
+    kind: 'instigate',
+    name: { en: 'Incite Rebellion', zh: '煽動' },
+    description: 'Stir unrest in a target city, dropping its loyalty by 15–30. May trigger revolt if loyalty falls below 30.',
+    descriptionZh: "煽動目標城池民變,使其忠誠下降15至30。若忠誠跌破30,則可能爆發叛亂。",
+    goldCost: 250,
+    minIntelligence: 70,
+    targetsOfficer: false,
+    baseSuccess: 0.45,
+  },
+  {
+    kind: 'sabotage',
+    name: { en: 'Sabotage Stores', zh: '破壊' },
+    description: 'Burn enemy food stocks. Destroys 30–50% of food at the targeted city.',
+    descriptionZh: "焚毀敵方糧倉。摧毀目標城池30%至50%之糧草。",
+    goldCost: 200,
+    minIntelligence: 60,
+    targetsOfficer: false,
+    baseSuccess: 0.55,
+  },
+  {
+    kind: 'assassinate',
+    name: { en: 'Assassinate', zh: '暗殺' },
+    description: 'Send a killer after a specific enemy officer. Catastrophic if exposed.',
+    descriptionZh: "派遣刺客暗殺指定敵將。若事敗,後果慘重。",
+    goldCost: 500,
+    minIntelligence: 80,
+    targetsOfficer: true,
+    baseSuccess: 0.25,
+  },
+  {
+    kind: 'defect',
+    name: { en: 'Turn Officer', zh: '寝返' },
+    description: 'Offer gold, position, and protection to an enemy officer. Works best on those with low loyalty.',
+    descriptionZh: "以黃金、官位與庇護招攬敵方武將。對忠誠低下者最為有效。",
+    goldCost: 400,
+    minIntelligence: 70,
+    targetsOfficer: true,
+    baseSuccess: 0.30,
+  },
+  {
+    kind: 'frame',
+    name: { en: 'Frame & Slander', zh: '離間' },
+    description: 'Plant evidence that an enemy officer is conspiring with you. Their loyalty drops by 15–25.',
+    descriptionZh: "捏造證據,陷害敵方武將與我方暗通。其忠誠將下降15至25。",
+    goldCost: 150,
+    minIntelligence: 65,
+    targetsOfficer: true,
+    baseSuccess: 0.55,
+  },
+];
+
+export const ESPIONAGE_DEFS_BY_KIND: Record<string, EspionageDef> =
+  Object.fromEntries(ESPIONAGE_DEFS.map((d) => [d.kind, d]));

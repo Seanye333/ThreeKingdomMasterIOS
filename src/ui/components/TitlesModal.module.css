@@ -1,0 +1,284 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 900;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.modal {
+  background: linear-gradient(160deg, #1b2531 0%, #10161e 100%);
+  border: 1px solid #364654;
+  border-top: 3px solid #b8442e;  /* vermilion — 印璽紅 */
+  width: min(960px, 100%);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  color: #e6edf3;
+  font-family: var(--tkm-font-body);
+  box-shadow: 0 0 18px rgba(184, 68, 46, 0.15);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #2b3845;
+}
+
+.titleZh {
+  font-size: 1.5rem;
+  color: #e6c473;
+  letter-spacing: 0.07rem;
+}
+
+.titleEn {
+  font-size: 0.85rem;
+  color: #7a8893;
+  font-style: italic;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: #e6c473;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid #2b3845;
+}
+
+.tab {
+  background: none;
+  border: 1px solid #2b3845;
+  color: #7a8893;
+  padding: 0.4rem 1rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.tabActive {
+  border-color: #e6c473;
+  color: #e6c473;
+  background: rgba(212, 168, 74, 0.1);
+}
+
+.body {
+  overflow-y: auto;
+  padding: 1rem 1.5rem;
+  flex: 1;
+}
+
+.titleGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.titleCard {
+  background: #10161e;
+  border: 1px solid #2b3845;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.titleNameRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.titleName {
+  font-size: 1.1rem;
+  color: #e6c473;
+}
+
+.titleNameEn {
+  font-size: 0.75rem;
+  color: #7a8893;
+  font-style: italic;
+}
+
+.titleDesc {
+  font-size: 0.78rem;
+  color: #aab6c0;
+  line-height: 1.4;
+  font-style: italic;
+}
+
+.holderRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.5rem;
+  border-top: 1px solid #26323e;
+  margin-top: 0.4rem;
+}
+
+.holder {
+  font-size: 0.85rem;
+}
+
+.holderNone {
+  color: #6a5238;
+}
+
+.appointBtn {
+  background: #26323e;
+  border: 1px solid #e6c473;
+  color: #e6c473;
+  padding: 0.25rem 0.7rem;
+  font-family: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.appointBtn:hover {
+  background: #364654;
+}
+
+.revokeBtn {
+  background: none;
+  border: 1px solid #b8442e;
+  color: #b8442e;
+  padding: 0.25rem 0.7rem;
+  font-family: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.picker {
+  background: #080b0e;
+  border: 1px solid #2b3845;
+  margin-top: 0.5rem;
+  padding: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.pickerLabel {
+  font-size: 0.7rem;
+  color: #7a8893;
+  letter-spacing: 0.1rem;
+  text-transform: uppercase;
+}
+
+.officerOption {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0.5rem;
+  background: #10161e;
+  border: 1px solid #26323e;
+  cursor: pointer;
+  font-family: inherit;
+  color: #e6edf3;
+}
+
+.officerOption:hover {
+  border-color: #e6c473;
+  background: #1b2531;
+}
+
+.officerStats {
+  font-family: ui-monospace, monospace;
+  font-size: 0.7rem;
+  color: #7a8893;
+}
+
+.cityPicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+
+.cityChip {
+  background: #10161e;
+  border: 1px solid #26323e;
+  color: #aab6c0;
+  font-family: inherit;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.55rem;
+  cursor: pointer;
+}
+
+.cityChip:hover {
+  border-color: #e6c473;
+}
+
+.cityChipActive {
+  border-color: #e6c473;
+  color: #e6c473;
+}
+
+.rankRow {
+  display: grid;
+  grid-template-columns: 130px 1fr 100px 80px auto;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.55rem 0.4rem;
+  border-bottom: 1px solid #26323e;
+  font-size: 0.85rem;
+}
+
+.rankName {
+  color: #e6c473;
+}
+
+.rankNameEn {
+  color: #7a8893;
+  font-size: 0.7rem;
+  font-style: italic;
+  margin-left: 0.4rem;
+}
+
+.rankReq {
+  color: #7a8893;
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+}
+
+.rankStipend {
+  color: #c9a64e;
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+}
+
+.rankCap {
+  color: #88b7e8;
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+}
+
+.rankAction {
+  text-align: right;
+}
+
+.muted {
+  color: #6a5238;
+  font-style: italic;
+}
+
+.empty {
+  text-align: center;
+  color: #6a5238;
+  padding: 2rem;
+  font-style: italic;
+}
