@@ -45,7 +45,7 @@ const MOVES: Array<{ id: DuelMove; zh: string; en: string; hint: { zh: string; e
 ];
 
 export function DuelGameModal({
-  attacker, defender, onComplete, meFatigue = 0, foeFatigue = 0, lethal = true, reinforcements = [],
+  attacker, defender, onComplete, meFatigue = 0, foeFatigue = 0, lethal = true, reinforcements = [], staged = false, onRound,
 }: {
   attacker: Officer;
   defender: Officer;
@@ -57,6 +57,10 @@ export function DuelGameModal({
   lethal?: boolean;
   /** 三英戰呂布 — adjacent allies who can leap in when your fighter is hard-pressed. */
   reinforcements?: Officer[];
+  /** 戰場原地對決 — render as a bottom panel so the 3D battlefield shows behind. */
+  staged?: boolean;
+  /** Fires after each exchange so the staged battlefield can clash the units. */
+  onRound?: (r: { hit: 'a' | 'd' | 'both'; killed: boolean }) => void;
 }) {
   const t = useT();
   const lang = useLanguage();
@@ -129,6 +133,7 @@ export function DuelGameModal({
       : 'both';
     fxKey.current += 1;
     setFx({ key: fxKey.current, hit, dmg: Math.max(res.dmgToAttacker, res.dmgToDefender), killed: !!res.bout.killedId });
+    onRound?.({ hit, killed: !!res.bout.killedId });
 
     // 必殺 — a decisive 奮 from a great warrior unleashes a named signature move.
     const sigSide = move === 'power' && res.roundWinner === 'attacker' ? me
@@ -165,8 +170,10 @@ export function DuelGameModal({
       : (lethal && bout.killedId ? `${nm(defender)} ${t('斬', 'cut down')} ${nm(me)}!` : `${nm(defender)} ${t('佔上風', 'prevails')}`);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', display: 'grid', placeItems: 'center', zIndex: 130 }}>
-      <div style={{ position: 'relative', overflow: 'hidden', width: 560, maxWidth: '95vw', background: '#1f1810', border: '1px solid #e6c473', padding: '1.25rem', fontFamily: 'var(--tkm-font-body)', color: '#e6edf3' }}>
+    <div style={staged
+      ? { position: 'fixed', left: 0, right: 0, bottom: 0, display: 'grid', placeItems: 'center', zIndex: 130, padding: '0 0 1rem', pointerEvents: 'none' }
+      : { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', display: 'grid', placeItems: 'center', zIndex: 130 }}>
+      <div style={{ position: 'relative', overflow: 'hidden', width: 560, maxWidth: '95vw', background: staged ? 'rgba(31,24,16,0.94)' : '#1f1810', border: '1px solid #e6c473', padding: '1.25rem', fontFamily: 'var(--tkm-font-body)', color: '#e6edf3', pointerEvents: 'auto', boxShadow: staged ? '0 -6px 30px rgba(0,0,0,0.6)' : undefined }}>
         {/* 受創血暈 — the card edges flush red when *you* (the attacker) take a blow. */}
         {fx && !reduced && fx.hit === 'a' && <div key={`v${fx.key}`} className="tkm-blood-vignette" />}
 

@@ -2906,13 +2906,30 @@ function FieldDressing({ tiles }: { tiles: TacticalTile[] }) {
 /** 鏡頭跟隨 — on the enemy's turn, gently drift the orbit target toward where
  *  the action just landed (latest damage popup); on your turn, ease back to the
  *  board centre. Subtle lerp on controls.target — never wrests manual control. */
-function CameraFollow({ battle, playerSide, home }: {
+function CameraFollow({ battle, playerSide, home, focus = null }: {
   battle: TacticalBattle; playerSide: 'attacker' | 'defender' | null; home: [number, number];
+  focus?: [number, number] | null;
 }) {
   const controls = useThree((s) => s.controls) as unknown as { target?: THREE.Vector3 } | null;
+  const camera = useThree((s) => s.camera);
+  // Remember where the camera was so it can ease back after the duel.
+  const homeCam = useRef<THREE.Vector3 | null>(null);
   useFrame(() => {
     const tgt = controls?.target;
     if (!tgt) return;
+    // 戰場原地對決 — frame the two fighters: pan the target to the midpoint and
+    // pull the camera into a close, low angle.
+    if (focus) {
+      if (!homeCam.current) homeCam.current = camera.position.clone();
+      tgt.x += (focus[0] - tgt.x) * 0.07;
+      tgt.z += (focus[1] - tgt.z) * 0.07;
+      camera.position.lerp(DUEL_CAM.set(focus[0] + 3.5, 5.5, focus[1] + 7), 0.05);
+      return;
+    }
+    if (homeCam.current) {
+      camera.position.lerp(homeCam.current, 0.06);
+      if (camera.position.distanceTo(homeCam.current) < 0.5) homeCam.current = null;
+    }
     let fx = home[0], fz = home[1];
     const aiTurn = !!playerSide && battle.activeSide !== playerSide && !battle.winner;
     if (aiTurn) {
@@ -2925,6 +2942,7 @@ function CameraFollow({ battle, playerSide, home }: {
   });
   return null;
 }
+const DUEL_CAM = new THREE.Vector3();
 
 /** 日月 — a glowing sun (day/dawn/dusk) or pale moon (night) hung in the sky at
  *  the light's direction; Bloom gives it a halo. */
@@ -3071,7 +3089,7 @@ function Corpse({ coord, color }: { coord: HexCoord; color: string }) {
 export function BattleScene({
   battle, playerSide, actionMode,
   selectedId, hovered, setHovered, onTileClick,
-  attackArcs, stratagemFx, officers, embedded = false,
+  attackArcs, stratagemFx, officers, embedded = false, duelFocus = null,
 }: {
   battle: TacticalBattle;
   playerSide: 'attacker' | 'defender' | null;
@@ -3086,6 +3104,8 @@ export function BattleScene({
   /** Diorama mode — rendered inside ANOTHER scene (the strategic map): skip
    *  scene-global fog/lights/surround/ground/weather and DOM overlays. */
   embedded?: boolean;
+  /** 戰場原地對決 — world [x,z] midpoint to frame while a duel plays, or null. */
+  duelFocus?: [number, number] | null;
 }) {
   const { tiles, units } = battle;
   const tileByCoord = useMemo(() => {
@@ -3178,7 +3198,7 @@ export function BattleScene({
           <BattleSurround width={battle.width} height={battle.height} timeOfDay={battle.timeOfDay} />
           {lighting.showStars && <Stars radius={80} depth={50} count={2500} factor={3} fade speed={0.5} />}
           <SkyBody position={lighting.sun.position} color={lighting.sun.color} night={lighting.showStars} />
-          <CameraFollow battle={battle} playerSide={playerSide} home={[hexWorld(battle.width / 2, battle.height / 2)[0], hexWorld(battle.width / 2, battle.height / 2)[1]]} />
+          <CameraFollow battle={battle} playerSide={playerSide} home={[hexWorld(battle.width / 2, battle.height / 2)[0], hexWorld(battle.width / 2, battle.height / 2)[1]]} focus={duelFocus} />
 
           {/* Lighting per time-of-day */}
           <ambientLight intensity={lighting.ambient} />
@@ -3715,6 +3735,36 @@ export function TacticalBattleScreen3D() {
   const lighting = LIGHTING[battle.timeOfDay];
   const myTurn = playerSide && battle.activeSide === playerSide && !battle.winner;
 
+  // 戰場原地對決 — the two duelists' units (by their original officers) and the
+  // world midpoint the camera frames while the bout plays.
+  const duelUnitCoords = interactiveDuel
+    ? (() => {
+        const a = battle.units.find((u) => u.officerId === interactiveDuel.me.id);
+        const b = battle.units.find((u) => u.officerId === interactiveDuel.foe.id);
+        return a && b ? { a: a.coord, b: b.coord } : null;
+      })()
+    : null;
+  const duelFocus: [number, number] | null = duelUnitCoords
+    ? (() => {
+        const [ax, az] = hexWorld(duelUnitCoords.a.col, duelUnitCoords.a.row);
+        const [bx, bz] = hexWorld(duelUnitCoords.b.col, duelUnitCoords.b.row);
+        return [(ax + bx) / 2, (az + bz) / 2];
+      })()
+    : null;
+  // Each exchange: both fighters lunge at each other + a camera kick.
+  const onDuelRound = (r: { hit: 'a' | 'd' | 'both'; killed: boolean }) => {
+    if (!duelUnitCoords) return;
+    // spawnedAt must be a Date.now() stamp — the lunge anim reads (Date.now()-at).
+    const now = Date.now();
+    const id1 = now, id2 = now + 1;
+    setAttackArcs((arcs) => [...arcs,
+      { id: id1, from: duelUnitCoords.a, to: duelUnitCoords.b, kind: 'melee' as const, spawnedAt: now },
+      { id: id2, from: duelUnitCoords.b, to: duelUnitCoords.a, kind: 'melee' as const, spawnedAt: now },
+    ]);
+    setTimeout(() => setAttackArcs((arcs) => arcs.filter((x) => x.id !== id1 && x.id !== id2)), 600);
+    setCine({ key: ++cineCount.current, weight: r.killed ? 3 : 1, color: r.killed ? '#ff5030' : '#ffd54a' });
+  };
+
   // 敵將叫陣 — once per turn, a brave/strong enemy next to one of your duel-capable
   // officers may call you out. Accepting opens the bout (no AP cost — it's their
   // initiative); the foe carries any 車輪戰 fatigue.
@@ -4143,6 +4193,7 @@ export function TacticalBattleScreen3D() {
               attackArcs={attackArcs}
               stratagemFx={stratagemFx}
               officers={officers}
+              duelFocus={duelFocus}
             />
             <OrbitControls
               makeDefault
@@ -4507,6 +4558,8 @@ export function TacticalBattleScreen3D() {
           meFatigue={interactiveDuel.meFatigue}
           foeFatigue={interactiveDuel.foeFatigue}
           reinforcements={interactiveDuel.reinforcements}
+          staged
+          onRound={onDuelRound}
           onComplete={(outcome) => {
             const { foe } = interactiveDuel;
             // 援護 — the officer who actually finished the bout (may be a relief).
