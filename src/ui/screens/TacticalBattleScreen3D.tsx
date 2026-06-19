@@ -2944,6 +2944,49 @@ function CameraFollow({ battle, playerSide, home, focus = null }: {
 }
 const DUEL_CAM = new THREE.Vector3();
 
+const CLASH_SPARKS = Array.from({ length: 9 }, (_, i) => i);
+/** 兵器交擊 — a bright flash + flung sparks where the two duelists' weapons meet,
+ *  replayed each round (the parent remounts it by key). */
+function DuelClash3D({ pos }: { pos: [number, number, number] }) {
+  const start = useRef<number | null>(null);
+  const flashRef = useRef<THREE.Mesh>(null);
+  const sparksRef = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    if (start.current === null) start.current = clock.elapsedTime;
+    const e = clock.elapsedTime - start.current;
+    const tt = Math.min(1, e / 0.5);
+    if (flashRef.current) {
+      flashRef.current.scale.setScalar(0.25 + tt * 1.0);
+      (flashRef.current.material as THREE.MeshBasicMaterial).opacity = (1 - tt) * 0.9;
+    }
+    if (sparksRef.current) {
+      sparksRef.current.children.forEach((c, i) => {
+        const a = (i / CLASH_SPARKS.length) * Math.PI * 2;
+        const r = tt * 0.9;
+        c.position.set(Math.cos(a) * r, Math.sin(i * 1.7) * 0.4 * tt, Math.sin(a) * r);
+        c.rotation.z = a;
+        (c as THREE.Mesh).material && ((((c as THREE.Mesh).material) as THREE.MeshBasicMaterial).opacity = 1 - tt);
+      });
+    }
+  });
+  return (
+    <group position={pos}>
+      <mesh ref={flashRef}>
+        <sphereGeometry args={[0.3, 8, 8]} />
+        <meshBasicMaterial color="#fff0c0" transparent opacity={0.9} depthWrite={false} />
+      </mesh>
+      <group ref={sparksRef}>
+        {CLASH_SPARKS.map((i) => (
+          <mesh key={i}>
+            <boxGeometry args={[0.035, 0.035, 0.18]} />
+            <meshBasicMaterial color={i % 2 ? '#ffd86a' : '#fff2cf'} transparent depthWrite={false} />
+          </mesh>
+        ))}
+      </group>
+    </group>
+  );
+}
+
 /** 日月 — a glowing sun (day/dawn/dusk) or pale moon (night) hung in the sky at
  *  the light's direction; Bloom gives it a halo. */
 function SkyBody({ position, color, night }: { position: [number, number, number]; color: string; night: boolean }) {
@@ -3089,7 +3132,7 @@ function Corpse({ coord, color }: { coord: HexCoord; color: string }) {
 export function BattleScene({
   battle, playerSide, actionMode,
   selectedId, hovered, setHovered, onTileClick,
-  attackArcs, stratagemFx, officers, embedded = false, duelFocus = null,
+  attackArcs, stratagemFx, officers, embedded = false, duelFocus = null, duelClashKey = 0,
 }: {
   battle: TacticalBattle;
   playerSide: 'attacker' | 'defender' | null;
@@ -3106,6 +3149,8 @@ export function BattleScene({
   embedded?: boolean;
   /** 戰場原地對決 — world [x,z] midpoint to frame while a duel plays, or null. */
   duelFocus?: [number, number] | null;
+  /** Bumped each duel round to replay a clash spark between the fighters. */
+  duelClashKey?: number;
 }) {
   const { tiles, units } = battle;
   const tileByCoord = useMemo(() => {
@@ -3199,6 +3244,7 @@ export function BattleScene({
           {lighting.showStars && <Stars radius={80} depth={50} count={2500} factor={3} fade speed={0.5} />}
           <SkyBody position={lighting.sun.position} color={lighting.sun.color} night={lighting.showStars} />
           <CameraFollow battle={battle} playerSide={playerSide} home={[hexWorld(battle.width / 2, battle.height / 2)[0], hexWorld(battle.width / 2, battle.height / 2)[1]]} focus={duelFocus} />
+          {duelFocus && duelClashKey > 0 && <DuelClash3D key={duelClashKey} pos={[duelFocus[0], 1.0, duelFocus[1]]} />}
 
           {/* Lighting per time-of-day */}
           <ambientLight intensity={lighting.ambient} />
@@ -3572,6 +3618,8 @@ export function TacticalBattleScreen3D() {
   const challengeTurn = useRef(-1);
   // 斬/擒 — after a duel KOs an enemy, the victor chooses their fate.
   const [captureChoice, setCaptureChoice] = useState<{ id: string; name: { zh: string; en: string } } | null>(null);
+  // 兵器交擊 — bumps each duel round so a spark burst replays between the fighters.
+  const [duelClashKey, setDuelClashKey] = useState(0);
   const [voiceLine, setVoiceLine] = useState<{ text: string; key: number } | null>(null);
   // N7 — signature-tactic banner overlay state
   const [signatureBanner, setSignatureBanner] = useState<{ zh: string; en: string; key: number } | null>(null);
@@ -3763,6 +3811,8 @@ export function TacticalBattleScreen3D() {
     ]);
     setTimeout(() => setAttackArcs((arcs) => arcs.filter((x) => x.id !== id1 && x.id !== id2)), 600);
     setCine({ key: ++cineCount.current, weight: r.killed ? 3 : 1, color: r.killed ? '#ff5030' : '#ffd54a' });
+    // Replay the clash spark a beat later, when the lunges meet in the middle.
+    setTimeout(() => setDuelClashKey((k) => k + 1), 180);
   };
 
   // 敵將叫陣 — once per turn, a brave/strong enemy next to one of your duel-capable
@@ -4194,6 +4244,7 @@ export function TacticalBattleScreen3D() {
               stratagemFx={stratagemFx}
               officers={officers}
               duelFocus={duelFocus}
+              duelClashKey={duelClashKey}
             />
             <OrbitControls
               makeDefault
