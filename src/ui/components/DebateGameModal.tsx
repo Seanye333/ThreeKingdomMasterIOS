@@ -7,6 +7,20 @@ import {
 import { OfficerPortrait } from './OfficerPortrait';
 import { useT, useLanguage } from '../i18n';
 
+/** Per-exchange feedback emitted by {@link DebateGameModal} so a host (the 3D
+ *  debate hall) can drive declamation / recoil / rout animations. `hit` is which
+ *  mind lost composure; `winner` is the round (or, when `over`, the bout) victor;
+ *  `routed` means a mind's 沉著 actually hit 0 (a 罵倒, not a points finish). */
+export interface DebateRoundFx {
+  hit: 'a' | 'd' | 'both';
+  aMove: DebateMove;
+  dMove: DebateMove;
+  dmg: number;
+  over: boolean;
+  routed: boolean;
+  winner?: 'a' | 'd' | 'draw';
+}
+
 /**
  * Interactive 舌戰 (war of words) — the player commits 論/諷/駁/詰 each round vs
  * the AI. 論>諷, 諷>駁, 駁>論; a successful 駁 banks 氣勢, and 詰 (Press, 2 氣勢)
@@ -21,11 +35,15 @@ const MOVES: Array<{ id: DebateMove; zh: string; en: string; hint: { zh: string;
 ];
 
 export function DebateGameModal({
-  me, foe, onComplete,
+  me, foe, onComplete, staged = false, onRound,
 }: {
   me: Officer;
   foe: Officer;
   onComplete: (outcome: { meDelta: number; foeDelta: number; winner: 'me' | 'foe' | 'draw' }) => void;
+  /** When staged, render as a slim bottom control panel over the 3D hall. */
+  staged?: boolean;
+  /** Fires after each exchange so the 3D debate hall can animate the minds. */
+  onRound?: (fx: DebateRoundFx) => void;
 }) {
   const t = useT();
   const lang = useLanguage();
@@ -58,6 +76,16 @@ export function DebateGameModal({
       : 'both';
     fxKey.current += 1;
     setFx({ key: fxKey.current, hit, dmg: Math.max(res.dmgToA, res.dmgToD), routed: !!res.bout.over });
+
+    // 演武 — hand the exchange to the 3D hall (if any) so the minds animate.
+    // `routed` = composure actually broke (a 罵倒), as opposed to a points finish.
+    const broke = res.bout.aComposure <= 0 || res.bout.dComposure <= 0;
+    onRound?.({
+      hit, aMove: move, dMove: foeMove,
+      dmg: Math.max(res.dmgToA, res.dmgToD),
+      over: !!res.bout.over, routed: broke,
+      winner: res.bout.over ? res.bout.winner : res.roundWinner,
+    });
   };
 
   const bar = (val: number, color: string) => (
@@ -75,6 +103,68 @@ export function DebateGameModal({
     bout.winner === 'draw' ? t('各執一詞 — 不分勝負', 'A stalemate of words')
     : bout.winner === 'a' ? `${nm(me)} ${t('辯勝', 'wins the exchange')}!`
     : `${nm(foe)} ${t('辯勝', 'wins the exchange')}!`;
+
+  // ── Staged mode — a slim control panel over the 3D debate hall ──────────────
+  if (staged) {
+    const side = (o: Officer, mo: number, color: string, hitSide: 'a' | 'd', align: 'left' | 'right') => (
+      <div
+        key={fx && (fx.hit === hitSide || fx.hit === 'both') && !reduced ? `${hitSide}${fx.key}` : hitSide}
+        className={fx && (fx.hit === hitSide || fx.hit === 'both') && !reduced ? 'tkm-shake' : undefined}
+        style={{ flex: 1, position: 'relative', textAlign: align }}
+      >
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexDirection: align === 'right' ? 'row-reverse' : 'row' }}>
+          <OfficerPortrait officer={o} size={30} forceColor={color} />
+          <div style={{ color: '#e6c473', fontSize: '0.82rem' }}>{nm(o)}</div>
+        </div>
+        <div style={{ marginTop: 3 }}>{bar(hitSide === 'a' ? bout.aComposure : bout.dComposure, color)}</div>
+        {pips(mo)}
+        {fx && fx.dmg > 0 && (fx.hit === hitSide || fx.hit === 'both') && (
+          <span key={`d${hitSide}${fx.key}`} className="tkm-damage-num" style={{ position: 'absolute', [align === 'right' ? 'left' : 'right']: 8, top: -2, fontSize: '1.05rem' }}>−{fx.dmg}</span>
+        )}
+      </div>
+    );
+    return (
+      <div style={{ position: 'fixed', left: '50%', bottom: 14, transform: 'translateX(-50%)', width: 560, maxWidth: '96vw', background: 'rgba(18,16,11,0.92)', border: '1px solid #88b7e8', borderRadius: 8, padding: '0.7rem 0.9rem', fontFamily: 'var(--tkm-font-body)', color: '#e6edf3', zIndex: 130, boxShadow: '0 6px 24px rgba(0,0,0,0.5)' }}>
+        <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+          {side(me, bout.aMomentum, '#6abf6a', 'a', 'left')}
+          <div style={{ alignSelf: 'center', color: '#88b7e8', letterSpacing: '0.1rem', fontSize: '0.95rem' }}>舌{t('戰', '')}</div>
+          {side(foe, bout.dMomentum, '#c178c7', 'd', 'right')}
+        </div>
+        {!bout.over ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.4rem' }}>
+            {MOVES.map((m) => {
+              const disabled = m.id === 'press' && bout.aMomentum < PRESS_MOMENTUM_COST;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => play(m.id)}
+                  disabled={disabled}
+                  style={{ padding: '0.4rem 0.2rem', background: disabled ? '#1a1810' : '#26221a', border: `1px solid ${disabled ? '#2c281c' : '#4a5530'}`, color: disabled ? '#5a4a36' : '#e6edf3', cursor: disabled ? 'default' : 'pointer', fontFamily: 'inherit', textAlign: 'center' }}
+                  title={lang === 'en' ? m.hint.en : m.hint.zh}
+                >
+                  <div style={{ fontSize: '1.15rem', color: disabled ? '#5a4a36' : '#88b7e8' }}>{m.zh}</div>
+                  <div style={{ fontSize: '0.56rem', color: '#7a8893' }}>{lang === 'en' ? m.en : m.hint.zh}</div>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center' }}>
+            <div className={reduced ? undefined : 'tkm-victory-slam'} style={{ color: '#88b7e8', fontSize: '1.05rem', letterSpacing: '0.06rem', marginBottom: '0.4rem', textShadow: '0 0 12px rgba(136,183,232,0.5)' }}>{resultText}</div>
+            <button
+              onClick={() => {
+                const { meDelta, foeDelta } = debateMoraleDeltas(bout);
+                const winner = bout.winner === 'a' ? 'me' : bout.winner === 'd' ? 'foe' : 'draw';
+                onComplete({ meDelta, foeDelta, winner });
+              }}
+              style={{ padding: '0.4rem 1.4rem', background: '#26221a', border: '1px solid #88b7e8', color: '#88b7e8', cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.06rem' }}
+            >{t('確定', 'Continue')}</button>
+          </div>
+        )}
+        {log[0] && <div style={{ marginTop: '0.45rem', fontSize: '0.7rem', color: '#94a2ae', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{log[0]}</div>}
+      </div>
+    );
+  }
 
   return (
     // Above the 3D battle screen (z-1000) — at its old z-130 it was silently

@@ -5,11 +5,13 @@ import { readdir, rm, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 
 // The duel folder holds many Mixamo packs (~259MB) kept on disk for future use,
-// but the 3D duel only loads the Sword-and-Shield and Great-Sword packs plus a
-// few standalone clips. This prunes the rest from the BUILD OUTPUT (dist only —
-// source files are never touched) so iOS/Vercel ship ~40MB instead of 259MB.
+// but only a few are loaded at runtime: the 3D duel uses the Sword-and-Shield
+// and Great-Sword packs (+ a few standalone clips); the 3D 舌戰 (DebateArena3D)
+// uses the Pro-Magic and Gestures packs. This prunes the rest from the BUILD
+// OUTPUT (dist only — source files are never touched) so iOS/Vercel ship a
+// fraction of the 259MB. Keep these in sync with duelAssets.ts + debateAssets.ts.
 function pruneUnusedDuelPacks(): Plugin {
-  const KEEP_DIRS = new Set(['Sword and Shield Pack', 'Great Sword Pack'])
+  const KEEP_DIRS = new Set(['Sword and Shield Pack', 'Great Sword Pack', 'Pro Magic Pack', 'Gestures Pack Basic'])
   const KEEP_FILES = new Set(['X Bot.fbx', 'Dodging.fbx', 'Quick Roll To Run.fbx', 'Jump.fbx', 'README.md'])
   return {
     name: 'prune-unused-duel-packs',

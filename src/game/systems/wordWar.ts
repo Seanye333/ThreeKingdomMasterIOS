@@ -139,7 +139,7 @@ export interface DebateBout {
 export const PRESS_MOMENTUM_COST = 2;
 const DEBATE_ROUNDS = 6;
 
-function debateProwess(o: Officer): number {
+export function debateProwess(o: Officer): number {
   return Math.round(o.stats.intelligence + o.stats.charisma * 0.5);
 }
 

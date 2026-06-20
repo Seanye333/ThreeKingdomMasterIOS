@@ -78,6 +78,7 @@ const GovernorsModal = lazy(() => import('../components/GovernorsModal').then(m 
 const FormationsModal = lazy(() => import('../components/FormationsModal').then(m => ({ default: m.FormationsModal })));
 const TrainingGroundModal = lazy(() => import('../components/TrainingGroundModal').then(m => ({ default: m.TrainingGroundModal })));
 const TournamentModal = lazy(() => import('../components/TournamentModal').then(m => ({ default: m.TournamentModal })));
+const DebateGroundModal = lazy(() => import('../components/DebateGroundModal').then(m => ({ default: m.DebateGroundModal })));
 
 export function MapScreen() {
   const t = useT();
@@ -93,6 +94,7 @@ export function MapScreen() {
   const [showSave, setShowSave] = useState<'save' | 'load' | null>(null);
   const [showFormations, setShowFormations] = useState(false);
   const [showTraining, setShowTraining] = useState(false);
+  const [showDebateGround, setShowDebateGround] = useState(false);
   const [showTournament, setShowTournament] = useState(false);
   const [theme, setTheme] = useState<ThemeId>(getStoredTheme());
   const handleSetTheme = (id: ThemeId) => {
@@ -386,6 +388,7 @@ export function MapScreen() {
       { id: 'espionage', zh: '密偵', en: 'Espionage', hint: g.mil, run: () => setShowEspionage(true) },
       { id: 'formations', zh: '陣形', en: 'Formations', hint: g.mil, run: () => setShowFormations(true) },
       { id: 'training', zh: '演武場', en: 'Sparring ground', hint: g.mil, run: () => setShowTraining(true) },
+      { id: 'debate-ground', zh: '論辯場', en: 'Debate ground', hint: g.mil, run: () => setShowDebateGround(true) },
       { id: 'tournament', zh: '比武大會', en: 'Martial tournament', hint: g.mil, run: () => setShowTournament(true) },
       { id: 'armoury', zh: '寶物', en: 'Armoury', hint: g.craft, run: () => setShowArmoury(true) },
       { id: 'forge', zh: '鍛造', en: 'Forge', hint: g.craft, run: () => setShowForge(true) },
@@ -504,6 +507,7 @@ export function MapScreen() {
           items={[
             { label: t('錦囊', 'Advisor'),    onClick: () => setShowAdvisor(true) },
             { label: t('演武', 'Sparring'),   onClick: () => setShowTraining(true) },
+            { label: t('論辯', 'Debate'),     onClick: () => setShowDebateGround(true) },
             { label: t('比武', 'Tournament'), onClick: () => setShowTournament(true) },
             { label: t('計略', 'Schemes'),    onClick: () => setShowSchemes(true) },
             { label: t('軍團', 'Legions'),    onClick: () => setShowLegions(true) },
@@ -710,6 +714,7 @@ export function MapScreen() {
         {showGovernors && <GovernorsModal onClose={() => setShowGovernors(false)} />}
         {showFormations && <FormationsModal onClose={() => setShowFormations(false)} />}
         {showTraining && <TrainingGroundModal onClose={() => setShowTraining(false)} />}
+        {showDebateGround && <DebateGroundModal onClose={() => setShowDebateGround(false)} />}
         {showTournament && <TournamentModal onClose={() => setShowTournament(false)} />}
         {showEspionage && <EspionageModal onClose={() => setShowEspionage(false)} />}
         {showDeeds && <DeedsModal onClose={() => setShowDeeds(false)} />}

@@ -3,7 +3,7 @@ import { NAMED_MAPS_BY_ID, NAMED_MAPS_BY_CITY } from '../../game/data';
 import { playSfx } from '../../game/systems/sound';
 import { useGameStore } from '../../game/state/store';
 import type { Officer } from '../../game/types';
-import { DebateGameModal } from '../components/DebateGameModal';
+import { Debate3DStage } from '../components/debate/Debate3DStage';
 import { LocatorMap } from '../components/LocatorMap';
 import { battleViewWindow } from '../viewWindow';
 import { TacticalBattleScreen3D } from './TacticalBattleScreen3D';
@@ -137,7 +137,7 @@ export function TacticalBattleScreen() {
       {/* 舌戰 — playable war of words at battle start; the result shifts unit
           morale (player's side by meDelta, the enemy by foeDelta). */}
       {interactiveDebate && (
-        <DebateGameModal
+        <Debate3DStage
           me={interactiveDebate.me}
           foe={interactiveDebate.foe}
           onComplete={({ meDelta, foeDelta }) => {
