@@ -42,6 +42,10 @@ export interface Officer {
   hometownCityId?: EntityId;
   /** Seasons remaining before a wounded officer recovers to idle. */
   woundedSeasons?: number;
+  /** 後遺 — short-lived afflictions (養傷 from a duel, 羞憤 from a lost debate)
+   *  that sap effective stats for a few seasons. Optional; ticks down each
+   *  season. See systems/afflictions.ts. */
+  afflictions?: import('../systems/afflictions').Affliction[];
   task: CommandType | null;
   equipment: Equipment;
   /** Innate skill IDs (referencing SKILLS_BY_ID). 0–4 per officer. */

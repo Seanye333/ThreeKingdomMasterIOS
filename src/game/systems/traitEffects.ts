@@ -105,6 +105,12 @@ export function effectiveStats(officer: Officer): OfficerStats {
     if (CHA_BOOST.has(t)) charisma += 3;
     if (CHA_PENALTY.has(t)) charisma -= 3;
   }
+  // 後遺 — fold in any active afflictions (養傷 saps 武力, 羞憤 saps 魅力/智力).
+  for (const a of officer.afflictions ?? []) {
+    war += a.war ?? 0;
+    intelligence += a.intelligence ?? 0;
+    charisma += a.charisma ?? 0;
+  }
   const clamp = (v: number) => Math.max(1, Math.min(120, v));
   return {
     war: clamp(war),

@@ -24,6 +24,7 @@ import type {
 import { isHostilePermitted } from '../types';
 import { createDeeds } from '../types/deeds';
 import { grantDeedTitles } from '../systems/deedTitles';
+import { tickAfflictions, withAffliction, type Affliction } from '../systems/afflictions';
 import type { Difficulty } from './gameState';
 import { CIVIC_TITLES_BY_ID, MILITARY_RANKS_BY_ID } from '../data/titles';
 import { FORGE_RECIPES_BY_ID } from '../data/forging';
@@ -407,6 +408,9 @@ interface GameStore extends GameState {
   /** Award XP to a single officer (比武大會 prizes, etc.). Grows stats / skills
    *  via the normal growth path. Returns level-up notes; null if missing. */
   grantOfficerXp: (officerId: EntityId, amount: number) => { leveled: boolean; notes: string[] } | null;
+  /** 後遺 — lay a short-lived affliction on an officer (養傷 from a duel, 羞憤
+   *  from a lost debate). Ticks down each season; folds into effective stats. */
+  afflictOfficer: (officerId: EntityId, affliction: Affliction) => void;
   /** Pay for siege works (圍困糧耗 / 水攻決堤) from the attacking city's
    *  stores before an assault. Returns false (and deducts nothing) if the
    *  city can't afford it. */
@@ -2415,6 +2419,11 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           } else {
             tickedOfficers[o.id] = o;
           }
+        }
+        // 後遺 — tick down duel/debate afflictions (養傷 / 羞憤) each season.
+        for (const id of Object.keys(tickedOfficers)) {
+          const ticked = tickAfflictions(tickedOfficers[id]);
+          if (ticked !== tickedOfficers[id]) tickedOfficers[id] = ticked;
         }
         postOfficers = tickedOfficers;
 
@@ -4653,6 +4662,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           winnerLeveled: rw.leveled, loserLeveled: rl.leveled,
           notes: [...rw.entries, ...rl.entries].map((e) => e.textZh ?? e.text),
         };
+      },
+      afflictOfficer: (officerId, affliction) => {
+        const state = get();
+        const o = state.officers[officerId];
+        if (!o || o.status === 'dead') return;
+        set({ officers: { ...state.officers, [officerId]: withAffliction(o, affliction) } });
       },
       grantOfficerXp: (officerId, amount) => {
         const state = get();

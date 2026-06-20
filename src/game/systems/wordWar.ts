@@ -1,4 +1,5 @@
 import type { Officer } from '../types';
+import { afflictionDelta } from './afflictions';
 
 /**
  * 舌戰 — pre-battle war of words. Each side may field a strategist; the
@@ -143,10 +144,16 @@ export interface DebateBout {
   dPersona: DebatePersona;
   aLastMove?: DebateMove;   // 連辯 — last argument, for chain synergies
   dLastMove?: DebateMove;
+  audience: number;  // 民心 — −100..100; + sways to a (me), − to d (foe)
+  aRally: boolean;   // 全場附和 — next argument lands clean (spent on use)
+  dRally: boolean;
   round: number;
   over: boolean;
   winner?: 'a' | 'd' | 'draw';
 }
+
+/** 民心 — the hall sways this far toward a side before it rallies behind them. */
+export const AUDIENCE_RALLY = 80;
 
 export const PRESS_MOMENTUM_COST = 2;
 export const CITE_MOMENTUM_COST = 2;
@@ -160,7 +167,10 @@ export function debateMoveCost(m: DebateMove): number {
 const DEBATE_ROUNDS = 6;
 
 export function debateProwess(o: Officer): number {
-  return Math.round(o.stats.intelligence + o.stats.charisma * 0.5);
+  // 羞憤 — a shamed mind argues less keenly (folds in 智力/魅力 penalties).
+  const int = o.stats.intelligence + afflictionDelta(o, 'intelligence');
+  const cha = o.stats.charisma + afflictionDelta(o, 'charisma');
+  return Math.round(int + cha * 0.5);
 }
 
 // 風格 — a strategist's debating persona drives which gestures / win poses the
@@ -186,6 +196,7 @@ export function initDebate(me: Officer, foe: Officer): DebateBout {
     aComposure: 100, dComposure: 100, aMomentum: 0, dMomentum: 0,
     aProwess: debateProwess(me), dProwess: debateProwess(foe),
     aPersona: debatePersona(me), dPersona: debatePersona(foe),
+    audience: 0, aRally: false, dRally: false,
     round: 0, over: false,
   };
 }
@@ -219,6 +230,10 @@ export interface DebateRoundResult {
   dmgToD: number;
   /** 連辯 — set when a side completes a recognised argument chain this round. */
   chain?: { side: 'a' | 'd'; kind: 'assert-cite' | 'retort-press' };
+  /** 民心 — the new audience value after this exchange (−100..100, + toward a). */
+  audience: number;
+  /** 全場附和 — set to the side the hall just rallied behind this round. */
+  rally?: 'a' | 'd';
 }
 
 // 連辯 — recognised two-move argument chains. The opener sets up the follow-up,
@@ -235,7 +250,7 @@ export function debateRound(
   rng: () => number = Math.random,
 ): DebateRoundResult {
   const b: DebateBout = { ...bout };
-  if (b.over) return { bout: b, roundWinner: 'draw', dmgToA: 0, dmgToD: 0 };
+  if (b.over) return { bout: b, roundWinner: 'draw', dmgToA: 0, dmgToD: 0, audience: b.audience };
   b.aMomentum = Math.max(0, b.aMomentum - debateMoveCost(aMove));
   b.dMomentum = Math.max(0, b.dMomentum - debateMoveCost(dMove));
 
@@ -267,6 +282,12 @@ export function debateRound(
   } else if (aMove === 'retort' && dMove === 'retort') {
     b.aMomentum += 1; b.dMomentum += 1;
   }
+  // 全場附和 — a rally banked from the 民心 meter makes this argument land clean,
+  // overriding a walk-into-a-counter. Spent on use.
+  if (b.aRally && roundWinner !== 'a') { roundWinner = 'a'; dmgToD = Math.round(dmgFrom(aMove, b.aProwess, b.dProwess) * chainMul('a')); dmgToA = 0; }
+  if (b.dRally && roundWinner !== 'd') { roundWinner = 'd'; dmgToA = Math.round(dmgFrom(dMove, b.dProwess, b.aProwess) * chainMul('d')); dmgToD = 0; }
+  b.aRally = false; b.dRally = false;
+
   // 連辯 — a completed chain refunds the follow-up's cost where the chain says so
   // (駁→詰), and is reported so the hall can flash the link.
   let chain: DebateRoundResult['chain'];
@@ -274,6 +295,19 @@ export function debateRound(
   if (dChain) { b.dMomentum += dChain.refund; chain = { side: 'd', kind: dChain.kind }; }
   b.aLastMove = aMove;
   b.dLastMove = dMove;
+
+  // 民心 — the hall sways toward whoever pressed home, by how decisively. When it
+  // tips past AUDIENCE_RALLY, that side rallies: bank a 氣勢 and their next
+  // argument is guaranteed to land (全場附和); the meter eases back off the edge.
+  // A win always sways the hall a little (even-matched debates still build), more
+  // so when it lands hard — so 民心 can crest before composure runs out.
+  const swing = Math.round(16 + Math.max(dmgToA, dmgToD) * 0.4);
+  if (roundWinner === 'a') b.audience = Math.min(100, b.audience + swing);
+  else if (roundWinner === 'd') b.audience = Math.max(-100, b.audience - swing);
+  let rally: DebateRoundResult['rally'];
+  if (b.audience >= AUDIENCE_RALLY) { b.aRally = true; b.aMomentum += 1; b.audience = 40; rally = 'a'; }
+  else if (b.audience <= -AUDIENCE_RALLY) { b.dRally = true; b.dMomentum += 1; b.audience = -40; rally = 'd'; }
+
   b.aComposure = Math.max(0, b.aComposure - dmgToA);
   b.dComposure = Math.max(0, b.dComposure - dmgToD);
   b.round += 1;
@@ -288,7 +322,7 @@ export function debateRound(
       b.winner = gap < 12 ? 'draw' : b.aComposure > b.dComposure ? 'a' : 'd';
     }
   }
-  return { bout: b, roundWinner, dmgToA, dmgToD, chain };
+  return { bout: b, roundWinner, dmgToA, dmgToD, chain, audience: b.audience, rally };
 }
 
 export function aiDebateMove(bout: DebateBout, side: 'a' | 'd', rng: () => number = Math.random): DebateMove {

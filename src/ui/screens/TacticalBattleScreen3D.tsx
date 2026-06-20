@@ -19,6 +19,7 @@ import { applyBattlePrep,
   findPath, moveUnitAlong, reachableHexes,
 } from '../../game/systems/tactical';
 import { canDuel } from '../../game/systems/duel';
+import { duelWound } from '../../game/systems/afflictions';
 import { personalTacticsForUnit } from '../../game/systems/personalTactics';
 import { FORMATIONS_BY_ID, STRATAGEMS } from '../../game/data';
 import { BattleResultsModal } from '../components/BattleResultsModal';
@@ -3884,6 +3885,7 @@ export function TacticalBattleScreen3D() {
   };
   useEffect(() => () => { recorderRef.current?.stop(); }, []);
   const applyResolution = useGameStore((s) => s.applyTacticalResolution);
+  const afflictOfficer = useGameStore((s) => s.afflictOfficer);
   const cancelBattle = useGameStore((s) => s.cancelTacticalBattle);
   const setBattleViewMinimized = useGameStore((s) => s.setBattleViewMinimized);
   const battleSpeed = useGameStore((s) => s.battleSpeed);
@@ -5080,6 +5082,15 @@ export function TacticalBattleScreen3D() {
             // 車輪戰 — both surviving fighters are more winded for any next bout.
             next = { ...next, units: next.units.map((u) => (u.officerId === me.id || u.officerId === foe.id) ? { ...u, duelFatigue: (u.duelFatigue ?? 0) + 24 } : u) };
             start(next);
+            // 養傷 — a survivor of the bout carries a lingering wound (−武力 for a
+            // few seasons): the bested fighter is hurt worse; a draw mauls both.
+            if (outcome.winner === 'draw') {
+              if (me.id !== killedId) afflictOfficer(me.id, duelWound(false));
+              if (foe.id !== killedId) afflictOfficer(foe.id, duelWound(false));
+            } else {
+              const woundedId = outcome.winner === 'attacker' ? foe.id : me.id;
+              if (woundedId !== killedId) afflictOfficer(woundedId, duelWound(true));
+            }
             setInteractiveDuel(null);
             // 斬/擒 — you cut the foe down; choose whether to take them alive.
             if (killedId && killedId === foe.id) setCaptureChoice({ id: foe.id, name: foe.name });

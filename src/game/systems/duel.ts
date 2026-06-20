@@ -2,6 +2,7 @@ import type { Officer } from '../types';
 import { ITEMS_BY_ID } from '../data/items';
 import { SKILLS_BY_ID } from '../data/skills';
 import { effectivePrestigeEffects } from '../data/prestige';
+import { afflictionDelta } from './afflictions';
 
 /**
  * One-on-one duel resolution between two officers — a multi-round 氣力 bout.
@@ -174,7 +175,8 @@ function prowessParts(o: Officer): { itemBonus: number; skillBonus: number; trai
 /** Static prowess (war + bonuses, no dice) — drives interactive-duel damage. */
 export function staticProwess(o: Officer): number {
   const p = prowessParts(o);
-  return Math.round(o.stats.war + p.itemBonus + p.skillBonus + p.traitBonus + effectivePrestigeEffects(o).duelBonus);
+  // 養傷 — a lingering duel wound saps 武力 here too.
+  return Math.round(o.stats.war + afflictionDelta(o, 'war') + p.itemBonus + p.skillBonus + p.traitBonus + effectivePrestigeEffects(o).duelBonus);
 }
 
 function rollOne(o: Officer, rng: () => number): DuelRoll {
@@ -280,7 +282,8 @@ export type DuelMove =
   | 'cleave' | 'slash' | 'sweep'      // 3 base attacks
   | 'guard' | 'dodge' | 'parry'       // 3 defenses
   | 'power'                           // 奮 — heavy spender
-  | 'taunt' | 'thrust' | 'combo';     // 挑釁 / 突刺 / 連擊 — new specials
+  | 'taunt' | 'thrust' | 'combo'      // 挑釁 / 突刺 / 連擊 — specials
+  | 'ultimate';                       // 必殺技 — unleashed when the 武魂 gauge is full
 
 const ATTACKS: DuelMove[] = ['cleave', 'slash', 'sweep'];
 const DEFENSES: DuelMove[] = ['guard', 'dodge', 'parry'];
@@ -288,15 +291,18 @@ const SPECIALS: DuelMove[] = ['taunt', 'thrust', 'combo'];
 export const isAttackMove = (m: DuelMove): boolean => ATTACKS.includes(m);
 export const isDefenseMove = (m: DuelMove): boolean => DEFENSES.includes(m);
 export const isSpecialMove = (m: DuelMove): boolean => SPECIALS.includes(m);
-/** Any move that closes to strike (base attacks + thrust/combo/power). */
-const isOffensiveMove = (m: DuelMove): boolean => isAttackMove(m) || m === 'thrust' || m === 'combo' || m === 'power';
+/** Any move that closes to strike (base attacks + thrust/combo/power/必殺). */
+const isOffensiveMove = (m: DuelMove): boolean => isAttackMove(m) || m === 'thrust' || m === 'combo' || m === 'power' || m === 'ultimate';
+
+/** 武魂 — the gauge fills to this to unlock a once-per-bout 必殺技. */
+export const SPIRIT_MAX = 100;
 
 // The one defense each attack BEATS (its blind spot); the other two stop it.
 const ATTACK_PUNISHES: Record<string, DuelMove> = { cleave: 'parry', slash: 'dodge', sweep: 'guard' };
 // Attack-vs-attack mini ring: key beats value (斬>劈>掃>斬).
 const ATTACK_BEATS: Record<string, DuelMove> = { slash: 'cleave', cleave: 'sweep', sweep: 'slash' };
 // Base damage a clean strike deals, before prowess gap / die / weapon art.
-const STRIKE_DMG: Record<string, number> = { cleave: 34, slash: 26, sweep: 24, power: 42, thrust: 30, combo: 34 };
+const STRIKE_DMG: Record<string, number> = { cleave: 34, slash: 26, sweep: 24, power: 42, thrust: 30, combo: 34, ultimate: 64 };
 // 氣 banked by a defense that holds (架 parry banks most; 閃 dodge none).
 const DEFENSE_GUARD: Record<string, number> = { guard: 1, parry: 2, dodge: 0 };
 
@@ -338,6 +344,10 @@ export interface DuelBout {
   dMoves: DuelMove[];
   aChain: DuelMove[]; // 連招 — consecutive landed offensive strikes (resets on a miss/defense)
   dChain: DuelMove[];
+  aSpirit: number;    // 武魂 — 0..SPIRIT_MAX; full unlocks a 必殺技
+  dSpirit: number;
+  aUltUsed: boolean;  // 必殺技 is once per bout
+  dUltUsed: boolean;
   aArt: WeaponArt | null; // 兵器絕技 — a legendary weapon's signature edge
   dArt: WeaponArt | null;
   aClass: WeaponClass; // 兵器 — drives class combat traits (spear reach, axe break…)
@@ -373,6 +383,7 @@ export function initDuelBout(
     aInt: attacker.stats.intelligence, dInt: defender.stats.intelligence,
     aMoves: [], dMoves: [],
     aChain: [], dChain: [],
+    aSpirit: 0, dSpirit: 0, aUltUsed: false, dUltUsed: false,
     aArt: weaponArtFor(attacker), dArt: weaponArtFor(defender),
     aClass, dClass,
     aPersona: duelPersona(attacker), dPersona: duelPersona(defender),
@@ -391,6 +402,15 @@ export interface DuelRoundResult {
   /** 連招 — set when a side lands its 3rd+ consecutive offensive strike. A named
    *  chain (斬→突刺→奮) bites deepest; any chain ≥3 jars the foe's guard open. */
   combo?: { side: 'attacker' | 'defender'; length: number; named: boolean };
+  /** 必殺技 — set to the side that unleashed an unstoppable 武魂 finisher. */
+  ultimate?: 'attacker' | 'defender';
+}
+
+/** Whether a side may unleash its 必殺技 right now (gauge full, not yet spent). */
+export function ultReady(bout: DuelBout, side: 'attacker' | 'defender'): boolean {
+  return side === 'attacker'
+    ? bout.aSpirit >= SPIRIT_MAX && !bout.aUltUsed
+    : bout.dSpirit >= SPIRIT_MAX && !bout.dUltUsed;
 }
 
 /** 連段必殺 — the set sequence that pays the biggest 連招 bonus. */
@@ -430,7 +450,13 @@ export function duelRound(
   let aGuardGain = 0, dGuardGain = 0, aRecover = 0, dRecover = 0;
   let disarm: 'attacker' | 'defender' | undefined;
 
-  if (isSpecialMove(aMove) || isSpecialMove(dMove)) {
+  if (aMove === 'ultimate' || dMove === 'ultimate') {
+    // ── 必殺技 — an unstoppable 武魂 finisher. No defense turns it aside; both
+    // sides landing their ult in the same exchange simply trade huge blows.
+    if (aMove === 'ultimate') { dmgToDefender = strike('ultimate', b.aStatic, b.dStatic, b.aArt); b.dGuard = 0; }
+    if (dMove === 'ultimate') { dmgToAttacker = strike('ultimate', b.dStatic, b.aStatic, b.dArt); b.aGuard = 0; }
+    roundWinner = dmgToDefender > dmgToAttacker ? 'attacker' : dmgToAttacker > dmgToDefender ? 'defender' : 'draw';
+  } else if (isSpecialMove(aMove) || isSpecialMove(dMove)) {
     // ── 招式·特技 (taunt / thrust / combo) — resolved apart from the base ring ──
     if (aMove === 'taunt' || dMove === 'taunt') {
       // 挑釁 — bank 氣 & catch a breath, UNLESS the foe pressed an attack home,
@@ -603,6 +629,14 @@ export function duelRound(
   b.aChain = aChain;
   b.dChain = dChain;
 
+  // ── 武魂 (spirit gauge) — both dealing and weathering blows stoke a fighter's
+  // fury; fill the gauge to unleash a 必殺技. An ult spends the whole gauge.
+  b.aSpirit = Math.min(SPIRIT_MAX, b.aSpirit + Math.round(dmgToDefender * 0.5 + dmgToAttacker * 0.7));
+  b.dSpirit = Math.min(SPIRIT_MAX, b.dSpirit + Math.round(dmgToAttacker * 0.5 + dmgToDefender * 0.7));
+  let ultimate: DuelRoundResult['ultimate'];
+  if (aMove === 'ultimate') { b.aSpirit = 0; b.aUltUsed = true; ultimate = 'attacker'; }
+  if (dMove === 'ultimate') { b.dSpirit = 0; b.dUltUsed = true; ultimate = 'defender'; }
+
   b.aGuard += aGuardGain;
   b.dGuard += dGuardGain;
   b.aStamina = Math.min(100, Math.max(0, b.aStamina - dmgToAttacker + aRecover));
@@ -622,7 +656,7 @@ export function duelRound(
     if (b.aStamina <= 0 && b.winner === 'defender') b.killedId = 'attacker';
     if (b.dStamina <= 0 && b.winner === 'attacker') b.killedId = 'defender';
   }
-  return { bout: b, roundWinner, dmgToAttacker, dmgToDefender, disarm, combo };
+  return { bout: b, roundWinner, dmgToAttacker, dmgToDefender, disarm, combo, ultimate };
 }
 
 // The best answer to a predicted move: stop an attack with a defense that holds
@@ -639,6 +673,7 @@ const COUNTER: Record<DuelMove, DuelMove> = {
   thrust: 'guard',  // 突刺 — only the block stops the lunge
   combo: 'guard',   // 連擊 — guard bleeds the least from the flurry
   taunt: 'slash',   // 挑釁 — punish the open taunter with a fast cut
+  ultimate: 'dodge',// 必殺 — unstoppable; nothing truly counters it
 };
 
 /** The foe's prevailing habit over their last few moves (random among ties). */
@@ -675,6 +710,9 @@ export function aiDuelMove(bout: DuelBout, side: 'attacker' | 'defender', rng: (
     veteran:  { read: 1.00, cap: 0.72, powerRead: 0.45 },
     peerless: { read: 1.40, cap: 0.92, powerRead: 0.70 },
   };
+  // 必殺 — when the 武魂 gauge is full, unleash the finisher (almost always).
+  if (ultReady(bout, side) && rng() < 0.85) return 'ultimate';
+
   const d = DIFF[bout.difficulty];
   const readChance = Math.min(d.cap, Math.max(0, (myInt - 40) / 100) * d.read);
   if (rng() < readChance) {

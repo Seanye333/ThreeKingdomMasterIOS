@@ -5,6 +5,7 @@ import {
   type DebateMove, type DebateBout,
 } from '../../game/systems/wordWar';
 import { OfficerPortrait } from './OfficerPortrait';
+import { playSfx } from '../../game/systems/sound';
 import { useT, useLanguage } from '../i18n';
 
 /** Per-exchange feedback emitted by {@link DebateGameModal} so a host (the 3D
@@ -76,6 +77,12 @@ export function DebateGameModal({
       ? `${t('第', 'R')}${res.bout.round}: ${nm(me)} ${moveZh(move)} ⚔ ${moveZh(foeMove)} ${nm(foe)} — ${t('相持', 'no ground')}`
       : `${t('第', 'R')}${res.bout.round}: ${nm(me)} ${moveZh(move)} ⚔ ${moveZh(foeMove)} ${nm(foe)} — ${who}${t(' 佔理', ' presses home')} (−${Math.max(res.dmgToA, res.dmgToD)})`;
     setLog((l) => [line, ...l].slice(0, 7));
+    // 全場附和 — note when the hall rallies behind a side.
+    if (res.rally) {
+      const who = res.rally === 'a' ? nm(me) : nm(foe);
+      setLog((l) => [`📣 ${who} ${t('博得滿堂附和 — 下一論必中!', 'wins the hall — next argument lands clean!')}`, ...l].slice(0, 7));
+      playSfx('shout');
+    }
     // 連辯 — note a completed argument chain.
     if (res.chain) {
       const who = res.chain.side === 'a' ? nm(me) : nm(foe);
@@ -114,6 +121,24 @@ export function DebateGameModal({
       {t('勢', 'MO')} {'◆'.repeat(n)}{'◇'.repeat(Math.max(0, PRESS_MOMENTUM_COST - n))}
     </div>
   );
+  // 民心 — a centred meter swaying toward whoever holds the hall (left = me / 青衫,
+  // right = foe / 紫袍). Cresting either edge rallies that side (全場附和).
+  const audienceBar = () => {
+    const a = bout.audience; // −100 (foe) .. +100 (me)
+    return (
+      <div style={{ margin: '0.35rem auto', maxWidth: 320 }}>
+        <div style={{ fontSize: '0.6rem', color: '#caa3d6', textAlign: 'center', letterSpacing: '0.1rem', marginBottom: 2 }}>
+          {t('民心', 'The Hall')}
+        </div>
+        <div style={{ position: 'relative', height: 8, background: '#1b2531', border: '1px solid #2b3845', borderRadius: 4, overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 1, background: '#5a6a78' }} />
+          {a >= 0
+            ? <div style={{ position: 'absolute', right: '50%', top: 0, bottom: 0, width: `${(a / 100) * 50}%`, background: '#6abf6a', transition: 'width 0.4s' }} />
+            : <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: `${(-a / 100) * 50}%`, background: '#c178c7', transition: 'width 0.4s' }} />}
+        </div>
+      </div>
+    );
+  };
 
   const resultText = !bout.over ? '' :
     bout.winner === 'draw' ? t('各執一詞 — 不分勝負', 'A stalemate of words')
@@ -146,6 +171,7 @@ export function DebateGameModal({
           <div style={{ alignSelf: 'center', color: '#88b7e8', letterSpacing: '0.1rem', fontSize: '0.95rem' }}>舌{t('戰', '')}</div>
           {side(foe, bout.dMomentum, '#c178c7', 'd', 'right')}
         </div>
+        {audienceBar()}
         {!bout.over ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem' }}>
             {myMoves.map((m) => {
@@ -235,6 +261,8 @@ export function DebateGameModal({
             )}
           </div>
         </div>
+
+        {audienceBar()}
 
         {!bout.over && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginTop: '1rem' }}>

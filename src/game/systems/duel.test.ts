@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveDuel, canDuel, initDuelBout, duelRound, staticProwess, aiDuelMove, weaponArtFor, weaponClassFor, duelPersona, type DuelMove } from './duel';
+import { resolveDuel, canDuel, initDuelBout, duelRound, staticProwess, aiDuelMove, weaponArtFor, weaponClassFor, duelPersona, ultReady, type DuelMove } from './duel';
 import { resolveWordWar, initDebate, debateRound, aiDebateMove, schoolMoveFor, type DebateMove } from './wordWar';
 import { mkOfficer, seededRng } from '../../test/factories';
 
@@ -413,6 +413,28 @@ describe('性格 (duel AI personas)', () => {
   });
 });
 
+describe('武魂 (ultimate gauge)', () => {
+  const mk = (war: number) => mkOfficer({ stats: { war, leadership: 60, intelligence: 60, politics: 60, charisma: 60 } });
+  const fixed = () => 0.5;
+
+  it('a full gauge unleashes an unstoppable 必殺技 that no guard turns aside', () => {
+    const b = { ...initDuelBout(mk(95), mk(70)), aSpirit: 100 };
+    expect(ultReady(b, 'attacker')).toBe(true);
+    const r = duelRound(b, 'ultimate', 'guard', fixed); // 格 cannot stop it
+    expect(r.ultimate).toBe('attacker');
+    expect(r.dmgToDefender).toBeGreaterThan(40);
+    expect(r.bout.aSpirit).toBe(0);
+    expect(r.bout.aUltUsed).toBe(true);
+  });
+
+  it('spirit accrues from an ordinary exchange and the AI spends a full gauge', () => {
+    const b = initDuelBout(mk(85), mk(70));
+    const r = duelRound(b, 'sweep', 'guard', fixed); // 掃 punishes 格 → lands
+    expect(r.bout.aSpirit).toBeGreaterThan(0);
+    expect(aiDuelMove({ ...b, dSpirit: 100 }, 'defender', () => 0.1)).toBe('ultimate');
+  });
+});
+
 describe('連辯 (debate argument chains)', () => {
   const mk = (intel: number) => mkOfficer({ stats: { war: 50, leadership: 60, intelligence: intel, politics: 60, charisma: 60 } });
   const fixed = () => 0.5;
@@ -428,6 +450,29 @@ describe('連辯 (debate argument chains)', () => {
     const r = debateRound({ ...initDebate(mk(80), mk(80)), aMomentum: 2, aLastMove: 'retort' }, 'press', 'assert', fixed);
     expect(r.chain?.kind).toBe('retort-press');
     expect(r.bout.aMomentum).toBe(1); // 2 − 2 (詰) + 1 (chain refund)
+  });
+});
+
+describe('民心 (debate audience meter)', () => {
+  const mk = (intel: number) => mkOfficer({ stats: { war: 50, leadership: 60, intelligence: intel, politics: 60, charisma: 60 } });
+  const fixed = () => 0.5;
+
+  it('sways toward whoever presses home and rallies the hall past the threshold', () => {
+    let cur = initDebate(mk(78), mk(62));
+    let rallied = false;
+    for (let i = 0; i < 6 && !cur.over; i++) {
+      const r = debateRound(cur, 'assert', 'provoke', fixed); // 論 > 諷 every round
+      cur = r.bout;
+      if (r.rally === 'a') rallied = true;
+    }
+    expect(rallied).toBe(true);
+  });
+
+  it('a rallied side lands its next argument even into a counter', () => {
+    const b = { ...initDebate(mk(70), mk(70)), aRally: true };
+    const r = debateRound(b, 'assert', 'press', fixed); // 詰 normally beats 論
+    expect(r.roundWinner).toBe('a'); // 全場附和 overrides
+    expect(r.bout.aRally).toBe(false); // spent
   });
 });
 

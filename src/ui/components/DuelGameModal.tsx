@@ -1,11 +1,13 @@
 import { useRef, useState } from 'react';
 import type { Officer } from '../../game/types';
 import {
-  initDuelBout, duelRound, aiDuelMove, POWER_GUARD_COST, THRUST_COST, COMBO_COST, staticProwess, weaponArtFor, duelPersona,
+  initDuelBout, duelRound, aiDuelMove, POWER_GUARD_COST, THRUST_COST, COMBO_COST, SPIRIT_MAX, staticProwess, weaponArtFor, duelPersona, ultReady,
   type DuelMove, type DuelBout, type DuelDifficulty,
 } from '../../game/systems/duel';
 import { OfficerPortrait } from './OfficerPortrait';
 import { playSfx } from '../../game/systems/sound';
+import { areBonded } from '../../game/systems/tactical';
+import { areSwornBrothers } from '../../game/systems/relationshipEffects';
 import { useT, useLanguage } from '../i18n';
 
 /** Per-exchange feedback emitted by {@link DuelGameModal} so a host (the staged
@@ -106,21 +108,40 @@ export function DuelGameModal({
   // 必殺技 — a named signature move flares when a great warrior lands a 奮.
   const [signature, setSignature] = useState<{ key: number; text: string } | null>(null);
   const sigKey = useRef(0);
-  // 罵陣 — a one-time pre-duel taunt: out-talk them (your 武+魅 vs theirs)
-  // and start with banked 氣 toward 奮; misfire and you open the round winded.
+  // 罵陣 — a one-time pre-duel psychological exchange: pick a tack, read the foe.
+  // 挑衅 (goad) > 不動 (stoic) > 嘲諷 (mock) > 挑衅. Win it to bank a 奮; lose and
+  // open the bout rattled; a wash leaves you wary. The foe leans on its 性格.
+  type Psych = 'goad' | 'mock' | 'stoic';
+  const PSYCH_BEATS: Record<Psych, Psych> = { goad: 'stoic', stoic: 'mock', mock: 'goad' };
+  const PSYCH_ZH: Record<Psych, string> = { goad: '挑釁', mock: '嘲諷', stoic: '不動' };
+  const PSYCH_EN: Record<Psych, string> = { goad: 'Goad', mock: 'Mock', stoic: 'Stoic' };
+  const PSYCH_LINE: Record<Psych, { zh: string; en: string }> = {
+    goad: { zh: '量你也不敢出陣!', en: 'I doubt you even dare ride out!' },
+    mock: { zh: '徒有虛名,也配與我一戰?', en: 'A hollow name — and you would fight me?' },
+    stoic: { zh: '少廢話,放馬過來。', en: 'Enough talk. Come, then.' },
+  };
   const [taunted, setTaunted] = useState(false);
-  const taunt = () => {
+  const taunt = (choice: Psych) => {
     if (taunted || bout.round > 0 || bout.over) return;
     setTaunted(true);
-    const mine = me.stats.war * 0.5 + me.stats.charisma * 0.5;
-    const theirs = defender.stats.war * 0.5 + defender.stats.charisma * 0.5;
-    const land = Math.random() < 0.5 + (mine - theirs) / 120;
-    if (land) {
+    // The foe's tack follows its temperament; a balanced foe picks at random.
+    const foePick: Psych = bout.dPersona === 'aggressive' ? 'goad'
+      : bout.dPersona === 'cunning' ? 'mock'
+      : bout.dPersona === 'cautious' ? 'stoic'
+      : (['goad', 'mock', 'stoic'] as Psych[])[Math.floor(Math.random() * 3)];
+    const win = PSYCH_BEATS[choice] === foePick;
+    const lose = PSYCH_BEATS[foePick] === choice;
+    const head = `${nm(me)}「${t(PSYCH_LINE[choice].zh, PSYCH_LINE[choice].en)}」 ⚔ ${nm(defender)} ${t(PSYCH_ZH[foePick], PSYCH_EN[foePick])}`;
+    if (win) {
       setBout((b) => ({ ...b, aGuard: b.aGuard + POWER_GUARD_COST }));
-      setLog((l) => [`${nm(me)} ${t('罵陣搦戰,氣勢大盛 — 蓄滿一記奮擊!', 'taunts the foe and seizes the initiative — an Overpower is banked!')}`, ...l]);
-    } else {
+      setLog((l) => [`${head} — ${t('壓住對手氣勢,蓄滿一記奮擊!', 'you seize the initiative — an Overpower is banked!')}`, ...l]);
+      playSfx('shout');
+    } else if (lose) {
       setBout((b) => ({ ...b, aStamina: Math.max(1, b.aStamina - 12) }));
-      setLog((l) => [`${nm(me)} ${t('罵陣不成,反被激得心浮氣躁(−12 氣力)。', 'taunts and is rattled in return (−12 stamina).')}`, ...l]);
+      setLog((l) => [`${head} — ${t('反被激得心浮氣躁(−12 氣力)。', 'and you are rattled in return (−12 stamina).')}`, ...l]);
+    } else {
+      setBout((b) => ({ ...b, aGuard: b.aGuard + 1 }));
+      setLog((l) => [`${head} — ${t('各不相讓,凝神戒備(攢1氣)。', 'neither gives ground — you steady yourself (+1氣).')}`, ...l]);
     }
   };
   const nm = (o: Officer) => (lang === 'en' ? o.name.en : o.name.zh);
@@ -131,21 +152,41 @@ export function DuelGameModal({
   const available = reinforcements.filter((r) => !used.has(r.id));
   const swapIn = (ally: Officer) => {
     if (bout.over) return;
+    const relieved = me; // the hard-pressed fighter being relieved
+    // 合擊 — a sworn-brother / bonded relief crashes in with a joint opening blow.
+    const combo = areBonded(ally.id, relieved.id) || areSwornBrothers(ally.id, relieved.id);
+    const comboDmg = combo ? Math.round(30 + staticProwess(ally) * 0.15) : 0;
     setMe(ally);
     setUsed((s) => new Set([...s, ally.id]));
     setTaunted(true);
     setBout((b) => ({
       ...b,
-      aStamina: 100, aGuard: 0, aMoves: [], aChain: [],
+      aStamina: 100, aGuard: combo ? 1 : 0, aMoves: [], aChain: [],
+      aSpirit: 0, aUltUsed: false,
+      // The combo blow chips the foe (clamped so it never instakills — the next
+      // exchange resolves the kill through the normal bout-end logic).
+      dStamina: comboDmg ? Math.max(1, b.dStamina - comboDmg) : b.dStamina,
       aStatic: staticProwess(ally), aInt: ally.stats.intelligence, aArt: weaponArtFor(ally),
       aPersona: duelPersona(ally),
     }));
-    setLog((l) => [`${nm(ally)} ${t('挺身援護,接力再戰!', 'leaps in to fight on!')}`, ...l]);
+    if (combo) {
+      fxKey.current += 1;
+      setFx({ key: fxKey.current, hit: 'd', dmg: comboDmg, killed: false });
+      sigKey.current += 1;
+      const text = lang === 'en' ? `${nm(relieved)} & ${nm(ally)} — Joint Strike!` : `${nm(relieved)}・${nm(ally)}【合擊】!`;
+      setSignature({ key: sigKey.current, text });
+      playSfx('crash');
+      window.setTimeout(() => setSignature((s) => (s && s.key === sigKey.current ? null : s)), 1700);
+      setLog((l) => [`🤝 ${nm(ally)} ${t('挺身援護 — 與', 'joins forces with')} ${nm(relieved)} ${t(`合擊!(−${comboDmg})`, `for a joint strike! (−${comboDmg})`)}`, ...l]);
+    } else {
+      setLog((l) => [`${nm(ally)} ${t('挺身援護,接力再戰!', 'leaps in to fight on!')}`, ...l]);
+    }
   };
 
   const moveCost = (m: DuelMove) => MOVES.find((x) => x.id === m)?.cost ?? 0;
   const play = (move: DuelMove) => {
     if (bout.over) return;
+    if (move === 'ultimate' && !ultReady(bout, 'attacker')) return; // 武魂 not full
     if (bout.aGuard < moveCost(move)) return; // not enough 氣 to spend
     const foeMove = aiDuelMove(bout, 'defender', Math.random);
     const res = duelRound(bout, move, foeMove, Math.random);
@@ -179,12 +220,15 @@ export function DuelGameModal({
       setLog((l) => [`⚡ ${victim} ${t('被架開兵器,氣勢盡失!', 'is disarmed — weapon knocked aside!')}`, ...l].slice(0, 7));
     }
 
-    // 必殺 — a decisive 奮 from a great warrior unleashes a named signature move.
-    const sigSide = move === 'power' && res.roundWinner === 'attacker' ? me
+    // 必殺 — an unleashed 武魂 finisher, or a decisive 奮 from a great warrior,
+    // flares a named signature move (a generic 必殺技 when the fighter has none).
+    const sigSide = res.ultimate === 'attacker' ? me
+      : res.ultimate === 'defender' ? defender
+      : move === 'power' && res.roundWinner === 'attacker' ? me
       : foeMove === 'power' && res.roundWinner === 'defender' ? defender
       : null;
     if (sigSide) {
-      const sig = signatureFor(sigSide);
+      const sig = signatureFor(sigSide) ?? (res.ultimate ? { zh: '必殺技', en: 'Finishing Blow' } : null);
       if (sig) {
         sigKey.current += 1;
         const text = lang === 'en' ? `${nm(sigSide)} — ${sig.en}!` : `${nm(sigSide)}【${sig.zh}】!`;
@@ -206,6 +250,18 @@ export function DuelGameModal({
       {t('氣', 'GD')} {'◆'.repeat(n)}{'◇'.repeat(Math.max(0, POWER_GUARD_COST - n))}
     </div>
   );
+  // 武魂 — a thin gold gauge that fills toward the 必殺技; glows when full.
+  const spiritBar = (spirit: number, used: boolean) => {
+    const full = spirit >= SPIRIT_MAX && !used;
+    return (
+      <div style={{ marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+        <span style={{ fontSize: '0.6rem', color: full ? '#ffd86a' : used ? '#5a4a36' : '#9a7a40' }}>{t('魂', 'SP')}</span>
+        <div style={{ flex: 1, height: 6, background: '#1b1408', border: `1px solid ${full ? '#ffd86a' : '#3a2c14'}`, borderRadius: 2, overflow: 'hidden', boxShadow: full ? '0 0 8px rgba(255,200,90,0.7)' : undefined }}>
+          <div style={{ width: `${used ? 0 : spirit}%`, height: '100%', background: full ? 'linear-gradient(90deg,#ffcf5a,#ff8a3a)' : '#b88a3a', transition: 'width 0.4s' }} />
+        </div>
+      </div>
+    );
+  };
 
   const resultText = !bout.over ? '' :
     bout.winner === 'draw' ? (lethal ? t('平手 — 各自負傷', 'Draw — both wounded') : t('平手 — 點到為止', 'A draw — well matched'))
@@ -245,6 +301,23 @@ export function DuelGameModal({
       {lang === 'en' ? en : zh}
     </div>
   );
+  // 必殺技 — only shown when the 武魂 gauge is full; an unstoppable finisher.
+  const canUlt = !bout.over && ultReady(bout, 'attacker');
+  const ultButton = (
+    <button
+      onClick={() => play('ultimate')}
+      className={reduced ? undefined : 'tkm-ult-pulse'}
+      style={{
+        width: '100%', padding: '0.45rem 0.3rem', borderRadius: 5, cursor: 'pointer', fontFamily: 'inherit',
+        background: 'linear-gradient(90deg, rgba(255,140,40,0.25), rgba(255,200,90,0.3))',
+        border: '1px solid #ffd86a', color: '#ffe8a8', letterSpacing: '0.06rem',
+        textShadow: '0 0 10px rgba(255,190,70,0.8)',
+      }}
+      title={t('武魂全滿 — 釋放必殺技,無可格擋!', 'Spirit full — unleash an unstoppable finisher!')}
+    >
+      ⚡ {t('必殺技', 'Finisher')} ⚡
+    </button>
+  );
 
   // One fighter's portrait + name + WAR + weapon art + health + guard, with the
   // hit shake / damage float. `who` picks the side; `foe` mirrors it to the right.
@@ -253,6 +326,8 @@ export function DuelGameModal({
     const color = who === 'me' ? '#b8442e' : '#3a7dd9';
     const stamina = who === 'me' ? bout.aStamina : bout.dStamina;
     const guard = who === 'me' ? bout.aGuard : bout.dGuard;
+    const spirit = who === 'me' ? bout.aSpirit : bout.dSpirit;
+    const ultUsed = who === 'me' ? bout.aUltUsed : bout.dUltUsed;
     const art = who === 'me' ? bout.aArt : bout.dArt;
     const right = who === 'foe';
     const isHit = !!fx && (who === 'me' ? (fx.hit === 'a' || fx.hit === 'both') : (fx.hit === 'd' || fx.hit === 'both'));
@@ -272,6 +347,7 @@ export function DuelGameModal({
         </div>
         <div style={{ marginTop: '0.4rem' }}>{bar(stamina, color)}</div>
         {guardPips(guard)}
+        {spiritBar(spirit, ultUsed)}
         {fx && fx.dmg > 0 && isHit && (
           <span key={`d${who}${fx.key}`} className="tkm-damage-num" style={{ position: 'absolute', [right ? 'left' : 'right']: 8, top: 4, fontSize: '1.1rem' }}>−{fx.dmg}</span>
         )}
@@ -334,17 +410,25 @@ export function DuelGameModal({
           </div>
         )}
 
-        {/* 罵陣 — one shot, before blows are traded */}
+        {/* 罵陣 — one shot, before blows are traded: a 3-way psych read. */}
         {!bout.over && !taunted && bout.round === 0 && (
-          <button
-            onClick={taunt}
-            style={{
-              marginTop: '0.9rem', width: '100%', padding: '0.4rem',
-              background: 'rgba(184, 88, 74, 0.18)', border: '1px solid #b8584a',
-              color: '#e8b0a0', cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.07rem',
-            }}
-            title={t('開打前先罵陣搦戰 — 武力+魅力壓過對手則蓄一記奮擊,反之自亂陣腳', 'Taunt before blows — win on War+Charisma to bank an Overpower, lose and rattle yourself')}
-          >🗣 {t('罵陣搦戰', 'Taunt')}</button>
+          <div style={{ marginTop: '0.9rem' }}>
+            <div style={{ fontSize: '0.66rem', color: '#e8b0a0', letterSpacing: '0.05rem', marginBottom: 4, textAlign: 'center' }}>
+              🗣 {t('罵陣搦戰 — 挑釁 › 不動 › 嘲諷 › 挑釁', 'Taunt — Goad › Stoic › Mock › Goad')}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem' }}>
+              {(['goad', 'mock', 'stoic'] as const).map((c) => (
+                <button
+                  key={c}
+                  onClick={() => taunt(c)}
+                  style={{ padding: '0.4rem 0.2rem', background: 'rgba(184, 88, 74, 0.18)', border: '1px solid #b8584a', color: '#e8b0a0', cursor: 'pointer', fontFamily: 'inherit', borderRadius: 4 }}
+                  title={t(PSYCH_LINE[c].zh, PSYCH_LINE[c].en)}
+                >
+                  <div style={{ fontSize: '0.95rem' }}>{t(PSYCH_ZH[c], PSYCH_EN[c])}</div>
+                </button>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* 援護 — when your fighter is hard-pressed, a fresh ally can leap in. */}
@@ -369,6 +453,7 @@ export function DuelGameModal({
             side panels outside this card so the fighters aren't covered. */}
         {!bout.over && !staged && (
           <div style={{ display: 'grid', gap: '0.5rem', marginTop: '0.9rem' }}>
+            {canUlt && ultButton}
             <div>
               {groupLabel('攻 — 進攻', 'ATTACK', 'attack')}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem' }}>{movesOf('attack').map(moveBtn)}</div>
@@ -419,6 +504,7 @@ export function DuelGameModal({
       {staged && !bout.over && (
         <>
           <div style={{ position: 'fixed', left: 10, bottom: 22, width: 104, display: 'flex', flexDirection: 'column', gap: 6, pointerEvents: 'auto', zIndex: 131, maxHeight: '92vh', overflowY: 'auto' }}>
+            {canUlt && ultButton}
             {groupLabel('攻 — 進攻', 'ATTACK', 'attack')}
             {movesOf('attack').map(moveBtn)}
             <div style={{ height: 2 }} />

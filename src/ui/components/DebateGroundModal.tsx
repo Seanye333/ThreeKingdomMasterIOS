@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { debateProwess } from '../../game/systems/wordWar';
+import { debateShame, isEmotional } from '../../game/systems/afflictions';
 import { Modal } from './Modal';
 import { OfficerPortrait } from './OfficerPortrait';
 import { OfficerStats } from './OfficerStats';
@@ -20,6 +21,7 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
   const playerForceId = useGameStore((s) => s.playerForceId);
   const year = useGameStore((s) => s.date.year);
   const grantSparXp = useGameStore((s) => s.grantSparXp);
+  const afflictOfficer = useGameStore((s) => s.afflictOfficer);
 
   // Anyone fit to speak may debate — sort the sharpest tongues to the front.
   const roster = useMemo(
@@ -60,10 +62,21 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
           const winnerId = draw || outcome.winner === 'me' ? aId! : bId!;
           const loserId = winnerId === aId ? bId! : aId!;
           const r = grantSparXp(winnerId, loserId, draw);
+          // 羞憤 — an emotional officer who is out-argued stews on it for a few
+          // seasons (−魅力/−智力), a real cost to losing a war of words.
+          const loser = officers[loserId];
+          let shamed = false;
+          if (!draw && loser && isEmotional(loser)) {
+            afflictOfficer(loserId, debateShame());
+            shamed = true;
+          }
           if (r) {
-            const text = draw
+            const base = draw
               ? t('各執一詞 — 雙方皆有所獲', 'A stalemate of words — both learned from it')
               : t(`${pickName(officers[winnerId].name, lang)} 辯勝`, `${pickName(officers[winnerId].name, lang)} carries the argument`);
+            const text = shamed
+              ? `${base} — ${t(`${pickName(loser.name, lang)} 羞憤難平`, `${pickName(loser.name, lang)} is left stewing in shame`)}`
+              : base;
             setResult({ text, notes: r.notes });
           }
         }}
