@@ -15,11 +15,17 @@ name = "app_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
-tauri-build = { version = "2.6.2" }
+tauri-build = { version = "2.6.2", features = [] }
 
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
-tauri = { version = "2.11.2" }
+tauri = { version = "2.11.2", features = [] }
 tauri-plugin-log = "2"
+
+# Local patch of wry 0.55.1: neutralizes platform_webview_version(), which
+# crashes at startup on iOS/macOS 26 (NSBundle::bundleWithIdentifier over-release
+# inside CoreFoundation). See vendor/wry/src/wkwebview/mod.rs for details.
+[patch.crates-io]
+wry = { path = "vendor/wry" }

@@ -8,6 +8,17 @@ dist-ssr
 # Tauri / Rust build
 src-tauri/target
 
+# Tauri iOS build artifacts (regenerable; ~380M — keep out of git)
+src-tauri/gen/apple/Externals
+src-tauri/gen/apple/build
+src-tauri/gen/apple/DerivedData
+src-tauri/gen/apple/Pods
+src-tauri/gen/apple/*.xcworkspace
+src-tauri/gen/apple/.tauri
+
+# Vercel CLI local config
+.vercel
+
 # Test artifacts
 test-results
 playwright-report
