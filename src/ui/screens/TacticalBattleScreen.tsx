@@ -140,6 +140,8 @@ export function TacticalBattleScreen() {
         <Debate3DStage
           me={interactiveDebate.me}
           foe={interactiveDebate.foe}
+          // 難度 — a wittier enemy strategist reads & counters more sharply.
+          difficulty={interactiveDebate.foe.stats.intelligence >= 88 ? 'peerless' : interactiveDebate.foe.stats.intelligence >= 68 ? 'veteran' : 'rookie'}
           onComplete={({ meDelta, foeDelta }) => {
             start({
               ...battle,

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveDuel, canDuel, initDuelBout, duelRound, staticProwess, aiDuelMove, weaponArtFor, weaponClassFor, duelPersona, ultReady, type DuelMove } from './duel';
+import { resolveDuel, canDuel, initDuelBout, duelRound, staticProwess, aiDuelMove, weaponArtFor, weaponClassFor, duelPersona, ultReady, isDuelMoveUnlocked, unlockedDuelMoves, duelMoveUnlockLevel, type DuelMove } from './duel';
 import { resolveWordWar, initDebate, debateRound, aiDebateMove, schoolMoveFor, type DebateMove } from './wordWar';
 import { mkOfficer, seededRng } from '../../test/factories';
 
@@ -203,6 +203,35 @@ describe('招式·特技 (taunt / thrust / combo specials)', () => {
   });
 });
 
+describe('招式修練 (duel move unlocks)', () => {
+  it('a raw recruit knows only the basics; flourishes & the finisher are earned', () => {
+    const recruit = mkOfficer({ level: 1, stats: { war: 80, leadership: 60, intelligence: 60, politics: 60, charisma: 60 } });
+    // Base attacks/defenses + 奮 are known from the start.
+    for (const m of ['cleave', 'slash', 'sweep', 'guard', 'dodge', 'parry', 'power'] as DuelMove[]) {
+      expect(isDuelMoveUnlocked(recruit, m)).toBe(true);
+    }
+    // The flourishes and the 必殺技 are still locked.
+    expect(isDuelMoveUnlocked(recruit, 'taunt')).toBe(false);
+    expect(isDuelMoveUnlocked(recruit, 'thrust')).toBe(false);
+    expect(isDuelMoveUnlocked(recruit, 'combo')).toBe(false);
+    expect(isDuelMoveUnlocked(recruit, 'ultimate')).toBe(false);
+  });
+
+  it('a seasoned general fields the full arsenal', () => {
+    const veteran = mkOfficer({ level: 20, stats: { war: 90, leadership: 70, intelligence: 60, politics: 60, charisma: 60 } });
+    const moves = unlockedDuelMoves(veteran);
+    expect(moves).toContain('combo');
+    expect(moves).toContain('ultimate');
+    expect(moves).toHaveLength(11);
+  });
+
+  it('each flourish unlocks at its trained level', () => {
+    const mk = (lvl: number) => mkOfficer({ level: lvl, stats: { war: 80, leadership: 60, intelligence: 60, politics: 60, charisma: 60 } });
+    expect(isDuelMoveUnlocked(mk(duelMoveUnlockLevel('combo') - 1), 'combo')).toBe(false);
+    expect(isDuelMoveUnlocked(mk(duelMoveUnlockLevel('combo')), 'combo')).toBe(true);
+  });
+});
+
 describe('interactive debate engine', () => {
   const mk = (intel: number) => mkOfficer({ stats: { war: 50, leadership: 60, intelligence: intel, politics: 60, charisma: 60 } });
   const fixed = () => 0.5;
@@ -236,6 +265,15 @@ describe('interactive debate engine', () => {
   it('aiDebateMove spends 詰 when 氣勢 is banked', () => {
     const b = { ...initDebate(mk(80), mk(80)), aMomentum: 2 };
     expect(aiDebateMove(b, 'a', () => 0.1)).toBe('press');
+  });
+
+  it('難度 — a 宗師 reads the foe and springs the base counter; a 學徒 rarely does', () => {
+    // No banked 氣勢, so the loaded-argument lines skip and the read path decides.
+    const peerless = { ...initDebate(mk(95), mk(95), 'peerless'), dLastMove: 'assert' as DebateMove };
+    expect(aiDebateMove(peerless, 'a', () => 0.5)).toBe('retort'); // 駁 counters 論
+    const rookie = { ...initDebate(mk(95), mk(95), 'rookie'), dLastMove: 'assert' as DebateMove };
+    // rookie readChance ≈ 0.31 — at rng 0.5 the read misses and it plays on instinct.
+    expect(aiDebateMove(rookie, 'a', () => 0.5)).toBe('provoke');
   });
 
   it('引/哂 — the loaded arguments resolve against the base ring', () => {

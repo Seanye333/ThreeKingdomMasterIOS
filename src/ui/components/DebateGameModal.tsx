@@ -2,10 +2,10 @@ import { useRef, useState } from 'react';
 import type { Officer } from '../../game/types';
 import {
   initDebate, debateRound, aiDebateMove, debateMoraleDeltas, PRESS_MOMENTUM_COST, debateMoveCost, schoolMoveFor, SCHOOL_MOVES,
-  type DebateMove, type DebateBout,
+  type DebateMove, type DebateBout, type DebateDifficulty,
 } from '../../game/systems/wordWar';
 import { OfficerPortrait } from './OfficerPortrait';
-import { playSfx } from '../../game/systems/sound';
+import { playSfx, speakLine } from '../../game/systems/sound';
 import { debateMoveLine, debateRoutLine } from '../../game/data/battleLines';
 import { useT, useLanguage } from '../i18n';
 
@@ -43,7 +43,7 @@ const MOVES: Array<{ id: DebateMove; zh: string; en: string; cost?: number; hint
 ];
 
 export function DebateGameModal({
-  me, foe, onComplete, staged = false, onRound,
+  me, foe, onComplete, staged = false, onRound, difficulty = 'veteran',
 }: {
   me: Officer;
   foe: Officer;
@@ -52,11 +52,13 @@ export function DebateGameModal({
   staged?: boolean;
   /** Fires after each exchange so the 3D debate hall can animate the minds. */
   onRound?: (fx: DebateRoundFx) => void;
+  /** 難度 — how sharply the AI foe reads your argument and counters. */
+  difficulty?: DebateDifficulty;
 }) {
   const t = useT();
   const lang = useLanguage();
   const reduced = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  const [bout, setBout] = useState<DebateBout>(() => initDebate(me, foe));
+  const [bout, setBout] = useState<DebateBout>(() => initDebate(me, foe, difficulty));
   const [log, setLog] = useState<string[]>([]);
   // 佔理演出 — per-round retort feedback: who lost composure, by how much, with
   // a key so the glint / shake / float replay even on a repeat hit.
@@ -98,9 +100,10 @@ export function DebateGameModal({
       const speaker = res.bout.winner === 'a' ? nm(me) : nm(foe);
       const l = debateRoutLine(persona);
       setLog((ll) => [`💬 「${t(l.zh, l.en)}」— ${speaker}`, ...ll].slice(0, 7));
+      speakLine(l.zh, l.en, lang);
     } else if (res.roundWinner === 'a' && (['press', 'cite', 'scorn', 'analogy', 'rebuke', 'deceive'] as DebateMove[]).includes(move)) {
       const l = debateMoveLine(move);
-      if (l) setLog((ll) => [`💬 「${t(l.zh, l.en)}」— ${nm(me)}`, ...ll].slice(0, 7));
+      if (l) { setLog((ll) => [`💬 「${t(l.zh, l.en)}」— ${nm(me)}`, ...ll].slice(0, 7)); speakLine(l.zh, l.en, lang); }
     }
     setBout(res.bout);
 

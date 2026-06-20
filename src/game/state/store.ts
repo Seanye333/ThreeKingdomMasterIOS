@@ -24,7 +24,10 @@ import type {
 import { isHostilePermitted } from '../types';
 import { createDeeds } from '../types/deeds';
 import { grantDeedTitles } from '../systems/deedTitles';
+import { pushBoutRecord } from '../systems/duelHall';
+import { applyBout } from '../systems/warRanking';
 import { tickAfflictions, withAffliction, type Affliction } from '../systems/afflictions';
+import { trainKey, recordTrain } from '../systems/sparLimit';
 import type { Difficulty } from './gameState';
 import { CIVIC_TITLES_BY_ID, MILITARY_RANKS_BY_ID } from '../data/titles';
 import { FORGE_RECIPES_BY_ID } from '../data/forging';
@@ -402,18 +405,28 @@ interface GameStore extends GameState {
   /** 演武 — two of your officers spar (non-lethal). Both gain XP (the winner
    *  more), which can grow stats / learn skills via the normal growth path.
    *  Returns a summary for the UI; null if either officer is missing. */
-  grantSparXp: (winnerId: EntityId, loserId: EntityId, draw?: boolean) => {
+  grantSparXp: (winnerId: EntityId, loserId: EntityId, draw?: boolean, favored?: keyof import('../types').OfficerStats | Array<keyof import('../types').OfficerStats>) => {
     winnerName: string; loserName: string; winnerLeveled: boolean; loserLeveled: boolean; notes: string[];
   } | null;
+  /** 演武/論辯冷卻 — log a friendly 1-on-1 spar/debate for both participants so
+   *  each officer's per-season allowance ticks down (anti XP-farm). 'spar' and
+   *  'debate' draw from separate pools. See systems/sparLimit. */
+  recordTrainingUse: (kind: 'spar' | 'debate', ids: EntityId[]) => void;
   /** Award XP to a single officer (比武大會 prizes, etc.). Grows stats / skills
    *  via the normal growth path. Returns level-up notes; null if missing. */
-  grantOfficerXp: (officerId: EntityId, amount: number) => { leveled: boolean; notes: string[] } | null;
+  grantOfficerXp: (officerId: EntityId, amount: number, favored?: keyof import('../types').OfficerStats | Array<keyof import('../types').OfficerStats>) => { leveled: boolean; notes: string[] } | null;
   /** 後遺 — lay a short-lived affliction on an officer (養傷 from a duel, 羞憤
    *  from a lost debate). Ticks down each season; folds into effective stats. */
   afflictOfficer: (officerId: EntityId, affliction: Affliction) => void;
   /** 名聲榜 — accumulate heroic deeds (duel/debate wins, etc.) for an officer.
    *  Numeric fields add; others overwrite. Feeds renown in systems/fame.ts. */
   recordDeed: (officerId: EntityId, patch: Partial<import('../types').HeroicDeeds>) => void;
+  /** 名局廊 — archive a notable duel/debate so it can be replayed from the hall. */
+  recordBout: (rec: import('../systems/duelHall').BoutRecord) => void;
+  /** 武評榜 — fold an interactive duel result into the ELO ladder (a from a's view). */
+  recordDuelRating: (aId: EntityId, bId: EntityId, result: 'win' | 'loss' | 'draw') => void;
+  /** 單挑戰役 — mark a duel scenario cleared (campaign progress). */
+  markDuelScenarioCleared: (scenarioId: EntityId) => void;
   /** 劇情舌戰 — apply a scripted scenario's outcome effects to live state
    *  (gold to the capital, recruiting a won-over officer, shaming a routed one).
    *  Relationship/morale/note effects are display-only. */
@@ -4654,21 +4667,31 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         return true;
       },
 
-      grantSparXp: (winnerId, loserId, draw = false) => {
+      grantSparXp: (winnerId, loserId, draw = false, favored) => {
         const state = get();
         const w = state.officers[winnerId];
         const l = state.officers[loserId];
         if (!w || !l) return null;
         // 演武 — a non-lethal bout. Both improve; the winner a little more. A
         // draw splits the middle. Growth is still capped by each officer's latent.
-        const rw = grantXp(w, draw ? 32 : 42);
-        const rl = grantXp(l, draw ? 32 : 26);
+        // `favored` steers growth (a 舌戰 grows 知力/魅力 rather than 武力).
+        const rw = grantXp(w, draw ? 32 : 42, Math.random, favored);
+        const rl = grantXp(l, draw ? 32 : 26, Math.random, favored);
         set({ officers: { ...state.officers, [winnerId]: rw.officer, [loserId]: rl.officer } });
         return {
           winnerName: w.name.zh, loserName: l.name.zh,
           winnerLeveled: rw.leveled, loserLeveled: rl.leveled,
           notes: [...rw.entries, ...rl.entries].map((e) => e.textZh ?? e.text),
         };
+      },
+      recordTrainingUse: (kind, ids) => {
+        const state = get();
+        const key = trainKey(state.date);
+        if (kind === 'debate') {
+          set({ debateUsage: recordTrain(state.debateUsage ?? {}, ids, key) });
+        } else {
+          set({ sparUsage: recordTrain(state.sparUsage ?? {}, ids, key) });
+        }
       },
       afflictOfficer: (officerId, affliction) => {
         const state = get();
@@ -4685,6 +4708,22 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           merged[k] = typeof v === 'number' ? (curRec[k] ?? 0) + v : v;
         }
         set({ deeds: { ...state.deeds, [officerId]: merged as unknown as import('../types').HeroicDeeds } });
+      },
+      recordBout: (rec) => {
+        set({ duelHall: pushBoutRecord(get().duelHall, rec) });
+      },
+      recordDuelRating: (aId, bId, result) => {
+        const state = get();
+        const a = state.officers[aId];
+        const b = state.officers[bId];
+        if (!a || !b) return;
+        const u = applyBout(state.warRatings, a, b, result);
+        set({ warRatings: { ...state.warRatings, [u.winnerId]: u.winnerRating, [u.loserId]: u.loserRating } });
+      },
+      markDuelScenarioCleared: (scenarioId) => {
+        const cur = get().clearedDuelScenarios ?? [];
+        if (cur.includes(scenarioId)) return;
+        set({ clearedDuelScenarios: [...cur, scenarioId] });
       },
       applyScenarioEffects: (effects) => {
         const state = get();
@@ -4709,11 +4748,11 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         }
         set({ officers, cities });
       },
-      grantOfficerXp: (officerId, amount) => {
+      grantOfficerXp: (officerId, amount, favored) => {
         const state = get();
         const o = state.officers[officerId];
         if (!o) return null;
-        const r = grantXp(o, amount);
+        const r = grantXp(o, amount, Math.random, favored);
         set({ officers: { ...state.officers, [officerId]: r.officer } });
         return { leveled: r.leveled, notes: r.entries.map((e) => e.textZh ?? e.text) };
       },
@@ -6940,6 +6979,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         forces: state.forces,
         officers: state.officers,
         pendingCommands: state.pendingCommands,
+        sparUsage: state.sparUsage,
+        debateUsage: state.debateUsage,
         pendingTrainings: state.pendingTrainings,
         lastReport: state.lastReport,
         cityEventMarks: state.cityEventMarks,
@@ -6991,6 +7032,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // The trail stays watchable for the current session; reloaded replays
         // fall back to the final frame (the viewer already handles that).
         battleReplays: state.battleReplays.map((r) => ({ ...r, snapshots: [] })),
+        // 名局廊 — small fx-only records, safe to persist in full.
+        duelHall: state.duelHall,
+        warRatings: state.warRatings,
+        clearedDuelScenarios: state.clearedDuelScenarios,
         deeds: state.deeds,
         fogOfWar: state.fogOfWar,
         espionageReveals: state.espionageReveals,
@@ -7019,6 +7064,11 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (!state.rapport) state.rapport = {};
         if (state.activeChallenge === undefined) state.activeChallenge = null;
         if (!state.challengeRecords) state.challengeRecords = {};
+        if (!state.sparUsage) state.sparUsage = {};
+        if (!state.debateUsage) state.debateUsage = {};
+        if (!state.duelHall) state.duelHall = [];
+        if (!state.warRatings) state.warRatings = {};
+        if (!state.clearedDuelScenarios) state.clearedDuelScenarios = [];
         if (!state.customEvents) state.customEvents = [];
         if (!state.recentPrestige) state.recentPrestige = [];
         if (!state.recentBonds) state.recentBonds = [];

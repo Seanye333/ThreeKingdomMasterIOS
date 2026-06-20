@@ -7,7 +7,6 @@ import { POLICY_DEFS } from '../../game/data/officerAttributes';
 import { citySize, nextTierPop } from '../../game/systems/citySize';
 import { tickCityEconomy } from '../../game/systems/economy';
 import type { City, EntityId, Officer } from '../../game/types';
-import { CityMapScreen } from '../screens/CityMapScreen';
 import { CityMapScreen3D } from '../screens/CityMapScreen3D';
 import { BuildingsPanel } from './BuildingsPanel';
 import { AnimatedNumber } from './AnimatedNumber';
@@ -52,8 +51,6 @@ export function CityPanel() {
   const openCityMap = useGameStore((s) => s.openCityMap);
   const closeCityMap = useGameStore((s) => s.closeCityMap);
   const setShowCityMap = (open: boolean) => (open ? openCityMap() : closeCityMap());
-  // Default to 3D city map; user can switch to 2D inside the modal.
-  const [use3DCityMap, setUse3DCityMap] = useState(true);
   const t = useT();
   const lang = useLanguage();
 
@@ -167,19 +164,12 @@ export function CityPanel() {
           </ul>
         )}
       </section>
-      {showCityMap && (use3DCityMap ? (
+      {showCityMap && (
         <CityMapScreen3D
           cityId={city.id}
           onClose={() => setShowCityMap(false)}
-          onSwitch2D={() => setUse3DCityMap(false)}
         />
-      ) : (
-        <CityMapScreen
-          cityId={city.id}
-          onClose={() => setShowCityMap(false)}
-          onSwitch3D={() => setUse3DCityMap(true)}
-        />
-      ))}
+      )}
     </aside>
   );
 }

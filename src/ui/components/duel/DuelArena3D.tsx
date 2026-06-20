@@ -1,7 +1,7 @@
 import { Component, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Canvas, useFrame, useLoader } from '@react-three/fiber';
-import { ContactShadows, Html, Sparkles } from '@react-three/drei';
+import { ContactShadows, Html, Sparkles, OrbitControls } from '@react-three/drei';
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js';
@@ -10,7 +10,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import type { Group } from 'three';
 import type { Officer } from '../../../game/types';
 import type { DuelRoundFx } from '../DuelGameModal';
-import { weaponClassFor, weaponIsTwoHanded, type WeaponClass } from '../../../game/systems/duel';
+import { weaponClassFor, weaponIsTwoHanded, type WeaponClass, type DuelTerrain } from '../../../game/systems/duel';
 import { playSfx } from '../../../game/systems/sound';
 import {
   DUEL_ASSETS_READY, DUEL_FORMAT, DUEL_PACKS, type DuelAnim, type DuelPackId,
@@ -701,6 +701,198 @@ function ArenaStage() {
   );
 }
 
+// ─────────────────────────── 地形/天候 (terrain & weather) ──────────────────
+// The bout's DuelTerrain re-skins the whole stage: floor, sky, fog, ambient
+// light and a weather layer. 演武/比武 are on the neutral 校場 (plain); a
+// battlefield 單挑 can fall on a bridge, in the mire, in the rain or in fire.
+interface TerrainLook {
+  floor: string; bg: string; fog: [number, number]; ambient: number;
+  key: string; keyColor: string; weather: 'rain' | 'fire' | 'mud' | null;
+  descZh: string; descEn: string;
+}
+const TERRAIN_LOOK: Record<DuelTerrain, TerrainLook> = {
+  plain:  { floor: '#3c352a', bg: '#14110c', fog: [7, 16], ambient: 0.35, key: '#ffe0b0', keyColor: '#ffe0b0', weather: null,   descZh: '校場', descEn: 'Open Ground' },
+  bridge: { floor: '#6a5236', bg: '#1a1814', fog: [8, 18], ambient: 0.42, key: '#ffe6c0', keyColor: '#ffe6c0', weather: null,   descZh: '長坂橋', descEn: 'Narrow Bridge' },
+  mud:    { floor: '#352a1b', bg: '#100d09', fog: [6, 14], ambient: 0.3,  key: '#d8c098', keyColor: '#d8c098', weather: 'mud',  descZh: '泥濘', descEn: 'Mire' },
+  fire:   { floor: '#2a1610', bg: '#1c0b05', fog: [5, 12], ambient: 0.52, key: '#ff9050', keyColor: '#ff7a40', weather: 'fire', descZh: '火海', descEn: 'Burning Field' },
+  rain:   { floor: '#2c2e30', bg: '#0b0d11', fog: [5, 12], ambient: 0.26, key: '#a8c0e0', keyColor: '#9fb6d8', weather: 'rain', descZh: '雨夜', descEn: 'Rainy Night' },
+};
+
+/** Falling-rain streaks (a wrapping instanced field) for the 雨夜 terrain. */
+function Rain() {
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const N = 220;
+  const seeds = useMemo(() => Array.from({ length: N }, (_, i) => ({
+    x: (((i * 7.31) % 10) - 5), z: (((i * 3.77) % 10) - 5), y: ((i * 1.13) % 6), s: 0.6 + (i % 4) * 0.18,
+  })), []);
+  useFrame((_, delta) => {
+    const inst = ref.current; if (!inst) return;
+    const m = new THREE.Matrix4();
+    for (let i = 0; i < N; i++) {
+      const sd = seeds[i];
+      sd.y -= delta * 9 * sd.s;
+      if (sd.y < 0) sd.y += 6;
+      m.makeTranslation(sd.x, sd.y, sd.z);
+      inst.setMatrixAt(i, m);
+    }
+    inst.instanceMatrix.needsUpdate = true;
+  });
+  return (
+    <instancedMesh ref={ref} args={[undefined, undefined, N]}>
+      <boxGeometry args={[0.012, 0.4, 0.012]} />
+      <meshBasicMaterial color="#acc4e6" transparent opacity={0.5} />
+    </instancedMesh>
+  );
+}
+
+/** Weather layer keyed to the terrain — rain streaks, fire embers, or a wet sheen. */
+function Weather({ kind }: { kind: 'rain' | 'fire' | 'mud' | null }) {
+  if (kind === 'rain') return <><Rain /><Sparkles count={30} scale={[9, 0.2, 9]} position={[0, 0.05, 0]} size={3} speed={0.2} opacity={0.25} color="#acc4e6" /></>;
+  if (kind === 'fire') return <Sparkles count={70} scale={[9, 5, 9]} position={[0, 2.4, 0]} size={4} speed={1.1} opacity={0.7} color="#ff7a30" />;
+  if (kind === 'mud') return <Sparkles count={16} scale={[8, 0.4, 8]} position={[0, 0.1, 0]} size={2} speed={0.1} opacity={0.18} color="#6a5a3a" />;
+  return null;
+}
+
+// ─── 環境互動物 (interactive props) — braziers/jars that topple on a kill ─────
+function KnockProp({ position, kind, knockKey, knockX }: { position: [number, number, number]; kind: 'jar' | 'brazier'; knockKey: number; knockX: number }) {
+  const g = useRef<Group>(null);
+  const tip = useRef(0);
+  const seen = useRef(0);
+  // Topple if the kill happened on this prop's side (same sign of x).
+  useFrame((_, delta) => {
+    if (!g.current) return;
+    if (knockKey !== seen.current) {
+      seen.current = knockKey;
+      if (Math.sign(knockX || 0) === Math.sign(position[0]) || knockX === 0) tip.current = Math.max(tip.current, 1);
+    }
+    if (tip.current > 0.001) {
+      const fall = Math.min(1, (g.current.userData.fall = (g.current.userData.fall ?? 0) + delta * 2.2));
+      g.current.rotation.z = -fall * 1.3 * Math.sign(position[0] || 1);
+      g.current.position.y = position[1] - fall * 0.1;
+    }
+  });
+  const flame = useRef<THREE.Mesh>(null);
+  useFrame(({ clock }) => { if (flame.current) flame.current.scale.y = 1 + Math.sin(clock.elapsedTime * 11 + position[0]) * 0.25; });
+  return (
+    <group ref={g} position={position}>
+      {kind === 'jar' ? (
+        <mesh castShadow position={[0, 0.22, 0]}>
+          <cylinderGeometry args={[0.13, 0.18, 0.44, 12]} />
+          <meshStandardMaterial color="#6a4a30" roughness={0.85} />
+        </mesh>
+      ) : (
+        <>
+          <mesh castShadow position={[0, 0.3, 0]}>
+            <cylinderGeometry args={[0.16, 0.1, 0.6, 8]} />
+            <meshStandardMaterial color="#3a2a1a" roughness={0.9} metalness={0.2} />
+          </mesh>
+          <mesh position={[0, 0.62, 0]}><cylinderGeometry args={[0.17, 0.17, 0.08, 12]} /><meshStandardMaterial color="#2a1c12" /></mesh>
+          <mesh ref={flame} position={[0, 0.72, 0]}><coneGeometry args={[0.1, 0.3, 8]} /><meshBasicMaterial color="#ffb44a" toneMapped={false} /></mesh>
+          <pointLight position={[0, 0.8, 0]} color="#ff9b3a" intensity={4} distance={4} decay={2} />
+        </>
+      )}
+    </group>
+  );
+}
+
+function StageProps({ knockKey, knockX }: { knockKey: number; knockX: number }) {
+  return (
+    <>
+      <KnockProp position={[-2.6, 0, 1.6]} kind="brazier" knockKey={knockKey} knockX={knockX} />
+      <KnockProp position={[2.6, 0, 1.6]} kind="brazier" knockKey={knockKey} knockX={knockX} />
+      <KnockProp position={[-2.9, 0, -1.2]} kind="jar" knockKey={knockKey} knockX={knockX} />
+      <KnockProp position={[2.9, 0, -1.2]} kind="jar" knockKey={knockKey} knockX={knockX} />
+    </>
+  );
+}
+
+// ─── 伤痕/血迹 (wounds) — a blood spray on a telling hit + a growing stain ─────
+function BloodSpray({ position, big }: { position: [number, number, number]; big: boolean }) {
+  const grp = useRef<Group>(null);
+  const start = useRef(0);
+  const pending = useRef(true);
+  const drops = useMemo(() => Array.from({ length: big ? 12 : 7 }, (_, i) => {
+    const a = (i / (big ? 12 : 7)) * Math.PI * 2 + (i % 2) * 0.4;
+    return { a, r: 0.14 + (i % 3) * 0.06, vy: 0.5 + (i % 4) * 0.2 };
+  }), [big]);
+  useFrame(({ clock }) => {
+    if (pending.current) { start.current = clock.elapsedTime; pending.current = false; }
+    const t = clock.elapsedTime - start.current;
+    const p = Math.min(1, t / 0.5);
+    if (grp.current) {
+      grp.current.scale.setScalar(0.4 + p * (big ? 1.9 : 1.3));
+      grp.current.visible = p < 1;
+      grp.current.children.forEach((c, i) => { c.position.y = (drops[i]?.vy ?? 0.5) * p * 0.5 - p * p * 0.6; });
+      (grp.current.children[0] as THREE.Mesh | undefined);
+    }
+  });
+  return (
+    <group ref={grp} position={position}>
+      {drops.map((d, i) => (
+        <mesh key={i} position={[Math.cos(d.a) * d.r, 0, Math.sin(d.a) * d.r]}>
+          <sphereGeometry args={[0.028, 6, 6]} />
+          <meshBasicMaterial color="#8e1c12" transparent opacity={0.85} depthWrite={false} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+/** A dark blood stain that pools under a fighter, deepening as wounds mount. */
+function WoundStain({ x, wounds }: { x: number; wounds: number }) {
+  const opacity = Math.min(0.6, wounds * 0.12);
+  const scale = 0.4 + Math.min(1, wounds * 0.16);
+  if (wounds <= 0) return null;
+  return (
+    <mesh position={[x, 0.03, 0.1]} rotation={[-Math.PI / 2, 0, 0]} scale={[scale, scale, scale]}>
+      <circleGeometry args={[0.55, 20]} />
+      <meshBasicMaterial color="#4a0f08" transparent opacity={opacity} depthWrite={false} />
+    </mesh>
+  );
+}
+
+// ─── 名將終結技 (signature finisher) — a colour-keyed crescent sweep on a kill ─
+const FINISHER: Record<string, { color: string }> = {
+  'guan-yu': { color: '#3aa05a' }, 'zhang-fei': { color: '#d04030' }, 'zhao-yun': { color: '#e0e0f0' },
+  'lu-bu': { color: '#caa64a' }, 'ma-chao': { color: '#d8c0a0' }, 'dian-wei': { color: '#a03020' },
+  'xu-chu': { color: '#c08040' }, 'huang-zhong': { color: '#e0b040' }, 'gan-ning': { color: '#40a0d0' },
+  'zhang-liao': { color: '#b85020' }, 'taishi-ci': { color: '#50a0b8' }, 'sun-ce': { color: '#d0b040' },
+};
+
+// 名將終結動作 — the signature motion a famous warrior delivers the killing blow
+// with, drawn from the existing clip pool (no new assets). This map is also the
+// slot for real per-officer mocap finishers: point an id at a dedicated clip key
+// once it's added to the pack and it plays here automatically.
+const SIGNATURE_FINISH: Record<string, DuelAnim> = {
+  'guan-yu': 'cleave', 'zhang-fei': 'thrust', 'zhao-yun': 'thrust', 'ma-chao': 'thrust',
+  'lu-bu': 'power', 'dian-wei': 'power', 'xu-chu': 'power', 'huang-zhong': 'slash',
+  'gan-ning': 'slash', 'taishi-ci': 'slash', 'zhang-liao': 'cleave', 'sun-ce': 'thrust',
+};
+function FinisherArc({ position, color }: { position: [number, number, number]; color: string }) {
+  const ring = useRef<THREE.Mesh>(null);
+  const mat = useRef<THREE.MeshBasicMaterial>(null);
+  const start = useRef(0);
+  const pending = useRef(true);
+  useFrame(({ clock }) => {
+    if (pending.current) { start.current = clock.elapsedTime; pending.current = false; }
+    const t = clock.elapsedTime - start.current;
+    const p = Math.min(1, t / 0.55);
+    if (ring.current) { const s = 0.3 + p * 3.2; ring.current.scale.set(s, s, s); ring.current.rotation.z = p * 2.4; ring.current.visible = p < 1; }
+    if (mat.current) mat.current.opacity = (1 - p) * 0.9;
+  });
+  return (
+    <mesh ref={ring} position={position} rotation={[Math.PI / 2.6, 0, 0]}>
+      <torusGeometry args={[0.5, 0.06, 8, 32, Math.PI * 1.3]} />
+      <meshBasicMaterial ref={mat} color={color} transparent opacity={0.9} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
+    </mesh>
+  );
+}
+
+// ─── 拍照模式 (photo mode) — free-orbit the frozen scene for a screenshot ─────
+function PhotoControls() {
+  return <OrbitControls enablePan={false} minDistance={1.6} maxDistance={8} target={[0, 1.1, 0]} maxPolarAngle={Math.PI * 0.52} />;
+}
+
 // ─────────────────────────── arena scene + shell ───────────────────────────
 
 export interface DuelArenaEvent extends DuelRoundFx { key: number }
@@ -716,29 +908,35 @@ class ArenaErrorBoundary extends Component<{ children: ReactNode }, { failed: bo
 
 function Scene({
   left, right, leftName, rightName, leftClass, rightClass, shakeKey, big, timeScale, spark, killKey, killX,
+  look, blood, leftWounds, rightWounds, finisher, photo,
 }: {
   left: FighterAction; right: FighterAction; leftName: string; rightName: string;
   leftClass: WeaponClass; rightClass: WeaponClass; shakeKey: number; big: boolean;
   timeScale: number; spark: { key: number; x: number; killed: boolean; heavy: boolean } | null; killKey: number; killX: number;
+  look: TerrainLook; blood: { key: number; x: number; big: boolean } | null;
+  leftWounds: number; rightWounds: number; finisher: { key: number; x: number; color: string } | null; photo: boolean;
 }) {
+  const wet = look.weather === 'rain' || look.weather === 'mud';
   return (
     <>
-      <CameraRig shakeKey={shakeKey} big={big} killKey={killKey} killX={killX} />
-      {/* Dusk, torch-lit mood — low ambient so the torches and bloom carry it. */}
-      <ambientLight intensity={0.35} />
+      {!photo && <CameraRig shakeKey={shakeKey} big={big} killKey={killKey} killX={killX} />}
+      {photo && <PhotoControls />}
+      {/* Dusk, torch-lit mood — low ambient so the torches and bloom carry it.
+          The terrain shifts the key light's colour and the fill. */}
+      <ambientLight intensity={look.ambient} />
       <hemisphereLight args={['#5a6b8a', '#2a1c10', 0.4]} />
       <directionalLight
-        position={[3, 6, 4]} intensity={1.15} color="#ffe0b0" castShadow
+        position={[3, 6, 4]} intensity={1.15} color={look.keyColor} castShadow
         shadow-mapSize-width={1024} shadow-mapSize-height={1024}
         shadow-camera-left={-4} shadow-camera-right={4}
         shadow-camera-top={4} shadow-camera-bottom={-4}
       />
       <directionalLight position={[-4, 3, -3]} intensity={0.35} color="#7088b0" />
 
-      {/* arena floor */}
+      {/* arena floor — re-coloured per terrain (a wet sheen on rain/mud) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <circleGeometry args={[4.5, 48]} />
-        <meshStandardMaterial color="#3c352a" roughness={0.95} />
+        <meshStandardMaterial color={look.floor} roughness={wet ? 0.4 : 0.95} metalness={wet ? 0.3 : 0} />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
         <ringGeometry args={[4.3, 4.5, 48]} />
@@ -747,10 +945,18 @@ function Scene({
       <ContactShadows position={[0, 0.02, 0]} opacity={0.5} scale={6} blur={2.2} far={3} />
 
       <ArenaStage />
+      <StageProps knockKey={killKey} knockX={killX} />
+      <Weather kind={look.weather} />
+
+      {/* 伤痕 — blood pools deepen beneath each fighter as they take wounds. */}
+      <WoundStain x={-0.95} wounds={leftWounds} />
+      <WoundStain x={0.95} wounds={rightWounds} />
 
       <Fighter side="left" tunic={RED} action={left} name={leftName} weaponClass={leftClass} timeScale={timeScale} />
       <Fighter side="right" tunic={BLUE} action={right} name={rightName} weaponClass={rightClass} timeScale={timeScale} />
       {spark && <HitSpark key={spark.key} position={[spark.x, 1.15, 0]} killed={spark.killed} heavy={spark.heavy} />}
+      {blood && <BloodSpray key={`b${blood.key}`} position={[blood.x, 1.05, 0.1]} big={blood.big} />}
+      {finisher && <FinisherArc key={`f${finisher.key}`} position={[finisher.x, 1.0, 0]} color={finisher.color} />}
 
       <EffectComposer>
         <Bloom intensity={0.7} luminanceThreshold={0.65} luminanceSmoothing={0.25} mipmapBlur />
@@ -765,14 +971,15 @@ function Scene({
  * a monotonically increasing `key`) and it animates both fighters accordingly.
  */
 export function DuelArena3D({
-  attacker, defender, leftName, rightName, event,
+  attacker, defender, leftName, rightName, event, terrain = 'plain',
 }: {
   attacker: Officer; defender: Officer; leftName: string; rightName: string;
-  event: DuelArenaEvent | null;
+  event: DuelArenaEvent | null; terrain?: DuelTerrain;
 }) {
   // Each officer's 3D weapon (drives both the pack and the hand mesh).
   const leftClass = useMemo(() => weaponClassFor(attacker), [attacker]);
   const rightClass = useMemo(() => weaponClassFor(defender), [defender]);
+  const look = TERRAIN_LOOK[terrain] ?? TERRAIN_LOOK.plain;
   const idle = (): FighterAction => ({ anim: 'idle', rot: 0, stamp: 0 });
   const [left, setLeft] = useState<FighterAction>(idle);
   const [right, setRight] = useState<FighterAction>(idle);
@@ -782,6 +989,16 @@ export function DuelArena3D({
   const [spark, setSpark] = useState<{ key: number; x: number; killed: boolean; heavy: boolean } | null>(null);
   const [killKey, setKillKey] = useState(0);
   const [killX, setKillX] = useState(0);
+  // 伤痕 — accumulated wounds per side; blood spray on a telling blow.
+  const [leftWounds, setLeftWounds] = useState(0);
+  const [rightWounds, setRightWounds] = useState(0);
+  const [blood, setBlood] = useState<{ key: number; x: number; big: boolean } | null>(null);
+  // 名將終結技 — a colour-keyed crescent on the kill.
+  const [finisher, setFinisher] = useState<{ key: number; x: number; color: string } | null>(null);
+  // 拍照模式 — freeze + free-orbit for a screenshot.
+  const [photo, setPhoto] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const lastKey = useRef(0);
 
   useEffect(() => {
@@ -811,6 +1028,14 @@ export function DuelArena3D({
     // Strike spark at the struck fighter (left −0.95, right +0.95, clash centre).
     setSpark({ key: k, x: hit === 'a' ? -0.95 : hit === 'd' ? 0.95 : 0, killed: !!killed, heavy: heavy(aMove) || heavy(dMove) });
 
+    // 伤痕/血迹 — a single-sided telling blow draws blood + deepens that side's
+    // wound stain (a mutual clash/block doesn't). A kill throws a big spray.
+    const woundSide: 'left' | 'right' | null = killed ? (leftDied ? 'left' : 'right') : hit === 'a' ? 'left' : hit === 'd' ? 'right' : null;
+    if (woundSide) {
+      setBlood({ key: k, x: woundSide === 'left' ? -0.95 : 0.95, big: !!killed || heavy(aMove) || heavy(dMove) });
+      if (woundSide === 'left') setLeftWounds((w) => w + 1); else setRightWounds((w) => w + 1);
+    }
+
     // Each duel move name is also an animation name, so a fighter plays their
     // chosen move — unless they were hit (flinch) or cut down (fall).
     const animFor = (
@@ -825,6 +1050,10 @@ export function DuelArena3D({
     // 缴械 — the parrier plays the disarming motion; the victim recoils.
     if (!killed && disarm === 'attacker') { leftAnim = 'hit'; rightAnim = 'disarm'; }
     else if (!killed && disarm === 'defender') { rightAnim = 'hit'; leftAnim = 'disarm'; }
+    // 名將終結動作 — the victor strikes the killing blow with their own signature
+    // motion (the loser already plays 'death' via animFor).
+    if (killed && rightDied) leftAnim = SIGNATURE_FINISH[attacker.id] ?? leftAnim;
+    else if (killed && leftDied) rightAnim = SIGNATURE_FINISH[defender.id] ?? rightAnim;
     // `rot` picks which clip from the anim's pool (each fighter resolves it
     // against its own pack); the right fighter is offset by 2 so a mutual clash
     // shows two different strikes. `stamp` (= k) retriggers the animation.
@@ -841,10 +1070,16 @@ export function DuelArena3D({
       window.setTimeout(() => setTimeScale(1), 600);
     }
 
-    // Finishing blow — killcam push-in on the slain fighter + slow motion.
+    // Finishing blow — killcam push-in on the slain fighter + slow motion + the
+    // winner's 名將終結技 crescent (colour-keyed to the victor, faction-tinted
+    // for the rank and file).
     if (killed) {
-      setKillX(leftDied ? -0.95 : 0.95);
+      const slainX = leftDied ? -0.95 : 0.95;
+      const victorId = winner === 'attacker' ? attacker.id : defender.id;
+      const color = FINISHER[victorId]?.color ?? (winner === 'attacker' ? RED : BLUE);
+      setKillX(slainX);
       setKillKey((s) => s + 1);
+      setFinisher({ key: k, x: slainX, color });
       setTimeScale(0.32);
       const tid = window.setTimeout(() => setTimeScale(1), 1300);
       return () => window.clearTimeout(tid);
@@ -860,30 +1095,80 @@ export function DuelArena3D({
     }
   }, [event]);
 
+  const capture = () => {
+    const canvas = wrapRef.current?.querySelector('canvas');
+    if (!canvas) return;
+    try {
+      const url = canvas.toDataURL('image/png');
+      const stamp = `${leftName}-vs-${rightName}`.replace(/[^\w一-龥-]/g, '');
+      const nav = navigator as Navigator & { share?: (d: { files?: File[]; title?: string }) => Promise<void>; canShare?: (d: { files: File[] }) => boolean };
+      const blob = dataUrlToBlob(url);
+      const file = blob ? new File([blob], `duel-${stamp}.png`, { type: 'image/png' }) : null;
+      if (file && nav.canShare?.({ files: [file] }) && nav.share) {
+        nav.share({ files: [file], title: 'Three Kingdom Masters' }).catch(() => undefined);
+      } else {
+        const a = document.createElement('a');
+        a.href = url; a.download = `duel-${stamp}.png`; a.click();
+      }
+      setToast('📸');
+      window.setTimeout(() => setToast(null), 1200);
+    } catch { /* tainted canvas / unsupported — ignore */ }
+  };
+
   return (
     <ArenaErrorBoundary>
-      <div style={{ position: 'fixed', inset: 0, zIndex: 120 }}>
+      <div ref={wrapRef} style={{ position: 'fixed', inset: 0, zIndex: 120 }}>
         <Canvas
           shadows dpr={[1, 1.8]}
           camera={{ position: [0, 1.55, 4.0], fov: 38, near: 0.1, far: 100 }}
-          gl={{ antialias: true }}
+          gl={{ antialias: true, preserveDrawingBuffer: true }}
         >
-          {/* atmospheric backdrop */}
-          <color attach="background" args={['#14110c']} />
-          <fog attach="fog" args={['#14110c', 7, 16]} />
+          {/* atmospheric backdrop — terrain-tinted */}
+          <color attach="background" args={[look.bg]} />
+          <fog attach="fog" args={[look.bg, look.fog[0], look.fog[1]]} />
           <Suspense fallback={null}>
             <Scene
               left={left} right={right}
               leftName={leftName} rightName={rightName}
               leftClass={leftClass} rightClass={rightClass}
-              timeScale={timeScale} spark={spark} killKey={killKey} killX={killX}
+              timeScale={photo ? 0 : timeScale} spark={spark} killKey={killKey} killX={killX}
               shakeKey={shakeKey} big={big}
+              look={look} blood={blood} leftWounds={leftWounds} rightWounds={rightWounds} finisher={finisher} photo={photo}
             />
           </Suspense>
         </Canvas>
+
+        {/* 鏡頭/拍照 — toggle a frozen free-orbit photo mode + capture a card. */}
+        <div style={{ position: 'absolute', top: 10, right: 10, display: 'flex', gap: 6, zIndex: 121 }}>
+          <button
+            onClick={() => setPhoto((p) => !p)}
+            title="Photo mode"
+            style={photoBtn(photo ? '#e6c473' : '#5a6470', photo ? '#f2dd9a' : '#c8d0d8')}
+          >{photo ? '▶' : '📷'}</button>
+          {photo && <button onClick={capture} title="Capture" style={photoBtn('#6aae73', '#cfe8c8')}>⬇</button>}
+        </div>
+        {toast && <div style={{ position: 'absolute', top: 14, left: '50%', transform: 'translateX(-50%)', zIndex: 121, color: '#fff', fontSize: 22 }}>{toast}</div>}
       </div>
     </ArenaErrorBoundary>
   );
+}
+
+function photoBtn(border: string, color: string): React.CSSProperties {
+  return {
+    width: 34, height: 30, borderRadius: 5, cursor: 'pointer',
+    background: 'rgba(20,28,38,0.86)', border: `1px solid ${border}`, color, fontSize: 14,
+  };
+}
+
+function dataUrlToBlob(url: string): Blob | null {
+  try {
+    const [head, body] = url.split(',');
+    const mime = head.match(/:(.*?);/)?.[1] ?? 'image/png';
+    const bin = atob(body);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  } catch { return null; }
 }
 
 // Preload both packs when enabled so the first bout opens smoothly.

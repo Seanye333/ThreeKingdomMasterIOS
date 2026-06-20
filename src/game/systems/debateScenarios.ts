@@ -87,6 +87,37 @@ export const DEBATE_SCENARIOS: DebateScenario[] = [
       { kind: 'note', textZh: '諸侯不為所動,拂袖而去。', textEn: 'The lord is unmoved and takes his leave.', },
     ],
   },
+  {
+    id: 'persuade-zhang-liao',
+    kind: 'persuade-defect',
+    titleZh: '白門樓說張遼', titleEn: 'Win Over Zhang Liao',
+    introZh: '白門樓上,張遼寧死不降,破口大罵。你若能以忠義相激、曉以大勢,或可收得這員萬人敵。',
+    introEn: 'On the White Gate Tower, Zhang Liao curses, ready to die rather than yield. Appeal to honour and the tide of history, and you may win this matchless warrior.',
+    opponentId: 'zhang-liao',
+    winEffects: [
+      { kind: 'recruit', targetId: 'zhang-liao', textZh: '張遼為忠義所感,釋甲來投!', textEn: 'Moved by your appeal to honour, Zhang Liao lays down his arms and joins you!' },
+    ],
+    loseEffects: [
+      { kind: 'relationship', targetId: 'zhang-liao', amount: -1, textZh: '張遼怒目而視,不發一言。', textEn: 'Zhang Liao glares in furious silence.' },
+    ],
+  },
+  {
+    id: 'shout-down-mi-heng',
+    kind: 'shout-down',
+    titleZh: '反挫狂士禰衡', titleEn: 'Out-talk the Insolent Mi Heng',
+    introZh: '狂士禰衡擊鼓罵座,目中無人。當眾折其銳氣,挫其狂傲!',
+    introEn: 'The insolent Mi Heng drums and insults the whole court, sparing no one. Break his arrogance before them all!',
+    opponentId: 'mi-heng',
+    winEffects: [
+      { kind: 'morale', amount: -8, textZh: '禰衡語塞,滿座稱快。', textEn: 'Mi Heng is left speechless; the court is delighted.' },
+    ],
+    loseEffects: [
+      { kind: 'note', textZh: '反遭禰衡譏諷,自取其辱。', textEn: 'Mi Heng turns his barbs on you — a humiliation.' },
+    ],
+    routEffects: [
+      { kind: 'afflict', targetId: 'mi-heng', textZh: '禰衡羞憤無地,拂衣而去。', textEn: 'Mi Heng, shamed beyond words, storms out.' },
+    ],
+  },
 ];
 
 export const DEBATE_SCENARIOS_BY_ID: Record<string, DebateScenario> =

@@ -2,13 +2,15 @@ import { useRef, useState } from 'react';
 import type { Officer } from '../../game/types';
 import {
   initDuelBout, duelRound, aiDuelMove, POWER_GUARD_COST, THRUST_COST, COMBO_COST, SPIRIT_MAX, staticProwess, weaponArtFor, duelPersona, ultReady, DUEL_TERRAIN_INFO,
+  isDuelMoveUnlocked, duelMoveUnlockLevel,
   type DuelMove, type DuelBout, type DuelDifficulty, type DuelTerrain,
 } from '../../game/systems/duel';
 import { OfficerPortrait } from './OfficerPortrait';
-import { playSfx } from '../../game/systems/sound';
+import { playSfx, speakLine } from '../../game/systems/sound';
 import { areBonded } from '../../game/systems/tactical';
 import { areSwornBrothers } from '../../game/systems/relationshipEffects';
 import { duelMoveLine, duelUltLine } from '../../game/data/battleLines';
+import { officerDuelLine } from '../../game/data/officerLines';
 import { useT, useLanguage } from '../i18n';
 
 /** Per-exchange feedback emitted by {@link DuelGameModal} so a host (the staged
@@ -74,7 +76,7 @@ const MOVES: Array<{ id: DuelMove; zh: string; en: string; kind: MoveKind; cost?
 ];
 
 export function DuelGameModal({
-  attacker, defender, onComplete, meFatigue = 0, foeFatigue = 0, lethal = true, reinforcements = [], staged = false, onRound, difficulty = 'veteran', terrain = 'plain',
+  attacker, defender, onComplete, meFatigue = 0, foeFatigue = 0, lethal = true, reinforcements = [], staged = false, onRound, difficulty = 'veteran', terrain = 'plain', hotSeat = false,
 }: {
   attacker: Officer;
   defender: Officer;
@@ -95,6 +97,9 @@ export function DuelGameModal({
   /** Fires after each exchange so the staged battlefield (or 3D duel arena) can
    *  play the matching strike/hit/death animations. */
   onRound?: (r: DuelRoundFx) => void;
+  /** 雙人對戰 — hot-seat: a second human picks the defender's move each round
+   *  (P1 commits the attack, then P2 commits the defense) instead of the AI. */
+  hotSeat?: boolean;
 }) {
   const t = useT();
   const lang = useLanguage();
@@ -124,6 +129,12 @@ export function DuelGameModal({
     stoic: { zh: '少廢話,放馬過來。', en: 'Enough talk. Come, then.' },
   };
   const [taunted, setTaunted] = useState(false);
+  // 陣中用度 — one-use bout consumables: 暗器 (a thrown dart that softens but
+  // never kills) and 金瘡藥 (patch a wound). Each may be used once per bout.
+  const [usedDart, setUsedDart] = useState(false);
+  const [usedHeal, setUsedHeal] = useState(false);
+  // 雙人對戰 — in hot-seat, P1's committed attack waits for P2 to pick the defense.
+  const [pendingAtk, setPendingAtk] = useState<DuelMove | null>(null);
   const taunt = (choice: Psych) => {
     if (taunted || bout.round > 0 || bout.over) return;
     setTaunted(true);
@@ -134,7 +145,11 @@ export function DuelGameModal({
       : (['goad', 'mock', 'stoic'] as Psych[])[Math.floor(Math.random() * 3)];
     const win = PSYCH_BEATS[choice] === foePick;
     const lose = PSYCH_BEATS[foePick] === choice;
-    const head = `${nm(me)}「${t(PSYCH_LINE[choice].zh, PSYCH_LINE[choice].en)}」 ⚔ ${nm(defender)} ${t(PSYCH_ZH[foePick], PSYCH_EN[foePick])}`;
+    // 名將台詞 — a famous warrior goads in their own voice; others use the tack line.
+    const sigTaunt = officerDuelLine(me.id, 'taunt');
+    const myLine = sigTaunt ?? PSYCH_LINE[choice];
+    const head = `${nm(me)}「${t(myLine.zh, myLine.en)}」 ⚔ ${nm(defender)} ${t(PSYCH_ZH[foePick], PSYCH_EN[foePick])}`;
+    speakLine(myLine.zh, myLine.en, lang, sigTaunt ? `${me.id}-taunt` : undefined);
     if (win) {
       setBout((b) => ({ ...b, aGuard: b.aGuard + POWER_GUARD_COST }));
       setLog((l) => [`${head} — ${t('壓住對手氣勢,蓄滿一記奮擊!', 'you seize the initiative — an Overpower is banked!')}`, ...l]);
@@ -149,6 +164,29 @@ export function DuelGameModal({
   };
   const nm = (o: Officer) => (lang === 'en' ? o.name.en : o.name.zh);
   const moveZh = (m: DuelMove) => MOVES.find((x) => x.id === m)!.zh;
+
+  // 暗器 — hurl a hidden dart for quick chip damage. It softens the foe but is
+  // never lethal (floors them at 1 氣力), a tactical setup rather than a finisher.
+  const throwDart = () => {
+    if (bout.over || usedDart) return;
+    setUsedDart(true);
+    const dmg = 14 + Math.floor(Math.random() * 7);
+    setBout((b) => ({ ...b, dStamina: Math.max(1, b.dStamina - dmg) }));
+    setLog((l) => [`${nm(me)} ${t('擲出暗器', 'hurls a hidden dart')} — ${nm(defender)} −${dmg} ${t('氣力', 'stamina')}`, ...l].slice(0, 7));
+    playSfx('arrow');
+    fxKey.current += 1;
+    setFx({ key: fxKey.current, hit: 'd', dmg, killed: false });
+    onRound?.({ hit: 'd', killed: false, aMove: 'thrust', dMove: 'dodge', over: false });
+  };
+  // 金瘡藥 — patch a wound mid-bout to recover 氣力.
+  const useSalve = () => {
+    if (bout.over || usedHeal) return;
+    setUsedHeal(true);
+    const heal = 22;
+    setBout((b) => ({ ...b, aStamina: Math.min(100, b.aStamina + heal) }));
+    setLog((l) => [`${nm(me)} ${t('敷上金瘡藥', 'applies a wound-salve')} — +${heal} ${t('氣力', 'stamina')}`, ...l].slice(0, 7));
+    playSfx('bell');
+  };
 
   // 援護 — a fresh ally leaps in to take over, body fresh, against a foe who
   // keeps every wound and banked 氣 from the bout so far (三英戰呂布).
@@ -187,11 +225,35 @@ export function DuelGameModal({
   };
 
   const moveCost = (m: DuelMove) => MOVES.find((x) => x.id === m)?.cost ?? 0;
+  // 雙人對戰 — who is committing a move right now: P1 (attacker) until they've
+  // picked, then P2 (defender). In AI mode it's always the attacker.
+  const pickSide: 'attacker' | 'defender' = hotSeat && pendingAtk !== null ? 'defender' : 'attacker';
   const play = (move: DuelMove) => {
     if (bout.over) return;
+    if (hotSeat) {
+      // Gate the committing side by ITS own 氣 / 武魂 / trained moves.
+      if (pickSide === 'attacker') {
+        if (move === 'ultimate' && !ultReady(bout, 'attacker')) return;
+        if (bout.aGuard < moveCost(move)) return;
+        setPendingAtk(move);
+        return;
+      }
+      if (move === 'ultimate' && !ultReady(bout, 'defender')) return;
+      if (bout.dGuard < moveCost(move)) return;
+      const atk = pendingAtk!;
+      setPendingAtk(null);
+      resolve(atk, move);
+      return;
+    }
     if (move === 'ultimate' && !ultReady(bout, 'attacker')) return; // 武魂 not full
     if (bout.aGuard < moveCost(move)) return; // not enough 氣 to spend
-    const foeMove = aiDuelMove(bout, 'defender', Math.random);
+    // 招式修練 — the AI foe may only field moves it has trained for its level; a
+    // raw conscript can't loose a flurry or a finisher (falls back to a plain cut).
+    const rawFoe = aiDuelMove(bout, 'defender', Math.random);
+    const foeMove: DuelMove = isDuelMoveUnlocked(defender, rawFoe) ? rawFoe : 'slash';
+    resolve(move, foeMove);
+  };
+  const resolve = (move: DuelMove, foeMove: DuelMove) => {
     const res = duelRound(bout, move, foeMove, Math.random);
     const who = res.roundWinner === 'attacker' ? nm(me)
       : res.roundWinner === 'defender' ? nm(defender) : t('雙方', 'Both');
@@ -211,14 +273,16 @@ export function DuelGameModal({
     onRound?.({ hit, killed: !!res.bout.killedId, aMove: move, dMove: foeMove, over: res.bout.over, winner: res.bout.winner, disarm: res.disarm, combo: res.combo });
     // 台詞庫 — voice a short barb on a notable blow.
     if (res.ultimate === 'attacker') {
-      const l = duelUltLine(bout.aPersona);
+      const l = officerDuelLine(me.id, 'ult', res.bout.round) ?? duelUltLine(bout.aPersona);
       setLog((ll) => [`💬 「${t(l.zh, l.en)}」— ${nm(me)}`, ...ll].slice(0, 7));
+      speakLine(l.zh, l.en, lang, `${me.id}-ult`);
     } else if (res.ultimate === 'defender') {
-      const l = duelUltLine(bout.dPersona);
+      const l = officerDuelLine(defender.id, 'ult', res.bout.round) ?? duelUltLine(bout.dPersona);
       setLog((ll) => [`💬 「${t(l.zh, l.en)}」— ${nm(defender)}`, ...ll].slice(0, 7));
+      speakLine(l.zh, l.en, lang, `${defender.id}-ult`);
     } else if ((move === 'power' || move === 'combo' || move === 'thrust') && res.roundWinner === 'attacker') {
       const l = duelMoveLine(move);
-      if (l) setLog((ll) => [`💬 「${t(l.zh, l.en)}」— ${nm(me)}`, ...ll].slice(0, 7));
+      if (l) { setLog((ll) => [`💬 「${t(l.zh, l.en)}」— ${nm(me)}`, ...ll].slice(0, 7)); speakLine(l.zh, l.en, lang); }
     }
     // 連招 — flash the combo that just landed.
     if (res.combo) {
@@ -286,9 +350,15 @@ export function DuelGameModal({
   // ── Move buttons (shared by the inline grid and the staged side panels) ──
   const KIND_TINT: Record<MoveKind, string> = { attack: '#b8442e', defense: '#3a7dd9', power: '#e6c473' };
   const movesOf = (kind: MoveKind) => MOVES.filter((m) => m.kind === kind);
+  // The fighter currently choosing (P2 in hot-seat once P1 has committed) and
+  // their 氣, so move buttons gate against the right side.
+  const pickOfficer = pickSide === 'defender' ? defender : me;
+  const pickGuard = pickSide === 'defender' ? bout.dGuard : bout.aGuard;
   const moveBtn = (m: typeof MOVES[number]) => {
     const cost = m.cost ?? 0;
-    const disabled = cost > bout.aGuard;
+    // 招式修練 — a move the current fighter hasn't trained to their level is locked.
+    const locked = !isDuelMoveUnlocked(pickOfficer, m.id);
+    const disabled = locked || cost > pickGuard;
     const tint = m.bank ? '#e08a4a' : KIND_TINT[m.kind]; // 挑釁 reads as a risky orange
     return (
       <button
@@ -301,22 +371,42 @@ export function DuelGameModal({
           color: disabled ? '#5a4a36' : '#e6edf3', cursor: disabled ? 'default' : 'pointer',
           fontFamily: 'inherit', textAlign: 'center', borderRadius: 4,
         }}
-        title={lang === 'en' ? m.hint.en : m.hint.zh}
+        title={locked ? t(`Lv.${duelMoveUnlockLevel(m.id)} 解鎖`, `unlocks at Lv.${duelMoveUnlockLevel(m.id)}`) : (lang === 'en' ? m.hint.en : m.hint.zh)}
       >
         <div style={{ fontSize: m.zh.length > 1 ? '1.0rem' : '1.25rem', color: disabled ? '#5a4a36' : tint }}>
           {m.zh}{cost > 0 ? ` ${'◆'.repeat(cost)}` : m.bank ? ' ＋' : ''}
         </div>
-        <div style={{ fontSize: '0.58rem', color: '#8a96a0', lineHeight: 1.2 }}>{lang === 'en' ? m.en : m.hint.zh}</div>
+        <div style={{ fontSize: '0.58rem', color: '#8a96a0', lineHeight: 1.2 }}>
+          {locked ? `🔒 Lv.${duelMoveUnlockLevel(m.id)}` : (lang === 'en' ? m.en : m.hint.zh)}
+        </div>
       </button>
     );
   };
+  // 陣中用度 — the one-use item buttons (暗器 / 金瘡藥).
+  const itemRow = (
+    <div style={{ display: 'flex', gap: 4 }}>
+      <button
+        onClick={throwDart}
+        disabled={usedDart || bout.over}
+        title={t('擲暗器:傷敵氣力(不致命),每局一次', 'Throw a dart: chip the foe (never lethal), once per bout')}
+        style={{ flex: 1, padding: '0.32rem 0.2rem', borderRadius: 4, cursor: usedDart ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: '0.8rem', background: usedDart ? '#241c12' : 'rgba(20,28,38,0.96)', border: `1px solid ${usedDart ? '#243240' : '#9a7ad0'}`, color: usedDart ? '#5a4a36' : '#cbb6ef' }}
+      >🗡 {t('暗器', 'Dart')}</button>
+      <button
+        onClick={useSalve}
+        disabled={usedHeal || bout.over}
+        title={t('金瘡藥:回復氣力,每局一次', 'Wound-salve: recover stamina, once per bout')}
+        style={{ flex: 1, padding: '0.32rem 0.2rem', borderRadius: 4, cursor: usedHeal ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: '0.8rem', background: usedHeal ? '#241c12' : 'rgba(20,28,38,0.96)', border: `1px solid ${usedHeal ? '#243240' : '#6aae73'}`, color: usedHeal ? '#5a4a36' : '#bfe6b8' }}
+      >🧪 {t('療傷', 'Salve')}</button>
+    </div>
+  );
   const groupLabel = (zh: string, en: string, kind: MoveKind) => (
     <div style={{ fontSize: '0.62rem', color: KIND_TINT[kind], letterSpacing: '0.08rem', margin: '0 0 3px 2px', textShadow: '0 1px 3px #000' }}>
       {lang === 'en' ? en : zh}
     </div>
   );
-  // 必殺技 — only shown when the 武魂 gauge is full; an unstoppable finisher.
-  const canUlt = !bout.over && ultReady(bout, 'attacker');
+  // 必殺技 — only shown when the committing side's 武魂 gauge is full AND they've
+  // trained the finisher (a seasoned general's art); an unstoppable blow.
+  const canUlt = !bout.over && ultReady(bout, pickSide) && isDuelMoveUnlocked(pickOfficer, 'ultimate');
   const ultButton = (
     <button
       onClick={() => play('ultimate')}
@@ -486,6 +576,12 @@ export function DuelGameModal({
               {groupLabel('技 — 絕技 (耗氣)', 'SPECIAL (氣)', 'power')}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.4rem' }}>{movesOf('power').map(moveBtn)}</div>
             </div>
+            {!hotSeat && (
+              <div>
+                {groupLabel('陣中用度', 'ITEMS', 'power')}
+                {itemRow}
+              </div>
+            )}
           </div>
         )}
 
@@ -519,6 +615,15 @@ export function DuelGameModal({
         return <>{corner('me')}{corner('foe')}</>;
       })()}
 
+      {/* 雙人對戰 — whose turn it is (P1 attacks, then P2 defends). */}
+      {hotSeat && !bout.over && (
+        <div style={{ position: 'fixed', top: 78, left: '50%', transform: 'translateX(-50%)', zIndex: 133, pointerEvents: 'none', background: pickSide === 'attacker' ? 'rgba(184,68,46,0.92)' : 'rgba(58,125,217,0.92)', borderRadius: 6, padding: '0.28rem 0.9rem', color: '#fff', fontFamily: 'var(--tkm-font-body)', fontSize: '0.88rem', letterSpacing: '0.05rem', textShadow: '0 1px 3px #000', whiteSpace: 'nowrap' }}>
+          {pickSide === 'attacker'
+            ? t(`玩家① ${nm(me)} — 出招 ⚔`, `Player 1 ${nm(me)} — attack ⚔`)
+            : t(`玩家② ${nm(defender)} — 應招 🛡`, `Player 2 ${nm(defender)} — defend 🛡`)}
+        </div>
+      )}
+
       {/* Staged side panels — attacks bottom-left, defenses bottom-right, so the
           centre stays clear for the 3D fighters. */}
       {staged && !bout.over && (
@@ -534,6 +639,11 @@ export function DuelGameModal({
           <div style={{ position: 'fixed', right: 10, bottom: 22, width: 104, display: 'flex', flexDirection: 'column', gap: 6, pointerEvents: 'auto', zIndex: 131 }}>
             {groupLabel('守 — 防禦', 'DEFEND', 'defense')}
             {movesOf('defense').map(moveBtn)}
+            {!hotSeat && <>
+              <div style={{ height: 2 }} />
+              {groupLabel('陣中', 'ITEMS', 'power')}
+              {itemRow}
+            </>}
           </div>
         </>
       )}

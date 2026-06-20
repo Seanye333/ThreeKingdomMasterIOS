@@ -2913,24 +2913,22 @@ function CityScene({
 }
 
 /* ─── Top-level screen ──────────────────────────────────────────────── */
-export function CityMapScreen3D({ cityId, onClose, onSwitch2D }: {
+export function CityMapScreen3D({ cityId, onClose }: {
   cityId: EntityId;
   onClose: () => void;
-  onSwitch2D: () => void;
 }) {
   // Thin shell — the early bail lives HERE so the inner component's ~20 hooks
   // always run unconditionally (the old in-body `if (!city) return null`
   // violated the Rules of Hooks for every hook declared after it).
   const city = useGameStore((s) => s.cities[cityId]);
   if (!city) return null;
-  return <CityMapScreen3DInner city={city} cityId={cityId} onClose={onClose} onSwitch2D={onSwitch2D} />;
+  return <CityMapScreen3DInner city={city} cityId={cityId} onClose={onClose} />;
 }
 
-function CityMapScreen3DInner({ city, cityId, onClose, onSwitch2D }: {
+function CityMapScreen3DInner({ city, cityId, onClose }: {
   city: import('../../game/types').City;
   cityId: EntityId;
   onClose: () => void;
-  onSwitch2D: () => void;
 }) {
   const playerForceId = useGameStore((s) => s.playerForceId);
   const forces = useGameStore((s) => s.forces);
@@ -3310,17 +3308,6 @@ function CityMapScreen3DInner({ city, cityId, onClose, onSwitch2D }: {
             }}
           >
             {showOverlays ? '✓' : ''} 戰術疊加
-          </button>
-          <button
-            onClick={onSwitch2D}
-            style={{
-              background: '#1a3a5a', color: '#88b7e8',
-              border: '1px solid #88b7e8', padding: '0.3rem 0.7rem',
-              cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.7rem',
-              letterSpacing: '0.1rem',
-            }}
-          >
-            ⇄ 切換 2D
           </button>
           <button onClick={beginClose} style={{
             background: 'transparent', border: 'none', color: '#d4a84a',

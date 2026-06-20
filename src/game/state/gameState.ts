@@ -85,6 +85,11 @@ export interface GameState {
   forces: Record<EntityId, Force>;
   officers: Record<EntityId, Officer>;
   pendingCommands: Record<EntityId, Command>;
+  /** 演武/論辯冷卻 — per-officer count of friendly 1-on-1 spars (and, separately,
+   *  debates) taken this season, stamped with the season so it self-resets each
+   *  turn. Caps in-house 演武場/論辯場 XP farming. See systems/sparLimit. */
+  sparUsage: import('../systems/sparLimit').TrainUsage;
+  debateUsage: import('../systems/sparLimit').TrainUsage;
   /** In-flight academy training tasks. Each entry ticks down each season
    *  and on completion adds a new policy to the officer. */
   pendingTrainings: Array<import('../systems/training').PendingTraining>;
@@ -220,6 +225,12 @@ export interface GameState {
   }>;
   /** Saved battle replays. */
   battleReplays: import('../types').BattleReplay[];
+  /** 名局廊 — replayable records of notable duels & debates (newest first). */
+  duelHall: import('../systems/duelHall').BoutRecord[];
+  /** 武評榜 — per-officer ELO rating for single combat (seeded from 武力 if absent). */
+  warRatings: Record<EntityId, number>;
+  /** 單挑戰役 — ids of duel scenarios the player has cleared (campaign progress). */
+  clearedDuelScenarios: EntityId[];
   /** Per-turn snapshots of the CURRENT battle (transient, not persisted) —
    *  harvested into the replay when the battle resolves. */
   currentBattleSnapshots: import('../types').TacticalBattle[];
@@ -365,6 +376,8 @@ export const EMPTY_STATE: GameState = {
   forces: {},
   officers: {},
   pendingCommands: {},
+  sparUsage: {},
+  debateUsage: {},
   pendingTrainings: [],
   lastReport: null,
   cityEventMarks: [],
@@ -422,6 +435,9 @@ export const EMPTY_STATE: GameState = {
   lostItems: [],
   itemHistory: [],
   battleReplays: [],
+  duelHall: [],
+  warRatings: {},
+  clearedDuelScenarios: [],
   currentBattleSnapshots: [],
   deeds: {},
   fogOfWar: false,
@@ -596,6 +612,8 @@ export function loadScenario(
     // only genuine in-play rises fire a notice thereafter.
     officers: indexById(officers.map((o) => ({ ...o, prestigeTitleId: bestPrestige(o)?.id }))),
     pendingCommands: {},
+    sparUsage: {},
+    debateUsage: {},
     pendingTrainings: [],
     lastReport: null,
   cityEventMarks: [],
@@ -669,6 +687,9 @@ export function loadScenario(
     lostItems: computeLostItems(officers, scaledCities, state.placementMode),
     itemHistory: [],
     battleReplays: [],
+    duelHall: [],
+    warRatings: {},
+    clearedDuelScenarios: [],
   currentBattleSnapshots: [],
     deeds: {},
     fogOfWar: state.fogOfWar,

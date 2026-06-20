@@ -1,7 +1,7 @@
 import { Component, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Canvas, useFrame, useLoader } from '@react-three/fiber';
-import { ContactShadows, Html, Sparkles } from '@react-three/drei';
+import { ContactShadows, Html, Sparkles, OrbitControls } from '@react-three/drei';
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js';
@@ -499,6 +499,77 @@ function HallStage() {
   );
 }
 
+// ─── 時辰 (time of day) — the hall's light shifts by hour for variety ────────
+interface HallMood { bg: string; ambient: number; key: string; fill: string; lantern: number; descZh: string; descEn: string }
+const HALL_MOODS: HallMood[] = [
+  { bg: '#171208', ambient: 0.5, key: '#ffe8c0', fill: '#c0a060', lantern: 0.6, descZh: '朝議', descEn: 'Morning Court' },
+  { bg: '#120f0a', ambient: 0.38, key: '#ffd9a0', fill: '#b08050', lantern: 1, descZh: '暮堂', descEn: 'Dusk Hall' },
+  { bg: '#0b0a10', ambient: 0.24, key: '#cdbce0', fill: '#6a6088', lantern: 1.5, descZh: '夜朝', descEn: 'Night Session' },
+];
+/** Deterministic hall mood from the two debaters (stable per matchup, no RNG). */
+function pickHallMood(meId: string, foeId: string): HallMood {
+  let h = 0;
+  for (const c of meId + foeId) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return HALL_MOODS[h % HALL_MOODS.length];
+}
+
+/** A spreading ink stain beneath a mind, deepening as its composure is battered. */
+function InkStain({ x, hits }: { x: number; hits: number }) {
+  if (hits <= 0) return null;
+  const opacity = Math.min(0.55, hits * 0.11);
+  const scale = 0.4 + Math.min(1, hits * 0.15);
+  return (
+    <mesh position={[x, 0.04, 0.1]} rotation={[-Math.PI / 2, 0, 0]} scale={[scale, scale, scale]}>
+      <circleGeometry args={[0.5, 20]} />
+      <meshBasicMaterial color="#0e0a18" transparent opacity={opacity} depthWrite={false} />
+    </mesh>
+  );
+}
+
+// ─── 折服 (rout flourish) — a sweeping calligraphy crescent on a 罵倒 ─────────
+function RoutFlourish({ position, color }: { position: [number, number, number]; color: string }) {
+  const ring = useRef<THREE.Mesh>(null);
+  const mat = useRef<THREE.MeshBasicMaterial>(null);
+  const start = useRef(0);
+  const pending = useRef(true);
+  useFrame(({ clock }) => {
+    if (pending.current) { start.current = clock.elapsedTime; pending.current = false; }
+    const t = clock.elapsedTime - start.current;
+    const p = Math.min(1, t / 0.6);
+    if (ring.current) { const s = 0.3 + p * 2.8; ring.current.scale.set(s, s, s); ring.current.rotation.z = -p * 2.2; ring.current.visible = p < 1; }
+    if (mat.current) mat.current.opacity = (1 - p) * 0.85;
+  });
+  return (
+    <mesh ref={ring} position={position} rotation={[Math.PI / 2.6, 0, 0]}>
+      <torusGeometry args={[0.5, 0.05, 8, 32, Math.PI * 1.4]} />
+      <meshBasicMaterial ref={mat} color={color} transparent opacity={0.85} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
+    </mesh>
+  );
+}
+
+// ─── 拍照模式 (photo mode) — free-orbit the frozen hall for a screenshot ──────
+function PhotoControls() {
+  return <OrbitControls enablePan={false} minDistance={1.6} maxDistance={8} target={[0, 1.1, 0]} maxPolarAngle={Math.PI * 0.52} />;
+}
+
+function photoBtn(border: string, color: string): React.CSSProperties {
+  return {
+    width: 34, height: 30, borderRadius: 5, cursor: 'pointer',
+    background: 'rgba(20,28,38,0.86)', border: `1px solid ${border}`, color, fontSize: 14,
+  };
+}
+
+function dataUrlToBlob(url: string): Blob | null {
+  try {
+    const [head, body] = url.split(',');
+    const mime = head.match(/:(.*?);/)?.[1] ?? 'image/png';
+    const bin = atob(body);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  } catch { return null; }
+}
+
 // ─────────────────────────── arena scene + shell ───────────────────────────
 
 export interface DebateArenaEvent extends DebateRoundFx { key: number }
@@ -514,26 +585,30 @@ class ArenaErrorBoundary extends Component<{ children: ReactNode }, { failed: bo
 
 function Scene({
   left, right, leftName, rightName, shakeKey, big, timeScale, ink, glyph, routKey, routX,
+  mood, leftHits, rightHits, flourish, photo,
 }: {
   left: ScholarAction; right: ScholarAction; leftName: string; rightName: string;
   shakeKey: number; big: boolean; timeScale: number;
   ink: { key: number; x: number; big: boolean } | null;
   glyph: { key: number; glyph: string; fromX: number; toX: number; color: string; big: boolean } | null;
   routKey: number; routX: number;
+  mood: HallMood; leftHits: number; rightHits: number;
+  flourish: { key: number; x: number; color: string } | null; photo: boolean;
 }) {
   return (
     <>
-      <CameraRig shakeKey={shakeKey} big={big} routKey={routKey} routX={routX} />
-      {/* warm, lantern-lit interior — low ambient so the lanterns + bloom carry it. */}
-      <ambientLight intensity={0.38} />
+      {!photo && <CameraRig shakeKey={shakeKey} big={big} routKey={routKey} routX={routX} />}
+      {photo && <PhotoControls />}
+      {/* warm, lantern-lit interior — the hour shifts the ambient & key colour. */}
+      <ambientLight intensity={mood.ambient} />
       <hemisphereLight args={['#6a5a48', '#1a1208', 0.45]} />
       <directionalLight
-        position={[2.5, 6, 4]} intensity={1.0} color="#ffe2b4" castShadow
+        position={[2.5, 6, 4]} intensity={1.0} color={mood.key} castShadow
         shadow-mapSize-width={1024} shadow-mapSize-height={1024}
         shadow-camera-left={-4} shadow-camera-right={4}
         shadow-camera-top={4} shadow-camera-bottom={-4}
       />
-      <directionalLight position={[-4, 3, 2]} intensity={0.3} color="#b08050" />
+      <directionalLight position={[-4, 3, 2]} intensity={0.3} color={mood.fill} />
 
       {/* hall floor — dark polished boards + a central mat */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
@@ -552,10 +627,15 @@ function Scene({
 
       <HallStage />
 
+      {/* 墨痕 — ink pools spread beneath a mind as its composure is worn down. */}
+      <InkStain x={-0.95} hits={leftHits} />
+      <InkStain x={0.95} hits={rightHits} />
+
       <Scholar side="left" robe={ME} action={left} name={leftName} timeScale={timeScale} />
       <Scholar side="right" robe={FOE} action={right} name={rightName} timeScale={timeScale} />
       {ink && <InkBurst key={`ink-${ink.key}`} position={[ink.x, 1.2, 0]} big={ink.big} />}
       {glyph && <WordGlyph key={`glyph-${glyph.key}`} glyph={glyph.glyph} fromX={glyph.fromX} toX={glyph.toX} color={glyph.color} stamp={glyph.key} big={glyph.big} />}
+      {flourish && <RoutFlourish key={`rf-${flourish.key}`} position={[flourish.x, 1.0, 0]} color={flourish.color} />}
 
       <EffectComposer>
         <Bloom intensity={0.6} luminanceThreshold={0.7} luminanceSmoothing={0.25} mipmapBlur />
@@ -578,6 +658,7 @@ export function DebateArena3D({
   // 風格 — each strategist's persona picks their 折服 (victory) flourish.
   const mePersona = useMemo(() => debatePersona(me), [me]);
   const foePersona = useMemo(() => debatePersona(foe), [foe]);
+  const mood = useMemo(() => pickHallMood(me.id, foe.id), [me.id, foe.id]);
   const idle = (): ScholarAction => ({ anim: 'idle', rot: 0, stamp: 0 });
   const [left, setLeft] = useState<ScholarAction>(idle);
   const [right, setRight] = useState<ScholarAction>(idle);
@@ -588,6 +669,13 @@ export function DebateArena3D({
   const [glyph, setGlyph] = useState<{ key: number; glyph: string; fromX: number; toX: number; color: string; big: boolean } | null>(null);
   const [routKey, setRoutKey] = useState(0);
   const [routX, setRoutX] = useState(0);
+  // 墨痕 — accumulated composure damage per mind, for spreading ink stains.
+  const [leftHits, setLeftHits] = useState(0);
+  const [rightHits, setRightHits] = useState(0);
+  const [flourish, setFlourish] = useState<{ key: number; x: number; color: string } | null>(null);
+  const [photo, setPhoto] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const lastKey = useRef(0);
 
   useEffect(() => {
@@ -619,6 +707,12 @@ export function DebateArena3D({
     setInk(dmg > 0 || routed
       ? { key: k, x: hit === 'a' ? -0.95 : hit === 'd' ? 0.95 : 0, big: heavy || !!routed }
       : null);
+
+    // 墨痕 — a single-sided composure blow deepens that mind's ink stain.
+    if (dmg > 0) {
+      if (leftHit && !rightHit) setLeftHits((w) => w + 1);
+      else if (rightHit && !leftHit) setRightHits((w) => w + 1);
+    }
 
     // The winning argument's 字 flies toward the mind it struck.
     if (winner === 'a' || winner === 'd' || (!winner && hit !== 'both')) {
@@ -655,10 +749,13 @@ export function DebateArena3D({
       window.setTimeout(() => setTimeScale(1), 600);
     }
 
-    // 罵倒 — composure broken: push-in on the broken mind + slow motion.
+    // 罵倒 — composure broken: push-in on the broken mind + slow motion + the
+    // victor's 折服 calligraphy crescent over the routed mind.
     if (routed) {
-      setRoutX(leftRouted ? -0.95 : 0.95);
+      const brokeX = leftRouted ? -0.95 : 0.95;
+      setRoutX(brokeX);
       setRoutKey((s) => s + 1);
+      setFlourish({ key: k, x: brokeX, color: winner === 'a' ? ME : FOE });
       setTimeScale(0.4);
       const tid = window.setTimeout(() => setTimeScale(1), 1200);
       return () => window.clearTimeout(tid);
@@ -674,25 +771,53 @@ export function DebateArena3D({
     }
   }, [event]);
 
+  const capture = () => {
+    const canvas = wrapRef.current?.querySelector('canvas');
+    if (!canvas) return;
+    try {
+      const url = canvas.toDataURL('image/png');
+      const stamp = `${leftName}-vs-${rightName}`.replace(/[^\w一-龥-]/g, '');
+      const nav = navigator as Navigator & { share?: (d: { files?: File[]; title?: string }) => Promise<void>; canShare?: (d: { files: File[] }) => boolean };
+      const blob = dataUrlToBlob(url);
+      const file = blob ? new File([blob], `debate-${stamp}.png`, { type: 'image/png' }) : null;
+      if (file && nav.canShare?.({ files: [file] }) && nav.share) {
+        nav.share({ files: [file], title: 'Three Kingdom Masters' }).catch(() => undefined);
+      } else {
+        const a = document.createElement('a');
+        a.href = url; a.download = `debate-${stamp}.png`; a.click();
+      }
+      setToast('📸');
+      window.setTimeout(() => setToast(null), 1200);
+    } catch { /* tainted/unsupported — ignore */ }
+  };
+
   return (
     <ArenaErrorBoundary>
-      <div style={{ position: 'fixed', inset: 0, zIndex: 120 }}>
+      <div ref={wrapRef} style={{ position: 'fixed', inset: 0, zIndex: 120 }}>
         <Canvas
           shadows dpr={[1, 1.8]}
           camera={{ position: [0, 1.5, 3.9], fov: 40, near: 0.1, far: 100 }}
-          gl={{ antialias: true }}
+          gl={{ antialias: true, preserveDrawingBuffer: true }}
         >
-          <color attach="background" args={['#120f0a']} />
-          <fog attach="fog" args={['#120f0a', 7, 15]} />
+          <color attach="background" args={[mood.bg]} />
+          <fog attach="fog" args={[mood.bg, 7, 15]} />
           <Suspense fallback={null}>
             <Scene
               left={left} right={right}
               leftName={leftName} rightName={rightName}
-              timeScale={timeScale} ink={ink} glyph={glyph}
+              timeScale={photo ? 0 : timeScale} ink={ink} glyph={glyph}
               shakeKey={shakeKey} big={big} routKey={routKey} routX={routX}
+              mood={mood} leftHits={leftHits} rightHits={rightHits} flourish={flourish} photo={photo}
             />
           </Suspense>
         </Canvas>
+
+        {/* 鏡頭/拍照 — frozen free-orbit photo mode + capture a card. */}
+        <div style={{ position: 'absolute', top: 10, right: 10, display: 'flex', gap: 6, zIndex: 121 }}>
+          <button onClick={() => setPhoto((p) => !p)} title="Photo mode" style={photoBtn(photo ? '#e6c473' : '#5a6470', photo ? '#f2dd9a' : '#c8d0d8')}>{photo ? '▶' : '📷'}</button>
+          {photo && <button onClick={capture} title="Capture" style={photoBtn('#6aae73', '#cfe8c8')}>⬇</button>}
+        </div>
+        {toast && <div style={{ position: 'absolute', top: 14, left: '50%', transform: 'translateX(-50%)', zIndex: 121, color: '#fff', fontSize: 22 }}>{toast}</div>}
       </div>
     </ArenaErrorBoundary>
   );

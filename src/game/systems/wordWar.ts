@@ -133,6 +133,11 @@ export type DebateMove =
   | 'assert' | 'provoke' | 'retort' | 'press' | 'cite' | 'scorn'
   | 'analogy' | 'rebuke' | 'deceive';
 
+// 難度 — how sharply the AI debater reads your argument and plays the counter.
+// Mirrors the duel's DuelDifficulty: a 學徒 barely anticipates, a 名士 reads a
+// high-INT foe well, a 宗師 almost always springs the right rebuttal.
+export type DebateDifficulty = 'rookie' | 'veteran' | 'peerless';
+
 export interface DebateBout {
   aComposure: number;
   dComposure: number;
@@ -147,6 +152,7 @@ export interface DebateBout {
   audience: number;  // 民心 — −100..100; + sways to a (me), − to d (foe)
   aRally: boolean;   // 全場附和 — next argument lands clean (spent on use)
   dRally: boolean;
+  difficulty: DebateDifficulty; // AI skill tier for the foe (side 'd')
   round: number;
   over: boolean;
   winner?: 'a' | 'd' | 'draw';
@@ -191,12 +197,13 @@ export function schoolMoveFor(o: Officer | DebatePersona): DebateMove {
 /** 流派招式 — moves that are only available to a matching school. */
 export const SCHOOL_MOVES: DebateMove[] = ['analogy', 'rebuke', 'deceive'];
 
-export function initDebate(me: Officer, foe: Officer): DebateBout {
+export function initDebate(me: Officer, foe: Officer, difficulty: DebateDifficulty = 'veteran'): DebateBout {
   return {
     aComposure: 100, dComposure: 100, aMomentum: 0, dMomentum: 0,
     aProwess: debateProwess(me), dProwess: debateProwess(foe),
     aPersona: debatePersona(me), dPersona: debatePersona(foe),
     audience: 0, aRally: false, dRally: false,
+    difficulty,
     round: 0, over: false,
   };
 }
@@ -222,6 +229,15 @@ const DEBATE_BEATS: Record<DebateMove, DebateMove[]> = {
 function debateMoveBeats(x: DebateMove, y: DebateMove): boolean {
   return DEBATE_BEATS[x].includes(y);
 }
+
+// 料敵 — the cheapest (base-ring) argument that answers a foe's last move, for
+// a reading AI to spring. 引 (cite) has no base counter (only loaded moves
+// answer authority), so a foe who cited last is left to the random fallback.
+const DEBATE_BASE_COUNTER: Partial<Record<DebateMove, DebateMove>> = {
+  assert: 'retort', provoke: 'assert', retort: 'provoke',
+  press: 'retort', scorn: 'assert', analogy: 'assert',
+  rebuke: 'provoke', deceive: 'provoke',
+};
 
 export interface DebateRoundResult {
   bout: DebateBout;
@@ -338,6 +354,24 @@ export function aiDebateMove(bout: DebateBout, side: 'a' | 'd', rng: () => numbe
   if (debateMoveCost(school) <= momentum && rng() < 0.5) return school;
   // 哂笑 — a cheap loaded mock when even a little 氣勢 is banked.
   if (momentum >= SCORN_MOMENTUM_COST && rng() < 0.32) return 'scorn';
+
+  // 料敵 — a sharp, well-drilled debater reads the foe's last argument and
+  // springs the base-ring counter. Reading scales with prowess (INT+CHA/2) AND
+  // the difficulty tier — a 學徒 rarely anticipates, a 宗師 almost always does.
+  const foeLast = side === 'a' ? bout.dLastMove : bout.aLastMove;
+  const myProwess = side === 'a' ? bout.aProwess : bout.dProwess;
+  const DIFF: Record<DebateDifficulty, { read: number; cap: number }> = {
+    rookie:   { read: 0.45, cap: 0.40 },
+    veteran:  { read: 1.00, cap: 0.72 },
+    peerless: { read: 1.40, cap: 0.92 },
+  };
+  const d = DIFF[bout.difficulty];
+  const readChance = Math.min(d.cap, Math.max(0, (myProwess - 50) / 110) * d.read);
+  if (foeLast && rng() < readChance) {
+    const counter = DEBATE_BASE_COUNTER[foeLast];
+    if (counter) return counter;
+  }
+
   const r = rng();
   if (composure < 35) return r < 0.5 ? 'retort' : r < 0.78 ? 'provoke' : 'assert';
   return r < 0.45 ? 'assert' : r < 0.72 ? 'provoke' : 'retort';

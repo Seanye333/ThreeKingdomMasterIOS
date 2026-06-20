@@ -3,7 +3,13 @@ import type { ComponentProps } from 'react';
 import { DebateGameModal, type DebateRoundFx } from '../DebateGameModal';
 import { pickName, useLanguage, useT } from '../../i18n';
 import { playSfx } from '../../../game/systems/sound';
+import { useGameStore } from '../../../game/state/store';
+import { isNotableBout, type BoutRecord } from '../../../game/systems/duelHall';
+import { debateCommentary } from '../../../game/systems/combatCommentary';
 import { DebateArena3D, type DebateArenaEvent } from './DebateArena3D';
+
+const SEASON_IDX = ['spring', 'summer', 'autumn', 'winter'];
+let debateSeq = 0;
 
 /**
  * 寫實舌戰 — pairs the interactive {@link DebateGameModal} (rendered in `staged`
@@ -26,13 +32,33 @@ export function Debate3DStage(props: ComponentProps<typeof DebateGameModal>) {
   const [ended, setEnded] = useState<DebateRoundFx | null>(null);
   const [replaying, setReplaying] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [announce, setAnnounce] = useState<{ key: number; text: string } | null>(null);
+  const archived = useRef(false);
 
   const emit = (fx: DebateRoundFx) => { keyRef.current += 1; setEvent({ ...fx, key: keyRef.current }); };
 
   const handleRound = (fx: DebateRoundFx) => {
     history.current.push(fx);
     emit(fx);
-    if (fx.over) setEnded(fx);
+    // 實況解說 — a ringside line for the notable exchanges.
+    const line = debateCommentary({ aName: leftName, dName: rightName, winner: fx.winner, hit: fx.hit, routed: fx.routed, dmg: fx.dmg, aMove: fx.aMove, dMove: fx.dMove }, history.current.length);
+    if (line) setAnnounce({ key: history.current.length, text: lang === 'en' ? line.en : line.zh });
+    if (fx.over) {
+      setEnded(fx);
+      // 名局廊 — archive a memorable war of words (a 罵死 rout or a long debate).
+      if (!archived.current) {
+        archived.current = true;
+        const { date, recordBout } = useGameStore.getState();
+        const rec: BoutRecord = {
+          id: `debate-${me.id}-${foe.id}-${Date.now()}-${debateSeq++}`,
+          kind: 'debate', aId: me.id, dId: foe.id,
+          winner: fx.winner ?? 'draw', routed: !!fx.routed,
+          year: date.year, season: Math.max(0, SEASON_IDX.indexOf(date.season)),
+          fx: history.current.map((h) => ({ ...h })),
+        };
+        if (isNotableBout(rec)) recordBout(rec);
+      }
+    }
     onRound?.(fx); // preserve any host-supplied behaviour
   };
 
@@ -77,6 +103,13 @@ export function Debate3DStage(props: ComponentProps<typeof DebateGameModal>) {
         event={event}
       />
       <DebateGameModal {...props} staged onRound={handleRound} />
+
+      {/* 實況解說 — a ringside announcer line, refreshed each notable exchange. */}
+      {announce && (
+        <div key={announce.key} className="tkm-announce" style={{ position: 'fixed', left: '50%', top: 52, transform: 'translateX(-50%)', maxWidth: '88vw', zIndex: 131, pointerEvents: 'none', background: 'linear-gradient(90deg, rgba(20,28,38,0), rgba(20,28,38,0.92) 18%, rgba(20,28,38,0.92) 82%, rgba(20,28,38,0))', padding: '0.3rem 1.2rem', color: '#cfe0ff', fontFamily: 'var(--tkm-font-body)', fontSize: '0.92rem', letterSpacing: '0.04rem', textShadow: '0 1px 4px #000', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          🎙 {announce.text}
+        </div>
+      )}
 
       {/* 戰後 — replay / share, shown once the debate is decided. */}
       {ended && (
