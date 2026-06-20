@@ -49,12 +49,33 @@ gan-ning    huang-zhong zhang-liao  sun-ce
 → 24 files, e.g. `lu-bu-taunt.mp3`, `lu-bu-ult.mp3`, `guan-yu-taunt.mp3`, …
 Any clip you skip keeps the system-TTS voice for that line.
 
+## 4) 戰法施放音效 FX — `public/audio/fx/<kind>.mp3`  (37 files)
+
+One sting per tactic-cast FX archetype (the `StratagemFxKind` families):
+
+```
+fire  shipfire  oil  grain        lightning thunderstorm
+arrows cannon caltrops             shockwave beast streak
+spears blades rocks                splash
+shield chain net grapple scatter
+swirl feint smoke poison ice vortex curse
+rune dragon wind gate lamp empty charm
+aura drum
+```
+
+## 5) 事件音效 Event — `public/audio/event/<mood>.mp3`  (5 files)
+
+A motif per event mood (the `EventCueMood` values):
+
+```
+auspicious   ominous   martial   somber   mystic
+```
+
 ---
 
 ## Notes
 
-- **Stratagem-cast stings** (火/雷/弓/騎… the 37 `StratagemFxKind` families) and
-  **event mood cues** are synth-only — there is no file-override path for them.
-- To register only a subset by hand instead of the convention helpers, see
-  `registerSfxSamples` / `registerMusicFiles` / `registerVoiceClips` in
+- To register only a subset by hand instead of the convention helper
+  (`enableAudioFiles()`), see `registerSfxSamples` / `registerMusicFiles` /
+  `registerVoiceClips` / `registerFxSamples` / `registerEventCueSamples` in
   `sound.ts`.

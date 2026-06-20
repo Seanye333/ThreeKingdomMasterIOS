@@ -217,6 +217,22 @@ export function setAudioFilesEnabled(on: boolean): void {
 }
 export function isAudioFilesEnabled(): boolean { return audioFilesEnabled; }
 
+// Override tables for the two synth-only channels below — tactic-cast FX stings
+// (keyed by StratagemFxKind) and event mood cues (keyed by EventCueMood). Same
+// opt-in gating + per-item synth fallback as the SFX/music tables above.
+const fxSampleUrls: Partial<Record<StratagemFxKind, string>> = {};
+const fxSampleCache: Partial<Record<StratagemFxKind, HTMLAudioElement | 'bad'>> = {};
+const eventCueUrls: Partial<Record<EventCueMood, string>> = {};
+const eventCueCache: Partial<Record<EventCueMood, HTMLAudioElement | 'bad'>> = {};
+/** Register recorded FX-cast stings (kind → url). Missing keys keep the synth. */
+export function registerFxSamples(map: Partial<Record<StratagemFxKind, string>>): void {
+  Object.assign(fxSampleUrls, map);
+}
+/** Register recorded event cues (mood → url). Missing keys keep the synth. */
+export function registerEventCueSamples(map: Partial<Record<EventCueMood, string>>): void {
+  Object.assign(eventCueUrls, map);
+}
+
 /** Register recorded SFX (key → url). Missing keys keep the synth sting. */
 export function registerSfxSamples(map: Partial<Record<SfxName, string>>): void {
   Object.assign(sfxSampleUrls, map);
@@ -230,6 +246,8 @@ export function registerMusicFiles(map: Partial<Record<Exclude<MusicTrack, null>
 export function enableAudioFiles(base = '/audio', ext = 'mp3'): void {
   for (const n of Object.keys(SFX_PATTERNS) as SfxName[]) sfxSampleUrls[n] = `${base}/sfx/${n}.${ext}`;
   for (const tk of Object.keys(MUSIC_TRACKS) as Array<Exclude<MusicTrack, null>>) musicFileUrls[tk] = `${base}/music/${tk}.${ext}`;
+  for (const k of Object.keys(FX_SFX) as StratagemFxKind[]) fxSampleUrls[k] = `${base}/fx/${k}.${ext}`;
+  for (const m of Object.keys(EVENT_CUES) as EventCueMood[]) eventCueUrls[m] = `${base}/event/${m}.${ext}`;
 }
 
 /** Try a recorded sample for `name`; returns false to fall back to the synth. */
@@ -412,9 +430,34 @@ const FX_SFX: Record<StratagemFxKind, Tone[]> = {
   drum: [{ freq: 90, duration: 0.14, type: 'square', gain: 0.2 }, { freq: 90, duration: 0.14, type: 'square', gain: 0.15 }, { freq: 112, duration: 0.18, type: 'square', gain: 0.2 }],
 };
 
+/** Try a recorded FX sting; returns false to fall back to the synth. */
+function tryPlayFxSample(kind: StratagemFxKind): boolean {
+  if (!audioFilesEnabled) return false;
+  const url = fxSampleUrls[kind];
+  if (!url) return false;
+  let el = fxSampleCache[kind];
+  if (el === 'bad') return false;
+  if (!el) {
+    try {
+      el = new Audio(url);
+      el.preload = 'auto';
+      el.addEventListener('error', () => { fxSampleCache[kind] = 'bad'; });
+      fxSampleCache[kind] = el;
+    } catch { fxSampleCache[kind] = 'bad'; return false; }
+  }
+  try {
+    const voice = el.cloneNode() as HTMLAudioElement;
+    voice.volume = 0.85;
+    const p = voice.play();
+    if (p) p.catch(() => undefined);
+    return true;
+  } catch { return false; }
+}
+
 /** Play the signature sting for a tactic's FX archetype (no-op if disabled). */
 export function playFxSfx(kind: StratagemFxKind): void {
   if (!enabled) return;
+  if (tryPlayFxSample(kind)) return;
   const c = getCtx();
   if (!c) return;
   unlockAudio();
@@ -443,9 +486,34 @@ const EVENT_CUES: Record<EventCueMood, Tone[]> = {
   mystic: [{ freq: 880, duration: 0.22, type: 'triangle', gain: 0.07 }, { freq: 1175, duration: 0.22, type: 'triangle', gain: 0.06 }, { freq: 1568, duration: 0.42, type: 'triangle', gain: 0.05 }],
 };
 
+/** Try a recorded event cue; returns false to fall back to the synth. */
+function tryPlayEventCueSample(mood: EventCueMood): boolean {
+  if (!audioFilesEnabled) return false;
+  const url = eventCueUrls[mood];
+  if (!url) return false;
+  let el = eventCueCache[mood];
+  if (el === 'bad') return false;
+  if (!el) {
+    try {
+      el = new Audio(url);
+      el.preload = 'auto';
+      el.addEventListener('error', () => { eventCueCache[mood] = 'bad'; });
+      eventCueCache[mood] = el;
+    } catch { eventCueCache[mood] = 'bad'; return false; }
+  }
+  try {
+    const voice = el.cloneNode() as HTMLAudioElement;
+    voice.volume = 0.85;
+    const p = voice.play();
+    if (p) p.catch(() => undefined);
+    return true;
+  } catch { return false; }
+}
+
 /** Play the motif for an event's mood (no-op if disabled). */
 export function playEventCue(mood: EventCueMood): void {
   if (!enabled) return;
+  if (tryPlayEventCueSample(mood)) return;
   const c = getCtx();
   if (!c) return;
   unlockAudio();
