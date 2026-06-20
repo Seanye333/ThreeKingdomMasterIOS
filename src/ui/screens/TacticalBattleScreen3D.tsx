@@ -1,7 +1,11 @@
 import { Suspense, createContext, useContext, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Html, OrbitControls, Stars } from '@react-three/drei';
-import { EffectComposer, Bloom } from '@react-three/postprocessing';
+import { Html, OrbitControls, Stars, SoftShadows, Sparkles } from '@react-three/drei';
+import {
+  EffectComposer, Bloom, N8AO, ToneMapping, Vignette, SMAA,
+  HueSaturation, BrightnessContrast, DepthOfField,
+} from '@react-three/postprocessing';
+import { ToneMappingMode } from 'postprocessing';
 import * as THREE from 'three';
 import { useGameStore } from '../../game/state/store';
 import { playSfx, playFxSfx, startBattleAmbience, stopBattleAmbience, playMusic, stopMusic, type MusicTrack } from '../../game/systems/sound';
@@ -22,6 +26,26 @@ import { IntroDive } from '../components/IntroDive';
 import { DuelGameModal } from '../components/DuelGameModal';
 import { useT, useDesc, useLanguage, pickName } from '../i18n';
 import { isReduceMotion } from '../uiPrefs';
+import { groundNormalTexture, groundRoughnessTexture } from './battleTextures';
+
+/** Shared normal-map intensity for ground/armour grain. */
+const SURFACE_NORMAL_SCALE = new THREE.Vector2(0.5, 0.5);
+/** Subtler grain for armour plate so it catches light without looking pitted. */
+const ARMOR_NORMAL_SCALE = new THREE.Vector2(0.35, 0.35);
+const armorNormal = groundNormalTexture();
+
+/** Tiled clones of the ground grain for the wide shadow-catch skirt. */
+const groundSkirtTextures = (() => {
+  const tile = (t: THREE.Texture | null) => {
+    if (!t) return null;
+    const c = t.clone();
+    c.wrapS = c.wrapT = THREE.RepeatWrapping;
+    c.repeat.set(40, 40);
+    c.needsUpdate = true;
+    return c;
+  };
+  return { normal: tile(groundNormalTexture()), rough: tile(groundRoughnessTexture()) };
+})();
 
 /** Coarse-pointer / small-screen device — drop pixel ratio and skip the
  *  post-processing pass so phones keep a playable framerate. */
@@ -225,12 +249,25 @@ export function HexTile({
   const [x, z] = hexWorld(tile.coord.col, tile.coord.row);
   const h = TERRAIN_HEIGHT[tile.terrain];
   const baseColor = TERRAIN_COLOR[tile.terrain];
+  // 地表質感 — shared procedural grain + a deterministic per-hex tint jitter so
+  // a field of one terrain stops looking like a single flat slab.
+  const surf = useMemo(() => ({ normal: groundNormalTexture(), rough: groundRoughnessTexture() }), []);
+  const tint = useMemo(() => {
+    const c = new THREE.Color(baseColor);
+    const j = ((((tile.coord.col * 73856093) ^ (tile.coord.row * 19349663)) >>> 0) % 1000) / 1000;
+    c.offsetHSL((j - 0.5) * 0.02, (j - 0.5) * 0.05, (j - 0.5) * 0.07);
+    return c;
+  }, [baseColor, tile.coord.col, tile.coord.row]);
   const pulseRef = useRef<THREE.MeshBasicMaterial>(null);
   useFrame(({ clock }) => {
     if (pulseRef.current && highlight) {
-      pulseRef.current.opacity = 0.35 + Math.sin(clock.elapsedTime * 4) * 0.15;
+      pulseRef.current.opacity = 0.5 + Math.sin(clock.elapsedTime * 4) * 0.22;
     }
   });
+  // 高亮配色 — brighter, more saturated than the terrain so move/attack/path
+  // reads at a glance on a phone.
+  const hlColor = highlight === 'move' ? '#5ef088'
+    : highlight === 'path' ? '#ffd24a' : '#ff6242';
 
   return (
     <group position={[x, 0, z]}>
@@ -243,23 +280,43 @@ export function HexTile({
       >
         <cylinderGeometry args={[R * 0.98, R * 0.98, h, 6]} />
         <meshStandardMaterial
-          color={hovered ? '#f0e0b0' : baseColor}
-          roughness={0.85}
+          color={hovered ? '#f0e0b0' : tint}
+          normalMap={surf.normal ?? undefined}
+          normalScale={SURFACE_NORMAL_SCALE}
+          roughnessMap={surf.rough ?? undefined}
+          roughness={0.92}
           metalness={0.05}
         />
       </mesh>
-      {/* Highlight overlay — pulsing colored disk above hex */}
+      {/* 觸控擴大命中區 — a flat invisible disk over the whole hex top makes the
+          tile easy to tap on a phone. It sits low (at the hex surface) so the
+          taller unit figures still win the raycast and stay individually tappable. */}
+      <mesh
+        position={[0, h + 0.01, 0]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        onClick={(e) => { e.stopPropagation(); onClick(); }}
+      >
+        <circleGeometry args={[R, 6]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+      </mesh>
+      {/* Highlight overlay — pulsing filled hex + a crisp outline ring so a
+          walkable / attackable / path tile pops against the terrain. */}
       {highlight && (
-        <mesh position={[0, h + 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <circleGeometry args={[R * 0.85, 6]} />
-          <meshBasicMaterial
-            ref={pulseRef}
-            color={highlight === 'move' ? '#7ed68a' : highlight === 'path' ? '#e0c060' : '#ff7050'}
-            transparent
-            opacity={0.4}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
+        <group position={[0, h + 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
+          <mesh raycast={() => null}>
+            <circleGeometry args={[R * 0.9, 6]} />
+            <meshBasicMaterial
+              ref={pulseRef}
+              color={hlColor}
+              transparent opacity={0.5} side={THREE.DoubleSide}
+              toneMapped={false} depthWrite={false}
+            />
+          </mesh>
+          <mesh position={[0, 0, 0.002]} raycast={() => null}>
+            <ringGeometry args={[R * 0.82, R * 0.93, 6]} />
+            <meshBasicMaterial color={hlColor} transparent opacity={0.85} side={THREE.DoubleSide} toneMapped={false} depthWrite={false} />
+          </mesh>
+        </group>
       )}
       {/* Terrain decoration on top */}
       {tile.terrain === 'forest' && <ForestArt y={h} windStrength={windStrength} />}
@@ -547,13 +604,18 @@ function UnitWeapon({ unit, yLift }: { unit: TacticalUnit; yLift: number }) {
       <>
         {/* Long spear pole */}
         <mesh position={[-0.34, 0.85 + yLift, 0]} castShadow>
-          <cylinderGeometry args={[0.022, 0.022, 1.40, 5]} />
-          <meshStandardMaterial color="#3a2818" />
+          <cylinderGeometry args={[0.03, 0.03, 1.45, 6]} />
+          <meshStandardMaterial color="#3a2818" roughness={0.8} />
         </mesh>
-        {/* Spearhead */}
-        <mesh position={[-0.34, 1.60 + yLift, 0]} castShadow>
-          <coneGeometry args={[0.055, 0.18, 5]} />
-          <meshStandardMaterial color="#a0a0a0" metalness={0.6} roughness={0.4} />
+        {/* Tassel below the head */}
+        <mesh position={[-0.34, 1.46 + yLift, 0]} castShadow>
+          <sphereGeometry args={[0.05, 6, 6]} />
+          <meshStandardMaterial color="#b8442e" roughness={0.7} />
+        </mesh>
+        {/* Spearhead — broad leaf blade */}
+        <mesh position={[-0.34, 1.66 + yLift, 0]} castShadow>
+          <coneGeometry args={[0.075, 0.26, 6]} />
+          <meshStandardMaterial color="#c4ccd4" metalness={0.7} roughness={0.3} />
         </mesh>
       </>
     );
@@ -561,15 +623,20 @@ function UnitWeapon({ unit, yLift }: { unit: TacticalUnit; yLift: number }) {
   if (unit.unitType === 'archers') {
     return (
       <>
-        {/* Bow — curved torus half */}
-        <mesh position={[-0.40, 0.55 + yLift, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
-          <torusGeometry args={[0.24, 0.024, 6, 14, Math.PI]} />
-          <meshStandardMaterial color="#3a2818" roughness={0.7} />
+        {/* Bow — curved torus half, recurve tips */}
+        <mesh position={[-0.42, 0.55 + yLift, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
+          <torusGeometry args={[0.30, 0.03, 6, 16, Math.PI]} />
+          <meshStandardMaterial color="#4a2e18" roughness={0.6} />
         </mesh>
         {/* Bowstring */}
-        <mesh position={[-0.40, 0.55 + yLift, 0]} castShadow>
-          <cylinderGeometry args={[0.005, 0.005, 0.48, 3]} />
-          <meshStandardMaterial color="#c0a070" />
+        <mesh position={[-0.42, 0.55 + yLift, 0]} castShadow>
+          <cylinderGeometry args={[0.006, 0.006, 0.60, 3]} />
+          <meshStandardMaterial color="#d8c090" />
+        </mesh>
+        {/* Nocked arrow */}
+        <mesh position={[-0.36, 0.55 + yLift, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
+          <cylinderGeometry args={[0.008, 0.008, 0.42, 4]} />
+          <meshStandardMaterial color="#6a5230" />
         </mesh>
       </>
     );
@@ -577,26 +644,45 @@ function UnitWeapon({ unit, yLift }: { unit: TacticalUnit; yLift: number }) {
   if (unit.unitType === 'infantry') {
     return (
       <>
-        {/* Sword — angled across body */}
-        <mesh position={[-0.34, 0.45 + yLift, 0]} rotation={[0, 0, -0.4]} castShadow>
-          <boxGeometry args={[0.038, 0.48, 0.012]} />
-          <meshStandardMaterial color="#c0c0c0" metalness={0.5} roughness={0.4} />
+        {/* Sword blade — angled across body */}
+        <mesh position={[-0.36, 0.50 + yLift, 0]} rotation={[0, 0, -0.4]} castShadow>
+          <boxGeometry args={[0.05, 0.54, 0.014]} />
+          <meshStandardMaterial color="#cdd2d8" metalness={0.65} roughness={0.3} />
         </mesh>
-        {/* Round shield in front */}
-        <mesh position={[0.30, 0.45 + yLift, 0.05]} rotation={[Math.PI / 2, 0, 0]} castShadow>
-          <cylinderGeometry args={[0.20, 0.20, 0.04, 12]} />
-          <meshStandardMaterial color="#5a4530" />
+        {/* Crossguard */}
+        <mesh position={[-0.30, 0.27 + yLift, 0]} rotation={[0, 0, -0.4]} castShadow>
+          <boxGeometry args={[0.14, 0.03, 0.03]} />
+          <meshStandardMaterial color="#3a2818" metalness={0.3} roughness={0.6} />
+        </mesh>
+        {/* Round shield in front, with a central boss */}
+        <mesh position={[0.31, 0.45 + yLift, 0.05]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+          <cylinderGeometry args={[0.23, 0.23, 0.05, 14]} />
+          <meshStandardMaterial color="#6a3024" metalness={0.1} roughness={0.7} />
+        </mesh>
+        <mesh position={[0.34, 0.45 + yLift, 0.05]} rotation={[0, 0, Math.PI / 2]} castShadow>
+          <sphereGeometry args={[0.06, 8, 8]} />
+          <meshStandardMaterial color="#d4a84a" metalness={0.6} roughness={0.35} />
         </mesh>
       </>
     );
   }
   if (unit.unitType === 'cavalry') {
     return (
-      // Lance held forward
-      <mesh position={[-0.30, 0.70 + yLift, -0.10]} rotation={[Math.PI / 2 - 0.1, 0, 0]} castShadow>
-        <cylinderGeometry args={[0.020, 0.020, 1.10, 5]} />
-        <meshStandardMaterial color="#3a2818" />
-      </mesh>
+      // Lance held forward — couched, with a steel head and a pennon
+      <group position={[-0.30, 0.70 + yLift, -0.10]} rotation={[Math.PI / 2 - 0.1, 0, 0]}>
+        <mesh castShadow>
+          <cylinderGeometry args={[0.026, 0.026, 1.35, 6]} />
+          <meshStandardMaterial color="#3a2818" roughness={0.8} />
+        </mesh>
+        <mesh position={[0, 0.74, 0]} castShadow>
+          <coneGeometry args={[0.05, 0.20, 6]} />
+          <meshStandardMaterial color="#c4ccd4" metalness={0.7} roughness={0.3} />
+        </mesh>
+        <mesh position={[0.07, 0.5, 0]} rotation={[0, 0, 0.5]} castShadow>
+          <planeGeometry args={[0.16, 0.1]} />
+          <meshStandardMaterial color="#b8442e" side={THREE.DoubleSide} roughness={0.85} />
+        </mesh>
+      </group>
     );
   }
   return null; // siege/navy already have their own props on the mount
@@ -614,6 +700,7 @@ const HOST_MAX = IS_MOBILE ? 16 : 48;
 function UnitRetinue({ troops, color, unitType }: { troops: number; color: string; unitType?: string }) {
   const bodyRef = useRef<THREE.InstancedMesh>(null);
   const headRef = useRef<THREE.InstancedMesh>(null);
+  const helmetRef = useRef<THREE.InstancedMesh>(null);
   const spearRef = useRef<THREE.InstancedMesh>(null);
   const horseRef = useRef<THREE.InstancedMesh>(null);
   const mounted = unitType === 'cavalry';
@@ -661,6 +748,10 @@ function UnitRetinue({ troops, color, unitType }: { troops: number; color: strin
       bodyRef.current.setMatrixAt(i, m.compose(p, q, sc));
       p.set(sl.x, 0.42 * S + lift, sl.z);
       headRef.current.setMatrixAt(i, m.compose(p, q, sc));
+      if (helmetRef.current) {
+        p.set(sl.x, 0.5 * S + lift, sl.z);
+        helmetRef.current.setMatrixAt(i, m.compose(p, q, sc));
+      }
       if (sl.spear && spearRef.current) {
         // Taller pikes stand up from the shoulder; short arms sit at the hand.
         p.set(sl.x + 0.12 * S, (0.42 * S + lift) + (spearLen - 0.5) * 0.42 * S, sl.z);
@@ -669,6 +760,7 @@ function UnitRetinue({ troops, color, unitType }: { troops: number; color: strin
     }
     bodyRef.current.instanceMatrix.needsUpdate = true;
     headRef.current.instanceMatrix.needsUpdate = true;
+    if (helmetRef.current) helmetRef.current.instanceMatrix.needsUpdate = true;
     if (spearRef.current) spearRef.current.instanceMatrix.needsUpdate = true;
     if (horseRef.current) horseRef.current.instanceMatrix.needsUpdate = true;
   });
@@ -688,6 +780,11 @@ function UnitRetinue({ troops, color, unitType }: { troops: number; color: strin
       <instancedMesh ref={headRef} args={[undefined, undefined, slots.length]} castShadow>
         <sphereGeometry args={[0.1, 6, 6]} />
         <meshStandardMaterial color="#e0c498" roughness={0.75} />
+      </instancedMesh>
+      {/* 兜鍪 — an iron helmet on every footman so the host reads as armoured. */}
+      <instancedMesh ref={helmetRef} args={[undefined, undefined, slots.length]} castShadow>
+        <coneGeometry args={[0.13, 0.16, 6]} />
+        <meshStandardMaterial color="#2a2018" roughness={0.5} metalness={0.4} />
       </instancedMesh>
       <instancedMesh ref={spearRef} args={[undefined, undefined, Math.max(1, spearCount)]} castShadow>
         <cylinderGeometry args={[0.015, 0.015, spearLen, 4]} />
@@ -719,6 +816,29 @@ function FlutterFlag({ color, poleX, y, big }: { color: string; poleX: number; y
   );
 }
 
+/** 戰袍 — a war-cloak draped from the shoulders that billows as it hangs, giving
+ *  commanders and riders a heavier, more heroic silhouette. */
+function UnitCape({ color, yLift, big }: { color: string; yLift: number; big?: boolean }) {
+  const ref = useRef<THREE.Group>(null);
+  const ph = useMemo(() => Math.sin(yLift * 13.1 + 2.4) * 6.28, [yLift]);
+  const cloth = useMemo(() => new THREE.Color(color).multiplyScalar(0.7), [color]);
+  const w = big ? 0.52 : 0.44, h = big ? 0.7 : 0.56;
+  useFrame(({ clock }) => {
+    if (!ref.current) return;
+    const t = clock.elapsedTime * 2.1 + ph;
+    ref.current.rotation.x = 0.2 + Math.sin(t) * 0.07;       // billow off the back
+    ref.current.rotation.z = Math.sin(t * 0.8) * 0.05;
+  });
+  return (
+    <group ref={ref} position={[-0.18, 0.74 + yLift, 0]}>
+      <mesh position={[0, -h / 2, 0]} castShadow>
+        <planeGeometry args={[w, h, 2, 3]} />
+        <meshStandardMaterial color={cloth} side={THREE.DoubleSide} roughness={0.82} metalness={0.05} />
+      </mesh>
+    </group>
+  );
+}
+
 /** 浴血 — battle wear scaled by how much a unit has bled: blood streaks on the
  *  armor, and arrows lodged in it once badly hurt. Static (derived from state). */
 function BattleWear({ unit, yLift }: { unit: TacticalUnit; yLift: number }) {
@@ -742,6 +862,174 @@ function BattleWear({ unit, yLift }: { unit: TacticalUnit; yLift: number }) {
           </mesh>
         );
       })}
+    </group>
+  );
+}
+
+/** 選定標記 — a pulsing twin ground ring plus a bobbing down-chevron over the
+ *  head, so the picked unit is unmistakable even on a small phone screen.
+ *  Self-animating (own useFrame) and non-raycasting so it never eats taps. */
+function SelectionMarker({ yLift }: { yLift: number }) {
+  const ringRef = useRef<THREE.Mesh>(null);
+  const haloRef = useRef<THREE.MeshBasicMaterial>(null);
+  const chevRef = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    if (ringRef.current) {
+      const s = 1 + Math.sin(t * 3) * 0.08;
+      ringRef.current.scale.set(s, s, s);
+    }
+    if (haloRef.current) haloRef.current.opacity = 0.5 + Math.sin(t * 3) * 0.25;
+    if (chevRef.current) chevRef.current.position.y = 1.5 + yLift + Math.sin(t * 3) * 0.09;
+  });
+  return (
+    <group raycast={() => null}>
+      {/* bright inner ring */}
+      <mesh ref={ringRef} position={[0, 0.06, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
+        <ringGeometry args={[0.5, 0.66, 40]} />
+        <meshBasicMaterial color="#ffe08a" side={THREE.DoubleSide} transparent opacity={0.9} toneMapped={false} depthWrite={false} />
+      </mesh>
+      {/* faint outer halo */}
+      <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
+        <ringGeometry args={[0.72, 0.98, 40]} />
+        <meshBasicMaterial ref={haloRef} color="#d4a84a" side={THREE.DoubleSide} transparent opacity={0.4} toneMapped={false} depthWrite={false} />
+      </mesh>
+      {/* down-pointing chevron floating over the head */}
+      <group ref={chevRef} position={[0, 1.5 + yLift, 0]}>
+        <mesh rotation={[Math.PI, 0, 0]} raycast={() => null}>
+          <coneGeometry args={[0.13, 0.22, 4]} />
+          <meshBasicMaterial color="#ffe08a" toneMapped={false} transparent opacity={0.95} />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+/** 武將立繪 — a properly proportioned low-poly warrior to replace the old
+ *  cylinder-and-sphere "snowman": armoured legs + boots, a layered lamellar
+ *  cuirass with tassets, broad curved pauldrons, posed arms with hands, a
+ *  gorget and a bowl helmet (commanders add a face beard + a plumed crest).
+ *  Faction colour rides on the chest/pauldrons; everything else is iron/leather.
+ *  onClick lives on the whole group so the entire figure is one tap target. */
+function WarriorFigure({
+  color, yLift, isCommander, onClick,
+}: {
+  color: string;
+  yLift: number;
+  isCommander: boolean;
+  onClick: (e: { stopPropagation: () => void }) => void;
+}) {
+  const IRON = '#2a2018';
+  const LEATHER = '#3a2818';
+  const SKIN = '#e0c498';
+  const GOLD = '#d4a84a';
+  return (
+    <group position={[0, yLift, 0]} onClick={onClick}>
+      {/* Legs — armoured greaves */}
+      {[-0.12, 0.12].map((x, i) => (
+        <mesh key={`leg${i}`} position={[x, 0.17, 0]} castShadow>
+          <cylinderGeometry args={[0.075, 0.058, 0.34, 8]} />
+          <meshStandardMaterial color={IRON} roughness={0.8} metalness={0.18} />
+        </mesh>
+      ))}
+      {/* War boots */}
+      {[-0.12, 0.12].map((x, i) => (
+        <mesh key={`boot${i}`} position={[x, 0.035, 0.05]} castShadow>
+          <boxGeometry args={[0.13, 0.08, 0.22]} />
+          <meshStandardMaterial color="#1a120a" roughness={0.85} />
+        </mesh>
+      ))}
+      {/* 戰裙 — tapered armoured skirt (tassets), main tap target */}
+      <mesh position={[0, 0.36, 0]} castShadow onClick={onClick}>
+        <cylinderGeometry args={[0.30, 0.43, 0.34, 12]} />
+        <meshStandardMaterial color={LEATHER} roughness={0.82} metalness={0.1}
+          normalMap={armorNormal ?? undefined} normalScale={ARMOR_NORMAL_SCALE} />
+      </mesh>
+      {/* Front tasset plate — a hanging armour flap */}
+      <mesh position={[0, 0.32, 0.36]} rotation={[0.12, 0, 0]} castShadow>
+        <boxGeometry args={[0.26, 0.3, 0.04]} />
+        <meshStandardMaterial color={IRON} roughness={0.6} metalness={0.3} />
+      </mesh>
+      {/* Belt */}
+      <mesh position={[0, 0.54, 0]} castShadow>
+        <cylinderGeometry args={[0.33, 0.33, 0.08, 12]} />
+        <meshStandardMaterial color={GOLD} roughness={0.5} metalness={0.45} />
+      </mesh>
+      {/* 鎧甲 — layered lamellar cuirass (two stacked tapers), faction colour */}
+      <mesh position={[0, 0.68, 0]} castShadow onClick={onClick}>
+        <cylinderGeometry args={[0.27, 0.32, 0.28, 12]} />
+        <meshStandardMaterial color={color} roughness={0.5} metalness={0.3}
+          normalMap={armorNormal ?? undefined} normalScale={ARMOR_NORMAL_SCALE} />
+      </mesh>
+      <mesh position={[0, 0.82, 0]} castShadow>
+        <cylinderGeometry args={[0.25, 0.28, 0.12, 12]} />
+        <meshStandardMaterial color={color} roughness={0.5} metalness={0.3} />
+      </mesh>
+      {/* Chest cross-strap — gold for a commander, leather otherwise */}
+      <mesh position={[0, 0.68, 0.26]} rotation={[0, 0, 0.5]} castShadow>
+        <boxGeometry args={[0.07, 0.4, 0.04]} />
+        <meshStandardMaterial color={isCommander ? GOLD : LEATHER} roughness={0.5} metalness={isCommander ? 0.5 : 0.2} />
+      </mesh>
+      {/* 肩甲 — broad curved pauldrons */}
+      {[-0.31, 0.31].map((x, i) => (
+        <mesh key={`pauld${i}`} position={[x, 0.86, 0]} scale={[1.1, 0.7, 1.1]} castShadow>
+          <sphereGeometry args={[0.15, 10, 8]} />
+          <meshStandardMaterial color={color} roughness={0.45} metalness={0.35} />
+        </mesh>
+      ))}
+      {/* Arms — upper arm + hand, angled out from the pauldrons */}
+      {[-1, 1].map((s, i) => (
+        <group key={`arm${i}`} position={[0.28 * s, 0.82, 0.02]} rotation={[0.1, 0, s * 0.2]}>
+          <mesh position={[0, -0.16, 0]} castShadow>
+            <cylinderGeometry args={[0.07, 0.055, 0.32, 8]} />
+            <meshStandardMaterial color={IRON} roughness={0.75} metalness={0.2} />
+          </mesh>
+          <mesh position={[0, -0.34, 0.03]} castShadow>
+            <sphereGeometry args={[0.06, 8, 8]} />
+            <meshStandardMaterial color={SKIN} roughness={0.7} />
+          </mesh>
+        </group>
+      ))}
+      {/* 護頸 — gorget */}
+      <mesh position={[0, 0.94, 0]} castShadow>
+        <cylinderGeometry args={[0.11, 0.14, 0.08, 10]} />
+        <meshStandardMaterial color={IRON} roughness={0.55} metalness={0.35} />
+      </mesh>
+      {/* Head */}
+      <mesh position={[0, 1.04, 0]} castShadow>
+        <sphereGeometry args={[0.13, 12, 12]} />
+        <meshStandardMaterial color={SKIN} roughness={0.7} />
+      </mesh>
+      {/* 美髯 — a general's beard */}
+      {isCommander && (
+        <mesh position={[0, 0.99, 0.07]} rotation={[0.3, 0, 0]} castShadow>
+          <coneGeometry args={[0.07, 0.16, 6]} />
+          <meshStandardMaterial color="#2a1c10" roughness={0.85} />
+        </mesh>
+      )}
+      {/* 兜鍪 — bowl helmet for everyone */}
+      <mesh position={[0, 1.13, 0]} castShadow>
+        <sphereGeometry args={[0.15, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshStandardMaterial color={IRON} roughness={0.45} metalness={0.45} />
+      </mesh>
+      {/* Helmet neck flap */}
+      <mesh position={[0, 1.08, -0.1]} rotation={[0.5, 0, 0]} castShadow>
+        <boxGeometry args={[0.2, 0.1, 0.03]} />
+        <meshStandardMaterial color={LEATHER} roughness={0.7} metalness={0.15} />
+      </mesh>
+      {/* Commander crest — gold finial + tall red plume */}
+      {isCommander && (
+        <>
+          <mesh position={[0, 1.27, 0]} castShadow>
+            <sphereGeometry args={[0.04, 8, 8]} />
+            <meshStandardMaterial color={GOLD} metalness={0.6} roughness={0.3} />
+          </mesh>
+          <mesh position={[0, 1.38, -0.02]} rotation={[0.2, 0, 0]} castShadow>
+            <coneGeometry args={[0.05, 0.22, 6]} />
+            <meshStandardMaterial color="#c0301c" roughness={0.55} />
+          </mesh>
+        </>
+      )}
     </group>
   );
 }
@@ -946,61 +1234,18 @@ function UnitMesh({
       <UnitMount unit={unit} onClick={onClick} />
       {/* Rank-and-file host behind the hero (footmen read wrong on a boat). */}
       {unit.unitType !== 'navy' && <UnitRetinue troops={unit.troops} color={color} unitType={unit.unitType} />}
-      {/* Lower robe / hakama — wider at the bottom, gives armored silhouette. */}
-      <mesh
-        position={[0, 0.18 + yLift, 0]}
-        onClick={(e) => { e.stopPropagation(); onClick(); }}
-        castShadow
-      >
-        <cylinderGeometry args={[0.36, 0.45, 0.30, 12]} />
-        <meshStandardMaterial color="#3a2818" roughness={0.85} />
-      </mesh>
-      {/* Belt sash — accent ring at the waist. */}
-      <mesh position={[0, 0.36 + yLift, 0]} castShadow>
-        <cylinderGeometry args={[0.37, 0.37, 0.06, 12]} />
-        <meshStandardMaterial color="#5a4530" roughness={0.7} metalness={0.2} />
-      </mesh>
-      {/* Chest armor — main body with side-faction color. */}
-      <mesh
-        position={[0, 0.55 + yLift, 0]}
-        castShadow
-      >
-        <cylinderGeometry args={[0.30, 0.36, 0.36, 12]} />
-        <meshStandardMaterial color={color} roughness={0.55} metalness={0.15} />
-      </mesh>
-      {/* Shoulder pauldrons — two small spheres for armor detail. */}
-      <mesh position={[-0.28, 0.68 + yLift, 0]} castShadow>
-        <sphereGeometry args={[0.10, 8, 8]} />
-        <meshStandardMaterial color={color} roughness={0.55} metalness={0.25} />
-      </mesh>
-      <mesh position={[0.28, 0.68 + yLift, 0]} castShadow>
-        <sphereGeometry args={[0.10, 8, 8]} />
-        <meshStandardMaterial color={color} roughness={0.55} metalness={0.25} />
-      </mesh>
-      {/* Neck */}
-      <mesh position={[0, 0.78 + yLift, 0]} castShadow>
-        <cylinderGeometry args={[0.08, 0.10, 0.10, 8]} />
-        <meshStandardMaterial color="#d8b894" roughness={0.7} />
-      </mesh>
-      {/* Head */}
-      <mesh position={[0, 0.90 + yLift, 0]} castShadow>
-        <sphereGeometry args={[0.16, 12, 12]} />
-        <meshStandardMaterial color="#e0c498" roughness={0.7} />
-      </mesh>
-      {/* Helmet — cone for commanders or warriors. Skipped for low-tier units. */}
-      {unit.isCommander && (
-        <>
-          <mesh position={[0, 1.04 + yLift, 0]} castShadow>
-            <coneGeometry args={[0.17, 0.18, 8]} />
-            <meshStandardMaterial color="#3a2818" roughness={0.5} metalness={0.4} />
-          </mesh>
-          {/* Crest plume — small vertical bar in red. */}
-          <mesh position={[0, 1.18 + yLift, 0]} castShadow>
-            <boxGeometry args={[0.04, 0.10, 0.02]} />
-            <meshStandardMaterial color="#b8442e" roughness={0.4} />
-          </mesh>
-        </>
+      {/* 戰袍 — war-cloak for generals and riders. */}
+      {(unit.isCommander || unit.unitType === 'cavalry') && (
+        <UnitCape color={color} yLift={yLift} big={unit.isCommander} />
       )}
+      {/* 武將本體 — properly proportioned warrior figure (legs, lamellar armour,
+          pauldrons, arms, helmet); the whole group is one tap target. */}
+      <WarriorFigure
+        color={color}
+        yLift={yLift}
+        isCommander={!!unit.isCommander}
+        onClick={(e) => { e.stopPropagation(); onClick(); }}
+      />
       {/* Per-unit-type weapon */}
       <UnitWeapon unit={unit} yLift={yLift} />
       {/* 浴血 — blood + lodged arrows scaled by damage taken. */}
@@ -1018,13 +1263,8 @@ function UnitMesh({
           <meshStandardMaterial color="#d4a84a" metalness={0.6} roughness={0.3} />
         </mesh>
       )}
-      {/* Selection ring */}
-      {selected && (
-        <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[0.55, 0.7, 32]} />
-          <meshBasicMaterial color="#d4a84a" side={THREE.DoubleSide} />
-        </mesh>
-      )}
+      {/* 選定標記 — pulsing ground ring + bobbing head chevron. */}
+      {selected && <SelectionMarker yLift={yLift} />}
       {/* HTML overlay — unit info, always-upright crisp text. Skipped in the
           embedded diorama, and dropped the instant the unit is wiped out so a
           floating label doesn't hover over the toppling corpse. */}
@@ -1681,7 +1921,9 @@ function AttackArc({ from, to, kind, spawnedAt }: {
 }) {
   const [fx, fz] = hexWorld(from.col, from.row);
   const [tx, tz] = hexWorld(to.col, to.row);
-  const projRef = useRef<THREE.Mesh>(null);
+  const ang = useMemo(() => Math.atan2(tz - fz, tx - fx), [fx, fz, tx, tz]);
+  const projRef = useRef<THREE.Group>(null);
+  const flashRef = useRef<THREE.Mesh>(null);
   useFrame(() => {
     if (!projRef.current) return;
     const age = (Date.now() - spawnedAt) / 1000;
@@ -1689,8 +1931,14 @@ function AttackArc({ from, to, kind, spawnedAt }: {
     projRef.current.position.x = fx + (tx - fx) * t;
     projRef.current.position.z = fz + (tz - fz) * t;
     projRef.current.position.y = 1.0 + Math.sin(t * Math.PI) * 0.4;
-    const mat = projRef.current.material as THREE.MeshBasicMaterial;
-    mat.opacity = 1 - t;
+    projRef.current.scale.setScalar(1 - t * 0.5);
+    projRef.current.visible = t < 0.98;
+    // 斬擊 — the strike blooms into a flash as it lands.
+    if (flashRef.current) {
+      const it = Math.max(0, (t - 0.6) / 0.4);
+      flashRef.current.scale.setScalar(0.1 + it * 0.9);
+      (flashRef.current.material as THREE.MeshBasicMaterial).opacity = it * (1 - it) * 4;
+    }
   });
   // Ranged attacks loose a whole volley; melee throws a single arcing strike.
   if (kind === 'ranged') return (
@@ -1700,10 +1948,24 @@ function AttackArc({ from, to, kind, spawnedAt }: {
     </>
   );
   return (
-    <mesh ref={projRef} position={[fx, 1, fz]}>
-      <sphereGeometry args={[0.1, 8, 8]} />
-      <meshBasicMaterial color="#ff8050" transparent opacity={1} />
-    </mesh>
+    <>
+      {/* glowing strike bolt with a trailing streak along its travel */}
+      <group ref={projRef} position={[fx, 1, fz]} rotation={[0, -ang, 0]}>
+        <mesh>
+          <sphereGeometry args={[0.13, 10, 10]} />
+          <meshBasicMaterial color="#ffb060" transparent opacity={0.95} toneMapped={false} depthWrite={false} />
+        </mesh>
+        <mesh position={[-0.28, 0, 0]}>
+          <boxGeometry args={[0.55, 0.07, 0.07]} />
+          <meshBasicMaterial color="#ff7a3a" transparent opacity={0.55} toneMapped={false} depthWrite={false} />
+        </mesh>
+      </group>
+      {/* impact flash at the target */}
+      <mesh ref={flashRef} position={[tx, 1, tz]}>
+        <sphereGeometry args={[0.3, 10, 10]} />
+        <meshBasicMaterial color="#fff0c0" transparent opacity={0} toneMapped={false} depthWrite={false} />
+      </mesh>
+    </>
   );
 }
 
@@ -1737,7 +1999,7 @@ export function BattleCinematics({ trigger }: { trigger: { key: number; weight: 
           frozen.current = true;
           clock.autoStart = false;
           clock.running = false;
-          const ms = trigger.weight >= 3 ? 130 : 85;
+          const ms = trigger.weight >= 3 ? 180 : 85;
           setTimeout(() => {
             clock.oldTime = (typeof performance !== 'undefined' ? performance.now() : Date.now());
             clock.running = true;
@@ -2849,17 +3111,32 @@ function FieldDressing({ tiles }: { tiles: TacticalTile[] }) {
       const hsh = (t.coord.col * 73 + t.coord.row * 31) % 100;
       const [x, z] = hexWorld(t.coord.col, t.coord.row);
       const y = TERRAIN_HEIGHT[t.terrain];
-      if (t.terrain === 'plain' && hsh < 55) {
-        const n = 2 + (hsh % 2);
+      // Plains carpet — denser clumps of grass, spread across the hex.
+      if (t.terrain === 'plain' && hsh < 78) {
+        const n = 4 + (hsh % 5);
         for (let k = 0; k < n; k++) {
           const a = ((hsh + k * 47) % 100) / 100 * Math.PI * 2;
-          const r = 0.25 + ((hsh * (k + 3)) % 50) / 100;
+          const r = 0.15 + ((hsh * (k + 3)) % 70) / 100;
           grass.push([x + Math.cos(a) * r, y, z + Math.sin(a) * r]);
         }
       }
-      if (t.terrain === 'hill' && hsh < 70) {
-        const a = (hsh / 100) * Math.PI * 2;
-        rocks.push([x + Math.cos(a) * 0.45, y, z + Math.sin(a) * 0.45]);
+      // Forest undergrowth — a few tufts at the foot of the trees.
+      if (t.terrain === 'forest' && hsh < 65) {
+        const n = 2 + (hsh % 3);
+        for (let k = 0; k < n; k++) {
+          const a = ((hsh + k * 61) % 100) / 100 * Math.PI * 2;
+          const r = 0.2 + ((hsh * (k + 2)) % 55) / 100;
+          grass.push([x + Math.cos(a) * r, y, z + Math.sin(a) * r]);
+        }
+      }
+      // Hills & mountains — scattered scree, a couple of stones each.
+      if ((t.terrain === 'hill' || t.terrain === 'mountain') && hsh < 80) {
+        const n = 1 + (hsh % 3);
+        for (let k = 0; k < n; k++) {
+          const a = ((hsh + k * 53) % 100) / 100 * Math.PI * 2;
+          const r = 0.3 + ((hsh * (k + 1)) % 40) / 100;
+          rocks.push([x + Math.cos(a) * r, y, z + Math.sin(a) * r]);
+        }
       }
     }
     return { grass, rocks };
@@ -2944,12 +3221,13 @@ function CameraFollow({ battle, playerSide, home, focus = null }: {
 }
 const DUEL_CAM = new THREE.Vector3();
 
-const CLASH_SPARKS = Array.from({ length: 9 }, (_, i) => i);
-/** 兵器交擊 — a bright flash + flung sparks where the two duelists' weapons meet,
- *  replayed each round (the parent remounts it by key). */
+const CLASH_SPARKS = Array.from({ length: 16 }, (_, i) => i);
+/** 兵器交擊 — a bright flash + flung sparks + a ground shockwave ring where the
+ *  two duelists' weapons meet, replayed each round (parent remounts it by key). */
 function DuelClash3D({ pos, big = false }: { pos: [number, number, number]; big?: boolean }) {
   const start = useRef<number | null>(null);
   const flashRef = useRef<THREE.Mesh>(null);
+  const ringRef = useRef<THREE.Mesh>(null);
   const sparksRef = useRef<THREE.Group>(null);
   const mag = big ? 1.9 : 1;   // the killing blow flares larger
   const dur = big ? 0.75 : 0.5;
@@ -2959,29 +3237,41 @@ function DuelClash3D({ pos, big = false }: { pos: [number, number, number]; big?
     const tt = Math.min(1, e / dur);
     if (flashRef.current) {
       flashRef.current.scale.setScalar((0.25 + tt * 1.0) * mag);
-      (flashRef.current.material as THREE.MeshBasicMaterial).opacity = (1 - tt) * 0.9;
+      (flashRef.current.material as THREE.MeshBasicMaterial).opacity = (1 - tt) * 0.95;
+    }
+    if (ringRef.current) {
+      const rs = (0.2 + tt * 2.2) * mag;
+      ringRef.current.scale.set(rs, rs, rs);
+      (ringRef.current.material as THREE.MeshBasicMaterial).opacity = (1 - tt) * 0.7;
     }
     if (sparksRef.current) {
       sparksRef.current.children.forEach((c, i) => {
         const a = (i / CLASH_SPARKS.length) * Math.PI * 2;
-        const r = tt * 0.9 * mag;
-        c.position.set(Math.cos(a) * r, Math.sin(i * 1.7) * 0.4 * tt * mag, Math.sin(a) * r);
+        const ease = 1 - (1 - tt) * (1 - tt);   // fling out fast, slow at the end
+        const r = ease * 1.1 * mag;
+        c.position.set(Math.cos(a) * r, Math.sin(i * 1.7) * 0.5 * ease * mag, Math.sin(a) * r);
         c.rotation.z = a;
-        (c as THREE.Mesh).material && ((((c as THREE.Mesh).material) as THREE.MeshBasicMaterial).opacity = 1 - tt);
+        const m = (c as THREE.Mesh).material as THREE.MeshBasicMaterial | undefined;
+        if (m) m.opacity = 1 - tt;
       });
     }
   });
   return (
     <group position={pos}>
       <mesh ref={flashRef}>
-        <sphereGeometry args={[0.3, 8, 8]} />
-        <meshBasicMaterial color={big ? '#ffd0a0' : '#fff0c0'} transparent opacity={0.9} depthWrite={false} />
+        <sphereGeometry args={[0.3, 10, 10]} />
+        <meshBasicMaterial color={big ? '#ffd0a0' : '#fff0c0'} transparent opacity={0.95} depthWrite={false} toneMapped={false} />
+      </mesh>
+      {/* ground shockwave */}
+      <mesh ref={ringRef} position={[0, -pos[1] + 0.06, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.34, 0.46, 32]} />
+        <meshBasicMaterial color={big ? '#ffb070' : '#ffe6a0'} transparent opacity={0.7} side={THREE.DoubleSide} depthWrite={false} toneMapped={false} />
       </mesh>
       <group ref={sparksRef}>
         {CLASH_SPARKS.map((i) => (
           <mesh key={i}>
-            <boxGeometry args={[0.035, 0.035, 0.18]} />
-            <meshBasicMaterial color={i % 2 ? '#ffd86a' : '#fff2cf'} transparent depthWrite={false} />
+            <boxGeometry args={[0.035, 0.035, 0.2]} />
+            <meshBasicMaterial color={i % 2 ? '#ffd86a' : '#fff2cf'} transparent depthWrite={false} toneMapped={false} />
           </mesh>
         ))}
       </group>
@@ -3109,12 +3399,31 @@ function AmbushBurst({ coord, at }: { coord: HexCoord; at: number }) {
 function Corpse({ coord, color }: { coord: HexCoord; color: string }) {
   const [x, z] = hexWorld(coord.col, coord.row);
   const r = (coord.col * 7 + coord.row * 13) % 7;
+  // 血濺 — an irregular pooled stain plus a ring of cast-off spatter, so a
+  // death scars the earth rather than dropping a tidy disc.
+  const spatter = useMemo(() => {
+    const seed = (coord.col * 131 + coord.row * 197) >>> 0;
+    return Array.from({ length: 5 }, (_, i) => {
+      const a = (((seed + i * 79) % 100) / 100) * Math.PI * 2;
+      const d = 0.4 + (((seed * (i + 3)) % 60) / 100);
+      const s = 0.07 + (((seed + i * 17) % 40) / 100) * 0.16;
+      return { x: Math.cos(a) * d, z: Math.sin(a) * d, s };
+    });
+  }, [coord.col, coord.row]);
   return (
     <group position={[x, 0, z]} rotation={[0, r, 0]} raycast={() => null}>
+      {/* main pool */}
       <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[0.55, 12]} />
-        <meshBasicMaterial color="#34130f" transparent opacity={0.42} depthWrite={false} />
+        <circleGeometry args={[0.5, 10]} />
+        <meshBasicMaterial color="#34130f" transparent opacity={0.5} depthWrite={false} />
       </mesh>
+      {/* cast-off spatter */}
+      {spatter.map((sp, i) => (
+        <mesh key={i} position={[sp.x, 0.021, sp.z]} rotation={[-Math.PI / 2, 0, i]}>
+          <circleGeometry args={[sp.s, 7]} />
+          <meshBasicMaterial color="#3e160f" transparent opacity={0.38} depthWrite={false} />
+        </mesh>
+      ))}
       <mesh position={[0, 0.06, 0]} scale={[1, 0.4, 1]}>
         <sphereGeometry args={[0.26, 8, 6]} />
         <meshStandardMaterial color="#2a2018" roughness={1} />
@@ -3126,6 +3435,24 @@ function Corpse({ coord, color }: { coord: HexCoord; color: string }) {
       <mesh position={[0.34, 0.04, 0.05]} rotation={[-Math.PI / 2, 0, 0.5]}>
         <planeGeometry args={[0.18, 0.12]} />
         <meshStandardMaterial color={color} side={THREE.DoubleSide} roughness={0.9} transparent opacity={0.7} />
+      </mesh>
+    </group>
+  );
+}
+
+/** 焦土 — a charred, ashen scorch left where ground fire has burned. */
+function ScorchMark({ coord }: { coord: HexCoord }) {
+  const [x, z] = hexWorld(coord.col, coord.row);
+  const r = (coord.col * 11 + coord.row * 17) % 7;
+  return (
+    <group position={[x, 0, z]} rotation={[0, r, 0]} raycast={() => null}>
+      <mesh position={[0, 0.015, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.62, 9]} />
+        <meshBasicMaterial color="#0d0a08" transparent opacity={0.55} depthWrite={false} />
+      </mesh>
+      <mesh position={[0, 0.018, 0]} rotation={[-Math.PI / 2, 0, 0.4]}>
+        <circleGeometry args={[0.34, 8]} />
+        <meshBasicMaterial color="#221a12" transparent opacity={0.5} depthWrite={false} />
       </mesh>
     </group>
   );
@@ -3189,6 +3516,20 @@ export function BattleScene({
     if (add.length) setFallen((f) => [...f, ...add].slice(-50));
   }, [units, playerSide]);
 
+  // 焦土 — once a hex has burned, leave a charred scorch that lingers after the
+  // flames die, so fire leaves a lasting mark on the land.
+  const [scorched, setScorched] = useState<HexCoord[]>([]);
+  const scorchedKeys = useRef(new Set<string>());
+  useEffect(() => { scorchedKeys.current = new Set(); setScorched([]); }, [battle.id]);
+  useEffect(() => {
+    const add: HexCoord[] = [];
+    for (const f of battle.groundFires ?? []) {
+      const key = `${f.coord.col},${f.coord.row}`;
+      if (!scorchedKeys.current.has(key)) { scorchedKeys.current.add(key); add.push(f.coord); }
+    }
+    if (add.length) setScorched((s) => [...s, ...add].slice(-60));
+  }, [battle.groundFires]);
+
   // 伏兵奇襲 — burst an ambush FX where a hidden unit just sprang into view.
   const prevHidden = useRef<Set<string>>(new Set());
   const [ambushFx, setAmbushFx] = useState<{ id: string; coord: HexCoord; at: number }[]>([]);
@@ -3249,6 +3590,10 @@ export function BattleScene({
           <SkyBody position={lighting.sun.position} color={lighting.sun.color} night={lighting.showStars} />
           <CameraFollow battle={battle} playerSide={playerSide} home={[hexWorld(battle.width / 2, battle.height / 2)[0], hexWorld(battle.width / 2, battle.height / 2)[1]]} focus={duelFocus} />
 
+          {/* Percentage-closer soft shadows — contact-tight near the feet,
+              softening with distance so units sit IN the field, not on it. */}
+          <SoftShadows size={26} samples={16} focus={0.7} />
+
           {/* Lighting per time-of-day */}
           <ambientLight intensity={lighting.ambient} />
           <directionalLight
@@ -3256,12 +3601,14 @@ export function BattleScene({
             intensity={lighting.sun.intensity}
             color={lighting.sun.color}
             castShadow
-            shadow-mapSize-width={2048}
-            shadow-mapSize-height={2048}
-            shadow-camera-left={-30}
-            shadow-camera-right={30}
-            shadow-camera-top={30}
-            shadow-camera-bottom={-30}
+            shadow-mapSize-width={4096}
+            shadow-mapSize-height={4096}
+            shadow-bias={-0.0004}
+            shadow-normalBias={0.02}
+            shadow-camera-left={-24}
+            shadow-camera-right={24}
+            shadow-camera-top={24}
+            shadow-camera-bottom={-24}
           />
           <directionalLight
             position={[-lighting.sun.position[0], 6, -lighting.sun.position[2]]}
@@ -3273,7 +3620,13 @@ export function BattleScene({
           {/* Ground plane for shadow catching beyond hexes */}
           <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.2, 0]} receiveShadow>
             <planeGeometry args={[200, 200]} />
-            <meshStandardMaterial color="#1a1408" />
+            <meshStandardMaterial
+              color="#1a1408"
+              normalMap={groundSkirtTextures.normal ?? undefined}
+              normalScale={SURFACE_NORMAL_SCALE}
+              roughnessMap={groundSkirtTextures.rough ?? undefined}
+              roughness={0.96}
+            />
           </mesh>
 
           {/* Weather particles */}
@@ -3284,6 +3637,20 @@ export function BattleScene({
           {battle.weather === 'snow' && <SnowParticles bounds={bounds} />}
           {battle.weather === 'wind' && battle.windDirection && battle.windDirection !== 'calm' && (
             <WindStreaks bounds={bounds} dir={battle.windDirection} />
+          )}
+          {/* 流螢微塵 — drifting motes (cool at night, warm embers at dusk) that
+              thicken the air; Bloom catches them for a glow. */}
+          {(battle.timeOfDay === 'dusk' || battle.timeOfDay === 'night') && !isReduceMotion() && (
+            <Sparkles
+              count={110}
+              position={[bounds.x / 2, 2.2, bounds.z / 2]}
+              scale={[bounds.x + 6, 4.5, bounds.z + 6]}
+              size={battle.timeOfDay === 'night' ? 2.2 : 3}
+              speed={0.3}
+              opacity={0.7}
+              color={battle.timeOfDay === 'night' ? '#aac4ff' : '#ffb060'}
+              noise={1.5}
+            />
           )}
         </>
       )}
@@ -3371,6 +3738,7 @@ export function BattleScene({
       <FormationViz battle={battle} side="defender" />
 
       {/* 屍橫遍野 — the accumulated dead (skipped in the lightweight diorama). */}
+      {!embedded && scorched.map((c, i) => <ScorchMark key={`scorch-${c.col}-${c.row}-${i}`} coord={c} />)}
       {!embedded && fallen.map((c) => <Corpse key={`corpse-${c.id}`} coord={c.coord} color={c.color} />)}
       {/* 伏兵奇襲 — reveal bursts where ambushers sprang. */}
       {ambushFx.map((a) => <AmbushBurst key={a.id} coord={a.coord} at={a.at} />)}
@@ -3646,17 +4014,17 @@ export function TacticalBattleScreen3D() {
     if (isReduceMotion()) return;  // 減少動畫 — skip the camera punch entirely.
     const el = canvasWrapRef.current;
     if (!el || typeof el.animate !== 'function') return;
-    const a = cine.weight >= 2 ? 11 : 5;
+    const a = cine.weight >= 3 ? 17 : cine.weight >= 2 ? 11 : 5;
     el.animate(
       [
         { transform: 'translate(0,0) scale(1)' },
-        { transform: `translate(${a}px,${-a * 0.7}px) scale(1.03)` },
-        { transform: `translate(${-a}px,${a * 0.6}px) scale(1.03)` },
+        { transform: `translate(${a}px,${-a * 0.7}px) scale(1.04)` },
+        { transform: `translate(${-a}px,${a * 0.6}px) scale(1.04)` },
         { transform: `translate(${a * 0.6}px,${a * 0.5}px) scale(1.02)` },
         { transform: `translate(${-a * 0.4}px,${-a * 0.3}px) scale(1.01)` },
         { transform: 'translate(0,0) scale(1)' },
       ],
-      { duration: cine.weight >= 2 ? 430 : 260, easing: 'ease-out' },
+      { duration: cine.weight >= 3 ? 520 : cine.weight >= 2 ? 430 : 260, easing: 'ease-out' },
     );
   }, [cine?.key]);  // eslint-disable-line react-hooks/exhaustive-deps
   const t = useT();
@@ -4227,16 +4595,21 @@ export function TacticalBattleScreen3D() {
           />
         )}
         <Canvas
-          shadows={!IS_MOBILE}
-          dpr={IS_MOBILE ? [1, 1.5] : [1, 2]}
+          shadows
+          dpr={[1, 2]}
           camera={{ position: [target[0] - 8, 40, target[2] + 6], fov: 45 }}
-          gl={{ antialias: !IS_MOBILE }}
+          gl={{
+            antialias: false,  // SMAA in the composer handles edges
+            // The composer applies AgX tone mapping as its final pass, so the
+            // renderer itself must stay linear to avoid double tone-mapping.
+            toneMapping: THREE.NoToneMapping,
+          }}
         >
           <BattleCinematics trigger={cine} />
           {/* Swoop down onto the field from overhead when the battle opens. */}
           <IntroDive
             start={[target[0] - 8, 40, target[2] + 6]}
-            end={[target[0] - 8, 14, target[2] + 12]}
+            end={[target[0] - 8, IS_MOBILE ? 11 : 14, target[2] + (IS_MOBILE ? 9 : 12)]}
             target={target}
             onDone={() => setIntroDone(true)}
           />
@@ -4263,15 +4636,42 @@ export function TacticalBattleScreen3D() {
               maxPolarAngle={Math.PI / 2.2}
               minDistance={6}
               maxDistance={40}
+              enablePan
+              panSpeed={IS_MOBILE ? 1.1 : 0.8}
+              rotateSpeed={0.7}
               enableDamping
-              dampingFactor={0.1}
+              dampingFactor={IS_MOBILE ? 0.2 : 0.1}
+              // 觸控操作 — 單指平移地圖(而非旋轉,旋轉會吃掉點擊),雙指縮放/旋轉。
+              touches={{ ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_ROTATE }}
             />
-            {/* Fires, beacons and night lanterns glow. */}
-            {!IS_MOBILE && (
-              <EffectComposer>
-                <Bloom luminanceThreshold={0.8} intensity={0.45} mipmapBlur />
-              </EffectComposer>
-            )}
+            {/* Cinematic post stack: ambient-occlusion grounding, bloom for
+                fires/beacons, a warm grade, vignette, and AgX tone mapping.
+                Depth-of-field kicks in only to frame a duel. */}
+            <EffectComposer enableNormalPass multisampling={0}>
+              <N8AO
+                aoRadius={1.2}
+                intensity={2.4}
+                distanceFalloff={1.0}
+                quality="performance"
+                halfRes
+              />
+              <Bloom luminanceThreshold={0.7} intensity={0.6} mipmapBlur />
+              {duelFocus ? (
+                <DepthOfField
+                  target={[duelFocus[0], 1.0, duelFocus[1]]}
+                  focalLength={0.04}
+                  bokehScale={5}
+                  height={480}
+                />
+              ) : (
+                <></>
+              )}
+              <HueSaturation saturation={0.12} />
+              <BrightnessContrast brightness={0.0} contrast={0.12} />
+              <Vignette eskil={false} offset={0.25} darkness={0.62} />
+              <ToneMapping mode={ToneMappingMode.AGX} />
+              <SMAA />
+            </EffectComposer>
           </Suspense>
         </Canvas>
        </div>
