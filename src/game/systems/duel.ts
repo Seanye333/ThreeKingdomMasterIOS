@@ -3,6 +3,7 @@ import { ITEMS_BY_ID } from '../data/items';
 import { SKILLS_BY_ID } from '../data/skills';
 import { effectivePrestigeEffects } from '../data/prestige';
 import { afflictionDelta } from './afflictions';
+import { officerLevel } from './officerGrade';
 
 /**
  * One-on-one duel resolution between two officers — a multi-round 氣力 bout.
@@ -288,6 +289,30 @@ export type DuelMove =
 const ATTACKS: DuelMove[] = ['cleave', 'slash', 'sweep'];
 const DEFENSES: DuelMove[] = ['guard', 'dodge', 'parry'];
 const SPECIALS: DuelMove[] = ['taunt', 'thrust', 'combo'];
+
+// ─── 招式修練 — a general's repertoire grows with their level (skill tree) ────
+// The 3 attacks / 3 defenses + 奮 are the foundation every fighter knows. The
+// flourish moves and the 必殺技 are earned as a general seasons in battle, so a
+// raw recruit fights plainly and a veteran has the full arsenal.
+export const DUEL_MOVE_UNLOCK: Partial<Record<DuelMove, number>> = {
+  taunt: 3, thrust: 6, combo: 10, ultimate: 14,
+};
+/** The level at which a move becomes available (1 = known from the start). */
+export function duelMoveUnlockLevel(m: DuelMove): number {
+  return DUEL_MOVE_UNLOCK[m] ?? 1;
+}
+/** Whether an officer has trained far enough to field a given move. Uses the
+ *  canonical 歷練 level (explicit officer.level wins, else derived from
+ *  capability + growth) so a real roster officer — who never has a stored
+ *  level — still unlocks moves by prowess rather than being stuck at Lv.1. */
+export function isDuelMoveUnlocked(o: Officer, m: DuelMove): boolean {
+  return officerLevel(o) >= duelMoveUnlockLevel(m);
+}
+const ALL_DUEL_MOVES: DuelMove[] = ['cleave', 'slash', 'sweep', 'guard', 'dodge', 'parry', 'power', 'taunt', 'thrust', 'combo', 'ultimate'];
+/** Every move an officer may field at their current level. */
+export function unlockedDuelMoves(o: Officer): DuelMove[] {
+  return ALL_DUEL_MOVES.filter((m) => isDuelMoveUnlocked(o, m));
+}
 export const isAttackMove = (m: DuelMove): boolean => ATTACKS.includes(m);
 export const isDefenseMove = (m: DuelMove): boolean => DEFENSES.includes(m);
 export const isSpecialMove = (m: DuelMove): boolean => SPECIALS.includes(m);

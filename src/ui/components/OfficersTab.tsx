@@ -5,6 +5,7 @@ import {
   deriveFormations, deriveTactics, derivePolicies,
 } from '../../game/data/officerAttributes';
 import { DYNASTY_DEFS, type Dynasty } from '../../game/data/dynasties';
+import { officerGrade, officerLevel } from '../../game/systems/officerGrade';
 import type { EntityId, Officer, OfficerStats } from '../../game/types';
 import { OfficerDetail } from './OfficerDetail';
 import { OfficerHoverCard } from './OfficerHoverCard';
@@ -400,6 +401,8 @@ function OfficerRow({
   const age = currentYear - o.birthYear;
   const task = o.task ? (lang === 'en' ? COMMAND_DEFS[o.task]?.label.en : COMMAND_DEFS[o.task]?.label.zh) : null;
   const top = topStatKey(o.stats);
+  const grade = officerGrade(o);
+  const lvl = officerLevel(o);
   const tacticsCount = deriveTactics(o.stats, o.id).length;
   const formationsCount = deriveFormations(o.stats, o.id).length;
   const policiesCount = derivePolicies(o.stats, o.id).length;
@@ -412,6 +415,16 @@ function OfficerRow({
     >
       <OfficerHoverCard officer={o}>
         <span className={styles.rowName}>
+          <span
+            title={`${pickName(grade.name, lang)} ${pickName(grade.rank, lang)} · Lv.${lvl}`}
+            style={{
+              flexShrink: 0, fontSize: '0.6rem', fontFamily: 'ui-monospace, monospace',
+              color: grade.color, border: `1px solid ${grade.color}`, borderRadius: 2,
+              padding: '0 0.22rem', letterSpacing: '0.02rem', alignSelf: 'center',
+            }}
+          >
+            {pickName(grade.name, lang).charAt(0)}{lvl}
+          </span>
           {lang !== 'en' && <span className={styles.rowNameZh}>{o.name.zh}</span>}
           {lang !== 'zh' && <span className={styles.rowNameEn}>{o.name.en}</span>}
           {o.courtesyName && (

@@ -1,8 +1,10 @@
 import { useMemo, useRef, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
-import { debateProwess } from '../../game/systems/wordWar';
+import { debateProwess, type DebateDifficulty } from '../../game/systems/wordWar';
 import { debateShame, isEmotional } from '../../game/systems/afflictions';
 import { DEBATE_SCENARIOS, scenarioOutcome, scenarioResultLine, type DebateScenario } from '../../game/systems/debateScenarios';
+import { trainKey, trainsLeft, TRAIN_PER_SEASON } from '../../game/systems/sparLimit';
+import { officerLevel } from '../../game/systems/officerGrade';
 import { Modal } from './Modal';
 import { OfficerPortrait } from './OfficerPortrait';
 import { OfficerStats } from './OfficerStats';
@@ -22,11 +24,17 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
   const playerForceId = useGameStore((s) => s.playerForceId);
   const year = useGameStore((s) => s.date.year);
   const grantSparXp = useGameStore((s) => s.grantSparXp);
+  const grantOfficerXp = useGameStore((s) => s.grantOfficerXp);
+  const recordTrainingUse = useGameStore((s) => s.recordTrainingUse);
+  const debateUsage = useGameStore((s) => s.debateUsage);
+  const date = useGameStore((s) => s.date);
   const afflictOfficer = useGameStore((s) => s.afflictOfficer);
   const recordDeed = useGameStore((s) => s.recordDeed);
   const applyScenarioEffects = useGameStore((s) => s.applyScenarioEffects);
 
-  const [mode, setMode] = useState<'spar' | 'story'>('spar');
+  const [mode, setMode] = useState<'spar' | 'story' | 'gauntlet'>('spar');
+  // 舌戰群儒 — a champion faces a line of opposing scholars, one after another.
+  const [gauntlet, setGauntlet] = useState<{ championId: string; foeIds: string[]; idx: number; wins: number } | null>(null);
   // 劇情舌戰 — scenarios whose opponent is present on the map and not yet ours.
   const scenarios = useMemo(
     () => DEBATE_SCENARIOS.filter((s) => {
@@ -39,6 +47,15 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
   const [story, setStory] = useState<{ scenario: DebateScenario; strategistId: string } | null>(null);
   const routedRef = useRef(false);
 
+  // 群儒 — the opposing scholars, sharpest tongue saved for last (up to 5).
+  const gauntletFoes = useMemo(
+    () => Object.values(officers)
+      .filter((o) => o.forceId !== playerForceId && o.status !== 'dead' && o.status !== 'unsearched' && o.status !== 'imprisoned')
+      .sort((x, y) => debateProwess(x) - debateProwess(y))
+      .slice(0, 5),
+    [officers, playerForceId],
+  );
+
   // Anyone fit to speak may debate — sort the sharpest tongues to the front.
   const roster = useMemo(
     () => Object.values(officers)
@@ -49,22 +66,67 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
 
   const [aId, setAId] = useState<string | null>(null);
   const [bId, setBId] = useState<string | null>(null);
+  const [difficulty, setDifficulty] = useState<DebateDifficulty>('veteran');
   const [debating, setDebating] = useState(false);
   const [result, setResult] = useState<{ text: string; notes: string[] } | null>(null);
 
   const a = aId ? officers[aId] : null;
   const b = bId ? officers[bId] : null;
   const ready = !!(a && b && aId !== bId);
+  // 論辯冷卻 — each officer gets a limited number of friendly debates per season.
+  const seasonKey = trainKey(date);
+  const debateLeftFor = (id: string | null) => (id ? trainsLeft(debateUsage ?? {}, id, seasonKey) : 0);
+  const debateReady = ready && debateLeftFor(aId) > 0 && debateLeftFor(bId) > 0;
+  // 群儒 — the champion spends one debate slot on entry (the whole run costs one).
+  const gauntletReady = !!a && gauntletFoes.length > 0 && debateLeftFor(aId) > 0;
 
   const pick = (id: string) => {
     setResult(null);
-    if (mode === 'story') { setAId(aId === id ? null : id); return; } // story picks one 說客
+    if (mode === 'story' || mode === 'gauntlet') { setAId(aId === id ? null : id); return; } // pick one champion
     if (aId === id) { setAId(null); return; }
     if (bId === id) { setBId(null); return; }
     if (!aId) setAId(id);
     else if (!bId) setBId(id);
     else { setAId(id); setBId(null); }
   };
+
+  // 舌戰群儒 — the champion debates each foe in turn; a win advances, a loss ends
+  // the run. Composure resets per opponent (a fresh war of words each time).
+  if (gauntlet) {
+    const champ = officers[gauntlet.championId];
+    const foe = officers[gauntlet.foeIds[gauntlet.idx]];
+    if (champ && foe) {
+      return (
+        <Debate3DStage
+          key={`g-${gauntlet.idx}`}
+          me={champ}
+          foe={foe}
+          difficulty={difficulty}
+          onComplete={(outcome) => {
+            const won = outcome.winner === 'me';
+            // 舌戰增知力 — each scholar bested sharpens the champion's mind.
+            const xp = won ? grantOfficerXp(gauntlet.championId, 30, ['intelligence', 'charisma']) : null;
+            if (won) recordDeed(gauntlet.championId, { debatesWon: 1 });
+            const last = gauntlet.idx >= gauntlet.foeIds.length - 1;
+            if (won && !last) {
+              setGauntlet({ ...gauntlet, idx: gauntlet.idx + 1, wins: gauntlet.wins + 1 });
+            } else {
+              const wins = gauntlet.wins + (won ? 1 : 0);
+              const cleared = won && last;
+              setGauntlet(null);
+              setResult({
+                text: cleared
+                  ? t(`${pickName(champ.name, lang)} 舌戰群儒 — 連折 ${wins} 人,全勝!`, `${pickName(champ.name, lang)} out-talks them all — ${wins} routed, a clean sweep!`)
+                  : t(`${pickName(champ.name, lang)} 連折 ${wins} 人,終遇強手。`, `${pickName(champ.name, lang)} bested ${wins} before meeting their match.`),
+                notes: xp?.notes ?? [],
+              });
+            }
+          }}
+        />
+      );
+    }
+    setGauntlet(null);
+  }
 
   // While the debate plays, show only the 3D hall (it's fixed-position; rendering
   // it alongside the higher-z modal would bury it).
@@ -73,12 +135,14 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
       <Debate3DStage
         me={a}
         foe={b}
+        difficulty={difficulty}
         onComplete={(outcome) => {
           setDebating(false);
           const draw = outcome.winner === 'draw';
           const winnerId = draw || outcome.winner === 'me' ? aId! : bId!;
           const loserId = winnerId === aId ? bId! : aId!;
-          const r = grantSparXp(winnerId, loserId, draw);
+          const r = grantSparXp(winnerId, loserId, draw, ['intelligence', 'charisma']); // 舌戰增知力/魅力
+          recordTrainingUse('debate', [aId!, bId!]); // 論辯冷卻 — both spend a slot
           // 羞憤 — an emotional officer who is out-argued stews on it for a few
           // seasons (−魅力/−智力), a real cost to losing a war of words.
           const loser = officers[loserId];
@@ -114,6 +178,7 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
         <Debate3DStage
           me={strategist}
           foe={opponent}
+          difficulty={difficulty}
           onRound={(fx) => { routedRef.current = fx.over && fx.routed; }}
           onComplete={(outcome) => {
             const sc = story.scenario;
@@ -156,28 +221,64 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
 
   return (
     <Modal onClose={onClose} title={t('論辯場', 'Debate Ground')} icon="💬" width="min(560px, 100%)" scrollBody>
-      {/* 切磋 (sparring) vs 劇情 (scripted scenarios with stakes). */}
+      {/* 切磋 / 劇情 / 群儒 */}
       <div style={{ display: 'flex', gap: 6, marginBottom: '0.8rem' }}>
-        {(['spar', 'story'] as const).map((m) => (
+        {(['spar', 'story', 'gauntlet'] as const).map((m) => (
           <button
             key={m}
             onClick={() => { setMode(m); setResult(null); }}
             style={{
-              flex: 1, padding: '0.4rem', borderRadius: 4, cursor: 'pointer', fontFamily: 'var(--tkm-font-body)',
+              flex: 1, padding: '0.4rem', borderRadius: 4, cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.84rem',
               background: mode === m ? 'rgba(136,183,232,0.18)' : '#10161e',
               border: `1px solid ${mode === m ? '#88b7e8' : '#26323e'}`, color: mode === m ? '#d8ecff' : '#8a96a0',
             }}
-          >{m === 'spar' ? t('切磋', 'Spar') : t('劇情舌戰', 'Scenarios')}</button>
+          >{m === 'spar' ? t('切磋', 'Spar') : m === 'story' ? t('劇情', 'Scenarios') : t('群儒', 'Gauntlet')}</button>
         ))}
       </div>
 
-      <div style={{ fontSize: '0.8rem', color: '#aab6c0', marginBottom: '0.8rem', lineHeight: 1.6 }}>
-        {mode === 'spar'
-          ? t('選兩名麾下武將切磋舌辯(點到為止)。出「論/駁/諷/詰」破對方沉著,雙方皆增經驗,或可升級增益屬性、習得新技。',
-              'Pick two officers for a war of words (non-lethal). Play 論/駁/諷/詰 to break their composure; both gain experience — which can raise stats or teach skills.')
-          : t('挑一段劇情,遣一位說客出馬。辯勝有真實獎賞 — 說降、結盟、乃至罵死強敵。',
-              'Pick a scenario and send a debater. A win carries real stakes — a defection, an alliance, even shouting a foe to death.')}
-      </div>
+      {mode === 'gauntlet' && (<>
+        <div style={{ fontSize: '0.8rem', color: '#aab6c0', marginBottom: '0.8rem', lineHeight: 1.6 }}>
+          {t('遣一位說客舌戰群儒 — 連辯敵方諸人,愈往後對手愈強。一敗即止,看能連折幾人。',
+            'Send one debater against a line of opposing scholars — each tougher than the last. One loss ends the run; see how many you can rout.')}
+        </div>
+        {a && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: '0.6rem' }}>
+            <span style={{ color: '#f2dd9a', fontSize: '0.86rem' }}>{pickName(a.name, lang)}</span>
+            <span style={{ color: '#7a8893' }}>vs</span>
+            {gauntletFoes.map((f, i) => (
+              <span key={f.id} style={{ fontSize: '0.72rem', color: '#9aa6b0', background: '#10161e', border: '1px solid #26323e', borderRadius: 4, padding: '0.1rem 0.4rem' }}>
+                {i + 1}. {pickName(f.name, lang)}
+              </span>
+            ))}
+          </div>
+        )}
+        <button
+          disabled={!gauntletReady}
+          onClick={() => { if (aId && gauntletReady) { setResult(null); recordTrainingUse('debate', [aId]); setGauntlet({ championId: aId, foeIds: gauntletFoes.map((f) => f.id), idx: 0, wins: 0 }); } }}
+          style={{
+            width: '100%', padding: '0.6rem', marginBottom: a && !gauntletReady ? '0.4rem' : '0.8rem',
+            background: gauntletReady ? 'linear-gradient(180deg,#234a6e,#13283e)' : '#1e2832',
+            border: `1px solid ${gauntletReady ? '#88b7e8' : '#2b3845'}`,
+            color: gauntletReady ? '#d8ecff' : '#5f6c76', cursor: gauntletReady ? 'pointer' : 'default',
+            fontFamily: 'var(--tkm-font-body)', fontSize: '1rem', letterSpacing: '0.1rem',
+          }}
+        >💬 {gauntletFoes.length === 0 ? t('無對手可辯', 'No opponents present') : a ? t(`遣 ${pickName(a.name, lang)} 舌戰群儒`, `Send ${pickName(a.name, lang)} into the gauntlet`) : t('選一位說客', 'Pick a debater')}</button>
+        {a && gauntletFoes.length > 0 && debateLeftFor(aId) <= 0 && (
+          <div style={{ fontSize: '0.74rem', color: '#7fa8d8', marginBottom: '0.8rem', lineHeight: 1.5 }}>
+            ⏳ {t(`${pickName(a.name, lang)} 本季舌敝唇焦，需休整至下季再辯。`, `${pickName(a.name, lang)} is talked out for the season — rest until next season.`)}
+          </div>
+        )}
+      </>)}
+
+      {mode !== 'gauntlet' && (
+        <div style={{ fontSize: '0.8rem', color: '#aab6c0', marginBottom: '0.8rem', lineHeight: 1.6 }}>
+          {mode === 'spar'
+            ? t('選兩名麾下武將切磋舌辯(點到為止)。出「論/駁/諷/詰」破對方沉著,雙方皆增經驗,或可升級增益屬性、習得新技。',
+                'Pick two officers for a war of words (non-lethal). Play 論/駁/諷/詰 to break their composure; both gain experience — which can raise stats or teach skills.')
+            : t('挑一段劇情,遣一位說客出馬。辯勝有真實獎賞 — 說降、結盟、乃至罵死強敵。',
+                'Pick a scenario and send a debater. A win carries real stakes — a defection, an alliance, even shouting a foe to death.')}
+        </div>
+      )}
 
       {mode === 'spar' && (<>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.8rem' }}>
@@ -185,17 +286,46 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
           <div style={{ fontSize: '1.4rem', color: '#7a8893' }}>VS</div>
           {slot(b, t('對手', 'Opponent'))}
         </div>
+        {/* 難度 — how sharply the opposing officer reads & counters your arguments. */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: '0.8rem' }}>
+          {([
+            ['rookie', t('學徒', 'Novice')],
+            ['veteran', t('名士', 'Adept')],
+            ['peerless', t('宗師', 'Master')],
+          ] as const).map(([id, label]) => {
+            const on = difficulty === id;
+            return (
+              <button
+                key={id}
+                onClick={() => setDifficulty(id)}
+                style={{
+                  flex: 1, padding: '0.35rem', borderRadius: 4, cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.82rem',
+                  background: on ? 'rgba(136,183,232,0.18)' : '#10161e',
+                  border: `1px solid ${on ? '#88b7e8' : '#26323e'}`, color: on ? '#d8ecff' : '#8a96a0',
+                }}
+              >{label}</button>
+            );
+          })}
+        </div>
         <button
-          disabled={!ready}
+          disabled={!debateReady}
           onClick={() => { setResult(null); setDebating(true); }}
           style={{
-            width: '100%', padding: '0.6rem', marginBottom: '0.8rem',
-            background: ready ? 'linear-gradient(180deg,#234a6e,#13283e)' : '#1e2832',
-            border: `1px solid ${ready ? '#88b7e8' : '#2b3845'}`,
-            color: ready ? '#d8ecff' : '#5f6c76', cursor: ready ? 'pointer' : 'default',
+            width: '100%', padding: '0.6rem', marginBottom: ready && !debateReady ? '0.4rem' : '0.8rem',
+            background: debateReady ? 'linear-gradient(180deg,#234a6e,#13283e)' : '#1e2832',
+            border: `1px solid ${debateReady ? '#88b7e8' : '#2b3845'}`,
+            color: debateReady ? '#d8ecff' : '#5f6c76', cursor: debateReady ? 'pointer' : 'default',
             fontFamily: 'var(--tkm-font-body)', fontSize: '1rem', letterSpacing: '0.1rem',
           }}
         >💬 {t('開始論辯', 'Begin the Debate')}</button>
+        {ready && !debateReady && (
+          <div style={{ fontSize: '0.74rem', color: '#7fa8d8', marginBottom: '0.8rem', lineHeight: 1.5 }}>
+            ⏳ {t(
+              `${debateLeftFor(aId) <= 0 ? pickName(a!.name, lang) : pickName(b!.name, lang)} 本季舌敝唇焦，需休整至下季再辯。`,
+              `${debateLeftFor(aId) <= 0 ? pickName(a!.name, lang) : pickName(b!.name, lang)} is talked out for the season — rest until next season to debate again.`,
+            )}
+          </div>
+        )}
       </>)}
 
       {mode === 'story' && (<>
@@ -247,30 +377,40 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
       )}
 
       <div style={{ fontSize: '0.68rem', color: '#7a8893', letterSpacing: '0.1rem', margin: '0.2rem 0 0.4rem' }}>
-        {mode === 'story' ? t('遣誰出馬', 'Choose your debater') : t('麾下武將', 'Your Officers')} ({roster.length})
+        {mode === 'story' || mode === 'gauntlet' ? t('遣誰出馬', 'Choose your debater') : t('麾下武將', 'Your Officers')} ({roster.length})
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 6 }}>
         {roster.map((o) => {
           const sel = o.id === aId || o.id === bId;
+          // 論辯冷卻 — a talked-out officer can't be fielded in 切磋 or 群儒
+          // (deselect still works).
+          const left = trainsLeft(debateUsage ?? {}, o.id, seasonKey);
+          const winded = (mode === 'spar' || mode === 'gauntlet') && left <= 0 && !sel;
           return (
             <button
               key={o.id}
+              disabled={winded}
               onClick={() => pick(o.id)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left',
                 background: sel ? 'rgba(136,183,232,0.16)' : '#10161e',
                 border: `1px solid ${sel ? '#88b7e8' : '#26323e'}`,
-                borderRadius: 4, padding: '0.4rem 0.5rem', cursor: 'pointer', color: '#e6edf3',
-                fontFamily: 'var(--tkm-font-body)',
+                borderRadius: 4, padding: '0.4rem 0.5rem', cursor: winded ? 'default' : 'pointer',
+                color: '#e6edf3', opacity: winded ? 0.5 : 1, fontFamily: 'var(--tkm-font-body)',
               }}
             >
               <OfficerPortrait officer={o} size={32} forceColor="#88b7e8" year={year} />
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ color: '#f2dd9a', fontSize: '0.85rem' }}>{pickName(o.name, lang)}</span>
                 <span style={{ display: 'block', fontSize: '0.66rem', color: '#8a96a0' }}>
-                  <OfficerStats officer={o} keys={['intelligence', 'charisma']} /> · {t('等', 'Lv')}{o.level ?? 1}
+                  <OfficerStats officer={o} keys={['intelligence', 'charisma']} /> · {t('等', 'Lv')}{officerLevel(o)}
                 </span>
               </span>
+              {(mode === 'spar' || mode === 'gauntlet') && (
+                <span style={{ fontSize: '0.6rem', color: winded ? '#7fa8d8' : '#7a8893', whiteSpace: 'nowrap' }}>
+                  {winded ? t('歇', 'Rest') : `辯 ${left}/${TRAIN_PER_SEASON}`}
+                </span>
+              )}
             </button>
           );
         })}

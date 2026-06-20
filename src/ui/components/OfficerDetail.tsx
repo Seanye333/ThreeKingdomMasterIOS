@@ -27,7 +27,9 @@ import {
 import { WEAPON_TYPE_DEFS, deriveWeaponType } from '../../game/data/weaponTypes';
 import { HISTORICAL_LIFESPANS } from '../../game/data/historicalLifespans';
 import { effectivePrestige } from '../../game/data/prestige';
-import { renownFromDeeds, fameTier } from '../../game/systems/fame';
+import { renownFromDeeds, fameTier, fameMedal } from '../../game/systems/fame';
+import { xpProgress } from '../../game/systems/growth';
+import { officerGrade, officerLevel } from '../../game/systems/officerGrade';
 import type { City, Force, Officer, Skill } from '../../game/types';
 import { FORMATIONS_BY_ID } from '../../game/data/formations';
 import { TACTIC_DESC } from './TacticsModal';
@@ -197,12 +199,18 @@ export function OfficerDetail({
               const renown = renownFromDeeds(deeds[officer.id]);
               if (renown < 20) return null;
               const tier = fameTier(renown);
+              const medal = fameMedal(renown);
               return (
                 <div style={{
                   display: 'inline-block', marginTop: '0.3rem', marginLeft: '0.4rem', padding: '0.12rem 0.5rem',
                   background: 'linear-gradient(180deg, #1a3a2a, #102018)', border: '1px solid #6aae8a',
                   color: '#9ed8b8', fontSize: '0.82rem', letterSpacing: '0.05rem', borderRadius: 2,
                 }}>
+                  {medal && (
+                    <span title={lang === 'en' ? medal.name.en : medal.name.zh} style={{ marginRight: '0.3rem' }}>
+                      {medal.glyph}
+                    </span>
+                  )}
                   {lang === 'en' ? tier.en : tier.zh} · {t('名望', 'Renown')} {renown}
                 </div>
               );
@@ -341,18 +349,56 @@ export function OfficerDetail({
           <StatBar label={t('忠誠', 'Loyalty')} value={officer.loyalty} mode="loyalty" />
         </section>
 
-        {(officer.doctrine || officer.level) && (
+        {(
           <section className={styles.statsSection}>
             <h3 className={styles.sectionTitle}>{t('武將錄', 'Officer Profile')}</h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem 1.5rem', alignItems: 'baseline' }}>
-              {officer.level !== undefined && (
-                <div>
-                  <span style={{ fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('等級', 'Lv.')} </span>
-                  <span style={{ fontSize: '1.1rem', color: '#e6c473', fontFamily: 'ui-monospace, monospace' }}>
-                    {officer.level}
-                  </span>
-                </div>
-              )}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem 1.5rem', alignItems: 'flex-start' }}>
+              {(() => {
+                // 品階 — gold/silver/bronze grade from effective stats. Descriptive,
+                // not a spend currency: it climbs 鐵→銅→銀→金 as the officer grows.
+                const g = officerGrade(officer);
+                return (
+                  <div title={t(`品階 ${g.rank.zh} · 評分 ${g.score}`, `Grade ${g.rank.en} · score ${g.score}`)}>
+                    <span style={{ fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('品階', 'Grade')} </span>
+                    <span style={{
+                      display: 'inline-block', padding: '0.1rem 0.5rem', borderRadius: 2,
+                      background: '#10161e', border: `1px solid ${g.color}`, color: g.color,
+                      fontSize: '0.85rem', letterSpacing: '0.08rem',
+                    }}>
+                      {lang === 'en' ? g.name.en : g.name.zh}
+                      <span style={{ marginLeft: 4, fontSize: '0.62rem', opacity: 0.8 }}>
+                        {lang === 'en' ? g.rank.en : g.rank.zh}
+                      </span>
+                    </span>
+                  </div>
+                );
+              })()}
+              {(() => {
+                // 歷練 — the officer's overall level (headline) plus a bar showing
+                // progress toward the next stat-growth tick. Raised by practice,
+                // debates, battle and internal-affairs work.
+                const lvl = officerLevel(officer);
+                const p = xpProgress(officer.xp);
+                const pct = p.atMax ? 100 : Math.round((p.intoLevel / p.levelSpan) * 100);
+                return (
+                  <div style={{ minWidth: 150 }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem' }}>
+                      <span style={{ fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('歷練', 'Level')}</span>
+                      <span style={{ fontSize: '1.1rem', color: '#e6c473', fontFamily: 'ui-monospace, monospace' }}>
+                        Lv.{lvl}
+                      </span>
+                    </div>
+                    <div style={{ marginTop: 3, height: 5, width: 150, background: '#10161e', border: '1px solid #26323e', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${pct}%`, background: p.atMax ? 'linear-gradient(90deg,#c9a64e,#e6c473)' : '#3a7dd9' }} />
+                    </div>
+                    <div style={{ marginTop: 2, fontSize: '0.6rem', color: '#7a8893', fontFamily: 'ui-monospace, monospace' }}>
+                      {p.atMax
+                        ? t('已臻化境', 'Mastery (max)')
+                        : t(`距下次成長 · 再 ${p.toNext} 經驗`, `${p.toNext} XP to next growth`)}
+                    </div>
+                  </div>
+                );
+              })()}
               {officer.doctrine && (() => {
                 const d = DOCTRINE_DEFS[officer.doctrine];
                 return (

@@ -4,6 +4,8 @@ import type { Officer } from '../../game/types';
 import { OfficerPortrait } from './OfficerPortrait';
 import { OfficerStats } from './OfficerStats';
 import { useGameStore } from '../../game/state/store';
+import { officerGrade, officerLevel } from '../../game/systems/officerGrade';
+import { renownFromDeeds, fameMedal } from '../../game/systems/fame';
 import { useLanguage, pickName } from '../i18n';
 
 interface Props {
@@ -23,7 +25,11 @@ export function OfficerHoverCard({ officer, children }: Props) {
   const forceColor = useGameStore((s) =>
     officer.forceId ? s.forces[officer.forceId]?.color : undefined,
   );
+  const deeds = useGameStore((s) => s.deeds[officer.id]);
   const lang = useLanguage();
+  const grade = officerGrade(officer);
+  const lvl = officerLevel(officer);
+  const medal = fameMedal(renownFromDeeds(deeds));
   const t = officer.traits ?? [];
   const skills = officer.skills.map((id) => SKILLS_BY_ID[id]).filter(Boolean);
   const items = officer.equipment.map((id) => ITEMS_BY_ID[id]).filter(Boolean);
@@ -79,6 +85,22 @@ export function OfficerHoverCard({ officer, children }: Props) {
                   {lang === 'en' ? 'Courtesy ' : '字 '}{pickName(officer.courtesyName, lang)}
                 </div>
               )}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: '0.25rem', alignItems: 'center' }}>
+                <span style={{
+                  fontSize: '0.66rem', padding: '0.04rem 0.34rem', borderRadius: 2,
+                  border: `1px solid ${grade.color}`, color: grade.color, letterSpacing: '0.04rem',
+                }}>
+                  {pickName(grade.name, lang)} {pickName(grade.rank, lang)}
+                </span>
+                <span style={{ fontSize: '0.7rem', color: '#e6c473', fontFamily: 'ui-monospace, monospace' }}>
+                  Lv.{lvl}
+                </span>
+                {medal && (
+                  <span title={pickName(medal.name, lang)} style={{ fontSize: '0.72rem', color: medal.color }}>
+                    {medal.glyph}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           <div style={{ marginTop: '0.4rem' }}>

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { grantXp, awardInternalAffairsXp, INTERNAL_AFFAIRS_XP, INTERNAL_AFFAIRS_XP_MAJOR } from './growth';
+import { grantXp, awardInternalAffairsXp, xpProgress, MAX_GROWTH_LEVEL, INTERNAL_AFFAIRS_XP, INTERNAL_AFFAIRS_XP_MAJOR } from './growth';
 import type { Officer, OfficerStats } from '../types';
 
 function makeOfficer(stats: Partial<OfficerStats> = {}): Officer {
@@ -79,5 +79,36 @@ describe('awardInternalAffairsXp — civic-duty trickle', () => {
     const r = awardInternalAffairsXp(o, 'improve-loyalty', true, () => 0.5);
     expect(r.officer.stats.charisma).toBeGreaterThan(o.stats.charisma);
     expect(r.officer.stats.politics).toBe(o.stats.politics);
+  });
+});
+
+describe('xpProgress — UI level/bar math', () => {
+  it('reports a fresh officer at level 0 with progress toward 100', () => {
+    const p = xpProgress(0);
+    expect(p.level).toBe(0);
+    expect(p.atMax).toBe(false);
+    expect(p.toNext).toBe(100);
+    expect(p.levelSpan).toBe(100);
+    expect(p.intoLevel).toBe(0);
+  });
+
+  it('measures progress within the current band', () => {
+    // 175 XP: level 1 (≥100), band is 100→250, so 75/150 into it.
+    const p = xpProgress(175);
+    expect(p.level).toBe(1);
+    expect(p.intoLevel).toBe(75);
+    expect(p.levelSpan).toBe(150);
+    expect(p.toNext).toBe(75);
+  });
+
+  it('caps out at the top level', () => {
+    const p = xpProgress(99999);
+    expect(p.level).toBe(MAX_GROWTH_LEVEL);
+    expect(p.atMax).toBe(true);
+    expect(p.toNext).toBe(0);
+  });
+
+  it('treats undefined xp as zero', () => {
+    expect(xpProgress(undefined).level).toBe(0);
   });
 });

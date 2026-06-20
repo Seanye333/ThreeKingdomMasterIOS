@@ -47,6 +47,27 @@ export function nextTierThreshold(renown: number): number | null {
   return null;
 }
 
+/**
+ * 名望牌 — a gold/silver/bronze medal for an officer's earned renown (their
+ * battlefield/rhetorical deeds, via renownFromDeeds). Distinct from 品階, which
+ * reflects raw ability: a 名望牌 must be *won* through famous deeds. Returns
+ * null below the 銅牌 threshold so unremarkable officers carry no medal.
+ */
+export type FameMedalTier = 'gold' | 'silver' | 'bronze';
+export interface FameMedal {
+  tier: FameMedalTier;
+  glyph: string;
+  name: { zh: string; en: string };
+  color: string;
+}
+
+export function fameMedal(renown: number): FameMedal | null {
+  if (renown >= 200) return { tier: 'gold',   glyph: '🥇', name: { zh: '金牌名將', en: 'Gold' },   color: '#e6c473' };
+  if (renown >= 100) return { tier: 'silver', glyph: '🥈', name: { zh: '銀牌宿將', en: 'Silver' }, color: '#cfd8e0' };
+  if (renown >= 50)  return { tier: 'bronze', glyph: '🥉', name: { zh: '銅牌健兒', en: 'Bronze' }, color: '#c8884e' };
+  return null;
+}
+
 export interface Challenger {
   challengerId: string;
   kind: 'duel' | 'debate';

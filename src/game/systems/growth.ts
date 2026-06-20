@@ -30,6 +30,34 @@ export function xpForNextLevel(xp: number): number {
   return XP_LEVELS[XP_LEVELS.length - 1];
 }
 
+/** Top growth level — an officer at this level has crossed every threshold. */
+export const MAX_GROWTH_LEVEL = XP_LEVELS.length;
+
+/**
+ * Progress within the current growth level, for UI bars. `intoLevel/levelSpan`
+ * gives the fill ratio; `toNext` is XP remaining to the next level (0 at max).
+ */
+export function xpProgress(xp: number | undefined): {
+  level: number;
+  intoLevel: number;
+  levelSpan: number;
+  toNext: number;
+  atMax: boolean;
+} {
+  const x = Math.max(0, xp ?? 0);
+  const level = totalLevel(x);
+  const atMax = level >= XP_LEVELS.length;
+  const floor = level === 0 ? 0 : XP_LEVELS[level - 1];
+  const ceil = atMax ? XP_LEVELS[XP_LEVELS.length - 1] : XP_LEVELS[level];
+  return {
+    level,
+    intoLevel: x - floor,
+    levelSpan: Math.max(1, ceil - floor),
+    toNext: atMax ? 0 : ceil - x,
+    atMax,
+  };
+}
+
 /**
  * Award XP and roll stat growth when thresholds are crossed. Latent stats
  * cap the growth; we never grow a stat above its latent value (default
