@@ -1,4 +1,4 @@
-import type { EntityId, Officer, OfficerStats, ReportEntry } from '../types';
+import type { EntityId, InternalAffairsType, Officer, OfficerStats, ReportEntry } from '../types';
 import { SKILLS, SKILLS_BY_ID } from '../data/skills';
 import { rollLevelUpTrait } from './traitEffects';
 import { TRAIT_DEFS_BY_ID } from '../data/personality';
@@ -39,11 +39,16 @@ export function grantXp(
   officer: Officer,
   amount: number,
   rng: () => number = Math.random,
+  // 偏向成長 — when set, level-up stat gains are steered toward these stats
+  // (e.g. a 舌戰 grows 知力/魅力). Falls back to the normal spread only when
+  // none of the favoured stats can still grow.
+  favored?: keyof OfficerStats | Array<keyof OfficerStats>,
 ): {
   officer: Officer;
   leveled: boolean;
   entries: ReportEntry[];
 } {
+  const favoredKeys = favored ? (Array.isArray(favored) ? favored : [favored]) : null;
   const oldXp = officer.xp ?? 0;
   const newXp = oldXp + amount;
   const oldLevel = totalLevel(oldXp);
@@ -59,9 +64,13 @@ export function grantXp(
       .map((k) => [k, latent[k] - stats[k]] as [keyof OfficerStats, number])
       .filter(([, gap]) => gap > 0);
     if (gaps.length === 0) break;
-    gaps.sort((a, b) => b[1] - a[1]);
+    // 偏向成長 — if the grant favours certain stats and any can still grow,
+    // draw only from those; otherwise fall back to the full spread.
+    const favoredGaps = favoredKeys ? gaps.filter(([k]) => favoredKeys.includes(k)) : [];
+    const pool = favoredGaps.length > 0 ? favoredGaps : gaps;
+    pool.sort((a, b) => b[1] - a[1]);
     // Bias toward the top 3 by gap (weighted random).
-    const top = gaps.slice(0, 3);
+    const top = pool.slice(0, 3);
     const sumW = top.reduce((s, [, g]) => s + g, 0);
     let r = rng() * sumW;
     let chosen: keyof OfficerStats = top[0][0];
@@ -182,4 +191,58 @@ export function awardBattleXp(
     entries.push(...res.entries);
   }
   return { officers: out, entries };
+}
+
+/**
+ * 內政經驗 — the stat each internal-affairs command exercises. An officer kept
+ * on civic duty slowly specialises in the relevant stat (政治 for development,
+ * 魅力 for people work, 統率 for garrison). Kept local to avoid a
+ * growth→commands import; mirrors COMMAND_DEFS[type].stat.
+ */
+const INTERNAL_AFFAIRS_FAVORED: Record<InternalAffairsType, keyof OfficerStats> = {
+  'develop-agriculture': 'politics',
+  'develop-commerce': 'politics',
+  'build-defense': 'politics',
+  'recruit-troops': 'charisma',
+  'improve-loyalty': 'charisma',
+  search: 'charisma',
+  'major-agriculture': 'politics',
+  'major-commerce': 'politics',
+  'major-defense': 'politics',
+  'encourage-migration': 'charisma',
+  'upgrade-wall': 'politics',
+  garrison: 'leadership',
+};
+
+/** Heavier projects grant a bit more of the trickle. */
+const INTERNAL_AFFAIRS_MAJOR = new Set<InternalAffairsType>([
+  'major-agriculture',
+  'major-commerce',
+  'major-defense',
+  'encourage-migration',
+  'upgrade-wall',
+]);
+
+/** Base XP from one season of civic work — far below battle XP (25–50) so
+ *  growth from internal affairs is a slow burn (~10 seasons to level 1). */
+export const INTERNAL_AFFAIRS_XP = 10;
+export const INTERNAL_AFFAIRS_XP_MAJOR = 16;
+
+/**
+ * Award the slow internal-affairs XP trickle to the officer who carried out a
+ * command, steered toward the stat that command exercises. `success === false`
+ * (a capped or no-op command) scales the grant down to 40% — the officer still
+ * spent the season, but produced little. Returns the updated officer and any
+ * level-up report entries (empty on the common no-threshold-crossed season).
+ */
+export function awardInternalAffairsXp(
+  officer: Officer,
+  type: InternalAffairsType,
+  success: boolean,
+  rng: () => number = Math.random,
+): { officer: Officer; entries: ReportEntry[] } {
+  const base = INTERNAL_AFFAIRS_MAJOR.has(type) ? INTERNAL_AFFAIRS_XP_MAJOR : INTERNAL_AFFAIRS_XP;
+  const amount = success ? base : Math.max(3, Math.round(base * 0.4));
+  const res = grantXp(officer, amount, rng, INTERNAL_AFFAIRS_FAVORED[type]);
+  return { officer: res.officer, entries: res.entries };
 }

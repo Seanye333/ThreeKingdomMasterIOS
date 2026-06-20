@@ -20,6 +20,7 @@ import { FACILITY_DEFS, type Fort } from '../types/fort';
 import { advanceSeason } from '../state/gameState';
 import { processAging } from './aging';
 import { handleSearch, resolveInternalAffairs, type LostItemRef } from './commands';
+import { awardInternalAffairsXp } from './growth';
 import { handleMarch } from './combat';
 import { tickDiplomacy, applyCoalitionPressure } from './diplomacy';
 import { tickCityEconomy, tradeTreatyGrants } from './economy';
@@ -979,6 +980,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       officers = result.officers;
       lostItems = result.lostItems;
       entries.push(result.entry);
+      // 內政經驗 — scouring the city for talent still hones 魅力 over time.
+      const searchXp = awardInternalAffairsXp(officers[cmd.officerId] ?? officer, 'search', true, rng);
+      officers[cmd.officerId] = searchXp.officer;
+      entries.push(...searchXp.entries);
       continue;
     }
     if (cmd.type === 'garrison') {
@@ -1012,6 +1017,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
           : `${officer.name.zh}鎮守${city.name.zh}：城防 +${defBoost}。`,
       });
       bumpDeed(cmd.officerId, { civicWorks: 1 });
+      // 內政經驗 — garrison duty hones 統率.
+      const garrisonXp = awardInternalAffairsXp(officers[cmd.officerId] ?? officer, 'garrison', true, rng);
+      officers[cmd.officerId] = garrisonXp.officer;
+      entries.push(...garrisonXp.entries);
       continue;
     }
     const bonus = appointmentBonusFor(
@@ -1037,6 +1046,12 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     });
     // 武功 — civicWorks bump on successful internal affairs
     if (result.success) bumpDeed(cmd.officerId, { civicWorks: 1 });
+    // 內政經驗 — slow stat growth from the work, steered toward the command's
+    // stat (政治 for development, 魅力 for people work). Capped/no-op commands
+    // grant a reduced trickle inside awardInternalAffairsXp.
+    const iaXp = awardInternalAffairsXp(officers[cmd.officerId] ?? officer, cmd.type, result.success, rng);
+    officers[cmd.officerId] = iaXp.officer;
+    entries.push(...iaXp.entries);
   }
 
   const seasonBoundary = input.seasonBoundary ?? true;
