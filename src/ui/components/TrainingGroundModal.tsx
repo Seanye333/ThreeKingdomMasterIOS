@@ -6,7 +6,7 @@ import { wagerMultiplier, wagerProfit } from '../../game/systems/wager';
 import { findRivalryChallenge } from '../../game/systems/rivalries';
 import { DUEL_SCENARIOS, DUEL_CAMPAIGNS, campaignSteps, duelScenarioOutcome, duelScenarioResultLine, type DuelScenario } from '../../game/systems/duelScenarios';
 import { renownFromDeeds, fameTier, rollChallenger } from '../../game/systems/fame';
-import { trainKey, trainsLeft, canTrain, TRAIN_PER_SEASON } from '../../game/systems/sparLimit';
+import { trainKey, trainsLeft, TRAIN_PER_SEASON } from '../../game/systems/sparLimit';
 import { officerLevel } from '../../game/systems/officerGrade';
 import { Modal } from './Modal';
 import { OfficerPortrait } from './OfficerPortrait';
