@@ -411,6 +411,9 @@ interface GameStore extends GameState {
   /** 後遺 — lay a short-lived affliction on an officer (養傷 from a duel, 羞憤
    *  from a lost debate). Ticks down each season; folds into effective stats. */
   afflictOfficer: (officerId: EntityId, affliction: Affliction) => void;
+  /** 名聲榜 — accumulate heroic deeds (duel/debate wins, etc.) for an officer.
+   *  Numeric fields add; others overwrite. Feeds renown in systems/fame.ts. */
+  recordDeed: (officerId: EntityId, patch: Partial<import('../types').HeroicDeeds>) => void;
   /** Pay for siege works (圍困糧耗 / 水攻決堤) from the attacking city's
    *  stores before an assault. Returns false (and deducts nothing) if the
    *  city can't afford it. */
@@ -4668,6 +4671,16 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const o = state.officers[officerId];
         if (!o || o.status === 'dead') return;
         set({ officers: { ...state.officers, [officerId]: withAffliction(o, affliction) } });
+      },
+      recordDeed: (officerId, patch) => {
+        const state = get();
+        const cur = state.deeds[officerId] ?? createDeeds(officerId);
+        const curRec = cur as unknown as Record<string, number>;
+        const merged = { ...cur } as unknown as Record<string, unknown>;
+        for (const [k, v] of Object.entries(patch)) {
+          merged[k] = typeof v === 'number' ? (curRec[k] ?? 0) + v : v;
+        }
+        set({ deeds: { ...state.deeds, [officerId]: merged as unknown as import('../types').HeroicDeeds } });
       },
       grantOfficerXp: (officerId, amount) => {
         const state = get();

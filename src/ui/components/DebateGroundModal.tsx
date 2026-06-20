@@ -22,6 +22,7 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
   const year = useGameStore((s) => s.date.year);
   const grantSparXp = useGameStore((s) => s.grantSparXp);
   const afflictOfficer = useGameStore((s) => s.afflictOfficer);
+  const recordDeed = useGameStore((s) => s.recordDeed);
 
   // Anyone fit to speak may debate — sort the sharpest tongues to the front.
   const roster = useMemo(
@@ -66,9 +67,12 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
           // seasons (−魅力/−智力), a real cost to losing a war of words.
           const loser = officers[loserId];
           let shamed = false;
-          if (!draw && loser && isEmotional(loser)) {
-            afflictOfficer(loserId, debateShame());
-            shamed = true;
+          if (!draw) {
+            recordDeed(winnerId, { debatesWon: 1 }); // 名聲榜 — a 舌戰 win
+            if (loser && isEmotional(loser)) {
+              afflictOfficer(loserId, debateShame());
+              shamed = true;
+            }
           }
           if (r) {
             const base = draw

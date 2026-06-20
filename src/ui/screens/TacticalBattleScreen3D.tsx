@@ -3886,6 +3886,7 @@ export function TacticalBattleScreen3D() {
   useEffect(() => () => { recorderRef.current?.stop(); }, []);
   const applyResolution = useGameStore((s) => s.applyTacticalResolution);
   const afflictOfficer = useGameStore((s) => s.afflictOfficer);
+  const recordDeed = useGameStore((s) => s.recordDeed);
   const cancelBattle = useGameStore((s) => s.cancelTacticalBattle);
   const setBattleViewMinimized = useGameStore((s) => s.setBattleViewMinimized);
   const battleSpeed = useGameStore((s) => s.battleSpeed);
@@ -5091,6 +5092,8 @@ export function TacticalBattleScreen3D() {
             } else {
               const woundedId = outcome.winner === 'attacker' ? foe.id : me.id;
               if (woundedId !== killedId) afflictOfficer(woundedId, duelWound(true));
+              // 名聲榜 — the victor banks a 單挑 win toward their renown.
+              recordDeed(outcome.winner === 'attacker' ? me.id : foe.id, { duelsWon: 1 });
             }
             setInteractiveDuel(null);
             // 斬/擒 — you cut the foe down; choose whether to take them alive.

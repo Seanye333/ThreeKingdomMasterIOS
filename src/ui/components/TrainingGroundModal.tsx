@@ -20,6 +20,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
   const playerForceId = useGameStore((s) => s.playerForceId);
   const year = useGameStore((s) => s.date.year);
   const grantSparXp = useGameStore((s) => s.grantSparXp);
+  const recordDeed = useGameStore((s) => s.recordDeed);
 
   const roster = useMemo(
     () => Object.values(officers)
@@ -62,6 +63,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
           const winnerId = draw || outcome.winner === 'attacker' ? aId! : bId!;
           const loserId = winnerId === aId ? bId! : aId!;
           const r = grantSparXp(winnerId, loserId, draw);
+          if (!draw) recordDeed(winnerId, { duelsWon: 1 }); // 名聲榜 — a 演武 win
           if (r) {
             const text = draw
               ? t('點到為止 — 雙方皆有所獲', 'A friendly draw — both learned from it')

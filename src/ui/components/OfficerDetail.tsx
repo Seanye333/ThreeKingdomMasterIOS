@@ -27,6 +27,7 @@ import {
 import { WEAPON_TYPE_DEFS, deriveWeaponType } from '../../game/data/weaponTypes';
 import { HISTORICAL_LIFESPANS } from '../../game/data/historicalLifespans';
 import { effectivePrestige } from '../../game/data/prestige';
+import { renownFromDeeds, fameTier } from '../../game/systems/fame';
 import type { City, Force, Officer, Skill } from '../../game/types';
 import { FORMATIONS_BY_ID } from '../../game/data/formations';
 import { TACTIC_DESC } from './TacticsModal';
@@ -125,6 +126,7 @@ export function OfficerDetail({
   const pendingTrainings = useGameStore((s) => s.pendingTrainings);
   const cancelTrainingFn = useGameStore((s) => s.cancelTraining);
   const allOfficers = useGameStore((s) => s.officers);
+  const deeds = useGameStore((s) => s.deeds);
   const buildings = useGameStore((s) => s.buildings);
   const family = useGameStore((s) => s.family);
   const officerDeeds = useGameStore((s) => s.deeds[officer.id]);
@@ -190,6 +192,28 @@ export function OfficerDetail({
                 </div>
               );
             })()}
+            {(() => {
+              // 名聲榜 — martial/rhetorical renown from the officer's deeds.
+              const renown = renownFromDeeds(deeds[officer.id]);
+              if (renown < 20) return null;
+              const tier = fameTier(renown);
+              return (
+                <div style={{
+                  display: 'inline-block', marginTop: '0.3rem', marginLeft: '0.4rem', padding: '0.12rem 0.5rem',
+                  background: 'linear-gradient(180deg, #1a3a2a, #102018)', border: '1px solid #6aae8a',
+                  color: '#9ed8b8', fontSize: '0.82rem', letterSpacing: '0.05rem', borderRadius: 2,
+                }}>
+                  {lang === 'en' ? tier.en : tier.zh} · {t('名望', 'Renown')} {renown}
+                </div>
+              );
+            })()}
+            {(officer.afflictions ?? []).map((a) => (
+              <div key={a.kind} style={{ marginTop: '0.2rem', fontSize: '0.72rem', color: a.kind === 'wound' ? '#d88a6a' : '#c79ad6' }}>
+                {a.kind === 'wound'
+                  ? `🩹 ${t(`養傷中(武力 ${a.war}，${a.seasons} 季)`, `Recovering (WAR ${a.war}, ${a.seasons}s)`)}`
+                  : `😖 ${t(`羞憤難平(魅力 ${a.charisma}、智力 ${a.intelligence}，${a.seasons} 季)`, `Shamed (CHA ${a.charisma}/INT ${a.intelligence}, ${a.seasons}s)`)}`}
+              </div>
+            ))}
             {openWish && (
               <div style={{
                 marginTop: '0.3rem', fontSize: '0.78rem',

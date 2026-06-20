@@ -8,6 +8,8 @@ export interface HeroicDeeds {
   officerId: EntityId;
   killsTroops: number;
   duelsWon: number;
+  /** 舌戰 won (論辯場 + pre-battle word wars). Optional; old saves default 0. */
+  debatesWon?: number;
   captured: number;
   citiesTaken: number;
   espionageSuccess: number;
