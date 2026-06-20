@@ -1,5 +1,6 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
+import { setVoiceEnabled } from '../../game/systems/sound';
 import { exportAllSaves, importAllSaves } from '../../game/state/saveTransfer';
 import { installMod, loadMods, parseModBundle, removeMod } from '../../game/systems/mods';
 import { applyUiPrefs, getStoredUiPrefs, type UiPrefs, type UiScale } from '../uiPrefs';
@@ -32,6 +33,13 @@ export function SettingsModal({ onClose }: Props) {
   const setLanguage = useGameStore((s) => s.setLanguage);
   const placementMode = useGameStore((s) => s.placementMode ?? 'historical');
   const setPlacementMode = useGameStore((s) => s.setPlacementMode);
+  // 配音 — device-level voice-line (TTS) preference; lives in localStorage.
+  const [voiceOn, setVoiceOn] = useState(() => (typeof localStorage === 'undefined' ? true : localStorage.getItem('tkm-voice') !== 'off'));
+  useEffect(() => { setVoiceEnabled(voiceOn); }, [voiceOn]);
+  const toggleVoice = (on: boolean) => {
+    setVoiceOn(on);
+    try { localStorage.setItem('tkm-voice', on ? 'on' : 'off'); } catch { /* ignore */ }
+  };
   // 輔助偏好 — device-level, not campaign state; lives in localStorage.
   const [uiPrefs, setUiPrefs] = useState<UiPrefs>(getStoredUiPrefs);
   const updateUiPref = (patch: Partial<UiPrefs>) => {
@@ -53,6 +61,7 @@ export function SettingsModal({ onClose }: Props) {
     >
           <Section title={t('音響', 'Audio')}>
             <Toggle label={t('音效', 'Sound effects')} hint={t('UI 點擊、刀劍、號角', 'UI clicks, swords, horns')} checked={soundEnabled} onChange={setSoundEnabled} />
+            <Toggle label={t('武將配音', 'Voice lines')} hint={t('單挑/舌戰台詞語音(系統 TTS)', 'Spoken duel/debate barbs (system TTS)')} checked={voiceOn} onChange={toggleVoice} />
             <Row label={t('背景音樂', 'Music')}>
               <select
                 value={musicTrack ?? 'auto'}

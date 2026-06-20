@@ -45,6 +45,8 @@ export function setSoundEnabled(on: boolean): void {
   }
   if (!on) {
     stopMapAmbience();
+    if (musicEl) { try { musicEl.pause(); } catch { /* ignore */ } }
+    if (typeof window !== 'undefined') window.speechSynthesis?.cancel();
   }
 }
 
@@ -185,8 +187,59 @@ const SFX_PATTERNS: Record<SfxName, Tone[]> = {
   ],
 };
 
+// ─── 真實音檔 (optional recorded samples) — drop files in public/audio/ ──────
+// A file-playback channel layered over the synth. Until samples are registered
+// (or `enableAudioFiles()` is called) nothing is fetched and the oscillator
+// stings play as before. Register a real recording for any SfxName / music
+// track and it is used instead, with the synth as an automatic fallback when a
+// sample is missing or fails to load.
+const sfxSampleUrls: Partial<Record<SfxName, string>> = {};
+const sfxSampleCache: Partial<Record<SfxName, HTMLAudioElement | 'bad'>> = {};
+const musicFileUrls: Partial<Record<Exclude<MusicTrack, null>, string>> = {};
+let musicEl: HTMLAudioElement | null = null;
+
+/** Register recorded SFX (key → url). Missing keys keep the synth sting. */
+export function registerSfxSamples(map: Partial<Record<SfxName, string>>): void {
+  Object.assign(sfxSampleUrls, map);
+}
+/** Register looping music files (track → url). Missing tracks keep the score. */
+export function registerMusicFiles(map: Partial<Record<Exclude<MusicTrack, null>, string>>): void {
+  Object.assign(musicFileUrls, map);
+}
+/** Convenience: map every SFX/track to `${base}/sfx/<name>.<ext>` etc. Call this
+ *  once after dropping a full audio pack into public/audio/ to use real files. */
+export function enableAudioFiles(base = '/audio', ext = 'mp3'): void {
+  for (const n of Object.keys(SFX_PATTERNS) as SfxName[]) sfxSampleUrls[n] = `${base}/sfx/${n}.${ext}`;
+  for (const tk of Object.keys(MUSIC_TRACKS) as Array<Exclude<MusicTrack, null>>) musicFileUrls[tk] = `${base}/music/${tk}.${ext}`;
+}
+
+/** Try a recorded sample for `name`; returns false to fall back to the synth. */
+function tryPlaySfxSample(name: SfxName): boolean {
+  const url = sfxSampleUrls[name];
+  if (!url) return false;
+  let el = sfxSampleCache[name];
+  if (el === 'bad') return false;
+  if (!el) {
+    try {
+      el = new Audio(url);
+      el.preload = 'auto';
+      el.addEventListener('error', () => { sfxSampleCache[name] = 'bad'; });
+      sfxSampleCache[name] = el;
+    } catch { sfxSampleCache[name] = 'bad'; return false; }
+  }
+  try {
+    const voice = (el.cloneNode() as HTMLAudioElement);
+    voice.volume = 0.85;
+    const p = voice.play();
+    if (p) p.catch(() => { /* autoplay/codec issue — synth already skipped */ });
+    return true;
+  } catch { return false; }
+}
+
 export function playSfx(name: SfxName): void {
   if (!enabled) return;
+  // A registered recording wins; otherwise the synth sting.
+  if (tryPlaySfxSample(name)) return;
   const c = getCtx();
   if (!c) return;
   unlockAudio();
@@ -197,6 +250,81 @@ export function playSfx(name: SfxName): void {
     playTone(c, tone, t);
     t += tone.duration;
   }
+}
+
+// ─── 真人配音 (spoken lines) — system 中文 TTS via Web Speech, no asset files ──
+let voiceEnabled = (() => {
+  try { return typeof localStorage === 'undefined' || localStorage.getItem('tkm-voice') !== 'off'; }
+  catch { return true; }
+})();
+let zhVoice: SpeechSynthesisVoice | null = null;
+let voiceResolved = false;
+
+export function setVoiceEnabled(on: boolean): void {
+  voiceEnabled = on;
+  if (!on && typeof window !== 'undefined') window.speechSynthesis?.cancel();
+}
+
+function resolveZhVoice(synth: SpeechSynthesis): void {
+  if (voiceResolved) return;
+  const voices = synth.getVoices();
+  if (voices.length === 0) return; // not loaded yet; try again next call
+  voiceResolved = true;
+  zhVoice = voices.find((v) => /zh[-_]?(CN|Hans)/i.test(v.lang))
+    ?? voices.find((v) => /^zh/i.test(v.lang))
+    ?? null;
+}
+
+/**
+ * 台詞配音 — speak a short battle/debate barb aloud through the device's built-in
+ * speech synthesis (a 中文 voice for zh, the system default for en). A no-op when
+ * sound or voice is off, or when the platform has no SpeechSynthesis.
+ */
+// 真人配音檔 — optional recorded voice clips keyed by line id (e.g. 'lu-bu-ult').
+// Drop files in public/audio/voice/<key>.mp3 and registerVoiceClips({...}); a
+// registered clip is spoken instead of the system TTS, with TTS as the fallback.
+const voiceClipUrls: Record<string, string> = {};
+const voiceClipCache: Record<string, HTMLAudioElement | 'bad'> = {};
+export function registerVoiceClips(map: Record<string, string>): void {
+  Object.assign(voiceClipUrls, map);
+}
+function tryPlayVoiceClip(key: string): boolean {
+  const url = voiceClipUrls[key];
+  if (!url) return false;
+  let el = voiceClipCache[key];
+  if (el === 'bad') return false;
+  if (!el) {
+    try {
+      el = new Audio(url);
+      el.preload = 'auto';
+      el.addEventListener('error', () => { voiceClipCache[key] = 'bad'; });
+      voiceClipCache[key] = el;
+    } catch { voiceClipCache[key] = 'bad'; return false; }
+  }
+  try { const v = el.cloneNode() as HTMLAudioElement; v.volume = 0.92; const p = v.play(); if (p) p.catch(() => undefined); return true; }
+  catch { return false; }
+}
+
+export function speakLine(zh: string, en: string, lang: string = 'zh', clipKey?: string): void {
+  if (!enabled || !voiceEnabled) return;
+  // A registered recording wins over the system TTS.
+  if (clipKey && tryPlayVoiceClip(clipKey)) return;
+  if (typeof window === 'undefined') return;
+  const synth = window.speechSynthesis;
+  if (!synth) return;
+  resolveZhVoice(synth);
+  try {
+    synth.cancel(); // barbs are short; let the latest one speak
+    // 'both' (bilingual UI) speaks the 中文 line.
+    const useEn = lang === 'en';
+    const u = new SpeechSynthesisUtterance(useEn ? en : zh);
+    if (!useEn) { u.lang = zhVoice?.lang ?? 'zh-CN'; if (zhVoice) u.voice = zhVoice; }
+    else u.lang = 'en-US';
+    u.rate = 0.96;
+    u.pitch = 0.92;
+    u.volume = 0.9;
+    synth.speak(u);
+  } catch { /* unsupported — ignore */ }
 }
 
 /* ─── 戰法施放音效 — one signature sting per FX archetype ─────────────────
@@ -820,9 +948,33 @@ function warDrum(c: AudioContext, dry: AudioNode, wet: AudioNode | null): void {
 /** Crossfade duration when switching tracks — old fades out as new fades in. */
 const MUSIC_CROSSFADE = 1.6;
 
+/** Swap to a registered music FILE (looping <audio>); returns true if one exists. */
+function tryPlayMusicFile(track: Exclude<MusicTrack, null>): boolean {
+  const url = musicFileUrls[track];
+  if (!url) return false;
+  try {
+    if (!musicEl) { musicEl = new Audio(); musicEl.loop = true; musicEl.volume = 0.6; }
+    if (musicEl.src.endsWith(url) && !musicEl.paused) return true;
+    musicEl.src = url;
+    const p = musicEl.play();
+    if (p) p.catch(() => undefined);
+    return true;
+  } catch { return false; }
+}
+function stopMusicFile(): void {
+  if (musicEl) { try { musicEl.pause(); } catch { /* ignore */ } }
+}
+
 export function playMusic(track: MusicTrack): void {
   // Same track already sounding → leave it be (no restart churn).
-  if (track && track === currentTrack && musicTimer) return;
+  if (track && track === currentTrack && (musicTimer || (musicEl && !musicEl.paused))) return;
+  // A registered recording wins over the procedural score.
+  if (track && enabled && tryPlayMusicFile(track)) {
+    currentTrack = track;
+    if (musicTimer) { clearInterval(musicTimer); musicTimer = null; }
+    return;
+  }
+  stopMusicFile();
   const c = getCtx();
 
   // Crossfade out the outgoing bus rather than hard-cutting it: ramp its gain
@@ -895,6 +1047,7 @@ export function playMusic(track: MusicTrack): void {
 
 export function stopMusic(): void {
   currentTrack = null;
+  stopMusicFile();
   if (musicTimer) {
     clearInterval(musicTimer);
     musicTimer = null;
