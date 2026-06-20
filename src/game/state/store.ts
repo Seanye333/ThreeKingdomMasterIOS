@@ -414,6 +414,10 @@ interface GameStore extends GameState {
   /** 名聲榜 — accumulate heroic deeds (duel/debate wins, etc.) for an officer.
    *  Numeric fields add; others overwrite. Feeds renown in systems/fame.ts. */
   recordDeed: (officerId: EntityId, patch: Partial<import('../types').HeroicDeeds>) => void;
+  /** 劇情舌戰 — apply a scripted scenario's outcome effects to live state
+   *  (gold to the capital, recruiting a won-over officer, shaming a routed one).
+   *  Relationship/morale/note effects are display-only. */
+  applyScenarioEffects: (effects: import('../systems/debateScenarios').ScenarioEffect[]) => void;
   /** Pay for siege works (圍困糧耗 / 水攻決堤) from the attacking city's
    *  stores before an assault. Returns false (and deducts nothing) if the
    *  city can't afford it. */
@@ -4681,6 +4685,29 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           merged[k] = typeof v === 'number' ? (curRec[k] ?? 0) + v : v;
         }
         set({ deeds: { ...state.deeds, [officerId]: merged as unknown as import('../types').HeroicDeeds } });
+      },
+      applyScenarioEffects: (effects) => {
+        const state = get();
+        const player = state.forces[state.playerForceId ?? ''];
+        if (!player) return;
+        const officers = { ...state.officers };
+        const cities = { ...state.cities };
+        const capId = player.capitalCityId;
+        for (const e of effects) {
+          if (e.kind === 'gold' && e.amount && cities[capId]) {
+            cities[capId] = { ...cities[capId], gold: cities[capId].gold + e.amount };
+          } else if (e.kind === 'recruit' && e.targetId) {
+            const o = officers[e.targetId];
+            if (o && o.status !== 'dead' && o.forceId !== state.playerForceId) {
+              officers[e.targetId] = { ...o, forceId: state.playerForceId, status: 'idle', task: null, locationCityId: capId, loyalty: Math.max(o.loyalty, 65) };
+            }
+          } else if (e.kind === 'afflict' && e.targetId) {
+            const o = officers[e.targetId];
+            if (o && o.status !== 'dead') officers[e.targetId] = withAffliction(o, { kind: 'shame', seasons: 4, charisma: -10, intelligence: -8 });
+          }
+          // 'relationship' / 'morale' / 'note' are display-only here.
+        }
+        set({ officers, cities });
       },
       grantOfficerXp: (officerId, amount) => {
         const state = get();

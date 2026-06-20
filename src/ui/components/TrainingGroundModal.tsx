@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { canDuel, type DuelDifficulty } from '../../game/systems/duel';
+import { renownFromDeeds, fameTier, rollChallenger } from '../../game/systems/fame';
 import { Modal } from './Modal';
 import { OfficerPortrait } from './OfficerPortrait';
 import { OfficerStats } from './OfficerStats';
@@ -21,6 +22,8 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
   const year = useGameStore((s) => s.date.year);
   const grantSparXp = useGameStore((s) => s.grantSparXp);
   const recordDeed = useGameStore((s) => s.recordDeed);
+  const deeds = useGameStore((s) => s.deeds);
+  const applyScenarioEffects = useGameStore((s) => s.applyScenarioEffects);
 
   const roster = useMemo(
     () => Object.values(officers)
@@ -29,10 +32,25 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
     [officers, playerForceId],
   );
 
+  // 踢館 — your most renowned warrior draws an ambitious outsider who rides in to
+  // test them. Generated deterministically (rng→0) so a challenge is waiting when
+  // you visit; beat them for a gold bounty (and the renown).
+  const challenge = useMemo(() => {
+    const champ = roster.find((o) => fameTier(renownFromDeeds(deeds[o.id])).min >= 50);
+    if (!champ) return null;
+    const renown = renownFromDeeds(deeds[champ.id]);
+    const candidates = Object.values(officers).filter((o) => o.forceId !== playerForceId && canDuel(o).ok);
+    const ch = rollChallenger(champ, renown, candidates, () => 0);
+    if (!ch || ch.kind !== 'duel') return null;
+    const challenger = officers[ch.challengerId];
+    return challenger ? { champ, challenger, bounty: ch.bounty, lineZh: ch.lineZh, lineEn: ch.lineEn } : null;
+  }, [roster, officers, deeds, playerForceId]);
+
   const [aId, setAId] = useState<string | null>(null);
   const [bId, setBId] = useState<string | null>(null);
   const [difficulty, setDifficulty] = useState<DuelDifficulty>('veteran');
   const [sparring, setSparring] = useState(false);
+  const [duelChallenge, setDuelChallenge] = useState(false);
   const [result, setResult] = useState<{ text: string; notes: string[] } | null>(null);
 
   const a = aId ? officers[aId] : null;
@@ -75,6 +93,38 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
     );
   }
 
+  // 踢館 — the renowned champion faces the visiting challenger; a real bout with a
+  // gold bounty on the line.
+  if (duelChallenge && challenge) {
+    return (
+      <Duel3DStage
+        attacker={challenge.champ}
+        defender={challenge.challenger}
+        lethal={false}
+        difficulty="peerless"
+        onComplete={(outcome) => {
+          setDuelChallenge(false);
+          const won = outcome.winner === 'attacker';
+          if (won) {
+            recordDeed(challenge.champ.id, { duelsWon: 1 });
+            applyScenarioEffects([{ kind: 'gold', amount: challenge.bounty, textZh: '', textEn: '' }]);
+            setResult({
+              text: t(`${pickName(challenge.champ.name, lang)} 力克踢館者 ${pickName(challenge.challenger.name, lang)}!`, `${pickName(challenge.champ.name, lang)} beats the challenger ${pickName(challenge.challenger.name, lang)}!`),
+              notes: [t(`賞金 ${challenge.bounty} 入庫。`, `Bounty of ${challenge.bounty} gold collected.`)],
+            });
+          } else {
+            setResult({
+              text: outcome.winner === 'draw'
+                ? t('與踢館者戰成平手。', 'A draw against the challenger.')
+                : t(`不敵踢館者 ${pickName(challenge.challenger.name, lang)}。`, `Bested by the challenger ${pickName(challenge.challenger.name, lang)}.`),
+              notes: [],
+            });
+          }
+        }}
+      />
+    );
+  }
+
   const slot = (o: typeof a, label: string) => (
     <div style={{ flex: 1, textAlign: 'center', border: '1px dashed #3a4754', borderRadius: 6, padding: '0.6rem', background: o ? 'rgba(230,196,115,0.06)' : 'transparent' }}>
       <div style={{ fontSize: '0.68rem', color: '#7a8893', letterSpacing: '0.1rem', marginBottom: '0.4rem' }}>{label}</div>
@@ -100,6 +150,21 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
         {t('選兩名麾下武將切磋(點到為止,不致命)。勝負雙方皆增經驗,或可升級增益屬性、習得新技。',
           'Pick two officers to spar (non-lethal). Both gain experience — the winner more — which can raise stats or teach skills.')}
       </div>
+
+      {/* 踢館 — an outsider drawn by your champion's renown waits to test them. */}
+      {challenge && (
+        <div style={{ background: 'linear-gradient(180deg, rgba(120,40,30,0.3), rgba(40,16,12,0.3))', border: '1px solid #e0846a', borderRadius: 6, padding: '0.6rem 0.8rem', marginBottom: '0.8rem' }}>
+          <div style={{ color: '#ffd0b8', fontSize: '0.84rem', marginBottom: 4 }}>
+            🏯 {t('踢館', 'A Challenger Arrives')} — <b style={{ color: '#ffe0d0' }}>{pickName(challenge.challenger.name, lang)}</b>
+            <span style={{ color: '#caa86a', fontSize: '0.74rem' }}> ({t('武', 'WAR')} {challenge.challenger.stats.war})</span>
+          </div>
+          <div style={{ fontSize: '0.74rem', color: '#d8b0a0', fontStyle: 'italic', marginBottom: 6 }}>「{lang === 'en' ? challenge.lineEn : challenge.lineZh}」</div>
+          <button
+            onClick={() => { setResult(null); setDuelChallenge(true); }}
+            style={{ width: '100%', padding: '0.45rem', background: 'linear-gradient(180deg,#7a2a20,#4a1810)', border: '1px solid #e0846a', color: '#ffe0d0', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', letterSpacing: '0.08rem', borderRadius: 4 }}
+          >⚔ {t(`遣 ${pickName(challenge.champ.name, lang)} 應戰(賞 ${challenge.bounty} 金)`, `Send ${pickName(challenge.champ.name, lang)} (${challenge.bounty}g bounty)`)}</button>
+        </div>
+      )}
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.8rem' }}>
         {slot(a, t('挑戰者', 'Challenger'))}
