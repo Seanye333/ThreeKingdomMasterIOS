@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
-import { canDuel } from '../../game/systems/duel';
+import { canDuel, type DuelDifficulty } from '../../game/systems/duel';
 import { Modal } from './Modal';
 import { OfficerPortrait } from './OfficerPortrait';
 import { OfficerStats } from './OfficerStats';
-import { DuelGameModal } from './DuelGameModal';
+import { Duel3DStage } from './duel/Duel3DStage';
 import { useT, useLanguage, pickName } from '../i18n';
 
 /**
@@ -30,6 +30,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
 
   const [aId, setAId] = useState<string | null>(null);
   const [bId, setBId] = useState<string | null>(null);
+  const [difficulty, setDifficulty] = useState<DuelDifficulty>('veteran');
   const [sparring, setSparring] = useState(false);
   const [result, setResult] = useState<{ text: string; notes: string[] } | null>(null);
 
@@ -50,10 +51,11 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
   // alongside the higher-z modal would bury it).
   if (sparring && a && b) {
     return (
-      <DuelGameModal
+      <Duel3DStage
         attacker={a}
         defender={b}
         lethal={false}
+        difficulty={difficulty}
         onComplete={(outcome) => {
           setSparring(false);
           const draw = outcome.winner === 'draw';
@@ -101,6 +103,25 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
         {slot(a, t('挑戰者', 'Challenger'))}
         <div style={{ fontSize: '1.4rem', color: '#7a8893' }}>VS</div>
         {slot(b, t('對手', 'Opponent'))}
+      </div>
+
+      {/* AI 難度 — how sharply the opponent reads and counters. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: '0.8rem' }}>
+        <span style={{ fontSize: '0.72rem', color: '#7a8893', letterSpacing: '0.06rem', marginRight: 2 }}>{t('對手難度', 'AI')}</span>
+        {([['rookie', '新手', 'Rookie'], ['veteran', '老將', 'Veteran'], ['peerless', '無雙', 'Peerless']] as const).map(([id, zh, en]) => {
+          const on = difficulty === id;
+          return (
+            <button
+              key={id}
+              onClick={() => setDifficulty(id)}
+              style={{
+                flex: 1, padding: '0.3rem', fontFamily: 'inherit', fontSize: '0.8rem', cursor: 'pointer', borderRadius: 4,
+                background: on ? 'rgba(230,196,115,0.16)' : '#10161e', border: `1px solid ${on ? '#e6c473' : '#26323e'}`,
+                color: on ? '#f2dd9a' : '#8a96a0',
+              }}
+            >{lang === 'en' ? en : zh}</button>
+          );
+        })}
       </div>
 
       <button

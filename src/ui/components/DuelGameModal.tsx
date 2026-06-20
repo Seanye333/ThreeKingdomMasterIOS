@@ -2,11 +2,24 @@ import { useRef, useState } from 'react';
 import type { Officer } from '../../game/types';
 import {
   initDuelBout, duelRound, aiDuelMove, POWER_GUARD_COST, staticProwess, weaponArtFor,
-  type DuelMove, type DuelBout,
+  type DuelMove, type DuelBout, type DuelDifficulty,
 } from '../../game/systems/duel';
 import { OfficerPortrait } from './OfficerPortrait';
 import { playSfx } from '../../game/systems/sound';
 import { useT, useLanguage } from '../i18n';
+
+/** Per-exchange feedback emitted by {@link DuelGameModal} so a host (the staged
+ *  battlefield or the 3D duel arena) can drive strike / hit / death animations.
+ *  `hit` is which side took the blow; the rest let the arena pick the right clip
+ *  (a 奮 plays a heavier strike; `over`/`winner` trigger the finishing pose). */
+export interface DuelRoundFx {
+  hit: 'a' | 'd' | 'both';
+  killed: boolean;
+  aMove?: DuelMove;
+  dMove?: DuelMove;
+  over?: boolean;
+  winner?: 'attacker' | 'defender' | 'draw';
+}
 
 /** 必殺技 — a named signature move for famous warriors; the rest of the great
  *  (matchless / war ≥ 90) fall back to a generic 奮命一擊. */
@@ -32,20 +45,25 @@ function signatureFor(o: Officer): { zh: string; en: string } | null {
 }
 
 /**
- * Interactive single combat — the player commits 攻/守/計/奮 each round against
- * the AI. 守>攻, 攻>計, 計>守; a successful 守 banks a guard point, and 奮
- * (Overpower, costs 2 guard) beats 攻 and 計 but loses to 守. First to drop the
- * foe's 氣力 to 0 cuts them down; a stamina lead at the end wins on points.
+ * Interactive single combat — each round the player commits one of 3 attacks
+ * (劈 cleave / 斬 slash / 掃 sweep) or 3 defenses (格 guard / 閃 dodge / 架 parry),
+ * or spends 氣 on 奮 (Overpower). Counters are near-decisive: each attack is
+ * stopped by two defenses and punishes the third; attacks clash on 斬>劈>掃>斬.
+ * First to drop the foe's 氣力 to 0 cuts them down; a lead at the end wins.
  */
-const MOVES: Array<{ id: DuelMove; zh: string; en: string; hint: { zh: string; en: string } }> = [
-  { id: 'attack', zh: '攻', en: 'Attack',  hint: { zh: '勝計、負守', en: 'beats Scheme, loses to Guard' } },
-  { id: 'defend', zh: '守', en: 'Guard',   hint: { zh: '勝攻、攢氣', en: 'beats Attack, banks guard' } },
-  { id: 'scheme', zh: '計', en: 'Scheme',  hint: { zh: '勝守、負攻', en: 'beats Guard, loses to Attack' } },
-  { id: 'power',  zh: '奮', en: 'Overpower', hint: { zh: '耗2氣，勝攻計', en: '2 guard — beats Attack & Scheme' } },
+type MoveKind = 'attack' | 'defense' | 'power';
+const MOVES: Array<{ id: DuelMove; zh: string; en: string; kind: MoveKind; hint: { zh: string; en: string } }> = [
+  { id: 'cleave', zh: '劈', en: 'Cleave',    kind: 'attack',  hint: { zh: '高·重 — 破架招', en: 'high/heavy — punishes Parry' } },
+  { id: 'slash',  zh: '斬', en: 'Slash',     kind: 'attack',  hint: { zh: '中·快 — 破閃避', en: 'mid/fast — punishes Dodge' } },
+  { id: 'sweep',  zh: '掃', en: 'Sweep',     kind: 'attack',  hint: { zh: '低·掃 — 破格擋', en: 'low — punishes Guard' } },
+  { id: 'guard',  zh: '格', en: 'Guard',     kind: 'defense', hint: { zh: '擋斬·劈，攢氣；漏掃', en: 'stops Slash/Cleave, banks 氣; weak vs Sweep' } },
+  { id: 'dodge',  zh: '閃', en: 'Dodge',     kind: 'defense', hint: { zh: '閃劈·掃，回氣力；漏斬', en: 'evades Cleave/Sweep, recovers; weak vs Slash' } },
+  { id: 'parry',  zh: '架', en: 'Parry',     kind: 'defense', hint: { zh: '架斬·掃，反擊攢2氣；漏劈', en: 'deflects Slash/Sweep, ripostes +2氣; weak vs Cleave' } },
+  { id: 'power',  zh: '奮', en: 'Overpower', kind: 'power',   hint: { zh: '耗2氣，唯格可擋', en: '2 氣 — only Guard stops it' } },
 ];
 
 export function DuelGameModal({
-  attacker, defender, onComplete, meFatigue = 0, foeFatigue = 0, lethal = true, reinforcements = [], staged = false, onRound,
+  attacker, defender, onComplete, meFatigue = 0, foeFatigue = 0, lethal = true, reinforcements = [], staged = false, onRound, difficulty = 'veteran',
 }: {
   attacker: Officer;
   defender: Officer;
@@ -53,19 +71,22 @@ export function DuelGameModal({
   /** 車輪戰 — starting-stamina penalties from bouts already fought this battle. */
   meFatigue?: number;
   foeFatigue?: number;
+  /** AI 難度 — how sharply the foe reads and counters (rookie/veteran/peerless). */
+  difficulty?: DuelDifficulty;
   /** 演武 — a non-lethal sparring bout: a knockout reads as "yields", not death. */
   lethal?: boolean;
   /** 三英戰呂布 — adjacent allies who can leap in when your fighter is hard-pressed. */
   reinforcements?: Officer[];
   /** 戰場原地對決 — render as a bottom panel so the 3D battlefield shows behind. */
   staged?: boolean;
-  /** Fires after each exchange so the staged battlefield can clash the units. */
-  onRound?: (r: { hit: 'a' | 'd' | 'both'; killed: boolean }) => void;
+  /** Fires after each exchange so the staged battlefield (or 3D duel arena) can
+   *  play the matching strike/hit/death animations. */
+  onRound?: (r: DuelRoundFx) => void;
 }) {
   const t = useT();
   const lang = useLanguage();
   const reduced = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  const [bout, setBout] = useState<DuelBout>(() => initDuelBout(attacker, defender, meFatigue, foeFatigue));
+  const [bout, setBout] = useState<DuelBout>(() => initDuelBout(attacker, defender, meFatigue, foeFatigue, difficulty));
   // 當前出戰者 — starts as `attacker`; an ally can take over mid-bout (援護).
   const [me, setMe] = useState<Officer>(attacker);
   const [used, setUsed] = useState<Set<string>>(() => new Set([attacker.id]));
@@ -133,7 +154,7 @@ export function DuelGameModal({
       : 'both';
     fxKey.current += 1;
     setFx({ key: fxKey.current, hit, dmg: Math.max(res.dmgToAttacker, res.dmgToDefender), killed: !!res.bout.killedId });
-    onRound?.({ hit, killed: !!res.bout.killedId });
+    onRound?.({ hit, killed: !!res.bout.killedId, aMove: move, dMove: foeMove, over: res.bout.over, winner: res.bout.winner });
 
     // 必殺 — a decisive 奮 from a great warrior unleashes a named signature move.
     const sigSide = move === 'power' && res.roundWinner === 'attacker' ? me
@@ -169,11 +190,79 @@ export function DuelGameModal({
       ? (lethal && bout.killedId ? `${nm(me)} ${t('斬', 'cut down')} ${nm(defender)}!` : `${nm(me)} ${t('佔上風', 'prevails')}`)
       : (lethal && bout.killedId ? `${nm(defender)} ${t('斬', 'cut down')} ${nm(me)}!` : `${nm(defender)} ${t('佔上風', 'prevails')}`);
 
+  // ── Move buttons (shared by the inline grid and the staged side panels) ──
+  const KIND_TINT: Record<MoveKind, string> = { attack: '#b8442e', defense: '#3a7dd9', power: '#e6c473' };
+  const movesOf = (kind: MoveKind) => MOVES.filter((m) => m.kind === kind);
+  const moveBtn = (m: typeof MOVES[number]) => {
+    const disabled = m.id === 'power' && bout.aGuard < POWER_GUARD_COST;
+    const tint = KIND_TINT[m.kind];
+    return (
+      <button
+        key={m.id}
+        onClick={() => play(m.id)}
+        disabled={disabled}
+        style={{
+          width: '100%', padding: '0.4rem 0.3rem', background: disabled ? '#241c12' : 'rgba(20,28,38,0.96)',
+          border: `1px solid ${disabled ? '#243240' : tint}`,
+          color: disabled ? '#5a4a36' : '#e6edf3', cursor: disabled ? 'default' : 'pointer',
+          fontFamily: 'inherit', textAlign: 'center', borderRadius: 4,
+        }}
+        title={lang === 'en' ? m.hint.en : m.hint.zh}
+      >
+        <div style={{ fontSize: '1.25rem', color: disabled ? '#5a4a36' : tint }}>
+          {m.zh}{m.id === 'power' ? ` (${bout.aGuard}/${POWER_GUARD_COST})` : ''}
+        </div>
+        <div style={{ fontSize: '0.58rem', color: '#8a96a0', lineHeight: 1.2 }}>{lang === 'en' ? m.en : m.hint.zh}</div>
+      </button>
+    );
+  };
+  const groupLabel = (zh: string, en: string, kind: MoveKind) => (
+    <div style={{ fontSize: '0.62rem', color: KIND_TINT[kind], letterSpacing: '0.08rem', margin: '0 0 3px 2px', textShadow: '0 1px 3px #000' }}>
+      {lang === 'en' ? en : zh}
+    </div>
+  );
+
+  // One fighter's portrait + name + WAR + weapon art + health + guard, with the
+  // hit shake / damage float. `who` picks the side; `foe` mirrors it to the right.
+  const fighterStatus = (who: 'me' | 'foe') => {
+    const o = who === 'me' ? me : defender;
+    const color = who === 'me' ? '#b8442e' : '#3a7dd9';
+    const stamina = who === 'me' ? bout.aStamina : bout.dStamina;
+    const guard = who === 'me' ? bout.aGuard : bout.dGuard;
+    const art = who === 'me' ? bout.aArt : bout.dArt;
+    const right = who === 'foe';
+    const isHit = !!fx && (who === 'me' ? (fx.hit === 'a' || fx.hit === 'both') : (fx.hit === 'd' || fx.hit === 'both'));
+    return (
+      <div
+        key={isHit && !reduced ? `${who}${fx!.key}` : who}
+        className={isHit && !reduced ? 'tkm-shake' : undefined}
+        style={{ position: 'relative', textAlign: right ? 'right' : 'left', minWidth: 0 }}
+      >
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexDirection: right ? 'row-reverse' : 'row' }}>
+          <OfficerPortrait officer={o} size={44} forceColor={color} />
+          <div style={{ minWidth: 0 }}>
+            <div style={{ color: '#e6c473', whiteSpace: 'nowrap' }}>{nm(o)}</div>
+            <div style={{ fontSize: '0.72rem', color: '#aab6c0' }}>{t('武', 'WAR')} {o.stats.war}</div>
+            {art && <div style={{ fontSize: '0.64rem', color: '#e0b060', whiteSpace: 'nowrap' }}>⚔ {lang === 'en' ? art.en : art.zh}</div>}
+          </div>
+        </div>
+        <div style={{ marginTop: '0.4rem' }}>{bar(stamina, color)}</div>
+        {guardPips(guard)}
+        {fx && fx.dmg > 0 && isHit && (
+          <span key={`d${who}${fx.key}`} className="tkm-damage-num" style={{ position: 'absolute', [right ? 'left' : 'right']: 8, top: 4, fontSize: '1.1rem' }}>−{fx.dmg}</span>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div style={staged
-      ? { position: 'fixed', left: 0, right: 0, bottom: 0, display: 'grid', placeItems: 'center', zIndex: 130, padding: '0 0 1rem', pointerEvents: 'none' }
+      ? { position: 'fixed', inset: 0, zIndex: 130, pointerEvents: 'none' }
       : { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', display: 'grid', placeItems: 'center', zIndex: 130 }}>
-      <div style={{ position: 'relative', overflow: 'hidden', width: 560, maxWidth: '95vw', background: staged ? 'rgba(31,24,16,0.94)' : '#1f1810', border: '1px solid #e6c473', padding: '1.25rem', fontFamily: 'var(--tkm-font-body)', color: '#e6edf3', pointerEvents: 'auto', boxShadow: staged ? '0 -6px 30px rgba(0,0,0,0.6)' : undefined }}>
+      {/* Status card — slim bar at the TOP when staged (so the fighters stay clear) */}
+      <div style={staged
+        ? { position: 'fixed', top: 8, left: '50%', transform: 'translateX(-50%)', width: 'min(340px, 42vw)', overflow: 'hidden', background: 'rgba(31,24,16,0.9)', border: '1px solid #e6c473', borderRadius: 6, padding: '0.55rem 0.9rem', fontFamily: 'var(--tkm-font-body)', color: '#e6edf3', pointerEvents: 'auto', boxShadow: '0 6px 30px rgba(0,0,0,0.6)' }
+        : { position: 'relative', overflow: 'hidden', width: 560, maxWidth: '95vw', background: '#1f1810', border: '1px solid #e6c473', padding: '1.25rem', fontFamily: 'var(--tkm-font-body)', color: '#e6edf3', pointerEvents: 'auto' }}>
         {/* 受創血暈 — the card edges flush red when *you* (the attacker) take a blow. */}
         {fx && !reduced && fx.hit === 'a' && <div key={`v${fx.key}`} className="tkm-blood-vignette" />}
 
@@ -188,9 +277,9 @@ export function DuelGameModal({
           </div>
         )}
 
-        {/* 必殺技 — the signature move slams across the bout. */}
+        {/* 必殺技 — the signature move slams across the whole screen. */}
         {signature && (
-          <div key={signature.key} style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', pointerEvents: 'none', zIndex: 6 }}>
+          <div key={signature.key} style={{ position: 'fixed', inset: 0, display: 'grid', placeItems: 'center', pointerEvents: 'none', zIndex: 140 }}>
             <div
               className={reduced ? undefined : 'tkm-victory-slam'}
               style={{
@@ -204,57 +293,22 @@ export function DuelGameModal({
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '1rem', alignItems: 'center', position: 'relative' }}>
-          <div
-            key={fx && (fx.hit === 'a' || fx.hit === 'both') && !reduced ? `a${fx.key}` : 'a'}
-            className={fx && (fx.hit === 'a' || fx.hit === 'both') && !reduced ? 'tkm-shake' : undefined}
-            style={{ position: 'relative' }}
-          >
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <OfficerPortrait officer={me} size={44} forceColor="#b8442e" />
-              <div>
-                <div style={{ color: '#e6c473' }}>{nm(me)}</div>
-                <div style={{ fontSize: '0.72rem', color: '#aab6c0' }}>{t('武', 'WAR')} {me.stats.war}</div>
-                {bout.aArt && <div style={{ fontSize: '0.64rem', color: '#e0b060' }}>⚔ {lang === 'en' ? bout.aArt.en : bout.aArt.zh}</div>}
-              </div>
+        {/* Non-staged: portraits in a centred row. (Staged shows them in the
+            top corners — see the fixed panels below.) */}
+        {!staged && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '1rem', alignItems: 'center', position: 'relative' }}>
+            {fighterStatus('me')}
+            <div style={{ position: 'relative', display: 'grid', placeItems: 'center', minWidth: '2.6rem' }}>
+              <div style={{ fontSize: '1.6rem', color: '#7a8893' }}>VS</div>
+              {fx && !reduced && (
+                <span key={`c${fx.key}`} className="tkm-clash" style={{ position: 'absolute', color: fx.killed ? '#ffd86a' : '#e6c473' }}>
+                  {fx.killed ? '✸' : '⚔'}
+                </span>
+              )}
             </div>
-            <div style={{ marginTop: '0.4rem' }}>{bar(bout.aStamina, '#b8442e')}</div>
-            {guardPips(bout.aGuard)}
-            {fx && fx.dmg > 0 && (fx.hit === 'a' || fx.hit === 'both') && (
-              <span key={`da${fx.key}`} className="tkm-damage-num" style={{ position: 'absolute', right: 8, top: 4, fontSize: '1.1rem' }}>−{fx.dmg}</span>
-            )}
+            {fighterStatus('foe')}
           </div>
-
-          {/* 刀光 — a clash glint flares over the centre each time blows are traded. */}
-          <div style={{ position: 'relative', display: 'grid', placeItems: 'center', minWidth: '2.6rem' }}>
-            <div style={{ fontSize: '1.6rem', color: '#7a8893' }}>VS</div>
-            {fx && !reduced && (
-              <span key={`c${fx.key}`} className="tkm-clash" style={{ position: 'absolute', color: fx.killed ? '#ffd86a' : '#e6c473' }}>
-                {fx.killed ? '✸' : '⚔'}
-              </span>
-            )}
-          </div>
-
-          <div
-            key={fx && fx.hit === 'd' && !reduced ? `d${fx.key}` : 'd'}
-            className={fx && fx.hit === 'd' && !reduced ? 'tkm-shake' : undefined}
-            style={{ textAlign: 'right', position: 'relative' }}
-          >
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexDirection: 'row-reverse' }}>
-              <OfficerPortrait officer={defender} size={44} forceColor="#3a7dd9" />
-              <div>
-                <div style={{ color: '#e6c473' }}>{nm(defender)}</div>
-                <div style={{ fontSize: '0.72rem', color: '#aab6c0' }}>{t('武', 'WAR')} {defender.stats.war}</div>
-                {bout.dArt && <div style={{ fontSize: '0.64rem', color: '#e0b060' }}>⚔ {lang === 'en' ? bout.dArt.en : bout.dArt.zh}</div>}
-              </div>
-            </div>
-            <div style={{ marginTop: '0.4rem' }}>{bar(bout.dStamina, '#3a7dd9')}</div>
-            {guardPips(bout.dGuard)}
-            {fx && fx.dmg > 0 && (fx.hit === 'd' || fx.hit === 'both') && (
-              <span key={`dd${fx.key}`} className="tkm-damage-num" style={{ position: 'absolute', left: 8, top: 4, fontSize: '1.1rem' }}>−{fx.dmg}</span>
-            )}
-          </div>
-        </div>
+        )}
 
         {/* 罵陣 — one shot, before blows are traded */}
         {!bout.over && !taunted && bout.round === 0 && (
@@ -287,35 +341,25 @@ export function DuelGameModal({
           </div>
         )}
 
-        {/* Move buttons */}
-        {!bout.over && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginTop: '1rem' }}>
-            {MOVES.map((m) => {
-              const disabled = m.id === 'power' && bout.aGuard < POWER_GUARD_COST;
-              return (
-                <button
-                  key={m.id}
-                  onClick={() => play(m.id)}
-                  disabled={disabled}
-                  style={{
-                    padding: '0.5rem 0.3rem', background: disabled ? '#241c12' : '#1e2832',
-                    border: `1px solid ${disabled ? '#243240' : '#364654'}`,
-                    color: disabled ? '#5a4a36' : '#e6edf3', cursor: disabled ? 'default' : 'pointer',
-                    fontFamily: 'inherit', textAlign: 'center',
-                  }}
-                  title={lang === 'en' ? m.hint.en : m.hint.zh}
-                >
-                  <div style={{ fontSize: '1.3rem', color: disabled ? '#5a4a36' : '#e6c473' }}>{m.zh}</div>
-                  <div style={{ fontSize: '0.6rem', color: '#7a8893' }}>{lang === 'en' ? m.en : m.hint.zh}</div>
-                </button>
-              );
-            })}
+        {/* Move buttons — inline grid (non-staged); staged mode shows them as
+            side panels outside this card so the fighters aren't covered. */}
+        {!bout.over && !staged && (
+          <div style={{ display: 'grid', gap: '0.5rem', marginTop: '0.9rem' }}>
+            <div>
+              {groupLabel('攻 — 進攻', 'ATTACK', 'attack')}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem' }}>{movesOf('attack').map(moveBtn)}</div>
+            </div>
+            <div>
+              {groupLabel('守 — 防禦', 'DEFEND', 'defense')}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem' }}>{movesOf('defense').map(moveBtn)}</div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr' }}>{movesOf('power').map(moveBtn)}</div>
           </div>
         )}
 
-        {/* Round log */}
-        <div style={{ marginTop: '0.8rem', minHeight: 96, maxHeight: 96, overflow: 'hidden', fontSize: '0.74rem', color: '#aab6c0', lineHeight: 1.6 }}>
-          {log.map((l, i) => <div key={i} style={{ opacity: 1 - i * 0.12 }}>{l}</div>)}
+        {/* Round log — short when staged (it's a slim top bar) */}
+        <div style={{ marginTop: '0.7rem', minHeight: staged ? 40 : 96, maxHeight: staged ? 40 : 96, overflow: 'hidden', fontSize: '0.74rem', color: '#aab6c0', lineHeight: 1.5 }}>
+          {log.slice(0, staged ? 2 : 7).map((l, i) => <div key={i} style={{ opacity: 1 - i * 0.12 }}>{l}</div>)}
         </div>
 
         {bout.over && (
@@ -330,6 +374,35 @@ export function DuelGameModal({
           </div>
         )}
       </div>
+
+      {/* Staged: each fighter's portrait/name/health sits in a top corner. */}
+      {staged && (() => {
+        const corner = (who: 'me' | 'foe') => (
+          <div style={{
+            position: 'fixed', top: 10, ...(who === 'me' ? { left: 10 } : { right: 10 }),
+            width: 'min(220px, 28vw)', pointerEvents: 'none', zIndex: 131,
+            background: 'rgba(15,12,8,0.72)', border: '1px solid #5a4a2a', borderRadius: 6, padding: '0.45rem 0.6rem',
+          }}>{fighterStatus(who)}</div>
+        );
+        return <>{corner('me')}{corner('foe')}</>;
+      })()}
+
+      {/* Staged side panels — attacks bottom-left, defenses bottom-right, so the
+          centre stays clear for the 3D fighters. */}
+      {staged && !bout.over && (
+        <>
+          <div style={{ position: 'fixed', left: 10, bottom: 22, width: 104, display: 'flex', flexDirection: 'column', gap: 6, pointerEvents: 'auto', zIndex: 131 }}>
+            {groupLabel('攻 — 進攻', 'ATTACK', 'attack')}
+            {movesOf('attack').map(moveBtn)}
+            <div style={{ height: 2 }} />
+            {movesOf('power').map(moveBtn)}
+          </div>
+          <div style={{ position: 'fixed', right: 10, bottom: 22, width: 104, display: 'flex', flexDirection: 'column', gap: 6, pointerEvents: 'auto', zIndex: 131 }}>
+            {groupLabel('守 — 防禦', 'DEFEND', 'defense')}
+            {movesOf('defense').map(moveBtn)}
+          </div>
+        </>
+      )}
     </div>
   );
 }

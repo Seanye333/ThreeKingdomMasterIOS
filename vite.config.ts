@@ -1,6 +1,43 @@
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { readdir, rm, stat } from 'node:fs/promises'
+import { join } from 'node:path'
+
+// The duel folder holds many Mixamo packs (~259MB) kept on disk for future use,
+// but the 3D duel only loads the Sword-and-Shield and Great-Sword packs plus a
+// few standalone clips. This prunes the rest from the BUILD OUTPUT (dist only —
+// source files are never touched) so iOS/Vercel ship ~40MB instead of 259MB.
+function pruneUnusedDuelPacks(): Plugin {
+  const KEEP_DIRS = new Set(['Sword and Shield Pack', 'Great Sword Pack'])
+  const KEEP_FILES = new Set(['X Bot.fbx', 'Dodging.fbx', 'Quick Roll To Run.fbx', 'Jump.fbx', 'README.md'])
+  return {
+    name: 'prune-unused-duel-packs',
+    apply: 'build',
+    async closeBundle() {
+      const dir = join('dist', 'models', 'duel')
+      let entries
+      try { entries = await readdir(dir, { withFileTypes: true }) } catch { return }
+      let freed = 0
+      for (const e of entries) {
+        const full = join(dir, e.name)
+        const drop = e.isDirectory() ? !KEEP_DIRS.has(e.name) : (e.name.endsWith('.fbx') && !KEEP_FILES.has(e.name))
+        if (!drop) continue
+        try { freed += await dirSize(full) } catch { /* ignore */ }
+        await rm(full, { recursive: true, force: true })
+      }
+      if (freed > 0) console.log(`\n[prune-duel-packs] removed ~${(freed / 1024 / 1024).toFixed(0)}MB of unused duel assets from dist`)
+    },
+  }
+}
+
+async function dirSize(p: string): Promise<number> {
+  const s = await stat(p)
+  if (!s.isDirectory()) return s.size
+  let total = 0
+  for (const e of await readdir(p)) total += await dirSize(join(p, e))
+  return total
+}
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -9,6 +46,7 @@ export default defineConfig({
   base: process.env.GHPAGES ? '/three-kingdom-masters/' : '/',
   plugins: [
     react(),
+    pruneUnusedDuelPacks(),
     // PWA — installable on phone home screens (fullscreen, offline-capable)
     // and as a desktop app window; the browser experience is unchanged.
     VitePWA({

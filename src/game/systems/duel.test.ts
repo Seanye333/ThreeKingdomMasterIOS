@@ -110,21 +110,31 @@ describe('interactive duel engine', () => {
   const mk = (war: number) => mkOfficer({ stats: { war, leadership: 60, intelligence: 60, politics: 60, charisma: 60 } });
   const fixed = () => 0.5;
 
-  it('respects the move cycle (守>攻, 計>守, 奮>攻, 守>奮)', () => {
+  it('respects the counter matrix (defenses stop two attacks, the blind spot is punished)', () => {
     const b = initDuelBout(mk(80), mk(80));
-    expect(duelRound(b, 'attack', 'defend', fixed).roundWinner).toBe('defender'); // 守 beats 攻
-    expect(duelRound(b, 'scheme', 'defend', fixed).roundWinner).toBe('attacker'); // 計 beats 守
-    expect(duelRound(b, 'power', 'attack', fixed).roundWinner).toBe('attacker');  // 奮 beats 攻
-    expect(duelRound(b, 'power', 'defend', fixed).roundWinner).toBe('defender');  // 守 beats 奮
-    expect(duelRound(b, 'attack', 'attack', fixed).roundWinner).toBe('draw');     // clash
+    // 格 guard stops 斬 slash (and banks 氣); 閃 dodge is slash's blind spot.
+    expect(duelRound(b, 'slash', 'guard', fixed).roundWinner).toBe('defender');
+    expect(duelRound(b, 'slash', 'dodge', fixed).roundWinner).toBe('attacker'); // 斬 punishes 閃
+    expect(duelRound(b, 'cleave', 'parry', fixed).roundWinner).toBe('attacker'); // 劈 punishes 架
+    expect(duelRound(b, 'sweep', 'guard', fixed).roundWinner).toBe('attacker');  // 掃 punishes 格
+    // Attack-vs-attack mini ring: 斬 > 劈.
+    expect(duelRound(b, 'slash', 'cleave', fixed).roundWinner).toBe('attacker');
+    // 奮 power: only 格 guard stops it.
+    expect(duelRound(b, 'power', 'guard', fixed).roundWinner).toBe('defender');
+    expect(duelRound(b, 'power', 'slash', fixed).roundWinner).toBe('attacker');
+    expect(duelRound(b, 'slash', 'slash', fixed).roundWinner).toBe('draw'); // mirror clash
   });
 
-  it('a successful block banks a guard point and deals no damage to the blocker', () => {
+  it('a guard that holds banks 氣 and takes no damage; a parry ripostes', () => {
     const b = initDuelBout(mk(80), mk(80));
-    const r = duelRound(b, 'attack', 'defend', fixed); // defender blocks
-    expect(r.dmgToDefender).toBe(0);
-    expect(r.bout.dGuard).toBe(1);
-    expect(r.dmgToAttacker).toBeGreaterThan(0);
+    const blocked = duelRound(b, 'slash', 'guard', fixed); // 格 stops 斬
+    expect(blocked.dmgToDefender).toBe(0);
+    expect(blocked.dmgToAttacker).toBe(0);
+    expect(blocked.bout.dGuard).toBe(1);
+    const parried = duelRound(b, 'slash', 'parry', fixed); // 架 stops 斬, ripostes
+    expect(parried.dmgToDefender).toBe(0);
+    expect(parried.bout.dGuard).toBe(2);
+    expect(parried.dmgToAttacker).toBeGreaterThan(0);
   });
 
   it('initDuelBout seeds static prowess; the bout ends and names a winner', () => {
@@ -132,7 +142,7 @@ describe('interactive duel engine', () => {
     const b = initDuelBout(atk, def);
     expect(b.aStatic).toBe(staticProwess(atk));
     let cur = b;
-    for (let i = 0; i < 12 && !cur.over; i++) cur = duelRound(cur, 'attack', 'scheme', fixed).bout; // 攻>計 every round
+    for (let i = 0; i < 12 && !cur.over; i++) cur = duelRound(cur, 'sweep', 'guard', fixed).bout; // 掃 punishes 格 every round
     expect(cur.over).toBe(true);
     expect(cur.winner).toBe('attacker');
   });
@@ -199,30 +209,29 @@ describe('兵器絕技 (weapon arts)', () => {
     expect(b.dArt).toBeNull();
   });
 
-  it('蛇矛破守 — a snake-spear chips a guarding foe (9) even when turned aside', () => {
+  it('蛇矛破守 — a snake-spear chips a 格-guarding foe (9) even when turned aside', () => {
     const zhangFei = mkOfficer({ equipment: ['snake-spear'], stats: { war: 90, leadership: 60, intelligence: 60, politics: 60, charisma: 60 } });
     const mook = mkOfficer({ stats: { war: 70, leadership: 60, intelligence: 60, politics: 60, charisma: 60 } });
     const b = initDuelBout(zhangFei, mook);
-    // 攻 into 守 normally deals 0 to the defender (守>攻); pierce chips 9.
-    const res = duelRound(b, 'attack', 'defend', fixed);
-    expect(res.roundWinner).toBe('defender');
+    // 斬 into 格 normally deals 0 to the blocker; the snake-spear chips 9.
+    const res = duelRound(b, 'slash', 'guard', fixed);
     expect(res.dmgToDefender).toBe(9);
   });
 });
 
 describe('aiDuelMove — 料敵 (intelligence reads the foe)', () => {
   const mkO = (intel: number) => mkOfficer({ stats: { war: 80, leadership: 60, intelligence: intel, politics: 60, charisma: 60 } });
-  const habit = ['attack', 'attack', 'attack'] as DuelMove[];
+  const habit = ['slash', 'slash', 'slash'] as DuelMove[];
 
   it('a sharp mind counters a predictable attacker; a bruiser fights on instinct', () => {
     const base = initDuelBout(mkO(80), mkO(110));
-    // Defender INT 110 → reads ~70%; with the foe always attacking, it guards.
+    // Defender INT 110 → reads ~70%; the foe always slashes, so it parries.
     const sharp = { ...base, aMoves: habit, dInt: 110, aGuard: 0, dGuard: 0 };
-    expect(aiDuelMove(sharp, 'defender', () => 0.1)).toBe('defend');
+    expect(aiDuelMove(sharp, 'defender', () => 0.1)).toBe('parry');
 
-    // Defender INT 40 → never reads; falls back to instinct (attack on rng 0.1).
+    // Defender INT 40 → never reads; falls back to instinct (slash on rng 0.1).
     const dull = { ...base, aMoves: habit, dInt: 40, aGuard: 0, dGuard: 0 };
-    expect(aiDuelMove(dull, 'defender', () => 0.1)).toBe('attack');
+    expect(aiDuelMove(dull, 'defender', () => 0.1)).toBe('slash');
   });
 
   it('車輪戰 — fatigue penalties open the bout winded (clamped to 30)', () => {
@@ -240,6 +249,58 @@ describe('aiDuelMove — 料敵 (intelligence reads the foe)', () => {
     const base = initDuelBout(mkO(80), mkO(110));
     // Foe (attacker) has 2 guard banked → threatens 奮; the reader plays 守.
     const bout = { ...base, dInt: 110, aGuard: 2, dGuard: 0, aMoves: [] as DuelMove[] };
-    expect(aiDuelMove(bout, 'defender', () => 0.1)).toBe('defend');
+    expect(aiDuelMove(bout, 'defender', () => 0.1)).toBe('guard');
+  });
+});
+
+describe('兵器特性 (weapon-class traits)', () => {
+  const fixed = () => 0.5;
+  const mk = (war: number) => mkOfficer({ stats: { war, leadership: 60, intelligence: 60, politics: 60, charisma: 60 } });
+
+  it('斧·破甲 — an axe chips a 格-guarding foe that fully blocks a sword', () => {
+    const base = initDuelBout(mk(80), mk(80));
+    expect(duelRound(base, 'slash', 'guard', fixed).dmgToDefender).toBe(0); // sword: blocked clean
+    expect(duelRound({ ...base, aClass: 'axe' }, 'slash', 'guard', fixed).dmgToDefender).toBeGreaterThan(0);
+  });
+
+  it('矛·一寸長 — a spear wins a mirrored clash instead of trading blows', () => {
+    const base = initDuelBout(mk(80), mk(80));
+    const r = duelRound({ ...base, aClass: 'spear', dClass: 'sword' }, 'slash', 'slash', fixed);
+    expect(r.roundWinner).toBe('attacker');
+    expect(r.dmgToAttacker).toBe(0);
+    expect(r.dmgToDefender).toBeGreaterThan(0);
+  });
+
+  it('雙劍·追擊 — a landed twin-blade strike deals 6 more than a plain sword', () => {
+    const base = initDuelBout(mk(80), mk(80));
+    const sword = duelRound({ ...base, aClass: 'sword' }, 'slash', 'dodge', fixed).dmgToDefender;
+    const twin = duelRound({ ...base, aClass: 'twinblade' }, 'slash', 'dodge', fixed).dmgToDefender;
+    expect(twin).toBe(sword + 6);
+  });
+
+  it('重兵器·震懾 — a greatsword hit jars a banked 氣 point loose', () => {
+    const base = { ...initDuelBout(mk(80), mk(80)), aClass: 'greatsword' as const, dGuard: 2 };
+    const r = duelRound(base, 'slash', 'dodge', fixed); // 斬 punishes 閃 → it lands
+    expect(r.dmgToDefender).toBeGreaterThan(0);
+    expect(r.bout.dGuard).toBe(1);
+  });
+
+  it('奮·壓制 — a landed Overpower knocks all the victim\'s 氣 loose', () => {
+    const base = { ...initDuelBout(mk(80), mk(80)), aGuard: 2, dGuard: 2 };
+    const r = duelRound(base, 'power', 'slash', fixed); // only 格 stops 奮 — it lands
+    expect(r.dmgToDefender).toBeGreaterThan(0);
+    expect(r.bout.dGuard).toBe(0);
+  });
+});
+
+describe('難度分檔 (AI difficulty)', () => {
+  const mkO = (intel: number) => mkOfficer({ stats: { war: 80, leadership: 60, intelligence: intel, politics: 60, charisma: 60 } });
+  const habit = ['slash', 'slash', 'slash'] as DuelMove[];
+
+  it('a peerless foe reads & counters where a rookie fights blind', () => {
+    const base = { ...initDuelBout(mkO(80), mkO(110)), aMoves: habit, dInt: 110, aGuard: 0, dGuard: 0 };
+    expect(aiDuelMove({ ...base, difficulty: 'veteran' }, 'defender', () => 0.5)).toBe('parry');
+    expect(aiDuelMove({ ...base, difficulty: 'peerless' }, 'defender', () => 0.5)).toBe('parry');
+    expect(aiDuelMove({ ...base, difficulty: 'rookie' }, 'defender', () => 0.5)).not.toBe('parry');
   });
 });

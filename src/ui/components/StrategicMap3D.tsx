@@ -24,7 +24,7 @@ import { categoryOfTactic } from '../../game/data/officerAttributes';
 import { unitAt, canMove, canAttack, moveUnit, attackUnits, endTurn, applyStratagem, hexDistance, forecastAttack, matchupLabel, battleStratagemSituation } from '../../game/systems/tactical';
 import { canDuel } from '../../game/systems/duel';
 import { personalTacticsForUnit } from '../../game/systems/personalTactics';
-import { DuelGameModal } from './DuelGameModal';
+import { Duel3DStage } from './duel/Duel3DStage';
 import { MarchPicker } from './MarchPicker';
 import { OfficerPicker } from './OfficerPicker';
 import { playSfx, playFxSfx, startMapAmbience, setMapAmbienceMode, stopMapAmbience } from '../../game/systems/sound';
@@ -7688,7 +7688,7 @@ export function StrategicMap3D() {
 
       {/* 單挑 from the world map — same modal & writeback as the fullscreen. */}
       {worldDuel && (
-        <DuelGameModal
+        <Duel3DStage
           attacker={worldDuel.me}
           defender={worldDuel.foe}
           meFatigue={worldDuel.meFatigue}

@@ -23,7 +23,7 @@ import { personalTacticsForUnit } from '../../game/systems/personalTactics';
 import { FORMATIONS_BY_ID, STRATAGEMS } from '../../game/data';
 import { BattleResultsModal } from '../components/BattleResultsModal';
 import { IntroDive } from '../components/IntroDive';
-import { DuelGameModal } from '../components/DuelGameModal';
+import { Duel3DStage } from '../components/duel/Duel3DStage';
 import { useT, useDesc, useLanguage, pickName } from '../i18n';
 import { isReduceMotion } from '../uiPrefs';
 import { groundNormalTexture, groundRoughnessTexture } from './battleTextures';
@@ -5013,7 +5013,7 @@ export function TacticalBattleScreen3D() {
       )}
 
       {interactiveDuel && (
-        <DuelGameModal
+        <Duel3DStage
           attacker={interactiveDuel.me}
           defender={interactiveDuel.foe}
           meFatigue={interactiveDuel.meFatigue}
