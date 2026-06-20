@@ -671,7 +671,13 @@ export function MapScreen() {
 
       <main className={styles.main}>
         <div className={styles.mapWrap} style={{ position: 'relative' }}>
-          <StrategicMap3D />
+          {/* Free the strategic map's WebGL context while the fullscreen battle
+              (单挑 / 舌战 / 会战) sits opaque on top of it. Two live three.js
+              contexts at once is what tips mobile browsers into an out-of-memory
+              tab reload — which drops the player back to the map mid-fight and
+              forces a re-出阵. Minimizing the battle to its map diorama clears
+              battleScreenUp, so the map remounts and 观战 still works. */}
+          {!battleScreenUp && <StrategicMap3D />}
           {/* In-transit armies overview — shown over both map modes. */}
           <div style={{ position: 'absolute', left: 8, top: 92, zIndex: 15 }}>
             <ArmiesPanel />

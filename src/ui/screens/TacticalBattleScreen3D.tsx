@@ -4598,8 +4598,12 @@ export function TacticalBattleScreen3D() {
           />
         )}
         <Canvas
-          shadows
-          dpr={[1, 2]}
+          // Phones: cap the pixel ratio (a DPR-3 phone otherwise renders at 2×
+          // = ~4× the fragments) and drop shadow maps — both are pure GPU-memory
+          // wins that keep the battle scene from tipping the tab into an
+          // out-of-memory reload while the strategic map context is also alive.
+          shadows={!IS_MOBILE}
+          dpr={IS_MOBILE ? [1, 1.5] : [1, 2]}
           camera={{ position: [target[0] - 8, 40, target[2] + 6], fov: 45 }}
           gl={{
             antialias: false,  // SMAA in the composer handles edges
