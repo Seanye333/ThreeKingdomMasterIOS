@@ -1,58 +1,60 @@
-# 真實音效 / 配樂 (optional recorded audio)
+# 真實音效 / 配樂 / 配音 (optional recorded audio)
 
 The game ships with **synthesized** sound (oscillator stings + a procedural
-score in `src/game/systems/sound.ts`). You can layer **real recordings** on top
-with zero code changes — anything you don't provide keeps the synth fallback.
+score in `src/game/systems/sound.ts`) and **system TTS** for spoken lines. It
+needs **no audio files at all** to sound complete.
 
-## How to add files
+Recorded files are an **optional override**: drop them here and flip
+**Settings → 音響 → 真實音效包 (Real audio pack)** on. Anything you don't provide
+falls back to the synth/TTS automatically — partial packs are fine.
 
-Drop audio (mp3/ogg/m4a) here:
+The paths below are already wired (`App.tsx` calls `enableAudioFiles()` +
+`registerOfficerVoiceClips(...)` at startup), so you only need to **add files
+matching these names** and turn the toggle on. Nothing is fetched while the
+toggle is off, so an empty folder causes no 404s.
 
-```
-public/audio/sfx/<name>.mp3      e.g. sfx/sword.mp3, sfx/crash.mp3, sfx/wardrum.mp3
-public/audio/music/<track>.mp3   tracks: peace, tension, battle, victory, defeat
-```
+> Format: **mp3** is safest (works in iOS WKWebView / Tauri). Avoid `.ogg` on iOS.
 
-The SFX `<name>` values are the `SfxName` union in `sound.ts`
-(`click, sword, horn, gong, arrow, fire, coin, defeat, victory, march, bell,
-dirge, crash, whoosh, pluck, quake, thud, shout, wardrum, retreat, forge,
-wedding`, plus `open-modal`).
+---
 
-## How to turn them on
+## 1) 音效 SFX — `public/audio/sfx/<name>.mp3`  (23 files)
 
-Call once at startup (e.g. in `src/main.tsx`), after the files exist:
-
-```ts
-import { enableAudioFiles } from './game/systems/sound';
-enableAudioFiles();                 // maps every name → /audio/sfx|music/<name>.mp3
-// or register only the ones you have:
-import { registerSfxSamples, registerMusicFiles } from './game/systems/sound';
-registerSfxSamples({ sword: '/audio/sfx/sword.mp3', crash: '/audio/sfx/crash.mp3' });
-registerMusicFiles({ battle: '/audio/music/battle.mp3' });
-```
-
-Missing names/tracks silently fall back to the synth, so partial packs are fine.
-`enableAudioFiles()` is intentionally **not** called by default (so no 404s when
-the folder is empty) — wire it once you've added a pack.
-
-## 真人配音 (recorded voice lines)
-
-The duel/debate barbs speak via the device's system TTS by default. To use real
-recordings instead, drop clips in `public/audio/voice/` and register them:
+The `<name>` values are the `SfxName` union in `sound.ts`:
 
 ```
-public/audio/voice/<key>.mp3     e.g. voice/lu-bu-ult.mp3, voice/guan-yu-taunt.mp3
+click   open-modal   sword   horn    gong     arrow    fire    coin
+defeat  victory      march   bell    dirge    crash    whoosh  pluck
+quake   thud         shout   wardrum retreat  forge    wedding
 ```
 
-```ts
-import { registerVoiceClips } from './game/systems/sound';
-registerVoiceClips({
-  'lu-bu-ult': '/audio/voice/lu-bu-ult.mp3',
-  'guan-yu-taunt': '/audio/voice/guan-yu-taunt.mp3',
-});
+## 2) 配樂 Music — `public/audio/music/<track>.mp3`  (5 files)
+
+```
+peace   tension   battle   victory   defeat
 ```
 
-The keys the 單挑 currently passes are `<officerId>-ult` (on a finisher) and
-`<officerId>-taunt` (on the pre-duel goad), for the famous officers in
-`src/game/data/officerLines.ts`. A registered clip plays instead of TTS; anything
-unregistered keeps the TTS voice.
+These loop; pick something seamless.
+
+## 3) 武將配音 Voice — `public/audio/voice/<id>-<kind>.mp3`
+
+`<kind>` is `taunt` (pre-duel goad) or `ult` (cried on a finisher). The 12
+officers with signature lines (`src/game/data/officerLines.ts`):
+
+```
+lu-bu       guan-yu     zhang-fei   zhao-yun
+ma-chao     dian-wei    xu-chu      taishi-ci
+gan-ning    huang-zhong zhang-liao  sun-ce
+```
+
+→ 24 files, e.g. `lu-bu-taunt.mp3`, `lu-bu-ult.mp3`, `guan-yu-taunt.mp3`, …
+Any clip you skip keeps the system-TTS voice for that line.
+
+---
+
+## Notes
+
+- **Stratagem-cast stings** (火/雷/弓/騎… the 37 `StratagemFxKind` families) and
+  **event mood cues** are synth-only — there is no file-override path for them.
+- To register only a subset by hand instead of the convention helpers, see
+  `registerSfxSamples` / `registerMusicFiles` / `registerVoiceClips` in
+  `sound.ts`.

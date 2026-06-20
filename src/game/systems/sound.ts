@@ -198,6 +198,25 @@ const sfxSampleCache: Partial<Record<SfxName, HTMLAudioElement | 'bad'>> = {};
 const musicFileUrls: Partial<Record<Exclude<MusicTrack, null>, string>> = {};
 let musicEl: HTMLAudioElement | null = null;
 
+// 真實音效包總開關 — master switch for the recorded-file override layer. Default
+// OFF: until the player opts in (Settings → 真實音效包), the synth/TTS engine
+// drives everything, and registered file URLs are never fetched. Registering
+// URLs (enableAudioFiles / registerVoiceClips) is therefore safe at startup;
+// nothing loads until this flips on. Persisted per-device like the voice toggle.
+let audioFilesEnabled = (() => {
+  try { return typeof localStorage !== 'undefined' && localStorage.getItem('tkm-audiofiles') === 'on'; }
+  catch { return false; }
+})();
+export function setAudioFilesEnabled(on: boolean): void {
+  audioFilesEnabled = on;
+  try { if (typeof localStorage !== 'undefined') localStorage.setItem('tkm-audiofiles', on ? 'on' : 'off'); }
+  catch { /* ignore */ }
+  // Switching the pack off mid-track drops to the procedural score on next call;
+  // a sounding music FILE is stopped so it doesn't linger.
+  if (!on) stopMusicFile();
+}
+export function isAudioFilesEnabled(): boolean { return audioFilesEnabled; }
+
 /** Register recorded SFX (key → url). Missing keys keep the synth sting. */
 export function registerSfxSamples(map: Partial<Record<SfxName, string>>): void {
   Object.assign(sfxSampleUrls, map);
@@ -215,6 +234,7 @@ export function enableAudioFiles(base = '/audio', ext = 'mp3'): void {
 
 /** Try a recorded sample for `name`; returns false to fall back to the synth. */
 function tryPlaySfxSample(name: SfxName): boolean {
+  if (!audioFilesEnabled) return false;
   const url = sfxSampleUrls[name];
   if (!url) return false;
   let el = sfxSampleCache[name];
@@ -288,7 +308,19 @@ const voiceClipCache: Record<string, HTMLAudioElement | 'bad'> = {};
 export function registerVoiceClips(map: Record<string, string>): void {
   Object.assign(voiceClipUrls, map);
 }
+/** Register `<id>-taunt` / `<id>-ult` clips for many officers at once, by
+ *  convention `${base}/<id>-<kind>.${ext}`. Speak sites pass those exact keys
+ *  (see DuelGameModal). A missing file silently falls back to system TTS. */
+export function registerOfficerVoiceClips(ids: string[], base = '/audio/voice', ext = 'mp3'): void {
+  const map: Record<string, string> = {};
+  for (const id of ids) {
+    map[`${id}-taunt`] = `${base}/${id}-taunt.${ext}`;
+    map[`${id}-ult`] = `${base}/${id}-ult.${ext}`;
+  }
+  registerVoiceClips(map);
+}
 function tryPlayVoiceClip(key: string): boolean {
+  if (!audioFilesEnabled) return false;
   const url = voiceClipUrls[key];
   if (!url) return false;
   let el = voiceClipCache[key];
@@ -950,6 +982,7 @@ const MUSIC_CROSSFADE = 1.6;
 
 /** Swap to a registered music FILE (looping <audio>); returns true if one exists. */
 function tryPlayMusicFile(track: Exclude<MusicTrack, null>): boolean {
+  if (!audioFilesEnabled) return false;
   const url = musicFileUrls[track];
   if (!url) return false;
   try {

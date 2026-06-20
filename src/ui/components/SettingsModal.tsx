@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
-import { setVoiceEnabled } from '../../game/systems/sound';
+import { setVoiceEnabled, setAudioFilesEnabled, isAudioFilesEnabled } from '../../game/systems/sound';
 import { exportAllSaves, importAllSaves } from '../../game/state/saveTransfer';
 import { installMod, loadMods, parseModBundle, removeMod } from '../../game/systems/mods';
 import { applyUiPrefs, getStoredUiPrefs, type UiPrefs, type UiScale } from '../uiPrefs';
@@ -40,6 +40,10 @@ export function SettingsModal({ onClose }: Props) {
     setVoiceOn(on);
     try { localStorage.setItem('tkm-voice', on ? 'on' : 'off'); } catch { /* ignore */ }
   };
+  // 真實音效包 — opt-in override that plays recorded files from public/audio/
+  // instead of the built-in synth/TTS (missing files fall back automatically).
+  const [audioPackOn, setAudioPackOn] = useState(isAudioFilesEnabled);
+  const toggleAudioPack = (on: boolean) => { setAudioPackOn(on); setAudioFilesEnabled(on); };
   // 輔助偏好 — device-level, not campaign state; lives in localStorage.
   const [uiPrefs, setUiPrefs] = useState<UiPrefs>(getStoredUiPrefs);
   const updateUiPref = (patch: Partial<UiPrefs>) => {
@@ -62,6 +66,7 @@ export function SettingsModal({ onClose }: Props) {
           <Section title={t('音響', 'Audio')}>
             <Toggle label={t('音效', 'Sound effects')} hint={t('UI 點擊、刀劍、號角', 'UI clicks, swords, horns')} checked={soundEnabled} onChange={setSoundEnabled} />
             <Toggle label={t('武將配音', 'Voice lines')} hint={t('單挑/舌戰台詞語音(系統 TTS)', 'Spoken duel/debate barbs (system TTS)')} checked={voiceOn} onChange={toggleVoice} />
+            <Toggle label={t('真實音效包', 'Real audio pack')} hint={t('改用 public/audio/ 內的錄音(缺檔自動回落合成)', 'Use recordings in public/audio/ (missing files fall back to synth)')} checked={audioPackOn} onChange={toggleAudioPack} />
             <Row label={t('背景音樂', 'Music')}>
               <select
                 value={musicTrack ?? 'auto'}

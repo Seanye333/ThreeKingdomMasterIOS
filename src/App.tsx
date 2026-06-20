@@ -16,7 +16,10 @@ import {
   stopAmbience,
   stopMusic,
   unlockAudio,
+  enableAudioFiles,
+  registerOfficerVoiceClips,
 } from './game/systems/sound';
+import { OFFICER_DUEL_LINES } from './game/data/officerLines';
 import { ErrorBoundary } from './ui/components/ErrorBoundary';
 import { Suspense, lazy } from 'react';
 import { TitleScreen } from './ui/screens/TitleScreen';
@@ -29,6 +32,13 @@ const MapScreen = lazy(() => import('./ui/screens/MapScreen').then((m) => ({ def
 
 // Expose province lookup for the canvas overlay.
 (window as unknown as { __provinceByCity?: Record<string, string> }).__provinceByCity = PROVINCE_BY_CITY;
+
+// Map the optional recorded-audio pack to its conventional paths under
+// public/audio/ (sfx/<name>.mp3, music/<track>.mp3, voice/<id>-{taunt,ult}.mp3).
+// This only populates URL tables — nothing is fetched until the player turns on
+// 真實音效包 in Settings; missing files fall back to the synth/TTS per item.
+enableAudioFiles();
+registerOfficerVoiceClips(Object.keys(OFFICER_DUEL_LINES));
 
 /**
  * 進圖載入頁 — covers the map's heavy first-mount (terrain, instanced meshes,
