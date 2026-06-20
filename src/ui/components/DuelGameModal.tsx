@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import type { Officer } from '../../game/types';
 import {
-  initDuelBout, duelRound, aiDuelMove, POWER_GUARD_COST, THRUST_COST, COMBO_COST, staticProwess, weaponArtFor,
+  initDuelBout, duelRound, aiDuelMove, POWER_GUARD_COST, THRUST_COST, COMBO_COST, staticProwess, weaponArtFor, duelPersona,
   type DuelMove, type DuelBout, type DuelDifficulty,
 } from '../../game/systems/duel';
 import { OfficerPortrait } from './OfficerPortrait';
@@ -21,6 +21,8 @@ export interface DuelRoundFx {
   winner?: 'attacker' | 'defender' | 'draw';
   /** 缴械 — set to the side whose weapon was knocked aside by a 架 parry. */
   disarm?: 'attacker' | 'defender';
+  /** 連招 — a landed 3rd+ consecutive strike (named = the 斬→突刺→奮 finisher). */
+  combo?: { side: 'attacker' | 'defender'; length: number; named: boolean };
 }
 
 /** 必殺技 — a named signature move for famous warriors; the rest of the great
@@ -134,8 +136,9 @@ export function DuelGameModal({
     setTaunted(true);
     setBout((b) => ({
       ...b,
-      aStamina: 100, aGuard: 0, aMoves: [],
+      aStamina: 100, aGuard: 0, aMoves: [], aChain: [],
       aStatic: staticProwess(ally), aInt: ally.stats.intelligence, aArt: weaponArtFor(ally),
+      aPersona: duelPersona(ally),
     }));
     setLog((l) => [`${nm(ally)} ${t('挺身援護,接力再戰!', 'leaps in to fight on!')}`, ...l]);
   };
@@ -161,7 +164,16 @@ export function DuelGameModal({
       : 'both';
     fxKey.current += 1;
     setFx({ key: fxKey.current, hit, dmg: Math.max(res.dmgToAttacker, res.dmgToDefender), killed: !!res.bout.killedId });
-    onRound?.({ hit, killed: !!res.bout.killedId, aMove: move, dMove: foeMove, over: res.bout.over, winner: res.bout.winner, disarm: res.disarm });
+    onRound?.({ hit, killed: !!res.bout.killedId, aMove: move, dMove: foeMove, over: res.bout.over, winner: res.bout.winner, disarm: res.disarm, combo: res.combo });
+    // 連招 — flash the combo that just landed.
+    if (res.combo) {
+      const who = res.combo.side === 'attacker' ? nm(me) : nm(defender);
+      const label = res.combo.named
+        ? t('連段必殺!', 'Finisher!')
+        : t(`連招 ×${res.combo.length}!`, `Combo ×${res.combo.length}!`);
+      setLog((l) => [`🔥 ${who} ${label}`, ...l].slice(0, 7));
+      if (res.combo.named) { playSfx('crash'); }
+    }
     if (res.disarm) {
       const victim = res.disarm === 'attacker' ? nm(me) : nm(defender);
       setLog((l) => [`⚡ ${victim} ${t('被架開兵器,氣勢盡失!', 'is disarmed — weapon knocked aside!')}`, ...l].slice(0, 7));

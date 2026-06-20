@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { resolveDuel, canDuel, initDuelBout, duelRound, staticProwess, aiDuelMove, weaponArtFor, weaponClassFor, type DuelMove } from './duel';
-import { resolveWordWar, initDebate, debateRound, aiDebateMove } from './wordWar';
+import { resolveDuel, canDuel, initDuelBout, duelRound, staticProwess, aiDuelMove, weaponArtFor, weaponClassFor, duelPersona, type DuelMove } from './duel';
+import { resolveWordWar, initDebate, debateRound, aiDebateMove, schoolMoveFor, type DebateMove } from './wordWar';
 import { mkOfficer, seededRng } from '../../test/factories';
 
 describe('canDuel', () => {
@@ -358,6 +358,100 @@ describe('兵器特性 (weapon-class traits)', () => {
     const r = duelRound(base, 'power', 'slash', fixed); // only 格 stops 奮 — it lands
     expect(r.dmgToDefender).toBeGreaterThan(0);
     expect(r.bout.dGuard).toBe(0);
+  });
+});
+
+describe('連招 (combo chains)', () => {
+  const mk = (war: number) => mkOfficer({ stats: { war, leadership: 60, intelligence: 60, politics: 60, charisma: 60 } });
+  const fixed = () => 0.5;
+
+  it('the 3rd consecutive landed strike bites deeper and breaks the foe guard', () => {
+    let b = initDuelBout(mk(85), mk(70));
+    const r1 = duelRound(b, 'sweep', 'guard', fixed); b = r1.bout; // 掃 punishes 格 → lands
+    expect(r1.combo).toBeUndefined();
+    const r2 = duelRound(b, 'sweep', 'guard', fixed); b = r2.bout;
+    expect(r2.combo).toBeUndefined();
+    const r3 = duelRound(b, 'sweep', 'guard', fixed);
+    expect(r3.combo?.side).toBe('attacker');
+    expect(r3.combo!.length).toBeGreaterThanOrEqual(3);
+    expect(r3.bout.dGuard).toBe(0); // 破防
+  });
+
+  it('a defensive round breaks the chain', () => {
+    let b = initDuelBout(mk(85), mk(70));
+    b = duelRound(b, 'sweep', 'guard', fixed).bout;
+    b = duelRound(b, 'sweep', 'guard', fixed).bout;
+    const reset = duelRound(b, 'guard', 'guard', fixed);
+    expect(reset.bout.aChain.length).toBe(0);
+  });
+
+  it('the named chain 斬→突刺→奮 is a 連段必殺', () => {
+    let b = { ...initDuelBout(mk(85), mk(60)), aGuard: 3 };
+    b = duelRound(b, 'slash', 'dodge', fixed).bout;  // 斬 punishes 閃 → lands
+    b = duelRound(b, 'thrust', 'dodge', fixed).bout; // 突刺 slips 閃 → lands
+    const r = duelRound(b, 'power', 'dodge', fixed);  // 奮 lands clean vs 閃
+    expect(r.combo?.named).toBe(true);
+  });
+});
+
+describe('性格 (duel AI personas)', () => {
+  const mk2 = (war: number, int: number, traits: string[] = []) =>
+    mkOfficer({ stats: { war, leadership: 60, intelligence: int, politics: 60, charisma: 60 }, traits: traits as never });
+
+  it('reads temperament from traits and stat shape', () => {
+    expect(duelPersona(mk2(95, 40, ['reckless']))).toBe('aggressive');
+    expect(duelPersona(mk2(70, 90, ['cunning']))).toBe('cunning');
+    expect(duelPersona(mk2(70, 60, ['cautious']))).toBe('cautious');
+    expect(duelPersona(mk2(75, 70))).toBe('balanced');
+  });
+
+  it('a 猛 fighter spends 奮 more readily than a 慎 one', () => {
+    const agg = { ...initDuelBout(mk2(95, 40, ['reckless']), mk2(95, 40, ['reckless'])), aGuard: 2 };
+    const cau = { ...initDuelBout(mk2(70, 60, ['cautious']), mk2(70, 60, ['cautious'])), aGuard: 2 };
+    expect(aiDuelMove(agg, 'attacker', () => 0.5)).toBe('power');       // gate 0.78
+    expect(aiDuelMove(cau, 'attacker', () => 0.5)).not.toBe('power');   // gate 0.40
+  });
+});
+
+describe('連辯 (debate argument chains)', () => {
+  const mk = (intel: number) => mkOfficer({ stats: { war: 50, leadership: 60, intelligence: intel, politics: 60, charisma: 60 } });
+  const fixed = () => 0.5;
+
+  it('論→引 bites deeper than a cold 引', () => {
+    const base = debateRound({ ...initDebate(mk(80), mk(80)), aMomentum: 2 }, 'cite', 'assert', fixed).dmgToD;
+    const chained = debateRound({ ...initDebate(mk(80), mk(80)), aMomentum: 2, aLastMove: 'assert' }, 'cite', 'assert', fixed);
+    expect(chained.dmgToD).toBeGreaterThan(base);
+    expect(chained.chain?.kind).toBe('assert-cite');
+  });
+
+  it('駁→詰 refunds a 氣勢', () => {
+    const r = debateRound({ ...initDebate(mk(80), mk(80)), aMomentum: 2, aLastMove: 'retort' }, 'press', 'assert', fixed);
+    expect(r.chain?.kind).toBe('retort-press');
+    expect(r.bout.aMomentum).toBe(1); // 2 − 2 (詰) + 1 (chain refund)
+  });
+});
+
+describe('流派絕學 (debate school moves)', () => {
+  const mk = (intel: number) => mkOfficer({ stats: { war: 50, leadership: 60, intelligence: intel, politics: 60, charisma: 60 } });
+  const fixed = () => 0.5;
+
+  it('maps each persona to its signature argument', () => {
+    expect(schoolMoveFor('sage')).toBe('analogy');
+    expect(schoolMoveFor('fierce')).toBe('rebuke');
+    expect(schoolMoveFor('sly')).toBe('deceive');
+  });
+
+  it('no pair of arguments has two winners (anti-symmetric matrix)', () => {
+    const moves: DebateMove[] = ['assert', 'provoke', 'retort', 'press', 'cite', 'scorn', 'analogy', 'rebuke', 'deceive'];
+    const b = { ...initDebate(mk(80), mk(80)), aMomentum: 9, dMomentum: 9 };
+    for (const x of moves) for (const y of moves) {
+      if (x === y) continue;
+      const xy = debateRound(b, x, y, fixed).roundWinner;
+      const yx = debateRound(b, y, x, fixed).roundWinner;
+      if (xy === 'a') expect(yx).toBe('d');
+      else if (xy === 'd') expect(yx).toBe('a');
+      else expect(yx).toBe('draw');
+    }
   });
 });
 

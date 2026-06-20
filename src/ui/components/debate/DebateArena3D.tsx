@@ -34,7 +34,11 @@ const SKIN = '#e0c498';
 const INK = '#15131b';
 
 // The 字 that flashes for each argument (matches DebateGameModal's labels).
-const MOVE_GLYPH: Record<DebateMove, string> = { assert: '論', retort: '駁', provoke: '諷', press: '詰', cite: '引', scorn: '哂' };
+const MOVE_GLYPH: Record<DebateMove, string> = { assert: '論', retort: '駁', provoke: '諷', press: '詰', cite: '引', scorn: '哂', analogy: '喻', rebuke: '叱', deceive: '詐' };
+
+// 流派絕學 reuse an existing declamation clip until they get their own (P3):
+// 喻 reads like a measured citation, 叱 like a forceful press, 詐 like a mocking scorn.
+const SCHOOL_ANIM: Record<'analogy' | 'rebuke' | 'deceive', DebateAnim> = { analogy: 'cite', rebuke: 'press', deceive: 'scorn' };
 
 // Approximate clip lengths (seconds) for the procedural fallback, which has no
 // real clip to read a duration from. The realistic backend uses each Mixamo
@@ -599,7 +603,7 @@ export function DebateArena3D({
     const rightHit = hit === 'd' || hit === 'both';
     const heavy = dmg >= 22;
     // 詰/引 — the heavy loaded arguments earn the wardrum + slow-mo.
-    const loaded = (m?: string) => m === 'press' || m === 'cite';
+    const loaded = (m?: string) => m === 'press' || m === 'cite' || m === 'deceive';
     const mocking = aMove === 'scorn' || dMove === 'scorn' || aMove === 'provoke' || dMove === 'provoke';
 
     // 音效 — synthesized verbal stings keyed to the exchange.
@@ -636,7 +640,7 @@ export function DebateArena3D({
     const animFor = (mine: DebateMove, wasHit: boolean, broke: boolean): DebateAnim => {
       if (broke) return 'rout';
       if (wasHit) return heavy ? 'recoil' : 'flinch';
-      return mine;
+      return mine === 'analogy' || mine === 'rebuke' || mine === 'deceive' ? SCHOOL_ANIM[mine] : mine;
     };
     const act = (anim: DebateAnim, rot: number, stamp = k): ScholarAction => ({ anim, rot, stamp });
 

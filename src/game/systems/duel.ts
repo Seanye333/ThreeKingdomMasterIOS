@@ -309,6 +309,22 @@ const TAUNT_RECOVER = 8;  // …and catches this much breath back
 // 難度 — how sharply the AI foe reads and counters you.
 export type DuelDifficulty = 'rookie' | 'veteran' | 'peerless';
 
+// 性格 — a fighter's temperament colours HOW the AI fights (separate from how
+// well it reads you, which is 難度). 猛: presses the attack, loves 奮/連擊; 慎:
+// hangs back on 格/閃/架, spends 氣 grudgingly; 詐: feints — leans on 挑釁 bluffs
+// and 突刺, baiting a guard then slipping it. 均 is the balanced default.
+export type DuelPersona = 'aggressive' | 'cautious' | 'cunning' | 'balanced';
+
+/** Read a fighter's duelling temperament from its traits and stat shape. */
+export function duelPersona(o: Officer): DuelPersona {
+  const t = o.traits ?? [];
+  const { war, intelligence: int } = o.stats;
+  if (t.includes('reckless') || t.includes('wrathful') || t.includes('matchless') || (war >= 88 && war > int + 20)) return 'aggressive';
+  if (t.includes('cunning') || t.includes('ambitious') || (int >= 80 && int > war)) return 'cunning';
+  if (t.includes('cautious') || t.includes('cowardly') || t.includes('sickly')) return 'cautious';
+  return 'balanced';
+}
+
 export interface DuelBout {
   aStamina: number;
   dStamina: number;
@@ -320,10 +336,14 @@ export interface DuelBout {
   dInt: number;
   aMoves: DuelMove[]; // move history, so a sharp mind can read a habit
   dMoves: DuelMove[];
+  aChain: DuelMove[]; // 連招 — consecutive landed offensive strikes (resets on a miss/defense)
+  dChain: DuelMove[];
   aArt: WeaponArt | null; // 兵器絕技 — a legendary weapon's signature edge
   dArt: WeaponArt | null;
   aClass: WeaponClass; // 兵器 — drives class combat traits (spear reach, axe break…)
   dClass: WeaponClass;
+  aPersona: DuelPersona; // 性格 — colours how each side fights on instinct
+  dPersona: DuelPersona;
   difficulty: DuelDifficulty; // AI skill tier for the foe
   round: number;    // rounds played
   over: boolean;
@@ -352,8 +372,10 @@ export function initDuelBout(
     aStatic: staticProwess(attacker), dStatic: staticProwess(defender),
     aInt: attacker.stats.intelligence, dInt: defender.stats.intelligence,
     aMoves: [], dMoves: [],
+    aChain: [], dChain: [],
     aArt: weaponArtFor(attacker), dArt: weaponArtFor(defender),
     aClass, dClass,
+    aPersona: duelPersona(attacker), dPersona: duelPersona(defender),
     difficulty,
     round: 0, over: false,
   };
@@ -366,7 +388,15 @@ export interface DuelRoundResult {
   dmgToDefender: number;
   /** 缴械 — set to the side whose weapon was knocked aside by a 架 parry. */
   disarm?: 'attacker' | 'defender';
+  /** 連招 — set when a side lands its 3rd+ consecutive offensive strike. A named
+   *  chain (斬→突刺→奮) bites deepest; any chain ≥3 jars the foe's guard open. */
+  combo?: { side: 'attacker' | 'defender'; length: number; named: boolean };
 }
+
+/** 連段必殺 — the set sequence that pays the biggest 連招 bonus. */
+const NAMED_CHAIN: DuelMove[] = ['slash', 'thrust', 'power'];
+const endsWithSeq = (chain: DuelMove[], seq: DuelMove[]): boolean =>
+  seq.length <= chain.length && seq.every((m, i) => chain[chain.length - seq.length + i] === m);
 
 /** Resolve one exchange. attacker/defender each commit a move. */
 export function duelRound(
@@ -549,6 +579,30 @@ export function duelRound(
   if (aMove === 'power' && dmgToDefender > 0) b.dGuard = 0;
   if (dMove === 'power' && dmgToAttacker > 0) b.aGuard = 0;
 
+  // ── 連招 (combo chains) — a side that lands an offensive strike on consecutive
+  // rounds builds a 連段. The 3rd+ strike in a row bites 50% deeper and jars the
+  // foe's guard wide open (破防); the set sequence 斬→突刺→奮 is a true 連段必殺
+  // (×1.8). Any non-landing round (a miss, a block, a defense) breaks the chain.
+  let combo: DuelRoundResult['combo'];
+  const aLanded = isOffensiveMove(aMove) && roundWinner === 'attacker' && dmgToDefender > 0;
+  const dLanded = isOffensiveMove(dMove) && roundWinner === 'defender' && dmgToAttacker > 0;
+  const aChain = aLanded ? [...b.aChain, aMove] : [];
+  const dChain = dLanded ? [...b.dChain, dMove] : [];
+  if (aLanded && aChain.length >= 3) {
+    const named = endsWithSeq(aChain, NAMED_CHAIN);
+    dmgToDefender = Math.round(dmgToDefender * (named ? 1.8 : 1.5));
+    b.dGuard = 0; // 破防
+    combo = { side: 'attacker', length: aChain.length, named };
+  }
+  if (dLanded && dChain.length >= 3) {
+    const named = endsWithSeq(dChain, NAMED_CHAIN);
+    dmgToAttacker = Math.round(dmgToAttacker * (named ? 1.8 : 1.5));
+    b.aGuard = 0; // 破防
+    combo = { side: 'defender', length: dChain.length, named };
+  }
+  b.aChain = aChain;
+  b.dChain = dChain;
+
   b.aGuard += aGuardGain;
   b.dGuard += dGuardGain;
   b.aStamina = Math.min(100, Math.max(0, b.aStamina - dmgToAttacker + aRecover));
@@ -568,7 +622,7 @@ export function duelRound(
     if (b.aStamina <= 0 && b.winner === 'defender') b.killedId = 'attacker';
     if (b.dStamina <= 0 && b.winner === 'attacker') b.killedId = 'defender';
   }
-  return { bout: b, roundWinner, dmgToAttacker, dmgToDefender, disarm };
+  return { bout: b, roundWinner, dmgToAttacker, dmgToDefender, disarm, combo };
 }
 
 // The best answer to a predicted move: stop an attack with a defense that holds
@@ -630,15 +684,35 @@ export function aiDuelMove(bout: DuelBout, side: 'attacker' | 'defender', rng: (
     if (predicted) return COUNTER[predicted];
   }
 
-  if (guard >= POWER_GUARD_COST && rng() < 0.55) return 'power';
+  // 性格 — temperament tunes the instinct play. 均 (balanced) keeps the exact
+  // baseline; 猛 presses & spends 氣 freely, 慎 hoards 氣 and falls back on 守,
+  // 詐 feints with 挑釁 bluffs and 突刺.
+  const persona = side === 'attacker' ? bout.aPersona : bout.dPersona;
+  const P: Record<DuelPersona, { power: number; combo: number; thrust: number; taunt: number }> = {
+    aggressive: { power: 0.78, combo: 0.66, thrust: 0.30, taunt: 0.0 },
+    cautious:   { power: 0.40, combo: 0.32, thrust: 0.20, taunt: 0.0 },
+    cunning:    { power: 0.52, combo: 0.50, thrust: 0.52, taunt: 0.28 },
+    balanced:   { power: 0.55, combo: 0.50, thrust: 0.30, taunt: 0.0 },
+  };
+  const p = P[persona];
+
+  if (guard >= POWER_GUARD_COST && rng() < p.power) return 'power';
   // 連擊 — sometimes spend a full bank on a flurry instead of 奮.
-  if (guard >= COMBO_COST && rng() < 0.5) return 'combo';
+  if (guard >= COMBO_COST && rng() < p.combo) return 'combo';
   // 突刺 — a single banked 氣 buys a fast lunge that only 格 stops.
-  if (guard >= THRUST_COST && rng() < 0.3) return 'thrust';
+  if (guard >= THRUST_COST && rng() < p.thrust) return 'thrust';
   const r = rng();
-  // Battered → favour defense; otherwise press an attack on instinct.
-  if (stamina < 35) return r < 0.4 ? 'guard' : r < 0.7 ? 'parry' : 'dodge';
-  // 挑釁 — flush of 氣力 and no bank: gamble a taunt to load a spender.
-  if (guard < THRUST_COST && stamina > 55 && r > 0.9) return 'taunt';
+  // Battered → favour defense; a 猛 fighter may still swing through it.
+  if (stamina < 35) {
+    if (persona === 'aggressive' && r > 0.55) return r > 0.8 ? 'cleave' : 'slash';
+    return r < 0.4 ? 'guard' : r < 0.7 ? 'parry' : 'dodge';
+  }
+  // 挑釁 — flush of 氣力 and no bank: gamble a taunt to load a spender. A 詐
+  // fighter bluffs far more often (詐 0.28 vs the baseline 0.10).
+  const tauntGate = 1 - (persona === 'cunning' ? p.taunt : 0.1);
+  if (guard < THRUST_COST && stamina > 55 && r > tauntGate) return 'taunt';
+  // 慎 stands off behind a guard even while healthy; 猛 leans on the heavy 劈.
+  if (persona === 'cautious' && r > 0.82) return 'guard';
+  if (persona === 'aggressive') return r < 0.30 ? 'slash' : r < 0.85 ? 'cleave' : 'sweep';
   return r < 0.45 ? 'slash' : r < 0.72 ? 'cleave' : 'sweep';
 }

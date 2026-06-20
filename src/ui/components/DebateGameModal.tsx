@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import type { Officer } from '../../game/types';
 import {
-  initDebate, debateRound, aiDebateMove, debateMoraleDeltas, PRESS_MOMENTUM_COST, debateMoveCost,
+  initDebate, debateRound, aiDebateMove, debateMoraleDeltas, PRESS_MOMENTUM_COST, debateMoveCost, schoolMoveFor, SCHOOL_MOVES,
   type DebateMove, type DebateBout,
 } from '../../game/systems/wordWar';
 import { OfficerPortrait } from './OfficerPortrait';
@@ -28,12 +28,16 @@ export interface DebateRoundFx {
  * them; the loser's side opens the battle demoralized.
  */
 const MOVES: Array<{ id: DebateMove; zh: string; en: string; cost?: number; hint: { zh: string; en: string } }> = [
-  { id: 'assert',  zh: '論', en: 'Assert',  hint: { zh: '勝諷·哂、負駁詰引', en: 'beats Provoke/Scorn, loses to Retort/Press/Cite' } },
-  { id: 'retort',  zh: '駁', en: 'Retort',  hint: { zh: '勝論·詰、攢勢', en: 'beats Assert/Press, banks momentum' } },
-  { id: 'provoke', zh: '諷', en: 'Provoke', hint: { zh: '勝駁·哂、負論詰引', en: 'beats Retort/Scorn, loses to Assert/Press/Cite' } },
-  { id: 'press',   zh: '詰', en: 'Press',   cost: PRESS_MOMENTUM_COST, hint: { zh: '耗2勢，勝論諷引；負駁哂', en: '2勢 — beats Assert/Provoke/Cite; loses to Retort/Scorn' } },
-  { id: 'cite',    zh: '引', en: 'Cite',    cost: 2, hint: { zh: '耗2勢，引經據典壓三式；負詰哂', en: '2勢 — authority over the 3 base; loses to Press/Scorn' } },
-  { id: 'scorn',   zh: '哂', en: 'Scorn',   cost: 1, hint: { zh: '耗1勢，哂笑破駁·引·詰；負論諷', en: '1勢 — deflates Retort/Cite/Press; loses to Assert/Provoke' } },
+  { id: 'assert',  zh: '論', en: 'Assert',  hint: { zh: '勝諷·哂·喻、負駁詰引', en: 'beats Provoke/Scorn/Analogy, loses to Retort/Press/Cite' } },
+  { id: 'retort',  zh: '駁', en: 'Retort',  hint: { zh: '勝論·詰·詐、攢勢', en: 'beats Assert/Press/Deceive, banks momentum' } },
+  { id: 'provoke', zh: '諷', en: 'Provoke', hint: { zh: '勝駁·哂·叱·詐、負論詰引', en: 'beats Retort/Scorn/Rebuke/Deceive' } },
+  { id: 'press',   zh: '詰', en: 'Press',   cost: PRESS_MOMENTUM_COST, hint: { zh: '耗2勢，勝論諷引叱詐；負駁哂', en: '2勢 — beats Assert/Provoke/Cite/Rebuke/Deceive' } },
+  { id: 'cite',    zh: '引', en: 'Cite',    cost: 2, hint: { zh: '耗2勢，引經據典壓三式·喻；負詰哂', en: '2勢 — authority over the base & Analogy' } },
+  { id: 'scorn',   zh: '哂', en: 'Scorn',   cost: 1, hint: { zh: '耗1勢，哂笑破駁·引·詰·叱；負論諷', en: '1勢 — deflates Retort/Cite/Press/Rebuke' } },
+  // 流派絕學 — only the matching school may field its signature.
+  { id: 'analogy', zh: '喻', en: 'Analogy', cost: 1, hint: { zh: '智者·耗1勢，以喻破諷·哂·詰；負論引叱', en: 'Sage 1勢 — a parable over Provoke/Scorn/Press' } },
+  { id: 'rebuke',  zh: '叱', en: 'Rebuke',  cost: 1, hint: { zh: '猛士·耗1勢，厲叱壓論·駁·喻；負諷哂詰詐', en: 'Fierce 1勢 — a reprimand over Assert/Retort/Analogy' } },
+  { id: 'deceive', zh: '詐', en: 'Deceive', cost: 2, hint: { zh: '奸雄·耗2勢，設謀陷論·引·叱；負詰諷駁', en: 'Sly 2勢 — a trap over Assert/Cite/Rebuke' } },
 ];
 
 export function DebateGameModal({
@@ -58,6 +62,9 @@ export function DebateGameModal({
   const fxKey = useRef(0);
   const nm = (o: Officer) => (lang === 'en' ? o.name.en : o.name.zh);
   const moveZh = (m: DebateMove) => MOVES.find((x) => x.id === m)!.zh;
+  // 流派 — the player only sees their own school's signature among the loaded args.
+  const mySchool = schoolMoveFor(me);
+  const myMoves = MOVES.filter((m) => !SCHOOL_MOVES.includes(m.id) || m.id === mySchool);
 
   const play = (move: DebateMove) => {
     if (bout.over) return;
@@ -69,6 +76,13 @@ export function DebateGameModal({
       ? `${t('第', 'R')}${res.bout.round}: ${nm(me)} ${moveZh(move)} ⚔ ${moveZh(foeMove)} ${nm(foe)} — ${t('相持', 'no ground')}`
       : `${t('第', 'R')}${res.bout.round}: ${nm(me)} ${moveZh(move)} ⚔ ${moveZh(foeMove)} ${nm(foe)} — ${who}${t(' 佔理', ' presses home')} (−${Math.max(res.dmgToA, res.dmgToD)})`;
     setLog((l) => [line, ...l].slice(0, 7));
+    // 連辯 — note a completed argument chain.
+    if (res.chain) {
+      const who = res.chain.side === 'a' ? nm(me) : nm(foe);
+      const kindZh = res.chain.kind === 'assert-cite' ? '論→引 連辯' : '駁→詰 連辯';
+      const kindEn = res.chain.kind === 'assert-cite' ? 'Assert→Cite chain' : 'Retort→Press chain';
+      setLog((l) => [`✦ ${who} ${t(kindZh, kindEn)}`, ...l].slice(0, 7));
+    }
     setBout(res.bout);
 
     // Fire the retort feedback: the round loser loses composure.
@@ -134,7 +148,7 @@ export function DebateGameModal({
         </div>
         {!bout.over ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem' }}>
-            {MOVES.map((m) => {
+            {myMoves.map((m) => {
               const cost = m.cost ?? 0;
               const disabled = cost > bout.aMomentum;
               return (
@@ -142,7 +156,7 @@ export function DebateGameModal({
                   key={m.id}
                   onClick={() => play(m.id)}
                   disabled={disabled}
-                  style={{ padding: '0.35rem 0.2rem', background: disabled ? '#1a1810' : '#26221a', border: `1px solid ${disabled ? '#2c281c' : cost ? '#7a6a3a' : '#4a5530'}`, color: disabled ? '#5a4a36' : '#e6edf3', cursor: disabled ? 'default' : 'pointer', fontFamily: 'inherit', textAlign: 'center' }}
+                  style={{ padding: '0.35rem 0.2rem', background: disabled ? '#1a1810' : '#26221a', border: `1px solid ${disabled ? '#2c281c' : SCHOOL_MOVES.includes(m.id) ? '#c89a4a' : cost ? '#7a6a3a' : '#4a5530'}`, color: disabled ? '#5a4a36' : '#e6edf3', cursor: disabled ? 'default' : 'pointer', fontFamily: 'inherit', textAlign: 'center' }}
                   title={lang === 'en' ? m.hint.en : m.hint.zh}
                 >
                   <div style={{ fontSize: '1.1rem', color: disabled ? '#5a4a36' : cost ? '#e6c473' : '#88b7e8' }}>{m.zh}{cost ? ` ${'◆'.repeat(cost)}` : ''}</div>
@@ -224,7 +238,7 @@ export function DebateGameModal({
 
         {!bout.over && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginTop: '1rem' }}>
-            {MOVES.map((m) => {
+            {myMoves.map((m) => {
               const cost = m.cost ?? 0;
               const disabled = cost > bout.aMomentum;
               return (
@@ -234,7 +248,7 @@ export function DebateGameModal({
                   disabled={disabled}
                   style={{
                     padding: '0.5rem 0.3rem', background: disabled ? '#1a1810' : '#26221a',
-                    border: `1px solid ${disabled ? '#2c281c' : cost ? '#7a6a3a' : '#4a5530'}`,
+                    border: `1px solid ${disabled ? '#2c281c' : SCHOOL_MOVES.includes(m.id) ? '#c89a4a' : cost ? '#7a6a3a' : '#4a5530'}`,
                     color: disabled ? '#5a4a36' : '#e6edf3', cursor: disabled ? 'default' : 'pointer',
                     fontFamily: 'inherit', textAlign: 'center',
                   }}

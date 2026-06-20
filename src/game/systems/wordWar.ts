@@ -125,7 +125,12 @@ export function resolveWordWar(
 // Prowess = INT + CHA/2; drain a foe's 沉著 (composure) to 0 to rout them, else
 // win on points. The loser's side starts the battle demoralized.
 
-export type DebateMove = 'assert' | 'provoke' | 'retort' | 'press' | 'cite' | 'scorn';
+// Six universal arguments + three 流派 (school) signatures, each gated to a
+// debating persona: 喻 analogy (智者/sage), 叱 rebuke (猛士/fierce), 詐 deceive
+// (奸雄/sly). A strategist may only play the signature of their own school.
+export type DebateMove =
+  | 'assert' | 'provoke' | 'retort' | 'press' | 'cite' | 'scorn'
+  | 'analogy' | 'rebuke' | 'deceive';
 
 export interface DebateBout {
   aComposure: number;
@@ -134,6 +139,10 @@ export interface DebateBout {
   dMomentum: number;
   aProwess: number;
   dProwess: number;
+  aPersona: DebatePersona; // 流派 — which school signature each side may play
+  dPersona: DebatePersona;
+  aLastMove?: DebateMove;   // 連辯 — last argument, for chain synergies
+  dLastMove?: DebateMove;
   round: number;
   over: boolean;
   winner?: 'a' | 'd' | 'draw';
@@ -144,7 +153,9 @@ export const CITE_MOMENTUM_COST = 2;
 export const SCORN_MOMENTUM_COST = 1;
 /** 氣勢 a loaded argument spends. */
 export function debateMoveCost(m: DebateMove): number {
-  return m === 'press' || m === 'cite' ? 2 : m === 'scorn' ? 1 : 0;
+  if (m === 'press' || m === 'cite' || m === 'deceive') return 2;
+  if (m === 'scorn' || m === 'analogy' || m === 'rebuke') return 1;
+  return 0;
 }
 const DEBATE_ROUNDS = 6;
 
@@ -162,23 +173,40 @@ export function debatePersona(o: Officer): DebatePersona {
   return 'sage';
 }
 
+/** 流派絕學 — the signature argument a debating school may field (or null). */
+const SCHOOL_MOVE: Record<DebatePersona, DebateMove> = { sage: 'analogy', fierce: 'rebuke', sly: 'deceive' };
+export function schoolMoveFor(o: Officer | DebatePersona): DebateMove {
+  return SCHOOL_MOVE[typeof o === 'string' ? o : debatePersona(o)];
+}
+/** 流派招式 — moves that are only available to a matching school. */
+export const SCHOOL_MOVES: DebateMove[] = ['analogy', 'rebuke', 'deceive'];
+
 export function initDebate(me: Officer, foe: Officer): DebateBout {
   return {
     aComposure: 100, dComposure: 100, aMomentum: 0, dMomentum: 0,
     aProwess: debateProwess(me), dProwess: debateProwess(foe),
+    aPersona: debatePersona(me), dPersona: debatePersona(foe),
     round: 0, over: false,
   };
 }
 
 // Each move's win set. The base ring (論>諷>駁>論) and 詰's relationships are
 // unchanged from the 4-move game; 引/哂 extend it. No pair has two winners.
+// The base ring (論>諷>駁>論) is unchanged; 引/哂 and the three 流派 signatures
+// extend it. Invariant (verified by a property test): no pair has two winners.
+//   喻 analogy — a vivid parable defuses 諷/哂/詰; undone by 論/引/叱
+//   叱 rebuke  — a thunderous reprimand shouts down 論/駁/喻; deflated by 諷/哂/詰/詐
+//   詐 deceive — a rhetorical trap springs on 論/引/叱; sprung by 詰/諷/駁
 const DEBATE_BEATS: Record<DebateMove, DebateMove[]> = {
-  assert:  ['provoke', 'scorn'],            // 論 — beats 諷 and sees through 哂
-  provoke: ['retort', 'scorn'],             // 諷 — beats 駁 and out-mocks 哂
-  retort:  ['assert', 'press'],             // 駁 — beats 論 and turns aside 詰
-  press:   ['assert', 'provoke', 'cite'],   // 詰 — overwhelms 論/諷 and 引
-  cite:    ['assert', 'provoke', 'retort'], // 引 — authority over all three base
-  scorn:   ['retort', 'cite', 'press'],     // 哂 — deflates 駁/引 and the heavy 詰
+  assert:  ['provoke', 'scorn', 'analogy'],          // 論 — also sees through a parable
+  provoke: ['retort', 'scorn', 'rebuke', 'deceive'], // 諷 — mockery deflates bluster & cunning
+  retort:  ['assert', 'press', 'deceive'],           // 駁 — turns aside 詰 and springs the trap
+  press:   ['assert', 'provoke', 'cite', 'rebuke', 'deceive'], // 詰 — relentless questioning
+  cite:    ['assert', 'provoke', 'retort', 'analogy'], // 引 — authority over the base & a parable
+  scorn:   ['retort', 'cite', 'press', 'rebuke'],    // 哂 — also laughs off bluster
+  analogy: ['provoke', 'scorn', 'press'],            // 喻 — parable over mockery, scorn & pressure
+  rebuke:  ['assert', 'retort', 'analogy'],          // 叱 — force over reason, retort & parable
+  deceive: ['assert', 'cite', 'rebuke'],             // 詐 — trap over assertion, authority & bluster
 };
 function debateMoveBeats(x: DebateMove, y: DebateMove): boolean {
   return DEBATE_BEATS[x].includes(y);
@@ -189,7 +217,16 @@ export interface DebateRoundResult {
   roundWinner: 'a' | 'd' | 'draw';
   dmgToA: number;
   dmgToD: number;
+  /** 連辯 — set when a side completes a recognised argument chain this round. */
+  chain?: { side: 'a' | 'd'; kind: 'assert-cite' | 'retort-press' };
 }
+
+// 連辯 — recognised two-move argument chains. The opener sets up the follow-up,
+// which then bites ~30% deeper (and 駁→詰 refunds a 氣勢, deflect-then-press).
+const CHAINS: Array<{ prev: DebateMove; now: DebateMove; kind: 'assert-cite' | 'retort-press'; refund: number }> = [
+  { prev: 'assert', now: 'cite',  kind: 'assert-cite',  refund: 0 }, // 論→引 — the claim, then the authority behind it
+  { prev: 'retort', now: 'press', kind: 'retort-press', refund: 1 }, // 駁→詰 — turn it aside, then press the opening
+];
 
 export function debateRound(
   bout: DebateBout,
@@ -204,7 +241,14 @@ export function debateRound(
 
   const DMG_BASE: Record<DebateMove, number> = {
     retort: 10, assert: 18, provoke: 18, press: 30, cite: 26, scorn: 22,
+    analogy: 22, rebuke: 26, deceive: 30,
   };
+  // 連辯 — does this move complete a chain off the side's previous argument?
+  const chainFor = (last: DebateMove | undefined, now: DebateMove) =>
+    last ? CHAINS.find((c) => c.prev === last && c.now === now) : undefined;
+  const aChain = chainFor(bout.aLastMove, aMove);
+  const dChain = chainFor(bout.dLastMove, dMove);
+  const chainMul = (side: 'a' | 'd') => ((side === 'a' ? aChain : dChain) ? 1.3 : 1);
   const dmgFrom = (move: DebateMove, winP: number, loseP: number): number => {
     const adv = Math.max(-6, Math.min(20, (winP - loseP) * 0.4));
     return Math.max(6, Math.round((DMG_BASE[move] ?? 18) + adv + rng() * 8));
@@ -214,15 +258,22 @@ export function debateRound(
   let dmgToA = 0, dmgToD = 0;
   if (debateMoveBeats(aMove, dMove)) {
     roundWinner = 'a';
-    dmgToD = dmgFrom(aMove, b.aProwess, b.dProwess);
+    dmgToD = Math.round(dmgFrom(aMove, b.aProwess, b.dProwess) * chainMul('a'));
     if (aMove === 'retort') b.aMomentum += 1;
   } else if (debateMoveBeats(dMove, aMove)) {
     roundWinner = 'd';
-    dmgToA = dmgFrom(dMove, b.dProwess, b.aProwess);
+    dmgToA = Math.round(dmgFrom(dMove, b.dProwess, b.aProwess) * chainMul('d'));
     if (dMove === 'retort') b.dMomentum += 1;
   } else if (aMove === 'retort' && dMove === 'retort') {
     b.aMomentum += 1; b.dMomentum += 1;
   }
+  // 連辯 — a completed chain refunds the follow-up's cost where the chain says so
+  // (駁→詰), and is reported so the hall can flash the link.
+  let chain: DebateRoundResult['chain'];
+  if (aChain) { b.aMomentum += aChain.refund; chain = { side: 'a', kind: aChain.kind }; }
+  if (dChain) { b.dMomentum += dChain.refund; chain = { side: 'd', kind: dChain.kind }; }
+  b.aLastMove = aMove;
+  b.dLastMove = dMove;
   b.aComposure = Math.max(0, b.aComposure - dmgToA);
   b.dComposure = Math.max(0, b.dComposure - dmgToD);
   b.round += 1;
@@ -237,15 +288,20 @@ export function debateRound(
       b.winner = gap < 12 ? 'draw' : b.aComposure > b.dComposure ? 'a' : 'd';
     }
   }
-  return { bout: b, roundWinner, dmgToA, dmgToD };
+  return { bout: b, roundWinner, dmgToA, dmgToD, chain };
 }
 
 export function aiDebateMove(bout: DebateBout, side: 'a' | 'd', rng: () => number = Math.random): DebateMove {
   const momentum = side === 'a' ? bout.aMomentum : bout.dMomentum;
   const composure = side === 'a' ? bout.aComposure : bout.dComposure;
+  const persona = side === 'a' ? bout.aPersona : bout.dPersona;
+  const school = SCHOOL_MOVE[persona];
   if (momentum >= PRESS_MOMENTUM_COST && rng() < 0.55) return 'press';
   // 引經據典 — an alternative heavy spender to the press.
   if (momentum >= CITE_MOMENTUM_COST && rng() < 0.5) return 'cite';
+  // 流派絕學 — a strategist leans on their own school's signature when the 氣勢
+  // is there for it (the sly 詐 costs 2勢; the parable/rebuke only 1).
+  if (debateMoveCost(school) <= momentum && rng() < 0.5) return school;
   // 哂笑 — a cheap loaded mock when even a little 氣勢 is banked.
   if (momentum >= SCORN_MOMENTUM_COST && rng() < 0.32) return 'scorn';
   const r = rng();
