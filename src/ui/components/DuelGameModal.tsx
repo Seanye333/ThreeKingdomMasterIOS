@@ -1,13 +1,14 @@
 import { useRef, useState } from 'react';
 import type { Officer } from '../../game/types';
 import {
-  initDuelBout, duelRound, aiDuelMove, POWER_GUARD_COST, THRUST_COST, COMBO_COST, SPIRIT_MAX, staticProwess, weaponArtFor, duelPersona, ultReady,
-  type DuelMove, type DuelBout, type DuelDifficulty,
+  initDuelBout, duelRound, aiDuelMove, POWER_GUARD_COST, THRUST_COST, COMBO_COST, SPIRIT_MAX, staticProwess, weaponArtFor, duelPersona, ultReady, DUEL_TERRAIN_INFO,
+  type DuelMove, type DuelBout, type DuelDifficulty, type DuelTerrain,
 } from '../../game/systems/duel';
 import { OfficerPortrait } from './OfficerPortrait';
 import { playSfx } from '../../game/systems/sound';
 import { areBonded } from '../../game/systems/tactical';
 import { areSwornBrothers } from '../../game/systems/relationshipEffects';
+import { duelMoveLine, duelUltLine } from '../../game/data/battleLines';
 import { useT, useLanguage } from '../i18n';
 
 /** Per-exchange feedback emitted by {@link DuelGameModal} so a host (the staged
@@ -73,7 +74,7 @@ const MOVES: Array<{ id: DuelMove; zh: string; en: string; kind: MoveKind; cost?
 ];
 
 export function DuelGameModal({
-  attacker, defender, onComplete, meFatigue = 0, foeFatigue = 0, lethal = true, reinforcements = [], staged = false, onRound, difficulty = 'veteran',
+  attacker, defender, onComplete, meFatigue = 0, foeFatigue = 0, lethal = true, reinforcements = [], staged = false, onRound, difficulty = 'veteran', terrain = 'plain',
 }: {
   attacker: Officer;
   defender: Officer;
@@ -83,6 +84,8 @@ export function DuelGameModal({
   foeFatigue?: number;
   /** AI 難度 — how sharply the foe reads and counters (rookie/veteran/peerless). */
   difficulty?: DuelDifficulty;
+  /** 地形 — the ground the bout is fought on (plain / bridge / mud / fire / rain). */
+  terrain?: DuelTerrain;
   /** 演武 — a non-lethal sparring bout: a knockout reads as "yields", not death. */
   lethal?: boolean;
   /** 三英戰呂布 — adjacent allies who can leap in when your fighter is hard-pressed. */
@@ -96,7 +99,7 @@ export function DuelGameModal({
   const t = useT();
   const lang = useLanguage();
   const reduced = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  const [bout, setBout] = useState<DuelBout>(() => initDuelBout(attacker, defender, meFatigue, foeFatigue, difficulty));
+  const [bout, setBout] = useState<DuelBout>(() => initDuelBout(attacker, defender, meFatigue, foeFatigue, difficulty, terrain));
   // 當前出戰者 — starts as `attacker`; an ally can take over mid-bout (援護).
   const [me, setMe] = useState<Officer>(attacker);
   const [used, setUsed] = useState<Set<string>>(() => new Set([attacker.id]));
@@ -206,6 +209,17 @@ export function DuelGameModal({
     fxKey.current += 1;
     setFx({ key: fxKey.current, hit, dmg: Math.max(res.dmgToAttacker, res.dmgToDefender), killed: !!res.bout.killedId });
     onRound?.({ hit, killed: !!res.bout.killedId, aMove: move, dMove: foeMove, over: res.bout.over, winner: res.bout.winner, disarm: res.disarm, combo: res.combo });
+    // 台詞庫 — voice a short barb on a notable blow.
+    if (res.ultimate === 'attacker') {
+      const l = duelUltLine(bout.aPersona);
+      setLog((ll) => [`💬 「${t(l.zh, l.en)}」— ${nm(me)}`, ...ll].slice(0, 7));
+    } else if (res.ultimate === 'defender') {
+      const l = duelUltLine(bout.dPersona);
+      setLog((ll) => [`💬 「${t(l.zh, l.en)}」— ${nm(defender)}`, ...ll].slice(0, 7));
+    } else if ((move === 'power' || move === 'combo' || move === 'thrust') && res.roundWinner === 'attacker') {
+      const l = duelMoveLine(move);
+      if (l) setLog((ll) => [`💬 「${t(l.zh, l.en)}」— ${nm(me)}`, ...ll].slice(0, 7));
+    }
     // 連招 — flash the combo that just landed.
     if (res.combo) {
       const who = res.combo.side === 'attacker' ? nm(me) : nm(defender);
@@ -369,6 +383,12 @@ export function DuelGameModal({
         <div style={{ textAlign: 'center', color: '#e6c473', letterSpacing: '0.14rem', fontSize: '1.2rem', marginBottom: foeFatigue > 0 || meFatigue > 0 ? '0.2rem' : '0.8rem' }}>
           ⚔ {t('單挑', 'Single Combat')}
         </div>
+        {bout.terrain !== 'plain' && (
+          <div style={{ textAlign: 'center', fontSize: '0.7rem', color: '#caa86a', marginBottom: '0.5rem', letterSpacing: '0.04rem' }}>
+            🏟 {t(DUEL_TERRAIN_INFO[bout.terrain].zh, DUEL_TERRAIN_INFO[bout.terrain].en)}
+            <span style={{ color: '#8a96a0' }}> — {t(DUEL_TERRAIN_INFO[bout.terrain].descZh, DUEL_TERRAIN_INFO[bout.terrain].descEn)}</span>
+          </div>
+        )}
         {(foeFatigue > 0 || meFatigue > 0) && (
           <div style={{ textAlign: 'center', fontSize: '0.72rem', color: '#e0a060', marginBottom: '0.7rem', letterSpacing: '0.05rem' }}>
             🌀 {foeFatigue >= meFatigue

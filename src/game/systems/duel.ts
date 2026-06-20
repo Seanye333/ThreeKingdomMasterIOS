@@ -315,6 +315,26 @@ const TAUNT_RECOVER = 8;  // …and catches this much breath back
 // 難度 — how sharply the AI foe reads and counters you.
 export type DuelDifficulty = 'rookie' | 'veteran' | 'peerless';
 
+// 地形 — the ground a bout is fought on colours the exchange. 演武/比武 are on
+// the neutral 校場 (plain); a battlefield 單挑 can fall on rougher terrain.
+export type DuelTerrain = 'plain' | 'bridge' | 'mud' | 'fire' | 'rain';
+export const DUEL_TERRAIN_INFO: Record<DuelTerrain, { zh: string; en: string; descZh: string; descEn: string }> = {
+  plain:  { zh: '校場', en: 'Open Ground', descZh: '平地 — 無增益', descEn: 'level ground — no modifier' },
+  bridge: { zh: '長坂橋', en: 'Narrow Bridge', descZh: '窄橋 — 閃避無處騰挪,失足受創', descEn: 'no room to dodge — lost footing chips you' },
+  mud:    { zh: '泥濘', en: 'Mire', descZh: '泥濘 — 突刺/連擊陷足,威力大減', descEn: 'lunges & flurries bog down (−20%)' },
+  fire:   { zh: '火海', en: 'Burning Field', descZh: '烈火 — 雙方每回合灼傷', descEn: 'flames scorch both each round' },
+  rain:   { zh: '雨夜', en: 'Rainy Night', descZh: '雨夜濕滑 — 刀劈失準(−10%)', descEn: 'slick footing dulls every blow (−10%)' },
+};
+/** Pick a battlefield terrain — mostly neutral, sometimes rough. */
+export function pickDuelTerrain(rng: () => number = Math.random): DuelTerrain {
+  const r = rng();
+  if (r < 0.55) return 'plain';
+  if (r < 0.67) return 'bridge';
+  if (r < 0.79) return 'mud';
+  if (r < 0.90) return 'rain';
+  return 'fire';
+}
+
 // 性格 — a fighter's temperament colours HOW the AI fights (separate from how
 // well it reads you, which is 難度). 猛: presses the attack, loves 奮/連擊; 慎:
 // hangs back on 格/閃/架, spends 氣 grudgingly; 詐: feints — leans on 挑釁 bluffs
@@ -354,6 +374,7 @@ export interface DuelBout {
   dClass: WeaponClass;
   aPersona: DuelPersona; // 性格 — colours how each side fights on instinct
   dPersona: DuelPersona;
+  terrain: DuelTerrain;  // 地形 — the ground the bout is fought on
   difficulty: DuelDifficulty; // AI skill tier for the foe
   round: number;    // rounds played
   over: boolean;
@@ -371,6 +392,7 @@ export function initDuelBout(
   aStaminaPenalty = 0,
   dStaminaPenalty = 0,
   difficulty: DuelDifficulty = 'veteran',
+  terrain: DuelTerrain = 'plain',
 ): DuelBout {
   const aClass = weaponClassFor(attacker);
   const dClass = weaponClassFor(defender);
@@ -387,6 +409,7 @@ export function initDuelBout(
     aArt: weaponArtFor(attacker), dArt: weaponArtFor(defender),
     aClass, dClass,
     aPersona: duelPersona(attacker), dPersona: duelPersona(defender),
+    terrain,
     difficulty,
     round: 0, over: false,
   };
@@ -604,6 +627,19 @@ export function duelRound(
   // 奮·壓制: a landed Overpower knocks all the victim's banked 氣 loose.
   if (aMove === 'power' && dmgToDefender > 0) b.dGuard = 0;
   if (dMove === 'power' && dmgToAttacker > 0) b.aGuard = 0;
+
+  // ── 地形 (terrain) — the ground itself shapes the exchange ──────────────────
+  if (b.terrain === 'fire') { dmgToAttacker += 4; dmgToDefender += 4; } // 烈火灼身
+  else if (b.terrain === 'mud') { // 泥濘 — lunges & flurries bog down
+    if ((aMove === 'thrust' || aMove === 'combo') && dmgToDefender > 0) dmgToDefender = Math.round(dmgToDefender * 0.8);
+    if ((dMove === 'thrust' || dMove === 'combo') && dmgToAttacker > 0) dmgToAttacker = Math.round(dmgToAttacker * 0.8);
+  } else if (b.terrain === 'bridge') { // 窄橋 — a dodge finds no room; footing chips
+    if (aMove === 'dodge') { aRecover = 0; dmgToAttacker += 3; }
+    if (dMove === 'dodge') { dRecover = 0; dmgToDefender += 3; }
+  } else if (b.terrain === 'rain') { // 雨夜濕滑 — every cut loses a little bite
+    if (dmgToDefender > 0 && isAttackMove(aMove)) dmgToDefender = Math.round(dmgToDefender * 0.9);
+    if (dmgToAttacker > 0 && isAttackMove(dMove)) dmgToAttacker = Math.round(dmgToAttacker * 0.9);
+  }
 
   // ── 連招 (combo chains) — a side that lands an offensive strike on consecutive
   // rounds builds a 連段. The 3rd+ strike in a row bites 50% deeper and jars the

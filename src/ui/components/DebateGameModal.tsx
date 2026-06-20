@@ -6,6 +6,7 @@ import {
 } from '../../game/systems/wordWar';
 import { OfficerPortrait } from './OfficerPortrait';
 import { playSfx } from '../../game/systems/sound';
+import { debateMoveLine, debateRoutLine } from '../../game/data/battleLines';
 import { useT, useLanguage } from '../i18n';
 
 /** Per-exchange feedback emitted by {@link DebateGameModal} so a host (the 3D
@@ -59,7 +60,7 @@ export function DebateGameModal({
   const [log, setLog] = useState<string[]>([]);
   // 佔理演出 — per-round retort feedback: who lost composure, by how much, with
   // a key so the glint / shake / float replay even on a repeat hit.
-  const [fx, setFx] = useState<{ key: number; hit: 'a' | 'd' | 'both'; dmg: number; routed: boolean } | null>(null);
+  const [fx, setFx] = useState<{ key: number; hit: 'a' | 'd' | 'both'; dmg: number; routed: boolean; glyph: string } | null>(null);
   const fxKey = useRef(0);
   const nm = (o: Officer) => (lang === 'en' ? o.name.en : o.name.zh);
   const moveZh = (m: DebateMove) => MOVES.find((x) => x.id === m)!.zh;
@@ -90,6 +91,17 @@ export function DebateGameModal({
       const kindEn = res.chain.kind === 'assert-cite' ? 'Assert→Cite chain' : 'Retort→Press chain';
       setLog((l) => [`✦ ${who} ${t(kindZh, kindEn)}`, ...l].slice(0, 7));
     }
+    // 台詞庫 — voice a barb on a landed loaded/school argument; a 罵倒 on a rout.
+    const routedNow = res.bout.aComposure <= 0 || res.bout.dComposure <= 0;
+    if (routedNow && res.bout.winner && res.bout.winner !== 'draw') {
+      const persona = res.bout.winner === 'a' ? bout.aPersona : bout.dPersona;
+      const speaker = res.bout.winner === 'a' ? nm(me) : nm(foe);
+      const l = debateRoutLine(persona);
+      setLog((ll) => [`💬 「${t(l.zh, l.en)}」— ${speaker}`, ...ll].slice(0, 7));
+    } else if (res.roundWinner === 'a' && (['press', 'cite', 'scorn', 'analogy', 'rebuke', 'deceive'] as DebateMove[]).includes(move)) {
+      const l = debateMoveLine(move);
+      if (l) setLog((ll) => [`💬 「${t(l.zh, l.en)}」— ${nm(me)}`, ...ll].slice(0, 7));
+    }
     setBout(res.bout);
 
     // Fire the retort feedback: the round loser loses composure.
@@ -97,8 +109,10 @@ export function DebateGameModal({
       res.dmgToA > res.dmgToD ? 'a'
       : res.dmgToD > res.dmgToA ? 'd'
       : 'both';
+    // 水墨 — the winning argument's 字 brushes across the centre.
+    const winMove = res.roundWinner === 'd' ? foeMove : move;
     fxKey.current += 1;
-    setFx({ key: fxKey.current, hit, dmg: Math.max(res.dmgToA, res.dmgToD), routed: !!res.bout.over });
+    setFx({ key: fxKey.current, hit, dmg: Math.max(res.dmgToA, res.dmgToD), routed: routedNow, glyph: moveZh(winMove) });
 
     // 演武 — hand the exchange to the 3D hall (if any) so the minds animate.
     // `routed` = composure actually broke (a 罵倒), as opposed to a points finish.
@@ -236,12 +250,24 @@ export function DebateGameModal({
           </div>
 
           {/* 唇槍 — a verbal jab flashes over the centre each exchange. */}
-          <div style={{ position: 'relative', display: 'grid', placeItems: 'center', minWidth: '2.2rem' }}>
+          <div style={{ position: 'relative', display: 'grid', placeItems: 'center', minWidth: '2.6rem' }}>
             <div style={{ fontSize: '1.4rem', color: '#7a8893' }}>⟷</div>
+            {/* 語塞 — a black ink-splash blooms behind the 字 when a mind is routed. */}
+            {fx && fx.routed && !reduced && (
+              <span key={`ink${fx.key}`} className="tkm-ink-splash" style={{ position: 'absolute', fontSize: '3rem', color: '#0c0a10', pointerEvents: 'none' }}>●</span>
+            )}
+            {/* 書法 — the winning argument brushes across the centre. */}
             {fx && !reduced && (
-              <span key={`c${fx.key}`} className="tkm-clash" style={{ position: 'absolute', color: fx.routed ? '#a9c8e2' : '#88b7e8' }}>
-                {fx.routed ? '✸' : '⚡'}
-              </span>
+              <span
+                key={`c${fx.key}`}
+                className="tkm-clash"
+                style={{
+                  position: 'absolute', fontSize: '1.9rem',
+                  fontFamily: 'var(--tkm-font-zh, "Ma Shan Zheng", "Songti SC", "Noto Serif SC", serif)',
+                  color: fx.routed ? '#e8d2a0' : fx.hit === 'a' ? '#c178c7' : '#88b7e8',
+                  textShadow: '0 0 12px rgba(20,16,28,0.9), 0 2px 4px #000',
+                }}
+              >{fx.glyph}</span>
             )}
           </div>
 

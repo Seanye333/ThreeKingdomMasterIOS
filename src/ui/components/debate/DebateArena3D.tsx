@@ -367,7 +367,7 @@ function WordGlyph({ glyph, fromX, toX, color, stamp, big }: { glyph: string; fr
       <Html center distanceFactor={5} style={{ pointerEvents: 'none' }}>
         <div style={{
           fontSize: big ? 60 : 44, fontWeight: 900, color,
-          fontFamily: 'var(--tkm-font-display, "Noto Serif SC", serif)',
+          fontFamily: 'var(--tkm-font-zh, "Ma Shan Zheng", "Songti SC", "Noto Serif SC", serif)',
           textShadow: `0 0 ${big ? 28 : 16}px ${color}, 0 0 6px ${color}, 0 2px 6px #000`, whiteSpace: 'nowrap',
         }}>{glyph}</div>
       </Html>

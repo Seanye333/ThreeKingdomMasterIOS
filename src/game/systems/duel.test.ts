@@ -435,6 +435,24 @@ describe('武魂 (ultimate gauge)', () => {
   });
 });
 
+describe('地形 (duel terrain)', () => {
+  const mk = (war: number) => mkOfficer({ stats: { war, leadership: 60, intelligence: 60, politics: 60, charisma: 60 } });
+  const fixed = () => 0.5;
+
+  it('火海 scorches both each round even through a guard', () => {
+    const fire = initDuelBout(mk(80), mk(80), 0, 0, 'veteran', 'fire');
+    const r = duelRound(fire, 'guard', 'guard', fixed); // a wary standoff — no normal damage
+    expect(r.dmgToAttacker).toBe(4);
+    expect(r.dmgToDefender).toBe(4);
+  });
+
+  it('泥濘 bogs down a thrust compared with open ground', () => {
+    const plain = duelRound({ ...initDuelBout(mk(80), mk(80)), aGuard: 1 }, 'thrust', 'dodge', fixed).dmgToDefender;
+    const mud = duelRound({ ...initDuelBout(mk(80), mk(80), 0, 0, 'veteran', 'mud'), aGuard: 1 }, 'thrust', 'dodge', fixed).dmgToDefender;
+    expect(mud).toBeLessThan(plain);
+  });
+});
+
 describe('連辯 (debate argument chains)', () => {
   const mk = (intel: number) => mkOfficer({ stats: { war: 50, leadership: 60, intelligence: intel, politics: 60, charisma: 60 } });
   const fixed = () => 0.5;

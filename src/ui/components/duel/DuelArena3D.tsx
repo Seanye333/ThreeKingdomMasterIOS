@@ -56,9 +56,61 @@ const STEEL = '#c8d0d8';
 // Built facing +X (toward the opponent). The host mirrors the right-hand
 // fighter by rotating the whole group 180° about Y.
 
+/** The procedural fighter's right-hand weapon, rendered per WeaponClass. Local
+ *  space is the swing-arm group (grip near the origin; blades hang along −Y). */
+function ProcWeapon({ cls }: { cls: WeaponClass }) {
+  const steel = { color: STEEL, roughness: 0.25, metalness: 0.85 } as const;
+  const wood = { color: '#5a4632', roughness: 0.8 } as const;
+  const gold = { color: '#caa64a', metalness: 0.7, roughness: 0.3 } as const;
+  if (cls === 'bow') {
+    return (
+      <group position={[0.18, -0.3, 0]}>
+        <mesh castShadow rotation={[0, 0, Math.PI * 0.9]}><torusGeometry args={[0.34, 0.016, 6, 18, Math.PI * 1.15]} /><meshStandardMaterial {...wood} /></mesh>
+        <mesh><cylinderGeometry args={[0.004, 0.004, 0.62, 4]} /><meshBasicMaterial color="#e8e0c8" /></mesh>
+      </group>
+    );
+  }
+  if (cls === 'axe') {
+    return (
+      <group position={[0.18, -0.5, 0]}>
+        <mesh castShadow><cylinderGeometry args={[0.018, 0.018, 0.62, 8]} /><meshStandardMaterial {...wood} /></mesh>
+        <mesh position={[0.0, 0.22, 0.1]} castShadow><boxGeometry args={[0.04, 0.2, 0.24]} /><meshStandardMaterial {...steel} /></mesh>
+      </group>
+    );
+  }
+  if (cls === 'spear' || cls === 'glaive' || cls === 'halberd') {
+    return (
+      <group position={[0.18, -0.45, 0]}>
+        {/* a long pole reaching well past the hand */}
+        <mesh castShadow><cylinderGeometry args={[0.016, 0.016, 1.5, 8]} /><meshStandardMaterial {...wood} /></mesh>
+        {cls === 'spear' && <mesh position={[0, 0.82, 0]} castShadow><coneGeometry args={[0.035, 0.2, 8]} /><meshStandardMaterial {...steel} /></mesh>}
+        {cls === 'glaive' && <mesh position={[0.07, 0.78, 0]} rotation={[0, 0, -0.35]} castShadow><boxGeometry args={[0.16, 0.34, 0.02]} /><meshStandardMaterial {...steel} /></mesh>}
+        {cls === 'halberd' && <>
+          <mesh position={[0, 0.84, 0]} castShadow><coneGeometry args={[0.03, 0.2, 8]} /><meshStandardMaterial {...steel} /></mesh>
+          <mesh position={[0.09, 0.72, 0]} rotation={[0, 0, -Math.PI / 2]} castShadow><torusGeometry args={[0.09, 0.016, 6, 12, Math.PI]} /><meshStandardMaterial {...steel} /></mesh>
+        </>}
+      </group>
+    );
+  }
+  // sword / twinblade / greatsword — a straight blade, longer for the greatsword.
+  const len = cls === 'greatsword' ? 1.0 : 0.7;
+  return (
+    <>
+      <mesh position={[0.18, -0.28 - len / 2, 0]} castShadow>
+        <boxGeometry args={[cls === 'greatsword' ? 0.08 : 0.05, len, 0.02]} />
+        <meshStandardMaterial {...steel} />
+      </mesh>
+      <mesh position={[0.18, -0.28, 0]} castShadow>
+        <boxGeometry args={[0.16, 0.04, 0.05]} />
+        <meshStandardMaterial {...gold} />
+      </mesh>
+    </>
+  );
+}
+
 function ProceduralFighter({
-  tunic, action,
-}: { tunic: string; action: FighterAction }) {
+  tunic, action, weaponClass = 'sword',
+}: { tunic: string; action: FighterAction; weaponClass?: WeaponClass }) {
   const root = useRef<Group>(null);
   const torso = useRef<Group>(null);
   const swingArm = useRef<Group>(null);
@@ -182,16 +234,10 @@ function ProceduralFighter({
             <cylinderGeometry args={[0.05, 0.045, 0.42, 8]} />
             <meshStandardMaterial color={SKIN} roughness={0.7} />
           </mesh>
-          {/* blade */}
-          <mesh position={[0.18, -0.62, 0]} castShadow>
-            <boxGeometry args={[0.05, 0.7, 0.02]} />
-            <meshStandardMaterial color={STEEL} roughness={0.25} metalness={0.85} />
-          </mesh>
-          {/* guard + grip */}
-          <mesh position={[0.18, -0.28, 0]} castShadow>
-            <boxGeometry args={[0.16, 0.04, 0.05]} />
-            <meshStandardMaterial color={'#caa64a'} metalness={0.7} roughness={0.3} />
-          </mesh>
+          {/* 兵器 — the procedural weapon varies by class (a coarse echo of the
+              detailed Mixamo meshes): pole-arms reach far, the axe shows a head,
+              the greatsword a longer blade, the bow a curved limb. */}
+          <ProcWeapon cls={weaponClass} />
         </group>
       </group>
 
@@ -460,7 +506,7 @@ function Fighter({
     <group position={[x, 0, 0]} rotation={[0, rotY, 0]}>
       {DUEL_ASSETS_READY
         ? <RealFighter action={action} pack={packForClass(weaponClass)} weaponClass={weaponClass} tint={tunic} timeScale={timeScale} />
-        : <ProceduralFighter tunic={tunic} action={action} />}
+        : <ProceduralFighter tunic={tunic} action={action} weaponClass={weaponClass} />}
       {/* faction ring underfoot */}
       <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.34, 0.46, 32]} />

@@ -18,7 +18,7 @@ import { applyBattlePrep,
   moveUnit, resolveBattleEnd, unitAt, forecastAttack, matchupLabel, battleStratagemSituation, eliteUnitOf,
   findPath, moveUnitAlong, reachableHexes,
 } from '../../game/systems/tactical';
-import { canDuel } from '../../game/systems/duel';
+import { canDuel, pickDuelTerrain } from '../../game/systems/duel';
 import { duelWound } from '../../game/systems/afflictions';
 import { personalTacticsForUnit } from '../../game/systems/personalTactics';
 import { FORMATIONS_BY_ID, STRATAGEMS } from '../../game/data';
@@ -3986,7 +3986,7 @@ export function TacticalBattleScreen3D() {
     const id = setTimeout(() => setShowOpening(false), 2800);
     return () => clearTimeout(id);
   }, []);
-  const [interactiveDuel, setInteractiveDuel] = useState<{ me: Officer; foe: Officer; meFatigue: number; foeFatigue: number; reinforcements: Officer[] } | null>(null);
+  const [interactiveDuel, setInteractiveDuel] = useState<{ me: Officer; foe: Officer; meFatigue: number; foeFatigue: number; reinforcements: Officer[]; terrain?: import('../../game/systems/duel').DuelTerrain } | null>(null);
   // 敵將叫陣 — an aggressive enemy adjacent to one of your officers may challenge
   // you at the top of your turn; accept to duel, or refuse.
   const [challenge, setChallenge] = useState<{ me: Officer; foe: Officer; meFatigue: number; foeFatigue: number; reinforcements: Officer[] } | null>(null);
@@ -4308,7 +4308,7 @@ export function TacticalBattleScreen3D() {
           && hexDistance(ru.coord, u.coord) === 1 && officers[ru.officerId] && canDuel(officers[ru.officerId]!).ok)
         .map((ru) => officers[ru.officerId]!).slice(0, 2);
       // 車輪戰 — each fighter opens winded by the bouts they've already fought.
-      setInteractiveDuel({ me, foe, meFatigue: selectedUnit.duelFatigue ?? 0, foeFatigue: u.duelFatigue ?? 0, reinforcements });
+      setInteractiveDuel({ me, foe, meFatigue: selectedUnit.duelFatigue ?? 0, foeFatigue: u.duelFatigue ?? 0, reinforcements, terrain: pickDuelTerrain() });
       setActionMode({ kind: 'none' });
       return;
     }
@@ -4980,7 +4980,7 @@ export function TacticalBattleScreen3D() {
             </div>
             <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'center' }}>
               <button
-                onClick={() => { setInteractiveDuel({ ...challenge }); setChallenge(null); }}
+                onClick={() => { setInteractiveDuel({ ...challenge, terrain: pickDuelTerrain() }); setChallenge(null); }}
                 style={{ flex: 1, padding: '0.6rem', background: 'linear-gradient(180deg,#7a2a20,#4a1810)', border: '1px solid #e0846a', color: '#ffe0d0', cursor: 'pointer', fontFamily: 'inherit', fontSize: '1.05rem', letterSpacing: '0.1rem' }}
               >{t('應戰!', 'Accept!')}</button>
               <button
@@ -5021,6 +5021,7 @@ export function TacticalBattleScreen3D() {
           meFatigue={interactiveDuel.meFatigue}
           foeFatigue={interactiveDuel.foeFatigue}
           reinforcements={interactiveDuel.reinforcements}
+          terrain={interactiveDuel.terrain ?? 'plain'}
           staged
           onRound={onDuelRound}
           onComplete={(outcome) => {
