@@ -11,7 +11,10 @@ import { join } from 'node:path'
 // OUTPUT (dist only — source files are never touched) so iOS/Vercel ship a
 // fraction of the 259MB. Keep these in sync with duelAssets.ts + debateAssets.ts.
 function pruneUnusedDuelPacks(): Plugin {
-  const KEEP_DIRS = new Set(['Sword and Shield Pack', 'Great Sword Pack', 'Pro Magic Pack', 'Gestures Pack Basic'])
+  // Keep in sync with duelAssets.ts + debateAssets.ts. The duel uses Sword/Great
+  // + the Axe pack (斧 class & the shared 挑釁/突刺/連擊/缴械 clips) + the Longbow
+  // pack (弓 class & roll/sidestep evades); the 舌戰 uses Pro-Magic + Gestures.
+  const KEEP_DIRS = new Set(['Sword and Shield Pack', 'Great Sword Pack', 'Pro Melee Axe Pack-2', 'Pro Longbow Pack', 'Pro Magic Pack', 'Gestures Pack Basic'])
   const KEEP_FILES = new Set(['X Bot.fbx', 'Dodging.fbx', 'Quick Roll To Run.fbx', 'Jump.fbx', 'README.md'])
   return {
     name: 'prune-unused-duel-packs',

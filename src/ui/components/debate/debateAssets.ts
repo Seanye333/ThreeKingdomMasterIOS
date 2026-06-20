@@ -23,10 +23,12 @@ export type DebateAnim =
   | 'retort'   // 駁 — a dismissive wave that turns the argument aside
   | 'provoke'  // 諷 — cocky, sarcastic mockery
   | 'press'    // 詰 — overwhelming forward pressure
+  | 'cite'     // 引 — a pointed, authoritative single-hand declamation (引經據典)
+  | 'scorn'    // 哂 — a dismissive look-away mockery (哂笑不屑)
   | 'flinch'   // 微挫 — a small loss of composure (annoyed recoil)
   | 'recoil'   // 語塞 — a large loss of composure (struck back)
   | 'rout'     // 罵倒 — composure broken; stagger back, undone
-  | 'win';     // 折服 — won the exchange; a cocky flourish
+  | 'win';     // 折服 — won the exchange; a flourish (persona picks which)
 
 /** 'fbx' (current Mixamo export) or 'glb' if you later convert for iOS perf. */
 export const DEBATE_FORMAT: 'fbx' | 'glb' = 'fbx';
@@ -49,11 +51,18 @@ const RAW: Record<DebateAnim, string[]> = {
   retort:  [GB + 'dismissing gesture', GB + 'shaking head no'],
   provoke: [GB + 'being cocky', GB + 'sarcastic head nod'],
   press:   [PM + 'Standing 2H Magic Area Attack 01', PM + 'Standing 2H Magic Attack 03'],
-  flinch:  [GB + 'annoyed head shake', PM + 'Standing React Small From Front'],
-  recoil:  [PM + 'Standing React Large From Front'],
-  rout:    [PM + 'Standing React Death Backward'],
-  win:     [GB + 'being cocky', GB + 'acknowledging'],
+  cite:    [PM + 'Standing 1H Magic Attack 01', PM + 'Standing 1H Magic Attack 02'], // 引經 — pointed authority
+  scorn:   [GB + 'look away gesture', GB + 'sarcastic head nod', GB + 'being cocky'], // 哂笑 — dismissive mockery
+  flinch:  [GB + 'annoyed head shake', PM + 'Standing React Small From Front', GB + 'thoughtful head shake'],
+  recoil:  [PM + 'Standing React Large From Front', PM + 'Standing React Large From Back'],
+  rout:    [PM + 'Standing React Death Backward', PM + 'Standing React Death Forward'],
+  // 折服 — the victory flourish; the hall picks a clip by the winner's persona
+  // (see WIN_BY_PERSONA): sly→cocky, sage→relieved/acknowledge, fierce→angry/nod.
+  win:     [GB + 'being cocky', GB + 'acknowledging', GB + 'angry gesture', GB + 'relieved sigh', GB + 'hard head nod'],
 };
+
+/** Index into the `win` pool above for each debating persona. */
+export const WIN_BY_PERSONA: Record<'sage' | 'fierce' | 'sly', number> = { sly: 0, sage: 1, fierce: 2 };
 
 export interface DebatePack {
   character: string;                         // mesh URL

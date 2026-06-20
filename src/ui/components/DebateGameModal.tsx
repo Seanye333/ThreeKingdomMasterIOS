@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import type { Officer } from '../../game/types';
 import {
-  initDebate, debateRound, aiDebateMove, debateMoraleDeltas, PRESS_MOMENTUM_COST,
+  initDebate, debateRound, aiDebateMove, debateMoraleDeltas, PRESS_MOMENTUM_COST, debateMoveCost,
   type DebateMove, type DebateBout,
 } from '../../game/systems/wordWar';
 import { OfficerPortrait } from './OfficerPortrait';
@@ -27,11 +27,13 @@ export interface DebateRoundFx {
  * beats 論 and 諷 but is turned aside by 駁. Drain the foe's 沉著 to 0 to rout
  * them; the loser's side opens the battle demoralized.
  */
-const MOVES: Array<{ id: DebateMove; zh: string; en: string; hint: { zh: string; en: string } }> = [
-  { id: 'assert',  zh: '論', en: 'Assert',  hint: { zh: '勝諷、負駁', en: 'beats Provoke, loses to Retort' } },
-  { id: 'retort',  zh: '駁', en: 'Retort',  hint: { zh: '勝論、攢勢', en: 'beats Assert, banks momentum' } },
-  { id: 'provoke', zh: '諷', en: 'Provoke', hint: { zh: '勝駁、負論', en: 'beats Retort, loses to Assert' } },
-  { id: 'press',   zh: '詰', en: 'Press',   hint: { zh: '耗2勢，勝論諷', en: '2 momentum — beats Assert & Provoke' } },
+const MOVES: Array<{ id: DebateMove; zh: string; en: string; cost?: number; hint: { zh: string; en: string } }> = [
+  { id: 'assert',  zh: '論', en: 'Assert',  hint: { zh: '勝諷·哂、負駁詰引', en: 'beats Provoke/Scorn, loses to Retort/Press/Cite' } },
+  { id: 'retort',  zh: '駁', en: 'Retort',  hint: { zh: '勝論·詰、攢勢', en: 'beats Assert/Press, banks momentum' } },
+  { id: 'provoke', zh: '諷', en: 'Provoke', hint: { zh: '勝駁·哂、負論詰引', en: 'beats Retort/Scorn, loses to Assert/Press/Cite' } },
+  { id: 'press',   zh: '詰', en: 'Press',   cost: PRESS_MOMENTUM_COST, hint: { zh: '耗2勢，勝論諷引；負駁哂', en: '2勢 — beats Assert/Provoke/Cite; loses to Retort/Scorn' } },
+  { id: 'cite',    zh: '引', en: 'Cite',    cost: 2, hint: { zh: '耗2勢，引經據典壓三式；負詰哂', en: '2勢 — authority over the 3 base; loses to Press/Scorn' } },
+  { id: 'scorn',   zh: '哂', en: 'Scorn',   cost: 1, hint: { zh: '耗1勢，哂笑破駁·引·詰；負論諷', en: '1勢 — deflates Retort/Cite/Press; loses to Assert/Provoke' } },
 ];
 
 export function DebateGameModal({
@@ -59,7 +61,7 @@ export function DebateGameModal({
 
   const play = (move: DebateMove) => {
     if (bout.over) return;
-    if (move === 'press' && bout.aMomentum < PRESS_MOMENTUM_COST) return;
+    if (bout.aMomentum < debateMoveCost(move)) return; // not enough 氣勢 to spend
     const foeMove = aiDebateMove(bout, 'd', Math.random);
     const res = debateRound(bout, move, foeMove, Math.random);
     const who = res.roundWinner === 'a' ? nm(me) : res.roundWinner === 'd' ? nm(foe) : t('各執', 'Stalemate');
@@ -131,19 +133,20 @@ export function DebateGameModal({
           {side(foe, bout.dMomentum, '#c178c7', 'd', 'right')}
         </div>
         {!bout.over ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.4rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem' }}>
             {MOVES.map((m) => {
-              const disabled = m.id === 'press' && bout.aMomentum < PRESS_MOMENTUM_COST;
+              const cost = m.cost ?? 0;
+              const disabled = cost > bout.aMomentum;
               return (
                 <button
                   key={m.id}
                   onClick={() => play(m.id)}
                   disabled={disabled}
-                  style={{ padding: '0.4rem 0.2rem', background: disabled ? '#1a1810' : '#26221a', border: `1px solid ${disabled ? '#2c281c' : '#4a5530'}`, color: disabled ? '#5a4a36' : '#e6edf3', cursor: disabled ? 'default' : 'pointer', fontFamily: 'inherit', textAlign: 'center' }}
+                  style={{ padding: '0.35rem 0.2rem', background: disabled ? '#1a1810' : '#26221a', border: `1px solid ${disabled ? '#2c281c' : cost ? '#7a6a3a' : '#4a5530'}`, color: disabled ? '#5a4a36' : '#e6edf3', cursor: disabled ? 'default' : 'pointer', fontFamily: 'inherit', textAlign: 'center' }}
                   title={lang === 'en' ? m.hint.en : m.hint.zh}
                 >
-                  <div style={{ fontSize: '1.15rem', color: disabled ? '#5a4a36' : '#88b7e8' }}>{m.zh}</div>
-                  <div style={{ fontSize: '0.56rem', color: '#7a8893' }}>{lang === 'en' ? m.en : m.hint.zh}</div>
+                  <div style={{ fontSize: '1.1rem', color: disabled ? '#5a4a36' : cost ? '#e6c473' : '#88b7e8' }}>{m.zh}{cost ? ` ${'◆'.repeat(cost)}` : ''}</div>
+                  <div style={{ fontSize: '0.54rem', color: '#7a8893' }}>{m.en}</div>
                 </button>
               );
             })}
@@ -220,9 +223,10 @@ export function DebateGameModal({
         </div>
 
         {!bout.over && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginTop: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginTop: '1rem' }}>
             {MOVES.map((m) => {
-              const disabled = m.id === 'press' && bout.aMomentum < PRESS_MOMENTUM_COST;
+              const cost = m.cost ?? 0;
+              const disabled = cost > bout.aMomentum;
               return (
                 <button
                   key={m.id}
@@ -230,13 +234,13 @@ export function DebateGameModal({
                   disabled={disabled}
                   style={{
                     padding: '0.5rem 0.3rem', background: disabled ? '#1a1810' : '#26221a',
-                    border: `1px solid ${disabled ? '#2c281c' : '#4a5530'}`,
+                    border: `1px solid ${disabled ? '#2c281c' : cost ? '#7a6a3a' : '#4a5530'}`,
                     color: disabled ? '#5a4a36' : '#e6edf3', cursor: disabled ? 'default' : 'pointer',
                     fontFamily: 'inherit', textAlign: 'center',
                   }}
                   title={lang === 'en' ? m.hint.en : m.hint.zh}
                 >
-                  <div style={{ fontSize: '1.3rem', color: disabled ? '#5a4a36' : '#88b7e8' }}>{m.zh}</div>
+                  <div style={{ fontSize: '1.25rem', color: disabled ? '#5a4a36' : cost ? '#e6c473' : '#88b7e8' }}>{m.zh}{cost ? ` ${'◆'.repeat(cost)}` : ''}</div>
                   <div style={{ fontSize: '0.6rem', color: '#7a8893' }}>{lang === 'en' ? m.en : m.hint.zh}</div>
                 </button>
               );

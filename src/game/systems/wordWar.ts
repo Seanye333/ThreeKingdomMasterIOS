@@ -114,20 +114,23 @@ export function resolveWordWar(
   return { ...base, winnerSide: 'defender', attackerMoraleDelta: -10, defenderMoraleDelta: 0 };
 }
 
-// ─── Interactive debate (player-played 論/諷/駁/詰 round game) ──────────────
+// ─── Interactive debate (player-played 論/諷/駁/詰/引/哂 round game) ──────────
 //
-// Mirrors the duel minigame for the war of words. 論>諷, 諷>駁, 駁>論; a
-// successful 駁 (retort) banks 氣勢 toward 詰 (Press, costs 2), which beats 論
-// and 諷 but is turned aside by 駁. Prowess = INT + CHA/2; drain a foe's 沉著
-// (composure) to 0 to rout them in debate, else win on points. The loser's side
-// starts the battle demoralized.
+// Mirrors the duel minigame for the war of words. The three base ripostes form
+// a ring — 論>諷, 諷>駁, 駁>論 — and a successful 駁 (retort) banks 氣勢. Three
+// "loaded" arguments spend that 氣勢:
+//   詰 Press   (2勢): 壓 — beats 論/諷/引, turned aside by 駁/哂
+//   引 Cite    (2勢): 引經據典 — beats 論/諷/駁, undone by 詰/哂
+//   哂 Scorn   (1勢): 哂笑不屑 — beats 駁/引/詰, but bare 論/諷 see through it
+// Prowess = INT + CHA/2; drain a foe's 沉著 (composure) to 0 to rout them, else
+// win on points. The loser's side starts the battle demoralized.
 
-export type DebateMove = 'assert' | 'provoke' | 'retort' | 'press';
+export type DebateMove = 'assert' | 'provoke' | 'retort' | 'press' | 'cite' | 'scorn';
 
 export interface DebateBout {
   aComposure: number;
   dComposure: number;
-  aMomentum: number; // banked retorts toward 詰
+  aMomentum: number; // banked retorts toward the loaded arguments
   dMomentum: number;
   aProwess: number;
   dProwess: number;
@@ -137,10 +140,26 @@ export interface DebateBout {
 }
 
 export const PRESS_MOMENTUM_COST = 2;
+export const CITE_MOMENTUM_COST = 2;
+export const SCORN_MOMENTUM_COST = 1;
+/** 氣勢 a loaded argument spends. */
+export function debateMoveCost(m: DebateMove): number {
+  return m === 'press' || m === 'cite' ? 2 : m === 'scorn' ? 1 : 0;
+}
 const DEBATE_ROUNDS = 6;
 
 export function debateProwess(o: Officer): number {
   return Math.round(o.stats.intelligence + o.stats.charisma * 0.5);
+}
+
+// 風格 — a strategist's debating persona drives which gestures / win poses the
+// 3D hall plays: 智者 (measured), 猛士 (blunt & forceful), 奸雄 (sly & mocking).
+export type DebatePersona = 'sage' | 'fierce' | 'sly';
+export function debatePersona(o: Officer): DebatePersona {
+  const { intelligence: int, charisma: cha, war } = o.stats;
+  if (o.traits?.includes('ambitious') || o.traits?.includes('cunning') || o.traits?.includes('arrogant') || (cha >= 80 && int >= 70 && cha > int)) return 'sly';
+  if (war >= 78 && war > int) return 'fierce';
+  return 'sage';
 }
 
 export function initDebate(me: Officer, foe: Officer): DebateBout {
@@ -151,14 +170,18 @@ export function initDebate(me: Officer, foe: Officer): DebateBout {
   };
 }
 
-// 論>諷, 諷>駁, 駁>論; 詰 beats 論 & 諷 but loses to 駁.
-const DEBATE_BEATS: Record<Exclude<DebateMove, 'press'>, DebateMove> = {
-  assert: 'provoke', provoke: 'retort', retort: 'assert',
+// Each move's win set. The base ring (論>諷>駁>論) and 詰's relationships are
+// unchanged from the 4-move game; 引/哂 extend it. No pair has two winners.
+const DEBATE_BEATS: Record<DebateMove, DebateMove[]> = {
+  assert:  ['provoke', 'scorn'],            // 論 — beats 諷 and sees through 哂
+  provoke: ['retort', 'scorn'],             // 諷 — beats 駁 and out-mocks 哂
+  retort:  ['assert', 'press'],             // 駁 — beats 論 and turns aside 詰
+  press:   ['assert', 'provoke', 'cite'],   // 詰 — overwhelms 論/諷 and 引
+  cite:    ['assert', 'provoke', 'retort'], // 引 — authority over all three base
+  scorn:   ['retort', 'cite', 'press'],     // 哂 — deflates 駁/引 and the heavy 詰
 };
 function debateMoveBeats(x: DebateMove, y: DebateMove): boolean {
-  if (x === 'press') return y === 'assert' || y === 'provoke';
-  if (y === 'press') return x === 'retort';
-  return DEBATE_BEATS[x] === y;
+  return DEBATE_BEATS[x].includes(y);
 }
 
 export interface DebateRoundResult {
@@ -176,13 +199,15 @@ export function debateRound(
 ): DebateRoundResult {
   const b: DebateBout = { ...bout };
   if (b.over) return { bout: b, roundWinner: 'draw', dmgToA: 0, dmgToD: 0 };
-  if (aMove === 'press') b.aMomentum = Math.max(0, b.aMomentum - PRESS_MOMENTUM_COST);
-  if (dMove === 'press') b.dMomentum = Math.max(0, b.dMomentum - PRESS_MOMENTUM_COST);
+  b.aMomentum = Math.max(0, b.aMomentum - debateMoveCost(aMove));
+  b.dMomentum = Math.max(0, b.dMomentum - debateMoveCost(dMove));
 
+  const DMG_BASE: Record<DebateMove, number> = {
+    retort: 10, assert: 18, provoke: 18, press: 30, cite: 26, scorn: 22,
+  };
   const dmgFrom = (move: DebateMove, winP: number, loseP: number): number => {
-    const base = move === 'retort' ? 10 : move === 'press' ? 30 : 18;
     const adv = Math.max(-6, Math.min(20, (winP - loseP) * 0.4));
-    return Math.max(6, Math.round(base + adv + rng() * 8));
+    return Math.max(6, Math.round((DMG_BASE[move] ?? 18) + adv + rng() * 8));
   };
 
   let roundWinner: 'a' | 'd' | 'draw' = 'draw';
@@ -219,6 +244,10 @@ export function aiDebateMove(bout: DebateBout, side: 'a' | 'd', rng: () => numbe
   const momentum = side === 'a' ? bout.aMomentum : bout.dMomentum;
   const composure = side === 'a' ? bout.aComposure : bout.dComposure;
   if (momentum >= PRESS_MOMENTUM_COST && rng() < 0.55) return 'press';
+  // 引經據典 — an alternative heavy spender to the press.
+  if (momentum >= CITE_MOMENTUM_COST && rng() < 0.5) return 'cite';
+  // 哂笑 — a cheap loaded mock when even a little 氣勢 is banked.
+  if (momentum >= SCORN_MOMENTUM_COST && rng() < 0.32) return 'scorn';
   const r = rng();
   if (composure < 35) return r < 0.5 ? 'retort' : r < 0.78 ? 'provoke' : 'assert';
   return r < 0.45 ? 'assert' : r < 0.72 ? 'provoke' : 'retort';

@@ -214,9 +214,10 @@ export function weaponArtFor(o: Officer): WeaponArt | null {
 }
 
 // ─── 兵器 — which weapon an officer wields in the 3D duel arena ──────────────
-// Drives both the animation pack (one-handed sword vs two-handed polearm) and
-// the weapon mesh on the hand. Two-handed: glaive/spear/halberd/greatsword.
-export type WeaponClass = 'sword' | 'axe' | 'twinblade' | 'glaive' | 'spear' | 'halberd' | 'greatsword';
+// Drives both the animation pack (one-handed sword vs two-handed polearm vs the
+// dedicated axe / bow packs) and the weapon mesh on the hand. Two-handed:
+// glaive/spear/halberd/greatsword; 斧 and 弓 each fight with their own pack.
+export type WeaponClass = 'sword' | 'axe' | 'twinblade' | 'glaive' | 'spear' | 'halberd' | 'greatsword' | 'bow';
 
 // A legendary weapon dictates the class outright.
 const WEAPON_CLASS_BY_ITEM: Record<string, WeaponClass> = {
@@ -233,6 +234,8 @@ const WEAPON_CLASS_BY_OFFICER: Record<string, WeaponClass> = {
   'guan-yu': 'glaive', 'zhang-fei': 'spear', 'zhao-yun': 'spear', 'ma-chao': 'spear',
   'lu-bu': 'halberd', 'dian-wei': 'greatsword', 'xu-chu': 'greatsword',
   'huang-gai': 'axe', 'xu-huang': 'axe', 'dong-zhuo': 'halberd',
+  // 神射手 — famous archers carry a bow into the arena (ranged opening volley).
+  'huang-zhong': 'bow', 'taishi-ci': 'bow', 'xiahou-yuan': 'bow', 'gan-ning': 'bow',
 };
 
 /** The officer's 3D duel weapon: legendary item → signature → war-based default. */
@@ -244,39 +247,64 @@ export function weaponClassFor(o: Officer): WeaponClass {
   return 'sword';
 }
 
-/** The animation pack a weapon class fights with: one-handed vs two-handed. */
+/** The animation pack a weapon class fights with: one-handed vs two-handed.
+ *  (弓 archers use their own pack — see the arena's packForClass.) */
 export function weaponIsTwoHanded(c: WeaponClass): boolean {
   return c === 'glaive' || c === 'spear' || c === 'halberd' || c === 'greatsword';
 }
 
-// ─── Interactive duel — a 3-attack / 3-defense counter game ────────────────
+/** 弓手 — an archer opens with a ranged volley and harries from distance. */
+export function weaponIsRanged(c: WeaponClass): boolean {
+  return c === 'bow';
+}
+
+// ─── Interactive duel — a counter game of 3 attacks / 3 defenses + specials ──
 //
 //   Attacks:  劈 cleave (high/heavy) · 斬 slash (mid/fast) · 掃 sweep (low)
 //   Defenses: 格 guard (block) · 閃 dodge (evade) · 架 parry (deflect+riposte)
-//   Spender:  奮 power (costs 2 氣; only 格 guard stops it)
+//   Specials: 挑釁 taunt  — banks 2 氣 + recovers, but a foe's attack lands clean
+//             突刺 thrust — costs 1 氣; fast lunge, only 格 guard stops it (slips
+//                           閃 dodge & 架 parry, beats the slower base attacks)
+//             連擊 combo  — costs 2 氣; a flurry no single defense fully stops
+//             奮 power    — costs 2 氣; heavy overpower, only 格 guard stops it
 //
 // Counters are near-decisive — the matrix fixes WHO is hit; prowess gap and a
 // small die only set the magnitude. Each attack is STOPPED by two defenses and
 // PUNISHES the third (its blind spot):
 //   劈 cleave punished only by 架 parry · 斬 slash punished only by 閃 dodge ·
 //   掃 sweep  punished only by 格 guard.
-// Attack-vs-attack is a mini ring: 斬 > 劈 > 掃 > 斬.
+// Attack-vs-attack is a mini ring: 斬 > 劈 > 掃 > 斬. The specials resolve in a
+// dedicated branch so the tested base matrix above is never perturbed.
 
-export type DuelMove = 'cleave' | 'slash' | 'sweep' | 'guard' | 'dodge' | 'parry' | 'power';
+export type DuelMove =
+  | 'cleave' | 'slash' | 'sweep'      // 3 base attacks
+  | 'guard' | 'dodge' | 'parry'       // 3 defenses
+  | 'power'                           // 奮 — heavy spender
+  | 'taunt' | 'thrust' | 'combo';     // 挑釁 / 突刺 / 連擊 — new specials
 
 const ATTACKS: DuelMove[] = ['cleave', 'slash', 'sweep'];
 const DEFENSES: DuelMove[] = ['guard', 'dodge', 'parry'];
+const SPECIALS: DuelMove[] = ['taunt', 'thrust', 'combo'];
 export const isAttackMove = (m: DuelMove): boolean => ATTACKS.includes(m);
 export const isDefenseMove = (m: DuelMove): boolean => DEFENSES.includes(m);
+export const isSpecialMove = (m: DuelMove): boolean => SPECIALS.includes(m);
+/** Any move that closes to strike (base attacks + thrust/combo/power). */
+const isOffensiveMove = (m: DuelMove): boolean => isAttackMove(m) || m === 'thrust' || m === 'combo' || m === 'power';
 
 // The one defense each attack BEATS (its blind spot); the other two stop it.
 const ATTACK_PUNISHES: Record<string, DuelMove> = { cleave: 'parry', slash: 'dodge', sweep: 'guard' };
 // Attack-vs-attack mini ring: key beats value (斬>劈>掃>斬).
 const ATTACK_BEATS: Record<string, DuelMove> = { slash: 'cleave', cleave: 'sweep', sweep: 'slash' };
 // Base damage a clean strike deals, before prowess gap / die / weapon art.
-const STRIKE_DMG: Record<string, number> = { cleave: 34, slash: 26, sweep: 24, power: 42 };
+const STRIKE_DMG: Record<string, number> = { cleave: 34, slash: 26, sweep: 24, power: 42, thrust: 30, combo: 34 };
 // 氣 banked by a defense that holds (架 parry banks most; 閃 dodge none).
 const DEFENSE_GUARD: Record<string, number> = { guard: 1, parry: 2, dodge: 0 };
+
+// 氣 costs / rewards of the specials.
+export const THRUST_COST = 1;
+export const COMBO_COST = 2;
+const TAUNT_BANK = 2;     // 挑釁 banks this much 氣 when it isn't punished
+const TAUNT_RECOVER = 8;  // …and catches this much breath back
 
 // 難度 — how sharply the AI foe reads and counters you.
 export type DuelDifficulty = 'rookie' | 'veteran' | 'peerless';
@@ -314,15 +342,18 @@ export function initDuelBout(
   dStaminaPenalty = 0,
   difficulty: DuelDifficulty = 'veteran',
 ): DuelBout {
+  const aClass = weaponClassFor(attacker);
+  const dClass = weaponClassFor(defender);
   return {
     aStamina: Math.max(30, 100 - aStaminaPenalty),
     dStamina: Math.max(30, 100 - dStaminaPenalty),
-    aGuard: 0, dGuard: 0,
+    // 弓·先發制人 — an archer opens with a banked 氣 from the ranged volley.
+    aGuard: weaponIsRanged(aClass) ? 1 : 0, dGuard: weaponIsRanged(dClass) ? 1 : 0,
     aStatic: staticProwess(attacker), dStatic: staticProwess(defender),
     aInt: attacker.stats.intelligence, dInt: defender.stats.intelligence,
     aMoves: [], dMoves: [],
     aArt: weaponArtFor(attacker), dArt: weaponArtFor(defender),
-    aClass: weaponClassFor(attacker), dClass: weaponClassFor(defender),
+    aClass, dClass,
     difficulty,
     round: 0, over: false,
   };
@@ -333,6 +364,8 @@ export interface DuelRoundResult {
   roundWinner: 'attacker' | 'defender' | 'draw';
   dmgToAttacker: number;
   dmgToDefender: number;
+  /** 缴械 — set to the side whose weapon was knocked aside by a 架 parry. */
+  disarm?: 'attacker' | 'defender';
 }
 
 /** Resolve one exchange. attacker/defender each commit a move. */
@@ -347,8 +380,9 @@ export function duelRound(
   // Record the exchange so a reading mind has a habit to exploit next round.
   b.aMoves = [...bout.aMoves, aMove];
   b.dMoves = [...bout.dMoves, dMove];
-  if (aMove === 'power') b.aGuard = Math.max(0, b.aGuard - POWER_GUARD_COST);
-  if (dMove === 'power') b.dGuard = Math.max(0, b.dGuard - POWER_GUARD_COST);
+  const spendCost = (m: DuelMove): number => (m === 'power' ? POWER_GUARD_COST : m === 'combo' ? COMBO_COST : m === 'thrust' ? THRUST_COST : 0);
+  b.aGuard = Math.max(0, b.aGuard - spendCost(aMove));
+  b.dGuard = Math.max(0, b.dGuard - spendCost(dMove));
 
   // A clean strike's damage. Near-decisive: the matrix already chose the victim;
   // a stronger arm and a small die only set how hard, never flip it. A matching
@@ -364,8 +398,74 @@ export function duelRound(
   let roundWinner: 'attacker' | 'defender' | 'draw' = 'draw';
   let dmgToAttacker = 0, dmgToDefender = 0;
   let aGuardGain = 0, dGuardGain = 0, aRecover = 0, dRecover = 0;
+  let disarm: 'attacker' | 'defender' | undefined;
 
-  if (aMove === 'power' || dMove === 'power') {
+  if (isSpecialMove(aMove) || isSpecialMove(dMove)) {
+    // ── 招式·特技 (taunt / thrust / combo) — resolved apart from the base ring ──
+    if (aMove === 'taunt' || dMove === 'taunt') {
+      // 挑釁 — bank 氣 & catch a breath, UNLESS the foe pressed an attack home,
+      // in which case it lands clean (no guard up). Mutual taunt / taunt-vs-
+      // defense is safe posturing for the taunter.
+      const settleTaunt = (taunterIsA: boolean) => {
+        const foe = taunterIsA ? dMove : aMove;
+        if (isOffensiveMove(foe)) {
+          // Punished: the foe's blow lands clean on the open taunter.
+          const foeP = taunterIsA ? b.dStatic : b.aStatic;
+          const selfP = taunterIsA ? b.aStatic : b.dStatic;
+          const foeArt = taunterIsA ? b.dArt : b.aArt;
+          const dmg = strike(foe, foeP, selfP, foeArt);
+          if (taunterIsA) { dmgToAttacker = dmg; roundWinner = 'defender'; }
+          else { dmgToDefender = dmg; roundWinner = 'attacker'; }
+        } else {
+          // Safe — bank 氣 and recover. The foe (defending or also taunting)
+          // gets their own defensive 氣 / breath.
+          if (taunterIsA) { aGuardGain += TAUNT_BANK; aRecover += TAUNT_RECOVER; }
+          else { dGuardGain += TAUNT_BANK; dRecover += TAUNT_RECOVER; }
+        }
+      };
+      if (aMove === 'taunt') settleTaunt(true);
+      if (dMove === 'taunt') settleTaunt(false);
+      // A defending foe still banks its defensive 氣 / dodge breath.
+      if (aMove === 'taunt' && isDefenseMove(dMove)) { dGuardGain += DEFENSE_GUARD[dMove]; if (dMove === 'dodge') dRecover += 5; }
+      if (dMove === 'taunt' && isDefenseMove(aMove)) { aGuardGain += DEFENSE_GUARD[aMove]; if (aMove === 'dodge') aRecover += 5; }
+    } else if (isOffensiveMove(aMove) && isOffensiveMove(dMove)) {
+      // Two committed strikes (≥1 special) — a hard trade. Both land; the
+      // crisper blow wins and blunts half of the other's.
+      let aDmg = strike(aMove, b.aStatic, b.dStatic, b.aArt);
+      let dDmg = strike(dMove, b.dStatic, b.aStatic, b.dArt);
+      if (aDmg > dDmg) dDmg = Math.round(dDmg * 0.5);
+      else if (dDmg > aDmg) aDmg = Math.round(aDmg * 0.5);
+      dmgToDefender = aDmg; dmgToAttacker = dDmg;
+      roundWinner = aDmg > dDmg ? 'attacker' : dDmg > aDmg ? 'defender' : 'draw';
+    } else {
+      // One special offence (thrust/combo) vs a defense — the defender is the
+      // non-special side. Resolve by the special's rules.
+      const atkIsA = isDefenseMove(dMove);
+      const atk = atkIsA ? aMove : dMove;     // 'thrust' | 'combo'
+      const def = atkIsA ? dMove : aMove;     // 'guard' | 'dodge' | 'parry'
+      const atkP = atkIsA ? b.aStatic : b.dStatic;
+      const defP = atkIsA ? b.dStatic : b.aStatic;
+      const atkArt = atkIsA ? b.aArt : b.dArt;
+      let atkLands = 0, defLands = 0, defBank = 0, defRec = 0;
+      let win: 'atk' | 'def' = 'atk';
+      if (atk === 'thrust') {
+        if (def === 'guard') { defBank = 1; defLands = chip(); win = 'def'; } // 格 stops the thrust — recoil
+        else { atkLands = strike('thrust', atkP, defP, atkArt); if (def === 'dodge') defRec = 5; } // slips 閃/架
+      } else { // combo — a flurry no single guard fully stops
+        const full = strike('combo', atkP, defP, atkArt);
+        if (def === 'guard') { atkLands = Math.round(full * 0.5); defBank = 1; }
+        else if (def === 'dodge') { atkLands = Math.round(full * 0.6); defRec = 4; }
+        else { atkLands = Math.round(full * 0.6); defBank = 2; defLands = Math.round(9 + rng() * 4); } // 架 deflects one, ripostes
+      }
+      if (atkIsA) {
+        dmgToDefender = atkLands; dmgToAttacker = defLands; dGuardGain += defBank; dRecover += defRec;
+        roundWinner = win === 'atk' ? 'attacker' : 'defender';
+      } else {
+        dmgToAttacker = atkLands; dmgToDefender = defLands; aGuardGain += defBank; aRecover += defRec;
+        roundWinner = win === 'atk' ? 'defender' : 'attacker';
+      }
+    }
+  } else if (aMove === 'power' || dMove === 'power') {
     if (aMove === 'power' && dMove === 'power') {
       dmgToDefender = strike('power', b.aStatic, b.dStatic, b.aArt);
       dmgToAttacker = strike('power', b.dStatic, b.aStatic, b.dArt);
@@ -405,12 +505,18 @@ export function duelRound(
       const gain = DEFENSE_GUARD[def];
       const riposte = def === 'parry' ? Math.round(9 + rng() * 5) : 0;
       const pierce = def === 'guard' && atkArt?.kind === 'pierce' ? 9 : 0;
+      // 缴械 — a parry that holds can rip the attacker's weapon aside: a sharper
+      // arm disarms more often. The victim is staggered and loses all banked 氣.
+      const canDisarm = def === 'parry' && rng() < 0.22 + Math.max(0, Math.min(0.2, (defP - atkP) * 0.004));
+      const stagger = canDisarm ? Math.round(10 + rng() * 6) : 0;
       if (aAttacks) {
         dGuardGain += gain; if (def === 'dodge') dRecover = 5;
-        dmgToAttacker += riposte; dmgToDefender += pierce; roundWinner = 'defender';
+        dmgToAttacker += riposte + stagger; dmgToDefender += pierce; roundWinner = 'defender';
+        if (canDisarm) { disarm = 'attacker'; b.aGuard = 0; }
       } else {
         aGuardGain += gain; if (def === 'dodge') aRecover = 6;
-        dmgToDefender += riposte; dmgToAttacker += pierce; roundWinner = 'attacker';
+        dmgToDefender += riposte + stagger; dmgToAttacker += pierce; roundWinner = 'attacker';
+        if (canDisarm) { disarm = 'defender'; b.dGuard = 0; }
       }
     }
   }
@@ -435,6 +541,10 @@ export function duelRound(
   // 重兵器·震懾: a landed greatsword blow hits harder and jars a 氣 point loose.
   if (dmgToDefender > 0 && b.aClass === 'greatsword' && isAttackMove(aMove)) { dmgToDefender += 7; b.dGuard = Math.max(0, b.dGuard - 1); }
   if (dmgToAttacker > 0 && b.dClass === 'greatsword' && isAttackMove(dMove)) { dmgToAttacker += 7; b.aGuard = Math.max(0, b.aGuard - 1); }
+  // 弓·騎射: a bow's base attack that's turned aside still harasses a few 氣力 —
+  // an archer keeps chipping from range even when the foe defends well.
+  if (b.aClass === 'bow' && isAttackMove(aMove) && isDefenseMove(dMove) && ATTACK_PUNISHES[aMove] !== dMove) dmgToDefender += 4;
+  if (b.dClass === 'bow' && isAttackMove(dMove) && isDefenseMove(aMove) && ATTACK_PUNISHES[dMove] !== aMove) dmgToAttacker += 4;
   // 奮·壓制: a landed Overpower knocks all the victim's banked 氣 loose.
   if (aMove === 'power' && dmgToDefender > 0) b.dGuard = 0;
   if (dMove === 'power' && dmgToAttacker > 0) b.aGuard = 0;
@@ -458,7 +568,7 @@ export function duelRound(
     if (b.aStamina <= 0 && b.winner === 'defender') b.killedId = 'attacker';
     if (b.dStamina <= 0 && b.winner === 'attacker') b.killedId = 'defender';
   }
-  return { bout: b, roundWinner, dmgToAttacker, dmgToDefender };
+  return { bout: b, roundWinner, dmgToAttacker, dmgToDefender, disarm };
 }
 
 // The best answer to a predicted move: stop an attack with a defense that holds
@@ -472,6 +582,9 @@ const COUNTER: Record<DuelMove, DuelMove> = {
   dodge: 'slash',   // 閃 — caught by the fast slash
   parry: 'cleave',  // 架 — broken through by the heavy cleave
   power: 'guard',   // 奮 — only the block stops it
+  thrust: 'guard',  // 突刺 — only the block stops the lunge
+  combo: 'guard',   // 連擊 — guard bleeds the least from the flurry
+  taunt: 'slash',   // 挑釁 — punish the open taunter with a fast cut
 };
 
 /** The foe's prevailing habit over their last few moves (random among ties). */
@@ -518,8 +631,14 @@ export function aiDuelMove(bout: DuelBout, side: 'attacker' | 'defender', rng: (
   }
 
   if (guard >= POWER_GUARD_COST && rng() < 0.55) return 'power';
+  // 連擊 — sometimes spend a full bank on a flurry instead of 奮.
+  if (guard >= COMBO_COST && rng() < 0.5) return 'combo';
+  // 突刺 — a single banked 氣 buys a fast lunge that only 格 stops.
+  if (guard >= THRUST_COST && rng() < 0.3) return 'thrust';
   const r = rng();
   // Battered → favour defense; otherwise press an attack on instinct.
   if (stamina < 35) return r < 0.4 ? 'guard' : r < 0.7 ? 'parry' : 'dodge';
+  // 挑釁 — flush of 氣力 and no bank: gamble a taunt to load a spender.
+  if (guard < THRUST_COST && stamina > 55 && r > 0.9) return 'taunt';
   return r < 0.45 ? 'slash' : r < 0.72 ? 'cleave' : 'sweep';
 }

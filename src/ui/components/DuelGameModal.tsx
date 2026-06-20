@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import type { Officer } from '../../game/types';
 import {
-  initDuelBout, duelRound, aiDuelMove, POWER_GUARD_COST, staticProwess, weaponArtFor,
+  initDuelBout, duelRound, aiDuelMove, POWER_GUARD_COST, THRUST_COST, COMBO_COST, staticProwess, weaponArtFor,
   type DuelMove, type DuelBout, type DuelDifficulty,
 } from '../../game/systems/duel';
 import { OfficerPortrait } from './OfficerPortrait';
@@ -19,6 +19,8 @@ export interface DuelRoundFx {
   dMove?: DuelMove;
   over?: boolean;
   winner?: 'attacker' | 'defender' | 'draw';
+  /** 缴械 — set to the side whose weapon was knocked aside by a 架 parry. */
+  disarm?: 'attacker' | 'defender';
 }
 
 /** 必殺技 — a named signature move for famous warriors; the rest of the great
@@ -52,14 +54,18 @@ function signatureFor(o: Officer): { zh: string; en: string } | null {
  * First to drop the foe's 氣力 to 0 cuts them down; a lead at the end wins.
  */
 type MoveKind = 'attack' | 'defense' | 'power';
-const MOVES: Array<{ id: DuelMove; zh: string; en: string; kind: MoveKind; hint: { zh: string; en: string } }> = [
+// `cost` is 氣 spent (0 = free); `bank` flags the 挑釁 generator.
+const MOVES: Array<{ id: DuelMove; zh: string; en: string; kind: MoveKind; cost?: number; bank?: boolean; hint: { zh: string; en: string } }> = [
   { id: 'cleave', zh: '劈', en: 'Cleave',    kind: 'attack',  hint: { zh: '高·重 — 破架招', en: 'high/heavy — punishes Parry' } },
   { id: 'slash',  zh: '斬', en: 'Slash',     kind: 'attack',  hint: { zh: '中·快 — 破閃避', en: 'mid/fast — punishes Dodge' } },
   { id: 'sweep',  zh: '掃', en: 'Sweep',     kind: 'attack',  hint: { zh: '低·掃 — 破格擋', en: 'low — punishes Guard' } },
   { id: 'guard',  zh: '格', en: 'Guard',     kind: 'defense', hint: { zh: '擋斬·劈，攢氣；漏掃', en: 'stops Slash/Cleave, banks 氣; weak vs Sweep' } },
   { id: 'dodge',  zh: '閃', en: 'Dodge',     kind: 'defense', hint: { zh: '閃劈·掃，回氣力；漏斬', en: 'evades Cleave/Sweep, recovers; weak vs Slash' } },
-  { id: 'parry',  zh: '架', en: 'Parry',     kind: 'defense', hint: { zh: '架斬·掃，反擊攢2氣；漏劈', en: 'deflects Slash/Sweep, ripostes +2氣; weak vs Cleave' } },
-  { id: 'power',  zh: '奮', en: 'Overpower', kind: 'power',   hint: { zh: '耗2氣，唯格可擋', en: '2 氣 — only Guard stops it' } },
+  { id: 'parry',  zh: '架', en: 'Parry',     kind: 'defense', hint: { zh: '架斬·掃，反擊攢2氣，可缴械；漏劈', en: 'deflects Slash/Sweep, ripostes +2氣, can disarm; weak vs Cleave' } },
+  { id: 'taunt',  zh: '挑釁', en: 'Taunt',   kind: 'power', bank: true, hint: { zh: '攢2氣+回氣力；若對手進攻則挨實打', en: 'banks 2氣 + recovers; but a foe attack lands clean' } },
+  { id: 'thrust', zh: '突刺', en: 'Thrust',  kind: 'power', cost: THRUST_COST, hint: { zh: '耗1氣，破閃·架，唯格可擋', en: '1氣 — slips Dodge/Parry, only Guard stops' } },
+  { id: 'combo',  zh: '連擊', en: 'Combo',    kind: 'power', cost: COMBO_COST, hint: { zh: '耗2氣，連環擊，無單防可全擋', en: '2氣 — a flurry no single defense fully stops' } },
+  { id: 'power',  zh: '奮', en: 'Overpower', kind: 'power', cost: POWER_GUARD_COST, hint: { zh: '耗2氣，重擊，唯格可擋', en: '2氣 — heavy, only Guard stops it' } },
 ];
 
 export function DuelGameModal({
@@ -134,9 +140,10 @@ export function DuelGameModal({
     setLog((l) => [`${nm(ally)} ${t('挺身援護,接力再戰!', 'leaps in to fight on!')}`, ...l]);
   };
 
+  const moveCost = (m: DuelMove) => MOVES.find((x) => x.id === m)?.cost ?? 0;
   const play = (move: DuelMove) => {
     if (bout.over) return;
-    if (move === 'power' && bout.aGuard < POWER_GUARD_COST) return;
+    if (bout.aGuard < moveCost(move)) return; // not enough 氣 to spend
     const foeMove = aiDuelMove(bout, 'defender', Math.random);
     const res = duelRound(bout, move, foeMove, Math.random);
     const who = res.roundWinner === 'attacker' ? nm(me)
@@ -154,7 +161,11 @@ export function DuelGameModal({
       : 'both';
     fxKey.current += 1;
     setFx({ key: fxKey.current, hit, dmg: Math.max(res.dmgToAttacker, res.dmgToDefender), killed: !!res.bout.killedId });
-    onRound?.({ hit, killed: !!res.bout.killedId, aMove: move, dMove: foeMove, over: res.bout.over, winner: res.bout.winner });
+    onRound?.({ hit, killed: !!res.bout.killedId, aMove: move, dMove: foeMove, over: res.bout.over, winner: res.bout.winner, disarm: res.disarm });
+    if (res.disarm) {
+      const victim = res.disarm === 'attacker' ? nm(me) : nm(defender);
+      setLog((l) => [`⚡ ${victim} ${t('被架開兵器,氣勢盡失!', 'is disarmed — weapon knocked aside!')}`, ...l].slice(0, 7));
+    }
 
     // 必殺 — a decisive 奮 from a great warrior unleashes a named signature move.
     const sigSide = move === 'power' && res.roundWinner === 'attacker' ? me
@@ -194,8 +205,9 @@ export function DuelGameModal({
   const KIND_TINT: Record<MoveKind, string> = { attack: '#b8442e', defense: '#3a7dd9', power: '#e6c473' };
   const movesOf = (kind: MoveKind) => MOVES.filter((m) => m.kind === kind);
   const moveBtn = (m: typeof MOVES[number]) => {
-    const disabled = m.id === 'power' && bout.aGuard < POWER_GUARD_COST;
-    const tint = KIND_TINT[m.kind];
+    const cost = m.cost ?? 0;
+    const disabled = cost > bout.aGuard;
+    const tint = m.bank ? '#e08a4a' : KIND_TINT[m.kind]; // 挑釁 reads as a risky orange
     return (
       <button
         key={m.id}
@@ -209,8 +221,8 @@ export function DuelGameModal({
         }}
         title={lang === 'en' ? m.hint.en : m.hint.zh}
       >
-        <div style={{ fontSize: '1.25rem', color: disabled ? '#5a4a36' : tint }}>
-          {m.zh}{m.id === 'power' ? ` (${bout.aGuard}/${POWER_GUARD_COST})` : ''}
+        <div style={{ fontSize: m.zh.length > 1 ? '1.0rem' : '1.25rem', color: disabled ? '#5a4a36' : tint }}>
+          {m.zh}{cost > 0 ? ` ${'◆'.repeat(cost)}` : m.bank ? ' ＋' : ''}
         </div>
         <div style={{ fontSize: '0.58rem', color: '#8a96a0', lineHeight: 1.2 }}>{lang === 'en' ? m.en : m.hint.zh}</div>
       </button>
@@ -353,7 +365,10 @@ export function DuelGameModal({
               {groupLabel('守 — 防禦', 'DEFEND', 'defense')}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem' }}>{movesOf('defense').map(moveBtn)}</div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr' }}>{movesOf('power').map(moveBtn)}</div>
+            <div>
+              {groupLabel('技 — 絕技 (耗氣)', 'SPECIAL (氣)', 'power')}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.4rem' }}>{movesOf('power').map(moveBtn)}</div>
+            </div>
           </div>
         )}
 
@@ -391,10 +406,11 @@ export function DuelGameModal({
           centre stays clear for the 3D fighters. */}
       {staged && !bout.over && (
         <>
-          <div style={{ position: 'fixed', left: 10, bottom: 22, width: 104, display: 'flex', flexDirection: 'column', gap: 6, pointerEvents: 'auto', zIndex: 131 }}>
+          <div style={{ position: 'fixed', left: 10, bottom: 22, width: 104, display: 'flex', flexDirection: 'column', gap: 6, pointerEvents: 'auto', zIndex: 131, maxHeight: '92vh', overflowY: 'auto' }}>
             {groupLabel('攻 — 進攻', 'ATTACK', 'attack')}
             {movesOf('attack').map(moveBtn)}
             <div style={{ height: 2 }} />
+            {groupLabel('技 — 絕技', 'SPECIAL', 'power')}
             {movesOf('power').map(moveBtn)}
           </div>
           <div style={{ position: 'fixed', right: 10, bottom: 22, width: 104, display: 'flex', flexDirection: 'column', gap: 6, pointerEvents: 'auto', zIndex: 131 }}>

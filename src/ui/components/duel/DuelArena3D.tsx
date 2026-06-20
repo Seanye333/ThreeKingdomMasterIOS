@@ -16,7 +16,8 @@ import {
   DUEL_ASSETS_READY, DUEL_FORMAT, DUEL_PACKS, type DuelAnim, type DuelPackId,
 } from './duelAssets';
 
-const packForClass = (c: WeaponClass): DuelPackId => (weaponIsTwoHanded(c) ? 'great' : 'sword');
+const packForClass = (c: WeaponClass): DuelPackId =>
+  c === 'bow' ? 'long' : c === 'axe' ? 'axe' : weaponIsTwoHanded(c) ? 'great' : 'sword';
 
 // Approximate clip lengths (seconds) for the procedural fallback fighter, which
 // has no real clip to read a duration from. The realistic backend instead uses
@@ -266,6 +267,18 @@ function buildWeapon(cls: WeaponClass, H: number): THREE.Group {
     g.add(haft, head);
   } else if (cls === 'greatsword') {
     g = bladeSword(H * 0.95);
+  } else if (cls === 'bow') {
+    // 弓 — a curved limb (a C-arc) strung top to bottom.
+    g = new THREE.Group();
+    const limb = new THREE.Mesh(new THREE.TorusGeometry(H * 0.26, H * 0.012, 6, 18, Math.PI * 1.15), MAT.wood());
+    limb.rotation.z = Math.PI * 0.92;
+    const grip = new THREE.Mesh(new THREE.CylinderGeometry(H * 0.018, H * 0.018, H * 0.12, 8), MAT.wood());
+    const string = new THREE.Mesh(
+      new THREE.CylinderGeometry(H * 0.003, H * 0.003, H * 0.5, 4),
+      new THREE.MeshBasicMaterial({ color: '#e8e0c8' }),
+    );
+    string.position.x = H * 0.2;
+    g.add(limb, grip, string);
   } else { // two-handed polearms: spear / glaive / halberd
     const len = H * 1.2;
     g = poleArm(len);
@@ -304,6 +317,12 @@ function attachWeapons(root: THREE.Object3D, cls: WeaponClass): void {
   if (!ATTACH_WEAPON) return;
   const box = new THREE.Box3().setFromObject(root);
   const H = box.max.y - box.min.y || 100;
+  // 弓手 — the bow rides the LEFT hand; the right stays free to draw.
+  if (cls === 'bow') {
+    const lh = root.getObjectByName(LEFT_HAND) ?? root.getObjectByName(LEFT_FOREARM);
+    if (lh) { const w = buildWeapon('bow', H); w.position.set(0, GRIP_ONE.off[1] * H, 0); lh.add(w); }
+    return;
+  }
   const twoH = weaponIsTwoHanded(cls);
   const grip = twoH ? GRIP_TWO : GRIP_ONE;
   const hand = root.getObjectByName(RIGHT_HAND);
@@ -485,27 +504,60 @@ function CameraRig({ shakeKey, big, killKey, killX }: { shakeKey: number; big: b
   return null;
 }
 
-/** A brief spark/flash burst at a struck fighter. Remount via `key` to replay. */
-function HitSpark({ position, killed }: { position: [number, number, number]; killed: boolean }) {
-  const ref = useRef<Group>(null);
-  const mat = useRef<THREE.MeshBasicMaterial>(null);
+/** A punchy multi-part strike burst at a struck fighter: a white core flash, a
+ *  ring of radial spark shards and an expanding shock ring. Heavier blows (奮/
+ *  連擊/突刺) and kills throw a bigger, redder burst. Remount via `key` to replay. */
+const SPARK_SHARDS = 9;
+function HitSpark({ position, killed, heavy }: { position: [number, number, number]; killed: boolean; heavy: boolean }) {
+  const core = useRef<Group>(null);
+  const coreMat = useRef<THREE.MeshBasicMaterial>(null);
+  const shards = useRef<Group>(null);
+  const shardMat = useRef<THREE.MeshBasicMaterial>(null);
+  const ring = useRef<THREE.Mesh>(null);
+  const ringMat = useRef<THREE.MeshBasicMaterial>(null);
   const start = useRef(0);
   const pending = useRef(true);
+  const big = killed || heavy;
+  const tint = killed ? '#ff4a2c' : heavy ? '#ffc04a' : '#ffe6a0';
   useFrame(({ clock }) => {
-    const g = ref.current; if (!g) return;
     if (pending.current) { start.current = clock.elapsedTime; pending.current = false; }
     const t = clock.elapsedTime - start.current;
-    const dur = killed ? 0.55 : 0.3;
+    const dur = killed ? 0.6 : big ? 0.42 : 0.3;
     const p = Math.min(1, t / dur);
-    g.scale.setScalar(0.12 + p * (killed ? 0.85 : 0.5));
-    g.visible = p < 1;
-    if (mat.current) mat.current.opacity = (1 - p) * 0.9;
+    const fade = 1 - p;
+    if (core.current) core.current.scale.setScalar(0.1 + p * (big ? 0.9 : 0.55));
+    if (coreMat.current) coreMat.current.opacity = fade * 0.95;
+    if (shards.current) { shards.current.scale.setScalar(0.2 + p * (big ? 2.4 : 1.5)); shards.current.visible = p < 1; }
+    if (shardMat.current) shardMat.current.opacity = fade * fade * 0.95;
+    if (ring.current) { const s = 0.2 + p * (big ? 2.2 : 1.4); ring.current.scale.set(s, s, s); ring.current.visible = p < 1; }
+    if (ringMat.current) ringMat.current.opacity = fade * 0.7;
+    if (core.current) core.current.visible = p < 1;
   });
+  const shardEls = useMemo(() => Array.from({ length: SPARK_SHARDS }, (_, i) => {
+    const a = (i / SPARK_SHARDS) * Math.PI * 2 + (i % 2) * 0.3;
+    const len = 0.16 + (i % 3) * 0.05;
+    return (
+      <mesh key={i} position={[Math.cos(a) * 0.18, Math.sin(a) * 0.18, 0]} rotation={[0, 0, a]}>
+        <boxGeometry args={[len, 0.022, 0.022]} />
+        <meshBasicMaterial ref={i === 0 ? shardMat : undefined} color={tint} transparent opacity={0.95} depthWrite={false} blending={THREE.AdditiveBlending} />
+      </mesh>
+    );
+  }), [tint]);
   return (
-    <group ref={ref} position={position}>
-      <mesh>
-        <sphereGeometry args={[1, 12, 12]} />
-        <meshBasicMaterial ref={mat} color={killed ? '#ff5a3c' : '#ffe6a0'} transparent opacity={0.9} depthWrite={false} blending={THREE.AdditiveBlending} />
+    <group position={position}>
+      {/* core flash */}
+      <group ref={core}>
+        <mesh>
+          <sphereGeometry args={[1, 12, 12]} />
+          <meshBasicMaterial ref={coreMat} color={killed ? '#ffd0c0' : '#ffffff'} transparent opacity={0.95} depthWrite={false} blending={THREE.AdditiveBlending} />
+        </mesh>
+      </group>
+      {/* radial spark shards */}
+      <group ref={shards}>{shardEls}</group>
+      {/* expanding shock ring */}
+      <mesh ref={ring} rotation={[0, 0, 0]}>
+        <ringGeometry args={[0.34, 0.46, 24]} />
+        <meshBasicMaterial ref={ringMat} color={tint} transparent opacity={0.7} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
       </mesh>
     </group>
   );
@@ -621,7 +673,7 @@ function Scene({
 }: {
   left: FighterAction; right: FighterAction; leftName: string; rightName: string;
   leftClass: WeaponClass; rightClass: WeaponClass; shakeKey: number; big: boolean;
-  timeScale: number; spark: { key: number; x: number; killed: boolean } | null; killKey: number; killX: number;
+  timeScale: number; spark: { key: number; x: number; killed: boolean; heavy: boolean } | null; killKey: number; killX: number;
 }) {
   return (
     <>
@@ -652,7 +704,7 @@ function Scene({
 
       <Fighter side="left" tunic={RED} action={left} name={leftName} weaponClass={leftClass} timeScale={timeScale} />
       <Fighter side="right" tunic={BLUE} action={right} name={rightName} weaponClass={rightClass} timeScale={timeScale} />
-      {spark && <HitSpark key={spark.key} position={[spark.x, 1.15, 0]} killed={spark.killed} />}
+      {spark && <HitSpark key={spark.key} position={[spark.x, 1.15, 0]} killed={spark.killed} heavy={spark.heavy} />}
 
       <EffectComposer>
         <Bloom intensity={0.7} luminanceThreshold={0.65} luminanceSmoothing={0.25} mipmapBlur />
@@ -681,7 +733,7 @@ export function DuelArena3D({
   const [shakeKey, setShakeKey] = useState(0);
   const [big, setBig] = useState(false);
   const [timeScale, setTimeScale] = useState(1);
-  const [spark, setSpark] = useState<{ key: number; x: number; killed: boolean } | null>(null);
+  const [spark, setSpark] = useState<{ key: number; x: number; killed: boolean; heavy: boolean } | null>(null);
   const [killKey, setKillKey] = useState(0);
   const [killX, setKillX] = useState(0);
   const lastKey = useRef(0);
@@ -690,23 +742,28 @@ export function DuelArena3D({
     if (!event || event.key === lastKey.current) return;
     lastKey.current = event.key;
     const k = event.key;
-    const { hit, killed, aMove, dMove, over, winner } = event;
+    const { hit, killed, aMove, dMove, over, winner, disarm } = event;
 
     const leftDied = killed && winner === 'defender';
     const rightDied = killed && winner === 'attacker';
-
-    // 音效 — synthesized stings keyed to what happened this exchange.
+    // The 氣-spending strikes (奮/連擊/突刺) hit heavy — they earn the wardrum,
+    // the screen shake and the slow-mo punch.
+    const heavy = (m?: string) => m === 'power' || m === 'combo' || m === 'thrust';
     const isDef = (m?: string) => m === 'guard' || m === 'dodge' || m === 'parry';
     const landed = hit === 'a' || hit === 'd' || hit === 'both';
+
+    // 音效 — synthesized stings keyed to what happened this exchange.
     if (killed) { playSfx('crash'); window.setTimeout(() => playSfx('dirge'), 220); }
-    else if (aMove === 'power' || dMove === 'power') { playSfx('wardrum'); if (landed) window.setTimeout(() => playSfx('thud'), 110); }
+    else if (disarm) { playSfx('forge'); window.setTimeout(() => playSfx('whoosh'), 120); } // weapon clatters away
+    else if (aMove === 'taunt' || dMove === 'taunt') { playSfx('shout'); window.setTimeout(() => playSfx('wardrum'), 90); }
+    else if (heavy(aMove) || heavy(dMove)) { playSfx('wardrum'); if (landed) window.setTimeout(() => playSfx('thud'), 110); }
     else if (landed) { playSfx('sword'); window.setTimeout(() => playSfx('thud'), 70); }
     else if (aMove === 'dodge' || dMove === 'dodge') playSfx('whoosh');
     else if (isDef(aMove) || isDef(dMove)) playSfx('forge'); // blade turned aside — a clang
     else playSfx('sword');
 
     // Strike spark at the struck fighter (left −0.95, right +0.95, clash centre).
-    setSpark({ key: k, x: hit === 'a' ? -0.95 : hit === 'd' ? 0.95 : 0, killed: !!killed });
+    setSpark({ key: k, x: hit === 'a' ? -0.95 : hit === 'd' ? 0.95 : 0, killed: !!killed, heavy: heavy(aMove) || heavy(dMove) });
 
     // Each duel move name is also an animation name, so a fighter plays their
     // chosen move — unless they were hit (flinch) or cut down (fall).
@@ -717,18 +774,23 @@ export function DuelArena3D({
       if (wasHit) return 'hit';
       return (mine ?? 'idle') as DuelAnim;
     };
+    let leftAnim = animFor(aMove, hit === 'a', leftDied);
+    let rightAnim = animFor(dMove, hit === 'd', rightDied);
+    // 缴械 — the parrier plays the disarming motion; the victim recoils.
+    if (!killed && disarm === 'attacker') { leftAnim = 'hit'; rightAnim = 'disarm'; }
+    else if (!killed && disarm === 'defender') { rightAnim = 'hit'; leftAnim = 'disarm'; }
     // `rot` picks which clip from the anim's pool (each fighter resolves it
     // against its own pack); the right fighter is offset by 2 so a mutual clash
     // shows two different strikes. `stamp` (= k) retriggers the animation.
     const act = (anim: DuelAnim, rot: number, stamp = k): FighterAction => ({ anim, rot, stamp });
 
-    setLeft(act(animFor(aMove, hit === 'a', leftDied), k));
-    setRight(act(animFor(dMove, hit === 'd', rightDied), k + 2));
-    setBig(aMove === 'power' || dMove === 'power' || killed);
+    setLeft(act(leftAnim, k));
+    setRight(act(rightAnim, k + 2));
+    setBig(heavy(aMove) || heavy(dMove) || killed || !!disarm);
     setShakeKey((s) => s + 1);
 
-    // 必殺 — a landed Overpower gets a brief slow-mo punch even without a kill.
-    if (!killed && (aMove === 'power' || dMove === 'power') && landed) {
+    // 必殺 — a landed heavy strike (奮/連擊/突刺) gets a brief slow-mo punch.
+    if (!killed && (heavy(aMove) || heavy(dMove)) && landed) {
       setTimeScale(0.5);
       window.setTimeout(() => setTimeScale(1), 600);
     }

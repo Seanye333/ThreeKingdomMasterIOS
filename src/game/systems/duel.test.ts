@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveDuel, canDuel, initDuelBout, duelRound, staticProwess, aiDuelMove, weaponArtFor, type DuelMove } from './duel';
+import { resolveDuel, canDuel, initDuelBout, duelRound, staticProwess, aiDuelMove, weaponArtFor, weaponClassFor, type DuelMove } from './duel';
 import { resolveWordWar, initDebate, debateRound, aiDebateMove } from './wordWar';
 import { mkOfficer, seededRng } from '../../test/factories';
 
@@ -153,6 +153,56 @@ describe('interactive duel engine', () => {
   });
 });
 
+describe('招式·特技 (taunt / thrust / combo specials)', () => {
+  const mk = (war: number) => mkOfficer({ stats: { war, leadership: 60, intelligence: 60, politics: 60, charisma: 60 } });
+  const fixed = () => 0.5;
+
+  it('挑釁 — banks 氣 against a defending foe, but is punished by an attack', () => {
+    const b = initDuelBout(mk(80), mk(80));
+    const safe = duelRound(b, 'taunt', 'guard', fixed); // foe defends → taunt is safe
+    expect(safe.bout.aGuard).toBe(2);                   // banked a full 奮 worth
+    expect(safe.dmgToAttacker).toBe(0);
+    const punished = duelRound(b, 'taunt', 'slash', fixed); // foe attacks → lands clean
+    expect(punished.dmgToAttacker).toBeGreaterThan(0);
+    expect(punished.roundWinner).toBe('defender');
+  });
+
+  it('突刺 — costs 1 氣, slips 閃/架 but is stopped by 格', () => {
+    const b = { ...initDuelBout(mk(80), mk(80)), aGuard: 1 };
+    expect(duelRound(b, 'thrust', 'dodge', fixed).dmgToDefender).toBeGreaterThan(0); // slips the dodge
+    expect(duelRound(b, 'thrust', 'parry', fixed).dmgToDefender).toBeGreaterThan(0); // slips the parry
+    const blocked = duelRound(b, 'thrust', 'guard', fixed);
+    expect(blocked.dmgToDefender).toBe(0);              // 格 stops the lunge
+    expect(blocked.roundWinner).toBe('defender');
+    expect(blocked.bout.aGuard).toBe(0);                // spent the 氣
+  });
+
+  it('連擊 — costs 2 氣 and chips through any single defense', () => {
+    const b = { ...initDuelBout(mk(80), mk(80)), aGuard: 2 };
+    const r = duelRound(b, 'combo', 'guard', fixed);
+    expect(r.dmgToDefender).toBeGreaterThan(0);         // no single guard fully stops a flurry
+    expect(r.bout.aGuard).toBe(0);                      // spent both 氣
+  });
+
+  it('缴械 — a parry that holds can disarm the attacker (氣 stripped)', () => {
+    const b = { ...initDuelBout(mk(70), mk(95)), aGuard: 2 };
+    const r = duelRound(b, 'slash', 'parry', () => 0); // strong defender parries → disarm
+    expect(r.disarm).toBe('attacker');
+    expect(r.bout.aGuard).toBe(0);
+    expect(r.dmgToAttacker).toBeGreaterThan(0);
+  });
+
+  it('弓 — archers open with a banked 氣 and harass through a guard', () => {
+    const archer = mkOfficer({ id: 'huang-zhong', stats: { war: 80, leadership: 60, intelligence: 60, politics: 60, charisma: 60 } });
+    expect(weaponClassFor(archer)).toBe('bow');
+    const plain = mk(80);
+    const b = initDuelBout(archer, plain);
+    expect(b.aGuard).toBe(1);                           // ranged volley banks a 氣
+    // 斬 into a 格 normally deals 0; a bow still harasses a few 氣力.
+    expect(duelRound(b, 'slash', 'guard', () => 0.5).dmgToDefender).toBeGreaterThan(0);
+  });
+});
+
 describe('interactive debate engine', () => {
   const mk = (intel: number) => mkOfficer({ stats: { war: 50, leadership: 60, intelligence: intel, politics: 60, charisma: 60 } });
   const fixed = () => 0.5;
@@ -186,6 +236,24 @@ describe('interactive debate engine', () => {
   it('aiDebateMove spends 詰 when 氣勢 is banked', () => {
     const b = { ...initDebate(mk(80), mk(80)), aMomentum: 2 };
     expect(aiDebateMove(b, 'a', () => 0.1)).toBe('press');
+  });
+
+  it('引/哂 — the loaded arguments resolve against the base ring', () => {
+    const b = initDebate(mk(80), mk(80));
+    // 引經據典 overwhelms all three ordinary arguments…
+    expect(debateRound(b, 'cite', 'assert', fixed).roundWinner).toBe('a');
+    expect(debateRound(b, 'cite', 'retort', fixed).roundWinner).toBe('a');
+    // …but a scornful laugh deflates the pedant and the heavy press.
+    expect(debateRound(b, 'scorn', 'cite', fixed).roundWinner).toBe('a');
+    expect(debateRound(b, 'scorn', 'press', fixed).roundWinner).toBe('a');
+    // while a bare 論 sees through the empty mockery.
+    expect(debateRound(b, 'assert', 'scorn', fixed).roundWinner).toBe('a');
+  });
+
+  it('引/哂 spend 氣勢 (2 / 1)', () => {
+    const b = { ...initDebate(mk(80), mk(80)), aMomentum: 2 };
+    expect(debateRound(b, 'cite', 'assert', fixed).bout.aMomentum).toBe(0);
+    expect(debateRound(b, 'scorn', 'assert', fixed).bout.aMomentum).toBe(1);
   });
 });
 

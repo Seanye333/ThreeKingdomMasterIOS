@@ -10,9 +10,9 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import type { Group } from 'three';
 import type { Officer } from '../../../game/types';
 import type { DebateRoundFx } from '../DebateGameModal';
-import type { DebateMove } from '../../../game/systems/wordWar';
+import { debatePersona, type DebateMove } from '../../../game/systems/wordWar';
 import { playSfx } from '../../../game/systems/sound';
-import { DEBATE_ASSETS_READY, DEBATE_FORMAT, DEBATE_PACK, type DebateAnim } from './debateAssets';
+import { DEBATE_ASSETS_READY, DEBATE_FORMAT, DEBATE_PACK, WIN_BY_PERSONA, type DebateAnim } from './debateAssets';
 
 /**
  * 寫實舌戰朝堂 — a self-contained 3D hall that stages a war of words between two
@@ -34,17 +34,17 @@ const SKIN = '#e0c498';
 const INK = '#15131b';
 
 // The 字 that flashes for each argument (matches DebateGameModal's labels).
-const MOVE_GLYPH: Record<DebateMove, string> = { assert: '論', retort: '駁', provoke: '諷', press: '詰' };
+const MOVE_GLYPH: Record<DebateMove, string> = { assert: '論', retort: '駁', provoke: '諷', press: '詰', cite: '引', scorn: '哂' };
 
 // Approximate clip lengths (seconds) for the procedural fallback, which has no
 // real clip to read a duration from. The realistic backend uses each Mixamo
 // clip's own duration via the mixer's 'finished' event.
 const PROC_SECONDS: Partial<Record<DebateAnim, number>> = {
-  assert: 1.1, retort: 0.9, provoke: 1.0, press: 1.3,
+  assert: 1.1, retort: 0.9, provoke: 1.0, press: 1.3, cite: 1.1, scorn: 1.0,
   flinch: 0.7, recoil: 0.9, rout: 1.5, win: 1.6,
 };
-const PROC_DECLAIM: DebateAnim[] = ['assert', 'press'];
-const PROC_GESTURE: DebateAnim[] = ['retort', 'provoke'];
+const PROC_DECLAIM: DebateAnim[] = ['assert', 'press', 'cite'];
+const PROC_GESTURE: DebateAnim[] = ['retort', 'provoke', 'scorn'];
 
 // Which animation each scholar should currently be playing. `rot` selects which
 // clip from the anim's pool; `stamp` bumps to retrigger the same anim.
@@ -338,8 +338,9 @@ function InkBurst({ position, big }: { position: [number, number, number]; big: 
   );
 }
 
-/** The winning argument's 字 flies from the speaker toward the mind it struck. */
-function WordGlyph({ glyph, fromX, toX, color, stamp }: { glyph: string; fromX: number; toX: number; color: string; stamp: number }) {
+/** The winning argument's 字 flies from the speaker toward the mind it struck.
+ *  A loaded argument (詰/引/哂) flies larger and spins in harder. */
+function WordGlyph({ glyph, fromX, toX, color, stamp, big }: { glyph: string; fromX: number; toX: number; color: string; stamp: number; big: boolean }) {
   const ref = useRef<Group>(null);
   const start = useRef(0);
   const pending = useRef(true);
@@ -351,17 +352,19 @@ function WordGlyph({ glyph, fromX, toX, color, stamp }: { glyph: string; fromX: 
     const dur = 0.72;
     const p = Math.min(1, t / dur);
     g.position.x = THREE.MathUtils.lerp(fromX, toX, p);
-    g.position.y = 1.55 + Math.sin(p * Math.PI) * 0.35;
+    g.position.y = 1.55 + Math.sin(p * Math.PI) * 0.42;
     g.visible = p < 1;
-    g.scale.setScalar(p < 1 ? 1 + Math.sin(p * Math.PI) * 0.45 : 0);
+    const amp = big ? 0.75 : 0.45;
+    g.scale.setScalar(p < 1 ? (big ? 1.35 : 1) + Math.sin(p * Math.PI) * amp : 0);
+    g.rotation.z = (1 - p) * (toX > fromX ? -0.5 : 0.5) * (big ? 1.6 : 1);
   });
   return (
     <group ref={ref} position={[fromX, 1.55, 0]}>
       <Html center distanceFactor={5} style={{ pointerEvents: 'none' }}>
         <div style={{
-          fontSize: 44, fontWeight: 800, color,
+          fontSize: big ? 60 : 44, fontWeight: 900, color,
           fontFamily: 'var(--tkm-font-display, "Noto Serif SC", serif)',
-          textShadow: `0 0 16px ${color}, 0 2px 5px #000`, whiteSpace: 'nowrap',
+          textShadow: `0 0 ${big ? 28 : 16}px ${color}, 0 0 6px ${color}, 0 2px 6px #000`, whiteSpace: 'nowrap',
         }}>{glyph}</div>
       </Html>
     </group>
@@ -511,7 +514,7 @@ function Scene({
   left: ScholarAction; right: ScholarAction; leftName: string; rightName: string;
   shakeKey: number; big: boolean; timeScale: number;
   ink: { key: number; x: number; big: boolean } | null;
-  glyph: { key: number; glyph: string; fromX: number; toX: number; color: string } | null;
+  glyph: { key: number; glyph: string; fromX: number; toX: number; color: string; big: boolean } | null;
   routKey: number; routX: number;
 }) {
   return (
@@ -548,7 +551,7 @@ function Scene({
       <Scholar side="left" robe={ME} action={left} name={leftName} timeScale={timeScale} />
       <Scholar side="right" robe={FOE} action={right} name={rightName} timeScale={timeScale} />
       {ink && <InkBurst key={`ink-${ink.key}`} position={[ink.x, 1.2, 0]} big={ink.big} />}
-      {glyph && <WordGlyph key={`glyph-${glyph.key}`} glyph={glyph.glyph} fromX={glyph.fromX} toX={glyph.toX} color={glyph.color} stamp={glyph.key} />}
+      {glyph && <WordGlyph key={`glyph-${glyph.key}`} glyph={glyph.glyph} fromX={glyph.fromX} toX={glyph.toX} color={glyph.color} stamp={glyph.key} big={glyph.big} />}
 
       <EffectComposer>
         <Bloom intensity={0.6} luminanceThreshold={0.7} luminanceSmoothing={0.25} mipmapBlur />
@@ -568,7 +571,9 @@ export function DebateArena3D({
   me: Officer; foe: Officer; leftName: string; rightName: string;
   event: DebateArenaEvent | null;
 }) {
-  void me; void foe; // reserved for future per-officer flavour
+  // 風格 — each strategist's persona picks their 折服 (victory) flourish.
+  const mePersona = useMemo(() => debatePersona(me), [me]);
+  const foePersona = useMemo(() => debatePersona(foe), [foe]);
   const idle = (): ScholarAction => ({ anim: 'idle', rot: 0, stamp: 0 });
   const [left, setLeft] = useState<ScholarAction>(idle);
   const [right, setRight] = useState<ScholarAction>(idle);
@@ -576,7 +581,7 @@ export function DebateArena3D({
   const [big, setBig] = useState(false);
   const [timeScale, setTimeScale] = useState(1);
   const [ink, setInk] = useState<{ key: number; x: number; big: boolean } | null>(null);
-  const [glyph, setGlyph] = useState<{ key: number; glyph: string; fromX: number; toX: number; color: string } | null>(null);
+  const [glyph, setGlyph] = useState<{ key: number; glyph: string; fromX: number; toX: number; color: string; big: boolean } | null>(null);
   const [routKey, setRoutKey] = useState(0);
   const [routX, setRoutX] = useState(0);
   const lastKey = useRef(0);
@@ -593,11 +598,15 @@ export function DebateArena3D({
     const leftHit = hit === 'a' || hit === 'both';
     const rightHit = hit === 'd' || hit === 'both';
     const heavy = dmg >= 22;
+    // 詰/引 — the heavy loaded arguments earn the wardrum + slow-mo.
+    const loaded = (m?: string) => m === 'press' || m === 'cite';
+    const mocking = aMove === 'scorn' || dMove === 'scorn' || aMove === 'provoke' || dMove === 'provoke';
 
     // 音效 — synthesized verbal stings keyed to the exchange.
     if (routed) { playSfx('shout'); window.setTimeout(() => playSfx('crash'), 180); window.setTimeout(() => playSfx('victory'), 460); }
-    else if (aMove === 'press' || dMove === 'press') { playSfx('wardrum'); window.setTimeout(() => playSfx('shout'), 120); }
+    else if (loaded(aMove) || loaded(dMove)) { playSfx('wardrum'); window.setTimeout(() => playSfx('shout'), 120); }
     else if (hit === 'both') playSfx('forge');                 // both pressed home — a clash
+    else if (mocking && (leftHit || rightHit)) { playSfx('whoosh'); window.setTimeout(() => playSfx('shout'), 80); } // a derisive jab
     else if (leftHit || rightHit) playSfx('shout');            // a jab landed
     else playSfx('whoosh');                                    // turned aside
 
@@ -616,6 +625,7 @@ export function DebateArena3D({
         fromX: winSide === 'a' ? -0.95 : 0.95,
         toX: winSide === 'a' ? 0.95 : -0.95,
         color: winSide === 'a' ? ME : FOE,
+        big: wMove === 'press' || wMove === 'cite' || wMove === 'scorn',
       });
     } else {
       setGlyph(null);
@@ -632,11 +642,11 @@ export function DebateArena3D({
 
     setLeft(act(animFor(aMove, leftHit && !leftRouted, leftRouted), k));
     setRight(act(animFor(dMove, rightHit && !rightRouted, rightRouted), k + 2));
-    setBig(aMove === 'press' || dMove === 'press' || !!routed);
+    setBig(loaded(aMove) || loaded(dMove) || !!routed);
     setShakeKey((s) => s + 1);
 
-    // 詰 — a landed Press gets a brief slow-mo punch even without a rout.
-    if (!routed && (aMove === 'press' || dMove === 'press') && (leftHit || rightHit)) {
+    // 詰/引 — a landed loaded argument gets a brief slow-mo punch even without a rout.
+    if (!routed && (loaded(aMove) || loaded(dMove)) && (leftHit || rightHit)) {
       setTimeScale(0.55);
       window.setTimeout(() => setTimeScale(1), 600);
     }
@@ -650,11 +660,11 @@ export function DebateArena3D({
       return () => window.clearTimeout(tid);
     }
 
-    // 折服 — a points win (no rout): strike a cocky victory pose a beat later.
+    // 折服 — a points win (no rout): strike a victory pose chosen by persona.
     if (over && winner && winner !== 'draw') {
       const tid = window.setTimeout(() => {
-        if (winner === 'a') setLeft(act('win', k, k + 1));
-        else setRight(act('win', k + 1, k + 1));
+        if (winner === 'a') setLeft(act('win', WIN_BY_PERSONA[mePersona], k + 1));
+        else setRight(act('win', WIN_BY_PERSONA[foePersona], k + 1));
       }, 800);
       return () => window.clearTimeout(tid);
     }

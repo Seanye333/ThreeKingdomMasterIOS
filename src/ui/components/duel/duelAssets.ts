@@ -21,9 +21,13 @@ export type DuelAnim =
   | 'cleave'  // 劈 — heavy overhead chop
   | 'sweep'   // 掃 — low sweep / kick
   | 'guard'   // 格 — raise block
-  | 'dodge'   // 閃 — sidestep / evade
+  | 'dodge'   // 閃 — sidestep / evade / roll
   | 'parry'   // 架 — deflect + riposte
   | 'power'   // 奮 — heavy overpower combo
+  | 'taunt'   // 挑釁 — battle-cry / chest-thump to bank 氣
+  | 'thrust'  // 突刺 — fast lunging stab
+  | 'combo'   // 連擊 — a rapid multi-hit flurry
+  | 'disarm'  // 缴械 — rip the foe's weapon aside off a parry
   | 'hit'     // 受擊 — flinch from a blow (from left / right / gut)
   | 'death'   // 倒地 — cut down
   | 'victory';// 得勝 — battle-cry flourish
@@ -46,11 +50,22 @@ const url = (basename: string) => encodeURI(DIR + basename + EXT);
 // both carry real death/impact/block clips. Evasions reuse the standalone
 // Dodging/Roll/Jump clips. Clip key = path under the duel folder (no extension).
 
-export type DuelPackId = 'sword' | 'great';
+export type DuelPackId = 'sword' | 'great' | 'axe' | 'long';
 
 const SS = 'Sword and Shield Pack/';
 const GS = 'Great Sword Pack/';
-const EVADE = ['Dodging', 'Quick Roll To Run', 'Jump'];
+const AX = 'Pro Melee Axe Pack-2/';   // 斧 — generic melee on the X Bot rig
+const LB = 'Pro Longbow Pack/';        // 弓 — archery clips
+// 閃避 — sidesteps and rolls (top-level standalone + longbow sidesteps) shared by
+// the melee packs so 閃 dodge reads as a nimble roll/sidestep, not a flinch.
+const EVADE = ['Dodging', 'Quick Roll To Run', 'Jump', LB + 'standing dodge left', LB + 'standing dodge right'];
+
+// 招式·特技 clips shared by every melee pack (all on the X Bot rig, so the same
+// generic-melee motions retarget onto a sworded / great-sworded / axe fighter).
+const TAUNT = [AX + 'standing taunt battlecry', AX + 'standing taunt chest thump'];
+const THRUST_M = [AX + 'standing melee run jump attack', AX + 'standing melee attack downward'];
+const COMBO_M = [AX + 'standing melee combo attack ver. 1', AX + 'standing melee combo attack ver. 2', AX + 'standing melee combo attack ver. 3'];
+const DISARM_M = [AX + 'standing disarm over shoulder', AX + 'standing disarm underarm'];
 
 const RAW_SWORD: Record<DuelAnim, string[]> = {
   idle:    [SS + 'sword and shield idle', SS + 'sword and shield idle (2)'],
@@ -61,6 +76,10 @@ const RAW_SWORD: Record<DuelAnim, string[]> = {
   dodge:   EVADE,
   parry:   [SS + 'sword and shield block', SS + 'sword and shield block (2)'],
   power:   [SS + 'sword and shield slash (4)', SS + 'sword and shield slash (5)'],
+  taunt:   TAUNT,
+  thrust:  THRUST_M,
+  combo:   COMBO_M,
+  disarm:  DISARM_M,
   hit:     [SS + 'sword and shield impact', SS + 'sword and shield impact (2)', SS + 'sword and shield impact (3)'],
   death:   [SS + 'sword and shield death', SS + 'sword and shield death (2)'],
   victory: [SS + 'sword and shield power up'],
@@ -76,9 +95,53 @@ const RAW_GREAT: Record<DuelAnim, string[]> = {
   parry:   [GS + 'great sword blocking (2)', GS + 'great sword blocking (3)'],
   // (great sword jump attack.fbx fails to parse in FBXLoader, so it's omitted.)
   power:   [GS + 'great sword high spin attack', GS + 'great sword slash (5)'],
+  taunt:   TAUNT,
+  thrust:  THRUST_M,
+  combo:   COMBO_M,
+  disarm:  DISARM_M,
   hit:     [GS + 'great sword impact', GS + 'great sword impact (2)', GS + 'great sword impact (3)'],
   death:   [GS + 'two handed sword death', GS + 'two handed sword death (2)'],
   victory: [GS + 'great sword power up'],
+};
+
+// 斧 — a dedicated axe pack: spinning 360 chops, backhands and heavy combos that
+// the sword/great packs never play, so an axe-wielder fights distinctly.
+const RAW_AXE: Record<DuelAnim, string[]> = {
+  idle:    [AX + 'standing idle', AX + 'standing idle looking ver. 1'],
+  slash:   [AX + 'standing melee attack horizontal', AX + 'standing melee attack backhand'],
+  cleave:  [AX + 'standing melee attack downward', AX + 'standing melee attack 360 high'],
+  sweep:   [AX + 'standing melee attack 360 low', AX + 'standing melee attack kick ver. 1'],
+  guard:   [AX + 'standing block idle'],
+  dodge:   EVADE,
+  parry:   [AX + 'standing block react large'],
+  power:   [AX + 'standing melee combo attack ver. 3', AX + 'standing melee attack 360 high'],
+  taunt:   TAUNT,
+  thrust:  THRUST_M,
+  combo:   COMBO_M,
+  disarm:  DISARM_M,
+  hit:     [AX + 'standing react large from left', AX + 'standing react large from right', AX + 'standing react large gut'],
+  death:   [GS + 'two handed sword death', GS + 'two handed sword death (2)'], // no death clip in the axe set
+  victory: [AX + 'standing taunt chest thump'],
+};
+
+// 弓 — an archer's pack: draw / overdraw / recoil reads as shots, sidesteps for
+// 閃, with kicks/punches when forced into melee.
+const RAW_LONG: Record<DuelAnim, string[]> = {
+  idle:    [LB + 'standing idle 01', LB + 'standing idle 02 looking'],
+  slash:   [LB + 'standing draw arrow', LB + 'standing aim recoil'],
+  cleave:  [LB + 'standing aim overdraw', LB + 'standing aim recoil'],
+  sweep:   [LB + 'standing melee kick', LB + 'standing melee punch'],
+  guard:   [LB + 'standing block'],
+  dodge:   [LB + 'standing dodge backward', LB + 'standing dodge left', LB + 'standing dodge right', LB + 'standing dive forward'],
+  parry:   [LB + 'standing block'],
+  power:   [LB + 'standing aim overdraw', LB + 'standing aim recoil'],
+  taunt:   [AX + 'standing taunt battlecry', LB + 'standing idle 03 examine'],
+  thrust:  [LB + 'standing aim recoil', LB + 'standing draw arrow'],
+  combo:   [LB + 'standing aim recoil', LB + 'standing melee kick'],
+  disarm:  [LB + 'standing melee punch'],
+  hit:     [LB + 'standing react small from front', LB + 'standing react small from headshot'],
+  death:   [LB + 'standing death backward 01', LB + 'standing death forward 01'],
+  victory: [LB + 'standing idle 03 examine'],
 };
 
 export interface DuelPack {
@@ -102,10 +165,12 @@ function buildPack(characterBasename: string, raw: Record<DuelAnim, string[]>): 
   };
 }
 
-// Both packs ride the same X Bot rig, so one mesh works for either.
+// Every pack rides the same X Bot rig, so one mesh works for all of them.
 export const DUEL_PACKS: Record<DuelPackId, DuelPack> = {
   sword: buildPack('X Bot', RAW_SWORD),
   great: buildPack('X Bot', RAW_GREAT),
+  axe:   buildPack('X Bot', RAW_AXE),
+  long:  buildPack('X Bot', RAW_LONG),
 };
 
 /**
