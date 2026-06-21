@@ -6,6 +6,7 @@ import { OfficerStats } from './OfficerStats';
 import styles from './TitlesModal.module.css';
 import { useDesc, useLanguage } from '../i18n';
 import { Name } from './Name';
+import { officerGrade, gradeRank, gradeMeta } from '../../game/systems/officerGrade';
 
 function pickBestFit(
   officers: Officer[],
@@ -345,6 +346,11 @@ function CivicTab({
             <div className={styles.titleNameRow}>
               <div>
                 <span className={styles.titleName}><Name pair={t.name} /></span>
+                {t.minGrade && (
+                  <span style={{ marginLeft: '0.4rem', fontSize: '0.62rem', color: gradeMeta(t.minGrade).color, border: `1px solid ${gradeMeta(t.minGrade).color}`, borderRadius: 2, padding: '0 0.3rem' }}>
+                    需{gradeMeta(t.minGrade).name.zh}
+                  </span>
+                )}
               </div>
               <span className={styles.officerStats}>{t.primaryStat.slice(0, 3).toUpperCase()}</span>
             </div>
@@ -378,21 +384,29 @@ function CivicTab({
             {picking && !holder && (
               <div className={styles.picker}>
                 <div className={styles.pickerLabel}>Choose officer</div>
-                {officersSortedFor(t.primaryStat).map(({ o, recommended }) => (
-                  <button
-                    key={o.id}
-                    className={styles.officerOption}
-                    onClick={() => onAppoint(o.id, t.id)}
-                  >
-                    <span>
-                      {recommended && <span style={{ color: '#e6c473' }}>★ </span>}
-                      <Name pair={o.name} />
-                    </span>
-                    <span className={styles.officerStats}>
-                      {t.primaryStat.slice(0, 3).toUpperCase()} {o.stats[t.primaryStat]}
-                    </span>
-                  </button>
-                ))}
+                {officersSortedFor(t.primaryStat).map(({ o, recommended }) => {
+                  const g = officerGrade(o);
+                  const meets = !t.minGrade || gradeRank(g.grade) >= gradeRank(t.minGrade);
+                  return (
+                    <button
+                      key={o.id}
+                      className={styles.officerOption}
+                      disabled={!meets}
+                      title={meets ? undefined : `品階不足：需${gradeMeta(t.minGrade!).name.zh}以上（現為${g.name.zh}）`}
+                      style={meets ? undefined : { opacity: 0.45, cursor: 'not-allowed' }}
+                      onClick={() => meets && onAppoint(o.id, t.id)}
+                    >
+                      <span>
+                        {recommended && meets && <span style={{ color: '#e6c473' }}>★ </span>}
+                        <Name pair={o.name} />
+                        <span style={{ marginLeft: '0.35rem', fontSize: '0.62rem', color: g.color }}>{g.name.zh}</span>
+                      </span>
+                      <span className={styles.officerStats}>
+                        {t.primaryStat.slice(0, 3).toUpperCase()} {o.stats[t.primaryStat]}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>

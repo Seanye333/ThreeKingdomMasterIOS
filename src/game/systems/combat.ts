@@ -19,6 +19,7 @@ import { cityPos } from '../data/cityGeo';
 import { sidePoolRelationshipBonus, rivalShowdownMultiplier } from './relationshipEffects';
 import { effectivePrestigeEffects } from '../data/prestige';
 import { gradeAuraPowerMul, gradeAuraMorale, itemMasteryMul } from './gradeCombat';
+import { itemSetPowerMul } from '../data/itemSets';
 import { selectSiegeEngine } from '../data/siegeEngines';
 import {
   STRATAGEM_DEFS,
@@ -454,10 +455,13 @@ export function resolveBattle(
   // 品階威儀 — a side led by high-grade officers fights above its numbers.
   const aGradeMul = gradeAuraPowerMul(attackerPool);
   const dGradeMul = gradeAuraPowerMul(defenderPool);
+  // 神兵譜共鳴 — a commander bearing a full legendary set lifts the army's power.
+  const aSetMul = itemSetPowerMul(attacker.commander);
+  const dSetMul = defender.commander ? itemSetPowerMul(defender.commander) : 1;
   const aPower =
     aBlended * Math.sqrt(attacker.troops) * aSkillEffects.powerMultiplier * aElitePower *
     (stratEffect.attackerPowerMul ?? 1) * aPolicy.attackMul * aTraitMods.attackMul * aComboMul *
-    aRelBonus.powerMul * rivalMul * aTitlePowerMul * aCasusMul * aNavalMul * aGuardMul * aPrestigeMul * aGradeMul;
+    aRelBonus.powerMul * rivalMul * aTitlePowerMul * aCasusMul * aNavalMul * aGuardMul * aPrestigeMul * aGradeMul * aSetMul;
 
   const defenderIds = defenderPool.map((o) => o.id);
   const dBaseBlended =
@@ -493,7 +497,7 @@ export function resolveBattle(
     dElitePower *
     (stratEffect.defenderPowerMul ?? 1) *
     dPolicy.attackMul * dTraitMods.attackMul * dComboMul * dRelBonus.powerMul * rivalMul *
-    dTitlePowerMul * dCasusMul * dNavalMul * dGuardMul * dPrestigeMul * dGradeMul / Math.max(0.5, dPolicy.defenseMul);
+    dTitlePowerMul * dCasusMul * dNavalMul * dGuardMul * dPrestigeMul * dGradeMul * dSetMul / Math.max(0.5, dPolicy.defenseMul);
 
   const total = aPower + dPower || 1;
   const aRatio = aPower / total;

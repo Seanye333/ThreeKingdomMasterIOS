@@ -57,6 +57,11 @@ export function gradeRank(grade: OfficerGrade): number {
   return GRADE_ORDER.indexOf(grade);
 }
 
+/** Display meta (name/rank/color) for a bare grade key — no officer needed. */
+export function gradeMeta(grade: OfficerGrade): Omit<GradeInfo, 'grade' | 'score'> {
+  return GRADE_META[grade];
+}
+
 export function officerGrade(officer: Officer): GradeInfo {
   const score = gradeScore(officer);
   const grade = gradeFromScore(score);

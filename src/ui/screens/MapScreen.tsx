@@ -69,6 +69,7 @@ const ProvinceModal = lazy(() => import('../components/ProvinceModal').then(m =>
 const ConvoyModal = lazy(() => import('../components/ConvoyModal').then(m => ({ default: m.ConvoyModal })));
 type PaletteCommand = import('../components/CommandPalette').PaletteCommand;
 const DeedsModal = lazy(() => import('../components/DeedsModal').then(m => ({ default: m.DeedsModal })));
+const HallOfFameModal = lazy(() => import('../components/HallOfFameModal').then(m => ({ default: m.HallOfFameModal })));
 const ForgingModal = lazy(() => import('../components/ForgingModal').then(m => ({ default: m.ForgingModal })));
 const DiplomacyGraphModal = lazy(() => import('../components/DiplomacyGraphModal').then(m => ({ default: m.DiplomacyGraphModal })));
 const EncyclopediaModal = lazy(() => import('../components/EncyclopediaModal').then(m => ({ default: m.EncyclopediaModal })));
@@ -107,6 +108,7 @@ export function MapScreen() {
   const [showEnding, setShowEnding] = useState(false);
   const [showReplays, setShowReplays] = useState(false);
   const [showDeeds, setShowDeeds] = useState(false);
+  const [showHallOfFame, setShowHallOfFame] = useState(false);
   const [showEncyclopedia, setShowEncyclopedia] = useState(false);
   const [showDipGraph, setShowDipGraph] = useState(false);
   const [showCareer, setShowCareer] = useState(false);
@@ -375,6 +377,7 @@ export function MapScreen() {
       { id: 'bonds', zh: '結義', en: 'Bonds', hint: g.people, run: () => setShowBonds(true) },
       { id: 'prestige', zh: '威名', en: 'Prestige', hint: g.people, run: () => setShowPrestige(true) },
       { id: 'deeds', zh: '武功', en: 'Deeds', hint: g.people, run: () => setShowDeeds(true) },
+      { id: 'hall-of-fame', zh: '名將榜', en: 'Hall of Fame', hint: g.people, run: () => setShowHallOfFame(true) },
       { id: 'wiki', zh: '列傳', en: 'Biographies', hint: g.people, run: () => setShowEncyclopedia(true) },
       { id: 'titles', zh: '任官', en: 'Appointments', hint: g.court, run: () => setShowTitles(true) },
       { id: 'governors', zh: '州牧', en: 'Governors', hint: g.court, run: () => setShowGovernors(true) },
@@ -487,6 +490,7 @@ export function MapScreen() {
             { label: t('結義', 'Bonds'),     onClick: () => setShowBonds(true) },
             { label: t('威名', 'Prestige'),  onClick: () => setShowPrestige(true) },
             { label: t('武功', 'Deeds'),     onClick: () => setShowDeeds(true) },
+            { label: t('名將榜', 'Hall of Fame'), onClick: () => setShowHallOfFame(true) },
             { label: t('列傳', 'Wiki'),      onClick: () => setShowEncyclopedia(true) },
             ...(careerMode
               ? [{ label: t('一代記', 'Chronicle'), onClick: () => setShowCareer(true) }]
@@ -729,6 +733,7 @@ export function MapScreen() {
         {showTournament && <TournamentModal onClose={() => setShowTournament(false)} />}
         {showEspionage && <EspionageModal onClose={() => setShowEspionage(false)} />}
         {showDeeds && <DeedsModal onClose={() => setShowDeeds(false)} />}
+        {showHallOfFame && <HallOfFameModal onClose={() => setShowHallOfFame(false)} />}
         {showReplays && <BattleReplayModal onClose={() => setShowReplays(false)} />}
         {showEncyclopedia && <EncyclopediaModal onClose={() => setShowEncyclopedia(false)} />}
         {showDipGraph && <DiplomacyGraphModal onClose={() => setShowDipGraph(false)} />}

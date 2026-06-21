@@ -28,6 +28,21 @@ export interface AgingOutput {
   entries: ReportEntry[];
 }
 
+/**
+ * 年歲 — an officer's life-stage band from their age. Prime years (巔峰) are
+ * the window to use a great officer; past 遲暮 their martial edge wanes (see the
+ * decline in processAging). Pure helper, also used by the UI / 名將榜.
+ */
+export interface AgeBand { id: string; zh: string; en: string; color: string; declining: boolean; }
+export function ageBand(age: number): AgeBand {
+  if (age < 22) return { id: 'youth', zh: '少年', en: 'Youth', color: '#9ed8b8', declining: false };
+  if (age < 30) return { id: 'young', zh: '青年', en: 'Young', color: '#88b7e8', declining: false };
+  if (age < 45) return { id: 'prime', zh: '巔峰', en: 'Prime', color: '#e6c473', declining: false };
+  if (age < 55) return { id: 'seasoned', zh: '老練', en: 'Seasoned', color: '#cfd8e0', declining: false };
+  if (age < 65) return { id: 'twilight', zh: '遲暮', en: 'Twilight', color: '#c8884e', declining: true };
+  return { id: 'venerable', zh: '耄耋', en: 'Venerable', color: '#9a7a6a', declining: true };
+}
+
 /** Run yearly aging — call this once per year, at end of winter. */
 export function processAging(input: AgingInput): AgingOutput {
   const cities = { ...input.cities };
@@ -74,6 +89,17 @@ export function processAging(input: AgingInput): AgingOutput {
         }
       }
     }
+    // 遲暮 — past their prime an officer's body wanes: 武力 slips from ~50, and
+    // 統率 later. Gentle, permanent, floored — a reason to use elites while young.
+    if (age >= 50) {
+      const cur = officers[officer.id] ?? officer;
+      let s = cur.stats;
+      let changed = false;
+      if (s.war > 55 && input.rng() < 0.5) { s = { ...s, war: s.war - 1 }; changed = true; }
+      if (age >= 62 && s.leadership > 50 && input.rng() < 0.4) { s = { ...s, leadership: s.leadership - 1 }; changed = true; }
+      if (changed) officers = { ...officers, [officer.id]: { ...cur, stats: s } };
+    }
+
     // T8 — trait-based hardiness / fragility
     const chance = deathChance(officer, input.year, age) * deathChanceMultiplier(officer);
     if (input.rng() >= chance) continue;

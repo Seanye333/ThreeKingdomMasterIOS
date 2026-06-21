@@ -250,12 +250,36 @@ export function canBreakthrough(officer: Officer): { ok: boolean; reason?: 'not-
   return { ok: true };
 }
 
+/** 轉生稱號 — a flavour rank that climbs with each breakthrough. */
+const BREAKTHROUGH_TITLES: Array<{ zh: string; en: string }> = [
+  { zh: '初成', en: 'Awakened' },
+  { zh: '小成', en: 'Tempered' },
+  { zh: '大成', en: 'Ascendant' },
+  { zh: '化境', en: 'Transcendent' },
+  { zh: '通神', en: 'Divine' },
+];
+export function breakthroughTitle(count: number | undefined): { zh: string; en: string } | null {
+  if (!count || count < 1) return null;
+  return BREAKTHROUGH_TITLES[Math.min(count, BREAKTHROUGH_TITLES.length) - 1];
+}
+
+/** Milestone traits granted at the 3rd (signature) and 5th (legendary) breakthrough,
+ *  keyed off the officer's strongest stat so the perk fits who they are. */
+const BREAKTHROUGH_TRAITS: Record<keyof OfficerStats, { mid: string; high: string }> = {
+  war:          { mid: 'martial-valor', high: 'matchless' },
+  leadership:   { mid: 'field-tactician', high: 'fortress-keeper' },
+  intelligence: { mid: 'strategist', high: 'precognitive' },
+  politics:     { mid: 'diligent', high: 'honor-bound' },
+  charisma:     { mid: 'charming', high: 'noble' },
+};
+
 /**
  * 突破 — a fully-seasoned officer (max growth level) channels their experience
  * into a fresh leap: every latent cap rises, and their three signature stats
- * sharpen by +2 (within the new caps). This is the only growth past the XP
- * ceiling, so it's the long-game goal for veteran officers. Pure — the caller
- * (store) is responsible for the gold cost and eligibility gate.
+ * sharpen by +2 (within the new caps). At the 3rd and 5th breakthrough they also
+ * awaken a signature trait fitting their strongest stat. This is the only growth
+ * past the XP ceiling, so it's the long-game goal for veteran officers. Pure —
+ * the caller (store) is responsible for the gold cost and eligibility gate.
  */
 export function applyBreakthrough(
   officer: Officer,
@@ -280,13 +304,35 @@ export function applyBreakthrough(
     stats = { ...stats, [k]: next };
   }
   const breakthroughs = (officer.breakthroughs ?? 0) + 1;
+  const title = breakthroughTitle(breakthroughs);
   const entries: ReportEntry[] = [{
     cityId: officer.locationCityId,
     kind: 'talent',
-    text: `${officer.name.en} achieved a breakthrough (#${breakthroughs}), reaching new heights.`,
-    textZh: `${officer.name.zh}突破第${breakthroughs}重，潛力大進（${grown.join('、') || '臻於化境'}）。`,
+    text: `${officer.name.en} achieved a breakthrough (#${breakthroughs}${title ? `, ${title.en}` : ''}), reaching new heights.`,
+    textZh: `${officer.name.zh}突破第${breakthroughs}重${title ? `·${title.zh}` : ''}，潛力大進（${grown.join('、') || '臻於化境'}）。`,
   }];
-  return { officer: { ...officer, stats, latentStats: latent, breakthroughs }, entries };
+
+  // 突破覺醒 — milestone breakthroughs awaken a signature trait fitting the
+  // officer's strongest stat (3rd → signature, 5th → legendary).
+  let traits = (officer.traits ?? []) as string[];
+  const topStat = (Object.keys(stats) as Array<keyof OfficerStats>)
+    .reduce((best, k) => (stats[k] > stats[best] ? k : best), 'war' as keyof OfficerStats);
+  const tier = breakthroughs === 3 ? 'mid' : breakthroughs === 5 ? 'high' : null;
+  if (tier) {
+    const traitId = BREAKTHROUGH_TRAITS[topStat][tier];
+    if (!traits.includes(traitId)) {
+      traits = [...traits, traitId];
+      const def = TRAIT_DEFS_BY_ID[traitId];
+      entries.push({
+        cityId: officer.locationCityId,
+        kind: 'talent',
+        text: `${officer.name.en} awakened the ${def?.name.en ?? traitId} trait through breakthrough.`,
+        textZh: `${officer.name.zh}突破之際,覺醒「${def?.name.zh ?? traitId}」之性。`,
+      });
+    }
+  }
+
+  return { officer: { ...officer, stats, latentStats: latent, breakthroughs, traits: traits as Officer['traits'] }, entries };
 }
 
 function defaultLatent(stats: OfficerStats): OfficerStats {

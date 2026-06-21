@@ -28,10 +28,12 @@ import { WEAPON_TYPE_DEFS, deriveWeaponType } from '../../game/data/weaponTypes'
 import { HISTORICAL_LIFESPANS } from '../../game/data/historicalLifespans';
 import { effectivePrestige } from '../../game/data/prestige';
 import { renownFromDeeds, fameTier, fameMedal } from '../../game/systems/fame';
-import { xpProgress, learnableSkills, canBreakthrough, breakthroughCost, MAX_BREAKTHROUGHS } from '../../game/systems/growth';
+import { xpProgress, learnableSkills, canBreakthrough, breakthroughCost, MAX_BREAKTHROUGHS, breakthroughTitle } from '../../game/systems/growth';
 import { officerGrade, officerLevel } from '../../game/systems/officerGrade';
 import { gradeCombatBonus, itemMasteryMul } from '../../game/systems/gradeCombat';
 import { itemRarity, itemRarityMeta } from '../../game/data/items';
+import { activeItemSets } from '../../game/data/itemSets';
+import { ageBand } from '../../game/systems/aging';
 import type { City, Force, Officer, OfficerStats, Skill } from '../../game/types';
 import { FORMATIONS_BY_ID } from '../../game/data/formations';
 import { TACTIC_DESC } from './TacticsModal';
@@ -408,6 +410,21 @@ export function OfficerDetail({
                 );
               })()}
               {(() => {
+                // 年歲 — life-stage band; past 遲暮 the officer's martial edge wanes.
+                const band = ageBand(age);
+                return (
+                  <div title={t(`${age} 歲 · ${band.zh}${band.declining ? '（武力漸衰）' : ''}`, `Age ${age} · ${band.en}${band.declining ? ' (waning)' : ''}`)}>
+                    <span style={{ fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('年歲', 'Age')} </span>
+                    <span style={{
+                      display: 'inline-block', padding: '0.1rem 0.5rem', borderRadius: 2,
+                      background: '#10161e', border: `1px solid ${band.color}`, color: band.color, fontSize: '0.85rem',
+                    }}>
+                      {age} · {lang === 'en' ? band.en : band.zh}
+                    </span>
+                  </div>
+                );
+              })()}
+              {(() => {
                 // 寶物品階 — the best gold/silver/bronze rarity the officer carries,
                 // shown in the same palette as 品階 so ability and gear read alike.
                 const live = allOfficers[officer.id] ?? officer;
@@ -535,6 +552,7 @@ export function OfficerDetail({
                       {count > 0 && (
                         <span title={t(`已突破 ${count}/${MAX_BREAKTHROUGHS} 重`, `${count}/${MAX_BREAKTHROUGHS} breakthroughs`)} style={{ color: '#e6c473', fontSize: '0.82rem', letterSpacing: '0.1rem' }}>
                           {'★'.repeat(count)}{'☆'.repeat(Math.max(0, MAX_BREAKTHROUGHS - count))}
+                          {(() => { const bt = breakthroughTitle(count); return bt ? <span style={{ marginLeft: 5, fontSize: '0.7rem', color: '#8ee8ff' }}>{lang === 'en' ? bt.en : bt.zh}</span> : null; })()}
                         </span>
                       )}
                       {gate.ok ? (
@@ -938,6 +956,22 @@ export function OfficerDetail({
                   </span>
                 )}
               </h3>
+              {(() => {
+                // 神兵譜 — full legendary sets the officer has assembled.
+                const sets = activeItemSets(officer);
+                if (sets.length === 0) return null;
+                return (
+                  <div style={{ marginBottom: '0.5rem', display: 'flex', flexWrap: 'wrap', gap: '0.4rem', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.65rem', color: '#7a8893' }}>{t('神兵譜', 'Set')}</span>
+                    {sets.map((s) => (
+                      <span key={s.id} title={t(`套裝共鳴 — 戰力 +${Math.round(s.powerBonus * 100)}%`, `Set resonance — power +${Math.round(s.powerBonus * 100)}%`)}
+                        style={{ padding: '0.1rem 0.5rem', borderRadius: 2, background: '#10161e', border: `1px solid ${s.color}`, color: s.color, fontSize: '0.78rem' }}>
+                        {lang === 'en' ? s.name.en : s.name.zh} <span style={{ fontSize: '0.66rem', opacity: 0.85 }}>+{Math.round(s.powerBonus * 100)}%</span>
+                      </span>
+                    ))}
+                  </div>
+                );
+              })()}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
                 {officer.equipment.map((id) => {
                   const item = ITEMS_BY_ID[id];

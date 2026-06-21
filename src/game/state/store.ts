@@ -129,6 +129,7 @@ import { razedCity, rebuiltCity, rebuildCost } from '../systems/cityRuin';
 import { buildSpecialtyTradeRoutes, tickSpecialtyTrade } from '../systems/tradeRoutes';
 import { fortMaxHpForLevel, FACILITY_DEFS, type FacilityKind } from '../types';
 import { awardBattleXp, grantXp, applyBreakthrough, canBreakthrough, breakthroughCost } from '../systems/growth';
+import { officerGrade, gradeRank, gradeMeta } from '../systems/officerGrade';
 import { tickBuildings } from '../systems/buildings';
 import { evaluateCoalition } from '../systems/coalition';
 import { rollDialogue } from '../systems/dialogueRoll';
@@ -4438,6 +4439,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // Personality refuses (proud/humble/lazy block certain posts).
         const refusal = traitRefusal(officer, def);
         if (refusal) return { ok: false, reason: refusal.zh };
+        // 品階門檻 — a great office demands a proven officer.
+        if (def.minGrade) {
+          const g = officerGrade(officer);
+          if (gradeRank(g.grade) < gradeRank(def.minGrade)) {
+            return { ok: false, reason: `品階不足：${def.name.zh}需${gradeMeta(def.minGrade).name.zh}以上（${officer.name.zh}為${g.name.zh}）。` };
+          }
+        }
         // 4-season cooldown after a prior revoke of (officer, title).
         const cd = isOnCooldown(state.appointmentHistory, officerId, titleId, state.date.year, state.date.season);
         if (cd.onCooldown) {

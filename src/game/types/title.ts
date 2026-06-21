@@ -73,6 +73,9 @@ export interface CivicTitle {
   /** Other civic titles in this force that get auto-vacated when this
    *  one is appointed. 丞相 supersedes 太尉/司徒/大鴻臚 historically. */
   excludes?: CivicTitleId[];
+  /** 品階門檻 — minimum 品階 an officer must hold to take this post. A great
+   *  office demands a proven officer; below it the appointment is refused. */
+  minGrade?: import('../systems/officerGrade').OfficerGrade;
 }
 
 /**

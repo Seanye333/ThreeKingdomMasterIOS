@@ -10,6 +10,7 @@ import type {
 } from '../types';
 import { CIVIC_TITLES, CIVIC_TITLES_BY_ID, MILITARY_RANKS, MILITARY_RANKS_BY_ID } from '../data/titles';
 import { traitRefusal } from './appointmentEffects';
+import { officerGrade, gradeRank } from './officerGrade';
 
 export interface AIAppointmentsContext {
   forces: Record<EntityId, Force>;
@@ -100,6 +101,8 @@ export function planAIAppointments(ctx: AIAppointmentsContext): AIAppointmentsOu
       const candidates = forceOfficers
         .filter((o) => !heldByOfficer.has(o.id))
         .filter((o) => !traitRefusal(o, titleDef))
+        // 品階門檻 — the AI also can't seat an under-grade officer in a high post.
+        .filter((o) => !titleDef.minGrade || gradeRank(officerGrade(o).grade) >= gradeRank(titleDef.minGrade))
         .sort((a, b) => b.stats[titleDef.primaryStat] - a.stats[titleDef.primaryStat]);
       const candidate = candidates[0];
       if (!candidate) continue;

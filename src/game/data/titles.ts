@@ -80,6 +80,7 @@ export const CIVIC_TITLES: CivicTitle[] = [
     primaryStat: 'politics',
     forceBonus: { internalMultiplier: 1.15 },
     loyaltyOnAppoint: 3,
+    minGrade: 'bronze',
   },
   {
     id: 'strategist',
@@ -91,6 +92,7 @@ export const CIVIC_TITLES: CivicTitle[] = [
     primaryStat: 'intelligence',
     forceBonus: { powerMultiplier: 1.1 },
     loyaltyOnAppoint: 5,
+    minGrade: 'gold',
   },
   {
     id: 'chancellor',
@@ -103,6 +105,7 @@ export const CIVIC_TITLES: CivicTitle[] = [
     forceBonus: { internalMultiplier: 1.25, recruitBonus: 0.15 },
     loyaltyOnAppoint: 8,
     excludes: ['minister', 'grand-marshal', 'foreign-affairs'],
+    minGrade: 'platinum',
   },
   {
     id: 'inspector',
@@ -113,6 +116,7 @@ export const CIVIC_TITLES: CivicTitle[] = [
     primaryStat: 'politics',
     forceBonus: { recruitBonus: 0.1 },
     loyaltyOnAppoint: 4,
+    minGrade: 'silver',
   },
   {
     id: 'minister',
@@ -123,6 +127,7 @@ export const CIVIC_TITLES: CivicTitle[] = [
     primaryStat: 'politics',
     forceBonus: { internalMultiplier: 1.15 },
     loyaltyOnAppoint: 4,
+    minGrade: 'silver',
   },
   {
     id: 'grand-marshal',
@@ -133,6 +138,7 @@ export const CIVIC_TITLES: CivicTitle[] = [
     primaryStat: 'war',
     forceBonus: { powerMultiplier: 1.08 },
     loyaltyOnAppoint: 5,
+    minGrade: 'gold',
   },
   {
     id: 'foreign-affairs',
@@ -143,6 +149,7 @@ export const CIVIC_TITLES: CivicTitle[] = [
     primaryStat: 'charisma',
     forceBonus: { diplomacyMultiplier: 1.2 },
     loyaltyOnAppoint: 3,
+    minGrade: 'silver',
   },
   {
     id: 'censor',
@@ -153,6 +160,7 @@ export const CIVIC_TITLES: CivicTitle[] = [
     primaryStat: 'politics',
     forceBonus: { loyaltyDrift: 1 },
     loyaltyOnAppoint: 4,
+    minGrade: 'silver',
   },
   {
     id: 'advisor',
@@ -163,6 +171,7 @@ export const CIVIC_TITLES: CivicTitle[] = [
     primaryStat: 'intelligence',
     forceBonus: { advisorMultiplier: 1.5 },
     loyaltyOnAppoint: 3,
+    minGrade: 'silver',
   },
 ];
 
