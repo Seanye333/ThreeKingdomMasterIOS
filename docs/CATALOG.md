@@ -2152,23 +2152,42 @@
 | 良吏 Steward | official | 收入×1.07 |
 | 巨賈 Great Merchant | merchant | 收入×1.1 |
 
-### 官職 Civic Titles(9)
+### 官職 Civic Titles(28)
 
 | 官職 | 主屬性 | 效果 |
 |---|---|---|
 | 太守 Prefect | politics | 一城之長。所在城池內政效果 +15%。 |
 | 軍師 Strategist | intelligence | 勢力首席軍師。軍力 +10%。 |
-| 丞相 Chancellor | politics | 三公之首。內政效果 ×1.25,招募 +15%。設丞相則 太尉/司徒/大鴻臚 罷。 |
+| 丞相 Chancellor | politics | 三公之首。內政效果 ×1.25,招募 +15%。設丞相則 太尉/司徒/司空/大鴻臚 罷。 |
+| 太傅 Grand Tutor | politics | 上公之首,元老鎮國。書信/夙願忠誠回報 ×1.3,全勢力每季忠誠 +1。 |
+| 大司馬 Grand Marshal of State | war | 上公,總攬兵權。全軍軍力 +10%。設大司馬則太尉罷。 |
+| 尚書令 Master of Writing | politics | 尚書台首,錄尚書事,政務樞機。內政效果 +18%,各城每季民心 +1。 |
+| 侍中 Palace Attendant | intelligence | 禁中近臣。書信/夙願忠誠回報 ×1.25,招募 +5%。 |
+| 司隸校尉 Colonel-Director of Retainers | politics | 糾劾京畿百官。各城每季民心 +1,全勢力每季忠誠 +1。 |
+| 州牧 Provincial Governor | politics | 一州之主,位在刺史之上。內政效果 +10%,招募 +10%。 |
 | 刺史 Inspector | politics | 監察使。招募 +10%。 |
 | 司徒 Minister | politics | 高位文臣。內政效果 +15%。 |
+| 司空 Minister of Works | politics | 三公之一。內政效果 +12%。 |
 | 太尉 Grand Marshal | war | 全軍統帥之首。軍力 +8%。 |
+| 太常 Minister of Rites | politics | 九卿之首,掌禮樂郊廟。禮教安民,各城每季民心 +1,夙願回報 ×1.1。 |
+| 光祿勳 Minister of the Household | charisma | 掌宿衛侍從、選署郎官。招募 +10%。 |
+| 衛尉 Minister of the Guards | war | 掌宮門屯兵宿衛。每季為都城增 300 駐軍。 |
+| 太僕 Minister of Stables | war | 掌輿馬廄牧。車騎精練,全軍軍力 +4%。 |
+| 廷尉 Minister of Justice | politics | 掌刑獄律令。明刑弼教,各城每季民心 +1。 |
+| 宗正 Minister of the Clan | politics | 掌宗室譜牒。敦睦宗親,全勢力每季忠誠 +1。 |
+| 大司農 Minister of Agriculture | politics | 掌錢穀租稅、國之府庫。每季為都城增 120 金、120 糧。 |
+| 少府 Minister of the Privy Treasury | politics | 掌山海池澤之稅、宮中用度。每季為都城增 80 金。 |
 | 大鴻臚 Herald | charisma | 外交之長。邦交效果 ×1.2。 |
 | 御史中丞 Censor | politics | 監察百官。全勢力每季忠誠 +1（肅貪）。 |
 | 諫議大夫 Advisor | intelligence | 諫議朝政。書信、夙願之忠誠回報 ×1.5。 |
+| 郡丞 Deputy Magistrate | politics | 佐太守理民。內政效果 +5%。 |
+| 主簿 Registrar | intelligence | 掌文書簿籍。書信、夙願之忠誠回報 ×1.12。 |
+| 功曹 Merit Officer | charisma | 掌選署功勞。招募 +6%。 |
+| 別駕 Chief Clerk | politics | 州牧之佐,巡行郡縣。各城每季民心 +1。 |
 
-### 軍階 Military Ranks(7)
+### 軍階 Military Ranks(15)
 
-兵卒 → 都尉 → 校尉 → 偏将軍 → 将軍 → 大将軍 → 丞相
+兵卒 → 都尉 → 校尉 → 中郎將 → 偏将軍 → 裨将軍 → 将軍 → 四安平将軍 → 四征鎮将軍 → 四方将軍 → 衛将軍 → 車騎将軍 → 驃騎将軍 → 大将軍 → 丞相
 
 ### 船級 Ship Classes(8)
 

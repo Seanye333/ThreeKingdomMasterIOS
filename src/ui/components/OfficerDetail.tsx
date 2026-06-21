@@ -28,6 +28,7 @@ import { WEAPON_TYPE_DEFS, deriveWeaponType } from '../../game/data/weaponTypes'
 import { HISTORICAL_LIFESPANS } from '../../game/data/historicalLifespans';
 import { effectivePrestige } from '../../game/data/prestige';
 import { peerageById } from '../../game/data/peerage';
+import { honorificById } from '../../game/data/honorifics';
 import { renownFromDeeds, fameTier, fameMedal } from '../../game/systems/fame';
 import { xpProgress, learnableSkills, canBreakthrough, breakthroughCost, MAX_BREAKTHROUGHS, breakthroughTitle, growthPowerMul } from '../../game/systems/growth';
 import { officerGrade, officerLevel } from '../../game/systems/officerGrade';
@@ -352,6 +353,23 @@ export function OfficerDetail({
                   >
                     <span className={styles.rankZh}>{lang === 'en' ? peer.name.en : peer.name.zh}</span>
                     {lang === 'both' && <span className={styles.rankEn}>{peer.name.en}</span>}
+                  </span>
+                );
+              })()}
+              {(() => {
+                const hon = honorificById(officer.honorificId);
+                if (!hon) return null;
+                return (
+                  <span
+                    className={styles.rankBadge}
+                    style={{ background: 'linear-gradient(135deg,#5a1e1e,#b8442e)', color: '#fbeede' }}
+                    title={t(
+                      `名號 ${hon.name.zh} · 忠誠 +${hon.loyaltyBonus}/季${hon.combatPowerMul ? ` · 戰力 ×${hon.combatPowerMul}` : ''}`,
+                      `Honorific ${hon.name.en} · loyalty +${hon.loyaltyBonus}/season${hon.combatPowerMul ? ` · power ×${hon.combatPowerMul}` : ''}`,
+                    )}
+                  >
+                    <span className={styles.rankZh}>{lang === 'en' ? hon.name.en : hon.name.zh}</span>
+                    {lang === 'both' && <span className={styles.rankEn}>{hon.name.en}</span>}
                   </span>
                 );
               })()}

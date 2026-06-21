@@ -33,6 +33,7 @@ import type { Expedition, ExpeditionMode } from '../types';
 import { appointmentBonusFor } from './appointmentEffects';
 import { MILITARY_RANKS_BY_ID } from '../data/titles';
 import { peerageEffects } from '../data/peerage';
+import { honorificEffects } from '../data/honorifics';
 import { rollEvents } from './events';
 import { generateFictionalOfficer } from './officerGen';
 import { resolveAmbitions } from './ambition';
@@ -1456,6 +1457,38 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     }
   }
 
+  // 2d. 官署常俸 — the 九卿/尚書台 yield their offices' season upkeep: the
+  // treasury ministers (大司農/少府) pay coin & grain into the capital, the
+  // guards minister (衛尉) musters garrison there, and the justice/rites/
+  // capital inspectors (廷尉/太常/司隸/尚書令) raise 民心 in every city.
+  if (seasonBoundary && input.appointments && input.appointments.length > 0) {
+    for (const force of Object.values(forces)) {
+      const cb = appointmentBonusFor(force.id, input.appointments, officers);
+      if (
+        cb.goldPerSeason === 0 && cb.foodPerSeason === 0 &&
+        cb.cityLoyaltyPerSeason === 0 && cb.capitalGarrisonPerSeason === 0
+      ) continue;
+      if (force.capitalCityId) {
+        const cap = cities[force.capitalCityId];
+        if (cap) {
+          cities[cap.id] = {
+            ...cap,
+            gold: cap.gold + cb.goldPerSeason,
+            food: cap.food + cb.foodPerSeason,
+            troops: cap.troops + cb.capitalGarrisonPerSeason,
+          };
+        }
+      }
+      if (cb.cityLoyaltyPerSeason !== 0) {
+        for (const c of Object.values(cities)) {
+          if (c.ownerForceId !== force.id) continue;
+          const loyalty = Math.max(0, Math.min(100, c.loyalty + cb.cityLoyaltyPerSeason));
+          if (loyalty !== c.loyalty) cities[c.id] = { ...cities[c.id], loyalty };
+        }
+      }
+    }
+  }
+
   // 3. Reset officer tasks + loyalty drift toward force strength.
   // Compute per-force city counts once.
   const cityCountByForce: Record<EntityId, number> = {};
@@ -1495,6 +1528,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       drift += censorBonusByForce[o.forceId] ?? 0;
       // 食邑加俸 — an enfeoffed noble's standing loyalty bonus.
       if (o.peerageId) drift += peerageEffects(o).loyaltyBonus;
+      // 名號將軍 — a conferred honorific's standing loyalty bonus.
+      if (o.honorificId) drift += honorificEffects(o).loyaltyBonus;
       if (drift !== 0) {
         const newLoyalty = Math.max(0, Math.min(100, o.loyalty + drift));
         if (newLoyalty !== o.loyalty) {

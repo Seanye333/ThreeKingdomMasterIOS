@@ -33,6 +33,7 @@ import { trainKey, recordTrain } from '../systems/sparLimit';
 import type { Difficulty } from './gameState';
 import { CIVIC_TITLES_BY_ID, MILITARY_RANKS_BY_ID } from '../data/titles';
 import { PEERAGES_BY_ID, meritScore, peerageTier } from '../data/peerage';
+import { HONORIFICS_BY_ID, honorificTier } from '../data/honorifics';
 import { stanceRecruitModifier } from '../systems/clans';
 import { statecraftRecruitBonus } from '../systems/statecraft';
 import { holdFounding } from '../systems/founding';
@@ -427,6 +428,12 @@ interface GameStore extends GameState {
   grantPeerage: (
     officerId: EntityId,
     peerageId: PeerageId,
+  ) => { ok: boolean; reason?: string };
+  /** 賜名號 — confer a martial honorific (名號將軍) on one of your officers.
+   *  Gated by 功勳積分; pays a one-shot loyalty + 戰功威望 bump. */
+  grantHonorific: (
+    officerId: EntityId,
+    honorificId: string,
   ) => { ok: boolean; reason?: string };
   /** 門第政策 — set the player realm's talent-selection stance. Drives the
    *  門閥世族 loop (重門第 / 唯才是舉 / 並用). */
@@ -2080,6 +2087,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               kind: 'note',
               text: `${force.name.en} enfeoffed ${o.name.en} as ${peerDef.name.en}.`,
               textZh: `${force.name.zh}封${o.name.zh}為${peerDef.name.zh}。`,
+            });
+          } else if (ch.kind === 'honor' && ch.honorificId) {
+            const honDef = HONORIFICS_BY_ID[ch.honorificId];
+            if (!honDef) continue;
+            result.report.entries.push({
+              cityId: o.locationCityId,
+              kind: 'note',
+              text: `${force.name.en} named ${o.name.en} ${honDef.name.en}.`,
+              textZh: `${force.name.zh}拜${o.name.zh}為${honDef.name.zh}。`,
             });
           }
         }
@@ -5057,6 +5073,34 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           nextOfficers[o.id] = { ...prev, loyalty: Math.max(0, prev.loyalty - 5) };
         }
         set({ officers: nextOfficers });
+        return { ok: true };
+      },
+
+      grantHonorific: (officerId, honorificId) => {
+        const state = get();
+        const officer = state.officers[officerId];
+        const def = HONORIFICS_BY_ID[honorificId];
+        if (!officer || !def) return { ok: false, reason: 'invalid' };
+        if (officer.forceId !== state.playerForceId)
+          return { ok: false, reason: 'not your officer' };
+        if (officer.status === 'dead' || officer.status === 'imprisoned')
+          return { ok: false, reason: 'unavailable' };
+        if (honorificTier(officer.honorificId) >= def.tier)
+          return { ok: false, reason: 'already holds an equal or higher honorific' };
+        const merit = meritScore(officer, state.deeds[officerId]);
+        if (merit < def.minMerit)
+          return { ok: false, reason: `requires ${def.minMerit} merit (has ${merit})` };
+        set({
+          officers: {
+            ...state.officers,
+            [officerId]: {
+              ...officer,
+              honorificId,
+              loyalty: Math.min(100, officer.loyalty + def.loyaltyOnGrant),
+              renown: (officer.renown ?? 0) + def.renownOnGrant,
+            },
+          },
+        });
         return { ok: true };
       },
 

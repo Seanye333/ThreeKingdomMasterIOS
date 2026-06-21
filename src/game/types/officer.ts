@@ -109,4 +109,7 @@ export interface Officer {
    *  Yields 食邑 income + loyalty + prestige; great fiefs feed 野心. Default/
    *  omitted = no peerage. See data/peerage.ts. */
   peerageId?: import('./title').PeerageId;
+  /** 名號將軍 — a conferred martial honorific (雜號將軍). Standing loyalty +
+   *  a signature battle perk; one per officer. See data/honorifics.ts. */
+  honorificId?: string;
 }

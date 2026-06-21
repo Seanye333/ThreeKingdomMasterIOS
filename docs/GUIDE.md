@@ -12,7 +12,7 @@
 |---|---|---|---|
 | 速 | [速查總表 Quick Reference](#速查總表-quick-reference) | 一頁掃完所有關鍵常數 / 公式 / 成本 / 機率 | ✅ |
 | 1 | [城市・內政・經濟](#第一章-城市內政經濟) | citySize, economy, commands, market, buildings, autoBuild, policyEffects, forging, specialties, tradeRoutes, convoy | ✅ |
-| 2 | [武將・成長・家族](#第二章-武將成長家族) | growth, officerGrade, gradeCombat, officerFate, traitEffects, personality, biography, posthumous, aging, officerGen, family, retinues, wishes, rapport, relationshipEffects, career, codex, peerage | ✅ |
+| 2 | [武將・成長・家族](#第二章-武將成長家族) | growth, officerGrade, gradeCombat, officerFate, traitEffects, personality, biography, posthumous, aging, officerGen, family, retinues, wishes, rapport, relationshipEffects, career, codex, peerage, honorifics | ✅ |
 | 3 | [人才・招攬・舌戰](#第三章-人才招攬舌戰) | commands(search), officerFate, debate, wordWar, commonerTalent | ✅ |
 | 4 | [軍事指揮・委任](#第四章-軍事指揮委任) | muster, legion, governor, governorEval, advisor | ✅ |
 | 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, combat, formations, stratagems, weather, battlefieldTerrain, personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
@@ -347,16 +347,21 @@
 
 官爵的最高一層,凌駕於**軍階**(任官第四章)與**官職**之上。一名武將同時只持有一個爵位(取最高)。封爵入口在「任官」面板的「爵位」分頁。
 
-**爵位階梯(六級,各帶食邑與功勳門檻)**
+**爵位階梯(十一級:民爵 → 列侯細分 → 公王,各帶食邑與功勳門檻)**
 
 | 爵位 | 食邑(每季入府庫) | 忠誠/季 | 受封忠誠 | 功勳門檻 | 野心壓力 | 限制 |
 |---|---|---|---|---|---|---|
-| 關內侯 | +40 金 +60 糧 | +2 | +4 | 120 | 0 | — |
-| 亭侯 | +90 金 +120 糧 | +3 | +6 | 200 | 0 | — |
-| 鄉侯 | +160 金 +200 糧 | +4 | +8 | 320 | 1 | — |
-| 縣侯 | +260 金 +300 糧 | +5 | +10 | 460 | 2 | — |
-| 公 | +420 金 +460 糧 | +6 | +12 | 640 | 4 | 需 **稱王/稱帝** |
-| 王 | +640 金 +640 糧 | +8 | +16 | 860 | 7 | 需 **稱王/稱帝** |
+| 五大夫 | +20 金 +30 糧 | +1 | +2 | 60 | 0 | — |
+| 關中侯 | +30 金 +45 糧 | +1 | +3 | 90 | 0 | — |
+| 關內侯 | +45 金 +60 糧 | +2 | +4 | 120 | 0 | — |
+| 都亭侯 | +70 金 +95 糧 | +2 | +5 | 180 | 0 | — |
+| 亭侯 | +95 金 +120 糧 | +3 | +6 | 240 | 0 | — |
+| 都鄉侯 | +130 金 +160 糧 | +3 | +7 | 300 | 1 | — |
+| 鄉侯 | +165 金 +200 糧 | +4 | +8 | 360 | 1 | — |
+| 縣侯 | +260 金 +300 糧 | +5 | +10 | 480 | 2 | — |
+| 郡公 | +340 金 +380 糧 | +6 | +11 | 600 | 3 | 需 **稱王/稱帝** |
+| 公 | +440 金 +480 糧 | +6 | +12 | 720 | 4 | 需 **稱王/稱帝** |
+| 王 | +640 金 +640 糧 | +8 | +16 | 900 | 7 | 需 **稱王/稱帝** |
 
 - **食邑**:封地每季把金/糧繳入勢力都城(諸侯為國理財)—— 封爵對國庫**淨增益**,即便該將出征在外仍照繳;唯死亡/被擒停租。
 - **忠誠**:受封當下一次性加忠誠;此後每季(閒置時)疊加「食邑加俸」忠誠漂移。
@@ -364,6 +369,16 @@
 - **野心張力**:把「公/王」這種大邑壓在尚未稱帝的強將身上會餵養其**野心**(見 7.5,曹操封魏公之患)—— 重賞名將也可能養出軍閥。
 - **嫉妒**:封爵會惹得功勳更高卻未受爵的「善妒/嫉妒」同僚忠誠 −5。
 - AI 勢力同樣封爵(aiAppointments):每季僅擇一名功勳最高的適格者受封,爵位因此稀缺。
+
+### 2.12 名號將軍(honorifics.ts)
+
+與爵位並列的另一條榮譽線,但偏**武人榮耀**:一整套 25 個**雜號將軍**名號(含牙門/五官中郎/虎賁中郎/羽林中郎將、揚武/平難將軍等),按戰功封賞、可收集、各帶專屬主題與小特效。一名武將同持一個(取最高),入口在「任官」面板的「名號」分頁。功勳積分共用爵位的 `meritScore`。
+
+七大主題(各數例):**武勇**(折衝/奮威/虎威將軍)、**平叛**(盪寇/討逆/平虜)、**水戰**(伏波/橫江)、**攻城**(破虜/振威)、**征討**(度遼/征虜)、**謀略**(安遠/軍師將軍)、**鎮撫**(建威/鎮軍/輔國/安漢),頂階另有重望之**征西大將軍**。
+
+- **效果**:受封一次性加忠誠 + **戰功威望(renown)**(餵入 2.2 品階 → 真實戰力);多數帶**每季站樁忠誠**(與食邑加俸同迴圈);武勇/征討類另帶**戰力乘子**(經 `prestigeCombatMultiplier` 與威名取較高者,封頂 +12%)。
+- **分三階**:tier1 常見 → tier3 顯赫,只能往上換。每個名號 UI 標出主題與「宜授」之功(如伏波將軍宜授靖定水路者)。
+- AI 同樣賜名號(aiAppointments):每季擇一名最適格武將受之。
 
 ---
 
@@ -582,7 +597,7 @@
 - **天命 mandate**(每勢力 0~100,初始 50):祥瑞/凶兆每季 8% 觸發增減;挾天子者日聚。
 - **朝廷派系**(intrigue.ts / courtFactions.ts):武將自動歸入**革新派 / 宦黨 / 門閥 / 軍方**四派。注意有**兩套分派**:朝堂黨爭(intrigue.ts)按年齡/屬性分(改革派 政 >70 且 <40 歲、宦官 統 <50 政 >70、門閥 政 >75 魅 >70、武人 武 >80);而派系事件與野心(courtFactions.ts)按**性格**分(諂媚/狡詐→宦黨、純武將→軍方、門第性格+高政→門閥、高智高政或仁厚→革新)。
 - **派系事件**(factionEvents.ts):當一派占某勢力分類武將 >55%(≥5 人),每季 25% 機率觸發 —— **軍方**:武人干政(全勢力忠誠 −3、天命 −2);**門閥**:九品官人法(低魅武將 −5 忠誠);**宦黨**:黨錮之禍(一名革新/門閥武將 −15 忠誠);**革新**:新政(各城 +5 民忠)。
-- **任官加成**(appointmentEffects:太守/丞相/司徒等乘內政、刺史加徵兵)。
+- **任官加成**(appointmentEffects)：官職共 **28 個**,構成完整漢制朝堂——**上公**(太傅/大司馬)、**三公**(太尉/司徒/司空)、**尚書台**(尚書令/侍中)、**司隸校尉**、**九卿**(太常/光祿勳/衛尉/太僕/廷尉/宗正/大司農/少府/大鴻臚)、州牧/刺史/太守、以及銅階即可任的**佐官**(郡丞/主簿/功曹/別駕)。除舊有的乘內政/軍力/招募/外交/忠誠漂移/諫言六種加成外,**新開四條每季常俸通道**:大司農/少府**入金糧**、衛尉**增禁軍駐都**、廷尉/太常/司隸/尚書令/別駕**升各城民心**。各官效果一覽見附錄。
 - **建國大典(founding.ts)** —— 把「稱帝」從結局升為**中盤可玩節點**。勢力達 **王/帝** 後可於任官面板「👑 建國大典」**一次性**舉行:
   - **定國號・年號**(foundingNames.ts 預設或自選):寫入 `force.dynastyTitle / eraName`,於各處顯示。
   - **大赦天下**:所轄各城民忠 **+8**;**恩賞群臣**:全勢力武將忠誠 **+6**。
@@ -934,7 +949,7 @@ flowchart LR
 | 戰法 Tactics | 589 |
 | 技能 Skills | 30 |
 | 威名 Prestige | 8 |
-| 官職 Civic Titles | 9 |
+| 官職 Civic Titles | 28 |
 | 船級 Ships | 8 |
 | 精兵 Elite | 6 |
 | 攻城器械 Siege | 9 |
@@ -1138,23 +1153,42 @@ flowchart LR
 | 良吏 Steward | official | 收入×1.07 |
 | 巨賈 Great Merchant | merchant | 收入×1.1 |
 
-### 官職 Civic Titles(9)
+### 官職 Civic Titles(28)
 
 | 官職 | 主屬性 | 效果 |
 |---|---|---|
 | 太守 Prefect | politics | 一城之長。所在城池內政效果 +15%。 |
 | 軍師 Strategist | intelligence | 勢力首席軍師。軍力 +10%。 |
-| 丞相 Chancellor | politics | 三公之首。內政效果 ×1.25,招募 +15%。設丞相則 太尉/司徒/大鴻臚 罷。 |
+| 丞相 Chancellor | politics | 三公之首。內政效果 ×1.25,招募 +15%。設丞相則 太尉/司徒/司空/大鴻臚 罷。 |
+| 太傅 Grand Tutor | politics | 上公之首,元老鎮國。書信/夙願忠誠回報 ×1.3,全勢力每季忠誠 +1。 |
+| 大司馬 Grand Marshal of State | war | 上公,總攬兵權。全軍軍力 +10%。設大司馬則太尉罷。 |
+| 尚書令 Master of Writing | politics | 尚書台首,錄尚書事,政務樞機。內政效果 +18%,各城每季民心 +1。 |
+| 侍中 Palace Attendant | intelligence | 禁中近臣。書信/夙願忠誠回報 ×1.25,招募 +5%。 |
+| 司隸校尉 Colonel-Director of Retainers | politics | 糾劾京畿百官。各城每季民心 +1,全勢力每季忠誠 +1。 |
+| 州牧 Provincial Governor | politics | 一州之主,位在刺史之上。內政效果 +10%,招募 +10%。 |
 | 刺史 Inspector | politics | 監察使。招募 +10%。 |
 | 司徒 Minister | politics | 高位文臣。內政效果 +15%。 |
+| 司空 Minister of Works | politics | 三公之一。內政效果 +12%。 |
 | 太尉 Grand Marshal | war | 全軍統帥之首。軍力 +8%。 |
+| 太常 Minister of Rites | politics | 九卿之首,掌禮樂郊廟。禮教安民,各城每季民心 +1,夙願回報 ×1.1。 |
+| 光祿勳 Minister of the Household | charisma | 掌宿衛侍從、選署郎官。招募 +10%。 |
+| 衛尉 Minister of the Guards | war | 掌宮門屯兵宿衛。每季為都城增 300 駐軍。 |
+| 太僕 Minister of Stables | war | 掌輿馬廄牧。車騎精練,全軍軍力 +4%。 |
+| 廷尉 Minister of Justice | politics | 掌刑獄律令。明刑弼教,各城每季民心 +1。 |
+| 宗正 Minister of the Clan | politics | 掌宗室譜牒。敦睦宗親,全勢力每季忠誠 +1。 |
+| 大司農 Minister of Agriculture | politics | 掌錢穀租稅、國之府庫。每季為都城增 120 金、120 糧。 |
+| 少府 Minister of the Privy Treasury | politics | 掌山海池澤之稅、宮中用度。每季為都城增 80 金。 |
 | 大鴻臚 Herald | charisma | 外交之長。邦交效果 ×1.2。 |
 | 御史中丞 Censor | politics | 監察百官。全勢力每季忠誠 +1（肅貪）。 |
 | 諫議大夫 Advisor | intelligence | 諫議朝政。書信、夙願之忠誠回報 ×1.5。 |
+| 郡丞 Deputy Magistrate | politics | 佐太守理民。內政效果 +5%。 |
+| 主簿 Registrar | intelligence | 掌文書簿籍。書信、夙願之忠誠回報 ×1.12。 |
+| 功曹 Merit Officer | charisma | 掌選署功勞。招募 +6%。 |
+| 別駕 Chief Clerk | politics | 州牧之佐,巡行郡縣。各城每季民心 +1。 |
 
-### 軍階 Military Ranks(7)
+### 軍階 Military Ranks(15)
 
-兵卒 → 都尉 → 校尉 → 偏将軍 → 将軍 → 大将軍 → 丞相
+兵卒 → 都尉 → 校尉 → 中郎將 → 偏将軍 → 裨将軍 → 将軍 → 四安平将軍 → 四征鎮将軍 → 四方将軍 → 衛将軍 → 車騎将軍 → 驃騎将軍 → 大将軍 → 丞相
 
 ### 船級 Ship Classes(8)
 

@@ -83,6 +83,12 @@ export interface AppointmentBonus {
   diplomacyMultiplier: number;
   loyaltyDriftPerSeason: number;
   advisorMultiplier: number;
+  /** 財政/治安/禁軍 — per-season civic upkeep yields (九卿等). Force-level;
+   *  read once per force in resolution, never per-city. */
+  goldPerSeason: number;
+  foodPerSeason: number;
+  cityLoyaltyPerSeason: number;
+  capitalGarrisonPerSeason: number;
 }
 
 const ZERO: AppointmentBonus = {
@@ -92,6 +98,10 @@ const ZERO: AppointmentBonus = {
   diplomacyMultiplier: 1,
   loyaltyDriftPerSeason: 0,
   advisorMultiplier: 1,
+  goldPerSeason: 0,
+  foodPerSeason: 0,
+  cityLoyaltyPerSeason: 0,
+  capitalGarrisonPerSeason: 0,
 };
 
 /**
@@ -125,6 +135,10 @@ export function appointmentBonusFor(
     if (fb.diplomacyMultiplier) out.diplomacyMultiplier *= fb.diplomacyMultiplier;
     if (fb.loyaltyDrift)        out.loyaltyDriftPerSeason += fb.loyaltyDrift;
     if (fb.advisorMultiplier)   out.advisorMultiplier   *= fb.advisorMultiplier;
+    if (fb.goldPerSeason)             out.goldPerSeason             += fb.goldPerSeason;
+    if (fb.foodPerSeason)             out.foodPerSeason             += fb.foodPerSeason;
+    if (fb.cityLoyaltyPerSeason)      out.cityLoyaltyPerSeason      += fb.cityLoyaltyPerSeason;
+    if (fb.capitalGarrisonPerSeason)  out.capitalGarrisonPerSeason  += fb.capitalGarrisonPerSeason;
   }
   return out;
 }

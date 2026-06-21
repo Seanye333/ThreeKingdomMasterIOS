@@ -18,6 +18,7 @@ import { describeBattleSite, isRiverside } from '../data/geography';
 import { cityPos } from '../data/cityGeo';
 import { sidePoolRelationshipBonus, rivalShowdownMultiplier } from './relationshipEffects';
 import { effectivePrestigeEffects } from '../data/prestige';
+import { honorificEffects } from '../data/honorifics';
 import { gradeAuraPowerMul, gradeAuraMorale, itemMasteryMul } from './gradeCombat';
 import { growthPowerMul } from './growth';
 import { itemSetPowerMul } from '../data/itemSets';
@@ -133,7 +134,10 @@ export function foreignAuxDefenseMultiplier(aux: number | undefined): number {
  */
 export function prestigeCombatMultiplier(pool: Officer[]): number {
   let best = 1;
-  for (const o of pool) best = Math.max(best, effectivePrestigeEffects(o).combatPowerMul);
+  for (const o of pool) {
+    // A title's combat heft OR a conferred 名號將軍 perk, whichever is higher.
+    best = Math.max(best, effectivePrestigeEffects(o).combatPowerMul, honorificEffects(o).combatPowerMul);
+  }
   return Math.min(1.12, best);
 }
 

@@ -12,6 +12,7 @@ import type { HeroicDeeds } from '../types/deeds';
 import type { PeerageId } from '../types/title';
 import { CIVIC_TITLES, CIVIC_TITLES_BY_ID, MILITARY_RANKS, MILITARY_RANKS_BY_ID } from '../data/titles';
 import { highestEligiblePeerage } from '../data/peerage';
+import { highestEligibleHonorific } from '../data/honorifics';
 import { traitRefusal } from './appointmentEffects';
 import { officerGrade, gradeRank } from './officerGrade';
 
@@ -32,11 +33,12 @@ export interface AIAppointmentsOutput {
   /** Force-id keyed labels for surfaced changes (used by season-report logging). */
   changes: Array<{
     forceId: EntityId;
-    kind: 'appoint' | 'promote' | 'enfeoff';
+    kind: 'appoint' | 'promote' | 'enfeoff' | 'honor';
     officerId: EntityId;
     titleId?: CivicTitleId;
     rankId?: MilitaryRankId;
     peerageId?: PeerageId;
+    honorificId?: string;
   }>;
 }
 
@@ -166,6 +168,28 @@ export function planAIAppointments(ctx: AIAppointmentsContext): AIAppointmentsOu
         loyalty: Math.min(100, o.loyalty + def.loyaltyOnGrant),
       };
       changes.push({ forceId: force.id, kind: 'enfeoff', officerId: o.id, peerageId: bestAward.peerageId });
+    }
+
+    // 賜名號 pass — bestow a martial honorific on the single most-deserving
+    // general lacking a high one. Scarce, like enfeoffment: one per season.
+    let bestHon: { officer: Officer; def: ReturnType<typeof highestEligibleHonorific> } | null = null;
+    for (const o of forceOfficers) {
+      const next = highestEligibleHonorific(officers[o.id] ?? o, ctx.deeds?.[o.id]);
+      if (!next) continue;
+      if (!bestHon || next.tier > (bestHon.def?.tier ?? 0)) {
+        bestHon = { officer: officers[o.id] ?? o, def: next };
+      }
+    }
+    if (bestHon && bestHon.def) {
+      const o = bestHon.officer;
+      const def = bestHon.def;
+      officers[o.id] = {
+        ...o,
+        honorificId: def.id,
+        loyalty: Math.min(100, o.loyalty + def.loyaltyOnGrant),
+        renown: (o.renown ?? 0) + def.renownOnGrant,
+      };
+      changes.push({ forceId: force.id, kind: 'honor', officerId: o.id, honorificId: def.id });
     }
   }
 

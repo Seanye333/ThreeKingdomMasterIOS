@@ -259,11 +259,19 @@ export const OFFICER_SKILLS: Record<string, string[]> = {
  * an officer's best of war/leadership.
  */
 const RANK_THRESHOLDS: Array<{ minStat: number; rank: MilitaryRankId }> = [
-  { minStat: 92, rank: 'grand-general' },
-  { minStat: 85, rank: 'general' },
-  { minStat: 75, rank: 'lt-general' },
-  { minStat: 65, rank: 'colonel' },
-  { minStat: 55, rank: 'captain' },
+  { minStat: 95, rank: 'grand-general' },
+  { minStat: 93, rank: 'cavalry-general' },
+  { minStat: 91, rank: 'chariot-general' },
+  { minStat: 89, rank: 'guard-general' },
+  { minStat: 87, rank: 'cardinal-general' },
+  { minStat: 84, rank: 'campaign-general' },
+  { minStat: 81, rank: 'frontier-general' },
+  { minStat: 77, rank: 'general' },
+  { minStat: 72, rank: 'vice-general' },
+  { minStat: 68, rank: 'lt-general' },
+  { minStat: 63, rank: 'palace-general' },
+  { minStat: 58, rank: 'colonel' },
+  { minStat: 52, rank: 'captain' },
 ];
 
 /**
