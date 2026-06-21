@@ -335,6 +335,8 @@ export interface SearchInput {
   /** Current year — talent below recruiting age (or not yet born) can't be
    *  found. As the campaign advances, more officers come of age naturally. */
   year?: number;
+  /** 在野登場 — multiplier on the search success chance. Default 1. */
+  successMul?: number;
 }
 
 /** Officers younger than this (in the current year) aren't discoverable yet. */
@@ -348,7 +350,7 @@ export interface SearchOutput {
 
 export function handleSearch(input: SearchInput): SearchOutput {
   const { officer, city, officers, lostItems, rng } = input;
-  const successChance = Math.min(0.85, officer.stats.charisma / 100);
+  const successChance = Math.min(0.95, (officer.stats.charisma / 100) * (input.successMul ?? 1));
   const succeeded = rng() < successChance;
 
   if (!succeeded) {

@@ -26,6 +26,12 @@ export interface AmbitionContext {
   playerForceId: EntityId | null | undefined;
   /** Deterministic seed (derive from the campaign date) — keeps it off the main rng. */
   seed: number;
+  /**
+   * Optional per-officer betrayal-chance bonus (0..~0.06), derived from court
+   * factions: a strongman whose own faction dominates the court has a clique
+   * at his back and is far likelier to move. Keyed by officer id.
+   */
+  factionBoost?: Record<EntityId, number>;
 }
 
 export interface AmbitionEvent {
@@ -101,6 +107,7 @@ export function resolveAmbitions(ctx: AmbitionContext): AmbitionEvent[] {
     chance += Math.min(0.1, grievance * 0.025);
     if (ambitious) chance += 0.05;
     if (arrogant) chance += 0.02;
+    chance += ctx.factionBoost?.[o.id] ?? 0; // a faction at his back emboldens him
     if (rng() >= chance) continue;
 
     const ruler = officers[force.rulerOfficerId];

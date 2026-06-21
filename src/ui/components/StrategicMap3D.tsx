@@ -6,6 +6,7 @@ import { RENDER_HI } from '../renderQuality';
 import { getTerritoryCanvas, getTerritorySignature } from './territoryOverlay';
 import { positionAlongRoute, marchDestCoords, terrainRoute, generateTerritories } from '../../game/data/territories';
 import { snapToHexCenter, geoToPixel, battleGroundAt, MAP_W as PX_W, MAP_H as PX_H, WORLD_SCALE } from '../../game/data/geography';
+import { getEmbassyTarget } from '../../game/systems/foreignRealm';
 import { cityPixel, cityPos } from '../../game/data/cityGeo';
 import { marchDurationFor } from '../../game/data/cities';
 import { NAMED_MAPS_BY_CITY, NAMED_MAPS_BY_ID } from '../../game/data/namedMaps';
@@ -2430,6 +2431,102 @@ function ConvoyCart({ route, t, kind, naval, color = '#9a8a6a' }: { route: Array
       <mesh position={[0.17, 0.56, 0.12]}>
         <boxGeometry args={[0.13, 0.09, 0.012]} />
         <meshStandardMaterial color={color} side={THREE.DoubleSide} />
+      </mesh>
+    </group>
+  );
+}
+
+/**
+ * 游历使者 — lone officers roaming the map: a 城池 errand rider heads to another
+ * city; a 遠使 embassy rider strikes out toward a distant realm/tribe at the
+ * map's edge (gold banner). Mirrors the convoy renderer.
+ */
+function Envoys({
+  cities,
+  expeditions,
+  forces,
+}: {
+  cities: Record<string, import('../../game/types').City>;
+  expeditions: Record<string, import('../../game/types').Expedition>;
+  forces: Record<string, import('../../game/types').Force>;
+}) {
+  const list = useMemo(() => {
+    const out: Array<{ id: string; route: Array<{ x: number; y: number }>; t: number; color: string; embassy: boolean }> = [];
+    for (const e of Object.values(expeditions)) {
+      const from = cities[e.fromCityId];
+      if (!from) continue;
+      const [fx, fy] = cityPixel(from.id, from.coords.x, from.coords.y);
+      let dx: number, dy: number;
+      if (e.mode === 'embassy' && e.toRealmId) {
+        const target = getEmbassyTarget(e.toRealmId);
+        if (!target) continue;
+        const [rx, ry] = geoToPixel(target.homeland.lon, target.homeland.lat);
+        // Distant realms sit off the playable map — aim the rider at the border
+        // in their direction so he heads off the right edge, not into the void.
+        dx = Math.max(20, Math.min(PX_W - 20, rx));
+        dy = Math.max(20, Math.min(PX_H - 20, ry));
+      } else {
+        const to = cities[e.toCityId];
+        if (!to) continue;
+        [dx, dy] = cityPixel(to.id, to.coords.x, to.coords.y);
+      }
+      // Outbound rides from home to destination; the return leg reverses it.
+      const a = e.phase === 'returning' ? { x: dx, y: dy } : { x: fx, y: fy };
+      const b = e.phase === 'returning' ? { x: fx, y: fy } : { x: dx, y: dy };
+      const route = terrainRoute(a.x, a.y, b.x, b.y);
+      const elapsed = e.legSeasons - e.seasonsRemaining;
+      const t = Math.min(0.96, Math.max(0.04, (elapsed + 0.5) / Math.max(1, e.legSeasons)));
+      out.push({ id: e.id, route, t, color: forces[e.forceId]?.color ?? '#cdb87a', embassy: e.mode === 'embassy' });
+    }
+    return out;
+  }, [cities, expeditions, forces]);
+
+  return (
+    <>
+      {list.map((e) => (
+        <EnvoyRider key={e.id} route={e.route} t={e.t} color={e.color} embassy={e.embassy} />
+      ))}
+    </>
+  );
+}
+
+function EnvoyRider({ route, t, color, embassy }: { route: Array<{ x: number; y: number }>; t: number; color: string; embassy: boolean }) {
+  const groupRef = useRef<THREE.Group>(null);
+  useFrame(() => {
+    if (!groupRef.current || route.length === 0) return;
+    const here = positionAlongRoute(route, t);
+    const ahead = positionAlongRoute(route, Math.min(0.99, t + 0.05));
+    const [wx, wz] = pxToWorld(here.x, here.y);
+    const [wx2, wz2] = pxToWorld(ahead.x, ahead.y);
+    const y = sampleTerrainHeight(wx, wz) + 0.05;
+    groupRef.current.position.set(wx, y, wz);
+    if (wx2 !== wx || wz2 !== wz) groupRef.current.rotation.y = Math.atan2(wx2 - wx, wz2 - wz);
+  });
+  return (
+    <group ref={groupRef} scale={ARMY_TOKEN_SCALE * 0.85}>
+      {/* mount */}
+      <mesh position={[0, 0.14, 0]} castShadow>
+        <boxGeometry args={[0.11, 0.11, 0.32]} />
+        <meshStandardMaterial color="#5a3f24" roughness={0.9} />
+      </mesh>
+      {/* rider (force colour) */}
+      <mesh position={[0, 0.3, 0]} castShadow>
+        <cylinderGeometry args={[0.05, 0.07, 0.18, 6]} />
+        <meshStandardMaterial color={color} roughness={0.7} />
+      </mesh>
+      <mesh position={[0, 0.42, 0]}>
+        <sphereGeometry args={[0.05, 8, 8]} />
+        <meshStandardMaterial color="#d8c0a0" />
+      </mesh>
+      {/* 旌節 — an envoy's tall banner so he's spottable on the map; gold for a
+          遠使 to distant lands. */}
+      <mesh position={[0, 0.62, -0.08]}>
+        <cylinderGeometry args={[0.01, 0.01, 0.64, 5]} />
+        <meshStandardMaterial color="#3a2818" />
+      </mesh>
+      <mesh position={[0.11, 0.78, -0.08]}>
+        <boxGeometry args={[0.18, 0.14, 0.014]} />
+        <meshStandardMaterial color={embassy ? '#e6c473' : color} side={THREE.DoubleSide} emissive={embassy ? '#5a4410' : '#000000'} emissiveIntensity={embassy ? 0.4 : 0} />
       </mesh>
     </group>
   );
@@ -6185,6 +6282,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
   const startFieldBattle = useGameStore((s) => s.startFieldBattle);
   const armiesState = useGameStore((s) => s.armies);
   const convoysState = useGameStore((s) => s.convoys);
+  const expeditionsState = useGameStore((s) => s.expeditions);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const lang = useLanguage();
   const t = useT();
@@ -6412,6 +6510,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
       <UniqueLandmarks3D cities={cities} />
       <MarchingArmies cities={cities} pendingCommands={visibleCommands} forces={forces} officers={officers} ports={portsForMarch} selectedArmyId={selectedArmyId3D} onArmyClick={handleArmyClick} hideNearPx={battleSitePx} />
       <Convoys cities={cities} convoys={convoysState} forces={forces} />
+      <Envoys cities={cities} expeditions={expeditionsState} forces={forces} />
       {overlayMode === 'supply' && <SupplyLines3D />}
       {overlayMode === 'diplomacy' && <DiplomacyLines3D cities={cities} forces={forces} />}
       <FieldBattleMarks3D marks={fieldBattleMarks} />

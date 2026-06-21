@@ -13,6 +13,8 @@ import { AnimatedNumber } from './AnimatedNumber';
 import { CaptivesSection } from './CaptivesSection';
 import { CommandMenu } from './CommandMenu';
 import { ConvoyDispatchModal } from './ConvoyDispatchModal';
+import { ExpeditionModal } from './ExpeditionModal';
+import { getEmbassyTarget } from '../../game/systems/foreignRealm';
 import { FreeAgentsSection } from './FreeAgentsSection';
 import { Icon, type IconName } from './Icon';
 import { OfficerStats } from './OfficerStats';
@@ -124,6 +126,7 @@ export function CityPanel() {
       <ResourcesSection city={city} cityOfficers={officers} isPlayerCity={isPlayerCity} />
 
       <GrainTransferSection cityId={city.id} isPlayerCity={isPlayerCity} />
+      <ExpeditionSection cityId={city.id} isPlayerCity={isPlayerCity} />
 
       <DevelopmentSection city={city} isPlayerCity={isPlayerCity} />
 
@@ -268,6 +271,106 @@ function GrainTransferSection({ cityId, isPlayerCity }: { cityId: EntityId; isPl
       </div>
 
       {open && <ConvoyDispatchModal fromCityId={cityId} onClose={() => setOpen(false)} />}
+    </section>
+  );
+}
+
+/**
+ * 游历 — a compact launcher for sending a lone officer roaming (探索/出使/策反/
+ * 刺探). Shows who is presently abroad out of this city (with a recall button)
+ * and a 遣行 button opening the full composer.
+ */
+function ExpeditionSection({ cityId, isPlayerCity }: { cityId: EntityId; isPlayerCity: boolean }) {
+  const t = useT();
+  const lang = useLanguage();
+  const allCities = useGameStore((s) => s.cities);
+  const playerForceId = useGameStore((s) => s.playerForceId);
+  const officers = useGameStore((s) => s.officers);
+  const expeditions = useGameStore((s) => s.expeditions);
+  const recallExpedition = useGameStore((s) => s.recallExpedition);
+  const [open, setOpen] = useState(false);
+  const city = allCities[cityId];
+
+  const roamerCount = useMemo(
+    () => Object.values(officers).filter((o) => o.forceId === playerForceId && o.locationCityId === cityId && (o.status === 'idle' || o.status === 'active') && !o.task).length,
+    [officers, playerForceId, cityId],
+  );
+  const outbound = useMemo(
+    () => Object.values(expeditions ?? {})
+      .filter((e) => e.fromCityId === cityId && e.forceId === playerForceId)
+      .sort((a, b) => a.seasonsRemaining - b.seasonsRemaining),
+    [expeditions, cityId, playerForceId],
+  );
+
+  if (!isPlayerCity || !city) return null;
+
+  const MODE_LABEL: Record<string, { zh: string; en: string; icon: string }> = {
+    explore: { zh: '探索', en: 'explore', icon: '🧭' },
+    envoy: { zh: '出使', en: 'envoy', icon: '🕊️' },
+    subvert: { zh: '策反', en: 'subvert', icon: '🎭' },
+    infiltrate: { zh: '刺探', en: 'infiltrate', icon: '🕵️' },
+    embassy: { zh: '遠使', en: 'embassy', icon: '🐫' },
+  };
+
+  return (
+    <section className={styles.section}>
+      <h3 className={styles.sectionTitle} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <span>{t('游历', 'Expedition')}</span>
+        <button
+          onClick={() => setOpen(true)}
+          disabled={roamerCount === 0}
+          title={roamerCount === 0 ? t('需一名駐城閒置武將', 'needs an idle officer here') : t('遣將游历', 'send an officer roaming')}
+          style={{
+            background: roamerCount === 0 ? '#161c24' : 'linear-gradient(180deg, rgba(230,196,115,0.2), rgba(230,196,115,0.06))',
+            border: `1px solid ${roamerCount === 0 ? '#26323e' : '#e6c473'}`,
+            color: roamerCount === 0 ? '#4a5660' : '#f2dd9a',
+            padding: '0.2rem 0.7rem', fontFamily: 'inherit', fontSize: '0.72rem',
+            cursor: roamerCount === 0 ? 'not-allowed' : 'pointer', borderRadius: 4, letterSpacing: '0.05rem',
+          }}
+        >
+          {t('遣行 ⇨', 'Send ⇨')}
+        </button>
+      </h3>
+
+      {outbound.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3, marginBottom: '0.3rem' }}>
+          {outbound.map((e) => {
+            const realm = e.mode === 'embassy' && e.toRealmId ? getEmbassyTarget(e.toRealmId) : null;
+            const to = realm ? null : allCities[e.toCityId];
+            const destName = realm ? (lang === 'en' ? realm.name.en : realm.name.zh) : (to ? (lang === 'en' ? to.name.en : to.name.zh) : '?');
+            const o = officers[e.officerId];
+            const m = MODE_LABEL[e.mode] ?? { zh: e.mode, en: e.mode, icon: '•' };
+            return (
+              <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, fontSize: '0.7rem', color: '#aab6c0', background: '#10161e', border: '1px solid #1d2731', borderRadius: 3, padding: '0.18rem 0.45rem' }}>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {m.icon} {o ? (lang === 'en' ? o.name.en : o.name.zh) : '?'}
+                  <span style={{ color: '#7a8893' }}> {e.phase === 'returning' ? t('歸途', 'homeward') : `→ ${destName}`} · {lang === 'en' ? m.en : m.zh}</span>
+                </span>
+                <span style={{ display: 'flex', gap: 6, alignItems: 'center', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontFamily: 'ui-monospace, monospace', color: '#7a8893' }}>{t(`${e.seasonsRemaining}旬`, `${e.seasonsRemaining}s`)}</span>
+                  {e.phase === 'outbound' && (
+                    <button
+                      onClick={() => recallExpedition(e.id)}
+                      title={t('召回', 'recall')}
+                      style={{ background: 'none', border: '1px solid #3a4651', color: '#9aa6b0', borderRadius: 3, fontSize: '0.62rem', padding: '0 0.3rem', cursor: 'pointer', fontFamily: 'inherit' }}
+                    >
+                      {t('召回', 'recall')}
+                    </button>
+                  )}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div style={{ fontSize: '0.68rem', color: '#7a8893' }}>
+        {roamerCount > 0
+          ? t(`${roamerCount} 將可遣 · 探索/出使/策反/刺探`, `${roamerCount} officer(s) free · scout / envoy / subvert / spy`)
+          : t('此城無閒置武將可遣', 'no idle officer here to send')}
+      </div>
+
+      {open && <ExpeditionModal fromCityId={cityId} onClose={() => setOpen(false)} />}
     </section>
   );
 }
@@ -453,6 +556,13 @@ function ResourcesSection({ city, cityOfficers, isPlayerCity }: { city: City; ci
         delta: desertion > 0 ? t(`逃亡 −${desertion.toLocaleString()}`, `−${desertion.toLocaleString()} desert`) : undefined,
         tone: '#e0707a',
       })}
+      {/* 異域義從 — foreign auxiliaries stationed here lift the city's defence */}
+      {(city.foreignAux ?? 0) > 0 && (
+        <div style={{ marginTop: 4, fontSize: '0.68rem', color: '#c9a86a' }}>
+          {t(`異域義從 ${(city.foreignAux ?? 0).toLocaleString()} — 守備戰力 +${Math.round(Math.min(0.15, (city.foreignAux ?? 0) / 20000) * 100)}%`,
+             `${(city.foreignAux ?? 0).toLocaleString()} foreign auxiliaries — +${Math.round(Math.min(0.15, (city.foreignAux ?? 0) / 20000) * 100)}% defence`)}
+        </div>
+      )}
       {/* 缺糧警示 — a real, imminent problem the player should act on */}
       {proj && desertion > 0 && (
         <div style={{ marginTop: 4, fontSize: '0.7rem', color: '#f0a0a0', background: 'rgba(180,60,50,0.12)', border: '1px solid #7a3030', borderRadius: 3, padding: '0.2rem 0.45rem' }}>

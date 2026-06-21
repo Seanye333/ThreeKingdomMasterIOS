@@ -3,7 +3,7 @@
 > 由 `scripts/gen-catalog.ts` 自動生成,請勿手改;重生成:`npm run docs:catalog`。
 > 可讀摘要見 [GUIDE.md](GUIDE.md) 附錄。
 
-## 名品 Items(1273)
+## 名品 Items(1280)
 
 | 名 | 類 | 出處城 | 加成 |
 |---|---|---|---|
@@ -1280,6 +1280,13 @@
 | 張果老倒騎驢 Zhang Guolao's Donkey | horse | changan | INT+8 CHA+8 |
 | 如來神掌 Tathagata Divine Palm | book | shaolin | WAR+13 CHA+8 |
 | 鎮魔七寶 Seven Treasures of Demon-Suppression | treasure | kunlun | INT+10 WAR+8 CHA+8 |
+| 汗血寶馬 Blood-Sweating Horse | horse | — | WAR+8 LEA+5 |
+| 于闐美玉 Khotan Jade | treasure | — | POL+6 CHA+5 |
+| 龜茲樂譜 Kucha Music Score | book | — | CHA+7 INT+2 |
+| 大秦琉璃 Roman Glassware | treasure | — | CHA+8 INT+3 |
+| 天竺貝葉經 Palm-Leaf Sutra | book | — | INT+8 POL+2 |
+| 安息香料 Parthian Frankincense | treasure | — | POL+4 CHA+4 |
+| 南海象牙 Great Ivory Tusk | treasure | — | CHA+6 |
 
 ## 政策 Policies(161)
 

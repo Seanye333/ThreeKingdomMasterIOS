@@ -34,6 +34,30 @@ export function SettingsModal({ onClose }: Props) {
   const setRomanceMode = useGameStore((s) => s.setRomanceMode);
   const roguelikeMode = useGameStore((s) => s.roguelikeMode);
   const setRoguelikeMode = useGameStore((s) => s.setRoguelikeMode);
+  const lifespanMode = useGameStore((s) => s.lifespanMode ?? 'historical');
+  const setLifespanMode = useGameStore((s) => s.setLifespanMode);
+  const noBattleDeath = useGameStore((s) => s.noBattleDeath ?? false);
+  const setNoBattleDeath = useGameStore((s) => s.setNoBattleDeath);
+  const reviveDeadOfficers = useGameStore((s) => s.reviveDeadOfficers ?? false);
+  const setReviveDeadOfficers = useGameStore((s) => s.setReviveDeadOfficers);
+  const aiStrength = useGameStore((s) => s.aiStrength ?? 3);
+  const setAiStrength = useGameStore((s) => s.setAiStrength);
+  const victoryGoal = useGameStore((s) => s.victoryGoal ?? 'free');
+  const setVictoryGoal = useGameStore((s) => s.setVictoryGoal);
+  const battleDifficulty = useGameStore((s) => s.battleDifficulty ?? null);
+  const setBattleDifficulty = useGameStore((s) => s.setBattleDifficulty);
+  const lifespanLength = useGameStore((s) => s.lifespanLength ?? 'historical');
+  const setLifespanLength = useGameStore((s) => s.setLifespanLength);
+  const talentDiscovery = useGameStore((s) => s.talentDiscovery ?? 'normal');
+  const setTalentDiscovery = useGameStore((s) => s.setTalentDiscovery);
+  const duelFrequency = useGameStore((s) => s.duelFrequency ?? 'normal');
+  const setDuelFrequency = useGameStore((s) => s.setDuelFrequency);
+  const disasterFrequency = useGameStore((s) => s.disasterFrequency ?? 'normal');
+  const setDisasterFrequency = useGameStore((s) => s.setDisasterFrequency);
+  const ironman = useGameStore((s) => s.ironman ?? false);
+  const setIronman = useGameStore((s) => s.setIronman);
+  const newOfficers = useGameStore((s) => s.newOfficers ?? 'off');
+  const setNewOfficers = useGameStore((s) => s.setNewOfficers);
   const careerMode = useGameStore((s) => s.careerMode);
   const battleSpeed = useGameStore((s) => s.battleSpeed);
   const setBattleSpeed = useGameStore((s) => s.setBattleSpeed);
@@ -188,6 +212,140 @@ export function SettingsModal({ onClose }: Props) {
               >
                 <option value="historical">{t('歷史', 'Historical')}</option>
                 <option value="random">{t('虛構', 'Fictional')}</option>
+              </select>
+            </Row>
+            <Row
+              label={t('武將壽命', 'Officer lifespan')}
+              hint={
+                lifespanMode === 'historical'
+                  ? t('史實:武將在史實卒年前後謝世', 'Historical: officers pass around their real death year')
+                  : lifespanMode === 'fictionalImmortal'
+                    ? t('虛構不老:自創/虛構武將不因壽命而亡,史實武將照常', 'Fictional immortal: invented officers never die of age; historical ones still do')
+                    : t('全員不老:無人因壽命而亡', 'All immortal: no one dies of old age')
+              }
+            >
+              <select
+                value={lifespanMode}
+                onChange={(e) => setLifespanMode(e.target.value as 'historical' | 'fictionalImmortal' | 'immortal')}
+                style={selectStyle}
+              >
+                <option value="historical">{t('史實', 'Historical')}</option>
+                <option value="fictionalImmortal">{t('虛構不老', 'Fictional immortal')}</option>
+                <option value="immortal">{t('全員不老', 'All immortal')}</option>
+              </select>
+            </Row>
+            <Toggle
+              label={t('不會戰死', 'No battle death')}
+              hint={t('武將不會在戰陣/單挑/重傷中喪命,改為負傷或被俘', 'Officers are never killed in battle — wounded or captured instead')}
+              checked={noBattleDeath}
+              onChange={setNoBattleDeath}
+            />
+            <Toggle
+              label={t('起死回生', 'Revive the dead')}
+              hint={t('已故武將(含戰役開始前去世者)或會逐年復活,現身故鄉', 'Dead officers (even those fallen before the campaign) may return over the years, appearing in their hometown')}
+              checked={reviveDeadOfficers}
+              onChange={setReviveDeadOfficers}
+            />
+            <Row label={t('AI 強度', 'AI strength')} hint={t('AI 的進取與戰術水平(獨立於難度)', "The AI's aggression & tactical skill (independent of difficulty)")}>
+              <div style={{ display: 'flex', gap: 4 }}>
+                {[1, 2, 3, 4, 5].map((lv) => (
+                  <button
+                    key={lv}
+                    onClick={() => setAiStrength(lv)}
+                    style={{
+                      background: aiStrength === lv ? '#26323e' : 'transparent',
+                      border: '1px solid ' + (aiStrength === lv ? '#e6c473' : '#2b3845'),
+                      color: aiStrength === lv ? '#e6c473' : '#7a8893',
+                      padding: '0.25rem 0.6rem', cursor: 'pointer', fontFamily: 'inherit',
+                    }}
+                  >{lv}</button>
+                ))}
+              </div>
+            </Row>
+            <Row label={t('勝利條件', 'Victory condition')} hint={t('達成即獲勝;「自由」則任意結局皆可', 'Reaching it wins; "Free" allows any of the nine endings')}>
+              <select
+                value={victoryGoal}
+                onChange={(e) => setVictoryGoal(e.target.value as 'free' | 'unify' | 'hegemon' | 'tripartite')}
+                style={selectStyle}
+              >
+                <option value="free">{t('自由', 'Free')}</option>
+                <option value="unify">{t('統一天下', 'Unify')}</option>
+                <option value="hegemon">{t('稱霸中原', 'Hegemony')}</option>
+                <option value="tripartite">{t('三分天下', 'Tripartite')}</option>
+              </select>
+            </Row>
+            <Row label={t('戰鬥難度', 'Battle difficulty')} hint={t('戰術 AI 水平(可獨立於戰役難度)', 'Tactical-AI skill (can differ from campaign difficulty)')}>
+              <select
+                value={battleDifficulty ?? 'follow'}
+                onChange={(e) => setBattleDifficulty(e.target.value === 'follow' ? null : e.target.value as 'easy' | 'normal' | 'hard')}
+                style={selectStyle}
+              >
+                <option value="follow">{t('跟隨戰役', 'Follow')}</option>
+                <option value="easy">{t('易', 'Easy')}</option>
+                <option value="normal">{t('普通', 'Normal')}</option>
+                <option value="hard">{t('困難', 'Hard')}</option>
+              </select>
+            </Row>
+            <Row label={t('武將壽命長短', 'Lifespan length')} hint={t('老死速度;疊在「武將壽命」模式之上', 'Old-age death rate; layered on the lifespan mode')}>
+              <select
+                value={lifespanLength}
+                onChange={(e) => setLifespanLength(e.target.value as 'short' | 'historical' | 'long')}
+                style={selectStyle}
+              >
+                <option value="short">{t('短命', 'Short')}</option>
+                <option value="historical">{t('史實', 'Historical')}</option>
+                <option value="long">{t('長壽', 'Long')}</option>
+              </select>
+            </Row>
+            <Row label={t('在野登場', 'Talent discovery')} hint={t('搜索人才的成功率', 'How readily Search for Talent finds officers')}>
+              <select
+                value={talentDiscovery}
+                onChange={(e) => setTalentDiscovery(e.target.value as 'scarce' | 'normal' | 'plentiful')}
+                style={selectStyle}
+              >
+                <option value="scarce">{t('稀少', 'Scarce')}</option>
+                <option value="normal">{t('正常', 'Normal')}</option>
+                <option value="plentiful">{t('眾多', 'Plentiful')}</option>
+              </select>
+            </Row>
+            <Row label={t('單挑頻率', 'Duel frequency')} hint={t('陣前一騎討的觸發機率', 'How often field duels break out')}>
+              <select
+                value={duelFrequency}
+                onChange={(e) => setDuelFrequency(e.target.value as 'rare' | 'normal' | 'frequent')}
+                style={selectStyle}
+              >
+                <option value="rare">{t('罕見', 'Rare')}</option>
+                <option value="normal">{t('正常', 'Normal')}</option>
+                <option value="frequent">{t('頻繁', 'Frequent')}</option>
+              </select>
+            </Row>
+            <Row label={t('天災頻率', 'Disaster frequency')} hint={t('饑荒/瘟疫/水患的發生率', 'Famine / plague / flood rate')}>
+              <select
+                value={disasterFrequency}
+                onChange={(e) => setDisasterFrequency(e.target.value as 'low' | 'normal' | 'high')}
+                style={selectStyle}
+              >
+                <option value="low">{t('少', 'Low')}</option>
+                <option value="normal">{t('正常', 'Normal')}</option>
+                <option value="high">{t('多', 'High')}</option>
+              </select>
+            </Row>
+            <Toggle
+              label={t('鐵人模式', 'Ironman')}
+              hint={t('禁止手動存檔,只保留每季自動存檔', 'Disables manual save — only the per-season autosave remains')}
+              checked={ironman}
+              onChange={setIronman}
+            />
+            <Row label={t('新武將登場', 'New officers')} hint={t('虛構新秀隨年代以在野身分登場', 'Fictional newcomers appear over time as free agents')}>
+              <select
+                value={newOfficers}
+                onChange={(e) => setNewOfficers(e.target.value as 'off' | 'rare' | 'normal' | 'common')}
+                style={selectStyle}
+              >
+                <option value="off">{t('關閉', 'Off')}</option>
+                <option value="rare">{t('稀少', 'Rare')}</option>
+                <option value="normal">{t('正常', 'Normal')}</option>
+                <option value="common">{t('頻繁', 'Common')}</option>
               </select>
             </Row>
           </Section>

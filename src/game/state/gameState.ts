@@ -28,7 +28,9 @@ import type {
   TribeState,
 } from '../types';
 import type { OathBond } from '../data/bonds';
-import { MONTH_PHASES, firstMonthOfSeason, seasonFromMonth } from '../types';
+import { MONTH_PHASES, firstMonthOfSeason, seasonFromMonth, pairKey } from '../types';
+import type { Relation } from '../types/diplomacy';
+import { generateFictionalOfficer } from '../systems/officerGen';
 import type { MonthPhase } from '../types';
 import { createInitialTribeState } from '../systems/tribes';
 import { rollWeather, type Weather } from '../systems/weather';
@@ -261,6 +263,15 @@ export interface GameState {
   inflation: number;
   /** 輜重 — supply convoys (運糧/運金車) crawling between your cities. */
   convoys: Record<EntityId, import('../systems/convoy').Convoy>;
+  /** 游历 — lone officers roaming abroad (探索/出使/策反/刺探), in transit. */
+  expeditions: Record<EntityId, import('../types').Expedition>;
+  /** 絲路通商 — distant realms a 遠使 embassy has opened (realmId → frontier
+   *  cityId). Each opened realm pays seasonal trade gold to its city. */
+  openedRealms: Record<string, EntityId>;
+  /** 遠邦關係 — standing with each distant realm (realmId → 0–100), built by
+   *  repeated embassies. Higher = safer journeys, richer rewards, and the
+   *  realm more likely to send a tribute envoy of its own (反向來使). */
+  realmRelations: Record<string, number>;
   /** 常運糧道 — standing supply routes: each season any surplus grain at the
    *  source auto-ships to the destination. */
   standingRoutes: Array<{ fromCityId: EntityId; toCityId: EntityId }>;
@@ -307,6 +318,71 @@ export interface GameState {
   /** Roguelike mode: when true and the career officer dies, game resets to
    *  title and increments the cross-run counter. */
   roguelikeMode: boolean;
+  /** 武將壽命 — old-age / lifespan death rule.
+   *  'historical' (default): officers die clustered around their 史實 death
+   *    year; fictional officers (no deathYear) die from age 60+.
+   *  'fictionalImmortal': fictional / self-created officers never die of old
+   *    age; historical officers still pass at their appointed year.
+   *  'immortal': no officer ever dies of old age. */
+  lifespanMode: 'historical' | 'fictionalImmortal' | 'immortal';
+  /** 不會戰死 — when true, officers are never KILLED in battle (single combat,
+   *  瀕死 wounds, tactical defeat). They are wounded or captured instead. */
+  noBattleDeath: boolean;
+  /** 起死回生 — when true, dead officers (including those who fell before the
+   *  campaign began) may return to life over the years as free agents. */
+  reviveDeadOfficers: boolean;
+  /** AI 強度 — how hard the AI plays, independent of `difficulty` (which mainly
+   *  handicaps starting troops). 1 = 保守/弱, 3 = 普通, 5 = 狂攻/強. Scales the
+   *  strategic attack appetite and tactical-battle skill. Default 3. */
+  aiStrength: number;
+  /** 起始國力 — player's starting-resource补正 (gold/food/troops multiplier),
+   *  independent of difficulty. 'weak' = 劣勢(×0.7), 'even' = 均衡(×1),
+   *  'strong' = 優勢(×1.4). Applied once at scenario load. Default 'even'. */
+  startHandicap: 'weak' | 'even' | 'strong';
+  /** 勝利條件 — the campaign's win goal. 'free' (default) ends on ANY of the
+   *  nine endings; the others end the game ONLY on the chosen path (plus
+   *  defeat always applies). */
+  victoryGoal: 'free' | 'unify' | 'hegemon' | 'tripartite';
+  /** 起始稅率 — the player force's tax rate at scenario start (a tradeoff
+   *  preset, still changeable in-game). Default 'normal'. */
+  startTaxRate: 'light' | 'normal' | 'heavy';
+  /** 起始通脹 — the player's starting 通貨膨脹 level (0–100; saps tax income).
+   *  A starting economic headwind that decays over time. Default 0. */
+  startInflation: number;
+  /** AI 兵力補正 — AI forces' starting-troops multiplier, layered ON TOP of the
+   *  difficulty troop handicap so it can be tuned independently. 'fewer' ×0.8,
+   *  'even' ×1, 'more' ×1.2. Default 'even'. */
+  aiStartTroops: 'fewer' | 'even' | 'more';
+  /** 戰鬥難度 — tactical-AI competence baseline, decoupled from campaign
+   *  `difficulty`. null = follow the campaign difficulty. */
+  battleDifficulty: 'easy' | 'normal' | 'hard' | null;
+  /** 武將壽命長短 — multiplier on old-age death chance, layered on top of
+   *  `lifespanMode`. 'short' = die sooner, 'long' = live longer. Default
+   *  'historical' (×1). */
+  lifespanLength: 'short' | 'historical' | 'long';
+  /** 在野登場 — how readily 搜索人才 turns up hidden officers. 'scarce' ×0.6,
+   *  'normal', 'plentiful' ×1.4 on the search success chance. Default 'normal'. */
+  talentDiscovery: 'scarce' | 'normal' | 'plentiful';
+  /** 單挑頻率 — multiplier on the field-duel trigger (base 12% when both
+   *  commanders 武≥80). 'rare' ×0.5, 'normal', 'frequent' ×2. Default 'normal'. */
+  duelFrequency: 'rare' | 'normal' | 'frequent';
+  /** 天災頻率 — multiplier on famine/plague/flood event chances. 'low' ×0.5,
+   *  'normal', 'high' ×1.7. Default 'normal'. */
+  disasterFrequency: 'low' | 'normal' | 'high';
+  /** 鐵人模式 — when true, manual save is disabled (only the per-season
+   *  autosave remains), discouraging save-scumming. Default false. */
+  ironman: boolean;
+  /** 新武將登場 — how often brand-new FICTIONAL officers enter the world as
+   *  free agents over time. 'off' (default) / 'rare' / 'normal' / 'common'. */
+  newOfficers: 'off' | 'rare' | 'normal' | 'common';
+  /** 虛構人才庫 — a batch of generated fictional officers seeded into the
+   *  initial 在野 pool at scenario start. 'off' (default) / 'some' (20) /
+   *  'many' (50). For an ahistorical opening. */
+  fictionalPool: 'off' | 'some' | 'many';
+  /** 初始外交 — opening relations between forces. 'neutral' (default, all free
+   *  to war) / 'warring' (亂世死敵 — negative scores, AI shuns pacts) /
+   *  'coalitions' (群雄結盟 — AI forces sprinkle non-aggression blocs). */
+  initialDiplomacy: 'neutral' | 'warring' | 'coalitions';
   /** Per-campaign superlatives. */
   campaignStats: import('../types').CampaignStats;
   /** Achievements unlocked this session (toast queue). */
@@ -453,6 +529,9 @@ export const EMPTY_STATE: GameState = {
   tradePartners: [],
   inflation: 0,
   convoys: {},
+  expeditions: {},
+  openedRealms: {},
+  realmRelations: {},
   standingRoutes: [],
   espionageReveals: {},
   cityDelegations: {},
@@ -470,6 +549,24 @@ export const EMPTY_STATE: GameState = {
   battleSpeed: 1,
   romanceMode: false,
   roguelikeMode: false,
+  lifespanMode: 'historical',
+  noBattleDeath: false,
+  reviveDeadOfficers: false,
+  aiStrength: 3,
+  startHandicap: 'even',
+  victoryGoal: 'free',
+  startTaxRate: 'normal',
+  startInflation: 0,
+  aiStartTroops: 'even',
+  battleDifficulty: null,
+  lifespanLength: 'historical',
+  talentDiscovery: 'normal',
+  duelFrequency: 'normal',
+  disasterFrequency: 'normal',
+  ironman: false,
+  newOfficers: 'off',
+  fictionalPool: 'off',
+  initialDiplomacy: 'neutral',
   campaignStats: { seasonsPlayed: 0, totalBattles: 0 },
   recentAchievementUnlocks: [],
   recentDeedTitles: [],
@@ -508,7 +605,17 @@ export function loadScenario(
   customOfficer?: CustomOfficerInit,
 ): GameState {
   const playerTroopMul = difficulty === 'easy' ? 1.2 : 1.0;
-  const aiTroopMul = difficulty === 'hard' ? 1.2 : 1.0;
+  // AI 兵力補正 — independent multiplier layered on the difficulty handicap.
+  const aiTroopBonusMul =
+    state.aiStartTroops === 'fewer' ? 0.8 :
+    state.aiStartTroops === 'more' ? 1.2 : 1.0;
+  const aiTroopMul = (difficulty === 'hard' ? 1.2 : 1.0) * aiTroopBonusMul;
+  // 起始國力補正 — player's starting gold/food/troops, layered on top of the
+  // difficulty troop handicap. Independent so a player can pick e.g. 普通難度
+  // but an underdog start.
+  const handicapMul =
+    state.startHandicap === 'weak' ? 0.7 :
+    state.startHandicap === 'strong' ? 1.4 : 1.0;
 
   const capitalIds = new Set(scenario.forces.map((f) => f.capitalCityId));
   const scaledCities: City[] = scenario.cities.map((c) => {
@@ -519,7 +626,16 @@ export function loadScenario(
     const wallTier: 1 | 2 | 3 =
       capitalIds.has(c.id) || c.population >= 200_000 ? 3 :
       c.population >= 100_000 ? 2 : 1;
-    const base = mul === 1.0 ? c : { ...c, troops: Math.floor(c.troops * mul) };
+    let base = mul === 1.0 ? c : { ...c, troops: Math.floor(c.troops * mul) };
+    // Player-only starting-resource補正 (gold/food/troops).
+    if (isPlayer && handicapMul !== 1.0) {
+      base = {
+        ...base,
+        troops: Math.floor(base.troops * handicapMul),
+        gold: Math.floor(base.gold * handicapMul),
+        food: Math.floor(base.food * handicapMul),
+      };
+    }
     return { ...base, wallTier };
   });
 
@@ -595,6 +711,40 @@ export function loadScenario(
     ];
   }
 
+  // 虛構人才庫 — seed a batch of generated fictional officers into the rootless
+  // 在野 pool for an ahistorical opening.
+  if (state.fictionalPool && state.fictionalPool !== 'off') {
+    const count = state.fictionalPool === 'many' ? 50 : 20;
+    const ids = new Set(officers.map((o) => o.id));
+    const extras = [];
+    for (let i = 0; i < count; i++) {
+      const o = generateFictionalOfficer(scenario.startDate.year, Math.random, ids);
+      ids.add(o.id);
+      extras.push(o);
+    }
+    officers = [...officers, ...extras];
+  }
+
+  // 初始外交 — opening relations between forces.
+  const initialRelations: Record<string, Relation> = {};
+  const rel = (a: EntityId, b: EntityId, score: number, status: Relation['status']): void => {
+    initialRelations[pairKey(a, b)] = { forceA: a < b ? a : b, forceB: a < b ? b : a, score, status };
+  };
+  const allForceIds = scenario.forces.map((f) => f.id);
+  if (state.initialDiplomacy === 'warring') {
+    // 亂世死敵 — every pair starts soured; the AI shuns NAPs/marriages.
+    for (let i = 0; i < allForceIds.length; i++)
+      for (let j = i + 1; j < allForceIds.length; j++)
+        rel(allForceIds[i], allForceIds[j], -50, 'neutral');
+  } else if (state.initialDiplomacy === 'coalitions') {
+    // 群雄結盟 — AI forces sprinkle non-aggression blocs (player excluded, so
+    // the human faces coalitions rather than a free-for-all).
+    const aiIds = allForceIds.filter((id) => id !== playerForceId);
+    for (let i = 0; i < aiIds.length; i++)
+      for (let j = i + 1; j < aiIds.length; j++)
+        if (Math.random() < 0.4) rel(aiIds[i], aiIds[j], 65, 'non-aggression');
+  }
+
   return {
     ...state,
     date: {
@@ -628,7 +778,7 @@ export function loadScenario(
     activeChallenge: null,
     // Challenge records are meta-progression — carry across games.
     challengeRecords: state.challengeRecords ?? {},
-    diplomacy: { relations: {} },
+    diplomacy: { relations: initialRelations },
     runtimeBonds: [],
     rapport: {},
     battleHistory: [],
@@ -701,12 +851,18 @@ export function loadScenario(
   currentBattleSnapshots: [],
     deeds: {},
     fogOfWar: state.fogOfWar,
-    taxPolicy: state.taxPolicy ?? {},
+    // 起始稅率 — seed the player force's tax rate from the start setting.
+    taxPolicy: (state.startTaxRate && state.startTaxRate !== 'normal')
+      ? { [playerForceId]: state.startTaxRate }
+      : {},
     credibility: state.credibility ?? {},
     grudges: state.grudges ?? {},
     tradePartners: state.tradePartners ?? [],
-    inflation: state.inflation ?? 0,
+    inflation: state.startInflation ?? 0,
     convoys: state.convoys ?? {},
+    expeditions: state.expeditions ?? {},
+    openedRealms: state.openedRealms ?? {},
+    realmRelations: state.realmRelations ?? {},
     standingRoutes: state.standingRoutes ?? [],
     commandTemplates: state.commandTemplates,
     autoBuildQueues: {},
@@ -717,6 +873,24 @@ export function loadScenario(
     battleSpeed: state.battleSpeed,
     romanceMode: state.romanceMode,
     roguelikeMode: state.roguelikeMode,
+    lifespanMode: state.lifespanMode ?? 'historical',
+    noBattleDeath: state.noBattleDeath ?? false,
+    reviveDeadOfficers: state.reviveDeadOfficers ?? false,
+    aiStrength: state.aiStrength ?? 3,
+    startHandicap: state.startHandicap ?? 'even',
+    victoryGoal: state.victoryGoal ?? 'free',
+    startTaxRate: state.startTaxRate ?? 'normal',
+    startInflation: state.startInflation ?? 0,
+    aiStartTroops: state.aiStartTroops ?? 'even',
+    battleDifficulty: state.battleDifficulty ?? null,
+    lifespanLength: state.lifespanLength ?? 'historical',
+    talentDiscovery: state.talentDiscovery ?? 'normal',
+    duelFrequency: state.duelFrequency ?? 'normal',
+    disasterFrequency: state.disasterFrequency ?? 'normal',
+    ironman: state.ironman ?? false,
+    newOfficers: state.newOfficers ?? 'off',
+    fictionalPool: state.fictionalPool ?? 'off',
+    initialDiplomacy: state.initialDiplomacy ?? 'neutral',
     campaignStats: { seasonsPlayed: 0, totalBattles: 0 },
     recentAchievementUnlocks: [],
     recentDeedTitles: [],

@@ -79,6 +79,7 @@ export type ReportEntryKind =
   | 'plague'
   | 'talent'
   | 'espionage'
+  | 'expedition'
   | 'tribe-raid'
   | 'edict'
   | 'note';

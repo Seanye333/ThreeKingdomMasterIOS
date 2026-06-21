@@ -461,6 +461,40 @@ export const ACHIEVEMENTS: Achievement[] = [
     tier: 'legendary',
     trigger: { kind: 'cumulative-battles-won', threshold: 500 },
   },
+
+  // ─── 遠使異域 — embassies to the distant lands (see foreignRealm.ts) ───
+  {
+    id: 'ach-embassy-xiyu',
+    name: { en: 'Piercing the Void', zh: '鑿空之功' },
+    description: 'Open a standing caravan to the Western Regions (高昌/樓蘭/龜茲/于闐/大宛).',
+    descriptionZh: '遣使通成西域諸國,開絲路商路(張騫鑿空之繼)。',
+    tier: 'gold',
+    trigger: { kind: 'fire-event', targetId: 'embassy-xiyu' },
+  },
+  {
+    id: 'ach-embassy-dongyi',
+    name: { en: 'Across the Eastern Sea', zh: '浮槎東渡' },
+    description: 'Open relations with the eastern seas (三韓 / 倭・邪馬台).',
+    descriptionZh: '遣使通成東夷海外(三韓 / 倭・邪馬台)。',
+    tier: 'silver',
+    trigger: { kind: 'fire-event', targetId: 'embassy-dongyi' },
+  },
+  {
+    id: 'ach-embassy-daqin',
+    name: { en: 'Hands Across the World', zh: '通好大秦' },
+    description: 'Open a caravan all the way to Da Qin — Rome.',
+    descriptionZh: '遣使遠抵大秦(羅馬),開萬里商路。',
+    tier: 'legendary',
+    trigger: { kind: 'fire-event', targetId: 'embassy-realm-daqin' },
+  },
+  {
+    id: 'ach-embassy-five',
+    name: { en: 'Envoy to the Ends of the Earth', zh: '萬里之使' },
+    description: 'Open standing caravans to five distant realms.',
+    descriptionZh: '通成五處遠邦,絲路四通。',
+    tier: 'gold',
+    trigger: { kind: 'fire-event', targetId: 'embassy-open-5' },
+  },
 ];
 
 export const ACHIEVEMENTS_BY_ID: Record<string, Achievement> = Object.fromEntries(

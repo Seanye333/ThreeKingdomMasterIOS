@@ -9,6 +9,7 @@ import type {
   EdictKind,
   EntityId,
   EspionageKind,
+  ExpeditionMode,
   HistoricalEvent,
   ImperialRank,
   InternalAffairsType,
@@ -38,6 +39,9 @@ import { marchDurationFor } from '../data/cities';
 import { terrainRoute, positionAlongRoute, marchDestCoords } from '../data/territories';
 import { cityPos, CITY_GEO_OVERRIDES } from '../data/cityGeo';
 import { provisionNeeded, convoyCapacity, planConvoy } from '../systems/convoy';
+import { expeditionLegSeasons } from '../systems/expedition';
+import { getEmbassyTarget, embassyLegSeasons, realmTradeIncome } from '../systems/foreignRealm';
+import { FOREIGN_REALMS_BY_ID } from '../data/foreignRealms';
 import { terrainTypeAt, isRiverside, WORLD_SCALE } from '../data/geography';
 import { FAMILY_LINEAGE } from '../data/familyLineage';
 import { POLICY_DEFS, TACTIC_DEFS } from '../data/officerAttributes';
@@ -78,6 +82,7 @@ import { COMMONER_ARRIVAL_CHANCE, commonerArrivalCity, generateCommonerOfficer }
 import { codexMarkRecruited, codexMarkRecruitedMany, codexMarkSeen, codexMarkSlain } from '../systems/codex';
 import { recordDailyResult } from '../systems/dailyChallenge';
 import { SCHEME_DEFS, schemeOdds, validateScheme, type SchemeId } from '../systems/schemes';
+import { resolveAISchemes } from '../systems/aiSchemes';
 import { appendPowerHistory, takePowerSnapshot } from '../systems/powerHistory';
 import { pickAdvisor } from '../systems/advisor';
 import { canTrain, trainingCost, tickTrainings, trainingDurationSeasons, sweepStaleTrainings, mentorDurationSeasons, isParentMentor, canTrainTactic, tacticTrainingCost, tacticDurationSeasons, tacticMentorDurationSeasons } from '../systems/training';
@@ -158,7 +163,8 @@ import { generateRandomScenario } from '../systems/randomScenario';
 import { rollWeather, describeWeather } from '../systems/weather';
 import { rollPlagueOutbreak, rollIntrigue } from '../systems/intrigue';
 import { rollOmen } from '../systems/mandate';
-import { rollReligiousRebellion } from '../systems/religion';
+import { rollReligiousRebellion, spreadCultUnrest } from '../systems/religion';
+import { resolveAIRansoms } from '../systems/aiRansom';
 
 const SEASON_INDEX: Record<string, number> = {
   spring: 0,
@@ -268,6 +274,20 @@ interface GameStore extends GameState {
   /** 常運糧道 — toggle a standing supply route (auto-ships surplus grain each
    *  season from → to). */
   setStandingRoute: (fromCityId: EntityId, toCityId: EntityId, on: boolean) => void;
+  /** 游历 — send a lone officer roaming from one of your cities to another city
+   *  (yours or a rival's) on an errand: 探索 (intel + windfalls), 出使 (warm
+   *  relations), 策反 (turn an enemy officer), 刺探 (deep intel + sabotage). He
+   *  travels alone, resolves the errand on arrival, and rides home. The foreign
+   *  errands (envoy/subvert/infiltrate) require a target held by another force. */
+  dispatchExpedition: (officerId: EntityId, fromCityId: EntityId, toCityId: EntityId, mode: ExpeditionMode) => { ok: boolean; seasons: number; reason?: string };
+  /** 召回游历 — recall a roaming officer; he turns straight for home, errand
+   *  abandoned (an officer already on his way back is left to it). */
+  recallExpedition: (id: EntityId) => void;
+  /** 遠使異域 — send an officer on a long embassy to a distant land (FOREIGN_REALMS:
+   *  西域/倭/大秦…) or a border tribe (TribeId). He travels far, opens relations
+   *  / placates the frontier, and rides home with coin, exotica, auxiliaries and
+   *  prestige — if the road doesn't claim him. Reuses the expedition machinery. */
+  dispatchEmbassy: (officerId: EntityId, fromCityId: EntityId, realmId: EntityId) => { ok: boolean; seasons: number; reason?: string };
   /** 借糧 — ask a friendly force to send grain to your capital. Allies and NAP
    *  partners (or anyone you're on good terms with) oblige; the grain comes out
    *  of their own stores. */
@@ -506,6 +526,24 @@ interface GameStore extends GameState {
   addCareerMilestone: (title: { zh: string; en: string }) => void;
   setRomanceMode: (on: boolean) => void;
   setRoguelikeMode: (on: boolean) => void;
+  setLifespanMode: (mode: 'historical' | 'fictionalImmortal' | 'immortal') => void;
+  setNoBattleDeath: (on: boolean) => void;
+  setReviveDeadOfficers: (on: boolean) => void;
+  setAiStrength: (level: number) => void;
+  setStartHandicap: (h: 'weak' | 'even' | 'strong') => void;
+  setVictoryGoal: (goal: 'free' | 'unify' | 'hegemon' | 'tripartite') => void;
+  setStartTaxRate: (rate: 'light' | 'normal' | 'heavy') => void;
+  setStartInflation: (level: number) => void;
+  setAiStartTroops: (v: 'fewer' | 'even' | 'more') => void;
+  setBattleDifficulty: (d: 'easy' | 'normal' | 'hard' | null) => void;
+  setLifespanLength: (l: 'short' | 'historical' | 'long') => void;
+  setTalentDiscovery: (v: 'scarce' | 'normal' | 'plentiful') => void;
+  setDuelFrequency: (v: 'rare' | 'normal' | 'frequent') => void;
+  setDisasterFrequency: (v: 'low' | 'normal' | 'high') => void;
+  setIronman: (on: boolean) => void;
+  setNewOfficers: (v: 'off' | 'rare' | 'normal' | 'common') => void;
+  setFictionalPool: (v: 'off' | 'some' | 'many') => void;
+  setInitialDiplomacy: (v: 'neutral' | 'warring' | 'coalitions') => void;
   forgeItem: (
     cityId: EntityId,
     recipeId: EntityId,
@@ -1447,6 +1485,84 @@ export const useGameStore = create<GameStore>()(
         set({ standingRoutes: on ? [...routes, { fromCityId, toCityId }] : routes });
       },
 
+      dispatchExpedition: (officerId, fromCityId, toCityId, mode) => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid) return { ok: false, seasons: 0 };
+        const from = state.cities[fromCityId];
+        const to = state.cities[toCityId];
+        if (!from || !to || fromCityId === toCityId) return { ok: false, seasons: 0, reason: 'bad route' };
+        if (from.ownerForceId !== pid) return { ok: false, seasons: 0, reason: 'not your city' };
+        const officer = state.officers[officerId];
+        if (!officer || officer.forceId !== pid) return { ok: false, seasons: 0, reason: 'need an officer' };
+        if (officer.locationCityId !== fromCityId) return { ok: false, seasons: 0, reason: 'officer not in this city' };
+        if (officer.task || state.pendingCommands[officerId]) return { ok: false, seasons: 0, reason: 'officer is busy' };
+        if (state.pendingTrainings.some((tr) => tr.officerId === officerId)) return { ok: false, seasons: 0, reason: 'officer is training' };
+        // 出使/策反/刺探 act on a foreign power — the target must be someone else's.
+        const foreign = to.ownerForceId != null && to.ownerForceId !== pid;
+        if (mode !== 'explore' && !foreign) return { ok: false, seasons: 0, reason: 'target must be a foreign city' };
+        const baseSeasons = Math.max(1, marchDurationFor(from, to, state.date.season));
+        const legSeasons = expeditionLegSeasons(baseSeasons, officer);
+        const id = `exp-${officerId}-${toCityId}-${state.date.year}-${state.date.season}-${Object.keys(state.expeditions ?? {}).length}`;
+        set({
+          // The officer rides out alone (off the city rosters until he returns).
+          officers: { ...state.officers, [officerId]: { ...officer, locationCityId: null, task: null, status: 'active' } },
+          expeditions: {
+            ...state.expeditions,
+            [id]: { id, officerId, forceId: pid, fromCityId, toCityId, mode, phase: 'outbound', seasonsRemaining: legSeasons, legSeasons },
+          },
+        });
+        get().notify(
+          `游历啟程 · ${officer.name.zh} → ${to.name.zh}(來回約 ${legSeasons * 2} 季)`,
+          `${officer.name.en} sets out for ${to.name.en} (~${legSeasons * 2} seasons round trip)`,
+        );
+        return { ok: true, seasons: legSeasons };
+      },
+
+      recallExpedition: (id) => {
+        const state = get();
+        const exp = state.expeditions[id];
+        if (!exp) return;
+        const expeditions = { ...state.expeditions };
+        // Still outbound — turn him around now, the errand abandoned. Already
+        // homeward — leave him to finish the leg.
+        if (exp.phase === 'outbound') {
+          expeditions[id] = { ...exp, phase: 'returning', seasonsRemaining: exp.legSeasons, haul: undefined };
+        }
+        set({ expeditions });
+        const o = state.officers[exp.officerId];
+        get().notify(`游历召回 · ${o?.name.zh ?? ''}啟程歸返`, `Recalled ${o?.name.en ?? 'officer'} — heading home`);
+      },
+
+      dispatchEmbassy: (officerId, fromCityId, realmId) => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid) return { ok: false, seasons: 0 };
+        const from = state.cities[fromCityId];
+        if (!from || from.ownerForceId !== pid) return { ok: false, seasons: 0, reason: 'not your city' };
+        const officer = state.officers[officerId];
+        if (!officer || officer.forceId !== pid) return { ok: false, seasons: 0, reason: 'need an officer' };
+        if (officer.locationCityId !== fromCityId) return { ok: false, seasons: 0, reason: 'officer not in this city' };
+        if (officer.task || state.pendingCommands[officerId]) return { ok: false, seasons: 0, reason: 'officer is busy' };
+        if (state.pendingTrainings.some((tr) => tr.officerId === officerId)) return { ok: false, seasons: 0, reason: 'officer is training' };
+        const target = getEmbassyTarget(realmId);
+        if (!target) return { ok: false, seasons: 0, reason: 'unknown realm' };
+        const leg = embassyLegSeasons(target, officer);
+        const id = `emb-${officerId}-${realmId}-${state.date.year}-${state.date.season}-${Object.keys(state.expeditions ?? {}).length}`;
+        set({
+          officers: { ...state.officers, [officerId]: { ...officer, locationCityId: null, task: null, status: 'active' } },
+          expeditions: {
+            ...state.expeditions,
+            [id]: { id, officerId, forceId: pid, fromCityId, toCityId: '', toRealmId: realmId, mode: 'embassy', phase: 'outbound', seasonsRemaining: leg, legSeasons: leg },
+          },
+        });
+        get().notify(
+          `遠使啟程 · ${officer.name.zh} → ${target.name.zh}(來回約 ${leg * 2} 季)`,
+          `${officer.name.en} sets out for ${target.name.en} (~${leg * 2} seasons round trip)`,
+        );
+        return { ok: true, seasons: leg };
+      },
+
       createLegion: (legion) => {
         const id = `legion-${(get().legions ?? []).reduce((m, l) => Math.max(m, Number(l.id.split('-')[1] ?? 0)), 0) + 1}`;
         set({ legions: [...(get().legions ?? []), { ...legion, id }] });
@@ -1826,6 +1942,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           pendingTrainings: state.pendingTrainings,
           buildings: state.buildings,
           difficulty: state.difficulty,
+          aiStrength: state.aiStrength ?? 3,
           diplomacy: state.diplomacy,
           runtimeBonds: state.runtimeBonds,
           family: state.family,
@@ -1866,7 +1983,17 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           tradePartners: state.tradePartners,
           inflation: state.inflation,
           convoys: state.convoys,
+          expeditions: state.expeditions,
+          realmRelations: state.realmRelations,
           standingRoutes: state.standingRoutes,
+          lifespanMode: state.lifespanMode ?? 'historical',
+          lifespanLength: state.lifespanLength ?? 'historical',
+          noBattleDeath: state.noBattleDeath ?? false,
+          reviveDeadOfficers: state.reviveDeadOfficers ?? false,
+          searchSuccessMul: state.talentDiscovery === 'scarce' ? 0.6 : state.talentDiscovery === 'plentiful' ? 1.4 : 1,
+          duelChanceMul: state.duelFrequency === 'rare' ? 0.5 : state.duelFrequency === 'frequent' ? 2 : 1,
+          disasterMul: state.disasterFrequency === 'low' ? 0.5 : state.disasterFrequency === 'high' ? 1.7 : 1,
+          newOfficerChance: state.newOfficers === 'rare' ? 0.05 : state.newOfficers === 'normal' ? 0.12 : state.newOfficers === 'common' ? 0.25 : 0,
           seasonBoundary,
         });
         // Prepend AI diplomatic announcements to the report.
@@ -2025,6 +2152,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           embeddedSpiesNext = spyTick.spies;
           spyGrudgeBumps = spyTick.grudgeBumps;
         }
+        // 游历細探 — intel an expedition (探索/刺探) lit on the cities it reached.
+        for (const [cid, ticks] of Object.entries(result.espionageReveals ?? {})) {
+          espionageRevealsNext[cid] = Math.max(espionageRevealsNext[cid] ?? 0, ticks);
+        }
         const grudgesAfterSpies: Record<EntityId, number> = Object.keys(spyGrudgeBumps).length > 0
           ? (() => {
               const g = { ...(state.grudges ?? {}) };
@@ -2047,6 +2178,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         }
         // Tribe aggression carried forward; AI 征討 may beat it down below.
         let nextAggression: Record<string, number> = { ...tribeResult.state.aggression };
+        // 安邊 — a 遠使 embassy to a border tribe placates it (raids subside).
+        if (result.expeditionAggressionDeltas) {
+          for (const [tid, d] of Object.entries(result.expeditionAggressionDeltas)) {
+            nextAggression[tid] = Math.max(0, Math.min(1, (nextAggression[tid] ?? 0) + d));
+          }
+        }
 
         // 野外據點 — resource deposits pay their holders; still-hostile bandit
         // nests sack a neighbouring city. Once per season.
@@ -2340,6 +2477,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (coalitionResult.entries.length > 0) {
           result.report.entries.push(...coalitionResult.entries);
         }
+        // Diplomacy threads through coalition → AI schemes → final commit.
+        let postDiplomacy = coalitionResult.diplomacy;
+        const aiSchemeMarks: typeof state.casusBelliMarks = [];
 
         // Dialogue roll. Branching follow-ups fire deterministically before
         // any random roll — they were queued by an earlier choice.
@@ -2421,6 +2561,28 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           postCities = facOut.cities;
           nextMandate = facOut.mandate;
           if (facOut.entries.length > 0) result.report.entries.push(...facOut.entries);
+          // 邦交 — prestige a 遠使 embassy won at a foreign court (受封親魏倭王…).
+          if (result.expeditionMandateDeltas) {
+            const byForce = { ...nextMandate.byForce };
+            for (const [fid, d] of Object.entries(result.expeditionMandateDeltas)) {
+              byForce[fid] = Math.max(0, Math.min(100, (byForce[fid] ?? 50) + d));
+            }
+            nextMandate = { ...nextMandate, byForce };
+          }
+          // AI 大局計略 — rival courts plot against each other and the player.
+          const schemeOut = resolveAISchemes({
+            forces: postForces,
+            officers: postOfficers,
+            cities: postCities,
+            diplomacy: postDiplomacy,
+            playerForceId: state.playerForceId,
+            date: { year: result.date.year, season: result.date.season as 'spring' | 'summer' | 'autumn' | 'winter' },
+            rng: Math.random,
+          });
+          postDiplomacy = schemeOut.diplomacy;
+          postCities = schemeOut.cities;
+          aiSchemeMarks.push(...schemeOut.marks);
+          if (schemeOut.entries.length > 0) result.report.entries.push(...schemeOut.entries);
           // AI court wish flavor: 0-2 random AI petitions resolved per season.
           const aiWishFlavor = rollAIWishFlavor(postOfficers, postForces, state.playerForceId, Math.random);
           postOfficers = aiWishFlavor.officers;
@@ -2434,9 +2596,25 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const woundedRetireWishes: import('../types').OfficerWish[] = [];
         for (const o of Object.values(postOfficers)) {
           if (o.status === 'wounded' && o.woundedSeasons !== undefined) {
+            // 瀕死 — a critical wound can still carry the officer off. Chance
+            // rises with age; the young and hale usually pull through.
+            if (o.woundSeverity === 'critical' && !(state.noBattleDeath ?? false)) {
+              const age = result.date.year - o.birthYear;
+              const mortal = 0.05 + Math.max(0, age - 45) * 0.004;
+              if (Math.random() < mortal) {
+                tickedOfficers[o.id] = { ...o, status: 'dead', task: null, woundedSeasons: undefined, woundSeverity: undefined };
+                result.report.entries.push({
+                  cityId: o.locationCityId,
+                  kind: 'death',
+                  text: `傷重不治 — ${o.name.zh}（${o.name.en}） succumbed to his wounds.`,
+                  textZh: `傷重不治 — ${o.name.zh}創甚而卒。`,
+                });
+                continue;
+              }
+            }
             const left = o.woundedSeasons - 1;
             if (left <= 0) {
-              tickedOfficers[o.id] = { ...o, status: 'idle', woundedSeasons: undefined };
+              tickedOfficers[o.id] = { ...o, status: 'idle', woundedSeasons: undefined, woundSeverity: undefined };
               result.report.entries.push({
                 cityId: o.locationCityId,
                 kind: 'note',
@@ -2511,6 +2689,27 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           postForces = religion.forces;
           postOfficers = religion.officers;
           if (religion.entries.length > 0) result.report.entries.push(...religion.entries);
+          // 流民四起 — an active cult erodes its neighbours and may spread.
+          const contagion = spreadCultUnrest({
+            cities: postCities,
+            forces: postForces,
+            officers: postOfficers,
+            date: result.date,
+            rng: Math.random,
+          });
+          postCities = contagion.cities;
+          if (contagion.entries.length > 0) result.report.entries.push(...contagion.entries);
+          // 贖俘 — rival lords buy their captured officers back into circulation.
+          const ransom = resolveAIRansoms({
+            forces: postForces,
+            officers: postOfficers,
+            cities: postCities,
+            playerForceId: state.playerForceId,
+            rng: Math.random,
+          });
+          postOfficers = ransom.officers;
+          postCities = ransom.cities;
+          if (ransom.entries.length > 0) result.report.entries.push(...ransom.entries);
         }
 
         // ── T3 — Per-season loyalty drift from personality traits ──
@@ -2909,6 +3108,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           forces: postForces,
           playerForceId: state.playerForceId,
           date: result.date,
+          victoryGoal: state.victoryGoal ?? 'free',
         });
         let endVS = victoryStatus;
         let endingsAchieved = state.endingsAchieved;
@@ -3492,6 +3692,90 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // 絲路商路 — a 遠使 that opened a distant realm establishes a standing
+        // caravan; opened realms pay seasonal trade gold to their frontier city.
+        const nextOpenedRealms = { ...(state.openedRealms ?? {}), ...(result.expeditionRealmsOpened ?? {}) };
+        if (result.expeditionRealmsOpened) {
+          for (const [realmId, cid] of Object.entries(result.expeditionRealmsOpened)) {
+            if (state.openedRealms?.[realmId]) continue; // already open — no fanfare
+            const c = postCities[cid];
+            const realm = FOREIGN_REALMS_BY_ID[realmId];
+            if (c && realm) result.report.entries.push({
+              cityId: cid,
+              kind: 'expedition',
+              text: `A standing caravan now links ${c.name.en} to ${realm.name.en} — trade flows each season.`,
+              textZh: `${c.name.zh}通${realm.name.zh},絲路商隊往來,歲歲有利。`,
+            });
+          }
+        }
+        if (seasonBoundary) {
+          for (const [realmId, cid] of Object.entries(nextOpenedRealms)) {
+            const c = postCities[cid];
+            if (!c || c.ownerForceId !== state.playerForceId) continue;
+            const inc = realmTradeIncome(realmId);
+            if (inc > 0) postCities = { ...postCities, [cid]: { ...c, gold: c.gold + inc } };
+          }
+        }
+
+        // 遠邦關係 — fold in relation gained by this season's embassies (cap 100).
+        const nextRealmRelations = { ...(state.realmRelations ?? {}) };
+        if (result.expeditionRealmRelationDeltas) {
+          for (const [rid, d] of Object.entries(result.expeditionRealmRelationDeltas)) {
+            nextRealmRelations[rid] = Math.max(0, Math.min(100, (nextRealmRelations[rid] ?? 0) + d));
+          }
+        }
+
+        // 反向來使 — a realm the player has opened may send a tribute embassy of
+        // its own (the warmer the standing, the likelier). 受其朝貢、得異寶。
+        let nextMandateAfterEnvoy = nextMandate;
+        if (seasonBoundary) {
+          for (const [realmId, cid] of Object.entries(nextOpenedRealms)) {
+            const c = postCities[cid];
+            const realm = FOREIGN_REALMS_BY_ID[realmId];
+            if (!c || !realm || c.ownerForceId !== state.playerForceId) continue;
+            const rel = nextRealmRelations[realmId] ?? 0;
+            if (Math.random() >= 0.06 + rel / 500) continue; // ~6–26%/season
+            const tribute = realmTradeIncome(realmId) * 2 + Math.floor(Math.random() * 400);
+            postCities = { ...postCities, [cid]: { ...c, gold: c.gold + tribute } };
+            const parts: string[] = [`金 ${tribute.toLocaleString()}`];
+            const partsEn: string[] = [`${tribute.toLocaleString()} gold`];
+            const pfid = state.playerForceId;
+            if (pfid && realm.reward.prestige) {
+              const m = { ...nextMandateAfterEnvoy.byForce };
+              m[pfid] = Math.max(0, Math.min(100, (m[pfid] ?? 50) + 2));
+              nextMandateAfterEnvoy = { ...nextMandateAfterEnvoy, byForce: m };
+              parts.push('天命 +2'); partsEn.push('prestige +2');
+            }
+            result.report.entries.push({
+              cityId: cid,
+              kind: 'expedition',
+              text: `An envoy from ${realm.name.en} arrives at ${c.name.en} bearing tribute: ${partsEn.join(', ')}.`,
+              textZh: `${realm.name.zh}遣使來朝${c.name.zh},奉貢:${parts.join('、')}。`,
+            });
+          }
+        }
+        nextMandate = nextMandateAfterEnvoy;
+
+        // 遠使勳功 — embassy achievements (reuse the fire-event trigger pipeline).
+        const embassyAchUnlocks: string[] = [];
+        if (result.expeditionRealmsOpened) {
+          let achE = loadAchievementProgress();
+          const newlyOpened = Object.keys(result.expeditionRealmsOpened).filter((rid) => !state.openedRealms?.[rid]);
+          for (const rid of newlyOpened) {
+            const realm = FOREIGN_REALMS_BY_ID[rid];
+            if (!realm) continue;
+            for (const tgt of [`embassy-${realm.region}`, `embassy-realm-${rid}`]) {
+              const r = processTrigger(achE, { kind: 'fire-event', targetId: tgt });
+              achE = r.progress; embassyAchUnlocks.push(...r.newlyUnlocked);
+            }
+          }
+          if (Object.keys(nextOpenedRealms).length >= 5) {
+            const r = processTrigger(achE, { kind: 'fire-event', targetId: 'embassy-open-5' });
+            achE = r.progress; embassyAchUnlocks.push(...r.newlyUnlocked);
+          }
+          if (newlyOpened.length > 0) saveAchievementProgress(achE);
+        }
+
         set({
           date: result.date,
           cities: postCities,
@@ -3566,6 +3850,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           territoryOwnership: result.territoryOwnership ?? state.territoryOwnership ?? {},
           armies: result.armies ?? {},
           convoys: result.convoys ?? {},
+          expeditions: result.expeditions ?? {},
+          openedRealms: nextOpenedRealms,
+          realmRelations: nextRealmRelations,
+          recentAchievementUnlocks: embassyAchUnlocks.length > 0
+            ? [...state.recentAchievementUnlocks, ...embassyAchUnlocks]
+            : state.recentAchievementUnlocks,
           endingsAchieved,
           campaignStats: {
             ...state.campaignStats,
@@ -3575,18 +3865,18 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           diplomacy: (() => {
             // 奉迎天子 — the realm resents whoever speaks with the
             // emperor's voice: -1/season with every other living force.
-            if (!seasonBoundary) return coalitionResult.diplomacy;
+            if (!seasonBoundary) return postDiplomacy;
             const custodian = emperorCustodian(postCities, state.emperorCityId ?? null);
-            if (!custodian) return coalitionResult.diplomacy;
+            if (!custodian) return postDiplomacy;
             const living = new Set(Object.values(postCities).map((c) => c.ownerForceId).filter(Boolean) as EntityId[]);
-            const relations = { ...coalitionResult.diplomacy.relations };
+            const relations = { ...postDiplomacy.relations };
             for (const fid of living) {
               if (fid === custodian) continue;
               const key = pairKey(custodian, fid);
               const rel = relations[key] ?? { forceA: custodian < fid ? custodian : fid, forceB: custodian < fid ? fid : custodian, score: 0, status: 'neutral' as const };
               relations[key] = { ...rel, score: Math.max(-100, rel.score + RESENTMENT_PER_SEASON) };
             }
-            return { ...coalitionResult.diplomacy, relations };
+            return { ...postDiplomacy, relations };
           })(),
           autoBuildQueues: auto.queues,
           pendingDialogue: dlg ?? state.pendingDialogue,
@@ -3673,7 +3963,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           edictCooldowns: edictCooldownsAfterCourt,
           // 討伐令 marks expire by season — drop any past their date.
           casusBelliMarks: seasonBoundary
-            ? casusBelliAfterCourt.filter((m) => {
+            ? [...casusBelliAfterCourt, ...aiSchemeMarks].filter((m) => {
                 const seasonIdx = { spring: 0, summer: 1, autumn: 2, winter: 3 } as const;
                 const nextAbs = result.date.year * 4 + seasonIdx[result.date.season];
                 const expAbs = m.expiresYear * 4 + seasonIdx[m.expiresSeason];
@@ -5083,11 +5373,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         }].slice(-10);
         void force;
 
-        // Apply officer fates.
+        // Apply officer fates. 不會戰死 — fallen officers are taken captive
+        // instead of slain.
+        const spareTheFallen = state.noBattleDeath ?? false;
         for (const id of dead) {
           const o = officers[id];
           if (o) {
-            officers[id] = { ...o, status: 'dead', forceId: null, task: null };
+            officers[id] = spareTheFallen
+              ? { ...o, status: 'imprisoned', forceId: null, task: null }
+              : { ...o, status: 'dead', forceId: null, task: null };
           }
         }
         for (const id of captured) {
@@ -5905,6 +6199,24 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
 
       setRomanceMode: (on) => set({ romanceMode: on }),
       setRoguelikeMode: (on) => set({ roguelikeMode: on }),
+      setLifespanMode: (mode) => set({ lifespanMode: mode }),
+      setNoBattleDeath: (on) => set({ noBattleDeath: on }),
+      setReviveDeadOfficers: (on) => set({ reviveDeadOfficers: on }),
+      setAiStrength: (level) => set({ aiStrength: Math.max(1, Math.min(5, Math.round(level))) }),
+      setStartHandicap: (h) => set({ startHandicap: h }),
+      setVictoryGoal: (goal) => set({ victoryGoal: goal }),
+      setStartTaxRate: (rate) => set({ startTaxRate: rate }),
+      setStartInflation: (level) => set({ startInflation: Math.max(0, Math.min(100, Math.round(level))) }),
+      setAiStartTroops: (v) => set({ aiStartTroops: v }),
+      setBattleDifficulty: (d) => set({ battleDifficulty: d }),
+      setLifespanLength: (l) => set({ lifespanLength: l }),
+      setTalentDiscovery: (v) => set({ talentDiscovery: v }),
+      setDuelFrequency: (v) => set({ duelFrequency: v }),
+      setDisasterFrequency: (v) => set({ disasterFrequency: v }),
+      setIronman: (on) => set({ ironman: on }),
+      setNewOfficers: (v) => set({ newOfficers: v }),
+      setFictionalPool: (v) => set({ fictionalPool: v }),
+      setInitialDiplomacy: (v) => set({ initialDiplomacy: v }),
 
       forgeItem: (cityId, recipeId) => {
         const state = get();
@@ -7148,6 +7460,24 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         battleSpeed: state.battleSpeed,
         romanceMode: state.romanceMode,
         roguelikeMode: state.roguelikeMode,
+        lifespanMode: state.lifespanMode,
+        noBattleDeath: state.noBattleDeath,
+        reviveDeadOfficers: state.reviveDeadOfficers,
+        aiStrength: state.aiStrength,
+        startHandicap: state.startHandicap,
+        victoryGoal: state.victoryGoal,
+        startTaxRate: state.startTaxRate,
+        startInflation: state.startInflation,
+        aiStartTroops: state.aiStartTroops,
+        battleDifficulty: state.battleDifficulty,
+        lifespanLength: state.lifespanLength,
+        talentDiscovery: state.talentDiscovery,
+        duelFrequency: state.duelFrequency,
+        disasterFrequency: state.disasterFrequency,
+        ironman: state.ironman,
+        newOfficers: state.newOfficers,
+        fictionalPool: state.fictionalPool,
+        initialDiplomacy: state.initialDiplomacy,
         campaignStats: state.campaignStats,
       }),
       onRehydrateStorage: () => (state) => {

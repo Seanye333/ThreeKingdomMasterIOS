@@ -18,6 +18,9 @@ export function SaveSlotsModal({ onClose, mode }: Props) {
   const loadSlot = useGameStore((s) => s.loadSlot);
   const deleteSlotAction = useGameStore((s) => s.deleteSlot);
   const listSlotsFn = useGameStore((s) => s.listSlots);
+  const ironman = useGameStore((s) => s.ironman ?? false);
+  // 鐵人模式 — never expose manual save, even if opened in 'save' mode.
+  const canSave = mode === 'save' && !ironman;
 
   const [newLabel, setNewLabel] = useState('');
   const [refresh, setRefresh] = useState(0);
@@ -103,7 +106,7 @@ export function SaveSlotsModal({ onClose, mode }: Props) {
         </header>
 
         <div className={styles.body}>
-          {mode === 'save' && (
+          {canSave && (
             <div className={styles.newSlot}>
               <input
                 className={styles.newSlotInput}
@@ -191,7 +194,7 @@ export function SaveSlotsModal({ onClose, mode }: Props) {
                       {new Date(s.savedAt).toLocaleString()}
                     </span>
                   </div>
-                  {mode === 'save' && (
+                  {canSave && (
                     <button
                       className={styles.loadBtn}
                       onClick={() => {

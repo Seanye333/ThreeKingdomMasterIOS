@@ -19,6 +19,12 @@ export interface AgingInput {
   forces: Record<EntityId, Force>;
   rng: () => number;
   family?: FamilyRelation[];
+  /** 武將壽命 — old-age death rule. Defaults to 'historical'. */
+  lifespanMode?: 'historical' | 'fictionalImmortal' | 'immortal';
+  /** 武將壽命長短 — multiplier on the death chance. Defaults to 'historical'. */
+  lifespanLength?: 'short' | 'historical' | 'long';
+  /** 起死回生 — when true, dead officers may return to life this year. */
+  reviveDeadOfficers?: boolean;
 }
 
 export interface AgingOutput {
@@ -100,8 +106,12 @@ export function processAging(input: AgingInput): AgingOutput {
       if (changed) officers = { ...officers, [officer.id]: { ...cur, stats: s } };
     }
 
-    // T8 — trait-based hardiness / fragility
-    const chance = deathChance(officer, input.year, age) * deathChanceMultiplier(officer);
+    // T8 — trait-based hardiness / fragility, plus the 壽命長短 dial.
+    const lengthMul =
+      input.lifespanLength === 'short' ? 1.6 :
+      input.lifespanLength === 'long' ? 0.5 : 1.0;
+    const chance = deathChance(officer, input.year, age, input.lifespanMode ?? 'historical')
+      * deathChanceMultiplier(officer) * lengthMul;
     if (input.rng() >= chance) continue;
 
     // Officer dies — and their court, if they had one, grants the 諡號.
@@ -162,10 +172,65 @@ export function processAging(input: AgingInput): AgingOutput {
     }
   }
 
+  // 起死回生 — with revival enabled, the dead may return. Each fallen officer
+  // (whether they died this campaign or before it began) has a small yearly
+  // chance to walk the earth again as a free agent at their hometown, restored
+  // to their prime and no longer bound to a historical death year. Capped so a
+  // late-era roster full of the dead doesn't all flood back at once.
+  if (input.reviveDeadOfficers) {
+    const REVIVE_CAP = 2;
+    let revived = 0;
+    for (const officer of Object.values(officers)) {
+      if (revived >= REVIVE_CAP) break;
+      if (officer.status !== 'dead') continue;
+      if (input.rng() >= 0.05) continue;
+      const homeId = officer.hometownCityId ?? null;
+      officers = {
+        ...officers,
+        [officer.id]: {
+          ...officer,
+          status: 'unsearched',
+          forceId: null,
+          locationCityId: homeId,
+          // Restored to their prime; shed the historical death sentence so they
+          // don't simply perish again next winter.
+          birthYear: input.year - 24,
+          deathYear: undefined,
+          task: null,
+          loyalty: 0,
+          posthumousName: undefined,
+          woundSeverity: undefined,
+          woundedSeasons: undefined,
+        },
+      };
+      revived += 1;
+      const city = homeId ? cities[homeId] : undefined;
+      const whereEn = city ? ` near ${city.name.en}` : '';
+      const whereZh = city ? `，現身${city.name.zh}` : '';
+      entries.push({
+        cityId: homeId,
+        kind: 'note',
+        text: `起死回生 — ${officer.name.en} (${officer.name.zh}) has returned to the living${whereEn}.`,
+        textZh: `起死回生 — ${officer.name.zh}重返人世${whereZh}。`,
+      });
+    }
+  }
+
   return { cities, officers, forces, entries };
 }
 
-function deathChance(officer: Officer, year: number, age: number): number {
+function deathChance(
+  officer: Officer,
+  year: number,
+  age: number,
+  lifespanMode: 'historical' | 'fictionalImmortal' | 'immortal',
+): number {
+  // 武將壽命 settings — short-circuit before any roll.
+  if (lifespanMode === 'immortal') return 0;
+  // A "fictional" officer is anyone with no 史實 death year (self-created,
+  // mod, or otherwise non-historical). They never age out in this mode.
+  if (lifespanMode === 'fictionalImmortal' && officer.deathYear === undefined) return 0;
+
   if (officer.deathYear !== undefined) {
     // Cluster death around historical year.
     if (year < officer.deathYear) return 0;

@@ -13,6 +13,8 @@ export interface EventsInput {
   /** 防災工程 — granary/infirmary/levee levels mitigate disasters. */
   buildings?: import('../types').Building[];
   rng: () => number;
+  /** 天災頻率 — multiplier on famine/plague/flood chances. Default 1. */
+  disasterMul?: number;
 }
 
 export interface EventsOutput {
@@ -35,6 +37,8 @@ export function rollEvents(input: EventsInput): EventsOutput {
   const worksLevel = (cityId: EntityId, id: string): number =>
     input.buildings?.find((b) => b.cityId === cityId && b.id === id)?.level ?? 0;
   const entries: ReportEntry[] = [];
+  // 天災頻率 — scales famine/plague/flood likelihood (after works mitigation).
+  const dm = input.disasterMul ?? 1;
 
   // Per-city rolls.
   for (const c of Object.values(cities)) {
@@ -79,7 +83,7 @@ export function rollEvents(input: EventsInput): EventsOutput {
       if (
         input.season === 'summer' &&
         levee < 3 &&
-        input.rng() < FLOOD_CHANCE * (1 - levee / 3)
+        input.rng() < FLOOD_CHANCE * dm * (1 - levee / 3)
       ) {
         const lost = Math.floor(cities[c.id].food * 0.3);
         cities[c.id] = {
@@ -100,7 +104,7 @@ export function rollEvents(input: EventsInput): EventsOutput {
 
     // Famine: spoiled stores / drought. Granaries blunt both odds and loss.
     const granary = worksLevel(c.id, 'granary');
-    if (cities[c.id].food > 0 && input.rng() < FAMINE_CHANCE * (1 - 0.2 * granary)) {
+    if (cities[c.id].food > 0 && input.rng() < FAMINE_CHANCE * dm * (1 - 0.2 * granary)) {
       const lost = Math.floor(cities[c.id].food * 0.4 * (1 - 0.25 * granary));
       cities[c.id] = {
         ...cities[c.id],
@@ -118,7 +122,7 @@ export function rollEvents(input: EventsInput): EventsOutput {
 
     // Plague: hits population & troops. Infirmaries quarantine and treat.
     const infirmary = worksLevel(c.id, 'infirmary');
-    if (cities[c.id].population > 50_000 && input.rng() < PLAGUE_CHANCE * (1 - 0.25 * infirmary)) {
+    if (cities[c.id].population > 50_000 && input.rng() < PLAGUE_CHANCE * dm * (1 - 0.25 * infirmary)) {
       const popLost = Math.floor(cities[c.id].population * 0.1 * (1 - 0.25 * infirmary));
       const troopLost = Math.floor(cities[c.id].troops * 0.05 * (1 - 0.25 * infirmary));
       cities[c.id] = {

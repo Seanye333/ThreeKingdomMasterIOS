@@ -3893,6 +3893,9 @@ export function TacticalBattleScreen3D() {
   const setBattleViewMinimized = useGameStore((s) => s.setBattleViewMinimized);
   const battleSpeed = useGameStore((s) => s.battleSpeed);
   const difficulty = useGameStore((s) => s.difficulty);
+  const battleDifficulty = useGameStore((s) => s.battleDifficulty ?? null);
+  const aiStrength = useGameStore((s) => s.aiStrength ?? 3);
+  const battleDiff = battleDifficulty ?? difficulty;
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hovered, setHovered] = useState<HexCoord | null>(null);
@@ -4077,7 +4080,7 @@ export function TacticalBattleScreen3D() {
       const delay = Math.max(150, 700 / Math.max(1, battleSpeed));
       const id = setTimeout(() => {
         const result = aiTakeTurn(battle, officers, Math.random, {
-          skill: aiSkillForDifficulty(difficulty),
+          skill: aiSkillForDifficulty(battleDiff, aiStrength),
         });
         const next = result.battle;
         // For each AI signature usage, spawn FX + banner + flavor log entry.
@@ -4127,7 +4130,7 @@ export function TacticalBattleScreen3D() {
       }, delay);
       return () => clearTimeout(id);
     }
-  }, [battle, officers, playerSide, start, battleSpeed, difficulty, autoPilot, paused]);
+  }, [battle, officers, playerSide, start, battleSpeed, battleDiff, aiStrength, autoPilot, paused]);
 
   // 勝負定格 — on decision, a dramatic camera kick (FOV punch + hitstop) and a
   // slam-in banner play before the results modal slides in.

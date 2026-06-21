@@ -40,6 +40,65 @@ export interface ReligionOutput {
   entries: ReportEntry[];
 }
 
+/** A cult banner (spawned by rollReligiousRebellion) carries a `cult-` id. */
+export function isCultForce(forceId: EntityId | null | undefined): boolean {
+  return typeof forceId === 'string' && forceId.startsWith('cult-');
+}
+
+/**
+ * 流民四起 — faith contagion. Each season every cult-held city erodes the
+ * loyalty of its non-cult neighbours (the 太平道 spread along the roads). A
+ * neighbour already on the brink can itself rise and join the *adjacent* cult
+ * banner — turning one rebellion into the cascading 黃巾之亂 rather than a
+ * single containable flip. At most one city converts per season so a player
+ * who responds promptly can stem the tide; ignore it and a province burns.
+ */
+export function spreadCultUnrest(input: ReligionInput): ReligionOutput {
+  const cities = { ...input.cities };
+  const forces = input.forces;
+  const officers = input.officers;
+  const entries: ReportEntry[] = [];
+
+  const cultCities = Object.values(cities).filter((c) => isCultForce(c.ownerForceId));
+  if (cultCities.length === 0) return { cities, forces, officers, entries };
+
+  // Erode loyalty in every non-cult neighbour of a cult city.
+  const flipCandidates: Array<{ city: City; cultForceId: EntityId }> = [];
+  for (const cc of cultCities) {
+    for (const adjId of cc.adjacentCityIds ?? []) {
+      const adj = cities[adjId];
+      if (!adj || isCultForce(adj.ownerForceId) || adj.ownerForceId === null) continue;
+      const drop = adj.loyalty < 40 ? 4 : 2; // shakier cities slip faster
+      cities[adjId] = { ...adj, loyalty: Math.max(0, cities[adjId].loyalty - drop) };
+      if (cities[adjId].loyalty < 22 && cities[adjId].population > 40_000) {
+        flipCandidates.push({ city: cities[adjId], cultForceId: cc.ownerForceId as EntityId });
+      }
+    }
+  }
+
+  // At most one neighbour actually rises this season.
+  if (flipCandidates.length > 0 && input.rng() < 0.5) {
+    const pick = flipCandidates[Math.floor(input.rng() * flipCandidates.length)];
+    const target = cities[pick.city.id];
+    const label = forces[pick.cultForceId]?.name ?? { zh: '亂民', en: 'Rebels' };
+    cities[target.id] = {
+      ...target,
+      ownerForceId: pick.cultForceId,
+      loyalty: 60,
+      troops: Math.max(1_500, Math.floor(target.troops * 0.55)),
+      population: Math.max(15_000, Math.floor(target.population * 0.9)),
+    };
+    entries.push({
+      cityId: target.id,
+      kind: 'rebellion',
+      text: `The faith spreads — ${target.name.zh} rises and joins the ${label.zh}（${label.en}）.`,
+      textZh: `信眾蔓延 — ${target.name.zh}響應${label.zh}，舉城而附。`,
+    });
+  }
+
+  return { cities, forces, officers, entries };
+}
+
 export function rollReligiousRebellion(input: ReligionInput): ReligionOutput {
   const cities = { ...input.cities };
   const forces = { ...input.forces };

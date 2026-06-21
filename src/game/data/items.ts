@@ -11872,6 +11872,72 @@ export const ITEMS: Item[] = [
     descriptionZh: "鎮魔七寶。封神演義與民間道教所傳:劍、綾、圈、扇、鏡、葫、印。各鎮一類妖魔。合而可降天下諸惡。",
     effects: { intelligence: 10, war: 8, charisma: 8 },
   },
+  // ── 異域奇珍 — exotic treasures hauled home by 遠使 embassies (see
+  //    systems/foreignRealm.ts). Not scattered as lost loot; only an embassy
+  //    to the relevant distant land can bring one back. ──
+  {
+    id: 'hanxue-baoma',
+    name: { en: 'Blood-Sweating Horse', zh: '汗血寶馬' },
+    kind: 'horse',
+    description: 'The fabled 天馬 of Dayuan (Ferghana). Sweats like blood under exertion; can run a thousand li. Emperor Wu of Han waged a war to win the breed.',
+    descriptionZh: '大宛天馬,汗出如血,日行千里。漢武帝為之兩伐大宛。西域遠使之至寶。',
+    effects: { war: 8, leadership: 5 },
+    rarity: 'gold',
+  },
+  {
+    id: 'yutian-meiyu',
+    name: { en: 'Khotan Jade', zh: '于闐美玉' },
+    kind: 'treasure',
+    description: 'Mutton-fat white jade from the Jade-River of Khotan — the finest jade of the ancient world, fit for an emperor’s seal.',
+    descriptionZh: '于闐玉河所產羊脂白玉,古來玉中之冠,堪琢傳國之璽。',
+    effects: { politics: 6, charisma: 5 },
+    rarity: 'silver',
+  },
+  {
+    id: 'qiuci-yuepu',
+    name: { en: 'Kucha Music Score', zh: '龜茲樂譜' },
+    kind: 'book',
+    description: 'The famed music and dance of Kucha — pipa, drums and twirling sleeves that would one day enthral the Tang court.',
+    descriptionZh: '龜茲樂舞,琵琶羯鼓、胡旋紛飛,後世傾動長安。',
+    effects: { charisma: 7, intelligence: 2 },
+    rarity: 'silver',
+  },
+  {
+    id: 'daqin-liuli',
+    name: { en: 'Roman Glassware', zh: '大秦琉璃' },
+    kind: 'treasure',
+    description: 'Limpid blown glass from Da Qin (Rome), clearer than any jade — a marvel worth a city in the markets of the East.',
+    descriptionZh: '大秦(羅馬)所製琉璃,澄澈勝玉,東土一器值一城,世所罕見。',
+    effects: { charisma: 8, intelligence: 3 },
+    rarity: 'gold',
+  },
+  {
+    id: 'tianzhu-beiye',
+    name: { en: 'Palm-Leaf Sutra', zh: '天竺貝葉經' },
+    kind: 'book',
+    description: 'Buddhist scripture inscribed on palm leaves, carried from India — distilled wisdom of a distant faith.',
+    descriptionZh: '天竺貝葉所書佛經,遠載而歸,異域智慧之結晶。',
+    effects: { intelligence: 8, politics: 2 },
+    rarity: 'gold',
+  },
+  {
+    id: 'anxi-xiangliao',
+    name: { en: 'Parthian Frankincense', zh: '安息香料' },
+    kind: 'treasure',
+    description: 'Aromatics from Anxi (Parthia) — frankincense and myrrh whose scent alone marks a man of consequence.',
+    descriptionZh: '安息(帕提亞)香料,乳香沒藥,馥郁難名,薰之自顯貴胄之氣。',
+    effects: { politics: 4, charisma: 4 },
+    rarity: 'silver',
+  },
+  {
+    id: 'nanhai-xiangya',
+    name: { en: 'Great Ivory Tusk', zh: '南海象牙' },
+    kind: 'treasure',
+    description: 'A pair of great elephant tusks from the southern seas (Funan/Linyi) — tribute fit for a sovereign.',
+    descriptionZh: '南海(扶南/林邑)所貢巨象之牙,堪為王者之贄。',
+    effects: { charisma: 6 },
+    rarity: 'silver',
+  },
 ];
 
 export function getItem(id: string): Item | null {

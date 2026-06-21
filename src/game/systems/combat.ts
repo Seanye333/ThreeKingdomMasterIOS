@@ -34,16 +34,50 @@ import { appointmentBonusFor } from './appointmentEffects';
 import { aggregateSlotEffects } from '../data/defenseBuildings';
 import type { Weather } from './weather';
 
+/**
+ * Classify a city's battlefield terrain. Prefers the authored `city.terrain`
+ * field (every city carries one) and only falls back to name-keyword inference
+ * for the rare city that lacks it — replacing the old name-only guesswork.
+ */
+export function cityCombatTerrain(city?: City): 'naval' | 'river' | 'mountain' | 'plain' {
+  if (city?.terrain) {
+    switch (city.terrain) {
+      case 'water':    return 'river';
+      case 'wetland':  return 'river';
+      case 'mountain': return 'mountain';
+      case 'forest':   return 'mountain';
+      case 'pass':     return 'mountain';
+      default:         return 'plain'; // plain, desert
+    }
+  }
+  const cityName = city?.name.en.toLowerCase() ?? '';
+  if (/jiang|river|chibi|red cliff|fan|jianye|wu|huai|han.river/.test(cityName)) return 'river';
+  if (/shu|mt\.|mountain|hanzhong|jianmen|kuiguan|baidi/.test(cityName)) return 'mountain';
+  return 'plain';
+}
+
+/**
+ * Inherent defender power multiplier from the city's own ground — independent
+ * of any defence buildings. Mountain holds and passes are murder to storm;
+ * forest and marsh foul an attacker's footing; open plains and water give the
+ * defender nothing extra. This is what makes a 山城 worth holding.
+ */
+export function terrainDefenderMultiplier(city?: City): number {
+  switch (city?.terrain) {
+    case 'pass':     return 1.15; // 關隘 — a handful can hold a chokepoint
+    case 'mountain': return 1.12; // 山城 — high walls, hard climbs
+    case 'forest':   return 1.06; // 山林 — broken ground, ambush cover
+    case 'wetland':  return 1.05; // 湿地 — bogs down the assault
+    default:         return 1.0;  // plain / water / desert
+  }
+}
+
 /** Helper: compute combat-context policy effects for a side. */
 function computePolicyCombat(
   officers: Officer[],
   ctx?: { city?: City; weather?: Weather },
 ) {
-  // Infer terrain hint from city name keywords or default 'plain'.
-  let terrain: 'naval' | 'river' | 'mountain' | 'plain' = 'plain';
-  const cityName = ctx?.city?.name.en.toLowerCase() ?? '';
-  if (/jiang|river|chibi|red cliff|fan|jianye|wu|huai|han.river/.test(cityName)) terrain = 'river';
-  if (/shu|mt\.|mountain|hanzhong|jianmen|kuiguan|baidi/.test(cityName)) terrain = 'mountain';
+  const terrain = cityCombatTerrain(ctx?.city);
   return combatPolicyEffects(officers, { terrain, weather: ctx?.weather as string | undefined });
 }
 
@@ -78,6 +112,18 @@ export function privateGuardMultiplier(pool: Officer[]): number {
   const total = pool.reduce((s, o) => s + Math.max(0, o.privateTroops ?? 0), 0);
   if (total <= 0) return 1;
   return 1 + Math.min(0.18, total / 100_000);
+}
+
+/**
+ * 異域義從 — foreign auxiliaries (象兵/突騎/汗血騎) garrisoned by 遠使 embassies
+ * fight above their numbers when their host city is defended. +1% defence power
+ * per 1,330 aux, capped at +15% — elite quality layered on the raw troop count
+ * they already add. (See City.foreignAux, systems/foreignRealm.ts.)
+ */
+export function foreignAuxDefenseMultiplier(aux: number | undefined): number {
+  const a = Math.max(0, aux ?? 0);
+  if (a <= 0) return 1;
+  return 1 + Math.min(0.15, a / 20_000);
 }
 
 /**
@@ -191,7 +237,7 @@ export interface BattleResult {
   /** Stratagem deployed by the attacker (if any). */
   stratagem?: { id: string; name: { zh: string; en: string }; succeeded: boolean };
   /** Wounded officers (one or both sides) — recoverable after N seasons. */
-  wounded?: Array<{ officerId: EntityId; seasons: number }>;
+  wounded?: Array<{ officerId: EntityId; seasons: number; severity: 'minor' | 'serious' | 'critical' }>;
   /** Officers captured by the victor (defection roll later). */
   captured?: EntityId[];
   /** Whether attacker pursued retreating enemy (extra losses to defender). */
@@ -233,6 +279,8 @@ export interface BattleContext {
    *  has denounced the defender's force (within the 8-season window). */
   attackerCasusBelliMul?: number;
   defenderCasusBelliMul?: number;
+  /** 單挑頻率 — multiplier on the field-duel trigger chance. Default 1. */
+  duelChanceMul?: number;
 }
 
 export function resolveBattle(
@@ -546,7 +594,7 @@ export function resolveBattle(
   if (
     attacker.commander.stats.war >= 80 &&
     defender.commander.stats.war >= 80 &&
-    rng() < 0.12
+    rng() < 0.12 * (ctx?.duelChanceMul ?? 1)
   ) {
     const aCmd = effectsForOfficer(attacker.commander);
     const dCmd = effectsForOfficer(defender.commander);
@@ -657,7 +705,7 @@ export function resolveBattle(
 
   // Wounded officers: any commander or companion on the losing side has a
   // small chance to be wounded (not killed) instead of just walking off.
-  const wounded: Array<{ officerId: EntityId; seasons: number }> = [];
+  const wounded: Array<{ officerId: EntityId; seasons: number; severity: 'minor' | 'serious' | 'critical' }> = [];
   const losingSide = finalAttackerWins
     ? [defender.commander, ...(defender.companions ?? [])]
     : [attacker.commander, ...(attacker.companions ?? [])];
@@ -666,10 +714,14 @@ export function resolveBattle(
     if (captured.includes(o.id)) continue;
     if (duel?.loser.id === o.id) continue; // duel loser handled by duel record
     if (rng() < 0.18) {
-      wounded.push({
-        officerId: o.id,
-        seasons: 1 + Math.floor(rng() * 3), // 1-3 seasons
-      });
+      // 傷勢分級 — most wounds are slight; a sixth are grave; a rare one is
+      // near-mortal and lays the officer up for half a year (and may kill).
+      const r = rng();
+      const severity = r < 0.62 ? 'minor' : r < 0.9 ? 'serious' : 'critical';
+      const seasons = severity === 'minor' ? 1 + Math.floor(rng() * 2)   // 1-2
+        : severity === 'serious' ? 3 + Math.floor(rng() * 2)             // 3-4
+        : 5 + Math.floor(rng() * 2);                                     // 5-6
+      wounded.push({ officerId: o.id, seasons, severity });
     }
   }
 
@@ -776,6 +828,11 @@ export interface MarchContext {
   /** The human player's force — AI attackers (≠ player) pick siege works
    *  (圍困/水攻) on their own; the player chooses via the battle modal. */
   playerForceId?: EntityId | null;
+  /** 不會戰死 — when true, a duel loser is gravely wounded but survives,
+   *  rather than being slain on the field. */
+  noBattleDeath?: boolean;
+  /** 單挑頻率 — multiplier on the field-duel trigger chance. Default 1. */
+  duelChanceMul?: number;
 }
 
 export interface MarchOutcome {
@@ -863,9 +920,12 @@ export function handleMarch(
   // only in the passes, 兵舍 extraGarrison always adds standing defenders.
   const siegeMods = siegeBuildingModifiers(slotEffects, {
     water: isWaterBattle({ city: target }),
-    mountain: /shu|mt\.|mountain|hanzhong|jianmen|kuiguan|baidi/.test(target.name.en.toLowerCase()),
+    mountain: cityCombatTerrain(target) === 'mountain',
     attackerCavalry: commander.skills.includes('cavalry-master'),
   });
+  // Inherent ground advantage for the defender (passes/mountains/forest/marsh),
+  // on top of any walls or rockfall facilities.
+  const terrainDefMul = terrainDefenderMultiplier(target);
   // ── AI 攻城方略 — a non-player attacker prosecutes the siege like a
   // player would: flood a riverside city (decisive sieges only), or invest
   // a grain-poor one until the garrison starves. Costs come out of the
@@ -945,9 +1005,10 @@ export function handleMarch(
       family: ctx.family,
       runtimeBonds: ctx.runtimeBonds,
       attackerTitlePowerMul: attackerTitlePowerMul * siegeMods.attackerPowerMul,
-      defenderTitlePowerMul: defenderTitlePowerMul * siegeMods.defenderPowerMul,
+      defenderTitlePowerMul: defenderTitlePowerMul * siegeMods.defenderPowerMul * terrainDefMul * foreignAuxDefenseMultiplier(target.foreignAux),
       attackerCasusBelliMul,
       defenderCasusBelliMul,
+      duelChanceMul: ctx.duelChanceMul ?? 1,
     },
   );
   // Account for the prestrike in the casualty report.
@@ -965,6 +1026,7 @@ export function handleMarch(
         status: 'wounded',
         task: null,
         woundedSeasons: w.seasons,
+        woundSeverity: w.severity,
       };
     }
   }
@@ -977,6 +1039,7 @@ export function handleMarch(
       officers[id] = {
         ...o,
         status: 'imprisoned',
+        capturedFromForceId: o.forceId ?? undefined,
         forceId: null,
         loyalty: 30,
         task: null,
@@ -1010,18 +1073,38 @@ export function handleMarch(
   }
 
   if (result.duel) {
-    entries.push({
-      cityId: target.id,
-      kind: 'battle',
-      text: `Duel! ${result.duel.winner.name.en} slew ${result.duel.loser.name.en} on the field.`,
-      textZh: `一騎討！${result.duel.winner.name.zh}陣前斬${result.duel.loser.name.zh}。`,
-    });
-    officers[result.duel.loser.id] = {
-      ...officers[result.duel.loser.id],
-      status: 'dead',
-      forceId: null,
-      task: null,
-    };
+    const loser = officers[result.duel.loser.id];
+    if (ctx.noBattleDeath) {
+      // 不會戰死 — the loser is unhorsed and gravely wounded, but lives.
+      entries.push({
+        cityId: target.id,
+        kind: 'battle',
+        text: `Duel! ${result.duel.winner.name.en} bested ${result.duel.loser.name.en}, who fled gravely wounded.`,
+        textZh: `一騎討！${result.duel.winner.name.zh}陣前敗${result.duel.loser.name.zh}，後者重傷遁走。`,
+      });
+      if (loser) {
+        officers[result.duel.loser.id] = {
+          ...loser,
+          status: 'wounded',
+          woundSeverity: 'serious',
+          woundedSeasons: 3,
+          task: null,
+        };
+      }
+    } else {
+      entries.push({
+        cityId: target.id,
+        kind: 'battle',
+        text: `Duel! ${result.duel.winner.name.en} slew ${result.duel.loser.name.en} on the field.`,
+        textZh: `一騎討！${result.duel.winner.name.zh}陣前斬${result.duel.loser.name.zh}。`,
+      });
+      officers[result.duel.loser.id] = {
+        ...officers[result.duel.loser.id],
+        status: 'dead',
+        forceId: null,
+        task: null,
+      };
+    }
   }
 
   const attackerSurvivors = sentTroops - result.attackerLosses;

@@ -41,6 +41,13 @@ export interface City {
   /** Has river/sea port — unlocks naval movement to other ports. */
   port?: boolean;
   /**
+   * 異域義從 — foreign auxiliaries (象兵/突騎/汗血騎) stationed here by 遠使
+   * embassies. Counted within `troops` for raw strength, but ALSO grant a
+   * defence-power bonus (elite quality on top of quantity) — see
+   * `foreignAuxDefenseMultiplier` in combat.ts. Default/omitted = 0.
+   */
+  foreignAux?: number;
+  /**
    * Wall fortification tier (1 = village wall, 2 = inner-walled city,
    * 3 = three-tier citadel like Hefei/Luoyang/Chang'an).
    * Each tier multiplies city defense and increases siege duration.

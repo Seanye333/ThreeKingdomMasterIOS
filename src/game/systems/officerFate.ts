@@ -298,6 +298,7 @@ export function applyExecute(officer: Officer): Officer {
     forceId: null,
     locationCityId: null,
     task: null,
+    capturedFromForceId: undefined,
   };
 }
 
@@ -307,6 +308,7 @@ export function applyRelease(officer: Officer): Officer {
     status: 'idle',
     forceId: null,
     task: null,
+    capturedFromForceId: undefined,
   };
 }
 

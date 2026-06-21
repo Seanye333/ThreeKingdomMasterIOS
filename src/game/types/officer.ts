@@ -42,6 +42,13 @@ export interface Officer {
   hometownCityId?: EntityId;
   /** Seasons remaining before a wounded officer recovers to idle. */
   woundedSeasons?: number;
+  /** 傷勢 — how grave the current wound is. A 瀕死 (critical) wound recovers
+   *  slowly, fights far weaker, and can still prove mortal. Set with status
+   *  'wounded'; cleared on recovery. */
+  woundSeverity?: 'minor' | 'serious' | 'critical';
+  /** 故主 — the force this officer served when captured. Set on imprisonment so
+   *  that force can later ransom (贖回) them back. Cleared on release/recruit. */
+  capturedFromForceId?: EntityId;
   /** 後遺 — short-lived afflictions (養傷 from a duel, 羞憤 from a lost debate)
    *  that sap effective stats for a few seasons. Optional; ticks down each
    *  season. See systems/afflictions.ts. */

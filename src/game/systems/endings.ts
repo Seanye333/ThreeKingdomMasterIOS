@@ -9,7 +9,18 @@ export interface EndingContext {
   date: GameDate;
   /** Year the player declared emperor (if any). */
   enthroneYear?: number;
+  /** 勝利條件 — when not 'free', only the chosen path (and defeat) ends the
+   *  campaign; lesser/incidental endings are suppressed so the game continues. */
+  victoryGoal?: 'free' | 'unify' | 'hegemon' | 'tripartite';
 }
+
+/** Which ending kinds satisfy a chosen victory goal. Unification always counts
+ *  (it strictly exceeds the lesser goals); defeat is handled separately. */
+const GOAL_ALLOWED: Record<'unify' | 'hegemon' | 'tripartite', EndingKind[]> = {
+  unify: ['unify', 'unify-tyrant'],
+  hegemon: ['hegemon', 'restore-han', 'unify', 'unify-tyrant'],
+  tripartite: ['tripartite', 'unify', 'unify-tyrant'],
+};
 
 export interface EndingResult {
   kind: EndingKind;
@@ -20,6 +31,15 @@ export interface EndingResult {
 }
 
 export function checkEndings(ctx: EndingContext): EndingResult | null {
+  const result = rawEnding(ctx);
+  if (!result) return null;
+  const goal = ctx.victoryGoal ?? 'free';
+  // Defeat always ends the game; with a goal set, only matching victories do.
+  if (goal === 'free' || result.kind === 'defeat') return result;
+  return GOAL_ALLOWED[goal].includes(result.kind) ? result : null;
+}
+
+function rawEnding(ctx: EndingContext): EndingResult | null {
   if (!ctx.playerForceId) return null;
   const totalCities = Object.keys(ctx.cities).length;
   const playerCities = Object.values(ctx.cities).filter(

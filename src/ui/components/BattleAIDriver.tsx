@@ -17,7 +17,10 @@ export function BattleAIDriver({ active }: { active: boolean }) {
   const start = useGameStore((s) => s.startTacticalBattle);
   const battleSpeed = useGameStore((s) => s.battleSpeed);
   const difficulty = useGameStore((s) => s.difficulty);
+  const battleDifficulty = useGameStore((s) => s.battleDifficulty ?? null);
+  const aiStrength = useGameStore((s) => s.aiStrength ?? 3);
   const pushBattleFx = useGameStore((s) => s.pushBattleFx);
+  const battleDiff = battleDifficulty ?? difficulty;
 
   useEffect(() => {
     if (!active || !battle || battle.winner) return;
@@ -27,7 +30,7 @@ export function BattleAIDriver({ active }: { active: boolean }) {
     const delay = Math.max(150, 700 / Math.max(1, battleSpeed));
     const id = setTimeout(() => {
       const result = aiTakeTurn(battle, officers, Math.random, {
-        skill: aiSkillForDifficulty(difficulty),
+        skill: aiSkillForDifficulty(battleDiff, aiStrength),
       });
       // Keep the signature flavor lines flowing into the log so the diorama's
       // story (and the sfx watcher, once the screen reopens) stays intact.
@@ -49,7 +52,7 @@ export function BattleAIDriver({ active }: { active: boolean }) {
       start(next);
     }, delay);
     return () => clearTimeout(id);
-  }, [active, battle, officers, playerForceId, start, battleSpeed, difficulty, pushBattleFx]);
+  }, [active, battle, officers, playerForceId, start, battleSpeed, battleDiff, aiStrength, pushBattleFx]);
 
   return null;
 }

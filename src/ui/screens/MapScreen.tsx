@@ -153,6 +153,7 @@ export function MapScreen() {
   const officersForToast = useGameStore((s) => s.officers);
   const fogOfWar = useGameStore((s) => s.fogOfWar);
   const setFogOfWar = useGameStore((s) => s.setFogOfWar);
+  const ironman = useGameStore((s) => s.ironman ?? false);
   const tacticalBattle = useGameStore((s) => s.tacticalBattle);
   // 戰場引燃 — hold the battle screen back ~1s so the world camera can fly to
   // the clash site first (BattleFocusFly); the battle then drops over that
@@ -564,7 +565,9 @@ export function MapScreen() {
             { label: t('⚙ 設定', '⚙ Settings'),                onClick: () => setShowSettings(true) },
             { label: fogOfWar ? t('🌫 戰霧：開', '🌫 Fog: On') : t('☀ 戰霧：關', '☀ Fog: Off'), onClick: () => setFogOfWar(!fogOfWar) },
             { label: t('📖 教學', '📖 Tutorial'),               onClick: () => setTutorialStep(0) },
-            { label: t('保存', 'Save'),                        onClick: () => setShowSave('save') },
+            ...(ironman
+              ? [{ label: t('🔒 鐵人模式（禁手動存檔）', '🔒 Ironman (no manual save)'), onClick: () => {} }]
+              : [{ label: t('保存', 'Save'), onClick: () => setShowSave('save') }]),
             { label: t('載入', 'Load'),                        onClick: () => setShowSave('load') },
             { label: soundEnabled ? t('🔊 音效：開', '🔊 Sound: On') : t('🔇 音效：關', '🔇 Sound: Off'), onClick: () => setSoundEnabled(!soundEnabled) },
             ...THEMES.map((th) => ({

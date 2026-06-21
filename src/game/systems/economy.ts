@@ -64,6 +64,7 @@ export function tickCityEconomy(
   cityOfficers: Officer[] = [],
   tax: TaxRate = 'normal',
   inflation = 0,
+  weatherKind: import('./weather').WeatherKind = 'clear',
 ): CityEconomyTick {
   const eff = cityPolicyEffects(city, cityOfficers);
   const taxEff = TAX_EFFECT[tax] ?? TAX_EFFECT.normal;
@@ -96,7 +97,14 @@ export function tickCityEconomy(
   const granaryFood = season === 'autumn'
     ? aggregateSlotEffects(city.buildSlots ?? []).extraFood
     : 0;
-  const foodIncome = Math.floor(baseFood * eff.foodMul * size.foodMul * spec.foodMul) + granaryFood;
+  // 天時 — weather bends the harvest. A drought withers the autumn yield by
+  // ~45%; steady rain swells it slightly; snow/wind are neutral. Only the
+  // harvest season (autumn) carries a crop to lose.
+  const harvestWeatherMul =
+    weatherKind === 'drought' ? 0.55 :
+    weatherKind === 'rain' ? 1.1 :
+    1;
+  const foodIncome = Math.floor(baseFood * eff.foodMul * size.foodMul * spec.foodMul * harvestWeatherMul) + granaryFood;
 
   const foodUpkeep = Math.ceil(city.troops * FOOD_PER_TROOP_PER_SEASON);
 
@@ -111,9 +119,12 @@ export function tickCityEconomy(
     ? populationDelta(city, foodIncome - foodUpkeep)
     : 0;
 
+  // A drought stokes famine fear — the populace grows restive whatever the season.
+  const droughtLoyalty = weatherKind === 'drought' ? -2 : 0;
+
   return {
     goldIncome, foodIncome, foodUpkeep, desertion,
-    loyaltyDelta: eff.loyaltyDelta + taxEff.loyalty,
+    loyaltyDelta: eff.loyaltyDelta + taxEff.loyalty + droughtLoyalty,
     populationDelta: popDelta,
     policyBadges: taxEff.loyalty !== 0 ? [...eff.badges, taxEff.zh] : eff.badges,
   };

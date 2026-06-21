@@ -26,10 +26,15 @@ import { handleMarch } from './combat';
 import { tickDiplomacy, applyCoalitionPressure } from './diplomacy';
 import { tickCityEconomy, tradeTreatyGrants } from './economy';
 import { stepConvoys, resolveConvoyRaids, provisionNeeded, consumeRations, type Convoy } from './convoy';
+import { stepExpeditions, expeditionSpeedMul } from './expedition';
+import { embassyTargets, embassyLegSeasons } from './foreignRealm';
+import type { Expedition, ExpeditionMode } from '../types';
 import { appointmentBonusFor } from './appointmentEffects';
 import { MILITARY_RANKS_BY_ID } from '../data/titles';
 import { rollEvents } from './events';
+import { generateFictionalOfficer } from './officerGen';
 import { resolveAmbitions } from './ambition';
+import { deriveCourtFactions, type FactionId } from './courtFactions';
 
 export interface ResolutionInput {
   date: GameDate;
@@ -67,10 +72,35 @@ export interface ResolutionInput {
   inflation?: number;
   /** 輜重 — supply convoys in transit between the player's cities. */
   convoys?: Record<EntityId, Convoy>;
+  /** 游历 — lone officers roaming abroad (any force), in transit. */
+  expeditions?: Record<EntityId, Expedition>;
+  /** 細作開眼 — per-city intel ticks; expeditions light fresh intel here. */
+  espionageReveals?: Record<EntityId, number>;
+  /** 遠邦關係 — player's standing with each distant realm (0–100). */
+  realmRelations?: Record<string, number>;
   /** 常運糧道 — player standing routes; each season auto-ships surplus grain. */
   standingRoutes?: Array<{ fromCityId: EntityId; toCityId: EntityId }>;
   rng?: () => number;
   weather?: import('./weather').Weather;
+  /** 武將壽命 — old-age death rule (see GameState.lifespanMode). Defaults to
+   *  'historical'. */
+  lifespanMode?: 'historical' | 'fictionalImmortal' | 'immortal';
+  /** 武將壽命長短 — multiplier on the old-age death chance. Default 'historical'. */
+  lifespanLength?: 'short' | 'historical' | 'long';
+  /** 不會戰死 — when true, no officer is killed in battle (wounded/captured
+   *  instead). Folded into single combat here; tactical/瀕死 handled in store. */
+  noBattleDeath?: boolean;
+  /** 起死回生 — when true, the yearly tick may return dead officers to life. */
+  reviveDeadOfficers?: boolean;
+  /** 在野登場 — multiplier on 搜索人才 success chance. Default 1. */
+  searchSuccessMul?: number;
+  /** 單挑頻率 — multiplier on the field-duel trigger chance. Default 1. */
+  duelChanceMul?: number;
+  /** 天災頻率 — multiplier on famine/plague/flood chances. Default 1. */
+  disasterMul?: number;
+  /** 新武將登場 — per-season chance a brand-new fictional officer appears as a
+   *  free agent. 0 (default) = off. */
+  newOfficerChance?: number;
   /**
    * True when this period transition crosses a season boundary (every 9
    * periods). Per-season ticks (economy, harvest, plague, etc.) only fire
@@ -100,6 +130,18 @@ export interface ResolutionOutput {
   armies?: Record<EntityId, import('../types').Army>;
   /** 輜重 — supply convoys still in transit after this season's step. */
   convoys?: Record<EntityId, Convoy>;
+  /** 游历 — roaming officers still in transit after this season's step. */
+  expeditions?: Record<EntityId, Expedition>;
+  /** 細作開眼 — per-city intel ticks after expeditions lit fresh intel. */
+  espionageReveals?: Record<EntityId, number>;
+  /** 安邊 — tribe-aggression deltas from 遠使 embassies (tribeId → delta). */
+  expeditionAggressionDeltas?: Record<string, number>;
+  /** 邦交 — prestige/天命 deltas from 遠使 embassies (forceId → delta). */
+  expeditionMandateDeltas?: Record<string, number>;
+  /** 通商 — realms a player embassy opened this step (realmId → frontier city). */
+  expeditionRealmsOpened?: Record<string, EntityId>;
+  /** 遠邦關係 — relation deltas from player embassies (realmId → delta). */
+  expeditionRealmRelationDeltas?: Record<string, number>;
   /** Field-battle sites this season (ambush/camp-storm/clash) to mark on the
    *  map. Coords in 1000×720 map space. */
   fieldBattleMarks?: Array<{
@@ -784,6 +826,36 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       textZh: gone ? `${cmdr.name.zh}部糧盡潰散於途。` : `${cmdr.name.zh}部糧盡,士卒逃散。`,
     });
   };
+  // 孤軍深入 — a column striking deep into ground it does not own bleeds men to
+  // harassment and thin foraging each season it is on the road, on top of any
+  // ration shortfall. The further the planned strike, the worse the toll — so
+  // short supply lines (or a relief convoy) are rewarded. Flat % (no rng) to
+  // keep the main resolution stream deterministic.
+  const hostileMarchAttrition = (
+    cmd: Extract<Command, { type: 'march' }>,
+    troops: number,
+  ): { troops: number; lost: number } => {
+    const dst = cities[cmd.targetCityId];
+    const cmdr = officers[cmd.officerId];
+    if (!dst || !cmdr?.forceId) return { troops, lost: 0 };
+    const owner = dst.ownerForceId;
+    if (!owner || owner === cmdr.forceId) return { troops, lost: 0 }; // own land = safe
+    const total = cmd.totalSeasons ?? 1;
+    if (total < 3) return { troops, lost: 0 }; // only genuine deep strikes
+    const frac = Math.min(0.06, 0.015 + total * 0.005);
+    const lost = Math.floor(troops * frac);
+    return lost > 0 ? { troops: Math.max(1, troops - lost), lost } : { troops, lost: 0 };
+  };
+  const noteHarass = (cmd: Extract<Command, { type: 'march' }>, lost: number) => {
+    const cmdr = officers[cmd.officerId];
+    if (!cmdr || cmdr.forceId !== pfId || lost <= 0) return;
+    entries.push({
+      cityId: null,
+      kind: 'desertion',
+      text: `${cmdr.name.en}'s column, deep in hostile country, loses ${lost} men to harassment.`,
+      textZh: `${cmdr.name.zh}孤軍深入,沿途遭襲,折兵 ${lost} 名。`,
+    });
+  };
 
   const keptCommands: Record<EntityId, Command> = {};
   const suppliedTroops: Record<EntityId, number> = {};
@@ -791,14 +863,17 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   for (const cmd of inTransit) {
     const s = supplyMarch(cmd);
     if (s.troops <= 0) { noteStarve(cmd, true); continue; } // whole column melted away
-    suppliedTroops[cmd.officerId] = s.troops;
-    suppliedFood[cmd.officerId] = s.food;
     if (s.starved) noteStarve(cmd, false);
+    const h = hostileMarchAttrition(cmd, s.troops);
+    if (h.lost > 0) noteHarass(cmd, h.lost);
+    if (h.troops <= 0) continue;
+    suppliedTroops[cmd.officerId] = h.troops;
+    suppliedFood[cmd.officerId] = s.food;
     // 防壁 — a barricade in the column's path stalls it this season (no advance).
     const advance = blockedOfficers.has(cmd.officerId) ? 0 : 1;
     keptCommands[cmd.officerId] = {
       ...cmd,
-      troops: s.troops,
+      troops: h.troops,
       food: s.food,
       seasonsRemaining: (cmd.seasonsRemaining ?? 1) - advance,
     };
@@ -808,10 +883,13 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   for (const cmd of held) {
     const s = supplyMarch(cmd);
     if (s.troops <= 0) { noteStarve(cmd, true); continue; }
-    suppliedTroops[cmd.officerId] = s.troops;
-    suppliedFood[cmd.officerId] = s.food;
     if (s.starved) noteStarve(cmd, false);
-    keptCommands[cmd.officerId] = { ...cmd, troops: s.troops, food: s.food };
+    const h = hostileMarchAttrition(cmd, s.troops);
+    if (h.lost > 0) noteHarass(cmd, h.lost);
+    if (h.troops <= 0) continue;
+    suppliedTroops[cmd.officerId] = h.troops;
+    suppliedFood[cmd.officerId] = s.food;
+    keptCommands[cmd.officerId] = { ...cmd, troops: h.troops, food: s.food };
   }
 
   // Derive the persistent Army layer from marches still on the map next
@@ -944,6 +1022,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       casusBelliMarks: input.casusBelliMarks,
       date: input.date,
       playerForceId: input.playerForceId ?? null,
+      noBattleDeath: input.noBattleDeath ?? false,
+      duelChanceMul: input.duelChanceMul ?? 1,
     });
     cities = outcome.cities;
     officers = outcome.officers;
@@ -977,7 +1057,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     if (!officer || !city) continue;
     if (officer.status !== 'idle') continue;
     if (cmd.type === 'search') {
-      const result = handleSearch({ officer, city, officers, lostItems, rng, year: input.date.year });
+      const result = handleSearch({ officer, city, officers, lostItems, rng, year: input.date.year, successMul: input.searchSuccessMul });
       officers = result.officers;
       lostItems = result.lostItems;
       entries.push(result.entry);
@@ -1143,6 +1223,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       cityOfficers,
       city.ownerForceId ? (input.taxPolicy?.[city.ownerForceId] ?? 'normal') : 'normal',
       city.ownerForceId === input.playerForceId ? (input.inflation ?? 0) : 0,
+      input.weather?.kind ?? 'clear',
     );
     const territoryGold = city.ownerForceId
       ? controlledSatellites(city) * TERRITORY_GOLD
@@ -1445,12 +1526,32 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   // date-seeded rng (off the main stream), so determinism elsewhere is intact.
   if (seasonBoundary) {
     const seasonIdx = { spring: 0, summer: 1, autumn: 2, winter: 3 }[input.date.season];
+    // A general whose own court faction has captured the realm has a clique at
+    // his back — fold that into his betrayal odds. 軍方 coups hardest of all.
+    const factionsByForce = deriveCourtFactions(officers);
+    const factionBoost: Record<EntityId, number> = {};
+    for (const list of Object.values(factionsByForce)) {
+      if (list.length < 5) continue;
+      const counts: Record<FactionId, number> = { reformer: 0, eunuch: 0, gentry: 0, military: 0 };
+      for (const m of list) counts[m.faction]++;
+      let dominant: FactionId | null = null;
+      let share = 0;
+      for (const fid of Object.keys(counts) as FactionId[]) {
+        const s = counts[fid] / list.length;
+        if (s > share) { share = s; dominant = fid; }
+      }
+      if (!dominant || share <= 0.5) continue;
+      const weight = dominant === 'military' ? 0.045 : dominant === 'gentry' ? 0.025 : 0;
+      if (weight === 0) continue;
+      for (const m of list) if (m.faction === dominant) factionBoost[m.officerId] = weight;
+    }
     const ambitionEvents = resolveAmbitions({
       officers,
       cities,
       forces,
       playerForceId: input.playerForceId,
       seed: (input.date.year * 4 + seasonIdx) >>> 0,
+      factionBoost,
     });
     for (const ev of ambitionEvents) {
       entries.push({ cityId: ev.cityId, kind: ev.kind, text: ev.text, textZh: ev.textZh });
@@ -1465,10 +1566,24 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       officers,
       buildings: input.buildings,
       rng,
+      disasterMul: input.disasterMul,
     });
     cities = eventResult.cities;
     officers = eventResult.officers;
     entries.push(...eventResult.entries);
+
+    // 新武將登場 — fresh fictional talent may step onto the stage (opt-in).
+    const newChance = input.newOfficerChance ?? 0;
+    if (newChance > 0 && rng() < newChance) {
+      const fresh = generateFictionalOfficer(input.date.year, rng, new Set(Object.keys(officers)));
+      officers = { ...officers, [fresh.id]: fresh };
+      entries.push({
+        cityId: null,
+        kind: 'note',
+        text: `A promising new talent, ${fresh.name.en}, has emerged among the people.`,
+        textZh: `江湖新秀 ${fresh.name.zh} 嶄露頭角,現身在野。`,
+      });
+    }
   }
 
   // 5. Aging — only at year boundary (winter → spring) + on season boundary.
@@ -1480,6 +1595,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       forces,
       rng,
       family: input.family,
+      lifespanMode: input.lifespanMode ?? 'historical',
+      lifespanLength: input.lifespanLength ?? 'historical',
+      reviveDeadOfficers: input.reviveDeadOfficers ?? false,
     });
     cities = aging.cities;
     officers = aging.officers;
@@ -1695,6 +1813,109 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     }
   }
 
+  // 8b. 游历 — advance roaming officers (探索/出使/策反/刺探). Errands resolve at
+  // the destination on the outbound leg (intel lit / relations warmed / a city
+  // bled / an officer turned); what the envoy carries is delivered when he gets
+  // home. Both the player's and rivals' expeditions step here.
+  let nextExpeditions = input.expeditions ?? {};
+  let nextEspionageReveals = input.espionageReveals ?? {};
+  let expeditionAggressionDeltas: Record<string, number> | undefined;
+  let expeditionMandateDeltas: Record<string, number> | undefined;
+  let expeditionRealmsOpened: Record<string, EntityId> | undefined;
+  let expeditionRealmRelationDeltas: Record<string, number> | undefined;
+  if (seasonBoundary && Object.keys(nextExpeditions).length > 0) {
+    const stepped = stepExpeditions({
+      expeditions: nextExpeditions,
+      cities,
+      officers,
+      forces,
+      diplomacy: finalDiplomacy,
+      espionageReveals: nextEspionageReveals,
+      rng,
+      playerForceId: input.playerForceId,
+      realmRelations: input.realmRelations,
+    });
+    nextExpeditions = stepped.expeditions;
+    cities = stepped.cities;
+    finalDiplomacy = stepped.diplomacy;
+    nextEspionageReveals = stepped.espionageReveals;
+    Object.assign(officers, stepped.officers); // merge officer mutations in place
+    for (const e of stepped.entries) entries.push(e);
+    if (Object.keys(stepped.aggressionDeltas).length > 0) expeditionAggressionDeltas = stepped.aggressionDeltas;
+    if (Object.keys(stepped.mandateDeltas).length > 0) expeditionMandateDeltas = stepped.mandateDeltas;
+    if (Object.keys(stepped.realmsOpened).length > 0) expeditionRealmsOpened = stepped.realmsOpened;
+    if (Object.keys(stepped.realmRelationDeltas).length > 0) expeditionRealmRelationDeltas = stepped.realmRelationDeltas;
+  }
+
+  // 8c. AI 游历 — each rival may send out one roamer a season: scout a far city,
+  // call on a neighbour (出使), or undermine one (策反/刺探, which can even turn
+  // or sabotage the PLAYER if his land is the mark). Low odds so the map stays
+  // lively without thrashing. The player drives his own.
+  if (seasonBoundary) {
+    const roamerByForce: Record<string, number> = {};
+    for (const e of Object.values(nextExpeditions)) roamerByForce[e.forceId] = (roamerByForce[e.forceId] ?? 0) + 1;
+    let aiExpSeq = 0;
+    for (const force of Object.values(forces)) {
+      if (force.id === input.playerForceId) continue;
+      if ((roamerByForce[force.id] ?? 0) > 0) continue; // one roamer abroad at a time
+      if (rng() >= 0.25) continue;
+      const candidates = Object.values(officers).filter(
+        (o) =>
+          o.forceId === force.id &&
+          o.locationCityId != null &&
+          cities[o.locationCityId]?.ownerForceId === force.id &&
+          (o.status === 'idle' || o.status === 'active') &&
+          !o.task &&
+          o.id !== force.rulerOfficerId,
+      );
+      if (candidates.length === 0) continue;
+      // Send the sharpest, most persuasive idler.
+      const officer = candidates.sort(
+        (a, b) => b.stats.intelligence + b.stats.charisma - (a.stats.intelligence + a.stats.charisma),
+      )[0];
+      const from = cities[officer.locationCityId!];
+      if (!from) continue;
+      // 遠使異域 — sometimes a rival court sends a long embassy abroad instead
+      // (通西域/出使倭/安撫邊族). Its deltas (force mandate, tribe aggression)
+      // bubble up like the player's.
+      if (rng() < 0.2) {
+        const targets = embassyTargets(input.date.year);
+        const target = targets[Math.floor(rng() * targets.length)];
+        if (target) {
+          const eleg = embassyLegSeasons(target, officer);
+          const eid = `emb-ai-${force.id}-${input.date.year}-${input.date.season}-${aiExpSeq++}`;
+          nextExpeditions[eid] = {
+            id: eid, officerId: officer.id, forceId: force.id, fromCityId: from.id, toCityId: '',
+            toRealmId: target.id, mode: 'embassy', phase: 'outbound', seasonsRemaining: eleg, legSeasons: eleg,
+          };
+          officers[officer.id] = { ...officer, locationCityId: null, task: null, status: 'active' };
+          continue;
+        }
+      }
+      const foreignCities = Object.values(cities).filter((c) => c.ownerForceId && c.ownerForceId !== force.id);
+      const roll = rng();
+      let to: City | undefined;
+      let mode: ExpeditionMode;
+      if (foreignCities.length > 0 && roll < 0.6) {
+        to = foreignCities[Math.floor(rng() * foreignCities.length)];
+        mode = roll < 0.3 ? 'envoy' : roll < 0.45 ? 'subvert' : 'infiltrate';
+      } else {
+        const others = Object.values(cities).filter((c) => c.id !== from.id);
+        if (others.length === 0) continue;
+        to = others[Math.floor(rng() * others.length)];
+        mode = 'explore';
+      }
+      if (!to || to.id === from.id) continue;
+      const leg = Math.max(1, Math.round(Math.max(1, marchDurationFor(from, to, input.date.season)) * expeditionSpeedMul(officer)));
+      const id = `exp-ai-${force.id}-${input.date.year}-${input.date.season}-${aiExpSeq++}`;
+      nextExpeditions[id] = {
+        id, officerId: officer.id, forceId: force.id, fromCityId: from.id, toCityId: to.id,
+        mode, phase: 'outbound', seasonsRemaining: leg, legSeasons: leg,
+      };
+      officers[officer.id] = { ...officer, locationCityId: null, task: null, status: 'active' };
+    }
+  }
+
   return {
     date: nextDate,
     cities,
@@ -1706,6 +1927,12 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     keptCommands: Object.keys(keptCommands).length > 0 ? keptCommands : undefined,
     armies: outArmies,
     convoys: nextConvoys,
+    expeditions: nextExpeditions,
+    espionageReveals: nextEspionageReveals,
+    expeditionAggressionDeltas,
+    expeditionMandateDeltas,
+    expeditionRealmsOpened,
+    expeditionRealmRelationDeltas,
     territoryOwnership,
     fieldBattleMarks: fieldBattleMarks.length > 0 ? fieldBattleMarks : undefined,
     pendingFieldBattles: pendingFieldBattles.length > 0 ? pendingFieldBattles : undefined,

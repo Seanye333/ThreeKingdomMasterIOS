@@ -1372,9 +1372,14 @@ export function attackUnits(
 
   const ao = officers[attacker.officerId];
   const To = officers[target.officerId];
-  // Wounded officers fight at reduced effectiveness — 受傷帶兵.
-  const aWoundedMul = ao?.status === 'wounded' ? 0.85 : 1.0;
-  const dWoundedMul = To?.status === 'wounded' ? 1.15 : 1.0;
+  // Wounded officers fight at reduced effectiveness — 受傷帶兵. The graver the
+  // wound, the worse they (and their men) fare.
+  const woundPenalty = (o?: { status: string; woundSeverity?: 'minor' | 'serious' | 'critical' }): number => {
+    if (o?.status !== 'wounded') return 1.0;
+    return o.woundSeverity === 'critical' ? 0.65 : o.woundSeverity === 'serious' ? 0.78 : 0.9;
+  };
+  const aWoundedMul = woundPenalty(ao);
+  const dWoundedMul = To?.status === 'wounded' ? (To.woundSeverity === 'critical' ? 1.3 : To.woundSeverity === 'serious' ? 1.22 : 1.12) : 1.0;
   const aWar = ao ? effectiveStats(ao).war : 50;
   const dLead = To ? effectiveStats(To).leadership : 50;
 
@@ -3228,9 +3233,18 @@ function inferSignatureTactic(
 
 // ─── AI movement & role helpers ────────────────────────────────────────
 
-/** Map the global game difficulty onto the tactical AI's competence knob. */
-export function aiSkillForDifficulty(difficulty: 'easy' | 'normal' | 'hard'): number {
-  return difficulty === 'easy' ? 0.35 : difficulty === 'hard' ? 1.0 : 0.7;
+/** Map the global game difficulty onto the tactical AI's competence knob.
+ *  The optional 1–5 AI-strength dial nudges it ±0.16 around the difficulty
+ *  baseline (clamped to a sane floor/ceiling), so "AI 強度" is felt in battle
+ *  as well as on the strategic map. */
+export function aiSkillForDifficulty(
+  difficulty: 'easy' | 'normal' | 'hard',
+  aiStrength = 3,
+): number {
+  const base = difficulty === 'easy' ? 0.35 : difficulty === 'hard' ? 1.0 : 0.7;
+  const lv = Math.max(1, Math.min(5, Math.round(aiStrength)));
+  const nudge = (lv - 3) * 0.08;
+  return Math.max(0.15, Math.min(1, base + nudge));
 }
 
 /** Battlefield role drives how the AI positions and fights a unit. */

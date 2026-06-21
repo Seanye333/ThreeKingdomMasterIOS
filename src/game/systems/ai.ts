@@ -72,7 +72,17 @@ export interface AIPlanInput {
   armies?: Record<EntityId, import('../types').Army>;
   date: GameDate;
   difficulty?: Difficulty;
+  /** AI 強度 (1–5, default 3) — independent of difficulty. Scales how readily
+   *  forces go on the offensive (see aggressionFromStrength). */
+  aiStrength?: number;
   rng?: () => number;
+}
+
+/** Map the 1–5 AI-strength dial to a multiplier on the attack threshold.
+ *  >1 = the AI tolerates worse troop ratios (more aggressive expansion). */
+export function aggressionFromStrength(level: number | undefined): number {
+  const lv = Math.max(1, Math.min(5, Math.round(level ?? 3)));
+  return [0.6, 0.8, 1.0, 1.2, 1.45][lv - 1];
 }
 
 export interface AIPlanOutput {
@@ -94,6 +104,7 @@ export interface AIPlanOutput {
 export function planAITurn(input: AIPlanInput): AIPlanOutput {
   const rng = input.rng ?? Math.random;
   const difficulty = input.difficulty ?? 'normal';
+  const aiAggressionMul = aggressionFromStrength(input.aiStrength);
   const cities = { ...input.cities };
   const officers = { ...input.officers };
   const pendingCommands = { ...input.pendingCommands };
@@ -153,6 +164,7 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
         posture,
         hegemonId,
         input.date.season,
+        aiAggressionMul,
       );
       if (!decision) continue;
 
@@ -776,6 +788,7 @@ function decideCommand(
   posture: 'aggressive' | 'defensive' = 'aggressive',
   hegemonId: EntityId | null = null,
   season?: 'spring' | 'summer' | 'autumn' | 'winter',
+  aiAggressionMul = 1,
 ): Decision | null {
   const ownRulerId = forces[forceId]?.rulerOfficerId;
   // 1. Food crisis — develop agriculture
@@ -946,7 +959,7 @@ function decideCommand(
       // from a defensive posture (still gated by feasibility, so no suicide).
       const vsHegemon = target.ownerForceId != null && target.ownerForceId === hegemonId;
       const postureMul = posture === 'defensive' && !vsHegemon ? 0.5 : 1;
-      const attackThreshold = baseThreshold * deterrence * focusRelax * postureMul;
+      const attackThreshold = baseThreshold * deterrence * focusRelax * postureMul * aiAggressionMul;
 
       // Effective defender strength factors in city defense: a fortress at
       // defense 88 (Tongguan) counts as if the garrison were ~60% larger.

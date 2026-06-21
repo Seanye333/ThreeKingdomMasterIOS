@@ -90,6 +90,46 @@ export function TitleScreen() {
   const enterCareerMode = useGameStore((s) => s.enterCareerMode);
   const setRomanceMode = useGameStore((s) => s.setRomanceMode);
   const setRoguelikeMode = useGameStore((s) => s.setRoguelikeMode);
+  const lifespanMode = useGameStore((s) => s.lifespanMode ?? 'historical');
+  const setLifespanMode = useGameStore((s) => s.setLifespanMode);
+  const noBattleDeath = useGameStore((s) => s.noBattleDeath ?? false);
+  const setNoBattleDeath = useGameStore((s) => s.setNoBattleDeath);
+  const reviveDeadOfficers = useGameStore((s) => s.reviveDeadOfficers ?? false);
+  const setReviveDeadOfficers = useGameStore((s) => s.setReviveDeadOfficers);
+  const aiStrength = useGameStore((s) => s.aiStrength ?? 3);
+  const setAiStrength = useGameStore((s) => s.setAiStrength);
+  const startHandicap = useGameStore((s) => s.startHandicap ?? 'even');
+  const setStartHandicap = useGameStore((s) => s.setStartHandicap);
+  const victoryGoal = useGameStore((s) => s.victoryGoal ?? 'free');
+  const setVictoryGoal = useGameStore((s) => s.setVictoryGoal);
+  const placementMode = useGameStore((s) => s.placementMode ?? 'historical');
+  const setPlacementMode = useGameStore((s) => s.setPlacementMode);
+  const fogOfWar = useGameStore((s) => s.fogOfWar ?? false);
+  const setFogOfWar = useGameStore((s) => s.setFogOfWar);
+  const startTaxRate = useGameStore((s) => s.startTaxRate ?? 'normal');
+  const setStartTaxRate = useGameStore((s) => s.setStartTaxRate);
+  const startInflation = useGameStore((s) => s.startInflation ?? 0);
+  const setStartInflation = useGameStore((s) => s.setStartInflation);
+  const aiStartTroops = useGameStore((s) => s.aiStartTroops ?? 'even');
+  const setAiStartTroops = useGameStore((s) => s.setAiStartTroops);
+  const battleDifficulty = useGameStore((s) => s.battleDifficulty ?? null);
+  const setBattleDifficulty = useGameStore((s) => s.setBattleDifficulty);
+  const lifespanLength = useGameStore((s) => s.lifespanLength ?? 'historical');
+  const setLifespanLength = useGameStore((s) => s.setLifespanLength);
+  const talentDiscovery = useGameStore((s) => s.talentDiscovery ?? 'normal');
+  const setTalentDiscovery = useGameStore((s) => s.setTalentDiscovery);
+  const duelFrequency = useGameStore((s) => s.duelFrequency ?? 'normal');
+  const setDuelFrequency = useGameStore((s) => s.setDuelFrequency);
+  const disasterFrequency = useGameStore((s) => s.disasterFrequency ?? 'normal');
+  const setDisasterFrequency = useGameStore((s) => s.setDisasterFrequency);
+  const ironman = useGameStore((s) => s.ironman ?? false);
+  const setIronman = useGameStore((s) => s.setIronman);
+  const newOfficers = useGameStore((s) => s.newOfficers ?? 'off');
+  const setNewOfficers = useGameStore((s) => s.setNewOfficers);
+  const fictionalPool = useGameStore((s) => s.fictionalPool ?? 'off');
+  const setFictionalPool = useGameStore((s) => s.setFictionalPool);
+  const initialDiplomacy = useGameStore((s) => s.initialDiplomacy ?? 'neutral');
+  const setInitialDiplomacy = useGameStore((s) => s.setInitialDiplomacy);
   const enabledDynasties = useGameStore((s) => s.enabledDynasties);
   const setEnabledDynasties = useGameStore((s) => s.setEnabledDynasties);
   const toggleDynasty = (d: Dynasty) => {
@@ -664,8 +704,121 @@ export function TitleScreen() {
               {(() => { const d = DIFFICULTIES.find((x) => x.id === difficulty); return d ? t(d.noteZh, d.noteEn) : ''; })()}
             </p>
 
-            {/* Game modes */}
-            <label style={{ display: 'block', marginTop: '0.6rem', fontSize: '0.78rem', color: '#7a8893', cursor: 'pointer' }}>
+            {/* ── AI 強度 ── independent of difficulty (RoTK 思考 / Total War 戰役難度) */}
+            <OptHeader>{t('AI 強度', 'AI strength')}</OptHeader>
+            <div style={optRowStyle}>
+              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>
+                {t('進取與戰術水平', 'Aggression & tactical skill')}
+              </span>
+              <div style={{ display: 'flex', gap: 4 }}>
+                {[1, 2, 3, 4, 5].map((lv) => (
+                  <button
+                    key={lv}
+                    type="button"
+                    onClick={() => setAiStrength(lv)}
+                    style={pillStyle(aiStrength === lv)}
+                  >{lv}</button>
+                ))}
+              </div>
+            </div>
+            <p style={optNoteStyle}>
+              {aiStrength <= 2
+                ? t('保守:AI 少主動進攻,戰術較弱 —— 適合新手。', 'Cautious: the AI rarely attacks and fights clumsily — gentle.')
+                : aiStrength === 3
+                  ? t('普通:AI 行為均衡。', 'Standard: balanced AI behavior.')
+                  : t('凶猛:AI 積極擴張、戰術老練 —— 高度挑戰。', 'Fierce: the AI expands hard and fights sharply — tough.')}
+            </p>
+            <div style={optRowStyle}>
+              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('AI 起始兵力', 'AI starting troops')}</span>
+              <select
+                value={aiStartTroops}
+                onChange={(e) => setAiStartTroops(e.target.value as 'fewer' | 'even' | 'more')}
+                style={optSelectStyle}
+              >
+                <option value="fewer">{t('較少 ×0.8', 'Fewer ×0.8')}</option>
+                <option value="even">{t('一般 ×1.0', 'Even ×1.0')}</option>
+                <option value="more">{t('較多 ×1.2', 'More ×1.2')}</option>
+              </select>
+            </div>
+            <div style={optRowStyle}>
+              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('戰鬥難度', 'Battle difficulty')}</span>
+              <select
+                value={battleDifficulty ?? 'follow'}
+                onChange={(e) => setBattleDifficulty(e.target.value === 'follow' ? null : e.target.value as 'easy' | 'normal' | 'hard')}
+                style={optSelectStyle}
+              >
+                <option value="follow">{t('跟隨戰役難度', 'Follow campaign')}</option>
+                <option value="easy">{t('易', 'Easy')}</option>
+                <option value="normal">{t('普通', 'Normal')}</option>
+                <option value="hard">{t('困難', 'Hard')}</option>
+              </select>
+            </div>
+
+            {/* ── 起始國力 ── player handicap (Total War 起始資源 / RoTK 上級補正) */}
+            <OptHeader>{t('起始國力', 'Starting power')}</OptHeader>
+            <div style={optRowStyle}>
+              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>
+                {t('我方起始金錢/兵糧/兵力', 'Your starting gold / food / troops')}
+              </span>
+              <select
+                value={startHandicap}
+                onChange={(e) => setStartHandicap(e.target.value as 'weak' | 'even' | 'strong')}
+                style={optSelectStyle}
+              >
+                <option value="weak">{t('劣勢 ×0.7', 'Underdog ×0.7')}</option>
+                <option value="even">{t('均衡 ×1.0', 'Even ×1.0')}</option>
+                <option value="strong">{t('優勢 ×1.4', 'Mighty ×1.4')}</option>
+              </select>
+            </div>
+
+            {/* ── 經濟 ── default tax preset + starting inflation headwind */}
+            <OptHeader>{t('經濟', 'Economy')}</OptHeader>
+            <div style={optRowStyle}>
+              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('起始稅率', 'Starting tax rate')}</span>
+              <select
+                value={startTaxRate}
+                onChange={(e) => setStartTaxRate(e.target.value as 'light' | 'normal' | 'heavy')}
+                style={optSelectStyle}
+              >
+                <option value="light">{t('輕稅（少金·安民）', 'Light (less gold, happier)')}</option>
+                <option value="normal">{t('正常', 'Normal')}</option>
+                <option value="heavy">{t('重稅（多金·失民）', 'Heavy (more gold, unrest)')}</option>
+              </select>
+            </div>
+            <div style={optRowStyle}>
+              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('起始通脹', 'Starting inflation')}</span>
+              <select
+                value={startInflation === 0 ? 'none' : startInflation <= 15 ? 'low' : 'high'}
+                onChange={(e) => setStartInflation(e.target.value === 'none' ? 0 : e.target.value === 'low' ? 15 : 35)}
+                style={optSelectStyle}
+              >
+                <option value="none">{t('無', 'None')}</option>
+                <option value="low">{t('輕微（稅收 −6%）', 'Mild (−6% tax income)')}</option>
+                <option value="high">{t('嚴重（稅收 −14%）', 'Severe (−14% tax income)')}</option>
+              </select>
+            </div>
+
+            {/* ── 勝利條件 ── (Total War victory conditions) */}
+            <OptHeader>{t('勝利條件', 'Victory condition')}</OptHeader>
+            <div style={optRowStyle}>
+              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>
+                {t('達成即獲勝', 'Reaching it wins the campaign')}
+              </span>
+              <select
+                value={victoryGoal}
+                onChange={(e) => setVictoryGoal(e.target.value as 'free' | 'unify' | 'hegemon' | 'tripartite')}
+                style={optSelectStyle}
+              >
+                <option value="free">{t('自由（任意結局）', 'Free (any ending)')}</option>
+                <option value="unify">{t('統一天下', 'Unify the realm')}</option>
+                <option value="hegemon">{t('稱霸中原（據三都）', 'Hegemony (3 capitals)')}</option>
+                <option value="tripartite">{t('三分天下', 'Three Kingdoms balance')}</option>
+              </select>
+            </div>
+
+            {/* ── 遊戲模式 ── */}
+            <OptHeader>{t('遊戲模式', 'Game modes')}</OptHeader>
+            <label style={{ display: 'block', fontSize: '0.78rem', color: '#7a8893', cursor: 'pointer' }}>
               <input type="checkbox" checked={hotSeatMode} onChange={(e) => setHotSeatMode(e.target.checked)} style={{ marginRight: '0.4rem' }} />
               {t('輪流模式（多人共用鍵盤）', 'Hot-seat (players share keyboard)')}
             </label>
@@ -681,6 +834,149 @@ export function TitleScreen() {
               <input type="checkbox" checked={roguelike} onChange={(e) => { setRoguelike(e.target.checked); setRoguelikeMode(e.target.checked); }} style={{ marginRight: '0.4rem' }} disabled={!careerMode} />
               {t('Roguelike 模式（主角陣亡即遊戲結束；需開啟一代記）', 'Roguelike (chronicle officer death = game over; requires Chronicle mode)')}
             </label>
+            <label style={{ display: 'block', marginTop: '0.3rem', fontSize: '0.78rem', color: '#7a8893', cursor: 'pointer' }}>
+              <input type="checkbox" checked={ironman} onChange={(e) => setIronman(e.target.checked)} style={{ marginRight: '0.4rem' }} />
+              {t('鐵人模式（禁止手動存檔，只保留每季自動存檔）', 'Ironman (no manual save — only the per-season autosave)')}
+            </label>
+
+            {/* ── 生死規則 ── per-campaign life/death settings (also in the in-game 設定). */}
+            <OptHeader>{t('生死規則', 'Life & death')}</OptHeader>
+            <div style={optRowStyle}>
+              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('武將壽命', 'Officer lifespan')}</span>
+              <select
+                value={lifespanMode}
+                onChange={(e) => setLifespanMode(e.target.value as 'historical' | 'fictionalImmortal' | 'immortal')}
+                style={optSelectStyle}
+              >
+                <option value="historical">{t('史實', 'Historical')}</option>
+                <option value="fictionalImmortal">{t('虛構不老', 'Fictional immortal')}</option>
+                <option value="immortal">{t('全員不老', 'All immortal')}</option>
+              </select>
+            </div>
+            <div style={optRowStyle}>
+              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('壽命長短', 'Lifespan length')}</span>
+              <select
+                value={lifespanLength}
+                onChange={(e) => setLifespanLength(e.target.value as 'short' | 'historical' | 'long')}
+                style={optSelectStyle}
+              >
+                <option value="short">{t('短命（老死更快）', 'Short (die sooner)')}</option>
+                <option value="historical">{t('史實', 'Historical')}</option>
+                <option value="long">{t('長壽（老死減半）', 'Long (live longer)')}</option>
+              </select>
+            </div>
+            <label style={{ display: 'block', marginTop: '0.3rem', fontSize: '0.78rem', color: '#7a8893', cursor: 'pointer' }}>
+              <input type="checkbox" checked={noBattleDeath} onChange={(e) => setNoBattleDeath(e.target.checked)} style={{ marginRight: '0.4rem' }} />
+              {t('不會戰死（改為負傷或被俘）', 'No battle death (wounded or captured instead)')}
+            </label>
+            <label style={{ display: 'block', marginTop: '0.3rem', fontSize: '0.78rem', color: '#7a8893', cursor: 'pointer' }}>
+              <input type="checkbox" checked={reviveDeadOfficers} onChange={(e) => setReviveDeadOfficers(e.target.checked)} style={{ marginRight: '0.4rem' }} />
+              {t('起死回生（已故武將或逐年復活，含開局前去世者）', 'Revive the dead (fallen officers may return over the years)')}
+            </label>
+
+            {/* ── 世界規則 ── map/officer rules surfaced here (also in 設定). */}
+            <OptHeader>{t('世界規則', 'World rules')}</OptHeader>
+            <div style={optRowStyle}>
+              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('武將與名品出現位置', 'Talent & item placement')}</span>
+              <select
+                value={placementMode}
+                onChange={(e) => setPlacementMode(e.target.value as 'historical' | 'random')}
+                style={optSelectStyle}
+              >
+                <option value="historical">{t('歷史', 'Historical')}</option>
+                <option value="random">{t('虛構（隨機散落）', 'Fictional (scattered)')}</option>
+              </select>
+            </div>
+            <label style={{ display: 'block', marginTop: '0.3rem', fontSize: '0.78rem', color: '#7a8893', cursor: 'pointer' }}>
+              <input type="checkbox" checked={fogOfWar} onChange={(e) => setFogOfWar(e.target.checked)} style={{ marginRight: '0.4rem' }} />
+              {t('戰霧（隱藏未偵察的城邑）', 'Fog of war (hide unscouted cities)')}
+            </label>
+            <div style={optRowStyle}>
+              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('在野登場（搜索難度）', 'Talent discovery')}</span>
+              <select
+                value={talentDiscovery}
+                onChange={(e) => setTalentDiscovery(e.target.value as 'scarce' | 'normal' | 'plentiful')}
+                style={optSelectStyle}
+              >
+                <option value="scarce">{t('稀少（難尋）', 'Scarce')}</option>
+                <option value="normal">{t('正常', 'Normal')}</option>
+                <option value="plentiful">{t('眾多（易尋）', 'Plentiful')}</option>
+              </select>
+            </div>
+            <div style={optRowStyle}>
+              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('單挑頻率', 'Duel frequency')}</span>
+              <select
+                value={duelFrequency}
+                onChange={(e) => setDuelFrequency(e.target.value as 'rare' | 'normal' | 'frequent')}
+                style={optSelectStyle}
+              >
+                <option value="rare">{t('罕見 ×0.5', 'Rare ×0.5')}</option>
+                <option value="normal">{t('正常', 'Normal')}</option>
+                <option value="frequent">{t('頻繁 ×2', 'Frequent ×2')}</option>
+              </select>
+            </div>
+            <div style={optRowStyle}>
+              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('天災頻率', 'Disaster frequency')}</span>
+              <select
+                value={disasterFrequency}
+                onChange={(e) => setDisasterFrequency(e.target.value as 'low' | 'normal' | 'high')}
+                style={optSelectStyle}
+              >
+                <option value="low">{t('少 ×0.5', 'Low ×0.5')}</option>
+                <option value="normal">{t('正常', 'Normal')}</option>
+                <option value="high">{t('多 ×1.7', 'High ×1.7')}</option>
+              </select>
+            </div>
+            <div style={optRowStyle}>
+              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('新武將登場', 'New officers')}</span>
+              <select
+                value={newOfficers}
+                onChange={(e) => setNewOfficers(e.target.value as 'off' | 'rare' | 'normal' | 'common')}
+                style={optSelectStyle}
+              >
+                <option value="off">{t('關閉', 'Off')}</option>
+                <option value="rare">{t('稀少', 'Rare')}</option>
+                <option value="normal">{t('正常', 'Normal')}</option>
+                <option value="common">{t('頻繁', 'Common')}</option>
+              </select>
+            </div>
+            <p style={optNoteStyle}>
+              {t('虛構新秀隨年代陸續以在野身分登場,補充人才池(無史實卒年,故受「武將壽命」影響)。', 'Fictional newcomers appear over the years as free agents to refresh the talent pool (no historical death year, so they obey the lifespan settings).')}
+            </p>
+            <div style={optRowStyle}>
+              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('虛構人才庫（開局）', 'Fictional talent pool (start)')}</span>
+              <select
+                value={fictionalPool}
+                onChange={(e) => setFictionalPool(e.target.value as 'off' | 'some' | 'many')}
+                style={optSelectStyle}
+              >
+                <option value="off">{t('關閉', 'Off')}</option>
+                <option value="some">{t('少量（+20）', 'Some (+20)')}</option>
+                <option value="many">{t('大量（+50）', 'Many (+50)')}</option>
+              </select>
+            </div>
+
+            {/* ── 外交 ── opening relations between forces */}
+            <OptHeader>{t('外交', 'Diplomacy')}</OptHeader>
+            <div style={optRowStyle}>
+              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('初始外交', 'Opening relations')}</span>
+              <select
+                value={initialDiplomacy}
+                onChange={(e) => setInitialDiplomacy(e.target.value as 'neutral' | 'warring' | 'coalitions')}
+                style={optSelectStyle}
+              >
+                <option value="neutral">{t('逐鹿（中立）', 'Free-for-all')}</option>
+                <option value="warring">{t('亂世死敵', 'Warring (all soured)')}</option>
+                <option value="coalitions">{t('群雄結盟', 'Coalitions')}</option>
+              </select>
+            </div>
+            <p style={optNoteStyle}>
+              {initialDiplomacy === 'warring'
+                ? t('各勢力開局即交惡,AI 不結盟、不締約,亂世立現。', 'Every force starts soured — the AI shuns pacts; the realm ignites at once.')
+                : initialDiplomacy === 'coalitions'
+                  ? t('AI 勢力開局結成互不侵犯陣營,玩家須面對聯盟。', 'AI forces open in non-aggression blocs — you face coalitions, not a free-for-all.')
+                  : t('預設:各勢力互不結盟,自由開戰。', 'Default: no pacts, all free to make war.')}
+            </p>
 
             {/* Cross-over historical officers */}
             <button
@@ -822,6 +1118,40 @@ function miniBtn(disabled: boolean): CSSProperties {
     cursor: disabled ? 'not-allowed' : 'pointer',
     fontFamily: 'inherit',
     fontSize: '0.7rem',
+  };
+}
+
+// ── Shared bits for the 開局設定 (options) step ──────────────────────────────
+/** A small uppercase section divider, RoTK-settings style. */
+function OptHeader({ children }: { children: import('react').ReactNode }) {
+  return (
+    <div style={{
+      marginTop: '0.85rem', marginBottom: '0.35rem',
+      fontSize: '0.68rem', letterSpacing: '0.07rem', color: '#c9a64e',
+      textTransform: 'uppercase',
+      borderTop: '1px solid var(--tkm-hairline, rgba(255,255,255,0.08))',
+      paddingTop: '0.5rem',
+    }}>{children}</div>
+  );
+}
+
+const optRowStyle: CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '0.3rem',
+};
+const optNoteStyle: CSSProperties = {
+  fontSize: '0.7rem', color: '#6a7682', margin: '0.25rem 0 0', lineHeight: 1.3,
+};
+const optSelectStyle: CSSProperties = {
+  background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473',
+  padding: '0.2rem 0.3rem', fontFamily: 'inherit', fontSize: '0.76rem',
+};
+function pillStyle(on: boolean): CSSProperties {
+  return {
+    background: on ? '#26323e' : 'transparent',
+    border: '1px solid ' + (on ? '#e6c473' : '#2b3845'),
+    color: on ? '#e6c473' : '#7a8893',
+    padding: '0.2rem 0.55rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.76rem',
+    borderRadius: 4,
   };
 }
 

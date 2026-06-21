@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveBattle, siegeBuildingModifiers, type BattleSide } from './combat';
+import { resolveBattle, siegeBuildingModifiers, foreignAuxDefenseMultiplier, type BattleSide } from './combat';
 import { aggregateSlotEffects, type DefenseBuildingId } from '../data/defenseBuildings';
 import type { City } from '../types';
 import { mkOfficer, fixedRng, seededRng } from '../../test/factories';
@@ -8,6 +8,16 @@ const side = (troops: number, commander = mkOfficer()): BattleSide => ({ troops,
 
 const cityOf = (over: Partial<City>): City =>
   ({ id: 'c', name: { zh: '城', en: 'City' }, ...over } as unknown as City);
+
+describe('異域義從 — foreign aux defence multiplier', () => {
+  it('is 1 with no aux and rises with aux, capped at +15%', () => {
+    expect(foreignAuxDefenseMultiplier(0)).toBe(1);
+    expect(foreignAuxDefenseMultiplier(undefined)).toBe(1);
+    expect(foreignAuxDefenseMultiplier(2000)).toBeGreaterThan(1);
+    expect(foreignAuxDefenseMultiplier(2000)).toBeLessThan(foreignAuxDefenseMultiplier(8000));
+    expect(foreignAuxDefenseMultiplier(10_000_000)).toBeCloseTo(1.15, 5);
+  });
+});
 
 describe('resolveBattle — basics', () => {
   it('is deterministic for a fixed RNG', () => {
