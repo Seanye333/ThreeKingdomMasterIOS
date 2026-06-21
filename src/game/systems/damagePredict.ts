@@ -1,5 +1,6 @@
 import type { Officer, TacticalBattle, TacticalUnit } from '../types';
 import { ITEMS_BY_ID } from '../data/items';
+import { itemMasteryMul } from './gradeCombat';
 
 /**
  * Quick deterministic damage range estimate for a unit-vs-unit attack.
@@ -54,7 +55,8 @@ function sumItemWar(o: Officer | undefined): number {
   if (!o) return 0;
   let n = 0;
   for (const id of o.equipment) {
-    n += ITEMS_BY_ID[id]?.effects.war ?? 0;
+    const it = ITEMS_BY_ID[id];
+    if (it) n += (it.effects.war ?? 0) * itemMasteryMul(o, it);
   }
   return n;
 }
@@ -63,7 +65,8 @@ function sumItemLead(o: Officer | undefined): number {
   if (!o) return 0;
   let n = 0;
   for (const id of o.equipment) {
-    n += ITEMS_BY_ID[id]?.effects.leadership ?? 0;
+    const it = ITEMS_BY_ID[id];
+    if (it) n += (it.effects.leadership ?? 0) * itemMasteryMul(o, it);
   }
   return n;
 }

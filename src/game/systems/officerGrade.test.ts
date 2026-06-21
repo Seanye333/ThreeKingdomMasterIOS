@@ -15,12 +15,24 @@ function makeOfficer(stats: Partial<OfficerStats> = {}): Officer {
 
 describe('officerGrade', () => {
   it('cuts tiers at the documented score thresholds', () => {
+    expect(gradeFromScore(110)).toBe('diamond');
+    expect(gradeFromScore(109)).toBe('platinum');
+    expect(gradeFromScore(100)).toBe('platinum');
+    expect(gradeFromScore(99)).toBe('gold');
     expect(gradeFromScore(92)).toBe('gold');
     expect(gradeFromScore(91)).toBe('silver');
     expect(gradeFromScore(82)).toBe('silver');
     expect(gradeFromScore(81)).toBe('bronze');
     expect(gradeFromScore(70)).toBe('bronze');
     expect(gradeFromScore(69)).toBe('iron');
+  });
+
+  it('reaches 白金/鑽石 only for maxed, well-rounded legends', () => {
+    // A fully-broken-through paragon (all five near the cap) tops the ladder.
+    const paragon = makeOfficer({ leadership: 112, war: 120, intelligence: 110, politics: 105, charisma: 110 });
+    expect(officerGrade(paragon).grade).toBe('diamond');
+    const peerless = makeOfficer({ leadership: 100, war: 105, intelligence: 98, politics: 96, charisma: 100 });
+    expect(peerless && ['platinum', 'diamond']).toContain(officerGrade(peerless).grade);
   });
 
   it('rates an elite all-rounder as gold and a green recruit as iron', () => {

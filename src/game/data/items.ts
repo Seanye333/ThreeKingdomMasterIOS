@@ -24,6 +24,39 @@ export interface Item {
     trait?: string;      // PersonalityTrait
     formation?: string;  // OfficerFormationId
   };
+  /** 品階 — optional explicit rarity. When omitted, itemRarity() derives one
+   *  from the item's effect magnitude so every item reads in the shared
+   *  金/銀/銅 visual language. */
+  rarity?: 'gold' | 'silver' | 'bronze';
+}
+
+export type ItemRarity = 'gold' | 'silver' | 'bronze';
+
+const RARITY_META: Record<ItemRarity, { zh: string; en: string; color: string }> = {
+  gold:   { zh: '神兵', en: 'Legendary', color: '#e6c473' },
+  silver: { zh: '寶器', en: 'Fine',      color: '#cfd8e0' },
+  bronze: { zh: '良具', en: 'Common',    color: '#c8884e' },
+};
+
+/**
+ * 寶物品階 — a gold/silver/bronze rarity that mirrors the officer 品階 colours.
+ * Uses an explicit `item.rarity` when set, else derives one from the total
+ * stat magnitude (a one-shot grant counts as extra heft) so 神兵 like the
+ * Sky Piercer read gold while a modest trinket reads bronze.
+ */
+export function itemRarity(item: Item): ItemRarity {
+  if (item.rarity) return item.rarity;
+  const e = item.effects;
+  let weight = Math.abs(e.war ?? 0) + Math.abs(e.leadership ?? 0) + Math.abs(e.intelligence ?? 0)
+    + Math.abs(e.politics ?? 0) + Math.abs(e.charisma ?? 0);
+  if (item.grants && Object.keys(item.grants).length > 0) weight += 6;
+  if (weight >= 15) return 'gold';
+  if (weight >= 9) return 'silver';
+  return 'bronze';
+}
+
+export function itemRarityMeta(r: ItemRarity): { zh: string; en: string; color: string } {
+  return RARITY_META[r];
 }
 
 export const ITEMS: Item[] = [

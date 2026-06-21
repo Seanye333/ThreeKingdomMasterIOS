@@ -12,6 +12,7 @@
  * below while his blood runs hot, and history remembers a 罵死.
  */
 import type { Officer } from '../types';
+import { gradeCombatBonus } from './gradeCombat';
 
 export type DebateCard = 'righteous' | 'taunt' | 'logic' | 'sophistry';
 
@@ -45,9 +46,10 @@ export function eloquence(o: Officer): number {
 }
 
 export function createDebate(a: Officer, b: Officer): DebateState {
+  // 品階威儀 — a renowned mind enters the 舌戰 with steadier 氣勢 (composure).
   return {
-    a: { officer: a, composure: 100 },
-    b: { officer: b, composure: 100 },
+    a: { officer: a, composure: 100 + gradeCombatBonus(a).debatePoise },
+    b: { officer: b, composure: 100 + gradeCombatBonus(b).debatePoise },
     round: 1,
     winner: null,
     collapse: false,

@@ -20,7 +20,7 @@ import { FACILITY_DEFS, type Fort } from '../types/fort';
 import { advanceSeason } from '../state/gameState';
 import { processAging } from './aging';
 import { handleSearch, resolveInternalAffairs, type LostItemRef } from './commands';
-import { awardInternalAffairsXp } from './growth';
+import { awardInternalAffairsXp, canBreakthrough, breakthroughCost, applyBreakthrough } from './growth';
 import { handleMarch } from './combat';
 import { tickDiplomacy, applyCoalitionPressure } from './diplomacy';
 import { tickCityEconomy, tradeTreatyGrants } from './economy';
@@ -1052,6 +1052,25 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const iaXp = awardInternalAffairsXp(officers[cmd.officerId] ?? officer, cmd.type, result.success, rng);
     officers[cmd.officerId] = iaXp.officer;
     entries.push(...iaXp.entries);
+  }
+
+  // Phase 3f-bis — AI 突破. Foreign forces invest in their fully-seasoned
+  // officers too, so the player's breakthrough edge doesn't compound into a
+  // one-sided power gap over a long game. A force only breaks an officer through
+  // when its city can spare double the cost (keep a war reserve) and only some
+  // seasons (rng), so it ramps gradually rather than all at once.
+  for (const o of Object.values(officers)) {
+    if (!o.forceId || o.forceId === input.playerForceId) continue;
+    if (o.status === 'dead' || o.status === 'imprisoned' || o.status === 'retired') continue;
+    if (!canBreakthrough(o).ok) continue;
+    const city = o.locationCityId ? cities[o.locationCityId] : null;
+    if (!city || city.ownerForceId !== o.forceId) continue;
+    const cost = breakthroughCost(o);
+    if (city.gold < cost * 2) continue; // keep a reserve
+    if (rng() > 0.5) continue;          // spread breakthroughs across seasons
+    const r = applyBreakthrough(o);
+    officers[o.id] = r.officer;
+    cities[city.id] = { ...city, gold: city.gold - cost };
   }
 
   const seasonBoundary = input.seasonBoundary ?? true;

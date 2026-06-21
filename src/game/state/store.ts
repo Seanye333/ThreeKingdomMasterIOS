@@ -128,7 +128,7 @@ import { SCENIC_BY_ID, canVisitScenic, rollHermitRecruit } from '../data/scenicS
 import { razedCity, rebuiltCity, rebuildCost } from '../systems/cityRuin';
 import { buildSpecialtyTradeRoutes, tickSpecialtyTrade } from '../systems/tradeRoutes';
 import { fortMaxHpForLevel, FACILITY_DEFS, type FacilityKind } from '../types';
-import { awardBattleXp, grantXp } from '../systems/growth';
+import { awardBattleXp, grantXp, applyBreakthrough, canBreakthrough, breakthroughCost } from '../systems/growth';
 import { tickBuildings } from '../systems/buildings';
 import { evaluateCoalition } from '../systems/coalition';
 import { rollDialogue } from '../systems/dialogueRoll';
@@ -415,6 +415,13 @@ interface GameStore extends GameState {
   /** Award XP to a single officer (比武大會 prizes, etc.). Grows stats / skills
    *  via the normal growth path. Returns level-up notes; null if missing. */
   grantOfficerXp: (officerId: EntityId, amount: number, favored?: keyof import('../types').OfficerStats | Array<keyof import('../types').OfficerStats>) => { leveled: boolean; notes: string[] } | null;
+  /** 練兵/拜師 — set (or clear, with null) the stat an officer's growth biases
+   *  toward. Persists on the officer; every later XP gain honours it. */
+  setTrainingFocus: (officerId: EntityId, stat: keyof import('../types').OfficerStats | null) => void;
+  /** 轉生/突破 — a max-level officer breaks through: latent caps rise and their
+   *  signature stats sharpen. Costs gold from their current city. Returns the
+   *  growth notes, or a reason when it can't be done. */
+  breakthroughOfficer: (officerId: EntityId) => { ok: boolean; reason?: string; notes?: string[] };
   /** 後遺 — lay a short-lived affliction on an officer (養傷 from a duel, 羞憤
    *  from a lost debate). Ticks down each season; folds into effective stats. */
   afflictOfficer: (officerId: EntityId, affliction: Affliction) => void;
@@ -4755,6 +4762,33 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const r = grantXp(o, amount, Math.random, favored);
         set({ officers: { ...state.officers, [officerId]: r.officer } });
         return { leveled: r.leveled, notes: r.entries.map((e) => e.textZh ?? e.text) };
+      },
+      setTrainingFocus: (officerId, stat) => {
+        const state = get();
+        const o = state.officers[officerId];
+        if (!o) return;
+        const next = { ...o };
+        if (stat) next.trainingFocus = stat;
+        else delete next.trainingFocus;
+        set({ officers: { ...state.officers, [officerId]: next } });
+      },
+      breakthroughOfficer: (officerId) => {
+        const state = get();
+        const o = state.officers[officerId];
+        if (!o) return { ok: false, reason: 'no-officer' };
+        const gate = canBreakthrough(o);
+        if (!gate.ok) return { ok: false, reason: gate.reason };
+        const cityId = o.locationCityId;
+        const city = cityId ? state.cities[cityId] : null;
+        if (!city || city.ownerForceId !== state.playerForceId) return { ok: false, reason: 'no-city' };
+        const cost = breakthroughCost(o);
+        if (city.gold < cost) return { ok: false, reason: 'no-gold' };
+        const r = applyBreakthrough(o);
+        set({
+          officers: { ...state.officers, [officerId]: r.officer },
+          cities: { ...state.cities, [city.id]: { ...city, gold: city.gold - cost } },
+        });
+        return { ok: true, notes: r.entries.map((e) => e.textZh ?? e.text) };
       },
       startPracticeBattle: (cityId, bearing = 0, officerIds) => {
         const state = get();

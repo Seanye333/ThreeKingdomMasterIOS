@@ -18,6 +18,7 @@ import { describeBattleSite, isRiverside } from '../data/geography';
 import { cityPos } from '../data/cityGeo';
 import { sidePoolRelationshipBonus, rivalShowdownMultiplier } from './relationshipEffects';
 import { effectivePrestigeEffects } from '../data/prestige';
+import { gradeAuraPowerMul, gradeAuraMorale, itemMasteryMul } from './gradeCombat';
 import { selectSiegeEngine } from '../data/siegeEngines';
 import {
   STRATAGEM_DEFS,
@@ -289,8 +290,10 @@ export function resolveBattle(
     for (const id of Object.values(o.equipment)) {
       const item = id ? ITEMS_BY_ID[id] : null;
       if (!item) continue;
-      itemWar += item.effects.war ?? 0;
-      itemLead += item.effects.leadership ?? 0;
+      // 兵器駕馭 — an under-grade wielder doesn't get the full effect.
+      const mastery = itemMasteryMul(o, item);
+      itemWar += (item.effects.war ?? 0) * mastery;
+      itemLead += (item.effects.leadership ?? 0) * mastery;
     }
     // Tactic bonuses — each tactic the officer knows gives a small stat buff.
     const tactics = (o as Officer & { tactics?: string[] }).tactics
@@ -448,10 +451,13 @@ export function resolveBattle(
   // 威名 — a side led by famous names hits harder.
   const aPrestigeMul = prestigeCombatMultiplier(attackerPool);
   const dPrestigeMul = prestigeCombatMultiplier(defenderPool);
+  // 品階威儀 — a side led by high-grade officers fights above its numbers.
+  const aGradeMul = gradeAuraPowerMul(attackerPool);
+  const dGradeMul = gradeAuraPowerMul(defenderPool);
   const aPower =
     aBlended * Math.sqrt(attacker.troops) * aSkillEffects.powerMultiplier * aElitePower *
     (stratEffect.attackerPowerMul ?? 1) * aPolicy.attackMul * aTraitMods.attackMul * aComboMul *
-    aRelBonus.powerMul * rivalMul * aTitlePowerMul * aCasusMul * aNavalMul * aGuardMul * aPrestigeMul;
+    aRelBonus.powerMul * rivalMul * aTitlePowerMul * aCasusMul * aNavalMul * aGuardMul * aPrestigeMul * aGradeMul;
 
   const defenderIds = defenderPool.map((o) => o.id);
   const dBaseBlended =
@@ -487,7 +493,7 @@ export function resolveBattle(
     dElitePower *
     (stratEffect.defenderPowerMul ?? 1) *
     dPolicy.attackMul * dTraitMods.attackMul * dComboMul * dRelBonus.powerMul * rivalMul *
-    dTitlePowerMul * dCasusMul * dNavalMul * dGuardMul * dPrestigeMul / Math.max(0.5, dPolicy.defenseMul);
+    dTitlePowerMul * dCasusMul * dNavalMul * dGuardMul * dPrestigeMul * dGradeMul / Math.max(0.5, dPolicy.defenseMul);
 
   const total = aPower + dPower || 1;
   const aRatio = aPower / total;
@@ -551,9 +557,10 @@ export function resolveBattle(
   // Each side starts at 60 + commander leadership/10. Phases shift morale by
   // power-ratio dynamics, stratagem surprise, duel outcomes, and elite presence.
   const phases: BattlePhaseLog[] = [];
-  let aMorale = clamp(60 + attacker.commander.stats.leadership / 10, 0, 100);
+  // 品階威儀 — a graded commander steadies the line, opening with higher morale.
+  let aMorale = clamp(60 + attacker.commander.stats.leadership / 10 + gradeAuraMorale(attackerPool), 0, 100);
   let dMorale = defender.commander
-    ? clamp(60 + defender.commander.stats.leadership / 10, 0, 100)
+    ? clamp(60 + defender.commander.stats.leadership / 10 + gradeAuraMorale(defenderPool), 0, 100)
     : 30;
 
   // Phase 1 — Formation (兵陣)

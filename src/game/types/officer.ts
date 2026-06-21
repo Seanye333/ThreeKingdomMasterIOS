@@ -85,4 +85,13 @@ export interface Officer {
    *  season from stats + deeds. Lets earned-from-deeds titles drive combat /
    *  duel / income without threading deeds to every call site. */
   prestigeTitleId?: string;
+  /** 練兵/拜師 — a player-chosen stat to steer level-up growth toward. When set,
+   *  every XP source biases stat gains here (see growth.grantXp). */
+  trainingFocus?: keyof OfficerStats;
+  /** Highest 品階 ever reached — drives one-shot 晉牌封賞 rewards so a promotion
+   *  fires once and a stat wobble around the threshold can't re-trigger it. */
+  peakGrade?: import('../systems/officerGrade').OfficerGrade;
+  /** 轉生/突破 — times this officer has broken through at max growth level. Each
+   *  one lifts their latent caps and grants fresh stat growth. Default 0. */
+  breakthroughs?: number;
 }

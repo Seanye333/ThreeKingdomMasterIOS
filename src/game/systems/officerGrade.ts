@@ -10,7 +10,7 @@ import { totalLevel } from './growth';
  * officer's single best stat (a one-trick specialist still reads as elite) with
  * the average as a tie-breaker so well-rounded officers aren't undersold.
  */
-export type OfficerGrade = 'gold' | 'silver' | 'bronze' | 'iron';
+export type OfficerGrade = 'diamond' | 'platinum' | 'gold' | 'silver' | 'bronze' | 'iron';
 
 export interface GradeInfo {
   grade: OfficerGrade;
@@ -23,10 +23,12 @@ export interface GradeInfo {
 }
 
 const GRADE_META: Record<OfficerGrade, Omit<GradeInfo, 'grade' | 'score'>> = {
-  gold:   { name: { zh: '金牌', en: 'Gold' },   rank: { zh: '一流', en: 'Elite' },   color: '#e6c473' },
-  silver: { name: { zh: '銀牌', en: 'Silver' }, rank: { zh: '二流', en: 'Veteran' }, color: '#cfd8e0' },
-  bronze: { name: { zh: '銅牌', en: 'Bronze' }, rank: { zh: '三流', en: 'Capable' }, color: '#c8884e' },
-  iron:   { name: { zh: '鐵牌', en: 'Iron' },   rank: { zh: '末流', en: 'Green' },   color: '#7a8893' },
+  diamond:  { name: { zh: '鑽石', en: 'Diamond' },  rank: { zh: '神品', en: 'Mythic' },   color: '#8ee8ff' },
+  platinum: { name: { zh: '白金', en: 'Platinum' }, rank: { zh: '超一流', en: 'Peerless' }, color: '#eaf0f4' },
+  gold:     { name: { zh: '金牌', en: 'Gold' },     rank: { zh: '一流', en: 'Elite' },    color: '#e6c473' },
+  silver:   { name: { zh: '銀牌', en: 'Silver' },   rank: { zh: '二流', en: 'Veteran' },  color: '#cfd8e0' },
+  bronze:   { name: { zh: '銅牌', en: 'Bronze' },   rank: { zh: '三流', en: 'Capable' },  color: '#c8884e' },
+  iron:     { name: { zh: '鐵牌', en: 'Iron' },     rank: { zh: '末流', en: 'Green' },    color: '#7a8893' },
 };
 
 /** Blended quality score: 55% best stat, 45% average across the five. */
@@ -39,10 +41,20 @@ export function gradeScore(officer: Officer): number {
 }
 
 export function gradeFromScore(score: number): OfficerGrade {
+  // 白金/鑽石 sit above 金牌 — natural stats top out around 金, so these upper
+  // tiers are reached mainly by well-rounded legends and 轉生/突破 growth.
+  if (score >= 110) return 'diamond';
+  if (score >= 100) return 'platinum';
   if (score >= 92) return 'gold';
   if (score >= 82) return 'silver';
   if (score >= 70) return 'bronze';
   return 'iron';
+}
+
+/** Ascending tier order — lets callers tell whether one grade outranks another. */
+const GRADE_ORDER: OfficerGrade[] = ['iron', 'bronze', 'silver', 'gold', 'platinum', 'diamond'];
+export function gradeRank(grade: OfficerGrade): number {
+  return GRADE_ORDER.indexOf(grade);
 }
 
 export function officerGrade(officer: Officer): GradeInfo {

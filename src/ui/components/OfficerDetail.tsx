@@ -28,9 +28,11 @@ import { WEAPON_TYPE_DEFS, deriveWeaponType } from '../../game/data/weaponTypes'
 import { HISTORICAL_LIFESPANS } from '../../game/data/historicalLifespans';
 import { effectivePrestige } from '../../game/data/prestige';
 import { renownFromDeeds, fameTier, fameMedal } from '../../game/systems/fame';
-import { xpProgress } from '../../game/systems/growth';
+import { xpProgress, learnableSkills, canBreakthrough, breakthroughCost, MAX_BREAKTHROUGHS } from '../../game/systems/growth';
 import { officerGrade, officerLevel } from '../../game/systems/officerGrade';
-import type { City, Force, Officer, Skill } from '../../game/types';
+import { gradeCombatBonus, itemMasteryMul } from '../../game/systems/gradeCombat';
+import { itemRarity, itemRarityMeta } from '../../game/data/items';
+import type { City, Force, Officer, OfficerStats, Skill } from '../../game/types';
 import { FORMATIONS_BY_ID } from '../../game/data/formations';
 import { TACTIC_DESC } from './TacticsModal';
 import { POLICY_DESC } from './PoliciesModal';
@@ -65,12 +67,15 @@ function effectiveStatBonuses(o: Officer): {
   charisma: number;
 } {
   const bonus = { leadership: 0, war: 0, intelligence: 0, politics: 0, charisma: 0 };
-  // Item bonuses
+  // Item bonuses. 兵器駕馭 — war/leadership are scaled by the wielder's mastery
+  // (matching what combat actually applies), so the bars don't promise more
+  // than an under-grade officer can draw from a 神兵.
   for (const itemId of o.equipment) {
     const item = ITEMS_BY_ID[itemId];
     if (!item) continue;
-    bonus.leadership += item.effects.leadership ?? 0;
-    bonus.war += item.effects.war ?? 0;
+    const mastery = itemMasteryMul(o, item);
+    bonus.leadership += Math.round((item.effects.leadership ?? 0) * mastery);
+    bonus.war += Math.round((item.effects.war ?? 0) * mastery);
     bonus.intelligence += item.effects.intelligence ?? 0;
     bonus.politics += item.effects.politics ?? 0;
     bonus.charisma += item.effects.charisma ?? 0;
@@ -135,8 +140,11 @@ export function OfficerDetail({
   const officerWishes = useGameStore((s) => s.officerWishes);
   const openWish = officerWishes.find((w) => w.officerId === officer.id);
   const unequipItemFn = useGameStore((s) => s.unequipItem);
+  const setTrainingFocusFn = useGameStore((s) => s.setTrainingFocus);
+  const breakthroughOfficerFn = useGameStore((s) => s.breakthroughOfficer);
   const activeTraining = pendingTrainings.find((tr) => tr.officerId === officer.id);
   const isPlayerOfficer = officer.forceId === playerForceId;
+  const [progressMsg, setProgressMsg] = useState<string | null>(null);
 
   const forces = forcesOverride ?? storeForces;
   const cities = citiesOverride ?? storeCities;
@@ -399,6 +407,30 @@ export function OfficerDetail({
                   </div>
                 );
               })()}
+              {(() => {
+                // 寶物品階 — the best gold/silver/bronze rarity the officer carries,
+                // shown in the same palette as 品階 so ability and gear read alike.
+                const live = allOfficers[officer.id] ?? officer;
+                const owned = live.equipment.map((id) => ITEMS_BY_ID[id]).filter(Boolean);
+                if (owned.length === 0) return null;
+                const order = { gold: 3, silver: 2, bronze: 1 } as const;
+                let best = owned[0];
+                for (const it of owned) if (order[itemRarity(it)] > order[itemRarity(best)]) best = it;
+                const rm = itemRarityMeta(itemRarity(best));
+                return (
+                  <div title={t(`持有 ${owned.length} 件寶物，最高 ${rm.zh}`, `Carries ${owned.length} item(s), best ${rm.en}`)}>
+                    <span style={{ fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('寶物', 'Gear')} </span>
+                    <span style={{
+                      display: 'inline-block', padding: '0.1rem 0.5rem', borderRadius: 2,
+                      background: '#10161e', border: `1px solid ${rm.color}`, color: rm.color,
+                      fontSize: '0.85rem', letterSpacing: '0.08rem',
+                    }}>
+                      {lang === 'en' ? rm.en : rm.zh}
+                      {owned.length > 1 && <span style={{ marginLeft: 4, fontSize: '0.62rem', opacity: 0.8 }}>×{owned.length}</span>}
+                    </span>
+                  </div>
+                );
+              })()}
               {officer.doctrine && (() => {
                 const d = DOCTRINE_DEFS[officer.doctrine];
                 return (
@@ -437,6 +469,121 @@ export function OfficerDetail({
                 );
               })()}
             </div>
+
+            {(() => {
+              // ── 品階威儀 / 練兵 / 突破 / 可習之技 — the progression controls ──
+              const live = allOfficers[officer.id] ?? officer;
+              const STAT_META: Array<{ key: keyof OfficerStats; zh: string; en: string }> = [
+                { key: 'leadership', zh: '統', en: 'LDR' },
+                { key: 'war', zh: '武', en: 'WAR' },
+                { key: 'intelligence', zh: '智', en: 'INT' },
+                { key: 'politics', zh: '政', en: 'POL' },
+                { key: 'charisma', zh: '魅', en: 'CHA' },
+              ];
+              const gp = gradeCombatBonus(live);
+              const passivePct = Math.round((gp.powerMul - 1) * 100);
+              const gate = canBreakthrough(live);
+              const count = live.breakthroughs ?? 0;
+              const cost = breakthroughCost(live);
+              const cityGold = city?.gold ?? 0;
+              const pool = learnableSkills(live);
+              const labelStyle = { fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' } as const;
+              return (
+                <div style={{ marginTop: '0.7rem', display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                  {/* 品階威儀 — what the grade actually does in a fight */}
+                  {passivePct > 0 && (
+                    <div style={{ fontSize: '0.7rem', color: '#9aa7b3' }}>
+                      <span style={labelStyle}>{t('品階威儀', 'Grade aura')} </span>
+                      {t(
+                        `戰力 +${passivePct}%　士氣 +${gp.morale}　單挑 +${gp.duelBonus}`,
+                        `Power +${passivePct}%, Morale +${gp.morale}, Duel +${gp.duelBonus}`,
+                      )}
+                    </div>
+                  )}
+
+                  {/* 練兵/拜師 — steer growth (player officers only) */}
+                  {isMine && (
+                    <div>
+                      <span style={labelStyle}>{t('練兵方向', 'Training focus')} </span>
+                      <span style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '0.3rem', marginLeft: '0.3rem', verticalAlign: 'middle' }}>
+                        {STAT_META.map((s) => {
+                          const on = live.trainingFocus === s.key;
+                          return (
+                            <button
+                              key={s.key}
+                              onClick={() => setTrainingFocusFn(officer.id, on ? null : s.key)}
+                              title={t('成長偏向此能力', 'Bias level-up growth toward this stat')}
+                              style={{
+                                cursor: 'pointer', padding: '0.1rem 0.45rem', borderRadius: 2,
+                                background: on ? '#2a2010' : '#10161e',
+                                border: `1px solid ${on ? '#e6c473' : '#26323e'}`,
+                                color: on ? '#e6c473' : '#8a97a3', fontSize: '0.78rem',
+                              }}
+                            >
+                              {lang === 'en' ? s.en : s.zh}
+                            </button>
+                          );
+                        })}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* 轉生/突破 — renewed growth past the XP ceiling */}
+                  {isMine && (count > 0 || gate.ok || gate.reason === 'capped') && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <span style={labelStyle}>{t('突破', 'Breakthrough')}</span>
+                      {count > 0 && (
+                        <span title={t(`已突破 ${count}/${MAX_BREAKTHROUGHS} 重`, `${count}/${MAX_BREAKTHROUGHS} breakthroughs`)} style={{ color: '#e6c473', fontSize: '0.82rem', letterSpacing: '0.1rem' }}>
+                          {'★'.repeat(count)}{'☆'.repeat(Math.max(0, MAX_BREAKTHROUGHS - count))}
+                        </span>
+                      )}
+                      {gate.ok ? (
+                        <button
+                          onClick={() => {
+                            const res = breakthroughOfficerFn(officer.id);
+                            setProgressMsg(res.ok
+                              ? (res.notes?.[0] ?? t('突破成功!', 'Breakthrough!'))
+                              : res.reason === 'no-gold'
+                                ? t('府庫黃金不足', 'Not enough gold')
+                                : t('無法突破', 'Cannot break through'));
+                          }}
+                          disabled={cityGold < cost}
+                          title={t(`消耗 ${cost} 黃金（本城 ${cityGold}）`, `Costs ${cost} gold (city has ${cityGold})`)}
+                          style={{
+                            cursor: cityGold < cost ? 'not-allowed' : 'pointer', padding: '0.12rem 0.6rem', borderRadius: 2,
+                            background: cityGold < cost ? '#10161e' : 'linear-gradient(180deg,#4a3a1a,#2a2010)',
+                            border: '1px solid #e6c473', color: cityGold < cost ? '#6a7480' : '#f0d890', fontSize: '0.78rem',
+                          }}
+                        >
+                          {t(`突破 · ${cost}黃金`, `Break through · ${cost}g`)}
+                        </button>
+                      ) : gate.reason === 'capped' ? (
+                        <span style={{ fontSize: '0.72rem', color: '#7a8893' }}>{t('已臻極限', 'At the limit')}</span>
+                      ) : null}
+                      {progressMsg && <span style={{ fontSize: '0.72rem', color: '#9ed8b8' }}>{progressMsg}</span>}
+                    </div>
+                  )}
+
+                  {/* 可習之技 — skills this officer could still grow into */}
+                  {pool.length > 0 && (
+                    <div>
+                      <span style={labelStyle}>{t('可習之技', 'May yet learn')} </span>
+                      <span style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '0.3rem', marginLeft: '0.3rem', verticalAlign: 'middle' }}>
+                        {pool.slice(0, 8).map((sk) => (
+                          <span key={sk.id} style={{
+                            padding: '0.08rem 0.4rem', borderRadius: 2, background: '#10161e',
+                            border: '1px dashed #3a4a5a', color: '#8a97a3', fontSize: '0.72rem',
+                          }}>
+                            {lang === 'en' ? sk.name.en : sk.name.zh}
+                          </span>
+                        ))}
+                        {pool.length > 8 && <span style={{ fontSize: '0.7rem', color: '#7a8893' }}>+{pool.length - 8}</span>}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </section>
         )}
 
@@ -807,16 +954,18 @@ export function OfficerDetail({
                     .join(' · ');
                   const grantSummary = item.grants ? Object.entries(item.grants)
                     .map(([k, v]) => `+${k}:${v}`).join(' · ') : '';
+                  const rm = itemRarityMeta(itemRarity(item));
                   return (
                     <span
                       key={id}
-                      title={`${desc}\n${effects}${grantSummary ? '\n' + grantSummary : ''}`}
+                      title={`【${lang === 'en' ? rm.en : rm.zh}】${desc}\n${effects}${grantSummary ? '\n' + grantSummary : ''}`}
                       style={{
                         background: '#10161e', border: `1px solid ${kindColor}`, color: kindColor,
                         padding: '0.3rem 0.55rem', fontSize: '0.78rem', letterSpacing: '0.1rem',
                         display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
                       }}
                     >
+                      <span title={lang === 'en' ? rm.en : rm.zh} style={{ width: 7, height: 7, borderRadius: '50%', background: rm.color, flexShrink: 0 }} />
                       <span>
                         {lang === 'en' ? item.name.en : item.name.zh}
                         {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#7a8893', fontStyle: 'italic' }}>{item.name.en}</span></>}

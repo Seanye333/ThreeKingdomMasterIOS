@@ -4,6 +4,7 @@ import { SKILLS_BY_ID } from '../data/skills';
 import { effectivePrestigeEffects } from '../data/prestige';
 import { afflictionDelta } from './afflictions';
 import { officerLevel } from './officerGrade';
+import { gradeCombatBonus, itemMasteryMul } from './gradeCombat';
 
 /**
  * One-on-one duel resolution between two officers — a multi-round 氣力 bout.
@@ -150,7 +151,8 @@ function prowessParts(o: Officer): { itemBonus: number; skillBonus: number; trai
   let itemBonus = 0;
   for (const id of o.equipment) {
     const it = ITEMS_BY_ID[id];
-    if (it?.effects.war) itemBonus += it.effects.war;
+    // 兵器駕馭 — a 神兵 only tells in worthy hands.
+    if (it?.effects.war) itemBonus += it.effects.war * itemMasteryMul(o, it);
   }
   let skillBonus = 0;
   for (const sid of o.skills) {
@@ -177,13 +179,15 @@ function prowessParts(o: Officer): { itemBonus: number; skillBonus: number; trai
 export function staticProwess(o: Officer): number {
   const p = prowessParts(o);
   // 養傷 — a lingering duel wound saps 武力 here too.
-  return Math.round(o.stats.war + afflictionDelta(o, 'war') + p.itemBonus + p.skillBonus + p.traitBonus + effectivePrestigeEffects(o).duelBonus);
+  return Math.round(o.stats.war + afflictionDelta(o, 'war') + p.itemBonus + p.skillBonus + p.traitBonus + effectivePrestigeEffects(o).duelBonus + gradeCombatBonus(o).duelBonus);
 }
 
 function rollOne(o: Officer, rng: () => number): DuelRoll {
   const { itemBonus, skillBonus, traitBonus } = prowessParts(o);
+  // 品階威儀 — a renowned warrior carries an edge into single combat.
+  const gradeBonus = gradeCombatBonus(o).duelBonus;
   const diceRoll = Math.floor(rng() * 30);
-  const total = o.stats.war + itemBonus + skillBonus + traitBonus + diceRoll;
+  const total = o.stats.war + itemBonus + skillBonus + traitBonus + gradeBonus + diceRoll;
   return {
     officerId: o.id,
     base: o.stats.war,

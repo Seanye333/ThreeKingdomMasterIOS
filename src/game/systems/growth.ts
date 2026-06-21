@@ -2,6 +2,7 @@ import type { EntityId, InternalAffairsType, Officer, OfficerStats, ReportEntry 
 import { SKILLS, SKILLS_BY_ID } from '../data/skills';
 import { rollLevelUpTrait } from './traitEffects';
 import { TRAIT_DEFS_BY_ID } from '../data/personality';
+import { officerGrade, gradeScore, gradeFromScore, gradeRank } from './officerGrade';
 
 const STAT_NAME_ZH: Record<keyof OfficerStats, string> = {
   leadership: '統率',
@@ -76,7 +77,13 @@ export function grantXp(
   leveled: boolean;
   entries: ReportEntry[];
 } {
-  const favoredKeys = favored ? (Array.isArray(favored) ? favored : [favored]) : null;
+  // 偏向成長 — combine any per-call steering with the officer's standing
+  // 練兵/拜師 focus, so *every* XP source (battle, civic, spar) respects the
+  // player's chosen direction once it's set.
+  const focusList: Array<keyof OfficerStats> = [];
+  if (favored) focusList.push(...(Array.isArray(favored) ? favored : [favored]));
+  if (officer.trainingFocus && !focusList.includes(officer.trainingFocus)) focusList.push(officer.trainingFocus);
+  const favoredKeys = focusList.length > 0 ? focusList : null;
   const oldXp = officer.xp ?? 0;
   const newXp = oldXp + amount;
   const oldLevel = totalLevel(oldXp);
@@ -147,11 +154,51 @@ export function grantXp(
       });
     }
   }
+  // 晉牌封賞 — a 品階 promotion (鐵→銅→銀→金) is a milestone, not just a silent
+  // number creep. Fire once per tier reached (tracked by peakGrade so a stat
+  // wobble around the threshold can't farm it), with a one-time morale/loyalty
+  // lift as the court takes notice.
+  let peakGrade = officer.peakGrade;
+  let loyalty = officer.loyalty;
+  const probe: Officer = { ...officer, stats, traits };
+  const newGrade = gradeFromScore(gradeScore(probe));
+  const basePeak = peakGrade ?? gradeFromScore(gradeScore(officer));
+  if (gradeRank(newGrade) > gradeRank(basePeak)) {
+    peakGrade = newGrade;
+    loyalty = Math.min(100, loyalty + 2);
+    const gi = officerGrade(probe);
+    entries.push({
+      cityId: officer.locationCityId,
+      kind: 'talent',
+      text: `${officer.name.en} has been promoted to ${gi.name.en} grade (${gi.rank.en}).`,
+      textZh: `${officer.name.zh}晉升${gi.name.zh}（${gi.rank.zh}），名動一時。`,
+    });
+  }
+
   return {
-    officer: { ...officer, xp: newXp, stats, latentStats: latent, skills, traits },
+    officer: { ...officer, xp: newXp, stats, latentStats: latent, skills, traits, peakGrade, loyalty },
     leveled: newLevel > oldLevel,
     entries,
   };
+}
+
+/**
+ * 可習之技 — the innate skills an officer could plausibly grow into at their
+ * current stat spread (the same filter the level-up roll draws from). Surfaced
+ * in the officer sheet so growth has a visible horizon instead of being a black
+ * box. Pure read — does not mutate or roll.
+ */
+export function learnableSkills(officer: Officer): Array<{ id: EntityId; name: { en: string; zh: string } }> {
+  const owned = new Set(officer.skills);
+  const s = officer.stats;
+  return SKILLS.filter((sk) => {
+    if (owned.has(sk.id)) return false;
+    if (sk.category === 'combat' && s.war < 65) return false;
+    if (sk.category === 'wisdom' && s.intelligence < 65) return false;
+    if (sk.category === 'command' && s.leadership < 65) return false;
+    if (sk.category === 'civil' && s.politics < 60) return false;
+    return true;
+  }).map((sk) => ({ id: sk.id, name: { en: sk.name.en, zh: sk.name.zh } }));
 }
 
 /**
@@ -182,6 +229,65 @@ void SKILLS_BY_ID;
 
 /** Hard cap for officer stats after growth — was 100, now 150. */
 export const STAT_CAP = 150;
+
+// ─── 轉生/突破 — renewed growth past the XP ceiling ─────────────────────────
+/** How many times an officer may break through (keeps stats from running to 150). */
+export const MAX_BREAKTHROUGHS = 5;
+/** Each breakthrough lifts every latent cap by this much (up to STAT_CAP). */
+const BREAKTHROUGH_LATENT_GAIN = 6;
+/** Base gold cost; rises with each breakthrough already taken. */
+const BREAKTHROUGH_BASE_COST = 800;
+
+/** Gold cost of this officer's next breakthrough (escalates per breakthrough taken). */
+export function breakthroughCost(officer: Officer): number {
+  return BREAKTHROUGH_BASE_COST * (1 + (officer.breakthroughs ?? 0));
+}
+
+/** Whether an officer is eligible to break through right now (max growth level, under the cap). */
+export function canBreakthrough(officer: Officer): { ok: boolean; reason?: 'not-max-level' | 'capped' } {
+  if (totalLevel(officer.xp ?? 0) < MAX_GROWTH_LEVEL) return { ok: false, reason: 'not-max-level' };
+  if ((officer.breakthroughs ?? 0) >= MAX_BREAKTHROUGHS) return { ok: false, reason: 'capped' };
+  return { ok: true };
+}
+
+/**
+ * 突破 — a fully-seasoned officer (max growth level) channels their experience
+ * into a fresh leap: every latent cap rises, and their three signature stats
+ * sharpen by +2 (within the new caps). This is the only growth past the XP
+ * ceiling, so it's the long-game goal for veteran officers. Pure — the caller
+ * (store) is responsible for the gold cost and eligibility gate.
+ */
+export function applyBreakthrough(
+  officer: Officer,
+): { officer: Officer; entries: ReportEntry[] } {
+  const base = officer.latentStats ?? defaultLatent(officer.stats);
+  const latent: OfficerStats = {
+    leadership: Math.min(STAT_CAP, base.leadership + BREAKTHROUGH_LATENT_GAIN),
+    war: Math.min(STAT_CAP, base.war + BREAKTHROUGH_LATENT_GAIN),
+    intelligence: Math.min(STAT_CAP, base.intelligence + BREAKTHROUGH_LATENT_GAIN),
+    politics: Math.min(STAT_CAP, base.politics + BREAKTHROUGH_LATENT_GAIN),
+    charisma: Math.min(STAT_CAP, base.charisma + BREAKTHROUGH_LATENT_GAIN),
+  };
+  let stats = { ...officer.stats };
+  // Sharpen the three signature stats (a breakthrough plays to strengths).
+  const ranked = (Object.keys(stats) as Array<keyof OfficerStats>)
+    .sort((a, b) => stats[b] - stats[a])
+    .slice(0, 3);
+  const grown: string[] = [];
+  for (const k of ranked) {
+    const next = Math.min(latent[k], stats[k] + 2);
+    if (next > stats[k]) grown.push(`${STAT_NAME_ZH[k]}+${next - stats[k]}`);
+    stats = { ...stats, [k]: next };
+  }
+  const breakthroughs = (officer.breakthroughs ?? 0) + 1;
+  const entries: ReportEntry[] = [{
+    cityId: officer.locationCityId,
+    kind: 'talent',
+    text: `${officer.name.en} achieved a breakthrough (#${breakthroughs}), reaching new heights.`,
+    textZh: `${officer.name.zh}突破第${breakthroughs}重，潛力大進（${grown.join('、') || '臻於化境'}）。`,
+  }];
+  return { officer: { ...officer, stats, latentStats: latent, breakthroughs }, entries };
+}
 
 function defaultLatent(stats: OfficerStats): OfficerStats {
   // Latent gap = current stat + 20% of remaining headroom (up to STAT_CAP).
