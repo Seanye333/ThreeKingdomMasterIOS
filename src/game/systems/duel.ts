@@ -1,5 +1,5 @@
 import type { Officer } from '../types';
-import { ITEMS_BY_ID } from '../data/items';
+import { liveItemById } from '../data/items';
 import { SKILLS_BY_ID } from '../data/skills';
 import { effectivePrestigeEffects } from '../data/prestige';
 import { afflictionDelta } from './afflictions';
@@ -91,8 +91,9 @@ export function resolveDuel(input: DuelInput): DuelResult {
   const aStatic = a.total - a.diceRoll;
   const dStatic = d.total - d.diceRoll;
 
-  let aSt = 100;
-  let dSt = 100;
+  // 氣力 — graded champions enter the bout with a deeper reserve (品階威儀).
+  let aSt = 100 + gradeCombatBonus(input.attacker).duelStamina;
+  let dSt = 100 + gradeCombatBonus(input.defender).duelStamina;
   const rounds: DuelExchange[] = [];
   let knockout: 'attacker' | 'defender' | null = null;
 
@@ -150,8 +151,8 @@ export function resolveDuel(input: DuelInput): DuelResult {
 function prowessParts(o: Officer): { itemBonus: number; skillBonus: number; traitBonus: number } {
   let itemBonus = 0;
   for (const id of o.equipment) {
-    const it = ITEMS_BY_ID[id];
-    // 兵器駕馭 — a 神兵 only tells in worthy hands.
+    const it = liveItemById(id);
+    // 兵器駕馭 — a 神兵 only tells in worthy hands; 精煉 boosts read live here.
     if (it?.effects.war) itemBonus += it.effects.war * itemMasteryMul(o, it);
   }
   let skillBonus = 0;

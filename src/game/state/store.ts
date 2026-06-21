@@ -33,7 +33,7 @@ import { CIVIC_TITLES_BY_ID, MILITARY_RANKS_BY_ID } from '../data/titles';
 import { FORGE_RECIPES_BY_ID } from '../data/forging';
 import { EDICTS_BY_KIND, IMPERIAL_RANKS_BY_ID } from '../data/imperial';
 import { ESPIONAGE_DEFS_BY_KIND } from '../data/espionage';
-import { ITEMS_BY_ID } from '../data/items';
+import { ITEMS_BY_ID, refineCost, REFINE_MAX, setRefineRegistry } from '../data/items';
 import { marchDurationFor } from '../data/cities';
 import { terrainRoute, positionAlongRoute, marchDestCoords } from '../data/territories';
 import { cityPos, CITY_GEO_OVERRIDES } from '../data/cityGeo';
@@ -510,6 +510,10 @@ interface GameStore extends GameState {
     cityId: EntityId,
     recipeId: EntityId,
   ) => { ok: boolean; reason?: string };
+  /** 精煉 — raise an item one refinement level (+1), charged from the city that
+   *  holds it (its wielder's city, or the lost-item city). A foundry there
+   *  discounts the cost. */
+  refineItem: (itemId: EntityId) => { ok: boolean; reason?: string; cost?: number };
   acknowledgeAchievements: () => void;
   acknowledgeDeedTitles: () => void;
   acknowledgePrestige: () => void;
@@ -729,19 +733,23 @@ export const useGameStore = create<GameStore>()(
     (set, get) => ({
       ...EMPTY_STATE,
 
-      loadScenario: (scenario, playerForceId, difficulty, customOfficer) =>
-        set((s) => loadScenario(s, scenario, playerForceId, difficulty, customOfficer)),
+      loadScenario: (scenario, playerForceId, difficulty, customOfficer) => {
+        setRefineRegistry({}); // fresh game → drop any prior 精煉 registry
+        set((s) => loadScenario(s, scenario, playerForceId, difficulty, customOfficer));
+      },
 
       // 演義模擬器 — load a scenario with NO player force and start in
       // observe mode, so the AI runs every realm and the season tick
       // simulates history while you watch.
-      observeScenario: (scenario, difficulty) =>
+      observeScenario: (scenario, difficulty) => {
+        setRefineRegistry({});
         set((s) => ({
           ...loadScenario(s, scenario, scenario.forces[0].id, difficulty),
           playerForceId: null,
           victoryStatus: 'observing' as const,
           tutorialStep: null,
-        })),
+        }));
+      },
 
       startChallenge: (challengeId) => {
         const challenge = findChallenge(challengeId);
@@ -750,6 +758,7 @@ export const useGameStore = create<GameStore>()(
         if (!scenario) return;
         const hasForce = scenario.forces.some((f) => f.id === challenge.forceId);
         if (!hasForce) return;
+        setRefineRegistry({});
         set((s) => ({
           ...loadScenario(s, scenario, challenge.forceId, challenge.difficulty),
           activeChallenge: challenge.id,
@@ -5939,6 +5948,36 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         return { ok: true };
       },
 
+      refineItem: (itemId) => {
+        const state = get();
+        const base = ITEMS_BY_ID[itemId];
+        if (!base) return { ok: false, reason: 'no-item' };
+        const plus = state.itemRefinements[itemId] ?? 0;
+        if (plus >= REFINE_MAX) return { ok: false, reason: 'maxed' };
+        // Charge the city that holds the item: its wielder's city if equipped,
+        // else the city its lost-item copy sits in.
+        const holder = Object.values(state.officers).find(
+          (o) => o.forceId === state.playerForceId && o.equipment.includes(itemId),
+        );
+        let city = holder?.locationCityId ? state.cities[holder.locationCityId] : undefined;
+        if (!city) {
+          const lost = state.lostItems.find((li) => li.itemId === itemId);
+          if (lost) city = state.cities[lost.cityId];
+        }
+        if (!city || city.ownerForceId !== state.playerForceId) return { ok: false, reason: 'no-city' };
+        // 鍛爐相助 — a foundry in the city shaves 25% off the refining cost.
+        const hasFoundry = state.buildings.some((b) => b.cityId === city!.id && b.id === 'foundry');
+        const cost = Math.round(refineCost(base, plus) * (hasFoundry ? 0.75 : 1));
+        if (city.gold < cost) return { ok: false, reason: 'no-gold', cost };
+        const itemRefinements = { ...state.itemRefinements, [itemId]: plus + 1 };
+        setRefineRegistry(itemRefinements);
+        set({
+          itemRefinements,
+          cities: { ...state.cities, [city.id]: { ...city, gold: city.gold - cost } },
+        });
+        return { ok: true, cost };
+      },
+
       acknowledgeAchievements: () => set({ recentAchievementUnlocks: [] }),
       acknowledgeDeedTitles: () => set({ recentDeedTitles: [] }),
       acknowledgePrestige: () => set({ recentPrestige: [] }),
@@ -7082,6 +7121,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         placementMode: state.placementMode,
         enabledDynasties: state.enabledDynasties,
         lostItems: state.lostItems,
+        itemRefinements: state.itemRefinements,
         // Persist replays WITHOUT their turn-by-turn trails — a single battle
         // trail can run ~0.5-1MB and partialize stringifies on every set().
         // The trail stays watchable for the current session; reloaded replays
@@ -7129,6 +7169,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (!state.recentBonds) state.recentBonds = [];
         if (!state.recentPrestigeCeremony) state.recentPrestigeCeremony = [];
         if (!state.recentPromotions) state.recentPromotions = [];
+        if (!state.itemRefinements) state.itemRefinements = {};
+        // 精煉登記 — sync the denormalized refinement registry the pure
+        // item-effect read sites resolve through.
+        setRefineRegistry(state.itemRefinements);
         const cityOwnerByCityId = Object.fromEntries(
           Object.values(state.cities ?? {}).map((c) => [c.id, c.ownerForceId]),
         );

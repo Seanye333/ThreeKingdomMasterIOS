@@ -215,6 +215,9 @@ export interface GameState {
   enabledDynasties: Dynasty[];
   /** Items hidden in cities, awaiting discovery via Search. */
   lostItems: Array<{ itemId: EntityId; cityId: EntityId }>;
+  /** 精煉 — per-item refinement level (+0…REFINE_MAX). Keyed by itemId since
+   *  every item is globally unique. Absent/0 = unrefined. */
+  itemRefinements: Record<EntityId, number>;
   /** Item-holder history — append-only log of equip transfers. */
   itemHistory: Array<{
     itemId: EntityId;
@@ -435,6 +438,7 @@ export const EMPTY_STATE: GameState = {
   placementMode: 'historical',
   enabledDynasties: [],
   lostItems: [],
+  itemRefinements: {},
   itemHistory: [],
   battleReplays: [],
   duelHall: [],
@@ -688,6 +692,7 @@ export function loadScenario(
     tutorialStep: null,
     musicTrack: state.musicTrack,
     lostItems: computeLostItems(officers, scaledCities, state.placementMode),
+    itemRefinements: {},
     itemHistory: [],
     battleReplays: [],
     duelHall: [],

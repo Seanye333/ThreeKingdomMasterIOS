@@ -94,4 +94,8 @@ export interface Officer {
   /** 轉生/突破 — times this officer has broken through at max growth level. Each
    *  one lifts their latent caps and grants fresh stat growth. Default 0. */
   breakthroughs?: number;
+  /** 戰功威望 — accumulated battlefield renown. Folds into gradeScore so a
+   *  battle-proven veteran can earn a higher 品階 than a higher-statted but
+   *  untested rival (晉品評定). Earned on victories. Default 0. */
+  renown?: number;
 }

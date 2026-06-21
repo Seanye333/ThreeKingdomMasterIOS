@@ -28,10 +28,10 @@ import { WEAPON_TYPE_DEFS, deriveWeaponType } from '../../game/data/weaponTypes'
 import { HISTORICAL_LIFESPANS } from '../../game/data/historicalLifespans';
 import { effectivePrestige } from '../../game/data/prestige';
 import { renownFromDeeds, fameTier, fameMedal } from '../../game/systems/fame';
-import { xpProgress, learnableSkills, canBreakthrough, breakthroughCost, MAX_BREAKTHROUGHS, breakthroughTitle } from '../../game/systems/growth';
+import { xpProgress, learnableSkills, canBreakthrough, breakthroughCost, MAX_BREAKTHROUGHS, breakthroughTitle, growthPowerMul } from '../../game/systems/growth';
 import { officerGrade, officerLevel } from '../../game/systems/officerGrade';
 import { gradeCombatBonus, itemMasteryMul } from '../../game/systems/gradeCombat';
-import { itemRarity, itemRarityMeta } from '../../game/data/items';
+import { itemRarity, itemRarityMeta, liveItemById, refineCost, REFINE_MAX } from '../../game/data/items';
 import { activeItemSets } from '../../game/data/itemSets';
 import { ageBand } from '../../game/systems/aging';
 import type { City, Force, Officer, OfficerStats, Skill } from '../../game/types';
@@ -73,7 +73,7 @@ function effectiveStatBonuses(o: Officer): {
   // (matching what combat actually applies), so the bars don't promise more
   // than an under-grade officer can draw from a 神兵.
   for (const itemId of o.equipment) {
-    const item = ITEMS_BY_ID[itemId];
+    const item = liveItemById(itemId);
     if (!item) continue;
     const mastery = itemMasteryMul(o, item);
     bonus.leadership += Math.round((item.effects.leadership ?? 0) * mastery);
@@ -142,6 +142,9 @@ export function OfficerDetail({
   const officerWishes = useGameStore((s) => s.officerWishes);
   const openWish = officerWishes.find((w) => w.officerId === officer.id);
   const unequipItemFn = useGameStore((s) => s.unequipItem);
+  const refineItemFn = useGameStore((s) => s.refineItem);
+  // Subscribe so refining (which bumps this map) re-renders the equipment list.
+  const itemRefinements = useGameStore((s) => s.itemRefinements);
   const setTrainingFocusFn = useGameStore((s) => s.setTrainingFocus);
   const breakthroughOfficerFn = useGameStore((s) => s.breakthroughOfficer);
   const activeTraining = pendingTrainings.find((tr) => tr.officerId === officer.id);
@@ -367,8 +370,9 @@ export function OfficerDetail({
                 // 品階 — gold/silver/bronze grade from effective stats. Descriptive,
                 // not a spend currency: it climbs 鐵→銅→銀→金 as the officer grows.
                 const g = officerGrade(officer);
+                const renown = Math.round(officer.renown ?? 0);
                 return (
-                  <div title={t(`品階 ${g.rank.zh} · 評分 ${g.score}`, `Grade ${g.rank.en} · score ${g.score}`)}>
+                  <div title={t(`品階 ${g.rank.zh} · 評分 ${g.score}${renown ? ` · 戰功威望 ${renown}` : ''}`, `Grade ${g.rank.en} · score ${g.score}${renown ? ` · renown ${renown}` : ''}`)}>
                     <span style={{ fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('品階', 'Grade')} </span>
                     <span style={{
                       display: 'inline-block', padding: '0.1rem 0.5rem', borderRadius: 2,
@@ -380,6 +384,11 @@ export function OfficerDetail({
                         {lang === 'en' ? g.rank.en : g.rank.zh}
                       </span>
                     </span>
+                    {renown > 0 && (
+                      <span style={{ marginLeft: 6, fontSize: '0.62rem', color: '#c8a24e' }}>
+                        {t('威望', 'Renown')} {renown}
+                      </span>
+                    )}
                   </div>
                 );
               })()}
@@ -512,8 +521,8 @@ export function OfficerDetail({
                     <div style={{ fontSize: '0.7rem', color: '#9aa7b3' }}>
                       <span style={labelStyle}>{t('品階威儀', 'Grade aura')} </span>
                       {t(
-                        `戰力 +${passivePct}%　士氣 +${gp.morale}　單挑 +${gp.duelBonus}`,
-                        `Power +${passivePct}%, Morale +${gp.morale}, Duel +${gp.duelBonus}`,
+                        `戰力 +${passivePct}%　士氣 +${gp.morale}　單挑 +${gp.duelBonus}　氣力 +${gp.duelStamina}　威儀減傷 ${Math.round(gp.damageResist * 100)}%　歷練 +${Math.round((growthPowerMul(live) - 1) * 100)}%`,
+                        `Power +${passivePct}%, Morale +${gp.morale}, Duel +${gp.duelBonus}, Stamina +${gp.duelStamina}, Resist ${Math.round(gp.damageResist * 100)}%, Seasoning +${Math.round((growthPowerMul(live) - 1) * 100)}%`,
                       )}
                     </div>
                   )}
@@ -936,7 +945,7 @@ export function OfficerDetail({
           // Aggregate all item stat bonuses.
           const total: Record<string, number> = {};
           for (const id of officer.equipment) {
-            const item = ITEMS_BY_ID[id];
+            const item = liveItemById(id);
             if (!item) continue;
             for (const [k, v] of Object.entries(item.effects)) {
               total[k] = (total[k] ?? 0) + (v as number);
@@ -974,8 +983,9 @@ export function OfficerDetail({
               })()}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
                 {officer.equipment.map((id) => {
-                  const item = ITEMS_BY_ID[id];
+                  const item = liveItemById(id);
                   if (!item) return null;
+                  const plus = itemRefinements[id] ?? 0;
                   const kindColor =
                     item.kind === 'weapon'   ? '#b8442e'
                     : item.kind === 'horse'    ? '#c9a64e'
@@ -988,11 +998,14 @@ export function OfficerDetail({
                     .join(' · ');
                   const grantSummary = item.grants ? Object.entries(item.grants)
                     .map(([k, v]) => `+${k}:${v}`).join(' · ') : '';
+                  // Rarity reads off the *live* item, so a refined piece shows its promoted tier.
                   const rm = itemRarityMeta(itemRarity(item));
+                  const atMax = plus >= REFINE_MAX;
+                  const cost = atMax ? 0 : refineCost(item, plus);
                   return (
                     <span
                       key={id}
-                      title={`【${lang === 'en' ? rm.en : rm.zh}】${desc}\n${effects}${grantSummary ? '\n' + grantSummary : ''}`}
+                      title={`【${lang === 'en' ? rm.en : rm.zh}${plus ? ` +${plus}` : ''}】${desc}\n${effects}${grantSummary ? '\n' + grantSummary : ''}`}
                       style={{
                         background: '#10161e', border: `1px solid ${kindColor}`, color: kindColor,
                         padding: '0.3rem 0.55rem', fontSize: '0.78rem', letterSpacing: '0.1rem',
@@ -1002,8 +1015,23 @@ export function OfficerDetail({
                       <span title={lang === 'en' ? rm.en : rm.zh} style={{ width: 7, height: 7, borderRadius: '50%', background: rm.color, flexShrink: 0 }} />
                       <span>
                         {lang === 'en' ? item.name.en : item.name.zh}
+                        {plus > 0 && <span style={{ marginLeft: '0.25rem', color: '#e6c473', fontWeight: 600 }}>+{plus}</span>}
                         {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#7a8893', fontStyle: 'italic' }}>{item.name.en}</span></>}
                       </span>
+                      {isPlayerOfficer && (
+                        <button
+                          onClick={() => { if (!atMax) refineItemFn(id); }}
+                          disabled={atMax}
+                          title={atMax
+                            ? t('已臻化境（精煉滿級）', 'Fully refined')
+                            : t(`精煉 +${plus + 1}（${cost} 金，本城金庫支付）`, `Refine to +${plus + 1} (${cost} gold from this city)`)}
+                          style={{
+                            background: 'none', border: `1px solid ${atMax ? '#364654' : '#e6c473'}`, borderRadius: 2,
+                            color: atMax ? '#4a5662' : '#e6c473',
+                            cursor: atMax ? 'default' : 'pointer', padding: '0 0.25rem', fontSize: '0.68rem',
+                          }}
+                        >{t('煉', '⚒')}</button>
+                      )}
                       {isPlayerOfficer && (
                         <button
                           onClick={() => unequipItemFn(officer.id, id)}

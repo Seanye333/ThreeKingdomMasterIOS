@@ -5,6 +5,7 @@ import { citySize, populationDelta } from './citySize';
 import { aggregateSlotEffects } from '../data/defenseBuildings';
 import { effectivePrestigeEffects } from '../data/prestige';
 import { specialtyEconomy } from '../data/specialties';
+import { officerGrade, gradeRank } from './officerGrade';
 
 export const FOOD_PER_TROOP_PER_SEASON = 0.25;
 
@@ -78,7 +79,13 @@ export function tickCityEconomy(
   const baseGold = Math.floor(city.commerce * (city.population / 4000));
   // 能臣/良吏/巨賈 prestige — the ablest administrator present fattens the coffers.
   const prestigeMul = cityOfficers.reduce((m, o) => Math.max(m, effectivePrestigeEffects(o).incomeMul), 1);
-  const goldIncome = Math.max(0, Math.floor((baseGold * eff.goldMul * size.goldMul * prestigeMul * spec.goldMul + eff.goldFlat) * taxEff.goldMul * inflationMul));
+  // 品階理政 — a high-品階 administrator runs a richer city: +3% gold per grade
+  // tier above 銅 (金牌 ≈ +6%, 鑽石 ≈ +12%). Best officer present sets the tone.
+  const gradeAdminMul = 1 + 0.03 * cityOfficers.reduce(
+    (best, o) => Math.max(best, gradeRank(officerGrade(o).grade) - gradeRank('bronze')),
+    0,
+  );
+  const goldIncome = Math.max(0, Math.floor((baseGold * eff.goldMul * size.goldMul * prestigeMul * gradeAdminMul * spec.goldMul + eff.goldFlat) * taxEff.goldMul * inflationMul));
 
   const baseFood =
     season === 'autumn'

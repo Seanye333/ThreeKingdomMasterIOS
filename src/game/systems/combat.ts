@@ -8,7 +8,7 @@ import type {
   Skill,
 } from '../types';
 import { OATH_BONDS } from '../data/bonds';
-import { ITEMS_BY_ID } from '../data/items';
+import { liveItemById } from '../data/items';
 import { OFFICER_RELATIONSHIPS } from '../data/relationships';
 import { SKILLS_BY_ID } from '../data/skills';
 import { getEliteTroop } from '../data/eliteTroops';
@@ -19,6 +19,7 @@ import { cityPos } from '../data/cityGeo';
 import { sidePoolRelationshipBonus, rivalShowdownMultiplier } from './relationshipEffects';
 import { effectivePrestigeEffects } from '../data/prestige';
 import { gradeAuraPowerMul, gradeAuraMorale, itemMasteryMul } from './gradeCombat';
+import { growthPowerMul } from './growth';
 import { itemSetPowerMul } from '../data/itemSets';
 import { selectSiegeEngine } from '../data/siegeEngines';
 import {
@@ -289,9 +290,10 @@ export function resolveBattle(
     let itemWar = 0;
     let itemLead = 0;
     for (const id of Object.values(o.equipment)) {
-      const item = id ? ITEMS_BY_ID[id] : null;
+      const item = id ? liveItemById(id) : null;
       if (!item) continue;
-      // 兵器駕馭 — an under-grade wielder doesn't get the full effect.
+      // 兵器駕馭 — an under-grade wielder doesn't get the full effect. The item
+      // is resolved live so 精煉 boosts (and any rarity promotion) count here.
       const mastery = itemMasteryMul(o, item);
       itemWar += (item.effects.war ?? 0) * mastery;
       itemLead += (item.effects.leadership ?? 0) * mastery;
@@ -300,10 +302,11 @@ export function resolveBattle(
     const tactics = (o as Officer & { tactics?: string[] }).tactics
       ?? deriveTactics(o.stats, o.id);
     const tb = tacticsTotalBonus(tactics);
+    // 歷練之威 — a seasoned officer's experience lifts their whole contribution.
     return (
       (o.stats.war + itemWar + bond + tb.war) * 0.6 +
       (o.stats.leadership + itemLead + bond + tb.leadership) * 0.4
-    );
+    ) * growthPowerMul(o);
   };
 
   // ── 計策 Stratagem — auto-pick best applicable, roll for success ──

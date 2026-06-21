@@ -18,12 +18,27 @@ const STAT_NAME_ZH: Record<keyof OfficerStats, string> = {
  * random stat (from their latent gap) for a +1 increase.
  */
 
-const XP_LEVELS = [100, 250, 500, 900, 1500, 2500];
+// 歷練曲線 — the old curve topped out at level 6 (2500 XP) and an officer hit
+// it inside a campaign's first stretch, after which leveling went quiet until
+// 轉生/突破. Three veteran tiers extend the climb so a long-serving officer keeps
+// earning growth (and the per-level 歷練 passive below) well into the late game.
+const XP_LEVELS = [100, 250, 500, 900, 1500, 2500, 3800, 5500, 8000];
 
 export function totalLevel(xp: number): number {
   let lvl = 0;
   for (const t of XP_LEVELS) if (xp >= t) lvl++;
   return lvl;
+}
+
+/**
+ * 歷練之威 — a gentle per-growth-level combat passive so the *level number*
+ * itself, not only the stat gains it rolls, is worth climbing. +0.6% combat
+ * power per level (≈ +5.4% at the level-9 ceiling). Stacks multiplicatively
+ * with 品階威儀 / 威名 / items; deliberately small so seasoning tilts a fight
+ * without eclipsing raw stats.
+ */
+export function growthPowerMul(officer: Officer): number {
+  return 1 + 0.006 * totalLevel(officer.xp ?? 0);
 }
 
 export function xpForNextLevel(xp: number): number {
@@ -363,13 +378,21 @@ export function awardBattleXp(
 ): { officers: Record<EntityId, Officer>; entries: ReportEntry[] } {
   const out = { ...officers };
   const entries: ReportEntry[] = [];
+  // 指揮歷練 — the officer who led the engagement (first participant) carries the
+  // heavier lesson, win or lose.
+  const commanderId = participantIds[0];
   for (const id of participantIds) {
     const o = out[id];
     if (!o) continue;
-    let amt = 25;
-    if (victorIds.includes(id)) amt += 25;
+    let amt = 30;
+    const won = victorIds.includes(id);
+    if (won) amt += 30;
+    if (id === commanderId) amt += 20;
     const res = grantXp(o, amt, rng);
-    out[id] = res.officer;
+    // 戰功威望 — victory earns lasting renown (the commander a little more),
+    // which feeds gradeScore toward 晉品. A defeat teaches but earns no glory.
+    const renownGain = won ? (id === commanderId ? 3 : 2) : 0;
+    out[id] = renownGain ? { ...res.officer, renown: (res.officer.renown ?? 0) + renownGain } : res.officer;
     entries.push(...res.entries);
   }
   return { officers: out, entries };

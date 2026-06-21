@@ -1,5 +1,5 @@
 import type { Officer, TacticalBattle, TacticalUnit } from '../types';
-import { ITEMS_BY_ID } from '../data/items';
+import { liveItemById } from '../data/items';
 import { itemMasteryMul } from './gradeCombat';
 
 /**
@@ -55,7 +55,7 @@ function sumItemWar(o: Officer | undefined): number {
   if (!o) return 0;
   let n = 0;
   for (const id of o.equipment) {
-    const it = ITEMS_BY_ID[id];
+    const it = liveItemById(id);
     if (it) n += (it.effects.war ?? 0) * itemMasteryMul(o, it);
   }
   return n;
@@ -65,7 +65,7 @@ function sumItemLead(o: Officer | undefined): number {
   if (!o) return 0;
   let n = 0;
   for (const id of o.equipment) {
-    const it = ITEMS_BY_ID[id];
+    const it = liveItemById(id);
     if (it) n += (it.effects.leadership ?? 0) * itemMasteryMul(o, it);
   }
   return n;

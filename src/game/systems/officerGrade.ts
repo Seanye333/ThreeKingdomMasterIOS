@@ -31,13 +31,18 @@ const GRADE_META: Record<OfficerGrade, Omit<GradeInfo, 'grade' | 'score'>> = {
   iron:     { name: { zh: '鐵牌', en: 'Iron' },     rank: { zh: '末流', en: 'Green' },    color: '#7a8893' },
 };
 
-/** Blended quality score: 55% best stat, 45% average across the five. */
+/** Blended quality score: 55% best stat, 45% average across the five, plus a
+ *  capped 戰功威望 (renown) bonus so deeds — not only raw stats — push an
+ *  officer up a 品階 (晉品評定). */
 export function gradeScore(officer: Officer): number {
   const s = effectiveStats(officer);
   const vals = [s.leadership, s.war, s.intelligence, s.politics, s.charisma];
   const max = Math.max(...vals);
   const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
-  return Math.round(max * 0.55 + avg * 0.45);
+  // Diminishing returns, capped at +8 (≈ enough to cross one tier near a
+  // boundary): ~64 renown to max it, so it's a long campaign's reward.
+  const renownBonus = Math.min(8, Math.sqrt(Math.max(0, officer.renown ?? 0)));
+  return Math.round(max * 0.55 + avg * 0.45 + renownBonus);
 }
 
 export function gradeFromScore(score: number): OfficerGrade {

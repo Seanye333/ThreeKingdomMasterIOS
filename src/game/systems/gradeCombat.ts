@@ -21,15 +21,29 @@ export interface GradeCombatBonus {
   /** Flat 氣勢 (composure) a graded orator opens a 舌戰 with — poise, not extra
    *  damage, so it doesn't shorten bouts or suppress the 罵死 mechanic. */
   debatePoise: number;
+  /** 氣力 — extra starting stamina a graded champion carries into 單挑, so an
+   *  elite simply outlasts a lesser foe even on an even exchange. */
+  duelStamina: number;
+  /** 威儀 — fraction (0–1) of incoming unit damage a graded commander's
+   *  formation shrugs off; a 神品 host is hard to break. */
+  damageResist: number;
 }
 
+// 品階威儀 — each tier carries a named signature so grade is *felt*, not just a
+// roster colour. Numbers stay gentle (grade tilts a fight, traits/威名/items
+// still decide it) but the perks now span offence, endurance, and toughness:
+//   銅 三流 — 初陣        : a whisper of presence.
+//   銀 二流 — 沙場老將    : steadier formation, a touch more 氣力.
+//   金 一流 — 萬軍辟易    : the line rallies to them and bends blows aside.
+//   白金 超一流 — 不動如山: a host that barely breaks; long-wind in single combat.
+//   鑽石 神品 — 萬人敵    : peerless on every axis.
 const GRADE_COMBAT: Record<OfficerGrade, GradeCombatBonus> = {
-  diamond:  { powerMul: 1.16, morale: 12, duelBonus: 18, debatePoise: 20 },
-  platinum: { powerMul: 1.12, morale: 9,  duelBonus: 14, debatePoise: 16 },
-  gold:     { powerMul: 1.08, morale: 6,  duelBonus: 10, debatePoise: 12 },
-  silver:   { powerMul: 1.04, morale: 3,  duelBonus: 5,  debatePoise: 6 },
-  bronze:   { powerMul: 1.01, morale: 1,  duelBonus: 2,  debatePoise: 2 },
-  iron:     { powerMul: 1.0,  morale: 0,  duelBonus: 0,  debatePoise: 0 },
+  diamond:  { powerMul: 1.16, morale: 12, duelBonus: 18, debatePoise: 20, duelStamina: 30, damageResist: 0.12 },
+  platinum: { powerMul: 1.12, morale: 9,  duelBonus: 14, debatePoise: 16, duelStamina: 22, damageResist: 0.09 },
+  gold:     { powerMul: 1.08, morale: 6,  duelBonus: 10, debatePoise: 12, duelStamina: 15, damageResist: 0.06 },
+  silver:   { powerMul: 1.04, morale: 3,  duelBonus: 5,  debatePoise: 6,  duelStamina: 8,  damageResist: 0.03 },
+  bronze:   { powerMul: 1.01, morale: 1,  duelBonus: 2,  debatePoise: 2,  duelStamina: 3,  damageResist: 0.01 },
+  iron:     { powerMul: 1.0,  morale: 0,  duelBonus: 0,  debatePoise: 0,  duelStamina: 0,  damageResist: 0 },
 };
 
 /** The combat passive for a single officer, keyed off their current 品階. */
