@@ -2,6 +2,7 @@ import { Suspense, createContext, useEffect, useMemo, useRef, useState } from 'r
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Html, Line, OrbitControls } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
+import { RENDER_HI } from '../renderQuality';
 import { getTerritoryCanvas, getTerritorySignature } from './territoryOverlay';
 import { positionAlongRoute, marchDestCoords, terrainRoute, generateTerritories } from '../../game/data/territories';
 import { snapToHexCenter, geoToPixel, battleGroundAt, MAP_W as PX_W, MAP_H as PX_H, WORLD_SCALE } from '../../game/data/geography';
@@ -7419,12 +7420,12 @@ export function StrategicMap3D() {
         />
       )}
       <Canvas
-        // Phones: shadow maps are the single biggest GPU cost on this scene.
-        shadows={!IS_MOBILE}
-        dpr={IS_MOBILE ? [1, 1.5] : [1, 2]}
+        // Shadow maps are the single biggest GPU cost on this scene — high tier only.
+        shadows={RENDER_HI}
+        dpr={RENDER_HI ? [1, 2] : [1, 1.5]}
         camera={{ position: [0, MAP_D * 0.9, MAP_D * 0.7], fov: 45, near: 0.5, far: 400 * WORLD_SCALE }}
         // preserveDrawingBuffer lets the 📷 button read the frame back.
-        gl={{ antialias: !IS_MOBILE, preserveDrawingBuffer: true }}
+        gl={{ antialias: RENDER_HI, preserveDrawingBuffer: true }}
       >
         <BattleCinematics trigger={cine} />
         <Suspense fallback={null}>
@@ -7461,8 +7462,8 @@ export function StrategicMap3D() {
           {/* Fly to a battle the moment it ignites — before its screen mounts. */}
           <BattleFocusFly controlsRef={controlsRef} onSettled={setOrbitTarget} />
           <MiniNavRig controlsRef={controlsRef} onView={setNavView} jump={navJump} />
-          {/* Gentle bloom — beacons, fires and water shimmer get a halo. */}
-          {!IS_MOBILE && (
+          {/* Gentle bloom — beacons, fires and water shimmer get a halo. High tier only. */}
+          {RENDER_HI && (
             <EffectComposer>
               <Bloom luminanceThreshold={0.85} intensity={0.35} mipmapBlur />
             </EffectComposer>

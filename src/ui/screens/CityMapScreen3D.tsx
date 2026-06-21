@@ -3,6 +3,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { OrbitControls, Html, Instances, Instance } from '@react-three/drei';
 import * as THREE from 'three';
+import { RENDER_HI } from '../renderQuality';
 import { useGameStore } from '../../game/state/store';
 import {
   DEFENSE_BUILDINGS,
@@ -3320,8 +3321,8 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
       <div style={{ flex: 1, position: 'relative' }}>
         <Canvas
           camera={{ position: [centerX, camHeight * 2.6, centerZ + camOffset * 0.18], fov: 50 }}
-          shadows={!IS_MOBILE}
-          dpr={IS_MOBILE ? [1, 1.5] : [1, 2]}
+          shadows={RENDER_HI}
+          dpr={RENDER_HI ? [1, 2] : [1, 1.5]}
           style={{ background: light.sky }}
         >
           {/* Swoop down into the city on entry; rise back up on exit. Distinct
@@ -3384,7 +3385,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
             maxDistance={citySpan * 2.4}
           />
           {/* Lanterns, braziers and water all catch a soft glow. */}
-          {!IS_MOBILE && (
+          {RENDER_HI && (
             <EffectComposer>
               <Bloom luminanceThreshold={0.85} intensity={0.35} mipmapBlur />
             </EffectComposer>

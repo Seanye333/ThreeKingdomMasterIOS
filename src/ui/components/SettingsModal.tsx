@@ -4,6 +4,7 @@ import { setVoiceEnabled, setAudioFilesEnabled, isAudioFilesEnabled } from '../.
 import { exportAllSaves, importAllSaves } from '../../game/state/saveTransfer';
 import { installMod, loadMods, parseModBundle, removeMod } from '../../game/systems/mods';
 import { applyUiPrefs, getStoredUiPrefs, type UiPrefs, type UiScale } from '../uiPrefs';
+import { getRenderQualityPref, setRenderQualityPref, type RenderQualityPref } from '../renderQuality';
 import { useT } from '../i18n';
 import { Modal } from './Modal';
 
@@ -18,6 +19,15 @@ interface Props {
 export function SettingsModal({ onClose }: Props) {
   const soundEnabled = useGameStore((s) => s.soundEnabled);
   const setSoundEnabled = useGameStore((s) => s.setSoundEnabled);
+  // 3D 畫質 — frozen at module load (RENDER_HI), so changing it reloads to apply.
+  const [renderQuality, setRenderQualityState] = useState<RenderQualityPref>(getRenderQualityPref);
+  const changeRenderQuality = (pref: RenderQualityPref) => {
+    if (pref === renderQuality) return;
+    setRenderQualityState(pref);
+    setRenderQualityPref(pref);
+    // Persisted game state rehydrates on reload, so this is safe mid-campaign.
+    setTimeout(() => window.location.reload(), 120);
+  };
   const fogOfWar = useGameStore((s) => s.fogOfWar);
   const setFogOfWar = useGameStore((s) => s.setFogOfWar);
   const romanceMode = useGameStore((s) => s.romanceMode);
@@ -84,6 +94,24 @@ export function SettingsModal({ onClose }: Props) {
           </Section>
 
           <Section title={t('畫面', 'Display')}>
+            <Row label={t('3D 畫質', '3D quality')} hint={t('精緻：陰影＋光暈＋更高解析（重啟生效）', 'High: shadows + bloom + higher res (reloads to apply)')}>
+              <div style={{ display: 'flex', gap: 4 }}>
+                {([['auto', t('自動', 'Auto')], ['low', t('流暢', 'Low')], ['high', t('精緻', 'High')]] as Array<[RenderQualityPref, string]>).map(([q, lbl]) => (
+                  <button
+                    key={q}
+                    onClick={() => changeRenderQuality(q)}
+                    style={{
+                      background: renderQuality === q ? '#26323e' : 'transparent',
+                      border: '1px solid ' + (renderQuality === q ? '#e6c473' : '#2b3845'),
+                      color: renderQuality === q ? '#e6c473' : '#7a8893',
+                      padding: '0.25rem 0.7rem', cursor: 'pointer', fontFamily: 'inherit',
+                    }}
+                  >
+                    {lbl}
+                  </button>
+                ))}
+              </div>
+            </Row>
             <Toggle label={t('戰霧', 'Fog of war')} hint={t('隱藏未偵察的城邑', 'Hide unscouted cities')} checked={fogOfWar} onChange={setFogOfWar} />
             <Row label={t('語言', 'Language')}>
               <select

@@ -7,6 +7,7 @@ import {
 } from '@react-three/postprocessing';
 import { ToneMappingMode } from 'postprocessing';
 import * as THREE from 'three';
+import { RENDER_HI } from '../renderQuality';
 import { useGameStore } from '../../game/state/store';
 import { playSfx, playFxSfx, startBattleAmbience, stopBattleAmbience, playMusic, stopMusic, type MusicTrack } from '../../game/systems/sound';
 import type { EntityId, HexCoord, Officer, StratagemId, TacticalBattle, TacticalTile, TacticalUnit, TerrainKind, TimeOfDay, UnitType, Weather } from '../../game/types';
@@ -3592,8 +3593,9 @@ export function BattleScene({
           <CameraFollow battle={battle} playerSide={playerSide} home={[hexWorld(battle.width / 2, battle.height / 2)[0], hexWorld(battle.width / 2, battle.height / 2)[1]]} focus={duelFocus} />
 
           {/* Percentage-closer soft shadows — contact-tight near the feet,
-              softening with distance so units sit IN the field, not on it. */}
-          <SoftShadows size={26} samples={16} focus={0.7} />
+              softening with distance so units sit IN the field, not on it.
+              High tier only — shadows are off entirely on the 流暢 tier. */}
+          {RENDER_HI && <SoftShadows size={26} samples={16} focus={0.7} />}
 
           {/* Lighting per time-of-day */}
           <ambientLight intensity={lighting.ambient} />
@@ -4602,14 +4604,18 @@ export function TacticalBattleScreen3D() {
           // = ~4× the fragments) and drop shadow maps — both are pure GPU-memory
           // wins that keep the battle scene from tipping the tab into an
           // out-of-memory reload while the strategic map context is also alive.
-          shadows={!IS_MOBILE}
-          dpr={IS_MOBILE ? [1, 1.5] : [1, 2]}
+          shadows={RENDER_HI}
+          dpr={RENDER_HI ? [1, 2] : [1, 1.5]}
           camera={{ position: [target[0] - 8, 40, target[2] + 6], fov: 45 }}
           gl={{
-            antialias: false,  // SMAA in the composer handles edges
-            // The composer applies AgX tone mapping as its final pass, so the
-            // renderer itself must stay linear to avoid double tone-mapping.
-            toneMapping: THREE.NoToneMapping,
+            // High tier: SMAA in the composer handles edges. Low tier (no
+            // composer): fall back to hardware MSAA.
+            antialias: !RENDER_HI,
+            // The composer applies AgX tone mapping as its final pass, so on the
+            // high tier the renderer stays linear to avoid double tone-mapping.
+            // With the composer gated off (low tier) the renderer must apply AgX
+            // itself, or the scene renders washed-out and linear.
+            toneMapping: RENDER_HI ? THREE.NoToneMapping : THREE.AgXToneMapping,
           }}
         >
           <BattleCinematics trigger={cine} />
@@ -4653,7 +4659,11 @@ export function TacticalBattleScreen3D() {
             />
             {/* Cinematic post stack: ambient-occlusion grounding, bloom for
                 fires/beacons, a warm grade, vignette, and AgX tone mapping.
-                Depth-of-field kicks in only to frame a duel. */}
+                Depth-of-field kicks in only to frame a duel. The whole stack is
+                the priciest thing on screen (N8AO especially), so it runs on the
+                精緻 tier only — the 流暢 tier renders straight to screen with the
+                renderer's own AgX tone mapping (set on the Canvas gl above). */}
+            {RENDER_HI && (
             <EffectComposer enableNormalPass multisampling={0}>
               <N8AO
                 aoRadius={1.2}
@@ -4679,6 +4689,7 @@ export function TacticalBattleScreen3D() {
               <ToneMapping mode={ToneMappingMode.AGX} />
               <SMAA />
             </EffectComposer>
+            )}
           </Suspense>
         </Canvas>
        </div>
