@@ -46,6 +46,7 @@ import {
 } from './training';
 import { TACTIC_DEFS, type TacticId } from '../data/officerAttributes';
 import { commandFitMultiplier, isCombatLiability } from './traitEffects';
+import { officerGrade, gradeRank } from './officerGrade';
 import { attackDeterrence, recruitPreferenceScore, runtimeSwornPair } from './relationshipEffects';
 
 export interface AIPlanInput {
@@ -1091,12 +1092,15 @@ function bestForCommand(
   prefectId: EntityId | null = null,
 ): Officer | null {
   if (officers.length === 0) return null;
+  // 品階優先 — when fielding a field commander (march), a proven 品階 tips the
+  // scale, so the AI sends its 金牌/白金/鑽石 names to the front, not just raw 武力.
+  const gradePref = (o: Officer) => (type === 'march' ? 1 + gradeRank(officerGrade(o).grade) * 0.04 : 1);
   return [...officers].sort((a, b) => {
     const aPref = a.id === prefectId ? 1.2 : 1;
     const bPref = b.id === prefectId ? 1.2 : 1;
     return (
-      b.stats[stat] * commandFitMultiplier(b, type) * bPref -
-      a.stats[stat] * commandFitMultiplier(a, type) * aPref
+      b.stats[stat] * commandFitMultiplier(b, type) * bPref * gradePref(b) -
+      a.stats[stat] * commandFitMultiplier(a, type) * aPref * gradePref(a)
     );
   })[0];
 }

@@ -172,6 +172,8 @@ export function grantXp(
       kind: 'talent',
       text: `${officer.name.en} has been promoted to ${gi.name.en} grade (${gi.rank.en}).`,
       textZh: `${officer.name.zh}晉升${gi.name.zh}（${gi.rank.zh}），名動一時。`,
+      // 金牌+ crossings earn a 封賞 ceremony for the player's own officers.
+      ...(gradeRank(newGrade) >= gradeRank('gold') ? { promotion: { officerId: officer.id, grade: newGrade } } : {}),
     });
   }
 

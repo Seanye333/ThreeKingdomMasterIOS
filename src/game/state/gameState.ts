@@ -316,6 +316,8 @@ export interface GameState {
   recentBonds: Array<{ aId: EntityId; bId: EntityId; titleZh: string; titleEn: string }>;
   /** Player officers who rose to a top-tier 威名 title, awaiting a 封號 ceremony. */
   recentPrestigeCeremony: Array<{ officerId: EntityId; titleId: string }>;
+  /** Player officers who crossed into a 金牌+ 品階 this season, awaiting a 晉牌封賞 ceremony. */
+  recentPromotions: Array<{ officerId: EntityId; grade: import('../systems/officerGrade').OfficerGrade }>;
   /** Per-officer battle-source deed deltas accumulated during the current
    *  season (殲敵/生擒/攻陷). Reset at season-end after MVP computation. */
   seasonBattleDeltas: Record<EntityId, { killsTroops: number; captured: number; citiesTaken: number }>;
@@ -470,6 +472,7 @@ export const EMPTY_STATE: GameState = {
   recentPrestige: [],
   recentBonds: [],
   recentPrestigeCeremony: [],
+  recentPromotions: [],
   seasonBattleDeltas: {},
   weather: { kind: 'clear', wind: 'calm', windPower: 1 },
   courtFactions: {},
@@ -715,6 +718,7 @@ export function loadScenario(
     recentPrestige: [],
     recentBonds: [],
     recentPrestigeCeremony: [],
+    recentPromotions: [],
     seasonBattleDeltas: {},
     weather: rollWeather(scenario.startDate.season, Math.random),
     courtFactions: {},

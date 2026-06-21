@@ -517,6 +517,8 @@ interface GameStore extends GameState {
   acknowledgeBond: () => void;
   /** Dequeue the front 威名 promotion awaiting its on-map 封號 ceremony. */
   acknowledgePrestigeCeremony: () => void;
+  /** Dequeue the front 品階 promotion awaiting its on-map 晉牌封賞 ceremony. */
+  acknowledgePromotion: () => void;
   // ─── Port (港) actions ────────────────────────────────────────────
   /** Queue a ship build at the given port. Player pays gold from capital
    *  immediately; ship is added to dockedShips when seasonsLeft hits 0. */
@@ -3353,6 +3355,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           ? [...state.recentPrestigeCeremony, prestigeCeremonies[0]]
           : state.recentPrestigeCeremony;
 
+        // 晉牌封賞 — a player officer who crossed into a 金牌+ 品階 this season
+        // (tagged on the report entry by grantXp) earns a ceremony flourish.
+        const promotionCeremonies = result.report.entries
+          .filter((e) => e.promotion && officersWithMarchTask[e.promotion.officerId]?.forceId === state.playerForceId)
+          .map((e) => e.promotion!);
+        const recentPromotionsAfter = promotionCeremonies.length > 0
+          ? [...state.recentPromotions, ...promotionCeremonies]
+          : state.recentPromotions;
+
         // 一代記 — auto-record chronicle milestones: prestige attained and
         // career rank promotions for the player's chronicle hero.
         let careerModeAfterSeason = state.careerMode;
@@ -3503,6 +3514,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           recentDeedTitles: [...state.recentDeedTitles, ...titleGrant.grants],
           recentPrestige: [...state.recentPrestige, ...newPrestige],
           recentPrestigeCeremony: recentPrestigeCeremonyAfter,
+          recentPromotions: recentPromotionsAfter,
           careerMode: careerModeAfterSeason,
           challengeRecords: challengeRecordsAfter,
           // Battle deltas only feed MVPs at season boundaries — reset
@@ -5932,6 +5944,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       acknowledgePrestige: () => set({ recentPrestige: [] }),
       acknowledgeBond: () => set((s) => ({ recentBonds: s.recentBonds.slice(1) })),
       acknowledgePrestigeCeremony: () => set((s) => ({ recentPrestigeCeremony: s.recentPrestigeCeremony.slice(1) })),
+      acknowledgePromotion: () => set((s) => ({ recentPromotions: s.recentPromotions.slice(1) })),
 
       attackPort: (portId, attackerOfficerId, troops) => {
         const state = get();
@@ -7115,6 +7128,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (!state.recentPrestige) state.recentPrestige = [];
         if (!state.recentBonds) state.recentBonds = [];
         if (!state.recentPrestigeCeremony) state.recentPrestigeCeremony = [];
+        if (!state.recentPromotions) state.recentPromotions = [];
         const cityOwnerByCityId = Object.fromEntries(
           Object.values(state.cities ?? {}).map((c) => [c.id, c.ownerForceId]),
         );

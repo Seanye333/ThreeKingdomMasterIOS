@@ -146,6 +146,9 @@ export interface ReportEntry {
   /** Optional Chinese variant — preferred when language === 'zh'. */
   textZh?: string;
   battle?: BattleDetail;
+  /** 晉牌 — set when this entry marks an officer crossing into a 金牌+ 品階 tier,
+   *  so the loop can fire a 封賞 ceremony for the player's own officers. */
+  promotion?: { officerId: EntityId; grade: import('../systems/officerGrade').OfficerGrade };
 }
 
 export interface SeasonReport {

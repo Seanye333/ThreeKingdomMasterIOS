@@ -17,6 +17,7 @@ import { PrivateForcesModal } from '../components/PrivateForcesModal';
 import { PrestigeModal } from '../components/PrestigeModal';
 import { BondCeremony } from '../components/BondCeremony';
 import { PrestigeCeremony } from '../components/PrestigeCeremony';
+import { PromotionCeremony } from '../components/PromotionCeremony';
 import { AnimatedNumber } from '../components/AnimatedNumber';
 import { Icon } from '../components/Icon';
 import { DialogueModal } from '../components/DialogueModal';
@@ -147,6 +148,8 @@ export function MapScreen() {
   const acknowledgeBond = useGameStore((s) => s.acknowledgeBond);
   const recentPrestigeCeremony = useGameStore((s) => s.recentPrestigeCeremony);
   const acknowledgePrestigeCeremony = useGameStore((s) => s.acknowledgePrestigeCeremony);
+  const recentPromotions = useGameStore((s) => s.recentPromotions);
+  const acknowledgePromotion = useGameStore((s) => s.acknowledgePromotion);
   const officersForToast = useGameStore((s) => s.officers);
   const fogOfWar = useGameStore((s) => s.fogOfWar);
   const setFogOfWar = useGameStore((s) => s.setFogOfWar);
@@ -905,6 +908,21 @@ export function MapScreen() {
             color={playerForce?.color ?? '#e6c473'}
             year={date.year}
             onDone={acknowledgePrestigeCeremony}
+          />
+        );
+      })()}
+      {/* 晉牌封賞 ceremony — after bonds + 封號, on a clear map. */}
+      {recentBonds.length === 0 && recentPrestigeCeremony.length === 0 && recentPromotions.length > 0 && !ceremonyBlocked && (() => {
+        const c = recentPromotions[0];
+        const o = officersForToast[c.officerId];
+        if (!o) { acknowledgePromotion(); return null; }
+        return (
+          <PromotionCeremony
+            officer={o}
+            grade={c.grade}
+            color={playerForce?.color ?? '#e6c473'}
+            year={date.year}
+            onDone={acknowledgePromotion}
           />
         );
       })()}
