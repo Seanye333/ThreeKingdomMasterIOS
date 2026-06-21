@@ -27,6 +27,7 @@ import {
 import { WEAPON_TYPE_DEFS, deriveWeaponType } from '../../game/data/weaponTypes';
 import { HISTORICAL_LIFESPANS } from '../../game/data/historicalLifespans';
 import { effectivePrestige } from '../../game/data/prestige';
+import { peerageById } from '../../game/data/peerage';
 import { renownFromDeeds, fameTier, fameMedal } from '../../game/systems/fame';
 import { xpProgress, learnableSkills, canBreakthrough, breakthroughCost, MAX_BREAKTHROUGHS, breakthroughTitle, growthPowerMul } from '../../game/systems/growth';
 import { officerGrade, officerLevel } from '../../game/systems/officerGrade';
@@ -337,6 +338,23 @@ export function OfficerDetail({
                   {lang === 'both' && <span className={styles.rankEn}>{rankDef.name.en}</span>}
                 </span>
               )}
+              {(() => {
+                const peer = peerageById(officer.peerageId);
+                if (!peer) return null;
+                return (
+                  <span
+                    className={styles.rankBadge}
+                    style={{ background: 'linear-gradient(135deg,#7a5c12,#caa53d)', color: '#1a1206' }}
+                    title={t(
+                      `爵位 ${peer.name.zh} · 食邑每季 +${peer.fiefGold}金 +${peer.fiefGrain}糧 · 忠誠 +${peer.loyaltyBonus}/季`,
+                      `Peerage ${peer.name.en} · fief +${peer.fiefGold}g +${peer.fiefGrain} grain/season · loyalty +${peer.loyaltyBonus}/season`,
+                    )}
+                  >
+                    <span className={styles.rankZh}>{lang === 'en' ? peer.name.en : peer.name.zh}</span>
+                    {lang === 'both' && <span className={styles.rankEn}>{peer.name.en}</span>}
+                  </span>
+                );
+              })()}
             </span>
           </div>
         </section>

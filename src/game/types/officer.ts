@@ -105,4 +105,8 @@ export interface Officer {
    *  battle-proven veteran can earn a higher 品階 than a higher-statted but
    *  untested rival (晉品評定). Earned on victories. Default 0. */
   renown?: number;
+  /** 爵位 — held peerage id (封爵), the highest layer of 官爵 above 軍階/官職.
+   *  Yields 食邑 income + loyalty + prestige; great fiefs feed 野心. Default/
+   *  omitted = no peerage. See data/peerage.ts. */
+  peerageId?: import('./title').PeerageId;
 }

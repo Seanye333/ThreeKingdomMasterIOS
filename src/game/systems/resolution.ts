@@ -19,6 +19,7 @@ import { marchDurationFor } from '../data/cities';
 import { FACILITY_DEFS, type Fort } from '../types/fort';
 import { advanceSeason } from '../state/gameState';
 import { processAging } from './aging';
+import { evaluateGovernors } from './governorEval';
 import { handleSearch, resolveInternalAffairs, type LostItemRef } from './commands';
 import { awardInternalAffairsXp, canBreakthrough, breakthroughCost, applyBreakthrough, grantXp } from './growth';
 import { officerGrade, gradeRank, officerLevel } from './officerGrade';
@@ -31,9 +32,12 @@ import { embassyTargets, embassyLegSeasons } from './foreignRealm';
 import type { Expedition, ExpeditionMode } from '../types';
 import { appointmentBonusFor } from './appointmentEffects';
 import { MILITARY_RANKS_BY_ID } from '../data/titles';
+import { peerageEffects } from '../data/peerage';
 import { rollEvents } from './events';
 import { generateFictionalOfficer } from './officerGen';
 import { resolveAmbitions } from './ambition';
+import { tickClans } from './clans';
+import { tickStatecraft } from './statecraft';
 import { deriveCourtFactions, type FactionId } from './courtFactions';
 
 export interface ResolutionInput {
@@ -1424,6 +1428,34 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     }
   }
 
+  // 2c. 食邑 — enfeoffed nobles' fiefs yield revenue into the realm capital
+  // each season (the noble manages productive land for the realm). The land
+  // is worked whether or not the noble is idle, so even a campaigning marquis
+  // pays in; only death/imprisonment stops the rent.
+  if (seasonBoundary) {
+    const fiefByForce: Record<EntityId, { gold: number; grain: number }> = {};
+    for (const o of Object.values(officers)) {
+      if (!o.forceId || !o.peerageId) continue;
+      if (o.status === 'dead' || o.status === 'imprisoned') continue;
+      const eff = peerageEffects(o);
+      if (eff.fiefGold === 0 && eff.fiefGrain === 0) continue;
+      const acc = (fiefByForce[o.forceId] ??= { gold: 0, grain: 0 });
+      acc.gold += eff.fiefGold;
+      acc.grain += eff.fiefGrain;
+    }
+    for (const force of Object.values(forces)) {
+      const fief = fiefByForce[force.id];
+      if (!fief || !force.capitalCityId) continue;
+      const capital = cities[force.capitalCityId];
+      if (!capital) continue;
+      cities[capital.id] = {
+        ...capital,
+        gold: capital.gold + fief.gold,
+        food: capital.food + fief.grain,
+      };
+    }
+  }
+
   // 3. Reset officer tasks + loyalty drift toward force strength.
   // Compute per-force city counts once.
   const cityCountByForce: Record<EntityId, number> = {};
@@ -1461,6 +1493,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       else if (owned < avgCities - 1) drift = -1;
       else if (owned === 0) drift = -3;
       drift += censorBonusByForce[o.forceId] ?? 0;
+      // 食邑加俸 — an enfeoffed noble's standing loyalty bonus.
+      if (o.peerageId) drift += peerageEffects(o).loyaltyBonus;
       if (drift !== 0) {
         const newLoyalty = Math.max(0, Math.min(100, o.loyalty + drift));
         if (newLoyalty !== o.loyalty) {
@@ -1521,6 +1555,35 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     }
   }
 
+  // 門閥世族 — the realm's 門第政策 tugs scion vs commoner loyalty and lets an
+  // over-mighty clan lend its strongman a usurpation push (folded into the
+  // ambition factionBoost below). Season-bounded; own date-seeded rng.
+  let clanFactionBoost: Record<EntityId, number> = {};
+  if (seasonBoundary) {
+    const seasonIdx0 = { spring: 0, summer: 1, autumn: 2, winter: 3 }[input.date.season];
+    const clanResult = tickClans({
+      officers,
+      forces,
+      cities,
+      playerForceId: input.playerForceId,
+      seed: ((input.date.year * 4 + seasonIdx0) ^ 0x5c1a) >>> 0,
+    });
+    officers = clanResult.officers;
+    clanFactionBoost = clanResult.factionBoost;
+    for (const e of clanResult.entries) {
+      entries.push({ cityId: e.cityId, kind: 'note', text: e.text, textZh: e.textZh });
+    }
+
+    // 治國理念 — each realm's school of statecraft slants its cities (民心/稅/糧/
+    // 耕戰) and rallies doctrine-aligned scholars.
+    const craft = tickStatecraft({ forces, cities, officers });
+    cities = craft.cities;
+    officers = craft.officers;
+    for (const e of craft.entries) {
+      entries.push({ cityId: e.cityId, kind: 'note', text: e.text, textZh: e.textZh });
+    }
+  }
+
   // 權謀 — ambition: once per season, a discontented landed general may usurp
   // his weak lord or break away with the city he holds. Uses its own
   // date-seeded rng (off the main stream), so determinism elsewhere is intact.
@@ -1544,6 +1607,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const weight = dominant === 'military' ? 0.045 : dominant === 'gentry' ? 0.025 : 0;
       if (weight === 0) continue;
       for (const m of list) if (m.faction === dominant) factionBoost[m.officerId] = weight;
+    }
+    // Fold in the 門閥 over-mighty-clan push (stacks with court-faction weight).
+    for (const [id, boost] of Object.entries(clanFactionBoost)) {
+      factionBoost[id] = Math.min(0.09, (factionBoost[id] ?? 0) + boost);
     }
     const ambitionEvents = resolveAmbitions({
       officers,
@@ -1603,6 +1670,20 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     officers = aging.officers;
     forces = aging.forces;
     entries.push(...aging.entries);
+
+    // 考課 — annual review of every realm's 太守. Grade the seat's health,
+    // reward/punish the prefect's loyalty. Runs once a year with aging.
+    if (input.appointments && input.appointments.length > 0) {
+      const kaoke = evaluateGovernors({
+        appointments: input.appointments,
+        cities,
+        officers,
+      });
+      officers = kaoke.officers;
+      for (const e of kaoke.entries) {
+        entries.push({ cityId: e.cityId, kind: 'note', text: e.text, textZh: e.textZh });
+      }
+    }
   }
 
   // 6. Diplomacy tick (NAP expiry + relation decay on year transitions).

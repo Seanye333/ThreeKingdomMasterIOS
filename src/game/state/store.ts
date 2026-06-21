@@ -16,6 +16,7 @@ import type {
   MarchCommand,
   MilitaryRankId,
   Officer,
+  PeerageId,
   ProvinceId,
   ReportEntryKind,
   Scenario,
@@ -31,6 +32,11 @@ import { tickAfflictions, withAffliction, type Affliction } from '../systems/aff
 import { trainKey, recordTrain } from '../systems/sparLimit';
 import type { Difficulty } from './gameState';
 import { CIVIC_TITLES_BY_ID, MILITARY_RANKS_BY_ID } from '../data/titles';
+import { PEERAGES_BY_ID, meritScore, peerageTier } from '../data/peerage';
+import { stanceRecruitModifier } from '../systems/clans';
+import { statecraftRecruitBonus } from '../systems/statecraft';
+import { holdFounding } from '../systems/founding';
+import { allianceBetween, breakAlliance as breakMarriageTie, tickMarriageAlliances } from '../systems/marriageAlliance';
 import { FORGE_RECIPES_BY_ID } from '../data/forging';
 import { EDICTS_BY_KIND, IMPERIAL_RANKS_BY_ID } from '../data/imperial';
 import { ESPIONAGE_DEFS_BY_KIND } from '../data/espionage';
@@ -387,6 +393,11 @@ interface GameStore extends GameState {
     yourOfficerId: EntityId,
     theirOfficerId: EntityId,
   ) => { ok: boolean; message: string };
+  /** 背信棄義 — renounce a marriage alliance to free your hand for war. Brands
+   *  you an oathbreaker: relation crash with the spurned realm + all others. */
+  breakMarriageAlliance: (
+    targetForceId: EntityId,
+  ) => { ok: boolean; message: string };
   transferOfficer: (
     officerId: EntityId,
     destinationCityId: EntityId,
@@ -410,6 +421,29 @@ interface GameStore extends GameState {
     officerId: EntityId,
     rankId: MilitaryRankId,
   ) => { ok: boolean; reason?: string };
+  /** 封爵 — confer a peerage on one of your officers. Gated by 功勳積分 (merit)
+   *  and, for 公/王, by the realm having reached 王/帝 standing. Pays a one-shot
+   *  loyalty bump; the standing 食邑 income + loyalty kick in at season turn. */
+  grantPeerage: (
+    officerId: EntityId,
+    peerageId: PeerageId,
+  ) => { ok: boolean; reason?: string };
+  /** 門第政策 — set the player realm's talent-selection stance. Drives the
+   *  門閥世族 loop (重門第 / 唯才是舉 / 並用). */
+  setRecruitmentStance: (
+    stance: 'aristocratic' | 'meritocratic' | 'balanced',
+  ) => void;
+  /** 治國理念 — set the player realm's school of statecraft (法/儒/道/兵), or
+   *  null to revert to 雜糅 (no slant). */
+  setStatecraft: (
+    school: import('../data/statecraft').StatecraftSchool | null,
+  ) => void;
+  /** 建國大典 — hold the founding ceremony (requires 王/帝 standing, once only):
+   *  proclaim 國號/年號, 大赦天下, 封賞百官 (mass enfeoffment), swell 天命. */
+  holdFoundingCeremony: (
+    dynastyTitle: string,
+    eraName: string,
+  ) => { ok: boolean; message: string; enfeoffed?: number };
   /** 抉擇 — resolve a choice-bearing event with the picked branch. */
   resolveEventChoice: (choiceId: string) => void;
   dismissEvent: () => void;
@@ -1899,6 +1933,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           officers: state.officers,
           cities: state.cities,
           appointments: state.appointments,
+          deeds: state.deeds,
           playerForceId: state.playerForceId,
           year: state.date.year,
         });
@@ -2036,6 +2071,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               kind: 'note',
               text: `${force.name.en} promoted ${o.name.en} to ${rankDef.name.en}.`,
               textZh: `${force.name.zh}晉${o.name.zh}為${rankDef.name.zh}。`,
+            });
+          } else if (ch.kind === 'enfeoff' && ch.peerageId) {
+            const peerDef = PEERAGES_BY_ID[ch.peerageId];
+            if (!peerDef) continue;
+            result.report.entries.push({
+              cityId: o.locationCityId,
+              kind: 'note',
+              text: `${force.name.en} enfeoffed ${o.name.en} as ${peerDef.name.en}.`,
+              textZh: `${force.name.zh}封${o.name.zh}為${peerDef.name.zh}。`,
             });
           }
         }
@@ -3776,10 +3820,24 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           if (newlyOpened.length > 0) saveAchievementProgress(achE);
         }
 
+        // 聯姻同盟 upkeep — hold standing alliances' relations at/above floor and
+        // prune any whose partner realm has fallen. Season-bounded.
+        const allianceTick = seasonBoundary
+          ? tickMarriageAlliances({
+              alliances: state.marriageAlliances,
+              diplomacy: postDiplomacy,
+              livingForceIds: new Set(
+                Object.values(postCities).map((c) => c.ownerForceId).filter(Boolean) as EntityId[],
+              ),
+            })
+          : { diplomacy: postDiplomacy, alliances: state.marriageAlliances, entries: [] };
+        postDiplomacy = allianceTick.diplomacy;
+
         set({
           date: result.date,
           cities: postCities,
           officers: officersWithMarchTask,
+          marriageAlliances: allianceTick.alliances,
           forces: postForces,
           runtimeBonds: bondsAfterTraits,
           rapport: rapportAfter,
@@ -4052,6 +4110,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           approach,
           bestRapportWithCaptors: bestRapportWith(state, officerId),
           debateWon,
+          stanceModifier:
+            stanceRecruitModifier(state.officers, force.id, force.recruitmentStance) +
+            statecraftRecruitBonus(force.statecraft),
         });
 
         const updates: Partial<GameState> = {
@@ -4550,8 +4611,18 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             [relKey]: {
               ...currentRel,
               score: Math.min(100, currentRel.score + 50),
+              // 聯姻同盟 — a binding tie: 'allied' blocks hostility both ways.
+              status: 'allied' as const,
             },
           },
+        };
+
+        const newAlliance = {
+          forceA: state.playerForceId,
+          forceB: targetForceId,
+          officerA: yourOfficerId,
+          officerB: theirOfficerId,
+          sinceYear: state.date.year,
         };
 
         set({
@@ -4561,11 +4632,41 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           },
           runtimeBonds: [...state.runtimeBonds, newBond],
           diplomacy: nextDiplomacy,
+          marriageAlliances: [...state.marriageAlliances, newAlliance],
         });
 
         return {
           ok: true,
-          message: `${yours.name.en} and ${theirs.name.en} are now bonded by marriage. Relations with ${target.name.en} improved.`,
+          message: `${yours.name.en} ⚭ ${theirs.name.en}: a binding marriage alliance with ${target.name.en} is sealed — neither realm may take up arms against the other while it stands.`,
+        };
+      },
+
+      breakMarriageAlliance: (targetForceId) => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        const existing = allianceBetween(state.marriageAlliances, state.playerForceId, targetForceId);
+        if (!existing) return { ok: false, message: 'No marriage alliance with that realm.' };
+        const livingForceIds = new Set(
+          Object.values(state.cities).map((c) => c.ownerForceId).filter(Boolean) as EntityId[],
+        );
+        const r = breakMarriageTie({
+          breakerForceId: state.playerForceId,
+          targetForceId,
+          alliances: state.marriageAlliances,
+          diplomacy: state.diplomacy,
+          officers: state.officers,
+          runtimeBonds: state.runtimeBonds,
+          livingForceIds,
+        });
+        set({
+          diplomacy: r.diplomacy,
+          marriageAlliances: r.alliances,
+          officers: r.officers,
+          runtimeBonds: r.runtimeBonds,
+        });
+        return {
+          ok: true,
+          message: 'You renounce the marriage alliance. War is once more permitted — but your word is now suspect across the realm.',
         };
       },
 
@@ -4913,6 +5014,109 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         }
         set({ officers: nextOfficers });
         return { ok: true };
+      },
+
+      grantPeerage: (officerId, peerageId) => {
+        const state = get();
+        const officer = state.officers[officerId];
+        const def = PEERAGES_BY_ID[peerageId];
+        if (!officer || !def) return { ok: false, reason: 'invalid' };
+        if (officer.forceId !== state.playerForceId)
+          return { ok: false, reason: 'not your officer' };
+        if (officer.status === 'dead' || officer.status === 'imprisoned')
+          return { ok: false, reason: 'unavailable' };
+        if (peerageTier(officer.peerageId) >= def.tier)
+          return { ok: false, reason: 'already holds an equal or higher peerage' };
+        const force = state.playerForceId ? state.forces[state.playerForceId] : undefined;
+        const sovereign =
+          force?.imperialRank === 'king' || force?.imperialRank === 'emperor';
+        if (def.requiresSovereign && !sovereign)
+          return { ok: false, reason: 'requires 稱王/稱帝 to confer 公/王' };
+        const merit = meritScore(officer, state.deeds[officerId]);
+        if (merit < def.minMerit)
+          return { ok: false, reason: `requires ${def.minMerit} merit (has ${merit})` };
+        const nextOfficers = {
+          ...state.officers,
+          [officerId]: {
+            ...officer,
+            peerageId,
+            loyalty: Math.min(100, officer.loyalty + def.loyaltyOnGrant),
+          },
+        };
+        // Jealousy — high-merit rivals without a peerage of their own resent
+        // an enfeoffment they feel they earned.
+        for (const o of Object.values(state.officers)) {
+          if (o.id === officerId) continue;
+          if (o.forceId !== state.playerForceId) continue;
+          if (o.status === 'dead' || o.status === 'imprisoned') continue;
+          const tr = o.traits ?? [];
+          if (!tr.includes('envious') && !tr.includes('jealous')) continue;
+          if (peerageTier(o.peerageId) >= def.tier) continue;
+          if (meritScore(o, state.deeds[o.id]) <= merit) continue;
+          const prev = nextOfficers[o.id] ?? o;
+          nextOfficers[o.id] = { ...prev, loyalty: Math.max(0, prev.loyalty - 5) };
+        }
+        set({ officers: nextOfficers });
+        return { ok: true };
+      },
+
+      setRecruitmentStance: (stance) => {
+        const state = get();
+        const fid = state.playerForceId;
+        if (!fid) return;
+        const force = state.forces[fid];
+        if (!force) return;
+        set({ forces: { ...state.forces, [fid]: { ...force, recruitmentStance: stance } } });
+      },
+
+      setStatecraft: (school) => {
+        const state = get();
+        const fid = state.playerForceId;
+        if (!fid) return;
+        const force = state.forces[fid];
+        if (!force) return;
+        set({ forces: { ...state.forces, [fid]: { ...force, statecraft: school ?? undefined } } });
+      },
+
+      holdFoundingCeremony: (dynastyTitle, eraName) => {
+        const state = get();
+        const fid = state.playerForceId;
+        if (!fid) return { ok: false, message: 'No player force.' };
+        const force = state.forces[fid];
+        if (!force) return { ok: false, message: 'No player force.' };
+        if (force.imperialRank !== 'king' && force.imperialRank !== 'emperor')
+          return { ok: false, message: '須先稱王或稱帝方可行建國大典。 (Requires 王/帝 standing.)' };
+        if (force.foundingYear !== undefined)
+          return { ok: false, message: '建國大典已行,不可再行。 (Already held.)' };
+        if (!dynastyTitle.trim() || !eraName.trim())
+          return { ok: false, message: '須定國號與年號。 (Pick a dynasty title and era name.)' };
+        const r = holdFounding({
+          forceId: fid,
+          cities: state.cities,
+          officers: state.officers,
+          deeds: state.deeds,
+        });
+        const mandate = {
+          ...state.mandate,
+          byForce: {
+            ...state.mandate.byForce,
+            [fid]: Math.min(100, (state.mandate.byForce[fid] ?? 50) + r.mandateGain),
+          },
+        };
+        set({
+          cities: r.cities,
+          officers: r.officers,
+          mandate,
+          forces: {
+            ...state.forces,
+            [fid]: { ...force, dynastyTitle: dynastyTitle.trim(), eraName: eraName.trim(), foundingYear: state.date.year },
+          },
+        });
+        return {
+          ok: true,
+          message: `${dynastyTitle.trim()}・${eraName.trim()} 元年:大典告成,大赦天下,封賞百官 ${r.enfeoffed.length} 人,天命大盛。`,
+          enfeoffed: r.enfeoffed.length,
+        };
       },
 
       resolveEventChoice: (choiceId) => {

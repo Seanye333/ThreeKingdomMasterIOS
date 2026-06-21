@@ -1,10 +1,15 @@
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import type { BattleDetail } from '../../game/types';
 import { OfficerPortrait } from './OfficerPortrait';
 import { useLanguage } from '../i18n';
 import { pickVoiceLine } from '../../game/data/voiceLines';
 import { playSfx } from '../../game/systems/sound';
+
+// 3D siege set-piece — lazy so the heavy three.js bundle loads only on demand.
+const SiegeDiorama3D = lazy(() =>
+  import('./SiegeDiorama3D').then((m) => ({ default: m.SiegeDiorama3D })),
+);
 
 interface Props {
   battle: BattleDetail;
@@ -31,6 +36,7 @@ export function BattleTheaterModal({ battle, onClose }: Props) {
   const phases = battle.phases ?? [];
   const totalSteps = phases.length + 1; // last step = summary
   const [step, setStep] = useState(0);
+  const [showSiege, setShowSiege] = useState(false);
 
   useEffect(() => {
     if (step >= totalSteps - 1) return;
@@ -269,6 +275,23 @@ export function BattleTheaterModal({ battle, onClose }: Props) {
               {battle.attackerWins ? (battle.cityFalls ? (lang === 'en' ? 'City Fell' : '城陷') : (lang === 'en' ? 'Victory' : '勝')) : (lang === 'en' ? 'Defeat' : '敗北')}
             </div>
 
+            {/* 觀此攻城 — open the 3D siege set-piece for a city assault
+                (any non-field battle is an assault on a walled city). */}
+            {!battle.field && (
+              <div style={{ textAlign: 'center', marginBottom: '0.7rem' }}>
+                <button
+                  onClick={() => setShowSiege(true)}
+                  style={{
+                    background: 'linear-gradient(135deg,#7a3a1a,#caa53d)', color: '#1a1206',
+                    border: 'none', borderRadius: '6px', padding: '0.45rem 1.1rem',
+                    cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.85rem', letterSpacing: '0.08rem',
+                  }}
+                >
+                  ⚔ {lang === 'en' ? 'Watch the Siege (3D)' : '觀此攻城 (3D)'}
+                </button>
+              </div>
+            )}
+
             {/* Stratagem result */}
             {battle.stratagem && (
               <div style={{
@@ -359,6 +382,27 @@ export function BattleTheaterModal({ battle, onClose }: Props) {
             : `⟫ ${step + 1} / ${phases.length}  ·  點擊跳至下一幕`}
         </div>
       </div>
+
+      {showSiege && (
+        <div
+          onClick={(e) => { e.stopPropagation(); setShowSiege(false); }}
+          style={{ position: 'fixed', inset: 0, zIndex: 60, background: '#000' }}
+        >
+          <Suspense fallback={<div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', color: '#e6c473' }}>…</div>}>
+            <SiegeDiorama3D
+              attackerColor={forces[battle.attacker.forceId ?? '']?.color ?? '#b8442e'}
+              defenderColor={forces[battle.defender.forceId ?? '']?.color ?? '#3a7dd9'}
+              cityFell={battle.cityFalls}
+            />
+          </Suspense>
+          <div style={{ position: 'absolute', top: 14, left: 0, right: 0, textAlign: 'center', color: '#e6c473', fontSize: '1rem', letterSpacing: '0.12rem', textShadow: '0 2px 8px #000', pointerEvents: 'none' }}>
+            {cities[battle.cityId]?.name.zh ?? ''} {lang === 'en' ? 'Siege' : '攻城戰'} — {battle.cityFalls ? (lang === 'en' ? 'the gate is broken' : '城門告破') : (lang === 'en' ? 'the walls hold' : '城垣堅守')}
+          </div>
+          <div style={{ position: 'absolute', bottom: 16, left: 0, right: 0, textAlign: 'center', color: '#9aa7b2', fontSize: '0.75rem', pointerEvents: 'none' }}>
+            {lang === 'en' ? 'drag to orbit · tap to close' : '拖動環視 · 點擊關閉'}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -7,6 +7,9 @@ import styles from './TitlesModal.module.css';
 import { useDesc, useLanguage } from '../i18n';
 import { Name } from './Name';
 import { officerGrade, gradeRank, gradeMeta } from '../../game/systems/officerGrade';
+import { PEERAGES, peerageById, peerageTier, meritScore } from '../../game/data/peerage';
+import { STATECRAFT } from '../../game/data/statecraft';
+import { DYNASTY_TITLES, ERA_NAMES } from '../../game/data/foundingNames';
 
 function pickBestFit(
   officers: Officer[],
@@ -26,7 +29,7 @@ interface Props {
   onClose: () => void;
 }
 
-type Tab = 'civic' | 'military' | 'history';
+type Tab = 'civic' | 'military' | 'peerage' | 'history';
 
 export function TitlesModal({ onClose }: Props) {
   const lang = useLanguage();
@@ -38,12 +41,26 @@ export function TitlesModal({ onClose }: Props) {
   const appointTitle = useGameStore((s) => s.appointTitle);
   const revokeTitle = useGameStore((s) => s.revokeTitle);
   const promoteOfficer = useGameStore((s) => s.promoteOfficer);
+  const grantPeerage = useGameStore((s) => s.grantPeerage);
+  const setRecruitmentStance = useGameStore((s) => s.setRecruitmentStance);
+  const setStatecraft = useGameStore((s) => s.setStatecraft);
+  const holdFoundingCeremony = useGameStore((s) => s.holdFoundingCeremony);
+  const deeds = useGameStore((s) => s.deeds);
+  const playerForce = useGameStore((s) => (s.playerForceId ? s.forces[s.playerForceId] : undefined));
+  const stance = playerForce?.recruitmentStance ?? 'balanced';
+  const statecraft = playerForce?.statecraft ?? null;
   const currentYear = useGameStore((s) => s.date.year);
   const allForces = useGameStore((s) => s.forces);
+  const sovereign = playerForce?.imperialRank === 'king' || playerForce?.imperialRank === 'emperor';
 
   const [tab, setTab] = useState<Tab>('civic');
   const [pickingTitle, setPickingTitle] = useState<CivicTitleId | null>(null);
   const [prefectCityId, setPrefectCityId] = useState<EntityId | null>(null);
+  const founded = playerForce?.foundingYear !== undefined;
+  const canFound = sovereign && !founded;
+  const [showCeremony, setShowCeremony] = useState(false);
+  const [dynastyTitle, setDynastyTitle] = useState(DYNASTY_TITLES[0].zh);
+  const [eraName, setEraName] = useState(ERA_NAMES[0].zh);
 
   const ownOfficers = useMemo(
     () =>
@@ -145,6 +162,90 @@ export function TitlesModal({ onClose }: Props) {
             <button className={styles.closeButton} onClick={onClose}>×</button>
           </div>
         </header>
+        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', padding: '0 1rem 0.4rem', flexWrap: 'wrap' }}>
+          <span className={styles.officerStats}>{lang === 'en' ? 'Talent policy 門第政策:' : '門第政策:'}</span>
+          {([
+            ['aristocratic', '重門第', 'Aristocratic'],
+            ['balanced', '並用', 'Balanced'],
+            ['meritocratic', '唯才是舉', 'Meritocratic'],
+          ] as const).map(([id, zh, en]) => (
+            <button
+              key={id}
+              className={`${styles.tab} ${stance === id ? styles.tabActive : ''}`}
+              title={
+                id === 'aristocratic'
+                  ? (lang === 'en' ? 'Lean on the great clans: recruit bonus + clan loyalty, but commoners chafe and clans grow over-mighty.' : '倚重世族:招攬加成、世族忠誠↑,但寒門離心、門閥易坐大。')
+                  : id === 'meritocratic'
+                  ? (lang === 'en' ? 'Promote by ability: commoners thrive, clans grow disaffected.' : '唯才是舉:寒門奮起忠誠↑,世族心懷怨望。')
+                  : (lang === 'en' ? 'Neutral middle road.' : '世族寒門並用,無偏。')
+              }
+              onClick={() => setRecruitmentStance(id)}
+            >
+              {lang === 'en' ? en : zh}
+            </button>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', padding: '0 1rem 0.5rem', flexWrap: 'wrap' }}>
+          <span className={styles.officerStats}>{lang === 'en' ? 'Statecraft 治國理念:' : '治國理念:'}</span>
+          <button
+            className={`${styles.tab} ${statecraft === null ? styles.tabActive : ''}`}
+            onClick={() => setStatecraft(null)}
+            title={lang === 'en' ? 'No slant.' : '雜糅,無偏。'}
+          >
+            {lang === 'en' ? 'None' : '雜糅'}
+          </button>
+          {STATECRAFT.map((s) => (
+            <button
+              key={s.id}
+              className={`${styles.tab} ${statecraft === s.id ? styles.tabActive : ''}`}
+              title={lang === 'en' ? s.creed.en : s.creed.zh}
+              onClick={() => setStatecraft(s.id)}
+            >
+              {lang === 'en' ? s.name.en : s.name.zh}
+            </button>
+          ))}
+          {(canFound || founded) && (
+            <button
+              className={`${styles.tab} ${showCeremony ? styles.tabActive : ''}`}
+              style={{ marginLeft: 'auto', borderColor: '#caa53d', color: founded ? '#7a8893' : '#e6c473' }}
+              disabled={founded}
+              title={founded
+                ? (lang === 'en' ? `Founded ${playerForce?.dynastyTitle} · ${playerForce?.eraName}` : `已建國:${playerForce?.dynastyTitle}・${playerForce?.eraName}`)
+                : (lang === 'en' ? 'Hold the founding ceremony: proclaim a dynasty, amnesty, and mass-enfeoff your officers.' : '行建國大典:定國號年號、大赦天下、封賞百官。')}
+              onClick={() => setShowCeremony((v) => !v)}
+            >
+              {founded
+                ? (lang === 'en' ? `👑 ${playerForce?.dynastyTitle}` : `👑 ${playerForce?.dynastyTitle}`)
+                : (lang === 'en' ? '👑 Found Dynasty' : '👑 建國大典')}
+            </button>
+          )}
+        </div>
+        {showCeremony && canFound && (
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', padding: '0 1rem 0.6rem', flexWrap: 'wrap' }}>
+            <span className={styles.officerStats}>{lang === 'en' ? 'Dynasty 國號' : '國號'}</span>
+            <select value={dynastyTitle} onChange={(e) => setDynastyTitle(e.target.value)}>
+              {DYNASTY_TITLES.map((d) => (
+                <option key={d.zh} value={d.zh}>{lang === 'en' ? `${d.en} (${d.zh})` : d.zh}</option>
+              ))}
+            </select>
+            <span className={styles.officerStats}>{lang === 'en' ? 'Era 年號' : '年號'}</span>
+            <select value={eraName} onChange={(e) => setEraName(e.target.value)}>
+              {ERA_NAMES.map((d) => (
+                <option key={d.zh} value={d.zh}>{lang === 'en' ? `${d.en} (${d.zh})` : d.zh}</option>
+              ))}
+            </select>
+            <button
+              className={styles.appointBtn}
+              onClick={() => {
+                const r = holdFoundingCeremony(dynastyTitle, eraName);
+                alert(r.message);
+                if (r.ok) setShowCeremony(false);
+              }}
+            >
+              {lang === 'en' ? 'Proclaim 即位告天' : '即位告天'}
+            </button>
+          </div>
+        )}
         <div className={styles.tabs}>
           <button
             className={`${styles.tab} ${tab === 'civic' ? styles.tabActive : ''}`}
@@ -157,6 +258,12 @@ export function TitlesModal({ onClose }: Props) {
             onClick={() => setTab('military')}
           >
             武官 Military Ranks
+          </button>
+          <button
+            className={`${styles.tab} ${tab === 'peerage' ? styles.tabActive : ''}`}
+            onClick={() => setTab('peerage')}
+          >
+            爵位 Peerage
           </button>
           <button
             className={`${styles.tab} ${tab === 'history' ? styles.tabActive : ''}`}
@@ -196,6 +303,17 @@ export function TitlesModal({ onClose }: Props) {
               ownOfficers={ownOfficers}
               onPromote={(officerId, rankId) => {
                 const r = promoteOfficer(officerId, rankId);
+                if (!r.ok) alert(r.reason ?? 'Failed');
+              }}
+            />
+          )}
+          {tab === 'peerage' && (
+            <PeerageTab
+              ownOfficers={ownOfficers}
+              deeds={deeds}
+              sovereign={sovereign}
+              onGrant={(officerId, peerageId) => {
+                const r = grantPeerage(officerId, peerageId);
                 if (!r.ok) alert(r.reason ?? 'Failed');
               }}
             />
@@ -485,6 +603,100 @@ function MilitaryTab({
       )}
       {!selected && (
         <div className={styles.empty}>{lang === 'en' ? 'Pick an officer to promote.' : '選一名武將授銜。'}</div>
+      )}
+    </div>
+  );
+}
+
+function PeerageTab({
+  ownOfficers,
+  deeds,
+  sovereign,
+  onGrant,
+}: {
+  ownOfficers: Officer[];
+  deeds: Record<EntityId, import('../../game/types').HeroicDeeds>;
+  sovereign: boolean;
+  onGrant: (officerId: EntityId, peerageId: import('../../game/types').PeerageId) => void;
+}) {
+  const lang = useLanguage();
+  const [selectedId, setSelectedId] = useState<EntityId | null>(null);
+  const selected = selectedId ? ownOfficers.find((o) => o.id === selectedId) : null;
+  // Sort officers by merit desc so the most-deserving sit at the top.
+  const sorted = useMemo(
+    () => [...ownOfficers].sort((a, b) => meritScore(b, deeds[b.id]) - meritScore(a, deeds[a.id])),
+    [ownOfficers, deeds],
+  );
+  return (
+    <div>
+      <div className={styles.pickerLabel}>
+        {sovereign
+          ? (lang === 'en' ? 'Select officer (公/王 unlocked)' : '選擇武將(已可封公/王)')
+          : (lang === 'en' ? 'Select officer — 公/王 need 稱王/稱帝' : '選擇武將(公/王需稱王稱帝)')}
+      </div>
+      <div className={styles.picker} style={{ marginBottom: '1rem' }}>
+        {sorted.map((o) => {
+          const peer = peerageById(o.peerageId);
+          return (
+            <button
+              key={o.id}
+              className={styles.officerOption}
+              onClick={() => setSelectedId(o.id === selectedId ? null : o.id)}
+              style={o.id === selectedId ? { borderColor: '#e6c473', background: '#1b2531' } : undefined}
+            >
+              <span>
+                <Name pair={o.name} />
+                {peer && <span style={{ color: '#caa53d', marginLeft: '0.4rem' }}><Name pair={peer.name} /></span>}
+              </span>
+              <span className={styles.officerStats}>
+                {lang === 'en' ? 'merit' : '功勳'} {meritScore(o, deeds[o.id])}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      {selected && (
+        <div>
+          <div className={styles.pickerLabel}>
+            {lang === 'en' ? 'Enfeoff ' : '封爵 '}<Name pair={selected.name} />
+            <span className={styles.officerStats} style={{ marginLeft: '0.5rem' }}>
+              {lang === 'en' ? 'merit' : '功勳'} {meritScore(selected, deeds[selected.id])}
+            </span>
+          </div>
+          {PEERAGES.map((p) => {
+            const merit = meritScore(selected, deeds[selected.id]);
+            const held = peerageTier(selected.peerageId);
+            const current = selected.peerageId === p.id;
+            const lockedSovereign = p.requiresSovereign && !sovereign;
+            const eligible = merit >= p.minMerit && p.tier > held && !lockedSovereign;
+            return (
+              <div key={p.id} className={styles.rankRow}>
+                <div>
+                  <span className={styles.rankName}><Name pair={p.name} /></span>
+                </div>
+                <div className={styles.rankReq}>
+                  {lang === 'en' ? 'merit' : '功勳'} ≥ {p.minMerit}{p.requiresSovereign ? ' · 王/帝' : ''}
+                </div>
+                <div className={styles.rankStipend}>+{p.fiefGold}g +{p.fiefGrain}{lang === 'en' ? ' grain' : '糧'}/season</div>
+                <div className={styles.rankCap}>{lang === 'en' ? 'loy' : '忠'}+{p.loyaltyBonus}/s</div>
+                <div className={styles.rankAction}>
+                  {current ? (
+                    <span className={styles.muted}>{lang === 'en' ? 'current' : '現爵'}</span>
+                  ) : eligible ? (
+                    <button className={styles.appointBtn} onClick={() => onGrant(selected.id, p.id)}>
+                      {lang === 'en' ? 'Enfeoff' : '封'}
+                    </button>
+                  ) : (
+                    <span className={styles.muted}>{lockedSovereign ? '🔒' : '—'}</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {!selected && (
+        <div className={styles.empty}>{lang === 'en' ? 'Pick an officer to enfeoff.' : '選一名武將封爵。'}</div>
       )}
     </div>
   );

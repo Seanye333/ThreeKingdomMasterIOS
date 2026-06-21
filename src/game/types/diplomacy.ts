@@ -14,6 +14,22 @@ export interface DiplomaticState {
   relations: Record<string, Relation>;
 }
 
+/**
+ * 聯姻同盟 — a binding marriage alliance between two realms. Distinct from a
+ * mere relation boost: while it stands the two forces are 'allied' (hostility
+ * blocked by isHostilePermitted) and their relation is floored; dissolving it
+ * to make war brands the breaker an 背信 oathbreaker (see systems/marriageAlliance).
+ */
+export interface MarriageAlliance {
+  forceA: EntityId;
+  forceB: EntityId;
+  /** The two wed officers (officerA serves forceA, officerB serves forceB). */
+  officerA: EntityId;
+  officerB: EntityId;
+  /** Year the union was sealed. */
+  sinceYear: number;
+}
+
 export function pairKey(a: EntityId, b: EntityId): string {
   return a < b ? `${a}__${b}` : `${b}__${a}`;
 }

@@ -8,7 +8,10 @@ import type {
   MilitaryRankId,
   Officer,
 } from '../types';
+import type { HeroicDeeds } from '../types/deeds';
+import type { PeerageId } from '../types/title';
 import { CIVIC_TITLES, CIVIC_TITLES_BY_ID, MILITARY_RANKS, MILITARY_RANKS_BY_ID } from '../data/titles';
+import { highestEligiblePeerage } from '../data/peerage';
 import { traitRefusal } from './appointmentEffects';
 import { officerGrade, gradeRank } from './officerGrade';
 
@@ -17,6 +20,8 @@ export interface AIAppointmentsContext {
   officers: Record<EntityId, Officer>;
   cities: Record<EntityId, City>;
   appointments: Appointment[];
+  /** Per-officer deeds — feeds 功勳積分 for AI enfeoffment. Optional. */
+  deeds?: Record<EntityId, HeroicDeeds>;
   playerForceId: EntityId | null;
   year: number;
 }
@@ -27,10 +32,11 @@ export interface AIAppointmentsOutput {
   /** Force-id keyed labels for surfaced changes (used by season-report logging). */
   changes: Array<{
     forceId: EntityId;
-    kind: 'appoint' | 'promote';
+    kind: 'appoint' | 'promote' | 'enfeoff';
     officerId: EntityId;
     titleId?: CivicTitleId;
     rankId?: MilitaryRankId;
+    peerageId?: PeerageId;
   }>;
 }
 
@@ -135,6 +141,31 @@ export function planAIAppointments(ctx: AIAppointmentsContext): AIAppointmentsOu
         loyalty: Math.min(100, o.loyalty + nextRank.loyaltyBonus),
       };
       changes.push({ forceId: force.id, kind: 'promote', officerId: o.id, rankId: nextRank.id });
+    }
+
+    // 封爵 pass — the realm enfeoffs its most-deserving officers. 公/王 need a
+    // sovereign (王/帝) realm; everyone else tops out at 縣侯. The AI enfeoffs
+    // sparingly: only the single highest-merit eligible officer per season, so
+    // peerages stay scarce and meaningful.
+    const sovereign =
+      force.imperialRank === 'king' || force.imperialRank === 'emperor';
+    let bestAward: { officer: Officer; peerageId: PeerageId; tier: number } | null = null;
+    for (const o of forceOfficers) {
+      const next = highestEligiblePeerage(officers[o.id] ?? o, ctx.deeds?.[o.id], sovereign);
+      if (!next) continue;
+      if (!bestAward || next.tier > bestAward.tier) {
+        bestAward = { officer: officers[o.id] ?? o, peerageId: next.id, tier: next.tier };
+      }
+    }
+    if (bestAward) {
+      const o = bestAward.officer;
+      const def = highestEligiblePeerage(o, ctx.deeds?.[o.id], sovereign)!;
+      officers[o.id] = {
+        ...o,
+        peerageId: bestAward.peerageId,
+        loyalty: Math.min(100, o.loyalty + def.loyaltyOnGrant),
+      };
+      changes.push({ forceId: force.id, kind: 'enfeoff', officerId: o.id, peerageId: bestAward.peerageId });
     }
   }
 

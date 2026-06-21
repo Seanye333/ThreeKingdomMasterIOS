@@ -12,14 +12,14 @@
 |---|---|---|---|
 | 速 | [速查總表 Quick Reference](#速查總表-quick-reference) | 一頁掃完所有關鍵常數 / 公式 / 成本 / 機率 | ✅ |
 | 1 | [城市・內政・經濟](#第一章-城市內政經濟) | citySize, economy, commands, market, buildings, autoBuild, policyEffects, forging, specialties, tradeRoutes, convoy | ✅ |
-| 2 | [武將・成長・家族](#第二章-武將成長家族) | growth, officerGrade, gradeCombat, officerFate, traitEffects, personality, biography, posthumous, aging, officerGen, family, retinues, wishes, rapport, relationshipEffects, career, codex | ✅ |
+| 2 | [武將・成長・家族](#第二章-武將成長家族) | growth, officerGrade, gradeCombat, officerFate, traitEffects, personality, biography, posthumous, aging, officerGen, family, retinues, wishes, rapport, relationshipEffects, career, codex, peerage | ✅ |
 | 3 | [人才・招攬・舌戰](#第三章-人才招攬舌戰) | commands(search), officerFate, debate, wordWar, commonerTalent | ✅ |
-| 4 | [軍事指揮・委任](#第四章-軍事指揮委任) | muster, legion, governor, advisor | ✅ |
+| 4 | [軍事指揮・委任](#第四章-軍事指揮委任) | muster, legion, governor, governorEval, advisor | ✅ |
 | 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, combat, formations, stratagems, weather, battlefieldTerrain, personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
 | 6 | [單挑](#第六章-單挑) | duel, gauntlet | ✅ |
-| 7 | [外交・謀略・天子](#第七章-外交謀略天子) | diplomacy, coalition, schemes, aiSchemes, ambition, espionage, expedition, foreignRealm, intrigue, courtFactions, factionEvents, emperor, imperialEffects, mandate, appointmentEffects | ✅ |
+| 7 | [外交・謀略・天子](#第七章-外交謀略天子) | diplomacy, coalition, schemes, aiSchemes, ambition, espionage, expedition, foreignRealm, intrigue, courtFactions, factionEvents, emperor, imperialEffects, mandate, appointmentEffects, clans, statecraft | ✅ |
 | 8 | [事件・天命・異族・宗教](#第八章-事件天命異族宗教) | events, historicalEvents, customEvents, factionEvents, religion, tribes | ✅ |
-| 9 | [元遊戲・收藏・分享](#第九章-元遊戲收藏分享) | achievements, deedTitles, dailyChallenge, leaderboard, mods, powerHistory, historyBook, sound, voiceLines, dialogueRoll | ✅ |
+| 9 | [元遊戲・收藏・分享](#第九章-元遊戲收藏分享) | achievements, deedTitles, dailyChallenge, leaderboard, mods, powerHistory, historyBook, romance, sound, voiceLines, dialogueRoll | ✅ |
 | 10 | [AI](#第十章-ai) | ai, aiBuild, aiCourt, aiAppointments, aiSchemes, aiRansom, aiWishesFlavor | ✅ |
 | 11 | [核心流程・勝敗・培訓・其他模式](#第十一章-核心流程勝敗培訓其他模式) | resolution, endings, training, succession, objectives, hotSeat, spectator, heroMode, customOfficer, eventEditor, randomScenario, dynasties | ✅ |
 | 圖 | [流程圖 Flowcharts](#流程圖-flowcharts) | 核心循環視覺化:結算順序 / 戰鬥管線 / 招攬升級 / 培訓 / 金收公式 | ✅ |
@@ -343,6 +343,28 @@
 - **應允** → 忠誠 +8~14(依心願類型);**駁回** → 忠誠 −4~12;**置之不理(逾期)** → 較小的忠誠折損(怠慢之過,比明駁輕)。
 - 野心/傲慢者更常開口求官。把心願當成低成本的忠誠維護 —— 順手應允通常比事後補救划算。(AI 勢力同理,旁白見第九章 aiWishesFlavor。)
 
+### 2.11 爵位・封爵(peerage.ts)
+
+官爵的最高一層,凌駕於**軍階**(任官第四章)與**官職**之上。一名武將同時只持有一個爵位(取最高)。封爵入口在「任官」面板的「爵位」分頁。
+
+**爵位階梯(六級,各帶食邑與功勳門檻)**
+
+| 爵位 | 食邑(每季入府庫) | 忠誠/季 | 受封忠誠 | 功勳門檻 | 野心壓力 | 限制 |
+|---|---|---|---|---|---|---|
+| 關內侯 | +40 金 +60 糧 | +2 | +4 | 120 | 0 | — |
+| 亭侯 | +90 金 +120 糧 | +3 | +6 | 200 | 0 | — |
+| 鄉侯 | +160 金 +200 糧 | +4 | +8 | 320 | 1 | — |
+| 縣侯 | +260 金 +300 糧 | +5 | +10 | 460 | 2 | — |
+| 公 | +420 金 +460 糧 | +6 | +12 | 640 | 4 | 需 **稱王/稱帝** |
+| 王 | +640 金 +640 糧 | +8 | +16 | 860 | 7 | 需 **稱王/稱帝** |
+
+- **食邑**:封地每季把金/糧繳入勢力都城(諸侯為國理財)—— 封爵對國庫**淨增益**,即便該將出征在外仍照繳;唯死亡/被擒停租。
+- **忠誠**:受封當下一次性加忠誠;此後每季(閒置時)疊加「食邑加俸」忠誠漂移。
+- **功勳積分(meritScore)**:`能力(取武/智/政最高 + 0.5×統率)×2`,再加戰功(殲敵/單挑勝/取城/勝戰/生擒/諜報/內政)。無戰功的純高屬勇將最高僅到亭侯一帶;縣侯以上要真打出來。
+- **野心張力**:把「公/王」這種大邑壓在尚未稱帝的強將身上會餵養其**野心**(見 7.5,曹操封魏公之患)—— 重賞名將也可能養出軍閥。
+- **嫉妒**:封爵會惹得功勳更高卻未受爵的「善妒/嫉妒」同僚忠誠 −5。
+- AI 勢力同樣封爵(aiAppointments):每季僅擇一名功勳最高的適格者受封,爵位因此稀缺。
+
 ---
 
 ## 第三章 人才・招攬・舌戰
@@ -416,6 +438,15 @@
 
 最高智武將每旬讀盤獻三策(城將失守→徵兵、民亂→安撫、缺糧→市易買糧、穀豐金荒→賣糧、賢才在野→探訪、良將閒置→派活、鄰城空虛→提示),可下令的一鍵「照辦」。
 
+### 4.6 考課・太守績效(governorEval.ts)
+
+委出去的太守不再「委而不問」——**每年冬末**(隨衰老結算)對各勢力在任太守做一次**考課**:以其所守城池的健康度為治績代理打分。
+
+- **評分(scoreGovernorSeat,0–100)**:民忠 34% + 府庫(相對城等上限)22% + 倉廩 16% + 守軍(相對 2 萬基準)14% + 太守政治 14%。
+- **三等(殿最)**:≥66 **上考**、≥38 **中考**、其餘 **下考**。
+- **賞罰**:上考忠誠 **+4**、中考 0、下考 **−4**。久居下考的太守忠誠持續下滑,終會撞上既有的叛離閾值(問責閉環)——治績不彰者自會離心,玩家亦可於任官面板主動罷免改任。
+- 失守之城不予考課;結果逐條寫入季報。
+
 ---
 
 ## 第五章 戰術戰鬥
@@ -474,6 +505,7 @@
 - **戰後復盤**(battleRecap):戰損比、最堅韌、中流砥柱、計謀次數。
 - **委託指揮**:小仗一鍵交戰術 AI 代打。
 - **戰鬥錄影**:🎬 導出 WebM。
+- **3D 攻城戲(SiegeDiorama3D)**:攻城戰(非野戰)的戰報摘要頁可按「⚔ 觀此攻城 (3D)」開啟一場**過場級 3D 演出** —— 全程式生成(無外部資產):雉堞城牆、城門、角樓、攻城槌、雙方旌旗依勢力色、攻守兵陣、煙塵與緩慢環繞鏡頭;城破則槌擊更猛、城門迸裂、暖光漫天。按需**懶載**(獨立 chunk),拖動環視、點擊關閉。
 
 ### 5.9 兵裝(weaponTypes.ts,10 類)
 
@@ -513,6 +545,13 @@
 - 關係狀態:中立 / 互不侵犯 / 同盟;好感 −100~+100。
 - 行動:同盟、互不侵犯(臨時和平)、歲貢(+好感)、聯姻、送質子(+50 好感、16 季 NAP)、破盟(−50)。
 
+**聯姻同盟(marriageAlliance.ts)** —— 把「婚姻」從一次性 +好感升格為**硬外交盟約**:
+
+- 締姻(1000 金,DiplomacyModal「婚姻」):兩將結為婚盟,**關係轉為「同盟」**(`isHostilePermitted` 雙向封鎖互攻),並建一條忠誠地板 80 的姻親 bond。
+- **每季維護**(tickMarriageAlliances):盟約存續期間關係**不低於 60** 且每季 +2 漸暖;若對方勢力**被他人所滅**,盟約自然失效(非背信)。
+- **背信棄義(breakMarriageAlliance,DiplomacyModal「背盟」)**:欲對盟友動兵須先撕盟 —— 與該國關係驟降至 −50 並解除封鎖,**且與所有其他勢力 −15**(背信之名播於四鄰),自家當事姻親武將忠誠 −25、姻親 bond 解除。重盟者三思。
+- 與舊有的「同盟/絕交(coalition breakAlliance,−50)」並存:有婚盟時破盟按上述背信規則,否則走普通絕交。
+
 ### 7.2 計略(schemes.ts,勢力級)
 
 | 計 | 費用 | 效果 |
@@ -544,6 +583,11 @@
 - **朝廷派系**(intrigue.ts / courtFactions.ts):武將自動歸入**革新派 / 宦黨 / 門閥 / 軍方**四派。注意有**兩套分派**:朝堂黨爭(intrigue.ts)按年齡/屬性分(改革派 政 >70 且 <40 歲、宦官 統 <50 政 >70、門閥 政 >75 魅 >70、武人 武 >80);而派系事件與野心(courtFactions.ts)按**性格**分(諂媚/狡詐→宦黨、純武將→軍方、門第性格+高政→門閥、高智高政或仁厚→革新)。
 - **派系事件**(factionEvents.ts):當一派占某勢力分類武將 >55%(≥5 人),每季 25% 機率觸發 —— **軍方**:武人干政(全勢力忠誠 −3、天命 −2);**門閥**:九品官人法(低魅武將 −5 忠誠);**宦黨**:黨錮之禍(一名革新/門閥武將 −15 忠誠);**革新**:新政(各城 +5 民忠)。
 - **任官加成**(appointmentEffects:太守/丞相/司徒等乘內政、刺史加徵兵)。
+- **建國大典(founding.ts)** —— 把「稱帝」從結局升為**中盤可玩節點**。勢力達 **王/帝** 後可於任官面板「👑 建國大典」**一次性**舉行:
+  - **定國號・年號**(foundingNames.ts 預設或自選):寫入 `force.dynastyTitle / eraName`,於各處顯示。
+  - **大赦天下**:所轄各城民忠 **+8**;**恩賞群臣**:全勢力武將忠誠 **+6**。
+  - **封賞百官(晉牌封爵)**:對每名適格武將**批量封爵**(以功勳取其最高可受爵位,大典已具帝王身故公/王亦可封)—— 與 2.11 爵位系統聯動的高潮時刻。
+  - **天命 +15**。一場大典即把忠誠、爵位、天命一次拉滿,昭告新朝。
 
 ### 7.5 權謀・叛變(ambition.ts)
 
@@ -611,6 +655,36 @@
 
 **地圖可視化**(StrategicMap3D `Envoys`):在途使者繪於戰略地圖 —— 城內差事騎士往目標城,遠使騎士(金色旌節)朝該遠邦方向馳出地圖邊緣;沿 `terrainRoute` 行進,按進度推移,返程反向。
 
+### 7.8 門閥世族(clans.ts / 門第政策)
+
+九大**世族**(司馬・袁・荀・諸葛・陳・楊・鍾・崔・王)以**指定成員 id**(非姓氏)圈定——王平之屬不與琅琊王氏混同。每族帶郡望與「滿意且在朝」時借予勢力的招攬/內政加成。
+
+**門第政策(force.recruitmentStance,任官面板頂部切換)**——把世族與寒門的忠誠擰成一條張力:
+
+| 政策 | 世族忠誠/季 | 寒門忠誠/季 | 招攬 | 風險 |
+|---|---|---|---|---|
+| **重門第** 九品中正 | +1 | −2 | 在朝且滿意(忠≥50)的各族借招攬加成(`stanceRecruitModifier`,上限 +30%) | 門閥坐大 → 強臣野心↑ |
+| **並用** balanced | — | — | — | 中庸無偏(預設) |
+| **唯才是舉** meritocratic | −1 | +2 | 寒門廣進(配合求賢令 commonerTalent) | 世族離心,≥2 人且均忠 <40 觸發怨望事件 |
+
+- **寒門**:`commoner-*` 生成的無名之士(求賢令出寒門,見 commonerTalent)。
+- **世族勢力(clanInfluence)**:在朝成員數 × 才幹加權,重門第 ×1.5、唯才是舉 ×0.6,封頂 100。
+- **門閥坐大 → 簒奪**:重門第下某族勢力 ≥70,其**最強且忠誠 <45** 的成員獲一份反叛加成(餵入 7.5 ambition 的 `factionBoost`,與朝堂派系疊加,封頂 +9%)——**司馬代魏**之患由此而生。
+- **AI 自走**:AI 勢力無顯式政策時自動取向——在朝世族 ≥2 人則傾向**重門第**,故世族扎堆的曹魏會自然滑向門閥政治並終養出權臣。玩家政策為**選擇制**(預設並用,需主動選邊)。
+
+### 7.9 治國理念・學派(statecraft.ts)
+
+凌駕於零散**政策**之上的**治國主軸**,四選一(或雜糅不選)。任官面板「治國理念」切換。每季為所轄各城施加傾向,並讓**主義(doctrine)契合**的士人忠誠 +1/季;與該理念相合的在野賢才也更易招攬。
+
+| 學派 | 信條 | 每季每城 | 招攬 | 契合主義 |
+|---|---|---|---|---|
+| **法家** | 富國強兵・信賞必罰 | +60 金;民忠 <40 則拉抬至 40(嚴明法度) | — | 覇道 |
+| **儒家** | 仁政教化・以德服人 | 民忠 +2 | +8% | 王道・礼教 |
+| **道家(黃老)** | 無為而治・與民休息 | +80 糧、民忠 +1 | +3% | 在野 |
+| **兵家** | 耕戰立國・以武為本 | 守軍 +250、民忠 −1 | — | 覇道 |
+
+選對理念可把勢力性格放大成一條路線:法家斂財鎮亂、儒家收心納士、道家休養生息、兵家耕戰擴軍——但各有代價(兵家損民心、法家不增民心)。AI 勢力亦可持有理念(由劇本/性格賦予)。
+
 ---
 
 ## 第八章 事件・天命・異族・宗教
@@ -643,6 +717,7 @@
 - **武功榜・稱號 deedTitles.ts**(萬人敵、百城將…):按 deeds 累積授予;武將列傳(biography.ts)由本局戰績生成「本朝實錄」。
 - **武將圖鑑 codex.ts**:跨戰役遇/仕/斬三檔,五虎將/五子良將/臥龍鳳雛/桃園三結義成套點 ✦。
 - **終局史書 historyBook.ts**:《本朝本紀》序/大事記/十大戰役/功臣列傳/贊曰,可導出文字。
+- **演義成書 romance.ts**:同一份戰史的**章回體**改寫——史書面板「改讀演義」一鍵切換《本朝演義》:把大事記切成一回回(每 5 事一回),自動擬**回目**對偶、以「卻說/話說」說書口吻成文,末回依勝負綴收場聯,亦可導出分享。與 historyBook 紀傳體互為表裡。
 - **諡號 posthumous.ts**:在職病逝授諡(史諡 + 諡法)。
 - **勢力消長 powerHistory.ts**:每季記國力,記錄頁畫折線圖。
 - **每日挑戰 dailyChallenge.ts**:日期種子全網同題(困難+迷霧+隨機第三條),最佳成績本地存,🏆 全球排行榜(leaderboard.ts,需 Vercel KV;未開通則本地)。

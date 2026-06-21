@@ -33,6 +33,9 @@ export interface RecruitInput {
   bestRapportWithCaptors?: number;
   /** 舌戰得勝 — a won war of words opens doors gold cannot (one shot). */
   debateWon?: boolean;
+  /** 門第政策加成 — recruit edge from an aristocratic realm's content clans
+   *  opening the gentry's doors (systems/clans.stanceRecruitModifier). */
+  stanceModifier?: number;
   rng?: () => number;
 }
 
@@ -146,6 +149,7 @@ export function estimateRecruitChance(input: Omit<RecruitInput, 'rng'>): number 
   if (approach === 'feeling') chance += (input.bestRapportWithCaptors ?? 0) / 180;
   chance += reputationBonus(recruiterReputation);
   chance += prestigeRecruitBonus(recruiterRuler);
+  chance += input.stanceModifier ?? 0;
   // 'noble' caps gold-flavored persuasion; an appeal to principle can
   // still reach them.
   if ((officer.traits ?? []).includes('noble')) {

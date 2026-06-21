@@ -14,6 +14,46 @@ export type MilitaryRankId =
   | 'grand-general'  // 大将軍
   | 'chancellor';    // 丞相 (rank-equivalent, top tier)
 
+/**
+ * 爵位 — the hereditary peerage ladder, granted by enfeoffment (封爵), distinct
+ * from the appointed military rank and civic post. A peerage yields 食邑 (fief
+ * income paid into the realm treasury each season), a standing loyalty bonus,
+ * and prestige — but enfeoffing 公/王 onto a powerful non-sovereign retainer
+ * feeds their 野心 (see systems/ambition.ts): the 曹操封魏公 tension. One officer
+ * holds exactly one peerage (the highest granted) at a time.
+ */
+export type PeerageId =
+  | 'guannei' // 關內侯 — entry peerage, no fief town
+  | 'ting'    // 亭侯   — 漢壽亭侯 (關羽)
+  | 'xiang'   // 鄉侯
+  | 'xian'    // 縣侯
+  | 'gong'    // 公     — 魏公 (requires a 稱王/稱帝 sovereign to grant)
+  | 'wang';   // 王     — 魏王 (sovereign-only; pinnacle short of the throne)
+
+export interface Peerage {
+  id: PeerageId;
+  name: BilingualName;
+  /** Sort order; higher = more senior (1..6). */
+  tier: number;
+  /** 食邑 — gold the fief yields into the realm capital each season. */
+  fiefGold: number;
+  /** 食邑 — grain the fief yields into the realm capital each season. */
+  fiefGrain: number;
+  /** Standing loyalty bonus while the peerage is held (folded into drift). */
+  loyaltyBonus: number;
+  /** One-shot loyalty bump on enfeoffment. */
+  loyaltyOnGrant: number;
+  /** Prestige weight — feeds 威望/fame and combat morale. */
+  prestige: number;
+  /** Merit gate (功勳積分: stat + deeds composite) required to be enfeoffed. */
+  minMerit: number;
+  /** 野心 pressure added per season to a non-sovereign holder of this peerage —
+   *  great fiefs make over-mighty subjects restless. */
+  ambitionPressure: number;
+  /** 公/王 may only be conferred by a sovereign who has 稱王/稱帝. */
+  requiresSovereign?: boolean;
+}
+
 export interface MilitaryRank {
   id: MilitaryRankId;
   name: BilingualName;

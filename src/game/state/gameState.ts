@@ -110,6 +110,8 @@ export interface GameState {
   challengeRecords: Record<string, import('../data/challenges').ChallengeRecord>;
   diplomacy: DiplomaticState;
   runtimeBonds: OathBond[];
+  /** 聯姻同盟 — binding marriage alliances the player has sealed. */
+  marriageAlliances: import('../types/diplomacy').MarriageAlliance[];
   /** Pairwise officer rapport (好感, 0–100) grown via social actions. */
   rapport: Record<string, number>;
   battleHistory: HistoricBattle[];
@@ -468,6 +470,7 @@ export const EMPTY_STATE: GameState = {
   challengeRecords: {},
   diplomacy: { relations: {} },
   runtimeBonds: [],
+    marriageAlliances: [],
   rapport: {},
   battleHistory: [],
   appointments: [],
@@ -780,6 +783,7 @@ export function loadScenario(
     challengeRecords: state.challengeRecords ?? {},
     diplomacy: { relations: initialRelations },
     runtimeBonds: [],
+    marriageAlliances: [],
     rapport: {},
     battleHistory: [],
     appointments: [],

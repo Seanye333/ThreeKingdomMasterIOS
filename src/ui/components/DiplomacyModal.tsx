@@ -49,6 +49,8 @@ export function DiplomacyModal({ onClose }: Props) {
   const requestGrain = useGameStore((s) => s.requestGrain);
   const proposeTradeTreaty = useGameStore((s) => s.proposeTradeTreaty);
   const breakAlliance = useGameStore((s) => s.breakAlliance);
+  const breakMarriageAlliance = useGameStore((s) => s.breakMarriageAlliance);
+  const marriageAlliances = useGameStore((s) => s.marriageAlliances);
   const grudges = useGameStore((s) => s.grudges);
   const tradePartners = useGameStore((s) => s.tradePartners);
   const credibility = useGameStore((s) => (playerForceId ? s.credibility[playerForceId] : undefined) ?? 100);
@@ -238,22 +240,50 @@ export function DiplomacyModal({ onClose }: Props) {
                   >
                     {t('人質', 'Hostage')}
                   </button>
-                  {row.relation.status === 'allied' && (
-                    <button
-                      className={styles.breakBtn}
-                      onClick={() => {
-                        breakAlliance(row.id);
-                        setFeedback({
-                          forceId: row.id,
-                          text: t('盟約已破，邦交受損。', 'Alliance broken. Relations damaged.'),
-                          accepted: false,
-                        });
-                      }}
-                      title={t('破棄同盟（−50 好感）', 'Break the alliance (−50 relation)')}
-                    >
-                      {t('絕交', 'Break')}
-                    </button>
-                  )}
+                  {(() => {
+                    const married = marriageAlliances.some(
+                      (m) => m.forceA === row.id || m.forceB === row.id,
+                    );
+                    if (married) {
+                      return (
+                        <button
+                          className={styles.breakBtn}
+                          onClick={() => {
+                            const r = breakMarriageAlliance(row.id);
+                            setFeedback({
+                              forceId: row.id,
+                              text: r.ok
+                                ? t('聯姻之盟撕毀 — 背信之名播於四鄰。', 'Marriage alliance renounced — branded an oathbreaker.')
+                                : r.message,
+                              accepted: false,
+                            });
+                          }}
+                          title={t('背信棄義 — 撕毀聯姻同盟（與該國及他國好感俱崩）', 'Renounce the marriage alliance (relation crash with them AND all others)')}
+                        >
+                          {t('背盟', 'Renounce')}
+                        </button>
+                      );
+                    }
+                    if (row.relation.status === 'allied') {
+                      return (
+                        <button
+                          className={styles.breakBtn}
+                          onClick={() => {
+                            breakAlliance(row.id);
+                            setFeedback({
+                              forceId: row.id,
+                              text: t('盟約已破，邦交受損。', 'Alliance broken. Relations damaged.'),
+                              accepted: false,
+                            });
+                          }}
+                          title={t('破棄同盟（−50 好感）', 'Break the alliance (−50 relation)')}
+                        >
+                          {t('絕交', 'Break')}
+                        </button>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
               </li>
             ))}
