@@ -1,5 +1,6 @@
 import type { Officer } from '../types';
 import type { HeroicDeeds } from '../types/deeds';
+import { officerGrade, gradeScore, gradeRank } from './officerGrade';
 
 /**
  * 名聲榜 — a martial/rhetorical renown ladder built on the deeds the game already
@@ -92,21 +93,26 @@ export function rollChallenger(
   const tier = fameTier(renown);
   // Below 'known' nobody bothers seeking you out.
   if (tier.min < 50) return null;
-  // The more famous, the likelier a challenger appears.
-  const chance = Math.min(0.6, 0.15 + (renown - 50) / 600);
+  // 品階 sweetens the draw: a 金牌+ champion is a trophy ambitious rivals covet,
+  // so challenges come more often, reach wider for a worthy foe, and pay more.
+  const champRank = gradeRank(officerGrade(champion).grade); // 0 (鐵) … 5 (鑽石)
+  // The more famous (and higher-graded), the likelier a challenger appears.
+  const chance = Math.min(0.7, 0.15 + (renown - 50) / 600 + champRank * 0.03);
   if (rng() >= chance) return null;
 
   // A strategist (高智) draws debaters; a warrior (高武) draws duelists.
   const kind: 'duel' | 'debate' = champion.stats.war >= champion.stats.intelligence ? 'duel' : 'debate';
   const key = kind === 'duel' ? 'war' as const : 'intelligence' as const;
+  // A renowned name reaches further for a worthy rival (window widens with grade).
+  const window = 18 + champRank * 3;
   const pool = candidates
     .filter((o) => o.status !== 'dead' && o.status !== 'imprisoned')
-    // Within ~18 points of the champion's relevant stat — a worthy test.
-    .filter((o) => Math.abs(o.stats[key] - champion.stats[key]) <= 18)
-    .sort((a, b) => b.stats[key] - a.stats[key]);
+    .filter((o) => Math.abs(o.stats[key] - champion.stats[key]) <= window)
+    // The strongest worthy rival rides out first — sort by 品階 score, then stat.
+    .sort((a, b) => (gradeScore(b) - gradeScore(a)) || (b.stats[key] - a.stats[key]));
   if (pool.length === 0) return null;
   const challenger = pool[Math.floor(rng() * Math.min(pool.length, 5))];
-  const bounty = Math.round(200 + tier.min * 2);
+  const bounty = Math.round((200 + tier.min * 2) * (1 + champRank * 0.15));
   return kind === 'duel'
     ? { challengerId: challenger.id, kind, bounty, lineZh: `久聞${champion.name.zh}武名,特來討教!`, lineEn: `Your name precedes you — face me in single combat!` }
     : { challengerId: challenger.id, kind, bounty, lineZh: `${champion.name.zh}之才,我倒要當面領教!`, lineEn: `They say you have a silver tongue — let us put it to the test!` };

@@ -7,7 +7,7 @@ import { findRivalryChallenge } from '../../game/systems/rivalries';
 import { DUEL_SCENARIOS, DUEL_CAMPAIGNS, campaignSteps, duelScenarioOutcome, duelScenarioResultLine, type DuelScenario } from '../../game/systems/duelScenarios';
 import { renownFromDeeds, fameTier, rollChallenger } from '../../game/systems/fame';
 import { trainKey, trainsLeft, TRAIN_PER_SEASON } from '../../game/systems/sparLimit';
-import { officerLevel } from '../../game/systems/officerGrade';
+import { officerLevel, officerGrade } from '../../game/systems/officerGrade';
 import { Modal } from './Modal';
 import { OfficerPortrait } from './OfficerPortrait';
 import { OfficerStats } from './OfficerStats';
@@ -441,6 +441,11 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
         <div style={{ background: 'linear-gradient(180deg, rgba(120,40,30,0.3), rgba(40,16,12,0.3))', border: '1px solid #e0846a', borderRadius: 6, padding: '0.6rem 0.8rem', marginBottom: '0.8rem' }}>
           <div style={{ color: '#ffd0b8', fontSize: '0.84rem', marginBottom: 4 }}>
             🏯 {t('踢館', 'A Challenger Arrives')} — <b style={{ color: '#ffe0d0' }}>{pickName(challenge.challenger.name, lang)}</b>
+            {(() => { const g = officerGrade(challenge.challenger); return (
+              <span style={{ marginLeft: 5, padding: '0 0.35rem', borderRadius: 2, border: `1px solid ${g.color}`, color: g.color, fontSize: '0.68rem' }}>
+                {lang === 'en' ? g.name.en : g.name.zh}
+              </span>
+            ); })()}
             <span style={{ color: '#caa86a', fontSize: '0.74rem' }}> ({t('武', 'WAR')} {challenge.challenger.stats.war})</span>
           </div>
           <div style={{ fontSize: '0.74rem', color: '#d8b0a0', fontStyle: 'italic', marginBottom: 6 }}>「{lang === 'en' ? challenge.lineEn : challenge.lineZh}」</div>

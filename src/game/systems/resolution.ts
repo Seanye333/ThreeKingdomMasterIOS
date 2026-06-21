@@ -20,7 +20,8 @@ import { FACILITY_DEFS, type Fort } from '../types/fort';
 import { advanceSeason } from '../state/gameState';
 import { processAging } from './aging';
 import { handleSearch, resolveInternalAffairs, type LostItemRef } from './commands';
-import { awardInternalAffairsXp, canBreakthrough, breakthroughCost, applyBreakthrough } from './growth';
+import { awardInternalAffairsXp, canBreakthrough, breakthroughCost, applyBreakthrough, grantXp } from './growth';
+import { officerGrade, gradeRank, officerLevel } from './officerGrade';
 import { handleMarch } from './combat';
 import { tickDiplomacy, applyCoalitionPressure } from './diplomacy';
 import { tickCityEconomy, tradeTreatyGrants } from './economy';
@@ -1052,6 +1053,36 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const iaXp = awardInternalAffairsXp(officers[cmd.officerId] ?? officer, cmd.type, result.success, rng);
     officers[cmd.officerId] = iaXp.officer;
     entries.push(...iaXp.entries);
+  }
+
+  // Phase 3f-ter — 名將帶新兵. A 金牌+ officer stationed in a city seasons the
+  // junior officers garrisoned with them: a small XP trickle to those clearly
+  // below the mentor's 歷練. Turns 品階 into a legacy/teaching loop (all forces).
+  const MENTOR_XP = 8;
+  for (const city of Object.values(cities)) {
+    if (!city.ownerForceId) continue;
+    const present = Object.values(officers).filter((o) =>
+      o.locationCityId === city.id && o.forceId === city.ownerForceId &&
+      (o.status === 'idle' || o.status === 'active'));
+    if (present.length < 2) continue;
+    // Mentor — the highest-grade officer present, provided they're 金牌 or above.
+    let mentor: typeof present[number] | null = null;
+    let mentorScore = -1;
+    for (const o of present) {
+      const gi = officerGrade(o);
+      if (gradeRank(gi.grade) >= gradeRank('gold') && gi.score > mentorScore) { mentor = o; mentorScore = gi.score; }
+    }
+    if (!mentor) continue;
+    const mLevel = officerLevel(mentor);
+    const students = present
+      .filter((o) => o.id !== mentor!.id && officerLevel(o) <= mLevel - 3)
+      .sort((a, b) => officerLevel(a) - officerLevel(b))
+      .slice(0, 3);
+    for (const st of students) {
+      const r = grantXp(officers[st.id] ?? st, MENTOR_XP, rng);
+      officers[st.id] = r.officer;
+      entries.push(...r.entries);
+    }
   }
 
   // Phase 3f-bis — AI 突破. Foreign forces invest in their fully-seasoned

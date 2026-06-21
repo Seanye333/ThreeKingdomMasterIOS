@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { applyBreakthrough, breakthroughTitle } from './growth';
+import { rollChallenger } from './fame';
 import { ageBand } from './aging';
 import { activeItemSets, itemSetPowerMul } from '../data/itemSets';
 import { CIVIC_TITLES_BY_ID } from '../data/titles';
@@ -58,6 +59,16 @@ describe('ageBand', () => {
     expect(ageBand(35).declining).toBe(false);
     expect(ageBand(60).declining).toBe(true);
     expect(ageBand(70).id).toBe('venerable');
+  });
+});
+
+describe('踢館 is grade-aware', () => {
+  it('the strongest worthy rival (highest 品階) rides out first', () => {
+    const champ = makeOfficer({ war: 100, leadership: 70, intelligence: 60, politics: 50, charisma: 60 }, { id: 'champ' });
+    const weak = makeOfficer({ war: 88, leadership: 60, intelligence: 50, politics: 50, charisma: 50 }, { id: 'weak', forceId: 'enemy' });
+    const strong = makeOfficer({ war: 95, leadership: 95, intelligence: 95, politics: 95, charisma: 95 }, { id: 'strong', forceId: 'enemy' });
+    const ch = rollChallenger(champ, 150, [weak, strong], () => 0);
+    expect(ch?.challengerId).toBe('strong');
   });
 });
 
