@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { idbStorage } from './idbStorage';
 import type {
+  Building,
   BuildingId,
   City,
   CivicTitleId,
@@ -46,6 +47,10 @@ import { marchDurationFor } from '../data/cities';
 import { terrainRoute, positionAlongRoute, marchDestCoords } from '../data/territories';
 import { cityPos, CITY_GEO_OVERRIDES } from '../data/cityGeo';
 import { provisionNeeded, convoyCapacity, planConvoy } from '../systems/convoy';
+import { citySize, cityMeetsSize, reassignLostCapitals, LOST_CAPITAL_LOYALTY_PENALTY } from '../systems/citySize';
+import { buildingBonuses } from '../systems/buildings';
+import { BUILDING_CATEGORY, BUILDING_PREREQ, BUILDING_MIN_SIZE } from '../data/buildings';
+import { cityAffinity } from '../data/specialties';
 import { expeditionLegSeasons } from '../systems/expedition';
 import { getEmbassyTarget, embassyLegSeasons, realmTradeIncome } from '../systems/foreignRealm';
 import { FOREIGN_REALMS_BY_ID } from '../data/foreignRealms';
@@ -116,6 +121,62 @@ import {
 } from '../systems/officerFate';
 import { resolveSeason } from '../systems/resolution';
 
+/** Total buildings per category (computed once) — for "complete a 群" achievements. */
+const CATEGORY_TOTAL: Record<string, number> = (() => {
+  const t: Record<string, number> = {};
+  for (const id of Object.keys(BUILDING_CATEGORY) as Array<keyof typeof BUILDING_CATEGORY>) {
+    const c = BUILDING_CATEGORY[id];
+    t[c] = (t[c] ?? 0) + 1;
+  }
+  return t;
+})();
+
+/**
+ * 建築成就 — scan the player's completed buildings each season and fire the
+ * milestone achievements (first build, a full 經濟/軍務 群, a 30-building 巨城,
+ * an all-category city). Uses synthetic fire-event triggers; already-unlocked
+ * ones no-op. Returns newly unlocked ids.
+ */
+function checkBuildingAchievements(
+  buildings: Building[],
+  cities: Record<string, City>,
+  playerForceId: string | null,
+): string[] {
+  if (!playerForceId) return [];
+  const mine = new Set(
+    Object.values(cities).filter((c) => c.ownerForceId === playerForceId).map((c) => c.id),
+  );
+  const perCity = new Map<string, { total: number; cat: Record<string, number> }>();
+  let anyBuilt = false;
+  for (const b of buildings) {
+    if (b.level < 1 || !mine.has(b.cityId)) continue;
+    anyBuilt = true;
+    const e = perCity.get(b.cityId) ?? { total: 0, cat: {} };
+    e.total += 1;
+    const c = BUILDING_CATEGORY[b.id];
+    if (c) e.cat[c] = (e.cat[c] ?? 0) + 1;
+    perCity.set(b.cityId, e);
+  }
+  const fire = new Set<string>();
+  if (anyBuilt) fire.add('evt-build-first');
+  for (const e of perCity.values()) {
+    if (e.total >= 30) fire.add('evt-grand-city');
+    if ((e.cat.economy ?? 0) >= CATEGORY_TOTAL.economy) fire.add('evt-economy-hub');
+    if ((e.cat.military ?? 0) >= CATEGORY_TOTAL.military) fire.add('evt-military-fortress');
+    if (Object.keys(CATEGORY_TOTAL).every((cat) => (e.cat[cat] ?? 0) >= 1)) fire.add('evt-all-rounder');
+  }
+  if (fire.size === 0) return [];
+  let ach = loadAchievementProgress();
+  const newly: string[] = [];
+  for (const id of fire) {
+    const r = processTrigger(ach, { kind: 'fire-event', targetId: id });
+    ach = r.progress;
+    newly.push(...r.newlyUnlocked);
+  }
+  if (newly.length > 0) saveAchievementProgress(ach);
+  return newly;
+}
+
 /** Highest rapport between an officer and anyone serving the player —
  *  the 以情動人 lever (old friends across the lines). */
 function bestRapportWith(state: { officers: Record<string, Officer>; rapport: Record<string, number>; playerForceId: string | null }, officerId: string): number {
@@ -137,12 +198,13 @@ import { canPlayerAttackFort, migrateForts } from '../data/forts';
 import { canPlayerSeizeSite, migrateSites } from '../data/sites';
 import { tickWildSites } from '../systems/sites';
 import { SCENIC_BY_ID, canVisitScenic, rollHermitRecruit } from '../data/scenicSites';
-import { razedCity, rebuiltCity, rebuildCost } from '../systems/cityRuin';
+import { razedCity, rebuiltCity, rebuildCost, conquestPopulationLoss } from '../systems/cityRuin';
 import { buildSpecialtyTradeRoutes, tickSpecialtyTrade } from '../systems/tradeRoutes';
 import { fortMaxHpForLevel, FACILITY_DEFS, type FacilityKind } from '../types';
 import { awardBattleXp, grantXp, applyBreakthrough, canBreakthrough, breakthroughCost } from '../systems/growth';
 import { officerGrade, gradeRank, gradeMeta } from '../systems/officerGrade';
 import { tickBuildings } from '../systems/buildings';
+import { tickBuildingEvents } from '../systems/buildingEvents';
 import { evaluateCoalition } from '../systems/coalition';
 import { rollDialogue } from '../systems/dialogueRoll';
 import { DIALOGUE_EVENTS_BY_ID } from '../data/dialogues';
@@ -213,6 +275,9 @@ interface GameStore extends GameState {
       skills: string[];
       affiliationForceId: EntityId | null;
     },
+    /** 開局治所 — optional player-chosen starting capital (must be one of the
+     *  player force's cities). Falls back to the scenario's default capital. */
+    capitalOverride?: EntityId,
   ) => void;
   /** Start a Hero Mode challenge by id — loads its scenario/force at the
    *  recommended difficulty and arms the pass/fail season-end check. */
@@ -663,6 +728,10 @@ interface GameStore extends GameState {
   razeCity: (cityId: EntityId) => { ok: boolean; message: string };
   /** 重建 — rebuild an owned ruined city (gold from that city's coffers). */
   rebuildCity: (cityId: EntityId) => { ok: boolean; message: string };
+  /** 遷都 — move the realm's seat (治所) to another owned city. Costs gold from
+   *  the new capital and unsettles both cities briefly; the new seat then earns
+   *  the standing capital loyalty bonus each season. */
+  relocateCapital: (cityId: EntityId) => { ok: boolean; message: string };
   /** Officer-led attack on a port. Damage scales with attacker WAR + LED;
    *  attacker takes casualties proportional to defender officer's WAR.
    *  Captures the port if HP drops to 0. */
@@ -812,9 +881,9 @@ export const useGameStore = create<GameStore>()(
     (set, get) => ({
       ...EMPTY_STATE,
 
-      loadScenario: (scenario, playerForceId, difficulty, customOfficer) => {
+      loadScenario: (scenario, playerForceId, difficulty, customOfficer, capitalOverride) => {
         setRefineRegistry({}); // fresh game → drop any prior 精煉 registry
-        set((s) => loadScenario(s, scenario, playerForceId, difficulty, customOfficer));
+        set((s) => loadScenario(s, scenario, playerForceId, difficulty, customOfficer, capitalOverride));
       },
 
       // 演義模擬器 — load a scenario with NO player force and start in
@@ -1437,7 +1506,8 @@ export const useGameStore = create<GameStore>()(
         let shipTroops = Math.min(Math.max(0, Math.floor(troops)), Math.max(0, from.troops - 100));
         // 載量 — clamp the total to what this officer can shepherd (scaling down
         // proportionally if the player asked for more than his 政治 allows).
-        const cap = convoyCapacity(officer);
+        // 驛傳 — a supply depot in the dispatching city widens the convoy.
+        const cap = Math.floor(convoyCapacity(officer) * buildingBonuses(fromCityId, state.buildings).convoyMul);
         const total = shipFood + shipGold + shipTroops;
         if (total > cap && total > 0) {
           const scale = cap / total;
@@ -2028,6 +2098,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           expeditions: state.expeditions,
           realmRelations: state.realmRelations,
           standingRoutes: state.standingRoutes,
+          refugees: state.refugees ?? 0,
           lifespanMode: state.lifespanMode ?? 'historical',
           lifespanLength: state.lifespanLength ?? 'historical',
           noBattleDeath: state.noBattleDeath ?? false,
@@ -2162,6 +2233,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           officers: result.officers,
           playerForceId: state.playerForceId,
           rng: Math.random,
+          buildings: state.buildings,
         });
         // Free agents.
         for (const o of Object.values(espResult.officers)) {
@@ -2443,6 +2515,16 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // Buildings tick (player + AI projects both progress).
         const bld = tickBuildings({ buildings: aiBuild.buildings, cities: postCities });
         if (bld.entries.length > 0) result.report.entries.push(...bld.entries);
+        // 城建興廢 — seasonal building mishaps (火災/坍塌) and boons (名匠).
+        const bldEvt = tickBuildingEvents({
+          buildings: bld.buildings,
+          cities: postCities,
+          playerForceId: state.playerForceId,
+          rng: Math.random,
+        });
+        if (bldEvt.entries.length > 0) result.report.entries.push(...bldEvt.entries);
+        // 建築成就 — milestones from the player's completed buildings.
+        const bldAch = checkBuildingAchievements(bldEvt.buildings, postCities, state.playerForceId);
 
         // Family tick (births + activations) — only on year boundary roughly.
         const fam = tickFamily({
@@ -2698,8 +2780,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
         // 後遺 — tick down duel/debate afflictions (養傷 / 羞憤) each season.
+        // 傷兵營 — a field hospital in the officer's city heals wounds faster.
         for (const id of Object.keys(tickedOfficers)) {
-          const ticked = tickAfflictions(tickedOfficers[id]);
+          const ofc = tickedOfficers[id];
+          const heal = ofc.locationCityId
+            ? buildingBonuses(ofc.locationCityId, state.buildings).woundRecovery
+            : 0;
+          const ticked = tickAfflictions(ofc, heal);
           if (ticked !== tickedOfficers[id]) tickedOfficers[id] = ticked;
         }
         postOfficers = tickedOfficers;
@@ -2756,6 +2843,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             officers: postOfficers,
             date: result.date,
             rng: Math.random,
+            buildings: state.buildings,
           });
           postCities = contagion.cities;
           if (contagion.entries.length > 0) result.report.entries.push(...contagion.entries);
@@ -3105,6 +3193,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           ]);
           const grown = growRapportFromProximity({
             rapport: rapportAfter, officers: postOfficers, bondedPairs, amount: 2,
+            buildings: state.buildings,
           });
           rapportAfter = grown.rapport;
           if (grown.forged.length > 0) {
@@ -3627,7 +3716,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // 晉牌封賞 — a player officer who crossed into a 金牌+ 品階 this season
         // (tagged on the report entry by grantXp) earns a ceremony flourish.
         const promotionCeremonies = result.report.entries
-          .filter((e) => e.promotion && officersWithMarchTask[e.promotion.officerId]?.forceId === state.playerForceId)
+          // NOTE: read postOfficers, not officersWithMarchTask — the latter is
+          // declared further below (TDZ); the march-task tag doesn't change forceId.
+          .filter((e) => e.promotion && postOfficers[e.promotion.officerId]?.forceId === state.playerForceId)
           .map((e) => e.promotion!);
         const recentPromotionsAfter = promotionCeremonies.length > 0
           ? [...state.recentPromotions, ...promotionCeremonies]
@@ -3849,12 +3940,39 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           : { diplomacy: postDiplomacy, alliances: state.marriageAlliances, entries: [] };
         postDiplomacy = allianceTick.diplomacy;
 
+        // 失都遷治 — any force whose 治所 changed hands this season relocates its
+        // seat to its largest surviving city, and its whole realm's 民忠 reels
+        // from the shock. Covers conquests from every path (AI, interactive,
+        // assault, seizure) since it runs on the final cities/forces.
+        {
+          const capFix = reassignLostCapitals(postForces, postCities);
+          postForces = capFix.forces;
+          for (const l of capFix.lost) {
+            const f = postForces[l.forceId];
+            const updated: Record<EntityId, City> = {};
+            for (const c of Object.values(postCities)) {
+              if (c.ownerForceId === l.forceId) {
+                updated[c.id] = { ...c, loyalty: Math.max(0, c.loyalty - LOST_CAPITAL_LOYALTY_PENALTY) };
+              }
+            }
+            if (Object.keys(updated).length > 0) postCities = { ...postCities, ...updated };
+            const newName = postCities[l.newCapitalId]?.name;
+            result.report.entries.push({
+              cityId: l.newCapitalId,
+              kind: 'rebellion',
+              text: `${f?.name.en ?? 'A realm'} lost its capital — the court relocates to ${newName?.en ?? '?'} (realm-wide loyalty −${LOST_CAPITAL_LOYALTY_PENALTY}).`,
+              textZh: `${f?.name.zh ?? '某勢力'}失其治所,遷都${newName?.zh ?? '?'}。失都動搖,全境民忠 −${LOST_CAPITAL_LOYALTY_PENALTY}。`,
+            });
+          }
+        }
+
         set({
           date: result.date,
           cities: postCities,
           officers: officersWithMarchTask,
           marriageAlliances: allianceTick.alliances,
           forces: postForces,
+          refugees: result.refugees,
           runtimeBonds: bondsAfterTraits,
           rapport: rapportAfter,
           recentBonds: recentBondsAfter,
@@ -3888,8 +4006,11 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           // then so the next season starts fresh; otherwise keep them
           // accumulating across mid-season ticks.
           seasonBattleDeltas: seasonBoundary ? {} : state.seasonBattleDeltas,
-          // 通脹漸消 — inflation eases a little each season as coin re-stabilises.
-          inflation: seasonBoundary ? Math.max(0, (state.inflation ?? 0) - 3) : state.inflation,
+          // 通脹漸消 — inflation eases each season as coin re-stabilises; a 平準署
+          // at the capital quickens the recovery.
+          inflation: seasonBoundary
+            ? Math.max(0, (state.inflation ?? 0) - 3 - buildingBonuses(state.forces[state.playerForceId ?? '']?.capitalCityId ?? '', state.buildings).inflationRelief)
+            : state.inflation,
           selectedCityId: stillOwned ? state.selectedCityId : fallback,
           victoryStatus: endVS,
           battleHistory: [...state.battleHistory, ...newBattles],
@@ -3904,7 +4025,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           grudges: grudgesAfterSpies,
           tribeState: { ...tribeResult.state, aggression: nextAggression as typeof tribeResult.state.aggression },
           scenicLooted: nextScenicLooted,
-          buildings: bld.buildings,
+          buildings: bldEvt.buildings,
           family: fam.family,
           pendingHeirs: fam.pendingHeirs,
           officerWishes: [
@@ -3927,8 +4048,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           expeditions: result.expeditions ?? {},
           openedRealms: nextOpenedRealms,
           realmRelations: nextRealmRelations,
-          recentAchievementUnlocks: embassyAchUnlocks.length > 0
-            ? [...state.recentAchievementUnlocks, ...embassyAchUnlocks]
+          recentAchievementUnlocks: (embassyAchUnlocks.length > 0 || bldAch.length > 0)
+            ? [...state.recentAchievementUnlocks, ...embassyAchUnlocks, ...bldAch]
             : state.recentAchievementUnlocks,
           endingsAchieved,
           campaignStats: {
@@ -4128,7 +4249,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           debateWon,
           stanceModifier:
             stanceRecruitModifier(state.officers, force.id, force.recruitmentStance) +
-            statecraftRecruitBonus(force.statecraft),
+            statecraftRecruitBonus(force.statecraft) +
+            // 招賢館 — a hall of worthies in the recruiting city sweetens the offer.
+            buildingBonuses(cityId, state.buildings).recruitOfficerBonus,
         });
 
         const updates: Partial<GameState> = {
@@ -4301,7 +4424,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           playerTotalTroops: computeTotalTroops(player.id, state.cities),
           diplomacy: state.diplomacy,
           date: state.date,
-          diplomacyMultiplier: appointmentBonusFor(player.id, state.appointments, state.officers).diplomacyMultiplier,
+          diplomacyMultiplier: appointmentBonusFor(player.id, state.appointments, state.officers).diplomacyMultiplier * (1 + buildingBonuses(state.forces[player.id]?.capitalCityId ?? '', state.buildings).diploRelMul),
           proposerCredibility: state.credibility[state.playerForceId] ?? 100,
           targetGrudge: state.grudges[targetForceId] ?? 0,
         });
@@ -4358,7 +4481,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           playerTotalTroops: computeTotalTroops(player.id, state.cities),
           diplomacy: state.diplomacy,
           date: state.date,
-          diplomacyMultiplier: appointmentBonusFor(player.id, state.appointments, state.officers).diplomacyMultiplier,
+          diplomacyMultiplier: appointmentBonusFor(player.id, state.appointments, state.officers).diplomacyMultiplier * (1 + buildingBonuses(state.forces[player.id]?.capitalCityId ?? '', state.buildings).diploRelMul),
           proposerCredibility: state.credibility[state.playerForceId] ?? 100,
           targetGrudge: state.grudges[targetForceId] ?? 0,
         });
@@ -4410,7 +4533,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             playerTotalTroops: computeTotalTroops(player.id, state.cities),
             diplomacy: state.diplomacy,
             date: state.date,
-            diplomacyMultiplier: appointmentBonusFor(player.id, state.appointments, state.officers).diplomacyMultiplier,
+            diplomacyMultiplier: appointmentBonusFor(player.id, state.appointments, state.officers).diplomacyMultiplier * (1 + buildingBonuses(state.forces[player.id]?.capitalCityId ?? '', state.buildings).diploRelMul),
           },
           amount,
         );
@@ -4547,7 +4670,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           playerTotalTroops: computeTotalTroops(player.id, state.cities),
           diplomacy: state.diplomacy,
           date: state.date,
-          diplomacyMultiplier: appointmentBonusFor(player.id, state.appointments, state.officers).diplomacyMultiplier,
+          diplomacyMultiplier: appointmentBonusFor(player.id, state.appointments, state.officers).diplomacyMultiplier * (1 + buildingBonuses(state.forces[player.id]?.capitalCityId ?? '', state.buildings).diploRelMul),
         });
 
         if (!outcome.ok) {
@@ -5746,12 +5869,25 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             const survivingTroops = tb.units
               .filter((u) => u.side === 'attacker')
               .reduce((s, u) => s + u.troops, 0);
+            // 兵燹 — the storm costs the city a fifth of its people; some flee
+            // as 流民 to an adjacent city still held by the former owner.
+            const formerOwner = target.ownerForceId;
+            const popLoss = conquestPopulationLoss(cities[tb.cityId].population);
             cities[tb.cityId] = {
               ...cities[tb.cityId],
               ownerForceId: tb.attackerForceId,
               troops: survivingTroops,
+              population: popLoss.survivors,
               loyalty: Math.max(20, Math.floor(target.loyalty * 0.5)),
             };
+            if (popLoss.refugees > 0 && formerOwner) {
+              const haven = (cities[tb.cityId].adjacentCityIds ?? []).find(
+                (cid) => cities[cid] && cities[cid].ownerForceId === formerOwner && !cities[cid].ruined,
+              );
+              if (haven) {
+                cities[haven] = { ...cities[haven], population: cities[haven].population + popLoss.refugees };
+              }
+            }
             bumpDeeds(attackerCmd.officerId, { citiesTaken: 1 });
             // Chronicle the conquest (interactive sieges bypass endSeason's scan).
             {
@@ -6525,11 +6661,16 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           if (lost) city = state.cities[lost.cityId];
         }
         if (!city || city.ownerForceId !== state.playerForceId) return { ok: false, reason: 'no-city' };
-        // 鍛爐相助 — a foundry in the city shaves 25% off the refining cost.
+        // 鍛爐相助 — a foundry in the city shaves 25% off the refining cost;
+        // 軍器監 (arms bureau) discounts further and may temper a bonus grade.
         const hasFoundry = state.buildings.some((b) => b.cityId === city!.id && b.id === 'foundry');
-        const cost = Math.round(refineCost(base, plus) * (hasFoundry ? 0.75 : 1));
+        const armsBB = buildingBonuses(city.id, state.buildings);
+        const cost = Math.round(refineCost(base, plus) * (hasFoundry ? 0.75 : 1) * (1 - armsBB.refineDiscount));
         if (city.gold < cost) return { ok: false, reason: 'no-gold', cost };
-        const itemRefinements = { ...state.itemRefinements, [itemId]: plus + 1 };
+        const masterwork = armsBB.refineUpgradeChance > 0
+          && plus + 2 <= REFINE_MAX
+          && Math.random() < armsBB.refineUpgradeChance;
+        const itemRefinements = { ...state.itemRefinements, [itemId]: plus + (masterwork ? 2 : 1) };
         setRefineRegistry(itemRefinements);
         set({
           itemRefinements,
@@ -7198,6 +7339,44 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         return { ok: true, message: `${city.name.zh}重建興復,流民歸附(−${cost}g)。` };
       },
 
+      relocateCapital: (cityId) => {
+        const RELOCATE_COST = 800;
+        const state = get();
+        const city = state.cities[cityId];
+        if (!city) return { ok: false, message: 'City not found.' };
+        if (!state.playerForceId || city.ownerForceId !== state.playerForceId)
+          return { ok: false, message: '只能遷都至本軍城池。' };
+        if (city.ruined) return { ok: false, message: '廢墟不可為治所。' };
+        const force = state.forces[state.playerForceId];
+        if (!force) return { ok: false, message: 'No player force.' };
+        if (force.capitalCityId === cityId)
+          return { ok: false, message: `${city.name.zh}已是本軍治所。` };
+        // 首次遷都免費 — the first relocation each game is free; later ones cost gold.
+        const free = !state.capitalMoveUsed;
+        const cost = free ? 0 : RELOCATE_COST;
+        if (city.gold < cost)
+          return { ok: false, message: `遷都需 ${cost} 金(${city.name.zh}府庫不足)。` };
+        const oldCap = state.cities[force.capitalCityId];
+        const nextCities = { ...state.cities };
+        // 新都 — pays the cost, but the court's arrival lifts morale (+5).
+        nextCities[cityId] = {
+          ...city,
+          gold: city.gold - cost,
+          loyalty: Math.min(100, city.loyalty + 5),
+        };
+        // 舊都 — losing the seat dims its standing a touch (−3).
+        if (oldCap && oldCap.ownerForceId === state.playerForceId) {
+          nextCities[oldCap.id] = { ...oldCap, loyalty: Math.max(0, oldCap.loyalty - 3) };
+        }
+        set({
+          cities: nextCities,
+          forces: { ...state.forces, [force.id]: { ...force, capitalCityId: cityId } },
+          capitalMoveUsed: true,
+        });
+        const costNote = free ? '首遷免費' : `耗 ${cost} 金`;
+        return { ok: true, message: `遷都${city.name.zh}!新都民心歸附(+5 忠),舊都失寵(−3 忠),${costNote}。` };
+      },
+
       repairFort: (fortId) => {
         const REPAIR_COST = 150;
         const REPAIR_HP = 300;
@@ -7270,12 +7449,35 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const def = BUILDING_DEFS_BY_ID[buildingId];
         if (!city || !def) return { ok: false, reason: 'invalid' };
         if (city.ownerForceId !== state.playerForceId) return { ok: false, reason: 'not your city' };
-        if (city.gold < def.goldPerLevel) return { ok: false, reason: 'not enough gold' };
         const existing = state.buildings.find((b) => b.cityId === cityId && b.id === buildingId);
+        // 建築前置 — a new tier-2 work needs its foundation built first.
+        if (!existing) {
+          const prereq = BUILDING_PREREQ[buildingId];
+          if (prereq && !state.buildings.some((b) => b.cityId === cityId && b.id === prereq && b.level >= 1))
+            return { ok: false, reason: `need ${prereq}` };
+          // 城格解鎖 — grand works need a city of sufficient size (人口 tier).
+          const minSize = BUILDING_MIN_SIZE[buildingId];
+          if (minSize && !cityMeetsSize(city, minSize))
+            return { ok: false, reason: `need ${minSize} city` };
+        }
+        // 將作監 discounts construction; 地利 (specialty affinity) discounts a
+        // matching-category building further.
+        const affineDiscount = cityAffinity(cityId) === BUILDING_CATEGORY[buildingId] ? 0.15 : 0;
+        const buildCost = Math.round(def.goldPerLevel
+          * (1 - buildingBonuses(cityId, state.buildings).buildDiscount)
+          * (1 - affineDiscount));
+        if (city.gold < buildCost) return { ok: false, reason: 'not enough gold' };
         if (existing && existing.level >= def.maxLevel)
           return { ok: false, reason: 'max level' };
         if (existing && existing.progress > 0)
           return { ok: false, reason: 'already in progress' };
+        // Build-slot cap: a city can host only as many distinct buildings as its
+        // size allows (邑6 → 都20). Upgrading an existing one is always fine.
+        if (!existing) {
+          const slotsUsed = state.buildings.filter((b) => b.cityId === cityId).length;
+          if (slotsUsed >= citySize(city).buildingSlots)
+            return { ok: false, reason: 'no free build slot' };
+        }
         // Shipyard needs river/coastal — check if the city has a 'river' route hint.
         // (We use specialTiles in named maps; for now allow all.)
         const newBuilding = existing
@@ -7286,7 +7488,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         set({
           cities: {
             ...state.cities,
-            [cityId]: { ...city, gold: city.gold - def.goldPerLevel },
+            [cityId]: { ...city, gold: city.gold - buildCost },
           },
           buildings: newBuilding,
         });

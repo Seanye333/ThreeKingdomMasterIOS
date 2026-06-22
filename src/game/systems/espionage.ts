@@ -8,6 +8,8 @@ import type {
 } from '../types';
 import { ESPIONAGE_DEFS_BY_KIND } from '../data/espionage';
 import { espionageBonus, counterEspionageResist } from './traitEffects';
+import { buildingBonuses } from './buildings';
+import type { Building } from '../types';
 
 export interface EspionageContext {
   ops: EspionageOp[];
@@ -15,6 +17,8 @@ export interface EspionageContext {
   officers: Record<EntityId, Officer>;
   playerForceId: EntityId | null;
   rng: () => number;
+  /** City buildings — 諜報司/寺院/甕城/譙樓 blunt schemes against the city. */
+  buildings?: Building[];
 }
 
 export interface EspionageOutput {
@@ -63,6 +67,18 @@ export function resolveEspionage(ctx: EspionageContext): EspionageOutput {
           targetForceOfficers.length
         : 0;
     chance -= counterResist;
+
+    // 諜報司 — a target city's intelligence bureau blunts schemes against it;
+    // 寺院/甕城/譙樓 specifically resist instigation (民心煽動).
+    if (op.targetCityId) {
+      const cityBB = buildingBonuses(op.targetCityId, ctx.buildings ?? []);
+      chance -= cityBB.schemeResist;
+      if (op.kind === 'instigate') chance -= cityBB.instigateResistance * 0.3;
+    }
+    // 斥候營 — a scout camp at the agent's home base sharpens the operation.
+    if (agent.locationCityId) {
+      chance += buildingBonuses(agent.locationCityId, ctx.buildings ?? []).espionagePower;
+    }
 
     if (op.kind === 'defect' && op.targetOfficerId) {
       const t = officers[op.targetOfficerId];

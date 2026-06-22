@@ -6,6 +6,7 @@ import type {
   Officer,
   ReportEntry,
 } from '../types';
+import { buildingBonuses } from './buildings';
 
 /**
  * 邪教叛乱 — Cult rebellion. Models late-Han religious uprisings:
@@ -31,6 +32,8 @@ export interface ReligionInput {
   officers: Record<EntityId, Officer>;
   date: GameDate;
   rng: () => number;
+  /** City buildings — a 道觀 blunts cult-contagion loyalty erosion. */
+  buildings?: import('../types').Building[];
 }
 
 export interface ReligionOutput {
@@ -68,7 +71,10 @@ export function spreadCultUnrest(input: ReligionInput): ReligionOutput {
     for (const adjId of cc.adjacentCityIds ?? []) {
       const adj = cities[adjId];
       if (!adj || isCultForce(adj.ownerForceId) || adj.ownerForceId === null) continue;
-      const drop = adj.loyalty < 40 ? 4 : 2; // shakier cities slip faster
+      const baseDrop = adj.loyalty < 40 ? 4 : 2; // shakier cities slip faster
+      // 道觀 — a Daoist temple steadies the faithful against the contagion.
+      const cultResist = buildingBonuses(adjId, input.buildings ?? []).cultResist;
+      const drop = Math.round(baseDrop * (1 - cultResist));
       cities[adjId] = { ...adj, loyalty: Math.max(0, cities[adjId].loyalty - drop) };
       if (cities[adjId].loyalty < 22 && cities[adjId].population > 40_000) {
         flipCandidates.push({ city: cities[adjId], cultForceId: cc.ownerForceId as EntityId });

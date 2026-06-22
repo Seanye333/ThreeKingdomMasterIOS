@@ -15,7 +15,8 @@ import type {
 import { getRelation, isHostilePermitted, pairKey } from '../types';
 import type { Difficulty } from '../state/gameState';
 import { OATH_BONDS, type OathBond } from '../data/bonds';
-import { COMMAND_DEFS } from './commands';
+import { COMMAND_DEFS, meetsMinSize } from './commands';
+import { citySize, cityCarryingCapacity, cityEconCap, cityStatCap } from './citySize';
 import { marchDurationFor } from '../data/cities';
 import { isLand, terrainMarchCost, WORLD_SCALE } from '../data/geography';
 import { cityPos } from '../data/cityGeo';
@@ -791,6 +792,14 @@ function decideCommand(
   aiAggressionMul = 1,
 ): Decision | null {
   const ownRulerId = forces[forceId]?.rulerOfficerId;
+  // 前線 — a city bordering an enemy (or neutral) realm. Computed up-front so
+  // garrison build-up, migration and development can all key off position.
+  const onFront = city.adjacentCityIds.some((id) => {
+    const e = allCities[id];
+    return !!e && e.ownerForceId !== forceId &&
+      (e.ownerForceId === null || isHostilePermitted(diplomacy, forceId, e.ownerForceId));
+  });
+
   // 1. Food crisis — develop agriculture
   if (city.food < city.troops * 0.6) {
     const o = bestForCommand(officersHere, 'politics', 'develop-agriculture', prefectId);
@@ -1040,14 +1049,51 @@ function decideCommand(
     }
   }
 
+  // 4.6 建軍 — keep a standing garrison sized to the city's tier and position.
+  // Front-line cities hold a strong garrison; rear cities a modest one (whose
+  // surplus the reinforcement step above ferries to the front). This is what
+  // keeps a realm's armies from bleeding away to nothing over a long war —
+  // cities actively rebuild toward a target instead of only when nearly empty.
+  {
+    const cap = citySize(city).troopCap;
+    const target = Math.floor(cap * (onFront ? 0.75 : 0.5));
+    if (
+      city.troops < target &&
+      city.population > 40_000 &&
+      city.loyalty >= 50 &&
+      city.gold >= COMMAND_DEFS['recruit-troops'].goldCost * 3 // keep a reserve for other works
+    ) {
+      const o = bestForCommand(officersHere, 'charisma', 'recruit-troops', prefectId);
+      if (o) return internalDecision('recruit-troops', city, o);
+    }
+  }
+
+  // 4.7 招撫流民 — a settled city with ample headroom under its 承載力 actively
+  // recruits migrants to drive its population toward the next size tier (and the
+  // tier unlocks that come with it). Stops once the city fills toward its
+  // ceiling, so 農業 development can raise the ceiling before pulling more in.
+  {
+    const headroom = cityCarryingCapacity(city) - city.population;
+    if (
+      headroom >= city.population * 0.25 &&
+      city.loyalty >= 55 &&
+      city.population >= 20_000 &&
+      city.gold >= COMMAND_DEFS['encourage-migration'].goldCost * 2
+    ) {
+      const o = bestForCommand(officersHere, 'charisma', 'encourage-migration', prefectId);
+      if (o) return internalDecision('encourage-migration', city, o);
+    }
+  }
+
   // 5. Routine — front-line cities fortify, rear cities grow the economy.
-  const onFront = city.adjacentCityIds.some((id) => {
-    const e = allCities[id];
-    return !!e && e.ownerForceId !== forceId &&
-      (e.ownerForceId === null || isHostilePermitted(diplomacy, forceId, e.ownerForceId));
-  });
   const devType = chooseDevelopment(city, onFront);
+  // 二級內政 — once the city reaches 城 tier, prefer the triple-strength 大農政/
+  // 大商政/大築城 when affordable and the stat still has room to climb.
+  const majorType = majorDevFor(devType, city);
   const o = bestBy(officersHere, 'politics', prefectId);
+  if (o && majorType && canAfford(city, majorType)) {
+    return internalDecision(majorType, city, o);
+  }
   if (o && canAfford(city, devType)) {
     return internalDecision(devType, city, o);
   }
@@ -1132,4 +1178,21 @@ export function chooseDevelopment(
   const econ = city.commerce <= city.agriculture ? 'develop-commerce' : 'develop-agriculture';
   if (onFront) return city.defense < 75 ? 'build-defense' : econ;
   return econ;
+}
+
+/** 二級內政 — upgrade a basic development order to its triple-strength 大-variant
+ *  when the city has reached 城 tier and the target stat still has room to grow
+ *  (no point paying 3× to push a near-capped stat). Null = stick with basic. */
+function majorDevFor(
+  devType: 'develop-agriculture' | 'develop-commerce' | 'build-defense',
+  city: City,
+): InternalAffairsType | null {
+  if (!meetsMinSize(citySize(city).id, 'city')) return null;
+  const econCap = cityEconCap(city);
+  const statCap = cityStatCap(city);
+  switch (devType) {
+    case 'develop-agriculture': return city.agriculture < econCap - 10 ? 'major-agriculture' : null;
+    case 'develop-commerce':    return city.commerce < econCap - 10 ? 'major-commerce' : null;
+    case 'build-defense':       return city.defense < statCap - 10 ? 'major-defense' : null;
+  }
 }

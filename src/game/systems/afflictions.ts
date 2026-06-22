@@ -46,11 +46,12 @@ export function withAffliction(o: Officer, aff: Affliction): Officer {
 }
 
 /** Decrement every affliction by one season; drop the spent ones. Call once per
- *  season boundary (alongside the wounded-recovery tick). */
-export function tickAfflictions(o: Officer): Officer {
+ *  season boundary (alongside the wounded-recovery tick). A 傷兵營 (field hospital)
+ *  in the officer's city knocks extra seasons off 養傷 wounds via `woundHealBonus`. */
+export function tickAfflictions(o: Officer, woundHealBonus = 0): Officer {
   if (!o.afflictions?.length) return o;
   const next = o.afflictions
-    .map((a) => ({ ...a, seasons: a.seasons - 1 }))
+    .map((a) => ({ ...a, seasons: a.seasons - 1 - (a.kind === 'wound' ? woundHealBonus : 0) }))
     .filter((a) => a.seasons > 0);
   return { ...o, afflictions: next.length ? next : undefined };
 }

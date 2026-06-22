@@ -1,6 +1,7 @@
 import type { EntityId, Officer } from '../types';
 import { pairKey } from '../types/diplomacy';
 import type { OathBond } from '../data/bonds';
+import { buildingBonuses } from './buildings';
 
 /**
  * Rapport (好感) — a pairwise 0–100 affinity the player grows through social
@@ -61,6 +62,8 @@ export interface ProximityRapportInput {
   bondedPairs: Set<string>;
   /** Rapport gained per season by officers serving together (default 2). */
   amount?: number;
+  /** City buildings — a 酒肆 (tavern) speeds rapport growth in that city. */
+  buildings?: import('../types').Building[];
 }
 
 /**
@@ -88,12 +91,15 @@ export function growRapportFromProximity(
   let rapport = input.rapport;
   const forged: OathBond[] = [];
   const justForged = new Set<string>();
-  for (const ids of groups.values()) {
+  for (const [gk, ids] of groups.entries()) {
     if (ids.length < 2) continue;
+    // 酒肆 — a tavern in this city quickens the bonding (gk = `${forceId}@${cityId}`).
+    const cityId = gk.slice(gk.indexOf('@') + 1);
+    const cityAmount = amount * buildingBonuses(cityId, input.buildings ?? []).rapportMul;
     for (let i = 0; i < ids.length; i++) {
       for (let j = i + 1; j < ids.length; j++) {
         const key = pairKey(ids[i], ids[j]);
-        const next = Math.min(RAPPORT_BOND_THRESHOLD, (rapport[key] ?? 0) + amount);
+        const next = Math.min(RAPPORT_BOND_THRESHOLD, (rapport[key] ?? 0) + cityAmount);
         rapport = { ...rapport, [key]: next };
         if (next >= RAPPORT_BOND_THRESHOLD && !input.bondedPairs.has(key) && !justForged.has(key)) {
           justForged.add(key);

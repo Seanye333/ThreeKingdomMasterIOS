@@ -19,7 +19,48 @@ export type BuildingId =
   | 'stable'     // 馬廄 — breeds warhorses: boosts recruit + troop cap (cavalry)
   | 'workshop'   // 工房 — arms & siege works: city defense + slight recruit
   | 'mint'       // 錢莊 — coin minting: strong commerce gold boost
-  | 'arsenal';   // 武庫 — armoury: city defense + troop cap
+  | 'arsenal'    // 武庫 — armoury: city defense + troop cap
+  | 'relay'      // 驛站 — post roads: commerce + troop cap (logistics)
+  | 'grandacademy' // 太學 — grand academy: strong officer XP + loyalty
+  | 'barbican'   // 甕城 — fortified gatework: heavy defense + instigate resistance
+  | 'evernormal' // 常平倉 — ever-normal granary: agriculture + commerce
+  | 'drillground' // 演武場 — drill ground: recruit + officer XP
+  | 'irrigation' // 水利 — irrigation works: agriculture + drought mitigation
+  | 'recruithall' // 招賢館 — hall of worthies: officer-recruit chance + XP
+  | 'spyoffice'  // 諜報司 — intelligence bureau: counter-scheme + instigate resistance
+  | 'supplydepot' // 驛傳 — supply depot: convoy capacity + troop cap
+  | 'civicoffice' // 安民坊 — civic office: population growth + loyalty
+  | 'tradeoffice' // 市舶司 — maritime trade office: foreign-trade income + commerce
+  | 'warschool'  // 武學堂 — military academy: heavy officer XP
+  | 'quartermaster' // 糧倉署 — quartermaster: troop cap + recruit
+  | 'signaltower' // 譙樓 — signal tower: city defense + watch (instigate resistance)
+  | 'fieldhospital' // 傷兵營 — field hospital: speeds officer wound recovery + loyalty
+  | 'daotemple'  // 道觀 — Daoist temple: resists cult contagion + loyalty
+  | 'worksbureau' // 將作監 — works bureau: cheaper & faster construction of other buildings
+  | 'tavern'     // 酒肆 — tavern: faster officer rapport growth + loyalty + commerce
+  | 'prison'     // 牢城 — prison/court: defection resistance + instigate resistance
+  | 'pasture'    // 牧苑 — horse pasture: troop cap + recruit (cavalry)
+  | 'library'    // 藏書閣 — library: officer XP + instigate resistance
+  | 'beacon'     // 烽燧 — beacon line: city defense + counter-scheme (early warning)
+  | 'armsbureau' // 軍器監 — arms bureau: cheaper & better forging/refining
+  | 'pricebureau' // 平準署 — price bureau: eases inflation + commerce
+  | 'heraldhall' // 鴻臚館 — herald hall: stronger diplomacy + commerce
+  | 'navalyard'  // 樓船署 — naval yard: water-battle defense + recruit
+  | 'scoutcamp'; // 斥候營 — scout camp: own espionage success + instigate resist
+
+/**
+ * 建築群 — every building belongs to one category. Clustering same-category
+ * buildings in a city compounds that category's output (a "district" set bonus),
+ * rewarding specialised cities (an economic 都, a military 重鎮…).
+ */
+export type BuildingCategory =
+  | 'economy'      // 經濟
+  | 'agriculture'  // 農政
+  | 'military'     // 軍務
+  | 'defense'      // 城防
+  | 'culture'      // 文教
+  | 'civic'        // 民政
+  | 'intel';       // 諜報
 
 export interface BuildingDef {
   id: BuildingId;

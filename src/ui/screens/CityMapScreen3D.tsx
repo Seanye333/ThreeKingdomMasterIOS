@@ -13,14 +13,15 @@ import {
 import { previewBattlefield } from '../../game/systems/tactical';
 import { battleGroundAt, geoToPixel } from '../../game/data/geography';
 import { FACILITY_DEFS, type FacilityKind } from '../../game/types';
-import { citySize } from '../../game/systems/citySize';
+import { citySize, cityMeetsSize, CITY_SIZES_BY_ID } from '../../game/systems/citySize';
 import { COMMAND_DEFS, meetsMinSize } from '../../game/systems/commands';
 import type { InternalAffairsType } from '../../game/types';
 import { OfficerPicker } from '../components/OfficerPicker';
 import { LocatorMap } from '../components/LocatorMap';
 import { IntroDive } from '../components/IntroDive';
 import { cityViewWindow } from '../viewWindow';
-import { BUILDING_DEFS, BUILDING_DEFS_BY_ID } from '../../game/data/buildings';
+import { BUILDING_DEFS, BUILDING_DEFS_BY_ID, BUILDING_CATEGORY, BUILDING_CATEGORY_LABEL, BUILDING_PREREQ, BUILDING_MIN_SIZE, buildingGroupSynergy } from '../../game/data/buildings';
+import { cityAffinity } from '../../game/data/specialties';
 import { startCityAmbience, stopCityAmbience } from '../../game/systems/sound';
 import type { EntityId, BuildingId } from '../../game/types';
 import { useLanguage, pickName, useT } from '../i18n';
@@ -61,6 +62,33 @@ const INSIDE_BUILDING_DEF: Record<BuildingId, { glyph: string; color: string; he
   workshop: { glyph: '工', color: '#7d7264', height: 1.3, nameZh: '工房' },
   mint:     { glyph: '錢', color: '#c9a23c', height: 1.1, nameZh: '錢莊' },
   arsenal:  { glyph: '庫', color: '#6b5f4a', height: 1.2, nameZh: '武庫' },
+  relay:    { glyph: '驛', color: '#b89058', height: 1.0, nameZh: '驛站' },
+  grandacademy: { glyph: '學', color: '#6fa0d8', height: 1.9, nameZh: '太學' },
+  barbican: { glyph: '甕', color: '#6a5238', height: 1.6, nameZh: '甕城' },
+  evernormal: { glyph: '糴', color: '#cabd82', height: 1.1, nameZh: '常平倉' },
+  drillground: { glyph: '武', color: '#9a6a52', height: 0.9, nameZh: '演武場' },
+  irrigation: { glyph: '水', color: '#6faec0', height: 0.5, nameZh: '水利' },
+  recruithall: { glyph: '賢', color: '#9fc0e0', height: 1.5, nameZh: '招賢館' },
+  spyoffice: { glyph: '諜', color: '#6a6a78', height: 1.2, nameZh: '諜報司' },
+  supplydepot: { glyph: '傳', color: '#b09060', height: 1.1, nameZh: '驛傳' },
+  civicoffice: { glyph: '安', color: '#c0a050', height: 1.2, nameZh: '安民坊' },
+  tradeoffice: { glyph: '舶', color: '#3f8aa8', height: 1.3, nameZh: '市舶司' },
+  warschool: { glyph: '韜', color: '#8a5848', height: 1.5, nameZh: '武學堂' },
+  quartermaster: { glyph: '廩', color: '#b8a868', height: 1.2, nameZh: '糧倉署' },
+  signaltower: { glyph: '譙', color: '#6b5a44', height: 2.0, nameZh: '譙樓' },
+  fieldhospital: { glyph: '療', color: '#9ec8b0', height: 1.0, nameZh: '傷兵營' },
+  daotemple: { glyph: '道', color: '#c8a85a', height: 1.7, nameZh: '道觀' },
+  worksbureau: { glyph: '匠', color: '#8a7a5a', height: 1.3, nameZh: '將作監' },
+  tavern: { glyph: '酒', color: '#c47a4a', height: 1.0, nameZh: '酒肆' },
+  prison: { glyph: '牢', color: '#5a5550', height: 1.1, nameZh: '牢城' },
+  pasture: { glyph: '牧', color: '#9aa86a', height: 0.6, nameZh: '牧苑' },
+  library: { glyph: '藏', color: '#7fa8d0', height: 1.5, nameZh: '藏書閣' },
+  beacon: { glyph: '烽', color: '#7a5a44', height: 2.1, nameZh: '烽燧' },
+  armsbureau: { glyph: '器', color: '#7a7068', height: 1.4, nameZh: '軍器監' },
+  pricebureau: { glyph: '平', color: '#c8b45a', height: 1.2, nameZh: '平準署' },
+  heraldhall: { glyph: '鴻', color: '#c08a5a', height: 1.5, nameZh: '鴻臚館' },
+  navalyard: { glyph: '艦', color: '#3f7a98', height: 1.3, nameZh: '樓船署' },
+  scoutcamp: { glyph: '斥', color: '#7a8a6a', height: 0.9, nameZh: '斥候營' },
 };
 
 /* ─── Gentle ambient motion ──────────────────────────────────────────
@@ -2971,7 +2999,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
     () => previewBattlefield(cityId, {
       terrain: city?.terrain, port: city?.port,
       x: city?.coords.x, y: city?.coords.y,
-    }, 24, 16, true), // city view uses a big, consistent grid (forceSize)
+    }, 30, 19, true), // city view uses a big, consistent grid (forceSize); 30×19 → 45 raw plots (sliced to building-type count)
     [cityId, city?.terrain, city?.port, city?.coords.x, city?.coords.y],
   );
   // Inside the walls the ground is a city, not a battlefield — flatten the
@@ -3013,8 +3041,10 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
   // Buildable foundations (地基) inside the walls. Each building remembers the
   // plot it was placed on (b.plot); legacy/AI buildings without one fall back
   // to the first free plot in a deterministic order.
+  // One foundation per possible building type — slice the raw grid to the
+  // building-type count so there are never perpetually-empty buildable rings.
   const plots = useMemo(
-    () => cityBuildPlots(preview.width, preview.height),
+    () => cityBuildPlots(preview.width, preview.height).slice(0, BUILDING_DEFS.length),
     [preview.width, preview.height],
   );
   const placed = useMemo(() => {
@@ -3528,6 +3558,20 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
         {selectedPlot !== null && isPlayer && (() => {
           const existing = buildingAtPlot.get(selectedPlot);
           const buildable = BUILDING_DEFS.filter((d) => d.id !== 'wall' && !presentTypes.has(d.id));
+          const slotsUsed = cityBuildingsAll.length;
+          const slotsCap = size.buildingSlots;
+          const atSlotCap = slotsUsed >= slotsCap;
+          // 建築群方略 — how many of each category the city already has built (lv≥1).
+          const catCountCity: Partial<Record<string, number>> = {};
+          const builtTypes = new Set<string>();
+          for (const b of cityBuildingsAll) {
+            if ((b.level ?? 0) < 1) continue;
+            builtTypes.add(b.id);
+            const c = BUILDING_CATEGORY[b.id];
+            if (c) catCountCity[c] = (catCountCity[c] ?? 0) + 1;
+          }
+          const groupPct = (count: number) => Math.round((buildingGroupSynergy(count) - 1) * 100);
+          const affinity = cityAffinity(cityId); // 地利 — specialty-favoured category
           return (
             <div
               style={{
@@ -3552,6 +3596,9 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
               </div>
               <div style={{ color: '#8a7050', fontSize: '0.7rem', marginBottom: '0.5rem' }}>
                 💰 城内存金 <span style={{ color: '#e0c060' }}>{city.gold}</span>
+                <span style={{ float: 'right' }}>
+                  建設位 <span style={{ color: atSlotCap ? '#b8442e' : '#e0c060' }}>{slotsUsed}/{slotsCap}</span>
+                </span>
               </div>
 
               {existing ? (() => {
@@ -3569,6 +3616,17 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
                     <div style={{ color: '#8a7050', fontSize: '0.72rem', marginBottom: '0.5rem' }}>
                       {def?.descriptionZh}
                     </div>
+                    {(() => {
+                      const cat = BUILDING_CATEGORY[existing.id];
+                      const cnt = catCountCity[cat] ?? 0;
+                      const pct = groupPct(cnt);
+                      return (
+                        <div style={{ color: pct > 0 ? '#8fce8f' : '#8a7050', fontSize: '0.7rem', marginBottom: '0.5rem' }}>
+                          {BUILDING_CATEGORY_LABEL[cat].zh}群 ×{cnt}
+                          {pct > 0 ? ` → 同類效果 +${pct}%` : '(同類建築相鄰增益,多蓋更強)'}
+                        </div>
+                      );
+                    })()}
                     {def && existing.level < def.maxLevel && existing.progress === 0 && (
                       <button
                         onClick={() => tryUpgradeBuilding(existing.id)}
@@ -3591,33 +3649,65 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
               })() : (
                 <div>
                   <div style={{ color: '#8a7050', marginBottom: '0.4rem' }}>選擇建築 → 蓋在此地基:</div>
-                  {buildable.length === 0 && (
+                  {atSlotCap && (
+                    <div style={{ color: '#b8442e', textAlign: 'center', fontSize: '0.72rem' }}>
+                      建設位已滿 ({slotsUsed}/{slotsCap}) — 城市升級可增加建設位
+                    </div>
+                  )}
+                  {!atSlotCap && buildable.length === 0 && (
                     <div style={{ color: '#8a7050', textAlign: 'center', fontSize: '0.72rem' }}>所有設施已建齊</div>
                   )}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.28rem' }}>
-                    {buildable.map((def) => {
+                    {!atSlotCap && buildable.map((def) => {
                       const vis = INSIDE_BUILDING_DEF[def.id];
-                      const afford = city.gold >= def.goldPerLevel;
+                      const cat = BUILDING_CATEGORY[def.id];
+                      const prereq = BUILDING_PREREQ[def.id];
+                      const prereqLocked = !!prereq && !builtTypes.has(prereq);
+                      const minSize = BUILDING_MIN_SIZE[def.id];
+                      const sizeLocked = !!minSize && !cityMeetsSize(city, minSize);
+                      const locked = prereqLocked || sizeLocked;
+                      const affine = cat === affinity;
+                      const cost = Math.round(def.goldPerLevel * (affine ? 0.85 : 1));
+                      const afford = city.gold >= cost;
+                      const usable = afford && !locked;
                       return (
                         <button
                           key={def.id}
-                          onClick={() => tryStartBuilding(selectedPlot, def.id)}
-                          disabled={!afford}
+                          onClick={() => !locked && tryStartBuilding(selectedPlot, def.id)}
+                          disabled={!usable}
                           title={def.descriptionZh}
                           style={{
                             padding: '0.4rem 0.5rem',
                             background: 'rgba(212, 168, 74, 0.08)',
-                            border: `1px solid ${vis?.color ?? '#5a4530'}`,
-                            color: afford ? (vis?.color ?? '#c0a878') : '#6a5a44',
-                            opacity: afford ? 1 : 0.55,
+                            border: `1px solid ${locked ? '#5a4a3a' : (vis?.color ?? '#5a4530')}`,
+                            color: usable ? (vis?.color ?? '#c0a878') : '#6a5a44',
+                            opacity: usable ? 1 : 0.5,
                             fontFamily: 'inherit', fontSize: '0.75rem',
-                            cursor: afford ? 'pointer' : 'not-allowed', textAlign: 'left',
+                            cursor: usable ? 'pointer' : 'not-allowed', textAlign: 'left',
                           }}
                         >
                           <div>
                             {vis?.glyph} {vis?.nameZh ?? def.id}
-                            <span style={{ float: 'right', opacity: 0.8 }}>{def.goldPerLevel}g · {def.seasonsPerLevel}季</span>
+                            {affine && <span style={{ color: '#e0c060', marginLeft: 4 }}>◆地利</span>}
+                            <span style={{ float: 'right', opacity: 0.8 }}>{cost}g · {def.seasonsPerLevel}季</span>
                           </div>
+                          {prereqLocked ? (
+                            <div style={{ fontSize: '0.62rem', color: '#b8442e', marginTop: 1 }}>
+                              需先建「{BUILDING_DEFS_BY_ID[prereq!]?.name.zh ?? prereq}」
+                            </div>
+                          ) : sizeLocked ? (
+                            <div style={{ fontSize: '0.62rem', color: '#b8442e', marginTop: 1 }}>
+                              需「{CITY_SIZES_BY_ID[minSize!]?.name.zh ?? minSize}」級以上城市
+                            </div>
+                          ) : (() => {
+                            const after = groupPct((catCountCity[cat] ?? 0) + 1);
+                            return (
+                              <div style={{ fontSize: '0.62rem', color: '#7f9f6f', marginTop: 1 }}>
+                                {BUILDING_CATEGORY_LABEL[cat].zh}群{after > 0 ? ` → 同類 +${after}%` : ''}
+                                {affine ? ' · 地利 +10%/造價 −15%' : ''}
+                              </div>
+                            );
+                          })()}
                           <div style={{ fontSize: '0.66rem', color: '#8a7050', marginTop: 2 }}>{def.descriptionZh}</div>
                         </button>
                       );

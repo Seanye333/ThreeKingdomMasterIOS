@@ -445,9 +445,11 @@ export function awardInternalAffairsXp(
   type: InternalAffairsType,
   success: boolean,
   rng: () => number = Math.random,
+  xpMul = 1,
 ): { officer: Officer; entries: ReportEntry[] } {
   const base = INTERNAL_AFFAIRS_MAJOR.has(type) ? INTERNAL_AFFAIRS_XP_MAJOR : INTERNAL_AFFAIRS_XP;
-  const amount = success ? base : Math.max(3, Math.round(base * 0.4));
+  // 書院/太學/武學堂/招賢館 — schooling multiplies the experience the work yields.
+  const amount = Math.round((success ? base : Math.max(3, Math.round(base * 0.4))) * xpMul);
   const res = grantXp(officer, amount, rng, INTERNAL_AFFAIRS_FAVORED[type]);
   return { officer: res.officer, entries: res.entries };
 }

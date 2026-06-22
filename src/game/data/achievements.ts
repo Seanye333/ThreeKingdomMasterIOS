@@ -495,6 +495,47 @@ export const ACHIEVEMENTS: Achievement[] = [
     tier: 'gold',
     trigger: { kind: 'fire-event', targetId: 'embassy-open-5' },
   },
+  // ── 城建 — building milestones ──
+  {
+    id: 'ach-build-first',
+    name: { en: 'Foundations Laid', zh: '奠基立業' },
+    description: 'Complete your first city building.',
+    descriptionZh: '建成第一座城內設施。',
+    tier: 'bronze',
+    trigger: { kind: 'fire-event', targetId: 'evt-build-first' },
+  },
+  {
+    id: 'ach-economy-hub',
+    name: { en: 'Treasury of the Realm', zh: '富甲天下' },
+    description: 'Build every economy-group building (7) in one city.',
+    descriptionZh: '於一城蓋齊全部經濟群建築(7 種)。',
+    tier: 'silver',
+    trigger: { kind: 'fire-event', targetId: 'evt-economy-hub' },
+  },
+  {
+    id: 'ach-military-fortress',
+    name: { en: 'Citadel of War', zh: '兵甲重鎮' },
+    description: 'Build every military-group building (9) in one city.',
+    descriptionZh: '於一城蓋齊全部軍務群建築(9 種)。',
+    tier: 'silver',
+    trigger: { kind: 'fire-event', targetId: 'evt-military-fortress' },
+  },
+  {
+    id: 'ach-all-rounder',
+    name: { en: 'A City Complete', zh: '百業俱興' },
+    description: 'Hold a city with at least one building of every category.',
+    descriptionZh: '使一城七類建築俱備(各有其一)。',
+    tier: 'gold',
+    trigger: { kind: 'fire-event', targetId: 'evt-all-rounder' },
+  },
+  {
+    id: 'ach-grand-city',
+    name: { en: 'The Greatest City', zh: '天下第一城' },
+    description: 'Raise a single city with 30+ buildings.',
+    descriptionZh: '營建一座擁有 30 座以上建築的巨城。',
+    tier: 'legendary',
+    trigger: { kind: 'fire-event', targetId: 'evt-grand-city' },
+  },
 ];
 
 export const ACHIEVEMENTS_BY_ID: Record<string, Achievement> = Object.fromEntries(

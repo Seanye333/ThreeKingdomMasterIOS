@@ -22,6 +22,26 @@ export function razedCity(city: City): City {
   };
 }
 
+/**
+ * 兵燹 — a city that falls by storm loses people: siege dead, and townsfolk who
+ * flee the sack toward kin in the countryside. Roughly a fifth of the populace
+ * is lost outright; a portion of that flees as 流民 (the caller may resettle
+ * them in an adjacent friendly city). So a hard-won metropolis is left scarred —
+ * not instantly the prize it was — and may slip a size tier until it recovers.
+ */
+export const CONQUEST_POP_LOSS_FRAC = 0.2;
+export const CONQUEST_REFUGEE_FRAC = 0.4; // of the lost, this share flees (rest perish/scatter)
+
+export function conquestPopulationLoss(population: number): {
+  survivors: number;
+  lost: number;
+  refugees: number;
+} {
+  const lost = Math.floor(population * CONQUEST_POP_LOSS_FRAC);
+  const refugees = Math.floor(lost * CONQUEST_REFUGEE_FRAC);
+  return { survivors: Math.max(1000, population - lost), lost, refugees };
+}
+
 export const REBUILD_BASE_COST = 800;
 
 /** Gold to rebuild — scales gently with the (reduced) population to repopulate. */

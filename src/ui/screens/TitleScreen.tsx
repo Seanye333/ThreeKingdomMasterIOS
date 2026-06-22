@@ -150,6 +150,8 @@ export function TitleScreen() {
   // ── New-game wizard (三国志14-style stepped flow) ──────────────────────
   const [step, setStep] = useState<'scenario' | 'force' | 'options'>('scenario');
   const [selectedForceId, setSelectedForceId] = useState<string | null>(null);
+  // 開局治所 — player-chosen starting capital (null = scenario default).
+  const [capitalChoice, setCapitalChoice] = useState<string | null>(null);
   const ERAS = [
     { id: 'warring', zh: '戰國', en: 'Warring States' },
     { id: 'chuhan',  zh: '楚漢', en: 'Chu-Han' },
@@ -184,6 +186,13 @@ export function TitleScreen() {
     (d) => !(NATIVE_DYNASTIES[eraOf(scenario)] ?? []).includes(d.id),
   );
   const selectedForce = scenario.forces.find((f) => f.id === selectedForceId) ?? null;
+  // Reset the capital choice whenever the force (or scenario) changes.
+  useEffect(() => { setCapitalChoice(null); }, [selectedForceId, scenarioId]);
+  // Cities the chosen force owns — offered as initial-capital options.
+  const selectedForceCities = useMemo(
+    () => (selectedForceId ? scenario.cities.filter((c) => c.ownerForceId === selectedForceId) : []),
+    [scenario, selectedForceId],
+  );
   const selectedRuler = selectedForce
     ? scenario.officers.find((o) => o.id === selectedForce.rulerOfficerId) ?? null
     : null;
@@ -199,7 +208,7 @@ export function TitleScreen() {
       })));
       loadScenario(scenario, allForces[0].id, difficulty);
     } else {
-      loadScenario(scenario, forceId, difficulty);
+      loadScenario(scenario, forceId, difficulty, undefined, capitalChoice ?? undefined);
     }
     if (careerMode) {
       const officersInForce = scenario.officers.filter((o) => o.forceId === forceId);
@@ -685,6 +694,31 @@ export function TitleScreen() {
                 </div>
               );
             })()}
+
+            {/* ── 初始治所 ── pick which owned city is the realm's capital */}
+            {selectedForce && selectedForceCities.length > 1 && (
+              <>
+                <OptHeader>{t('初始治所', 'Starting capital')}</OptHeader>
+                <div style={optRowStyle}>
+                  <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>
+                    {t('政令外交所出之地(每季 +3 民忠)', 'Seat of edicts & diplomacy (+3 loyalty/season)')}
+                  </span>
+                  <select
+                    value={capitalChoice ?? selectedForce.capitalCityId}
+                    onChange={(e) => setCapitalChoice(e.target.value)}
+                    style={optSelectStyle}
+                  >
+                    {selectedForceCities.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {lang === 'en' ? c.name.en : c.name.zh}
+                        {c.id === selectedForce.capitalCityId ? t('(預設)', ' (default)') : ''}
+                        {` · ${(c.population / 10000).toFixed(0)}萬`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            )}
 
             <div className={styles.difficultyLabel}>{t('難易度', 'Difficulty')}</div>
             <div className={styles.difficultyRow}>

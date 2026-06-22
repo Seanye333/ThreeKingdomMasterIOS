@@ -1,5 +1,6 @@
 import type {
   BattleDetail,
+  Building,
   City,
   EntityId,
   MarchCommand,
@@ -7,6 +8,8 @@ import type {
   ReportEntry,
   Skill,
 } from '../types';
+import { buildingBonuses } from './buildings';
+import { conquestPopulationLoss } from './cityRuin';
 import { OATH_BONDS } from '../data/bonds';
 import { liveItemById } from '../data/items';
 import { OFFICER_RELATIONSHIPS } from '../data/relationships';
@@ -837,6 +840,8 @@ export interface MarchContext {
   noBattleDeath?: boolean;
   /** 單挑頻率 — multiplier on the field-duel trigger chance. Default 1. */
   duelChanceMul?: number;
+  /** City interior buildings — 城壁/武庫/甕城/譙樓 add to the defender's wall. */
+  buildings?: Building[];
 }
 
 export interface MarchOutcome {
@@ -960,8 +965,13 @@ export function handleMarch(
     }
   }
 
+  // 城內建築 — 城壁/武庫/工房/甕城/譙樓/烽燧 reinforce the wall on top of policies
+  // and perimeter defence structures; 樓船署 adds defence in water battles.
+  const cityBuildBonus = buildingBonuses(target.id, ctx.buildings ?? []);
+  const buildingDefenseAdd = cityBuildBonus.defenseAdd
+    + (isWaterBattle({ city: target }) ? cityBuildBonus.navalPower : 0);
   const effectiveDefense =
-    (target.defense + defenseBonusFromPolicy + slotEffects.defenseBonus + siegeMods.defenseBonus) * worksDefenseMul;
+    (target.defense + defenseBonusFromPolicy + slotEffects.defenseBonus + siegeMods.defenseBonus + buildingDefenseAdd) * worksDefenseMul;
   const defenderTroops = Math.max(1, Math.floor((target.troops + siegeMods.garrisonBonus) * worksTroopsMul));
 
   // Watchtower / arrow-platform / rockfall pre-strike the attacker before battle math.
@@ -1171,6 +1181,12 @@ export function handleMarch(
   const dLossPct = result.defenderLosses / Math.max(1, target.troops);
   const tryGainTrait = (off: Officer, traitId: 'veteran' | 'cowardly', chance: number) => {
     if (!off || off.status === 'dead') return;
+    // Only persist onto a REAL stored officer — a synthetic garrison fallback
+    // (id `garrison-…`, not in the officers map) or an id-less stand-in would
+    // otherwise spawn a phantom officer holding only `{traits}`, which later
+    // crashes systems that read its (missing) name/stats.
+    const existing = off.id ? officers[off.id] : undefined;
+    if (!existing) return;
     const ts = (off.traits ?? []) as string[];
     if (ts.includes(traitId)) return;
     // Conflicts: veteran ↮ cowardly; can't have both
@@ -1178,7 +1194,7 @@ export function handleMarch(
     if (traitId === 'cowardly' && (ts.includes('martial-valor') || ts.includes('ironhearted'))) return;
     if (ctx.rng() < chance) {
       officers[off.id] = {
-        ...officers[off.id],
+        ...existing,
         traits: [...ts, traitId] as Officer['traits'],
       };
       entries.push({
@@ -1315,12 +1331,25 @@ export function handleMarch(
     // commanders earn higher loyalty; brutal ones cause unrest.
     const traitLoyaltyMod = conquestLoyaltyMod(commander);
     const baseLoyalty = Math.max(20, Math.floor(target.loyalty * 0.5));
+    // 兵燹 — the sack costs the city a fifth of its people; some flee as 流民 to
+    // an adjacent city still held by the former owner.
+    const formerOwner = target.ownerForceId;
+    const popLoss = conquestPopulationLoss(cities[target.id].population);
     cities[target.id] = {
       ...cities[target.id],
       ownerForceId: source.ownerForceId,
       troops: attackerSurvivors,
+      population: popLoss.survivors,
       loyalty: Math.max(10, Math.min(80, baseLoyalty + traitLoyaltyMod)),
     };
+    if (popLoss.refugees > 0 && formerOwner) {
+      const haven = target.adjacentCityIds.find(
+        (cid) => cities[cid] && cities[cid].ownerForceId === formerOwner && !cities[cid].ruined,
+      );
+      if (haven) {
+        cities[haven] = { ...cities[haven], population: cities[haven].population + popLoss.refugees };
+      }
+    }
     officers[commander.id] = {
       ...commander,
       locationCityId: target.id,

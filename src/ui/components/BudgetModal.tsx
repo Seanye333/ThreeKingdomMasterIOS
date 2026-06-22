@@ -18,6 +18,7 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
   const t = useT();
   const cities = useGameStore((s) => s.cities);
   const officers = useGameStore((s) => s.officers);
+  const allBuildings = useGameStore((s) => s.buildings);
   const season = useGameStore((s) => s.date.season);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const selectCity = useGameStore((s) => s.selectCity);
@@ -25,6 +26,7 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
   const setTaxPolicy = useGameStore((s) => s.setTaxPolicy);
   const inflation = useGameStore((s) => s.inflation ?? 0);
   const mintCoin = useGameStore((s) => s.mintCoin);
+  const refugees = useGameStore((s) => s.refugees ?? 0);
 
   const { rows, totals, treasury } = useMemo(() => {
     const officersList = Object.values(officers);
@@ -35,7 +37,7 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
     }
     const mine = Object.values(cities).filter((c) => c.ownerForceId === playerForceId);
     const rs = mine.map((c) => {
-      const tick = tickCityEconomy(c, season, officersByCity[c.id] ?? [], tax, inflation);
+      const tick = tickCityEconomy(c, season, officersByCity[c.id] ?? [], tax, inflation, 'clear', allBuildings);
       const netFood = tick.foodIncome - tick.foodUpkeep;
       return {
         city: c,
@@ -52,7 +54,7 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
     );
     const treasury = mine.reduce((acc, c) => ({ gold: acc.gold + c.gold, food: acc.food + c.food }), { gold: 0, food: 0 });
     return { rows: rs, totals, treasury };
-  }, [cities, officers, season, playerForceId, tax, inflation]);
+  }, [cities, officers, allBuildings, season, playerForceId, tax, inflation]);
 
   const netFoodTotal = totals.foodIn - totals.foodUp;
   const seasonZh = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' }[season];
@@ -85,6 +87,21 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
             <div style={{ color: '#5f6c76', fontSize: '0.7rem' }}>{t('收', 'in')} {num(totals.foodIn)} · {t('支', 'out')} {num(totals.foodUp)}</div>
           </div>
         </div>
+        {/* 流民 — the realm-wide displaced pool. Famine/unrest/war feed it; each
+            season it drifts toward welcoming cities (high 民忠 / 輕稅 / 有餘容). */}
+        {refugees > 0 && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.5rem',
+            background: '#1c1814', border: '1px solid #5a4a2a', borderRadius: 4, padding: '0.35rem 0.6rem',
+          }}>
+            <Icon name="city" size={14} color="#d4b070" />
+            <span style={{ color: '#d4b070', fontSize: '0.8rem' }}>{t('天下流民', 'Refugees afield')}</span>
+            <span style={{ color: '#f2dd9a', fontFamily: 'ui-monospace, monospace', fontSize: '0.9rem' }}>{num(refugees)}</span>
+            <span style={{ color: '#8a7a5a', fontSize: '0.7rem', flex: 1, textAlign: 'right' }}>
+              {t('輕稅 + 高民忠 + 餘容 → 引流民歸附', 'Light tax + high loyalty + headroom draws them in')}
+            </span>
+          </div>
+        )}
         {/* 定稅 — the gold↔loyalty lever. Light eases the people, heavy fills
             the coffers and breeds resentment. */}
         {playerForceId && (

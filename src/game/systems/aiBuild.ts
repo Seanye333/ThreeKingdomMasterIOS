@@ -13,7 +13,8 @@ import type {
   RulerPersonality,
   WildSite,
 } from '../types';
-import { BUILDING_DEFS_BY_ID } from '../data/buildings';
+import { BUILDING_DEFS_BY_ID, BUILDING_PREREQ, BUILDING_MIN_SIZE } from '../data/buildings';
+import { citySize, cityMeetsSize } from './citySize';
 import { FACILITY_DEFS, isHostilePermitted } from '../types';
 import { CITY_GEO_OVERRIDES, cityPos } from '../data/cityGeo';
 import { geoToPixel, WORLD_SCALE } from '../data/geography';
@@ -28,14 +29,14 @@ import { portUpgradeCost, PORT_MAX_NAVAL_TIER } from '../data/ships';
  * afford) is started.
  */
 const BUILD_PRIORITIES: Record<RulerPersonality, BuildingId[]> = {
-  aggressive:   ['barracks', 'stable',  'foundry',  'arsenal', 'wall',    'workshop', 'farm',    'market', 'mint',    'academy', 'temple'],
-  defensive:    ['wall',     'arsenal', 'farm',     'workshop','temple',  'barracks', 'market',  'mint',   'academy', 'foundry', 'stable'],
-  opportunist:  ['market',   'mint',    'barracks', 'farm',    'stable',  'foundry',  'workshop','temple', 'academy', 'wall',    'arsenal'],
-  hesitant:     ['market',   'mint',    'farm',     'academy', 'temple',  'wall',     'arsenal', 'barracks','foundry','workshop','stable'],
-  tyrant:       ['barracks', 'stable',  'foundry',  'arsenal', 'wall',    'workshop', 'farm',    'market',  'mint',   'academy', 'temple'],
-  scholar:      ['academy',  'market',  'mint',     'farm',    'temple',  'wall',     'arsenal', 'barracks','workshop','foundry','stable'],
-  expansionist: ['barracks', 'stable',  'market',   'mint',    'farm',    'foundry',  'workshop','arsenal', 'temple', 'academy', 'wall'],
-  cautious:     ['wall',     'arsenal', 'farm',     'market',  'mint',    'temple',   'workshop','academy', 'barracks','foundry','stable'],
+  aggressive:   ['barracks', 'drillground', 'quartermaster', 'pasture', 'stable',  'foundry',  'arsenal', 'warschool', 'barbican', 'signaltower', 'beacon', 'wall',    'workshop', 'supplydepot', 'navalyard', 'armsbureau', 'farm',    'irrigation', 'evernormal', 'market', 'relay', 'mint',    'academy', 'grandacademy', 'recruithall', 'fieldhospital', 'prison', 'worksbureau', 'library', 'scoutcamp', 'civicoffice', 'daotemple', 'tavern', 'spyoffice', 'tradeoffice', 'heraldhall', 'pricebureau', 'temple'],
+  defensive:    ['wall',     'barbican', 'signaltower', 'beacon', 'arsenal', 'spyoffice', 'scoutcamp', 'prison', 'farm',     'irrigation', 'evernormal', 'workshop','temple',  'daotemple', 'civicoffice', 'fieldhospital', 'barracks', 'drillground', 'quartermaster', 'pasture', 'navalyard', 'market',  'relay', 'mint',   'supplydepot', 'armsbureau', 'worksbureau', 'library', 'academy', 'grandacademy', 'warschool', 'recruithall', 'tavern', 'tradeoffice', 'heraldhall', 'pricebureau', 'foundry', 'stable'],
+  opportunist:  ['market',   'relay', 'tradeoffice', 'mint',    'pricebureau', 'tavern', 'evernormal', 'irrigation', 'worksbureau', 'heraldhall', 'barracks', 'farm',    'civicoffice', 'stable',  'drillground', 'quartermaster', 'pasture', 'foundry',  'armsbureau', 'workshop','temple', 'academy', 'grandacademy', 'library', 'recruithall', 'warschool', 'supplydepot', 'navalyard', 'fieldhospital', 'daotemple', 'prison', 'scoutcamp', 'spyoffice', 'wall',    'barbican', 'signaltower', 'beacon', 'arsenal'],
+  hesitant:     ['market',   'mint',    'relay', 'tradeoffice', 'pricebureau', 'tavern', 'farm',     'irrigation', 'evernormal', 'civicoffice', 'worksbureau', 'heraldhall', 'academy', 'grandacademy', 'library', 'recruithall', 'temple',  'daotemple', 'warschool', 'fieldhospital', 'armsbureau', 'wall',     'barbican', 'signaltower', 'beacon', 'arsenal', 'prison', 'scoutcamp', 'spyoffice', 'barracks','drillground', 'quartermaster', 'pasture', 'supplydepot', 'navalyard', 'foundry','workshop','stable'],
+  tyrant:       ['barracks', 'drillground', 'quartermaster', 'pasture', 'stable',  'foundry',  'arsenal', 'warschool', 'barbican', 'signaltower', 'beacon', 'prison', 'wall',    'workshop', 'supplydepot', 'navalyard', 'armsbureau', 'farm',    'irrigation', 'evernormal', 'market',  'relay', 'mint',   'academy', 'grandacademy', 'recruithall', 'fieldhospital', 'worksbureau', 'library', 'scoutcamp', 'civicoffice', 'daotemple', 'tavern', 'spyoffice', 'tradeoffice', 'heraldhall', 'pricebureau', 'temple'],
+  scholar:      ['academy',  'grandacademy', 'warschool', 'recruithall', 'library', 'heraldhall', 'market',  'relay', 'tradeoffice', 'mint',     'pricebureau', 'daotemple', 'farm',    'irrigation', 'evernormal', 'civicoffice', 'worksbureau', 'temple',  'fieldhospital', 'tavern', 'armsbureau', 'wall',     'barbican', 'signaltower', 'beacon', 'spyoffice', 'scoutcamp', 'arsenal', 'barracks','drillground', 'quartermaster', 'pasture', 'navalyard', 'prison', 'workshop','supplydepot', 'foundry','stable'],
+  expansionist: ['barracks', 'drillground', 'quartermaster', 'pasture', 'stable',  'market',   'relay', 'tradeoffice', 'mint',    'pricebureau', 'farm',    'irrigation', 'evernormal', 'civicoffice', 'worksbureau', 'heraldhall', 'foundry',  'workshop','supplydepot', 'navalyard', 'armsbureau', 'arsenal', 'barbican', 'signaltower', 'beacon', 'temple', 'academy', 'grandacademy', 'recruithall', 'library', 'fieldhospital', 'tavern', 'warschool', 'daotemple', 'prison', 'scoutcamp', 'spyoffice', 'wall'],
+  cautious:     ['wall',     'barbican', 'signaltower', 'beacon', 'arsenal', 'spyoffice', 'scoutcamp', 'prison', 'farm',     'irrigation', 'evernormal', 'daotemple', 'market',  'relay', 'tradeoffice', 'mint',    'pricebureau', 'civicoffice', 'fieldhospital', 'temple',   'workshop','worksbureau', 'navalyard', 'academy', 'grandacademy', 'library', 'recruithall', 'warschool', 'armsbureau', 'tavern', 'heraldhall', 'barracks','drillground', 'quartermaster', 'pasture', 'supplydepot', 'foundry','stable'],
 };
 
 export interface AIBuildContext {
@@ -70,12 +71,26 @@ export function planAIBuildOrders(ctx: AIBuildContext): AIBuildOutput {
     const personality = force?.personality ?? 'opportunist';
     const priorities = BUILD_PRIORITIES[personality];
 
+    // Build-slot cap mirrors the player's: only as many distinct buildings as
+    // the city's size allows. At the cap the AI may still upgrade what it has.
+    const slotsUsed = buildings.filter((b) => b.cityId === city.id).length;
+    const atSlotCap = slotsUsed >= citySize(city).buildingSlots;
+
     // Pick the first building they can afford that isn't maxed.
     for (const bid of priorities) {
       const def = BUILDING_DEFS_BY_ID[bid];
       if (!def) continue;
       const existing = buildings.find((b) => b.cityId === city.id && b.id === bid);
       if (existing && existing.level >= def.maxLevel) continue;
+      if (!existing && atSlotCap) continue; // no free slot for a new building
+      // 建築前置 — a new tier-2 work needs its foundation built first.
+      if (!existing) {
+        const prereq = BUILDING_PREREQ[bid];
+        if (prereq && !buildings.some((b) => b.cityId === city.id && b.id === prereq && b.level >= 1)) continue;
+        // 城格解鎖 — grand works need a city of sufficient size.
+        const minSize = BUILDING_MIN_SIZE[bid];
+        if (minSize && !cityMeetsSize(city, minSize)) continue;
+      }
       // Don't spend the city dry — keep at least 200 gold reserve.
       if (city.gold < def.goldPerLevel + 200) continue;
       // Start it.

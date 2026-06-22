@@ -4,7 +4,8 @@ import { useGameStore } from '../../game/state/store';
 import { COMMAND_DEFS } from '../../game/systems/commands';
 import { cityPolicyEffects, lockedPolicies } from '../../game/systems/policyEffects';
 import { POLICY_DEFS } from '../../game/data/officerAttributes';
-import { citySize, nextTierPop } from '../../game/systems/citySize';
+import { citySize, nextTierPop, cityCarryingCapacity } from '../../game/systems/citySize';
+import { buildingBonuses } from '../../game/systems/buildings';
 import { tickCityEconomy } from '../../game/systems/economy';
 import type { City, EntityId, Officer } from '../../game/types';
 import { CityMapScreen3D } from '../screens/CityMapScreen3D';
@@ -81,6 +82,15 @@ export function CityPanel() {
               {lang === 'en' ? force.name.en : force.name.zh}
               {lang === 'both' && <span className={styles.ownerEn}>· {force.name.en}</span>}
               {isPlayerCity && <span className={styles.playerTag}>{t('我方', 'YOU')}</span>}
+              {force.capitalCityId === city.id && (
+                <span
+                  style={{
+                    marginLeft: '0.4rem', background: '#2a2410', border: '1px solid #c8a23a',
+                    color: '#e6c473', padding: '0.05rem 0.4rem', borderRadius: '4px',
+                    fontSize: '0.7rem', letterSpacing: '0.08rem',
+                  }}
+                >{t('★治所', '★ Capital')}</span>
+              )}
             </>
           ) : (
             <span className={styles.neutral}>{t('中立', 'Neutral')}</span>
@@ -142,6 +152,7 @@ export function CityPanel() {
 
       {isPlayerCity && <BuildingsPanel cityId={city.id} />}
 
+      {isPlayerCity && <CapitalControls cityId={city.id} />}
       {isPlayerCity && <RuinControls cityId={city.id} />}
 
       <FreeAgentsSection cityId={city.id} isPlayerCity={isPlayerCity} />
@@ -495,16 +506,17 @@ function ResourcesSection({ city, cityOfficers, isPlayerCity }: { city: City; ci
   const season = useGameStore((s) => s.date.season);
   const taxPolicy = useGameStore((s) => s.taxPolicy);
   const inflation = useGameStore((s) => s.inflation ?? 0);
+  const allBuildings = useGameStore((s) => s.buildings);
   const size = citySize(city);
 
   // Mirror the resolution tick so the quoted numbers match what actually lands.
   const proj = useMemo(() => {
     if (!isPlayerCity) return null;
     const tax = taxPolicy?.[city.ownerForceId ?? ''] ?? 'normal';
-    const now = tickCityEconomy(city, season, cityOfficers, tax, inflation);
-    const harvest = season === 'autumn' ? now.foodIncome : tickCityEconomy(city, 'autumn', cityOfficers, tax, inflation).foodIncome;
+    const now = tickCityEconomy(city, season, cityOfficers, tax, inflation, 'clear', allBuildings);
+    const harvest = season === 'autumn' ? now.foodIncome : tickCityEconomy(city, 'autumn', cityOfficers, tax, inflation, 'clear', allBuildings).foodIncome;
     return { now, harvest };
-  }, [city, cityOfficers, season, taxPolicy, inflation, isPlayerCity]);
+  }, [city, cityOfficers, season, taxPolicy, inflation, isPlayerCity, allBuildings]);
 
   const row = (icon: IconName, zh: string, en: string, num: number, opts?: {
     suffix?: string; delta?: string; tone?: string; sub?: ReactNode;
@@ -531,12 +543,38 @@ function ResourcesSection({ city, cityOfficers, isPlayerCity }: { city: City; ci
   // 旬糧 — seasons of grain left if no harvest comes first (only when consuming).
   const seasonsLeft = upkeep > 0 ? Math.floor(city.food / upkeep) : Infinity;
 
+  // 承載力 — how many people the city's farmland + civic works can sustain. Make
+  // the population ceiling visible so the player knows when to raise 農業.
+  const growthAdd = buildingBonuses(city.id, allBuildings).popGrowthAdd;
+  const capacity = cityCarryingCapacity(city, growthAdd);
+  const fill = capacity > 0 ? city.population / capacity : 1;
+  const capPct = Math.min(150, Math.round(fill * 100));
+  const capTone = fill >= 1 ? '#e0707a' : fill >= 0.85 ? '#e0c060' : '#7ed68a';
+  const capBar = (
+    <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, marginTop: 2 }}>
+      <span style={{ fontSize: '0.64rem', color: '#8a98a4' }}>
+        {t('承載力', 'Capacity')} {capacity.toLocaleString()} ({capPct}%)
+      </span>
+      <span style={{ width: 88, height: 4, background: '#10161e', borderRadius: 2, overflow: 'hidden' }}>
+        <span style={{ display: 'block', width: `${Math.min(100, capPct)}%`, height: '100%', background: capTone }} />
+      </span>
+      {fill >= 0.92 && (
+        <span style={{ fontSize: '0.6rem', color: capTone }}>
+          {fill >= 1 ? t('已飽和 — 升農業擴容', 'At capacity — raise 農業') : t('近飽和 — 升農業擴容', 'Near cap — raise 農業')}
+        </span>
+      )}
+    </span>
+  );
+
   return (
     <section className={styles.section}>
       <h3 className={styles.sectionTitle}>{t('資源', 'Resources')}</h3>
-      {row('city', '人口', 'Population', city.population, proj && season === 'autumn' && proj.now.populationDelta !== 0
-        ? { delta: `${proj.now.populationDelta > 0 ? '+' : ''}${proj.now.populationDelta.toLocaleString()}`, tone: proj.now.populationDelta > 0 ? '#7ed68a' : '#e0707a' }
-        : undefined)}
+      {row('city', '人口', 'Population', city.population, {
+        ...(proj && season === 'autumn' && proj.now.populationDelta !== 0
+          ? { delta: `${proj.now.populationDelta > 0 ? '+' : ''}${proj.now.populationDelta.toLocaleString()}`, tone: proj.now.populationDelta > 0 ? '#7ed68a' : '#e0707a' }
+          : {}),
+        sub: capBar,
+      })}
       {row('gold', '金', 'Gold', city.gold, proj
         ? { delta: t(`稅入 +${proj.now.goldIncome.toLocaleString()}/季`, `+${proj.now.goldIncome.toLocaleString()}/qtr`), tone: '#7ed68a' }
         : undefined)}
@@ -854,6 +892,77 @@ function PolicyEffectsSection({
         {cityOfficers.length} {t('武將在城 · 政策由其個人專業聚合而成', 'officers stationed · policies emerge from their personal specialties')}
         {locked.length > 0 && ` · ${locked.length} ${t('政策待解鎖', 'policies need prereqs')}`}
       </div>
+    </section>
+  );
+}
+
+/** 遷都 — designate this owned city as the realm's seat (治所). The current
+ *  capital shows a badge; other owned cities offer a relocate button. */
+function CapitalControls({ cityId }: { cityId: EntityId }) {
+  const city = useGameStore((s) => s.cities[cityId]);
+  const isCapital = useGameStore((s) => {
+    const f = city?.ownerForceId ? s.forces[city.ownerForceId] : null;
+    return f?.capitalCityId === cityId;
+  });
+  const relocateCapital = useGameStore((s) => s.relocateCapital);
+  const capitalMoveUsed = useGameStore((s) => s.capitalMoveUsed);
+  const [confirming, setConfirming] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const t = useT();
+  if (!city || city.ruined) return null;
+
+  if (isCapital) {
+    return (
+      <section className={styles.section}>
+        <h3 className={styles.sectionTitle}>{t('治所', 'Capital')}</h3>
+        <div className={styles.muted}>
+          {t('★ 本軍治所 — 政令外交所出,每季 +3 民忠;若失守,全境民心動搖。',
+             '★ The realm\'s seat — edicts & diplomacy issue here, +3 loyalty/season. If it falls, the whole realm reels.')}
+        </div>
+      </section>
+    );
+  }
+
+  const free = !capitalMoveUsed;
+  const cost = free ? 0 : 800;
+  const afford = city.gold >= cost;
+  const costLabel = free ? t('首遷免費', 'first move free') : `−${cost}g`;
+  return (
+    <section className={styles.section}>
+      <h3 className={styles.sectionTitle}>{t('遷都', 'Relocate Capital')}</h3>
+      {!confirming ? (
+        <button
+          onClick={() => setConfirming(true)}
+          disabled={!afford}
+          style={{
+            background: '#14202a', color: afford ? '#7ec0d6' : '#7a8893',
+            border: '1px solid ' + (afford ? '#3a6a7a' : '#26323e'),
+            padding: '0.4rem 0.8rem', cursor: afford ? 'pointer' : 'not-allowed',
+            fontFamily: 'inherit', fontSize: '0.82rem', opacity: afford ? 1 : 0.6,
+          }}
+        >{t('遷都至此', 'Make this the capital')} ({costLabel})</button>
+      ) : (
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ color: '#7ec0d6', fontSize: '0.78rem' }}>
+            {t('遷治所至此城?', 'Move the seat of power here?')}
+          </span>
+          <button
+            onClick={() => { const r = relocateCapital(cityId); setMsg(r.message); setConfirming(false); }}
+            style={{
+              background: '#1a2a3a', color: '#7ec0d6', border: '1px solid #3a6a7a',
+              padding: '0.35rem 0.7rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.8rem',
+            }}
+          >{t('確認遷都', 'Confirm')}</button>
+          <button
+            onClick={() => setConfirming(false)}
+            style={{
+              background: 'transparent', color: '#97a4ae', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+              padding: '0.35rem 0.7rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.8rem',
+            }}
+          >{t('取消', 'Cancel')}</button>
+        </div>
+      )}
+      {msg && <div className={styles.muted} style={{ marginTop: '0.4rem', color: '#7ec0d6' }}>{msg}</div>}
     </section>
   );
 }

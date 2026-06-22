@@ -163,7 +163,7 @@ export function resolveInternalAffairs(
   officer: Officer,
   city: City,
   rng: () => number,
-  bonus?: { internalMultiplier?: number; recruitBonus?: number },
+  bonus?: { internalMultiplier?: number; recruitBonus?: number; troopCapMul?: number },
 ): CommandResult {
   const def = COMMAND_DEFS[type];
   // Trait multiplier (diligent +20%, lazy −20%, specialist +20% for matching
@@ -224,11 +224,17 @@ export function resolveInternalAffairs(
       };
     }
     case 'recruit-troops': {
-      const max = Math.floor(statValue * 20) + 200;
+      // Per-action throughput raised so big standing armies can actually be
+      // raised and replaced — without this a long war demilitarises the whole
+      // map (cities can't rebuild spent armies fast enough).
+      const max = Math.floor(statValue * 50) + 800;
       // City size also limits the per-action max so a Hamlet can't recruit huge armies.
-      const sizeMax = Math.floor(size.troopCap / 10);
-      const fromPop = Math.min(max, sizeMax, Math.floor(city.population / 100));
-      const popDrawn = fromPop * 2;
+      // 兵營/馬廄/武庫/糧倉署/驛站 raise the per-season ceiling (troopCapMul).
+      const sizeMax = Math.floor((size.troopCap * (bonus?.troopCapMul ?? 1)) / 8);
+      const fromPop = Math.min(max, sizeMax, Math.floor(city.population / 60));
+      // Each soldier costs ~1.4 civilians — keeps the (unchanged) population from
+      // being gutted as armies grow larger, so big garrisons are sustainable.
+      const popDrawn = Math.round(fromPop * 1.4);
       // 民怨 — conscription pulls men from the fields and breeds resentment, the
       // harder you levy relative to the populace the worse. Sustained recruiting
       // must be balanced with 撫民 or the city turns restive.

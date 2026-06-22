@@ -76,6 +76,12 @@ export interface GameState {
   scenarioId: EntityId | null;
   playerForceId: EntityId | null;
   selectedCityId: EntityId | null;
+  /** 遷都 — true once the player has used their one free capital relocation this
+   *  game; subsequent 遷都 cost gold. Reset on every new game. */
+  capitalMoveUsed?: boolean;
+  /** 流民 — realm-wide pool of displaced people, carried between seasons. Famine
+   *  and unrest feed it; welcoming cities resettle a share each season. */
+  refugees?: number;
   /** Selected in-transit army (for map highlight), or null. */
   selectedArmyId: EntityId | null;
   /** Whether the city-interior map is open for the selected city (UI flag). */
@@ -606,7 +612,17 @@ export function loadScenario(
   playerForceId: EntityId,
   difficulty: Difficulty,
   customOfficer?: CustomOfficerInit,
+  capitalOverride?: EntityId,
 ): GameState {
+  // 開局治所 — honour a player-chosen starting capital, but only if it's a city
+  // the player force actually owns. Otherwise fall back to the scenario default.
+  const playerForce = scenario.forces.find((f) => f.id === playerForceId);
+  const validOverride =
+    capitalOverride &&
+    scenario.cities.some((c) => c.id === capitalOverride && c.ownerForceId === playerForceId)
+      ? capitalOverride
+      : null;
+  const playerCapitalId = validOverride ?? playerForce?.capitalCityId ?? null;
   const playerTroopMul = difficulty === 'easy' ? 1.2 : 1.0;
   // AI 兵力補正 — independent multiplier layered on the difficulty handicap.
   const aiTroopBonusMul =
@@ -621,6 +637,7 @@ export function loadScenario(
     state.startHandicap === 'strong' ? 1.4 : 1.0;
 
   const capitalIds = new Set(scenario.forces.map((f) => f.capitalCityId));
+  if (validOverride) capitalIds.add(validOverride);
   const scaledCities: City[] = scenario.cities.map((c) => {
     const isPlayer = c.ownerForceId === playerForceId;
     const isAI = c.ownerForceId !== null && c.ownerForceId !== playerForceId;
@@ -758,13 +775,18 @@ export function loadScenario(
     scenarioId: scenario.id,
     playerForceId,
     difficulty,
-    selectedCityId:
-      scenario.forces.find((f) => f.id === playerForceId)?.capitalCityId ??
-      null,
+    selectedCityId: playerCapitalId,
+    capitalMoveUsed: false, // 首次遷都免費 — fresh game grants one free 遷都
+    refugees: 0, // 流民 — fresh game starts with no displaced pool
     cities: indexById(scaledCities),
     forces: indexById(
       distinctForceColors(
-        scenario.forces.map((f) => ({ ...f, isPlayer: f.id === playerForceId })),
+        scenario.forces.map((f) => ({
+          ...f,
+          isPlayer: f.id === playerForceId,
+          // Apply the player's chosen starting capital, if any.
+          capitalCityId: f.id === playerForceId && validOverride ? validOverride : f.capitalCityId,
+        })),
       ),
     ),
     // Seed each officer's cached 威名 title from innate stats so the first

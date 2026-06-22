@@ -4,7 +4,7 @@
 
 保存目录：`portraits-src/`
 
-总数：2209，源图文件：110，已匹配角色：115，未匹配角色：2094
+总数：2209，源图文件：200，已匹配角色：205，未匹配角色：2004
 
 说明：勾选代表 `portraits-src/` 里已经有对应源图。识别规则包括 `{id}.webp/.png/.jpg`、中文名图片、以及少量繁简姓名对应；同名历史人物可能共用同一张源图。
 
@@ -125,10 +125,100 @@
 - [x] 曹徽 (cao-hui) -> `portraits-src/曹徽.png`
 - [x] 曹儼 (cao-yan) -> `portraits-src/曹儼.png`
 - [x] 司馬亮 (sima-liang) -> `portraits-src/司馬亮.png`
+- [x] 司馬望 (sima-wang) -> `portraits-src/司馬望.png`
+- [x] 鍾繇 (zhong-yao) -> `portraits-src/鍾繇.png`
+- [x] 任峻 (ren-jun) -> `portraits-src/任峻.png`
+- [x] 魏續 (wei-xu) -> `portraits-src/魏續.png`
+- [x] 衛瓘 (wei-guan) -> `portraits-src/衛瓘.png`
+- [x] 何晏 (he-yan) -> `portraits-src/何晏.png`
+- [x] 曹奐 (cao-huan) -> `portraits-src/曹奐.png`
+- [x] 高柔 (gao-rou) -> `portraits-src/高柔.png`
+- [x] 蔣濟 (jiang-ji) -> `portraits-src/蔣濟.png`
+- [x] 傅嘏 (fu-jia) -> `portraits-src/傅嘏.png`
+- [x] 劉馥 (liu-fu) -> `portraits-src/劉馥.png`
+- [x] 崔琰 (cui-yan) -> `portraits-src/崔琰.png`
+- [x] 荀諶 (xun-chen) -> `portraits-src/荀諶.png`
+- [x] 夏侯玄 (xiahou-xuan) -> `portraits-src/夏侯玄.png`
+- [x] 李豐 (li-feng) -> `portraits-src/李豐.png`
+- [x] 文欽 (wen-qin) -> `portraits-src/文欽.png`
+- [x] 文鴦 (wen-yang) -> `portraits-src/文鴦.png`
+- [x] 辛毗 (xin-pi) -> `portraits-src/辛毗.png`
+- [x] 朱靈 (zhu-ling) -> `portraits-src/朱靈.png`
+- [x] 費曜 (fei-yao) -> `portraits-src/費曜.png`
+- [x] 牽招 (qian-zhao) -> `portraits-src/牽招.png`
+- [x] 石苞 (shi-bao) -> `portraits-src/石苞.png`
+- [x] 王戎 (wang-rong) -> `portraits-src/王戎.png`
+- [x] 司馬朗 (sima-lang) -> `portraits-src/司馬朗.png`
+- [x] 荀顗 (xun-yi) -> `portraits-src/荀顗.png`
+- [x] 荀粲 (xun-can) -> `portraits-src/荀粲.png`
+- [x] 杜畿 (du-ji) -> `portraits-src/杜畿.png`
+- [x] 杜恕 (du-shu) -> `portraits-src/杜恕.png`
+- [x] 盧毓 (lu-yu) -> `portraits-src/盧毓.png`
+- [x] 董昭 (dong-zhao) -> `portraits-src/董昭.png`
+- [x] 秦朗 (qin-lang) -> `portraits-src/秦朗.png`
+- [x] 魏諷 (wei-feng) -> `portraits-src/魏諷.png`
+- [x] 崔林 (cui-lin) -> `portraits-src/崔林.png`
+- [x] 何夔 (he-fu) -> `portraits-src/何夔.png`
+- [x] 楊濟 (yang-ji) -> `portraits-src/楊濟.png`
+- [x] 杜祺 (du-qi) -> `portraits-src/杜祺.png`
+- [x] 曹沖 (cao-chong) -> `portraits-src/曹沖.png`
+- [x] 夏侯恩 (xiahou-en) -> `portraits-src/夏侯恩.png`
+- [x] 夏侯德 (xiahou-de) -> `portraits-src/夏侯德.png`
+- [x] 夏侯稱 (xiahou-cheng) -> `portraits-src/夏侯稱.png`
+- [x] 夏侯榮 (xiahou-rong) -> `portraits-src/夏侯榮.png`
+- [x] 王子服 (wang-zifu) -> `portraits-src/王子服.png`
+- [x] 種輯 (zhong-ji) -> `portraits-src/種輯.png`
+- [x] 穆順 (mu-shun) -> `portraits-src/穆順.png`
+- [x] 張華 (zhang-hua) -> `portraits-src/張華.png`
+- [x] 何曾 (he-zeng) -> `portraits-src/何曾.png`
+- [x] 裴秀 (pei-xiu) -> `portraits-src/裴秀.png`
+- [x] 裴楷 (pei-kai) -> `portraits-src/裴楷.png`
+- [x] 司馬駿 (sima-jun) -> `portraits-src/司馬駿.png`
+- [x] 王基 (wang-ji-wei) -> `portraits-src/王基.png`
+- [x] 韋誕 (wei-dan) -> `portraits-src/韋誕.png`
+- [x] 鍾毓 (zhong-yu) -> `portraits-src/鍾毓.png`
+- [x] 諸葛緒 (zhuge-xu-wei) -> `portraits-src/諸葛緒.png`
+- [x] 田續 (tian-xu) -> `portraits-src/田續.png`
+- [x] 牽弘 (qian-hong) -> `portraits-src/牽弘.png`
+- [x] 王經 (wang-jing) -> `portraits-src/王經.png`
+- [x] 馬遵 (ma-zun) -> `portraits-src/馬遵.png`
+- [x] 夏侯湛 (xiahou-zhan) -> `portraits-src/夏侯湛.png`
+- [x] 張軌 (zhang-gui) -> `portraits-src/張軌.png`
+- [x] 棗祗 (zao-zhi) -> `portraits-src/棗祗.png`
+- [x] 曹訓 (cao-xun) -> `portraits-src/曹訓.png`
+- [x] 衛覬 (wei-ji-wei) -> `portraits-src/衛覬.png`
+- [x] 楊俊 (yang-jun) -> `portraits-src/楊俊.png`
+- [x] 桓階 (huan-jie) -> `portraits-src/桓階.png`
+- [x] 桓嘉 (huan-jia) -> `portraits-src/桓嘉.png`
+- [x] 王雙 (wang-shuang-wei) -> `portraits-src/王雙.png`
+- [x] 戴陵 (dai-ling) -> `portraits-src/戴陵.png`
+- [x] 周宣 (zhou-xuan) -> `portraits-src/周宣.png`
+- [x] 張南 (zhang-nan) -> `portraits-src/張南.png`
+- [x] 王忠 (wang-zhong) -> `portraits-src/王忠.png`
+- [x] 卞蘭 (bian-lan) -> `portraits-src/卞蘭.png`
+- [x] 司馬芝 (sima-zhi) -> `portraits-src/司馬芝.png`
+- [x] 楊欣 (yang-xin) -> `portraits-src/楊欣.png`
+- [x] 王業 (wang-ye) -> `portraits-src/王業.png`
+- [x] 賈範 (jia-fan) -> `portraits-src/賈範.png`
+- [x] 蘇愉 (su-yu) -> `portraits-src/蘇愉.png`
+- [x] 蹇義 (jian-yi) -> `portraits-src/蹇義.png`
+- [x] 劉寔 (liu-shi) -> `portraits-src/劉寔.png`
+- [x] 張茂 (zhang-mao-jin) -> `portraits-src/張茂.png`
+- [x] 曹肇 (cao-zhao) -> `portraits-src/曹肇.png`
+- [x] 司馬權 (sima-quan) -> `portraits-src/司馬權.png`
+- [x] 司馬泰 (sima-tai) -> `portraits-src/司馬泰.png`
+- [x] 高堂隆 (gao-tang-long) -> `portraits-src/高堂隆.png`
+- [x] 夏侯威 (xiahou-wei) -> `portraits-src/夏侯威.png`
+- [x] 夏侯楙 (xiahou-mao) -> `portraits-src/夏侯楙.png`
+- [x] 夏侯徽 (xiahou-hui) -> `portraits-src/夏侯徽.png`
+- [x] 王雙 (wang-shuang) -> `portraits-src/wang-shuang.png`
+- [x] 王基 (wang-ji) -> `portraits-src/wang-ji.png`
+- [x] 傅嘏 (fu-shi) -> `portraits-src/fu-shi.png`
+- [x] 田疇 (tian-chou) -> `portraits-src/田疇.png`
 
 ## 按分组 Checklist
 
-### 三国 · 魏 (110/203)
+### 三国 · 魏 (200/203)
 
 - [x] 曹操 (cao-cao, 武) - 曹操.png
 - [x] 夏侯惇 (xiahou-dun, 武) - 夏侯惇.png
@@ -240,96 +330,96 @@
 - [x] 曹徽 (cao-hui, 文) - 曹徽.png
 - [x] 曹儼 (cao-yan, 文) - 曹儼.png
 - [x] 司馬亮 (sima-liang, 文) - 司馬亮.png
-- [ ] 司馬望 (sima-wang, 武)
-- [ ] 鍾繇 (zhong-yao, 文)
-- [ ] 任峻 (ren-jun, 文)
-- [ ] 魏續 (wei-xu, 武)
-- [ ] 衛瓘 (wei-guan, 文)
-- [ ] 何晏 (he-yan, 文)
-- [ ] 曹奐 (cao-huan, 文)
-- [ ] 高柔 (gao-rou, 文)
-- [ ] 蔣濟 (jiang-ji, 文)
-- [ ] 傅嘏 (fu-jia, 文)
-- [ ] 劉馥 (liu-fu, 文)
-- [ ] 崔琰 (cui-yan, 文)
-- [ ] 荀諶 (xun-chen, 文)
-- [ ] 夏侯玄 (xiahou-xuan, 武)
-- [ ] 李豐 (li-feng, 文)
-- [ ] 文欽 (wen-qin, 武)
-- [ ] 文鴦 (wen-yang, 武)
-- [ ] 辛毗 (xin-pi, 文)
-- [ ] 朱靈 (zhu-ling, 武)
-- [ ] 費曜 (fei-yao, 武)
-- [ ] 牽招 (qian-zhao, 武)
-- [ ] 石苞 (shi-bao, 武)
-- [ ] 王戎 (wang-rong, 文)
-- [ ] 司馬朗 (sima-lang, 文)
-- [ ] 荀顗 (xun-yi, 文)
-- [ ] 荀粲 (xun-can, 文)
-- [ ] 杜畿 (du-ji, 文)
-- [ ] 杜恕 (du-shu, 文)
-- [ ] 盧毓 (lu-yu, 文)
-- [ ] 董昭 (dong-zhao, 文)
-- [ ] 秦朗 (qin-lang, 武)
-- [ ] 魏諷 (wei-feng, 文)
-- [ ] 崔林 (cui-lin, 文)
-- [ ] 何夔 (he-fu, 文)
-- [ ] 楊濟 (yang-ji, 文)
-- [ ] 杜祺 (du-qi, 文)
-- [ ] 曹沖 (cao-chong, 文)
-- [ ] 夏侯恩 (xiahou-en, 武)
-- [ ] 夏侯德 (xiahou-de, 武)
-- [ ] 夏侯稱 (xiahou-cheng, 武)
-- [ ] 夏侯榮 (xiahou-rong, 文)
-- [ ] 王子服 (wang-zifu, 文)
-- [ ] 種輯 (zhong-ji, 文)
-- [ ] 穆順 (mu-shun, 文)
-- [ ] 張華 (zhang-hua, 文)
-- [ ] 何曾 (he-zeng, 文)
-- [ ] 裴秀 (pei-xiu, 文)
-- [ ] 裴楷 (pei-kai, 文)
-- [ ] 司馬駿 (sima-jun, 武)
-- [ ] 王基 (wang-ji-wei, 武)
-- [ ] 韋誕 (wei-dan, 文)
-- [ ] 鍾毓 (zhong-yu, 文)
-- [ ] 諸葛緒 (zhuge-xu-wei, 武)
-- [ ] 田續 (tian-xu, 武)
-- [ ] 牽弘 (qian-hong, 武)
-- [ ] 王經 (wang-jing, 文)
-- [ ] 馬遵 (ma-zun, 文)
-- [ ] 夏侯湛 (xiahou-zhan, 文)
-- [ ] 張軌 (zhang-gui, 武)
-- [ ] 棗祗 (zao-zhi, 文)
-- [ ] 曹訓 (cao-xun, 武)
-- [ ] 衛覬 (wei-ji-wei, 文)
-- [ ] 楊俊 (yang-jun, 文)
-- [ ] 桓階 (huan-jie, 文)
-- [ ] 桓嘉 (huan-jia, 武)
-- [ ] 王雙 (wang-shuang-wei, 武)
-- [ ] 戴陵 (dai-ling, 武)
-- [ ] 周宣 (zhou-xuan, 文)
-- [ ] 張南 (zhang-nan, 武)
-- [ ] 王忠 (wang-zhong, 武)
-- [ ] 卞蘭 (bian-lan, 文)
-- [ ] 司馬芝 (sima-zhi, 文)
-- [ ] 楊欣 (yang-xin, 武)
-- [ ] 王業 (wang-ye, 文)
-- [ ] 賈範 (jia-fan, 武)
-- [ ] 蘇愉 (su-yu, 文)
-- [ ] 蹇義 (jian-yi, 文)
-- [ ] 劉寔 (liu-shi, 文)
-- [ ] 張茂 (zhang-mao-jin, 武)
-- [ ] 曹肇 (cao-zhao, 武)
-- [ ] 司馬權 (sima-quan, 文)
-- [ ] 司馬泰 (sima-tai, 文)
-- [ ] 高堂隆 (gao-tang-long, 文)
-- [ ] 夏侯威 (xiahou-wei, 武)
-- [ ] 夏侯楙 (xiahou-mao, 文)
-- [ ] 夏侯徽 (xiahou-hui, 文)
-- [ ] 王雙 (wang-shuang, 武)
-- [ ] 王基 (wang-ji, 武)
-- [ ] 傅嘏 (fu-shi, 文)
-- [ ] 田疇 (tian-chou, 文)
+- [x] 司馬望 (sima-wang, 武) - 司馬望.png
+- [x] 鍾繇 (zhong-yao, 文) - 鍾繇.png
+- [x] 任峻 (ren-jun, 文) - 任峻.png
+- [x] 魏續 (wei-xu, 武) - 魏續.png
+- [x] 衛瓘 (wei-guan, 文) - 衛瓘.png
+- [x] 何晏 (he-yan, 文) - 何晏.png
+- [x] 曹奐 (cao-huan, 文) - 曹奐.png
+- [x] 高柔 (gao-rou, 文) - 高柔.png
+- [x] 蔣濟 (jiang-ji, 文) - 蔣濟.png
+- [x] 傅嘏 (fu-jia, 文) - 傅嘏.png
+- [x] 劉馥 (liu-fu, 文) - 劉馥.png
+- [x] 崔琰 (cui-yan, 文) - 崔琰.png
+- [x] 荀諶 (xun-chen, 文) - 荀諶.png
+- [x] 夏侯玄 (xiahou-xuan, 武) - 夏侯玄.png
+- [x] 李豐 (li-feng, 文) - 李豐.png
+- [x] 文欽 (wen-qin, 武) - 文欽.png
+- [x] 文鴦 (wen-yang, 武) - 文鴦.png
+- [x] 辛毗 (xin-pi, 文) - 辛毗.png
+- [x] 朱靈 (zhu-ling, 武) - 朱靈.png
+- [x] 費曜 (fei-yao, 武) - 費曜.png
+- [x] 牽招 (qian-zhao, 武) - 牽招.png
+- [x] 石苞 (shi-bao, 武) - 石苞.png
+- [x] 王戎 (wang-rong, 文) - 王戎.png
+- [x] 司馬朗 (sima-lang, 文) - 司馬朗.png
+- [x] 荀顗 (xun-yi, 文) - 荀顗.png
+- [x] 荀粲 (xun-can, 文) - 荀粲.png
+- [x] 杜畿 (du-ji, 文) - 杜畿.png
+- [x] 杜恕 (du-shu, 文) - 杜恕.png
+- [x] 盧毓 (lu-yu, 文) - 盧毓.png
+- [x] 董昭 (dong-zhao, 文) - 董昭.png
+- [x] 秦朗 (qin-lang, 武) - 秦朗.png
+- [x] 魏諷 (wei-feng, 文) - 魏諷.png
+- [x] 崔林 (cui-lin, 文) - 崔林.png
+- [x] 何夔 (he-fu, 文) - 何夔.png
+- [x] 楊濟 (yang-ji, 文) - 楊濟.png
+- [x] 杜祺 (du-qi, 文) - 杜祺.png
+- [x] 曹沖 (cao-chong, 文) - 曹沖.png
+- [x] 夏侯恩 (xiahou-en, 武) - 夏侯恩.png
+- [x] 夏侯德 (xiahou-de, 武) - 夏侯德.png
+- [x] 夏侯稱 (xiahou-cheng, 武) - 夏侯稱.png
+- [x] 夏侯榮 (xiahou-rong, 文) - 夏侯榮.png
+- [x] 王子服 (wang-zifu, 文) - 王子服.png
+- [x] 種輯 (zhong-ji, 文) - 種輯.png
+- [x] 穆順 (mu-shun, 文) - 穆順.png
+- [x] 張華 (zhang-hua, 文) - 張華.png
+- [x] 何曾 (he-zeng, 文) - 何曾.png
+- [x] 裴秀 (pei-xiu, 文) - 裴秀.png
+- [x] 裴楷 (pei-kai, 文) - 裴楷.png
+- [x] 司馬駿 (sima-jun, 武) - 司馬駿.png
+- [x] 王基 (wang-ji-wei, 武) - 王基.png
+- [x] 韋誕 (wei-dan, 文) - 韋誕.png
+- [x] 鍾毓 (zhong-yu, 文) - 鍾毓.png
+- [x] 諸葛緒 (zhuge-xu-wei, 武) - 諸葛緒.png
+- [x] 田續 (tian-xu, 武) - 田續.png
+- [x] 牽弘 (qian-hong, 武) - 牽弘.png
+- [x] 王經 (wang-jing, 文) - 王經.png
+- [x] 馬遵 (ma-zun, 文) - 馬遵.png
+- [x] 夏侯湛 (xiahou-zhan, 文) - 夏侯湛.png
+- [x] 張軌 (zhang-gui, 武) - 張軌.png
+- [x] 棗祗 (zao-zhi, 文) - 棗祗.png
+- [x] 曹訓 (cao-xun, 武) - 曹訓.png
+- [x] 衛覬 (wei-ji-wei, 文) - 衛覬.png
+- [x] 楊俊 (yang-jun, 文) - 楊俊.png
+- [x] 桓階 (huan-jie, 文) - 桓階.png
+- [x] 桓嘉 (huan-jia, 武) - 桓嘉.png
+- [x] 王雙 (wang-shuang-wei, 武) - 王雙.png
+- [x] 戴陵 (dai-ling, 武) - 戴陵.png
+- [x] 周宣 (zhou-xuan, 文) - 周宣.png
+- [x] 張南 (zhang-nan, 武) - 張南.png
+- [x] 王忠 (wang-zhong, 武) - 王忠.png
+- [x] 卞蘭 (bian-lan, 文) - 卞蘭.png
+- [x] 司馬芝 (sima-zhi, 文) - 司馬芝.png
+- [x] 楊欣 (yang-xin, 武) - 楊欣.png
+- [x] 王業 (wang-ye, 文) - 王業.png
+- [x] 賈範 (jia-fan, 武) - 賈範.png
+- [x] 蘇愉 (su-yu, 文) - 蘇愉.png
+- [x] 蹇義 (jian-yi, 文) - 蹇義.png
+- [x] 劉寔 (liu-shi, 文) - 劉寔.png
+- [x] 張茂 (zhang-mao-jin, 武) - 張茂.png
+- [x] 曹肇 (cao-zhao, 武) - 曹肇.png
+- [x] 司馬權 (sima-quan, 文) - 司馬權.png
+- [x] 司馬泰 (sima-tai, 文) - 司馬泰.png
+- [x] 高堂隆 (gao-tang-long, 文) - 高堂隆.png
+- [x] 夏侯威 (xiahou-wei, 武) - 夏侯威.png
+- [x] 夏侯楙 (xiahou-mao, 文) - 夏侯楙.png
+- [x] 夏侯徽 (xiahou-hui, 文) - 夏侯徽.png
+- [x] 王雙 (wang-shuang, 武) - wang-shuang.png
+- [x] 王基 (wang-ji, 武) - wang-ji.png
+- [x] 傅嘏 (fu-shi, 文) - fu-shi.png
+- [x] 田疇 (tian-chou, 文) - 田疇.png
 - [ ] 曹冏 (cao-jiong, 文)
 - [ ] 王沈 (wang-shen, 文)
 - [ ] 劉楨 (liu-zhen, 文)

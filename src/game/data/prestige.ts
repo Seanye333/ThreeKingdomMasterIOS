@@ -141,7 +141,9 @@ export function refreshPrestige(
   const next: Record<EntityId, Officer> = {};
   const awards: PrestigeAward[] = [];
   for (const [id, o] of Object.entries(officers)) {
-    if (o.status === 'dead') { next[id] = o; continue; }
+    // Skip the dead and any malformed officer missing its stat block — a single
+    // bad entry must never crash the whole season's prestige pass.
+    if (o.status === 'dead' || !o.stats) { next[id] = o; continue; }
     const title = bestPrestige(o, deeds[id]);
     const newId = title?.id;
     if (newId !== o.prestigeTitleId) {

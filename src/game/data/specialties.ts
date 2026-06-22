@@ -93,6 +93,28 @@ export const CITY_SPECIALTY: Record<string, SpecialtyId> = {
   hanzhong: 'herb', yinping: 'herb', wudu: 'herb',
 };
 
+/**
+ * 地利親和 — a city's signature good lends an edge to a matching building
+ * category: a horse frontier favours 軍務 (cavalry works), a salt/silk/brocade
+ * town favours 經濟, a rice/wheat basin 農政, a herb region 民政 (medicine),
+ * timber 城防 (walls & ships). Buildings of the affine category build cheaper
+ * and run stronger in that city. (Imported by systems/buildings.ts.)
+ */
+export const SPECIALTY_AFFINITY: Record<SpecialtyId, import('../types').BuildingCategory> = {
+  horse: 'military', iron: 'military',
+  salt: 'economy', silk: 'economy', brocade: 'economy', pearl: 'economy',
+  copper: 'economy', lacquer: 'economy', ivory: 'economy',
+  rice: 'agriculture', wheat: 'agriculture', fruit: 'agriculture', fish: 'agriculture',
+  timber: 'defense',
+  herb: 'civic',
+};
+
+/** A city's building-category affinity from its specialty (null if none). */
+export function cityAffinity(cityId: string): import('../types').BuildingCategory | null {
+  const sid = CITY_SPECIALTY[cityId];
+  return sid ? SPECIALTY_AFFINITY[sid] : null;
+}
+
 /** The specialty multipliers for a city's economy (1.0 if it has none). */
 export function specialtyEconomy(cityId: string): { goldMul: number; foodMul: number } {
   const sid = CITY_SPECIALTY[cityId];

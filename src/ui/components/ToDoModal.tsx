@@ -36,6 +36,7 @@ export function ToDoModal({ onClose, onOpenLetters }: { onClose: () => void; onO
   const t = useT();
   const cities = useGameStore((s) => s.cities);
   const officers = useGameStore((s) => s.officers);
+  const allBuildings = useGameStore((s) => s.buildings);
   const armies = useGameStore((s) => s.armies);
   const season = useGameStore((s) => s.date.season);
   const playerForceId = useGameStore((s) => s.playerForceId);
@@ -77,7 +78,7 @@ export function ToDoModal({ onClose, onOpenLetters }: { onClose: () => void; onO
 
     // 2) 糧荒 — garrison will starve next season (food + net < 0 → desertion).
     for (const c of mine) {
-      const tick = tickCityEconomy(c, season, officersByCity[c.id] ?? []);
+      const tick = tickCityEconomy(c, season, officersByCity[c.id] ?? [], 'normal', 0, 'clear', allBuildings);
       const net = tick.foodIncome - tick.foodUpkeep;
       if (c.food + net < 0) {
         // 一鍵調糧 — the richest adjacent friendly city with grain to spare
@@ -172,7 +173,7 @@ export function ToDoModal({ onClose, onOpenLetters }: { onClose: () => void; onO
 
     const rank: Record<Tone, number> = { urgent: 0, warn: 1, info: 2 };
     return list.sort((a, b) => rank[a.tone] - rank[b.tone]);
-  }, [cities, officers, armies, season, playerForceId, cityDelegations, pendingTrainings, wishCount, onOpenLetters, selectCity, dispatchConvoy, onClose, t]);
+  }, [cities, officers, allBuildings, armies, season, playerForceId, cityDelegations, pendingTrainings, wishCount, onOpenLetters, selectCity, dispatchConvoy, onClose, t]);
 
   const urgent = todos.filter((td) => td.tone === 'urgent').length;
 

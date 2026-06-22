@@ -1,6 +1,7 @@
-import type { City, Officer, Season, TaxRate, EntityId, DiplomaticState } from '../types';
+import type { City, Officer, Season, TaxRate, EntityId, DiplomaticState, Building } from '../types';
 import { getRelation } from '../types';
 import { cityPolicyEffects } from './policyEffects';
+import { buildingBonuses } from './buildings';
 import { citySize, populationDelta } from './citySize';
 import { aggregateSlotEffects } from '../data/defenseBuildings';
 import { effectivePrestigeEffects } from '../data/prestige';
@@ -65,8 +66,14 @@ export function tickCityEconomy(
   tax: TaxRate = 'normal',
   inflation = 0,
   weatherKind: import('./weather').WeatherKind = 'clear',
+  buildings: Building[] = [],
+  statecraft: string | null = null,
 ): CityEconomyTick {
   const eff = cityPolicyEffects(city, cityOfficers);
+  // 城內建築 — 市場/錢莊/常平倉/市舶司 fatten commerce; 屯田/水利/常平倉 the
+  // harvest; 寺院/太學/安民坊 民忠; 水利 blunts drought; 安民坊 grows population.
+  // 地利(specialty) + 理念(statecraft) further slant each building category.
+  const bb = buildingBonuses(city.id, buildings, { statecraft });
   const taxEff = TAX_EFFECT[tax] ?? TAX_EFFECT.normal;
   // 通貨膨脹 — debased coin buys less; tax income shrinks up to −40% at peak.
   const inflationMul = 1 - Math.max(0, Math.min(100, inflation)) / 250;
@@ -86,7 +93,7 @@ export function tickCityEconomy(
     (best, o) => Math.max(best, gradeRank(officerGrade(o).grade) - gradeRank('bronze')),
     0,
   );
-  const goldIncome = Math.max(0, Math.floor((baseGold * eff.goldMul * size.goldMul * prestigeMul * gradeAdminMul * spec.goldMul + eff.goldFlat) * taxEff.goldMul * inflationMul));
+  const goldIncome = Math.max(0, Math.floor((baseGold * eff.goldMul * bb.commerceMul * size.goldMul * prestigeMul * gradeAdminMul * spec.goldMul + eff.goldFlat) * taxEff.goldMul * inflationMul));
 
   const baseFood =
     season === 'autumn'
@@ -101,10 +108,10 @@ export function tickCityEconomy(
   // ~45%; steady rain swells it slightly; snow/wind are neutral. Only the
   // harvest season (autumn) carries a crop to lose.
   const harvestWeatherMul =
-    weatherKind === 'drought' ? 0.55 :
+    weatherKind === 'drought' ? 0.55 + 0.45 * bb.droughtMitigation :
     weatherKind === 'rain' ? 1.1 :
     1;
-  const foodIncome = Math.floor(baseFood * eff.foodMul * size.foodMul * spec.foodMul * harvestWeatherMul) + granaryFood;
+  const foodIncome = Math.floor(baseFood * eff.foodMul * bb.agricultureMul * size.foodMul * spec.foodMul * harvestWeatherMul) + granaryFood;
 
   const foodUpkeep = Math.ceil(city.troops * FOOD_PER_TROOP_PER_SEASON);
 
@@ -116,7 +123,7 @@ export function tickCityEconomy(
 
   // Population growth/shrink based on loyalty + food surplus (only on autumn harvest).
   const popDelta = season === 'autumn'
-    ? populationDelta(city, foodIncome - foodUpkeep)
+    ? populationDelta(city, foodIncome - foodUpkeep, bb.popGrowthAdd)
     : 0;
 
   // A drought stokes famine fear — the populace grows restive whatever the season.
@@ -124,7 +131,7 @@ export function tickCityEconomy(
 
   return {
     goldIncome, foodIncome, foodUpkeep, desertion,
-    loyaltyDelta: eff.loyaltyDelta + taxEff.loyalty + droughtLoyalty,
+    loyaltyDelta: eff.loyaltyDelta + taxEff.loyalty + droughtLoyalty + bb.loyaltyPerSeason,
     populationDelta: popDelta,
     policyBadges: taxEff.loyalty !== 0 ? [...eff.badges, taxEff.zh] : eff.badges,
   };

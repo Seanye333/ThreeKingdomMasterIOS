@@ -1,4 +1,5 @@
 import type { City, EntityId, Force, Officer } from '../types';
+import { buildingBonuses } from './buildings';
 
 /**
  * 權謀 — officer ambition, betrayal and usurpation.
@@ -32,6 +33,8 @@ export interface AmbitionContext {
    * at his back and is far likelier to move. Keyed by officer id.
    */
   factionBoost?: Record<EntityId, number>;
+  /** City buildings — a 牢城 (prison) at the officer's seat blunts betrayal. */
+  buildings?: import('../types').Building[];
 }
 
 export interface AmbitionEvent {
@@ -108,6 +111,8 @@ export function resolveAmbitions(ctx: AmbitionContext): AmbitionEvent[] {
     if (ambitious) chance += 0.05;
     if (arrogant) chance += 0.02;
     chance += ctx.factionBoost?.[o.id] ?? 0; // a faction at his back emboldens him
+    // 牢城 — a prison/court at his seat keeps the discontented in line.
+    chance *= 1 - buildingBonuses(homeId, ctx.buildings ?? []).defectionResist;
     if (rng() >= chance) continue;
 
     const ruler = officers[force.rulerOfficerId];

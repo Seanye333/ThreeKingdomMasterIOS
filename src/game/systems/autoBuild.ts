@@ -5,7 +5,8 @@ import type {
   EntityId,
   ReportEntry,
 } from '../types';
-import { BUILDING_DEFS_BY_ID } from '../data/buildings';
+import { BUILDING_DEFS_BY_ID, BUILDING_MIN_SIZE } from '../data/buildings';
+import { cityMeetsSize } from './citySize';
 
 export interface AutoBuildContext {
   cities: Record<EntityId, City>;
@@ -50,6 +51,12 @@ export function applyAutoBuild(ctx: AutoBuildContext): AutoBuildOutput {
     if (existing && existing.level >= def.maxLevel) {
       queues[cityId] = queue.slice(1);
       continue;
+    }
+    // 城格解鎖 — a new grand work waits in the queue until the city is big
+    // enough (growing population eventually unlocks it).
+    if (!existing) {
+      const minSize = BUILDING_MIN_SIZE[headId];
+      if (minSize && !cityMeetsSize(city, minSize)) continue;
     }
     if (city.gold < def.goldPerLevel) {
       // Not enough gold this season — leave queue, try again next time.

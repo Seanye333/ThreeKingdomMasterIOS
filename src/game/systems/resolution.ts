@@ -26,6 +26,9 @@ import { officerGrade, gradeRank, officerLevel } from './officerGrade';
 import { handleMarch } from './combat';
 import { tickDiplomacy, applyCoalitionPressure } from './diplomacy';
 import { tickCityEconomy, tradeTreatyGrants } from './economy';
+import { buildingBonuses } from './buildings';
+import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
+import { settleRefugees, REFUGEE_SHED_FRAC } from './refugees';
 import { stepConvoys, resolveConvoyRaids, provisionNeeded, consumeRations, type Convoy } from './convoy';
 import { stepExpeditions, expeditionSpeedMul } from './expedition';
 import { embassyTargets, embassyLegSeasons } from './foreignRealm';
@@ -85,6 +88,8 @@ export interface ResolutionInput {
   realmRelations?: Record<string, number>;
   /** 常運糧道 — player standing routes; each season auto-ships surplus grain. */
   standingRoutes?: Array<{ fromCityId: EntityId; toCityId: EntityId }>;
+  /** 流民 — the realm-wide pool of displaced people carried between seasons. */
+  refugees?: number;
   rng?: () => number;
   weather?: import('./weather').Weather;
   /** 武將壽命 — old-age death rule (see GameState.lifespanMode). Defaults to
@@ -121,6 +126,8 @@ export interface ResolutionOutput {
   forces: Record<EntityId, Force>;
   diplomacy: DiplomaticState;
   lostItems: LostItemRef[];
+  /** 流民 — the refugee pool after this season's shedding + resettlement. */
+  refugees: number;
   report: SeasonReport;
   /**
    * Marches still in transit (seasonsRemaining > 1 at start of resolution).
@@ -181,6 +188,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   let officers: Record<EntityId, Officer> = { ...input.officers };
   let forces: Record<EntityId, Force> = { ...input.forces };
   let lostItems: LostItemRef[] = [...input.lostItems];
+  // 流民 — pool carried in from last season; this season's famine/unrest sheds
+  // more into it, then welcoming cities resettle a share of it (see settleRefugees).
+  let refugeePool = input.refugees ?? 0;
+  let refugeesShed = 0;
   const entries: ReportEntry[] = [];
   // 武功 — deed deltas accumulated this turn
   const deedDeltas: Array<{ officerId: EntityId; patch: Partial<import('../types').HeroicDeeds> }> = [];
@@ -1029,6 +1040,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       playerForceId: input.playerForceId ?? null,
       noBattleDeath: input.noBattleDeath ?? false,
       duelChanceMul: input.duelChanceMul ?? 1,
+      buildings: input.buildings,
     });
     cities = outcome.cities;
     officers = outcome.officers;
@@ -1119,9 +1131,19 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const recruitBoost = city.ownerForceId && input.recruitBonusSeasons
       ? input.recruitBonusSeasons[city.ownerForceId]
       : undefined;
-    const finalBonus = recruitBoost
-      ? { ...bonus, recruitBonus: bonus.recruitBonus + (recruitBoost.multiplier - 1) }
-      : bonus;
+    // 城內建築 — 兵營/馬廄/工房/演武場/糧倉署 speed recruiting (recruitMul) and
+    // 兵營/馬廄/武庫/糧倉署/驛站/驛傳 raise the per-season recruit ceiling (troopCapMul).
+    const cityBB = buildingBonuses(city.id, input.buildings ?? [], {
+      statecraft: city.ownerForceId ? (forces[city.ownerForceId]?.statecraft ?? null) : null,
+    });
+    const baseRecruitBonus = recruitBoost
+      ? bonus.recruitBonus + (recruitBoost.multiplier - 1)
+      : bonus.recruitBonus;
+    const finalBonus = {
+      ...bonus,
+      recruitBonus: baseRecruitBonus + (cityBB.recruitMul - 1),
+      troopCapMul: cityBB.troopCapMul,
+    };
     const result = resolveInternalAffairs(cmd.type, officer, city, rng, finalBonus);
     cities[city.id] = applyDelta(city, result.delta);
     entries.push({
@@ -1135,7 +1157,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     // 內政經驗 — slow stat growth from the work, steered toward the command's
     // stat (政治 for development, 魅力 for people work). Capped/no-op commands
     // grant a reduced trickle inside awardInternalAffairsXp.
-    const iaXp = awardInternalAffairsXp(officers[cmd.officerId] ?? officer, cmd.type, result.success, rng);
+    const iaXp = awardInternalAffairsXp(officers[cmd.officerId] ?? officer, cmd.type, result.success, rng, cityBB.xpMul);
     officers[cmd.officerId] = iaXp.officer;
     entries.push(...iaXp.entries);
   }
@@ -1229,19 +1251,72 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       city.ownerForceId ? (input.taxPolicy?.[city.ownerForceId] ?? 'normal') : 'normal',
       city.ownerForceId === input.playerForceId ? (input.inflation ?? 0) : 0,
       input.weather?.kind ?? 'clear',
+      input.buildings,
+      city.ownerForceId ? (forces[city.ownerForceId]?.statecraft ?? null) : null,
     );
     const territoryGold = city.ownerForceId
       ? controlledSatellites(city) * TERRITORY_GOLD
       : 0;
+    // 向心 — the realm's seat of power (首都/治所) draws extra loyalty each season.
+    const isCapital = city.ownerForceId
+      ? forces[city.ownerForceId]?.capitalCityId === city.id
+      : false;
+    const capitalLoyalty = isCapital ? CAPITAL_LOYALTY_BONUS : 0;
+    // 禁軍宿衛 — the seat of power musters its own standing guard each season:
+    // ~0.4% of the populace report for 宿衛 duty (only when the city is settled
+    // enough, 民忠 ≥ 40), capped by the city's troop ceiling. Makes the capital
+    // genuinely harder to storm and gives 選都/守都 strategic weight.
+    const troopsAfterDesertion = Math.max(0, city.troops - tick.desertion);
+    let capitalGuard = 0;
+    if (isCapital && city.loyalty >= 40) {
+      const cap = citySize(city).troopCap;
+      capitalGuard = Math.max(0, Math.min(Math.round(city.population * 0.004), cap - troopsAfterDesertion));
+    }
     const updated: City = {
       ...city,
       gold: city.gold + tick.goldIncome + territoryGold,
       food: Math.max(0, city.food + tick.foodIncome - tick.foodUpkeep),
-      troops: Math.max(0, city.troops - tick.desertion),
-      loyalty: Math.max(0, Math.min(100, city.loyalty + tick.loyaltyDelta)),
+      troops: troopsAfterDesertion + capitalGuard,
+      loyalty: Math.max(0, Math.min(100, city.loyalty + tick.loyaltyDelta + capitalLoyalty)),
       population: Math.max(1000, city.population + tick.populationDelta),
     };
     cities[city.id] = updated;
+    if (capitalGuard > 0) {
+      entries.push({
+        cityId: city.id,
+        kind: 'income',
+        text: `${city.name.en}: capital guard +${capitalGuard.toLocaleString()} troops (宿衛).`,
+        textZh: `${city.name.zh}：禁軍宿衛 +${capitalGuard.toLocaleString()} 兵。`,
+      });
+    }
+    // 流民 — a shrinking city sheds part of its loss into the wandering pool
+    // (famine/unrest drive people out; they don't simply vanish).
+    if (tick.populationDelta < 0) {
+      refugeesShed += Math.floor(-tick.populationDelta * REFUGEE_SHED_FRAC);
+    }
+    // ⑥ 升格/降格 — population crossed a size tier this season. A promotion brings
+    // an immigration boost in confidence (a one-off loyalty lift); a demotion is
+    // a visible blow. Logged so the player feels the city's status change.
+    {
+      const before = citySize(city);
+      const after = citySize(updated);
+      if (after.id !== before.id) {
+        const grew = citySizeRank(after.id) > citySizeRank(before.id);
+        if (grew) {
+          cities[city.id] = { ...updated, loyalty: Math.min(100, updated.loyalty + 2) };
+        }
+        entries.push({
+          cityId: city.id,
+          kind: grew ? 'income' : 'desertion',
+          text: grew
+            ? `${city.name.en} has grown into a ${after.name.en}! (民心歸附 +2 loyalty)`
+            : `${city.name.en} has dwindled to a ${after.name.en}.`,
+          textZh: grew
+            ? `${city.name.zh}人口興旺,升格為「${after.name.zh}」!(民心歸附 +2)`
+            : `${city.name.zh}人口流散,跌為「${after.name.zh}」。`,
+        });
+      }
+    }
     if (tick.populationDelta !== 0) {
       entries.push({
         cityId: city.id,
@@ -1289,6 +1364,32 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     }
   }
 
+  // 流民安置 — fold this season's shed people into the pool, then let welcoming
+  // cities (high 民忠 / 輕稅 / 有餘容) resettle a share of it. Season-bounded.
+  if (seasonBoundary) {
+    refugeePool += refugeesShed;
+    if (refugeePool > 0) {
+      const flow = settleRefugees({
+        pool: refugeePool,
+        cities,
+        buildings: input.buildings ?? [],
+        taxPolicy: input.taxPolicy,
+      });
+      cities = flow.cities;
+      refugeePool = flow.pool;
+      for (const s of flow.settled) {
+        const c = cities[s.cityId];
+        if (!c) continue;
+        entries.push({
+          cityId: s.cityId,
+          kind: 'income',
+          text: `${c.name.en}: ${s.count.toLocaleString()} refugees settle (流民歸附).`,
+          textZh: `${c.name.zh}：流民歸附 +${s.count.toLocaleString()} 人。`,
+        });
+      }
+    }
+  }
+
   // 通商歲入 — credit each peaceful trade treaty's mutual income to capitals.
   if (seasonBoundary && input.tradePartners && input.tradePartners.length > 0 && input.playerForceId) {
     const grants = tradeTreatyGrants(input.tradePartners, input.diplomacy, input.playerForceId);
@@ -1296,13 +1397,16 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const cap = forces[fid]?.capitalCityId;
       const c = cap ? cities[cap] : undefined;
       if (!cap || !c || c.ownerForceId !== fid) continue;
-      cities[cap] = { ...c, gold: c.gold + gold };
+      // 市舶司 — a maritime trade office at the capital fattens treaty income.
+      const tradeMul = buildingBonuses(cap, input.buildings ?? []).tradeMul;
+      const credited = Math.round(gold * tradeMul);
+      cities[cap] = { ...c, gold: c.gold + credited };
       if (fid === input.playerForceId) {
         entries.push({
           cityId: cap,
           kind: 'income',
-          text: `${c.name.en}: +${gold} gold from trade treaties.`,
-          textZh: `${c.name.zh}：通商歲入 金 +${gold}。`,
+          text: `${c.name.en}: +${credited} gold from trade treaties.`,
+          textZh: `${c.name.zh}：通商歲入 金 +${credited}。`,
         });
       }
     }
@@ -1654,6 +1758,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       playerForceId: input.playerForceId,
       seed: (input.date.year * 4 + seasonIdx) >>> 0,
       factionBoost,
+      buildings: input.buildings,
     });
     for (const ev of ambitionEvents) {
       entries.push({ cityId: ev.cityId, kind: ev.kind, text: ev.text, textZh: ev.textZh });
@@ -2039,6 +2144,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     forces,
     diplomacy: finalDiplomacy,
     lostItems,
+    refugees: refugeePool,
     report: { date: { year: input.date.year, season: input.date.season }, entries },
     keptCommands: Object.keys(keptCommands).length > 0 ? keptCommands : undefined,
     armies: outArmies,

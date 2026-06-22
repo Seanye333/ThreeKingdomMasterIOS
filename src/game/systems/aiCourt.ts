@@ -92,9 +92,48 @@ export function planAICourt(ctx: AICourtContext): AICourtOutput {
   const newEnthronements: EntityId[] = [];
   const entries: ReportEntry[] = [];
 
+  // 前線 — a city is exposed if any neighbour is held by a rival force.
+  const isFrontline = (city: City): boolean =>
+    city.adjacentCityIds.some((nid) => {
+      const n = cities[nid];
+      return !!n && n.ownerForceId != null && n.ownerForceId !== city.ownerForceId;
+    });
+  // 治所價值 — big and safe cities make better seats; frontline cities are
+  // discounted so the AI prefers a defensible interior capital.
+  const seatScore = (city: City): number => city.population * (isFrontline(city) ? 0.6 : 1);
+
   for (const force of Object.values(forces)) {
     if (force.id === ctx.playerForceId) continue;
     if (force.vassalOfForceId) continue; // vassals don't run their own court
+
+    // --- 戰略遷都 — move the seat to a markedly better (bigger / safer) city.
+    // The 1.4× threshold + the loyalty cost give hysteresis so the AI doesn't
+    // thrash its capital back and forth season to season. ---
+    {
+      const cap = cities[force.capitalCityId];
+      if (cap && cap.ownerForceId === force.id) {
+        const owned = Object.values(cities).filter((c) => c.ownerForceId === force.id && !c.ruined);
+        if (owned.length > 1) {
+          let best = cap;
+          let bestScore = seatScore(cap);
+          for (const c of owned) {
+            const s = seatScore(c);
+            if (s > bestScore) { best = c; bestScore = s; }
+          }
+          if (best.id !== cap.id && bestScore >= seatScore(cap) * 1.4) {
+            forces[force.id] = { ...forces[force.id], capitalCityId: best.id };
+            cities[best.id] = { ...best, loyalty: Math.min(100, best.loyalty + 5) };
+            cities[cap.id] = { ...cap, loyalty: Math.max(0, cap.loyalty - 3) };
+            entries.push({
+              cityId: best.id,
+              kind: 'note',
+              text: `${force.name.en} moves its capital to ${best.name.en}.`,
+              textZh: `${force.name.zh}遷治所於${best.name.zh}。`,
+            });
+          }
+        }
+      }
+    }
 
     // --- Imperial rank promotion (try one tier per tick) ---
     const currentRank = force.imperialRank ?? 'commoner';

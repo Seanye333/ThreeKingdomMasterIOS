@@ -13,12 +13,12 @@ const mkCity = (over: Partial<City> & { id: string }): City =>
   } as unknown as City);
 
 describe('徵兵 — conscription costs population and loyalty', () => {
-  it('raises troops, draws twice as many people, and dents loyalty', () => {
+  it('raises troops, draws ~1.4× as many people, and dents loyalty', () => {
     const o = mkOfficer({ id: 'gov', stats: { charisma: 80 } });
     const res = resolveInternalAffairs('recruit-troops', o, mkCity({ id: 'ye', population: 200000, loyalty: 80 }), () => 0.5);
     expect(res.success).toBe(true);
     expect(res.delta?.troops).toBeGreaterThan(0);
-    expect(res.delta?.population).toBe(-(res.delta!.troops! * 2));
+    expect(res.delta?.population).toBe(-Math.round(res.delta!.troops! * 1.4));
     expect(res.delta?.loyalty).toBeLessThan(0); // 民怨
     expect(res.delta?.loyalty).toBeGreaterThanOrEqual(-8);
   });
