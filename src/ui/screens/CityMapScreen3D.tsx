@@ -2134,7 +2134,7 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, g
       <group onClick={(e) => { e.stopPropagation(); inspect({ title: '屯田 · 田畝', body: '军民屯垦之田,城邑粮秣所出。可於此勸課農桑。', color: '#bcd07a', commands: ['develop-agriculture', 'major-agriculture'] }); }}>
         <Farmland3D x={landmarks.farm.x} z={landmarks.farm.z} lush={stats.fAgri} />
       </group>
-      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '府衙 · 治所', body: '一城之治所,太守理政、安民撫眾之地。', color: '#f0d98a', commands: ['improve-loyalty', 'relief', 'encourage-migration'] }); }}>
+      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '府衙 · 治所', body: '一城之治所,太守理政、安民撫眾之地。', color: '#f0d98a', commands: ['improve-loyalty', 'relief', 'anti-corruption', 'encourage-migration'] }); }}>
         <GovernmentHall3D x={hall.x} z={hall.z} bannerColor={bannerColor} />
       </group>
       <group onClick={(e) => { e.stopPropagation(); inspect({ title: '兵營 · 校場', body: '操演士卒、招募新軍之所。', color: '#c08858', commands: ['recruit-troops'] }); }}>

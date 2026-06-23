@@ -1121,6 +1121,32 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       entries.push(...garrisonXp.entries);
       continue;
     }
+    if (cmd.type === 'promote-learning') {
+      // 興学 — the lecturer endows the schools and holds 講學: every officer
+      // garrisoned in this city gains an XP burst, amplified by a 書院/太學
+      // (cityBB.xpMul). Turns a culture city into a talent forge.
+      if (!city.ownerForceId) continue;
+      const lectureBB = buildingBonuses(city.id, input.buildings ?? [], {
+        statecraft: forces[city.ownerForceId]?.statecraft ?? null,
+      });
+      const burst = Math.round((10 + officer.stats.intelligence * 0.4) * lectureBB.xpMul);
+      const pupils = Object.values(officers).filter(
+        (o) => o.locationCityId === city.id && o.forceId === city.ownerForceId,
+      );
+      for (const pupil of pupils) {
+        const taught = grantXp(officers[pupil.id] ?? pupil, burst, rng);
+        officers[pupil.id] = taught.officer;
+        entries.push(...taught.entries);
+      }
+      entries.push({
+        cityId: city.id,
+        kind: 'command-success',
+        text: `${officer.name.en} promoted learning at ${city.name.en}: ${pupils.length} officer(s) gained ${burst} XP each.`,
+        textZh: `${officer.name.zh}興学講學於${city.name.zh}：在城 ${pupils.length} 員各得 ${burst} 歷練。`,
+      });
+      bumpDeed(cmd.officerId, { civicWorks: 1 });
+      continue;
+    }
     const bonus = appointmentBonusFor(
       city.ownerForceId,
       input.appointments ?? [],
@@ -1144,7 +1170,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       recruitBonus: baseRecruitBonus + (cityBB.recruitMul - 1),
       troopCapMul: cityBB.troopCapMul,
     };
-    const result = resolveInternalAffairs(cmd.type, officer, city, rng, finalBonus);
+    const result = resolveInternalAffairs(cmd.type, officer, city, rng, finalBonus, input.weather?.kind);
     cities[city.id] = applyDelta(city, result.delta);
     entries.push({
       cityId: city.id,
@@ -2174,6 +2200,8 @@ function applyDelta(
     population: number;
     loyalty: number;
     food: number;
+    gold: number;
+    floodWorks: number;
     wallTier: 1 | 2 | 3;
   }>,
 ): City {
@@ -2189,6 +2217,8 @@ function applyDelta(
     population: Math.max(0, city.population + (delta.population ?? 0)),
     loyalty: clamp(city.loyalty + (delta.loyalty ?? 0), 0, 100),
     food: Math.max(0, city.food + (delta.food ?? 0)),
+    gold: Math.max(0, city.gold + (delta.gold ?? 0)),
+    floodWorks: delta.floodWorks ?? city.floodWorks,
     wallTier: delta.wallTier ?? city.wallTier,
   };
 }

@@ -36,6 +36,10 @@ export interface City {
   /** Razed to ruins (焦土) — population/production gutted until 重建. A ruined
    *  city flies no banner, builds nothing, and yields almost no income. */
   ruined?: boolean;
+  /** 治水之功 — flood works raised by the 治水 command (officer labour, as
+   *  opposed to the gold-built 堤防 levee). Stacks with the levee building level
+   *  toward the flood-immunity cap (3) in events.ts. Default/omitted = 0. */
+  floodWorks?: number;
   /** Terrain category — see TERRAIN_DEFS in cities.ts. */
   terrain?: import('../data/cities').Terrain;
   /** Has river/sea port — unlocks naval movement to other ports. */

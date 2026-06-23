@@ -15,6 +15,9 @@ export type InternalAffairsType =
   // ── Specialist actions ──
   | 'encourage-migration' // 招撫流民 — boost population
   | 'upgrade-wall'        // 城壁強化 — upgrade wallTier 1→2→3
+  | 'promote-learning'    // 興学 — XP burst to stationed officers (教化)
+  | 'anti-corruption'     // 巡查肅貪 — claw back graft → city gold + loyalty
+  | 'flood-control'       // 治水 — raise flood works (stacks with levee) + irrigation
   | 'garrison';           // 鎮守 — reclaim surrounding territory + boost defense
 
 export type CommandType = InternalAffairsType | 'march';

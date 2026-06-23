@@ -417,6 +417,9 @@ const INTERNAL_AFFAIRS_FAVORED: Record<InternalAffairsType, keyof OfficerStats> 
   'major-defense': 'politics',
   'encourage-migration': 'charisma',
   'upgrade-wall': 'politics',
+  'promote-learning': 'intelligence',
+  'anti-corruption': 'politics',
+  'flood-control': 'politics',
   garrison: 'leadership',
 };
 

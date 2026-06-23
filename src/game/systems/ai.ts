@@ -884,6 +884,13 @@ function decideCommand(
   // its grain and pays gold instead; a broke-but-fed city relieves on a slimmer
   // surplus rather than do nothing.
   if (city.loyalty < 40) {
+    // 巡查肅貪 — a wealthy city first roots out graft: it restores faith AND
+    // recovers gold (the richer the city, the more), so it pays for itself
+    // where 撫民 only spends. Politics-led.
+    if (city.commerce >= 60 && canAfford(city, 'anti-corruption')) {
+      const g = bestForCommand(officersHere, 'politics', 'anti-corruption', prefectId);
+      if (g) return internalDecision('anti-corruption', city, g);
+    }
     const reliefFood = Math.max(500, Math.round(city.population * 0.02));
     if (city.food >= reliefFood * 2 && city.food > city.troops) {
       const r = bestForCommand(officersHere, 'charisma', 'relief', prefectId);
@@ -1191,6 +1198,39 @@ function decideCommand(
   ) {
     const o = bestBy(officersHere, 'politics', prefectId);
     if (o) return internalDecision('upgrade-wall', city, o);
+  }
+
+  // 4.95 治水 — a calm rear city with spare gold raises hand-built flood works
+  // (toward the immunity cap) as cheap insurance against the summer floods. Self-
+  // limiting: the apply step stops adding once works hit 3, after which it only
+  // irrigates and we'd rather develop, so gate on works < 2.
+  if (
+    !onFront &&
+    (city.floodWorks ?? 0) < 2 &&
+    city.loyalty >= 50 &&
+    city.gold >= COMMAND_DEFS['flood-control'].goldCost * 2
+  ) {
+    const o = bestBy(officersHere, 'politics', prefectId);
+    if (o) return internalDecision('flood-control', city, o);
+  }
+
+  // 4.97 興学 — a prosperous, peaceful rear city with its economy already built
+  // out turns to growing TALENT: a 講學 XP burst to every officer stationed here.
+  // Gated on a maxed-out economy so it never crowds out development, and on ≥2
+  // pupils so the burst actually pays off. Intelligence-led.
+  {
+    const econCap = cityEconCap(city);
+    if (
+      !onFront &&
+      officersHere.length >= 2 &&
+      city.loyalty >= 55 &&
+      city.agriculture >= econCap * 0.85 &&
+      city.commerce >= econCap * 0.85 &&
+      canAfford(city, 'promote-learning')
+    ) {
+      const o = bestBy(officersHere, 'intelligence', prefectId);
+      if (o) return internalDecision('promote-learning', city, o);
+    }
   }
 
   // 5. Routine — front-line cities fortify, rear cities grow the economy.

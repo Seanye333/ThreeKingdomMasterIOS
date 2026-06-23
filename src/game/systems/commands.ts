@@ -9,6 +9,7 @@ import type {
 import { ITEMS_BY_ID } from '../data/items';
 import { cityStatCap, cityEconCap, citySize, CITY_SIZES, type CitySize } from './citySize';
 import { internalAffairsMultiplier } from './traitEffects';
+import type { WeatherKind } from './weather';
 
 export interface CommandDef {
   type: CommandType;
@@ -135,6 +136,30 @@ export const COMMAND_DEFS: Record<CommandType, CommandDef> = {
     description:
       '城壁強化 — Upgrade fortification tier (1→2→3). Tier 2 = inner wall +18% def; Tier 3 = citadel like 合肥/長安/洛陽 +40% def. Massive gold cost, can only be done at 城 tier+.',
   },
+  'promote-learning': {
+    type: 'promote-learning',
+    label: { en: 'Promote Learning', zh: '興学' },
+    stat: 'intelligence',
+    goldCost: 300,
+    description:
+      '興学 — Hold lectures and endow the schools. Grants an XP burst to every officer stationed in this city (amplified by a 書院/太學), and lifts public morale. Your stable of talent grows faster where learning is honoured.',
+  },
+  'anti-corruption': {
+    type: 'anti-corruption',
+    label: { en: 'Root Out Graft', zh: '巡查肅貪' },
+    stat: 'politics',
+    goldCost: 200,
+    description:
+      '巡查肅貪 — Audit the clerks and claw back embezzled funds. Recovers gold (scaling with the city’s commerce — the richer the city, the more graft) and restores public faith (loyalty), unaffected by the 撫民 near-cap taper.',
+  },
+  'flood-control': {
+    type: 'flood-control',
+    label: { en: 'Flood Control', zh: '治水' },
+    stat: 'politics',
+    goldCost: 400,
+    description:
+      '治水 — Dredge channels and raise dikes by hand. Builds flood works that stack with the 堤防 levee toward flood immunity (cap 3), and the irrigation lifts agriculture a little. The labour path to taming the rivers when you lack a levee.',
+  },
   garrison: {
     type: 'garrison',
     label: { en: 'Garrison', zh: '鎮守' },
@@ -163,6 +188,8 @@ export interface CommandResult {
     population: number;
     loyalty: number;
     food: number;
+    gold: number;
+    floodWorks: number;
     wallTier: 1 | 2 | 3;
   }>;
   message: string;
@@ -170,11 +197,12 @@ export interface CommandResult {
 }
 
 export function resolveInternalAffairs(
-  type: Exclude<InternalAffairsType, 'search' | 'garrison'>,
+  type: Exclude<InternalAffairsType, 'search' | 'garrison' | 'promote-learning'>,
   officer: Officer,
   city: City,
   rng: () => number,
   bonus?: { internalMultiplier?: number; recruitBonus?: number; troopCapMul?: number },
+  weather?: WeatherKind,
 ): CommandResult {
   const def = COMMAND_DEFS[type];
   // Trait multiplier (diligent +20%, lazy −20%, specialist +20% for matching
@@ -193,7 +221,7 @@ export function resolveInternalAffairs(
 
   switch (type) {
     case 'develop-agriculture': {
-      const mishap = civicMishap(city, statValue, rng);
+      const mishap = civicMishap(city, statValue, rng, weather);
       if (mishap !== null) {
         const setback = Math.max(-city.agriculture, mishap);
         return {
@@ -217,7 +245,7 @@ export function resolveInternalAffairs(
       };
     }
     case 'develop-commerce': {
-      const mishap = civicMishap(city, statValue, rng);
+      const mishap = civicMishap(city, statValue, rng, weather);
       if (mishap !== null) {
         const setback = Math.max(-city.commerce, mishap);
         return {
@@ -241,7 +269,7 @@ export function resolveInternalAffairs(
       };
     }
     case 'build-defense': {
-      const mishap = civicMishap(city, statValue, rng);
+      const mishap = civicMishap(city, statValue, rng, weather);
       if (mishap !== null) {
         const setback = Math.max(-city.defense, mishap);
         return {
@@ -320,12 +348,52 @@ export function resolveInternalAffairs(
           messageZh: `${officer.name.zh}:倉廩空虛,無糧可賑(需 ${foodNeeded} 糧)。`,
         };
       }
-      const gain = Math.min(100 - city.loyalty, developmentGain(statValue, rng) + 3);
+      // 旱年賑濟,民感尤深 — relief during a drought (when famine bites hardest)
+      // earns markedly more goodwill for the same grain.
+      const droughtMul = weather === 'drought' ? 1.5 : 1;
+      const gain = Math.min(100 - city.loyalty, Math.round((developmentGain(statValue, rng) + 3) * droughtMul));
+      const droughtNote = weather === 'drought' ? ' (旱年民感尤深)' : '';
       return {
         success: gain > 0,
         delta: { loyalty: gain, food: -foodNeeded },
-        message: `${officer.name.en} 賑濟: opened the granaries (−${foodNeeded} food), Loyalty +${gain} (now ${city.loyalty + gain}).`,
-        messageZh: `${officer.name.zh}賑濟:開倉放糧(糧 −${foodNeeded}),民忠 +${gain} (現 ${city.loyalty + gain})。`,
+        message: `${officer.name.en} 賑濟: opened the granaries (−${foodNeeded} food), Loyalty +${gain} (now ${city.loyalty + gain}).${droughtNote}`,
+        messageZh: `${officer.name.zh}賑濟:開倉放糧(糧 −${foodNeeded}),民忠 +${gain} (現 ${city.loyalty + gain})。${droughtNote}`,
+      };
+    }
+    case 'anti-corruption': {
+      // 巡查肅貪 — claw back embezzled funds (scales with how much wealth flows
+      // through the city → more graft to recover) and restore public faith. The
+      // loyalty win ignores the 撫民 taper, so it tops a rich city off; the gold
+      // recovered typically more than repays the 200 inspection cost.
+      const recovered = Math.floor(city.commerce * 2 + statValue * 3);
+      const loyaltyGain = Math.min(100 - city.loyalty, developmentGain(statValue, rng));
+      return {
+        success: true,
+        delta: { gold: recovered, loyalty: loyaltyGain },
+        message: `${officer.name.en} 巡查肅貪: clawed back ${recovered}g of graft, Loyalty +${loyaltyGain} (now ${city.loyalty + loyaltyGain}).`,
+        messageZh: `${officer.name.zh}巡查肅貪:追贓 ${recovered} 金,民心大快,民忠 +${loyaltyGain} (現 ${city.loyalty + loyaltyGain})。`,
+      };
+    }
+    case 'flood-control': {
+      // 治水 — raise flood works by hand. Stacks with the 堤防 levee toward the
+      // immunity cap (3, applied in events.ts); the irrigation also nudges
+      // agriculture. No-op once works are already maxed.
+      const cur = city.floodWorks ?? 0;
+      const irrigation = Math.min(econCap - city.agriculture, Math.floor(statValue / 25) + 1);
+      if (cur >= 3) {
+        return {
+          success: irrigation > 0,
+          delta: { agriculture: irrigation },
+          message: `${officer.name.en} 治水: works already at their peak; irrigation lifted Agriculture +${irrigation}.`,
+          messageZh: `${officer.name.zh}治水:堤工已固,水利惠農,農業 +${irrigation}。`,
+        };
+      }
+      const next = cur + 1;
+      return {
+        success: true,
+        delta: { floodWorks: next, agriculture: irrigation },
+        message: `${officer.name.en} 治水: flood works ${cur} → ${next} (cuts flood odds), Agriculture +${irrigation}.`,
+        messageZh: `${officer.name.zh}治水:堤工 ${cur} → ${next} 級(洪災機率降),水利惠農 +${irrigation}。`,
       };
     }
     case 'major-agriculture': {
@@ -431,10 +499,14 @@ function applyDevelopment(current: number, stat: number, rng: () => number, cap:
  * projects are assumed to be run with enough oversight to stay safe.
  * Returns a negative setback (−1..−3), or null for "no disaster".
  */
-function civicMishap(city: City, stat: number, rng: () => number): number | null {
+function civicMishap(city: City, stat: number, rng: () => number, weather?: WeatherKind): number | null {
+  // 旱 — drought parches the fields and dries the timber: blight/fire are more
+  // likely. Rain, by contrast, dampens fire risk slightly.
+  const weatherRisk = weather === 'drought' ? 0.06 : weather === 'rain' ? -0.01 : 0;
   const risk = 0.04
     + Math.max(0, 60 - city.loyalty) * 0.0016
-    - Math.max(0, stat - 70) * 0.0008;
+    - Math.max(0, stat - 70) * 0.0008
+    + weatherRisk;
   if (rng() >= Math.max(0.01, risk)) return null;
   return -(1 + Math.floor(rng() * 3));
 }

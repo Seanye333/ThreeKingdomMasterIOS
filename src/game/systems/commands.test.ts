@@ -112,6 +112,56 @@ describe('賑濟 — feed the people from the granary (food → loyalty)', () =>
   });
 });
 
+describe('天時 × 内政 — weather bends the outcome', () => {
+  it('賑濟 in a drought wins more goodwill for the same grain', () => {
+    const o = mkOfficer({ id: 'gov', stats: { charisma: 70 } });
+    const city = mkCity({ id: 'parched', population: 100000, food: 40000, loyalty: 50 });
+    const clear = resolveInternalAffairs('relief', o, city, () => 0.5, undefined, 'clear');
+    const drought = resolveInternalAffairs('relief', o, city, () => 0.5, undefined, 'drought');
+    expect(drought.delta!.loyalty!).toBeGreaterThan(clear.delta!.loyalty!);
+    expect(drought.delta!.food).toBe(clear.delta!.food); // same grain spent
+  });
+
+  it('drought raises 災異 risk — the same roll blights in a drought but is safe when clear', () => {
+    const o = mkOfficer({ id: 'gov', stats: { politics: 60 } });
+    const city = mkCity({ id: 'ye', agriculture: 60, loyalty: 80, population: 200000 });
+    // risk ≈ 0.04 clear vs 0.10 drought; a 0.07 first-draw lands between them.
+    const clear = resolveInternalAffairs('develop-agriculture', o, city, seq([0.07, 0.5, 0.9]), undefined, 'clear');
+    const drought = resolveInternalAffairs('develop-agriculture', o, city, seq([0.07, 0]), undefined, 'drought');
+    expect(clear.success).toBe(true);
+    expect(clear.delta!.agriculture!).toBeGreaterThan(0);
+    expect(drought.success).toBe(false);
+    expect(drought.delta!.agriculture!).toBeLessThan(0);
+  });
+});
+
+describe('巡查肅貪 — claw back graft (gold) + restore faith (loyalty)', () => {
+  it('recovers gold scaling with commerce and lifts loyalty', () => {
+    const o = mkOfficer({ id: 'gov', stats: { politics: 80 } });
+    const rich = resolveInternalAffairs('anti-corruption', o, mkCity({ id: 'rich', commerce: 150, loyalty: 70 }), () => 0.5);
+    const poor = resolveInternalAffairs('anti-corruption', o, mkCity({ id: 'poor', commerce: 30, loyalty: 70 }), () => 0.5);
+    expect(rich.success).toBe(true);
+    expect(rich.delta!.gold!).toBeGreaterThan(poor.delta!.gold!); // richer city → more graft
+    expect(rich.delta!.loyalty!).toBeGreaterThan(0);
+  });
+});
+
+describe('治水 — flood works (+ irrigation), capped at 3', () => {
+  it('raises flood works and nudges agriculture', () => {
+    const o = mkOfficer({ id: 'gov', stats: { politics: 60 } });
+    const res = resolveInternalAffairs('flood-control', o, mkCity({ id: 'riverside', agriculture: 60, population: 200000 }), () => 0.5);
+    expect(res.delta!.floodWorks).toBe(1);
+    expect(res.delta!.agriculture!).toBeGreaterThan(0);
+  });
+
+  it('once works are maxed it only irrigates', () => {
+    const o = mkOfficer({ id: 'gov', stats: { politics: 60 } });
+    const res = resolveInternalAffairs('flood-control', o, mkCity({ id: 'maxed', agriculture: 60, floodWorks: 3, population: 200000 }), () => 0.5);
+    expect(res.delta!.floodWorks).toBeUndefined();
+    expect(res.delta!.agriculture!).toBeGreaterThan(0);
+  });
+});
+
 describe('招撫流民 — diminishing pull and settling friction', () => {
   it('a crowded large city draws fewer refugees than a hamlet on the same roll', () => {
     const o = mkOfficer({ id: 'gov', stats: { charisma: 70 } });

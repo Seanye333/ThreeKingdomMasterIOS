@@ -79,7 +79,9 @@ export function rollEvents(input: EventsInput): EventsOutput {
     // Flood: summer only — the river takes grain and walls alike.
     // Levees cut the odds by a third per level; a L3 levee is immune.
     {
-      const levee = worksLevel(c.id, 'levee');
+      // 堤防 levee building + 治水 hand-built flood works both count toward the
+      // immunity cap (3): each "level" cuts the odds by a third.
+      const levee = Math.min(3, worksLevel(c.id, 'levee') + (c.floodWorks ?? 0));
       if (
         input.season === 'summer' &&
         levee < 3 &&

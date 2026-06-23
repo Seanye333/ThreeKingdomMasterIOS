@@ -26,6 +26,9 @@ const BASIC_ORDER: InternalAffairsType[] = [
   'recruit-troops',
   'improve-loyalty',
   'relief',
+  'anti-corruption',
+  'promote-learning',
+  'flood-control',
   'garrison',
   'search',
   'encourage-migration',
@@ -108,11 +111,17 @@ export function CommandMenu({ cityId }: Props) {
 
   const renderInternal = (type: InternalAffairsType) => {
     const def = COMMAND_DEFS[type];
-    const canAfford = city.gold >= def.goldCost;
     const tierOk = meetsMinSize(currentSize.id, def.minSize);
     if (!tierOk) return null; // tier-locked orders simply don't show
+    // 賑濟 spends FOOD, not gold — gate and label it on the granary so the menu
+    // doesn't advertise it as a free (0g) order or let it fire on empty stores.
+    const reliefFood = type === 'relief' ? Math.max(500, Math.round(city.population * 0.02)) : 0;
+    const canAfford = type === 'relief' ? city.food >= reliefFood : city.gold >= def.goldCost;
+    const costLabel = type === 'relief' ? `${reliefFood}${t('糧', ' food')}` : `${def.goldCost}g`;
     const minSizeDef = def.minSize ? CITY_SIZES_BY_ID[def.minSize] : null;
-    const reason = !canAfford ? t('金錢不足', 'Not enough gold') : desc(def);
+    const reason = !canAfford
+      ? (type === 'relief' ? t('存糧不足', 'Not enough food') : t('金錢不足', 'Not enough gold'))
+      : desc(def);
     return (
       <button
         key={type}
@@ -126,7 +135,7 @@ export function CommandMenu({ cityId }: Props) {
           {def.minSize && <span style={{ fontSize: '0.55rem', color: '#7a8893', marginLeft: 4 }}>★{lang === 'en' ? minSizeDef?.name.en : minSizeDef?.name.zh}+</span>}
         </span>
         {lang === 'both' && <span className={styles.cmdLabelEn}>{def.label.en}</span>}
-        <span className={styles.cmdCost}>{def.goldCost}g</span>
+        <span className={styles.cmdCost}>{costLabel}</span>
       </button>
     );
   };
