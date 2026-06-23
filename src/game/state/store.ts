@@ -50,7 +50,7 @@ import { provisionNeeded, convoyCapacity, planConvoy } from '../systems/convoy';
 import { citySize, citySizeRank, cityMeetsSize, reassignLostCapitals, LOST_CAPITAL_LOYALTY_PENALTY } from '../systems/citySize';
 import { buildingBonuses } from '../systems/buildings';
 import { BUILDING_CATEGORY, BUILDING_PREREQ, BUILDING_MIN_SIZE } from '../data/buildings';
-import { cityAffinity } from '../data/specialties';
+import { cityAffinity, CITY_SPECIALTY } from '../data/specialties';
 import { expeditionLegSeasons } from '../systems/expedition';
 import { getEmbassyTarget, embassyLegSeasons, realmTradeIncome } from '../systems/foreignRealm';
 import { FOREIGN_REALMS_BY_ID } from '../data/foreignRealms';
@@ -88,7 +88,7 @@ import { COMMAND_DEFS } from '../systems/commands';
 import { planMassMuster } from '../systems/muster';
 import { planGovernorCommand } from '../systems/governor';
 import { planLegionOrders, type Legion } from '../systems/legion';
-import { buyQuote, sellQuote } from '../systems/market';
+import { buyQuote, sellQuote, borderTariff, buyHorses, sellHorses, WARHORSE_CITY_CAP } from '../systems/market';
 import { EDICT_DISCOUNT, EMPEROR_HOME, MANDATE_PER_SEASON, RESENTMENT_PER_SEASON, canWelcomeEmperor, emperorCustodian } from '../systems/emperor';
 import { COMMONER_ARRIVAL_CHANCE, commonerArrivalCity, generateCommonerOfficer } from '../systems/commonerTalent';
 import { codexMarkRecruited, codexMarkRecruitedMany, codexMarkSeen, codexMarkSlain } from '../systems/codex';
@@ -338,11 +338,25 @@ interface GameStore extends GameState {
   welcomeEmperor: () => { ok: boolean; reason?: string };
   /** 市易 — convert gold↔food at the city's current market rate. */
   tradeFood: (cityId: EntityId, kind: 'buy' | 'sell', amount: number) => { ok: boolean; got: number };
+  /** 榷場 — cross-border grain trade with a neighbouring force you are at peace
+   *  with (allied / non-aggression). Priced by THEIR city's conditions so you can
+   *  arbitrage cross-border price gaps; a 榷場 tariff (eased by 市舶司) applies, and
+   *  the resources move between the two cities' treasuries. `kind` is from the
+   *  player's side: 'buy' = buy their grain for gold, 'sell' = sell them grain. */
+  borderTrade: (
+    myCityId: EntityId,
+    theirCityId: EntityId,
+    kind: 'buy' | 'sell',
+    amount: number,
+  ) => { ok: boolean; got: number; reason?: string };
+  /** 馬市 — convert gold↔戰馬 at the city's horse-market rate (cheap in
+   *  horse-country, dear elsewhere). `kind` is from the player's side. */
+  tradeHorses: (cityId: EntityId, kind: 'buy' | 'sell', amount: number) => { ok: boolean; got: number };
   /** 運糧/運金 — dispatch a supply convoy carrying grain and/or gold from one of
    *  your cities to another. It crawls the map over `seasons` and empties its
    *  cargo on arrival; adjacent hauls arrive in full, longer ones lose 12% on
    *  the road. Cargo is deducted from the source at dispatch. */
-  dispatchConvoy: (fromCityId: EntityId, toCityId: EntityId, food: number, gold: number, troops: number, officerId: EntityId, cautious?: boolean) => { ok: boolean; seasons: number; reason?: string };
+  dispatchConvoy: (fromCityId: EntityId, toCityId: EntityId, food: number, gold: number, troops: number, officerId: EntityId, cautious?: boolean, warhorses?: number) => { ok: boolean; seasons: number; reason?: string };
   /** 召回輜重 — turn a convoy around; its cargo returns to the origin city (lost
    *  if that city has since fallen). */
   recallConvoy: (id: EntityId) => void;
@@ -1512,19 +1526,81 @@ export const useGameStore = create<GameStore>()(
         const city = state.cities[cityId];
         if (!city || city.ownerForceId !== state.playerForceId || amount <= 0) return { ok: false, got: 0 };
         const season = state.date.season;
+        const mkt = { stability: buildingBonuses(cityId, state.buildings).priceStability };
         if (kind === 'buy') {
           if (city.gold < amount) return { ok: false, got: 0 };
-          const food = buyQuote(city, season, amount);
+          const food = buyQuote(city, season, amount, mkt);
           set({ cities: { ...state.cities, [cityId]: { ...city, gold: city.gold - amount, food: city.food + food } } });
           return { ok: true, got: food };
         }
         if (city.food < amount) return { ok: false, got: 0 };
-        const gold = sellQuote(city, season, amount);
+        const gold = sellQuote(city, season, amount, mkt);
         set({ cities: { ...state.cities, [cityId]: { ...city, food: city.food - amount, gold: city.gold + gold } } });
         return { ok: true, got: gold };
       },
 
-      dispatchConvoy: (fromCityId, toCityId, food, gold, troops = 0, officerId, cautious = false) => {
+      tradeHorses: (cityId, kind, amount) => {
+        const state = get();
+        const city = state.cities[cityId];
+        if (!city || city.ownerForceId !== state.playerForceId || amount <= 0) return { ok: false, got: 0 };
+        const producer = CITY_SPECIALTY[cityId] === 'horse';
+        const mkt = { stability: buildingBonuses(cityId, state.buildings).priceStability };
+        const held = city.warhorses ?? 0;
+        if (kind === 'buy') {
+          if (city.gold < amount) return { ok: false, got: 0 };
+          const horses = Math.min(buyHorses(city, producer, amount, mkt), WARHORSE_CITY_CAP - held);
+          if (horses <= 0) return { ok: false, got: 0 };
+          set({ cities: { ...state.cities, [cityId]: { ...city, gold: city.gold - amount, warhorses: held + horses } } });
+          return { ok: true, got: horses };
+        }
+        if (held < amount) return { ok: false, got: 0 };
+        const gold = sellHorses(city, producer, amount, mkt);
+        set({ cities: { ...state.cities, [cityId]: { ...city, warhorses: held - amount, gold: city.gold + gold } } });
+        return { ok: true, got: gold };
+      },
+
+      borderTrade: (myCityId, theirCityId, kind, amount) => {
+        const state = get();
+        const pid = state.playerForceId;
+        const mine = state.cities[myCityId];
+        const theirs = state.cities[theirCityId];
+        if (!pid || !mine || !theirs || amount <= 0) return { ok: false, got: 0 };
+        if (mine.ownerForceId !== pid) return { ok: false, got: 0, reason: '非我城' };
+        if (theirs.ownerForceId === pid || theirs.ownerForceId == null) return { ok: false, got: 0, reason: '無外邦' };
+        if (!mine.adjacentCityIds.includes(theirCityId)) return { ok: false, got: 0, reason: '不接壤' };
+        // Peace gate — 榷場 only opens to allies / non-aggression partners.
+        const rel = getRelation(state.diplomacy, pid, theirs.ownerForceId);
+        if (rel.status !== 'allied' && rel.status !== 'non-aggression') return { ok: false, got: 0, reason: '需通好' };
+        const season = state.date.season;
+        // Priced by THEIR market (their glut/scarcity) plus a border tariff that a
+        // developed 市舶司 (in my border city) whittles down.
+        const theirMkt = { stability: buildingBonuses(theirCityId, state.buildings).priceStability };
+        const tariff = borderTariff(buildingBonuses(myCityId, state.buildings).tradeMul);
+        if (kind === 'buy') {
+          // I buy their grain: I pay `amount` gold, they ship grain from their stores.
+          if (mine.gold < amount) return { ok: false, got: 0, reason: '府庫金不足' };
+          const food = Math.floor(buyQuote(theirs, season, amount, theirMkt) * (1 - tariff));
+          // The seller won't strip its own garrison bare.
+          const spareFood = Math.max(0, theirs.food - theirs.troops * 2);
+          if (food <= 0 || spareFood < food) return { ok: false, got: 0, reason: '對方無餘糧' };
+          set({ cities: { ...state.cities,
+            [myCityId]: { ...mine, gold: mine.gold - amount, food: mine.food + food },
+            [theirCityId]: { ...theirs, food: theirs.food - food, gold: theirs.gold + amount },
+          } });
+          return { ok: true, got: food };
+        }
+        // I sell them grain: I ship `amount` food, they pay gold from their treasury.
+        if (mine.food < amount) return { ok: false, got: 0, reason: '存糧不足' };
+        const gold = Math.floor(sellQuote(theirs, season, amount, theirMkt) * (1 - tariff));
+        if (gold <= 0 || theirs.gold < gold) return { ok: false, got: 0, reason: '對方金不足' };
+        set({ cities: { ...state.cities,
+          [myCityId]: { ...mine, food: mine.food - amount, gold: mine.gold + gold },
+          [theirCityId]: { ...theirs, gold: theirs.gold - gold, food: theirs.food + amount },
+        } });
+        return { ok: true, got: gold };
+      },
+
+      dispatchConvoy: (fromCityId, toCityId, food, gold, troops = 0, officerId, cautious = false, warhorses = 0) => {
         const state = get();
         const pid = state.playerForceId;
         if (!pid) return { ok: false, seasons: 0 };
@@ -1543,18 +1619,20 @@ export const useGameStore = create<GameStore>()(
         let shipGold = Math.min(Math.max(0, Math.floor(gold)), from.gold);
         // Keep a token garrison behind — never ship the city's last 100 men.
         let shipTroops = Math.min(Math.max(0, Math.floor(troops)), Math.max(0, from.troops - 100));
+        let shipHorses = Math.min(Math.max(0, Math.floor(warhorses)), from.warhorses ?? 0);
         // 載量 — clamp the total to what this officer can shepherd (scaling down
         // proportionally if the player asked for more than his 政治 allows).
         // 驛傳 — a supply depot in the dispatching city widens the convoy.
         const cap = Math.floor(convoyCapacity(officer) * buildingBonuses(fromCityId, state.buildings).convoyMul);
-        const total = shipFood + shipGold + shipTroops;
+        const total = shipFood + shipGold + shipTroops + shipHorses;
         if (total > cap && total > 0) {
           const scale = cap / total;
           shipFood = Math.floor(shipFood * scale);
           shipGold = Math.floor(shipGold * scale);
           shipTroops = Math.floor(shipTroops * scale);
+          shipHorses = Math.floor(shipHorses * scale);
         }
-        if (shipFood <= 0 && shipGold <= 0 && shipTroops <= 0) return { ok: false, seasons: 0 };
+        if (shipFood <= 0 && shipGold <= 0 && shipTroops <= 0 && shipHorses <= 0) return { ok: false, seasons: 0 };
         // 木牛流馬 — Zhuge Liang's logistics device (an officer skill). In a
         // force's service it speeds transport ~40% and halves road spoilage.
         const woodenOx = Object.values(state.officers).some(
@@ -1571,12 +1649,19 @@ export const useGameStore = create<GameStore>()(
         const arriveFood = Math.floor(shipFood * keep);
         const arriveGold = Math.floor(shipGold * keep);
         const arriveTroops = Math.floor(shipTroops * keep);
+        const arriveHorses = Math.floor(shipHorses * keep);
         const seasons = plan.seasons;
         const id = `convoy-${fromCityId}-${toCityId}-${state.date.year}-${state.date.season}-${Object.keys(state.convoys ?? {}).length}`;
         set({
           cities: {
             ...state.cities,
-            [fromCityId]: { ...from, food: from.food - shipFood, gold: from.gold - shipGold, troops: from.troops - shipTroops },
+            [fromCityId]: {
+              ...from,
+              food: from.food - shipFood,
+              gold: from.gold - shipGold,
+              troops: from.troops - shipTroops,
+              ...(shipHorses > 0 ? { warhorses: (from.warhorses ?? 0) - shipHorses } : {}),
+            },
           },
           // The escorting officer rides out with the column (off the rosters
           // until it arrives, where they reappear).
@@ -1590,13 +1675,14 @@ export const useGameStore = create<GameStore>()(
               id, forceId: pid, officerId,
               fromCityId, toCityId,
               food: arriveFood, gold: arriveGold, troops: arriveTroops,
+              ...(arriveHorses > 0 ? { warhorses: arriveHorses } : {}),
               seasonsRemaining: seasons, totalSeasons: seasons,
               ...(naval ? { naval: true } : {}),
               ...(cautious ? { cautious: true } : {}),
             },
           },
         });
-        const cargo = [arriveFood > 0 ? `糧 ${arriveFood.toLocaleString()}` : '', arriveGold > 0 ? `金 ${arriveGold.toLocaleString()}` : '', arriveTroops > 0 ? `兵 ${arriveTroops.toLocaleString()}` : ''].filter(Boolean).join('、');
+        const cargo = [arriveFood > 0 ? `糧 ${arriveFood.toLocaleString()}` : '', arriveGold > 0 ? `金 ${arriveGold.toLocaleString()}` : '', arriveTroops > 0 ? `兵 ${arriveTroops.toLocaleString()}` : '', arriveHorses > 0 ? `馬 ${arriveHorses.toLocaleString()}` : ''].filter(Boolean).join('、');
         get().notify(
           `輜重啟運 · ${from.name.zh} → ${to.name.zh}(${cargo},${seasons}季抵達)`,
           `Convoy dispatched · ${from.name.en} → ${to.name.en} (${seasons} seasons)`,

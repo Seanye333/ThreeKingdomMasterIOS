@@ -6,7 +6,9 @@ import type { EntityId, InternalAffairsType } from '../../game/types';
 import { MarchPicker } from './MarchPicker';
 import { TrainingPicker } from './TrainingPicker';
 import { cityHasAcademy, cityHasMentors } from '../../game/systems/training';
-import { foodRate } from '../../game/systems/market';
+import { buyQuote, sellQuote, marketOutlook } from '../../game/systems/market';
+import { buildingBonuses } from '../../game/systems/buildings';
+import { useMarketShock } from '../hooks/useMarketShock';
 import { OfficerPicker } from './OfficerPicker';
 import { Icon, type IconName } from './Icon';
 import styles from './CommandMenu.module.css';
@@ -435,10 +437,18 @@ function MarketPanel({ cityId, onClose }: { cityId: EntityId; onClose: () => voi
   const city = useGameStore((s) => s.cities[cityId]);
   const season = useGameStore((s) => s.date.season);
   const tradeFood = useGameStore((s) => s.tradeFood);
+  const buildings = useGameStore((s) => s.buildings);
   const t = useT();
   const [last, setLast] = useState<string | null>(null);
+  const shock = useMarketShock(cityId);
   if (!city) return null;
-  const rate = foodRate(city, season);
+  const mkt = { stability: buildingBonuses(cityId, buildings).priceStability };
+  const outlook = marketOutlook(city, season, mkt, shock);
+  const rate = outlook.spot;
+  const levelZh = outlook.level === 'cheap' ? '穀賤' : outlook.level === 'dear' ? '穀貴' : '平';
+  const levelEn = outlook.level === 'cheap' ? 'cheap' : outlook.level === 'dear' ? 'dear' : 'fair';
+  const nextZh = outlook.nextDir === 'cheaper' ? '↓賤' : outlook.nextDir === 'dearer' ? '↑貴' : '→平';
+  const nextEn = outlook.nextDir === 'cheaper' ? '↓' : outlook.nextDir === 'dearer' ? '↑' : '→';
   const buyLots = [200, 500, 1000];
   const sellLots = [2000, 5000, 10000];
   const row: React.CSSProperties = { display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' };
@@ -459,10 +469,15 @@ function MarketPanel({ cityId, onClose }: { cityId: EntityId; onClose: () => voi
         }}
       >
         <div style={{ color: '#e8c478', letterSpacing: '0.08rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="gold" size={15} color="#e8c478" />{t('市易', 'Grain Market')}</div>
-        <div style={{ fontSize: '0.72rem', color: '#7a8893', marginBottom: '0.7rem' }}>
-          {t(`時價:1金 ≈ ${rate.toFixed(1)}糧(市稅一成)· 庫:${city.gold}金 / ${city.food.toLocaleString()}糧`,
-             `Rate: 1g ≈ ${rate.toFixed(1)} food (10% spread) · ${city.gold}g / ${city.food.toLocaleString()} food`)}
+        <div style={{ fontSize: '0.72rem', color: '#7a8893', marginBottom: outlook.warnings.length ? '0.3rem' : '0.7rem' }}>
+          {t(`時價:1金 ≈ ${rate.toFixed(1)}糧 · ${levelZh} · 來季${nextZh} · 庫:${city.gold}金 / ${city.food.toLocaleString()}糧`,
+             `Rate: 1g ≈ ${rate.toFixed(1)} food · ${levelEn} · next ${nextEn} · ${city.gold}g / ${city.food.toLocaleString()} food`)}
         </div>
+        {outlook.warnings.length > 0 && (
+          <div style={{ fontSize: '0.7rem', color: '#e0a060', marginBottom: '0.6rem' }}>
+            {outlook.warnings.map((w, i) => <div key={i}>⚠ {t(w.zh, w.en)}</div>)}
+          </div>
+        )}
         <div style={{ fontSize: '0.78rem', color: '#aab6c0', marginBottom: 4 }}>{t('買糧', 'Buy food')}</div>
         <div style={row}>
           {buyLots.map((g) => (
@@ -471,7 +486,7 @@ function MarketPanel({ cityId, onClose }: { cityId: EntityId; onClose: () => voi
                 const r = tradeFood(cityId, 'buy', g);
                 setLast(r.ok ? t(`購入 ${r.got.toLocaleString()} 糧`, `Bought ${r.got.toLocaleString()} food`) : t('金錢不足', 'Not enough gold'));
               }}
-            >{g}金 → ~{Math.floor(g * rate * 0.9).toLocaleString()}糧</button>
+            >{g}金 → ~{buyQuote(city, season, g, mkt).toLocaleString()}糧</button>
           ))}
         </div>
         <div style={{ fontSize: '0.78rem', color: '#aab6c0', marginBottom: 4 }}>{t('賣糧', 'Sell food')}</div>
@@ -482,7 +497,7 @@ function MarketPanel({ cityId, onClose }: { cityId: EntityId; onClose: () => voi
                 const r = tradeFood(cityId, 'sell', f);
                 setLast(r.ok ? t(`售得 ${r.got.toLocaleString()} 金`, `Sold for ${r.got.toLocaleString()}g`) : t('存糧不足', 'Not enough food'));
               }}
-            >{f.toLocaleString()}糧 → ~{Math.floor((f / rate) * 0.9).toLocaleString()}金</button>
+            >{f.toLocaleString()}糧 → ~{sellQuote(city, season, f, mkt).toLocaleString()}金</button>
           ))}
         </div>
         {last && <div style={{ fontSize: '0.75rem', color: '#9ed68a', marginBottom: 6 }}>{last}</div>}

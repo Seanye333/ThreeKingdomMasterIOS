@@ -18,7 +18,11 @@ import { COMMAND_DEFS, meetsMinSize, previewCommandGain } from '../../game/syste
 import { commandFitMultiplier } from '../../game/systems/traitEffects';
 import { appointmentBonusFor } from '../../game/systems/appointmentEffects';
 import { tickCityEconomy } from '../../game/systems/economy';
-import { foodRate, buyQuote, sellQuote } from '../../game/systems/market';
+import { buyQuote, sellQuote, foodRate, marketOutlook, borderTariff, buyHorses, sellHorses } from '../../game/systems/market';
+import { buildingBonuses } from '../../game/systems/buildings';
+import { CITY_SPECIALTY } from '../../game/data/specialties';
+import { getRelation } from '../../game/types/diplomacy';
+import { useMarketShock } from '../hooks/useMarketShock';
 import type { WeatherKind } from '../../game/systems/weather';
 import type { InternalAffairsType, CommandType } from '../../game/types';
 import { OfficerPicker } from '../components/OfficerPicker';
@@ -3165,7 +3169,30 @@ function MarketTradeRow({ city, season, cityId, tradeFood, onTraded }: {
   tradeFood: (cityId: EntityId, kind: 'buy' | 'sell', amount: number) => { ok: boolean; got: number };
   onTraded: (msg: string) => void;
 }) {
-  const rate = foodRate(city, season);
+  const buildings = useGameStore((s) => s.buildings);
+  const allCities = useGameStore((s) => s.cities);
+  const forces = useGameStore((s) => s.forces);
+  const diplomacy = useGameStore((s) => s.diplomacy);
+  const playerForceId = useGameStore((s) => s.playerForceId);
+  const borderTrade = useGameStore((s) => s.borderTrade);
+  const tradeHorses = useGameStore((s) => s.tradeHorses);
+  const mkt = { stability: buildingBonuses(cityId, buildings).priceStability };
+  const shock = useMarketShock(cityId);
+  const outlook = marketOutlook(city, season, mkt, shock);
+  // 榷場 — adjacent foreign cities of forces we're at peace with.
+  const tariff = borderTariff(buildingBonuses(cityId, buildings).tradeMul);
+  const borderPartners = city.adjacentCityIds
+    .map((nid) => allCities[nid])
+    .filter((n) => !!n && n.ownerForceId != null && n.ownerForceId !== playerForceId
+      && (getRelation(diplomacy, playerForceId!, n.ownerForceId).status === 'allied'
+        || getRelation(diplomacy, playerForceId!, n.ownerForceId).status === 'non-aggression'));
+  const rate = outlook.spot;
+  const levelTag = outlook.level === 'cheap'
+    ? { t: '穀賤', c: '#9ac06a' }
+    : outlook.level === 'dear'
+      ? { t: '穀貴', c: '#e07a5a' }
+      : { t: '平', c: '#8a7858' };
+  const nextArrow = outlook.nextDir === 'cheaper' ? '↓賤' : outlook.nextDir === 'dearer' ? '↑貴' : '→平';
   const btn = (label: string, disabled: boolean, onClick: () => void, key: string) => (
     <button key={key} disabled={disabled} onClick={onClick} style={{
       background: disabled ? 'transparent' : '#2a1f14',
@@ -3179,11 +3206,18 @@ function MarketTradeRow({ city, season, cityId, tradeFood, onTraded }: {
     <div style={{ marginTop: 8, borderTop: '1px solid #3a2d20', paddingTop: 6, fontSize: '0.72rem', color: '#c0a878' }}>
       <div style={{ marginBottom: 5 }}>
         <span style={{ color: '#8a7858' }}>市易</span> 糧價 <strong style={{ color: '#d4a84a' }}>{rate.toFixed(1)}</strong> 糧/金
+        <span style={{ marginLeft: 6, color: levelTag.c }}>{levelTag.t}</span>
+        <span style={{ marginLeft: 6, color: '#8a7050' }}>來季 {nextArrow}</span>
         <span style={{ marginLeft: 8, color: '#8a7050' }}>庫 金{city.gold.toLocaleString()} · 糧{city.food.toLocaleString()}</span>
       </div>
+      {outlook.warnings.length > 0 && (
+        <div style={{ marginBottom: 5, color: '#e0a060', fontSize: '0.68rem' }}>
+          {outlook.warnings.map((w, i) => <div key={i}>⚠ {w.zh}</div>)}
+        </div>
+      )}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center' }}>
         <span style={{ color: '#9ac06a', marginRight: 2 }}>買糧</span>
-        {[500, 2000].map((g) => btn(`${g}金→${buyQuote(city, season, g).toLocaleString()}糧`, city.gold < g, () => {
+        {[500, 2000].map((g) => btn(`${g}金→${buyQuote(city, season, g, mkt).toLocaleString()}糧`, city.gold < g, () => {
           const r = tradeFood(cityId, 'buy', g);
           if (r.ok) playSfx('coin');
           onTraded(r.ok ? `市易:${g} 金易得 ${r.got.toLocaleString()} 糧。` : '府庫金不足。');
@@ -3191,12 +3225,73 @@ function MarketTradeRow({ city, season, cityId, tradeFood, onTraded }: {
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center', marginTop: 4 }}>
         <span style={{ color: '#e0c060', marginRight: 2 }}>賣糧</span>
-        {[1000, 5000].map((f) => btn(`${f.toLocaleString()}糧→${sellQuote(city, season, f).toLocaleString()}金`, city.food < f, () => {
+        {[1000, 5000].map((f) => btn(`${f.toLocaleString()}糧→${sellQuote(city, season, f, mkt).toLocaleString()}金`, city.food < f, () => {
           const r = tradeFood(cityId, 'sell', f);
           if (r.ok) playSfx('coin');
           onTraded(r.ok ? `市易:${f.toLocaleString()} 糧易得 ${r.got.toLocaleString()} 金。` : '存糧不足。');
         }, `s${f}`))}
       </div>
+      {(() => {
+        const producer = CITY_SPECIALTY[cityId] === 'horse';
+        const held = city.warhorses ?? 0;
+        // Show the 馬市 wherever horses are bred (producer) or already stabled.
+        if (!producer && held <= 0) return null;
+        const buyGold = 1000, sellH = 500;
+        const buyGet = buyHorses(city, producer, buyGold, mkt);
+        const sellGet = sellHorses(city, producer, sellH, mkt);
+        return (
+          <div style={{ marginTop: 7, borderTop: '1px dashed #3a2d20', paddingTop: 6 }}>
+            <div style={{ color: '#c8a258', marginBottom: 4 }}>
+              馬市 <span style={{ color: '#7a6a4a', fontSize: '0.66rem' }}>· 戰馬 {held.toLocaleString()} {producer ? '· 產馬之地(價賤)' : '· 非產地(價貴)'}</span>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center' }}>
+              {btn(`糴 ${buyGold}金→${buyGet.toLocaleString()}馬`, city.gold < buyGold || buyGet <= 0, () => {
+                const r = tradeHorses(cityId, 'buy', buyGold);
+                if (r.ok) playSfx('coin');
+                onTraded(r.ok ? `馬市:${buyGold} 金購得 ${r.got.toLocaleString()} 戰馬。` : '無法購馬。');
+              }, 'hb')}
+              {btn(`糶 ${sellH}馬→${sellGet.toLocaleString()}金`, held < sellH || sellGet <= 0, () => {
+                const r = tradeHorses(cityId, 'sell', sellH);
+                if (r.ok) playSfx('coin');
+                onTraded(r.ok ? `馬市:${sellH} 戰馬售得 ${r.got.toLocaleString()} 金。` : '戰馬不足。');
+              }, 'hs')}
+              <span style={{ color: '#7a6a4a', fontSize: '0.64rem' }}>馬充軍備,提升募兵上限</span>
+            </div>
+          </div>
+        );
+      })()}
+      {borderPartners.length > 0 && (
+        <div style={{ marginTop: 7, borderTop: '1px dashed #3a2d20', paddingTop: 6 }}>
+          <div style={{ color: '#c8a258', marginBottom: 4 }}>榷場 <span style={{ color: '#7a6a4a', fontSize: '0.66rem' }}>· 與通好鄰邦互市(關稅 {(tariff * 100).toFixed(0)}%)</span></div>
+          {borderPartners.map((n) => {
+            const nMkt = { stability: buildingBonuses(n.id, buildings).priceStability };
+            const nRate = foodRate(n, season, nMkt);
+            const fname = forces[n.ownerForceId!]?.name?.zh ?? '鄰邦';
+            const buyGold = 1000, sellFood = 2000;
+            const buyGet = Math.floor(buyQuote(n, season, buyGold, nMkt) * (1 - tariff));
+            const sellGet = Math.floor(sellQuote(n, season, sellFood, nMkt) * (1 - tariff));
+            return (
+              <div key={n.id} style={{ marginBottom: 4 }}>
+                <div style={{ color: '#a89878', fontSize: '0.68rem', marginBottom: 2 }}>
+                  {fname}·{n.name.zh} <span style={{ color: nRate > 11 ? '#9ac06a' : nRate < 9 ? '#e07a5a' : '#8a7858' }}>糧價 {nRate.toFixed(1)}</span>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                  {btn(`糴 ${buyGold}金→${buyGet.toLocaleString()}糧`, city.gold < buyGold || buyGet <= 0, () => {
+                    const r = borderTrade(cityId, n.id, 'buy', buyGold);
+                    if (r.ok) playSfx('coin');
+                    onTraded(r.ok ? `榷場:${buyGold} 金糴得 ${r.got.toLocaleString()} 糧。` : `榷場交易未成(${r.reason ?? '失敗'})。`);
+                  }, `qb${n.id}`)}
+                  {btn(`糶 ${sellFood.toLocaleString()}糧→${sellGet.toLocaleString()}金`, city.food < sellFood || sellGet <= 0, () => {
+                    const r = borderTrade(cityId, n.id, 'sell', sellFood);
+                    if (r.ok) playSfx('coin');
+                    onTraded(r.ok ? `榷場:${sellFood.toLocaleString()} 糧糶得 ${r.got.toLocaleString()} 金。` : `榷場交易未成(${r.reason ?? '失敗'})。`);
+                  }, `qs${n.id}`)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

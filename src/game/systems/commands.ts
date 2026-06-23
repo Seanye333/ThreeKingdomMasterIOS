@@ -348,7 +348,8 @@ export function resolveInternalAffairs(
       const max = Math.floor(statValue * 50) + 800;
       // City size also limits the per-action max so a Hamlet can't recruit huge armies.
       // 兵營/馬廄/武庫/糧倉署/驛站 raise the per-season ceiling (troopCapMul).
-      const sizeMax = Math.floor((size.troopCap * (bonus?.troopCapMul ?? 1)) / 8);
+      // 馬政 — a standing warhorse herd lets a frontier muster cavalry beyond its size.
+      const sizeMax = Math.floor((size.troopCap * (bonus?.troopCapMul ?? 1)) / 8) + Math.floor(city.warhorses ?? 0);
       const fromPop = Math.min(max, sizeMax, Math.floor(city.population / 60));
       // Each soldier costs ~1.4 civilians — keeps the (unchanged) population from
       // being gutted as armies grow larger, so big garrisons are sustainable.
@@ -694,7 +695,7 @@ export function previewCommandGain(
     case 'recruit-troops': {
       const size = citySize(city);
       const max = Math.floor(statValue * 50) + 800;
-      const sizeMax = Math.floor((size.troopCap * (bonus?.troopCapMul ?? 1)) / 8);
+      const sizeMax = Math.floor((size.troopCap * (bonus?.troopCapMul ?? 1)) / 8) + Math.floor(city.warhorses ?? 0);
       return { zh: '兵', en: 'Troops', delta: Math.max(0, Math.min(max, sizeMax, Math.floor(city.population / 60))) };
     }
     default:

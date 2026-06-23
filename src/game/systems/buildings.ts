@@ -103,6 +103,9 @@ export function buildingBonuses(
   navalPower: number;
   /** Additive bonus to espionage ops launched from this city (scout camp). */
   espionagePower: number;
+  /** 0..0.6 — 常平倉/平準署 平糴平糶: flattens grain-price swings, tightens the
+   *  市易 spread, and blunts large-order slippage (see market.ts MarketContext). */
+  priceStability: number;
 } {
   const inCity = buildings.filter((b) => b.cityId === cityId);
   // 建築群方略 — count built (level≥1) buildings per category so a cluster of
@@ -140,6 +143,7 @@ export function buildingBonuses(
   let diploRelMul = 0;
   let navalPower = 0;
   let espionagePower = 0;
+  let priceStability = 0;
   const affinity = cityAffinity(cityId);          // 地利 — specialty-favoured category
   const school = opts?.statecraft;                 // 理念 — realm's school of statecraft
   for (const b of inCity) {
@@ -212,6 +216,7 @@ export function buildingBonuses(
       case 'evernormal':
         agricultureMul *= 1 + 0.1 * l;
         commerceMul *= 1 + 0.05 * l;
+        priceStability += 0.12 * l; // 平糴平糶 — the granary that stabilises grain prices
         break;
       case 'drillground':
         recruitMul *= 1 + 0.06 * l;
@@ -292,6 +297,7 @@ export function buildingBonuses(
       case 'pricebureau':
         inflationRelief += 2 * l;
         commerceMul *= 1 + 0.03 * l;
+        priceStability += 0.08 * l; // 平準 — levels market prices alongside easing inflation
         break;
       case 'heraldhall':
         diploRelMul += 0.15 * l;
@@ -335,6 +341,7 @@ export function buildingBonuses(
     diploRelMul,
     navalPower,
     espionagePower,
+    priceStability: Math.min(0.6, priceStability),
   };
 }
 

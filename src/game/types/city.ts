@@ -59,6 +59,13 @@ export interface City {
   /** Has river/sea port — unlocks naval movement to other ports. */
   port?: boolean;
   /**
+   * 戰馬 — warhorses stabled here. Bred each season by horse-country cities
+   * (涼州/幽州/并州, the `horse` specialty), scaled by 馬廄/牧苑. A strategic good:
+   * traded at the 馬市 (cheap where bred, dear elsewhere — see market.ts), and the
+   * standing herd raises the city's cavalry recruit ceiling. Default/omitted = 0.
+   */
+  warhorses?: number;
+  /**
    * 異域義從 — foreign auxiliaries (象兵/突騎/汗血騎) stationed here by 遠使
    * embassies. Counted within `troops` for raw strength, but ALSO grant a
    * defence-power bonus (elite quality on top of quantity) — see

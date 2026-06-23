@@ -17,7 +17,8 @@ import { getRelation, isHostilePermitted, pairKey } from '../types';
 import type { Difficulty } from '../state/gameState';
 import { OATH_BONDS, type OathBond } from '../data/bonds';
 import { COMMAND_DEFS, meetsMinSize } from './commands';
-import { buyQuote, sellQuote } from './market';
+import { buyQuote, sellQuote, sellHorses } from './market';
+import { CITY_SPECIALTY } from '../data/specialties';
 import { citySize, cityCarryingCapacity, cityEconCap, cityStatCap } from './citySize';
 import { marchDurationFor } from '../data/cities';
 import { isLand, terrainMarchCost, WORLD_SCALE } from '../data/geography';
@@ -282,6 +283,16 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
             const gold = sellQuote(city, season, surplus);
             if (gold > 0) cities[city.id] = { ...city, gold: city.gold + gold, food: city.food - surplus };
           }
+        }
+        // 馬市 — a horse-country city with a fat herd and a thin purse sells the
+        // surplus for coin (and keeps the warhorse market liquid for the player).
+        const c2 = cities[city.id];
+        const horses = c2.warhorses ?? 0;
+        if (horses > 1500 && c2.gold < 1200) {
+          const producer = CITY_SPECIALTY[city.id] === 'horse';
+          const surplusH = horses - 1000;
+          const gold = sellHorses(c2, producer, surplusH);
+          if (gold > 0) cities[city.id] = { ...c2, gold: c2.gold + gold, warhorses: horses - surplusH };
         }
       }
     }

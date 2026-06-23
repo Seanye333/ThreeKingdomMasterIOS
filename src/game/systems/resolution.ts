@@ -26,6 +26,7 @@ import { officerGrade, gradeRank, officerLevel } from './officerGrade';
 import { handleMarch } from './combat';
 import { tickDiplomacy, applyCoalitionPressure } from './diplomacy';
 import { tickCityEconomy, tradeTreatyGrants } from './economy';
+import { WARHORSE_CITY_CAP } from './market';
 import { buildingBonuses } from './buildings';
 import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
 import { corruptionAccrualMultiplier } from './traitEffects';
@@ -1346,6 +1347,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       corruption: city.ownerForceId ? nextCorruption : city.corruption,
       drill: nextDrill,
       population: Math.max(1000, city.population + tick.populationDelta),
+      warhorses: tick.warhorseBreed > 0
+        ? Math.min(WARHORSE_CITY_CAP, (city.warhorses ?? 0) + tick.warhorseBreed)
+        : city.warhorses,
     };
     cities[city.id] = updated;
     // 貪腐告警 — warn the player when graft crosses a threshold upward in one of

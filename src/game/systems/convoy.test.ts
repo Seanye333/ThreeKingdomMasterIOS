@@ -35,6 +35,17 @@ describe('輜重 — convoy stepping', () => {
     expect(r.arrivals).toHaveLength(1);
   });
 
+  it('delivers warhorses on arrival, capped at the city herd ceiling', () => {
+    const convoys = { cv1: mkConvoy({ seasonsRemaining: 1, food: 0, gold: 0, warhorses: 1500 }) };
+    const cities = { a: mkCity('a'), b: mkCity('b', { warhorses: 200 }) };
+    const r = stepConvoys(convoys, cities);
+    expect(r.cities.b.warhorses).toBe(1700); // 200 + 1500
+    // A delivery that would overflow the 6000 cap is clamped.
+    const big = { cv1: mkConvoy({ seasonsRemaining: 1, food: 0, gold: 0, warhorses: 5000 }) };
+    const r2 = stepConvoys(big, { a: mkCity('a'), b: mkCity('b', { warhorses: 5500 }) });
+    expect(r2.cities.b.warhorses).toBe(6000); // clamped, not 10500
+  });
+
   it('forfeits the cargo if the destination is no longer the force’s', () => {
     const convoys = { cv1: mkConvoy({ seasonsRemaining: 1 }) };
     const cities = { a: mkCity('a'), b: mkCity('b', { ownerForceId: 'enemy', food: 5000 }) };

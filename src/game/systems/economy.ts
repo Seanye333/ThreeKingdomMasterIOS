@@ -6,7 +6,7 @@ import { buildingBonuses } from './buildings';
 import { citySize, populationDelta } from './citySize';
 import { aggregateSlotEffects } from '../data/defenseBuildings';
 import { effectivePrestigeEffects } from '../data/prestige';
-import { specialtyEconomy } from '../data/specialties';
+import { specialtyEconomy, CITY_SPECIALTY } from '../data/specialties';
 import { officerGrade, gradeRank } from './officerGrade';
 import { buildSpecialtyTradeRoutes } from './tradeRoutes';
 import { appointmentBonusFor, totalStipendForForce } from './appointmentEffects';
@@ -58,6 +58,8 @@ export interface CityEconomyTick {
   populationDelta: number;
   /** Brief badges to surface to the UI / report ("屯田 +25% 糧"). */
   policyBadges: string[];
+  /** 馬政 — warhorses bred this season (horse-country cities only; 0 elsewhere). */
+  warhorseBreed: number;
 }
 
 /**
@@ -137,11 +139,19 @@ export function tickCityEconomy(
   // A drought stokes famine fear — the populace grows restive whatever the season.
   const droughtLoyalty = weatherKind === 'drought' ? -2 : 0;
 
+  // 馬政 — horse-country cities breed warhorses each season; 馬廄/牧苑 (recruitMul)
+  // and a settled populace swell the herd. Only owned, non-ruined horse-lands breed.
+  let warhorseBreed = 0;
+  if (city.ownerForceId && !city.ruined && CITY_SPECIALTY[city.id] === 'horse') {
+    warhorseBreed = Math.round(40 * bb.recruitMul * (0.6 + city.loyalty / 200));
+  }
+
   return {
     goldIncome, foodIncome, foodUpkeep, desertion,
     loyaltyDelta: eff.loyaltyDelta + taxEff.loyalty + droughtLoyalty + bb.loyaltyPerSeason,
     populationDelta: popDelta,
     policyBadges: taxEff.loyalty !== 0 ? [...eff.badges, taxEff.zh] : eff.badges,
+    warhorseBreed,
   };
 }
 

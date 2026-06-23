@@ -1,5 +1,6 @@
 import type { City, EntityId, Officer } from '../types';
 import { FOOD_PER_TROOP_PER_SEASON } from './economy';
+import { WARHORSE_CITY_CAP } from './market';
 
 /* ─── 押運武将 — a convoy is run by an officer, and his measure decides how
    much it can haul and how fast. 政治 (administration) sets the load a column
@@ -85,6 +86,8 @@ export interface Convoy {
   gold: number;
   /** 援兵 — soldiers ferried to reinforce the destination's garrison. */
   troops: number;
+  /** 戰馬 — warhorses shipped from horse-country to stable at the destination. */
+  warhorses?: number;
   seasonsRemaining: number;
   totalSeasons: number;
   /** 漕運 — shipped by sea/river between linked ports: faster, less spoilage,
@@ -124,9 +127,16 @@ export function stepConvoys(
     }
     const dest = nextCities[c.toCityId];
     if (dest && dest.ownerForceId === c.forceId) {
+      const horses = c.warhorses ?? 0;
       nextCities = {
         ...nextCities,
-        [c.toCityId]: { ...dest, food: dest.food + c.food, gold: dest.gold + c.gold, troops: dest.troops + c.troops },
+        [c.toCityId]: {
+          ...dest,
+          food: dest.food + c.food,
+          gold: dest.gold + c.gold,
+          troops: dest.troops + c.troops,
+          ...(horses > 0 ? { warhorses: Math.min(WARHORSE_CITY_CAP, (dest.warhorses ?? 0) + horses) } : {}),
+        },
       };
       arrivals.push({ convoy: c, toName: dest.name.zh });
     } else {
