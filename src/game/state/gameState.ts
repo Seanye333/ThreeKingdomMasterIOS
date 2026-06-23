@@ -279,6 +279,11 @@ export interface GameState {
   /** 募捐冷卻 — absolute season index (year×4 + seasonOrder) of the last 劝募
    *  appeal. Donations may only be solicited once a year (4 seasons). */
   lastDonationAt?: number;
+  /** 富商借餉 — an outstanding merchant war-loan: `owed` is the gold still to
+   *  repay (principal + baked-in interest), `perSeason` the fixed amount auto-
+   *  drawn from the capital each season until cleared. null/absent = no debt;
+   *  a new loan can't be taken while one is outstanding. */
+  merchantLoan?: { owed: number; perSeason: number } | null;
   /** 輜重 — supply convoys (運糧/運金車) crawling between your cities. */
   convoys: Record<EntityId, import('../systems/convoy').Convoy>;
   /** 游历 — lone officers roaming abroad (探索/出使/策反/刺探), in transit. */
@@ -898,6 +903,7 @@ export function loadScenario(
     grudges: state.grudges ?? {},
     tradePartners: state.tradePartners ?? [],
     inflation: state.startInflation ?? 0,
+    merchantLoan: null,
     convoys: state.convoys ?? {},
     expeditions: state.expeditions ?? {},
     openedRealms: state.openedRealms ?? {},

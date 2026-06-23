@@ -393,6 +393,10 @@ interface GameStore extends GameState {
   /** 劝募/募捐 — appeal to the people for an immediate gold windfall (scaled by
    *  realm size & loyalty) at the cost of 民忠. Once a year (4 seasons). */
   solicitDonations: () => { ok: boolean; gold: number; message?: string };
+  /** 富商借餉 — borrow a war-chest from the realm's merchants: a large lump of
+   *  gold now, auto-repaid (principal + ~25% interest) over 8 seasons from the
+   *  capital. No new loan while one is outstanding. */
+  borrowWarFunds: () => { ok: boolean; gold: number; owed?: number; message?: string };
   /** 委任太守 — set (or clear with null) a city's standing governor. */
   delegateCity: (cityId: EntityId, officerId: EntityId | null) => void;
   /** 軍團都督 — form a legion (id auto-assigned). */
@@ -4236,9 +4240,28 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // 富商借餉償還 — each season-end, a fixed instalment is drawn from the
+        // capital toward any outstanding war-loan (interest is baked into `owed`).
+        // A capital too poor to cover the instalment pays what it can and takes a
+        // small 民忠 ding (信用受損); the balance simply rolls to next season.
+        let nextMerchantLoan = state.merchantLoan ?? null;
+        if (seasonBoundary && nextMerchantLoan && nextMerchantLoan.owed > 0 && state.playerForceId) {
+          const capId = state.forces[state.playerForceId]?.capitalCityId;
+          const cap = capId ? postCities[capId] : null;
+          if (cap) {
+            const due = Math.min(nextMerchantLoan.perSeason, nextMerchantLoan.owed);
+            const paid = Math.min(due, cap.gold);
+            const short = due - paid;
+            postCities = { ...postCities, [capId]: { ...cap, gold: cap.gold - paid, loyalty: short > 0 ? Math.max(0, cap.loyalty - 1) : cap.loyalty } };
+            const owedLeft = nextMerchantLoan.owed - paid;
+            nextMerchantLoan = owedLeft > 0 ? { ...nextMerchantLoan, owed: owedLeft } : null;
+          }
+        }
+
         set({
           date: result.date,
           cities: postCities,
+          merchantLoan: nextMerchantLoan,
           popupQueue: [...state.popupQueue, ...sizePopups, ...wallPopups, ...buildPopups],
           officers: officersWithMarchTask,
           marriageAlliances: allianceTick.alliances,
@@ -4956,6 +4979,34 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           `Donations raised ${windfall.toLocaleString()} gold (loyalty −${DONATION_LOYALTY_COST}/city)`,
         );
         return { ok: true, gold: windfall };
+      },
+
+      borrowWarFunds: () => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, gold: 0, message: 'No player force.' };
+        if (state.merchantLoan && state.merchantLoan.owed > 0) {
+          return { ok: false, gold: 0, message: `舊債未清(尚欠 ${state.merchantLoan.owed.toLocaleString()} 金),富商不肯再借。` };
+        }
+        const mine = Object.values(state.cities).filter((c) => c.ownerForceId === state.playerForceId);
+        if (mine.length === 0) return { ok: false, gold: 0, message: 'No cities.' };
+        const force = state.forces[state.playerForceId];
+        const capital = force ? state.cities[force.capitalCityId] : null;
+        if (!capital) return { ok: false, gold: 0, message: 'No capital.' };
+        // Principal scales with the realm's commercial weight (richer merchants
+        // lend more), clamped to a sane band; interest baked in at ~25%, repaid
+        // over 8 seasons (2 years).
+        const principal = Math.max(2000, Math.min(25000, Math.floor(mine.reduce((s, c) => s + c.commerce * 18 + c.population / 2500, 0))));
+        const owed = Math.round(principal * 1.25);
+        const perSeason = Math.ceil(owed / 8);
+        set({
+          cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold + principal } },
+          merchantLoan: { owed, perSeason },
+        });
+        get().notify(
+          `富商借餉 · ${capital.name.zh} 入金 ${principal.toLocaleString()}(分 8 季償 ${owed.toLocaleString()},每季 ${perSeason.toLocaleString()})`,
+          `War-loan of ${principal.toLocaleString()} gold (repay ${owed.toLocaleString()} over 8 seasons, ${perSeason.toLocaleString()}/season)`,
+        );
+        return { ok: true, gold: principal, owed };
       },
 
       breakAlliance: (targetForceId) => {

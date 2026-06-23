@@ -28,6 +28,8 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
   const inflation = useGameStore((s) => s.inflation ?? 0);
   const mintCoin = useGameStore((s) => s.mintCoin);
   const solicitDonations = useGameStore((s) => s.solicitDonations);
+  const borrowWarFunds = useGameStore((s) => s.borrowWarFunds);
+  const merchantLoan = useGameStore((s) => s.merchantLoan ?? null);
   const refugees = useGameStore((s) => s.refugees ?? 0);
   const weather = useGameStore((s) => s.weather);
   const diplomacy = useGameStore((s) => s.diplomacy);
@@ -195,6 +197,24 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
                 fontFamily: 'inherit', fontSize: '0.8rem',
               }}
             ><Icon name="city" size={13} /> {donateWait > 0 ? t(`勸募(待 ${donateWait} 季)`, `Donate (${donateWait}q)`) : t('勸募', 'Donate')}</button>
+            <button
+              onClick={() => { const r = borrowWarFunds(); if (r.ok) playSfx('coin'); }}
+              disabled={!!merchantLoan && merchantLoan.owed > 0}
+              title={t('富商借餉 — 即入一大筆金,分 8 季自首都償還(本+息約 25%);債未清不可再借', 'War-loan — a large lump of gold now, auto-repaid from the capital over 8 seasons (~25% interest); no new loan until repaid')}
+              style={{
+                background: merchantLoan && merchantLoan.owed > 0 ? 'transparent' : 'rgba(124,170,214,0.14)',
+                border: `1px solid ${merchantLoan && merchantLoan.owed > 0 ? '#2b3845' : '#7ea8d6'}`,
+                color: merchantLoan && merchantLoan.owed > 0 ? '#5f6c76' : '#9abce0',
+                padding: '0.25rem 0.7rem', borderRadius: 4, cursor: merchantLoan && merchantLoan.owed > 0 ? 'default' : 'pointer',
+                fontFamily: 'inherit', fontSize: '0.8rem',
+              }}
+            ><Icon name="gold" size={13} /> {t('借餉', 'War-loan')}</button>
+            {merchantLoan && merchantLoan.owed > 0 && (
+              <span style={{ fontSize: '0.74rem', color: '#e0a070' }}>
+                {t(`欠餉 ${merchantLoan.owed.toLocaleString()}`, `Owed ${merchantLoan.owed.toLocaleString()}`)}
+                <span style={{ color: '#7a8893' }}> · {t(`每季 −${merchantLoan.perSeason.toLocaleString()}`, `−${merchantLoan.perSeason.toLocaleString()}/q`)}</span>
+              </span>
+            )}
             <span style={{ fontSize: '0.74rem', color: inflation >= 60 ? '#e0707a' : inflation >= 25 ? '#e0a070' : '#7a8893' }}>
               {t('通脹', 'Inflation')} <strong>{inflation}</strong>
               {inflation > 0 && <span style={{ color: '#7a8893' }}> · {t(`稅入 −${Math.round(inflation / 2.5)}%`, `−${Math.round(inflation / 2.5)}% tax`)}</span>}
