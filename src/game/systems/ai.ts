@@ -340,6 +340,60 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
     }
   }
 
+  // ── 榷場(買方)— a starving AI city with coin actively buys grain from a
+  //    peace-partner that has spare (the cases the seller-relief pass didn't
+  //    proactively cover). The AI now both offers AND seeks cross-border grain.
+  {
+    const season = input.date.season;
+    for (const buyer of Object.values(cities)) {
+      const bid = buyer.ownerForceId;
+      if (!bid || bid === input.playerForceId) continue;
+      const bNow = cities[buyer.id];
+      if (bNow.food >= bNow.troops * 1.5 || bNow.gold < 300) continue; // not desperate, or broke
+      for (const nid of bNow.adjacentCityIds) {
+        const seller = cities[nid];
+        if (!seller || !seller.ownerForceId || seller.ownerForceId === bid || seller.ownerForceId === input.playerForceId) continue;
+        const rel = getRelation(diplomacy, bid, seller.ownerForceId);
+        if (rel.status !== 'allied' && rel.status !== 'non-aggression') continue;
+        const spare = seller.food - seller.troops * 3;
+        if (spare < 300) continue;
+        const tariff = borderTariff(buildingBonuses(buyer.id, input.buildings).tradeMul);
+        const sellerMkt = { stability: buildingBonuses(seller.id, input.buildings).priceStability };
+        let spend = Math.min(Math.floor(bNow.gold * 0.4), 3000);
+        if (spend < 50) continue;
+        let food = Math.floor(buyQuote(seller, season, spend, sellerMkt) * (1 - tariff));
+        if (food <= 0) continue;
+        const maxFood = Math.min(spare, bNow.troops * 2 - bNow.food);
+        if (food > maxFood) { spend = Math.floor(spend * (maxFood / food)); food = maxFood; }
+        if (spend < 50 || food < 200) continue;
+        cities[buyer.id] = { ...bNow, gold: bNow.gold - spend, food: bNow.food + food };
+        cities[seller.id] = { ...seller, food: seller.food - food, gold: seller.gold + spend };
+        break; // one purchase per buyer per season
+      }
+    }
+  }
+
+  // ── 馬政調度 — a force ferries surplus warhorses from its breeders to its most
+  //    horse-poor city (abstracted instant logistics, as with AI grain balancing),
+  //    so AI frontiers raise cavalry too instead of the herd piling up at the studs.
+  for (const forceCities of citiesByForce.values()) {
+    if (forceCities.length < 2) continue;
+    let donor: string | null = null;
+    let recip: string | null = null;
+    for (const c of forceCities) {
+      if (!cities[c.id]) continue;
+      if (donor === null || (cities[c.id].warhorses ?? 0) > (cities[donor].warhorses ?? 0)) donor = c.id;
+      if (recip === null || (cities[c.id].warhorses ?? 0) < (cities[recip].warhorses ?? 0)) recip = c.id;
+    }
+    if (!donor || !recip || donor === recip) continue;
+    const dHorses = cities[donor].warhorses ?? 0;
+    if (dHorses < 2000) continue;                       // only a real surplus is spread
+    const move = Math.min(1500, dHorses - 1000);
+    if (move < 200) continue;
+    cities[donor] = { ...cities[donor], warhorses: dHorses - move };
+    cities[recip] = { ...cities[recip], warhorses: (cities[recip].warhorses ?? 0) + move };
+  }
+
   // ── 定稅 — AI tax policy: a self-correcting loyalty↔gold lever (the player's
   //    稅率 dial, now used by the AI). A restive realm eases the burden (輕稅);
   //    a contented realm at war squeezes for war-chest gold (重稅); otherwise

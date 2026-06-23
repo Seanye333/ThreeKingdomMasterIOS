@@ -2127,16 +2127,31 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         const src = cities[r.fromCityId];
         const dst = cities[r.toCityId];
         if (!src || !dst || src.ownerForceId !== playerFid || dst.ownerForceId !== playerFid) continue;
-        if (src.food <= 8000) continue; // only ship genuine surplus
         if (Object.values(nextConvoys).some((cv) => cv.forceId === playerFid && cv.fromCityId === r.fromCityId && cv.toCityId === r.toCityId)) continue;
-        const ship = Math.min(src.food - 5000, 5000);
-        if (ship < 1000) continue;
+        // Auto-ship any genuine surplus — grain, plus a producer's spare warhorses
+        // and iron (each over a reserve), all on one no-frills route convoy.
+        const shipFood = src.food > 8000 ? Math.min(src.food - 5000, 5000) : 0;
+        const shipHorses = (src.warhorses ?? 0) > 1500 ? Math.min((src.warhorses ?? 0) - 1000, 2000) : 0;
+        const shipIron = (src.iron ?? 0) > 1500 ? Math.min((src.iron ?? 0) - 1000, 2000) : 0;
+        if (shipFood < 1000 && shipHorses <= 0 && shipIron <= 0) continue;
         const seasons = Math.max(1, marchDurationFor(src, dst, input.date.season));
         const keep = 1 - Math.min(0.4, 0.06 * (seasons - 1));
-        cities[r.fromCityId] = { ...cities[r.fromCityId], food: cities[r.fromCityId].food - ship };
+        cities[r.fromCityId] = {
+          ...cities[r.fromCityId],
+          food: cities[r.fromCityId].food - shipFood,
+          ...(shipHorses > 0 ? { warhorses: (cities[r.fromCityId].warhorses ?? 0) - shipHorses } : {}),
+          ...(shipIron > 0 ? { iron: (cities[r.fromCityId].iron ?? 0) - shipIron } : {}),
+        };
         const id = `route-convoy-${r.fromCityId}-${r.toCityId}-${input.date.year}-${input.date.season}-${srSeq++}`;
-        nextConvoys[id] = { id, forceId: playerFid, fromCityId: r.fromCityId, toCityId: r.toCityId, food: Math.floor(ship * keep), gold: 0, troops: 0, seasonsRemaining: seasons, totalSeasons: seasons };
-        entries.push({ cityId: r.toCityId, kind: 'income', text: `Standing route ships ${Math.floor(ship * keep)} grain toward ${dst.name.en}.`, textZh: `常運糧道發 ${Math.floor(ship * keep).toLocaleString()} 糧往 ${dst.name.zh}。` });
+        nextConvoys[id] = {
+          id, forceId: playerFid, fromCityId: r.fromCityId, toCityId: r.toCityId,
+          food: Math.floor(shipFood * keep), gold: 0, troops: 0,
+          ...(shipHorses > 0 ? { warhorses: Math.floor(shipHorses * keep) } : {}),
+          ...(shipIron > 0 ? { iron: Math.floor(shipIron * keep) } : {}),
+          seasonsRemaining: seasons, totalSeasons: seasons,
+        };
+        const cargoZh = [shipFood > 0 ? `${Math.floor(shipFood * keep).toLocaleString()} 糧` : '', shipHorses > 0 ? `${Math.floor(shipHorses * keep).toLocaleString()} 馬` : '', shipIron > 0 ? `${Math.floor(shipIron * keep).toLocaleString()} 鐵` : ''].filter(Boolean).join('、');
+        entries.push({ cityId: r.toCityId, kind: 'income', text: `Standing route ships ${cargoZh} toward ${dst.name.en}.`, textZh: `常運糧道發 ${cargoZh} 往 ${dst.name.zh}。` });
       }
     }
   }

@@ -178,6 +178,30 @@ describe('AI uses the new systems (private guard + sworn brotherhood)', () => {
   });
 });
 
+describe('馬政調度 — AI spreads its warhorse herd to horse-poor cities', () => {
+  const mkCity = (over: Partial<City> & { id: string }): City =>
+    ({ ownerForceId: null, troops: 6000, defense: 20, population: 100_000, adjacentCityIds: [],
+       coords: { x: 0, y: 0 }, name: { zh: over.id, en: over.id }, gold: 5000, food: 30_000,
+       commerce: 50, agriculture: 50, loyalty: 70, ...over } as unknown as City);
+
+  it('ferries surplus from the breeder to the most horse-poor city', () => {
+    const stud = mkCity({ id: 'stud', ownerForceId: 'A', warhorses: 4000 });
+    const front = mkCity({ id: 'front', ownerForceId: 'A', warhorses: 0 });
+    const ruler = mkOfficer({ id: 'r', forceId: 'A', locationCityId: 'stud', status: 'idle' });
+    const out = planAITurn({
+      cities: { stud: { ...stud }, front: { ...front } }, officers: { r: { ...ruler } },
+      forces: { A: { id: 'A', rulerOfficerId: 'r', name: { zh: 'A', en: 'A' }, color: '#fff', capitalCityId: 'stud' } as unknown as Force },
+      playerForceId: 'P', pendingCommands: {}, pendingTrainings: [], buildings: [],
+      diplomacy: { relations: {} } as DiplomaticState, runtimeBonds: [],
+      date: { year: 200, season: 'spring', month: 1, phase: 'upper' }, rng: () => 0.5,
+    });
+    expect(out.cities.front.warhorses ?? 0).toBeGreaterThan(0);   // frontier got cavalry
+    expect(out.cities.stud.warhorses ?? 0).toBeLessThan(4000);     // drawn from the stud
+    // Conserved: 1500 moved, nothing created or lost.
+    expect((out.cities.stud.warhorses ?? 0) + (out.cities.front.warhorses ?? 0)).toBe(4000);
+  });
+});
+
 describe('chooseDevelopment — front fortifies, rear grows', () => {
   it('a poorly-walled front city builds defence', () => {
     const c = mkCity({ id: 'c', defense: 40, commerce: 60, agriculture: 50 });
