@@ -4081,10 +4081,51 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // 堅城落成 — a player city's 城壁 reached the top tier (3) this season.
+        const wallPopups: import('../types').PopupEvent[] = [];
+        for (const c of Object.values(postCities)) {
+          if (c.ownerForceId !== state.playerForceId) continue;
+          const before = state.cities[c.id];
+          if (!before || before.ownerForceId !== state.playerForceId) continue;
+          if ((c.wallTier ?? 1) >= 3 && (before.wallTier ?? 1) < 3) {
+            wallPopups.push({
+              key: 'wall-citadel',
+              media: 'image',
+              titleZh: '堅城落成',
+              titleEn: 'A Great Citadel',
+              captionZh: `${c.name.zh} 城壁臻於極致(三級堅城)`,
+              captionEn: `${c.name.en}'s walls rise to a citadel (tier 3)`,
+            });
+          }
+        }
+
+        // 大興土木 — queue a popup for each player-city building that finished
+        // construction this season (level 0 → ≥1; upgrades don't re-fire).
+        const buildPopups: import('../types').PopupEvent[] = [];
+        {
+          const beforeLevel = new Map<string, number>();
+          for (const b of state.buildings) beforeLevel.set(`${b.cityId}:${b.id}`, b.level);
+          for (const b of bldEvt.buildings) {
+            if (b.level < 1) continue;
+            if ((beforeLevel.get(`${b.cityId}:${b.id}`) ?? 0) >= 1) continue; // already built
+            const c = postCities[b.cityId];
+            if (!c || c.ownerForceId !== state.playerForceId) continue;
+            const def = BUILDING_DEFS_BY_ID[b.id];
+            buildPopups.push({
+              key: 'building-complete',
+              media: 'image',
+              titleZh: '大興土木',
+              titleEn: 'A Great Work Raised',
+              captionZh: `${c.name.zh} 新建「${def?.name.zh ?? b.id}」落成`,
+              captionEn: `${def?.name.en ?? b.id} completed at ${c.name.en}`,
+            });
+          }
+        }
+
         set({
           date: result.date,
           cities: postCities,
-          popupQueue: [...state.popupQueue, ...sizePopups],
+          popupQueue: [...state.popupQueue, ...sizePopups, ...wallPopups, ...buildPopups],
           officers: officersWithMarchTask,
           marriageAlliances: allianceTick.alliances,
           forces: postForces,
@@ -4408,6 +4449,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               ...cum.newlyUnlocked,
             ];
           }
+          updates.popupQueue = [...state.popupQueue, {
+            key: 'officer-recruited',
+            media: 'image',
+            titleZh: '訪賢得士',
+            titleEn: 'A Worthy Joins',
+            captionZh: `${result.recruitedOfficer.name.zh} 來投(${city.name.zh})`,
+            captionEn: `${result.recruitedOfficer.name.en} has joined your cause`,
+          }];
         }
         set(updates);
         return { ok: result.ok, message: result.message };
@@ -4483,6 +4532,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           codexMarkRecruited(officerId);
           updates.officers = { ...state.officers, [officerId]: result.recruitedOfficer };
           delete nextRecruitState[officerId];
+          updates.popupQueue = [...state.popupQueue, {
+            key: 'officer-recruited',
+            media: 'image',
+            titleZh: '訪賢得士',
+            titleEn: 'A Worthy Joins',
+            captionZh: `${result.recruitedOfficer.name.zh} 應招入幕(${city.name.zh})`,
+            captionEn: `${result.recruitedOfficer.name.en} answers your call`,
+          }];
         } else {
           // A refusal opens the escalation options (舌戰/賄賂) for this season.
           nextRecruitState[officerId] = { season: seasonKey, stage: 'declined' };

@@ -17,6 +17,9 @@
  *   city-upgrade-city      升「城」
  *   city-upgrade-large     升「大城」
  *   city-upgrade-capital   升「都」
+ *   building-complete      大興土木(城內建築竣工)
+ *   officer-recruited      訪賢得士(招攬/勸降來投)
+ *   wall-citadel           堅城落成(城壁強化至 3 級)
  */
 export const KNOWN_POPUP_KEYS = [
   'capital-set',
@@ -24,6 +27,9 @@ export const KNOWN_POPUP_KEYS = [
   'city-upgrade-city',
   'city-upgrade-large',
   'city-upgrade-capital',
+  'building-complete',
+  'officer-recruited',
+  'wall-citadel',
 ] as const;
 
 /** Candidate image URLs for a key, tried in order (jpg first — best for the

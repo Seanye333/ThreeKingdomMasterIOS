@@ -284,7 +284,7 @@
 
 #### 慶典彈窗(里程碑圖/影)
 
-達成里程碑時全屏彈出一張慶典圖(或短片),配victory 音與淡入動畫,點/「繼續」/逾時(5秒)收起。事件入 `popupQueue`(`pushPopup`/`dismissPopup`),於 `MapScreen` 全局掛載 `CelebrationPopup`,故大地圖/城內皆會顯示。目前觸發:**遷都成功**(`capital-set`)、**升城**(`city-upgrade-<等級>`,季結算時偵測玩家城跨級晉升)。
+達成里程碑時全屏彈出一張慶典圖(或短片),配victory 音與淡入動畫,點/「繼續」/逾時(5秒)收起。事件入 `popupQueue`(`pushPopup`/`dismissPopup`),於 `MapScreen` 全局掛載 `CelebrationPopup`,故大地圖/城內皆會顯示。目前觸發:**遷都成功**(`capital-set`)、**升城**(`city-upgrade-<等級>`,季結算偵測玩家城跨級晉升)、**城內建築竣工**(`building-complete`,季結算偵測 level 0→≥1)、**訪賢得士**(`officer-recruited`,招攬/勸降來投)、**堅城落成**(`wall-citadel`,城壁強化至 3 級)。
 
 - **素材約定**:每個 key 對應 `public/popups/<key>.png`(圖)或 `<key>.mp4`(影)。**檔案缺失時自動降級為樣式卡**,不報錯 —— 系統先行,素材後補即自動點亮。已知 key 與建議畫面見 `public/popups/README.md` 與 `src/ui/popups/assets.ts`。
 - **擴充**:任何動作呼叫 `pushPopup({ key, media, titleZh, titleEn, captionZh?, captionEn? })` 即可加新慶典(竣工、名將登場、統一…)。

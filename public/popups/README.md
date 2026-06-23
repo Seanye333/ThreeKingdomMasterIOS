@@ -9,6 +9,9 @@ Drop generated art here. Each file's name is a **popup key**:
 | `city-upgrade-city` ✅ | 升「城」 | 城牆築起、人煙稠密 |
 | `city-upgrade-large` ✅ | 升「大城」 | 通衢廣陌、樓閣連雲 |
 | `city-upgrade-capital` ✅ | 升「都」 | 天下名都、車馬輻輳 |
+| `building-complete` ✅ | 城內建築竣工 | 新殿落成、披紅掛彩、撤去腳手架 |
+| `officer-recruited` ✅ | 招攬/勸降來投 | 名士青衫入府、太守躬迎 |
+| `wall-citadel` ✅ | 城壁強化至 3 級 | 巍峨甕城、雉堞重門、固若金湯 |
 
 Formats:
 - Image: `<key>.jpg` (preferred) or `<key>.png` (fallback). Absent → styled card.
