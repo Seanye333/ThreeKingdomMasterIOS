@@ -139,6 +139,49 @@ export function sellHorses(city: City, producer: boolean, horses: number, ctx: M
   return Math.floor((horses / rate) * (1 - effectiveSpread(city, stab)));
 }
 
+/* ─── 鐵市 — the iron market ─────────────────────────────────────────────── */
+
+/** Iron received for 1 gold at neutral conditions (≈ 2 gold/iron). */
+export const BASE_IRON_RATE = 0.5;
+/** Most iron a single city ever stockpiles (smelting cap, applied at season end). */
+export const IRON_CITY_CAP = 8000;
+/** Iron consumed per forge to earn the home-smelting discount. */
+export const IRON_FORGE_COST = 300;
+/** Gold knocked off a forge when the city can feed it from its own iron stock. */
+export const FORGE_IRON_DISCOUNT = 0.3;
+
+/**
+ * Iron per gold at this city. Like warhorses the price is regional, not
+ * seasonal: iron-country (`producer` — 宛城/巴西/涪城/彭城 冶鐵之饒) smelts cheap,
+ * the iron-poor pay dear. A fat local stockpile and a busy market both soften it.
+ */
+export function ironRate(city: City, producer: boolean, ctx: MarketContext = {}): number {
+  const stab = clampStab(ctx.stability);
+  let rate = BASE_IRON_RATE;
+  if (producer) rate *= 1 + 0.7 * (1 - stab); // smelted here → cheap (more iron/gold)
+  const ore = city.iron ?? 0;
+  if (ore > 3000) rate *= 1 + 0.2 * (1 - stab);
+  else if (ore < 400) rate *= 1 - 0.3 * (1 - stab);
+  rate *= 1 + city.commerce / 500;
+  return Math.max(0.12, Math.min(1.1, rate));
+}
+
+/** Iron received for spending `gold` (after slippage and spread). */
+export function buyIron(city: City, producer: boolean, gold: number, ctx: MarketContext = {}): number {
+  const stab = clampStab(ctx.stability);
+  const slip = slippage(gold, 1800 + city.commerce * 30, stab);
+  const rate = ironRate(city, producer, ctx) * (1 - slip);
+  return Math.floor(gold * rate * (1 - effectiveSpread(city, stab)));
+}
+
+/** Gold received for selling `iron` (after slippage and spread). */
+export function sellIron(city: City, producer: boolean, iron: number, ctx: MarketContext = {}): number {
+  const stab = clampStab(ctx.stability);
+  const slip = slippage(iron, 1500 + city.commerce * 24, stab);
+  const rate = ironRate(city, producer, ctx) * (1 + slip);
+  return Math.floor((iron / rate) * (1 - effectiveSpread(city, stab)));
+}
+
 /**
  * 榷場 — the extra cut a cross-border trade pays on top of the local spread
  * (border tariffs, foreign middlemen, the counterparty's own margin). A

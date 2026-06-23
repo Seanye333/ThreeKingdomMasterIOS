@@ -66,6 +66,13 @@ export interface City {
    */
   warhorses?: number;
   /**
+   * 鐵 — iron stockpiled here. Smelted each season by iron-country cities
+   * (宛城/巴西/涪城/彭城, the `iron` specialty). A strategic good traded at the
+   * 鐵市 (cheap where smelted, dear elsewhere — see market.ts); a city that can
+   * feed a forge from its own iron stock forges at a discount. Default/omitted = 0.
+   */
+  iron?: number;
+  /**
    * 異域義從 — foreign auxiliaries (象兵/突騎/汗血騎) stationed here by 遠使
    * embassies. Counted within `troops` for raw strength, but ALSO grant a
    * defence-power bonus (elite quality on top of quantity) — see

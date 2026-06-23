@@ -49,6 +49,7 @@ export function ConvoyDispatchModal({ fromCityId, onClose }: { fromCityId: strin
   const [gold, setGold] = useState(0);
   const [troops, setTroops] = useState(0);
   const [horses, setHorses] = useState(0);
+  const [iron, setIron] = useState(0);
   const [cautious, setCautious] = useState(false);
 
   const dest = cities[destId] ?? dests[0];
@@ -63,12 +64,13 @@ export function ConvoyDispatchModal({ fromCityId, onClose }: { fromCityId: strin
     );
   }
 
-  const total = food + gold + troops + horses;
+  const total = food + gold + troops + horses + iron;
   const remaining = Math.max(0, cap - total);
   const foodStock = from.food;
   const goldStock = from.gold;
   const troopStock = Math.max(0, from.troops - 100);
   const horseStock = from.warhorses ?? 0;
+  const ironStock = from.iron ?? 0;
 
   // Live ETA + road-loss, identical to what dispatch will apply.
   const naval = dest ? (!from.adjacentCityIds.includes(dest.id) && navalReachableCityIds(fromCityId, ports).has(dest.id)) : false;
@@ -80,7 +82,7 @@ export function ConvoyDispatchModal({ fromCityId, onClose }: { fromCityId: strin
 
   const send = () => {
     if (!dest || !escort || total <= 0) return;
-    const r = dispatchConvoy(fromCityId, dest.id, food, gold, troops, escort.id, cautious, horses);
+    const r = dispatchConvoy(fromCityId, dest.id, food, gold, troops, escort.id, cautious, horses, iron);
     if (r.ok) { playSfx('coin'); onClose(); }
   };
 
@@ -140,6 +142,7 @@ export function ConvoyDispatchModal({ fromCityId, onClose }: { fromCityId: strin
         {cargoRow(t('金', 'Gold'), gold, setGold, goldStock, '#e8c84a')}
         {cargoRow(t('兵', 'Troops'), troops, setTroops, troopStock, '#9ec0d8')}
         {horseStock > 0 && cargoRow(t('馬', 'Horses'), horses, setHorses, horseStock, '#c8a06a')}
+        {ironStock > 0 && cargoRow(t('鐵', 'Iron'), iron, setIron, ironStock, '#8fa0ad')}
       </div>
 
       {/* Load meter */}
@@ -165,6 +168,7 @@ export function ConvoyDispatchModal({ fromCityId, onClose }: { fromCityId: strin
             {gold > 0 && ` 金${Math.floor(gold * plan.keepFrac).toLocaleString()}`}
             {troops > 0 && ` 兵${Math.floor(troops * plan.keepFrac).toLocaleString()}`}
             {horses > 0 && ` 馬${Math.floor(horses * plan.keepFrac).toLocaleString()}`}
+            {iron > 0 && ` 鐵${Math.floor(iron * plan.keepFrac).toLocaleString()}`}
           </div>
         )}
       </div>

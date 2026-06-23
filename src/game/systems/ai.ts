@@ -17,8 +17,9 @@ import { getRelation, isHostilePermitted, pairKey } from '../types';
 import type { Difficulty } from '../state/gameState';
 import { OATH_BONDS, type OathBond } from '../data/bonds';
 import { COMMAND_DEFS, meetsMinSize } from './commands';
-import { buyQuote, sellQuote, sellHorses } from './market';
+import { buyQuote, sellQuote, sellHorses, sellIron, borderTariff } from './market';
 import { CITY_SPECIALTY } from '../data/specialties';
+import { buildingBonuses } from './buildings';
 import { citySize, cityCarryingCapacity, cityEconCap, cityStatCap } from './citySize';
 import { marchDurationFor } from '../data/cities';
 import { isLand, terrainMarchCost, WORLD_SCALE } from '../data/geography';
@@ -294,6 +295,47 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
           const gold = sellHorses(c2, producer, surplusH);
           if (gold > 0) cities[city.id] = { ...c2, gold: c2.gold + gold, warhorses: horses - surplusH };
         }
+        // 鐵市 — likewise sell off an iron glut when the purse runs thin.
+        const c3 = cities[city.id];
+        const ore = c3.iron ?? 0;
+        if (ore > 2500 && c3.gold < 1200) {
+          const producer = CITY_SPECIALTY[city.id] === 'iron';
+          const surplusI = ore - 1500;
+          const gold = sellIron(c3, producer, surplusI);
+          if (gold > 0) cities[city.id] = { ...c3, gold: c3.gold + gold, iron: ore - surplusI };
+        }
+      }
+    }
+  }
+
+  // ── 榷場 — AI cross-border grain relief: a glutted city ships its surplus to
+  //    an adjacent peace-partner (allied/NAP) city that's short, taking gold for
+  //    it (priced by the buyer's market, less the 榷場 tariff). The AI side of the
+  //    player's borderTrade — friendly economies interlink instead of one
+  //    starving beside a neighbour's overflowing granary. AI↔AI only; the
+  //    player's coffers are never touched without the player's own action.
+  {
+    const season = input.date.season;
+    for (const seller of Object.values(cities)) {
+      const sid = seller.ownerForceId;
+      if (!sid || sid === input.playerForceId) continue;
+      const sNow = cities[seller.id];
+      if (sNow.food <= sNow.troops * 7) continue; // only a real glut spares grain
+      for (const nid of sNow.adjacentCityIds) {
+        const buyer = cities[nid];
+        if (!buyer || !buyer.ownerForceId || buyer.ownerForceId === sid || buyer.ownerForceId === input.playerForceId) continue;
+        const rel = getRelation(diplomacy, sid, buyer.ownerForceId);
+        if (rel.status !== 'allied' && rel.status !== 'non-aggression') continue;
+        if (buyer.food >= buyer.troops * 2) continue; // buyer not actually short
+        const amount = Math.min(sNow.food - sNow.troops * 6, buyer.troops * 2 - buyer.food);
+        if (amount < 300) continue;
+        const tariff = borderTariff(buildingBonuses(seller.id, input.buildings).tradeMul);
+        const buyerMkt = { stability: buildingBonuses(buyer.id, input.buildings).priceStability };
+        const gold = Math.floor(sellQuote(buyer, season, amount, buyerMkt) * (1 - tariff));
+        if (gold <= 0 || buyer.gold < gold) continue;
+        cities[seller.id] = { ...sNow, food: sNow.food - amount, gold: sNow.gold + gold };
+        cities[buyer.id] = { ...buyer, food: buyer.food + amount, gold: buyer.gold - gold };
+        break; // one relief shipment per seller per season
       }
     }
   }

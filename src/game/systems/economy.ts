@@ -60,6 +60,8 @@ export interface CityEconomyTick {
   policyBadges: string[];
   /** 馬政 — warhorses bred this season (horse-country cities only; 0 elsewhere). */
   warhorseBreed: number;
+  /** 冶鐵 — iron smelted this season (iron-country cities only; 0 elsewhere). */
+  ironSmelt: number;
 }
 
 /**
@@ -145,6 +147,12 @@ export function tickCityEconomy(
   if (city.ownerForceId && !city.ruined && CITY_SPECIALTY[city.id] === 'horse') {
     warhorseBreed = Math.round(40 * bb.recruitMul * (0.6 + city.loyalty / 200));
   }
+  // 冶鐵 — iron-country cities smelt iron each season (a settled, busy populace
+  // works the forges harder). Only owned, non-ruined iron-lands smelt.
+  let ironSmelt = 0;
+  if (city.ownerForceId && !city.ruined && CITY_SPECIALTY[city.id] === 'iron') {
+    ironSmelt = Math.round(45 * Math.min(1.5, bb.commerceMul) * (0.6 + city.loyalty / 200));
+  }
 
   return {
     goldIncome, foodIncome, foodUpkeep, desertion,
@@ -152,6 +160,7 @@ export function tickCityEconomy(
     populationDelta: popDelta,
     policyBadges: taxEff.loyalty !== 0 ? [...eff.badges, taxEff.zh] : eff.badges,
     warhorseBreed,
+    ironSmelt,
   };
 }
 

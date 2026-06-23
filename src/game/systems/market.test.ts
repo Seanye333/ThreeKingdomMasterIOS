@@ -4,6 +4,7 @@ import type { City } from '../types';
 import {
   buyQuote, foodRate, sellQuote, marketOutlook, borderTariff,
   horseRate, buyHorses, sellHorses,
+  ironRate, buyIron, sellIron,
 } from './market';
 
 const mkCity = (over: Partial<City> = {}): City =>
@@ -115,6 +116,21 @@ describe('馬市 warhorse market', () => {
     expect(sellHorses(c, true, horses)).toBeLessThan(1000);
     const small = buyHorses(c, true, 200) / 200;
     const big = buyHorses(c, true, 8000) / 8000;
+    expect(big).toBeLessThan(small);
+  });
+});
+
+describe('鐵市 iron market', () => {
+  it('iron-country smelts cheap — more iron per gold than the iron-poor', () => {
+    const ic = mkCity({ iron: 1000 });
+    expect(ironRate(ic, true)).toBeGreaterThan(ironRate(ic, false));
+  });
+  it('buy-sell round trip loses money (spread), and a big buy walks the price', () => {
+    const c = mkCity({ iron: 1000 });
+    const iron = buyIron(c, true, 1000);
+    expect(sellIron(c, true, iron)).toBeLessThan(1000);
+    const small = buyIron(c, true, 200) / 200;
+    const big = buyIron(c, true, 10000) / 10000;
     expect(big).toBeLessThan(small);
   });
 });

@@ -18,7 +18,7 @@ import { COMMAND_DEFS, meetsMinSize, previewCommandGain } from '../../game/syste
 import { commandFitMultiplier } from '../../game/systems/traitEffects';
 import { appointmentBonusFor } from '../../game/systems/appointmentEffects';
 import { tickCityEconomy } from '../../game/systems/economy';
-import { buyQuote, sellQuote, foodRate, marketOutlook, borderTariff, buyHorses, sellHorses } from '../../game/systems/market';
+import { buyQuote, sellQuote, foodRate, marketOutlook, borderTariff, buyHorses, sellHorses, buyIron, sellIron } from '../../game/systems/market';
 import { buildingBonuses } from '../../game/systems/buildings';
 import { CITY_SPECIALTY } from '../../game/data/specialties';
 import { getRelation } from '../../game/types/diplomacy';
@@ -3176,6 +3176,7 @@ function MarketTradeRow({ city, season, cityId, tradeFood, onTraded }: {
   const playerForceId = useGameStore((s) => s.playerForceId);
   const borderTrade = useGameStore((s) => s.borderTrade);
   const tradeHorses = useGameStore((s) => s.tradeHorses);
+  const tradeIron = useGameStore((s) => s.tradeIron);
   const mkt = { stability: buildingBonuses(cityId, buildings).priceStability };
   const shock = useMarketShock(cityId);
   const outlook = marketOutlook(city, season, mkt, shock);
@@ -3256,6 +3257,34 @@ function MarketTradeRow({ city, season, cityId, tradeFood, onTraded }: {
                 onTraded(r.ok ? `馬市:${sellH} 戰馬售得 ${r.got.toLocaleString()} 金。` : '戰馬不足。');
               }, 'hs')}
               <span style={{ color: '#7a6a4a', fontSize: '0.64rem' }}>馬充軍備,提升募兵上限</span>
+            </div>
+          </div>
+        );
+      })()}
+      {(() => {
+        const producer = CITY_SPECIALTY[cityId] === 'iron';
+        const held = city.iron ?? 0;
+        if (!producer && held <= 0) return null;
+        const buyGold = 1000, sellI = 800;
+        const buyGet = buyIron(city, producer, buyGold, mkt);
+        const sellGet = sellIron(city, producer, sellI, mkt);
+        return (
+          <div style={{ marginTop: 7, borderTop: '1px dashed #3a2d20', paddingTop: 6 }}>
+            <div style={{ color: '#c8a258', marginBottom: 4 }}>
+              鐵市 <span style={{ color: '#7a6a4a', fontSize: '0.66rem' }}>· 鐵 {held.toLocaleString()} {producer ? '· 冶鐵之饒(價賤)' : '· 非產地(價貴)'}</span>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center' }}>
+              {btn(`糴 ${buyGold}金→${buyGet.toLocaleString()}鐵`, city.gold < buyGold || buyGet <= 0, () => {
+                const r = tradeIron(cityId, 'buy', buyGold);
+                if (r.ok) playSfx('coin');
+                onTraded(r.ok ? `鐵市:${buyGold} 金購得 ${r.got.toLocaleString()} 鐵。` : '無法購鐵。');
+              }, 'ib')}
+              {btn(`糶 ${sellI}鐵→${sellGet.toLocaleString()}金`, held < sellI || sellGet <= 0, () => {
+                const r = tradeIron(cityId, 'sell', sellI);
+                if (r.ok) playSfx('coin');
+                onTraded(r.ok ? `鐵市:${sellI} 鐵售得 ${r.got.toLocaleString()} 金。` : '存鐵不足。');
+              }, 'is')}
+              <span style={{ color: '#7a6a4a', fontSize: '0.64rem' }}>鐵料自給,鍛造打折</span>
             </div>
           </div>
         );

@@ -46,6 +46,16 @@ describe('輜重 — convoy stepping', () => {
     expect(r2.cities.b.warhorses).toBe(6000); // clamped, not 10500
   });
 
+  it('delivers iron on arrival, capped at the city smelting ceiling', () => {
+    const convoys = { cv1: mkConvoy({ seasonsRemaining: 1, food: 0, gold: 0, iron: 2000 }) };
+    const cities = { a: mkCity('a'), b: mkCity('b', { iron: 500 }) };
+    const r = stepConvoys(convoys, cities);
+    expect(r.cities.b.iron).toBe(2500);
+    const big = { cv1: mkConvoy({ seasonsRemaining: 1, food: 0, gold: 0, iron: 6000 }) };
+    const r2 = stepConvoys(big, { a: mkCity('a'), b: mkCity('b', { iron: 7500 }) });
+    expect(r2.cities.b.iron).toBe(8000); // clamped to IRON_CITY_CAP
+  });
+
   it('forfeits the cargo if the destination is no longer the force’s', () => {
     const convoys = { cv1: mkConvoy({ seasonsRemaining: 1 }) };
     const cities = { a: mkCity('a'), b: mkCity('b', { ownerForceId: 'enemy', food: 5000 }) };

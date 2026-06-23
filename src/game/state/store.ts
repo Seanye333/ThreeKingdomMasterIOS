@@ -88,7 +88,7 @@ import { COMMAND_DEFS } from '../systems/commands';
 import { planMassMuster } from '../systems/muster';
 import { planGovernorCommand } from '../systems/governor';
 import { planLegionOrders, type Legion } from '../systems/legion';
-import { buyQuote, sellQuote, borderTariff, buyHorses, sellHorses, WARHORSE_CITY_CAP } from '../systems/market';
+import { buyQuote, sellQuote, borderTariff, buyHorses, sellHorses, WARHORSE_CITY_CAP, buyIron, sellIron, IRON_CITY_CAP, IRON_FORGE_COST, FORGE_IRON_DISCOUNT } from '../systems/market';
 import { EDICT_DISCOUNT, EMPEROR_HOME, MANDATE_PER_SEASON, RESENTMENT_PER_SEASON, canWelcomeEmperor, emperorCustodian } from '../systems/emperor';
 import { COMMONER_ARRIVAL_CHANCE, commonerArrivalCity, generateCommonerOfficer } from '../systems/commonerTalent';
 import { codexMarkRecruited, codexMarkRecruitedMany, codexMarkSeen, codexMarkSlain } from '../systems/codex';
@@ -352,11 +352,14 @@ interface GameStore extends GameState {
   /** 馬市 — convert gold↔戰馬 at the city's horse-market rate (cheap in
    *  horse-country, dear elsewhere). `kind` is from the player's side. */
   tradeHorses: (cityId: EntityId, kind: 'buy' | 'sell', amount: number) => { ok: boolean; got: number };
+  /** 鐵市 — convert gold↔鐵 at the city's iron-market rate (cheap in
+   *  iron-country, dear elsewhere). `kind` is from the player's side. */
+  tradeIron: (cityId: EntityId, kind: 'buy' | 'sell', amount: number) => { ok: boolean; got: number };
   /** 運糧/運金 — dispatch a supply convoy carrying grain and/or gold from one of
    *  your cities to another. It crawls the map over `seasons` and empties its
    *  cargo on arrival; adjacent hauls arrive in full, longer ones lose 12% on
    *  the road. Cargo is deducted from the source at dispatch. */
-  dispatchConvoy: (fromCityId: EntityId, toCityId: EntityId, food: number, gold: number, troops: number, officerId: EntityId, cautious?: boolean, warhorses?: number) => { ok: boolean; seasons: number; reason?: string };
+  dispatchConvoy: (fromCityId: EntityId, toCityId: EntityId, food: number, gold: number, troops: number, officerId: EntityId, cautious?: boolean, warhorses?: number, iron?: number) => { ok: boolean; seasons: number; reason?: string };
   /** 召回輜重 — turn a convoy around; its cargo returns to the origin city (lost
    *  if that city has since fallen). */
   recallConvoy: (id: EntityId) => void;
@@ -1559,6 +1562,26 @@ export const useGameStore = create<GameStore>()(
         return { ok: true, got: gold };
       },
 
+      tradeIron: (cityId, kind, amount) => {
+        const state = get();
+        const city = state.cities[cityId];
+        if (!city || city.ownerForceId !== state.playerForceId || amount <= 0) return { ok: false, got: 0 };
+        const producer = CITY_SPECIALTY[cityId] === 'iron';
+        const mkt = { stability: buildingBonuses(cityId, state.buildings).priceStability };
+        const held = city.iron ?? 0;
+        if (kind === 'buy') {
+          if (city.gold < amount) return { ok: false, got: 0 };
+          const iron = Math.min(buyIron(city, producer, amount, mkt), IRON_CITY_CAP - held);
+          if (iron <= 0) return { ok: false, got: 0 };
+          set({ cities: { ...state.cities, [cityId]: { ...city, gold: city.gold - amount, iron: held + iron } } });
+          return { ok: true, got: iron };
+        }
+        if (held < amount) return { ok: false, got: 0 };
+        const gold = sellIron(city, producer, amount, mkt);
+        set({ cities: { ...state.cities, [cityId]: { ...city, iron: held - amount, gold: city.gold + gold } } });
+        return { ok: true, got: gold };
+      },
+
       borderTrade: (myCityId, theirCityId, kind, amount) => {
         const state = get();
         const pid = state.playerForceId;
@@ -1600,7 +1623,7 @@ export const useGameStore = create<GameStore>()(
         return { ok: true, got: gold };
       },
 
-      dispatchConvoy: (fromCityId, toCityId, food, gold, troops = 0, officerId, cautious = false, warhorses = 0) => {
+      dispatchConvoy: (fromCityId, toCityId, food, gold, troops = 0, officerId, cautious = false, warhorses = 0, iron = 0) => {
         const state = get();
         const pid = state.playerForceId;
         if (!pid) return { ok: false, seasons: 0 };
@@ -1620,19 +1643,21 @@ export const useGameStore = create<GameStore>()(
         // Keep a token garrison behind — never ship the city's last 100 men.
         let shipTroops = Math.min(Math.max(0, Math.floor(troops)), Math.max(0, from.troops - 100));
         let shipHorses = Math.min(Math.max(0, Math.floor(warhorses)), from.warhorses ?? 0);
+        let shipIron = Math.min(Math.max(0, Math.floor(iron)), from.iron ?? 0);
         // 載量 — clamp the total to what this officer can shepherd (scaling down
         // proportionally if the player asked for more than his 政治 allows).
         // 驛傳 — a supply depot in the dispatching city widens the convoy.
         const cap = Math.floor(convoyCapacity(officer) * buildingBonuses(fromCityId, state.buildings).convoyMul);
-        const total = shipFood + shipGold + shipTroops + shipHorses;
+        const total = shipFood + shipGold + shipTroops + shipHorses + shipIron;
         if (total > cap && total > 0) {
           const scale = cap / total;
           shipFood = Math.floor(shipFood * scale);
           shipGold = Math.floor(shipGold * scale);
           shipTroops = Math.floor(shipTroops * scale);
           shipHorses = Math.floor(shipHorses * scale);
+          shipIron = Math.floor(shipIron * scale);
         }
-        if (shipFood <= 0 && shipGold <= 0 && shipTroops <= 0 && shipHorses <= 0) return { ok: false, seasons: 0 };
+        if (shipFood <= 0 && shipGold <= 0 && shipTroops <= 0 && shipHorses <= 0 && shipIron <= 0) return { ok: false, seasons: 0 };
         // 木牛流馬 — Zhuge Liang's logistics device (an officer skill). In a
         // force's service it speeds transport ~40% and halves road spoilage.
         const woodenOx = Object.values(state.officers).some(
@@ -1650,6 +1675,7 @@ export const useGameStore = create<GameStore>()(
         const arriveGold = Math.floor(shipGold * keep);
         const arriveTroops = Math.floor(shipTroops * keep);
         const arriveHorses = Math.floor(shipHorses * keep);
+        const arriveIron = Math.floor(shipIron * keep);
         const seasons = plan.seasons;
         const id = `convoy-${fromCityId}-${toCityId}-${state.date.year}-${state.date.season}-${Object.keys(state.convoys ?? {}).length}`;
         set({
@@ -1661,6 +1687,7 @@ export const useGameStore = create<GameStore>()(
               gold: from.gold - shipGold,
               troops: from.troops - shipTroops,
               ...(shipHorses > 0 ? { warhorses: (from.warhorses ?? 0) - shipHorses } : {}),
+              ...(shipIron > 0 ? { iron: (from.iron ?? 0) - shipIron } : {}),
             },
           },
           // The escorting officer rides out with the column (off the rosters
@@ -1676,13 +1703,14 @@ export const useGameStore = create<GameStore>()(
               fromCityId, toCityId,
               food: arriveFood, gold: arriveGold, troops: arriveTroops,
               ...(arriveHorses > 0 ? { warhorses: arriveHorses } : {}),
+              ...(arriveIron > 0 ? { iron: arriveIron } : {}),
               seasonsRemaining: seasons, totalSeasons: seasons,
               ...(naval ? { naval: true } : {}),
               ...(cautious ? { cautious: true } : {}),
             },
           },
         });
-        const cargo = [arriveFood > 0 ? `糧 ${arriveFood.toLocaleString()}` : '', arriveGold > 0 ? `金 ${arriveGold.toLocaleString()}` : '', arriveTroops > 0 ? `兵 ${arriveTroops.toLocaleString()}` : '', arriveHorses > 0 ? `馬 ${arriveHorses.toLocaleString()}` : ''].filter(Boolean).join('、');
+        const cargo = [arriveFood > 0 ? `糧 ${arriveFood.toLocaleString()}` : '', arriveGold > 0 ? `金 ${arriveGold.toLocaleString()}` : '', arriveTroops > 0 ? `兵 ${arriveTroops.toLocaleString()}` : '', arriveHorses > 0 ? `馬 ${arriveHorses.toLocaleString()}` : '', arriveIron > 0 ? `鐵 ${arriveIron.toLocaleString()}` : ''].filter(Boolean).join('、');
         get().notify(
           `輜重啟運 · ${from.name.zh} → ${to.name.zh}(${cargo},${seasons}季抵達)`,
           `Convoy dispatched · ${from.name.en} → ${to.name.en} (${seasons} seasons)`,
@@ -6928,7 +6956,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (!recipe) return { ok: false, reason: 'invalid recipe' };
         if (!foundry || foundry.level < recipe.minFoundryLevel)
           return { ok: false, reason: `need foundry lv${recipe.minFoundryLevel}` };
-        if (city.gold < recipe.goldCost)
+        // 鐵料自給 — a foundry fed from the city's own iron stock forges cheaper.
+        const ironFed = (city.iron ?? 0) >= IRON_FORGE_COST;
+        const goldCost = ironFed ? Math.round(recipe.goldCost * (1 - FORGE_IRON_DISCOUNT)) : recipe.goldCost;
+        if (city.gold < goldCost)
           return { ok: false, reason: 'not enough gold' };
         // Verify all ingredients are present as lost items in this city.
         const ingredientsInCity = state.lostItems.filter(
@@ -6949,7 +6980,11 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         set({
           cities: {
             ...state.cities,
-            [cityId]: { ...city, gold: city.gold - recipe.goldCost },
+            [cityId]: {
+              ...city,
+              gold: city.gold - goldCost,
+              ...(ironFed ? { iron: (city.iron ?? 0) - IRON_FORGE_COST } : {}),
+            },
           },
           lostItems: newLostItems,
         });
