@@ -40,6 +40,20 @@ export interface City {
    *  opposed to the gold-built 堤防 levee). Stacks with the levee building level
    *  toward the flood-immunity cap (3) in events.ts. Default/omitted = 0. */
   floodWorks?: number;
+  /**
+   * 貪腐 — accumulated graft (0–100). Creeps up each season in wealthy/large
+   * cities left unaudited; skims a slice off gold income (up to −40% at 100).
+   * The 巡查肅貪 command claws it back to near-zero AND recovers the embezzled
+   * gold (scaling with how much had piled up). Default/omitted = 0 (clean).
+   */
+  corruption?: number;
+  /**
+   * 練度 — the garrison's drill/training level (0–100). Raised by the 練兵
+   * command and by 演習 sparring drills; decays slowly each season. Lifts the
+   * city's defensive fighting power when besieged (well-drilled defenders hold
+   * the walls better). Default/omitted = 0 (raw levies).
+   */
+  drill?: number;
   /** Terrain category — see TERRAIN_DEFS in cities.ts. */
   terrain?: import('../data/cities').Terrain;
   /** Has river/sea port — unlocks naval movement to other ports. */

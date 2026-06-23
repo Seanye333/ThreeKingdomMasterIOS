@@ -1,0 +1,106 @@
+/**
+ * Soak test for the internal-affairs systems added this round:
+ *   貪腐 (corruption) · 練度 (drill) · 屯田 (military-farming) · 練兵 (drill-troops)
+ *
+ * Drives the REAL game loop headlessly in observe mode (every realm AI-run) for
+ * N years, then reports:
+ *   - corruption distribution over time (does it run away? does AI audit it?)
+ *   - drill distribution (does AI 練兵 / does decay keep it sane?)
+ *   - command usage tallied from the season reports (屯田/練兵/肅貪/賑濟…)
+ *   - macro health (cities/troops/gold/food) so we'd notice a balance blowup.
+ *
+ * Run:  node --import tsx scripts/soak-internal-affairs.ts [years]
+ */
+
+// ── Minimal browser-global stubs so the zustand store runs under node ──
+const g = globalThis as unknown as { localStorage?: unknown };
+if (!g.localStorage) {
+  const mem = new Map<string, string>();
+  g.localStorage = {
+    getItem: (k: string) => (mem.has(k) ? mem.get(k)! : null),
+    setItem: (k: string, v: string) => void mem.set(k, String(v)),
+    removeItem: (k: string) => void mem.delete(k),
+    clear: () => mem.clear(),
+    key: (i: number) => [...mem.keys()][i] ?? null,
+    get length() { return mem.size; },
+  };
+}
+
+import { useGameStore } from '../src/game/state/store';
+import { SCENARIOS } from '../src/game/data/scenarios';
+import type { City } from '../src/game/types';
+
+const YEARS = Number(process.argv[2] ?? 30);
+const SEASONS = YEARS * 4;
+const scenario = SCENARIOS[0];
+
+const store = useGameStore;
+store.getState().observeScenario(scenario, 'normal');
+
+const ownedCities = (): City[] =>
+  Object.values(store.getState().cities).filter((c) => c.ownerForceId);
+
+const pct = (xs: number[], p: number): number => {
+  if (xs.length === 0) return 0;
+  const s = [...xs].sort((a, b) => a - b);
+  return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))];
+};
+const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+const r = (n: number, d = 0) => Number(n.toFixed(d));
+
+// Tally command usage from season-report zh text (resolveSeason writes these).
+const cmdTally: Record<string, number> = {
+  屯田: 0, 練兵: 0, 巡查肅貪: 0, 賑濟: 0, 招撫流民: 0, 城壁強化: 0, 兵怨逃屯: 0,
+  // civic events (civicEvents.ts):
+  貪腐醜聞: 0, 校場揚威: 0, 屯田大熟: 0,
+};
+const warns = { corruption: 0 };
+
+console.log(`\n=== Soak: ${scenario.name?.zh ?? scenario.id} · ${YEARS}y (${SEASONS} seasons), observe mode ===\n`);
+console.log('year  cities  corr(mean/p90/max)   drill(mean/max)   Σtroops    Σgold    Σfood   drillCities');
+
+for (let s = 1; s <= SEASONS; s++) {
+  store.getState().endSeason();
+
+  // Tally this season's report.
+  const rep = store.getState().lastReport;
+  if (rep) {
+    for (const e of rep.entries) {
+      const txt = e.textZh ?? e.text ?? '';
+      for (const key of Object.keys(cmdTally)) if (txt.includes(key)) cmdTally[key]++;
+      if (txt.includes('貪腐已達')) warns.corruption++;
+    }
+  }
+
+  if (s % 4 === 0) {
+    const cs = ownedCities();
+    const corr = cs.map((c) => c.corruption ?? 0);
+    const drill = cs.map((c) => c.drill ?? 0);
+    const drillCities = drill.filter((d) => d > 0).length;
+    const Σt = cs.reduce((a, c) => a + c.troops, 0);
+    const Σg = cs.reduce((a, c) => a + c.gold, 0);
+    const Σf = cs.reduce((a, c) => a + c.food, 0);
+    const yr = s / 4;
+    if (yr % 5 === 0 || yr === 1) {
+      console.log(
+        `${String(yr).padStart(4)}  ${String(cs.length).padStart(6)}  ` +
+        `${String(r(mean(corr))).padStart(4)}/${String(pct(corr, 90)).padStart(3)}/${String(Math.max(0, ...corr)).padStart(3)}` +
+        `        ${String(r(mean(drill))).padStart(4)}/${String(Math.max(0, ...drill)).padStart(3)}` +
+        `       ${String(Math.round(Σt)).padStart(8)}  ${String(Math.round(Σg)).padStart(8)}  ${String(Math.round(Σf)).padStart(8)}   ${drillCities}`,
+      );
+    }
+  }
+}
+
+console.log('\n=== Command usage (report-entry hits over the run) ===');
+for (const [k, v] of Object.entries(cmdTally)) console.log(`  ${k.padEnd(10)} ${v}`);
+console.log(`  貪腐警告(玩家城,觀戰下通常0)  ${warns.corruption}`);
+
+const finalCs = ownedCities();
+const finalCorr = finalCs.map((c) => c.corruption ?? 0);
+console.log('\n=== Final sanity ===');
+console.log(`  cities alive: ${finalCs.length}`);
+console.log(`  corruption  : mean ${r(mean(finalCorr), 1)}, p90 ${pct(finalCorr, 90)}, max ${Math.max(0, ...finalCorr)}`);
+console.log(`  cities at corruption 100 (pegged): ${finalCorr.filter((c) => c >= 100).length}`);
+console.log(`  any NaN city stat: ${finalCs.some((c) => [c.gold, c.food, c.troops, c.corruption ?? 0, c.drill ?? 0].some(Number.isNaN))}`);
+console.log('');

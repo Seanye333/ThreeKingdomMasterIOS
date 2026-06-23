@@ -19,6 +19,7 @@ import type {
   Fort,
   PendingHeir,
   Port,
+  PopupEvent,
   ProvinceId,
   Scenario,
   SeasonReport,
@@ -102,6 +103,9 @@ export interface GameState {
    *  and on completion adds a new policy to the officer. */
   pendingTrainings: Array<import('../systems/training').PendingTraining>;
   lastReport: SeasonReport | null;
+  /** 慶典彈窗佇列 — celebratory image/video popups waiting to be shown (city
+   *  tier-ups, capital moves, great works…). Shown one at a time; not persisted. */
+  popupQueue: PopupEvent[];
   /** 事件地標 — this tick's per-city calamities/windfalls (famine, plague,
    *  harvest, rebellion, tribe raid), kept for map markers after the season
    *  report is dismissed. Replaced wholesale each tick. */
@@ -475,6 +479,7 @@ export const EMPTY_STATE: GameState = {
   debateUsage: {},
   pendingTrainings: [],
   lastReport: null,
+  popupQueue: [],
   cityEventMarks: [],
   victoryStatus: 'playing',
   difficulty: 'normal',
@@ -805,6 +810,7 @@ export function loadScenario(
     debateUsage: {},
     pendingTrainings: [],
     lastReport: null,
+    popupQueue: [],
   cityEventMarks: [],
     victoryStatus: 'playing',
     activeChallenge: null,

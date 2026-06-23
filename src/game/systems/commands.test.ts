@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import type { City } from '../types';
 import { mkOfficer } from '../../test/factories';
-import { resolveInternalAffairs } from './commands';
+import { resolveInternalAffairs, previewCommandGain } from './commands';
 
 const mkCity = (over: Partial<City> & { id: string }): City =>
   ({
@@ -44,6 +44,29 @@ const seq = (vals: number[]) => {
   let i = 0;
   return () => vals[i++ % vals.length];
 };
+
+describe('協同施政 — assistants lift the lead command with diminishing weight', () => {
+  it('two assistants raise the development gain above the lead alone', () => {
+    // Fixed rng (0.5) makes developmentGain deterministic, so the only variable
+    // is the effective stat — which the assistants boost.
+    const city = mkCity({ id: 'ye', agriculture: 40, population: 200000 });
+    const lead = mkOfficer({ id: 'lead', stats: { politics: 70 } });
+    const a1 = mkOfficer({ id: 'a1', stats: { politics: 80 } });
+    const a2 = mkOfficer({ id: 'a2', stats: { politics: 60 } });
+    const solo = resolveInternalAffairs('develop-agriculture', lead, city, () => 0.5).delta!.agriculture!;
+    const team = resolveInternalAffairs('develop-agriculture', lead, city, () => 0.5, undefined, undefined, [a1, a2]).delta!.agriculture!;
+    expect(team).toBeGreaterThan(solo);
+  });
+
+  it('only the first two assistants count (diminishing, capped at 2)', () => {
+    const city = mkCity({ id: 'ye', agriculture: 40, population: 200000 });
+    const lead = mkOfficer({ id: 'lead', stats: { politics: 70 } });
+    const a = mkOfficer({ id: 'a', stats: { politics: 90 } });
+    const two = resolveInternalAffairs('develop-agriculture', lead, city, () => 0.5, undefined, undefined, [a, a]).delta!.agriculture!;
+    const three = resolveInternalAffairs('develop-agriculture', lead, city, () => 0.5, undefined, undefined, [a, a, a]).delta!.agriculture!;
+    expect(three).toBe(two); // the 3rd assistant is ignored
+  });
+});
 
 describe('勸農/興商 — talent reads, with a 良吏豐政 crit', () => {
   it('a 政治95 名臣 out-develops a 政治60 庸吏 on the same roll', () => {
@@ -176,5 +199,125 @@ describe('招撫流民 — diminishing pull and settling friction', () => {
     const charming = mkOfficer({ id: 'b', stats: { charisma: 85 } });
     expect(resolveInternalAffairs('encourage-migration', plain, city, () => 0.5).delta!.loyalty).toBe(-1);
     expect(resolveInternalAffairs('encourage-migration', charming, city, () => 0.5).delta!.loyalty).toBe(0);
+  });
+});
+
+describe('屯田 — soldiers farm state land, no population drawn', () => {
+  it('yields food scaling with the garrison and draws zero population', () => {
+    const o = mkOfficer({ id: 'gov', stats: { leadership: 80 } });
+    const res = resolveInternalAffairs('military-farming', o, mkCity({ id: 'xu', troops: 9000 }), () => 0.5);
+    expect(res.success).toBe(true);
+    expect(res.delta!.food!).toBeGreaterThan(0);
+    expect(res.delta!.population ?? 0).toBe(0); // never spends civilians
+  });
+
+  it('a bigger garrison farms more food', () => {
+    const o = mkOfficer({ id: 'gov', stats: { leadership: 70 } });
+    const small = resolveInternalAffairs('military-farming', o, mkCity({ id: 'a', troops: 1000 }), () => 0.5);
+    const big = resolveInternalAffairs('military-farming', o, mkCity({ id: 'b', troops: 16000 }), () => 0.5);
+    expect(big.delta!.food!).toBeGreaterThan(small.delta!.food!);
+  });
+
+  it('an empty garrison has no hands to till', () => {
+    const o = mkOfficer({ id: 'gov', stats: { leadership: 80 } });
+    const res = resolveInternalAffairs('military-farming', o, mkCity({ id: 'ghost', troops: 0 }), () => 0.5);
+    expect(res.success).toBe(false);
+  });
+
+  it('a near-mutinous garrison (loyalty < 35) may desert the drudgery', () => {
+    const o = mkOfficer({ id: 'gov', stats: { leadership: 80 } });
+    // rng 0.1 < 0.2 → the 兵怨逃屯 branch fires.
+    const res = resolveInternalAffairs('military-farming', o, mkCity({ id: 'restive', troops: 5000, loyalty: 20 }), () => 0.1);
+    expect(res.success).toBe(false);
+    expect(res.delta!.troops!).toBeLessThan(0); // deserters
+    // a contented city never triggers it
+    const calm = resolveInternalAffairs('military-farming', o, mkCity({ id: 'calm', troops: 5000, loyalty: 80 }), () => 0.1);
+    expect(calm.success).toBe(true);
+    expect(calm.delta!.troops ?? 0).toBe(0);
+  });
+});
+
+describe('練兵 — drilling raises 練度 with diminishing returns near the top', () => {
+  it('raises drill, and gains taper as drill approaches 100', () => {
+    const o = mkOfficer({ id: 'gov', stats: { leadership: 80 } });
+    const fresh = resolveInternalAffairs('drill-troops', o, mkCity({ id: 'a', drill: 0 } as Partial<City> & { id: string }), () => 0.5);
+    const nearTop = resolveInternalAffairs('drill-troops', o, mkCity({ id: 'b', drill: 96 } as Partial<City> & { id: string }), () => 0.5);
+    expect(fresh.delta!.drill!).toBeGreaterThan(0);
+    expect(nearTop.delta!.drill!).toBeLessThan(fresh.delta!.drill!);
+  });
+
+  it('a fully-drilled garrison cannot drill further', () => {
+    const o = mkOfficer({ id: 'gov', stats: { leadership: 80 } });
+    const res = resolveInternalAffairs('drill-troops', o, mkCity({ id: 'max', drill: 100 } as Partial<City> & { id: string }), () => 0.5);
+    expect(res.success).toBe(false);
+  });
+});
+
+describe('巡查肅貪 — clawback scales with accumulated graft, and clears it', () => {
+  it('a graft-ridden city recovers far more gold and drives corruption down', () => {
+    const o = mkOfficer({ id: 'gov', stats: { politics: 80 } });
+    const clean = resolveInternalAffairs('anti-corruption', o, mkCity({ id: 'a', corruption: 0 } as Partial<City> & { id: string }), () => 0.5);
+    const dirty = resolveInternalAffairs('anti-corruption', o, mkCity({ id: 'b', corruption: 80 } as Partial<City> & { id: string }), () => 0.5);
+    expect(dirty.delta!.gold!).toBeGreaterThan(clean.delta!.gold!);
+    expect(dirty.delta!.corruption!).toBeLessThan(0); // graft cleared
+    expect(clean.delta!.corruption ?? 0).toBeCloseTo(0); // nothing to clear in a clean city
+  });
+});
+
+describe('滿倉轉用 — development at the tier cap is redirected, not wasted', () => {
+  it('capped agriculture banks surplus food instead of failing', () => {
+    const o = mkOfficer({ id: 'gov', stats: { politics: 80 } });
+    const res = resolveInternalAffairs('develop-agriculture', o, mkCity({ id: 'maxag', agriculture: 999, population: 50000 }), () => 0.5);
+    expect(res.success).toBe(true);
+    expect(res.delta!.agriculture ?? 0).toBe(0);
+    expect(res.delta!.food!).toBeGreaterThan(0);
+  });
+
+  it('capped defense drills the garrison (練度) instead of failing', () => {
+    const o = mkOfficer({ id: 'gov', stats: { politics: 80 } });
+    const res = resolveInternalAffairs('build-defense', o, mkCity({ id: 'maxdef', defense: 999, population: 50000 }), () => 0.5);
+    expect(res.success).toBe(true);
+    expect(res.delta!.drill!).toBeGreaterThan(0);
+  });
+});
+
+describe('施政預覽 — previewCommandGain (deterministic pre-dispatch estimate)', () => {
+  it('estimates a positive agriculture gain that respects the econ cap', () => {
+    const o = mkOfficer({ id: 'ad', stats: { politics: 90 } });
+    const pv = previewCommandGain('develop-agriculture', o, mkCity({ id: 'c', agriculture: 60, population: 200000 }));
+    expect(pv?.zh).toBe('農業');
+    expect(pv!.delta).toBeGreaterThan(0);
+  });
+
+  it('大農政 estimate is meaningfully larger than the basic drive', () => {
+    const o = mkOfficer({ id: 'ad', stats: { politics: 90 } });
+    const base = previewCommandGain('develop-agriculture', o, mkCity({ id: 'c', agriculture: 10, population: 200000 }))!.delta;
+    const major = previewCommandGain('major-agriculture', o, mkCity({ id: 'c', agriculture: 10, population: 200000 }))!.delta;
+    expect(major).toBeGreaterThan(base);
+  });
+
+  it('a stronger officer is estimated to out-perform a weaker one', () => {
+    const strong = mkOfficer({ id: 's', stats: { politics: 95 } });
+    const weak = mkOfficer({ id: 'w', stats: { politics: 50 } });
+    const city = mkCity({ id: 'c', commerce: 20, population: 200000 });
+    expect(previewCommandGain('develop-commerce', strong, city)!.delta)
+      .toBeGreaterThan(previewCommandGain('develop-commerce', weak, city)!.delta);
+  });
+
+  it('returns null for commands with no single previewable metric (治水/興学/鎮守)', () => {
+    const o = mkOfficer({ id: 'o', stats: { politics: 80, intelligence: 80, leadership: 80 } });
+    const city = mkCity({ id: 'c', population: 200000 });
+    expect(previewCommandGain('flood-control', o, city)).toBeNull();
+    expect(previewCommandGain('promote-learning', o, city)).toBeNull();
+    expect(previewCommandGain('garrison', o, city)).toBeNull();
+  });
+
+  it('recruit estimate matches the resolver for a representative season', () => {
+    const o = mkOfficer({ id: 'g', stats: { charisma: 80 } });
+    const city = mkCity({ id: 'c', population: 200000, loyalty: 80 });
+    const pv = previewCommandGain('recruit-troops', o, city);
+    const res = resolveInternalAffairs('recruit-troops', o, city, () => 0.5);
+    expect(pv?.zh).toBe('兵');
+    expect(pv!.delta).toBe(res.delta!.troops);
   });
 });

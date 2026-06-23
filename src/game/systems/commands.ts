@@ -160,6 +160,22 @@ export const COMMAND_DEFS: Record<CommandType, CommandDef> = {
     description:
       '治水 — Dredge channels and raise dikes by hand. Builds flood works that stack with the 堤防 levee toward flood immunity (cap 3), and the irrigation lifts agriculture a little. The labour path to taming the rivers when you lack a levee.',
   },
+  'military-farming': {
+    type: 'military-farming',
+    label: { en: 'Military Farms', zh: '屯田' },
+    stat: 'leadership',
+    goldCost: 250,
+    description:
+      '屯田 — Settle the garrison on state land to till it between campaigns (曹操 of Xuchang’s grain engine). Yields a block of FOOD without drawing a single civilian from the population, and the cleared fields nudge agriculture up. Output scales with Leadership (you are organising soldiers, not peasants) and the size of the standing garrison — an empty city has no hands to farm.',
+  },
+  'drill-troops': {
+    type: 'drill-troops',
+    label: { en: 'Drill Troops', zh: '練兵' },
+    stat: 'leadership',
+    goldCost: 300,
+    description:
+      '練兵 — Put the garrison through formation drills and weapons practice, raising the city’s 練度 (drill level). Well-drilled defenders fight harder on the walls (a defensive power bonus when besieged, up to +25% at full drill). Gain scales with Leadership; 練度 decays slowly if left to lapse. Complements the hands-on 演習 sparring battles, which also build 練度.',
+  },
   garrison: {
     type: 'garrison',
     label: { en: 'Garrison', zh: '鎮守' },
@@ -191,10 +207,15 @@ export interface CommandResult {
     gold: number;
     floodWorks: number;
     wallTier: 1 | 2 | 3;
+    corruption: number;
+    drill: number;
   }>;
   message: string;
   messageZh: string;
 }
+
+/** 協同施政 — diminishing weights for the 1st and 2nd assistant officer. */
+export const ASSIST_WEIGHTS = [0.5, 0.3] as const;
 
 export function resolveInternalAffairs(
   type: Exclude<InternalAffairsType, 'search' | 'garrison' | 'promote-learning'>,
@@ -203,6 +224,8 @@ export function resolveInternalAffairs(
   rng: () => number,
   bonus?: { internalMultiplier?: number; recruitBonus?: number; troopCapMul?: number },
   weather?: WeatherKind,
+  /** 協同施政 — assistants pouring their season into this command (max 2 counted). */
+  assistants?: Officer[],
 ): CommandResult {
   const def = COMMAND_DEFS[type];
   // Trait multiplier (diligent +20%, lazy −20%, specialist +20% for matching
@@ -213,7 +236,14 @@ export function resolveInternalAffairs(
   const titleMul = type === 'recruit-troops'
     ? 1 + (bonus?.recruitBonus ?? 0)
     : (bonus?.internalMultiplier ?? 1);
-  const statValue = Math.round(officer.stats[def.stat] * traitMul * titleMul);
+  // 協同施政 — each assistant adds a diminishing fraction of their own trait-
+  // adjusted stat for this command, so a strong second hand meaningfully lifts
+  // the result without making "stack everyone on one task" strictly optimal.
+  let assistBonus = 0;
+  (assistants ?? []).slice(0, ASSIST_WEIGHTS.length).forEach((a, i) => {
+    assistBonus += a.stats[def.stat] * internalAffairsMultiplier(a, type) * ASSIST_WEIGHTS[i];
+  });
+  const statValue = Math.round(officer.stats[def.stat] * traitMul * titleMul + assistBonus);
 
   const size = citySize(city);
   const cap = cityStatCap(city);      // defense ceiling
@@ -232,16 +262,23 @@ export function resolveInternalAffairs(
         };
       }
       const gain = applyDevelopment(city.agriculture, statValue, rng, econCap);
-      const econCapHit = city.agriculture + gain >= econCap && gain === 0;
+      // 倉廩既盈 — agriculture already maxed for this tier: the officer's season
+      // isn't wasted, the surplus harvest is laid up as FOOD instead of left to
+      // rot. A reason to keep a top administrator on the land past the cap.
+      if (city.agriculture + gain >= econCap && gain === 0) {
+        const surplus = (developmentGain(statValue, rng) + 1) * 30;
+        return {
+          success: true,
+          delta: { food: surplus },
+          message: `${officer.name.en}: Agriculture at ${size.name.zh}'s cap (${econCap}); banked the surplus harvest (+${surplus} food).`,
+          messageZh: `${officer.name.zh}:農業已達${size.name.zh}上限 (${econCap}),積餘糧入倉(糧 +${surplus})。`,
+        };
+      }
       return {
         success: gain > 0,
         delta: { agriculture: gain },
-        message: econCapHit
-          ? `${officer.name.en}: Agriculture already at ${size.name.zh}'s cap (${econCap}). Promote the city first.`
-          : `${officer.name.en} raised Agriculture by ${gain} (now ${city.agriculture + gain}/${econCap}).`,
-        messageZh: econCapHit
-          ? `${officer.name.zh}:農業已達${size.name.zh}上限 (${econCap}),需先升城。`
-          : `${officer.name.zh}勸農 +${gain} (現 ${city.agriculture + gain}/${econCap})。`,
+        message: `${officer.name.en} raised Agriculture by ${gain} (now ${city.agriculture + gain}/${econCap}).`,
+        messageZh: `${officer.name.zh}勸農 +${gain} (現 ${city.agriculture + gain}/${econCap})。`,
       };
     }
     case 'develop-commerce': {
@@ -256,16 +293,22 @@ export function resolveInternalAffairs(
         };
       }
       const gain = applyDevelopment(city.commerce, statValue, rng, econCap);
-      const econCapHit = city.commerce + gain >= econCap && gain === 0;
+      // 市集既盛 — commerce maxed for this tier: the officer works the markets for
+      // a one-off windfall of GOLD instead of a wasted season.
+      if (city.commerce + gain >= econCap && gain === 0) {
+        const windfall = (developmentGain(statValue, rng) + 1) * 25;
+        return {
+          success: true,
+          delta: { gold: windfall },
+          message: `${officer.name.en}: Commerce at ${size.name.zh}'s cap (${econCap}); worked the markets for +${windfall}g.`,
+          messageZh: `${officer.name.zh}:商業已達${size.name.zh}上限 (${econCap}),經市得利(金 +${windfall})。`,
+        };
+      }
       return {
         success: gain > 0,
         delta: { commerce: gain },
-        message: econCapHit
-          ? `${officer.name.en}: Commerce already at ${size.name.zh}'s cap (${econCap}).`
-          : `${officer.name.en} raised Commerce by ${gain} (now ${city.commerce + gain}/${econCap}).`,
-        messageZh: econCapHit
-          ? `${officer.name.zh}:商業已達${size.name.zh}上限 (${econCap})。`
-          : `${officer.name.zh}興商 +${gain} (現 ${city.commerce + gain}/${econCap})。`,
+        message: `${officer.name.en} raised Commerce by ${gain} (now ${city.commerce + gain}/${econCap}).`,
+        messageZh: `${officer.name.zh}興商 +${gain} (現 ${city.commerce + gain}/${econCap})。`,
       };
     }
     case 'build-defense': {
@@ -280,16 +323,22 @@ export function resolveInternalAffairs(
         };
       }
       const gain = applyDevelopment(city.defense, statValue, rng, cap);
-      const capHit = city.defense + gain >= cap && gain === 0;
+      // 城堅而閱武 — walls maxed for this tier: the work turns to drilling the
+      // garrison on the ramparts, a touch of 練度 instead of a wasted season.
+      if (city.defense + gain >= cap && gain === 0) {
+        const drillGain = Math.max(1, Math.floor(statValue / 25));
+        return {
+          success: true,
+          delta: { drill: drillGain },
+          message: `${officer.name.en}: Defense at ${size.name.zh}'s cap (${cap}); drilled the garrison on the walls (+${drillGain} drill).`,
+          messageZh: `${officer.name.zh}:城防已達${size.name.zh}上限 (${cap}),轉而閱武練兵(練度 +${drillGain})。`,
+        };
+      }
       return {
         success: gain > 0,
         delta: { defense: gain },
-        message: capHit
-          ? `${officer.name.en}: Defense already at ${size.name.zh}'s cap (${cap}).`
-          : `${officer.name.en} reinforced Defense by ${gain} (now ${city.defense + gain}/${cap}).`,
-        messageZh: capHit
-          ? `${officer.name.zh}:城防已達${size.name.zh}上限 (${cap})。`
-          : `${officer.name.zh}築城 +${gain} (現 ${city.defense + gain}/${cap})。`,
+        message: `${officer.name.en} reinforced Defense by ${gain} (now ${city.defense + gain}/${cap}).`,
+        messageZh: `${officer.name.zh}築城 +${gain} (現 ${city.defense + gain}/${cap})。`,
       };
     }
     case 'recruit-troops': {
@@ -361,17 +410,83 @@ export function resolveInternalAffairs(
       };
     }
     case 'anti-corruption': {
-      // 巡查肅貪 — claw back embezzled funds (scales with how much wealth flows
-      // through the city → more graft to recover) and restore public faith. The
-      // loyalty win ignores the 撫民 taper, so it tops a rich city off; the gold
-      // recovered typically more than repays the 200 inspection cost.
-      const recovered = Math.floor(city.commerce * 2 + statValue * 3);
+      // 巡查肅貪 — audit the clerks and claw back the embezzled hoard. The longer
+      // a wealthy city goes unaudited the more 貪腐 piles up (see City.corruption,
+      // accrued each season in resolution.ts), and the bigger the clawback when
+      // you finally sweep it. A capable inspector also drives corruption back
+      // down toward zero. The loyalty win ignores the 撫民 taper, so it tops a
+      // rich city off; the gold recovered repays the inspection many times over.
+      const graft = city.corruption ?? 0;
+      const recovered = Math.floor(city.commerce * 1.5 + statValue * 2 + graft * 8 + graft * city.commerce * 0.15);
       const loyaltyGain = Math.min(100 - city.loyalty, developmentGain(statValue, rng));
+      // A sweep never fully eradicates entrenched graft in one pass — an able
+      // official (high 政治) clears more of it.
+      const cleared = Math.min(graft, Math.max(8, Math.round(statValue / 6)));
+      const graftNote = graft > 0 ? ` (貪腐 −${cleared})` : '';
       return {
         success: true,
-        delta: { gold: recovered, loyalty: loyaltyGain },
-        message: `${officer.name.en} 巡查肅貪: clawed back ${recovered}g of graft, Loyalty +${loyaltyGain} (now ${city.loyalty + loyaltyGain}).`,
-        messageZh: `${officer.name.zh}巡查肅貪:追贓 ${recovered} 金,民心大快,民忠 +${loyaltyGain} (現 ${city.loyalty + loyaltyGain})。`,
+        delta: { gold: recovered, loyalty: loyaltyGain, corruption: -cleared },
+        message: `${officer.name.en} 巡查肅貪: clawed back ${recovered}g of graft${graft > 0 ? ` (corruption −${cleared})` : ''}, Loyalty +${loyaltyGain} (now ${city.loyalty + loyaltyGain}).`,
+        messageZh: `${officer.name.zh}巡查肅貪:追贓 ${recovered} 金${graftNote},民心大快,民忠 +${loyaltyGain} (現 ${city.loyalty + loyaltyGain})。`,
+      };
+    }
+    case 'military-farming': {
+      // 屯田 — settle the garrison on state land to till it. Food yield scales
+      // with the standing garrison (more soldier-farmers) and Leadership
+      // (organising them), and draws NO civilians from the population. The
+      // cleared fields also nudge agriculture up a touch.
+      const hands = Math.sqrt(Math.max(0, city.troops));
+      const foodGain = Math.round(hands * (8 + statValue * 0.15));
+      if (foodGain <= 0) {
+        return {
+          success: false,
+          delta: {},
+          message: `${officer.name.en} 屯田: no garrison here to work the land.`,
+          messageZh: `${officer.name.zh}屯田:城中無兵可耕。`,
+        };
+      }
+      // 兵怨逃屯 — forcing a near-mutinous garrison (loyalty < 35) to farm breeds
+      // resentment; some desert the drudgery and the harvest comes in thin.
+      if (city.loyalty < 35 && rng() < 0.2) {
+        const deserters = Math.min(city.troops, Math.round(hands * 2));
+        const thinFood = Math.round(foodGain * 0.5);
+        return {
+          success: false,
+          delta: { food: thinFood, troops: -deserters },
+          message: `${officer.name.en} 屯田: the restive garrison balked at the drudgery — ${deserters} deserted, only ${thinFood} food gathered.`,
+          messageZh: `${officer.name.zh}屯田:軍心不穩,士卒怨耕逃散 ${deserters} 人,僅得糧 ${thinFood}。`,
+        };
+      }
+      const irrigation = Math.min(Math.max(0, econCap - city.agriculture), Math.floor(statValue / 30));
+      return {
+        success: true,
+        delta: { food: foodGain, agriculture: irrigation },
+        message: `${officer.name.en} 屯田: the garrison tilled state land (+${foodGain} food${irrigation ? `, Agriculture +${irrigation}` : ''}; no population drawn).`,
+        messageZh: `${officer.name.zh}屯田:軍士耕屯(糧 +${foodGain}${irrigation ? `,農業 +${irrigation}` : ''};不耗民口)。`,
+      };
+    }
+    case 'drill-troops': {
+      // 練兵 — formation drills raise the city's 練度 toward 100, tapering near
+      // the top (the last increments of discipline come hardest). 練度 lifts
+      // defensive power in a siege (see cityDrillDefenseMultiplier in combat.ts)
+      // and decays slowly each season if left to lapse.
+      const cur = city.drill ?? 0;
+      const room = 100 - cur;
+      if (room <= 0) {
+        return {
+          success: false,
+          delta: {},
+          message: `${officer.name.en} 練兵: the garrison is already at peak drill (練度 100).`,
+          messageZh: `${officer.name.zh}練兵:守軍練度已臻極致 (100)。`,
+        };
+      }
+      const taper = Math.min(1, room / 50);
+      const gain = Math.min(room, Math.max(1, Math.round((Math.floor(statValue / 8) + 2) * taper)));
+      return {
+        success: true,
+        delta: { drill: gain },
+        message: `${officer.name.en} 練兵: drilled the garrison, 練度 ${cur} → ${cur + gain}.`,
+        messageZh: `${officer.name.zh}練兵:操演守軍,練度 ${cur} → ${cur + gain}。`,
       };
     }
     case 'flood-control': {
@@ -397,6 +512,16 @@ export function resolveInternalAffairs(
       };
     }
     case 'major-agriculture': {
+      const mishap = civicMishap(city, statValue, rng, weather, 0.35);
+      if (mishap !== null) {
+        const setback = Math.max(-city.agriculture, mishap * 2);
+        return {
+          success: false,
+          delta: { agriculture: setback },
+          message: `${officer.name.en} 大農政: the great works were undone by blight/flood — Agriculture ${setback}.`,
+          messageZh: `${officer.name.zh}大農政遇蝗澇之災,功虧一簣,農業 ${setback}。`,
+        };
+      }
       const gain = Math.min(econCap - city.agriculture, applyDevelopment(city.agriculture, statValue, rng, econCap) * 3);
       return {
         success: gain > 0,
@@ -406,6 +531,16 @@ export function resolveInternalAffairs(
       };
     }
     case 'major-commerce': {
+      const mishap = civicMishap(city, statValue, rng, weather, 0.35);
+      if (mishap !== null) {
+        const setback = Math.max(-city.commerce, mishap * 2);
+        return {
+          success: false,
+          delta: { commerce: setback },
+          message: `${officer.name.en} 大商政: a market crash / great fire gutted the wards — Commerce ${setback}.`,
+          messageZh: `${officer.name.zh}大商政遇市崩火患,商業 ${setback}。`,
+        };
+      }
       const gain = Math.min(econCap - city.commerce, applyDevelopment(city.commerce, statValue, rng, econCap) * 3);
       return {
         success: gain > 0,
@@ -415,6 +550,16 @@ export function resolveInternalAffairs(
       };
     }
     case 'major-defense': {
+      const mishap = civicMishap(city, statValue, rng, weather, 0.35);
+      if (mishap !== null) {
+        const setback = Math.max(-city.defense, mishap * 2);
+        return {
+          success: false,
+          delta: { defense: setback },
+          message: `${officer.name.en} 大築城: the great works collapsed / burned — Defense ${setback}.`,
+          messageZh: `${officer.name.zh}大築城遇坍塌失火,城防 ${setback}。`,
+        };
+      }
       const gain = Math.min(cap - city.defense, applyDevelopment(city.defense, statValue, rng, cap) * 3);
       return {
         success: gain > 0,
@@ -490,24 +635,98 @@ function applyDevelopment(current: number, stat: number, rng: () => number, cap:
   return Math.min(cap - current, developmentGain(stat, rng));
 }
 
+/** Expected (mean) development gain — the deterministic, no-RNG companion to
+ *  developmentGain, for pre-dispatch previews. Mirrors its base+elite tail,
+ *  folds in the mean of the 0–1 variance roll and the crit chance, ≥1. */
+function expectedDevGain(stat: number): number {
+  const base = Math.floor(stat / 14);
+  const elite = Math.floor(Math.max(0, stat - 70) / 10);
+  const mean = base + elite + 1 + 0.5; // +0.5 = E[⌊rng×2⌋]
+  const crit = 0.06 + Math.max(0, stat - 70) * 0.003;
+  return Math.max(1, Math.round(mean * (1 + crit * 0.5)));
+}
+
+/** 施政預覽 — a deterministic, no-mishap, expected-value estimate of a command's
+ *  primary-metric gain for one officer, for the pre-dispatch UI (the 3D building
+ *  card and the officer picker). Returns the metric label + estimated delta, or
+ *  null for commands whose effect isn't a single previewable number (賑濟/治水/
+ *  招撫流民/興学/巡查肅貪/鎮守/城壁強化/屯田/人材探訪). `bonus` folds in civic-title
+ *  / building multipliers when the caller has them; omit for a trait-only estimate. */
+export function previewCommandGain(
+  type: InternalAffairsType,
+  officer: Officer,
+  city: City,
+  bonus?: { internalMultiplier?: number; recruitBonus?: number; troopCapMul?: number },
+): { zh: string; en: string; delta: number } | null {
+  const def = COMMAND_DEFS[type];
+  const traitMul = internalAffairsMultiplier(officer, type);
+  const titleMul = type === 'recruit-troops'
+    ? 1 + (bonus?.recruitBonus ?? 0)
+    : (bonus?.internalMultiplier ?? 1);
+  const statValue = Math.round(officer.stats[def.stat] * traitMul * titleMul);
+  const econCap = cityEconCap(city);
+  const cap = cityStatCap(city);
+  const exp = expectedDevGain(statValue);
+
+  switch (type) {
+    case 'develop-agriculture':
+      return { zh: '農業', en: 'Agri', delta: Math.max(0, Math.min(econCap - city.agriculture, exp)) };
+    case 'major-agriculture':
+      return { zh: '農業', en: 'Agri', delta: Math.max(0, Math.min(econCap - city.agriculture, exp * 3)) };
+    case 'develop-commerce':
+      return { zh: '商業', en: 'Comm', delta: Math.max(0, Math.min(econCap - city.commerce, exp)) };
+    case 'major-commerce':
+      return { zh: '商業', en: 'Comm', delta: Math.max(0, Math.min(econCap - city.commerce, exp * 3)) };
+    case 'build-defense':
+      return { zh: '城防', en: 'Def', delta: Math.max(0, Math.min(cap - city.defense, exp)) };
+    case 'major-defense':
+      return { zh: '城防', en: 'Def', delta: Math.max(0, Math.min(cap - city.defense, exp * 3)) };
+    case 'improve-loyalty': {
+      const room = 100 - city.loyalty;
+      const taper = Math.min(1, room / 40);
+      return { zh: '民忠', en: 'Loy', delta: room > 0 ? Math.max(1, Math.round(exp * taper)) : 0 };
+    }
+    case 'drill-troops': {
+      const room = 100 - (city.drill ?? 0);
+      const taper = Math.min(1, room / 50);
+      return { zh: '練度', en: 'Drill', delta: room > 0 ? Math.max(1, Math.round((Math.floor(statValue / 8) + 2) * taper)) : 0 };
+    }
+    case 'recruit-troops': {
+      const size = citySize(city);
+      const max = Math.floor(statValue * 50) + 800;
+      const sizeMax = Math.floor((size.troopCap * (bonus?.troopCapMul ?? 1)) / 8);
+      return { zh: '兵', en: 'Troops', delta: Math.max(0, Math.min(max, sizeMax, Math.floor(city.population / 60))) };
+    }
+    default:
+      return null;
+  }
+}
+
 /**
  * 災異 — the downside that mirrors 良吏豐政. A restive, poorly-run city can
  * suffer a setback instead of progress (蝗災/旱 on the fields, 失火 on the
  * works). Risk is ~4% in a contented city, climbing toward ~14% as loyalty
  * falls below 60; a capable official (政治/魅力 > 70) manages it back down.
- * Only the deliberate, hands-on basic pushes carry this risk — the costly 大政
- * projects are assumed to be run with enough oversight to stay safe.
+ * The deliberate, hands-on basic pushes carry the full risk; the costly 大政
+ * projects run with more oversight (riskMul ≈ 0.35) but are NOT immune — a big
+ * project that goes wrong fails spectacularly.
  * Returns a negative setback (−1..−3), or null for "no disaster".
  */
-function civicMishap(city: City, stat: number, rng: () => number, weather?: WeatherKind): number | null {
+function civicMishap(
+  city: City,
+  stat: number,
+  rng: () => number,
+  weather?: WeatherKind,
+  riskMul = 1,
+): number | null {
   // 旱 — drought parches the fields and dries the timber: blight/fire are more
   // likely. Rain, by contrast, dampens fire risk slightly.
   const weatherRisk = weather === 'drought' ? 0.06 : weather === 'rain' ? -0.01 : 0;
-  const risk = 0.04
+  const risk = (0.04
     + Math.max(0, 60 - city.loyalty) * 0.0016
     - Math.max(0, stat - 70) * 0.0008
-    + weatherRisk;
-  if (rng() >= Math.max(0.01, risk)) return null;
+    + weatherRisk) * riskMul;
+  if (rng() >= Math.max(0.005, risk)) return null;
   return -(1 + Math.floor(rng() * 3));
 }
 

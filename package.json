@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "docs:catalog": "node --import tsx scripts/gen-catalog.ts",
+    "soak": "node --import tsx scripts/soak-internal-affairs.ts",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build"

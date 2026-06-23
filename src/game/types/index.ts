@@ -1,5 +1,6 @@
 export * from './common';
 export * from './command';
+export * from './popup';
 export * from './expedition';
 export * from './foreignRealm';
 export * from './diplomacy';

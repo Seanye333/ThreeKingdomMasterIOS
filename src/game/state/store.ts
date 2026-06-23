@@ -47,7 +47,7 @@ import { marchDurationFor } from '../data/cities';
 import { terrainRoute, positionAlongRoute, marchDestCoords } from '../data/territories';
 import { cityPos, CITY_GEO_OVERRIDES } from '../data/cityGeo';
 import { provisionNeeded, convoyCapacity, planConvoy } from '../systems/convoy';
-import { citySize, cityMeetsSize, reassignLostCapitals, LOST_CAPITAL_LOYALTY_PENALTY } from '../systems/citySize';
+import { citySize, citySizeRank, cityMeetsSize, reassignLostCapitals, LOST_CAPITAL_LOYALTY_PENALTY } from '../systems/citySize';
 import { buildingBonuses } from '../systems/buildings';
 import { BUILDING_CATEGORY, BUILDING_PREREQ, BUILDING_MIN_SIZE } from '../data/buildings';
 import { cityAffinity } from '../data/specialties';
@@ -313,6 +313,8 @@ interface GameStore extends GameState {
     cityId: EntityId,
     type: InternalAffairsType,
     officerId: EntityId,
+    /** 協同施政 — up to 2 assistant officers (paid once, diminishing boost). */
+    assistantOfficerIds?: EntityId[],
   ) => { ok: boolean; reason?: string };
   issueMarch: (
     sourceId: EntityId,
@@ -414,6 +416,10 @@ interface GameStore extends GameState {
   demolishDefenseStructure: (cityId: EntityId, slot: number) => void;
   endSeason: () => void;
   dismissReport: () => void;
+  /** 慶典彈窗 — enqueue a celebratory image/video popup; shown one at a time. */
+  pushPopup: (event: import('../types').PopupEvent) => void;
+  /** Dismiss the front popup (advance the queue). */
+  dismissPopup: () => void;
   dismissBattleTheater: () => void;
   recruitOfficer: (
     officerId: EntityId,
@@ -1168,7 +1174,7 @@ export const useGameStore = create<GameStore>()(
         return detachId;
       },
 
-      issueCommand: (cityId, type, officerId) => {
+      issueCommand: (cityId, type, officerId, assistantOfficerIds) => {
         const state = get();
         const city = state.cities[cityId];
         const officer = state.officers[officerId];
@@ -1188,23 +1194,48 @@ export const useGameStore = create<GameStore>()(
         if (city.gold < def.goldCost)
           return { ok: false, reason: 'not enough gold' };
 
+        // 協同施政 — validate up to 2 assistants: idle officers in this city,
+        // not the lead, not already busy/training, deduped.
+        const trainingIds = new Set(state.pendingTrainings.map((t) => t.officerId));
+        const assistants: typeof officer[] = [];
+        const seen = new Set<EntityId>([officerId]);
+        for (const aid of assistantOfficerIds ?? []) {
+          if (assistants.length >= 2) break;
+          if (seen.has(aid)) continue;
+          const a = state.officers[aid];
+          if (!a || a.locationCityId !== cityId || a.forceId !== city.ownerForceId) continue;
+          if (a.status !== 'idle' || a.task) continue;
+          if (state.pendingCommands[aid] || trainingIds.has(aid)) continue;
+          seen.add(aid);
+          assistants.push(a);
+        }
+        const assistIds = assistants.map((a) => a.id);
+
+        const nextOfficers = {
+          ...state.officers,
+          [officerId]: { ...officer, task: type },
+        };
+        for (const a of assistants) nextOfficers[a.id] = { ...a, task: type };
+
         set({
           cities: {
             ...state.cities,
             [cityId]: { ...city, gold: city.gold - def.goldCost },
           },
-          officers: {
-            ...state.officers,
-            [officerId]: { ...officer, task: type },
-          },
+          officers: nextOfficers,
           pendingCommands: {
             ...state.pendingCommands,
-            [officerId]: { type, cityId, officerId },
+            [officerId]: {
+              type, cityId, officerId,
+              ...(assistIds.length ? { assistantOfficerIds: assistIds } : {}),
+            },
           },
         });
+        const assistZh = assistIds.length ? `(協同 ${assistants.map((a) => a.name.zh).join('、')})` : '';
+        const assistEn = assistIds.length ? ` (+${assistIds.length} assisting)` : '';
         get().notify(
-          `委派 · ${officer.name.zh}　${def.label.zh}（${city.name.zh}）`,
-          `Dispatched · ${officer.name.en} — ${def.label.en} (${city.name.en})`,
+          `委派 · ${officer.name.zh}　${def.label.zh}（${city.name.zh}）${assistZh}`,
+          `Dispatched · ${officer.name.en} — ${def.label.en} (${city.name.en})${assistEn}`,
         );
         return { ok: true };
       },
@@ -1752,6 +1783,13 @@ export const useGameStore = create<GameStore>()(
             if (x) officersUpdate[xId] = { ...x, task: null };
           }
         }
+        // 協同施政 — free the assistants too.
+        if (cmd.type !== 'march' && cmd.assistantOfficerIds) {
+          for (const xId of cmd.assistantOfficerIds) {
+            const x = state.officers[xId];
+            if (x) officersUpdate[xId] = { ...x, task: null };
+          }
+        }
 
         const nextArmies = { ...state.armies };
         delete nextArmies[officerKey];
@@ -2205,7 +2243,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             )?.id ?? null
           : null;
 
-        // Victory/defeat check
+        // Victory/defeat check — only a real player force is judged. In observe
+        // mode (playerForceId === null) the season tick just simulates history
+        // for the watcher; it must never resolve to victory/defeat (which would
+        // freeze the loop, since the observer owns 0 cities by definition).
         const totalCities = Object.values(result.cities).length;
         const playerCities = playerForceId
           ? Object.values(result.cities).filter(
@@ -2213,10 +2254,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             ).length
           : 0;
         let victoryStatus: VictoryStatus = state.victoryStatus;
-        if (playerCities === 0) {
-          victoryStatus = 'defeat';
-        } else if (playerCities === totalCities) {
-          victoryStatus = 'victory';
+        if (playerForceId) {
+          if (playerCities === 0) {
+            victoryStatus = 'defeat';
+          } else if (playerCities === totalCities) {
+            victoryStatus = 'victory';
+          }
         }
 
         // Capture battle details from this season into persistent history.
@@ -4018,9 +4061,30 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           if (Object.keys(govPatch).length > 0) postCities = { ...postCities, ...govPatch };
         }
 
+        // 升城慶典 — queue a celebratory popup for each player city that crossed
+        // UP a size tier this season (邑→鎮→城→大城→都).
+        const sizePopups: import('../types').PopupEvent[] = [];
+        for (const c of Object.values(postCities)) {
+          if (c.ownerForceId !== state.playerForceId) continue;
+          const before = state.cities[c.id];
+          if (!before || before.ownerForceId !== state.playerForceId) continue;
+          const a = citySize(c);
+          if (citySizeRank(a.id) > citySizeRank(citySize(before).id)) {
+            sizePopups.push({
+              key: `city-upgrade-${a.id}`,
+              media: 'image',
+              titleZh: `升格・${a.name.zh}`,
+              titleEn: `Risen to ${a.name.en}`,
+              captionZh: `${c.name.zh} 人口興旺,晉為「${a.name.zh}」`,
+              captionEn: `${c.name.en} has grown into a ${a.name.en}`,
+            });
+          }
+        }
+
         set({
           date: result.date,
           cities: postCities,
+          popupQueue: [...state.popupQueue, ...sizePopups],
           officers: officersWithMarchTask,
           marriageAlliances: allianceTick.alliances,
           forces: postForces,
@@ -4273,6 +4337,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       },
 
       dismissReport: () => set(() => ({ lastReport: null })),
+      pushPopup: (event) => set((s) => ({ popupQueue: [...s.popupQueue, event] })),
+      dismissPopup: () => set((s) => ({ popupQueue: s.popupQueue.slice(1) })),
 
       dismissBattleTheater: () => {
         const state = get();
@@ -5630,7 +5696,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           battleGeo: { x: tp.x, y: tp.y, bearing, anchorCol: 16, season: state.date.season },
         });
         battle.practice = true;
-        set({ tacticalBattle: battle, selectedCityId: cityId });
+        // 演習練兵 — hands-on sparring builds the garrison's 練度 (drill level),
+        // the same stat the 練兵 command raises (feeds defensive power in a real
+        // siege; see cityDrillDefenseMultiplier in combat.ts).
+        const drilled = Math.min(100, (city.drill ?? 0) + 3);
+        set({
+          tacticalBattle: battle,
+          selectedCityId: cityId,
+          cities: { ...state.cities, [cityId]: { ...city, drill: drilled } },
+        });
         return true;
       },
 
@@ -7467,6 +7541,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           cities: nextCities,
           forces: { ...state.forces, [force.id]: { ...force, capitalCityId: cityId } },
           capitalMoveUsed: true,
+          popupQueue: [...state.popupQueue, {
+            key: 'capital-set',
+            media: 'image',
+            titleZh: '遷都之喜',
+            titleEn: 'A New Capital',
+            captionZh: `${city.name.zh} 立為治所`,
+            captionEn: `${city.name.en} is now the seat of the realm`,
+          }],
         });
         const costNote = free ? '首遷免費' : `耗 ${cost} 金`;
         return { ok: true, message: `遷都${city.name.zh}!新都民心歸附(+5 忠),舊都失寵(−3 忠),${costNote}。` };

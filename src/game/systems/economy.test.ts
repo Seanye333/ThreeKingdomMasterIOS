@@ -150,4 +150,15 @@ describe('通貨膨脹 — inflation saps tax income', () => {
     // baseline unchanged when omitted
     expect(tickCityEconomy(c, 'spring', [], 'normal').goldIncome).toBe(none);
   });
+
+  it('貪腐 skims gold income; a clean city is the baseline, full graft ≈ −40%', () => {
+    const clean = tickCityEconomy(makeCity({ corruption: 0 }), 'spring', [], 'normal').goldIncome;
+    const dirty = tickCityEconomy(makeCity({ corruption: 50 }), 'spring', [], 'normal').goldIncome;
+    const rotten = tickCityEconomy(makeCity({ corruption: 100 }), 'spring', [], 'normal').goldIncome;
+    expect(dirty).toBeLessThan(clean);
+    expect(rotten).toBeLessThan(dirty);
+    expect(rotten).toBeCloseTo(clean * 0.6, 0); // 1 − 100/250 = 0.6
+    // omitted corruption matches an explicitly-clean city
+    expect(tickCityEconomy(makeCity(), 'spring', [], 'normal').goldIncome).toBe(clean);
+  });
 });

@@ -1150,6 +1150,19 @@ function decideCommand(
     }
   }
 
+  // 4.65 屯田 — a city with a hungry garrison settles its soldiers on state land:
+  // food without spending a single civilian. Keeps a large standing army fed —
+  // especially near the front, where armies mass and the larder runs thin. The
+  // food yield scales with the garrison, so it needs real troops to be worth it.
+  if (
+    city.troops >= 2000 &&
+    city.food < city.troops * 4 &&
+    canAfford(city, 'military-farming')
+  ) {
+    const o = bestForCommand(officersHere, 'leadership', 'military-farming', prefectId);
+    if (o) return internalDecision('military-farming', city, o);
+  }
+
   // 4.7 招撫流民 — a settled city with ample headroom under its 承載力 actively
   // recruits migrants to drive its population toward the next size tier (and the
   // tier unlocks that come with it). Stops once the city fills toward its
@@ -1198,6 +1211,21 @@ function decideCommand(
   ) {
     const o = bestBy(officersHere, 'politics', prefectId);
     if (o) return internalDecision('upgrade-wall', city, o);
+  }
+
+  // 4.93 練兵 — a front-line fortress with a real garrison drills its troops,
+  // building 練度 (defensive fighting power in a siege). Cheap insurance for a
+  // border bastion once its walls are seen to; gated on a garrison worth drilling
+  // and on the drill level having room to climb. Leadership-led.
+  if (
+    onFront &&
+    city.troops >= 3000 &&
+    (city.drill ?? 0) < 60 &&
+    city.loyalty >= 50 &&
+    canAfford(city, 'drill-troops')
+  ) {
+    const o = bestForCommand(officersHere, 'leadership', 'drill-troops', prefectId);
+    if (o) return internalDecision('drill-troops', city, o);
   }
 
   // 4.95 治水 — a calm rear city with spare gold raises hand-built flood works

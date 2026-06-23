@@ -8,6 +8,7 @@ import { WEATHER_LABEL, WIND_LABEL } from '../../game/systems/weather';
 import { MANDATE_LABEL } from '../../game/systems/mandate';
 import { CityPanel } from '../components/CityPanel';
 import { ActionToasts } from '../components/ActionToasts';
+import { CelebrationPopup } from '../components/CelebrationPopup';
 import { RelationshipBrowserModal } from '../components/RelationshipBrowserModal';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { SettingsModal } from '../components/SettingsModal';
@@ -765,6 +766,8 @@ export function MapScreen() {
       </Suspense>
       {/* 戰略層回饋 — order-confirmation toasts, top-centre */}
       <ActionToasts />
+      {/* 慶典彈窗 — celebratory image/video on milestones (升城/遷都…) */}
+      <CelebrationPopup />
       {/* Achievement toast — bottom-right when something just unlocked */}
       {recentAchievementUnlocks.length > 0 && (
         <div

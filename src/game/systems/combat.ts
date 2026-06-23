@@ -131,6 +131,28 @@ export function foreignAuxDefenseMultiplier(aux: number | undefined): number {
 }
 
 /**
+ * 練度 — a well-drilled garrison holds the walls harder. The 練兵 command and
+ * 演習 sparring build City.drill (0–100); each point adds 0.25% defensive power,
+ * up to +25% at full drill. Raw levies (drill 0) fight at face value.
+ */
+export function cityDrillDefenseMultiplier(drill: number | undefined): number {
+  const d = Math.max(0, Math.min(100, drill ?? 0));
+  if (d <= 0) return 1;
+  return 1 + d * 0.0025;
+}
+
+/**
+ * 練度減損 — a well-drilled garrison also dies less: disciplined ranks hold
+ * formation and take fewer casualties. Cuts defender losses up to −15% at full
+ * drill. Multiplies the defender's own-loss rate (so < 1 means fewer losses).
+ */
+export function cityDrillLossMultiplier(drill: number | undefined): number {
+  const d = Math.max(0, Math.min(100, drill ?? 0));
+  if (d <= 0) return 1;
+  return 1 - d * 0.0015;
+}
+
+/**
  * 威名 — a side's pooled prestige (虎將/名將/王佐 …) sharpens its battle power.
  * Uses the strongest single title's combatPowerMul rather than stacking, so a
  * roster of famous names reads as "led by a legend", capped near +12%.
@@ -583,7 +605,8 @@ export function resolveBattle(
       aSkillEffects.enemyLossMultiplier *
       dEliteOwnLoss *
       (stratEffect.enemyLossMul ?? 1) *
-      dTraitMods.lossMul,
+      dTraitMods.lossMul *
+      cityDrillLossMultiplier(ctx?.city?.drill),
   );
 
   const attackerLosses = Math.floor(attacker.troops * aLossRate);
@@ -1019,7 +1042,7 @@ export function handleMarch(
       family: ctx.family,
       runtimeBonds: ctx.runtimeBonds,
       attackerTitlePowerMul: attackerTitlePowerMul * siegeMods.attackerPowerMul,
-      defenderTitlePowerMul: defenderTitlePowerMul * siegeMods.defenderPowerMul * terrainDefMul * foreignAuxDefenseMultiplier(target.foreignAux),
+      defenderTitlePowerMul: defenderTitlePowerMul * siegeMods.defenderPowerMul * terrainDefMul * foreignAuxDefenseMultiplier(target.foreignAux) * cityDrillDefenseMultiplier(target.drill),
       attackerCasusBelliMul,
       defenderCasusBelliMul,
       duelChanceMul: ctx.duelChanceMul ?? 1,

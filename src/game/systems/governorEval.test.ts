@@ -32,6 +32,15 @@ describe('scoreGovernorSeat + gradeFromScore', () => {
     expect(gradeFromScore(neglected)).toBe('xia');
     expect(thriving).toBeGreaterThan(neglected);
   });
+
+  it('graft on the watch drags the review score down', () => {
+    const base = mkCity({ gold: 9000, food: 14000, troops: 25000, loyalty: 95 });
+    const gov = mkGov({ stats: { leadership: 70, war: 60, intelligence: 80, politics: 95, charisma: 70 } });
+    const clean = scoreGovernorSeat({ ...base, corruption: 0 } as City, gov);
+    const dirty = scoreGovernorSeat({ ...base, corruption: 100 } as City, gov);
+    expect(dirty).toBeLessThan(clean);
+    expect(clean - dirty).toBeCloseTo(15, 0); // up to −15 at full corruption
+  });
 });
 
 describe('evaluateGovernors', () => {
@@ -65,5 +74,13 @@ describe('evaluateGovernors', () => {
   it('honours the forceId filter', () => {
     const r = evaluateGovernors({ appointments: appts, cities, officers, forceId: 'wei' });
     expect(r.reviews).toHaveLength(0);
+  });
+
+  it('grooms a 上考 steward with XP (steered to 政治)', () => {
+    const r = evaluateGovernors({ appointments: appts, cities, officers, rng: () => 0.5 });
+    // 'able' scored 上 → gains XP; the entry advertises it.
+    const ableReview = r.reviews.find((x) => x.officerId === 'able')!;
+    expect(ableReview.grade).toBe('shang');
+    expect(r.entries.find((e) => e.textZh.includes('歷練 +'))).toBeTruthy();
   });
 });

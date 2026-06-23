@@ -28,6 +28,8 @@ import { tickDiplomacy, applyCoalitionPressure } from './diplomacy';
 import { tickCityEconomy, tradeTreatyGrants } from './economy';
 import { buildingBonuses } from './buildings';
 import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
+import { corruptionAccrualMultiplier } from './traitEffects';
+import { rollCivicEvents } from './civicEvents';
 import { settleRefugees, REFUGEE_SHED_FRAC } from './refugees';
 import { stepConvoys, resolveConvoyRaids, provisionNeeded, consumeRations, type Convoy } from './convoy';
 import { stepExpeditions, expeditionSpeedMul } from './expedition';
@@ -1170,13 +1172,21 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       recruitBonus: baseRecruitBonus + (cityBB.recruitMul - 1),
       troopCapMul: cityBB.troopCapMul,
     };
-    const result = resolveInternalAffairs(cmd.type, officer, city, rng, finalBonus, input.weather?.kind);
+    // 協同施政 — assistants pour their season into the lead's command (paid
+    // once at issue). They boost the effective stat and earn their own XP.
+    const assistants = (cmd.assistantOfficerIds ?? [])
+      .map((aid) => officers[aid])
+      .filter((a): a is Officer => !!a);
+    const result = resolveInternalAffairs(cmd.type, officer, city, rng, finalBonus, input.weather?.kind, assistants);
     cities[city.id] = applyDelta(city, result.delta);
+    const assistNote = assistants.length
+      ? { text: ` (協同 ${assistants.map((a) => a.name.en).join(', ')})`, zh: `(協同 ${assistants.map((a) => a.name.zh).join('、')})` }
+      : { text: '', zh: '' };
     entries.push({
       cityId: city.id,
       kind: result.success ? 'command-success' : 'command-failure',
-      text: result.message,
-      textZh: result.messageZh,
+      text: result.message + assistNote.text,
+      textZh: result.messageZh + assistNote.zh,
     });
     // 武功 — civicWorks bump on successful internal affairs
     if (result.success) bumpDeed(cmd.officerId, { civicWorks: 1 });
@@ -1186,6 +1196,14 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const iaXp = awardInternalAffairsXp(officers[cmd.officerId] ?? officer, cmd.type, result.success, rng, cityBB.xpMul);
     officers[cmd.officerId] = iaXp.officer;
     entries.push(...iaXp.entries);
+    // 襄助歷練 — each assistant earns the internal-affairs XP trickle too (they
+    // did the work alongside the lead), steered toward the command's stat.
+    for (const a of assistants) {
+      const axp = awardInternalAffairsXp(officers[a.id] ?? a, cmd.type, result.success, rng, cityBB.xpMul);
+      officers[a.id] = axp.officer;
+      entries.push(...axp.entries);
+      if (result.success) bumpDeed(a.id, { civicWorks: 1 });
+    }
   }
 
   // Phase 3f-ter — 名將帶新兵. A 金牌+ officer stationed in a city seasons the
@@ -1298,15 +1316,55 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const cap = citySize(city).troopCap;
       capitalGuard = Math.max(0, Math.min(Math.round(city.population * 0.004), cap - troopsAfterDesertion));
     }
+    // 貪腐滋生 — graft creeps up each season in cities left unaudited, faster the
+    // wealthier and busier the city (more coin flowing → more to skim). A clean
+    // administrator (high 政治 present) slows the rot; a venal/upright officer
+    // posted here further speeds/slows it (corruptionAccrualMultiplier). The
+    // 巡查肅貪 command claws it back. Only owned cities accrue it.
+    const bestPolitics = cityOfficers.reduce((m, o) => Math.max(m, o.stats.politics), 0);
+    // A capable administrator SLOWS graft but can't eliminate it — the politics
+    // offset is capped at 0.6, so a wealthy city left to coast still accrues a
+    // slow drip even under a top official (it just takes much longer to bite).
+    const corruptionAccrual = city.ownerForceId
+      ? Math.max(0, 0.6 + city.commerce / 120 - Math.min(0.6, bestPolitics / 130))
+        * corruptionAccrualMultiplier(cityOfficers)
+      : 0;
+    const nextCorruption = corruptionAccrual > 0
+      ? Math.min(100, (city.corruption ?? 0) + corruptionAccrual)
+      : (city.corruption ?? 0);
+    // 貪墨生怨 — entrenched graft (≥60) breeds public resentment: a small loyalty
+    // bite on top of the gold it already skims, so it can't be ignored forever.
+    const corruptionLoyaltyBite = nextCorruption >= 60 ? -1 : 0;
+    // 練度弛 — drill fades when the garrison isn't kept at it (about 2/season).
+    const nextDrill = city.drill ? Math.max(0, city.drill - 2) : city.drill;
     const updated: City = {
       ...city,
       gold: city.gold + tick.goldIncome + territoryGold,
       food: Math.max(0, city.food + tick.foodIncome - tick.foodUpkeep),
       troops: troopsAfterDesertion + capitalGuard,
-      loyalty: Math.max(0, Math.min(100, city.loyalty + tick.loyaltyDelta + capitalLoyalty)),
+      loyalty: Math.max(0, Math.min(100, city.loyalty + tick.loyaltyDelta + capitalLoyalty + corruptionLoyaltyBite)),
+      corruption: city.ownerForceId ? nextCorruption : city.corruption,
+      drill: nextDrill,
       population: Math.max(1000, city.population + tick.populationDelta),
     };
     cities[city.id] = updated;
+    // 貪腐告警 — warn the player when graft crosses a threshold upward in one of
+    // their cities, so the hidden gold drain doesn't go unnoticed (mirrors the
+    // loyalty-crisis warnings). Fires once per crossing, player force only.
+    if (city.ownerForceId && city.ownerForceId === input.playerForceId) {
+      const was = city.corruption ?? 0;
+      for (const thr of [50, 75]) {
+        if (was < thr && nextCorruption >= thr) {
+          entries.push({
+            cityId: city.id,
+            kind: 'command-failure',
+            text: `${city.name.en}: corruption has reached ${Math.round(nextCorruption)} — graft is bleeding the treasury. Order 巡查肅貪 to claw it back.`,
+            textZh: `${city.name.zh}：貪腐已達 ${Math.round(nextCorruption)} —— 歲入正被蠹蝕,宜遣員巡查肅貪。`,
+          });
+          break;
+        }
+      }
+    }
     if (capitalGuard > 0) {
       entries.push({
         cityId: city.id,
@@ -1388,6 +1446,21 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         textZh: `${city.name.zh}：因缺糧，逃兵 ${tick.desertion} 名。`,
       });
     }
+  }
+
+  // 內政事件 — turn the internal-affairs stats into moments: a graft scandal in
+  // a corruption-ridden city (貪腐醜聞), a grand review of a drilled garrison
+  // (校場揚威), a bumper soldier-farm harvest (屯田豐收). Runs on the post-economy
+  // cities so this season's accrued corruption/drill feed the rolls.
+  {
+    const civic = rollCivicEvents({
+      cities,
+      season: input.date.season,
+      rng,
+      playerForceId: input.playerForceId,
+    });
+    for (const [cid, c] of Object.entries(civic.cities)) cities[cid] = c;
+    entries.push(...civic.entries);
   }
 
   // 流民安置 — fold this season's shed people into the pool, then let welcoming
@@ -1844,6 +1917,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         appointments: input.appointments,
         cities,
         officers,
+        rng,
       });
       officers = kaoke.officers;
       for (const e of kaoke.entries) {
@@ -2203,6 +2277,8 @@ function applyDelta(
     gold: number;
     floodWorks: number;
     wallTier: 1 | 2 | 3;
+    corruption: number;
+    drill: number;
   }>,
 ): City {
   // Per-command logic already clamps to the city-tier cap (cityEconCap for
@@ -2220,6 +2296,12 @@ function applyDelta(
     gold: Math.max(0, city.gold + (delta.gold ?? 0)),
     floodWorks: delta.floodWorks ?? city.floodWorks,
     wallTier: delta.wallTier ?? city.wallTier,
+    corruption: delta.corruption !== undefined
+      ? clamp((city.corruption ?? 0) + delta.corruption, 0, 100)
+      : city.corruption,
+    drill: delta.drill !== undefined
+      ? clamp((city.drill ?? 0) + delta.drill, 0, 100)
+      : city.drill,
   };
 }
 

@@ -39,4 +39,17 @@ describe('planGovernorCommand', () => {
   it('returns null when the treasury cannot fund anything', () => {
     expect(planGovernorCommand(mkCity({ gold: 0 }), civil)).toBeNull();
   });
+
+  it('sweeps entrenched graft before tending the economy', () => {
+    expect(planGovernorCommand(mkCity({ corruption: 70 }), civil)).toBe('anti-corruption');
+  });
+
+  it('reaches advanced works once every pillar is built out to its cap', () => {
+    // Economy/walls maxed, loyalty steady, a real garrison → the magistrate now
+    // pulls migrants / drills / upgrades walls instead of idling.
+    const built = mkCity({ agriculture: 400, commerce: 400, defense: 200, gold: 6000, loyalty: 80, drill: 0 });
+    const order = planGovernorCommand(built, civil);
+    expect(order).not.toBeNull();
+    expect(['upgrade-wall', 'drill-troops', 'encourage-migration', 'flood-control']).toContain(order);
+  });
 });

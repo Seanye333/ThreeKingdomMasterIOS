@@ -14,16 +14,22 @@ import { previewBattlefield } from '../../game/systems/tactical';
 import { battleGroundAt, geoToPixel } from '../../game/data/geography';
 import { FACILITY_DEFS, type FacilityKind } from '../../game/types';
 import { citySize, cityMeetsSize, CITY_SIZES_BY_ID } from '../../game/systems/citySize';
-import { COMMAND_DEFS, meetsMinSize } from '../../game/systems/commands';
-import type { InternalAffairsType } from '../../game/types';
+import { COMMAND_DEFS, meetsMinSize, previewCommandGain } from '../../game/systems/commands';
+import { commandFitMultiplier } from '../../game/systems/traitEffects';
+import { appointmentBonusFor } from '../../game/systems/appointmentEffects';
+import { tickCityEconomy } from '../../game/systems/economy';
+import { foodRate, buyQuote, sellQuote } from '../../game/systems/market';
+import type { WeatherKind } from '../../game/systems/weather';
+import type { InternalAffairsType, CommandType } from '../../game/types';
 import { OfficerPicker } from '../components/OfficerPicker';
 import { LocatorMap } from '../components/LocatorMap';
 import { IntroDive } from '../components/IntroDive';
 import { cityViewWindow } from '../viewWindow';
 import { BUILDING_DEFS, BUILDING_DEFS_BY_ID, BUILDING_CATEGORY, BUILDING_CATEGORY_LABEL, BUILDING_PREREQ, BUILDING_MIN_SIZE, buildingGroupSynergy } from '../../game/data/buildings';
-import { cityAffinity } from '../../game/data/specialties';
-import { startCityAmbience, stopCityAmbience } from '../../game/systems/sound';
-import type { EntityId, BuildingId } from '../../game/types';
+import { cityAffinity, citySpecialty, type SpecialtyDef } from '../../game/data/specialties';
+import { startCityAmbience, stopCityAmbience, playSfx } from '../../game/systems/sound';
+import type { EntityId, BuildingId, City } from '../../game/types';
+import { SEASON_LABEL, type Season } from '../../game/types/common';
 import { useLanguage, pickName, useT } from '../i18n';
 // Reuse the polished 3D primitives from the tactical battle scene so the
 // city map matches its visual fidelity — terrain art, lighting, walls.
@@ -133,13 +139,28 @@ function InsideBuilding3D({ coord, buildingId, level }: {
   level: number;
 }) {
   const [x, z] = hexWorld(coord.col, coord.row);
+  const inspect = useContext(InspectCtx);
   const def = INSIDE_BUILDING_DEF[buildingId];
   const h = def.height + level * 0.15;
   // Temple & academy get a gilded, ornamented roof; the rest tile-blue.
   const grand = buildingId === 'temple' || buildingId === 'academy';
   const roofColor = grand ? '#b9952f' : '#39444f';
+  // 點建築 — show what this built structure actually does (其加成已接入模擬),
+  // and let 文教 buildings (書院/太學/藏書閣/武學堂) hold a 興学 lecture in place.
+  const onInspectBuilding = (e: { stopPropagation: () => void }) => {
+    e.stopPropagation();
+    const bdef = BUILDING_DEFS_BY_ID[buildingId];
+    const cat = BUILDING_CATEGORY[buildingId];
+    const catLabel = BUILDING_CATEGORY_LABEL[cat];
+    inspect({
+      title: `${def.nameZh} · ${catLabel?.zh ?? ''} lv${level}`,
+      body: bdef?.descriptionZh ?? bdef?.description ?? '城中營造,其加成已接入本城模擬。',
+      color: def.color,
+      commands: cat === 'culture' ? ['promote-learning'] : undefined,
+    });
+  };
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} onClick={onInspectBuilding}>
       {/* Stone plinth */}
       <mesh position={[0, 0.09, 0]} receiveShadow castShadow>
         <boxGeometry args={[1.28, 0.18, 1.28]} />
@@ -203,19 +224,31 @@ function InsideBuilding3D({ coord, buildingId, level }: {
 /* ─── Perimeter wall + gate ──────────────────────────────────────────── */
 /** A lightweight crenellated wall block (no per-segment banner/animation, so
  *  a full perimeter stays cheap on mobile). */
-function WallSegment3D({ x, z }: { x: number; z: number }) {
+function WallSegment3D({ x, z, tier = 1 }: { x: number; z: number; tier?: 1 | 2 | 3 }) {
+  // 城壁強化 — each tier raises the rampart: taller and a touch thicker, so a
+  // 3-級 citadel (合肥/長安/洛陽) visibly towers over a frontier stockade.
+  const h = 1.3 + (tier - 1) * 0.55;
+  const thick = 1.5 + (tier - 1) * 0.12;
+  const stone = tier >= 3 ? '#736152' : tier === 2 ? '#6e5944' : '#6a5540';
   return (
     <group position={[x, 0, z]}>
-      <mesh position={[0, 0.65, 0]} castShadow receiveShadow>
-        <boxGeometry args={[1.5, 1.3, 1.5]} />
-        <meshStandardMaterial color="#6a5540" roughness={0.92} />
+      <mesh position={[0, h / 2, 0]} castShadow receiveShadow>
+        <boxGeometry args={[thick, h, 1.5]} />
+        <meshStandardMaterial color={stone} roughness={0.92} />
       </mesh>
       {[-0.5, 0, 0.5].map((px, i) => (
-        <mesh key={i} position={[px, 1.4, 0]} castShadow>
+        <mesh key={i} position={[px, h + 0.1, 0]} castShadow>
           <boxGeometry args={[0.34, 0.3, 1.5]} />
           <meshStandardMaterial color="#7a6550" roughness={0.92} />
         </mesh>
       ))}
+      {/* Tier-3 citadels gain a stone string-course band partway up. */}
+      {tier >= 3 && (
+        <mesh position={[0, h * 0.62, 0.02]} castShadow>
+          <boxGeometry args={[thick + 0.04, 0.16, 1.54]} />
+          <meshStandardMaterial color="#8a7656" roughness={0.9} />
+        </mesh>
+      )}
     </group>
   );
 }
@@ -535,6 +568,12 @@ type CityStats = { fCommerce: number; fAgri: number; fLoyalty: number; fPop: num
 
 // Tapping a landmark reports a little "what is this" card up to the screen.
 type InspectInfo = { title: string; body: string; color: string; commands?: InternalAffairsType[] };
+/** Live, city-derived flavour text for the decorative landmarks (報時/瞭望/休憩). */
+type LandmarkInfo = { timeBody: string; pagodaBody: string; gardenBody: string };
+
+/** Which landmarks have an internal-affairs order queued this season (施政中). */
+type CityActivity = { farm: boolean; market: boolean; barracks: boolean; wall: boolean; hall: boolean; tavern: boolean };
+
 const InspectCtx = createContext<(info: InspectInfo) => void>(() => {});
 
 /** Multiply an #rrggbb colour by a factor (>1 lightens, <1 darkens). Cheap
@@ -752,7 +791,7 @@ function FlagPole3D({ x, z, color, h = 2.4 }: { x: number; z: number; color: str
 
 /** The seat of government — a grand double-eave hall on a stepped platform,
  *  flanked by stone lions and banner poles. */
-function GovernmentHall3D({ x, z, bannerColor }: { x: number; z: number; bannerColor: string }) {
+function GovernmentHall3D({ x, z, bannerColor, isCapital = false }: { x: number; z: number; bannerColor: string; isCapital?: boolean }) {
   return (
     <group position={[x, 0, z]}>
       {/* Paved plaza with a border step */}
@@ -888,9 +927,33 @@ function GovernmentHall3D({ x, z, bannerColor }: { x: number; z: number; bannerC
       <StoneLion3D x={0.7} z={1.15} faceZ={1} />
       <FlagPole3D x={-1.5} z={1.4} color={bannerColor} />
       <FlagPole3D x={1.5} z={1.4} color={bannerColor} />
-      <Html position={[0, 2.7, 0]} center distanceFactor={9} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
-        <div style={{ background: 'rgba(20,14,8,0.85)', border: '1px solid #d4a84a', padding: '1px 6px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px', color: '#f0d98a', borderRadius: 2, whiteSpace: 'nowrap' }}>
-          府衙
+      {/* ★治所 — the realm's seat flies a grand gilded canopy (華蓋) on a tall
+          central mast above the hall, so the capital reads from across the map. */}
+      {isCapital && (
+        <group position={[0, 0, 0]}>
+          <mesh position={[0, 3.0, 0]} castShadow>
+            <cylinderGeometry args={[0.05, 0.06, 3.6, 8]} />
+            <meshStandardMaterial color="#7a5a2a" roughness={0.6} metalness={0.3} />
+          </mesh>
+          {/* tiered gold canopy */}
+          <mesh position={[0, 3.5, 0]} castShadow>
+            <coneGeometry args={[0.62, 0.4, 12]} />
+            <meshStandardMaterial color="#d8b048" metalness={0.6} roughness={0.35} emissive="#6a4f12" emissiveIntensity={0.3} />
+          </mesh>
+          <mesh position={[0, 3.78, 0]} castShadow>
+            <coneGeometry args={[0.42, 0.3, 12]} />
+            <meshStandardMaterial color="#e6c25a" metalness={0.6} roughness={0.32} emissive="#6a4f12" emissiveIntensity={0.35} />
+          </mesh>
+          <mesh position={[0, 4.05, 0]}>
+            <sphereGeometry args={[0.1, 10, 10]} />
+            <meshStandardMaterial color="#ffe08a" metalness={0.7} roughness={0.25} emissive="#8a6a1a" emissiveIntensity={0.5} />
+          </mesh>
+          <group position={[0, 2.4, 0]}><Banner3D color={bannerColor} w={0.4} h={1.0} phase={x - z} faceX={0.2} /></group>
+        </group>
+      )}
+      <Html position={[0, isCapital ? 4.5 : 2.7, 0]} center distanceFactor={9} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
+        <div style={{ background: 'rgba(20,14,8,0.85)', border: `1px solid ${isCapital ? '#ffd86a' : '#d4a84a'}`, padding: '1px 6px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px', color: isCapital ? '#ffe69a' : '#f0d98a', borderRadius: 2, whiteSpace: 'nowrap' }}>
+          {isCapital ? '★ 治所' : '府衙'}
         </div>
       </Html>
     </group>
@@ -1877,14 +1940,143 @@ function Farmland3D({ x, z, lush = 0.5 }: { x: number; z: number; lush?: number 
   );
 }
 
+/** 焦土 — charred rubble mounds, broken beams and pillars of ruin-smoke laid
+ *  over a razed city, on a sampling of its former house plots. */
+function RuinsOverlay({ houses }: { houses: Array<{ x: number; z: number; seed: number; key: string }> }) {
+  const sample = houses.filter((_, i) => i % 3 === 0).slice(0, RENDER_HI ? 14 : 8);
+  return (
+    <>
+      {sample.map((h) => (
+        <group key={`rb-${h.key}`} position={[h.x, 0, h.z]} rotation={[0, (h.seed % 6) * 0.5, 0]}>
+          <mesh position={[0, 0.17, 0]} castShadow receiveShadow>
+            <boxGeometry args={[0.7 + (h.seed % 3) * 0.1, 0.34, 0.6]} />
+            <meshStandardMaterial color="#3a322a" roughness={1} />
+          </mesh>
+          <mesh position={[0.2, 0.42, 0.1]} rotation={[0, 0, 0.7]} castShadow>
+            <boxGeometry args={[0.06, 0.7, 0.06]} />
+            <meshStandardMaterial color="#241c14" roughness={0.9} />
+          </mesh>
+        </group>
+      ))}
+      {sample.filter((_, i) => i % 4 === 0).map((h) => (
+        <Smoke3D key={`rsm-${h.key}`} x={h.x} z={h.z} base={0.6} />
+      ))}
+    </>
+  );
+}
+
+/** 名產 — a market consignment (stacked crates/sacks) tagged with the good's
+ *  glyph; one adaptable prop stands in for all 15 regional specialties. */
+function SpecialtyProp3D({ specialty, x, z }: { specialty: SpecialtyDef; x: number; z: number }) {
+  const tint = specialty.foodMul > 1 ? '#b89a52' : '#9a7a4a';
+  return (
+    <group position={[x, 0, z]}>
+      <mesh position={[0, 0.18, 0]} castShadow receiveShadow><boxGeometry args={[0.4, 0.36, 0.4]} /><meshStandardMaterial color={tint} roughness={0.9} /></mesh>
+      <mesh position={[0.28, 0.14, 0.1]} castShadow><boxGeometry args={[0.3, 0.28, 0.3]} /><meshStandardMaterial color="#8a6a3a" roughness={0.92} /></mesh>
+      <mesh position={[-0.1, 0.5, 0]} castShadow><boxGeometry args={[0.34, 0.3, 0.34]} /><meshStandardMaterial color={tint} roughness={0.9} /></mesh>
+      <Html position={[0, 0.98, 0]} center distanceFactor={10} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
+        <div style={{ background: 'rgba(20,14,8,0.82)', border: '1px solid #caa24a', padding: '0 5px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px', color: '#e8c46a', borderRadius: 2, whiteSpace: 'nowrap' }}>
+          {specialty.glyph} {specialty.zh}
+        </div>
+      </Html>
+    </group>
+  );
+}
+
+/** 駐軍旌旗 — a rank of force banners by the drill ground, more for a big
+ *  garrison (a great host plants a forest of flags). */
+function GarrisonBanners3D({ x, z, troops, color }: { x: number; z: number; troops: number; color: string }) {
+  // Each banner is a real draw call; cap lower on low-tier devices.
+  const n = Math.max(0, Math.min(RENDER_HI ? 8 : 4, Math.round(troops / 12000)));
+  if (n === 0) return null;
+  return (
+    <group position={[x, 0, z]}>
+      {Array.from({ length: n }, (_, i) => {
+        const col = i % 4, row = Math.floor(i / 4);
+        return <FlagPole3D key={i} x={-1.2 + col * 0.8} z={1.7 + row * 0.7} color={color} h={1.9} />;
+      })}
+    </group>
+  );
+}
+
+/** A pulsing ground ring marking an active work-site (施政中). */
+function ActivityRing3D({ x, z, color }: { x: number; z: number; color: string }) {
+  const ref = useRef<THREE.Mesh>(null);
+  useFrame((s) => {
+    const m = ref.current;
+    if (!m) return;
+    const t = s.clock.elapsedTime;
+    const k = 0.78 + Math.sin(t * 2.2) * 0.16;
+    m.scale.set(k, k, 1);
+    (m.material as THREE.MeshBasicMaterial).opacity = 0.3 + (Math.sin(t * 2.2) + 1) * 0.12;
+  });
+  return (
+    <mesh ref={ref} position={[x, 0.08, z]} rotation={[-Math.PI / 2, 0, 0]}>
+      <ringGeometry args={[0.85, 1.12, 30]} />
+      <meshBasicMaterial color={color} transparent opacity={0.4} side={THREE.DoubleSide} depthWrite={false} />
+    </mesh>
+  );
+}
+
+/** 施政中 — work-in-progress at a landmark: a pulsing ring, a pair of pacing
+ *  hands, and a 「…中」 tag. `soldier` adds a spear rank (操演), `build` a small
+ *  scaffold (築城). Driven purely off this city's pending orders. */
+function CommandActivity3D({ x, z, color, label, build = false, soldier = false }: {
+  x: number; z: number; color: string; label: string; build?: boolean; soldier?: boolean;
+}) {
+  return (
+    <group>
+      <ActivityRing3D x={x} z={z} color={color} />
+      {/* The pacing figures are the costly part (multi-mesh) — ring + tag carry
+          the meaning, so low-tier devices keep those and drop the crowd. */}
+      {RENDER_HI && <Walker3D ax={x - 0.85} az={z + 0.5} bx={x + 0.85} bz={z + 0.5} seed={Math.round(x * 13 + z * 7)} />}
+      {RENDER_HI && <Walker3D ax={x + 0.7} az={z - 0.6} bx={x - 0.7} bz={z - 0.6} seed={Math.round(x * 5 + z * 17) + 3} />}
+      {soldier && [-0.6, -0.2, 0.2, 0.6].map((px, i) => (
+        <mesh key={i} position={[x + px, 0.55, z - 0.9]} castShadow>
+          <cylinderGeometry args={[0.02, 0.02, 1.1, 5]} />
+          <meshStandardMaterial color="#caa24a" roughness={0.6} />
+        </mesh>
+      ))}
+      {build && (
+        <group position={[x, 0, z - 0.2]}>
+          {[[-0.5, 0.5], [0.5, 0.5], [-0.5, -0.5], [0.5, -0.5]].map((p, i) => (
+            <mesh key={i} position={[p[0], 0.55, p[1]]} castShadow>
+              <cylinderGeometry args={[0.04, 0.04, 1.1, 5]} />
+              <meshStandardMaterial color="#7a5a32" roughness={0.9} />
+            </mesh>
+          ))}
+          {[0.45, 0.85].map((hh, i) => (
+            <mesh key={`pl${i}`} position={[0, hh, 0]} castShadow>
+              <boxGeometry args={[1.2, 0.06, 1.2]} />
+              <meshStandardMaterial color="#8a6a3a" roughness={0.92} />
+            </mesh>
+          ))}
+        </group>
+      )}
+      <Html position={[x, build ? 1.5 : 1.1, z]} center distanceFactor={9} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
+        <div style={{ background: 'rgba(18,26,12,0.86)', border: `1px solid ${color}`, padding: '0 5px', fontFamily: 'var(--tkm-font-body)', fontSize: '10px', color: '#dceec4', borderRadius: 2, whiteSpace: 'nowrap' }}>
+          {label}中
+        </div>
+      </Html>
+    </group>
+  );
+}
+
 /** Scatter dwellings across the inside-city land, leaving gaps for streets. */
-function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, grand }: {
+function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, grand, landmarkInfo, weatherKind, ruined, isCapital, specialty, troops, activity }: {
   preview: ReturnType<typeof previewBattlefield>;
   cityWallCol: number;
   occupied: Set<string>;
   bannerColor: string;
   stats: CityStats;
   grand: boolean;
+  landmarkInfo: LandmarkInfo;
+  weatherKind: WeatherKind;
+  ruined: boolean;
+  isCapital: boolean;
+  specialty: SpecialtyDef | null;
+  troops: number;
+  activity: CityActivity;
 }) {
   const inspect = useContext(InspectCtx);
   // The market grows with commerce — a sleepy 2-stall corner at low trade,
@@ -2105,39 +2297,53 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, g
       <group onClick={(e) => { e.stopPropagation(); inspect({ title: '市集 · 商坊', body: '城中商市,理一城之財貨。可於此勸課商賈。', color: '#d4a84a', commands: ['develop-commerce', 'major-commerce'] }); }}>
         {market.map((m) => <MarketStall3D key={`mk-${m.key}`} x={m.x} z={m.z} seed={m.seed} />)}
       </group>
-      {villagers.map((v) => <Villager3D key={`vl-${v.key}`} x={v.x} z={v.z} seed={v.seed} />)}
-      {props.folk.map((v, i) => <Villager3D key={`mf-${i}`} x={v.x} z={v.z} seed={v.seed} />)}
-      {props.walkers.map((wk, i) => <Walker3D key={`wk-${i}`} ax={wk.ax} az={wk.az} bx={wk.bx} bz={wk.bz} seed={wk.seed} />)}
-      {props.oxcart && <MovingCart3D ax={props.oxcart.ax} az={props.oxcart.az} bx={props.oxcart.bx} bz={props.oxcart.bz} seed={props.oxcart.seed} />}
-      {/* Chimney smoke from a scattering of homes */}
-      {houses.filter((_, i) => i % 8 === 0).slice(0, 5).map((h) => (
+      {/* 焦土 — a razed city empties of life: no crowds, no festive lanterns. */}
+      {!ruined && villagers.map((v) => <Villager3D key={`vl-${v.key}`} x={v.x} z={v.z} seed={v.seed} />)}
+      {!ruined && props.folk.map((v, i) => <Villager3D key={`mf-${i}`} x={v.x} z={v.z} seed={v.seed} />)}
+      {!ruined && props.walkers.map((wk, i) => <Walker3D key={`wk-${i}`} ax={wk.ax} az={wk.az} bx={wk.bx} bz={wk.bz} seed={wk.seed} />)}
+      {!ruined && props.oxcart && <MovingCart3D ax={props.oxcart.ax} az={props.oxcart.az} bx={props.oxcart.bx} bz={props.oxcart.bz} seed={props.oxcart.seed} />}
+      {/* Chimney smoke from a scattering of homes (peaceful) — black pillars of
+          ruin smoke if the city has been razed. */}
+      {!ruined && houses.filter((_, i) => i % 8 === 0).slice(0, 5).map((h) => (
         <Smoke3D key={`sm-${h.key}`} x={h.x} z={h.z} base={1.15} />
       ))}
-      {props.cart && <Cart3D x={props.cart.x} z={props.cart.z} seed={props.cart.seed} />}
+      {ruined && <RuinsOverlay houses={houses} />}
+      {props.cart && !ruined && <Cart3D x={props.cart.x} z={props.cart.z} seed={props.cart.seed} />}
       <Well3D x={props.well.x} z={props.well.z} />
       {props.braziers.map((b, i) => <Brazier3D key={`bz-${i}`} x={b.x} z={b.z} />)}
-      {lanterns.map((l) => <Lantern3D key={`ln-${l.key}`} x={l.x} z={l.z} />)}
-      {props.avenueLanterns.map((l, i) => <Lantern3D key={`al-${i}`} x={l.x} z={l.z} />)}
+      {!ruined && lanterns.map((l) => <Lantern3D key={`ln-${l.key}`} x={l.x} z={l.z} />)}
+      {!ruined && props.avenueLanterns.map((l, i) => <Lantern3D key={`al-${i}`} x={l.x} z={l.z} />)}
       {props.paifang && <Paifang3D x={props.paifang.x} z={props.paifang.z} />}
-      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '寶塔', body: '城中佛塔,镇一方文运、为行旅指引方向,亦是登高瞭望之所。', color: '#e0c060' }); }}>
+      {/* 名產 — a signature-good prop by the market wards (salt heap, horse pen,
+          loom…), a visual nod to the city's specialty trade edge. */}
+      {specialty && market[0] && <SpecialtyProp3D specialty={specialty} x={market[0].x + 1.7} z={market[0].z + 1.6} />}
+      {/* 駐軍旌旗 — a rank of banners by the drill ground, taller for a big garrison. */}
+      {!ruined && <GarrisonBanners3D x={landmarks.barracks.x} z={landmarks.barracks.z} troops={troops} color={bannerColor} />}
+      {/* 施政中 — work-in-progress at the landmark whose order is queued. */}
+      {activity.farm && <CommandActivity3D x={landmarks.farm.x} z={landmarks.farm.z + 1.6} color="#bcd07a" label="勸課農桑" />}
+      {activity.market && market[0] && <CommandActivity3D x={market[0].x} z={market[0].z + 1.5} color="#d4a84a" label="興商理財" />}
+      {activity.barracks && <CommandActivity3D x={landmarks.barracks.x} z={landmarks.barracks.z + 1.6} color="#c08858" label="操演徵募" soldier />}
+      {activity.hall && <CommandActivity3D x={hall.x} z={hall.z + 2.6} color="#f0d98a" label="撫民理政" />}
+      {activity.tavern && <CommandActivity3D x={landmarks.tavern.x} z={landmarks.tavern.z + 1.3} color="#d98a6a" label="探訪賢才" />}
+      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '寶塔 · 瞭望', body: landmarkInfo.pagodaBody, color: '#e0c060' }); }}>
         <Pagoda3D x={landmarks.pagoda.x} z={landmarks.pagoda.z} />
       </group>
-      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '鼓樓', body: '暮鼓所在。击鼓报时、警急聚兵,与钟楼合为「晨钟暮鼓」。', color: '#e0c060' }); }}>
+      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '鼓樓 · 報時', body: landmarkInfo.timeBody, color: '#e0c060' }); }}>
         <DrumTower3D x={landmarks.drum.x} z={landmarks.drum.z} />
       </group>
-      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '鐘樓', body: '晨钟所在。悬大铜钟,晓时鸣钟启市,与鼓楼相对。', color: '#e0c060' }); }}>
+      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '鐘樓 · 報時', body: landmarkInfo.timeBody, color: '#e0c060' }); }}>
         <BellTower3D x={landmarks.bell.x} z={landmarks.bell.z} />
       </group>
-      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '園林', body: '官家园池。曲桥亭榭、莲叶垂柳,文士雅集、休憩之地。', color: '#9ac06a' }); }}>
+      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '園林 · 雅集', body: landmarkInfo.gardenBody, color: '#9ac06a' }); }}>
         <Garden3D x={landmarks.garden.x} z={landmarks.garden.z} />
       </group>
-      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '屯田 · 田畝', body: '军民屯垦之田,城邑粮秣所出。可於此勸課農桑。', color: '#bcd07a', commands: ['develop-agriculture', 'major-agriculture'] }); }}>
-        <Farmland3D x={landmarks.farm.x} z={landmarks.farm.z} lush={stats.fAgri} />
+      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '屯田 · 田畝', body: '军民屯垦之田,城邑粮秣所出。可於此勸課農桑、興修水利。', color: '#bcd07a', commands: ['develop-agriculture', 'major-agriculture', 'flood-control'] }); }}>
+        <Farmland3D x={landmarks.farm.x} z={landmarks.farm.z} lush={weatherKind === 'drought' ? stats.fAgri * 0.32 : stats.fAgri} />
       </group>
-      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '府衙 · 治所', body: '一城之治所,太守理政、安民撫眾之地。', color: '#f0d98a', commands: ['improve-loyalty', 'relief', 'anti-corruption', 'encourage-migration'] }); }}>
-        <GovernmentHall3D x={hall.x} z={hall.z} bannerColor={bannerColor} />
+      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '府衙 · 治所', body: '一城之治所,太守理政、安民撫眾、興学教化之地。', color: '#f0d98a', commands: ['improve-loyalty', 'relief', 'anti-corruption', 'encourage-migration', 'promote-learning'] }); }}>
+        <GovernmentHall3D x={hall.x} z={hall.z} bannerColor={bannerColor} isCapital={isCapital} />
       </group>
-      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '兵營 · 校場', body: '操演士卒、招募新軍之所。', color: '#c08858', commands: ['recruit-troops'] }); }}>
+      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '兵營 · 校場', body: '操演士卒、招募新軍、屯田練兵、鎮守疆場之所。', color: '#c08858', commands: ['recruit-troops', 'military-farming', 'drill-troops', 'garrison'] }); }}>
         <Barracks3D x={landmarks.barracks.x} z={landmarks.barracks.z} bannerColor={bannerColor} />
       </group>
       <group onClick={(e) => { e.stopPropagation(); inspect({ title: '酒樓', body: '杯酒之間,常聞在野賢才之名。可於此遣人探訪。', color: '#d98a6a', commands: ['search'] }); }}>
@@ -2653,7 +2859,8 @@ function Hinterland3D({
 function CityScene({
   preview, slots, buildings, construction, plots, cityWallCol, bannerColor, light, season, stats, grand, onInspect,
   selectedPlot, onPlotClick, hovered, onHover, onClick, showOverlays,
-  city, neighbors, facilities, armies, stockades, ports, scars, selectedSlot, onSlotClick,
+  city, neighbors, facilities, armies, stockades, ports, scars, selectedSlot, onSlotClick, landmarkInfo,
+  weatherKind, isCapital, specialty, activity,
 }: {
   preview: ReturnType<typeof previewBattlefield>;
   slots: ReturnType<typeof useGameStore.getState>['cities'][string]['buildSlots'];
@@ -2673,7 +2880,7 @@ function CityScene({
   onHover: (c: { col: number; row: number } | null) => void;
   onClick: (c: { col: number; row: number }) => void;
   showOverlays: boolean;
-  city: { coords: { x: number; y: number } };
+  city: City;
   neighbors: Neighbor[];
   facilities: HinterlandFacility[];
   armies: HinterlandArmy[];
@@ -2682,6 +2889,11 @@ function CityScene({
   scars: Array<{ dx: number; dy: number; dist: number; fresh: boolean }>;
   selectedSlot: number | null;
   onSlotClick: (slot: number) => void;
+  landmarkInfo: LandmarkInfo;
+  weatherKind: WeatherKind;
+  isCapital: boolean;
+  specialty: SpecialtyDef | null;
+  activity: CityActivity;
 }) {
   // Defence slots now ride the outer hinterland ring (directional defence),
   // not the city-wall hexes — so they no longer occupy any grid hex here.
@@ -2700,6 +2912,7 @@ function CityScene({
   return (
     <SeasonCtx.Provider value={season}>
       <SeasonalDrift season={season} />
+      <WeatherFX kind={weatherKind} width={preview.width} height={preview.height} />
      <InspectCtx.Provider value={onInspect}>
       <ambientLight intensity={light.ambient * 0.7} color={light.ambientColor} />
       {/* Sky/ground hemisphere fill for richer ambient colour grading */}
@@ -2801,7 +3014,7 @@ function CityScene({
           <>
             {segs.filter((s) => !(s.col === gateCol && s.row === gateRow) && !corners.has(`${s.col},${s.row}`) && !isWater(s)).map((s) => {
               const [x, z] = hexWorld(s.col, s.row);
-              return <WallSegment3D key={`wall-${s.col}-${s.row}`} x={x} z={z} />;
+              return <WallSegment3D key={`wall-${s.col}-${s.row}`} x={x} z={z} tier={city.wallTier ?? 1} />;
             })}
             {/* Banners flying from the wall-walk at intervals */}
             {segs.filter((s) => !corners.has(`${s.col},${s.row}`) && !(s.col === gateCol && s.row === gateRow) && !isWater(s) && (s.col + s.row) % 5 === 0).map((s) => {
@@ -2813,9 +3026,11 @@ function CityScene({
               const [x, z] = hexWorld(col, row);
               return <CornerTower3D key={`tower-${c}`} x={x} z={z} bannerColor={bannerColor} />;
             })}
-            <group onClick={(e) => { e.stopPropagation(); onInspect({ title: '城牆 · 城門', body: '一城之屏障。可於此修築城防、強化城壁。', color: '#9aa6b0', commands: ['build-defense', 'upgrade-wall'] }); }}>
+            <group onClick={(e) => { e.stopPropagation(); onInspect({ title: '城牆 · 城門', body: '一城之屏障。可於此修築城防、大興築城、強化城壁。', color: '#9aa6b0', commands: ['build-defense', 'major-defense', 'upgrade-wall'] }); }}>
               <CityGate3D x={gx} z={gz} bannerColor={bannerColor} />
             </group>
+            {/* 築城修壁中 — scaffolding + work crew when a defence order is queued. */}
+            {activity.wall && <CommandActivity3D x={gx} z={gz - 1.4} color="#9aa6b0" label="築城修壁" build />}
             {/* Stone bridge crossing the moat out from the gate */}
             <StoneBridge3D x={gx} z={gz + 2.1} />
             {/* Water gate + wharf on the east wall */}
@@ -2916,7 +3131,7 @@ function CityScene({
       })}
 
       {/* Living-city dwellings + central 府衙 (cosmetic) */}
-      <CityDwellings3D preview={preview} cityWallCol={cityWallCol} occupied={occupiedHexes} bannerColor={bannerColor} stats={stats} grand={grand} />
+      <CityDwellings3D preview={preview} cityWallCol={cityWallCol} occupied={occupiedHexes} bannerColor={bannerColor} stats={stats} grand={grand} landmarkInfo={landmarkInfo} weatherKind={weatherKind} ruined={!!city.ruined} isCapital={isCapital} specialty={specialty} troops={city.troops} activity={activity} />
 
       {/* A few birds wheeling over the rooftops */}
       <Birds3D
@@ -2938,6 +3153,51 @@ function CityScene({
 
      </InspectCtx.Provider>
     </SeasonCtx.Provider>
+  );
+}
+
+/* ─── 市易 — inline grain market for the 市集 inspect card (金⇄糧 at the
+ *  city's live, season-bent rate), so the player needn't open the flat panel. */
+function MarketTradeRow({ city, season, cityId, tradeFood, onTraded }: {
+  city: City;
+  season: Season;
+  cityId: EntityId;
+  tradeFood: (cityId: EntityId, kind: 'buy' | 'sell', amount: number) => { ok: boolean; got: number };
+  onTraded: (msg: string) => void;
+}) {
+  const rate = foodRate(city, season);
+  const btn = (label: string, disabled: boolean, onClick: () => void, key: string) => (
+    <button key={key} disabled={disabled} onClick={onClick} style={{
+      background: disabled ? 'transparent' : '#2a1f14',
+      border: `1px solid ${disabled ? '#3a2d20' : '#d4a84a'}`,
+      color: disabled ? '#5a4a35' : '#f0d98a',
+      padding: '0.26rem 0.5rem', cursor: disabled ? 'not-allowed' : 'pointer',
+      fontFamily: 'inherit', fontSize: '0.72rem',
+    }}>{label}</button>
+  );
+  return (
+    <div style={{ marginTop: 8, borderTop: '1px solid #3a2d20', paddingTop: 6, fontSize: '0.72rem', color: '#c0a878' }}>
+      <div style={{ marginBottom: 5 }}>
+        <span style={{ color: '#8a7858' }}>市易</span> 糧價 <strong style={{ color: '#d4a84a' }}>{rate.toFixed(1)}</strong> 糧/金
+        <span style={{ marginLeft: 8, color: '#8a7050' }}>庫 金{city.gold.toLocaleString()} · 糧{city.food.toLocaleString()}</span>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center' }}>
+        <span style={{ color: '#9ac06a', marginRight: 2 }}>買糧</span>
+        {[500, 2000].map((g) => btn(`${g}金→${buyQuote(city, season, g).toLocaleString()}糧`, city.gold < g, () => {
+          const r = tradeFood(cityId, 'buy', g);
+          if (r.ok) playSfx('coin');
+          onTraded(r.ok ? `市易:${g} 金易得 ${r.got.toLocaleString()} 糧。` : '府庫金不足。');
+        }, `b${g}`))}
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center', marginTop: 4 }}>
+        <span style={{ color: '#e0c060', marginRight: 2 }}>賣糧</span>
+        {[1000, 5000].map((f) => btn(`${f.toLocaleString()}糧→${sellQuote(city, season, f).toLocaleString()}金`, city.food < f, () => {
+          const r = tradeFood(cityId, 'sell', f);
+          if (r.ok) playSfx('coin');
+          onTraded(r.ok ? `市易:${f.toLocaleString()} 糧易得 ${r.got.toLocaleString()} 金。` : '存糧不足。');
+        }, `s${f}`))}
+      </div>
+    </div>
   );
 }
 
@@ -2965,13 +3225,42 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
   const allForts = useGameStore((s) => s.forts);
   const allArmies = useGameStore((s) => s.armies);
   const allBuildings = useGameStore((s) => s.buildings);
+  const officersMap = useGameStore((s) => s.officers);
+  const appointments = useGameStore((s) => s.appointments);
+  const pendingCommands = useGameStore((s) => s.pendingCommands);
+  const date = useGameStore((s) => s.date);
+  const taxPolicy = useGameStore((s) => s.taxPolicy);
+  const inflation = useGameStore((s) => s.inflation ?? 0);
+  const weatherKind = useGameStore((s) => (s.weather?.kind ?? 'clear') as WeatherKind);
+  const tradeFood = useGameStore((s) => s.tradeFood);
+  const autoAssignIdle = useGameStore((s) => s.autoAssignIdle);
+  const relocateCapital = useGameStore((s) => s.relocateCapital);
+  const capitalMoveUsed = useGameStore((s) => s.capitalMoveUsed);
+  const [assignMsg, setAssignMsg] = useState<string | null>(null);
   const buildAction = useGameStore((s) => s.buildDefenseStructure);
   const upgradeAction = useGameStore((s) => s.upgradeDefenseStructure);
   const demolishAction = useGameStore((s) => s.demolishDefenseStructure);
   const startBuilding = useGameStore((s) => s.startBuilding);
   const startPracticeBattle = useGameStore((s) => s.startPracticeBattle);
   const season = useGameStore((s) => s.date.season) as SeasonKey;
-  const light = SEASON_LIGHT[season] ?? SEASON_LIGHT.spring;
+  const baseLight = SEASON_LIGHT[season] ?? SEASON_LIGHT.spring;
+  // 天時入景 — the weather bends the city's light, not just its harvest:
+  // a drought bakes the air amber and hazy, rain greys it down, ruin drains
+  // the colour out. The scene reads its own crisis at a glance.
+  const light = useMemo(() => {
+    let L = { ...baseLight };
+    if (weatherKind === 'drought') {
+      L = { ...L, ambient: L.ambient * 1.05, ambientColor: '#f4d79a', sun: '#ffdf9a', sunI: L.sunI * 1.12, fog: '#d8c690' };
+    } else if (weatherKind === 'rain') {
+      L = { ...L, ambient: L.ambient * 0.7, ambientColor: '#9fb0bc', sun: '#b8c4cc', sunI: L.sunI * 0.5, fog: '#8a98a2', nightGlow: Math.max(L.nightGlow, 0.5) };
+    } else if (weatherKind === 'wind') {
+      L = { ...L, fog: '#cabfa0' };
+    }
+    if (city.ruined) {
+      L = { ...L, ambient: L.ambient * 0.78, ambientColor: '#b8a890', sun: '#c8b89a', sunI: L.sunI * 0.7, fog: '#7a6e5c', nightGlow: Math.max(L.nightGlow, 0.4) };
+    }
+    return L;
+  }, [baseLight, weatherKind, city.ruined]);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [selectedPlot, setSelectedPlot] = useState<number | null>(null);
   const [buildMsg, setBuildMsg] = useState<string | null>(null);
@@ -2989,6 +3278,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
   const beginClose = () => {
     if (closingRef.current) return;
     closingRef.current = true;
+    playSfx('whoosh');
     setExiting(true);
     window.setTimeout(onClose, 480);
   };
@@ -3025,6 +3315,106 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
   // loyal populace. The city view becomes a readout of its own numbers.
   const cap = size.statCap || 100;
   const econCap = size.econCap || cap;
+  // 施政預覽 — for each command button, estimate the gain the city's BEST idle
+  // officer would yield, so the player can judge value before opening the picker.
+  const apptBonus = useMemo(
+    () => appointmentBonusFor(city.ownerForceId, appointments, officersMap, cityId),
+    [city.ownerForceId, appointments, officersMap, cityId],
+  );
+  const idleOfficers = useMemo(
+    () => Object.values(officersMap).filter(
+      (o) => o.locationCityId === cityId && o.forceId === city.ownerForceId && o.status === 'idle' && !o.task,
+    ),
+    [officersMap, cityId, city.ownerForceId],
+  );
+  // 在城武將 — every officer garrisoned here (興学 lectures lift them all).
+  const stationedCount = useMemo(
+    () => Object.values(officersMap).filter(
+      (o) => o.locationCityId === cityId && o.forceId === city.ownerForceId,
+    ).length,
+    [officersMap, cityId, city.ownerForceId],
+  );
+  // 裝飾地標的活文本 — 鐘鼓樓報時、寶塔登高瞭望最近的異旗之城、園林記在城雅集之眾。
+  const landmarkInfo = useMemo<LandmarkInfo>(() => {
+    const seasonZh = SEASON_LABEL[date.season as Season]?.zh ?? '';
+    const timeBody = `晨鐘暮鼓,司一城之辰刻。今為 ${date.year} 年 · ${seasonZh}季;城中現有武將 ${stationedCount} 員。`;
+    let nearest: typeof city | null = null;
+    let nd = Infinity;
+    for (const c of Object.values(allCities)) {
+      if (c.id === cityId || c.ownerForceId === city.ownerForceId) continue;
+      const d = Math.hypot(c.coords.x - city.coords.x, c.coords.y - city.coords.y);
+      if (d < nd) { nd = d; nearest = c; }
+    }
+    let pagodaBody: string;
+    if (nearest) {
+      const dx = nearest.coords.x - city.coords.x;
+      const dy = nearest.coords.y - city.coords.y;
+      const dir = ['東', '東南', '南', '西南', '西', '西北', '北', '東北'][
+        Math.round(((Math.atan2(dy, dx) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI / 4)) % 8
+      ];
+      const ownerZh = nearest.ownerForceId ? (forces[nearest.ownerForceId]?.name.zh ?? '在野') : '在野';
+      pagodaBody = `登高瞭望:最近的異旗之城為${dir}面的「${nearest.name.zh}」(${ownerZh}),憑欄可望其旌旗。`;
+    } else {
+      pagodaBody = '登高瞭望:四望皆我疆土,邊塵不驚。';
+    }
+    const gardenBody = stationedCount > 0
+      ? `官家園池,曲橋亭榭、蓮葉垂柳。今城中 ${stationedCount} 員文武在此雅集休憩,情誼漸篤。`
+      : '官家園池,曲橋亭榭、蓮葉垂柳。惜城中無將,池榭空寂。';
+    return { timeBody, pagodaBody, gardenBody };
+  }, [date.year, date.season, stationedCount, allCities, cityId, city, forces]);
+  // 府衙度支 — this city's own seasonal ledger, via the SAME engine the season
+  // settles with (not an estimate). Surfaced at the 府衙 so the player needn't
+  // leave the city view for the 度支簿.
+  const cityEcon = useMemo(() => {
+    const cityOfficers = Object.values(officersMap).filter(
+      (o) => o.locationCityId === cityId && o.forceId === city.ownerForceId,
+    );
+    const tax = city.ownerForceId ? (taxPolicy?.[city.ownerForceId] ?? 'normal') : 'normal';
+    const infl = city.ownerForceId === playerForceId ? inflation : 0;
+    const statecraft = city.ownerForceId ? (forces[city.ownerForceId]?.statecraft ?? null) : null;
+    return tickCityEconomy(city, date.season as Season, cityOfficers, tax, infl, weatherKind, allBuildings, statecraft);
+  }, [city, officersMap, cityId, taxPolicy, inflation, playerForceId, forces, date.season, weatherKind, allBuildings]);
+  const isCapital = !!playerForceId && forces[playerForceId]?.capitalCityId === cityId;
+  const specialty = useMemo(() => citySpecialty(cityId), [cityId]);
+  // 施政中 — which landmarks have an order queued this season, so the scene can
+  // show the work in progress (field hands at the 屯田, drilling at the 校場,
+  // scaffolding on the walls…). Reads pendingCommands for this city.
+  const activity = useMemo<CityActivity>(() => {
+    const a: CityActivity = { farm: false, market: false, barracks: false, wall: false, hall: false, tavern: false };
+    for (const c of Object.values(pendingCommands)) {
+      if ((c as { cityId?: EntityId }).cityId !== cityId) continue;
+      switch ((c as { type?: InternalAffairsType }).type) {
+        case 'develop-agriculture': case 'major-agriculture': case 'flood-control': a.farm = true; break;
+        case 'military-farming': a.farm = true; a.barracks = true; break;
+        case 'develop-commerce': case 'major-commerce': a.market = true; break;
+        case 'recruit-troops': case 'drill-troops': case 'garrison': a.barracks = true; break;
+        case 'build-defense': case 'major-defense': case 'upgrade-wall': a.wall = true; break;
+        case 'improve-loyalty': case 'relief': case 'anti-corruption': case 'encourage-migration': case 'promote-learning': a.hall = true; break;
+        case 'search': a.tavern = true; break;
+      }
+    }
+    return a;
+  }, [pendingCommands, cityId]);
+  // Best-officer施政預覽 per command, computed once (memoised) rather than
+  // re-scanning idleOfficers for every button on every render of the card.
+  const previewByCmd = useMemo(() => {
+    const out: Partial<Record<InternalAffairsType, ReturnType<typeof previewCommandGain>>> = {};
+    const types = (Object.keys(COMMAND_DEFS) as CommandType[]).filter((k): k is InternalAffairsType => k !== 'march');
+    for (const ct of types) {
+      const stat = COMMAND_DEFS[ct].stat;
+      let best: typeof idleOfficers[number] | null = null;
+      let bestScore = -1;
+      for (const o of idleOfficers) {
+        const score = o.stats[stat] * commandFitMultiplier(o, ct);
+        if (score > bestScore) { bestScore = score; best = o; }
+      }
+      out[ct] = best ? previewCommandGain(ct, best, city, {
+        internalMultiplier: apptBonus.internalMultiplier,
+        recruitBonus: apptBonus.recruitBonus,
+      }) : null;
+    }
+    return out;
+  }, [idleOfficers, apptBonus, city]);
   const cityStats = {
     fCommerce: Math.min(1, city.commerce / cap),
     fAgri: Math.min(1, city.agriculture / cap),
@@ -3244,6 +3634,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
       };
       setBuildMsg(reasons[r.reason ?? ''] ?? r.reason ?? '無法建造');
     } else {
+      playSfx('thud');
       setSelectedPlot(null);
     }
   };
@@ -3258,6 +3649,8 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
         'already in progress': '已在建造中',
       };
       setBuildMsg(reasons[r.reason ?? ''] ?? r.reason ?? '無法升級');
+    } else {
+      playSfx('thud');
     }
   };
 
@@ -3265,12 +3658,13 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
     setError(null);
     const r = buildAction(cityId, slot, id);
     if (!r.ok) setError(r.reason ?? 'Failed');
-    else setSelectedSlot(null);
+    else { playSfx('thud'); setSelectedSlot(null); }
   };
   const tryUpgrade = (slot: number) => {
     setError(null);
     const r = upgradeAction(cityId, slot);
     if (!r.ok) setError(r.reason ?? 'Failed');
+    else playSfx('thud');
   };
   const tryDemolish = (slot: number) => {
     demolishAction(cityId, slot);
@@ -3300,6 +3694,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
 
   // City soundscape while the 城内 view is open.
   useEffect(() => {
+    playSfx('open-modal');
     startCityAmbience();
     return () => stopCityAmbience();
   }, []);
@@ -3327,6 +3722,28 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
           </span>
         </div>
         <div style={{ display: 'flex', gap: '0.4rem' }}>
+          {isPlayer && idleOfficers.length > 0 && (
+            <button
+              onClick={() => {
+                const r = autoAssignIdle();
+                playSfx(r.assigned > 0 ? 'bell' : 'pluck');
+                setAssignMsg(r.assigned > 0
+                  ? `一鍵委派:${r.assigned} 員領命${r.goldSpent > 0 ? `,耗 ${r.goldSpent} 金` : ''}。`
+                  : '無閒置武將可委派(或城已委任太守自理)。');
+                window.setTimeout(() => setAssignMsg(null), 3200);
+              }}
+              title={t('把城中閒置武將按需求×適性自動派活', 'Auto-assign idle officers by need × aptitude')}
+              style={{
+                background: 'rgba(126, 214, 138, 0.16)',
+                border: '1px solid rgba(126, 214, 138, 0.5)', borderRadius: '10px',
+                color: '#bfeebf', padding: '0.3rem 0.6rem',
+                fontFamily: 'var(--tkm-font-body)', fontSize: '0.7rem', cursor: 'pointer',
+                letterSpacing: '0.08rem',
+              }}
+            >
+              一鍵委派 ({idleOfficers.length})
+            </button>
+          )}
           <button
             onClick={() => setShowOverlays(!showOverlays)}
             style={{
@@ -3346,6 +3763,15 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
           }}>×</button>
         </div>
       </header>
+
+      {assignMsg && (
+        <div style={{
+          position: 'absolute', top: 58, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 12, background: 'rgba(20,32,18,0.94)', border: '1px solid #7ed68a',
+          borderRadius: 4, padding: '0.35rem 0.8rem', color: '#bfeebf',
+          fontFamily: 'var(--tkm-font-body)', fontSize: '0.76rem', whiteSpace: 'nowrap',
+        }}>{assignMsg}</div>
+      )}
 
       {/* 3D canvas */}
       <div style={{ flex: 1, position: 'relative' }}>
@@ -3389,7 +3815,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
             season={season}
             stats={cityStats}
             grand={grandCity}
-            onInspect={setInspect}
+            onInspect={(info) => { playSfx('click'); setInspect(info); }}
             selectedPlot={selectedPlot}
             onPlotClick={handlePlotClick}
             hovered={hovered}
@@ -3405,6 +3831,11 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
             scars={nearbyScars}
             selectedSlot={selectedSlot}
             onSlotClick={handleSlotClick}
+            landmarkInfo={landmarkInfo}
+            weatherKind={weatherKind}
+            isCapital={isCapital}
+            specialty={specialty}
+            activity={activity}
           />
           <OrbitControls
             enabled={introDone && !exiting}
@@ -3760,15 +4191,20 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
               const sizeId = citySize(city).id;
               // The metric this landmark governs, for the at-a-glance readout.
               const cmds = inspect.commands;
-              const metric = cmds.includes('develop-agriculture') ? { zh: '農業', v: city.agriculture, max: econCap }
-                : cmds.includes('develop-commerce') ? { zh: '商業', v: city.commerce, max: econCap }
-                : { zh: '城防', v: city.defense, max: cap };
+              // 文教 buildings only hold 興学 — show the talent it accelerates
+              // (在城武將) rather than an irrelevant 城防 line.
+              const learningOnly = cmds.length === 1 && cmds[0] === 'promote-learning';
+              const metric = cmds.includes('develop-agriculture') ? { zh: '農業', v: city.agriculture, max: econCap as number | null }
+                : cmds.includes('develop-commerce') ? { zh: '商業', v: city.commerce, max: econCap as number | null }
+                : cmds.includes('drill-troops') ? { zh: '練度', v: city.drill ?? 0, max: 100 as number | null }
+                : learningOnly ? { zh: '在城武將', v: stationedCount, max: null as number | null }
+                : { zh: '城防', v: city.defense, max: cap as number | null };
               return (
                 <div style={{ marginTop: 8, borderTop: '1px solid #3a2d20', paddingTop: 6 }}>
                   <div style={{ fontSize: '0.74rem', color: '#e8d9b0', marginBottom: 6 }}>
-                    {metric.zh} <strong style={{ color: inspect.color }}>{metric.v}</strong>
-                    <span style={{ color: '#8a7050' }}> / {metric.max}</span>
-                    {!cmds.includes('develop-agriculture') && !cmds.includes('develop-commerce') && (
+                    {metric.zh} <strong style={{ color: inspect.color }}>{metric.v}{learningOnly ? ' 員' : ''}</strong>
+                    {metric.max != null && <span style={{ color: '#8a7050' }}> / {metric.max}</span>}
+                    {!cmds.includes('develop-agriculture') && !cmds.includes('develop-commerce') && !learningOnly && (
                       <span style={{ marginLeft: 10, color: '#8a7050' }}>兵 {city.troops.toLocaleString()} · 民忠 {city.loyalty}</span>
                     )}
                   </div>
@@ -3778,10 +4214,11 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
                       const tierOk = meetsMinSize(sizeId, def.minSize);
                       if (!tierOk) return null;
                       const canAfford = city.gold >= def.goldCost;
+                      const pv = previewByCmd[ct] ?? null;
                       return (
                         <button
                           key={ct}
-                          onClick={() => { setPickerCmd(ct); setInspect(null); }}
+                          onClick={() => { playSfx('open-modal'); setPickerCmd(ct); setInspect(null); }}
                           disabled={!canAfford}
                           title={canAfford ? def.description : t('金錢不足', 'Not enough gold')}
                           style={{
@@ -3791,10 +4228,49 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
                             padding: '0.3rem 0.6rem', cursor: canAfford ? 'pointer' : 'not-allowed',
                             fontFamily: 'inherit', fontSize: '0.76rem',
                           }}
-                        >{pickName(def.label, lang)} <span style={{ color: '#8a7050' }}>{def.goldCost > 0 ? `${def.goldCost}g` : '免'}</span></button>
+                        >{pickName(def.label, lang)} <span style={{ color: '#8a7050' }}>{def.goldCost > 0 ? `${def.goldCost}g` : '免'}</span>
+                          {pv && pv.delta > 0 && canAfford && (
+                            <span style={{ marginLeft: 5, color: '#8fbf7a' }}>≈+{pv.delta.toLocaleString()}</span>
+                          )}</button>
                       );
                     })}
                   </div>
+                  {/* 府衙 · 度支 + 治所/遷都 — the seat of government surfaces this
+                      city's own seasonal ledger and the capital controls in place. */}
+                  {cmds.includes('improve-loyalty') && (
+                    <div style={{ marginTop: 8, borderTop: '1px solid #3a2d20', paddingTop: 6, fontSize: '0.72rem', color: '#c0a878' }}>
+                      <div style={{ marginBottom: 5 }}>
+                        <span style={{ color: '#8a7858' }}>本城度支</span>{'  '}
+                        季金 <strong style={{ color: '#e8c860' }}>+{cityEcon.goldIncome.toLocaleString()}</strong>
+                        <span style={{ marginLeft: 8 }}>季糧 <strong style={{ color: (cityEcon.foodIncome - cityEcon.foodUpkeep) >= 0 ? '#9ac06a' : '#d4774a' }}>{(cityEcon.foodIncome - cityEcon.foodUpkeep) >= 0 ? '+' : ''}{(cityEcon.foodIncome - cityEcon.foodUpkeep).toLocaleString()}</strong></span>
+                        <span style={{ marginLeft: 8 }}>人口 <strong style={{ color: cityEcon.populationDelta >= 0 ? '#88b7e8' : '#d4774a' }}>{cityEcon.populationDelta >= 0 ? '+' : ''}{cityEcon.populationDelta.toLocaleString()}</strong>/季</span>
+                      </div>
+                      {isCapital ? (
+                        <div style={{ color: '#e8c860' }}>★ 本城為治所 — 政令所出,每季 +3 民忠、禁軍宿衛。</div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            const r = relocateCapital(cityId);
+                            playSfx(r.ok ? 'gong' : 'pluck');
+                            setAssignMsg(r.message);
+                            window.setTimeout(() => setAssignMsg(null), 3600);
+                            setInspect(null);
+                          }}
+                          style={{ background: '#2a1f14', border: '1px solid #e0c060', color: '#f0d98a', padding: '0.28rem 0.6rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.74rem' }}
+                        >遷都至此 <span style={{ color: '#8a7050' }}>{capitalMoveUsed ? '800g' : '首遷免費'}</span></button>
+                      )}
+                    </div>
+                  )}
+                  {/* 市集 · 市易 — inline grain market on the commerce landmark. */}
+                  {cmds.includes('develop-commerce') && (
+                    <MarketTradeRow
+                      city={city}
+                      season={date.season as Season}
+                      cityId={cityId}
+                      tradeFood={tradeFood}
+                      onTraded={(m) => { setAssignMsg(m); window.setTimeout(() => setAssignMsg(null), 3000); }}
+                    />
+                  )}
                 </div>
               );
             })()}
@@ -3874,6 +4350,59 @@ function SeasonalDrift({ season }: { season: 'spring' | 'summer' | 'autumn' | 'w
       {season === 'winter'
         ? <sphereGeometry args={[cfg.size, 4, 4]} />
         : <planeGeometry args={[cfg.size * 2, cfg.size * 1.4]} />}
+      <meshBasicMaterial color={cfg.color} transparent opacity={cfg.opacity} side={THREE.DoubleSide} depthWrite={false} />
+    </instancedMesh>
+  );
+}
+
+/* ─── 天時粒子 — weather laid over the city: slanting rain, drifting drought
+ *  dust, or wind-blown grit. One instanced field, dressed by the weather kind;
+ *  clear/snow defer to SeasonalDrift. */
+function WeatherFX({ kind, width, height }: { kind: WeatherKind; width: number; height: number }) {
+  // Low-tier devices get roughly half the motes (the per-frame instance loop is
+  // the cost here, not the draw call — one instanced mesh either way).
+  const cfg = kind === 'rain'
+    ? { count: RENDER_HI ? 1100 : 480, color: '#9fb4c4', sizeX: 0.022, sizeY: 0.5, fall: 9, swayX: 0.6, swayZ: 0, opacity: 0.5, top: 16 }
+    : kind === 'drought'
+      ? { count: RENDER_HI ? 220 : 110, color: '#cdb27a', sizeX: 0.05, sizeY: 0.05, fall: 0.25, swayX: 2.4, swayZ: 1.6, opacity: 0.5, top: 6 }
+      : kind === 'wind'
+        ? { count: RENDER_HI ? 320 : 150, color: '#c4b388', sizeX: 0.07, sizeY: 0.03, fall: 0.6, swayX: 3.6, swayZ: 0.8, opacity: 0.42, top: 7 }
+        : null;
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+  const spanX = width * HEX_COL_STEP, spanZ = height * HEX_ROW_STEP;
+  const seeds = useMemo(() => {
+    const n = cfg?.count ?? 0;
+    return Array.from({ length: n }, (_, i) => ({
+      x: ((i * 73) % 200) / 200 * spanX,
+      z: ((i * 137 + 41) % 200) / 200 * spanZ,
+      y: ((i * 29) % 100) / 100 * (cfg?.top ?? 12),
+      speed: 0.7 + ((i * 31) % 10) / 10 * 0.7,
+      drift: ((i * 17) % 63) / 10,
+    }));
+  }, [cfg?.count, cfg?.top, spanX, spanZ]);
+  useFrame((state, delta) => {
+    if (!meshRef.current || !cfg) return;
+    const t = state.clock.elapsedTime;
+    for (let i = 0; i < seeds.length; i++) {
+      const sd = seeds[i];
+      sd.y -= sd.speed * cfg.fall * delta;
+      if (sd.y < 0) sd.y = cfg.top;
+      // Rain slants steadily; dust/wind swirl on a sine drift.
+      const sx = kind === 'rain' ? cfg.swayX : Math.sin(t * 0.9 + sd.drift) * cfg.swayX;
+      const sz = Math.cos(t * 0.7 + sd.drift) * cfg.swayZ;
+      dummy.position.set(sd.x + sx, sd.y, sd.z + sz);
+      if (kind === 'rain') dummy.rotation.set(0, 0, 0.18);
+      else dummy.rotation.set(t + sd.drift, t * 0.6, 0);
+      dummy.updateMatrix();
+      meshRef.current.setMatrixAt(i, dummy.matrix);
+    }
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  });
+  if (!cfg) return null;
+  return (
+    <instancedMesh ref={meshRef} args={[undefined, undefined, cfg.count]} key={kind}>
+      <planeGeometry args={[cfg.sizeX, cfg.sizeY]} />
       <meshBasicMaterial color={cfg.color} transparent opacity={cfg.opacity} side={THREE.DoubleSide} depthWrite={false} />
     </instancedMesh>
   );

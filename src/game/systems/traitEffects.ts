@@ -26,6 +26,9 @@ const INTERNAL_PENALTY_TRAITS = new Set(['lazy']);
 const COMMERCE_BOOST = new Set(['frugal']);
 const DEFENSE_BOOST = new Set(['fortress-keeper']);
 const LOYALTY_BOOST = new Set(['compassionate', 'benevolent', 'noble', 'lenient', 'generous']);
+// 治軍嚴整 — a disciplined martial officer drills the garrison and organises a
+// 屯田 colony better than a soft administrator.
+const DRILL_BOOST = new Set(['iron-discipline', 'martial-valor', 'veteran']);
 
 /**
  * Multiplier applied to an officer's internal-affairs effect.
@@ -43,7 +46,28 @@ export function internalAffairsMultiplier(
   if ((type === 'build-defense' || type === 'major-defense' || type === 'upgrade-wall')
       && hasAny(officer, DEFENSE_BOOST)) mul += 0.20;
   if (type === 'improve-loyalty' && hasAny(officer, LOYALTY_BOOST)) mul += 0.25;
+  if ((type === 'drill-troops' || type === 'military-farming')
+      && hasAny(officer, DRILL_BOOST)) mul += 0.20;
   return Math.max(0.4, Math.min(2.0, mul));
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// 貪腐滋生 — how fast graft accrues in a city, by the character of the
+// officers posted there. A venal governor lets it run; an incorruptible /
+// frugal / iron-disciplined one keeps the clerks honest.
+// ─────────────────────────────────────────────────────────────────────
+
+const CORRUPTION_FAST = new Set(['greedy', 'gluttonous']);
+const CORRUPTION_SLOW = new Set(['incorruptible', 'frugal', 'iron-discipline']);
+
+/** Multiplier on a city's per-season corruption accrual from the officers
+ *  stationed there. A greedy presence speeds it (×1.5); an upright one slows it
+ *  (×0.5); both present roughly cancel. */
+export function corruptionAccrualMultiplier(officers: Officer[]): number {
+  let mul = 1;
+  if (officers.some((o) => hasAny(o, CORRUPTION_FAST))) mul *= 1.5;
+  if (officers.some((o) => hasAny(o, CORRUPTION_SLOW))) mul *= 0.5;
+  return mul;
 }
 
 /**

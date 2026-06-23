@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveBattle, siegeBuildingModifiers, foreignAuxDefenseMultiplier, type BattleSide } from './combat';
+import { resolveBattle, siegeBuildingModifiers, foreignAuxDefenseMultiplier, cityDrillDefenseMultiplier, cityDrillLossMultiplier, type BattleSide } from './combat';
 import { aggregateSlotEffects, type DefenseBuildingId } from '../data/defenseBuildings';
 import type { City } from '../types';
 import { mkOfficer, fixedRng, seededRng } from '../../test/factories';
@@ -16,6 +16,26 @@ describe('異域義從 — foreign aux defence multiplier', () => {
     expect(foreignAuxDefenseMultiplier(2000)).toBeGreaterThan(1);
     expect(foreignAuxDefenseMultiplier(2000)).toBeLessThan(foreignAuxDefenseMultiplier(8000));
     expect(foreignAuxDefenseMultiplier(10_000_000)).toBeCloseTo(1.15, 5);
+  });
+});
+
+describe('練度 — drill defence multiplier', () => {
+  it('is 1 for raw levies and rises with drill, capped at +25%', () => {
+    expect(cityDrillDefenseMultiplier(0)).toBe(1);
+    expect(cityDrillDefenseMultiplier(undefined)).toBe(1);
+    expect(cityDrillDefenseMultiplier(40)).toBeGreaterThan(1);
+    expect(cityDrillDefenseMultiplier(40)).toBeLessThan(cityDrillDefenseMultiplier(80));
+    expect(cityDrillDefenseMultiplier(100)).toBeCloseTo(1.25, 5);
+  });
+});
+
+describe('練度減損 — drill cuts defender casualties', () => {
+  it('is 1 for raw levies and falls with drill, down to −15%', () => {
+    expect(cityDrillLossMultiplier(0)).toBe(1);
+    expect(cityDrillLossMultiplier(undefined)).toBe(1);
+    expect(cityDrillLossMultiplier(40)).toBeLessThan(1);
+    expect(cityDrillLossMultiplier(80)).toBeLessThan(cityDrillLossMultiplier(40));
+    expect(cityDrillLossMultiplier(100)).toBeCloseTo(0.85, 5);
   });
 });
 

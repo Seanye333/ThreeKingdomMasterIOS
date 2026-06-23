@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
-import { COMMAND_DEFS } from '../../game/systems/commands';
+import { COMMAND_DEFS, previewCommandGain } from '../../game/systems/commands';
 import type { EntityId, InternalAffairsType } from '../../game/types';
 import { OfficerHoverCard } from './OfficerHoverCard';
 import { Name } from './Name';
 import styles from './OfficerPicker.module.css';
 import { useT, useLanguage, useDesc } from '../i18n';
 import { commandFitMultiplier } from '../../game/systems/traitEffects';
+import { appointmentBonusFor } from '../../game/systems/appointmentEffects';
+import { playSfx } from '../../game/systems/sound';
 
 interface Props {
   cityId: EntityId;
@@ -19,6 +21,7 @@ export function OfficerPicker({ cityId, commandType, onClose }: Props) {
   const issueCommand = useGameStore((s) => s.issueCommand);
   const city = useGameStore((s) => s.cities[cityId]);
   const officersMap = useGameStore((s) => s.officers);
+  const appointments = useGameStore((s) => s.appointments);
   const pendingTrainings = useGameStore((s) => s.pendingTrainings);
   const t = useT();
   const lang = useLanguage();
@@ -50,20 +53,46 @@ export function OfficerPicker({ cityId, commandType, onClose }: Props) {
     [officersMap, cityId, city?.ownerForceId, def.stat, trainingIds, commandType],
   );
 
+  // Civic-title multiplier for this force/city — same for every officer, so
+  // compute once and fold into each per-officer 施政預覽.
+  const apptBonus = useMemo(
+    () => appointmentBonusFor(city?.ownerForceId ?? null, appointments, officersMap, cityId),
+    [city?.ownerForceId, appointments, officersMap, cityId],
+  );
+
   const gold = city?.gold ?? 0;
   const totalCost = picked.size * def.goldCost;
-  // How many MORE officers the treasury can still fund (free commands: no cap).
+  // How many MORE officers the treasury can still fund for SEPARATE dispatch
+  // (free commands: no cap).
   const affordableMore = def.goldCost > 0 ? Math.max(0, Math.floor((gold - totalCost) / def.goldCost)) : Infinity;
+  // How many of the picked officers the treasury can actually fund for SEPARATE
+  // dispatch right now (each separate command pays its own cost). May be < picked
+  // when extra officers were picked for the single-cost 協同 path — keeps the
+  // dispatch button's count/cost honest instead of promising an unaffordable total.
+  const fundableSeparate = def.goldCost > 0 ? Math.min(picked.size, Math.floor(gold / def.goldCost)) : picked.size;
+  // 協同施政 needs only ONE cost regardless of party size — so always allow
+  // picking up to 3 (1 lead + 2 assists) as long as that single cost is funded,
+  // even when separate dispatch of that many wouldn't be affordable.
+  const canPickMore = def.goldCost === 0 || (gold >= def.goldCost && (affordableMore > 0 || picked.size < 3));
 
   const toggle = (officerId: EntityId) => {
     if (trainingIds.has(officerId)) return;
     setPicked((prev) => {
       const next = new Set(prev);
       if (next.has(officerId)) next.delete(officerId);
-      else if (affordableMore > 0) next.add(officerId);
+      else if (canPickMore) next.add(officerId);
       return next;
     });
   };
+
+  // Order the picked officers by command fit (best = lead for 協同施政).
+  const pickedByFit = officers.filter((o) => picked.has(o.id));
+  const canCooperate = picked.size >= 2 && picked.size <= 3 && gold >= def.goldCost;
+
+  // 委派之聲 — recruit musters to the 鐘, paid civil works ring the 錢, a free
+  // errand a soft 擊.
+  const dispatchSfx = () =>
+    playSfx(commandType === 'recruit-troops' ? 'bell' : def.goldCost > 0 ? 'coin' : 'click');
 
   const dispatch = () => {
     let dispatched = 0;
@@ -71,7 +100,15 @@ export function OfficerPicker({ cityId, commandType, onClose }: Props) {
       const r = issueCommand(cityId, commandType, id);
       if (r.ok) dispatched++;
     }
-    if (dispatched > 0) onClose();
+    if (dispatched > 0) { dispatchSfx(); onClose(); }
+  };
+
+  // 協同施政 — the best-fit pick leads; the rest assist (max 2). One gold cost.
+  const dispatchCooperative = () => {
+    if (pickedByFit.length < 2) return;
+    const [lead, ...rest] = pickedByFit;
+    const r = issueCommand(cityId, commandType, lead.id, rest.slice(0, 2).map((o) => o.id));
+    if (r.ok) { dispatchSfx(); onClose(); }
   };
 
   return (
@@ -99,7 +136,7 @@ export function OfficerPicker({ cityId, commandType, onClose }: Props) {
         <p className={styles.desc}>{desc(def)}</p>
 
         <h3 className={styles.sectionTitle}>
-          {t('選擇武將(可多選)', 'Select officers (multiple)')}
+          {t('選擇武將(可多選 · 2–3 員可協同)', 'Select officers (multi · 2–3 can cooperate)')}
           {picked.size > 0 && (
             <span style={{ marginLeft: 8, fontSize: '0.8rem', color: '#e6c473' }}>
               {t(`已選 ${picked.size}`, `${picked.size} picked`)}
@@ -117,9 +154,15 @@ export function OfficerPicker({ cityId, commandType, onClose }: Props) {
               const isTraining = trainingIds.has(o.id);
               const isPicked = picked.has(o.id);
               const fit = commandFitMultiplier(o, commandType);
+              const preview = city
+                ? previewCommandGain(commandType, o, city, {
+                    internalMultiplier: apptBonus.internalMultiplier,
+                    recruitBonus: apptBonus.recruitBonus,
+                  })
+                : null;
               const recommended = fit >= 1.15;
               const liability = fit <= 0.85;
-              const unaffordable = !isPicked && affordableMore <= 0;
+              const unaffordable = !isPicked && !canPickMore;
               const blocked = isTraining || unaffordable;
               return (
                 <li key={o.id}>
@@ -152,6 +195,11 @@ export function OfficerPicker({ cityId, commandType, onClose }: Props) {
                         {isTraining && <span style={{ marginLeft: '0.4rem', fontSize: '0.7rem', color: '#88b7e8', fontStyle: 'italic' }}>⏳ {t('培訓中', 'training')}</span>}
                       </span>
                       <span className={styles.officerStat}>
+                        {preview && preview.delta > 0 && (
+                          <span style={{ marginRight: 8, color: recommended ? '#8fdc8f' : '#c8b683' }}>
+                            ≈ {preview.zh} +{preview.delta.toLocaleString()}
+                          </span>
+                        )}
                         {def.stat.toUpperCase().slice(0, 3)}{' '}
                         <strong>{o.stats[def.stat]}</strong>
                       </span>
@@ -164,23 +212,48 @@ export function OfficerPicker({ cityId, commandType, onClose }: Props) {
         )}
 
         {officers.length > 0 && (
-          <button
-            onClick={dispatch}
-            disabled={picked.size === 0}
-            style={{
-              marginTop: '0.8rem', width: '100%', padding: '0.55rem',
-              background: picked.size > 0 ? 'linear-gradient(180deg,#3a2d18,#2a1f10)' : 'transparent',
-              border: `1px solid ${picked.size > 0 ? '#e6c473' : '#26323e'}`,
-              color: picked.size > 0 ? '#f2dd9a' : '#5a4a35',
-              cursor: picked.size > 0 ? 'pointer' : 'not-allowed',
-              fontFamily: 'inherit', letterSpacing: '0.07rem', fontSize: '0.9rem',
-            }}
-          >
-            {picked.size === 0
-              ? t('選擇武將', 'Select officers')
-              : t(`委派 ${picked.size} 員${def.goldCost > 0 ? ` · 共 ${totalCost}金` : ''}`,
-                  `Dispatch ${picked.size}${def.goldCost > 0 ? ` · ${totalCost}g` : ''}`)}
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.8rem' }}>
+            <button
+              onClick={dispatch}
+              disabled={picked.size === 0}
+              style={{
+                width: '100%', padding: '0.55rem',
+                background: picked.size > 0 ? 'linear-gradient(180deg,#3a2d18,#2a1f10)' : 'transparent',
+                border: `1px solid ${picked.size > 0 ? '#e6c473' : '#26323e'}`,
+                color: picked.size > 0 ? '#f2dd9a' : '#5a4a35',
+                cursor: picked.size > 0 ? 'pointer' : 'not-allowed',
+                fontFamily: 'inherit', letterSpacing: '0.07rem', fontSize: '0.9rem',
+              }}
+            >
+              {picked.size === 0
+                ? t('選擇武將', 'Select officers')
+                : picked.size === 1
+                  ? t(`委派${def.goldCost > 0 ? ` · ${def.goldCost}金` : ''}`, `Dispatch${def.goldCost > 0 ? ` · ${def.goldCost}g` : ''}`)
+                  : fundableSeparate < picked.size
+                    ? t(`分別委派 ${fundableSeparate}/${picked.size} 員(餘者國庫不足)${def.goldCost > 0 ? ` · ${fundableSeparate * def.goldCost}金` : ''}`,
+                        `Dispatch ${fundableSeparate}/${picked.size} (rest unfunded)${def.goldCost > 0 ? ` · ${fundableSeparate * def.goldCost}g` : ''}`)
+                    : t(`分別委派 ${picked.size} 員${def.goldCost > 0 ? ` · 共 ${totalCost}金` : ''}`,
+                        `Dispatch ${picked.size} separately${def.goldCost > 0 ? ` · ${totalCost}g` : ''}`)}
+            </button>
+            {canCooperate && (
+              <button
+                onClick={dispatchCooperative}
+                style={{
+                  width: '100%', padding: '0.55rem',
+                  background: 'linear-gradient(180deg,#1d2f1a,#162313)',
+                  border: '1px solid #7ed68a', color: '#bfeebf',
+                  cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.05rem', fontSize: '0.86rem',
+                }}
+                title={t(
+                  '協同施政 — 首席主政,餘者襄助(遞減 0.5×/0.3×),只付一份費用,襄助者亦得歷練。',
+                  'Cooperate — best-fit officer leads, the rest assist (0.5×/0.3× diminishing). One cost only; assistants gain XP too.',
+                )}
+              >
+                {t(`協同施政:${pickedByFit.length} 員合力${def.goldCost > 0 ? ` · 僅 ${def.goldCost}金` : ''}`,
+                   `Cooperate · ${pickedByFit.length} on one task${def.goldCost > 0 ? ` · ${def.goldCost}g only` : ''}`)}
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>

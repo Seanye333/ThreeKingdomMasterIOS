@@ -98,7 +98,10 @@ export function tickCityEconomy(
     (best, o) => Math.max(best, gradeRank(officerGrade(o).grade) - gradeRank('bronze')),
     0,
   );
-  const goldIncome = Math.max(0, Math.floor((baseGold * eff.goldMul * bb.commerceMul * size.goldMul * prestigeMul * gradeAdminMul * spec.goldMul + eff.goldFlat) * taxEff.goldMul * inflationMul));
+  // 貪腐蝕利 — graft skims a slice off the top: clerks pad the books and pocket
+  // the difference. Up to −40% at full corruption (100). Cleared by 巡查肅貪.
+  const corruptionMul = 1 - Math.max(0, Math.min(100, city.corruption ?? 0)) / 250;
+  const goldIncome = Math.max(0, Math.floor((baseGold * eff.goldMul * bb.commerceMul * size.goldMul * prestigeMul * gradeAdminMul * spec.goldMul + eff.goldFlat) * taxEff.goldMul * inflationMul * corruptionMul));
 
   const baseFood =
     season === 'autumn'

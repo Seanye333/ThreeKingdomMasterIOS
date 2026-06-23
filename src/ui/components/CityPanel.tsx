@@ -727,8 +727,9 @@ function DevelopmentSection({ city, isPlayerCity }: { city: City; isPlayerCity: 
       if (c.cityId !== city.id) continue;
       if (c.type === 'develop-agriculture' || c.type === 'major-agriculture') w.agriculture = true;
       else if (c.type === 'develop-commerce' || c.type === 'major-commerce') w.commerce = true;
-      else if (c.type === 'build-defense' || c.type === 'major-defense' || c.type === 'upgrade-wall') w.defense = true;
-      else if (c.type === 'improve-loyalty') w.loyalty = true;
+      else if (c.type === 'build-defense' || c.type === 'major-defense' || c.type === 'upgrade-wall' || c.type === 'drill-troops') w.defense = true;
+      else if (c.type === 'improve-loyalty' || c.type === 'relief' || c.type === 'anti-corruption') w.loyalty = true;
+      else if (c.type === 'military-farming') w.agriculture = true;
     }
     return w;
   }, [allPending, city.id, isPlayerCity]);

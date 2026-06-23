@@ -420,6 +420,8 @@ const INTERNAL_AFFAIRS_FAVORED: Record<InternalAffairsType, keyof OfficerStats> 
   'promote-learning': 'intelligence',
   'anti-corruption': 'politics',
   'flood-control': 'politics',
+  'military-farming': 'leadership',
+  'drill-troops': 'leadership',
   garrison: 'leadership',
 };
 

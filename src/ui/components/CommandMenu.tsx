@@ -24,6 +24,8 @@ const BASIC_ORDER: InternalAffairsType[] = [
   'develop-commerce',
   'build-defense',
   'recruit-troops',
+  'military-farming',
+  'drill-troops',
   'improve-loyalty',
   'relief',
   'anti-corruption',
@@ -192,6 +194,16 @@ export function CommandMenu({ cityId }: Props) {
                     </span>
                     <span className={styles.activeOfficer}>
                       {t('由', 'by')} {lang === 'en' ? officer.name.en : officer.name.zh}
+                      {cmd.type !== 'march' && cmd.assistantOfficerIds && cmd.assistantOfficerIds.length > 0 && (
+                        <span style={{ color: '#7ed68a' }}>
+                          {' '}{t('協同', '+')}{' '}
+                          {cmd.assistantOfficerIds
+                            .map((aid) => officersMap[aid])
+                            .filter(Boolean)
+                            .map((a) => lang === 'en' ? a!.name.en : a!.name.zh)
+                            .join(lang === 'en' ? ', ' : '、')}
+                        </span>
+                      )}
                       {cmd.type === 'march' && targetCity && (
                         <>
                           {' → '}

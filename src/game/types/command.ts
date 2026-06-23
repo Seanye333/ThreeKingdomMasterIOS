@@ -18,6 +18,8 @@ export type InternalAffairsType =
   | 'promote-learning'    // 興学 — XP burst to stationed officers (教化)
   | 'anti-corruption'     // 巡查肅貪 — claw back graft → city gold + loyalty
   | 'flood-control'       // 治水 — raise flood works (stacks with levee) + irrigation
+  | 'military-farming'    // 屯田 — soldiers till state land: food without drawing population
+  | 'drill-troops'        // 練兵 — drill the garrison: raise the city's 練度 (drill) → defense
   | 'garrison';           // 鎮守 — reclaim surrounding territory + boost defense
 
 export type CommandType = InternalAffairsType | 'march';
@@ -29,6 +31,15 @@ interface CommandBase {
 
 export interface InternalAffairsCommand extends CommandBase {
   type: InternalAffairsType;
+  /**
+   * 協同施政 — up to 2 assistant officers who pour their season into the lead's
+   * command instead of running their own. The gold cost is paid ONCE (by the
+   * lead); each assistant adds a diminishing fraction of their effective stat
+   * to the output (0.5×, 0.3×) and earns an internal-affairs XP trickle of
+   * their own — a gold-efficient single push that also seasons junior officers.
+   * Assistants are marked busy (task set) exactly like the lead.
+   */
+  assistantOfficerIds?: EntityId[];
 }
 
 export interface MarchCommand extends CommandBase {
