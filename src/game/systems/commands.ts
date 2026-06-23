@@ -70,6 +70,16 @@ export const COMMAND_DEFS: Record<CommandType, CommandDef> = {
     description:
       'Distribute aid to raise public loyalty. Effect scales with Charisma.',
   },
+  relief: {
+    type: 'relief',
+    label: { en: 'Famine Relief', zh: '賑濟' },
+    stat: 'charisma',
+    // Costs FOOD, not gold — opening the granaries to feed the people. A second
+    // loyalty lever that bites in a different resource than 撫民 (gold).
+    goldCost: 0,
+    description:
+      '賑濟 — Open the granaries to feed the populace. Spends city FOOD (scaling with population) to win a strong loyalty boost. Unaffected by the near-cap taper that limits 撫民, so it can top a city off — but a starving city has nothing to give.',
+  },
   search: {
     type: 'search',
     label: { en: 'Search for Talent', zh: '人材探訪' },
@@ -85,28 +95,28 @@ export const COMMAND_DEFS: Record<CommandType, CommandDef> = {
     type: 'major-agriculture',
     label: { en: 'Mass Agriculture', zh: '大農政' },
     stat: 'politics',
-    goldCost: 800,
+    goldCost: 1100,
     minSize: 'city',
     description:
-      '大農政 — Triple-strength agriculture push. Costs 800g but gains 3× over basic. Requires 城 (City) tier.',
+      '大農政 — Triple-strength agriculture push. 1100g (a premium over 3× basic) but does it in one officer-season instead of three. Requires 城 (City) tier.',
   },
   'major-commerce': {
     type: 'major-commerce',
     label: { en: 'Mass Commerce', zh: '大商政' },
     stat: 'politics',
-    goldCost: 800,
+    goldCost: 1100,
     minSize: 'city',
     description:
-      '大商政 — Triple-strength commerce drive. Costs 800g, +3× over basic. Requires 城 tier.',
+      '大商政 — Triple-strength commerce drive. 1100g (a premium over 3× basic) but done in one officer-season. Requires 城 tier.',
   },
   'major-defense': {
     type: 'major-defense',
     label: { en: 'Mass Fortification', zh: '大築城' },
     stat: 'politics',
-    goldCost: 1000,
+    goldCost: 1400,
     minSize: 'city',
     description:
-      '大築城 — Massive fortification project. 1000g, +3× defense over basic. Requires 城 tier.',
+      '大築城 — Massive fortification project. 1400g (a premium over 3× basic) but done in one officer-season. Requires 城 tier.',
   },
   'encourage-migration': {
     type: 'encourage-migration',
@@ -152,6 +162,7 @@ export interface CommandResult {
     troops: number;
     population: number;
     loyalty: number;
+    food: number;
     wallTier: 1 | 2 | 3;
   }>;
   message: string;
@@ -182,6 +193,16 @@ export function resolveInternalAffairs(
 
   switch (type) {
     case 'develop-agriculture': {
+      const mishap = civicMishap(city, statValue, rng);
+      if (mishap !== null) {
+        const setback = Math.max(-city.agriculture, mishap);
+        return {
+          success: false,
+          delta: { agriculture: setback },
+          message: `${officer.name.en}: a locust/drought blight struck the fields — Agriculture ${setback}.`,
+          messageZh: `${officer.name.zh}勸農遇蝗旱之災,農業 ${setback}。`,
+        };
+      }
       const gain = applyDevelopment(city.agriculture, statValue, rng, econCap);
       const econCapHit = city.agriculture + gain >= econCap && gain === 0;
       return {
@@ -196,6 +217,16 @@ export function resolveInternalAffairs(
       };
     }
     case 'develop-commerce': {
+      const mishap = civicMishap(city, statValue, rng);
+      if (mishap !== null) {
+        const setback = Math.max(-city.commerce, mishap);
+        return {
+          success: false,
+          delta: { commerce: setback },
+          message: `${officer.name.en}: a market panic/fire hit the wards — Commerce ${setback}.`,
+          messageZh: `${officer.name.zh}興商遇市亂火患,商業 ${setback}。`,
+        };
+      }
       const gain = applyDevelopment(city.commerce, statValue, rng, econCap);
       const econCapHit = city.commerce + gain >= econCap && gain === 0;
       return {
@@ -210,6 +241,16 @@ export function resolveInternalAffairs(
       };
     }
     case 'build-defense': {
+      const mishap = civicMishap(city, statValue, rng);
+      if (mishap !== null) {
+        const setback = Math.max(-city.defense, mishap);
+        return {
+          success: false,
+          delta: { defense: setback },
+          message: `${officer.name.en}: scaffolding collapsed / a fire gutted the works — Defense ${setback}.`,
+          messageZh: `${officer.name.zh}築城遇失火坍塌,城防 ${setback}。`,
+        };
+      }
       const gain = applyDevelopment(city.defense, statValue, rng, cap);
       const capHit = city.defense + gain >= cap && gain === 0;
       return {
@@ -249,15 +290,42 @@ export function resolveInternalAffairs(
       };
     }
     case 'improve-loyalty': {
-      const gain = Math.min(
-        100 - city.loyalty,
-        Math.max(1, Math.floor(statValue / 20) + Math.floor(rng() * 3)),
-      );
+      // Diminishing near the cap — winning over the last restive holdouts is
+      // far harder than calming a merely-unsettled town. Full value while
+      // loyalty ≤ 60 (room ≥ 40), then it tapers: 撫民 alone can't hold a city
+      // at 100, leaving room for 賑濟 / policies / titles to do the topping-off.
+      const room = 100 - city.loyalty;
+      const taper = Math.min(1, room / 40);
+      const gain = room > 0
+        ? Math.min(room, Math.max(1, Math.round(developmentGain(statValue, rng) * taper)))
+        : 0;
       return {
         success: gain > 0,
         delta: { loyalty: gain },
         message: `${officer.name.en} raised Loyalty by ${gain} (now ${city.loyalty + gain}).`,
         messageZh: `${officer.name.zh}撫民,民忠 +${gain} (現 ${city.loyalty + gain})。`,
+      };
+    }
+    case 'relief': {
+      // 賑濟 — feed the people from the granary. Cost scales with population
+      // (more mouths → more grain); a starving city (can't cover it) can't
+      // relieve. The loyalty win is strong and ignores the 撫民 near-cap taper,
+      // so it's the way to top a city off — but you pay it in food, not gold.
+      const foodNeeded = Math.max(500, Math.round(city.population * 0.02));
+      if (city.food < foodNeeded) {
+        return {
+          success: false,
+          delta: {},
+          message: `${officer.name.en}: granaries too bare to relieve ${city.name.en} (need ${foodNeeded} food).`,
+          messageZh: `${officer.name.zh}:倉廩空虛,無糧可賑(需 ${foodNeeded} 糧)。`,
+        };
+      }
+      const gain = Math.min(100 - city.loyalty, developmentGain(statValue, rng) + 3);
+      return {
+        success: gain > 0,
+        delta: { loyalty: gain, food: -foodNeeded },
+        message: `${officer.name.en} 賑濟: opened the granaries (−${foodNeeded} food), Loyalty +${gain} (now ${city.loyalty + gain}).`,
+        messageZh: `${officer.name.zh}賑濟:開倉放糧(糧 −${foodNeeded}),民忠 +${gain} (現 ${city.loyalty + gain})。`,
       };
     }
     case 'major-agriculture': {
@@ -291,12 +359,19 @@ export function resolveInternalAffairs(
       // Population boost proportional to charisma + small random.
       const base = Math.floor(statValue * 80) + 2000;
       const variance = Math.floor(rng() * 1500);
-      const popGain = base + variance;
+      // Diminishing pull — the larger (more crowded) the city, the fewer extra
+      // refugees one drive attracts, so migration can't be spammed to balloon a
+      // metropolis. 邑 ×1.0 → 都 ×0.4.
+      const pullMul = 1 - SIZE_RANK[size.id] * 0.15;
+      const popGain = Math.round((base + variance) * pullMul);
+      // Newcomers strain food and housing before they settle — a small loyalty
+      // dip (replacing the old free +1) that a charismatic governor (≥80) avoids.
+      const loyaltyHit = statValue >= 80 ? 0 : -1;
       return {
         success: true,
-        delta: { population: popGain, loyalty: 1 },
-        message: `${officer.name.en} 招撫流民: +${popGain.toLocaleString()} population (loyalty +1).`,
-        messageZh: `${officer.name.zh}招撫流民:民眾 +${popGain.toLocaleString()} (民忠 +1)。`,
+        delta: { population: popGain, loyalty: loyaltyHit },
+        message: `${officer.name.en} 招撫流民: +${popGain.toLocaleString()} population (${size.name.zh} pull ×${pullMul.toFixed(2)}, loyalty ${loyaltyHit}).`,
+        messageZh: `${officer.name.zh}招撫流民:民眾 +${popGain.toLocaleString()} (${size.name.zh}吸引 ×${pullMul.toFixed(2)},民忠 ${loyaltyHit})。`,
       };
     }
     case 'upgrade-wall': {
@@ -320,11 +395,48 @@ export function resolveInternalAffairs(
   }
 }
 
+/**
+ * Per-action raw increment for an internal-affairs push (勸農/興商/築城/撫民).
+ *
+ * Replaces the old ⌊stat/20⌋ band, where 政治 60 and 79 produced the same base
+ * and the 0–2 noise drowned out talent ("頂級文官優勢有限"). Now:
+ *  - finer base (÷14) so every ~14 points reads,
+ *  - an elite tail (+1 per 10 points above 70) so a 95-politics 名臣 clearly
+ *    out-administers a 60 journeyman,
+ *  - tight 0–1 noise so high stat is both high AND reliable,
+ *  - 良吏豐政: a small crit (chance rising with stat) yields an exceptional
+ *    season (×1.5). Surfaces naturally as a bigger +N in the report.
+ */
+function developmentGain(stat: number, rng: () => number): number {
+  const base = Math.floor(stat / 14);
+  const elite = Math.floor(Math.max(0, stat - 70) / 10);
+  const variance = Math.floor(rng() * 2);
+  let raw = base + elite + variance + 1;
+  const critChance = 0.06 + Math.max(0, stat - 70) * 0.003;
+  if (rng() < critChance) raw = Math.floor(raw * 1.5);
+  return raw;
+}
+
 function applyDevelopment(current: number, stat: number, rng: () => number, cap: number): number {
   if (current >= cap) return 0;
-  const base = Math.floor(stat / 20);
-  const variance = Math.floor(rng() * 3);
-  return Math.min(cap - current, base + variance + 1);
+  return Math.min(cap - current, developmentGain(stat, rng));
+}
+
+/**
+ * 災異 — the downside that mirrors 良吏豐政. A restive, poorly-run city can
+ * suffer a setback instead of progress (蝗災/旱 on the fields, 失火 on the
+ * works). Risk is ~4% in a contented city, climbing toward ~14% as loyalty
+ * falls below 60; a capable official (政治/魅力 > 70) manages it back down.
+ * Only the deliberate, hands-on basic pushes carry this risk — the costly 大政
+ * projects are assumed to be run with enough oversight to stay safe.
+ * Returns a negative setback (−1..−3), or null for "no disaster".
+ */
+function civicMishap(city: City, stat: number, rng: () => number): number | null {
+  const risk = 0.04
+    + Math.max(0, 60 - city.loyalty) * 0.0016
+    - Math.max(0, stat - 70) * 0.0008;
+  if (rng() >= Math.max(0.01, risk)) return null;
+  return -(1 + Math.floor(rng() * 3));
 }
 
 export interface LostItemRef {

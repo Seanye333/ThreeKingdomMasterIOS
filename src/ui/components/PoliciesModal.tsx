@@ -222,13 +222,13 @@ export const POLICY_DESC: Record<string, string> = {
   'siege-school':      '攻城 — 工程兵專業化。攻城速度 +30%，城牆減耗 −20%。',
   // ── diplomacy / intel ──
   'alliance-marriage': '和親 — 與鄰國通婚。與目標勢力外交關係 +30，盟約穩定。',
-  'tribute-system':    '朝貢 — 確立宗主地位。附屬勢力每季貢金 +50。',
+  'tribute-system':    '朝貢 — 確立宗主地位。每季金 +50。',
   'spy-network':       '細作 — 培訓間諜。敵情可視範圍 +1 城，計謀成功率 +15%。',
   propaganda:          '檄文 — 起草檄文討伐。戰前敵兵叛逃率 +5%，盟友參戰意願 +15。',
   'frontier-pacification': '撫夷 — 攻心為上，南撫蠻夷。南方/西涼異族叛亂 −60%，可徵召蠻兵。',
   // ── new economy ──
-  granary:             '倉廩 — 設常平倉。糧價穩定，凶年無饑民，金庫每季 −20 維護。',
-  'maritime-trade':    '海貿 — 沿海港口開放。每季金 +80，需港口城。東吳特色。',
+  granary:             '倉廩 — 設常平倉。糧價穩定，凶年無饑民。',
+  'maritime-trade':    '海貿 — 沿海港口開放。商業金 +30%，需港口城。東吳特色。',
   'silk-loom':         '蠶桑 — 推廣蠶絲。商業 +10，可生產絲綢進貢/外銷。',
   'ox-plowing':        '牛耕 — 鼓勵牛拉重犁。農業上限 +12，農時 −15%。',
   'fish-salt':         '漁鹽 — 沿海漁鹽兼營。糧 +15%，金 +40/季，需沿海城。',
@@ -238,11 +238,11 @@ export const POLICY_DESC: Record<string, string> = {
   'mountain-warfare':  '山戰 — 山地行軍與作戰。山地移動 ×2，山地傷害 +20%。',
   conscription:        '徵兵 — 大規模強徵。兵力上限 +35%，但民忠 −1/季、農業 −10%。',
   'elite-guards':      '親衛 — 培訓親衛精銳。主將護衛 +40 兵，主將戰死率 −50%。',
-  arsenal:             '軍械庫 — 設中央軍械庫。出征自動配發兵器，每月 −15g 維護。',
+  arsenal:             '軍械庫 — 設中央軍械庫。出征自動配發兵器。',
   // ── new civil ──
   'imperial-academy':  '太學 — 設立太學。學者武將每季 INT +1，可培養儒生官吏。',
   'post-roads':        '驛站 — 全國驛站。命令傳達 +1 城/季，行軍速度 +10%。',
-  'community-granary': '義倉 — 鄉社互助糧倉。災情自動賑濟，民忠 +3，金庫 −30/季。',
+  'community-granary': '義倉 — 鄉社互助糧倉。災情自動賑濟，民忠 +3。',
   'court-music':       '雅樂 — 朝廷正樂。文官效率 +10%，外賓禮節分 +5。',
   // ── cultural / religious ──
   buddhism:            '佛教 — 建寺度僧。民忠 +3/季，少部分人口出家不耕戰 (−5%)。',
@@ -276,7 +276,7 @@ export const POLICY_DESC: Record<string, string> = {
   // ── Phase 3 civil ──
   'household-register':'戶籍 — 編製戶口冊。稅收 +10%，徵兵效率 +20%。',
   examination:         '察舉 — 漢代察舉制。每季全國發現 1-2 名隱士。',
-  'mourning-rites':    '喪禮 — 制定喪禮規格。世族忠誠 +5，但金庫 −20/季。',
+  'mourning-rites':    '喪禮 — 制定喪禮規格。世族忠誠 +5。',
   library:             '圖書 — 設置藏書閣。學者武將智力恢復 +1/季。',
   'music-bureau':      '樂府 — 採集民間樂歌。文官+魅力恢復 +1/季。',
   'school-village':    '鄉學 — 廣設鄉校。寒門武將招募 +20%，文化人口 +5%。',
@@ -287,7 +287,7 @@ export const POLICY_DESC: Record<string, string> = {
   'river-god':         '河神祭 — 祭祀河神。水患減半，水軍出兵時士氣 +3。',
   // ── Phase 3 diplomacy ──
   'envoy-bureau':      '鴻臚寺 — 設外交使團。可同時派 3 個使節，外交效率 +30%。',
-  'frontier-market':   '邊市 — 邊境互市。異族貿易金 +50/季，但細作風險 +1。',
+  'frontier-market':   '邊市 — 邊境互市。異族貿易金 +50/季。',
   'captives-ransom':   '贖俘 — 贖回戰俘。減少士氣損失，可換回被擒武將。',
   // ── Phase 4 economy ──
   'gold-mining':       '金礦 — 開金礦。每季金 +120，需金礦資源城（稀少）。',
@@ -299,7 +299,7 @@ export const POLICY_DESC: Record<string, string> = {
   'pawn-bureau':       '質庫 — 官辦當鋪。災年金 +30 (典當收入)，民忠 −1。',
   'court-treasury':    '內庫 — 帝王私帑。奢華消費可獨立，外交賞賜不耗國庫。',
   'bamboo-craft':      '竹器 — 竹器作坊。輕工業 +5%，需有竹林資源。',
-  'sericulture-tax':   '桑稅 — 桑田專稅。每季金 +35，但 silk-loom 效率 −10%。',
+  'sericulture-tax':   '桑稅 — 桑田專稅。每季金 +35。',
   // ── Phase 4 military ──
   'archery-school':    '射禮 — 設射禮練弓。弓兵命中 +15%，新兵 WAR 略增。',
   'military-drill':    '演武 — 大演武。全軍士氣 +5%，戰前狀態 +1 季。',
@@ -314,25 +314,25 @@ export const POLICY_DESC: Record<string, string> = {
   // ── Phase 4 civil ──
   'noble-titles':      '封爵 — 賞賜爵位。武將忠誠 +10，但長期世族化加深。',
   'imperial-tour':     '巡幸 — 帝王巡幸。沿途城市民忠 +5，但奢費 ×2。',
-  'charity-house':     '養濟院 — 設孤殘院。民忠 +3，瘟疫 −20%，金 −25/季。',
+  'charity-house':     '養濟院 — 設孤殘院。民忠 +3，瘟疫 −20%。',
   mediation:           '鄉約 — 鄉里調解。內亂概率 −15%，民忠 +2。',
   'standardize-weights':'度量衡 — 統一度量。商業 +10%，稅收 +5%，內政效率 +5。',
   'standardize-script':'文字 — 統一文字。文化人口 +5%，行政效率 +10%。',
   'map-survey':        '圖經 — 全國繪圖。軍事偵察 +1 級，行軍路線優化。',
   'crime-amnesty':     '大赦 — 大赦天下。民忠 +8 (一次性)，但盜賊 +10%。',
   // ── religion (civil chip) ──
-  'temple-building':   '寺廟 — 大規模建寺。民忠 +3，但金 −40/季，部分人口出家。',
+  'temple-building':   '寺廟 — 大規模建寺。民忠 +3，部分人口出家。',
   'new-year-rites':    '元正 — 元正大朝。每年初士氣 +10%，外賓必至。',
   alchemy:             '煉丹 — 道家煉丹。可採尋長生丹藥，武將壽命延長機率。',
   'soul-prayer':       '招魂 — 為陣亡士兵招魂。戰後士氣恢復 +10%。',
   // ── Phase 4 diplomacy ──
   bribery:             '收買 — 賄賂敵方官吏。敵情獲取 +30%，敵國民忠 −5%。',
   'propaganda-songs':  '童謠 — 政治童謠散布。敵國民忠每季 −1，難以追蹤源頭。',
-  'nanman-tribute':    '南蠻朝貢 — 收南蠻朝貢。每季金 +40 + 象 +1，需 frontier-pacification。',
+  'nanman-tribute':    '南蠻朝貢 — 收南蠻朝貢。每季金 +40,需 frontier-pacification。',
   // ── Phase 5 economy ──
   ironworks:           '鐵冶 — 國營鐵冶。武器產量 +25%，需 iron-mining 配套。',
   shipyard:            '造船廠 — 大型造船廠。每季新船 +5，水軍規模 +20%。',
-  canal:               '運河 — 開鑿運河。糧運效率 ×2，金 −80 一次性建設費。',
+  canal:               '運河 — 開鑿運河。糧運效率 ×2。',
   'water-mill':        '水車 — 水力磨坊。糧產 +12%，需河流城市。',
   weaving:             '紡織 — 國營紡織坊。商業 +8，士兵冬裝普及。',
   'silver-mining':     '銀礦 — 開銀礦。金 +90/季，需銀礦資源城（稀少）。',
@@ -341,7 +341,7 @@ export const POLICY_DESC: Record<string, string> = {
   caravansary:         '驛館 — 沿途館驛。商旅疲勞 −50%，商業 +5%。',
   'river-dredging':    '浚河 — 定期疏浚河道。洪災 −50%，水運效率 +15%。',
   'horse-breeding':    '牧苑 — 國家牧場。每季新馬 +50 匹，騎兵補充加速。',
-  'famine-loans':      '借糧 — 凶年借糧。災年民忠不下滑，金 −60 借出。',
+  'famine-loans':      '借糧 — 凶年借糧。災年民忠不下滑。',
   // ── Phase 5 military ──
   'skirmish-corps':    '散兵 — 散兵騷擾。森林伏擊 +20%，但正面戰力低。',
   'light-cavalry':     '輕騎 — 輕騎偵察。情報範圍 +1 城，騎兵機動 +1。',
@@ -357,7 +357,7 @@ export const POLICY_DESC: Record<string, string> = {
   'six-ministers':     '三公九卿 — 中央官制改革。行政效率 +25%，世族影響 +1。',
   protocol:            '朝儀 — 朝堂禮儀。外交禮節 +1 等，朝臣不亂禮。',
   'royal-physicians':  '太醫 — 設太醫署。皇帝/重臣壽命延長機率，瘟疫 −20%。',
-  'imperial-guard':    '禁衛 — 皇宮禁衛。京城叛亂幾乎不可能，金 −30/季。',
+  'imperial-guard':    '禁衛 — 皇宮禁衛。京城叛亂幾乎不可能。',
   'official-promotion': '升遷 — 正規升遷制度。武將升職速度 +20%。',
   'royal-park':        '苑囿 — 皇家園林。皇族享樂，民忠 −3，奢費 +50/季。',
   'prefecture-reform': '郡縣改革 — 重劃郡縣。內政效率 +15%，地方影響 −1。',
@@ -369,7 +369,7 @@ export const POLICY_DESC: Record<string, string> = {
   'ancestral-temple':  '太廟 — 太廟祭祀。皇族忠誠 +15，子孫合法繼承。',
   // ── Phase 5 frontier diplomacy ──
   'xianbei-buffer':    '鮮卑緩衝 — 邊境設緩衝區。鮮卑入侵 −60%，邊境 horse-trade +。',
-  'xiongnu-tribute':   '匈奴朝貢 — 匈奴稱臣納貢。每季金 +30 + 馬 +20。',
+  'xiongnu-tribute':   '匈奴朝貢 — 匈奴稱臣納貢。每季金 +30。',
   'qiang-pacification': '羌族安撫 — 撫西涼羌族。叛亂 −70%，可徵羌騎。',
   'wuhuan-buffer':     '烏桓緩衝 — 治理烏桓。東北邊境 +50% 穩定。',
   'jiao-pacification': '交州安撫 — 安南越族。南方城市 +5 民忠，可開南海貿易。',
@@ -411,13 +411,13 @@ export const POLICY_DESC_EN: Record<string, string> = {
   'siege-school':      'Siege School — professional engineers. Siege speed +30%, wall wear −20%.',
   // diplomacy / intel
   'alliance-marriage': 'Marriage Alliance — wed a neighbor’s house. +30 relations with the target force, stable pacts.',
-  'tribute-system':    'Tribute System — assert suzerainty. Vassal forces pay +50 gold/season.',
+  'tribute-system':    'Tribute System — assert suzerainty. +50 gold/season.',
   'spy-network':       'Spy Network — train agents. Enemy intel range +1 city, stratagem success +15%.',
   propaganda:          'Manifesto — draft a call to arms. Pre-battle enemy desertion +5%, allies +15% willing to join.',
   'frontier-pacification': 'Pacify the Frontier — win hearts in the south. Southern/Liang tribal revolts −60%, can levy tribal troops.',
   // new economy
-  granary:             'Granary — ever-normal stores. Stable grain prices, no famine victims, −20 gold/season upkeep.',
-  'maritime-trade':    'Maritime Trade — open coastal ports. +80 gold/season, needs a port city. A Wu specialty.',
+  granary:             'Granary — ever-normal stores. Stable grain prices, no famine victims.',
+  'maritime-trade':    'Maritime Trade — open coastal ports. +30% commerce gold, needs a port city. A Wu specialty.',
   'silk-loom':         'Sericulture — promote silk. Commerce +10, can produce silk for tribute/export.',
   'ox-plowing':        'Ox Plowing — heavy ox-drawn ploughs. Agriculture cap +12, farming time −15%.',
   'fish-salt':         'Fishing & Salt — coastal fisheries and salt. Food +15%, +40 gold/season, needs a coastal city.',
@@ -427,11 +427,11 @@ export const POLICY_DESC_EN: Record<string, string> = {
   'mountain-warfare':  'Mountain Warfare — highland marching and combat. Mountain movement ×2, mountain damage +20%.',
   conscription:        'Conscription — mass forced levy. Troop cap +35%, but loyalty −1/season and agriculture −10%.',
   'elite-guards':      'Elite Guards — train a bodyguard corps. Commander escort +40 troops, commander death rate −50%.',
-  arsenal:             'Arsenal — central armory. Auto-issues weapons on campaign, −15g/month upkeep.',
+  arsenal:             'Arsenal — central armory. Auto-issues weapons on campaign.',
   // new civil
   'imperial-academy':  'Imperial Academy — found the Taixue. Scholar officers +1 INT/season, trains Confucian officials.',
   'post-roads':        'Post Roads — national relay stations. Order reach +1 city/season, march speed +10%.',
-  'community-granary': 'Community Granary — village mutual-aid stores. Auto-relief in disasters, loyalty +3, −30 gold/season.',
+  'community-granary': 'Community Granary — village mutual-aid stores. Auto-relief in disasters, loyalty +3.',
   'court-music':       'Court Music — proper court music. Civil-officer efficiency +10%, +5 envoy courtesy.',
   // cultural / religious
   buddhism:            'Buddhism — build temples, ordain monks. Loyalty +3/season; a few leave farm/war (−5%).',
@@ -465,7 +465,7 @@ export const POLICY_DESC_EN: Record<string, string> = {
   // Phase 3 civil
   'household-register':'Household Register — census rolls. Tax +10%, conscription efficiency +20%.',
   examination:         'Recommendation — Han recommendation system. 1–2 hermits found nationwide each season.',
-  'mourning-rites':    'Mourning Rites — formal funeral rites. Gentry loyalty +5, but −20 gold/season.',
+  'mourning-rites':    'Mourning Rites — formal funeral rites. Gentry loyalty +5.',
   library:             'Library — establish a book repository. Scholar officers’ INT recovery +1/season.',
   'music-bureau':      'Music Bureau — collect folk songs. Civil officers’ CHA recovery +1/season.',
   'school-village':    'Village Schools — schools everywhere. Commoner-officer recruitment +20%, cultured population +5%.',
@@ -476,7 +476,7 @@ export const POLICY_DESC_EN: Record<string, string> = {
   'river-god':         'River-God Rite — worship river gods. Flood damage halved, +3 navy morale on sortie.',
   // Phase 3 diplomacy
   'envoy-bureau':      'Office of Envoys — diplomatic corps. Send 3 envoys at once, diplomacy efficiency +30%.',
-  'frontier-market':   'Frontier Market — border trade fairs. +50 gold/season from tribal trade, but spy risk +1.',
+  'frontier-market':   'Frontier Market — border trade fairs. +50 gold/season from tribal trade.',
   'captives-ransom':   'Ransom — buy back captives. Less morale loss, can recover captured officers.',
   // Phase 4 economy
   'gold-mining':       'Gold Mining — work gold. +120 gold/season, needs a (rare) gold-resource city.',
@@ -488,7 +488,7 @@ export const POLICY_DESC_EN: Record<string, string> = {
   'pawn-bureau':       'Pawn Bureau — state pawnshops. Famine-year +30 gold (pawn income), loyalty −1.',
   'court-treasury':    'Privy Purse — the ruler’s private treasury. Luxury self-funds; gifts don’t drain the state.',
   'bamboo-craft':      'Bamboo Craft — bamboo workshops. Light industry +5%, needs a bamboo resource.',
-  'sericulture-tax':   'Mulberry Tax — dedicated silk-field tax. +35 gold/season, but silk-loom efficiency −10%.',
+  'sericulture-tax':   'Mulberry Tax — dedicated silk-field tax. +35 gold/season.',
   // Phase 4 military
   'archery-school':    'Archery School — train at the archery rite. Archer accuracy +15%, recruits’ WAR slightly up.',
   'military-drill':    'Grand Review — great muster. All-army morale +5%, +1 season of battle-readiness.',
@@ -503,25 +503,25 @@ export const POLICY_DESC_EN: Record<string, string> = {
   // Phase 4 civil
   'noble-titles':      'Noble Titles — grant peerages. Officer loyalty +10, but gentrification deepens over time.',
   'imperial-tour':     'Imperial Tour — the ruler progresses. Loyalty +5 along the route, but luxury cost ×2.',
-  'charity-house':     'Charity House — homes for the destitute. Loyalty +3, plague −20%, −25 gold/season.',
+  'charity-house':     'Charity House — homes for the destitute. Loyalty +3, plague −20%.',
   mediation:           'Village Pact — local mediation. Unrest chance −15%, loyalty +2.',
   'standardize-weights':'Standard Measures — unify weights. Commerce +10%, tax +5%, admin efficiency +5.',
   'standardize-script':'Standard Script — unify writing. Cultured population +5%, admin efficiency +10%.',
   'map-survey':        'Cartography — survey the realm. Military scouting +1 level, optimized march routes.',
   'crime-amnesty':     'Amnesty — pardon the realm. Loyalty +8 (one-time), but banditry +10%.',
   // religion
-  'temple-building':   'Temple Building — build temples widely. Loyalty +3, but −40 gold/season; some people ordain.',
+  'temple-building':   'Temple Building — build temples widely. Loyalty +3; some people ordain.',
   'new-year-rites':    'New Year Court — grand New Year audience. +10% morale at year’s start, all envoys attend.',
   alchemy:             'Alchemy — Daoist elixirs. May find longevity elixirs; chance to extend officer lifespan.',
   'soul-prayer':       'Soul Prayer — rites for the war dead. Post-battle morale recovery +10%.',
   // Phase 4 diplomacy
   bribery:             'Bribery — bribe enemy officials. Intel gain +30%, enemy loyalty −5%.',
   'propaganda-songs':  'Children’s Rhymes — spread political ditties. Enemy loyalty −1/season, hard to trace.',
-  'nanman-tribute':    'Nanman Tribute — collect southern tribute. +40 gold + 1 elephant/season, needs frontier-pacification.',
+  'nanman-tribute':    'Nanman Tribute — collect southern tribute. +40 gold/season, needs frontier-pacification.',
   // Phase 5 economy
   ironworks:           'State Ironworks — national iron-smelting. Weapon output +25%, pairs with iron-mining.',
   shipyard:            'Shipyard — large shipyards. +5 new ships/season, navy size +20%.',
-  canal:               'Canal — dig a canal. Grain transport ×2, −80 gold one-time build cost.',
+  canal:               'Canal — dig a canal. Grain transport ×2.',
   'water-mill':        'Water Mill — water-powered mills. Grain output +12%, needs a river city.',
   weaving:             'Weaving — state textile mills. Commerce +8, winter clothing for the troops.',
   'silver-mining':     'Silver Mining — work silver. +90 gold/season, needs a (rare) silver-resource city.',
@@ -530,7 +530,7 @@ export const POLICY_DESC_EN: Record<string, string> = {
   caravansary:         'Caravansary — wayside inns. Merchant fatigue −50%, commerce +5%.',
   'river-dredging':    'River Dredging — dredge channels regularly. Flood −50%, water transport +15%.',
   'horse-breeding':    'State Pastures — national horse farms. +50 new horses/season, faster cavalry replenishment.',
-  'famine-loans':      'Famine Loans — lend grain in lean years. Loyalty holds in disasters, −60 gold lent out.',
+  'famine-loans':      'Famine Loans — lend grain in lean years. Loyalty holds in disasters.',
   // Phase 5 military
   'skirmish-corps':    'Skirmishers — harassing skirmishers. Forest ambush +20%, but weak head-on.',
   'light-cavalry':     'Light Cavalry — scouting riders. Intel range +1 city, cavalry mobility +1.',
@@ -546,7 +546,7 @@ export const POLICY_DESC_EN: Record<string, string> = {
   'six-ministers':     'Three Excellencies & Nine Ministers — central office reform. Admin efficiency +25%, gentry influence +1.',
   protocol:            'Court Protocol — court etiquette. Diplomatic courtesy +1 grade, no breaches of decorum.',
   'royal-physicians':  'Imperial Physicians — the Imperial Medical Office. May extend emperor/minister lifespans, plague −20%.',
-  'imperial-guard':    'Imperial Guard — palace guards. Capital revolt nearly impossible, −30 gold/season.',
+  'imperial-guard':    'Imperial Guard — palace guards. Capital revolt nearly impossible.',
   'official-promotion': 'Promotion System — regular promotion. Officer promotion speed +20%.',
   'royal-park':        'Royal Park — imperial gardens. Royal indulgence: loyalty −3, luxury +50/season.',
   'prefecture-reform': 'Commandery Reform — redraw commanderies. Admin efficiency +15%, local influence −1.',
@@ -558,7 +558,7 @@ export const POLICY_DESC_EN: Record<string, string> = {
   'ancestral-temple':  'Ancestral Temple — temple rites. Royal-clan loyalty +15, legitimate succession.',
   // Phase 5 frontier diplomacy
   'xianbei-buffer':    'Xianbei Buffer — a frontier buffer zone. Xianbei incursions −60%, +border horse-trade.',
-  'xiongnu-tribute':   'Xiongnu Tribute — the Xiongnu submit. +30 gold + 20 horses/season.',
+  'xiongnu-tribute':   'Xiongnu Tribute — the Xiongnu submit. +30 gold/season.',
   'qiang-pacification': 'Qiang Pacification — soothe the Liang Qiang. Revolts −70%, can levy Qiang riders.',
   'wuhuan-buffer':     'Wuhuan Buffer — govern the Wuhuan. Northeast frontier +50% stability.',
   'jiao-pacification': 'Jiaozhou Pacification — pacify the southern Yue. Southern cities +5 loyalty, opens South Sea trade.',

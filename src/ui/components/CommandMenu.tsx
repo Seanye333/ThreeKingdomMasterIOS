@@ -25,6 +25,7 @@ const BASIC_ORDER: InternalAffairsType[] = [
   'build-defense',
   'recruit-troops',
   'improve-loyalty',
+  'relief',
   'garrison',
   'search',
   'encourage-migration',

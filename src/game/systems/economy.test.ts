@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { tickCityEconomy, TAX_EFFECT, tradeTreatyGrants, TRADE_INCOME_PER_TREATY } from './economy';
-import type { City, DiplomaticState } from '../types';
+import { tickCityEconomy, TAX_EFFECT, tradeTreatyGrants, TRADE_INCOME_PER_TREATY, realmBudget } from './economy';
+import type { City, DiplomaticState, Officer } from '../types';
 import { pairKey } from '../types/diplomacy';
 
 const makeCity = (over: Partial<City> = {}): City => ({
@@ -80,6 +80,56 @@ describe('通商條約 — trade treaty income', () => {
     };
     const g = tradeTreatyGrants(['a', 'b'], dip, 'me');
     expect(g['me']).toBe(TRADE_INCOME_PER_TREATY * 2);
+  });
+});
+
+describe('度支簿 — realmBudget income statement', () => {
+  const baseInput = (over: Partial<Parameters<typeof realmBudget>[0]> = {}): Parameters<typeof realmBudget>[0] => ({
+    cities: { c1: { ...makeCity(), id: 'c1', troops: 4000 } },
+    officers: {},
+    forceId: 'f1',
+    season: 'spring',
+    tax: 'normal',
+    inflation: 0,
+    weatherKind: 'clear',
+    buildings: [],
+    tradePartners: [],
+    diplomacy: { relations: {} },
+    appointments: [],
+    ...over,
+  });
+
+  it('sums tax income and subtracts grain upkeep for the bottom line', () => {
+    const b = realmBudget(baseInput());
+    expect(b.goldLines.tax).toBeGreaterThan(0);
+    expect(b.goldNet).toBe(b.goldLines.tax + b.goldLines.tradeTreaty + b.goldLines.tradeRoute + b.goldLines.fief + b.goldLines.office - b.goldLines.stipend);
+    // No harvest in spring, so net grain is purely the troop upkeep (negative).
+    expect(b.foodLines.harvest).toBe(0);
+    expect(b.foodLines.upkeep).toBeGreaterThan(0);
+    expect(b.foodNet).toBeLessThan(0);
+  });
+
+  it('reports a finite gold runway only when the realm runs a deficit', () => {
+    const surplus = realmBudget(baseInput());
+    expect(surplus.goldRunway).toBe(Infinity); // tax income, no stipends → surplus
+    // A heavy officer payroll with an empty treasury drains fast.
+    // Marching (no locationCityId) so it stays out of the per-city prestige path
+    // but still owes a rank stipend at season-end.
+    const general: Officer = {
+      id: 'o1', forceId: 'f1', status: 'active',
+      rank: 'general', loyalty: 80,
+    } as unknown as Officer;
+    const broke = realmBudget(baseInput({
+      cities: { c1: { ...makeCity(), id: 'c1', gold: 100, commerce: 1, population: 2000, troops: 100 } },
+      officers: { o1: general },
+    }));
+    if (broke.goldNet < 0) expect(broke.goldRunway).not.toBe(Infinity);
+  });
+
+  it('counts a trade treaty into the gold ledger', () => {
+    const dip: DiplomaticState = { relations: { [pairKey('f1', 'ally')]: { forceA: 'ally' < 'f1' ? 'ally' : 'f1', forceB: 'ally' < 'f1' ? 'f1' : 'ally', score: 0, status: 'allied' } } };
+    const b = realmBudget(baseInput({ tradePartners: ['ally'], diplomacy: dip }));
+    expect(b.goldLines.tradeTreaty).toBe(TRADE_INCOME_PER_TREATY);
   });
 });
 

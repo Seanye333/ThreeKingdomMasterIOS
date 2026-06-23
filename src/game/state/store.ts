@@ -212,6 +212,7 @@ import { applyAutoBuild } from '../systems/autoBuild';
 import { planAIBuildOrders, planAIFacilities, planAIFortAssaults, planAISiteSeizures, planAIFrontierExploits } from '../systems/aiBuild';
 import { SCENARIO_OBJECTIVES } from '../data/objectives';
 import { SCENARIOS } from '../data';
+import { PROVINCES_BY_ID } from '../data/provinces';
 import { findChallenge, evaluateChallenge, challengeStars } from '../data/challenges';
 import { MAX_CUSTOM_EVENTS } from '../systems/customEvents';
 import { refreshPrestige, prestigeTitleById, TOP_PRESTIGE_IDS } from '../data/prestige';
@@ -370,6 +371,9 @@ interface GameStore extends GameState {
   /** 鑄錢 — debase the coinage for an immediate windfall in the capital at the
    *  cost of rising inflation (which saps future tax income until it eases). */
   mintCoin: () => { ok: boolean; gold: number; inflation: number };
+  /** 劝募/募捐 — appeal to the people for an immediate gold windfall (scaled by
+   *  realm size & loyalty) at the cost of 民忠. Once a year (4 seasons). */
+  solicitDonations: () => { ok: boolean; gold: number; message?: string };
   /** 委任太守 — set (or clear with null) a city's standing governor. */
   delegateCity: (cityId: EntityId, officerId: EntityId | null) => void;
   /** 軍團都督 — form a legion (id auto-assigned). */
@@ -1231,6 +1235,10 @@ export const useGameStore = create<GameStore>()(
           // (cost 0) is the guaranteed fallback so no idle hand stays idle.
           const best = Math.max(o.stats.politics, o.stats.war, o.stats.intelligence);
           const cand: InternalAffairsType[] = [];
+          // 賑濟 — a food-rich city pacifies by opening the granaries (saves gold);
+          // gated on food since the picker below only checks gold affordability.
+          const reliefFood = Math.max(500, Math.round(c.population * 0.02));
+          if (c.loyalty < 50 && c.food >= reliefFood * 2) cand.push('relief');
           if (c.loyalty < 50) cand.push('improve-loyalty');
           if (o.stats.war === best) cand.push('recruit-troops', 'build-defense');
           if (o.stats.politics === best) cand.push(c.agriculture <= c.commerce ? 'develop-agriculture' : 'develop-commerce');
@@ -2061,6 +2069,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           appointments: appointmentsAfterAI,
           territoryOwnership: state.territoryOwnership ?? {},
           armies: state.armies,
+          taxPolicy: state.taxPolicy,
           date: state.date,
         });
         // Compute whether this period transition crosses a season boundary.
@@ -2091,7 +2100,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           weather: state.weather,
           forts: state.forts,
           sites: state.sites,
-          taxPolicy: state.taxPolicy,
+          taxPolicy: planned.taxPolicy,
           tradePartners: state.tradePartners,
           inflation: state.inflation,
           convoys: state.convoys,
@@ -2287,6 +2296,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // 游历細探 — intel an expedition (探索/刺探) lit on the cities it reached.
         for (const [cid, ticks] of Object.entries(result.espionageReveals ?? {})) {
           espionageRevealsNext[cid] = Math.max(espionageRevealsNext[cid] ?? 0, ticks);
+        }
+        // 行刺敗露 — fold a botched assassination's blowback into the same grudge merge.
+        for (const [fid, d] of Object.entries(espResult.grudgeDelta)) {
+          spyGrudgeBumps[fid] = (spyGrudgeBumps[fid] ?? 0) + d;
         }
         const grudgesAfterSpies: Record<EntityId, number> = Object.keys(spyGrudgeBumps).length > 0
           ? (() => {
@@ -3966,6 +3979,45 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // 州牧 — a provincial governor (player-appointed) runs his province as a
+        // unit: every season his cities gain order (民忠) and a little revenue,
+        // scaled by his administrative talent (政 0.6 + 魅 0.4). A dead/lost
+        // governor simply yields nothing until reassigned. Player-only (the AI
+        // doesn't appoint 州牧). Modest by design — it rewards holding a whole
+        // province under one trusted name without occupying him elsewhere.
+        if (seasonBoundary && state.playerForceId && Object.keys(state.provinceGovernors ?? {}).length > 0) {
+          const govPatch: Record<string, City> = {};
+          for (const [provinceId, officerId] of Object.entries(state.provinceGovernors)) {
+            const gov = officerId ? postOfficers[officerId] : null;
+            if (!gov || gov.status === 'dead' || gov.forceId !== state.playerForceId) continue;
+            const province = PROVINCES_BY_ID[provinceId];
+            if (!province) continue;
+            const admin = gov.stats.politics * 0.6 + gov.stats.charisma * 0.4;
+            const loyaltyGain = admin >= 80 ? 2 : 1;
+            const goldBonus = Math.round(gov.stats.politics / 12);
+            let touched = 0;
+            for (const cid of province.cityIds) {
+              const c = (govPatch[cid] ?? postCities[cid]);
+              if (!c || c.ownerForceId !== state.playerForceId) continue;
+              govPatch[cid] = {
+                ...c,
+                loyalty: Math.min(100, c.loyalty + loyaltyGain),
+                gold: c.gold + goldBonus,
+              };
+              touched++;
+            }
+            if (touched > 0) {
+              result.report.entries.push({
+                cityId: null,
+                kind: 'income',
+                text: `${gov.name.en} governs ${province.name.en}: +${loyaltyGain} loyalty & +${goldBonus} gold across ${touched} cities.`,
+                textZh: `${gov.name.zh}牧${province.name.zh}:全境 ${touched} 城 民忠 +${loyaltyGain}、金 +${goldBonus}。`,
+              });
+            }
+          }
+          if (Object.keys(govPatch).length > 0) postCities = { ...postCities, ...govPatch };
+        }
+
         set({
           date: result.date,
           cities: postCities,
@@ -4011,6 +4063,16 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           inflation: seasonBoundary
             ? Math.max(0, (state.inflation ?? 0) - 3 - buildingBonuses(state.forces[state.playerForceId ?? '']?.capitalCityId ?? '', state.buildings).inflationRelief)
             : state.inflation,
+          // 度支沿革 — snapshot the player's total treasury gold each season so
+          // the 度支簿 can chart whether the realm is bleeding or building.
+          treasuryHistory: seasonBoundary && state.playerForceId
+            ? [
+                ...(state.treasuryHistory ?? []),
+                Object.values(postCities).reduce((sum, c) => (c.ownerForceId === state.playerForceId ? sum + c.gold : sum), 0),
+              ].slice(-8)
+            : state.treasuryHistory,
+          // 定稅 — persist the AI's tax decisions (player's entry untouched).
+          taxPolicy: planned.taxPolicy,
           selectedCityId: stillOwned ? state.selectedCityId : fallback,
           victoryStatus: endVS,
           battleHistory: [...state.battleHistory, ...newBattles],
@@ -4624,6 +4686,39 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           `Minted ${windfall.toLocaleString()} gold (inflation ${nextInflation})`,
         );
         return { ok: true, gold: windfall, inflation: nextInflation };
+      },
+
+      solicitDonations: () => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, gold: 0, message: 'No player force.' };
+        // 募捐冷卻 — once a year. Absolute season index = year×4 + season order.
+        const order = { spring: 0, summer: 1, autumn: 2, winter: 3 }[state.date.season];
+        const abs = state.date.year * 4 + order;
+        if (state.lastDonationAt != null && abs - state.lastDonationAt < 4) {
+          const wait = 4 - (abs - state.lastDonationAt);
+          return { ok: false, gold: 0, message: `民力未復,需待 ${wait} 季方可再勸募。` };
+        }
+        const mine = Object.values(state.cities).filter((c) => c.ownerForceId === state.playerForceId);
+        if (mine.length === 0) return { ok: false, gold: 0, message: 'No cities.' };
+        // Windfall scales with each city's commerce, population AND loyalty — a
+        // content, prosperous populace gives freely; a resentful one little.
+        const DONATION_LOYALTY_COST = 8;
+        let windfall = 0;
+        const nextCities = { ...state.cities };
+        for (const c of mine) {
+          windfall += Math.floor((c.commerce * 12 + c.population / 3000) * (c.loyalty / 100));
+          nextCities[c.id] = { ...c, loyalty: Math.max(0, c.loyalty - DONATION_LOYALTY_COST) };
+        }
+        const force = state.forces[state.playerForceId];
+        const capital = force ? nextCities[force.capitalCityId] : null;
+        if (!capital) return { ok: false, gold: 0, message: 'No capital.' };
+        nextCities[capital.id] = { ...capital, gold: capital.gold + windfall };
+        set({ cities: nextCities, lastDonationAt: abs });
+        get().notify(
+          `勸募 · ${capital.name.zh} 入金 ${windfall.toLocaleString()}(民忠 −${DONATION_LOYALTY_COST}/城)`,
+          `Donations raised ${windfall.toLocaleString()} gold (loyalty −${DONATION_LOYALTY_COST}/city)`,
+        );
+        return { ok: true, gold: windfall };
       },
 
       breakAlliance: (targetForceId) => {

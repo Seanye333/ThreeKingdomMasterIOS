@@ -32,6 +32,20 @@ describe('cityPolicyEffects — table-driven economy/defense', () => {
     expect(e.loyaltyDelta).toBe(-1);
   });
 
+  it('formerly-cosmetic gold policies now pay flat gold', () => {
+    expect(cityPolicyEffects(CITY, [off('sericulture-tax')]).goldFlat).toBe(35);
+    expect(cityPolicyEffects(CITY, [off('frontier-market')]).goldFlat).toBe(50);
+    expect(cityPolicyEffects(CITY, [off('tribute-system')]).goldFlat).toBe(50);
+    expect(cityPolicyEffects(CITY, [off('nanman-tribute')]).goldFlat).toBe(40);
+    expect(cityPolicyEffects(CITY, [off('rites', 'frontier-pacification', 'xiongnu-tribute')]).goldFlat).toBe(30);
+  });
+
+  it('granary-family loyalty matches its blurb (+3)', () => {
+    // include each policy's prereq (tuntian / poor-relief) so it's active.
+    expect(cityPolicyEffects(CITY, [off('tuntian', 'community-granary')]).loyaltyDelta).toBe(3);
+    expect(cityPolicyEffects(CITY, [off('rites', 'poor-relief', 'charity-house')]).loyaltyDelta).toBe(1 + 1 + 3);
+  });
+
   it('conscription boosts troop cap and dents loyalty', () => {
     const e = cityPolicyEffects(CITY, [off('conscription')]);
     expect(e.troopCapMul).toBeCloseTo(1.35);

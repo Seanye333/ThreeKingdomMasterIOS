@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useGameStore } from '../../game/state/store';
-import { tickCityEconomy, TAX_EFFECT } from '../../game/systems/economy';
+import { realmBudget, TAX_EFFECT } from '../../game/systems/economy';
 import type { TaxRate } from '../../game/types';
 import { useT } from '../i18n';
 import { Modal } from './Modal';
@@ -8,17 +8,18 @@ import { Icon } from './Icon';
 import { playSfx } from '../../game/systems/sound';
 
 /**
- * 度支簿 — the realm's ledger for the coming season: every city's projected
- * gold and grain, netted into one bottom line. It runs the very same
- * tickCityEconomy the season engine uses, so these are the true numbers, not a
- * guess. Grain income only lands at the autumn harvest, so spring/summer/winter
- * show upkeep eating into stores — that red is the point.
+ * 度支簿 — the realm's full season ledger. It runs realmBudget(), the same
+ * helpers the season engine applies, so it nets the tax/harvest the cities
+ * raise against the realm-level flows that actually move at season-end (通商
+ * 條約 · 名產商路 · 食邑 · 官署常俸 · 俸祿). The bottom line is the TRUE net,
+ * not a gross-income guess; a red 净金 plus a 府庫見底 countdown is the warning.
  */
 export function BudgetModal({ onClose }: { onClose: () => void }) {
   const t = useT();
   const cities = useGameStore((s) => s.cities);
   const officers = useGameStore((s) => s.officers);
   const allBuildings = useGameStore((s) => s.buildings);
+  const forces = useGameStore((s) => s.forces);
   const season = useGameStore((s) => s.date.season);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const selectCity = useGameStore((s) => s.selectCity);
@@ -26,69 +27,110 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
   const setTaxPolicy = useGameStore((s) => s.setTaxPolicy);
   const inflation = useGameStore((s) => s.inflation ?? 0);
   const mintCoin = useGameStore((s) => s.mintCoin);
+  const solicitDonations = useGameStore((s) => s.solicitDonations);
   const refugees = useGameStore((s) => s.refugees ?? 0);
+  const weather = useGameStore((s) => s.weather);
+  const diplomacy = useGameStore((s) => s.diplomacy);
+  const appointments = useGameStore((s) => s.appointments);
+  const tradePartners = useGameStore((s) => s.tradePartners);
+  const treasuryHistory = useGameStore((s) => s.treasuryHistory ?? []);
 
-  const { rows, totals, treasury } = useMemo(() => {
-    const officersList = Object.values(officers);
-    const officersByCity: Record<string, typeof officersList> = {};
-    for (const o of officersList) {
-      if (!o.locationCityId || o.status === 'dead' || o.status === 'unsearched') continue;
-      (officersByCity[o.locationCityId] ??= []).push(o);
-    }
-    const mine = Object.values(cities).filter((c) => c.ownerForceId === playerForceId);
-    const rs = mine.map((c) => {
-      const tick = tickCityEconomy(c, season, officersByCity[c.id] ?? [], tax, inflation, 'clear', allBuildings);
-      const netFood = tick.foodIncome - tick.foodUpkeep;
-      return {
-        city: c,
-        gold: tick.goldIncome,
-        foodIn: tick.foodIncome,
-        foodUp: tick.foodUpkeep,
-        netFood,
-        starving: c.food + netFood < 0,
-      };
-    }).sort((a, b) => b.gold - a.gold);
-    const totals = rs.reduce(
-      (acc, r) => ({ gold: acc.gold + r.gold, foodIn: acc.foodIn + r.foodIn, foodUp: acc.foodUp + r.foodUp }),
-      { gold: 0, foodIn: 0, foodUp: 0 },
-    );
-    const treasury = mine.reduce((acc, c) => ({ gold: acc.gold + c.gold, food: acc.food + c.food }), { gold: 0, food: 0 });
-    return { rows: rs, totals, treasury };
-  }, [cities, officers, allBuildings, season, playerForceId, tax, inflation]);
+  const budget = useMemo(() => {
+    if (!playerForceId) return null;
+    return realmBudget({
+      cities, officers, forceId: playerForceId, season, tax, inflation,
+      weatherKind: weather?.kind ?? 'clear',
+      buildings: allBuildings, tradePartners, diplomacy, appointments,
+      statecraft: forces[playerForceId]?.statecraft ?? null,
+    });
+  }, [cities, officers, allBuildings, forces, season, playerForceId, tax, inflation, weather, tradePartners, diplomacy, appointments]);
 
-  const netFoodTotal = totals.foodIn - totals.foodUp;
   const seasonZh = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' }[season];
-  const num = (n: number) => n.toLocaleString();
+  const num = (n: number) => Math.round(n).toLocaleString();
   const signed = (n: number) => (n >= 0 ? `+${num(n)}` : `−${num(-n)}`);
+
+  if (!budget) {
+    return (
+      <Modal onClose={onClose} width="min(720px, 100%)" icon={<Icon name="gold" size={18} />} title={t('度支簿', 'Treasury')}>
+        <div style={{ color: '#7a8893', fontSize: '0.85rem', padding: '1rem 0' }}>{t('尚無勢力。', 'No force yet.')}</div>
+      </Modal>
+    );
+  }
+
+  const { rows, treasury, goldLines, goldNet, foodLines, foodNet, goldRunway, foodRunway } = budget;
+  const isAutumn = season === 'autumn';
+
+  // Donation cooldown — once a year. Derive remaining seasons for the button label.
+  const date = useGameStore.getState().date;
+  const order = { spring: 0, summer: 1, autumn: 2, winter: 3 }[date.season];
+  const absSeason = date.year * 4 + order;
+  const lastDonationAt = useGameStore.getState().lastDonationAt;
+  const donateWait = lastDonationAt != null ? Math.max(0, 4 - (absSeason - lastDonationAt)) : 0;
+
+  // Income-statement ledger lines (omit zero rows to keep it tight).
+  const goldRows: Array<{ zh: string; en: string; v: number }> = [
+    { zh: '稅入', en: 'Taxes', v: goldLines.tax },
+    { zh: '名產商路', en: 'Trade routes', v: goldLines.tradeRoute },
+    { zh: '通商條約', en: 'Treaties', v: goldLines.tradeTreaty },
+    { zh: '食邑', en: 'Fiefs', v: goldLines.fief },
+    { zh: '官署常俸', en: 'Offices', v: goldLines.office },
+    { zh: '俸祿', en: 'Stipends', v: -goldLines.stipend },
+  ].filter((r) => r.v !== 0);
+  const foodRows: Array<{ zh: string; en: string; v: number }> = [
+    { zh: '秋收', en: 'Harvest', v: foodLines.harvest },
+    { zh: '食邑', en: 'Fiefs', v: foodLines.fief },
+    { zh: '官署常俸', en: 'Offices', v: foodLines.office },
+    { zh: '兵糧', en: 'Upkeep', v: -foodLines.upkeep },
+  ].filter((r) => r.v !== 0);
+
+  const card = { background: '#141c25', border: '1px solid #243240', padding: '0.5rem 0.6rem', borderRadius: 4 } as const;
+  const labelStyle = { color: '#7a8893', fontSize: '0.72rem' } as const;
+  const mono = { fontFamily: 'ui-monospace, monospace' } as const;
 
   return (
     <Modal
       onClose={onClose}
-      width="min(680px, 100%)"
+      width="min(720px, 100%)"
       icon={<Icon name="gold" size={18} />}
       title={t('度支簿', 'Treasury')}
       badge={t(`${seasonZh}季預算`, `${season} budget`)}
     >
-        {/* Realm summary — three cards: treasury on hand, gold/season, grain/season. */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: '0.7rem' }}>
-          <div style={{ background: '#141c25', border: '1px solid #243240', padding: '0.5rem 0.6rem', borderRadius: 4 }}>
-            <div style={{ color: '#7a8893', fontSize: '0.72rem' }}>{t('府庫現金', 'On hand')}</div>
-            <div style={{ color: '#f2dd9a', fontSize: '1.05rem', fontFamily: 'ui-monospace, monospace' }}>{num(treasury.gold)} <span style={{ fontSize: '0.7rem' }}>金</span></div>
-            <div style={{ color: '#aab6c0', fontSize: '0.72rem', fontFamily: 'ui-monospace, monospace' }}>{num(treasury.food)} 糧</div>
+        {/* Realm summary — treasury on hand, net gold/season, net grain/season. */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: '0.6rem' }}>
+          <div style={card}>
+            <div style={labelStyle}>{t('府庫現金', 'On hand')}</div>
+            <div style={{ ...mono, color: '#f2dd9a', fontSize: '1.05rem' }}>{num(treasury.gold)} <span style={{ fontSize: '0.7rem' }}>金</span></div>
+            <div style={{ ...mono, color: '#aab6c0', fontSize: '0.72rem' }}>{num(treasury.food)} 糧</div>
           </div>
-          <div style={{ background: '#141c25', border: '1px solid #243240', padding: '0.5rem 0.6rem', borderRadius: 4 }}>
-            <div style={{ color: '#7a8893', fontSize: '0.72rem' }}>{t('本季入金', 'Gold / season')}</div>
-            <div style={{ color: '#7ed68a', fontSize: '1.05rem', fontFamily: 'ui-monospace, monospace' }}>{signed(totals.gold)}</div>
-            <div style={{ color: '#5f6c76', fontSize: '0.7rem' }}>{rows.length} {t('城', 'cities')}</div>
+          <div style={card}>
+            <div style={labelStyle}>{t('本季淨金', 'Net gold / season')}</div>
+            <div style={{ ...mono, color: goldNet >= 0 ? '#7ed68a' : '#e8704a', fontSize: '1.05rem' }}>{signed(goldNet)}</div>
+            <div style={{ fontSize: '0.7rem', color: goldRunway !== Infinity ? '#e8704a' : '#5f6c76' }}>
+              {goldRunway !== Infinity ? t(`府庫 ${goldRunway} 季見底 ⚠`, `dry in ${goldRunway} qtr ⚠`) : `${rows.length} ${t('城', 'cities')}`}
+            </div>
           </div>
-          <div style={{ background: '#141c25', border: '1px solid #243240', padding: '0.5rem 0.6rem', borderRadius: 4 }}>
-            <div style={{ color: '#7a8893', fontSize: '0.72rem' }}>{t('本季糧秣', 'Grain / season')}</div>
-            <div style={{ color: netFoodTotal >= 0 ? '#7ed68a' : '#e8704a', fontSize: '1.05rem', fontFamily: 'ui-monospace, monospace' }}>{signed(netFoodTotal)}</div>
-            <div style={{ color: '#5f6c76', fontSize: '0.7rem' }}>{t('收', 'in')} {num(totals.foodIn)} · {t('支', 'out')} {num(totals.foodUp)}</div>
+          <div style={card}>
+            <div style={labelStyle}>{t('本季淨糧', 'Net grain / season')}</div>
+            <div style={{ ...mono, color: foodNet >= 0 ? '#7ed68a' : '#e8704a', fontSize: '1.05rem' }}>{signed(foodNet)}</div>
+            <div style={{ fontSize: '0.7rem', color: foodRunway !== Infinity ? '#e8704a' : '#5f6c76' }}>
+              {foodRunway !== Infinity ? t(`存糧 ${foodRunway} 季見底 ⚠`, `dry in ${foodRunway} qtr ⚠`) : t('糧有盈餘', 'surplus')}
+            </div>
           </div>
         </div>
-        {/* 流民 — the realm-wide displaced pool. Famine/unrest/war feed it; each
-            season it drifts toward welcoming cities (high 民忠 / 輕稅 / 有餘容). */}
+
+        {/* 度支沿革 — treasury trend over the last few seasons. */}
+        {treasuryHistory.length >= 2 && (
+          <Sparkline values={treasuryHistory} t={t} />
+        )}
+
+        {/* 收支明細 — the full income statement, gold | grain side by side. */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: '0.6rem' }}>
+          <Ledger title={t('金 · 收支', 'Gold ledger')} rows={goldRows} net={goldNet} num={num} signed={signed} t={t} />
+          <Ledger title={t('糧 · 收支', 'Grain ledger')} rows={foodRows} net={foodNet} num={num} signed={signed} t={t}
+                  note={!isAutumn ? t('糧入僅秋收', 'harvest = autumn only') : weather?.kind === 'drought' ? t('旱災 秋收 ×0.55', 'drought ×0.55') : undefined} />
+        </div>
+
+        {/* 流民 — the realm-wide displaced pool. */}
         {refugees > 0 && (
           <div style={{
             display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.5rem',
@@ -96,14 +138,14 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
           }}>
             <Icon name="city" size={14} color="#d4b070" />
             <span style={{ color: '#d4b070', fontSize: '0.8rem' }}>{t('天下流民', 'Refugees afield')}</span>
-            <span style={{ color: '#f2dd9a', fontFamily: 'ui-monospace, monospace', fontSize: '0.9rem' }}>{num(refugees)}</span>
+            <span style={{ ...mono, color: '#f2dd9a', fontSize: '0.9rem' }}>{num(refugees)}</span>
             <span style={{ color: '#8a7a5a', fontSize: '0.7rem', flex: 1, textAlign: 'right' }}>
               {t('輕稅 + 高民忠 + 餘容 → 引流民歸附', 'Light tax + high loyalty + headroom draws them in')}
             </span>
           </div>
         )}
-        {/* 定稅 — the gold↔loyalty lever. Light eases the people, heavy fills
-            the coffers and breeds resentment. */}
+
+        {/* 定稅 — the gold↔loyalty lever. */}
         {playerForceId && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.5rem', flexWrap: 'wrap' }}>
             <span style={{ color: '#7a8893', fontSize: '0.78rem' }}>{t('稅率', 'Tax rate')}</span>
@@ -129,7 +171,8 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
             </span>
           </div>
         )}
-        {/* 鑄錢 — debase the coinage for fast gold at the cost of inflation. */}
+
+        {/* 應急 — one-off fundraising levers: 鑄錢 (inflation) and 勸募 (loyalty). */}
         {playerForceId && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.5rem', flexWrap: 'wrap' }}>
             <button
@@ -140,15 +183,22 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
                 padding: '0.25rem 0.7rem', borderRadius: 4, cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.8rem',
               }}
             ><Icon name="gold" size={13} /> {t('鑄錢', 'Mint coin')}</button>
+            <button
+              onClick={() => { const r = solicitDonations(); if (r.ok) playSfx('coin'); }}
+              disabled={donateWait > 0}
+              title={t('勸募 — 向民間募捐,即入一筆金(隨國力與民忠遞增),然民忠 −8/城。一年一次', 'Solicit donations — an immediate gold gift scaled by realm size & loyalty, but −8 loyalty per city. Once a year')}
+              style={{
+                background: donateWait > 0 ? 'transparent' : 'rgba(124,214,138,0.14)',
+                border: `1px solid ${donateWait > 0 ? '#2b3845' : '#7ed68a'}`,
+                color: donateWait > 0 ? '#5f6c76' : '#9ad6a8',
+                padding: '0.25rem 0.7rem', borderRadius: 4, cursor: donateWait > 0 ? 'default' : 'pointer',
+                fontFamily: 'inherit', fontSize: '0.8rem',
+              }}
+            ><Icon name="city" size={13} /> {donateWait > 0 ? t(`勸募(待 ${donateWait} 季)`, `Donate (${donateWait}q)`) : t('勸募', 'Donate')}</button>
             <span style={{ fontSize: '0.74rem', color: inflation >= 60 ? '#e0707a' : inflation >= 25 ? '#e0a070' : '#7a8893' }}>
               {t('通脹', 'Inflation')} <strong>{inflation}</strong>
               {inflation > 0 && <span style={{ color: '#7a8893' }}> · {t(`稅入 −${Math.round(inflation / 2.5)}%`, `−${Math.round(inflation / 2.5)}% tax`)}</span>}
             </span>
-          </div>
-        )}
-        {season !== 'autumn' && (
-          <div style={{ color: '#7a8893', fontSize: '0.72rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: 5 }}>
-            <Icon name="grain" size={12} /> {t('糧入僅在秋收結算,他季只支不入。', 'Grain only comes in at the autumn harvest — other seasons are upkeep-only.')}
           </div>
         )}
 
@@ -168,10 +218,10 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
                 <td style={{ padding: '3px 6px', color: r.starving ? '#e8704a' : '#eef4f8' }}>
                   {r.city.name.zh}{r.starving ? ' ⚠' : ''}
                 </td>
-                <td style={{ textAlign: 'right', padding: '3px 6px', fontFamily: 'ui-monospace, monospace', color: '#7ed68a' }}>+{num(r.gold)}</td>
-                <td style={{ textAlign: 'right', padding: '3px 6px', fontFamily: 'ui-monospace, monospace', color: '#aab6c0' }}>{r.foodIn ? `+${num(r.foodIn)}` : '—'}</td>
-                <td style={{ textAlign: 'right', padding: '3px 6px', fontFamily: 'ui-monospace, monospace', color: '#a88' }}>−{num(r.foodUp)}</td>
-                <td style={{ textAlign: 'right', padding: '3px 6px', fontFamily: 'ui-monospace, monospace', color: r.netFood >= 0 ? '#7ed68a' : '#e8704a' }}>{signed(r.netFood)}</td>
+                <td style={{ ...mono, textAlign: 'right', padding: '3px 6px', color: '#7ed68a' }}>+{num(r.gold)}</td>
+                <td style={{ ...mono, textAlign: 'right', padding: '3px 6px', color: '#aab6c0' }}>{r.foodIn ? `+${num(r.foodIn)}` : '—'}</td>
+                <td style={{ ...mono, textAlign: 'right', padding: '3px 6px', color: '#a88' }}>−{num(r.foodUp)}</td>
+                <td style={{ ...mono, textAlign: 'right', padding: '3px 6px', color: r.netFood >= 0 ? '#7ed68a' : '#e8704a' }}>{signed(r.netFood)}</td>
               </tr>
             ))}
           </tbody>
@@ -180,5 +230,62 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
           <div style={{ color: '#7a8893', fontSize: '0.85rem', padding: '1rem 0' }}>{t('尚無城池。', 'No cities yet.')}</div>
         )}
     </Modal>
+  );
+}
+
+/** One income-statement column: line items + a netted bottom rule. */
+function Ledger({ title, rows, net, num, signed, t, note }: {
+  title: string;
+  rows: Array<{ zh: string; en: string; v: number }>;
+  net: number;
+  num: (n: number) => string;
+  signed: (n: number) => string;
+  t: (zh: string, en: string) => string;
+  note?: string;
+}) {
+  const mono = { fontFamily: 'ui-monospace, monospace' } as const;
+  return (
+    <div style={{ background: '#10171f', border: '1px solid #1e2a34', borderRadius: 4, padding: '0.45rem 0.55rem' }}>
+      <div style={{ color: '#9fb0bc', fontSize: '0.74rem', marginBottom: 3, display: 'flex', justifyContent: 'space-between' }}>
+        <span>{title}</span>
+        {note && <span style={{ color: '#6f7c86', fontSize: '0.66rem' }}>{note}</span>}
+      </div>
+      {rows.length === 0 && <div style={{ color: '#5f6c76', fontSize: '0.72rem' }}>{t('無', 'none')}</div>}
+      {rows.map((r) => (
+        <div key={r.zh} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', padding: '1px 0' }}>
+          <span style={{ color: '#8a98a4' }}>{t(r.zh, r.en)}</span>
+          <span style={{ ...mono, color: r.v >= 0 ? '#7ed68a' : '#d98a6a' }}>{r.v >= 0 ? `+${num(r.v)}` : `−${num(-r.v)}`}</span>
+        </div>
+      ))}
+      <div style={{ borderTop: '1px solid #243240', marginTop: 3, paddingTop: 2, display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
+        <span style={{ color: '#aab6c0' }}>{t('淨', 'Net')}</span>
+        <span style={{ ...mono, color: net >= 0 ? '#7ed68a' : '#e8704a' }}>{signed(net)}</span>
+      </div>
+    </div>
+  );
+}
+
+/** 度支沿革 — a tiny inline treasury-over-time sparkline. */
+function Sparkline({ values, t }: { values: number[]; t: (zh: string, en: string) => string }) {
+  const w = 200, h = 26;
+  const min = Math.min(...values), max = Math.max(...values);
+  const span = max - min || 1;
+  const pts = values.map((v, i) => {
+    const x = values.length === 1 ? w : (i / (values.length - 1)) * w;
+    const y = h - 2 - ((v - min) / span) * (h - 4);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  const rising = values[values.length - 1] >= values[0];
+  const stroke = rising ? '#7ed68a' : '#e8704a';
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.6rem' }}>
+      <span style={{ color: '#7a8893', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{t('府庫沿革', 'Treasury trend')}</span>
+      <svg width={w} height={h} style={{ flex: 1 }} viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
+        <polyline points={pts} fill="none" stroke={stroke} strokeWidth={1.5} />
+      </svg>
+      <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.72rem', color: stroke, whiteSpace: 'nowrap' }}>
+        {rising ? '▲' : '▼'} {Math.round(values[values.length - 1]).toLocaleString()}
+      </span>
+    </div>
   );
 }

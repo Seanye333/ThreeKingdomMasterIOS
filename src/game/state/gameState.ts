@@ -269,6 +269,12 @@ export interface GameState {
    *  inflation (0–100), which saps every city's tax income until it eases. 0 by
    *  default, so a realm that never mints is wholly unaffected. */
   inflation: number;
+  /** 度支沿革 — the player realm's treasury gold at each season-end, newest
+   *  last, capped at 8. Powers the 度支簿 trend sparkline. */
+  treasuryHistory?: number[];
+  /** 募捐冷卻 — absolute season index (year×4 + seasonOrder) of the last 劝募
+   *  appeal. Donations may only be solicited once a year (4 seasons). */
+  lastDonationAt?: number;
   /** 輜重 — supply convoys (運糧/運金車) crawling between your cities. */
   convoys: Record<EntityId, import('../systems/convoy').Convoy>;
   /** 游历 — lone officers roaming abroad (探索/出使/策反/刺探), in transit. */
@@ -537,6 +543,7 @@ export const EMPTY_STATE: GameState = {
   grudges: {},
   tradePartners: [],
   inflation: 0,
+  treasuryHistory: [],
   convoys: {},
   expeditions: {},
   openedRealms: {},

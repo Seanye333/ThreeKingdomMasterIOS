@@ -11,11 +11,13 @@ import type {
   Officer,
   OfficerStats,
   ReportEntry,
+  TaxRate,
 } from '../types';
 import { getRelation, isHostilePermitted, pairKey } from '../types';
 import type { Difficulty } from '../state/gameState';
 import { OATH_BONDS, type OathBond } from '../data/bonds';
 import { COMMAND_DEFS, meetsMinSize } from './commands';
+import { buyQuote, sellQuote } from './market';
 import { citySize, cityCarryingCapacity, cityEconCap, cityStatCap } from './citySize';
 import { marchDurationFor } from '../data/cities';
 import { isLand, terrainMarchCost, WORLD_SCALE } from '../data/geography';
@@ -71,6 +73,8 @@ export interface AIPlanInput {
   /** Persistent field armies — so the AI can dispatch interceptors to meet
    *  hostile columns in the open field rather than only at city walls. */
   armies?: Record<EntityId, import('../types').Army>;
+  /** Current per-force tax rates — the AI reads & updates its own forces'. */
+  taxPolicy?: Record<EntityId, TaxRate>;
   date: GameDate;
   difficulty?: Difficulty;
   /** AI 強度 (1–5, default 3) — independent of difficulty. Scales how readily
@@ -94,6 +98,8 @@ export interface AIPlanOutput {
   newTrainings: PendingTraining[];
   diplomacy: DiplomaticState;
   runtimeBonds: OathBond[];
+  /** Updated tax rates (AI forces only; player's entry passes through). */
+  taxPolicy: Record<EntityId, TaxRate>;
   entries: ReportEntry[];
 }
 
@@ -112,6 +118,7 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
   const newTrainings: PendingTraining[] = [];
   let diplomacy = input.diplomacy;
   const runtimeBonds = [...input.runtimeBonds];
+  const taxPolicy = { ...(input.taxPolicy ?? {}) };
   const entries: ReportEntry[] = [];
 
   // Group cities by owning force.
@@ -244,6 +251,61 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
         });
       }
     }
+  }
+
+  // ── 市易 — AI grain market: balance each city's food↔gold instead of
+  //    letting starvation or a glut go to waste (the player's 市易 lever, now
+  //    used by the AI). Each city trades with its own coffers, like 兵糧 the
+  //    player would shore up. Buy low into a starving garrison; sell a granary
+  //    glut (which is being price-penalised anyway) when gold runs short.
+  {
+    const season = input.date.season;
+    for (const forceCities of citiesByForce.values()) {
+      for (const c of forceCities) {
+        const city = cities[c.id];
+        if (!city) continue;
+        const need = city.troops * 2;                       // upkeep buffer before desertion
+        // Starving + has coin → buy grain up toward the buffer, keeping a 100g reserve.
+        if (city.food < city.troops * 1.5 && city.gold > 200) {
+          const deficit = need - city.food;
+          let spend = Math.min(city.gold - 100, Math.ceil(deficit / Math.max(1, buyQuote(city, season, 1))));
+          spend = Math.max(0, Math.min(spend, Math.floor(city.gold * 0.6)));
+          if (spend >= 20) {
+            const bought = buyQuote(city, season, spend);
+            if (bought > 0) cities[city.id] = { ...city, gold: city.gold - spend, food: city.food + bought };
+          }
+        }
+        // Glut + gold-poor → sell the surplus above ×6 mouths for coin.
+        else if (city.food > city.troops * 8 && city.gold < 800) {
+          const surplus = city.food - city.troops * 6;
+          if (surplus >= 200) {
+            const gold = sellQuote(city, season, surplus);
+            if (gold > 0) cities[city.id] = { ...city, gold: city.gold + gold, food: city.food - surplus };
+          }
+        }
+      }
+    }
+  }
+
+  // ── 定稅 — AI tax policy: a self-correcting loyalty↔gold lever (the player's
+  //    稅率 dial, now used by the AI). A restive realm eases the burden (輕稅);
+  //    a contented realm at war squeezes for war-chest gold (重稅); otherwise
+  //    常稅. Because 重稅 bleeds loyalty, a force that over-squeezes drops below
+  //    the contentment bar and reverts — a stable feedback loop, no runaway.
+  for (const [forceId, forceCities] of citiesByForce) {
+    if (forceCities.length === 0) continue;
+    const avgLoyalty = forceCities.reduce((s, c) => s + (cities[c.id]?.loyalty ?? c.loyalty), 0) / forceCities.length;
+    const atWar = forceCities.some((c) =>
+      c.adjacentCityIds.some((id) => {
+        const e = cities[id];
+        return !!e && e.ownerForceId != null && e.ownerForceId !== forceId &&
+          isHostilePermitted(diplomacy, forceId, e.ownerForceId);
+      }),
+    );
+    taxPolicy[forceId] =
+      avgLoyalty < 42 ? 'light' :
+      atWar && avgLoyalty >= 60 ? 'heavy' :
+      'normal';
   }
 
   // ── AI-initiated diplomacy: weak AI forces seek NAPs with much
@@ -626,7 +688,7 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
     if (dOff) officers[detachId] = { ...dOff, task: 'march' };
   }
 
-  return { cities, officers, pendingCommands, newTrainings, diplomacy, runtimeBonds, entries };
+  return { cities, officers, pendingCommands, newTrainings, diplomacy, runtimeBonds, taxPolicy, entries };
 }
 
 interface Decision {
@@ -816,11 +878,24 @@ function decideCommand(
     }
   }
 
-  // 3. Loyalty crisis — pacify
+  // 3. Loyalty crisis — pacify. 賑濟 (open the granaries) is preferred when the
+  // city is food-rich: it's stronger than 撫民 and spends grain instead of the
+  // gold the AI would rather pour into armies. A famine-threatened city keeps
+  // its grain and pays gold instead; a broke-but-fed city relieves on a slimmer
+  // surplus rather than do nothing.
   if (city.loyalty < 40) {
+    const reliefFood = Math.max(500, Math.round(city.population * 0.02));
+    if (city.food >= reliefFood * 2 && city.food > city.troops) {
+      const r = bestForCommand(officersHere, 'charisma', 'relief', prefectId);
+      if (r) return internalDecision('relief', city, r);
+    }
     const o = bestForCommand(officersHere, 'charisma', 'improve-loyalty', prefectId);
     if (o && canAfford(city, 'improve-loyalty')) {
       return internalDecision('improve-loyalty', city, o);
+    }
+    if (city.food >= reliefFood) {
+      const r = bestForCommand(officersHere, 'charisma', 'relief', prefectId);
+      if (r) return internalDecision('relief', city, r);
     }
   }
 
@@ -1085,6 +1160,39 @@ function decideCommand(
     }
   }
 
+  // 4.8 鎮守 — an enemy column has overrun some of this city's territory cells.
+  // Drive them off (reclaim the halo + a defense bump). Cheap (150g), so it
+  // slots in before the costlier development works. territory ids are
+  // `${parentCityId}-${i}`, so a cell is this city's iff it carries our prefix.
+  {
+    const prefix = `${city.id}-`;
+    let lostCells = 0;
+    for (const [terId, ownerId] of Object.entries(territoryOwnership)) {
+      if (!terId.startsWith(prefix)) continue;
+      if (ownerId != null && ownerId !== forceId) lostCells++;
+    }
+    if (lostCells > 0 && canAfford(city, 'garrison')) {
+      const o = bestForCommand(officersHere, 'leadership', 'garrison', prefectId);
+      if (o) return internalDecision('garrison', city, o);
+    }
+  }
+
+  // 4.9 城壁強化 — a front-line 城-tier fortress raises its wall tier (1→3) when
+  // the treasury is fat enough to spare 1500g and still fund other works. A
+  // citadel (Tier 3) makes the city far costlier to storm, so border bastions
+  // invest in stone once their economy can bear it. Naturally bounded — wallTier
+  // maxes at 3, after which the apply step refuses and we fall through.
+  if (
+    onFront &&
+    (city.wallTier ?? 1) < 3 &&
+    meetsMinSize(citySize(city).id, 'city') &&
+    city.gold >= COMMAND_DEFS['upgrade-wall'].goldCost * 1.6 &&
+    city.loyalty >= 50
+  ) {
+    const o = bestBy(officersHere, 'politics', prefectId);
+    if (o) return internalDecision('upgrade-wall', city, o);
+  }
+
   // 5. Routine — front-line cities fortify, rear cities grow the economy.
   const devType = chooseDevelopment(city, onFront);
   // 二級內政 — once the city reaches 城 tier, prefer the triple-strength 大農政/
@@ -1098,11 +1206,16 @@ function decideCommand(
     return internalDecision(devType, city, o);
   }
 
-  // 6. Pacify if we can afford it (cheap fallback)
+  // 6. Pacify if we can afford it (cheap fallback). 撫民 tapers off near the
+  // cap, so a food-rich, gold-strapped city tops itself off with 賑濟 instead.
   if (city.loyalty < 90) {
     const fb = bestBy(officersHere, 'charisma', prefectId);
     if (fb && canAfford(city, 'improve-loyalty')) {
       return internalDecision('improve-loyalty', city, fb);
+    }
+    const reliefFood = Math.max(500, Math.round(city.population * 0.02));
+    if (fb && city.food >= reliefFood * 3) {
+      return internalDecision('relief', city, fb);
     }
   }
 

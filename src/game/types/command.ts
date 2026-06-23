@@ -6,6 +6,7 @@ export type InternalAffairsType =
   | 'build-defense'
   | 'recruit-troops'
   | 'improve-loyalty'
+  | 'relief'              // 賑濟 — spend food (not gold) to raise loyalty
   | 'search'
   // ── Tier-2 mass development (requires city tier ≥ 城) ──
   | 'major-agriculture'   // 大農政 — heavy ag investment

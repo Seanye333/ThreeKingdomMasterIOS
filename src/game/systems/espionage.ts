@@ -26,6 +26,9 @@ export interface EspionageOutput {
   officers: Record<EntityId, Officer>;
   results: EspionageResult[];
   entries: ReportEntry[];
+  /** 敗露之怨 — forceId → added resentment toward the player when a scheme
+   *  (e.g. a botched assassination) is traced back. Merged into state.grudges. */
+  grudgeDelta: Record<EntityId, number>;
 }
 
 /**
@@ -40,6 +43,7 @@ export function resolveEspionage(ctx: EspionageContext): EspionageOutput {
   const officers = { ...ctx.officers };
   const results: EspionageResult[] = [];
   const entries: ReportEntry[] = [];
+  const grudgeDelta: Record<EntityId, number> = {};
 
   for (const op of ctx.ops) {
     const def = ESPIONAGE_DEFS_BY_KIND[op.kind];
@@ -159,10 +163,13 @@ export function resolveEspionage(ctx: EspionageContext): EspionageOutput {
         message = `${t.name.en} was struck down by an unknown assassin.`;
         messageZh = `${t.name.zh}為不知名刺客所殺。`;
       } else {
-        message = `The assassin failed. ${t.name.en} survives the attempt.`;
-        messageZh = `刺客失手，${t.name.zh}得以倖免。`;
-        // Modest blowback: drop diplomatic relation handled elsewhere; for now
-        // the player simply loses the gold (already deducted).
+        message = `The assassin failed. ${t.name.en} survives — and the plot is traced back.`;
+        messageZh = `刺客失手，${t.name.zh}得以倖免，且行刺敗露為人所察。`;
+        // 行刺敗露 — a botched assassination is traced to its sponsor: the target's
+        // realm nurses a lasting grudge (the gold was already spent for nothing).
+        if (op.targetForceId) {
+          grudgeDelta[op.targetForceId] = (grudgeDelta[op.targetForceId] ?? 0) + 14;
+        }
       }
     } else if (op.kind === 'defect' && op.targetOfficerId) {
       const t = officers[op.targetOfficerId];
@@ -218,5 +225,5 @@ export function resolveEspionage(ctx: EspionageContext): EspionageOutput {
     });
   }
 
-  return { cities, officers, results, entries };
+  return { cities, officers, results, entries, grudgeDelta };
 }

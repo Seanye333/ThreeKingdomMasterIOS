@@ -1290,7 +1290,7 @@
 
 ## 政策 Policies(161)
 
-#### 內政效果 City Effects(36)— 駐城武將持有即生效
+#### 內政效果 City Effects(41)— 駐城武將持有即生效
 
 | 政策 | 效果 | 前置 |
 |---|---|---|
@@ -1312,10 +1312,15 @@
 | 関稅 River Tolls | 関稅 +50 金 | 商業 |
 | 茶馬貿易 Tea-Horse Trade | 茶馬 +10% 金 | 商業 |
 | 漁鹽 Fishery & Salt | 漁鹽 +40 金 +15% 糧 | — |
+| 桑稅 Silk Tax | 桑稅 +35 金 | — |
+| 邊市 Frontier Market | 邊市 +50 金 | — |
+| 朝貢 Tribute System | 朝貢 +50 金 | — |
+| 南蠻朝貢 Nanman Tribute | 南蠻納貢 +40 金 | — |
+| 匈奴朝貢 Xiongnu Tribute | 匈奴納貢 +30 金 | 撫夷 |
 | 礼楽 Rites | 禮樂 +1 忠/季 | — |
 | 賑災 Famine Relief | 賑災 +1 忠/季 | 礼楽 |
-| 義倉 Community Granary | 義倉 +2 忠/季 | 屯田 |
-| 養濟院 Charity House | 養濟院 +1 忠 | 賑災 |
+| 義倉 Community Granary | 義倉 +3 忠/季 | 屯田 |
+| 養濟院 Charity House | 養濟院 +3 忠 | 賑災 |
 | 鄉約 Village Mediation | 鄉約 +1 忠 | 礼楽 |
 | 輕徭薄賦 Light Taxes | 輕徭 +2 忠/-20% 金 | 法治 |
 | 撫夷 Frontier Pacification | 撫夷 +2 忠 | 礼楽 |
@@ -1366,7 +1371,7 @@
 | 牧苑 State Stud Farm | 兵質 +10% | 馬政 |
 | 演武 Military Drill | 演武 兵質 +5% | — |
 
-#### 制度 / 科技節點(104)— 解鎖前置、提供威望或劇情效果
+#### 制度 / 科技節點(99)— 解鎖前置、提供威望或劇情效果
 
 | 政策 | 前置 |
 |---|---|
@@ -1384,7 +1389,6 @@
 | 天文 Astronomy | — |
 | 曆法 Calendar Reform | — |
 | 和親 Marriage Alliance | — |
-| 朝貢 Tribute System | — |
 | 細作 Spy Network | — |
 | 倉廩 State Granaries | — |
 | 蠶桑 Silk Weaving | — |
@@ -1415,7 +1419,6 @@
 | 山神祭 Mountain Spirit Rites | — |
 | 河神祭 River God Rites | — |
 | 鴻臚寺 Envoy Bureau | — |
-| 邊市 Frontier Market | — |
 | 贖俘 Ransom Captives | — |
 | 護林 Forest Conservation | — |
 | 陶器 Pottery | — |
@@ -1424,7 +1427,6 @@
 | 質庫 Pawn Bureau | — |
 | 內庫 Palace Treasury | — |
 | 竹器 Bamboo Crafts | — |
-| 桑稅 Silk Tax | — |
 | 樓車 Siege Tower | — |
 | 工程營 Engineer Corps | — |
 | 邊騎 Frontier Cavalry | — |
@@ -1441,7 +1443,6 @@
 | 招魂 Soul-Calling Rites | — |
 | 收買 Bribery | — |
 | 童謠 Political Songs | — |
-| 南蠻朝貢 Nanman Tribute | — |
 | 鐵冶 State Ironworks | — |
 | 造船廠 Shipyard | — |
 | 運河 Canal | — |
@@ -1469,7 +1470,6 @@
 | 朝山 Mountain Pilgrimage | — |
 | 太廟 Ancestral Temple | — |
 | 鮮卑緩衝 Xianbei Buffer | 撫夷 |
-| 匈奴朝貢 Xiongnu Tribute | 撫夷 |
 | 羌族安撫 Qiang Pacification | 撫夷 |
 | 烏桓緩衝 Wuhuan Buffer | 撫夷 |
 | 交州安撫 Jiao Pacification | 撫夷 |

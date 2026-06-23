@@ -1,4 +1,5 @@
 import type { City, Officer, Season, TaxRate, EntityId, DiplomaticState, Building } from '../types';
+import type { Appointment } from '../types/title';
 import { getRelation } from '../types';
 import { cityPolicyEffects } from './policyEffects';
 import { buildingBonuses } from './buildings';
@@ -7,6 +8,10 @@ import { aggregateSlotEffects } from '../data/defenseBuildings';
 import { effectivePrestigeEffects } from '../data/prestige';
 import { specialtyEconomy } from '../data/specialties';
 import { officerGrade, gradeRank } from './officerGrade';
+import { buildSpecialtyTradeRoutes } from './tradeRoutes';
+import { appointmentBonusFor, totalStipendForForce } from './appointmentEffects';
+import { peerageEffects } from '../data/peerage';
+import type { WeatherKind } from './weather';
 
 export const FOOD_PER_TROOP_PER_SEASON = 0.25;
 
@@ -134,5 +139,121 @@ export function tickCityEconomy(
     loyaltyDelta: eff.loyaltyDelta + taxEff.loyalty + droughtLoyalty + bb.loyaltyPerSeason,
     populationDelta: popDelta,
     policyBadges: taxEff.loyalty !== 0 ? [...eff.badges, taxEff.zh] : eff.badges,
+  };
+}
+
+/** One city's line in the realm ledger. */
+export interface RealmBudgetRow {
+  city: City;
+  gold: number;
+  foodIn: number;
+  foodUp: number;
+  netFood: number;
+  starving: boolean;
+}
+
+/**
+ * 度支簿 — the realm's full season income statement for ONE force, netting the
+ * tax/harvest the cities raise against the realm-level flows the season engine
+ * actually applies: 通商條約 (trade treaties), 名產商路 (specialty routes),
+ * 食邑 (peerage fiefs), 官署常俸 (civic-office yields) and 俸祿 (military
+ * stipends). The same helpers resolution.ts uses, so the bottom line matches
+ * what really happens at season-end — not a gross-income guess.
+ */
+export interface RealmBudget {
+  rows: RealmBudgetRow[];
+  treasury: { gold: number; food: number };
+  /** Gold income/expense broken into ledger lines (stipend is a positive outflow). */
+  goldLines: { tax: number; tradeTreaty: number; tradeRoute: number; fief: number; office: number; stipend: number };
+  goldNet: number;
+  /** Grain ledger lines (upkeep is a positive outflow). */
+  foodLines: { harvest: number; fief: number; office: number; upkeep: number };
+  foodNet: number;
+  /** Seasons until the coffers run dry at the current burn (Infinity if net ≥ 0). */
+  goldRunway: number;
+  /** Seasons until grain stores run dry (Infinity if net ≥ 0). */
+  foodRunway: number;
+}
+
+export interface RealmBudgetInput {
+  cities: Record<EntityId, City>;
+  officers: Record<EntityId, Officer>;
+  forceId: EntityId;
+  season: Season;
+  tax: TaxRate;
+  inflation: number;
+  weatherKind: WeatherKind;
+  buildings: Building[];
+  tradePartners: EntityId[];
+  diplomacy: DiplomaticState;
+  appointments: Appointment[];
+  statecraft?: string | null;
+}
+
+export function realmBudget(input: RealmBudgetInput): RealmBudget {
+  const { cities, officers, forceId, season, tax, inflation, weatherKind, buildings, tradePartners, diplomacy, appointments } = input;
+
+  const officersByCity: Record<string, Officer[]> = {};
+  for (const o of Object.values(officers)) {
+    if (!o.locationCityId || o.status === 'dead' || o.status === 'unsearched') continue;
+    (officersByCity[o.locationCityId] ??= []).push(o);
+  }
+
+  const mine = Object.values(cities).filter((c) => c.ownerForceId === forceId);
+  const rows: RealmBudgetRow[] = mine.map((c) => {
+    const tick = tickCityEconomy(c, season, officersByCity[c.id] ?? [], tax, inflation, weatherKind, buildings, input.statecraft ?? null);
+    const netFood = tick.foodIncome - tick.foodUpkeep;
+    return { city: c, gold: tick.goldIncome, foodIn: tick.foodIncome, foodUp: tick.foodUpkeep, netFood, starving: c.food + netFood < 0 };
+  }).sort((a, b) => b.gold - a.gold);
+
+  const tax_ = rows.reduce((s, r) => s + r.gold, 0);
+  const harvest = rows.reduce((s, r) => s + r.foodIn, 0);
+  const upkeep = rows.reduce((s, r) => s + r.foodUp, 0);
+
+  // 通商條約 — the player's standing trade treaties (their share only).
+  const treatyGrants = tradeTreatyGrants(tradePartners, diplomacy, forceId);
+  const tradeTreaty = treatyGrants[forceId] ?? 0;
+
+  // 名產商路 — premium routes between same-owner adjacent cities, both endpoints credited.
+  const tradeRoute = buildSpecialtyTradeRoutes(cities).reduce((s, r) => {
+    const a = cities[r.cityAId];
+    return a && a.ownerForceId === forceId ? s + r.baseIncome * 2 : s;
+  }, 0);
+
+  // 食邑 — enfeoffed nobles' fiefs pay rent (gold + grain) into the treasury.
+  let fiefGold = 0, fiefGrain = 0;
+  for (const o of Object.values(officers)) {
+    if (o.forceId !== forceId || !o.peerageId) continue;
+    if (o.status === 'dead' || o.status === 'imprisoned') continue;
+    const eff = peerageEffects(o);
+    fiefGold += eff.fiefGold;
+    fiefGrain += eff.fiefGrain;
+  }
+
+  // 官署常俸 — the 九卿/尚書台 ministries yield season coin & grain.
+  const ab = appointmentBonusFor(forceId, appointments, officers);
+  const officeGold = ab.goldPerSeason;
+  const officeFood = ab.foodPerSeason;
+
+  // 俸祿 — military stipends owed to every officer of the force.
+  const stipend = totalStipendForForce(forceId, officers);
+
+  const goldLines = { tax: tax_, tradeTreaty, tradeRoute, fief: fiefGold, office: officeGold, stipend };
+  const goldNet = tax_ + tradeTreaty + tradeRoute + fiefGold + officeGold - stipend;
+
+  const foodLines = { harvest, fief: fiefGrain, office: officeFood, upkeep };
+  const foodNet = harvest + fiefGrain + officeFood - upkeep;
+
+  const treasury = mine.reduce((acc, c) => ({ gold: acc.gold + c.gold, food: acc.food + c.food }), { gold: 0, food: 0 });
+
+  return {
+    rows,
+    treasury,
+    goldLines,
+    goldNet,
+    foodLines,
+    foodNet,
+    goldRunway: goldNet < 0 ? Math.floor(treasury.gold / -goldNet) : Infinity,
+    foodRunway: foodNet < 0 ? Math.floor(treasury.food / -foodNet) : Infinity,
   };
 }

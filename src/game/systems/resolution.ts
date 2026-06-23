@@ -2173,6 +2173,7 @@ function applyDelta(
     troops: number;
     population: number;
     loyalty: number;
+    food: number;
     wallTier: 1 | 2 | 3;
   }>,
 ): City {
@@ -2187,6 +2188,7 @@ function applyDelta(
     troops: Math.max(0, city.troops + (delta.troops ?? 0)),
     population: Math.max(0, city.population + (delta.population ?? 0)),
     loyalty: clamp(city.loyalty + (delta.loyalty ?? 0), 0, 100),
+    food: Math.max(0, city.food + (delta.food ?? 0)),
     wallTier: delta.wallTier ?? city.wallTier,
   };
 }
