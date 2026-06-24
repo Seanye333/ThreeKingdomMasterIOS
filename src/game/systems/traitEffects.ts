@@ -392,16 +392,15 @@ export function rollLevelUpTrait(
  *  chance to gain the trait. */
 const ITEM_RESONANCE: Record<string, string> = {
   // Books / classics
-  'sunzi-art':       'strategist',
   'sunzi-bingfa':    'strategist',
   'sima-fa':         'veteran',
   'liu-tao':         'strategist',
   'mengde-manual':   'cunning',
   'art-of-war':      'strategist',
   'spring-autumn':   'honor-bound',
-  'guanzi-book':     'diligent',
+  'guanzi-shu':      'diligent',
   'liji-book':       'refined',
-  'mengzi-book':     'benevolent',
+  'meng-zi':         'benevolent',
   'mozi-book':       'frugal',
   'zhuangzi-book':   'composed',
   'gongsun-longzi':  'eloquent',
@@ -434,7 +433,6 @@ export function itemResonanceCandidate(officer: Officer): string | null {
  * Books primarily; some legendary weapons too.
  */
 const ITEM_TACTIC_GRANT: Record<string, string> = {
-  'sunzi-art':       'deception',
   'sunzi-bingfa':    'know-self',
   'sima-fa':         'wait-tired',
   'liu-tao':         'ambush',

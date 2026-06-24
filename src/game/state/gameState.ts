@@ -37,6 +37,7 @@ import { createInitialTribeState } from '../systems/tribes';
 import { rollWeather, type Weather } from '../systems/weather';
 import { createInitialMandate, type MandateState } from '../systems/mandate';
 import { ITEMS } from '../data/items';
+import { STARTER_RECIPE_IDS } from '../systems/forging';
 import { buildInitialPorts } from '../data/ports';
 import { buildInitialForts } from '../data/forts';
 import { distinctForceColors } from '../data/forceColors';
@@ -232,6 +233,17 @@ export interface GameState {
   /** 精煉 — per-item refinement level (+0…REFINE_MAX). Keyed by itemId since
    *  every item is globally unique. Absent/0 = unrefined. */
   itemRefinements: Record<EntityId, number>;
+  /** 突破 — per-item breakthrough stars (★0…BREAKTHROUGH_MAX), beyond full 精煉. */
+  itemBreakthroughs: Record<EntityId, number>;
+  /** 鑲嵌 — per-item socketed gem ids (length ≤ socketsFor(item)). */
+  itemGems: Record<EntityId, string[]>;
+  /** 寶石庫存 — gems on hand (from 熔毀 drops etc.); socketing spends these
+   *  before buying with gold. Keyed by gem id → count. */
+  gemStock: Record<EntityId, number>;
+  /** 鑄法圖譜 — forging recipes the player has learned. Basic (lv≤1) designs are
+   *  seeded at game start; 神兵 blueprints are discovered via 研發 at a foundry
+   *  staffed by an 巧思 tinkerer. A recipe absent here cannot be forged. */
+  knownRecipes: EntityId[];
   /** Item-holder history — append-only log of equip transfers. */
   itemHistory: Array<{
     itemId: EntityId;
@@ -540,6 +552,10 @@ export const EMPTY_STATE: GameState = {
   enabledDynasties: [],
   lostItems: [],
   itemRefinements: {},
+  itemBreakthroughs: {},
+  itemGems: {},
+  gemStock: {},
+  knownRecipes: STARTER_RECIPE_IDS.slice(),
   itemHistory: [],
   battleReplays: [],
   duelHall: [],
@@ -887,6 +903,10 @@ export function loadScenario(
     musicTrack: state.musicTrack,
     lostItems: computeLostItems(officers, scaledCities, state.placementMode),
     itemRefinements: {},
+  itemBreakthroughs: {},
+  itemGems: {},
+  gemStock: {},
+    knownRecipes: STARTER_RECIPE_IDS.slice(),
     itemHistory: [],
     battleReplays: [],
     duelHall: [],
@@ -985,6 +1005,8 @@ function computeLostItems(
     return seed / 233280;
   };
   for (const item of ITEMS) {
+    // 鍛造專屬名品永不散落 —— 只能在鐵工坊鍛出,撿不到。
+    if (item.forgeOnly) continue;
     if (equippedIds.has(item.id)) continue;
     if (ownedCityIds.length === 0) continue;
     // In 'historical' mode, prefer the item's recorded origin city

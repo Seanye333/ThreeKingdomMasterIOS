@@ -40,9 +40,14 @@ import { statecraftRecruitBonus } from '../systems/statecraft';
 import { holdFounding } from '../systems/founding';
 import { allianceBetween, breakAlliance as breakMarriageTie, tickMarriageAlliances } from '../systems/marriageAlliance';
 import { FORGE_RECIPES_BY_ID } from '../data/forging';
+import { STARTER_RECIPE_IDS, forgeQualityPlus, discoverableRecipe, dismantleYield } from '../systems/forging';
+import { assignAiGear } from '../systems/aiGear';
+import { planAiForging } from '../systems/aiForge';
 import { EDICTS_BY_KIND, IMPERIAL_RANKS_BY_ID } from '../data/imperial';
 import { ESPIONAGE_DEFS_BY_KIND } from '../data/espionage';
-import { ITEMS_BY_ID, refineCost, REFINE_MAX, setRefineRegistry } from '../data/items';
+import { ITEMS_BY_ID, refineCost, REFINE_MAX, setRefineRegistry, itemRarity,
+  BREAKTHROUGH_MAX, breakthroughCost as itemBreakthroughCost, socketsFor, GEMS_BY_ID,
+  setBreakthroughRegistry, setGemRegistry } from '../data/items';
 import { marchDurationFor } from '../data/cities';
 import { terrainRoute, positionAlongRoute, marchDestCoords } from '../data/territories';
 import { cityPos, CITY_GEO_OVERRIDES } from '../data/cityGeo';
@@ -506,7 +511,7 @@ interface GameStore extends GameState {
   unequipItem: (officerId: EntityId, itemId: EntityId) => { ok: boolean; reason?: string };
   unequipSlot: (
     officerId: EntityId,
-    slot: 'weapon' | 'horse' | 'treasure' | 'book',
+    slot: 'weapon' | 'horse' | 'treasure' | 'book' | 'armor',
   ) => { ok: boolean; reason?: string };
   appointTitle: (
     officerId: EntityId,
@@ -684,11 +689,27 @@ interface GameStore extends GameState {
   forgeItem: (
     cityId: EntityId,
     recipeId: EntityId,
-  ) => { ok: boolean; reason?: string };
+  ) => { ok: boolean; reason?: string; plus?: number; smith?: { zh: string; en: string } };
+  /** 熔毀 — melt a lost item in a foundry city back into iron + gold. */
+  dismantleItem: (
+    cityId: EntityId,
+    itemId: EntityId,
+  ) => { ok: boolean; reason?: string; iron?: number; gold?: number; gem?: EntityId };
+  /** Learn a forging blueprint (研發 / event grant). No-op if already known. */
+  learnRecipe: (recipeId: EntityId) => { ok: boolean; reason?: string };
   /** 精煉 — raise an item one refinement level (+1), charged from the city that
    *  holds it (its wielder's city, or the lost-item city). A foundry there
    *  discounts the cost. */
   refineItem: (itemId: EntityId) => { ok: boolean; reason?: string; cost?: number };
+  /** 突破 — push a fully-refined item one ★ further, charged gold + iron from the
+   *  holding city (needs a foundry). */
+  breakthroughItem: (itemId: EntityId) => { ok: boolean; reason?: string; cost?: number; iron?: number };
+  /** 鑲嵌 — socket a gem into an item (up to socketsFor), charged from the holding city. */
+  socketGem: (itemId: EntityId, gemId: EntityId) => { ok: boolean; reason?: string; cost?: number };
+  /** 卸下寶石 — pry a socketed gem out (no refund). */
+  unsocketGem: (itemId: EntityId, index: number) => { ok: boolean; reason?: string };
+  /** 敵軍軍備 — seed AI-held gear with 精煉/突破/鑲嵌 scaled by difficulty. */
+  seedAiGear: () => void;
   acknowledgeAchievements: () => void;
   acknowledgeDeedTitles: () => void;
   acknowledgePrestige: () => void;
@@ -913,21 +934,23 @@ export const useGameStore = create<GameStore>()(
       ...EMPTY_STATE,
 
       loadScenario: (scenario, playerForceId, difficulty, customOfficer, capitalOverride) => {
-        setRefineRegistry({}); // fresh game → drop any prior 精煉 registry
+        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); // fresh game → drop any prior 精煉 registry
         set((s) => loadScenario(s, scenario, playerForceId, difficulty, customOfficer, capitalOverride));
+        get().seedAiGear();
       },
 
       // 演義模擬器 — load a scenario with NO player force and start in
       // observe mode, so the AI runs every realm and the season tick
       // simulates history while you watch.
       observeScenario: (scenario, difficulty) => {
-        setRefineRegistry({});
+        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({});
         set((s) => ({
           ...loadScenario(s, scenario, scenario.forces[0].id, difficulty),
           playerForceId: null,
           victoryStatus: 'observing' as const,
           tutorialStep: null,
         }));
+        get().seedAiGear();
       },
 
       startChallenge: (challengeId) => {
@@ -937,11 +960,24 @@ export const useGameStore = create<GameStore>()(
         if (!scenario) return;
         const hasForce = scenario.forces.some((f) => f.id === challenge.forceId);
         if (!hasForce) return;
-        setRefineRegistry({});
+        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({});
         set((s) => ({
           ...loadScenario(s, scenario, challenge.forceId, challenge.difficulty),
           activeChallenge: challenge.id,
         }));
+        get().seedAiGear();
+      },
+
+      // 敵軍軍備 — seed AI-held gear with 精煉/突破/鑲嵌 scaled by difficulty.
+      // Shared by loadScenario / observeScenario / startChallenge.
+      seedAiGear: () => {
+        const s = get();
+        const ai = assignAiGear({
+          officers: s.officers, playerForceId: s.playerForceId, difficulty: s.difficulty,
+          aiStrength: s.aiStrength, refine: s.itemRefinements, breakthrough: s.itemBreakthroughs, gems: s.itemGems,
+        });
+        setRefineRegistry(ai.refine); setBreakthroughRegistry(ai.breakthrough); setGemRegistry(ai.gems);
+        set({ itemRefinements: ai.refine, itemBreakthroughs: ai.breakthrough, itemGems: ai.gems });
       },
 
       selectCity: (cityId) => set(() => ({ selectedCityId: cityId })),
@@ -4258,9 +4294,75 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // 研發圖譜 — a foundry city (lv≥2) staffed by an 巧思 tinkerer may puzzle
+        // out a new 鑄法 each season, within the foundry's reach. This is the
+        // path by which 神兵 blueprints (beyond the seeded basics) enter play.
+        let knownRecipesNext = state.knownRecipes ?? STARTER_RECIPE_IDS.slice();
+        if (seasonBoundary && state.playerForceId) {
+          const known = new Set(knownRecipesNext);
+          const learned: EntityId[] = [];
+          for (const c of Object.values(postCities)) {
+            if (c.ownerForceId !== state.playerForceId) continue;
+            const foundry = state.buildings.find((b) => b.cityId === c.id && b.id === 'foundry');
+            if (!foundry || foundry.level < 2) continue;
+            const smith = Object.values(state.officers).find(
+              (o) => o.forceId === state.playerForceId && o.locationCityId === c.id
+                && o.status !== 'dead' && (o.traits ?? []).includes('inventive'),
+            );
+            if (!smith) continue;
+            if (Math.random() >= 0.22 + 0.04 * foundry.level) continue;
+            const id = discoverableRecipe(known, foundry.level, Math.random);
+            if (!id) continue;
+            known.add(id);
+            learned.push(id);
+            const item = ITEMS_BY_ID[FORGE_RECIPES_BY_ID[id]?.resultItemId];
+            result.report.entries.push({
+              cityId: c.id,
+              kind: 'note',
+              text: `${smith.name.en} unlocked the forging method for ${item?.name.en ?? id} at ${c.name.en}.`,
+              textZh: `${smith.name.zh}於${c.name.zh}鑽研得「${item?.name.zh ?? id}」鑄法。`,
+            });
+          }
+          if (learned.length > 0) knownRecipesNext = [...knownRecipesNext, ...learned];
+        }
+
+        // 軍備漸長 — each season boundary, re-scale AI-held gear from the current
+        // roster so newly recruited/born enemy officers also get armed (never
+        // lowers existing levels). Player gear is untouched.
+        let aiGearNext: { refine: typeof state.itemRefinements; breakthrough: typeof state.itemBreakthroughs; gems: typeof state.itemGems } | null = null;
+        if (seasonBoundary) {
+          const g = assignAiGear({
+            officers: officersWithMarchTask, playerForceId: state.playerForceId, difficulty: state.difficulty,
+            aiStrength: state.aiStrength, refine: state.itemRefinements, breakthrough: state.itemBreakthroughs, gems: state.itemGems,
+          });
+          setRefineRegistry(g.refine); setBreakthroughRegistry(g.breakthrough); setGemRegistry(g.gems);
+          aiGearNext = g;
+        }
+
+        // 敵國鑄兵 — AI foundry cities arm their best still-unforged commanders
+        // with a fresh 神兵 (uniqueness-respecting; deducts the city's gold+iron).
+        if (seasonBoundary) {
+          const forgeActions = planAiForging({
+            officers: officersWithMarchTask, cities: postCities, buildings: state.buildings,
+            lostItems: result.lostItems, playerForceId: state.playerForceId, rng: Math.random,
+          });
+          if (forgeActions.length > 0) {
+            postCities = { ...postCities };
+            officersWithMarchTask = { ...officersWithMarchTask };
+            for (const a of forgeActions) {
+              const c = postCities[a.cityId];
+              if (c) postCities[a.cityId] = { ...c, gold: c.gold - a.goldCost, iron: Math.max(0, (c.iron ?? 0) - a.ironCost) };
+              const o = officersWithMarchTask[a.officerId];
+              if (o) officersWithMarchTask[a.officerId] = { ...o, equipment: [...o.equipment, a.itemId] };
+            }
+          }
+        }
+
         set({
           date: result.date,
           cities: postCities,
+          knownRecipes: knownRecipesNext,
+          ...(aiGearNext ? { itemRefinements: aiGearNext.refine, itemBreakthroughs: aiGearNext.breakthrough, itemGems: aiGearNext.gems } : {}),
           merchantLoan: nextMerchantLoan,
           popupQueue: [...state.popupQueue, ...sizePopups, ...wallPopups, ...buildPopups],
           officers: officersWithMarchTask,
@@ -7005,11 +7107,40 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         );
         const recipe = FORGE_RECIPES_BY_ID[recipeId];
         if (!recipe) return { ok: false, reason: 'invalid recipe' };
+        // 鑄法圖譜 — the blueprint must be known (basic designs are seeded; 神兵
+        // blueprints are discovered via 研發, see endSeason).
+        if (!(state.knownRecipes ?? STARTER_RECIPE_IDS).includes(recipeId))
+          return { ok: false, reason: 'recipe not learned' };
+        // 名品唯一 — a REPEATABLE recipe (empty ingredients → iron/gold only) must
+        // NOT mint a second copy of a result that already exists in play, or two
+        // officers could equip the same itemId and share its (itemId-keyed)
+        // refine/突破/gem registries. Sacrifice recipes are naturally one-shot
+        // (their unique ingredient is consumed), so they're exempt.
+        const resultId = recipe.resultItemId;
+        if (recipe.ingredients.length === 0
+            && (state.lostItems.some((li) => li.itemId === resultId)
+              || Object.values(state.officers).some((o) => o.equipment.includes(resultId))))
+          return { ok: false, reason: 'already exists' };
         if (!foundry || foundry.level < recipe.minFoundryLevel)
           return { ok: false, reason: `need foundry lv${recipe.minFoundryLevel}` };
-        // 鐵料自給 — a foundry fed from the city's own iron stock forges cheaper.
-        const ironFed = (city.iron ?? 0) >= IRON_FORGE_COST;
-        const goldCost = ironFed ? Math.round(recipe.goldCost * (1 - FORGE_IRON_DISCOUNT)) : recipe.goldCost;
+        // 鐵料配方 vs 鐵料自給.
+        //  • An ironCost recipe forges from the city's iron stock as its material
+        //    (renewable — not bound to the finite pool of unique weapons). Iron is
+        //    required and consumed; gold is paid in full (iron IS the discount).
+        //  • Otherwise the legacy path: holding ≥300 iron just shaves 30% off gold.
+        const ironRecipe = (recipe.ironCost ?? 0) > 0;
+        let goldCost: number;
+        let ironSpend: number;
+        if (ironRecipe) {
+          if ((city.iron ?? 0) < recipe.ironCost!)
+            return { ok: false, reason: `need ${recipe.ironCost} iron` };
+          goldCost = recipe.goldCost;
+          ironSpend = recipe.ironCost!;
+        } else {
+          const ironFed = (city.iron ?? 0) >= IRON_FORGE_COST;
+          goldCost = ironFed ? Math.round(recipe.goldCost * (1 - FORGE_IRON_DISCOUNT)) : recipe.goldCost;
+          ironSpend = ironFed ? IRON_FORGE_COST : 0;
+        }
         if (city.gold < goldCost)
           return { ok: false, reason: 'not enough gold' };
         // Verify all ingredients are present as lost items in this city.
@@ -7020,6 +7151,18 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (!recipe.ingredients.every((id) => have.has(id)))
           return { ok: false, reason: 'missing ingredients' };
 
+        // 工匠手藝 — the most capable smith stationed here presides over the forge.
+        // A sharp-minded (or 巧思) master turns out a piece born pre-refined.
+        const smith = Object.values(state.officers)
+          .filter((o) => o.forceId === state.playerForceId && o.locationCityId === cityId && o.status !== 'dead')
+          .sort((a, b) => b.stats.intelligence - a.stats.intelligence)[0];
+        const armsBB = buildingBonuses(cityId, state.buildings);
+        const plus = forgeQualityPlus({
+          smithIntelligence: smith?.stats.intelligence ?? 0,
+          inventive: (smith?.traits ?? []).includes('inventive'),
+          refineUpgradeChance: armsBB.refineUpgradeChance,
+        });
+
         // Consume gold, consume ingredients, place result in the lost-items pool of this city.
         const newLostItems = state.lostItems.filter((li) => {
           if (li.cityId !== cityId) return true;
@@ -7028,17 +7171,79 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           return false;
         });
         newLostItems.push({ itemId: recipe.resultItemId, cityId });
+        // The forged piece is born with the smith's quality baked into 精煉.
+        const itemRefinements = plus > 0
+          ? { ...state.itemRefinements, [recipe.resultItemId]: Math.max(state.itemRefinements[recipe.resultItemId] ?? 0, plus) }
+          : state.itemRefinements;
+        if (plus > 0) setRefineRegistry(itemRefinements);
         set({
           cities: {
             ...state.cities,
             [cityId]: {
               ...city,
               gold: city.gold - goldCost,
-              ...(ironFed ? { iron: (city.iron ?? 0) - IRON_FORGE_COST } : {}),
+              ...(ironSpend > 0 ? { iron: (city.iron ?? 0) - ironSpend } : {}),
             },
           },
           lostItems: newLostItems,
+          itemRefinements,
         });
+        return { ok: true, plus, smith: smith?.name };
+      },
+
+      dismantleItem: (cityId, itemId) => {
+        const state = get();
+        const city = state.cities[cityId];
+        if (!city) return { ok: false, reason: 'invalid city' };
+        if (city.ownerForceId !== state.playerForceId)
+          return { ok: false, reason: 'not your city' };
+        const foundry = state.buildings.find((b) => b.cityId === cityId && b.id === 'foundry');
+        if (!foundry || foundry.level < 1) return { ok: false, reason: 'need foundry' };
+        const base = ITEMS_BY_ID[itemId];
+        if (!base) return { ok: false, reason: 'invalid item' };
+        // Must be a loose item sitting in this city's 藏寶池 (not equipped).
+        const idx = state.lostItems.findIndex((li) => li.cityId === cityId && li.itemId === itemId);
+        if (idx < 0) return { ok: false, reason: 'item not here' };
+        const plus = state.itemRefinements[itemId] ?? 0;
+        const { iron, gold } = dismantleYield(base, plus);
+        const newLostItems = state.lostItems.filter((_, i) => i !== idx);
+        // Melting it down clears ALL养成 that rode on the item — refine, 突破 AND
+        // 鑲嵌 — so a later re-forge of the same id can't inherit stale upgrades.
+        const itemRefinements = { ...state.itemRefinements };
+        const itemBreakthroughs = { ...state.itemBreakthroughs };
+        const itemGems = { ...state.itemGems };
+        let touched = false;
+        if (itemId in itemRefinements) { delete itemRefinements[itemId]; setRefineRegistry(itemRefinements); touched = true; }
+        if (itemId in itemBreakthroughs) { delete itemBreakthroughs[itemId]; setBreakthroughRegistry(itemBreakthroughs); touched = true; }
+        if (itemId in itemGems) { delete itemGems[itemId]; setGemRegistry(itemGems); touched = true; }
+        // 寶石析出 — a 神兵-grade melt sometimes yields a basic gem (寶石來源).
+        const GEM_DROPS = ['gem-war', 'gem-lead', 'gem-int', 'gem-pol', 'gem-cha', 'gem-warlead'];
+        let gemStock = state.gemStock;
+        let gemDrop: string | undefined;
+        if (itemRarity(base) === 'gold' && Math.random() < 0.4) {
+          gemDrop = GEM_DROPS[Math.floor(Math.random() * GEM_DROPS.length)];
+          gemStock = { ...state.gemStock, [gemDrop]: (state.gemStock[gemDrop] ?? 0) + 1 };
+        }
+        const newIron = Math.min(IRON_CITY_CAP, (city.iron ?? 0) + iron);
+        set({
+          cities: {
+            ...state.cities,
+            [cityId]: { ...city, gold: city.gold + gold, iron: newIron },
+          },
+          lostItems: newLostItems,
+          ...(touched ? { itemRefinements, itemBreakthroughs, itemGems } : {}),
+          gemStock,
+        });
+        // Report the iron actually credited (capped), not the raw yield.
+        return { ok: true, iron: newIron - (city.iron ?? 0), gold, gem: gemDrop };
+      },
+
+      learnRecipe: (recipeId) => {
+        const state = get();
+        if (!FORGE_RECIPES_BY_ID[recipeId]) return { ok: false, reason: 'invalid recipe' };
+        const known = state.knownRecipes ?? STARTER_RECIPE_IDS.slice();
+        if (known.includes(recipeId)) return { ok: false, reason: 'already known' };
+        set({ knownRecipes: [...known, recipeId] });
         return { ok: true };
       },
 
@@ -7075,6 +7280,82 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           cities: { ...state.cities, [city.id]: { ...city, gold: city.gold - cost } },
         });
         return { ok: true, cost };
+      },
+
+      // 城邑 — locate the player city that holds an item (wielder's city, else its
+      // lost-item pile). Shared by 突破 / 鑲嵌.
+      breakthroughItem: (itemId) => {
+        const state = get();
+        const base = ITEMS_BY_ID[itemId];
+        if (!base) return { ok: false, reason: 'no-item' };
+        // 突破 only after full 精煉 — a piece must be maxed before it can break through.
+        if ((state.itemRefinements[itemId] ?? 0) < REFINE_MAX) return { ok: false, reason: 'refine-first' };
+        const stars = state.itemBreakthroughs[itemId] ?? 0;
+        if (stars >= BREAKTHROUGH_MAX) return { ok: false, reason: 'maxed' };
+        const holder = Object.values(state.officers).find(
+          (o) => o.forceId === state.playerForceId && o.equipment.includes(itemId),
+        );
+        let city = holder?.locationCityId ? state.cities[holder.locationCityId] : undefined;
+        if (!city) {
+          const lost = state.lostItems.find((li) => li.itemId === itemId);
+          if (lost) city = state.cities[lost.cityId];
+        }
+        if (!city || city.ownerForceId !== state.playerForceId) return { ok: false, reason: 'no-city' };
+        // 突破爐 — needs a foundry; consumes gold + iron (玄鐵淬煉).
+        if (!state.buildings.some((b) => b.cityId === city!.id && b.id === 'foundry'))
+          return { ok: false, reason: 'need-foundry' };
+        const { gold, iron } = itemBreakthroughCost(base, stars);
+        if (city.gold < gold) return { ok: false, reason: 'no-gold', cost: gold };
+        if ((city.iron ?? 0) < iron) return { ok: false, reason: 'no-iron', iron };
+        const itemBreakthroughs = { ...state.itemBreakthroughs, [itemId]: stars + 1 };
+        setBreakthroughRegistry(itemBreakthroughs);
+        set({
+          itemBreakthroughs,
+          cities: { ...state.cities, [city.id]: { ...city, gold: city.gold - gold, iron: (city.iron ?? 0) - iron } },
+        });
+        return { ok: true, cost: gold, iron };
+      },
+
+      socketGem: (itemId, gemId) => {
+        const state = get();
+        const base = ITEMS_BY_ID[itemId];
+        if (!base) return { ok: false, reason: 'no-item' };
+        const gem = GEMS_BY_ID[gemId];
+        if (!gem) return { ok: false, reason: 'no-gem' };
+        const current = state.itemGems[itemId] ?? [];
+        if (current.length >= socketsFor(base)) return { ok: false, reason: 'no-socket' };
+        const holder = Object.values(state.officers).find(
+          (o) => o.forceId === state.playerForceId && o.equipment.includes(itemId),
+        );
+        let city = holder?.locationCityId ? state.cities[holder.locationCityId] : undefined;
+        if (!city) {
+          const lost = state.lostItems.find((li) => li.itemId === itemId);
+          if (lost) city = state.cities[lost.cityId];
+        }
+        if (!city || city.ownerForceId !== state.playerForceId) return { ok: false, reason: 'no-city' };
+        // 寶石庫存優先 — spend a stocked gem (from 熔毀 etc.) for free; else buy with gold.
+        const fromStock = (state.gemStock[gemId] ?? 0) > 0;
+        if (!fromStock && city.gold < gem.cost) return { ok: false, reason: 'no-gold', cost: gem.cost };
+        const itemGems = { ...state.itemGems, [itemId]: [...current, gemId] };
+        setGemRegistry(itemGems);
+        set({
+          itemGems,
+          gemStock: fromStock ? { ...state.gemStock, [gemId]: state.gemStock[gemId] - 1 } : state.gemStock,
+          ...(fromStock ? {} : { cities: { ...state.cities, [city.id]: { ...city, gold: city.gold - gem.cost } } }),
+        });
+        return { ok: true, cost: fromStock ? 0 : gem.cost };
+      },
+
+      unsocketGem: (itemId, index) => {
+        const state = get();
+        const current = state.itemGems[itemId] ?? [];
+        if (index < 0 || index >= current.length) return { ok: false, reason: 'no-gem' };
+        // 卸下寶石 — pried out and discarded (no refund); the socket reopens.
+        const next = current.filter((_, i) => i !== index);
+        const itemGems = { ...state.itemGems, [itemId]: next };
+        setGemRegistry(itemGems);
+        set({ itemGems });
+        return { ok: true };
       },
 
       acknowledgeAchievements: () => set({ recentAchievementUnlocks: [] }),
@@ -8215,7 +8496,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           ),
           sites: migrateSites(loaded.sites),
           scenicLooted: loaded.scenicLooted ?? {},
+          itemRefinements: loaded.itemRefinements ?? {},
+          itemBreakthroughs: loaded.itemBreakthroughs ?? {},
+          itemGems: loaded.itemGems ?? {},
+          gemStock: loaded.gemStock ?? {},
         };
+        // 精煉/突破/鑲嵌登記 — re-point the denormalized registries at the loaded maps.
+        setRefineRegistry(fresh.itemRefinements);
+        setBreakthroughRegistry(fresh.itemBreakthroughs);
+        setGemRegistry(fresh.itemGems);
         set(fresh);
         return true;
       },
@@ -8290,6 +8579,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         enabledDynasties: state.enabledDynasties,
         lostItems: state.lostItems,
         itemRefinements: state.itemRefinements,
+        itemBreakthroughs: state.itemBreakthroughs,
+        itemGems: state.itemGems,
+        gemStock: state.gemStock,
+        knownRecipes: state.knownRecipes,
         // Persist replays WITHOUT their turn-by-turn trails — a single battle
         // trail can run ~0.5-1MB and partialize stringifies on every set().
         // The trail stays watchable for the current session; reloaded replays
@@ -8356,9 +8649,16 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (!state.recentPrestigeCeremony) state.recentPrestigeCeremony = [];
         if (!state.recentPromotions) state.recentPromotions = [];
         if (!state.itemRefinements) state.itemRefinements = {};
-        // 精煉登記 — sync the denormalized refinement registry the pure
+        if (!state.itemBreakthroughs) state.itemBreakthroughs = {};
+        if (!state.itemGems) state.itemGems = {};
+        if (!state.gemStock) state.gemStock = {};
+        // 鑄法圖譜 — pre-blueprint saves know the basic designs by default.
+        if (!state.knownRecipes) state.knownRecipes = STARTER_RECIPE_IDS.slice();
+        // 精煉/突破/鑲嵌登記 — sync the denormalized registries the pure
         // item-effect read sites resolve through.
         setRefineRegistry(state.itemRefinements);
+        setBreakthroughRegistry(state.itemBreakthroughs);
+        setGemRegistry(state.itemGems);
         const cityOwnerByCityId = Object.fromEntries(
           Object.values(state.cities ?? {}).map((c) => [c.id, c.ownerForceId]),
         );

@@ -13,6 +13,7 @@ type Kind = 'all' | Item['kind'];
 const KIND_LABEL: Record<Kind, { zh: string; en: string }> = {
   all:      { zh: '一切', en: 'All' },
   weapon:   { zh: '武具', en: 'Weapons' },
+  armor:    { zh: '甲冑', en: 'Armor' },
   horse:    { zh: '名馬', en: 'Horses' },
   treasure: { zh: '宝物', en: 'Treasures' },
   book:     { zh: '兵書', en: 'Books' },
@@ -20,6 +21,7 @@ const KIND_LABEL: Record<Kind, { zh: string; en: string }> = {
 
 const KIND_COLOR: Record<Item['kind'], string> = {
   weapon:   '#b8442e',
+  armor:    '#6a8fb0',
   horse:    '#c9a64e',
   treasure: '#88b7e8',
   book:     '#7a9a5a',
@@ -60,7 +62,7 @@ const SORT_LABEL_EN: Record<SortKey, string> = {
 };
 
 const KIND_ORDER: Record<Item['kind'], number> = {
-  weapon: 0, horse: 1, treasure: 2, book: 3,
+  weapon: 0, armor: 1, horse: 2, treasure: 3, book: 4,
 };
 
 function itemTotal(item: Item): number {
@@ -187,7 +189,7 @@ export function ItemsBrowser({ onClose }: Props) {
             borderBottom: '1px solid #2b3845', flexWrap: 'wrap',
           }}
         >
-          {(['all', 'weapon', 'horse', 'treasure', 'book'] as Kind[]).map((k) => (
+          {(['all', 'weapon', 'armor', 'horse', 'treasure', 'book'] as Kind[]).map((k) => (
             <button
               key={k}
               onClick={() => setKind(k)}

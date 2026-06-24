@@ -12,7 +12,7 @@ interface Props {
   onClose: () => void;
 }
 
-type KindFilter = 'all' | 'weapon' | 'horse' | 'treasure' | 'book';
+type KindFilter = 'all' | 'weapon' | 'armor' | 'horse' | 'treasure' | 'book';
 type OwnerFilter = 'mine' | 'enemy' | 'unclaimed' | 'all';
 
 /** Sum all stat boosts an item gives — used for rarity classification. */
@@ -126,7 +126,7 @@ export function ArmouryModal({ onClose }: Props) {
 
   const handleUnequip = (
     officerId: EntityId,
-    slot: 'weapon' | 'horse' | 'treasure' | 'book',
+    slot: 'weapon' | 'horse' | 'treasure' | 'book' | 'armor',
   ) => {
     unequipSlot(officerId, slot);
   };
@@ -152,6 +152,7 @@ export function ArmouryModal({ onClose }: Props) {
             [
               ['all',      t('全部', 'All')],
               ['weapon',   t('武器', 'Weapon')],
+              ['armor',    t('甲冑', 'Armor')],
               ['horse',    t('駿馬', 'Horse')],
               ['treasure', t('寶物', 'Treasure')],
               ['book',     t('兵書', 'Book')],
