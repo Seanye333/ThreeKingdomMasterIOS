@@ -15,7 +15,7 @@ export interface OfficerStats {
 }
 
 /** Item kinds — used for UI grouping only. No longer caps the per-officer count. */
-export type EquipSlot = 'weapon' | 'horse' | 'treasure' | 'book';
+export type EquipSlot = 'weapon' | 'horse' | 'treasure' | 'book' | 'armor';
 
 /**
  * Equipment is an unbounded list of item IDs an officer carries.

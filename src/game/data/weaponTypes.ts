@@ -77,7 +77,6 @@ export const ITEM_WEAPON_TYPE: Record<string, WeaponType> = {
   'jade-hilt-knife':   'sword',
   'sevenstar-saber':   'sword',
   'serpent-tongue-dagger':'sword',
-  'mountain-splitter-axe':'sword',
 
   // Bows
   'rhinoceros-bow':    'bow',

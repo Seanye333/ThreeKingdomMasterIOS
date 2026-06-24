@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ITEMS } from '../../game/data';
 import type { Item } from '../../game/data/items';
+import { ITEMS_BY_ID, REFINE_MAX, BREAKTHROUGH_MAX, breakthroughCost as itemBreakthroughCost, socketsFor, GEMS, GEMS_BY_ID } from '../../game/data/items';
 import { useGameStore } from '../../game/state/store';
 import type { EntityId, Officer } from '../../game/types';
 import { OfficerStats } from './OfficerStats';
@@ -12,7 +13,7 @@ interface Props {
   onClose: () => void;
 }
 
-type KindFilter = 'all' | 'weapon' | 'horse' | 'treasure' | 'book';
+type KindFilter = 'all' | 'weapon' | 'armor' | 'horse' | 'treasure' | 'book';
 type OwnerFilter = 'mine' | 'enemy' | 'unclaimed' | 'all';
 
 /** Sum all stat boosts an item gives — used for rarity classification. */
@@ -61,6 +62,15 @@ export function ArmouryModal({ onClose }: Props) {
   const assignItem = useGameStore((s) => s.assignItem);
   const unequipSlot = useGameStore((s) => s.unequipSlot);
   const lostItems = useGameStore((s) => s.lostItems);
+  const cities = useGameStore((s) => s.cities);
+  const buildings = useGameStore((s) => s.buildings);
+  const itemRefinements = useGameStore((s) => s.itemRefinements);
+  const itemBreakthroughs = useGameStore((s) => s.itemBreakthroughs);
+  const itemGems = useGameStore((s) => s.itemGems);
+  const gemStock = useGameStore((s) => s.gemStock);
+  const refineItemFn = useGameStore((s) => s.refineItem);
+  const breakthroughItemFn = useGameStore((s) => s.breakthroughItem);
+  const socketGemFn = useGameStore((s) => s.socketGem);
 
   const [filter, setFilter] = useState<KindFilter>('all');
   const [ownerFilter, setOwnerFilter] = useState<OwnerFilter>('all');
@@ -126,7 +136,7 @@ export function ArmouryModal({ onClose }: Props) {
 
   const handleUnequip = (
     officerId: EntityId,
-    slot: 'weapon' | 'horse' | 'treasure' | 'book',
+    slot: 'weapon' | 'horse' | 'treasure' | 'book' | 'armor',
   ) => {
     unequipSlot(officerId, slot);
   };
@@ -152,6 +162,7 @@ export function ArmouryModal({ onClose }: Props) {
             [
               ['all',      t('全部', 'All')],
               ['weapon',   t('武器', 'Weapon')],
+              ['armor',    t('甲冑', 'Armor')],
               ['horse',    t('駿馬', 'Horse')],
               ['treasure', t('寶物', 'Treasure')],
               ['book',     t('兵書', 'Book')],
@@ -253,6 +264,36 @@ export function ArmouryModal({ onClose }: Props) {
                           </button>
                         </div>
                       )}
+                      {isYours && (() => {
+                        // 裝備養成 — refine / 突破 / 鑲嵌 right here in the armoury.
+                        const plus = itemRefinements[item.id] ?? 0;
+                        const stars = itemBreakthroughs[item.id] ?? 0;
+                        const gems = itemGems[item.id] ?? [];
+                        const maxSockets = socketsFor(ITEMS_BY_ID[item.id] ?? item);
+                        const hcity = holder.locationCityId ? cities[holder.locationCityId] : null;
+                        const hasFoundry = !!hcity && buildings.some((b) => b.cityId === hcity.id && b.id === 'foundry');
+                        const bc = itemBreakthroughCost(item, stars);
+                        const canBreak = stars < BREAKTHROUGH_MAX && plus >= REFINE_MAX && hasFoundry && !!hcity && hcity.gold >= bc.gold && (hcity.iron ?? 0) >= bc.iron;
+                        return (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap', marginTop: '0.25rem', fontSize: '0.72rem' }}>
+                            <span style={{ color: '#7a8893' }}>
+                              {plus > 0 && <span style={{ color: '#e6c473' }}>+{plus} </span>}
+                              {stars > 0 && <span style={{ color: '#ff9f5a' }}>{'★'.repeat(stars)} </span>}
+                              {gems.map((gid, gi) => { const g = GEMS_BY_ID[gid]; return g ? <span key={gi} title={g.name.zh} style={{ width: 8, height: 8, borderRadius: 2, background: g.color, display: 'inline-block', marginRight: 2 }} /> : null; })}
+                            </span>
+                            {plus < REFINE_MAX && <button className={styles.actionBtn} onClick={() => refineItemFn(item.id)}>{t('精煉', 'Refine')}</button>}
+                            {plus >= REFINE_MAX && stars < BREAKTHROUGH_MAX && (
+                              <button className={styles.actionBtn} disabled={!canBreak} title={!hasFoundry ? t('需鐵工坊', 'needs foundry') : `${bc.gold}g+${bc.iron}鐵`} onClick={() => { const r = breakthroughItemFn(item.id); if (!r.ok) alert(r.reason); }}>{t('突破★', 'Star')}</button>
+                            )}
+                            {gems.length < maxSockets && (
+                              <select value="" onChange={(e) => { if (e.target.value) { const r = socketGemFn(item.id, e.target.value); if (!r.ok) alert(r.reason); } }} style={{ background: '#10161e', border: '1px solid #6a8fb0', color: '#9fb0bf', fontSize: '0.66rem' }}>
+                                <option value="">💎</option>
+                                {GEMS.map((g) => { const n = gemStock[g.id] ?? 0; return <option key={g.id} value={g.id}>{g.name.zh} ({n > 0 ? t(`庫${n}`, `${n}`) : `${g.cost}g`})</option>; })}
+                              </select>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </>
                   ) : (
                     <>

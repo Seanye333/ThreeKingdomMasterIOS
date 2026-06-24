@@ -40,7 +40,7 @@ export const SCENIC_SITES: ScenicSite[] = [
   },
   {
     id: 'yingchuan', name: { zh: '潁川書塾', en: 'Yingchuan Academy' },
-    coords: { lon: 113.5, lat: 34.1 }, hermitId: 'xu-shu', itemId: 'sunzi-art', gold: 250,
+    coords: { lon: 113.5, lat: 34.1 }, hermitId: 'xu-shu', itemId: 'sunzi-bingfa', gold: 250,
     descZh: '潁川多奇士,徐庶元直曾遊學於此。', guards: ['xuchang', 'guandu'],
   },
   {

@@ -33,7 +33,8 @@ import { renownFromDeeds, fameTier, fameMedal } from '../../game/systems/fame';
 import { xpProgress, learnableSkills, canBreakthrough, breakthroughCost, MAX_BREAKTHROUGHS, breakthroughTitle, growthPowerMul } from '../../game/systems/growth';
 import { officerGrade, officerLevel } from '../../game/systems/officerGrade';
 import { gradeCombatBonus, itemMasteryMul } from '../../game/systems/gradeCombat';
-import { itemRarity, itemRarityMeta, liveItemById, refineCost, REFINE_MAX } from '../../game/data/items';
+import { itemRarity, itemRarityMeta, liveItemById, refineCost, REFINE_MAX,
+  BREAKTHROUGH_MAX, breakthroughCost as itemBreakthroughCost, socketsFor, GEMS, GEMS_BY_ID } from '../../game/data/items';
 import { activeItemSets } from '../../game/data/itemSets';
 import { ageBand } from '../../game/systems/aging';
 import type { City, Force, Officer, OfficerStats, Skill } from '../../game/types';
@@ -145,6 +146,22 @@ export function OfficerDetail({
   const openWish = officerWishes.find((w) => w.officerId === officer.id);
   const unequipItemFn = useGameStore((s) => s.unequipItem);
   const refineItemFn = useGameStore((s) => s.refineItem);
+  const breakthroughItemFn = useGameStore((s) => s.breakthroughItem);
+  const socketGemFn = useGameStore((s) => s.socketGem);
+  const unsocketGemFn = useGameStore((s) => s.unsocketGem);
+  const itemBreakthroughs = useGameStore((s) => s.itemBreakthroughs);
+  const itemGems = useGameStore((s) => s.itemGems);
+  const gemStock = useGameStore((s) => s.gemStock);
+  // 裝備養成提示 — turn the store's raw reason codes into a bilingual message.
+  const gearReason = (r?: string): string => ({
+    'need-foundry': t('需要鐵工坊', 'Needs a foundry'),
+    'no-gold': t('金不足', 'Not enough gold'),
+    'no-iron': t('鐵不足', 'Not enough iron'),
+    'no-socket': t('無空孔', 'No open socket'),
+    'refine-first': t('須先精煉滿級', 'Refine to max first'),
+    'maxed': t('已達上限', 'Already maxed'),
+    'no-city': t('不在我方城中', 'Not held in your city'),
+  } as Record<string, string>)[r ?? ''] ?? r ?? '';
   // Subscribe so refining (which bumps this map) re-renders the equipment list.
   const itemRefinements = useGameStore((s) => s.itemRefinements);
   const setTrainingFocusFn = useGameStore((s) => s.setTrainingFocus);
@@ -1022,8 +1039,15 @@ export function OfficerDetail({
                   const item = liveItemById(id);
                   if (!item) return null;
                   const plus = itemRefinements[id] ?? 0;
+                  const stars = itemBreakthroughs[id] ?? 0;
+                  const gems = itemGems[id] ?? [];
+                  // Socket count off the BASE item (matches the store's socketGem
+                  // guard) — liveItem's refine/突破 can promote 品階 and would
+                  // otherwise show phantom sockets the store rejects.
+                  const maxSockets = socketsFor(ITEMS_BY_ID[id] ?? item);
                   const kindColor =
                     item.kind === 'weapon'   ? '#b8442e'
+                    : item.kind === 'armor'    ? '#6a8fb0'
                     : item.kind === 'horse'    ? '#c9a64e'
                     : item.kind === 'treasure' ? '#e6c473'
                     : item.kind === 'book'     ? '#3a7dd9'
@@ -1052,21 +1076,64 @@ export function OfficerDetail({
                       <span>
                         {lang === 'en' ? item.name.en : item.name.zh}
                         {plus > 0 && <span style={{ marginLeft: '0.25rem', color: '#e6c473', fontWeight: 600 }}>+{plus}</span>}
+                        {stars > 0 && <span style={{ marginLeft: '0.2rem', color: '#ff9f5a', fontWeight: 600 }}>{'★'.repeat(stars)}</span>}
                         {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#7a8893', fontStyle: 'italic' }}>{item.name.en}</span></>}
                       </span>
-                      {isPlayerOfficer && (
+                      {/* 鑲嵌 — socketed gem dots */}
+                      {gems.map((gid, gi) => {
+                        const gem = GEMS_BY_ID[gid];
+                        return gem ? (
+                          <span key={gi} title={`${lang === 'en' ? gem.name.en : gem.name.zh}${isPlayerOfficer ? t('（點擊卸下）', ' (click to remove)') : ''}`}
+                            onClick={isPlayerOfficer ? () => unsocketGemFn(id, gi) : undefined}
+                            style={{ width: 9, height: 9, borderRadius: 2, background: gem.color, cursor: isPlayerOfficer ? 'pointer' : 'default', flexShrink: 0, boxShadow: '0 0 3px ' + gem.color }} />
+                        ) : null;
+                      })}
+                      {isPlayerOfficer && !atMax && (
                         <button
-                          onClick={() => { if (!atMax) refineItemFn(id); }}
-                          disabled={atMax}
-                          title={atMax
-                            ? t('已臻化境（精煉滿級）', 'Fully refined')
-                            : t(`精煉 +${plus + 1}（${cost} 金，本城金庫支付）`, `Refine to +${plus + 1} (${cost} gold from this city)`)}
+                          onClick={() => refineItemFn(id)}
+                          title={t(`精煉 +${plus + 1}（${cost} 金，本城金庫支付）`, `Refine to +${plus + 1} (${cost} gold from this city)`)}
                           style={{
-                            background: 'none', border: `1px solid ${atMax ? '#364654' : '#e6c473'}`, borderRadius: 2,
-                            color: atMax ? '#4a5662' : '#e6c473',
-                            cursor: atMax ? 'default' : 'pointer', padding: '0 0.25rem', fontSize: '0.68rem',
+                            background: 'none', border: '1px solid #e6c473', borderRadius: 2, color: '#e6c473',
+                            cursor: 'pointer', padding: '0 0.25rem', fontSize: '0.68rem',
                           }}
                         >{t('煉', '⚒')}</button>
+                      )}
+                      {isPlayerOfficer && atMax && stars < BREAKTHROUGH_MAX && (() => {
+                        const bc = itemBreakthroughCost(item, stars);
+                        const holdCity = officer.locationCityId ? cities[officer.locationCityId] : null;
+                        const hasFoundry = !!holdCity && buildings.some((b) => b.cityId === holdCity.id && b.id === 'foundry');
+                        const canBreak = hasFoundry && !!holdCity && holdCity.gold >= bc.gold && (holdCity.iron ?? 0) >= bc.iron;
+                        return (
+                          <button
+                            onClick={() => { if (!canBreak) return; const r = breakthroughItemFn(id); if (!r.ok) alert(gearReason(r.reason)); }}
+                            disabled={!canBreak}
+                            title={!hasFoundry
+                              ? t('突破需鐵工坊', 'Breakthrough needs a foundry city')
+                              : t(`突破 ★${stars + 1}（${bc.gold} 金 + ${bc.iron} 鐵）`, `Breakthrough to ★${stars + 1} (${bc.gold} gold + ${bc.iron} iron)`)}
+                            style={{
+                              background: 'none', border: `1px solid ${canBreak ? '#ff9f5a' : '#5a4636'}`, borderRadius: 2, color: canBreak ? '#ff9f5a' : '#6a5238',
+                              cursor: canBreak ? 'pointer' : 'not-allowed', padding: '0 0.25rem', fontSize: '0.68rem',
+                            }}
+                          >{t('突', '★')}</button>
+                        );
+                      })()}
+                      {isPlayerOfficer && gems.length < maxSockets && (
+                        <select
+                          value=""
+                          onChange={(e) => { if (e.target.value) { const r = socketGemFn(id, e.target.value); if (!r.ok) alert(gearReason(r.reason)); } }}
+                          title={t(`鑲嵌寶石（${gems.length}/${maxSockets} 孔）`, `Socket a gem (${gems.length}/${maxSockets})`)}
+                          style={{
+                            background: '#10161e', border: '1px solid #6a8fb0', borderRadius: 2, color: '#9fb0bf',
+                            cursor: 'pointer', padding: '0 0.1rem', fontSize: '0.62rem', maxWidth: 26,
+                          }}
+                        >
+                          <option value="">💎</option>
+                          {GEMS.map((g) => {
+                            const stock = gemStock[g.id] ?? 0;
+                            const price = stock > 0 ? t(`庫存${stock}·免費`, `${stock} in stock · free`) : `${g.cost}g`;
+                            return <option key={g.id} value={g.id}>{(lang === 'en' ? g.name.en : g.name.zh)} ({price})</option>;
+                          })}
+                        </select>
                       )}
                       {isPlayerOfficer && (
                         <button

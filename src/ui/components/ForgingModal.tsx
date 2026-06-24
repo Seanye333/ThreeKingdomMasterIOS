@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { FORGE_RECIPES, ITEMS_BY_ID } from '../../game/data';
+import { itemRarity, itemRarityMeta, GEMS, GEMS_BY_ID, GEM_FUSION, GEM_FUSION_COST } from '../../game/data/items';
+import { dismantleYield } from '../../game/systems/forging';
 import { useGameStore } from '../../game/state/store';
 import { playSfx } from '../../game/systems/sound';
 import type { EntityId } from '../../game/types';
@@ -14,7 +16,7 @@ const SPARKS = Array.from({ length: 14 }, (_, i) => i);
 
 /** 鑄成 — the reveal when a weapon leaves the anvil: the name slams in over
  *  the forge's glow as embers fly up. Dismiss on click. */
-function ForgedReveal({ name, onDone }: { name?: { zh: string; en: string }; onDone: () => void }) {
+function ForgedReveal({ name, plus, onDone }: { name?: { zh: string; en: string }; plus?: number; onDone: () => void }) {
   const t = useT();
   useEffect(() => { playSfx('forge'); }, []);
   const reduced = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -50,6 +52,11 @@ function ForgedReveal({ name, onDone }: { name?: { zh: string; en: string }; onD
         }}>
           <Name pair={name} />
         </div>
+        {!!plus && plus > 0 && (
+          <div style={{ fontSize: '0.95rem', color: '#ffd9a0', letterSpacing: '0.2rem', ...(reduced ? {} : { animation: 'tkmVictorySub 0.5s ease-out 0.5s both' }) }}>
+            {t(`神品 +${plus}`, `Masterwork +${plus}`)}
+          </div>
+        )}
         {!reduced && SPARKS.map((i) => (
           <span key={i} style={{
             position: 'absolute', left: `calc(50% + ${(i - 7) * 16}px)`, bottom: '30%',
@@ -70,7 +77,13 @@ export function ForgingModal({ onClose }: Props) {
   const buildings = useGameStore((s) => s.buildings);
   const lostItems = useGameStore((s) => s.lostItems);
   const playerForceId = useGameStore((s) => s.playerForceId);
+  const officers = useGameStore((s) => s.officers);
+  const knownRecipes = useGameStore((s) => s.knownRecipes);
+  const itemRefinements = useGameStore((s) => s.itemRefinements);
   const forgeItem = useGameStore((s) => s.forgeItem);
+  const dismantleItem = useGameStore((s) => s.dismantleItem);
+  const gemStock = useGameStore((s) => s.gemStock);
+  const fuseGems = useGameStore((s) => s.fuseGems);
   const desc = useDesc();
 
   // Find player cities with a foundry.
@@ -85,9 +98,16 @@ export function ForgingModal({ onClose }: Props) {
     foundryCities[0]?.id ?? null,
   );
   // The just-forged weapon, shown in a brief reveal over the smithy.
-  const [forged, setForged] = useState<{ zh: string; en: string } | null>(null);
+  const [forged, setForged] = useState<{ name: { zh: string; en: string }; plus: number } | null>(null);
 
   const pickedCity = pickedCityId ? cities[pickedCityId] : null;
+  // 主匠 — the most capable smith stationed here decides the forge's quality.
+  const smith = useMemo(() => {
+    if (!pickedCityId) return null;
+    return Object.values(officers)
+      .filter((o) => o.forceId === playerForceId && o.locationCityId === pickedCityId && o.status !== 'dead')
+      .sort((a, b) => b.stats.intelligence - a.stats.intelligence)[0] ?? null;
+  }, [officers, pickedCityId, playerForceId]);
   const foundryLevel = pickedCityId
     ? (buildings.find((b) => b.cityId === pickedCityId && b.id === 'foundry')?.level ?? 0)
     : 0;
@@ -101,7 +121,14 @@ export function ForgingModal({ onClose }: Props) {
     if (!r.ok) { alert(r.reason); return; }
     const recipe = FORGE_RECIPES.find((x) => x.id === recipeId);
     const item = recipe ? ITEMS_BY_ID[recipe.resultItemId] : null;
-    if (item) setForged(item.name);
+    if (item) setForged({ name: item.name, plus: r.plus ?? 0 });
+  };
+
+  const handleDismantle = (itemId: string) => {
+    if (!pickedCityId) return;
+    const r = dismantleItem(pickedCityId, itemId);
+    if (!r.ok) { alert(r.reason); return; }
+    playSfx('forge');
   };
 
   return (
@@ -177,16 +204,32 @@ export function ForgingModal({ onClose }: Props) {
         <div style={{ padding: '1rem 1.5rem', overflowY: 'auto', flex: 1 }}>
           {pickedCity && (
             <>
-              <div style={{ fontSize: '0.78rem', color: '#7a8893', marginBottom: '0.5rem' }}>
-                {lang === 'en' ? 'Treasury at ' : '府庫 · '}<Name pair={pickedCity.name} />: <strong style={{ color: '#c9a64e' }}>{pickedCity.gold}g</strong> ·
+              <div style={{ fontSize: '0.78rem', color: '#7a8893', marginBottom: '0.35rem' }}>
+                {lang === 'en' ? 'Treasury at ' : '府庫 · '}<Name pair={pickedCity.name} />: <strong style={{ color: '#c9a64e' }}>{pickedCity.gold}g</strong>
+                {(pickedCity.iron ?? 0) > 0 && <> · <span style={{ color: '#9fb0bf' }}>{lang === 'en' ? `Iron ${pickedCity.iron}` : `鐵 ${pickedCity.iron}`}</span></>} ·
                 {lang === 'en' ? ` Items here: ${itemsInCity.length}` : ` 存物 ${itemsInCity.length}`}
+              </div>
+              {/* 主匠 — the resident smith decides how fine each piece comes out. */}
+              <div style={{ fontSize: '0.74rem', color: '#7a8893', marginBottom: '0.5rem' }}>
+                {smith ? (
+                  <>
+                    {lang === 'en' ? 'Master smith: ' : '主匠 · '}
+                    <span style={{ color: '#e6c473' }}><Name pair={smith.name} /></span>
+                    <span style={{ color: '#7a8893' }}> {lang === 'en' ? 'Int' : '智'}{smith.stats.intelligence}</span>
+                    {(smith.traits ?? []).includes('inventive') && <span style={{ color: '#88b7e8' }}> · {lang === 'en' ? '✦ Inventive' : '✦ 巧思'}</span>}
+                  </>
+                ) : (
+                  <span style={{ color: '#b8442e', fontStyle: 'italic' }}>{lang === 'en' ? 'No smith stationed — forged pieces come out plain.' : '無武將駐守 —— 鑄件平平。'}</span>
+                )}
               </div>
               {FORGE_RECIPES.map((r) => {
                 const result = ITEMS_BY_ID[r.resultItemId];
+                const known = (knownRecipes ?? []).includes(r.id);
                 const have = r.ingredients.every((id) => itemsInCity.includes(id));
                 const lvlOK = foundryLevel >= r.minFoundryLevel;
                 const goldOK = pickedCity.gold >= r.goldCost;
-                const canForge = have && lvlOK && goldOK;
+                const ironOK = !r.ironCost || (pickedCity.iron ?? 0) >= r.ironCost;
+                const canForge = known && have && lvlOK && goldOK && ironOK;
                 return (
                   <div
                     key={r.id}
@@ -195,16 +238,17 @@ export function ForgingModal({ onClose }: Props) {
                       border: '1px solid ' + (canForge ? '#e6c473' : '#2b3845'),
                       padding: '0.7rem 0.85rem',
                       marginBottom: '0.4rem',
-                      opacity: canForge ? 1 : 0.65,
+                      opacity: canForge ? 1 : known ? 0.65 : 0.5,
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                      <div style={{ color: '#e6c473', fontSize: '1rem' }}>
-                        → <Name pair={result?.name} />
+                      <div style={{ color: known ? '#e6c473' : '#7a8893', fontSize: '1rem' }}>
+                        {known ? '→ ' : '🔒 '}<Name pair={result?.name} />
                       </div>
                       <button
                         onClick={() => handle(r.id)}
                         disabled={!canForge}
+                        title={!known ? (lang === 'en' ? 'Blueprint not yet learned — research it via 研發 at a foundry' : '鑄法未習得 —— 由巧思之士於鐵工坊研發') : undefined}
                         style={{
                           background: '#26323e',
                           border: '1px solid ' + (canForge ? '#e6c473' : '#2b3845'),
@@ -213,31 +257,118 @@ export function ForgingModal({ onClose }: Props) {
                           fontFamily: 'inherit', cursor: canForge ? 'pointer' : 'not-allowed',
                         }}
                       >
-                        鍛 Forge
+                        {known ? '鍛 Forge' : (lang === 'en' ? '🔒 Locked' : '🔒 未習')}
                       </button>
                     </div>
                     <div style={{ fontSize: '0.78rem', color: '#aab6c0', fontStyle: 'italic', marginTop: '0.3rem' }}>
                       {desc(r)}
                     </div>
-                    <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.72rem', color: '#7a8893', marginTop: '0.3rem' }}>
-                      Ingredients: {r.ingredients.map((id) => (
-                        <span key={id} style={{ color: itemsInCity.includes(id) ? '#7ed68a' : '#b8442e', marginRight: '0.5rem' }}>
-                          {ITEMS_BY_ID[id]?.name.zh ?? id} {itemsInCity.includes(id) ? '✓' : '✗'}
-                        </span>
-                      ))}
-                    </div>
+                    {r.ingredients.length > 0 && (
+                      <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.72rem', color: '#7a8893', marginTop: '0.3rem' }}>
+                        Ingredients: {r.ingredients.map((id) => (
+                          <span key={id} style={{ color: itemsInCity.includes(id) ? '#7ed68a' : '#b8442e', marginRight: '0.5rem' }}>
+                            {ITEMS_BY_ID[id]?.name.zh ?? id} {itemsInCity.includes(id) ? '✓' : '✗'}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                     <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.72rem', color: '#7a8893', marginTop: '0.2rem' }}>
-                      {r.goldCost}g · req Foundry Lv{r.minFoundryLevel}
+                      {r.goldCost}g
+                      {!!r.ironCost && <span style={{ color: ironOK ? '#9fb0bf' : '#b8442e' }}> · {lang === 'en' ? `${r.ironCost} iron` : `鐵 ${r.ironCost}`}</span>}
+                      {' · req Foundry Lv'}{r.minFoundryLevel}
                     </div>
                   </div>
                 );
               })}
+
+              {/* 熔毀 — melt loose items back into iron + gold. */}
+              {itemsInCity.length > 0 && (
+                <div style={{ marginTop: '1.1rem', borderTop: '1px solid #2b3845', paddingTop: '0.8rem' }}>
+                  <div style={{ fontSize: '0.8rem', color: '#c8884e', letterSpacing: '0.05rem', marginBottom: '0.2rem' }}>
+                    {lang === 'en' ? 'Melt Down' : '熔毀'}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: '#7a8893', fontStyle: 'italic', marginBottom: '0.5rem' }}>
+                    {lang === 'en'
+                      ? 'Reclaim iron + gold from loose items — feeds the iron-forge discount.'
+                      : '把藏寶池的散物熔回鐵與金 —— 鐵料回流可省鍛造金。'}
+                  </div>
+                  {itemsInCity.map((id, idx) => {
+                    const it = ITEMS_BY_ID[id];
+                    if (!it) return null;
+                    const plus = itemRefinements[id] ?? 0;
+                    const meta = itemRarityMeta(itemRarity(it));
+                    const yld = dismantleYield(it, plus);
+                    return (
+                      <div
+                        key={`${id}-${idx}`}
+                        style={{
+                          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                          background: '#10161e', border: '1px solid #2b3845',
+                          padding: '0.4rem 0.7rem', marginBottom: '0.3rem',
+                        }}
+                      >
+                        <div style={{ fontSize: '0.85rem' }}>
+                          <span style={{ color: meta.color }}><Name pair={it.name} /></span>
+                          {plus > 0 && <span style={{ color: '#ffd9a0', fontSize: '0.72rem' }}> +{plus}</span>}
+                          <span style={{ color: '#7a8893', fontFamily: 'ui-monospace, monospace', fontSize: '0.7rem' }}> → 鐵 {yld.iron} · {yld.gold}g</span>
+                        </div>
+                        <button
+                          onClick={() => handleDismantle(id)}
+                          style={{
+                            background: '#241a14', border: '1px solid #c8884e', color: '#d49a5e',
+                            padding: '0.25rem 0.7rem', fontFamily: 'inherit', cursor: 'pointer', fontSize: '0.8rem',
+                          }}
+                        >
+                          {lang === 'en' ? 'Melt' : '熔'}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* 寶石庫存 / 合成 — gems from melts; fuse 3 → 1 next grade. */}
+              {GEMS.some((g) => (gemStock[g.id] ?? 0) > 0) && (
+                <div style={{ marginTop: '1.1rem', borderTop: '1px solid #2b3845', paddingTop: '0.8rem' }}>
+                  <div style={{ fontSize: '0.8rem', color: '#88b7e8', letterSpacing: '0.05rem', marginBottom: '0.2rem' }}>
+                    {lang === 'en' ? 'Gem Vault' : '寶石庫存'}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: '#7a8893', fontStyle: 'italic', marginBottom: '0.5rem' }}>
+                    {lang === 'en' ? `Fuse ${GEM_FUSION_COST} of a grade into 1 of the next.` : `同階寶石 ${GEM_FUSION_COST} 顆合成 1 顆上階。`}
+                  </div>
+                  {GEMS.filter((g) => (gemStock[g.id] ?? 0) > 0).map((g) => {
+                    const n = gemStock[g.id] ?? 0;
+                    const out = GEM_FUSION[g.id];
+                    const canFuse = !!out && n >= GEM_FUSION_COST;
+                    return (
+                      <div key={g.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#10161e', border: '1px solid #2b3845', padding: '0.35rem 0.7rem', marginBottom: '0.3rem' }}>
+                        <div style={{ fontSize: '0.82rem' }}>
+                          <span style={{ width: 9, height: 9, borderRadius: 2, background: g.color, display: 'inline-block', marginRight: '0.4rem', boxShadow: '0 0 3px ' + g.color }} />
+                          <span style={{ color: g.color }}>{lang === 'en' ? g.name.en : g.name.zh}</span>
+                          <span style={{ color: '#9fb0bf' }}> ×{n}</span>
+                          {out && <span style={{ color: '#7a8893', fontSize: '0.7rem' }}> → {lang === 'en' ? GEMS_BY_ID[out].name.en : GEMS_BY_ID[out].name.zh}</span>}
+                        </div>
+                        {out && (
+                          <button
+                            onClick={() => { const r = fuseGems(g.id); if (!r.ok) alert(r.reason); }}
+                            disabled={!canFuse}
+                            title={canFuse ? undefined : (lang === 'en' ? `Need ${GEM_FUSION_COST}` : `需 ${GEM_FUSION_COST} 顆`)}
+                            style={{ background: '#10161e', border: `1px solid ${canFuse ? '#88b7e8' : '#2b3845'}`, color: canFuse ? '#88b7e8' : '#4a5662', padding: '0.2rem 0.6rem', fontFamily: 'inherit', cursor: canFuse ? 'pointer' : 'not-allowed', fontSize: '0.78rem' }}
+                          >
+                            {lang === 'en' ? 'Fuse' : '合成'}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </>
           )}
         </div>
       </div>
     </div>
-    {forged && <ForgedReveal name={forged} onDone={() => setForged(null)} />}
+    {forged && <ForgedReveal name={forged.name} plus={forged.plus} onDone={() => setForged(null)} />}
     </>
   );
 }

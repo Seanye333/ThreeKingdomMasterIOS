@@ -7,6 +7,7 @@ import type {
   ReportEntry,
 } from '../types';
 import { ITEMS_BY_ID } from '../data/items';
+import { itemSetBonuses } from '../data/itemSets';
 import { cityStatCap, cityEconCap, citySize, CITY_SIZES, type CitySize } from './citySize';
 import { internalAffairsMultiplier } from './traitEffects';
 import type { WeatherKind } from './weather';
@@ -243,7 +244,10 @@ export function resolveInternalAffairs(
   (assistants ?? []).slice(0, ASSIST_WEIGHTS.length).forEach((a, i) => {
     assistBonus += a.stats[def.stat] * internalAffairsMultiplier(a, type) * ASSIST_WEIGHTS[i];
   });
-  const statValue = Math.round(officer.stats[def.stat] * traitMul * titleMul + assistBonus);
+  // 治國套裝 — a 文臣/諸子 set (商鞅變法/臥龍... effect:'civil') lifts the lead
+  // officer's internal-affairs output, the non-combat counterpart to 戰陣共鳴.
+  const civilMul = itemSetBonuses(officer).civilMul;
+  const statValue = Math.round(officer.stats[def.stat] * traitMul * titleMul * civilMul + assistBonus);
 
   const size = citySize(city);
   const cap = cityStatCap(city);      // defense ceiling

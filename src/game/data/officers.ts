@@ -1307,7 +1307,7 @@ const CANONICAL_ITEMS_PRIMARY: Record<string, string> = {
   'zhang-jiao':  'taiping',
   // Phase 30 additions
   'ji-ling':     'sanjian-liangren',
-  'pang-de':     'fengzui-dao',
+  'pang-de':     'phoenix-beak',
   'cheng-pu':    'tiejisha-mao',
   'wang-shuang': 'liuxing-chui',
   'dian-wei':    'guzhi-shuang-ji',
@@ -1340,7 +1340,7 @@ const CANONICAL_ITEMS_PRIMARY: Record<string, string> = {
   'wei-guan':    'banma-fu',            // Tiger Tally
   // ─── 歷代名將 — historically-canonical items ───
   // 春秋戰國
-  'hist-jiang-ziya':  'taigong-liutao',     // 太公兵法 / 六韜 (he wrote it)
+  'hist-jiang-ziya':  'liu-tao',     // 六韜 (he wrote it)
   'hist-laozi':       'dao-de-jing',        // 道德經 — author owns it
   'hist-guiguzi':     'guiguzi',            // 鬼谷子 book
   'hist-han-fei':     'hanfeizi',           // 韓非子 — author
@@ -1386,7 +1386,7 @@ const CANONICAL_ITEMS_PRIMARY: Record<string, string> = {
   // 三國新增
   'hua-tuo':         'qing-nang-shu',       // 青囊書 — 華佗醫聖
   'cai-yong':        'jiao-wei-qin',        // 焦尾琴 — 蔡邕救桐木所斲
-  'xiahou-en':       'qing-gang-jian',      // 青釭劍 — 夏侯恩背之,趙雲奪
+  'xiahou-en':       'qing-gang',      // 青釭劍 — 夏侯恩背之,趙雲奪
   'lady-huang':      'lian-nu',             // 諸葛連弩 — 黃月英巧思
   // 春秋戰國新增
   'hist-qu-yuan':    'li-sao',              // 離騷 — 屈原所作
@@ -1397,7 +1397,7 @@ const CANONICAL_ITEMS_PRIMARY: Record<string, string> = {
   'hist-li-guang':   'fei-jiang-bow',       // 飛將軍弓 — 李廣神射
   'hist-wang-zhaojun':'zhao-jun-pipa',      // 昭君琵琶 — 出塞和親
   'hist-ban-chao':   'tou-bi-cong-rong',    // 投筆 — 班超從戎
-  'hist-yang-xiong': 'jiu-deyou',           // 太玄經 — 揚雄所作
+  'hist-yang-xiong': 'taixuan-jing',           // 太玄經 — 揚雄所作
   // 晉
   'hist-ji-kang':    'lanke-jian',          // 廣陵散 — 嵇康絕響
   // 南北朝

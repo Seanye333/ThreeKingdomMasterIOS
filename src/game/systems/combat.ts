@@ -24,7 +24,7 @@ import { effectivePrestigeEffects } from '../data/prestige';
 import { honorificEffects } from '../data/honorifics';
 import { gradeAuraPowerMul, gradeAuraMorale, itemMasteryMul } from './gradeCombat';
 import { growthPowerMul } from './growth';
-import { itemSetPowerMul } from '../data/itemSets';
+import { itemSetBonuses } from '../data/itemSets';
 import { selectSiegeEngine } from '../data/siegeEngines';
 import {
   STRATAGEM_DEFS,
@@ -37,6 +37,26 @@ import { combatPolicyEffects, cityPolicyEffects } from './policyEffects';
 import { appointmentBonusFor } from './appointmentEffects';
 import { aggregateSlotEffects } from '../data/defenseBuildings';
 import type { Weather } from './weather';
+
+/**
+ * 甲冑防護 — sum the (live) defensive weight of every armor piece worn across a
+ * side, and turn it into an own-casualty multiplier (<1). Each armor item's
+ * leadership (+ half its war) counts as protection; the effect diminishes and
+ * caps at −25% losses, so stacking armor helps but never makes a side immortal.
+ */
+function armorMitigationMul(pool: Array<Officer | null | undefined>): number {
+  let def = 0;
+  for (const o of pool) {
+    if (!o) continue;
+    for (const id of Object.values(o.equipment)) {
+      const it = id ? liveItemById(id) : null;
+      if (it && it.kind === 'armor') {
+        def += (it.effects.leadership ?? 0) + Math.max(0, it.effects.war ?? 0) * 0.5;
+      }
+    }
+  }
+  return 1 - Math.min(0.25, def / 240);
+}
 
 /**
  * Classify a city's battlefield terrain. Prefers the authored `city.terrain`
@@ -369,6 +389,9 @@ export function resolveBattle(
     for (const id of Object.values(o.equipment)) {
       const item = id ? liveItemById(id) : null;
       if (!item) continue;
+      // 武器主攻、甲冑主守 — armor's value is its 減傷 (armorMitigationMul), NOT
+      // raw power, so it does not feed the offensive blend (no double-dip).
+      if (item.kind === 'armor') continue;
       // 兵器駕馭 — an under-grade wielder doesn't get the full effect. The item
       // is resolved live so 精煉 boosts (and any rarity promotion) count here.
       const mastery = itemMasteryMul(o, item);
@@ -536,8 +559,13 @@ export function resolveBattle(
   const aGradeMul = gradeAuraPowerMul(attackerPool);
   const dGradeMul = gradeAuraPowerMul(defenderPool);
   // 神兵譜共鳴 — a commander bearing a full legendary set lifts the army's power.
-  const aSetMul = itemSetPowerMul(attacker.commander);
-  const dSetMul = defender.commander ? itemSetPowerMul(defender.commander) : 1;
+  // 套裝共鳴 — power axis (+ naval axis in water battles); the guard axis feeds
+  // the casualty rates below.
+  const NO_SET = { powerMul: 1, guardMul: 1, navalMul: 1 };
+  const aSet = attacker.commander ? itemSetBonuses(attacker.commander) : NO_SET;
+  const dSet = defender.commander ? itemSetBonuses(defender.commander) : NO_SET;
+  const aSetMul = aSet.powerMul * (water ? aSet.navalMul : 1);
+  const dSetMul = dSet.powerMul * (water ? dSet.navalMul : 1);
   const aPower =
     aBlended * Math.sqrt(attacker.troops) * aSkillEffects.powerMultiplier * aElitePower *
     (stratEffect.attackerPowerMul ?? 1) * aPolicy.attackMul * aTraitMods.attackMul * aComboMul *
@@ -590,6 +618,10 @@ export function resolveBattle(
   // Defensive structures on the perimeter make the attacker take more damage.
   // (attackerDamageMul < 1 = attacker hits softer → defender takes less → attacker takes MORE proportionally)
   const structureAttackerLossBoost = ctx?.attackerDamageMul ? 1 / Math.max(0.5, ctx.attackerDamageMul) : 1;
+  // 甲冑防護 — armor worn by the side's officers blunts its own casualties;
+  // a 守 set (四象神甲 etc.) on the commander adds to that.
+  const aArmorMul = armorMitigationMul(attackerPool) * aSet.guardMul;
+  const dArmorMul = armorMitigationMul(defenderPool) * dSet.guardMul;
   const aLossRate = clamp01(
     (dRatio + variance) *
       aSkillEffects.ownLossMultiplier *
@@ -597,7 +629,8 @@ export function resolveBattle(
       aEliteOwnLoss *
       (stratEffect.ownLossMul ?? 1) *
       structureAttackerLossBoost *
-      aTraitMods.lossMul,
+      aTraitMods.lossMul *
+      aArmorMul,
   );
   const dLossRate = clamp01(
     (aRatio - variance) *
@@ -606,7 +639,8 @@ export function resolveBattle(
       dEliteOwnLoss *
       (stratEffect.enemyLossMul ?? 1) *
       dTraitMods.lossMul *
-      cityDrillLossMultiplier(ctx?.city?.drill),
+      cityDrillLossMultiplier(ctx?.city?.drill) *
+      dArmorMul,
   );
 
   const attackerLosses = Math.floor(attacker.troops * aLossRate);

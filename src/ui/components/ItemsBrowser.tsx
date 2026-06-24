@@ -1,7 +1,10 @@
 import { useMemo, useState } from 'react';
 import { ITEMS } from '../../game/data';
 import type { Item } from '../../game/data/items';
+import { ITEMS_BY_ID } from '../../game/data/items';
+import { ITEM_SETS } from '../../game/data/itemSets';
 import { CITY_NAMES_BY_ID } from '../../game/data/cities';
+import { useGameStore } from '../../game/state/store';
 import { useT, useLanguage } from '../i18n';
 
 interface Props {
@@ -13,6 +16,7 @@ type Kind = 'all' | Item['kind'];
 const KIND_LABEL: Record<Kind, { zh: string; en: string }> = {
   all:      { zh: '一切', en: 'All' },
   weapon:   { zh: '武具', en: 'Weapons' },
+  armor:    { zh: '甲冑', en: 'Armor' },
   horse:    { zh: '名馬', en: 'Horses' },
   treasure: { zh: '宝物', en: 'Treasures' },
   book:     { zh: '兵書', en: 'Books' },
@@ -20,6 +24,7 @@ const KIND_LABEL: Record<Kind, { zh: string; en: string }> = {
 
 const KIND_COLOR: Record<Item['kind'], string> = {
   weapon:   '#b8442e',
+  armor:    '#6a8fb0',
   horse:    '#c9a64e',
   treasure: '#88b7e8',
   book:     '#7a9a5a',
@@ -60,7 +65,7 @@ const SORT_LABEL_EN: Record<SortKey, string> = {
 };
 
 const KIND_ORDER: Record<Item['kind'], number> = {
-  weapon: 0, horse: 1, treasure: 2, book: 3,
+  weapon: 0, armor: 1, horse: 2, treasure: 3, book: 4,
 };
 
 function itemTotal(item: Item): number {
@@ -72,14 +77,33 @@ function itemTotal(item: Item): number {
  * Standalone all-items browser. Usable from the title screen without a
  * game state, since it reads only from the static ITEMS catalog.
  */
+/** 套裝成員的獲取狀態 — drives the ✓/✗ marks in the set-progress view. */
+type MemberState = { tag: 'own' | 'enemy' | 'avail' | 'wild' | 'forge' | 'gone'; who?: string };
+
 export function ItemsBrowser({ onClose }: Props) {
   const [kind, setKind] = useState<Kind>('all');
+  const [showSets, setShowSets] = useState(false);
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('total');
   const [sortDir, setSortDir] = useState<'desc' | 'asc'>('desc');
   const t = useT();
   const lang = useLanguage();
   const SORT_LABEL = lang === 'en' ? SORT_LABEL_EN : SORT_LABEL_ZH;
+  const officers = useGameStore((s) => s.officers);
+  const lostItems = useGameStore((s) => s.lostItems);
+  const cities = useGameStore((s) => s.cities);
+  const playerForceId = useGameStore((s) => s.playerForceId);
+
+  // Where each item currently is — for the set-progress view.
+  const memberState = (itemId: string): MemberState => {
+    const holder = Object.values(officers).find((o) => o.equipment.includes(itemId) && o.status !== 'dead');
+    if (holder) return holder.forceId === playerForceId
+      ? { tag: 'own', who: lang === 'en' ? holder.name.en : holder.name.zh }
+      : { tag: 'enemy', who: lang === 'en' ? holder.name.en : holder.name.zh };
+    const lost = lostItems.find((li) => li.itemId === itemId);
+    if (lost) return cities[lost.cityId]?.ownerForceId === playerForceId ? { tag: 'avail' } : { tag: 'wild' };
+    return ITEMS_BY_ID[itemId]?.forgeOnly ? { tag: 'forge' } : { tag: 'gone' };
+  };
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -187,7 +211,18 @@ export function ItemsBrowser({ onClose }: Props) {
             borderBottom: '1px solid #2b3845', flexWrap: 'wrap',
           }}
         >
-          {(['all', 'weapon', 'horse', 'treasure', 'book'] as Kind[]).map((k) => (
+          <button
+            onClick={() => setShowSets((v) => !v)}
+            style={{
+              background: showSets ? '#2a2030' : 'transparent',
+              border: '1px solid ' + (showSets ? '#c178c7' : '#2b3845'),
+              color: showSets ? '#d79be0' : '#7a8893',
+              padding: '0.35rem 1rem', fontFamily: 'inherit', cursor: 'pointer', letterSpacing: '0.1rem',
+            }}
+          >
+            {t(`套裝 ${ITEM_SETS.length}`, `Sets ${ITEM_SETS.length}`)}
+          </button>
+          {!showSets && (['all', 'weapon', 'armor', 'horse', 'treasure', 'book'] as Kind[]).map((k) => (
             <button
               key={k}
               onClick={() => setKind(k)}
@@ -254,6 +289,43 @@ export function ItemsBrowser({ onClose }: Props) {
           })}
         </div>
 
+        {showSets ? (
+          <div style={{ overflowY: 'auto', padding: '1rem 1.5rem', flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(330px, 1fr))', gap: '0.6rem', alignContent: 'start' }}>
+            {ITEM_SETS.map((s) => {
+              const states = s.members.map((m) => ({ id: m, st: memberState(m) }));
+              const ownedN = states.filter((x) => x.st.tag === 'own').length;
+              const complete = ownedN === s.members.length;
+              const effLabel = s.effect === 'guard' ? t('守', 'Guard') : s.effect === 'naval' ? t('水', 'Naval') : s.effect === 'civil' ? t('治', 'Civil') : t('攻', 'Power');
+              return (
+                <div key={s.id} style={{ background: '#10161e', border: `1px solid ${complete ? s.color : '#2b3845'}`, borderLeft: `3px solid ${s.color}`, padding: '0.55rem 0.7rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                    <span style={{ color: s.color, fontSize: '0.95rem' }}>{lang === 'en' ? s.name.en : s.name.zh}</span>
+                    <span style={{ fontSize: '0.72rem', color: complete ? '#7ed68a' : '#7a8893' }}>
+                      {complete ? t('★ 已成', '★ Complete') : `${ownedN}/${s.members.length}`} · +{Math.round(s.powerBonus * 100)}% {effLabel}
+                    </span>
+                  </div>
+                  <div style={{ marginTop: '0.3rem', display: 'flex', flexDirection: 'column', gap: '0.12rem' }}>
+                    {states.map(({ id, st }) => {
+                      const it = ITEMS_BY_ID[id];
+                      const tag = st.tag === 'own' ? { m: '✓', c: '#7ed68a', x: st.who }
+                        : st.tag === 'avail' ? { m: '⌕', c: '#e6c473', x: t('在我城藏寶池', 'in your vault') }
+                        : st.tag === 'wild' ? { m: '⌕', c: '#c8884e', x: t('野區可尋', 'in the wild') }
+                        : st.tag === 'enemy' ? { m: '⚔', c: '#b8442e', x: st.who }
+                        : st.tag === 'forge' ? { m: '⚒', c: '#88b7e8', x: t('待鍛', 'forge it') }
+                        : { m: '·', c: '#4a5662', x: '' };
+                      return (
+                        <div key={id} style={{ fontSize: '0.74rem', display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#aab6c0' }}><span style={{ color: tag.c, marginRight: '0.35rem' }}>{tag.m}</span>{it ? (lang === 'en' ? it.name.en : it.name.zh) : id}</span>
+                          <span style={{ color: tag.c, fontSize: '0.68rem' }}>{tag.x}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
         <div
           style={{
             overflowY: 'auto',
@@ -273,6 +345,7 @@ export function ItemsBrowser({ onClose }: Props) {
             visible.map((i) => <ItemCard key={i.id} item={i} />)
           )}
         </div>
+        )}
       </div>
     </div>
   );
