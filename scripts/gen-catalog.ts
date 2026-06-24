@@ -26,6 +26,7 @@ import {
 import { CATEGORY_TEMPLATE, SIGNATURE_OVERRIDES } from '../src/game/systems/personalTactics';
 import { CITY_POLICY_EFFECTS, COMBAT_POLICY_EFFECTS, RECRUIT_POLICY_EFFECTS } from '../src/game/systems/policyEffects';
 import { SCENARIOS } from '../src/game/data/scenarios';
+import { SPECIALTY_DEFS, CITY_SPECIALTY, SPECIALTY_ROLE, ROLE_ZH } from '../src/game/data/specialties';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const GUIDE = join(here, '..', 'docs', 'GUIDE.md');
@@ -189,6 +190,18 @@ function smallTables(): string[] {
   }
   L.push('', `### 劇本 Scenarios(${SCENARIOS.length})`, '');
   for (const [k, names] of byKind) L.push(`- **${k}**(${names.length}):${names.join('、')}`);
+
+  // 名產名物 — each signature good's premium, strategic role, and producer count.
+  const prodCount: Record<string, number> = {};
+  for (const sid of Object.values(CITY_SPECIALTY)) prodCount[sid] = (prodCount[sid] ?? 0) + 1;
+  const specIds = Object.keys(SPECIALTY_DEFS) as Array<keyof typeof SPECIALTY_DEFS>;
+  L.push('', `### 名產名物 Specialties(${specIds.length} 物 · ${Object.keys(CITY_SPECIALTY).length} 城)— 戰略物資見 §1.9`, '',
+    '| 名產 | 戰略物資 | 商利 | 糧產 | 產地數 | 註 |', '|---|---|---|---|---|---|');
+  for (const id of specIds) {
+    const d = SPECIALTY_DEFS[id];
+    const role = SPECIALTY_ROLE[id];
+    L.push(`| ${d.glyph} ${d.zh} | ${role ? ROLE_ZH[role] : '—'} | ${d.goldMul > 1 ? pct(d.goldMul - 1) : '—'} | ${d.foodMul > 1 ? pct(d.foodMul - 1) : '—'} | ${prodCount[id] ?? 0} | ${clean(d.noteZh)} |`);
+  }
   return L;
 }
 
@@ -213,6 +226,7 @@ summary.push(
   `| 城防設施 Defense | ${defs.length} |`,
   `| 英雄挑戰 Challenges | ${CHALLENGES.length} |`,
   `| 劇本 Scenarios | ${SCENARIOS.length} |`,
+  `| 名產 Specialties | ${Object.keys(SPECIALTY_DEFS).length} 物 / ${Object.keys(CITY_SPECIALTY).length} 城 |`,
 );
 // 名品精選 — top 30 by effect total
 const topItems = [...ITEMS].sort((a, b) => effTotal(b.effects as Record<string, number>) - effTotal(a.effects as Record<string, number>)).slice(0, 30);
