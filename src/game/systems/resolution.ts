@@ -36,7 +36,7 @@ import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
 import { corruptionAccrualMultiplier } from './traitEffects';
 import { rollCivicEvents } from './civicEvents';
 import { settleRefugees, REFUGEE_SHED_FRAC } from './refugees';
-import { stepConvoys, resolveConvoyRaids, provisionNeeded, consumeRations, type Convoy } from './convoy';
+import { stepConvoys, resolveConvoyRaids, resolveRaidStrike, provisionNeeded, consumeRations, type Convoy, type ConvoyRaid } from './convoy';
 import { stepExpeditions, expeditionSpeedMul } from './expedition';
 import { embassyTargets, embassyLegSeasons } from './foreignRealm';
 import type { Expedition, ExpeditionMode } from '../types';
@@ -89,6 +89,8 @@ export interface ResolutionInput {
   embargoes?: import('../data/specialties').Embargo[];
   /** 輜重 — supply convoys in transit between the player's cities. */
   convoys?: Record<EntityId, Convoy>;
+  /** 主動劫糧 — raiding columns hunting enemy supply convoys. */
+  raids?: Record<EntityId, ConvoyRaid>;
   /** 游历 — lone officers roaming abroad (any force), in transit. */
   expeditions?: Record<EntityId, Expedition>;
   /** 細作開眼 — per-city intel ticks; expeditions light fresh intel here. */
@@ -151,6 +153,8 @@ export interface ResolutionOutput {
   armies?: Record<EntityId, import('../types').Army>;
   /** 輜重 — supply convoys still in transit after this season's step. */
   convoys?: Record<EntityId, Convoy>;
+  /** 主動劫糧 — raiding columns still hunting after this season's step. */
+  raids?: Record<EntityId, ConvoyRaid>;
   /** 游历 — roaming officers still in transit after this season's step. */
   expeditions?: Record<EntityId, Expedition>;
   /** 細作開眼 — per-city intel ticks after expeditions lit fresh intel. */
@@ -1985,24 +1989,47 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   // 8. 輜重 — advance supply convoys; the cargo of those that arrive empties
   // into the destination city (forfeited if it fell mid-haul). Season only.
   let nextConvoys = input.convoys ?? {};
+  let nextRaids = input.raids ?? {};
   if (seasonBoundary && Object.keys(nextConvoys).length > 0) {
-    const stepped = stepConvoys(nextConvoys, cities);
+    const stepped = stepConvoys(nextConvoys, cities, outArmies);
     nextConvoys = stepped.convoys;
     cities = stepped.cities;
+    Object.assign(outArmies, stepped.armies); // 直供前線 deliveries relieved sieges
+    // Nearest still-friendly city to a map point (for landing a front escort).
+    const nearestFriendlyCityId = (x: number, y: number, fid: EntityId): EntityId | null => {
+      let best: EntityId | null = null, bd = Infinity;
+      for (const c of Object.values(cities)) {
+        if (c.ownerForceId !== fid || c.ruined) continue;
+        const cp = cityPos(c);
+        const d = Math.hypot(cp.x - x, cp.y - y);
+        if (d < bd) { bd = d; best = c.id; }
+      }
+      return best;
+    };
     for (const a of stepped.arrivals) {
-      // 押運武将抵達 — the escort reappears in the destination city.
+      // 押運武将抵達 — the escort reappears: at the destination city for a city
+      // haul; at the nearest friendly city to the host for a front delivery.
       if (a.convoy.officerId && officers[a.convoy.officerId]) {
-        officers[a.convoy.officerId] = { ...officers[a.convoy.officerId], locationCityId: a.convoy.toCityId, status: 'idle' };
+        let landAt: EntityId = a.convoy.toCityId;
+        if (a.toArmy) {
+          const army = a.convoy.toArmyId ? outArmies[a.convoy.toArmyId] : undefined;
+          landAt = (army ? nearestFriendlyCityId(army.x, army.y, a.convoy.forceId) : null) ?? a.convoy.fromCityId;
+        }
+        officers[a.convoy.officerId] = { ...officers[a.convoy.officerId], locationCityId: landAt, status: 'idle' };
       }
       const parts: string[] = [];
       if (a.convoy.food > 0) parts.push(`糧 +${a.convoy.food.toLocaleString()}`);
-      if (a.convoy.gold > 0) parts.push(`金 +${a.convoy.gold.toLocaleString()}`);
-      if (a.convoy.troops > 0) parts.push(`兵 +${a.convoy.troops.toLocaleString()}`);
+      if (!a.toArmy && a.convoy.gold > 0) parts.push(`金 +${a.convoy.gold.toLocaleString()}`);
+      if (a.convoy.troops > 0) parts.push(`${a.toArmy ? '援兵' : '兵'} +${a.convoy.troops.toLocaleString()}`);
       entries.push({
-        cityId: a.convoy.toCityId,
+        cityId: a.toArmy ? null : a.convoy.toCityId,
         kind: 'income',
-        text: `Supply convoy reached ${a.toName}: ${parts.join(', ') || 'empty'}.`,
-        textZh: `輜重抵 ${a.toName}：${parts.join('、') || '空車'}。`,
+        text: a.toArmy
+          ? `Supply reached the army before ${a.toName}: ${parts.join(', ') || 'empty'}.`
+          : `Supply convoy reached ${a.toName}: ${parts.join(', ') || 'empty'}.`,
+        textZh: a.toArmy
+          ? `輜重直抵前軍(${a.toName}下)：${parts.join('、') || '空車'}。`
+          : `輜重抵 ${a.toName}：${parts.join('、') || '空車'}。`,
       });
     }
     // Destination lost mid-haul — the column (and its escort) is taken.
@@ -2141,6 +2168,35 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       nextConvoys[id] = { id, forceId: fid, fromCityId: rich.id, toCityId: poor.id, food: ship, gold: 0, troops: 0, seasonsRemaining: seasons, totalSeasons: seasons };
     }
 
+    // AI 前運糧秣 — a rival whose host is hungry in the field pushes grain to it
+    // from a rich rear city (直供前線), so a long siege need not simply starve.
+    // The column crawls the front, so it is exactly the player's 劫糧 quarry.
+    for (const [fid, cs] of Object.entries(aiByForce)) {
+      if (rng() >= 0.4) continue;
+      if (Object.values(nextConvoys).some((cv) => cv.forceId === fid && cv.toArmyId)) continue; // one forward column at a time
+      const host = Object.values(outArmies)
+        .filter((a) => a.forceId === fid && (a.food ?? 0) < provisionNeeded(a.troops, 2))
+        .sort((a, b) => (a.food ?? 0) - (b.food ?? 0))[0];
+      if (!host) continue;
+      const front = cities[host.targetCityId];
+      const rear = [...cs].sort((a, b) => b.food - a.food)[0];
+      if (!front || !rear || rear.food < 6000) continue;
+      const ship = Math.min(rear.food - 4000, 4000);
+      if (ship < 1000) continue;
+      // 護糧 — a column bound for a contested front rides with an escort drawn
+      // from the rear garrison (a real guard the player must overmatch to raid;
+      // the survivors reinforce the host on arrival). Drawn only from true spare.
+      const escort = Math.min(Math.max(0, rear.troops - 1200), 1500);
+      cities[rear.id] = { ...cities[rear.id], food: cities[rear.id].food - ship, troops: cities[rear.id].troops - escort };
+      const seasons = Math.max(1, marchDurationFor(rear, front, input.date.season));
+      const keep = 1 - Math.min(0.4, 0.06 * (seasons - 1));
+      const id = `ai-fwd-${fid}-${input.date.year}-${input.date.season}-${aiSeq++}`;
+      nextConvoys[id] = {
+        id, forceId: fid, fromCityId: rear.id, toCityId: front.id, toArmyId: host.id,
+        food: Math.floor(ship * keep), gold: 0, troops: Math.floor(escort * keep), seasonsRemaining: seasons, totalSeasons: seasons,
+      };
+    }
+
     // 常運糧道 — the player's standing routes auto-ship any surplus grain each
     // season (a basic, no-frills haul; manual convoys still get naval/木牛流馬).
     if (playerFid) {
@@ -2175,6 +2231,111 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         const cargoZh = [shipFood > 0 ? `${Math.floor(shipFood * keep).toLocaleString()} 糧` : '', shipHorses > 0 ? `${Math.floor(shipHorses * keep).toLocaleString()} 馬` : '', shipIron > 0 ? `${Math.floor(shipIron * keep).toLocaleString()} 鐵` : ''].filter(Boolean).join('、');
         entries.push({ cityId: r.toCityId, kind: 'income', text: `Standing route ships ${cargoZh} toward ${dst.name.en}.`, textZh: `常運糧道發 ${cargoZh} 往 ${dst.name.zh}。` });
       }
+    }
+  }
+
+  // 8a. 主動劫糧 — advance the player's raiding columns. A column that runs down
+  // its quarry burns the grain, loots the coin home, and takes the escort (or is
+  // beaten off by a heavier guard); a quarry already in safety is a dry hole. The
+  // raiders then ride home and rejoin the launch city's garrison. 烏巢之火.
+  if (seasonBoundary && Object.keys(nextRaids).length > 0) {
+    const keptRaids: Record<EntityId, ConvoyRaid> = {};
+    for (const raid of Object.values(nextRaids)) {
+      const remaining = raid.seasonsRemaining - 1;
+      if (remaining > 0) { keptRaids[raid.id] = { ...raid, seasonsRemaining: remaining }; continue; }
+      const target = nextConvoys[raid.targetConvoyId];
+      const outcome = resolveRaidStrike(raid, target);
+      const officer = officers[raid.officerId];
+      const home = cities[raid.fromCityId];
+      const homeOurs = !!home && home.ownerForceId === raid.forceId;
+      if (officer) officers[raid.officerId] = { ...officer, locationCityId: raid.fromCityId, status: 'idle', task: null };
+      if (homeOurs && outcome.raiderSurvivors > 0) {
+        cities[raid.fromCityId] = { ...cities[raid.fromCityId], troops: cities[raid.fromCityId].troops + outcome.raiderSurvivors };
+      }
+      const isPlayer = raid.forceId === input.playerForceId;
+      const targetWasPlayer = !!target && target.forceId === input.playerForceId; // an AI raid on us
+      if (outcome.found && outcome.success && target) {
+        delete nextConvoys[raid.targetConvoyId];
+        if (homeOurs && outcome.loot > 0) cities[raid.fromCityId] = { ...cities[raid.fromCityId], gold: cities[raid.fromCityId].gold + outcome.loot };
+        if (outcome.capturedEscortId && officers[outcome.capturedEscortId]) {
+          officers[outcome.capturedEscortId] = { ...officers[outcome.capturedEscortId], status: 'imprisoned', locationCityId: raid.fromCityId, task: null };
+        }
+        const cargo = [outcome.burnedFood > 0 ? `糧${outcome.burnedFood.toLocaleString()}` : '', outcome.loot > 0 ? `掠金${outcome.loot.toLocaleString()}` : ''].filter(Boolean).join('、');
+        if (isPlayer) {
+          const enemy = forces[target.forceId]?.name;
+          entries.push({
+            cityId: raid.fromCityId, kind: 'conquest',
+            text: `${officer?.name.en ?? 'Your raiders'} fell on ${enemy?.en ?? 'an enemy'} supply column — ${cargo || 'it'} destroyed${outcome.capturedEscortId ? ', escort captured' : ''}!`,
+            textZh: `${officer?.name.zh ?? '遊騎'}劫了${enemy?.zh ?? '敵'}糧道 — ${cargo || '輜重'}盡毀${outcome.capturedEscortId ? ',生擒押運' : ''}!`,
+          });
+        } else if (targetWasPlayer) {
+          const raider = forces[raid.forceId]?.name;
+          const esc = outcome.capturedEscortId ? officers[outcome.capturedEscortId]?.name : null;
+          entries.push({
+            cityId: raid.fromCityId, kind: 'desertion',
+            text: `${raider?.en ?? 'Enemy'} raiders cut one of your supply columns — ${cargo || 'cargo'} lost${esc ? `, ${esc.en} taken` : ''}!`,
+            textZh: `${raider?.zh ?? '敵'}輕騎劫了我糧道 — ${cargo || '輜重'}盡失${esc ? `,${esc.zh}被擒` : ''}!`,
+          });
+        }
+      } else if (isPlayer) {
+        entries.push({
+          cityId: raid.fromCityId, kind: 'desertion',
+          text: outcome.found
+            ? `${officer?.name.en ?? 'Your raiders'} were beaten off an enemy supply column.`
+            : `${officer?.name.en ?? 'Your raiders'} found the supply column already gone.`,
+          textZh: outcome.found
+            ? `${officer?.name.zh ?? '遊騎'}劫糧不成,為護糧之軍所拒。`
+            : `${officer?.name.zh ?? '遊騎'}撲空,敵糧已先入城。`,
+        });
+      } else if (targetWasPlayer && outcome.found) {
+        const raider = forces[raid.forceId]?.name;
+        entries.push({
+          cityId: raid.targetConvoyId in nextConvoys ? nextConvoys[raid.targetConvoyId].toCityId : null, kind: 'income',
+          text: `Your escort beat off ${raider?.en ?? 'an enemy'} raiding party on the supply road.`,
+          textZh: `護糧之軍擊退${raider?.zh ?? '敵'}輕騎,糧道得保。`,
+        });
+      }
+    }
+    nextRaids = keptRaids;
+  }
+
+  // 8a′. AI 劫糧 — a rival that spots one of the player's supply columns near its
+  // own territory, and can spare a strike force, sends raiders after it (its own
+  // 烏巢 move); resolves next season like the player's. This makes a deep 直供前線
+  // a genuine risk, not a free siege-saver. The player's counterplay: escort the
+  // column (its troops are the guard), take the cautious back-roads, or ship by
+  // water — a land raiding party can't catch a junk and is likelier to lose the
+  // cautious trail.
+  const pfRaidId = input.playerForceId;
+  if (seasonBoundary && pfRaidId && Object.keys(nextConvoys).length > 0) {
+    let aiRaidSeq = 0;
+    const struck = new Set<string>(Object.values(nextRaids).map((r) => r.forceId)); // one strike per force/season
+    const hunted = new Set<string>(Object.values(nextRaids).map((r) => r.targetConvoyId));
+    for (const cv of Object.values(nextConvoys)) {
+      if (cv.forceId !== pfRaidId || cv.naval || hunted.has(cv.id)) continue; // can't catch a water column
+      const from = cities[cv.fromCityId], to = cities[cv.toCityId];
+      if (!from || !to) continue;
+      const sp = cityPos(from), dp = cityPos(to);
+      const prog = Math.min(0.9, Math.max(0.1, (cv.totalSeasons - cv.seasonsRemaining + 0.5) / Math.max(1, cv.totalSeasons)));
+      const pos = positionAlongRoute(terrainRoute(sp.x, sp.y, dp.x, dp.y), prog);
+      let near: City | undefined; let nd = Infinity;
+      for (const c of Object.values(cities)) {
+        if (c.ruined || !c.ownerForceId) continue;
+        const cp = cityPos(c);
+        const d = Math.hypot(cp.x - pos.x, cp.y - pos.y);
+        if (d < nd) { nd = d; near = c; }
+      }
+      if (!near || !near.ownerForceId || near.ownerForceId === pfRaidId) continue; // our own ground is nearest → safe
+      const fid = near.ownerForceId;
+      if (struck.has(fid) || !isHostilePermitted(input.diplomacy, fid, pfRaidId)) continue;
+      if (rng() >= (cv.cautious ? 0.25 : 0.5)) continue;
+      // Commit only if the nearest stronghold can spare enough to likely overrun the escort.
+      const strike = Math.min(Math.max(0, near.troops - 1000), Math.max(1200, cv.troops + 500));
+      if (strike < 600 || strike <= cv.troops) continue;
+      cities[near.id] = { ...cities[near.id], troops: near.troops - strike };
+      struck.add(fid);
+      const id = `ai-raid-${fid}-${cv.id}-${input.date.year}-${input.date.season}-${aiRaidSeq++}`;
+      nextRaids[id] = { id, forceId: fid, officerId: '', troops: strike, fromCityId: near.id, targetConvoyId: cv.id, seasonsRemaining: 1 };
     }
   }
 
@@ -2293,6 +2454,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     keptCommands: Object.keys(keptCommands).length > 0 ? keptCommands : undefined,
     armies: outArmies,
     convoys: nextConvoys,
+    raids: nextRaids,
     expeditions: nextExpeditions,
     espionageReveals: nextEspionageReveals,
     expeditionAggressionDeltas,

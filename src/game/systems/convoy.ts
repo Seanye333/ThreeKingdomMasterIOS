@@ -1,4 +1,4 @@
-import type { City, EntityId, Officer } from '../types';
+import type { Army, City, EntityId, Officer } from '../types';
 import { FOOD_PER_TROOP_PER_SEASON } from './economy';
 import { WARHORSE_CITY_CAP, IRON_CITY_CAP, MEDICINE_CITY_CAP } from './market';
 
@@ -81,6 +81,12 @@ export interface Convoy {
   officerId?: EntityId;
   fromCityId: EntityId;
   toCityId: EntityId;
+  /** 直供前線 — if set, the column is bound for a friendly FIELD ARMY (keyed by
+   *  its commander id), not the city. `toCityId` then holds the army's objective
+   *  city (used only for routing the march + reckoning road raids). On arrival the
+   *  grain/troops empty into the army (relieving a siege / 孤軍深入); if the army is
+   *  no longer afoot the load falls back to that city, or is forfeit if it fell. */
+  toArmyId?: EntityId;
   /** Cargo as it will ARRIVE. */
   food: number;
   gold: number;
@@ -105,22 +111,47 @@ export interface Convoy {
 export interface ConvoyStepResult {
   convoys: Record<EntityId, Convoy>;
   cities: Record<EntityId, City>;
-  arrivals: Array<{ convoy: Convoy; toName: string }>;
+  /** Field armies after any direct-to-front deliveries (relieved sieges). */
+  armies: Record<EntityId, Army>;
+  arrivals: Array<{ convoy: Convoy; toName: string; toArmy?: boolean }>;
   /** Columns whose destination was lost mid-haul — cargo (and escort) forfeited. */
   forfeited: Convoy[];
+}
+
+/** Empty a column's cargo into a destination city (caps strategic goods). */
+function deliverToCity(city: City, c: Convoy): City {
+  const horses = c.warhorses ?? 0;
+  const ore = c.iron ?? 0;
+  const med = c.medicine ?? 0;
+  return {
+    ...city,
+    food: city.food + c.food,
+    gold: city.gold + c.gold,
+    troops: city.troops + c.troops,
+    ...(horses > 0 ? { warhorses: Math.min(WARHORSE_CITY_CAP, (city.warhorses ?? 0) + horses) } : {}),
+    ...(ore > 0 ? { iron: Math.min(IRON_CITY_CAP, (city.iron ?? 0) + ore) } : {}),
+    ...(med > 0 ? { medicine: Math.min(MEDICINE_CITY_CAP, (city.medicine ?? 0) + med) } : {}),
+  };
 }
 
 /**
  * Advance every convoy by one season and deliver the cargo of those that
  * arrive — but only if the destination is still held by the convoy's force; a
  * city lost mid-haul forfeits the load (the column is captured or scattered).
+ *
+ * A column bound for a field army (`toArmyId`) instead empties its grain/troops
+ * into that army if it is still afoot under the same banner (relieving a siege /
+ * 孤軍深入); if the army has dispersed it falls back to its objective city, or is
+ * forfeit if that city has fallen.
  */
 export function stepConvoys(
   convoys: Record<EntityId, Convoy>,
   cities: Record<EntityId, City>,
+  armies: Record<EntityId, Army> = {},
 ): ConvoyStepResult {
   const nextConvoys: Record<EntityId, Convoy> = {};
   let nextCities = cities;
+  let nextArmies = armies;
   const arrivals: ConvoyStepResult['arrivals'] = [];
   const forfeited: Convoy[] = [];
   for (const c of Object.values(convoys)) {
@@ -129,29 +160,102 @@ export function stepConvoys(
       nextConvoys[c.id] = { ...c, seasonsRemaining: remaining };
       continue;
     }
+    // 直供前線 — bound for a field army: relieve it if it still stands.
+    if (c.toArmyId) {
+      const army = nextArmies[c.toArmyId];
+      if (army && army.forceId === c.forceId) {
+        nextArmies = {
+          ...nextArmies,
+          [army.id]: { ...army, food: (army.food ?? 0) + c.food, troops: army.troops + c.troops },
+        };
+        arrivals.push({ convoy: c, toName: nextCities[c.toCityId]?.name.zh ?? '前軍', toArmy: true });
+        continue;
+      }
+      // The host has dispersed — drop the load at its objective city if we still
+      // hold it, otherwise the column is lost.
+      const fallback = nextCities[c.toCityId];
+      if (fallback && fallback.ownerForceId === c.forceId) {
+        nextCities = { ...nextCities, [c.toCityId]: deliverToCity(fallback, c) };
+        arrivals.push({ convoy: c, toName: fallback.name.zh });
+      } else {
+        forfeited.push(c);
+      }
+      continue;
+    }
     const dest = nextCities[c.toCityId];
     if (dest && dest.ownerForceId === c.forceId) {
-      const horses = c.warhorses ?? 0;
-      const ore = c.iron ?? 0;
-      const med = c.medicine ?? 0;
-      nextCities = {
-        ...nextCities,
-        [c.toCityId]: {
-          ...dest,
-          food: dest.food + c.food,
-          gold: dest.gold + c.gold,
-          troops: dest.troops + c.troops,
-          ...(horses > 0 ? { warhorses: Math.min(WARHORSE_CITY_CAP, (dest.warhorses ?? 0) + horses) } : {}),
-          ...(ore > 0 ? { iron: Math.min(IRON_CITY_CAP, (dest.iron ?? 0) + ore) } : {}),
-          ...(med > 0 ? { medicine: Math.min(MEDICINE_CITY_CAP, (dest.medicine ?? 0) + med) } : {}),
-        },
-      };
+      nextCities = { ...nextCities, [c.toCityId]: deliverToCity(dest, c) };
       arrivals.push({ convoy: c, toName: dest.name.zh });
     } else {
       forfeited.push(c); // destination lost mid-haul — column captured/scattered
     }
   }
-  return { convoys: nextConvoys, cities: nextCities, arrivals, forfeited };
+  return { convoys: nextConvoys, cities: nextCities, armies: nextArmies, arrivals, forfeited };
+}
+
+/**
+ * 主動劫糧 — a player-aimed raiding column (遊騎/輕騎) sent out to hunt a spotted
+ * enemy supply convoy, as opposed to the passive garrison sortie of
+ * resolveConvoyRaids. An officer leads `troops` out of a launch city and runs
+ * down the quarry after `seasonsRemaining` seasons — the 烏巢 move made deliberate.
+ */
+export interface ConvoyRaid {
+  id: EntityId;
+  forceId: EntityId;
+  officerId: EntityId;
+  troops: number;
+  /** Launch city — the raiders ride back here. */
+  fromCityId: EntityId;
+  /** The enemy column being hunted. */
+  targetConvoyId: EntityId;
+  seasonsRemaining: number;
+}
+
+export interface RaidStrikeOutcome {
+  /** Was the quarry still on the road when the raiders arrived? */
+  found: boolean;
+  /** Did the raiders overrun its escort? */
+  success: boolean;
+  /** Raiders still standing afterwards. */
+  raiderSurvivors: number;
+  /** Coin carried home from an overrun column. */
+  loot: number;
+  /** Grain put to the torch (烏巢之火). */
+  burnedFood: number;
+  /** The quarry's escorting officer, taken on an overrun. */
+  capturedEscortId?: EntityId;
+}
+
+/**
+ * Resolve a raiding column's strike on its quarry. A column the raiders can
+ * match or outnumber is overrun — its grain burned, coin looted home, escort
+ * taken; the raiders' own losses scale with the resistance met (none against an
+ * unescorted baggage train, up to ~20% against a matched guard). A heavier
+ * escort beats them off (−35%, the convoy rolls on). A quarry already delivered
+ * or destroyed is a dry hole (the raiders return whole, empty-handed).
+ */
+export function resolveRaidStrike(raider: { troops: number }, target: Convoy | undefined): RaidStrikeOutcome {
+  if (!target) {
+    return { found: false, success: false, raiderSurvivors: raider.troops, loot: 0, burnedFood: 0 };
+  }
+  if (raider.troops >= target.troops) {
+    const resistance = Math.min(1, target.troops / Math.max(1, raider.troops));
+    return {
+      found: true,
+      success: true,
+      raiderSurvivors: Math.max(1, raider.troops - Math.floor(raider.troops * 0.2 * resistance)),
+      loot: target.gold,
+      burnedFood: target.food,
+      capturedEscortId: target.officerId,
+    };
+  }
+  return {
+    found: true,
+    success: false,
+    raiderSurvivors: Math.max(0, raider.troops - Math.floor(raider.troops * 0.35)),
+    loot: 0,
+    burnedFood: 0,
+  };
 }
 
 export interface ConvoyRaidResult {

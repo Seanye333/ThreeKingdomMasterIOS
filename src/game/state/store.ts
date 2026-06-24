@@ -370,13 +370,19 @@ interface GameStore extends GameState {
    *  your cities to another. It crawls the map over `seasons` and empties its
    *  cargo on arrival; adjacent hauls arrive in full, longer ones lose 12% on
    *  the road. Cargo is deducted from the source at dispatch. */
-  dispatchConvoy: (fromCityId: EntityId, toCityId: EntityId, food: number, gold: number, troops: number, officerId: EntityId, cautious?: boolean, warhorses?: number, iron?: number, medicine?: number) => { ok: boolean; seasons: number; reason?: string };
+  dispatchConvoy: (fromCityId: EntityId, toCityId: EntityId, food: number, gold: number, troops: number, officerId: EntityId, cautious?: boolean, warhorses?: number, iron?: number, medicine?: number, toArmyId?: EntityId) => { ok: boolean; seasons: number; reason?: string };
   /** 召回輜重 — turn a convoy around; its cargo returns to the origin city (lost
    *  if that city has since fallen). */
   recallConvoy: (id: EntityId) => void;
   /** 常運糧道 — toggle a standing supply route (auto-ships surplus grain each
    *  season from → to). */
   setStandingRoute: (fromCityId: EntityId, toCityId: EntityId, on: boolean) => void;
+  /** 主動劫糧 — enemy supply convoys the player can see (their nearest city is
+   *  yours) and so may run down with a raiding column, plus the launch city. */
+  spottedEnemyConvoys: () => Array<{ convoy: import('../systems/convoy').Convoy; fromCityId: EntityId; x: number; y: number }>;
+  /** 主動劫糧 — send a raiding column (officer + troops) out of `fromCityId` to
+   *  run down a spotted enemy supply convoy; it intercepts next season. */
+  raidConvoy: (targetConvoyId: EntityId, fromCityId: EntityId, officerId: EntityId, troops: number) => { ok: boolean; reason?: string };
   /** 游历 — send a lone officer roaming from one of your cities to another city
    *  (yours or a rival's) on an errand: 探索 (intel + windfalls), 出使 (warm
    *  relations), 策反 (turn an enemy officer), 刺探 (deep intel + sabotage). He
@@ -954,6 +960,39 @@ function forceSpecialtyRealm(
 ): SpecialtyRealmEffects {
   const ctrl = specialtyControl(cities, forceId, forceId ? embargoedRolesAgainst(forceId, embargoes) : undefined);
   return specialtyRealmEffects(ctrl);
+}
+
+/**
+ * Where a convoy is on the map right now — the same prog/route maths the season
+ * loop uses to reckon road raids, so the player's 劫糧 reach matches reality.
+ */
+function convoyMapPos(
+  cv: { fromCityId: EntityId; toCityId: EntityId; totalSeasons: number; seasonsRemaining: number },
+  cities: Record<EntityId, City>,
+): { x: number; y: number } {
+  const from = cities[cv.fromCityId];
+  const to = cities[cv.toCityId];
+  if (!from || !to) return { x: 0, y: 0 };
+  const sp = cityPos(from), dp = cityPos(to);
+  const prog = Math.min(0.9, Math.max(0.1, (cv.totalSeasons - cv.seasonsRemaining + 0.5) / Math.max(1, cv.totalSeasons)));
+  return positionAlongRoute(terrainRoute(sp.x, sp.y, dp.x, dp.y), prog);
+}
+
+/** The owned city nearest a map point (any owner if forceId omitted). */
+function nearestCityTo(
+  x: number, y: number,
+  cities: Record<EntityId, City>,
+  forceId?: EntityId | null,
+): City | null {
+  let best: City | null = null, bd = Infinity;
+  for (const c of Object.values(cities)) {
+    if (c.ruined || !c.ownerForceId) continue;
+    if (forceId !== undefined && c.ownerForceId !== forceId) continue;
+    const cp = cityPos(c);
+    const d = Math.hypot(cp.x - x, cp.y - y);
+    if (d < bd) { bd = d; best = c; }
+  }
+  return best;
 }
 
 /** 名駒 — the famous mounts (赤兔/的盧/汗血…) a developed 名馬 city can foal. */
@@ -1694,14 +1733,24 @@ export const useGameStore = create<GameStore>()(
         return { ok: true, got: gold };
       },
 
-      dispatchConvoy: (fromCityId, toCityId, food, gold, troops = 0, officerId, cautious = false, warhorses = 0, iron = 0, medicine = 0) => {
+      dispatchConvoy: (fromCityId, toCityId, food, gold, troops = 0, officerId, cautious = false, warhorses = 0, iron = 0, medicine = 0, toArmyId) => {
         const state = get();
         const pid = state.playerForceId;
         if (!pid) return { ok: false, seasons: 0 };
         const from = state.cities[fromCityId];
-        const to = state.cities[toCityId];
-        if (!from || !to || fromCityId === toCityId) return { ok: false, seasons: 0 };
-        if (from.ownerForceId !== pid || to.ownerForceId !== pid) return { ok: false, seasons: 0 };
+        if (!from || from.ownerForceId !== pid) return { ok: false, seasons: 0 };
+        // 直供前線 — a column may be bound for a friendly field army instead of a
+        // city; it then routes to (and reckons road raids by) the army's objective
+        // city, but empties into the army on arrival. Army hauls carry only grain
+        // and reinforcements.
+        const targetArmy = toArmyId ? state.armies[toArmyId] : undefined;
+        if (toArmyId && (!targetArmy || targetArmy.forceId !== pid)) return { ok: false, seasons: 0, reason: 'army not afoot' };
+        const to = targetArmy ? state.cities[targetArmy.targetCityId] : state.cities[toCityId];
+        if (!to) return { ok: false, seasons: 0 };
+        if (!targetArmy) {
+          if (fromCityId === toCityId) return { ok: false, seasons: 0 };
+          if (to.ownerForceId !== pid) return { ok: false, seasons: 0 };
+        }
         // 押運武将 — a column must be run by an available officer standing in the
         // source city; his 政治 caps the load and (with his temperament) sets the pace.
         const officer = state.officers[officerId];
@@ -1716,6 +1765,9 @@ export const useGameStore = create<GameStore>()(
         let shipHorses = Math.min(Math.max(0, Math.floor(warhorses)), from.warhorses ?? 0);
         let shipIron = Math.min(Math.max(0, Math.floor(iron)), from.iron ?? 0);
         let shipMed = Math.min(Math.max(0, Math.floor(medicine)), from.medicine ?? 0);
+        // A column to a field army carries only grain and reinforcements — coin
+        // and strategic goods have no granary to land in out in the field.
+        if (targetArmy) { shipGold = 0; shipHorses = 0; shipIron = 0; shipMed = 0; }
         // 載量 — clamp the total to what this officer can shepherd (scaling down
         // proportionally if the player asked for more than his 政治 allows).
         // 驛傳 — a supply depot in the dispatching city widens the convoy.
@@ -1740,7 +1792,7 @@ export const useGameStore = create<GameStore>()(
         // the first), winter roads add a little, all capped; 木牛流馬 halves it.
         // 漕運 — port-to-port over water (and not already land-adjacent): faster
         // and gentler on the cargo than an overland haul.
-        const naval = !from.adjacentCityIds.includes(toCityId) && navalReachableCityIds(fromCityId, state.ports).has(toCityId);
+        const naval = !from.adjacentCityIds.includes(to.id) && navalReachableCityIds(fromCityId, state.ports).has(to.id);
         const baseSeasons = Math.max(1, marchDurationFor(from, to, state.date.season));
         const plan = planConvoy({ baseSeasons, season: state.date.season, officer, naval, woodenOx, cautious });
         const keep = plan.keepFrac;
@@ -1751,7 +1803,7 @@ export const useGameStore = create<GameStore>()(
         const arriveIron = Math.floor(shipIron * keep);
         const arriveMed = Math.floor(shipMed * keep);
         const seasons = plan.seasons;
-        const id = `convoy-${fromCityId}-${toCityId}-${state.date.year}-${state.date.season}-${Object.keys(state.convoys ?? {}).length}`;
+        const id = `convoy-${fromCityId}-${to.id}-${state.date.year}-${state.date.season}-${Object.keys(state.convoys ?? {}).length}`;
         set({
           cities: {
             ...state.cities,
@@ -1775,7 +1827,8 @@ export const useGameStore = create<GameStore>()(
             ...state.convoys,
             [id]: {
               id, forceId: pid, officerId,
-              fromCityId, toCityId,
+              fromCityId, toCityId: to.id,
+              ...(targetArmy ? { toArmyId } : {}),
               food: arriveFood, gold: arriveGold, troops: arriveTroops,
               ...(arriveHorses > 0 ? { warhorses: arriveHorses } : {}),
               ...(arriveIron > 0 ? { iron: arriveIron } : {}),
@@ -1787,9 +1840,11 @@ export const useGameStore = create<GameStore>()(
           },
         });
         const cargo = [arriveFood > 0 ? `糧 ${arriveFood.toLocaleString()}` : '', arriveGold > 0 ? `金 ${arriveGold.toLocaleString()}` : '', arriveTroops > 0 ? `兵 ${arriveTroops.toLocaleString()}` : '', arriveHorses > 0 ? `馬 ${arriveHorses.toLocaleString()}` : '', arriveIron > 0 ? `鐵 ${arriveIron.toLocaleString()}` : '', arriveMed > 0 ? `藥 ${arriveMed.toLocaleString()}` : ''].filter(Boolean).join('、');
+        const destZh = targetArmy ? `${state.officers[targetArmy.commanderId]?.name.zh ?? ''}前軍(${to.name.zh}下)` : to.name.zh;
+        const destEn = targetArmy ? `${state.officers[targetArmy.commanderId]?.name.en ?? 'the army'} (at ${to.name.en})` : to.name.en;
         get().notify(
-          `輜重啟運 · ${from.name.zh} → ${to.name.zh}(${cargo},${seasons}季抵達)`,
-          `Convoy dispatched · ${from.name.en} → ${to.name.en} (${seasons} seasons)`,
+          `輜重啟運 · ${from.name.zh} → ${destZh}(${cargo},${seasons}季抵達)`,
+          `Convoy dispatched · ${from.name.en} → ${destEn} (${seasons} seasons)`,
         );
         return { ok: true, seasons };
       },
@@ -1831,6 +1886,56 @@ export const useGameStore = create<GameStore>()(
         const state = get();
         const routes = (state.standingRoutes ?? []).filter((r) => !(r.fromCityId === fromCityId && r.toCityId === toCityId));
         set({ standingRoutes: on ? [...routes, { fromCityId, toCityId }] : routes });
+      },
+
+      spottedEnemyConvoys: () => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid) return [];
+        const out: Array<{ convoy: import('../systems/convoy').Convoy; fromCityId: EntityId; x: number; y: number }> = [];
+        for (const cv of Object.values(state.convoys)) {
+          if (cv.forceId === pid) continue;
+          if (!isHostilePermitted(state.diplomacy, pid, cv.forceId)) continue;
+          // Spotted when the column's nearest stronghold is one of ours — the same
+          // geometry by which our garrison would sortie on it (the launch city).
+          const pos = convoyMapPos(cv, state.cities);
+          const near = nearestCityTo(pos.x, pos.y, state.cities);
+          if (!near || near.ownerForceId !== pid) continue;
+          out.push({ convoy: cv, fromCityId: near.id, x: pos.x, y: pos.y });
+        }
+        return out;
+      },
+
+      raidConvoy: (targetConvoyId, fromCityId, officerId, troops) => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid) return { ok: false };
+        const target = state.convoys[targetConvoyId];
+        if (!target || target.forceId === pid) return { ok: false, reason: 'not an enemy convoy' };
+        if (!isHostilePermitted(state.diplomacy, pid, target.forceId)) return { ok: false, reason: 'not at war' };
+        const from = state.cities[fromCityId];
+        if (!from || from.ownerForceId !== pid) return { ok: false, reason: 'not your city' };
+        // The launch city must be the stronghold nearest the spotted column.
+        const pos = convoyMapPos(target, state.cities);
+        if (nearestCityTo(pos.x, pos.y, state.cities)?.id !== fromCityId) return { ok: false, reason: 'out of reach' };
+        const officer = state.officers[officerId];
+        if (!officer || officer.forceId !== pid || officer.locationCityId !== fromCityId || officer.task || state.pendingCommands[officerId]) {
+          return { ok: false, reason: 'officer unavailable' };
+        }
+        if (state.pendingTrainings.some((tr) => tr.officerId === officerId)) return { ok: false, reason: 'officer is training' };
+        const send = Math.min(Math.max(0, Math.floor(troops)), Math.max(0, from.troops - 100));
+        if (send < 1) return { ok: false, reason: 'no troops to spare' };
+        const id = `raid-${fromCityId}-${targetConvoyId}-${state.date.year}-${state.date.season}`;
+        set({
+          cities: { ...state.cities, [fromCityId]: { ...from, troops: from.troops - send } },
+          officers: { ...state.officers, [officerId]: { ...officer, locationCityId: null, task: null } },
+          raids: { ...state.raids, [id]: { id, forceId: pid, officerId, troops: send, fromCityId, targetConvoyId, seasonsRemaining: 1 } },
+        });
+        get().notify(
+          `遣 ${officer.name.zh} 將 ${send.toLocaleString()} 騎截劫敵糧道`,
+          `${officer.name.en} rides out to raid the supply column`,
+        );
+        return { ok: true };
       },
 
       dispatchExpedition: (officerId, fromCityId, toCityId, mode) => {
@@ -2341,6 +2446,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           inflation: state.inflation,
           embargoes: state.embargoes,
           convoys: state.convoys,
+          raids: state.raids,
           expeditions: state.expeditions,
           realmRelations: state.realmRelations,
           standingRoutes: state.standingRoutes,
@@ -2597,8 +2703,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           siteCities = merc.cities;
           if (merc.entries.length > 0) result.report.entries.push(...merc.entries);
 
-          // 名產商路 — connect same-owner specialty cities and pay the margins.
-          nextTradeRoutes = buildSpecialtyTradeRoutes(siteCities);
+          // 名產商路 — connect same-owner specialty cities (land + 漕運) and pay
+          // the margins, throttled where war/banditry threatens the road and
+          // eased where a 驛傳 depot patrols it (護商).
+          const securedCityIds = new Set(
+            Object.keys(siteCities).filter((id) => buildingBonuses(id, state.buildings).convoyMul > 1),
+          );
+          nextTradeRoutes = buildSpecialtyTradeRoutes(siteCities, state.diplomacy, { ports: state.ports, securedCityIds });
           const trade = tickSpecialtyTrade({
             cities: siteCities,
             routes: nextTradeRoutes,
@@ -4665,6 +4776,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           territoryOwnership: result.territoryOwnership ?? state.territoryOwnership ?? {},
           armies: result.armies ?? {},
           convoys: result.convoys ?? {},
+          raids: result.raids ?? {},
           expeditions: result.expeditions ?? {},
           openedRealms: nextOpenedRealms,
           realmRelations: nextRealmRelations,

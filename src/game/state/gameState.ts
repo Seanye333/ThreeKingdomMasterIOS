@@ -301,6 +301,9 @@ export interface GameState {
   merchantLoan?: { owed: number; perSeason: number } | null;
   /** 輜重 — supply convoys (運糧/運金車) crawling between your cities. */
   convoys: Record<EntityId, import('../systems/convoy').Convoy>;
+  /** 主動劫糧 — raiding columns (遊騎) sent out to run down a spotted enemy supply
+   *  convoy; they intercept after a season, then ride home (the 烏巢 move). */
+  raids: Record<EntityId, import('../systems/convoy').ConvoyRaid>;
   /** 游历 — lone officers roaming abroad (探索/出使/策反/刺探), in transit. */
   expeditions: Record<EntityId, import('../types').Expedition>;
   /** 絲路通商 — distant realms a 遠使 embassy has opened (realmId → frontier
@@ -574,6 +577,7 @@ export const EMPTY_STATE: GameState = {
   inflation: 0,
   treasuryHistory: [],
   convoys: {},
+  raids: {},
   expeditions: {},
   openedRealms: {},
   realmRelations: {},
@@ -928,6 +932,7 @@ export function loadScenario(
     inflation: state.startInflation ?? 0,
     merchantLoan: null,
     convoys: state.convoys ?? {},
+    raids: state.raids ?? {},
     expeditions: state.expeditions ?? {},
     openedRealms: state.openedRealms ?? {},
     realmRelations: state.realmRelations ?? {},

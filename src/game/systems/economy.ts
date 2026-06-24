@@ -284,7 +284,7 @@ export function realmBudget(input: RealmBudgetInput): RealmBudget {
   const tradeTreaty = treatyGrants[forceId] ?? 0;
 
   // 名產商路 — premium routes between same-owner adjacent cities, both endpoints credited.
-  const tradeRoute = buildSpecialtyTradeRoutes(cities).reduce((s, r) => {
+  const tradeRoute = buildSpecialtyTradeRoutes(cities, diplomacy).reduce((s, r) => {
     const a = cities[r.cityAId];
     return a && a.ownerForceId === forceId ? s + r.baseIncome * 2 : s;
   }, 0);

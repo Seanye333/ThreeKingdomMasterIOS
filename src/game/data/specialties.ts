@@ -118,6 +118,32 @@ export function cityAffinity(cityId: string): import('../types').BuildingCategor
 }
 
 /**
+ * 互通有無 — a good's complementarity class, the axis along which trade is rich.
+ * 遠物為貴 says a route earns its margin by carrying what the other end LACKS, so
+ * goods that serve *different* needs (兵甲 ⇄ 糧, 藥材 ⇄ anything) trade richest;
+ * two goods of the SAME class (兩種糧、兩種名品) still trade, but compete as much
+ * as they complement, so they ride at a lesser premium. Consumed by tradeRoutes.ts.
+ *   war   兵甲之資 — mounts, arms, ships, war-coin (馬鐵木銅)
+ *   food  飽腹之資 — the staples + the salt that keeps them (稻麥橘魚鹽)
+ *   craft 工巧名品 — what a court covets (絲錦漆珠象)
+ *   physic 藥石之資 — physic, complementary to all (藥材)
+ */
+export type SpecialtyClass = 'war' | 'food' | 'craft' | 'physic';
+
+export const SPECIALTY_CLASS: Record<SpecialtyId, SpecialtyClass> = {
+  horse: 'war', iron: 'war', timber: 'war', copper: 'war',
+  rice: 'food', wheat: 'food', fruit: 'food', fish: 'food', salt: 'food',
+  silk: 'craft', brocade: 'craft', lacquer: 'craft', pearl: 'craft', ivory: 'craft',
+  herb: 'physic',
+};
+
+/** A city's complementarity class from its signature good (null if none). */
+export function specialtyClass(cityId: string): SpecialtyClass | null {
+  const sid = CITY_SPECIALTY[cityId];
+  return sid ? SPECIALTY_CLASS[sid] : null;
+}
+
+/**
  * 名產發展度 — investing in a city's signature trade (名產作坊/匠籍) sharpens its
  * edge. Each development level widens the gold/food premium by SPECIALTY_DEV_GAIN
  * of the base delta (蜀錦 +20% climbs toward +35% at max dev) and likewise swells

@@ -40,6 +40,9 @@ export interface TradeRoute {
   id: EntityId;
   cityAId: EntityId;
   cityBId: EntityId;
-  /** Gold per season produced. */
+  /** Gold per season produced (already net of any war/banditry throttle). */
   baseIncome: number;
+  /** 兵燹/盜匪 — a war-soured neighbour or a lawless district is skimming this
+   *  road's takings this season (income already reduced). Default/omitted = safe. */
+  threatened?: boolean;
 }
