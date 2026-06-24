@@ -33,7 +33,7 @@ describe('specialty trade routes', () => {
     }
   });
 
-  it('complementary (different) specialties trade richest', () => {
+  it('complementary (different) specialties trade richest, scaled by rarity', () => {
     const cm = Object.fromEntries(buildInitialCities({}).map((c) => [c.id, { ...c, ownerForceId: 'f1' }]));
     const pair = findComplementaryPair(cm);
     expect(pair).not.toBeNull();
@@ -41,7 +41,19 @@ describe('specialty trade routes', () => {
     const key = [pair![0], pair![1]].sort().join('::');
     const route = routes.find((r) => r.id === `spec-${key}`);
     expect(route, 'complementary pair should have a route').toBeTruthy();
-    expect(route!.baseIncome).toBe(75); // the complementary premium
+    // Rarity weighting lifts a complementary route above the 75 base premium.
+    expect(route!.baseIncome).toBeGreaterThan(75);
+  });
+
+  it('developing a specialty makes its trade route richer', () => {
+    const base = Object.fromEntries(buildInitialCities({}).map((c) => [c.id, { ...c, ownerForceId: 'f1' }]));
+    const pair = findComplementaryPair(base)!;
+    const key = [pair[0], pair[1]].sort().join('::');
+    const before = buildSpecialtyTradeRoutes(base).find((r) => r.id === `spec-${key}`)!.baseIncome;
+    // Build up one endpoint's 名產發展度 → its route should pay more.
+    const dev = { ...base, [pair[0]]: { ...base[pair[0]], specialtyDev: 5 } };
+    const after = buildSpecialtyTradeRoutes(dev).find((r) => r.id === `spec-${key}`)!.baseIncome;
+    expect(after).toBeGreaterThan(before);
   });
 
   it('tick credits both endpoints and sums the player take', () => {

@@ -26,7 +26,11 @@ import { officerGrade, gradeRank, officerLevel } from './officerGrade';
 import { handleMarch } from './combat';
 import { tickDiplomacy, applyCoalitionPressure } from './diplomacy';
 import { tickCityEconomy, tradeTreatyGrants } from './economy';
-import { WARHORSE_CITY_CAP, IRON_CITY_CAP } from './market';
+import { WARHORSE_CITY_CAP, IRON_CITY_CAP, MEDICINE_CITY_CAP } from './market';
+import {
+  specialtyControl, specialtyRealmEffects, allRoleEffects, embargoedRolesAgainst,
+  type SpecialtyControl, type SpecialtyRealmEffects, type SpecialtyRole,
+} from '../data/specialties';
 import { buildingBonuses } from './buildings';
 import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
 import { corruptionAccrualMultiplier } from './traitEffects';
@@ -81,6 +85,8 @@ export interface ResolutionInput {
   tradePartners?: EntityId[];
   /** 通貨膨脹 — the player's inflation level (0–100); saps player tax income. */
   inflation?: number;
+  /** 禁運 — standing 專營 embargoes (monopolist cuts a rival off a good). */
+  embargoes?: import('../data/specialties').Embargo[];
   /** 輜重 — supply convoys in transit between the player's cities. */
   convoys?: Record<EntityId, Convoy>;
   /** 游历 — lone officers roaming abroad (any force), in transit. */
@@ -1282,6 +1288,18 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     return held;
   };
 
+  // 名產版圖 — tally every force's realm-wide grip on the strategic goods once
+  // per season: it amplifies 名產所恃 policy yields and 醃漬軍糧 upkeep relief in
+  // the tick below, and feeds the wound/ship/mint/tribute bonuses downstream.
+  type SpecSnap = { control: SpecialtyControl; realm: SpecialtyRealmEffects; roleStrength: Record<SpecialtyRole, number> };
+  const specByForce = new Map<EntityId, SpecSnap>();
+  if (seasonBoundary) {
+    for (const fid of Object.keys(forces)) {
+      const control = specialtyControl(cities, fid, embargoedRolesAgainst(fid, input.embargoes));
+      specByForce.set(fid, { control, realm: specialtyRealmEffects(control), roleStrength: allRoleEffects(control) });
+    }
+  }
+
   // 2. Economy tick per city — only on season boundary (every 9 periods).
   if (seasonBoundary)
   for (const city of Object.values(cities)) {
@@ -1298,6 +1316,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       input.weather?.kind ?? 'clear',
       input.buildings,
       city.ownerForceId ? (forces[city.ownerForceId]?.statecraft ?? null) : null,
+      city.ownerForceId ? specByForce.get(city.ownerForceId) : undefined,
     );
     const territoryGold = city.ownerForceId
       ? controlledSatellites(city) * TERRITORY_GOLD
@@ -1353,6 +1372,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       iron: tick.ironSmelt > 0
         ? Math.min(IRON_CITY_CAP, (city.iron ?? 0) + tick.ironSmelt)
         : city.iron,
+      medicine: tick.medicineGather > 0
+        ? Math.min(MEDICINE_CITY_CAP, (city.medicine ?? 0) + tick.medicineGather)
+        : city.medicine,
     };
     cities[city.id] = updated;
     // 貪腐告警 — warn the player when graft crosses a threshold upward in one of

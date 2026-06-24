@@ -73,6 +73,19 @@ export interface City {
    */
   iron?: number;
   /**
+   * 藥材 — medicine stockpiled here. Gathered each season by herb-country cities
+   * (漢中/陰平/武都, the `herb` specialty), scaled by 民政 buildings + development.
+   * A strategic good spent automatically each season to heal the realm's wounded
+   * officers faster and to blunt plague outbreaks. Default/omitted = 0.
+   */
+  medicine?: number;
+  /**
+   * 名產發展度 — how far this city's signature trade has been built up (0..5).
+   * Raised by the 名產作坊 investment command; widens the specialty's gold/food
+   * premium and swells the strategic good it produces. Default/omitted = 0.
+   */
+  specialtyDev?: number;
+  /**
    * 異域義從 — foreign auxiliaries (象兵/突騎/汗血騎) stationed here by 遠使
    * embassies. Counted within `troops` for raw strength, but ALSO grant a
    * defence-power bonus (elite quality on top of quantity) — see

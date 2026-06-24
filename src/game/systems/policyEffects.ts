@@ -10,6 +10,7 @@
  */
 import type { City, Officer, PolicyId } from '../types';
 import { POLICY_PREREQ } from '../data/officerAttributes';
+import type { SpecialtyRole } from '../data/specialties';
 
 export interface CityPolicyEffects {
   /** Multiplier applied to gold income (1.0 = unchanged). */
@@ -108,6 +109,13 @@ export interface CityPolicyEffect {
   loyaltyDelta?: number;
   defenseBonus?: number;
   troopCapMul?: number; // additive delta to troop-cap multiplier
+  /**
+   * 名產所恃 — if set, this policy's gold yield is AMPLIFIED by how much of the
+   * matching strategic good the owning force actually controls. A 鹽政官營 run by
+   * a realm that holds the salt is worth far more than the same edict on paper.
+   * The base value still applies (administrative skill); ownership adds upside.
+   */
+  specialtyRole?: SpecialtyRole;
   badge: string;
 }
 
@@ -119,21 +127,21 @@ export const CITY_POLICY_EFFECTS: Partial<Record<PolicyId, CityPolicyEffect>> = 
   'water-mill':   { foodMul: 0.12, badge: '水車 +12% 糧' },
   hydraulics:     { foodMul: 0.15, badge: '治水 +15% 糧' },
   commerce:       { goldMul: 0.20, badge: '商業 +20% 金' },
-  'silk-trade':   { goldMul: 0.25, badge: '絲綢 +25% 金' },
+  'silk-trade':   { goldMul: 0.25, specialtyRole: 'luxury', badge: '絲綢 +25% 金' },
   'maritime-trade': { goldMul: 0.30, badge: '海貿 +30% 金' },
-  'salt-monopoly': { goldFlat: 60, loyaltyDelta: -1, badge: '鹽政 +60 金/-1 忠' },
-  'iron-monopoly': { goldFlat: 40, badge: '鐵政 +40 金' },
+  'salt-monopoly': { goldFlat: 60, loyaltyDelta: -1, specialtyRole: 'rations', badge: '鹽政 +60 金/-1 忠' },
+  'iron-monopoly': { goldFlat: 40, specialtyRole: 'iron', badge: '鐵政 +40 金' },
   'gold-mining':  { goldFlat: 120, badge: '金礦 +120 金' },
   'silver-mining': { goldFlat: 90, badge: '銀礦 +90 金' },
-  'copper-mining': { goldFlat: 50, badge: '銅礦 +50 金' },
-  'pearl-trade':  { goldFlat: 60, badge: '珍珠貿 +60 金' },
+  'copper-mining': { goldFlat: 50, specialtyRole: 'coin', badge: '銅礦 +50 金' },
+  'pearl-trade':  { goldFlat: 60, specialtyRole: 'luxury', badge: '珍珠貿 +60 金' },
   'jade-trade':   { goldFlat: 40, badge: '玉貿 +40 金' },
   'river-customs': { goldFlat: 50, badge: '関稅 +50 金' },
   'tea-trade':    { goldMul: 0.10, badge: '茶馬 +10% 金' },
-  'fish-salt':    { goldFlat: 40, foodMul: 0.15, badge: '漁鹽 +40 金 +15% 糧' },
-  'sericulture-tax':  { goldFlat: 35, badge: '桑稅 +35 金' },
+  'fish-salt':    { goldFlat: 40, foodMul: 0.15, specialtyRole: 'rations', badge: '漁鹽 +40 金 +15% 糧' },
+  'sericulture-tax':  { goldFlat: 35, specialtyRole: 'luxury', badge: '桑稅 +35 金' },
   'frontier-market':  { goldFlat: 50, badge: '邊市 +50 金' },
-  'tribute-system':   { goldFlat: 50, badge: '朝貢 +50 金' },
+  'tribute-system':   { goldFlat: 50, specialtyRole: 'luxury', badge: '朝貢 +50 金' },
   'nanman-tribute':   { goldFlat: 40, badge: '南蠻納貢 +40 金' },
   'xiongnu-tribute':  { goldFlat: 30, badge: '匈奴納貢 +30 金' },
   // ── LOYALTY / SOCIAL ──
@@ -219,6 +227,9 @@ export const RECRUIT_POLICY_EFFECTS: Partial<Record<PolicyId, RecruitPolicyEffec
 export function cityPolicyEffects(
   _city: City,
   cityOfficers: Officer[],
+  /** Owning force's monopoly-adjusted grip on each strategic good (see
+   *  allRoleEffects). Amplifies 名產所恃 policies; omit for a paper estimate. */
+  roleStrength?: Record<SpecialtyRole, number>,
 ): CityPolicyEffects {
   const pol = aggregatePolicies(cityOfficers);
   let goldMul = 1, goldFlat = 0, foodMul = 1, loyaltyDelta = 0;
@@ -227,13 +238,19 @@ export function cityPolicyEffects(
 
   for (const [id, eff] of Object.entries(CITY_POLICY_EFFECTS) as Array<[PolicyId, CityPolicyEffect]>) {
     if (!pol.has(id)) continue;
-    goldMul += eff.goldMul ?? 0;
-    goldFlat += eff.goldFlat ?? 0;
+    // 名產所恃 — owning the matching good adds upside on top of the base value:
+    // ~4 weighted producers ≈ doubles the policy's gold yield (capped at ×2).
+    let boost = 0;
+    if (eff.specialtyRole && roleStrength) {
+      boost = Math.min(1, (roleStrength[eff.specialtyRole] ?? 0) * 0.25);
+    }
+    goldMul += (eff.goldMul ?? 0) * (1 + boost);
+    goldFlat += (eff.goldFlat ?? 0) * (1 + boost);
     foodMul += eff.foodMul ?? 0;
     loyaltyDelta += eff.loyaltyDelta ?? 0;
     defenseBonus += eff.defenseBonus ?? 0;
     troopCapMul += eff.troopCapMul ?? 0;
-    badges.push(eff.badge);
+    badges.push(boost >= 0.5 ? `${eff.badge} ▲專營` : eff.badge);
   }
 
   return {

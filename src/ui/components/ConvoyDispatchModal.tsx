@@ -50,6 +50,7 @@ export function ConvoyDispatchModal({ fromCityId, onClose }: { fromCityId: strin
   const [troops, setTroops] = useState(0);
   const [horses, setHorses] = useState(0);
   const [iron, setIron] = useState(0);
+  const [med, setMed] = useState(0);
   const [cautious, setCautious] = useState(false);
 
   const dest = cities[destId] ?? dests[0];
@@ -64,13 +65,14 @@ export function ConvoyDispatchModal({ fromCityId, onClose }: { fromCityId: strin
     );
   }
 
-  const total = food + gold + troops + horses + iron;
+  const total = food + gold + troops + horses + iron + med;
   const remaining = Math.max(0, cap - total);
   const foodStock = from.food;
   const goldStock = from.gold;
   const troopStock = Math.max(0, from.troops - 100);
   const horseStock = from.warhorses ?? 0;
   const ironStock = from.iron ?? 0;
+  const medStock = from.medicine ?? 0;
 
   // Live ETA + road-loss, identical to what dispatch will apply.
   const naval = dest ? (!from.adjacentCityIds.includes(dest.id) && navalReachableCityIds(fromCityId, ports).has(dest.id)) : false;
@@ -82,7 +84,7 @@ export function ConvoyDispatchModal({ fromCityId, onClose }: { fromCityId: strin
 
   const send = () => {
     if (!dest || !escort || total <= 0) return;
-    const r = dispatchConvoy(fromCityId, dest.id, food, gold, troops, escort.id, cautious, horses, iron);
+    const r = dispatchConvoy(fromCityId, dest.id, food, gold, troops, escort.id, cautious, horses, iron, med);
     if (r.ok) { playSfx('coin'); onClose(); }
   };
 
@@ -143,6 +145,7 @@ export function ConvoyDispatchModal({ fromCityId, onClose }: { fromCityId: strin
         {cargoRow(t('兵', 'Troops'), troops, setTroops, troopStock, '#9ec0d8')}
         {horseStock > 0 && cargoRow(t('馬', 'Horses'), horses, setHorses, horseStock, '#c8a06a')}
         {ironStock > 0 && cargoRow(t('鐵', 'Iron'), iron, setIron, ironStock, '#8fa0ad')}
+        {medStock > 0 && cargoRow(t('藥', 'Medicine'), med, setMed, medStock, '#7fbf8f')}
       </div>
 
       {/* Load meter */}

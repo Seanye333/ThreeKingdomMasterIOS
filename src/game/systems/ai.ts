@@ -18,7 +18,7 @@ import type { Difficulty } from '../state/gameState';
 import { OATH_BONDS, type OathBond } from '../data/bonds';
 import { COMMAND_DEFS, meetsMinSize } from './commands';
 import { buyQuote, sellQuote, sellHorses, sellIron, borderTariff } from './market';
-import { CITY_SPECIALTY } from '../data/specialties';
+import { CITY_SPECIALTY, cityRole, specialtyControl } from '../data/specialties';
 import { buildingBonuses } from './buildings';
 import { citySize, cityCarryingCapacity, cityEconCap, cityStatCap } from './citySize';
 import { marchDurationFor } from '../data/cities';
@@ -846,6 +846,9 @@ export function pickForceTarget(
       pressure[adjId] = (pressure[adjId] ?? 0) + city.troops * 0.6;
     }
   }
+  // 名物版圖 — our existing grip on each strategic good, so we can weigh a
+  // candidate that would tighten it (clustering toward a 專營 monopoly).
+  const ownCtrl = specialtyControl(allCities, forceId);
   let best: EntityId | null = null;
   let bestScore = 0;
   for (const [candId, force] of Object.entries(pressure)) {
@@ -854,7 +857,11 @@ export function pickForceTarget(
     const effDef = cand.troops * (1 + cand.defense / 200);
     const feasibility = force / Math.max(1, effDef);
     if (feasibility < 1.05) continue; // can't realistically take it, even massed
-    const value = 1 + (cand.population ?? 0) / 200_000;
+    let value = 1 + (cand.population ?? 0) / 200_000;
+    // 名物所鍾 — a city that makes a famous good is a richer prize, and richer
+    // still if seizing it tightens our grip on that good (toward 鹽鐵專營).
+    const role = cityRole(candId);
+    if (role) value *= 1.25 + Math.min(0.6, ownCtrl.strength[role] * 0.12);
     // Death blow: taking the last city of an enemy force wipes it off the map —
     // worth far more than the city's size alone, so the AI finishes off crippled
     // rivals instead of leaving one-city rumps to linger.

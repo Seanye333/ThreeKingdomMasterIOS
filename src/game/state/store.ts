@@ -55,7 +55,12 @@ import { provisionNeeded, convoyCapacity, planConvoy } from '../systems/convoy';
 import { citySize, citySizeRank, cityMeetsSize, reassignLostCapitals, LOST_CAPITAL_LOYALTY_PENALTY } from '../systems/citySize';
 import { buildingBonuses } from '../systems/buildings';
 import { BUILDING_CATEGORY, BUILDING_PREREQ, BUILDING_MIN_SIZE } from '../data/buildings';
-import { cityAffinity, CITY_SPECIALTY } from '../data/specialties';
+import {
+  cityAffinity, CITY_SPECIALTY, citySpecialty, ROLE_ZH,
+  specialtyControl, specialtyRealmEffects, embargoedRolesAgainst, canEmbargo,
+  SPECIALTY_DEV_MAX, SPECIALTY_DEV_GAIN,
+  type SpecialtyControl, type SpecialtyRealmEffects, type Embargo, type SpecialtyRole,
+} from '../data/specialties';
 import { expeditionLegSeasons } from '../systems/expedition';
 import { getEmbassyTarget, embassyLegSeasons, realmTradeIncome } from '../systems/foreignRealm';
 import { FOREIGN_REALMS_BY_ID } from '../data/foreignRealms';
@@ -93,7 +98,7 @@ import { COMMAND_DEFS } from '../systems/commands';
 import { planMassMuster } from '../systems/muster';
 import { planGovernorCommand } from '../systems/governor';
 import { planLegionOrders, type Legion } from '../systems/legion';
-import { buyQuote, sellQuote, borderTariff, buyHorses, sellHorses, WARHORSE_CITY_CAP, buyIron, sellIron, IRON_CITY_CAP, IRON_FORGE_COST, FORGE_IRON_DISCOUNT } from '../systems/market';
+import { buyQuote, sellQuote, borderTariff, buyHorses, sellHorses, WARHORSE_CITY_CAP, buyIron, sellIron, IRON_CITY_CAP, MEDICINE_CITY_CAP, IRON_FORGE_COST, FORGE_IRON_DISCOUNT } from '../systems/market';
 import { EDICT_DISCOUNT, EMPEROR_HOME, MANDATE_PER_SEASON, RESENTMENT_PER_SEASON, canWelcomeEmperor, emperorCustodian } from '../systems/emperor';
 import { COMMONER_ARRIVAL_CHANCE, commonerArrivalCity, generateCommonerOfficer } from '../systems/commonerTalent';
 import { codexMarkRecruited, codexMarkRecruitedMany, codexMarkSeen, codexMarkSlain } from '../systems/codex';
@@ -204,7 +209,7 @@ import { canPlayerSeizeSite, migrateSites } from '../data/sites';
 import { tickWildSites } from '../systems/sites';
 import { SCENIC_BY_ID, canVisitScenic, rollHermitRecruit } from '../data/scenicSites';
 import { razedCity, rebuiltCity, rebuildCost, conquestPopulationLoss } from '../systems/cityRuin';
-import { buildSpecialtyTradeRoutes, tickSpecialtyTrade } from '../systems/tradeRoutes';
+import { buildSpecialtyTradeRoutes, tickSpecialtyTrade, specialtyEntrepotIncome } from '../systems/tradeRoutes';
 import { fortMaxHpForLevel, FACILITY_DEFS, type FacilityKind } from '../types';
 import { awardBattleXp, grantXp, applyBreakthrough, canBreakthrough, breakthroughCost } from '../systems/growth';
 import { officerGrade, gradeRank, gradeMeta } from '../systems/officerGrade';
@@ -237,6 +242,7 @@ import { checkEndings } from '../systems/endings';
 import { generateRandomScenario } from '../systems/randomScenario';
 import { rollWeather, describeWeather } from '../systems/weather';
 import { rollPlagueOutbreak, rollIntrigue } from '../systems/intrigue';
+import { rollSpecialtyEvents } from '../systems/specialtyEvents';
 import { rollOmen } from '../systems/mandate';
 import { rollReligiousRebellion, spreadCultUnrest } from '../systems/religion';
 import { resolveAIRansoms } from '../systems/aiRansom';
@@ -364,7 +370,7 @@ interface GameStore extends GameState {
    *  your cities to another. It crawls the map over `seasons` and empties its
    *  cargo on arrival; adjacent hauls arrive in full, longer ones lose 12% on
    *  the road. Cargo is deducted from the source at dispatch. */
-  dispatchConvoy: (fromCityId: EntityId, toCityId: EntityId, food: number, gold: number, troops: number, officerId: EntityId, cautious?: boolean, warhorses?: number, iron?: number) => { ok: boolean; seasons: number; reason?: string };
+  dispatchConvoy: (fromCityId: EntityId, toCityId: EntityId, food: number, gold: number, troops: number, officerId: EntityId, cautious?: boolean, warhorses?: number, iron?: number, medicine?: number) => { ok: boolean; seasons: number; reason?: string };
   /** 召回輜重 — turn a convoy around; its cargo returns to the origin city (lost
    *  if that city has since fallen). */
   recallConvoy: (id: EntityId) => void;
@@ -395,6 +401,12 @@ interface GameStore extends GameState {
   /** 鑄錢 — debase the coinage for an immediate windfall in the capital at the
    *  cost of rising inflation (which saps future tax income until it eases). */
   mintCoin: () => { ok: boolean; gold: number; inflation: number };
+  /** 名產作坊 — invest the holding city's gold to raise its 特產發展度 by one
+   *  (cap SPECIALTY_DEV_MAX), widening the gold/food premium + strategic-good yield. */
+  developSpecialty: (cityId: EntityId) => { ok: boolean; message: string };
+  /** 禁運 — a 專營 (≥60% world share) monopolist cuts a rival off a strategic
+   *  good, halving the rival's grip on it. Toggle on/off. */
+  setEmbargo: (targetForceId: EntityId, role: SpecialtyRole, on: boolean) => { ok: boolean; message: string };
   /** 劝募/募捐 — appeal to the people for an immediate gold windfall (scaled by
    *  realm size & loyalty) at the cost of 民忠. Once a year (4 seasons). */
   solicitDonations: () => { ok: boolean; gold: number; message?: string };
@@ -929,6 +941,23 @@ function buildFieldBattle(
   battle.defenderArmyId = enemyArmyId;
   return battle;
 }
+
+/**
+ * A force's realm-wide 名產 bonuses (ship/siege discounts, mint, tribute, …),
+ * honouring any standing 禁運 against it. Used by the action handlers that spend
+ * or earn outside the per-season resolution loop (鑄錢, 造船, 招撫…).
+ */
+function forceSpecialtyRealm(
+  cities: Record<EntityId, City>,
+  forceId: EntityId | null,
+  embargoes?: Embargo[],
+): SpecialtyRealmEffects {
+  const ctrl = specialtyControl(cities, forceId, forceId ? embargoedRolesAgainst(forceId, embargoes) : undefined);
+  return specialtyRealmEffects(ctrl);
+}
+
+/** 名駒 — the famous mounts (赤兔/的盧/汗血…) a developed 名馬 city can foal. */
+const NAMED_MOUNTS = Object.values(ITEMS_BY_ID).filter((i) => (i as { kind?: string }).kind === 'horse');
 
 export const useGameStore = create<GameStore>()(
   persist(
@@ -1665,7 +1694,7 @@ export const useGameStore = create<GameStore>()(
         return { ok: true, got: gold };
       },
 
-      dispatchConvoy: (fromCityId, toCityId, food, gold, troops = 0, officerId, cautious = false, warhorses = 0, iron = 0) => {
+      dispatchConvoy: (fromCityId, toCityId, food, gold, troops = 0, officerId, cautious = false, warhorses = 0, iron = 0, medicine = 0) => {
         const state = get();
         const pid = state.playerForceId;
         if (!pid) return { ok: false, seasons: 0 };
@@ -1686,11 +1715,12 @@ export const useGameStore = create<GameStore>()(
         let shipTroops = Math.min(Math.max(0, Math.floor(troops)), Math.max(0, from.troops - 100));
         let shipHorses = Math.min(Math.max(0, Math.floor(warhorses)), from.warhorses ?? 0);
         let shipIron = Math.min(Math.max(0, Math.floor(iron)), from.iron ?? 0);
+        let shipMed = Math.min(Math.max(0, Math.floor(medicine)), from.medicine ?? 0);
         // 載量 — clamp the total to what this officer can shepherd (scaling down
         // proportionally if the player asked for more than his 政治 allows).
         // 驛傳 — a supply depot in the dispatching city widens the convoy.
         const cap = Math.floor(convoyCapacity(officer) * buildingBonuses(fromCityId, state.buildings).convoyMul);
-        const total = shipFood + shipGold + shipTroops + shipHorses + shipIron;
+        const total = shipFood + shipGold + shipTroops + shipHorses + shipIron + shipMed;
         if (total > cap && total > 0) {
           const scale = cap / total;
           shipFood = Math.floor(shipFood * scale);
@@ -1698,8 +1728,9 @@ export const useGameStore = create<GameStore>()(
           shipTroops = Math.floor(shipTroops * scale);
           shipHorses = Math.floor(shipHorses * scale);
           shipIron = Math.floor(shipIron * scale);
+          shipMed = Math.floor(shipMed * scale);
         }
-        if (shipFood <= 0 && shipGold <= 0 && shipTroops <= 0 && shipHorses <= 0 && shipIron <= 0) return { ok: false, seasons: 0 };
+        if (shipFood <= 0 && shipGold <= 0 && shipTroops <= 0 && shipHorses <= 0 && shipIron <= 0 && shipMed <= 0) return { ok: false, seasons: 0 };
         // 木牛流馬 — Zhuge Liang's logistics device (an officer skill). In a
         // force's service it speeds transport ~40% and halves road spoilage.
         const woodenOx = Object.values(state.officers).some(
@@ -1718,6 +1749,7 @@ export const useGameStore = create<GameStore>()(
         const arriveTroops = Math.floor(shipTroops * keep);
         const arriveHorses = Math.floor(shipHorses * keep);
         const arriveIron = Math.floor(shipIron * keep);
+        const arriveMed = Math.floor(shipMed * keep);
         const seasons = plan.seasons;
         const id = `convoy-${fromCityId}-${toCityId}-${state.date.year}-${state.date.season}-${Object.keys(state.convoys ?? {}).length}`;
         set({
@@ -1730,6 +1762,7 @@ export const useGameStore = create<GameStore>()(
               troops: from.troops - shipTroops,
               ...(shipHorses > 0 ? { warhorses: (from.warhorses ?? 0) - shipHorses } : {}),
               ...(shipIron > 0 ? { iron: (from.iron ?? 0) - shipIron } : {}),
+              ...(shipMed > 0 ? { medicine: (from.medicine ?? 0) - shipMed } : {}),
             },
           },
           // The escorting officer rides out with the column (off the rosters
@@ -1746,13 +1779,14 @@ export const useGameStore = create<GameStore>()(
               food: arriveFood, gold: arriveGold, troops: arriveTroops,
               ...(arriveHorses > 0 ? { warhorses: arriveHorses } : {}),
               ...(arriveIron > 0 ? { iron: arriveIron } : {}),
+              ...(arriveMed > 0 ? { medicine: arriveMed } : {}),
               seasonsRemaining: seasons, totalSeasons: seasons,
               ...(naval ? { naval: true } : {}),
               ...(cautious ? { cautious: true } : {}),
             },
           },
         });
-        const cargo = [arriveFood > 0 ? `糧 ${arriveFood.toLocaleString()}` : '', arriveGold > 0 ? `金 ${arriveGold.toLocaleString()}` : '', arriveTroops > 0 ? `兵 ${arriveTroops.toLocaleString()}` : '', arriveHorses > 0 ? `馬 ${arriveHorses.toLocaleString()}` : '', arriveIron > 0 ? `鐵 ${arriveIron.toLocaleString()}` : ''].filter(Boolean).join('、');
+        const cargo = [arriveFood > 0 ? `糧 ${arriveFood.toLocaleString()}` : '', arriveGold > 0 ? `金 ${arriveGold.toLocaleString()}` : '', arriveTroops > 0 ? `兵 ${arriveTroops.toLocaleString()}` : '', arriveHorses > 0 ? `馬 ${arriveHorses.toLocaleString()}` : '', arriveIron > 0 ? `鐵 ${arriveIron.toLocaleString()}` : '', arriveMed > 0 ? `藥 ${arriveMed.toLocaleString()}` : ''].filter(Boolean).join('、');
         get().notify(
           `輜重啟運 · ${from.name.zh} → ${to.name.zh}(${cargo},${seasons}季抵達)`,
           `Convoy dispatched · ${from.name.en} → ${to.name.en} (${seasons} seasons)`,
@@ -1777,7 +1811,15 @@ export const useGameStore = create<GameStore>()(
           set({
             convoys,
             officers: officersBack,
-            cities: { ...state.cities, [c.fromCityId]: { ...home, food: home.food + c.food, gold: home.gold + c.gold, troops: home.troops + c.troops } },
+            cities: { ...state.cities, [c.fromCityId]: {
+              ...home,
+              food: home.food + c.food,
+              gold: home.gold + c.gold,
+              troops: home.troops + c.troops,
+              ...((c.warhorses ?? 0) > 0 ? { warhorses: Math.min(WARHORSE_CITY_CAP, (home.warhorses ?? 0) + (c.warhorses ?? 0)) } : {}),
+              ...((c.iron ?? 0) > 0 ? { iron: Math.min(IRON_CITY_CAP, (home.iron ?? 0) + (c.iron ?? 0)) } : {}),
+              ...((c.medicine ?? 0) > 0 ? { medicine: Math.min(MEDICINE_CITY_CAP, (home.medicine ?? 0) + (c.medicine ?? 0)) } : {}),
+            } },
           });
           get().notify(`輜重召回 · 貨返 ${home.name.zh}`, `Convoy recalled to ${home.name.en}`);
         } else {
@@ -2297,6 +2339,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           taxPolicy: planned.taxPolicy,
           tradePartners: state.tradePartners,
           inflation: state.inflation,
+          embargoes: state.embargoes,
           convoys: state.convoys,
           expeditions: state.expeditions,
           realmRelations: state.realmRelations,
@@ -2563,6 +2606,24 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           });
           siteCities = trade.cities;
           if (trade.entries.length > 0) result.report.entries.push(...trade.entries);
+
+          // 名物萃京 — the demand side: each realm's DISTINCT goods funnel to its
+          // seat and fetch a premium at the great central market (互通有無).
+          for (const f of Object.values(state.forces)) {
+            const cap = f.capitalCityId ? siteCities[f.capitalCityId] : null;
+            if (!cap || cap.ownerForceId !== f.id || cap.ruined) continue;
+            const inc = specialtyEntrepotIncome(siteCities, f.id);
+            if (inc <= 0) continue;
+            siteCities = { ...siteCities, [cap.id]: { ...cap, gold: cap.gold + inc } };
+            if (f.id === state.playerForceId) {
+              result.report.entries.push({
+                cityId: cap.id,
+                kind: 'income',
+                text: `Entrepôt trade funneled ${inc.toLocaleString()} gold to ${cap.name.en}.`,
+                textZh: `${cap.name.zh}:名物萃京,通都大邑商利 +${inc.toLocaleString()} 金。`,
+              });
+            }
+          }
         }
 
         // Historical event check. Fires at most one event per season.
@@ -2859,19 +2920,121 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // 名產版圖 — each force's realm-wide grip on the strategic goods, tallied
+        // for this season's medicine (wounds/plague), 鑄錢/抑通膨 (copper) and 名品
+        // court prestige. Memoised per force; ownership/dev are stable this phase.
+        const specCtrlCache = new Map<string, SpecialtyControl>();
+        const specOf = (fid?: string | null): SpecialtyControl | null => {
+          if (!fid) return null;
+          let c = specCtrlCache.get(fid);
+          if (!c) {
+            c = specialtyControl(postCities, fid, embargoedRolesAgainst(fid, state.embargoes));
+            specCtrlCache.set(fid, c);
+          }
+          return c;
+        };
+        const realmOf = (fid?: string | null) => {
+          const c = specOf(fid);
+          return c ? specialtyRealmEffects(c) : null;
+        };
+
         // ── Season-bound rolls (every 9 periods only) ──
         let nextWeather = state.weather;
         let nextMandate = state.mandate;
+        let nextEmbargoes = state.embargoes;
         if (seasonBoundary) {
+          // 禁運失依 — an embargo lapses once its imposer no longer holds the 專營.
+          if (nextEmbargoes && nextEmbargoes.length > 0) {
+            const kept = nextEmbargoes.filter((e) => { const c = specOf(e.by); return c ? canEmbargo(c, e.role) : false; });
+            if (kept.length !== nextEmbargoes.length) nextEmbargoes = kept.length ? kept : undefined;
+          }
+          // 敵國禁榷 — an AI force that holds a 專營 occasionally cuts a hostile
+          // rival off the good — the AI side of the player's 禁運 lever.
+          {
+            const cityCount: Record<string, number> = {};
+            for (const c of Object.values(postCities)) if (c.ownerForceId) cityCount[c.ownerForceId] = (cityCount[c.ownerForceId] ?? 0) + 1;
+            const list = nextEmbargoes ? [...nextEmbargoes] : [];
+            const grew = (() => {
+              let changed = false;
+              for (const fid of Object.keys(postForces)) {
+                if (fid === state.playerForceId || Math.random() > 0.2) continue;
+                const ctrl = specOf(fid);
+                if (!ctrl) continue;
+                const role = (Object.keys(ctrl.strength) as SpecialtyRole[]).find((r) => canEmbargo(ctrl, r));
+                if (!role) continue;
+                const targets = Object.keys(postForces)
+                  .filter((t) => t !== fid && isHostilePermitted(postDiplomacy, fid, t))
+                  .sort((a, b) => (cityCount[b] ?? 0) - (cityCount[a] ?? 0));
+                const target = targets[0];
+                if (!target || list.some((e) => e.by === fid && e.against === target && e.role === role)) continue;
+                list.push({ by: fid, against: target, role });
+                changed = true;
+                if (target === state.playerForceId) {
+                  result.report.entries.push({
+                    cityId: null, kind: 'note',
+                    text: `${postForces[fid]?.name.en ?? fid} embargoes your realm's ${ROLE_ZH[role]} (專營禁榷).`,
+                    textZh: `${postForces[fid]?.name.zh ?? fid}挾${ROLE_ZH[role]}專營,斷我商路(禁榷)。`,
+                  });
+                }
+              }
+              return changed;
+            })();
+            if (grew) nextEmbargoes = list;
+          }
+          // 採藥備疫 — a herb-rich realm shrugs off part of a plague's toll.
+          const plagueResistByForce: Record<string, number> = {};
+          for (const fid of Object.keys(postForces)) plagueResistByForce[fid] = realmOf(fid)?.plagueResist ?? 0;
+
           const plagueOut = rollPlagueOutbreak({
             cities: postCities,
             officers: postOfficers,
             currentYear: result.date.year,
             rng: Math.random,
+            plagueResist: plagueResistByForce,
           });
           postCities = plagueOut.cities;
           postOfficers = plagueOut.officers;
           if (plagueOut.entries.length > 0) result.report.entries.push(...plagueOut.entries);
+
+          // 名物盛衰 — a regional shock or windfall keyed to a city's signature
+          // good (馬瘟/珠枯/蝗災/豐年). Makes the specialty map dynamic; AI too.
+          const specEvt = rollSpecialtyEvents({
+            cities: postCities,
+            rng: Math.random,
+            season: result.date.season,
+            calamityMul: state.disasterFrequency === 'low' ? 0.5 : state.disasterFrequency === 'high' ? 1.7 : 1,
+          });
+          postCities = specEvt.cities;
+          if (specEvt.entries.length > 0) result.report.entries.push(...specEvt.entries);
+
+          // 名駒入廄 — a well-developed 名馬 city now and then foals a famous mount,
+          // appearing in its 藏寶池 (lostItems) to be assigned to an officer for a
+          // war/leadership edge. Player realm only; at most one foaled per season.
+          if (state.playerForceId && NAMED_MOUNTS.length > 0) {
+            const inPlay = new Set<string>([
+              ...result.lostItems.map((li) => li.itemId),
+              ...Object.values(postOfficers).flatMap((o) => o.equipment ?? []),
+            ]);
+            const available = NAMED_MOUNTS.filter((m) => !inPlay.has(m.id));
+            if (available.length > 0) {
+              for (const c of Object.values(postCities)) {
+                if (c.ownerForceId !== state.playerForceId || c.ruined) continue;
+                if (CITY_SPECIALTY[c.id] !== 'horse') continue;
+                const dev = c.specialtyDev ?? 0;
+                if (dev < 2) continue;                       // only a built-up stud farm
+                if (Math.random() >= 0.04 + dev * 0.03) continue; // dev2 ≈10% … dev5 ≈19%
+                const foal = available.find((m) => (m as { originCityId?: string }).originCityId === c.id)
+                  ?? available[Math.floor(Math.random() * available.length)];
+                result.lostItems = [...result.lostItems, { itemId: foal.id, cityId: c.id }];
+                result.report.entries.push({
+                  cityId: c.id, kind: 'note',
+                  text: `名駒入廄 — ${c.name.en} foaled ${foal.name.en}; assign it to an officer.`,
+                  textZh: `名駒入廄 — ${c.name.zh}牧得${foal.name.zh},可賜予武將。`,
+                });
+                break; // one realm-wide per season keeps it special
+              }
+            }
+          }
 
           const intrigueOut = rollIntrigue({
             officers: postOfficers,
@@ -2923,6 +3086,17 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             }
             nextMandate = { ...nextMandate, byForce };
           }
+          // 名品充府 — a realm flush with fine goods (絲/錦/珠/象/漆) lends its court
+          // lustre and legitimacy: a small 天命 trickle each season (≤ +2).
+          {
+            const byForce = { ...nextMandate.byForce };
+            let touched = false;
+            for (const fid of Object.keys(postForces)) {
+              const cp = realmOf(fid)?.courtPrestige ?? 0;
+              if (cp > 0) { byForce[fid] = Math.max(0, Math.min(100, (byForce[fid] ?? 50) + Math.min(2, cp * 0.2))); touched = true; }
+            }
+            if (touched) nextMandate = { ...nextMandate, byForce };
+          }
           // AI 大局計略 — rival courts plot against each other and the player.
           const schemeOut = resolveAISchemes({
             forces: postForces,
@@ -2946,15 +3120,29 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // ── Wounded recovery tick: decrement woundedSeasons, restore to idle at 0 ──
         // Newly wounded with cautious/sickly trait or age ≥ 55 may petition
         // to retire — generated as a `retire` wish for the player only.
+        // 良醫療傷 — a herb-rich realm heals the wounded faster and pulls more of
+        // the critically hurt through, spending medicine from its 藥圃 to do it.
+        const forceMedicine: Record<string, number> = {};
+        for (const c of Object.values(postCities)) {
+          if (c.ownerForceId && (c.medicine ?? 0) > 0) forceMedicine[c.ownerForceId] = (forceMedicine[c.ownerForceId] ?? 0) + (c.medicine ?? 0);
+        }
+        const recoveryMulOf = (fid?: string | null) => {
+          if (!fid) return 1;
+          const base = realmOf(fid)?.woundRecoveryMul ?? 1;
+          return base + Math.min(0.4, (forceMedicine[fid] ?? 0) / 3000); // stockpile sweetens it
+        };
+        const medicineSpend: Record<string, number> = {};
         const tickedOfficers: Record<string, typeof postOfficers[string]> = {};
         const woundedRetireWishes: import('../types').OfficerWish[] = [];
         for (const o of Object.values(postOfficers)) {
           if (o.status === 'wounded' && o.woundedSeasons !== undefined) {
+            const recoveryMul = recoveryMulOf(o.forceId);
             // 瀕死 — a critical wound can still carry the officer off. Chance
-            // rises with age; the young and hale usually pull through.
+            // rises with age; the young and hale usually pull through — and good
+            // physic (藥材) pulls more through still.
             if (o.woundSeverity === 'critical' && !(state.noBattleDeath ?? false)) {
               const age = result.date.year - o.birthYear;
-              const mortal = 0.05 + Math.max(0, age - 45) * 0.004;
+              const mortal = (0.05 + Math.max(0, age - 45) * 0.004) / recoveryMul;
               if (Math.random() < mortal) {
                 tickedOfficers[o.id] = { ...o, status: 'dead', task: null, woundedSeasons: undefined, woundSeverity: undefined };
                 result.report.entries.push({
@@ -2966,7 +3154,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                 continue;
               }
             }
-            const left = o.woundedSeasons - 1;
+            // 藥到病除 — at each season's turn, strong physic can heal a whole
+            // extra period of convalescence in one go (spending medicine when it
+            // does). Gated to the season boundary so it fires once, not per period.
+            let dec = 1;
+            if (seasonBoundary && o.forceId && Math.random() < Math.min(0.85, recoveryMul - 1)) {
+              dec = 2;
+              medicineSpend[o.forceId] = (medicineSpend[o.forceId] ?? 0) + 60;
+            }
+            const left = o.woundedSeasons - dec;
             if (left <= 0) {
               tickedOfficers[o.id] = { ...o, status: 'idle', woundedSeasons: undefined, woundSeverity: undefined };
               result.report.entries.push({
@@ -3002,6 +3198,19 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           if (ticked !== tickedOfficers[id]) tickedOfficers[id] = ticked;
         }
         postOfficers = tickedOfficers;
+
+        // 用藥 — draw the medicine the season's healing consumed from each force's
+        // 藥圃 cities (best-effort; the passive 採藥備疫 edge applies regardless).
+        for (const [fid, amt] of Object.entries(medicineSpend)) {
+          let remaining = amt;
+          for (const c of Object.values(postCities)) {
+            if (remaining <= 0) break;
+            if (c.ownerForceId !== fid || (c.medicine ?? 0) <= 0) continue;
+            const take = Math.min(c.medicine ?? 0, remaining);
+            postCities = { ...postCities, [c.id]: { ...c, medicine: (c.medicine ?? 0) - take } };
+            remaining -= take;
+          }
+        }
 
         // ── Delayed effects (截糧 troop drain) tick ──
         // Always absorb fresh effects from this period's battles so none are
@@ -4405,9 +4614,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           // accumulating across mid-season ticks.
           seasonBattleDeltas: seasonBoundary ? {} : state.seasonBattleDeltas,
           // 通脹漸消 — inflation eases each season as coin re-stabilises; a 平準署
-          // at the capital quickens the recovery.
+          // at the capital quickens it, and a 銅 (copper) realm's sound coinage
+          // steadies prices further (specialtyRealmEffects.inflationRelief).
           inflation: seasonBoundary
-            ? Math.max(0, (state.inflation ?? 0) - 3 - buildingBonuses(state.forces[state.playerForceId ?? '']?.capitalCityId ?? '', state.buildings).inflationRelief)
+            ? Math.max(0, (state.inflation ?? 0) - 3
+                - buildingBonuses(state.forces[state.playerForceId ?? '']?.capitalCityId ?? '', state.buildings).inflationRelief
+                - (realmOf(state.playerForceId)?.inflationRelief ?? 0))
             : state.inflation,
           // 度支沿革 — snapshot the player's total treasury gold each season so
           // the 度支簿 can chart whether the realm is bleeding or building.
@@ -4554,6 +4766,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               },
             };
           })(),
+          embargoes: nextEmbargoes,
           pendingDelayedEffects: remainingDelayed,
           appointments: prunedAppointments,
           appointmentHistory: [
@@ -5039,8 +5252,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const capital = force ? state.cities[force.capitalCityId] : null;
         if (!capital) return { ok: false, gold: 0, inflation: state.inflation ?? 0 };
         // Windfall scales with the capital's commerce; inflation jumps +18 (cap 100).
-        const windfall = 1000 + Math.floor(capital.commerce * 30);
-        const nextInflation = Math.min(100, (state.inflation ?? 0) + 18);
+        // 丹陽銅冶 — a 銅 (copper) realm mints richer coin (mintMul) and, with sound
+        // metal, debases less (a touch less inflation per mint).
+        const mintRealm = forceSpecialtyRealm(state.cities, state.playerForceId, state.embargoes);
+        const windfall = Math.round((1000 + Math.floor(capital.commerce * 30)) * mintRealm.mintMul);
+        const inflationJump = Math.round(18 / Math.max(1, mintRealm.mintMul));
+        const nextInflation = Math.min(100, (state.inflation ?? 0) + inflationJump);
         set({
           cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold + windfall } },
           inflation: nextInflation,
@@ -5050,6 +5267,51 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           `Minted ${windfall.toLocaleString()} gold (inflation ${nextInflation})`,
         );
         return { ok: true, gold: windfall, inflation: nextInflation };
+      },
+
+      developSpecialty: (cityId) => {
+        const state = get();
+        const city = state.cities[cityId];
+        if (!city) return { ok: false, message: 'City not found.' };
+        if (city.ownerForceId !== state.playerForceId) return { ok: false, message: '非我所轄。' };
+        const spec = citySpecialty(cityId);
+        if (!spec) return { ok: false, message: '此城無名產可興。' };
+        const dev = city.specialtyDev ?? 0;
+        if (dev >= SPECIALTY_DEV_MAX) return { ok: false, message: `${spec.zh}已臻極盛。` };
+        // 興作之費 — each tier costs more; a busy city (high commerce) builds the
+        // workshop cheaper. A settled populace (loyalty ≥ 40) is required.
+        if (city.loyalty < 40) return { ok: false, message: '民心未附,難興名產。' };
+        const cost = Math.round((600 + 600 * dev) * (1 - Math.min(0.3, city.commerce / 400)));
+        if (city.gold < cost) return { ok: false, message: `需 ${cost} 金（${city.name.zh}）。` };
+        set({
+          cities: { ...state.cities, [cityId]: { ...city, gold: city.gold - cost, specialtyDev: dev + 1 } },
+        });
+        const pct = Math.round((dev + 1) * SPECIALTY_DEV_GAIN * 100);
+        get().notify(
+          `名產作坊 · ${city.name.zh}${spec.zh}興旺至 ${dev + 1} 級(名產之利 +${pct}%,−${cost} 金)`,
+          `${spec.zh} workshop at ${city.name.en} raised to tier ${dev + 1} (+${pct}% specialty edge, −${cost}g)`,
+        );
+        return { ok: true, message: `${spec.zh} → ${dev + 1} 級` };
+      },
+
+      setEmbargo: (targetForceId, role, on) => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        if (targetForceId === state.playerForceId) return { ok: false, message: '不能禁運自身。' };
+        const existing = state.embargoes ?? [];
+        if (on) {
+          // Only a standing 專營 (≥60% world share) can impose one.
+          const ctrl = specialtyControl(state.cities, state.playerForceId);
+          if (!canEmbargo(ctrl, role)) return { ok: false, message: `未握${ROLE_ZH[role]}專營(需占天下六成),不能禁運。` };
+          if (existing.some((e) => e.by === state.playerForceId && e.against === targetForceId && e.role === role))
+            return { ok: false, message: '已在禁運中。' };
+          set({ embargoes: [...existing, { by: state.playerForceId, against: targetForceId, role }] });
+          const tname = state.forces[targetForceId]?.name.zh ?? targetForceId;
+          get().notify(`禁運 · 斷${tname}之${ROLE_ZH[role]}`, `Embargo: cut ${targetForceId} off ${role}`);
+          return { ok: true, message: `已對${tname}行${ROLE_ZH[role]}禁運。` };
+        }
+        set({ embargoes: existing.filter((e) => !(e.by === state.playerForceId && e.against === targetForceId && e.role === role)) });
+        return { ok: true, message: '已解禁運。' };
       },
 
       solicitDonations: () => {
@@ -7159,10 +7421,16 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           .filter((o) => o.forceId === state.playerForceId && o.locationCityId === cityId && o.status !== 'dead')
           .sort((a, b) => b.stats.intelligence - a.stats.intelligence)[0];
         const armsBB = buildingBonuses(cityId, state.buildings);
+        // 匠籍神品 — an iron-land's smithing tradition (宛城/巴西…) tempers a finer
+        // piece: the 冶鐵 specialty lifts the masterwork (神品) chance, more so the
+        // better the 名產作坊 is developed.
+        const forgeSpecialtyBonus = CITY_SPECIALTY[cityId] === 'iron'
+          ? 0.1 + (city.specialtyDev ?? 0) * 0.05
+          : 0;
         const plus = forgeQualityPlus({
           smithIntelligence: smith?.stats.intelligence ?? 0,
           inventive: (smith?.traits ?? []).includes('inventive'),
-          refineUpgradeChance: armsBB.refineUpgradeChance,
+          refineUpgradeChance: armsBB.refineUpgradeChance + forgeSpecialtyBonus,
         });
 
         // Consume gold, consume ingredients, place result in the lost-items pool of this city.
@@ -7616,14 +7884,17 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           return { ok: false, message: `${def.name.zh}需 ${SHIP_MIN_TIER[shipClass]} 級船塢(此港 ${tier} 級)。` };
         const player = state.forces[state.playerForceId];
         const capital = player ? state.cities[player.capitalCityId] : null;
-        if (!capital || capital.gold < def.goldCost)
-          return { ok: false, message: `Need ${def.goldCost} gold in capital.` };
-        const seasons = shipBuildSeasons(def, tier);
+        // 山林之饒 — a 木材 (timber) realm builds ships cheaper and faster.
+        const timber = forceSpecialtyRealm(state.cities, state.playerForceId, state.embargoes);
+        const goldCost = Math.round(def.goldCost * timber.shipBuildMul);
+        if (!capital || capital.gold < goldCost)
+          return { ok: false, message: `Need ${goldCost} gold in capital.` };
+        const seasons = Math.max(1, Math.round(shipBuildSeasons(def, tier) * timber.shipBuildMul));
         const queue = [...(port.buildQueue ?? []), { shipClass, seasonsLeft: seasons }];
         set({
           cities: {
             ...state.cities,
-            [capital.id]: { ...capital, gold: capital.gold - def.goldCost },
+            [capital.id]: { ...capital, gold: capital.gold - goldCost },
           },
           ports: {
             ...state.ports,
@@ -7632,7 +7903,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         });
         return {
           ok: true,
-          message: `${def.name.zh} build started at ${port.name.zh} (${seasons} seasons, −${def.goldCost}g).`,
+          message: `${def.name.zh} build started at ${port.name.zh} (${seasons} seasons, −${goldCost}g).`,
         };
       },
 
@@ -7851,7 +8122,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (!capital || capital.gold < TRIBE_PLACATE_COST)
           return { ok: false, message: `Need ${TRIBE_PLACATE_COST}g in capital.` };
         const prevAgg = state.tribeState.aggression[tribe.id] ?? tribe.baseAggression;
-        const nextAgg = Math.max(0, prevAgg - TRIBE_PLACATE_AGGRESSION_DROP);
+        // 名品結好 — fine goods (絲/錦/珠/象) from a luxury realm impress the chiefs
+        // far more than coin alone, cooling the frontier deeper (tributeMul).
+        const tribute = forceSpecialtyRealm(state.cities, state.playerForceId, state.embargoes);
+        const nextAgg = Math.max(0, prevAgg - Math.round(TRIBE_PLACATE_AGGRESSION_DROP * tribute.tributeMul));
         set({
           cities: {
             ...state.cities,

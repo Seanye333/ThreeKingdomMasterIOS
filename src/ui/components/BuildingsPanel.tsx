@@ -1,6 +1,6 @@
 import { BUILDING_DEFS } from '../../game/data';
 import { buildingBonuses } from '../../game/systems/buildings';
-import { citySpecialty } from '../../game/data/specialties';
+import { citySpecialty, cityRole, ROLE_ZH, SPECIALTY_DEV_MAX, SPECIALTY_DEV_GAIN } from '../../game/data/specialties';
 import { useGameStore } from '../../game/state/store';
 import type { BuildingId, EntityId } from '../../game/types';
 import { useT, useLanguage, useDesc } from '../i18n';
@@ -18,6 +18,8 @@ export function BuildingsPanel({ cityId }: Props) {
   const buildings = useGameStore((s) => s.buildings);
   const cities = useGameStore((s) => s.cities);
   const startBuilding = useGameStore((s) => s.startBuilding);
+  const developSpecialty = useGameStore((s) => s.developSpecialty);
+  const playerForceId = useGameStore((s) => s.playerForceId);
   const autoQueueRaw = useGameStore((s) => s.autoBuildQueues[cityId]);
   const autoQueue = autoQueueRaw ?? EMPTY_QUEUE;
   const setAutoBuildQueue = useGameStore((s) => s.setAutoBuildQueue);
@@ -34,18 +36,52 @@ export function BuildingsPanel({ cityId }: Props) {
       <div style={{ fontSize: '0.7rem', letterSpacing: '0.07rem', color: '#7a8893', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
         {t('建設', 'Buildings')}
       </div>
-      {specialty && (
-        <div style={{ fontSize: '0.72rem', color: '#e0c070', marginBottom: '0.45rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: '1.25rem', height: '1.25rem', borderRadius: 3,
-            background: '#3a2c14', border: '1px solid #c9a23c',
-            fontFamily: 'var(--tkm-font-body)', fontSize: '0.8rem',
-          }}>{specialty.glyph}</span>
-          <span>{t('特產', 'Specialty')}：{specialty.zh}</span>
-          <span style={{ color: '#9a8a60', fontSize: '0.66rem' }}>{specialty.noteZh}</span>
-        </div>
-      )}
+      {specialty && (() => {
+        const dev = city.specialtyDev ?? 0;
+        const role = cityRole(cityId);
+        const maxed = dev >= SPECIALTY_DEV_MAX;
+        const cost = Math.round((600 + 600 * dev) * (1 - Math.min(0.3, city.commerce / 400)));
+        const owned = city.ownerForceId === playerForceId;
+        const canDev = owned && !maxed && city.loyalty >= 40 && city.gold >= cost;
+        const edgePct = Math.round(dev * SPECIALTY_DEV_GAIN * 100);
+        return (
+          <div style={{ marginBottom: '0.45rem' }}>
+            <div style={{ fontSize: '0.72rem', color: '#e0c070', display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: '1.25rem', height: '1.25rem', borderRadius: 3,
+                background: '#3a2c14', border: '1px solid #c9a23c',
+                fontFamily: 'var(--tkm-font-body)', fontSize: '0.8rem',
+              }}>{specialty.glyph}</span>
+              <span>{t('特產', 'Specialty')}：{specialty.zh}</span>
+              <span style={{ color: '#c9a23c', letterSpacing: '0.05rem' }} title={t(`發展度 ${dev}/${SPECIALTY_DEV_MAX}`, `Development ${dev}/${SPECIALTY_DEV_MAX}`)}>
+                {'★'.repeat(dev)}{'☆'.repeat(SPECIALTY_DEV_MAX - dev)}
+              </span>
+              {role && <span style={{ color: '#7a9ac0', fontSize: '0.64rem' }}>{t('戰略物資', 'Strategic')}：{ROLE_ZH[role]}</span>}
+            </div>
+            <div style={{ fontSize: '0.66rem', color: '#9a8a60', marginTop: '0.2rem' }}>
+              {specialty.noteZh}{dev > 0 && `(名產作坊 +${edgePct}%)`}
+              {role === 'medicine' && (city.medicine ?? 0) > 0 && ` · ${t('藥材', 'Medicine')} ${(city.medicine ?? 0).toLocaleString()}`}
+            </div>
+            {owned && (
+              <button
+                onClick={() => { const r = developSpecialty(cityId); if (!r.ok) alert(r.message); }}
+                disabled={!canDev}
+                title={maxed ? t('名產已臻極盛', 'Specialty fully developed') : city.loyalty < 40 ? t('民心未附(需民忠 ≥ 40)', 'needs loyalty ≥ 40') : `${cost}g`}
+                style={{
+                  marginTop: '0.3rem', background: '#080b0e',
+                  border: '1px solid ' + (canDev ? '#c9a23c' : '#26323e'),
+                  color: canDev ? '#e6c473' : '#7a8893',
+                  padding: '0.25rem 0.5rem', fontSize: '0.68rem', fontFamily: 'inherit',
+                  cursor: canDev ? 'pointer' : 'not-allowed', opacity: canDev ? 1 : 0.6,
+                }}
+              >
+                {maxed ? t('名產作坊 · 極盛', 'Workshop · Max') : t(`興名產作坊 (${cost}g → ★${dev + 1})`, `Develop specialty (${cost}g → ★${dev + 1})`)}
+              </button>
+            )}
+          </div>
+        );
+      })()}
       <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.7rem', color: '#aab6c0', marginBottom: '0.5rem' }}>
         {t('徵兵', 'Recruit')} ×{bonuses.recruitMul.toFixed(2)} · {t('商業', 'Commerce')} ×{bonuses.commerceMul.toFixed(2)} · {t('糧草', 'Food')} ×{bonuses.agricultureMul.toFixed(2)} · {t('民忠', 'Loyalty')} +{bonuses.loyaltyPerSeason}/{t('季', 'season')} · {t('守備', 'Defense')} +{bonuses.defenseAdd}
       </div>

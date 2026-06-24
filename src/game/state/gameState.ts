@@ -285,6 +285,9 @@ export interface GameState {
    *  inflation (0–100), which saps every city's tax income until it eases. 0 by
    *  default, so a realm that never mints is wholly unaffected. */
   inflation: number;
+  /** 禁運 — standing 專營 embargoes a monopolist force has imposed on rivals,
+   *  cutting them off a strategic good. Empty/undefined = free trade. */
+  embargoes?: import('../data/specialties').Embargo[];
   /** 度支沿革 — the player realm's treasury gold at each season-end, newest
    *  last, capped at 8. Powers the 度支簿 trend sparkline. */
   treasuryHistory?: number[];

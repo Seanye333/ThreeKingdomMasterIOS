@@ -145,6 +145,8 @@ export function sellHorses(city: City, producer: boolean, horses: number, ctx: M
 export const BASE_IRON_RATE = 0.5;
 /** Most iron a single city ever stockpiles (smelting cap, applied at season end). */
 export const IRON_CITY_CAP = 8000;
+/** Most medicine a single herb city ever stockpiles (gathering cap, season end). */
+export const MEDICINE_CITY_CAP = 4000;
 /** Iron consumed per forge to earn the home-smelting discount. */
 export const IRON_FORGE_COST = 300;
 /** Gold knocked off a forge when the city can feed it from its own iron stock. */

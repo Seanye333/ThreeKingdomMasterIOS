@@ -1089,15 +1089,51 @@ export function handleMarch(
 
   // Wounded officers: apply 'wounded' status with recovery countdown.
   if (result.wounded) {
+    // 戰陣藥營 — a side with 藥材 dresses its grave wounds in the field: it
+    // downgrades severity (so fewer later die of their wounds — see the 瀕死 roll)
+    // and shortens convalescence, spending medicine from that realm's stores.
+    const MED_COST = 120;
+    const medPool: Record<string, number> = {};
+    const medTotal = (fid: string | null | undefined): number => {
+      if (!fid) return 0;
+      if (medPool[fid] == null) medPool[fid] = Object.values(cities).reduce((sum, c) => c.ownerForceId === fid ? sum + (c.medicine ?? 0) : sum, 0);
+      return medPool[fid];
+    };
+    const spendMed = (fid: string, amount: number) => {
+      medPool[fid] = Math.max(0, (medPool[fid] ?? 0) - amount);
+      let rem = amount;
+      for (const c of Object.values(cities)) {
+        if (rem <= 0) break;
+        if (c.ownerForceId !== fid || (c.medicine ?? 0) <= 0) continue;
+        const take = Math.min(c.medicine ?? 0, rem);
+        cities[c.id] = { ...c, medicine: (c.medicine ?? 0) - take };
+        rem -= take;
+      }
+    };
     for (const w of result.wounded) {
       const o = officers[w.officerId];
       if (!o || o.status === 'dead') continue;
+      let severity = w.severity;
+      let seasons = w.seasons;
+      const fid = o.forceId;
+      if (fid && (severity === 'critical' || severity === 'serious') && medTotal(fid) >= MED_COST) {
+        spendMed(fid, MED_COST);
+        severity = severity === 'critical' ? 'serious' : 'minor';
+        seasons = Math.max(1, seasons - 2);
+        if (fid === ctx.playerForceId) {
+          entries.push({
+            cityId: target.id, kind: 'note',
+            text: `Field hospital (藥營) tended ${o.name.en}'s wounds — severity eased.`,
+            textZh: `戰陣藥營救治${o.name.zh},傷勢得緩、復出有期。`,
+          });
+        }
+      }
       officers[w.officerId] = {
         ...o,
         status: 'wounded',
         task: null,
-        woundedSeasons: w.seasons,
-        woundSeverity: w.severity,
+        woundedSeasons: seasons,
+        woundSeverity: severity,
       };
     }
   }

@@ -6,7 +6,24 @@ import { buildingBonuses } from './buildings';
 import { citySize, populationDelta } from './citySize';
 import { aggregateSlotEffects } from '../data/defenseBuildings';
 import { effectivePrestigeEffects } from '../data/prestige';
-import { specialtyEconomy, CITY_SPECIALTY } from '../data/specialties';
+import { specialtyEconomy, CITY_SPECIALTY, producerWeight, cityRole } from '../data/specialties';
+import type { SpecialtyRole, SpecialtyRealmEffects } from '../data/specialties';
+
+/**
+ * 専才坐鎮 — the officer expertise that sharpens each strategic good. Station a
+ * 馬政 master in a horse-land, a 医術 physician in a herb-land, or a 巨賈/行會
+ * merchant in a salt/silk/copper town and that name-good runs measurably richer.
+ * Matched against an officer's personal policies (PolicyId strings).
+ */
+const ROLE_SPECIALIST_POLICIES: Record<SpecialtyRole, string[]> = {
+  warhorse: ['horse-stewardship', 'horse-breeding'],
+  iron: ['smithing', 'iron-monopoly'],
+  medicine: ['medicine', 'royal-physicians'],
+  rations: ['salt-monopoly', 'fish-salt'],
+  lumber: ['timber', 'shipyard'],
+  coin: ['mint-coin', 'copper-mining'],
+  luxury: ['silk-trade', 'pearl-trade', 'sericulture-tax', 'lacquerware', 'merchant-guild', 'tribute-system'],
+};
 import { officerGrade, gradeRank } from './officerGrade';
 import { buildSpecialtyTradeRoutes } from './tradeRoutes';
 import { appointmentBonusFor, totalStipendForForce } from './appointmentEffects';
@@ -62,6 +79,8 @@ export interface CityEconomyTick {
   warhorseBreed: number;
   /** 冶鐵 — iron smelted this season (iron-country cities only; 0 elsewhere). */
   ironSmelt: number;
+  /** 採藥 — medicine gathered this season (herb-country cities only; 0 elsewhere). */
+  medicineGather: number;
 }
 
 /**
@@ -77,8 +96,11 @@ export function tickCityEconomy(
   weatherKind: import('./weather').WeatherKind = 'clear',
   buildings: Building[] = [],
   statecraft: string | null = null,
+  /** Owning force's realm-wide specialty grip — amplifies 名產所恃 policies
+   *  (roleStrength) and stretches grain (realm.foodUpkeepMul, from salt). */
+  specialty?: { roleStrength?: Record<SpecialtyRole, number>; realm?: SpecialtyRealmEffects },
 ): CityEconomyTick {
-  const eff = cityPolicyEffects(city, cityOfficers);
+  const eff = cityPolicyEffects(city, cityOfficers, specialty?.roleStrength);
   // 城內建築 — 市場/錢莊/常平倉/市舶司 fatten commerce; 屯田/水利/常平倉 the
   // harvest; 寺院/太學/安民坊 民忠; 水利 blunts drought; 安民坊 grows population.
   // 地利(specialty) + 理念(statecraft) further slant each building category.
@@ -88,8 +110,20 @@ export function tickCityEconomy(
   const inflationMul = 1 - Math.max(0, Math.min(100, inflation)) / 250;
   const size = citySize(city);
   // 特產／名產 — a salt town, horse market or brocade workshop trades richer;
-  // a rice basin harvests heavier. A small permanent regional edge.
-  const spec = specialtyEconomy(city.id);
+  // a rice basin harvests heavier. A small permanent regional edge, sharpened by
+  // the city's 名產發展度 (specialtyDev).
+  const spec = specialtyEconomy(city.id, city.specialtyDev ?? 0);
+  // 専才坐鎮 — a stationed specialist (馬政/医術/巨賈…) sharpens the local name-good:
+  // a wider trade/harvest premium and ~+35% strategic-good output.
+  const _role = cityRole(city.id);
+  const hasSpecialist = _role != null && cityOfficers.some(
+    (o) => (o.policies ?? []).some((p) => ROLE_SPECIALIST_POLICIES[_role].includes(p as string)),
+  );
+  const specialistMul = hasSpecialist ? 1.35 : 1;
+  // The specialist widens the specialty's premium (delta above 1.0).
+  const specGoldMul = 1 + (spec.goldMul - 1) * specialistMul;
+  const specFoodMul = 1 + (spec.foodMul - 1) * specialistMul;
+  const specWeight = producerWeight(city.specialtyDev ?? 0) * specialistMul;
 
   // 稅入基數 — divisor lowered 5000→4000 (≈ +25% gold across the board) to
   // ease the early-game cash crunch. Applies to every force, AI included.
@@ -105,7 +139,7 @@ export function tickCityEconomy(
   // 貪腐蝕利 — graft skims a slice off the top: clerks pad the books and pocket
   // the difference. Up to −40% at full corruption (100). Cleared by 巡查肅貪.
   const corruptionMul = 1 - Math.max(0, Math.min(100, city.corruption ?? 0)) / 250;
-  const goldIncome = Math.max(0, Math.floor((baseGold * eff.goldMul * bb.commerceMul * size.goldMul * prestigeMul * gradeAdminMul * spec.goldMul + eff.goldFlat) * taxEff.goldMul * inflationMul * corruptionMul));
+  const goldIncome = Math.max(0, Math.floor((baseGold * eff.goldMul * bb.commerceMul * size.goldMul * prestigeMul * gradeAdminMul * specGoldMul + eff.goldFlat) * taxEff.goldMul * inflationMul * corruptionMul));
 
   const baseFood =
     season === 'autumn'
@@ -123,9 +157,11 @@ export function tickCityEconomy(
     weatherKind === 'drought' ? 0.55 + 0.45 * bb.droughtMitigation :
     weatherKind === 'rain' ? 1.1 :
     1;
-  const foodIncome = Math.floor(baseFood * eff.foodMul * bb.agricultureMul * size.foodMul * spec.foodMul * harvestWeatherMul) + granaryFood;
+  const foodIncome = Math.floor(baseFood * eff.foodMul * bb.agricultureMul * size.foodMul * specFoodMul * harvestWeatherMul) + granaryFood;
 
-  const foodUpkeep = Math.ceil(city.troops * FOOD_PER_TROOP_PER_SEASON);
+  // 醃漬軍糧 — a salt-rich realm cures rations that travel and keep, stretching
+  // the grain each soldier eats (lower upkeep). specialty.realm.foodUpkeepMul < 1.
+  const foodUpkeep = Math.ceil(city.troops * FOOD_PER_TROOP_PER_SEASON * (specialty?.realm?.foodUpkeepMul ?? 1));
 
   let desertion = 0;
   const netFood = city.food + foodIncome - foodUpkeep;
@@ -145,22 +181,33 @@ export function tickCityEconomy(
   // and a settled populace swell the herd. Only owned, non-ruined horse-lands breed.
   let warhorseBreed = 0;
   if (city.ownerForceId && !city.ruined && CITY_SPECIALTY[city.id] === 'horse') {
-    warhorseBreed = Math.round(40 * bb.recruitMul * (0.6 + city.loyalty / 200));
+    warhorseBreed = Math.round(40 * bb.recruitMul * specWeight * (0.6 + city.loyalty / 200));
   }
   // 冶鐵 — iron-country cities smelt iron each season (a settled, busy populace
   // works the forges harder). Only owned, non-ruined iron-lands smelt.
   let ironSmelt = 0;
   if (city.ownerForceId && !city.ruined && CITY_SPECIALTY[city.id] === 'iron') {
-    ironSmelt = Math.round(45 * Math.min(1.5, bb.commerceMul) * (0.6 + city.loyalty / 200));
+    ironSmelt = Math.round(45 * Math.min(1.5, bb.commerceMul) * specWeight * (0.6 + city.loyalty / 200));
+  }
+  // 採藥 — herb-country cities gather medicine each season (a settled populace
+  // tends the 藥圃 harder). Spent automatically to heal the wounded + fight plague.
+  let medicineGather = 0;
+  if (city.ownerForceId && !city.ruined && CITY_SPECIALTY[city.id] === 'herb') {
+    medicineGather = Math.round(35 * specWeight * (0.6 + city.loyalty / 200));
   }
 
   return {
     goldIncome, foodIncome, foodUpkeep, desertion,
     loyaltyDelta: eff.loyaltyDelta + taxEff.loyalty + droughtLoyalty + bb.loyaltyPerSeason,
     populationDelta: popDelta,
-    policyBadges: taxEff.loyalty !== 0 ? [...eff.badges, taxEff.zh] : eff.badges,
+    policyBadges: [
+      ...eff.badges,
+      ...(taxEff.loyalty !== 0 ? [taxEff.zh] : []),
+      ...(hasSpecialist ? ['専才坐鎮'] : []),
+    ],
     warhorseBreed,
     ironSmelt,
+    medicineGather,
   };
 }
 

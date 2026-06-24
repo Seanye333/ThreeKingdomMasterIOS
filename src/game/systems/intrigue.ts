@@ -154,6 +154,9 @@ export interface PlagueInput {
   officers: Record<EntityId, Officer>;
   currentYear: number;
   rng: () => number;
+  /** 採藥備疫 — per-force 0..0.6 fraction of a plague's toll shrugged off by a
+   *  herb-rich realm (population/troop loss, loyalty hit, officer deaths). */
+  plagueResist?: Record<EntityId, number>;
 }
 
 export interface PlagueOutput {
@@ -198,19 +201,24 @@ export function rollPlagueOutbreak(input: PlagueInput): PlagueOutput {
   }
 
   for (const c of struck) {
-    const popLost = Math.floor(c.population * (0.06 + input.rng() * 0.08));
-    const troopLost = Math.floor(c.troops * 0.07);
+    // 採藥備疫 — the owner's herb stockpile/infrastructure blunts the toll.
+    const resist = (c.ownerForceId && input.plagueResist?.[c.ownerForceId]) || 0;
+    const keep = 1 - resist;
+    const popLost = Math.floor(c.population * (0.06 + input.rng() * 0.08) * keep);
+    const troopLost = Math.floor(c.troops * 0.07 * keep);
+    const loyaltyHit = resist >= 0.4 ? 2 : 4;
     cities[c.id] = {
       ...cities[c.id],
       population: Math.max(0, c.population - popLost),
       troops: Math.max(0, c.troops - troopLost),
-      loyalty: Math.max(0, c.loyalty - 4),
+      loyalty: Math.max(0, c.loyalty - loyaltyHit),
     };
+    const relief = resist > 0 ? `(藥材備疫 −${Math.round(resist * 100)}%)` : '';
     entries.push({
       cityId: c.id,
       kind: 'plague',
-      text: `瘟疫蔓延 ${c.name.zh}. −${popLost.toLocaleString()} 民, −${troopLost.toLocaleString()} 兵, 民心 −4.`,
-      textZh: `瘟疫蔓延於${c.name.zh}。民 −${popLost.toLocaleString()}、兵 −${troopLost.toLocaleString()}、民心 −4。`,
+      text: `瘟疫蔓延 ${c.name.zh}. −${popLost.toLocaleString()} 民, −${troopLost.toLocaleString()} 兵, 民心 −${loyaltyHit}. ${relief}`,
+      textZh: `瘟疫蔓延於${c.name.zh}。民 −${popLost.toLocaleString()}、兵 −${troopLost.toLocaleString()}、民心 −${loyaltyHit}。${relief}`,
     });
   }
 
@@ -229,6 +237,10 @@ export function rollPlagueOutbreak(input: PlagueInput): PlagueOutput {
     let chance = 0.04;
     if (age > 55) chance += (age - 55) * 0.01;
     if (o.stats.charisma < 50) chance += (50 - o.stats.charisma) * 0.005;
+    // 良醫救治 — a herb-rich realm's physicians pull more of the stricken through.
+    const cityResist = (o.locationCityId && cities[o.locationCityId]?.ownerForceId
+      && input.plagueResist?.[cities[o.locationCityId].ownerForceId!]) || 0;
+    chance *= 1 - cityResist;
     if (input.rng() < chance) {
       officers[o.id] = { ...o, status: 'dead', task: null };
       const poem = getDeathPoem(o.id);

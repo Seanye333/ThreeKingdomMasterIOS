@@ -23,7 +23,7 @@ export function ConvoyModal({ onClose }: { onClose: () => void }) {
   );
 
   const cargoText = (c: typeof rows[number]) =>
-    [c.food > 0 ? `糧 ${c.food.toLocaleString()}` : '', c.gold > 0 ? `金 ${c.gold.toLocaleString()}` : '', c.troops > 0 ? `兵 ${c.troops.toLocaleString()}` : '', (c.warhorses ?? 0) > 0 ? `馬 ${(c.warhorses ?? 0).toLocaleString()}` : '', (c.iron ?? 0) > 0 ? `鐵 ${(c.iron ?? 0).toLocaleString()}` : '']
+    [c.food > 0 ? `糧 ${c.food.toLocaleString()}` : '', c.gold > 0 ? `金 ${c.gold.toLocaleString()}` : '', c.troops > 0 ? `兵 ${c.troops.toLocaleString()}` : '', (c.warhorses ?? 0) > 0 ? `馬 ${(c.warhorses ?? 0).toLocaleString()}` : '', (c.iron ?? 0) > 0 ? `鐵 ${(c.iron ?? 0).toLocaleString()}` : '', (c.medicine ?? 0) > 0 ? `藥 ${(c.medicine ?? 0).toLocaleString()}` : '']
       .filter(Boolean).join(' · ') || '—';
 
   return (

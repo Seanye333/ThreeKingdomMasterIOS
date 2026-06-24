@@ -1,6 +1,6 @@
 import type { City, EntityId, Officer } from '../types';
 import { FOOD_PER_TROOP_PER_SEASON } from './economy';
-import { WARHORSE_CITY_CAP, IRON_CITY_CAP } from './market';
+import { WARHORSE_CITY_CAP, IRON_CITY_CAP, MEDICINE_CITY_CAP } from './market';
 
 /* ─── 押運武将 — a convoy is run by an officer, and his measure decides how
    much it can haul and how fast. 政治 (administration) sets the load a column
@@ -90,6 +90,8 @@ export interface Convoy {
   warhorses?: number;
   /** 鐵 — iron shipped from iron-country to stock at the destination. */
   iron?: number;
+  /** 藥材 — medicine shipped from herb-country to stock at the destination. */
+  medicine?: number;
   seasonsRemaining: number;
   totalSeasons: number;
   /** 漕運 — shipped by sea/river between linked ports: faster, less spoilage,
@@ -131,6 +133,7 @@ export function stepConvoys(
     if (dest && dest.ownerForceId === c.forceId) {
       const horses = c.warhorses ?? 0;
       const ore = c.iron ?? 0;
+      const med = c.medicine ?? 0;
       nextCities = {
         ...nextCities,
         [c.toCityId]: {
@@ -140,6 +143,7 @@ export function stepConvoys(
           troops: dest.troops + c.troops,
           ...(horses > 0 ? { warhorses: Math.min(WARHORSE_CITY_CAP, (dest.warhorses ?? 0) + horses) } : {}),
           ...(ore > 0 ? { iron: Math.min(IRON_CITY_CAP, (dest.iron ?? 0) + ore) } : {}),
+          ...(med > 0 ? { medicine: Math.min(MEDICINE_CITY_CAP, (dest.medicine ?? 0) + med) } : {}),
         },
       };
       arrivals.push({ convoy: c, toName: dest.name.zh });
