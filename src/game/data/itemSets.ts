@@ -144,6 +144,27 @@ export const ITEM_SETS: ItemSet[] = [
   { id: 'laodang-yizhuang',name: { zh: '老當益壯', en: 'Old but Vigorous' },       members: ['tietai-gong', 'lao-dang-yi-zhuang', 'wu-hu-shang-jiang'],         powerBonus: 0.13, color: '#c9a64e' },
   { id: 'wolong',         name: { zh: '臥龍',     en: 'The Crouching Dragon' },    members: ['bagua-robe', 'wooden-ox', 'zhuge-liang-lun-jin'], powerBonus: 0.13, color: '#7ed68a' },
   { id: 'jizhi-jiangwei', name: { zh: '繼志姜維', en: "Jiang Wei's Inheritance" }, members: ['bingfa-ershisi', 'jiu-fa-zhong-yuan'],           powerBonus: 0.10, color: '#9fd0c0' },
+  // ── 群雄 + 歷代英傑套 — 三國諸雄 + 楚漢/隋唐/戰國 名將謀臣(皆其標配) ──
+  // 三國群雄
+  { id: 'weiwu-hegemony', name: { zh: '魏武霸業', en: "Cao Cao's Hegemony" },      members: ['yitian', 'jue-ying', 'cao-cao-wei-wang-fu'],      powerBonus: 0.14, color: '#cfd8e0' },
+  { id: 'han-zhaolie',    name: { zh: '漢昭烈',   en: 'Liu Bei the Glorious' },    members: ['twin-swords', 'bi-rou-fu-sheng', 'liu-bei-shu-ji'], powerBonus: 0.12, color: '#d4a84a' },
+  { id: 'jiangdong-tiger',name: { zh: '江東猛虎', en: 'Tiger of Jiangdong' },     members: ['imperial-seal', 'sun-jian-jin-pao'],             powerBonus: 0.12, color: '#c87850' },
+  { id: 'baima-yicong',   name: { zh: '白馬義從', en: 'White-Horse Volunteers' },  members: ['bai-ma-yi-cong', 'gongsun-zan-bai-pao'],         powerBonus: 0.11, color: '#dfe6ec' },
+  { id: 'xiliang-mateng', name: { zh: '西涼馬騰', en: 'Ma Teng of Xiliang' },      members: ['ma-teng-xi-liang-qiang', 'ma-teng-bao-jian'],    powerBonus: 0.11, color: '#c8884e' },
+  { id: 'dangkou-chengpu',name: { zh: '蕩寇程普', en: 'Cheng Pu the Veteran' },    members: ['tiejisha-mao', 'cheng-pu-fu-jie'],               powerBonus: 0.10, color: '#8896a4' },
+  { id: 'lingjun-liuxiang',name: { zh: '令君留香', en: "Xun Yu's Fragrance" },     members: ['xun-ling-xiang', 'xun-yu-yu-pei'],               powerBonus: 0.10, color: '#88b7e8' },
+  // 楚漢
+  { id: 'xichu-bawang',   name: { zh: '西楚霸王', en: 'Hegemon-King of Chu' },     members: ['baqiang', 'ba-wang-bie-ji', 'xiang-yu-bing-fu'], powerBonus: 0.14, color: '#b8442e' },
+  { id: 'guoshi-wushuang',name: { zh: '國士無雙', en: 'The Matchless Hero' },      members: ['qixing-jian', 'shi-mian-mai-fu', 'han-xin-huai-yin-yin'], powerBonus: 0.14, color: '#e6c473' },
+  { id: 'yunchou-weiwo',  name: { zh: '運籌帷幄', en: 'Master of Strategy' },      members: ['yun-chou-wei-wo', 'zhang-liang-pei-jian'],       powerBonus: 0.12, color: '#88b7e8' },
+  { id: 'han-gaozu',      name: { zh: '漢高祖',   en: 'Founder of Han' },          members: ['chixiao-jian', 'da-feng-ge', 'han-gaozu-zhao'],  powerBonus: 0.12, color: '#d4a84a' },
+  // 隋唐
+  { id: 'tian-kehan',     name: { zh: '天可汗',   en: 'The Heavenly Khan' },       members: ['xuanyuan-jian', 'zhen-guan-zheng-yao', 'tian-ke-han'], powerBonus: 0.14, color: '#e6c473' },
+  { id: 'weiguo-gong',    name: { zh: '衛國公',   en: 'Duke of Wey (Li Jing)' },   members: ['mingguang-armor', 'wei-gong-bing-fa', 'li-jing-bing-yin'], powerBonus: 0.13, color: '#6a8fb0' },
+  { id: 'yumian-xiaohu',  name: { zh: '玉面虓虎', en: 'Yuchi Gong the Fierce' },   members: ['lion-helm', 'yuchi-gong-bian'],                  powerBonus: 0.11, color: '#8896a4' },
+  // 戰國
+  { id: 'shangyang-reform',name: { zh: '商鞅變法', en: "Shang Yang's Reforms" },   members: ['shangjun-shu', 'xi-mu-li-xin', 'shang-yang-bian-fa-shi'], powerBonus: 0.11, color: '#a0c8e0' },
+  { id: 'bingsheng-sunbin',name: { zh: '兵聖孫臏', en: 'Sun Bin the War-Sage' },   members: ['sunbin-bingfa', 'sun-bin-bin-jiao'],             powerBonus: 0.11, color: '#9fd0c0' },
 ];
 
 /** The sets an officer has fully assembled in their equipment. */
