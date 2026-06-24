@@ -47,7 +47,7 @@ import { EDICTS_BY_KIND, IMPERIAL_RANKS_BY_ID } from '../data/imperial';
 import { ESPIONAGE_DEFS_BY_KIND } from '../data/espionage';
 import { ITEMS_BY_ID, refineCost, REFINE_MAX, setRefineRegistry, itemRarity,
   BREAKTHROUGH_MAX, breakthroughCost as itemBreakthroughCost, socketsFor, GEMS_BY_ID,
-  setBreakthroughRegistry, setGemRegistry } from '../data/items';
+  GEM_FUSION, GEM_FUSION_COST, setBreakthroughRegistry, setGemRegistry } from '../data/items';
 import { marchDurationFor } from '../data/cities';
 import { terrainRoute, positionAlongRoute, marchDestCoords } from '../data/territories';
 import { cityPos, CITY_GEO_OVERRIDES } from '../data/cityGeo';
@@ -708,6 +708,8 @@ interface GameStore extends GameState {
   socketGem: (itemId: EntityId, gemId: EntityId) => { ok: boolean; reason?: string; cost?: number };
   /** 卸下寶石 — pry a socketed gem out (no refund). */
   unsocketGem: (itemId: EntityId, index: number) => { ok: boolean; reason?: string };
+  /** 寶石合成 — fuse 3 stocked gems into 1 of the next grade. */
+  fuseGems: (gemId: EntityId) => { ok: boolean; reason?: string; gem?: EntityId };
   /** 敵軍軍備 — seed AI-held gear with 精煉/突破/鑲嵌 scaled by difficulty. */
   seedAiGear: () => void;
   acknowledgeAchievements: () => void;
@@ -7356,6 +7358,21 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         setGemRegistry(itemGems);
         set({ itemGems });
         return { ok: true };
+      },
+
+      fuseGems: (gemId) => {
+        const state = get();
+        const out = GEM_FUSION[gemId];
+        if (!out) return { ok: false, reason: 'no-recipe' };
+        if ((state.gemStock[gemId] ?? 0) < GEM_FUSION_COST) return { ok: false, reason: 'no-gems' };
+        // 寶石合成 — 3 of a grade → 1 of the next.
+        const gemStock = {
+          ...state.gemStock,
+          [gemId]: (state.gemStock[gemId] ?? 0) - GEM_FUSION_COST,
+          [out]: (state.gemStock[out] ?? 0) + 1,
+        };
+        set({ gemStock });
+        return { ok: true, gem: out };
       },
 
       acknowledgeAchievements: () => set({ recentAchievementUnlocks: [] }),

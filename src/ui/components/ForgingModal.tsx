@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { FORGE_RECIPES, ITEMS_BY_ID } from '../../game/data';
-import { itemRarity, itemRarityMeta } from '../../game/data/items';
+import { itemRarity, itemRarityMeta, GEMS, GEMS_BY_ID, GEM_FUSION, GEM_FUSION_COST } from '../../game/data/items';
 import { dismantleYield } from '../../game/systems/forging';
 import { useGameStore } from '../../game/state/store';
 import { playSfx } from '../../game/systems/sound';
@@ -82,6 +82,8 @@ export function ForgingModal({ onClose }: Props) {
   const itemRefinements = useGameStore((s) => s.itemRefinements);
   const forgeItem = useGameStore((s) => s.forgeItem);
   const dismantleItem = useGameStore((s) => s.dismantleItem);
+  const gemStock = useGameStore((s) => s.gemStock);
+  const fuseGems = useGameStore((s) => s.fuseGems);
   const desc = useDesc();
 
   // Find player cities with a foundry.
@@ -319,6 +321,43 @@ export function ForgingModal({ onClose }: Props) {
                         >
                           {lang === 'en' ? 'Melt' : '熔'}
                         </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* 寶石庫存 / 合成 — gems from melts; fuse 3 → 1 next grade. */}
+              {GEMS.some((g) => (gemStock[g.id] ?? 0) > 0) && (
+                <div style={{ marginTop: '1.1rem', borderTop: '1px solid #2b3845', paddingTop: '0.8rem' }}>
+                  <div style={{ fontSize: '0.8rem', color: '#88b7e8', letterSpacing: '0.05rem', marginBottom: '0.2rem' }}>
+                    {lang === 'en' ? 'Gem Vault' : '寶石庫存'}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: '#7a8893', fontStyle: 'italic', marginBottom: '0.5rem' }}>
+                    {lang === 'en' ? `Fuse ${GEM_FUSION_COST} of a grade into 1 of the next.` : `同階寶石 ${GEM_FUSION_COST} 顆合成 1 顆上階。`}
+                  </div>
+                  {GEMS.filter((g) => (gemStock[g.id] ?? 0) > 0).map((g) => {
+                    const n = gemStock[g.id] ?? 0;
+                    const out = GEM_FUSION[g.id];
+                    const canFuse = !!out && n >= GEM_FUSION_COST;
+                    return (
+                      <div key={g.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#10161e', border: '1px solid #2b3845', padding: '0.35rem 0.7rem', marginBottom: '0.3rem' }}>
+                        <div style={{ fontSize: '0.82rem' }}>
+                          <span style={{ width: 9, height: 9, borderRadius: 2, background: g.color, display: 'inline-block', marginRight: '0.4rem', boxShadow: '0 0 3px ' + g.color }} />
+                          <span style={{ color: g.color }}>{lang === 'en' ? g.name.en : g.name.zh}</span>
+                          <span style={{ color: '#9fb0bf' }}> ×{n}</span>
+                          {out && <span style={{ color: '#7a8893', fontSize: '0.7rem' }}> → {lang === 'en' ? GEMS_BY_ID[out].name.en : GEMS_BY_ID[out].name.zh}</span>}
+                        </div>
+                        {out && (
+                          <button
+                            onClick={() => { const r = fuseGems(g.id); if (!r.ok) alert(r.reason); }}
+                            disabled={!canFuse}
+                            title={canFuse ? undefined : (lang === 'en' ? `Need ${GEM_FUSION_COST}` : `需 ${GEM_FUSION_COST} 顆`)}
+                            style={{ background: '#10161e', border: `1px solid ${canFuse ? '#88b7e8' : '#2b3845'}`, color: canFuse ? '#88b7e8' : '#4a5662', padding: '0.2rem 0.6rem', fontFamily: 'inherit', cursor: canFuse ? 'pointer' : 'not-allowed', fontSize: '0.78rem' }}
+                          >
+                            {lang === 'en' ? 'Fuse' : '合成'}
+                          </button>
+                        )}
                       </div>
                     );
                   })}

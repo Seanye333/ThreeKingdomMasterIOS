@@ -49,8 +49,13 @@ describe('forgeQualityPlus', () => {
     expect(forgeQualityPlus({ smithIntelligence: 30, inventive: true, refineUpgradeChance: 0, rng: noLuck })).toBe(1);
   });
 
-  it('a masterwork roll adds one grade, capped at +3', () => {
-    expect(forgeQualityPlus({ smithIntelligence: 95, inventive: true, refineUpgradeChance: 1, rng: alwaysLuck })).toBe(3);
+  it('a masterwork roll adds one grade (capped at +3 without a crit)', () => {
+    // rng 0.5 clears the masterwork roll but not the rare 神品暴擊 (chance ≤ 0.07).
+    expect(forgeQualityPlus({ smithIntelligence: 95, inventive: true, refineUpgradeChance: 1, rng: () => 0.5 })).toBe(3);
+  });
+
+  it('神品暴擊 — a rare crit tempers a 4th grade beyond the +3 cap', () => {
+    expect(forgeQualityPlus({ smithIntelligence: 95, inventive: true, refineUpgradeChance: 1, rng: alwaysLuck })).toBe(4);
   });
 });
 

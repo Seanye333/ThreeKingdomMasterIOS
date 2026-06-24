@@ -6,13 +6,19 @@ import type { Officer } from '../types';
  * top of each item's own effects. A collection meta layered on the new item
  * rarity: hunting down a full 桃園虎將 or 溫侯之配 set is its own goal.
  */
+/** What axis a set's resonance buffs. Default 'power' (raw combat power). */
+export type ItemSetEffect = 'power' | 'guard' | 'naval';
+
 export interface ItemSet {
   id: string;
   name: { zh: string; en: string };
   /** All member item ids — the bonus applies only when the officer holds them all. */
   members: string[];
-  /** Combat power bonus when the full set is equipped (e.g. 0.10 = +10%). */
+  /** Magnitude of the set's resonance (e.g. 0.10 = +10% / −10%). */
   powerBonus: number;
+  /** Which combat axis it buffs (default 'power'): 'guard' cuts own casualties,
+   *  'naval' lifts power only in water battles, 'power' is raw field power. */
+  effect?: ItemSetEffect;
   color: string;
 }
 
@@ -87,14 +93,14 @@ export const ITEM_SETS: ItemSet[] = [
     id: 'four-symbols-armor',
     name: { zh: '四象神甲', en: 'Four-Symbols Divine Armor' },
     members: ['qinglong-linjia', 'baihu-yinkai', 'zhuque-huojia', 'xuanwu-zhongjia'],
-    powerBonus: 0.14,
+    powerBonus: 0.14, effect: 'guard',
     color: '#7ed68a',
   },
   {
     id: 'iron-guard',
     name: { zh: '重鎧鐵衛', en: 'Iron Guard' },
     members: ['xuantie-zhongkai', 'luoma-banjia', 'budong-mingwang-jia'],
-    powerBonus: 0.10,
+    powerBonus: 0.10, effect: 'guard',
     color: '#8896a4',
   },
   // ── 名將全裝套 — a hero's full kit (兵器 + 坐騎 + 甲) resonates strongest ──
@@ -132,7 +138,7 @@ export const ITEM_SETS: ItemSet[] = [
   { id: 'mei-zhoulang',   name: { zh: '美周郎',   en: 'Zhou Yu the Fair' },        members: ['zhou-lang-gu-qu', 'zhou-yu-yu-shan'],            powerBonus: 0.12, color: '#7ec8e8' },
   { id: 'youping-guzhu',  name: { zh: '幼平護主', en: 'Zhou Tai the Bodyguard' },  members: ['zhouqiao-shuangdao', 'zhou-tai-xuan-jia'],       powerBonus: 0.11, color: '#8896a4' },
   { id: 'biyan-er',       name: { zh: '碧眼兒',   en: 'The Blue-Eyed Lord' },      members: ['purple-lightning', 'er-zhang-mou'],              powerBonus: 0.10, color: '#a06ed0' },
-  { id: 'kurou-ji',       name: { zh: '苦肉計',   en: "Huang Gai's Ruse" },        members: ['shuang-bian', 'zha-xiang-shu'],                  powerBonus: 0.11, color: '#5aa0c8' },
+  { id: 'kurou-ji',       name: { zh: '苦肉計',   en: "Huang Gai's Ruse" },        members: ['shuang-bian', 'zha-xiang-shu'],                  powerBonus: 0.11, effect: 'naval', color: '#5aa0c8' },
   { id: 'shibie-sanri',   name: { zh: '士別三日', en: "Lü Meng's Diligence" },     members: ['wu-xia-a-meng', 'lu-meng-jiang-shu'],            powerBonus: 0.10, color: '#7ed6a0' },
   // 魏
   { id: 'huchi',          name: { zh: '虎癡',     en: 'Xu Chu the Tiger-Fool' },   members: ['hu-chi-shuang-ji', 'xu-chu-hong-jin-pao'],       powerBonus: 0.12, color: '#c87850' },
@@ -174,8 +180,8 @@ export const ITEM_SETS: ItemSet[] = [
   { id: 'yiyu-qibing',    name: { zh: '異域奇兵', en: 'Arms of Distant Lands' },   members: ['damashige-dao', 'bosi-wandao', 'luoma-duanjian', 'weijing-zhanfu'], powerBonus: 0.12, color: '#8ee8ff' },
   { id: 'shanggu-shenshou',name: { zh: '上古神獸', en: 'The Primordial Beasts' },  members: ['yinglong-mao', 'kunpeng-shuo', 'fenghuang-gong', 'kuiniu-chui'], powerBonus: 0.13, color: '#e0623a' },
   // 鍛造甲冑收集套
-  { id: 'bailian-jingjia',name: { zh: '百鍊精甲', en: 'Hundred-Temper Plate' },    members: ['bailian-tiejia', 'wujin-lianhuan-kai', 'saitangni-kai'], powerBonus: 0.11, color: '#8896a4' },
-  { id: 'ruishou-baojia', name: { zh: '瑞獸寶甲', en: 'Auspicious-Beast Armor' },  members: ['qilin-baojia', 'fengchi-zijin-kui', 'huangjin-suozi-jia'], powerBonus: 0.12, color: '#c9a64e' },
+  { id: 'bailian-jingjia',name: { zh: '百鍊精甲', en: 'Hundred-Temper Plate' },    members: ['bailian-tiejia', 'wujin-lianhuan-kai', 'saitangni-kai'], powerBonus: 0.11, effect: 'guard', color: '#8896a4' },
+  { id: 'ruishou-baojia', name: { zh: '瑞獸寶甲', en: 'Auspicious-Beast Armor' },  members: ['qilin-baojia', 'fengchi-zijin-kui', 'huangjin-suozi-jia'], powerBonus: 0.12, effect: 'guard', color: '#c9a64e' },
   // ── 諸子百家 + 歷代名士套 — 補齊知名文臣/謀士/名士(皆其標配,多自動激活)──
   // 三國補遺
   { id: 'luxun-inferno',  name: { zh: '陸遜燒營', en: "Lu Xun's Inferno" },        members: ['yue-jue-shu', 'lu-xun-du-du-yin'],               powerBonus: 0.12, color: '#e0623a' },
@@ -202,9 +208,39 @@ export function activeItemSets(officer: Officer): ItemSet[] {
   return ITEM_SETS.filter((s) => s.members.every((m) => owned.has(m)));
 }
 
-/** 套裝共鳴 — combined combat-power multiplier from every full set an officer holds. */
+export interface ItemSetBonus {
+  /** ×power on the field (raw + naval-in-water folded in by the combat caller). */
+  powerMul: number;
+  /** ×own-casualties (≤1 — a 甲冑/守 set blunts losses). */
+  guardMul: number;
+  /** ×power applied ONLY in water battles, on top of powerMul. */
+  navalMul: number;
+}
+
+// 共鳴封頂 — multi-set stacking is summed per axis then capped, so piling several
+// sets onto one general can't snowball without bound.
+const POWER_CAP = 0.25;   // ≤ +25% raw power
+const GUARD_CAP = 0.20;   // ≤ −20% own losses
+const NAVAL_CAP = 0.30;   // ≤ +30% extra power in water
+
+/** 套裝共鳴 — aggregate every full set an officer holds, by effect axis, capped. */
+export function itemSetBonuses(officer: Officer): ItemSetBonus {
+  let power = 0, guard = 0, naval = 0;
+  for (const s of activeItemSets(officer)) {
+    switch (s.effect ?? 'power') {
+      case 'guard': guard += s.powerBonus; break;
+      case 'naval': naval += s.powerBonus; break;
+      default:      power += s.powerBonus; break;
+    }
+  }
+  return {
+    powerMul: 1 + Math.min(POWER_CAP, power),
+    guardMul: 1 - Math.min(GUARD_CAP, guard),
+    navalMul: 1 + Math.min(NAVAL_CAP, naval),
+  };
+}
+
+/** 套裝共鳴 — field-power multiplier (back-compat: power axis only, capped). */
 export function itemSetPowerMul(officer: Officer): number {
-  let mul = 1;
-  for (const s of activeItemSets(officer)) mul *= 1 + s.powerBonus;
-  return mul;
+  return itemSetBonuses(officer).powerMul;
 }

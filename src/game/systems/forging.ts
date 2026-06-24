@@ -48,7 +48,12 @@ export function forgeQualityPlus(input: {
   // 神品 — a masterwork roll can temper one extra grade in.
   const chance = (input.inventive ? 0.18 : 0.06) + input.refineUpgradeChance;
   if (rng() < chance) plus += 1;
-  return Math.min(3, plus);
+  plus = Math.min(3, plus);
+  // 神品暴擊 — a rare flash of inspiration at the anvil tempers a 4th grade in,
+  // beyond the normal cap (capped at REFINE_MAX). The forge is no longer a sure
+  // thing — every heat carries a small chance of an exceptional piece.
+  if (rng() < (input.inventive ? 0.07 : 0.04)) plus = Math.min(5, plus + 1);
+  return plus;
 }
 
 /**

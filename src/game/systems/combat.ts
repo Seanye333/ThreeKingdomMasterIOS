@@ -24,7 +24,7 @@ import { effectivePrestigeEffects } from '../data/prestige';
 import { honorificEffects } from '../data/honorifics';
 import { gradeAuraPowerMul, gradeAuraMorale, itemMasteryMul } from './gradeCombat';
 import { growthPowerMul } from './growth';
-import { itemSetPowerMul } from '../data/itemSets';
+import { itemSetBonuses } from '../data/itemSets';
 import { selectSiegeEngine } from '../data/siegeEngines';
 import {
   STRATAGEM_DEFS,
@@ -559,8 +559,13 @@ export function resolveBattle(
   const aGradeMul = gradeAuraPowerMul(attackerPool);
   const dGradeMul = gradeAuraPowerMul(defenderPool);
   // 神兵譜共鳴 — a commander bearing a full legendary set lifts the army's power.
-  const aSetMul = itemSetPowerMul(attacker.commander);
-  const dSetMul = defender.commander ? itemSetPowerMul(defender.commander) : 1;
+  // 套裝共鳴 — power axis (+ naval axis in water battles); the guard axis feeds
+  // the casualty rates below.
+  const NO_SET = { powerMul: 1, guardMul: 1, navalMul: 1 };
+  const aSet = attacker.commander ? itemSetBonuses(attacker.commander) : NO_SET;
+  const dSet = defender.commander ? itemSetBonuses(defender.commander) : NO_SET;
+  const aSetMul = aSet.powerMul * (water ? aSet.navalMul : 1);
+  const dSetMul = dSet.powerMul * (water ? dSet.navalMul : 1);
   const aPower =
     aBlended * Math.sqrt(attacker.troops) * aSkillEffects.powerMultiplier * aElitePower *
     (stratEffect.attackerPowerMul ?? 1) * aPolicy.attackMul * aTraitMods.attackMul * aComboMul *
@@ -613,9 +618,10 @@ export function resolveBattle(
   // Defensive structures on the perimeter make the attacker take more damage.
   // (attackerDamageMul < 1 = attacker hits softer → defender takes less → attacker takes MORE proportionally)
   const structureAttackerLossBoost = ctx?.attackerDamageMul ? 1 / Math.max(0.5, ctx.attackerDamageMul) : 1;
-  // 甲冑防護 — armor worn by the side's officers blunts its own casualties.
-  const aArmorMul = armorMitigationMul(attackerPool);
-  const dArmorMul = armorMitigationMul(defenderPool);
+  // 甲冑防護 — armor worn by the side's officers blunts its own casualties;
+  // a 守 set (四象神甲 etc.) on the commander adds to that.
+  const aArmorMul = armorMitigationMul(attackerPool) * aSet.guardMul;
+  const dArmorMul = armorMitigationMul(defenderPool) * dSet.guardMul;
   const aLossRate = clamp01(
     (dRatio + variance) *
       aSkillEffects.ownLossMultiplier *

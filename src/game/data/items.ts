@@ -112,13 +112,19 @@ export function itemBreakthroughLevel(itemId: string): number {
   const s = BREAKTHROUGH_REGISTRY[itemId] ?? 0;
   return s < 0 ? 0 : s > BREAKTHROUGH_MAX ? BREAKTHROUGH_MAX : s;
 }
-/** Each ★ lifts every non-zero effect by another 12% of base — stacks on 精煉. */
+/**
+ * Each ★ lifts every non-zero effect by 12% of base — stacks on 精煉 — PLUS a
+ * milestone surge at ★3 (+10%) and ★5 (+20%), so breakthrough isn't linear:
+ * reaching ★3 / ★5 is a real 質變 power spike, not just one more grade.
+ */
 function breakthroughEffects(effects: Item['effects'], stars: number): Item['effects'] {
   if (!stars) return effects;
+  const milestone = (stars >= 5 ? 0.20 : 0) + (stars >= 3 ? 0.10 : 0);
+  const factor = 0.12 * stars + milestone;
   const out: Item['effects'] = {};
   for (const [k, v] of Object.entries(effects) as Array<[keyof Item['effects'], number | undefined]>) {
     if (!v) continue;
-    out[k] = v + Math.sign(v) * Math.max(1, Math.round(Math.abs(v) * 0.12 * stars));
+    out[k] = v + Math.sign(v) * Math.max(1, Math.round(Math.abs(v) * factor));
   }
   return out;
 }
@@ -207,6 +213,14 @@ export const GEMS: Gem[] = [
   { id: 'gem-imperial',    name: { en: 'Imperial Amethyst', zh: '帝王紫晶' }, effects: { war: 3, leadership: 3, charisma: 3 }, cost: 2000, color: '#9b59b6' },
 ];
 export const GEMS_BY_ID: Record<string, Gem> = Object.fromEntries(GEMS.map((g) => [g.id, g]));
+
+/** 寶石合成 — fuse 3 of a lower gem into 1 of the next grade (基礎 → 精良 → 完美). */
+export const GEM_FUSION: Record<string, string> = {
+  'gem-war': 'gem-war-fine',  'gem-war-fine': 'gem-war-perfect',
+  'gem-lead': 'gem-lead-fine', 'gem-lead-fine': 'gem-lead-perfect',
+};
+/** How many of the input gem one fusion consumes. */
+export const GEM_FUSION_COST = 3;
 
 // 第五批單獨成陣列 + 展開,避免巨型字面量觸發 TS2590(union too complex)。
 const FORGE_BATCH_5: Item[] = [
