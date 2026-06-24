@@ -176,6 +176,24 @@ export const ITEM_SETS: ItemSet[] = [
   // 鍛造甲冑收集套
   { id: 'bailian-jingjia',name: { zh: '百鍊精甲', en: 'Hundred-Temper Plate' },    members: ['bailian-tiejia', 'wujin-lianhuan-kai', 'saitangni-kai'], powerBonus: 0.11, color: '#8896a4' },
   { id: 'ruishou-baojia', name: { zh: '瑞獸寶甲', en: 'Auspicious-Beast Armor' },  members: ['qilin-baojia', 'fengchi-zijin-kui', 'huangjin-suozi-jia'], powerBonus: 0.12, color: '#c9a64e' },
+  // ── 諸子百家 + 歷代名士套 — 補齊知名文臣/謀士/名士(皆其標配,多自動激活)──
+  // 三國補遺
+  { id: 'luxun-inferno',  name: { zh: '陸遜燒營', en: "Lu Xun's Inferno" },        members: ['yue-jue-shu', 'lu-xun-du-du-yin'],               powerBonus: 0.12, color: '#e0623a' },
+  { id: 'yibo-yuntian',   name: { zh: '義薄雲天', en: "Guan Yu's Righteousness" },  members: ['spring-autumn', 'han-shou-ting-hou-yin'],        powerBonus: 0.11, color: '#b8442e' },
+  // 戰國諸子
+  { id: 'quyuan-lisao',   name: { zh: '屈原離騷', en: "Qu Yuan's Lament" },         members: ['li-sao', 'tian-wen', 'jiu-ge'],                  powerBonus: 0.11, color: '#7ec8a0' },
+  { id: 'hanfei-fashu',   name: { zh: '韓非法術', en: "Han Fei's Legalism" },       members: ['hanfeizi', 'shuo-nan', 'wu-du'],                 powerBonus: 0.11, color: '#a0c8e0' },
+  { id: 'mojia-jianai',   name: { zh: '墨家兼愛', en: 'The Mohist School' },        members: ['mojing', 'mo-zi-shou-cheng-qi', 'mo-zi-tong-ren'], powerBonus: 0.12, color: '#8896a4' },
+  { id: 'yasheng-mengzi', name: { zh: '亞聖孟子', en: 'Mencius the Second Sage' },  members: ['meng-zi', 'mengzi-shu-jian'],                    powerBonus: 0.10, color: '#7ed68a' },
+  { id: 'xunzi-xinge',    name: { zh: '荀子勸學', en: "Xunzi's Teaching" },         members: ['xun-zi', 'xun-zi-jian'],                         powerBonus: 0.10, color: '#9fd0c0' },
+  { id: 'wanbi-guizhao',  name: { zh: '完璧歸趙', en: 'The Returned Jade' },        members: ['wan-bi-gui-zhao', 'mian-chi-hui'],               powerBonus: 0.11, color: '#cfd8e0' },
+  { id: 'yueyi-faqi',     name: { zh: '樂毅伐齊', en: "Yue Yi's Campaign" },        members: ['yueyi-lun', 'bao-yan-hui-wang-shu'],             powerBonus: 0.11, color: '#c9a64e' },
+  // 唐代名士
+  { id: 'shixian-libai',  name: { zh: '詩仙李白', en: 'Li Bai the Banished Immortal' }, members: ['jiang-jin-jiu', 'shu-dao-nan', 'li-bai-bao-jian'], powerBonus: 0.12, color: '#88b7e8' },
+  { id: 'shisheng-dufu',  name: { zh: '詩聖杜甫', en: 'Du Fu the Poet-Sage' },      members: ['chun-wang', 'bing-che-xing', 'du-fu-zhu-bi'],    powerBonus: 0.10, color: '#a0b0bf' },
+  { id: 'wuzhao-stele',   name: { zh: '武曌稱帝', en: "Wu Zetian's Reign" },        members: ['wuzi-bei', 'wu-zetian-jin-ce', 'shang-guan-wan-er'], powerBonus: 0.12, color: '#c178c7' },
+  { id: 'yanjin-liugu',   name: { zh: '顏筋柳骨', en: 'Yan Zhenqing the Loyal' },   members: ['ji-zhi-wen-gao', 'duo-bao-ta-bei', 'yan-zhenqing-yin'], powerBonus: 0.11, color: '#d4a84a' },
+  { id: 'shifo-wangwei',  name: { zh: '詩佛王維', en: 'Wang Wei the Poet-Buddha' }, members: ['wang-chuan-tu', 'shan-ju-qiu-ming'],             powerBonus: 0.10, color: '#7ed6a0' },
 ];
 
 /** The sets an officer has fully assembled in their equipment. */
