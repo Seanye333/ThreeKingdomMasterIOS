@@ -165,6 +165,17 @@ export const ITEM_SETS: ItemSet[] = [
   // 戰國
   { id: 'shangyang-reform',name: { zh: '商鞅變法', en: "Shang Yang's Reforms" },   members: ['shangjun-shu', 'xi-mu-li-xin', 'shang-yang-bian-fa-shi'], powerBonus: 0.11, color: '#a0c8e0' },
   { id: 'bingsheng-sunbin',name: { zh: '兵聖孫臏', en: 'Sun Bin the War-Sage' },   members: ['sunbin-bingfa', 'sun-bin-bin-jiao'],             powerBonus: 0.11, color: '#9fd0c0' },
+  // ── 鍛造收集套 — forge a themed batch of 神兵 then assemble them on one general.
+  //    Purely aspirational (no auto-active); the reward for the 鍛造 grind. ──
+  { id: 'liangshan',      name: { zh: '梁山聚義', en: 'Heroes of Liangshan' },     members: ['huyanzhuo-shuangbian', 'suochao-jinzhan-fu', 'dongping-shuangqiang', 'lujunyi-qiang', 'shijin-baohuan-dao'], powerBonus: 0.15, color: '#7ed68a' },
+  { id: 'yuejia-jun',     name: { zh: '岳家軍',   en: 'The Yue Family Army' },     members: ['gaochong-zanjin-qiang', 'yueyun-yinchui', 'niugao-shuangjian', 'yangzaixing-qiang'], powerBonus: 0.13, color: '#c9a64e' },
+  { id: 'tianxia-mingren',name: { zh: '天下名刃', en: 'Famed Blades of Japan' },   members: ['tongzieqie', 'guiwan-guogang', 'qingling-qie', 'riben-hao'], powerBonus: 0.13, color: '#cfd8e0' },
+  { id: 'zhuxian-array',  name: { zh: '誅仙劍陣', en: 'Zhuxian Sword Formation' }, members: ['zhuxian-fumo-jian', 'lu-xian-jian', 'xianxian-jian', 'juexian-jian'], powerBonus: 0.15, color: '#b07cd0' },
+  { id: 'yiyu-qibing',    name: { zh: '異域奇兵', en: 'Arms of Distant Lands' },   members: ['damashige-dao', 'bosi-wandao', 'luoma-duanjian', 'weijing-zhanfu'], powerBonus: 0.12, color: '#8ee8ff' },
+  { id: 'shanggu-shenshou',name: { zh: '上古神獸', en: 'The Primordial Beasts' },  members: ['yinglong-mao', 'kunpeng-shuo', 'fenghuang-gong', 'kuiniu-chui'], powerBonus: 0.13, color: '#e0623a' },
+  // 鍛造甲冑收集套
+  { id: 'bailian-jingjia',name: { zh: '百鍊精甲', en: 'Hundred-Temper Plate' },    members: ['bailian-tiejia', 'wujin-lianhuan-kai', 'saitangni-kai'], powerBonus: 0.11, color: '#8896a4' },
+  { id: 'ruishou-baojia', name: { zh: '瑞獸寶甲', en: 'Auspicious-Beast Armor' },  members: ['qilin-baojia', 'fengchi-zijin-kui', 'huangjin-suozi-jia'], powerBonus: 0.12, color: '#c9a64e' },
 ];
 
 /** The sets an officer has fully assembled in their equipment. */
