@@ -126,6 +126,24 @@ export const ITEM_SETS: ItemSet[] = [
     powerBonus: 0.12,
     color: '#e6c473',
   },
+  // ── 派系平衡名將套 — built from each hero's CANONICAL gear (mostly auto-active),
+  //    so 吳/魏/蜀 all get signature 羁绊, across 猛將/謀士/弓手/水戰 roles. ──
+  // 吳
+  { id: 'mei-zhoulang',   name: { zh: '美周郎',   en: 'Zhou Yu the Fair' },        members: ['zhou-lang-gu-qu', 'zhou-yu-yu-shan'],            powerBonus: 0.12, color: '#7ec8e8' },
+  { id: 'youping-guzhu',  name: { zh: '幼平護主', en: 'Zhou Tai the Bodyguard' },  members: ['zhouqiao-shuangdao', 'zhou-tai-xuan-jia'],       powerBonus: 0.11, color: '#8896a4' },
+  { id: 'biyan-er',       name: { zh: '碧眼兒',   en: 'The Blue-Eyed Lord' },      members: ['purple-lightning', 'er-zhang-mou'],              powerBonus: 0.10, color: '#a06ed0' },
+  { id: 'kurou-ji',       name: { zh: '苦肉計',   en: "Huang Gai's Ruse" },        members: ['shuang-bian', 'zha-xiang-shu'],                  powerBonus: 0.11, color: '#5aa0c8' },
+  { id: 'shibie-sanri',   name: { zh: '士別三日', en: "Lü Meng's Diligence" },     members: ['wu-xia-a-meng', 'lu-meng-jiang-shu'],            powerBonus: 0.10, color: '#7ed6a0' },
+  // 魏
+  { id: 'huchi',          name: { zh: '虎癡',     en: 'Xu Chu the Tiger-Fool' },   members: ['hu-chi-shuang-ji', 'xu-chu-hong-jin-pao'],       powerBonus: 0.12, color: '#c87850' },
+  { id: 'xiaoyaojin',     name: { zh: '逍遙津',   en: 'Hero of Xiaoyao Ford' },    members: ['xiaoyaojin-ji', 'ba-bai-po-shi-wan'],            powerBonus: 0.12, color: '#5a8acb' },
+  { id: 'guzhi-elai',     name: { zh: '古之惡來', en: 'Evil Lai Reborn' },         members: ['guzhi-shuang-ji', 'shuang-tie-ji-ba-shi'],       powerBonus: 0.11, color: '#b8442e' },
+  { id: 'qiaobian-zhanghe',name: { zh: '巧變張郃', en: 'Zhang He the Adaptable' }, members: ['qiao-bian-bingfa', 'jie-ting-po-ma-su'],         powerBonus: 0.10, color: '#88b7e8' },
+  // 蜀
+  { id: 'jin-machao',     name: { zh: '錦馬超',   en: 'Ma Chao the Splendid' },    members: ['machao-yinlong-qiang', 'xi-liang-tie-qi', 'ma-chao-shi-zi-kui'], powerBonus: 0.14, color: '#cfd8e0' },
+  { id: 'laodang-yizhuang',name: { zh: '老當益壯', en: 'Old but Vigorous' },       members: ['tietai-gong', 'lao-dang-yi-zhuang', 'wu-hu-shang-jiang'],         powerBonus: 0.13, color: '#c9a64e' },
+  { id: 'wolong',         name: { zh: '臥龍',     en: 'The Crouching Dragon' },    members: ['bagua-robe', 'wooden-ox', 'zhuge-liang-lun-jin'], powerBonus: 0.13, color: '#7ed68a' },
+  { id: 'jizhi-jiangwei', name: { zh: '繼志姜維', en: "Jiang Wei's Inheritance" }, members: ['bingfa-ershisi', 'jiu-fa-zhong-yuan'],           powerBonus: 0.10, color: '#9fd0c0' },
 ];
 
 /** The sets an officer has fully assembled in their equipment. */
