@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { planAiForging } from './aiForge';
 import { ITEMS_BY_ID } from '../data/items';
+import { ITEM_SETS } from '../data/itemSets';
 import type { Officer, City, Building } from '../types';
 
 function off(id: string, forceId: string | null, war: number, lead: number, cityId: string, equipment: string[] = []): Officer {
@@ -56,6 +57,26 @@ describe('planAiForging', () => {
       buildings: [foundry('ye')], lostItems: [], playerForceId: 'shu', rng: always,
     });
     expect(actions.length).toBe(0);
+  });
+
+  it('completes a forge set — an officer holding 1 member gets the next forged for them', () => {
+    // Find an iron-only collection set (every member is an empty-ingredient iron recipe).
+    const ironResults = new Set(
+      // re-derive via items: forgeOnly armor/weapon that are iron recipes is hard here,
+      // so just pick the 四象神甲 set whose members are all forge-only armor.
+      ITEM_SETS.find((s) => s.id === 'four-symbols-armor')!.members,
+    );
+    const set = ITEM_SETS.find((s) => s.id === 'four-symbols-armor')!;
+    const [first, ...rest] = set.members;
+    const actions = planAiForging({
+      officers: rec(off('ai-1', 'wei', 80, 95, 'ye', [first])), // already holds 1 member
+      cities: rcc(city('ye', 'wei', 9000, 3000)),
+      buildings: [foundry('ye')], lostItems: [], playerForceId: 'shu', rng: always,
+    });
+    expect(actions.length).toBe(1);
+    // The forged item should be another (missing) member of the same set.
+    expect(rest).toContain(actions[0].itemId);
+    void ironResults;
   });
 
   it('gives a marshal armor and a fighter a weapon', () => {

@@ -29,6 +29,15 @@ describe('itemSetBonuses — differentiated effect axes', () => {
     expect(b.powerMul).toBe(1);
   });
 
+  it('a civil set lifts civilMul (internal affairs), not combat', () => {
+    const set = ITEM_SETS.find((s) => s.effect === 'civil');
+    if (!set) return;
+    const b = itemSetBonuses(wearer(set.members));
+    expect(b.civilMul).toBeGreaterThan(1);
+    expect(b.powerMul).toBe(1);
+    expect(b.guardMul).toBe(1);
+  });
+
   it('stacking many power sets is capped at +25%', () => {
     const allPowerMembers = ITEM_SETS
       .filter((s) => (s.effect ?? 'power') === 'power')

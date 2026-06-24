@@ -1,6 +1,7 @@
 import type { Officer, City, Building, EntityId } from '../types';
 import { FORGE_RECIPES } from '../data/forging';
 import { ITEMS_BY_ID } from '../data/items';
+import { ITEM_SETS } from '../data/itemSets';
 
 export interface AiForgeAction {
   forceId: EntityId;
@@ -17,6 +18,13 @@ const MIN_FOUNDRY_LEVEL = 2;
  *  Each result is still globally unique, so a recipe is only usable while its
  *  result is not already in play. */
 const IRON_RECIPES = FORGE_RECIPES.filter((r) => (r.ironCost ?? 0) > 0 && r.ingredients.length === 0);
+const IRON_RECIPE_BY_RESULT: Record<string, typeof IRON_RECIPES[number]> = Object.fromEntries(
+  IRON_RECIPES.map((r) => [r.resultItemId, r]),
+);
+const IRON_RESULTS = new Set(IRON_RECIPES.map((r) => r.resultItemId));
+/** Collection sets the AI can fully forge itself — every member is an iron recipe
+ *  (四象神甲 / 重鎧鐵衛 / 奧林帕斯 / 異域奇兵 …). The AI assembles these on a champion. */
+const AI_FORGE_SETS = ITEM_SETS.filter((s) => s.members.every((m) => IRON_RESULTS.has(m)));
 
 /**
  * 敵國鑄兵 — plan one forge per AI force per call: a foundry city with the gold +
@@ -67,32 +75,57 @@ export function planAiForging(input: {
     if (!cityId) continue;
     const city = input.cities[cityId];
     const level = foundryLevel[cityId];
+    const forgeable = (id: string) => {
+      const r = IRON_RECIPE_BY_RESULT[id];
+      return !!r && r.minFoundryLevel <= level && !inPlay.has(id);
+    };
 
-    // The force's strongest officer stationed here who holds no forged 神兵 yet.
-    const officer = Object.values(input.officers)
-      .filter((o) => o.forceId === forceId && o.locationCityId === cityId && o.status !== 'dead'
-        && !o.equipment.some((id) => ITEMS_BY_ID[id]?.forgeOnly))
-      .sort((a, b) => (b.stats.war + b.stats.leadership) - (a.stats.war + a.stats.leadership))[0];
-    if (!officer) continue;
+    // Candidate champions: the force's officers stationed here, strongest first.
+    const roster = Object.values(input.officers)
+      .filter((o) => o.forceId === forceId && o.locationCityId === cityId && o.status !== 'dead')
+      .sort((a, b) => (b.stats.war + b.stats.leadership) - (a.stats.war + a.stats.leadership));
 
-    // A marshal (lead-leaning) gets armor; a fighter gets a weapon.
-    const wantArmor = officer.stats.leadership > officer.stats.war;
-    const candidates = IRON_RECIPES.filter((r) => {
-      if (r.minFoundryLevel > level) return false;
-      if (inPlay.has(r.resultItemId)) return false;
-      const it = ITEMS_BY_ID[r.resultItemId];
-      return wantArmor ? it.kind === 'armor' : it.kind === 'weapon';
-    });
-    // Fall back to any affordable, available recipe if the preferred kind is taken.
-    const pool = candidates.length > 0 ? candidates
-      : IRON_RECIPES.filter((r) => r.minFoundryLevel <= level && !inPlay.has(r.resultItemId));
-    const recipe = pool.sort((a, b) => b.goldCost - a.goldCost)[0]; // their best affordable
-    if (!recipe) continue;
+    // Pick the first champion that yields a forgeable item, biasing toward
+    // COMPLETING (or starting) an iron collection set on that one officer.
+    let chosen: { officer: Officer; itemId: string } | undefined;
+    for (const o of roster) {
+      const owned = new Set(o.equipment);
+      // (a) 補全在鑄之套 — a set this officer already has ≥1 member of, incomplete.
+      const inProgress = AI_FORGE_SETS
+        .map((s) => ({ s, have: s.members.filter((m) => owned.has(m)).length }))
+        .filter((x) => x.have > 0 && x.have < x.s.members.length
+          && x.s.members.some((m) => !owned.has(m) && forgeable(m)))
+        .sort((a, b) => b.have - a.have)[0];
+      if (inProgress) {
+        const next = inProgress.s.members.find((m) => !owned.has(m) && forgeable(m))!;
+        chosen = { officer: o, itemId: next };
+        break;
+      }
+      // (b) 開鑄新套 — only for an officer with no forged piece yet: start a
+      //     role-matched set (armor set for a marshal, weapon set for a fighter).
+      if (!o.equipment.some((id) => ITEMS_BY_ID[id]?.forgeOnly)) {
+        const wantArmor = o.stats.leadership > o.stats.war;
+        const startSet = AI_FORGE_SETS.find((s) => {
+          const first = s.members.find((m) => forgeable(m));
+          if (!first) return false;
+          return wantArmor ? ITEMS_BY_ID[first].kind === 'armor' : ITEMS_BY_ID[first].kind === 'weapon';
+        });
+        const member = startSet?.members.find((m) => forgeable(m));
+        // (c) Fall back to any standalone iron piece of the right kind.
+        const standalone = IRON_RECIPES.filter((r) => forgeable(r.resultItemId)
+          && (wantArmor ? ITEMS_BY_ID[r.resultItemId].kind === 'armor' : ITEMS_BY_ID[r.resultItemId].kind === 'weapon'))
+          .sort((x, y) => y.goldCost - x.goldCost)[0];
+        const itemId = member ?? standalone?.resultItemId;
+        if (itemId) { chosen = { officer: o, itemId }; break; }
+      }
+    }
+    if (!chosen) continue;
+
+    const recipe = IRON_RECIPE_BY_RESULT[chosen.itemId];
     const ironCost = recipe.ironCost ?? 0;
     if (city.gold < recipe.goldCost || (city.iron ?? 0) < ironCost) continue;
-
-    actions.push({ forceId, cityId, officerId: officer.id, itemId: recipe.resultItemId, goldCost: recipe.goldCost, ironCost });
-    inPlay.add(recipe.resultItemId); // reserve so two forces don't claim the same id
+    actions.push({ forceId, cityId, officerId: chosen.officer.id, itemId: chosen.itemId, goldCost: recipe.goldCost, ironCost });
+    inPlay.add(chosen.itemId); // reserve so two forces don't claim the same id
   }
   return actions;
 }

@@ -7,7 +7,7 @@ import type { Officer } from '../types';
  * rarity: hunting down a full 桃園虎將 or 溫侯之配 set is its own goal.
  */
 /** What axis a set's resonance buffs. Default 'power' (raw combat power). */
-export type ItemSetEffect = 'power' | 'guard' | 'naval';
+export type ItemSetEffect = 'power' | 'guard' | 'naval' | 'civil';
 
 export interface ItemSet {
   id: string;
@@ -158,7 +158,7 @@ export const ITEM_SETS: ItemSet[] = [
   { id: 'baima-yicong',   name: { zh: '白馬義從', en: 'White-Horse Volunteers' },  members: ['bai-ma-yi-cong', 'gongsun-zan-bai-pao'],         powerBonus: 0.11, color: '#dfe6ec' },
   { id: 'xiliang-mateng', name: { zh: '西涼馬騰', en: 'Ma Teng of Xiliang' },      members: ['ma-teng-xi-liang-qiang', 'ma-teng-bao-jian'],    powerBonus: 0.11, color: '#c8884e' },
   { id: 'dangkou-chengpu',name: { zh: '蕩寇程普', en: 'Cheng Pu the Veteran' },    members: ['tiejisha-mao', 'cheng-pu-fu-jie'],               powerBonus: 0.10, color: '#8896a4' },
-  { id: 'lingjun-liuxiang',name: { zh: '令君留香', en: "Xun Yu's Fragrance" },     members: ['xun-ling-xiang', 'xun-yu-yu-pei'],               powerBonus: 0.10, color: '#88b7e8' },
+  { id: 'lingjun-liuxiang',name: { zh: '令君留香', en: "Xun Yu's Fragrance" },     members: ['xun-ling-xiang', 'xun-yu-yu-pei'],               powerBonus: 0.10, effect: 'civil', color: '#88b7e8' },
   // 楚漢
   { id: 'xichu-bawang',   name: { zh: '西楚霸王', en: 'Hegemon-King of Chu' },     members: ['baqiang', 'ba-wang-bie-ji', 'xiang-yu-bing-fu'], powerBonus: 0.14, color: '#b8442e' },
   { id: 'guoshi-wushuang',name: { zh: '國士無雙', en: 'The Matchless Hero' },      members: ['qixing-jian', 'shi-mian-mai-fu', 'han-xin-huai-yin-yin'], powerBonus: 0.14, color: '#e6c473' },
@@ -169,7 +169,7 @@ export const ITEM_SETS: ItemSet[] = [
   { id: 'weiguo-gong',    name: { zh: '衛國公',   en: 'Duke of Wey (Li Jing)' },   members: ['mingguang-armor', 'wei-gong-bing-fa', 'li-jing-bing-yin'], powerBonus: 0.13, color: '#6a8fb0' },
   { id: 'yumian-xiaohu',  name: { zh: '玉面虓虎', en: 'Yuchi Gong the Fierce' },   members: ['lion-helm', 'yuchi-gong-bian'],                  powerBonus: 0.11, color: '#8896a4' },
   // 戰國
-  { id: 'shangyang-reform',name: { zh: '商鞅變法', en: "Shang Yang's Reforms" },   members: ['shangjun-shu', 'xi-mu-li-xin', 'shang-yang-bian-fa-shi'], powerBonus: 0.11, color: '#a0c8e0' },
+  { id: 'shangyang-reform',name: { zh: '商鞅變法', en: "Shang Yang's Reforms" },   members: ['shangjun-shu', 'xi-mu-li-xin', 'shang-yang-bian-fa-shi'], powerBonus: 0.11, effect: 'civil', color: '#a0c8e0' },
   { id: 'bingsheng-sunbin',name: { zh: '兵聖孫臏', en: 'Sun Bin the War-Sage' },   members: ['sunbin-bingfa', 'sun-bin-bin-jiao'],             powerBonus: 0.11, color: '#9fd0c0' },
   // ── 鍛造收集套 — forge a themed batch of 神兵 then assemble them on one general.
   //    Purely aspirational (no auto-active); the reward for the 鍛造 grind. ──
@@ -187,19 +187,19 @@ export const ITEM_SETS: ItemSet[] = [
   { id: 'luxun-inferno',  name: { zh: '陸遜燒營', en: "Lu Xun's Inferno" },        members: ['yue-jue-shu', 'lu-xun-du-du-yin'],               powerBonus: 0.12, color: '#e0623a' },
   { id: 'yibo-yuntian',   name: { zh: '義薄雲天', en: "Guan Yu's Righteousness" },  members: ['spring-autumn', 'han-shou-ting-hou-yin'],        powerBonus: 0.11, color: '#b8442e' },
   // 戰國諸子
-  { id: 'quyuan-lisao',   name: { zh: '屈原離騷', en: "Qu Yuan's Lament" },         members: ['li-sao', 'tian-wen', 'jiu-ge'],                  powerBonus: 0.11, color: '#7ec8a0' },
-  { id: 'hanfei-fashu',   name: { zh: '韓非法術', en: "Han Fei's Legalism" },       members: ['hanfeizi', 'shuo-nan', 'wu-du'],                 powerBonus: 0.11, color: '#a0c8e0' },
-  { id: 'mojia-jianai',   name: { zh: '墨家兼愛', en: 'The Mohist School' },        members: ['mojing', 'mo-zi-shou-cheng-qi', 'mo-zi-tong-ren'], powerBonus: 0.12, color: '#8896a4' },
-  { id: 'yasheng-mengzi', name: { zh: '亞聖孟子', en: 'Mencius the Second Sage' },  members: ['meng-zi', 'mengzi-shu-jian'],                    powerBonus: 0.10, color: '#7ed68a' },
-  { id: 'xunzi-xinge',    name: { zh: '荀子勸學', en: "Xunzi's Teaching" },         members: ['xun-zi', 'xun-zi-jian'],                         powerBonus: 0.10, color: '#9fd0c0' },
-  { id: 'wanbi-guizhao',  name: { zh: '完璧歸趙', en: 'The Returned Jade' },        members: ['wan-bi-gui-zhao', 'mian-chi-hui'],               powerBonus: 0.11, color: '#cfd8e0' },
+  { id: 'quyuan-lisao',   name: { zh: '屈原離騷', en: "Qu Yuan's Lament" },         members: ['li-sao', 'tian-wen', 'jiu-ge'],                  powerBonus: 0.11, effect: 'civil', color: '#7ec8a0' },
+  { id: 'hanfei-fashu',   name: { zh: '韓非法術', en: "Han Fei's Legalism" },       members: ['hanfeizi', 'shuo-nan', 'wu-du'],                 powerBonus: 0.11, effect: 'civil', color: '#a0c8e0' },
+  { id: 'mojia-jianai',   name: { zh: '墨家兼愛', en: 'The Mohist School' },        members: ['mojing', 'mo-zi-shou-cheng-qi', 'mo-zi-tong-ren'], powerBonus: 0.12, effect: 'civil', color: '#8896a4' },
+  { id: 'yasheng-mengzi', name: { zh: '亞聖孟子', en: 'Mencius the Second Sage' },  members: ['meng-zi', 'mengzi-shu-jian'],                    powerBonus: 0.10, effect: 'civil', color: '#7ed68a' },
+  { id: 'xunzi-xinge',    name: { zh: '荀子勸學', en: "Xunzi's Teaching" },         members: ['xun-zi', 'xun-zi-jian'],                         powerBonus: 0.10, effect: 'civil', color: '#9fd0c0' },
+  { id: 'wanbi-guizhao',  name: { zh: '完璧歸趙', en: 'The Returned Jade' },        members: ['wan-bi-gui-zhao', 'mian-chi-hui'],               powerBonus: 0.11, effect: 'civil', color: '#cfd8e0' },
   { id: 'yueyi-faqi',     name: { zh: '樂毅伐齊', en: "Yue Yi's Campaign" },        members: ['yueyi-lun', 'bao-yan-hui-wang-shu'],             powerBonus: 0.11, color: '#c9a64e' },
   // 唐代名士
   { id: 'shixian-libai',  name: { zh: '詩仙李白', en: 'Li Bai the Banished Immortal' }, members: ['jiang-jin-jiu', 'shu-dao-nan', 'li-bai-bao-jian'], powerBonus: 0.12, color: '#88b7e8' },
-  { id: 'shisheng-dufu',  name: { zh: '詩聖杜甫', en: 'Du Fu the Poet-Sage' },      members: ['chun-wang', 'bing-che-xing', 'du-fu-zhu-bi'],    powerBonus: 0.10, color: '#a0b0bf' },
+  { id: 'shisheng-dufu',  name: { zh: '詩聖杜甫', en: 'Du Fu the Poet-Sage' },      members: ['chun-wang', 'bing-che-xing', 'du-fu-zhu-bi'],    powerBonus: 0.10, effect: 'civil', color: '#a0b0bf' },
   { id: 'wuzhao-stele',   name: { zh: '武曌稱帝', en: "Wu Zetian's Reign" },        members: ['wuzi-bei', 'wu-zetian-jin-ce', 'shang-guan-wan-er'], powerBonus: 0.12, color: '#c178c7' },
   { id: 'yanjin-liugu',   name: { zh: '顏筋柳骨', en: 'Yan Zhenqing the Loyal' },   members: ['ji-zhi-wen-gao', 'duo-bao-ta-bei', 'yan-zhenqing-yin'], powerBonus: 0.11, color: '#d4a84a' },
-  { id: 'shifo-wangwei',  name: { zh: '詩佛王維', en: 'Wang Wei the Poet-Buddha' }, members: ['wang-chuan-tu', 'shan-ju-qiu-ming'],             powerBonus: 0.10, color: '#7ed6a0' },
+  { id: 'shifo-wangwei',  name: { zh: '詩佛王維', en: 'Wang Wei the Poet-Buddha' }, members: ['wang-chuan-tu', 'shan-ju-qiu-ming'],             powerBonus: 0.10, effect: 'civil', color: '#7ed6a0' },
 ];
 
 /** The sets an officer has fully assembled in their equipment. */
@@ -215,6 +215,8 @@ export interface ItemSetBonus {
   guardMul: number;
   /** ×power applied ONLY in water battles, on top of powerMul. */
   navalMul: number;
+  /** ×internal-affairs output (文臣/諸子 sets — 治國 not 戰陣). */
+  civilMul: number;
 }
 
 // 共鳴封頂 — multi-set stacking is summed per axis then capped, so piling several
@@ -222,14 +224,16 @@ export interface ItemSetBonus {
 const POWER_CAP = 0.25;   // ≤ +25% raw power
 const GUARD_CAP = 0.20;   // ≤ −20% own losses
 const NAVAL_CAP = 0.30;   // ≤ +30% extra power in water
+const CIVIL_CAP = 0.25;   // ≤ +25% internal-affairs output
 
 /** 套裝共鳴 — aggregate every full set an officer holds, by effect axis, capped. */
 export function itemSetBonuses(officer: Officer): ItemSetBonus {
-  let power = 0, guard = 0, naval = 0;
+  let power = 0, guard = 0, naval = 0, civil = 0;
   for (const s of activeItemSets(officer)) {
     switch (s.effect ?? 'power') {
       case 'guard': guard += s.powerBonus; break;
       case 'naval': naval += s.powerBonus; break;
+      case 'civil': civil += s.powerBonus; break;
       default:      power += s.powerBonus; break;
     }
   }
@@ -237,6 +241,7 @@ export function itemSetBonuses(officer: Officer): ItemSetBonus {
     powerMul: 1 + Math.min(POWER_CAP, power),
     guardMul: 1 - Math.min(GUARD_CAP, guard),
     navalMul: 1 + Math.min(NAVAL_CAP, naval),
+    civilMul: 1 + Math.min(CIVIL_CAP, civil),
   };
 }
 

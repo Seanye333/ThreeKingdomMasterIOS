@@ -295,7 +295,7 @@ export function ItemsBrowser({ onClose }: Props) {
               const states = s.members.map((m) => ({ id: m, st: memberState(m) }));
               const ownedN = states.filter((x) => x.st.tag === 'own').length;
               const complete = ownedN === s.members.length;
-              const effLabel = s.effect === 'guard' ? t('守', 'Guard') : s.effect === 'naval' ? t('水', 'Naval') : t('攻', 'Power');
+              const effLabel = s.effect === 'guard' ? t('守', 'Guard') : s.effect === 'naval' ? t('水', 'Naval') : s.effect === 'civil' ? t('治', 'Civil') : t('攻', 'Power');
               return (
                 <div key={s.id} style={{ background: '#10161e', border: `1px solid ${complete ? s.color : '#2b3845'}`, borderLeft: `3px solid ${s.color}`, padding: '0.55rem 0.7rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
