@@ -8,6 +8,7 @@
  */
 import type { Officer, OfficerStats, InternalAffairsType, UnitType, TerrainKind, EntityId } from '../types';
 import type { HeroicDeeds } from '../types/deeds';
+import { honorificById } from '../data/honorifics';
 
 type TraitId = string;
 
@@ -16,6 +17,10 @@ function has(officer: Officer, id: TraitId): boolean {
 }
 function hasAny(officer: Officer, ids: ReadonlySet<TraitId>): boolean {
   return (officer.traits ?? []).some((t) => ids.has(t));
+}
+/** Theme of a held 名號將軍 (or null) — lets non-combat themes pull their weight. */
+function honorificTheme(officer: Officer): string | null {
+  return honorificById(officer.honorificId)?.theme ?? null;
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -42,6 +47,10 @@ export function internalAffairsMultiplier(
   let mul = 1.0;
   if (hasAny(officer, INTERNAL_BOOST_TRAITS)) mul += 0.20;
   if (hasAny(officer, INTERNAL_PENALTY_TRAITS)) mul -= 0.20;
+  // 內向 — shuns the crowd, pours themselves into the ledgers (+10% internal).
+  if ((officer.traits as string[] | undefined)?.includes('introverted')) mul += 0.10;
+  // 鎮撫名號 — a 鎮撫 general steadies the realm: governance runs better (軍民賴安).
+  if (honorificTheme(officer) === 'steward') mul += 0.10;
   if ((type === 'develop-commerce' || type === 'major-commerce')
       && hasAny(officer, COMMERCE_BOOST)) mul += 0.20;
   if ((type === 'build-defense' || type === 'major-defense' || type === 'upgrade-wall')
@@ -170,6 +179,8 @@ export function effectiveStats(officer: Officer): OfficerStats {
     if (t === 'mighty-strength') war += 4;
     // 過目不忘 — a perfect memory sharpens the mind.
     if (t === 'photographic-memory') intelligence += 3;
+    // 學究 — 拘泥細節而博學,智力大進。
+    if (t === 'pedantic') intelligence += 5;
   }
   // 後遺 — fold in any active afflictions (養傷 saps 武力, 羞憤 saps 魅力/智力).
   for (const a of officer.afflictions ?? []) {
@@ -455,6 +466,8 @@ export function diplomacyProposalBonus(rulerOfficer: Officer): number {
   let bonus = 0;
   if (hasAny(rulerOfficer, DIPLOMAT_TRAITS)) bonus += 0.15;
   if (hasAny(rulerOfficer, TRICKSTER_TRAITS)) bonus += 0.10;
+  // 內向 — a reticent envoy fares worse at the negotiating table (−10%).
+  if ((rulerOfficer.traits as string[] | undefined)?.includes('introverted')) bonus -= 0.10;
   return bonus;
 }
 
@@ -475,6 +488,8 @@ const SPY_RESIST_TRAITS = new Set(['loyal', 'honor-bound', 'suspicious', 'compos
 export function espionageBonus(agent: Officer): number {
   let bonus = 0;
   if (hasAny(agent, SPY_TRAITS)) bonus += 0.15;
+  // 謀略名號 — a 謀略 general runs the spy-craft better (運籌帷幄).
+  if (honorificTheme(agent) === 'guile') bonus += 0.10;
   return bonus;
 }
 
@@ -1042,6 +1057,7 @@ export function rollFlavorEvent(officer: Officer, rng: () => number): FlavorEven
 
 const EXTRA_WIRED: readonly string[] = [
   // inline-checked in this module (commandFit / combatModifiers / effectiveStats)
+  'pedantic', 'introverted', // 學究(智+5)、內向(內政+10%/外交−10%)
   'cautious', 'reckless', 'weathered', 'siege-expert', 'ambush-master',
   'drunkard', 'versatile', 'mighty-strength', 'photographic-memory', 'cowardly',
   'frail', 'field-tactician', 'fortress-keeper', 'martial-valor', 'veteran',

@@ -206,6 +206,18 @@ export function highestEligiblePeerage(
   return best;
 }
 
+/**
+ * 遞降襲爵 — the peerage an heir inherits: one tier below the deceased's. The
+ * lowest rung (五大夫) has nothing beneath it, so that line's title simply ends.
+ * Pure; returns null when nothing is inherited.
+ */
+export function demotedPeerage(id: PeerageId | undefined | null): PeerageId | null {
+  const t = peerageTier(id);
+  if (t <= 1) return null;
+  const lower = PEERAGES.find((p) => p.tier === t - 1);
+  return lower ? lower.id : null;
+}
+
 export interface PeerageEffects {
   fiefGold: number;
   fiefGrain: number;

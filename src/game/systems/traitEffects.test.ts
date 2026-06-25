@@ -8,7 +8,41 @@ import {
   conquestLoyaltyMod, cityIncomeTraitMul, isFlavorOnlyTrait,
   deedTraitCandidate, combatRoleFit,
   physicianRecoveryBonus, plagueDeathTraitMul, isIncapacitated,
+  effectiveStats, diplomacyProposalBonus, isWiredTrait, espionageBonus,
 } from './traitEffects';
+
+describe('言行一致 — newly-wired personality traits', () => {
+  it('學究 pedantic lifts intelligence by 5 (and is no longer flavor-only)', () => {
+    const base = mkOfficer({ id: 'p0', stats: { intelligence: 70 } as never });
+    const pedant = mkOfficer({ id: 'p1', stats: { intelligence: 70 } as never, traits: ['pedantic'] as never });
+    expect(effectiveStats(pedant).intelligence - effectiveStats(base).intelligence).toBe(5);
+    expect(isWiredTrait('pedantic')).toBe(true);
+  });
+  it('內向 introverted boosts internal affairs but hurts diplomacy', () => {
+    const intro = mkOfficer({ id: 'i', traits: ['introverted'] as never });
+    expect(internalAffairsMultiplier(intro, 'develop-commerce')).toBeGreaterThan(1);
+    expect(diplomacyProposalBonus(intro)).toBeLessThan(0);
+    expect(isWiredTrait('introverted')).toBe(true);
+  });
+  it('reworded flavor traits no longer claim unbacked numbers', () => {
+    // gossipy/rumor-monger/solemn are honest flavor now (no system reads them).
+    expect(isFlavorOnlyTrait('gossipy')).toBe(true);
+  });
+});
+
+describe('名號非戰鬥特效 — 鎮撫/謀略', () => {
+  it('a 鎮撫 honorific lifts internal affairs', () => {
+    const plain = mkOfficer({ id: 's0' });
+    const steward = mkOfficer({ id: 's1', honorificId: 'jianwei' as never });
+    expect(internalAffairsMultiplier(steward, 'develop-commerce'))
+      .toBeGreaterThan(internalAffairsMultiplier(plain, 'develop-commerce'));
+  });
+  it('a 謀略 honorific lifts espionage', () => {
+    const plain = mkOfficer({ id: 'g0' });
+    const guile = mkOfficer({ id: 'g1', honorificId: 'anyuan' as never });
+    expect(espionageBonus(guile)).toBeGreaterThan(espionageBonus(plain));
+  });
+});
 
 describe('治軍嚴整 — disciplined officers drill / farm better', () => {
   it('iron-discipline boosts 練兵 and 屯田 but not, say, 興商', () => {

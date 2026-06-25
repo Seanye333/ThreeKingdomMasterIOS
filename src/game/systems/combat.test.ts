@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveBattle, siegeBuildingModifiers, foreignAuxDefenseMultiplier, cityDrillDefenseMultiplier, cityDrillLossMultiplier, type BattleSide } from './combat';
+import { resolveBattle, siegeBuildingModifiers, foreignAuxDefenseMultiplier, cityDrillDefenseMultiplier, cityDrillLossMultiplier, honorificThemeMul, type BattleSide } from './combat';
 import { aggregateSlotEffects, type DefenseBuildingId } from '../data/defenseBuildings';
 import type { City } from '../types';
 import { mkOfficer, fixedRng, seededRng } from '../../test/factories';
@@ -8,6 +8,31 @@ const side = (troops: number, commander = mkOfficer()): BattleSide => ({ troops,
 
 const cityOf = (over: Partial<City>): City =>
   ({ id: 'c', name: { zh: '城', en: 'City' }, ...over } as unknown as City);
+
+describe('名號各司其職 — honorificThemeMul', () => {
+  const navy = mkOfficer({ honorificId: 'fubo' as never });      // naval
+  const valor = mkOfficer({ honorificId: 'huwei' as never });    // valor
+  const steward = mkOfficer({ honorificId: 'jianwei' as never });// steward
+  const siege = mkOfficer({ honorificId: 'polu' as never });     // siege
+
+  it('a naval honorific only helps on water', () => {
+    expect(honorificThemeMul([navy], { water: true, siege: false, defending: false })).toBeGreaterThan(1);
+    expect(honorificThemeMul([navy], { water: false, siege: false, defending: false })).toBe(1);
+  });
+  it('valor helps in an open field clash, not on water', () => {
+    expect(honorificThemeMul([valor], { water: false, siege: false, defending: false })).toBeGreaterThan(1);
+    expect(honorificThemeMul([valor], { water: true, siege: false, defending: false })).toBe(1);
+  });
+  it('siege helps the attacker storming a city; steward helps its defender', () => {
+    expect(honorificThemeMul([siege], { water: false, siege: true, defending: false })).toBeGreaterThan(1);
+    expect(honorificThemeMul([siege], { water: false, siege: true, defending: true })).toBe(1);
+    expect(honorificThemeMul([steward], { water: false, siege: true, defending: true })).toBeGreaterThan(1);
+    expect(honorificThemeMul([steward], { water: false, siege: true, defending: false })).toBe(1);
+  });
+  it('no honorific is neutral', () => {
+    expect(honorificThemeMul([mkOfficer()], { water: true, siege: false, defending: false })).toBe(1);
+  });
+});
 
 describe('異域義從 — foreign aux defence multiplier', () => {
   it('is 1 with no aux and rises with aux, capped at +15%', () => {

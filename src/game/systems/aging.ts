@@ -12,6 +12,7 @@ import { getDeathPoem } from '../data/deathPoems';
 import { deathChanceMultiplier, rollAgeDrift } from './traitEffects';
 import { TRAIT_DEFS_BY_ID } from '../data/personality';
 import { griefOnDeath } from './relationshipEffects';
+import { demotedPeerage, peerageById, peerageTier } from '../data/peerage';
 import type { FamilyRelation } from '../types/family';
 
 export interface AgingInput {
@@ -249,6 +250,34 @@ export function processAging(input: AgingInput): AgingOutput {
             kind: 'talent',
             text: `${heir.name.en} inherits ${officer.name.en}'s storied ${it?.name.en ?? heirloom}${title ? ` (${title.en})` : ''} — its renown lives on.`,
             textZh: `${heir.name.zh}繼承${officer.name.zh}之名器「${it?.name.zh ?? heirloom}」${title ? `·${title.zh}` : ''},威名不墜。`,
+          });
+        }
+      }
+    }
+
+    // 遞降襲爵 — a fallen noble's fief passes to a living same-force heir, demoted
+    // one tier (世子 preferred; 五大夫 has nothing below it, so that line ends).
+    if (officer.peerageId) {
+      const inheritedId = demotedPeerage(officer.peerageId);
+      if (inheritedId) {
+        const eligible = (o?: Officer): o is Officer =>
+          !!o && o.status !== 'dead' && o.status !== 'unsearched'
+          && o.forceId === officer.forceId
+          && peerageTier(o.peerageId) < peerageTier(inheritedId);
+        const childIds: EntityId[] = [];
+        for (const f of input.family ?? []) {
+          if (f.kind === 'parent-child' && f.officerA === officer.id) childIds.push(f.officerB);
+        }
+        const children = childIds.map((id) => officers[id]).filter(eligible);
+        const heir = children.find((o) => o.designatedHeir) ?? children[0];
+        if (heir) {
+          officers = { ...officers, [heir.id]: { ...officers[heir.id], peerageId: inheritedId } };
+          const pd = peerageById(inheritedId);
+          entries.push({
+            cityId: heir.locationCityId,
+            kind: 'talent',
+            text: `${heir.name.en} succeeds to ${officer.name.en}'s title, demoted one rank to ${pd?.name.en ?? inheritedId}.`,
+            textZh: `${heir.name.zh}遞降襲${officer.name.zh}之爵,封${pd?.name.zh ?? inheritedId}。`,
           });
         }
       }

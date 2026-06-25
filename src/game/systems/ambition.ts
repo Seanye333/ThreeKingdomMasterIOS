@@ -1,6 +1,7 @@
 import type { City, EntityId, Force, Officer } from '../types';
 import { buildingBonuses } from './buildings';
 import { getLordRapport, isConfidant } from './rapport';
+import { peerageEffects } from '../data/peerage';
 
 /**
  * 權謀 — officer ambition, betrayal and usurpation.
@@ -121,6 +122,10 @@ export function resolveAmbitions(ctx: AmbitionContext): AmbitionEvent[] {
     const lr = getLordRapport(ctx.lordRapport ?? {}, o.id);
     if (lr < 0) chance += Math.min(0.2, -lr * 0.002);
     else if (lr > 0) chance -= lr * 0.002;
+    // 封爵養虎 — a great fief swells a discontented, non-confidant noble's
+    // designs (列侯自立 / 養成權臣). The two great fiefs (公/王) push hardest.
+    const fiefPressure = peerageEffects(o).ambitionPressure;
+    if (fiefPressure > 0) chance += fiefPressure * 0.012;
     // 牢城 — a prison/court at his seat keeps the discontented in line.
     chance *= 1 - buildingBonuses(homeId, ctx.buildings ?? []).defectionResist;
     if (chance <= 0) continue;
@@ -131,8 +136,10 @@ export function resolveAmbitions(ctx: AmbitionContext): AmbitionEvent[] {
     const isPlayerForce = o.forceId === playerForceId;
     const homeIsCapital = force.capitalCityId === homeId;
 
-    // ── 簒奪 — only against an AI lord the general clearly eclipses. ──
-    if (!isPlayerForce && dominates && grievance >= 2 && o.loyalty < 25 && rng() < 0.5) {
+    // ── 簒奪 — only against an AI lord the general clearly eclipses. A great
+    // fief (公/王) emboldens the noble to seize the throne outright. ──
+    const usurpThreshold = 0.5 + Math.min(0.3, fiefPressure * 0.05);
+    if (!isPlayerForce && dominates && grievance >= 2 && o.loyalty < 25 && rng() < usurpThreshold) {
       if (ruler) {
         officers[ruler.id] = {
           ...ruler,

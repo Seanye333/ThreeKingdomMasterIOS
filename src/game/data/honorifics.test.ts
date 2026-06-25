@@ -7,6 +7,8 @@ import {
   honorificTier,
   highestEligibleHonorific,
   honorificEffects,
+  honorificThemeFit,
+  bestFitHonorific,
 } from './honorifics';
 
 function mkOfficer(over: Partial<Officer> = {}): Officer {
@@ -69,5 +71,24 @@ describe('honorificEffects', () => {
   it('honorificTier orders held titles', () => {
     expect(honorificTier('zhengxi-da')).toBeGreaterThan(honorificTier('zhechong'));
     expect(honorificTier(undefined)).toBe(0);
+  });
+});
+
+describe('適才適號 — theme fit & best-fit selection', () => {
+  it('rates a navy officer for naval, a statesman for steward', () => {
+    const navy = mkOfficer({ skills: ['navy-master'] as never });
+    const statesman = mkOfficer({ stats: { leadership: 60, war: 50, intelligence: 60, politics: 90, charisma: 60 } });
+    expect(honorificThemeFit(navy, undefined, 'naval')).toBeGreaterThan(0);
+    expect(honorificThemeFit(navy, undefined, 'steward')).toBe(0);
+    expect(honorificThemeFit(statesman, undefined, 'steward')).toBeGreaterThan(0);
+  });
+
+  it('bestFitHonorific picks the suiting theme at the top eligible tier', () => {
+    const navy = mkOfficer({
+      skills: ['navy-master'] as never,
+      stats: { leadership: 70, war: 70, intelligence: 70, politics: 60, charisma: 60 },
+    });
+    const pick = bestFitHonorific(navy, mkDeeds({ battlesWon: 14 }));
+    expect(pick?.theme).toBe('naval');
   });
 });
