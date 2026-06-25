@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { FORMATIONS, NAMED_MAPS_BY_CITY, NAMED_MAPS_BY_ID } from '../../game/data';
 import { inferUnitType, setupTacticalBattle, planSiegeRelief, rollTimeOfDay } from '../../game/systems/tactical';
 import { cityPos } from '../../game/data/cityGeo';
@@ -101,6 +102,7 @@ export function BattlePrepModal({
   totalTroops,
   onClose,
 }: Props) {
+  useEscapeKey(onClose);
   const officers = useGameStore((s) => s.officers);
   const cities = useGameStore((s) => s.cities);
   const startTactical = useGameStore((s) => s.startTacticalBattle);

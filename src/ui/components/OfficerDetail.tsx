@@ -1,7 +1,10 @@
-import { useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { COMMAND_DEFS } from '../../game/systems/commands';
 import { composeBiography } from '../../game/systems/biography';
+import type { BoutRecord } from '../../game/systems/duelHall';
+// Lazy — pulls the heavy 3D duel/debate stack only when a 名局 is actually replayed.
+const BoutReplay3D = lazy(() => import('./duel/BoutReplay3D').then((m) => ({ default: m.BoutReplay3D })));
 import { durationBreakdown, isParentMentor } from '../../game/systems/training';
 import { effectiveStats, traitMechanicalEffects, isFlavorOnlyTrait } from '../../game/systems/traitEffects';
 import { FAMILY_LINEAGE } from '../../game/data/familyLineage';
@@ -252,6 +255,20 @@ export function OfficerDetail({
                     </span>
                   )}
                   {lang === 'en' ? tier.en : tier.zh} · {t('名望', 'Renown')} {renown}
+                </div>
+              );
+            })()}
+            {officer.retinueOfLordId && allOfficers[officer.retinueOfLordId] && officer.retinueOfLordId !== officer.id && (() => {
+              const lord = allOfficers[officer.retinueOfLordId];
+              const serving = lord.status !== 'dead' && lord.forceId === officer.forceId;
+              return (
+                <div title={serving ? t('故主在上,死生相隨', "Serving their old lord — loyalty runs deep") : t('故主之舊部', "An old lord's retainer")}
+                  style={{
+                    display: 'inline-block', marginTop: '0.3rem', marginLeft: '0.4rem', padding: '0.12rem 0.5rem',
+                    background: 'linear-gradient(180deg,#2a2418,#161208)', border: '1px solid #8a7244',
+                    color: '#d8c08a', fontSize: '0.78rem', letterSpacing: '0.05rem', borderRadius: 2,
+                  }}>
+                  {t(`舊部 · ${lord.name.zh}之故將`, `Retainer of ${lord.name.en}`)}{serving ? ' ✦' : ''}
                 </div>
               );
             })()}
@@ -1339,7 +1356,7 @@ export function OfficerDetail({
         <section className={styles.statsSection}>
           <h3 className={styles.sectionTitle}>{t('列傳', 'Biography')}</h3>
           <BiographyBlock officer={officer} />
-          <CampaignChronicleBlock officer={officer} />
+          <CampaignChronicleBlock officer={officer} officersOverride={officersOverride} />
         </section>
 
         {officer.deathYear && (
@@ -1561,37 +1578,95 @@ function RelationshipsSection({ officerId, officersOverride }: { officerId: stri
 /** 本朝實錄 — the biography THIS campaign wrote: composed live from the
  *  officer's deeds, epithets and battle history. The static lore above is
  *  who they were; this is who they're becoming in your game. */
-function CampaignChronicleBlock({ officer }: { officer: Officer }) {
+function CampaignChronicleBlock({ officer, officersOverride }: { officer: Officer; officersOverride?: Record<string, Officer> }) {
   const deeds = useGameStore((s) => s.deeds[officer.id] ?? null);
   const battleHistory = useGameStore((s) => s.battleHistory);
   const forces = useGameStore((s) => s.forces);
   const cities = useGameStore((s) => s.cities);
+  const storeOfficers = useGameStore((s) => s.officers);
+  const family = useGameStore((s) => s.family);
+  const runtimeBonds = useGameStore((s) => s.runtimeBonds);
+  const duelHall = useGameStore((s) => s.duelHall);
+  const clanStandings = useGameStore((s) => s.clanStandings);
+  const officers = officersOverride ?? storeOfficers;
   const lang = useLanguage();
   const t = useT();
+  // B — 交叉引用 click targets: drill to a named officer, or replay a 名局.
+  const [drillId, setDrillId] = useState<string | null>(null);
+  const [replay, setReplay] = useState<BoutRecord | null>(null);
+  const officerNamesById = useMemo(
+    () => Object.fromEntries(Object.values(officers).map((o) => [o.id, o.name])),
+    [officers],
+  );
+  const forceNamesById = useMemo(
+    () => Object.fromEntries(Object.values(forces).map((f) => [f.id, f.name])),
+    [forces],
+  );
   const paragraphs = useMemo(() => composeBiography({
     officer,
     deeds,
     battleHistory,
     forceNameZh: officer.forceId ? forces[officer.forceId]?.name.zh ?? null : null,
     cityNameZhById: Object.fromEntries(Object.values(cities).map((c) => [c.id, c.name.zh])),
-  }), [officer, deeds, battleHistory, forces, cities]);
+    officerNamesById,
+    forceNamesById,
+    family,
+    runtimeBonds,
+    duelHall,
+    clanStandings,
+  }), [officer, deeds, battleHistory, forces, cities, officerNamesById, forceNamesById, family, runtimeBonds, duelHall, clanStandings]);
   return (
     <div style={{ marginTop: '0.6rem', borderTop: '1px dashed #26323e', paddingTop: '0.5rem' }}>
       <div style={{
         fontSize: '0.66rem', color: '#c9a64e', letterSpacing: '0.08rem',
         textTransform: 'uppercase', fontFamily: 'ui-monospace, monospace', marginBottom: 4,
       }}>{t('本朝實錄', 'This campaign')}</div>
-      {paragraphs.map((p, i) => (
-        <p key={i} style={{
-          margin: '0 0 0.35rem', fontSize: '0.8rem', lineHeight: 1.7,
-          color: '#cdb88f', fontFamily: 'var(--tkm-font-body)',
-        }}>
-          {lang === 'en' ? p.en : lang === 'both' ? `${p.zh} — ${p.en}` : p.zh}
-        </p>
-      ))}
+      {paragraphs.map((p, i) => {
+        // Clickable cross-references: named officers we can drill to, a bout we can replay.
+        const refIds = [...new Set(p.refs?.officerIds ?? [])].filter((id) => id !== officer.id && officers[id]);
+        const bout = p.refs?.boutId ? duelHall.find((b) => b.id === p.refs!.boutId) : undefined;
+        return (
+          <div key={i} style={{ margin: '0 0 0.35rem' }}>
+            <p style={{
+              margin: 0, fontSize: '0.8rem', lineHeight: 1.7,
+              color: '#cdb88f', fontFamily: 'var(--tkm-font-body)',
+            }}>
+              {lang === 'en' ? p.en : lang === 'both' ? `${p.zh} — ${p.en}` : p.zh}
+            </p>
+            {(refIds.length > 0 || bout) && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 3 }}>
+                {refIds.map((id) => (
+                  <button key={id} onClick={() => setDrillId(id)} style={refChip}>
+                    {officers[id].name.zh}
+                  </button>
+                ))}
+                {bout && (
+                  <button onClick={() => setReplay(bout)} style={{ ...refChip, color: '#9ed8b8', borderColor: '#3a5e4c' }}>
+                    ▶ {t('名局重演', 'Replay')}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+      {drillId && officers[drillId] && (
+        <OfficerDetail officer={officers[drillId]} onClose={() => setDrillId(null)} officersOverride={officersOverride} />
+      )}
+      {replay && (
+        <Suspense fallback={null}>
+          <BoutReplay3D rec={replay} onClose={() => setReplay(null)} />
+        </Suspense>
+      )}
     </div>
   );
 }
+
+const refChip: React.CSSProperties = {
+  background: 'rgba(212,168,74,0.10)', border: '1px solid #5a4a2a', color: '#e6c473',
+  padding: '0.05rem 0.45rem', fontSize: '0.72rem', cursor: 'pointer',
+  fontFamily: 'var(--tkm-font-body)', borderRadius: 2,
+};
 
 function BiographyBlock({ officer }: { officer: Officer }) {
   const bio = getBiography(officer.id, officer.name.en, officer.name.zh, officer.stats);

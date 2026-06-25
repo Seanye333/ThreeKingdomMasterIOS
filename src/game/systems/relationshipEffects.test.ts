@@ -8,6 +8,7 @@ import {
   runtimeFeudPair,
   swornDepth,
   cliqueBackingBoost,
+  loyaltyFloor,
 } from './relationshipEffects';
 import type { OathBond } from '../data/bonds';
 import { mkOfficer } from '../../test/factories';
@@ -66,6 +67,28 @@ describe('griefOnDeath — runtime bonds & feud relief', () => {
     const g = grief.find((e) => e.targetId === 'y');
     expect(g).toBeDefined();
     expect(g!.delta).toBeGreaterThan(0);
+  });
+
+  it("a fallen lord's surviving 部曲 mourn when allOfficers is supplied", () => {
+    const retainer = off('r', { retinueOfLordId: 'lord' });
+    const grief = griefOnDeath('lord', '主', 'Lord', [], [], { r: retainer });
+    const g = grief.find((e) => e.targetId === 'r');
+    expect(g).toBeDefined();
+    expect(g!.delta).toBeLessThan(0);
+  });
+});
+
+describe('部曲 loyaltyFloor', () => {
+  it('a retainer under their living original lord keeps a high floor', () => {
+    const lord = off('lord');
+    const retainer = off('r', { retinueOfLordId: 'lord' });
+    expect(loyaltyFloor(retainer, { lord, r: retainer }, [], [])).toBeGreaterThanOrEqual(90);
+  });
+
+  it('the floor lifts once the original lord is gone', () => {
+    const lord = off('lord', { status: 'dead' });
+    const retainer = off('r', { retinueOfLordId: 'lord' });
+    expect(loyaltyFloor(retainer, { lord, r: retainer }, [], [])).toBe(0);
   });
 });
 

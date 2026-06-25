@@ -141,4 +141,9 @@ export interface Officer {
    *  succession prefers them over birth order. Carried from a PendingHeir on
    *  coming-of-age, or set directly on a grown child. */
   designatedHeir?: boolean;
+  /** 部曲故主 — the lord whose historical retinue this officer belongs to (set
+   *  once by fillRetinues at scenario start, never cleared). Drives a loyalty
+   *  floor while serving that lord, grief if the lord falls, and an eager
+   *  re-recruit ("舊部歸心") if the old lord calls them back. Optional/safe. */
+  retinueOfLordId?: EntityId;
 }

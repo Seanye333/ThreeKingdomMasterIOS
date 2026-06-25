@@ -1,4 +1,5 @@
 import { useMemo, type CSSProperties } from 'react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useGameStore } from '../../game/state/store';
 import { PRESTIGE_TITLES, REQ, effectivePrestige, type PrestigePath } from '../../game/data/prestige';
 import { useT, useLanguage } from '../i18n';
@@ -20,6 +21,7 @@ const PATH_LABEL: Record<PrestigePath, { zh: string; en: string; color: string }
  * title (effectivePrestige), so earned-from-deeds rises show up here.
  */
 export function PrestigeModal({ onClose }: Props) {
+  useEscapeKey(onClose);
   const officers = useGameStore((s) => s.officers);
   const forces = useGameStore((s) => s.forces);
   const t = useT();

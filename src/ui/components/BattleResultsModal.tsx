@@ -1,4 +1,5 @@
 import { resolveBattleEnd } from '../../game/systems/tactical';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { battleRecap } from '../../game/systems/battleRecap';
 import { useGameStore } from '../../game/state/store';
 import { pickVoiceLine } from '../../game/data/voiceLines';
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export function BattleResultsModal({ battle, playerSide, onClose }: Props) {
+  useEscapeKey(onClose);
   const officers = useGameStore((s) => s.officers);
   const currentYear = useGameStore((s) => s.date.year);
   const forces = useGameStore((s) => s.forces);

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useGameStore } from '../../game/state/store';
 import { SCHEME_DEFS, schemeOdds, validateScheme, type SchemeId } from '../../game/systems/schemes';
 import { pickAdvisor } from '../../game/systems/advisor';
@@ -9,6 +10,7 @@ import { useT, useLanguage } from '../i18n';
  * shown before the silver leaves the treasury.
  */
 export function SchemesModal({ onClose }: { onClose: () => void }) {
+  useEscapeKey(onClose);
   const t = useT();
   const lang = useLanguage();
   const cities = useGameStore((s) => s.cities);

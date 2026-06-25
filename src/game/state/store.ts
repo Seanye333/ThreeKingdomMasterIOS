@@ -105,6 +105,7 @@ import { buyQuote, sellQuote, borderTariff, buyHorses, sellHorses, WARHORSE_CITY
 import { EDICT_DISCOUNT, EMPEROR_HOME, MANDATE_PER_SEASON, RESENTMENT_PER_SEASON, canWelcomeEmperor, emperorCustodian } from '../systems/emperor';
 import { COMMONER_ARRIVAL_CHANCE, commonerArrivalCity, generateCommonerOfficer } from '../systems/commonerTalent';
 import { codexMarkRecruited, codexMarkRecruitedMany, codexMarkSeen, codexMarkSlain } from '../systems/codex';
+import { itemCodexMarkCarried } from '../systems/itemCodex';
 import { recordDailyResult } from '../systems/dailyChallenge';
 import { SCHEME_DEFS, schemeOdds, validateScheme, type SchemeId } from '../systems/schemes';
 import { resolveAISchemes } from '../systems/aiSchemes';
@@ -230,6 +231,7 @@ import { PROVINCES_BY_ID } from '../data/provinces';
 import { findChallenge, evaluateChallenge, challengeStars } from '../data/challenges';
 import { MAX_CUSTOM_EVENTS } from '../systems/customEvents';
 import { refreshPrestige, prestigeTitleById, TOP_PRESTIGE_IDS } from '../data/prestige';
+import { peerageById } from '../data/peerage';
 import { careerStanding, careerGuardCapBonus } from '../systems/career';
 import { evaluateGoal, findObjectiveFor } from '../systems/objectives';
 import { applySuccession } from '../systems/succession';
@@ -242,7 +244,7 @@ import {
 } from '../systems/achievements';
 import { tickFamily, addSpouse, addParentChild, aiArrangeMarriages } from '../systems/family';
 import { clanOf } from '../data/clans';
-import { rollWishes, applyWishGrant, applyWishReject, expireWishes, maybeWoundedRetireWish } from '../systems/wishes';
+import { rollWishes, applyWishGrant, applyWishReject, expireWishes, maybeWoundedRetireWish, decayGrievances } from '../systems/wishes';
 import { checkEndings } from '../systems/endings';
 import { generateRandomScenario } from '../systems/randomScenario';
 import { rollWeather, describeWeather } from '../systems/weather';
@@ -3031,6 +3033,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           date: result.date,
           rng: Math.random,
         });
+        // 怨氣漸消 — content officers with no pending petition let old grudges fade.
+        postOfficers = decayGrievances(postOfficers, newWishes, Math.random);
 
         // Ship build orders tick.
         const newOrders = state.shipOrders.map((o) => ({
@@ -4502,6 +4506,23 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             const title = prestigeTitleById(pr.titleId);
             if (title) ms.push({
               title: { zh: `威名 — ${title.name.zh}`, en: `Prestige: ${title.name.en}` },
+              year: result.date.year, season: result.date.season,
+            });
+          }
+          // 封爵 / 拜將 — a new peerage or honorific is a milestone too.
+          const oldOff = state.officers[cid];
+          const newOff = postOfficers[cid];
+          if (newOff?.peerageId && newOff.peerageId !== oldOff?.peerageId) {
+            const peer = peerageById(newOff.peerageId);
+            if (peer) ms.push({
+              title: { zh: `封爵 — ${peer.name.zh}`, en: `Enfeoffed: ${peer.name.en}` },
+              year: result.date.year, season: result.date.season,
+            });
+          }
+          if (newOff?.honorificId && newOff.honorificId !== oldOff?.honorificId) {
+            const hon = HONORIFICS_BY_ID[newOff.honorificId];
+            if (hon) ms.push({
+              title: { zh: `拜將 — ${hon.name.zh}`, en: `Honorific: ${hon.name.en}` },
               year: result.date.year, season: result.date.season,
             });
           }
@@ -6078,6 +6099,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           officers: { ...state.officers, ...updates },
           itemHistory: [...(state.itemHistory ?? []), histEntry],
         });
+        // 名品圖鑑 — record that this treasure has been in your armoury.
+        itemCodexMarkCarried(itemId);
         return { ok: true };
       },
 
@@ -7253,7 +7276,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             let ach = loadAchievementProgress();
             ach = bumpCounters(ach, { careerRuns: 1 });
             saveAchievementProgress(ach);
-            alert(`Your career officer ${careerOff.name.en} has fallen in battle. The campaign ends here. (Roguelike run #${ach.counters.careerRuns})`);
+            // 蓋棺論定 — a closing epilogue summing up the life that just ended.
+            const d = state.deeds[state.careerMode.officerId];
+            const st = careerStanding(d);
+            const epilogue =
+              `${careerOff.name.zh} 的一代記就此落幕 — 終為${st.status.zh}(品 ${st.rank})。\n` +
+              `歷戰勝 ${d?.battlesWon ?? 0}・殲敵 ${(d?.killsTroops ?? 0).toLocaleString()}・拔城 ${d?.citiesTaken ?? 0}・單挑勝 ${d?.duelsWon ?? 0}。\n\n` +
+              `${careerOff.name.en} has fallen — they died as ${st.status.en}. The campaign ends here. (Roguelike run #${ach.counters.careerRuns})`;
+            alert(epilogue);
             careerMode = null;
           }
         }

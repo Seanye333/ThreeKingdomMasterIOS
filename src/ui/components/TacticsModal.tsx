@@ -1,4 +1,5 @@
 import { TACTIC_DEFS, tacticBonus, isTacticSignature, TACTIC_PREREQ, TACTIC_COMBOS } from '../../game/data/officerAttributes';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useLanguage } from '../i18n';
 import { CatalogModal, type CatalogItem, type CatalogCategory } from './CatalogModal';
 
@@ -1556,6 +1557,7 @@ const CATEGORIES: CatalogCategory[] = [
 interface Props { onClose: () => void; }
 
 export function TacticsModal({ onClose }: Props) {
+  useEscapeKey(onClose);
   const lang = useLanguage();
   const en = lang === 'en';
   const items: CatalogItem[] = Object.entries(TACTIC_DEFS).map(([id, def]) => {

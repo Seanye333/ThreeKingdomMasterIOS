@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { ITEMS } from '../../game/data';
 import type { Item } from '../../game/data/items';
 import { ITEMS_BY_ID, REFINE_MAX, BREAKTHROUGH_MAX, breakthroughCost as itemBreakthroughCost, socketsFor, GEMS, GEMS_BY_ID } from '../../game/data/items';
@@ -56,6 +57,7 @@ function bestFitStat(item: Item): 'leadership' | 'war' | 'intelligence' | 'polit
 }
 
 export function ArmouryModal({ onClose }: Props) {
+  useEscapeKey(onClose);
   const officers = useGameStore((s) => s.officers);
   const forces = useGameStore((s) => s.forces);
   const playerForceId = useGameStore((s) => s.playerForceId);

@@ -182,7 +182,7 @@ export function processAging(input: AgingInput): AgingOutput {
     });
 
     // R10 — Grief: apply loyalty hits to bonded officers + report
-    const grief = griefOnDeath(officer.id, officer.name.zh, officer.name.en, input.family ?? [], input.runtimeBonds ?? []);
+    const grief = griefOnDeath(officer.id, officer.name.zh, officer.name.en, input.family ?? [], input.runtimeBonds ?? [], officers);
     for (const g of grief) {
       const target = officers[g.targetId];
       if (!target || target.status === 'dead' || !target.forceId) continue;

@@ -2247,6 +2247,14 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     // grain convoy between them. These crawl the map too, so they can be raided
     // when they pass a player stronghold (your garrison sorties on their supply).
     const playerFid = input.playerForceId;
+    // 木牛流馬 — a force that fields the logistics device (an officer skill)
+    // hauls faster and loses less on EVERY column, not just hand-dispatched ones.
+    const forceHasWoodenOx = (fid: string | null | undefined): boolean =>
+      !!fid && Object.values(officers).some(
+        (o) => o.forceId === fid && o.status !== 'dead' && (o.skills ?? []).includes('wooden-ox' as never),
+      );
+    const woodenOxSeasons = (n: number, ox: boolean) => Math.max(1, Math.round(n * (ox ? 0.6 : 1)));
+    const woodenOxKeep = (seasons: number, ox: boolean) => 1 - Math.min(0.4, 0.06 * (seasons - 1)) * (ox ? 0.5 : 1);
     const aiByForce: Record<string, City[]> = {};
     for (const c of Object.values(cities)) {
       if (!c.ownerForceId || c.ownerForceId === playerFid) continue;
@@ -2263,7 +2271,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const ship = Math.min(rich.food - 5000, 4000);
       if (ship < 1000) continue;
       cities[rich.id] = { ...cities[rich.id], food: cities[rich.id].food - ship };
-      const seasons = Math.max(2, marchDurationFor(rich, poor, input.date.season));
+      const seasons = Math.max(2, woodenOxSeasons(marchDurationFor(rich, poor, input.date.season), forceHasWoodenOx(fid)));
       const id = `ai-convoy-${fid}-${input.date.year}-${input.date.season}-${aiSeq++}`;
       nextConvoys[id] = { id, forceId: fid, fromCityId: rich.id, toCityId: poor.id, food: ship, gold: 0, troops: 0, seasonsRemaining: seasons, totalSeasons: seasons };
     }
@@ -2288,8 +2296,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       // the survivors reinforce the host on arrival). Drawn only from true spare.
       const escort = Math.min(Math.max(0, rear.troops - 1200), 1500);
       cities[rear.id] = { ...cities[rear.id], food: cities[rear.id].food - ship, troops: cities[rear.id].troops - escort };
-      const seasons = Math.max(1, marchDurationFor(rear, front, input.date.season));
-      const keep = 1 - Math.min(0.4, 0.06 * (seasons - 1));
+      const ox = forceHasWoodenOx(fid);
+      const seasons = woodenOxSeasons(marchDurationFor(rear, front, input.date.season), ox);
+      const keep = woodenOxKeep(seasons, ox);
       const id = `ai-fwd-${fid}-${input.date.year}-${input.date.season}-${aiSeq++}`;
       nextConvoys[id] = {
         id, forceId: fid, fromCityId: rear.id, toCityId: front.id, toArmyId: host.id,
@@ -2312,8 +2321,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         const shipHorses = (src.warhorses ?? 0) > 1500 ? Math.min((src.warhorses ?? 0) - 1000, 2000) : 0;
         const shipIron = (src.iron ?? 0) > 1500 ? Math.min((src.iron ?? 0) - 1000, 2000) : 0;
         if (shipFood < 1000 && shipHorses <= 0 && shipIron <= 0) continue;
-        const seasons = Math.max(1, marchDurationFor(src, dst, input.date.season));
-        const keep = 1 - Math.min(0.4, 0.06 * (seasons - 1));
+        const ox = forceHasWoodenOx(playerFid);
+        const seasons = woodenOxSeasons(marchDurationFor(src, dst, input.date.season), ox);
+        const keep = woodenOxKeep(seasons, ox);
         cities[r.fromCityId] = {
           ...cities[r.fromCityId],
           food: cities[r.fromCityId].food - shipFood,

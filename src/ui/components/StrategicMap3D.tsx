@@ -9,6 +9,7 @@ import { snapToHexCenter, geoToPixel, battleGroundAt, MAP_W as PX_W, MAP_H as PX
 import { getEmbassyTarget } from '../../game/systems/foreignRealm';
 import { cityPixel, cityPos } from '../../game/data/cityGeo';
 import { marchDurationFor } from '../../game/data/cities';
+import { citySpecialty, specialtyClass } from '../../game/data/specialties';
 import { NAMED_MAPS_BY_CITY, NAMED_MAPS_BY_ID } from '../../game/data/namedMaps';
 import { deriveWeaponType, type WeaponType } from '../../game/data/weaponTypes';
 import * as THREE from 'three';
@@ -52,7 +53,7 @@ import { useT, useLanguage, pickName } from '../i18n';
 const IS_MOBILE = typeof window !== 'undefined'
   && (window.matchMedia?.('(pointer: coarse)')?.matches || window.innerWidth < 700);
 
-type OverlayMode = 'none' | 'gold' | 'food' | 'troops' | 'loyalty' | 'province' | 'supply' | 'diplomacy' | 'threat';
+type OverlayMode = 'none' | 'gold' | 'food' | 'troops' | 'loyalty' | 'province' | 'supply' | 'diplomacy' | 'threat' | 'specialty';
 
 const PROVINCE_COLOR: Record<string, string> = {
   sili: '#d4a84a', yu: '#c19a3b', ji: '#3a5a8a', qing: '#5a8a8a',
@@ -3636,6 +3637,14 @@ function overlayForCity(
   maxes: { gold: number; food: number; troops: number },
 ): { color: string; label: string } | null {
   if (mode === 'none' || mode === 'supply' || mode === 'diplomacy' || mode === 'threat') return null; // these draw their own
+  if (mode === 'specialty') {
+    // 名產 — mark only the cities that make a famous good, glyph-coded by class.
+    const sp = citySpecialty(city.id);
+    if (!sp) return null;
+    const cls = specialtyClass(city.id);
+    const color = cls === 'war' ? '#b8442e' : cls === 'food' ? '#6aae5a' : cls === 'craft' ? '#d4a84a' : cls === 'physic' ? '#4aa8a0' : '#8a7a4a';
+    return { color, label: sp.glyph };
+  }
   if (mode === 'province') {
     const pid = PROVINCE_BY_CITY[city.id];
     const color = pid ? (PROVINCE_COLOR[pid] ?? '#5a4530') : '#5a4530';
@@ -6940,6 +6949,7 @@ const OVERLAY_OPTIONS: Array<{ id: OverlayMode; zh: string; en: string }> = [
   { id: 'troops',   zh: '兵力', en: 'TROOPS' },
   { id: 'loyalty',  zh: '民忠', en: 'LOYALTY' },
   { id: 'province', zh: '州郡', en: 'PROVINCE' },
+  { id: 'specialty', zh: '名產', en: 'GOODS' },
   { id: 'supply',   zh: '糧道', en: 'SUPPLY' },
   { id: 'diplomacy', zh: '邦交', en: 'TIES' },
   { id: 'threat',   zh: '威脅', en: 'THREAT' },

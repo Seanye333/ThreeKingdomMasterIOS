@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useGameStore } from '../../game/state/store';
 import { adviseTips, pickAdvisor, type AdvisorTip } from '../../game/systems/advisor';
 import { OfficerAvatar } from './OfficerAvatar';
@@ -10,6 +11,7 @@ import { useT } from '../i18n';
  * after every execution so the next tip reflects the new state.
  */
 export function AdvisorModal({ onClose }: { onClose: () => void }) {
+  useEscapeKey(onClose);
   const cities = useGameStore((s) => s.cities);
   const officers = useGameStore((s) => s.officers);
   const armies = useGameStore((s) => s.armies);

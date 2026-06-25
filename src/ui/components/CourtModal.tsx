@@ -9,12 +9,14 @@ import { canPromoteToRank, nextImperialRank } from '../../game/systems/imperialE
 import { canWelcomeEmperor, emperorCustodian } from '../../game/systems/emperor';
 import { deriveCourtFactions, FACTION_LABEL } from '../../game/systems/courtFactions';
 import { clanGentryWeight } from '../../game/systems/clans';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface Props {
   onClose: () => void;
 }
 
 export function CourtModal({ onClose }: Props) {
+  useEscapeKey(onClose);
   const forces = useGameStore((s) => s.forces);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const edictHistory = useGameStore((s) => s.edictHistory);

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useGameStore } from '../../game/state/store';
 import { getRelation, pairKey } from '../../game/types';
 import { Name } from './Name';
@@ -11,6 +12,7 @@ interface Props {
  * Visual diplomacy graph: forces around a circle, lines colored by status.
  */
 export function DiplomacyGraphModal({ onClose }: Props) {
+  useEscapeKey(onClose);
   const forces = useGameStore((s) => s.forces);
   const cities = useGameStore((s) => s.cities);
   const diplomacy = useGameStore((s) => s.diplomacy);

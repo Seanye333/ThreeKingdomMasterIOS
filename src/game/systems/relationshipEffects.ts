@@ -493,6 +493,10 @@ export function loyaltyFloor(
   for (const mentorId of mentorsOf(officer.id)) {
     if (sameForceAlive(mentorId)) floor = Math.max(floor, 90);
   }
+  // 部曲 — a retainer serving under their original lord keeps a high floor.
+  if (officer.retinueOfLordId && sameForceAlive(officer.retinueOfLordId)) {
+    floor = Math.max(floor, 90);
+  }
   return floor;
 }
 
@@ -514,6 +518,8 @@ export function griefOnDeath(
   deceasedNameEn: string,
   family: FamilyRelation[],
   runtimeBonds: OathBond[] = [],
+  /** When supplied, a fallen lord's scattered 部曲 also mourn (retinueOfLordId). */
+  allOfficers?: Record<EntityId, Officer>,
 ): GriefEffect[] {
   const out: GriefEffect[] = [];
   const seen = new Set<EntityId>();
@@ -566,6 +572,16 @@ export function griefOnDeath(
   }
   for (const id of studentsOf(deceasedId)) {
     add(id, -10, `恩師${deceasedNameZh}辭世`, `Mentor ${deceasedNameEn} died`);
+  }
+  // 部曲喪志 — a fallen lord's surviving retainers mourn their old master.
+  // The `seen` set keeps anyone already grieving (e.g. as a sworn brother) from
+  // double-dipping, so this only adds the rank-and-file retinue.
+  if (allOfficers) {
+    for (const o of Object.values(allOfficers)) {
+      if (o.retinueOfLordId === deceasedId && o.status !== 'dead') {
+        add(o.id, -18, `故主${deceasedNameZh}殞落 — 部曲喪志`, `Their old lord ${deceasedNameEn} has fallen`);
+      }
+    }
   }
   return out;
 }

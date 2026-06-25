@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useGameStore } from '../../game/state/store';
 import { getRelation } from '../../game/types/diplomacy';
 import { useT, useLanguage } from '../i18n';
@@ -9,6 +10,7 @@ import { useT, useLanguage } from '../i18n';
  * chilled by the -100..+100 score), with living forces ranked by city count.
  */
 export function RelationsModal({ onClose }: { onClose: () => void }) {
+  useEscapeKey(onClose);
   const forces = useGameStore((s) => s.forces);
   const cities = useGameStore((s) => s.cities);
   const diplomacy = useGameStore((s) => s.diplomacy);

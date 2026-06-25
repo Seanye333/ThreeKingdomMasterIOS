@@ -1,4 +1,5 @@
 import { useGameStore } from '../../game/state/store';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { CHALLENGES, totalStars, type Challenge } from '../../game/data/challenges';
 import { SCENARIOS } from '../../game/data';
 import { useT, useLanguage } from '../i18n';
@@ -20,6 +21,7 @@ const DIFF_LABEL: Record<Challenge['difficulty'], { zh: string; en: string; colo
  * scenario at the recommended difficulty and arms the check.
  */
 export function HeroModeModal({ onClose }: Props) {
+  useEscapeKey(onClose);
   const startChallenge = useGameStore((s) => s.startChallenge);
   const records = useGameStore((s) => s.challengeRecords);
   const t = useT();

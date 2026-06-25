@@ -7,6 +7,7 @@ import { OfficerDetail } from './OfficerDetail';
 import { BondCeremony } from './BondCeremony';
 import { playSfx } from '../../game/systems/sound';
 import styles from './BondsModal.module.css';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useT, useLanguage } from '../i18n';
 
 interface Props {
@@ -26,6 +27,7 @@ interface BondRow {
 }
 
 export function BondsModal({ onClose }: Props) {
+  useEscapeKey(onClose);
   const officers = useGameStore((s) => s.officers);
   const forces = useGameStore((s) => s.forces);
   const runtimeBonds = useGameStore((s) => s.runtimeBonds);

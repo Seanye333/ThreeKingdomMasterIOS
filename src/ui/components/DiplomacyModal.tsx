@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useGameStore } from '../../game/state/store';
 import {
   ALLIANCE_PROPOSAL_COST,
@@ -34,6 +35,7 @@ interface ForceRow {
 }
 
 export function DiplomacyModal({ onClose }: Props) {
+  useEscapeKey(onClose);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const forces = useGameStore((s) => s.forces);
   const cities = useGameStore((s) => s.cities);

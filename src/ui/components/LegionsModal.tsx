@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useGameStore } from '../../game/state/store';
 import type { Legion } from '../../game/systems/legion';
 import { useT } from '../i18n';
@@ -9,6 +10,7 @@ import { useT } from '../i18n';
  * its orders auto-issue every tick through the ordinary pipeline.
  */
 export function LegionsModal({ onClose }: { onClose: () => void }) {
+  useEscapeKey(onClose);
   const legions = useGameStore((s) => s.legions ?? []);
   const cities = useGameStore((s) => s.cities);
   const officers = useGameStore((s) => s.officers);

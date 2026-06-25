@@ -65,6 +65,9 @@ export type WishKind =
   | 'dismiss-rival'    // wants a rival officer dismissed
   | 'learn-policy'     // wants to be trained in a specific policy
   | 'retire'           // wants to retire (only old / wounded officers)
+  | 'peerage'          // 求爵 — wants enfeoffment (next peerage tier)
+  | 'mentor'           // 求師 — wants to apprentice under a strong colleague
+  | 'gift'             // 求賜 — wants a reward of honour/renown
   | 'info';            // 上書 — informational letter, no grant/reject choice
 
 export interface OfficerWish {

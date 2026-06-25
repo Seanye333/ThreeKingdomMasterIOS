@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { FORMATIONS } from '../../game/data';
 import { useGameStore } from '../../game/state/store';
 import type { FormationDef } from '../../game/types';
@@ -57,6 +58,7 @@ const CATEGORY_COLOR: Record<Category, string> = {
 };
 
 export function FormationsModal({ onClose }: Props) {
+  useEscapeKey(onClose);
   const [cat, setCat] = useState<Category>('all');
   const [usableOnly, setUsableOnly] = useState(false);
   const t = useT();

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useGameStore } from '../../game/state/store';
 import { useT, useLanguage } from '../i18n';
 import { officerGrade, gradeScore, officerLevel, gradeRank } from '../../game/systems/officerGrade';
@@ -14,6 +15,7 @@ import { OfficerDetail } from './OfficerDetail';
  * at a glance who the heavyweights are — yours and your rivals'.
  */
 export function HallOfFameModal({ onClose }: { onClose: () => void }) {
+  useEscapeKey(onClose);
   const t = useT();
   const lang = useLanguage();
   const officers = useGameStore((s) => s.officers);

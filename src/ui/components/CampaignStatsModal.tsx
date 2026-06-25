@@ -1,4 +1,5 @@
 import { useGameStore } from '../../game/state/store';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { SEASON_LABEL } from '../../game/types';
 import { useT, useLanguage } from '../i18n';
 
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export function CampaignStatsModal({ onClose }: Props) {
+  useEscapeKey(onClose);
   const stats = useGameStore((s) => s.campaignStats);
   const officers = useGameStore((s) => s.officers);
   const cities = useGameStore((s) => s.cities);

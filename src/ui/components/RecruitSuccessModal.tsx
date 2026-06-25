@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useGameStore } from '../../game/state/store';
 import { TRAIT_DEFS_BY_ID } from '../../game/data/personality';
 import type { Officer } from '../../game/types';
@@ -18,6 +19,7 @@ const MOTES = Array.from({ length: 10 }, (_, i) => i);
  * a victorious line. Shared by both flows.
  */
 export function RecruitSuccessModal({ officer, onClose }: { officer: Officer; onClose: () => void }) {
+  useEscapeKey(onClose);
   const t = useT();
   const lang = useLanguage();
   const forces = useGameStore((s) => s.forces);

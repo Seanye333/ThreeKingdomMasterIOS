@@ -80,6 +80,7 @@ export function fillRetinues(officers: Officer[], forces: Force[], year: number)
       o.locationCityId = force.capitalCityId;
       o.status = 'idle';
       o.loyalty = 90;
+      o.retinueOfLordId = force.rulerOfficerId; // 部曲故主 — loyalty floor / grief / re-recruit
       assigned.add(oid);
     }
   }

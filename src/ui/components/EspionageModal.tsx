@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { ESPIONAGE_DEFS } from '../../game/data';
 import { useGameStore } from '../../game/state/store';
 import type { EntityId, EspionageKind, Officer } from '../../game/types';
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function EspionageModal({ onClose }: Props) {
+  useEscapeKey(onClose);
   const officers = useGameStore((s) => s.officers);
   const cities = useGameStore((s) => s.cities);
   const forces = useGameStore((s) => s.forces);

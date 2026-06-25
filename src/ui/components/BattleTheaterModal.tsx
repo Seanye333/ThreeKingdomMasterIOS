@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useGameStore } from '../../game/state/store';
 import type { BattleDetail } from '../../game/types';
 import { OfficerPortrait } from './OfficerPortrait';
@@ -26,6 +27,7 @@ const PHASE_LABEL: Record<string, { zh: string; en: string; sfx: 'horn' | 'sword
 const PHASE_MS = 2200;
 
 export function BattleTheaterModal({ battle, onClose }: Props) {
+  useEscapeKey(onClose);
   const lang = useLanguage();
   const officers = useGameStore((s) => s.officers);
   const forces = useGameStore((s) => s.forces);
