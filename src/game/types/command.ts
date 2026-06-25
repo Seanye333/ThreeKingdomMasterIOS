@@ -20,7 +20,8 @@ export type InternalAffairsType =
   | 'flood-control'       // 治水 — raise flood works (stacks with levee) + irrigation
   | 'military-farming'    // 屯田 — soldiers till state land: food without drawing population
   | 'drill-troops'        // 練兵 — drill the garrison: raise the city's 練度 (drill) → defense
-  | 'garrison';           // 鎮守 — reclaim surrounding territory + boost defense
+  | 'garrison'            // 鎮守 — reclaim surrounding territory + boost defense
+  | 'special-training';   // 特訓 — drill ONE officer hard: big XP + chance of skill/性格/潛能, martial tracks risk 養傷
 
 export type CommandType = InternalAffairsType | 'march';
 

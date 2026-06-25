@@ -3,7 +3,7 @@
 > 由 `scripts/gen-catalog.ts` 自動生成,請勿手改;重生成:`npm run docs:catalog`。
 > 可讀摘要見 [GUIDE.md](GUIDE.md) 附錄。
 
-## 名品 Items(1399)
+## 名品 Items(1404)
 
 | 名 | 類 | 出處城 | 加成 |
 |---|---|---|---|
@@ -1406,6 +1406,11 @@
 | 九錫 Nine Bestowments | treasure | — | POL+8 CHA+6 |
 | 龍紋玉帶 Dragon Jade Belt | treasure | — | POL+6 CHA+6 |
 | 鎮國神璽 Realm-Anchoring Seal | treasure | — | POL+9 CHA+5 |
+| 孫子兵法 Sun Tzu's Art of War | book | wu |  |
+| 太公六韜 Taigong's Six Secret Teachings | book | ye |  |
+| 道德經 Tao Te Ching | book | chengdu |  |
+| 論語 The Analects | book | beihai |  |
+| 戰國策 Stratagems of the Warring States | book | luoyang |  |
 
 ## 政策 Policies(161)
 

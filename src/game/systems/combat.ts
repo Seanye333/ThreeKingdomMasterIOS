@@ -22,7 +22,7 @@ import { cityPos } from '../data/cityGeo';
 import { sidePoolRelationshipBonus, rivalShowdownMultiplier } from './relationshipEffects';
 import { effectivePrestigeEffects } from '../data/prestige';
 import { honorificEffects } from '../data/honorifics';
-import { gradeAuraPowerMul, gradeAuraMorale, itemMasteryMul } from './gradeCombat';
+import { gradeAuraPowerMul, gradeAuraMorale, itemMasteryMul, enemyMoraleShock, holdsTheLine } from './gradeCombat';
 import { growthPowerMul } from './growth';
 import { itemSetBonuses } from '../data/itemSets';
 import { selectSiegeEngine } from '../data/siegeEngines';
@@ -676,10 +676,11 @@ export function resolveBattle(
   // Each side starts at 60 + commander leadership/10. Phases shift morale by
   // power-ratio dynamics, stratagem surprise, duel outcomes, and elite presence.
   const phases: BattlePhaseLog[] = [];
-  // 品階威儀 — a graded commander steadies the line, opening with higher morale.
-  let aMorale = clamp(60 + attacker.commander.stats.leadership / 10 + gradeAuraMorale(attackerPool), 0, 100);
+  // 品階威儀 — a graded commander steadies his own line (gradeAuraMorale) AND
+  // 萬軍辟易 shakes the enemy's (enemyMoraleShock): facing a legend, the foe opens lower.
+  let aMorale = clamp(60 + attacker.commander.stats.leadership / 10 + gradeAuraMorale(attackerPool) - enemyMoraleShock(defenderPool), 0, 100);
   let dMorale = defender.commander
-    ? clamp(60 + defender.commander.stats.leadership / 10 + gradeAuraMorale(defenderPool), 0, 100)
+    ? clamp(60 + defender.commander.stats.leadership / 10 + gradeAuraMorale(defenderPool) - enemyMoraleShock(attackerPool), 0, 100)
     : 30;
 
   // Phase 1 — Formation (兵陣)
@@ -734,12 +735,14 @@ export function resolveBattle(
   let finalAttackerWins = attackerWins;
   let extraDefenderLosses = 0;
   let extraAttackerLosses = 0;
+  // 不動如山 — a 白金+ commander's host breaks in good order: a rout costs it far
+  // fewer extra casualties (0.10 instead of 0.25).
   if (dMorale < 25 && aMorale > 35) {
     finalAttackerWins = true;
-    extraDefenderLosses = Math.floor(defenderSurvivors * 0.25);
+    extraDefenderLosses = Math.floor(defenderSurvivors * (holdsTheLine(defenderPool) ? 0.10 : 0.25));
   } else if (aMorale < 25 && dMorale > 35) {
     finalAttackerWins = false;
-    extraAttackerLosses = Math.floor(attackerSurvivors * 0.25);
+    extraAttackerLosses = Math.floor(attackerSurvivors * (holdsTheLine(attackerPool) ? 0.10 : 0.25));
   }
 
   // Phase 4 — Pursuit (追擊). Only if attacker won + chose to pursue.

@@ -95,6 +95,15 @@ export interface Officer {
   /** 練兵/拜師 — a player-chosen stat to steer level-up growth toward. When set,
    *  every XP source biases stat gains here (see growth.grantXp). */
   trainingFocus?: keyof OfficerStats;
+  /** 頓悟槽 — XP earned past the level-9 ceiling pools here instead of being
+   *  wasted; each time it fills, the officer breaks a 瓶頸 and lifts one latent
+   *  cap (a mini-breakthrough between 突破s). See growth.grantXp. Default 0. */
+  epiphany?: number;
+  /** 師承 — the officer this one is apprenticed to (拜師). While both are
+   *  garrisoned together the disciple grows toward the master's strongest suit,
+   *  may inherit one of their skills, and inherits a 遺志 boost on the master's
+   *  death. See systems/growth + resolution's mentor loop. */
+  mentorId?: EntityId;
   /** Highest 品階 ever reached — drives one-shot 晉牌封賞 rewards so a promotion
    *  fires once and a stat wobble around the threshold can't re-trigger it. */
   peakGrade?: import('../systems/officerGrade').OfficerGrade;
@@ -103,8 +112,13 @@ export interface Officer {
   breakthroughs?: number;
   /** 戰功威望 — accumulated battlefield renown. Folds into gradeScore so a
    *  battle-proven veteran can earn a higher 品階 than a higher-statted but
-   *  untested rival (晉品評定). Earned on victories. Default 0. */
+   *  untested rival (晉品評定). Earned on victories, DOCKED on humiliation
+   *  (罵死/被俘) — a living, two-way reputation (揚威/失威). Default 0. */
   renown?: number;
+  /** 失威 — seasons of disgrace after a humiliating 罵死 / 被俘. While >0 the
+   *  officer's 品階招牌 (萬軍辟易/不動如山/萬人敵) is suppressed — their aura is
+   *  shaken until they win it back. Ticks down each season. Default/omitted = 0. */
+  disgrace?: number;
   /** 爵位 — held peerage id (封爵), the highest layer of 官爵 above 軍階/官職.
    *  Yields 食邑 income + loyalty + prestige; great fiefs feed 野心. Default/
    *  omitted = no peerage. See data/peerage.ts. */

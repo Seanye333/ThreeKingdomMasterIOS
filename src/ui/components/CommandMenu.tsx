@@ -28,6 +28,7 @@ const BASIC_ORDER: InternalAffairsType[] = [
   'recruit-troops',
   'military-farming',
   'drill-troops',
+  'special-training',
   'improve-loyalty',
   'relief',
   'anti-corruption',

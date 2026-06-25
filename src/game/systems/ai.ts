@@ -1375,6 +1375,33 @@ function decideCommand(
     }
   }
 
+  // 4.98 特訓 — a rich, peaceful rear city with gold to spare puts its most
+  // promising officer through a hard personal drill (特訓): gold traded for big
+  // 歷練 plus a shot at a skill / 性格 / 潛能. Gated like 興学 (economy built out)
+  // so it never crowds out development, plus a real-headroom check so it isn't
+  // wasted on an officer who can barely grow. Keeps AI growth on par with the
+  // player's new training lever.
+  {
+    const econCap = cityEconCap(city);
+    if (
+      !onFront &&
+      city.loyalty >= 55 &&
+      city.agriculture >= econCap * 0.9 &&
+      city.commerce >= econCap * 0.9 &&
+      city.gold >= COMMAND_DEFS['special-training'].goldCost * 3
+    ) {
+      const cand = officersHere.find((o) => {
+        const lat = o.latentStats;
+        if (!lat || o.status === 'wounded') return false;
+        const gap = (lat.war - o.stats.war) + (lat.leadership - o.stats.leadership)
+          + (lat.intelligence - o.stats.intelligence) + (lat.politics - o.stats.politics)
+          + (lat.charisma - o.stats.charisma);
+        return gap >= 10;
+      });
+      if (cand) return internalDecision('special-training', city, cand);
+    }
+  }
+
   // 5. Routine — front-line cities fortify, rear cities grow the economy.
   const devType = chooseDevelopment(city, onFront);
   // 二級內政 — once the city reaches 城 tier, prefer the triple-strength 大農政/

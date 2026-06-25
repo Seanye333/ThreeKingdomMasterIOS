@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { useT, useLanguage } from '../i18n';
-import { officerGrade, gradeScore, officerLevel } from '../../game/systems/officerGrade';
+import { officerGrade, gradeScore, officerLevel, gradeRank } from '../../game/systems/officerGrade';
 import { renownFromDeeds, fameMedal } from '../../game/systems/fame';
 import { ageBand } from '../../game/systems/aging';
 import { breakthroughTitle } from '../../game/systems/growth';
@@ -22,16 +22,19 @@ export function HallOfFameModal({ onClose }: { onClose: () => void }) {
   const playerForceId = useGameStore((s) => s.playerForceId);
   const year = useGameStore((s) => s.date.year);
   const [scope, setScope] = useState<'all' | 'mine'>('all');
+  const [tier, setTier] = useState<'all' | 'gold' | 'platinum'>('all');
   const [selected, setSelected] = useState<Officer | null>(null);
 
   const rows = useMemo(() => {
+    const floor = tier === 'all' ? -1 : gradeRank(tier);
     return Object.values(officers)
       .filter((o) => o.status !== 'dead' && o.status !== 'unsearched')
       .filter((o) => (scope === 'mine' ? o.forceId === playerForceId : true))
+      .filter((o) => (floor < 0 ? true : gradeRank(officerGrade(o).grade) >= floor))
       .map((o) => ({ o, score: gradeScore(o) }))
       .sort((a, b) => b.score - a.score)
       .slice(0, 60);
-  }, [officers, scope, playerForceId]);
+  }, [officers, scope, tier, playerForceId]);
 
   return (
     <div
@@ -60,6 +63,13 @@ export function HallOfFameModal({ onClose }: { onClose: () => void }) {
               padding: '0.2rem 0.7rem', borderRadius: 2, cursor: 'pointer', fontSize: '0.78rem',
               background: scope === s ? '#2a2010' : '#10161e', border: `1px solid ${scope === s ? '#e6c473' : '#26323e'}`, color: scope === s ? '#e6c473' : '#8a97a3',
             }}>{s === 'all' ? t('天下', 'All') : t('本勢力', 'My force')}</button>
+          ))}
+          <span style={{ width: 1, background: '#2b3845', margin: '0 0.2rem' }} />
+          {([['all', t('全品', 'All')], ['gold', t('金牌+', 'Gold+')], ['platinum', t('白金+', 'Platinum+')]] as const).map(([tk, label]) => (
+            <button key={tk} onClick={() => setTier(tk as typeof tier)} style={{
+              padding: '0.2rem 0.7rem', borderRadius: 2, cursor: 'pointer', fontSize: '0.78rem',
+              background: tier === tk ? '#2a2010' : '#10161e', border: `1px solid ${tier === tk ? '#e6c473' : '#26323e'}`, color: tier === tk ? '#e6c473' : '#8a97a3',
+            }}>{label}</button>
           ))}
         </div>
 

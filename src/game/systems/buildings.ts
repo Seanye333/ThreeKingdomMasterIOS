@@ -3,6 +3,7 @@ import type {
   BuildingId,
   City,
   EntityId,
+  Officer,
   ReportEntry,
   TradeRoute,
 } from '../types';
@@ -53,10 +54,36 @@ export function tickBuildings(ctx: BuildingTickContext): BuildingTickOutput {
  * Aggregate building bonuses for a city. Returns multiplicative bonuses
  * indexed by effect category.
  */
+/** Schools whose xpMul a 山長 (headmaster) can amplify. */
+export const SCHOOL_BUILDINGS = new Set<BuildingId>(['academy', 'grandacademy', 'drillground', 'recruithall', 'warschool', 'library']);
+
+/** 山長之偏 — the stat the city's school headmasters tilt 講學 toward (the top
+ *  stat of the strongest assigned headmaster), or null if none is assigned. So a
+ *  武學堂 under a fierce general trains 武, a 書院 under a sage trains 智. */
+export function schoolHeadmasterFocus(
+  cityId: EntityId,
+  buildings: Building[],
+  officers: Record<EntityId, Officer>,
+): keyof Officer['stats'] | null {
+  let best: Officer | null = null;
+  let bestScore = -1;
+  for (const b of buildings) {
+    if (b.cityId !== cityId || b.level === 0 || !b.headmasterId || !SCHOOL_BUILDINGS.has(b.id)) continue;
+    const hm = officers[b.headmasterId];
+    if (!hm || hm.locationCityId !== cityId || hm.status === 'dead') continue;
+    const score = hm.stats.leadership + hm.stats.war + hm.stats.intelligence + hm.stats.politics + hm.stats.charisma;
+    if (score > bestScore) { best = hm; bestScore = score; }
+  }
+  if (!best) return null;
+  const o = best;
+  return (Object.keys(o.stats) as Array<keyof Officer['stats']>)
+    .reduce((a, k) => (o.stats[k] > o.stats[a] ? k : a), 'war' as keyof Officer['stats']);
+}
+
 export function buildingBonuses(
   cityId: EntityId,
   buildings: Building[],
-  opts?: { statecraft?: string | null },
+  opts?: { statecraft?: string | null; officers?: Record<EntityId, Officer> },
 ): {
   recruitMul: number;
   commerceMul: number;
@@ -311,6 +338,14 @@ export function buildingBonuses(
         espionagePower += 0.1 * l;
         instigateResistance += 0.1 * l;
         break;
+    }
+    // 山長 — an officer assigned to head a school amplifies its XP output: their
+    // 智力 (a 山長's learning) lifts the school's contribution by up to +40%.
+    if (opts?.officers && b.headmasterId && SCHOOL_BUILDINGS.has(b.id)) {
+      const hm = opts.officers[b.headmasterId];
+      if (hm && hm.locationCityId === cityId && hm.status !== 'dead') {
+        xpMul *= 1 + Math.min(0.4, hm.stats.intelligence * 0.004);
+      }
     }
   }
   return {

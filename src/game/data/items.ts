@@ -24,6 +24,16 @@ export interface Item {
     trait?: string;      // PersonalityTrait
     formation?: string;  // OfficerFormationId
   };
+  /** 兵書/秘笈 — a consumable manual. When `study`-ed by an officer it applies
+   *  its effect once and is destroyed (not kept as equipment). `xp` floods growth
+   *  XP; `latent` lifts the named latent ceiling (and nudges the stat with it);
+   *  `skill` teaches an innate skill. A consumable's `effects` are ignored.
+   *  See store.studyManual. */
+  consumable?: {
+    xp?: number;
+    latent?: { stat: 'leadership' | 'war' | 'intelligence' | 'politics' | 'charisma'; amount: number };
+    skill?: string; // SKILLS id
+  };
   /** 品階 — optional explicit rarity. When omitted, itemRarity() derives one
    *  from the item's effect magnitude so every item reads in the shared
    *  金/銀/銅 visual language. */
@@ -151,13 +161,57 @@ export function itemGemIds(itemId: string): string[] {
   return GEM_REGISTRY[itemId] ?? [];
 }
 
+// ─── 名器養成 — a weapon's accumulated battle-renown (人器合一) ────────────────
+// Carried through battle after battle, a weapon builds a legend: a small growing
+// aura on its effects, and a familiarity that eases the 兵器駕馭 grade penalty for
+// whoever wields it (see gradeCombat.itemMasteryMul). Stored per-item, denormalised
+// into a registry like 精煉/突破/鑲嵌 so the pure read sites resolve through it.
+let LORE_REGISTRY: Record<string, number> = {};
+export function setLoreRegistry(map: Record<string, number> | undefined): void {
+  LORE_REGISTRY = map ?? {};
+}
+/** Battles this item has been carried through — its 威名. */
+export function itemLoreLevel(itemId: string): number {
+  const n = LORE_REGISTRY[itemId] ?? 0;
+  return n < 0 ? 0 : n;
+}
+/** 名器稱號 — a storied weapon earns a title as its renown climbs. */
+const LORE_TITLES: Array<{ at: number; zh: string; en: string }> = [
+  { at: 60, zh: '名器', en: 'Storied' },
+  { at: 30, zh: '百戰', en: 'Battle-Worn' },
+  { at: 12, zh: '飲血', en: 'Blooded' },
+];
+export function itemLoreTitle(renown: number): { zh: string; en: string } | null {
+  for (const t of LORE_TITLES) if (renown >= t.at) return { zh: t.zh, en: t.en };
+  return null;
+}
+/** 名器光環 — renown gently lifts the item's effects, capped at +8% (~40 battles). */
+export function itemLoreAuraMul(renown: number): number {
+  return 1 + Math.min(0.08, Math.max(0, renown) * 0.002);
+}
+/** Grant +1 威名 to every weapon / armour / mount in each equipment list (one list
+ *  per officer-per-battle, so an officer in two battles seasons their gear twice).
+ *  Returns a NEW lore map. Shared by the tactical (store) + strategic (endSeason) hooks. */
+export function accrueWeaponLore(prior: Record<string, number>, equipmentLists: string[][]): Record<string, number> {
+  const next = { ...prior };
+  for (const eq of equipmentLists) {
+    for (const itemId of eq) {
+      const base = ITEMS_BY_ID[itemId];
+      if (base && (base.kind === 'weapon' || base.kind === 'armor' || base.kind === 'horse')) {
+        next[itemId] = (next[itemId] ?? 0) + 1;
+      }
+    }
+  }
+  return next;
+}
+
 /**
  * An item with 精煉 → 突破 → 鑲嵌 all baked into `effects`, in that order:
  * refine and breakthrough scale the base magnitudes; gems then add flat stats.
  * Rarity recomputes from the boosted magnitude (so growth can promote 品階).
  */
-export function liveItem(item: Item, plus: number, stars = 0, gemIds: string[] = []): Item {
-  if (!plus && !stars && gemIds.length === 0) return item;
+export function liveItem(item: Item, plus: number, stars = 0, gemIds: string[] = [], lore = 0): Item {
+  if (!plus && !stars && gemIds.length === 0 && lore <= 0) return item;
   let effects = refinedEffects(item, plus);
   if (stars) effects = breakthroughEffects(effects, stars);
   if (gemIds.length > 0) {
@@ -170,15 +224,38 @@ export function liveItem(item: Item, plus: number, stars = 0, gemIds: string[] =
         effects[k] = (effects[k] ?? 0) + v;
       }
     }
+    // 寶石共鳴 — sockets filled with the SAME gem resonate: +25% of that gem per
+    // matching socket beyond the first (2 同 → +25%, 滿 3 孔 → +50%).
+    if (gemIds.length >= 2 && new Set(gemIds).size === 1) {
+      const gem = GEMS_BY_ID[gemIds[0]];
+      if (gem) {
+        const reso = (gemIds.length - 1) * 0.25;
+        for (const [k, v] of Object.entries(gem.effects) as Array<[keyof Item['effects'], number | undefined]>) {
+          if (!v) continue;
+          effects[k] = (effects[k] ?? 0) + Math.sign(v) * Math.max(1, Math.round(Math.abs(v) * reso));
+        }
+      }
+    }
+  }
+  // 名器光環 — battle-renown lifts every effect by a small, capped factor.
+  if (lore > 0) {
+    const mul = itemLoreAuraMul(lore);
+    if (mul > 1) {
+      effects = { ...effects };
+      for (const [k, v] of Object.entries(effects) as Array<[keyof Item['effects'], number | undefined]>) {
+        if (!v) continue;
+        effects[k] = v + Math.sign(v) * Math.max(1, Math.round(Math.abs(v) * (mul - 1)));
+      }
+    }
   }
   return { ...item, effects };
 }
 
-/** Look up an item by id and bake in its registered refinement + breakthrough + gems. */
+/** Look up an item by id and bake in its registered refinement + breakthrough + gems + 名器威名. */
 export function liveItemById(id: string): Item | null {
   const base = ITEMS_BY_ID[id];
   if (!base) return null;
-  return liveItem(base, itemRefineLevel(id), itemBreakthroughLevel(id), itemGemIds(id));
+  return liveItem(base, itemRefineLevel(id), itemBreakthroughLevel(id), itemGemIds(id), itemLoreLevel(id));
 }
 
 /** Gold cost to take an item from `plus` → `plus+1` (escalates with rarity + level). */
@@ -186,6 +263,14 @@ export function refineCost(item: Item, plus: number): number {
   const r = itemRarity(item);
   const base = r === 'gold' ? 600 : r === 'silver' ? 360 : 220;
   return Math.round(base * (plus + 1) * 1.35);
+}
+
+/** 洗點退養 — cumulative gold sunk into an item's 精煉 + 突破, for a respec refund. */
+export function itemGrowthGoldSpent(item: Item, plus: number, stars: number): number {
+  let g = 0;
+  for (let p = 0; p < plus; p++) g += refineCost(item, p);
+  for (let st = 0; st < stars; st++) g += breakthroughCost(item, st).gold;
+  return g;
 }
 
 /** 突破 — gold + iron to take an item from ★stars → ★stars+1 (steep, end-game). */
@@ -13453,6 +13538,65 @@ export const ITEMS: Item[] = [
   ...FORGE_BATCH_8,
   ...FORGE_BATCH_9,
   ...FORGE_BATCH_10,
+
+  // ── 兵書 / 秘笈 — consumable manuals. Carried like any item, then 研讀 (studied)
+  // to apply a one-time growth boost and be destroyed. `effects: {}` so merely
+  // carrying one does nothing; the payoff is in `consumable`. See store.studyManual. ──
+  {
+    id: 'sunzi-bingfa',
+    name: { en: "Sun Tzu's Art of War", zh: '孫子兵法' },
+    kind: 'book',
+    originCityId: 'wu',
+    description: 'The thirteen chapters — the soldier’s bible. Studying it floods a commander with hard-won experience and deepens their martial potential.',
+    descriptionZh: '兵家聖典十三篇。研讀之,歷練大進,武略之資益深。',
+    effects: {},
+    consumable: { xp: 200, latent: { stat: 'war', amount: 2 } },
+    rarity: 'gold',
+  },
+  {
+    id: 'taigong-liutao',
+    name: { en: "Taigong's Six Secret Teachings", zh: '太公六韜' },
+    kind: 'book',
+    originCityId: 'ye',
+    description: 'Jiang Ziya’s treatise on command and statecraft. Lifts a leader’s capacity to marshal armies.',
+    descriptionZh: '姜尚論將帥治軍之道。研讀之,統御之資益進,歷練大增。',
+    effects: {},
+    consumable: { xp: 160, latent: { stat: 'leadership', amount: 2 } },
+    rarity: 'silver',
+  },
+  {
+    id: 'daode-jing',
+    name: { en: 'Tao Te Ching', zh: '道德經' },
+    kind: 'book',
+    originCityId: 'chengdu',
+    description: 'Laozi’s five thousand words. Contemplation sharpens the mind and widens a strategist’s insight.',
+    descriptionZh: '老子五千言。靜參之,智慧通明,謀略之資益深。',
+    effects: {},
+    consumable: { xp: 140, latent: { stat: 'intelligence', amount: 2 } },
+    rarity: 'silver',
+  },
+  {
+    id: 'lunyu-analects',
+    name: { en: 'The Analects', zh: '論語' },
+    kind: 'book',
+    originCityId: 'beihai',
+    description: 'Confucius’ sayings on virtue and governance. Study tempers an administrator’s hand.',
+    descriptionZh: '孔門論仁政之語。研讀之,政事之資益進,歷練漸長。',
+    effects: {},
+    consumable: { xp: 120, latent: { stat: 'politics', amount: 2 } },
+    rarity: 'bronze',
+  },
+  {
+    id: 'zhanguo-ce',
+    name: { en: 'Stratagems of the Warring States', zh: '戰國策' },
+    kind: 'book',
+    originCityId: 'luoyang',
+    description: 'The persuasions of the wandering diplomats. Reading them silvers the tongue and quickens the wit.',
+    descriptionZh: '縱橫策士辭令之集。研讀之,辯才魅力俱增,智資亦長。',
+    effects: {},
+    consumable: { xp: 150, latent: { stat: 'charisma', amount: 2 } },
+    rarity: 'silver',
+  },
 
 ];
 

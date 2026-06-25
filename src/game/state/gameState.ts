@@ -237,6 +237,9 @@ export interface GameState {
   itemBreakthroughs: Record<EntityId, number>;
   /** 鑲嵌 — per-item socketed gem ids (length ≤ socketsFor(item)). */
   itemGems: Record<EntityId, string[]>;
+  /** 名器威名 — per-item accumulated battle-renown (人器合一). Grows as the item is
+   *  carried through battle; lifts its effects + eases 兵器駕馭. Absent/0 = unblooded. */
+  itemLore: Record<EntityId, number>;
   /** 寶石庫存 — gems on hand (from 熔毀 drops etc.); socketing spends these
    *  before buying with gold. Keyed by gem id → count. */
   gemStock: Record<EntityId, number>;
@@ -560,6 +563,7 @@ export const EMPTY_STATE: GameState = {
   itemRefinements: {},
   itemBreakthroughs: {},
   itemGems: {},
+  itemLore: {},
   gemStock: {},
   knownRecipes: STARTER_RECIPE_IDS.slice(),
   itemHistory: [],
@@ -912,6 +916,7 @@ export function loadScenario(
     itemRefinements: {},
   itemBreakthroughs: {},
   itemGems: {},
+  itemLore: {},
   gemStock: {},
     knownRecipes: STARTER_RECIPE_IDS.slice(),
     itemHistory: [],

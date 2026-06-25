@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { officerGrade, gradeFromScore, officerLevel } from './officerGrade';
+import { officerGrade, gradeFromScore, officerLevel, nextGradeGap } from './officerGrade';
 import type { Officer, OfficerStats } from '../types';
 
 function makeOfficer(stats: Partial<OfficerStats> = {}): Officer {
@@ -71,5 +71,18 @@ describe('officerLevel', () => {
     const base = makeOfficer({ war: 70, leadership: 65 });
     const seasoned = { ...base, xp: 1000 } as Officer;
     expect(officerLevel(seasoned)).toBeGreaterThan(officerLevel(base));
+  });
+});
+
+describe('晉品評定 nextGradeGap', () => {
+  it('reports the next tier and points still needed', () => {
+    const green = makeOfficer(); // all 50 → score 50, iron
+    const g = nextGradeGap(green);
+    expect(g.next).toBe('bronze');
+    expect(g.toNext).toBe(20); // 70 − 50
+  });
+  it('returns null once an officer tops out at 鑽石', () => {
+    const legend = makeOfficer({ leadership: 120, war: 130, intelligence: 120, politics: 120, charisma: 120 });
+    expect(nextGradeGap(legend).next).toBeNull();
   });
 });

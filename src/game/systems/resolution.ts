@@ -21,7 +21,7 @@ import { advanceSeason } from '../state/gameState';
 import { processAging } from './aging';
 import { evaluateGovernors } from './governorEval';
 import { handleSearch, resolveInternalAffairs, type LostItemRef } from './commands';
-import { awardInternalAffairsXp, canBreakthrough, breakthroughCost, applyBreakthrough, grantXp } from './growth';
+import { awardInternalAffairsXp, canBreakthrough, breakthroughCost, breakthroughIronCost, applyBreakthrough, defaultBreakthroughPath, grantXp, tickMentorBonds, specialTraining } from './growth';
 import { officerGrade, gradeRank, officerLevel } from './officerGrade';
 import { handleMarch } from './combat';
 import { tickDiplomacy, applyCoalitionPressure } from './diplomacy';
@@ -31,7 +31,7 @@ import {
   specialtyControl, specialtyRealmEffects, allRoleEffects, embargoedRolesAgainst,
   type SpecialtyControl, type SpecialtyRealmEffects, type SpecialtyRole,
 } from '../data/specialties';
-import { buildingBonuses } from './buildings';
+import { buildingBonuses, schoolHeadmasterFocus } from './buildings';
 import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
 import { corruptionAccrualMultiplier } from './traitEffects';
 import { rollCivicEvents } from './civicEvents';
@@ -42,7 +42,7 @@ import { embassyTargets, embassyLegSeasons } from './foreignRealm';
 import type { Expedition, ExpeditionMode } from '../types';
 import { appointmentBonusFor } from './appointmentEffects';
 import { MILITARY_RANKS_BY_ID } from '../data/titles';
-import { peerageEffects } from '../data/peerage';
+import { peerageEffects, peerageTier } from '../data/peerage';
 import { honorificEffects } from '../data/honorifics';
 import { rollEvents } from './events';
 import { generateFictionalOfficer } from './officerGen';
@@ -1092,7 +1092,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       lostItems = result.lostItems;
       entries.push(result.entry);
       // 內政經驗 — scouring the city for talent still hones 魅力 over time.
-      const searchXp = awardInternalAffairsXp(officers[cmd.officerId] ?? officer, 'search', true, rng);
+      const searchXp = awardInternalAffairsXp(officers[cmd.officerId] ?? officer, 'search', true, rng, 1, input.date.year);
       officers[cmd.officerId] = searchXp.officer;
       entries.push(...searchXp.entries);
       continue;
@@ -1129,7 +1129,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       });
       bumpDeed(cmd.officerId, { civicWorks: 1 });
       // 內政經驗 — garrison duty hones 統率.
-      const garrisonXp = awardInternalAffairsXp(officers[cmd.officerId] ?? officer, 'garrison', true, rng);
+      const garrisonXp = awardInternalAffairsXp(officers[cmd.officerId] ?? officer, 'garrison', true, rng, 1, input.date.year);
       officers[cmd.officerId] = garrisonXp.officer;
       entries.push(...garrisonXp.entries);
       continue;
@@ -1141,13 +1141,16 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       if (!city.ownerForceId) continue;
       const lectureBB = buildingBonuses(city.id, input.buildings ?? [], {
         statecraft: forces[city.ownerForceId]?.statecraft ?? null,
+        officers, // 山長 amplifies the 講學 xpMul
       });
       const burst = Math.round((10 + officer.stats.intelligence * 0.4) * lectureBB.xpMul);
+      // 山長之偏 — a school's headmaster tilts what 講學 teaches (武學堂→武, 書院→智…).
+      const lectureFocus = schoolHeadmasterFocus(city.id, input.buildings ?? [], officers);
       const pupils = Object.values(officers).filter(
         (o) => o.locationCityId === city.id && o.forceId === city.ownerForceId,
       );
       for (const pupil of pupils) {
-        const taught = grantXp(officers[pupil.id] ?? pupil, burst, rng);
+        const taught = grantXp(officers[pupil.id] ?? pupil, burst, rng, lectureFocus ?? undefined, { year: input.date.year });
         officers[pupil.id] = taught.officer;
         entries.push(...taught.entries);
       }
@@ -1158,6 +1161,16 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         textZh: `${officer.name.zh}興学講學於${city.name.zh}：在城 ${pupils.length} 員各得 ${burst} 歷練。`,
       });
       bumpDeed(cmd.officerId, { civicWorks: 1 });
+      continue;
+    }
+    if (cmd.type === 'special-training') {
+      // 特訓 — a whole season poured into one officer: big 歷練 along their focus
+      // track, with chances at a skill / 性格 / 潛能, and a 養傷 risk on the
+      // martial tracks. Gold was paid at issue.
+      const tr = specialTraining(officers[cmd.officerId] ?? officer, rng, input.date.year);
+      officers[cmd.officerId] = tr.officer;
+      entries.push(...tr.entries);
+      bumpDeed(cmd.officerId, { trainingsCompleted: 1 });
       continue;
     }
     const bonus = appointmentBonusFor(
@@ -1174,6 +1187,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     // 兵營/馬廄/武庫/糧倉署/驛站/驛傳 raise the per-season recruit ceiling (troopCapMul).
     const cityBB = buildingBonuses(city.id, input.buildings ?? [], {
       statecraft: city.ownerForceId ? (forces[city.ownerForceId]?.statecraft ?? null) : null,
+      officers, // 山長 lifts the city's civic XP output too
     });
     const baseRecruitBonus = recruitBoost
       ? bonus.recruitBonus + (recruitBoost.multiplier - 1)
@@ -1204,22 +1218,31 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     // 內政經驗 — slow stat growth from the work, steered toward the command's
     // stat (政治 for development, 魅力 for people work). Capped/no-op commands
     // grant a reduced trickle inside awardInternalAffairsXp.
-    const iaXp = awardInternalAffairsXp(officers[cmd.officerId] ?? officer, cmd.type, result.success, rng, cityBB.xpMul);
+    const iaXp = awardInternalAffairsXp(officers[cmd.officerId] ?? officer, cmd.type, result.success, rng, cityBB.xpMul, input.date.year);
     officers[cmd.officerId] = iaXp.officer;
     entries.push(...iaXp.entries);
     // 襄助歷練 — each assistant earns the internal-affairs XP trickle too (they
     // did the work alongside the lead), steered toward the command's stat.
     for (const a of assistants) {
-      const axp = awardInternalAffairsXp(officers[a.id] ?? a, cmd.type, result.success, rng, cityBB.xpMul);
+      const axp = awardInternalAffairsXp(officers[a.id] ?? a, cmd.type, result.success, rng, cityBB.xpMul, input.date.year);
       officers[a.id] = axp.officer;
       entries.push(...axp.entries);
       if (result.success) bumpDeed(a.id, { civicWorks: 1 });
     }
   }
 
+  // Phase 3f-quater — 師徒衣缽. Explicit 拜師 bonds resolve first: a disciple
+  // apprenticed to a specific master (and garrisoned with them) earns the richer
+  // bond XP toward the master's strongest suit, and may inherit their craft.
+  const bondTick = tickMentorBonds(officers, rng);
+  Object.assign(officers, bondTick.officers);
+  entries.push(...bondTick.entries);
+  const bonded = bondTick.bonded;
+
   // Phase 3f-ter — 名將帶新兵. A 金牌+ officer stationed in a city seasons the
   // junior officers garrisoned with them: a small XP trickle to those clearly
   // below the mentor's 歷練. Turns 品階 into a legacy/teaching loop (all forces).
+  // Disciples already fed by an explicit bond this season are skipped (no double-dip).
   const MENTOR_XP = 8;
   for (const city of Object.values(cities)) {
     if (!city.ownerForceId) continue;
@@ -1237,7 +1260,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     if (!mentor) continue;
     const mLevel = officerLevel(mentor);
     const students = present
-      .filter((o) => o.id !== mentor!.id && officerLevel(o) <= mLevel - 3)
+      .filter((o) => o.id !== mentor!.id && !bonded.has(o.id) && officerLevel(o) <= mLevel - 3)
       .sort((a, b) => officerLevel(a) - officerLevel(b))
       .slice(0, 3);
     for (const st of students) {
@@ -1260,10 +1283,12 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     if (!city || city.ownerForceId !== o.forceId) continue;
     const cost = breakthroughCost(o);
     if (city.gold < cost * 2) continue; // keep a reserve
+    const iron = breakthroughIronCost(o);
+    if ((city.iron ?? 0) < iron) continue; // 淬鍊之鐵 — needs 鐵 like the player does
     if (rng() > 0.5) continue;          // spread breakthroughs across seasons
-    const r = applyBreakthrough(o);
+    const r = applyBreakthrough(o, defaultBreakthroughPath(o)); // AI picks 道 by strength
     officers[o.id] = r.officer;
-    cities[city.id] = { ...city, gold: city.gold - cost };
+    cities[city.id] = { ...city, gold: city.gold - cost, iron: (city.iron ?? 0) - iron };
   }
 
   const seasonBoundary = input.seasonBoundary ?? true;
@@ -1755,6 +1780,14 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   }
   for (const o of Object.values(officers)) {
     let next: Officer = o.task ? { ...o, task: null } : o;
+    // 失威漸復 — disgrace fades one season at a time (gated on the season boundary,
+    // since this loop runs every period); once spent, the officer's 品階招牌 returns
+    // (see gradeCombat). Applies to every officer, all forces.
+    if (seasonBoundary && (o.disgrace ?? 0) > 0) {
+      const d = (o.disgrace ?? 0) - 1;
+      next = { ...next };
+      if (d > 0) next.disgrace = d; else delete next.disgrace;
+    }
     if (o.forceId && o.status === 'idle') {
       const owned = cityCountByForce[o.forceId] ?? 0;
       let drift = 0;
@@ -1766,6 +1799,17 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       if (o.peerageId) drift += peerageEffects(o).loyaltyBonus;
       // 名號將軍 — a conferred honorific's standing loyalty bonus.
       if (o.honorificId) drift += honorificEffects(o).loyaltyBonus;
+      // 名將傲氣 — a 金牌+ talent expects rank/peerage befitting their renown. Held
+      // beneath it (low 軍階, no 爵), pride curdles into discontent (−1); honoured
+      // to a station worthy of them, they're a lion who fights for a true lord (+1).
+      // Applies to every force, so a slighted enemy elite drifts toward defection.
+      const gRank = gradeRank(officerGrade(o).grade);
+      if (gRank >= gradeRank('gold')) {
+        const recognition = (MILITARY_RANKS_BY_ID[o.rank]?.tier ?? 0) + peerageTier(o.peerageId) * 1.5;
+        const expected = (gRank - 2) * 3; // 金→3, 白金→6, 鑽石→9
+        if (recognition < expected) drift -= 1;
+        else if (recognition >= expected + 3) drift += 1;
+      }
       if (drift !== 0) {
         const newLoyalty = Math.max(0, Math.min(100, o.loyalty + drift));
         if (newLoyalty !== o.loyalty) {
@@ -1774,6 +1818,32 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       }
     }
     if (next !== o) officers[o.id] = next;
+  }
+
+  // 瑜亮情結 — two peerless (白金+) talents under one banner chafe at sharing the
+  // stage. Occasionally a proud one bristles: a small loyalty dip + a note. Rare and
+  // temperament-gated, so it's flavour friction among legends, not constant attrition.
+  if (seasonBoundary) {
+    const topByForce: Record<EntityId, Officer[]> = {};
+    for (const o of Object.values(officers)) {
+      if (!o.forceId || o.status === 'dead' || o.status === 'imprisoned' || o.status === 'unsearched') continue;
+      if (gradeRank(officerGrade(o).grade) >= gradeRank('platinum')) (topByForce[o.forceId] ??= []).push(o);
+    }
+    const PROUD = ['arrogant', 'vainglorious', 'jealous', 'envious', 'wrathful', 'ambitious'];
+    for (const list of Object.values(topByForce)) {
+      if (list.length < 2 || rng() >= 0.12) continue;
+      const proud = list.find((o) => (o.traits as string[] | undefined ?? []).some((t) => PROUD.includes(t)));
+      const sub = proud ?? list[0];
+      const rival = list.find((o) => o.id !== sub.id);
+      if (!rival) continue;
+      officers[sub.id] = { ...officers[sub.id], loyalty: Math.max(0, officers[sub.id].loyalty - 2) };
+      entries.push({
+        cityId: sub.locationCityId,
+        kind: 'note',
+        text: `${sub.name.en} chafes at sharing the stage with ${rival.name.en} (瑜亮情結) — loyalty −2.`,
+        textZh: `${sub.name.zh}與${rival.name.zh}瑜亮並立,心有未平(忠誠 −2)。`,
+      });
+    }
   }
 
   // Apply oath-bond loyalty floors (after drift, so bonds always win).

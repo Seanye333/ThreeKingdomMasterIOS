@@ -30,11 +30,12 @@ import { effectivePrestige } from '../../game/data/prestige';
 import { peerageById } from '../../game/data/peerage';
 import { honorificById } from '../../game/data/honorifics';
 import { renownFromDeeds, fameTier, fameMedal } from '../../game/systems/fame';
-import { xpProgress, learnableSkills, canBreakthrough, breakthroughCost, MAX_BREAKTHROUGHS, breakthroughTitle, growthPowerMul } from '../../game/systems/growth';
-import { officerGrade, officerLevel } from '../../game/systems/officerGrade';
+import { xpProgress, learnableSkills, canBreakthrough, breakthroughCost, breakthroughIronCost, BREAKTHROUGH_PATHS, MAX_BREAKTHROUGHS, breakthroughTitle, growthPowerMul, growthAptitude, aptitudeLabel, EPIPHANY_THRESHOLD } from '../../game/systems/growth';
+import { officerGrade, officerLevel, nextGradeGap, gradeMeta } from '../../game/systems/officerGrade';
 import { gradeCombatBonus, itemMasteryMul } from '../../game/systems/gradeCombat';
 import { itemRarity, itemRarityMeta, liveItemById, refineCost, REFINE_MAX,
-  BREAKTHROUGH_MAX, breakthroughCost as itemBreakthroughCost, socketsFor, GEMS, GEMS_BY_ID } from '../../game/data/items';
+  BREAKTHROUGH_MAX, breakthroughCost as itemBreakthroughCost, socketsFor, GEMS, GEMS_BY_ID,
+  itemLoreLevel, itemLoreTitle } from '../../game/data/items';
 import { activeItemSets } from '../../game/data/itemSets';
 import { ageBand } from '../../game/systems/aging';
 import type { City, Force, Officer, OfficerStats, Skill } from '../../game/types';
@@ -147,6 +148,7 @@ export function OfficerDetail({
   const unequipItemFn = useGameStore((s) => s.unequipItem);
   const refineItemFn = useGameStore((s) => s.refineItem);
   const breakthroughItemFn = useGameStore((s) => s.breakthroughItem);
+  const resetItemGrowthFn = useGameStore((s) => s.resetItemGrowth);
   const socketGemFn = useGameStore((s) => s.socketGem);
   const unsocketGemFn = useGameStore((s) => s.unsocketGem);
   const itemBreakthroughs = useGameStore((s) => s.itemBreakthroughs);
@@ -166,6 +168,9 @@ export function OfficerDetail({
   const itemRefinements = useGameStore((s) => s.itemRefinements);
   const setTrainingFocusFn = useGameStore((s) => s.setTrainingFocus);
   const breakthroughOfficerFn = useGameStore((s) => s.breakthroughOfficer);
+  const assignMentorFn = useGameStore((s) => s.assignMentor);
+  const studyManualFn = useGameStore((s) => s.studyManual);
+  const issueCommandFn = useGameStore((s) => s.issueCommand);
   const activeTraining = pendingTrainings.find((tr) => tr.officerId === officer.id);
   const isPlayerOfficer = officer.forceId === playerForceId;
   const [progressMsg, setProgressMsg] = useState<string | null>(null);
@@ -442,6 +447,17 @@ export function OfficerDetail({
                         {t('威望', 'Renown')} {renown}
                       </span>
                     )}
+                    {/* 晉品評定 — make the hidden grade formula legible: points to next tier. */}
+                    {(() => {
+                      const gap = nextGradeGap(officer);
+                      if (!gap.next) return null;
+                      const nm = gradeMeta(gap.next);
+                      return (
+                        <span style={{ marginLeft: 6, fontSize: '0.6rem', color: '#7a8893' }}>
+                          {t(`距${nm.name.zh} +${gap.toNext}`, `+${gap.toNext} to ${nm.name.en}`)}
+                        </span>
+                      );
+                    })()}
                   </div>
                 );
               })()}
@@ -465,8 +481,33 @@ export function OfficerDetail({
                     </div>
                     <div style={{ marginTop: 2, fontSize: '0.6rem', color: '#7a8893', fontFamily: 'ui-monospace, monospace' }}>
                       {p.atMax
-                        ? t('已臻化境', 'Mastery (max)')
+                        ? t(`已臻化境 · 頓悟 ${officer.epiphany ?? 0}/${EPIPHANY_THRESHOLD}`, `Mastery · Epiphany ${officer.epiphany ?? 0}/${EPIPHANY_THRESHOLD}`)
                         : t(`距下次成長 · 再 ${p.toNext} 經驗`, `${p.toNext} XP to next growth`)}
+                    </div>
+                  </div>
+                );
+              })()}
+              {(() => {
+                // 成長資質 — per-stat talent (天/上/中/常) read from latent ceilings:
+                // gifted stats grow faster and higher. A fixed read of the officer's nature.
+                const apt = growthAptitude(officer);
+                const STATS: Array<{ key: keyof typeof apt; zh: string; en: string }> = [
+                  { key: 'leadership', zh: '統', en: 'LDR' }, { key: 'war', zh: '武', en: 'WAR' },
+                  { key: 'intelligence', zh: '智', en: 'INT' }, { key: 'politics', zh: '政', en: 'POL' },
+                  { key: 'charisma', zh: '魅', en: 'CHA' },
+                ];
+                const col = (g: string) => g === 'S' ? '#e6c473' : g === 'A' ? '#9ed8b8' : g === 'B' ? '#88b7e8' : '#7a8893';
+                return (
+                  <div style={{ minWidth: 150 }}>
+                    <span style={{ fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('成長資質', 'Aptitude')}</span>
+                    <div style={{ display: 'flex', gap: 4, marginTop: 3, flexWrap: 'wrap' }}>
+                      {STATS.map((s) => (
+                        <span key={s.key}
+                          title={t(`${s.zh} · ${aptitudeLabel(apt[s.key]).zh}`, `${s.en} · ${apt[s.key]} aptitude`)}
+                          style={{ fontSize: '0.62rem', padding: '0.05rem 0.32rem', borderRadius: 2, background: '#10161e', border: `1px solid ${col(apt[s.key])}`, color: col(apt[s.key]), fontFamily: 'ui-monospace, monospace' }}>
+                          {lang === 'en' ? s.en.slice(0, 1) : s.zh}{apt[s.key]}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 );
@@ -564,7 +605,10 @@ export function OfficerDetail({
               const gate = canBreakthrough(live);
               const count = live.breakthroughs ?? 0;
               const cost = breakthroughCost(live);
+              const ironCost = breakthroughIronCost(live);
               const cityGold = city?.gold ?? 0;
+              const cityIron = city?.iron ?? 0;
+              const canBT = cityGold >= cost && cityIron >= ironCost;
               const pool = learnableSkills(live);
               const labelStyle = { fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' } as const;
               return (
@@ -577,6 +621,14 @@ export function OfficerDetail({
                         `戰力 +${passivePct}%　士氣 +${gp.morale}　單挑 +${gp.duelBonus}　氣力 +${gp.duelStamina}　威儀減傷 ${Math.round(gp.damageResist * 100)}%　歷練 +${Math.round((growthPowerMul(live) - 1) * 100)}%`,
                         `Power +${passivePct}%, Morale +${gp.morale}, Duel +${gp.duelBonus}, Stamina +${gp.duelStamina}, Resist ${Math.round(gp.damageResist * 100)}%, Seasoning +${Math.round((growthPowerMul(live) - 1) * 100)}%`,
                       )}
+                    </div>
+                  )}
+
+                  {/* 失威 — disgrace suppresses 品階招牌 until recovered */}
+                  {(live.disgrace ?? 0) > 0 && (
+                    <div style={{ fontSize: '0.7rem', color: '#d08a6a' }}>
+                      <span style={labelStyle}>{t('失威', 'Disgraced')} </span>
+                      {t(`名望受挫,品階招牌暫失 ${live.disgrace} 季`, `Aura shaken — signature perks suppressed for ${live.disgrace} season(s)`)}
                     </div>
                   )}
 
@@ -607,6 +659,44 @@ export function OfficerDetail({
                     </div>
                   )}
 
+                  {/* 拜師 — apprentice to a master (same city); 特訓 — drill this officer */}
+                  {isMine && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <span style={labelStyle}>{t('師承', 'Mentor')}</span>
+                      {(() => {
+                        const masters = Object.values(allOfficers).filter((m) =>
+                          m.id !== officer.id && m.forceId === officer.forceId &&
+                          m.locationCityId != null && m.locationCityId === officer.locationCityId &&
+                          (m.status === 'idle' || m.status === 'active'));
+                        return (
+                          <select
+                            value={live.mentorId ?? ''}
+                            onChange={(e) => assignMentorFn(officer.id, e.target.value || null)}
+                            title={t('同城拜師:成長偏向師父所長,並可習其衣缽', 'Apprentice (same city): grow toward the master’s strength and inherit their craft')}
+                            style={{ background: '#10161e', border: '1px solid #26323e', color: '#cdd6df', fontSize: '0.74rem', borderRadius: 2, padding: '0.1rem 0.3rem', maxWidth: 130 }}
+                          >
+                            <option value="">{t('（無）', '(none)')}</option>
+                            {masters.map((m) => (
+                              <option key={m.id} value={m.id}>{lang === 'en' ? m.name.en : m.name.zh}</option>
+                            ))}
+                          </select>
+                        );
+                      })()}
+                      {city?.ownerForceId === playerForceId && officer.locationCityId && (officer.status === 'idle' || officer.status === 'active') && (
+                        <button
+                          onClick={() => {
+                            const r = issueCommandFn(officer.locationCityId!, 'special-training', officer.id);
+                            setProgressMsg(r.ok ? t('特訓已下令', 'Training ordered') : t('無法特訓(金/狀態)', 'Cannot train (gold/status)'));
+                          }}
+                          title={t('特訓 · 400 黃金 · 苦練一季,可習技/性格/潛能', 'Special Training · 400g · a hard season; may yield skill/trait/potential')}
+                          style={{ cursor: 'pointer', padding: '0.12rem 0.55rem', borderRadius: 2, background: 'linear-gradient(180deg,#1a3a2a,#102018)', border: '1px solid #9ed8b8', color: '#bfeacf', fontSize: '0.76rem' }}
+                        >
+                          {t('特訓', 'Train')}
+                        </button>
+                      )}
+                    </div>
+                  )}
+
                   {/* 轉生/突破 — renewed growth past the XP ceiling */}
                   {isMine && (count > 0 || gate.ok || gate.reason === 'capped') && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -618,25 +708,37 @@ export function OfficerDetail({
                         </span>
                       )}
                       {gate.ok ? (
-                        <button
-                          onClick={() => {
-                            const res = breakthroughOfficerFn(officer.id);
-                            setProgressMsg(res.ok
-                              ? (res.notes?.[0] ?? t('突破成功!', 'Breakthrough!'))
-                              : res.reason === 'no-gold'
-                                ? t('府庫黃金不足', 'Not enough gold')
-                                : t('無法突破', 'Cannot break through'));
-                          }}
-                          disabled={cityGold < cost}
-                          title={t(`消耗 ${cost} 黃金（本城 ${cityGold}）`, `Costs ${cost} gold (city has ${cityGold})`)}
-                          style={{
-                            cursor: cityGold < cost ? 'not-allowed' : 'pointer', padding: '0.12rem 0.6rem', borderRadius: 2,
-                            background: cityGold < cost ? '#10161e' : 'linear-gradient(180deg,#4a3a1a,#2a2010)',
-                            border: '1px solid #e6c473', color: cityGold < cost ? '#6a7480' : '#f0d890', fontSize: '0.78rem',
-                          }}
-                        >
-                          {t(`突破 · ${cost}黃金`, `Break through · ${cost}g`)}
-                        </button>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.66rem', color: canBT ? '#9aa7b3' : '#a86a6a' }}>
+                            {t(`擇道突破 · ${cost}金 ${ironCost}鐵`, `Choose a path · ${cost}g ${ironCost} iron`)}
+                            {!canBT && t(`(本城 ${cityGold}金/${cityIron}鐵)`, ` (city ${cityGold}g/${cityIron} iron)`)}
+                          </span>
+                          {(Object.keys(BREAKTHROUGH_PATHS) as Array<keyof typeof BREAKTHROUGH_PATHS>).map((pk) => {
+                            const p = BREAKTHROUGH_PATHS[pk];
+                            return (
+                              <button
+                                key={pk}
+                                onClick={() => {
+                                  const res = breakthroughOfficerFn(officer.id, pk);
+                                  setProgressMsg(res.ok
+                                    ? (res.notes?.[0] ?? t(`突破·${p.zh}成功!`, `${p.en} breakthrough!`))
+                                    : res.reason === 'no-gold' ? t('府庫黃金不足', 'Not enough gold')
+                                      : res.reason === 'no-iron' ? t('府庫鐵料不足', 'Not enough iron')
+                                        : t('無法突破', 'Cannot break through'));
+                                }}
+                                disabled={!canBT}
+                                title={t(`${p.zh} — 偏 ${p.stats.map((s) => STAT_META.find((m) => m.key === s)?.zh ?? s).join('/')}`, `${p.en} — favours ${p.stats.join('/')}`)}
+                                style={{
+                                  cursor: canBT ? 'pointer' : 'not-allowed', padding: '0.1rem 0.4rem', borderRadius: 2,
+                                  background: canBT ? 'linear-gradient(180deg,#4a3a1a,#2a2010)' : '#10161e',
+                                  border: '1px solid #e6c473', color: canBT ? '#f0d890' : '#6a7480', fontSize: '0.74rem',
+                                }}
+                              >
+                                {lang === 'en' ? p.en : p.zh}
+                              </button>
+                            );
+                          })}
+                        </span>
                       ) : gate.reason === 'capped' ? (
                         <span style={{ fontSize: '0.72rem', color: '#7a8893' }}>{t('已臻極限', 'At the limit')}</span>
                       ) : null}
@@ -1077,6 +1179,12 @@ export function OfficerDetail({
                         {lang === 'en' ? item.name.en : item.name.zh}
                         {plus > 0 && <span style={{ marginLeft: '0.25rem', color: '#e6c473', fontWeight: 600 }}>+{plus}</span>}
                         {stars > 0 && <span style={{ marginLeft: '0.2rem', color: '#ff9f5a', fontWeight: 600 }}>{'★'.repeat(stars)}</span>}
+                        {/* 名器威名 — a storied weapon's earned title (飲血/百戰/名器) */}
+                        {(() => {
+                          const lore = itemLoreLevel(id);
+                          const lt = itemLoreTitle(lore);
+                          return lt ? <span title={t(`名器威名 · 歷 ${lore} 戰`, `${lore} battles carried`)} style={{ marginLeft: '0.25rem', color: '#8ee8ff', fontSize: '0.62rem' }}>〈{lang === 'en' ? lt.en : lt.zh}〉</span> : null;
+                        })()}
                         {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#7a8893', fontStyle: 'italic' }}>{item.name.en}</span></>}
                       </span>
                       {/* 鑲嵌 — socketed gem dots */}
@@ -1134,6 +1242,37 @@ export function OfficerDetail({
                             return <option key={g.id} value={g.id}>{(lang === 'en' ? g.name.en : g.name.zh)} ({price})</option>;
                           })}
                         </select>
+                      )}
+                      {isPlayerOfficer && item.consumable && (
+                        <button
+                          onClick={() => {
+                            const r = studyManualFn(officer.id, id);
+                            if (r.ok) {
+                              const msg = (r.notes && r.notes.length) ? r.notes.join('\n') : t('研讀完畢', 'Studied.');
+                              window.alert(t(`${item.name.zh} 研讀:\n${msg}`, `Studied ${item.name.en}:\n${msg}`));
+                            } else {
+                              window.alert(t('無法研讀此書', 'Cannot study this manual'));
+                            }
+                          }}
+                          title={t('研讀此兵書(一次性,讀後即毀)', 'Study this manual (one-time; consumed on use)')}
+                          style={{
+                            background: 'linear-gradient(180deg,#1a2a3a,#101820)', border: '1px solid #3a7dd9', color: '#9cc6f0',
+                            cursor: 'pointer', padding: '0 0.35rem', fontSize: '0.7rem', borderRadius: 2, marginRight: 4,
+                          }}
+                        >{t('研讀', 'Study')}</button>
+                      )}
+                      {isPlayerOfficer && (plus > 0 || stars > 0 || gems.length > 0) && (
+                        <button
+                          onClick={() => {
+                            const r = resetItemGrowthFn(id);
+                            if (r.ok) window.alert(t(`已退養「${item.name.zh}」:寶石歸庫,退還 ${r.refund ?? 0} 金`, `Reset ${item.name.en}: gems returned, ${r.refund ?? 0}g refunded`));
+                          }}
+                          title={t('洗點退養 — 拆精煉/突破/鑲嵌:寶石歸庫、半數金退還(名器威名保留)', 'Respec — strip refine/breakthrough/gems: gems to stock, half gold refunded (名器 renown kept)')}
+                          style={{
+                            background: 'none', border: 'none', color: '#7a8893',
+                            cursor: 'pointer', padding: '0 0.15rem', fontSize: '0.72rem',
+                          }}
+                        >♻</button>
                       )}
                       {isPlayerOfficer && (
                         <button

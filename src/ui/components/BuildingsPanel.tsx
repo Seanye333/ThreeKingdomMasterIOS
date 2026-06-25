@@ -1,5 +1,5 @@
 import { BUILDING_DEFS } from '../../game/data';
-import { buildingBonuses } from '../../game/systems/buildings';
+import { buildingBonuses, SCHOOL_BUILDINGS } from '../../game/systems/buildings';
 import { citySpecialty, cityRole, ROLE_ZH, SPECIALTY_DEV_MAX, SPECIALTY_DEV_GAIN } from '../../game/data/specialties';
 import { useGameStore } from '../../game/state/store';
 import type { BuildingId, EntityId } from '../../game/types';
@@ -23,6 +23,8 @@ export function BuildingsPanel({ cityId }: Props) {
   const autoQueueRaw = useGameStore((s) => s.autoBuildQueues[cityId]);
   const autoQueue = autoQueueRaw ?? EMPTY_QUEUE;
   const setAutoBuildQueue = useGameStore((s) => s.setAutoBuildQueue);
+  const officers = useGameStore((s) => s.officers);
+  const assignHeadmaster = useGameStore((s) => s.assignHeadmaster);
   const city = cities[cityId];
   const t = useT();
   const lang = useLanguage();
@@ -126,6 +128,47 @@ export function BuildingsPanel({ cityId }: Props) {
           );
         })}
       </div>
+
+      {/* 山長 — assign an officer to head each school; their 智力 boosts the
+          school's XP and their strongest 圍 tilts what 講學 teaches. */}
+      {city.ownerForceId === playerForceId && (() => {
+        const schools = buildings.filter((b) => b.cityId === cityId && b.level > 0 && SCHOOL_BUILDINGS.has(b.id));
+        if (schools.length === 0) return null;
+        const here = Object.values(officers).filter((o) =>
+          o.forceId === playerForceId && o.locationCityId === cityId &&
+          o.status !== 'dead' && o.status !== 'unsearched' && o.status !== 'imprisoned');
+        return (
+          <div style={{ marginTop: '0.5rem', borderTop: '1px dotted #26323e', paddingTop: '0.4rem' }}>
+            <div style={{ fontSize: '0.65rem', letterSpacing: '0.07rem', color: '#7a8893', textTransform: 'uppercase', marginBottom: '0.3rem' }}>
+              {t('山長 · 學館主事', 'Headmasters')}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              {schools.map((b) => {
+                const def = BUILDING_DEFS.find((d) => d.id === b.id);
+                const label = def ? (lang === 'en' ? def.name.en : def.name.zh) : b.id;
+                return (
+                  <div key={b.id} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem' }}>
+                    <span style={{ color: '#aab6c0', minWidth: 64 }}>{label}</span>
+                    <select
+                      value={b.headmasterId ?? ''}
+                      onChange={(e) => assignHeadmaster(cityId, b.id, e.target.value || null)}
+                      style={{ background: '#080b0e', border: '1px solid #26323e', color: '#cdd6df', fontSize: '0.7rem', padding: '0.1rem 0.3rem', flex: 1 }}
+                    >
+                      <option value="">{t('(空缺)', '(vacant)')}</option>
+                      {here.map((o) => (
+                        <option key={o.id} value={o.id}>{(lang === 'en' ? o.name.en : o.name.zh)}（{t('智', 'INT')}{o.stats.intelligence}）</option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ fontSize: '0.6rem', color: '#7a8893', marginTop: '0.2rem' }}>
+              {t('山長以智力放大學館歷練,並以所長偏導講學', "A headmaster's Intellect boosts the school's XP; their strongest stat tilts what 講學 teaches")}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Auto-build queue */}
       <div style={{ marginTop: '0.5rem', borderTop: '1px dotted #26323e', paddingTop: '0.4rem' }}>

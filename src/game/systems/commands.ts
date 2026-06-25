@@ -185,6 +185,14 @@ export const COMMAND_DEFS: Record<CommandType, CommandDef> = {
     description:
       '鎮守 — Drive enemy raiders out of the territory cells surrounding this city and reinforce its defense. Effect scales with Leadership. Useful when an enemy column has captured nearby ground.',
   },
+  'special-training': {
+    type: 'special-training',
+    label: { en: 'Special Training', zh: '特訓' },
+    stat: 'war',
+    goldCost: 400,
+    description:
+      '特訓 — Spend a whole season drilling ONE officer hard along the track that fits their 練兵 focus (閉關/演武/遊學/狩獵/論道). Far more 歷練 than ordinary duties, with real chances to learn a skill, forge a 性格, or deepen a 圍’s 潛能 — but the martial tracks (演武/狩獵) risk a 養傷 wound. The drill steers growth toward the officer’s focus stat.',
+  },
   march: {
     type: 'march',
     label: { en: 'March', zh: '出陣' },
@@ -219,7 +227,7 @@ export interface CommandResult {
 export const ASSIST_WEIGHTS = [0.5, 0.3] as const;
 
 export function resolveInternalAffairs(
-  type: Exclude<InternalAffairsType, 'search' | 'garrison' | 'promote-learning'>,
+  type: Exclude<InternalAffairsType, 'search' | 'garrison' | 'promote-learning' | 'special-training'>,
   officer: Officer,
   city: City,
   rng: () => number,

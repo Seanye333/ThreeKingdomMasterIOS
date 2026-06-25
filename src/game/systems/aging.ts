@@ -6,6 +6,8 @@ import type {
   ReportEntry,
 } from '../types';
 import { grantPosthumousName } from './posthumous';
+import { inheritLegacyOnDeath } from './growth';
+import { ITEMS_BY_ID, itemLoreLevel, itemLoreTitle } from '../data/items';
 import { getDeathPoem } from '../data/deathPoems';
 import { deathChanceMultiplier, rollAgeDrift } from './traitEffects';
 import { TRAIT_DEFS_BY_ID } from '../data/personality';
@@ -103,6 +105,14 @@ export function processAging(input: AgingInput): AgingOutput {
       let changed = false;
       if (s.war > 55 && input.rng() < 0.5) { s = { ...s, war: s.war - 1 }; changed = true; }
       if (age >= 62 && s.leadership > 50 && input.rng() < 0.4) { s = { ...s, leadership: s.leadership - 1 }; changed = true; }
+      // 智政晚成 — the body wanes but judgement ripens. Past their prime an
+      // officer's 智力/政治 may still deepen (within their latent ceiling), so a
+      // veteran drifts from 猛將 toward 老謀的謀臣 even while idle — the mirror of
+      // the martial decline above, and the same 武→智 arc the age-tilt gives to
+      // those still earning XP (see growth.ageGrowthBias).
+      const lat = cur.latentStats;
+      if (s.intelligence < (lat ? lat.intelligence : 100) && input.rng() < 0.35) { s = { ...s, intelligence: s.intelligence + 1 }; changed = true; }
+      if (age >= 55 && s.politics < (lat ? lat.politics : 100) && input.rng() < 0.3) { s = { ...s, politics: s.politics + 1 }; changed = true; }
       if (changed) officers = { ...officers, [officer.id]: { ...cur, stats: s } };
     }
 
@@ -153,6 +163,51 @@ export function processAging(input: AgingInput): AgingOutput {
         textZh: `${target.name.zh}:${g.reasonZh} (忠誠 ${g.delta})。`,
       });
     }
+
+    // 名器傳承 — a fallen master's STORIED weapon (a 名器, earned through battle)
+    // is not buried with him: it passes to a living disciple first, else a living
+    // kin, carrying its 威名. Done before 繼承遺志 (which clears the 師承 bond) so
+    // the disciple is still findable — they inherit both the will and the blade.
+    {
+      const dead = officers[officer.id];
+      const storied = (dead?.equipment ?? []).filter((id) => {
+        const it = ITEMS_BY_ID[id];
+        return it && it.kind === 'weapon' && itemLoreTitle(itemLoreLevel(id)) !== null;
+      });
+      if (storied.length > 0) {
+        const heirloom = storied.reduce((b, id) => (itemLoreLevel(id) > itemLoreLevel(b) ? id : b), storied[0]);
+        const isAlive = (o?: Officer) => !!o && o.status !== 'dead' && o.status !== 'unsearched';
+        let heir = Object.values(officers).find((o) => o.mentorId === officer.id && isAlive(o)) ?? null;
+        if (!heir && input.family) {
+          for (const f of input.family) {
+            if (f.kind !== 'parent-child') continue;
+            const otherId = f.officerA === officer.id ? f.officerB : f.officerB === officer.id ? f.officerA : null;
+            if (otherId && isAlive(officers[otherId])) { heir = officers[otherId]; break; }
+          }
+        }
+        if (heir) {
+          officers = {
+            ...officers,
+            [officer.id]: { ...dead, equipment: dead.equipment.filter((id) => id !== heirloom) },
+            [heir.id]: { ...officers[heir.id], equipment: [...officers[heir.id].equipment, heirloom] },
+          };
+          const it = ITEMS_BY_ID[heirloom];
+          const title = itemLoreTitle(itemLoreLevel(heirloom));
+          entries.push({
+            cityId: heir.locationCityId,
+            kind: 'talent',
+            text: `${heir.name.en} inherits ${officer.name.en}'s storied ${it?.name.en ?? heirloom}${title ? ` (${title.en})` : ''} — its renown lives on.`,
+            textZh: `${heir.name.zh}繼承${officer.name.zh}之名器「${it?.name.zh ?? heirloom}」${title ? `·${title.zh}` : ''},威名不墜。`,
+          });
+        }
+      }
+    }
+
+    // 繼承遺志 — disciples apprenticed to the fallen master channel the loss into
+    // resolve: a one-time lift in the master's strongest suit, and the bond ends.
+    const legacy = inheritLegacyOnDeath(officer, officers);
+    officers = legacy.officers;
+    entries.push(...legacy.entries);
 
     // Was this officer the ruler of any force?
     const ruledForce = Object.values(forces).find(

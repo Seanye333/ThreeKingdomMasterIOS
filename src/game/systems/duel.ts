@@ -4,7 +4,7 @@ import { SKILLS_BY_ID } from '../data/skills';
 import { effectivePrestigeEffects } from '../data/prestige';
 import { afflictionDelta } from './afflictions';
 import { officerLevel } from './officerGrade';
-import { gradeCombatBonus, itemMasteryMul } from './gradeCombat';
+import { gradeCombatBonus, itemMasteryMul, duelFirstStrike } from './gradeCombat';
 
 /**
  * One-on-one duel resolution between two officers — a multi-round 氣力 bout.
@@ -96,10 +96,13 @@ export function resolveDuel(input: DuelInput): DuelResult {
   let dSt = 100 + gradeCombatBonus(input.defender).duelStamina;
   const rounds: DuelExchange[] = [];
   let knockout: 'attacker' | 'defender' | null = null;
+  // 萬人敵 — a 鑽石 champion seizes the opening exchange (先手氣勢), applied round 1 only.
+  const aFirst = duelFirstStrike(input.attacker);
+  const dFirst = duelFirstStrike(input.defender);
 
   for (let r = 1; r <= MAX_ROUNDS; r++) {
-    const aScore = aStatic + Math.floor(rng() * 20);
-    const dScore = dStatic + Math.floor(rng() * 20);
+    const aScore = aStatic + Math.floor(rng() * 20) + (r === 1 ? aFirst : 0);
+    const dScore = dStatic + Math.floor(rng() * 20) + (r === 1 ? dFirst : 0);
     const diff = aScore - dScore;
     const roundWinner = diff > 0 ? 'attacker' : diff < 0 ? 'defender' : 'draw';
     const dmg = 14 + Math.min(28, Math.floor(Math.abs(diff) * 0.8));
