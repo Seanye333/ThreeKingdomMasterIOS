@@ -94,6 +94,7 @@ export function MarriagePicker({ targetForceId, onClose }: Props) {
 
   const [yourPick, setYourPick] = useState<EntityId | null>(null);
   const [theirPick, setTheirPick] = useState<EntityId | null>(null);
+  const [hostage, setHostage] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; text: string } | null>(
     null,
   );
@@ -122,7 +123,7 @@ export function MarriagePicker({ targetForceId, onClose }: Props) {
     if (!yourPick || !theirPick) return;
     const groom = officers[yourPick];
     const bride = officers[theirPick];
-    const r = proposeMarriage(targetForceId, yourPick, theirPick);
+    const r = proposeMarriage(targetForceId, yourPick, theirPick, { hostage });
     setFeedback({ ok: r.ok, text: r.message });
     if (r.ok) {
       if (groom && bride) setWed({ a: groom, b: bride });
@@ -150,6 +151,12 @@ export function MarriagePicker({ targetForceId, onClose }: Props) {
         <div className={styles.meta}>
           {t('費用：', 'Cost:')} <strong>{MARRIAGE_COST}{t('金', 'g')}</strong> {t('（國庫）', 'from capital')} · {t('現有：', 'Your gold:')}{' '}
           <strong>{playerCapitalGold}g</strong>
+        </div>
+        <div className={styles.meta}>
+          <label style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+            <input type="checkbox" checked={hostage} onChange={(e) => setHostage(e.target.checked)} />
+            {t('質子聯姻（羈絆更固、本家升為外戚）', '質子 union (tighter bond; your house rises as in-laws)')}
+          </label>
         </div>
 
         <div className={styles.columns}>

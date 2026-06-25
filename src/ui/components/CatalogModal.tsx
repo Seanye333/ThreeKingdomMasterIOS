@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useT, useLanguage } from '../i18n';
 
 export interface CatalogItem {
@@ -33,6 +34,7 @@ interface Props {
 }
 
 export function CatalogModal({ onClose, title, items, categories = [] }: Props) {
+  useEscapeKey(onClose);
   const [cat, setCat] = useState<string>('all');
   const t = useT();
   const lang = useLanguage();

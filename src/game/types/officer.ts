@@ -95,6 +95,15 @@ export interface Officer {
   /** 練兵/拜師 — a player-chosen stat to steer level-up growth toward. When set,
    *  every XP source biases stat gains here (see growth.grantXp). */
   trainingFocus?: keyof OfficerStats;
+  /** 頓悟槽 — XP earned past the level-9 ceiling pools here instead of being
+   *  wasted; each time it fills, the officer breaks a 瓶頸 and lifts one latent
+   *  cap (a mini-breakthrough between 突破s). See growth.grantXp. Default 0. */
+  epiphany?: number;
+  /** 師承 — the officer this one is apprenticed to (拜師). While both are
+   *  garrisoned together the disciple grows toward the master's strongest suit,
+   *  may inherit one of their skills, and inherits a 遺志 boost on the master's
+   *  death. See systems/growth + resolution's mentor loop. */
+  mentorId?: EntityId;
   /** Highest 品階 ever reached — drives one-shot 晉牌封賞 rewards so a promotion
    *  fires once and a stat wobble around the threshold can't re-trigger it. */
   peakGrade?: import('../systems/officerGrade').OfficerGrade;
@@ -103,13 +112,38 @@ export interface Officer {
   breakthroughs?: number;
   /** 戰功威望 — accumulated battlefield renown. Folds into gradeScore so a
    *  battle-proven veteran can earn a higher 品階 than a higher-statted but
-   *  untested rival (晉品評定). Earned on victories. Default 0. */
+   *  untested rival (晉品評定). Earned on victories, DOCKED on humiliation
+   *  (罵死/被俘) — a living, two-way reputation (揚威/失威). Default 0. */
   renown?: number;
+  /** 失威 — seasons of disgrace after a humiliating 罵死 / 被俘. While >0 the
+   *  officer's 品階招牌 (萬軍辟易/不動如山/萬人敵) is suppressed — their aura is
+   *  shaken until they win it back. Ticks down each season. Default/omitted = 0. */
+  disgrace?: number;
   /** 爵位 — held peerage id (封爵), the highest layer of 官爵 above 軍階/官職.
    *  Yields 食邑 income + loyalty + prestige; great fiefs feed 野心. Default/
    *  omitted = no peerage. See data/peerage.ts. */
   peerageId?: import('./title').PeerageId;
+  /** 復仇 — which force killed each of this officer's close relatives
+   *  (relativeOfficerId → killerForceId). Read by the `vengeful` trait for a
+   *  combat bonus vs that force. Additive/optional — safe for old saves. */
+  killedRelativesBy?: Record<EntityId, EntityId>;
+  /** 為兄弟復仇 — which force slew each fallen sworn brother (義兄弟Id → killerForceId).
+   *  Grants a combat bonus vs that force (no trait required). Optional/safe. */
+  killedSwornBy?: Record<EntityId, EntityId>;
   /** 名號將軍 — a conferred martial honorific (雜號將軍). Standing loyalty +
    *  a signature battle perk; one per officer. See data/honorifics.ts. */
   honorificId?: string;
+  /** 家門 — the clan house this officer belongs to (key into state.clans, =
+   *  zh surname). Set on heir 出仕 / 收養; lazily backfilled for historical
+   *  officers by deriveInitialClans. Optional — safe for old saves. */
+  clanId?: string;
+  /** 世子 — the player named this officer the designated heir of their line;
+   *  succession prefers them over birth order. Carried from a PendingHeir on
+   *  coming-of-age, or set directly on a grown child. */
+  designatedHeir?: boolean;
+  /** 部曲故主 — the lord whose historical retinue this officer belongs to (set
+   *  once by fillRetinues at scenario start, never cleared). Drives a loyalty
+   *  floor while serving that lord, grief if the lord falls, and an eager
+   *  re-recruit ("舊部歸心") if the old lord calls them back. Optional/safe. */
+  retinueOfLordId?: EntityId;
 }

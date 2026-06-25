@@ -4,6 +4,7 @@ import { OFFICER_RELATIONSHIPS } from '../../game/data/relationships';
 import { FAMILY_LINEAGE } from '../../game/data/familyLineage';
 import { useT, useLanguage } from '../i18n';
 import { OfficerDetail } from './OfficerDetail';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import type { Officer } from '../../game/types';
 
 /**
@@ -30,6 +31,7 @@ interface Props {
 }
 
 export function RelationshipBrowserModal({ onClose, officersOverride }: Props) {
+  useEscapeKey(onClose);
   const storeOfficers = useGameStore((s) => s.officers);
   const officers = officersOverride ?? storeOfficers;
   const family = useGameStore((s) => s.family);

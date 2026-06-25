@@ -49,4 +49,53 @@ describe('composeBiography', () => {
     });
     expect(bio.some((p) => p.zh.includes('列傳俟後人補之'))).toBe(true);
   });
+
+  // ── 交叉引用 — only fire when the name maps are supplied. ──
+  const hero = mkOfficer({ id: 'test-hero', stats: { war: 88 }, mentorId: 'test-mentor', killedRelativesBy: { 'test-kin': 'force-evil' } });
+  const crossInputs = {
+    officer: hero,
+    deeds: createDeeds('test-hero'),
+    battleHistory: [],
+    officerNamesById: {
+      'test-friend': { zh: '張三', en: 'Zhang San' },
+      'test-wife': { zh: '王氏', en: 'Lady Wang' },
+      'test-son': { zh: '小將', en: 'Junior' },
+      'test-mentor': { zh: '盧師', en: 'Master Lu' },
+      'test-foe': { zh: '李四', en: 'Li Si' },
+      'test-kin': { zh: '親人', en: 'Kin' },
+    },
+    forceNamesById: { 'force-evil': { zh: '董卓軍', en: 'Dong Zhuo Army' } },
+    family: [
+      { officerA: 'test-hero', officerB: 'test-wife', kind: 'spouse' as const },
+      { officerA: 'test-hero', officerB: 'test-son', kind: 'parent-child' as const },
+    ],
+    runtimeBonds: [
+      { officerA: 'test-hero', officerB: 'test-friend', kind: 'oath' as const, floor: 96, label: '生死之交', depth: 3 as const },
+    ],
+    duelHall: [
+      { id: 'bout1', aId: 'test-hero', dId: 'test-foe', year: 205, season: 1, kind: 'duel' as const, winner: 'attacker' as const, killed: true, fx: [{ hit: 'a' as const, killed: true }] },
+    ],
+  };
+
+  it('weaves in 師承/婚育/結義/名局/復仇 when name maps are supplied', () => {
+    const bio = composeBiography(crossInputs);
+    const zh = bio.map((p) => p.zh).join('');
+    expect(zh).toContain('師事盧師');
+    expect(zh).toContain('娶王氏');
+    expect(zh).toContain('育1子');
+    expect(zh).toContain('生死之交');
+    expect(zh).toContain('張三');
+    expect(zh).toContain('陣前斬李四');
+    expect(zh).toContain('董卓軍害其骨肉親人');
+    // The 名局 line carries a clickable bout ref.
+    expect(bio.some((p) => p.refs?.boutId === 'bout1')).toBe(true);
+  });
+
+  it('omits the cross-reference paragraphs when name maps are absent', () => {
+    const { officerNamesById: _omit, forceNamesById: _omit2, ...withoutNames } = crossInputs;
+    const zh = composeBiography(withoutNames).map((p) => p.zh).join('');
+    expect(zh).not.toContain('生死之交');
+    expect(zh).not.toContain('陣前斬');
+    expect(zh).not.toContain('師事');
+  });
 });

@@ -1,6 +1,13 @@
 import type { EntityId, Officer, OfficerStats } from '../types';
 import { TRAIT_DEFS } from '../data/personality';
+import { isWiredTrait } from './traitEffects';
 import type { PersonalityTrait } from '../types/personality';
+
+// Only hand brand-new recruits traits that some system actually reads — a
+// freshly-generated officer should never carry a dead flavor trait the UI
+// would advertise but nothing would honour. (Historical/curated rosters in
+// data/ are unaffected; this gate is procedural-generation only.)
+const WIRED_TRAIT_DEFS = TRAIT_DEFS.filter((d) => isWiredTrait(d.id) && d.tier !== 'legendary');
 
 /**
  * 新武將登場 — runtime generation of brand-new FICTIONAL officers, to refresh
@@ -92,7 +99,7 @@ export function generateFictionalOfficer(
   const traitRoll = rng();
   const traitCount = traitRoll < 0.4 ? 1 : traitRoll < 0.5 ? 2 : 0;
   for (let i = 0; i < traitCount; i++) {
-    const id = pick(TRAIT_DEFS, rng).id as PersonalityTrait;
+    const id = pick(WIRED_TRAIT_DEFS, rng).id as PersonalityTrait;
     if (!traits.includes(id)) traits.push(id);
   }
 

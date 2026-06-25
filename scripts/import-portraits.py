@@ -64,7 +64,8 @@ def build_index():
             continue
         for oid, en, zh in ENTRY_RE.findall(open(path, encoding="utf-8").read()):
             officer_ids.add(oid)
-            for key in (oid, zh, _t2s(zh), _s2t(zh), en.lower(), en.lower().replace(" ", "-")):
+            index[oid] = oid
+            for key in (zh, _t2s(zh), _s2t(zh), en.lower(), en.lower().replace(" ", "-")):
                 index.setdefault(key, oid)
     return index, officer_ids
 

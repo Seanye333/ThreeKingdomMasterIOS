@@ -48,6 +48,8 @@ export function SettingsModal({ onClose }: Props) {
   const setBattleDifficulty = useGameStore((s) => s.setBattleDifficulty);
   const lifespanLength = useGameStore((s) => s.lifespanLength ?? 'historical');
   const setLifespanLength = useGameStore((s) => s.setLifespanLength);
+  const agingStatLock = useGameStore((s) => s.agingStatLock ?? false);
+  const setAgingStatLock = useGameStore((s) => s.setAgingStatLock);
   const talentDiscovery = useGameStore((s) => s.talentDiscovery ?? 'normal');
   const setTalentDiscovery = useGameStore((s) => s.setTalentDiscovery);
   const duelFrequency = useGameStore((s) => s.duelFrequency ?? 'normal');
@@ -297,6 +299,12 @@ export function SettingsModal({ onClose }: Props) {
                 <option value="long">{t('長壽', 'Long')}</option>
               </select>
             </Row>
+            <Toggle
+              label={t('變老不影響屬性', 'Aging keeps stats')}
+              hint={t('開啟後五圍不隨年齡增減(無遲暮衰退,亦無智政晚成);武將照常衰老、得失性格、終老', 'Five stats stay frozen against age (no decline, no late-bloom); officers still age, drift traits, and die')}
+              checked={agingStatLock}
+              onChange={setAgingStatLock}
+            />
             <Row label={t('在野登場', 'Talent discovery')} hint={t('搜索人才的成功率', 'How readily Search for Talent finds officers')}>
               <select
                 value={talentDiscovery}

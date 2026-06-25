@@ -1,4 +1,6 @@
 import type { EntityId } from './common';
+import type { OfficerStats } from './officer';
+import type { PersonalityTrait } from './personality';
 
 /**
  * Officer family relationships. Spouses get married; couples roll annually
@@ -30,6 +32,25 @@ export interface PendingHeir {
   name: { zh: string; en: string };
   /** True if female (only affects portrait archetype + recruit logic). */
   female: boolean;
+  /** 資質遺傳 — traits inherited at birth (rolled from the parents). Carried
+   *  onto the Officer on coming-of-age. Optional — old saves had none. */
+  traits?: PersonalityTrait[];
+  /** 西席/家學 — an officer assigned to tutor this child before adulthood.
+   *  Biases upbringing toward the tutor's strengths. */
+  tutorId?: EntityId;
+  /** 教養 — per-year upbringing accumulators applied before coming-of-age. */
+  upbringing?: {
+    /** Years of upbringing already applied. */
+    years: number;
+    /** Accumulated nudges folded into baseStats + latent at 出仕. */
+    statBias: OfficerStats;
+    /** 神童 surfaced/nurtured via tutoring (extra latent on activation). */
+    prodigyRevealed?: boolean;
+  };
+  /** 世子 — player flagged this child as the designated heir. */
+  designatedHeir?: boolean;
+  /** 收養 — created by adoption rather than birth (no birth roll). */
+  adopted?: boolean;
 }
 
 /**
@@ -44,6 +65,9 @@ export type WishKind =
   | 'dismiss-rival'    // wants a rival officer dismissed
   | 'learn-policy'     // wants to be trained in a specific policy
   | 'retire'           // wants to retire (only old / wounded officers)
+  | 'peerage'          // 求爵 — wants enfeoffment (next peerage tier)
+  | 'mentor'           // 求師 — wants to apprentice under a strong colleague
+  | 'gift'             // 求賜 — wants a reward of honour/renown
   | 'info';            // 上書 — informational letter, no grant/reject choice
 
 export interface OfficerWish {

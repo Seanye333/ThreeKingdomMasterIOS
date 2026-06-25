@@ -8,6 +8,7 @@ import type {
   WishKind,
 } from '../types';
 import { POLICY_DEFS, POLICY_PREREQ, type PolicyId } from '../data/officerAttributes';
+import { PEERAGES, PEERAGES_BY_ID } from '../data/peerage';
 
 /**
  * Officer wishes: a small chance each season that an active officer in the
@@ -99,6 +100,32 @@ export function expireWishes(
 }
 
 /**
+ * 怨氣漸消 — each season, an officer with no open wish and decent loyalty has a
+ * chance to let an old grievance fade (grievanceCount −1). Stops a few past
+ * rejections from permanently shadowing an otherwise content officer. Pure.
+ */
+export function decayGrievances(
+  officers: Record<EntityId, Officer>,
+  openWishes: OfficerWish[],
+  rng: () => number,
+): Record<EntityId, Officer> {
+  const withWish = new Set(openWishes.map((w) => w.officerId));
+  let changed = false;
+  const next = { ...officers };
+  for (const o of Object.values(officers)) {
+    if ((o.grievanceCount ?? 0) <= 0) continue;
+    if (withWish.has(o.id)) continue;            // a pending ask keeps the grudge fresh
+    if (o.status === 'dead' || o.status === 'imprisoned') continue;
+    if (o.loyalty < 60) continue;                // resentment only fades when content
+    if (rng() < 0.25) {                          // ~1-in-4 seasons
+      next[o.id] = { ...o, grievanceCount: (o.grievanceCount ?? 0) - 1 };
+      changed = true;
+    }
+  }
+  return changed ? next : officers;
+}
+
+/**
  * Wounded-officer wish: a wounded officer with 'cautious' or `sickly`
  * trait may petition to retire. Called from the wounded-recovery tick.
  */
@@ -130,6 +157,25 @@ export function maybeWoundedRetireWish(
 
 function generateWish(o: Officer, ctx: WishContext): OfficerWish | null {
   const traits = o.traits ?? [];
+  // 致仕 — a very old officer may petition to retire honourably, wound or no
+  // wound. (The selfless 'loyal' are already filtered out upstream.)
+  const age = ctx.date.year - o.birthYear;
+  if (age >= 68 && ctx.rng() < 0.5) {
+    return {
+      id: `wish-retire-${o.id}-${ctx.date.year}-${ctx.date.season}`,
+      officerId: o.id,
+      kind: 'retire',
+      text: {
+        zh: `${o.name.zh}年事已高,上書乞骸骨,願歸故里。`,
+        en: `${o.name.en}, grown old, petitions to retire honourably.`,
+      },
+      issuedYear: ctx.date.year,
+      issuedSeason: ctx.date.season,
+      rejectPenalty: 10,
+      grantBonus: 8,
+      expiresAfterSeasons: 4,
+    };
+  }
   // Officers with int >= 70 and < 8 policies sometimes wish to learn one.
   const have = new Set(o.policies ?? []);
   const learnable: PolicyId[] = [];
@@ -151,18 +197,38 @@ function generateWish(o: Officer, ctx: WishContext): OfficerWish | null {
             o.stats[o.stats.war >= o.stats.intelligence ? 'war' : 'intelligence'],
       )
     : [];
+  // 求爵 — a renowned officer may petition for the next peerage tier.
+  const curPeerIdx = o.peerageId ? PEERAGES.findIndex((p) => p.id === o.peerageId) : -1;
+  const nextPeerage = curPeerIdx + 1 < PEERAGES.length ? PEERAGES[curPeerIdx + 1] : null;
+  const ambitious = traits.includes('ambitious') || traits.includes('arrogant');
+  const wantsPeerage = !!nextPeerage && ((o.renown ?? 0) >= 150 || (ambitious && (o.renown ?? 0) >= 80));
+  // 求師 — a junior officer with a much stronger same-force colleague may seek a mentor.
+  const myBest = Math.max(o.stats.war, o.stats.intelligence);
+  const mentorCand = !o.mentorId && (o.level ?? 1) < 14
+    ? Object.values(ctx.officers).find(
+        (m) => m.id !== o.id && m.forceId === o.forceId && m.status !== 'dead' &&
+          Math.max(m.stats.war, m.stats.intelligence) >= myBest + 15,
+      )
+    : undefined;
   // Build weighted kind pool by personality.
   const weights: Array<[WishKind, number]> = [
     ['transfer',     traits.includes('refined') ? 2 : 1],
     ['reinforce',    o.stats.war >= 70 ? 2 : 1],
-    ['promote',      traits.includes('arrogant') || traits.includes('ambitious') ? 4 : 1],
+    ['promote',      ambitious ? 4 : 1],
     ['item',         o.stats.war >= 75 || traits.includes('martial-valor') ? 2 : 1],
+    ['gift',         traits.includes('greedy') ? 3 : 1],
   ];
   if (learnable.length > 0) {
     weights.push(['learn-policy', traits.includes('humble') ? 5 : (o.stats.intelligence >= 80 ? 3 : 1)]);
   }
   if (rivals.length > 0) {
     weights.push(['dismiss-rival', 3]);
+  }
+  if (wantsPeerage) {
+    weights.push(['peerage', ambitious ? 4 : 2]);
+  }
+  if (mentorCand) {
+    weights.push(['mentor', traits.includes('humble') ? 4 : 2]);
   }
   // 上書: 5% chance of an info letter from a high-INT prefect-eligible officer.
   if (o.stats.intelligence >= 75 && ctx.rng() < 0.15) {
@@ -304,6 +370,53 @@ function generateWish(o: Officer, ctx: WishContext): OfficerWish | null {
       rejectPenalty: 0,
       grantBonus: 2, // small acknowledgement loyalty
       expiresAfterSeasons: 3,
+    };
+  }
+  if (kind === 'peerage' && nextPeerage) {
+    return {
+      id: `wish-${o.id}-${ctx.date.year}-${ctx.date.season}`,
+      officerId: o.id,
+      kind: 'peerage',
+      text: {
+        zh: `${o.name.zh}自陳功勳,求封「${nextPeerage.name.zh}」之爵。`,
+        en: `${o.name.en} petitions to be enfeoffed as ${nextPeerage.name.en}.`,
+      },
+      targetId: nextPeerage.id,
+      issuedYear: ctx.date.year,
+      issuedSeason: ctx.date.season,
+      rejectPenalty: 10,
+      grantBonus: 12,
+    };
+  }
+  if (kind === 'mentor' && mentorCand) {
+    return {
+      id: `wish-${o.id}-${ctx.date.year}-${ctx.date.season}`,
+      officerId: o.id,
+      kind: 'mentor',
+      text: {
+        zh: `${o.name.zh}願拜${mentorCand.name.zh}為師,以求精進。`,
+        en: `${o.name.en} wishes to study under ${mentorCand.name.en}.`,
+      },
+      targetId: mentorCand.id,
+      issuedYear: ctx.date.year,
+      issuedSeason: ctx.date.season,
+      rejectPenalty: 6,
+      grantBonus: 10,
+    };
+  }
+  if (kind === 'gift') {
+    return {
+      id: `wish-${o.id}-${ctx.date.year}-${ctx.date.season}`,
+      officerId: o.id,
+      kind: 'gift',
+      text: {
+        zh: `${o.name.zh}自陳勞苦,求主公賞賜以彰其功。`,
+        en: `${o.name.en} asks for a reward to honour their service.`,
+      },
+      issuedYear: ctx.date.year,
+      issuedSeason: ctx.date.season,
+      rejectPenalty: 6,
+      grantBonus: 8,
     };
   }
   return {
@@ -463,6 +576,7 @@ export function applyWishGrant(
   } else if (wish.kind === 'retire') {
     // Officer leaves service permanently — status:'retired' keeps them
     // visible in 列傳 with a "歸隱" tag.
+    const formerForce = o.forceId;
     officers[o.id] = {
       ...o,
       forceId: null,
@@ -471,8 +585,44 @@ export function applyWishGrant(
       task: null,
       loyalty: Math.min(100, o.loyalty + bonus),
     };
-    extraEn = ' Retired with full honors.';
-    extraZh = '准其辭官歸里。';
+    // 禮遇耆老 — honourably retiring an elder heartens the whole court: every
+    // serving colleague is steadied by the gesture (+2 loyalty).
+    let cascade = 0;
+    if (formerForce) {
+      for (const other of Object.values(officers)) {
+        if (other.id === o.id || other.forceId !== formerForce) continue;
+        if (other.status === 'dead' || other.status === 'unsearched') continue;
+        officers[other.id] = { ...other, loyalty: Math.min(100, other.loyalty + 2) };
+        cascade++;
+      }
+    }
+    extraEn = ` Retired with full honors${cascade ? ` — the court is heartened (${cascade}× +2 loyalty)` : ''}.`;
+    extraZh = `准其辭官歸里${cascade ? `,禮遇耆老,百僚感懷(${cascade} 人忠誠 +2)` : ''}。`;
+  } else if (wish.kind === 'peerage' && wish.targetId) {
+    // 求爵 — enfeoff to the requested tier (generated as exactly one step up).
+    const peer = PEERAGES_BY_ID[wish.targetId as import('../types/title').PeerageId];
+    if (peer) {
+      officers[o.id] = { ...o, peerageId: peer.id, loyalty: Math.min(100, o.loyalty + bonus) };
+      extraEn = ` Enfeoffed as ${peer.name.en}.`;
+      extraZh = `封為${peer.name.zh}。`;
+    } else {
+      officers[o.id] = { ...o, loyalty: Math.min(100, o.loyalty + bonus) };
+    }
+  } else if (wish.kind === 'mentor' && wish.targetId) {
+    // 求師 — apprentice the petitioner to the named colleague (師承).
+    const mentor = officers[wish.targetId];
+    if (mentor && mentor.status !== 'dead') {
+      officers[o.id] = { ...o, mentorId: mentor.id, loyalty: Math.min(100, o.loyalty + bonus) };
+      extraEn = ` Now studies under ${mentor.name.en}.`;
+      extraZh = `拜${mentor.name.zh}為師。`;
+    } else {
+      officers[o.id] = { ...o, loyalty: Math.min(100, o.loyalty + bonus) };
+    }
+  } else if (wish.kind === 'gift') {
+    // 求賜 — a reward of honour: loyalty + a renown bump (賞賜揚名).
+    officers[o.id] = { ...o, renown: (o.renown ?? 0) + 20, loyalty: Math.min(100, o.loyalty + bonus) };
+    extraEn = ' Rewarded with honours (renown +20).';
+    extraZh = '厚加賞賜,威望 +20。';
   } else if (wish.kind === 'info') {
     // Acknowledging an info letter gives a small loyalty bump, no other effect.
     officers[o.id] = { ...o, loyalty: Math.min(100, o.loyalty + bonus) };

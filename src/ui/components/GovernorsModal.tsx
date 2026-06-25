@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { PROVINCES } from '../../game/data';
 import { useGameStore } from '../../game/state/store';
 import type { Officer } from '../../game/types';
@@ -15,6 +16,7 @@ interface Props {
  * lets you appoint one of your idle officers as its governor.
  */
 export function GovernorsModal({ onClose }: Props) {
+  useEscapeKey(onClose);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const cities = useGameStore((s) => s.cities);
   const officers = useGameStore((s) => s.officers);

@@ -91,4 +91,8 @@ export interface Building {
    *  city's build-plot grid). Optional — legacy/AI buildings without one fall
    *  back to deterministic order placement in the 3D city view. */
   plot?: number;
+  /** 山長 — an officer assigned to head a school building (書院/太學/武學堂/招賢館).
+   *  Their relevant stat boosts the school's XP multiplier and tilts which 圍 the
+   *  schooling trains. Ignored for non-school buildings. See buildings.buildingBonuses. */
+  headmasterId?: EntityId;
 }

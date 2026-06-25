@@ -8,8 +8,14 @@ import type {
 } from '../types';
 import { ESPIONAGE_DEFS_BY_KIND } from '../data/espionage';
 import { espionageBonus, counterEspionageResist } from './traitEffects';
+import { hasBloodKinInForce, runtimeSwornPair, swornDepth } from './relationshipEffects';
+import { getLordRapport, isConfidant } from './rapport';
+import { addFriction } from './friction';
+import { getRapport } from './rapport';
+import { pairKey } from '../types/diplomacy';
 import { buildingBonuses } from './buildings';
 import type { Building } from '../types';
+import type { FamilyRelation } from '../types/family';
 
 export interface EspionageContext {
   ops: EspionageOp[];
@@ -19,6 +25,15 @@ export interface EspionageContext {
   rng: () => number;
   /** City buildings — 諜報司/寺院/甕城/譙樓 blunt schemes against the city. */
   buildings?: Building[];
+  /** Family relations — for the 仁孝 kin-anchored defection immunity. */
+  family?: FamilyRelation[];
+  /** 君臣好感 — per-officer regard for their lord; a 心腹 (≥80) can't be turned,
+   *  and warmth blunts 策反. Also read/written by the 離間計 (sow-discord) op. */
+  lordRapport?: Record<EntityId, number>;
+  /** Pairwise officer rapport (好感) — the 離間計 op lowers it / breaks weak bonds. */
+  rapport?: Record<string, number>;
+  /** Runtime bonds — 離間計 may sever a shallow 義結; deep bonds resist. */
+  runtimeBonds?: import('../data/bonds').OathBond[];
 }
 
 export interface EspionageOutput {
@@ -29,6 +44,10 @@ export interface EspionageOutput {
   /** 敗露之怨 — forceId → added resentment toward the player when a scheme
    *  (e.g. a botched assassination) is traced back. Merged into state.grudges. */
   grudgeDelta: Record<EntityId, number>;
+  /** Officer rapport after any 離間計 (sow-discord) ops. Undefined = unchanged. */
+  rapport?: Record<string, number>;
+  /** Runtime bonds after any 離間計 that severed a shallow 義結. Undefined = unchanged. */
+  runtimeBonds?: import('../data/bonds').OathBond[];
 }
 
 /**
@@ -44,6 +63,10 @@ export function resolveEspionage(ctx: EspionageContext): EspionageOutput {
   const results: EspionageResult[] = [];
   const entries: ReportEntry[] = [];
   const grudgeDelta: Record<EntityId, number> = {};
+  // 離間計 mutates the social fabric; track copies and whether they changed.
+  let rapport = { ...(ctx.rapport ?? {}) };
+  let runtimeBonds = ctx.runtimeBonds ? [...ctx.runtimeBonds] : [];
+  let socialChanged = false;
 
   for (const op of ctx.ops) {
     const def = ESPIONAGE_DEFS_BY_KIND[op.kind];
@@ -84,16 +107,38 @@ export function resolveEspionage(ctx: EspionageContext): EspionageOutput {
       chance += buildingBonuses(agent.locationCityId, ctx.buildings ?? []).espionagePower;
     }
 
+    // True immunity (仁孝 / 心腹) — bypasses the 2% floor below.
+    let hardBlock = false;
     if (op.kind === 'defect' && op.targetOfficerId) {
       const t = officers[op.targetOfficerId];
       if (t) {
-        chance += ((100 - t.loyalty) / 50) - 0.2;
-        // T7 — loyal/honor-bound officers resist defection HARD
-        chance -= counterEspionageResist(t) * 3;
+        // 仁孝 — won't abandon a force where blood kin still serve.
+        // 心腹 — a confidant (君臣好感 ≥80) will not betray their lord at any price.
+        if (hasBloodKinInForce(t, officers, ctx.family ?? []) || isConfidant(ctx.lordRapport ?? {}, t.id)) {
+          chance = 0;
+          hardBlock = true;
+        } else {
+          chance += ((100 - t.loyalty) / 50) - 0.2;
+          // 好色 — a lustful target is far easier to lure (美人計).
+          if ((t.traits as string[] | undefined ?? []).includes('lustful')) chance += 0.15;
+          // T7 — loyal/honor-bound officers resist defection HARD
+          chance -= counterEspionageResist(t) * 3;
+          // 君臣好感 — an officer who esteems their lord is harder to turn.
+          chance -= Math.max(0, getLordRapport(ctx.lordRapport ?? {}, t.id)) / 120;
+        }
       }
     }
 
-    chance = Math.max(0.02, Math.min(0.95, chance));
+    // 離間計 — a deep 義結 (or even high warmth) resists estrangement.
+    if (op.kind === 'sow-discord' && op.targetOfficerId && op.targetOfficerId2) {
+      const depth = swornDepth(op.targetOfficerId, op.targetOfficerId2, runtimeBonds);
+      if (depth >= 2) chance *= 0.3;                 // 金蘭/生死之交 nearly unbreakable
+      else if (runtimeSwornPair(op.targetOfficerId, op.targetOfficerId2, runtimeBonds)) chance *= 0.6;
+      const warmth = getRapport(rapport, op.targetOfficerId, op.targetOfficerId2);
+      if (warmth > 0) chance -= warmth / 250;        // genuine friendship is hard to poison
+    }
+
+    chance = hardBlock ? 0 : Math.max(0.02, Math.min(0.95, chance));
     const roll = ctx.rng();
     const success = roll < chance;
 
@@ -214,6 +259,40 @@ export function resolveEspionage(ctx: EspionageContext): EspionageOutput {
         message = `The slander against ${t.name.en} was disbelieved.`;
         messageZh = `離間${t.name.zh}之謀未為其主所信。`;
       }
+    } else if (op.kind === 'sow-discord' && op.targetOfficerId && op.targetOfficerId2) {
+      const t1 = officers[op.targetOfficerId], t2 = officers[op.targetOfficerId2];
+      if (!t1 || !t2 || t1.status === 'dead' || t2.status === 'dead') {
+        message = `Targets unavailable.`;
+        messageZh = `目標已不可及。`;
+      } else if (success) {
+        // Poison their rapport; a shallow (depth-1) 義結 may shatter outright.
+        const drop = 20 + Math.floor(ctx.rng() * 21); // 20–40
+        const beforeBonded = runtimeSwornPair(t1.id, t2.id, runtimeBonds);
+        const shallow = beforeBonded && swornDepth(t1.id, t2.id, runtimeBonds) <= 1;
+        if (shallow) {
+          runtimeBonds = runtimeBonds.filter((bd) =>
+            !((bd.kind === 'sibling' || bd.kind === 'oath') &&
+              ((bd.officerA === t1.id && bd.officerB === t2.id) || (bd.officerA === t2.id && bd.officerB === t1.id))));
+          // A broken bond starts the pair from neutral before souring.
+          rapport = { ...rapport, [pairKey(t1.id, t2.id)]: 0 };
+        }
+        const alreadyFeud = runtimeBonds.some((bd) =>
+          bd.kind === 'feud' &&
+          ((bd.officerA === t1.id && bd.officerB === t2.id) || (bd.officerA === t2.id && bd.officerB === t1.id)));
+        const fr = addFriction(rapport, t1.id, t2.id, drop, alreadyFeud);
+        rapport = fr.rapport;
+        if (fr.forged) runtimeBonds = [...runtimeBonds, fr.forged];
+        socialChanged = true;
+        message = shallow
+          ? `Whispers shattered the bond between ${t1.name.en} and ${t2.name.en} — now bitter rivals.`
+          : `${t1.name.en} and ${t2.name.en} turn cold toward one another (好感 −${drop}).`;
+        messageZh = shallow
+          ? `讒言離間，${t1.name.zh}與${t2.name.zh}義斷恩絕，反目成仇。`
+          : `${t1.name.zh}與${t2.name.zh}漸生嫌隙(好感 −${drop})。`;
+      } else {
+        message = `The attempt to estrange ${t1.name.en} and ${t2.name.en} came to nothing.`;
+        messageZh = `離間${t1.name.zh}與${t2.name.zh}之計未成。`;
+      }
     }
 
     results.push({ op, success, message });
@@ -225,5 +304,8 @@ export function resolveEspionage(ctx: EspionageContext): EspionageOutput {
     });
   }
 
-  return { cities, officers, results, entries, grudgeDelta };
+  return {
+    cities, officers, results, entries, grudgeDelta,
+    ...(socialChanged ? { rapport, runtimeBonds } : {}),
+  };
 }

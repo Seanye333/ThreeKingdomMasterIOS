@@ -56,6 +56,23 @@ export function gradeFromScore(score: number): OfficerGrade {
   return 'iron';
 }
 
+/** Score thresholds each grade is cut at (mirror of gradeFromScore), ascending. */
+const GRADE_THRESHOLDS: Array<{ grade: OfficerGrade; at: number }> = [
+  { grade: 'bronze', at: 70 }, { grade: 'silver', at: 82 }, { grade: 'gold', at: 92 },
+  { grade: 'platinum', at: 100 }, { grade: 'diamond', at: 110 },
+];
+
+/** 晉品評定 — how close an officer is to their next 品階: the next tier and the
+ *  blended-score points still needed (null tier = already 鑽石/topped out). Makes
+ *  the otherwise-hidden grade formula legible in the UI. */
+export function nextGradeGap(officer: Officer): { next: OfficerGrade | null; toNext: number } {
+  const score = gradeScore(officer);
+  for (const t of GRADE_THRESHOLDS) {
+    if (score < t.at) return { next: t.grade, toNext: Math.max(1, Math.ceil(t.at - score)) };
+  }
+  return { next: null, toNext: 0 };
+}
+
 /** Ascending tier order — lets callers tell whether one grade outranks another. */
 const GRADE_ORDER: OfficerGrade[] = ['iron', 'bronze', 'silver', 'gold', 'platinum', 'diamond'];
 export function gradeRank(grade: OfficerGrade): number {

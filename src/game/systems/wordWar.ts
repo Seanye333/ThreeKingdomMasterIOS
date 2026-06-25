@@ -1,5 +1,6 @@
 import type { Officer } from '../types';
 import { afflictionDelta } from './afflictions';
+import { wordWarProwessMul } from './traitEffects';
 
 /**
  * 舌戰 — pre-battle war of words. Each side may field a strategist; the
@@ -68,8 +69,9 @@ export function resolveWordWar(
   };
   const a = pickStrategist(attackerCommander, attackerCompanions);
   const d = pickStrategist(defenderCommander, defenderCompanions);
-  const aProwess = a.stats.intelligence + a.stats.charisma * 0.5;
-  const dProwess = d.stats.intelligence + d.stats.charisma * 0.5;
+  // 口才 — rhetorical traits (雄辯/善說/寡言鋒/機智…) sharpen or blunt the tongue.
+  const aProwess = (a.stats.intelligence + a.stats.charisma * 0.5) * wordWarProwessMul(a);
+  const dProwess = (d.stats.intelligence + d.stats.charisma * 0.5) * wordWarProwessMul(d);
 
   const lines: WordWarLine[] = [];
   const rounds: WordWarRound[] = [];

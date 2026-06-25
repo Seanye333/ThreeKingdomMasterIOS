@@ -3961,7 +3961,7 @@ export function TacticalBattleScreen3D() {
       if (e.key === ' ') {
         e.preventDefault();
         playSfx('horn');
-        start(endTurn(battle));
+        start(endTurn(battle, officers));
         setSelectedId(null);
         setActionMode({ kind: 'none' });
         return;
@@ -4363,7 +4363,7 @@ export function TacticalBattleScreen3D() {
 
   const onEndTurn = () => {
     if (!myTurn) return;
-    start(endTurn(battle));
+    start(endTurn(battle, officers));
     setSelectedId(null);
     setActionMode({ kind: 'none' });
   };

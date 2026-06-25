@@ -19,6 +19,7 @@ export function ConvoyDispatchModal({ fromCityId, onClose }: { fromCityId: strin
   const lang = useLanguage();
   const cities = useGameStore((s) => s.cities);
   const officers = useGameStore((s) => s.officers);
+  const armies = useGameStore((s) => s.armies);
   const ports = useGameStore((s) => s.ports);
   const date = useGameStore((s) => s.date);
   const playerForceId = useGameStore((s) => s.playerForceId);
@@ -27,6 +28,13 @@ export function ConvoyDispatchModal({ fromCityId, onClose }: { fromCityId: strin
   const setStandingRoute = useGameStore((s) => s.setStandingRoute);
 
   const from = cities[fromCityId];
+  // 直供前線 — friendly field armies the column may resupply (neediest first).
+  const myArmies = useMemo(
+    () => Object.values(armies)
+      .filter((a) => a.forceId === playerForceId && cities[a.targetCityId])
+      .sort((a, b) => (a.food ?? 0) - (b.food ?? 0)),
+    [armies, playerForceId, cities],
+  );
   const woodenOx = useMemo(
     () => Object.values(officers).some((o) => o.forceId === playerForceId && o.status !== 'dead' && (o.skills ?? []).includes('wooden-ox' as never)),
     [officers, playerForceId],
@@ -43,20 +51,23 @@ export function ConvoyDispatchModal({ fromCityId, onClose }: { fromCityId: strin
     [officers, playerForceId, fromCityId],
   );
 
-  const [destId, setDestId] = useState(dests[0]?.id ?? '');
+  const [destId, setDestId] = useState(dests[0]?.id ?? (myArmies[0] ? `army:${myArmies[0].id}` : ''));
   const [escortId, setEscortId] = useState(escorts[0]?.id ?? '');
   const [food, setFood] = useState(0);
   const [gold, setGold] = useState(0);
   const [troops, setTroops] = useState(0);
   const [horses, setHorses] = useState(0);
   const [iron, setIron] = useState(0);
+  const [med, setMed] = useState(0);
   const [cautious, setCautious] = useState(false);
 
-  const dest = cities[destId] ?? dests[0];
+  // A destination is either a city id or `army:<id>` (a field army to resupply).
+  const armyDest = destId.startsWith('army:') ? armies[destId.slice(5)] : null;
+  const dest = armyDest ? cities[armyDest.targetCityId] : (cities[destId] ?? dests[0]);
   const escort = officers[escortId] && escorts.some((o) => o.id === escortId) ? officers[escortId] : escorts[0];
   const cap = escort ? convoyCapacity(escort) : 0;
 
-  if (!from || dests.length === 0) {
+  if (!from || (dests.length === 0 && myArmies.length === 0)) {
     return (
       <Modal onClose={onClose} icon="🐂" title={t('輜重發運', 'Dispatch Convoy')} width="min(440px, 100%)">
         <div style={{ color: '#7a8893', fontSize: '0.86rem', padding: '1rem 0' }}>{t('無其他可運之城。', 'No other city to ship to.')}</div>
@@ -64,13 +75,19 @@ export function ConvoyDispatchModal({ fromCityId, onClose }: { fromCityId: strin
     );
   }
 
-  const total = food + gold + troops + horses + iron;
+  // A field-army haul carries only grain + reinforcements (no granary in the field).
+  const effGold = armyDest ? 0 : gold;
+  const effHorses = armyDest ? 0 : horses;
+  const effIron = armyDest ? 0 : iron;
+  const effMed = armyDest ? 0 : med;
+  const total = food + effGold + troops + effHorses + effIron + effMed;
   const remaining = Math.max(0, cap - total);
   const foodStock = from.food;
   const goldStock = from.gold;
   const troopStock = Math.max(0, from.troops - 100);
   const horseStock = from.warhorses ?? 0;
   const ironStock = from.iron ?? 0;
+  const medStock = from.medicine ?? 0;
 
   // Live ETA + road-loss, identical to what dispatch will apply.
   const naval = dest ? (!from.adjacentCityIds.includes(dest.id) && navalReachableCityIds(fromCityId, ports).has(dest.id)) : false;
@@ -82,7 +99,9 @@ export function ConvoyDispatchModal({ fromCityId, onClose }: { fromCityId: strin
 
   const send = () => {
     if (!dest || !escort || total <= 0) return;
-    const r = dispatchConvoy(fromCityId, dest.id, food, gold, troops, escort.id, cautious, horses, iron);
+    const r = armyDest
+      ? dispatchConvoy(fromCityId, armyDest.targetCityId, food, 0, troops, escort.id, cautious, 0, 0, 0, armyDest.id)
+      : dispatchConvoy(fromCityId, dest.id, food, gold, troops, escort.id, cautious, horses, iron, med);
     if (r.ok) { playSfx('coin'); onClose(); }
   };
 
@@ -114,12 +133,25 @@ export function ConvoyDispatchModal({ fromCityId, onClose }: { fromCityId: strin
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: '0.8rem' }}>
         <label style={{ display: 'grid', gridTemplateColumns: '3.4rem 1fr', gap: 8, alignItems: 'center' }}>
           <span style={{ fontSize: '0.78rem', color: '#7a8893' }}>{t('目的地', 'To')}</span>
-          <select value={dest?.id ?? ''} onChange={(e) => setDestId(e.target.value)} style={selectStyle}>
+          <select value={destId} onChange={(e) => setDestId(e.target.value)} style={selectStyle}>
             {dests.map((c) => (
               <option key={c.id} value={c.id}>
                 {(lang === 'en' ? c.name.en : c.name.zh)} · {t('糧', 'grain')}{Math.round(c.food / 1000)}k{from.adjacentCityIds.includes(c.id) ? t(' · 鄰', ' · adj') : navalReachableCityIds(fromCityId, ports).has(c.id) ? ' · 🚢' : ''}
               </option>
             ))}
+            {myArmies.length > 0 && (
+              <optgroup label={t('直供前線(援軍/解圍)', 'To the front (relieve a siege)')}>
+                {myArmies.map((a) => {
+                  const cmdr = officers[a.commanderId];
+                  const at = cities[a.targetCityId];
+                  return (
+                    <option key={a.id} value={`army:${a.id}`}>
+                      ⚔ {(lang === 'en' ? cmdr?.name.en : cmdr?.name.zh) ?? a.commanderId} · {t('糧', 'grain')}{Math.round((a.food ?? 0) / 1000)}k{at ? ` · ${t('攻', 'vs')}${lang === 'en' ? at.name.en : at.name.zh}` : ''}
+                    </option>
+                  );
+                })}
+              </optgroup>
+            )}
           </select>
         </label>
         <label style={{ display: 'grid', gridTemplateColumns: '3.4rem 1fr', gap: 8, alignItems: 'center' }}>
@@ -139,10 +171,11 @@ export function ConvoyDispatchModal({ fromCityId, onClose }: { fromCityId: strin
       {/* Cargo sliders */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: '0.7rem', opacity: escort ? 1 : 0.5 }}>
         {cargoRow(t('糧', 'Grain'), food, setFood, foodStock, '#d8c88a')}
-        {cargoRow(t('金', 'Gold'), gold, setGold, goldStock, '#e8c84a')}
-        {cargoRow(t('兵', 'Troops'), troops, setTroops, troopStock, '#9ec0d8')}
-        {horseStock > 0 && cargoRow(t('馬', 'Horses'), horses, setHorses, horseStock, '#c8a06a')}
-        {ironStock > 0 && cargoRow(t('鐵', 'Iron'), iron, setIron, ironStock, '#8fa0ad')}
+        {!armyDest && cargoRow(t('金', 'Gold'), gold, setGold, goldStock, '#e8c84a')}
+        {cargoRow(armyDest ? t('援兵', 'Reinf.') : t('兵', 'Troops'), troops, setTroops, troopStock, '#9ec0d8')}
+        {!armyDest && horseStock > 0 && cargoRow(t('馬', 'Horses'), horses, setHorses, horseStock, '#c8a06a')}
+        {!armyDest && ironStock > 0 && cargoRow(t('鐵', 'Iron'), iron, setIron, ironStock, '#8fa0ad')}
+        {!armyDest && medStock > 0 && cargoRow(t('藥', 'Medicine'), med, setMed, medStock, '#7fbf8f')}
       </div>
 
       {/* Load meter */}
@@ -165,10 +198,10 @@ export function ConvoyDispatchModal({ fromCityId, onClose }: { fromCityId: strin
           <div style={{ color: '#7a8893' }}>
             {t('實到', 'arrives')}:
             {food > 0 && ` 糧${Math.floor(food * plan.keepFrac).toLocaleString()}`}
-            {gold > 0 && ` 金${Math.floor(gold * plan.keepFrac).toLocaleString()}`}
-            {troops > 0 && ` 兵${Math.floor(troops * plan.keepFrac).toLocaleString()}`}
-            {horses > 0 && ` 馬${Math.floor(horses * plan.keepFrac).toLocaleString()}`}
-            {iron > 0 && ` 鐵${Math.floor(iron * plan.keepFrac).toLocaleString()}`}
+            {effGold > 0 && ` 金${Math.floor(effGold * plan.keepFrac).toLocaleString()}`}
+            {troops > 0 && ` ${armyDest ? '援兵' : '兵'}${Math.floor(troops * plan.keepFrac).toLocaleString()}`}
+            {effHorses > 0 && ` 馬${Math.floor(effHorses * plan.keepFrac).toLocaleString()}`}
+            {effIron > 0 && ` 鐵${Math.floor(effIron * plan.keepFrac).toLocaleString()}`}
           </div>
         )}
       </div>
@@ -179,7 +212,7 @@ export function ConvoyDispatchModal({ fromCityId, onClose }: { fromCityId: strin
           <input type="checkbox" checked={cautious} onChange={(e) => setCautious(e.target.checked)} />
           {t('謹慎走小路(+1旬,少被劫)', 'Back-roads (+1 season, safer)')}
         </label>
-        {dest && (
+        {dest && !armyDest && (
           <button
             onClick={() => setStandingRoute(fromCityId, dest.id, !standingOn)}
             style={{ ...selectStyle, cursor: 'pointer', padding: '0.2rem 0.6rem', color: standingOn ? '#9ad6a8' : '#e6c473', borderColor: standingOn ? '#6fae73' : '#2b3845', background: standingOn ? 'rgba(126,214,138,0.12)' : '#080b0e' }}

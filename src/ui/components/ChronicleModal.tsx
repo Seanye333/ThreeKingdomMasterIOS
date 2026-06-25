@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useGameStore } from '../../game/state/store';
 import { useT, useLanguage } from '../i18n';
 
@@ -20,6 +21,7 @@ const SEASON_ZH: Record<string, string> = { spring: '春', summer: '夏', autumn
 const SEASON_ORDER: Record<string, number> = { spring: 0, summer: 1, autumn: 2, winter: 3 };
 
 export function ChronicleModal({ onClose }: { onClose: () => void }) {
+  useEscapeKey(onClose);
   const chronicle = useGameStore((s) => s.chronicle ?? []);
   const date = useGameStore((s) => s.date);
   const playerForce = useGameStore((s) => (s.playerForceId ? s.forces[s.playerForceId] : null));

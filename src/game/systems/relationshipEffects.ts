@@ -17,6 +17,8 @@
 import type { EntityId, Officer } from '../types';
 import type { FamilyRelation } from '../types/family';
 import type { OathBond } from '../data/bonds';
+import { isFeudKind } from '../data/bonds';
+import { pairKey } from '../types/diplomacy';
 import { OFFICER_RELATIONSHIPS, type OfficerRelationship } from '../data/relationships';
 import { FAMILY_LINEAGE } from '../data/familyLineage';
 
@@ -33,6 +35,35 @@ export function runtimeSwornPair(a: EntityId, b: EntityId, bonds: OathBond[] = [
     (bd) =>
       isSwornBondKind(bd.kind) &&
       ((bd.officerA === a && bd.officerB === b) || (bd.officerA === b && bd.officerB === a)),
+  );
+}
+
+/** True if a runtime bond list ties A and B as 宿怨/私仇 (a feud). */
+export function runtimeFeudPair(a: EntityId, b: EntityId, bonds: OathBond[] = []): boolean {
+  return bonds.some(
+    (bd) =>
+      isFeudKind(bd.kind) &&
+      ((bd.officerA === a && bd.officerB === b) || (bd.officerA === b && bd.officerB === a)),
+  );
+}
+
+/** Depth (1..3) of the sworn tie between A and B. Runtime bonds carry their own
+ *  depth; a static-lore sworn brotherhood is treated as 義結金蘭 (2). 0 if none. */
+export function swornDepth(a: EntityId, b: EntityId, bonds: OathBond[] = []): number {
+  const bd = bonds.find(
+    (x) =>
+      isSwornBondKind(x.kind) &&
+      ((x.officerA === a && x.officerB === b) || (x.officerA === b && x.officerB === a)),
+  );
+  if (bd) return bd.depth ?? 1;
+  return areStaticSworn(a, b) ? 2 : 0;
+}
+
+function areStaticSworn(a: EntityId, b: EntityId): boolean {
+  return OFFICER_RELATIONSHIPS.some(
+    (r) =>
+      r.kind === 'sworn-brothers' &&
+      ((r.a === a && r.b === b) || (r.a === b && r.b === a)),
   );
 }
 
@@ -57,11 +88,22 @@ export function relationsOf(officerId: EntityId): OfficerRelationship[] {
   return relIndex().get(officerId) ?? [];
 }
 
-/** Get all sworn brothers of an officer (other officer ids). */
+/** Get all sworn brothers of an officer (other officer ids) from STATIC lore. */
 export function swornBrothersOf(officerId: EntityId): EntityId[] {
   return relationsOf(officerId)
     .filter((r) => r.kind === 'sworn-brothers')
     .map((r) => (r.a === officerId ? r.b : r.a));
+}
+
+/** All sworn brothers — static lore + runtime 結拜/義結 bonds — deduped. */
+export function allSwornBrothersOf(officerId: EntityId, runtimeBonds: OathBond[] = []): EntityId[] {
+  const out = new Set<EntityId>(swornBrothersOf(officerId));
+  for (const bd of runtimeBonds) {
+    if (!isSwornBondKind(bd.kind)) continue;
+    if (bd.officerA === officerId) out.add(bd.officerB);
+    else if (bd.officerB === officerId) out.add(bd.officerA);
+  }
+  return [...out];
 }
 
 /** Get all rivals (mutual relationship). */
@@ -166,6 +208,26 @@ export function areFamily(a: EntityId, b: EntityId, family: FamilyRelation[]): b
   );
 }
 
+/** 仁孝 — true if a `filial` officer currently has a blood relative
+ *  (parent / child / sibling) alive and serving in the SAME force. Such an
+ *  officer will not abandon their kin, so callers treat them as undefectable. */
+export function hasBloodKinInForce(
+  officer: Officer,
+  officersById: Record<EntityId, Officer>,
+  family: FamilyRelation[],
+): boolean {
+  if (!(officer.traits as string[] | undefined ?? []).includes('filial')) return false;
+  const kin = [
+    ...parentsOf(officer.id, family),
+    ...childrenOf(officer.id, family),
+    ...siblingsOf(officer.id, family),
+  ];
+  return kin.some((id) => {
+    const k = officersById[id];
+    return k && k.status !== 'dead' && k.forceId === officer.forceId;
+  });
+}
+
 /** True if A and B sworn brothers — by static lore OR a runtime 結拜 bond. */
 export function areSwornBrothers(a: EntityId, b: EntityId, runtimeBonds: OathBond[] = []): boolean {
   if (runtimeSwornPair(a, b, runtimeBonds)) return true;
@@ -214,6 +276,7 @@ export function sidePoolRelationshipBonus(
   pool: Officer[],
   family: FamilyRelation[],
   runtimeBonds: OathBond[] = [],
+  rapport: Record<string, number> = {},
 ): RelationshipCombatBonus {
   if (pool.length < 2) return { powerMul: 1.0, moraleResist: 0 };
   let powerMul = 1.0;
@@ -222,19 +285,40 @@ export function sidePoolRelationshipBonus(
   for (let i = 0; i < pool.length; i++) {
     for (let j = i + 1; j < pool.length; j++) {
       const a = pool[i].id, b = pool[j].id;
-      if (areSwornBrothers(a, b, runtimeBonds)) {
-        powerMul *= 1.06;
-        moraleResist += 0.10;
+      const sworn = areSwornBrothers(a, b, runtimeBonds);
+      const feud = runtimeFeudPair(a, b, runtimeBonds);
+      if (sworn) {
+        // Depth-scaled: 義交 1.05 / 義結金蘭 1.06 / 生死之交 1.08.
+        const depth = swornDepth(a, b, runtimeBonds);
+        powerMul *= depth >= 3 ? 1.08 : depth === 1 ? 1.05 : 1.06;
+        moraleResist += depth >= 3 ? 0.12 : 0.10;
+      } else if (feud) {
+        // 宿怨 — generals who loathe each other fight worse shoulder to shoulder.
+        powerMul *= 0.95;
+        moraleResist -= 0.06;
       }
       if (areFamily(a, b, family)) {
         powerMul *= 1.04;
         moraleResist += 0.05;
       }
+      // Graded rapport — warmth/coldness short of a forged bond still counts.
+      // Skipped when a bond/feud already exists (the multipliers above already
+      // represent the maxed-out relationship — avoids double-counting).
+      if (!sworn && !feud) {
+        const r = rapport[pairKey(a, b)] ?? 0;
+        if (r > 0) {
+          powerMul *= 1 + 0.04 * (r / 100);
+          moraleResist += 0.06 * (r / 100);
+        } else if (r < 0) {
+          powerMul *= 1 + 0.05 * (r / 100); // r<0 → <1
+          moraleResist += 0.06 * (r / 100); // r<0 → negative
+        }
+      }
     }
   }
   // Compress
   powerMul = 1 + (powerMul - 1) * 0.75;
-  moraleResist = Math.min(0.5, moraleResist);
+  moraleResist = Math.max(-0.5, Math.min(0.5, moraleResist));
   return { powerMul, moraleResist };
 }
 
@@ -244,6 +328,108 @@ export function rivalShowdownMultiplier(commanderA: Officer | null, commanderB: 
   if (!commanderA || !commanderB) return 1.0;
   if (areRivals(commanderA.id, commanderB.id)) return 1.10;
   return 1.0;
+}
+
+/** Cross-line morale bite — when a sworn brother stands in the ENEMY ranks, a
+ *  general fights with a divided heart. Returns a morale penalty (≤0) to apply
+ *  to the side, scaled by how many sworn brothers face them. */
+export function swornAcrossLinesPenalty(
+  side: Officer[],
+  enemy: Officer[],
+  runtimeBonds: OathBond[] = [],
+): number {
+  if (side.length === 0 || enemy.length === 0) return 0;
+  let pairs = 0;
+  for (const a of side) {
+    for (const b of enemy) {
+      if (areSwornBrothers(a.id, b.id, runtimeBonds)) pairs++;
+    }
+  }
+  return Math.max(-0.2, -0.05 * pairs);
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// 義結深化 — sworn bonds deepen with shared service
+// ─────────────────────────────────────────────────────────────────────
+
+export interface BondDeepenResult {
+  bonds: OathBond[];
+  /** Pairs whose depth advanced this tick (for player-facing notes). */
+  deepened: Array<{ a: EntityId; b: EntityId; depth: number; label: string }>;
+}
+
+/**
+ * Each season, sworn bonds whose members serve the same force grow stronger.
+ * 義交 (1) → 義結金蘭 (2) after 8 seasons together → 生死之交 (3) after 24.
+ * Deeper bonds raise the loyalty floor (88/92/96) and battle synergy. Pure.
+ */
+export function deepenBonds(
+  bonds: OathBond[],
+  officersById: Record<EntityId, Officer>,
+): BondDeepenResult {
+  const deepened: BondDeepenResult['deepened'] = [];
+  const out = bonds.map((bd) => {
+    if (!isSwornBondKind(bd.kind)) return bd;
+    const a = officersById[bd.officerA], b = officersById[bd.officerB];
+    const together =
+      !!a && !!b && a.status !== 'dead' && b.status !== 'dead' &&
+      !!a.forceId && a.forceId === b.forceId;
+    if (!together) return bd;
+    const shared = (bd.sharedSeasons ?? 0) + 1;
+    const depth = bd.depth ?? 1;
+    let newDepth: 1 | 2 | 3 = depth as 1 | 2 | 3;
+    if (depth < 2 && shared >= 8) newDepth = 2;
+    if (depth < 3 && shared >= 24) newDepth = 3;
+    if (newDepth !== depth) deepened.push({ a: bd.officerA, b: bd.officerB, depth: newDepth, label: bd.label });
+    return { ...bd, sharedSeasons: shared, depth: newDepth };
+  });
+  return { bonds: out, deepened };
+}
+
+/**
+ * 同袍／嫌隙 loyalty nudge — an officer's average rapport with their same-force
+ * peers gives a small per-season loyalty drift: warmth (camaraderie) steadies
+ * them, friction (嫌隙) gnaws. Bounded to ±3 so it nudges without overriding the
+ * floor. Pure; reads rapport directly via pairKey (no rapport.ts dependency).
+ */
+export function camaraderieLoyaltyDelta(
+  officer: Officer,
+  forceOfficers: Officer[],
+  rapport: Record<string, number>,
+): number {
+  let sum = 0, n = 0;
+  for (const o of forceOfficers) {
+    if (o.id === officer.id || o.status === 'dead') continue;
+    sum += rapport[pairKey(officer.id, o.id)] ?? 0;
+    n++;
+  }
+  if (n === 0) return 0;
+  const avg = sum / n; // −100..100
+  return Math.max(-3, Math.min(3, avg * 0.03));
+}
+
+/**
+ * 朋黨 — an ambitious general with a tight clique of high-rapport allies in the
+ * same force has co-conspirators at his back, and moves the bolder for it; a man
+ * isolated by feuds has no one to follow him. Returns a small additive boost to
+ * his betrayal odds (0..~0.04), fed into the ambition factionBoost. Pure.
+ */
+export function cliqueBackingBoost(
+  officerId: EntityId,
+  forceOfficers: Officer[],
+  rapport: Record<string, number>,
+  runtimeBonds: OathBond[] = [],
+): number {
+  let allies = 0;
+  let foes = 0;
+  for (const o of forceOfficers) {
+    if (o.id === officerId || o.status === 'dead') continue;
+    const r = rapport[pairKey(officerId, o.id)] ?? 0;
+    if (r >= 60 || runtimeSwornPair(officerId, o.id, runtimeBonds)) allies++;
+    else if (r <= -60 || runtimeFeudPair(officerId, o.id, runtimeBonds)) foes++;
+  }
+  const net = Math.max(0, allies - foes);
+  return Math.min(0.04, net * 0.015);
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -277,12 +463,16 @@ export function loyaltyFloor(
   for (const id of swornBrothersOf(officer.id)) {
     if (sameForceAlive(id)) floor = Math.max(floor, 95);
   }
-  // Runtime 結拜 sworn brothers (義兄弟 forged in-game) — 90.
+  // Runtime 結拜 sworn brothers (義兄弟 forged in-game) — depth-scaled:
+  // 義交 88 / 義結金蘭 92 / 生死之交 96.
   for (const bd of runtimeBonds) {
     if (!isSwornBondKind(bd.kind)) continue;
     const otherId = bd.officerA === officer.id ? bd.officerB
       : bd.officerB === officer.id ? bd.officerA : null;
-    if (otherId && sameForceAlive(otherId)) floor = Math.max(floor, 90);
+    if (otherId && sameForceAlive(otherId)) {
+      const d = bd.depth ?? 1;
+      floor = Math.max(floor, d >= 3 ? 96 : d === 2 ? 92 : 88);
+    }
   }
   // Family ties — close kin keep loyalty high
   for (const f of [...family, ...FAMILY_LINEAGE]) {
@@ -303,6 +493,10 @@ export function loyaltyFloor(
   for (const mentorId of mentorsOf(officer.id)) {
     if (sameForceAlive(mentorId)) floor = Math.max(floor, 90);
   }
+  // 部曲 — a retainer serving under their original lord keeps a high floor.
+  if (officer.retinueOfLordId && sameForceAlive(officer.retinueOfLordId)) {
+    floor = Math.max(floor, 90);
+  }
   return floor;
 }
 
@@ -311,26 +505,46 @@ export function loyaltyFloor(
  *  Returns array of {targetId, delta, reasonZh, reasonEn}. */
 export interface GriefEffect {
   targetId: EntityId;
-  delta: number;          // negative
+  delta: number;          // negative (grief) or positive (relief over a fallen foe)
   reasonZh: string;
   reasonEn: string;
+  /** Depth of a lost sworn bond (1..3) — depth ≥2 may trigger 殉義 (the survivor
+   *  follows their brother in death/retirement). Set only for deep sworn losses. */
+  mournDepth?: number;
 }
 export function griefOnDeath(
   deceasedId: EntityId,
   deceasedNameZh: string,
   deceasedNameEn: string,
   family: FamilyRelation[],
+  runtimeBonds: OathBond[] = [],
+  /** When supplied, a fallen lord's scattered 部曲 also mourn (retinueOfLordId). */
+  allOfficers?: Record<EntityId, Officer>,
 ): GriefEffect[] {
   const out: GriefEffect[] = [];
   const seen = new Set<EntityId>();
-  const add = (id: EntityId, delta: number, zh: string, en: string) => {
+  const add = (id: EntityId, delta: number, zh: string, en: string, mournDepth?: number) => {
     if (seen.has(id)) return; // avoid double-dipping
     seen.add(id);
-    out.push({ targetId: id, delta, reasonZh: zh, reasonEn: en });
+    out.push({ targetId: id, delta, reasonZh: zh, reasonEn: en, mournDepth });
   };
   // Sworn brothers — biggest loyalty hit, may rage
   for (const id of swornBrothersOf(deceasedId)) {
-    add(id, -20, `義兄弟${deceasedNameZh}陣亡 — 悲憤難當`, `Sworn brother ${deceasedNameEn} fell — grief and rage`);
+    add(id, -20, `義兄弟${deceasedNameZh}陣亡 — 悲憤難當`, `Sworn brother ${deceasedNameEn} fell — grief and rage`, 2);
+  }
+  // Runtime 義結 brothers (forged in-game) — grief scales with bond depth.
+  for (const bd of runtimeBonds) {
+    const otherId = bd.officerA === deceasedId ? bd.officerB
+      : bd.officerB === deceasedId ? bd.officerA : null;
+    if (!otherId) continue;
+    if (isSwornBondKind(bd.kind)) {
+      const d = bd.depth ?? 1;
+      add(otherId, d >= 3 ? -25 : d === 2 ? -20 : -15,
+        `義兄弟${deceasedNameZh}逝 — 悲憤難當`, `Sworn brother ${deceasedNameEn} fell — grief and rage`, d);
+    } else if (isFeudKind(bd.kind)) {
+      // 宿怨 — a hated rival's death brings cold relief, not grief.
+      add(otherId, 5, `宿敵${deceasedNameZh}伏誅 — 心結頓解`, `Foe ${deceasedNameEn} is gone — an old grudge lifts`);
+    }
   }
   // Romantic partner — heart-rending
   for (const id of romanticPartnersOf(deceasedId)) {
@@ -358,6 +572,16 @@ export function griefOnDeath(
   }
   for (const id of studentsOf(deceasedId)) {
     add(id, -10, `恩師${deceasedNameZh}辭世`, `Mentor ${deceasedNameEn} died`);
+  }
+  // 部曲喪志 — a fallen lord's surviving retainers mourn their old master.
+  // The `seen` set keeps anyone already grieving (e.g. as a sworn brother) from
+  // double-dipping, so this only adds the rank-and-file retinue.
+  if (allOfficers) {
+    for (const o of Object.values(allOfficers)) {
+      if (o.retinueOfLordId === deceasedId && o.status !== 'dead') {
+        add(o.id, -18, `故主${deceasedNameZh}殞落 — 部曲喪志`, `Their old lord ${deceasedNameEn} has fallen`);
+      }
+    }
   }
   return out;
 }
@@ -451,6 +675,7 @@ export function recruitPreferenceScore(
   prospectId: EntityId,
   recruiterRulerId: EntityId,
   family: FamilyRelation[],
+  rapport: Record<string, number> = {},
 ): number {
   if (arePersonalEnemies(prospectId, recruiterRulerId)) return -9999;
   let score = 0;
@@ -459,6 +684,8 @@ export function recruitPreferenceScore(
   if (mastersOf(prospectId).includes(recruiterRulerId)) score += 40;
   if (mentorsOf(prospectId).includes(recruiterRulerId)) score += 30;
   if (studentsOf(prospectId).includes(recruiterRulerId)) score += 30;
+  // 舊好 — prior warmth (or coldness) with the lord nudges the priority.
+  score += (rapport[pairKey(prospectId, recruiterRulerId)] ?? 0) * 0.3;
   return score;
 }
 

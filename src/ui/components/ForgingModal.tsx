@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { FORGE_RECIPES, ITEMS_BY_ID } from '../../game/data';
 import { itemRarity, itemRarityMeta, GEMS, GEMS_BY_ID, GEM_FUSION, GEM_FUSION_COST } from '../../game/data/items';
 import { dismantleYield } from '../../game/systems/forging';
@@ -72,6 +73,7 @@ function ForgedReveal({ name, plus, onDone }: { name?: { zh: string; en: string 
 }
 
 export function ForgingModal({ onClose }: Props) {
+  useEscapeKey(onClose);
   const lang = useLanguage();
   const cities = useGameStore((s) => s.cities);
   const buildings = useGameStore((s) => s.buildings);

@@ -1,6 +1,9 @@
+import { useMemo } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { SEASON_LABEL } from '../../game/types';
 import { careerStanding, careerPrivileges } from '../../game/systems/career';
+import { composeBiography } from '../../game/systems/biography';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useT, useLanguage } from '../i18n';
 
 interface Props {
@@ -18,8 +21,31 @@ export function CareerModal({ onClose }: Props) {
   const officers = useGameStore((s) => s.officers);
   const deeds = useGameStore((s) => s.deeds);
   const forces = useGameStore((s) => s.forces);
+  const cities = useGameStore((s) => s.cities);
+  const battleHistory = useGameStore((s) => s.battleHistory);
+  const family = useGameStore((s) => s.family);
+  const runtimeBonds = useGameStore((s) => s.runtimeBonds);
+  const duelHall = useGameStore((s) => s.duelHall);
+  const clanStandings = useGameStore((s) => s.clanStandings);
   const t = useT();
   const lang = useLanguage();
+  useEscapeKey(onClose);
+
+  // 列傳 — the protagonist's auto-biography, weaving in their cross-references.
+  const bioParagraphs = useMemo(() => {
+    const o = career ? officers[career.officerId] : null;
+    if (!o) return [];
+    return composeBiography({
+      officer: o,
+      deeds: deeds[o.id] ?? null,
+      battleHistory,
+      forceNameZh: o.forceId ? forces[o.forceId]?.name.zh ?? null : null,
+      cityNameZhById: Object.fromEntries(Object.values(cities).map((c) => [c.id, c.name.zh])),
+      officerNamesById: Object.fromEntries(Object.values(officers).map((x) => [x.id, x.name])),
+      forceNamesById: Object.fromEntries(Object.values(forces).map((f) => [f.id, f.name])),
+      family, runtimeBonds, duelHall, clanStandings,
+    });
+  }, [career, officers, deeds, battleHistory, forces, cities, family, runtimeBonds, duelHall, clanStandings]);
 
   if (!career) {
     return (
@@ -167,6 +193,20 @@ export function CareerModal({ onClose }: Props) {
                 <span><span style={{ color: '#7a8893' }}>{t('勝戰', 'Wins')}</span> {d.battlesWon}</span>
                 <span><span style={{ color: '#7a8893' }}>{t('敗戰', 'Losses')}</span> {d.battlesLost}</span>
               </div>
+            </div>
+          )}
+
+          {/* 列傳 — the protagonist's living biography, woven from their deeds + bonds */}
+          {bioParagraphs.length > 0 && (
+            <div style={{ background: '#10161e', border: '1px solid #2b3845', padding: '0.85rem', marginBottom: '1rem' }}>
+              <div style={{ fontSize: '0.7rem', letterSpacing: '0.07rem', color: '#7a8893', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+                {t('本朝實錄', 'Chronicle of a Life')}
+              </div>
+              {bioParagraphs.map((p, i) => (
+                <p key={i} style={{ margin: '0 0 0.4rem', fontSize: '0.84rem', lineHeight: 1.75, color: '#cdb88f' }}>
+                  {lang === 'en' ? p.en : lang === 'both' ? `${p.zh} — ${p.en}` : p.zh}
+                </p>
+              ))}
             </div>
           )}
 

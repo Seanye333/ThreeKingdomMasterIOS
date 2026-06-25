@@ -240,6 +240,8 @@ export function attemptFreeAgentRecruit(
   // R1 — relationship-based: personal enemy refuses, sworn brother / family eager
   chance += recruitRefusalPenalty(officer.id, recruiterRuler.id);
   chance += recruitKinshipBonus(officer.id, recruiterRuler.id, family ?? []);
+  // 舊部歸心 — a scattered retainer rejoins their original lord eagerly.
+  if (officer.retinueOfLordId && officer.retinueOfLordId === recruiterRuler.id) chance += 0.35;
   // 'noble' free agent: harder, won't accept just because you're rich.
   if ((officer.traits ?? []).includes('noble')) chance -= 0.10;
   // 舌戰 / 賄賂 escalation after a first refusal.

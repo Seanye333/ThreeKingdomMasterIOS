@@ -7,6 +7,7 @@ import { OfficerDetail } from './OfficerDetail';
 import { BondCeremony } from './BondCeremony';
 import { playSfx } from '../../game/systems/sound';
 import styles from './BondsModal.module.css';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useT, useLanguage } from '../i18n';
 
 interface Props {
@@ -22,9 +23,11 @@ interface BondRow {
   kind: string;
   label: string;
   status: BondStatus;
+  depth?: number;
 }
 
 export function BondsModal({ onClose }: Props) {
+  useEscapeKey(onClose);
   const officers = useGameStore((s) => s.officers);
   const forces = useGameStore((s) => s.forces);
   const runtimeBonds = useGameStore((s) => s.runtimeBonds);
@@ -34,11 +37,14 @@ export function BondsModal({ onClose }: Props) {
   const socializeOfficers = useGameStore((s) => s.socializeOfficers);
   const hostBanquet = useGameStore((s) => s.hostBanquet);
   const swearBrotherhood = useGameStore((s) => s.swearBrotherhood);
+  const swearThreeWay = useGameStore((s) => s.swearThreeWay);
+  const reconcileOfficers = useGameStore((s) => s.reconcileOfficers);
   const year = useGameStore((s) => s.date.year);
   const playerColor = (playerForceId ? forces[playerForceId]?.color : null) ?? '#e6c473';
   const [selectedOfficer, setSelectedOfficer] = useState<Officer | null>(null);
   const [aSel, setASel] = useState('');
   const [bSel, setBSel] = useState('');
+  const [cSel, setCSel] = useState('');
   const [citySel, setCitySel] = useState('');
   const [socialMsg, setSocialMsg] = useState('');
   // Ceremony overlay (義結金蘭 flourish) + a transient floating-number cue.
@@ -81,6 +87,22 @@ export function BondsModal({ onClose }: Props) {
     if (r.ok) { playSfx('horn'); floatFx(t('忠誠 ↑ · 好感 ↑', 'Loyalty ↑ · Rapport ↑'), '#e6c473'); }
     else playSfx('defeat');
   };
+  const handleReconcile = () => {
+    const r = reconcileOfficers(aSel, bSel);
+    setSocialMsg(r.message);
+    if (r.ok) { playSfx('coin'); floatFx(t('好感 ↑ · 化解', 'Rapport ↑ · Mended'), '#9ed8b8'); }
+    else playSfx('defeat');
+  };
+  const handleThreeWay = () => {
+    const r = swearThreeWay(aSel, bSel, cSel);
+    setSocialMsg(r.message);
+    if (r.ok && officers[aSel] && officers[bSel]) {
+      playSfx('bell');
+      setCeremony({ a: officers[aSel], b: officers[bSel], titleZh: '桃園結義', titleEn: 'Oath of the Peach Garden' });
+    } else {
+      playSfx('defeat');
+    }
+  };
 
   const myOfficers = useMemo(
     () => Object.values(officers)
@@ -106,7 +128,7 @@ export function BondsModal({ onClose }: Props) {
       } else {
         status = 'dormant';
       }
-      return { officerA: a, officerB: b, floor: bond.floor, kind: bond.kind, label: bond.label, status };
+      return { officerA: a, officerB: b, floor: bond.floor, kind: bond.kind, label: bond.label, status, depth: bond.depth };
     });
   }, [officers, runtimeBonds]);
 
@@ -116,22 +138,28 @@ export function BondsModal({ onClose }: Props) {
     broken: rows.filter((r) => r.status === 'broken'),
   };
 
-  // 近誼養成中 — player pairs whose rapport is climbing toward a bond.
-  const warming = useMemo(() => {
+  // 近誼養成中 / 嫌隙漸生 — player pairs whose rapport is climbing (warm) or
+  // sinking (cold) but not yet bonded/feuding.
+  const { warming, souring } = useMemo(() => {
     const bonded = new Set(
       [...OATH_BONDS, ...runtimeBonds].map((b) => (b.officerA < b.officerB ? `${b.officerA}|${b.officerB}` : `${b.officerB}|${b.officerA}`)),
     );
-    const out: Array<{ a: Officer; b: Officer; r: number }> = [];
+    const warm: Array<{ a: Officer; b: Officer; r: number }> = [];
+    const cold: Array<{ a: Officer; b: Officer; r: number }> = [];
     for (let i = 0; i < myOfficers.length; i++) {
       for (let j = i + 1; j < myOfficers.length; j++) {
         const a = myOfficers[i], b = myOfficers[j];
         const key = a.id < b.id ? `${a.id}|${b.id}` : `${b.id}|${a.id}`;
         if (bonded.has(key)) continue;
         const r = getRapport(rapport, a.id, b.id);
-        if (r > 0) out.push({ a, b, r });
+        if (r > 0) warm.push({ a, b, r });
+        else if (r < 0) cold.push({ a, b, r });
       }
     }
-    return out.sort((x, y) => y.r - x.r).slice(0, 6);
+    return {
+      warming: warm.sort((x, y) => y.r - x.r).slice(0, 6),
+      souring: cold.sort((x, y) => x.r - y.r).slice(0, 6),
+    };
   }, [myOfficers, rapport, runtimeBonds]);
 
   return (
@@ -179,9 +207,12 @@ export function BondsModal({ onClose }: Props) {
               <option value="">{t('武將乙', 'Officer B')}</option>
               {myOfficers.map((o) => <option key={o.id} value={o.id}>{oName(o)}</option>)}
             </select>
-            {aSel && bSel && aSel !== bSel && (
-              <span style={{ fontSize: '0.75rem', color: '#aab6c0' }}>{t('好感', 'Rapport')} {getRapport(rapport, aSel, bSel)}/100</span>
-            )}
+            {aSel && bSel && aSel !== bSel && (() => {
+              const rv = getRapport(rapport, aSel, bSel);
+              const col = rv >= 60 ? '#7ed68a' : rv < 0 ? '#d98a8a' : '#aab6c0';
+              const lbl = rv < 0 ? t('嫌隙', 'Friction') : t('好感', 'Rapport');
+              return <span style={{ fontSize: '0.75rem', color: col }}>{lbl} {rv}/100</span>;
+            })()}
             <button
               onClick={handleSocialize}
               disabled={!aSel || !bSel || aSel === bSel}
@@ -189,14 +220,32 @@ export function BondsModal({ onClose }: Props) {
             >
               {t('結交 (100金)', 'Socialize (100g)')}
             </button>
-            <button
-              onClick={handleSwear}
-              disabled={!aSel || !bSel || aSel === bSel}
-              style={{ ...btnStyle(!(!aSel || !bSel || aSel === bSel)), borderColor: '#c0504a', color: aSel && bSel && aSel !== bSel ? '#e2a07a' : undefined }}
-              title={t('義結金蘭 — 永久羈絆，戰場同陣加成 + 忠誠下限90', 'Sworn brotherhood — permanent bond: same-side combat synergy + loyalty floor 90')}
-            >
-              {t('結拜 (300金)', 'Swear Oath (300g)')}
-            </button>
+            {(() => {
+              const canSwear = !!aSel && !!bSel && aSel !== bSel && getRapport(rapport, aSel, bSel) >= 60;
+              return (
+                <button
+                  onClick={handleSwear}
+                  disabled={!canSwear}
+                  style={{ ...btnStyle(canSwear), borderColor: '#c0504a', color: canSwear ? '#e2a07a' : undefined }}
+                  title={t('義結金蘭 — 需好感 ≥60；永久羈絆，戰場同陣加成 + 忠誠下限,且隨年資加深(義交→金蘭→生死之交)', 'Sworn brotherhood — needs rapport ≥60; permanent bond: same-side synergy + loyalty floor, deepening over years of service')}
+                >
+                  {t('結拜 (300金)', 'Swear Oath (300g)')}
+                </button>
+              );
+            })()}
+            {(() => {
+              const soured = !!aSel && !!bSel && aSel !== bSel && getRapport(rapport, aSel, bSel) < 0;
+              if (!soured) return null;
+              return (
+                <button
+                  onClick={handleReconcile}
+                  style={{ ...btnStyle(true), borderColor: '#5a8a6a', color: '#9ed8b8' }}
+                  title={t('調解 — 由府中德望最高者居中斡旋,提升好感;好感回升足夠則宿怨冰釋', 'Reconcile — your most respected officer mediates; raises rapport, and a feud dissolves once rapport recovers enough')}
+                >
+                  {t('調解 (200金)', 'Reconcile (200g)')}
+                </button>
+              );
+            })()}
           </div>
           <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap' }}>
             <select value={citySel} onChange={(e) => setCitySel(e.target.value)} style={selStyle}>
@@ -212,6 +261,32 @@ export function BondsModal({ onClose }: Props) {
             </button>
             {socialMsg && <span style={{ fontSize: '0.74rem', color: '#7ed68a' }}>{socialMsg}</span>}
           </div>
+          {/* 桃園三結義 — bind three officers at once (each pair needs 好感 ≥60) */}
+          <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.74rem', color: '#7a8893' }}>{t('桃園三結義', 'Peach-garden Oath')}</span>
+            <select value={cSel} onChange={(e) => setCSel(e.target.value)} style={selStyle}>
+              <option value="">{t('第三人', 'Third officer')}</option>
+              {myOfficers.map((o) => <option key={o.id} value={o.id}>{oName(o)}</option>)}
+            </select>
+            {(() => {
+              const trio = [aSel, bSel, cSel];
+              const distinct = new Set(trio.filter(Boolean)).size === 3;
+              const ok = distinct &&
+                getRapport(rapport, aSel, bSel) >= 60 &&
+                getRapport(rapport, aSel, cSel) >= 60 &&
+                getRapport(rapport, bSel, cSel) >= 60;
+              return (
+                <button
+                  onClick={handleThreeWay}
+                  disabled={!ok}
+                  style={{ ...btnStyle(ok), borderColor: '#c0504a', color: ok ? '#e2a07a' : undefined }}
+                  title={t('三人結義(甲/乙 + 第三人,各對好感 ≥60)', 'Three swear brotherhood (A/B + third; each pair needs rapport ≥60)')}
+                >
+                  {t('三結義 (600金)', 'Three-way Oath (600g)')}
+                </button>
+              );
+            })()}
+          </div>
           {warming.length > 0 && (
             <div style={{ marginTop: '0.6rem', borderTop: '1px solid #1e2832', paddingTop: '0.5rem' }}>
               <div style={{ fontSize: '0.7rem', color: '#7a8893', marginBottom: '0.3rem' }}>
@@ -221,6 +296,20 @@ export function BondsModal({ onClose }: Props) {
                 {warming.map(({ a, b, r }) => (
                   <span key={`${a.id}|${b.id}`} style={{ fontSize: '0.74rem', color: '#aab6c0', border: '1px solid #2b3845', padding: '0.1rem 0.4rem', borderRadius: 2 }}>
                     {oName(a)}–{oName(b)} <span style={{ color: r >= 80 ? '#7ed68a' : '#e6c473', fontFamily: 'ui-monospace, monospace' }}>{r}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {souring.length > 0 && (
+            <div style={{ marginTop: '0.5rem', borderTop: '1px solid #2a1e1e', paddingTop: '0.5rem' }}>
+              <div style={{ fontSize: '0.7rem', color: '#946', marginBottom: '0.3rem' }}>
+                {t('嫌隙漸生（性情不合/爭功/宿仇,跌至 −100 結為宿怨）', 'Friction rising — clashing egos / rivalry; at −100 it hardens into a feud')}
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                {souring.map(({ a, b, r }) => (
+                  <span key={`${a.id}|${b.id}`} style={{ fontSize: '0.74rem', color: '#c99', border: '1px solid #3a2b2b', padding: '0.1rem 0.4rem', borderRadius: 2 }}>
+                    {oName(a)}–{oName(b)} <span style={{ color: '#d98a8a', fontFamily: 'ui-monospace, monospace' }}>{r}</span>
                   </span>
                 ))}
               </div>
@@ -325,10 +414,21 @@ function BondRowView({
     <li className={styles.row}>
       <OfficerCell officer={row.officerA} force={aForce} onClick={onPickOfficer} />
       <div className={styles.linkBlock}>
-        <div className={styles.bondLabel}>{row.label}</div>
-        <div className={styles.bondFloor}>
-          ≥ {row.floor} {t('忠誠', 'loyalty')}
-        </div>
+        <div className={styles.bondLabel} style={row.kind === 'feud' ? { color: '#d98a8a' } : undefined}>{row.label}</div>
+        {row.kind === 'feud' ? (
+          <div className={styles.bondFloor} style={{ color: '#b56' }}>
+            {row.depth && row.depth >= 3 ? t('死敵', 'Mortal foes') : row.depth === 2 ? t('宿怨', 'Bitter feud') : t('嫌隙', 'Friction')}
+          </div>
+        ) : (
+          <div className={styles.bondFloor}>
+            ≥ {row.floor} {t('忠誠', 'loyalty')}
+            {row.depth && row.depth >= 2 && (
+              <span style={{ marginLeft: 4, color: row.depth >= 3 ? '#e6c473' : '#9ed8b8' }}>
+                · {row.depth >= 3 ? t('生死之交', 'unto death') : t('金蘭', 'sworn')}
+              </span>
+            )}
+          </div>
+        )}
         <div className={`${styles.bondKind} ${styles[`kind_${row.kind}`]}`}>
           {row.kind}
         </div>

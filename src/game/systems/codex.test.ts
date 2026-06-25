@@ -1,6 +1,7 @@
 /** 武將圖鑑 — locks the album ledgers and set progress. */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { codexMarkRecruited, codexMarkSeen, codexMarkSlain, codexSetProgress, loadCodex } from './codex';
+import { CODEX_SETS, codexMarkRecruited, codexMarkSeen, codexMarkSlain, codexSetProgress, loadCodex } from './codex';
+import { OFFICER_IDS, TALENT_POOL_IDS } from '../data';
 
 function stubStorage() {
   const map = new Map<string, string>();
@@ -38,5 +39,26 @@ describe('codex ledgers', () => {
     expect(codexSetProgress(loadCodex(), 'oath-brothers')).toEqual({ have: 2, total: 3 });
     codexMarkRecruited('zhang-fei');
     expect(codexSetProgress(loadCodex(), 'oath-brothers')).toEqual({ have: 3, total: 3 });
+  });
+});
+
+describe('codex sets', () => {
+  const ROSTER = new Set<string>([...OFFICER_IDS, ...TALENT_POOL_IDS]);
+
+  it('every set member is a real recruitable officer', () => {
+    // Would have caught the `yue-jin`→`le-jin` bug: a member that no roster
+    // entry matches makes its set permanently uncompletable.
+    const orphans = CODEX_SETS.flatMap((s) =>
+      s.members.filter((m) => !ROSTER.has(m)).map((m) => `${s.id}:${m}`),
+    );
+    expect(orphans).toEqual([]);
+  });
+
+  it('set ids and members are unique within each set', () => {
+    const ids = CODEX_SETS.map((s) => s.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const s of CODEX_SETS) {
+      expect(new Set(s.members).size).toBe(s.members.length);
+    }
   });
 });

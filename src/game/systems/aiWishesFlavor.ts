@@ -1,5 +1,6 @@
 import type { EntityId, Force, Officer, ReportEntry } from '../types';
 import { MILITARY_RANKS, MILITARY_RANKS_BY_ID } from '../data/titles';
+import { PEERAGES } from '../data/peerage';
 
 /**
  * Each season generate 0-2 flavor entries showing AI courts processing
@@ -31,7 +32,31 @@ export function rollAIWishFlavor(
     const traits = o.traits ?? [];
     const granted = rng() < 0.6;
     const isAmbitious = traits.includes('ambitious') || traits.includes('arrogant');
-    const kind = isAmbitious ? 'promotion' : (rng() < 0.5 ? 'reward' : 'transfer');
+    const kind = isAmbitious
+      ? (rng() < 0.3 && (o.renown ?? 0) >= 120 ? 'peerage' : 'promotion')
+      : (rng() < 0.34 ? 'reward' : rng() < 0.5 ? 'transfer' : 'gift');
+
+    if (kind === 'peerage') {
+      // 求爵 — granting bumps the officer one peerage tier (real, like promotion).
+      const curIdx = o.peerageId ? PEERAGES.findIndex((p) => p.id === o.peerageId) : -1;
+      const next = curIdx + 1 < PEERAGES.length ? PEERAGES[curIdx + 1] : null;
+      if (granted && next) {
+        out[o.id] = { ...o, peerageId: next.id, loyalty: Math.min(100, o.loyalty + 5) };
+        entries.push({
+          cityId: o.locationCityId, kind: 'note',
+          text: `${force.name.en}: ${o.name.en} enfeoffed as ${next.name.en}.`,
+          textZh: `${force.name.zh}：封${o.name.zh}為${next.name.zh}。`,
+        });
+      } else {
+        out[o.id] = { ...o, loyalty: Math.max(0, o.loyalty - 8) };
+        entries.push({
+          cityId: o.locationCityId, kind: 'note',
+          text: `${force.name.en}: ${o.name.en} seeks a fief; ${force.name.en} declines (loyalty −8).`,
+          textZh: `${force.name.zh}：${o.name.zh}求封爵,不許(忠誠 −8)。`,
+        });
+      }
+      continue;
+    }
 
     if (kind === 'promotion' && granted) {
       // Real promotion: try to bump rank one tier up if eligible.
@@ -66,12 +91,16 @@ export function rollAIWishFlavor(
       });
       continue;
     }
-    // Reward / transfer fall-through: small loyalty delta only.
+    // Reward / transfer / gift fall-through: small loyalty delta (gift also renown).
     const delta = granted ? 4 : -6;
-    out[o.id] = { ...o, loyalty: Math.max(0, Math.min(100, o.loyalty + delta)) };
+    out[o.id] = {
+      ...o,
+      loyalty: Math.max(0, Math.min(100, o.loyalty + delta)),
+      ...(kind === 'gift' && granted ? { renown: (o.renown ?? 0) + 12 } : {}),
+    };
     const verbZh = granted ? '准' : '却';
-    const subjectZh = kind === 'reward' ? '請賞' : '請改任';
-    const subjectEn = kind === 'reward' ? 'requests reward' : 'requests transfer';
+    const subjectZh = kind === 'reward' ? '請賞' : kind === 'gift' ? '請賜物' : '請改任';
+    const subjectEn = kind === 'reward' ? 'requests reward' : kind === 'gift' ? 'asks for a reward' : 'requests transfer';
     const verbEn = granted ? 'grants' : 'declines';
     entries.push({
       cityId: o.locationCityId,

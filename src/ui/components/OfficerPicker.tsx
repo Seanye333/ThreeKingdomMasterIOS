@@ -8,6 +8,7 @@ import styles from './OfficerPicker.module.css';
 import { useT, useLanguage, useDesc } from '../i18n';
 import { commandFitMultiplier } from '../../game/systems/traitEffects';
 import { appointmentBonusFor } from '../../game/systems/appointmentEffects';
+import { getRapport } from '../../game/systems/rapport';
 import { playSfx } from '../../game/systems/sound';
 
 interface Props {
@@ -21,6 +22,7 @@ export function OfficerPicker({ cityId, commandType, onClose }: Props) {
   const issueCommand = useGameStore((s) => s.issueCommand);
   const city = useGameStore((s) => s.cities[cityId]);
   const officersMap = useGameStore((s) => s.officers);
+  const rapport = useGameStore((s) => s.rapport);
   const appointments = useGameStore((s) => s.appointments);
   const pendingTrainings = useGameStore((s) => s.pendingTrainings);
   const t = useT();
@@ -253,6 +255,27 @@ export function OfficerPicker({ cityId, commandType, onClose }: Props) {
                    `Cooperate · ${pickedByFit.length} on one task${def.goldCost > 0 ? ` · ${def.goldCost}g only` : ''}`)}
               </button>
             )}
+            {canCooperate && (() => {
+              // 搭檔情誼 — show the lead↔assistant rapport so the player can pair
+              // officers who work well together (warmth lifts協同, feuds drag it).
+              const [lead, ...rest] = pickedByFit;
+              const tags = rest.slice(0, 2).map((a) => {
+                const r = getRapport(rapport, lead.id, a.id);
+                const col = r >= 40 ? '#7ed68a' : r < 0 ? '#d98a8a' : '#aab6c0';
+                const lbl = r >= 40 ? t('默契', 'in sync') : r < 0 ? t('不和', 'at odds') : t('平', 'neutral');
+                return { id: a.id, name: lang === 'en' ? a.name.en : a.name.zh, r, col, lbl };
+              });
+              return (
+                <div style={{ marginTop: 6, fontSize: '0.72rem', color: '#8a96a0', display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+                  <span>{t('搭檔情誼', 'Pairing')}:</span>
+                  {tags.map((tg) => (
+                    <span key={tg.id} style={{ color: tg.col }}>
+                      {lang === 'en' ? lead.name.en : lead.name.zh}–{tg.name} <span style={{ fontFamily: 'ui-monospace, monospace' }}>{tg.r >= 0 ? `+${tg.r}` : tg.r}</span> {tg.lbl}
+                    </span>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>

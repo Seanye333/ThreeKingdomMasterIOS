@@ -1,5 +1,6 @@
 import type { City, EntityId, Force, Officer } from '../types';
 import { buildingBonuses } from './buildings';
+import { getLordRapport, isConfidant } from './rapport';
 
 /**
  * 權謀 — officer ambition, betrayal and usurpation.
@@ -35,6 +36,9 @@ export interface AmbitionContext {
   factionBoost?: Record<EntityId, number>;
   /** City buildings — a 牢城 (prison) at the officer's seat blunts betrayal. */
   buildings?: import('../types').Building[];
+  /** 君臣好感 — an officer's regard for their lord. A 心腹 (≥80) never moves;
+   *  resentment (negative) emboldens, warmth (positive) restrains. */
+  lordRapport?: Record<EntityId, number>;
 }
 
 export interface AmbitionEvent {
@@ -92,6 +96,7 @@ export function resolveAmbitions(ctx: AmbitionContext): AmbitionEvent[] {
     if (!force) continue;
     if (force.rulerOfficerId === o.id) continue;          // a lord doesn't betray himself
     if (hasTrait(o, 'loyal')) continue;                   // the faithful never turn
+    if (isConfidant(ctx.lordRapport ?? {}, o.id)) continue; // a 心腹 never turns on their lord
     if (o.loyalty >= 30) continue;                        // must be discontented
     const grievance = o.grievanceCount ?? 0;
     const ambitious = hasTrait(o, 'ambitious');
@@ -111,8 +116,14 @@ export function resolveAmbitions(ctx: AmbitionContext): AmbitionEvent[] {
     if (ambitious) chance += 0.05;
     if (arrogant) chance += 0.02;
     chance += ctx.factionBoost?.[o.id] ?? 0; // a faction at his back emboldens him
+    // 君臣好感 — resentment toward the lord stokes the move; lingering warmth
+    // (short of 心腹) stays his hand.
+    const lr = getLordRapport(ctx.lordRapport ?? {}, o.id);
+    if (lr < 0) chance += Math.min(0.2, -lr * 0.002);
+    else if (lr > 0) chance -= lr * 0.002;
     // 牢城 — a prison/court at his seat keeps the discontented in line.
     chance *= 1 - buildingBonuses(homeId, ctx.buildings ?? []).defectionResist;
+    if (chance <= 0) continue;
     if (rng() >= chance) continue;
 
     const ruler = officers[force.rulerOfficerId];

@@ -1,4 +1,5 @@
 import { useGameStore } from '../../game/state/store';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import type { BattleDetail, BattleSideDetail, Officer } from '../../game/types';
 import { OfficerStats } from './OfficerStats';
 import { Name } from './Name';
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function BattleDetailModal({ battle, onClose }: Props) {
+  useEscapeKey(onClose);
   const officers = useGameStore((s) => s.officers);
   const forces = useGameStore((s) => s.forces);
   const cities = useGameStore((s) => s.cities);

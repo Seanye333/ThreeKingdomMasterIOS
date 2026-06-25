@@ -55,7 +55,13 @@ export interface DiplomaticContext {
 /** Credibility's drag on acceptance odds: 0 at full repute, −0.4 at zero. */
 function credibilityMod(ctx: DiplomaticContext): number {
   const cred = ctx.proposerCredibility ?? 100;
-  return (Math.max(0, Math.min(100, cred)) - 100) / 250;
+  let mod = (Math.max(0, Math.min(100, cred)) - 100) / 250;
+  // 守信 — a ruler famed for keeping their word is trusted more readily
+  // (the mirror of the already-wired 失信 oath-breaker).
+  if (ctx.playerRuler && (ctx.playerRuler.traits as string[] | undefined ?? []).includes('keeps-word')) {
+    mod += 0.15;
+  }
+  return mod;
 }
 
 /** Grudge's drag on acceptance odds: 0 at no resentment, −0.5 at boiling. */

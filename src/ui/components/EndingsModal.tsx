@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useGameStore } from '../../game/state/store';
 import { checkEndings } from '../../game/systems/endings';
 import type { EndingKind } from '../../game/state/gameState';
@@ -164,6 +165,7 @@ interface Props {
 }
 
 export function EndingsModal({ onClose }: Props) {
+  useEscapeKey(onClose);
   const cities = useGameStore((s) => s.cities);
   const officers = useGameStore((s) => s.officers);
   const forces = useGameStore((s) => s.forces);

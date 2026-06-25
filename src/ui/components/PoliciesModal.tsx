@@ -1,4 +1,5 @@
 import { POLICY_DEFS } from '../../game/data/officerAttributes';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { CatalogModal, type CatalogItem, type CatalogCategory } from './CatalogModal';
 import { useLanguage } from '../i18n';
 
@@ -575,6 +576,7 @@ const CATEGORIES: CatalogCategory[] = [
 interface Props { onClose: () => void; }
 
 export function PoliciesModal({ onClose }: Props) {
+  useEscapeKey(onClose);
   const lang = useLanguage();
   const items: CatalogItem[] = Object.entries(POLICY_DEFS).map(([id, def]) => ({
     id,

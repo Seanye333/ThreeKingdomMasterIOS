@@ -18,7 +18,7 @@ import type { Difficulty } from '../state/gameState';
 import { OATH_BONDS, type OathBond } from '../data/bonds';
 import { COMMAND_DEFS, meetsMinSize } from './commands';
 import { buyQuote, sellQuote, sellHorses, sellIron, borderTariff } from './market';
-import { CITY_SPECIALTY } from '../data/specialties';
+import { CITY_SPECIALTY, cityRole, specialtyControl } from '../data/specialties';
 import { buildingBonuses } from './buildings';
 import { citySize, cityCarryingCapacity, cityEconCap, cityStatCap } from './citySize';
 import { marchDurationFor } from '../data/cities';
@@ -51,8 +51,10 @@ import {
 } from './training';
 import { TACTIC_DEFS, type TacticId } from '../data/officerAttributes';
 import { commandFitMultiplier, isCombatLiability } from './traitEffects';
+import { personalityAttackMul, personalityDiplomacyAppetite } from './rulerPersonality';
 import { officerGrade, gradeRank } from './officerGrade';
-import { attackDeterrence, recruitPreferenceScore, runtimeSwornPair } from './relationshipEffects';
+import { attackDeterrence, recruitPreferenceScore, runtimeSwornPair, runtimeFeudPair } from './relationshipEffects';
+import { addFriction } from './friction';
 
 export interface AIPlanInput {
   cities: Record<EntityId, City>;
@@ -64,6 +66,9 @@ export interface AIPlanInput {
   buildings: Building[];
   diplomacy: DiplomaticState;
   runtimeBonds: OathBond[];
+  /** Pairwise officer rapport (好感) — AI reads it to weight recruiting and
+   *  runs 治府 upkeep on its own officers (5d). Returned (possibly grown). */
+  rapport?: Record<string, number>;
   /** Runtime family — flows into recruiting for kinship bonus (R1). */
   family?: import('../types/family').FamilyRelation[];
   /** Civic-title appointments — so AI can route a city's internal-affairs
@@ -100,6 +105,8 @@ export interface AIPlanOutput {
   newTrainings: PendingTraining[];
   diplomacy: DiplomaticState;
   runtimeBonds: OathBond[];
+  /** Officer rapport after AI 治府 upkeep (5d). */
+  rapport?: Record<string, number>;
   /** Updated tax rates (AI forces only; player's entry passes through). */
   taxPolicy: Record<EntityId, TaxRate>;
   entries: ReportEntry[];
@@ -120,6 +127,7 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
   const newTrainings: PendingTraining[] = [];
   let diplomacy = input.diplomacy;
   const runtimeBonds = [...input.runtimeBonds];
+  let rapport = { ...(input.rapport ?? {}) };
   const taxPolicy = { ...(input.taxPolicy ?? {}) };
   const entries: ReportEntry[] = [];
 
@@ -220,7 +228,7 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
       // former masters of the ruler) first, then by total stats. Personal
       // enemies are excluded entirely (-9999 score).
       const scoreFor = (o: Officer) => {
-        const rel = recruitPreferenceScore(o.id, ruler.id, input.family ?? []);
+        const rel = recruitPreferenceScore(o.id, ruler.id, input.family ?? [], rapport);
         if (rel < 0) return rel; // skip enemies
         const stats = o.stats.leadership + o.stats.war + o.stats.intelligence + o.stats.politics + o.stats.charisma;
         return rel + stats;
@@ -419,7 +427,9 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
   //    stronger neighbors (player included) to buy time.
   const aiForceIds = Array.from(citiesByForce.keys());
   for (const forceId of aiForceIds) {
-    if (rng() > 0.25) continue; // 25% chance per AI per season
+    // 君主性格 — warmongers (tyrant/aggressive) rarely sue for peace; cautious /
+    // defensive rulers court it readily. Base 25%/season scaled by appetite.
+    if (rng() > 0.25 * personalityDiplomacyAppetite(input.forces[forceId]?.personality)) continue;
 
     const force = input.forces[forceId];
     const ruler = force ? officers[force.rulerOfficerId] : null;
@@ -582,7 +592,7 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
           if (runtimeSwornPair(a.id, b.id, runtimeBonds)) continue;
           runtimeBonds.push({
             officerA: a.id, officerB: b.id, floor: 90, kind: 'sibling',
-            label: `${a.name.en} & ${b.name.en} 義兄弟`,
+            label: `${a.name.en} & ${b.name.en} 義兄弟`, depth: 1, sharedSeasons: 0,
           });
           capitalGold -= 300;
           officers[a.id] = { ...officers[a.id], loyalty: Math.max(officers[a.id].loyalty ?? 0, 90) };
@@ -617,6 +627,47 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
 
     if (capitalGold !== capital.gold) {
       cities[capital.id] = { ...cities[capital.id], gold: capitalGold };
+    }
+  }
+
+  // ── AI 離間計 — a capable rival sows discord among the PLAYER's officers,
+  //    souring the warmest co-located, unbonded pair (may even harden into a
+  //    宿怨). Gated by AI aggression + difficulty so weak/easy AI leaves the
+  //    player be. The negative half of the social game, turned on the player. ──
+  if (input.playerForceId) {
+    const discordChance = 0.05 * aiAggressionMul * (difficulty === 'hard' ? 1.5 : difficulty === 'easy' ? 0.4 : 1);
+    const hasSchemer = Object.values(officers).some(
+      (o) => o.forceId && o.forceId !== input.playerForceId && o.status !== 'dead' &&
+        o.status !== 'imprisoned' && o.stats.intelligence >= 80,
+    );
+    if (hasSchemer && rng() < discordChance) {
+      const pf = input.playerForceId;
+      const pOff = Object.values(officers).filter(
+        (o) => o.forceId === pf && o.status !== 'dead' && o.locationCityId,
+      );
+      let best: [Officer, Officer] | null = null;
+      let bestR = 40; // only worth poisoning a pair that's actually warm
+      for (let i = 0; i < pOff.length; i++) {
+        for (let j = i + 1; j < pOff.length; j++) {
+          const a = pOff[i], b = pOff[j];
+          if (a.locationCityId !== b.locationCityId) continue;
+          // Sworn brothers and existing feuds are off the table here.
+          if (runtimeSwornPair(a.id, b.id, runtimeBonds) || runtimeFeudPair(a.id, b.id, runtimeBonds)) continue;
+          const r = rapport[pairKey(a.id, b.id)] ?? 0;
+          if (r > bestR) { bestR = r; best = [a, b]; }
+        }
+      }
+      if (best) {
+        const [a, b] = best;
+        const fr = addFriction(rapport, a.id, b.id, 15 + Math.floor(rng() * 16), false);
+        rapport = fr.rapport;
+        if (fr.forged) runtimeBonds.push(fr.forged);
+        entries.push({
+          cityId: a.locationCityId, kind: 'note',
+          text: `Rumours sap the trust between ${a.name.en} and ${b.name.en} — a rival's whisper campaign.`,
+          textZh: `流言中傷,${a.name.zh}與${b.name.zh}漸生嫌隙 —— 敵方離間之計。`,
+        });
+      }
     }
   }
 
@@ -795,7 +846,7 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
     if (dOff) officers[detachId] = { ...dOff, task: 'march' };
   }
 
-  return { cities, officers, pendingCommands, newTrainings, diplomacy, runtimeBonds, taxPolicy, entries };
+  return { cities, officers, pendingCommands, newTrainings, diplomacy, runtimeBonds, rapport, taxPolicy, entries };
 }
 
 interface Decision {
@@ -846,6 +897,9 @@ export function pickForceTarget(
       pressure[adjId] = (pressure[adjId] ?? 0) + city.troops * 0.6;
     }
   }
+  // 名物版圖 — our existing grip on each strategic good, so we can weigh a
+  // candidate that would tighten it (clustering toward a 專營 monopoly).
+  const ownCtrl = specialtyControl(allCities, forceId);
   let best: EntityId | null = null;
   let bestScore = 0;
   for (const [candId, force] of Object.entries(pressure)) {
@@ -854,7 +908,11 @@ export function pickForceTarget(
     const effDef = cand.troops * (1 + cand.defense / 200);
     const feasibility = force / Math.max(1, effDef);
     if (feasibility < 1.05) continue; // can't realistically take it, even massed
-    const value = 1 + (cand.population ?? 0) / 200_000;
+    let value = 1 + (cand.population ?? 0) / 200_000;
+    // 名物所鍾 — a city that makes a famous good is a richer prize, and richer
+    // still if seizing it tightens our grip on that good (toward 鹽鐵專營).
+    const role = cityRole(candId);
+    if (role) value *= 1.25 + Math.min(0.6, ownCtrl.strength[role] * 0.12);
     // Death blow: taking the last city of an enemy force wipes it off the map —
     // worth far more than the city's size alone, so the AI finishes off crippled
     // rivals instead of leaving one-city rumps to linger.
@@ -1157,7 +1215,10 @@ function decideCommand(
       // from a defensive posture (still gated by feasibility, so no suicide).
       const vsHegemon = target.ownerForceId != null && target.ownerForceId === hegemonId;
       const postureMul = posture === 'defensive' && !vsHegemon ? 0.5 : 1;
-      const attackThreshold = baseThreshold * deterrence * focusRelax * postureMul * aiAggressionMul;
+      // 君主性格 — a tyrant/aggressive lord strikes on thin margins; a cautious
+      // or scholarly one only when very safe.
+      const personalityMul = personalityAttackMul(forces[forceId]?.personality);
+      const attackThreshold = baseThreshold * deterrence * focusRelax * postureMul * aiAggressionMul * personalityMul;
 
       // Effective defender strength factors in city defense: a fortress at
       // defense 88 (Tongguan) counts as if the garrison were ~60% larger.
@@ -1365,6 +1426,33 @@ function decideCommand(
     ) {
       const o = bestBy(officersHere, 'intelligence', prefectId);
       if (o) return internalDecision('promote-learning', city, o);
+    }
+  }
+
+  // 4.98 特訓 — a rich, peaceful rear city with gold to spare puts its most
+  // promising officer through a hard personal drill (特訓): gold traded for big
+  // 歷練 plus a shot at a skill / 性格 / 潛能. Gated like 興学 (economy built out)
+  // so it never crowds out development, plus a real-headroom check so it isn't
+  // wasted on an officer who can barely grow. Keeps AI growth on par with the
+  // player's new training lever.
+  {
+    const econCap = cityEconCap(city);
+    if (
+      !onFront &&
+      city.loyalty >= 55 &&
+      city.agriculture >= econCap * 0.9 &&
+      city.commerce >= econCap * 0.9 &&
+      city.gold >= COMMAND_DEFS['special-training'].goldCost * 3
+    ) {
+      const cand = officersHere.find((o) => {
+        const lat = o.latentStats;
+        if (!lat || o.status === 'wounded') return false;
+        const gap = (lat.war - o.stats.war) + (lat.leadership - o.stats.leadership)
+          + (lat.intelligence - o.stats.intelligence) + (lat.politics - o.stats.politics)
+          + (lat.charisma - o.stats.charisma);
+        return gap >= 10;
+      });
+      if (cand) return internalDecision('special-training', city, cand);
     }
   }
 

@@ -8,12 +8,15 @@ import { Name } from './Name';
 import { canPromoteToRank, nextImperialRank } from '../../game/systems/imperialEffects';
 import { canWelcomeEmperor, emperorCustodian } from '../../game/systems/emperor';
 import { deriveCourtFactions, FACTION_LABEL } from '../../game/systems/courtFactions';
+import { clanGentryWeight } from '../../game/systems/clans';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface Props {
   onClose: () => void;
 }
 
 export function CourtModal({ onClose }: Props) {
+  useEscapeKey(onClose);
   const forces = useGameStore((s) => s.forces);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const edictHistory = useGameStore((s) => s.edictHistory);
@@ -24,6 +27,7 @@ export function CourtModal({ onClose }: Props) {
   const allCities = useGameStore((s) => s.cities);
   const allAppointments = useGameStore((s) => s.appointments);
   const allOfficers = useGameStore((s) => s.officers);
+  const clanStandings = useGameStore((s) => s.clanStandings);
   const eventFlags = useGameStore((s) => s.eventFlags);
   const mandate = useGameStore((s) => s.mandate);
   const emperorCityId = useGameStore((s) => s.emperorCityId);
@@ -163,7 +167,7 @@ export function CourtModal({ onClose }: Props) {
         </div>
         {/* Court factions snapshot (auto-derived from officer stats + traits). */}
         {playerForceId && (() => {
-          const factions = deriveCourtFactions(allOfficers)[playerForceId] ?? [];
+          const factions = deriveCourtFactions(allOfficers, clanGentryWeight(allOfficers, clanStandings))[playerForceId] ?? [];
           if (factions.length === 0) return null;
           const counts: Record<string, number> = {};
           for (const f of factions) counts[f.faction] = (counts[f.faction] ?? 0) + 1;

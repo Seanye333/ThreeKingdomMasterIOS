@@ -69,7 +69,7 @@ export function debateShame(): Affliction {
 }
 
 /** Traits that make an officer take a 舌戰 loss to heart (and so be shamed). */
-const EMOTIONAL_TRAITS = ['hot-tempered', 'arrogant', 'wrathful', 'vainglorious', 'stubborn', 'reckless'];
+const EMOTIONAL_TRAITS = ['wrathful', 'arrogant', 'vainglorious', 'stubborn', 'reckless', 'impatient'];
 export function isEmotional(o: Officer): boolean {
   return (o.traits as string[] | undefined ?? []).some((t) => EMOTIONAL_TRAITS.includes(t));
 }

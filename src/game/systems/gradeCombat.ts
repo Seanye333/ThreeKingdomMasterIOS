@@ -1,6 +1,6 @@
 import type { Officer } from '../types';
 import { officerGrade, gradeRank, type OfficerGrade } from './officerGrade';
-import { itemRarity, type Item, type ItemRarity } from '../data/items';
+import { itemRarity, itemLoreLevel, type Item, type ItemRarity } from '../data/items';
 
 /**
  * 品階威儀 — the combat passive an officer projects from their 品階. Until now a
@@ -95,7 +95,11 @@ export function itemMasteryMul(officer: Officer, item: Item): number {
   const need = gradeRank(RARITY_REQUIRED_GRADE[itemRarity(item)]);
   const have = gradeRank(officerGrade(officer).grade);
   const shortfall = Math.max(0, need - have);
-  return Math.max(0.64, 1 - 0.12 * shortfall);
+  // 人器合一 — a storied weapon "remembers": its battle-renown gives back up to
+  // one full grade-step (+0.12) of the 兵器駕馭 penalty, so a blade long-carried by
+  // a lesser hand still tells. Never exceeds full effect.
+  const familiarity = Math.min(0.12, itemLoreLevel(item.id) * 0.003);
+  return Math.max(0.64, Math.min(1, 1 - 0.12 * shortfall + familiarity));
 }
 
 /** Best (highest) morale bonus among a pool's officers — the formation rallies to its finest. */
@@ -106,4 +110,42 @@ export function gradeAuraMorale(pool: Array<Officer | undefined | null>): number
     best = Math.max(best, gradeCombatBonus(o).morale);
   }
   return best;
+}
+
+// ─── 品階招牌 — discrete signature perks at the top tiers ────────────────────
+// Beyond the scaling numbers above, the upper grades carry QUALITATIVE perks so
+// crossing a tier reads as an unlock, not mere inflation:
+//   金 一流 「萬軍辟易」 — facing this commander shakes the enemy line (−morale).
+//   白金 超一流 「不動如山」 — their formation breaks in good order (far fewer rout losses).
+//   鑽石 神品 「萬人敵」 — peerless; also opens a 單挑 with a first-strike edge.
+
+/** 萬軍辟易 — flat morale the ENEMY opens a battle down by, from facing this pool's
+ *  finest 金牌+ commander (金 −4 / 白金 −6 / 鑽石 −8). 0 if none qualify. */
+// 失威 — a disgraced officer (lost a 罵戰/被俘 recently) projects no 招牌 aura until
+// they recover their name; all three signature perks check this.
+const disgraced = (o: Officer): boolean => (o.disgrace ?? 0) > 0;
+
+export function enemyMoraleShock(pool: Array<Officer | undefined | null>): number {
+  let best = 0;
+  for (const o of pool) {
+    if (!o || disgraced(o)) continue;
+    const r = gradeRank(officerGrade(o).grade);
+    const shock = r >= 5 ? 8 : r >= 4 ? 6 : r >= 3 ? 4 : 0;
+    if (shock > best) best = shock;
+  }
+  return best;
+}
+
+/** 不動如山 — true if the pool's best (non-disgraced) officer is 白金+; their line
+ *  breaks in good order, so a rout costs far fewer extra casualties. */
+export function holdsTheLine(pool: Array<Officer | undefined | null>): boolean {
+  for (const o of pool) {
+    if (o && !disgraced(o) && gradeRank(officerGrade(o).grade) >= 4) return true;
+  }
+  return false;
+}
+
+/** 萬人敵 — the first-round 單挑 edge a 鑽石 champion presses (先手氣勢); none while disgraced. */
+export function duelFirstStrike(officer: Officer): number {
+  return !disgraced(officer) && gradeRank(officerGrade(officer).grade) >= 5 ? 8 : 0;
 }

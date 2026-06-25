@@ -1,5 +1,6 @@
 import { useGameStore } from '../../game/state/store';
 import { OfficerAvatar } from './OfficerAvatar';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useLanguage, pickName } from '../i18n';
 
 interface Props {
@@ -7,6 +8,12 @@ interface Props {
 }
 
 const SEASON_IDX = { spring: 0, summer: 1, autumn: 2, winter: 3 } as const;
+
+// 心願種類 — a one-glyph tag so the kind reads at a glance.
+const WISH_TAG: Record<string, string> = {
+  transfer: '調', reinforce: '兵', item: '器', promote: '升', 'dismiss-rival': '黜',
+  'learn-policy': '學', retire: '退', peerage: '爵', mentor: '師', gift: '賞',
+};
 
 export function WishesModal({ onClose }: Props) {
   const wishes = useGameStore((s) => s.officerWishes);
@@ -17,6 +24,7 @@ export function WishesModal({ onClose }: Props) {
   const currentSeason = useGameStore((s) => s.date.season);
   const nowAbs = currentYear * 4 + SEASON_IDX[currentSeason];
   const lang = useLanguage();
+  useEscapeKey(onClose);
 
   return (
     <div
@@ -124,6 +132,12 @@ export function WishesModal({ onClose }: Props) {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                     <div style={{ fontSize: '0.9rem', color: isInfo ? '#7ed68a' : '#e6c473' }}>
                       {isInfo && <span style={{ marginRight: '0.4rem', letterSpacing: '0.07rem' }}>上書</span>}
+                      {!isInfo && WISH_TAG[w.kind] && (
+                        <span style={{
+                          marginRight: '0.4rem', fontSize: '0.7rem', color: '#caa15a',
+                          border: '1px solid #5a4a2a', borderRadius: 3, padding: '0 0.25rem',
+                        }}>{WISH_TAG[w.kind]}</span>
+                      )}
                       {o ? pickName(o.name, lang) : ''}
                       {grievance >= 2 && (
                         <span style={{ marginLeft: '0.5rem', color: '#b8442e', fontSize: '0.72rem' }}>

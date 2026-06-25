@@ -48,12 +48,15 @@ describe('runtime sworn brotherhood', () => {
     expect(bonded.moraleResist).toBeGreaterThan(0);
   });
 
-  it('loyaltyFloor returns 90 for a runtime sworn pair alive in the same force', () => {
+  it('loyaltyFloor scales with bond depth for a runtime sworn pair in the same force', () => {
     const a = off('a', { forceId: 'cao' });
     const b = off('b', { forceId: 'cao' });
     const byId = { a, b };
     expect(loyaltyFloor(a, byId, [])).toBe(0);
-    expect(loyaltyFloor(a, byId, [], [oath('a', 'b')])).toBe(90);
+    // depth-less / depth 1 (義交) → 88; depth 2 (義結金蘭) → 92; depth 3 (生死之交) → 96.
+    expect(loyaltyFloor(a, byId, [], [oath('a', 'b')])).toBe(88);
+    expect(loyaltyFloor(a, byId, [], [{ ...oath('a', 'b'), depth: 2 }])).toBe(92);
+    expect(loyaltyFloor(a, byId, [], [{ ...oath('a', 'b'), depth: 3 }])).toBe(96);
   });
 
   it('loyaltyFloor ignores the bond when the brother is in another force or dead', () => {

@@ -1,4 +1,5 @@
 import { useRef, useState, type CSSProperties } from 'react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useGameStore } from '../../game/state/store';
 import { privateGuardMultiplier } from '../../game/systems/combat';
 import { playSfx } from '../../game/systems/sound';
@@ -16,6 +17,7 @@ interface Props {
  * capped at leadership×100, paid from the officer's current city treasury.
  */
 export function PrivateForcesModal({ onClose }: Props) {
+  useEscapeKey(onClose);
   const officers = useGameStore((s) => s.officers);
   const cities = useGameStore((s) => s.cities);
   const playerForceId = useGameStore((s) => s.playerForceId);

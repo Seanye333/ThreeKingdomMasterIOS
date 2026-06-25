@@ -18,6 +18,7 @@ describe('fillRetinues', () => {
     expect(after.forceId).toBe('LB');
     expect(after.status).toBe('idle');
     expect(after.locationCityId).toBe('xiangyang');
+    expect(after.retinueOfLordId).toBe('liu-biao'); // 部曲故主 stamped
   });
 
   it('skips the dead, the not-yet-born, and officers already serving someone', () => {

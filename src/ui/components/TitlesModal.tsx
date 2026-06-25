@@ -10,6 +10,7 @@ import { officerGrade, gradeRank, gradeMeta } from '../../game/systems/officerGr
 import { PEERAGES, peerageById, peerageTier, meritScore } from '../../game/data/peerage';
 import { STATECRAFT } from '../../game/data/statecraft';
 import { DYNASTY_TITLES, ERA_NAMES } from '../../game/data/foundingNames';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { HONORIFICS, honorificById, honorificTier, HONORIFIC_THEME_ZH } from '../../game/data/honorifics';
 
 function pickBestFit(
@@ -33,6 +34,7 @@ interface Props {
 type Tab = 'civic' | 'military' | 'peerage' | 'honorific' | 'history';
 
 export function TitlesModal({ onClose }: Props) {
+  useEscapeKey(onClose);
   const lang = useLanguage();
   const officers = useGameStore((s) => s.officers);
   const cities = useGameStore((s) => s.cities);

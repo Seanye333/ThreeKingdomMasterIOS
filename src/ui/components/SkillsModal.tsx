@@ -1,4 +1,5 @@
 import { SKILLS } from '../../game/data/skills';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { CatalogModal, type CatalogItem, type CatalogCategory } from './CatalogModal';
 
 const CATEGORIES: CatalogCategory[] = [
@@ -11,6 +12,7 @@ const CATEGORIES: CatalogCategory[] = [
 interface Props { onClose: () => void; }
 
 export function SkillsModal({ onClose }: Props) {
+  useEscapeKey(onClose);
   const items: CatalogItem[] = SKILLS.map((s) => ({
     id: s.id,
     zh: s.name.zh,

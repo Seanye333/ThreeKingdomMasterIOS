@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { stepConvoys, resolveConvoyRaids, provisionNeeded, consumeRations, convoyCapacity, convoySpeedMul, type Convoy } from './convoy';
+import { stepConvoys, resolveConvoyRaids, resolveRaidStrike, provisionNeeded, consumeRations, convoyCapacity, convoySpeedMul, type Convoy } from './convoy';
 import { mkOfficer } from '../../test/factories';
 import type { City } from '../types';
 
@@ -63,6 +63,76 @@ describe('輜重 — convoy stepping', () => {
     expect(r.convoys.cv1).toBeUndefined();       // convoy gone
     expect(r.cities.b.food).toBe(5000);          // nothing delivered
     expect(r.arrivals).toHaveLength(0);
+  });
+});
+
+describe('直供前線 — convoy delivering to a field army', () => {
+  const mkArmy = (over: Partial<import('../types').Army> = {}): import('../types').Army => ({
+    id: 'gen1', forceId: 'me', commanderId: 'gen1', companionIds: [], troops: 3000,
+    fromCityId: 'a', targetCityId: 'b', x: 0, y: 0, progress: 0.5, totalSeasons: 2, food: 400, ...over,
+  });
+
+  it('empties grain + reinforcements into the army, not the city', () => {
+    const convoys = { cv1: mkConvoy({ seasonsRemaining: 1, food: 1200, gold: 0, troops: 800, toArmyId: 'gen1' }) };
+    const cities = { a: mkCity('a'), b: mkCity('b', { ownerForceId: 'rival', food: 5000 }) }; // besieged enemy city
+    const armies = { gen1: mkArmy({ food: 400, troops: 3000 }) };
+    const r = stepConvoys(convoys, cities, armies);
+    expect(r.convoys.cv1).toBeUndefined();
+    expect(r.armies.gen1.food).toBe(1600);   // 400 + 1200
+    expect(r.armies.gen1.troops).toBe(3800); // 3000 + 800
+    expect(r.cities.b.food).toBe(5000);      // enemy city untouched
+    expect(r.arrivals[0].toArmy).toBe(true);
+    expect(r.forfeited).toHaveLength(0);
+  });
+
+  it('falls back to the objective city if the army has dispersed and we hold it', () => {
+    const convoys = { cv1: mkConvoy({ seasonsRemaining: 1, food: 1000, gold: 0, troops: 0, toArmyId: 'gen1' }) };
+    const cities = { a: mkCity('a'), b: mkCity('b', { ownerForceId: 'me', food: 5000 }) }; // we now hold it
+    const r = stepConvoys(convoys, cities, {}); // army gone
+    expect(r.cities.b.food).toBe(6000);
+    expect(r.forfeited).toHaveLength(0);
+  });
+
+  it('forfeits if both the army and the objective city are gone', () => {
+    const convoys = { cv1: mkConvoy({ seasonsRemaining: 1, food: 1000, toArmyId: 'gen1' }) };
+    const cities = { a: mkCity('a'), b: mkCity('b', { ownerForceId: 'rival' }) };
+    const r = stepConvoys(convoys, cities, {});
+    expect(r.forfeited).toHaveLength(1);
+    expect(r.arrivals).toHaveLength(0);
+  });
+});
+
+describe('主動劫糧 — raiding an enemy supply column (烏巢)', () => {
+  it('an equal-or-stronger column is overrun: grain burned, coin looted, escort taken', () => {
+    const target = mkConvoy({ troops: 1000, food: 3000, gold: 500, officerId: 'esc' });
+    const o = resolveRaidStrike({ troops: 1200 }, target);
+    expect(o.found).toBe(true);
+    expect(o.success).toBe(true);
+    expect(o.burnedFood).toBe(3000);
+    expect(o.loot).toBe(500);
+    expect(o.capturedEscortId).toBe('esc');
+    expect(o.raiderSurvivors).toBe(1000); // −20%×(1000/1200 resistance) = −200
+  });
+
+  it('overrunning an unescorted baggage train costs the raiders nothing', () => {
+    const o = resolveRaidStrike({ troops: 800 }, mkConvoy({ troops: 0, food: 2000 }));
+    expect(o.success).toBe(true);
+    expect(o.raiderSurvivors).toBe(800); // no escort → no losses
+    expect(o.burnedFood).toBe(2000);
+  });
+
+  it('a heavier escort beats the raiders off (−35%, no loot)', () => {
+    const o = resolveRaidStrike({ troops: 1000 }, mkConvoy({ troops: 2000, gold: 500 }));
+    expect(o.success).toBe(false);
+    expect(o.loot).toBe(0);
+    expect(o.raiderSurvivors).toBe(650);
+  });
+
+  it('a quarry already delivered/destroyed is a dry hole — raiders return whole', () => {
+    const o = resolveRaidStrike({ troops: 1000 }, undefined);
+    expect(o.found).toBe(false);
+    expect(o.success).toBe(false);
+    expect(o.raiderSurvivors).toBe(1000);
   });
 });
 

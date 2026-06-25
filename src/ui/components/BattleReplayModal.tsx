@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useGameStore } from '../../game/state/store';
 import { SEASON_LABEL } from '../../game/types';
 import { useLanguage, pickName } from '../i18n';
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export function BattleReplayModal({ onClose }: Props) {
+  useEscapeKey(onClose);
   const replays = useGameStore((s) => s.battleReplays);
   const officers = useGameStore((s) => s.officers);
   const [selectedId, setSelectedId] = useState<string | null>(replays[0]?.id ?? null);

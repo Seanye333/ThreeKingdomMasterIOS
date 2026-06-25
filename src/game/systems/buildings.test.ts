@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { Building, BuildingId, City, Officer } from '../types';
-import { buildingBonuses } from './buildings';
+import { buildingBonuses, schoolHeadmasterFocus } from './buildings';
 import { buildingGroupSynergy, statecraftCategoryMul } from '../data/buildings';
 import { cityAffinity } from '../data/specialties';
 import { tickBuildingEvents } from './buildingEvents';
@@ -12,6 +12,40 @@ const mk = (id: BuildingId, level: number): Building => ({
   cityId: 'c1',
   level,
   progress: 0,
+});
+
+const mkOff = (id: string, intelligence: number, top?: Partial<Officer['stats']>): Officer => ({
+  id, name: { zh: id, en: id },
+  stats: { leadership: 50, war: 50, intelligence, politics: 50, charisma: 50, ...top },
+  skills: [], loyalty: 100, status: 'idle', task: null, locationCityId: 'c1', forceId: 'p',
+  rank: 'soldier', equipment: [], birthYear: 200,
+} as unknown as Officer);
+
+describe('山長 — school headmaster', () => {
+  it('lifts a school’s xpMul by up to +40% (scaled by 智力)', () => {
+    const base = buildingBonuses('c1', [mk('academy', 2)]).xpMul;
+    const withHm = buildingBonuses('c1', [{ ...mk('academy', 2), headmasterId: 'sage' }],
+      { officers: { sage: mkOff('sage', 100) } }).xpMul;
+    expect(withHm).toBeGreaterThan(base);
+    expect(withHm / base).toBeCloseTo(1.4, 1); // 智力 100 → +40%
+  });
+  it('no boost without officers passed, nor for a non-school building', () => {
+    const school = { ...mk('academy', 2), headmasterId: 'sage' };
+    expect(buildingBonuses('c1', [school]).xpMul).toBeCloseTo(buildingBonuses('c1', [mk('academy', 2)]).xpMul);
+    const market = { ...mk('market', 2), headmasterId: 'sage' };
+    expect(buildingBonuses('c1', [market], { officers: { sage: mkOff('sage', 100) } }).commerceMul)
+      .toBeCloseTo(buildingBonuses('c1', [mk('market', 2)]).commerceMul);
+  });
+  it('no boost when the headmaster has left the city', () => {
+    const away = { ...mkOff('sage', 100), locationCityId: 'elsewhere' } as Officer;
+    const withHm = buildingBonuses('c1', [{ ...mk('academy', 2), headmasterId: 'sage' }], { officers: { sage: away } }).xpMul;
+    expect(withHm).toBeCloseTo(buildingBonuses('c1', [mk('academy', 2)]).xpMul);
+  });
+  it('schoolHeadmasterFocus returns the strongest headmaster’s top stat (else null)', () => {
+    const tiger = mkOff('tiger', 60, { war: 95 });
+    expect(schoolHeadmasterFocus('c1', [{ ...mk('warschool', 1), headmasterId: 'tiger' }], { tiger })).toBe('war');
+    expect(schoolHeadmasterFocus('c1', [mk('warschool', 1)], {})).toBeNull();
+  });
 });
 
 describe('buildingBonuses — new buildings are wired in', () => {

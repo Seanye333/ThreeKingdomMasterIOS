@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useGameStore } from '../../game/state/store';
 import { SEASON_LABEL } from '../../game/types';
 import type { HistoricBattle, Season } from '../../game/types';
@@ -14,6 +15,7 @@ interface Props {
 type OutcomeFilter = 'all' | 'won' | 'lost' | 'conquest';
 
 export function BattleHistoryModal({ onClose }: Props) {
+  useEscapeKey(onClose);
   const lang = useLanguage();
   const battles = useGameStore((s) => s.battleHistory);
   const cities = useGameStore((s) => s.cities);

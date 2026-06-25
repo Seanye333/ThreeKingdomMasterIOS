@@ -6,6 +6,7 @@ import { useT } from '../i18n';
 import { Modal } from './Modal';
 import { Icon } from './Icon';
 import { playSfx } from '../../game/systems/sound';
+import { SpecialtyDominionPanel } from './SpecialtyDominionPanel';
 
 /**
  * 度支簿 — the realm's full season ledger. It runs realmBudget(), the same
@@ -131,6 +132,9 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
           <Ledger title={t('糧 · 收支', 'Grain ledger')} rows={foodRows} net={foodNet} num={num} signed={signed} t={t}
                   note={!isAutumn ? t('糧入僅秋收', 'harvest = autumn only') : weather?.kind === 'drought' ? t('旱災 秋收 ×0.55', 'drought ×0.55') : undefined} />
         </div>
+
+        {/* 名產版圖 — strategic-good control, monopoly tiers, embargo lever. */}
+        <SpecialtyDominionPanel />
 
         {/* 流民 — the realm-wide displaced pool. */}
         {refugees > 0 && (

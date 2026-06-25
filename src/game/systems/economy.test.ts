@@ -20,6 +20,41 @@ const makeCity = (over: Partial<City> = {}): City => ({
   ...over,
 });
 
+describe('専才坐鎮 — specialist officers sharpen a name-good', () => {
+  // 'wuwei' is a `horse` specialty city → warhorse production + gold premium.
+  const mkOfficer = (policies: string[]): Officer => ({
+    id: 'o1', name: { zh: '某', en: 'X' },
+    stats: { war: 60, leadership: 60, intelligence: 60, politics: 60, charisma: 60 },
+    policies, skills: [], traits: [], equipment: [],
+    forceId: 'f1', locationCityId: 'wuwei', status: 'idle', task: null,
+    birthYear: 180, loyalty: 80,
+  } as unknown as Officer);
+
+  it('a 馬政 officer in a horse-land breeds more warhorses', () => {
+    const c = makeCity({ id: 'wuwei', loyalty: 80 });
+    const none = tickCityEconomy(c, 'spring', []).warhorseBreed;
+    const groom = tickCityEconomy(c, 'spring', [mkOfficer(['horse-stewardship'])]).warhorseBreed;
+    expect(none).toBeGreaterThan(0);
+    expect(groom).toBeGreaterThan(none);
+  });
+
+  it('a non-matching specialist does NOT boost the output', () => {
+    const c = makeCity({ id: 'wuwei', loyalty: 80 });
+    const none = tickCityEconomy(c, 'spring', []).warhorseBreed;
+    const clerk = tickCityEconomy(c, 'spring', [mkOfficer(['commerce'])]).warhorseBreed;
+    expect(clerk).toBe(none); // 商業 is not a 馬政 specialty
+  });
+
+  it('a 巨賈/行會 merchant in a brocade city widens its gold premium', () => {
+    const c = makeCity({ id: 'chengdu', commerce: 80, loyalty: 80 }); // 蜀錦
+    // Compare a matching merchant vs a non-matching official (same stats → equal
+    // grade/prestige gold), so the delta is purely the 専才坐鎮 premium widening.
+    const merchant = tickCityEconomy(c, 'spring', [{ ...mkOfficer(['merchant-guild']), locationCityId: 'chengdu' }]).goldIncome;
+    const official = tickCityEconomy(c, 'spring', [{ ...mkOfficer(['rites']), locationCityId: 'chengdu' }]).goldIncome;
+    expect(merchant).toBeGreaterThan(official);
+  });
+});
+
 describe('稅率 — tax policy in tickCityEconomy', () => {
   it('heavy yields more gold than normal than light', () => {
     const c = makeCity();

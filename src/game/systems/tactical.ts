@@ -26,7 +26,7 @@ import { NAMED_MAPS_BY_CITY, NAMED_MAPS_BY_ID } from '../data/namedMaps';
 import { SHIP_CLASSES_BY_ID } from '../data/ships';
 import { pickVoiceLine } from '../data/voiceLines';
 import { generateTerrain, type TerrainHint } from './battlefieldTerrain';
-import { effectiveStats } from './traitEffects';
+import { effectiveStats, tacticalDamageMul, tacticalDefenseMul, tacticalMoraleAura, stratagemDamageMul } from './traitEffects';
 import { gradeCombatBonus } from './gradeCombat';
 import { growthPowerMul } from './growth';
 import { itemSetPowerMul } from '../data/itemSets';
@@ -1475,12 +1475,29 @@ export function attackUnits(
   const aGrowthMul = ao ? growthPowerMul(ao) : 1;
   // 神兵譜共鳴 — a full legendary set lends extra bite.
   const aSetMul = ao ? itemSetPowerMul(ao) : 1;
+  // 性格專長 — unit-type / terrain / night / charge specialist traits (神槍/弩匠/
+  // 騎將/水將/山戰/林戰/夜襲/先鋒/狂戰…) finally bite, where unit type & terrain are real.
+  const aTraitCtx = {
+    unitType: attacker.unitType,
+    terrain: aTerrainTile?.terrain ?? 'plain',
+    isNight: b.timeOfDay === 'night',
+    isAmbush: ambushBonus > 1.0,
+    turn: b.turn,
+    troopRatio: attacker.maxTroops > 0 ? attacker.troops / attacker.maxTroops : 1,
+    isAttacker: attacker.side === 'attacker',
+    enemyForceId: To?.forceId ?? undefined,
+  } as const;
+  const aTraitMul = ao ? tacticalDamageMul(ao, aTraitCtx) : 1;
+  const dTraitDefMul = To
+    ? tacticalDefenseMul(To, { ...aTraitCtx, unitType: target.unitType, terrain: (dTerrainTile?.terrain ?? 'plain'), isAttacker: target.side === 'attacker', enemyForceId: ao?.forceId ?? undefined })
+    : 1;
   const base =
     Math.floor((attacker.troops * (aWar + 30) * (0.85 + rng() * 0.3)) / (dLead + 50));
   let damage = Math.floor(
     base * counter * aTerrainMod * weatherMul * defenseMul * offenseMul *
     dShield * ambushBonus * fatigueMul * aWoundedMul * dWoundedMul * shipMul * pincerMul *
-    nightMul * heightMul * flankMul * crossingMul * streetMul * comboMul * formCounterMul * eliteMul * aGradeMul * dGradeResistMul * aGrowthMul * aSetMul,
+    nightMul * heightMul * flankMul * crossingMul * streetMul * comboMul * formCounterMul * eliteMul * aGradeMul * dGradeResistMul * aGrowthMul * aSetMul *
+    aTraitMul * dTraitDefMul,
   );
   if (targetDefending) damage = Math.floor(damage / 2);
   if (attackerBurning) damage = Math.floor(damage * 0.9);
@@ -1904,8 +1921,9 @@ export function applyStratagem(
       const tileFlammable = !!bareTile && ['forest', 'plain', 'road', 'bridge'].includes(bareTile.terrain);
       if ((!target || target.side === unit.side) && !(target == null && tileFlammable && b.weather !== 'rain'))
         return { battle: b, ok: false, reason: 'invalid target' };
-      // Wind doubles fire duration; rain halves it.
-      const turns = b.weather === 'wind' ? 5 : b.weather === 'rain' ? 1 : 3;
+      // Wind doubles fire duration; rain halves it. 火攻 master stokes it +1 turn.
+      const baseTurns = b.weather === 'wind' ? 5 : b.weather === 'rain' ? 1 : 3;
+      const turns = baseTurns + ((off?.traits as string[] | undefined ?? []).includes('fire-tactician') ? 1 : 0);
       let updated = target && target.side !== unit.side
         ? setStatus(b, target.id, { kind: 'burning', turnsLeft: turns })
         : b;
@@ -1972,8 +1990,9 @@ export function applyStratagem(
       const aWar = off?.stats.war ?? 50;
       const dLead = officers[target.officerId]?.stats.leadership ?? 50;
       const chgSit = battleStratagemSituation(b, unit.coord, targetCoord, stratagem);
+      const chgTraitMul = off ? stratagemDamageMul(off, stratagem) : 1;
       const damage = Math.floor(
-        (unit.troops * (aWar + 30) * 1.5) / (dLead + 50) * chgSit.mult,
+        (unit.troops * (aWar + 30) * 1.5) / (dLead + 50) * chgSit.mult * chgTraitMul,
       );
       const updated: TacticalBattle = {
         ...b,
@@ -1996,7 +2015,7 @@ export function applyStratagem(
         return { battle: b, ok: false, reason: 'invalid target' };
       // 戰法情境 — rain soaks the bowstrings, high ground extends the volley.
       const arrSit = battleStratagemSituation(b, unit.coord, targetCoord, stratagem);
-      const damage = Math.floor(target.troops * 0.12 * arrSit.mult);
+      const damage = Math.floor(target.troops * 0.12 * arrSit.mult * (off ? stratagemDamageMul(off, stratagem) : 1));
       const popup: DamagePopup = {
         id: `dmg-${Date.now()}-arrows`,
         coord: target.coord,
@@ -2069,7 +2088,7 @@ export function applyStratagem(
       if (!target) return { battle: b, ok: false, reason: 'no target' };
       // 戰法情境 — a brewing storm feeds the bolt; fog/snow damps it.
       const ltSit = battleStratagemSituation(b, unit.coord, targetCoord, stratagem);
-      const damage = Math.floor(target.troops * 0.15 * ltSit.mult);
+      const damage = Math.floor(target.troops * 0.15 * ltSit.mult * (off ? stratagemDamageMul(off, stratagem) : 1));
       const confuse = Math.random() < 0.3;
       let next: TacticalBattle = {
         ...b,
@@ -2378,7 +2397,7 @@ function finalize(
 
 // ─── Turn end ────────────────────────────────────────────────────────
 
-export function endTurn(b: TacticalBattle): TacticalBattle {
+export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>): TacticalBattle {
   // Prune expired damage popups — every battle event appends to the array and
   // nothing ever removed them, so a long battle accumulated hundreds of dead
   // popup nodes (and the embedded diorama showed them frozen mid-air).
@@ -2419,6 +2438,23 @@ export function endTurn(b: TacticalBattle): TacticalBattle {
     }
     return { ...u, troops, morale, effects: newEffects, ap: u.maxAp };
   });
+
+  // 旗令/開朗/沉勇 — a unit beside a morale-aura officer recovers heart each turn
+  // (the aura the bearer projects to ADJACENT allies). Skipped when the caller
+  // didn't supply the officer map (e.g. unit tests).
+  if (officers) {
+    tickedUnits = tickedUnits.map((u) => {
+      if (u.troops <= 0 || u.morale >= 100) return u;
+      let aura = 0;
+      for (const other of tickedUnits) {
+        if (other.id === u.id || other.side !== u.side || other.troops <= 0) continue;
+        if (hexDistance(other.coord, u.coord) !== 1) continue;
+        const oo = officers[other.officerId];
+        if (oo) aura += tacticalMoraleAura(oo);
+      }
+      return aura > 0 ? { ...u, morale: Math.min(100, u.morale + Math.min(8, aura)) } : u;
+    });
+  }
 
   // ── 燒糧 — a supply convoy reduced to ruin starves the host that leaned on
   // it: the owning side's units lose heart and begin deserting (烏巢之火).
@@ -3743,5 +3779,5 @@ export function aiTakeTurn(
     }
     if (!acted) break;
   }
-  return { battle: endTurn(cur), signatures };
+  return { battle: endTurn(cur, officers), signatures };
 }

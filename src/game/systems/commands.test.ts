@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { City } from '../types';
 import { mkOfficer } from '../../test/factories';
 import { resolveInternalAffairs, previewCommandGain } from './commands';
+import { pairKey } from '../types/diplomacy';
 
 const mkCity = (over: Partial<City> & { id: string }): City =>
   ({
@@ -35,6 +36,24 @@ describe('徵兵 — conscription costs population and loyalty', () => {
     const res = resolveInternalAffairs('recruit-troops', o, mkCity({ id: 'hamlet', population: 50, loyalty: 80 }), () => 0.5);
     expect(res.success).toBe(false);
     expect(res.delta?.loyalty ?? 0).toBe(0);
+  });
+});
+
+describe('協同施政 — 搭檔情誼 (assistant rapport synergy)', () => {
+  const lead = mkOfficer({ id: 'lead', stats: { leadership: 30, war: 30, intelligence: 30, politics: 30, charisma: 30 } });
+  const asst = mkOfficer({ id: 'asst', stats: { leadership: 100, war: 100, intelligence: 100, politics: 100, charisma: 100 } });
+  const city = () => mkCity({ id: 'ye', agriculture: 20 });
+
+  it('a warm 搭檔 lifts output above a feuding one', () => {
+    const warm = resolveInternalAffairs('develop-agriculture', lead, city(), () => 0.5, undefined, undefined, [asst], { [pairKey('lead', 'asst')]: 100 });
+    const feud = resolveInternalAffairs('develop-agriculture', lead, city(), () => 0.5, undefined, undefined, [asst], { [pairKey('lead', 'asst')]: -100 });
+    expect(warm.delta?.agriculture ?? 0).toBeGreaterThan(feud.delta?.agriculture ?? 0);
+  });
+
+  it('no rapport map → behaves like neutral (synergy ×1)', () => {
+    const neutralMap = resolveInternalAffairs('develop-agriculture', lead, city(), () => 0.5, undefined, undefined, [asst], { [pairKey('lead', 'asst')]: 0 });
+    const noMap = resolveInternalAffairs('develop-agriculture', lead, city(), () => 0.5, undefined, undefined, [asst]);
+    expect(noMap.delta?.agriculture).toBe(neutralMap.delta?.agriculture);
   });
 });
 

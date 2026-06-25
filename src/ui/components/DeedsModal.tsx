@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useGameStore } from '../../game/state/store';
 import { useT, useLanguage } from '../i18n';
 import { DEED_TITLES_BY_ID } from '../../game/systems/deedTitles';
@@ -31,6 +32,7 @@ const COL_LABELS: Array<{ key: SortKey; zh: string; en: string }> = [
 const MEDAL: Record<number, string> = { 0: '🥇', 1: '🥈', 2: '🥉' };
 
 export function DeedsModal({ onClose }: Props) {
+  useEscapeKey(onClose);
   const deeds = useGameStore((s) => s.deeds);
   const officers = useGameStore((s) => s.officers);
   const forces = useGameStore((s) => s.forces);

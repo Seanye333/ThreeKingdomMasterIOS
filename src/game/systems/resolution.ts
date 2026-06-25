@@ -21,31 +21,36 @@ import { advanceSeason } from '../state/gameState';
 import { processAging } from './aging';
 import { evaluateGovernors } from './governorEval';
 import { handleSearch, resolveInternalAffairs, type LostItemRef } from './commands';
-import { awardInternalAffairsXp, canBreakthrough, breakthroughCost, applyBreakthrough, grantXp } from './growth';
+import { awardInternalAffairsXp, canBreakthrough, breakthroughCost, breakthroughIronCost, applyBreakthrough, defaultBreakthroughPath, grantXp, tickMentorBonds, specialTraining } from './growth';
 import { officerGrade, gradeRank, officerLevel } from './officerGrade';
 import { handleMarch } from './combat';
 import { tickDiplomacy, applyCoalitionPressure } from './diplomacy';
 import { tickCityEconomy, tradeTreatyGrants } from './economy';
-import { WARHORSE_CITY_CAP, IRON_CITY_CAP } from './market';
-import { buildingBonuses } from './buildings';
+import { WARHORSE_CITY_CAP, IRON_CITY_CAP, MEDICINE_CITY_CAP } from './market';
+import {
+  specialtyControl, specialtyRealmEffects, allRoleEffects, embargoedRolesAgainst,
+  type SpecialtyControl, type SpecialtyRealmEffects, type SpecialtyRole,
+} from '../data/specialties';
+import { buildingBonuses, schoolHeadmasterFocus } from './buildings';
 import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
 import { corruptionAccrualMultiplier } from './traitEffects';
 import { rollCivicEvents } from './civicEvents';
 import { settleRefugees, REFUGEE_SHED_FRAC } from './refugees';
-import { stepConvoys, resolveConvoyRaids, provisionNeeded, consumeRations, type Convoy } from './convoy';
+import { stepConvoys, resolveConvoyRaids, resolveRaidStrike, provisionNeeded, consumeRations, type Convoy, type ConvoyRaid } from './convoy';
 import { stepExpeditions, expeditionSpeedMul } from './expedition';
 import { embassyTargets, embassyLegSeasons } from './foreignRealm';
 import type { Expedition, ExpeditionMode } from '../types';
 import { appointmentBonusFor } from './appointmentEffects';
 import { MILITARY_RANKS_BY_ID } from '../data/titles';
-import { peerageEffects } from '../data/peerage';
+import { peerageEffects, peerageTier } from '../data/peerage';
 import { honorificEffects } from '../data/honorifics';
 import { rollEvents } from './events';
 import { generateFictionalOfficer } from './officerGen';
 import { resolveAmbitions } from './ambition';
-import { tickClans } from './clans';
+import { tickClans, clanGentryWeight } from './clans';
 import { tickStatecraft } from './statecraft';
 import { deriveCourtFactions, type FactionId } from './courtFactions';
+import { cliqueBackingBoost } from './relationshipEffects';
 
 export interface ResolutionInput {
   date: GameDate;
@@ -55,6 +60,12 @@ export interface ResolutionInput {
   pendingCommands: Record<EntityId, Command>;
   diplomacy: DiplomaticState;
   runtimeBonds: OathBond[];
+  /** Pairwise officer rapport (好感, −100..100) — flows into combat for graded
+   *  same-side synergy/friction beyond forged bonds. */
+  rapport?: Record<string, number>;
+  /** 君臣好感 — per-officer regard for their lord; feeds ambition (心腹 never
+   *  turns; resentment emboldens) and 策反 resistance. */
+  lordRapport?: Record<EntityId, number>;
   lostItems: LostItemRef[];
   /** Phase 3c — current per-territory owner overrides (null/missing
    *  means inherit from parent city). */
@@ -63,6 +74,8 @@ export interface ResolutionInput {
   playerForceId?: EntityId | null;
   /** Runtime family relations — flow through into combat for kinship bonuses. */
   family?: import('../types/family').FamilyRelation[];
+  /** 家門聲望 — clan standings, for 門閥 weighting in court-faction coup math. */
+  clanStandings?: Record<string, import('../types').ClanStanding>;
   /** Civic-title appointments — drive force-wide bonuses in commands + combat. */
   appointments?: import('../types').Appointment[];
   /** Active 討伐令 marks — combat power +10% from issuer toward target. */
@@ -81,8 +94,12 @@ export interface ResolutionInput {
   tradePartners?: EntityId[];
   /** 通貨膨脹 — the player's inflation level (0–100); saps player tax income. */
   inflation?: number;
+  /** 禁運 — standing 專營 embargoes (monopolist cuts a rival off a good). */
+  embargoes?: import('../data/specialties').Embargo[];
   /** 輜重 — supply convoys in transit between the player's cities. */
   convoys?: Record<EntityId, Convoy>;
+  /** 主動劫糧 — raiding columns hunting enemy supply convoys. */
+  raids?: Record<EntityId, ConvoyRaid>;
   /** 游历 — lone officers roaming abroad (any force), in transit. */
   expeditions?: Record<EntityId, Expedition>;
   /** 細作開眼 — per-city intel ticks; expeditions light fresh intel here. */
@@ -100,6 +117,8 @@ export interface ResolutionInput {
   lifespanMode?: 'historical' | 'fictionalImmortal' | 'immortal';
   /** 武將壽命長短 — multiplier on the old-age death chance. Default 'historical'. */
   lifespanLength?: 'short' | 'historical' | 'long';
+  /** 變老不影響屬性 — when true, aging does not drift the five 圍. Default false. */
+  agingStatLock?: boolean;
   /** 不會戰死 — when true, no officer is killed in battle (wounded/captured
    *  instead). Folded into single combat here; tactical/瀕死 handled in store. */
   noBattleDeath?: boolean;
@@ -145,6 +164,8 @@ export interface ResolutionOutput {
   armies?: Record<EntityId, import('../types').Army>;
   /** 輜重 — supply convoys still in transit after this season's step. */
   convoys?: Record<EntityId, Convoy>;
+  /** 主動劫糧 — raiding columns still hunting after this season's step. */
+  raids?: Record<EntityId, ConvoyRaid>;
   /** 游历 — roaming officers still in transit after this season's step. */
   expeditions?: Record<EntityId, Expedition>;
   /** 細作開眼 — per-city intel ticks after expeditions lit fresh intel. */
@@ -1037,6 +1058,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       delayedEffectsOut: delayedEffects,
       family: input.family,
       runtimeBonds: input.runtimeBonds,
+      rapport: input.rapport,
       appointments: input.appointments,
       casusBelliMarks: input.casusBelliMarks,
       date: input.date,
@@ -1082,7 +1104,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       lostItems = result.lostItems;
       entries.push(result.entry);
       // 內政經驗 — scouring the city for talent still hones 魅力 over time.
-      const searchXp = awardInternalAffairsXp(officers[cmd.officerId] ?? officer, 'search', true, rng);
+      const searchXp = awardInternalAffairsXp(officers[cmd.officerId] ?? officer, 'search', true, rng, 1, input.date.year);
       officers[cmd.officerId] = searchXp.officer;
       entries.push(...searchXp.entries);
       continue;
@@ -1119,7 +1141,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       });
       bumpDeed(cmd.officerId, { civicWorks: 1 });
       // 內政經驗 — garrison duty hones 統率.
-      const garrisonXp = awardInternalAffairsXp(officers[cmd.officerId] ?? officer, 'garrison', true, rng);
+      const garrisonXp = awardInternalAffairsXp(officers[cmd.officerId] ?? officer, 'garrison', true, rng, 1, input.date.year);
       officers[cmd.officerId] = garrisonXp.officer;
       entries.push(...garrisonXp.entries);
       continue;
@@ -1131,13 +1153,16 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       if (!city.ownerForceId) continue;
       const lectureBB = buildingBonuses(city.id, input.buildings ?? [], {
         statecraft: forces[city.ownerForceId]?.statecraft ?? null,
+        officers, // 山長 amplifies the 講學 xpMul
       });
       const burst = Math.round((10 + officer.stats.intelligence * 0.4) * lectureBB.xpMul);
+      // 山長之偏 — a school's headmaster tilts what 講學 teaches (武學堂→武, 書院→智…).
+      const lectureFocus = schoolHeadmasterFocus(city.id, input.buildings ?? [], officers);
       const pupils = Object.values(officers).filter(
         (o) => o.locationCityId === city.id && o.forceId === city.ownerForceId,
       );
       for (const pupil of pupils) {
-        const taught = grantXp(officers[pupil.id] ?? pupil, burst, rng);
+        const taught = grantXp(officers[pupil.id] ?? pupil, burst, rng, lectureFocus ?? undefined, { year: input.date.year });
         officers[pupil.id] = taught.officer;
         entries.push(...taught.entries);
       }
@@ -1148,6 +1173,16 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         textZh: `${officer.name.zh}興学講學於${city.name.zh}：在城 ${pupils.length} 員各得 ${burst} 歷練。`,
       });
       bumpDeed(cmd.officerId, { civicWorks: 1 });
+      continue;
+    }
+    if (cmd.type === 'special-training') {
+      // 特訓 — a whole season poured into one officer: big 歷練 along their focus
+      // track, with chances at a skill / 性格 / 潛能, and a 養傷 risk on the
+      // martial tracks. Gold was paid at issue.
+      const tr = specialTraining(officers[cmd.officerId] ?? officer, rng, input.date.year);
+      officers[cmd.officerId] = tr.officer;
+      entries.push(...tr.entries);
+      bumpDeed(cmd.officerId, { trainingsCompleted: 1 });
       continue;
     }
     const bonus = appointmentBonusFor(
@@ -1164,6 +1199,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     // 兵營/馬廄/武庫/糧倉署/驛站/驛傳 raise the per-season recruit ceiling (troopCapMul).
     const cityBB = buildingBonuses(city.id, input.buildings ?? [], {
       statecraft: city.ownerForceId ? (forces[city.ownerForceId]?.statecraft ?? null) : null,
+      officers, // 山長 lifts the city's civic XP output too
     });
     const baseRecruitBonus = recruitBoost
       ? bonus.recruitBonus + (recruitBoost.multiplier - 1)
@@ -1178,7 +1214,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const assistants = (cmd.assistantOfficerIds ?? [])
       .map((aid) => officers[aid])
       .filter((a): a is Officer => !!a);
-    const result = resolveInternalAffairs(cmd.type, officer, city, rng, finalBonus, input.weather?.kind, assistants);
+    const result = resolveInternalAffairs(cmd.type, officer, city, rng, finalBonus, input.weather?.kind, assistants, input.rapport);
     cities[city.id] = applyDelta(city, result.delta);
     const assistNote = assistants.length
       ? { text: ` (協同 ${assistants.map((a) => a.name.en).join(', ')})`, zh: `(協同 ${assistants.map((a) => a.name.zh).join('、')})` }
@@ -1194,22 +1230,31 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     // 內政經驗 — slow stat growth from the work, steered toward the command's
     // stat (政治 for development, 魅力 for people work). Capped/no-op commands
     // grant a reduced trickle inside awardInternalAffairsXp.
-    const iaXp = awardInternalAffairsXp(officers[cmd.officerId] ?? officer, cmd.type, result.success, rng, cityBB.xpMul);
+    const iaXp = awardInternalAffairsXp(officers[cmd.officerId] ?? officer, cmd.type, result.success, rng, cityBB.xpMul, input.date.year);
     officers[cmd.officerId] = iaXp.officer;
     entries.push(...iaXp.entries);
     // 襄助歷練 — each assistant earns the internal-affairs XP trickle too (they
     // did the work alongside the lead), steered toward the command's stat.
     for (const a of assistants) {
-      const axp = awardInternalAffairsXp(officers[a.id] ?? a, cmd.type, result.success, rng, cityBB.xpMul);
+      const axp = awardInternalAffairsXp(officers[a.id] ?? a, cmd.type, result.success, rng, cityBB.xpMul, input.date.year);
       officers[a.id] = axp.officer;
       entries.push(...axp.entries);
       if (result.success) bumpDeed(a.id, { civicWorks: 1 });
     }
   }
 
+  // Phase 3f-quater — 師徒衣缽. Explicit 拜師 bonds resolve first: a disciple
+  // apprenticed to a specific master (and garrisoned with them) earns the richer
+  // bond XP toward the master's strongest suit, and may inherit their craft.
+  const bondTick = tickMentorBonds(officers, rng);
+  Object.assign(officers, bondTick.officers);
+  entries.push(...bondTick.entries);
+  const bonded = bondTick.bonded;
+
   // Phase 3f-ter — 名將帶新兵. A 金牌+ officer stationed in a city seasons the
   // junior officers garrisoned with them: a small XP trickle to those clearly
   // below the mentor's 歷練. Turns 品階 into a legacy/teaching loop (all forces).
+  // Disciples already fed by an explicit bond this season are skipped (no double-dip).
   const MENTOR_XP = 8;
   for (const city of Object.values(cities)) {
     if (!city.ownerForceId) continue;
@@ -1227,7 +1272,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     if (!mentor) continue;
     const mLevel = officerLevel(mentor);
     const students = present
-      .filter((o) => o.id !== mentor!.id && officerLevel(o) <= mLevel - 3)
+      .filter((o) => o.id !== mentor!.id && !bonded.has(o.id) && officerLevel(o) <= mLevel - 3)
       .sort((a, b) => officerLevel(a) - officerLevel(b))
       .slice(0, 3);
     for (const st of students) {
@@ -1250,10 +1295,12 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     if (!city || city.ownerForceId !== o.forceId) continue;
     const cost = breakthroughCost(o);
     if (city.gold < cost * 2) continue; // keep a reserve
+    const iron = breakthroughIronCost(o);
+    if ((city.iron ?? 0) < iron) continue; // 淬鍊之鐵 — needs 鐵 like the player does
     if (rng() > 0.5) continue;          // spread breakthroughs across seasons
-    const r = applyBreakthrough(o);
+    const r = applyBreakthrough(o, defaultBreakthroughPath(o)); // AI picks 道 by strength
     officers[o.id] = r.officer;
-    cities[city.id] = { ...city, gold: city.gold - cost };
+    cities[city.id] = { ...city, gold: city.gold - cost, iron: (city.iron ?? 0) - iron };
   }
 
   const seasonBoundary = input.seasonBoundary ?? true;
@@ -1282,6 +1329,18 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     return held;
   };
 
+  // 名產版圖 — tally every force's realm-wide grip on the strategic goods once
+  // per season: it amplifies 名產所恃 policy yields and 醃漬軍糧 upkeep relief in
+  // the tick below, and feeds the wound/ship/mint/tribute bonuses downstream.
+  type SpecSnap = { control: SpecialtyControl; realm: SpecialtyRealmEffects; roleStrength: Record<SpecialtyRole, number> };
+  const specByForce = new Map<EntityId, SpecSnap>();
+  if (seasonBoundary) {
+    for (const fid of Object.keys(forces)) {
+      const control = specialtyControl(cities, fid, embargoedRolesAgainst(fid, input.embargoes));
+      specByForce.set(fid, { control, realm: specialtyRealmEffects(control), roleStrength: allRoleEffects(control) });
+    }
+  }
+
   // 2. Economy tick per city — only on season boundary (every 9 periods).
   if (seasonBoundary)
   for (const city of Object.values(cities)) {
@@ -1298,6 +1357,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       input.weather?.kind ?? 'clear',
       input.buildings,
       city.ownerForceId ? (forces[city.ownerForceId]?.statecraft ?? null) : null,
+      city.ownerForceId ? specByForce.get(city.ownerForceId) : undefined,
     );
     const territoryGold = city.ownerForceId
       ? controlledSatellites(city) * TERRITORY_GOLD
@@ -1353,6 +1413,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       iron: tick.ironSmelt > 0
         ? Math.min(IRON_CITY_CAP, (city.iron ?? 0) + tick.ironSmelt)
         : city.iron,
+      medicine: tick.medicineGather > 0
+        ? Math.min(MEDICINE_CITY_CAP, (city.medicine ?? 0) + tick.medicineGather)
+        : city.medicine,
     };
     cities[city.id] = updated;
     // 貪腐告警 — warn the player when graft crosses a threshold upward in one of
@@ -1729,6 +1792,14 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   }
   for (const o of Object.values(officers)) {
     let next: Officer = o.task ? { ...o, task: null } : o;
+    // 失威漸復 — disgrace fades one season at a time (gated on the season boundary,
+    // since this loop runs every period); once spent, the officer's 品階招牌 returns
+    // (see gradeCombat). Applies to every officer, all forces.
+    if (seasonBoundary && (o.disgrace ?? 0) > 0) {
+      const d = (o.disgrace ?? 0) - 1;
+      next = { ...next };
+      if (d > 0) next.disgrace = d; else delete next.disgrace;
+    }
     if (o.forceId && o.status === 'idle') {
       const owned = cityCountByForce[o.forceId] ?? 0;
       let drift = 0;
@@ -1740,6 +1811,17 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       if (o.peerageId) drift += peerageEffects(o).loyaltyBonus;
       // 名號將軍 — a conferred honorific's standing loyalty bonus.
       if (o.honorificId) drift += honorificEffects(o).loyaltyBonus;
+      // 名將傲氣 — a 金牌+ talent expects rank/peerage befitting their renown. Held
+      // beneath it (low 軍階, no 爵), pride curdles into discontent (−1); honoured
+      // to a station worthy of them, they're a lion who fights for a true lord (+1).
+      // Applies to every force, so a slighted enemy elite drifts toward defection.
+      const gRank = gradeRank(officerGrade(o).grade);
+      if (gRank >= gradeRank('gold')) {
+        const recognition = (MILITARY_RANKS_BY_ID[o.rank]?.tier ?? 0) + peerageTier(o.peerageId) * 1.5;
+        const expected = (gRank - 2) * 3; // 金→3, 白金→6, 鑽石→9
+        if (recognition < expected) drift -= 1;
+        else if (recognition >= expected + 3) drift += 1;
+      }
       if (drift !== 0) {
         const newLoyalty = Math.max(0, Math.min(100, o.loyalty + drift));
         if (newLoyalty !== o.loyalty) {
@@ -1748,6 +1830,32 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       }
     }
     if (next !== o) officers[o.id] = next;
+  }
+
+  // 瑜亮情結 — two peerless (白金+) talents under one banner chafe at sharing the
+  // stage. Occasionally a proud one bristles: a small loyalty dip + a note. Rare and
+  // temperament-gated, so it's flavour friction among legends, not constant attrition.
+  if (seasonBoundary) {
+    const topByForce: Record<EntityId, Officer[]> = {};
+    for (const o of Object.values(officers)) {
+      if (!o.forceId || o.status === 'dead' || o.status === 'imprisoned' || o.status === 'unsearched') continue;
+      if (gradeRank(officerGrade(o).grade) >= gradeRank('platinum')) (topByForce[o.forceId] ??= []).push(o);
+    }
+    const PROUD = ['arrogant', 'vainglorious', 'jealous', 'envious', 'wrathful', 'ambitious'];
+    for (const list of Object.values(topByForce)) {
+      if (list.length < 2 || rng() >= 0.12) continue;
+      const proud = list.find((o) => (o.traits as string[] | undefined ?? []).some((t) => PROUD.includes(t)));
+      const sub = proud ?? list[0];
+      const rival = list.find((o) => o.id !== sub.id);
+      if (!rival) continue;
+      officers[sub.id] = { ...officers[sub.id], loyalty: Math.max(0, officers[sub.id].loyalty - 2) };
+      entries.push({
+        cityId: sub.locationCityId,
+        kind: 'note',
+        text: `${sub.name.en} chafes at sharing the stage with ${rival.name.en} (瑜亮情結) — loyalty −2.`,
+        textZh: `${sub.name.zh}與${rival.name.zh}瑜亮並立,心有未平(忠誠 −2)。`,
+      });
+    }
   }
 
   // Apply oath-bond loyalty floors (after drift, so bonds always win).
@@ -1836,7 +1944,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const seasonIdx = { spring: 0, summer: 1, autumn: 2, winter: 3 }[input.date.season];
     // A general whose own court faction has captured the realm has a clique at
     // his back — fold that into his betrayal odds. 軍方 coups hardest of all.
-    const factionsByForce = deriveCourtFactions(officers);
+    const clanWeight = input.clanStandings ? clanGentryWeight(officers, input.clanStandings) : undefined;
+    const factionsByForce = deriveCourtFactions(officers, clanWeight);
     const factionBoost: Record<EntityId, number> = {};
     for (const list of Object.values(factionsByForce)) {
       if (list.length < 5) continue;
@@ -1857,6 +1966,20 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     for (const [id, boost] of Object.entries(clanFactionBoost)) {
       factionBoost[id] = Math.min(0.09, (factionBoost[id] ?? 0) + boost);
     }
+    // 朋黨 — a discontented general's clique of high-rapport allies emboldens him;
+    // feuds isolate. Only the ambition-relevant (low-loyalty) set is scored.
+    if (input.rapport) {
+      const byForce = new Map<EntityId, Officer[]>();
+      for (const o of Object.values(officers)) {
+        if (!o.forceId || o.status === 'dead' || o.status === 'imprisoned') continue;
+        (byForce.get(o.forceId) ?? byForce.set(o.forceId, []).get(o.forceId)!).push(o);
+      }
+      for (const o of Object.values(officers)) {
+        if (!o.forceId || o.loyalty >= 35) continue;
+        const boost = cliqueBackingBoost(o.id, byForce.get(o.forceId) ?? [], input.rapport, input.runtimeBonds);
+        if (boost > 0) factionBoost[o.id] = Math.min(0.11, (factionBoost[o.id] ?? 0) + boost);
+      }
+    }
     const ambitionEvents = resolveAmbitions({
       officers,
       cities,
@@ -1865,6 +1988,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       seed: (input.date.year * 4 + seasonIdx) >>> 0,
       factionBoost,
       buildings: input.buildings,
+      lordRapport: input.lordRapport,
     });
     for (const ev of ambitionEvents) {
       entries.push({ cityId: ev.cityId, kind: ev.kind, text: ev.text, textZh: ev.textZh });
@@ -1908,8 +2032,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       forces,
       rng,
       family: input.family,
+      runtimeBonds: input.runtimeBonds,
       lifespanMode: input.lifespanMode ?? 'historical',
       lifespanLength: input.lifespanLength ?? 'historical',
+      agingStatLock: input.agingStatLock ?? false,
       reviveDeadOfficers: input.reviveDeadOfficers ?? false,
     });
     cities = aging.cities;
@@ -1963,24 +2089,47 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   // 8. 輜重 — advance supply convoys; the cargo of those that arrive empties
   // into the destination city (forfeited if it fell mid-haul). Season only.
   let nextConvoys = input.convoys ?? {};
+  let nextRaids = input.raids ?? {};
   if (seasonBoundary && Object.keys(nextConvoys).length > 0) {
-    const stepped = stepConvoys(nextConvoys, cities);
+    const stepped = stepConvoys(nextConvoys, cities, outArmies);
     nextConvoys = stepped.convoys;
     cities = stepped.cities;
+    Object.assign(outArmies, stepped.armies); // 直供前線 deliveries relieved sieges
+    // Nearest still-friendly city to a map point (for landing a front escort).
+    const nearestFriendlyCityId = (x: number, y: number, fid: EntityId): EntityId | null => {
+      let best: EntityId | null = null, bd = Infinity;
+      for (const c of Object.values(cities)) {
+        if (c.ownerForceId !== fid || c.ruined) continue;
+        const cp = cityPos(c);
+        const d = Math.hypot(cp.x - x, cp.y - y);
+        if (d < bd) { bd = d; best = c.id; }
+      }
+      return best;
+    };
     for (const a of stepped.arrivals) {
-      // 押運武将抵達 — the escort reappears in the destination city.
+      // 押運武将抵達 — the escort reappears: at the destination city for a city
+      // haul; at the nearest friendly city to the host for a front delivery.
       if (a.convoy.officerId && officers[a.convoy.officerId]) {
-        officers[a.convoy.officerId] = { ...officers[a.convoy.officerId], locationCityId: a.convoy.toCityId, status: 'idle' };
+        let landAt: EntityId = a.convoy.toCityId;
+        if (a.toArmy) {
+          const army = a.convoy.toArmyId ? outArmies[a.convoy.toArmyId] : undefined;
+          landAt = (army ? nearestFriendlyCityId(army.x, army.y, a.convoy.forceId) : null) ?? a.convoy.fromCityId;
+        }
+        officers[a.convoy.officerId] = { ...officers[a.convoy.officerId], locationCityId: landAt, status: 'idle' };
       }
       const parts: string[] = [];
       if (a.convoy.food > 0) parts.push(`糧 +${a.convoy.food.toLocaleString()}`);
-      if (a.convoy.gold > 0) parts.push(`金 +${a.convoy.gold.toLocaleString()}`);
-      if (a.convoy.troops > 0) parts.push(`兵 +${a.convoy.troops.toLocaleString()}`);
+      if (!a.toArmy && a.convoy.gold > 0) parts.push(`金 +${a.convoy.gold.toLocaleString()}`);
+      if (a.convoy.troops > 0) parts.push(`${a.toArmy ? '援兵' : '兵'} +${a.convoy.troops.toLocaleString()}`);
       entries.push({
-        cityId: a.convoy.toCityId,
+        cityId: a.toArmy ? null : a.convoy.toCityId,
         kind: 'income',
-        text: `Supply convoy reached ${a.toName}: ${parts.join(', ') || 'empty'}.`,
-        textZh: `輜重抵 ${a.toName}：${parts.join('、') || '空車'}。`,
+        text: a.toArmy
+          ? `Supply reached the army before ${a.toName}: ${parts.join(', ') || 'empty'}.`
+          : `Supply convoy reached ${a.toName}: ${parts.join(', ') || 'empty'}.`,
+        textZh: a.toArmy
+          ? `輜重直抵前軍(${a.toName}下)：${parts.join('、') || '空車'}。`
+          : `輜重抵 ${a.toName}：${parts.join('、') || '空車'}。`,
       });
     }
     // Destination lost mid-haul — the column (and its escort) is taken.
@@ -2098,6 +2247,14 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     // grain convoy between them. These crawl the map too, so they can be raided
     // when they pass a player stronghold (your garrison sorties on their supply).
     const playerFid = input.playerForceId;
+    // 木牛流馬 — a force that fields the logistics device (an officer skill)
+    // hauls faster and loses less on EVERY column, not just hand-dispatched ones.
+    const forceHasWoodenOx = (fid: string | null | undefined): boolean =>
+      !!fid && Object.values(officers).some(
+        (o) => o.forceId === fid && o.status !== 'dead' && (o.skills ?? []).includes('wooden-ox' as never),
+      );
+    const woodenOxSeasons = (n: number, ox: boolean) => Math.max(1, Math.round(n * (ox ? 0.6 : 1)));
+    const woodenOxKeep = (seasons: number, ox: boolean) => 1 - Math.min(0.4, 0.06 * (seasons - 1)) * (ox ? 0.5 : 1);
     const aiByForce: Record<string, City[]> = {};
     for (const c of Object.values(cities)) {
       if (!c.ownerForceId || c.ownerForceId === playerFid) continue;
@@ -2114,9 +2271,39 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const ship = Math.min(rich.food - 5000, 4000);
       if (ship < 1000) continue;
       cities[rich.id] = { ...cities[rich.id], food: cities[rich.id].food - ship };
-      const seasons = Math.max(2, marchDurationFor(rich, poor, input.date.season));
+      const seasons = Math.max(2, woodenOxSeasons(marchDurationFor(rich, poor, input.date.season), forceHasWoodenOx(fid)));
       const id = `ai-convoy-${fid}-${input.date.year}-${input.date.season}-${aiSeq++}`;
       nextConvoys[id] = { id, forceId: fid, fromCityId: rich.id, toCityId: poor.id, food: ship, gold: 0, troops: 0, seasonsRemaining: seasons, totalSeasons: seasons };
+    }
+
+    // AI 前運糧秣 — a rival whose host is hungry in the field pushes grain to it
+    // from a rich rear city (直供前線), so a long siege need not simply starve.
+    // The column crawls the front, so it is exactly the player's 劫糧 quarry.
+    for (const [fid, cs] of Object.entries(aiByForce)) {
+      if (rng() >= 0.4) continue;
+      if (Object.values(nextConvoys).some((cv) => cv.forceId === fid && cv.toArmyId)) continue; // one forward column at a time
+      const host = Object.values(outArmies)
+        .filter((a) => a.forceId === fid && (a.food ?? 0) < provisionNeeded(a.troops, 2))
+        .sort((a, b) => (a.food ?? 0) - (b.food ?? 0))[0];
+      if (!host) continue;
+      const front = cities[host.targetCityId];
+      const rear = [...cs].sort((a, b) => b.food - a.food)[0];
+      if (!front || !rear || rear.food < 6000) continue;
+      const ship = Math.min(rear.food - 4000, 4000);
+      if (ship < 1000) continue;
+      // 護糧 — a column bound for a contested front rides with an escort drawn
+      // from the rear garrison (a real guard the player must overmatch to raid;
+      // the survivors reinforce the host on arrival). Drawn only from true spare.
+      const escort = Math.min(Math.max(0, rear.troops - 1200), 1500);
+      cities[rear.id] = { ...cities[rear.id], food: cities[rear.id].food - ship, troops: cities[rear.id].troops - escort };
+      const ox = forceHasWoodenOx(fid);
+      const seasons = woodenOxSeasons(marchDurationFor(rear, front, input.date.season), ox);
+      const keep = woodenOxKeep(seasons, ox);
+      const id = `ai-fwd-${fid}-${input.date.year}-${input.date.season}-${aiSeq++}`;
+      nextConvoys[id] = {
+        id, forceId: fid, fromCityId: rear.id, toCityId: front.id, toArmyId: host.id,
+        food: Math.floor(ship * keep), gold: 0, troops: Math.floor(escort * keep), seasonsRemaining: seasons, totalSeasons: seasons,
+      };
     }
 
     // 常運糧道 — the player's standing routes auto-ship any surplus grain each
@@ -2134,8 +2321,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         const shipHorses = (src.warhorses ?? 0) > 1500 ? Math.min((src.warhorses ?? 0) - 1000, 2000) : 0;
         const shipIron = (src.iron ?? 0) > 1500 ? Math.min((src.iron ?? 0) - 1000, 2000) : 0;
         if (shipFood < 1000 && shipHorses <= 0 && shipIron <= 0) continue;
-        const seasons = Math.max(1, marchDurationFor(src, dst, input.date.season));
-        const keep = 1 - Math.min(0.4, 0.06 * (seasons - 1));
+        const ox = forceHasWoodenOx(playerFid);
+        const seasons = woodenOxSeasons(marchDurationFor(src, dst, input.date.season), ox);
+        const keep = woodenOxKeep(seasons, ox);
         cities[r.fromCityId] = {
           ...cities[r.fromCityId],
           food: cities[r.fromCityId].food - shipFood,
@@ -2153,6 +2341,111 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         const cargoZh = [shipFood > 0 ? `${Math.floor(shipFood * keep).toLocaleString()} 糧` : '', shipHorses > 0 ? `${Math.floor(shipHorses * keep).toLocaleString()} 馬` : '', shipIron > 0 ? `${Math.floor(shipIron * keep).toLocaleString()} 鐵` : ''].filter(Boolean).join('、');
         entries.push({ cityId: r.toCityId, kind: 'income', text: `Standing route ships ${cargoZh} toward ${dst.name.en}.`, textZh: `常運糧道發 ${cargoZh} 往 ${dst.name.zh}。` });
       }
+    }
+  }
+
+  // 8a. 主動劫糧 — advance the player's raiding columns. A column that runs down
+  // its quarry burns the grain, loots the coin home, and takes the escort (or is
+  // beaten off by a heavier guard); a quarry already in safety is a dry hole. The
+  // raiders then ride home and rejoin the launch city's garrison. 烏巢之火.
+  if (seasonBoundary && Object.keys(nextRaids).length > 0) {
+    const keptRaids: Record<EntityId, ConvoyRaid> = {};
+    for (const raid of Object.values(nextRaids)) {
+      const remaining = raid.seasonsRemaining - 1;
+      if (remaining > 0) { keptRaids[raid.id] = { ...raid, seasonsRemaining: remaining }; continue; }
+      const target = nextConvoys[raid.targetConvoyId];
+      const outcome = resolveRaidStrike(raid, target);
+      const officer = officers[raid.officerId];
+      const home = cities[raid.fromCityId];
+      const homeOurs = !!home && home.ownerForceId === raid.forceId;
+      if (officer) officers[raid.officerId] = { ...officer, locationCityId: raid.fromCityId, status: 'idle', task: null };
+      if (homeOurs && outcome.raiderSurvivors > 0) {
+        cities[raid.fromCityId] = { ...cities[raid.fromCityId], troops: cities[raid.fromCityId].troops + outcome.raiderSurvivors };
+      }
+      const isPlayer = raid.forceId === input.playerForceId;
+      const targetWasPlayer = !!target && target.forceId === input.playerForceId; // an AI raid on us
+      if (outcome.found && outcome.success && target) {
+        delete nextConvoys[raid.targetConvoyId];
+        if (homeOurs && outcome.loot > 0) cities[raid.fromCityId] = { ...cities[raid.fromCityId], gold: cities[raid.fromCityId].gold + outcome.loot };
+        if (outcome.capturedEscortId && officers[outcome.capturedEscortId]) {
+          officers[outcome.capturedEscortId] = { ...officers[outcome.capturedEscortId], status: 'imprisoned', locationCityId: raid.fromCityId, task: null };
+        }
+        const cargo = [outcome.burnedFood > 0 ? `糧${outcome.burnedFood.toLocaleString()}` : '', outcome.loot > 0 ? `掠金${outcome.loot.toLocaleString()}` : ''].filter(Boolean).join('、');
+        if (isPlayer) {
+          const enemy = forces[target.forceId]?.name;
+          entries.push({
+            cityId: raid.fromCityId, kind: 'conquest',
+            text: `${officer?.name.en ?? 'Your raiders'} fell on ${enemy?.en ?? 'an enemy'} supply column — ${cargo || 'it'} destroyed${outcome.capturedEscortId ? ', escort captured' : ''}!`,
+            textZh: `${officer?.name.zh ?? '遊騎'}劫了${enemy?.zh ?? '敵'}糧道 — ${cargo || '輜重'}盡毀${outcome.capturedEscortId ? ',生擒押運' : ''}!`,
+          });
+        } else if (targetWasPlayer) {
+          const raider = forces[raid.forceId]?.name;
+          const esc = outcome.capturedEscortId ? officers[outcome.capturedEscortId]?.name : null;
+          entries.push({
+            cityId: raid.fromCityId, kind: 'desertion',
+            text: `${raider?.en ?? 'Enemy'} raiders cut one of your supply columns — ${cargo || 'cargo'} lost${esc ? `, ${esc.en} taken` : ''}!`,
+            textZh: `${raider?.zh ?? '敵'}輕騎劫了我糧道 — ${cargo || '輜重'}盡失${esc ? `,${esc.zh}被擒` : ''}!`,
+          });
+        }
+      } else if (isPlayer) {
+        entries.push({
+          cityId: raid.fromCityId, kind: 'desertion',
+          text: outcome.found
+            ? `${officer?.name.en ?? 'Your raiders'} were beaten off an enemy supply column.`
+            : `${officer?.name.en ?? 'Your raiders'} found the supply column already gone.`,
+          textZh: outcome.found
+            ? `${officer?.name.zh ?? '遊騎'}劫糧不成,為護糧之軍所拒。`
+            : `${officer?.name.zh ?? '遊騎'}撲空,敵糧已先入城。`,
+        });
+      } else if (targetWasPlayer && outcome.found) {
+        const raider = forces[raid.forceId]?.name;
+        entries.push({
+          cityId: raid.targetConvoyId in nextConvoys ? nextConvoys[raid.targetConvoyId].toCityId : null, kind: 'income',
+          text: `Your escort beat off ${raider?.en ?? 'an enemy'} raiding party on the supply road.`,
+          textZh: `護糧之軍擊退${raider?.zh ?? '敵'}輕騎,糧道得保。`,
+        });
+      }
+    }
+    nextRaids = keptRaids;
+  }
+
+  // 8a′. AI 劫糧 — a rival that spots one of the player's supply columns near its
+  // own territory, and can spare a strike force, sends raiders after it (its own
+  // 烏巢 move); resolves next season like the player's. This makes a deep 直供前線
+  // a genuine risk, not a free siege-saver. The player's counterplay: escort the
+  // column (its troops are the guard), take the cautious back-roads, or ship by
+  // water — a land raiding party can't catch a junk and is likelier to lose the
+  // cautious trail.
+  const pfRaidId = input.playerForceId;
+  if (seasonBoundary && pfRaidId && Object.keys(nextConvoys).length > 0) {
+    let aiRaidSeq = 0;
+    const struck = new Set<string>(Object.values(nextRaids).map((r) => r.forceId)); // one strike per force/season
+    const hunted = new Set<string>(Object.values(nextRaids).map((r) => r.targetConvoyId));
+    for (const cv of Object.values(nextConvoys)) {
+      if (cv.forceId !== pfRaidId || cv.naval || hunted.has(cv.id)) continue; // can't catch a water column
+      const from = cities[cv.fromCityId], to = cities[cv.toCityId];
+      if (!from || !to) continue;
+      const sp = cityPos(from), dp = cityPos(to);
+      const prog = Math.min(0.9, Math.max(0.1, (cv.totalSeasons - cv.seasonsRemaining + 0.5) / Math.max(1, cv.totalSeasons)));
+      const pos = positionAlongRoute(terrainRoute(sp.x, sp.y, dp.x, dp.y), prog);
+      let near: City | undefined; let nd = Infinity;
+      for (const c of Object.values(cities)) {
+        if (c.ruined || !c.ownerForceId) continue;
+        const cp = cityPos(c);
+        const d = Math.hypot(cp.x - pos.x, cp.y - pos.y);
+        if (d < nd) { nd = d; near = c; }
+      }
+      if (!near || !near.ownerForceId || near.ownerForceId === pfRaidId) continue; // our own ground is nearest → safe
+      const fid = near.ownerForceId;
+      if (struck.has(fid) || !isHostilePermitted(input.diplomacy, fid, pfRaidId)) continue;
+      if (rng() >= (cv.cautious ? 0.25 : 0.5)) continue;
+      // Commit only if the nearest stronghold can spare enough to likely overrun the escort.
+      const strike = Math.min(Math.max(0, near.troops - 1000), Math.max(1200, cv.troops + 500));
+      if (strike < 600 || strike <= cv.troops) continue;
+      cities[near.id] = { ...cities[near.id], troops: near.troops - strike };
+      struck.add(fid);
+      const id = `ai-raid-${fid}-${cv.id}-${input.date.year}-${input.date.season}-${aiRaidSeq++}`;
+      nextRaids[id] = { id, forceId: fid, officerId: '', troops: strike, fromCityId: near.id, targetConvoyId: cv.id, seasonsRemaining: 1 };
     }
   }
 
@@ -2271,6 +2564,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     keptCommands: Object.keys(keptCommands).length > 0 ? keptCommands : undefined,
     armies: outArmies,
     convoys: nextConvoys,
+    raids: nextRaids,
     expeditions: nextExpeditions,
     espionageReveals: nextEspionageReveals,
     expeditionAggressionDeltas,

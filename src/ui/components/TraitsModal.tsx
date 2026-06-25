@@ -1,4 +1,5 @@
 import { TRAIT_DEFS } from '../../game/data/personality';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { CatalogModal, type CatalogItem, type CatalogCategory } from './CatalogModal';
 import { useT } from '../i18n';
 
@@ -10,6 +11,7 @@ const CATEGORIES: CatalogCategory[] = [
 interface Props { onClose: () => void; }
 
 export function TraitsModal({ onClose }: Props) {
+  useEscapeKey(onClose);
   const t = useT();
   const items: CatalogItem[] = TRAIT_DEFS.map((tr) => ({
     id: tr.id,

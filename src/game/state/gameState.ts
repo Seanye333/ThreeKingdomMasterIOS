@@ -2,6 +2,7 @@ import type {
   Appointment,
   Building,
   City,
+  ClanStanding,
   Command,
   DiplomaticState,
   EdictKind,
@@ -43,6 +44,7 @@ import { buildInitialForts } from '../data/forts';
 import { distinctForceColors } from '../data/forceColors';
 import { buildInitialSites } from '../data/sites';
 import { FAMILY_LINEAGE } from '../data/familyLineage';
+import { deriveInitialClanStandings } from '../systems/clans';
 import { buildHistoricalOfficers } from '../data/officers';
 import { loadMods, modEventsForStart, modOfficersForStart } from '../systems/mods';
 import { bestPrestige } from '../data/prestige';
@@ -123,8 +125,13 @@ export interface GameState {
   runtimeBonds: OathBond[];
   /** 聯姻同盟 — binding marriage alliances the player has sealed. */
   marriageAlliances: import('../types/diplomacy').MarriageAlliance[];
-  /** Pairwise officer rapport (好感, 0–100) grown via social actions. */
+  /** Pairwise officer rapport (好感, −100..100) — positive grown via social
+   *  actions/co-service, negative accrued from friction (嫌隙) and 離間計. */
   rapport: Record<string, number>;
+  /** 君臣好感 — each officer's feeling toward their CURRENT lord (−100..100).
+   *  Keyed by officerId (follows whoever they serve). High → 心腹 (defection-proof,
+   *  pre-warns of plots); low/negative → feeds ambition, eases enemy 策反. */
+  lordRapport: Record<EntityId, number>;
   battleHistory: HistoricBattle[];
   /** Civic title appointments — one entry per held post. */
   appointments: Appointment[];
@@ -201,6 +208,9 @@ export interface GameState {
   family: FamilyRelation[];
   /** Pending heirs that will activate when they come of age. */
   pendingHeirs: PendingHeir[];
+  /** 家門聲望 — accrued clan standing keyed by clan id (curated id or an
+   *  emergent `house-<founderId>`). Recomputed yearly. See systems/clans.ts. */
+  clanStandings: Record<string, ClanStanding>;
   /** Officer wishes awaiting player response. */
   officerWishes: OfficerWish[];
   /** Pending grant/reject report entries to prepend to next season report. */
@@ -237,6 +247,9 @@ export interface GameState {
   itemBreakthroughs: Record<EntityId, number>;
   /** 鑲嵌 — per-item socketed gem ids (length ≤ socketsFor(item)). */
   itemGems: Record<EntityId, string[]>;
+  /** 名器威名 — per-item accumulated battle-renown (人器合一). Grows as the item is
+   *  carried through battle; lifts its effects + eases 兵器駕馭. Absent/0 = unblooded. */
+  itemLore: Record<EntityId, number>;
   /** 寶石庫存 — gems on hand (from 熔毀 drops etc.); socketing spends these
    *  before buying with gold. Keyed by gem id → count. */
   gemStock: Record<EntityId, number>;
@@ -285,6 +298,9 @@ export interface GameState {
    *  inflation (0–100), which saps every city's tax income until it eases. 0 by
    *  default, so a realm that never mints is wholly unaffected. */
   inflation: number;
+  /** 禁運 — standing 專營 embargoes a monopolist force has imposed on rivals,
+   *  cutting them off a strategic good. Empty/undefined = free trade. */
+  embargoes?: import('../data/specialties').Embargo[];
   /** 度支沿革 — the player realm's treasury gold at each season-end, newest
    *  last, capped at 8. Powers the 度支簿 trend sparkline. */
   treasuryHistory?: number[];
@@ -298,6 +314,9 @@ export interface GameState {
   merchantLoan?: { owed: number; perSeason: number } | null;
   /** 輜重 — supply convoys (運糧/運金車) crawling between your cities. */
   convoys: Record<EntityId, import('../systems/convoy').Convoy>;
+  /** 主動劫糧 — raiding columns (遊騎) sent out to run down a spotted enemy supply
+   *  convoy; they intercept after a season, then ride home (the 烏巢 move). */
+  raids: Record<EntityId, import('../systems/convoy').ConvoyRaid>;
   /** 游历 — lone officers roaming abroad (探索/出使/策反/刺探), in transit. */
   expeditions: Record<EntityId, import('../types').Expedition>;
   /** 絲路通商 — distant realms a 遠使 embassy has opened (realmId → frontier
@@ -395,6 +414,11 @@ export interface GameState {
    *  `lifespanMode`. 'short' = die sooner, 'long' = live longer. Default
    *  'historical' (×1). */
   lifespanLength: 'short' | 'historical' | 'long';
+  /** 變老不影響屬性 — when true, the §2.4 age-driven stat drift is disabled:
+   *  no 遲暮 武力/統率 decline AND no 智政晚成 智力/政治 growth. Officers still
+   *  age, gain/shed traits, and die — only their five 圍 are frozen vs age.
+   *  Default false. */
+  agingStatLock: boolean;
   /** 在野登場 — how readily 搜索人才 turns up hidden officers. 'scarce' ×0.6,
    *  'normal', 'plentiful' ×1.4 on the search success chance. Default 'normal'. */
   talentDiscovery: 'scarce' | 'normal' | 'plentiful';
@@ -506,6 +530,7 @@ export const EMPTY_STATE: GameState = {
   runtimeBonds: [],
     marriageAlliances: [],
   rapport: {},
+  lordRapport: {},
   battleHistory: [],
   appointments: [],
   appointmentHistory: [],
@@ -540,6 +565,7 @@ export const EMPTY_STATE: GameState = {
   armies: {},
   family: [],
   pendingHeirs: [],
+  clanStandings: {},
   officerWishes: [],
   pendingWishEntries: [],
   endingsAchieved: [],
@@ -554,6 +580,7 @@ export const EMPTY_STATE: GameState = {
   itemRefinements: {},
   itemBreakthroughs: {},
   itemGems: {},
+  itemLore: {},
   gemStock: {},
   knownRecipes: STARTER_RECIPE_IDS.slice(),
   itemHistory: [],
@@ -571,6 +598,7 @@ export const EMPTY_STATE: GameState = {
   inflation: 0,
   treasuryHistory: [],
   convoys: {},
+  raids: {},
   expeditions: {},
   openedRealms: {},
   realmRelations: {},
@@ -602,6 +630,7 @@ export const EMPTY_STATE: GameState = {
   aiStartTroops: 'even',
   battleDifficulty: null,
   lifespanLength: 'historical',
+  agingStatLock: false,
   talentDiscovery: 'normal',
   duelFrequency: 'normal',
   disasterFrequency: 'normal',
@@ -841,6 +870,7 @@ export function loadScenario(
     runtimeBonds: [],
     marriageAlliances: [],
     rapport: {},
+    lordRapport: {},
     battleHistory: [],
     appointments: [],
   appointmentHistory: [],
@@ -894,6 +924,10 @@ export function loadScenario(
       return FAMILY_LINEAGE.filter((r) => idSet.has(r.officerA) && idSet.has(r.officerB));
     })(),
     pendingHeirs: [],
+    // 家門聲望 — seed each clan house's standing from its starting members.
+    clanStandings: deriveInitialClanStandings(
+      Object.fromEntries(officers.map((o) => [o.id, o])),
+    ),
     officerWishes: [],
   pendingWishEntries: [],
     endingsAchieved: state.endingsAchieved,
@@ -905,6 +939,7 @@ export function loadScenario(
     itemRefinements: {},
   itemBreakthroughs: {},
   itemGems: {},
+  itemLore: {},
   gemStock: {},
     knownRecipes: STARTER_RECIPE_IDS.slice(),
     itemHistory: [],
@@ -925,6 +960,7 @@ export function loadScenario(
     inflation: state.startInflation ?? 0,
     merchantLoan: null,
     convoys: state.convoys ?? {},
+    raids: state.raids ?? {},
     expeditions: state.expeditions ?? {},
     openedRealms: state.openedRealms ?? {},
     realmRelations: state.realmRelations ?? {},
@@ -949,6 +985,7 @@ export function loadScenario(
     aiStartTroops: state.aiStartTroops ?? 'even',
     battleDifficulty: state.battleDifficulty ?? null,
     lifespanLength: state.lifespanLength ?? 'historical',
+    agingStatLock: state.agingStatLock ?? false,
     talentDiscovery: state.talentDiscovery ?? 'normal',
     duelFrequency: state.duelFrequency ?? 'normal',
     disasterFrequency: state.disasterFrequency ?? 'normal',

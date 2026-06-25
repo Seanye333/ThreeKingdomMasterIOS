@@ -16,13 +16,13 @@ import { OFFICER_RELATIONSHIPS } from '../data/relationships';
 import { SKILLS_BY_ID } from '../data/skills';
 import { getEliteTroop } from '../data/eliteTroops';
 import { deriveTactics, tacticsTotalBonus, combosPowerMultiplier, findActiveCombos } from '../data/officerAttributes';
-import { combatModifiers, conquestLoyaltyMod, type CombatMods } from './traitEffects';
+import { combatModifiers, conquestLoyaltyMod, combatRoleFit, type CombatMods } from './traitEffects';
 import { describeBattleSite, isRiverside } from '../data/geography';
 import { cityPos } from '../data/cityGeo';
-import { sidePoolRelationshipBonus, rivalShowdownMultiplier } from './relationshipEffects';
+import { sidePoolRelationshipBonus, rivalShowdownMultiplier, parentsOf, childrenOf, spousesOf, siblingsOf, allSwornBrothersOf, swornAcrossLinesPenalty, areSwornBrothers } from './relationshipEffects';
 import { effectivePrestigeEffects } from '../data/prestige';
 import { honorificEffects } from '../data/honorifics';
-import { gradeAuraPowerMul, gradeAuraMorale, itemMasteryMul } from './gradeCombat';
+import { gradeAuraPowerMul, gradeAuraMorale, itemMasteryMul, enemyMoraleShock, holdsTheLine } from './gradeCombat';
 import { growthPowerMul } from './growth';
 import { itemSetBonuses } from '../data/itemSets';
 import { selectSiegeEngine } from '../data/siegeEngines';
@@ -321,6 +321,8 @@ export interface BattleContext {
   family?: import('../types/family').FamilyRelation[];
   /** Runtime oath bonds (義兄弟 結拜 / rapport) — sworn-brother combat synergy. */
   runtimeBonds?: import('../data/bonds').OathBond[];
+  /** Pairwise officer rapport (好感, −100..100) — graded same-side synergy/friction. */
+  rapport?: Record<string, number>;
   /** Civic-title power multipliers per side (軍師/太尉/丞相 etc.). */
   attackerTitlePowerMul?: number;
   defenderTitlePowerMul?: number;
@@ -537,8 +539,9 @@ export function resolveBattle(
   // R1 — Relationship bonuses
   const family = ctx?.family ?? [];
   const bonds = ctx?.runtimeBonds ?? [];
-  const aRelBonus = sidePoolRelationshipBonus(attackerPool, family, bonds);
-  const dRelBonus = sidePoolRelationshipBonus(defenderPool, family, bonds);
+  const rapport = ctx?.rapport ?? {};
+  const aRelBonus = sidePoolRelationshipBonus(attackerPool, family, bonds, rapport);
+  const dRelBonus = sidePoolRelationshipBonus(defenderPool, family, bonds, rapport);
   // Rival showdown (commanders are rivals) — both sides get an attack boost
   const rivalMul = rivalShowdownMultiplier(attacker.commander, defender.commander);
 
@@ -653,12 +656,21 @@ export function resolveBattle(
   const surpriseTilt = stratEffect.surpriseRoll ?? 0;
   const attackerWins = roll < aRatio + 0.05 + surpriseTilt;
 
-  // Duel: rare event when both commanders have war ≥ 80.
+  // Duel: rare event when both commanders have war ≥ 80. 鬥將/武勇 actively seek
+  // single combat, so a duel-seeker on either side makes it markedly likelier.
+  const duelSeekers = (o: Officer) => (o.traits as string[] | undefined ?? [])
+    .some((t) => t === 'duelist' || t === 'martial-valor' || t === 'reckless');
+  const duelSeekMul = (duelSeekers(attacker.commander) ? 1.6 : 1)
+    * (duelSeekers(defender.commander) ? 1.6 : 1);
+  // 義不相殘 — sworn brothers across the line will not seek each other's blood;
+  // the bout simply never happens (the cross-line morale bite is felt instead).
+  const swornAcross = areSwornBrothers(attacker.commander.id, defender.commander.id, bonds);
   let duel: BattleResult['duel'];
   if (
+    !swornAcross &&
     attacker.commander.stats.war >= 80 &&
     defender.commander.stats.war >= 80 &&
-    rng() < 0.12 * (ctx?.duelChanceMul ?? 1)
+    rng() < 0.12 * (ctx?.duelChanceMul ?? 1) * duelSeekMul
   ) {
     const aCmd = effectsForOfficer(attacker.commander);
     const dCmd = effectsForOfficer(defender.commander);
@@ -676,10 +688,15 @@ export function resolveBattle(
   // Each side starts at 60 + commander leadership/10. Phases shift morale by
   // power-ratio dynamics, stratagem surprise, duel outcomes, and elite presence.
   const phases: BattlePhaseLog[] = [];
-  // 品階威儀 — a graded commander steadies the line, opening with higher morale.
-  let aMorale = clamp(60 + attacker.commander.stats.leadership / 10 + gradeAuraMorale(attackerPool), 0, 100);
+  // 品階威儀 — a graded commander steadies his own line (gradeAuraMorale) AND
+  // 萬軍辟易 shakes the enemy's (enemyMoraleShock): facing a legend, the foe opens lower.
+  // 同袍士氣 — relationship morale (sworn/family/好感 lift; 宿怨 drag) plus the
+  // divided heart of facing a sworn brother across the line. Small but real.
+  const aRelMorale = (aRelBonus.moraleResist + swornAcrossLinesPenalty(attackerPool, defenderPool, bonds)) * 15;
+  const dRelMorale = (dRelBonus.moraleResist + swornAcrossLinesPenalty(defenderPool, attackerPool, bonds)) * 15;
+  let aMorale = clamp(60 + attacker.commander.stats.leadership / 10 + gradeAuraMorale(attackerPool) - enemyMoraleShock(defenderPool) + aRelMorale, 0, 100);
   let dMorale = defender.commander
-    ? clamp(60 + defender.commander.stats.leadership / 10 + gradeAuraMorale(defenderPool), 0, 100)
+    ? clamp(60 + defender.commander.stats.leadership / 10 + gradeAuraMorale(defenderPool) - enemyMoraleShock(attackerPool) + dRelMorale, 0, 100)
     : 30;
 
   // Phase 1 — Formation (兵陣)
@@ -734,12 +751,14 @@ export function resolveBattle(
   let finalAttackerWins = attackerWins;
   let extraDefenderLosses = 0;
   let extraAttackerLosses = 0;
+  // 不動如山 — a 白金+ commander's host breaks in good order: a rout costs it far
+  // fewer extra casualties (0.10 instead of 0.25).
   if (dMorale < 25 && aMorale > 35) {
     finalAttackerWins = true;
-    extraDefenderLosses = Math.floor(defenderSurvivors * 0.25);
+    extraDefenderLosses = Math.floor(defenderSurvivors * (holdsTheLine(defenderPool) ? 0.10 : 0.25));
   } else if (aMorale < 25 && dMorale > 35) {
     finalAttackerWins = false;
-    extraAttackerLosses = Math.floor(attackerSurvivors * 0.25);
+    extraAttackerLosses = Math.floor(attackerSurvivors * (holdsTheLine(attackerPool) ? 0.10 : 0.25));
   }
 
   // Phase 4 — Pursuit (追擊). Only if attacker won + chose to pursue.
@@ -883,6 +902,8 @@ export interface MarchContext {
   family?: import('../types/family').FamilyRelation[];
   /** Runtime oath bonds (義兄弟 結拜 / rapport) — sworn-brother combat synergy. */
   runtimeBonds?: import('../data/bonds').OathBond[];
+  /** Pairwise officer rapport (好感, −100..100) — graded same-side synergy/friction. */
+  rapport?: Record<string, number>;
   /** Civic-title appointments — derive per-force power multiplier per battle. */
   appointments?: import('../types').Appointment[];
   /** Active casus-belli marks (from 討伐令). Attacker gets +10% vs target. */
@@ -962,9 +983,14 @@ export function handleMarch(
       o.forceId === target.ownerForceId &&
       o.status === 'idle',
   );
+  // 適才適所 — pick the defender whose specialist traits fit the fight (善守 on a
+  // wall, 水將 on a river), not merely the highest 武力.
+  const defNaval = isWaterBattle({ city: target });
   const defenderCommander =
-    defenderOfficers.sort((a, b) => b.stats.war - a.stats.war)[0] ??
-    fallbackCommander(target);
+    [...defenderOfficers].sort((a, b) =>
+      b.stats.war * combatRoleFit(b, { isSiege: true, isNaval: defNaval, isDefense: true })
+      - a.stats.war * combatRoleFit(a, { isSiege: true, isNaval: defNaval, isDefense: true }),
+    )[0] ?? fallbackCommander(target);
 
   // Gather marching companions (multi-officer armies).
   const companions: Officer[] = (cmd.additionalOfficerIds ?? [])
@@ -1075,6 +1101,7 @@ export function handleMarch(
       attackerDamageMul: slotEffects.attackerDamageMul,
       family: ctx.family,
       runtimeBonds: ctx.runtimeBonds,
+      rapport: ctx.rapport,
       attackerTitlePowerMul: attackerTitlePowerMul * siegeMods.attackerPowerMul,
       defenderTitlePowerMul: defenderTitlePowerMul * siegeMods.defenderPowerMul * terrainDefMul * foreignAuxDefenseMultiplier(target.foreignAux) * cityDrillDefenseMultiplier(target.drill),
       attackerCasusBelliMul,
@@ -1089,15 +1116,51 @@ export function handleMarch(
 
   // Wounded officers: apply 'wounded' status with recovery countdown.
   if (result.wounded) {
+    // 戰陣藥營 — a side with 藥材 dresses its grave wounds in the field: it
+    // downgrades severity (so fewer later die of their wounds — see the 瀕死 roll)
+    // and shortens convalescence, spending medicine from that realm's stores.
+    const MED_COST = 120;
+    const medPool: Record<string, number> = {};
+    const medTotal = (fid: string | null | undefined): number => {
+      if (!fid) return 0;
+      if (medPool[fid] == null) medPool[fid] = Object.values(cities).reduce((sum, c) => c.ownerForceId === fid ? sum + (c.medicine ?? 0) : sum, 0);
+      return medPool[fid];
+    };
+    const spendMed = (fid: string, amount: number) => {
+      medPool[fid] = Math.max(0, (medPool[fid] ?? 0) - amount);
+      let rem = amount;
+      for (const c of Object.values(cities)) {
+        if (rem <= 0) break;
+        if (c.ownerForceId !== fid || (c.medicine ?? 0) <= 0) continue;
+        const take = Math.min(c.medicine ?? 0, rem);
+        cities[c.id] = { ...c, medicine: (c.medicine ?? 0) - take };
+        rem -= take;
+      }
+    };
     for (const w of result.wounded) {
       const o = officers[w.officerId];
       if (!o || o.status === 'dead') continue;
+      let severity = w.severity;
+      let seasons = w.seasons;
+      const fid = o.forceId;
+      if (fid && (severity === 'critical' || severity === 'serious') && medTotal(fid) >= MED_COST) {
+        spendMed(fid, MED_COST);
+        severity = severity === 'critical' ? 'serious' : 'minor';
+        seasons = Math.max(1, seasons - 2);
+        if (fid === ctx.playerForceId) {
+          entries.push({
+            cityId: target.id, kind: 'note',
+            text: `Field hospital (藥營) tended ${o.name.en}'s wounds — severity eased.`,
+            textZh: `戰陣藥營救治${o.name.zh},傷勢得緩、復出有期。`,
+          });
+        }
+      }
       officers[w.officerId] = {
         ...o,
         status: 'wounded',
         task: null,
-        woundedSeasons: w.seasons,
-        woundSeverity: w.severity,
+        woundedSeasons: seasons,
+        woundSeverity: severity,
       };
     }
   }
@@ -1169,6 +1232,26 @@ export function handleMarch(
         text: `Duel! ${result.duel.winner.name.en} slew ${result.duel.loser.name.en} on the field.`,
         textZh: `一騎討！${result.duel.winner.name.zh}陣前斬${result.duel.loser.name.zh}。`,
       });
+      // 復仇種子 — record the slayer's force on each surviving close relative of
+      // the fallen, so a `vengeful` kin bears a grudge in future battles.
+      const killerForce = result.duel.winner.forceId;
+      if (killerForce) {
+        const fam = ctx?.family ?? [];
+        const loserId = result.duel.loser.id;
+        const relIds = [...parentsOf(loserId, fam), ...childrenOf(loserId, fam), ...spousesOf(loserId, fam), ...siblingsOf(loserId, fam)];
+        for (const relId of relIds) {
+          const rel = officers[relId];
+          if (!rel || rel.status === 'dead') continue;
+          officers[relId] = { ...rel, killedRelativesBy: { ...(rel.killedRelativesBy ?? {}), [loserId]: killerForce } };
+        }
+        // 為兄弟復仇 — a fallen brother's sworn kin bear a grudge against the slayer's
+        // force (combat bonus vs them, no `vengeful` trait required).
+        for (const swornId of allSwornBrothersOf(loserId, ctx?.runtimeBonds ?? [])) {
+          const sw = officers[swornId];
+          if (!sw || sw.status === 'dead') continue;
+          officers[swornId] = { ...sw, killedSwornBy: { ...(sw.killedSwornBy ?? {}), [loserId]: killerForce } };
+        }
+      }
       officers[result.duel.loser.id] = {
         ...officers[result.duel.loser.id],
         status: 'dead',
