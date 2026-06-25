@@ -21,7 +21,7 @@ import { describeBattleSite, isRiverside } from '../data/geography';
 import { cityPos } from '../data/cityGeo';
 import { sidePoolRelationshipBonus, rivalShowdownMultiplier, parentsOf, childrenOf, spousesOf, siblingsOf, allSwornBrothersOf, swornAcrossLinesPenalty, areSwornBrothers } from './relationshipEffects';
 import { effectivePrestigeEffects } from '../data/prestige';
-import { honorificEffects } from '../data/honorifics';
+import { honorificEffects, honorificById } from '../data/honorifics';
 import { gradeAuraPowerMul, gradeAuraMorale, itemMasteryMul, enemyMoraleShock, holdsTheLine } from './gradeCombat';
 import { growthPowerMul } from './growth';
 import { itemSetBonuses } from '../data/itemSets';
@@ -184,6 +184,30 @@ export function prestigeCombatMultiplier(pool: Officer[]): number {
     best = Math.max(best, effectivePrestigeEffects(o).combatPowerMul, honorificEffects(o).combatPowerMul);
   }
   return Math.min(1.12, best);
+}
+
+/**
+ * 名號各司其職 — a held 名號將軍 lends a SITUATIONAL edge when the battle matches
+ * its theme: 水戰 on water; 攻城/平叛/征討 when assaulting a city; 鎮撫 when
+ * defending one's own walls; 武勇/平叛/征討 in an open field clash. Best single
+ * match per side, +4% base +1%/tier, capped at +10%. Pure.
+ */
+export function honorificThemeMul(
+  pool: Officer[],
+  ctx: { water: boolean; siege: boolean; defending: boolean },
+): number {
+  let best = 1;
+  for (const o of pool) {
+    const h = honorificById(o.honorificId);
+    if (!h) continue;
+    const matches = ctx.water
+      ? h.theme === 'naval'
+      : ctx.siege
+        ? (ctx.defending ? h.theme === 'steward' : (h.theme === 'siege' || h.theme === 'rebel' || h.theme === 'frontier'))
+        : (h.theme === 'valor' || h.theme === 'rebel' || h.theme === 'frontier');
+    if (matches) best = Math.max(best, 1 + 0.04 + (h.tier - 1) * 0.01);
+  }
+  return Math.min(1.10, best);
 }
 
 /**
@@ -558,6 +582,9 @@ export function resolveBattle(
   // 威名 — a side led by famous names hits harder.
   const aPrestigeMul = prestigeCombatMultiplier(attackerPool);
   const dPrestigeMul = prestigeCombatMultiplier(defenderPool);
+  // 名號各司其職 — situational honorific edge by battle type (水戰/攻城/守城/野戰).
+  const aThemeMul = honorificThemeMul(attackerPool, { water, siege: isSiegeBattle, defending: false });
+  const dThemeMul = honorificThemeMul(defenderPool, { water, siege: isSiegeBattle, defending: true });
   // 品階威儀 — a side led by high-grade officers fights above its numbers.
   const aGradeMul = gradeAuraPowerMul(attackerPool);
   const dGradeMul = gradeAuraPowerMul(defenderPool);
@@ -572,7 +599,7 @@ export function resolveBattle(
   const aPower =
     aBlended * Math.sqrt(attacker.troops) * aSkillEffects.powerMultiplier * aElitePower *
     (stratEffect.attackerPowerMul ?? 1) * aPolicy.attackMul * aTraitMods.attackMul * aComboMul *
-    aRelBonus.powerMul * rivalMul * aTitlePowerMul * aCasusMul * aNavalMul * aGuardMul * aPrestigeMul * aGradeMul * aSetMul;
+    aRelBonus.powerMul * rivalMul * aTitlePowerMul * aCasusMul * aNavalMul * aGuardMul * aPrestigeMul * aThemeMul * aGradeMul * aSetMul;
 
   const defenderIds = defenderPool.map((o) => o.id);
   const dBaseBlended =
@@ -608,7 +635,7 @@ export function resolveBattle(
     dElitePower *
     (stratEffect.defenderPowerMul ?? 1) *
     dPolicy.attackMul * dTraitMods.attackMul * dComboMul * dRelBonus.powerMul * rivalMul *
-    dTitlePowerMul * dCasusMul * dNavalMul * dGuardMul * dPrestigeMul * dGradeMul * dSetMul / Math.max(0.5, dPolicy.defenseMul);
+    dTitlePowerMul * dCasusMul * dNavalMul * dGuardMul * dPrestigeMul * dThemeMul * dGradeMul * dSetMul / Math.max(0.5, dPolicy.defenseMul);
 
   const total = aPower + dPower || 1;
   const aRatio = aPower / total;

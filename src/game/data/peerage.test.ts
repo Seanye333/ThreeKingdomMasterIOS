@@ -8,6 +8,7 @@ import {
   meritScore,
   highestEligiblePeerage,
   peerageEffects,
+  demotedPeerage,
 } from './peerage';
 
 function mkOfficer(over: Partial<Officer> = {}): Officer {
@@ -113,5 +114,18 @@ describe('peerageEffects', () => {
   it('peerageTier orders held peerages', () => {
     expect(peerageTier('wang')).toBeGreaterThan(peerageTier('guannei'));
     expect(peerageTier(undefined)).toBe(0);
+  });
+});
+
+describe('demotedPeerage (遞降襲爵)', () => {
+  it('an heir inherits the title one tier lower', () => {
+    const lower = demotedPeerage('wang');
+    expect(lower).not.toBeNull();
+    expect(peerageTier(lower)).toBe(peerageTier('wang') - 1);
+  });
+
+  it('the lowest rung leaves nothing to inherit', () => {
+    expect(demotedPeerage('wudafu')).toBeNull(); // tier 1 — line ends
+    expect(demotedPeerage(undefined)).toBeNull();
   });
 });

@@ -12,7 +12,7 @@ import type { HeroicDeeds } from '../types/deeds';
 import type { PeerageId } from '../types/title';
 import { CIVIC_TITLES, CIVIC_TITLES_BY_ID, MILITARY_RANKS, MILITARY_RANKS_BY_ID } from '../data/titles';
 import { highestEligiblePeerage } from '../data/peerage';
-import { highestEligibleHonorific } from '../data/honorifics';
+import { bestFitHonorific } from '../data/honorifics';
 import { traitRefusal } from './appointmentEffects';
 import { officerGrade, gradeRank } from './officerGrade';
 
@@ -172,9 +172,9 @@ export function planAIAppointments(ctx: AIAppointmentsContext): AIAppointmentsOu
 
     // 賜名號 pass — bestow a martial honorific on the single most-deserving
     // general lacking a high one. Scarce, like enfeoffment: one per season.
-    let bestHon: { officer: Officer; def: ReturnType<typeof highestEligibleHonorific> } | null = null;
+    let bestHon: { officer: Officer; def: ReturnType<typeof bestFitHonorific> } | null = null;
     for (const o of forceOfficers) {
-      const next = highestEligibleHonorific(officers[o.id] ?? o, ctx.deeds?.[o.id]);
+      const next = bestFitHonorific(officers[o.id] ?? o, ctx.deeds?.[o.id]);
       if (!next) continue;
       if (!bestHon || next.tier > (bestHon.def?.tier ?? 0)) {
         bestHon = { officer: officers[o.id] ?? o, def: next };

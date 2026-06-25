@@ -121,4 +121,29 @@ describe('resolveAmbitions', () => {
     expect(sawUsurp).toBe(false);
     expect(sawBreakaway).toBe(true);
   });
+
+  it('封爵養虎 — a great fief makes a discontented landed noble likelier to rebel', () => {
+    const rebellions = (peerageId?: string) => {
+      let count = 0;
+      for (let seed = 0; seed < 300; seed++) {
+        const cities = {
+          cap: mkCity({ id: 'cap', ownerForceId: 'wei' }),
+          border: mkCity({ id: 'border', ownerForceId: 'wei', troops: 6000 }),
+        };
+        const forces = { wei: mkForce({ id: 'wei', rulerOfficerId: 'lord', capitalCityId: 'cap' }) };
+        const officers = {
+          lord: mkOfficer({ id: 'lord', forceId: 'wei', locationCityId: 'cap', loyalty: 100, stats: { war: 40, leadership: 40, intelligence: 40, politics: 40 } }),
+          rebel: mkOfficer({
+            id: 'rebel', forceId: 'wei', locationCityId: 'border', loyalty: 10, grievanceCount: 3,
+            traits: ['ambitious'] as never, stats: { war: 95, leadership: 95, intelligence: 90, politics: 80 },
+            ...(peerageId ? { peerageId: peerageId as never } : {}),
+          }),
+        };
+        if (resolveAmbitions({ officers, cities, forces, playerForceId: null, seed }).length > 0) count++;
+      }
+      return count;
+    };
+    // The same discontented noble rebels more often when he holds a 王 fief.
+    expect(rebellions('wang')).toBeGreaterThan(rebellions(undefined));
+  });
 });

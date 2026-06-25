@@ -11,7 +11,7 @@ import { PEERAGES, peerageById, peerageTier, meritScore } from '../../game/data/
 import { STATECRAFT } from '../../game/data/statecraft';
 import { DYNASTY_TITLES, ERA_NAMES } from '../../game/data/foundingNames';
 import { useEscapeKey } from '../hooks/useEscapeKey';
-import { HONORIFICS, honorificById, honorificTier, HONORIFIC_THEME_ZH } from '../../game/data/honorifics';
+import { HONORIFICS, honorificById, honorificTier, HONORIFIC_THEME_ZH, bestFitHonorific, honorificThemeFit } from '../../game/data/honorifics';
 
 function pickBestFit(
   officers: Officer[],
@@ -45,7 +45,9 @@ export function TitlesModal({ onClose }: Props) {
   const revokeTitle = useGameStore((s) => s.revokeTitle);
   const promoteOfficer = useGameStore((s) => s.promoteOfficer);
   const grantPeerage = useGameStore((s) => s.grantPeerage);
+  const revokePeerage = useGameStore((s) => s.revokePeerage);
   const grantHonorific = useGameStore((s) => s.grantHonorific);
+  const revokeHonorific = useGameStore((s) => s.revokeHonorific);
   const setRecruitmentStance = useGameStore((s) => s.setRecruitmentStance);
   const setStatecraft = useGameStore((s) => s.setStatecraft);
   const holdFoundingCeremony = useGameStore((s) => s.holdFoundingCeremony);
@@ -326,6 +328,10 @@ export function TitlesModal({ onClose }: Props) {
                 const r = grantPeerage(officerId, peerageId);
                 if (!r.ok) alert(r.reason ?? 'Failed');
               }}
+              onRevoke={(officerId) => {
+                const r = revokePeerage(officerId);
+                if (!r.ok) alert(r.reason ?? 'Failed');
+              }}
             />
           )}
           {tab === 'honorific' && (
@@ -334,6 +340,10 @@ export function TitlesModal({ onClose }: Props) {
               deeds={deeds}
               onGrant={(officerId, honorificId) => {
                 const r = grantHonorific(officerId, honorificId);
+                if (!r.ok) alert(r.reason ?? 'Failed');
+              }}
+              onRevoke={(officerId) => {
+                const r = revokeHonorific(officerId);
                 if (!r.ok) alert(r.reason ?? 'Failed');
               }}
             />
@@ -633,11 +643,13 @@ function PeerageTab({
   deeds,
   sovereign,
   onGrant,
+  onRevoke,
 }: {
   ownOfficers: Officer[];
   deeds: Record<EntityId, import('../../game/types').HeroicDeeds>;
   sovereign: boolean;
   onGrant: (officerId: EntityId, peerageId: import('../../game/types').PeerageId) => void;
+  onRevoke: (officerId: EntityId) => void;
 }) {
   const lang = useLanguage();
   const [selectedId, setSelectedId] = useState<EntityId | null>(null);
@@ -647,8 +659,34 @@ function PeerageTab({
     () => [...ownOfficers].sort((a, b) => meritScore(b, deeds[b.id]) - meritScore(a, deeds[a.id])),
     [ownOfficers, deeds],
   );
+  // 本朝封爵 — everyone who currently holds a fief, grandest first.
+  const peers = useMemo(
+    () => ownOfficers.filter((o) => o.peerageId).sort((a, b) => peerageTier(b.peerageId) - peerageTier(a.peerageId)),
+    [ownOfficers],
+  );
+  const totalFief = peers.reduce((s, o) => {
+    const p = peerageById(o.peerageId);
+    return { gold: s.gold + (p?.fiefGold ?? 0), grain: s.grain + (p?.fiefGrain ?? 0) };
+  }, { gold: 0, grain: 0 });
   return (
     <div>
+      {peers.length > 0 && (
+        <div style={{ marginBottom: '0.9rem', border: '1px solid #2b3845', background: '#10161e', padding: '0.5rem 0.7rem' }}>
+          <div style={{ fontSize: '0.7rem', letterSpacing: '0.07rem', color: '#7a8893', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+            {lang === 'en' ? `Peerage of the realm (${peers.length}) · fiefs +${totalFief.gold}g +${totalFief.grain} grain/s` : `本朝封爵(${peers.length})· 食邑合計每季 +${totalFief.gold}金 +${totalFief.grain}糧`}
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {peers.map((o) => {
+              const p = peerageById(o.peerageId);
+              return (
+                <span key={o.id} style={{ fontSize: '0.76rem', color: '#caa53d', border: '1px solid #5a4a2a', borderRadius: 3, padding: '0.05rem 0.4rem' }}>
+                  <Name pair={o.name} /> · {p ? (lang === 'en' ? p.name.en : p.name.zh) : ''}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
       <div className={styles.pickerLabel}>
         {sovereign
           ? (lang === 'en' ? 'Select officer (公/王 unlocked)' : '選擇武將(已可封公/王)')
@@ -682,6 +720,22 @@ function PeerageTab({
             <span className={styles.officerStats} style={{ marginLeft: '0.5rem' }}>
               {lang === 'en' ? 'merit' : '功勳'} {meritScore(selected, deeds[selected.id])}
             </span>
+            {selected.peerageId && (
+              <button
+                onClick={() => {
+                  const peer = peerageById(selected.peerageId);
+                  const name = peer ? (lang === 'en' ? peer.name.en : peer.name.zh) : '';
+                  if (confirm(lang === 'en'
+                    ? `Strip ${selected.name.en} of ${name}? Their loyalty will fall sharply.`
+                    : `削去${selected.name.zh}的${name}?其忠誠將大跌。`)) onRevoke(selected.id);
+                }}
+                style={{
+                  marginLeft: '0.6rem', fontSize: '0.72rem', cursor: 'pointer',
+                  background: 'none', border: '1px solid #7a3a2a', color: '#c97a5a',
+                  borderRadius: 3, padding: '0.1rem 0.45rem', fontFamily: 'inherit',
+                }}
+              >{lang === 'en' ? 'Strip title' : '削爵'}</button>
+            )}
           </div>
           {PEERAGES.map((p) => {
             const merit = meritScore(selected, deeds[selected.id]);
@@ -726,10 +780,12 @@ function HonorificTab({
   ownOfficers,
   deeds,
   onGrant,
+  onRevoke,
 }: {
   ownOfficers: Officer[];
   deeds: Record<EntityId, import('../../game/types').HeroicDeeds>;
   onGrant: (officerId: EntityId, honorificId: string) => void;
+  onRevoke: (officerId: EntityId) => void;
 }) {
   const lang = useLanguage();
   const [selectedId, setSelectedId] = useState<EntityId | null>(null);
@@ -738,8 +794,32 @@ function HonorificTab({
     () => [...ownOfficers].sort((a, b) => meritScore(b, deeds[b.id]) - meritScore(a, deeds[a.id])),
     [ownOfficers, deeds],
   );
+  // 本朝名號 — everyone bearing a martial honorific, grandest first.
+  const bearers = useMemo(
+    () => ownOfficers.filter((o) => o.honorificId).sort((a, b) => honorificTier(b.honorificId) - honorificTier(a.honorificId)),
+    [ownOfficers],
+  );
+  // 宜授 — the title we'd recommend for the selected officer (適才適號).
+  const rec = selected ? bestFitHonorific(selected, deeds[selected.id]) : null;
   return (
     <div>
+      {bearers.length > 0 && (
+        <div style={{ marginBottom: '0.9rem', border: '1px solid #2b3845', background: '#10161e', padding: '0.5rem 0.7rem' }}>
+          <div style={{ fontSize: '0.7rem', letterSpacing: '0.07rem', color: '#7a8893', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+            {lang === 'en' ? `Honorifics of the realm (${bearers.length})` : `本朝名號(${bearers.length})`}
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {bearers.map((o) => {
+              const hon = honorificById(o.honorificId);
+              return (
+                <span key={o.id} style={{ fontSize: '0.76rem', color: '#e08a6a', border: '1px solid #5a3a2a', borderRadius: 3, padding: '0.05rem 0.4rem' }}>
+                  <Name pair={o.name} /> · {hon ? (lang === 'en' ? hon.name.en : hon.name.zh) : ''}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
       <div className={styles.pickerLabel}>
         {lang === 'en' ? 'Select officer — martial honorifics (雜號將軍)' : '選擇武將 — 名號將軍(雜號將軍)'}
       </div>
@@ -771,17 +851,39 @@ function HonorificTab({
             <span className={styles.officerStats} style={{ marginLeft: '0.5rem' }}>
               {lang === 'en' ? 'merit' : '功勳'} {meritScore(selected, deeds[selected.id])}
             </span>
+            {selected.honorificId && (
+              <button
+                onClick={() => {
+                  const hon = honorificById(selected.honorificId);
+                  const name = hon ? (lang === 'en' ? hon.name.en : hon.name.zh) : '';
+                  if (confirm(lang === 'en'
+                    ? `Strip ${selected.name.en} of ${name}? Their loyalty will fall.`
+                    : `奪去${selected.name.zh}的${name}?其忠誠將下降。`)) onRevoke(selected.id);
+                }}
+                style={{
+                  marginLeft: '0.6rem', fontSize: '0.72rem', cursor: 'pointer',
+                  background: 'none', border: '1px solid #7a3a2a', color: '#c97a5a',
+                  borderRadius: 3, padding: '0.1rem 0.45rem', fontFamily: 'inherit',
+                }}
+              >{lang === 'en' ? 'Strip honorific' : '奪號'}</button>
+            )}
           </div>
+          {rec && (
+            <div style={{ fontSize: '0.76rem', color: '#7ed6a0', margin: '0 0 0.4rem' }}>
+              {lang === 'en' ? `Recommended (suits them): ${rec.name.en}` : `宜授(適才適號):${rec.name.zh} · ${HONORIFIC_THEME_ZH[rec.theme]}`}
+            </div>
+          )}
           {HONORIFICS.map((h) => {
             const merit = meritScore(selected, deeds[selected.id]);
             const held = honorificTier(selected.honorificId);
             const current = selected.honorificId === h.id;
             const eligible = merit >= h.minMerit && h.tier > held;
+            const fits = honorificThemeFit(selected, deeds[selected.id], h.theme) > 0;
             return (
               <div key={h.id} className={styles.rankRow} title={h.deedHintZh}>
                 <div>
                   <span className={styles.rankName}><Name pair={h.name} /></span>
-                  <span className={styles.officerStats} style={{ marginLeft: '0.4rem' }}>·{HONORIFIC_THEME_ZH[h.theme]}</span>
+                  <span className={styles.officerStats} style={{ marginLeft: '0.4rem', color: fits ? '#7ed6a0' : undefined }}>·{HONORIFIC_THEME_ZH[h.theme]}{fits ? ' ✦' : ''}</span>
                 </div>
                 <div className={styles.rankReq}>{lang === 'en' ? 'merit' : '功勳'} ≥ {h.minMerit}</div>
                 <div className={styles.rankStipend}>{lang === 'en' ? 'loy' : '忠'}+{h.loyaltyBonus}/s · 威望+{h.renownOnGrant}</div>

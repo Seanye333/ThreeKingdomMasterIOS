@@ -118,6 +118,46 @@ export function highestEligibleHonorific(
   return best;
 }
 
+/**
+ * 適才適號 — how well a theme suits an officer's strengths (0 = poor, 3 = ideal).
+ * Now that themes carry a situational battle/affairs perk, a 水戰 title belongs
+ * on a navy officer, a 鎮撫 on a statesman, etc. Pure.
+ */
+export function honorificThemeFit(o: Officer, deeds: HeroicDeeds | undefined, theme: HonorificTheme): number {
+  const s = o.stats;
+  switch (theme) {
+    case 'naval':    return (o.skills ?? []).includes('navy-master') ? 3 : 0;
+    case 'valor':    return s.war >= 82 ? 2 : s.war >= 68 ? 1 : 0;
+    case 'siege':    return (deeds?.citiesTaken ?? 0) >= 3 ? 2 : (s.war + s.leadership) / 2 >= 78 ? 1 : 0;
+    case 'guile':    return (s.intelligence >= 82 || (deeds?.espionageSuccess ?? 0) >= 3) ? 2 : s.intelligence >= 68 ? 1 : 0;
+    case 'steward':  return s.politics >= 78 ? 2 : s.politics >= 62 ? 1 : 0;
+    case 'rebel':    return s.war >= 76 ? 1 : 0;
+    case 'frontier': return (s.leadership >= 80 || s.war >= 80) ? 1 : 0;
+    default:         return 0;
+  }
+}
+
+/**
+ * The honorific to actually confer: the HIGHEST tier the officer's merit clears
+ * (scarcity preserved), and among that tier the one whose theme best fits them —
+ * so 適才適號 makes the §2.12 theme perk land where it helps. Null if none.
+ */
+export function bestFitHonorific(o: Officer, deeds: HeroicDeeds | undefined): Honorific | null {
+  const merit = meritScore(o, deeds);
+  const held = honorificTier(o.honorificId);
+  const eligible = HONORIFICS.filter((h) => merit >= h.minMerit && h.tier > held);
+  if (eligible.length === 0) return null;
+  const maxTier = Math.max(...eligible.map((h) => h.tier));
+  const top = eligible.filter((h) => h.tier === maxTier);
+  return top.reduce((best, h) => {
+    const fb = honorificThemeFit(o, deeds, best.theme);
+    const fh = honorificThemeFit(o, deeds, h.theme);
+    if (fh > fb) return h;
+    if (fh === fb && h.minMerit > best.minMerit) return h;
+    return best;
+  });
+}
+
 export interface HonorificEffects {
   loyaltyBonus: number;
   combatPowerMul: number;

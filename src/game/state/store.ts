@@ -558,12 +558,19 @@ interface GameStore extends GameState {
     officerId: EntityId,
     peerageId: PeerageId,
   ) => { ok: boolean; reason?: string };
+  /** 削爵 — strip an officer's peerage to curb an over-mighty retainer. Removes
+   *  the fief (and its 野心 pressure) at the cost of a sharp loyalty drop +
+   *  grievance. A blunt lever against a noble grown too dangerous. */
+  revokePeerage: (officerId: EntityId) => { ok: boolean; reason?: string };
   /** 賜名號 — confer a martial honorific (名號將軍) on one of your officers.
    *  Gated by 功勳積分; pays a one-shot loyalty + 戰功威望 bump. */
   grantHonorific: (
     officerId: EntityId,
     honorificId: string,
   ) => { ok: boolean; reason?: string };
+  /** 奪號 — strip an officer's martial honorific (its standing loyalty + battle
+   *  perk go with it), at the cost of a loyalty drop + grievance. */
+  revokeHonorific: (officerId: EntityId) => { ok: boolean; reason?: string };
   /** 門第政策 — set the player realm's talent-selection stance. Drives the
    *  門閥世族 loop (重門第 / 唯才是舉 / 並用). */
   setRecruitmentStance: (
@@ -6387,6 +6394,31 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         return { ok: true };
       },
 
+      revokePeerage: (officerId) => {
+        const state = get();
+        const officer = state.officers[officerId];
+        if (!officer) return { ok: false, reason: 'invalid' };
+        if (officer.forceId !== state.playerForceId)
+          return { ok: false, reason: 'not your officer' };
+        if (!officer.peerageId) return { ok: false, reason: 'holds no peerage' };
+        // 削爵之辱 — losing one's fief is a grave humiliation: a heavy loyalty
+        // blow and a grievance, scaled by how great the fief was.
+        const tier = peerageTier(officer.peerageId);
+        const penalty = 10 + tier * 2;
+        set({
+          officers: {
+            ...state.officers,
+            [officerId]: {
+              ...officer,
+              peerageId: undefined,
+              loyalty: Math.max(0, officer.loyalty - penalty),
+              grievanceCount: (officer.grievanceCount ?? 0) + 1,
+            },
+          },
+        });
+        return { ok: true };
+      },
+
       grantHonorific: (officerId, honorificId) => {
         const state = get();
         const officer = state.officers[officerId];
@@ -6409,6 +6441,29 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               honorificId,
               loyalty: Math.min(100, officer.loyalty + def.loyaltyOnGrant),
               renown: (officer.renown ?? 0) + def.renownOnGrant,
+            },
+          },
+        });
+        return { ok: true };
+      },
+
+      revokeHonorific: (officerId) => {
+        const state = get();
+        const officer = state.officers[officerId];
+        if (!officer) return { ok: false, reason: 'invalid' };
+        if (officer.forceId !== state.playerForceId)
+          return { ok: false, reason: 'not your officer' };
+        if (!officer.honorificId) return { ok: false, reason: 'holds no honorific' };
+        // 奪號之辱 — stripping a martial title stings (scaled by its tier).
+        const penalty = 6 + honorificTier(officer.honorificId) * 3;
+        set({
+          officers: {
+            ...state.officers,
+            [officerId]: {
+              ...officer,
+              honorificId: undefined,
+              loyalty: Math.max(0, officer.loyalty - penalty),
+              grievanceCount: (officer.grievanceCount ?? 0) + 1,
             },
           },
         });
