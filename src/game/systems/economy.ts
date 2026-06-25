@@ -4,6 +4,7 @@ import { getRelation } from '../types';
 import { cityPolicyEffects } from './policyEffects';
 import { buildingBonuses } from './buildings';
 import { citySize, populationDelta } from './citySize';
+import { cityIncomeTraitMul } from './traitEffects';
 import { aggregateSlotEffects } from '../data/defenseBuildings';
 import { effectivePrestigeEffects } from '../data/prestige';
 import { specialtyEconomy, CITY_SPECIALTY, producerWeight, cityRole } from '../data/specialties';
@@ -139,7 +140,9 @@ export function tickCityEconomy(
   // 貪腐蝕利 — graft skims a slice off the top: clerks pad the books and pocket
   // the difference. Up to −40% at full corruption (100). Cleared by 巡查肅貪.
   const corruptionMul = 1 - Math.max(0, Math.min(100, city.corruption ?? 0)) / 250;
-  const goldIncome = Math.max(0, Math.floor((baseGold * eff.goldMul * bb.commerceMul * size.goldMul * prestigeMul * gradeAdminMul * specGoldMul + eff.goldFlat) * taxEff.goldMul * inflationMul * corruptionMul));
+  // 性格理財 — a thrifty steward squeezes more from the coin; a wastrel leaks it.
+  const incomeTraitMul = cityIncomeTraitMul(cityOfficers);
+  const goldIncome = Math.max(0, Math.floor((baseGold * eff.goldMul * bb.commerceMul * size.goldMul * prestigeMul * gradeAdminMul * specGoldMul + eff.goldFlat) * taxEff.goldMul * inflationMul * corruptionMul * incomeTraitMul));
 
   const baseFood =
     season === 'autumn'
@@ -193,7 +196,9 @@ export function tickCityEconomy(
   // tends the 藥圃 harder). Spent automatically to heal the wounded + fight plague.
   let medicineGather = 0;
   if (city.ownerForceId && !city.ruined && CITY_SPECIALTY[city.id] === 'herb') {
-    medicineGather = Math.round(35 * specWeight * (0.6 + city.loyalty / 200));
+    // 採藥 — a resident herbalist (採藥 trait) works the herb-fields harder.
+    const herbalistMul = cityOfficers.some((o) => (o.traits as string[] | undefined ?? []).includes('herbalist')) ? 1.3 : 1;
+    medicineGather = Math.round(35 * specWeight * (0.6 + city.loyalty / 200) * herbalistMul);
   }
 
   return {

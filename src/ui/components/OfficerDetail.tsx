@@ -3,7 +3,7 @@ import { useGameStore } from '../../game/state/store';
 import { COMMAND_DEFS } from '../../game/systems/commands';
 import { composeBiography } from '../../game/systems/biography';
 import { durationBreakdown, isParentMentor } from '../../game/systems/training';
-import { effectiveStats, traitMechanicalEffects } from '../../game/systems/traitEffects';
+import { effectiveStats, traitMechanicalEffects, isFlavorOnlyTrait } from '../../game/systems/traitEffects';
 import { FAMILY_LINEAGE } from '../../game/data/familyLineage';
 import { DEED_TITLES_BY_ID } from '../../game/systems/deedTitles';
 import {
@@ -28,6 +28,7 @@ import { WEAPON_TYPE_DEFS, deriveWeaponType } from '../../game/data/weaponTypes'
 import { HISTORICAL_LIFESPANS } from '../../game/data/historicalLifespans';
 import { effectivePrestige } from '../../game/data/prestige';
 import { peerageById } from '../../game/data/peerage';
+import { clanOf } from '../../game/data/clans';
 import { honorificById } from '../../game/data/honorifics';
 import { renownFromDeeds, fameTier, fameMedal } from '../../game/systems/fame';
 import { xpProgress, learnableSkills, canBreakthrough, breakthroughCost, breakthroughIronCost, BREAKTHROUGH_PATHS, MAX_BREAKTHROUGHS, breakthroughTitle, growthPowerMul, growthAptitude, aptitudeLabel, EPIPHANY_THRESHOLD } from '../../game/systems/growth';
@@ -37,7 +38,7 @@ import { itemRarity, itemRarityMeta, liveItemById, refineCost, REFINE_MAX,
   BREAKTHROUGH_MAX, breakthroughCost as itemBreakthroughCost, socketsFor, GEMS, GEMS_BY_ID,
   itemLoreLevel, itemLoreTitle } from '../../game/data/items';
 import { activeItemSets } from '../../game/data/itemSets';
-import { ageBand } from '../../game/systems/aging';
+import { ageBand, annualDeathChance } from '../../game/systems/aging';
 import type { City, Force, Officer, OfficerStats, Skill } from '../../game/types';
 import { FORMATIONS_BY_ID } from '../../game/data/formations';
 import { TACTIC_DESC } from './TacticsModal';
@@ -132,6 +133,8 @@ export function OfficerDetail({
   const storeForces = useGameStore((s) => s.forces);
   const storeCities = useGameStore((s) => s.cities);
   const storeYear = useGameStore((s) => s.date.year);
+  const lifespanMode = useGameStore((s) => s.lifespanMode);
+  const lifespanLength = useGameStore((s) => s.lifespanLength);
   const t = useT();
   const lang = useLanguage();
   const playerForceId = useGameStore((s) => s.playerForceId);
@@ -259,6 +262,20 @@ export function OfficerDetail({
                   : `😖 ${t(`羞憤難平(魅力 ${a.charisma}、智力 ${a.intelligence}，${a.seasons} 季)`, `Shamed (CHA ${a.charisma}/INT ${a.intelligence}, ${a.seasons}s)`)}`}
               </div>
             ))}
+            {officer.status === 'wounded' && officer.woundSeverity && (() => {
+              const sev = officer.woundSeverity;
+              const zh = sev === 'critical' ? '瀕死' : sev === 'serious' ? '重傷' : '輕傷';
+              const en = sev === 'critical' ? 'Critical' : sev === 'serious' ? 'Serious' : 'Minor';
+              const mul = sev === 'critical' ? '0.65' : sev === 'serious' ? '0.78' : '0.9';
+              const seasons = officer.woundedSeasons ?? 0;
+              return (
+                <div style={{ marginTop: '0.2rem', fontSize: '0.72rem', fontWeight: 600,
+                  color: sev === 'critical' ? '#b8442e' : sev === 'serious' ? '#d88a6a' : '#caa15a' }}>
+                  🩹 {t(`${zh}・${seasons} 季・戰力 ×${mul}${sev === 'critical' ? '・不能理事' : ''}`,
+                       `${en} wound · ${seasons}s · power ×${mul}${sev === 'critical' ? ' · cannot serve' : ''}`)}
+                </div>
+              );
+            })()}
             {openWish && (
               <div style={{
                 marginTop: '0.3rem', fontSize: '0.78rem',
@@ -523,6 +540,28 @@ export function OfficerDetail({
                       background: '#10161e', border: `1px solid ${band.color}`, color: band.color, fontSize: '0.85rem',
                     }}>
                       {age} · {lang === 'en' ? band.en : band.zh}
+                    </span>
+                  </div>
+                );
+              })()}
+              {(() => {
+                // 壽算 — yearly death risk, computed exactly as the winter roll
+                // does (base × 性格 hardiness × 壽命長短). Surfaced so death stops
+                // being a silent surprise. Hidden when negligible (<5%).
+                const risk = annualDeathChance(officer, storeYear, lifespanMode ?? 'historical', lifespanLength ?? 'historical');
+                if (risk < 0.05) return null;
+                const pct = Math.round(risk * 100);
+                const { zh, en, color } = risk >= 0.5 ? { zh: '將盡', en: 'Failing', color: '#b8442e' }
+                  : risk >= 0.25 ? { zh: '遲暮', en: 'Frail', color: '#d88a6a' }
+                  : { zh: '漸衰', en: 'Aging', color: '#caa15a' };
+                return (
+                  <div title={t(`今冬殞落機率約 ${pct}%`, `~${pct}% chance to pass this winter`)} style={{ marginTop: '0.2rem' }}>
+                    <span style={{ fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('壽算', 'Mortality')} </span>
+                    <span style={{
+                      display: 'inline-block', padding: '0.1rem 0.5rem', borderRadius: 2,
+                      background: '#10161e', border: `1px solid ${color}`, color, fontSize: '0.8rem',
+                    }}>
+                      {lang === 'en' ? en : zh} · {pct}%
                     </span>
                   </div>
                 );
@@ -1020,11 +1059,15 @@ export function OfficerDetail({
                 .filter((tr): tr is import('../../game/types').PersonalityTraitDef => !!tr)
                 .map((tr) => {
                   const desc = lang === 'zh' && tr.descriptionZh ? tr.descriptionZh : tr.description;
-                  // P5 — append actual mechanical effects to the tooltip
+                  // P5 — append actual mechanical effects to the tooltip. A trait
+                  // no system reads is flagged "(風味)" so it doesn't masquerade
+                  // as having a hidden effect.
                   const effects = traitMechanicalEffects(tr.id);
                   const effectLines = effects.length > 0
                     ? '\n\n' + effects.map((e) => `• ${lang === 'en' ? e.en : e.zh}`).join('\n')
-                    : '';
+                    : isFlavorOnlyTrait(tr.id)
+                      ? '\n\n' + (lang === 'en' ? '(flavor only — no mechanical effect)' : '(風味性格 · 無機制效果)')
+                      : '';
                   return (
                     <span
                       key={`trait-${tr.id}`}
@@ -1044,6 +1087,7 @@ export function OfficerDetail({
         )}
 
         <FamilyTreeSection officerId={officer.id} officersOverride={officersOverride} />
+        <HeirsAndClanSection officerId={officer.id} />
         <RelationshipsSection officerId={officer.id} officersOverride={officersOverride} />
 
         {officerDeeds && (officerDeeds.titles?.length ?? 0) + officerDeeds.killsTroops + officerDeeds.duelsWon + officerDeeds.citiesTaken + officerDeeds.espionageSuccess + officerDeeds.civicWorks + officerDeeds.battlesWon > 0 && (
@@ -2134,6 +2178,194 @@ function FamilyTreeSection({ officerId, officersOverride }: {
           onClose={() => setDrillId(null)}
           officersOverride={officersOverride}
         />
+      )}
+    </section>
+  );
+}
+
+const CLAN_TIER_META: Record<'humble' | 'gentry' | 'great', { zh: string; en: string; color: string }> = {
+  humble: { zh: '寒門', en: 'Humble', color: '#7a8893' },
+  gentry: { zh: '士族', en: 'Gentry', color: '#cfd8e0' },
+  great: { zh: '世家', en: 'Great House', color: '#e6c473' },
+};
+
+const HEIR_STAT_ROW: Array<{ key: keyof Officer['stats']; zh: string; en: string }> = [
+  { key: 'leadership', zh: '統', en: 'LDR' },
+  { key: 'war', zh: '武', en: 'WAR' },
+  { key: 'intelligence', zh: '智', en: 'INT' },
+  { key: 'politics', zh: '政', en: 'POL' },
+  { key: 'charisma', zh: '魅', en: 'CHR' },
+];
+
+/** 家門與子嗣 — clan standing banner + pending-heir roster with upbringing /
+ *  designation / adoption controls (for the player's own officers). §2.5. */
+function HeirsAndClanSection({ officerId }: { officerId: string }) {
+  const officers = useGameStore((s) => s.officers);
+  const pendingHeirs = useGameStore((s) => s.pendingHeirs);
+  const clanStandings = useGameStore((s) => s.clanStandings);
+  const family = useGameStore((s) => s.family);
+  const playerForceId = useGameStore((s) => s.playerForceId);
+  const year = useGameStore((s) => s.date.year);
+  const assignTutorFn = useGameStore((s) => s.assignTutor);
+  const designateHeirFn = useGameStore((s) => s.designateHeir);
+  const adoptHeirFn = useGameStore((s) => s.adoptHeir);
+  const t = useT();
+  const lang = useLanguage();
+  const [adoptId, setAdoptId] = useState('');
+
+  const officer = officers[officerId];
+  if (!officer) return null;
+  const isMine = officer.forceId === playerForceId;
+  const clanId = clanOf(officer);
+  const standing = clanId ? clanStandings[clanId] : undefined;
+  const heirs = pendingHeirs.filter((h) => h.parentAId === officerId || h.parentBId === officerId);
+  // Grown children (activated officers) of this officer, for heir designation.
+  const grownChildren = family
+    .filter((r) => r.kind === 'parent-child' && (r.officerA === officerId || r.officerB === officerId))
+    .map((r) => (r.officerA === officerId ? r.officerB : r.officerA))
+    .filter((id, i, arr) => arr.indexOf(id) === i)
+    .map((id) => officers[id])
+    .filter((o): o is Officer => !!o && o.status !== 'dead');
+
+  if (!standing && heirs.length === 0 && grownChildren.length === 0) return null;
+
+  const tierMeta = standing ? CLAN_TIER_META[standing.tier] : null;
+  // Living officers in the player's force — tutor / adoption candidates.
+  const playerOfficers = isMine
+    ? Object.values(officers).filter((o) => o.forceId === playerForceId && o.status !== 'dead' && o.status !== 'unsearched')
+    : [];
+
+  return (
+    <section className={styles.statsSection}>
+      <h3 className={styles.sectionTitle}>{t('家門與子嗣', 'House & Heirs')}</h3>
+
+      {standing && tierMeta && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap',
+          background: 'linear-gradient(180deg, rgba(212,168,74,0.05) 0%, transparent 100%)',
+          border: '1px solid #2b3845', padding: '0.5rem 0.6rem', marginBottom: heirs.length > 0 ? '0.5rem' : 0,
+        }}>
+          <span style={{ color: '#ffd47a', fontSize: '0.95rem', fontWeight: 600 }}>
+            {lang === 'en' ? (standing.nameEn ?? standing.nameZh) : standing.nameZh}
+          </span>
+          <span style={{
+            color: tierMeta.color, border: `1px solid ${tierMeta.color}`,
+            fontSize: '0.66rem', padding: '0.05rem 0.35rem', letterSpacing: '0.06rem',
+          }}>{lang === 'en' ? tierMeta.en : tierMeta.zh}</span>
+          <span style={{ color: '#9fb0bf', fontSize: '0.74rem' }}>
+            {t('聲望', 'Prestige')} {standing.prestige}
+            {standing.peakPrestige && standing.peakPrestige > standing.prestige
+              ? `（${t('巔峰', 'peak')} ${standing.peakPrestige}）` : ''}
+          </span>
+        </div>
+      )}
+
+      {heirs.map((h) => {
+        const age = year - h.birthYear;
+        const toCome = Math.max(0, 14 - age);
+        const projected = HEIR_STAT_ROW.map(({ key }) => h.baseStats[key] + (h.upbringing?.statBias[key] ?? 0));
+        const tutor = h.tutorId ? officers[h.tutorId] : undefined;
+        return (
+          <div key={h.id} style={{ border: '1px solid #2b3845', padding: '0.5rem 0.6rem', marginBottom: '0.4rem', background: '#10161e' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+              <span style={{ color: '#e6c473', fontSize: '0.85rem' }}>
+                {lang === 'en' ? h.name.en : h.name.zh}
+              </span>
+              <span style={{ color: h.female ? '#e8a8c8' : '#88b7e8', fontSize: '0.66rem' }}>
+                {h.female ? t('女', 'F') : t('男', 'M')}
+              </span>
+              <span style={{ color: '#9fb0bf', fontSize: '0.72rem' }}>
+                {age}{t('歲', 'y')} · {toCome > 0 ? t(`${toCome}年後及冠`, `${toCome}y to age`) : t('將及冠', 'coming of age')}
+              </span>
+              {h.upbringing?.prodigyRevealed && (
+                <span style={{ color: '#ffce4a', border: '1px solid #ffce4a', fontSize: '0.62rem', padding: '0.02rem 0.3rem' }}>{t('神童', 'Prodigy')}</span>
+              )}
+              {h.designatedHeir && (
+                <span style={{ color: '#7ed68a', border: '1px solid #7ed68a', fontSize: '0.62rem', padding: '0.02rem 0.3rem' }}>{t('世子', 'Heir')}</span>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.35rem', flexWrap: 'wrap' }}>
+              {HEIR_STAT_ROW.map((s, i) => (
+                <span key={s.key} style={{ color: '#cfd8e0', fontSize: '0.72rem' }}>
+                  <span style={{ color: '#7a8893' }}>{lang === 'en' ? s.en : s.zh}</span> {projected[i]}
+                </span>
+              ))}
+            </div>
+
+            {h.traits && h.traits.length > 0 && (
+              <div style={{ marginTop: '0.3rem', color: '#b69bd0', fontSize: '0.72rem' }}>
+                {h.traits.map((tid) => TRAIT_DEFS_BY_ID[tid]).filter(Boolean).map((tr) => lang === 'en' ? tr.name.en : tr.name.zh).join('、')}
+              </div>
+            )}
+
+            <div style={{ marginTop: '0.3rem', color: '#9fb0bf', fontSize: '0.72rem' }}>
+              {t('西席', 'Tutor')}：{tutor ? (lang === 'en' ? tutor.name.en : tutor.name.zh) : t('（無）', '(none)')}
+            </div>
+
+            {isMine && (
+              <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                <select
+                  value={h.tutorId ?? ''}
+                  onChange={(e) => assignTutorFn(h.id, e.target.value || null)}
+                  style={{ background: '#0c1218', color: '#cfd8e0', border: '1px solid #2b3845', fontSize: '0.72rem', padding: '0.15rem 0.25rem', maxWidth: 160 }}
+                >
+                  <option value="">{t('指派西席…', 'Assign tutor…')}</option>
+                  {playerOfficers.map((o) => (
+                    <option key={o.id} value={o.id}>{lang === 'en' ? o.name.en : o.name.zh}</option>
+                  ))}
+                </select>
+                {!h.designatedHeir && (
+                  <button
+                    onClick={() => designateHeirFn(h.id)}
+                    style={{ background: '#1b2531', color: '#7ed68a', border: '1px solid #2b5a3a', fontSize: '0.72rem', padding: '0.15rem 0.5rem', cursor: 'pointer' }}
+                  >{t('立為世子', 'Designate heir')}</button>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {grownChildren.length > 0 && (
+        <div style={{ marginTop: '0.3rem' }}>
+          <div style={{ color: '#7a8893', fontSize: '0.68rem', marginBottom: '0.2rem' }}>{t('成年子嗣', 'Grown children')}</div>
+          {grownChildren.map((c) => (
+            <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.2rem' }}>
+              <span style={{ color: '#7ed68a', fontSize: '0.78rem' }}>{lang === 'en' ? c.name.en : c.name.zh}</span>
+              {c.designatedHeir && (
+                <span style={{ color: '#7ed68a', border: '1px solid #7ed68a', fontSize: '0.62rem', padding: '0.02rem 0.3rem' }}>{t('世子', 'Heir')}</span>
+              )}
+              {isMine && !c.designatedHeir && (
+                <button
+                  onClick={() => designateHeirFn(c.id)}
+                  style={{ background: '#1b2531', color: '#7ed68a', border: '1px solid #2b5a3a', fontSize: '0.7rem', padding: '0.1rem 0.45rem', cursor: 'pointer' }}
+                >{t('立為世子', 'Designate heir')}</button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {isMine && (
+        <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.3rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ color: '#7a8893', fontSize: '0.72rem' }}>{t('收養', 'Adopt')}</span>
+          <select
+            value={adoptId}
+            onChange={(e) => setAdoptId(e.target.value)}
+            style={{ background: '#0c1218', color: '#cfd8e0', border: '1px solid #2b3845', fontSize: '0.72rem', padding: '0.15rem 0.25rem', maxWidth: 160 }}
+          >
+            <option value="">{t('選擇武將…', 'Choose officer…')}</option>
+            {playerOfficers.filter((o) => o.id !== officerId).map((o) => (
+              <option key={o.id} value={o.id}>{lang === 'en' ? o.name.en : o.name.zh}</option>
+            ))}
+          </select>
+          <button
+            disabled={!adoptId}
+            onClick={() => { if (adoptId) { adoptHeirFn(adoptId, officerId); setAdoptId(''); } }}
+            style={{ background: '#1b2531', color: adoptId ? '#e6c473' : '#566', border: '1px solid #2b3845', fontSize: '0.72rem', padding: '0.15rem 0.5rem', cursor: adoptId ? 'pointer' : 'default' }}
+          >{t('收為養子', 'Adopt')}</button>
+        </div>
       )}
     </section>
   );

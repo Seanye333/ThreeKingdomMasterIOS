@@ -1,11 +1,14 @@
-import type { City, EntityId, Force, Officer, ReportEntry } from '../types';
+import type { City, ClanStanding, EntityId, Force, Officer, ReportEntry } from '../types';
 import { deriveCourtFactions, type FactionId } from './courtFactions';
+import { clanGentryWeight } from './clans';
 
 export interface FactionEventInput {
   forces: Record<EntityId, Force>;
   officers: Record<EntityId, Officer>;
   cities: Record<EntityId, City>;
   mandate: { byForce: Record<EntityId, number> };
+  /** 家門聲望 — for 門閥 weighting in faction classification. */
+  clanStandings?: Record<string, ClanStanding>;
   rng: () => number;
 }
 
@@ -32,7 +35,8 @@ export function rollFactionEvents(input: FactionEventInput): FactionEventOutput 
   let mandate = input.mandate;
   const entries: ReportEntry[] = [];
 
-  const factionsByForce = deriveCourtFactions(officers);
+  const clanWeight = input.clanStandings ? clanGentryWeight(officers, input.clanStandings) : undefined;
+  const factionsByForce = deriveCourtFactions(officers, clanWeight);
   for (const force of Object.values(input.forces)) {
     const list = factionsByForce[force.id];
     if (!list || list.length < 5) continue; // too few classified officers to matter

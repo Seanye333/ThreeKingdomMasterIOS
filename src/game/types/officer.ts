@@ -123,7 +123,22 @@ export interface Officer {
    *  Yields 食邑 income + loyalty + prestige; great fiefs feed 野心. Default/
    *  omitted = no peerage. See data/peerage.ts. */
   peerageId?: import('./title').PeerageId;
+  /** 復仇 — which force killed each of this officer's close relatives
+   *  (relativeOfficerId → killerForceId). Read by the `vengeful` trait for a
+   *  combat bonus vs that force. Additive/optional — safe for old saves. */
+  killedRelativesBy?: Record<EntityId, EntityId>;
+  /** 為兄弟復仇 — which force slew each fallen sworn brother (義兄弟Id → killerForceId).
+   *  Grants a combat bonus vs that force (no trait required). Optional/safe. */
+  killedSwornBy?: Record<EntityId, EntityId>;
   /** 名號將軍 — a conferred martial honorific (雜號將軍). Standing loyalty +
    *  a signature battle perk; one per officer. See data/honorifics.ts. */
   honorificId?: string;
+  /** 家門 — the clan house this officer belongs to (key into state.clans, =
+   *  zh surname). Set on heir 出仕 / 收養; lazily backfilled for historical
+   *  officers by deriveInitialClans. Optional — safe for old saves. */
+  clanId?: string;
+  /** 世子 — the player named this officer the designated heir of their line;
+   *  succession prefers them over birth order. Carried from a PendingHeir on
+   *  coming-of-age, or set directly on a grown child. */
+  designatedHeir?: boolean;
 }

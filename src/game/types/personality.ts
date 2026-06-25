@@ -208,7 +208,10 @@ export type PersonalityTrait =
   | 'phoenix-rebirth'      // 鳳生 — recovers from defeat
   | 'shadow-walker'        // 影行 — scout master
   | 'star-reader'          // 觀星 — astronomy
-  | 'jade-heart';  // 玉心 — gentle of soul
+  | 'jade-heart'           // 玉心 — gentle of soul
+  // ─── §2.4 additions — the medical axis ─────────────────────────
+  | 'physician'            // 醫術 — heals wounds faster; resists plague
+  | 'herbalist';           // 採藥 — gathers medicine; blunts plague
 
 export interface PersonalityTraitDef {
   id: PersonalityTrait;
@@ -219,6 +222,10 @@ export interface PersonalityTraitDef {
   color: string;
   /** Whether this trait is generally a "positive" personality. */
   positive: boolean;
+  /** 'common' (default) / 'signature' / 'legendary'. Legendary traits are iconic
+   *  and **curated-only** — never handed out by procedural officer generation
+   *  (they can still be assigned by rosters or earned via breakthrough/deeds). */
+  tier?: 'common' | 'signature' | 'legendary';
 }
 
 /**

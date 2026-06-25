@@ -31,7 +31,7 @@ describe('afflictions', () => {
   });
 
   it('refreshing an affliction keeps the longer duration; isEmotional reads traits', () => {
-    const o = mkOfficer({ traits: ['hot-tempered'] as never });
+    const o = mkOfficer({ traits: ['wrathful'] as never });
     expect(isEmotional(o)).toBe(true);
     const a = withAffliction(o, { kind: 'wound', seasons: 1, war: -6 });
     const b = withAffliction(a, { kind: 'wound', seasons: 3, war: -6 });

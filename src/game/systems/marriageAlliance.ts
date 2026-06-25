@@ -95,6 +95,8 @@ export function breakAlliance(input: {
   officers: Record<EntityId, Officer>;
   runtimeBonds: OathBond[];
   livingForceIds: ReadonlySet<EntityId>;
+  /** Current year — stamped on a 質子's death if a hostage union is betrayed. */
+  year?: number;
 }): AllianceBreakResult {
   const alliance = allianceBetween(input.alliances, input.breakerForceId, input.targetForceId);
   const relations = { ...input.diplomacy.relations };
@@ -116,11 +118,23 @@ export function breakAlliance(input: {
     }));
   }
 
-  // The wedded officer on the breaker's side is shamed.
+  // The wedded officer on the breaker's side pays. A 質子 union betrayed costs
+  // the hostage's life (the spurned realm executes them); otherwise just shame.
   if (alliance) {
     const ownId = alliance.forceA === input.breakerForceId ? alliance.officerA : alliance.officerB;
     const own = officers[ownId];
-    if (own) officers[ownId] = { ...own, loyalty: Math.max(0, own.loyalty - 25) };
+    if (own) {
+      if (alliance.hostage && own.status !== 'dead') {
+        officers[ownId] = { ...own, status: 'dead', ...(input.year !== undefined ? { deathYear: input.year } : {}) };
+        entries.push({
+          cityId: own.locationCityId,
+          text: `${own.name.en}, held as a 質子, is put to the sword when the alliance is betrayed.`,
+          textZh: `${own.name.zh}本為質子,盟約一毀,身死他鄉。`,
+        });
+      } else {
+        officers[ownId] = { ...own, loyalty: Math.max(0, own.loyalty - 25) };
+      }
+    }
   }
 
   const runtimeBonds = alliance

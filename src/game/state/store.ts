@@ -35,7 +35,7 @@ import type { Difficulty } from './gameState';
 import { CIVIC_TITLES_BY_ID, MILITARY_RANKS_BY_ID } from '../data/titles';
 import { PEERAGES_BY_ID, meritScore, peerageTier } from '../data/peerage';
 import { HONORIFICS_BY_ID, honorificTier } from '../data/honorifics';
-import { stanceRecruitModifier } from '../systems/clans';
+import { stanceRecruitModifier, deriveInitialClanStandings, tickClanStandings, clanPrestigeBonus } from '../systems/clans';
 import { statecraftRecruitBonus } from '../systems/statecraft';
 import { holdFounding } from '../systems/founding';
 import { allianceBetween, breakAlliance as breakMarriageTie, tickMarriageAlliances } from '../systems/marriageAlliance';
@@ -85,7 +85,8 @@ import {
   TRIBE_PLACATE_AGGRESSION_DROP,
 } from '../systems/tribes';
 import { TRIBES_BY_ID } from '../data/tribes';
-import { addRapport, mingleRapport, getRapport, growRapportFromProximity } from '../systems/rapport';
+import { addRapport, mingleRapport, getRapport, growRapportFromProximity, decayRapport, addLordRapport, decayLordRapport, getLordRapport } from '../systems/rapport';
+import { growFrictionFromProximity, reconcilePair } from '../systems/friction';
 import { pairKey, getRelation } from '../types/diplomacy';
 import { OATH_BONDS } from '../data';
 import { planAITurn } from '../systems/ai';
@@ -110,8 +111,8 @@ import { resolveAISchemes } from '../systems/aiSchemes';
 import { appendPowerHistory, takePowerSnapshot } from '../systems/powerHistory';
 import { pickAdvisor } from '../systems/advisor';
 import { canTrain, trainingCost, tickTrainings, trainingDurationSeasons, sweepStaleTrainings, mentorDurationSeasons, isParentMentor, canTrainTactic, tacticTrainingCost, tacticDurationSeasons, tacticMentorDurationSeasons } from '../systems/training';
-import { loyaltyDriftPerSeason, rollFlavorEvent, defectionChance, sharedBondableTrait, maritalCompatibility, itemResonanceCandidate, policyResonanceCandidate, rollMarriageAssimilation, itemTacticCandidate } from '../systems/traitEffects';
-import { loyaltyFloor, rollMentorPolicyTransfer, mentorsOf } from '../systems/relationshipEffects';
+import { loyaltyDriftPerSeason, rollFlavorEvent, defectionChance, sharedBondableTrait, maritalCompatibility, itemResonanceCandidate, policyResonanceCandidate, rollMarriageAssimilation, itemTacticCandidate, deedTraitCandidate, isIncapacitated } from '../systems/traitEffects';
+import { loyaltyFloor, rollMentorPolicyTransfer, mentorsOf, deepenBonds, camaraderieLoyaltyDelta } from '../systems/relationshipEffects';
 import { TRAIT_DEFS_BY_ID } from '../data/personality';
 import {
   ALLIANCE_PROPOSAL_COST,
@@ -239,7 +240,8 @@ import {
   processTrigger,
   saveAchievementProgress,
 } from '../systems/achievements';
-import { tickFamily, addSpouse } from '../systems/family';
+import { tickFamily, addSpouse, addParentChild, aiArrangeMarriages } from '../systems/family';
+import { clanOf } from '../data/clans';
 import { rollWishes, applyWishGrant, applyWishReject, expireWishes, maybeWoundedRetireWish } from '../systems/wishes';
 import { checkEndings } from '../systems/endings';
 import { generateRandomScenario } from '../systems/randomScenario';
@@ -515,6 +517,9 @@ interface GameStore extends GameState {
     targetForceId: EntityId,
     yourOfficerId: EntityId,
     theirOfficerId: EntityId,
+    /** 人質 — your officer lives in the partner's court; tightens the bond and
+     *  lends the partner extra surety. */
+    opts?: { hostage?: boolean },
   ) => { ok: boolean; message: string };
   /** 背信棄義 — renounce a marriage alliance to free your hand for war. Brands
    *  you an oathbreaker: relation crash with the spurned realm + all others. */
@@ -671,6 +676,7 @@ interface GameStore extends GameState {
     targetForceId: EntityId,
     targetCityId?: EntityId,
     targetOfficerId?: EntityId,
+    targetOfficerId2?: EntityId,
   ) => { ok: boolean; reason?: string };
   cancelEspionage: (opId: EntityId) => void;
   /** 潛伏 — plant one of your officers as a persistent spy in an enemy city. */
@@ -716,6 +722,7 @@ interface GameStore extends GameState {
   setAiStartTroops: (v: 'fewer' | 'even' | 'more') => void;
   setBattleDifficulty: (d: 'easy' | 'normal' | 'hard' | null) => void;
   setLifespanLength: (l: 'short' | 'historical' | 'long') => void;
+  setAgingStatLock: (on: boolean) => void;
   setTalentDiscovery: (v: 'scarce' | 'normal' | 'plentiful') => void;
   setDuelFrequency: (v: 'rare' | 'normal' | 'frequent') => void;
   setDisasterFrequency: (v: 'low' | 'normal' | 'high') => void;
@@ -858,17 +865,34 @@ interface GameStore extends GameState {
     provinceId: ProvinceId,
     officerId: EntityId,
   ) => { ok: boolean; reason?: string };
+  /** 府內結親 — arrange a marriage between two of your own officers (500 gold):
+   *  steadies their loyalty and lets the couple raise heirs over the years. */
   proposeMarriagePair: (
     aId: EntityId,
     bId: EntityId,
-  ) => { ok: boolean; reason?: string };
+  ) => { ok: boolean; reason?: string; message?: string };
+  /** 西席 — assign (or clear, with null) a tutor for a pending heir; the tutor's
+   *  strengths bias the child's upbringing each year before it comes of age. */
+  assignTutor: (heirId: EntityId, tutorId: EntityId | null) => { ok: boolean; message?: string };
+  /** 立世子 — designate one of your pending heirs as the house's chosen heir. */
+  designateHeir: (heirId: EntityId) => { ok: boolean; message?: string };
+  /** 收養 — adopt one of your officers into another's bloodline (家門): adds a
+   *  parent-child bond and brings the child into the parent's clan. */
+  adoptHeir: (childOfficerId: EntityId, parentOfficerId: EntityId) => { ok: boolean; message?: string };
   /** 結交 — grow rapport between two of your officers; they swear a bond at 100. */
   socializeOfficers: (aId: EntityId, bId: EntityId) => { ok: boolean; message: string; forged?: boolean };
   /** 宴請 — host a banquet at an owned city: mingles rapport + lifts loyalty. */
   hostBanquet: (cityId: EntityId) => { ok: boolean; message: string };
   /** 結拜 — two of your officers swear brotherhood (義兄弟): a permanent runtime
-   *  bond granting same-side combat synergy + a 90 loyalty floor. Costs gold. */
+   *  bond granting same-side combat synergy + a 90 loyalty floor. Costs gold.
+   *  Requires 好感 ≥ 60 between the pair. */
   swearBrotherhood: (aId: EntityId, bId: EntityId) => { ok: boolean; message: string };
+  /** 桃園三結義 — three of your officers swear brotherhood together (pairwise
+   *  好感 ≥ 60), forging three sibling bonds at once. Costs gold. */
+  swearThreeWay: (aId: EntityId, bId: EntityId, cId: EntityId) => { ok: boolean; message: string };
+  /** 調解 — a respected mediator warms two soured/feuding officers back toward
+   *  neutrality (好感 ↑); a 宿怨 may dissolve once rapport recovers enough. Gold. */
+  reconcileOfficers: (aId: EntityId, bId: EntityId) => { ok: boolean; message: string };
   /** 私兵 — fund a personal-guard corps for one of your officers (2 gold/unit,
    *  drawn from their current city; capped at leadership×100). */
   levyPrivateTroops: (officerId: EntityId, amount: number) => { ok: boolean; message: string };
@@ -1332,6 +1356,9 @@ export const useGameStore = create<GameStore>()(
           return { ok: false, reason: 'officer not in this city' };
         if (officer.task)
           return { ok: false, reason: 'officer already assigned' };
+        // 重傷不能理事 — a critically wounded officer is bed-bound until they heal.
+        if (isIncapacitated(officer))
+          return { ok: false, reason: 'officer gravely wounded' };
         // pendingCommands keyed by officerId — one task per officer, many per city.
         if (state.pendingCommands[officerId])
           return { ok: false, reason: 'officer already has a pending command' };
@@ -2438,6 +2465,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           aiStrength: state.aiStrength ?? 3,
           diplomacy: state.diplomacy,
           runtimeBonds: state.runtimeBonds,
+          rapport: state.rapport,
           family: state.family,
           appointments: appointmentsAfterAI,
           territoryOwnership: state.territoryOwnership ?? {},
@@ -2463,10 +2491,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           pendingCommands: planned.pendingCommands,
           diplomacy: planned.diplomacy,
           runtimeBonds: planned.runtimeBonds,
+          rapport: planned.rapport ?? state.rapport,
+          lordRapport: state.lordRapport,
           lostItems: state.lostItems,
           territoryOwnership: state.territoryOwnership ?? {},
           playerForceId: state.playerForceId,
           family: state.family,
+          clanStandings: state.clanStandings,
           appointments: appointmentsAfterAI,
           casusBelliMarks: casusBelliAfterCourt,
           recruitBonusSeasons: state.recruitBonusSeasons,
@@ -2485,6 +2516,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           refugees: state.refugees ?? 0,
           lifespanMode: state.lifespanMode ?? 'historical',
           lifespanLength: state.lifespanLength ?? 'historical',
+          agingStatLock: state.agingStatLock ?? false,
           noBattleDeath: state.noBattleDeath ?? false,
           reviveDeadOfficers: state.reviveDeadOfficers ?? false,
           searchSuccessMul: state.talentDiscovery === 'scarce' ? 0.6 : state.talentDiscovery === 'plentiful' ? 1.4 : 1,
@@ -2636,6 +2668,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           playerForceId: state.playerForceId,
           rng: Math.random,
           buildings: state.buildings,
+          family: state.family,
+          lordRapport: state.lordRapport,
+          rapport: planned.rapport ?? state.rapport,
+          runtimeBonds: planned.runtimeBonds,
         });
         // Free agents.
         for (const o of Object.values(espResult.officers)) {
@@ -2955,11 +2991,26 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // 建築成就 — milestones from the player's completed buildings.
         const bldAch = checkBuildingAchievements(bldEvt.buildings, postCities, state.playerForceId);
 
+        // AI 養世家 — AI realms wed their officers each spring so their lines
+        // raise heirs too (mirrors the player's 府內結親).
+        let familyForTick = state.family;
+        if (seasonBoundary && state.date.season === 'spring') {
+          const aiMar = aiArrangeMarriages({
+            officers: postOfficers,
+            family: state.family,
+            playerForceId: state.playerForceId,
+            year: result.date.year,
+            rng: Math.random,
+          });
+          familyForTick = aiMar.family;
+          if (aiMar.entries.length > 0) result.report.entries.push(...aiMar.entries);
+        }
+
         // Family tick (births + activations) — only on year boundary roughly.
         const fam = tickFamily({
           date: result.date,
           officers: postOfficers,
-          family: state.family,
+          family: familyForTick,
           pendingHeirs: state.pendingHeirs,
           rng: Math.random,
         });
@@ -3034,6 +3085,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           deeds: state.deeds,
         });
         postForces = succession.forces;
+        postOfficers = succession.officers;
         if (succession.entries.length > 0) {
           result.report.entries.push(...succession.entries);
         }
@@ -3228,6 +3280,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             officers: postOfficers,
             cities: postCities,
             mandate: nextMandate,
+            clanStandings: state.clanStandings,
             rng: Math.random,
           });
           postOfficers = facOut.officers;
@@ -3282,10 +3335,18 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         for (const c of Object.values(postCities)) {
           if (c.ownerForceId && (c.medicine ?? 0) > 0) forceMedicine[c.ownerForceId] = (forceMedicine[c.ownerForceId] ?? 0) + (c.medicine ?? 0);
         }
+        // 醫者在側 — a force with a 醫術 officer in service heals its wounded faster.
+        const forceHasPhysician = new Set<string>();
+        for (const o of Object.values(postOfficers)) {
+          if (o.forceId && o.status !== 'dead' && (o.traits as string[] | undefined ?? []).includes('physician')) {
+            forceHasPhysician.add(o.forceId);
+          }
+        }
         const recoveryMulOf = (fid?: string | null) => {
           if (!fid) return 1;
           const base = realmOf(fid)?.woundRecoveryMul ?? 1;
-          return base + Math.min(0.4, (forceMedicine[fid] ?? 0) / 3000); // stockpile sweetens it
+          return base + Math.min(0.4, (forceMedicine[fid] ?? 0) / 3000) // stockpile sweetens it
+            + (forceHasPhysician.has(fid) ? 0.2 : 0);
         };
         const medicineSpend: Record<string, number> = {};
         const tickedOfficers: Record<string, typeof postOfficers[string]> = {};
@@ -3443,9 +3504,21 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         {
           const driftedOfficers: Record<EntityId, Officer> = { ...postOfficers };
           let anyChange = false;
+          // Group officers by force once for the 同袍/嫌隙 camaraderie nudge.
+          const byForce = new Map<EntityId, Officer[]>();
           for (const o of Object.values(postOfficers)) {
             if (o.status === 'dead' || !o.forceId) continue;
-            const drift = loyaltyDriftPerSeason(o);
+            (byForce.get(o.forceId) ?? byForce.set(o.forceId, []).get(o.forceId)!).push(o);
+          }
+          const curRapport = espResult.rapport ?? state.rapport;
+          for (const o of Object.values(postOfficers)) {
+            if (o.status === 'dead' || !o.forceId) continue;
+            let drift = loyaltyDriftPerSeason(o);
+            // 同袍／嫌隙 — warmth among peers steadies loyalty; friction gnaws.
+            drift += camaraderieLoyaltyDelta(o, byForce.get(o.forceId) ?? [], curRapport);
+            // 君臣相得 — an officer who esteems their lord recovers loyalty faster.
+            const lr = getLordRapport(state.lordRapport, o.id);
+            if (lr > 0) drift += Math.min(2, lr * 0.02);
             // R1 — Relationship-based loyalty floor (folds in what 絆/OATH_BONDS
             // used to do): sworn brothers 95, close family 95, siblings 90,
             // master-servant 90, mentor-student 90 — all conditional on the
@@ -3703,14 +3776,45 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             }
           }
           if (anyCouple) postOfficers = updated;
+
+          // ── D — 戰績習性 — officers earn a specialist trait from a sustained
+          // record of deeds (3 duels → 鬥將, 5 cities → 攻城, 10 battles → 老兵,
+          // 5 espionage → 老謀, 2000 kills → 影行). One per officer per season.
+          {
+            const deeded = { ...postOfficers };
+            let anyDeed = false;
+            for (const o of Object.values(postOfficers)) {
+              if (o.status === 'dead' || !o.forceId) continue;
+              const deedTrait = deedTraitCandidate(o, state.deeds[o.id]);
+              if (!deedTrait) continue;
+              const cur = (deeded[o.id].traits ?? []) as string[];
+              if (cur.includes(deedTrait)) continue;
+              deeded[o.id] = { ...deeded[o.id], traits: [...cur, deedTrait] as Officer['traits'] };
+              anyDeed = true;
+              if (o.forceId === state.playerForceId) {
+                const def = TRAIT_DEFS_BY_ID[deedTrait];
+                result.report.entries.push({
+                  cityId: o.locationCityId,
+                  kind: 'talent',
+                  text: `${o.name.en} earned the ${def?.name.en ?? deedTrait} trait through repeated deeds.`,
+                  textZh: `${o.name.zh}因戰績卓著,習得「${def?.name.zh ?? deedTrait}」之性。`,
+                });
+              }
+            }
+            if (anyDeed) postOfficers = deeded;
+          }
         }
 
         // ── P11 — Same-trait bond formation (season boundary, rare) ──
         // Two officers in the same force/city sharing an idealistic trait
         // (chivalrous, scholar, mystical, etc.) occasionally form an oath
         // bond. Adds to runtimeBonds with a moderate loyalty floor.
-        let bondsAfterTraits = planned.runtimeBonds;
-        let rapportAfter = state.rapport;
+        // Seed from any 離間計 (sow-discord) fallout this season — a poisoned
+        // rapport / severed 義結 must carry into the rest of the social tick.
+        // Chain: AI changes (planned) → espionage (espResult) → social tick.
+        let bondsAfterTraits = espResult.runtimeBonds ?? planned.runtimeBonds;
+        let rapportAfter = espResult.rapport ?? planned.rapport ?? state.rapport;
+        let lordRapportAfter = state.lordRapport;
         // Player-relevant bonds forged organically this season → at most one
         // gets a ceremony on the map (kept rare so it stays momentous).
         const seasonBonds: Array<{ aId: EntityId; bId: EntityId; titleZh: string; titleEn: string }> = [];
@@ -3784,6 +3888,92 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                   textZh: `${a.name.zh}與${b?.name.zh}同袍共事,日久情深,義結金蘭。`,
                 });
                 if (b) seasonBonds.push({ aId: a.id, bId: b.id, titleZh: '義結金蘭', titleEn: 'A Bond is Sworn' });
+              }
+            }
+          }
+
+          // 嫌隙與宿怨 — the cold half: abrasive egos, lore rivals/enemies and the
+          // aggrieved sour on one another. A pair that sinks to −100 forges a 宿怨.
+          const feudSkip = new Set<string>([
+            ...OATH_BONDS.map((b) => pairKey(b.officerA, b.officerB)),
+            ...bondsAfterTraits.map((b) => pairKey(b.officerA, b.officerB)),
+          ]);
+          const soured = growFrictionFromProximity({
+            rapport: rapportAfter, officers: postOfficers, bondedPairs: feudSkip,
+            amount: 2, buildings: state.buildings,
+          });
+          rapportAfter = soured.rapport;
+          if (soured.forged.length > 0) {
+            bondsAfterTraits = [...bondsAfterTraits, ...soured.forged];
+            for (const fb of soured.forged) {
+              const a = postOfficers[fb.officerA], b = postOfficers[fb.officerB];
+              if (a && a.forceId === state.playerForceId) {
+                result.report.entries.push({
+                  cityId: a.locationCityId, kind: 'note',
+                  text: `${a.name.en} and ${b?.name.en} can no longer abide each other — a bitter feud forms.`,
+                  textZh: `${a.name.zh}與${b?.name.zh}積怨難解,結為宿怨 —— 同陣則貌合神離。`,
+                });
+              }
+            }
+          }
+
+          // 好感維繫 — pairs no longer serving together cool toward indifference.
+          // Bonds and feuds are exempt (they don't fade with distance).
+          rapportAfter = decayRapport({
+            rapport: rapportAfter, officers: postOfficers, bondedPairs: feudSkip, amount: 1,
+          });
+
+          // 君臣好感維繫 — lord rapport eases toward 0; the throne must keep
+          // earning it (and the dead drop out).
+          lordRapportAfter = decayLordRapport(lordRapportAfter, postOfficers, 1);
+
+          // 義結深化 — sworn bonds grow with shared service (義交 → 金蘭 → 生死之交).
+          const deepenRes = deepenBonds(bondsAfterTraits, postOfficers);
+          bondsAfterTraits = deepenRes.bonds;
+          for (const d of deepenRes.deepened) {
+            const a = postOfficers[d.a], b = postOfficers[d.b];
+            if (a && a.forceId === state.playerForceId) {
+              const tierZh = d.depth >= 3 ? '生死之交' : '義結金蘭';
+              result.report.entries.push({
+                cityId: a.locationCityId, kind: 'note',
+                text: `${a.name.en} and ${b?.name.en}'s bond deepens (${d.depth >= 3 ? 'sworn unto death' : 'sworn brothers'}).`,
+                textZh: `${a.name.zh}與${b?.name.zh}情誼日篤,結為${tierZh}。`,
+              });
+            }
+          }
+
+          // 心腹密報 — a confidant (君臣好感 ≥80) keeps the lord's ear: he names a
+          // brewing traitor within the realm, or recommends an able man in the wild.
+          if (state.playerForceId) {
+            const pf = state.playerForceId;
+            const hasT = (o: Officer, t: string) => (o.traits as string[] | undefined ?? []).includes(t);
+            const confidant = Object.values(postOfficers)
+              .filter((o) => o.forceId === pf && o.status !== 'dead' && getLordRapport(lordRapportAfter, o.id) >= 80)
+              .sort((a, b) => b.stats.intelligence - a.stats.intelligence)[0];
+            if (confidant) {
+              const risk = Object.values(postOfficers)
+                .filter((o) => o.forceId === pf && o.status !== 'dead' && o.id !== confidant.id &&
+                  o.loyalty < 24 && getLordRapport(lordRapportAfter, o.id) < 80 &&
+                  (hasT(o, 'ambitious') || hasT(o, 'arrogant') || (o.grievanceCount ?? 0) >= 2))
+                .sort((a, b) => a.loyalty - b.loyalty)[0];
+              if (risk && Math.random() < 0.5) {
+                result.report.entries.push({
+                  cityId: confidant.locationCityId, kind: 'note',
+                  text: `${confidant.name.en} (心腹) warns the throne: ${risk.name.en} harbours disloyal designs (loyalty ${risk.loyalty}).`,
+                  textZh: `心腹${confidant.name.zh}密奏:${risk.name.zh}心懷異志,主公宜早為之備(忠誠 ${risk.loyalty})。`,
+                });
+              } else if (!risk && Math.random() < 0.2) {
+                const talent = Object.values(postOfficers)
+                  .filter((o) => o.forceId === null && o.status !== 'dead' && o.status !== 'unsearched' && o.locationCityId &&
+                    (o.stats.war + o.stats.leadership + o.stats.intelligence + o.stats.politics) >= 320)
+                  .sort((a, b) => (b.stats.war + b.stats.leadership + b.stats.intelligence + b.stats.politics) - (a.stats.war + a.stats.leadership + a.stats.intelligence + a.stats.politics))[0];
+                if (talent) {
+                  result.report.entries.push({
+                    cityId: talent.locationCityId, kind: 'note',
+                    text: `${confidant.name.en} (心腹) recommends ${talent.name.en}, an able man living in the wild — worth recruiting.`,
+                    textZh: `心腹${confidant.name.zh}舉薦在野賢才${talent.name.zh},主公可遣使招攬。`,
+                  });
+                }
               }
             }
           }
@@ -4725,6 +4915,27 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // 家門聲望 — recompute clan standing once a year (winter), after this
+        // season's births/出仕, deaths and succession have all landed, then let
+        // great/gentry-house scions gain a touch of loyalty (世家蔭澤).
+        let clanStandingsNext = state.clanStandings;
+        if (seasonBoundary && state.date.season === 'winter') {
+          const clanTick = tickClanStandings(officersWithMarchTask, state.clanStandings);
+          clanStandingsNext = clanTick.clanStandings;
+          if (clanTick.entries.length > 0) result.report.entries.push(...clanTick.entries);
+          let loyaltyMutated = false;
+          const bumped = { ...officersWithMarchTask };
+          for (const o of Object.values(officersWithMarchTask)) {
+            if (o.status === 'dead' || !o.forceId) continue;
+            const bump = clanPrestigeBonus(o, clanStandingsNext).loyalty;
+            if (bump > 0 && o.loyalty < 100) {
+              bumped[o.id] = { ...o, loyalty: Math.min(100, o.loyalty + bump) };
+              loyaltyMutated = true;
+            }
+          }
+          if (loyaltyMutated) officersWithMarchTask = bumped;
+        }
+
         set({
           date: result.date,
           cities: postCities,
@@ -4739,6 +4950,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           refugees: result.refugees,
           runtimeBonds: bondsAfterTraits,
           rapport: rapportAfter,
+          lordRapport: lordRapportAfter,
           recentBonds: recentBondsAfter,
           pendingCommands: carriedCommands,
           pendingTrainings: nextTrainings,
@@ -4805,6 +5017,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           buildings: bldEvt.buildings,
           family: fam.family,
           pendingHeirs: fam.pendingHeirs,
+          clanStandings: clanStandingsNext,
           officerWishes: [
             ...(consumedWishIds.size > 0
               ? newWishes.filter((w) => !consumedWishIds.has(w.id))
@@ -5039,7 +5252,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             stanceRecruitModifier(state.officers, force.id, force.recruitmentStance) +
             statecraftRecruitBonus(force.statecraft) +
             // 招賢館 — a hall of worthies in the recruiting city sweetens the offer.
-            buildingBonuses(cityId, state.buildings).recruitOfficerBonus,
+            buildingBonuses(cityId, state.buildings).recruitOfficerBonus +
+            // 世家蔭澤 — a scion of a great house is easier to bring on board.
+            clanPrestigeBonus(officer, state.clanStandings).recruit,
         });
 
         const updates: Partial<GameState> = {
@@ -5608,8 +5823,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         };
       },
 
-      proposeMarriage: (targetForceId, yourOfficerId, theirOfficerId) => {
+      proposeMarriage: (targetForceId, yourOfficerId, theirOfficerId, opts) => {
         const MARRIAGE_COST = 1000;
+        const hostage = !!opts?.hostage;
         const state = get();
         if (!state.playerForceId)
           return { ok: false, message: 'No player force.' };
@@ -5643,10 +5859,27 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const newBond = {
           officerA: yourOfficerId,
           officerB: theirOfficerId,
-          floor: 80,
+          floor: hostage ? 88 : 80,
           kind: 'oath' as const,
           label: `${yours.name.en} ⚭ ${theirs.name.en} Marriage`,
         };
+
+        // 外戚 — the wedded officer's house becomes in-laws of the partner realm;
+        // its prestige rises a notch from the union.
+        const maternalClanId = clanOf(yours) ?? undefined;
+        let clanStandingsNext = state.clanStandings;
+        if (maternalClanId && state.clanStandings[maternalClanId]) {
+          const cl = state.clanStandings[maternalClanId];
+          const gain = hostage ? 30 : 18;
+          clanStandingsNext = {
+            ...state.clanStandings,
+            [maternalClanId]: {
+              ...cl,
+              prestige: Math.min(1000, cl.prestige + gain),
+              peakPrestige: Math.max(cl.peakPrestige ?? 0, cl.prestige + gain),
+            },
+          };
+        }
 
         const relKey =
           state.playerForceId < targetForceId
@@ -5676,6 +5909,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           officerA: yourOfficerId,
           officerB: theirOfficerId,
           sinceYear: state.date.year,
+          ...(hostage ? { hostage: true } : {}),
+          ...(maternalClanId ? { maternalClanId } : {}),
         };
 
         set({
@@ -5686,11 +5921,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           runtimeBonds: [...state.runtimeBonds, newBond],
           diplomacy: nextDiplomacy,
           marriageAlliances: [...state.marriageAlliances, newAlliance],
+          clanStandings: clanStandingsNext,
         });
 
         return {
           ok: true,
-          message: `${yours.name.en} ⚭ ${theirs.name.en}: a binding marriage alliance with ${target.name.en} is sealed — neither realm may take up arms against the other while it stands.`,
+          message: hostage
+            ? `${yours.name.en} ⚭ ${theirs.name.en}: sealed as a 質子 union with ${target.name.en} — a tighter bond, and ${yours.name.en}'s house rises as in-laws of the realm.`
+            : `${yours.name.en} ⚭ ${theirs.name.en}: a binding marriage alliance with ${target.name.en} is sealed — neither realm may take up arms against the other while it stands.`,
         };
       },
 
@@ -5710,16 +5948,29 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           officers: state.officers,
           runtimeBonds: state.runtimeBonds,
           livingForceIds,
+          year: state.date.year,
         });
+        // 外戚失勢 — betraying an in-law tie shames the maternal house.
+        let clanStandingsNext = state.clanStandings;
+        if (existing.maternalClanId && state.clanStandings[existing.maternalClanId]) {
+          const cl = state.clanStandings[existing.maternalClanId];
+          clanStandingsNext = {
+            ...state.clanStandings,
+            [existing.maternalClanId]: { ...cl, prestige: Math.max(0, cl.prestige - 25) },
+          };
+        }
         set({
           diplomacy: r.diplomacy,
           marriageAlliances: r.alliances,
           officers: r.officers,
           runtimeBonds: r.runtimeBonds,
+          clanStandings: clanStandingsNext,
         });
         return {
           ok: true,
-          message: 'You renounce the marriage alliance. War is once more permitted — but your word is now suspect across the realm.',
+          message: existing.hostage
+            ? 'You renounce a 質子 alliance — the hostage pays with their life, your house is shamed, and your word is suspect across the realm.'
+            : 'You renounce the marriage alliance. War is once more permitted — but your word is now suspect across the realm.',
         };
       },
 
@@ -6288,7 +6539,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // `favored` steers growth (a 舌戰 grows 知力/魅力 rather than 武力).
         const rw = grantXp(w, draw ? 32 : 42, Math.random, favored);
         const rl = grantXp(l, draw ? 32 : 26, Math.random, favored);
-        set({ officers: { ...state.officers, [winnerId]: rw.officer, [loserId]: rl.officer } });
+        // 切磋情誼 — crossing blades in friendship warms the pair, and lets two
+        // who'd soured vent the grudge: a 宿怨 can even be laid to rest this way.
+        const rec = reconcilePair(state.rapport, state.runtimeBonds, winnerId, loserId, 8);
+        set({
+          officers: { ...state.officers, [winnerId]: rw.officer, [loserId]: rl.officer },
+          rapport: rec.rapport,
+          runtimeBonds: rec.runtimeBonds,
+        });
         return {
           winnerName: w.name.zh, loserName: l.name.zh,
           winnerLeveled: rw.leveled, loserLeveled: rl.leveled,
@@ -7098,7 +7356,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         });
       },
 
-      queueEspionage: (kind, agentOfficerId, targetForceId, targetCityId, targetOfficerId) => {
+      queueEspionage: (kind, agentOfficerId, targetForceId, targetCityId, targetOfficerId, targetOfficerId2) => {
         const state = get();
         const def = ESPIONAGE_DEFS_BY_KIND[kind];
         const agent = state.officers[agentOfficerId];
@@ -7110,6 +7368,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           return { ok: false, reason: `requires INT ${def.minIntelligence}` };
         if (def.targetsOfficer && !targetOfficerId)
           return { ok: false, reason: 'needs a target officer' };
+        if (kind === 'sow-discord' && (!targetOfficerId2 || targetOfficerId2 === targetOfficerId))
+          return { ok: false, reason: 'needs two distinct target officers' };
         if (!def.targetsOfficer && !targetCityId)
           return { ok: false, reason: 'needs a target city' };
 
@@ -7126,6 +7386,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           targetForceId,
           targetCityId,
           targetOfficerId,
+          targetOfficerId2,
           issuedYear: state.date.year,
           issuedSeason: state.date.season,
         };
@@ -7638,6 +7899,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       setAiStartTroops: (v) => set({ aiStartTroops: v }),
       setBattleDifficulty: (d) => set({ battleDifficulty: d }),
       setLifespanLength: (l) => set({ lifespanLength: l }),
+      setAgingStatLock: (on) => set({ agingStatLock: on }),
       setTalentDiscovery: (v) => set({ talentDiscovery: v }),
       setDuelFrequency: (v) => set({ duelFrequency: v }),
       setDisasterFrequency: (v) => set({ disasterFrequency: v }),
@@ -8775,15 +9037,115 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       },
 
       proposeMarriagePair: (aId, bId) => {
+        const MARRIAGE_COST = 500;
         const state = get();
         const a = state.officers[aId];
         const b = state.officers[bId];
-        if (!a || !b) return { ok: false, reason: 'invalid officer' };
-        if (a.forceId !== state.playerForceId && b.forceId !== state.playerForceId)
-          return { ok: false, reason: 'must be your officers' };
+        if (!a || !b || aId === bId) return { ok: false, reason: 'invalid officer', message: 'Invalid officers.' };
+        if (!state.playerForceId || a.forceId !== state.playerForceId || b.forceId !== state.playerForceId)
+          return { ok: false, reason: 'must be your officers', message: 'Both must be your officers.' };
+        if (a.status === 'dead' || b.status === 'dead')
+          return { ok: false, reason: 'must be living', message: 'Both must be living.' };
+        if (state.family.some((r) => r.kind === 'spouse' && ((r.officerA === aId && r.officerB === bId) || (r.officerA === bId && r.officerB === aId))))
+          return { ok: false, reason: 'already wed', message: `${a.name.en} and ${b.name.en} are already wed.` };
+        const player = state.forces[state.playerForceId];
+        const capital = player ? state.cities[player.capitalCityId] : null;
+        if (!capital || capital.gold < MARRIAGE_COST)
+          return { ok: false, reason: 'no gold', message: `Need ${MARRIAGE_COST} gold in the capital.` };
         const family = addSpouse(state.family, aId, bId);
-        set({ family });
-        return { ok: true };
+        // 結親 — wedding lifts both spouses to a steadfast loyalty (couples bond).
+        const officers = { ...state.officers };
+        officers[aId] = { ...a, loyalty: Math.max(a.loyalty ?? 0, 90) };
+        officers[bId] = { ...b, loyalty: Math.max(b.loyalty ?? 0, 90) };
+        set({
+          family,
+          officers,
+          cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - MARRIAGE_COST } },
+        });
+        return { ok: true, message: `${a.name.en} ⚭ ${b.name.en}: a marriage is arranged within your house — their loyalty steadies, and they may in time raise heirs.` };
+      },
+
+      assignTutor: (heirId, tutorId) => {
+        const state = get();
+        const heir = state.pendingHeirs.find((h) => h.id === heirId);
+        if (!heir) return { ok: false, message: 'No such child.' };
+        if (tutorId) {
+          const tutor = state.officers[tutorId];
+          if (!tutor || tutor.status === 'dead' || tutor.status === 'unsearched')
+            return { ok: false, message: 'Invalid tutor.' };
+          if (tutor.forceId !== state.playerForceId)
+            return { ok: false, message: 'Tutor must be your officer.' };
+        }
+        const pendingHeirs = state.pendingHeirs.map((h) =>
+          h.id === heirId ? { ...h, tutorId: tutorId ?? undefined } : h,
+        );
+        set({ pendingHeirs });
+        const tutorName = tutorId ? state.officers[tutorId]?.name.en : null;
+        return { ok: true, message: tutorName ? `${tutorName} will tutor ${heir.name.en}.` : `Tutor cleared for ${heir.name.en}.` };
+      },
+
+      designateHeir: (heirId) => {
+        const state = get();
+        const target = state.pendingHeirs.find((h) => h.id === heirId);
+        if (target) {
+          // One designated heir per parent line — clear siblings sharing a parent.
+          const pendingHeirs = state.pendingHeirs.map((h) => {
+            if (h.id === heirId) return { ...h, designatedHeir: true };
+            const sharesParent = h.parentAId === target.parentAId || h.parentAId === target.parentBId
+              || h.parentBId === target.parentAId || h.parentBId === target.parentBId;
+            return sharesParent && h.designatedHeir ? { ...h, designatedHeir: false } : h;
+          });
+          set({ pendingHeirs });
+          return { ok: true, message: `${target.name.en} is named the house's chosen heir (世子).` };
+        }
+        // Grown child: set the flag on the officer, clearing siblings (same parents).
+        const child = state.officers[heirId];
+        if (!child) return { ok: false, message: 'No such child.' };
+        if (child.forceId !== state.playerForceId) return { ok: false, message: 'Must be your officer.' };
+        const parentIds = state.family
+          .filter((r) => r.kind === 'parent-child' && (r.officerA === heirId || r.officerB === heirId))
+          .map((r) => (r.officerA === heirId ? r.officerB : r.officerA));
+        if (parentIds.length === 0) return { ok: false, message: 'Not part of a bloodline.' };
+        const siblingIds = new Set<string>();
+        for (const r of state.family) {
+          if (r.kind !== 'parent-child') continue;
+          const c = parentIds.includes(r.officerA) ? r.officerB : parentIds.includes(r.officerB) ? r.officerA : null;
+          if (c) siblingIds.add(c);
+        }
+        const officers = { ...state.officers };
+        for (const sid of siblingIds) {
+          if (sid === heirId) continue;
+          const s = officers[sid];
+          if (s?.designatedHeir) officers[sid] = { ...s, designatedHeir: false };
+        }
+        officers[heirId] = { ...child, designatedHeir: true };
+        set({ officers });
+        return { ok: true, message: `${child.name.en} is named the house's chosen heir (世子).` };
+      },
+
+      adoptHeir: (childOfficerId, parentOfficerId) => {
+        const state = get();
+        const child = state.officers[childOfficerId];
+        const parent = state.officers[parentOfficerId];
+        if (!child || !parent || childOfficerId === parentOfficerId)
+          return { ok: false, message: 'Invalid officers.' };
+        if (!state.playerForceId || child.forceId !== state.playerForceId || parent.forceId !== state.playerForceId)
+          return { ok: false, message: 'Both must be your officers.' };
+        if (child.status === 'dead' || parent.status === 'dead')
+          return { ok: false, message: 'Both must be living.' };
+        if (state.family.some((r) => r.kind === 'parent-child' && ((r.officerA === childOfficerId && r.officerB === parentOfficerId) || (r.officerA === parentOfficerId && r.officerB === childOfficerId))))
+          return { ok: false, message: 'Already kin.' };
+        const family = addParentChild(state.family, parentOfficerId, childOfficerId);
+        // The adoptee joins the parent's house; if the parent has none, it founds one.
+        const officers = { ...state.officers };
+        let clanId = clanOf(parent) ?? undefined;
+        if (!clanId) {
+          clanId = `house-${parent.id}`;
+          officers[parent.id] = { ...parent, clanId };
+        }
+        officers[childOfficerId] = { ...child, clanId, loyalty: Math.max(child.loyalty ?? 0, 90) };
+        set({ family, officers });
+        return { ok: true, message: `${child.name.en} is adopted into ${parent.name.en}'s house (收養) — bound by blood-oath and clan.` };
       },
 
       socializeOfficers: (aId, bId) => {
@@ -8801,8 +9163,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           (bd.officerA === aId && bd.officerB === bId) || (bd.officerA === bId && bd.officerB === aId));
         const { rapport, forged } = addRapport(state.rapport, aId, bId, 25, bonded,
           `${a.name.en} & ${b.name.en} Sworn Bond`);
+        // 君臣相得 — if the lord personally 結交 an officer, that officer warms
+        // to their sovereign (君臣好感), building toward 心腹 status.
+        const rulerId = player?.rulerOfficerId;
+        let lordRapport = state.lordRapport;
+        if (rulerId === aId) lordRapport = addLordRapport(lordRapport, bId, 25);
+        else if (rulerId === bId) lordRapport = addLordRapport(lordRapport, aId, 25);
         set({
           rapport,
+          lordRapport,
           cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - COST } },
           runtimeBonds: forged ? [...state.runtimeBonds, forged] : state.runtimeBonds,
         });
@@ -8827,12 +9196,16 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const rapport = mingleRapport(state.rapport, here.map((o) => o.id), 10);
         const officers = { ...state.officers };
         for (const o of here) officers[o.id] = { ...o, loyalty: Math.min(100, (o.loyalty ?? 0) + 4) };
+        // 君臣同歡 — the lord's hospitality warms each guest toward the throne.
+        let lordRapport = state.lordRapport;
+        for (const o of here) lordRapport = addLordRapport(lordRapport, o.id, 3);
         set({
           rapport,
+          lordRapport,
           officers,
           cities: { ...state.cities, [cityId]: { ...city, gold: city.gold - COST } },
         });
-        return { ok: true, message: `Banquet at ${city.name.en} — ${here.length} officers mingle (+loyalty, +rapport).` };
+        return { ok: true, message: `Banquet at ${city.name.en} — ${here.length} officers mingle (+loyalty, +rapport, +君臣好感).` };
       },
 
       swearBrotherhood: (aId, bId) => {
@@ -8847,6 +9220,11 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           (bd.kind === 'sibling' || bd.kind === 'oath') &&
           ((bd.officerA === aId && bd.officerB === bId) || (bd.officerA === bId && bd.officerB === aId)));
         if (already) return { ok: false, message: `${a.name.en} and ${b.name.en} are already sworn brothers.` };
+        // Brotherhood is earned through fellowship, not bought cold — they must
+        // already hold each other in some regard (好感 ≥ 60).
+        const SWEAR_RAPPORT_MIN = 60;
+        if (getRapport(state.rapport, aId, bId) < SWEAR_RAPPORT_MIN)
+          return { ok: false, message: `${a.name.en} and ${b.name.en} aren't close enough yet (need 好感 ≥ ${SWEAR_RAPPORT_MIN}).` };
         const player = state.forces[state.playerForceId];
         const capital = player ? state.cities[player.capitalCityId] : null;
         const COST = 300;
@@ -8857,6 +9235,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           floor: 90,
           kind: 'sibling' as const,
           label: `${a.name.en} & ${b.name.en} 義兄弟`,
+          depth: 1 as const,
+          sharedSeasons: 0,
         };
         // Forging a brotherhood also lifts both officers to the loyalty floor now.
         const officers = { ...state.officers };
@@ -8868,6 +9248,88 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - COST } },
         });
         return { ok: true, message: `${a.name.en} and ${b.name.en} swear an oath of brotherhood! 義結金蘭` };
+      },
+
+      swearThreeWay: (aId, bId, cId) => {
+        const state = get();
+        const ids = [aId, bId, cId];
+        if (new Set(ids).size !== 3) return { ok: false, message: 'Pick three distinct officers.' };
+        const os = ids.map((id) => state.officers[id]);
+        if (os.some((o) => !o)) return { ok: false, message: 'Invalid officers.' };
+        const [a, b, c] = os as [Officer, Officer, Officer];
+        if (!state.playerForceId || os.some((o) => o!.forceId !== state.playerForceId))
+          return { ok: false, message: 'All three must be your officers.' };
+        if (os.some((o) => o!.status === 'dead')) return { ok: false, message: 'All must be living.' };
+        const pairs: Array<[EntityId, EntityId]> = [[aId, bId], [aId, cId], [bId, cId]];
+        const SWEAR_RAPPORT_MIN = 60;
+        for (const [x, y] of pairs) {
+          const already = [...OATH_BONDS, ...state.runtimeBonds].some((bd) =>
+            (bd.kind === 'sibling' || bd.kind === 'oath') &&
+            ((bd.officerA === x && bd.officerB === y) || (bd.officerA === y && bd.officerB === x)));
+          if (already) continue; // an existing tie is fine — just bind the rest
+          if (getRapport(state.rapport, x, y) < SWEAR_RAPPORT_MIN)
+            return { ok: false, message: `Not all three are close enough yet (each pair needs 好感 ≥ ${SWEAR_RAPPORT_MIN}).` };
+        }
+        const player = state.forces[state.playerForceId];
+        const capital = player ? state.cities[player.capitalCityId] : null;
+        const COST = 600;
+        if (!capital || capital.gold < COST) return { ok: false, message: `Need ${COST} gold in the capital.` };
+        const newBonds = pairs
+          .filter(([x, y]) => ![...OATH_BONDS, ...state.runtimeBonds].some((bd) =>
+            (bd.kind === 'sibling' || bd.kind === 'oath') &&
+            ((bd.officerA === x && bd.officerB === y) || (bd.officerA === y && bd.officerB === x))))
+          .map(([x, y]) => ({
+            officerA: x, officerB: y, floor: 90, kind: 'sibling' as const,
+            label: `${state.officers[x]!.name.en} & ${state.officers[y]!.name.en} 桃園`,
+            depth: 1 as const, sharedSeasons: 0,
+          }));
+        const officers = { ...state.officers };
+        for (const o of [a, b, c]) officers[o.id] = { ...o, loyalty: Math.max(o.loyalty ?? 0, 90) };
+        set({
+          officers,
+          runtimeBonds: [...state.runtimeBonds, ...newBonds],
+          cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - COST } },
+        });
+        return { ok: true, message: `${a.name.en}, ${b.name.en} and ${c.name.en} swear brotherhood in the peach garden! 桃園結義` };
+      },
+
+      reconcileOfficers: (aId, bId) => {
+        const state = get();
+        const a = state.officers[aId];
+        const b = state.officers[bId];
+        if (!a || !b || aId === bId) return { ok: false, message: 'Invalid officers.' };
+        if (!state.playerForceId || a.forceId !== state.playerForceId || b.forceId !== state.playerForceId)
+          return { ok: false, message: 'Both must be your officers.' };
+        if (a.status === 'dead' || b.status === 'dead') return { ok: false, message: 'Both must be living.' };
+        const cur = getRapport(state.rapport, aId, bId);
+        const feuding = state.runtimeBonds.some((bd) => bd.kind === 'feud' &&
+          ((bd.officerA === aId && bd.officerB === bId) || (bd.officerA === bId && bd.officerB === aId)));
+        if (cur >= 0 && !feuding) return { ok: false, message: `${a.name.en} and ${b.name.en} are on fine terms — nothing to mend.` };
+        const player = state.forces[state.playerForceId];
+        const capital = player ? state.cities[player.capitalCityId] : null;
+        const COST = 200;
+        if (!capital || capital.gold < COST) return { ok: false, message: `Need ${COST} gold in the capital.` };
+        // The ablest impartial peer (politics+charisma) mediates; better envoys mend more.
+        let mediator: Officer | null = null;
+        for (const o of Object.values(state.officers)) {
+          if (o.id === aId || o.id === bId) continue;
+          if (o.forceId !== state.playerForceId || o.status === 'dead' || o.status === 'imprisoned') continue;
+          if (!mediator || (o.stats.politics + o.stats.charisma) > (mediator.stats.politics + mediator.stats.charisma)) mediator = o;
+        }
+        const amount = 25 + Math.round(((mediator?.stats.politics ?? 0) + (mediator?.stats.charisma ?? 0)) / 8);
+        const res = reconcilePair(state.rapport, state.runtimeBonds, aId, bId, amount);
+        set({
+          rapport: res.rapport,
+          runtimeBonds: res.runtimeBonds,
+          cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - COST } },
+        });
+        const via = mediator ? `${mediator.name.en} mediates; ` : '';
+        return {
+          ok: true,
+          message: res.dissolved
+            ? `${via}the feud between ${a.name.en} and ${b.name.en} is laid to rest (好感 ${getRapport(res.rapport, aId, bId)}).`
+            : `${via}${a.name.en} and ${b.name.en} are partly reconciled (好感 ${getRapport(res.rapport, aId, bId)}).`,
+        };
       },
 
       levyPrivateTroops: (officerId, amount) => {
@@ -8963,6 +9425,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           cities: r.cities,
           lostItems: newLostItems,
           officerWishes: state.officerWishes.filter((w) => w.id !== wishId),
+          // 君臣相得 — granting a petition is the lord's fairest gesture; it
+          // deepens the officer's regard for the throne.
+          lordRapport: addLordRapport(state.lordRapport, wish.officerId, 12),
           // Queue the report entry so it shows up in the next season report.
           pendingWishEntries: [...(state.pendingWishEntries ?? []), r.entry],
         });
@@ -8977,6 +9442,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           officers: r.officers,
           cities: r.cities,
           officerWishes: state.officerWishes.filter((w) => w.id !== wishId),
+          // Spurning a petition cools the officer toward their lord (君臣好感 −10).
+          lordRapport: addLordRapport(state.lordRapport, wish.officerId, -10),
           pendingWishEntries: [...(state.pendingWishEntries ?? []), r.entry],
         });
       },
@@ -9078,6 +9545,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           itemBreakthroughs: loaded.itemBreakthroughs ?? {},
           itemGems: loaded.itemGems ?? {},
           gemStock: loaded.gemStock ?? {},
+          // 家門聲望 — backfill from the loaded roster for legacy saves.
+          clanStandings: loaded.clanStandings ?? deriveInitialClanStandings(loaded.officers ?? {}),
         };
         // 精煉/突破/鑲嵌登記 — re-point the denormalized registries at the loaded maps.
         setRefineRegistry(fresh.itemRefinements);
@@ -9145,6 +9614,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         scenicLooted: state.scenicLooted,
         family: state.family,
         pendingHeirs: state.pendingHeirs,
+        clanStandings: state.clanStandings,
         officerWishes: state.officerWishes,
         pendingWishEntries: state.pendingWishEntries,
         itemHistory: state.itemHistory,
@@ -9199,6 +9669,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         aiStartTroops: state.aiStartTroops,
         battleDifficulty: state.battleDifficulty,
         lifespanLength: state.lifespanLength,
+        agingStatLock: state.agingStatLock,
         talentDiscovery: state.talentDiscovery,
         duelFrequency: state.duelFrequency,
         disasterFrequency: state.disasterFrequency,
@@ -9215,6 +9686,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (!state) return;
         if (!state.enabledDynasties) state.enabledDynasties = [];
         if (!state.rapport) state.rapport = {};
+        if (!state.lordRapport) state.lordRapport = {};
         if (state.activeChallenge === undefined) state.activeChallenge = null;
         if (!state.challengeRecords) state.challengeRecords = {};
         if (!state.sparUsage) state.sparUsage = {};

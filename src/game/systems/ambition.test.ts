@@ -38,6 +38,23 @@ describe('resolveAmbitions', () => {
     }
   });
 
+  it('a 心腹 (confidant, 君臣好感 ≥80) never rebels, at any seed', () => {
+    for (let seed = 0; seed < 300; seed++) {
+      const cities = {
+        cap: mkCity({ id: 'cap', ownerForceId: 'wei' }),
+        border: mkCity({ id: 'border', ownerForceId: 'wei', troops: 6000 }),
+      };
+      const forces = { wei: mkForce({ id: 'wei', rulerOfficerId: 'lord', capitalCityId: 'cap' }) };
+      const officers = {
+        lord: mkOfficer({ id: 'lord', forceId: 'wei', locationCityId: 'cap', loyalty: 100 }),
+        // every motive to rebel — but a confidant of the lord
+        rebel: mkOfficer({ id: 'rebel', forceId: 'wei', locationCityId: 'border', loyalty: 5, grievanceCount: 5, traits: ['ambitious'] as never }),
+      };
+      const ev = resolveAmbitions({ officers, cities, forces, playerForceId: null, seed, lordRapport: { rebel: 85 } });
+      expect(ev).toHaveLength(0);
+    }
+  });
+
   it('a disloyal ambitious landed general can break away with his city', () => {
     let broke = false;
     for (let seed = 0; seed < 300 && !broke; seed++) {

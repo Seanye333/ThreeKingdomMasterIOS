@@ -204,6 +204,7 @@ describe('師徒衣缽 — explicit mentor bonds', () => {
     expect(officers.pupil.stats.war).toBeGreaterThan(pupil.stats.war); // master’s top stat
     expect(officers.pupil.mentorId).toBeUndefined(); // bond ends with the master
     expect(officers.pupil.loyalty).toBeGreaterThanOrEqual(pupil.loyalty);
+    expect(officers.pupil.skills).toContain(SKILLS[0].id); // 衣鉢相傳 — inherits the master's art
     expect(entries.length).toBeGreaterThan(0);
   });
 });

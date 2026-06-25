@@ -6,7 +6,8 @@
  * helpers each gameplay system calls to read trait modifiers in a consistent
  * way. Adding a new trait → adding it to the relevant set here is enough.
  */
-import type { Officer, OfficerStats, InternalAffairsType } from '../types';
+import type { Officer, OfficerStats, InternalAffairsType, UnitType, TerrainKind, EntityId } from '../types';
+import type { HeroicDeeds } from '../types/deeds';
 
 type TraitId = string;
 
@@ -25,7 +26,7 @@ const INTERNAL_BOOST_TRAITS = new Set(['diligent']);
 const INTERNAL_PENALTY_TRAITS = new Set(['lazy']);
 const COMMERCE_BOOST = new Set(['frugal']);
 const DEFENSE_BOOST = new Set(['fortress-keeper']);
-const LOYALTY_BOOST = new Set(['compassionate', 'benevolent', 'noble', 'lenient', 'generous']);
+const LOYALTY_BOOST = new Set(['compassionate', 'benevolent', 'noble', 'lenient', 'generous', 'humble']);
 // 治軍嚴整 — a disciplined martial officer drills the garrison and organises a
 // 屯田 colony better than a soft administrator.
 const DRILL_BOOST = new Set(['iron-discipline', 'martial-valor', 'veteran']);
@@ -85,6 +86,10 @@ export function commandFitMultiplier(
     if (has(officer, 'frail')) m *= 0.6;
     if (hasAny(officer, new Set(['martial-valor', 'veteran', 'ironhearted', 'stoic-brave']))) m *= 1.2;
     if (has(officer, 'field-tactician')) m *= 1.1;
+    // 攻城/陷陣 — a march on a city is a siege; the AI prefers siege & charge
+    // specialists to lead it (so 攻城/先鋒/鬥將 actually get fielded forward).
+    if (has(officer, 'siege-expert')) m *= 1.15;
+    if (hasAny(officer, new Set(['vanguard', 'duelist']))) m *= 1.05;
     if (has(officer, 'reckless')) m *= 1.05;
     if (has(officer, 'cautious')) m *= 0.9;
     return m;
@@ -97,18 +102,49 @@ export function isCombatLiability(officer: Officer): boolean {
   return has(officer, 'cowardly') || has(officer, 'frail');
 }
 
+/** 重傷不能理事 — a gravely (critical) wounded officer is bed-bound: they can't
+ *  lead internal-affairs commands, run espionage, or seek duels until they
+ *  recover. Minor/serious wounds only sap power (see tactical woundPenalty). */
+export function isIncapacitated(officer: Officer): boolean {
+  return officer.status === 'wounded' && officer.woundSeverity === 'critical';
+}
+
+/**
+ * Combat-role fit — a selection-bias multiplier so the AI (and UI suggestions)
+ * field the RIGHT specialist for a battle's shape: a 水將 for a river fight, a
+ * 善守 to hold a wall, an 攻城 for a siege, a 鬥將 to lead a charge. Multiplies
+ * the officer's war score for SORTING only; it does NOT touch effectiveStats, so
+ * it never double-counts with tacticalDamageMul. Range ≈ [0.5, 1.4].
+ */
+export function combatRoleFit(
+  officer: Officer,
+  ctx: { isSiege?: boolean; isNaval?: boolean; isDefense?: boolean },
+): number {
+  const t = new Set(officer.traits ?? []);
+  let mul = 1.0;
+  if (ctx.isSiege && t.has('siege-expert')) mul *= 1.20;
+  if (ctx.isSiege && t.has('ambush-master')) mul *= 1.08;
+  if (ctx.isNaval && t.has('navy-master')) mul *= 1.20;
+  if (ctx.isDefense && t.has('fortress-keeper')) mul *= 1.20;
+  if (ctx.isDefense && (t.has('shield-bearer') || t.has('mountain-still'))) mul *= 1.08;
+  if (!ctx.isDefense && (t.has('duelist') || t.has('vanguard') || t.has('martial-valor'))) mul *= 1.10;
+  if (has(officer, 'cowardly')) mul *= 0.5;
+  if (has(officer, 'frail')) mul *= 0.6;
+  return mul;
+}
+
 // ─────────────────────────────────────────────────────────────────────
 // T2 — Effective stats (trait bonuses on top of raw stats)
 // ─────────────────────────────────────────────────────────────────────
 
-const WAR_BOOST = new Set(['martial-valor', 'ironhearted', 'veteran', 'stoic-brave', 'bloodthirsty', 'matchless']);
-const WAR_PENALTY = new Set(['frail', 'cowardly', 'drunkard']);
-const LEAD_BOOST = new Set(['veteran', 'fortress-keeper', 'field-tactician', 'noble']);
-const INT_BOOST = new Set(['erudite', 'wise', 'scholar', 'mystical', 'strategist', 'precognitive']);
-const POL_BOOST = new Set(['eloquent', 'diligent', 'honor-bound', 'composed', 'stern']);
-const POL_PENALTY = new Set(['oath-breaker', 'lazy', 'drunkard']);
-const CHA_BOOST = new Set(['charming', 'noble', 'graceful', 'eloquent', 'compassionate', 'refined']);
-const CHA_PENALTY = new Set(['suspicious', 'ruthless', 'bloodthirsty', 'oath-breaker', 'cruel', 'arrogant']);
+const WAR_BOOST = new Set(['martial-valor', 'ironhearted', 'veteran', 'stoic-brave', 'bloodthirsty', 'matchless', 'robust', 'berserker', 'tiger-roar']);
+const WAR_PENALTY = new Set(['frail', 'cowardly', 'drunkard', 'hunchback', 'sleepy']);
+const LEAD_BOOST = new Set(['veteran', 'fortress-keeper', 'field-tactician', 'noble', 'iron-discipline', 'banner-master']);
+const INT_BOOST = new Set(['erudite', 'wise', 'classics-scholar', 'mystical', 'strategist', 'precognitive', 'analytical', 'visionary', 'quick-witted', 'deep-schemer', 'unfathomable', 'sleeping-dragon', 'phoenix-mind']);
+const POL_BOOST = new Set(['eloquent', 'diligent', 'honor-bound', 'composed', 'stern', 'meritocratic', 'pragmatic', 'self-disciplined']);
+const POL_PENALTY = new Set(['oath-breaker', 'lazy', 'drunkard', 'short-sighted', 'spendthrift', 'opium-user']);
+const CHA_BOOST = new Set(['charming', 'noble', 'graceful', 'eloquent', 'compassionate', 'refined', 'handsome-noble', 'beautiful', 'jade-face', 'gallant', 'humorous', 'sociable']);
+const CHA_PENALTY = new Set(['suspicious', 'ruthless', 'bloodthirsty', 'oath-breaker', 'cruel', 'arrogant', 'ugly', 'cold', 'awkward', 'haughty']);
 
 /** Effective stats with trait bonuses layered on top of base stats.
  *  Each trait contributes +3 (or −3) to one stat; cap final at [1, 120]. */
@@ -128,6 +164,12 @@ export function effectiveStats(officer: Officer): OfficerStats {
     if (POL_PENALTY.has(t)) politics -= 3;
     if (CHA_BOOST.has(t)) charisma += 3;
     if (CHA_PENALTY.has(t)) charisma -= 3;
+    // 文武雙全 — a small, even lift to every 圍 (fulfils the description's promise).
+    if (t === 'versatile') { war += 2; leadership += 2; intelligence += 2; politics += 2; charisma += 2; }
+    // 巨力 — raw thews lend martial weight.
+    if (t === 'mighty-strength') war += 4;
+    // 過目不忘 — a perfect memory sharpens the mind.
+    if (t === 'photographic-memory') intelligence += 3;
   }
   // 後遺 — fold in any active afflictions (養傷 saps 武力, 羞憤 saps 魅力/智力).
   for (const a of officer.afflictions ?? []) {
@@ -152,12 +194,16 @@ export function effectiveStats(officer: Officer): OfficerStats {
 const LOYAL_TRAITS = new Set(['loyal', 'honor-bound', 'ironhearted', 'pious']);
 const FLIGHTY_TRAITS = new Set(['oath-breaker', 'ambitious', 'vainglorious', 'greedy']);
 const AMBITIOUS_TRAITS = new Set(['ambitious', 'vainglorious']);
+// 忠君愛國 — steadfast officers regenerate loyalty but (unlike LOYAL_TRAITS) are
+// not made wholly unshakeable; their devotion is to the realm, not blind.
+const STEADFAST_TRAITS = new Set(['patriotic', 'grateful', 'nostalgic']);
 
 /** How much an officer's loyalty drifts each season-boundary, before
  *  events. Positive = loyalty regenerates; negative = officer drifts away. */
 export function loyaltyDriftPerSeason(officer: Officer): number {
   let drift = 0;
   if (hasAny(officer, LOYAL_TRAITS)) drift += 1;
+  if (hasAny(officer, STEADFAST_TRAITS)) drift += 1;
   if (hasAny(officer, FLIGHTY_TRAITS)) drift -= 1;
   // Ambitious officers without high rank drift down extra. (Rank check
   // would need data; we approximate via low stats — high-rank officers
@@ -239,28 +285,170 @@ export function combatModifiers(officer: Officer, ctx: CombatContext): CombatMod
 }
 
 // ─────────────────────────────────────────────────────────────────────
+// T4b — Tactical (hex-battle) specialist modifiers
+//
+// The strategic combatModifiers above averages whole armies, where a single
+// officer's "unit type" is ill-defined. The hex tactical battle, by contrast,
+// gives every officer a concrete UnitType, terrain tile, time-of-day and turn —
+// so the unit/terrain/night/charge specialist traits that the roster *promises*
+// (神槍/弩匠/騎將/水將/山戰/林戰/夜襲/先鋒…) are wired HERE, where they're real.
+// `attackUnits` multiplies the offense result into the blow and the defense
+// result into damage taken.
+// ─────────────────────────────────────────────────────────────────────
+
+export interface TacticalTraitContext {
+  unitType: UnitType;
+  terrain: TerrainKind;
+  isNight: boolean;
+  isAmbush: boolean;   // attacker struck from concealment (hidden)
+  turn: number;        // 1-based battle turn
+  troopRatio: number;  // current troops / max troops (0–1)
+  isAttacker: boolean;
+  enemyForceId?: EntityId; // the foe's force — for the 復仇 vengeful check
+}
+
+/** Offensive damage multiplier from an attacker's tactical specialist traits. */
+export function tacticalDamageMul(officer: Officer, ctx: TacticalTraitContext): number {
+  const t = new Set(officer.traits ?? []);
+  let mul = 1;
+  // ── Unit-type specialists (the headline "broken promises") ──
+  if (ctx.unitType === 'spearmen' && (t.has('spear-master') || t.has('pikeman'))) mul *= 1.15;
+  if (ctx.unitType === 'archers' && (t.has('sharpshooter') || t.has('crossbow-adept'))) mul *= 1.15;
+  if (ctx.unitType === 'cavalry' && t.has('cavalryman')) mul *= 1.15;
+  if (ctx.unitType === 'navy' && t.has('navy-master')) mul *= 1.20;
+  if (ctx.unitType === 'siege' && t.has('siege-expert')) mul *= 1.20;
+  // ── 復仇 — +20% against the very force that slew a close relative ──
+  if (t.has('vengeful') && ctx.enemyForceId
+      && officer.killedRelativesBy
+      && Object.values(officer.killedRelativesBy).includes(ctx.enemyForceId)) mul *= 1.20;
+  // ── 為兄弟復仇 — +12% against the force that slew a sworn brother (no trait) ──
+  if (ctx.enemyForceId
+      && officer.killedSwornBy
+      && Object.values(officer.killedSwornBy).includes(ctx.enemyForceId)) mul *= 1.12;
+  // ── Terrain specialists ──
+  if ((ctx.terrain === 'hill' || ctx.terrain === 'mountain') && t.has('hill-fighter')) mul *= 1.20;
+  if (ctx.terrain === 'forest' && t.has('forest-fighter')) mul *= 1.20;
+  if (ctx.terrain === 'desert' && t.has('desert-rider')) mul *= 1.25;
+  if ((ctx.terrain === 'plain' || ctx.terrain === 'road') && t.has('field-tactician')) mul *= 1.10;
+  // ── Time / opening / desperation ──
+  if (ctx.isNight && t.has('night-raider')) mul *= 1.25;
+  if (ctx.isAmbush && (t.has('ambush-master') || t.has('raid-style') || t.has('serpent-strike'))) mul *= 1.20;
+  if (ctx.turn === 1 && (t.has('vanguard') || t.has('explosive'))) mul *= 1.20;       // 先鋒/暴烈 burst
+  if (ctx.turn > 1 && t.has('explosive')) mul *= 0.92;                                // …then they tire
+  if (ctx.troopRatio < 0.5 && (t.has('berserker') || t.has('one-eyed'))) mul *= 1.25; // cornered fury
+  if (t.has('lightning-spear') && ctx.unitType === 'spearmen') mul *= 1.10;
+  return mul;
+}
+
+/** Defensive multiplier on damage an officer TAKES from tactical specialist
+ *  traits (<1 = takes less). */
+export function tacticalDefenseMul(officer: Officer, ctx: TacticalTraitContext): number {
+  const t = new Set(officer.traits ?? []);
+  let mul = 1;
+  if (t.has('shield-bearer')) mul *= 0.85;
+  if (t.has('mountain-still') && (ctx.terrain === 'hill' || ctx.terrain === 'mountain')) mul *= 0.85;
+  if (t.has('river-warden') && (ctx.terrain === 'river' || ctx.terrain === 'bridge')) mul *= 0.85;
+  if (t.has('fortress-keeper') && (ctx.terrain === 'wall' || ctx.terrain === 'gate')) mul *= 0.85;
+  return mul;
+}
+
+/** Per-officer morale aura granted to ADJACENT allies in tactical battles
+ *  (旗令/開朗/沉勇). Caller sums it over neighbours. */
+export function tacticalMoraleAura(officer: Officer): number {
+  const t = new Set(officer.traits ?? []);
+  let aura = 0;
+  if (t.has('banner-master')) aura += 5;
+  if (t.has('cheerful')) aura += 4;
+  if (t.has('stoic-brave')) aura += 3;
+  if (t.has('iron-discipline')) aura += 3;
+  return aura;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// T4c — Stratagem (計略) amplifiers
+// ─────────────────────────────────────────────────────────────────────
+
+/** Damage/effect multiplier a caster's traits lend to a battle stratagem. */
+export function stratagemDamageMul(officer: Officer, stratagem: string): number {
+  const t = new Set(officer.traits ?? []);
+  let mul = 1;
+  // General planners sharpen any 計.
+  if (t.has('strategist')) mul *= 1.10;
+  if (t.has('adaptable') || t.has('deep-schemer')) mul *= 1.10;
+  // Element specialists.
+  if (stratagem === 'fire-attack' && t.has('fire-tactician')) mul *= 1.30;
+  if ((stratagem === 'chain-ships' || stratagem === 'flood' || stratagem === 'water-attack')
+      && t.has('water-tactician')) mul *= 1.30;
+  if (stratagem === 'rain-of-arrows' && (t.has('sharpshooter') || t.has('crossbow-adept'))) mul *= 1.20;
+  if (stratagem === 'charge' && (t.has('cavalryman') || t.has('reckless'))) mul *= 1.15;
+  return mul;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// T4d — 舌戰 (word-war) prowess
+// ─────────────────────────────────────────────────────────────────────
+
+/** Multiplier on an officer's 舌戰 prowess from rhetorical traits. */
+export function wordWarProwessMul(officer: Officer): number {
+  const t = new Set(officer.traits ?? []);
+  let mul = 1;
+  if (t.has('eloquent') || t.has('persuasive')) mul *= 1.12;
+  if (t.has('sharp-tongue')) mul *= 1.10;
+  if (t.has('quick-witted') || t.has('humorous')) mul *= 1.06;
+  if (t.has('composed') || t.has('reserved')) mul *= 1.05;   // unflappable under barbs
+  if (t.has('taciturn')) mul *= 0.92;                         // few words to spend
+  if (t.has('awkward')) mul *= 0.90;
+  return mul;
+}
+
+// ─────────────────────────────────────────────────────────────────────
 // T5 — Post-conquest behavior
 // ─────────────────────────────────────────────────────────────────────
 
-const MERCIFUL_TRAITS = new Set(['compassionate', 'benevolent', 'chivalrous', 'honor-bound', 'noble', 'lenient', 'generous']);
-const BRUTAL_TRAITS = new Set(['ruthless', 'bloodthirsty', 'cruel', 'wrathful']);
+// Graded by how the trait shows mercy: a gentle soul wins the people most, an
+// honour-bound knight somewhat, a merely lenient governor a little.
+const MERCY_STRONG = new Set(['compassionate', 'benevolent']);
+const MERCY_MILD = new Set(['chivalrous', 'honor-bound', 'noble', 'lenient', 'generous']);
+const CRUEL_STRONG = new Set(['bloodthirsty', 'cruel']);
+const CRUEL_MILD = new Set(['ruthless', 'wrathful']);
 
 /** Post-conquest loyalty modifier for the captured city. Merciful
- *  commanders earn higher loyalty from the populace; brutal ones lower. */
+ *  commanders earn higher loyalty from the populace; brutal ones lower.
+ *  Magnitude is tiered so the cluster doesn't all read as a flat ±15. */
 export function conquestLoyaltyMod(commander: Officer): number {
   let mod = 0;
-  if (hasAny(commander, MERCIFUL_TRAITS)) mod += 15;
-  if (hasAny(commander, BRUTAL_TRAITS)) mod -= 15;
+  if (hasAny(commander, MERCY_STRONG)) mod += 18;
+  else if (hasAny(commander, MERCY_MILD)) mod += 12;
+  if (hasAny(commander, CRUEL_STRONG)) mod -= 18;
+  else if (hasAny(commander, CRUEL_MILD)) mod -= 12;
   return mod;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// T5b — Economy: per-city income/upkeep from the character of its officers
+// ─────────────────────────────────────────────────────────────────────
+
+const THRIFTY_TRAITS = new Set(['frugal', 'modest-dress', 'self-disciplined', 'ascetic']);
+const WASTEFUL_TRAITS = new Set(['spendthrift', 'gluttonous', 'opium-user', 'gambler']);
+
+/** Multiplier on a city's gold income from the officers stationed there.
+ *  A thrifty steward squeezes more from the same coin; a wastrel or a
+ *  backroom dealer leaks it. Clamped to a gentle band. */
+export function cityIncomeTraitMul(officers: Officer[]): number {
+  let mul = 1;
+  if (officers.some((o) => hasAny(o, THRIFTY_TRAITS))) mul += 0.08;
+  if (officers.some((o) => hasAny(o, WASTEFUL_TRAITS))) mul -= 0.08;
+  if (officers.some((o) => has(o, 'dark-political'))) mul += 0.05; // backroom deals fill the coffers…
+  return Math.max(0.8, Math.min(1.2, mul));
 }
 
 // ─────────────────────────────────────────────────────────────────────
 // T6 — Diplomacy modifiers
 // ─────────────────────────────────────────────────────────────────────
 
-const DIPLOMAT_TRAITS = new Set(['eloquent', 'graceful', 'noble', 'composed']);
-const TRICKSTER_TRAITS = new Set(['cunning', 'strategist']);
-const SUSPICIOUS_TRAITS = new Set(['suspicious', 'paranoid']);
+const DIPLOMAT_TRAITS = new Set(['eloquent', 'graceful', 'noble', 'composed', 'persuasive', 'smooth', 'sociable']);
+const TRICKSTER_TRAITS = new Set(['cunning', 'strategist', 'deep-schemer', 'dark-political']);
+const SUSPICIOUS_TRAITS = new Set(['suspicious', 'paranoid', 'unfathomable']);
 
 /** Bonus to the chance an opposing ruler accepts a diplomatic proposal. */
 export function diplomacyProposalBonus(rulerOfficer: Officer): number {
@@ -280,8 +468,8 @@ export function diplomacyResistance(rulerOfficer: Officer): number {
 // T7 — Espionage modifiers
 // ─────────────────────────────────────────────────────────────────────
 
-const SPY_TRAITS = new Set(['cunning', 'strategist', 'precognitive']);
-const SPY_RESIST_TRAITS = new Set(['loyal', 'honor-bound', 'suspicious', 'composed', 'taciturn', 'paranoid', 'precognitive']);
+const SPY_TRAITS = new Set(['cunning', 'strategist', 'precognitive', 'deep-schemer', 'shadow-walker', 'dark-political']);
+const SPY_RESIST_TRAITS = new Set(['loyal', 'honor-bound', 'suspicious', 'composed', 'taciturn', 'paranoid', 'precognitive', 'unfathomable', 'fire-eyes']);
 
 /** Bonus to the chance an espionage op succeeds. */
 export function espionageBonus(agent: Officer): number {
@@ -302,8 +490,8 @@ export function counterEspionageResist(officer: Officer): number {
 // T8 — Aging / mortality
 // ─────────────────────────────────────────────────────────────────────
 
-const HARDY_TRAITS = new Set(['weathered', 'stoic-brave', 'long-lived', 'ironhearted']);
-const SICKLY_TRAITS = new Set(['frail', 'drunkard', 'sickly']);
+const HARDY_TRAITS = new Set(['weathered', 'stoic-brave', 'long-lived', 'ironhearted', 'robust', 'crane-longevity']);
+const SICKLY_TRAITS = new Set(['frail', 'drunkard', 'sickly', 'opium-user']);
 
 /** Multiplier on the annual death roll. <1 = longer lived. */
 export function deathChanceMultiplier(officer: Officer): number {
@@ -311,6 +499,27 @@ export function deathChanceMultiplier(officer: Officer): number {
   if (hasAny(officer, HARDY_TRAITS)) mul *= 0.7;
   if (hasAny(officer, SICKLY_TRAITS)) mul *= 1.3;
   if (has(officer, 'long-lived')) mul *= 0.6; // historical longevity
+  return mul;
+}
+
+// 醫者 — the medical axis (§2.4). A physician posted to a force speeds the
+// recovery of its wounded; an officer's own constitution / a healer's care
+// also colours how a plague treats them.
+const FRAGILE_TO_PLAGUE = new Set(['sickly', 'frail', 'drunkard', 'opium-user']);
+const PLAGUE_RESILIENT = new Set(['long-lived', 'robust', 'physician', 'crane-longevity']);
+
+/** Extra wound-recovery multiplier a force gains from its best resident healer.
+ *  Caller adds this on top of medicine/building bonuses. */
+export function physicianRecoveryBonus(officers: Officer[]): number {
+  return officers.some((o) => has(o, 'physician')) ? 0.2 : 0;
+}
+
+/** Per-officer multiplier on a plague's chance to carry them off. Frail bodies
+ *  succumb; the hale and the well-doctored pull through. */
+export function plagueDeathTraitMul(officer: Officer): number {
+  let mul = 1;
+  if (hasAny(officer, FRAGILE_TO_PLAGUE)) mul *= 1.5;
+  if (hasAny(officer, PLAGUE_RESILIENT)) mul *= 0.7;
   return mul;
 }
 
@@ -322,9 +531,13 @@ export function deathChanceMultiplier(officer: Officer): number {
 export function recruitChanceBonus(prospect: Officer): number {
   let bonus = 0;
   if (has(prospect, 'approachable')) bonus += 0.10;
+  if (has(prospect, 'sociable')) bonus += 0.08;  // wide circle, easily courted
   if (has(prospect, 'charming')) bonus += 0.05; // willing to be charmed
+  if (has(prospect, 'wandering-spirit')) bonus += 0.10; // a drifter, no roots to hold them
   if (has(prospect, 'noble')) bonus -= 0.10;
+  if (has(prospect, 'aloof')) bonus -= 0.08;     // distant, hard to reach
   if (has(prospect, 'loyal')) bonus -= 0.15;    // loyal officers won't switch easily
+  if (has(prospect, 'patriotic')) bonus -= 0.10; // devotion to the realm resists poaching
   if (has(prospect, 'oath-breaker')) bonus += 0.15;
   return bonus;
 }
@@ -336,6 +549,8 @@ export function recruiterBonus(ruler: Officer): number {
   if (has(ruler, 'noble')) bonus += 0.05;
   if (has(ruler, 'eloquent')) bonus += 0.05;
   if (has(ruler, 'generous')) bonus += 0.05;
+  if (has(ruler, 'cordial-host')) bonus += 0.05; // entertains and wins over guests
+  if (has(ruler, 'meritocratic')) bonus += 0.05; // 任賢 — talent flocks to one who values it
   return bonus;
 }
 
@@ -344,10 +559,12 @@ export function recruiterBonus(ruler: Officer): number {
  *  traits — not negative ones. Used by P11 bond formation and E marriage
  *  assimilation. Declared early so both sections can reference it. */
 const BONDABLE_TRAITS: readonly string[] = [
-  'chivalrous', 'mystical', 'scholar', 'erudite', 'refined',
+  'chivalrous', 'mystical', 'classics-scholar', 'erudite', 'refined',
   'poetic-genius', 'martial-valor', 'honor-bound', 'pious',
   'loyal', 'composed', 'noble', 'graceful', 'compassionate',
   'benevolent', 'eloquent', 'wise',
+  // 性情相投 — sociable / warm-hearted characters make friends readily.
+  'sociable', 'cordial-host', 'humorous', 'gallant', 'cheerful', 'generous',
 ];
 
 // ─────────────────────────────────────────────────────────────────────
@@ -370,13 +587,19 @@ export function rollLevelUpTrait(
   const have = new Set((officer.traits ?? []) as string[]);
   const pool: string[] = [];
   const s = officer.stats;
+  // ── ≥70 tiers (broad pools) so well-rounded officers aren't locked out ──
+  if (s.war >= 70) pool.push('robust', 'reckless', 'tiger-roar');
   if (s.war >= 80) pool.push('veteran', 'martial-valor', 'stoic-brave');
-  if (s.war >= 90) pool.push('ironhearted', 'matchless');
+  if (s.war >= 90) pool.push('ironhearted', 'matchless', 'duelist');
+  if (s.intelligence >= 70) pool.push('analytical', 'quick-witted', 'curious');
   if (s.intelligence >= 80) pool.push('strategist', 'erudite', 'wise');
-  if (s.intelligence >= 90) pool.push('precognitive', 'composed');
+  if (s.intelligence >= 90) pool.push('precognitive', 'composed', 'deep-schemer');
+  if (s.leadership >= 70) pool.push('iron-discipline', 'banner-master');
   if (s.leadership >= 80) pool.push('field-tactician', 'veteran');
   if (s.leadership >= 90) pool.push('fortress-keeper');
+  if (s.politics >= 70) pool.push('pragmatic', 'self-disciplined', 'meritocratic');
   if (s.politics >= 80) pool.push('diligent', 'honor-bound', 'composed');
+  if (s.charisma >= 70) pool.push('sociable', 'humorous', 'gallant');
   if (s.charisma >= 80) pool.push('eloquent', 'graceful');
   if (s.charisma >= 90) pool.push('charming', 'compassionate');
   const filtered = pool.filter((t) => !have.has(t));
@@ -404,7 +627,7 @@ const ITEM_RESONANCE: Record<string, string> = {
   'mozi-book':       'frugal',
   'zhuangzi-book':   'composed',
   'gongsun-longzi':  'eloquent',
-  'jiuzhang-suan':   'scholar',
+  'jiuzhang-suan':   'classics-scholar',
   'star-chart':      'mystical',
   'way-of-great-peace': 'mystical',
   // Weapons — fierce traits
@@ -591,14 +814,17 @@ export function sharedBondableTrait(a: Officer, b: Officer): string | null {
 export function flavorEventChance(officer: Officer): number {
   let chance = 0;
   if (has(officer, 'mystical')) chance += 0.04;
-  if (has(officer, 'poetic-genius')) chance += 0.04;
+  if (has(officer, 'poetic-genius') || has(officer, 'graceful') || has(officer, 'refined')) chance += 0.04;
   if (has(officer, 'drunkard')) chance += 0.05;
-  if (has(officer, 'jealous')) chance += 0.04; // quarrels with peers
+  if (has(officer, 'jealous')) chance += 0.04;  // quarrels with peers
+  if (has(officer, 'gambler')) chance += 0.04;  // wins or loses a fortune
+  if (has(officer, 'inventive') || has(officer, 'curious')) chance += 0.03; // tinkering
+  if (has(officer, 'erudite') || has(officer, 'classics-scholar')) chance += 0.03;   // study breakthroughs
   return chance;
 }
 
 export interface FlavorEvent {
-  kind: 'mystical' | 'poetic' | 'drunkard' | 'jealous';
+  kind: 'mystical' | 'poetic' | 'drunkard' | 'jealous' | 'gambler' | 'inventive' | 'classics-scholar';
   loyaltyDelta: number;
   statDelta?: Partial<OfficerStats>;
   textZh: string;
@@ -613,7 +839,7 @@ export interface FlavorEvent {
 export function traitMechanicalEffects(traitId: string): Array<{ zh: string; en: string }> {
   const out: Array<{ zh: string; en: string }> = [];
   // Training
-  if (['diligent', 'erudite', 'wise', 'scholar', 'cunning'].includes(traitId))
+  if (['diligent', 'erudite', 'wise', 'classics-scholar', 'cunning'].includes(traitId))
     out.push({ zh: '書院培訓 −1 季', en: 'Academy training −1 season' });
   if (traitId === 'lazy') out.push({ zh: '書院培訓 +1 季', en: 'Academy training +1 season' });
   if (traitId === 'loyal') out.push({ zh: '書院學費 −20%', en: 'Academy tuition −20%' });
@@ -668,12 +894,52 @@ export function traitMechanicalEffects(traitId: string): Array<{ zh: string; en:
   // Recruit
   if (traitId === 'approachable') out.push({ zh: '更易被招攬', en: 'Easier to recruit' });
   if (traitId === 'charming') out.push({ zh: '統治者:招攬 +10%', en: 'Ruler: recruit +10%' });
+  // Tactical specialists (hex battle)
+  if (traitId === 'spear-master' || traitId === 'pikeman') out.push({ zh: '統槍兵時傷害 +15%', en: 'Spear units +15% dmg' });
+  if (traitId === 'sharpshooter' || traitId === 'crossbow-adept') out.push({ zh: '統弓弩時傷害 +15% · 矢雨 +20%', en: 'Archer units +15% · arrow-volley +20%' });
+  if (traitId === 'cavalryman') out.push({ zh: '統騎兵時傷害 +15% · 突撃 +15%', en: 'Cavalry +15% dmg · charge +15%' });
+  if (traitId === 'navy-master') out.push({ zh: '水軍傷害 +20%', en: 'Naval units +20% dmg' });
+  if (traitId === 'hill-fighter') out.push({ zh: '山地/丘陵傷害 +20%', en: 'Hill/mountain +20% dmg' });
+  if (traitId === 'forest-fighter') out.push({ zh: '森林傷害 +20%', en: 'Forest +20% dmg' });
+  if (traitId === 'desert-rider') out.push({ zh: '荒漠傷害 +25%', en: 'Desert +25% dmg' });
+  if (traitId === 'night-raider') out.push({ zh: '夜戰傷害 +25%', en: 'Night battle +25% dmg' });
+  if (traitId === 'vanguard' || traitId === 'explosive') out.push({ zh: '首回合傷害 +20%', en: 'First-turn +20% dmg' });
+  if (traitId === 'berserker') out.push({ zh: '兵力<50% 傷害 +25% · 一騎打 +10', en: 'Below 50% troops +25% · duel +10' });
+  if (traitId === 'raid-style' || traitId === 'serpent-strike' || traitId === 'ambush-master') out.push({ zh: '伏擊/奇襲傷害 +20%', en: 'Ambush/raid +20% dmg' });
+  if (traitId === 'shield-bearer') out.push({ zh: '受傷 −15%', en: 'Damage taken −15%' });
+  if (traitId === 'mountain-still') out.push({ zh: '山地防守:受傷 −15%', en: 'Hill/mtn defense −15% taken' });
+  if (traitId === 'river-warden') out.push({ zh: '沿江防守:受傷 −15%', en: 'River defense −15% taken' });
+  if (traitId === 'banner-master') out.push({ zh: '相鄰友軍士氣 +5/回合 · 統率 +3', en: 'Adjacent allies +5 morale/turn · lead +3' });
+  if (traitId === 'cheerful') out.push({ zh: '相鄰友軍士氣 +4/回合', en: 'Adjacent allies +4 morale/turn' });
+  if (traitId === 'duelist') out.push({ zh: '一騎打擲骰 +20 · 好戰', en: 'Duel rolls +20 · seeks combat' });
+  // Stratagems
+  if (traitId === 'fire-tactician') out.push({ zh: '火計 +30% · 火攻 +1 回合', en: 'Fire stratagems +30% · burn +1 turn' });
+  if (traitId === 'water-tactician') out.push({ zh: '水計 +30%', en: 'Water stratagems +30%' });
+  if (traitId === 'strategist') out.push({ zh: '計略傷害 +10%', en: 'Stratagem dmg +10%' });
+  if (traitId === 'adaptable' || traitId === 'deep-schemer') out.push({ zh: '計略傷害 +10% · 諜報 +', en: 'Stratagem dmg +10% · espionage +' });
+  // 舌戰
+  if (traitId === 'eloquent' || traitId === 'persuasive') out.push({ zh: '舌戰口才 ×1.12', en: 'Word-war prowess ×1.12' });
+  if (traitId === 'sharp-tongue') out.push({ zh: '舌戰口才 ×1.10', en: 'Word-war prowess ×1.10' });
+  if (traitId === 'taciturn') out.push({ zh: '舌戰口才 ×0.92(寡言)', en: 'Word-war ×0.92 (few words)' });
+  // Convoy
+  if (traitId === 'stern' || traitId === 'tireless-march') out.push({ zh: '輜重行軍 +10%', en: 'Convoy march +10%' });
+  if (traitId === 'iron-discipline') out.push({ zh: '輜重行軍 +5% · 本部士氣 +', en: 'Convoy +5% · unit morale +' });
+  // Medical (§2.4)
+  if (traitId === 'physician') out.push({ zh: '同勢力傷者養傷 +20% · 抗瘟疫', en: 'Force wound recovery +20% · plague-resilient' });
+  if (traitId === 'herbalist') out.push({ zh: '採藥 + · 減瘟疫之害', en: 'Medicine gather + · eases plague' });
+  // Economy
+  if (THRIFTY_TRAITS.has(traitId)) out.push({ zh: '駐城金收 +8%', en: 'City gold income +8%' });
+  if (WASTEFUL_TRAITS.has(traitId)) out.push({ zh: '駐城金收 −8%', en: 'City gold income −8%' });
+  if (traitId === 'dark-political') out.push({ zh: '駐城金收 +5% · 諜報 + · 易入宦黨', en: 'City gold +5% · espionage + · eunuch faction' });
+  if (traitId === 'patriotic' || traitId === 'grateful' || traitId === 'nostalgic') out.push({ zh: '忠誠 +1/季', en: 'Loyalty +1/season' });
+  if (traitId === 'versatile') out.push({ zh: '五圍各 +2', en: 'All five stats +2' });
+  if (traitId === 'mighty-strength') out.push({ zh: '武力 +4', en: 'War +4' });
   // Stats
   const statMap: Record<string, string[]> = {
     'martial-valor': ['武力 +3'], 'ironhearted': ['武力 +3'], 'veteran': ['武力 +3 · 統率 +3'],
     'stoic-brave': ['武力 +3'], 'bloodthirsty': ['武力 +3 · 魅力 −3'], 'matchless': ['武力 +3'],
     'fortress-keeper': ['統率 +3'], 'field-tactician': ['統率 +3'], 'noble': ['統率 +3 · 魅力 +3'],
-    'erudite': ['知力 +3'], 'wise': ['知力 +3'], 'scholar': ['知力 +3'], 'mystical': ['知力 +3'],
+    'erudite': ['知力 +3'], 'wise': ['知力 +3'], 'classics-scholar': ['知力 +3'], 'mystical': ['知力 +3'],
     'strategist': ['知力 +3'], 'precognitive': ['知力 +3'],
     'eloquent': ['政治 +3 · 魅力 +3'], 'diligent': ['政治 +3'], 'honor-bound': ['政治 +3'],
     'composed': ['政治 +3'], 'stern': ['政治 +3'], 'oath-breaker': ['政治 −3 · 魅力 −3'],
@@ -727,6 +993,138 @@ export function rollFlavorEvent(officer: Officer, rng: () => number): FlavorEven
       textEn: `${officer.name.en} envied peers' deeds — small unrest in the camp.`,
     });
   }
+  if (has(officer, 'gambler')) {
+    const won = rng() < 0.5;
+    pool.push({
+      kind: 'gambler',
+      loyaltyDelta: won ? 2 : -3,
+      textZh: won
+        ? `${officer.name.zh}賭場豪擲,竟連莊大勝,意氣風發。`
+        : `${officer.name.zh}一擲千金而輸個精光,垂頭喪氣。`,
+      textEn: won
+        ? `${officer.name.en} hit a hot streak at dice — spirits soar.`
+        : `${officer.name.en} gambled it all away — morale sinks.`,
+    });
+  }
+  if (has(officer, 'inventive') || has(officer, 'curious')) {
+    pool.push({
+      kind: 'inventive',
+      loyaltyDelta: 1,
+      statDelta: { intelligence: 1 },
+      textZh: `${officer.name.zh}巧思忽至,試造新器,智力 +1。`,
+      textEn: `${officer.name.en} tinkered out a clever contrivance — intelligence +1.`,
+    });
+  }
+  if (has(officer, 'erudite') || has(officer, 'classics-scholar')) {
+    pool.push({
+      kind: 'classics-scholar',
+      loyaltyDelta: 1,
+      statDelta: { politics: 1 },
+      textZh: `${officer.name.zh}埋首典籍,有所得,政治 +1。`,
+      textEn: `${officer.name.en} pored over the classics and gained insight — politics +1.`,
+    });
+  }
   if (pool.length === 0) return null;
   return pool[Math.floor(rng() * pool.length)];
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Trait coverage registry — which traits any system actually reads.
+//
+// This is the single source of truth for: (1) officerGen, so brand-new
+// recruits aren't handed dead flavor traits; (2) the OfficerDetail UI, which
+// badges a trait "(風味)" when nothing reads it; (3) the GUIDE §2.3 wired/flavor
+// split. Built by unioning every trait Set defined above plus the traits that
+// are checked by string literal here or in sibling systems (duel/debate/
+// convoy/courtFactions/training/growth). When you wire a new trait, add it to a
+// Set above (preferred) or to EXTRA_WIRED below.
+// ─────────────────────────────────────────────────────────────────────
+
+const EXTRA_WIRED: readonly string[] = [
+  // inline-checked in this module (commandFit / combatModifiers / effectiveStats)
+  'cautious', 'reckless', 'weathered', 'siege-expert', 'ambush-master',
+  'drunkard', 'versatile', 'mighty-strength', 'photographic-memory', 'cowardly',
+  'frail', 'field-tactician', 'fortress-keeper', 'martial-valor', 'veteran',
+  'ironhearted', 'stoic-brave', 'bloodthirsty',
+  // tactical specialists (tacticalDamageMul / tacticalDefenseMul / aura)
+  'spear-master', 'pikeman', 'sharpshooter', 'crossbow-adept', 'cavalryman',
+  'navy-master', 'hill-fighter', 'forest-fighter', 'desert-rider',
+  'night-raider', 'raid-style', 'serpent-strike', 'vanguard', 'explosive',
+  'one-eyed', 'lightning-spear', 'shield-bearer', 'mountain-still',
+  'river-warden', 'banner-master', 'cheerful', 'berserker',
+  // stratagem amplifiers
+  'strategist', 'adaptable', 'deep-schemer', 'fire-tactician', 'water-tactician',
+  // 舌戰 prowess
+  'eloquent', 'persuasive', 'sharp-tongue', 'quick-witted', 'humorous',
+  'composed', 'reserved', 'taciturn', 'awkward',
+  // recruitment
+  'approachable', 'sociable', 'charming', 'wandering-spirit', 'aloof',
+  'patriotic', 'oath-breaker', 'cordial-host', 'meritocratic', 'generous', 'noble',
+  // duel.ts / debate.ts / afflictions.ts
+  'matchless', 'wrathful', 'sickly', 'duelist',
+  'arrogant', 'vainglorious', 'stubborn', 'impatient',
+  // courtFactions.ts
+  'sycophant', 'cunning', 'refined', 'benevolent', 'honest-to-fault',
+  'dark-political', 'court-favorite', 'crowd-pleaser',
+  'smiling-tiger', 'smiling-blade', 'hates-evil',
+  // read by other systems: 嫉妒 rival/jealousy (store/resolution/wishes),
+  // 玉心 corruption-immunity (officerFate).
+  'envious', 'jade-heart',
+  // convoy.ts
+  'diligent', 'lazy', 'stern', 'iron-discipline', 'tireless-march',
+  // newly wired this pass: 復仇 (combat vs killer force), 好色 (seduction),
+  // 仁孝 (kin-anchored loyalty), 守信 (diplomacy credibility).
+  'vengeful', 'lustful', 'filial', 'keeps-word',
+  // §2.4 medical axis: wound recovery + plague mitigation
+  'physician', 'herbalist',
+  // flavor events + item/policy resonance grants
+  'mystical', 'poetic-genius', 'graceful', 'jealous', 'gambler', 'inventive',
+  'curious', 'erudite', 'classics-scholar', 'pious', 'frugal', 'honor-bound', 'wise',
+  'compassionate',
+];
+
+const WIRED_TRAIT_IDS: ReadonlySet<string> = new Set<string>([
+  ...INTERNAL_BOOST_TRAITS, ...INTERNAL_PENALTY_TRAITS, ...COMMERCE_BOOST,
+  ...DEFENSE_BOOST, ...LOYALTY_BOOST, ...DRILL_BOOST, ...CORRUPTION_FAST,
+  ...CORRUPTION_SLOW, ...WAR_BOOST, ...WAR_PENALTY, ...LEAD_BOOST, ...INT_BOOST,
+  ...POL_BOOST, ...POL_PENALTY, ...CHA_BOOST, ...CHA_PENALTY, ...LOYAL_TRAITS,
+  ...FLIGHTY_TRAITS, ...AMBITIOUS_TRAITS, ...STEADFAST_TRAITS, ...MERCY_STRONG,
+  ...MERCY_MILD, ...CRUEL_STRONG, ...CRUEL_MILD, ...THRIFTY_TRAITS,
+  ...WASTEFUL_TRAITS, ...DIPLOMAT_TRAITS, ...TRICKSTER_TRAITS,
+  ...SUSPICIOUS_TRAITS, ...SPY_TRAITS, ...SPY_RESIST_TRAITS, ...HARDY_TRAITS,
+  ...SICKLY_TRAITS, ...HOT_TRAITS, ...SAGE_TRAITS, ...BONDABLE_TRAITS,
+  ...CRUEL_TRAITS, ...GENTLE_TRAITS, ...EXTRA_WIRED,
+]);
+
+/** True if at least one game system reads this trait. */
+export function isWiredTrait(id: string): boolean {
+  return WIRED_TRAIT_IDS.has(id);
+}
+
+/** True if NO system reads this trait (pure flavor / cosmetic). */
+export function isFlavorOnlyTrait(id: string): boolean {
+  return !WIRED_TRAIT_IDS.has(id);
+}
+
+/** All trait ids that any system reads — used by officerGen to avoid handing
+ *  new recruits dead traits. */
+export function wiredTraitIds(): string[] {
+  return [...WIRED_TRAIT_IDS];
+}
+
+/**
+ * 戰績習性 — a trait an officer EARNS from a sustained record of deeds, checked
+ * each season. Demonstrated mastery hardens into character: a serial duellist
+ * becomes a 鬥將, a city-taker an 攻城 expert, and so on. Returns at most one new
+ * (wired, not-yet-held) trait, or null. Granted by the season tick in store.ts.
+ */
+export function deedTraitCandidate(officer: Officer, deeds: HeroicDeeds | undefined): string | null {
+  if (!deeds) return null;
+  const have = new Set((officer.traits ?? []) as string[]);
+  if ((deeds.duelsWon ?? 0) >= 3 && !have.has('duelist')) return 'duelist';
+  if ((deeds.citiesTaken ?? 0) >= 5 && !have.has('siege-expert')) return 'siege-expert';
+  if ((deeds.battlesWon ?? 0) >= 10 && !have.has('veteran')) return 'veteran';
+  if ((deeds.espionageSuccess ?? 0) >= 5 && !have.has('cunning')) return 'cunning';
+  if ((deeds.killsTroops ?? 0) >= 2000 && !have.has('shadow-walker')) return 'shadow-walker';
+  return null;
 }

@@ -12,7 +12,8 @@ export type EspionageKind =
   | 'sabotage'      // 破壊 — destroy food stocks at target city
   | 'assassinate'   // 暗殺 — attempt to kill a specific enemy officer
   | 'defect'        // 寝返 — turn an enemy officer to your side
-  | 'frame';        // 離間 — drop loyalty of an enemy officer toward their lord
+  | 'frame'         // 離間 — drop loyalty of an enemy officer toward their lord
+  | 'sow-discord';  // 離間計 — poison the rapport between two enemy officers
 
 export interface EspionageDef {
   kind: EspionageKind;
@@ -41,6 +42,8 @@ export interface EspionageOp {
   targetCityId?: EntityId;
   /** Targeted officer, if applicable. */
   targetOfficerId?: EntityId;
+  /** Second targeted officer — for 離間計 (sow-discord), the pair to estrange. */
+  targetOfficerId2?: EntityId;
   /** Season the op was issued. */
   issuedYear: number;
   issuedSeason: 'spring' | 'summer' | 'autumn' | 'winter';

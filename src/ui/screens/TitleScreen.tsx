@@ -116,6 +116,8 @@ export function TitleScreen() {
   const setBattleDifficulty = useGameStore((s) => s.setBattleDifficulty);
   const lifespanLength = useGameStore((s) => s.lifespanLength ?? 'historical');
   const setLifespanLength = useGameStore((s) => s.setLifespanLength);
+  const agingStatLock = useGameStore((s) => s.agingStatLock ?? false);
+  const setAgingStatLock = useGameStore((s) => s.setAgingStatLock);
   const talentDiscovery = useGameStore((s) => s.talentDiscovery ?? 'normal');
   const setTalentDiscovery = useGameStore((s) => s.setTalentDiscovery);
   const duelFrequency = useGameStore((s) => s.duelFrequency ?? 'normal');
@@ -899,6 +901,10 @@ export function TitleScreen() {
                 <option value="long">{t('長壽（老死減半）', 'Long (live longer)')}</option>
               </select>
             </div>
+            <label style={{ display: 'block', marginTop: '0.3rem', fontSize: '0.78rem', color: '#7a8893', cursor: 'pointer' }}>
+              <input type="checkbox" checked={agingStatLock} onChange={(e) => setAgingStatLock(e.target.checked)} style={{ marginRight: '0.4rem' }} />
+              {t('變老不影響屬性（五圍不隨年齡增減）', 'Aging does not affect stats (five stats frozen vs age)')}
+            </label>
             <label style={{ display: 'block', marginTop: '0.3rem', fontSize: '0.78rem', color: '#7a8893', cursor: 'pointer' }}>
               <input type="checkbox" checked={noBattleDeath} onChange={(e) => setNoBattleDeath(e.target.checked)} style={{ marginRight: '0.4rem' }} />
               {t('不會戰死（改為負傷或被俘）', 'No battle death (wounded or captured instead)')}

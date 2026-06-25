@@ -21,10 +21,15 @@ export interface AgingInput {
   forces: Record<EntityId, Force>;
   rng: () => number;
   family?: FamilyRelation[];
+  /** Runtime oath/feud bonds — drive 殉義 grief and a foe's cold relief on death. */
+  runtimeBonds?: import('../data/bonds').OathBond[];
   /** 武將壽命 — old-age death rule. Defaults to 'historical'. */
   lifespanMode?: 'historical' | 'fictionalImmortal' | 'immortal';
   /** 武將壽命長短 — multiplier on the death chance. Defaults to 'historical'. */
   lifespanLength?: 'short' | 'historical' | 'long';
+  /** 變老不影響屬性 — when true, skip the age-driven five-圍 drift entirely
+   *  (no 遲暮 decline, no 智政晚成 growth). Officers still age/die. Default false. */
+  agingStatLock?: boolean;
   /** 起死回生 — when true, dead officers may return to life this year. */
   reviveDeadOfficers?: boolean;
 }
@@ -99,7 +104,9 @@ export function processAging(input: AgingInput): AgingOutput {
     }
     // 遲暮 — past their prime an officer's body wanes: 武力 slips from ~50, and
     // 統率 later. Gentle, permanent, floored — a reason to use elites while young.
-    if (age >= 50) {
+    // 變老不影響屬性 — the setting freezes all age-driven 圍 drift (decline AND
+    // late-bloom), so a maxed general never decays with the years.
+    if (age >= 50 && !input.agingStatLock) {
       const cur = officers[officer.id] ?? officer;
       let s = cur.stats;
       let changed = false;
@@ -114,6 +121,33 @@ export function processAging(input: AgingInput): AgingOutput {
       if (s.intelligence < (lat ? lat.intelligence : 100) && input.rng() < 0.35) { s = { ...s, intelligence: s.intelligence + 1 }; changed = true; }
       if (age >= 55 && s.politics < (lat ? lat.politics : 100) && input.rng() < 0.3) { s = { ...s, politics: s.politics + 1 }; changed = true; }
       if (changed) officers = { ...officers, [officer.id]: { ...cur, stats: s } };
+    }
+
+    // 高齡里程碑 — a long life is its own honour. At 60/70/80 a serving officer
+    // earns a milestone beat (fires once, since age increments by 1 each year):
+    // 元老 steadies them, 國士 inspires a young colleague, 期頤 marvels the court.
+    if (officer.forceId && (age === 60 || age === 70 || age === 80)) {
+      const cur = officers[officer.id] ?? officer;
+      if (age === 60) {
+        officers = { ...officers, [officer.id]: { ...cur, loyalty: Math.min(100, cur.loyalty + 3) } };
+        entries.push({ cityId: cur.locationCityId, kind: 'talent',
+          text: `${officer.name.en} is honored as an Elder Statesman at 60 (loyalty +3).`,
+          textZh: `${officer.name.zh}花甲之年,眾推為元老,德高望重(忠誠 +3)。` });
+      } else if (age === 70) {
+        officers = { ...officers, [officer.id]: { ...cur, loyalty: Math.min(100, cur.loyalty + 3) } };
+        const youth = Object.values(officers).find((o) => o.forceId === officer.forceId
+          && o.locationCityId === cur.locationCityId && o.id !== officer.id
+          && o.status !== 'dead' && o.status !== 'unsearched' && (input.year - o.birthYear) < 30);
+        if (youth) officers = { ...officers, [youth.id]: { ...youth, loyalty: Math.min(100, youth.loyalty + 2) } };
+        entries.push({ cityId: cur.locationCityId, kind: 'talent',
+          text: `${officer.name.en}, a living legend at 70, inspires the young${youth ? ` ${youth.name.en}` : ''} (loyalty +3).`,
+          textZh: `${officer.name.zh}古稀之壽,世稱國士${youth ? `,後進${youth.name.zh}景仰` : ''}(忠誠 +3)。` });
+      } else { // 80
+        officers = { ...officers, [officer.id]: { ...cur, loyalty: Math.min(100, cur.loyalty + 5) } };
+        entries.push({ cityId: cur.locationCityId, kind: 'talent',
+          text: `${officer.name.en} reaches the rare age of 80 — a marvel that heartens the realm (loyalty +5).`,
+          textZh: `${officer.name.zh}耄耋八十,期頤之壽,舉國稱奇(忠誠 +5)。` });
+      }
     }
 
     // T8 — trait-based hardiness / fragility, plus the 壽命長短 dial.
@@ -148,20 +182,37 @@ export function processAging(input: AgingInput): AgingOutput {
     });
 
     // R10 — Grief: apply loyalty hits to bonded officers + report
-    const grief = griefOnDeath(officer.id, officer.name.zh, officer.name.en, input.family ?? []);
+    const grief = griefOnDeath(officer.id, officer.name.zh, officer.name.en, input.family ?? [], input.runtimeBonds ?? []);
     for (const g of grief) {
       const target = officers[g.targetId];
       if (!target || target.status === 'dead' || !target.forceId) continue;
       officers = {
         ...officers,
-        [g.targetId]: { ...target, loyalty: Math.max(0, target.loyalty + g.delta) },
+        [g.targetId]: { ...target, loyalty: Math.max(0, Math.min(100, target.loyalty + g.delta)) },
       };
+      const sign = g.delta >= 0 ? `+${g.delta}` : `${g.delta}`;
       entries.push({
         cityId: target.locationCityId,
         kind: 'note',
-        text: `${target.name.en}: ${g.reasonEn} (loyalty ${g.delta}).`,
-        textZh: `${target.name.zh}:${g.reasonZh} (忠誠 ${g.delta})。`,
+        text: `${target.name.en}: ${g.reasonEn} (loyalty ${sign}).`,
+        textZh: `${target.name.zh}:${g.reasonZh} (忠誠 ${sign})。`,
       });
+      // 殉義 — for a deep sworn bond (義結金蘭+), the bereaved may follow their
+      // brother out of the world's affairs. Not for a ruler (would orphan succession).
+      if (g.mournDepth && g.mournDepth >= 2) {
+        const force = target.forceId ? forces[target.forceId] : undefined;
+        const isRuler = force?.rulerOfficerId === target.id;
+        const chance = g.mournDepth >= 3 ? 0.25 : 0.10;
+        if (!isRuler && input.rng() < chance) {
+          officers = { ...officers, [g.targetId]: { ...officers[g.targetId], status: 'retired', task: null } };
+          entries.push({
+            cityId: target.locationCityId,
+            kind: 'note',
+            text: `${target.name.en} lays down their arms to mourn ${officer.name.en} — 殉義, withdrawing from service.`,
+            textZh: `${target.name.zh}痛失義兄弟${officer.name.zh},心如死灰,自此殉義歸隱。`,
+          });
+        }
+      }
     }
 
     // 名器傳承 — a fallen master's STORIED weapon (a 名器, earned through battle)
@@ -208,6 +259,26 @@ export function processAging(input: AgingInput): AgingOutput {
     const legacy = inheritLegacyOnDeath(officer, officers);
     officers = legacy.officers;
     entries.push(...legacy.entries);
+
+    // 託孤 — a venerable elder (70+) on their deathbed entrusts their unfinished
+    // cause to the worthiest junior still serving their force: that officer is
+    // steadied (+6 loyalty), resolved to carry the torch. (Separate from the
+    // ruler-succession path below; fires for any storied elder.)
+    if (age >= 70 && officer.forceId) {
+      const heir = Object.values(officers)
+        .filter((o) => o.forceId === officer.forceId && o.id !== officer.id
+          && o.status !== 'dead' && o.status !== 'unsearched')
+        .sort((a, b) => b.loyalty - a.loyalty)[0];
+      if (heir) {
+        officers = { ...officers, [heir.id]: { ...heir, loyalty: Math.min(100, heir.loyalty + 6) } };
+        entries.push({
+          cityId: heir.locationCityId,
+          kind: 'talent',
+          text: `On their deathbed, ${officer.name.en} entrusted their cause to ${heir.name.en} (loyalty +6).`,
+          textZh: `${officer.name.zh}臨終託孤,以後事相付${heir.name.zh},${heir.name.zh}感而效死(忠誠 +6)。`,
+        });
+      }
+    }
 
     // Was this officer the ruler of any force?
     const ruledForce = Object.values(forces).find(
@@ -274,7 +345,7 @@ export function processAging(input: AgingInput): AgingOutput {
   return { cities, officers, forces, entries };
 }
 
-function deathChance(
+export function deathChance(
   officer: Officer,
   year: number,
   age: number,
@@ -294,6 +365,19 @@ function deathChance(
   // Age-based fallback for fictional officers.
   if (age < 60) return 0;
   return Math.min(1, (age - 60) * 0.05);
+}
+
+/** 壽算 — the officer's full yearly death probability (base × trait hardiness ×
+ *  壽命長短), exactly as the winter roll computes it. Pure; for UI read-out (D1). */
+export function annualDeathChance(
+  officer: Officer,
+  year: number,
+  lifespanMode: 'historical' | 'fictionalImmortal' | 'immortal',
+  lifespanLength: 'short' | 'historical' | 'long',
+): number {
+  const age = year - officer.birthYear;
+  const lengthMul = lifespanLength === 'short' ? 1.6 : lifespanLength === 'long' ? 0.5 : 1.0;
+  return Math.min(1, deathChance(officer, year, age, lifespanMode) * deathChanceMultiplier(officer) * lengthMul);
 }
 
 interface SuccessionResult {

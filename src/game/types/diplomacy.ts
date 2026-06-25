@@ -28,6 +28,12 @@ export interface MarriageAlliance {
   officerB: EntityId;
   /** Year the union was sealed. */
   sinceYear: number;
+  /** 人質 — a child/heir married OUT lives in the partner's court as surety;
+   *  the leverage tightens the bond. Optional — most unions aren't hostages. */
+  hostage?: boolean;
+  /** 外戚 — the maternal clan key whose prestige rises from the union (the
+   *  bride's house becoming in-laws of the partner realm). */
+  maternalClanId?: string;
 }
 
 export function pairKey(a: EntityId, b: EntityId): string {

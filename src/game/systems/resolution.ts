@@ -47,9 +47,10 @@ import { honorificEffects } from '../data/honorifics';
 import { rollEvents } from './events';
 import { generateFictionalOfficer } from './officerGen';
 import { resolveAmbitions } from './ambition';
-import { tickClans } from './clans';
+import { tickClans, clanGentryWeight } from './clans';
 import { tickStatecraft } from './statecraft';
 import { deriveCourtFactions, type FactionId } from './courtFactions';
+import { cliqueBackingBoost } from './relationshipEffects';
 
 export interface ResolutionInput {
   date: GameDate;
@@ -59,6 +60,12 @@ export interface ResolutionInput {
   pendingCommands: Record<EntityId, Command>;
   diplomacy: DiplomaticState;
   runtimeBonds: OathBond[];
+  /** Pairwise officer rapport (好感, −100..100) — flows into combat for graded
+   *  same-side synergy/friction beyond forged bonds. */
+  rapport?: Record<string, number>;
+  /** 君臣好感 — per-officer regard for their lord; feeds ambition (心腹 never
+   *  turns; resentment emboldens) and 策反 resistance. */
+  lordRapport?: Record<EntityId, number>;
   lostItems: LostItemRef[];
   /** Phase 3c — current per-territory owner overrides (null/missing
    *  means inherit from parent city). */
@@ -67,6 +74,8 @@ export interface ResolutionInput {
   playerForceId?: EntityId | null;
   /** Runtime family relations — flow through into combat for kinship bonuses. */
   family?: import('../types/family').FamilyRelation[];
+  /** 家門聲望 — clan standings, for 門閥 weighting in court-faction coup math. */
+  clanStandings?: Record<string, import('../types').ClanStanding>;
   /** Civic-title appointments — drive force-wide bonuses in commands + combat. */
   appointments?: import('../types').Appointment[];
   /** Active 討伐令 marks — combat power +10% from issuer toward target. */
@@ -108,6 +117,8 @@ export interface ResolutionInput {
   lifespanMode?: 'historical' | 'fictionalImmortal' | 'immortal';
   /** 武將壽命長短 — multiplier on the old-age death chance. Default 'historical'. */
   lifespanLength?: 'short' | 'historical' | 'long';
+  /** 變老不影響屬性 — when true, aging does not drift the five 圍. Default false. */
+  agingStatLock?: boolean;
   /** 不會戰死 — when true, no officer is killed in battle (wounded/captured
    *  instead). Folded into single combat here; tactical/瀕死 handled in store. */
   noBattleDeath?: boolean;
@@ -1047,6 +1058,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       delayedEffectsOut: delayedEffects,
       family: input.family,
       runtimeBonds: input.runtimeBonds,
+      rapport: input.rapport,
       appointments: input.appointments,
       casusBelliMarks: input.casusBelliMarks,
       date: input.date,
@@ -1202,7 +1214,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const assistants = (cmd.assistantOfficerIds ?? [])
       .map((aid) => officers[aid])
       .filter((a): a is Officer => !!a);
-    const result = resolveInternalAffairs(cmd.type, officer, city, rng, finalBonus, input.weather?.kind, assistants);
+    const result = resolveInternalAffairs(cmd.type, officer, city, rng, finalBonus, input.weather?.kind, assistants, input.rapport);
     cities[city.id] = applyDelta(city, result.delta);
     const assistNote = assistants.length
       ? { text: ` (協同 ${assistants.map((a) => a.name.en).join(', ')})`, zh: `(協同 ${assistants.map((a) => a.name.zh).join('、')})` }
@@ -1932,7 +1944,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const seasonIdx = { spring: 0, summer: 1, autumn: 2, winter: 3 }[input.date.season];
     // A general whose own court faction has captured the realm has a clique at
     // his back — fold that into his betrayal odds. 軍方 coups hardest of all.
-    const factionsByForce = deriveCourtFactions(officers);
+    const clanWeight = input.clanStandings ? clanGentryWeight(officers, input.clanStandings) : undefined;
+    const factionsByForce = deriveCourtFactions(officers, clanWeight);
     const factionBoost: Record<EntityId, number> = {};
     for (const list of Object.values(factionsByForce)) {
       if (list.length < 5) continue;
@@ -1953,6 +1966,20 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     for (const [id, boost] of Object.entries(clanFactionBoost)) {
       factionBoost[id] = Math.min(0.09, (factionBoost[id] ?? 0) + boost);
     }
+    // 朋黨 — a discontented general's clique of high-rapport allies emboldens him;
+    // feuds isolate. Only the ambition-relevant (low-loyalty) set is scored.
+    if (input.rapport) {
+      const byForce = new Map<EntityId, Officer[]>();
+      for (const o of Object.values(officers)) {
+        if (!o.forceId || o.status === 'dead' || o.status === 'imprisoned') continue;
+        (byForce.get(o.forceId) ?? byForce.set(o.forceId, []).get(o.forceId)!).push(o);
+      }
+      for (const o of Object.values(officers)) {
+        if (!o.forceId || o.loyalty >= 35) continue;
+        const boost = cliqueBackingBoost(o.id, byForce.get(o.forceId) ?? [], input.rapport, input.runtimeBonds);
+        if (boost > 0) factionBoost[o.id] = Math.min(0.11, (factionBoost[o.id] ?? 0) + boost);
+      }
+    }
     const ambitionEvents = resolveAmbitions({
       officers,
       cities,
@@ -1961,6 +1988,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       seed: (input.date.year * 4 + seasonIdx) >>> 0,
       factionBoost,
       buildings: input.buildings,
+      lordRapport: input.lordRapport,
     });
     for (const ev of ambitionEvents) {
       entries.push({ cityId: ev.cityId, kind: ev.kind, text: ev.text, textZh: ev.textZh });
@@ -2004,8 +2032,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       forces,
       rng,
       family: input.family,
+      runtimeBonds: input.runtimeBonds,
       lifespanMode: input.lifespanMode ?? 'historical',
       lifespanLength: input.lifespanLength ?? 'historical',
+      agingStatLock: input.agingStatLock ?? false,
       reviveDeadOfficers: input.reviveDeadOfficers ?? false,
     });
     cities = aging.cities;

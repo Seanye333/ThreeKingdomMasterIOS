@@ -88,4 +88,24 @@ describe('breakAlliance (oathbreaker)', () => {
     expect(r.alliances).toHaveLength(0);
     expect(r.runtimeBonds).toHaveLength(0);
   });
+
+  it('betraying a 質子 union executes the hostage rather than merely shaming them', () => {
+    const diplomacy: DiplomaticState = {
+      relations: { shu__wu: { forceA: 'shu', forceB: 'wu', score: 80, status: 'allied' } },
+    };
+    const hostageAlliance: MarriageAlliance = { ...alliance, hostage: true };
+    const officers = { 'guan-yu': mkOfficer('guan-yu', 'shu', 90) };
+    const r = breakAlliance({
+      breakerForceId: 'shu',
+      targetForceId: 'wu',
+      alliances: [hostageAlliance],
+      diplomacy,
+      officers,
+      runtimeBonds: [],
+      livingForceIds: new Set(['shu', 'wu']),
+      year: 215,
+    });
+    expect(r.officers['guan-yu'].status).toBe('dead');
+    expect(r.officers['guan-yu'].deathYear).toBe(215);
+  });
 });

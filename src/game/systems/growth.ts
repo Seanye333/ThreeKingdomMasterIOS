@@ -473,6 +473,16 @@ const BREAKTHROUGH_TRAITS: Record<keyof OfficerStats, { mid: string; high: strin
   charisma:     { mid: 'charming', high: 'noble' },
 };
 
+/** 突破之道的招牌性格 — distinct signature per chosen 道 (so 將道≠王道 even though
+ *  both touch 統率). Falls back to BREAKTHROUGH_TRAITS (by stat) when no path. */
+const PATH_SIGNATURE_TRAITS: Record<BreakthroughPath, { mid: string; high: string }> = {
+  martial:    { mid: 'martial-valor', high: 'matchless' },
+  command:    { mid: 'iron-discipline', high: 'fortress-keeper' },
+  strategy:   { mid: 'strategist', high: 'precognitive' },
+  governance: { mid: 'diligent', high: 'honor-bound' },
+  kingly:     { mid: 'charming', high: 'noble' },
+};
+
 /** 突破之道 — the path a 突破 takes, biasing which two 圍 sharpen (+2) and which
  *  signature trait awakens. The player chooses each time; the AI picks by strength. */
 export type BreakthroughPath = 'martial' | 'command' | 'strategy' | 'governance' | 'kingly';
@@ -546,7 +556,9 @@ export function applyBreakthrough(
     : (Object.keys(stats) as Array<keyof OfficerStats>).reduce((best, k) => (stats[k] > stats[best] ? k : best), 'war' as keyof OfficerStats);
   const tier = breakthroughs === 3 ? 'mid' : breakthroughs === 5 ? 'high' : null;
   if (tier) {
-    const traitId = BREAKTHROUGH_TRAITS[traitStat][tier];
+    const traitId = path
+      ? PATH_SIGNATURE_TRAITS[path][tier]
+      : BREAKTHROUGH_TRAITS[traitStat][tier];
     if (!traits.includes(traitId)) {
       traits = [...traits, traitId];
       const def = TRAIT_DEFS_BY_ID[traitId];
@@ -698,17 +710,24 @@ export function inheritLegacyOnDeath(
     if (st.status === 'dead' || st.status === 'unsearched') continue;
     const latent = st.latentStats ?? defaultLatent(st.stats);
     const grown = Math.min(latent[k], st.stats[k] + 2);
+    // 衣鉢相傳 — the disciple also receives one skill the master knew but they
+    // did not, so a teacher's art outlives them. (Deterministic: first such.)
+    const heirSkill = (master.skills ?? []).find((sid) => !(st.skills ?? []).includes(sid));
     const next: Officer = {
       ...st,
       stats: { ...st.stats, [k]: grown },
       loyalty: Math.min(100, st.loyalty + 3),
+      ...(heirSkill ? { skills: [...(st.skills ?? []), heirSkill] } : {}),
     };
     delete next.mentorId; // the bond ends with the master
     out[st.id] = next;
+    const skillDef = heirSkill ? SKILLS_BY_ID[heirSkill] : null;
+    const skillTailZh = skillDef ? `,並承師技「${skillDef.name.zh}」` : '';
+    const skillTailEn = skillDef ? `, and inherits the art ${skillDef.name.en}` : '';
     entries.push({
       cityId: st.locationCityId, kind: 'talent',
-      text: `${st.name.en} inherits the will of fallen master ${master.name.en} — ${STAT_NAME_ZH[k]} +${grown - st.stats[k]}.`,
-      textZh: `${st.name.zh}繼${master.name.zh}之遺志,化悲憤為力,${STAT_NAME_ZH[k]}+${grown - st.stats[k]}。`,
+      text: `${st.name.en} inherits the will of fallen master ${master.name.en} — ${STAT_NAME_ZH[k]} +${grown - st.stats[k]}${skillTailEn}.`,
+      textZh: `${st.name.zh}繼${master.name.zh}之遺志,化悲憤為力,${STAT_NAME_ZH[k]}+${grown - st.stats[k]}${skillTailZh}。`,
     });
   }
   return { officers: out, entries };

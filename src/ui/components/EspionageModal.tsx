@@ -30,6 +30,7 @@ export function EspionageModal({ onClose }: Props) {
   const [pickedTargetForceId, setPickedTargetForceId] = useState<EntityId | null>(null);
   const [pickedTargetCityId, setPickedTargetCityId] = useState<EntityId | null>(null);
   const [pickedTargetOfficerId, setPickedTargetOfficerId] = useState<EntityId | null>(null);
+  const [pickedTargetOfficerId2, setPickedTargetOfficerId2] = useState<EntityId | null>(null);
 
   const def = pickedKind ? ESPIONAGE_DEFS.find((d) => d.kind === pickedKind) : null;
 
@@ -78,7 +79,8 @@ export function EspionageModal({ onClose }: Props) {
     !!def &&
     !!pickedAgentId &&
     !!pickedTargetForceId &&
-    (def.targetsOfficer ? !!pickedTargetOfficerId : !!pickedTargetCityId);
+    (def.targetsOfficer ? !!pickedTargetOfficerId : !!pickedTargetCityId) &&
+    (def.kind !== 'sow-discord' || (!!pickedTargetOfficerId2 && pickedTargetOfficerId2 !== pickedTargetOfficerId));
 
   // Success probability preview — mirrors the calc in resolveEspionage:
   //   chance = baseSuccess × (agent.int / 100)
@@ -130,6 +132,7 @@ export function EspionageModal({ onClose }: Props) {
       pickedTargetForceId,
       pickedTargetCityId ?? undefined,
       pickedTargetOfficerId ?? undefined,
+      pickedTargetOfficerId2 ?? undefined,
     );
     if (r.ok) {
       setPickedKind(null);
@@ -137,6 +140,7 @@ export function EspionageModal({ onClose }: Props) {
       setPickedTargetForceId(null);
       setPickedTargetCityId(null);
       setPickedTargetOfficerId(null);
+      setPickedTargetOfficerId2(null);
     } else {
       alert(r.reason ?? 'Failed');
     }
@@ -258,7 +262,9 @@ export function EspionageModal({ onClose }: Props) {
           <div className={styles.column}>
             {def?.targetsOfficer ? (
               <>
-                <div className={styles.colLabel}>Target Officer (sorted by lowest loyalty)</div>
+                <div className={styles.colLabel}>
+                  {def.kind === 'sow-discord' ? 'Officer A (to estrange)' : 'Target Officer (sorted by lowest loyalty)'}
+                </div>
                 <div className={styles.optionList}>
                   {targetOfficers.length === 0 ? (
                     <div className={styles.muted}>Pick a target force.</div>
@@ -273,6 +279,23 @@ export function EspionageModal({ onClose }: Props) {
                     </button>
                   ))}
                 </div>
+                {def.kind === 'sow-discord' && (
+                  <>
+                    <div className={styles.colLabel} style={{ marginTop: '0.6rem' }}>Officer B (to estrange)</div>
+                    <div className={styles.optionList}>
+                      {targetOfficers.filter((o) => o.id !== pickedTargetOfficerId).map((o) => (
+                        <button
+                          key={o.id}
+                          className={`${styles.option} ${pickedTargetOfficerId2 === o.id ? styles.optionActive : ''}`}
+                          onClick={() => setPickedTargetOfficerId2(o.id)}
+                        >
+                          <span><Name pair={o.name} /></span>
+                          <span className={styles.optionStats}>L{o.loyalty} · <OfficerStats officer={o} keys={['intelligence']} /></span>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
               </>
             ) : (
               <>

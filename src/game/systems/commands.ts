@@ -10,7 +10,16 @@ import { ITEMS_BY_ID } from '../data/items';
 import { itemSetBonuses } from '../data/itemSets';
 import { cityStatCap, cityEconCap, citySize, CITY_SIZES, type CitySize } from './citySize';
 import { internalAffairsMultiplier } from './traitEffects';
+import { pairKey } from '../types/diplomacy';
 import type { WeatherKind } from './weather';
+
+/** 同心／嫌隙 — how well an assistant's season meshes with the lead officer's,
+ *  by their rapport (好感). A warm 搭檔 pulls in the same direction (up to ×1.5);
+ *  a soured/feuding one barely helps (down to ×0.4). */
+function assistSynergy(rapport: Record<string, number> | undefined, leadId: EntityId, assistId: EntityId): number {
+  const r = rapport?.[pairKey(leadId, assistId)] ?? 0;
+  return 1 + (r >= 0 ? 0.5 * (r / 100) : 0.6 * (r / 100));
+}
 
 export interface CommandDef {
   type: CommandType;
@@ -235,6 +244,8 @@ export function resolveInternalAffairs(
   weather?: WeatherKind,
   /** 協同施政 — assistants pouring their season into this command (max 2 counted). */
   assistants?: Officer[],
+  /** Pairwise officer rapport (好感) — scales each assistant's協同 by 搭檔情誼. */
+  rapport?: Record<string, number>,
 ): CommandResult {
   const def = COMMAND_DEFS[type];
   // Trait multiplier (diligent +20%, lazy −20%, specialist +20% for matching
@@ -250,7 +261,10 @@ export function resolveInternalAffairs(
   // the result without making "stack everyone on one task" strictly optimal.
   let assistBonus = 0;
   (assistants ?? []).slice(0, ASSIST_WEIGHTS.length).forEach((a, i) => {
-    assistBonus += a.stats[def.stat] * internalAffairsMultiplier(a, type) * ASSIST_WEIGHTS[i];
+    // 搭檔情誼 — a well-liked second hand meshes with the lead; a feuding one
+    // works at cross-purposes and the協同 barely helps.
+    const synergy = assistSynergy(rapport, officer.id, a.id);
+    assistBonus += a.stats[def.stat] * internalAffairsMultiplier(a, type) * ASSIST_WEIGHTS[i] * synergy;
   });
   // 治國套裝 — a 文臣/諸子 set (商鞅變法/臥龍... effect:'civil') lifts the lead
   // officer's internal-affairs output, the non-combat counterpart to 戰陣共鳴.

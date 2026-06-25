@@ -61,6 +61,16 @@ export const ESPIONAGE_DEFS: EspionageDef[] = [
     targetsOfficer: true,
     baseSuccess: 0.55,
   },
+  {
+    kind: 'sow-discord',
+    name: { en: 'Sow Discord', zh: '離間計' },
+    description: 'Whisper poison between two enemy officers — their rapport (好感) plummets and a shallow sworn-bond may shatter. Deep bonds resist.',
+    descriptionZh: "在敵方兩名武將之間挑撥離間 —— 其好感驟降,淺薄的義結甚至可能就此破裂。生死之交則不為所動。",
+    goldCost: 250,
+    minIntelligence: 75,
+    targetsOfficer: true,
+    baseSuccess: 0.45,
+  },
 ];
 
 export const ESPIONAGE_DEFS_BY_KIND: Record<string, EspionageDef> =

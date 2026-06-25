@@ -100,7 +100,9 @@ export function playRound(
   else if (nextA <= 0) winner = 'b';
 
   const loser = winner === 'a' ? { c: nextB, o: state.b.officer } : winner === 'b' ? { c: nextA, o: state.a.officer } : null;
-  const collapse = !!loser && loser.c <= -15 && (loser.o.traits as string[] | undefined ?? []).some((t) => ['hot-tempered', 'arrogant', 'vainglorious', 'stubborn'].includes(t));
+  // 性烈者被打穿氣勢時可被「罵死」。註:特性 id 為 'wrathful'(暴怒),
+  // 早期誤寫 'hot-tempered'(不存在)導致此機制從未觸發 —— 已修正。
+  const collapse = !!loser && loser.c <= -15 && (loser.o.traits as string[] | undefined ?? []).some((t) => ['wrathful', 'arrogant', 'vainglorious', 'stubborn', 'impatient'].includes(t));
   if (winner) {
     const wName = winner === 'a' ? state.a.officer.name.zh : state.b.officer.name.zh;
     const lName = winner === 'a' ? state.b.officer.name.zh : state.a.officer.name.zh;

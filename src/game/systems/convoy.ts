@@ -23,6 +23,12 @@ export function convoySpeedMul(officer: Officer): number {
   if (traits.includes('lazy' as never)) mul += 0.18;
   if (traits.includes('cautious' as never)) mul += 0.08;
   if (traits.includes('reckless' as never)) mul -= 0.06;
+  // 嚴峻治軍 / 鐵律 / 健行 — a hard-driving, disciplined or tireless quartermaster
+  // hustles the column along the road.
+  if (traits.includes('stern' as never)) mul -= 0.10;
+  if (traits.includes('tireless-march' as never)) mul -= 0.10;
+  if (traits.includes('iron-discipline' as never)) mul -= 0.05;
+  if (traits.includes('sleepy' as never)) mul += 0.08;
   return Math.max(0.65, Math.min(1.4, mul));
 }
 

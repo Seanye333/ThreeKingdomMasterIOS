@@ -20,6 +20,7 @@ export * from './fort';
 export * from './site';
 export * from './army';
 export * from './family';
+export * from './clan';
 export * from './personality';
 export * from './replay';
 export * from './deeds';

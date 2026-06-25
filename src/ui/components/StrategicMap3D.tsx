@@ -7727,7 +7727,7 @@ export function StrategicMap3D() {
               onClick={() => {
                 const b = useGameStore.getState().tacticalBattle;
                 if (!b || !worldMyTurn) return;
-                startBattleUpdate(endTurn(b));
+                startBattleUpdate(endTurn(b, useGameStore.getState().officers));
                 setDioPick(null);
               }}
               disabled={!worldMyTurn}

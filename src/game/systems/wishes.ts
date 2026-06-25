@@ -130,6 +130,25 @@ export function maybeWoundedRetireWish(
 
 function generateWish(o: Officer, ctx: WishContext): OfficerWish | null {
   const traits = o.traits ?? [];
+  // 致仕 — a very old officer may petition to retire honourably, wound or no
+  // wound. (The selfless 'loyal' are already filtered out upstream.)
+  const age = ctx.date.year - o.birthYear;
+  if (age >= 68 && ctx.rng() < 0.5) {
+    return {
+      id: `wish-retire-${o.id}-${ctx.date.year}-${ctx.date.season}`,
+      officerId: o.id,
+      kind: 'retire',
+      text: {
+        zh: `${o.name.zh}年事已高,上書乞骸骨,願歸故里。`,
+        en: `${o.name.en}, grown old, petitions to retire honourably.`,
+      },
+      issuedYear: ctx.date.year,
+      issuedSeason: ctx.date.season,
+      rejectPenalty: 10,
+      grantBonus: 8,
+      expiresAfterSeasons: 4,
+    };
+  }
   // Officers with int >= 70 and < 8 policies sometimes wish to learn one.
   const have = new Set(o.policies ?? []);
   const learnable: PolicyId[] = [];
@@ -463,6 +482,7 @@ export function applyWishGrant(
   } else if (wish.kind === 'retire') {
     // Officer leaves service permanently — status:'retired' keeps them
     // visible in 列傳 with a "歸隱" tag.
+    const formerForce = o.forceId;
     officers[o.id] = {
       ...o,
       forceId: null,
@@ -471,8 +491,19 @@ export function applyWishGrant(
       task: null,
       loyalty: Math.min(100, o.loyalty + bonus),
     };
-    extraEn = ' Retired with full honors.';
-    extraZh = '准其辭官歸里。';
+    // 禮遇耆老 — honourably retiring an elder heartens the whole court: every
+    // serving colleague is steadied by the gesture (+2 loyalty).
+    let cascade = 0;
+    if (formerForce) {
+      for (const other of Object.values(officers)) {
+        if (other.id === o.id || other.forceId !== formerForce) continue;
+        if (other.status === 'dead' || other.status === 'unsearched') continue;
+        officers[other.id] = { ...other, loyalty: Math.min(100, other.loyalty + 2) };
+        cascade++;
+      }
+    }
+    extraEn = ` Retired with full honors${cascade ? ` — the court is heartened (${cascade}× +2 loyalty)` : ''}.`;
+    extraZh = `准其辭官歸里${cascade ? `,禮遇耆老,百僚感懷(${cascade} 人忠誠 +2)` : ''}。`;
   } else if (wish.kind === 'info') {
     // Acknowledging an info letter gives a small loyalty bump, no other effect.
     officers[o.id] = { ...o, loyalty: Math.min(100, o.loyalty + bonus) };

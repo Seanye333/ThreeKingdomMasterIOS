@@ -6,6 +6,7 @@ import type {
   GameDate,
 } from '../types';
 import { getDeathPoem } from '../data/deathPoems';
+import { plagueDeathTraitMul } from './traitEffects';
 
 // ── Court intrigue: court factions auto-derived from officer profile ──
 //
@@ -224,6 +225,13 @@ export function rollPlagueOutbreak(input: PlagueInput): PlagueOutput {
 
   // Officer fatalities — vulnerable: age > 55 OR charisma < 50.
   const struckIds = new Set(struck.map((c) => c.id));
+  // 醫者坐鎮 — a physician/herbalist stationed in a stricken city saves lives there.
+  const healerCities = new Set<EntityId>();
+  for (const o of Object.values(officers)) {
+    if (o.status === 'dead' || !o.locationCityId || !struckIds.has(o.locationCityId)) continue;
+    const tr = o.traits as string[] | undefined ?? [];
+    if (tr.includes('physician') || tr.includes('herbalist')) healerCities.add(o.locationCityId);
+  }
   const exposed = Object.values(officers).filter(
     (o) =>
       o.locationCityId &&
@@ -241,6 +249,10 @@ export function rollPlagueOutbreak(input: PlagueInput): PlagueOutput {
     const cityResist = (o.locationCityId && cities[o.locationCityId]?.ownerForceId
       && input.plagueResist?.[cities[o.locationCityId].ownerForceId!]) || 0;
     chance *= 1 - cityResist;
+    // 性格體質 — frail bodies succumb; the hale / well-doctored endure.
+    chance *= plagueDeathTraitMul(o);
+    // a resident healer tends the sick (−15% deaths in that city).
+    if (o.locationCityId && healerCities.has(o.locationCityId)) chance *= 0.85;
     if (input.rng() < chance) {
       officers[o.id] = { ...o, status: 'dead', task: null };
       const poem = getDeathPoem(o.id);

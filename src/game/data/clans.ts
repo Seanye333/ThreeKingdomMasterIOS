@@ -99,9 +99,12 @@ const CLAN_OF_OFFICER: Record<EntityId, string> = (() => {
   return m;
 })();
 
-/** The clan id an officer belongs to, or null for the unaffiliated. */
+/** The clan id an officer belongs to, or null for the unaffiliated. A runtime
+ *  `clanId` (an heir who came of age, an adoptee, an emergent player house)
+ *  wins over the curated membership map. */
 export function clanOf(o: Officer | undefined | null): string | null {
-  return o ? CLAN_OF_OFFICER[o.id] ?? null : null;
+  if (!o) return null;
+  return o.clanId ?? CLAN_OF_OFFICER[o.id] ?? null;
 }
 
 /** 寒門 — an officer of humble birth, with no great-clan backing. Commoner-
