@@ -62,7 +62,13 @@ export function cautiousAttritionMul(pace: MarchPace | undefined): number {
   return pace === 'cautious' ? 0.5 : 1;
 }
 /** 疲勞 — morale the column opens its arrival battle down by, if it force-marched
- *  to get there (以逸待勞). Applied in the auto-resolved arrival. */
+ *  to get there (以逸待勞). Applied to the arrival battle (auto + interactive). */
 export function arrivalFatigueMorale(pace: MarchPace | undefined): number {
   return pace === 'forced' ? 12 : 0;
+}
+/** 行軍暴露 — a forced march strings the column out and is caught at longer range
+ *  (interception / 守軍出擊); a cautious one keeps tight & screened. Multiplies the
+ *  catch radius. */
+export function paceExposureMul(pace: MarchPace | undefined): number {
+  return pace === 'forced' ? 1.25 : pace === 'cautious' ? 0.8 : 1;
 }

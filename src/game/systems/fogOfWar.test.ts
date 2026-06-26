@@ -4,6 +4,8 @@
  */
 import { describe, it, expect } from 'vitest';
 import type { Army, City, EntityId } from '../types';
+import type { Officer } from '../types';
+import { mkOfficer } from '../../test/factories';
 import { computeFog, FOG_ARMY_RADIUS, FOG_CITY_RADIUS } from './fogOfWar';
 
 const mkCity = (over: Partial<City> & { id: string; x: number; y: number }): City =>
@@ -74,5 +76,21 @@ describe('computeFog', () => {
     const fog = computeFog(world(), armies, 'wei');
     expect(fog.visibleCityIds.has('faraway')).toBe(false);
     expect(fog.isVisiblePx(900, 650)).toBe(false);
+  });
+
+  it('斥候之明 — a keen mind in the city sees further than a dullard', () => {
+    const justBeyond = 200 + FOG_CITY_RADIUS + 15; // outside the flat radius
+    const dull: Record<EntityId, Officer> = { d: mkOfficer({ id: 'd', forceId: 'wei', locationCityId: 'home', stats: { intelligence: 60 } as never }) };
+    const keen: Record<EntityId, Officer> = { k: mkOfficer({ id: 'k', forceId: 'wei', locationCityId: 'home', stats: { intelligence: 100 } as never }) };
+    expect(computeFog(world(), {}, 'wei', undefined, dull).isVisiblePx(justBeyond, 200)).toBe(false);
+    expect(computeFog(world(), {}, 'wei', undefined, keen).isVisiblePx(justBeyond, 200)).toBe(true);
+  });
+
+  it('a keen column commander scouts further ahead', () => {
+    const officers: Record<EntityId, Officer> = { sage: mkOfficer({ id: 'sage', forceId: 'wei', stats: { intelligence: 100 } as never }) };
+    const armies = { sage: mkArmy({ id: 'sage', forceId: 'wei', x: 880, y: 640, commanderId: 'sage' }) };
+    const justBeyond = 880 + FOG_ARMY_RADIUS + 15;
+    expect(computeFog(world(), armies, 'wei').isVisiblePx(justBeyond, 640)).toBe(false); // base radius
+    expect(computeFog(world(), armies, 'wei', undefined, officers).isVisiblePx(justBeyond, 640)).toBe(true);
   });
 });

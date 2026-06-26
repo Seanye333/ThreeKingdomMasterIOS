@@ -54,7 +54,7 @@ import { ITEMS_BY_ID, refineCost, REFINE_MAX, setRefineRegistry, itemRarity,
   itemGrowthGoldSpent } from '../data/items';
 import { SKILLS_BY_ID } from '../data/skills';
 import { marchDurationFor } from '../data/cities';
-import { marchSpeedMul, adjustMarchSeasons, PACE_LABEL } from '../systems/marchPace';
+import { marchSpeedMul, adjustMarchSeasons, PACE_LABEL, arrivalFatigueMorale } from '../systems/marchPace';
 import { terrainRoute, positionAlongRoute, marchDestCoords } from '../data/territories';
 import { cityPos, CITY_GEO_OVERRIDES } from '../data/cityGeo';
 import { provisionNeeded, convoyCapacity, planConvoy } from '../systems/convoy';
@@ -353,6 +353,14 @@ interface GameStore extends GameState {
    *  abandons the objective and streams home, shedding stragglers (deeper = more).
    *  No-op once it's about to arrive (seasonsRemaining ≤ 1) or already returning. */
   recallMarch: (officerId: EntityId) => { ok: boolean; reason?: string };
+  /** 邀擊 — enemy marching columns the player can see & run down (their position's
+   *  nearest stronghold is one of yours, and they're not behind the fog). The
+   *  launch city is that nearest stronghold. */
+  spottedEnemyColumns: () => Array<{ armyId: EntityId; fromCityId: EntityId; x: number; y: number; troops: number; commanderName: { zh: string; en: string } }>;
+  /** 邀擊 — sortie an officer + troops from a border city to run down a spotted
+   *  enemy column; the intercept march aims ahead of the column and clashes when
+   *  the two hosts meet on the road. */
+  interceptColumn: (armyId: EntityId, fromCityId: EntityId, officerId: EntityId, troops: number) => { ok: boolean; reason?: string };
   /** 一鍵委派 — auto-assign every idle officer in a self-run city a sensible
    *  internal-affairs task (by city need × aptitude). Returns how many were
    *  dispatched and the gold spent. */
@@ -1007,6 +1015,8 @@ function buildFieldBattle(
     defenderForceId: eArmy.forceId,
     attackers,
     defenders,
+    // 疲勞 — a forced-marched column meets this clash weary (以逸待勞).
+    attackerFatigue: arrivalFatigueMorale(pArmy.pace),
     // Whichever side is dug in fights from an ambush formation.
     attackerFormation: pArmy.holding ? 'ten-ambush' : undefined,
     defenderFormation: eArmy.holding ? 'ten-ambush' : undefined,
@@ -1672,6 +1682,64 @@ export const useGameStore = create<GameStore>()(
         get().notify(
           `召回 · ${officer.name.zh} 折返本城（散卒 ${Math.round(straggle * 100)}%,${returnDur}季抵）`,
           `Recall · ${officer.name.en} turns home (−${Math.round(straggle * 100)}% straggle, ${returnDur} seasons)`,
+        );
+        return { ok: true };
+      },
+      spottedEnemyColumns: () => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid) return [];
+        const out: Array<{ armyId: EntityId; fromCityId: EntityId; x: number; y: number; troops: number; commanderName: { zh: string; en: string } }> = [];
+        for (const a of Object.values(state.armies)) {
+          if (!a.forceId || a.forceId === pid) continue;
+          if (!isHostilePermitted(state.diplomacy, pid, a.forceId)) continue;
+          // Spotted when the column's nearest stronghold is one of ours (the same
+          // geometry by which a garrison would sally on it) — the launch city.
+          const near = nearestCityTo(a.x, a.y, state.cities);
+          if (!near || near.ownerForceId !== pid) continue;
+          const cmdr = state.officers[a.commanderId];
+          out.push({ armyId: a.id, fromCityId: near.id, x: a.x, y: a.y, troops: a.troops, commanderName: cmdr?.name ?? { zh: '?', en: '?' } });
+        }
+        return out;
+      },
+      interceptColumn: (armyId, fromCityId, officerId, troops) => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid) return { ok: false };
+        const target = state.armies[armyId];
+        if (!target || !target.forceId || target.forceId === pid) return { ok: false, reason: 'not an enemy column' };
+        if (!isHostilePermitted(state.diplomacy, pid, target.forceId)) return { ok: false, reason: 'not at war' };
+        const from = state.cities[fromCityId];
+        if (!from || from.ownerForceId !== pid) return { ok: false, reason: 'not your city' };
+        if (nearestCityTo(target.x, target.y, state.cities)?.id !== fromCityId) return { ok: false, reason: 'out of reach' };
+        if (from.gold < 100) return { ok: false, reason: 'not enough gold' };
+        const officer = state.officers[officerId];
+        if (!officer || officer.forceId !== pid || officer.locationCityId !== fromCityId || officer.task || state.pendingCommands[officerId]) return { ok: false, reason: 'officer unavailable' };
+        if (state.pendingTrainings.some((tr) => tr.officerId === officerId)) return { ok: false, reason: 'officer is training' };
+        const send = Math.min(Math.max(0, Math.floor(troops)), Math.max(0, from.troops - 100));
+        if (send < 1) return { ok: false, reason: 'no troops to spare' };
+        // 邀擊 — aim ahead of the column, toward where it's bound, so the two hosts
+        // meet on the road (the field-clash interception then resolves it).
+        const fp = cityPos(from);
+        const dst = target.cellTarget || !state.cities[target.targetCityId] ? { x: target.x, y: target.y } : cityPos(state.cities[target.targetCityId]);
+        const remaining = Math.max(1, Math.round((1 - target.progress) * target.totalSeasons));
+        const lead = { x: target.x + (dst.x - target.x) / remaining, y: target.y + (dst.y - target.y) / remaining };
+        const dur = Math.hypot(lead.x - fp.x, lead.y - fp.y) < 100 * WORLD_SCALE ? 1 : 2;
+        set({
+          cities: { ...state.cities, [fromCityId]: { ...from, gold: from.gold - 100, troops: from.troops - send } },
+          officers: { ...state.officers, [officerId]: { ...officer, task: 'march' as const } },
+          pendingCommands: {
+            ...state.pendingCommands,
+            [officerId]: { type: 'march', cityId: fromCityId, officerId, targetCityId: fromCityId, targetX: lead.x, targetY: lead.y, troops: send, seasonsRemaining: dur, totalSeasons: dur, pace: 'forced' } as MarchCommand,
+          },
+          armies: {
+            ...state.armies,
+            [officerId]: { id: officerId, forceId: pid, commanderId: officerId, companionIds: [], troops: send, fromCityId, targetCityId: fromCityId, x: fp.x, y: fp.y, progress: 0, totalSeasons: dur, cellTarget: true, pace: 'forced' },
+          },
+        });
+        get().notify(
+          `邀擊 · ${officer.name.zh} 領 ${send.toLocaleString()} 兵截擊 ${state.officers[target.commanderId]?.name.zh ?? '敵軍'}`,
+          `Intercept · ${officer.name.en} rides to run down the enemy column`,
         );
         return { ok: true };
       },

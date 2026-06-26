@@ -37,7 +37,7 @@ import { corruptionAccrualMultiplier } from './traitEffects';
 import { rollCivicEvents } from './civicEvents';
 import { settleRefugees, REFUGEE_SHED_FRAC } from './refugees';
 import { stepConvoys, resolveConvoyRaids, resolveRaidStrike, provisionNeeded, consumeRations, type Convoy, type ConvoyRaid } from './convoy';
-import { forcedMarchAttrition, cautiousAttritionMul } from './marchPace';
+import { forcedMarchAttrition, cautiousAttritionMul, paceExposureMul } from './marchPace';
 import { stepExpeditions, expeditionSpeedMul } from './expedition';
 import { embassyTargets, embassyLegSeasons } from './foreignRealm';
 import type { Expedition, ExpeditionMode } from '../types';
@@ -311,7 +311,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const pa = armyPosition(a);
       const pb = armyPosition(b);
       if (!pa || !pb) continue;
-      if (Math.hypot(pa.x - pb.x, pa.y - pb.y) > INTERCEPT_DIST) continue;
+      // 行軍暴露 — a forced-marched column (strung out) is caught at longer range;
+      // a cautious, screened one is harder to run down. Use the more exposed side.
+      const catchDist = INTERCEPT_DIST * Math.max(paceExposureMul(a.pace), paceExposureMul(b.pace));
+      if (Math.hypot(pa.x - pb.x, pa.y - pb.y) > catchDist) continue;
 
       // AI 亲征 — a significant clash involving the player is handed off to an
       // interactive tactical battle instead of being auto-resolved here. Both
@@ -495,9 +498,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     if (!oa?.forceId) continue;
     const pos = armyPosition(a);
     if (!pos) continue;
-    // Nearest hostile, non-target city within sally range.
+    // Nearest hostile, non-target city within sally range. 行軍暴露 — a forced
+    // march is sallied on from further off; a cautious one slips past more often.
     let bestCity: City | null = null;
-    let bestD = SALLY_DIST;
+    let bestD = SALLY_DIST * paceExposureMul(a.pace);
     for (const city of Object.values(cities)) {
       if (!city.ownerForceId || city.ownerForceId === oa.forceId) continue;
       if (city.id === a.targetCityId || city.id === a.cityId) continue;

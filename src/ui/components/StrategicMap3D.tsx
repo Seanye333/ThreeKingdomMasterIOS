@@ -6405,9 +6405,9 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
   const espReveals = useGameStore((s) => s.espionageReveals ?? EMPTY_REVEALS);
   const fog = useMemo(
     () => (fogOfWarOn && playerForceId
-      ? computeFog(cities, armiesState, playerForceId, Object.keys(espReveals))
+      ? computeFog(cities, armiesState, playerForceId, Object.keys(espReveals), officers)
       : null),
-    [fogOfWarOn, cities, armiesState, playerForceId, espReveals],
+    [fogOfWarOn, cities, armiesState, playerForceId, espReveals, officers],
   );
   // Hostile columns out of sight simply don't render — filter the command
   // map MarchingArmies feeds on (the army layer mirrors it 1:1 by officer).

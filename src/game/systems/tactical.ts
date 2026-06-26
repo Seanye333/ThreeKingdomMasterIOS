@@ -338,6 +338,9 @@ export interface SetupParams {
   siegeWorks?: 'storm' | 'invest' | 'flood';
   /** Field battle (army vs army in the open) — no city, so no rampart wall. */
   field?: boolean;
+  /** 疲勞 — points the attacker's units open at below full morale (a forced-marched
+   *  column arrives weary; 以逸待勞). Default 0. */
+  attackerFatigue?: number;
 }
 
 // (Legacy TERRAIN_RNG_SEED removed — terrain generation now lives in
@@ -533,7 +536,8 @@ export function setupTacticalBattle(p: SetupParams): TacticalBattle {
         maxTroops: entry.troops,
         ap: maxAp,
         maxAp,
-        morale: 100,
+        // 疲勞 — a forced-marched attacker opens below full morale (以逸待勞).
+        morale: side === 'attacker' ? Math.max(40, 100 - (p.attackerFatigue ?? 0)) : 100,
         isCommander,
         effects: [],
         unitType,

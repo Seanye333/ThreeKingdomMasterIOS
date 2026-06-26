@@ -3,7 +3,7 @@
  * The newest entry drives the in-game「本次更新」popup: bump
  * GAME_VERSION when a batch ships and the next launch shows it once.
  */
-export const GAME_VERSION = '1.8.0';
+export const GAME_VERSION = '1.9.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -13,6 +13,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.9.0',
+    date: '2026-06-26',
+    title: '行軍深化 — 斥候迷霧、邀擊、急行暴露、交戰疲勞',
+    items: [
+      '🌫 斥候之明:開霧時敵縱隊只在斥候範圍內可見,而範圍隨守望者智力放大 —— 偵察始有意義',
+      '⚔ 邀擊:對斥候可見的敵軍縱隊,可遣將出城急行截擊,途中接戰(化被動守軍出擊為主動)',
+      '🏃 急行軍隊形拖沓,更易被攔截/守軍出擊;緩進更難被截',
+      '😓 急行軍疲勞now也施於玩家親征的野戰交鋒(開戰攻方士氣挫)',
+    ],
+  },
   {
     version: '1.8.0',
     date: '2026-06-26',
