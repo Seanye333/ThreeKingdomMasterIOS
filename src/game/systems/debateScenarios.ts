@@ -13,8 +13,10 @@ import type { DebateTopic } from './wordWar';
 export type ScenarioKind = 'persuade-defect' | 'sway-neutral' | 'shout-down';
 
 export interface ScenarioEffect {
-  // 'slay' — a 罵死 that actually kills (王朗墜馬); 'afflict' — only shames.
-  kind: 'recruit' | 'morale' | 'relationship' | 'gold' | 'afflict' | 'slay' | 'note';
+  // 'slay' — a 罵死 that actually kills (王朗墜馬); 'afflict' — only shames;
+  // 'ally' — shift diplomacy with the target FORCE (amount ≥20 seals an alliance,
+  // negative just sours the score), used by the live 说客 (§3.4).
+  kind: 'recruit' | 'morale' | 'relationship' | 'gold' | 'afflict' | 'slay' | 'ally' | 'note';
   /** Target officer / force, where relevant. */
   targetId?: EntityId;
   /** Magnitude (gold, morale delta, relationship delta). */

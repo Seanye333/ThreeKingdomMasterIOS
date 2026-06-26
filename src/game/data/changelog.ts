@@ -3,7 +3,7 @@
  * The newest entry drives the in-game「本次更新」popup: bump
  * GAME_VERSION when a batch ships and the next launch shows it once.
  */
-export const GAME_VERSION = '1.4.0';
+export const GAME_VERSION = '1.5.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -13,6 +13,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.5.0',
+    date: '2026-06-25',
+    title: '說客 — 舌戰成戰略動詞',
+    items: [
+      '🗣 說客:主選單遣善言之士赴鄰境敵城,當面論辯 —— 舌戰不再只是論辯場演練',
+      '🎭 說降:對心懷不滿(忠誠<65)的敵將親辯,勝則棄暗投明、就地歸心',
+      '🤝 游說結盟:對鄰境諸侯本人親辯,勝則盟約立成、罵倒另饋軍資',
+      '💰 費 200 金且僅限接壤之敵 —— 邊境工具而非處處可用',
+    ],
+  },
   {
     version: '1.4.0',
     date: '2026-06-25',

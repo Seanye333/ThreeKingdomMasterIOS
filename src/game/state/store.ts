@@ -653,6 +653,9 @@ interface GameStore extends GameState {
   debateRout: (officerId: EntityId, rng?: () => number) => RoutConsequence;
   /** 民心 — nudge a city's loyalty (公開舌戰的餘波撼動守城民心). Clamped 0..100. */
   shiftCityLoyalty: (cityId: EntityId, delta: number) => void;
+  /** Spend gold from a city's coffers (e.g. mounting a 说客 embassy). Returns
+   *  false and deducts nothing if the city can't afford it. */
+  spendCityGold: (cityId: EntityId, amount: number) => boolean;
   /** 月旦評 — your sharpest 名士 appraises an officer (§3.5): records a 定評,
    *  reveals their 成長資質, and makes a name (renown for both). Returns the
    *  verdict, or a reason it can't be done (no appraiser / already appraised). */
@@ -6796,6 +6799,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (!c) return;
         set({ cities: { ...state.cities, [cityId]: { ...c, loyalty: Math.max(0, Math.min(100, c.loyalty + delta)) } } });
       },
+      spendCityGold: (cityId, amount) => {
+        const state = get();
+        const c = state.cities[cityId];
+        if (!c || c.gold < amount) return false;
+        set({ cities: { ...state.cities, [cityId]: { ...c, gold: c.gold - amount } } });
+        return true;
+      },
       appraiseOfficer: (targetId) => {
         const state = get();
         const target = state.officers[targetId];
@@ -6851,6 +6861,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const officers = { ...state.officers };
         const cities = { ...state.cities };
         const capId = player.capitalCityId;
+        let relations = state.diplomacy.relations;
+        let diploTouched = false;
         for (const e of effects) {
           if (e.kind === 'gold' && e.amount && cities[capId]) {
             cities[capId] = { ...cities[capId], gold: cities[capId].gold + e.amount };
@@ -6866,10 +6878,20 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             // 罵死 — a scripted rout that actually breaks the foe (王朗墜馬而亡).
             const o = officers[e.targetId];
             if (o && o.status !== 'dead') officers[e.targetId] = { ...o, status: 'dead', forceId: null, task: null, woundedSeasons: undefined, woundSeverity: undefined };
+          } else if (e.kind === 'ally' && e.targetId && state.playerForceId) {
+            // 游说结盟 — shift diplomacy with the target force; a decisive win
+            // (amount ≥20) seals the alliance, a loss merely sours the score.
+            relations = diploTouched ? relations : { ...relations };
+            diploTouched = true;
+            const x = state.playerForceId, y = e.targetId;
+            const key = pairKey(x, y);
+            const rel = relations[key] ?? { forceA: x < y ? x : y, forceB: x < y ? y : x, score: 0, status: 'neutral' as const };
+            const score = Math.max(-100, Math.min(100, rel.score + (e.amount ?? 0)));
+            relations[key] = { ...rel, score, status: (e.amount ?? 0) >= 20 ? 'allied' : rel.status };
           }
           // 'relationship' / 'morale' / 'note' are display-only here.
         }
-        set({ officers, cities });
+        set({ officers, cities, ...(diploTouched ? { diplomacy: { ...state.diplomacy, relations } } : {}) });
       },
       grantOfficerXp: (officerId, amount, favored) => {
         const state = get();

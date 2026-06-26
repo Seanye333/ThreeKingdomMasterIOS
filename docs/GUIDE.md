@@ -13,7 +13,7 @@
 | 速 | [速查總表 Quick Reference](#速查總表-quick-reference) | 一頁掃完所有關鍵常數 / 公式 / 成本 / 機率 | ✅ |
 | 1 | [城市・內政・經濟](#第一章-城市內政經濟) | citySize, economy, commands, civicEvents, market(行情/榷場/馬市/鐵市), buildings, autoBuild, policyEffects, forging, specialties, specialtyEvents, tradeRoutes, convoy | ✅ |
 | 2 | [武將・成長・家族](#第二章-武將成長家族) | growth, officerGrade, gradeCombat, officerFate, traitEffects, personality, biography, posthumous, aging, officerGen, family, clans, retinues, wishes, rapport, friction, relationshipEffects, career, codex, peerage, honorifics | ✅ |
-| 3 | [人才・招攬・舌戰](#第三章-人才招攬舌戰) | commands(search), officerFate, recommendation, commonerTalent, appraisal(月旦評), scenicSites(三顧), debate, wordWar | ✅ |
+| 3 | [人才・招攬・舌戰](#第三章-人才招攬舌戰) | commands(search), officerFate, recommendation, commonerTalent, appraisal(月旦評), scenicSites(三顧), debate, wordWar, persuasion(說客) | ✅ |
 | 4 | [軍事指揮・委任](#第四章-軍事指揮委任) | muster, legion, governor, governorEval, advisor | ✅ |
 | 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, combat, formations, stratagems, weather, battlefieldTerrain, personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
 | 6 | [單挑](#第六章-單挑) | duel, gauntlet | ✅ |
@@ -130,6 +130,7 @@
 | 舉薦(賢以薦賢) | 識見武將(智或魅 ≥72)每季 6% 薦在野;**玩家+AI 皆會**;荐主智越高所薦越上才(智 100 取前 ~15%) |
 | 月旦評・品評 | 名士(智 ≥78)下定評:揭其資質(識人雾)、定品第(上/中/下)、得名望 3~20;一人一評 |
 | 三顧茅廬(名所隱士) | 訪之分三顧:一訪 −0.15、二訪 +0.12、三訪 +0.45(上限 0.97);`scenicVisits` 計次 |
+| 說客(戰略舌戰) | 遣善言之士赴**接壤**敵城:說降忠誠<65 之敵將 / 游說鄰境諸侯結盟;費 200 金,勝則易幟·立盟 |
 | 舌戰(招攬/勸降加成) | 勝 +28%(一次,穿透名節上限);負則鎖到下回合 |
 | 勸降「曉以大義」對高潔上限 | 0.15 → 0.35 |
 | 舌戰・口才(交互) | 口才 = ⌊(智 + 魅/2)× 口才性格⌋;沉著 100 見底即潰,六回合論點計分 |
@@ -956,9 +957,13 @@
 - **難度(AI)**:學徒/名士/宗師 三檔讀招力遞增;**名士起會主動鋪連辯**(論→引、駁→詰),宗師近乎必接。
 - **民心外溢**:阵前舌战罵倒敵方說客,**攻方撼動所圍之城民忠 −5、守方則激勵 +5**(`shiftCityLoyalty`)——舌戰成了攻城前的軟化手段。
 - **功業與成名**:舌戰勝計入名聲榜(`debatesWon`),罵倒另計 `debateRouts`(權重更高);**連勝 5 場得〈雄辯〉、連罵倒 3 人得〈寡言鋒〉**(`deedTraitCandidate`),雄辯回過頭又抬升口才,形成正循環。罵倒/長局入**名局廊**可 3D 重演。
-- **用途/入口**:阵前舌战(雙方有智 ≥80 者,開戰前自動觸發)、**論辯場**(切磋練 XP / 劇情說客 / 舌戰群儒)、以及在野招攬與勸降的升級手段(見 §3.1–3.3 的 +28% 加成)。
+- **用途/入口**:阵前舌战(雙方有智 ≥80 者,開戰前自動觸發)、**論辯場**(切磋練 XP / 劇情 / 舌戰群儒)、**說客**(戰略動詞,見下)、以及在野招攬與勸降的升級手段(見 §3.1–3.3 的 +28% 加成)。
 
-> 待辦(未做):把劇情說客(說降/結盟/游說)從論辯場沙盒接進**真正的外交/游历**動線,使「游說中立諸侯」成為戰略動詞而非隨時可玩的演練。
+**说客(`persuasion.ts`,戰略動詞)**:舌戰不再只活在論辯場沙盒 —— 主選單「說客」遣一名善言之士赴**鄰境可達**(與己城接壤的他勢力城)的真實對象,當面論辯:
+
+- **說降**:對**心懷不滿(忠誠 <65)的敵將**親辯;勝則**棄暗投明**(就地歸入麾下),罵倒更是字字誅心。
+- **游說結盟**:對**鄰境的諸侯本人**親辯;勝則**盟約立成**(`ally` 效果撥 +40 並結盟),罵倒另饋軍資 300,負則交惡(−8)。
+- **成本與節制**:每次費 **200 金**(成敗皆耗,`spendCityGold`),且僅限**接壤**之敵 —— 邊境工具而非處處可用;勝利的後果(一將易幟、一盟立成)本身即為節流。對局走既有交互舌戰引擎(論題依類別、難度依對手智力),結果經 `scenarioOutcome → applyScenarioEffects` 落地。
 
 ### 3.5 月旦評・品評(appraisal.ts)
 
