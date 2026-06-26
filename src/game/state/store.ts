@@ -103,7 +103,8 @@ import { planGovernorCommand } from '../systems/governor';
 import { planLegionOrders, type Legion } from '../systems/legion';
 import { buyQuote, sellQuote, borderTariff, buyHorses, sellHorses, WARHORSE_CITY_CAP, buyIron, sellIron, IRON_CITY_CAP, MEDICINE_CITY_CAP, IRON_FORGE_COST, FORGE_IRON_DISCOUNT } from '../systems/market';
 import { EDICT_DISCOUNT, EMPEROR_HOME, MANDATE_PER_SEASON, RESENTMENT_PER_SEASON, canWelcomeEmperor, emperorCustodian } from '../systems/emperor';
-import { COMMONER_ARRIVAL_CHANCE, commonerArrivalCity, generateCommonerOfficer } from '../systems/commonerTalent';
+import { commonerArrivalCity, generateCommonerOfficer, lordTalentDraw, commonerArrivalChance } from '../systems/commonerTalent';
+import { rollRecommendations } from '../systems/recommendation';
 import { codexMarkRecruited, codexMarkRecruitedMany, codexMarkSeen, codexMarkSlain } from '../systems/codex';
 import { itemCodexMarkCarried } from '../systems/itemCodex';
 import { recordDailyResult } from '../systems/dailyChallenge';
@@ -132,6 +133,7 @@ import {
   attemptRecruit,
   estimateRecruitChance,
   recruitCostFor,
+  giftRecruitValue,
 } from '../systems/officerFate';
 import { resolveSeason } from '../systems/resolution';
 
@@ -477,6 +479,8 @@ interface GameStore extends GameState {
     cityId: EntityId,
     approach?: import('../systems/officerFate').PersuasionApproach,
     debateWon?: boolean,
+    /** 名品禮聘 — an unclaimed treasure pressed on the captive (joins them on success). */
+    giftItemId?: EntityId,
   ) => { ok: boolean; message: string };
   /** 舌戰 — apply the aftermath: a collapse cracks the captive's resolve. */
   applyDebateCollapse: (officerId: EntityId) => void;
@@ -491,12 +495,14 @@ interface GameStore extends GameState {
   recruitFreeAgent: (
     officerId: EntityId,
     cityId: EntityId,
-    opts?: { debateWon?: boolean; bribe?: number },
+    opts?: { debateWon?: boolean; bribe?: number; giftItemId?: EntityId },
   ) => { ok: boolean; message: string };
   /** 舌戰失利 — lock a free agent until next season (lost the war of words). */
   lockFreeAgentRecruit: (officerId: EntityId) => void;
   executeOfficer: (officerId: EntityId) => void;
-  releaseOfficer: (officerId: EntityId) => void;
+  /** 釋放俘虜。`honorable`(義釋)→ the freed officer remembers the kindness
+   *  (`freedByForceId`, easier to recruit later) and the lord earns renown. */
+  releaseOfficer: (officerId: EntityId, honorable?: boolean) => void;
   acknowledgeVictory: () => void;
   proposeAlliance: (
     targetForceId: EntityId,
@@ -4618,7 +4624,16 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // a generated officer of humble birth may join one of its cities.
         if (seasonBoundary) {
           for (const fid of Object.keys(state.recruitBonusSeasons)) {
-            if (Math.random() >= COMMONER_ARRIVAL_CHANCE) continue;
+            // 名聲招賢 — a famed, humane lord draws more & better talent.
+            const force = state.forces[fid];
+            const ruler = force ? (officersWithMarchTask[force.rulerOfficerId] ?? state.officers[force.rulerOfficerId]) : undefined;
+            const cityCount = Object.values(postCities).filter((c) => c.ownerForceId === fid).length;
+            const draw = lordTalentDraw({
+              cityCount,
+              rulerCharisma: ruler?.stats.charisma ?? 50,
+              rulerRenown: ruler?.renown,
+            });
+            if (Math.random() >= commonerArrivalChance(draw)) continue;
             const arrivalCity = commonerArrivalCity(postCities, fid, Math.random);
             if (!arrivalCity) continue;
             const newcomer = generateCommonerOfficer({
@@ -4627,14 +4642,70 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               cityId: arrivalCity.id,
               takenIds: new Set(Object.keys(officersWithMarchTask)),
               rng: Math.random,
+              quality: draw,
             });
             officersWithMarchTask[newcomer.id] = newcomer;
+            const grand = draw >= 0.6;
             result.report.entries.push({
               cityId: arrivalCity.id,
               kind: 'talent',
-              text: `${newcomer.name.en}, a commoner of promise, answers the Call for Talent at ${arrivalCity.name.en}.`,
-              textZh: `求賢令下,寒門之士${newcomer.name.zh}至${arrivalCity.name.zh}投效。`,
+              text: `${newcomer.name.en}, ${grand ? 'a gifted talent' : 'a commoner of promise'}, answers the Call for Talent at ${arrivalCity.name.en}.`,
+              textZh: `求賢令下,${grand ? '豪傑之士' : '寒門之士'}${newcomer.name.zh}至${arrivalCity.name.zh}投效。`,
             });
+          }
+
+          // 舉薦 — a connected, capable officer surfaces a hidden talent (賢以薦賢).
+          for (const r of rollRecommendations({ officers: officersWithMarchTask, playerForceId: state.playerForceId, rng: Math.random })) {
+            const rec = officersWithMarchTask[r.recommenderId];
+            const found = officersWithMarchTask[r.revealedId];
+            if (!rec || !found) continue;
+            const city = r.cityId ? postCities[r.cityId] : null;
+            officersWithMarchTask[found.id] = {
+              ...found, status: 'idle', forceId: null, loyalty: 0,
+              locationCityId: r.cityId ?? found.locationCityId,
+              recommended: true, // 舉薦作保 — easier to recruit while flagged.
+            };
+            result.report.entries.push({
+              cityId: r.cityId ?? null,
+              kind: 'talent',
+              text: `${rec.name.en} recommends a hidden talent — ${found.name.en} surfaces${city ? ` at ${city.name.en}` : ''}, awaiting your courtship.`,
+              textZh: `${rec.name.zh}薦舉賢才,${found.name.zh}現身${city ? `於${city.name.zh}` : ''},待主公延攬。`,
+            });
+          }
+
+          // 群雄競聘 — rival lords also court free agents idling in their own
+          // cities; dither too long and a talent slips into an enemy's service.
+          for (const force of Object.values(state.forces)) {
+            if (force.id === state.playerForceId) continue;
+            if (Math.random() >= 0.5) continue; // not every court every season
+            const aiRuler = officersWithMarchTask[force.rulerOfficerId];
+            if (!aiRuler) continue;
+            const candidates = Object.values(officersWithMarchTask).filter(
+              (o) => o.forceId === null && o.status === 'idle' && o.locationCityId
+                && postCities[o.locationCityId]?.ownerForceId === force.id,
+            );
+            if (candidates.length === 0) continue;
+            // Court the most capable one in town.
+            const prospect = candidates.sort((a, b) => {
+              const sum = (o: typeof a) => o.stats.war + o.stats.leadership + o.stats.intelligence + o.stats.politics + o.stats.charisma;
+              return sum(b) - sum(a);
+            })[0];
+            const pCity = postCities[prospect.locationCityId!];
+            if (!pCity) continue;
+            const aiCities = Object.values(postCities).filter((c) => c.ownerForceId === force.id).length;
+            const r = attemptFreeAgentRecruit({
+              officer: prospect, city: pCity, recruiterForce: force, recruiterRuler: aiRuler,
+              recruiterReputation: { citiesOwned: aiCities }, family: state.family, free: true, rng: Math.random,
+            });
+            if (r.ok && r.recruitedOfficer) {
+              officersWithMarchTask[prospect.id] = { ...r.recruitedOfficer, recommended: undefined };
+              result.report.entries.push({
+                cityId: pCity.id,
+                kind: 'talent',
+                text: `${force.name.en} wins the free agent ${prospect.name.en} into service at ${pCity.name.en}.`,
+                textZh: `${force.name.zh}延攬在野之士${prospect.name.zh}於${pCity.name.zh}。`,
+              });
+            }
           }
         }
 
@@ -5253,7 +5324,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         } } });
       },
 
-      recruitOfficer: (officerId, cityId, approach, debateWon) => {
+      recruitOfficer: (officerId, cityId, approach, debateWon, giftItemId) => {
         const state = get();
         const officer = state.officers[officerId];
         const city = state.cities[cityId];
@@ -5267,6 +5338,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const citiesOwned = Object.values(state.cities).filter(
           (c) => c.ownerForceId === state.playerForceId,
         ).length;
+        // 名品禮聘 — a treasure from the realm's unclaimed hoard sweetens the plea.
+        const giftEntry = giftItemId ? state.lostItems.find((li) => li.itemId === giftItemId) : undefined;
+        const giftItem = giftEntry ? ITEMS_BY_ID[giftEntry.itemId] : undefined;
+        const giftBonus = giftItem ? giftRecruitValue(giftItem, officer) : 0;
         const result = attemptRecruit({
           officer,
           city,
@@ -5276,6 +5351,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           approach,
           bestRapportWithCaptors: bestRapportWith(state, officerId),
           debateWon,
+          giftBonus,
           stanceModifier:
             stanceRecruitModifier(state.officers, force.id, force.recruitmentStance) +
             statecraftRecruitBonus(force.statecraft) +
@@ -5293,9 +5369,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         };
         if (result.ok && result.recruitedOfficer) {
           codexMarkRecruited(officerId);
+          let recruited = result.recruitedOfficer;
+          if (giftItem && giftEntry) {
+            recruited = { ...recruited, equipment: [...(recruited.equipment ?? []), giftItem.id] };
+            updates.lostItems = state.lostItems.filter((li) => li !== giftEntry);
+          }
           updates.officers = {
             ...state.officers,
-            [officerId]: result.recruitedOfficer,
+            [officerId]: recruited,
           };
           // Achievement trigger.
           let ach = loadAchievementProgress();
@@ -5373,6 +5454,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const citiesOwned2 = Object.values(state.cities).filter(
           (c) => c.ownerForceId === state.playerForceId,
         ).length;
+        // 三顧之誠 — each prior refusal builds a little cumulative warmth.
+        const priorAttempts = state.recruitState[officerId]?.attempts ?? 0;
+        const persistenceBonus = Math.min(0.20, priorAttempts * 0.05);
+        // 名品禮聘 — a treasure from the realm's unclaimed hoard sweetens the offer.
+        const giftEntry = opts?.giftItemId ? state.lostItems.find((li) => li.itemId === opts.giftItemId) : undefined;
+        const giftItem = giftEntry ? ITEMS_BY_ID[giftEntry.itemId] : undefined;
+        const giftBonus = giftItem ? giftRecruitValue(giftItem, officer) : 0;
         const result = attemptFreeAgentRecruit({
           officer,
           city,
@@ -5383,6 +5471,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           free: true,            // 邀請免費 — only a bribe spends gold.
           debateWon: opts?.debateWon,
           bribeBonus,
+          persistenceBonus,
+          recommendedBonus: officer.recommended ? 0.15 : 0, // 舉薦作保
+          giftBonus,
         });
 
         const updates: Partial<GameState> = {};
@@ -5392,7 +5483,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const nextRecruitState = { ...state.recruitState };
         if (result.ok && result.recruitedOfficer) {
           codexMarkRecruited(officerId);
-          updates.officers = { ...state.officers, [officerId]: result.recruitedOfficer };
+          // 名品隨之 — a gift given on success goes to the new officer (consumed
+          // from the hoard); a refused offer keeps the treasure.
+          let recruited = { ...result.recruitedOfficer, recommended: undefined };
+          if (giftItem && giftEntry) {
+            recruited = { ...recruited, equipment: [...(recruited.equipment ?? []), giftItem.id] };
+            updates.lostItems = state.lostItems.filter((li) => li !== giftEntry);
+          }
+          updates.officers = { ...state.officers, [officerId]: recruited };
           delete nextRecruitState[officerId];
           updates.popupQueue = [...state.popupQueue, {
             key: 'officer-recruited',
@@ -5403,8 +5501,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             captionEn: `${result.recruitedOfficer.name.en} answers your call`,
           }];
         } else {
-          // A refusal opens the escalation options (舌戰/賄賂) for this season.
-          nextRecruitState[officerId] = { season: seasonKey, stage: 'declined' };
+          // A refusal opens escalation (舌戰/賄賂) this season AND counts toward
+          // 三顧之誠 — persistence across seasons warms a reluctant talent.
+          nextRecruitState[officerId] = { season: seasonKey, stage: 'declined', attempts: priorAttempts + 1 };
         }
         updates.recruitState = nextRecruitState;
         set(updates);
@@ -5430,16 +5529,21 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         });
       },
 
-      releaseOfficer: (officerId) => {
+      releaseOfficer: (officerId, honorable) => {
         const state = get();
         const officer = state.officers[officerId];
         if (!officer || officer.status !== 'imprisoned') return;
-        set({
-          officers: {
-            ...state.officers,
-            [officerId]: applyRelease(officer),
-          },
-        });
+        const released = applyRelease(officer);
+        const officers = { ...state.officers, [officerId]: released };
+        if (honorable && state.playerForceId) {
+          // 義釋 — magnanimity remembered: the freed officer is far easier for
+          // your house to win later (報恩), and your lord earns a name for it.
+          officers[officerId] = { ...released, freedByForceId: state.playerForceId };
+          const force = state.forces[state.playerForceId];
+          const ruler = force ? officers[force.rulerOfficerId] : null;
+          if (ruler) officers[ruler.id] = { ...ruler, renown: (ruler.renown ?? 0) + 5 };
+        }
+        set({ officers });
       },
 
       acknowledgeVictory: () =>

@@ -3,6 +3,68 @@ import type { FamilyRelation } from '../types/family';
 import { recruiterBonus } from './traitEffects';
 import { recruitRefusalPenalty, recruitKinshipBonus } from './relationshipEffects';
 import { effectivePrestige } from '../data/prestige';
+import { deriveDoctrine } from '../data/officerAttributes';
+import { IMPERIAL_RANKS } from '../data/imperial';
+import { itemRarity, type Item } from '../data/items';
+
+/**
+ * 名品禮聘 — recruit-odds sweetener from gifting a treasure the prospect values:
+ * the rarer the piece (神兵/寶器/良具) and the better it fits their craft, the
+ * more it sways them. Capped at +0.20. Pure.
+ */
+export function giftRecruitValue(item: Item, prospect: Officer): number {
+  const r = itemRarity(item);
+  let v = r === 'gold' ? 0.15 : r === 'silver' ? 0.10 : 0.06;
+  const s = prospect.stats;
+  if (item.kind === 'weapon' && s.war >= 75) v += 0.05;
+  else if (item.kind === 'book' && s.intelligence >= 75) v += 0.05;
+  else if (item.kind === 'horse' && Math.max(s.war, s.leadership) >= 75) v += 0.04;
+  else if (item.kind === 'treasure' || item.kind === 'armor') v += 0.02;
+  return Math.min(0.20, v);
+}
+
+/**
+ * 良禽擇木 — a free agent's 主義 (doctrine) shapes whom they'll serve, judged by
+ * the courting lord's character. Returns a recruit-odds delta and, when they'd
+ * balk, the reason why. Pure.
+ */
+export function doctrineRecruitFit(
+  prospect: Officer,
+  ruler: Officer,
+  force: Force,
+  citiesOwned: number,
+): { delta: number; reasonZh?: string; reasonEn?: string } {
+  const doc = prospect.doctrine ?? deriveDoctrine(prospect.stats, prospect.id);
+  const cha = ruler.stats.charisma;
+  const might = Math.max(ruler.stats.war, ruler.stats.leadership);
+  const rankTier = Math.max(0, IMPERIAL_RANKS.findIndex((r) => r.id === (force.imperialRank ?? 'commoner')));
+  const aristocratic = force.recruitmentStance === 'aristocratic';
+  switch (doc) {
+    case 'royal': // 王道 — drawn to a benevolent lord, spurns a brute.
+      if (cha >= 80) return { delta: 0.12 };
+      if (cha >= 65) return { delta: 0.05 };
+      if (cha < 55) return { delta: -0.12, reasonZh: '王道之士,不屑事寡德之主', reasonEn: 'A man of virtue spurns a lord of little benevolence' };
+      return { delta: 0 };
+    case 'hegemonic': // 覇道 — follows strength.
+      if (might >= 85) return { delta: 0.12 };
+      if (might >= 70) return { delta: 0.05 };
+      if (might < 55) return { delta: -0.10, reasonZh: '覇道之士慕強,不從弱主', reasonEn: 'A man of force follows only the strong' };
+      return { delta: 0 };
+    case 'ritual': // 礼教 — holds out for a lord of standing.
+      if (rankTier >= 2 || aristocratic) return { delta: 0.10 };
+      if (ruler.stats.politics >= 75) return { delta: 0.04 };
+      return { delta: -0.07, reasonZh: '礼教之士重名分,不附無名之主', reasonEn: 'A man of rite holds out for a lord of proper standing' };
+    case 'fame': // 名利 — opportunist, drawn to a winning house.
+      return { delta: citiesOwned >= 5 ? 0.06 : 0.02 };
+    case 'separatist': // 割據 — harbours their own ambitions.
+      return { delta: -0.18, reasonZh: '其志在割據,不甘為人下', reasonEn: 'They harbour their own ambitions and will not serve' };
+    case 'reclusion': // 在野 — only a renowned lord (三顧之誠) draws a recluse out.
+      if (cha >= 88) return { delta: 0.04 };
+      return { delta: -0.20, reasonZh: '高士隱於野,非明主三顧不出', reasonEn: 'A recluse stirs for none but a lord of great renown' };
+    default:
+      return { delta: 0 };
+  }
+}
 
 export const RECRUIT_COST = 200;
 export const FREE_AGENT_COST = 100;
@@ -36,6 +98,8 @@ export interface RecruitInput {
   /** 門第政策加成 — recruit edge from an aristocratic realm's content clans
    *  opening the gentry's doors (systems/clans.stanceRecruitModifier). */
   stanceModifier?: number;
+  /** 名品禮聘 — a treasured gift sways the captive (caller validates the item). */
+  giftBonus?: number;
   rng?: () => number;
 }
 
@@ -137,7 +201,7 @@ export function recruitCostFor(approach?: PersuasionApproach): number {
 /** The success odds an attempt would roll against — surfaced to the UI
  *  so the three approaches can be compared before spending the gold. */
 export function estimateRecruitChance(input: Omit<RecruitInput, 'rng'>): number {
-  const { officer, city, recruiterRuler, recruiterReputation, approach } = input;
+  const { officer, city, recruiterForce, recruiterRuler, recruiterReputation, approach } = input;
   const persuasion = recruiterRuler.stats.charisma;
   const resistance = officer.loyalty;
   let chance = (persuasion - resistance + 50) / 100;
@@ -150,6 +214,17 @@ export function estimateRecruitChance(input: Omit<RecruitInput, 'rng'>): number 
   chance += reputationBonus(recruiterReputation);
   chance += prestigeRecruitBonus(recruiterRuler);
   chance += input.stanceModifier ?? 0;
+  // 良禽擇木 — even a captive weighs the captor's character by their 主義.
+  chance += doctrineRecruitFit(officer, recruiterRuler, recruiterForce, recruiterReputation?.citiesOwned ?? 0).delta;
+  // 舊部歸心 — a captured former retainer is far easier to win back.
+  if (officer.retinueOfLordId && officer.retinueOfLordId === recruiterRuler.id) chance += 0.35;
+  // 報恩 — one you once freed honourably remembers the kindness.
+  if (officer.freedByForceId && officer.freedByForceId === recruiterForce.id) chance += 0.20;
+  // 名品禮聘 — a treasure pressed into a captive's hands.
+  chance += input.giftBonus ?? 0;
+  // 誓不事仇 — they will not serve the force that slew their kin or sworn brothers.
+  const killers = new Set<string>([...Object.values(officer.killedRelativesBy ?? {}), ...Object.values(officer.killedSwornBy ?? {})]);
+  if (killers.has(recruiterForce.id)) chance -= 0.5;
   // 'noble' caps gold-flavored persuasion; an appeal to principle can
   // still reach them.
   if ((officer.traits ?? []).includes('noble')) {
@@ -213,6 +288,12 @@ export interface FreeAgentRecruitInput {
   debateWon?: boolean;
   /** 賄賂 — gold-bought goodwill (already paid by the caller); flat odds. */
   bribeBonus?: number;
+  /** 三顧之誠 — cumulative warmth from prior invitations (persistence pays). */
+  persistenceBonus?: number;
+  /** 舉薦作保 — a serving officer vouched for this talent (§3.1 舉薦). */
+  recommendedBonus?: number;
+  /** 名品禮聘 — a treasured gift sways them (caller validates the item). */
+  giftBonus?: number;
   rng?: () => number;
 }
 
@@ -242,9 +323,18 @@ export function attemptFreeAgentRecruit(
   chance += recruitKinshipBonus(officer.id, recruiterRuler.id, family ?? []);
   // 舊部歸心 — a scattered retainer rejoins their original lord eagerly.
   if (officer.retinueOfLordId && officer.retinueOfLordId === recruiterRuler.id) chance += 0.35;
+  // 良禽擇木 — the prospect's 主義 weighs the lord's character.
+  const docFit = doctrineRecruitFit(officer, recruiterRuler, recruiterForce, input.recruiterReputation?.citiesOwned ?? 0);
+  chance += docFit.delta;
+  // 報恩 — a free agent you once freed honourably inclines back to you.
+  if (officer.freedByForceId && officer.freedByForceId === recruiterForce.id) chance += 0.20;
   // 'noble' free agent: harder, won't accept just because you're rich.
-  if ((officer.traits ?? []).includes('noble')) chance -= 0.10;
-  // 舌戰 / 賄賂 escalation after a first refusal.
+  const isNoble = (officer.traits ?? []).includes('noble' as never);
+  if (isNoble) chance -= 0.10;
+  // 三顧之誠 / 舉薦作保 / 名品禮聘 / 舌戰 / 賄賂.
+  chance += input.persistenceBonus ?? 0;
+  chance += input.recommendedBonus ?? 0;
+  chance += input.giftBonus ?? 0;
   if (input.debateWon) chance += 0.28;
   chance += input.bribeBonus ?? 0;
   chance = clamp01(chance);
@@ -266,10 +356,18 @@ export function attemptFreeAgentRecruit(
     };
   }
 
+  // 拒絕之由 — surface the strongest reason they balked, so the player learns.
+  const enemyPenalty = recruitRefusalPenalty(officer.id, recruiterRuler.id);
+  let reasonZh: string | undefined;
+  let reasonEn: string | undefined;
+  if (enemyPenalty < 0) { reasonZh = '與主公有宿怨,豈肯來投'; reasonEn = 'They bear an old grudge against you'; }
+  else if (docFit.delta < 0 && docFit.reasonZh) { reasonZh = docFit.reasonZh; reasonEn = docFit.reasonEn; }
+  else if (isNoble) { reasonZh = '高潔自矜,不肯輕附'; reasonEn = 'Too proud to be lightly won'; }
+  const tail = reasonZh ? ` ${reasonZh} — ${reasonEn}` : '';
   return {
     ok: false,
     chance,
-    message: `${officer.name.en} declines and slips away. ${FREE_AGENT_COST} gold spent.`,
+    message: `${officer.name.en} declines.${tail}`,
   };
 }
 

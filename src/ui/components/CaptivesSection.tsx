@@ -8,12 +8,15 @@ import { OfficerStats } from './OfficerStats';
 import { DebateModal } from './DebateModal';
 import { RecruitSuccessModal } from './RecruitSuccessModal';
 import { eloquence } from '../../game/systems/debate';
+import { ITEMS_BY_ID, itemRarity } from '../../game/data/items';
 import { useT, useLanguage } from '../i18n';
 import styles from './CaptivesSection.module.css';
 
 interface Props {
   cityId: EntityId;
 }
+
+const RARITY_RANK: Record<string, number> = { gold: 3, silver: 2, bronze: 1 };
 
 export function CaptivesSection({ cityId }: Props) {
   const t = useT();
@@ -37,6 +40,7 @@ export function CaptivesSection({ cityId }: Props) {
   );
   const executeOfficer = useGameStore((s) => s.executeOfficer);
   const releaseOfficer = useGameStore((s) => s.releaseOfficer);
+  const lostItems = useGameStore((s) => s.lostItems);
   const [feedback, setFeedback] = useState<{
     officerId: EntityId;
     text: string;
@@ -51,10 +55,19 @@ export function CaptivesSection({ cityId }: Props) {
     [officersMap, cityId],
   );
 
+  // 名品禮聘 — grandest unclaimed treasure in this city, to press on a captive.
+  const bestGift = useMemo(() => {
+    const here = lostItems
+      .filter((li) => li.cityId === cityId && ITEMS_BY_ID[li.itemId])
+      .map((li) => ITEMS_BY_ID[li.itemId]);
+    if (here.length === 0) return null;
+    return here.sort((a, b) => RARITY_RANK[itemRarity(b)] - RARITY_RANK[itemRarity(a)])[0];
+  }, [lostItems, cityId]);
+
   if (captives.length === 0) return null;
 
-  const handleRecruit = (officerId: EntityId, approach?: PersuasionApproach) => {
-    const result = recruitOfficer(officerId, cityId, approach, debateEdge.has(officerId));
+  const handleRecruit = (officerId: EntityId, approach?: PersuasionApproach, giftItemId?: EntityId) => {
+    const result = recruitOfficer(officerId, cityId, approach, debateEdge.has(officerId), giftItemId);
     if (debateEdge.has(officerId)) setDebateEdge((prev) => { const n = new Set(prev); n.delete(officerId); return n; });
     if (result.ok) setRecruited(officerId);
     setFeedback({ officerId, text: result.message, ok: result.ok });
@@ -119,11 +132,25 @@ export function CaptivesSection({ cityId }: Props) {
                   </button>
                 );
               })}
+              {bestGift && (
+                <button
+                  className={styles.recruitBtn}
+                  onClick={() => handleRecruit(o.id, 'riches', bestGift.id)}
+                  title={t(`以名品「${bestGift.name.zh}」厚禮招降(成則隨之入幕)`, `Press ${bestGift.name.en} on them (joins them on success)`)}
+                >🎁 {t('厚禮', 'Gift')} · {lang === 'en' ? bestGift.name.en : bestGift.name.zh}</button>
+              )}
               <button
                 className={styles.releaseBtn}
                 onClick={() => releaseOfficer(o.id)}
               >
                 {t('釋放', 'Release')}
+              </button>
+              <button
+                className={styles.releaseBtn}
+                onClick={() => releaseOfficer(o.id, true)}
+                title={t('義釋 — 結恩於其,漲己威望;日後招攬大加成', 'Free them honorably — earns renown; far easier to recruit them later')}
+              >
+                {t('義釋', 'Free w/ honor')}
               </button>
               <button
                 className={styles.executeBtn}

@@ -146,4 +146,10 @@ export interface Officer {
    *  floor while serving that lord, grief if the lord falls, and an eager
    *  re-recruit ("舊部歸心") if the old lord calls them back. Optional/safe. */
   retinueOfLordId?: EntityId;
+  /** 舉薦待延 — a serving officer recently put this in-the-wild talent forward
+   *  (§3.1 舉薦); they're easier to recruit while flagged. Cleared on joining. */
+  recommended?: boolean;
+  /** 義釋報恩 — a force that once freed this officer honourably (§3.3 義釋);
+   *  they remember the kindness and are far easier for that force to recruit. */
+  freedByForceId?: EntityId;
 }
