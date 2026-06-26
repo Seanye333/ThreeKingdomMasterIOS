@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { COMMAND_DEFS, meetsMinSize } from '../../game/systems/commands';
 import { citySize, CITY_SIZES_BY_ID } from '../../game/systems/citySize';
+import type { GovernorStance } from '../../game/systems/governor';
 import type { EntityId, InternalAffairsType } from '../../game/types';
 import { MarchPicker } from './MarchPicker';
 import { TrainingPicker } from './TrainingPicker';
@@ -70,6 +71,8 @@ export function CommandMenu({ cityId }: Props) {
   const buildings = useGameStore((s) => s.buildings);
   const delegations = useGameStore((s) => s.cityDelegations ?? EMPTY_DELEGATIONS);
   const delegateCity = useGameStore((s) => s.delegateCity);
+  const governorStances = useGameStore((s) => s.governorStances ?? EMPTY_DELEGATIONS);
+  const setGovernorStance = useGameStore((s) => s.setGovernorStance);
   const pendingTrainings = useGameStore((s) => s.pendingTrainings);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const t = useT();
@@ -180,6 +183,23 @@ export function CommandMenu({ cityId }: Props) {
           ))}
         </select>
       </div>
+      {/* 施政重點 — steer a delegated governor without micromanaging. */}
+      {governor && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: '-0.35rem', marginBottom: '0.5rem', padding: '0.2rem 0.6rem', fontFamily: 'var(--tkm-font-body)', fontSize: '0.72rem', color: '#9aa6b0' }}>
+          <span>{t('施政重點', 'Focus')}</span>
+          <select
+            value={governorStances[cityId] ?? 'balanced'}
+            onChange={(e) => setGovernorStance(cityId, e.target.value as GovernorStance)}
+            style={{ background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473', padding: '0.2rem', fontFamily: 'inherit', fontSize: '0.72rem', maxWidth: 130 }}
+          >
+            <option value="balanced">{t('均衡', 'Balanced')}</option>
+            <option value="economy">{t('富國', 'Economy')}</option>
+            <option value="military">{t('強兵', 'Military')}</option>
+            <option value="walls">{t('守備', 'Defences')}</option>
+            <option value="loyalty">{t('安民', 'Loyalty')}</option>
+          </select>
+        </div>
+      )}
       {/* Currently pending commands in this city — one per assigned officer */}
       {pendingInCity.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginBottom: '0.5rem' }}>

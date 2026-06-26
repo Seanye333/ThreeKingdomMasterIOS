@@ -341,6 +341,10 @@ export interface GameState {
   /** 委任太守 — cityId → governor officerId. A delegated city auto-issues
    *  its governor's internal command at the start of every tick. */
   cityDelegations: Record<EntityId, EntityId>;
+  /** 施政重點 — cityId → the focus the player set its governor (default balanced). */
+  governorStances: Record<EntityId, import('../systems/governor').GovernorStance>;
+  /** 太守任期 — cityId → year the seat was delegated, for 久任尾大不掉 effects. */
+  governorSince: Record<EntityId, number>;
   /** 軍團都督 — player legions: a marshal, a city cluster, a directive.
    *  Their orders auto-issue at the start of every tick. */
   legions: import('../systems/legion').Legion[];
@@ -613,6 +617,8 @@ export const EMPTY_STATE: GameState = {
   standingRoutes: [],
   espionageReveals: {},
   cityDelegations: {},
+  governorStances: {},
+  governorSince: {},
   legions: [],
   emperorCityId: 'luoyang',
   dailyChallengeDate: null,
@@ -901,6 +907,8 @@ export function loadScenario(
     embeddedSpies: [],
     espionageReveals: {},
     cityDelegations: {},
+    governorStances: {},
+    governorSince: {},
     legions: [],
     emperorCityId: 'luoyang',
     dailyChallengeDate: null,

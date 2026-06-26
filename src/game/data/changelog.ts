@@ -3,7 +3,7 @@
  * The newest entry drives the in-game「本次更新」popup: bump
  * GAME_VERSION when a batch ships and the next launch shows it once.
  */
-export const GAME_VERSION = '1.13.0';
+export const GAME_VERSION = '1.14.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -13,6 +13,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.14.0',
+    date: '2026-06-26',
+    title: '委任太守做活 — 太守本事、施政重點、政報、太守之弊',
+    items: [
+      '🏛 太守做活:太守本事真影響施政 —— 政治→更猛更省、魅力→撫民、智力→肅貪治事',
+      '🎚 施政重點:給太守定均衡/富國/強兵/守備/安民,決策按重點加權',
+      '📜 太守政報:每旬出一條「X 太守〔Y 城〕:勸農/補軍/平亂…」,不再黑箱',
+      '💰 太守之弊:貪婪/低忠太守縱貪腐+貪墨;久任野心者漸生異心 —— 委任不再純收益',
+    ],
+  },
   {
     version: '1.13.0',
     date: '2026-06-26',

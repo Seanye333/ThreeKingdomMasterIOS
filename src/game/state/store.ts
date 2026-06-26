@@ -103,7 +103,7 @@ import { appointmentBonusFor, pruneStaleAppointments, traitRefusal, isOnCooldown
 import { canPromoteToRank } from '../systems/imperialEffects';
 import { COMMAND_DEFS } from '../systems/commands';
 import { planMassMuster, musterStrain, MUSTER_GATHER_SEASONS, MUSTER_CAMPAIGN_SEASONS, type MusterOptions } from '../systems/muster';
-import { planGovernorCommand } from '../systems/governor';
+import { planGovernorCommand, governorMisruleEffect } from '../systems/governor';
 import { planLegionOrders, planLegionLogistics, legionBannerBonus, type Legion } from '../systems/legion';
 import { buyQuote, sellQuote, borderTariff, buyHorses, sellHorses, WARHORSE_CITY_CAP, buyIron, sellIron, IRON_CITY_CAP, MEDICINE_CITY_CAP, IRON_FORGE_COST, FORGE_IRON_DISCOUNT } from '../systems/market';
 import { EDICT_DISCOUNT, EMPEROR_HOME, MANDATE_PER_SEASON, RESENTMENT_PER_SEASON, canWelcomeEmperor, emperorCustodian } from '../systems/emperor';
@@ -449,6 +449,8 @@ interface GameStore extends GameState {
   borrowWarFunds: () => { ok: boolean; gold: number; owed?: number; message?: string };
   /** 委任太守 — set (or clear with null) a city's standing governor. */
   delegateCity: (cityId: EntityId, officerId: EntityId | null) => void;
+  /** 施政重點 — set a delegated city's governor focus (均衡/富國/強兵/守備/安民). */
+  setGovernorStance: (cityId: EntityId, stance: import('../systems/governor').GovernorStance) => void;
   /** 軍團都督 — form a legion (id auto-assigned). */
   createLegion: (legion: Omit<Legion, 'id'>) => void;
   disbandLegion: (legionId: string) => void;
@@ -2291,13 +2293,20 @@ export const useGameStore = create<GameStore>()(
           return;
         }
         const next = { ...s.cityDelegations };
-        if (officerId) next[cityId] = officerId;
-        else delete next[cityId];
-        set({ cityDelegations: next });
+        const since = { ...s.governorSince };
+        const stances = { ...s.governorStances };
+        if (officerId) { next[cityId] = officerId; since[cityId] = s.date.year; }
+        else { delete next[cityId]; delete since[cityId]; delete stances[cityId]; }
+        set({ cityDelegations: next, governorSince: since, governorStances: stances });
         if (city) {
           if (gov) s.notify(`委任太守 · ${gov.name.zh} 治 ${city.name.zh}`, `Governor · ${gov.name.en} now runs ${city.name.en}`);
           else s.notify(`撤太守 · ${city.name.zh} 收歸親理`, `Governor recalled · ${city.name.en}`, 'warn');
         }
+      },
+      setGovernorStance: (cityId, stance) => {
+        const s = get();
+        if (!s.cityDelegations[cityId]) return;
+        set({ governorStances: { ...s.governorStances, [cityId]: stance } });
       },
 
       massMuster: (targetCityId, opts) => {
@@ -2668,14 +2677,41 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         {
           const s0 = get();
           if (s0.victoryStatus !== 'playing' && s0.victoryStatus !== 'observing') return;
+          const annualGov = s0.date.season === 'winter'; // 久任 drift, once a year
+          const GOV_LABEL: Partial<Record<string, [string, string]>> = {
+            'improve-loyalty': ['撫民安境', 'soothed unrest'], relief: ['開倉賑濟', 'opened the granaries'],
+            'anti-corruption': ['巡查肅貪', 'swept out graft'], 'recruit-troops': ['徵募守軍', 'raised troops'],
+            'military-farming': ['屯田', 'set the troops to farm'], 'develop-agriculture': ['勸農', 'developed farming'],
+            'develop-commerce': ['興商', 'developed commerce'], 'build-defense': ['修城防', 'built defences'],
+            'major-agriculture': ['大興農政', 'a great farming push'], 'major-commerce': ['大興商政', 'a great commerce push'],
+            'major-defense': ['大修城防', 'a great defence push'], 'upgrade-wall': ['強化城壁', 'raised the walls'],
+            'drill-troops': ['練兵', 'drilled the garrison'], 'encourage-migration': ['招撫流民', 'drew in migrants'],
+            'flood-control': ['興修水利', 'tended the waterworks'],
+          };
           for (const [cid, govId] of Object.entries(s0.cityDelegations ?? {})) {
             const c = get().cities[cid];
             const gov = get().officers[govId];
             if (!c || !gov || c.ownerForceId !== s0.playerForceId) continue;
+            // 太守之弊 — a greedy/disloyal or long-seated governor exacts a toll
+            // (graft creeping up, a little skim, tenure loyalty drift) whether or
+            // not he's free to act this tick.
+            const tenure = s0.date.year - (s0.governorSince[cid] ?? s0.date.year);
+            const ill = governorMisruleEffect(gov, tenure, annualGov);
+            if (ill.corruption > 0 || ill.skim > 0 || ill.govLoyaltyDelta !== 0) {
+              const cc = get().cities[cid];
+              if (cc) set({
+                cities: { ...get().cities, [cid]: { ...cc, corruption: Math.min(100, (cc.corruption ?? 0) + ill.corruption), gold: Math.max(0, cc.gold - ill.skim) } },
+                officers: ill.govLoyaltyDelta !== 0 ? { ...get().officers, [govId]: { ...get().officers[govId], loyalty: Math.max(0, Math.min(100, get().officers[govId].loyalty + ill.govLoyaltyDelta)) } } : get().officers,
+              });
+            }
             if (gov.locationCityId !== cid || gov.task || get().pendingCommands[govId]) continue;
             if (s0.pendingTrainings.some((t) => t.officerId === govId)) continue;
-            const type = planGovernorCommand(c, gov);
-            if (type) get().issueCommand(cid, type, govId);
+            const type = planGovernorCommand(get().cities[cid] ?? c, gov, s0.governorStances[cid] ?? 'balanced');
+            if (type && get().issueCommand(cid, type, govId).ok) {
+              // 太守政報 — a concise line so the governor isn't a silent black box.
+              const lbl = GOV_LABEL[type];
+              if (lbl) get().notify(`${gov.name.zh} 太守〔${c.name.zh}〕:${lbl[0]}`, `Gov. ${gov.name.en} [${c.name.en}]: ${lbl[1]}`);
+            }
           }
           // 軍團都督 — each legion files its marshal's orders the same way.
           const pidL = s0.playerForceId ?? '';
@@ -10235,6 +10271,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           scenicLooted: loaded.scenicLooted ?? {},
           scenicVisits: loaded.scenicVisits ?? {},
           musters: loaded.musters ?? {},
+          governorStances: loaded.governorStances ?? {},
+          governorSince: loaded.governorSince ?? {},
           itemRefinements: loaded.itemRefinements ?? {},
           itemBreakthroughs: loaded.itemBreakthroughs ?? {},
           itemGems: loaded.itemGems ?? {},
@@ -10341,6 +10379,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         fogOfWar: state.fogOfWar,
         espionageReveals: state.espionageReveals,
         cityDelegations: state.cityDelegations,
+        governorStances: state.governorStances,
+        governorSince: state.governorSince,
         legions: state.legions,
         emperorCityId: state.emperorCityId,
         dailyChallengeDate: state.dailyChallengeDate,
