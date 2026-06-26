@@ -32,6 +32,7 @@ import { applyBout } from '../systems/warRanking';
 import { tickAfflictions, withAffliction, type Affliction } from '../systems/afflictions';
 import { routConsequence, type RoutConsequence } from '../systems/wordWar';
 import { canAppraise, appraisalVerdict, appraisalRenownGain } from '../systems/appraisal';
+import { executionRenownCost, markSlainVendetta } from '../systems/captiveFate';
 import { trainKey, recordTrain } from '../systems/sparLimit';
 import type { Difficulty } from './gameState';
 import { CIVIC_TITLES_BY_ID, MILITARY_RANKS_BY_ID } from '../data/titles';
@@ -257,6 +258,7 @@ import { rollSpecialtyEvents } from '../systems/specialtyEvents';
 import { rollOmen } from '../systems/mandate';
 import { rollReligiousRebellion, spreadCultUnrest } from '../systems/religion';
 import { resolveAIRansoms } from '../systems/aiRansom';
+import { resolveAICaptives } from '../systems/aiCaptiveFate';
 
 const SEASON_INDEX: Record<string, number> = {
   spring: 0,
@@ -3517,6 +3519,28 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           });
           postCities = contagion.cities;
           if (contagion.entries.length > 0) result.report.entries.push(...contagion.entries);
+          // 俘虜處置 — AI captors pass verdict on their prisoners (招降/義釋/處決),
+          // bearing the same costs the player does, before the ransom clears the rest.
+          const captiveFate = resolveAICaptives({
+            forces: postForces,
+            officers: postOfficers,
+            cities: postCities,
+            family: state.family,
+            runtimeBonds: state.runtimeBonds ?? [],
+            playerForceId: state.playerForceId,
+            rng: Math.random,
+          });
+          postOfficers = captiveFate.officers;
+          if (captiveFate.entries.length > 0) result.report.entries.push(...captiveFate.entries);
+          if (captiveFate.relationDeltas.length > 0) {
+            const relations = { ...postDiplomacy.relations };
+            for (const d of captiveFate.relationDeltas) {
+              const key = pairKey(d.a, d.b);
+              const rel = relations[key] ?? { forceA: d.a < d.b ? d.a : d.b, forceB: d.a < d.b ? d.b : d.a, score: 0, status: 'neutral' as const };
+              relations[key] = { ...rel, score: Math.max(-100, Math.min(100, rel.score + d.delta)) };
+            }
+            postDiplomacy = { ...postDiplomacy, relations };
+          }
           // 贖俘 — rival lords buy their captured officers back into circulation.
           const ransom = resolveAIRansoms({
             forces: postForces,
@@ -5547,16 +5571,33 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       },
 
       executeOfficer: (officerId) => {
-        codexMarkSlain(officerId);
         const state = get();
         const officer = state.officers[officerId];
         if (!officer || officer.status !== 'imprisoned') return;
-        set({
-          officers: {
-            ...state.officers,
-            [officerId]: applyExecute(officer),
-          },
-        });
+        codexMarkSlain(officerId);
+        const pid = state.playerForceId;
+        // 宿怨 — the slain man's kin & sworn brothers mark your house (near-
+        // unrecruitable thereafter, a grudge in battle).
+        const officers = pid
+          ? markSlainVendetta(state.officers, officerId, pid, state.family, state.runtimeBonds ?? [])
+          : { ...state.officers };
+        officers[officerId] = applyExecute(officer);
+        // 殺降之累 — the executing lord forfeits 威望 (heavier for a man of honour
+        // or renown; killing one who chose death over surrender weighs heaviest).
+        const player = pid ? state.forces[pid] : null;
+        const ruler = player ? officers[player.rulerOfficerId] : null;
+        if (ruler) officers[ruler.id] = { ...ruler, renown: Math.max(0, (ruler.renown ?? 0) - executionRenownCost(officer)) };
+        // 積怨 — the victim's old court resents the killing.
+        let diplomacy = state.diplomacy;
+        const former = officer.capturedFromForceId;
+        if (pid && former && former !== pid && state.forces[former]) {
+          const relations = { ...state.diplomacy.relations };
+          const key = pairKey(pid, former);
+          const rel = relations[key] ?? { forceA: pid < former ? pid : former, forceB: pid < former ? former : pid, score: 0, status: 'neutral' as const };
+          relations[key] = { ...rel, score: Math.max(-100, rel.score - 12) };
+          diplomacy = { ...state.diplomacy, relations };
+        }
+        set({ officers, diplomacy });
       },
 
       releaseOfficer: (officerId, honorable) => {

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { recruitCostFor, type PersuasionApproach } from '../../game/systems/officerFate';
+import { isMartyr, executionRenownCost } from '../../game/systems/captiveFate';
 import { playSfx } from '../../game/systems/sound';
 import type { EntityId } from '../../game/types';
 import { OfficerHoverCard } from './OfficerHoverCard';
@@ -107,38 +108,46 @@ export function CaptivesSection({ cityId }: Props) {
               </div>
             )}
             <div className={styles.actions}>
-              {bestDebater && !debateEdge.has(o.id) && (
-                <button
-                  className={styles.recruitBtn}
-                  onClick={() => setDebating(o.id)}
-                  title={t(`遣${bestDebater.name.zh}與其舌戰 — 勝則勸降大增(一次),罵倒則其志氣再挫`, `Send ${bestDebater.name.en} to debate — win to greatly boost surrender odds (once); a rout further breaks his will`)}
-                >💬 {t('舌戰', 'Debate')}</button>
-              )}
-              {debateEdge.has(o.id) && (
-                <span style={{ fontSize: '0.7rem', color: '#9ed68a', alignSelf: 'center' }}>{t('舌戰得勝,趁勢勸降 ↑', 'Debate won — press the advantage ↑')}</span>
-              )}
-              {APPROACHES.map((a) => {
-                const cost = recruitCostFor(a.id);
-                const odds = Math.round(estimatePersuasion(o.id, cityId, a.id) * 100);
-                return (
+              {isMartyr(o) ? (
+                // 寧死不降 — the ironhearted refuse captivity; persuasion is wasted.
+                <span style={{ fontSize: '0.72rem', color: '#d98a6a', alignSelf: 'center' }}
+                  title={t('鐵血之士,至死不降 — 唯釋或斬', 'Ironhearted — will never defect; only release or the sword')}>
+                  ⚔ {t('寧死不降', 'Will never yield')}
+                </span>
+              ) : (<>
+                {bestDebater && !debateEdge.has(o.id) && (
                   <button
-                    key={a.id}
                     className={styles.recruitBtn}
-                    onClick={() => handleRecruit(o.id, a.id)}
-                    disabled={cityGold < cost}
-                    title={`${lang === 'en' ? a.tipEn : a.tip}(${cost}g)`}
-                  >
-                    {lang === 'en' ? a.en : a.zh} {odds}%
-                  </button>
-                );
-              })}
-              {bestGift && (
-                <button
-                  className={styles.recruitBtn}
-                  onClick={() => handleRecruit(o.id, 'riches', bestGift.id)}
-                  title={t(`以名品「${bestGift.name.zh}」厚禮招降(成則隨之入幕)`, `Press ${bestGift.name.en} on them (joins them on success)`)}
-                >🎁 {t('厚禮', 'Gift')} · {lang === 'en' ? bestGift.name.en : bestGift.name.zh}</button>
-              )}
+                    onClick={() => setDebating(o.id)}
+                    title={t(`遣${bestDebater.name.zh}與其舌戰 — 勝則勸降大增(一次),罵倒則其志氣再挫`, `Send ${bestDebater.name.en} to debate — win to greatly boost surrender odds (once); a rout further breaks his will`)}
+                  >💬 {t('舌戰', 'Debate')}</button>
+                )}
+                {debateEdge.has(o.id) && (
+                  <span style={{ fontSize: '0.7rem', color: '#9ed68a', alignSelf: 'center' }}>{t('舌戰得勝,趁勢勸降 ↑', 'Debate won — press the advantage ↑')}</span>
+                )}
+                {APPROACHES.map((a) => {
+                  const cost = recruitCostFor(a.id);
+                  const odds = Math.round(estimatePersuasion(o.id, cityId, a.id) * 100);
+                  return (
+                    <button
+                      key={a.id}
+                      className={styles.recruitBtn}
+                      onClick={() => handleRecruit(o.id, a.id)}
+                      disabled={cityGold < cost}
+                      title={`${lang === 'en' ? a.tipEn : a.tip}(${cost}g)`}
+                    >
+                      {lang === 'en' ? a.en : a.zh} {odds}%
+                    </button>
+                  );
+                })}
+                {bestGift && (
+                  <button
+                    className={styles.recruitBtn}
+                    onClick={() => handleRecruit(o.id, 'riches', bestGift.id)}
+                    title={t(`以名品「${bestGift.name.zh}」厚禮招降(成則隨之入幕)`, `Press ${bestGift.name.en} on them (joins them on success)`)}
+                  >🎁 {t('厚禮', 'Gift')} · {lang === 'en' ? bestGift.name.en : bestGift.name.zh}</button>
+                )}
+              </>)}
               <button
                 className={styles.releaseBtn}
                 onClick={() => releaseOfficer(o.id)}
@@ -155,6 +164,7 @@ export function CaptivesSection({ cityId }: Props) {
               <button
                 className={styles.executeBtn}
                 onClick={() => executeOfficer(o.id)}
+                title={t(`斬首 — 折君主威望 −${executionRenownCost(o)},且結宿怨於其親族義兄、與其故主交惡`, `Execute — costs your lord −${executionRenownCost(o)} renown, sows a blood-feud with his kin & sworn brothers, and sours his old court`)}
               >
                 {t('斬首', 'Execute')}
               </button>

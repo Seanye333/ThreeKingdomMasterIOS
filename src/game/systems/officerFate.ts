@@ -2,6 +2,7 @@ import type { City, Force, Officer } from '../types';
 import type { FamilyRelation } from '../types/family';
 import { recruiterBonus } from './traitEffects';
 import { recruitRefusalPenalty, recruitKinshipBonus } from './relationshipEffects';
+import { isMartyr } from './captiveFate';
 import { effectivePrestige } from '../data/prestige';
 import { deriveDoctrine } from '../data/officerAttributes';
 import { IMPERIAL_RANKS } from '../data/imperial';
@@ -202,6 +203,8 @@ export function recruitCostFor(approach?: PersuasionApproach): number {
  *  so the three approaches can be compared before spending the gold. */
 export function estimateRecruitChance(input: Omit<RecruitInput, 'rng'>): number {
   const { officer, city, recruiterForce, recruiterRuler, recruiterReputation, approach } = input;
+  // 寧死不降 — the ironhearted (鐵血/鐵骨) refuse captivity; no words turn them.
+  if (isMartyr(officer)) return 0;
   const persuasion = recruiterRuler.stats.charisma;
   const resistance = officer.loyalty;
   let chance = (persuasion - resistance + 50) / 100;

@@ -3,7 +3,7 @@
  * The newest entry drives the in-game「本次更新」popup: bump
  * GAME_VERSION when a batch ships and the next launch shows it once.
  */
-export const GAME_VERSION = '1.5.0';
+export const GAME_VERSION = '1.6.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -13,6 +13,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.6.0',
+    date: '2026-06-25',
+    title: '俘虜大改 — 殺降有累、寧死不降、AI 處置',
+    items: [
+      '⚔ 寧死不降:鐵血龐德、鐵骨之士絕不歸降,唯釋或斬(原本只是描述,如今成真)',
+      '🩸 殺降之累:斬俘折君主威望(殺烈士/忠義更重),並結宿怨於其親族義兄、與故主交惡',
+      '🤝 義釋 vs 處決自此是一道真實的德/利權衡,而非無痛點殺',
+      '🏯 AI 也處置自家俘虜:招降不滿者、仁主義釋、暴主斬勁敵,且承擔同等後果',
+      '📣 你被俘的武將如今真會被招走/義釋/斬首(季報通報),先於贖俘結算',
+    ],
+  },
   {
     version: '1.5.0',
     date: '2026-06-25',

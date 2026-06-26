@@ -13,7 +13,7 @@
 | 速 | [速查總表 Quick Reference](#速查總表-quick-reference) | 一頁掃完所有關鍵常數 / 公式 / 成本 / 機率 | ✅ |
 | 1 | [城市・內政・經濟](#第一章-城市內政經濟) | citySize, economy, commands, civicEvents, market(行情/榷場/馬市/鐵市), buildings, autoBuild, policyEffects, forging, specialties, specialtyEvents, tradeRoutes, convoy | ✅ |
 | 2 | [武將・成長・家族](#第二章-武將成長家族) | growth, officerGrade, gradeCombat, officerFate, traitEffects, personality, biography, posthumous, aging, officerGen, family, clans, retinues, wishes, rapport, friction, relationshipEffects, career, codex, peerage, honorifics | ✅ |
-| 3 | [人才・招攬・舌戰](#第三章-人才招攬舌戰) | commands(search), officerFate, recommendation, commonerTalent, appraisal(月旦評), scenicSites(三顧), debate, wordWar, persuasion(說客) | ✅ |
+| 3 | [人才・招攬・舌戰](#第三章-人才招攬舌戰) | commands(search), officerFate, recommendation, commonerTalent, appraisal(月旦評), scenicSites(三顧), captiveFate(處決後果/AI處置), aiRansom, debate, wordWar, persuasion(說客) | ✅ |
 | 4 | [軍事指揮・委任](#第四章-軍事指揮委任) | muster, legion, governor, governorEval, advisor | ✅ |
 | 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, combat, formations, stratagems, weather, battlefieldTerrain, personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
 | 6 | [單挑](#第六章-單挑) | duel, gauntlet | ✅ |
@@ -131,6 +131,9 @@
 | 月旦評・品評 | 名士(智 ≥78)下定評:揭其資質(識人雾)、定品第(上/中/下)、得名望 3~20;一人一評 |
 | 三顧茅廬(名所隱士) | 訪之分三顧:一訪 −0.15、二訪 +0.12、三訪 +0.45(上限 0.97);`scenicVisits` 計次 |
 | 說客(戰略舌戰) | 遣善言之士赴**接壤**敵城:說降忠誠<65 之敵將 / 游說鄰境諸侯結盟;費 200 金,勝則易幟·立盟 |
+| 寧死不降 | 鐵血/鐵骨之士絕不歸降(招攬率 =0),唯釋或斬 |
+| 處決後果 | 斬俘折君主威望 2~20(殺烈士/忠義更重)+ 結宿怨於其親族義兄 + 與故主邦交 −12 |
+| AI 處置俘虜 | 俘獲方 AI 每季招降/義釋/處決自家俘虜(承擔同等後果),先於贖俘結算 |
 | 舌戰(招攬/勸降加成) | 勝 +28%(一次,穿透名節上限);負則鎖到下回合 |
 | 勸降「曉以大義」對高潔上限 | 0.15 → 0.35 |
 | 舌戰・口才(交互) | 口才 = ⌊(智 + 魅/2)× 口才性格⌋;沉著 100 見底即潰,六回合論點計分 |
@@ -933,9 +936,19 @@
   - **誓不事仇**:你殺其親/義兄弟者(`killedRelativesBy`/`killedSwornBy` 指向你)幾乎不降(−0.5)。
   - **報恩**:曾被你**義釋**者(`freedByForceId`)感念舊恩,勸降/招攬 +0.20。
 
+- **寧死不降(`isMartyr`)**:**鐵血(ironhearted,龐德抬棺)/ 鐵骨(iron-bones,受刑不降)** 之士**絕不歸降** —— `estimateRecruitChance` 對其直接歸 0,三策/舌戰/厚禮俱無用(俘虜面板標「寧死不降」、勸降鈕隱去),唯**釋**或**斬**。原本這倆性格只是 −0.25 的描述,如今成真。
+
 **俘虜的五種去向**:勸降(三策+厚禮)/ **釋放** / **義釋** / **處決** / **被贖**。
 
 - **義釋**(`releaseOfficer(_, honorable)`):放歸並結恩 —— 被釋者銘記(`freedByForceId`),**日後你招攬大加成(+0.20 報恩)**;你方君主得**威望 +5**(寬仁之名)。曹操義釋關羽之意。
+
+- **處決後果(殺降之累,`captiveFate.ts`)**:斬俘不再無代價 ——
+  - **君主威望損**(`executionRenownCost`,2~20):隨被斬者之**威望/五圍/honour 性格**遞增,**斬寧死不降者(成仁)再 +5、斬忠義之士 +3** —— 殺名將、殺烈士,折德最重。
+  - **宿怨**(`markSlainVendetta`):被斬者之**親族與義兄弟**就此記下你勢力(`killedRelativesBy`/`killedSwornBy`)—— 日後幾乎不可招(−0.5)、戰場對你有仇恨加成,與陣前斬殺同源。
+  - **與故主交惡**:其故主(`capturedFromForceId`)邦交 −12(積怨)。
+  - 故「義釋 vs 處決」自此是一道真實的德/利權衡,而非無痛點殺。
+
+- **AI 也處置自家俘虜(對稱,`aiCaptiveFate.ts`)**:過去 AI 只會贖回故將;如今**俘獲方 AI 君主每季亦對獄中俘虜下判** —— **招降**心懷不滿者入麾下、**仁主義釋**放歸、**暴主處決**勁敵(`benevolent`→釋、`cruel`/`ambitious`→斬),且**承擔與玩家相同的後果**(折威望、結宿怨、與故主交惡)。你被俘的武將如今真會被招走、被義釋或被斬(季報通報);**先於贖俘市場結算**,餘者方入贖俘。
 
 - **贖俘市場**(aiRansom.ts,每季 AI 自動):被俘武將記下故主。每季其故主(若仍在、付得起)可出 `300 + 最高戰鬥圍×12` 金贖回 —— 金從故主流向**俘獲方**,武將歸國閒置、忠誠回升至 ≥70。**若俘獲方是玩家,這筆贖金白賺**(留俘比處決多一條財路);玩家自己的金不會被自動花掉,玩家想贖回自家被俘武將仍走勸降/外交。
 
