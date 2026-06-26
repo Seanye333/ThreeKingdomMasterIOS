@@ -152,4 +152,8 @@ export interface Officer {
   /** 義釋報恩 — a force that once freed this officer honourably (§3.3 義釋);
    *  they remember the kindness and are far easier for that force to recruit. */
   freedByForceId?: EntityId;
+  /** 月旦評 — a famed appraiser's verdict on this officer (§3.5). Its presence
+   *  means they've been appraised: their 成長資質 is then known, and the 定評
+   *  reads as a permanent epithet. Undefined until a 名士 sizes them up. */
+  appraisal?: { zh: string; en: string; grade: 'upper' | 'middle' | 'lower' };
 }

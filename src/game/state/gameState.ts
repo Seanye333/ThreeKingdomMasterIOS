@@ -198,6 +198,9 @@ export interface GameState {
   sites: Record<EntityId, import('../types').WildSite>;
   /** 名所 loot claimed: scenic-site id → the force that took the treasure. */
   scenicLooted: Record<string, EntityId>;
+  /** 三顧 — how many times the player has called on each 名所's recluse, so a
+   *  hermit's sincerity test (一訪不遇 → 三顧乃出) escalates across visits. */
+  scenicVisits: Record<string, number>;
   /** Phase 3c — territory ownership keyed by territory id. Null/missing
    *  means the cell inherits from its parent city. Set explicitly when
    *  an army marches through it, regardless of march outcome. */
@@ -561,6 +564,7 @@ export const EMPTY_STATE: GameState = {
   forts: {},
   sites: {},
   scenicLooted: {},
+  scenicVisits: {},
   territoryOwnership: {},
   armies: {},
   family: [],

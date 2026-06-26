@@ -31,6 +31,7 @@ import { pushBoutRecord } from '../systems/duelHall';
 import { applyBout } from '../systems/warRanking';
 import { tickAfflictions, withAffliction, type Affliction } from '../systems/afflictions';
 import { routConsequence, type RoutConsequence } from '../systems/wordWar';
+import { canAppraise, appraisalVerdict, appraisalRenownGain } from '../systems/appraisal';
 import { trainKey, recordTrain } from '../systems/sparLimit';
 import type { Difficulty } from './gameState';
 import { CIVIC_TITLES_BY_ID, MILITARY_RANKS_BY_ID } from '../data/titles';
@@ -652,6 +653,10 @@ interface GameStore extends GameState {
   debateRout: (officerId: EntityId, rng?: () => number) => RoutConsequence;
   /** 民心 — nudge a city's loyalty (公開舌戰的餘波撼動守城民心). Clamped 0..100. */
   shiftCityLoyalty: (cityId: EntityId, delta: number) => void;
+  /** 月旦評 — your sharpest 名士 appraises an officer (§3.5): records a 定評,
+   *  reveals their 成長資質, and makes a name (renown for both). Returns the
+   *  verdict, or a reason it can't be done (no appraiser / already appraised). */
+  appraiseOfficer: (targetId: EntityId) => { ok: boolean; reason?: string; verdictZh?: string; verdictEn?: string; appraiserName?: { zh: string; en: string }; renownGain?: number };
   /** 名聲榜 — accumulate heroic deeds (duel/debate wins, etc.) for an officer.
    *  Numeric fields add; others overwrite. Feeds renown in systems/fame.ts. */
   recordDeed: (officerId: EntityId, patch: Partial<import('../types').HeroicDeeds>) => void;
@@ -4662,22 +4667,32 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
 
           // 舉薦 — a connected, capable officer surfaces a hidden talent (賢以薦賢).
-          for (const r of rollRecommendations({ officers: officersWithMarchTask, playerForceId: state.playerForceId, rng: Math.random })) {
-            const rec = officersWithMarchTask[r.recommenderId];
-            const found = officersWithMarchTask[r.revealedId];
-            if (!rec || !found) continue;
-            const city = r.cityId ? postCities[r.cityId] : null;
-            officersWithMarchTask[found.id] = {
-              ...found, status: 'idle', forceId: null, loyalty: 0,
-              locationCityId: r.cityId ?? found.locationCityId,
-              recommended: true, // 舉薦作保 — easier to recruit while flagged.
-            };
-            result.report.entries.push({
-              cityId: r.cityId ?? null,
-              kind: 'talent',
-              text: `${rec.name.en} recommends a hidden talent — ${found.name.en} surfaces${city ? ` at ${city.name.en}` : ''}, awaiting your courtship.`,
-              textZh: `${rec.name.zh}薦舉賢才,${found.name.zh}現身${city ? `於${city.name.zh}` : ''},待主公延攬。`,
-            });
+          // Every court does this now, not just the player's: a rival's 荀彧 can
+          // name a 郭嘉 into their own city — which 群雄競聘 (below) then courts —
+          // so the player no longer holds an exclusive talent pipeline.
+          for (const force of Object.values(state.forces)) {
+            const isPlayer = force.id === state.playerForceId;
+            for (const r of rollRecommendations({ officers: officersWithMarchTask, forceId: force.id, rng: Math.random })) {
+              const rec = officersWithMarchTask[r.recommenderId];
+              const found = officersWithMarchTask[r.revealedId];
+              if (!rec || !found) continue;
+              const city = r.cityId ? postCities[r.cityId] : null;
+              officersWithMarchTask[found.id] = {
+                ...found, status: 'idle', forceId: null, loyalty: 0,
+                locationCityId: r.cityId ?? found.locationCityId,
+                recommended: true, // 舉薦作保 — easier to recruit while flagged.
+              };
+              // The player gets the courtship prompt; an AI's recommendation is
+              // surfaced quietly (it reports when 群雄競聘 lands the recruit).
+              if (isPlayer) {
+                result.report.entries.push({
+                  cityId: r.cityId ?? null,
+                  kind: 'talent',
+                  text: `${rec.name.en} recommends a hidden talent — ${found.name.en} surfaces${city ? ` at ${city.name.en}` : ''}, awaiting your courtship.`,
+                  textZh: `${rec.name.zh}薦舉賢才,${found.name.zh}現身${city ? `於${city.name.zh}` : ''},待主公延攬。`,
+                });
+              }
+            }
           }
 
           // 群雄競聘 — rival lords also court free agents idling in their own
@@ -5263,14 +5278,19 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                 return nextAbs <= expAbs;
               })
             : state.casusBelliMarks,
-          // 求賢令 recruit bonus tick: decrement seasonsLeft, drop expired.
-          recruitBonusSeasons: seasonBoundary
-            ? Object.fromEntries(
-                Object.entries(state.recruitBonusSeasons)
-                  .map(([k, v]) => [k, { ...v, seasonsLeft: v.seasonsLeft - 1 }] as const)
-                  .filter(([, v]) => v.seasonsLeft > 0),
-              )
-            : state.recruitBonusSeasons,
+          // 求賢令 recruit bonus tick: decrement seasonsLeft, drop expired; then
+          // fold in any AI 求賢令 issued this tick (so it rings next season too).
+          recruitBonusSeasons: (() => {
+            const next: Record<EntityId, { multiplier: number; seasonsLeft: number }> = seasonBoundary
+              ? Object.fromEntries(
+                  Object.entries(state.recruitBonusSeasons)
+                    .map(([k, v]) => [k, { ...v, seasonsLeft: v.seasonsLeft - 1 }] as const)
+                    .filter(([, v]) => v.seasonsLeft > 0),
+                )
+              : { ...state.recruitBonusSeasons };
+            for (const fid of aiCourt.talentEdicts) next[fid] = { multiplier: 1.5, seasonsLeft: 1 };
+            return next;
+          })(),
         });
 
         // 自動存檔 — every season boundary writes one of three rolling
@@ -6775,6 +6795,28 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const c = state.cities[cityId];
         if (!c) return;
         set({ cities: { ...state.cities, [cityId]: { ...c, loyalty: Math.max(0, Math.min(100, c.loyalty + delta)) } } });
+      },
+      appraiseOfficer: (targetId) => {
+        const state = get();
+        const target = state.officers[targetId];
+        if (!target || target.status === 'dead') return { ok: false, reason: 'no-target' };
+        if (target.appraisal) return { ok: false, reason: 'appraised' };
+        // 名士 — the player's keenest eye for talent (idle/active, INT ≥ bar).
+        const appraiser = Object.values(state.officers)
+          .filter((o) => o.forceId === state.playerForceId && (o.status === 'idle' || o.status === 'active') && canAppraise(o) && o.id !== targetId)
+          .sort((a, b) => b.stats.intelligence - a.stats.intelligence)[0];
+        if (!appraiser) return { ok: false, reason: 'no-appraiser' };
+        const verdict = appraisalVerdict(target);
+        const gain = appraisalRenownGain(appraiser, target);
+        set({
+          officers: {
+            ...state.officers,
+            [target.id]: { ...target, appraisal: verdict, renown: (target.renown ?? 0) + gain.target },
+            // The appraiser earns a little 識人之名 (skip if appraiser === target's id, guarded above).
+            [appraiser.id]: { ...state.officers[appraiser.id], renown: (appraiser.renown ?? 0) + gain.appraiser },
+          },
+        });
+        return { ok: true, verdictZh: verdict.zh, verdictEn: verdict.en, appraiserName: appraiser.name, renownGain: gain.target };
       },
       recordDeed: (officerId, patch) => {
         const state = get();
@@ -9009,17 +9051,22 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           updates.scenicLooted = { ...state.scenicLooted, [siteId]: state.playerForceId };
         }
 
-        // 訪賢 — court the recluse if he's still a free agent.
+        // 訪賢 — court the recluse if he's still a free agent. 三顧之誠 — each
+        // call is one of the famous three visits: sincerity tells, so the odds
+        // (and the flavour) escalate from 一訪不遇 to 三顧乃出.
         let recruited = false;
         if (site.hermitId) {
           const hermit = state.officers[site.hermitId];
           if (hermit && hermit.forceId === null && (hermit.status === 'idle' || hermit.status === 'unsearched')) {
             const force = state.forces[state.playerForceId];
             const ruler = force ? state.officers[force.rulerOfficerId] : null;
+            const visit = (state.scenicVisits[siteId] ?? 0) + 1;
+            updates.scenicVisits = { ...state.scenicVisits, [siteId]: visit };
             recruited = rollHermitRecruit({
               envoyCharisma: envoy.stats.charisma,
               rulerCharisma: ruler?.stats.charisma ?? 50,
               hermitIntelligence: hermit.stats.intelligence,
+              visit,
               rng: Math.random,
             });
             if (recruited) {
@@ -9034,9 +9081,16 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                   loyalty: 75,
                 },
               };
-              msgs.push(`${hermit.name.zh}感誠來投!`);
+              msgs.push(visit >= 3
+                ? `三顧之誠,${hermit.name.zh}感而出山,願效犬馬!`
+                : `${hermit.name.zh}感誠來投!`);
             } else {
-              msgs.push(`${hermit.name.zh}避而不出 — 來日再訪`);
+              // 一訪不遇 / 二訪留書 / 仍避而不出 — distinct flavour per visit.
+              msgs.push(visit === 1
+                ? `一訪不遇 — 童子應門:先生雲遊未歸,來日再訪。`
+                : visit === 2
+                  ? `二訪不值 — ${hermit.name.zh}適有他出,留書而返。`
+                  : `${hermit.name.zh}避而不出 — 精誠所至,來日再訪。`);
             }
           }
         }
@@ -9760,6 +9814,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           ),
           sites: migrateSites(loaded.sites),
           scenicLooted: loaded.scenicLooted ?? {},
+          scenicVisits: loaded.scenicVisits ?? {},
           itemRefinements: loaded.itemRefinements ?? {},
           itemBreakthroughs: loaded.itemBreakthroughs ?? {},
           itemGems: loaded.itemGems ?? {},
@@ -9831,6 +9886,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         forts: state.forts,
         sites: state.sites,
         scenicLooted: state.scenicLooted,
+        scenicVisits: state.scenicVisits,
         family: state.family,
         pendingHeirs: state.pendingHeirs,
         clanStandings: state.clanStandings,

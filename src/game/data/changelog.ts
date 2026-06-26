@@ -3,7 +3,7 @@
  * The newest entry drives the in-game「本次更新」popup: bump
  * GAME_VERSION when a batch ships and the next launch shows it once.
  */
-export const GAME_VERSION = '1.3.0';
+export const GAME_VERSION = '1.4.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -13,6 +13,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.4.0',
+    date: '2026-06-25',
+    title: '人才大改 — 月旦評、舉薦、三顧',
+    items: [
+      '🔍 月旦評:遣名士品評武將,一句定評(治世能臣/亂世奸雄),揚名又揭資質',
+      '🌫 識人雾:在野/敵將「資質未明」,須品評方知潛能 —— 招攬成了「先探明 vs 賭一把」',
+      '🤝 舉薦不再玩家獨享:AI 賢臣也薦才入城,群雄爭才;荐主智越高所薦越上才',
+      '📜 AI 也發求賢令引寒門 —— 不再是玩家專利的空喊',
+      '🏯 三顧茅廬:名所隱士訪之三顧遞進(一訪不遇/二訪留書/三訪乃出)',
+    ],
+  },
   {
     version: '1.3.0',
     date: '2026-06-25',
