@@ -29,6 +29,7 @@ import { canDuel } from '../../game/systems/duel';
 import { personalTacticsForUnit } from '../../game/systems/personalTactics';
 import { Duel3DStage } from './duel/Duel3DStage';
 import { MarchPicker } from './MarchPicker';
+import { MusterModal } from './MusterModal';
 import { OfficerPicker } from './OfficerPicker';
 import { playSfx, playFxSfx, startMapAmbience, setMapAmbienceMode, stopMapAmbience } from '../../game/systems/sound';
 import { computeFog } from '../../game/systems/fogOfWar';
@@ -6263,7 +6264,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
   onScenicClick: (siteId: string) => void;
   /** 快捷輪盤 — open the march/recruit picker for a city (DOM modals live
    *  in the outer shell, outside the Canvas). */
-  onQuickAction: (kind: 'march' | 'recruit', cityId: string) => void;
+  onQuickAction: (kind: 'march' | 'recruit' | 'muster', cityId: string) => void;
   /** 原地指揮 — in-place battle commanding state, owned by the outer shell. */
   dioSelectedId: string | null;
   dioMode: 'move' | 'attack';
@@ -6281,7 +6282,6 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
   const selectedCityId = useGameStore((s) => s.selectedCityId);
   const selectCity = useGameStore((s) => s.selectCity);
   const openCityMap = useGameStore((s) => s.openCityMap);
-  const massMuster = useGameStore((s) => s.massMuster);
   const pendingCommands = useGameStore((s) => s.pendingCommands);
   const selectedArmyId3D = useGameStore((s) => s.selectedArmyId);
   const selectArmy = useGameStore((s) => s.selectArmy);
@@ -6665,7 +6665,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
               onEnter={() => openCityMap()}
               onMarch={() => onQuickAction('march', c.id)}
               onRecruit={() => onQuickAction('recruit', c.id)}
-              onMuster={() => massMuster(c.id)}
+              onMuster={() => onQuickAction('muster', c.id)}
             />
           </Html>
         );
@@ -6764,10 +6764,8 @@ function CityQuickRing({ own, onEnter, onMarch, onRecruit, onMuster }: {
   onEnter: () => void;
   onMarch: () => void;
   onRecruit: () => void;
-  onMuster: () => number;
+  onMuster: () => void;
 }) {
-  const [armed, setArmed] = useState(false);
-  const [sent, setSent] = useState<number | null>(null);
   const t = useT();
 
   const radial = (emoji: string, zh: string, en: string, deg: number, onClick: () => void) => {
@@ -6795,35 +6793,20 @@ function CityQuickRing({ own, onEnter, onMarch, onRecruit, onMuster }: {
   };
 
   if (!own) {
+    // Enemy city — opens the muster planner (preview + options + confirm).
     return (
       <div style={{ position: 'relative', width: 0, height: 0 }}>
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            if (sent != null) return;
-            if (!armed) {
-              setArmed(true);
-              window.setTimeout(() => setArmed(false), 2600);
-              return;
-            }
-            setArmed(false);
-            setSent(onMuster());
-            window.setTimeout(() => setSent(null), 2600);
-          }}
+          onClick={(e) => { e.stopPropagation(); onMuster(); }}
           style={{
             position: 'absolute', left: -62, top: -76, width: 124,
-            background: armed ? 'rgba(120,30,20,0.94)' : 'rgba(20,14,8,0.92)',
-            border: `1px solid ${armed ? '#ff6a50' : '#b8584a'}`,
-            color: armed ? '#ffd0c0' : '#e8b0a0', cursor: 'pointer',
+            background: 'rgba(20,14,8,0.92)', border: '1px solid #b8584a',
+            color: '#e8b0a0', cursor: 'pointer',
             fontFamily: 'var(--tkm-font-body)', fontSize: 12, letterSpacing: 2,
             padding: '0.32rem 0', borderRadius: 4, boxShadow: '0 2px 8px rgba(0,0,0,0.55)',
             whiteSpace: 'nowrap',
           }}
-        >
-          {sent != null
-            ? (sent > 0 ? t(`🚩 ${sent} 路兵馬已發`, `🚩 ${sent} columns marching`) : t('無兵可發', 'No troops to send'))
-            : armed ? t('確定集結?', 'Confirm muster?') : t('🚩 全軍集結', '🚩 Mass muster')}
-        </button>
+        >{t('🚩 全軍集結', '🚩 Mass muster')}</button>
       </div>
     );
   }
@@ -6832,6 +6815,8 @@ function CityQuickRing({ own, onEnter, onMarch, onRecruit, onMuster }: {
       {radial('⛩', '進城', 'Enter', 150, onEnter)}
       {radial('⚔', '出陣', 'March', 90, onMarch)}
       {radial('👥', '徵兵', 'Recruit', 30, onRecruit)}
+      {/* 勤王 — rally the realm to reinforce this own city. */}
+      {radial('🚩', '集結', 'Muster', 210, onMuster)}
     </div>
   );
 }
@@ -7238,7 +7223,7 @@ export function StrategicMap3D() {
   const [worldDuel, setWorldDuel] = useState<{ me: Officer; foe: Officer; meFatigue: number; foeFatigue: number; reinforcements: Officer[] } | null>(null);
   const [captureChoice, setCaptureChoice] = useState<{ id: string; name: { zh: string; en: string } } | null>(null);
   // 快捷輪盤 — which DOM picker (march/recruit) the ring asked for.
-  const [quickPick, setQuickPick] = useState<{ kind: 'march' | 'recruit'; cityId: string } | null>(null);
+  const [quickPick, setQuickPick] = useState<{ kind: 'march' | 'recruit' | 'muster'; cityId: string } | null>(null);
   const [dioArcs, setDioArcs] = useState<Array<{ id: number; from: HexCoord; to: HexCoord; kind: 'melee' | 'ranged'; spawnedAt: number }>>([]);
   const dioSelectedId = worldBattle && dioPick && dioPick.bid === worldBattle.id
     && worldBattle.units.some((u) => u.id === dioPick.uid) ? dioPick.uid : null;
@@ -7588,6 +7573,9 @@ export function StrategicMap3D() {
       )}
       {quickPick?.kind === 'recruit' && (
         <OfficerPicker cityId={quickPick.cityId} commandType="recruit-troops" onClose={() => setQuickPick(null)} />
+      )}
+      {quickPick?.kind === 'muster' && (
+        <MusterModal targetCityId={quickPick.cityId} onClose={() => setQuickPick(null)} />
       )}
 
       {/* 原地指揮 — command the minimized battle right on the map: select,

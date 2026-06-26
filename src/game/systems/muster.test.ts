@@ -43,7 +43,7 @@ function realm() {
   return { cities, officers };
 }
 
-const plan = (over: Partial<Parameters<typeof planMassMuster>[0]> = {}) => {
+const plan = (over: Partial<Parameters<typeof planMassMuster>[0]> = {}, opts?: Parameters<typeof planMassMuster>[1]) => {
   const { cities, officers } = realm();
   return planMassMuster({
     cities,
@@ -53,7 +53,7 @@ const plan = (over: Partial<Parameters<typeof planMassMuster>[0]> = {}) => {
     playerForceId: 'wei',
     targetCityId: 'target',
     ...over,
-  });
+  }, opts).orders;
 };
 
 describe('nextHopToward', () => {
@@ -89,18 +89,21 @@ describe('planMassMuster', () => {
     const { cities, officers } = realm();
     cities.cap = { ...cities.cap, troops: 2000 };       // below the 3000 floor
     cities.mid = { ...cities.mid, gold: 50 };           // can't pay the march
-    const orders = planMassMuster({
+    const { orders, excluded } = planMassMuster({
       cities, officers,
       pendingCommandOfficerIds: new Set(), trainingOfficerIds: new Set(),
       playerForceId: 'wei', targetCityId: 'target',
     });
     expect(orders.map((o) => o.cityId)).toEqual(['front']);
+    // …and the skips are reported with reasons for the preview.
+    expect(excluded.find((e) => e.cityId === 'cap')?.reason).toBe('low-garrison');
+    expect(excluded.find((e) => e.cityId === 'mid')?.reason).toBe('no-gold');
   });
 
   it('skips cities whose only officers are busy, training or already ordered', () => {
     const { cities, officers } = realm();
     officers.c = { ...officers.c, task: 'march' };
-    const orders = planMassMuster({
+    const { orders } = planMassMuster({
       cities, officers,
       pendingCommandOfficerIds: new Set(['b']),
       trainingOfficerIds: new Set(['a']),
@@ -112,7 +115,7 @@ describe('planMassMuster', () => {
   it('picks the strongest idle commander when several are home', () => {
     const { cities, officers } = realm();
     officers.c2 = idleIn('c2', 'front', 95, 90);
-    const orders = planMassMuster({
+    const { orders } = planMassMuster({
       cities, officers,
       pendingCommandOfficerIds: new Set(), trainingOfficerIds: new Set(),
       playerForceId: 'wei', targetCityId: 'target',
@@ -122,5 +125,32 @@ describe('planMassMuster', () => {
 
   it('returns nothing for an unknown target', () => {
     expect(plan({ targetCityId: 'nowhere' })).toEqual([]);
+  });
+});
+
+describe('planMassMuster — 選擇性 / 勤王', () => {
+  it('a custom fraction & garrison floor cap what each city sends', () => {
+    const half = plan({}, { fraction: 0.5 });
+    expect(half.find((o) => o.cityId === 'cap')?.troops).toBe(Math.floor(8000 * 0.5));
+    // Keep 7000 home of an 8000 garrison → only 1000 marches.
+    const kept = plan({}, { keepGarrison: 7000 });
+    expect(kept.find((o) => o.cityId === 'cap')?.troops).toBe(1000);
+  });
+
+  it('exclusions keep a city home (and report it)', () => {
+    const { cities, officers } = realm();
+    const out = planMassMuster(
+      { cities, officers, pendingCommandOfficerIds: new Set(), trainingOfficerIds: new Set(), playerForceId: 'wei', targetCityId: 'target' },
+      { excludeCityIds: new Set(['front']) },
+    );
+    expect(out.orders.map((o) => o.cityId).sort()).toEqual(['cap', 'mid']);
+    expect(out.excluded.find((e) => e.cityId === 'front')?.reason).toBe('excluded');
+  });
+
+  it('勤王 — musters toward an OWN city (reinforce), the others converging on it', () => {
+    // Target the front (own) instead of the enemy — cap/mid march to reinforce it.
+    const orders = plan({ targetCityId: 'front' });
+    expect(orders.map((o) => o.cityId).sort()).toEqual(['cap', 'mid']);
+    expect(orders.find((o) => o.cityId === 'mid')?.marchTo).toBe('front');
   });
 });

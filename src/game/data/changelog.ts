@@ -3,7 +3,7 @@
  * The newest entry drives the in-game「本次更新」popup: bump
  * GAME_VERSION when a batch ships and the next launch shows it once.
  */
-export const GAME_VERSION = '1.9.0';
+export const GAME_VERSION = '1.10.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -13,6 +13,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.10.0',
+    date: '2026-06-26',
+    title: '集結令大改 — 預覽、勤王、集結點、選擇性',
+    items: [
+      '📋 集結預覽:點擊先出規劃 —— 幾路兵馬、共調多少兵、耗多少金、最慢幾季到、哪些城不發及原因',
+      '🛡 勤王・守城集結:對自家危城一鍵令全國發兵增援(友軍合流),被圍時的即時應對',
+      '🚩 集結點・分進合擊:各路先匯於某城蓄勢再合擊,免添油送菜被各個擊破',
+      '🎚 選擇性集結:可調出兵比例、保留守軍底線(不抽空邊城)、排除前線城',
+    ],
+  },
   {
     version: '1.9.0',
     date: '2026-06-26',

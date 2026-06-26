@@ -102,7 +102,7 @@ import { rollAIWishFlavor } from '../systems/aiWishesFlavor';
 import { appointmentBonusFor, pruneStaleAppointments, traitRefusal, isOnCooldown } from '../systems/appointmentEffects';
 import { canPromoteToRank } from '../systems/imperialEffects';
 import { COMMAND_DEFS } from '../systems/commands';
-import { planMassMuster } from '../systems/muster';
+import { planMassMuster, type MusterOptions } from '../systems/muster';
 import { planGovernorCommand } from '../systems/governor';
 import { planLegionOrders, type Legion } from '../systems/legion';
 import { buyQuote, sellQuote, borderTariff, buyHorses, sellHorses, WARHORSE_CITY_CAP, buyIron, sellIron, IRON_CITY_CAP, MEDICINE_CITY_CAP, IRON_FORGE_COST, FORGE_IRON_DISCOUNT } from '../systems/market';
@@ -456,7 +456,17 @@ interface GameStore extends GameState {
    *  of its garrison toward the target under its best idle officer
    *  (adjacent cities directly, the hinterland one hop along an in-realm
    *  path). Returns how many columns were dispatched. */
-  massMuster: (targetCityId: EntityId) => number;
+  /** 全軍集結令 — converge the realm on a city: a hostile target (攻) or one of
+   *  your own (勤王 reinforce / 集結點). Options: troop fraction, garrison floor,
+   *  exclude 前線 cities. Returns how many columns actually marched. */
+  massMuster: (targetCityId: EntityId, opts?: { fraction?: number; keepGarrison?: number; excludeFrontier?: boolean }) => number;
+  /** 集結預覽 — what a muster would do without committing: column count, total
+   *  troops & gold, slowest ETA, per-column legs, and which cities are excluded. */
+  musterPreview: (targetCityId: EntityId, opts?: { fraction?: number; keepGarrison?: number; excludeFrontier?: boolean }) => {
+    relief: boolean; columns: number; totalTroops: number; totalGold: number; slowestSeasons: number;
+    orders: Array<{ cityId: EntityId; marchTo: EntityId; troops: number; seasons: number }>;
+    excluded: Array<{ cityId: EntityId; reason: string }>;
+  };
   cancelCommand: (cityId: EntityId) => void;
   /** Start training an officer in a new policy. If `mentorOfficerId` is
    *  provided, runs in mentor mode (no academy needed, 0 gold, +1 season).
@@ -1088,6 +1098,28 @@ function nearestCityTo(
 
 /** 名駒 — the famous mounts (赤兔/的盧/汗血…) a developed 名馬 city can foal. */
 const NAMED_MOUNTS = Object.values(ITEMS_BY_ID).filter((i) => (i as { kind?: string }).kind === 'horse');
+
+/** Resolve a muster's UI options into the planner's options — chiefly turning
+ *  「排除前線」into the concrete set of border cities to leave at home. */
+function musterOptsFor(
+  state: GameState,
+  opts?: { fraction?: number; keepGarrison?: number; excludeFrontier?: boolean },
+): MusterOptions | undefined {
+  if (!opts) return undefined;
+  const excludeCityIds = new Set<EntityId>();
+  const pid = state.playerForceId;
+  if (opts.excludeFrontier && pid) {
+    for (const c of Object.values(state.cities)) {
+      if (c.ownerForceId !== pid) continue;
+      const onFrontier = c.adjacentCityIds.some((nid) => {
+        const n = state.cities[nid];
+        return !!n && !!n.ownerForceId && n.ownerForceId !== pid && isHostilePermitted(state.diplomacy, pid, n.ownerForceId);
+      });
+      if (onFrontier) excludeCityIds.add(c.id);
+    }
+  }
+  return { fraction: opts.fraction, keepGarrison: opts.keepGarrison, excludeCityIds };
+}
 
 export const useGameStore = create<GameStore>()(
   persist(
@@ -2241,17 +2273,20 @@ export const useGameStore = create<GameStore>()(
         }
       },
 
-      massMuster: (targetCityId) => {
+      massMuster: (targetCityId, opts) => {
         const state = get();
         if (!state.playerForceId) return 0;
-        const orders = planMassMuster({
-          cities: state.cities,
-          officers: state.officers,
-          pendingCommandOfficerIds: new Set(Object.keys(state.pendingCommands)),
-          trainingOfficerIds: new Set(state.pendingTrainings.map((t) => t.officerId)),
-          playerForceId: state.playerForceId,
-          targetCityId,
-        });
+        const { orders } = planMassMuster(
+          {
+            cities: state.cities,
+            officers: state.officers,
+            pendingCommandOfficerIds: new Set(Object.keys(state.pendingCommands)),
+            trainingOfficerIds: new Set(state.pendingTrainings.map((t) => t.officerId)),
+            playerForceId: state.playerForceId,
+            targetCityId,
+          },
+          musterOptsFor(state, opts),
+        );
         // Execute through the ordinary march so every validation (diplomacy,
         // gold, naval reach) still applies; a refused column just stays home.
         let dispatched = 0;
@@ -2259,6 +2294,39 @@ export const useGameStore = create<GameStore>()(
           if (get().issueMarch(o.cityId, o.marchTo, o.officerId, o.troops).ok) dispatched++;
         }
         return dispatched;
+      },
+      musterPreview: (targetCityId, opts) => {
+        const state = get();
+        const empty = { relief: false, columns: 0, totalTroops: 0, totalGold: 0, slowestSeasons: 0, orders: [] as Array<{ cityId: EntityId; marchTo: EntityId; troops: number; seasons: number }>, excluded: [] as Array<{ cityId: EntityId; reason: string }> };
+        if (!state.playerForceId) return empty;
+        const target = state.cities[targetCityId];
+        const { orders, excluded } = planMassMuster(
+          {
+            cities: state.cities,
+            officers: state.officers,
+            pendingCommandOfficerIds: new Set(Object.keys(state.pendingCommands)),
+            trainingOfficerIds: new Set(state.pendingTrainings.map((t) => t.officerId)),
+            playerForceId: state.playerForceId,
+            targetCityId,
+          },
+          musterOptsFor(state, opts),
+        );
+        const marchGold = COMMAND_DEFS['march'].goldCost;
+        const detailed = orders.map((o) => {
+          const src = state.cities[o.cityId];
+          const dst = state.cities[o.marchTo];
+          const seasons = src && dst ? marchDurationFor(src, dst, state.date.season) : 1;
+          return { cityId: o.cityId, marchTo: o.marchTo, troops: o.troops, seasons };
+        });
+        return {
+          relief: !!target && target.ownerForceId === state.playerForceId,
+          columns: orders.length,
+          totalTroops: orders.reduce((s, o) => s + o.troops, 0),
+          totalGold: orders.length * marchGold,
+          slowestSeasons: detailed.reduce((m, o) => Math.max(m, o.seasons), 0),
+          orders: detailed,
+          excluded,
+        };
       },
 
       cancelCommand: (idOrOfficerId) => {
