@@ -3,7 +3,7 @@
  * The newest entry drives the in-game「本次更新」popup: bump
  * GAME_VERSION when a batch ships and the next launch shows it once.
  */
-export const GAME_VERSION = '1.6.0';
+export const GAME_VERSION = '1.7.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -13,6 +13,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.7.0',
+    date: '2026-06-25',
+    title: '月旦評深化 — 知遇、走眼、名家、公開評議',
+    items: [
+      '🤝 知遇之恩:準評一名在野上品 → 你招攬該人大加成(士為知己者死);評自家上品 +忠誠',
+      '👁 識人 / 走眼:識者造詣≈智力 —— 庸才會看走眼、含糊失準且不揭資質,須更高明者重斷',
+      '🐉 名家定評:許劭/司馬徽傳奇識者,品臥龍鳳雛得「得一可安天下」,一言名望 ×1.5',
+      '📜 月旦評公開評議:每季你最敏銳的名士公開品評當世最強在野才,揚名+結知遇,成招賢磁石',
+      '✍ 評語深化:新增「有才無德」「志大才疏」等定評',
+    ],
+  },
   {
     version: '1.6.0',
     date: '2026-06-25',

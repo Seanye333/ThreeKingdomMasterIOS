@@ -31,7 +31,7 @@ import { pushBoutRecord } from '../systems/duelHall';
 import { applyBout } from '../systems/warRanking';
 import { tickAfflictions, withAffliction, type Affliction } from '../systems/afflictions';
 import { routConsequence, type RoutConsequence } from '../systems/wordWar';
-import { canAppraise, appraisalVerdict, appraisalRenownGain } from '../systems/appraisal';
+import { canAppraise, appraisalVerdict, appraisalRenownGain, discernment, isLegendaryCritic, legendaryVerdict, appraisalMisread, pickMonthlyAppraisal } from '../systems/appraisal';
 import { executionRenownCost, markSlainVendetta } from '../systems/captiveFate';
 import { trainKey, recordTrain } from '../systems/sparLimit';
 import type { Difficulty } from './gameState';
@@ -661,7 +661,7 @@ interface GameStore extends GameState {
   /** 月旦評 — your sharpest 名士 appraises an officer (§3.5): records a 定評,
    *  reveals their 成長資質, and makes a name (renown for both). Returns the
    *  verdict, or a reason it can't be done (no appraiser / already appraised). */
-  appraiseOfficer: (targetId: EntityId) => { ok: boolean; reason?: string; verdictZh?: string; verdictEn?: string; appraiserName?: { zh: string; en: string }; renownGain?: number };
+  appraiseOfficer: (targetId: EntityId) => { ok: boolean; reason?: string; verdictZh?: string; verdictEn?: string; appraiserName?: { zh: string; en: string }; renownGain?: number; misread?: boolean; legendary?: boolean };
   /** 名聲榜 — accumulate heroic deeds (duel/debate wins, etc.) for an officer.
    *  Numeric fields add; others overwrite. Feeds renown in systems/fame.ts. */
   recordDeed: (officerId: EntityId, patch: Partial<import('../types').HeroicDeeds>) => void;
@@ -4722,6 +4722,31 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             }
           }
 
+          // 月旦評(公開評議)— each season your keenest 名士 publicly sizes up the
+          // realm's strongest unread 在野 talent: a name made (renown), and a
+          // glowing read inclines that worthy toward your house (知遇之恩).
+          {
+            const pick = pickMonthlyAppraisal(officersWithMarchTask, state.playerForceId);
+            if (pick) {
+              const { critic, target } = pick;
+              const verdict = legendaryVerdict(target) ?? appraisalVerdict(target);
+              const gain = appraisalRenownGain(critic, target);
+              officersWithMarchTask[target.id] = {
+                ...officersWithMarchTask[target.id],
+                appraisal: verdict,
+                renown: (target.renown ?? 0) + gain.target,
+                ...(verdict.grade === 'upper' && state.playerForceId ? { recognizedByForceId: state.playerForceId } : {}),
+              };
+              officersWithMarchTask[critic.id] = { ...officersWithMarchTask[critic.id], renown: (critic.renown ?? 0) + gain.appraiser };
+              result.report.entries.push({
+                cityId: critic.locationCityId ?? null,
+                kind: 'talent',
+                text: `月旦評 — ${critic.name.en} pronounces ${target.name.en} ${verdict.grade === 'upper' ? 'a talent of the first rank' : 'worth the realm’s notice'}; the worthy is flattered to be known.`,
+                textZh: `月旦評 — ${critic.name.zh}品${target.name.zh}為${verdict.grade === 'upper' ? '上品令器' : '可觀之才'},士林傾慕,其人感知遇之意。`,
+              });
+            }
+          }
+
           // 群雄競聘 — rival lords also court free agents idling in their own
           // cities; dither too long and a talent slips into an enemy's service.
           for (const force of Object.values(state.forces)) {
@@ -6851,23 +6876,39 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const state = get();
         const target = state.officers[targetId];
         if (!target || target.status === 'dead') return { ok: false, reason: 'no-target' };
-        if (target.appraisal) return { ok: false, reason: 'appraised' };
         // 名士 — the player's keenest eye for talent (idle/active, INT ≥ bar).
         const appraiser = Object.values(state.officers)
           .filter((o) => o.forceId === state.playerForceId && (o.status === 'idle' || o.status === 'active') && canAppraise(o) && o.id !== targetId)
-          .sort((a, b) => b.stats.intelligence - a.stats.intelligence)[0];
+          .sort((a, b) => discernment(b) - discernment(a))[0];
         if (!appraiser) return { ok: false, reason: 'no-appraiser' };
-        const verdict = appraisalVerdict(target);
-        const gain = appraisalRenownGain(appraiser, target);
-        set({
-          officers: {
-            ...state.officers,
-            [target.id]: { ...target, appraisal: verdict, renown: (target.renown ?? 0) + gain.target },
-            // The appraiser earns a little 識人之名 (skip if appraiser === target's id, guarded above).
-            [appraiser.id]: { ...state.officers[appraiser.id], renown: (appraiser.renown ?? 0) + gain.appraiser },
-          },
-        });
-        return { ok: true, verdictZh: verdict.zh, verdictEn: verdict.en, appraiserName: appraiser.name, renownGain: gain.target };
+        // An accurate read is final; a 走眼 one may be retried — but only by a
+        // strictly sharper eye than the judge who last misjudged him.
+        if (target.appraisal) {
+          if (!target.appraisal.misread) return { ok: false, reason: 'appraised' };
+          if (appraiser.stats.intelligence <= (target.appraisal.byInt ?? 0)) return { ok: false, reason: 'no-better-eye' };
+        }
+        // 識人造詣 — a legend never errs; a middling eye may 走眼.
+        const accurate = isLegendaryCritic(appraiser) || Math.random() < discernment(appraiser);
+        const verdict: typeof target.appraisal = accurate
+          ? { ...(legendaryVerdict(target) ?? appraisalVerdict(target)) }
+          : { ...appraisalMisread(Math.random), byInt: appraiser.stats.intelligence };
+        const gain = accurate ? appraisalRenownGain(appraiser, target) : { target: 0, appraiser: 0 };
+        const officers = {
+          ...state.officers,
+          [target.id]: { ...target, appraisal: verdict, renown: (target.renown ?? 0) + gain.target },
+          [appraiser.id]: { ...state.officers[appraiser.id], renown: (appraiser.renown ?? 0) + gain.appraiser },
+        };
+        if (accurate && verdict.grade === 'upper') {
+          // 知遇之恩 — a glowing read of an in-the-wild talent inclines them to you;
+          // a glowing read of your OWN officer heartens them (受知遇,+忠誠).
+          if (target.forceId !== state.playerForceId && state.playerForceId) {
+            officers[target.id] = { ...officers[target.id], recognizedByForceId: state.playerForceId };
+          } else if (target.forceId === state.playerForceId) {
+            officers[target.id] = { ...officers[target.id], loyalty: Math.min(100, target.loyalty + 4) };
+          }
+        }
+        set({ officers });
+        return { ok: true, verdictZh: verdict.zh, verdictEn: verdict.en, appraiserName: appraiser.name, renownGain: gain.target, misread: !accurate, legendary: accurate && !!legendaryVerdict(target) };
       },
       recordDeed: (officerId, patch) => {
         const state = get();
