@@ -3,7 +3,7 @@
  * The newest entry drives the in-game「本次更新」popup: bump
  * GAME_VERSION when a batch ships and the next launch shows it once.
  */
-export const GAME_VERSION = '1.14.0';
+export const GAME_VERSION = '1.15.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -13,6 +13,19 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.15.0',
+    date: '2026-06-26',
+    title: '軍師錦囊做活 — 智謀真管事、謀略獻策、忠誠告警、名士奇策',
+    items: [
+      '🧠 軍師做活:智力真影響獻策 —— 智≥80→4策·≥92→5策,預警隨智提前(兵未及城、民初浮動、糧未盡即勸)',
+      '🎖 尊重軍師頭銜:已封「軍師」者優先獻策,即便不是字面最高智;同一軍師之智亦驅動施計成算',
+      '🐯 謀略獻策(智≥72):軍師讀大局,主動獻二虎競食/遠交近攻,一鍵照辦即施(走計略管線)',
+      '💔 忠誠告警:重將忠心跌破40即點名預警,一鍵設宴結心,趕在叛離前挽留',
+      '📜 名士奇策:諸葛亮/司馬懿/周瑜/郭嘉/賈詡/荀彧/陸遜等當軍師時各獻簽名高見',
+      '✨ 錦囊 QoL:多策時「一鍵照辦全部」;不欲理會者按 ✕ 暫且擱置;面板顯示軍師頭像+智力',
+    ],
+  },
   {
     version: '1.14.0',
     date: '2026-06-26',

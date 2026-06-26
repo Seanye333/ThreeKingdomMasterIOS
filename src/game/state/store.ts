@@ -1800,7 +1800,7 @@ export const useGameStore = create<GameStore>()(
           return { ok: false, message: `國庫不足(需${def.goldCost}金於首都)` };
         const bad = validateScheme(schemeId, state.cities, state.playerForceId, targetA, targetB);
         if (bad) return { ok: false, message: bad };
-        const strategist = pickAdvisor(state.officers, state.playerForceId);
+        const strategist = pickAdvisor(state.officers, state.playerForceId, state.appointments);
         const odds = schemeOdds(schemeId, state.diplomacy, strategist, targetA, targetB);
         // Pay either way — schemes spend silver before they spend luck.
         const cities = { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - def.goldCost } };
