@@ -5,7 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import type { City, EntityId, Officer } from '../types';
 import { mkOfficer } from '../../test/factories';
-import { nextHopToward, planMassMuster } from './muster';
+import { nextHopToward, planMassMuster, musterStrain } from './muster';
 
 const mkCity = (over: Partial<City> & { id: string }): City =>
   ({
@@ -152,5 +152,11 @@ describe('planMassMuster — 選擇性 / 勤王', () => {
     const orders = plan({ targetCityId: 'front' });
     expect(orders.map((o) => o.cityId).sort()).toEqual(['cap', 'mid']);
     expect(orders.find((o) => o.cityId === 'mid')?.marchTo).toBe('front');
+  });
+
+  it('集結之累 — a heavier levy weighs more on 民心 (capped)', () => {
+    expect(musterStrain(1500)).toBeLessThan(musterStrain(9000));
+    expect(musterStrain(100)).toBeGreaterThanOrEqual(1);
+    expect(musterStrain(99999)).toBeLessThanOrEqual(6);
   });
 });

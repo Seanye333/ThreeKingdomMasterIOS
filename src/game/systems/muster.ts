@@ -47,6 +47,37 @@ export interface MusterPlan {
   excluded: Array<{ cityId: EntityId; reason: MusterExclusion }>;
 }
 
+/** 持續集結 — a standing muster that re-issues each season, funnelling the realm's
+ *  depth forward over time (one muster shuffles troops one hop; a campaign keeps
+ *  pushing until the objective falls). With a rally city it 分進合擊: gathers
+ *  there first (a few seasons), then strikes the final target together. */
+export interface MusterCampaign {
+  id: string;
+  forceId: EntityId;
+  /** Final objective (a hostile city). */
+  targetCityId: EntityId;
+  /** 集結點 — when set, columns gather here first (phase 1) before the strike. */
+  rallyCityId?: EntityId;
+  /** Seasons left in the gathering phase; 0/undefined = straight to the strike. */
+  gatherSeasonsLeft?: number;
+  /** Safety cap so a stalled campaign eventually retires. */
+  seasonsLeft: number;
+  fraction?: number;
+  keepGarrison?: number;
+  excludeFrontier?: boolean;
+}
+
+/** How many seasons a 集結點 gathers before the combined strike. */
+export const MUSTER_GATHER_SEASONS = 2;
+/** Default lifespan of a standing campaign before it auto-retires. */
+export const MUSTER_CAMPAIGN_SEASONS = 16;
+
+/** 集結之累 — the 民心 a levied city loses to war-weariness when it sends a wave;
+ *  the heavier the levy, the deeper the strain (capped). */
+export function musterStrain(troopsSent: number): number {
+  return Math.min(6, Math.max(1, Math.round(troopsSent / 1500)));
+}
+
 /** First step of the shortest path from `fromId` to `toId` where every
  *  intermediate city belongs to `forceId` (the target itself may not).
  *  Returns null when no such path exists. */

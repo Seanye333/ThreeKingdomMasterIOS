@@ -23,13 +23,25 @@ export function MusterModal({ targetCityId, onClose }: { targetCityId: string; o
   const t = useT();
   const lang = useLanguage();
   const cities = useGameStore((s) => s.cities);
+  const playerForceId = useGameStore((s) => s.playerForceId);
   const musterPreview = useGameStore((s) => s.musterPreview);
   const massMuster = useGameStore((s) => s.massMuster);
+  const startMusterCampaign = useGameStore((s) => s.startMusterCampaign);
+  const cancelMusterCampaign = useGameStore((s) => s.cancelMusterCampaign);
+  const musters = useGameStore((s) => s.musters);
 
   const [fraction, setFraction] = useState(0.7);
   const [keepGarrison, setKeepGarrison] = useState(0);
   const [excludeFrontier, setExcludeFrontier] = useState(false);
+  const [standing, setStanding] = useState(false);
+  const [rallyCityId, setRallyCityId] = useState<string>('');
   const [sent, setSent] = useState<number | null>(null);
+
+  const ownCities = useMemo(
+    () => Object.values(cities).filter((c) => c.ownerForceId === playerForceId && c.id !== targetCityId),
+    [cities, playerForceId, targetCityId],
+  );
+  const activeCampaign = musters[`muster-${playerForceId}-${targetCityId}`];
 
   const opts = { fraction, keepGarrison, excludeFrontier };
   // Re-plan whenever the knobs change (cities snapshot is stable within a turn).
@@ -74,7 +86,35 @@ export function MusterModal({ targetCityId, onClose }: { targetCityId: string; o
           <input type="checkbox" checked={excludeFrontier} onChange={(e) => setExcludeFrontier(e.target.checked)} />
           {t('排除前線城(守軍留邊)', 'Exclude frontier cities (keep border garrisons home)')}
         </label>
+        <label style={{ fontSize: '0.78rem', color: '#aab6c0', display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+          <input type="checkbox" checked={standing} onChange={(e) => setStanding(e.target.checked)} />
+          {t('持續集結(每季續發,funnel 全國之力至目標陷落)', 'Standing muster (re-issues each season until it falls)')}
+        </label>
+        {/* 集結點・分進合擊 — gather at a forward own city first, then strike. Attack musters only. */}
+        {standing && !preview.relief && (
+          <label style={{ fontSize: '0.78rem', color: '#aab6c0', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ width: 96 }}>{t('集結點', 'Rally at')}</span>
+            <select value={rallyCityId} onChange={(e) => setRallyCityId(e.target.value)}
+              style={{ flex: 1, background: '#10161e', border: '1px solid #26323e', color: '#e6edf3', borderRadius: 4, padding: '0.2rem', fontFamily: 'var(--tkm-font-body)', fontSize: '0.74rem' }}>
+              <option value="">{t('— 直撲(不設集結點) —', '— Direct (no rally) —')}</option>
+              {ownCities.map((c) => <option key={c.id} value={c.id}>{pickName(c.name, lang)}</option>)}
+            </select>
+          </label>
+        )}
       </div>
+
+      {/* 持續集結進行中 — show & allow calling off an active standing campaign. */}
+      {activeCampaign && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: '0.8rem', padding: '0.45rem 0.6rem', background: 'rgba(110,52,35,0.18)', border: '1px solid #b8584a', borderRadius: 5 }}>
+          <span style={{ fontSize: '0.76rem', color: '#f0c4b4' }}>
+            🚩 {t('持續集結進行中', 'Standing muster active')}{(activeCampaign.gatherSeasonsLeft ?? 0) > 0 ? t('(集結中)', ' (gathering)') : ''} · {t(`餘 ${activeCampaign.seasonsLeft} 季`, `${activeCampaign.seasonsLeft}s left`)}
+          </span>
+          <button onClick={() => cancelMusterCampaign(activeCampaign.id)}
+            style={{ background: 'rgba(184,68,46,0.22)', border: '1px solid #b8442e', color: '#f0b9a4', padding: '0.15rem 0.55rem', borderRadius: 4, cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.74rem' }}>
+            {t('罷集結', 'Call off')}
+          </button>
+        </div>
+      )}
 
       {/* 不發之城 — who sits it out and why. */}
       {preview.excluded.length > 0 && (
@@ -101,7 +141,14 @@ export function MusterModal({ targetCityId, onClose }: { targetCityId: string; o
       ) : (
         <button
           disabled={preview.columns === 0}
-          onClick={() => setSent(massMuster(targetCityId, opts))}
+          onClick={() => {
+            if (standing) {
+              startMusterCampaign(targetCityId, { rallyCityId: rallyCityId || undefined, ...opts });
+              setSent(preview.columns);
+            } else {
+              setSent(massMuster(targetCityId, opts));
+            }
+          }}
           style={{
             width: '100%', padding: '0.6rem',
             background: preview.columns > 0 ? 'linear-gradient(180deg,#6e3423,#3e1813)' : '#1e2832',
@@ -109,7 +156,7 @@ export function MusterModal({ targetCityId, onClose }: { targetCityId: string; o
             color: preview.columns > 0 ? '#ffd0c0' : '#5f6c76', cursor: preview.columns > 0 ? 'pointer' : 'default',
             fontFamily: 'var(--tkm-font-body)', fontSize: '1rem', letterSpacing: '0.1rem',
           }}
-        >🚩 {preview.relief ? t(`發 ${preview.columns} 路增援`, `Send ${preview.columns} columns to reinforce`) : t(`全軍集結（${preview.columns} 路)`, `Muster (${preview.columns} columns)`)}</button>
+        >🚩 {standing ? t(`下持續集結令（${preview.columns} 路/季)`, `Standing muster (${preview.columns}/season)`) : preview.relief ? t(`發 ${preview.columns} 路增援`, `Send ${preview.columns} columns to reinforce`) : t(`全軍集結（${preview.columns} 路)`, `Muster (${preview.columns} columns)`)}</button>
       )}
     </Modal>
   );

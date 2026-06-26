@@ -3,7 +3,7 @@
  * The newest entry drives the in-game「本次更新」popup: bump
  * GAME_VERSION when a batch ships and the next launch shows it once.
  */
-export const GAME_VERSION = '1.10.0';
+export const GAME_VERSION = '1.11.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -13,6 +13,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.11.0',
+    date: '2026-06-26',
+    title: '集結令深化 — 持續集結、分進合擊、厭戰、AI總動員',
+    items: [
+      '🔁 持續集結:下令後每季自動續發,把全國之力 funnel 到目標直至陷落(一次集結真能決戰)',
+      '🎯 分進合擊(自動):設集結點 → 各路先汇2季蓄勢,再自動轉強攻',
+      '😩 集結之累:大動員傷出兵城民心(隨徵兵量遞增),是大決斷而非 spam 鈕',
+      '🤖 AI 總動員:AI 占優時偶會集數城兵力孤注一擲壓一城 —— 攻勢有了高潮',
+    ],
+  },
   {
     version: '1.10.0',
     date: '2026-06-26',

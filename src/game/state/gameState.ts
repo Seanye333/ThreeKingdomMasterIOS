@@ -201,6 +201,9 @@ export interface GameState {
   /** 三顧 — how many times the player has called on each 名所's recluse, so a
    *  hermit's sincerity test (一訪不遇 → 三顧乃出) escalates across visits. */
   scenicVisits: Record<string, number>;
+  /** 持續集結 — active standing muster campaigns (player + AI 總動員), each
+   *  re-issuing a wave toward its objective every season until it falls. */
+  musters: Record<string, import('../systems/muster').MusterCampaign>;
   /** Phase 3c — territory ownership keyed by territory id. Null/missing
    *  means the cell inherits from its parent city. Set explicitly when
    *  an army marches through it, regardless of march outcome. */
@@ -565,6 +568,7 @@ export const EMPTY_STATE: GameState = {
   sites: {},
   scenicLooted: {},
   scenicVisits: {},
+  musters: {},
   territoryOwnership: {},
   armies: {},
   family: [],

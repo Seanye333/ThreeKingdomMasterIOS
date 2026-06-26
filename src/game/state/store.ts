@@ -102,7 +102,7 @@ import { rollAIWishFlavor } from '../systems/aiWishesFlavor';
 import { appointmentBonusFor, pruneStaleAppointments, traitRefusal, isOnCooldown } from '../systems/appointmentEffects';
 import { canPromoteToRank } from '../systems/imperialEffects';
 import { COMMAND_DEFS } from '../systems/commands';
-import { planMassMuster, type MusterOptions } from '../systems/muster';
+import { planMassMuster, musterStrain, MUSTER_GATHER_SEASONS, MUSTER_CAMPAIGN_SEASONS, type MusterOptions } from '../systems/muster';
 import { planGovernorCommand } from '../systems/governor';
 import { planLegionOrders, type Legion } from '../systems/legion';
 import { buyQuote, sellQuote, borderTariff, buyHorses, sellHorses, WARHORSE_CITY_CAP, buyIron, sellIron, IRON_CITY_CAP, MEDICINE_CITY_CAP, IRON_FORGE_COST, FORGE_IRON_DISCOUNT } from '../systems/market';
@@ -467,6 +467,15 @@ interface GameStore extends GameState {
     orders: Array<{ cityId: EntityId; marchTo: EntityId; troops: number; seasons: number }>;
     excluded: Array<{ cityId: EntityId; reason: string }>;
   };
+  /** 持續集結 — start a standing campaign that re-musters toward `targetCityId`
+   *  each season until it falls (or is cancelled). With `rallyCityId` it gathers
+   *  there first (分進合擊). Fires the first wave at once. Returns the campaign id. */
+  startMusterCampaign: (targetCityId: EntityId, opts?: { rallyCityId?: EntityId; fraction?: number; keepGarrison?: number; excludeFrontier?: boolean }) => EntityId | null;
+  /** 罷集結 — call off a standing muster campaign. */
+  cancelMusterCampaign: (id: EntityId) => void;
+  /** Step every standing campaign one season (issue its next wave; advance the
+   *  gather→strike phase; retire the spent ones). Called at the season boundary. */
+  processMusterCampaigns: () => void;
   cancelCommand: (cityId: EntityId) => void;
   /** Start training an officer in a new policy. If `mentorOfficerId` is
    *  provided, runs in mentor mode (no academy needed, 0 gold, +1 season).
@@ -2290,10 +2299,63 @@ export const useGameStore = create<GameStore>()(
         // Execute through the ordinary march so every validation (diplomacy,
         // gold, naval reach) still applies; a refused column just stays home.
         let dispatched = 0;
+        const strain: Record<EntityId, number> = {};
         for (const o of orders) {
-          if (get().issueMarch(o.cityId, o.marchTo, o.officerId, o.troops).ok) dispatched++;
+          if (get().issueMarch(o.cityId, o.marchTo, o.officerId, o.troops).ok) {
+            dispatched++;
+            strain[o.cityId] = musterStrain(o.troops); // 集結之累
+          }
+        }
+        // 厭戰 — a levied city's people grow weary; the heavier the draft, the more.
+        if (dispatched > 0) {
+          const s = get();
+          const cities = { ...s.cities };
+          for (const [cid, d] of Object.entries(strain)) {
+            const c = cities[cid];
+            if (c) cities[cid] = { ...c, loyalty: Math.max(0, c.loyalty - d) };
+          }
+          set({ cities });
         }
         return dispatched;
+      },
+      startMusterCampaign: (targetCityId, opts) => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid || !state.cities[targetCityId]) return null;
+        const id = `muster-${pid}-${targetCityId}`;
+        const rallyCityId = opts?.rallyCityId && state.cities[opts.rallyCityId]?.ownerForceId === pid ? opts.rallyCityId : undefined;
+        const campaign: import('../systems/muster').MusterCampaign = {
+          id, forceId: pid, targetCityId, rallyCityId,
+          gatherSeasonsLeft: rallyCityId ? MUSTER_GATHER_SEASONS : 0,
+          seasonsLeft: MUSTER_CAMPAIGN_SEASONS,
+          fraction: opts?.fraction, keepGarrison: opts?.keepGarrison, excludeFrontier: opts?.excludeFrontier,
+        };
+        set({ musters: { ...state.musters, [id]: campaign } });
+        // Fire the first wave immediately so it doesn't wait a season to start.
+        get().massMuster(rallyCityId ?? targetCityId, { fraction: opts?.fraction, keepGarrison: opts?.keepGarrison, excludeFrontier: opts?.excludeFrontier });
+        return id;
+      },
+      cancelMusterCampaign: (id) => {
+        const state = get();
+        if (!state.musters[id]) return;
+        const musters = { ...state.musters };
+        delete musters[id];
+        set({ musters });
+      },
+      processMusterCampaigns: () => {
+        const state = get();
+        if (Object.keys(state.musters).length === 0) return;
+        const musters = { ...state.musters };
+        for (const camp of Object.values(state.musters)) {
+          if (camp.forceId !== get().playerForceId) continue; // AI surges are one-shot, not standing
+          const finalT = get().cities[camp.targetCityId];
+          if (!finalT || finalT.ownerForceId === camp.forceId || camp.seasonsLeft <= 0) { delete musters[camp.id]; continue; }
+          const gathering = (camp.gatherSeasonsLeft ?? 0) > 0 && !!camp.rallyCityId && get().cities[camp.rallyCityId]?.ownerForceId === camp.forceId;
+          const target = gathering ? camp.rallyCityId! : camp.targetCityId;
+          get().massMuster(target, { fraction: camp.fraction, keepGarrison: camp.keepGarrison, excludeFrontier: camp.excludeFrontier });
+          musters[camp.id] = { ...camp, seasonsLeft: camp.seasonsLeft - 1, gatherSeasonsLeft: gathering ? Math.max(0, (camp.gatherSeasonsLeft ?? 0) - 1) : 0 };
+        }
+        set({ musters });
       },
       musterPreview: (targetCityId, opts) => {
         const state = get();
@@ -2617,6 +2679,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             }
           }
         }
+        // 持續集結 — standing muster campaigns issue their next wave for the season.
+        get().processMusterCampaigns();
         const state = get();
         if (state.victoryStatus !== 'playing' && state.victoryStatus !== 'observing')
           return;
@@ -10098,6 +10162,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           sites: migrateSites(loaded.sites),
           scenicLooted: loaded.scenicLooted ?? {},
           scenicVisits: loaded.scenicVisits ?? {},
+          musters: loaded.musters ?? {},
           itemRefinements: loaded.itemRefinements ?? {},
           itemBreakthroughs: loaded.itemBreakthroughs ?? {},
           itemGems: loaded.itemGems ?? {},
@@ -10170,6 +10235,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         sites: state.sites,
         scenicLooted: state.scenicLooted,
         scenicVisits: state.scenicVisits,
+        musters: state.musters,
         family: state.family,
         pendingHeirs: state.pendingHeirs,
         clanStandings: state.clanStandings,
