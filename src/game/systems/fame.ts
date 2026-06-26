@@ -16,6 +16,7 @@ export function renownFromDeeds(deeds: HeroicDeeds | undefined): number {
   return Math.round(
     (deeds.duelsWon ?? 0) * 5 +
     (deeds.debatesWon ?? 0) * 4 +
+    (deeds.debateRouts ?? 0) * 3 + // 罵倒 — breaking a mind is worth more than a points win
     (deeds.captured ?? 0) * 6 +
     (deeds.citiesTaken ?? 0) * 8 +
     (deeds.battlesWon ?? 0) * 3 +

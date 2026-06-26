@@ -30,6 +30,7 @@ import { grantDeedTitles } from '../systems/deedTitles';
 import { pushBoutRecord } from '../systems/duelHall';
 import { applyBout } from '../systems/warRanking';
 import { tickAfflictions, withAffliction, type Affliction } from '../systems/afflictions';
+import { routConsequence, type RoutConsequence } from '../systems/wordWar';
 import { trainKey, recordTrain } from '../systems/sparLimit';
 import type { Difficulty } from './gameState';
 import { CIVIC_TITLES_BY_ID, MILITARY_RANKS_BY_ID } from '../data/titles';
@@ -645,6 +646,12 @@ interface GameStore extends GameState {
   /** 後遺 — lay a short-lived affliction on an officer (養傷 from a duel, 羞憤
    *  from a lost debate). Ticks down each season; folds into effective stats. */
   afflictOfficer: (officerId: EntityId, affliction: Affliction) => void;
+  /** 罵死 — apply the consequence of routing a foe in a war of words: a
+   *  hot-tempered or aged mind may break (death, 王朗墜馬), else it stews in a
+   *  heavy 羞憤 (−魅/−智); the young & steady are unharmed. Returns the outcome. */
+  debateRout: (officerId: EntityId, rng?: () => number) => RoutConsequence;
+  /** 民心 — nudge a city's loyalty (公開舌戰的餘波撼動守城民心). Clamped 0..100. */
+  shiftCityLoyalty: (cityId: EntityId, delta: number) => void;
   /** 名聲榜 — accumulate heroic deeds (duel/debate wins, etc.) for an officer.
    *  Numeric fields add; others overwrite. Feeds renown in systems/fame.ts. */
   recordDeed: (officerId: EntityId, patch: Partial<import('../types').HeroicDeeds>) => void;
@@ -6750,6 +6757,25 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (!o || o.status === 'dead') return;
         set({ officers: { ...state.officers, [officerId]: withAffliction(o, affliction) } });
       },
+      debateRout: (officerId, rng = Math.random) => {
+        const state = get();
+        const o = state.officers[officerId];
+        if (!o || o.status === 'dead') return 'none';
+        const age = state.date.year - o.birthYear;
+        const outcome = routConsequence(o, age, rng);
+        if (outcome === 'death') {
+          set({ officers: { ...state.officers, [officerId]: { ...o, status: 'dead', forceId: null, task: null, woundedSeasons: undefined, woundSeverity: undefined } } });
+        } else if (outcome === 'shame') {
+          set({ officers: { ...state.officers, [officerId]: withAffliction(o, { kind: 'shame', seasons: 4, charisma: -10, intelligence: -8 }) } });
+        }
+        return outcome;
+      },
+      shiftCityLoyalty: (cityId, delta) => {
+        const state = get();
+        const c = state.cities[cityId];
+        if (!c) return;
+        set({ cities: { ...state.cities, [cityId]: { ...c, loyalty: Math.max(0, Math.min(100, c.loyalty + delta)) } } });
+      },
       recordDeed: (officerId, patch) => {
         const state = get();
         const cur = state.deeds[officerId] ?? createDeeds(officerId);
@@ -6794,6 +6820,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           } else if (e.kind === 'afflict' && e.targetId) {
             const o = officers[e.targetId];
             if (o && o.status !== 'dead') officers[e.targetId] = withAffliction(o, { kind: 'shame', seasons: 4, charisma: -10, intelligence: -8 });
+          } else if (e.kind === 'slay' && e.targetId) {
+            // 罵死 — a scripted rout that actually breaks the foe (王朗墜馬而亡).
+            const o = officers[e.targetId];
+            if (o && o.status !== 'dead') officers[e.targetId] = { ...o, status: 'dead', forceId: null, task: null, woundedSeasons: undefined, woundSeverity: undefined };
           }
           // 'relationship' / 'morale' / 'note' are display-only here.
         }

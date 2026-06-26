@@ -142,7 +142,7 @@ export function TacticalBattleScreen() {
           foe={interactiveDebate.foe}
           // 難度 — a wittier enemy strategist reads & counters more sharply.
           difficulty={interactiveDebate.foe.stats.intelligence >= 88 ? 'peerless' : interactiveDebate.foe.stats.intelligence >= 68 ? 'veteran' : 'rookie'}
-          onComplete={({ meDelta, foeDelta }) => {
+          onComplete={({ meDelta, foeDelta, winner, routed }) => {
             start({
               ...battle,
               units: battle.units.map((u) => ({
@@ -150,6 +150,22 @@ export function TacticalBattleScreen() {
                 morale: Math.max(0, Math.min(100, u.morale + (u.side === playerSide ? meDelta : foeDelta))),
               })),
             });
+            // 名聲 / 罵倒 / 民心 — a public war of words has consequences beyond morale.
+            if (winner === 'me') {
+              const st = useGameStore.getState();
+              st.recordDeed(interactiveDebate.me.id, { debatesWon: 1 });
+              if (routed) {
+                st.recordDeed(interactiveDebate.me.id, { debateRouts: 1 });
+                // 羞憤 — the broken strategist carries it for seasons (death is
+                // reserved for the scripted 罵死 scenarios; killing a live unit's
+                // commander mid-battle would orphan it).
+                st.afflictOfficer(interactiveDebate.foe.id, { kind: 'shame', seasons: 3, charisma: -8, intelligence: -6 });
+                // 民心外溢 — routing the town's champion in the open shakes the
+                // contested city (or, on the defence, heartens it).
+                const swing = playerSide === 'attacker' ? -5 : playerSide === 'defender' ? 5 : 0;
+                if (swing) st.shiftCityLoyalty(battle.cityId, swing);
+              }
+            }
             setInteractiveDebate(null);
           }}
         />

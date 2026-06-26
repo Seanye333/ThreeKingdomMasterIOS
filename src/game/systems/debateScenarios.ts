@@ -8,11 +8,13 @@
  * framing and the consequences.
  */
 import type { EntityId } from '../types';
+import type { DebateTopic } from './wordWar';
 
 export type ScenarioKind = 'persuade-defect' | 'sway-neutral' | 'shout-down';
 
 export interface ScenarioEffect {
-  kind: 'recruit' | 'morale' | 'relationship' | 'gold' | 'afflict' | 'note';
+  // 'slay' — a 罵死 that actually kills (王朗墜馬); 'afflict' — only shames.
+  kind: 'recruit' | 'morale' | 'relationship' | 'gold' | 'afflict' | 'slay' | 'note';
   /** Target officer / force, where relevant. */
   targetId?: EntityId;
   /** Magnitude (gold, morale delta, relationship delta). */
@@ -28,6 +30,8 @@ export interface DebateScenario {
   titleEn: string;
   introZh: string;
   introEn: string;
+  /** 論題 — what the debate turns on; apt arguments bite harder in the bout. */
+  topic: DebateTopic;
   /** The officer you must out-argue (an existing roster id). */
   opponentId: EntityId;
   /** Effects applied on a win (points or rout). */
@@ -47,6 +51,7 @@ export const DEBATE_SCENARIOS: DebateScenario[] = [
     titleZh: '罵死王朗', titleEn: 'Shout Down Wang Lang',
     introZh: '兩軍陣前,王朗策馬而出,欲以言辭勸降。你須當眾駁倒這位老臣,挫其銳氣。',
     introEn: 'Before both armies, Wang Lang rides out to talk you into surrender. Out-argue the old minister in the open and break his nerve.',
+    topic: 'legitimacy',
     opponentId: 'wang-lang',
     winEffects: [
       { kind: 'morale', amount: -15, textZh: '王朗理屈詞窮,敵軍士氣大挫(−15)。', textEn: 'Wang Lang is left speechless — enemy morale crumbles (−15).' },
@@ -55,7 +60,7 @@ export const DEBATE_SCENARIOS: DebateScenario[] = [
       { kind: 'morale', amount: -10, textZh: '反被王朗搶白,我軍士氣受挫(−10)。', textEn: 'Wang Lang turns it back on you — your morale dips (−10).' },
     ],
     routEffects: [
-      { kind: 'afflict', targetId: 'wang-lang', textZh: '王朗氣血上湧,墜馬而亡 — 一段佳話。', textEn: 'Wang Lang, apoplectic, topples from his horse — a tale for the ages.' },
+      { kind: 'slay', targetId: 'wang-lang', textZh: '王朗氣血上湧,墜馬而亡 — 一段佳話。', textEn: 'Wang Lang, apoplectic, topples from his horse — a tale for the ages.' },
     ],
   },
   {
@@ -64,6 +69,7 @@ export const DEBATE_SCENARIOS: DebateScenario[] = [
     titleZh: '說降叛將', titleEn: 'Talk a Defector Over',
     introZh: '對方麾下一員大將心懷不滿。你若能曉以利害,辯得他心服,他或願棄暗投明。',
     introEn: 'An able officer in the enemy camp harbours resentment. Win him over in debate and he may cross to your banner.',
+    topic: 'interest',
     opponentId: 'wei-yan',
     winEffects: [
       { kind: 'recruit', targetId: 'wei-yan', textZh: '對方折服,願率部來投!', textEn: 'Won over — he brings his command across to you!' },
@@ -78,6 +84,7 @@ export const DEBATE_SCENARIOS: DebateScenario[] = [
     titleZh: '游說中立諸侯', titleEn: 'Sway a Neutral Lord',
     introZh: '一方諸侯尚在觀望。憑三寸不爛之舌,說動他與你結盟,共抗強敵。',
     introEn: 'A fence-sitting lord watches and waits. With a silver tongue, talk him into an alliance against the common foe.',
+    topic: 'strategy',
     opponentId: 'kong-rong',
     winEffects: [
       { kind: 'relationship', targetId: 'kong-rong', amount: 2, textZh: '諸侯欣然結盟!', textEn: 'The lord gladly agrees to an alliance!' },
@@ -93,6 +100,7 @@ export const DEBATE_SCENARIOS: DebateScenario[] = [
     titleZh: '白門樓說張遼', titleEn: 'Win Over Zhang Liao',
     introZh: '白門樓上,張遼寧死不降,破口大罵。你若能以忠義相激、曉以大勢,或可收得這員萬人敵。',
     introEn: 'On the White Gate Tower, Zhang Liao curses, ready to die rather than yield. Appeal to honour and the tide of history, and you may win this matchless warrior.',
+    topic: 'honor',
     opponentId: 'zhang-liao',
     winEffects: [
       { kind: 'recruit', targetId: 'zhang-liao', textZh: '張遼為忠義所感,釋甲來投!', textEn: 'Moved by your appeal to honour, Zhang Liao lays down his arms and joins you!' },
@@ -107,6 +115,7 @@ export const DEBATE_SCENARIOS: DebateScenario[] = [
     titleZh: '反挫狂士禰衡', titleEn: 'Out-talk the Insolent Mi Heng',
     introZh: '狂士禰衡擊鼓罵座,目中無人。當眾折其銳氣,挫其狂傲!',
     introEn: 'The insolent Mi Heng drums and insults the whole court, sparing no one. Break his arrogance before them all!',
+    topic: 'honor',
     opponentId: 'mi-heng',
     winEffects: [
       { kind: 'morale', amount: -8, textZh: '禰衡語塞,滿座稱快。', textEn: 'Mi Heng is left speechless; the court is delighted.' },

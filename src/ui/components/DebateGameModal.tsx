@@ -2,7 +2,8 @@ import { useRef, useState } from 'react';
 import type { Officer } from '../../game/types';
 import {
   initDebate, debateRound, aiDebateMove, debateMoraleDeltas, PRESS_MOMENTUM_COST, debateMoveCost, schoolMoveFor, SCHOOL_MOVES,
-  type DebateMove, type DebateBout, type DebateDifficulty,
+  topicFavors, TOPIC_LABEL,
+  type DebateMove, type DebateBout, type DebateDifficulty, type DebateTopic,
 } from '../../game/systems/wordWar';
 import { OfficerPortrait } from './OfficerPortrait';
 import { playSfx, speakLine } from '../../game/systems/sound';
@@ -43,22 +44,25 @@ const MOVES: Array<{ id: DebateMove; zh: string; en: string; cost?: number; hint
 ];
 
 export function DebateGameModal({
-  me, foe, onComplete, staged = false, onRound, difficulty = 'veteran',
+  me, foe, onComplete, staged = false, onRound, difficulty = 'veteran', topic,
 }: {
   me: Officer;
   foe: Officer;
-  onComplete: (outcome: { meDelta: number; foeDelta: number; winner: 'me' | 'foe' | 'draw' }) => void;
+  onComplete: (outcome: { meDelta: number; foeDelta: number; winner: 'me' | 'foe' | 'draw'; routed: boolean }) => void;
   /** When staged, render as a slim bottom control panel over the 3D hall. */
   staged?: boolean;
   /** Fires after each exchange so the 3D debate hall can animate the minds. */
   onRound?: (fx: DebateRoundFx) => void;
   /** 難度 — how sharply the AI foe reads your argument and counters. */
   difficulty?: DebateDifficulty;
+  /** 論題 — what the debate is about; apt arguments bite harder. Defaults from
+   *  the matchup when unset. */
+  topic?: DebateTopic;
 }) {
   const t = useT();
   const lang = useLanguage();
   const reduced = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  const [bout, setBout] = useState<DebateBout>(() => initDebate(me, foe, difficulty));
+  const [bout, setBout] = useState<DebateBout>(() => initDebate(me, foe, difficulty, topic));
   const [log, setLog] = useState<string[]>([]);
   // 佔理演出 — per-round retort feedback: who lost composure, by how much, with
   // a key so the glint / shake / float replay even on a repeat hit.
@@ -142,10 +146,11 @@ export function DebateGameModal({
   // right = foe / 紫袍). Cresting either edge rallies that side (全場附和).
   const audienceBar = () => {
     const a = bout.audience; // −100 (foe) .. +100 (me)
+    const tl = bout.topic ? TOPIC_LABEL[bout.topic] : null;
     return (
       <div style={{ margin: '0.35rem auto', maxWidth: 320 }}>
         <div style={{ fontSize: '0.6rem', color: '#caa3d6', textAlign: 'center', letterSpacing: '0.1rem', marginBottom: 2 }}>
-          {t('民心', 'The Hall')}
+          {t('民心', 'The Hall')}{tl ? <span style={{ color: '#9fb4c8' }}> · {t('論題', 'Topic')} {lang === 'en' ? tl.en : tl.zh}</span> : null}
         </div>
         <div style={{ position: 'relative', height: 8, background: '#1b2531', border: '1px solid #2b3845', borderRadius: 4, overflow: 'hidden' }}>
           <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 1, background: '#5a6a78' }} />
@@ -194,15 +199,16 @@ export function DebateGameModal({
             {myMoves.map((m) => {
               const cost = m.cost ?? 0;
               const disabled = cost > bout.aMomentum;
+              const apt = !disabled && topicFavors(bout.topic, m.id); // 切中要害
               return (
                 <button
                   key={m.id}
                   onClick={() => play(m.id)}
                   disabled={disabled}
-                  style={{ padding: '0.35rem 0.2rem', background: disabled ? '#1a1810' : '#26221a', border: `1px solid ${disabled ? '#2c281c' : SCHOOL_MOVES.includes(m.id) ? '#c89a4a' : cost ? '#7a6a3a' : '#4a5530'}`, color: disabled ? '#5a4a36' : '#e6edf3', cursor: disabled ? 'default' : 'pointer', fontFamily: 'inherit', textAlign: 'center' }}
+                  style={{ padding: '0.35rem 0.2rem', background: disabled ? '#1a1810' : '#26221a', border: `1px solid ${disabled ? '#2c281c' : apt ? '#6abf6a' : SCHOOL_MOVES.includes(m.id) ? '#c89a4a' : cost ? '#7a6a3a' : '#4a5530'}`, color: disabled ? '#5a4a36' : '#e6edf3', cursor: disabled ? 'default' : 'pointer', fontFamily: 'inherit', textAlign: 'center' }}
                   title={lang === 'en' ? m.hint.en : m.hint.zh}
                 >
-                  <div style={{ fontSize: '1.1rem', color: disabled ? '#5a4a36' : cost ? '#e6c473' : '#88b7e8' }}>{m.zh}{cost ? ` ${'◆'.repeat(cost)}` : ''}</div>
+                  <div style={{ fontSize: '1.1rem', color: disabled ? '#5a4a36' : cost ? '#e6c473' : '#88b7e8' }}>{m.zh}{apt ? '◎' : ''}{cost ? ` ${'◆'.repeat(cost)}` : ''}</div>
                   <div style={{ fontSize: '0.54rem', color: '#7a8893' }}>{m.en}</div>
                 </button>
               );
@@ -215,7 +221,9 @@ export function DebateGameModal({
               onClick={() => {
                 const { meDelta, foeDelta } = debateMoraleDeltas(bout);
                 const winner = bout.winner === 'a' ? 'me' : bout.winner === 'd' ? 'foe' : 'draw';
-                onComplete({ meDelta, foeDelta, winner });
+                // 罵倒 — the bout broke a mind (沉著 to 0), not just a points finish.
+                const routed = bout.winner !== 'draw' && (bout.aComposure <= 0 || bout.dComposure <= 0);
+                onComplete({ meDelta, foeDelta, winner, routed });
               }}
               style={{ padding: '0.4rem 1.4rem', background: '#26221a', border: '1px solid #88b7e8', color: '#88b7e8', cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.06rem' }}
             >{t('確定', 'Continue')}</button>
@@ -298,6 +306,7 @@ export function DebateGameModal({
             {myMoves.map((m) => {
               const cost = m.cost ?? 0;
               const disabled = cost > bout.aMomentum;
+              const apt = !disabled && topicFavors(bout.topic, m.id); // 切中要害
               return (
                 <button
                   key={m.id}
@@ -305,13 +314,13 @@ export function DebateGameModal({
                   disabled={disabled}
                   style={{
                     padding: '0.5rem 0.3rem', background: disabled ? '#1a1810' : '#26221a',
-                    border: `1px solid ${disabled ? '#2c281c' : SCHOOL_MOVES.includes(m.id) ? '#c89a4a' : cost ? '#7a6a3a' : '#4a5530'}`,
+                    border: `1px solid ${disabled ? '#2c281c' : apt ? '#6abf6a' : SCHOOL_MOVES.includes(m.id) ? '#c89a4a' : cost ? '#7a6a3a' : '#4a5530'}`,
                     color: disabled ? '#5a4a36' : '#e6edf3', cursor: disabled ? 'default' : 'pointer',
                     fontFamily: 'inherit', textAlign: 'center',
                   }}
                   title={lang === 'en' ? m.hint.en : m.hint.zh}
                 >
-                  <div style={{ fontSize: '1.25rem', color: disabled ? '#5a4a36' : cost ? '#e6c473' : '#88b7e8' }}>{m.zh}{cost ? ` ${'◆'.repeat(cost)}` : ''}</div>
+                  <div style={{ fontSize: '1.25rem', color: disabled ? '#5a4a36' : cost ? '#e6c473' : '#88b7e8' }}>{m.zh}{apt ? '◎' : ''}{cost ? ` ${'◆'.repeat(cost)}` : ''}</div>
                   <div style={{ fontSize: '0.6rem', color: '#7a8893' }}>{lang === 'en' ? m.en : m.hint.zh}</div>
                 </button>
               );
@@ -330,7 +339,9 @@ export function DebateGameModal({
               onClick={() => {
                 const { meDelta, foeDelta } = debateMoraleDeltas(bout);
                 const winner = bout.winner === 'a' ? 'me' : bout.winner === 'd' ? 'foe' : 'draw';
-                onComplete({ meDelta, foeDelta, winner });
+                // 罵倒 — the bout broke a mind (沉著 to 0), not just a points finish.
+                const routed = bout.winner !== 'draw' && (bout.aComposure <= 0 || bout.dComposure <= 0);
+                onComplete({ meDelta, foeDelta, winner, routed });
               }}
               style={{ padding: '0.45rem 1.6rem', background: '#26221a', border: '1px solid #88b7e8', color: '#88b7e8', cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.07rem' }}
             >

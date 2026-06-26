@@ -1142,5 +1142,9 @@ export function deedTraitCandidate(officer: Officer, deeds: HeroicDeeds | undefi
   if ((deeds.battlesWon ?? 0) >= 10 && !have.has('veteran')) return 'veteran';
   if ((deeds.espionageSuccess ?? 0) >= 5 && !have.has('cunning')) return 'cunning';
   if ((deeds.killsTroops ?? 0) >= 2000 && !have.has('shadow-walker')) return 'shadow-walker';
+  // 舌戰成名 — a record of won word-wars earns 雄辯 (which then sharpens future
+  // 舌戰 prowess); a serial 罵倒er earns the feared 寡言鋒 (biting, few words).
+  if ((deeds.debateRouts ?? 0) >= 3 && !have.has('sharp-tongue')) return 'sharp-tongue';
+  if ((deeds.debatesWon ?? 0) >= 5 && !have.has('eloquent')) return 'eloquent';
   return null;
 }

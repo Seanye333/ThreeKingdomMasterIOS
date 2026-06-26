@@ -3,7 +3,7 @@
  * The newest entry drives the in-game「本次更新」popup: bump
  * GAME_VERSION when a batch ships and the next launch shows it once.
  */
-export const GAME_VERSION = '1.2.0';
+export const GAME_VERSION = '1.3.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -13,6 +13,20 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.3.0',
+    date: '2026-06-25',
+    title: '舌戰大改 — 論題、流派、罵死',
+    items: [
+      '💬 口才性格真正生效:雄辯/善說/機智/沈着… 直接抬升你親手打的舌戰口才',
+      '📜 論題系統:天命正統/軍略勝負/忠義氣節/利害得失,切題之論傷害 ×1.18(綠框 ◎ 提示)',
+      '⚔ 流派相剋:智者制奸雄、奸雄亂猛士、猛士壓智者,握有利對位開局口才 +8',
+      '💀 罵死成真:罵倒性烈/年邁敵手必致重度羞憤,並有概率致死(諸葛罵死王朗)',
+      '🏛 民心外溢:阵前罵倒敵方說客,可撼動所圍之城民忠 —— 舌戰成攻城軟化手段',
+      '🧠 宗師 AI 會鋪連辯(論→引、駁→詰),頂尖對局更難纏',
+      '🏅 舌戰功業:連勝得〈雄辯〉、連罵倒得〈寡言鋒〉,雄辯回頭又抬口才成正循環',
+    ],
+  },
   {
     version: '1.2.0',
     date: '2026-06-13',

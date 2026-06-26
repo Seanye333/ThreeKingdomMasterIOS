@@ -1,5 +1,5 @@
 import type { Officer } from '../types';
-import { afflictionDelta } from './afflictions';
+import { afflictionDelta, isEmotional } from './afflictions';
 import { wordWarProwessMul } from './traitEffects';
 
 /**
@@ -140,6 +140,64 @@ export type DebateMove =
 // high-INT foe well, a 宗師 almost always springs the right rebuttal.
 export type DebateDifficulty = 'rookie' | 'veteran' | 'peerless';
 
+// 論題 — what the war of words is *about*. Each topic favours a couple of
+// argument types (their barbs 切中要害, biting ~18% deeper and swaying the hall
+// a touch more) — so a debater fares better when the topic suits their style:
+// a 引經據典 scholar shines on 天命正統; a cunning trap-layer on 利害得失.
+export type DebateTopic = 'legitimacy' | 'strategy' | 'honor' | 'interest';
+export const DEBATE_TOPICS: DebateTopic[] = ['legitimacy', 'strategy', 'honor', 'interest'];
+export const TOPIC_LABEL: Record<DebateTopic, { zh: string; en: string }> = {
+  legitimacy: { zh: '天命正統', en: 'Mandate & Legitimacy' },
+  strategy:   { zh: '軍略勝負', en: 'Strategy & War' },
+  honor:      { zh: '忠義氣節', en: 'Honour & Loyalty' },
+  interest:   { zh: '利害得失', en: 'Gain & Loss' },
+};
+/** 切中要害 — the argument types each topic rewards. */
+const TOPIC_FAVORS: Record<DebateTopic, DebateMove[]> = {
+  legitimacy: ['cite', 'assert'],     // 引經據典 + 堂堂正論
+  strategy:   ['press', 'retort'],    // 詰問 + 駁斥
+  honor:      ['rebuke', 'provoke'],  // 厲叱 + 激將
+  interest:   ['deceive', 'analogy'], // 機詐 + 取譬
+};
+export function topicFavors(topic: DebateTopic | undefined, move: DebateMove): boolean {
+  return !!topic && TOPIC_FAVORS[topic].includes(move);
+}
+/** 切中要害 — a topic-apt argument bites this much harder. */
+export const TOPIC_DMG_MUL = 1.18;
+/** 各擅勝場 — the topic a matchup naturally falls into, from the sharper tongue's
+ *  school. Lets every bout carry a 論題 even when the host doesn't script one. */
+export function defaultTopicFor(me: Officer, foe: Officer): DebateTopic {
+  const lead = debateProwess(me) >= debateProwess(foe) ? me : foe;
+  const p = debatePersona(lead);
+  return p === 'sly' ? 'interest' : p === 'fierce' ? 'honor' : 'legitimacy';
+}
+
+// 流派相剋 — schools answer one another in a ring: the measured 智者 unflusters
+// the 奸雄's tricks, the 奸雄 rattles the blunt 猛士, the 猛士 overruns the 智者's
+// reason. Holding the favourable matchup lends a small edge in 口才.
+const PERSONA_BEATS: Record<DebatePersona, DebatePersona> = { sage: 'sly', sly: 'fierce', fierce: 'sage' };
+/** 流派相剋 — 口才 bonus when your school naturally answers the foe's. */
+export const PERSONA_EDGE = 8;
+export function personaEdge(mine: DebatePersona, theirs: DebatePersona): number {
+  return PERSONA_BEATS[mine] === theirs ? PERSONA_EDGE : 0;
+}
+
+// 罵死 — when a rout breaks a foe, what actually befalls them.
+export type RoutConsequence = 'death' | 'shame' | 'none';
+/** Only the hot-tempered (性烈) or the aged are at mortal risk of being shouted
+ *  to death (王朗策馬而出,氣血上湧墜馬而亡); a steady, hale mind merely stews
+ *  in shame, and the young shrug it off. Returns the consequence of the rout. */
+export function routConsequence(loser: Officer, age: number, rng: () => number = Math.random): RoutConsequence {
+  const emotional = isEmotional(loser);
+  if (!emotional && age < 60) return 'none';
+  let pDeath = 0;
+  if (emotional) pDeath += 0.12;
+  if (age >= 60) pDeath += Math.min(0.18, (age - 60) * 0.012); // older → frailer
+  if (emotional && age >= 60) pDeath += 0.06;                  // both → the classic
+  pDeath = Math.min(0.4, pDeath);
+  return rng() < pDeath ? 'death' : 'shame';
+}
+
 export interface DebateBout {
   aComposure: number;
   dComposure: number;
@@ -155,6 +213,7 @@ export interface DebateBout {
   aRally: boolean;   // 全場附和 — next argument lands clean (spent on use)
   dRally: boolean;
   difficulty: DebateDifficulty; // AI skill tier for the foe (side 'd')
+  topic?: DebateTopic; // 論題 — what the debate is about; rewards apt arguments
   round: number;
   over: boolean;
   winner?: 'a' | 'd' | 'draw';
@@ -178,7 +237,10 @@ export function debateProwess(o: Officer): number {
   // 羞憤 — a shamed mind argues less keenly (folds in 智力/魅力 penalties).
   const int = o.stats.intelligence + afflictionDelta(o, 'intelligence');
   const cha = o.stats.charisma + afflictionDelta(o, 'charisma');
-  return Math.round(int + cha * 0.5);
+  // 口才性格 — 雄辯/善說/機智/沈着 sharpen the tongue, 寡黙/木訥 blunt it. Same
+  // multiplier the pre-battle auto-resolve uses, so the traits matter in the
+  // interactive game the player actually plays (not just the AI-vs-AI path).
+  return Math.round((int + cha * 0.5) * wordWarProwessMul(o));
 }
 
 // 風格 — a strategist's debating persona drives which gestures / win poses the
@@ -199,13 +261,18 @@ export function schoolMoveFor(o: Officer | DebatePersona): DebateMove {
 /** 流派招式 — moves that are only available to a matching school. */
 export const SCHOOL_MOVES: DebateMove[] = ['analogy', 'rebuke', 'deceive'];
 
-export function initDebate(me: Officer, foe: Officer, difficulty: DebateDifficulty = 'veteran'): DebateBout {
+export function initDebate(me: Officer, foe: Officer, difficulty: DebateDifficulty = 'veteran', topic?: DebateTopic): DebateBout {
+  const aPersona = debatePersona(me);
+  const dPersona = debatePersona(foe);
   return {
     aComposure: 100, dComposure: 100, aMomentum: 0, dMomentum: 0,
-    aProwess: debateProwess(me), dProwess: debateProwess(foe),
-    aPersona: debatePersona(me), dPersona: debatePersona(foe),
+    // 流派相剋 — the favourable school matchup lends a small 口才 edge.
+    aProwess: debateProwess(me) + personaEdge(aPersona, dPersona),
+    dProwess: debateProwess(foe) + personaEdge(dPersona, aPersona),
+    aPersona, dPersona,
     audience: 0, aRally: false, dRally: false,
     difficulty,
+    topic: topic ?? defaultTopicFor(me, foe),
     round: 0, over: false,
   };
 }
@@ -282,28 +349,33 @@ export function debateRound(
   const aChain = chainFor(bout.aLastMove, aMove);
   const dChain = chainFor(bout.dLastMove, dMove);
   const chainMul = (side: 'a' | 'd') => ((side === 'a' ? aChain : dChain) ? 1.3 : 1);
+  // 切中要害 — an argument apt to the 論題 bites deeper.
+  const topicMul = (move: DebateMove) => (topicFavors(b.topic, move) ? TOPIC_DMG_MUL : 1);
   const dmgFrom = (move: DebateMove, winP: number, loseP: number): number => {
     const adv = Math.max(-6, Math.min(20, (winP - loseP) * 0.4));
     return Math.max(6, Math.round((DMG_BASE[move] ?? 18) + adv + rng() * 8));
   };
+  // The composure a landed argument costs: base × 連辯 chain × 論題 fit.
+  const land = (move: DebateMove, winP: number, loseP: number, side: 'a' | 'd') =>
+    Math.round(dmgFrom(move, winP, loseP) * chainMul(side) * topicMul(move));
 
   let roundWinner: 'a' | 'd' | 'draw' = 'draw';
   let dmgToA = 0, dmgToD = 0;
   if (debateMoveBeats(aMove, dMove)) {
     roundWinner = 'a';
-    dmgToD = Math.round(dmgFrom(aMove, b.aProwess, b.dProwess) * chainMul('a'));
+    dmgToD = land(aMove, b.aProwess, b.dProwess, 'a');
     if (aMove === 'retort') b.aMomentum += 1;
   } else if (debateMoveBeats(dMove, aMove)) {
     roundWinner = 'd';
-    dmgToA = Math.round(dmgFrom(dMove, b.dProwess, b.aProwess) * chainMul('d'));
+    dmgToA = land(dMove, b.dProwess, b.aProwess, 'd');
     if (dMove === 'retort') b.dMomentum += 1;
   } else if (aMove === 'retort' && dMove === 'retort') {
     b.aMomentum += 1; b.dMomentum += 1;
   }
   // 全場附和 — a rally banked from the 民心 meter makes this argument land clean,
   // overriding a walk-into-a-counter. Spent on use.
-  if (b.aRally && roundWinner !== 'a') { roundWinner = 'a'; dmgToD = Math.round(dmgFrom(aMove, b.aProwess, b.dProwess) * chainMul('a')); dmgToA = 0; }
-  if (b.dRally && roundWinner !== 'd') { roundWinner = 'd'; dmgToA = Math.round(dmgFrom(dMove, b.dProwess, b.aProwess) * chainMul('d')); dmgToD = 0; }
+  if (b.aRally && roundWinner !== 'a') { roundWinner = 'a'; dmgToD = land(aMove, b.aProwess, b.dProwess, 'a'); dmgToA = 0; }
+  if (b.dRally && roundWinner !== 'd') { roundWinner = 'd'; dmgToA = land(dMove, b.dProwess, b.aProwess, 'd'); dmgToD = 0; }
   b.aRally = false; b.dRally = false;
 
   // 連辯 — a completed chain refunds the follow-up's cost where the chain says so
@@ -348,6 +420,15 @@ export function aiDebateMove(bout: DebateBout, side: 'a' | 'd', rng: () => numbe
   const composure = side === 'a' ? bout.aComposure : bout.dComposure;
   const persona = side === 'a' ? bout.aPersona : bout.dPersona;
   const school = SCHOOL_MOVE[persona];
+  // 連辯 — a drilled debater sets up a recognised chain off their own last
+  // argument (論→引, 駁→詰) for the ~30% follow-through, the master almost
+  // always. A 學徒 never thinks that far ahead.
+  if (bout.difficulty !== 'rookie') {
+    const myLast = side === 'a' ? bout.aLastMove : bout.dLastMove;
+    const chainP = bout.difficulty === 'peerless' ? 0.8 : 0.5;
+    if (myLast === 'assert' && momentum >= CITE_MOMENTUM_COST && rng() < chainP) return 'cite';  // 論→引
+    if (myLast === 'retort' && momentum >= PRESS_MOMENTUM_COST && rng() < chainP) return 'press'; // 駁→詰
+  }
   if (momentum >= PRESS_MOMENTUM_COST && rng() < 0.55) return 'press';
   // 引經據典 — an alternative heavy spender to the press.
   if (momentum >= CITE_MOMENTUM_COST && rng() < 0.5) return 'cite';
