@@ -348,7 +348,7 @@ export interface GameState {
   /** 訪賢招攬 — per free-agent recruit state, keyed by season:
    *  'declined' (offer escalation this season) / 'locked' (lost a debate,
    *  no retry until next season). Stale entries (old season) are ignored. */
-  recruitState: Record<EntityId, { season: string; stage: 'declined' | 'locked' }>;
+  recruitState: Record<EntityId, { season: string; stage: 'declined' | 'locked'; attempts?: number }>;
   /** Saved command templates the player can re-apply each season. */
   commandTemplates: Array<{
     id: EntityId;

@@ -9,6 +9,7 @@ import { Icon } from './Icon';
 import { DebateModal } from './DebateModal';
 import { RecruitSuccessModal } from './RecruitSuccessModal';
 import { useT, useLanguage } from '../i18n';
+import { ITEMS_BY_ID, itemRarity } from '../../game/data/items';
 import styles from './FreeAgentsSection.module.css';
 
 interface Props {
@@ -17,6 +18,7 @@ interface Props {
 }
 
 const BRIBE_AMOUNT = 300;
+const RARITY_RANK: Record<string, number> = { gold: 3, silver: 2, bronze: 1 };
 
 export function FreeAgentsSection({ cityId, isPlayerCity }: Props) {
   const officersMap = useGameStore((s) => s.officers);
@@ -25,6 +27,7 @@ export function FreeAgentsSection({ cityId, isPlayerCity }: Props) {
   const recruitFreeAgent = useGameStore((s) => s.recruitFreeAgent);
   const lockFreeAgentRecruit = useGameStore((s) => s.lockFreeAgentRecruit);
   const recruitState = useGameStore((s) => s.recruitState);
+  const lostItems = useGameStore((s) => s.lostItems);
   const year = useGameStore((s) => s.date.year);
   const season = useGameStore((s) => s.date.season);
   const seasonKey = `${year}|${season}`;
@@ -50,6 +53,15 @@ export function FreeAgentsSection({ cityId, isPlayerCity }: Props) {
     [officersMap, playerForceId, cityId],
   );
 
+  // 名品禮聘 — the grandest unclaimed treasure sitting in this city, to offer as a gift.
+  const bestGift = useMemo(() => {
+    const here = lostItems
+      .filter((li) => li.cityId === cityId && ITEMS_BY_ID[li.itemId])
+      .map((li) => ITEMS_BY_ID[li.itemId]);
+    if (here.length === 0) return null;
+    return here.sort((a, b) => RARITY_RANK[itemRarity(b)] - RARITY_RANK[itemRarity(a)])[0];
+  }, [lostItems, cityId]);
+
   if (agents.length === 0) return null;
 
   const stageOf = (id: EntityId): 'fresh' | 'declined' | 'locked' => {
@@ -58,7 +70,7 @@ export function FreeAgentsSection({ cityId, isPlayerCity }: Props) {
     return r.stage;
   };
 
-  const invite = (id: EntityId, opts?: { debateWon?: boolean; bribe?: number }) => {
+  const invite = (id: EntityId, opts?: { debateWon?: boolean; bribe?: number; giftItemId?: EntityId }) => {
     const r = recruitFreeAgent(id, cityId, opts);
     setFeedback({ officerId: id, text: r.message, ok: r.ok });
     playSfx(r.ok ? 'bell' : 'defeat');
@@ -116,6 +128,13 @@ export function FreeAgentsSection({ cityId, isPlayerCity }: Props) {
                         disabled={cityGold < BRIBE_AMOUNT}
                         title={cityGold < BRIBE_AMOUNT ? `需 ${BRIBE_AMOUNT} 金` : `贈金 ${BRIBE_AMOUNT} 以動其心`}
                       ><Icon name="gold" size={11} /> {t('賄賂', 'Bribe')} ({BRIBE_AMOUNT}g)</button>
+                      {bestGift && (
+                        <button
+                          className={styles.recruitBtn}
+                          onClick={() => invite(o.id, { giftItemId: bestGift.id })}
+                          title={t(`以名品「${bestGift.name.zh}」相贈,動其心(成則隨之入幕)`, `Gift ${bestGift.name.en} to sway them (joins them on success)`)}
+                        >🎁 {t('厚禮', 'Gift')} · {lang === 'en' ? bestGift.name.en : bestGift.name.zh}</button>
+                      )}
                     </>
                   )}
                 </div>
