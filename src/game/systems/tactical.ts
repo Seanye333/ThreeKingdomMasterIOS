@@ -536,8 +536,9 @@ export function setupTacticalBattle(p: SetupParams): TacticalBattle {
         maxTroops: entry.troops,
         ap: maxAp,
         maxAp,
-        // 疲勞 — a forced-marched attacker opens below full morale (以逸待勞).
-        morale: side === 'attacker' ? Math.max(40, 100 - (p.attackerFatigue ?? 0)) : 100,
+        // 疲勞 / 都督之旗 — a forced-marched attacker opens below full morale; a
+        // legion banner offsets it (negative fatigue) but can't exceed full.
+        morale: side === 'attacker' ? Math.min(100, Math.max(40, 100 - (p.attackerFatigue ?? 0))) : 100,
         isCommander,
         effects: [],
         unitType,

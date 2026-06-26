@@ -1138,8 +1138,9 @@ export function handleMarch(
       attackerCasusBelliMul,
       defenderCasusBelliMul,
       duelChanceMul: ctx.duelChanceMul ?? 1,
-      // 疲勞 — a forced-marched column opens the assault weary (以逸待勞).
-      attackerMoraleMod: arrivalFatigueMorale(cmd.pace),
+      // 疲勞 less 都督之旗 — a forced march opens weary (以逸待勞), but a renowned
+      // legion marshal's banner steadies the column (legionBanner offsets it).
+      attackerMoraleMod: arrivalFatigueMorale(cmd.pace) - (cmd.legionBanner ?? 0),
     },
   );
   // Account for the prestrike in the casualty report.

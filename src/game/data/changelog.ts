@@ -3,7 +3,7 @@
  * The newest entry drives the in-game「本次更新」popup: bump
  * GAME_VERSION when a batch ships and the next launch shows it once.
  */
-export const GAME_VERSION = '1.12.0';
+export const GAME_VERSION = '1.13.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -13,6 +13,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.13.0',
+    date: '2026-06-26',
+    title: '軍團再深化 — 都督之旗、應敵守邊、分進合擊、軍團調度',
+    items: [
+      '🏴 都督之旗:都督的武力/品階/威望給軍團各路開戰士氣 +0~16(名帥坐鎮,補完都督的戰場效果)',
+      '🛡 智将守邊・應敵:偵見敵縱隊壓向軍團某城時,強城預先驰援,化被動為預判',
+      '🎯 分進合擊(軍團版):統率 ≥85 之都督的軍團先汇前進城蓄勢、再一齊扑向目標',
+      '🚚 軍團內調度:都督政治 ≥60 則每旬調度錢糧,後方接濟付不起軍費的前線城',
+    ],
+  },
   {
     version: '1.12.0',
     date: '2026-06-26',

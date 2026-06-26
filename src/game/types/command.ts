@@ -77,6 +77,9 @@ export interface MarchCommand extends CommandBase {
   /** 召回 — the column has abandoned its objective and is streaming home to its
    *  source city (targetCityId is then the source; it merges on arrival). */
   returning?: boolean;
+  /** 都督之旗 — extra opening morale a legion column carries from its marshal's
+   *  renown (§4.3). Applied to the arrival battle. */
+  legionBanner?: number;
 }
 
 export type Command = InternalAffairsCommand | MarchCommand;

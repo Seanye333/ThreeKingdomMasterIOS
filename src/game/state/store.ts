@@ -104,7 +104,7 @@ import { canPromoteToRank } from '../systems/imperialEffects';
 import { COMMAND_DEFS } from '../systems/commands';
 import { planMassMuster, musterStrain, MUSTER_GATHER_SEASONS, MUSTER_CAMPAIGN_SEASONS, type MusterOptions } from '../systems/muster';
 import { planGovernorCommand } from '../systems/governor';
-import { planLegionOrders, type Legion } from '../systems/legion';
+import { planLegionOrders, planLegionLogistics, legionBannerBonus, type Legion } from '../systems/legion';
 import { buyQuote, sellQuote, borderTariff, buyHorses, sellHorses, WARHORSE_CITY_CAP, buyIron, sellIron, IRON_CITY_CAP, MEDICINE_CITY_CAP, IRON_FORGE_COST, FORGE_IRON_DISCOUNT } from '../systems/market';
 import { EDICT_DISCOUNT, EMPEROR_HOME, MANDATE_PER_SEASON, RESENTMENT_PER_SEASON, canWelcomeEmperor, emperorCustodian } from '../systems/emperor';
 import { commonerArrivalCity, generateCommonerOfficer, lordTalentDraw, commonerArrivalChance } from '../systems/commonerTalent';
@@ -1037,8 +1037,8 @@ function buildFieldBattle(
     defenderForceId: eArmy.forceId,
     attackers,
     defenders,
-    // 疲勞 — a forced-marched column meets this clash weary (以逸待勞).
-    attackerFatigue: arrivalFatigueMorale(pArmy.pace),
+    // 疲勞 less 都督之旗 — weary from a forced march, steadied by the marshal's banner.
+    attackerFatigue: arrivalFatigueMorale(pArmy.pace) - (pArmy.legionBanner ?? 0),
     // Whichever side is dug in fights from an ambush formation.
     attackerFormation: pArmy.holding ? 'ten-ambush' : undefined,
     defenderFormation: eArmy.holding ? 'ten-ambush' : undefined,
@@ -2678,26 +2678,64 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             if (type) get().issueCommand(cid, type, govId);
           }
           // 軍團都督 — each legion files its marshal's orders the same way.
+          const pidL = s0.playerForceId ?? '';
+          // 應敵 — legion-held cities a hostile column is marching on (pre-empt).
+          const legionCityIds = new Set((s0.legions ?? []).flatMap((l) => l.cityIds));
+          const threatenedCityIds = new Set<EntityId>();
+          for (const a of Object.values(get().armies)) {
+            if (!a.forceId || a.forceId === pidL || a.returning) continue;
+            if (!legionCityIds.has(a.targetCityId)) continue;
+            if (!isHostilePermitted(get().diplomacy, pidL, a.forceId)) continue;
+            threatenedCityIds.add(a.targetCityId);
+          }
           for (const legion of s0.legions ?? []) {
             const cur = get();
+            // 軍團內調度 — a capable 都督 shifts coin/grain from a rich rear city
+            // to the neediest frontier one BEFORE orders, so the front can pay.
+            const move = planLegionLogistics(legion, cur.cities, cur.officers);
+            if (move) {
+              const from = cur.cities[move.fromCityId], to = cur.cities[move.toCityId];
+              if (from && to) {
+                set({ cities: { ...cur.cities,
+                  [from.id]: { ...from, gold: from.gold - move.gold, food: Math.max(0, from.food - move.food) },
+                  [to.id]: { ...to, gold: to.gold + move.gold, food: to.food + move.food },
+                } });
+              }
+            }
+            const cur2 = get();
             const busy = new Set<EntityId>([
-              ...Object.keys(cur.pendingCommands),
-              ...cur.pendingTrainings.map((t) => t.officerId),
+              ...Object.keys(cur2.pendingCommands),
+              ...cur2.pendingTrainings.map((t) => t.officerId),
             ]);
-            const pid = s0.playerForceId ?? '';
+            const pid = pidL;
             const { orders, summary } = planLegionOrders({
-              cities: cur.cities,
-              officers: cur.officers,
+              cities: cur2.cities,
+              officers: cur2.officers,
               busyOfficerIds: busy,
               playerForceId: pid,
               legion,
               // 方略擇敵 — only cities we may actually attack count as targets.
-              isEnemyCity: (c) => !!c.ownerForceId && c.ownerForceId !== pid && isHostilePermitted(cur.diplomacy, pid, c.ownerForceId),
+              isEnemyCity: (c) => !!c.ownerForceId && c.ownerForceId !== pid && isHostilePermitted(cur2.diplomacy, pid, c.ownerForceId),
+              threatenedCityIds,
             });
+            // 都督之旗 — the marshal's renown lends the legion's columns morale.
+            const banner = legionBannerBonus(cur2.officers[legion.commanderId]);
             let did = 0;
             for (const o of orders) {
-              if (o.kind === 'march') { if (get().issueMarch(o.cityId, o.toCityId, o.officerId, o.troops).ok) did++; }
-              else { get().issueCommand(o.cityId, 'recruit-troops', o.officerId); did++; }
+              if (o.kind === 'march') {
+                if (get().issueMarch(o.cityId, o.toCityId, o.officerId, o.troops).ok) {
+                  did++;
+                  if (banner > 0) {
+                    const st = get();
+                    const cmd = st.pendingCommands[o.officerId];
+                    const army = st.armies[o.officerId];
+                    set({
+                      pendingCommands: cmd && cmd.type === 'march' ? { ...st.pendingCommands, [o.officerId]: { ...cmd, legionBanner: banner } } : st.pendingCommands,
+                      armies: army ? { ...st.armies, [o.officerId]: { ...army, legionBanner: banner } } : st.armies,
+                    });
+                  }
+                }
+              } else { get().issueCommand(o.cityId, 'recruit-troops', o.officerId); did++; }
             }
             // 軍團戰報 — a consolidated line so the legion isn't a silent black box.
             if (did > 0) {

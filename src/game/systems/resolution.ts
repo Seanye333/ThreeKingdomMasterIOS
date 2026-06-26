@@ -989,6 +989,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       cellTarget: cmd.targetX != null,
       pace: cmd.pace,
       returning: cmd.returning,
+      legionBanner: cmd.legionBanner,
     };
   };
   for (const cmd of inTransit) deriveArmy(cmd, (cmd.seasonsRemaining ?? 1) - (blockedOfficers.has(cmd.officerId) ? 0 : 1), false);

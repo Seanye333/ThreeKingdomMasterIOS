@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useGameStore } from '../../game/state/store';
 import type { Legion, LegionDirective } from '../../game/systems/legion';
+import { legionBannerBonus } from '../../game/systems/legion';
 import { useT } from '../i18n';
 
 /** 方略 — directive labels (one place, used by the builder, list & editor). */
@@ -114,7 +115,7 @@ export function LegionsModal({ onClose }: { onClose: () => void }) {
                 <div style={{ fontSize: '0.85rem' }}>
                   <div style={{ color: '#e6c473' }}>
                     {l.name} · {t('都督', 'Marshal')} {cmd?.name.zh ?? '?'}
-                    {cmd && <span style={{ color: '#7a8893', fontSize: '0.68rem' }}> (統{cmd.stats.leadership}·智{cmd.stats.intelligence})</span>}
+                    {cmd && <span style={{ color: '#7a8893', fontSize: '0.68rem' }} title={t('統率→動員·智力→方略·旗→開戰士氣', 'Leadership→mobilization · Intelligence→targeting · Banner→opening morale')}> (統{cmd.stats.leadership}·智{cmd.stats.intelligence}{legionBannerBonus(cmd) > 0 ? `·旗+${legionBannerBonus(cmd)}` : ''})</span>}
                     <span style={{ color: l.directive.kind === 'defend' ? '#9ed68a' : '#ff9080', marginLeft: 8 }}>
                       {dirLabel(l.directive.kind)}{tgt ? ` ${tgt.name.zh}` : ''}
                     </span>
