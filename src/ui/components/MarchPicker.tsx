@@ -3,6 +3,7 @@ import { useGameStore } from '../../game/state/store';
 import { COMMAND_DEFS } from '../../game/systems/commands';
 import { navalReachableCityIds } from '../../game/data/ports';
 import { marchDurationFor } from '../../game/data/cities';
+import { marchSpeedMul, adjustMarchSeasons, MARCH_PACES, PACE_LABEL, type MarchPace } from '../../game/systems/marchPace';
 import { playSfx } from '../../game/systems/sound';
 import { generateTerritories, terrainRoute } from '../../game/data/territories';
 import { useT, useLanguage } from '../i18n';
@@ -126,6 +127,7 @@ export function MarchPicker({ cityId, onClose }: Props) {
   }, [cityId, targetId, setMarchPreview]);
 
   const [additionalIds, setAdditionalIds] = useState<EntityId[]>([]);
+  const [pace, setPace] = useState<MarchPace>('normal');
   const [troops, setTroops] = useState<number>(
     Math.min(2000, source?.troops ?? 0),
   );
@@ -169,7 +171,7 @@ export function MarchPicker({ cityId, onClose }: Props) {
   const handleConfirm = () => {
     if (!valid || !targetId || !officerId) return;
     const extras = additionalIds.filter((id) => id !== officerId);
-    const r = issueMarch(cityId, targetId, officerId, troops, extras);
+    const r = issueMarch(cityId, targetId, officerId, troops, extras, pace);
     if (r.ok) {
       // 出征 — a war march answers the gate horn with drums; a plain move just
       // sounds the march cadence.
@@ -290,13 +292,37 @@ export function MarchPicker({ cityId, onClose }: Props) {
                 border: '1px solid #fff4d0',
               }} title={target.name.zh} />
             </div>
-            <div style={{ fontSize: '0.72rem', color: '#aab6c0', marginTop: '0.2rem' }}>
-              {t(`耗時 ${routeInfo.seasons} 季`, `${routeInfo.seasons} season(s)`)}
-              {routeInfo.hostileCells > 0 && (
-                <span style={{ color: '#e08850', marginLeft: 8 }}>
-                  ⚠ {t(`途經 ${routeInfo.hostileCells} 格敵境 — 恐遭攔截`, `crosses ${routeInfo.hostileCells} enemy cell(s) — interception risk`)}
-                </span>
-              )}
+            {(() => {
+              // 行軍節奏 — fold the chosen pace + the column's speed (健行/驛站…) into
+              // the shown ETA, so the player sees what 急行/緩 actually buys.
+              const pool = [officerId ? officersMap[officerId] : null, ...additionalIds.map((id) => officersMap[id])].filter(Boolean) as import('../../game/types').Officer[];
+              const eta = adjustMarchSeasons(routeInfo.seasons, pace, marchSpeedMul(pool));
+              return (
+                <div style={{ fontSize: '0.72rem', color: '#aab6c0', marginTop: '0.2rem' }}>
+                  {t(`耗時 ${eta} 季`, `${eta} season(s)`)}
+                  {routeInfo.hostileCells > 0 && (
+                    <span style={{ color: '#e08850', marginLeft: 8 }}>
+                      ⚠ {t(`途經 ${routeInfo.hostileCells} 格敵境 — 恐遭攔截`, `crosses ${routeInfo.hostileCells} enemy cell(s) — interception risk`)}
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
+            {/* 行軍節奏 — 急行軍(快·累毙·疲勞) / 常行 / 緩進(慢·減孤軍折損). */}
+            <div style={{ display: 'flex', gap: 6, marginTop: '0.4rem' }}>
+              {MARCH_PACES.map((p) => {
+                const on = pace === p;
+                const tip = p === 'forced' ? t('急行軍:少一季,但累毙折兵、抵達疲勞', 'Forced: −1 season, but stragglers lost & arrives weary')
+                  : p === 'cautious' ? t('緩進:多一季,但孤軍折損減半', 'Cautious: +1 season, but half the deep-strike attrition')
+                  : t('常行', 'Normal pace');
+                return (
+                  <button key={p} onClick={() => setPace(p)} title={tip}
+                    style={{ flex: 1, padding: '0.25rem', borderRadius: 4, cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.74rem',
+                      background: on ? 'rgba(230,196,115,0.18)' : '#10161e', border: `1px solid ${on ? '#e6c473' : '#26323e'}`, color: on ? '#f2dd9a' : '#8a96a0' }}>
+                    {lang === 'en' ? PACE_LABEL[p].en : PACE_LABEL[p].zh}
+                  </button>
+                );
+              })}
             </div>
           </section>
         )}

@@ -22,6 +22,7 @@ import { CITY_SPECIALTY, cityRole, specialtyControl } from '../data/specialties'
 import { buildingBonuses } from './buildings';
 import { citySize, cityCarryingCapacity, cityEconCap, cityStatCap } from './citySize';
 import { marchDurationFor } from '../data/cities';
+import { marchSpeedMul, adjustMarchSeasons } from './marchPace';
 import { isLand, terrainMarchCost, WORLD_SCALE } from '../data/geography';
 import { cityPos } from '../data/cityGeo';
 import {
@@ -1261,7 +1262,8 @@ function decideCommand(
       }
       const companions = picked.map((c) => c.id);
 
-      const dur = marchDurationFor(city, target, season);
+      // 行軍捷疾 — 健行/嚴峻/騎將/驛站 quicken an AI host too (鈍重 drags it).
+      const dur = adjustMarchSeasons(marchDurationFor(city, target, season), 'normal', marchSpeedMul([o, ...picked]));
       const cmd: MarchCommand = {
         type: 'march',
         cityId: city.id,
@@ -1288,7 +1290,7 @@ function decideCommand(
       if (send >= 2000) {
         const o = officersHere.find((c) => !isCombatLiability(c)) ?? officersHere[0];
         if (o) {
-          const dur = marchDurationFor(city, dest, season);
+          const dur = adjustMarchSeasons(marchDurationFor(city, dest, season), 'normal', marchSpeedMul([o]));
           const cmd: MarchCommand = {
             type: 'march', cityId: city.id, officerId: o.id, targetCityId: dest.id,
             troops: send, seasonsRemaining: dur, totalSeasons: dur,

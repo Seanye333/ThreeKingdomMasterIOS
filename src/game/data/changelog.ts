@@ -3,7 +3,7 @@
  * The newest entry drives the in-game「本次更新」popup: bump
  * GAME_VERSION when a batch ships and the next launch shows it once.
  */
-export const GAME_VERSION = '1.7.0';
+export const GAME_VERSION = '1.8.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -13,6 +13,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.8.0',
+    date: '2026-06-26',
+    title: '行軍大改 — 急行軍/緩進、疲勞、行軍捷疾、召回',
+    items: [
+      '🏃 行軍節奏:急行軍(−1旬,但累毙掉隊+抵達疲勞)/ 常行 / 緩進(+1旬,孤軍折損減半)',
+      '🐎 行軍捷疾:健行/嚴峻/騎將/鐵律/驛站真正加速縱隊、鈍重拖累(原本只是描述)',
+      '🩸 AI 遠征過深亦師老兵疲掉兵,且入季報 —— 坚壁清野/斷糧防御對 AI 有了意義',
+      '↩ 召回行軍:在途縱隊可折返本城、保留大部兵力併入守軍(優於舊「徑直解散」)',
+    ],
+  },
   {
     version: '1.7.0',
     date: '2026-06-25',

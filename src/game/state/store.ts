@@ -54,6 +54,7 @@ import { ITEMS_BY_ID, refineCost, REFINE_MAX, setRefineRegistry, itemRarity,
   itemGrowthGoldSpent } from '../data/items';
 import { SKILLS_BY_ID } from '../data/skills';
 import { marchDurationFor } from '../data/cities';
+import { marchSpeedMul, adjustMarchSeasons, PACE_LABEL } from '../systems/marchPace';
 import { terrainRoute, positionAlongRoute, marchDestCoords } from '../data/territories';
 import { cityPos, CITY_GEO_OVERRIDES } from '../data/cityGeo';
 import { provisionNeeded, convoyCapacity, planConvoy } from '../systems/convoy';
@@ -346,7 +347,12 @@ interface GameStore extends GameState {
     officerId: EntityId,
     troops: number,
     additionalOfficerIds?: EntityId[],
+    pace?: import('../systems/marchPace').MarchPace,
   ) => { ok: boolean; reason?: string };
+  /** 召回行軍 — turn a column still on the road back toward its source city; it
+   *  abandons the objective and streams home, shedding stragglers (deeper = more).
+   *  No-op once it's about to arrive (seasonsRemaining ≤ 1) or already returning. */
+  recallMarch: (officerId: EntityId) => { ok: boolean; reason?: string };
   /** 一鍵委派 — auto-assign every idle officer in a self-run city a sensible
    *  internal-affairs task (by city need × aptitude). Returns how many were
    *  dispatched and the gold spent. */
@@ -1505,7 +1511,7 @@ export const useGameStore = create<GameStore>()(
         return { assigned, goldSpent };
       },
 
-      issueMarch: (sourceId, targetId, officerId, troops, additionalOfficerIds) => {
+      issueMarch: (sourceId, targetId, officerId, troops, additionalOfficerIds, pace = 'normal') => {
         const state = get();
         const source = state.cities[sourceId];
         const target = state.cities[targetId];
@@ -1574,9 +1580,12 @@ export const useGameStore = create<GameStore>()(
           };
         }
 
-        // Sea legs run on the fleet's schedule — two seasons however far
-        // the route, which beats any long land march (長江是高速路).
-        const dur = isNaval ? 2 : marchDurationFor(source, state.cities[targetId], state.date.season);
+        // Sea legs run on the fleet's schedule — two seasons however far the
+        // route (長江是高速路). A land march folds in 行軍節奏 (急行/緩) and the
+        // column's speed (健行/嚴峻/騎將/驛站 hasten, 鈍重 drags).
+        const marchPool = [officer, ...extras.map((e) => state.officers[e]).filter(Boolean)];
+        const speedMul = marchSpeedMul(marchPool);
+        const dur = isNaval ? 2 : adjustMarchSeasons(marchDurationFor(source, state.cities[targetId], state.date.season), pace, speedMul);
         set({
           cities: {
             ...state.cities,
@@ -1600,6 +1609,7 @@ export const useGameStore = create<GameStore>()(
               additionalOfficerIds: extras.length > 0 ? extras : undefined,
               seasonsRemaining: dur,
               totalSeasons: dur,
+              pace,
             } as MarchCommand,
           },
           // Mirror the order into the persistent army layer at the source
@@ -1619,6 +1629,7 @@ export const useGameStore = create<GameStore>()(
               y: cityPos(source).y,
               progress: 0,
               totalSeasons: dur,
+              pace,
             },
           },
           // 積怨 — marching on a force's own city stokes its lasting resentment.
@@ -1626,9 +1637,41 @@ export const useGameStore = create<GameStore>()(
             ? { grudges: { ...state.grudges, [target.ownerForceId]: Math.min(100, (state.grudges[target.ownerForceId] ?? 0) + 6) } }
             : {}),
         });
+        const paceTag = pace !== 'normal' && !isNaval ? `·${PACE_LABEL[pace].zh}` : '';
+        const paceTagEn = pace !== 'normal' && !isNaval ? ` · ${PACE_LABEL[pace].en}` : '';
         get().notify(
-          `出兵 · ${officer.name.zh} 領 ${troops.toLocaleString()} 兵 → ${target.name.zh}（${dur}季抵達）`,
-          `March · ${officer.name.en} leads ${troops.toLocaleString()} → ${target.name.en} (${dur} seasons)`,
+          `出兵${paceTag} · ${officer.name.zh} 領 ${troops.toLocaleString()} 兵 → ${target.name.zh}（${dur}季抵達）`,
+          `March${paceTagEn} · ${officer.name.en} leads ${troops.toLocaleString()} → ${target.name.en} (${dur} seasons)`,
+        );
+        return { ok: true };
+      },
+      recallMarch: (officerId) => {
+        const state = get();
+        const cmd = state.pendingCommands[officerId];
+        if (!cmd || cmd.type !== 'march') return { ok: false, reason: 'no march' };
+        if (cmd.returning) return { ok: false, reason: 'already returning' };
+        const remaining = cmd.seasonsRemaining ?? 1;
+        if (remaining <= 1) return { ok: false, reason: 'about to arrive' };
+        const officer = state.officers[officerId];
+        if (!officer || officer.forceId !== state.playerForceId) return { ok: false, reason: 'not yours' };
+        // 折返掉隊 — the deeper the column had marched, the more it sheds turning back.
+        const covered = (cmd.totalSeasons ?? 1) - remaining;
+        const returnDur = Math.max(1, covered);
+        const straggle = Math.min(0.25, 0.05 + covered * 0.04);
+        const troops = Math.max(1, Math.round(cmd.troops * (1 - straggle)));
+        // Head back to the source city (own ground → no 孤軍 toll, merges on arrival).
+        const recalled: MarchCommand = {
+          ...cmd, targetCityId: cmd.cityId, targetX: undefined, targetY: undefined,
+          troops, totalSeasons: returnDur, seasonsRemaining: returnDur, holding: false, returning: true,
+        };
+        const army = state.armies[officerId];
+        set({
+          pendingCommands: { ...state.pendingCommands, [officerId]: recalled },
+          armies: army ? { ...state.armies, [officerId]: { ...army, targetCityId: cmd.cityId, troops, totalSeasons: returnDur, progress: 0, holding: false, cellTarget: false, returning: true } } : state.armies,
+        });
+        get().notify(
+          `召回 · ${officer.name.zh} 折返本城（散卒 ${Math.round(straggle * 100)}%,${returnDur}季抵）`,
+          `Recall · ${officer.name.en} turns home (−${Math.round(straggle * 100)}% straggle, ${returnDur} seasons)`,
         );
         return { ok: true };
       },

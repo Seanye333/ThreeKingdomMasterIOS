@@ -37,6 +37,7 @@ import { corruptionAccrualMultiplier } from './traitEffects';
 import { rollCivicEvents } from './civicEvents';
 import { settleRefugees, REFUGEE_SHED_FRAC } from './refugees';
 import { stepConvoys, resolveConvoyRaids, resolveRaidStrike, provisionNeeded, consumeRations, type Convoy, type ConvoyRaid } from './convoy';
+import { forcedMarchAttrition, cautiousAttritionMul } from './marchPace';
 import { stepExpeditions, expeditionSpeedMul } from './expedition';
 import { embassyTargets, embassyLegSeasons } from './foreignRealm';
 import type { Expedition, ExpeditionMode } from '../types';
@@ -880,20 +881,41 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     if (!dst || !cmdr?.forceId) return { troops, lost: 0 };
     const owner = dst.ownerForceId;
     if (!owner || owner === cmdr.forceId) return { troops, lost: 0 }; // own land = safe
+    if (cmd.returning) return { troops, lost: 0 }; // streaming home over own/cleared ground
     const total = cmd.totalSeasons ?? 1;
     if (total < 3) return { troops, lost: 0 }; // only genuine deep strikes
-    const frac = Math.min(0.06, 0.015 + total * 0.005);
+    // 緩進 — a cautious column forages & rests, halving the toll.
+    const frac = Math.min(0.06, 0.015 + total * 0.005) * cautiousAttritionMul(cmd.pace);
     const lost = Math.floor(troops * frac);
     return lost > 0 ? { troops: Math.max(1, troops - lost), lost } : { troops, lost: 0 };
   };
   const noteHarass = (cmd: Extract<Command, { type: 'march' }>, lost: number) => {
     const cmdr = officers[cmd.officerId];
+    if (!cmdr || lost <= 0) return;
+    // 知敵虛實 — your own column's losses, AND a notable enemy host bleeding from
+    // overextension (≥300 lost), so you can read & exploit a rival's deep strike.
+    const mine = cmdr.forceId === pfId;
+    if (!mine && lost < 300) return;
+    entries.push({
+      cityId: null,
+      kind: 'desertion',
+      text: mine ? `${cmdr.name.en}'s column, deep in hostile country, loses ${lost} men to harassment.` : `${cmdr.name.en}'s host, overextended deep in foreign country, sheds ${lost} men.`,
+      textZh: mine ? `${cmdr.name.zh}孤軍深入,沿途遭襲,折兵 ${lost} 名。` : `${cmdr.name.zh}孤軍深入,師老兵疲,折兵 ${lost} 名。`,
+    });
+  };
+  // 累毙 — a forced march outruns its stragglers on any road (own land or not).
+  const forcedAttrition = (cmd: Extract<Command, { type: 'march' }>, troops: number): { troops: number; lost: number } => {
+    const lost = Math.floor(troops * forcedMarchAttrition(cmd.pace));
+    return lost > 0 ? { troops: Math.max(1, troops - lost), lost } : { troops, lost: 0 };
+  };
+  const noteForced = (cmd: Extract<Command, { type: 'march' }>, lost: number) => {
+    const cmdr = officers[cmd.officerId];
     if (!cmdr || cmdr.forceId !== pfId || lost <= 0) return;
     entries.push({
       cityId: null,
       kind: 'desertion',
-      text: `${cmdr.name.en}'s column, deep in hostile country, loses ${lost} men to harassment.`,
-      textZh: `${cmdr.name.zh}孤軍深入,沿途遭襲,折兵 ${lost} 名。`,
+      text: `${cmdr.name.en}'s forced march outruns ${lost} stragglers.`,
+      textZh: `${cmdr.name.zh}急行軍,${lost} 名士卒掉隊脫行。`,
     });
   };
 
@@ -907,13 +929,15 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const h = hostileMarchAttrition(cmd, s.troops);
     if (h.lost > 0) noteHarass(cmd, h.lost);
     if (h.troops <= 0) continue;
-    suppliedTroops[cmd.officerId] = h.troops;
+    const f = forcedAttrition(cmd, h.troops);
+    if (f.lost > 0) noteForced(cmd, f.lost);
+    suppliedTroops[cmd.officerId] = f.troops;
     suppliedFood[cmd.officerId] = s.food;
     // 防壁 — a barricade in the column's path stalls it this season (no advance).
     const advance = blockedOfficers.has(cmd.officerId) ? 0 : 1;
     keptCommands[cmd.officerId] = {
       ...cmd,
-      troops: h.troops,
+      troops: f.troops,
       food: s.food,
       seasonsRemaining: (cmd.seasonsRemaining ?? 1) - advance,
     };
@@ -959,6 +983,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       food: suppliedFood[cmd.officerId],
       holding,
       cellTarget: cmd.targetX != null,
+      pace: cmd.pace,
+      returning: cmd.returning,
     };
   };
   for (const cmd of inTransit) deriveArmy(cmd, (cmd.seasonsRemaining ?? 1) - (blockedOfficers.has(cmd.officerId) ? 0 : 1), false);
