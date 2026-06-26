@@ -3,7 +3,7 @@
  * The newest entry drives the in-game「本次更新」popup: bump
  * GAME_VERSION when a batch ships and the next launch shows it once.
  */
-export const GAME_VERSION = '1.11.0';
+export const GAME_VERSION = '1.12.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -13,6 +13,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.12.0',
+    date: '2026-06-26',
+    title: '軍團都督做活 — 都督本事、蠶食略地、戰報、改編',
+    items: [
+      '🎖 都督做活:都督不再掛名 —— 統率抬動員(出兵更多更早)、智力主方略(動態擇敵/重選陷落目標)',
+      '🐛 蠶食(新方略):無固定目標,每旬動態攻最軟的接壤敵城,逐城推進;另加略地(輕擾)',
+      '📜 軍團戰報:每旬出一條摘要「X軍團〔攻略→Y〕:N路發兵、M城補軍」,軍團不再黑箱',
+      '✏ 軍團改編:不拆建即可改方略/目標/城池/都督',
+    ],
+  },
   {
     version: '1.11.0',
     date: '2026-06-26',

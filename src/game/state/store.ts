@@ -452,6 +452,9 @@ interface GameStore extends GameState {
   /** 軍團都督 — form a legion (id auto-assigned). */
   createLegion: (legion: Omit<Legion, 'id'>) => void;
   disbandLegion: (legionId: string) => void;
+  /** 軍團改編 — edit a legion in place (directive / target / cities / 都督) without
+   *  disband-and-rebuild. A new 都督 must still be 金牌+. */
+  updateLegion: (legionId: string, patch: Partial<Omit<Legion, 'id'>>) => void;
   /** 全軍集結令 — every player city that can spare a column marches ~70%
    *  of its garrison toward the target under its best idle officer
    *  (adjacent cities directly, the hinterland one hop along an in-realm
@@ -2262,6 +2265,21 @@ export const useGameStore = create<GameStore>()(
         set({ legions: (get().legions ?? []).filter((l) => l.id !== legionId) });
       },
 
+      updateLegion: (legionId, patch) => {
+        const st = get();
+        const legion = (st.legions ?? []).find((l) => l.id === legionId);
+        if (!legion) return;
+        // 都督改任 — a replacement marshal must still be 金牌+.
+        if (patch.commanderId && patch.commanderId !== legion.commanderId) {
+          const cmdr = st.officers[patch.commanderId];
+          if (!cmdr || gradeRank(officerGrade(cmdr).grade) < gradeRank('gold')) {
+            st.notify('品階不足 · 軍團都督須金牌+', 'A legion commander must be Gold grade or above', 'warn');
+            return;
+          }
+        }
+        set({ legions: (st.legions ?? []).map((l) => (l.id === legionId ? { ...l, ...patch } : l)) });
+      },
+
       delegateCity: (cityId, officerId) => {
         const s = get();
         const city = s.cities[cityId];
@@ -2666,16 +2684,32 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               ...Object.keys(cur.pendingCommands),
               ...cur.pendingTrainings.map((t) => t.officerId),
             ]);
-            const orders = planLegionOrders({
+            const pid = s0.playerForceId ?? '';
+            const { orders, summary } = planLegionOrders({
               cities: cur.cities,
               officers: cur.officers,
               busyOfficerIds: busy,
-              playerForceId: s0.playerForceId ?? '',
+              playerForceId: pid,
               legion,
+              // 方略擇敵 — only cities we may actually attack count as targets.
+              isEnemyCity: (c) => !!c.ownerForceId && c.ownerForceId !== pid && isHostilePermitted(cur.diplomacy, pid, c.ownerForceId),
             });
+            let did = 0;
             for (const o of orders) {
-              if (o.kind === 'march') get().issueMarch(o.cityId, o.toCityId, o.officerId, o.troops);
-              else get().issueCommand(o.cityId, 'recruit-troops', o.officerId);
+              if (o.kind === 'march') { if (get().issueMarch(o.cityId, o.toCityId, o.officerId, o.troops).ok) did++; }
+              else { get().issueCommand(o.cityId, 'recruit-troops', o.officerId); did++; }
+            }
+            // 軍團戰報 — a consolidated line so the legion isn't a silent black box.
+            if (did > 0) {
+              const DIR = { conquer: '攻略', consume: '蠶食', raid: '略地', defend: '固守' } as const;
+              const DIR_EN = { conquer: 'Conquer', consume: 'Consume', raid: 'Raid', defend: 'Defend' } as const;
+              const tgt = summary.targetCityId ? get().cities[summary.targetCityId]?.name : undefined;
+              const tgtZh = tgt ? `→${tgt.zh}` : '';
+              const tgtEn = tgt ? ` → ${tgt.en}` : '';
+              get().notify(
+                `${legion.name}〔${DIR[summary.directive]}${tgtZh}〕:${summary.marched} 路發兵(${summary.troopsSent.toLocaleString()})、${summary.recruited} 城補軍`,
+                `${legion.name} [${DIR_EN[summary.directive]}${tgtEn}]: ${summary.marched} columns (${summary.troopsSent.toLocaleString()}), ${summary.recruited} reinforced`,
+              );
             }
           }
         }
