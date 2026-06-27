@@ -4729,6 +4729,8 @@ export function TacticalBattleScreen3D() {
             <div style={{ fontSize: '0.85rem', marginTop: '0.3rem' }}>
               HP {selectedUnit.troops.toLocaleString()}/{selectedUnit.maxTroops.toLocaleString()} ·
               AP {selectedUnit.ap}/{selectedUnit.maxAp} · Mor {selectedUnit.morale}
+              {(selectedUnit.fatigue ?? 0) > 0 && <span style={{ color: (selectedUnit.fatigue ?? 0) >= 70 ? '#e0623a' : '#caa15a' }}> · {t('疲', 'Ftg')} {Math.round(selectedUnit.fatigue ?? 0)}</span>}
+              {selectedUnit.maxAmmo !== undefined && <span style={{ color: (selectedUnit.ammo ?? 0) <= 0 ? '#e0623a' : '#88b7e8' }}> · {t('矢', 'Amo')} {selectedUnit.ammo ?? 0}/{selectedUnit.maxAmmo}</span>}
             </div>
           </div>
         )}
@@ -5257,6 +5259,12 @@ function UnitPanel3D({
         <span>AP <strong style={{ color: unit.ap === 0 ? '#b8442e' : '#7ed68a' }}>{unit.ap}</strong>/{unit.maxAp}</span>
         <span>Morale {unit.morale}</span>
         <span>{UNIT_TYPE_LABEL[unit.unitType]}</span>
+        {(unit.fatigue ?? 0) > 0 && (
+          <span>{t('疲乏', 'Fatigue')} <strong style={{ color: (unit.fatigue ?? 0) >= 70 ? '#e0623a' : '#caa15a' }}>{Math.round(unit.fatigue ?? 0)}</strong>{(unit.fatigue ?? 0) >= 70 ? ` ⚠` : ''}</span>
+        )}
+        {unit.maxAmmo !== undefined && (
+          <span>{t('弓矢', 'Arrows')} <strong style={{ color: (unit.ammo ?? 0) <= 0 ? '#e0623a' : '#88b7e8' }}>{unit.ammo ?? 0}</strong>/{unit.maxAmmo}</span>
+        )}
       </div>
       {unit.effects.length > 0 && (
         <div style={{ display: 'flex', gap: '0.2rem', flexWrap: 'wrap', marginTop: '0.4rem' }}>

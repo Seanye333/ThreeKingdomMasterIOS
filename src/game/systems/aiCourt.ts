@@ -46,6 +46,9 @@ export interface AICourtOutput {
   entries: ReportEntry[];
   /** Whether each AI force used its enthronement edict this tick. */
   newEnthronements: EntityId[];
+  /** 求賢令 — forces that issued a Call for Talent this tick (host folds each
+   *  into recruitBonusSeasons so commoners actually answer, §3.1). */
+  talentEdicts: EntityId[];
 }
 
 function nextSeasonAbs(date: GameDate, after: number): { year: number; season: Season } {
@@ -90,6 +93,7 @@ export function planAICourt(ctx: AICourtContext): AICourtOutput {
   const casusBelliMarks: AICourtOutput['casusBelliMarks'] = [];
   const rankChanges: AICourtOutput['rankChanges'] = [];
   const newEnthronements: EntityId[] = [];
+  const talentEdicts: EntityId[] = [];
   const entries: ReportEntry[] = [];
 
   // 前線 — a city is exposed if any neighbour is held by a rival force.
@@ -330,6 +334,9 @@ export function planAICourt(ctx: AICourtContext): AICourtOutput {
       );
       if (forceOfficers.length < 6 && ctx.rng() < 0.2) {
         tryIssue('call-for-talent', undefined, () => {
+          // 求賢令出寒門 — grant the recruit bonus so commoners actually answer
+          // (the host folds talentEdicts into recruitBonusSeasons).
+          talentEdicts.push(force.id);
           entries.push({
             cityId: null, kind: 'note',
             text: `${force.name.en} calls for sages.`,
@@ -343,6 +350,6 @@ export function planAICourt(ctx: AICourtContext): AICourtOutput {
   return {
     forces, officers, cities,
     edictHistory, edictCooldowns, casusBelliMarks,
-    rankChanges, entries, newEnthronements,
+    rankChanges, entries, newEnthronements, talentEdicts,
   };
 }

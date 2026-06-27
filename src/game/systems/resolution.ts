@@ -37,6 +37,7 @@ import { corruptionAccrualMultiplier } from './traitEffects';
 import { rollCivicEvents } from './civicEvents';
 import { settleRefugees, REFUGEE_SHED_FRAC } from './refugees';
 import { stepConvoys, resolveConvoyRaids, resolveRaidStrike, provisionNeeded, consumeRations, type Convoy, type ConvoyRaid } from './convoy';
+import { forcedMarchAttrition, cautiousAttritionMul, paceExposureMul } from './marchPace';
 import { stepExpeditions, expeditionSpeedMul } from './expedition';
 import { embassyTargets, embassyLegSeasons } from './foreignRealm';
 import type { Expedition, ExpeditionMode } from '../types';
@@ -47,6 +48,12 @@ import { honorificEffects } from '../data/honorifics';
 import { rollEvents } from './events';
 import { generateFictionalOfficer } from './officerGen';
 import { resolveAmbitions } from './ambition';
+import {
+  provinceGovernorEffect, provinceWarlordismDelta, seceProvince, planAIProvinceGovernors,
+  seededRng, WARLORDISM_WARN, WARLORDISM_CAP,
+} from './provinceGovernor';
+import type { ProvinceId } from '../types/province';
+import { PROVINCES_BY_ID } from '../data/provinces';
 import { tickClans, clanGentryWeight } from './clans';
 import { tickStatecraft } from './statecraft';
 import { deriveCourtFactions, type FactionId } from './courtFactions';
@@ -78,6 +85,14 @@ export interface ResolutionInput {
   clanStandings?: Record<string, import('../types').ClanStanding>;
   /** Civic-title appointments — drive force-wide bonuses in commands + combat. */
   appointments?: import('../types').Appointment[];
+  /** 考課・連續考績 — prefect officerId → signed streak, compounded each annual review. */
+  governorEvalStreaks?: Record<EntityId, number>;
+  /** 州牧 — provincial governor appointments (provinceId → officerId). */
+  provinceGovernors?: Partial<Record<ProvinceId, EntityId>>;
+  /** 州牧・擁兵自重 — provinceId → 割據 meter (0..100). */
+  provinceWarlordism?: Partial<Record<ProvinceId, number>>;
+  /** 州牧任期 — provinceId → year the steward took the province. */
+  provinceGovernorSince?: Partial<Record<ProvinceId, number>>;
   /** Active 討伐令 marks — combat power +10% from issuer toward target. */
   casusBelliMarks?: Array<{ byForceId: EntityId; targetForceId: EntityId; expiresYear: number; expiresSeason: 'spring' | 'summer' | 'autumn' | 'winter' }>;
   /** Transient 求賢令 recruit multipliers — folded into recruit commands. */
@@ -204,6 +219,20 @@ export interface ResolutionOutput {
    * Store aggregates and applies to state.deeds.
    */
   deedDeltas?: Array<{ officerId: EntityId; patch: Partial<import('../types').HeroicDeeds> }>;
+  /** 考課 (annual, winter) — updated 連續考績 streaks to persist. */
+  governorEvalStreaks?: Record<EntityId, number>;
+  /** 考課罷免 — prefect seats forfeit to chronic 下考 (AI realms only). */
+  governorRevocations?: import('./governorEval').GovernorRevocation[];
+  /** 治世之效 — 天命 deltas for realms of all-上考 stewards (forceId → delta). */
+  governorMandateDeltas?: Record<EntityId, number>;
+  /** 考課・去年考績 — per-prefect last grade, for the 考課 panel + 親裁. */
+  governorReviewLast?: import('./governorEval').GovernorEvalResult['reviewLast'];
+  /** 州牧 — updated slot map (AI appoints / secession / auto-vacate). */
+  provinceGovernors?: Partial<Record<ProvinceId, EntityId>>;
+  /** 州牧・擁兵自重 — updated 割據 meters. */
+  provinceWarlordism?: Partial<Record<ProvinceId, number>>;
+  /** 州牧任期 — updated tenure records. */
+  provinceGovernorSince?: Partial<Record<ProvinceId, number>>;
 }
 
 export function resolveSeason(input: ResolutionInput): ResolutionOutput {
@@ -217,6 +246,15 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   let refugeePool = input.refugees ?? 0;
   let refugeesShed = 0;
   const entries: ReportEntry[] = [];
+  // 考課 outputs (annual, winter boundary) — surfaced to the store to commit.
+  let governorEvalStreaksOut: Record<EntityId, number> | undefined;
+  let governorRevocationsOut: import('./governorEval').GovernorRevocation[] | undefined;
+  let governorMandateDeltasOut: Record<EntityId, number> | undefined;
+  let governorReviewLastOut: import('./governorEval').GovernorEvalResult['reviewLast'] | undefined;
+  // 州牧 outputs (per season) — slot map, 割據 meters, tenure — surfaced to the store.
+  let provinceGovernorsOut: Partial<Record<ProvinceId, EntityId>> | undefined;
+  let provinceWarlordismOut: Partial<Record<ProvinceId, number>> | undefined;
+  let provinceGovernorSinceOut: Partial<Record<ProvinceId, number>> | undefined;
   // 武功 — deed deltas accumulated this turn
   const deedDeltas: Array<{ officerId: EntityId; patch: Partial<import('../types').HeroicDeeds> }> = [];
   const bumpDeed = (officerId: EntityId, patch: Partial<import('../types').HeroicDeeds>) => {
@@ -310,7 +348,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const pa = armyPosition(a);
       const pb = armyPosition(b);
       if (!pa || !pb) continue;
-      if (Math.hypot(pa.x - pb.x, pa.y - pb.y) > INTERCEPT_DIST) continue;
+      // 行軍暴露 — a forced-marched column (strung out) is caught at longer range;
+      // a cautious, screened one is harder to run down. Use the more exposed side.
+      const catchDist = INTERCEPT_DIST * Math.max(paceExposureMul(a.pace), paceExposureMul(b.pace));
+      if (Math.hypot(pa.x - pb.x, pa.y - pb.y) > catchDist) continue;
 
       // AI 亲征 — a significant clash involving the player is handed off to an
       // interactive tactical battle instead of being auto-resolved here. Both
@@ -494,9 +535,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     if (!oa?.forceId) continue;
     const pos = armyPosition(a);
     if (!pos) continue;
-    // Nearest hostile, non-target city within sally range.
+    // Nearest hostile, non-target city within sally range. 行軍暴露 — a forced
+    // march is sallied on from further off; a cautious one slips past more often.
     let bestCity: City | null = null;
-    let bestD = SALLY_DIST;
+    let bestD = SALLY_DIST * paceExposureMul(a.pace);
     for (const city of Object.values(cities)) {
       if (!city.ownerForceId || city.ownerForceId === oa.forceId) continue;
       if (city.id === a.targetCityId || city.id === a.cityId) continue;
@@ -880,20 +922,41 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     if (!dst || !cmdr?.forceId) return { troops, lost: 0 };
     const owner = dst.ownerForceId;
     if (!owner || owner === cmdr.forceId) return { troops, lost: 0 }; // own land = safe
+    if (cmd.returning) return { troops, lost: 0 }; // streaming home over own/cleared ground
     const total = cmd.totalSeasons ?? 1;
     if (total < 3) return { troops, lost: 0 }; // only genuine deep strikes
-    const frac = Math.min(0.06, 0.015 + total * 0.005);
+    // 緩進 — a cautious column forages & rests, halving the toll.
+    const frac = Math.min(0.06, 0.015 + total * 0.005) * cautiousAttritionMul(cmd.pace);
     const lost = Math.floor(troops * frac);
     return lost > 0 ? { troops: Math.max(1, troops - lost), lost } : { troops, lost: 0 };
   };
   const noteHarass = (cmd: Extract<Command, { type: 'march' }>, lost: number) => {
     const cmdr = officers[cmd.officerId];
+    if (!cmdr || lost <= 0) return;
+    // 知敵虛實 — your own column's losses, AND a notable enemy host bleeding from
+    // overextension (≥300 lost), so you can read & exploit a rival's deep strike.
+    const mine = cmdr.forceId === pfId;
+    if (!mine && lost < 300) return;
+    entries.push({
+      cityId: null,
+      kind: 'desertion',
+      text: mine ? `${cmdr.name.en}'s column, deep in hostile country, loses ${lost} men to harassment.` : `${cmdr.name.en}'s host, overextended deep in foreign country, sheds ${lost} men.`,
+      textZh: mine ? `${cmdr.name.zh}孤軍深入,沿途遭襲,折兵 ${lost} 名。` : `${cmdr.name.zh}孤軍深入,師老兵疲,折兵 ${lost} 名。`,
+    });
+  };
+  // 累毙 — a forced march outruns its stragglers on any road (own land or not).
+  const forcedAttrition = (cmd: Extract<Command, { type: 'march' }>, troops: number): { troops: number; lost: number } => {
+    const lost = Math.floor(troops * forcedMarchAttrition(cmd.pace));
+    return lost > 0 ? { troops: Math.max(1, troops - lost), lost } : { troops, lost: 0 };
+  };
+  const noteForced = (cmd: Extract<Command, { type: 'march' }>, lost: number) => {
+    const cmdr = officers[cmd.officerId];
     if (!cmdr || cmdr.forceId !== pfId || lost <= 0) return;
     entries.push({
       cityId: null,
       kind: 'desertion',
-      text: `${cmdr.name.en}'s column, deep in hostile country, loses ${lost} men to harassment.`,
-      textZh: `${cmdr.name.zh}孤軍深入,沿途遭襲,折兵 ${lost} 名。`,
+      text: `${cmdr.name.en}'s forced march outruns ${lost} stragglers.`,
+      textZh: `${cmdr.name.zh}急行軍,${lost} 名士卒掉隊脫行。`,
     });
   };
 
@@ -907,13 +970,15 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const h = hostileMarchAttrition(cmd, s.troops);
     if (h.lost > 0) noteHarass(cmd, h.lost);
     if (h.troops <= 0) continue;
-    suppliedTroops[cmd.officerId] = h.troops;
+    const f = forcedAttrition(cmd, h.troops);
+    if (f.lost > 0) noteForced(cmd, f.lost);
+    suppliedTroops[cmd.officerId] = f.troops;
     suppliedFood[cmd.officerId] = s.food;
     // 防壁 — a barricade in the column's path stalls it this season (no advance).
     const advance = blockedOfficers.has(cmd.officerId) ? 0 : 1;
     keptCommands[cmd.officerId] = {
       ...cmd,
-      troops: h.troops,
+      troops: f.troops,
       food: s.food,
       seasonsRemaining: (cmd.seasonsRemaining ?? 1) - advance,
     };
@@ -959,6 +1024,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       food: suppliedFood[cmd.officerId],
       holding,
       cellTarget: cmd.targetX != null,
+      pace: cmd.pace,
+      returning: cmd.returning,
+      legionBanner: cmd.legionBanner,
     };
   };
   for (const cmd of inTransit) deriveArmy(cmd, (cmd.seasonsRemaining ?? 1) - (blockedOfficers.has(cmd.officerId) ? 0 : 1), false);
@@ -1995,6 +2063,99 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     }
   }
 
+  // 州牧 — provincial stewardship + 擁兵自重, once per season for ALL realms.
+  // AI lords seat their own 州牧; every governor stewards his province (分權之效)
+  // and accrues 割據 designs; at the cap he secedes the whole province (擁州自立).
+  if (seasonBoundary && input.provinceGovernors) {
+    const govs: Partial<Record<ProvinceId, EntityId>> = { ...input.provinceGovernors };
+    const warl: Partial<Record<ProvinceId, number>> = { ...(input.provinceWarlordism ?? {}) };
+    const since: Partial<Record<ProvinceId, number>> = { ...(input.provinceGovernorSince ?? {}) };
+    const pgSeasonIdx = { spring: 0, summer: 1, autumn: 2, winter: 3 }[input.date.season];
+    const pgRng = seededRng((input.date.year * 4 + pgSeasonIdx + 7919) >>> 0);
+
+    // AI realms seat 州牧 over provinces they fully hold (proven prefects preferred).
+    const aiAppts = planAIProvinceGovernors({
+      forces, officers, cities, provinceGovernors: govs, playerForceId: input.playerForceId,
+      streaks: input.governorEvalStreaks, rng: pgRng,
+    });
+    for (const a of aiAppts) {
+      govs[a.provinceId] = a.officerId;
+      since[a.provinceId] = input.date.year;
+      const o = officers[a.officerId];
+      const prov = PROVINCES_BY_ID[a.provinceId];
+      if (o && prov) {
+        officers[a.officerId] = { ...o, loyalty: Math.min(100, o.loyalty + 3) };
+        entries.push({
+          cityId: null, kind: 'note',
+          text: `${forces[a.forceId]?.name.en ?? a.forceId} names ${o.name.en} 州牧 of ${prov.name.en}.`,
+          textZh: `${forces[a.forceId]?.name.zh ?? a.forceId}拜${o.name.zh}為${prov.name.zh}牧。`,
+        });
+      }
+    }
+
+    for (const [pid, oid] of Object.entries(govs) as Array<[ProvinceId, EntityId]>) {
+      const gov = oid ? officers[oid] : null;
+      const province = PROVINCES_BY_ID[pid];
+      // 自動卸任 — governor gone, or his force holds nothing in the province.
+      if (!gov || gov.status === 'dead' || gov.status === 'imprisoned' || !gov.forceId || !province) {
+        delete govs[pid]; delete warl[pid]; delete since[pid]; continue;
+      }
+      const ownedIds = province.cityIds.filter((id) => cities[id]?.ownerForceId === gov.forceId);
+      if (ownedIds.length === 0) { delete govs[pid]; delete warl[pid]; delete since[pid]; continue; }
+
+      // 分權之效 — province-wide stewardship.
+      const eff = provinceGovernorEffect(gov, pid, cities);
+      for (const [cid, d] of Object.entries(eff.deltas)) {
+        const c = cities[cid];
+        if (!c) continue;
+        cities[cid] = {
+          ...c,
+          loyalty: Math.max(0, Math.min(100, c.loyalty + d.loyalty)),
+          gold: Math.max(0, c.gold + d.gold),
+          agriculture: Math.max(0, Math.min(400, c.agriculture + d.agriculture)),
+          defense: Math.max(0, Math.min(200, c.defense + d.defense)),
+          corruption: Math.max(0, Math.min(100, (c.corruption ?? 0) + d.corruption)),
+          troops: Math.max(0, c.troops + d.troops),
+        };
+      }
+      const isPlayer = gov.forceId === input.playerForceId;
+      if (eff.touched > 0 && isPlayer) {
+        entries.push({
+          cityId: null, kind: 'income',
+          text: `${gov.name.en} governs ${province.name.en}: +${eff.loyaltyGain} loyalty & +${eff.goldBonus} gold across ${eff.touched} cities${eff.developGain ? ` (+dev)` : ''}${eff.militia ? ` (+militia)` : ''}.`,
+          textZh: `${gov.name.zh}牧${province.name.zh}:全境 ${eff.touched} 城 民忠 +${eff.loyaltyGain}、金 +${eff.goldBonus}${eff.developGain ? `、勸農 +${eff.developGain}` : ''}${eff.defenseGain ? `、城防 +${eff.defenseGain}` : ''}${eff.antiGraft ? `、肅貪` : ''}${eff.militia ? `、州兵動員` : ''}。`,
+        });
+      }
+
+      // 擁兵自重 — accrue 割據 designs; at the cap, the province secedes.
+      const ownedTroops = ownedIds.reduce((s, id) => s + (cities[id]?.troops ?? 0), 0);
+      const tenureYears = input.date.year - (since[pid] ?? input.date.year);
+      const d = provinceWarlordismDelta({
+        gov, ownedTroops, ownedCities: ownedIds.length, tenureYears,
+        lordRapport: isPlayer ? input.lordRapport?.[gov.id] : undefined,
+      });
+      const meter = Math.max(0, Math.min(WARLORDISM_CAP, (warl[pid] ?? 0) + d));
+      warl[pid] = meter;
+      if (meter >= WARLORDISM_CAP) {
+        const sec = seceProvince({ provinceId: pid, gov, officers, cities, forces });
+        if (sec) {
+          entries.push({ cityId: sec.event.cityId, kind: 'rebellion', text: sec.event.text, textZh: sec.event.textZh });
+          delete govs[pid]; delete warl[pid]; delete since[pid];
+        }
+      } else if (meter >= WARLORDISM_WARN && d > 0 && isPlayer) {
+        entries.push({
+          cityId: null, kind: 'note',
+          text: `${gov.name.en}, 州牧 of ${province.name.en}, grows over-mighty (割據 ${Math.round(meter)}/100) — recall or appease him before he secedes.`,
+          textZh: `${province.name.zh}牧 ${gov.name.zh} 威權日重(割據 ${Math.round(meter)}/100),尾大不掉 — 宜召還或安撫,免其擁州自立。`,
+        });
+      }
+    }
+
+    provinceGovernorsOut = govs;
+    provinceWarlordismOut = warl;
+    provinceGovernorSinceOut = since;
+  }
+
   // 4. Random events — only on season boundary.
   if (seasonBoundary) {
     const eventResult = rollEvents({
@@ -2050,12 +2211,21 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         appointments: input.appointments,
         cities,
         officers,
+        playerForceId: input.playerForceId,
+        streaks: input.governorEvalStreaks,
+        year: input.date.year,
+        // 牧守一體 — use the post-州牧-step slot map (a seceded 州牧 is gone).
+        provinceGovernors: provinceGovernorsOut ?? input.provinceGovernors,
         rng,
       });
       officers = kaoke.officers;
       for (const e of kaoke.entries) {
-        entries.push({ cityId: e.cityId, kind: 'note', text: e.text, textZh: e.textZh });
+        entries.push({ cityId: e.cityId || null, kind: 'note', text: e.text, textZh: e.textZh });
       }
+      governorEvalStreaksOut = kaoke.streaks;
+      governorRevocationsOut = kaoke.revoked.length > 0 ? kaoke.revoked : undefined;
+      governorMandateDeltasOut = Object.keys(kaoke.mandateDeltas).length > 0 ? kaoke.mandateDeltas : undefined;
+      governorReviewLastOut = kaoke.reviewLast;
     }
   }
 
@@ -2577,6 +2747,13 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     pendingSiegeDefenses: pendingSiegeDefenses.length > 0 ? pendingSiegeDefenses : undefined,
     delayedEffects: delayedEffects.length > 0 ? delayedEffects : undefined,
     deedDeltas: deedDeltas.length > 0 ? deedDeltas : undefined,
+    governorEvalStreaks: governorEvalStreaksOut,
+    governorRevocations: governorRevocationsOut,
+    governorMandateDeltas: governorMandateDeltasOut,
+    governorReviewLast: governorReviewLastOut,
+    provinceGovernors: provinceGovernorsOut,
+    provinceWarlordism: provinceWarlordismOut,
+    provinceGovernorSince: provinceGovernorSinceOut,
   };
 }
 

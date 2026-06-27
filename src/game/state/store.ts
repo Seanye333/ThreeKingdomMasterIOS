@@ -30,6 +30,9 @@ import { grantDeedTitles } from '../systems/deedTitles';
 import { pushBoutRecord } from '../systems/duelHall';
 import { applyBout } from '../systems/warRanking';
 import { tickAfflictions, withAffliction, type Affliction } from '../systems/afflictions';
+import { routConsequence, type RoutConsequence } from '../systems/wordWar';
+import { canAppraise, appraisalVerdict, appraisalRenownGain, discernment, isLegendaryCritic, legendaryVerdict, appraisalMisread, pickMonthlyAppraisal } from '../systems/appraisal';
+import { executionRenownCost, markSlainVendetta } from '../systems/captiveFate';
 import { trainKey, recordTrain } from '../systems/sparLimit';
 import type { Difficulty } from './gameState';
 import { CIVIC_TITLES_BY_ID, MILITARY_RANKS_BY_ID } from '../data/titles';
@@ -51,6 +54,7 @@ import { ITEMS_BY_ID, refineCost, REFINE_MAX, setRefineRegistry, itemRarity,
   itemGrowthGoldSpent } from '../data/items';
 import { SKILLS_BY_ID } from '../data/skills';
 import { marchDurationFor } from '../data/cities';
+import { marchSpeedMul, adjustMarchSeasons, PACE_LABEL, arrivalFatigueMorale } from '../systems/marchPace';
 import { terrainRoute, positionAlongRoute, marchDestCoords } from '../data/territories';
 import { cityPos, CITY_GEO_OVERRIDES } from '../data/cityGeo';
 import { provisionNeeded, convoyCapacity, planConvoy } from '../systems/convoy';
@@ -98,9 +102,9 @@ import { rollAIWishFlavor } from '../systems/aiWishesFlavor';
 import { appointmentBonusFor, pruneStaleAppointments, traitRefusal, isOnCooldown } from '../systems/appointmentEffects';
 import { canPromoteToRank } from '../systems/imperialEffects';
 import { COMMAND_DEFS } from '../systems/commands';
-import { planMassMuster } from '../systems/muster';
-import { planGovernorCommand } from '../systems/governor';
-import { planLegionOrders, type Legion } from '../systems/legion';
+import { planMassMuster, musterStrain, MUSTER_GATHER_SEASONS, MUSTER_CAMPAIGN_SEASONS, type MusterOptions } from '../systems/muster';
+import { planGovernorCommand, governorMisruleEffect } from '../systems/governor';
+import { planLegionOrders, planLegionLogistics, legionBannerBonus, type Legion } from '../systems/legion';
 import { buyQuote, sellQuote, borderTariff, buyHorses, sellHorses, WARHORSE_CITY_CAP, buyIron, sellIron, IRON_CITY_CAP, MEDICINE_CITY_CAP, IRON_FORGE_COST, FORGE_IRON_DISCOUNT } from '../systems/market';
 import { EDICT_DISCOUNT, EMPEROR_HOME, MANDATE_PER_SEASON, RESENTMENT_PER_SEASON, canWelcomeEmperor, emperorCustodian } from '../systems/emperor';
 import { commonerArrivalCity, generateCommonerOfficer, lordTalentDraw, commonerArrivalChance } from '../systems/commonerTalent';
@@ -230,6 +234,7 @@ import { planAIBuildOrders, planAIFacilities, planAIFortAssaults, planAISiteSeiz
 import { SCENARIO_OBJECTIVES } from '../data/objectives';
 import { SCENARIOS } from '../data';
 import { PROVINCES_BY_ID } from '../data/provinces';
+import { planProvinceLevy } from '../systems/provinceGovernor';
 import { findChallenge, evaluateChallenge, challengeStars } from '../data/challenges';
 import { MAX_CUSTOM_EVENTS } from '../systems/customEvents';
 import { refreshPrestige, prestigeTitleById, TOP_PRESTIGE_IDS } from '../data/prestige';
@@ -255,6 +260,7 @@ import { rollSpecialtyEvents } from '../systems/specialtyEvents';
 import { rollOmen } from '../systems/mandate';
 import { rollReligiousRebellion, spreadCultUnrest } from '../systems/religion';
 import { resolveAIRansoms } from '../systems/aiRansom';
+import { resolveAICaptives } from '../systems/aiCaptiveFate';
 
 const SEASON_INDEX: Record<string, number> = {
   spring: 0,
@@ -342,7 +348,20 @@ interface GameStore extends GameState {
     officerId: EntityId,
     troops: number,
     additionalOfficerIds?: EntityId[],
+    pace?: import('../systems/marchPace').MarchPace,
   ) => { ok: boolean; reason?: string };
+  /** 召回行軍 — turn a column still on the road back toward its source city; it
+   *  abandons the objective and streams home, shedding stragglers (deeper = more).
+   *  No-op once it's about to arrive (seasonsRemaining ≤ 1) or already returning. */
+  recallMarch: (officerId: EntityId) => { ok: boolean; reason?: string };
+  /** 邀擊 — enemy marching columns the player can see & run down (their position's
+   *  nearest stronghold is one of yours, and they're not behind the fog). The
+   *  launch city is that nearest stronghold. */
+  spottedEnemyColumns: () => Array<{ armyId: EntityId; fromCityId: EntityId; x: number; y: number; troops: number; commanderName: { zh: string; en: string } }>;
+  /** 邀擊 — sortie an officer + troops from a border city to run down a spotted
+   *  enemy column; the intercept march aims ahead of the column and clashes when
+   *  the two hosts meet on the road. */
+  interceptColumn: (armyId: EntityId, fromCityId: EntityId, officerId: EntityId, troops: number) => { ok: boolean; reason?: string };
   /** 一鍵委派 — auto-assign every idle officer in a self-run city a sensible
    *  internal-affairs task (by city need × aptitude). Returns how many were
    *  dispatched and the gold spent. */
@@ -431,14 +450,42 @@ interface GameStore extends GameState {
   borrowWarFunds: () => { ok: boolean; gold: number; owed?: number; message?: string };
   /** 委任太守 — set (or clear with null) a city's standing governor. */
   delegateCity: (cityId: EntityId, officerId: EntityId | null) => void;
+  /** 施政重點 — set a delegated city's governor focus (均衡/富國/強兵/守備/安民). */
+  setGovernorStance: (cityId: EntityId, stance: import('../systems/governor').GovernorStance) => void;
+  /** 主公親裁・表彰 — reward a prefect (spends 府庫 gold): loyalty + 威望. */
+  commendGovernor: (officerId: EntityId) => { ok: boolean; reason?: string };
+  /** 主公親裁・問責 — discipline a prefect: a stern loyalty/威望 docking. */
+  reprimandGovernor: (officerId: EntityId) => { ok: boolean; reason?: string };
   /** 軍團都督 — form a legion (id auto-assigned). */
   createLegion: (legion: Omit<Legion, 'id'>) => void;
   disbandLegion: (legionId: string) => void;
+  /** 軍團改編 — edit a legion in place (directive / target / cities / 都督) without
+   *  disband-and-rebuild. A new 都督 must still be 金牌+. */
+  updateLegion: (legionId: string, patch: Partial<Omit<Legion, 'id'>>) => void;
   /** 全軍集結令 — every player city that can spare a column marches ~70%
    *  of its garrison toward the target under its best idle officer
    *  (adjacent cities directly, the hinterland one hop along an in-realm
    *  path). Returns how many columns were dispatched. */
-  massMuster: (targetCityId: EntityId) => number;
+  /** 全軍集結令 — converge the realm on a city: a hostile target (攻) or one of
+   *  your own (勤王 reinforce / 集結點). Options: troop fraction, garrison floor,
+   *  exclude 前線 cities. Returns how many columns actually marched. */
+  massMuster: (targetCityId: EntityId, opts?: { fraction?: number; keepGarrison?: number; excludeFrontier?: boolean }) => number;
+  /** 集結預覽 — what a muster would do without committing: column count, total
+   *  troops & gold, slowest ETA, per-column legs, and which cities are excluded. */
+  musterPreview: (targetCityId: EntityId, opts?: { fraction?: number; keepGarrison?: number; excludeFrontier?: boolean }) => {
+    relief: boolean; columns: number; totalTroops: number; totalGold: number; slowestSeasons: number;
+    orders: Array<{ cityId: EntityId; marchTo: EntityId; troops: number; seasons: number }>;
+    excluded: Array<{ cityId: EntityId; reason: string }>;
+  };
+  /** 持續集結 — start a standing campaign that re-musters toward `targetCityId`
+   *  each season until it falls (or is cancelled). With `rallyCityId` it gathers
+   *  there first (分進合擊). Fires the first wave at once. Returns the campaign id. */
+  startMusterCampaign: (targetCityId: EntityId, opts?: { rallyCityId?: EntityId; fraction?: number; keepGarrison?: number; excludeFrontier?: boolean }) => EntityId | null;
+  /** 罷集結 — call off a standing muster campaign. */
+  cancelMusterCampaign: (id: EntityId) => void;
+  /** Step every standing campaign one season (issue its next wave; advance the
+   *  gather→strike phase; retire the spent ones). Called at the season boundary. */
+  processMusterCampaigns: () => void;
   cancelCommand: (cityId: EntityId) => void;
   /** Start training an officer in a new policy. If `mentorOfficerId` is
    *  provided, runs in mentor mode (no academy needed, 0 gold, +1 season).
@@ -645,6 +692,19 @@ interface GameStore extends GameState {
   /** 後遺 — lay a short-lived affliction on an officer (養傷 from a duel, 羞憤
    *  from a lost debate). Ticks down each season; folds into effective stats. */
   afflictOfficer: (officerId: EntityId, affliction: Affliction) => void;
+  /** 罵死 — apply the consequence of routing a foe in a war of words: a
+   *  hot-tempered or aged mind may break (death, 王朗墜馬), else it stews in a
+   *  heavy 羞憤 (−魅/−智); the young & steady are unharmed. Returns the outcome. */
+  debateRout: (officerId: EntityId, rng?: () => number) => RoutConsequence;
+  /** 民心 — nudge a city's loyalty (公開舌戰的餘波撼動守城民心). Clamped 0..100. */
+  shiftCityLoyalty: (cityId: EntityId, delta: number) => void;
+  /** Spend gold from a city's coffers (e.g. mounting a 说客 embassy). Returns
+   *  false and deducts nothing if the city can't afford it. */
+  spendCityGold: (cityId: EntityId, amount: number) => boolean;
+  /** 月旦評 — your sharpest 名士 appraises an officer (§3.5): records a 定評,
+   *  reveals their 成長資質, and makes a name (renown for both). Returns the
+   *  verdict, or a reason it can't be done (no appraiser / already appraised). */
+  appraiseOfficer: (targetId: EntityId) => { ok: boolean; reason?: string; verdictZh?: string; verdictEn?: string; appraiserName?: { zh: string; en: string }; renownGain?: number; misread?: boolean; legendary?: boolean };
   /** 名聲榜 — accumulate heroic deeds (duel/debate wins, etc.) for an officer.
    *  Numeric fields add; others overwrite. Feeds renown in systems/fame.ts. */
   recordDeed: (officerId: EntityId, patch: Partial<import('../types').HeroicDeeds>) => void;
@@ -880,6 +940,12 @@ interface GameStore extends GameState {
     provinceId: ProvinceId,
     officerId: EntityId,
   ) => { ok: boolean; reason?: string };
+  /** 召還 — recall a province governor (clears the 割據 meter + tenure). */
+  recallGovernor: (provinceId: ProvinceId) => { ok: boolean; reason?: string };
+  /** 安撫 — spend gold to cool a restive 州牧's 割據 meter + firm his loyalty. */
+  appeaseGovernor: (provinceId: ProvinceId) => { ok: boolean; reason?: string };
+  /** 州牧辟召 — one-click 委任太守 for every undelegated city of the province. */
+  provinceLevy: (provinceId: ProvinceId) => { ok: boolean; count: number; reason?: string };
   /** 府內結親 — arrange a marriage between two of your own officers (500 gold):
    *  steadies their loyalty and lets the couple raise heirs over the years. */
   proposeMarriagePair: (
@@ -984,6 +1050,8 @@ function buildFieldBattle(
     defenderForceId: eArmy.forceId,
     attackers,
     defenders,
+    // 疲勞 less 都督之旗 — weary from a forced march, steadied by the marshal's banner.
+    attackerFatigue: arrivalFatigueMorale(pArmy.pace) - (pArmy.legionBanner ?? 0),
     // Whichever side is dug in fights from an ambush formation.
     attackerFormation: pArmy.holding ? 'ten-ambush' : undefined,
     defenderFormation: eArmy.holding ? 'ten-ambush' : undefined,
@@ -1055,6 +1123,28 @@ function nearestCityTo(
 
 /** 名駒 — the famous mounts (赤兔/的盧/汗血…) a developed 名馬 city can foal. */
 const NAMED_MOUNTS = Object.values(ITEMS_BY_ID).filter((i) => (i as { kind?: string }).kind === 'horse');
+
+/** Resolve a muster's UI options into the planner's options — chiefly turning
+ *  「排除前線」into the concrete set of border cities to leave at home. */
+function musterOptsFor(
+  state: GameState,
+  opts?: { fraction?: number; keepGarrison?: number; excludeFrontier?: boolean },
+): MusterOptions | undefined {
+  if (!opts) return undefined;
+  const excludeCityIds = new Set<EntityId>();
+  const pid = state.playerForceId;
+  if (opts.excludeFrontier && pid) {
+    for (const c of Object.values(state.cities)) {
+      if (c.ownerForceId !== pid) continue;
+      const onFrontier = c.adjacentCityIds.some((nid) => {
+        const n = state.cities[nid];
+        return !!n && !!n.ownerForceId && n.ownerForceId !== pid && isHostilePermitted(state.diplomacy, pid, n.ownerForceId);
+      });
+      if (onFrontier) excludeCityIds.add(c.id);
+    }
+  }
+  return { fraction: opts.fraction, keepGarrison: opts.keepGarrison, excludeCityIds };
+}
 
 export const useGameStore = create<GameStore>()(
   persist(
@@ -1488,7 +1578,7 @@ export const useGameStore = create<GameStore>()(
         return { assigned, goldSpent };
       },
 
-      issueMarch: (sourceId, targetId, officerId, troops, additionalOfficerIds) => {
+      issueMarch: (sourceId, targetId, officerId, troops, additionalOfficerIds, pace = 'normal') => {
         const state = get();
         const source = state.cities[sourceId];
         const target = state.cities[targetId];
@@ -1557,9 +1647,12 @@ export const useGameStore = create<GameStore>()(
           };
         }
 
-        // Sea legs run on the fleet's schedule — two seasons however far
-        // the route, which beats any long land march (長江是高速路).
-        const dur = isNaval ? 2 : marchDurationFor(source, state.cities[targetId], state.date.season);
+        // Sea legs run on the fleet's schedule — two seasons however far the
+        // route (長江是高速路). A land march folds in 行軍節奏 (急行/緩) and the
+        // column's speed (健行/嚴峻/騎將/驛站 hasten, 鈍重 drags).
+        const marchPool = [officer, ...extras.map((e) => state.officers[e]).filter(Boolean)];
+        const speedMul = marchSpeedMul(marchPool);
+        const dur = isNaval ? 2 : adjustMarchSeasons(marchDurationFor(source, state.cities[targetId], state.date.season), pace, speedMul);
         set({
           cities: {
             ...state.cities,
@@ -1583,6 +1676,7 @@ export const useGameStore = create<GameStore>()(
               additionalOfficerIds: extras.length > 0 ? extras : undefined,
               seasonsRemaining: dur,
               totalSeasons: dur,
+              pace,
             } as MarchCommand,
           },
           // Mirror the order into the persistent army layer at the source
@@ -1602,6 +1696,7 @@ export const useGameStore = create<GameStore>()(
               y: cityPos(source).y,
               progress: 0,
               totalSeasons: dur,
+              pace,
             },
           },
           // 積怨 — marching on a force's own city stokes its lasting resentment.
@@ -1609,9 +1704,99 @@ export const useGameStore = create<GameStore>()(
             ? { grudges: { ...state.grudges, [target.ownerForceId]: Math.min(100, (state.grudges[target.ownerForceId] ?? 0) + 6) } }
             : {}),
         });
+        const paceTag = pace !== 'normal' && !isNaval ? `·${PACE_LABEL[pace].zh}` : '';
+        const paceTagEn = pace !== 'normal' && !isNaval ? ` · ${PACE_LABEL[pace].en}` : '';
         get().notify(
-          `出兵 · ${officer.name.zh} 領 ${troops.toLocaleString()} 兵 → ${target.name.zh}（${dur}季抵達）`,
-          `March · ${officer.name.en} leads ${troops.toLocaleString()} → ${target.name.en} (${dur} seasons)`,
+          `出兵${paceTag} · ${officer.name.zh} 領 ${troops.toLocaleString()} 兵 → ${target.name.zh}（${dur}季抵達）`,
+          `March${paceTagEn} · ${officer.name.en} leads ${troops.toLocaleString()} → ${target.name.en} (${dur} seasons)`,
+        );
+        return { ok: true };
+      },
+      recallMarch: (officerId) => {
+        const state = get();
+        const cmd = state.pendingCommands[officerId];
+        if (!cmd || cmd.type !== 'march') return { ok: false, reason: 'no march' };
+        if (cmd.returning) return { ok: false, reason: 'already returning' };
+        const remaining = cmd.seasonsRemaining ?? 1;
+        if (remaining <= 1) return { ok: false, reason: 'about to arrive' };
+        const officer = state.officers[officerId];
+        if (!officer || officer.forceId !== state.playerForceId) return { ok: false, reason: 'not yours' };
+        // 折返掉隊 — the deeper the column had marched, the more it sheds turning back.
+        const covered = (cmd.totalSeasons ?? 1) - remaining;
+        const returnDur = Math.max(1, covered);
+        const straggle = Math.min(0.25, 0.05 + covered * 0.04);
+        const troops = Math.max(1, Math.round(cmd.troops * (1 - straggle)));
+        // Head back to the source city (own ground → no 孤軍 toll, merges on arrival).
+        const recalled: MarchCommand = {
+          ...cmd, targetCityId: cmd.cityId, targetX: undefined, targetY: undefined,
+          troops, totalSeasons: returnDur, seasonsRemaining: returnDur, holding: false, returning: true,
+        };
+        const army = state.armies[officerId];
+        set({
+          pendingCommands: { ...state.pendingCommands, [officerId]: recalled },
+          armies: army ? { ...state.armies, [officerId]: { ...army, targetCityId: cmd.cityId, troops, totalSeasons: returnDur, progress: 0, holding: false, cellTarget: false, returning: true } } : state.armies,
+        });
+        get().notify(
+          `召回 · ${officer.name.zh} 折返本城（散卒 ${Math.round(straggle * 100)}%,${returnDur}季抵）`,
+          `Recall · ${officer.name.en} turns home (−${Math.round(straggle * 100)}% straggle, ${returnDur} seasons)`,
+        );
+        return { ok: true };
+      },
+      spottedEnemyColumns: () => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid) return [];
+        const out: Array<{ armyId: EntityId; fromCityId: EntityId; x: number; y: number; troops: number; commanderName: { zh: string; en: string } }> = [];
+        for (const a of Object.values(state.armies)) {
+          if (!a.forceId || a.forceId === pid) continue;
+          if (!isHostilePermitted(state.diplomacy, pid, a.forceId)) continue;
+          // Spotted when the column's nearest stronghold is one of ours (the same
+          // geometry by which a garrison would sally on it) — the launch city.
+          const near = nearestCityTo(a.x, a.y, state.cities);
+          if (!near || near.ownerForceId !== pid) continue;
+          const cmdr = state.officers[a.commanderId];
+          out.push({ armyId: a.id, fromCityId: near.id, x: a.x, y: a.y, troops: a.troops, commanderName: cmdr?.name ?? { zh: '?', en: '?' } });
+        }
+        return out;
+      },
+      interceptColumn: (armyId, fromCityId, officerId, troops) => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid) return { ok: false };
+        const target = state.armies[armyId];
+        if (!target || !target.forceId || target.forceId === pid) return { ok: false, reason: 'not an enemy column' };
+        if (!isHostilePermitted(state.diplomacy, pid, target.forceId)) return { ok: false, reason: 'not at war' };
+        const from = state.cities[fromCityId];
+        if (!from || from.ownerForceId !== pid) return { ok: false, reason: 'not your city' };
+        if (nearestCityTo(target.x, target.y, state.cities)?.id !== fromCityId) return { ok: false, reason: 'out of reach' };
+        if (from.gold < 100) return { ok: false, reason: 'not enough gold' };
+        const officer = state.officers[officerId];
+        if (!officer || officer.forceId !== pid || officer.locationCityId !== fromCityId || officer.task || state.pendingCommands[officerId]) return { ok: false, reason: 'officer unavailable' };
+        if (state.pendingTrainings.some((tr) => tr.officerId === officerId)) return { ok: false, reason: 'officer is training' };
+        const send = Math.min(Math.max(0, Math.floor(troops)), Math.max(0, from.troops - 100));
+        if (send < 1) return { ok: false, reason: 'no troops to spare' };
+        // 邀擊 — aim ahead of the column, toward where it's bound, so the two hosts
+        // meet on the road (the field-clash interception then resolves it).
+        const fp = cityPos(from);
+        const dst = target.cellTarget || !state.cities[target.targetCityId] ? { x: target.x, y: target.y } : cityPos(state.cities[target.targetCityId]);
+        const remaining = Math.max(1, Math.round((1 - target.progress) * target.totalSeasons));
+        const lead = { x: target.x + (dst.x - target.x) / remaining, y: target.y + (dst.y - target.y) / remaining };
+        const dur = Math.hypot(lead.x - fp.x, lead.y - fp.y) < 100 * WORLD_SCALE ? 1 : 2;
+        set({
+          cities: { ...state.cities, [fromCityId]: { ...from, gold: from.gold - 100, troops: from.troops - send } },
+          officers: { ...state.officers, [officerId]: { ...officer, task: 'march' as const } },
+          pendingCommands: {
+            ...state.pendingCommands,
+            [officerId]: { type: 'march', cityId: fromCityId, officerId, targetCityId: fromCityId, targetX: lead.x, targetY: lead.y, troops: send, seasonsRemaining: dur, totalSeasons: dur, pace: 'forced' } as MarchCommand,
+          },
+          armies: {
+            ...state.armies,
+            [officerId]: { id: officerId, forceId: pid, commanderId: officerId, companionIds: [], troops: send, fromCityId, targetCityId: fromCityId, x: fp.x, y: fp.y, progress: 0, totalSeasons: dur, cellTarget: true, pace: 'forced' },
+          },
+        });
+        get().notify(
+          `邀擊 · ${officer.name.zh} 領 ${send.toLocaleString()} 兵截擊 ${state.officers[target.commanderId]?.name.zh ?? '敵軍'}`,
+          `Intercept · ${officer.name.en} rides to run down the enemy column`,
         );
         return { ok: true };
       },
@@ -1626,7 +1811,7 @@ export const useGameStore = create<GameStore>()(
           return { ok: false, message: `國庫不足(需${def.goldCost}金於首都)` };
         const bad = validateScheme(schemeId, state.cities, state.playerForceId, targetA, targetB);
         if (bad) return { ok: false, message: bad };
-        const strategist = pickAdvisor(state.officers, state.playerForceId);
+        const strategist = pickAdvisor(state.officers, state.playerForceId, state.appointments);
         const odds = schemeOdds(schemeId, state.diplomacy, strategist, targetA, targetB);
         // Pay either way — schemes spend silver before they spend luck.
         const cities = { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - def.goldCost } };
@@ -2093,6 +2278,21 @@ export const useGameStore = create<GameStore>()(
         set({ legions: (get().legions ?? []).filter((l) => l.id !== legionId) });
       },
 
+      updateLegion: (legionId, patch) => {
+        const st = get();
+        const legion = (st.legions ?? []).find((l) => l.id === legionId);
+        if (!legion) return;
+        // 都督改任 — a replacement marshal must still be 金牌+.
+        if (patch.commanderId && patch.commanderId !== legion.commanderId) {
+          const cmdr = st.officers[patch.commanderId];
+          if (!cmdr || gradeRank(officerGrade(cmdr).grade) < gradeRank('gold')) {
+            st.notify('品階不足 · 軍團都督須金牌+', 'A legion commander must be Gold grade or above', 'warn');
+            return;
+          }
+        }
+        set({ legions: (st.legions ?? []).map((l) => (l.id === legionId ? { ...l, ...patch } : l)) });
+      },
+
       delegateCity: (cityId, officerId) => {
         const s = get();
         const city = s.cities[cityId];
@@ -2104,33 +2304,195 @@ export const useGameStore = create<GameStore>()(
           return;
         }
         const next = { ...s.cityDelegations };
-        if (officerId) next[cityId] = officerId;
-        else delete next[cityId];
-        set({ cityDelegations: next });
+        const since = { ...s.governorSince };
+        const stances = { ...s.governorStances };
+        if (officerId) { next[cityId] = officerId; since[cityId] = s.date.year; }
+        else { delete next[cityId]; delete since[cityId]; delete stances[cityId]; }
+        set({ cityDelegations: next, governorSince: since, governorStances: stances });
         if (city) {
-          if (gov) s.notify(`委任太守 · ${gov.name.zh} 治 ${city.name.zh}`, `Governor · ${gov.name.en} now runs ${city.name.en}`);
-          else s.notify(`撤太守 · ${city.name.zh} 收歸親理`, `Governor recalled · ${city.name.en}`, 'warn');
+          if (gov) {
+            s.notify(`委任太守 · ${gov.name.zh} 治 ${city.name.zh}`, `Governor · ${gov.name.en} now runs ${city.name.en}`);
+            get().pushPopup({
+              key: 'governor-appointed', media: 'image',
+              titleZh: '委任太守', titleEn: 'A Governor Invested',
+              captionZh: `${gov.name.zh} 受印,出鎮 ${city.name.zh}`,
+              captionEn: `${gov.name.en} takes the seal of ${city.name.en}`,
+            });
+          } else s.notify(`撤太守 · ${city.name.zh} 收歸親理`, `Governor recalled · ${city.name.en}`, 'warn');
         }
       },
+      setGovernorStance: (cityId, stance) => {
+        const s = get();
+        if (!s.cityDelegations[cityId]) return;
+        set({ governorStances: { ...s.governorStances, [cityId]: stance } });
+      },
 
-      massMuster: (targetCityId) => {
+      // 主公親裁・恩 — 表彰 a steward. The 賞 comes out of the seat's own 府庫
+      // (300 金), and buys real loyalty + 威望 (renown folds into 品階).
+      commendGovernor: (officerId) => {
+        const s = get();
+        const o = s.officers[officerId];
+        if (!o || o.forceId !== s.playerForceId) return { ok: false, reason: '非我臣屬' };
+        const appt = s.appointments.find((a) => a.officerId === officerId && a.titleId === 'prefect');
+        if (!appt || !appt.cityId) return { ok: false, reason: '未領太守之任' };
+        const city = s.cities[appt.cityId];
+        if (!city || city.ownerForceId !== s.playerForceId) return { ok: false, reason: '城已易主' };
+        const COST = 300;
+        if (city.gold < COST) return { ok: false, reason: `府庫不足(需 ${COST} 金)` };
+        set({
+          cities: { ...s.cities, [city.id]: { ...city, gold: city.gold - COST } },
+          officers: {
+            ...s.officers,
+            [officerId]: { ...o, loyalty: Math.min(100, o.loyalty + 6), renown: (o.renown ?? 0) + 3 },
+          },
+        });
+        get().notify(
+          `表彰 ${o.name.zh}〔${city.name.zh}太守〕— 忠誠 +6,威望 +3。`,
+          `Commended ${o.name.en} (prefect of ${city.name.en}) — loyalty +6, renown +3.`,
+          'ok',
+        );
+        return { ok: true };
+      },
+
+      // 主公親裁・威 — 問責 a steward: a public dressing-down. Stings loyalty
+      // and 威望 — wield it on a chronic 下考, but mind the defection cliff.
+      reprimandGovernor: (officerId) => {
+        const s = get();
+        const o = s.officers[officerId];
+        if (!o || o.forceId !== s.playerForceId) return { ok: false, reason: '非我臣屬' };
+        const appt = s.appointments.find((a) => a.officerId === officerId && a.titleId === 'prefect');
+        if (!appt) return { ok: false, reason: '未領太守之任' };
+        set({
+          officers: {
+            ...s.officers,
+            [officerId]: { ...o, loyalty: Math.max(0, o.loyalty - 5), renown: Math.max(0, (o.renown ?? 0) - 2) },
+          },
+        });
+        get().notify(
+          `問責 ${o.name.zh} — 忠誠 −5,威望 −2,以儆效尤。`,
+          `Reprimanded ${o.name.en} — loyalty −5, renown −2.`,
+          'warn',
+        );
+        return { ok: true };
+      },
+
+      massMuster: (targetCityId, opts) => {
         const state = get();
         if (!state.playerForceId) return 0;
-        const orders = planMassMuster({
-          cities: state.cities,
-          officers: state.officers,
-          pendingCommandOfficerIds: new Set(Object.keys(state.pendingCommands)),
-          trainingOfficerIds: new Set(state.pendingTrainings.map((t) => t.officerId)),
-          playerForceId: state.playerForceId,
-          targetCityId,
-        });
+        const { orders } = planMassMuster(
+          {
+            cities: state.cities,
+            officers: state.officers,
+            pendingCommandOfficerIds: new Set(Object.keys(state.pendingCommands)),
+            trainingOfficerIds: new Set(state.pendingTrainings.map((t) => t.officerId)),
+            playerForceId: state.playerForceId,
+            targetCityId,
+          },
+          musterOptsFor(state, opts),
+        );
         // Execute through the ordinary march so every validation (diplomacy,
         // gold, naval reach) still applies; a refused column just stays home.
         let dispatched = 0;
+        const strain: Record<EntityId, number> = {};
         for (const o of orders) {
-          if (get().issueMarch(o.cityId, o.marchTo, o.officerId, o.troops).ok) dispatched++;
+          if (get().issueMarch(o.cityId, o.marchTo, o.officerId, o.troops).ok) {
+            dispatched++;
+            strain[o.cityId] = musterStrain(o.troops); // 集結之累
+          }
+        }
+        // 厭戰 — a levied city's people grow weary; the heavier the draft, the more.
+        if (dispatched > 0) {
+          const s = get();
+          const cities = { ...s.cities };
+          for (const [cid, d] of Object.entries(strain)) {
+            const c = cities[cid];
+            if (c) cities[cid] = { ...c, loyalty: Math.max(0, c.loyalty - d) };
+          }
+          set({ cities });
+        }
+        // 全軍集結 — a real mobilization (≥2 columns converging) is a grand sight.
+        if (dispatched >= 2) {
+          const tgt = state.cities[targetCityId];
+          get().pushPopup({
+            key: 'grand-muster', media: 'image',
+            titleZh: '全軍集結', titleEn: 'The Host Gathers',
+            captionZh: `${dispatched} 路兵馬會師${tgt ? `,直指 ${tgt.name.zh}` : ''}`,
+            captionEn: `${dispatched} columns muster${tgt ? ` toward ${tgt.name.en}` : ''}`,
+          });
         }
         return dispatched;
+      },
+      startMusterCampaign: (targetCityId, opts) => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid || !state.cities[targetCityId]) return null;
+        const id = `muster-${pid}-${targetCityId}`;
+        const rallyCityId = opts?.rallyCityId && state.cities[opts.rallyCityId]?.ownerForceId === pid ? opts.rallyCityId : undefined;
+        const campaign: import('../systems/muster').MusterCampaign = {
+          id, forceId: pid, targetCityId, rallyCityId,
+          gatherSeasonsLeft: rallyCityId ? MUSTER_GATHER_SEASONS : 0,
+          seasonsLeft: MUSTER_CAMPAIGN_SEASONS,
+          fraction: opts?.fraction, keepGarrison: opts?.keepGarrison, excludeFrontier: opts?.excludeFrontier,
+        };
+        set({ musters: { ...state.musters, [id]: campaign } });
+        // Fire the first wave immediately so it doesn't wait a season to start.
+        get().massMuster(rallyCityId ?? targetCityId, { fraction: opts?.fraction, keepGarrison: opts?.keepGarrison, excludeFrontier: opts?.excludeFrontier });
+        return id;
+      },
+      cancelMusterCampaign: (id) => {
+        const state = get();
+        if (!state.musters[id]) return;
+        const musters = { ...state.musters };
+        delete musters[id];
+        set({ musters });
+      },
+      processMusterCampaigns: () => {
+        const state = get();
+        if (Object.keys(state.musters).length === 0) return;
+        const musters = { ...state.musters };
+        for (const camp of Object.values(state.musters)) {
+          if (camp.forceId !== get().playerForceId) continue; // AI surges are one-shot, not standing
+          const finalT = get().cities[camp.targetCityId];
+          if (!finalT || finalT.ownerForceId === camp.forceId || camp.seasonsLeft <= 0) { delete musters[camp.id]; continue; }
+          const gathering = (camp.gatherSeasonsLeft ?? 0) > 0 && !!camp.rallyCityId && get().cities[camp.rallyCityId]?.ownerForceId === camp.forceId;
+          const target = gathering ? camp.rallyCityId! : camp.targetCityId;
+          get().massMuster(target, { fraction: camp.fraction, keepGarrison: camp.keepGarrison, excludeFrontier: camp.excludeFrontier });
+          musters[camp.id] = { ...camp, seasonsLeft: camp.seasonsLeft - 1, gatherSeasonsLeft: gathering ? Math.max(0, (camp.gatherSeasonsLeft ?? 0) - 1) : 0 };
+        }
+        set({ musters });
+      },
+      musterPreview: (targetCityId, opts) => {
+        const state = get();
+        const empty = { relief: false, columns: 0, totalTroops: 0, totalGold: 0, slowestSeasons: 0, orders: [] as Array<{ cityId: EntityId; marchTo: EntityId; troops: number; seasons: number }>, excluded: [] as Array<{ cityId: EntityId; reason: string }> };
+        if (!state.playerForceId) return empty;
+        const target = state.cities[targetCityId];
+        const { orders, excluded } = planMassMuster(
+          {
+            cities: state.cities,
+            officers: state.officers,
+            pendingCommandOfficerIds: new Set(Object.keys(state.pendingCommands)),
+            trainingOfficerIds: new Set(state.pendingTrainings.map((t) => t.officerId)),
+            playerForceId: state.playerForceId,
+            targetCityId,
+          },
+          musterOptsFor(state, opts),
+        );
+        const marchGold = COMMAND_DEFS['march'].goldCost;
+        const detailed = orders.map((o) => {
+          const src = state.cities[o.cityId];
+          const dst = state.cities[o.marchTo];
+          const seasons = src && dst ? marchDurationFor(src, dst, state.date.season) : 1;
+          return { cityId: o.cityId, marchTo: o.marchTo, troops: o.troops, seasons };
+        });
+        return {
+          relief: !!target && target.ownerForceId === state.playerForceId,
+          columns: orders.length,
+          totalTroops: orders.reduce((s, o) => s + o.troops, 0),
+          totalGold: orders.length * marchGold,
+          slowestSeasons: detailed.reduce((m, o) => Math.max(m, o.seasons), 0),
+          orders: detailed,
+          excluded,
+        };
       },
 
       cancelCommand: (idOrOfficerId) => {
@@ -2392,35 +2754,118 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         {
           const s0 = get();
           if (s0.victoryStatus !== 'playing' && s0.victoryStatus !== 'observing') return;
+          const annualGov = s0.date.season === 'winter'; // 久任 drift, once a year
+          const GOV_LABEL: Partial<Record<string, [string, string]>> = {
+            'improve-loyalty': ['撫民安境', 'soothed unrest'], relief: ['開倉賑濟', 'opened the granaries'],
+            'anti-corruption': ['巡查肅貪', 'swept out graft'], 'recruit-troops': ['徵募守軍', 'raised troops'],
+            'military-farming': ['屯田', 'set the troops to farm'], 'develop-agriculture': ['勸農', 'developed farming'],
+            'develop-commerce': ['興商', 'developed commerce'], 'build-defense': ['修城防', 'built defences'],
+            'major-agriculture': ['大興農政', 'a great farming push'], 'major-commerce': ['大興商政', 'a great commerce push'],
+            'major-defense': ['大修城防', 'a great defence push'], 'upgrade-wall': ['強化城壁', 'raised the walls'],
+            'drill-troops': ['練兵', 'drilled the garrison'], 'encourage-migration': ['招撫流民', 'drew in migrants'],
+            'flood-control': ['興修水利', 'tended the waterworks'],
+          };
           for (const [cid, govId] of Object.entries(s0.cityDelegations ?? {})) {
             const c = get().cities[cid];
             const gov = get().officers[govId];
             if (!c || !gov || c.ownerForceId !== s0.playerForceId) continue;
+            // 太守之弊 — a greedy/disloyal or long-seated governor exacts a toll
+            // (graft creeping up, a little skim, tenure loyalty drift) whether or
+            // not he's free to act this tick.
+            const tenure = s0.date.year - (s0.governorSince[cid] ?? s0.date.year);
+            const ill = governorMisruleEffect(gov, tenure, annualGov);
+            if (ill.corruption > 0 || ill.skim > 0 || ill.govLoyaltyDelta !== 0) {
+              const cc = get().cities[cid];
+              if (cc) set({
+                cities: { ...get().cities, [cid]: { ...cc, corruption: Math.min(100, (cc.corruption ?? 0) + ill.corruption), gold: Math.max(0, cc.gold - ill.skim) } },
+                officers: ill.govLoyaltyDelta !== 0 ? { ...get().officers, [govId]: { ...get().officers[govId], loyalty: Math.max(0, Math.min(100, get().officers[govId].loyalty + ill.govLoyaltyDelta)) } } : get().officers,
+              });
+            }
             if (gov.locationCityId !== cid || gov.task || get().pendingCommands[govId]) continue;
             if (s0.pendingTrainings.some((t) => t.officerId === govId)) continue;
-            const type = planGovernorCommand(c, gov);
-            if (type) get().issueCommand(cid, type, govId);
+            const type = planGovernorCommand(get().cities[cid] ?? c, gov, s0.governorStances[cid] ?? 'balanced');
+            if (type && get().issueCommand(cid, type, govId).ok) {
+              // 太守政報 — a concise line so the governor isn't a silent black box.
+              const lbl = GOV_LABEL[type];
+              if (lbl) get().notify(`${gov.name.zh} 太守〔${c.name.zh}〕:${lbl[0]}`, `Gov. ${gov.name.en} [${c.name.en}]: ${lbl[1]}`);
+            }
           }
           // 軍團都督 — each legion files its marshal's orders the same way.
+          const pidL = s0.playerForceId ?? '';
+          // 應敵 — legion-held cities a hostile column is marching on (pre-empt).
+          const legionCityIds = new Set((s0.legions ?? []).flatMap((l) => l.cityIds));
+          const threatenedCityIds = new Set<EntityId>();
+          for (const a of Object.values(get().armies)) {
+            if (!a.forceId || a.forceId === pidL || a.returning) continue;
+            if (!legionCityIds.has(a.targetCityId)) continue;
+            if (!isHostilePermitted(get().diplomacy, pidL, a.forceId)) continue;
+            threatenedCityIds.add(a.targetCityId);
+          }
           for (const legion of s0.legions ?? []) {
             const cur = get();
+            // 軍團內調度 — a capable 都督 shifts coin/grain from a rich rear city
+            // to the neediest frontier one BEFORE orders, so the front can pay.
+            const move = planLegionLogistics(legion, cur.cities, cur.officers);
+            if (move) {
+              const from = cur.cities[move.fromCityId], to = cur.cities[move.toCityId];
+              if (from && to) {
+                set({ cities: { ...cur.cities,
+                  [from.id]: { ...from, gold: from.gold - move.gold, food: Math.max(0, from.food - move.food) },
+                  [to.id]: { ...to, gold: to.gold + move.gold, food: to.food + move.food },
+                } });
+              }
+            }
+            const cur2 = get();
             const busy = new Set<EntityId>([
-              ...Object.keys(cur.pendingCommands),
-              ...cur.pendingTrainings.map((t) => t.officerId),
+              ...Object.keys(cur2.pendingCommands),
+              ...cur2.pendingTrainings.map((t) => t.officerId),
             ]);
-            const orders = planLegionOrders({
-              cities: cur.cities,
-              officers: cur.officers,
+            const pid = pidL;
+            const { orders, summary } = planLegionOrders({
+              cities: cur2.cities,
+              officers: cur2.officers,
               busyOfficerIds: busy,
-              playerForceId: s0.playerForceId ?? '',
+              playerForceId: pid,
               legion,
+              // 方略擇敵 — only cities we may actually attack count as targets.
+              isEnemyCity: (c) => !!c.ownerForceId && c.ownerForceId !== pid && isHostilePermitted(cur2.diplomacy, pid, c.ownerForceId),
+              threatenedCityIds,
             });
+            // 都督之旗 — the marshal's renown lends the legion's columns morale.
+            const banner = legionBannerBonus(cur2.officers[legion.commanderId]);
+            let did = 0;
             for (const o of orders) {
-              if (o.kind === 'march') get().issueMarch(o.cityId, o.toCityId, o.officerId, o.troops);
-              else get().issueCommand(o.cityId, 'recruit-troops', o.officerId);
+              if (o.kind === 'march') {
+                if (get().issueMarch(o.cityId, o.toCityId, o.officerId, o.troops).ok) {
+                  did++;
+                  if (banner > 0) {
+                    const st = get();
+                    const cmd = st.pendingCommands[o.officerId];
+                    const army = st.armies[o.officerId];
+                    set({
+                      pendingCommands: cmd && cmd.type === 'march' ? { ...st.pendingCommands, [o.officerId]: { ...cmd, legionBanner: banner } } : st.pendingCommands,
+                      armies: army ? { ...st.armies, [o.officerId]: { ...army, legionBanner: banner } } : st.armies,
+                    });
+                  }
+                }
+              } else { get().issueCommand(o.cityId, 'recruit-troops', o.officerId); did++; }
+            }
+            // 軍團戰報 — a consolidated line so the legion isn't a silent black box.
+            if (did > 0) {
+              const DIR = { conquer: '攻略', consume: '蠶食', raid: '略地', defend: '固守' } as const;
+              const DIR_EN = { conquer: 'Conquer', consume: 'Consume', raid: 'Raid', defend: 'Defend' } as const;
+              const tgt = summary.targetCityId ? get().cities[summary.targetCityId]?.name : undefined;
+              const tgtZh = tgt ? `→${tgt.zh}` : '';
+              const tgtEn = tgt ? ` → ${tgt.en}` : '';
+              get().notify(
+                `${legion.name}〔${DIR[summary.directive]}${tgtZh}〕:${summary.marched} 路發兵(${summary.troopsSent.toLocaleString()})、${summary.recruited} 城補軍`,
+                `${legion.name} [${DIR_EN[summary.directive]}${tgtEn}]: ${summary.marched} columns (${summary.troopsSent.toLocaleString()}), ${summary.recruited} reinforced`,
+              );
             }
           }
         }
+        // 持續集結 — standing muster campaigns issue their next wave for the season.
+        get().processMusterCampaigns();
         const state = get();
         if (state.victoryStatus !== 'playing' && state.victoryStatus !== 'observing')
           return;
@@ -2514,6 +2959,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           family: state.family,
           clanStandings: state.clanStandings,
           appointments: appointmentsAfterAI,
+          governorEvalStreaks: state.governorEvalStreaks,
+          provinceGovernors: state.provinceGovernors,
+          provinceWarlordism: state.provinceWarlordism,
+          provinceGovernorSince: state.provinceGovernorSince,
           casusBelliMarks: casusBelliAfterCourt,
           recruitBonusSeasons: state.recruitBonusSeasons,
           weather: state.weather,
@@ -3312,6 +3761,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             }
             nextMandate = { ...nextMandate, byForce };
           }
+          // 治世之效 — a realm of all-上考 stewards earns 天命 at the annual 考課.
+          if (result.governorMandateDeltas) {
+            const byForce = { ...nextMandate.byForce };
+            for (const [fid, d] of Object.entries(result.governorMandateDeltas)) {
+              byForce[fid] = Math.max(0, Math.min(100, (byForce[fid] ?? 50) + d));
+            }
+            nextMandate = { ...nextMandate, byForce };
+          }
           // 名品充府 — a realm flush with fine goods (絲/錦/珠/象/漆) lends its court
           // lustre and legitimacy: a small 天命 trickle each season (≤ +2).
           {
@@ -3502,6 +3959,28 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           });
           postCities = contagion.cities;
           if (contagion.entries.length > 0) result.report.entries.push(...contagion.entries);
+          // 俘虜處置 — AI captors pass verdict on their prisoners (招降/義釋/處決),
+          // bearing the same costs the player does, before the ransom clears the rest.
+          const captiveFate = resolveAICaptives({
+            forces: postForces,
+            officers: postOfficers,
+            cities: postCities,
+            family: state.family,
+            runtimeBonds: state.runtimeBonds ?? [],
+            playerForceId: state.playerForceId,
+            rng: Math.random,
+          });
+          postOfficers = captiveFate.officers;
+          if (captiveFate.entries.length > 0) result.report.entries.push(...captiveFate.entries);
+          if (captiveFate.relationDeltas.length > 0) {
+            const relations = { ...postDiplomacy.relations };
+            for (const d of captiveFate.relationDeltas) {
+              const key = pairKey(d.a, d.b);
+              const rel = relations[key] ?? { forceA: d.a < d.b ? d.a : d.b, forceB: d.a < d.b ? d.b : d.a, score: 0, status: 'neutral' as const };
+              relations[key] = { ...rel, score: Math.max(-100, Math.min(100, rel.score + d.delta)) };
+            }
+            postDiplomacy = { ...postDiplomacy, relations };
+          }
           // 贖俘 — rival lords buy their captured officers back into circulation.
           const ransom = resolveAIRansoms({
             forces: postForces,
@@ -4558,6 +5037,22 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // 考課罷免 — AI realms forfeit a chronically-failing prefect's seat
+        // (the player is only flagged, to 親裁). Drop those prefect posts + log.
+        if (result.governorRevocations && result.governorRevocations.length > 0) {
+          const revokedSet = new Set(result.governorRevocations.map((r) => r.officerId));
+          appointmentsAfterAI = appointmentsAfterAI.filter(
+            (a) => !(a.titleId === 'prefect' && revokedSet.has(a.officerId)),
+          );
+          for (const rev of result.governorRevocations) {
+            aiHistoryAppends.push({
+              kind: 'revoke', year: state.date.year, season: state.date.season,
+              officerId: rev.officerId, forceId: rev.forceId, titleId: 'prefect', cityId: rev.cityId,
+              reason: 'kaoke',
+            });
+          }
+        }
+
         // Prune appointments whose holders died / were captured / defected
         // / lost their city this season. Emit a vacancy notice + history.
         const prune = pruneStaleAppointments(appointmentsAfterAI, postOfficers, postCities);
@@ -4620,6 +5115,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // 慶典彈窗(本季結算觸發)— collected here and merged into popupQueue at
+        // season's end alongside the city-tier popups (see the set() below).
+        const livePopups: import('../types').PopupEvent[] = [];
+
         // 求賢令出寒門 — while a force's call rings, commoners answer:
         // a generated officer of humble birth may join one of its cities.
         if (seasonBoundary) {
@@ -4655,22 +5154,66 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
 
           // 舉薦 — a connected, capable officer surfaces a hidden talent (賢以薦賢).
-          for (const r of rollRecommendations({ officers: officersWithMarchTask, playerForceId: state.playerForceId, rng: Math.random })) {
-            const rec = officersWithMarchTask[r.recommenderId];
-            const found = officersWithMarchTask[r.revealedId];
-            if (!rec || !found) continue;
-            const city = r.cityId ? postCities[r.cityId] : null;
-            officersWithMarchTask[found.id] = {
-              ...found, status: 'idle', forceId: null, loyalty: 0,
-              locationCityId: r.cityId ?? found.locationCityId,
-              recommended: true, // 舉薦作保 — easier to recruit while flagged.
-            };
-            result.report.entries.push({
-              cityId: r.cityId ?? null,
-              kind: 'talent',
-              text: `${rec.name.en} recommends a hidden talent — ${found.name.en} surfaces${city ? ` at ${city.name.en}` : ''}, awaiting your courtship.`,
-              textZh: `${rec.name.zh}薦舉賢才,${found.name.zh}現身${city ? `於${city.name.zh}` : ''},待主公延攬。`,
-            });
+          // Every court does this now, not just the player's: a rival's 荀彧 can
+          // name a 郭嘉 into their own city — which 群雄競聘 (below) then courts —
+          // so the player no longer holds an exclusive talent pipeline.
+          for (const force of Object.values(state.forces)) {
+            const isPlayer = force.id === state.playerForceId;
+            for (const r of rollRecommendations({ officers: officersWithMarchTask, forceId: force.id, rng: Math.random })) {
+              const rec = officersWithMarchTask[r.recommenderId];
+              const found = officersWithMarchTask[r.revealedId];
+              if (!rec || !found) continue;
+              const city = r.cityId ? postCities[r.cityId] : null;
+              officersWithMarchTask[found.id] = {
+                ...found, status: 'idle', forceId: null, loyalty: 0,
+                locationCityId: r.cityId ?? found.locationCityId,
+                recommended: true, // 舉薦作保 — easier to recruit while flagged.
+              };
+              // The player gets the courtship prompt; an AI's recommendation is
+              // surfaced quietly (it reports when 群雄競聘 lands the recruit).
+              if (isPlayer) {
+                result.report.entries.push({
+                  cityId: r.cityId ?? null,
+                  kind: 'talent',
+                  text: `${rec.name.en} recommends a hidden talent — ${found.name.en} surfaces${city ? ` at ${city.name.en}` : ''}, awaiting your courtship.`,
+                  textZh: `${rec.name.zh}薦舉賢才,${found.name.zh}現身${city ? `於${city.name.zh}` : ''},待主公延攬。`,
+                });
+              }
+            }
+          }
+
+          // 月旦評(公開評議)— each season your keenest 名士 publicly sizes up the
+          // realm's strongest unread 在野 talent: a name made (renown), and a
+          // glowing read inclines that worthy toward your house (知遇之恩).
+          {
+            const pick = pickMonthlyAppraisal(officersWithMarchTask, state.playerForceId);
+            if (pick) {
+              const { critic, target } = pick;
+              const verdict = legendaryVerdict(target) ?? appraisalVerdict(target);
+              const gain = appraisalRenownGain(critic, target);
+              officersWithMarchTask[target.id] = {
+                ...officersWithMarchTask[target.id],
+                appraisal: verdict,
+                renown: (target.renown ?? 0) + gain.target,
+                ...(verdict.grade === 'upper' && state.playerForceId ? { recognizedByForceId: state.playerForceId } : {}),
+              };
+              officersWithMarchTask[critic.id] = { ...officersWithMarchTask[critic.id], renown: (critic.renown ?? 0) + gain.appraiser };
+              result.report.entries.push({
+                cityId: critic.locationCityId ?? null,
+                kind: 'talent',
+                text: `月旦評 — ${critic.name.en} pronounces ${target.name.en} ${verdict.grade === 'upper' ? 'a talent of the first rank' : 'worth the realm’s notice'}; the worthy is flattered to be known.`,
+                textZh: `月旦評 — ${critic.name.zh}品${target.name.zh}為${verdict.grade === 'upper' ? '上品令器' : '可觀之才'},士林傾慕,其人感知遇之意。`,
+              });
+              // 月旦定品 — only the rarer 上品 verdict earns a popup (most seasons pass quietly).
+              if (verdict.grade === 'upper') {
+                livePopups.push({
+                  key: 'appraisal-verdict', media: 'image',
+                  titleZh: '月旦評', titleEn: 'A Verdict of the Sages',
+                  captionZh: `${critic.name.zh} 品 ${target.name.zh} 為上品令器`,
+                  captionEn: `${critic.name.en} names ${target.name.en} a talent of the first rank`,
+                });
+              }
+            }
           }
 
           // 群雄競聘 — rival lords also court free agents idling in their own
@@ -4832,44 +5375,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
-        // 州牧 — a provincial governor (player-appointed) runs his province as a
-        // unit: every season his cities gain order (民忠) and a little revenue,
-        // scaled by his administrative talent (政 0.6 + 魅 0.4). A dead/lost
-        // governor simply yields nothing until reassigned. Player-only (the AI
-        // doesn't appoint 州牧). Modest by design — it rewards holding a whole
-        // province under one trusted name without occupying him elsewhere.
-        if (seasonBoundary && state.playerForceId && Object.keys(state.provinceGovernors ?? {}).length > 0) {
-          const govPatch: Record<string, City> = {};
-          for (const [provinceId, officerId] of Object.entries(state.provinceGovernors)) {
-            const gov = officerId ? postOfficers[officerId] : null;
-            if (!gov || gov.status === 'dead' || gov.forceId !== state.playerForceId) continue;
-            const province = PROVINCES_BY_ID[provinceId];
-            if (!province) continue;
-            const admin = gov.stats.politics * 0.6 + gov.stats.charisma * 0.4;
-            const loyaltyGain = admin >= 80 ? 2 : 1;
-            const goldBonus = Math.round(gov.stats.politics / 12);
-            let touched = 0;
-            for (const cid of province.cityIds) {
-              const c = (govPatch[cid] ?? postCities[cid]);
-              if (!c || c.ownerForceId !== state.playerForceId) continue;
-              govPatch[cid] = {
-                ...c,
-                loyalty: Math.min(100, c.loyalty + loyaltyGain),
-                gold: c.gold + goldBonus,
-              };
-              touched++;
-            }
-            if (touched > 0) {
-              result.report.entries.push({
-                cityId: null,
-                kind: 'income',
-                text: `${gov.name.en} governs ${province.name.en}: +${loyaltyGain} loyalty & +${goldBonus} gold across ${touched} cities.`,
-                textZh: `${gov.name.zh}牧${province.name.zh}:全境 ${touched} 城 民忠 +${loyaltyGain}、金 +${goldBonus}。`,
-              });
-            }
-          }
-          if (Object.keys(govPatch).length > 0) postCities = { ...postCities, ...govPatch };
-        }
+        // 州牧 — provincial stewardship (分權之效), 擁兵自重, and AI appointment
+        // now all run inside resolveSeason (it owns force-spawning for 擁州自立);
+        // the store just persists the returned slot/警戒/任期 maps below.
 
         // 升城慶典 — queue a celebratory popup for each player city that crossed
         // UP a size tier this season (邑→鎮→城→大城→都).
@@ -4930,6 +5438,84 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               captionEn: `${def?.name.en ?? b.id} completed at ${c.name.en}`,
             });
           }
+        }
+
+        // 武將里程碑慶典 — diff the roster (before → after) for the big personal
+        // beats: a 名將 crossing into 金牌+ 品階, a 名將's passing, and a child come
+        // of age. Player-force only, and gated (品階/辭世 to 名將, 及冠 to true heirs)
+        // so a single season can't spew a dozen popups; capped on merge below.
+        const officerPopups: import('../types').PopupEvent[] = [];
+        if (state.playerForceId) {
+          const goldRank = gradeRank('gold');
+          for (const after of Object.values(officersWithMarchTask)) {
+            const before = state.officers[after.id];
+            if (!before) {
+              // 及冠出仕 — heirs enter the roster fresh, as ~14-yo idle officers.
+              const age = result.date.year - (after.birthYear ?? result.date.year);
+              if (after.forceId === state.playerForceId && after.status !== 'dead' && age <= 15) {
+                officerPopups.push({
+                  key: 'heir-coming-of-age', media: 'image',
+                  titleZh: '及冠出仕', titleEn: 'A Scion Comes of Age',
+                  captionZh: `${after.name.zh} 及冠,今入仕效力`,
+                  captionEn: `${after.name.en} comes of age and enters service`,
+                });
+              }
+              continue;
+            }
+            if (after.forceId !== state.playerForceId) continue;
+            // 晉牌封賞 — first crossing UP into 金牌/白金/鑽石.
+            if (before.status !== 'dead' && after.status !== 'dead') {
+              const ga = gradeRank(officerGrade(after).grade);
+              const gb = gradeRank(officerGrade(before).grade);
+              if (ga > gb && ga >= goldRank) {
+                officerPopups.push({
+                  key: 'grade-promotion', media: 'image',
+                  titleZh: '晉牌封賞', titleEn: 'A Grade Conferred',
+                  captionZh: `${after.name.zh} 晉「${gradeMeta(officerGrade(after).grade).name.zh}」品階`,
+                  captionEn: `${after.name.en} rises to ${gradeMeta(officerGrade(after).grade).name.en} grade`,
+                });
+              }
+            }
+            // 名將辭世 — a 金牌+ general's passing (a state-funeral beat).
+            if (before.status !== 'dead' && after.status === 'dead'
+                && gradeRank(officerGrade(before).grade) >= goldRank) {
+              officerPopups.push({
+                key: 'officer-death', media: 'image',
+                titleZh: '名將辭世', titleEn: 'A Great General Passes',
+                captionZh: `${before.name.zh} 薨逝,舉國同哀`,
+                captionEn: `${before.name.en} has passed — the realm mourns`,
+              });
+            }
+          }
+        }
+
+        // 天災彈窗 — surface this season's disasters at YOUR cities (one per kind,
+        // keyed off the report entries 天災 events already emit).
+        if (state.playerForceId) {
+          const hitKinds = new Set<string>(
+            result.report.entries
+              .filter((e) => e.cityId && postCities[e.cityId]?.ownerForceId === state.playerForceId)
+              .map((e) => e.kind),
+          );
+          const DISASTERS: Array<{ kind: string; key: string; zh: string; en: string; capZh: string; capEn: string }> = [
+            { kind: 'famine', key: 'disaster-drought', zh: '旱蝗之災', en: 'Famine Strikes', capZh: '田疇歉收,饑饉迫境', capEn: 'Drought and locusts blight the fields' },
+            { kind: 'flood', key: 'disaster-flood', zh: '水患', en: 'The Floods Rise', capZh: '濁流破堤,田廬盡淹', capEn: 'A river bursts its banks' },
+            { kind: 'plague', key: 'disaster-plague', zh: '瘟疫', en: 'Plague', capZh: '疫癘橫行,人心惶惶', capEn: 'Pestilence sweeps the realm' },
+          ];
+          for (const d of DISASTERS) {
+            if (!hitKinds.has(d.kind)) continue;
+            livePopups.push({ key: d.key, media: 'image', titleZh: d.zh, titleEn: d.en, captionZh: d.capZh, captionEn: d.capEn });
+          }
+        }
+
+        // 考課殿最 — the annual review board, when a fresh one lands this season.
+        if (result.governorReviewLast && result.governorReviewLast !== state.governorReviewLast) {
+          livePopups.push({
+            key: 'evaluation-results', media: 'image',
+            titleZh: '考課殿最', titleEn: 'The Merit Review',
+            captionZh: '殿最榜出,賞功黜怠',
+            captionEn: 'The merit board is unveiled — the able rewarded, the slack censured',
+          });
         }
 
         // 富商借餉償還 — each season-end, a fixed instalment is drawn from the
@@ -5042,7 +5628,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           ...(aiGearNext ? { itemRefinements: aiGearNext.refine, itemBreakthroughs: aiGearNext.breakthrough, itemGems: aiGearNext.gems } : {}),
           itemLore: loreAfterSeason, // 名器威名 grown by this season's strategic battles
           merchantLoan: nextMerchantLoan,
-          popupQueue: [...state.popupQueue, ...sizePopups, ...wallPopups, ...buildPopups],
+          popupQueue: [...state.popupQueue, ...sizePopups, ...wallPopups, ...buildPopups, ...officerPopups.slice(0, 3), ...livePopups],
           officers: officersWithMarchTask,
           marriageAlliances: allianceTick.alliances,
           forces: postForces,
@@ -5239,6 +5825,11 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           embargoes: nextEmbargoes,
           pendingDelayedEffects: remainingDelayed,
           appointments: prunedAppointments,
+          governorEvalStreaks: result.governorEvalStreaks ?? state.governorEvalStreaks,
+          governorReviewLast: result.governorReviewLast ?? state.governorReviewLast,
+          provinceGovernors: result.provinceGovernors ?? state.provinceGovernors,
+          provinceWarlordism: result.provinceWarlordism ?? state.provinceWarlordism,
+          provinceGovernorSince: result.provinceGovernorSince ?? state.provinceGovernorSince,
           appointmentHistory: [
             ...state.appointmentHistory,
             ...aiHistoryAppends,
@@ -5256,14 +5847,19 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                 return nextAbs <= expAbs;
               })
             : state.casusBelliMarks,
-          // 求賢令 recruit bonus tick: decrement seasonsLeft, drop expired.
-          recruitBonusSeasons: seasonBoundary
-            ? Object.fromEntries(
-                Object.entries(state.recruitBonusSeasons)
-                  .map(([k, v]) => [k, { ...v, seasonsLeft: v.seasonsLeft - 1 }] as const)
-                  .filter(([, v]) => v.seasonsLeft > 0),
-              )
-            : state.recruitBonusSeasons,
+          // 求賢令 recruit bonus tick: decrement seasonsLeft, drop expired; then
+          // fold in any AI 求賢令 issued this tick (so it rings next season too).
+          recruitBonusSeasons: (() => {
+            const next: Record<EntityId, { multiplier: number; seasonsLeft: number }> = seasonBoundary
+              ? Object.fromEntries(
+                  Object.entries(state.recruitBonusSeasons)
+                    .map(([k, v]) => [k, { ...v, seasonsLeft: v.seasonsLeft - 1 }] as const)
+                    .filter(([, v]) => v.seasonsLeft > 0),
+                )
+              : { ...state.recruitBonusSeasons };
+            for (const fid of aiCourt.talentEdicts) next[fid] = { multiplier: 1.5, seasonsLeft: 1 };
+            return next;
+          })(),
         });
 
         // 自動存檔 — every season boundary writes one of three rolling
@@ -5517,16 +6113,33 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       },
 
       executeOfficer: (officerId) => {
-        codexMarkSlain(officerId);
         const state = get();
         const officer = state.officers[officerId];
         if (!officer || officer.status !== 'imprisoned') return;
-        set({
-          officers: {
-            ...state.officers,
-            [officerId]: applyExecute(officer),
-          },
-        });
+        codexMarkSlain(officerId);
+        const pid = state.playerForceId;
+        // 宿怨 — the slain man's kin & sworn brothers mark your house (near-
+        // unrecruitable thereafter, a grudge in battle).
+        const officers = pid
+          ? markSlainVendetta(state.officers, officerId, pid, state.family, state.runtimeBonds ?? [])
+          : { ...state.officers };
+        officers[officerId] = applyExecute(officer);
+        // 殺降之累 — the executing lord forfeits 威望 (heavier for a man of honour
+        // or renown; killing one who chose death over surrender weighs heaviest).
+        const player = pid ? state.forces[pid] : null;
+        const ruler = player ? officers[player.rulerOfficerId] : null;
+        if (ruler) officers[ruler.id] = { ...ruler, renown: Math.max(0, (ruler.renown ?? 0) - executionRenownCost(officer)) };
+        // 積怨 — the victim's old court resents the killing.
+        let diplomacy = state.diplomacy;
+        const former = officer.capturedFromForceId;
+        if (pid && former && former !== pid && state.forces[former]) {
+          const relations = { ...state.diplomacy.relations };
+          const key = pairKey(pid, former);
+          const rel = relations[key] ?? { forceA: pid < former ? pid : former, forceB: pid < former ? former : pid, score: 0, status: 'neutral' as const };
+          relations[key] = { ...rel, score: Math.max(-100, rel.score - 12) };
+          diplomacy = { ...state.diplomacy, relations };
+        }
+        set({ officers, diplomacy });
       },
 
       releaseOfficer: (officerId, honorable) => {
@@ -6495,6 +7108,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           nextOfficers[o.id] = { ...prev, loyalty: Math.max(0, prev.loyalty - 5) };
         }
         set({ officers: nextOfficers });
+        // 封爵之典 — a deliberate honour worth a flourish.
+        get().pushPopup({
+          key: 'peerage-granted', media: 'image',
+          titleZh: '封爵之典', titleEn: 'Ennoblement',
+          captionZh: `${officer.name.zh} 受封「${def.name.zh}」`,
+          captionEn: `${officer.name.en} is enfeoffed as ${def.name.en}`,
+        });
         return { ok: true };
       },
 
@@ -6547,6 +7167,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               renown: (officer.renown ?? 0) + def.renownOnGrant,
             },
           },
+        });
+        // 拜將之榮 — a martial title bestowed before the host.
+        get().pushPopup({
+          key: 'honorific-granted', media: 'image',
+          titleZh: '拜名號將軍', titleEn: 'A Title of War',
+          captionZh: `${officer.name.zh} 拜「${def.name.zh}」`,
+          captionEn: `${officer.name.en} is styled ${def.name.en}`,
         });
         return { ok: true };
       },
@@ -6750,6 +7377,70 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (!o || o.status === 'dead') return;
         set({ officers: { ...state.officers, [officerId]: withAffliction(o, affliction) } });
       },
+      debateRout: (officerId, rng = Math.random) => {
+        const state = get();
+        const o = state.officers[officerId];
+        if (!o || o.status === 'dead') return 'none';
+        const age = state.date.year - o.birthYear;
+        const outcome = routConsequence(o, age, rng);
+        if (outcome === 'death') {
+          set({ officers: { ...state.officers, [officerId]: { ...o, status: 'dead', forceId: null, task: null, woundedSeasons: undefined, woundSeverity: undefined } } });
+        } else if (outcome === 'shame') {
+          set({ officers: { ...state.officers, [officerId]: withAffliction(o, { kind: 'shame', seasons: 4, charisma: -10, intelligence: -8 }) } });
+        }
+        return outcome;
+      },
+      shiftCityLoyalty: (cityId, delta) => {
+        const state = get();
+        const c = state.cities[cityId];
+        if (!c) return;
+        set({ cities: { ...state.cities, [cityId]: { ...c, loyalty: Math.max(0, Math.min(100, c.loyalty + delta)) } } });
+      },
+      spendCityGold: (cityId, amount) => {
+        const state = get();
+        const c = state.cities[cityId];
+        if (!c || c.gold < amount) return false;
+        set({ cities: { ...state.cities, [cityId]: { ...c, gold: c.gold - amount } } });
+        return true;
+      },
+      appraiseOfficer: (targetId) => {
+        const state = get();
+        const target = state.officers[targetId];
+        if (!target || target.status === 'dead') return { ok: false, reason: 'no-target' };
+        // 名士 — the player's keenest eye for talent (idle/active, INT ≥ bar).
+        const appraiser = Object.values(state.officers)
+          .filter((o) => o.forceId === state.playerForceId && (o.status === 'idle' || o.status === 'active') && canAppraise(o) && o.id !== targetId)
+          .sort((a, b) => discernment(b) - discernment(a))[0];
+        if (!appraiser) return { ok: false, reason: 'no-appraiser' };
+        // An accurate read is final; a 走眼 one may be retried — but only by a
+        // strictly sharper eye than the judge who last misjudged him.
+        if (target.appraisal) {
+          if (!target.appraisal.misread) return { ok: false, reason: 'appraised' };
+          if (appraiser.stats.intelligence <= (target.appraisal.byInt ?? 0)) return { ok: false, reason: 'no-better-eye' };
+        }
+        // 識人造詣 — a legend never errs; a middling eye may 走眼.
+        const accurate = isLegendaryCritic(appraiser) || Math.random() < discernment(appraiser);
+        const verdict: typeof target.appraisal = accurate
+          ? { ...(legendaryVerdict(target) ?? appraisalVerdict(target)) }
+          : { ...appraisalMisread(Math.random), byInt: appraiser.stats.intelligence };
+        const gain = accurate ? appraisalRenownGain(appraiser, target) : { target: 0, appraiser: 0 };
+        const officers = {
+          ...state.officers,
+          [target.id]: { ...target, appraisal: verdict, renown: (target.renown ?? 0) + gain.target },
+          [appraiser.id]: { ...state.officers[appraiser.id], renown: (appraiser.renown ?? 0) + gain.appraiser },
+        };
+        if (accurate && verdict.grade === 'upper') {
+          // 知遇之恩 — a glowing read of an in-the-wild talent inclines them to you;
+          // a glowing read of your OWN officer heartens them (受知遇,+忠誠).
+          if (target.forceId !== state.playerForceId && state.playerForceId) {
+            officers[target.id] = { ...officers[target.id], recognizedByForceId: state.playerForceId };
+          } else if (target.forceId === state.playerForceId) {
+            officers[target.id] = { ...officers[target.id], loyalty: Math.min(100, target.loyalty + 4) };
+          }
+        }
+        set({ officers });
+        return { ok: true, verdictZh: verdict.zh, verdictEn: verdict.en, appraiserName: appraiser.name, renownGain: gain.target, misread: !accurate, legendary: accurate && !!legendaryVerdict(target) };
+      },
       recordDeed: (officerId, patch) => {
         const state = get();
         const cur = state.deeds[officerId] ?? createDeeds(officerId);
@@ -6783,6 +7474,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const officers = { ...state.officers };
         const cities = { ...state.cities };
         const capId = player.capitalCityId;
+        let relations = state.diplomacy.relations;
+        let diploTouched = false;
         for (const e of effects) {
           if (e.kind === 'gold' && e.amount && cities[capId]) {
             cities[capId] = { ...cities[capId], gold: cities[capId].gold + e.amount };
@@ -6794,10 +7487,24 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           } else if (e.kind === 'afflict' && e.targetId) {
             const o = officers[e.targetId];
             if (o && o.status !== 'dead') officers[e.targetId] = withAffliction(o, { kind: 'shame', seasons: 4, charisma: -10, intelligence: -8 });
+          } else if (e.kind === 'slay' && e.targetId) {
+            // 罵死 — a scripted rout that actually breaks the foe (王朗墜馬而亡).
+            const o = officers[e.targetId];
+            if (o && o.status !== 'dead') officers[e.targetId] = { ...o, status: 'dead', forceId: null, task: null, woundedSeasons: undefined, woundSeverity: undefined };
+          } else if (e.kind === 'ally' && e.targetId && state.playerForceId) {
+            // 游说结盟 — shift diplomacy with the target force; a decisive win
+            // (amount ≥20) seals the alliance, a loss merely sours the score.
+            relations = diploTouched ? relations : { ...relations };
+            diploTouched = true;
+            const x = state.playerForceId, y = e.targetId;
+            const key = pairKey(x, y);
+            const rel = relations[key] ?? { forceA: x < y ? x : y, forceB: x < y ? y : x, score: 0, status: 'neutral' as const };
+            const score = Math.max(-100, Math.min(100, rel.score + (e.amount ?? 0)));
+            relations[key] = { ...rel, score, status: (e.amount ?? 0) >= 20 ? 'allied' : rel.status };
           }
           // 'relationship' / 'morale' / 'note' are display-only here.
         }
-        set({ officers, cities });
+        set({ officers, cities, ...(diploTouched ? { diplomacy: { ...state.diplomacy, relations } } : {}) });
       },
       grantOfficerXp: (officerId, amount, favored) => {
         const state = get();
@@ -6833,6 +7540,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         set({
           officers: { ...state.officers, [officerId]: r.officer },
           cities: { ...state.cities, [city.id]: { ...city, gold: city.gold - cost, iron: (city.iron ?? 0) - iron } },
+        });
+        // 轉生慶典 — 突破 is a rare, deliberate milestone; herald it.
+        get().pushPopup({
+          key: 'breakthrough-rebirth', media: 'image',
+          titleZh: '轉生突破', titleEn: 'Transcendent Breakthrough',
+          captionZh: `${o.name.zh} 破境而出,更上一重天`,
+          captionEn: `${o.name.en} breaks through to a higher plane`,
         });
         return { ok: true, notes: r.entries.map((e) => e.textZh ?? e.text) };
       },
@@ -8979,17 +9693,22 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           updates.scenicLooted = { ...state.scenicLooted, [siteId]: state.playerForceId };
         }
 
-        // 訪賢 — court the recluse if he's still a free agent.
+        // 訪賢 — court the recluse if he's still a free agent. 三顧之誠 — each
+        // call is one of the famous three visits: sincerity tells, so the odds
+        // (and the flavour) escalate from 一訪不遇 to 三顧乃出.
         let recruited = false;
         if (site.hermitId) {
           const hermit = state.officers[site.hermitId];
           if (hermit && hermit.forceId === null && (hermit.status === 'idle' || hermit.status === 'unsearched')) {
             const force = state.forces[state.playerForceId];
             const ruler = force ? state.officers[force.rulerOfficerId] : null;
+            const visit = (state.scenicVisits[siteId] ?? 0) + 1;
+            updates.scenicVisits = { ...state.scenicVisits, [siteId]: visit };
             recruited = rollHermitRecruit({
               envoyCharisma: envoy.stats.charisma,
               rulerCharisma: ruler?.stats.charisma ?? 50,
               hermitIntelligence: hermit.stats.intelligence,
+              visit,
               rng: Math.random,
             });
             if (recruited) {
@@ -9004,9 +9723,16 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                   loyalty: 75,
                 },
               };
-              msgs.push(`${hermit.name.zh}感誠來投!`);
+              msgs.push(visit >= 3
+                ? `三顧之誠,${hermit.name.zh}感而出山,願效犬馬!`
+                : `${hermit.name.zh}感誠來投!`);
             } else {
-              msgs.push(`${hermit.name.zh}避而不出 — 來日再訪`);
+              // 一訪不遇 / 二訪留書 / 仍避而不出 — distinct flavour per visit.
+              msgs.push(visit === 1
+                ? `一訪不遇 — 童子應門:先生雲遊未歸,來日再訪。`
+                : visit === 2
+                  ? `二訪不值 — ${hermit.name.zh}適有他出,留書而返。`
+                  : `${hermit.name.zh}避而不出 — 精誠所至,來日再訪。`);
             }
           }
         }
@@ -9216,13 +9942,85 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const officer = state.officers[officerId];
         if (!officer) return { ok: false, reason: 'invalid officer' };
         if (officer.forceId !== state.playerForceId) return { ok: false, reason: 'not your officer' };
+        if (officer.status !== 'idle' && officer.status !== 'active') return { ok: false, reason: '武將不在其位' };
+        // 品階門檻 — a whole province demands a proven hand (銀牌以上).
+        if (gradeRank(officerGrade(officer).grade) < gradeRank('silver'))
+          return { ok: false, reason: `品階不足:州牧須銀牌以上(${officer.name.zh}資歷尚淺)` };
+        // The honour of the office buys a little goodwill; tenure starts now.
         set({
-          provinceGovernors: {
-            ...state.provinceGovernors,
-            [provinceId]: officerId,
-          },
+          provinceGovernors: { ...state.provinceGovernors, [provinceId]: officerId },
+          provinceGovernorSince: { ...state.provinceGovernorSince, [provinceId]: state.date.year },
+          provinceWarlordism: { ...state.provinceWarlordism, [provinceId]: 0 },
+          officers: { ...state.officers, [officerId]: { ...officer, loyalty: Math.min(100, officer.loyalty + 3) } },
+        });
+        // 牧守一體 — elevation to 州牧 is a weighty grant of authority.
+        get().pushPopup({
+          key: 'province-governor', media: 'image',
+          titleZh: '州牧晉升', titleEn: 'Provincial Governor',
+          captionZh: `${officer.name.zh} 受任州牧,節制一州`,
+          captionEn: `${officer.name.en} is raised to Governor of a whole province`,
         });
         return { ok: true };
+      },
+
+      // 召還 — recall a province governor: the slot, his 割據 designs and tenure
+      // all clear. The safe lever against a steward growing over-mighty.
+      recallGovernor: (provinceId) => {
+        const state = get();
+        if (!state.provinceGovernors[provinceId]) return { ok: false, reason: '此州未任州牧' };
+        const govs = { ...state.provinceGovernors }; delete govs[provinceId];
+        const warl = { ...state.provinceWarlordism }; delete warl[provinceId];
+        const since = { ...state.provinceGovernorSince }; delete since[provinceId];
+        set({ provinceGovernors: govs, provinceWarlordism: warl, provinceGovernorSince: since });
+        return { ok: true };
+      },
+
+      // 安撫 — spend 600 gold from the capital to lavish honours on a restive
+      // 州牧: his 割據 meter cools and his loyalty firms.
+      appeaseGovernor: (provinceId) => {
+        const state = get();
+        const oid = state.provinceGovernors[provinceId];
+        const gov = oid ? state.officers[oid] : null;
+        if (!gov) return { ok: false, reason: '此州未任州牧' };
+        if (!PROVINCES_BY_ID[provinceId]) return { ok: false, reason: 'invalid province' };
+        const force = state.playerForceId ? state.forces[state.playerForceId] : null;
+        const capital = force ? state.cities[force.capitalCityId] : null;
+        const COST = 600;
+        if (!capital || capital.gold < COST) return { ok: false, reason: `國庫不足(需 ${COST} 金於首都)` };
+        set({
+          cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - COST } },
+          officers: { ...state.officers, [oid!]: { ...gov, loyalty: Math.min(100, gov.loyalty + 8) } },
+          provinceWarlordism: { ...state.provinceWarlordism, [provinceId]: Math.max(0, (state.provinceWarlordism[provinceId] ?? 0) - 35) },
+        });
+        get().notify(`安撫 ${gov.name.zh} — 割據之心稍解,忠誠 +8。`, `Appeased ${gov.name.en} — warlordism cooled, loyalty +8.`, 'ok');
+        return { ok: true };
+      },
+
+      // 州牧辟召 — the 州牧 staffs every undelegated city of his province in one
+      // stroke, each to the ablest officer stationed there (州統諸郡).
+      provinceLevy: (provinceId) => {
+        const state = get();
+        const oid = state.provinceGovernors[provinceId];
+        if (!oid || !state.officers[oid]) return { ok: false, count: 0, reason: '此州未任州牧' };
+        if (!state.playerForceId) return { ok: false, count: 0, reason: 'no force' };
+        const busy = new Set<EntityId>([
+          ...Object.keys(state.pendingCommands),
+          ...state.pendingTrainings.map((tr) => tr.officerId),
+        ]);
+        const pairs = planProvinceLevy({
+          provinceId, forceId: state.playerForceId,
+          cities: state.cities, officers: state.officers,
+          cityDelegations: state.cityDelegations, busyOfficerIds: busy,
+        });
+        for (const p of pairs) get().delegateCity(p.cityId, p.officerId);
+        if (pairs.length === 0) return { ok: false, count: 0, reason: '無可委任之城(已委或無適任武將)' };
+        const gov = state.officers[oid];
+        get().notify(
+          `${gov.name.zh}辟召 ${PROVINCES_BY_ID[provinceId]?.name.zh ?? ''} — 委任 ${pairs.length} 城太守。`,
+          `${gov.name.en} levies ${PROVINCES_BY_ID[provinceId]?.name.en ?? ''} — ${pairs.length} prefects appointed.`,
+          'ok',
+        );
+        return { ok: true, count: pairs.length };
       },
 
       proposeMarriagePair: (aId, bId) => {
@@ -9250,6 +10048,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           family,
           officers,
           cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - MARRIAGE_COST } },
+        });
+        // 府內結親 — a wedding within the house.
+        get().pushPopup({
+          key: 'wedding', media: 'image',
+          titleZh: '府內結親', titleEn: 'A Wedding Arranged',
+          captionZh: `${a.name.zh} 與 ${b.name.zh} 結為連理`,
+          captionEn: `${a.name.en} ⚭ ${b.name.en}`,
         });
         return { ok: true, message: `${a.name.en} ⚭ ${b.name.en}: a marriage is arranged within your house — their loyalty steadies, and they may in time raise heirs.` };
       },
@@ -9730,6 +10535,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           ),
           sites: migrateSites(loaded.sites),
           scenicLooted: loaded.scenicLooted ?? {},
+          scenicVisits: loaded.scenicVisits ?? {},
+          musters: loaded.musters ?? {},
+          governorStances: loaded.governorStances ?? {},
+          governorSince: loaded.governorSince ?? {},
+          governorEvalStreaks: loaded.governorEvalStreaks ?? {},
+          governorReviewLast: loaded.governorReviewLast ?? {},
+          provinceGovernors: loaded.provinceGovernors ?? {},
+          provinceWarlordism: loaded.provinceWarlordism ?? {},
+          provinceGovernorSince: loaded.provinceGovernorSince ?? {},
           itemRefinements: loaded.itemRefinements ?? {},
           itemBreakthroughs: loaded.itemBreakthroughs ?? {},
           itemGems: loaded.itemGems ?? {},
@@ -9795,12 +10609,16 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         buildings: state.buildings,
         tradeRoutes: state.tradeRoutes,
         provinceGovernors: state.provinceGovernors,
+        provinceWarlordism: state.provinceWarlordism,
+        provinceGovernorSince: state.provinceGovernorSince,
         fleets: state.fleets,
         shipOrders: state.shipOrders,
         ports: state.ports,
         forts: state.forts,
         sites: state.sites,
         scenicLooted: state.scenicLooted,
+        scenicVisits: state.scenicVisits,
+        musters: state.musters,
         family: state.family,
         pendingHeirs: state.pendingHeirs,
         clanStandings: state.clanStandings,
@@ -9834,6 +10652,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         fogOfWar: state.fogOfWar,
         espionageReveals: state.espionageReveals,
         cityDelegations: state.cityDelegations,
+        governorStances: state.governorStances,
+        governorSince: state.governorSince,
+        governorEvalStreaks: state.governorEvalStreaks,
+        governorReviewLast: state.governorReviewLast,
         legions: state.legions,
         emperorCityId: state.emperorCityId,
         dailyChallengeDate: state.dailyChallengeDate,

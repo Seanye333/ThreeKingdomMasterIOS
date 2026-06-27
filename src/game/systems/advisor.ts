@@ -1,15 +1,27 @@
 /**
- * 軍師錦囊 — your best mind reads the board and hands you three moves.
+ * 軍師錦囊 — your best mind reads the board and hands you the moves.
  *
- * Each tick the advisor (highest-INT officer in your service) scans for
- * the loudest problems and opportunities; every tip carries a one-tap
- * action that routes through the ordinary order pipeline. The advice is
- * deliberately conservative — the 軍師 never spends what the treasury
- * can't afford and never orders an officer who's already busy.
+ * Each tick the advisor scans for the loudest problems and opportunities;
+ * every tip carries a one-tap action that routes through the ordinary
+ * order pipeline. The advice is deliberately conservative — the 軍師 never
+ * spends what the treasury can't afford and never orders a busy officer.
+ *
+ * 軍師做活 — the advisor is no longer a name on the panel. A sharper mind
+ * (or your appointed 軍師) reads further:
+ *   • more counsel       — 3 tips → up to 5, by intelligence
+ *   • earlier warning    — the thresholds for 兵臨/民變/糧盡 relax with 智,
+ *                          so a 神機 advisor sounds the alarm before the fire
+ *   • deeper counsel     — 謀略獻策 (set rivals against each other / 遠交近攻)
+ *                          and 名士奇策 (signature counsel from the great
+ *                          strategists) unlock only for a capable mind
+ * and the appointed 軍師 speaks first, even over a sharper unappointed aide.
  */
-import type { Army, City, EntityId, InternalAffairsType, Officer, Season } from '../types';
+import type { Army, City, EntityId, Force, InternalAffairsType, Officer, Season } from '../types';
+import type { DiplomaticState } from '../types/diplomacy';
+import { getRelation } from '../types/diplomacy';
 import { COMMAND_DEFS } from './commands';
 import { foodRate } from './market';
+import { forcesAdjacent, SCHEME_DEFS, type SchemeId } from './schemes';
 
 export interface AdvisorTip {
   id: string;
@@ -20,6 +32,8 @@ export interface AdvisorTip {
   action:
     | { kind: 'command'; cityId: EntityId; type: InternalAffairsType; officerId: EntityId }
     | { kind: 'trade'; cityId: EntityId; trade: 'buy' | 'sell'; amount: number }
+    | { kind: 'banquet'; cityId: EntityId }
+    | { kind: 'scheme'; schemeId: SchemeId; targetA: EntityId; targetB?: EntityId }
     | { kind: 'none' };
 }
 
@@ -30,12 +44,42 @@ export interface AdvisorInput {
   busyOfficerIds: ReadonlySet<EntityId>;
   playerForceId: EntityId;
   season: Season;
+  /** The advisor whose 智 drives slot count + foresight + signature counsel.
+   *  Absent → a neutral aide (INT 70): 3 tips, no relaxed thresholds. */
+  advisor?: Officer | null;
+  /** Rival forces — names/strength for 謀略獻策. Omit to skip scheme counsel. */
+  forces?: Record<EntityId, Force>;
+  /** Standing relations — sour pairs make the easiest 二虎競食 marks. */
+  diplomacy?: DiplomaticState;
+  /** Where schemes are paid from — gates the 照辦 button on scheme tips. */
+  playerCapitalId?: EntityId;
+  /** The lord himself never "defects"; excluded from 忠誠告警. */
+  rulerOfficerId?: EntityId;
 }
 
-/** The voice of the tips — your sharpest mind, or a nameless aide. */
-export function pickAdvisor(officers: Record<EntityId, Officer>, playerForceId: EntityId): Officer | null {
+/** A 軍師 appointment, if any (a thin slice of the civic-appointment record). */
+export interface AdvisorAppointment {
+  officerId: EntityId;
+  forceId: EntityId;
+  titleId: string;
+}
+
+/**
+ * The voice of the tips. Your appointed 軍師 speaks first; absent one, your
+ * sharpest serving mind. A nameless aide if the bench is empty.
+ */
+export function pickAdvisor(
+  officers: Record<EntityId, Officer>,
+  playerForceId: EntityId,
+  appointments?: ReadonlyArray<AdvisorAppointment>,
+): Officer | null {
+  const eligible = (o: Officer | undefined | null): o is Officer =>
+    !!o && o.forceId === playerForceId && o.status !== 'dead' && o.status !== 'imprisoned' && o.status !== 'unsearched';
+  // 拜將拜相 — the man you named 軍師 advises, even over a sharper aide.
+  const appt = appointments?.find((a) => a.forceId === playerForceId && a.titleId === 'strategist');
+  if (appt && eligible(officers[appt.officerId])) return officers[appt.officerId];
   return Object.values(officers)
-    .filter((o) => o.forceId === playerForceId && o.status !== 'dead' && o.status !== 'imprisoned' && o.status !== 'unsearched')
+    .filter(eligible)
     .sort((a, b) => b.stats.intelligence - a.stats.intelligence)[0] ?? null;
 }
 
@@ -49,46 +93,140 @@ function idleIn(input: AdvisorInput, cityId: EntityId): Officer | null {
     .sort((a, b) => b.stats.politics - a.stats.politics)[0] ?? null;
 }
 
-export function adviseTips(input: AdvisorInput, max = 3): AdvisorTip[] {
+/** A command tip if an idle officer + the silver are both on hand, else 參考. */
+function cmdTip(
+  input: AdvisorInput,
+  city: City,
+  type: InternalAffairsType,
+  fields: { id: string; zh: string; en: string; priority: number },
+): AdvisorTip {
+  const officer = idleIn(input, city.id);
+  const canAct = officer && city.gold >= COMMAND_DEFS[type].goldCost;
+  return {
+    ...fields,
+    action: canAct ? { kind: 'command', cityId: city.id, type, officerId: officer.id } : { kind: 'none' },
+  };
+}
+
+/**
+ * 名士奇策 — the great strategists, when they hold your ear, give counsel in
+ * their own hand. Flavour + a nudge toward the move that made them famous.
+ */
+function legendaryCounsel(input: AdvisorInput, sage: Officer, own: City[]): AdvisorTip | null {
+  if (!own.length) return null;
+  const byAgri = [...own].sort((a, b) => a.agriculture - b.agriculture)[0];
+  const byWall = [...own].sort((a, b) => a.defense - b.defense)[0];
+  const byTroops = [...own].sort((a, b) => b.troops - a.troops)[0];
+  const PRI = 64;
+  switch (sage.id) {
+    case 'zhuge-liang':
+      return cmdTip(input, byAgri, 'develop-agriculture', {
+        id: `sage-${sage.id}`, priority: PRI,
+        zh: `孔明撫扇而言:「治戎為長,務農足食 — 願於${byAgri.name.zh}屯田勸耕,根固而後圖天下。」`,
+        en: `Kongming counsels patient husbandry — break new fields at ${byAgri.name.en} before reaching for the realm.`,
+      });
+    case 'sima-yi':
+      return cmdTip(input, byWall, 'build-defense', {
+        id: `sage-${sage.id}`, priority: PRI,
+        zh: `仲達斂目:「善藏其鋒,待釁而動 — 宜厚${byWall.name.zh}之壘,以逸待勞,時至自有可乘。」`,
+        en: `Zhongda preaches patience — thicken ${byWall.name.en}'s walls and let the foe tire first.`,
+      });
+    case 'zhou-yu':
+      return cmdTip(input, byTroops, 'drill-troops', {
+        id: `sage-${sage.id}`, priority: PRI,
+        zh: `公瑾撫琴:「兵在精不在多 — 願精練${byTroops.name.zh}之卒,水陸並進,可決勝於談笑。」`,
+        en: `Gongjin would drill ${byTroops.name.en}'s ranks to a razor's edge — quality wins the day.`,
+      });
+    case 'guo-jia':
+      return {
+        id: `sage-${sage.id}`, priority: PRI, action: { kind: 'none' },
+        zh: `奉孝撫掌:「兵貴神速,主公有十勝,敵有十敗 — 見可乘之隙,當疾取之,遲則生變。」`,
+        en: `Fengxiao urges speed — you hold ten advantages; strike the opening before it closes.`,
+      };
+    case 'jia-xu':
+      return {
+        id: `sage-${sage.id}`, priority: PRI, action: { kind: 'none' },
+        zh: `文和低語:「亂世自保為先 — 驅人相鬥,坐觀虎爭,我不損一卒而敵自弱。」`,
+        en: `Wenhe whispers — let rivals bleed each other; you spend not a single soldier.`,
+      };
+    case 'xun-yu': {
+      const talentCity = own.find((c) => Object.values(input.officers)
+        .some((o) => o.status === 'unsearched' && o.locationCityId === c.id));
+      if (talentCity) return cmdTip(input, talentCity, 'search', {
+        id: `sage-${sage.id}`, priority: PRI,
+        zh: `文若進言:「廣攬賢才,固本寧邦 — 聞${talentCity.name.zh}有遺賢,宜速訪之,人安則國安。」`,
+        en: `Wenruo counsels talent first — hidden worthies wait at ${talentCity.name.en}; bring them in.`,
+      });
+      return {
+        id: `sage-${sage.id}`, priority: PRI, action: { kind: 'none' },
+        zh: `文若進言:「廣攬賢才,固本寧邦 — 王業之基,在得人心、收賢士。」`,
+        en: `Wenruo counsels that the dynasty's foundation is winning hearts and worthy minds.`,
+      };
+    }
+    case 'lu-xun':
+      return cmdTip(input, byWall, 'build-defense', {
+        id: `sage-${sage.id}`, priority: PRI,
+        zh: `伯言斂容:「以逸待勞,後發制人 — 固${byWall.name.zh}之守,驕敵深入,一炬可破連營。」`,
+        en: `Boyan would fortify ${byWall.name.en} and bait the foe deep — then burn the camps.`,
+      });
+    case 'pang-tong':
+      return {
+        id: `sage-${sage.id}`, priority: PRI, action: { kind: 'none' },
+        zh: `士元獻策:「連環之計,可束敵手 — 環環相扣,則堅陣可破,然用之者當慎防火攻。」`,
+        en: `Shiyuan offers the chained-ploy — bind the foe's hand, but beware the answering fire.`,
+      };
+    case 'fa-zheng':
+      return {
+        id: `sage-${sage.id}`, priority: PRI, action: { kind: 'none' },
+        zh: `孝直進言:「奇正相生,出敵不意 — 因勢用險,可收奇功於一役。」`,
+        en: `Xiaozhi counsels the bold gambit — read the moment and take the daring line.`,
+      };
+    default:
+      return null;
+  }
+}
+
+export function adviseTips(input: AdvisorInput): AdvisorTip[] {
   const tips: AdvisorTip[] = [];
   const own = Object.values(input.cities).filter((c) => c.ownerForceId === input.playerForceId);
   const hostiles = Object.values(input.armies).filter((a) => a.forceId !== input.playerForceId);
 
+  // 軍師做活 — a sharper mind sees further and speaks more.
+  const iq = input.advisor?.stats.intelligence ?? 70;
+  const foresight = Math.max(0, iq - 70) / 100;                 // 0 at ≤70 … 0.30 at 100
+  const maxTips = 3 + (iq >= 80 ? 1 : 0) + (iq >= 92 ? 1 : 0);  // 3 … 5
+
   for (const city of own) {
-    // ① 兵臨城下 — hostile columns already marching here outnumber the walls.
+    // ① 兵臨城下 — hostile columns marching here. A sharp 軍師 sounds the
+    //    alarm before they actually outnumber the walls (斥候警讯).
     const inbound = hostiles.filter((a) => a.targetCityId === city.id && !a.holding)
       .reduce((sum, a) => sum + a.troops, 0);
-    if (inbound > city.troops) {
-      const officer = idleIn(input, city.id);
-      const canAct = officer && city.gold >= COMMAND_DEFS['recruit-troops'].goldCost;
-      tips.push({
+    if (inbound > city.troops * (1 - foresight * 0.5)) {
+      const dire = inbound > city.troops;
+      tips.push(cmdTip(input, city, 'recruit-troops', {
         id: `threat-${city.id}`,
-        zh: `敵軍${Math.round(inbound / 1000)}千之眾正撲${city.name.zh},守軍恐難支 — 宜速徵兵固守。`,
-        en: `~${Math.round(inbound / 1000)}k hostiles march on ${city.name.en}; the garrison won't hold. Recruit now.`,
-        priority: 100 + inbound / 1000,
-        action: canAct
-          ? { kind: 'command', cityId: city.id, type: 'recruit-troops', officerId: officer.id }
-          : { kind: 'none' },
-      });
+        zh: dire
+          ? `敵軍${Math.round(inbound / 1000)}千之眾正撲${city.name.zh},守軍恐難支 — 宜速徵兵固守。`
+          : `斥候報:${Math.round(inbound / 1000)}千敵旅壓向${city.name.zh},雖未及城下,宜早徵兵以備。`,
+        en: dire
+          ? `~${Math.round(inbound / 1000)}k hostiles march on ${city.name.en}; the garrison won't hold. Recruit now.`
+          : `Scouts: ~${Math.round(inbound / 1000)}k bearing down on ${city.name.en} — recruit early, before they arrive.`,
+        priority: (dire ? 100 : 86) + inbound / 1000,
+      }));
     }
 
-    // ② 民心浮動 — unrest brewing.
-    if (city.loyalty < 50) {
-      const officer = idleIn(input, city.id);
-      const canAct = officer && city.gold >= COMMAND_DEFS['improve-loyalty'].goldCost;
-      tips.push({
+    // ② 民心浮動 — unrest brewing (a charismatic eye catches it sooner).
+    if (city.loyalty < 50 + foresight * 30) {
+      tips.push(cmdTip(input, city, 'improve-loyalty', {
         id: `unrest-${city.id}`,
         zh: `${city.name.zh}民忠僅${city.loyalty},恐生民變 — 宜行安撫。`,
         en: `${city.name.en} loyalty is ${city.loyalty}; revolt brews. Soothe it.`,
         priority: 80 + (50 - city.loyalty),
-        action: canAct
-          ? { kind: 'command', cityId: city.id, type: 'improve-loyalty', officerId: officer.id }
-          : { kind: 'none' },
-      });
+      }));
     }
 
     // ③ 糧將盡 — the granary won't feed the garrison much longer.
-    if (city.food < city.troops * 2 && city.gold >= 500) {
+    if (city.food < city.troops * (2 + foresight * 4) && city.gold >= 500) {
       tips.push({
         id: `hunger-${city.id}`,
         zh: `${city.name.zh}存糧不繼(${city.food.toLocaleString()}糧養${(city.troops / 1000).toFixed(1)}千兵)— 宜市易購糧。`,
@@ -113,17 +251,12 @@ export function adviseTips(input: AdvisorInput, max = 3): AdvisorTip[] {
     const hidden = Object.values(input.officers)
       .filter((o) => o.status === 'unsearched' && o.locationCityId === city.id).length;
     if (hidden > 0) {
-      const officer = idleIn(input, city.id);
-      const canAct = officer && city.gold >= COMMAND_DEFS['search'].goldCost;
-      tips.push({
+      tips.push(cmdTip(input, city, 'search', {
         id: `talent-${city.id}`,
         zh: `聞${city.name.zh}有在野賢士 — 宜遣人尋訪。`,
         en: `Word of hidden talent at ${city.name.en} — send a search.`,
         priority: 50 + hidden * 3,
-        action: canAct
-          ? { kind: 'command', cityId: city.id, type: 'search', officerId: officer.id }
-          : { kind: 'none' },
-      });
+      }));
     }
 
     // ⑥ 良將閒置 — three or more idle officers in one city is wasted salt.
@@ -133,22 +266,35 @@ export function adviseTips(input: AdvisorInput, max = 3): AdvisorTip[] {
         && (o.status === 'active' || o.status === 'idle')
         && !input.busyOfficerIds.has(o.id)).length;
     if (idleCount >= 3) {
-      const officer = idleIn(input, city.id);
       const weakest: InternalAffairsType = city.agriculture <= city.commerce ? 'develop-agriculture' : 'develop-commerce';
-      const canAct = officer && city.gold >= COMMAND_DEFS[weakest].goldCost;
-      tips.push({
+      tips.push(cmdTip(input, city, weakest, {
         id: `idle-${city.id}`,
         zh: `${city.name.zh}有${idleCount}員良將賦閒 — 養兵千日,宜遣其勸${weakest === 'develop-agriculture' ? '農' : '商'}。`,
         en: `${idleCount} officers idle at ${city.name.en} — put one to work.`,
         priority: 30,
-        action: canAct
-          ? { kind: 'command', cityId: city.id, type: weakest, officerId: officer.id }
-          : { kind: 'none' },
-      });
+      }));
     }
   }
 
-  // ⑦ 敵城空虛 — a weak neighbour invites ambition (informational).
+  // ⑦ 忠誠告警 — a key officer's heart is slipping; win them back with a
+  //    banquet before they bolt (the lord himself never defects).
+  const wavering = Object.values(input.officers)
+    .filter((o) => o.forceId === input.playerForceId && o.id !== input.rulerOfficerId
+      && (o.status === 'active' || o.status === 'idle') && o.loyalty < 40)
+    .sort((a, b) => a.loyalty - b.loyalty)[0];
+  if (wavering) {
+    const here = input.cities[wavering.locationCityId ?? ''];
+    const canAct = !!here && here.ownerForceId === input.playerForceId;
+    tips.push({
+      id: `loyalty-${wavering.id}`,
+      zh: `${wavering.name.zh}忠心僅${wavering.loyalty},久必生異志 — 宜設宴加恩,以結其心。`,
+      en: `${wavering.name.en}'s loyalty is ${wavering.loyalty}; hold a banquet and win them back before they bolt.`,
+      priority: 90 - wavering.loyalty,
+      action: canAct ? { kind: 'banquet', cityId: here.id } : { kind: 'none' },
+    });
+  }
+
+  // ⑧ 敵城空虛 — a weak neighbour invites ambition (informational).
   const strongest = Math.max(0, ...own.map((c) => c.troops));
   for (const city of own) {
     for (const adjId of city.adjacentCityIds ?? []) {
@@ -167,10 +313,67 @@ export function adviseTips(input: AdvisorInput, max = 3): AdvisorTip[] {
     }
   }
 
-  // Dedupe by id, sort loudest first, hand over the top N.
+  // ⑨ 謀略獻策 — a capable strategist (智≥72) reads the wider board and
+  //    proposes a named scheme: set two bordering rivals to bleed each
+  //    other (二虎競食), or court a far power (遠交近攻).
+  if (iq >= 72 && input.forces && input.playerCapitalId) {
+    const capital = input.cities[input.playerCapitalId];
+    const rivalIds = [...new Set(Object.values(input.cities)
+      .map((c) => c.ownerForceId)
+      .filter((f): f is EntityId => !!f && f !== input.playerForceId))];
+    const strength = (fid: EntityId) => Object.values(input.cities)
+      .filter((c) => c.ownerForceId === fid).reduce((s, c) => s + c.troops, 0);
+    const nameOf = (fid: EntityId) => input.forces?.[fid]?.name.zh ?? fid;
+    const nameEn = (fid: EntityId) => input.forces?.[fid]?.name.en ?? fid;
+    // 二虎競食 — the strongest sour, bordering rival pair.
+    let pair: { a: EntityId; b: EntityId; score: number } | null = null;
+    for (let i = 0; i < rivalIds.length; i++) {
+      for (let j = i + 1; j < rivalIds.length; j++) {
+        const a = rivalIds[i], b = rivalIds[j];
+        if (!forcesAdjacent(input.cities, a, b)) continue;
+        const sa = strength(a), sb = strength(b);
+        if (sa < 3000 || sb < 3000) continue;
+        const rel = input.diplomacy ? getRelation(input.diplomacy, a, b).score : 0;
+        const score = sa + sb - rel * 30; // already-sour pairs are easiest to ignite
+        if (!pair || score > pair.score) pair = { a, b, score };
+      }
+    }
+    const twoTigers = SCHEME_DEFS.find((d) => d.id === 'two-tigers')!;
+    const farFriend = SCHEME_DEFS.find((d) => d.id === 'far-friend')!;
+    if (pair && capital && capital.gold >= twoTigers.goldCost) {
+      tips.push({
+        id: `scheme-2t-${pair.a}-${pair.b}`,
+        zh: `${nameOf(pair.a)}與${nameOf(pair.b)}接壤而勢均 — 可施二虎競食,使其自相消耗,我坐收漁利。`,
+        en: `${nameEn(pair.a)} and ${nameEn(pair.b)} border each other and are evenly matched — set them at each other and reap the spoils.`,
+        priority: 48,
+        action: { kind: 'scheme', schemeId: 'two-tigers', targetA: pair.a, targetB: pair.b },
+      });
+    } else {
+      const far = rivalIds
+        .filter((f) => !forcesAdjacent(input.cities, input.playerForceId, f) && strength(f) >= 3000)
+        .sort((a, b) => strength(b) - strength(a))[0];
+      if (far && capital && capital.gold >= farFriend.goldCost) {
+        tips.push({
+          id: `scheme-ff-${far}`,
+          zh: `${nameOf(far)}地遠而不接壤 — 宜遠交近攻,結為奧援,以制近敵。`,
+          en: `${nameEn(far)} shares no border with us — court them as a distant ally against the neighbours.`,
+          priority: 44,
+          action: { kind: 'scheme', schemeId: 'far-friend', targetA: far },
+        });
+      }
+    }
+  }
+
+  // ⑩ 名士奇策 — a legendary strategist gives counsel in their own hand.
+  if (input.advisor) {
+    const sage = legendaryCounsel(input, input.advisor, own);
+    if (sage) tips.push(sage);
+  }
+
+  // Dedupe by id, sort loudest first, hand over the top N (scaled by 智).
   const seen = new Set<string>();
   return tips
     .filter((t2) => (seen.has(t2.id) ? false : (seen.add(t2.id), true)))
     .sort((a, b) => b.priority - a.priority)
-    .slice(0, max);
+    .slice(0, maxTips);
 }

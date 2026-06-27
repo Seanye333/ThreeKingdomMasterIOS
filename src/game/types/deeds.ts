@@ -10,6 +10,9 @@ export interface HeroicDeeds {
   duelsWon: number;
   /** 舌戰 won (論辯場 + pre-battle word wars). Optional; old saves default 0. */
   debatesWon?: number;
+  /** 罵倒 — debates won by breaking a foe's 沉著 to 0 (a rout, not points),
+   *  incl. the famous 罵死 finishes. Optional; old saves default 0. */
+  debateRouts?: number;
   captured: number;
   citiesTaken: number;
   espionageSuccess: number;

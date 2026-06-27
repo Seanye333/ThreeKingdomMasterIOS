@@ -19,6 +19,7 @@ export function ArmiesPanel() {
   const selectedArmyId = useGameStore((s) => s.selectedArmyId);
   const selectArmy = useGameStore((s) => s.selectArmy);
   const cancelCommand = useGameStore((s) => s.cancelCommand);
+  const recallMarch = useGameStore((s) => s.recallMarch);
   const holdArmy = useGameStore((s) => s.holdArmy);
   const resupplyArmy = useGameStore((s) => s.resupplyArmy);
   const splitArmy = useGameStore((s) => s.splitArmy);
@@ -101,12 +102,19 @@ export function ArmiesPanel() {
               >{lang === 'en' ? 'Split' : '分兵'}</button>
             )}
             <button
-              onClick={() => { cancelCommand(selectedArmyId); selectArmy(null); }}
+              onClick={() => {
+                // 召回 — turn a column still on the road home (keeps most troops,
+                // streams back over the distance covered). If it's already
+                // arriving / can't turn, fall back to disbanding it outright.
+                const r = recallMarch(selectedArmyId);
+                if (!r.ok) { cancelCommand(selectedArmyId); selectArmy(null); }
+              }}
               style={{
                 background: '#3a1410', border: '1px solid #b8442e', color: '#e8a890',
                 fontSize: '0.6rem', padding: '1px 6px', cursor: 'pointer',
                 fontFamily: 'var(--tkm-font-body)',
               }}
+              title={lang === 'en' ? 'Recall — turn the column home (keeps most troops; deeper marches shed more stragglers)' : '召回 — 折返本城(保留大部兵力;行得越深散卒越多)'}
             >{lang === 'en' ? 'Recall' : '召回'}</button>
           </div>
         </div>
@@ -119,8 +127,10 @@ export function ArmiesPanel() {
         const selected = a.id === selectedArmyId;
         const pct = Math.max(0, Math.min(100, Math.round(a.progress * 100)));
         const dest = a.cellTarget ? (lang === 'en' ? 'field' : '野地') : (target ? pickName(target.name, lang) : '?');
-        // Three unambiguous states: hold (parked) · marching · arriving next season.
-        const status = a.holding
+        // States: returning home · hold (parked) · marching · arriving next season.
+        const status = a.returning
+          ? { icon: '↩', text: lang === 'en' ? `home · ${remaining}s` : `歸返·${remaining}季`, color: '#c79a6a', tip: lang === 'en' ? 'Recalled — streaming home; merges into its source city on arrival' : '已召回,折返本城,抵達即併入守軍' }
+          : a.holding
           ? { icon: '⏸', text: lang === 'en' ? 'Hold' : '駐守', color: '#a8c87a', tip: lang === 'en' ? 'Holding position; won’t advance this season (Release to resume)' : '原地駐守,本季不前進(可「解除」續行)' }
           : remaining <= 1
             ? { icon: '⚑', text: lang === 'en' ? `${dest} · arriving` : `${dest}·抵達在即`, color: '#f2dd9a', tip: lang === 'en' ? 'Arrives next season' : '下季抵達目的地' }

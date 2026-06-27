@@ -6,33 +6,42 @@ import { OfficerAvatar } from './OfficerAvatar';
 import { useT } from '../i18n';
 
 /**
- * 軍師錦囊 — three reads of the board from your sharpest mind, each
- * with a 照辦 button that fires the real order. Advice recomputes
- * after every execution so the next tip reflects the new state.
+ * 軍師錦囊 — your sharpest mind (or your appointed 軍師) reads the board and
+ * hands you up to five moves, each with a 照辦 button that fires the real
+ * order — recruit, soothe, trade, 設宴結心, or a named 計略. Advice recomputes
+ * after every execution so the next tip reflects the new state. 一鍵照辦全部
+ * clears the lot; ✕ shelves a tip you'd rather not act on.
  */
 export function AdvisorModal({ onClose }: { onClose: () => void }) {
   useEscapeKey(onClose);
   const cities = useGameStore((s) => s.cities);
   const officers = useGameStore((s) => s.officers);
   const armies = useGameStore((s) => s.armies);
+  const forces = useGameStore((s) => s.forces);
+  const diplomacy = useGameStore((s) => s.diplomacy);
+  const appointments = useGameStore((s) => s.appointments);
   const pendingCommands = useGameStore((s) => s.pendingCommands);
   const pendingTrainings = useGameStore((s) => s.pendingTrainings);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const season = useGameStore((s) => s.date.season);
   const issueCommand = useGameStore((s) => s.issueCommand);
   const tradeFood = useGameStore((s) => s.tradeFood);
+  const hostBanquet = useGameStore((s) => s.hostBanquet);
+  const executeScheme = useGameStore((s) => s.executeScheme);
   const t = useT();
   const [done, setDone] = useState<Record<string, string>>({});
+  const [dismissed, setDismissed] = useState<Record<string, true>>({});
   const reduced = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const anim = (s: string) => (reduced ? undefined : s);
 
   const advisor = useMemo(
-    () => (playerForceId ? pickAdvisor(officers, playerForceId) : null),
-    [officers, playerForceId],
+    () => (playerForceId ? pickAdvisor(officers, playerForceId, appointments) : null),
+    [officers, playerForceId, appointments],
   );
 
-  const tips = useMemo(() => {
+  const allTips = useMemo(() => {
     if (!playerForceId) return [];
+    const force = forces[playerForceId];
     return adviseTips({
       cities,
       officers,
@@ -43,17 +52,47 @@ export function AdvisorModal({ onClose }: { onClose: () => void }) {
       ]),
       playerForceId,
       season,
+      advisor,
+      forces,
+      diplomacy,
+      playerCapitalId: force?.capitalCityId,
+      rulerOfficerId: force?.rulerOfficerId,
     });
-  }, [cities, officers, armies, pendingCommands, pendingTrainings, playerForceId, season]);
+  }, [cities, officers, armies, forces, diplomacy, pendingCommands, pendingTrainings, playerForceId, season, advisor]);
+
+  const tips = allTips.filter((tip) => !dismissed[tip.id]);
+
+  const runAction = (tip: AdvisorTip): string => {
+    const a = tip.action;
+    if (a.kind === 'command') {
+      const r = issueCommand(a.cityId, a.type, a.officerId);
+      return r.ok ? t('✓ 已照辦', '✓ Done') : (r.reason ?? t('未能執行', 'Failed'));
+    }
+    if (a.kind === 'trade') {
+      const r = tradeFood(a.cityId, a.trade, a.amount);
+      return r.ok ? t(`✓ 已成交(得${r.got.toLocaleString()})`, `✓ Traded (+${r.got.toLocaleString()})`) : t('未能成交', 'Failed');
+    }
+    if (a.kind === 'banquet') {
+      const r = hostBanquet(a.cityId);
+      return r.ok ? t('✓ 已設宴結心', '✓ Banquet held') : t('未能設宴', 'Failed');
+    }
+    if (a.kind === 'scheme') {
+      const r = executeScheme(a.schemeId, a.targetA, a.targetB);
+      return r.ok ? t('✓ 計成', '✓ Scheme set') : (r.message ?? t('計不售', 'Failed'));
+    }
+    return '';
+  };
 
   const execute = (tip: AdvisorTip) => {
-    if (tip.action.kind === 'command') {
-      const r = issueCommand(tip.action.cityId, tip.action.type, tip.action.officerId);
-      setDone((d) => ({ ...d, [tip.id]: r.ok ? t('✓ 已照辦', '✓ Done') : (r.reason ?? t('未能執行', 'Failed')) }));
-    } else if (tip.action.kind === 'trade') {
-      const r = tradeFood(tip.action.cityId, tip.action.trade, tip.action.amount);
-      setDone((d) => ({ ...d, [tip.id]: r.ok ? t(`✓ 已成交(得${r.got.toLocaleString()})`, `✓ Traded (+${r.got.toLocaleString()})`) : t('未能成交', 'Failed') }));
-    }
+    const msg = runAction(tip);
+    setDone((d) => ({ ...d, [tip.id]: msg }));
+  };
+
+  const actionable = tips.filter((tip) => tip.action.kind !== 'none' && !done[tip.id]);
+  const doAll = () => {
+    const results: Record<string, string> = {};
+    for (const tip of actionable) results[tip.id] = runAction(tip);
+    setDone((d) => ({ ...d, ...results }));
   };
 
   return (
@@ -80,12 +119,27 @@ export function AdvisorModal({ onClose }: { onClose: () => void }) {
             <div>
               <div style={{ fontSize: '1.15rem', color: '#e6c473', letterSpacing: '0.07rem' }}>🧠 {t('軍師錦囊', 'Advisor')}</div>
               <div style={{ fontSize: '0.72rem', color: '#7a8893' }}>
-                {advisor ? t(`${advisor.name.zh} 進言`, `${advisor.name.en} counsels`) : t('幕僚進言', 'Your aides counsel')}
+                {advisor
+                  ? t(`${advisor.name.zh} 進言 · 智 ${advisor.stats.intelligence}`, `${advisor.name.en} counsels · INT ${advisor.stats.intelligence}`)
+                  : t('幕僚進言', 'Your aides counsel')}
               </div>
             </div>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.4rem', cursor: 'pointer' }}>×</button>
         </div>
+
+        {actionable.length > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
+            <button
+              onClick={doAll}
+              style={{
+                background: 'linear-gradient(180deg,#243447,#16202c)', border: '1px solid #4a6a86',
+                color: '#bcd6ee', padding: '0.3rem 0.85rem', cursor: 'pointer',
+                fontFamily: 'inherit', fontSize: '0.78rem', letterSpacing: '0.04rem',
+              }}
+            >{t(`一鍵照辦全部(${actionable.length})`, `Do all (${actionable.length})`)}</button>
+          </div>
+        )}
 
         {tips.length === 0 && (
           <div style={{ color: '#7a8893', fontSize: '0.85rem', padding: '1rem 0' }}>
@@ -113,6 +167,13 @@ export function AdvisorModal({ onClose }: { onClose: () => void }) {
               >{t('照辦', 'Do it')}</button>
             ) : (
               <span style={{ fontSize: '0.7rem', color: '#5f6c76', whiteSpace: 'nowrap' }}>{t('參考', 'FYI')}</span>
+            )}
+            {!done[tip.id] && (
+              <button
+                onClick={() => setDismissed((dd) => ({ ...dd, [tip.id]: true }))}
+                title={t('暫且擱置', 'Set aside')}
+                style={{ background: 'none', border: 'none', color: '#52606b', fontSize: '1rem', cursor: 'pointer', lineHeight: 1, padding: '0 0.1rem' }}
+              >×</button>
             )}
           </div>
         ))}

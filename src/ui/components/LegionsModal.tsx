@@ -1,8 +1,20 @@
 import { useMemo, useState } from 'react';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useGameStore } from '../../game/state/store';
-import type { Legion } from '../../game/systems/legion';
+import type { Legion, LegionDirective } from '../../game/systems/legion';
+import { legionBannerBonus } from '../../game/systems/legion';
 import { useT } from '../i18n';
+
+/** 方略 — directive labels (one place, used by the builder, list & editor). */
+const DIR_OPTS: Array<[LegionDirective['kind'], string, string]> = [
+  ['conquer', '攻略', 'Conquer'],
+  ['consume', '蠶食', 'Consume'],
+  ['raid', '略地', 'Raid'],
+  ['defend', '固守', 'Hold'],
+];
+const DIR_LABEL = (k: LegionDirective['kind'], en: boolean) => {
+  const o = DIR_OPTS.find((d) => d[0] === k); return o ? (en ? o[2] : o[1]) : k;
+};
 
 /**
  * 軍團府 — form and dissolve legions. A legion is a marshal, a cluster
@@ -17,7 +29,9 @@ export function LegionsModal({ onClose }: { onClose: () => void }) {
   const playerForceId = useGameStore((s) => s.playerForceId);
   const createLegion = useGameStore((s) => s.createLegion);
   const disbandLegion = useGameStore((s) => s.disbandLegion);
+  const updateLegion = useGameStore((s) => s.updateLegion);
   const t = useT();
+  const dirLabel = (k: LegionDirective['kind']) => t(DIR_LABEL(k, false), DIR_LABEL(k, true));
 
   const ownCities = useMemo(
     () => Object.values(cities).filter((c) => c.ownerForceId === playerForceId),
@@ -35,7 +49,7 @@ export function LegionsModal({ onClose }: { onClose: () => void }) {
   // ── builder state ──
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [commanderId, setCommanderId] = useState('');
-  const [kind, setKind] = useState<'conquer' | 'defend'>('conquer');
+  const [kind, setKind] = useState<LegionDirective['kind']>('conquer');
   const [targetId, setTargetId] = useState('');
 
   const candidates = useMemo(
@@ -48,17 +62,16 @@ export function LegionsModal({ onClose }: { onClose: () => void }) {
   );
 
   const canCreate = picked.size > 0 && commanderId
-    && (kind === 'defend' || targetId);
+    && (kind !== 'conquer' || !!targetId);
 
   const create = () => {
     if (!canCreate) return;
+    const directive: LegionDirective = kind === 'conquer' ? { kind: 'conquer', targetCityId: targetId } : ({ kind } as LegionDirective);
     createLegion({
       name: `第${'一二三四五六七八九十'[legions.length] ?? legions.length + 1}軍團`,
       commanderId,
       cityIds: [...picked],
-      directive: kind === 'conquer'
-        ? { kind: 'conquer', targetCityId: targetId }
-        : { kind: 'defend' },
+      directive,
     });
     setPicked(new Set());
     setCommanderId('');
@@ -97,22 +110,43 @@ export function LegionsModal({ onClose }: { onClose: () => void }) {
           const cmd = officers[l.commanderId];
           const tgt = l.directive.kind === 'conquer' ? cities[l.directive.targetCityId] : null;
           return (
-            <div key={l.id} style={{ ...box, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-              <div style={{ fontSize: '0.85rem' }}>
-                <div style={{ color: '#e6c473' }}>
-                  {l.name} · {t('都督', 'Marshal')} {cmd?.name.zh ?? '?'}
-                  <span style={{ color: l.directive.kind === 'conquer' ? '#ff9080' : '#9ed68a', marginLeft: 8 }}>
-                    {l.directive.kind === 'conquer' ? `${t('攻略', 'Conquer')} ${tgt?.name.zh ?? '?'}` : t('固守', 'Hold')}
-                  </span>
+            <div key={l.id} style={box}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                <div style={{ fontSize: '0.85rem' }}>
+                  <div style={{ color: '#e6c473' }}>
+                    {l.name} · {t('都督', 'Marshal')} {cmd?.name.zh ?? '?'}
+                    {cmd && <span style={{ color: '#7a8893', fontSize: '0.68rem' }} title={t('統率→動員·智力→方略·旗→開戰士氣', 'Leadership→mobilization · Intelligence→targeting · Banner→opening morale')}> (統{cmd.stats.leadership}·智{cmd.stats.intelligence}{legionBannerBonus(cmd) > 0 ? `·旗+${legionBannerBonus(cmd)}` : ''})</span>}
+                    <span style={{ color: l.directive.kind === 'defend' ? '#9ed68a' : '#ff9080', marginLeft: 8 }}>
+                      {dirLabel(l.directive.kind)}{tgt ? ` ${tgt.name.zh}` : ''}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: '#7a8893' }}>
+                    {l.cityIds.map((cid) => cities[cid]?.name.zh ?? cid).join('、')}
+                  </div>
                 </div>
-                <div style={{ fontSize: '0.7rem', color: '#7a8893' }}>
-                  {l.cityIds.map((cid) => cities[cid]?.name.zh ?? cid).join('、')}
-                </div>
+                <button
+                  onClick={() => disbandLegion(l.id)}
+                  style={{ background: '#3a1410', border: '1px solid #b8442e', color: '#e8a890', padding: '0.25rem 0.6rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.75rem' }}
+                >{t('解散', 'Disband')}</button>
               </div>
-              <button
-                onClick={() => disbandLegion(l.id)}
-                style={{ background: '#3a1410', border: '1px solid #b8442e', color: '#e8a890', padding: '0.25rem 0.6rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.75rem' }}
-              >{t('解散', 'Disband')}</button>
+              {/* 軍團改編 — re-task in place without disband & rebuild. */}
+              <div style={{ display: 'flex', gap: 8, marginTop: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.68rem', color: '#7a8893' }}>{t('改方略', 'Re-task')}</span>
+                <select value={l.directive.kind}
+                  onChange={(e) => {
+                    const k = e.target.value as LegionDirective['kind'];
+                    if (k === 'conquer') updateLegion(l.id, { directive: { kind: 'conquer', targetCityId: l.directive.kind === 'conquer' ? l.directive.targetCityId : (enemyCities[0]?.id ?? '') } });
+                    else updateLegion(l.id, { directive: { kind: k } as LegionDirective });
+                  }}
+                  style={sel}>
+                  {DIR_OPTS.map(([k]) => <option key={k} value={k}>{dirLabel(k)}</option>)}
+                </select>
+                {l.directive.kind === 'conquer' && (
+                  <select value={l.directive.targetCityId} onChange={(e) => updateLegion(l.id, { directive: { kind: 'conquer', targetCityId: e.target.value } })} style={sel}>
+                    {enemyCities.map((c) => <option key={c.id} value={c.id}>{c.name.zh}</option>)}
+                  </select>
+                )}
+              </div>
             </div>
           );
         })}
@@ -154,9 +188,8 @@ export function LegionsModal({ onClose }: { onClose: () => void }) {
             </label>
             <label style={{ fontSize: '0.75rem' }}>
               {t('③ 方略', '3. Directive')}{' '}
-              <select value={kind} onChange={(e) => setKind(e.target.value as 'conquer' | 'defend')} style={sel}>
-                <option value="conquer">{t('攻略', 'Conquer')}</option>
-                <option value="defend">{t('固守', 'Hold')}</option>
+              <select value={kind} onChange={(e) => setKind(e.target.value as LegionDirective['kind'])} style={sel}>
+                {DIR_OPTS.map(([k]) => <option key={k} value={k}>{dirLabel(k)}</option>)}
               </select>
             </label>
             {kind === 'conquer' && (

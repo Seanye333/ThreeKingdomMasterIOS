@@ -2,6 +2,7 @@ import type { City, Force, Officer } from '../types';
 import type { FamilyRelation } from '../types/family';
 import { recruiterBonus } from './traitEffects';
 import { recruitRefusalPenalty, recruitKinshipBonus } from './relationshipEffects';
+import { isMartyr } from './captiveFate';
 import { effectivePrestige } from '../data/prestige';
 import { deriveDoctrine } from '../data/officerAttributes';
 import { IMPERIAL_RANKS } from '../data/imperial';
@@ -202,6 +203,8 @@ export function recruitCostFor(approach?: PersuasionApproach): number {
  *  so the three approaches can be compared before spending the gold. */
 export function estimateRecruitChance(input: Omit<RecruitInput, 'rng'>): number {
   const { officer, city, recruiterForce, recruiterRuler, recruiterReputation, approach } = input;
+  // 寧死不降 — the ironhearted (鐵血/鐵骨) refuse captivity; no words turn them.
+  if (isMartyr(officer)) return 0;
   const persuasion = recruiterRuler.stats.charisma;
   const resistance = officer.loyalty;
   let chance = (persuasion - resistance + 50) / 100;
@@ -220,6 +223,8 @@ export function estimateRecruitChance(input: Omit<RecruitInput, 'rng'>): number 
   if (officer.retinueOfLordId && officer.retinueOfLordId === recruiterRuler.id) chance += 0.35;
   // 報恩 — one you once freed honourably remembers the kindness.
   if (officer.freedByForceId && officer.freedByForceId === recruiterForce.id) chance += 0.20;
+  // 知遇之恩 — one your 名士 publicly recognized (月旦評) inclines to your house.
+  if (officer.recognizedByForceId && officer.recognizedByForceId === recruiterForce.id) chance += 0.15;
   // 名品禮聘 — a treasure pressed into a captive's hands.
   chance += input.giftBonus ?? 0;
   // 誓不事仇 — they will not serve the force that slew their kin or sworn brothers.
@@ -328,6 +333,8 @@ export function attemptFreeAgentRecruit(
   chance += docFit.delta;
   // 報恩 — a free agent you once freed honourably inclines back to you.
   if (officer.freedByForceId && officer.freedByForceId === recruiterForce.id) chance += 0.20;
+  // 知遇之恩 — one your 名士 publicly recognized (月旦評) inclines to your house.
+  if (officer.recognizedByForceId && officer.recognizedByForceId === recruiterForce.id) chance += 0.15;
   // 'noble' free agent: harder, won't accept just because you're rich.
   const isNoble = (officer.traits ?? []).includes('noble' as never);
   if (isNoble) chance -= 0.10;

@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import type { City, EntityId, Officer } from '../types';
 import { mkOfficer } from '../../test/factories';
-import { planLegionOrders, type Legion } from './legion';
+import { planLegionOrders, legionBannerBonus, planLegionLogistics, type Legion } from './legion';
 
 const mkCity = (over: Partial<City> & { id: string }): City =>
   ({
@@ -36,7 +36,7 @@ const legion = (over: Partial<Legion> = {}): Legion => ({
 });
 
 const plan = (cities: Record<EntityId, City>, officers: Record<EntityId, Officer>, lg = legion()) =>
-  planLegionOrders({ cities, officers, busyOfficerIds: new Set(), playerForceId: 'wei', legion: lg });
+  planLegionOrders({ cities, officers, busyOfficerIds: new Set(), playerForceId: 'wei', legion: lg }).orders;
 
 describe('planLegionOrders — conquer', () => {
   it('adjacent city strikes the target; the hinterland steps toward it', () => {
@@ -56,10 +56,48 @@ describe('planLegionOrders — conquer', () => {
   it('lost cities and busy officers drop out silently', () => {
     const { cities, officers } = world();
     cities.rear = { ...cities.rear, ownerForceId: 'wu' };
-    const orders = planLegionOrders({
+    const { orders } = planLegionOrders({
       cities, officers, busyOfficerIds: new Set(['a']), playerForceId: 'wei', legion: legion(),
     });
     expect(orders).toEqual([]);
+  });
+});
+
+describe('planLegionOrders — 都督做活 / 方略', () => {
+  it('a higher-統率 marshal sends a bigger levy (mobilizes more)', () => {
+    const { cities, officers } = world();
+    officers.a = mkOfficer({ id: 'a', forceId: 'wei', locationCityId: 'front', stats: { leadership: 70, war: 70 } as never });
+    const plain = plan(cities, officers).find((o) => o.cityId === 'front' && o.kind === 'march') as { troops: number };
+    officers.a = mkOfficer({ id: 'a', forceId: 'wei', locationCityId: 'front', stats: { leadership: 100, war: 70 } as never });
+    const great = plan(cities, officers).find((o) => o.cityId === 'front' && o.kind === 'march') as { troops: number };
+    expect(great.troops).toBeGreaterThan(plain.troops);
+  });
+
+  it('蠶食 — dynamically marches on the softest reachable enemy (no fixed target)', () => {
+    const { cities, officers } = world();
+    cities.target = { ...cities.target, troops: 4000 };
+    cities.soft = mkCity({ id: 'soft', ownerForceId: 'wu', troops: 800, adjacentCityIds: ['front'] });
+    cities.front = { ...cities.front, adjacentCityIds: ['target', 'rear', 'soft'] };
+    const orders = plan(cities, officers, legion({ directive: { kind: 'consume' } }));
+    // The front throws its weight at the weaker 'soft', not the stronger 'target'.
+    expect(orders).toContainEqual(expect.objectContaining({ cityId: 'front', toCityId: 'soft', kind: 'march' }));
+  });
+
+  it('a clever marshal retargets a fallen objective', () => {
+    const { cities, officers } = world();
+    cities.target = { ...cities.target, ownerForceId: 'wei' }; // objective already taken
+    cities.soft = mkCity({ id: 'soft', ownerForceId: 'wu', troops: 1000, adjacentCityIds: ['front'] });
+    cities.front = { ...cities.front, adjacentCityIds: ['target', 'rear', 'soft'] };
+    const orders = plan(cities, officers); // conquer 'target' (now ours) → swings to 'soft'
+    expect(orders).toContainEqual(expect.objectContaining({ cityId: 'front', toCityId: 'soft', kind: 'march' }));
+  });
+
+  it('reports a summary of what it did', () => {
+    const { cities, officers } = world();
+    const { summary } = planLegionOrders({ cities, officers, busyOfficerIds: new Set(), playerForceId: 'wei', legion: legion() });
+    expect(summary.directive).toBe('conquer');
+    expect(summary.marched).toBeGreaterThan(0);
+    expect(summary.troopsSent).toBeGreaterThan(0);
   });
 });
 
@@ -71,5 +109,43 @@ describe('planLegionOrders — defend', () => {
     officers.b = { ...officers.b, task: 'march' as Officer['task'] }; // rear can't even recruit
     const orders = plan(cities, officers, legion({ directive: { kind: 'defend' } }));
     expect(orders).toContainEqual(expect.objectContaining({ cityId: 'front', toCityId: 'rear', kind: 'march' }));
+  });
+
+  it('應敵 — a threatened city is reinforced over the merely weakest', () => {
+    const { cities, officers } = world();
+    cities.front = { ...cities.front, troops: 12000, adjacentCityIds: ['rear', 'flank', 'target'] };
+    cities.rear = { ...cities.rear, troops: 2000 };         // weakest, but safe
+    cities.flank = mkCity({ id: 'flank', troops: 5000, adjacentCityIds: ['front'] }); // under threat
+    officers.b = { ...officers.b, task: 'march' as Officer['task'] };
+    const { orders } = planLegionOrders({
+      cities, officers, busyOfficerIds: new Set(), playerForceId: 'wei',
+      legion: legion({ cityIds: ['front', 'rear', 'flank'], directive: { kind: 'defend' } }),
+      threatenedCityIds: new Set(['flank']),
+    });
+    expect(orders).toContainEqual(expect.objectContaining({ cityId: 'front', toCityId: 'flank', kind: 'march' }));
+  });
+});
+
+describe('都督之旗 / 軍團內調度', () => {
+  it('a mighty, renowned marshal lends a bigger banner than a nobody', () => {
+    const great = mkOfficer({ id: 'g', stats: { war: 98, leadership: 90, intelligence: 80, politics: 70, charisma: 80 } as never, renown: 60 as never });
+    const plain = mkOfficer({ id: 'p', stats: { war: 60, leadership: 60, intelligence: 60, politics: 60, charisma: 60 } as never });
+    expect(legionBannerBonus(great)).toBeGreaterThan(legionBannerBonus(plain));
+    expect(legionBannerBonus(undefined)).toBe(0);
+    expect(legionBannerBonus(great)).toBeLessThanOrEqual(16);
+  });
+
+  it('a capable 都督 shifts coin from a rich rear city to a needy frontier one', () => {
+    const { cities } = world();
+    cities.front = { ...cities.front, gold: 30 };   // can't pay a march
+    cities.rear = { ...cities.rear, gold: 2000 };   // comfortable donor
+    const officers = { a: mkOfficer({ id: 'a', stats: { politics: 80 } as never }) };
+    const move = planLegionLogistics(legion(), cities, officers);
+    expect(move?.fromCityId).toBe('rear');
+    expect(move?.toCityId).toBe('front');
+    expect(move?.gold).toBeGreaterThan(0);
+    // A marshal with no head for administration coordinates nothing.
+    const dull = { a: mkOfficer({ id: 'a', stats: { politics: 40 } as never }) };
+    expect(planLegionLogistics(legion(), cities, dull)).toBeNull();
   });
 });

@@ -3,6 +3,7 @@ import { useEscapeKey } from '../hooks/useEscapeKey';
 import { PROVINCES } from '../../game/data';
 import { useGameStore } from '../../game/state/store';
 import type { Officer } from '../../game/types';
+import { governorCalibre, WARLORDISM_WARN, WARLORDISM_CAP } from '../../game/systems/provinceGovernor';
 import { useT, useLanguage, useDesc } from '../i18n';
 import { Name } from './Name';
 
@@ -21,12 +22,20 @@ export function GovernorsModal({ onClose }: Props) {
   const cities = useGameStore((s) => s.cities);
   const officers = useGameStore((s) => s.officers);
   const provinceGovernors = useGameStore((s) => s.provinceGovernors);
+  const provinceWarlordism = useGameStore((s) => s.provinceWarlordism);
+  const appointments = useGameStore((s) => s.appointments);
+  const reviewLast = useGameStore((s) => s.governorReviewLast);
+  const streaks = useGameStore((s) => s.governorEvalStreaks);
   const appointGovernor = useGameStore((s) => s.appointGovernor);
+  const recallGovernor = useGameStore((s) => s.recallGovernor);
+  const appeaseGovernor = useGameStore((s) => s.appeaseGovernor);
+  const provinceLevy = useGameStore((s) => s.provinceLevy);
   const t = useT();
   const lang = useLanguage();
   const desc = useDesc();
 
   const [pickerForProvince, setPickerForProvince] = useState<string | null>(null);
+  const [msg, setMsg] = useState<Record<string, string>>({});
 
   // Provinces where player owns at least one city.
   const playerProvinces = useMemo(() => {
@@ -86,6 +95,15 @@ export function GovernorsModal({ onClose }: Props) {
                 const ownedCount = p.cityIds.filter((cid) => cities[cid]?.ownerForceId === playerForceId).length;
                 const govId = provinceGovernors[p.id as keyof typeof provinceGovernors];
                 const governor = govId ? officers[govId] : null;
+                // 牧守一體 — the 考課 grades of the province's own prefects.
+                const kao = { shang: 0, zhong: 0, xia: 0 };
+                for (const a of appointments) {
+                  if (a.titleId !== 'prefect' || a.forceId !== playerForceId || !a.cityId) continue;
+                  if (!p.cityIds.includes(a.cityId)) continue;
+                  const g = reviewLast[a.officerId]?.grade;
+                  if (g) kao[g]++;
+                }
+                const kaoTotal = kao.shang + kao.zhong + kao.xia;
                 return (
                   <li key={p.id} style={{ background: '#10161e', border: `1px solid ${p.color}`, padding: '0.7rem 1rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
@@ -116,6 +134,48 @@ export function GovernorsModal({ onClose }: Props) {
                         </button>
                       </div>
                     </div>
+                    {governor && (() => {
+                      const cal = Math.round(governorCalibre(governor));
+                      const meter = Math.round(provinceWarlordism[p.id as keyof typeof provinceWarlordism] ?? 0);
+                      const warn = meter >= WARLORDISM_WARN;
+                      const mColor = meter >= 85 ? '#e0623a' : warn ? '#e0a23a' : '#5a8a6a';
+                      return (
+                        <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.7rem', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.7rem', color: '#8a98a4' }}>{t('治才', 'Calibre')} {cal}</span>
+                          <div style={{ flex: 1, minWidth: 120 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.64rem', color: mColor }}>
+                              <span>{t('割據', 'Warlordism')}</span><span>{meter}/{WARLORDISM_CAP}</span>
+                            </div>
+                            <div style={{ height: 5, background: '#1e2a36', borderRadius: 2, overflow: 'hidden' }}>
+                              <div style={{ width: `${meter}%`, height: '100%', background: mColor }} />
+                            </div>
+                          </div>
+                          {meter > 0 && (
+                            <button
+                              onClick={() => { const r = appeaseGovernor(p.id); setMsg((m) => ({ ...m, [p.id]: r.ok ? t('✓ 已安撫', '✓ Appeased') : (r.reason ?? '') })); }}
+                              style={{ background: 'linear-gradient(180deg,#243447,#10161e)', border: '1px solid #4a6a86', color: '#bcd6ee', padding: '0.22rem 0.6rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.68rem', whiteSpace: 'nowrap' }}
+                            >{t('安撫(600金)', 'Appease (600g)')}</button>
+                          )}
+                          <button
+                            onClick={() => { const r = provinceLevy(p.id); setMsg((m) => ({ ...m, [p.id]: r.ok ? t(`✓ 辟召 ${r.count} 城`, `✓ Levied ${r.count}`) : (r.reason ?? '') })); }}
+                            style={{ background: 'linear-gradient(180deg,#1a2a1e,#10161e)', border: '1px solid #4a8a5a', color: '#9ed68a', padding: '0.22rem 0.6rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.68rem', whiteSpace: 'nowrap' }}
+                          >{t('辟召', 'Levy')}</button>
+                          <button
+                            onClick={() => { const r = recallGovernor(p.id); setMsg((m) => ({ ...m, [p.id]: r.ok ? t('✓ 已召還', '✓ Recalled') : (r.reason ?? '') })); }}
+                            style={{ background: 'linear-gradient(180deg,#2a1818,#10161e)', border: '1px solid #a04a4a', color: '#e08a8a', padding: '0.22rem 0.6rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.68rem', whiteSpace: 'nowrap' }}
+                          >{t('召還', 'Recall')}</button>
+                        </div>
+                      );
+                    })()}
+                    {msg[p.id] && <span style={{ fontSize: '0.7rem', color: '#9ed68a', display: 'block', marginTop: '0.3rem' }}>{msg[p.id]}</span>}
+                    {kaoTotal > 0 && (
+                      <div style={{ fontSize: '0.68rem', color: '#8a98a4', marginTop: '0.35rem' }}>
+                        {t('部屬太守考課', 'Prefect reviews')}: {' '}
+                        <span style={{ color: '#5fc26a' }}>上 {kao.shang}</span> · {' '}
+                        <span style={{ color: '#e6c473' }}>中 {kao.zhong}</span> · {' '}
+                        <span style={{ color: '#e0623a' }}>下 {kao.xia}</span>
+                      </div>
+                    )}
                     <p style={{ fontSize: '0.72rem', color: '#7a8893', margin: '0.4rem 0 0 0', lineHeight: 1.5 }}>
                       {desc(p)}
                     </p>
@@ -131,16 +191,20 @@ export function GovernorsModal({ onClose }: Props) {
                         ) : (
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.3rem' }}>
                             {idleOfficers
-                              .sort((a, b) => (b.stats.politics + b.stats.intelligence) - (a.stats.politics + a.stats.intelligence))
-                              .map((o) => (
+                              .map((o) => ({ o, ready: (streaks[o.id] ?? 0) >= 2 || reviewLast[o.id]?.grade === 'shang' }))
+                              .sort((a, b) => (b.o.stats.politics + b.o.stats.charisma * 0.7 + (b.ready ? 30 : 0))
+                                - (a.o.stats.politics + a.o.stats.charisma * 0.7 + (a.ready ? 30 : 0)))
+                              .map(({ o, ready }) => (
                                 <button
                                   key={o.id}
                                   onClick={() => {
-                                    appointGovernor(p.id, o.id);
+                                    const r = appointGovernor(p.id, o.id);
+                                    if (!r.ok) setMsg((m) => ({ ...m, [p.id]: r.reason ?? t('未能任命', 'Failed') }));
+                                    else setMsg((m) => { const n = { ...m }; delete n[p.id]; return n; });
                                     setPickerForProvince(null);
                                   }}
                                   style={{
-                                    background: '#10161e', border: '1px solid #26323e',
+                                    background: '#10161e', border: `1px solid ${ready ? '#5a8a6a' : '#26323e'}`,
                                     color: '#aab6c0', padding: '0.3rem 0.5rem',
                                     fontFamily: 'inherit', fontSize: '0.75rem',
                                     cursor: 'pointer', textAlign: 'left',
@@ -148,6 +212,7 @@ export function GovernorsModal({ onClose }: Props) {
                                 >
                                   <div style={{ color: '#e6c473' }}>
                                     <Name pair={o.name} />
+                                    {ready && <span style={{ color: '#9ed68a', fontSize: '0.6rem', marginLeft: 4 }}>{t('考績卓著·堪為州牧', 'proven · 州牧-ready')}</span>}
                                   </div>
                                   <div style={{ fontSize: '0.65rem', color: '#7a8893', fontFamily: 'ui-monospace, monospace' }}>
                                     政 {o.stats.politics} · 知 {o.stats.intelligence} · 魅 {o.stats.charisma}

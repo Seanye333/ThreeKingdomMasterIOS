@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { debateProwess, type DebateDifficulty } from '../../game/systems/wordWar';
 import { debateShame, isEmotional } from '../../game/systems/afflictions';
@@ -45,7 +45,6 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
   );
   const [scenario, setScenario] = useState<DebateScenario | null>(null);
   const [story, setStory] = useState<{ scenario: DebateScenario; strategistId: string } | null>(null);
-  const routedRef = useRef(false);
 
   // 群儒 — the opposing scholars, sharpest tongue saved for last (up to 5).
   const gauntletFoes = useMemo(
@@ -106,7 +105,7 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
             const won = outcome.winner === 'me';
             // 舌戰增知力 — each scholar bested sharpens the champion's mind.
             const xp = won ? grantOfficerXp(gauntlet.championId, 30, ['intelligence', 'charisma']) : null;
-            if (won) recordDeed(gauntlet.championId, { debatesWon: 1 });
+            if (won) recordDeed(gauntlet.championId, { debatesWon: 1, ...(outcome.routed ? { debateRouts: 1 } : {}) });
             const last = gauntlet.idx >= gauntlet.foeIds.length - 1;
             if (won && !last) {
               setGauntlet({ ...gauntlet, idx: gauntlet.idx + 1, wins: gauntlet.wins + 1 });
@@ -148,7 +147,7 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
           const loser = officers[loserId];
           let shamed = false;
           if (!draw) {
-            recordDeed(winnerId, { debatesWon: 1 }); // 名聲榜 — a 舌戰 win
+            recordDeed(winnerId, { debatesWon: 1, ...(outcome.routed ? { debateRouts: 1 } : {}) }); // 名聲榜 — a 舌戰 win (罵倒 counts extra)
             if (loser && isEmotional(loser)) {
               afflictOfficer(loserId, debateShame());
               shamed = true;
@@ -179,16 +178,18 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
           me={strategist}
           foe={opponent}
           difficulty={difficulty}
-          onRound={(fx) => { routedRef.current = fx.over && fx.routed; }}
+          topic={story.scenario.topic}
           onComplete={(outcome) => {
             const sc = story.scenario;
             setStory(null);
             const won = outcome.winner === 'me';
-            const routed = won && routedRef.current;
-            routedRef.current = false;
+            const routed = won && outcome.routed;
             const effects = scenarioOutcome(sc, { won, routed });
             applyScenarioEffects(effects);
-            if (won) recordDeed(story.strategistId, { debatesWon: 1 });
+            if (won) {
+              recordDeed(story.strategistId, { debatesWon: 1 });
+              if (routed) recordDeed(story.strategistId, { debateRouts: 1 }); // 罵倒
+            }
             const head = scenarioResultLine(sc, { won, routed });
             setResult({
               text: lang === 'en' ? head.en : head.zh,
@@ -353,7 +354,7 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
         </div>
         <button
           disabled={!(scenario && a)}
-          onClick={() => { if (scenario && aId) { setResult(null); routedRef.current = false; setStory({ scenario, strategistId: aId }); } }}
+          onClick={() => { if (scenario && aId) { setResult(null); setStory({ scenario, strategistId: aId }); } }}
           style={{
             width: '100%', padding: '0.6rem', marginBottom: '0.8rem',
             background: scenario && a ? 'linear-gradient(180deg,#6e4a23,#3e2813)' : '#1e2832',

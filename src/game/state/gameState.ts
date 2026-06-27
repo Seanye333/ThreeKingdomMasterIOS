@@ -186,6 +186,10 @@ export interface GameState {
   tradeRoutes: TradeRoute[];
   /** Provincial governor appointments keyed by province id. */
   provinceGovernors: Partial<Record<ProvinceId, EntityId>>;
+  /** 州牧・擁兵自重 — provinceId → 割據 meter (0..100). At 100 the 州牧 secedes. */
+  provinceWarlordism: Partial<Record<ProvinceId, number>>;
+  /** 州牧任期 — provinceId → year the steward took the province (久任尾大不掉). */
+  provinceGovernorSince: Partial<Record<ProvinceId, number>>;
   /** Active fleets. */
   fleets: Fleet[];
   /** Pending ship build orders. */
@@ -198,6 +202,12 @@ export interface GameState {
   sites: Record<EntityId, import('../types').WildSite>;
   /** 名所 loot claimed: scenic-site id → the force that took the treasure. */
   scenicLooted: Record<string, EntityId>;
+  /** 三顧 — how many times the player has called on each 名所's recluse, so a
+   *  hermit's sincerity test (一訪不遇 → 三顧乃出) escalates across visits. */
+  scenicVisits: Record<string, number>;
+  /** 持續集結 — active standing muster campaigns (player + AI 總動員), each
+   *  re-issuing a wave toward its objective every season until it falls. */
+  musters: Record<string, import('../systems/muster').MusterCampaign>;
   /** Phase 3c — territory ownership keyed by territory id. Null/missing
    *  means the cell inherits from its parent city. Set explicitly when
    *  an army marches through it, regardless of march outcome. */
@@ -335,6 +345,16 @@ export interface GameState {
   /** 委任太守 — cityId → governor officerId. A delegated city auto-issues
    *  its governor's internal command at the start of every tick. */
   cityDelegations: Record<EntityId, EntityId>;
+  /** 施政重點 — cityId → the focus the player set its governor (default balanced). */
+  governorStances: Record<EntityId, import('../systems/governor').GovernorStance>;
+  /** 太守任期 — cityId → year the seat was delegated, for 久任尾大不掉 effects. */
+  governorSince: Record<EntityId, number>;
+  /** 考課・連續考績 — prefect officerId → signed streak (+N consecutive 上考,
+   *  −N consecutive 下考). Drives 殿最閉環 (grooming / 罷免) in governorEval. */
+  governorEvalStreaks: Record<EntityId, number>;
+  /** 考課・去年考績 — prefect officerId → last annual review, for the 考課 panel
+   *  + 主公親裁 (恩威黜陟). */
+  governorReviewLast: Record<EntityId, { score: number; grade: import('../systems/governorEval').KaoKeGrade; year: number }>;
   /** 軍團都督 — player legions: a marshal, a city cluster, a directive.
    *  Their orders auto-issue at the start of every tick. */
   legions: import('../systems/legion').Legion[];
@@ -555,12 +575,16 @@ export const EMPTY_STATE: GameState = {
   buildings: [],
   tradeRoutes: [],
   provinceGovernors: {},
+  provinceWarlordism: {},
+  provinceGovernorSince: {},
   fleets: [],
   shipOrders: [],
   ports: {},
   forts: {},
   sites: {},
   scenicLooted: {},
+  scenicVisits: {},
+  musters: {},
   territoryOwnership: {},
   armies: {},
   family: [],
@@ -605,6 +629,10 @@ export const EMPTY_STATE: GameState = {
   standingRoutes: [],
   espionageReveals: {},
   cityDelegations: {},
+  governorStances: {},
+  governorSince: {},
+  governorEvalStreaks: {},
+  governorReviewLast: {},
   legions: [],
   emperorCityId: 'luoyang',
   dailyChallengeDate: null,
@@ -893,6 +921,10 @@ export function loadScenario(
     embeddedSpies: [],
     espionageReveals: {},
     cityDelegations: {},
+    governorStances: {},
+    governorSince: {},
+    governorEvalStreaks: {},
+    governorReviewLast: {},
     legions: [],
     emperorCityId: 'luoyang',
     dailyChallengeDate: null,
@@ -905,6 +937,8 @@ export function loadScenario(
     buildings: [],
     tradeRoutes: [],
     provinceGovernors: {},
+    provinceWarlordism: {},
+    provinceGovernorSince: {},
     fleets: [],
     shipOrders: [],
     ports: buildInitialPorts(

@@ -58,6 +58,7 @@ const ChronicleModal = lazy(() => import('../components/ChronicleModal').then(m 
 const RelationsModal = lazy(() => import('../components/RelationsModal').then(m => ({ default: m.RelationsModal })));
 const LegionsModal = lazy(() => import('../components/LegionsModal').then(m => ({ default: m.LegionsModal })));
 const AdvisorModal = lazy(() => import('../components/AdvisorModal').then(m => ({ default: m.AdvisorModal })));
+const GovernorEvalModal = lazy(() => import('../components/GovernorEvalModal').then(m => ({ default: m.GovernorEvalModal })));
 const HistoryBookModal = lazy(() => import('../components/HistoryBookModal').then(m => ({ default: m.HistoryBookModal })));
 const SchemesModal = lazy(() => import('../components/SchemesModal').then(m => ({ default: m.SchemesModal })));
 const PowerGraphModal = lazy(() => import('../components/PowerGraphModal').then(m => ({ default: m.PowerGraphModal })));
@@ -82,6 +83,7 @@ const FormationsModal = lazy(() => import('../components/FormationsModal').then(
 const TrainingGroundModal = lazy(() => import('../components/TrainingGroundModal').then(m => ({ default: m.TrainingGroundModal })));
 const TournamentModal = lazy(() => import('../components/TournamentModal').then(m => ({ default: m.TournamentModal })));
 const DebateGroundModal = lazy(() => import('../components/DebateGroundModal').then(m => ({ default: m.DebateGroundModal })));
+const PersuasionModal = lazy(() => import('../components/PersuasionModal').then(m => ({ default: m.PersuasionModal })));
 const DuelHallModal = lazy(() => import('../components/DuelHallModal').then(m => ({ default: m.DuelHallModal })));
 
 export function MapScreen() {
@@ -99,6 +101,7 @@ export function MapScreen() {
   const [showFormations, setShowFormations] = useState(false);
   const [showTraining, setShowTraining] = useState(false);
   const [showDebateGround, setShowDebateGround] = useState(false);
+  const [showPersuasion, setShowPersuasion] = useState(false);
   const [showDuelHall, setShowDuelHall] = useState(false);
   const [showTournament, setShowTournament] = useState(false);
   const [theme, setTheme] = useState<ThemeId>(getStoredTheme());
@@ -121,6 +124,7 @@ export function MapScreen() {
   const [showAch, setShowAch] = useState(false);
   const [showGlossary, setShowGlossary] = useState(false);
   const [showGovernors, setShowGovernors] = useState(false);
+  const [showKaoke, setShowKaoke] = useState(false);
   const [showCampaignStats, setShowCampaignStats] = useState(false);
   const [showChronicle, setShowChronicle] = useState(false);
   const [showRelations, setShowRelations] = useState(false);
@@ -386,6 +390,7 @@ export function MapScreen() {
       { id: 'wiki', zh: '列傳', en: 'Biographies', hint: g.people, run: () => setShowEncyclopedia(true) },
       { id: 'titles', zh: '任官', en: 'Appointments', hint: g.court, run: () => setShowTitles(true) },
       { id: 'governors', zh: '州牧', en: 'Governors', hint: g.court, run: () => setShowGovernors(true) },
+      { id: 'kaoke', zh: '考課', en: 'Reviews', hint: g.court, run: () => setShowKaoke(true) },
       { id: 'courtm', zh: '朝廷', en: 'Court', hint: g.court, run: () => setShowCourt(true) },
       { id: 'relations', zh: '邦交關係', en: 'Relations', hint: g.court, run: () => setShowRelations(true) },
       { id: 'letters', zh: '書信', en: 'Letters', hint: g.court, run: () => setShowWishes(true) },
@@ -399,6 +404,7 @@ export function MapScreen() {
       { id: 'formations', zh: '陣形', en: 'Formations', hint: g.mil, run: () => setShowFormations(true) },
       { id: 'training', zh: '演武場', en: 'Sparring ground', hint: g.mil, run: () => setShowTraining(true) },
       { id: 'debate-ground', zh: '論辯場', en: 'Debate ground', hint: g.mil, run: () => setShowDebateGround(true) },
+      { id: 'persuasion', zh: '說客', en: 'Persuader-envoy', hint: g.diplo, run: () => setShowPersuasion(true) },
       { id: 'tournament', zh: '比武大會', en: 'Martial tournament', hint: g.mil, run: () => setShowTournament(true) },
       { id: 'duel-hall', zh: '武鬥館', en: 'Hall of bouts', hint: g.mil, run: () => setShowDuelHall(true) },
       { id: 'armoury', zh: '寶物', en: 'Armoury', hint: g.craft, run: () => setShowArmoury(true) },
@@ -736,6 +742,7 @@ export function MapScreen() {
         {showFormations && <FormationsModal onClose={() => setShowFormations(false)} />}
         {showTraining && <TrainingGroundModal onClose={() => setShowTraining(false)} />}
         {showDebateGround && <DebateGroundModal onClose={() => setShowDebateGround(false)} />}
+        {showPersuasion && <PersuasionModal onClose={() => setShowPersuasion(false)} />}
         {showDuelHall && <DuelHallModal onClose={() => setShowDuelHall(false)} />}
         {showTournament && <TournamentModal onClose={() => setShowTournament(false)} />}
         {showEspionage && <EspionageModal onClose={() => setShowEspionage(false)} />}
@@ -752,6 +759,7 @@ export function MapScreen() {
         {showRelations && <RelationsModal onClose={() => setShowRelations(false)} />}
         {showLegions && <LegionsModal onClose={() => setShowLegions(false)} />}
         {showAdvisor && <AdvisorModal onClose={() => setShowAdvisor(false)} />}
+        {showKaoke && <GovernorEvalModal onClose={() => setShowKaoke(false)} />}
         {showHistoryBook && <HistoryBookModal onClose={() => setShowHistoryBook(false)} />}
         {showSchemes && <SchemesModal onClose={() => setShowSchemes(false)} />}
         {showPowerGraph && <PowerGraphModal onClose={() => setShowPowerGraph(false)} />}

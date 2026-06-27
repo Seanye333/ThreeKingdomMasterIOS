@@ -88,12 +88,20 @@ export function rollHermitRecruit(args: {
   envoyCharisma: number;
   rulerCharisma: number;
   hermitIntelligence: number;
+  /** 三顧 — how many times you've now called (1-based); sincerity tells. */
+  visit?: number;
   rng: () => number;
 }): boolean {
   const { envoyCharisma, rulerCharisma, hermitIntelligence, rng } = args;
   // Base on the better of envoy/ruler charm; the loftier the recluse, the
-  // steeper the climb. Clamped to a fair 15–90% band.
+  // steeper the climb.
   const persuasion = Math.max(envoyCharisma, rulerCharisma * 0.9);
-  const chance = Math.max(0.15, Math.min(0.9, (persuasion - hermitIntelligence * 0.5) / 70 + 0.35));
+  // 三顧之誠 — the lofty recluse tests sincerity: a first call seldom finds him
+  // in (一訪不遇), the second leaves a card, but by the third repeated devotion
+  // nearly always draws him out (三顧茅廬).
+  const visit = Math.max(1, args.visit ?? 1);
+  const visitBonus = visit >= 3 ? 0.45 : visit === 2 ? 0.12 : -0.15;
+  const cap = visit >= 3 ? 0.97 : 0.9;
+  const chance = Math.max(0.05, Math.min(cap, (persuasion - hermitIntelligence * 0.5) / 70 + 0.35 + visitBonus));
   return rng() < chance;
 }

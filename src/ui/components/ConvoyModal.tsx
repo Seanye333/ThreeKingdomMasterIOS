@@ -19,7 +19,11 @@ export function ConvoyModal({ onClose }: { onClose: () => void }) {
   const playerForceId = useGameStore((s) => s.playerForceId);
   const recallConvoy = useGameStore((s) => s.recallConvoy);
   const spottedFn = useGameStore((s) => s.spottedEnemyConvoys);
+  const spottedColumnsFn = useGameStore((s) => s.spottedEnemyColumns);
+  const interceptColumn = useGameStore((s) => s.interceptColumn);
+  const officers = useGameStore((s) => s.officers);
   const [raidTarget, setRaidTarget] = useState<{ convoyId: string; fromCityId: string } | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
 
   const rows = useMemo(
     () => Object.values(convoys)
@@ -30,6 +34,8 @@ export function ConvoyModal({ onClose }: { onClose: () => void }) {
 
   // 敵糧道 — enemy columns our territory can run down (recomputed as they move).
   const spotted = useMemo(() => spottedFn(), [spottedFn, convoys, cities]);
+  // 敵軍縱隊 — spotted enemy field columns we can sortie out to intercept (邀擊).
+  const spottedColumns = useMemo(() => spottedColumnsFn(), [spottedColumnsFn, cities]);
 
   const cargoText = (c: typeof rows[number]) =>
     [c.food > 0 ? `糧 ${c.food.toLocaleString()}` : '', c.gold > 0 ? `金 ${c.gold.toLocaleString()}` : '', c.troops > 0 ? `兵 ${c.troops.toLocaleString()}` : '', (c.warhorses ?? 0) > 0 ? `馬 ${(c.warhorses ?? 0).toLocaleString()}` : '', (c.iron ?? 0) > 0 ? `鐵 ${(c.iron ?? 0).toLocaleString()}` : '', (c.medicine ?? 0) > 0 ? `藥 ${(c.medicine ?? 0).toLocaleString()}` : '']
@@ -99,6 +105,47 @@ export function ConvoyModal({ onClose }: { onClose: () => void }) {
                 );
               })}
             </div>
+          </div>
+        )}
+
+        {/* 敵軍縱隊 — spotted enemy field columns; sortie a captain to run them down. */}
+        {spottedColumns.length > 0 && (
+          <div style={{ marginTop: '1rem' }}>
+            <div style={{ color: '#d88', fontSize: '0.76rem', letterSpacing: '0.08rem', marginBottom: 6, borderTop: '1px solid #243240', paddingTop: '0.7rem' }}>
+              {t('敵軍縱隊 · 可邀擊', 'Enemy columns · interceptable')} ({spottedColumns.length})
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {spottedColumns.map((col) => {
+                const launch = cities[col.fromCityId];
+                // 邀擊 — sortie the launch city's strongest idle officer with ~60% of its garrison.
+                const captain = Object.values(officers)
+                  .filter((o) => o.forceId === playerForceId && o.locationCityId === col.fromCityId && (o.status === 'idle' || o.status === 'active') && !o.task)
+                  .sort((a, b) => (b.stats.war * 0.6 + b.stats.leadership * 0.4) - (a.stats.war * 0.6 + a.stats.leadership * 0.4))[0];
+                const send = launch ? Math.floor((launch.troops - 100) * 0.6) : 0;
+                const can = !!captain && send >= 1 && (launch?.gold ?? 0) >= 100;
+                return (
+                  <div key={col.armyId} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.5rem 0.7rem', background: '#1c1614', border: '1px solid #3a2a24', borderRadius: 5 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ color: '#f0d2c4', fontSize: '0.84rem' }}>{lang === 'en' ? col.commanderName.en : col.commanderName.zh} · {col.troops.toLocaleString()}{t('兵', 't')}</div>
+                      <div style={{ color: '#b0a098', fontSize: '0.74rem' }}>
+                        {can ? t(`自 ${launch?.name.zh ?? ''} 遣 ${captain!.name.zh} 領 ${send.toLocaleString()} 邀擊（費100金·急行）`, `from ${launch?.name.en ?? ''}: ${captain!.name.en} leads ${send.toLocaleString()} (100g, forced)`)
+                          : t(`自 ${launch?.name.zh ?? ''} — 無閒將或兵金不足`, `from ${launch?.name.en ?? ''} — no captain / not enough troops or gold`)}
+                      </div>
+                    </div>
+                    <button
+                      disabled={!can}
+                      onClick={() => {
+                        const r = interceptColumn(col.armyId, col.fromCityId, captain!.id, send);
+                        setFeedback(r.ok ? t('已遣軍邀擊 — 將於途中接戰', 'Column dispatched — it clashes on the road') : t('邀擊未成', 'Could not intercept'));
+                      }}
+                      title={t('遣將出城截擊此敵軍縱隊(急行軍,途中接戰)', 'Sortie a captain to run down this column (forced march; clashes en route)')}
+                      style={{ background: can ? 'rgba(184,68,46,0.22)' : '#1e2832', border: `1px solid ${can ? '#b8442e' : '#2b3845'}`, color: can ? '#f0b9a4' : '#5f6c76', padding: '0.2rem 0.6rem', borderRadius: 4, cursor: can ? 'pointer' : 'default', fontFamily: 'inherit', fontSize: '0.76rem', whiteSpace: 'nowrap' }}
+                    >⚔ {t('邀擊', 'Intercept')}</button>
+                  </div>
+                );
+              })}
+            </div>
+            {feedback && <div style={{ marginTop: 6, fontSize: '0.74rem', color: '#9ed68a' }}>{feedback}</div>}
           </div>
         )}
 

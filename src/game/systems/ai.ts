@@ -22,6 +22,7 @@ import { CITY_SPECIALTY, cityRole, specialtyControl } from '../data/specialties'
 import { buildingBonuses } from './buildings';
 import { citySize, cityCarryingCapacity, cityEconCap, cityStatCap } from './citySize';
 import { marchDurationFor } from '../data/cities';
+import { marchSpeedMul, adjustMarchSeasons } from './marchPace';
 import { isLand, terrainMarchCost, WORLD_SCALE } from '../data/geography';
 import { cityPos } from '../data/cityGeo';
 import {
@@ -846,6 +847,56 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
     if (dOff) officers[detachId] = { ...dOff, task: 'march' };
   }
 
+  // ── AI 總動員 (coordinated mass surge) ────────────────────────────
+  // When a force holds a real edge, it occasionally hurls SEVERAL bordering
+  // cities at ONE weak enemy city at once — a climactic all-in instead of the
+  // usual one-city pecking. One surge per force per season, low odds, and only
+  // cities/officers not already committed this turn join in.
+  {
+    const surgeSeason = input.date.season;
+    for (const forceId of aiForceIds) {
+      if (rng() > 0.12) continue;                       // rare — a big decision
+      const myCities = Object.values(cities).filter((c) => c.ownerForceId === forceId);
+      if (myCities.length < 3) continue;
+      // Enemy cities bordered by my able cities → who could converge on them.
+      const borderers = new Map<EntityId, City[]>();
+      for (const c of myCities) {
+        if (c.troops < 3000) continue;
+        for (const nid of c.adjacentCityIds) {
+          const n = cities[nid];
+          if (!n || !n.ownerForceId || n.ownerForceId === forceId) continue;
+          if (!isHostilePermitted(diplomacy, forceId, n.ownerForceId)) continue;
+          (borderers.get(nid) ?? borderers.set(nid, []).get(nid)!).push(c);
+        }
+      }
+      // The weakest target ≥2 of my cities border, where I outweigh it ≥1.6×.
+      let best: { target: City; from: City[] } | null = null;
+      for (const [tid, from] of borderers) {
+        if (from.length < 2) continue;
+        const tgt = cities[tid];
+        if (!tgt) continue;
+        const myTroops = from.reduce((s, c) => s + c.troops, 0);
+        if (myTroops < tgt.troops * 1.6) continue;
+        if (!best || tgt.troops < best.target.troops) best = { target: tgt, from };
+      }
+      if (!best) continue;
+      // Throw the borderers' best uncommitted officers onto the target at once.
+      for (const c of best.from) {
+        const lead = Object.values(officers)
+          .filter((o) => o.forceId === forceId && o.locationCityId === c.id && !o.task
+            && (o.status === 'active' || o.status === 'idle') && !pendingCommands[o.id])
+          .sort((a, b) => (b.stats.leadership * 0.6 + b.stats.war * 0.4) - (a.stats.leadership * 0.6 + a.stats.war * 0.4))[0];
+        if (!lead) continue;
+        const dur = adjustMarchSeasons(marchDurationFor(c, best.target, surgeSeason), 'normal', marchSpeedMul([lead]));
+        pendingCommands[lead.id] = {
+          type: 'march', cityId: c.id, officerId: lead.id, targetCityId: best.target.id,
+          troops: Math.floor(c.troops * 0.65), seasonsRemaining: dur, totalSeasons: dur,
+        };
+        officers[lead.id] = { ...officers[lead.id], task: 'march' };
+      }
+    }
+  }
+
   return { cities, officers, pendingCommands, newTrainings, diplomacy, runtimeBonds, rapport, taxPolicy, entries };
 }
 
@@ -1261,7 +1312,8 @@ function decideCommand(
       }
       const companions = picked.map((c) => c.id);
 
-      const dur = marchDurationFor(city, target, season);
+      // 行軍捷疾 — 健行/嚴峻/騎將/驛站 quicken an AI host too (鈍重 drags it).
+      const dur = adjustMarchSeasons(marchDurationFor(city, target, season), 'normal', marchSpeedMul([o, ...picked]));
       const cmd: MarchCommand = {
         type: 'march',
         cityId: city.id,
@@ -1288,7 +1340,7 @@ function decideCommand(
       if (send >= 2000) {
         const o = officersHere.find((c) => !isCombatLiability(c)) ?? officersHere[0];
         if (o) {
-          const dur = marchDurationFor(city, dest, season);
+          const dur = adjustMarchSeasons(marchDurationFor(city, dest, season), 'normal', marchSpeedMul([o]));
           const cmd: MarchCommand = {
             type: 'march', cityId: city.id, officerId: o.id, targetCityId: dest.id,
             troops: send, seasonsRemaining: dur, totalSeasons: dur,

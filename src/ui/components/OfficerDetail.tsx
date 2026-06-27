@@ -35,6 +35,7 @@ import { clanOf } from '../../game/data/clans';
 import { honorificById } from '../../game/data/honorifics';
 import { renownFromDeeds, fameTier, fameMedal } from '../../game/systems/fame';
 import { xpProgress, learnableSkills, canBreakthrough, breakthroughCost, breakthroughIronCost, BREAKTHROUGH_PATHS, MAX_BREAKTHROUGHS, breakthroughTitle, growthPowerMul, growthAptitude, aptitudeLabel, EPIPHANY_THRESHOLD } from '../../game/systems/growth';
+import { canAppraise, GRADE_LABEL } from '../../game/systems/appraisal';
 import { officerGrade, officerLevel, nextGradeGap, gradeMeta } from '../../game/systems/officerGrade';
 import { gradeCombatBonus, itemMasteryMul } from '../../game/systems/gradeCombat';
 import { itemRarity, itemRarityMeta, liveItemById, refineCost, REFINE_MAX,
@@ -177,9 +178,11 @@ export function OfficerDetail({
   const assignMentorFn = useGameStore((s) => s.assignMentor);
   const studyManualFn = useGameStore((s) => s.studyManual);
   const issueCommandFn = useGameStore((s) => s.issueCommand);
+  const appraiseOfficerFn = useGameStore((s) => s.appraiseOfficer);
   const activeTraining = pendingTrainings.find((tr) => tr.officerId === officer.id);
   const isPlayerOfficer = officer.forceId === playerForceId;
   const [progressMsg, setProgressMsg] = useState<string | null>(null);
+  const [appraiseMsg, setAppraiseMsg] = useState<string | null>(null);
 
   const forces = forcesOverride ?? storeForces;
   const cities = citiesOverride ?? storeCities;
@@ -522,8 +525,9 @@ export function OfficerDetail({
                 );
               })()}
               {(() => {
-                // 成長資質 — per-stat talent (天/上/中/常) read from latent ceilings:
-                // gifted stats grow faster and higher. A fixed read of the officer's nature.
+                // 成長資質 — per-stat talent (天/上/中/常) read from latent ceilings.
+                // 月旦評 識人雾 — known for your own officers, or any a 名士 has
+                // appraised; otherwise the ceilings are fog until you size them up.
                 const apt = growthAptitude(officer);
                 const STATS: Array<{ key: keyof typeof apt; zh: string; en: string }> = [
                   { key: 'leadership', zh: '統', en: 'LDR' }, { key: 'war', zh: '武', en: 'WAR' },
@@ -531,18 +535,60 @@ export function OfficerDetail({
                   { key: 'charisma', zh: '魅', en: 'CHA' },
                 ];
                 const col = (g: string) => g === 'S' ? '#e6c473' : g === 'A' ? '#9ed8b8' : g === 'B' ? '#88b7e8' : '#7a8893';
+                const ap = officer.appraisal;
+                const accurate = !!ap && !ap.misread;            // a 走眼 read reveals nothing
+                const known = isMine || accurate;
+                const recognized = officer.recognizedByForceId === playerForceId && officer.forceId !== playerForceId; // 知遇
+                // 名士 — the keenest eye in your court (not the target).
+                const appraiser = Object.values(allOfficers)
+                  .filter((o) => o.forceId === playerForceId && (o.status === 'idle' || o.status === 'active') && canAppraise(o) && o.id !== officer.id)
+                  .sort((a, b) => b.stats.intelligence - a.stats.intelligence)[0];
+                // A fresh read, or a re-read only by a strictly sharper eye than the one who 走眼'd.
+                const canAppraiseNow = !!appraiser && (!ap || (ap.misread && appraiser.stats.intelligence > (ap.byInt ?? 0)));
+                const doAppraise = () => {
+                  const r = appraiseOfficerFn(officer.id);
+                  if (!r.ok) { setAppraiseMsg(r.reason === 'no-better-eye' ? t('需更高明的識者方能重斷。', 'Needs a sharper eye to judge again.') : t('無名士可品評。', 'No 名士 available.')); return; }
+                  const an = lang === 'en' ? r.appraiserName!.en : r.appraiserName!.zh;
+                  setAppraiseMsg(r.misread
+                    ? t(`${an} 沉吟未決 —「${r.verdictZh}」(走眼,資質難辨,可另請高明)`, `${an} hesitates — “${r.verdictEn}” (a misread; send a sharper eye)`)
+                    : t(`${an} 品評:「${r.verdictZh}」(名望 +${r.renownGain})`, `${an}: “${r.verdictEn}” (renown +${r.renownGain})`));
+                };
                 return (
                   <div style={{ minWidth: 150 }}>
-                    <span style={{ fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('成長資質', 'Aptitude')}</span>
-                    <div style={{ display: 'flex', gap: 4, marginTop: 3, flexWrap: 'wrap' }}>
-                      {STATS.map((s) => (
-                        <span key={s.key}
-                          title={t(`${s.zh} · ${aptitudeLabel(apt[s.key]).zh}`, `${s.en} · ${apt[s.key]} aptitude`)}
-                          style={{ fontSize: '0.62rem', padding: '0.05rem 0.32rem', borderRadius: 2, background: '#10161e', border: `1px solid ${col(apt[s.key])}`, color: col(apt[s.key]), fontFamily: 'ui-monospace, monospace' }}>
-                          {lang === 'en' ? s.en.slice(0, 1) : s.zh}{apt[s.key]}
-                        </span>
-                      ))}
-                    </div>
+                    <span style={{ fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' }}>
+                      {t('成長資質', 'Aptitude')}{recognized && <span style={{ color: '#9ed68a' }} title={t('知遇之恩 — 你曾賞識他,招攬大加成', 'You recognized him — far easier for you to recruit')}> · {t('知遇', 'Recognized')}</span>}
+                    </span>
+                    {known ? (
+                      <div style={{ display: 'flex', gap: 4, marginTop: 3, flexWrap: 'wrap' }}>
+                        {STATS.map((s) => (
+                          <span key={s.key}
+                            title={t(`${s.zh} · ${aptitudeLabel(apt[s.key]).zh}`, `${s.en} · ${apt[s.key]} aptitude`)}
+                            style={{ fontSize: '0.62rem', padding: '0.05rem 0.32rem', borderRadius: 2, background: '#10161e', border: `1px solid ${col(apt[s.key])}`, color: col(apt[s.key]), fontFamily: 'ui-monospace, monospace' }}>
+                            {lang === 'en' ? s.en.slice(0, 1) : s.zh}{apt[s.key]}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ marginTop: 3, fontSize: '0.62rem', color: ap?.misread ? '#c79a6a' : '#6a7682', fontStyle: 'italic' }}>
+                        {ap?.misread ? t('識者走眼 — 資質難辨', 'Misjudged — aptitude unclear') : t('資質未明 — 待名士品評', 'Unknown — needs a 名士’s appraisal')}
+                      </div>
+                    )}
+                    {/* 月旦評 定評 — accurate verdicts read as a permanent epithet. */}
+                    {accurate && (
+                      <div style={{ marginTop: 4, fontSize: '0.66rem', color: '#caa86a', fontStyle: 'italic' }}
+                        title={t(`品第 ${GRADE_LABEL[ap!.grade].zh}`, `${GRADE_LABEL[ap!.grade].en} grade`)}>
+                        「{lang === 'en' ? ap!.en : ap!.zh}」<span style={{ color: '#7a8893', fontStyle: 'normal' }}> · {lang === 'en' ? GRADE_LABEL[ap!.grade].en : GRADE_LABEL[ap!.grade].zh}</span>
+                      </div>
+                    )}
+                    {canAppraiseNow && (
+                      <button
+                        onClick={doAppraise}
+                        style={{ marginTop: 4, fontSize: '0.62rem', padding: '0.1rem 0.5rem', borderRadius: 3, cursor: 'pointer', background: '#1a2230', border: '1px solid #4a5a48', color: '#cfe0ff', fontFamily: 'var(--tkm-font-body)' }}
+                      >🔍 {ap?.misread ? t('另請高明', 'Re-appraise') : t('遣名士品評', 'Appraise (月旦評)')}</button>
+                    )}
+                    {appraiseMsg && (
+                      <div style={{ marginTop: 3, fontSize: '0.62rem', color: '#9ed68a', lineHeight: 1.5 }}>{appraiseMsg}</div>
+                    )}
                   </div>
                 );
               })()}

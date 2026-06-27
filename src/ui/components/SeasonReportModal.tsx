@@ -210,7 +210,11 @@ export function SeasonReportModal() {
                   }
                   style={clickable ? { cursor: 'pointer' } : undefined}
                 >
-                  <span className={styles.kindTag}>{kindLabel(e.kind, lang)}</span>
+                  <span className={styles.kindTag}>{
+                    (e.textZh ?? e.text ?? '').startsWith('考課')
+                      ? (lang === 'en' ? 'REVIEW' : '考課')
+                      : kindLabel(e.kind, lang)
+                  }</span>
                   <span className={styles.text}>{body}</span>
                   {e.cityId && cities[e.cityId] && (
                     <button

@@ -32,4 +32,10 @@ export interface Army {
   holding?: boolean;
   /** True if marching to an open cell (targetX/Y) rather than a city. */
   cellTarget?: boolean;
+  /** 行軍節奏 — 急行軍 / 常行 / 緩進 (see MarchCommand.pace). */
+  pace?: import('./command').MarchCommand['pace'];
+  /** 召回 — streaming home to its source (rendered/labelled as a return). */
+  returning?: boolean;
+  /** 都督之旗 — opening-morale bonus a legion column carries (§4.3). */
+  legionBanner?: number;
 }

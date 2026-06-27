@@ -189,6 +189,6 @@ export interface AppointmentHistoryEntry {
   forceId: EntityId;
   titleId: CivicTitleId;
   cityId?: EntityId;
-  /** For revokes/pruning: dead/imprisoned/defected/lost-city/missing/replaced. */
-  reason?: 'dead' | 'imprisoned' | 'defected' | 'lost-city' | 'missing' | 'replaced' | 'manual';
+  /** For revokes/pruning: dead/imprisoned/defected/lost-city/missing/replaced/考課罷免. */
+  reason?: 'dead' | 'imprisoned' | 'defected' | 'lost-city' | 'missing' | 'replaced' | 'manual' | 'kaoke';
 }

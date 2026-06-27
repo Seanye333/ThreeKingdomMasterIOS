@@ -43,7 +43,18 @@ describe('scenic sites', () => {
     expect(rollHermitRecruit({ envoyCharisma: 95, rulerCharisma: 95, hermitIntelligence: 70, rng: () => 0.2 })).toBe(true);
     // The loftiest recluse (孔明, INT 100) resists a dull envoy.
     expect(rollHermitRecruit({ envoyCharisma: 30, rulerCharisma: 30, hermitIntelligence: 100, rng: () => 0.5 })).toBe(false);
-    // Even the best never exceeds ~90% (rng 0.92 fails).
+    // Even the best never exceeds ~90% on a first call (rng 0.92 fails).
     expect(rollHermitRecruit({ envoyCharisma: 100, rulerCharisma: 100, hermitIntelligence: 20, rng: () => 0.92 })).toBe(false);
+  });
+
+  it('三顧之誠 — repeated visits draw out even the loftiest recluse', () => {
+    const call = (visit: number, rng: number) =>
+      rollHermitRecruit({ envoyCharisma: 75, rulerCharisma: 75, hermitIntelligence: 100, visit, rng: () => rng });
+    // 孔明 (INT 100) vs a worthy-but-not-dazzling envoy: a first call seldom
+    // finds him in, but the third nearly always does — same roll, different fate.
+    expect(call(1, 0.7)).toBe(false); // 一訪不遇
+    expect(call(3, 0.7)).toBe(true);  // 三顧乃出
+    // The third visit can crest past the first-visit 90% ceiling.
+    expect(call(3, 0.95)).toBe(true);
   });
 });

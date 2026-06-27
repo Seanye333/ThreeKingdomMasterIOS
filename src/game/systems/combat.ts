@@ -24,6 +24,7 @@ import { effectivePrestigeEffects } from '../data/prestige';
 import { honorificEffects, honorificById } from '../data/honorifics';
 import { gradeAuraPowerMul, gradeAuraMorale, itemMasteryMul, enemyMoraleShock, holdsTheLine } from './gradeCombat';
 import { growthPowerMul } from './growth';
+import { arrivalFatigueMorale } from './marchPace';
 import { itemSetBonuses } from '../data/itemSets';
 import { selectSiegeEngine } from '../data/siegeEngines';
 import {
@@ -356,6 +357,9 @@ export interface BattleContext {
   defenderCasusBelliMul?: number;
   /** 單挑頻率 — multiplier on the field-duel trigger chance. Default 1. */
   duelChanceMul?: number;
+  /** 疲勞 — points the attacker's opening morale is docked by (a forced-marched
+   *  column arrives weary, 以逸待勞). Default 0. */
+  attackerMoraleMod?: number;
 }
 
 export function resolveBattle(
@@ -721,7 +725,7 @@ export function resolveBattle(
   // divided heart of facing a sworn brother across the line. Small but real.
   const aRelMorale = (aRelBonus.moraleResist + swornAcrossLinesPenalty(attackerPool, defenderPool, bonds)) * 15;
   const dRelMorale = (dRelBonus.moraleResist + swornAcrossLinesPenalty(defenderPool, attackerPool, bonds)) * 15;
-  let aMorale = clamp(60 + attacker.commander.stats.leadership / 10 + gradeAuraMorale(attackerPool) - enemyMoraleShock(defenderPool) + aRelMorale, 0, 100);
+  let aMorale = clamp(60 + attacker.commander.stats.leadership / 10 + gradeAuraMorale(attackerPool) - enemyMoraleShock(defenderPool) + aRelMorale - (ctx?.attackerMoraleMod ?? 0), 0, 100);
   let dMorale = defender.commander
     ? clamp(60 + defender.commander.stats.leadership / 10 + gradeAuraMorale(defenderPool) - enemyMoraleShock(attackerPool) + dRelMorale, 0, 100)
     : 30;
@@ -1134,6 +1138,9 @@ export function handleMarch(
       attackerCasusBelliMul,
       defenderCasusBelliMul,
       duelChanceMul: ctx.duelChanceMul ?? 1,
+      // 疲勞 less 都督之旗 — a forced march opens weary (以逸待勞), but a renowned
+      // legion marshal's banner steadies the column (legionBanner offsets it).
+      attackerMoraleMod: arrivalFatigueMorale(cmd.pace) - (cmd.legionBanner ?? 0),
     },
   );
   // Account for the prestrike in the casualty report.

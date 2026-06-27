@@ -11,12 +11,16 @@ describe('debate scenarios', () => {
     }
   });
 
-  it('a win yields the win effects; a rout adds the rout bonus', () => {
+  it('a win yields the win effects; a 罵死 rout slays Wang Lang outright', () => {
     const wang = DEBATE_SCENARIOS_BY_ID['shout-down-wang-lang'];
     const pointsWin = scenarioOutcome(wang, { won: true, routed: false });
-    expect(pointsWin.some((e) => e.kind === 'afflict')).toBe(false);
+    expect(pointsWin.some((e) => e.kind === 'slay')).toBe(false); // points win → no death
     const rout = scenarioOutcome(wang, { won: true, routed: true });
-    expect(rout.some((e) => e.kind === 'afflict' && e.targetId === 'wang-lang')).toBe(true);
+    expect(rout.some((e) => e.kind === 'slay' && e.targetId === 'wang-lang')).toBe(true);
+  });
+
+  it('every scenario declares a 論題 topic', () => {
+    for (const s of DEBATE_SCENARIOS) expect(s.topic).toBeTruthy();
   });
 
   it('a defection scenario recruits the opponent on a win, sours them on a loss', () => {

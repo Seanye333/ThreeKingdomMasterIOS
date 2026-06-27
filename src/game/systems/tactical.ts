@@ -280,6 +280,44 @@ function offsetToCube(h: HexCoord): [number, number, number] {
   return [x, y, z];
 }
 
+/** The six cube-coordinate unit directions, for 朝向/側背 reckoning. */
+const CUBE_DIRS: ReadonlyArray<readonly [number, number, number]> = [
+  [1, -1, 0], [1, 0, -1], [0, 1, -1], [-1, 1, 0], [-1, 0, 1], [0, -1, 1],
+];
+
+/** Hex direction (0..5) from one hex toward another — exact for adjacent hexes,
+ *  nearest-of-six for farther ones. Drives unit facing + 側背 judgement. */
+export function hexDirection(from: HexCoord, to: HexCoord): number {
+  const [ax, ay, az] = offsetToCube(from);
+  const [bx, by, bz] = offsetToCube(to);
+  const dx = bx - ax, dy = by - ay, dz = bz - az;
+  let best = 0, bestScore = -Infinity;
+  for (let i = 0; i < 6; i++) {
+    const [cx, cy, cz] = CUBE_DIRS[i];
+    const score = dx * cx + dy * cy + dz * cz;
+    if (score > bestScore) { bestScore = score; best = i; }
+  }
+  return best;
+}
+
+/** Circular distance between two hex directions (0..3); 3 = directly opposed. */
+function dirGap(a: number, b: number): number {
+  const d = Math.abs(a - b) % 6;
+  return Math.min(d, 6 - d);
+}
+
+/** 久戰疲乏 — fatigue gained per melee blow / volley, recovered per rested turn. */
+const FATIGUE_PER_MELEE = 12;
+const FATIGUE_PER_VOLLEY = 7;
+const FATIGUE_REST = 7;
+const FATIGUE_REST_DEFEND = 14;
+const FATIGUE_SPENT = 70; // at/above this, a unit fields one fewer AP
+
+/** 時辰推移 — the day wears on: every this-many turn-phases the light steps
+ *  dawn → day → dusk → night (a long battle drags into darkness). */
+const PHASE_TURNS = 7;
+const TIME_SEQUENCE: TimeOfDay[] = ['dawn', 'day', 'dusk', 'night'];
+
 /** Neighbours in offset coords for odd-q flat-top hexes. */
 export function hexNeighbours(h: HexCoord): HexCoord[] {
   const odd = (h.col & 1) === 1;
@@ -338,6 +376,9 @@ export interface SetupParams {
   siegeWorks?: 'storm' | 'invest' | 'flood';
   /** Field battle (army vs army in the open) — no city, so no rampart wall. */
   field?: boolean;
+  /** 疲勞 — points the attacker's units open at below full morale (a forced-marched
+   *  column arrives weary; 以逸待勞). Default 0. */
+  attackerFatigue?: number;
 }
 
 // (Legacy TERRAIN_RNG_SEED removed — terrain generation now lives in
@@ -521,22 +562,30 @@ export function setupTacticalBattle(p: SetupParams): TacticalBattle {
       const isCommander = i === 0;
       const shipClass = isNaval ? assignShipClass(entry.troops, isCommander) : undefined;
       const maxAp = unitType === 'cavalry' ? 4 : unitType === 'siege' ? 2 : 3;
+      const uCol = isBackRank ? backCol : frontCol;
+      const coord = { col: uCol, row: settleRow(uCol, Math.max(0, Math.min(height - 1, row))) };
+      // 朝向 — units open facing the enemy edge (attacker rightward, defender left).
+      const facing = hexDirection(coord, { col: coord.col + (side === 'attacker' ? 2 : -2), row: coord.row });
+      // 弓矢 — only ranged arms carry a volley count.
+      const maxAmmo = unitType === 'archers' ? 4 : unitType === 'siege' ? 3 : unitType === 'navy' ? 3 : 0;
       return {
         id: `${side}-${entry.officer.id}`,
         officerId: entry.officer.id,
         side,
-        coord: {
-          col: isBackRank ? backCol : frontCol,
-          row: settleRow(isBackRank ? backCol : frontCol, Math.max(0, Math.min(height - 1, row))),
-        },
+        coord,
         troops: entry.troops,
         maxTroops: entry.troops,
         ap: maxAp,
         maxAp,
-        morale: 100,
+        // 疲勞 / 都督之旗 — a forced-marched attacker opens below full morale; a
+        // legion banner offsets it (negative fatigue) but can't exceed full.
+        morale: side === 'attacker' ? Math.min(100, Math.max(40, 100 - (p.attackerFatigue ?? 0))) : 100,
         isCommander,
         effects: [],
         unitType,
+        fatigue: 0,
+        facing,
+        ...(maxAmmo > 0 ? { ammo: maxAmmo, maxAmmo } : {}),
         ...(shipClass ? { shipClass } : {}),
       };
     });
@@ -1018,7 +1067,7 @@ export function moveUnit(
   let next: TacticalBattle = {
     ...b,
     units: b.units.map((u) => {
-      if (u.id === unitId) return { ...u, coord: to, ap: u.ap - cost };
+      if (u.id === unitId) return { ...u, coord: to, ap: u.ap - cost, facing: hexDirection(u.coord, to) };
       // Hidden enemy of the moving unit, now adjacent? Reveal.
       if (u.hidden && u.side !== unit.side &&
           adj.some((n) => n.col === u.coord.col && n.row === u.coord.row)) {
@@ -1440,6 +1489,9 @@ export function attackUnits(
   const fatigueMul = b.turn >= 10
     ? Math.max(0.6, 1 - 0.05 * (b.turn - 9))
     : 1.0;
+  // 一鼓作氣,再而衰,三而竭 — a fresh unit's blow carries élan (×1.05); a spent
+  // one flags (down to ×0.75 at full 久戰疲乏).
+  const freshMul = 1.05 - Math.min(0.30, (attacker.fatigue ?? 0) / 333);
 
   // Naval: a bigger hull (樓船/大翼) hits harder than a 走舸 skiff.
   const shipMul = shipPowerMul(attacker.shipClass);
@@ -1460,12 +1512,21 @@ export function attackUnits(
   );
   const comboMul = comboAlly ? 1.3 : 1.0;
 
-  // 背刺/側擊 — units face toward the enemy edge (attacker-side faces +col,
-  // defender-side faces −col). Striking from the foe's rear arc catches it
-  // unguarded: +25% damage and it can barely counter.
-  const targetFacing = target.side === 'attacker' ? 1 : -1;
-  const fromRear = (attacker.coord.col - target.coord.col) * targetFacing < 0;
-  const flankMul = fromRear ? 1.25 : 1.0;
+  // 背刺/側擊 — a blow that lands outside the foe's front arc catches it
+  // unguarded. With real 朝向, the rear arc (directly behind) is +25% and it can
+  // barely counter; a flank is +12%. Units with no facing set fall back to the
+  // legacy side-based reckoning (attacker faces +col, defender −col).
+  let fromRear = false;
+  let flankMul = 1.0;
+  if (typeof target.facing === 'number') {
+    const gap = dirGap(hexDirection(target.coord, attacker.coord), target.facing);
+    if (gap === 3) { fromRear = true; flankMul = 1.25; }
+    else if (gap === 2) { flankMul = 1.12; }
+  } else {
+    const targetFacing = target.side === 'attacker' ? 1 : -1;
+    fromRear = (attacker.coord.col - target.coord.col) * targetFacing < 0;
+    flankMul = fromRear ? 1.25 : 1.0;
+  }
 
   // 品階威儀 — a higher-grade officer's unit hits harder, and a higher-grade
   // defender's formation shrugs off part of the blow (威儀 toughness).
@@ -1495,7 +1556,7 @@ export function attackUnits(
     Math.floor((attacker.troops * (aWar + 30) * (0.85 + rng() * 0.3)) / (dLead + 50));
   let damage = Math.floor(
     base * counter * aTerrainMod * weatherMul * defenseMul * offenseMul *
-    dShield * ambushBonus * fatigueMul * aWoundedMul * dWoundedMul * shipMul * pincerMul *
+    dShield * ambushBonus * fatigueMul * freshMul * aWoundedMul * dWoundedMul * shipMul * pincerMul *
     nightMul * heightMul * flankMul * crossingMul * streetMul * comboMul * formCounterMul * eliteMul * aGradeMul * dGradeResistMul * aGrowthMul * aSetMul *
     aTraitMul * dTraitDefMul,
   );
@@ -1612,7 +1673,12 @@ export function attackUnits(
       };
     }
     if (u.id === attackerId) {
-      return { ...u, ap: u.ap - 1, troops: counterTroops };
+      // 久戰疲乏 + 朝向 — pressing the attack tires the unit and turns it to face the foe.
+      return {
+        ...u, ap: u.ap - 1, troops: counterTroops,
+        fatigue: Math.min(100, (u.fatigue ?? 0) + FATIGUE_PER_MELEE),
+        facing: hexDirection(u.coord, target.coord),
+      };
     }
     // Chain damage to linked units.
     if (chainEffect && chainEffect.chainedWith.includes(u.id) && u.side === target.side) {
@@ -2010,6 +2076,9 @@ export function applyStratagem(
       const d = hexDistance(unit.coord, targetCoord);
       if (d > maxRange || d < 2)
         return { battle: b, ok: false, reason: `range 2–${maxRange}` };
+      // 矢盡 — a ranged unit out of arrows can't volley until resupplied (糧車/補給格).
+      if (unit.maxAmmo !== undefined && (unit.ammo ?? 0) <= 0)
+        return { battle: b, ok: false, reason: '矢盡待補給' };
       const target = unitAt(b, targetCoord);
       if (!target || target.side === unit.side)
         return { battle: b, ok: false, reason: 'invalid target' };
@@ -2028,7 +2097,11 @@ export function applyStratagem(
         units: b.units.map((u) => {
           if (u.id === target.id)
             return { ...u, troops: Math.max(0, u.troops - damage) };
-          if (u.id === unit.id) return { ...u, ap: u.ap - 1 };
+          if (u.id === unit.id) return {
+            ...u, ap: u.ap - 1,
+            ammo: u.maxAmmo !== undefined ? Math.max(0, (u.ammo ?? 0) - 1) : u.ammo,
+            fatigue: Math.min(100, (u.fatigue ?? 0) + FATIGUE_PER_VOLLEY),
+          };
           return u;
         }),
         damagePopups: [...(b.damagePopups ?? []), popup],
@@ -2436,7 +2509,19 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
     if (inFormation(u.side)) {
       troops = Math.min(u.maxTroops, troops + Math.floor(u.maxTroops * 0.04));
     }
-    return { ...u, troops, morale, effects: newEffects, ap: u.maxAp };
+    // 久戰疲乏 — a rested unit catches its breath (more so if it stood on the
+    // defensive); a spent unit (≥70) fields one fewer AP next turn.
+    const wasDefending = u.effects.some((e) => e.kind === 'defending');
+    const fatigue = Math.max(0, (u.fatigue ?? 0) - (wasDefending ? FATIGUE_REST_DEFEND : FATIGUE_REST));
+    const ap = Math.max(1, u.maxAp - (fatigue >= FATIGUE_SPENT ? 1 : 0));
+    // 就地補給 — a ranged unit beside a 糧車 or supply tile draws fresh arrows.
+    let ammo = u.ammo;
+    if (u.maxAmmo !== undefined && (u.ammo ?? 0) < u.maxAmmo) {
+      const resupplied = b.units.some((s) => s.isSupply && s.side === u.side && s.troops > 0 && hexDistance(s.coord, u.coord) === 1)
+        || (b.specialTiles ?? []).some((s) => (s.role === 'supply' || s.role === 'wagon') && hexDistance(s.coord, u.coord) <= 1);
+      if (resupplied) ammo = Math.min(u.maxAmmo, (u.ammo ?? 0) + 1);
+    }
+    return { ...u, troops, morale, effects: newEffects, ap, fatigue, ammo };
   });
 
   // 旗令/開朗/沉勇 — a unit beside a morale-aura officer recovers heart each turn
@@ -2959,14 +3044,31 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
     ? [{ turn: b.turn, text: nextWeather === 'rain' ? '驟雨傾盆，火攻難繼！' : nextWeather === 'wind' ? '狂風驟起，火借風勢！' : '雲開天霽。', kind: 'event' }]
     : [];
 
+  // 時辰推移 — every PHASE_TURNS the light steps onward toward night; a long
+  // battle drags into darkness (and the night mechanics it brings).
+  const newTurn = b.turn + 1;
+  let nextTimeOfDay = b.timeOfDay;
+  const timeLog: NonNullable<TacticalBattle['log']> = [];
+  const tIdx = TIME_SEQUENCE.indexOf(b.timeOfDay);
+  if (newTurn % PHASE_TURNS === 0 && tIdx >= 0 && tIdx < TIME_SEQUENCE.length - 1) {
+    nextTimeOfDay = TIME_SEQUENCE[tIdx + 1];
+    const TIME_ZH: Record<TimeOfDay, string> = { dawn: '拂曉', day: '白晝', dusk: '黃昏', night: '入夜' };
+    timeLog.push({
+      turn: newTurn,
+      text: nextTimeOfDay === 'night' ? '🌙 天色入夜 — 弓矢難及、伏路愈深。' : nextTimeOfDay === 'dusk' ? '日暮西山，天色向晚。' : `天色轉${TIME_ZH[nextTimeOfDay]}。`,
+      kind: 'event',
+    });
+  }
+
   const next: TacticalBattle = {
     ...b,
     units: finalUnits,
     tiles: nextTiles,
     weather: nextWeather,
+    timeOfDay: nextTimeOfDay,
     windDirection: nextWind,
     groundFires: nextGroundFires.length > 0 ? nextGroundFires : undefined,
-    turn: b.turn + 1,
+    turn: newTurn,
     activeSide: b.activeSide === 'attacker' ? 'defender' : 'attacker',
     attackerLosses,
     defenderLosses,
@@ -2977,7 +3079,7 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
     defenderObjective: defenderObj,
     reinforcements: remaining,
     casualties,
-    log: [...(b.log ?? []), ...grainLog, ...fireLog, ...weatherLog, ...windLog, ...arrivalLog, ...structureLog, ...eventLog],
+    log: [...(b.log ?? []), ...grainLog, ...fireLog, ...weatherLog, ...windLog, ...timeLog, ...arrivalLog, ...structureLog, ...eventLog],
     damagePopups: structurePopups, // visible briefly on turn flip
     cityStructures: updatedStructures,
   };
@@ -3196,10 +3298,12 @@ function aiTryStratagem(
   if (adjEnemies.length > 0) {
     candidates.push({ id: 'charge', target: adjEnemies[0].coord });
   }
-  // 8. rain-of-arrows for archers/siege/navy
-  if (['archers', 'siege', 'navy'].includes(unit.unitType) && off.stats.intelligence >= 60) {
+  // 8. rain-of-arrows for archers/siege/navy — only with arrows still in the quiver.
+  if (['archers', 'siege', 'navy'].includes(unit.unitType) && off.stats.intelligence >= 60
+      && (unit.maxAmmo === undefined || (unit.ammo ?? 0) > 0)) {
+    const range = b.timeOfDay === 'night' ? 2 : 4;
     const inRange = enemies
-      .filter((e) => hexDistance(unit.coord, e.coord) <= 4)
+      .filter((e) => hexDistance(unit.coord, e.coord) <= range && hexDistance(unit.coord, e.coord) >= 2)
       .sort((a, b1) => b1.troops - a.troops);
     if (inRange.length > 0) candidates.push({ id: 'rain-of-arrows', target: inRange[0].coord });
   }

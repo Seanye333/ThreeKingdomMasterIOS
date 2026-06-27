@@ -16,20 +16,47 @@
 import type { City, EntityId, Officer } from '../types';
 import { COMMAND_DEFS } from './commands';
 import { nextHopToward } from './muster';
+import { officerGrade, gradeRank } from './officerGrade';
+
+/** 都督之旗 — the morale a renowned marshal's banner lends the legion's columns
+ *  on the battlefield (名帥坐鎮、旗鼓肅然): from 武力, 品階 and 威望. */
+export function legionBannerBonus(marshal?: Officer): number {
+  if (!marshal) return 0;
+  const warB = Math.max(0, Math.round((marshal.stats.war - 70) * 0.2));   // 0..~6
+  const gradeB = gradeRank(officerGrade(marshal).grade);                  // iron 0 … diamond 5
+  const renownB = Math.min(6, Math.round((marshal.renown ?? 0) / 12));    // 0..6
+  return Math.min(16, warB + gradeB + renownB);
+}
+
+export type LegionDirective =
+  | { kind: 'conquer'; targetCityId: EntityId } // strike a fixed enemy city
+  | { kind: 'consume' }   // 蠶食 — each season throw weight at the softest reachable enemy
+  | { kind: 'raid' }      // 略地 — harass the softest reachable enemy (a lighter levy)
+  | { kind: 'defend' };
 
 export interface Legion {
   id: string;
   name: string;
-  /** 都督 — display only for now; the legion plans with each city's best
-   *  idle officer (the marshal "issues" the orders). */
+  /** 都督 — the marshal now SHAPES the legion: 統率 → mobilization (bigger/sooner
+   *  columns), 智力 → 方略 (a clever marshal swings to softer targets / retargets a
+   *  fallen objective). */
   commanderId: EntityId;
   cityIds: EntityId[];
-  directive: { kind: 'conquer'; targetCityId: EntityId } | { kind: 'defend' };
+  directive: LegionDirective;
 }
 
 export type LegionOrder =
   | { kind: 'march'; cityId: EntityId; officerId: EntityId; troops: number; toCityId: EntityId }
   | { kind: 'recruit'; cityId: EntityId; officerId: EntityId };
+
+/** 軍團戰報 — what a legion did this season, for the player's report. */
+export interface LegionSummary {
+  directive: LegionDirective['kind'];
+  targetCityId?: EntityId;
+  marched: number;
+  recruited: number;
+  troopsSent: number;
+}
 
 const MIN_GARRISON = 3000;
 const SPARE_THRESHOLD = 6000;
@@ -58,16 +85,71 @@ export function planLegionOrders(input: {
   busyOfficerIds: ReadonlySet<EntityId>;
   playerForceId: EntityId;
   legion: Legion;
-}): LegionOrder[] {
+  /** Which cities the legion may attack (hostility-aware). Defaults to any
+   *  city owned by another force — the store passes a diplomacy-aware one. */
+  isEnemyCity?: (city: City) => boolean;
+  /** 應敵 — legion cities a hostile column is marching on; 固守 rushes these
+   *  reinforcements pre-emptively rather than only topping up the weakest. */
+  threatenedCityIds?: ReadonlySet<EntityId>;
+}): { orders: LegionOrder[]; summary: LegionSummary } {
   const { cities, officers, playerForceId, legion, busyOfficerIds } = input;
   const orders: LegionOrder[] = [];
   const recruitCost = COMMAND_DEFS['recruit-troops'].goldCost;
   const marchCost = COMMAND_DEFS['march'].goldCost;
+  const isEnemy = input.isEnemyCity ?? ((c: City) => !!c.ownerForceId && c.ownerForceId !== playerForceId);
 
   // Cities the legion still actually holds.
   const held = legion.cityIds
     .map((id) => cities[id])
     .filter((c): c is City => !!c && c.ownerForceId === playerForceId);
+
+  // 都督本事 — the marshal shapes the legion. 統率 mobilizes more & sooner; 智力
+  // sharpens the 方略 (target choice).
+  const marshal = officers[legion.commanderId];
+  const lead = marshal?.stats.leadership ?? 70;
+  const intel = marshal?.stats.intelligence ?? 70;
+  const spareThreshold = Math.max(4200, Math.round(SPARE_THRESHOLD - Math.max(0, lead - 70) * 30)); // 6000 → ~5100 @100
+  const baseFraction = Math.min(0.85, ATTACK_FRACTION + Math.max(0, lead - 70) * 0.004);             // 0.65 → ~0.77 @100
+
+  // 智将自行擇敵 — the softest enemy city adjacent to any legion city.
+  const softestReachableEnemy = (): EntityId | null => {
+    let best: { id: EntityId; troops: number } | null = null;
+    for (const c of held) {
+      for (const nid of c.adjacentCityIds) {
+        const n = cities[nid];
+        if (!n || !isEnemy(n)) continue;
+        if (!best || n.troops < best.troops) best = { id: n.id, troops: n.troops };
+      }
+    }
+    return best?.id ?? null;
+  };
+
+  // Resolve the attack target & levy from the directive (defend handled below).
+  let attackTarget: EntityId | null = null;
+  let fraction = baseFraction;
+  const d = legion.directive;
+  if (d.kind === 'conquer') {
+    const fixed = cities[d.targetCityId];
+    // 不死磕 — if the objective has fallen/turned friendly, or a clever marshal
+    // spots a far softer reachable city, swing the legion onto that instead.
+    attackTarget = fixed && isEnemy(fixed) ? d.targetCityId : softestReachableEnemy();
+    if (intel >= 80) {
+      const soft = softestReachableEnemy();
+      if (soft && cities[soft] && fixed && cities[soft].troops * 1.5 < fixed.troops) attackTarget = soft;
+    }
+  } else if (d.kind === 'consume') {
+    attackTarget = softestReachableEnemy();
+  } else if (d.kind === 'raid') {
+    attackTarget = softestReachableEnemy();
+    fraction = Math.min(0.5, baseFraction * 0.6); // a lighter, harassing levy
+  }
+
+  // 分進合擊 — a great coordinator (統率 ≥85) gathers the hinterland at the
+  // spearhead city bordering the target first, then strikes together, rather
+  // than feeding columns in piecemeal.
+  const coordinated = (d.kind === 'conquer' || d.kind === 'consume') && lead >= 85 && attackTarget != null;
+  const stagingCity = coordinated ? (held.find((c) => c.id !== attackTarget && c.adjacentCityIds.includes(attackTarget!))?.id ?? null) : null;
+  const threats = input.threatenedCityIds ?? new Set<EntityId>();
 
   for (const city of held) {
     const idle = idleOfficersIn(officers, city.id, playerForceId, busyOfficerIds);
@@ -79,38 +161,70 @@ export function planLegionOrders(input: {
       continue;
     }
 
-    if (legion.directive.kind === 'conquer') {
-      const target = legion.directive.targetCityId;
-      if (city.id === target) continue;
-      if (city.troops < SPARE_THRESHOLD || city.gold < marchCost) continue;
-      const marchTo = city.adjacentCityIds.includes(target)
-        ? target
-        : nextHopToward(cities, city.id, target, playerForceId);
-      if (!marchTo) continue;
-      orders.push({
-        kind: 'march',
-        cityId: city.id,
-        officerId: idle[0].id,
-        troops: Math.floor(city.troops * ATTACK_FRACTION),
-        toCityId: marchTo,
-      });
+    if (d.kind === 'defend') {
+      if (city.gold < marchCost) continue;
+      // 應敵 — a threatened adjacent legion city gets help first (pre-empt the
+      // blow); otherwise top up the weakest neighbour from strength.
+      const adj = held.filter((c) => c.id !== city.id && city.adjacentCityIds.includes(c.id));
+      const threatened = adj.filter((c) => threats.has(c.id) && c.troops < city.troops);
+      const weak = adj.filter((c) => c.troops * 2 < city.troops && c.troops < SPARE_THRESHOLD);
+      const pool = threatened.length > 0 ? threatened : weak;
+      if (pool.length === 0) continue;
+      pool.sort((a, b) => a.troops - b.troops);
+      // Rush a heavier column to a city actually under threat.
+      const frac = threatened.length > 0 ? 0.5 : 0.4;
+      orders.push({ kind: 'march', cityId: city.id, officerId: idle[0].id, troops: Math.floor(city.troops * frac), toCityId: pool[0].id });
     } else {
-      // defend — top up the weakest adjacent legion city from strength.
-      const weak = held
-        .filter((c) => c.id !== city.id
-          && city.adjacentCityIds.includes(c.id)
-          && c.troops * 2 < city.troops
-          && c.troops < SPARE_THRESHOLD);
-      if (weak.length === 0 || city.gold < marchCost) continue;
-      weak.sort((a, b) => a.troops - b.troops);
-      orders.push({
-        kind: 'march',
-        cityId: city.id,
-        officerId: idle[0].id,
-        troops: Math.floor(city.troops * 0.4),
-        toCityId: weak[0].id,
-      });
+      // attack directives (conquer / consume / raid) — march on the target,
+      // or gather at the staging city first when coordinating (分進合擊).
+      if (attackTarget == null) continue;
+      const dest = stagingCity && city.id !== stagingCity ? stagingCity : attackTarget;
+      if (city.id === dest) continue;
+      if (city.troops < spareThreshold || city.gold < marchCost) continue;
+      const marchTo = city.adjacentCityIds.includes(dest)
+        ? dest
+        : nextHopToward(cities, city.id, dest, playerForceId);
+      if (!marchTo) continue;
+      orders.push({ kind: 'march', cityId: city.id, officerId: idle[0].id, troops: Math.floor(city.troops * fraction), toCityId: marchTo });
     }
   }
-  return orders;
+
+  const marched = orders.filter((o) => o.kind === 'march');
+  return {
+    orders,
+    summary: {
+      directive: d.kind,
+      targetCityId: attackTarget ?? undefined,
+      marched: marched.length,
+      recruited: orders.length - marched.length,
+      troopsSent: marched.reduce((s, o) => s + (o.kind === 'march' ? o.troops : 0), 0),
+    },
+  };
+}
+
+/** 軍團內調度 — a capable 都督 (政治 ≥60) shifts a slice of a comfortable rear
+ *  city's coffers (and surplus grain) to the neediest frontier legion city that
+ *  can't yet pay its way, so the front keeps moving. One transfer per season.
+ *  Returns the move, or null if none is warranted. Pure. */
+export function planLegionLogistics(
+  legion: Legion,
+  cities: Record<EntityId, City>,
+  officers: Record<EntityId, Officer>,
+): { fromCityId: EntityId; toCityId: EntityId; gold: number; food: number } | null {
+  const marshal = officers[legion.commanderId];
+  if ((marshal?.stats.politics ?? 0) < 60) return null; // needs a real administrator
+  const held = legion.cityIds.map((id) => cities[id]).filter((c): c is City => !!c);
+  if (held.length < 2) return null;
+  const marchCost = COMMAND_DEFS['march'].goldCost;
+  const donor = [...held].sort((a, b) => b.gold - a.gold)[0];
+  if (!donor || donor.gold < marchCost * 3) return null; // donor must be comfortable
+  const needy = held
+    .filter((c) => c.id !== donor.id && c.gold < marchCost && c.troops >= 3000)
+    .sort((a, b) => a.gold - b.gold)[0];
+  if (!needy) return null;
+  const gold = Math.min(Math.floor(donor.gold * 0.3), 400);
+  const food = needy.food < needy.troops * 2 && donor.food > donor.troops * 4
+    ? Math.min(Math.floor(donor.food * 0.2), 1500) : 0;
+  if (gold < marchCost && food === 0) return null;
+  return { fromCityId: donor.id, toCityId: needy.id, gold, food };
 }
