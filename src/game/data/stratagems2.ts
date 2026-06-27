@@ -339,11 +339,33 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
  * Pick the best applicable stratagem for a side. Returns null if none apply.
  * Prefers higher-effect ones when multiple qualify.
  */
+/** 守城之計 — schemes a DEFENDER can throw (the rest are an attacker's plots).
+ *  A besieged marshal answers with these (resolved with mirrored semantics). */
+export const DEFENSIVE_SCHEMES: ReadonlySet<BattleStratagemId> = new Set<BattleStratagemId>([
+  'iron-wall', 'wait-tired', 'last-stand', 'sow-discord', 'ambush', 'false-surrender',
+]);
+
+/** 反制 — a defending scheme's effect read from the DEFENDER's point of view:
+ *  its "attackerPowerMul/ownLossMul" boost the defender & cut its losses, its
+ *  "defenderPowerMul/enemyLossMul" sap the attacker & swell its losses. Returns
+ *  an attacker-centric StratagemEffect so it can be merged with the attacker's. */
+export function mirrorDefenderEffect(e: StratagemEffect): StratagemEffect {
+  return {
+    defenderPowerMul: e.attackerPowerMul,   // defender boosts itself
+    attackerPowerMul: e.defenderPowerMul,   // defender saps the attacker
+    enemyLossMul: e.ownLossMul,             // defender's own losses (= "enemy" of attacker) shrink
+    ownLossMul: e.enemyLossMul,             // attacker's losses swell
+    surpriseRoll: e.surpriseRoll ? -e.surpriseRoll : undefined, // tilts the roll back to the defender
+  };
+}
+
 export function pickAutoStratagem(
   ctx: StratagemContext,
+  opts?: { only?: ReadonlySet<BattleStratagemId>; exclude?: ReadonlySet<BattleStratagemId> },
 ): BattleStratagemId | null {
   const candidates = Object.values(STRATAGEM_DEFS).filter(
-    (s) => ctx.attackerIntelligence >= s.minIntelligence && s.isApplicable(ctx),
+    (s) => ctx.attackerIntelligence >= s.minIntelligence && s.isApplicable(ctx)
+      && (!opts?.only || opts.only.has(s.id)) && !(opts?.exclude?.has(s.id)),
   );
   if (candidates.length === 0) return null;
   // T6 — Score each candidate by:

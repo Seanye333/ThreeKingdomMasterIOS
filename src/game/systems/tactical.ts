@@ -2463,6 +2463,47 @@ function weatherDamageMul(w: Weather, unitType: UnitType): number {
      contingent under the wall line; it surfaces inside the city. */
 export type BattlePrepKind = 'ambush' | 'night' | 'tunnel';
 
+/**
+ * 計接戰場 — when an abstract-combat scheme (§5.3) is played out on the hex grid,
+ * it manifests as a real opening: 火攻/火矢 → flames already licking the enemy
+ * front; 埋伏 → a hidden contingent; 夜襲 → the battle opens in darkness; 斷糧 →
+ * the enemy host already going hungry. Connects the two combat layers.
+ */
+export function applyOpeningScheme(b: TacticalBattle, scheme: string): TacticalBattle {
+  const enemy: 'attacker' | 'defender' = 'defender'; // the scheme is the attacker's plot
+  if (scheme === 'fire-attack' || scheme === 'fire-arrow') {
+    if (b.weather === 'rain' || b.weather === 'snow') return b;
+    // Set the foremost enemy unit's ground alight.
+    const front = b.units.filter((u) => u.side === enemy && u.troops > 0)
+      .sort((a, c) => a.coord.col - c.coord.col)[0]; // defenders sit east; lowest col = nearest the attacker
+    if (!front) return b;
+    return {
+      ...b,
+      groundFires: [...(b.groundFires ?? []), { coord: front.coord, turnsLeft: 3 }],
+      log: [...(b.log ?? []), { turn: 1, text: '🔥 火計既發 — 敵營一隅已騰起烈焰!', kind: 'event' as const }],
+    };
+  }
+  if (scheme === 'ambush' || scheme === 'set-ambush-path') {
+    return applyBattlePrep(b, 'attacker', 'ambush').battle;
+  }
+  if (scheme === 'night-raid') {
+    return applyBattlePrep(b, 'attacker', 'night').battle;
+  }
+  if (scheme === 'cut-supply' || scheme === 'cut-supply-strike') {
+    const prey = b.units.filter((u) => u.side === enemy && u.troops > 0 && !u.isSupply)
+      .sort((a, c) => c.troops - a.troops)[0];
+    if (!prey) return b;
+    return {
+      ...b,
+      units: b.units.map((u) => (u.id === prey.id
+        ? { ...u, effects: u.effects.some((e) => e.kind === 'starving') ? u.effects : [...u.effects, { kind: 'starving' as const, turnsLeft: 4 }], morale: Math.max(0, u.morale - 12) }
+        : u)),
+      log: [...(b.log ?? []), { turn: 1, text: '🌾 糧道已斷 — 敵一軍乏食、士氣低落!', kind: 'event' as const }],
+    };
+  }
+  return b;
+}
+
 export function applyBattlePrep(
   b: TacticalBattle,
   side: 'attacker' | 'defender',

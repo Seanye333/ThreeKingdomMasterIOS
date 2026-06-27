@@ -294,17 +294,26 @@ export function BattleTheaterModal({ battle, onClose }: Props) {
               </div>
             )}
 
-            {/* Stratagem result */}
-            {battle.stratagem && (
-              <div style={{
-                fontSize: '0.85rem',
-                color: battle.stratagem.succeeded ? 'var(--tkm-warn)' : 'var(--tkm-text-muted)',
-                textAlign: 'center',
-                marginBottom: '0.5rem',
-                letterSpacing: '0.07rem',
-              }}>
-                {battle.stratagem.succeeded ? '✓' : '✗'} {lang === 'en' ? battle.stratagem.nameEn : battle.stratagem.nameZh}
-                {lang === 'en' ? (battle.stratagem.succeeded ? ' succeeded' : ' failed') : (battle.stratagem.succeeded ? ' 之計成' : ' 之計敗')}
+            {/* 計謀交鋒 — both sides' schemes, 看破 & 連環 surfaced. */}
+            {(battle.stratagem || battle.defenderStratagem) && (
+              <div style={{ fontSize: '0.82rem', textAlign: 'center', marginBottom: '0.5rem', letterSpacing: '0.06rem' }}>
+                {battle.stratagem && (
+                  <div style={{ color: battle.stratagem.succeeded ? 'var(--tkm-warn)' : 'var(--tkm-text-muted)' }}>
+                    {battle.stratagem.seenThrough ? '👁' : battle.stratagem.succeeded ? '✓' : '✗'} {lang === 'en' ? '攻' : '攻'}・{lang === 'en' ? battle.stratagem.nameEn : battle.stratagem.nameZh}
+                    {battle.stratagem.seenThrough ? (lang === 'en' ? ' — seen through!' : '被看破!')
+                      : lang === 'en' ? (battle.stratagem.succeeded ? ' succeeded' : ' failed') : (battle.stratagem.succeeded ? ' 之計成' : ' 之計敗')}
+                    {battle.stratagemChain && (lang === 'en'
+                      ? ` ＋連環 ${battle.stratagemChain.nameEn}${battle.stratagemChain.succeeded ? '✓' : '✗'}`
+                      : ` ＋連環 ${battle.stratagemChain.nameZh}${battle.stratagemChain.succeeded ? '✓' : '✗'}`)}
+                  </div>
+                )}
+                {battle.defenderStratagem && (
+                  <div style={{ color: battle.defenderStratagem.succeeded ? 'var(--tkm-good, #7ed68a)' : 'var(--tkm-text-muted)' }}>
+                    {battle.defenderStratagem.seenThrough ? '👁' : battle.defenderStratagem.succeeded ? '✓' : '✗'} 守・{lang === 'en' ? battle.defenderStratagem.nameEn : battle.defenderStratagem.nameZh}
+                    {battle.defenderStratagem.seenThrough ? (lang === 'en' ? ' — seen through!' : '被看破!')
+                      : (battle.defenderStratagem.succeeded ? (lang === 'en' ? ' held' : ' 之計成') : (lang === 'en' ? ' failed' : ' 之計敗'))}
+                  </div>
+                )}
               </div>
             )}
 
