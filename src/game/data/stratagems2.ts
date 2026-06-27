@@ -242,7 +242,8 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
     description: '美人計 — defender CHA bound roll. Stronger when loyalty < 60.',
     descriptionZh: "美人計。以姿色亂敵心，敵將忠誠低於六十時尤為奏效。",
     minIntelligence: 70,
-    isApplicable: (ctx) => ctx.defenderAvgLoyalty < 60,
+    // 好色之將自亂 — a lustful enemy commander is vulnerable however loyal he is.
+    isApplicable: (ctx) => ctx.defenderAvgLoyalty < 60 || !!(ctx.defender?.traits as string[] | undefined)?.includes('lustful'),
     successEffect: { defenderPowerMul: 0.80, captureBonus: 1.3 },
   },
   'chain-stratagem': {

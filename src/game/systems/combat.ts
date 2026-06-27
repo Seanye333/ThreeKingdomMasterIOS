@@ -33,6 +33,7 @@ import {
   rollStratagemSuccess,
   DEFENSIVE_SCHEMES,
   mirrorDefenderEffect,
+  type BattleStratagemId,
   type StratagemEffect,
 } from '../data/stratagems2';
 import { combatPolicyEffects, cityPolicyEffects } from './policyEffects';
@@ -366,6 +367,9 @@ export interface BattleContext {
   /** 疲勞 — points the attacker's opening morale is docked by (a forced-marched
    *  column arrives weary, 以逸待勞). Default 0. */
   attackerMoraleMod?: number;
+  /** 軍師獻策 — a player-chosen scheme to deploy instead of the auto-pick. Only
+   *  honoured if its INT gate + conditions are met, else falls back to auto. */
+  forcedStratagem?: string;
 }
 
 export function resolveBattle(
@@ -476,38 +480,53 @@ export function resolveBattle(
     delayedDrain: e.delayedDrain ?? into.delayedDrain,
   });
   if (stratagemPool) {
-    // 看破 — a wise / precognitive defender can see through the attacker's plot,
-    // foiling it outright (and turning it back). Scales with the INT gap.
+    // 看破 — a wise / precognitive defender sees through the attacker's plot,
+    // foiling it outright (and turning it back). A keen mind reads a ruse even
+    // at parity (base 7%), and the edge climbs sharply with the INT gap.
     const dTraits = (defender.commander?.traits ?? []) as string[];
-    const seerEdge = (stratagemPool.defenderIntelligence - stratagemPool.attackerIntelligence) / 200
+    const seerEdge = (stratagemPool.defenderIntelligence - stratagemPool.attackerIntelligence + 5) / 70
       + (dTraits.includes('precognitive') ? 0.20 : 0)
       + (dTraits.some((t) => t === 'crouching-dragon' || t === 'young-phoenix' || t === 'celestial-tactician') ? 0.12 : 0);
 
     // ── Attacker's scheme (may be chained at 智 ≥ 90 — 連環計) ──
-    const sid = pickAutoStratagem(stratagemPool);
+    // 軍師獻策 — honour the player's chosen scheme if it's gated & applicable,
+    // else the marshal's auto-pick.
+    const forced = ctx?.forcedStratagem as BattleStratagemId | undefined;
+    const forcedOk = forced && STRATAGEM_DEFS[forced]
+      && stratagemPool.attackerIntelligence >= STRATAGEM_DEFS[forced].minIntelligence
+      && STRATAGEM_DEFS[forced].isApplicable(stratagemPool);
+    const sid = forcedOk ? forced! : pickAutoStratagem(stratagemPool);
     if (sid) {
       const def = STRATAGEM_DEFS[sid];
-      const seenThrough = rng() < Math.max(0, Math.min(0.5, seerEdge));
+      const seenThrough = rng() < Math.max(0, Math.min(0.6, seerEdge));
       const ok = !seenThrough && rollStratagemSuccess(def, stratagemPool, rng);
       stratagemRecord = { id: def.id, name: def.name, succeeded: ok, seenThrough };
       // 將計就計 — a plot seen through is turned back on its author.
       if (seenThrough) stratEffect = fold(stratEffect, { defenderPowerMul: 1.08, ownLossMul: 1.12 });
       if (ok) {
         stratEffect = fold(stratEffect, def.successEffect);
+        // 計謀條件深化 — a scheme bites deeper against the right mark: 美人計 on a
+        // 好色 commander, 反間/美人計 on a low-loyalty host (人心已散).
+        if (def.id === 'beauty-plot' && dTraits.includes('lustful')) stratEffect = fold(stratEffect, { defenderPowerMul: 0.85, captureBonus: 1.25 });
+        if ((def.id === 'sow-discord' || def.id === 'beauty-plot') && stratagemPool.defenderAvgLoyalty < 50) stratEffect = fold(stratEffect, { defenderPowerMul: 0.90 });
         if (def.successEffect.delayedDrain) {
           delayedEffects = [{ kind: 'troop-drain', targetCityId: ctx?.city.id, seasons: def.successEffect.delayedDrain.seasons, perSeason: def.successEffect.delayedDrain.troopsPerSeason }];
         }
       } else if (def.failurePenalty) {
         stratEffect = fold(stratEffect, { attackerPowerMul: def.failurePenalty.attackerPowerMul, ownLossMul: def.failurePenalty.ownLossMul });
       }
-      // 連環計 — a master (智 ≥ 90) links a second scheme onto the first.
+      // 連環計 — a master (智 ≥ 90) links a second scheme onto the first. 計多必失:
+      // piling a second ruse on is far easier to read (+0.22 看破), so chaining
+      // against a wise foe courts a double backfire — power, not a free win.
       if (stratagemPool.attackerIntelligence >= 90) {
         const sid2 = pickAutoStratagem(stratagemPool, { exclude: new Set([sid]) });
         if (sid2) {
           const def2 = STRATAGEM_DEFS[sid2];
-          const ok2 = !(rng() < Math.max(0, Math.min(0.5, seerEdge))) && rollStratagemSuccess(def2, stratagemPool, rng);
+          const seen2 = rng() < Math.max(0, Math.min(0.7, seerEdge + 0.22));
+          const ok2 = !seen2 && rollStratagemSuccess(def2, stratagemPool, rng);
           stratagemChainRecord = { id: def2.id, name: def2.name, succeeded: ok2 };
           if (ok2) stratEffect = fold(stratEffect, def2.successEffect);
+          else if (seen2) stratEffect = fold(stratEffect, { defenderPowerMul: 1.06, ownLossMul: 1.10 }); // 連環見破,反受其累
         }
       }
     }
