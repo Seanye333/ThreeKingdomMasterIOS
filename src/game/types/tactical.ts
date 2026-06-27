@@ -190,6 +190,19 @@ export interface TacticalUnit {
   /** 車輪戰 — duels fought this battle. Each prior bout leaves the officer
    *  more winded, so successive fresh challengers can wear down a strong foe. */
   duelFatigue?: number;
+  /** 久戰疲乏 (0..100) — rises with each attack/turn of fighting, recovers when
+   *  the unit rests/defends. 一鼓作氣再而衰三而竭: fresh units hit harder, the
+   *  spent flag (≥70) loses 1 AP. Absent → treated as 0 (fresh). */
+  fatigue?: number;
+  /** 弓矢 — remaining volleys for ranged units (archers/siege/navy). Each
+   *  矢雨齊發 spends one; resupplied beside a 糧車/補給格. Out of ammo → no volley
+   *  until resupplied (forced to close to melee). Absent on melee units. */
+  ammo?: number;
+  maxAmmo?: number;
+  /** 朝向 (0..5 hex direction) — the way the unit faces (set by its last move/
+   *  attack). 側背 bonuses read this: a blow from the rear arc lands 1.25×, a
+   *  flank 1.12×. Absent → falls back to side-based facing (legacy). */
+  facing?: number;
   /** 行軍路線 — queued waypoints from a multi-step move order. The unit walks
    *  these within the turn as AP allows; any leftover auto-resumes at the start
    *  of its side's next turn (unless it's pinned in melee). Cleared on arrival,

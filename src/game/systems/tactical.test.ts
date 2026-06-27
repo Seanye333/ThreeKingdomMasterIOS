@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   hexDistance,
   hexNeighbours,
+  hexDirection,
+  applyStratagem,
   counterMultiplier,
   terrainDamageMod,
   defenderTerrainShield,
@@ -408,5 +410,96 @@ describe('糧車護送 — supply convoy & 燒糧', () => {
     const after = endTurn(b);
     const d = after.units.find((u) => u.id === 'd-cmd')!;
     expect(d.effects.some((e) => e.kind === 'starving')).toBe(false); // already burned — no new penalty
+  });
+});
+
+describe('§5.1 戰場深化', () => {
+  const adj = (c: { col: number; row: number }) => hexNeighbours(c)[0];
+
+  it('hexDirection: a hex and its opposite neighbour are 3 apart', () => {
+    const c = { col: 5, row: 5 };
+    for (const n of hexNeighbours(c)) {
+      const fwd = hexDirection(c, n);
+      const back = hexDirection(n, c);
+      expect(Math.min(Math.abs(fwd - back), 6 - Math.abs(fwd - back))).toBe(3);
+    }
+  });
+
+  it('久戰疲乏: a spent unit hits softer than a fresh one (一鼓作氣)', () => {
+    const dmgAt = (fatigue: number) => {
+      const t = { col: 6, row: 5 };
+      const a = adj(t);
+      const A = mkUnit({ id: 'a', officerId: 'oa', side: 'attacker', coord: a, fatigue });
+      const D = mkUnit({ id: 'd', officerId: 'od', side: 'defender', coord: t, troops: 80000, maxTroops: 80000 });
+      const after = attackUnits(mkBattle({ units: [A, D] }), 'a', 'd', officerMap([A, D]), fixedRng(0.5));
+      return 80000 - (after.units.find((u) => u.id === 'd')?.troops ?? 0);
+    };
+    expect(dmgAt(0)).toBeGreaterThan(dmgAt(100));
+  });
+
+  it('久戰疲乏: attacking raises fatigue; a rested turn lowers it', () => {
+    const t = { col: 6, row: 5 };
+    const a = adj(t);
+    const A = mkUnit({ id: 'a', officerId: 'oa', side: 'attacker', coord: a, troops: 100000, maxTroops: 100000, fatigue: 0, isCommander: true });
+    const D = mkUnit({ id: 'd', officerId: 'od', side: 'defender', coord: t, troops: 100000, maxTroops: 100000, isCommander: true });
+    const fought = attackUnits(mkBattle({ units: [A, D] }), 'a', 'd', officerMap([A, D]), fixedRng(0.5));
+    const tired = fought.units.find((u) => u.id === 'a')!;
+    expect(tired.fatigue).toBeGreaterThan(0);
+    // a full turn cycle lets it catch its breath.
+    const rested = endTurn(endTurn(fought)).units.find((u) => u.id === 'a')!;
+    expect(rested.fatigue!).toBeLessThan(tired.fatigue!);
+  });
+
+  it('時辰推移: a long battle drags from day into dusk and night', () => {
+    let b = mkBattle({
+      units: [
+        mkUnit({ id: 'a', officerId: 'oa', side: 'attacker', coord: { col: 1, row: 1 }, isCommander: true }),
+        mkUnit({ id: 'd', officerId: 'od', side: 'defender', coord: { col: 12, row: 8 }, isCommander: true }),
+      ],
+      timeOfDay: 'day', turn: 1,
+    });
+    const seen = new Set<string>([b.timeOfDay]);
+    for (let i = 0; i < 18 && !b.winner; i++) { b = endTurn(b); seen.add(b.timeOfDay); }
+    expect(seen.has('dusk')).toBe(true);
+    expect(b.timeOfDay).toBe('night');
+  });
+
+  it('弓矢有限: a dry quiver cannot volley; a stocked one spends an arrow', () => {
+    const t = { col: 5, row: 7 };
+    const D = mkUnit({ id: 'd', officerId: 'od', side: 'defender', coord: t, troops: 50000, maxTroops: 50000, isCommander: true });
+    const om = officerMap([], [mkOfficer({ id: 'oa', stats: { intelligence: 80 } }), mkOfficer({ id: 'od' })]);
+    // dry: blocked with 矢盡
+    const dry = mkUnit({ id: 'a', officerId: 'oa', side: 'attacker', unitType: 'archers', coord: { col: 5, row: 5 }, ammo: 0, maxAmmo: 4 });
+    const r0 = applyStratagem(mkBattle({ units: [dry, D] }), 'a', 'rain-of-arrows', t, om);
+    expect(r0.ok).toBe(false);
+    expect(r0.reason).toBe('矢盡待補給');
+    // stocked: fires and spends one arrow
+    const stocked = mkUnit({ id: 'a', officerId: 'oa', side: 'attacker', unitType: 'archers', coord: { col: 5, row: 5 }, ammo: 4, maxAmmo: 4 });
+    const r1 = applyStratagem(mkBattle({ units: [stocked, D] }), 'a', 'rain-of-arrows', t, om);
+    expect(r1.ok).toBe(true);
+    expect(r1.battle.units.find((u) => u.id === 'a')?.ammo).toBe(3);
+  });
+
+  it('就地補給: a 糧車 beside a spent quiver replenishes it each turn', () => {
+    const a = { col: 5, row: 5 };
+    const A = mkUnit({ id: 'a', officerId: 'oa', side: 'attacker', unitType: 'archers', coord: a, ammo: 1, maxAmmo: 4, isCommander: true });
+    const wagon = mkUnit({ id: 'w', officerId: 'ow', side: 'attacker', coord: adj(a), isSupply: true });
+    const D = mkUnit({ id: 'd', officerId: 'od', side: 'defender', coord: { col: 12, row: 8 }, isCommander: true });
+    const after = endTurn(mkBattle({ units: [A, wagon, D] }));
+    expect(after.units.find((u) => u.id === 'a')?.ammo).toBe(2);
+  });
+
+  it('真·朝向側背: a blow into the rear arc lands the 背刺 bonus', () => {
+    const t = { col: 6, row: 5 };
+    const a = adj(t);
+    const dmg = (facesAttacker: boolean) => {
+      const toAttacker = hexDirection(t, a);
+      const facing = facesAttacker ? toAttacker : (toAttacker + 3) % 6;
+      const A = mkUnit({ id: 'a', officerId: 'oa', side: 'attacker', coord: a });
+      const D = mkUnit({ id: 'd', officerId: 'od', side: 'defender', coord: t, troops: 90000, maxTroops: 90000, facing });
+      const after = attackUnits(mkBattle({ units: [A, D] }), 'a', 'd', officerMap([A, D]), fixedRng(0.5));
+      return 90000 - (after.units.find((u) => u.id === 'd')?.troops ?? 0);
+    };
+    expect(dmg(false)).toBeGreaterThan(dmg(true)); // struck in the back > struck head-on
   });
 });

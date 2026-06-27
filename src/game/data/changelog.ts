@@ -3,7 +3,7 @@
  * The newest entry drives the in-game「本次更新」popup: bump
  * GAME_VERSION when a batch ships and the next launch shows it once.
  */
-export const GAME_VERSION = '1.19.0';
+export const GAME_VERSION = '1.20.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -13,6 +13,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.20.0',
+    date: '2026-06-26',
+    title: '戰場深化(§5.1)— 時辰推移、久戰疲乏、弓矢有限、真朝向側背',
+    items: [
+      '🌙 時辰推移:時辰隨回合流轉(7回合一階 拂曉→白晝→黃昏→入夜),久戰自然拖入夜 —— 動態觸發夜戰(弓程4→2、伏擊×1.5、夜傷)',
+      '🔥 久戰疲乏:單位出擊累積疲乏,生力軍×1.05、力竭×0.75,疲≥70少1AP,休整回氣 —— 一鼓作氣再而衰三而竭,逼速決',
+      '🏹 弓矢有限:弓弩/攻城/水軍帶矢數,矢雨耗矢、矢盡待補給(逼近戰);糧車/補給格相鄰補矢 —— 遠程火力掛鉤後勤',
+      '🧭 真·朝向側背:單位有真實朝向(隨移動/攻擊轉向),側翼×1.12、背刺×1.25且難反擊 —— 繞後/護翼成真戰術',
+      '🖥 選中單位面板顯疲乏/弓矢;AI 矢盡不空放',
+    ],
+  },
   {
     version: '1.19.0',
     date: '2026-06-26',
