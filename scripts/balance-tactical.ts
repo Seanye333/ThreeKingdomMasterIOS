@@ -115,33 +115,101 @@ function summarize(label: string, outs: Outcome[]) {
 }
 
 const inf: UnitType = 'infantry', spe: UnitType = 'spearmen', cav: UnitType = 'cavalry', arc: UnitType = 'archers';
-const run = (cfg: Config) => { const outs: Outcome[] = []; for (let s = 0; s < N; s++) outs.push(runBattle(cfg, s + cfg.label.length * 1000)); summarize(cfg.label, outs); };
+const ARMS: Array<[string, UnitType]> = [['inf', inf], ['spear', spe], ['cav', cav], ['arch', arc]];
+const run = (cfg: Config) => { const outs: Outcome[] = []; for (let s = 0; s < N; s++) outs.push(runBattle(cfg, s + cfg.label.length * 1000)); summarize(cfg.label, outs); return outs; };
 
-// Run an arm matchup BOTH ways (X-atk / X-def) so the side bias cancels and we
-// see the true arm edge: how often arm X beats arm Y regardless of side.
-function armEdge(xName: string, x: UnitType, yName: string, y: UnitType) {
+// Side-bias for a mirror config = ATK win% (50 is neutral).
+function sideBias(name: string, arm: UnitType): number {
+  let aw = 0, n = 0;
+  for (let s = 0; s < N; s++) {
+    const o = runBattle({ label: name, aArms: [arm, arm, arm], dArms: [arm, arm, arm], aTroops: 18000, dTroops: 18000 }, s + 100);
+    if (o.winner === 'attacker') aw++; if (o.winner !== 'none') n++;
+  }
+  return Math.round((100 * aw) / n);
+}
+
+// Arm X vs Y BOTH ways (side cancels) → X win%.
+function armEdge(x: UnitType, y: UnitType): number {
   let xWins = 0, n = 0;
   for (let s = 0; s < N; s++) {
-    const a = runBattle({ label: `${xName}v${yName}A`, aArms: [x, x, x], dArms: [y, y, y], aTroops: 18000, dTroops: 18000 }, s + 7000);
+    const a = runBattle({ label: 'a', aArms: [x, x, x], dArms: [y, y, y], aTroops: 18000, dTroops: 18000 }, s + 7000);
     if (a.winner === 'attacker') xWins++; if (a.winner !== 'none') n++;
-    const b = runBattle({ label: `${xName}v${yName}B`, aArms: [y, y, y], dArms: [x, x, x], aTroops: 18000, dTroops: 18000 }, s + 9000);
+    const b = runBattle({ label: 'b', aArms: [y, y, y], dArms: [x, x, x], aTroops: 18000, dTroops: 18000 }, s + 9000);
     if (b.winner === 'defender') xWins++; if (b.winner !== 'none') n++;
   }
-  console.log(`  ${xName} vs ${yName}: ${xName} wins ${Math.round((100 * xWins) / n)}%  (both sides, n=${n})`);
+  return Math.round((100 * xWins) / n);
+}
+
+// ── 單場追蹤 — print one battle turn-by-turn to SEE why a side wins ──
+function trace(cfg: Config, seed: number) {
+  const rng = lcg(seed + 1);
+  const officers: Record<string, Officer> = {};
+  const mk = (arms: UnitType[], troops: number, side: string) => arms.map((unitType, i) => {
+    const o = mkOfficer(i === 0 ? 80 : 74, i === 0 ? 78 : 70, 66); o.id = `${side}${i}`; officers[o.id] = o;
+    return { officer: o, troops: Math.floor(troops / arms.length), unitType };
+  });
+  let b = setupTacticalBattle({
+    cityId: 'demo', width: 14, height: 10, attackerForceId: 'A', defenderForceId: 'D',
+    attackers: mk(cfg.aArms, cfg.aTroops, 'A'), defenders: mk(cfg.dArms, cfg.dTroops, 'D'), field: true,
+  });
+  const tot = (s: string) => b.units.filter((u) => u.side === s && u.troops > 0).reduce((a, u) => a + u.troops, 0);
+  const cnt = (s: string) => b.units.filter((u) => u.side === s && u.troops > 0).length;
+  console.log(`\n══ TRACE ${cfg.label} seed=${seed} ══`);
+  let prevLog = 0;
+  while (!b.winner && b.turn <= 30) {
+    const before = b.turn, side = b.activeSide;
+    b = aiTakeTurn(b, officers, rng, { skill: 1, autoDuel: true }).battle;
+    const events = (b.log ?? []).slice(prevLog).filter((e) => e.kind === 'event').map((e) => e.text);
+    prevLog = (b.log ?? []).length;
+    console.log(`T${before} ${side.slice(0, 3)} → ATK ${cnt('attacker')}u/${tot('attacker')}  DEF ${cnt('defender')}u/${tot('defender')}  mom ${b.momentum ?? 0}${events.length ? '  | ' + events.slice(0, 3).join(' ; ') : ''}`);
+  }
+  console.log(`  winner: ${b.winner ?? 'none'} @T${b.turn}`);
+}
+
+if (process.argv[2] === 'trace') {
+  const A: Record<string, UnitType> = { inf, spear: spe, cav, arch: arc };
+  const ax = A[process.argv[4] ?? 'inf'], dx = A[process.argv[5] ?? process.argv[4] ?? 'inf'];
+  trace({ label: `${process.argv[4] ?? 'inf'} vs ${process.argv[5] ?? process.argv[4] ?? 'inf'}`, aArms: [ax, ax, ax], dArms: [dx, dx, dx], aTroops: 18000, dTroops: 18000 }, Number(process.argv[3] ?? 0));
+  process.exit(0);
 }
 
 console.log(`tactical balance — ${N} battles/config, seeded`);
 
-// 1) side neutrality — mirror, equal forces (ATK% should be ~50–60, not 80+)
-run({ label: 'mirror inf (equal)', aArms: [inf, inf, inf], dArms: [inf, inf, inf], aTroops: 18000, dTroops: 18000 });
-run({ label: 'mirror cav (equal)', aArms: [cav, cav, cav], dArms: [cav, cav, cav], aTroops: 18000, dTroops: 18000 });
-// 2) counter triangle — measured BOTH ways (decoupled from side). Want winner ~62–72%.
-console.log('\n▶ arm triangle (side-decoupled):');
-armEdge('spear', spe, 'cav', cav);   // spear should beat cav
-armEdge('cav', cav, 'arch', arc);    // cav should beat arch
-armEdge('arch', arc, 'spear', spe);  // arch should beat spear
-armEdge('spear', spe, 'arch', arc);  // off-triangle: arch should beat spear-ish? (spear loses to arch)
-// 3) force ratio — attacker +30% (should be a clear but not total edge)
-run({ label: 'inf +30% atk', aArms: [inf, inf, inf], dArms: [inf, inf, inf], aTroops: 23400, dTroops: 18000 });
-// 4) combined arms mirror (watch cap-hit% = grind)
-run({ label: 'combined arms', aArms: [spe, cav, arc], dArms: [spe, cav, arc], aTroops: 18000, dTroops: 18000 });
+// ── 1) side neutrality per arm (mirror, equal). 50 = neutral; want ~50–62 ──
+console.log('\n▶ side bias (mirror, equal — ATK win%, 50=neutral):');
+for (const [nm, arm] of ARMS) console.log(`  ${nm}: ${sideBias('m', arm)}%`);
+
+// ── 2) full arm-power matrix (side-decoupled). Each cell = row beats col % ──
+console.log('\n▶ arm matrix (row beats col %, side-decoupled):');
+console.log('         ' + ARMS.map(([n]) => n.padStart(5)).join(' '));
+const power: Record<string, number[]> = {};
+for (const [rn, r] of ARMS) {
+  const row = ARMS.map(([cn, c]) => (rn === cn ? 50 : armEdge(r, c)));
+  power[rn] = row;
+  console.log(`  ${rn.padStart(6)} ` + row.map((v) => `${v}`.padStart(5)).join(' '));
+}
+console.log('  arm power (avg vs others): ' + ARMS.map(([n]) => `${n} ${Math.round(power[n].reduce((a, b) => a + b, 0) / 4)}`).join(' · '));
+
+// ── 3) terrain & weather (mirror inf; does the defender benefit from ground?) ──
+console.log('\n▶ terrain/weather (mirror inf — ATK win%):');
+for (const t of ['plain', 'forest', 'mountain'] as const) {
+  let aw = 0, n = 0;
+  for (let s = 0; s < N; s++) { const o = runBattle({ label: t, aArms: [inf, inf, inf], dArms: [inf, inf, inf], aTroops: 18000, dTroops: 18000, terrainHint: t }, s + 200); if (o.winner === 'attacker') aw++; if (o.winner !== 'none') n++; }
+  console.log(`  ${t}: ATK ${Math.round((100 * aw) / n)}%`);
+}
+for (const w of ['rain', 'snow'] as const) {
+  let aw = 0, n = 0;
+  for (let s = 0; s < N; s++) { const o = runBattle({ label: w, aArms: [inf, inf, inf], dArms: [inf, inf, inf], aTroops: 18000, dTroops: 18000, weather: w }, s + 300); if (o.winner === 'attacker') aw++; if (o.winner !== 'none') n++; }
+  console.log(`  ${w}: ATK ${Math.round((100 * aw) / n)}%`);
+}
+
+// ── 4) force-ratio sweep (mirror inf; how much do numbers decide?) ──
+console.log('\n▶ force ratio (mirror inf, ATK troops × — ATK win%):');
+for (const r of [1.0, 1.15, 1.3, 1.5, 2.0]) {
+  let aw = 0, n = 0;
+  for (let s = 0; s < N; s++) { const o = runBattle({ label: `r${r}`, aArms: [inf, inf, inf], dArms: [inf, inf, inf], aTroops: Math.round(18000 * r), dTroops: 18000 }, s + 400); if (o.winner === 'attacker') aw++; if (o.winner !== 'none') n++; }
+  console.log(`  ×${r}: ATK ${Math.round((100 * aw) / n)}%`);
+}
+
+// ── 5) grind / combined arms ──
+run({ label: 'combined arms (cap-hit = grind)', aArms: [spe, cav, arc], dArms: [spe, cav, arc], aTroops: 18000, dTroops: 18000 });

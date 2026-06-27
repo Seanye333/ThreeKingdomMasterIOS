@@ -4314,7 +4314,9 @@ function aiActOnce(
   const micro = skill >= 0.4;
   if (fragile && micro) {
     const lo = role === 'strategist' ? 3 : 2;
-    const hi = role === 'strategist' ? 6 : 4;
+    // 弓不出射程 — archers/siege must kite to a band INSIDE their own range, else
+    // they sit a hex too far and never loose a shot (battles stall to the cap).
+    const hi = role === 'strategist' ? 6 : attackRange(unit, off);
     if (adjEnemies.length > 0) {
       // Enemy in our face — back off if we can, else fight.
       const step = bandRepositionStep(b, unit, enemies, lo, hi);
