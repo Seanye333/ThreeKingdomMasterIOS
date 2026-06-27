@@ -235,7 +235,7 @@ export function forecastAttack(
   const pincers = b.units.filter((u) => u.side === attacker.side && u.id !== attacker.id && u.troops > 0 && hexDistance(u.coord, target.coord) === 1).length;
   const pincerMul = 1 + Math.min(0.28, 0.10 * pincers);
   const favor = attacker.side === 'attacker' ? (b.momentum ?? 0) : -(b.momentum ?? 0);
-  const momentumMul = 1 + Math.max(-0.06, Math.min(0.08, favor / 1250));
+  const momentumMul = 1 + Math.max(-0.04, Math.min(0.05, favor / 2000));
   const aMoraleMul = attacker.morale >= 80 ? 1.06 : attacker.morale <= 15 ? 0.78 : attacker.morale < 40 ? 0.88 : 1;
   const targetRouting = isRouting(target);
   const pursuitMul = targetRouting ? (attacker.unitType === 'cavalry' ? 1.8 : attacker.unitType === 'navy' ? 1.3 : 1.5) : target.morale < 40 ? 1.12 : 1;
@@ -243,7 +243,7 @@ export function forecastAttack(
   const ch = attacker.charge;
   if (ch && ch.dist >= 2 && hexDistance(ch.from, target.coord) >= 2 && attacker.unitType !== 'siege' && attacker.unitType !== 'navy') {
     chargeMul = 1 + Math.min(attacker.unitType === 'cavalry' ? 0.45 : 0.18, (attacker.unitType === 'cavalry' ? 0.12 : 0.05) * (ch.dist - 1));
-    if (target.unitType === 'spearmen' && target.effects.some((e) => e.kind === 'defending') && typeof target.facing === 'number' && dirGap(hexDirection(target.coord, attacker.coord), target.facing) <= 1) { braced = true; chargeMul = 0.7; }
+    if (target.unitType === 'spearmen' && typeof target.facing === 'number' && dirGap(hexDirection(target.coord, attacker.coord), target.facing) <= 1) { braced = true; chargeMul = 0.7; }
   }
   const escapeHexes = hexNeighbours(target.coord).filter((n) => { const t = tileAt(b, n); return t && moveCost(b, n) < 99 && !unitAt(b, n); });
   const encircled = escapeHexes.length === 0 && !target.isSupply;
@@ -252,6 +252,7 @@ export function forecastAttack(
   const disorderMul = (attacker.effects.some((e) => e.kind === 'disorder') ? 0.82 : 1) * (target.effects.some((e) => e.kind === 'disorder') ? 1.15 : 1);
   let coverMul = 1.0;
   if (dist > 1) {
+    coverMul *= 0.5; // 騷擾之射 — a ranged shot harasses, it doesn't decide
     if (dTerr === 'forest') coverMul *= 0.8;
     if (hexLine(attacker.coord, target.coord).slice(1, -1).some((c) => unitAt(b, c))) coverMul *= 0.85;
   }
@@ -681,7 +682,7 @@ export function setupTacticalBattle(p: SetupParams): TacticalBattle {
       // 朝向 — units open facing the enemy edge (attacker rightward, defender left).
       const facing = hexDirection(coord, { col: coord.col + (side === 'attacker' ? 2 : -2), row: coord.row });
       // 弓矢 — only ranged arms carry a volley count.
-      const maxAmmo = unitType === 'archers' ? 4 : unitType === 'siege' ? 3 : unitType === 'navy' ? 3 : 0;
+      const maxAmmo = unitType === 'archers' ? 3 : unitType === 'siege' ? 3 : unitType === 'navy' ? 3 : 0;
       return {
         id: `${side}-${entry.officer.id}`,
         officerId: entry.officer.id,
@@ -1669,6 +1670,11 @@ export function attackUnits(
   const isRanged = attackDist > 1;
   let coverMul = 1.0;
   if (isRanged) {
+    // 騷擾之射 — a loosed volley harasses; it never bites like a sustained melee
+    // press (which is why bows soften and cavalry/foot decide). Without this a
+    // kiting archer that never risks a counter simply wins — keep it a chip, not
+    // a kill. (The dedicated 矢雨齊發 stratagem is the archers' real burst.)
+    coverMul *= 0.5;
     if (tileAt(b, target.coord)?.terrain === 'forest') coverMul *= 0.8;          // 林木遮蔽
     const line = hexLine(attacker.coord, target.coord);
     const screened = line.slice(1, -1).some((c) => unitAt(b, c));               // 友/敵軍擋箭
@@ -1783,8 +1789,10 @@ export function attackUnits(
     const per = attacker.unitType === 'cavalry' ? 0.12 : 0.05;
     const cap = attacker.unitType === 'cavalry' ? 0.45 : 0.18;
     chargeMul = 1 + Math.min(cap, per * (ch.dist - 1));
+    // 立防拒馬 — spears are inherently anti-charge: a spearman FACING the charger
+    // sets against it and breaks the impact, no manual 據守 needed (this is what
+    // keeps cavalry from simply running spearmen down).
     const tBraced = target.unitType === 'spearmen'
-      && target.effects.some((e) => e.kind === 'defending')
       && typeof target.facing === 'number'
       && dirGap(hexDirection(target.coord, attacker.coord), target.facing) <= 1;
     if (tBraced) { braced = true; chargeMul = 0.7; }
@@ -1828,7 +1836,7 @@ export function attackUnits(
   // 戰局氣勢 — a side riding the tide of battle presses its blows home (順勢),
   // a side losing it falters (頹勢). Momentum is +ve for the attacker side.
   const favor = attacker.side === 'attacker' ? (b.momentum ?? 0) : -(b.momentum ?? 0);
-  const momentumMul = 1 + Math.max(-0.06, Math.min(0.08, favor / 1250));
+  const momentumMul = 1 + Math.max(-0.04, Math.min(0.05, favor / 2000));
 
   // 兵裝相剋 — the officers' weapon classes (§5.9) refine the matchup: 戟制騎、
   // 弩破甲、騎踏弓弩、劍走側背、刀破輕、襲書生/欺徒手. No longer pure display.
@@ -2108,7 +2116,7 @@ export function attackUnits(
   // side that struck the blow (+ve favours the attacker side).
   let momentum = b.momentum ?? 0;
   if (newTroops === 0) {
-    const swing = (target.isCommander ? 22 : 9) * (attacker.side === 'attacker' ? 1 : -1);
+    const swing = (target.isCommander ? 14 : 6) * (attacker.side === 'attacker' ? 1 : -1);
     momentum = Math.max(-100, Math.min(100, momentum + swing));
   }
 
@@ -3128,8 +3136,8 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
     // 順勢/頹勢 — the side riding the battle's momentum takes heart; the side
     // losing it bleeds morale. Scales with how lopsided the tide has become.
     const mom = b.momentum ?? 0;
-    if (Math.abs(mom) >= 20) {
-      const swing = Math.min(4, Math.floor(Math.abs(mom) / 20) + 1);
+    if (Math.abs(mom) >= 35) {
+      const swing = Math.min(2, Math.floor(Math.abs(mom) / 35) + 1);
       const favored: 'attacker' | 'defender' = mom > 0 ? 'attacker' : 'defender';
       tickedUnits = tickedUnits.map((u) => {
         if (u.troops <= 0 || isRouting(u)) return u;

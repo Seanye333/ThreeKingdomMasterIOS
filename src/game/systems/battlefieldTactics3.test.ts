@@ -32,10 +32,10 @@ describe('戰局氣勢 — battle momentum', () => {
     const atk = mkUnit({ id: 'A', officerId: 'oA', side: 'attacker', coord: { col: 1, row: 0 }, troops: HP });
     const grunt = mkUnit({ id: 'D', officerId: 'oD', side: 'defender', coord: { col: 2, row: 0 }, troops: 1000, maxTroops: 1000 });
     const b = mkBattle({ units: [atk, grunt], tiles: mkTiles(6, 5) });
-    expect(attackUnits(b, 'A', 'D', officerMap([atk, grunt]), fixedRng(0.5)).momentum).toBe(9);
+    expect(attackUnits(b, 'A', 'D', officerMap([atk, grunt]), fixedRng(0.5)).momentum).toBe(6);
     const cmd = { ...grunt, isCommander: true };
     const b2 = mkBattle({ units: [atk, cmd], tiles: mkTiles(6, 5) });
-    expect(attackUnits(b2, 'A', 'D', officerMap([atk, cmd]), fixedRng(0.5)).momentum).toBe(22);
+    expect(attackUnits(b2, 'A', 'D', officerMap([atk, cmd]), fixedRng(0.5)).momentum).toBe(14);
   });
 
   it('the favoured side hits harder (順勢)', () => {
