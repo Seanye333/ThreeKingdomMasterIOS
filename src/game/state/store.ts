@@ -234,6 +234,7 @@ import { planAIBuildOrders, planAIFacilities, planAIFortAssaults, planAISiteSeiz
 import { SCENARIO_OBJECTIVES } from '../data/objectives';
 import { SCENARIOS } from '../data';
 import { PROVINCES_BY_ID } from '../data/provinces';
+import { planProvinceLevy } from '../systems/provinceGovernor';
 import { findChallenge, evaluateChallenge, challengeStars } from '../data/challenges';
 import { MAX_CUSTOM_EVENTS } from '../systems/customEvents';
 import { refreshPrestige, prestigeTitleById, TOP_PRESTIGE_IDS } from '../data/prestige';
@@ -943,6 +944,8 @@ interface GameStore extends GameState {
   recallGovernor: (provinceId: ProvinceId) => { ok: boolean; reason?: string };
   /** 安撫 — spend gold to cool a restive 州牧's 割據 meter + firm his loyalty. */
   appeaseGovernor: (provinceId: ProvinceId) => { ok: boolean; reason?: string };
+  /** 州牧辟召 — one-click 委任太守 for every undelegated city of the province. */
+  provinceLevy: (provinceId: ProvinceId) => { ok: boolean; count: number; reason?: string };
   /** 府內結親 — arrange a marriage between two of your own officers (500 gold):
    *  steadies their loyalty and lets the couple raise heirs over the years. */
   proposeMarriagePair: (
@@ -9855,6 +9858,33 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         });
         get().notify(`安撫 ${gov.name.zh} — 割據之心稍解,忠誠 +8。`, `Appeased ${gov.name.en} — warlordism cooled, loyalty +8.`, 'ok');
         return { ok: true };
+      },
+
+      // 州牧辟召 — the 州牧 staffs every undelegated city of his province in one
+      // stroke, each to the ablest officer stationed there (州統諸郡).
+      provinceLevy: (provinceId) => {
+        const state = get();
+        const oid = state.provinceGovernors[provinceId];
+        if (!oid || !state.officers[oid]) return { ok: false, count: 0, reason: '此州未任州牧' };
+        if (!state.playerForceId) return { ok: false, count: 0, reason: 'no force' };
+        const busy = new Set<EntityId>([
+          ...Object.keys(state.pendingCommands),
+          ...state.pendingTrainings.map((tr) => tr.officerId),
+        ]);
+        const pairs = planProvinceLevy({
+          provinceId, forceId: state.playerForceId,
+          cities: state.cities, officers: state.officers,
+          cityDelegations: state.cityDelegations, busyOfficerIds: busy,
+        });
+        for (const p of pairs) get().delegateCity(p.cityId, p.officerId);
+        if (pairs.length === 0) return { ok: false, count: 0, reason: '無可委任之城(已委或無適任武將)' };
+        const gov = state.officers[oid];
+        get().notify(
+          `${gov.name.zh}辟召 ${PROVINCES_BY_ID[provinceId]?.name.zh ?? ''} — 委任 ${pairs.length} 城太守。`,
+          `${gov.name.en} levies ${PROVINCES_BY_ID[provinceId]?.name.en ?? ''} — ${pairs.length} prefects appointed.`,
+          'ok',
+        );
+        return { ok: true, count: pairs.length };
       },
 
       proposeMarriagePair: (aId, bId) => {

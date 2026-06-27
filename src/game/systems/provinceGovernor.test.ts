@@ -6,7 +6,7 @@ import { mkOfficer } from '../../test/factories';
 import { PROVINCES_BY_ID } from '../data/provinces';
 import {
   provinceGovernorEffect, provinceWarlordismDelta, seceProvince, planAIProvinceGovernors,
-  governorCalibre, WARLORDISM_CAP,
+  planProvinceLevy, governorCalibre, WARLORDISM_CAP,
 } from './provinceGovernor';
 
 const PV = 'sili' as ProvinceId;
@@ -113,6 +113,33 @@ describe('planAIProvinceGovernors — AI 州牧', () => {
     const cities: Record<string, City> = Object.fromEntries(CIDS.map((c) => [c, mkCity(c)]));
     const appts = planAIProvinceGovernors({ forces, officers, cities, provinceGovernors: {}, playerForceId: 'wei', rng: () => 0.1 });
     expect(appts.find((a) => a.provinceId === PV)).toBeUndefined();
+  });
+});
+
+describe('planProvinceLevy — 州牧辟召', () => {
+  it('staffs every undelegated owned city with its ablest resident officer', () => {
+    const cities: Record<string, City> = {
+      [CIDS[0]]: mkCity(CIDS[0], { population: 120_000 }),
+      [CIDS[1]]: mkCity(CIDS[1], { population: 120_000 }),
+      [CIDS[2]]: mkCity(CIDS[2], { population: 120_000, ownerForceId: 'shu' }), // not ours → skipped
+    };
+    const officers: Record<string, Officer> = {
+      a: mkOfficer({ id: 'a', forceId: 'wei', locationCityId: CIDS[0], status: 'idle', stats: { politics: 80, charisma: 70, intelligence: 70, leadership: 60, war: 50 } }),
+      b: mkOfficer({ id: 'b', forceId: 'wei', locationCityId: CIDS[1], status: 'idle', stats: { politics: 75, charisma: 65, intelligence: 70, leadership: 60, war: 50 } }),
+    };
+    const pairs = planProvinceLevy({ provinceId: PV, forceId: 'wei', cities, officers, cityDelegations: {} });
+    expect(pairs).toEqual(expect.arrayContaining([
+      { cityId: CIDS[0], officerId: 'a' },
+      { cityId: CIDS[1], officerId: 'b' },
+    ]));
+    expect(pairs.find((p) => p.cityId === CIDS[2])).toBeUndefined();
+  });
+
+  it('skips already-delegated cities and cities with no resident officer', () => {
+    const cities: Record<string, City> = { [CIDS[0]]: mkCity(CIDS[0], { population: 120_000 }), [CIDS[1]]: mkCity(CIDS[1], { population: 120_000 }) };
+    const officers: Record<string, Officer> = { a: mkOfficer({ id: 'a', forceId: 'wei', locationCityId: CIDS[0], status: 'idle' }) };
+    const pairs = planProvinceLevy({ provinceId: PV, forceId: 'wei', cities, officers, cityDelegations: { [CIDS[0]]: 'a' } });
+    expect(pairs).toHaveLength(0); // CIDS[0] already delegated, CIDS[1] has nobody home
   });
 });
 

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { Appointment, City, Officer } from '../types';
 import { scoreGovernorSeat, scoreGovernorSeatDetail, isFrontierCity, gradeFromScore, evaluateGovernors } from './governorEval';
+import { PROVINCES_BY_ID } from '../data/provinces';
 
 function mkCity(over: Partial<City> = {}): City {
   return {
@@ -155,5 +156,44 @@ describe('治世之效 — an able realm earns 天命 and crowns 天下治最', 
     expect(r.reviews.every((x) => x.grade === 'shang')).toBe(true);
     expect(r.mandateDeltas['shu']).toBeGreaterThanOrEqual(2);
     expect(r.entries.some((e) => e.textZh.includes('天下治最'))).toBe(true);
+  });
+});
+
+describe('牧守一體 — 州牧 oversees his prefects', () => {
+  const SILI = PROVINCES_BY_ID['sili'].cityIds;
+  const mkPrefectCity = (id: string) =>
+    mkCity({ id, ownerForceId: 'shu', gold: 1000, food: 5000, troops: 12000, loyalty: 70, population: 120_000 } as never);
+
+  it('州牧督課 — a capable 州牧 lifts his prefects’ review', () => {
+    const cityId = SILI[0];
+    const cities = { [cityId]: mkPrefectCity(cityId) };
+    const officers = {
+      p: mkGov({ id: 'p', locationCityId: cityId, loyalty: 60 }),
+      sg: mkGov({ id: 'sg', loyalty: 60, stats: { leadership: 60, war: 40, intelligence: 80, politics: 95, charisma: 90 } }),
+    };
+    const appts: Appointment[] = [{ officerId: 'p', forceId: 'shu', titleId: 'prefect', cityId, appointedYear: 200 }];
+    const without = evaluateGovernors({ appointments: appts, cities, officers }).reviews[0].score;
+    const withSup = evaluateGovernors({ appointments: appts, cities, officers, provinceGovernors: { sili: 'sg' } }).reviews[0].score;
+    expect(withSup).toBeGreaterThan(without);
+  });
+
+  it('政績歸牧 — a province of 上考 prefects rewards its 州牧 (renown + loyalty)', () => {
+    const [c1, c2] = SILI;
+    const great = (id: string) => mkCity({ id, ownerForceId: 'shu', gold: 9000, food: 14000, troops: 25000, loyalty: 95, population: 200_000 } as never);
+    const cities = { [c1]: great(c1), [c2]: great(c2) };
+    const sharp = { leadership: 70, war: 60, intelligence: 80, politics: 95, charisma: 70 };
+    const officers = {
+      p1: mkGov({ id: 'p1', locationCityId: c1, stats: sharp }),
+      p2: mkGov({ id: 'p2', locationCityId: c2, stats: sharp }),
+      sg: mkGov({ id: 'sg', loyalty: 60, stats: sharp }),
+    };
+    const appts: Appointment[] = [
+      { officerId: 'p1', forceId: 'shu', titleId: 'prefect', cityId: c1, appointedYear: 200 },
+      { officerId: 'p2', forceId: 'shu', titleId: 'prefect', cityId: c2, appointedYear: 200 },
+    ];
+    const r = evaluateGovernors({ appointments: appts, cities, officers, provinceGovernors: { sili: 'sg' }, year: 205 });
+    expect(r.officers['sg'].loyalty).toBeGreaterThan(60);
+    expect(r.reviewLast['sg']?.grade).toBe('shang');
+    expect(r.entries.some((e) => e.textZh.includes('牧守有方'))).toBe(true);
   });
 });

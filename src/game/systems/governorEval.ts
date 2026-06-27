@@ -1,6 +1,8 @@
 import type { Appointment, City, EntityId, Officer } from '../types';
+import type { ProvinceId } from '../types/province';
 import { cityEconCap } from './citySize';
 import { grantXp } from './growth';
+import { PROVINCES_BY_ID, PROVINCE_BY_CITY } from '../data/provinces';
 
 /**
  * 考課 — the annual performance review of appointed governors (太守). A seat's
@@ -157,6 +159,10 @@ export function evaluateGovernors(input: {
   streaks?: Record<EntityId, number>;
   /** Year stamp for the 去年考績 record. */
   year?: number;
+  /** 牧守一體 — province governors (provinceId → officerId): a capable 州牧
+   *  lifts his prefects' 考課 (督課), and is himself judged by their aggregate
+   *  showing (政績歸牧). */
+  provinceGovernors?: Partial<Record<ProvinceId, EntityId>>;
   rng?: () => number;
 }): GovernorEvalResult {
   const officers = { ...input.officers };
@@ -184,7 +190,17 @@ export function evaluateGovernors(input: {
 
     const frontier = isFrontierCity(city, input.cities);
     const detail = scoreGovernorSeatDetail(city, gov, frontier);
-    const { score, grade } = detail;
+    let score = detail.score;
+    let grade = detail.grade;
+    // 州牧督課 — a capable same-realm 州牧 over this city's province backstops
+    // the seat, lifting the review (up to +5 at a masterful steward).
+    const supId = input.provinceGovernors?.[PROVINCE_BY_CITY[city.id] as ProvinceId];
+    const sup = supId ? officers[supId] : null;
+    if (sup && sup.id !== gov.id && sup.forceId === appt.forceId
+        && sup.status !== 'dead' && sup.status !== 'imprisoned') {
+      const oversight = Math.min(5, Math.max(0, Math.round((sup.stats.politics * 0.6 + sup.stats.charisma * 0.4 - 60) / 8)));
+      if (oversight > 0) { score = Math.min(100, score + oversight); grade = gradeFromScore(score); }
+    }
     reviews.push({ officerId: gov.id, cityId: city.id, score, grade });
     reviewLast[gov.id] = { score, grade, year };
 
@@ -247,6 +263,46 @@ export function evaluateGovernors(input: {
       text: `考課 (annual review): ${gov.name.en}, prefect of ${city.name.en} — ${gn.en} (${score})${streakEn}. Loyalty ${delta >= 0 ? '+' : ''}${delta}${xpNote}.${graftEn}${flagEn}`,
       textZh: `考課:${frontierZh}${city.name.zh}太守 ${gov.name.zh} 評 ${gn.zh}(${score})${streakZh},忠誠 ${delta >= 0 ? '+' : ''}${delta}${xp > 0 ? `,歷練 +${xp}` : ''}。${graftZh}${flagZh}`,
     });
+  }
+
+  // 政績歸牧 — a 州牧's own 考課 is the aggregate showing of his province's
+  // prefects: a province of 上考 stewards reflects a steward who governs well
+  // (renown + 歷練 + content loyalty, which in turn cools his 割據); a province
+  // of failures is laid at his door (失察問責).
+  if (input.provinceGovernors) {
+    for (const [pid, sgId] of Object.entries(input.provinceGovernors)) {
+      const sg = sgId ? officers[sgId] : null;
+      if (!sg || sg.status === 'dead' || sg.status === 'imprisoned') continue;
+      if (input.forceId && sg.forceId !== input.forceId) continue;
+      const province = PROVINCES_BY_ID[pid];
+      if (!province) continue;
+      const provReviews = reviews.filter((r) => PROVINCE_BY_CITY[r.cityId] === pid
+        && input.cities[r.cityId]?.ownerForceId === sg.forceId);
+      if (provReviews.length === 0) continue;
+      const shang = provReviews.filter((r) => r.grade === 'shang').length;
+      const xia = provReviews.filter((r) => r.grade === 'xia').length;
+      const fracShang = shang / provReviews.length;
+      const fracXia = xia / provReviews.length;
+      const cur = officers[sg.id] ?? sg;
+      if (fracShang >= 0.6) {
+        const up = grantXp({ ...cur, loyalty: Math.min(100, cur.loyalty + 3), renown: (cur.renown ?? 0) + 2 }, 10, rng, 'politics').officer;
+        officers[sg.id] = up;
+        reviewLast[sg.id] = { score: Math.round(fracShang * 100), grade: 'shang', year };
+        entries.push({
+          cityId: '' as EntityId,
+          text: `考課: ${sg.name.en}, 州牧 of ${province.name.en}, governs well — his prefects mostly earn 上考 (renown + loyalty).`,
+          textZh: `考課:${province.name.zh}牧 ${sg.name.zh} 牧守有方,部屬太守多評上考 — 賜威望、歷練,忠誠 +3。`,
+        });
+      } else if (fracXia >= 0.5) {
+        officers[sg.id] = { ...cur, loyalty: Math.max(0, cur.loyalty - 2) };
+        reviewLast[sg.id] = { score: Math.round((1 - fracXia) * 100), grade: 'xia', year };
+        entries.push({
+          cityId: '' as EntityId,
+          text: `考課: ${sg.name.en}, 州牧 of ${province.name.en}, oversees a failing province — his prefects mostly earn 下考 (失察問責).`,
+          textZh: `考課:${province.name.zh}牧 ${sg.name.zh} 督課失察,部屬太守多評下考,忠誠 −2,當問其責。`,
+        });
+      }
+    }
   }
 
   // 治世之效 — a realm whose seated stewards (≥2) all earned 上考 governs in

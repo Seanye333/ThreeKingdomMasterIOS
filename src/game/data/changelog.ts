@@ -3,7 +3,7 @@
  * The newest entry drives the in-game「本次更新」popup: bump
  * GAME_VERSION when a batch ships and the next launch shows it once.
  */
-export const GAME_VERSION = '1.17.0';
+export const GAME_VERSION = '1.18.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -13,6 +13,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.18.0',
+    date: '2026-06-26',
+    title: '牧守一體・州統諸郡 — 把州牧↔太守↔考課縫成一條鏈',
+    items: [
+      '📜 州牧辟召:州牧面板「辟召」鈕一鍵把州內未委之城委任太守,各擇城中最賢者(大城仍須金牌)',
+      '🏛 州牧督課:能員州牧為其州太守的考課背書加分(至多+5,隨治才)——好牧把治下太守從中考托上上考',
+      '⚖ 政績歸牧:州牧的考績由其州太守的考課等第匯總——部屬多上考則州牧得威望/歷練/忠誠(回頭壓低割據),多下考則問督課失察之責',
+      '🔗 縫合 §4.4 委任太守 / §4.6 考課 / §4.7 州牧 三系為一個層級',
+    ],
+  },
   {
     version: '1.17.0',
     date: '2026-06-26',

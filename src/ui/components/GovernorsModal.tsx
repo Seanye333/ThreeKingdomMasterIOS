@@ -26,6 +26,7 @@ export function GovernorsModal({ onClose }: Props) {
   const appointGovernor = useGameStore((s) => s.appointGovernor);
   const recallGovernor = useGameStore((s) => s.recallGovernor);
   const appeaseGovernor = useGameStore((s) => s.appeaseGovernor);
+  const provinceLevy = useGameStore((s) => s.provinceLevy);
   const t = useT();
   const lang = useLanguage();
   const desc = useDesc();
@@ -143,6 +144,10 @@ export function GovernorsModal({ onClose }: Props) {
                               style={{ background: 'linear-gradient(180deg,#243447,#10161e)', border: '1px solid #4a6a86', color: '#bcd6ee', padding: '0.22rem 0.6rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.68rem', whiteSpace: 'nowrap' }}
                             >{t('安撫(600金)', 'Appease (600g)')}</button>
                           )}
+                          <button
+                            onClick={() => { const r = provinceLevy(p.id); setMsg((m) => ({ ...m, [p.id]: r.ok ? t(`✓ 辟召 ${r.count} 城`, `✓ Levied ${r.count}`) : (r.reason ?? '') })); }}
+                            style={{ background: 'linear-gradient(180deg,#1a2a1e,#10161e)', border: '1px solid #4a8a5a', color: '#9ed68a', padding: '0.22rem 0.6rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.68rem', whiteSpace: 'nowrap' }}
+                          >{t('辟召', 'Levy')}</button>
                           <button
                             onClick={() => { const r = recallGovernor(p.id); setMsg((m) => ({ ...m, [p.id]: r.ok ? t('✓ 已召還', '✓ Recalled') : (r.reason ?? '') })); }}
                             style={{ background: 'linear-gradient(180deg,#2a1818,#10161e)', border: '1px solid #a04a4a', color: '#e08a8a', padding: '0.22rem 0.6rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.68rem', whiteSpace: 'nowrap' }}

@@ -2212,6 +2212,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         playerForceId: input.playerForceId,
         streaks: input.governorEvalStreaks,
         year: input.date.year,
+        // 牧守一體 — use the post-州牧-step slot map (a seceded 州牧 is gone).
+        provinceGovernors: provinceGovernorsOut ?? input.provinceGovernors,
         rng,
       });
       officers = kaoke.officers;

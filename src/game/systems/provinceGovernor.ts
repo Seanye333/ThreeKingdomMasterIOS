@@ -1,6 +1,8 @@
 import type { City, EntityId, Force, Officer } from '../types';
 import type { ProvinceId } from '../types/province';
 import { PROVINCES_BY_ID } from '../data/provinces';
+import { citySize, citySizeRank } from './citySize';
+import { officerGrade, gradeRank } from './officerGrade';
 
 /**
  * 州牧 — provincial governors, made to matter.
@@ -232,4 +234,44 @@ export function planAIProvinceGovernors(input: {
     taken.add(cand.id);
   }
   return appoints;
+}
+
+/**
+ * 州牧辟召 — a province governor commissions stewards for the cities of his 州
+ * that his realm holds but has left undelegated, each to the ablest officer
+ * stationed there (great cities still need a 金牌 hand). One-click 州統諸郡:
+ * the 州牧 staffs his whole province in a stroke. Pure — the caller commits via
+ * the ordinary delegateCity pipeline.
+ */
+export function planProvinceLevy(input: {
+  provinceId: ProvinceId;
+  forceId: EntityId;
+  cities: Record<EntityId, City>;
+  officers: Record<EntityId, Officer>;
+  cityDelegations: Record<EntityId, EntityId>;
+  busyOfficerIds?: ReadonlySet<EntityId>;
+}): Array<{ cityId: EntityId; officerId: EntityId }> {
+  const province = PROVINCES_BY_ID[input.provinceId];
+  if (!province) return [];
+  const used = new Set<EntityId>(Object.values(input.cityDelegations));
+  const out: Array<{ cityId: EntityId; officerId: EntityId }> = [];
+  for (const cid of province.cityIds) {
+    const city = input.cities[cid];
+    if (!city || city.ownerForceId !== input.forceId) continue;
+    if (input.cityDelegations[cid]) continue;                 // already delegated
+    const needsGold = citySizeRank(citySize(city).id) >= citySizeRank('large');
+    const cand = Object.values(input.officers)
+      .filter((o) => o.forceId === input.forceId
+        && o.locationCityId === cid
+        && (o.status === 'idle' || o.status === 'active')
+        && !o.task
+        && !used.has(o.id)
+        && !(input.busyOfficerIds?.has(o.id))
+        && (!needsGold || gradeRank(officerGrade(o).grade) >= gradeRank('gold')))
+      .sort((a, b) => governorCalibre(b) - governorCalibre(a))[0];
+    if (!cand) continue;
+    out.push({ cityId: cid, officerId: cand.id });
+    used.add(cand.id);
+  }
+  return out;
 }
