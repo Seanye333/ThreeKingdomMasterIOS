@@ -2310,8 +2310,15 @@ export const useGameStore = create<GameStore>()(
         else { delete next[cityId]; delete since[cityId]; delete stances[cityId]; }
         set({ cityDelegations: next, governorSince: since, governorStances: stances });
         if (city) {
-          if (gov) s.notify(`委任太守 · ${gov.name.zh} 治 ${city.name.zh}`, `Governor · ${gov.name.en} now runs ${city.name.en}`);
-          else s.notify(`撤太守 · ${city.name.zh} 收歸親理`, `Governor recalled · ${city.name.en}`, 'warn');
+          if (gov) {
+            s.notify(`委任太守 · ${gov.name.zh} 治 ${city.name.zh}`, `Governor · ${gov.name.en} now runs ${city.name.en}`);
+            get().pushPopup({
+              key: 'governor-appointed', media: 'image',
+              titleZh: '委任太守', titleEn: 'A Governor Invested',
+              captionZh: `${gov.name.zh} 受印,出鎮 ${city.name.zh}`,
+              captionEn: `${gov.name.en} takes the seal of ${city.name.en}`,
+            });
+          } else s.notify(`撤太守 · ${city.name.zh} 收歸親理`, `Governor recalled · ${city.name.en}`, 'warn');
         }
       },
       setGovernorStance: (cityId, stance) => {
@@ -2402,6 +2409,16 @@ export const useGameStore = create<GameStore>()(
             if (c) cities[cid] = { ...c, loyalty: Math.max(0, c.loyalty - d) };
           }
           set({ cities });
+        }
+        // 全軍集結 — a real mobilization (≥2 columns converging) is a grand sight.
+        if (dispatched >= 2) {
+          const tgt = state.cities[targetCityId];
+          get().pushPopup({
+            key: 'grand-muster', media: 'image',
+            titleZh: '全軍集結', titleEn: 'The Host Gathers',
+            captionZh: `${dispatched} 路兵馬會師${tgt ? `,直指 ${tgt.name.zh}` : ''}`,
+            captionEn: `${dispatched} columns muster${tgt ? ` toward ${tgt.name.en}` : ''}`,
+          });
         }
         return dispatched;
       },
@@ -5098,6 +5115,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // 慶典彈窗(本季結算觸發)— collected here and merged into popupQueue at
+        // season's end alongside the city-tier popups (see the set() below).
+        const livePopups: import('../types').PopupEvent[] = [];
+
         // 求賢令出寒門 — while a force's call rings, commoners answer:
         // a generated officer of humble birth may join one of its cities.
         if (seasonBoundary) {
@@ -5183,6 +5204,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                 text: `月旦評 — ${critic.name.en} pronounces ${target.name.en} ${verdict.grade === 'upper' ? 'a talent of the first rank' : 'worth the realm’s notice'}; the worthy is flattered to be known.`,
                 textZh: `月旦評 — ${critic.name.zh}品${target.name.zh}為${verdict.grade === 'upper' ? '上品令器' : '可觀之才'},士林傾慕,其人感知遇之意。`,
               });
+              // 月旦定品 — only the rarer 上品 verdict earns a popup (most seasons pass quietly).
+              if (verdict.grade === 'upper') {
+                livePopups.push({
+                  key: 'appraisal-verdict', media: 'image',
+                  titleZh: '月旦評', titleEn: 'A Verdict of the Sages',
+                  captionZh: `${critic.name.zh} 品 ${target.name.zh} 為上品令器`,
+                  captionEn: `${critic.name.en} names ${target.name.en} a talent of the first rank`,
+                });
+              }
             }
           }
 
@@ -5410,6 +5440,84 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // 武將里程碑慶典 — diff the roster (before → after) for the big personal
+        // beats: a 名將 crossing into 金牌+ 品階, a 名將's passing, and a child come
+        // of age. Player-force only, and gated (品階/辭世 to 名將, 及冠 to true heirs)
+        // so a single season can't spew a dozen popups; capped on merge below.
+        const officerPopups: import('../types').PopupEvent[] = [];
+        if (state.playerForceId) {
+          const goldRank = gradeRank('gold');
+          for (const after of Object.values(officersWithMarchTask)) {
+            const before = state.officers[after.id];
+            if (!before) {
+              // 及冠出仕 — heirs enter the roster fresh, as ~14-yo idle officers.
+              const age = result.date.year - (after.birthYear ?? result.date.year);
+              if (after.forceId === state.playerForceId && after.status !== 'dead' && age <= 15) {
+                officerPopups.push({
+                  key: 'heir-coming-of-age', media: 'image',
+                  titleZh: '及冠出仕', titleEn: 'A Scion Comes of Age',
+                  captionZh: `${after.name.zh} 及冠,今入仕效力`,
+                  captionEn: `${after.name.en} comes of age and enters service`,
+                });
+              }
+              continue;
+            }
+            if (after.forceId !== state.playerForceId) continue;
+            // 晉牌封賞 — first crossing UP into 金牌/白金/鑽石.
+            if (before.status !== 'dead' && after.status !== 'dead') {
+              const ga = gradeRank(officerGrade(after).grade);
+              const gb = gradeRank(officerGrade(before).grade);
+              if (ga > gb && ga >= goldRank) {
+                officerPopups.push({
+                  key: 'grade-promotion', media: 'image',
+                  titleZh: '晉牌封賞', titleEn: 'A Grade Conferred',
+                  captionZh: `${after.name.zh} 晉「${gradeMeta(officerGrade(after).grade).name.zh}」品階`,
+                  captionEn: `${after.name.en} rises to ${gradeMeta(officerGrade(after).grade).name.en} grade`,
+                });
+              }
+            }
+            // 名將辭世 — a 金牌+ general's passing (a state-funeral beat).
+            if (before.status !== 'dead' && after.status === 'dead'
+                && gradeRank(officerGrade(before).grade) >= goldRank) {
+              officerPopups.push({
+                key: 'officer-death', media: 'image',
+                titleZh: '名將辭世', titleEn: 'A Great General Passes',
+                captionZh: `${before.name.zh} 薨逝,舉國同哀`,
+                captionEn: `${before.name.en} has passed — the realm mourns`,
+              });
+            }
+          }
+        }
+
+        // 天災彈窗 — surface this season's disasters at YOUR cities (one per kind,
+        // keyed off the report entries 天災 events already emit).
+        if (state.playerForceId) {
+          const hitKinds = new Set<string>(
+            result.report.entries
+              .filter((e) => e.cityId && postCities[e.cityId]?.ownerForceId === state.playerForceId)
+              .map((e) => e.kind),
+          );
+          const DISASTERS: Array<{ kind: string; key: string; zh: string; en: string; capZh: string; capEn: string }> = [
+            { kind: 'famine', key: 'disaster-drought', zh: '旱蝗之災', en: 'Famine Strikes', capZh: '田疇歉收,饑饉迫境', capEn: 'Drought and locusts blight the fields' },
+            { kind: 'flood', key: 'disaster-flood', zh: '水患', en: 'The Floods Rise', capZh: '濁流破堤,田廬盡淹', capEn: 'A river bursts its banks' },
+            { kind: 'plague', key: 'disaster-plague', zh: '瘟疫', en: 'Plague', capZh: '疫癘橫行,人心惶惶', capEn: 'Pestilence sweeps the realm' },
+          ];
+          for (const d of DISASTERS) {
+            if (!hitKinds.has(d.kind)) continue;
+            livePopups.push({ key: d.key, media: 'image', titleZh: d.zh, titleEn: d.en, captionZh: d.capZh, captionEn: d.capEn });
+          }
+        }
+
+        // 考課殿最 — the annual review board, when a fresh one lands this season.
+        if (result.governorReviewLast && result.governorReviewLast !== state.governorReviewLast) {
+          livePopups.push({
+            key: 'evaluation-results', media: 'image',
+            titleZh: '考課殿最', titleEn: 'The Merit Review',
+            captionZh: '殿最榜出,賞功黜怠',
+            captionEn: 'The merit board is unveiled — the able rewarded, the slack censured',
+          });
+        }
+
         // 富商借餉償還 — each season-end, a fixed instalment is drawn from the
         // capital toward any outstanding war-loan (interest is baked into `owed`).
         // A capital too poor to cover the instalment pays what it can and takes a
@@ -5520,7 +5628,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           ...(aiGearNext ? { itemRefinements: aiGearNext.refine, itemBreakthroughs: aiGearNext.breakthrough, itemGems: aiGearNext.gems } : {}),
           itemLore: loreAfterSeason, // 名器威名 grown by this season's strategic battles
           merchantLoan: nextMerchantLoan,
-          popupQueue: [...state.popupQueue, ...sizePopups, ...wallPopups, ...buildPopups],
+          popupQueue: [...state.popupQueue, ...sizePopups, ...wallPopups, ...buildPopups, ...officerPopups.slice(0, 3), ...livePopups],
           officers: officersWithMarchTask,
           marriageAlliances: allianceTick.alliances,
           forces: postForces,
@@ -7000,6 +7108,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           nextOfficers[o.id] = { ...prev, loyalty: Math.max(0, prev.loyalty - 5) };
         }
         set({ officers: nextOfficers });
+        // 封爵之典 — a deliberate honour worth a flourish.
+        get().pushPopup({
+          key: 'peerage-granted', media: 'image',
+          titleZh: '封爵之典', titleEn: 'Ennoblement',
+          captionZh: `${officer.name.zh} 受封「${def.name.zh}」`,
+          captionEn: `${officer.name.en} is enfeoffed as ${def.name.en}`,
+        });
         return { ok: true };
       },
 
@@ -7052,6 +7167,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               renown: (officer.renown ?? 0) + def.renownOnGrant,
             },
           },
+        });
+        // 拜將之榮 — a martial title bestowed before the host.
+        get().pushPopup({
+          key: 'honorific-granted', media: 'image',
+          titleZh: '拜名號將軍', titleEn: 'A Title of War',
+          captionZh: `${officer.name.zh} 拜「${def.name.zh}」`,
+          captionEn: `${officer.name.en} is styled ${def.name.en}`,
         });
         return { ok: true };
       },
@@ -7418,6 +7540,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         set({
           officers: { ...state.officers, [officerId]: r.officer },
           cities: { ...state.cities, [city.id]: { ...city, gold: city.gold - cost, iron: (city.iron ?? 0) - iron } },
+        });
+        // 轉生慶典 — 突破 is a rare, deliberate milestone; herald it.
+        get().pushPopup({
+          key: 'breakthrough-rebirth', media: 'image',
+          titleZh: '轉生突破', titleEn: 'Transcendent Breakthrough',
+          captionZh: `${o.name.zh} 破境而出,更上一重天`,
+          captionEn: `${o.name.en} breaks through to a higher plane`,
         });
         return { ok: true, notes: r.entries.map((e) => e.textZh ?? e.text) };
       },
@@ -9824,6 +9953,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           provinceWarlordism: { ...state.provinceWarlordism, [provinceId]: 0 },
           officers: { ...state.officers, [officerId]: { ...officer, loyalty: Math.min(100, officer.loyalty + 3) } },
         });
+        // 牧守一體 — elevation to 州牧 is a weighty grant of authority.
+        get().pushPopup({
+          key: 'province-governor', media: 'image',
+          titleZh: '州牧晉升', titleEn: 'Provincial Governor',
+          captionZh: `${officer.name.zh} 受任州牧,節制一州`,
+          captionEn: `${officer.name.en} is raised to Governor of a whole province`,
+        });
         return { ok: true };
       },
 
@@ -9912,6 +10048,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           family,
           officers,
           cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - MARRIAGE_COST } },
+        });
+        // 府內結親 — a wedding within the house.
+        get().pushPopup({
+          key: 'wedding', media: 'image',
+          titleZh: '府內結親', titleEn: 'A Wedding Arranged',
+          captionZh: `${a.name.zh} 與 ${b.name.zh} 結為連理`,
+          captionEn: `${a.name.en} ⚭ ${b.name.en}`,
         });
         return { ok: true, message: `${a.name.en} ⚭ ${b.name.en}: a marriage is arranged within your house — their loyalty steadies, and they may in time raise heirs.` };
       },
