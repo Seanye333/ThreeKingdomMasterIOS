@@ -17,7 +17,7 @@ import { categoryOfTactic } from '../../game/data/officerAttributes';
 import { applyBattlePrep,
   aiTakeTurn, aiSkillForDifficulty, applyStratagem, attackUnits, canAttack, canMove, endTurn, hexDistance,
   moveUnit, resolveBattleEnd, unitAt, forecastAttack, matchupLabel, battleStratagemSituation, eliteUnitOf,
-  findPath, moveUnitAlong, reachableHexes,
+  findPath, moveUnitAlong, reachableHexes, isRouting,
 } from '../../game/systems/tactical';
 import { canDuel, pickDuelTerrain } from '../../game/systems/duel';
 import { duelWound } from '../../game/systems/afflictions';
@@ -4081,6 +4081,9 @@ export function TacticalBattleScreen3D() {
       const id = setTimeout(() => {
         const result = aiTakeTurn(battle, officers, Math.random, {
           skill: aiSkillForDifficulty(battleDiff, aiStrength),
+          // 委託指揮 — when the whole battle is delegated, let bold officers
+          // settle scores by auto-resolved 陣前單挑 (no interactive prompt).
+          autoDuel: autoPilot,
         });
         const next = result.battle;
         // For each AI signature usage, spawn FX + banner + flavor log entry.
@@ -4205,6 +4208,7 @@ export function TacticalBattleScreen3D() {
   // initiative); the foe carries any 車輪戰 fatigue.
   useEffect(() => {
     if (!myTurn || interactiveDuel || challenge || !playerSide) return;
+    if (autoPilot) return; // 委託指揮 — duels auto-resolve; don't interrupt with a prompt
     if (challengeTurn.current === battle.turn) return;
     challengeTurn.current = battle.turn;
     for (const e of battle.units) {
@@ -4729,6 +4733,7 @@ export function TacticalBattleScreen3D() {
             <div style={{ fontSize: '0.85rem', marginTop: '0.3rem' }}>
               HP {selectedUnit.troops.toLocaleString()}/{selectedUnit.maxTroops.toLocaleString()} ·
               AP {selectedUnit.ap}/{selectedUnit.maxAp} · Mor {selectedUnit.morale}
+              {isRouting(selectedUnit) && <span style={{ color: '#e0623a', fontWeight: 'bold' }}> · {t('潰走', 'ROUTING')}</span>}
               {(selectedUnit.fatigue ?? 0) > 0 && <span style={{ color: (selectedUnit.fatigue ?? 0) >= 70 ? '#e0623a' : '#caa15a' }}> · {t('疲', 'Ftg')} {Math.round(selectedUnit.fatigue ?? 0)}</span>}
               {selectedUnit.maxAmmo !== undefined && <span style={{ color: (selectedUnit.ammo ?? 0) <= 0 ? '#e0623a' : '#88b7e8' }}> · {t('矢', 'Amo')} {selectedUnit.ammo ?? 0}/{selectedUnit.maxAmmo}</span>}
             </div>
@@ -5257,8 +5262,12 @@ function UnitPanel3D({
       }}>
         <span>HP <strong>{unit.troops.toLocaleString()}</strong>/{unit.maxTroops.toLocaleString()}</span>
         <span>AP <strong style={{ color: unit.ap === 0 ? '#b8442e' : '#7ed68a' }}>{unit.ap}</strong>/{unit.maxAp}</span>
-        <span>Morale {unit.morale}</span>
+        <span>{t('士氣', 'Morale')} <strong style={{ color: isRouting(unit) ? '#e0623a' : unit.morale < 40 ? '#caa15a' : unit.morale >= 80 ? '#7ed68a' : '#cdbb95' }}>{unit.morale}</strong>
+          {isRouting(unit) ? ` ${t('潰走', 'ROUT')}` : unit.morale < 40 ? ` ${t('動搖', 'shaken')}` : unit.morale >= 80 ? ` ${t('高昂', 'high')}` : ''}</span>
         <span>{UNIT_TYPE_LABEL[unit.unitType]}</span>
+        {(unit.charge?.dist ?? 0) >= 2 && (
+          <span style={{ color: '#ffb24a' }}>{t('衝鋒', 'Charge')} <strong>×{unit.charge!.dist}</strong></span>
+        )}
         {(unit.fatigue ?? 0) > 0 && (
           <span>{t('疲乏', 'Fatigue')} <strong style={{ color: (unit.fatigue ?? 0) >= 70 ? '#e0623a' : '#caa15a' }}>{Math.round(unit.fatigue ?? 0)}</strong>{(unit.fatigue ?? 0) >= 70 ? ` ⚠` : ''}</span>
         )}
@@ -5268,25 +5277,24 @@ function UnitPanel3D({
       </div>
       {unit.effects.length > 0 && (
         <div style={{ display: 'flex', gap: '0.2rem', flexWrap: 'wrap', marginTop: '0.4rem' }}>
-          {unit.effects.map((e, i) => (
-            <span key={i} style={{
-              fontSize: '0.62rem',
-              padding: '1px 5px',
-              border: `1px solid ${
-                e.kind === 'burning' ? '#ff7050'
-                : e.kind === 'confused' ? '#c19a3b'
-                : e.kind === 'starving' ? '#d8b24a'
-                : e.kind === 'demoralized' ? '#c89090'
-                : '#88b7e8'
-              }`,
-              color: e.kind === 'burning' ? '#ff7050'
-                : e.kind === 'confused' ? '#c19a3b'
-                : e.kind === 'starving' ? '#d8b24a'
-                : e.kind === 'demoralized' ? '#c89090'
-                : '#88b7e8',
-              borderRadius: 2,
-            }}>{e.kind} {e.turnsLeft}t</span>
-          ))}
+          {unit.effects.map((e, i) => {
+            const EFF_ZH: Record<string, string> = {
+              burning: '燃燒', confused: '混亂', defending: '據守', chained: '連環',
+              revealed: '現形', demoralized: '沮喪', starving: '糧盡', disorder: '陷亂', 'feign-rout': '詐敗',
+            };
+            const col = e.kind === 'burning' ? '#ff7050'
+              : e.kind === 'confused' || e.kind === 'disorder' ? '#c19a3b'
+              : e.kind === 'starving' ? '#d8b24a'
+              : e.kind === 'demoralized' ? '#c89090'
+              : e.kind === 'feign-rout' ? '#c178c7'
+              : '#88b7e8';
+            return (
+              <span key={i} style={{
+                fontSize: '0.62rem', padding: '1px 5px',
+                border: `1px solid ${col}`, color: col, borderRadius: 2,
+              }}>{t(EFF_ZH[e.kind] ?? e.kind, e.kind)} {e.turnsLeft}t</span>
+            );
+          })}
         </div>
       )}
 
