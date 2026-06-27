@@ -349,6 +349,9 @@ interface GameStore extends GameState {
     troops: number,
     additionalOfficerIds?: EntityId[],
     pace?: import('../systems/marchPace').MarchPace,
+    /** Suppress the 大軍出征 慶典彈窗 — set by bulk dispatchers (集結/自動) that
+     *  fire their own popup or shouldn't pop at all. Manual marches leave it off. */
+    quiet?: boolean,
   ) => { ok: boolean; reason?: string };
   /** 召回行軍 — turn a column still on the road back toward its source city; it
    *  abandons the objective and streams home, shedding stragglers (deeper = more).
@@ -1578,7 +1581,7 @@ export const useGameStore = create<GameStore>()(
         return { assigned, goldSpent };
       },
 
-      issueMarch: (sourceId, targetId, officerId, troops, additionalOfficerIds, pace = 'normal') => {
+      issueMarch: (sourceId, targetId, officerId, troops, additionalOfficerIds, pace = 'normal', quiet = false) => {
         const state = get();
         const source = state.cities[sourceId];
         const target = state.cities[targetId];
@@ -1710,6 +1713,16 @@ export const useGameStore = create<GameStore>()(
           `出兵${paceTag} · ${officer.name.zh} 領 ${troops.toLocaleString()} 兵 → ${target.name.zh}（${dur}季抵達）`,
           `March${paceTagEn} · ${officer.name.en} leads ${troops.toLocaleString()} → ${target.name.en} (${dur} seasons)`,
         );
+        // 大軍出征 — a host of size marching forth earns a 慶典 (manual marches only;
+        // 集結令 fires its own 全軍集結 popup, so those columns pass quiet).
+        if (!quiet && troops >= 5000) {
+          get().pushPopup({
+            key: 'army-march', media: 'image',
+            titleZh: '大軍出征', titleEn: 'The Host Marches Forth',
+            captionZh: `${officer.name.zh} 領 ${troops.toLocaleString()} 大軍 → ${target.name.zh}`,
+            captionEn: `${officer.name.en} leads a host of ${troops.toLocaleString()} → ${target.name.en}`,
+          });
+        }
         return { ok: true };
       },
       recallMarch: (officerId) => {
@@ -1844,6 +1857,13 @@ export const useGameStore = create<GameStore>()(
           message = `二虎競食得售 — 兩虎相向,皆得討伐之名。`;
         }
         set({ cities, diplomacy: { ...state.diplomacy, relations }, casusBelliMarks: marks });
+        // 謀略獻策 — the 軍師's stratagem lands.
+        get().pushPopup({
+          key: 'advisor-scheme', media: 'image',
+          titleZh: '謀略獻策', titleEn: 'A Stratagem Lands',
+          captionZh: `${strategist?.name.zh ?? '軍師'}運籌帷幄,計策得售`,
+          captionEn: `${strategist?.name.en ?? 'Your strategist'}'s scheme succeeds`,
+        });
         return { ok: true, message };
       },
 
@@ -2395,7 +2415,7 @@ export const useGameStore = create<GameStore>()(
         let dispatched = 0;
         const strain: Record<EntityId, number> = {};
         for (const o of orders) {
-          if (get().issueMarch(o.cityId, o.marchTo, o.officerId, o.troops).ok) {
+          if (get().issueMarch(o.cityId, o.marchTo, o.officerId, o.troops, undefined, 'normal', true).ok) {
             dispatched++;
             strain[o.cityId] = musterStrain(o.troops); // 集結之累
           }
@@ -2836,7 +2856,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             let did = 0;
             for (const o of orders) {
               if (o.kind === 'march') {
-                if (get().issueMarch(o.cityId, o.toCityId, o.officerId, o.troops).ok) {
+                if (get().issueMarch(o.cityId, o.toCityId, o.officerId, o.troops, undefined, 'normal', true).ok) {
                   did++;
                   if (banner > 0) {
                     const st = get();
@@ -4892,11 +4912,23 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         for (const officerId of trainingsCompletedIds) {
           bumpDeed(officerId, { trainingsCompleted: 1 });
         }
+        // 慶典彈窗(本季結算觸發)— collected through resolution and merged into
+        // popupQueue at season's end (alongside the city-tier popups, see set()).
+        const livePopups: import('../types').PopupEvent[] = [];
         for (const heir of fam.pendingHeirs) {
           // Credit only newly-added heirs this tick (not the carryover).
           if (state.pendingHeirs.some((h) => h.id === heir.id)) continue;
           bumpDeed(heir.parentAId, { childrenSired: 1 });
           bumpDeed(heir.parentBId, { childrenSired: 1 });
+          // 弄璋之喜 — a child born into YOUR house earns a popup.
+          if (state.officers[heir.parentAId]?.forceId === state.playerForceId) {
+            livePopups.push({
+              key: 'heir-born', media: 'image',
+              titleZh: '弄璋之喜', titleEn: 'An Heir is Born',
+              captionZh: `${state.officers[heir.parentAId]?.name.zh ?? '名門'}喜得${heir.female ? '千金' : '麟兒'}「${heir.name.zh}」`,
+              captionEn: `A child, ${heir.name.en}, is born to your house`,
+            });
+          }
         }
         // Fold transient battlefield deltas into the per-officer season
         // map so 殲敵/生擒/攻陷 also get MVPs.
@@ -5114,10 +5146,6 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             codexMarkRecruitedMany(staged.filter((o) => o.forceId === state.playerForceId).map((o) => o.id));
           }
         }
-
-        // 慶典彈窗(本季結算觸發)— collected here and merged into popupQueue at
-        // season's end alongside the city-tier popups (see the set() below).
-        const livePopups: import('../types').PopupEvent[] = [];
 
         // 求賢令出寒門 — while a force's call rings, commoners answer:
         // a generated officer of humble birth may join one of its cities.
@@ -5504,7 +5532,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           ];
           for (const d of DISASTERS) {
             if (!hitKinds.has(d.kind)) continue;
-            livePopups.push({ key: d.key, media: 'image', titleZh: d.zh, titleEn: d.en, captionZh: d.capZh, captionEn: d.capEn });
+            // 蝗旱輪替 — the engine lumps crop blights under 'famine'; alternate the
+            // art between 旱災 and 蝗災 (by year) so both key-arts get screen time.
+            if (d.kind === 'famine' && result.date.year % 2 === 0) {
+              livePopups.push({ key: 'disaster-locust', media: 'image', titleZh: '蝗災', titleEn: 'A Plague of Locusts', captionZh: '蝗群蔽日,禾稼一空', captionEn: 'A locust swarm strips the fields bare' });
+            } else {
+              livePopups.push({ key: d.key, media: 'image', titleZh: d.zh, titleEn: d.en, captionZh: d.capZh, captionEn: d.capEn });
+            }
           }
         }
 
@@ -6416,6 +6450,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           `名產作坊 · ${city.name.zh}${spec.zh}興旺至 ${dev + 1} 級(名產之利 +${pct}%,−${cost} 金)`,
           `${spec.zh} workshop at ${city.name.en} raised to tier ${dev + 1} (+${pct}% specialty edge, −${cost}g)`,
         );
+        // 名動天下 — the specialty reaches its full renown (peak tier).
+        if (dev + 1 >= SPECIALTY_DEV_MAX) {
+          get().pushPopup({
+            key: 'specialty-discovered', media: 'image',
+            titleZh: '名動天下', titleEn: 'A Famed Specialty',
+            captionZh: `${city.name.zh}「${spec.zh}」名產臻於極盛,名動天下`,
+            captionEn: `${city.name.en}'s ${spec.zh} specialty reaches its full renown`,
+          });
+        }
         return { ok: true, message: `${spec.zh} → ${dev + 1} 級` };
       },
 
@@ -7476,6 +7519,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const capId = player.capitalCityId;
         let relations = state.diplomacy.relations;
         let diploTouched = false;
+        let defectorName: { zh: string; en: string } | null = null;
         for (const e of effects) {
           if (e.kind === 'gold' && e.amount && cities[capId]) {
             cities[capId] = { ...cities[capId], gold: cities[capId].gold + e.amount };
@@ -7483,6 +7527,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             const o = officers[e.targetId];
             if (o && o.status !== 'dead' && o.forceId !== state.playerForceId) {
               officers[e.targetId] = { ...o, forceId: state.playerForceId, status: 'idle', task: null, locationCityId: capId, loyalty: Math.max(o.loyalty, 65) };
+              defectorName = o.name; // 說降來投 — for the 慶典彈窗 below
             }
           } else if (e.kind === 'afflict' && e.targetId) {
             const o = officers[e.targetId];
@@ -7505,6 +7550,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           // 'relationship' / 'morale' / 'note' are display-only here.
         }
         set({ officers, cities, ...(diploTouched ? { diplomacy: { ...state.diplomacy, relations } } : {}) });
+        // 說降來投 — a 說客 turned an enemy general to your side.
+        if (defectorName) {
+          get().pushPopup({
+            key: 'persuasion-defection', media: 'image',
+            titleZh: '說降來投', titleEn: 'A General Won Over',
+            captionZh: `說客折服 ${defectorName.zh},率部來投`,
+            captionEn: `${defectorName.en} is won over and brings his command across`,
+          });
+        }
       },
       grantOfficerXp: (officerId, amount, favored) => {
         const state = get();
@@ -8910,6 +8964,16 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           lostItems: newLostItems,
           itemRefinements,
         });
+        // 名器鑄成 — herald a top-grade (神兵) piece coming off the anvil.
+        const forged = ITEMS_BY_ID[recipe.resultItemId];
+        if (forged?.rarity === 'gold') {
+          get().pushPopup({
+            key: 'forge-masterpiece', media: 'image',
+            titleZh: '名器鑄成', titleEn: 'A Masterwork Forged',
+            captionZh: `${city.name.zh} 鑄成「${forged.name.zh}」`,
+            captionEn: `${forged.name.en} is forged at ${city.name.en}`,
+          });
+        }
         return { ok: true, plus, smith: smith?.name };
       },
 
