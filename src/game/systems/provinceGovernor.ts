@@ -47,15 +47,20 @@ export function governorCalibre(o: Officer): number {
   return o.stats.politics * 0.6 + o.stats.charisma * 0.4;
 }
 
+/** 州兵 — a martial 州牧 keeps the province militia topped up toward this floor. */
+export const MILITIA_FLOOR = 6000;
+
 /** Per-city season delta a 州牧 confers (added + clamped by the caller). */
 export interface ProvinceCityDelta {
-  loyalty: number; gold: number; agriculture: number; defense: number; corruption: number;
+  loyalty: number; gold: number; agriculture: number; defense: number; corruption: number; troops: number;
 }
 
 export interface ProvinceEffect {
   /** cityId → delta, for every province city the governor's force still holds. */
   deltas: Record<EntityId, ProvinceCityDelta>;
   loyaltyGain: number; goldBonus: number; developGain: number; defenseGain: number; antiGraft: number;
+  /** 州兵動員 — whether the governor tops up thin garrisons this season. */
+  militia: boolean;
   touched: number;
 }
 
@@ -75,17 +80,23 @@ export function provinceGovernorEffect(
   const developGain = capable ? Math.min(2, Math.max(0, Math.round((gov.stats.intelligence - 50) / 30))) : 0; // 智 → 勸課農桑
   const antiGraft = capable && gov.stats.intelligence >= 75 ? 1 : 0;              // 智 → 抑貪
   const defenseGain = capable && gov.stats.leadership >= 75 ? 1 : 0;              // 統 → 防務
+  // 州兵動員 — a martial steward (統 ≥ 70) keeps thin garrisons topped up toward
+  // a militia floor; he tops up faster but never overfills (so it can't snowball).
+  const militia = gov.stats.leadership >= 70;
   const deltas: Record<EntityId, ProvinceCityDelta> = {};
   let touched = 0;
   if (province) {
     for (const cid of province.cityIds) {
       const c = cities[cid];
       if (!c || c.ownerForceId !== gov.forceId) continue;
-      deltas[cid] = { loyalty: loyaltyGain, gold: goldBonus, agriculture: developGain, defense: defenseGain, corruption: -antiGraft };
+      const topUp = militia && c.troops < MILITIA_FLOOR
+        ? Math.min(Math.round(gov.stats.leadership * 2), MILITIA_FLOOR - c.troops)
+        : 0;
+      deltas[cid] = { loyalty: loyaltyGain, gold: goldBonus, agriculture: developGain, defense: defenseGain, corruption: -antiGraft, troops: topUp };
       touched++;
     }
   }
-  return { deltas, loyaltyGain, goldBonus, developGain, defenseGain, antiGraft, touched };
+  return { deltas, loyaltyGain, goldBonus, developGain, defenseGain, antiGraft, militia, touched };
 }
 
 /**
@@ -196,12 +207,23 @@ export function seceProvince(input: {
  * steward to it (off the main rng so determinism elsewhere is intact). Returns
  * the appointments to commit; the caller mutates the slot map + tenure record.
  */
+/**
+ * 太守→州牧 — a proven prefect (a 連上考 record) is 州牧 material. Returns a
+ * 0+ bonus that sorts him ahead of an unblooded officer of similar calibre.
+ */
+export function governorReadiness(officerId: EntityId, streaks?: Record<EntityId, number>): number {
+  const s = streaks?.[officerId] ?? 0;
+  return s > 0 ? s * 5 : 0; // each consecutive 上考 is worth ~5 calibre points of preference
+}
+
 export function planAIProvinceGovernors(input: {
   forces: Record<EntityId, Force>;
   officers: Record<EntityId, Officer>;
   cities: Record<EntityId, City>;
   provinceGovernors: Partial<Record<ProvinceId, EntityId>>;
   playerForceId?: EntityId | null;
+  /** 太守→州牧 — proven prefects (連上考) are preferred for the post. */
+  streaks?: Record<EntityId, number>;
   rng: () => number;
 }): Array<{ provinceId: ProvinceId; officerId: EntityId; forceId: EntityId }> {
   const appoints: Array<{ provinceId: ProvinceId; officerId: EntityId; forceId: EntityId }> = [];
@@ -228,7 +250,9 @@ export function planAIProvinceGovernors(input: {
       .filter((o) => o.forceId === holder && o.id !== force.rulerOfficerId
         && (o.status === 'idle' || o.status === 'active')
         && !taken.has(o.id) && governorCalibre(o) >= 60)
-      .sort((a, b) => governorCalibre(b) - governorCalibre(a))[0];
+      // 太守→州牧 — a proven prefect outranks an unblooded officer of like calibre.
+      .sort((a, b) => (governorCalibre(b) + governorReadiness(b.id, input.streaks))
+        - (governorCalibre(a) + governorReadiness(a.id, input.streaks)))[0];
     if (!cand) continue;
     appoints.push({ provinceId: province.id, officerId: cand.id, forceId: holder });
     taken.add(cand.id);

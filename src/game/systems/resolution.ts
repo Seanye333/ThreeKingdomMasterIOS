@@ -2073,9 +2073,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const pgSeasonIdx = { spring: 0, summer: 1, autumn: 2, winter: 3 }[input.date.season];
     const pgRng = seededRng((input.date.year * 4 + pgSeasonIdx + 7919) >>> 0);
 
-    // AI realms seat 州牧 over provinces they fully hold.
+    // AI realms seat 州牧 over provinces they fully hold (proven prefects preferred).
     const aiAppts = planAIProvinceGovernors({
-      forces, officers, cities, provinceGovernors: govs, playerForceId: input.playerForceId, rng: pgRng,
+      forces, officers, cities, provinceGovernors: govs, playerForceId: input.playerForceId,
+      streaks: input.governorEvalStreaks, rng: pgRng,
     });
     for (const a of aiAppts) {
       govs[a.provinceId] = a.officerId;
@@ -2114,14 +2115,15 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
           agriculture: Math.max(0, Math.min(400, c.agriculture + d.agriculture)),
           defense: Math.max(0, Math.min(200, c.defense + d.defense)),
           corruption: Math.max(0, Math.min(100, (c.corruption ?? 0) + d.corruption)),
+          troops: Math.max(0, c.troops + d.troops),
         };
       }
       const isPlayer = gov.forceId === input.playerForceId;
       if (eff.touched > 0 && isPlayer) {
         entries.push({
           cityId: null, kind: 'income',
-          text: `${gov.name.en} governs ${province.name.en}: +${eff.loyaltyGain} loyalty & +${eff.goldBonus} gold across ${eff.touched} cities${eff.developGain ? ` (+dev)` : ''}.`,
-          textZh: `${gov.name.zh}牧${province.name.zh}:全境 ${eff.touched} 城 民忠 +${eff.loyaltyGain}、金 +${eff.goldBonus}${eff.developGain ? `、勸農 +${eff.developGain}` : ''}${eff.defenseGain ? `、城防 +${eff.defenseGain}` : ''}${eff.antiGraft ? `、肅貪` : ''}。`,
+          text: `${gov.name.en} governs ${province.name.en}: +${eff.loyaltyGain} loyalty & +${eff.goldBonus} gold across ${eff.touched} cities${eff.developGain ? ` (+dev)` : ''}${eff.militia ? ` (+militia)` : ''}.`,
+          textZh: `${gov.name.zh}牧${province.name.zh}:全境 ${eff.touched} 城 民忠 +${eff.loyaltyGain}、金 +${eff.goldBonus}${eff.developGain ? `、勸農 +${eff.developGain}` : ''}${eff.defenseGain ? `、城防 +${eff.defenseGain}` : ''}${eff.antiGraft ? `、肅貪` : ''}${eff.militia ? `、州兵動員` : ''}。`,
         });
       }
 

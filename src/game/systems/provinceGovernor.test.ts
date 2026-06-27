@@ -6,7 +6,7 @@ import { mkOfficer } from '../../test/factories';
 import { PROVINCES_BY_ID } from '../data/provinces';
 import {
   provinceGovernorEffect, provinceWarlordismDelta, seceProvince, planAIProvinceGovernors,
-  planProvinceLevy, governorCalibre, WARLORDISM_CAP,
+  planProvinceLevy, governorCalibre, governorReadiness, WARLORDISM_CAP, MILITIA_FLOOR,
 } from './provinceGovernor';
 
 const PV = 'sili' as ProvinceId;
@@ -140,6 +140,51 @@ describe('planProvinceLevy — 州牧辟召', () => {
     const officers: Record<string, Officer> = { a: mkOfficer({ id: 'a', forceId: 'wei', locationCityId: CIDS[0], status: 'idle' }) };
     const pairs = planProvinceLevy({ provinceId: PV, forceId: 'wei', cities, officers, cityDelegations: { [CIDS[0]]: 'a' } });
     expect(pairs).toHaveLength(0); // CIDS[0] already delegated, CIDS[1] has nobody home
+  });
+});
+
+describe('州兵動員 — a martial 州牧 tops up thin garrisons', () => {
+  it('refills a thin seat toward the militia floor, never overfilling a fat one', () => {
+    const martial = mkOfficer({ id: 'm', forceId: 'wei', stats: { politics: 70, charisma: 60, intelligence: 60, leadership: 85, war: 70 } });
+    const cities: Record<string, City> = {
+      [CIDS[0]]: mkCity(CIDS[0], { troops: 2000 }),                 // thin → topped up
+      [CIDS[1]]: mkCity(CIDS[1], { troops: MILITIA_FLOOR + 3000 }), // fat → untouched
+    };
+    const eff = provinceGovernorEffect(martial, PV, cities);
+    expect(eff.militia).toBe(true);
+    expect(eff.deltas[CIDS[0]].troops).toBeGreaterThan(0);
+    expect(eff.deltas[CIDS[0]].troops).toBeLessThanOrEqual(MILITIA_FLOOR - 2000);
+    expect(eff.deltas[CIDS[1]].troops).toBe(0);
+  });
+
+  it('a civilian 州牧 (統 < 70) raises no militia', () => {
+    const civ = mkOfficer({ id: 'c', forceId: 'wei', stats: { politics: 90, charisma: 85, intelligence: 80, leadership: 50, war: 30 } });
+    const cities: Record<string, City> = { [CIDS[0]]: mkCity(CIDS[0], { troops: 1000 }) };
+    const eff = provinceGovernorEffect(civ, PV, cities);
+    expect(eff.militia).toBe(false);
+    expect(eff.deltas[CIDS[0]].troops).toBe(0);
+  });
+});
+
+describe('太守→州牧 — proven prefects are preferred', () => {
+  it('governorReadiness rewards a 連上考 record', () => {
+    expect(governorReadiness('x', { x: 3 })).toBeGreaterThan(0);
+    expect(governorReadiness('x', { x: -2 })).toBe(0);
+    expect(governorReadiness('x', {})).toBe(0);
+  });
+
+  it('a proven prefect outranks a higher-calibre unblooded officer', () => {
+    const forces: Record<string, Force> = { wei: mkForce() };
+    const officers: Record<string, Officer> = {
+      raw: mkOfficer({ id: 'raw', forceId: 'wei', status: 'idle', stats: { politics: 78, charisma: 70, intelligence: 70, leadership: 70, war: 50 } }),
+      proven: mkOfficer({ id: 'proven', forceId: 'wei', status: 'idle', stats: { politics: 70, charisma: 64, intelligence: 70, leadership: 70, war: 50 } }),
+    };
+    const cities: Record<string, City> = Object.fromEntries(CIDS.map((c) => [c, mkCity(c)]));
+    const appts = planAIProvinceGovernors({
+      forces, officers, cities, provinceGovernors: {}, playerForceId: null,
+      streaks: { proven: 4 }, rng: () => 0.1,
+    });
+    expect(appts.find((a) => a.provinceId === PV)?.officerId).toBe('proven');
   });
 });
 

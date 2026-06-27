@@ -3,7 +3,7 @@
  * The newest entry drives the in-game「本次更新」popup: bump
  * GAME_VERSION when a batch ships and the next launch shows it once.
  */
-export const GAME_VERSION = '1.18.0';
+export const GAME_VERSION = '1.19.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -13,6 +13,16 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.19.0',
+    date: '2026-06-26',
+    title: '第四章小料 — 太守→州牧晉升、州兵動員、任免中樞',
+    items: [
+      '🎖 太守→州牧晉升:連年上考的太守是州牧之才 —— 州牧面板標「考績卓著·堪為州牧」並上排,AI 擇州牧亦優先這類歷練有成的太守',
+      '🪖 州兵動員:統率≥70 的州牧把州境薄弱守軍每季補向民兵底線(6000,只補不溢)—— 州牧終於有了軍事職能',
+      '🗂 任免中樞:州牧面板並列各州部屬太守的考課等第(上/中/下),牧守一覽於一面板',
+    ],
+  },
   {
     version: '1.18.0',
     date: '2026-06-26',
