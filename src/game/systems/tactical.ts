@@ -145,6 +145,40 @@ export function formationCounterMul(atk: string, def: string): number {
   return 1.0;
 }
 
+/**
+ * 排兵布陣 — pick a sensible formation for an AI army from its composition,
+ * commander wits (formations gate on 智), stance, and — when known — the enemy's
+ * formation (to win the 陣克陣). Without this NPC armies fought formation-less,
+ * so the whole 24-formation system lay dormant against the AI.
+ */
+export function pickAiFormation(
+  arms: UnitType[],
+  commanderInt: number,
+  opts?: { defensive?: boolean; counter?: FormationId },
+): FormationId {
+  const usable = (f: FormationId) => (FORMATIONS_BY_ID[f]?.minIntelligence ?? 0) <= commanderInt;
+  const n = (t: UnitType) => arms.filter((a) => a === t).length;
+  const cav = n('cavalry'), arc = n('archers'), spe = n('spearmen');
+  const cands: FormationId[] = [];
+  // 看破敵陣 — lead with a category that beats the enemy's (攻破守·守克機動·機動繞攻).
+  if (opts?.counter) {
+    const ec = FORMATION_CAT[opts.counter];
+    const want = ec === 'defensive' ? 'offensive' : ec === 'mobile' ? 'defensive' : ec === 'offensive' ? 'mobile' : undefined;
+    if (want) cands.push(...(Object.keys(FORMATION_CAT) as FormationId[]).filter((f) => FORMATION_CAT[f] === want));
+  }
+  // 因軍制宜 — by dominant arm and stance.
+  if (opts?.defensive) cands.push('fish-scale', 'square', 'stacked', 'crescent-moon');
+  if (cav >= arc && cav >= spe && cav > 0) cands.push('arrow-tip', 'awl');
+  if (arc >= cav && arc >= spe && arc > 0) cands.push('wild-goose', 'crescent-withdraw');
+  if (spe >= cav && spe > 0) cands.push('yoke', 'square');
+  // 智深用奇 — a clever commander reaches for the mystic arts.
+  if (commanderInt >= 90) cands.push('eight-trigrams');
+  if (commanderInt >= 85) cands.push('five-elements', 'seven-star');
+  if (commanderInt >= 80) cands.push('four-symbols', 'back-to-water');
+  cands.push('fish-scale', 'square', 'spread-out'); // low-gate fallbacks
+  return cands.find(usable) ?? 'none';
+}
+
 /** Per-terrain multiplier on damage dealt by attacker. */
 const TERRAIN_DAMAGE_MOD: Record<UnitType, Partial<Record<TerrainKind, number>>> = {
   cavalry: { forest: 0.6, mountain: 0.4, river: 0.5, road: 1.2, plain: 1.1, hill: 1.3, marsh: 0.4, chokepoint: 0.7, bridge: 0.8 },
@@ -1726,21 +1760,25 @@ export function attackUnits(
   const aTerrainTile = tileAt(b, attacker.coord);
   const aTerrainMod = aTerrainTile ? terrainDamageMod(attacker.unitType, aTerrainTile.terrain) : 1;
 
-  // Formation effects on defense.
+  // 陣勢 — every formation effect is scaled by how intact the line is and how
+  // masterful the commander (兵敗陣亂 ↔ 陣法精通). A dissolved 大陣 gives nothing.
+  const aFormStrength = formationStrength(b, attacker.side, officers);
+  const dFormStrength = formationStrength(b, target.side, officers);
+  // Formation effects on defense (faded by the defender's 陣勢).
   const targetFormation =
     target.side === 'attacker' ? b.attackerFormation : b.defenderFormation;
-  const defenseMul = defensiveFormationBonus(b, target, targetFormation ?? 'none');
+  const defenseMul = applyFormStrength(defensiveFormationBonus(b, target, targetFormation ?? 'none'), dFormStrength);
 
-  // Attacker's formation offensive bonus.
+  // Attacker's formation offensive bonus (faded by the attacker's 陣勢).
   const attackerFormation =
     attacker.side === 'attacker' ? b.attackerFormation : b.defenderFormation;
-  const offenseMul = offensiveFormationBonus(
+  const offenseMul = applyFormStrength(offensiveFormationBonus(
     attackerFormation ?? 'none',
     attacker.unitType,
     b.turn,
-  );
-  // 陣克陣 — formation-vs-formation rock-paper-scissors.
-  const formCounterMul = formationCounterMul(attackerFormation ?? 'none', targetFormation ?? 'none');
+  ), aFormStrength);
+  // 陣克陣 — formation-vs-formation rock-paper-scissors (scaled by 陣勢).
+  const formCounterMul = applyFormStrength(formationCounterMul(attackerFormation ?? 'none', targetFormation ?? 'none'), aFormStrength);
   // 精銳/異族 — elite corps hit harder and shrug off blows.
   const eliteMul = (ELITE_UNITS[attacker.officerId]?.atkMul ?? 1) * (ELITE_UNITS[target.officerId]?.defMul ?? 1);
 
@@ -1846,6 +1884,18 @@ export function attackUnits(
     const targetFacing = target.side === 'attacker' ? 1 : -1;
     fromRear = (attacker.coord.col - target.coord.col) * targetFacing < 0;
     flankMul = fromRear ? 1.25 : 1.0;
+  }
+  // 陣形方位 — the names finally mean their shapes (scaled by 陣勢): an all-round
+  // 方圓/四象/偃月 seals its flanks; a long 長蛇/鋒矢/錐行 line is thin on the side;
+  // an enveloping 鶴翼/雁行 attacker turns a flank harder. Folds into the §5.1 側背.
+  if (flankMul > 1.0) {
+    const excess = flankMul - 1;
+    let mod = 1.0;
+    if (targetFormation === 'square' || targetFormation === 'four-symbols' || targetFormation === 'crescent-moon') mod -= 0.6 * dFormStrength;   // 環陣護側
+    if (targetFormation === 'long-snake' || targetFormation === 'arrow-tip' || targetFormation === 'awl') mod += 0.5 * dFormStrength;            // 長陣側薄
+    if (attackerFormation === 'crane-wing' || attackerFormation === 'wild-goose') mod += 0.45 * aFormStrength;                                    // 鶴翼包抄
+    flankMul = 1 + excess * Math.max(0, mod);
+    if (flankMul <= 1.001) fromRear = false; // a fully-sealed flank denies the rear bonus's perks too
   }
 
   // 戰局氣勢 — a side riding the tide of battle presses its blows home (順勢),
@@ -2248,6 +2298,42 @@ export function challengeDuel(
   }
 
   return { ...b, units, log, damagePopups: [...(b.damagePopups ?? []), ...popups] };
+}
+
+/**
+ * 陣勢 — how much of a side's formation bonus is actually in force. It fades as
+ * the line shatters (routing/disordered units, a fallen commander — 兵敗陣亂) and
+ * swells with the commander's 陣法精通 (intelligence past the formation's gate).
+ * Returns a scalar applied to every formation effect's deviation from neutral:
+ * 0 = the 大陣 has dissolved (lost ⅔ of its standing line, or near-leaderless).
+ */
+export function formationStrength(
+  b: TacticalBattle,
+  side: 'attacker' | 'defender',
+  officers?: Record<EntityId, Officer>,
+): number {
+  const formation = side === 'attacker' ? b.attackerFormation : b.defenderFormation;
+  if (!formation || formation === 'none') return 0;
+  const sideUnits = b.units.filter((u) => u.side === side && u.troops > 0);
+  if (sideUnits.length === 0) return 0;
+  // 整度 — fraction still holding the line (neither routing nor disordered).
+  const holding = sideUnits.filter(
+    (u) => !isRouting(u) && !u.effects.some((e) => e.kind === 'disorder'),
+  ).length;
+  const holdFrac = holding / sideUnits.length;
+  if (holdFrac < 0.34) return 0; // 大陣已亂 — the formation has come apart
+  const cmd = sideUnits.find((u) => u.isCommander);
+  let integrity = holdFrac * (cmd ? 1 : 0.6); // 失帥則陣亂
+  // 陣法精通 — a master tactician's formation bites far harder than a novice's.
+  const gate = FORMATIONS_BY_ID[formation]?.minIntelligence ?? 0;
+  const cmdInt = cmd && officers?.[cmd.officerId] ? effectiveStats(officers[cmd.officerId]).intelligence : 60;
+  const mastery = 1 + Math.max(0, Math.min(0.35, (cmdInt - gate) / 160));
+  return integrity * mastery;
+}
+
+/** Scale a formation effect's deviation from neutral (1.0) by the side's 陣勢. */
+function applyFormStrength(rawMul: number, strength: number): number {
+  return 1 + (rawMul - 1) * strength;
 }
 
 function defensiveFormationBonus(

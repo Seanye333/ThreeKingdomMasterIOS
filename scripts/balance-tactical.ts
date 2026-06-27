@@ -11,7 +11,7 @@
  *
  * Run:  node --import tsx scripts/balance-tactical.ts [battlesPerConfig]
  */
-import { setupTacticalBattle, aiTakeTurn } from '../src/game/systems/tactical';
+import { setupTacticalBattle, aiTakeTurn, pickAiFormation } from '../src/game/systems/tactical';
 import type { Officer, UnitType, TacticalBattle, FormationId, Weather } from '../src/game/types';
 
 const N = Number(process.argv[2] ?? 240);
@@ -65,11 +65,16 @@ function runBattle(cfg: Config, seed: number): Outcome {
   const attackers = mk(cfg.aArms, cfg.aTroops);
   const defenders = mk(cfg.dArms, cfg.dTroops);
 
+  // Mirror the store: each side draws up a formation (the defender first, the
+  // attacker countering it) unless the config pins one — so the run exercises
+  // the real §5.2 system, not formation-less armies.
+  const dForm = cfg.dForm ?? pickAiFormation(cfg.dArms, defenders[0].officer.stats.intelligence, { defensive: true });
+  const aForm = cfg.aForm ?? pickAiFormation(cfg.aArms, attackers[0].officer.stats.intelligence, { counter: dForm });
   let b: TacticalBattle = setupTacticalBattle({
     cityId: 'demo', width: 14, height: 10,
     attackerForceId: 'A', defenderForceId: 'D',
     attackers, defenders,
-    attackerFormation: cfg.aForm, defenderFormation: cfg.dForm,
+    attackerFormation: aForm, defenderFormation: dForm,
     weather: cfg.weather, field: true,
     terrainHint: cfg.terrainHint ? { category: cfg.terrainHint } as never : undefined,
   });

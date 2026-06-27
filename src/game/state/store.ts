@@ -209,7 +209,7 @@ function bestRapportWith(state: { officers: Record<string, Officer>; rapport: Re
   }
   return best;
 }
-import { setupTacticalBattle, inferUnitType, planSiegeRelief, rollTimeOfDay } from '../systems/tactical';
+import { setupTacticalBattle, inferUnitType, planSiegeRelief, rollTimeOfDay, pickAiFormation } from '../systems/tactical';
 import { BUILDING_DEFS_BY_ID } from '../data/buildings';
 import { DEFENSE_BUILDINGS } from '../data/defenseBuildings';
 import { SHIP_CLASSES_BY_ID, shipMeetsTier, shipBuildSeasons, portUpgradeCost, SHIP_MIN_TIER, PORT_MAX_NAVAL_TIER } from '../data/ships';
@@ -1055,9 +1055,14 @@ function buildFieldBattle(
     defenders,
     // 疲勞 less 都督之旗 — weary from a forced march, steadied by the marshal's banner.
     attackerFatigue: arrivalFatigueMorale(pArmy.pace) - (pArmy.legionBanner ?? 0),
-    // Whichever side is dug in fights from an ambush formation.
-    attackerFormation: pArmy.holding ? 'ten-ambush' : undefined,
-    defenderFormation: eArmy.holding ? 'ten-ambush' : undefined,
+    // 排兵布陣 — a dug-in side fights from 十面埋伏; otherwise each marshal draws
+    // up a formation suited to its arms & wits, the attacker reading the
+    // defender's to counter it (陣克陣). No more formation-less NPC armies.
+    attackerFormation: pArmy.holding ? 'ten-ambush'
+      : pickAiFormation(attackers.map((a) => a.unitType), attackers[0]?.officer.stats.intelligence ?? 60,
+          { counter: eArmy.holding ? 'ten-ambush' : pickAiFormation(defenders.map((d) => d.unitType), defenders[0]?.officer.stats.intelligence ?? 60, { defensive: true }) }),
+    defenderFormation: eArmy.holding ? 'ten-ambush'
+      : pickAiFormation(defenders.map((d) => d.unitType), defenders[0]?.officer.stats.intelligence ?? 60, { defensive: true }),
     weather: tacticalWeather as 'clear' | 'rain' | 'wind' | 'fog' | 'snow',
     timeOfDay: rollTimeOfDay(),
     windDirection: s.weather?.wind ?? 'calm',
