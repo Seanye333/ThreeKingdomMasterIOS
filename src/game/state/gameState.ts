@@ -345,6 +345,12 @@ export interface GameState {
   governorStances: Record<EntityId, import('../systems/governor').GovernorStance>;
   /** 太守任期 — cityId → year the seat was delegated, for 久任尾大不掉 effects. */
   governorSince: Record<EntityId, number>;
+  /** 考課・連續考績 — prefect officerId → signed streak (+N consecutive 上考,
+   *  −N consecutive 下考). Drives 殿最閉環 (grooming / 罷免) in governorEval. */
+  governorEvalStreaks: Record<EntityId, number>;
+  /** 考課・去年考績 — prefect officerId → last annual review, for the 考課 panel
+   *  + 主公親裁 (恩威黜陟). */
+  governorReviewLast: Record<EntityId, { score: number; grade: import('../systems/governorEval').KaoKeGrade; year: number }>;
   /** 軍團都督 — player legions: a marshal, a city cluster, a directive.
    *  Their orders auto-issue at the start of every tick. */
   legions: import('../systems/legion').Legion[];
@@ -619,6 +625,8 @@ export const EMPTY_STATE: GameState = {
   cityDelegations: {},
   governorStances: {},
   governorSince: {},
+  governorEvalStreaks: {},
+  governorReviewLast: {},
   legions: [],
   emperorCityId: 'luoyang',
   dailyChallengeDate: null,
@@ -909,6 +917,8 @@ export function loadScenario(
     cityDelegations: {},
     governorStances: {},
     governorSince: {},
+    governorEvalStreaks: {},
+    governorReviewLast: {},
     legions: [],
     emperorCityId: 'luoyang',
     dailyChallengeDate: null,

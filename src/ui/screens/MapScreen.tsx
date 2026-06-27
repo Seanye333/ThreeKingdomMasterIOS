@@ -58,6 +58,7 @@ const ChronicleModal = lazy(() => import('../components/ChronicleModal').then(m 
 const RelationsModal = lazy(() => import('../components/RelationsModal').then(m => ({ default: m.RelationsModal })));
 const LegionsModal = lazy(() => import('../components/LegionsModal').then(m => ({ default: m.LegionsModal })));
 const AdvisorModal = lazy(() => import('../components/AdvisorModal').then(m => ({ default: m.AdvisorModal })));
+const GovernorEvalModal = lazy(() => import('../components/GovernorEvalModal').then(m => ({ default: m.GovernorEvalModal })));
 const HistoryBookModal = lazy(() => import('../components/HistoryBookModal').then(m => ({ default: m.HistoryBookModal })));
 const SchemesModal = lazy(() => import('../components/SchemesModal').then(m => ({ default: m.SchemesModal })));
 const PowerGraphModal = lazy(() => import('../components/PowerGraphModal').then(m => ({ default: m.PowerGraphModal })));
@@ -123,6 +124,7 @@ export function MapScreen() {
   const [showAch, setShowAch] = useState(false);
   const [showGlossary, setShowGlossary] = useState(false);
   const [showGovernors, setShowGovernors] = useState(false);
+  const [showKaoke, setShowKaoke] = useState(false);
   const [showCampaignStats, setShowCampaignStats] = useState(false);
   const [showChronicle, setShowChronicle] = useState(false);
   const [showRelations, setShowRelations] = useState(false);
@@ -388,6 +390,7 @@ export function MapScreen() {
       { id: 'wiki', zh: '列傳', en: 'Biographies', hint: g.people, run: () => setShowEncyclopedia(true) },
       { id: 'titles', zh: '任官', en: 'Appointments', hint: g.court, run: () => setShowTitles(true) },
       { id: 'governors', zh: '州牧', en: 'Governors', hint: g.court, run: () => setShowGovernors(true) },
+      { id: 'kaoke', zh: '考課', en: 'Reviews', hint: g.court, run: () => setShowKaoke(true) },
       { id: 'courtm', zh: '朝廷', en: 'Court', hint: g.court, run: () => setShowCourt(true) },
       { id: 'relations', zh: '邦交關係', en: 'Relations', hint: g.court, run: () => setShowRelations(true) },
       { id: 'letters', zh: '書信', en: 'Letters', hint: g.court, run: () => setShowWishes(true) },
@@ -756,6 +759,7 @@ export function MapScreen() {
         {showRelations && <RelationsModal onClose={() => setShowRelations(false)} />}
         {showLegions && <LegionsModal onClose={() => setShowLegions(false)} />}
         {showAdvisor && <AdvisorModal onClose={() => setShowAdvisor(false)} />}
+        {showKaoke && <GovernorEvalModal onClose={() => setShowKaoke(false)} />}
         {showHistoryBook && <HistoryBookModal onClose={() => setShowHistoryBook(false)} />}
         {showSchemes && <SchemesModal onClose={() => setShowSchemes(false)} />}
         {showPowerGraph && <PowerGraphModal onClose={() => setShowPowerGraph(false)} />}

@@ -937,7 +937,7 @@ function HistoryTab({
   const REASON_ZH: Record<NonNullable<import('../../game/types').AppointmentHistoryEntry['reason']>, string> = {
     'dead': '薨', 'imprisoned': '被擒', 'defected': '叛去',
     'lost-city': '失城', 'missing': '不知所終', 'replaced': '罷免',
-    'manual': '罷免',
+    'manual': '罷免', 'kaoke': '考課黜免',
   };
   const lang = useLanguage();
   return (

@@ -79,6 +79,8 @@ export interface ResolutionInput {
   clanStandings?: Record<string, import('../types').ClanStanding>;
   /** Civic-title appointments — drive force-wide bonuses in commands + combat. */
   appointments?: import('../types').Appointment[];
+  /** 考課・連續考績 — prefect officerId → signed streak, compounded each annual review. */
+  governorEvalStreaks?: Record<EntityId, number>;
   /** Active 討伐令 marks — combat power +10% from issuer toward target. */
   casusBelliMarks?: Array<{ byForceId: EntityId; targetForceId: EntityId; expiresYear: number; expiresSeason: 'spring' | 'summer' | 'autumn' | 'winter' }>;
   /** Transient 求賢令 recruit multipliers — folded into recruit commands. */
@@ -205,6 +207,14 @@ export interface ResolutionOutput {
    * Store aggregates and applies to state.deeds.
    */
   deedDeltas?: Array<{ officerId: EntityId; patch: Partial<import('../types').HeroicDeeds> }>;
+  /** 考課 (annual, winter) — updated 連續考績 streaks to persist. */
+  governorEvalStreaks?: Record<EntityId, number>;
+  /** 考課罷免 — prefect seats forfeit to chronic 下考 (AI realms only). */
+  governorRevocations?: import('./governorEval').GovernorRevocation[];
+  /** 治世之效 — 天命 deltas for realms of all-上考 stewards (forceId → delta). */
+  governorMandateDeltas?: Record<EntityId, number>;
+  /** 考課・去年考績 — per-prefect last grade, for the 考課 panel + 親裁. */
+  governorReviewLast?: import('./governorEval').GovernorEvalResult['reviewLast'];
 }
 
 export function resolveSeason(input: ResolutionInput): ResolutionOutput {
@@ -218,6 +228,11 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   let refugeePool = input.refugees ?? 0;
   let refugeesShed = 0;
   const entries: ReportEntry[] = [];
+  // 考課 outputs (annual, winter boundary) — surfaced to the store to commit.
+  let governorEvalStreaksOut: Record<EntityId, number> | undefined;
+  let governorRevocationsOut: import('./governorEval').GovernorRevocation[] | undefined;
+  let governorMandateDeltasOut: Record<EntityId, number> | undefined;
+  let governorReviewLastOut: import('./governorEval').GovernorEvalResult['reviewLast'] | undefined;
   // 武功 — deed deltas accumulated this turn
   const deedDeltas: Array<{ officerId: EntityId; patch: Partial<import('../types').HeroicDeeds> }> = [];
   const bumpDeed = (officerId: EntityId, patch: Partial<import('../types').HeroicDeeds>) => {
@@ -2081,12 +2096,19 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         appointments: input.appointments,
         cities,
         officers,
+        playerForceId: input.playerForceId,
+        streaks: input.governorEvalStreaks,
+        year: input.date.year,
         rng,
       });
       officers = kaoke.officers;
       for (const e of kaoke.entries) {
-        entries.push({ cityId: e.cityId, kind: 'note', text: e.text, textZh: e.textZh });
+        entries.push({ cityId: e.cityId || null, kind: 'note', text: e.text, textZh: e.textZh });
       }
+      governorEvalStreaksOut = kaoke.streaks;
+      governorRevocationsOut = kaoke.revoked.length > 0 ? kaoke.revoked : undefined;
+      governorMandateDeltasOut = Object.keys(kaoke.mandateDeltas).length > 0 ? kaoke.mandateDeltas : undefined;
+      governorReviewLastOut = kaoke.reviewLast;
     }
   }
 
@@ -2608,6 +2630,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     pendingSiegeDefenses: pendingSiegeDefenses.length > 0 ? pendingSiegeDefenses : undefined,
     delayedEffects: delayedEffects.length > 0 ? delayedEffects : undefined,
     deedDeltas: deedDeltas.length > 0 ? deedDeltas : undefined,
+    governorEvalStreaks: governorEvalStreaksOut,
+    governorRevocations: governorRevocationsOut,
+    governorMandateDeltas: governorMandateDeltasOut,
+    governorReviewLast: governorReviewLastOut,
   };
 }
 

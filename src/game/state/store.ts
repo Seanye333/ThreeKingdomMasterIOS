@@ -451,6 +451,10 @@ interface GameStore extends GameState {
   delegateCity: (cityId: EntityId, officerId: EntityId | null) => void;
   /** 施政重點 — set a delegated city's governor focus (均衡/富國/強兵/守備/安民). */
   setGovernorStance: (cityId: EntityId, stance: import('../systems/governor').GovernorStance) => void;
+  /** 主公親裁・表彰 — reward a prefect (spends 府庫 gold): loyalty + 威望. */
+  commendGovernor: (officerId: EntityId) => { ok: boolean; reason?: string };
+  /** 主公親裁・問責 — discipline a prefect: a stern loyalty/威望 docking. */
+  reprimandGovernor: (officerId: EntityId) => { ok: boolean; reason?: string };
   /** 軍團都督 — form a legion (id auto-assigned). */
   createLegion: (legion: Omit<Legion, 'id'>) => void;
   disbandLegion: (legionId: string) => void;
@@ -2309,6 +2313,55 @@ export const useGameStore = create<GameStore>()(
         set({ governorStances: { ...s.governorStances, [cityId]: stance } });
       },
 
+      // 主公親裁・恩 — 表彰 a steward. The 賞 comes out of the seat's own 府庫
+      // (300 金), and buys real loyalty + 威望 (renown folds into 品階).
+      commendGovernor: (officerId) => {
+        const s = get();
+        const o = s.officers[officerId];
+        if (!o || o.forceId !== s.playerForceId) return { ok: false, reason: '非我臣屬' };
+        const appt = s.appointments.find((a) => a.officerId === officerId && a.titleId === 'prefect');
+        if (!appt || !appt.cityId) return { ok: false, reason: '未領太守之任' };
+        const city = s.cities[appt.cityId];
+        if (!city || city.ownerForceId !== s.playerForceId) return { ok: false, reason: '城已易主' };
+        const COST = 300;
+        if (city.gold < COST) return { ok: false, reason: `府庫不足(需 ${COST} 金)` };
+        set({
+          cities: { ...s.cities, [city.id]: { ...city, gold: city.gold - COST } },
+          officers: {
+            ...s.officers,
+            [officerId]: { ...o, loyalty: Math.min(100, o.loyalty + 6), renown: (o.renown ?? 0) + 3 },
+          },
+        });
+        get().notify(
+          `表彰 ${o.name.zh}〔${city.name.zh}太守〕— 忠誠 +6,威望 +3。`,
+          `Commended ${o.name.en} (prefect of ${city.name.en}) — loyalty +6, renown +3.`,
+          'ok',
+        );
+        return { ok: true };
+      },
+
+      // 主公親裁・威 — 問責 a steward: a public dressing-down. Stings loyalty
+      // and 威望 — wield it on a chronic 下考, but mind the defection cliff.
+      reprimandGovernor: (officerId) => {
+        const s = get();
+        const o = s.officers[officerId];
+        if (!o || o.forceId !== s.playerForceId) return { ok: false, reason: '非我臣屬' };
+        const appt = s.appointments.find((a) => a.officerId === officerId && a.titleId === 'prefect');
+        if (!appt) return { ok: false, reason: '未領太守之任' };
+        set({
+          officers: {
+            ...s.officers,
+            [officerId]: { ...o, loyalty: Math.max(0, o.loyalty - 5), renown: Math.max(0, (o.renown ?? 0) - 2) },
+          },
+        });
+        get().notify(
+          `問責 ${o.name.zh} — 忠誠 −5,威望 −2,以儆效尤。`,
+          `Reprimanded ${o.name.en} — loyalty −5, renown −2.`,
+          'warn',
+        );
+        return { ok: true };
+      },
+
       massMuster: (targetCityId, opts) => {
         const state = get();
         if (!state.playerForceId) return 0;
@@ -2882,6 +2935,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           family: state.family,
           clanStandings: state.clanStandings,
           appointments: appointmentsAfterAI,
+          governorEvalStreaks: state.governorEvalStreaks,
           casusBelliMarks: casusBelliAfterCourt,
           recruitBonusSeasons: state.recruitBonusSeasons,
           weather: state.weather,
@@ -3676,6 +3730,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           if (result.expeditionMandateDeltas) {
             const byForce = { ...nextMandate.byForce };
             for (const [fid, d] of Object.entries(result.expeditionMandateDeltas)) {
+              byForce[fid] = Math.max(0, Math.min(100, (byForce[fid] ?? 50) + d));
+            }
+            nextMandate = { ...nextMandate, byForce };
+          }
+          // 治世之效 — a realm of all-上考 stewards earns 天命 at the annual 考課.
+          if (result.governorMandateDeltas) {
+            const byForce = { ...nextMandate.byForce };
+            for (const [fid, d] of Object.entries(result.governorMandateDeltas)) {
               byForce[fid] = Math.max(0, Math.min(100, (byForce[fid] ?? 50) + d));
             }
             nextMandate = { ...nextMandate, byForce };
@@ -4948,6 +5010,22 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // 考課罷免 — AI realms forfeit a chronically-failing prefect's seat
+        // (the player is only flagged, to 親裁). Drop those prefect posts + log.
+        if (result.governorRevocations && result.governorRevocations.length > 0) {
+          const revokedSet = new Set(result.governorRevocations.map((r) => r.officerId));
+          appointmentsAfterAI = appointmentsAfterAI.filter(
+            (a) => !(a.titleId === 'prefect' && revokedSet.has(a.officerId)),
+          );
+          for (const rev of result.governorRevocations) {
+            aiHistoryAppends.push({
+              kind: 'revoke', year: state.date.year, season: state.date.season,
+              officerId: rev.officerId, forceId: rev.forceId, titleId: 'prefect', cityId: rev.cityId,
+              reason: 'kaoke',
+            });
+          }
+        }
+
         // Prune appointments whose holders died / were captured / defected
         // / lost their city this season. Emit a vacancy notice + history.
         const prune = pruneStaleAppointments(appointmentsAfterAI, postOfficers, postCities);
@@ -5664,6 +5742,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           embargoes: nextEmbargoes,
           pendingDelayedEffects: remainingDelayed,
           appointments: prunedAppointments,
+          governorEvalStreaks: result.governorEvalStreaks ?? state.governorEvalStreaks,
+          governorReviewLast: result.governorReviewLast ?? state.governorReviewLast,
           appointmentHistory: [
             ...state.appointmentHistory,
             ...aiHistoryAppends,
@@ -10273,6 +10353,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           musters: loaded.musters ?? {},
           governorStances: loaded.governorStances ?? {},
           governorSince: loaded.governorSince ?? {},
+          governorEvalStreaks: loaded.governorEvalStreaks ?? {},
+          governorReviewLast: loaded.governorReviewLast ?? {},
           itemRefinements: loaded.itemRefinements ?? {},
           itemBreakthroughs: loaded.itemBreakthroughs ?? {},
           itemGems: loaded.itemGems ?? {},
@@ -10381,6 +10463,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         cityDelegations: state.cityDelegations,
         governorStances: state.governorStances,
         governorSince: state.governorSince,
+        governorEvalStreaks: state.governorEvalStreaks,
+        governorReviewLast: state.governorReviewLast,
         legions: state.legions,
         emperorCityId: state.emperorCityId,
         dailyChallengeDate: state.dailyChallengeDate,

@@ -3,7 +3,7 @@
  * The newest entry drives the in-game「本次更新」popup: bump
  * GAME_VERSION when a batch ships and the next launch shows it once.
  */
-export const GAME_VERSION = '1.15.0';
+export const GAME_VERSION = '1.16.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -13,6 +13,19 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.16.0',
+    date: '2026-06-26',
+    title: '考課做活 — 殿最榜面板、連考閉環、主公親裁、因城而異+治世',
+    items: [
+      '📋 考課面板・殿最榜:所有在任太守的預估分+等第+逐項拆解(民忠/府庫/倉廩/守軍/城防/政才),年中即見、趕在冬末考前補救',
+      '🔁 殿最閉環:連續考績(持久化)真有後果 —— 連上考歷練遞增+威望(陞遷儲備),連3年下考 AI 自動罷免換賢、玩家標記親裁',
+      '⚖ 主公親裁・恩威:面板上即可表彰(賞府庫金→忠誠+威望)/問責/革職',
+      '🏯 因城而異:邊城重守軍+城防(24+10)、腹地重府庫民心,雄關與財城各按所長受考',
+      '🌾 治世之效:闔境太守皆上考則天命+2;全境「天下治最」一員受表彰(威望+忠誠)',
+      '🏷 季報專屬「考課」標籤,不再混入「雜事」;條目點名貪腐提醒巡查肅貪',
+    ],
+  },
   {
     version: '1.15.0',
     date: '2026-06-26',

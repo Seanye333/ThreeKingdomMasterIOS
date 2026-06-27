@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { Appointment, City, Officer } from '../types';
-import { scoreGovernorSeat, gradeFromScore, evaluateGovernors } from './governorEval';
+import { scoreGovernorSeat, scoreGovernorSeatDetail, isFrontierCity, gradeFromScore, evaluateGovernors } from './governorEval';
 
 function mkCity(over: Partial<City> = {}): City {
   return {
@@ -82,5 +82,78 @@ describe('evaluateGovernors', () => {
     const ableReview = r.reviews.find((x) => x.officerId === 'able')!;
     expect(ableReview.grade).toBe('shang');
     expect(r.entries.find((e) => e.textZh.includes('歷練 +'))).toBeTruthy();
+  });
+});
+
+describe('因城而異 — frontier vs heartland weighting', () => {
+  it('isFrontierCity flags a seat bordering another force', () => {
+    const cs = {
+      home: mkCity({ id: 'home', ownerForceId: 'shu', adjacentCityIds: ['enemy', 'friend'] } as never),
+      enemy: mkCity({ id: 'enemy', ownerForceId: 'wei' }),
+      friend: mkCity({ id: 'friend', ownerForceId: 'shu' }),
+    };
+    expect(isFrontierCity(cs.home, cs)).toBe(true);
+    expect(isFrontierCity(cs.friend, cs)).toBe(false);
+  });
+
+  it('a strong-garrison weak-economy seat scores higher as a frontier', () => {
+    const martial = mkCity({ gold: 100, food: 100, troops: 25000, defense: 140, loyalty: 60 } as never);
+    const gov = mkGov();
+    expect(scoreGovernorSeat(martial, gov, true)).toBeGreaterThan(scoreGovernorSeat(martial, gov, false));
+    // the breakdown surfaces both garrison and walls for the panel.
+    const d = scoreGovernorSeatDetail(martial, gov, true);
+    expect(d.fill.garrison).toBeGreaterThan(0.9);
+    expect(d.fill.defense).toBeGreaterThan(0.9);
+  });
+});
+
+describe('殿最閉環 — streaks compound and forfeit AI seats', () => {
+  const cities = {
+    bad: mkCity({ id: 'bad', gold: 20, food: 20, troops: 300, loyalty: 10 }),
+  };
+  const officers = {
+    poor: mkGov({ id: 'poor', loyalty: 60, locationCityId: 'bad', stats: { leadership: 40, war: 40, intelligence: 40, politics: 35, charisma: 40 } }),
+  };
+  const appt = [{ officerId: 'poor', forceId: 'shu', titleId: 'prefect', cityId: 'bad', appointedYear: 200 }] as Appointment[];
+
+  it('a 下考 streak bleeds loyalty faster than a one-off', () => {
+    const fresh = evaluateGovernors({ appointments: appt, cities, officers });
+    const onStreak = evaluateGovernors({ appointments: appt, cities, officers, streaks: { poor: -1 } });
+    expect(onStreak.officers['poor'].loyalty).toBeLessThan(fresh.officers['poor'].loyalty);
+  });
+
+  it('three years of 下考 forfeits an AI prefect’s seat', () => {
+    const r = evaluateGovernors({ appointments: appt, cities, officers, streaks: { poor: -2 } });
+    expect(r.revoked.map((x) => x.officerId)).toContain('poor');
+  });
+
+  it('a chronically-failing PLAYER prefect is flagged, never auto-removed', () => {
+    const r = evaluateGovernors({ appointments: appt, cities, officers, streaks: { poor: -2 }, playerForceId: 'shu' });
+    expect(r.revoked).toHaveLength(0);
+    expect(r.entries.some((e) => e.textZh.includes('親裁'))).toBe(true);
+  });
+});
+
+describe('治世之效 — an able realm earns 天命 and crowns 天下治最', () => {
+  const great = (id: string, loyalty: number): City =>
+    mkCity({ id, gold: 9000, food: 14000, troops: 25000, loyalty } as never);
+  const cities = { a: great('a', 95), b: great('b', 92), c: great('c', 90) };
+  const sharp = { leadership: 70, war: 60, intelligence: 80, politics: 95, charisma: 70 };
+  const officers = {
+    g1: mkGov({ id: 'g1', locationCityId: 'a', stats: sharp }),
+    g2: mkGov({ id: 'g2', locationCityId: 'b', stats: sharp }),
+    g3: mkGov({ id: 'g3', locationCityId: 'c', stats: sharp }),
+  };
+  const appts: Appointment[] = [
+    { officerId: 'g1', forceId: 'shu', titleId: 'prefect', cityId: 'a', appointedYear: 200 },
+    { officerId: 'g2', forceId: 'shu', titleId: 'prefect', cityId: 'b', appointedYear: 200 },
+    { officerId: 'g3', forceId: 'shu', titleId: 'prefect', cityId: 'c', appointedYear: 200 },
+  ];
+
+  it('grants 天命 when all stewards earn 上考 and names a 天下治最', () => {
+    const r = evaluateGovernors({ appointments: appts, cities, officers });
+    expect(r.reviews.every((x) => x.grade === 'shang')).toBe(true);
+    expect(r.mandateDeltas['shu']).toBeGreaterThanOrEqual(2);
+    expect(r.entries.some((e) => e.textZh.includes('天下治最'))).toBe(true);
   });
 });
