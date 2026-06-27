@@ -939,6 +939,10 @@ interface GameStore extends GameState {
     provinceId: ProvinceId,
     officerId: EntityId,
   ) => { ok: boolean; reason?: string };
+  /** 召還 — recall a province governor (clears the 割據 meter + tenure). */
+  recallGovernor: (provinceId: ProvinceId) => { ok: boolean; reason?: string };
+  /** 安撫 — spend gold to cool a restive 州牧's 割據 meter + firm his loyalty. */
+  appeaseGovernor: (provinceId: ProvinceId) => { ok: boolean; reason?: string };
   /** 府內結親 — arrange a marriage between two of your own officers (500 gold):
    *  steadies their loyalty and lets the couple raise heirs over the years. */
   proposeMarriagePair: (
@@ -2936,6 +2940,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           clanStandings: state.clanStandings,
           appointments: appointmentsAfterAI,
           governorEvalStreaks: state.governorEvalStreaks,
+          provinceGovernors: state.provinceGovernors,
+          provinceWarlordism: state.provinceWarlordism,
+          provinceGovernorSince: state.provinceGovernorSince,
           casusBelliMarks: casusBelliAfterCourt,
           recruitBonusSeasons: state.recruitBonusSeasons,
           weather: state.weather,
@@ -5335,44 +5342,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
-        // 州牧 — a provincial governor (player-appointed) runs his province as a
-        // unit: every season his cities gain order (民忠) and a little revenue,
-        // scaled by his administrative talent (政 0.6 + 魅 0.4). A dead/lost
-        // governor simply yields nothing until reassigned. Player-only (the AI
-        // doesn't appoint 州牧). Modest by design — it rewards holding a whole
-        // province under one trusted name without occupying him elsewhere.
-        if (seasonBoundary && state.playerForceId && Object.keys(state.provinceGovernors ?? {}).length > 0) {
-          const govPatch: Record<string, City> = {};
-          for (const [provinceId, officerId] of Object.entries(state.provinceGovernors)) {
-            const gov = officerId ? postOfficers[officerId] : null;
-            if (!gov || gov.status === 'dead' || gov.forceId !== state.playerForceId) continue;
-            const province = PROVINCES_BY_ID[provinceId];
-            if (!province) continue;
-            const admin = gov.stats.politics * 0.6 + gov.stats.charisma * 0.4;
-            const loyaltyGain = admin >= 80 ? 2 : 1;
-            const goldBonus = Math.round(gov.stats.politics / 12);
-            let touched = 0;
-            for (const cid of province.cityIds) {
-              const c = (govPatch[cid] ?? postCities[cid]);
-              if (!c || c.ownerForceId !== state.playerForceId) continue;
-              govPatch[cid] = {
-                ...c,
-                loyalty: Math.min(100, c.loyalty + loyaltyGain),
-                gold: c.gold + goldBonus,
-              };
-              touched++;
-            }
-            if (touched > 0) {
-              result.report.entries.push({
-                cityId: null,
-                kind: 'income',
-                text: `${gov.name.en} governs ${province.name.en}: +${loyaltyGain} loyalty & +${goldBonus} gold across ${touched} cities.`,
-                textZh: `${gov.name.zh}牧${province.name.zh}:全境 ${touched} 城 民忠 +${loyaltyGain}、金 +${goldBonus}。`,
-              });
-            }
-          }
-          if (Object.keys(govPatch).length > 0) postCities = { ...postCities, ...govPatch };
-        }
+        // 州牧 — provincial stewardship (分權之效), 擁兵自重, and AI appointment
+        // now all run inside resolveSeason (it owns force-spawning for 擁州自立);
+        // the store just persists the returned slot/警戒/任期 maps below.
 
         // 升城慶典 — queue a celebratory popup for each player city that crossed
         // UP a size tier this season (邑→鎮→城→大城→都).
@@ -5744,6 +5716,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           appointments: prunedAppointments,
           governorEvalStreaks: result.governorEvalStreaks ?? state.governorEvalStreaks,
           governorReviewLast: result.governorReviewLast ?? state.governorReviewLast,
+          provinceGovernors: result.provinceGovernors ?? state.provinceGovernors,
+          provinceWarlordism: result.provinceWarlordism ?? state.provinceWarlordism,
+          provinceGovernorSince: result.provinceGovernorSince ?? state.provinceGovernorSince,
           appointmentHistory: [
             ...state.appointmentHistory,
             ...aiHistoryAppends,
@@ -9835,12 +9810,50 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const officer = state.officers[officerId];
         if (!officer) return { ok: false, reason: 'invalid officer' };
         if (officer.forceId !== state.playerForceId) return { ok: false, reason: 'not your officer' };
+        if (officer.status !== 'idle' && officer.status !== 'active') return { ok: false, reason: '武將不在其位' };
+        // 品階門檻 — a whole province demands a proven hand (銀牌以上).
+        if (gradeRank(officerGrade(officer).grade) < gradeRank('silver'))
+          return { ok: false, reason: `品階不足:州牧須銀牌以上(${officer.name.zh}資歷尚淺)` };
+        // The honour of the office buys a little goodwill; tenure starts now.
         set({
-          provinceGovernors: {
-            ...state.provinceGovernors,
-            [provinceId]: officerId,
-          },
+          provinceGovernors: { ...state.provinceGovernors, [provinceId]: officerId },
+          provinceGovernorSince: { ...state.provinceGovernorSince, [provinceId]: state.date.year },
+          provinceWarlordism: { ...state.provinceWarlordism, [provinceId]: 0 },
+          officers: { ...state.officers, [officerId]: { ...officer, loyalty: Math.min(100, officer.loyalty + 3) } },
         });
+        return { ok: true };
+      },
+
+      // 召還 — recall a province governor: the slot, his 割據 designs and tenure
+      // all clear. The safe lever against a steward growing over-mighty.
+      recallGovernor: (provinceId) => {
+        const state = get();
+        if (!state.provinceGovernors[provinceId]) return { ok: false, reason: '此州未任州牧' };
+        const govs = { ...state.provinceGovernors }; delete govs[provinceId];
+        const warl = { ...state.provinceWarlordism }; delete warl[provinceId];
+        const since = { ...state.provinceGovernorSince }; delete since[provinceId];
+        set({ provinceGovernors: govs, provinceWarlordism: warl, provinceGovernorSince: since });
+        return { ok: true };
+      },
+
+      // 安撫 — spend 600 gold from the capital to lavish honours on a restive
+      // 州牧: his 割據 meter cools and his loyalty firms.
+      appeaseGovernor: (provinceId) => {
+        const state = get();
+        const oid = state.provinceGovernors[provinceId];
+        const gov = oid ? state.officers[oid] : null;
+        if (!gov) return { ok: false, reason: '此州未任州牧' };
+        if (!PROVINCES_BY_ID[provinceId]) return { ok: false, reason: 'invalid province' };
+        const force = state.playerForceId ? state.forces[state.playerForceId] : null;
+        const capital = force ? state.cities[force.capitalCityId] : null;
+        const COST = 600;
+        if (!capital || capital.gold < COST) return { ok: false, reason: `國庫不足(需 ${COST} 金於首都)` };
+        set({
+          cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - COST } },
+          officers: { ...state.officers, [oid!]: { ...gov, loyalty: Math.min(100, gov.loyalty + 8) } },
+          provinceWarlordism: { ...state.provinceWarlordism, [provinceId]: Math.max(0, (state.provinceWarlordism[provinceId] ?? 0) - 35) },
+        });
+        get().notify(`安撫 ${gov.name.zh} — 割據之心稍解,忠誠 +8。`, `Appeased ${gov.name.en} — warlordism cooled, loyalty +8.`, 'ok');
         return { ok: true };
       },
 
@@ -10355,6 +10368,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           governorSince: loaded.governorSince ?? {},
           governorEvalStreaks: loaded.governorEvalStreaks ?? {},
           governorReviewLast: loaded.governorReviewLast ?? {},
+          provinceGovernors: loaded.provinceGovernors ?? {},
+          provinceWarlordism: loaded.provinceWarlordism ?? {},
+          provinceGovernorSince: loaded.provinceGovernorSince ?? {},
           itemRefinements: loaded.itemRefinements ?? {},
           itemBreakthroughs: loaded.itemBreakthroughs ?? {},
           itemGems: loaded.itemGems ?? {},
@@ -10420,6 +10436,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         buildings: state.buildings,
         tradeRoutes: state.tradeRoutes,
         provinceGovernors: state.provinceGovernors,
+        provinceWarlordism: state.provinceWarlordism,
+        provinceGovernorSince: state.provinceGovernorSince,
         fleets: state.fleets,
         shipOrders: state.shipOrders,
         ports: state.ports,

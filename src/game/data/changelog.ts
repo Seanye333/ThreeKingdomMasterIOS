@@ -3,7 +3,7 @@
  * The newest entry drives the in-game「本次更新」popup: bump
  * GAME_VERSION when a batch ships and the next launch shows it once.
  */
-export const GAME_VERSION = '1.16.0';
+export const GAME_VERSION = '1.17.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -13,6 +13,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.17.0',
+    date: '2026-06-26',
+    title: '州牧做活 — 擁兵自重裂土、分權之效、AI 州牧群雄割據',
+    items: [
+      '⚔ 擁兵自重・尾大不掉:州牧久鎮肥州生割據之心(兵力城數+低忠+野心+久任),≥50示警、達100擁州自立 —— 裂全州之地自成一勢,重現漢末州牧割據',
+      '🏛 分權之效:州牧本事真管事 —— 政→金、魅→民忠、智→勸農抑貪、統→城防(治才≥55解鎖),非二元門檻',
+      '🐉 AI 州牧・群雄割據:強勢 AI 君主對全據之州亦封州牧(同享加成),其州牧同樣會割據自立 —— 涌現式軍閥裂變',
+      '🤝 主公制衡:州牧面板示割據條,可召還(清零)或安撫(600金 −35割據+忠誠);封州牧須銀牌品階、起算任期、失州自動卸任',
+      '🎯 州牧效果與割據結算移入 resolveSeason(它本就掌管裂土生勢);玩家/AI 對稱',
+    ],
+  },
   {
     version: '1.16.0',
     date: '2026-06-26',

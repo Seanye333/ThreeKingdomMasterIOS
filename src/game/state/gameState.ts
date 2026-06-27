@@ -186,6 +186,10 @@ export interface GameState {
   tradeRoutes: TradeRoute[];
   /** Provincial governor appointments keyed by province id. */
   provinceGovernors: Partial<Record<ProvinceId, EntityId>>;
+  /** 州牧・擁兵自重 — provinceId → 割據 meter (0..100). At 100 the 州牧 secedes. */
+  provinceWarlordism: Partial<Record<ProvinceId, number>>;
+  /** 州牧任期 — provinceId → year the steward took the province (久任尾大不掉). */
+  provinceGovernorSince: Partial<Record<ProvinceId, number>>;
   /** Active fleets. */
   fleets: Fleet[];
   /** Pending ship build orders. */
@@ -571,6 +575,8 @@ export const EMPTY_STATE: GameState = {
   buildings: [],
   tradeRoutes: [],
   provinceGovernors: {},
+  provinceWarlordism: {},
+  provinceGovernorSince: {},
   fleets: [],
   shipOrders: [],
   ports: {},
@@ -931,6 +937,8 @@ export function loadScenario(
     buildings: [],
     tradeRoutes: [],
     provinceGovernors: {},
+    provinceWarlordism: {},
+    provinceGovernorSince: {},
     fleets: [],
     shipOrders: [],
     ports: buildInitialPorts(

@@ -48,6 +48,12 @@ import { honorificEffects } from '../data/honorifics';
 import { rollEvents } from './events';
 import { generateFictionalOfficer } from './officerGen';
 import { resolveAmbitions } from './ambition';
+import {
+  provinceGovernorEffect, provinceWarlordismDelta, seceProvince, planAIProvinceGovernors,
+  seededRng, WARLORDISM_WARN, WARLORDISM_CAP,
+} from './provinceGovernor';
+import type { ProvinceId } from '../types/province';
+import { PROVINCES_BY_ID } from '../data/provinces';
 import { tickClans, clanGentryWeight } from './clans';
 import { tickStatecraft } from './statecraft';
 import { deriveCourtFactions, type FactionId } from './courtFactions';
@@ -81,6 +87,12 @@ export interface ResolutionInput {
   appointments?: import('../types').Appointment[];
   /** 考課・連續考績 — prefect officerId → signed streak, compounded each annual review. */
   governorEvalStreaks?: Record<EntityId, number>;
+  /** 州牧 — provincial governor appointments (provinceId → officerId). */
+  provinceGovernors?: Partial<Record<ProvinceId, EntityId>>;
+  /** 州牧・擁兵自重 — provinceId → 割據 meter (0..100). */
+  provinceWarlordism?: Partial<Record<ProvinceId, number>>;
+  /** 州牧任期 — provinceId → year the steward took the province. */
+  provinceGovernorSince?: Partial<Record<ProvinceId, number>>;
   /** Active 討伐令 marks — combat power +10% from issuer toward target. */
   casusBelliMarks?: Array<{ byForceId: EntityId; targetForceId: EntityId; expiresYear: number; expiresSeason: 'spring' | 'summer' | 'autumn' | 'winter' }>;
   /** Transient 求賢令 recruit multipliers — folded into recruit commands. */
@@ -215,6 +227,12 @@ export interface ResolutionOutput {
   governorMandateDeltas?: Record<EntityId, number>;
   /** 考課・去年考績 — per-prefect last grade, for the 考課 panel + 親裁. */
   governorReviewLast?: import('./governorEval').GovernorEvalResult['reviewLast'];
+  /** 州牧 — updated slot map (AI appoints / secession / auto-vacate). */
+  provinceGovernors?: Partial<Record<ProvinceId, EntityId>>;
+  /** 州牧・擁兵自重 — updated 割據 meters. */
+  provinceWarlordism?: Partial<Record<ProvinceId, number>>;
+  /** 州牧任期 — updated tenure records. */
+  provinceGovernorSince?: Partial<Record<ProvinceId, number>>;
 }
 
 export function resolveSeason(input: ResolutionInput): ResolutionOutput {
@@ -233,6 +251,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   let governorRevocationsOut: import('./governorEval').GovernorRevocation[] | undefined;
   let governorMandateDeltasOut: Record<EntityId, number> | undefined;
   let governorReviewLastOut: import('./governorEval').GovernorEvalResult['reviewLast'] | undefined;
+  // 州牧 outputs (per season) — slot map, 割據 meters, tenure — surfaced to the store.
+  let provinceGovernorsOut: Partial<Record<ProvinceId, EntityId>> | undefined;
+  let provinceWarlordismOut: Partial<Record<ProvinceId, number>> | undefined;
+  let provinceGovernorSinceOut: Partial<Record<ProvinceId, number>> | undefined;
   // 武功 — deed deltas accumulated this turn
   const deedDeltas: Array<{ officerId: EntityId; patch: Partial<import('../types').HeroicDeeds> }> = [];
   const bumpDeed = (officerId: EntityId, patch: Partial<import('../types').HeroicDeeds>) => {
@@ -2041,6 +2063,97 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     }
   }
 
+  // 州牧 — provincial stewardship + 擁兵自重, once per season for ALL realms.
+  // AI lords seat their own 州牧; every governor stewards his province (分權之效)
+  // and accrues 割據 designs; at the cap he secedes the whole province (擁州自立).
+  if (seasonBoundary && input.provinceGovernors) {
+    const govs: Partial<Record<ProvinceId, EntityId>> = { ...input.provinceGovernors };
+    const warl: Partial<Record<ProvinceId, number>> = { ...(input.provinceWarlordism ?? {}) };
+    const since: Partial<Record<ProvinceId, number>> = { ...(input.provinceGovernorSince ?? {}) };
+    const pgSeasonIdx = { spring: 0, summer: 1, autumn: 2, winter: 3 }[input.date.season];
+    const pgRng = seededRng((input.date.year * 4 + pgSeasonIdx + 7919) >>> 0);
+
+    // AI realms seat 州牧 over provinces they fully hold.
+    const aiAppts = planAIProvinceGovernors({
+      forces, officers, cities, provinceGovernors: govs, playerForceId: input.playerForceId, rng: pgRng,
+    });
+    for (const a of aiAppts) {
+      govs[a.provinceId] = a.officerId;
+      since[a.provinceId] = input.date.year;
+      const o = officers[a.officerId];
+      const prov = PROVINCES_BY_ID[a.provinceId];
+      if (o && prov) {
+        officers[a.officerId] = { ...o, loyalty: Math.min(100, o.loyalty + 3) };
+        entries.push({
+          cityId: null, kind: 'note',
+          text: `${forces[a.forceId]?.name.en ?? a.forceId} names ${o.name.en} 州牧 of ${prov.name.en}.`,
+          textZh: `${forces[a.forceId]?.name.zh ?? a.forceId}拜${o.name.zh}為${prov.name.zh}牧。`,
+        });
+      }
+    }
+
+    for (const [pid, oid] of Object.entries(govs) as Array<[ProvinceId, EntityId]>) {
+      const gov = oid ? officers[oid] : null;
+      const province = PROVINCES_BY_ID[pid];
+      // 自動卸任 — governor gone, or his force holds nothing in the province.
+      if (!gov || gov.status === 'dead' || gov.status === 'imprisoned' || !gov.forceId || !province) {
+        delete govs[pid]; delete warl[pid]; delete since[pid]; continue;
+      }
+      const ownedIds = province.cityIds.filter((id) => cities[id]?.ownerForceId === gov.forceId);
+      if (ownedIds.length === 0) { delete govs[pid]; delete warl[pid]; delete since[pid]; continue; }
+
+      // 分權之效 — province-wide stewardship.
+      const eff = provinceGovernorEffect(gov, pid, cities);
+      for (const [cid, d] of Object.entries(eff.deltas)) {
+        const c = cities[cid];
+        if (!c) continue;
+        cities[cid] = {
+          ...c,
+          loyalty: Math.max(0, Math.min(100, c.loyalty + d.loyalty)),
+          gold: Math.max(0, c.gold + d.gold),
+          agriculture: Math.max(0, Math.min(400, c.agriculture + d.agriculture)),
+          defense: Math.max(0, Math.min(200, c.defense + d.defense)),
+          corruption: Math.max(0, Math.min(100, (c.corruption ?? 0) + d.corruption)),
+        };
+      }
+      const isPlayer = gov.forceId === input.playerForceId;
+      if (eff.touched > 0 && isPlayer) {
+        entries.push({
+          cityId: null, kind: 'income',
+          text: `${gov.name.en} governs ${province.name.en}: +${eff.loyaltyGain} loyalty & +${eff.goldBonus} gold across ${eff.touched} cities${eff.developGain ? ` (+dev)` : ''}.`,
+          textZh: `${gov.name.zh}牧${province.name.zh}:全境 ${eff.touched} 城 民忠 +${eff.loyaltyGain}、金 +${eff.goldBonus}${eff.developGain ? `、勸農 +${eff.developGain}` : ''}${eff.defenseGain ? `、城防 +${eff.defenseGain}` : ''}${eff.antiGraft ? `、肅貪` : ''}。`,
+        });
+      }
+
+      // 擁兵自重 — accrue 割據 designs; at the cap, the province secedes.
+      const ownedTroops = ownedIds.reduce((s, id) => s + (cities[id]?.troops ?? 0), 0);
+      const tenureYears = input.date.year - (since[pid] ?? input.date.year);
+      const d = provinceWarlordismDelta({
+        gov, ownedTroops, ownedCities: ownedIds.length, tenureYears,
+        lordRapport: isPlayer ? input.lordRapport?.[gov.id] : undefined,
+      });
+      const meter = Math.max(0, Math.min(WARLORDISM_CAP, (warl[pid] ?? 0) + d));
+      warl[pid] = meter;
+      if (meter >= WARLORDISM_CAP) {
+        const sec = seceProvince({ provinceId: pid, gov, officers, cities, forces });
+        if (sec) {
+          entries.push({ cityId: sec.event.cityId, kind: 'rebellion', text: sec.event.text, textZh: sec.event.textZh });
+          delete govs[pid]; delete warl[pid]; delete since[pid];
+        }
+      } else if (meter >= WARLORDISM_WARN && d > 0 && isPlayer) {
+        entries.push({
+          cityId: null, kind: 'note',
+          text: `${gov.name.en}, 州牧 of ${province.name.en}, grows over-mighty (割據 ${Math.round(meter)}/100) — recall or appease him before he secedes.`,
+          textZh: `${province.name.zh}牧 ${gov.name.zh} 威權日重(割據 ${Math.round(meter)}/100),尾大不掉 — 宜召還或安撫,免其擁州自立。`,
+        });
+      }
+    }
+
+    provinceGovernorsOut = govs;
+    provinceWarlordismOut = warl;
+    provinceGovernorSinceOut = since;
+  }
+
   // 4. Random events — only on season boundary.
   if (seasonBoundary) {
     const eventResult = rollEvents({
@@ -2634,6 +2747,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     governorRevocations: governorRevocationsOut,
     governorMandateDeltas: governorMandateDeltasOut,
     governorReviewLast: governorReviewLastOut,
+    provinceGovernors: provinceGovernorsOut,
+    provinceWarlordism: provinceWarlordismOut,
+    provinceGovernorSince: provinceGovernorSinceOut,
   };
 }
 
