@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { applyOpeningScheme } from './tactical';
+import { resolveBattle, type BattleSide } from './combat';
 import { pickAutoStratagem, mirrorDefenderEffect, DEFENSIVE_SCHEMES, STRATAGEM_DEFS } from '../data/stratagems2';
-import { mkUnit, mkBattle, mkTiles } from '../../test/factories';
+import { mkUnit, mkBattle, mkTiles, seededRng } from '../../test/factories';
 import type { Officer, City } from '../types';
 
 const off = (intelligence: number): Officer => ({
@@ -78,5 +79,39 @@ describe('連環計 sanity — chainable scheme pool is non-trivial at high INT'
     expect(first).not.toBeNull();
     expect(second).not.toBeNull();
     expect(STRATAGEM_DEFS[first!]).toBeDefined();
+  });
+});
+
+describe('resolveBattle 計謀交鋒 — engine integration', () => {
+  const side = (int: number): BattleSide => ({ troops: 20000, commander: off(int), companions: [off(int - 5)] });
+  const battleCtx = { city: { id: 'c', name: { zh: '城', en: 'C' }, terrain: 'mountain', port: false } as unknown as City, weather: { kind: 'wind', windPower: 3, wind: 'east' } as never, allowPursuit: true };
+
+  it('honours 軍師獻策 (a player-chosen, applicable scheme) over the auto-pick', () => {
+    const rng = seededRng(7);
+    let forcedHit = 0, n = 0;
+    for (let s = 0; s < 60; s++) {
+      const r = resolveBattle(side(85), side(60), 22, rng, { ...battleCtx, forcedStratagem: 'fire-attack' });
+      if (r.stratagem) { n++; if (r.stratagem.id === 'fire-attack') forcedHit++; }
+    }
+    expect(forcedHit).toBeGreaterThan(n * 0.8); // mostly the chosen scheme
+  });
+
+  it('a genius (智≥90) chains a second scheme (連環)', () => {
+    const rng = seededRng(11);
+    let chained = 0;
+    for (let s = 0; s < 60; s++) if (resolveBattle(side(96), side(60), 22, rng, battleCtx).stratagemChain) chained++;
+    expect(chained).toBeGreaterThan(0);
+  });
+
+  it('a far wiser defender sees through schemes (看破), and answers with its own', () => {
+    const rng = seededRng(3);
+    let seen = 0, dScheme = 0;
+    for (let s = 0; s < 250; s++) {
+      const r = resolveBattle(side(75), side(99), 22, rng, battleCtx);
+      if (r.stratagem?.seenThrough) seen++;
+      if (r.defenderStratagem) dScheme++;
+    }
+    expect(seen).toBeGreaterThan(0);   // 看破 actually fires
+    expect(dScheme).toBeGreaterThan(0); // 守城計 fires
   });
 });
