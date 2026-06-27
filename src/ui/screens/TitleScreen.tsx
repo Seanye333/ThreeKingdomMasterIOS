@@ -254,7 +254,27 @@ export function TitleScreen() {
   });
 
   return (
-    <div className={styles.root}>
+    <div className={styles.root} style={{ isolation: 'isolate' }}>
+      {/* 戰役主圖 — optional epic key-art behind the whole menu. Drop
+          public/title-hero.jpg to light it up; absent → the gradient backdrop
+          alone (unchanged). Sits at z-index -1, dimmed so the menu stays legible. */}
+      <img
+        src={`${import.meta.env.BASE_URL}title-hero.jpg`}
+        alt=""
+        aria-hidden="true"
+        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.5, zIndex: -1, pointerEvents: 'none' }}
+      />
+      {/* 壓暗罩 — darken the top band (behind the title) and foot so gold text /
+          menu stay legible over a bright hero; mid-frame keeps the art visible.
+          Sits above the hero img but below all content (both at z-index -1). */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute', inset: 0, zIndex: -1, pointerEvents: 'none',
+          background: 'linear-gradient(180deg, rgba(8,11,14,0.62) 0%, rgba(8,11,14,0.18) 26%, transparent 50%, rgba(8,11,14,0.30) 100%)',
+        }}
+      />
       {/* 氛圍 — drifting ink clouds + rising embers behind the menu. */}
       <div className={styles.ambient} aria-hidden="true">
         <div className={styles.cloud} style={{ top: '10%', left: '4%', width: 380, height: 210, ['--c-dur' as string]: '74s' }} />
@@ -495,6 +515,21 @@ export function TitleScreen() {
                 <div style={{ fontSize: '0.78rem', color: '#7a8893', marginBottom: '0.5rem' }}>
                   {startYear} AD · {scenario.forces.length} {t('勢力', 'forces')}
                 </div>
+                {/* 戰役封面 — optional cover above the territory map. Drop
+                    public/scenarios/<scenarioId>.jpg to light it up; absent → just
+                    the minimap (unchanged). key=id remounts so a prior miss resets. */}
+                <img
+                  key={scenario.id}
+                  src={`${import.meta.env.BASE_URL}scenarios/${scenario.id}.jpg`}
+                  alt=""
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                  style={{
+                    width: '100%', aspectRatio: '16 / 9', objectFit: 'cover', display: 'block',
+                    borderRadius: 'var(--tkm-radius, 8px)', marginBottom: '0.5rem',
+                    border: '1px solid var(--tkm-hairline, rgba(255,255,255,0.08))',
+                    boxShadow: 'var(--tkm-elev-1, 0 2px 10px rgba(0,0,0,0.35))',
+                  }}
+                />
                 <div style={{
                   borderRadius: 'var(--tkm-radius, 8px)', overflow: 'hidden',
                   border: '1px solid var(--tkm-hairline, rgba(255,255,255,0.08))',
