@@ -1063,10 +1063,22 @@ export function unitAt(b: TacticalBattle, c: HexCoord): TacticalUnit | undefined
   );
 }
 
+/** 天候入地 — rain churns open ground into mud and snow blankets it, dragging on
+ *  the march; firm/covered footing (wall/gate/bridge/chokepoint/forest) is spared.
+ *  Returns the extra move cost the current weather adds to a terrain. */
+export function weatherMoveSurcharge(weather: Weather, terrain: TerrainKind): number {
+  const soft = terrain === 'plain' || terrain === 'road' || terrain === 'desert' || terrain === 'marsh' || terrain === 'hill';
+  if (weather === 'rain' && soft) return 1;   // 泥濘
+  if (weather === 'snow' && soft) return 1;    // 積雪
+  return 0;
+}
+
 export function moveCost(b: TacticalBattle, to: HexCoord): number {
   const t = tileAt(b, to);
   if (!t) return Infinity;
-  return TERRAIN_MOVE_COST[t.terrain];
+  const base = TERRAIN_MOVE_COST[t.terrain];
+  if (base >= 99) return base; // impassable stays impassable
+  return base + weatherMoveSurcharge(b.weather, t.terrain);
 }
 
 /** Enemies (living, visible) currently adjacent to a unit — its zone-of-control
@@ -1483,14 +1495,70 @@ export function retreatUnit(b: TacticalBattle, unitId: EntityId): TacticalBattle
   };
 }
 
+/** 射程 — how far a unit can strike. Melee arms reach one hex; bows/siege/navy
+ *  loose at range (弓3·弩4·攻城4·水軍3). A crossbow's longer reach reads from the
+ *  officer's weapon class when supplied. */
+export function attackRange(unit: TacticalUnit, officer?: Officer): number {
+  if (unit.unitType === 'siege') return 4;
+  if (unit.unitType === 'navy') return 3;
+  if (unit.unitType === 'archers') {
+    return officer && deriveWeaponType(officer) === 'crossbow' ? 4 : 3;
+  }
+  return 1;
+}
+
+/** offset (odd-q) ← cube. */
+function cubeToOffset(x: number, z: number): HexCoord {
+  return { col: x, row: z + (x - (x & 1)) / 2 };
+}
+
+/** 視線 — the hexes a straight shot passes through, endpoints included. */
+function hexLine(a: HexCoord, b: HexCoord): HexCoord[] {
+  const n = hexDistance(a, b);
+  if (n === 0) return [a];
+  const [ax, , az] = offsetToCube(a);
+  const [bx, , bz] = offsetToCube(b);
+  const out: HexCoord[] = [];
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    let rx = Math.round(ax + (bx - ax) * t);
+    const ry = Math.round(-ax - az + (-bx - bz - (-ax - az)) * t);
+    let rz = Math.round(az + (bz - az) * t);
+    const dx = Math.abs(rx - (ax + (bx - ax) * t));
+    const dz = Math.abs(rz - (az + (bz - az) * t));
+    const dy = Math.abs(ry - (-ax - az + (-bx - bz - (-ax - az)) * t));
+    if (dx > dy && dx > dz) rx = -ry - rz;
+    else if (dz > dy) rz = -rx - ry;
+    out.push(cubeToOffset(rx, rz));
+  }
+  return out;
+}
+
+/** 射界 — is there a clear line of sight for a direct shot? Walls/gates/mountains
+ *  in the way block it (an arcing 矢雨 ignores this — it lofts over). Units on the
+ *  line don't block a direct shot but lend the target cover (handled in damage). */
+export function hasLineOfSight(b: TacticalBattle, from: HexCoord, to: HexCoord): boolean {
+  const line = hexLine(from, to);
+  for (let i = 1; i < line.length - 1; i++) {
+    const t = tileAt(b, line[i]);
+    if (t && (t.terrain === 'wall' || t.terrain === 'gate' || t.terrain === 'mountain')) return false;
+  }
+  return true;
+}
+
 export function canAttack(
-  _b: TacticalBattle,
+  b: TacticalBattle,
   unit: TacticalUnit,
   target: TacticalUnit,
 ): boolean {
   if (unit.ap <= 0 || unit.side === target.side) return false;
   if (isRouting(unit)) return false; // 潰走之軍只顧奔逃，無還手之力
-  return hexDistance(unit.coord, target.coord) === 1;
+  const dist = hexDistance(unit.coord, target.coord);
+  if (dist < 1 || dist > attackRange(unit)) return false;
+  if (dist === 1) return true; // melee — no line-of-sight needed
+  // 遠程:矢盡不能射,且須有射界(牆/高山阻斷)。
+  if (unit.maxAmmo !== undefined && (unit.ammo ?? 0) <= 0) return false;
+  return hasLineOfSight(b, unit.coord, target.coord);
 }
 
 /**
@@ -1509,6 +1577,18 @@ export function attackUnits(
   const target = b.units.find((u) => u.id === targetId);
   if (!attacker || !target) return b;
   if (!canAttack(b, attacker, target)) return b;
+  // 遠程射擊 — a shot loosed from beyond melee (弓弩/攻城/水軍): it spends an arrow,
+  // draws no melee riposte from a foe that can't reach back, and is blunted by
+  // cover (forest, or a body on the line).
+  const attackDist = hexDistance(attacker.coord, target.coord);
+  const isRanged = attackDist > 1;
+  let coverMul = 1.0;
+  if (isRanged) {
+    if (tileAt(b, target.coord)?.terrain === 'forest') coverMul *= 0.8;          // 林木遮蔽
+    const line = hexLine(attacker.coord, target.coord);
+    const screened = line.slice(1, -1).some((c) => unitAt(b, c));               // 友/敵軍擋箭
+    if (screened) coverMul *= 0.85;
+  }
   // Ambush bonus + reveal: hidden attacker striking from concealment
   // gets +30% damage this hit, then is revealed.
   const ambushBonus = attacker.hidden ? (b.timeOfDay === 'night' ? 1.5 : 1.3) : 1.0;
@@ -1660,6 +1740,11 @@ export function attackUnits(
     flankMul = fromRear ? 1.25 : 1.0;
   }
 
+  // 戰局氣勢 — a side riding the tide of battle presses its blows home (順勢),
+  // a side losing it falters (頹勢). Momentum is +ve for the attacker side.
+  const favor = attacker.side === 'attacker' ? (b.momentum ?? 0) : -(b.momentum ?? 0);
+  const momentumMul = 1 + Math.max(-0.06, Math.min(0.08, favor / 1250));
+
   // 兵裝相剋 — the officers' weapon classes (§5.9) refine the matchup: 戟制騎、
   // 弩破甲、騎踏弓弩、劍走側背、刀破輕、襲書生/欺徒手. No longer pure display.
   const aWeapon = ao ? deriveWeaponType(ao) : 'none';
@@ -1727,7 +1812,7 @@ export function attackUnits(
     base * counter * aTerrainMod * weatherMul * defenseMul * offenseMul *
     dShield * ambushBonus * fatigueMul * freshMul * aWoundedMul * dWoundedMul * shipMul * pincerMul *
     nightMul * heightMul * flankMul * crossingMul * streetMul * comboMul * formCounterMul * eliteMul * aGradeMul * dGradeResistMul * aGrowthMul * aSetMul *
-    aMoraleMul * pursuitMul * chargeMul * weaponMul * encircleMul * disorderMul *
+    aMoraleMul * pursuitMul * chargeMul * weaponMul * encircleMul * disorderMul * momentumMul * coverMul *
     aTraitMul * dTraitDefMul,
   );
   if (targetDefending) damage = Math.floor(damage / 2);
@@ -1752,9 +1837,12 @@ export function attackUnits(
   // braced spearwall that just turned back a charge ripostes savagely (拒馬); a
   // cornered beast lashes out (困獸猶鬥); and a 詐敗 unit that only *looked*
   // broken springs a full-strength riposte on its pursuer (誘敵反噬).
+  // A target struck from beyond its own reach can't strike back (弓弩臨敵,白刃
+  //莫及) — only a foe whose range covers the distance ripostes.
+  const targetCanReach = attackRange(target, To) >= attackDist;
   let counterTroops = attacker.troops;
   let counterDamage = 0;
-  if (newTroops > 0 && !targetRouting) {
+  if (newTroops > 0 && !targetRouting && targetCanReach) {
     const dWar = To ? effectiveStats(To).war : 50;
     const aLead = ao ? effectiveStats(ao).leadership : 50;
     const counterPortion = feigning ? 1.0 : 0.4;
@@ -1767,7 +1855,7 @@ export function attackUnits(
   }
 
   // Damage popups. Tag the blow: ★會心 / 衝鋒 / 追擊 / 背刺.
-  const tag = feigning ? '誘 ' : braced ? '折 ' : chargeMul > 1.05 ? '衝 ' : targetRouting ? '追 ' : encircleMul > 1 ? '殲 ' : weapon.tag ? `${weapon.tag} ` : fromRear ? '背 ' : '';
+  const tag = feigning ? '誘 ' : braced ? '折 ' : chargeMul > 1.05 ? '衝 ' : targetRouting ? '追 ' : encircleMul > 1 ? '殲 ' : isRanged ? (coverMul < 1 ? '掩 ' : '射 ') : weapon.tag ? `${weapon.tag} ` : fromRear ? '背 ' : '';
   const popups: DamagePopup[] = [
     {
       id: `dmg-${Date.now()}-1`,
@@ -1855,12 +1943,27 @@ export function attackUnits(
     : null;
   // 主將陣亡 — slaying the enemy commander crashes their WHOLE army's morale.
   const commanderFell = newTroops === 0 && target.isCommander;
+  // 指揮繼承 — the steadiest surviving officer takes up the fallen banner. A
+  // clear chain of command softens the shock (−15 not −30); a leaderless host
+  // reels in full. 副將接管,代領全軍.
+  let successorId: EntityId | undefined;
   if (commanderFell) {
-    log.push({
-      turn: b.turn,
-      text: `${To?.name.zh ?? '主將'}陣亡 — 全軍動搖!`,
-      kind: 'event',
-    });
+    const heirs = b.units.filter((u) => u.side === target.side && u.id !== targetId && u.troops > 0);
+    if (heirs.length > 0) {
+      successorId = heirs.reduce((best, u) => {
+        const lb = officers[best.officerId] ? effectiveStats(officers[best.officerId]).leadership : 0;
+        const lu = officers[u.officerId] ? effectiveStats(officers[u.officerId]).leadership : 0;
+        return lu > lb ? u : best;
+      }).id;
+    }
+  }
+  const crashDrop = successorId ? 15 : 30;
+  if (commanderFell) {
+    log.push({ turn: b.turn, text: `${To?.name.zh ?? '主將'}陣亡 — 全軍動搖!`, kind: 'event' });
+    if (successorId) {
+      const heir = officers[b.units.find((u) => u.id === successorId)!.officerId];
+      log.push({ turn: b.turn, text: `${heir?.name.zh ?? '副將'}臨危接掌帥旗,代領全軍 — 陣腳暫穩。`, kind: 'event' });
+    }
   }
   const units = b.units.map((u) => {
     if (u.id === targetId) {
@@ -1877,15 +1980,17 @@ export function attackUnits(
     if (u.id === attackerId) {
       // 久戰疲乏 + 朝向 — pressing the attack tires the unit and turns it to face
       // the foe. The charge is spent on impact (衝鋒蓄力 consumed). Springing a
-      // 詐敗 trap throws the pursuer's own ranks into disorder.
+      // 詐敗 trap throws the pursuer's own ranks into disorder. A ranged shot
+      // spends an arrow and tires less than a hand-to-hand bout.
       const effects = feigning && !u.effects.some((e) => e.kind === 'disorder')
         ? [...u.effects, { kind: 'disorder' as const, turnsLeft: 1 }]
         : u.effects;
       return {
         ...u, ap: u.ap - 1, troops: counterTroops,
-        fatigue: Math.min(100, (u.fatigue ?? 0) + FATIGUE_PER_MELEE),
+        fatigue: Math.min(100, (u.fatigue ?? 0) + (isRanged ? FATIGUE_PER_VOLLEY : FATIGUE_PER_MELEE)),
         facing: hexDirection(u.coord, target.coord),
         charge: undefined,
+        ammo: isRanged && u.maxAmmo !== undefined ? Math.max(0, (u.ammo ?? 0) - 1) : u.ammo,
         effects,
       };
     }
@@ -1901,10 +2006,12 @@ export function attackUnits(
       });
       return { ...u, troops: tr };
     }
-    // Morale shock: whole-army crash if the commander fell, else a local
-    // tremor through the dead unit's immediate neighbours.
+    // Morale shock: whole-army crash if the commander fell (softened when a heir
+    // takes command), else a local tremor through the dead unit's neighbours.
+    // The heir picks up the banner (isCommander) as it steadies the line.
     if (commanderFell && u.side === target.side && u.id !== targetId && u.troops > 0) {
-      return { ...u, morale: Math.max(0, u.morale - 30) };
+      const next = { ...u, morale: Math.max(0, u.morale - crashDrop) };
+      return u.id === successorId ? { ...next, isCommander: true } : next;
     }
     if (routShock && routShock.has(u.id)) {
       return { ...u, morale: Math.max(0, u.morale - 14) };
@@ -1912,9 +2019,18 @@ export function attackUnits(
     return u;
   });
 
+  // 戰局氣勢 — felling a unit (especially a commander) swings the tide toward the
+  // side that struck the blow (+ve favours the attacker side).
+  let momentum = b.momentum ?? 0;
+  if (newTroops === 0) {
+    const swing = (target.isCommander ? 22 : 9) * (attacker.side === 'attacker' ? 1 : -1);
+    momentum = Math.max(-100, Math.min(100, momentum + swing));
+  }
+
   return {
     ...b,
     units,
+    momentum,
     damagePopups: [...(b.damagePopups ?? []), ...popups],
     log,
   };
@@ -2405,19 +2521,28 @@ export function applyStratagem(
         return { battle: b, ok: false, reason: 'invalid target' };
       // 戰法情境 — rain soaks the bowstrings, high ground extends the volley.
       const arrSit = battleStratagemSituation(b, unit.coord, targetCoord, stratagem);
-      const damage = Math.floor(target.troops * 0.12 * arrSit.mult * (off ? stratagemDamageMul(off, stratagem) : 1));
-      const popup: DamagePopup = {
-        id: `dmg-${Date.now()}-arrows`,
-        coord: target.coord,
-        text: `-${damage.toLocaleString()}`,
-        color: '#88b7e8',
-        spawnedAt: Date.now(),
-      };
+      const stratMul = arrSit.mult * (off ? stratagemDamageMul(off, stratagem) : 1);
+      // 拋射覆蓋 — a volley falls over an area: the aimed hex takes the brunt,
+      // every other enemy pressed up against it catches the spillover (半傷).
+      // Arcing shots loft over walls/units, so no line-of-sight or cover applies.
+      const splashIds = new Set(
+        b.units.filter((u) => u.side === target.side && u.troops > 0 && u.id !== target.id
+          && hexDistance(u.coord, target.coord) === 1).map((u) => u.id),
+      );
+      const popups: DamagePopup[] = [];
       const updated: TacticalBattle = {
         ...b,
         units: b.units.map((u) => {
-          if (u.id === target.id)
-            return { ...u, troops: Math.max(0, u.troops - damage) };
+          if (u.id === target.id) {
+            const dmg = Math.floor(u.troops * 0.12 * stratMul);
+            popups.push({ id: `dmg-${Date.now()}-arr`, coord: u.coord, text: `-${dmg.toLocaleString()}`, color: '#88b7e8', spawnedAt: Date.now() });
+            return { ...u, troops: Math.max(0, u.troops - dmg), morale: Math.max(0, u.morale - 3) };
+          }
+          if (splashIds.has(u.id)) {
+            const dmg = Math.floor(u.troops * 0.06 * stratMul);
+            popups.push({ id: `dmg-${Date.now()}-arr-${u.id}`, coord: u.coord, text: `-${dmg.toLocaleString()}`, color: '#9cc0e8', spawnedAt: Date.now() + 1 });
+            return { ...u, troops: Math.max(0, u.troops - dmg) };
+          }
           if (u.id === unit.id) return {
             ...u, ap: u.ap - 1,
             ammo: u.maxAmmo !== undefined ? Math.max(0, (u.ammo ?? 0) - 1) : u.ammo,
@@ -2425,9 +2550,12 @@ export function applyStratagem(
           };
           return u;
         }),
-        damagePopups: [...(b.damagePopups ?? []), popup],
+        damagePopups: [...(b.damagePopups ?? []), ...popups],
       };
-      return finalize(updated, unitId, stratagem, 1);
+      const updated2 = splashIds.size > 0
+        ? { ...updated, log: [...(updated.log ?? []), { turn: b.turn, text: '矢雨覆蓋,波及一片!', kind: 'event' as const }] }
+        : updated;
+      return finalize(updated2, unitId, stratagem, 1);
     }
     case 'chain-ships': {
       if ((off?.stats.intelligence ?? 0) < 80)
@@ -2911,6 +3039,19 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
       if (ratio > 2.5 && u.morale < 100) return { ...u, morale: Math.min(100, u.morale + 3) };
       return u;
     });
+
+    // 順勢/頹勢 — the side riding the battle's momentum takes heart; the side
+    // losing it bleeds morale. Scales with how lopsided the tide has become.
+    const mom = b.momentum ?? 0;
+    if (Math.abs(mom) >= 20) {
+      const swing = Math.min(4, Math.floor(Math.abs(mom) / 20) + 1);
+      const favored: 'attacker' | 'defender' = mom > 0 ? 'attacker' : 'defender';
+      tickedUnits = tickedUnits.map((u) => {
+        if (u.troops <= 0 || isRouting(u)) return u;
+        if (u.side === favored) return u.morale < 100 ? { ...u, morale: Math.min(100, u.morale + swing) } : u;
+        return u.morale > 0 ? { ...u, morale: Math.max(0, u.morale - swing) } : u;
+      });
+    }
   }
 
   // ── 燒糧 — a supply convoy reduced to ruin starves the host that leaned on
@@ -3449,6 +3590,8 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
     groundFires: nextGroundFires.length > 0 ? nextGroundFires : undefined,
     turn: newTurn,
     activeSide: b.activeSide === 'attacker' ? 'defender' : 'attacker',
+    // 氣勢回落 — the tide eases back toward even each turn unless fed afresh.
+    momentum: Math.trunc((b.momentum ?? 0) * 0.85),
     attackerLosses,
     defenderLosses,
     startTroops,

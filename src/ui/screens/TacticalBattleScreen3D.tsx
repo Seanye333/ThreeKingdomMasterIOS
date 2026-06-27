@@ -4391,6 +4391,24 @@ export function TacticalBattleScreen3D() {
         <span style={{ fontSize: '0.85rem', color: '#d4a84a' }}>
           {t('第', 'Turn')} {battle.turn} {t('回', '')} · {myTurn ? <span style={{ color: '#7ed68a' }}>{t('我方回合', 'YOUR TURN')}</span> : <span style={{ color: '#ff7050' }}>{t('敵方回合', 'ENEMY TURN')}</span>}
         </span>
+        {(() => {
+          // 戰局氣勢 — momentum is +ve for the attacker; show it from the player's view.
+          const favor = Math.max(-100, Math.min(100, (playerSide === 'defender' ? -1 : 1) * (battle.momentum ?? 0)));
+          const pct = (favor + 100) / 2; // 0..100, 50 = even
+          const label = favor >= 25 ? t('順勢', 'Surging') : favor <= -25 ? t('頹勢', 'Faltering') : t('均勢', 'Even');
+          const col = favor >= 25 ? '#7ed68a' : favor <= -25 ? '#ff7050' : '#caa15a';
+          return (
+            <span title={t('戰局氣勢 — 殺敵/斬將取勢,順勢全軍勇,頹勢軍心搖', 'Battle momentum — kills & felling commanders swing the tide; the leader presses, the loser bleeds')}
+              style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.72rem', color: col }}>
+              {t('氣勢', 'Tide')}
+              <span style={{ position: 'relative', width: 72, height: 7, background: '#2a1f12', border: '1px solid #5a4530', borderRadius: 3 }}>
+                <span style={{ position: 'absolute', left: '50%', top: -1, bottom: -1, width: 1, background: '#7a6038' }} />
+                <span style={{ position: 'absolute', left: `${Math.min(pct, 50)}%`, width: `${Math.abs(pct - 50)}%`, top: 0, bottom: 0, background: col, opacity: 0.85, borderRadius: 2 }} />
+              </span>
+              {label}
+            </span>
+          );
+        })()}
         {battle.turn >= 10 && (
           <span style={{
             fontSize: '0.72rem', padding: '2px 7px',
