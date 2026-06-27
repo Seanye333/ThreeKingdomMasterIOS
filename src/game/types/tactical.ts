@@ -172,7 +172,10 @@ export interface TacticalUnit {
   /** Action points remaining this turn. Refilled at start of turn. */
   ap: number;
   maxAp: number;
-  /** "morale" — drops on damage; if 0, unit routs and is removed. */
+  /** 士氣 — drops on damage/rout-shock, recovered by rally/aura/收攏. Feeds
+   *  fighting power (氣勢如虹 ↔ 動搖); at 0 the unit is **潰走**: it can't attack
+   *  and auto-flees toward its own edge, run down by pursuers (追擊掩殺) until
+   *  killed or rallied back above 0. Only troops==0 removes it from the field. */
   morale: number;
   /** True if this is the army commander — eliminating them = side defeat. */
   isCommander: boolean;
@@ -211,6 +214,12 @@ export interface TacticalUnit {
   /** 糧車 — a supply/grain convoy, not a fighting unit: slow and lightly manned.
    *  Burn it down and the side that fed off it starves (see endTurn's 燒糧). */
   isSupply?: boolean;
+  /** 衝鋒蓄力 — transient run accumulator for this activation. `from` is where
+   *  the run began (this turn's first step); `dist` is the NET hex distance run
+   *  from there (so doubling back doesn't count). A melee blow after a run
+   *  (`dist ≥ 2`) onto a foe that was ≥2 away when the run began lands with
+   *  momentum (cavalry hardest); consumed on attack and reset each turn. */
+  charge?: { from: HexCoord; dist: number };
 }
 
 export type TacticalStatus =

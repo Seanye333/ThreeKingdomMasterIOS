@@ -33,6 +33,7 @@ import { itemSetPowerMul } from '../data/itemSets';
 import { SIGNATURE_OVERRIDES } from './personalTactics';
 import { predictAttackDamage } from './damagePredict';
 import { stratagemSituation, type Situation } from './tacticSituation';
+import { resolveDuel, canDuel } from './duel';
 
 /**
  * Unit-type counter matrix. counterBonus[attacker][defender] = multiplier on
@@ -312,6 +313,24 @@ const FATIGUE_PER_VOLLEY = 7;
 const FATIGUE_REST = 7;
 const FATIGUE_REST_DEFEND = 14;
 const FATIGUE_SPENT = 70; // at/above this, a unit fields one fewer AP
+
+/** 軍心動搖 — morale thresholds. At/above HIGH a unit's blows carry élan; at/
+ *  below SHAKEN it wavers; at 0 it is 潰走 (routing). */
+const MORALE_HIGH = 80;
+const MORALE_SHAKEN = 40;
+
+/** 潰走 — a unit still manned but whose heart has broken (morale 0). It can't
+ *  attack, auto-flees toward its own edge, and is run down by pursuers until it
+ *  is killed or rallied back above 0. Only troops==0 actually removes it. */
+export function isRouting(u: TacticalUnit): boolean {
+  return u.troops > 0 && u.morale <= 0;
+}
+
+/** The board edge column a routing unit of this side flees toward (where its
+ *  army came from): attackers stream back west (col 0), defenders east. */
+function homeEdgeCol(b: TacticalBattle, side: 'attacker' | 'defender'): number {
+  return side === 'attacker' ? 0 : b.width - 1;
+}
 
 /** 時辰推移 — the day wears on: every this-many turn-phases the light steps
  *  dawn → day → dusk → night (a long battle drags into darkness). */
@@ -1064,10 +1083,16 @@ export function moveUnit(
   // Reveal any hidden enemy that just became adjacent to the moved unit
   // (and any hidden unit adjacent to a watchtower the moved unit reveals).
   const adj = hexNeighbours(to);
+  // 衝鋒蓄力 — accumulate the run as NET displacement from where it began this
+  // turn (doubling back doesn't build momentum; odd-q "straight" lines that
+  // zigzag in cube space still count, since hexDistance is the true metric).
+  const stepDir = hexDirection(unit.coord, to);
+  const runFrom = unit.charge?.from ?? unit.coord;
+  const nextCharge = { from: runFrom, dist: hexDistance(runFrom, to) };
   let next: TacticalBattle = {
     ...b,
     units: b.units.map((u) => {
-      if (u.id === unitId) return { ...u, coord: to, ap: u.ap - cost, facing: hexDirection(u.coord, to) };
+      if (u.id === unitId) return { ...u, coord: to, ap: u.ap - cost, facing: stepDir, charge: nextCharge };
       // Hidden enemy of the moving unit, now adjacent? Reveal.
       if (u.hidden && u.side !== unit.side &&
           adj.some((n) => n.col === u.coord.col && n.row === u.coord.row)) {
@@ -1234,6 +1259,32 @@ function resumeQueuedPaths(b: TacticalBattle): TacticalBattle {
   return cur;
 }
 
+/**
+ * 潰走 — at the start of a side's turn, its routing units (morale 0, still
+ * manned) bolt for their own edge under no one's command. They can't fight; they
+ * only run, and pursuers cut them down (追擊掩殺, see attackUnits). A router
+ * rallied back above 0 morale (收攏/旗令/aura) before its turn rejoins the line
+ * and is skipped here.
+ */
+function processRout(b: TacticalBattle): TacticalBattle {
+  let cur = b;
+  const routers = cur.units.filter((u) => u.side === cur.activeSide && isRouting(u));
+  for (const r of routers) {
+    const edgeCol = homeEdgeCol(cur, r.side);
+    let safety = 8;
+    while (safety-- > 0) {
+      const u = cur.units.find((x) => x.id === r.id);
+      if (!u || !isRouting(u) || u.ap <= 0 || u.coord.col === edgeCol) break;
+      const step = bestStepToward(cur, u, { col: edgeCol, row: u.coord.row });
+      if (!step) break;
+      const moved = moveUnit(cur, u.id, step);
+      if (moved === cur) break; // blocked
+      cur = moved;
+    }
+  }
+  return cur;
+}
+
 /** Max HP a fortification repairs back toward, by kind. */
 const FORT_MAX_HP: Record<string, number> = { wall: 1000, gate: 700 };
 
@@ -1393,6 +1444,7 @@ export function canAttack(
   target: TacticalUnit,
 ): boolean {
   if (unit.ap <= 0 || unit.side === target.side) return false;
+  if (isRouting(unit)) return false; // 潰走之軍只顧奔逃，無還手之力
   return hexDistance(unit.coord, target.coord) === 1;
 }
 
@@ -1493,6 +1545,41 @@ export function attackUnits(
   // one flags (down to ×0.75 at full 久戰疲乏).
   const freshMul = 1.05 - Math.min(0.30, (attacker.fatigue ?? 0) / 333);
 
+  // 士氣轉戰力 — a unit's heart shows in its blows: 氣勢如虹 (≥80) presses the
+  // attack home; a 動搖 (<40) one wavers, a near-broken one barely fights.
+  const aMoraleMul =
+    attacker.morale >= MORALE_HIGH ? 1.06
+    : attacker.morale <= 15 ? 0.78
+    : attacker.morale < MORALE_SHAKEN ? 0.88
+    : 1.0;
+  // 追擊掩殺 — a broken (routing) foe is cut down from behind, no riposte; a
+  // merely shaken one is easier to press. Cavalry run routers down hardest
+  // (銜尾追殺); ships don't chase like horse.
+  const targetRouting = isRouting(target);
+  const pursuitMul = targetRouting
+    ? (attacker.unitType === 'cavalry' ? 1.8 : attacker.unitType === 'navy' ? 1.3 : 1.5)
+    : target.morale < MORALE_SHAKEN ? 1.12 : 1.0;
+
+  // 衝鋒蓄力 — a unit that ran a distance into a closing blow carries momentum
+  // (cavalry hardest). The foe must have been ≥2 hexes off when the run began
+  // (a real charge, not a shuffle in contact). A spear unit braced (據守) and
+  // facing the charger receives it on the points (拒馬立防): the charge breaks
+  // and the spears gut the chargers on the counter.
+  let chargeMul = 1.0;
+  let braced = false;
+  const ch = attacker.charge;
+  if (ch && ch.dist >= 2 && hexDistance(ch.from, target.coord) >= 2
+      && attacker.unitType !== 'siege' && attacker.unitType !== 'navy') {
+    const per = attacker.unitType === 'cavalry' ? 0.12 : 0.05;
+    const cap = attacker.unitType === 'cavalry' ? 0.45 : 0.18;
+    chargeMul = 1 + Math.min(cap, per * (ch.dist - 1));
+    const tBraced = target.unitType === 'spearmen'
+      && target.effects.some((e) => e.kind === 'defending')
+      && typeof target.facing === 'number'
+      && dirGap(hexDirection(target.coord, attacker.coord), target.facing) <= 1;
+    if (tBraced) { braced = true; chargeMul = 0.7; }
+  }
+
   // Naval: a bigger hull (樓船/大翼) hits harder than a 走舸 skiff.
   const shipMul = shipPowerMul(attacker.shipClass);
 
@@ -1558,6 +1645,7 @@ export function attackUnits(
     base * counter * aTerrainMod * weatherMul * defenseMul * offenseMul *
     dShield * ambushBonus * fatigueMul * freshMul * aWoundedMul * dWoundedMul * shipMul * pincerMul *
     nightMul * heightMul * flankMul * crossingMul * streetMul * comboMul * formCounterMul * eliteMul * aGradeMul * dGradeResistMul * aGrowthMul * aSetMul *
+    aMoraleMul * pursuitMul * chargeMul *
     aTraitMul * dTraitDefMul,
   );
   if (targetDefending) damage = Math.floor(damage / 2);
@@ -1575,27 +1663,30 @@ export function attackUnits(
   const newTroops = Math.max(0, target.troops - damage);
   const moraleLoss = Math.floor((damage / Math.max(1, target.maxTroops)) * 50);
 
-  // Counter-attack: target deals back ~40% if still alive.
+  // Counter-attack: target deals back ~40% if still alive. A foe struck in the
+  // rear barely retaliates; a routing foe doesn't at all (it only runs); a
+  // braced spearwall that just turned back a charge ripostes savagely (拒馬).
   let counterTroops = attacker.troops;
   let counterDamage = 0;
-  if (newTroops > 0) {
+  if (newTroops > 0 && !targetRouting) {
     const dWar = To ? effectiveStats(To).war : 50;
     const aLead = ao ? effectiveStats(ao).leadership : 50;
     const counterBase = Math.floor(
       (target.troops * (dWar + 30) * (0.85 + rng() * 0.3) * 0.4) / (aLead + 50)
-        * (fromRear ? 0.4 : 1),  // a foe struck in the rear can barely retaliate
+        * (fromRear ? 0.4 : 1) * (braced ? 1.6 : 1),
     );
     counterTroops = Math.max(0, attacker.troops - counterBase);
     counterDamage = counterBase;
   }
 
-  // Damage popups.
+  // Damage popups. Tag the blow: ★會心 / 衝鋒 / 追擊 / 背刺.
+  const tag = braced ? '折 ' : chargeMul > 1.05 ? '衝 ' : targetRouting ? '追 ' : fromRear ? '背 ' : '';
   const popups: DamagePopup[] = [
     {
       id: `dmg-${Date.now()}-1`,
       coord: target.coord,
-      text: `${martialSkill && isCrit ? '★' : ''}${fromRear ? '背 ' : ''}-${damage.toLocaleString()}${isCrit ? '!' : ''}`,
-      color: isCrit ? '#ffce4a' : fromRear ? '#ff9a3a' : '#ff6a4a',
+      text: `${martialSkill && isCrit ? '★' : ''}${tag}-${damage.toLocaleString()}${isCrit ? '!' : ''}`,
+      color: isCrit ? '#ffce4a' : chargeMul > 1.05 ? '#ffb24a' : targetRouting ? '#c45a8a' : fromRear ? '#ff9a3a' : '#ff6a4a',
       spawnedAt: Date.now(),
     },
   ];
@@ -1613,6 +1704,14 @@ export function attackUnits(
   const log = b.log ? [...b.log] : [];
   if (comboAlly && ao) {
     log.push({ turn: b.turn, text: `${ao.name.zh} × ${officers[comboAlly.officerId]?.name.zh ?? '友軍'} 合擊!`, kind: 'event' });
+  }
+  // 衝鋒陷陣 / 拒馬立防 / 追擊掩殺 — battle-flavour beats for the new edges.
+  if (braced) {
+    log.push({ turn: b.turn, text: `${To?.name.zh ?? '守軍'}長槍立防 — ${ao?.name.zh ?? '騎軍'}衝勢盡折,人馬交摧!`, kind: 'event' });
+  } else if (chargeMul > 1.05) {
+    log.push({ turn: b.turn, text: `${ao?.name.zh ?? '騎軍'}蓄勢突陣,衝鋒陷陣!`, kind: 'event' });
+  } else if (targetRouting && newTroops === 0) {
+    log.push({ turn: b.turn, text: `${To?.name.zh ?? '潰軍'}奔逃之際被銜尾掩殺 — 全軍覆沒!`, kind: 'event' });
   }
   // 腹背受敵 — the target is truly surrounded (pressed on three sides, or struck
   // in the rear while also flanked). A presentation beat; the pincer/rear damage
@@ -1641,6 +1740,12 @@ export function attackUnits(
     if (lowVoice) {
       log.push({ turn: b.turn, text: lowVoice, speaker: target.officerId, kind: 'voice' });
     }
+  }
+
+  // 軍心崩潰 — this blow broke the unit's heart (morale to 0 while still manned):
+  // it routs (潰走) instead of holding the line.
+  if (newTroops > 0 && target.morale > 0 && target.morale - moraleLoss <= 0) {
+    log.push({ turn: b.turn, text: `${To?.name.zh ?? '敵軍'}軍心崩潰 — 棄陣潰走!`, kind: 'event' });
   }
 
   // Chained-unit damage spread.
@@ -1673,11 +1778,13 @@ export function attackUnits(
       };
     }
     if (u.id === attackerId) {
-      // 久戰疲乏 + 朝向 — pressing the attack tires the unit and turns it to face the foe.
+      // 久戰疲乏 + 朝向 — pressing the attack tires the unit and turns it to face
+      // the foe. The charge is spent on impact (衝鋒蓄力 consumed).
       return {
         ...u, ap: u.ap - 1, troops: counterTroops,
         fatigue: Math.min(100, (u.fatigue ?? 0) + FATIGUE_PER_MELEE),
         facing: hexDirection(u.coord, target.coord),
+        charge: undefined,
       };
     }
     // Chain damage to linked units.
@@ -1709,6 +1816,110 @@ export function attackUnits(
     damagePopups: [...(b.damagePopups ?? []), ...popups],
     log,
   };
+}
+
+/** 陣前挑將 — whether the challenger may call out the adjacent enemy officer to
+ *  a mid-battle single combat (both able-bodied, neither routing, adjacent). */
+export function canChallengeDuel(
+  challenger: TacticalUnit,
+  target: TacticalUnit,
+  officers: Record<EntityId, Officer>,
+): boolean {
+  if (challenger.ap <= 0 || challenger.side === target.side) return false;
+  if (isRouting(challenger) || isRouting(target)) return false;
+  if (challenger.isSupply || target.isSupply) return false;
+  if (hexDistance(challenger.coord, target.coord) !== 1) return false;
+  const co = officers[challenger.officerId];
+  const to = officers[target.officerId];
+  if (!co || !to) return false;
+  return canDuel(co).ok && canDuel(to).ok;
+}
+
+/**
+ * 陣前單挑 — two adjacent enemy officers cross blades mid-battle, resolved by the
+ * same odds as the 演武場 (resolveDuel). 車輪戰: each bout already fought this
+ * battle blunts a fighter's effective 武力, so relays of fresh challengers can
+ * wear down a peerless champion. The loser's unit reels — a clean knockout
+ * shatters its heart into a rout (潰走), a points loss merely shakes it — while
+ * the victor's banner soars (氣勢大振). A challenge spends the challenger's turn.
+ */
+export function challengeDuel(
+  b: TacticalBattle,
+  challengerId: EntityId,
+  targetId: EntityId,
+  officers: Record<EntityId, Officer>,
+  rng: () => number,
+): TacticalBattle {
+  const challenger = b.units.find((u) => u.id === challengerId);
+  const target = b.units.find((u) => u.id === targetId);
+  if (!challenger || !target) return b;
+  if (!canChallengeDuel(challenger, target, officers)) return b;
+  const co = officers[challenger.officerId];
+  const to = officers[target.officerId];
+
+  // 車輪戰 — prior bouts blunt a fighter (−5 武力 each, floored at −20).
+  const winded = (o: Officer, u: TacticalUnit): Officer => {
+    const pen = Math.min(20, (u.duelFatigue ?? 0) * 5);
+    return pen > 0 ? { ...o, stats: { ...o.stats, war: Math.max(1, o.stats.war - pen) } } : o;
+  };
+  const result = resolveDuel({ attacker: winded(co, challenger), defender: winded(to, target), rng });
+
+  const log = b.log ? [...b.log] : [];
+  const popups: DamagePopup[] = [];
+  log.push({ turn: b.turn, text: `⚔ ${co.name.zh} 出陣搦戰 ${to.name.zh} — 陣前單挑!`, kind: 'event' });
+
+  // Both fighters spend a bout (車輪戰); the challenger spends the whole turn.
+  let units = b.units.map((u) => {
+    if (u.id === challengerId) return { ...u, ap: 0, duelFatigue: (u.duelFatigue ?? 0) + 1 };
+    if (u.id === targetId) return { ...u, duelFatigue: (u.duelFatigue ?? 0) + 1 };
+    return u;
+  });
+
+  if (result.winner === 'draw') {
+    log.push({ turn: b.turn, text: '兩將鬥得難解難分,各自鳴金 — 勝負未分。', kind: 'event' });
+    return { ...b, units, log };
+  }
+
+  const winnerUnit = result.winner === 'attacker' ? challenger : target;
+  const loserUnit = result.winner === 'attacker' ? target : challenger;
+  const winnerOff = officers[winnerUnit.officerId];
+  const loserOff = officers[loserUnit.officerId];
+  const knockout = result.knockout;
+  const loserTroopLoss = Math.floor(loserUnit.troops * (knockout ? 0.30 : 0.10));
+
+  units = units.map((u) => {
+    if (u.id === loserUnit.id) {
+      const morale = knockout ? 0 : Math.max(0, u.morale - 35); // 挑落 → 潰走
+      return { ...u, troops: Math.max(0, u.troops - loserTroopLoss), morale };
+    }
+    if (u.id === winnerUnit.id) return { ...u, morale: Math.min(100, u.morale + 15) };
+    if (u.side === winnerUnit.side && u.troops > 0) return { ...u, morale: Math.min(100, u.morale + 5) };
+    if (u.side === loserUnit.side && u.troops > 0) return { ...u, morale: Math.max(0, u.morale - 5) };
+    return u;
+  });
+
+  popups.push({
+    id: `duel-${Date.now()}`,
+    coord: loserUnit.coord,
+    text: knockout ? '挑落馬下!' : '陣前小挫',
+    color: '#ffd24a',
+    spawnedAt: Date.now(),
+  });
+  log.push({
+    turn: b.turn,
+    text: knockout
+      ? `${winnerOff?.name.zh ?? '勝者'}神威凜凜,將 ${loserOff?.name.zh ?? '敵將'} 挑落馬下 — 其部潰散奔逃!`
+      : `${winnerOff?.name.zh ?? '勝者'}佔得上風,${loserOff?.name.zh ?? '敵將'} 部曲奪氣。`,
+    kind: 'event',
+  });
+  // 主將敗北 — a routed commander drags the whole army's heart down further.
+  if (knockout && loserUnit.isCommander) {
+    units = units.map((u) => (u.side === loserUnit.side && u.id !== loserUnit.id && u.troops > 0
+      ? { ...u, morale: Math.max(0, u.morale - 10) } : u));
+    log.push({ turn: b.turn, text: `主將敗於陣前 — ${loserUnit.side === 'attacker' ? '攻方' : '守方'}三軍奪氣!`, kind: 'event' });
+  }
+
+  return { ...b, units, log, damagePopups: [...(b.damagePopups ?? []), ...popups] };
 }
 
 function defensiveFormationBonus(
@@ -2521,7 +2732,9 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
         || (b.specialTiles ?? []).some((s) => (s.role === 'supply' || s.role === 'wagon') && hexDistance(s.coord, u.coord) <= 1);
       if (resupplied) ammo = Math.min(u.maxAmmo, (u.ammo ?? 0) + 1);
     }
-    return { ...u, troops, morale, effects: newEffects, ap, fatigue, ammo };
+    // 衝鋒蓄力 is momentum within a single activation — it doesn't carry across
+    // turns; a unit must build its run anew each turn.
+    return { ...u, troops, morale, effects: newEffects, ap, fatigue, ammo, charge: undefined };
   });
 
   // 旗令/開朗/沉勇 — a unit beside a morale-aura officer recovers heart each turn
@@ -2538,6 +2751,31 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
         if (oo) aura += tacticalMoraleAura(oo);
       }
       return aura > 0 ? { ...u, morale: Math.min(100, u.morale + Math.min(8, aura)) } : u;
+    });
+
+    // 將旗統率 — the commander's banner steadies the host within its 統率半徑
+    // (R = 2 + 統率/40, so a great captain holds a wider line); a unit beyond
+    // ALL support — out of the banner AND with no friendly shoulder beside it —
+    // is 孤軍 and loses heart each turn (孤軍奮戰，軍心漸搖), which can tip it into
+    // a rout. The commander itself is exempt.
+    const banners = tickedUnits
+      .filter((c) => c.isCommander && c.troops > 0 && c.morale > 0)
+      .map((c) => ({
+        side: c.side,
+        coord: c.coord,
+        radius: 2 + Math.floor((officers[c.officerId] ? effectiveStats(officers[c.officerId]).leadership : 60) / 40),
+      }));
+    tickedUnits = tickedUnits.map((u) => {
+      if (u.troops <= 0 || u.isCommander) return u;
+      const inBanner = banners.some((bn) => bn.side === u.side && hexDistance(bn.coord, u.coord) <= bn.radius);
+      if (inBanner) {
+        return u.morale < 100 ? { ...u, morale: Math.min(100, u.morale + 3) } : u;
+      }
+      const hasShoulder = tickedUnits.some(
+        (f) => f.side === u.side && f.id !== u.id && f.troops > 0 && hexDistance(f.coord, u.coord) === 1,
+      );
+      if (!hasShoulder) return { ...u, morale: Math.max(0, u.morale - 6) };
+      return u;
     });
   }
 
@@ -2787,10 +3025,12 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
     }
   }
 
-  // Remove routed units (troops 0 or morale 0).
+  // Remove only annihilated units (troops 0). A broken unit (morale 0) is no
+  // longer wiped on the spot — it 潰走 (lingers and flees, run down by pursuers),
+  // so only an emptied unit leaves the field here.
   const allUnits = [...tickedUnits, ...arrivedUnits];
-  const surviving = allUnits.filter((u) => u.troops > 0 && u.morale > 0);
-  const removed = allUnits.filter((u) => u.troops <= 0 || u.morale <= 0);
+  const surviving = allUnits.filter((u) => u.troops > 0);
+  const removed = allUnits.filter((u) => u.troops <= 0);
   const newAttackerLoss = removed
     .filter((u) => u.side === 'attacker')
     .reduce((s, u) => s + u.maxTroops, 0);
@@ -2813,12 +3053,16 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
   const defenderCommanderDown = !surviving.some(
     (u) => u.side === 'defender' && u.isCommander,
   );
+  // 三軍盡潰 — a side still on the field but whose every standing unit is routing
+  // has lost the day: the army has broken (兵敗如山倒).
+  const attackerBroken = attackerLeft && surviving.filter((u) => u.side === 'attacker').every(isRouting);
+  const defenderBroken = defenderLeft && surviving.filter((u) => u.side === 'defender').every(isRouting);
 
   let winner: 'attacker' | 'defender' | undefined;
   if (attackerObj?.resolved === 'success') winner = 'attacker';
   else if (defenderObj?.resolved === 'success') winner = 'defender';
-  else if (!attackerLeft || attackerCommanderDown) winner = 'defender';
-  else if (!defenderLeft || defenderCommanderDown) winner = 'attacker';
+  else if (!attackerLeft || attackerCommanderDown || attackerBroken) winner = 'defender';
+  else if (!defenderLeft || defenderCommanderDown || defenderBroken) winner = 'attacker';
   else if (b.turn + 1 > 30) {
     // 糧盡兵疲 — beyond turn 30, force resolution by remaining troop strength.
     // Tie favors defender (they held).
@@ -2983,11 +3227,12 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
     }
   }
 
-  // Record this turn's fallen officers (routed pre-structures + finished off by
+  // Record this turn's fallen officers (annihilated outright or finished off by
   // structures/boiling oil). Units are removed from the field here, so without
   // this running tally resolveBattleEnd couldn't tell who fell. `allUnits` holds
   // everyone present this turn; whoever isn't in the final survivor set fell.
-  const finalUnits = unitsAfterStructures.filter((u) => u.troops > 0 && u.morale > 0);
+  // A routing unit (morale 0, still manned) is NOT fallen — it lingers and flees.
+  const finalUnits = unitsAfterStructures.filter((u) => u.troops > 0);
   const survivingIds = new Set(finalUnits.map((u) => u.id));
   const fallen = allUnits.filter((u) => !survivingIds.has(u.id));
   const prevCas = b.casualties ?? { attacker: [], defender: [] };
@@ -3083,8 +3328,9 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
     damagePopups: structurePopups, // visible briefly on turn flip
     cityStructures: updatedStructures,
   };
-  // 續行軍令 — newly-active units resume any queued march with their fresh AP.
-  return next.winner ? next : resumeQueuedPaths(next);
+  // 潰走 then 續行軍令 — newly-active routers bolt for their edge first, then the
+  // units still under command resume any queued march with their fresh AP.
+  return next.winner ? next : resumeQueuedPaths(processRout(next));
 }
 
 function tickObjective(
@@ -3624,6 +3870,7 @@ function aiActOnce(
   officers: Record<EntityId, Officer>,
   rng: () => number,
   skill: number,
+  autoDuel: boolean,
 ): { battle: TacticalBattle; acted: boolean; signatures: AITurnResult['signatures'] } {
   const hold = { battle: b, acted: false, signatures: [] as AITurnResult['signatures'] };
   const off = officers[unit.officerId];
@@ -3704,6 +3951,24 @@ function aiActOnce(
       if (step) return { battle: moveUnit(b, unit.id, step), acted: true, signatures: [] };
     }
     return hold; // in a good spot — don't charge into melee
+  }
+
+  // 陣前挑將 — a bold champion calls out a beatable adjacent officer rather than
+  // trade blows with the rank-and-file: it picks the foe it most outmatches
+  // (a commander breaks more if felled), exploiting 車輪戰 to wear heroes down.
+  const duelEager = !!off?.traits?.some((t) => t === 'martial-valor' || t === 'reckless' || t === 'matchless');
+  if (
+    autoDuel && skill >= 0.5 && !fragile && (off?.stats.war ?? 0) >= 80 && adjEnemies.length > 0 &&
+    rng() < 0.10 + (duelEager ? 0.18 : 0)
+  ) {
+    const beatable = adjEnemies
+      .filter((e) => canChallengeDuel(unit, e, officers))
+      .map((e) => ({ e, edge: (off?.stats.war ?? 0) - (officers[e.officerId]?.stats.war ?? 99) - (e.duelFatigue ?? 0) * 5 }))
+      .filter((x) => x.edge >= 8)
+      .sort((a, c) => (c.e.isCommander ? 1 : 0) - (a.e.isCommander ? 1 : 0) || c.edge - a.edge);
+    if (beatable.length > 0) {
+      return { battle: challengeDuel(b, unit.id, beatable[0].e.id, officers, rng), acted: true, signatures: [] };
+    }
   }
 
   // Melee: never walk past a free hit. Strike the best adjacent foe —
@@ -3855,14 +4120,21 @@ export function aiTakeTurn(
   b: TacticalBattle,
   officers: Record<EntityId, Officer>,
   rng: () => number,
-  opts?: { skill?: number },
+  opts?: { skill?: number; autoDuel?: boolean },
 ): AITurnResult {
   const skill = Math.max(0, Math.min(1, opts?.skill ?? 0.7));
+  // 陣前挑將 — auto-resolved single combats are only allowed when no human is
+  // watching this side play out (off-screen AI-vs-AI, or 委託指揮 delegated): an
+  // interactively-played battle uses the rich 3D 敵將叫陣 path instead, so the
+  // player never has a bout snatched away.
+  const autoDuel = opts?.autoDuel ?? false;
   let cur = b;
   const signatures: AITurnResult['signatures'] = [];
   let safety = 120;
   while (safety-- > 0) {
-    const myUnits = cur.units.filter((u) => u.side === cur.activeSide && u.ap > 0 && u.troops > 0);
+    // Routing units (morale 0) aren't commanded — they already bolted for the
+    // edge in processRout; the AI never tries to act with them.
+    const myUnits = cur.units.filter((u) => u.side === cur.activeSide && u.ap > 0 && u.troops > 0 && u.morale > 0);
     if (myUnits.length === 0) break;
     // Front line acts before ranged/casters so the squishy units can react to
     // how the melee shapes up.
@@ -3873,7 +4145,7 @@ export function aiTakeTurn(
     );
     let acted = false;
     for (const unit of ordered) {
-      const r = aiActOnce(cur, unit, officers, rng, skill);
+      const r = aiActOnce(cur, unit, officers, rng, skill, autoDuel);
       if (r.acted) {
         cur = r.battle;
         signatures.push(...r.signatures);
