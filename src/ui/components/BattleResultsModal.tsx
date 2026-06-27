@@ -148,6 +148,12 @@ export function BattleResultsModal({ battle, playerSide, onClose }: Props) {
             if (recap.toughest) rows.push([lang === 'en' ? 'Toughest' : '最堅韌', lang === 'en' ? `${recap.toughest.name} (${Math.round(recap.toughest.keptPct * 100)}% kept)` : `${recap.toughest.name}(存 ${Math.round(recap.toughest.keptPct * 100)}%)`]);
             if (recap.pillar) rows.push([lang === 'en' ? 'Pillar' : '中流砥柱', `${recap.pillar.name}(${recap.pillar.troops.toLocaleString()})`]);
             if (recap.schemesCast > 0) rows.push([lang === 'en' ? 'Schemes' : '計謀', lang === 'en' ? `${recap.schemesCast}x` : `${recap.schemesCast} 次`]);
+            if (Math.abs(recap.finalMomentum) >= 20) {
+              const atkSurge = recap.finalMomentum > 0;
+              rows.push([lang === 'en' ? 'Final tide' : '終局氣勢',
+                lang === 'en' ? `${atkSurge ? 'Attacker' : 'Defender'} surging (${Math.abs(recap.finalMomentum)})`
+                  : `${atkSurge ? '攻方' : '守方'}得勢(${Math.abs(recap.finalMomentum)})`]);
+            }
             if (rows.length === 0) return null;
             return (
               <div className={styles.section}>
@@ -162,20 +168,19 @@ export function BattleResultsModal({ battle, playerSide, onClose }: Props) {
             );
           })()}
 
-          {/* 名場面 — the signature moments that fired this battle. */}
+          {/* 戰局轉折 — the curated decisive beats (斬將/潰走/接掌帥旗/甕中…),
+              with the turn they struck; falls back to nothing if the day was quiet. */}
           {(() => {
-            const moments = Array.from(new Set(
-              (battle.log ?? []).filter((e) => e.kind === 'event').map((e) => e.text),
-            )).slice(-4);
+            const moments = battleRecap(battle, officers).keyMoments;
             if (moments.length === 0) return null;
             return (
               <div className={styles.section}>
-                <div className={styles.sectionLabel}>{lang === 'en' ? 'Highlights' : '名場面'}</div>
+                <div className={styles.sectionLabel}>{lang === 'en' ? 'Turning points' : '戰局轉折'}</div>
                 {moments.map((m, i) => (
                   <div key={i} style={{
                     color: '#f2dd9a', fontFamily: 'var(--tkm-font-body)', fontSize: '0.85rem',
                     padding: '2px 0', borderLeft: '2px solid #e6c473', paddingLeft: 8, margin: '3px 0',
-                  }}>{m}</div>
+                  }}><span style={{ color: '#9a8050', marginRight: 6 }}>T{m.turn}</span>{m.text}</div>
                 ))}
               </div>
             );

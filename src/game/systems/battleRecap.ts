@@ -17,6 +17,11 @@ export interface BattleRecap {
   toughest: { officerId: string; name: string; keptPct: number } | null;
   /** Winning-side unit with the most troops still standing. */
   pillar: { officerId: string; name: string; troops: number } | null;
+  /** 戰局轉折 — the day's decisive beats (斬將/潰走/挑落/接掌帥旗/甕中/衝鋒…),
+   *  pulled from the battle log so the recap reads as a story, not just numbers. */
+  keyMoments: Array<{ turn: number; text: string }>;
+  /** Final 氣勢 (−100..+100, +ve = attacker held the tide at the close). */
+  finalMomentum: number;
 }
 
 function unitName(u: TacticalUnit, officers: Record<string, Officer>): string {
@@ -49,6 +54,16 @@ export function battleRecap(battle: TacticalBattle, officers: Record<string, Off
   const schemesCast = (battle.log ?? []).filter((e) => e.kind === 'event'
     && /計|焚|火|風|霧|伏|謀|策/.test(e.text)).length;
 
+  // 戰局轉折 — the decisive beats, in order, deduped, capped to the top few.
+  const TURNING = /陣亡|接掌帥旗|軍心崩潰|潰走|挑落|甕中|衝鋒陷陣|困獸|決堤|燒糧|糧車被焚|全軍覆沒|三軍|盡潰|斬/;
+  const seen = new Set<string>();
+  const keyMoments: BattleRecap['keyMoments'] = [];
+  for (const e of battle.log ?? []) {
+    if (e.kind !== 'event' || !TURNING.test(e.text) || seen.has(e.text)) continue;
+    seen.add(e.text);
+    keyMoments.push({ turn: e.turn, text: e.text });
+  }
+
   return {
     attackerLosses: battle.attackerLosses,
     defenderLosses: battle.defenderLosses,
@@ -57,5 +72,7 @@ export function battleRecap(battle: TacticalBattle, officers: Record<string, Off
     schemesCast,
     toughest,
     pillar,
+    keyMoments: keyMoments.slice(-6),
+    finalMomentum: battle.momentum ?? 0,
   };
 }

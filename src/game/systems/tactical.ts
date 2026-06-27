@@ -25,6 +25,7 @@ import { FACILITY_DEFS, type Fort } from '../types/fort';
 import { NAMED_MAPS_BY_CITY, NAMED_MAPS_BY_ID } from '../data/namedMaps';
 import { SHIP_CLASSES_BY_ID } from '../data/ships';
 import { deriveWeaponType, type WeaponType } from '../data/weaponTypes';
+import { FORMATIONS_BY_ID } from '../data/formations';
 import { pickVoiceLine } from '../data/voiceLines';
 import { generateTerrain, type TerrainHint } from './battlefieldTerrain';
 import { effectiveStats, tacticalDamageMul, tacticalDefenseMul, tacticalMoraleAura, stratagemDamageMul } from './traitEffects';
@@ -210,22 +211,79 @@ export function forecastAttack(
   officers: Record<EntityId, Officer>,
 ): AttackForecast {
   const p = predictAttackDamage(b, attacker, target, officers);
+  const ao = officers[attacker.officerId];
+  const To = officers[target.officerId];
   const aTerr = tileAt(b, attacker.coord)?.terrain ?? 'plain';
   const dTerr = tileAt(b, target.coord)?.terrain ?? 'plain';
   const ctr = counterMultiplier(attacker.unitType, target.unitType);
   const aTerrMod = terrainDamageMod(attacker.unitType, aTerr);
   const shield = defenderTerrainShield(dTerr);
-  const fwd = ctr * aTerrMod * shield;
+  const dist = hexDistance(attacker.coord, target.coord);
+
+  // 背刺/側擊 — mirror attackUnits' facing reckoning.
+  let fromRear = false; let flankMul = 1.0;
+  if (typeof target.facing === 'number') {
+    const gap = dirGap(hexDirection(target.coord, attacker.coord), target.facing);
+    if (gap === 3) { fromRear = true; flankMul = 1.25; } else if (gap === 2) flankMul = 1.12;
+  } else {
+    const tf = target.side === 'attacker' ? 1 : -1;
+    fromRear = (attacker.coord.col - target.coord.col) * tf < 0;
+    flankMul = fromRear ? 1.25 : 1.0;
+  }
+  const ELEV: Partial<Record<TerrainKind, number>> = { mountain: 2, watchtower: 2, hill: 1 };
+  const heightMul = (ELEV[aTerr] ?? 0) > (ELEV[dTerr] ?? 0) ? 1.15 : (ELEV[aTerr] ?? 0) < (ELEV[dTerr] ?? 0) ? 0.92 : 1;
+  const pincers = b.units.filter((u) => u.side === attacker.side && u.id !== attacker.id && u.troops > 0 && hexDistance(u.coord, target.coord) === 1).length;
+  const pincerMul = 1 + Math.min(0.28, 0.10 * pincers);
+  const favor = attacker.side === 'attacker' ? (b.momentum ?? 0) : -(b.momentum ?? 0);
+  const momentumMul = 1 + Math.max(-0.06, Math.min(0.08, favor / 1250));
+  const aMoraleMul = attacker.morale >= 80 ? 1.06 : attacker.morale <= 15 ? 0.78 : attacker.morale < 40 ? 0.88 : 1;
+  const targetRouting = isRouting(target);
+  const pursuitMul = targetRouting ? (attacker.unitType === 'cavalry' ? 1.8 : attacker.unitType === 'navy' ? 1.3 : 1.5) : target.morale < 40 ? 1.12 : 1;
+  let chargeMul = 1.0; let braced = false;
+  const ch = attacker.charge;
+  if (ch && ch.dist >= 2 && hexDistance(ch.from, target.coord) >= 2 && attacker.unitType !== 'siege' && attacker.unitType !== 'navy') {
+    chargeMul = 1 + Math.min(attacker.unitType === 'cavalry' ? 0.45 : 0.18, (attacker.unitType === 'cavalry' ? 0.12 : 0.05) * (ch.dist - 1));
+    if (target.unitType === 'spearmen' && target.effects.some((e) => e.kind === 'defending') && typeof target.facing === 'number' && dirGap(hexDirection(target.coord, attacker.coord), target.facing) <= 1) { braced = true; chargeMul = 0.7; }
+  }
+  const escapeHexes = hexNeighbours(target.coord).filter((n) => { const t = tileAt(b, n); return t && moveCost(b, n) < 99 && !unitAt(b, n); });
+  const encircled = escapeHexes.length === 0 && !target.isSupply;
+  const desperate = encircled && !targetRouting;
+  const encircleMul = encircled ? (targetRouting ? 1.25 : 0.90) : 1;
+  const disorderMul = (attacker.effects.some((e) => e.kind === 'disorder') ? 0.82 : 1) * (target.effects.some((e) => e.kind === 'disorder') ? 1.15 : 1);
+  let coverMul = 1.0;
+  if (dist > 1) {
+    if (dTerr === 'forest') coverMul *= 0.8;
+    if (hexLine(attacker.coord, target.coord).slice(1, -1).some((c) => unitAt(b, c))) coverMul *= 0.85;
+  }
+  const weaponMul = weaponMatchupMul(ao ? deriveWeaponType(ao) : 'none', To ? deriveWeaponType(To) : 'none', target.unitType, fromRear || flankMul > 1).mul;
+  const aWoundedMul = ao?.status === 'wounded' ? (ao.woundSeverity === 'critical' ? 0.65 : ao.woundSeverity === 'serious' ? 0.78 : 0.9) : 1;
+  const dWoundedMul = To?.status === 'wounded' ? (To.woundSeverity === 'critical' ? 1.3 : To.woundSeverity === 'serious' ? 1.22 : 1.12) : 1;
+  const aGradeMul = ao ? gradeCombatBonus(ao).powerMul : 1;
+  const dGradeResistMul = To ? 1 - gradeCombatBonus(To).damageResist : 1;
+  const nightMul = b.timeOfDay === 'night' ? 0.94 : 1;
+  const crossingMul = target.unitType !== 'navy' && (dTerr === 'river' || dTerr === 'bridge') ? 1.25 : 1;
+  const streetMul = target.side === 'defender' && insideWalls(b, target.coord) ? 0.82 : 1;
+  const freshMul = 1.05 - Math.min(0.30, (attacker.fatigue ?? 0) / 333);
+  const fatigueMul = b.turn >= 10 ? Math.max(0.6, 1 - 0.05 * (b.turn - 9)) : 1;
+
+  const fwd = ctr * aTerrMod * shield * weaponMul * flankMul * heightMul * pincerMul * momentumMul
+    * aMoraleMul * pursuitMul * chargeMul * encircleMul * disorderMul * coverMul
+    * aWoundedMul * dWoundedMul * aGradeMul * dGradeResistMul * nightMul * crossingMul * streetMul
+    * freshMul * fatigueMul;
   const dmgMin = Math.max(0, Math.floor(p.min * fwd));
   const dmgMax = Math.max(0, Math.floor(p.max * fwd));
   const willKill = dmgMax >= target.troops;
-  const back = counterMultiplier(target.unitType, attacker.unitType);
+  // 反擊 — a foe struck from beyond its reach, or routing, can't retaliate; the
+  // rear/braced/desperate factors mirror attackUnits' counter math.
+  const targetCanReach = attackRange(target, To) >= dist;
+  const noCounter = willKill || targetRouting || !targetCanReach;
+  const back = counterMultiplier(target.unitType, attacker.unitType) * (fromRear ? 0.4 : 1) * (braced ? 1.6 : 1) * (desperate ? 1.35 : 1);
   return {
     dmgMin, dmgMax,
-    counterMin: willKill ? 0 : Math.max(0, Math.floor(p.counterMin * back)),
-    counterMax: willKill ? 0 : Math.max(0, Math.floor(p.counterMax * back)),
+    counterMin: noCounter ? 0 : Math.max(0, Math.floor(p.counterMin * back)),
+    counterMax: noCounter ? 0 : Math.max(0, Math.floor(p.counterMax * back)),
     willKill,
-    matchup: ctr > 1.05 ? 'strong' : ctr < 0.95 ? 'weak' : 'even',
+    matchup: ctr * weaponMul > 1.08 ? 'strong' : ctr * weaponMul < 0.95 ? 'weak' : 'even',
     counterMult: ctr,
     terrainAtk: aTerrMod,
     defShield: shield,
@@ -1492,6 +1550,33 @@ export function retreatUnit(b: TacticalBattle, unitId: EntityId): TacticalBattle
     ...b,
     units: remaining,
     [lossKey]: (b[lossKey] ?? 0) + Math.floor(unit.troops * 0.1), // 10% counted as stragglers
+  };
+}
+
+/** 臨陣變陣 — whether the side may re-form right now (a manoeuvre on a few-turn
+ *  cooldown so it can't be spammed). */
+export function canChangeFormation(b: TacticalBattle, side: 'attacker' | 'defender'): boolean {
+  return (b.stratagemCooldowns[`reform-${side}`] ?? 0) <= b.turn;
+}
+
+/** 變陣 — re-form the army into a new shape mid-battle. The whole side spends a
+ *  beat reordering its ranks: every living unit is thrown into 陷亂 for a turn
+ *  (the new shape only tells once the dust settles), and it can't repeat for a
+ *  few turns. A real trade: switch to counter the enemy's formation, but eat a
+ *  turn of disorder doing it. No-op if disallowed or already in that shape. */
+export function changeFormation(b: TacticalBattle, side: 'attacker' | 'defender', formation: FormationId): TacticalBattle {
+  if (!canChangeFormation(b, side)) return b;
+  const cur = side === 'attacker' ? b.attackerFormation : b.defenderFormation;
+  if (cur === formation) return b;
+  const units = b.units.map((u) => (u.side === side && u.troops > 0 && !u.effects.some((e) => e.kind === 'disorder')
+    ? { ...u, effects: [...u.effects, { kind: 'disorder' as const, turnsLeft: 1 }] } : u));
+  const name = FORMATIONS_BY_ID[formation]?.name.zh ?? formation;
+  return {
+    ...b,
+    [side === 'attacker' ? 'attackerFormation' : 'defenderFormation']: formation,
+    units,
+    stratagemCooldowns: { ...b.stratagemCooldowns, [`reform-${side}`]: b.turn + 3 },
+    log: [...(b.log ?? []), { turn: b.turn, text: `${side === 'attacker' ? '攻方' : '守方'}臨陣變陣 — 改結「${name}」陣,整隊未定(暫陷亂)。`, kind: 'event' as const }],
   };
 }
 
@@ -4092,19 +4177,20 @@ export function pickAdjacentTarget(
   officers: Record<EntityId, Officer>,
 ): TacticalUnit | undefined {
   if (adjEnemies.length === 0) return undefined;
-  const aTerr = tileAt(b, unit.coord)?.terrain ?? 'plain';
-  const aTerrMod = terrainDamageMod(unit.unitType, aTerr);
+  // 量敵而擊 — score by the FULL forecast (weapon/側背/圍殲/氣勢/掩體 all baked in),
+  // so the AI now favours a matchup it dominates and shies from a braced spearwall
+  // or a desperate cornered foe (high counter, low net swing) on its own.
   const value = (e: TacticalUnit): number => {
-    const p = predictAttackDamage(b, unit, e, officers);
-    const eTerr = tileAt(b, e.coord)?.terrain ?? 'plain';
-    const fwdMul = counterMultiplier(unit.unitType, e.unitType) * aTerrMod * defenderTerrainShield(eTerr);
-    const expDmg = ((p.min + p.max) / 2) * fwdMul;
-    const willKill = p.max * fwdMul >= e.troops;
-    const ctrMul = counterMultiplier(e.unitType, unit.unitType);
-    const expCounter = willKill ? 0 : ((p.counterMin + p.counterMax) / 2) * ctrMul;
-    let v = expDmg - expCounter; // net troop swing in our favour
+    const f = forecastAttack(b, unit, e, officers);
+    const expDmg = (f.dmgMin + f.dmgMax) / 2;
+    const expCounter = (f.counterMin + f.counterMax) / 2;
+    // Judge a kill by EXPECTED damage, not the optimistic max — the AI shouldn't
+    // bank on a top-roll one-shot it usually won't land.
+    const willKill = expDmg >= e.troops;
+    let v = expDmg - (willKill ? 0 : expCounter); // net swing; a kill dodges the riposte
     if (willKill) v += e.troops * 0.5 + 500; // remove a unit AND dodge the counter
-    if (e.isCommander) v += 800; // decapitation strike
+    if (e.isCommander) v += 800; // decapitation strike (also swings momentum hard)
+    if (isRouting(e)) v += 300; // run the broken foe down before it rallies
     return v;
   };
   return adjEnemies.reduce((a, c) => (value(c) > value(a) ? c : a));
@@ -4233,6 +4319,22 @@ function aiActOnce(
     if (nearest < lo || nearest > hi + 1) {
       const step = bandRepositionStep(b, unit, enemies, lo, hi);
       if (step) return { battle: moveUnit(b, unit.id, step), acted: true, signatures: [] };
+    }
+    // 引弓搭箭 — well-positioned and armed: loose a basic ranged shot at the foe
+    // it can hurt most (in射程 + clear射界), rather than idle. Uses the real
+    // forecast so it shoots through gaps, not into cover/walls.
+    if (role === 'ranged' && (unit.ammo ?? 0) > 0) {
+      const shootable = enemies.filter((e) => {
+        const d = hexDistance(unit.coord, e.coord);
+        return d > 1 && d <= attackRange(unit, off) && hasLineOfSight(b, unit.coord, e.coord);
+      });
+      if (shootable.length > 0) {
+        const best = shootable.reduce((a, c) => {
+          const fa = forecastAttack(b, unit, a, officers); const fc = forecastAttack(b, unit, c, officers);
+          return (fc.dmgMin + fc.dmgMax) > (fa.dmgMin + fa.dmgMax) ? c : a;
+        });
+        return { battle: attackUnits(b, unit.id, best.id, officers, rng), acted: true, signatures: [] };
+      }
     }
     return hold; // in a good spot — don't charge into melee
   }
