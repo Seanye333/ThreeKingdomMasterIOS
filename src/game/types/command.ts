@@ -140,7 +140,11 @@ export interface BattleDetail {
   duelLoserId?: EntityId;
   // ── Phase 68: Battle theater data ──
   phases?: BattlePhaseSummary[];
-  stratagem?: { id: string; nameZh: string; nameEn: string; succeeded: boolean };
+  stratagem?: { id: string; nameZh: string; nameEn: string; succeeded: boolean; seenThrough?: boolean };
+  /** 連環計 — the attacker's chained second scheme. */
+  stratagemChain?: { nameZh: string; nameEn: string; succeeded: boolean };
+  /** 守城之計 — the defender's own counter-scheme. */
+  defenderStratagem?: { nameZh: string; nameEn: string; succeeded: boolean; seenThrough?: boolean };
   attackerMoraleEnd?: number;
   defenderMoraleEnd?: number;
   woundedIds?: EntityId[];

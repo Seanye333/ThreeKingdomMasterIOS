@@ -209,7 +209,8 @@ function bestRapportWith(state: { officers: Record<string, Officer>; rapport: Re
   }
   return best;
 }
-import { setupTacticalBattle, inferUnitType, planSiegeRelief, rollTimeOfDay, pickAiFormation } from '../systems/tactical';
+import { setupTacticalBattle, inferUnitType, planSiegeRelief, rollTimeOfDay, pickAiFormation, applyOpeningScheme } from '../systems/tactical';
+import { pickAutoStratagem } from '../data/stratagems2';
 import { BUILDING_DEFS_BY_ID } from '../data/buildings';
 import { DEFENSE_BUILDINGS } from '../data/defenseBuildings';
 import { SHIP_CLASSES_BY_ID, shipMeetsTier, shipBuildSeasons, portUpgradeCost, SHIP_MIN_TIER, PORT_MAX_NAVAL_TIER } from '../data/ships';
@@ -1045,7 +1046,7 @@ function buildFieldBattle(
   const stratWeather = s.weather?.kind ?? 'clear';
   const tacticalWeather = stratWeather === 'drought' ? 'clear' : stratWeather;
 
-  const battle = setupTacticalBattle({
+  let battle = setupTacticalBattle({
     cityId: nominalCity,
     width: 18,
     height: 12,
@@ -1077,6 +1078,19 @@ function buildFieldBattle(
     forts: s.forts,
     field: true,
   });
+  // 計接戰場 — if the attacking marshal would have thrown a scheme, it manifests
+  // as a tactical opening (火攻→烈焰 / 埋伏→伏兵 / 夜襲→入夜 / 斷糧→乏食).
+  if (s.weather && defenders[0] && s.cities[nominalCity]) {
+    const avgI = (arr: typeof attackers) => Math.round(arr.reduce((sum, o) => sum + o.officer.stats.intelligence, 0) / Math.max(1, arr.length));
+    const scheme = pickAutoStratagem({
+      attacker: attackers[0].officer, defender: defenders[0].officer,
+      attackerTroops: pArmy.troops, defenderTroops: eArmy.troops,
+      city: s.cities[nominalCity], weather: s.weather,
+      attackerIntelligence: avgI(attackers), defenderIntelligence: avgI(defenders),
+      defenderAvgLoyalty: Math.round(defenders.reduce((sum, o) => sum + (o.officer.loyalty ?? 100), 0) / Math.max(1, defenders.length)),
+    });
+    if (scheme) battle = applyOpeningScheme(battle, scheme);
+  }
   battle.attackerArmyId = playerArmyId;
   battle.defenderArmyId = enemyArmyId;
   return battle;

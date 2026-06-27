@@ -31,7 +31,8 @@ import {
   STRATAGEM_DEFS,
   pickAutoStratagem,
   rollStratagemSuccess,
-  type BattleStratagemId,
+  DEFENSIVE_SCHEMES,
+  mirrorDefenderEffect,
   type StratagemEffect,
 } from '../data/stratagems2';
 import { combatPolicyEffects, cityPolicyEffects } from './policyEffects';
@@ -308,8 +309,13 @@ export interface BattleResult {
   aBondBonusAvg: number;
   dBondBonusAvg: number;
   // ── Phase-49 enhancements ──
-  /** Stratagem deployed by the attacker (if any). */
-  stratagem?: { id: string; name: { zh: string; en: string }; succeeded: boolean };
+  /** Stratagem deployed by the attacker (if any). `seenThrough` = a wise
+   *  defender 看破'd it (it failed AND the defender turned it back). */
+  stratagem?: { id: string; name: { zh: string; en: string }; succeeded: boolean; seenThrough?: boolean };
+  /** 連環計 — a second scheme the attacker chained on (智 ≥ 90), e.g. 連環+火攻. */
+  stratagemChain?: { id: string; name: { zh: string; en: string }; succeeded: boolean };
+  /** 守城之計 — the besieged marshal's own counter-scheme (鐵壁/以逸待勞/反間…). */
+  defenderStratagem?: { id: string; name: { zh: string; en: string }; succeeded: boolean; seenThrough?: boolean };
   /** Wounded officers (one or both sides) — recoverable after N seasons. */
   wounded?: Array<{ officerId: EntityId; seasons: number; severity: 'minor' | 'serious' | 'critical' }>;
   /** Officers captured by the victor (defection roll later). */
@@ -455,39 +461,73 @@ export function resolveBattle(
     : null;
   let stratEffect: StratagemEffect = {};
   let stratagemRecord: BattleResult['stratagem'] = undefined;
+  let stratagemChainRecord: BattleResult['stratagemChain'] = undefined;
+  let defenderStratagemRecord: BattleResult['defenderStratagem'] = undefined;
   let delayedEffects: BattleResult['delayedEffects'] = undefined;
+  // Merge a fresh StratagemEffect into the running one (multiplying the muls).
+  const fold = (into: StratagemEffect, e: StratagemEffect): StratagemEffect => ({
+    attackerPowerMul: (into.attackerPowerMul ?? 1) * (e.attackerPowerMul ?? 1),
+    defenderPowerMul: (into.defenderPowerMul ?? 1) * (e.defenderPowerMul ?? 1),
+    ownLossMul: (into.ownLossMul ?? 1) * (e.ownLossMul ?? 1),
+    enemyLossMul: (into.enemyLossMul ?? 1) * (e.enemyLossMul ?? 1),
+    surpriseRoll: (into.surpriseRoll ?? 0) + (e.surpriseRoll ?? 0),
+    // captureBonus is consumed as a MULTIPLIER (?? 1) downstream — keep it so.
+    captureBonus: (into.captureBonus ?? 1) * (e.captureBonus ?? 1),
+    delayedDrain: e.delayedDrain ?? into.delayedDrain,
+  });
   if (stratagemPool) {
-    const sid: BattleStratagemId | null = pickAutoStratagem(stratagemPool);
+    // 看破 — a wise / precognitive defender can see through the attacker's plot,
+    // foiling it outright (and turning it back). Scales with the INT gap.
+    const dTraits = (defender.commander?.traits ?? []) as string[];
+    const seerEdge = (stratagemPool.defenderIntelligence - stratagemPool.attackerIntelligence) / 200
+      + (dTraits.includes('precognitive') ? 0.20 : 0)
+      + (dTraits.some((t) => t === 'crouching-dragon' || t === 'young-phoenix' || t === 'celestial-tactician') ? 0.12 : 0);
+
+    // ── Attacker's scheme (may be chained at 智 ≥ 90 — 連環計) ──
+    const sid = pickAutoStratagem(stratagemPool);
     if (sid) {
       const def = STRATAGEM_DEFS[sid];
-      const stratagemSucceeded = rollStratagemSuccess(def, stratagemPool, rng);
-      stratagemRecord = {
-        id: def.id,
-        name: def.name,
-        succeeded: stratagemSucceeded,
-      };
-      if (stratagemSucceeded) {
-        stratEffect = def.successEffect;
-        // Policy boosts to specific stratagem families.
-        const fireFamily = ['fire-attack', 'fire-arrow', 'flood-attack'];
-        if (fireFamily.includes(def.id)) {
-          // pre-applied policy fire multiplier shows up below as we compute aPolicy/dPolicy
-          // (the actual multiply happens in the power calc since stratEffect is applied to power).
-        }
-        if (stratEffect.delayedDrain) {
-          delayedEffects = [{
-            kind: 'troop-drain',
-            targetCityId: ctx?.city.id,
-            seasons: stratEffect.delayedDrain.seasons,
-            perSeason: stratEffect.delayedDrain.troopsPerSeason,
-          }];
+      const seenThrough = rng() < Math.max(0, Math.min(0.5, seerEdge));
+      const ok = !seenThrough && rollStratagemSuccess(def, stratagemPool, rng);
+      stratagemRecord = { id: def.id, name: def.name, succeeded: ok, seenThrough };
+      // 將計就計 — a plot seen through is turned back on its author.
+      if (seenThrough) stratEffect = fold(stratEffect, { defenderPowerMul: 1.08, ownLossMul: 1.12 });
+      if (ok) {
+        stratEffect = fold(stratEffect, def.successEffect);
+        if (def.successEffect.delayedDrain) {
+          delayedEffects = [{ kind: 'troop-drain', targetCityId: ctx?.city.id, seasons: def.successEffect.delayedDrain.seasons, perSeason: def.successEffect.delayedDrain.troopsPerSeason }];
         }
       } else if (def.failurePenalty) {
-        stratEffect = {
-          attackerPowerMul: def.failurePenalty.attackerPowerMul,
-          ownLossMul: def.failurePenalty.ownLossMul,
-        };
+        stratEffect = fold(stratEffect, { attackerPowerMul: def.failurePenalty.attackerPowerMul, ownLossMul: def.failurePenalty.ownLossMul });
       }
+      // 連環計 — a master (智 ≥ 90) links a second scheme onto the first.
+      if (stratagemPool.attackerIntelligence >= 90) {
+        const sid2 = pickAutoStratagem(stratagemPool, { exclude: new Set([sid]) });
+        if (sid2) {
+          const def2 = STRATAGEM_DEFS[sid2];
+          const ok2 = !(rng() < Math.max(0, Math.min(0.5, seerEdge))) && rollStratagemSuccess(def2, stratagemPool, rng);
+          stratagemChainRecord = { id: def2.id, name: def2.name, succeeded: ok2 };
+          if (ok2) stratEffect = fold(stratEffect, def2.successEffect);
+        }
+      }
+    }
+
+    // ── Defender's counter-scheme (鐵壁/以逸待勞/反間…), mirrored semantics ──
+    const dPool: typeof stratagemPool = {
+      ...stratagemPool,
+      attacker: stratagemPool.defender!, defender: stratagemPool.attacker,
+      attackerTroops: stratagemPool.defenderTroops, defenderTroops: stratagemPool.attackerTroops,
+      attackerIntelligence: stratagemPool.defenderIntelligence, defenderIntelligence: stratagemPool.attackerIntelligence,
+    };
+    const dsid = pickAutoStratagem(dPool, { only: DEFENSIVE_SCHEMES });
+    if (dsid) {
+      const ddef = STRATAGEM_DEFS[dsid];
+      // The attacker's own wits may see through the defence in turn.
+      const aSees = (stratagemPool.attackerIntelligence - stratagemPool.defenderIntelligence) / 220;
+      const dSeen = rng() < Math.max(0, Math.min(0.4, aSees));
+      const dok = !dSeen && rollStratagemSuccess(ddef, dPool, rng);
+      defenderStratagemRecord = { id: ddef.id, name: ddef.name, succeeded: dok, seenThrough: dSeen };
+      if (dok) stratEffect = fold(stratEffect, mirrorDefenderEffect(ddef.successEffect));
     }
   }
 
@@ -858,6 +898,8 @@ export function resolveBattle(
     aBondBonusAvg,
     dBondBonusAvg,
     stratagem: stratagemRecord,
+    stratagemChain: stratagemChainRecord,
+    defenderStratagem: defenderStratagemRecord,
     wounded: wounded.length > 0 ? wounded : undefined,
     captured: captured.length > 0 ? captured : undefined,
     pursued,
@@ -1456,7 +1498,14 @@ export function handleMarch(
           nameZh: result.stratagem.name.zh,
           nameEn: result.stratagem.name.en,
           succeeded: result.stratagem.succeeded,
+          seenThrough: result.stratagem.seenThrough,
         }
+      : undefined,
+    stratagemChain: result.stratagemChain
+      ? { nameZh: result.stratagemChain.name.zh, nameEn: result.stratagemChain.name.en, succeeded: result.stratagemChain.succeeded }
+      : undefined,
+    defenderStratagem: result.defenderStratagem
+      ? { nameZh: result.defenderStratagem.name.zh, nameEn: result.defenderStratagem.name.en, succeeded: result.defenderStratagem.succeeded, seenThrough: result.defenderStratagem.seenThrough }
       : undefined,
     attackerMoraleEnd: result.attackerMoraleEnd,
     defenderMoraleEnd: result.defenderMoraleEnd,
