@@ -307,6 +307,11 @@ export interface TacticalBattle {
   /** 撤退 — the loser conceded and pulled out in order; survivors escape and
    *  the victor mounts no pursuit (no 掩殺 bonus). */
   withdrew?: boolean;
+  /** 戰局氣勢 — the tide of battle (−100..+100, positive favours the attacker).
+   *  Swings on kills / a felled commander / objective progress; decays toward 0
+   *  each turn. The favoured side hits a touch harder (順勢) and recovers heart,
+   *  the losing side bleeds it (頹勢). Absent → 0 (even). */
+  momentum?: number;
   /** 決堤 — a dam map-trap has been broken (one-shot flood). */
   damBroken?: boolean;
   /** 燒糧 — a supply convoy has been destroyed and the starvation penalty
