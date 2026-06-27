@@ -24,6 +24,7 @@ import { geoToPixel } from '../data/geography';
 import { FACILITY_DEFS, type Fort } from '../types/fort';
 import { NAMED_MAPS_BY_CITY, NAMED_MAPS_BY_ID } from '../data/namedMaps';
 import { SHIP_CLASSES_BY_ID } from '../data/ships';
+import { deriveWeaponType, type WeaponType } from '../data/weaponTypes';
 import { pickVoiceLine } from '../data/voiceLines';
 import { generateTerrain, type TerrainHint } from './battlefieldTerrain';
 import { effectiveStats, tacticalDamageMul, tacticalDefenseMul, tacticalMoraleAura, stratagemDamageMul } from './traitEffects';
@@ -50,6 +51,42 @@ const COUNTER_MATRIX: Record<UnitType, Partial<Record<UnitType, number>>> = {
 
 export function counterMultiplier(a: UnitType, d: UnitType): number {
   return COUNTER_MATRIX[a][d] ?? 1.0;
+}
+
+/**
+ * 兵裝相剋 — a finer layer than the 6-arm COUNTER_MATRIX: the officer's actual
+ * weapon class (§5.9, derived from equipment) now bites in melee. Returns the
+ * outgoing-damage multiplier for attacker-weapon vs defender-weapon/arm, plus a
+ * short tag for the strongest edge. Deliberately light (≤×1.15 per edge, clamped
+ * to [0.85,1.4]) so it refines the matchup without eclipsing the arm counters.
+ */
+export function weaponMatchupMul(
+  aw: WeaponType,
+  dw: WeaponType,
+  dUnitType: UnitType,
+  fromFlankOrRear: boolean,
+): { mul: number; tag?: string } {
+  let m = 1;
+  let tag: string | undefined;
+  const dMounted = dw === 'cavalry' || dUnitType === 'cavalry';
+  const dHeavy = dw === 'spear' || dw === 'halberd' || dw === 'sabre' || dw === 'cavalry' || dw === 'siege';
+  const dSoft = dw === 'bow' || dw === 'crossbow' || dw === 'fan';
+  // 戟制騎 — halberds hook and drag horsemen from the saddle.
+  if (aw === 'halberd' && dMounted) { m *= 1.15; tag = '戟制騎'; }
+  // 長槍拒馬 — spears outreach the charge (light; spearmen arm already counters).
+  else if (aw === 'spear' && dMounted) { m *= 1.07; tag = '槍拒馬'; }
+  // 弩矢破甲 — crossbow bolts punch heavy armour where bows can't.
+  if (aw === 'crossbow' && dHeavy) { m *= 1.13; tag = tag ?? '弩破甲'; }
+  // 鐵騎踏陣 — horse runs down bows/crossbows/strategists caught in the open.
+  if (aw === 'cavalry' && dSoft) { m *= 1.12; tag = tag ?? '騎踏陣'; }
+  // 劍走輕靈 — agile swordsmen exploit an exposed flank/rear harder.
+  if (aw === 'sword' && fromFlankOrRear) { m *= 1.10; tag = tag ?? '劍迅捷'; }
+  // 重刃破輕 — a heavy sabre overpowers light blades and the unarmed.
+  if (aw === 'sabre' && (dw === 'sword' || dw === 'none')) { m *= 1.07; tag = tag ?? '刀破輕'; }
+  // 書生臨陣 / 赤手 — strategists and the unarmed are soft in a stand-up melee.
+  if (dw === 'fan') { m *= 1.12; tag = tag ?? '襲書生'; }
+  else if (dw === 'none') { m *= 1.08; tag = tag ?? '欺徒手'; }
+  return { mul: Math.max(0.85, Math.min(1.4, m)), tag };
 }
 
 /** 連携合擊 — sworn brothers / famous bonded pairs who strike a foe together
@@ -1089,10 +1126,18 @@ export function moveUnit(
   const stepDir = hexDirection(unit.coord, to);
   const runFrom = unit.charge?.from ?? unit.coord;
   const nextCharge = { from: runFrom, dist: hexDistance(runFrom, to) };
+  // 半渡之亂 — fording a river breaks the ranks; the unit lands disordered (a
+  // bridge is a built crossing, so it doesn't). Ships are at home on the water.
+  const forded = tileAt(b, to)?.terrain === 'river' && unit.unitType !== 'navy';
   let next: TacticalBattle = {
     ...b,
     units: b.units.map((u) => {
-      if (u.id === unitId) return { ...u, coord: to, ap: u.ap - cost, facing: stepDir, charge: nextCharge };
+      if (u.id === unitId) {
+        const effects = forded && !u.effects.some((e) => e.kind === 'disorder')
+          ? [...u.effects, { kind: 'disorder' as const, turnsLeft: 1 }]
+          : u.effects;
+        return { ...u, coord: to, ap: u.ap - cost, facing: stepDir, charge: nextCharge, effects };
+      }
       // Hidden enemy of the moving unit, now adjacent? Reveal.
       if (u.hidden && u.side !== unit.side &&
           adj.some((n) => n.col === u.coord.col && n.row === u.coord.row)) {
@@ -1615,6 +1660,43 @@ export function attackUnits(
     flankMul = fromRear ? 1.25 : 1.0;
   }
 
+  // 兵裝相剋 — the officers' weapon classes (§5.9) refine the matchup: 戟制騎、
+  // 弩破甲、騎踏弓弩、劍走側背、刀破輕、襲書生/欺徒手. No longer pure display.
+  const aWeapon = ao ? deriveWeaponType(ao) : 'none';
+  const dWeapon = To ? deriveWeaponType(To) : 'none';
+  const weapon = weaponMatchupMul(aWeapon, dWeapon, target.unitType, fromRear || flankMul > 1);
+  const weaponMul = weapon.mul;
+
+  // 圍殲與退路 — has the target any empty, passable hex to fall back to? None =
+  // encircled. A cornered unit that hasn't broken fights desperately (困獸猶鬥:
+  // harder to kill, resists routing, ripostes savagely — 圍師必闕); but a routing
+  // unit boxed in is cut down where it stands (甕中之鱉).
+  const escapeHexes = hexNeighbours(target.coord).filter((n) => {
+    const t = tileAt(b, n);
+    return t && moveCost(b, n) < 99 && !unitAt(b, n);
+  });
+  const encircled = escapeHexes.length === 0 && !target.isSupply;
+  let encircleMul = 1.0;
+  let desperate = false;
+  if (encircled) {
+    if (targetRouting) encircleMul = 1.25;
+    else { encircleMul = 0.90; desperate = true; }
+  }
+
+  // 陷亂 — a disordered attacker mills and hits soft; a disordered target is an
+  // open mark. 詐敗 — the target only *looked* broken; this blow springs the trap.
+  const aDisordered = attacker.effects.some((e) => e.kind === 'disorder');
+  const dDisordered = target.effects.some((e) => e.kind === 'disorder');
+  const disorderMul = (aDisordered ? 0.82 : 1.0) * (dDisordered ? 1.15 : 1.0);
+  const feigning = target.effects.some((e) => e.kind === 'feign-rout');
+
+  // 督戰壓陣 — a unit fighting beside its own steady commander will not break
+  // while the banner stands (its morale is floored when struck).
+  const enforced = b.units.some(
+    (c) => c.side === target.side && c.isCommander && c.id !== target.id
+      && c.troops > 0 && c.morale > 30 && hexDistance(c.coord, target.coord) === 1,
+  );
+
   // 品階威儀 — a higher-grade officer's unit hits harder, and a higher-grade
   // defender's formation shrugs off part of the blow (威儀 toughness).
   const aGradeMul = ao ? gradeCombatBonus(ao).powerMul : 1;
@@ -1645,7 +1727,7 @@ export function attackUnits(
     base * counter * aTerrainMod * weatherMul * defenseMul * offenseMul *
     dShield * ambushBonus * fatigueMul * freshMul * aWoundedMul * dWoundedMul * shipMul * pincerMul *
     nightMul * heightMul * flankMul * crossingMul * streetMul * comboMul * formCounterMul * eliteMul * aGradeMul * dGradeResistMul * aGrowthMul * aSetMul *
-    aMoraleMul * pursuitMul * chargeMul *
+    aMoraleMul * pursuitMul * chargeMul * weaponMul * encircleMul * disorderMul *
     aTraitMul * dTraitDefMul,
   );
   if (targetDefending) damage = Math.floor(damage / 2);
@@ -1661,26 +1743,31 @@ export function attackUnits(
   if (isCrit) damage = Math.floor(damage * (martialSkill ? 1.8 : 1.6));
 
   const newTroops = Math.max(0, target.troops - damage);
-  const moraleLoss = Math.floor((damage / Math.max(1, target.maxTroops)) * 50);
+  let moraleLoss = Math.floor((damage / Math.max(1, target.maxTroops)) * 50);
+  // 必死則生 — a cornered, unbroken unit steels itself and barely loses heart.
+  if (desperate) moraleLoss = Math.floor(moraleLoss * 0.5);
 
   // Counter-attack: target deals back ~40% if still alive. A foe struck in the
   // rear barely retaliates; a routing foe doesn't at all (it only runs); a
-  // braced spearwall that just turned back a charge ripostes savagely (拒馬).
+  // braced spearwall that just turned back a charge ripostes savagely (拒馬); a
+  // cornered beast lashes out (困獸猶鬥); and a 詐敗 unit that only *looked*
+  // broken springs a full-strength riposte on its pursuer (誘敵反噬).
   let counterTroops = attacker.troops;
   let counterDamage = 0;
   if (newTroops > 0 && !targetRouting) {
     const dWar = To ? effectiveStats(To).war : 50;
     const aLead = ao ? effectiveStats(ao).leadership : 50;
+    const counterPortion = feigning ? 1.0 : 0.4;
     const counterBase = Math.floor(
-      (target.troops * (dWar + 30) * (0.85 + rng() * 0.3) * 0.4) / (aLead + 50)
-        * (fromRear ? 0.4 : 1) * (braced ? 1.6 : 1),
+      (target.troops * (dWar + 30) * (0.85 + rng() * 0.3) * counterPortion) / (aLead + 50)
+        * (feigning ? 1 : fromRear ? 0.4 : 1) * (braced ? 1.6 : 1) * (desperate ? 1.35 : 1),
     );
     counterTroops = Math.max(0, attacker.troops - counterBase);
     counterDamage = counterBase;
   }
 
   // Damage popups. Tag the blow: ★會心 / 衝鋒 / 追擊 / 背刺.
-  const tag = braced ? '折 ' : chargeMul > 1.05 ? '衝 ' : targetRouting ? '追 ' : fromRear ? '背 ' : '';
+  const tag = feigning ? '誘 ' : braced ? '折 ' : chargeMul > 1.05 ? '衝 ' : targetRouting ? '追 ' : encircleMul > 1 ? '殲 ' : weapon.tag ? `${weapon.tag} ` : fromRear ? '背 ' : '';
   const popups: DamagePopup[] = [
     {
       id: `dmg-${Date.now()}-1`,
@@ -1712,6 +1799,12 @@ export function attackUnits(
     log.push({ turn: b.turn, text: `${ao?.name.zh ?? '騎軍'}蓄勢突陣,衝鋒陷陣!`, kind: 'event' });
   } else if (targetRouting && newTroops === 0) {
     log.push({ turn: b.turn, text: `${To?.name.zh ?? '潰軍'}奔逃之際被銜尾掩殺 — 全軍覆沒!`, kind: 'event' });
+  } else if (feigning) {
+    log.push({ turn: b.turn, text: `${To?.name.zh ?? '敵軍'}詐敗回馬 — ${ao?.name.zh ?? '追兵'}中伏陣腳大亂!`, kind: 'event' });
+  } else if (desperate && newTroops > 0) {
+    log.push({ turn: b.turn, text: `${To?.name.zh ?? '敵軍'}四面被圍,困獸猶鬥 — 拼死反撲!`, kind: 'event' });
+  } else if (encircled && targetRouting && newTroops === 0) {
+    log.push({ turn: b.turn, text: `${To?.name.zh ?? '敵軍'}走投無路,聚而殲之 — 甕中捉鱉!`, kind: 'event' });
   }
   // 腹背受敵 — the target is truly surrounded (pressed on three sides, or struck
   // in the rear while also flanked). A presentation beat; the pincer/rear damage
@@ -1771,20 +1864,29 @@ export function attackUnits(
   }
   const units = b.units.map((u) => {
     if (u.id === targetId) {
-      return {
-        ...u,
-        troops: newTroops,
-        morale: Math.max(0, u.morale - moraleLoss),
-      };
+      // 督戰壓陣 — beside a steady commander, the unit won't break (morale floored).
+      const morale = Math.max(enforced ? 10 : 0, u.morale - moraleLoss);
+      // 衝陣致亂 — a landed charge breaks the target's ranks; the 詐敗 trap is
+      // spent the moment it springs.
+      let effects = u.effects.filter((e) => e.kind !== 'feign-rout');
+      if (chargeMul > 1.05 && newTroops > 0 && !effects.some((e) => e.kind === 'disorder')) {
+        effects = [...effects, { kind: 'disorder' as const, turnsLeft: 1 }];
+      }
+      return { ...u, troops: newTroops, morale, effects };
     }
     if (u.id === attackerId) {
       // 久戰疲乏 + 朝向 — pressing the attack tires the unit and turns it to face
-      // the foe. The charge is spent on impact (衝鋒蓄力 consumed).
+      // the foe. The charge is spent on impact (衝鋒蓄力 consumed). Springing a
+      // 詐敗 trap throws the pursuer's own ranks into disorder.
+      const effects = feigning && !u.effects.some((e) => e.kind === 'disorder')
+        ? [...u.effects, { kind: 'disorder' as const, turnsLeft: 1 }]
+        : u.effects;
       return {
         ...u, ap: u.ap - 1, troops: counterTroops,
         fatigue: Math.min(100, (u.fatigue ?? 0) + FATIGUE_PER_MELEE),
         facing: hexDirection(u.coord, target.coord),
         charge: undefined,
+        effects,
       };
     }
     // Chain damage to linked units.
@@ -2230,7 +2332,15 @@ export function applyStratagem(
       return finalize(updated, unitId, stratagem, 0);
     }
     case 'defend': {
-      const updated = setStatus(b, unit.id, { kind: 'defending', turnsLeft: 1 });
+      // 據守整隊 — digging in also re-forms a unit whose ranks were thrown into
+      // disorder (a charge / a river ford), clearing 陷亂 on the spot.
+      const reformed = {
+        ...b,
+        units: b.units.map((u) => (u.id === unit.id
+          ? { ...u, effects: u.effects.filter((e) => e.kind !== 'disorder') }
+          : u)),
+      };
+      const updated = setStatus(reformed, unit.id, { kind: 'defending', turnsLeft: 1 });
       return finalize(updated, unitId, stratagem, 0);
     }
     case 'rally': {
@@ -2345,13 +2455,15 @@ export function applyStratagem(
     case 'false-retreat': {
       if ((off?.stats.intelligence ?? 0) < 70)
         return { battle: b, ok: false, reason: 'requires INT 70' };
-      // Confuse the closest enemy.
+      // 詐敗誘敵 — the caster feigns a rout (sets a 詐敗 trap on itself: the next
+      // pursuer to strike it springs a full-strength回馬 counter and is thrown
+      // into disorder) AND rattles the nearest foe into giving chase.
       const enemies = b.units
         .filter((u) => u.side !== unit.side)
         .sort((a, c) => hexDistance(unit.coord, a.coord) - hexDistance(unit.coord, c.coord));
-      const closest = enemies[0];
-      if (!closest) return { battle: b, ok: false, reason: 'no enemies' };
-      const next = setStatus(b, closest.id, { kind: 'confused', turnsLeft: 2 });
+      let next = setStatus(b, unit.id, { kind: 'feign-rout', turnsLeft: 3 });
+      if (enemies[0]) next = setStatus(next, enemies[0].id, { kind: 'confused', turnsLeft: 2 });
+      next = { ...next, log: [...(next.log ?? []), { turn: b.turn, text: `${off?.name.zh ?? '我軍'}佯敗回旋,虛留破綻以誘追兵。`, kind: 'event' as const }] };
       return finalize(next, unitId, stratagem, 0);
     }
     case 'precognition': {
@@ -2775,6 +2887,28 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
         (f) => f.side === u.side && f.id !== u.id && f.troops > 0 && hexDistance(f.coord, u.coord) === 1,
       );
       if (!hasShoulder) return { ...u, morale: Math.max(0, u.morale - 6) };
+      return u;
+    });
+
+    // 寡不敵眾 / 眾寡懸殊 — local force balance shows in the heart: a unit hemmed
+    // in by a far heavier press of foes (within 2 hexes) wavers (−4), while one
+    // that overwhelmingly outweighs the enemy around it takes heart (+3). Quiet
+    // pockets with no contact nearby are left alone.
+    tickedUnits = tickedUnits.map((u) => {
+      if (u.troops <= 0 || isRouting(u)) return u;
+      let friend = 0;
+      let foe = 0;
+      for (const o of tickedUnits) {
+        if (o.troops <= 0 || o.isSupply) continue;
+        const d = hexDistance(o.coord, u.coord);
+        if (d > 2) continue;
+        if (o.side === u.side) friend += o.troops;
+        else foe += o.troops;
+      }
+      if (foe <= 0) return u;
+      const ratio = friend / foe;
+      if (ratio < 0.5 && u.morale > 0) return { ...u, morale: Math.max(0, u.morale - 4) };
+      if (ratio > 2.5 && u.morale < 100) return { ...u, morale: Math.min(100, u.morale + 3) };
       return u;
     });
   }
@@ -3505,6 +3639,13 @@ function aiTryStratagem(
   // 1. defend self if our troops are low
   if (unit.troops / Math.max(1, unit.maxTroops) < 0.4) {
     candidates.push({ id: 'defend', target: unit.coord });
+  }
+  // 1b. 詐敗誘敵 — a cunning officer pressed in melee feigns a rout to bait the
+  // pursuer onto a回馬槍 (sets a 詐敗 trap on itself; springs on the next hit).
+  const pressed = enemies.some((e) => hexDistance(unit.coord, e.coord) === 1);
+  if (off.stats.intelligence >= 70 && pressed && !unit.effects.some((e) => e.kind === 'feign-rout')
+      && (off.traits?.includes('cunning') || off.traits?.includes('precognitive') || unit.troops / Math.max(1, unit.maxTroops) < 0.6)) {
+    candidates.push({ id: 'false-retreat', target: unit.coord });
   }
   // 2. rally a wounded friend within 2
   if (off.stats.intelligence >= 60) {

@@ -229,7 +229,9 @@ export type TacticalStatus =
   | { kind: 'chained'; turnsLeft: number; chainedWith: EntityId[] }
   | { kind: 'revealed'; turnsLeft: number }
   | { kind: 'demoralized'; turnsLeft: number }
-  | { kind: 'starving'; turnsLeft: number }; // 糧盡 — desertion + sapped fighting power
+  | { kind: 'starving'; turnsLeft: number } // 糧盡 — desertion + sapped fighting power
+  | { kind: 'disorder'; turnsLeft: number } // 陷亂 — ranks broken by a charge / river crossing: hits weaker, is hit harder, until it re-forms (據守 or a turn)
+  | { kind: 'feign-rout'; turnsLeft: number }; // 詐敗 — looks broken to lure pursuers; springs on the first attacker (full counter + disorders them)
 
 /** Stratagem types — single-use special actions during the battle. */
 export type StratagemId =

@@ -5277,25 +5277,24 @@ function UnitPanel3D({
       </div>
       {unit.effects.length > 0 && (
         <div style={{ display: 'flex', gap: '0.2rem', flexWrap: 'wrap', marginTop: '0.4rem' }}>
-          {unit.effects.map((e, i) => (
-            <span key={i} style={{
-              fontSize: '0.62rem',
-              padding: '1px 5px',
-              border: `1px solid ${
-                e.kind === 'burning' ? '#ff7050'
-                : e.kind === 'confused' ? '#c19a3b'
-                : e.kind === 'starving' ? '#d8b24a'
-                : e.kind === 'demoralized' ? '#c89090'
-                : '#88b7e8'
-              }`,
-              color: e.kind === 'burning' ? '#ff7050'
-                : e.kind === 'confused' ? '#c19a3b'
-                : e.kind === 'starving' ? '#d8b24a'
-                : e.kind === 'demoralized' ? '#c89090'
-                : '#88b7e8',
-              borderRadius: 2,
-            }}>{e.kind} {e.turnsLeft}t</span>
-          ))}
+          {unit.effects.map((e, i) => {
+            const EFF_ZH: Record<string, string> = {
+              burning: '燃燒', confused: '混亂', defending: '據守', chained: '連環',
+              revealed: '現形', demoralized: '沮喪', starving: '糧盡', disorder: '陷亂', 'feign-rout': '詐敗',
+            };
+            const col = e.kind === 'burning' ? '#ff7050'
+              : e.kind === 'confused' || e.kind === 'disorder' ? '#c19a3b'
+              : e.kind === 'starving' ? '#d8b24a'
+              : e.kind === 'demoralized' ? '#c89090'
+              : e.kind === 'feign-rout' ? '#c178c7'
+              : '#88b7e8';
+            return (
+              <span key={i} style={{
+                fontSize: '0.62rem', padding: '1px 5px',
+                border: `1px solid ${col}`, color: col, borderRadius: 2,
+              }}>{t(EFF_ZH[e.kind] ?? e.kind, e.kind)} {e.turnsLeft}t</span>
+            );
+          })}
         </div>
       )}
 
