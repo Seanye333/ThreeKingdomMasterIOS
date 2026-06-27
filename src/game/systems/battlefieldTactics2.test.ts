@@ -87,7 +87,7 @@ describe('督戰壓陣 — an enforcer keeps the line from breaking', () => {
   it('a unit beside its steady commander is floored above 0 (won\'t rout)', () => {
     const run = (withCmd: boolean) => {
       const atk = mkUnit({ id: 'A', officerId: 'oA', side: 'attacker', coord: { col: 1, row: 2 }, troops: 100000, maxTroops: 100000 });
-      const tgt = mkUnit({ id: 'D', officerId: 'oD', side: 'defender', coord: { col: 2, row: 2 }, troops: 100000, maxTroops: 100000, morale: 30 });
+      const tgt = mkUnit({ id: 'D', officerId: 'oD', side: 'defender', coord: { col: 2, row: 2 }, troops: 100000, maxTroops: 100000, morale: 10 });
       const units = [atk, tgt];
       if (withCmd) units.push(mkUnit({ id: 'DC', officerId: 'oDC', side: 'defender', isCommander: true, coord: { col: 3, row: 2 }, morale: 100 }));
       const b = mkBattle({ units, tiles: mkTiles(8, 6) });

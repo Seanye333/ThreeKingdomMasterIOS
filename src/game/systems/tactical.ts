@@ -242,7 +242,7 @@ export function forecastAttack(
   let chargeMul = 1.0; let braced = false;
   const ch = attacker.charge;
   if (ch && ch.dist >= 2 && hexDistance(ch.from, target.coord) >= 2 && attacker.unitType !== 'siege' && attacker.unitType !== 'navy') {
-    chargeMul = 1 + Math.min(attacker.unitType === 'cavalry' ? 0.45 : 0.18, (attacker.unitType === 'cavalry' ? 0.12 : 0.05) * (ch.dist - 1));
+    chargeMul = 1 + Math.min(attacker.unitType === 'cavalry' ? 0.32 : 0.15, (attacker.unitType === 'cavalry' ? 0.09 : 0.045) * (ch.dist - 1));
     if (target.unitType === 'spearmen' && typeof target.facing === 'number' && dirGap(hexDirection(target.coord, attacker.coord), target.facing) <= 1) { braced = true; chargeMul = 0.7; }
   }
   const escapeHexes = hexNeighbours(target.coord).filter((n) => { const t = tileAt(b, n); return t && moveCost(b, n) < 99 && !unitAt(b, n); });
@@ -267,10 +267,13 @@ export function forecastAttack(
   const freshMul = 1.05 - Math.min(0.30, (attacker.fatigue ?? 0) / 333);
   const fatigueMul = b.turn >= 10 ? Math.max(0.6, 1 - 0.05 * (b.turn - 9)) : 1;
 
-  const fwd = ctr * aTerrMod * shield * weaponMul * flankMul * heightMul * pincerMul * momentumMul
+  const armorMul = ARM_ARMOR[target.unitType] ?? 1;
+  // predictAttackDamage's base omits COMBAT_LETHALITY — fold it in so the preview
+  // matches the real hit.
+  const fwd = COMBAT_LETHALITY * ctr * aTerrMod * shield * weaponMul * flankMul * heightMul * pincerMul * momentumMul
     * aMoraleMul * pursuitMul * chargeMul * encircleMul * disorderMul * coverMul
     * aWoundedMul * dWoundedMul * aGradeMul * dGradeResistMul * nightMul * crossingMul * streetMul
-    * freshMul * fatigueMul;
+    * freshMul * fatigueMul * armorMul;
   const dmgMin = Math.max(0, Math.floor(p.min * fwd));
   const dmgMax = Math.max(0, Math.floor(p.max * fwd));
   const willKill = dmgMax >= target.troops;
@@ -414,6 +417,18 @@ const FATIGUE_SPENT = 70; // at/above this, a unit fields one fewer AP
  *  below SHAKEN it wavers; at 0 it is 潰走 (routing). */
 const MORALE_HIGH = 80;
 const MORALE_SHAKEN = 40;
+
+/** 殺傷烈度 — global lethality scalar on base damage. Lower = combat is more
+ *  attrition than alpha-strike, so a unit survives the first blow to retaliate
+ *  and counters/positioning/terrain/numbers matter (balance-sim tuned). */
+const COMBAT_LETHALITY = 0.45;
+/** 甲冑輕重 — per-arm durability (incoming-damage multiplier). 步/槍 are the
+ *  armoured line: they soak volleys and charges and grind (lower = tougher).
+ *  輕騎 is shock, not a shield wall — fast and hard-hitting but soft when caught.
+ *  Gives the slow foot a reason to exist and reins in cavalry's dominance. */
+const ARM_ARMOR: Partial<Record<UnitType, number>> = {
+  infantry: 0.85, spearmen: 0.85, cavalry: 1.3,
+};
 
 /** 潰走 — a unit still manned but whose heart has broken (morale 0). It can't
  *  attack, auto-flees toward its own edge, and is run down by pursuers until it
@@ -1786,8 +1801,8 @@ export function attackUnits(
   const ch = attacker.charge;
   if (ch && ch.dist >= 2 && hexDistance(ch.from, target.coord) >= 2
       && attacker.unitType !== 'siege' && attacker.unitType !== 'navy') {
-    const per = attacker.unitType === 'cavalry' ? 0.12 : 0.05;
-    const cap = attacker.unitType === 'cavalry' ? 0.45 : 0.18;
+    const per = attacker.unitType === 'cavalry' ? 0.09 : 0.045;
+    const cap = attacker.unitType === 'cavalry' ? 0.32 : 0.15;
     chargeMul = 1 + Math.min(cap, per * (ch.dist - 1));
     // 立防拒馬 — spears are inherently anti-charge: a spearman FACING the charger
     // sets against it and breaks the impact, no manual 據守 needed (this is what
@@ -1900,12 +1915,14 @@ export function attackUnits(
     ? tacticalDefenseMul(To, { ...aTraitCtx, unitType: target.unitType, terrain: (dTerrainTile?.terrain ?? 'plain'), isAttacker: target.side === 'attacker', enemyForceId: ao?.forceId ?? undefined })
     : 1;
   const base =
-    Math.floor((attacker.troops * (aWar + 30) * (0.85 + rng() * 0.3)) / (dLead + 50));
+    Math.floor((attacker.troops * (aWar + 30) * (0.85 + rng() * 0.3) * COMBAT_LETHALITY) / (dLead + 50));
+  // 甲冑輕重 — armoured foot soak blows; light horse takes extra punishment.
+  const armorMul = ARM_ARMOR[target.unitType] ?? 1;
   let damage = Math.floor(
     base * counter * aTerrainMod * weatherMul * defenseMul * offenseMul *
     dShield * ambushBonus * fatigueMul * freshMul * aWoundedMul * dWoundedMul * shipMul * pincerMul *
     nightMul * heightMul * flankMul * crossingMul * streetMul * comboMul * formCounterMul * eliteMul * aGradeMul * dGradeResistMul * aGrowthMul * aSetMul *
-    aMoraleMul * pursuitMul * chargeMul * weaponMul * encircleMul * disorderMul * momentumMul * coverMul *
+    aMoraleMul * pursuitMul * chargeMul * weaponMul * encircleMul * disorderMul * momentumMul * coverMul * armorMul *
     aTraitMul * dTraitDefMul,
   );
   if (targetDefending) damage = Math.floor(damage / 2);
