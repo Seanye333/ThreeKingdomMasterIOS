@@ -4554,15 +4554,18 @@ export function TacticalBattleScreen3D() {
           <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
             <span style={{ fontSize: '0.7rem', color: '#d4a84a' }}>{t('戰前部署:', 'Prep:')}</span>
             {([
-              { kind: 'ambush' as const, zh: '⚔ 伏兵', tip: '最強一軍潛伏 — 敵近不見,首擊帶伏擊加成' },
-              { kind: 'night' as const, zh: '🌙 夜襲', tip: '入夜開戰 — 弓弩射程縮短,伏兵傷害更狠' },
-              { kind: 'tunnel' as const, zh: '⛏ 地道', tip: '攻城方限定 — 最弱一軍自地道潛入牆內' },
-            ]).map((p) => (
+              { kind: 'ambush' as const, zh: '⚔ 伏兵', tip: '最強一軍潛伏 — 敵近不見,首擊帶伏擊加成、且亂敵陣腳' },
+              { kind: 'night' as const, zh: '🌙 夜襲', tip: '入夜開戰 — 弓弩射程縮短,夜霧蔽視,伏兵傷害更狠' },
+              { kind: 'tunnel' as const, side: 'attacker' as const, zh: '⛏ 地道', tip: '攻城方限定 — 最弱一軍自地道潛入牆內(守將機警則中伏)' },
+              { kind: 'caltrops-trap' as const, side: 'defender' as const, zh: '🪤 拒馬', tip: '守方限定 — 陣前布鐵蒺藜陷坑,挫銳騎(騎兵 2.5× 傷)' },
+              { kind: 'fire-prep' as const, side: 'attacker' as const, zh: '🔥 火計', tip: '攻城方限定 — 預伏油薪,開局敵營已起火(雨雪不可)' },
+              { kind: 'decoy' as const, zh: '🚩 疑兵', tip: '虛張旗鼓 — 敵疑我眾,開局士氣 −10' },
+            ]).filter((p) => !('side' in p) || p.side === playerSide).map((p) => (
               <button
                 key={p.kind}
                 title={p.tip}
                 onClick={() => {
-                  const r = applyBattlePrep(battle, playerSide, p.kind);
+                  const r = applyBattlePrep(battle, playerSide, p.kind, officers);
                   if (r.ok) { start(r.battle); playSfx('shout'); }
                   else setPrepMsg(r.reason ?? null);
                 }}
