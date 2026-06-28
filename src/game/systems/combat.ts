@@ -26,7 +26,7 @@ import { honorificEffects, honorificById } from '../data/honorifics';
 import { gradeAuraPowerMul, gradeAuraMorale, itemMasteryMul, enemyMoraleShock, holdsTheLine } from './gradeCombat';
 import { growthPowerMul, grantXp } from './growth';
 import { deriveWeaponType, type WeaponType } from '../data/weaponTypes';
-import { weaponMatchupMul, weaponMasterySkill } from './tactical';
+import { weaponMatchupMul, weaponMasterySkill, pickAiFormation, formationCounterMul } from './tactical';
 import { arrivalFatigueMorale } from './marchPace';
 import { itemSetBonuses } from '../data/itemSets';
 import { selectSiegeEngine } from '../data/siegeEngines';
@@ -812,10 +812,18 @@ export function resolveBattle(
     !!o && !!weaponMasterySkill(w) && !!o.skills?.includes(weaponMasterySkill(w) as never);
   const aWeaponMul = weaponMatchupMul(aWeapon, dWeapon, weaponToUnitApprox(dWeapon), false, masters(attacker.commander, aWeapon)).mul;
   const dWeaponMul = weaponMatchupMul(dWeapon, aWeapon, weaponToUnitApprox(aWeapon), false, masters(defender.commander, dWeapon)).mul;
+  // 陣克陣(接抽象戰) — each marshal draws up a formation suited to the host its
+  // lead commander would field (arm proxied from the weapon class); the
+  // attacker's shape may counter the defender's (攻陣破守陣). A light edge
+  // (≤×1.15, capped by formationCounterMul) so weapon picks + wits carry shape
+  // into the auto-resolve, where formations were tactical-grid-only before.
+  const aFormAbstract = pickAiFormation([weaponToUnitApprox(aWeapon)], attacker.commander?.stats.intelligence ?? 60);
+  const dFormAbstract = pickAiFormation([weaponToUnitApprox(dWeapon)], defender.commander?.stats.intelligence ?? 60, { defensive: true });
+  const aFormMul = formationCounterMul(aFormAbstract, dFormAbstract);
   const aPower =
     aBlended * Math.sqrt(attacker.troops) * aSkillEffects.powerMultiplier * aElitePower *
     (stratEffect.attackerPowerMul ?? 1) * aPolicy.attackMul * aTraitMods.attackMul * aComboMul *
-    aRelBonus.powerMul * rivalMul * aTitlePowerMul * aCasusMul * aNavalMul * aGuardMul * aPrestigeMul * aThemeMul * aGradeMul * aSetMul * aWeaponMul;
+    aRelBonus.powerMul * rivalMul * aTitlePowerMul * aCasusMul * aNavalMul * aGuardMul * aPrestigeMul * aThemeMul * aGradeMul * aSetMul * aWeaponMul * aFormMul;
 
   const defenderIds = defenderPool.map((o) => o.id);
   const dBaseBlended =
@@ -868,7 +876,7 @@ export function resolveBattle(
   // a 守 set (四象神甲 etc.) on the commander adds to that.
   const aArmorMul = armorMitigationMul(attackerPool) * aSet.guardMul;
   const dArmorMul = armorMitigationMul(defenderPool) * dSet.guardMul;
-  const aLossRate = clamp01(
+  let aLossRate = clamp01(
     (dRatio + variance) *
       aSkillEffects.ownLossMultiplier *
       dSkillEffects.enemyLossMultiplier *
@@ -878,7 +886,7 @@ export function resolveBattle(
       aTraitMods.lossMul *
       aArmorMul,
   );
-  const dLossRate = clamp01(
+  let dLossRate = clamp01(
     (aRatio - variance) *
       dSkillEffects.ownLossMultiplier *
       aSkillEffects.enemyLossMultiplier *
@@ -888,6 +896,23 @@ export function resolveBattle(
       cityDrillLossMultiplier(ctx?.city?.drill) *
       dArmorMul,
   );
+
+  // 兵敗如山倒 — a decisively-lost battle isn't mere attrition, it's a ROUT: the
+  // broken host is cut down in the pursuit (追擊掩殺). Past a clear win the
+  // loser's losses swell (up to +30%) and the victor is spared a little. Muted
+  // for a defender holding city walls (they don't break into the open and flee).
+  const decisive = Math.max(aRatio, dRatio);
+  if (decisive >= 0.70) {
+    const routMul = 1 + Math.min(0.30, (decisive - 0.70) * 1.5);
+    const heldWalls = !!ctx?.city && !ctx.allowPursuit; // a walled siege defence
+    if (aRatio > dRatio) {                       // attacker routs the defender
+      dLossRate = clamp01(dLossRate * (heldWalls ? 1 + (routMul - 1) * 0.4 : routMul));
+      aLossRate = clamp01(aLossRate * 0.92);
+    } else {                                     // defender breaks the assault; attacker flees
+      aLossRate = clamp01(aLossRate * routMul);
+      dLossRate = clamp01(dLossRate * 0.92);
+    }
+  }
 
   const attackerLosses = Math.floor(attacker.troops * aLossRate);
   const defenderLosses = Math.floor(defender.troops * dLossRate);

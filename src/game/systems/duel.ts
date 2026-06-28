@@ -5,6 +5,34 @@ import { effectivePrestigeEffects } from '../data/prestige';
 import { afflictionDelta } from './afflictions';
 import { officerLevel } from './officerGrade';
 import { gradeCombatBonus, itemMasteryMul, duelFirstStrike } from './gradeCombat';
+import { deriveWeaponType, type WeaponType } from '../data/weaponTypes';
+
+/**
+ * 兵裝相剋(接單挑) — the duellists' weapon classes clash (§5.9), where before a
+ * 1v1 read only raw 武力 + items. A halberd hooks a horseman, a mace/crossbow
+ * shatters armour, a light blade bites it poorly — a modest prowess swing (±~6),
+ * doubled by a weapon-master (god-of-war 等). Duel-tuned (no terrain/flank).
+ */
+function duelWeaponEdge(self: Officer, foe: Officer): number {
+  const aw: WeaponType = deriveWeaponType(self);
+  const dw: WeaponType = deriveWeaponType(foe);
+  const dMounted = dw === 'cavalry';
+  const dHeavy = dw === 'spear' || dw === 'halberd' || dw === 'sabre' || dw === 'cavalry' || dw === 'siege';
+  let m = 1;
+  if (aw === 'halberd' && dMounted) m *= 1.15;          // 戟制騎
+  else if (aw === 'spear' && dMounted) m *= 1.07;        // 槍拒馬
+  if ((aw === 'crossbow' || aw === 'siege') && dHeavy) m *= 1.10; // 破甲
+  if (aw === 'sword' && (dw === 'halberd' || dw === 'cavalry' || dw === 'siege')) m *= 0.92; // 劍難破重
+  if (aw === 'sabre' && (dw === 'sword' || dw === 'none')) m *= 1.06; // 刀破輕
+  if (dw === 'fan') m *= 1.10; else if (dw === 'none') m *= 1.06;     // 襲書生/欺徒手
+  if (m > 1) {
+    const skill = aw === 'bow' || aw === 'crossbow' ? 'archer-master'
+      : aw === 'cavalry' ? 'cavalry-master' : aw === 'siege' ? 'siegemaster'
+      : (aw === 'spear' || aw === 'halberd' || aw === 'sabre' || aw === 'sword') ? 'god-of-war' : null;
+    if (skill && self.skills?.includes(skill as never)) m = 1 + (m - 1) * 2; // 兵裝精通
+  }
+  return (Math.max(0.85, Math.min(1.3, m)) - 1) * 45; // ≈ ±6 on the prowess score
+}
 
 /**
  * One-on-one duel resolution between two officers — a multi-round 氣力 bout.
@@ -88,8 +116,10 @@ export function resolveDuel(input: DuelInput): DuelResult {
   // rollOne gives the display breakdown; subtract its die for the fixed prowess.
   const a = rollOne(input.attacker, rng);
   const d = rollOne(input.defender, rng);
-  const aStatic = a.total - a.diceRoll;
-  const dStatic = d.total - d.diceRoll;
+  // 兵裝相剋 — the weapon-class clash tilts the fixed prowess (a 戟將 wresting a
+  // 騎將 from the saddle, a 劍士 struggling against heavy armour).
+  const aStatic = a.total - a.diceRoll + duelWeaponEdge(input.attacker, input.defender);
+  const dStatic = d.total - d.diceRoll + duelWeaponEdge(input.defender, input.attacker);
 
   // 氣力 — graded champions enter the bout with a deeper reserve (品階威儀).
   let aSt = 100 + gradeCombatBonus(input.attacker).duelStamina;
