@@ -37,6 +37,11 @@ export const NAMED_BATTLE_MAPS: NamedBattleMap[] = [
       { coord: { col: 5, row: 3 }, label: { en: 'Bridge', zh: '橋' }, role: 'bridge' },
       { coord: { col: 8, row: 3 }, label: { en: 'Ford', zh: '渡' }, role: 'bridge' },
     ],
+    windDirection: 'east', // 東南風 — the fire blows down onto the chained northern fleet
+    reinforcements: [
+      { arriveTurn: 3, side: 'defender', officerId: 'huang-gai', troops: 1200, unitType: 'navy', edge: 'south',
+        announcement: '🔥 黃蓋詐降,火船蔽江直撞連環 — 烈焰沖天!' },
+    ],
     defenderObjective: { kind: 'survive-turns', turnsRequired: 6 },
     introZh: '北軍艦船相連、鎖如平地;只待東南風起,一炬可焚連營。守得風來,則勝。',
     introEn: 'Red Cliffs — the chained northern fleet awaits the south wind and the fire. Hold until it turns.',
@@ -103,6 +108,10 @@ export const NAMED_BATTLE_MAPS: NamedBattleMap[] = [
       { coord: { col: 5, row: 4 }, label: { en: 'Changban Bridge', zh: '長坂橋' }, role: 'bridge' },
       { coord: { col: 5, row: 6 }, label: { en: 'Civilian Wagons', zh: '民之車' }, role: 'wagon' },
     ],
+    reinforcements: [
+      { arriveTurn: 3, side: 'defender', officerId: 'zhang-fei', troops: 1000, unitType: 'spearmen', edge: 'west',
+        announcement: '🗡 張飛橫矛立馬當陽橋 — 「燕人張翼德在此,誰敢與我決死!」' },
+    ],
     defenderObjective: { kind: 'survive-turns', turnsRequired: 5 },
     introZh: '長坂橋頭,張飛據水斷橋、趙雲七進七出。掩護百姓,撐到援軍即可。',
     introEn: 'Changban — hold the bridge and cover the people until relief comes.',
@@ -131,6 +140,9 @@ export const NAMED_BATTLE_MAPS: NamedBattleMap[] = [
     specialTiles: [
       { coord: { col: 5, row: 3 }, label: { en: 'Star Hill', zh: '星之丘' }, role: 'hill' },
     ],
+    defenderObjective: { kind: 'survive-turns', turnsRequired: 6 }, // 司馬懿據守不出,待星落
+    introZh: '武侯六出,陳兵五丈原。司馬懿堅壁拒戰 —— 蜀軍須速戰,魏軍但守得秋風起,大事定矣。',
+    introEn: 'Wuzhang Plains — Zhuge Liang\'s last march. Sima Yi will not be drawn; hold until the autumn wind falls and the star with it.',
   },
   {
     id: 'map-guandu',
@@ -210,6 +222,9 @@ export const NAMED_BATTLE_MAPS: NamedBattleMap[] = [
       { coord: { col: 10, row: 3 }, label: { en: 'Fancheng', zh: '樊城' }, role: 'flag' },
       { coord: { col: 5, row: 2 }, label: { en: 'Han Dam (Guan Yu)', zh: '漢水堰' }, role: 'bridge' },
     ],
+    defenderObjective: { kind: 'survive-turns', turnsRequired: 6 }, // 曹仁守孤城待援
+    introZh: '關羽圍樊,漢水暴漲。決漢水堰則七軍盡沒(水淹七軍) —— 曹仁但能守得援軍至,圍自解矣。',
+    introEn: 'Fancheng — break the Han dam and the relief army drowns (水淹七軍). Cao Ren must hold the walls until rescue comes.',
   },
   {
     id: 'map-dingjun',
@@ -233,6 +248,10 @@ export const NAMED_BATTLE_MAPS: NamedBattleMap[] = [
     })(),
     specialTiles: [
       { coord: { col: 4, row: 3 }, label: { en: 'High Plateau', zh: '山頂' }, role: 'hill' },
+    ],
+    reinforcements: [
+      { arriveTurn: 3, side: 'attacker', officerId: 'huang-zhong', troops: 1500, unitType: 'cavalry', edge: 'west',
+        announcement: '⚔ 老將黃忠居高鼓譟、勢如雷霆 — 直取夏侯淵!' },
     ],
     attackerObjective: { kind: 'destroy-commander' },
     introZh: '定軍山,老黃忠居高臨下、一刀斬夏侯淵。取敵主將首級者勝。',
@@ -262,6 +281,10 @@ export const NAMED_BATTLE_MAPS: NamedBattleMap[] = [
     specialTiles: [
       { coord: { col: 4, row: 2 }, label: { en: 'Lone Hill (Ma Su\'s mistake)', zh: '孤山' }, role: 'hill' },
       { coord: { col: 3, row: 3 }, label: { en: 'Spring', zh: '水源' }, role: 'supply' },
+    ],
+    reinforcements: [
+      { arriveTurn: 4, side: 'defender', officerId: 'wang-ping', troops: 1200, unitType: 'infantry', edge: 'west',
+        announcement: '🛡 王平鳴鼓徐退、當道拒守 — 收攏敗兵,不教全軍盡潰!' },
     ],
     defenderObjective: { kind: 'hold-tile', tileCoord: { col: 3, row: 3 }, turnsRequired: 5 },
     introZh: '街亭當道,守住水源即守住糧道。莫學馬謖舍水上山,自陷絕地。',
@@ -294,6 +317,10 @@ export const NAMED_BATTLE_MAPS: NamedBattleMap[] = [
     specialTiles: [
       { coord: { col: 7, row: 0 }, label: { en: 'Xiaoyao Ford', zh: '逍遙津' }, role: 'bridge' },
     ],
+    reinforcements: [
+      { arriveTurn: 3, side: 'defender', officerId: 'zhang-liao', troops: 1600, unitType: 'cavalry', edge: 'east',
+        announcement: '🐎 張遼率八百死士直衝吳營 — 威震逍遙津!' },
+    ],
     defenderObjective: { kind: 'survive-turns', turnsRequired: 6 },
     introZh: '合肥逍遙津,張遼八百破十萬。孤城拒眾,守得住便是威震江東。',
     introEn: 'Hefei — 800 against a host. Hold the lone fort and shatter their nerve.',
@@ -324,6 +351,7 @@ export const NAMED_BATTLE_MAPS: NamedBattleMap[] = [
     specialTiles: [
       { coord: { col: 10, row: 4 }, label: { en: 'Lu Xun\'s Observation Hill', zh: '陸遜瞭望' }, role: 'hill' },
     ],
+    windDirection: 'east', // 東風 — fire sweeps the forested camps (火燒連營)
     defenderObjective: { kind: 'survive-turns', turnsRequired: 6 },
     introZh: '夷陵連營七百里,皆紮林間。陸遜按兵不動,只待東風一炬 — 火燒連營。',
     introEn: 'Yiling — 700 li of camps in the woods. Bide your time for the wind and the fire.',
@@ -381,6 +409,10 @@ export const NAMED_BATTLE_MAPS: NamedBattleMap[] = [
     specialTiles: [
       { coord: { col: 6, row: 8 }, label: { en: 'Xinye Town', zh: '新野城' }, role: 'flag' },
     ],
+    windDirection: 'south', // 風助火勢 — Zhuge's fire engulfs the wooded town
+    defenderObjective: { kind: 'survive-turns', turnsRequired: 5 }, // 火燒新野,遲滯曹軍追兵
+    introZh: '火燒新野 —— 棄一座空城,引曹軍入火林。風起焰騰,撐住延滯追兵,百姓得渡。',
+    introEn: 'Xinye — abandon the town as a torch. Lure the pursuit into the burning woods and delay them long enough.',
   },
   {
     id: 'map-tongguan',
@@ -411,8 +443,8 @@ export const NAMED_BATTLE_MAPS: NamedBattleMap[] = [
   },
   {
     id: 'map-hanzhong',
-    name: { en: 'Hanzhong', zh: '漢中' },
-    description: 'Where Huang Zhong slew Xiahou Yuan at Mt. Dingjun. Forested ridges and steep cliffs.',
+    name: { en: 'Yangping Pass', zh: '陽平關' },
+    description: 'The gateway into the Hanzhong basin — forested ridges and steep cliffs barring the road south. Liu Bei contests Cao Cao for the whole region.',
     width: 14,
     height: 12,
     weather: 'clear',
@@ -436,8 +468,11 @@ export const NAMED_BATTLE_MAPS: NamedBattleMap[] = [
       return out;
     })(),
     specialTiles: [
-      { coord: { col: 7, row: 6 }, label: { en: 'Mt. Dingjun Watch', zh: '定軍山' }, role: 'hill' },
+      { coord: { col: 7, row: 6 }, label: { en: 'Pass Watchtower', zh: '關樓' }, role: 'hill' },
     ],
+    defenderObjective: { kind: 'survive-turns', turnsRequired: 6 }, // 曹軍扼關待援
+    introZh: '陽平天險,一夫當關。曹軍據關以拒劉備 —— 守住關隘,則漢中可保;一旦失守,蜀軍長驅而入。',
+    introEn: 'Yangping Pass — hold this gate and Hanzhong is safe; lose it and Liu Bei pours into the basin.',
   },
   // ─── Three more famous battlefields ─────────────────────────────────
   {
@@ -546,6 +581,8 @@ export const NAMED_MAPS_BY_CITY: Record<string, string> = {
   'fancheng':  'map-fancheng',
   'jiangling': 'map-maicheng',
   'hanzhong':  'map-dingjun',
+  'mei':       'map-wuzhang-plains', // 郿 — 諸葛亮 last campaign by the 五丈原
+  'yangping':  'map-hanzhong',       // 陽平關 — the gateway into the Hanzhong basin
   'tianshui':  'map-jieting',
   'chibi':     'map-red-cliffs',
   'changban':  'map-changban',

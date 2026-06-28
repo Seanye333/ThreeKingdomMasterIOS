@@ -93,6 +93,9 @@ export interface NamedBattleMap {
   /** Default weather and time. */
   weather: Weather;
   timeOfDay: TimeOfDay;
+  /** 名向之風 — a locked wind direction so the signature mechanic blows true
+   *  (赤壁's fire rides the 東南風 onto the chained fleet, not a random way). */
+  windDirection?: 'north' | 'south' | 'east' | 'west' | 'calm';
   /** Optional scripted reinforcements. */
   reinforcements?: Reinforcement[];
   /** Special hex tags for objectives (e.g. supply, bridge). */
