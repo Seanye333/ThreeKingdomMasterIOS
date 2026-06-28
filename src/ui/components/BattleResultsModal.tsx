@@ -38,6 +38,9 @@ export function BattleResultsModal({ battle, playerSide, onClose }: Props) {
   const isDraw = !resolution.winner;
   const winnerZh = won ? '勝利' : resolution.winner ? '敗北' : '引分';
   const winnerEn = won ? 'Victory' : resolution.winner ? 'Defeat' : 'Draw';
+  // 戰果配圖 — optional key-art behind the verdict banner: field/siege × win/loss.
+  // Drop public/battle/<key>.jpg to light it up; absent → the styled banner alone.
+  const battleArtKey = isDraw ? null : `${battle.field ? 'field' : 'siege'}-${won ? 'victory' : 'defeat'}`;
 
   // Pick a victor's voice line from a surviving officer on the winning side.
   const winnerUnits = resolution.winner
@@ -57,16 +60,38 @@ export function BattleResultsModal({ battle, playerSide, onClose }: Props) {
     <div className={styles.backdrop}>
       <div className={styles.modal}>
         <div className={styles.headerBanner}>
+          {battleArtKey && (
+            <>
+              <img
+                src={`${import.meta.env.BASE_URL}battle/${battleArtKey}.jpg`}
+                alt=""
+                aria-hidden="true"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.55, zIndex: 0, pointerEvents: 'none' }}
+              />
+              {/* 壓暗罩 — keep the verdict text/chop crisp over the art. */}
+              <div
+                aria-hidden="true"
+                style={{
+                  position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none',
+                  background: won
+                    ? 'linear-gradient(180deg, rgba(18,11,5,0.42) 0%, rgba(18,11,5,0.28) 50%, rgba(18,11,5,0.62) 100%)'
+                    : 'linear-gradient(180deg, rgba(8,9,13,0.52) 0%, rgba(8,9,13,0.38) 50%, rgba(8,9,13,0.70) 100%)',
+                }}
+              />
+            </>
+          )}
           {lang !== 'en' && (
             <div
               className={`${styles.bannerZh} ${
                 won ? styles.bannerZhVictory : styles.bannerZhDefeat
               }`}
+              style={{ position: 'relative', zIndex: 1 }}
             >
               {winnerZh}
             </div>
           )}
-          {lang !== 'zh' && <div className={styles.bannerEn}>{winnerEn}</div>}
+          {lang !== 'zh' && <div className={styles.bannerEn} style={{ position: 'relative', zIndex: 1 }}>{winnerEn}</div>}
           {/* 朱印 — 「捷」 in victory, 「敗」 in defeat, 「和」 on a draw. */}
           {!isDraw && (
             <span className={styles.sealStamp}>
