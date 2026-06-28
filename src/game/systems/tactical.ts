@@ -382,6 +382,21 @@ export function forecastAttack(
   const eliteMul = (ELITE_UNITS[attacker.officerId]?.atkMul ?? 1) * (ELITE_UNITS[target.officerId]?.defMul ?? 1);
   const weatherMul = weatherDamageMul(b.weather, attacker.unitType);
   const ambushFcMul = attacker.hidden ? (b.timeOfDay === 'night' ? 1.5 : 1.3) : 1.0;
+  // 歷練/神兵套/性格專長 — the last four attackUnits multipliers, mirrored so the
+  // preview no longer under-reports a seasoned, geared or specialist officer
+  // (each can swing the hit ±15–30%). Same context attackUnits builds.
+  const aGrowthMul = ao ? growthPowerMul(ao) : 1;
+  const aSetMul = ao ? itemSetPowerMul(ao) : 1;
+  const aTraitCtxFc = {
+    unitType: attacker.unitType, terrain: aTerr, isNight: b.timeOfDay === 'night',
+    isAmbush: ambushFcMul > 1.0, turn: b.turn,
+    troopRatio: attacker.maxTroops > 0 ? attacker.troops / attacker.maxTroops : 1,
+    isAttacker: attacker.side === 'attacker', enemyForceId: To?.forceId ?? undefined,
+  } as const;
+  const aTraitMul = ao ? tacticalDamageMul(ao, aTraitCtxFc) : 1;
+  const dTraitDefMul = To
+    ? tacticalDefenseMul(To, { ...aTraitCtxFc, unitType: target.unitType, terrain: dTerr, isAttacker: target.side === 'attacker', enemyForceId: ao?.forceId ?? undefined })
+    : 1;
   // predictAttackDamage's base omits COMBAT_LETHALITY — fold it in so the preview
   // matches the real hit.
   const fwd = COMBAT_LETHALITY * ctr * aTerrMod * shield * weaponMul * flankMul * heightMul * pincerMul * momentumMul
@@ -389,7 +404,8 @@ export function forecastAttack(
     * aWoundedMul * dWoundedMul * aGradeMul * dGradeResistMul * nightMul * crossingMul * streetMul
     * freshMul * fatigueMul * armorMul
     * defenseMul * offenseMul * formCounterMul * eliteMul * weatherMul * ambushFcMul
-    * weaponTerrainMul(aWeaponFc, aTerr);
+    * weaponTerrainMul(aWeaponFc, aTerr)
+    * aGrowthMul * aSetMul * aTraitMul * dTraitDefMul;
   const dmgMin = Math.max(0, Math.floor(p.min * fwd));
   const dmgMax = Math.max(0, Math.floor(p.max * fwd));
   const willKill = dmgMax >= target.troops;
@@ -1405,9 +1421,16 @@ export function findPath(b: TacticalBattle, unit: TacticalUnit, dest: HexCoord):
   const prev = new Map<string, HexCoord>();
   const frontier: Array<{ c: HexCoord; d: number }> = [{ c: unit.coord, d: 0 }];
 
+  const cellOrder = (c: HexCoord) => c.col * 1000 + c.row; // stable tie-break key
   while (frontier.length > 0) {
     let mi = 0;
-    for (let i = 1; i < frontier.length; i++) if (frontier[i].d < frontier[mi].d) mi = i;
+    for (let i = 1; i < frontier.length; i++) {
+      // 同代價取定向 — break ties by cell order (not frontier-insertion order), so
+      // an equal-cost path resolves to ONE deterministic shape every run (else a
+      // queued march could zig-zag differently and run out of AP — a flaky walk).
+      if (frontier[i].d < frontier[mi].d
+        || (frontier[i].d === frontier[mi].d && cellOrder(frontier[i].c) < cellOrder(frontier[mi].c))) mi = i;
+    }
     const { c, d } = frontier.splice(mi, 1)[0];
     if (key(c) === destK) break;
     if (d > (dist.get(key(c)) ?? Infinity)) continue;

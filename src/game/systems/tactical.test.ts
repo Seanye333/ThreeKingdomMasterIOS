@@ -360,7 +360,13 @@ describe('多步命令 — pathfinding & waypoint orders', () => {
     const cmdD = mkUnit({ id: 'd-cmd', officerId: 'od', side: 'defender', isCommander: true, coord: { col: 8, row: 2 } });
     const b = mkBattle({ units: [cmdA, cmdD], width: 9, height: 6, activeSide: 'defender' });
 
-    const after = endTurn(b);
+    // Pin the RNG so endTurn's weather roll stays clear — a fresh rain would
+    // (correctly) add a mud surcharge and stall the resumed march short of dest,
+    // which is real behaviour but not what THIS path-resumption test measures.
+    const orig = Math.random;
+    Math.random = () => 0.5; // ≥0.09 → weather holds clear, no mud surcharge
+    let after;
+    try { after = endTurn(b); } finally { Math.random = orig; }
     expect(after.activeSide).toBe('attacker');
     const movedA = after.units.find((x) => x.id === 'a-cmd')!;
     expect(movedA.coord).toEqual(dest);   // marched the full queued route
