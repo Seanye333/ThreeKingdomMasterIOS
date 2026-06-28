@@ -23,6 +23,7 @@ import { buildingBonuses } from './buildings';
 import { citySize, cityCarryingCapacity, cityEconCap, cityStatCap } from './citySize';
 import { marchDurationFor } from '../data/cities';
 import { marchSpeedMul, adjustMarchSeasons } from './marchPace';
+import { marchSpeedMultiplier } from './weather';
 import { isLand, terrainMarchCost, WORLD_SCALE } from '../data/geography';
 import { cityPos } from '../data/cityGeo';
 import {
@@ -88,6 +89,9 @@ export interface AIPlanInput {
   /** AI 強度 (1–5, default 3) — independent of difficulty. Scales how readily
    *  forces go on the offensive (see aggressionFromStrength). */
   aiStrength?: number;
+  /** This season's weather — 知天候 AI strikes while the wind serves a fire
+   *  attack and waits out a snowbound march (see weatherAttackMul). */
+  weather?: import('./weather').Weather;
   rng?: () => number;
 }
 
@@ -96,6 +100,26 @@ export interface AIPlanInput {
 export function aggressionFromStrength(level: number | undefined): number {
   const lv = Math.max(1, Math.min(5, Math.round(level ?? 3)));
   return [0.6, 0.8, 1.0, 1.2, 1.45][lv - 1];
+}
+
+/**
+ * 知天候 — multiplier on the attack threshold from this season's weather
+ * (>1 = strike now, <1 = bide). A 知火 commander on hand (a 智謀 who can light
+ * the fields) will press HARD while a dry gale serves the torch — 萬事俱備,
+ * 只欠東風. Snow grinds a march to a crawl, so a snowbound front holds. Rain is
+ * a mild damper. Weather-blind before this; now the AI campaigns by the sky.
+ */
+export function weatherAttackMul(
+  weather: import('./weather').Weather | undefined,
+  hasFireMind: boolean,
+): number {
+  if (!weather) return 1;
+  if (weather.kind === 'snow') return 0.82;          // 雪沒脛 — marching is misery
+  if (weather.kind === 'rain') return 0.94;          // muddy roads, wet bows
+  // A gale is the attacker's friend only if someone can exploit it with fire.
+  if (weather.kind === 'wind' && weather.windPower >= 2) return hasFireMind ? 1.18 : 1.04;
+  if (weather.kind === 'drought') return hasFireMind ? 1.08 : 1.0; // parched fields burn
+  return 1;
 }
 
 export interface AIPlanOutput {
@@ -184,6 +208,7 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
         hegemonId,
         input.date.season,
         aiAggressionMul,
+        input.weather,
       );
       if (!decision) continue;
 
@@ -1068,6 +1093,7 @@ function decideCommand(
   hegemonId: EntityId | null = null,
   season?: 'spring' | 'summer' | 'autumn' | 'winter',
   aiAggressionMul = 1,
+  weather?: import('./weather').Weather,
 ): Decision | null {
   const ownRulerId = forces[forceId]?.rulerOfficerId;
   // 前線 — a city bordering an enemy (or neutral) realm. Computed up-front so
@@ -1269,7 +1295,11 @@ function decideCommand(
       // 君主性格 — a tyrant/aggressive lord strikes on thin margins; a cautious
       // or scholarly one only when very safe.
       const personalityMul = personalityAttackMul(forces[forceId]?.personality);
-      const attackThreshold = baseThreshold * deterrence * focusRelax * postureMul * aiAggressionMul * personalityMul;
+      // 知天候 — a 智謀 commander on hand turns a dry gale into a 火攻 chance and
+      // presses; snow holds the column. (hasFireMind: someone here can light it.)
+      const hasFireMind = officersHere.some((c) => c.stats.intelligence >= 80);
+      const weatherMul = weatherAttackMul(weather, hasFireMind);
+      const attackThreshold = baseThreshold * deterrence * focusRelax * postureMul * aiAggressionMul * personalityMul * weatherMul;
 
       // Effective defender strength factors in city defense: a fortress at
       // defense 88 (Tongguan) counts as if the garrison were ~60% larger.
@@ -1312,8 +1342,12 @@ function decideCommand(
       }
       const companions = picked.map((c) => c.id);
 
-      // 行軍捷疾 — 健行/嚴峻/騎將/驛站 quicken an AI host too (鈍重 drags it).
-      const dur = adjustMarchSeasons(marchDurationFor(city, target, season), 'normal', marchSpeedMul([o, ...picked]));
+      // 行軍捷疾 — 健行/嚴峻/騎將/驛站 quicken an AI host too (鈍重 drags it),
+      // and the sky has its say: 雪沒脛/泥淖 drag the column, a tailwind hurries it.
+      const dur = adjustMarchSeasons(
+        marchDurationFor(city, target, season), 'normal',
+        marchSpeedMul([o, ...picked]) * marchSpeedMultiplier(weather),
+      );
       const cmd: MarchCommand = {
         type: 'march',
         cityId: city.id,

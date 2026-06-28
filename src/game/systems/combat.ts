@@ -40,6 +40,7 @@ import { combatPolicyEffects, cityPolicyEffects } from './policyEffects';
 import { appointmentBonusFor } from './appointmentEffects';
 import { aggregateSlotEffects } from '../data/defenseBuildings';
 import type { Weather } from './weather';
+import { fireAttackMultiplier } from './weather';
 
 /**
  * 甲冑防護 — sum the (live) defensive weight of every armor piece worn across a
@@ -505,6 +506,14 @@ export function resolveBattle(
       if (seenThrough) stratEffect = fold(stratEffect, { defenderPowerMul: 1.08, ownLossMul: 1.12 });
       if (ok) {
         stratEffect = fold(stratEffect, def.successEffect);
+        // 風助火勢 — a successful 火攻/火箭 burns hotter in a full gale than in a
+        // bare-minimum breeze. fireAttackMultiplier (1.18 at windPower 2 →
+        // 1.35 at 3) is rebased so windPower 2 is neutral and a true gale adds
+        // ~+14% to the blaze; 借東風 (which forces windPower 3) thus pays off.
+        if ((def.id === 'fire-attack' || def.id === 'fire-arrow') && ctx?.weather) {
+          const fireAmp = 1 + (fireAttackMultiplier(ctx.weather, true) - 1.18) * 0.8;
+          if (fireAmp !== 1) stratEffect = fold(stratEffect, { attackerPowerMul: fireAmp, enemyLossMul: fireAmp });
+        }
         // 計謀條件深化 — a scheme bites deeper against the right mark: 美人計 on a
         // 好色 commander, 反間/美人計 on a low-loyalty host (人心已散).
         if (def.id === 'beauty-plot' && dTraits.includes('lustful')) stratEffect = fold(stratEffect, { defenderPowerMul: 0.85, captureBonus: 1.25 });

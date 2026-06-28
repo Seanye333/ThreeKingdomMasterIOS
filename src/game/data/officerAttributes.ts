@@ -1167,8 +1167,9 @@ export const OFFICER_TACTICS: Record<string, TacticId[]> = {
   'zhang-bao-yt':   ['yellow-turban-mob', 'maoshan-rite', 'gu-poison'],
   'zhang-liang-yt': ['yellow-turban-mob', 'summon-gods'],
   'zhang-lu':       ['zhang-lu-rice', 'maoshan-rite'],
-  'yu-ji':          ['ride-clouds', 'summon-gods', 'gu-poison'],
-  'zuo-ci':         ['ride-clouds', 'summon-gods', 'maoshan-rite', 'feign-mad'],
+  'yu-ji':          ['ride-clouds', 'summon-gods', 'gu-poison', 'borrow-wind'],         // 方士祭風,呼風喚雨
+  'zuo-ci':         ['ride-clouds', 'summon-gods', 'maoshan-rite', 'feign-mad', 'borrow-wind'], // 左慈擲杯戲風
+
   'guan-lu':        ['ruse', 'attack-plans'],
   'nanhua-laoxian': ['ride-clouds', 'summon-gods', 'maoshan-rite'],
 

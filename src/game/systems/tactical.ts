@@ -154,12 +154,22 @@ export function formationCounterMul(atk: string, def: string): number {
 export function pickAiFormation(
   arms: UnitType[],
   commanderInt: number,
-  opts?: { defensive?: boolean; counter?: FormationId },
+  opts?: { defensive?: boolean; counter?: FormationId; fireWeather?: boolean },
 ): FormationId {
   const usable = (f: FormationId) => (FORMATIONS_BY_ID[f]?.minIntelligence ?? 0) <= commanderInt;
   const n = (t: UnitType) => arms.filter((a) => a === t).length;
   const cav = n('cavalry'), arc = n('archers'), spe = n('spearmen');
   const cands: FormationId[] = [];
+  // 乾風忌密 — in a dry gale the deadliest threat is fire leaping rank to rank,
+  // so a wits-about commander loosens up: 疏陣 spaces the files out (fire can't
+  // chain) and 鸞翔 keeps an archer screen mobile — both ahead of the tight
+  // packings the enemy could touch off. (Never the oil-cured 藤甲 here — it
+  // takes 2× burn; the picker steers well clear in fire weather.)
+  const fireRisk = !!opts?.fireWeather;
+  if (fireRisk && !opts?.counter) {
+    cands.push('spread-out');
+    if (arc > 0) cands.push('crescent-withdraw');
+  }
   // 看破敵陣 — lead with a category that beats the enemy's (攻破守·守克機動·機動繞攻).
   if (opts?.counter) {
     const ec = FORMATION_CAT[opts.counter];
@@ -289,6 +299,8 @@ export function forecastAttack(
     coverMul *= 0.5; // 騷擾之射 — a ranged shot harasses, it doesn't decide
     if (dTerr === 'forest') coverMul *= 0.8;
     if (hexLine(attacker.coord, target.coord).slice(1, -1).some((c) => unitAt(b, c))) coverMul *= 0.85;
+    const smoke = smokeOnLine(b, attacker.coord, target.coord); // 煙障迷目
+    if (smoke > 0) coverMul *= Math.max(0.45, 1 - 0.28 * smoke);
   }
   const weaponMul = weaponMatchupMul(ao ? deriveWeaponType(ao) : 'none', To ? deriveWeaponType(To) : 'none', target.unitType, fromRear || flankMul > 1).mul;
   const aWoundedMul = ao?.status === 'wounded' ? (ao.woundSeverity === 'critical' ? 0.65 : ao.woundSeverity === 'serious' ? 0.78 : 0.9) : 1;
@@ -502,6 +514,16 @@ export function hexNeighbours(h: HexCoord): HexCoord[] {
 // ─── Battle setup ─────────────────────────────────────────────────────
 
 export type WindDirection = 'north' | 'south' | 'east' | 'west' | 'calm';
+
+/** Unit vector a wind blows TOWARD (east wind = blows from west to east →
+ *  fire spreads to higher cols). Shared by fire-spread + AI fire-targeting. */
+export const WIND_DELTA: Record<WindDirection, { col: number; row: number }> = {
+  north: { col: 0, row: -1 },
+  south: { col: 0, row: 1 },
+  east:  { col: 1, row: 0 },
+  west:  { col: -1, row: 0 },
+  calm:  { col: 0, row: 0 },
+};
 
 export interface SetupParams {
   cityId: EntityId;
@@ -1681,6 +1703,24 @@ export function hasLineOfSight(b: TacticalBattle, from: HexCoord, to: HexCoord):
   return true;
 }
 
+/**
+ * 煙障 — how many burning ground-fire hexes a line of sight crosses. A pall of
+ * smoke fouls an archer's aim (handled as a ranged-damage penalty, not a hard
+ * LOS block, so it stays deterministic for AI planning). Endpoints excluded:
+ * a unit standing IN the fire is already burning, that's a separate matter.
+ */
+export function smokeOnLine(b: TacticalBattle, from: HexCoord, to: HexCoord): number {
+  const fires = b.groundFires;
+  if (!fires || fires.length === 0) return 0;
+  const burning = new Set(fires.map((f) => `${f.coord.col},${f.coord.row}`));
+  const line = hexLine(from, to);
+  let n = 0;
+  for (let i = 1; i < line.length - 1; i++) {
+    if (burning.has(`${line[i].col},${line[i].row}`)) n++;
+  }
+  return n;
+}
+
 export function canAttack(
   b: TacticalBattle,
   unit: TacticalUnit,
@@ -1728,6 +1768,8 @@ export function attackUnits(
     const line = hexLine(attacker.coord, target.coord);
     const screened = line.slice(1, -1).some((c) => unitAt(b, c));               // 友/敵軍擋箭
     if (screened) coverMul *= 0.85;
+    const smoke = smokeOnLine(b, attacker.coord, target.coord);                  // 煙障迷目
+    if (smoke > 0) coverMul *= Math.max(0.45, 1 - 0.28 * smoke);
   }
   // Ambush bonus + reveal: hidden attacker striking from concealment
   // gets +30% damage this hit, then is revealed.
@@ -2580,12 +2622,32 @@ export function applyStratagem(
 ): { battle: TacticalBattle; ok: boolean; reason?: string } {
   const unit = b.units.find((u) => u.id === unitId);
   if (!unit) return { battle: b, ok: false, reason: 'no unit' };
-  // 借東風 — before the fire lands, the wind answers the ritual: weather
-  // turns to wind and blows from the caster toward the enemy line, so the
-  // burn that follows spreads INTO their fleet. The Red Cliffs button.
+  const cooldownKey = `${unitId}-${stratagem}`;
+  const onCd = (b.stratagemCooldowns[cooldownKey] ?? 0) > b.turn;
+  if (onCd) return { battle: b, ok: false, reason: 'on cooldown' };
+  if (unit.ap < 1) return { battle: b, ok: false, reason: 'no AP' };
+  // 借東風 — before the fire lands, the caster prays the wind round to blow from
+  // himself toward the enemy line, so the burn that follows spreads INTO their
+  // fleet (the Red Cliffs button). It is NOT a sure thing: success scales with
+  // the caster's wits, and a wiser enemy sage may 逆風 — pray it back. Heaven
+  // does not always answer. (Gated here so a wasted/cooldown cast doesn't move
+  // the sky for free; the result also opens a re-cast window via cooldown.)
   if (tacticId === 'borrow-wind') {
+    const caster = officers[unit.officerId];
+    const casterInt = caster?.stats.intelligence ?? 70;
     const foes = b.units.filter((u) => u.side !== unit.side && u.troops > 0);
-    if (foes.length > 0) {
+    // 逆風 — the wisest opposing strategist resists; a true master can cancel it.
+    let foeSage = 0;
+    for (const u of foes) {
+      const o = officers[u.officerId];
+      if (!o) continue;
+      const adept = o.skills?.includes('celestial-tactician') || o.skills?.includes('crouching-dragon') || o.skills?.includes('young-phoenix');
+      if (o.stats.intelligence >= 80 || adept) foeSage = Math.max(foeSage, o.stats.intelligence + (adept ? 6 : 0));
+    }
+    const resist = foeSage > casterInt ? Math.min(0.6, (foeSage - casterInt) / 55) : 0;
+    const success = Math.max(0.2, Math.min(0.97, 0.82 + (casterInt - 85) / 110)) * (1 - resist);
+    const nameZh = caster?.name.zh ?? '';
+    if (foes.length > 0 && Math.random() < success) {
       const avgCol = foes.reduce((sum, u) => sum + u.coord.col, 0) / foes.length;
       const avgRow = foes.reduce((sum, u) => sum + u.coord.row, 0) / foes.length;
       const dCol = avgCol - unit.coord.col;
@@ -2599,16 +2661,24 @@ export function applyStratagem(
         windDirection: dir,
         log: [...(b.log ?? []), {
           turn: b.turn,
-          text: `🌬 ${officers[unit.officerId]?.name.zh ?? ''}祭風祈禳,風雲突變 — ${dir === 'east' ? '東' : dir === 'west' ? '西' : dir === 'south' ? '南' : '北'}風大作!`,
+          text: `🌬 ${nameZh}祭風祈禳,風雲突變 — ${dir === 'east' ? '東' : dir === 'west' ? '西' : dir === 'south' ? '南' : '北'}風大作!`,
+          kind: 'event' as const,
+        }],
+      };
+    } else {
+      // 風不應禱 — the ritual fails (heaven, or an enemy sage praying it back).
+      b = {
+        ...b,
+        log: [...(b.log ?? []), {
+          turn: b.turn,
+          text: resist > 0.25
+            ? `🌬 ${nameZh}祭風,然敵營亦有高人逆風相抗 — 風終不至。`
+            : `🌬 ${nameZh}祭風祈禳,然天意難測 — 風候未應。`,
           kind: 'event' as const,
         }],
       };
     }
   }
-  const cooldownKey = `${unitId}-${stratagem}`;
-  const onCd = (b.stratagemCooldowns[cooldownKey] ?? 0) > b.turn;
-  if (onCd) return { battle: b, ok: false, reason: 'on cooldown' };
-  if (unit.ap < 1) return { battle: b, ok: false, reason: 'no AP' };
 
   const off = officers[unit.officerId];
 
@@ -3319,16 +3389,8 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
   // readily.
   if (b.weather !== 'rain') {
     const baseSpreadChance = b.weather === 'wind' ? 0.45 : 0.22;
-    // Map wind direction to a delta vector preference. East wind = fire
-    // spreads west-to-east; south wind = north-to-south, etc.
-    const windDelta: Record<NonNullable<TacticalBattle['windDirection']>, { col: number; row: number }> = {
-      north: { col: 0, row: -1 },
-      south: { col: 0, row: 1 },
-      east:  { col: 1, row: 0 },
-      west:  { col: -1, row: 0 },
-      calm:  { col: 0, row: 0 },
-    };
-    const wd = windDelta[b.windDirection ?? 'calm'];
+    // East wind = fire spreads west-to-east; south wind = north-to-south, etc.
+    const wd = WIND_DELTA[b.windDirection ?? 'calm'];
     const burningIds = tickedUnits
       .filter((u) => u.effects.some((e) => e.kind === 'burning'))
       .map((u) => u.id);
@@ -3381,22 +3443,22 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
   if (nextGroundFires.length > 0) {
     const fireKey = (c: HexCoord) => `${c.col},${c.row}`;
     const burningSet = new Set(nextGroundFires.map((f) => fireKey(f.coord)));
-    // Burn whoever stands in the flames (and set them alight).
+    // Burn whoever stands in the flames (and set them alight). 火燒糧道 —
+    // a supply train caught in a blaze is dry tinder: its wagons go up far
+    // faster (×3 loss), and the lost grain is what really breaks the host
+    // downstream (see the 燒糧 starve-check above). 烏巢, 上方谷.
     tickedUnits = tickedUnits.map((u) => {
       if (!burningSet.has(fireKey(u.coord)) || u.troops <= 0) return u;
-      const loss = Math.max(40, Math.floor(u.troops * 0.07));
+      const burnRate = u.isSupply ? 0.21 : 0.07;
+      const loss = Math.max(40, Math.floor(u.troops * burnRate));
       const effects = u.effects.some((e) => e.kind === 'burning')
         ? u.effects
         : [...u.effects, { kind: 'burning' as const, turnsLeft: 2 }];
-      return { ...u, troops: Math.max(0, u.troops - loss), morale: Math.max(0, u.morale - 4), effects };
+      return { ...u, troops: Math.max(0, u.troops - loss), morale: Math.max(0, u.morale - (u.isSupply ? 8 : 4)), effects };
     });
     // Spread downwind into flammable neighbours.
     const FLAMMABLE: Record<string, number> = { forest: 0.5, bridge: 0.45, plain: 0.22, road: 0.12, marsh: 0.05 };
-    const windDelta2: Record<NonNullable<TacticalBattle['windDirection']>, { col: number; row: number }> = {
-      north: { col: 0, row: -1 }, south: { col: 0, row: 1 },
-      east: { col: 1, row: 0 }, west: { col: -1, row: 0 }, calm: { col: 0, row: 0 },
-    };
-    const wd2 = windDelta2[b.windDirection ?? 'calm'];
+    const wd2 = WIND_DELTA[b.windDirection ?? 'calm'];
     const sparked: Array<{ coord: HexCoord; turnsLeft: number }> = [];
     if (b.weather !== 'rain') {
       for (const f of nextGroundFires) {
@@ -3410,7 +3472,11 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
           if (b.windDirection !== 'calm') chance *= align > 0 ? 1.8 : 0.5;
           if (b.weather === 'wind') chance *= 1.4;
           if (Math.random() < chance) {
-            sparked.push({ coord: n, turnsLeft: t.terrain === 'forest' ? 4 : 2 });
+            // 火頭遞弱 — the spreading front can't burn longer than the ember
+            // that lit it, so fire weakens the further it creeps from its
+            // source (downwind it carries; against the wind it soon dies).
+            const base = t.terrain === 'forest' ? 4 : 2;
+            sparked.push({ coord: n, turnsLeft: Math.max(1, Math.min(base, f.turnsLeft)) });
             burningSet.add(fireKey(n));
           }
         }
@@ -3786,16 +3852,21 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
   if (nextWeather === 'rain' && b.weather !== 'rain' && nextGroundFires.length > 0) {
     nextGroundFires = nextGroundFires.map((f) => ({ ...f, turnsLeft: Math.ceil(f.turnsLeft / 2) }));
   }
-  // 水戰 — at sea the wind is a player too: each full round it may veer,
-  // and a fire set downwind can find itself upwind a turn later.
+  // 風雲變色 — the wind is a player too. At sea it veers freely each round
+  // (a fire set downwind can find itself upwind a turn later); on land a
+  // standing gale still gusts and swings, so a 火攻 can blow back on the one
+  // who set it — the very nightmare 借東風 is meant to engineer for the foe.
   let nextWind = b.windDirection ?? 'calm';
-  if (b.naval && Math.random() < 0.15) {
+  const hasWind = nextWind !== 'calm';
+  const veerChance = b.naval ? 0.15 : (b.weather === 'wind' && hasWind ? 0.07 : 0);
+  if (veerChance > 0 && Math.random() < veerChance) {
     const dirs: WindDirection[] = ['north', 'south', 'east', 'west'];
     const turned = dirs.filter((d) => d !== nextWind);
     nextWind = turned[Math.floor(Math.random() * turned.length)];
   }
+  const windTurnZh = nextWind === 'east' ? '東' : nextWind === 'west' ? '西' : nextWind === 'south' ? '南' : '北';
   const windLog: NonNullable<TacticalBattle['log']> = nextWind !== (b.windDirection ?? 'calm')
-    ? [{ turn: b.turn, text: `風向轉${nextWind === 'east' ? '東' : nextWind === 'west' ? '西' : nextWind === 'south' ? '南' : '北'},艨艟調帆!`, kind: 'event' }]
+    ? [{ turn: b.turn, text: b.naval ? `風向轉${windTurnZh},艨艟調帆!` : `風向陡轉${windTurnZh}風 — 火勢改道,當心反噬!`, kind: 'event' }]
     : [];
   const weatherLog: NonNullable<TacticalBattle['log']> = nextWeather !== b.weather
     ? [{ turn: b.turn, text: nextWeather === 'rain' ? '驟雨傾盆，火攻難繼！' : nextWeather === 'wind' ? '狂風驟起，火借風勢！' : '雲開天霽。', kind: 'event' }]
@@ -4035,11 +4106,31 @@ function aiTryStratagem(
       .filter((f) => hexDistance(unit.coord, f.coord) <= 2);
     if (wounded.length > 0) candidates.push({ id: 'rally', target: wounded[0].coord });
   }
-  // 3. fire-attack the nearest enemy in range 3
-  if (off.stats.intelligence >= 70) {
+  // 3. fire-attack — but a wits-about officer doesn't just torch the biggest
+  // foe in range: 看風使火 he picks the one the wind & ground will punish most.
+  // A blaze set downwind of a host packed onto flammable terrain (and in dry
+  // wind) spreads INTO them; against the wind, or on bare rock, it gutters out.
+  if (off.stats.intelligence >= 70 && b.weather !== 'rain') {
+    const wind = WIND_DELTA[b.windDirection ?? 'calm'];
+    const FLAMMABLE_T: Partial<Record<TerrainKind, number>> = { forest: 1.0, bridge: 0.9, plain: 0.45, road: 0.25, marsh: 0.1 };
+    const fireScore = (e: TacticalUnit): number => {
+      const tile = tileAt(b, e.coord);
+      let s = e.troops; // bigger host = bigger prize
+      s *= 1 + (FLAMMABLE_T[tile?.terrain ?? 'plain'] ?? 0); // dry tinder underfoot
+      // downwind of the caster (wind carries the fire onto them) — up to +60%.
+      const dx = e.coord.col - unit.coord.col, dy = e.coord.row - unit.coord.row;
+      const mag = Math.hypot(dx, dy) || 1;
+      const align = (wind.col * dx + wind.row * dy) / mag;
+      if (b.windDirection && b.windDirection !== 'calm') s *= 1 + 0.6 * align;
+      if (b.weather === 'wind') s *= 1.25; // a gale stokes any blaze
+      // a packed cluster of foes lets fire leap rank to rank
+      const cluster = enemies.filter((o) => hexDistance(e.coord, o.coord) <= 1).length;
+      s *= 1 + 0.12 * (cluster - 1);
+      return s;
+    };
     const inRange = enemies
       .filter((e) => hexDistance(unit.coord, e.coord) <= 3)
-      .sort((a, b1) => b1.troops - a.troops); // hit strongest first
+      .sort((a, b1) => fireScore(b1) - fireScore(a));
     if (inRange.length > 0) candidates.push({ id: 'fire-attack', target: inRange[0].coord });
   }
   // 4. confusion on the nearest enemy in range 4
