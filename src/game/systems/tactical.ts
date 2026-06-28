@@ -246,6 +246,9 @@ export interface AttackForecast {
   counterMult: number;
   terrainAtk: number;
   defShield: number;
+  /** 伏兵未察 — the target is concealed: the numbers are a guess, not intel.
+   *  The UI should fuzz the readout rather than hand the player a free X-ray. */
+  hidden?: boolean;
 }
 
 export function forecastAttack(
@@ -254,6 +257,15 @@ export function forecastAttack(
   target: TacticalUnit,
   officers: Record<EntityId, Officer>,
 ): AttackForecast {
+  // 伏兵未察 — you can't X-ray a foe you can't see. A concealed enemy yields no
+  // honest forecast: flag it so the UI shows uncertainty instead of exact intel.
+  // (Hidden units reveal on adjacency/attack, so this only fuzzes the unseen.)
+  if (target.hidden && target.side !== attacker.side) {
+    return {
+      dmgMin: 0, dmgMax: 0, counterMin: 0, counterMax: 0, willKill: false,
+      matchup: 'even', counterMult: 1, terrainAtk: 1, defShield: 1, hidden: true,
+    };
+  }
   const p = predictAttackDamage(b, attacker, target, officers);
   const ao = officers[attacker.officerId];
   const To = officers[target.officerId];
@@ -314,12 +326,26 @@ export function forecastAttack(
   const fatigueMul = b.turn >= 10 ? Math.max(0.6, 1 - 0.05 * (b.turn - 9)) : 1;
 
   const armorMul = ARM_ARMOR[target.unitType] ?? 1;
+  // 陣法/天時/精銳/伏擊 — mirror the formation, weather, elite & ambush multipliers
+  // that attackUnits applies, so the preview no longer under-reports a 陣克陣 edge,
+  // a fire-weather swing or a sprung ambush (these can shift the hit ±15–30%).
+  const aFormStrength = formationStrength(b, attacker.side, officers);
+  const dFormStrength = formationStrength(b, target.side, officers);
+  const targetFormation = target.side === 'attacker' ? b.attackerFormation : b.defenderFormation;
+  const attackerFormation = attacker.side === 'attacker' ? b.attackerFormation : b.defenderFormation;
+  const defenseMul = applyFormStrength(defensiveFormationBonus(b, target, targetFormation ?? 'none'), dFormStrength);
+  const offenseMul = applyFormStrength(offensiveFormationBonus(attackerFormation ?? 'none', attacker.unitType, b.turn), aFormStrength);
+  const formCounterMul = applyFormStrength(formationCounterMul(attackerFormation ?? 'none', targetFormation ?? 'none'), aFormStrength);
+  const eliteMul = (ELITE_UNITS[attacker.officerId]?.atkMul ?? 1) * (ELITE_UNITS[target.officerId]?.defMul ?? 1);
+  const weatherMul = weatherDamageMul(b.weather, attacker.unitType);
+  const ambushFcMul = attacker.hidden ? (b.timeOfDay === 'night' ? 1.5 : 1.3) : 1.0;
   // predictAttackDamage's base omits COMBAT_LETHALITY — fold it in so the preview
   // matches the real hit.
   const fwd = COMBAT_LETHALITY * ctr * aTerrMod * shield * weaponMul * flankMul * heightMul * pincerMul * momentumMul
     * aMoraleMul * pursuitMul * chargeMul * encircleMul * disorderMul * coverMul
     * aWoundedMul * dWoundedMul * aGradeMul * dGradeResistMul * nightMul * crossingMul * streetMul
-    * freshMul * fatigueMul * armorMul;
+    * freshMul * fatigueMul * armorMul
+    * defenseMul * offenseMul * formCounterMul * eliteMul * weatherMul * ambushFcMul;
   const dmgMin = Math.max(0, Math.floor(p.min * fwd));
   const dmgMax = Math.max(0, Math.floor(p.max * fwd));
   const willKill = dmgMax >= target.troops;
@@ -2191,12 +2217,18 @@ export function attackUnits(
       const effects = feigning && !u.effects.some((e) => e.kind === 'disorder')
         ? [...u.effects, { kind: 'disorder' as const, turnsLeft: 1 }]
         : u.effects;
+      // 戰功記功 — tally the troops this unit felled (and any rout it caused) so
+      // 戰後復盤 can crown a data-driven MVP (§5.8), not just the last survivor.
+      const dealt = Math.max(0, target.troops - newTroops);
+      const routedThem = newTroops <= 0 && target.troops > 0;
       return {
         ...u, ap: u.ap - 1, troops: counterTroops,
         fatigue: Math.min(100, (u.fatigue ?? 0) + (isRanged ? FATIGUE_PER_VOLLEY : FATIGUE_PER_MELEE)),
         facing: hexDirection(u.coord, target.coord),
         charge: undefined,
         ammo: isRanged && u.maxAmmo !== undefined ? Math.max(0, (u.ammo ?? 0) - 1) : u.ammo,
+        damageDealt: (u.damageDealt ?? 0) + dealt,
+        kills: (u.kills ?? 0) + (routedThem ? 1 : 0),
         effects,
       };
     }

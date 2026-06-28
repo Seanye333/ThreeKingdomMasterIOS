@@ -214,6 +214,10 @@ export interface TacticalUnit {
   /** 糧車 — a supply/grain convoy, not a fighting unit: slow and lightly manned.
    *  Burn it down and the side that fed off it starves (see endTurn's 燒糧). */
   isSupply?: boolean;
+  /** 戰功 — cumulative enemy troops this unit has felled, and routs it caused.
+   *  Pure bookkeeping for the 戰後復盤 MVP (§5.8); never gates combat. */
+  damageDealt?: number;
+  kills?: number;
   /** 衝鋒蓄力 — transient run accumulator for this activation. `from` is where
    *  the run began (this turn's first step); `dist` is the NET hex distance run
    *  from there (so doubling back doesn't count). A melee blow after a run

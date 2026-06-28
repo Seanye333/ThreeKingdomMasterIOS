@@ -2988,6 +2988,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           date: state.date,
           weather: state.weather,
           forts: state.forts,
+          fogOfWar: state.fogOfWar,
         });
         // Compute whether this period transition crosses a season boundary.
         // Boundary = the period BEFORE advance is the last (lower) phase of
