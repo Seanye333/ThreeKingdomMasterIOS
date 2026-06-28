@@ -66,6 +66,9 @@ export function weaponMatchupMul(
   dw: WeaponType,
   dUnitType: UnitType,
   fromFlankOrRear: boolean,
+  /** 兵裝精通 — the attacker masters their weapon class (槍/弩/騎/攻城…), which
+   *  sharpens its matchup edge by half again (1 + (m−1)×1.5). Penalties stand. */
+  aMastery = false,
 ): { mul: number; tag?: string } {
   let m = 1;
   let tag: string | undefined;
@@ -78,16 +81,55 @@ export function weaponMatchupMul(
   else if (aw === 'spear' && dMounted) { m *= 1.07; tag = '槍拒馬'; }
   // 弩矢破甲 — crossbow bolts punch heavy armour where bows can't.
   if (aw === 'crossbow' && dHeavy) { m *= 1.13; tag = tag ?? '弩破甲'; }
+  // 兵器破甲 — maces/axes/hammers crush armour and shatter a packed formation
+  // (the brute-force counterpart to the crossbow's punch-through).
+  if (aw === 'siege' && dHeavy) { m *= 1.13; tag = tag ?? '兵器破甲'; }
   // 鐵騎踏陣 — horse runs down bows/crossbows/strategists caught in the open.
   if (aw === 'cavalry' && dSoft) { m *= 1.12; tag = tag ?? '騎踏陣'; }
+  // 弓襲輕 — an archer at the kill picks off the unarmoured (bows/casters/none).
+  if (aw === 'bow' && (dSoft || dw === 'none')) { m *= 1.08; tag = tag ?? '弓襲輕'; }
   // 劍走輕靈 — agile swordsmen exploit an exposed flank/rear harder.
   if (aw === 'sword' && fromFlankOrRear) { m *= 1.10; tag = tag ?? '劍迅捷'; }
+  // 劍難破重 — but a light blade bites poorly into heavy armour (戟/騎/兵器).
+  if (aw === 'sword' && (dw === 'halberd' || dw === 'cavalry' || dw === 'siege')) { m *= 0.92; tag = tag ?? '劍難破重'; }
   // 重刃破輕 — a heavy sabre overpowers light blades and the unarmed.
   if (aw === 'sabre' && (dw === 'sword' || dw === 'none')) { m *= 1.07; tag = tag ?? '刀破輕'; }
   // 書生臨陣 / 赤手 — strategists and the unarmed are soft in a stand-up melee.
   if (dw === 'fan') { m *= 1.12; tag = tag ?? '襲書生'; }
   else if (dw === 'none') { m *= 1.08; tag = tag ?? '欺徒手'; }
+  // 兵裝精通 — a master sharpens the edge, but doesn't undo a bad matchup.
+  if (aMastery && m > 1) m = 1 + (m - 1) * 1.5;
   return { mul: Math.max(0.85, Math.min(1.4, m)), tag };
+}
+
+/**
+ * 兵裝得地 — a weapon class that suits the ground the attacker fights from:
+ * 長兵(槍/戟)扼隘 hold a chokepoint a beat longer; 弓弩居高 loose further and
+ * harder from the heights. A small edge (×1.08) on top of the arm's own terrain
+ * mod, so where a unit STANDS rewards the right weapon, not just the right arm.
+ */
+export function weaponTerrainMul(aw: WeaponType, attackerTerrain: TerrainKind): number {
+  if ((aw === 'spear' || aw === 'halberd') && attackerTerrain === 'chokepoint') return 1.08;
+  if ((aw === 'bow' || aw === 'crossbow') && (attackerTerrain === 'hill' || attackerTerrain === 'mountain' || attackerTerrain === 'watchtower')) return 1.08;
+  return 1;
+}
+
+/** The skill that masters a weapon class — feeds 兵裝精通 (weaponMatchupMul). */
+export function weaponMasterySkill(wt: WeaponType): string | null {
+  switch (wt) {
+    case 'bow': case 'crossbow': return 'archer-master';
+    case 'cavalry':              return 'cavalry-master';
+    case 'siege':                return 'siegemaster';
+    case 'spear': case 'halberd': case 'sabre': case 'sword': return 'god-of-war';
+    default:                     return null; // fan / none — no mastery
+  }
+}
+
+/** Does this officer master the given weapon class? */
+function hasWeaponMastery(officer: Officer | undefined, wt: WeaponType): boolean {
+  if (!officer) return false;
+  const skill = weaponMasterySkill(wt);
+  return !!skill && !!officer.skills?.includes(skill as never);
 }
 
 /** 連携合擊 — sworn brothers / famous bonded pairs who strike a foe together
@@ -314,7 +356,8 @@ export function forecastAttack(
     const smoke = smokeOnLine(b, attacker.coord, target.coord); // 煙障迷目
     if (smoke > 0) coverMul *= Math.max(0.45, 1 - 0.28 * smoke);
   }
-  const weaponMul = weaponMatchupMul(ao ? deriveWeaponType(ao) : 'none', To ? deriveWeaponType(To) : 'none', target.unitType, fromRear || flankMul > 1).mul;
+  const aWeaponFc = ao ? deriveWeaponType(ao) : 'none';
+  const weaponMul = weaponMatchupMul(aWeaponFc, To ? deriveWeaponType(To) : 'none', target.unitType, fromRear || flankMul > 1, hasWeaponMastery(ao, aWeaponFc)).mul;
   const aWoundedMul = ao?.status === 'wounded' ? (ao.woundSeverity === 'critical' ? 0.65 : ao.woundSeverity === 'serious' ? 0.78 : 0.9) : 1;
   const dWoundedMul = To?.status === 'wounded' ? (To.woundSeverity === 'critical' ? 1.3 : To.woundSeverity === 'serious' ? 1.22 : 1.12) : 1;
   const aGradeMul = ao ? gradeCombatBonus(ao).powerMul : 1;
@@ -345,7 +388,8 @@ export function forecastAttack(
     * aMoraleMul * pursuitMul * chargeMul * encircleMul * disorderMul * coverMul
     * aWoundedMul * dWoundedMul * aGradeMul * dGradeResistMul * nightMul * crossingMul * streetMul
     * freshMul * fatigueMul * armorMul
-    * defenseMul * offenseMul * formCounterMul * eliteMul * weatherMul * ambushFcMul;
+    * defenseMul * offenseMul * formCounterMul * eliteMul * weatherMul * ambushFcMul
+    * weaponTerrainMul(aWeaponFc, aTerr);
   const dmgMin = Math.max(0, Math.floor(p.min * fwd));
   const dmgMax = Math.max(0, Math.floor(p.max * fwd));
   const willKill = dmgMax >= target.troops;
@@ -1975,7 +2019,7 @@ export function attackUnits(
   // 弩破甲、騎踏弓弩、劍走側背、刀破輕、襲書生/欺徒手. No longer pure display.
   const aWeapon = ao ? deriveWeaponType(ao) : 'none';
   const dWeapon = To ? deriveWeaponType(To) : 'none';
-  const weapon = weaponMatchupMul(aWeapon, dWeapon, target.unitType, fromRear || flankMul > 1);
+  const weapon = weaponMatchupMul(aWeapon, dWeapon, target.unitType, fromRear || flankMul > 1, hasWeaponMastery(ao, aWeapon));
   const weaponMul = weapon.mul;
 
   // 圍殲與退路 — has the target any empty, passable hex to fall back to? None =
@@ -2040,7 +2084,7 @@ export function attackUnits(
     base * counter * aTerrainMod * weatherMul * defenseMul * offenseMul *
     dShield * ambushBonus * fatigueMul * freshMul * aWoundedMul * dWoundedMul * shipMul * pincerMul *
     nightMul * heightMul * flankMul * crossingMul * streetMul * comboMul * formCounterMul * eliteMul * aGradeMul * dGradeResistMul * aGrowthMul * aSetMul *
-    aMoraleMul * pursuitMul * chargeMul * weaponMul * encircleMul * disorderMul * momentumMul * coverMul * armorMul *
+    aMoraleMul * pursuitMul * chargeMul * weaponMul * weaponTerrainMul(aWeapon, aTerrainTile?.terrain ?? 'plain') * encircleMul * disorderMul * momentumMul * coverMul * armorMul *
     aTraitMul * dTraitDefMul,
   );
   if (targetDefending) damage = Math.floor(damage / 2);
@@ -3856,7 +3900,11 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
         (u) => u.side === 'attacker' && u.troops > 0 && hexDistance(s.coord, u.coord) === 1,
       );
       if (sappers.length > 0) {
-        const batter = sappers.reduce((sum, u) => sum + (u.unitType === 'siege' ? 200 : 60), 0);
+        // 兵器破工事 — a 兵器 officer (mace/axe/hammer) smashes a fortification far
+        // harder than bare hands, even leading a non-siege unit (+80 to the batter).
+        const batter = sappers.reduce((sum, u) =>
+          sum + (u.unitType === 'siege' ? 200 : 60)
+            + (officers && deriveWeaponType(officers[u.officerId]) === 'siege' ? 80 : 0), 0);
         s.hp = Math.max(0, s.hp - batter);
         if (s.hp <= 0) {
           structurePopups.push({

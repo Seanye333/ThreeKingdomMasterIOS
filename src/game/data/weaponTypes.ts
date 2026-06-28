@@ -104,13 +104,40 @@ export const ITEM_WEAPON_TYPE: Record<string, WeaponType> = {
   'gilt-mace':         'siege',
 };
 
+/**
+ * 名物識兵 — classify a weapon by the keywords in its NAME, for the hundreds of
+ * forged blades the hand-written ITEM_WEAPON_TYPE map never enumerated (a 連弩
+ * should read as 弩, an 開山斧 as 兵器 — not be guessed from a war stat). Order
+ * matters: the more specific class wins (弩 before 弓, 戟 before 槍/刀). Returns
+ * null when the name carries no weapon signal (so the stat heuristic still runs).
+ */
+export function classifyWeaponByName(name: { zh: string; en: string }): WeaponType | null {
+  const s = `${name.zh} ${name.en.toLowerCase()}`;
+  if (/弩|crossbow/.test(s)) return 'crossbow';
+  if (/弓|bow/.test(s)) return 'bow';
+  if (/戟|halberd|trident|方天/.test(s)) return 'halberd';
+  if (/斧|鉞|錘|鎚|鐧|鞭|鐗|鏈|流星|連枷|椎|殳|棒|杵|棍|杖|mace|hammer|axe|flail|club|maul|staff|quarterstaff|war.?pick/.test(s)) return 'siege';
+  if (/扇|麈|fan|whisk/.test(s)) return 'fan';
+  if (/槍|矛|矟|槊|稍|pike|spear|lance|halberd-spear/.test(s)) return 'spear';
+  if (/刀|鎌|鐮|saber|sabre|glaive|cleaver|falchion|sickle|scythe|偃月|blade(?!.*sword)/.test(s)) return 'sabre';
+  if (/劍|剑|爪|鉤|鈎|sword|rapier|dagger|knife|claw|hook|talon/.test(s)) return 'sword';
+  return null;
+}
+
 /** Derive the officer's primary weapon class. */
 export function deriveWeaponType(officer: Pick<Officer, 'equipment' | 'stats'>): WeaponType {
+  // 1) An explicit hand-map entry, then 2) the weapon's own NAME — so a forged
+  //    blade declares its true class instead of falling through to a stat guess.
   for (const itemId of officer.equipment) {
     const wt = ITEM_WEAPON_TYPE[itemId];
     if (wt) return wt;
+    const item = ITEMS_BY_ID[itemId];
+    if (item?.kind === 'weapon') {
+      const byName = classifyWeaponByName(item.name);
+      if (byName) return byName;
+    }
   }
-  // No specific weapon — pick class from stats
+  // No weapon to read — pick class from stats.
   const { war, intelligence } = officer.stats;
   if (intelligence >= 88 && war < 70) return 'fan';
   // Find any horse in equipment → cavalry
