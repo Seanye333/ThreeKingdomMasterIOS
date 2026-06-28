@@ -255,7 +255,7 @@ import { clanOf } from '../data/clans';
 import { rollWishes, applyWishGrant, applyWishReject, expireWishes, maybeWoundedRetireWish, decayGrievances } from '../systems/wishes';
 import { checkEndings } from '../systems/endings';
 import { generateRandomScenario } from '../systems/randomScenario';
-import { rollWeather, describeWeather } from '../systems/weather';
+import { rollWeather, describeWeather, marchSpeedMultiplier, seasonWeatherOutlook } from '../systems/weather';
 import { rollPlagueOutbreak, rollIntrigue } from '../systems/intrigue';
 import { rollSpecialtyEvents } from '../systems/specialtyEvents';
 import { rollOmen } from '../systems/mandate';
@@ -1047,6 +1047,10 @@ function buildFieldBattle(
   }
   const stratWeather = s.weather?.kind ?? 'clear';
   const tacticalWeather = stratWeather === 'drought' ? 'clear' : stratWeather;
+  // 乾風忌密 — a dry gale (or parched 旱地) means a stray spark chains down the
+  // ranks, so both marshals fight looser. Let the formation picker know.
+  const fireWeather = stratWeather === 'drought'
+    || (stratWeather === 'wind' && (s.weather?.windPower ?? 0) >= 2);
 
   let battle = setupTacticalBattle({
     cityId: nominalCity,
@@ -1063,9 +1067,9 @@ function buildFieldBattle(
     // defender's to counter it (陣克陣). No more formation-less NPC armies.
     attackerFormation: pArmy.holding ? 'ten-ambush'
       : pickAiFormation(attackers.map((a) => a.unitType), attackers[0]?.officer.stats.intelligence ?? 60,
-          { counter: eArmy.holding ? 'ten-ambush' : pickAiFormation(defenders.map((d) => d.unitType), defenders[0]?.officer.stats.intelligence ?? 60, { defensive: true }) }),
+          { fireWeather, counter: eArmy.holding ? 'ten-ambush' : pickAiFormation(defenders.map((d) => d.unitType), defenders[0]?.officer.stats.intelligence ?? 60, { defensive: true, fireWeather }) }),
     defenderFormation: eArmy.holding ? 'ten-ambush'
-      : pickAiFormation(defenders.map((d) => d.unitType), defenders[0]?.officer.stats.intelligence ?? 60, { defensive: true }),
+      : pickAiFormation(defenders.map((d) => d.unitType), defenders[0]?.officer.stats.intelligence ?? 60, { defensive: true, fireWeather }),
     weather: tacticalWeather as 'clear' | 'rain' | 'wind' | 'fog' | 'snow',
     timeOfDay: rollTimeOfDay(),
     windDirection: s.weather?.wind ?? 'calm',
@@ -1672,10 +1676,11 @@ export const useGameStore = create<GameStore>()(
         }
 
         // Sea legs run on the fleet's schedule — two seasons however far the
-        // route (長江是高速路). A land march folds in 行軍節奏 (急行/緩) and the
-        // column's speed (健行/嚴峻/騎將/驛站 hasten, 鈍重 drags).
+        // route (長江是高速路). A land march folds in 行軍節奏 (急行/緩), the
+        // column's speed (健行/嚴峻/騎將/驛站 hasten, 鈍重 drags), and the weather
+        // (雪沒脛/泥淖 mire it, a gale at the back hurries it).
         const marchPool = [officer, ...extras.map((e) => state.officers[e]).filter(Boolean)];
-        const speedMul = marchSpeedMul(marchPool);
+        const speedMul = marchSpeedMul(marchPool) * marchSpeedMultiplier(state.weather);
         const dur = isNaval ? 2 : adjustMarchSeasons(marchDurationFor(source, state.cities[targetId], state.date.season), pace, speedMul);
         set({
           cities: {
@@ -2974,6 +2979,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           armies: state.armies,
           taxPolicy: state.taxPolicy,
           date: state.date,
+          weather: state.weather,
         });
         // Compute whether this period transition crosses a season boundary.
         // Boundary = the period BEFORE advance is the last (lower) phase of
@@ -3773,6 +3779,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             });
           }
           result.report.entries.unshift(describeWeather(nextWeather));
+          // 天候前瞻 — a court astronomer reads the season's tendency off the
+          // almanac, so the player can campaign by the sky the way the 知天候 AI
+          // does (入秋多東風、最利火攻…).
+          {
+            const outlook = seasonWeatherOutlook(result.date.season);
+            result.report.entries.unshift({ cityId: null, kind: 'note', text: `🔭 ${outlook.zh}` });
+          }
 
           const omenOut = rollOmen({
             forces: postForces,

@@ -26,6 +26,7 @@ import { officerGrade, gradeRank, officerLevel } from './officerGrade';
 import { handleMarch } from './combat';
 import { tickDiplomacy, applyCoalitionPressure } from './diplomacy';
 import { tickCityEconomy, tradeTreatyGrants } from './economy';
+import { rollWeatherDisaster } from './weather';
 import { WARHORSE_CITY_CAP, IRON_CITY_CAP, MEDICINE_CITY_CAP } from './market';
 import {
   specialtyControl, specialtyRealmEffects, allRoleEffects, embargoedRolesAgainst,
@@ -1486,6 +1487,37 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         : city.medicine,
     };
     cities[city.id] = updated;
+    // 天候災異 — an extreme season can tip a city past a soft harvest cut into
+    // outright catastrophe: a drought spawns 蝗災/流民, prolonged rain bursts the
+    // dikes (水患). Irrigation (水利) blunts drought; flood-works (堤防/治水) the
+    // floods. A great drought really can cost more than a lost battle.
+    if (city.ownerForceId && input.weather &&
+        (input.weather.kind === 'drought' || input.weather.kind === 'rain')) {
+      const irrigationLevel = (input.buildings ?? []).reduce(
+        (m, b) => (b.cityId === city.id && b.id === 'irrigation' ? Math.max(m, b.level) : m), 0);
+      const disaster = rollWeatherDisaster(
+        input.weather, input.date.season,
+        { agriculture: updated.agriculture, floodWorks: updated.floodWorks, irrigationLevel },
+        rng,
+      );
+      if (disaster) {
+        const dc = cities[city.id];
+        cities[city.id] = {
+          ...dc,
+          food: Math.max(0, Math.round(dc.food * (1 - disaster.foodLossFrac))),
+          population: Math.max(1000, Math.round(dc.population * (1 - disaster.popLossFrac))),
+          loyalty: Math.max(0, Math.min(100, dc.loyalty + disaster.loyaltyDelta)),
+          agriculture: Math.max(0, dc.agriculture + disaster.agricultureDelta),
+          defense: Math.max(0, dc.defense + disaster.defenseDelta),
+        };
+        entries.push({
+          cityId: city.id,
+          kind: disaster.kind === 'flood' ? 'flood' : 'famine',
+          text: `${city.name.en}: ${disaster.textEn}`,
+          textZh: `【${city.name.zh}】${disaster.textZh}`,
+        });
+      }
+    }
     // 貪腐告警 — warn the player when graft crosses a threshold upward in one of
     // their cities, so the hidden gold drain doesn't go unnoticed (mirrors the
     // loyalty-crisis warnings). Fires once per crossing, player force only.
