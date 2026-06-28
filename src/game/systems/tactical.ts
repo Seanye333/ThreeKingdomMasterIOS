@@ -1186,7 +1186,9 @@ export function setupTacticalBattle(p: SetupParams): TacticalBattle {
     defenderObjective: p.defenderObjective ?? namedMap?.defenderObjective,
     weather,
     timeOfDay,
-    windDirection: p.windDirection ?? 'calm',
+    // 名向之風 — a named battlefield can lock the wind so its signature fire
+    // (赤壁/夷陵/新野) blows true, rather than inheriting a random strategic gust.
+    windDirection: namedMap?.windDirection ?? p.windDirection ?? 'calm',
     reinforcements: [...(namedMap?.reinforcements ?? []), ...(p.reinforcements ?? [])],
     specialTiles: namedMap?.specialTiles ?? [],
     damagePopups: [],
@@ -2796,6 +2798,9 @@ export function pickAiBattlePrep(
   const aggressive = traits.includes('aggressive') || traits.includes('brave') || traits.includes('reckless') || traits.includes('cruel');
   const out: BattlePrepKind[] = [];
   if (side === 'attacker') {
+    // 識名戰場 — on a wind-swept field (赤壁/夷陵/新野) a wits-about marshal
+    // reaches for the signature fire FIRST: the locked 東南風 is made for it.
+    if (b.weather === 'wind' && int >= 65) out.push('fire-prep');
     if (hasWalls && int >= 68) out.push('tunnel');                                  // 地道 against walls
     if (int >= 72 && dry && (traits.includes('fire-tactician') || int >= 85)) out.push('fire-prep'); // 火計備料
     if (hasForest || int >= 78) out.push('ambush');                                 // 伏兵 in cover / by wits
