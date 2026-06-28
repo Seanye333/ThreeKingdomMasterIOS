@@ -101,6 +101,75 @@ export function terrainDefenderMultiplier(city?: City): number {
   }
 }
 
+/** What ARM leads an assault — read off the marshal & companions' skills.
+ *  Siege engineers crack walls/passes; cavalry founder on broken ground;
+ *  plain foot is the all-terrain baseline. Siege takes precedence (a column
+ *  that brought engines fights the terrain with them, not with horses). */
+export type AttackerArm = 'cavalry' | 'siege' | 'infantry';
+export function attackerArm(pool: Array<Officer | null | undefined>): AttackerArm {
+  const has = (skill: string) => pool.some((o) => o?.skills.includes(skill));
+  if (has('siegemaster')) return 'siege';
+  if (has('cavalry-master')) return 'cavalry';
+  return 'infantry';
+}
+
+export interface TerrainSiegeOpts {
+  /** The arm leading the assault (see attackerArm). Default 'infantry'. */
+  arm?: AttackerArm;
+  /** This season's weather — 雪封山關 / 雨澇澤林 / 旱涸河津. */
+  weather?: Weather;
+  /** Force sizes — feed the 險隘寡守 (a defile multiplies a small garrison's
+   *  hold) and 沙漠耗師 (a big host withers in the waste) terms. */
+  attackerTroops?: number;
+  defenderTroops?: number;
+}
+
+/**
+ * 地形防御(深化) — the defender's inherent ground edge, now reading the
+ * attacker's ARM, the WEATHER, the force RATIO and the DESERT, where the old
+ * flat per-terrain bonus was blind to all four. Composes onto the base
+ * terrainDefenderMultiplier and is shared by the abstract siege (handleMarch)
+ * AND the AI's attack decision (so it actually shies off a 雄關). Capped at 2×
+ * so even the worst stack (winter cavalry storming a held pass) stays sane.
+ */
+export function terrainSiegeMultiplier(city: City | undefined, opts: TerrainSiegeOpts = {}): number {
+  let mul = terrainDefenderMultiplier(city);
+  const terrain = city?.terrain;
+  const highland = terrain === 'pass' || terrain === 'mountain';
+  const broken = terrain === 'forest' || terrain === 'wetland';
+
+  // 因兵制地 — arm vs ground.
+  const arm = opts.arm ?? 'infantry';
+  if (arm === 'cavalry') {
+    if (highland) mul *= 1.15;        // 騎不能登險 — horses founder on the climbs
+    else if (broken) mul *= 1.08;     // 涉澤穿林,鐵騎難施
+  } else if (arm === 'siege') {
+    if (highland) mul *= 0.88;        // 器械破關 — engines crack the chokepoint
+    else if (terrain === 'wetland') mul *= 1.05; // siege trains bog in the marsh
+  }
+
+  // 天時地利 — weather works the ground (ties §5.4 into §5.6).
+  const w = opts.weather?.kind;
+  if (w === 'snow' && highland) mul *= 1.12;                                   // 冰封棧道,雪壅關隘
+  else if (w === 'rain' && broken) mul *= 1.08;                                // 久雨泥濘,愈陷攻軍
+  else if (w === 'drought' && (terrain === 'water' || terrain === 'wetland')) mul *= 0.92; // 旱涸河津,淺可徒涉
+
+  // 險隘寡守 — in a defile, weight of numbers can't be brought to bear: a token
+  // garrison holds disproportionately (一夫當關,萬夫莫開).
+  if (highland && opts.attackerTroops && opts.defenderTroops && opts.defenderTroops > 0) {
+    const ratio = opts.attackerTroops / opts.defenderTroops;
+    if (ratio > 1) mul *= 1 + Math.min(0.20, (ratio - 1) * 0.08);
+  }
+
+  // 沙漠耗師 — heat, thirst and sandstorm wear at a host crossing the waste,
+  // and the bigger the column the worse the logistics (default terrain gave 0).
+  if (terrain === 'desert') {
+    mul *= 1.04 + Math.min(0.10, (opts.attackerTroops ?? 0) / 320_000);
+  }
+
+  return Math.min(2.0, mul);
+}
+
 /** Helper: compute combat-context policy effects for a side. */
 function computePolicyCombat(
   officers: Officer[],
@@ -1173,9 +1242,6 @@ export function handleMarch(
     mountain: cityCombatTerrain(target) === 'mountain',
     attackerCavalry: commander.skills.includes('cavalry-master'),
   });
-  // Inherent ground advantage for the defender (passes/mountains/forest/marsh),
-  // on top of any walls or rockfall facilities.
-  const terrainDefMul = terrainDefenderMultiplier(target);
   // ── AI 攻城方略 — a non-player attacker prosecutes the siege like a
   // player would: flood a riverside city (decisive sieges only), or invest
   // a grain-poor one until the garrison starves. Costs come out of the
@@ -1218,6 +1284,17 @@ export function handleMarch(
   const effectiveDefense =
     (target.defense + defenseBonusFromPolicy + slotEffects.defenseBonus + siegeMods.defenseBonus + buildingDefenseAdd + fortAid.defenseAdd) * worksDefenseMul;
   const defenderTroops = Math.max(1, Math.floor((target.troops + siegeMods.garrisonBonus + fortAid.garrison) * worksTroopsMul));
+
+  // Inherent ground advantage for the defender (passes/mountains/forest/marsh),
+  // on top of any walls or rockfall facilities — now reading the attacker's arm,
+  // the weather, the force ratio and the desert (§5.6 深化). defenderTroops is
+  // known here, so 險隘寡守 can weigh the column against the garrison.
+  const terrainDefMul = terrainSiegeMultiplier(target, {
+    arm: attackerArm([commander, ...companions]),
+    weather: ctx.weather,
+    attackerTroops: sentTroops,
+    defenderTroops,
+  });
 
   // Watchtower / arrow-platform / rockfall pre-strike the attacker before battle math —
   // plus a volley from any 箭樓/投石臺 guarding the city from the outskirts.

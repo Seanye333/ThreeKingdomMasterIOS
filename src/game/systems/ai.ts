@@ -24,7 +24,7 @@ import { citySize, cityCarryingCapacity, cityEconCap, cityStatCap } from './city
 import { marchDurationFor } from '../data/cities';
 import { marchSpeedMul, adjustMarchSeasons } from './marchPace';
 import { marchSpeedMultiplier } from './weather';
-import { siegeFacilityAid } from './combat';
+import { siegeFacilityAid, terrainSiegeMultiplier, attackerArm } from './combat';
 import { isLand, terrainMarchCost, WORLD_SCALE } from '../data/geography';
 import { cityPos } from '../data/cityGeo';
 import {
@@ -1313,17 +1313,36 @@ function decideCommand(
       // way the siege math will, so it shies off a fort-defended target and only
       // commits with a bigger edge — or goes to raze the forts first.
       const aid = siegeFacilityAid(forts, target.ownerForceId, target.id);
+      // 識地利 — a 山城/雄關 is murder to storm, the more so with cavalry and in
+      // snow; a desert saps a big host. The AI reads the SAME terrain math the
+      // siege will (factoring the arm it could field), so it shies off a 雄關 it
+      // can't crack and only presses when it brings engines or overwhelming foot.
+      const aiArm = attackerArm(officersHere);
+      const terrainMul = terrainSiegeMultiplier(target, {
+        arm: aiArm, weather,
+        attackerTroops: city.troops, defenderTroops: target.troops + aid.garrison,
+      });
       // Effective defender strength factors in city defense: a fortress at
       // defense 88 (Tongguan) counts as if the garrison were ~60% larger.
       const defenseMultiplier = 1 + (target.defense + aid.defenseAdd) / 200;
-      const effectiveDefenderTroops = (target.troops + aid.garrison) * defenseMultiplier * aid.defenderMul;
+      const effectiveDefenderTroops = (target.troops + aid.garrison) * defenseMultiplier * aid.defenderMul * terrainMul;
       // The besieging column is shelled before it reaches the walls.
       const effectiveAttackerTroops = Math.max(1, city.troops - aid.prestrike);
       const ratio = effectiveDefenderTroops / effectiveAttackerTroops;
       if (ratio > attackThreshold) continue;
       // P4 — exclude cowardly/frail officers from leading marches.
       const marchPool = officersHere.filter((c) => !isCombatLiability(c));
-      const o = bestForCommand(marchPool, 'war', 'march');
+      // 險地遣良 — into a pass/mountain, lead with an 攻城 engineer if one's on
+      // hand (器械破關); otherwise the best fighter. Keeps the eval honest: the
+      // arm the AI counted on (siege) is the arm it actually sends.
+      const hardTerrain = target.terrain === 'pass' || target.terrain === 'mountain';
+      let o = bestForCommand(marchPool, 'war', 'march');
+      if (hardTerrain) {
+        const sieger = marchPool
+          .filter((c) => c.skills.includes('siegemaster') && c.stats.war >= 60)
+          .sort((a, b) => b.stats.war - a.stats.war)[0];
+        if (sieger) o = sieger;
+      }
       if (!o || o.stats.war < 60) continue;
       const sendTroops = Math.floor(city.troops * 0.7);
       if (sendTroops < 1000) continue;

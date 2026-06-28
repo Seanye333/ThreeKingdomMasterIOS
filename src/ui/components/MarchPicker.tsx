@@ -12,6 +12,7 @@ import { applicableStratagems } from '../../game/data/stratagems2';
 import { cityPos } from '../../game/data/cityGeo';
 import { geoToPixel } from '../../game/data/geography';
 import { FACILITY_DEFS } from '../../game/types/fort';
+import { attackerArm } from '../../game/systems/combat';
 import type { EntityId } from '../../game/types';
 import { OfficerHoverCard } from './OfficerHoverCard';
 import { OfficerStats } from './OfficerStats';
@@ -403,6 +404,32 @@ export function MarchPicker({ cityId, onClose }: Props) {
                 {t('兵勢評估', 'Assessment')}: <strong style={{ color: verdict.c }}>{t(verdict.zh, verdict.en)}</strong>
                 <span className={styles.muted}> · {t(`遣 ${troops.toLocaleString()} 攻 ${Math.round(defEff).toLocaleString()} 守勢`, `${troops.toLocaleString()} vs ~${Math.round(defEff).toLocaleString()} eff.`)}</span>
               </div>
+              {(() => {
+                // 地利情報 — read the city's ground and advise the right arm (§5.6).
+                const TD: Record<string, { zh: string; en: string }> = {
+                  pass:     { zh: '雄關扼險', en: 'fortified pass' },
+                  mountain: { zh: '依山為城', en: 'mountain city' },
+                  forest:   { zh: '山林伏路', en: 'wooded ground' },
+                  wetland:  { zh: '沼澤陷敵', en: 'marshland' },
+                  desert:   { zh: '大漠耗師', en: 'desert waste' },
+                };
+                const td = target?.terrain ? TD[target.terrain] : undefined;
+                if (!target || !td) return null;
+                const highland = target.terrain === 'pass' || target.terrain === 'mountain';
+                const companions = additionalIds.map((id) => officersMap[id]).filter(Boolean) as typeof officer[];
+                const arm = officer ? attackerArm([officer, ...companions]) : 'infantry';
+                const advice = arm === 'cavalry'
+                  ? { zh: '騎兵難施其地 — 宜改遣步卒或攜攻城器械。', en: 'Bad ground for cavalry — lead with foot or bring siege engines.', c: '#e0707a' }
+                  : arm === 'siege' && highland
+                    ? { zh: '器械破關,正得其法。', en: 'Siege engines crack the pass — well chosen.', c: '#7ec77e' }
+                    : { zh: '地利在敵,謹慎為上。', en: 'The ground favours the defender — press with care.', c: '#e0a070' };
+                return (
+                  <div style={{ marginTop: '0.25rem', fontSize: '0.76rem', color: advice.c }}
+                    title={t('守城方據此地形得固有守勢加成,且因攻方兵種/天候而異(§5.6)。', "The defender draws an inherent bonus from this ground, modulated by your arm and the weather (§5.6).")}>
+                    🏔 {t(td.zh, td.en)} — {t(advice.zh, advice.en)}
+                  </div>
+                );
+              })()}
             </section>
           );
         })()}
