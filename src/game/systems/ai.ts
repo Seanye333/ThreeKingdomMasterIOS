@@ -25,6 +25,7 @@ import { marchDurationFor } from '../data/cities';
 import { marchSpeedMul, adjustMarchSeasons } from './marchPace';
 import { marchSpeedMultiplier } from './weather';
 import { siegeFacilityAid, terrainSiegeMultiplier, attackerArm } from './combat';
+import { computeFog, type FogView } from './fogOfWar';
 import { isLand, terrainMarchCost, WORLD_SCALE } from '../data/geography';
 import { cityPos } from '../data/cityGeo';
 import {
@@ -96,6 +97,10 @@ export interface AIPlanInput {
   /** Strategic forts/facilities — 識城防 AI counts an enemy city's 箭樓/投石臺
    *  network as a stiffer defence and shies off (see siegeFacilityAid). */
   forts?: Record<EntityId, import('../types/fort').Fort>;
+  /** 迷霧對等 — when fog is on, the AI is fogged TOO: it only reacts to enemy
+   *  columns its own forces can actually see, instead of magically intercepting
+   *  every player march (see the field-interception gate in decideCommand). */
+  fogOfWar?: boolean;
   rng?: () => number;
 }
 
@@ -177,6 +182,12 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
     const forceTargetId = pickForceTarget(forceId, forceCities, cities, input.diplomacy, hegemonId);
     // Season posture: consolidate when a bordering force overshadows us.
     const posture = forcePosture(forceId, forceCities, cities);
+    // 迷霧對等 — this force's own sight of the map (own cities + borders + its
+    // columns' scout rings). When fog is on, the AI may only react to enemy
+    // columns inside it; off → null = omniscient, same as the player un-fogged.
+    const fog: FogView | null = input.fogOfWar
+      ? computeFog(cities, input.armies ?? {}, forceId, undefined, officers)
+      : null;
     for (const city of forceCities) {
       if (pendingCommands[city.id]) continue; // shouldn't happen but safe
       const officersHere = Object.values(officers).filter(
@@ -214,6 +225,7 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
         aiAggressionMul,
         input.weather,
         input.forts,
+        fog,
       );
       if (!decision) continue;
 
@@ -1100,6 +1112,7 @@ function decideCommand(
   aiAggressionMul = 1,
   weather?: import('./weather').Weather,
   forts?: Record<EntityId, import('../types/fort').Fort>,
+  fog: FogView | null = null,
 ): Decision | null {
   const ownRulerId = forces[forceId]?.rulerOfficerId;
   // 前線 — a city bordering an enemy (or neutral) realm. Computed up-front so
@@ -1176,6 +1189,8 @@ function decideCommand(
         if (a.forceId === forceId) continue;
         if (!isHostilePermitted(diplomacy, forceId, a.forceId)) continue;
         if (a.troops < 1500) continue; // not worth a sally
+        // 迷霧對等 — can't sally to meet a column the scouts never spotted.
+        if (fog && !fog.isVisiblePx(a.x, a.y)) continue;
         const cp0 = cityPos(city);
         const d = Math.hypot(a.x - cp0.x, a.y - cp0.y);
         const aimsHere = a.targetCityId === city.id && !a.cellTarget;

@@ -18,6 +18,7 @@ import { applyBattlePrep,
   aiTakeTurn, aiSkillForDifficulty, applyStratagem, attackUnits, canAttack, canMove, endTurn, hexDistance,
   moveUnit, resolveBattleEnd, unitAt, forecastAttack, matchupLabel, battleStratagemSituation, eliteUnitOf,
   findPath, moveUnitAlong, reachableHexes, isRouting, changeFormation, canChangeFormation,
+  pickAiBattlePrep, pickAiFormation, formationCounterMul,
 } from '../../game/systems/tactical';
 import { FORMATIONS } from '../../game/data/formations';
 import { canDuel, pickDuelTerrain } from '../../game/systems/duel';
@@ -4081,6 +4082,26 @@ export function TacticalBattleScreen3D() {
     if (playerSide && (battle.activeSide !== playerSide || autoPilot)) {
       const delay = Math.max(150, 700 / Math.max(1, battleSpeed));
       const id = setTimeout(() => {
+        // 委託指揮做活 — handing a battle to the AI shouldn't waste the opening:
+        // on turn 1 the delegated side lays a battle prep (§5.7) and re-forms to
+        // counter the enemy if it's being out-shaped (worth the turn of disorder
+        // before the lines meet). Yields after setup so the move comes next tick.
+        if (autoPilot && battle.turn === 1 && playerSide && !battle.prepUsed?.[playerSide]) {
+          let working = battle;
+          const enemySide = playerSide === 'attacker' ? 'defender' : 'attacker';
+          const ourForm = playerSide === 'attacker' ? working.attackerFormation : working.defenderFormation;
+          const enemyForm = enemySide === 'attacker' ? working.attackerFormation : working.defenderFormation;
+          if (ourForm && enemyForm && canChangeFormation(working, playerSide) && formationCounterMul(enemyForm, ourForm) > 1) {
+            const myArms = working.units.filter((u) => u.side === playerSide && u.troops > 0).map((u) => u.unitType);
+            const cmdInt = officers[working.units.find((u) => u.side === playerSide && u.isCommander)?.officerId ?? '']?.stats.intelligence ?? 70;
+            working = changeFormation(working, playerSide, pickAiFormation(myArms, cmdInt, { counter: enemyForm }));
+          }
+          for (const kind of pickAiBattlePrep(working, playerSide, officers)) {
+            const r = applyBattlePrep(working, playerSide, kind, officers);
+            if (r.ok) { working = r.battle; break; }
+          }
+          if (working !== battle) { start(working); return; }
+        }
         const result = aiTakeTurn(battle, officers, Math.random, {
           skill: aiSkillForDifficulty(battleDiff, aiStrength),
           // 委託指揮 — when the whole battle is delegated, let bold officers

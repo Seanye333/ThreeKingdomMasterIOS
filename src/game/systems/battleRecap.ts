@@ -17,6 +17,9 @@ export interface BattleRecap {
   toughest: { officerId: string; name: string; keptPct: number } | null;
   /** Winning-side unit with the most troops still standing. */
   pillar: { officerId: string; name: string; troops: number } | null;
+  /** 中流砥柱 — the day's MVP by deeds: the unit (either side) that felled the
+   *  most enemy troops, with the routs it caused. Data-driven, from 戰功 tallies. */
+  mvp: { officerId: string; name: string; side: 'attacker' | 'defender'; damageDealt: number; kills: number } | null;
   /** 戰局轉折 — the day's decisive beats (斬將/潰走/挑落/接掌帥旗/甕中/衝鋒…),
    *  pulled from the battle log so the recap reads as a story, not just numbers. */
   keyMoments: Array<{ turn: number; text: string }>;
@@ -42,6 +45,19 @@ export function battleRecap(battle: TacticalBattle, officers: Record<string, Off
     }
     if (!pillar || u.troops > pillar.troops) {
       pillar = { officerId: u.officerId, name: unitName(u, officers), troops: u.troops };
+    }
+  }
+
+  // 中流砥柱 — the MVP by deeds: most enemy troops felled (ties broken by the
+  // routs caused, then by being a commander). Either side may earn it.
+  let mvp: BattleRecap['mvp'] = null;
+  for (const u of battle.units) {
+    const dealt = u.damageDealt ?? 0;
+    if (dealt <= 0) continue;
+    const better = !mvp || dealt > mvp.damageDealt
+      || (dealt === mvp.damageDealt && (u.kills ?? 0) > mvp.kills);
+    if (better) {
+      mvp = { officerId: u.officerId, name: unitName(u, officers), side: u.side, damageDealt: dealt, kills: u.kills ?? 0 };
     }
   }
 
@@ -72,6 +88,7 @@ export function battleRecap(battle: TacticalBattle, officers: Record<string, Off
     schemesCast,
     toughest,
     pillar,
+    mvp,
     keyMoments: keyMoments.slice(-6),
     finalMomentum: battle.momentum ?? 0,
   };

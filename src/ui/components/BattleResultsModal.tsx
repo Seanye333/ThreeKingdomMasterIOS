@@ -147,6 +147,9 @@ export function BattleResultsModal({ battle, playerSide, onClose }: Props) {
             if (recap.exchangeRatio != null) rows.push([lang === 'en' ? 'Exchange' : '戰損比', `1 : ${recap.exchangeRatio}`]);
             if (recap.toughest) rows.push([lang === 'en' ? 'Toughest' : '最堅韌', lang === 'en' ? `${recap.toughest.name} (${Math.round(recap.toughest.keptPct * 100)}% kept)` : `${recap.toughest.name}(存 ${Math.round(recap.toughest.keptPct * 100)}%)`]);
             if (recap.pillar) rows.push([lang === 'en' ? 'Pillar' : '中流砥柱', `${recap.pillar.name}(${recap.pillar.troops.toLocaleString()})`]);
+            if (recap.mvp) rows.push([lang === 'en' ? 'MVP' : '首功',
+              lang === 'en' ? `${recap.mvp.name} (${recap.mvp.damageDealt.toLocaleString()} felled${recap.mvp.kills > 0 ? `, ${recap.mvp.kills} routed` : ''})`
+                : `${recap.mvp.name}(殲 ${recap.mvp.damageDealt.toLocaleString()}${recap.mvp.kills > 0 ? `、潰 ${recap.mvp.kills} 軍` : ''})`]);
             if (recap.schemesCast > 0) rows.push([lang === 'en' ? 'Schemes' : '計謀', lang === 'en' ? `${recap.schemesCast}x` : `${recap.schemesCast} 次`]);
             if (Math.abs(recap.finalMomentum) >= 20) {
               const atkSurge = recap.finalMomentum > 0;
