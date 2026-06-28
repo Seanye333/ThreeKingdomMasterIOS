@@ -391,6 +391,28 @@ export function pickAutoStratagem(
 }
 
 /**
+ * 軍師獻策 — the schemes a commander could deploy in this battle (INT-gated &
+ * applicable), best-first, with an estimated success chance. Drives the
+ * player-facing scheme picker. `max` caps the list (default 4).
+ */
+export function applicableStratagems(
+  ctx: StratagemContext,
+  max = 4,
+): Array<{ id: BattleStratagemId; name: { zh: string; en: string }; descriptionZh?: string; odds: number }> {
+  const list = Object.values(STRATAGEM_DEFS).filter(
+    (s) => ctx.attackerIntelligence >= s.minIntelligence && s.isApplicable(ctx),
+  );
+  // Reuse the same "they know it / theme synergy" preference as the auto-pick.
+  const tactics = new Set(((ctx.attacker as { tactics?: string[] }).tactics) ?? []);
+  list.sort((a, b) => (b.minIntelligence + (tactics.has(b.id) ? 30 : 0)) - (a.minIntelligence + (tactics.has(a.id) ? 30 : 0)));
+  return list.slice(0, max).map((s) => ({
+    id: s.id, name: s.name, descriptionZh: s.descriptionZh,
+    // rough success estimate (mirrors rollStratagemSuccess's core, sans dice).
+    odds: Math.max(0.25, Math.min(0.95, 0.55 + (ctx.attackerIntelligence - s.minIntelligence) * 0.015 - (ctx.defenderIntelligence > 80 ? 0.10 : 0))),
+  }));
+}
+
+/**
  * Roll whether a stratagem succeeds. Higher attacker INT = better odds;
  * defender INT contests.
  */

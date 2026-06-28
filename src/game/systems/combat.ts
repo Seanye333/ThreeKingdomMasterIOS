@@ -1202,6 +1202,8 @@ export function handleMarch(
       // 疲勞 less 都督之旗 — a forced march opens weary (以逸待勞), but a renowned
       // legion marshal's banner steadies the column (legionBanner offsets it).
       attackerMoraleMod: arrivalFatigueMorale(cmd.pace) - (cmd.legionBanner ?? 0),
+      // 軍師獻策 — a scheme the player chose for this assault (if any).
+      forcedStratagem: cmd.forcedStratagem,
     },
   );
   // Account for the prestrike in the casualty report.

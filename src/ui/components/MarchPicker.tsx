@@ -8,6 +8,7 @@ import { playSfx } from '../../game/systems/sound';
 import { generateTerritories, terrainRoute } from '../../game/data/territories';
 import { useT, useLanguage } from '../i18n';
 import { BattlePrepModal } from './BattlePrepModal';
+import { applicableStratagems } from '../../game/data/stratagems2';
 import type { EntityId } from '../../game/types';
 import { OfficerHoverCard } from './OfficerHoverCard';
 import { OfficerStats } from './OfficerStats';
@@ -128,6 +129,8 @@ export function MarchPicker({ cityId, onClose }: Props) {
 
   const [additionalIds, setAdditionalIds] = useState<EntityId[]>([]);
   const [pace, setPace] = useState<MarchPace>('normal');
+  const [forcedStratagem, setForcedStratagem] = useState<string>('');
+  const weather = useGameStore((s) => s.weather);
   const [troops, setTroops] = useState<number>(
     Math.min(2000, source?.troops ?? 0),
   );
@@ -159,6 +162,25 @@ export function MarchPicker({ cityId, onClose }: Props) {
     }
     return { garrison: target.troops, captain, defense: target.defense, wallTier: target.wallTier ?? 1 };
   }, [target, isHostile, officersMap]);
+  // 軍師獻策 — schemes the chosen commander could deploy in this assault (§5.3).
+  const schemeOptions = useMemo(() => {
+    if (!officer || !isHostile || !target) return [];
+    const companions = additionalIds.map((id) => officersMap[id]).filter(Boolean) as typeof officer[];
+    const aInt = Math.round((officer.stats.intelligence + companions.reduce((s, o) => s + o.stats.intelligence, 0)) / (1 + companions.length));
+    const cap = enemyIntel?.captain ?? null;
+    return applicableStratagems({
+      attacker: officer, defender: cap,
+      attackerTroops: troops, defenderTroops: target.troops,
+      city: target, weather: weather ?? ({ kind: 'clear', windPower: 0 } as never),
+      attackerIntelligence: aInt,
+      defenderIntelligence: cap?.stats.intelligence ?? 60,
+      defenderAvgLoyalty: cap?.loyalty ?? 80,
+    });
+  }, [officer, isHostile, target, additionalIds, officersMap, troops, enemyIntel, weather]);
+  // A scheme the commander can no longer field (target/officer changed) is dropped.
+  useEffect(() => {
+    if (forcedStratagem && !schemeOptions.some((s) => s.id === forcedStratagem)) setForcedStratagem('');
+  }, [schemeOptions, forcedStratagem]);
   const maxTroops = source.troops;
   const canAfford = source.gold >= def.goldCost;
   const valid =
@@ -171,7 +193,7 @@ export function MarchPicker({ cityId, onClose }: Props) {
   const handleConfirm = () => {
     if (!valid || !targetId || !officerId) return;
     const extras = additionalIds.filter((id) => id !== officerId);
-    const r = issueMarch(cityId, targetId, officerId, troops, extras, pace);
+    const r = issueMarch(cityId, targetId, officerId, troops, extras, pace, false, forcedStratagem || undefined);
     if (r.ok) {
       // 出征 — a war march answers the gate horn with drums; a plain move just
       // sounds the march cadence.
@@ -445,6 +467,23 @@ export function MarchPicker({ cityId, onClose }: Props) {
           </div>
         </section>
 
+        {isHostile && schemeOptions.length > 0 && (
+          <div style={{ padding: '0.4rem 0.75rem', borderTop: '1px solid #3a2818', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.78rem', color: '#c178c7' }} title={t('速決戰時軍師獻上之計;過智謀門檻且合戰場條件方可施。戰術對戰請改用左鍵「戰術」', 'A scheme your strategist offers for a quick-resolved assault — INT-gated & condition-bound. For a played-out battle use “Tactical”.')}>
+              🧠 {t('軍師獻策', 'Strategist')}
+            </span>
+            <select
+              value={forcedStratagem}
+              onChange={(e) => setForcedStratagem(e.target.value)}
+              style={{ fontSize: '0.78rem', background: 'rgba(20,14,8,0.9)', color: '#d4a84a', border: '1px solid #5a4530', borderRadius: 3, padding: '2px 5px', fontFamily: 'var(--tkm-font-body)' }}
+            >
+              <option value="">{t('不獻計(主將自擇)', 'None (let the marshal decide)')}</option>
+              {schemeOptions.map((s) => (
+                <option key={s.id} value={s.id}>{lang === 'en' ? s.name.en : s.name.zh}（{Math.round(s.odds * 100)}%）</option>
+              ))}
+            </select>
+          </div>
+        )}
         <footer className={styles.footer}>
           <div className={styles.footerMeta}>
             {t('費用', 'Cost')}: <strong>{def.goldCost}{t('金', 'g')}</strong>
