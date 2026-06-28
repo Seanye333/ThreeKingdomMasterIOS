@@ -244,16 +244,27 @@ export function planAIFortAssaults(ctx: AIFacilityContext): AIFortAssaultOutput 
     if (force.id === ctx.playerForceId) continue;
     if (!isHostilePermitted(ctx.diplomacy, force.id, ctx.playerForceId)) continue;
     if (ctx.rng() > ASSAULT_CHANCE) continue;
-    // Nearest player fort within reach of one of this force's garrisons.
-    let best: { fort: Fort; city: City; d: number } | null = null;
+    // 識城防 — go for the fort that most impedes this force's advance, not just
+    // the nearest one: a 箭樓/投石臺 (it shells our columns) and one guarding a
+    // city on our own frontier (it covers a target we'd next assault) jump the
+    // queue. We score by distance MINUS those priorities and take the lowest.
+    const ourBorderSet = new Set(
+      Object.values(cities).filter((c) => c.ownerForceId === force.id).flatMap((c) => c.adjacentCityIds),
+    );
+    let best: { fort: Fort; city: City; score: number } | null = null;
     for (const fort of playerForts) {
       if (!forts[fort.id]) continue; // already razed this season
       const [fx, fy] = geoToPixel(fort.coords.lon, fort.coords.lat);
+      const fac = fort.facility ? FACILITY_DEFS[fort.facility] : null;
+      const rangedPriority = fac?.effect === 'ranged' ? 30 * WORLD_SCALE : 0;
+      const impedePriority = fort.guards.some((g) => ourBorderSet.has(g)) ? 45 * WORLD_SCALE : 0;
       for (const c of Object.values(cities)) {
         if (c.ownerForceId !== force.id || c.troops < 4000) continue;
         const cp = cityPos(c);
         const d = Math.hypot(cp.x - fx, cp.y - fy);
-        if (d < ASSAULT_RANGE && (!best || d < best.d)) best = { fort, city: c, d };
+        if (d >= ASSAULT_RANGE) continue;
+        const score = d - rangedPriority - impedePriority;
+        if (!best || score < best.score) best = { fort, city: c, score };
       }
     }
     if (!best) continue;

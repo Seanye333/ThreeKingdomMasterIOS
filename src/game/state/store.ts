@@ -659,6 +659,10 @@ interface GameStore extends GameState {
    *  that direction's real terrain. Nothing writes back to the campaign.
    *  Returns false if the city has no officers to field. */
   startPracticeBattle: (cityId: EntityId, bearing?: number, officerIds?: EntityId[]) => boolean;
+  /** 演習收功 — conclude a drill: bank 練度 + 武將歷練 scaled by how the garrison
+   *  fared (held the walls → more; routed → less; bailed early → token), then
+   *  clear the board. Replaces the old flat +3-on-launch. */
+  endPracticeDrill: () => void;
   /** 演武 — two of your officers spar (non-lethal). Both gain XP (the winner
    *  more), which can grow stats / learn skills via the normal growth path.
    *  Returns a summary for the UI; null if either officer is missing. */
@@ -2980,6 +2984,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           taxPolicy: state.taxPolicy,
           date: state.date,
           weather: state.weather,
+          forts: state.forts,
         });
         // Compute whether this period transition crosses a season boundary.
         // Boundary = the period BEFORE advance is the last (lower) phase of
@@ -7793,14 +7798,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           battleGeo: { x: tp.x, y: tp.y, bearing, anchorCol: 16, season: state.date.season },
         });
         battle.practice = true;
-        // 演習練兵 — hands-on sparring builds the garrison's 練度 (drill level),
-        // the same stat the 練兵 command raises (feeds defensive power in a real
-        // siege; see cityDrillDefenseMultiplier in combat.ts).
-        const drilled = Math.min(100, (city.drill ?? 0) + 3);
+        // 演習練兵 — the 練度 + 武將歷練 are now banked at CONCLUSION (endPracticeDrill),
+        // scaled by how the garrison actually fared, instead of a flat +3 for merely
+        // clicking start. (drill feeds defensive power in a real siege; see
+        // cityDrillDefenseMultiplier in combat.ts.)
         set({
           tacticalBattle: battle,
           selectedCityId: cityId,
-          cities: { ...state.cities, [cityId]: { ...city, drill: drilled } },
         });
         return true;
       },
@@ -7920,6 +7924,52 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             defenderLosses,
           },
         });
+      },
+      endPracticeDrill: () => {
+        const state = get();
+        const tb = state.tacticalBattle;
+        if (!tb || !tb.practice) { set({ tacticalBattle: null }); return; }
+        const cityId = tb.cityId ?? state.selectedCityId;
+        const city = cityId ? state.cities[cityId] : null;
+        if (!city) { set({ tacticalBattle: null }); return; }
+        // 戰果定功 — the garrison holds the walls as the DEFENDER. Holding (or a
+        // draw) banks a real drill; being stormed teaches a harder, smaller
+        // lesson; bailing before a verdict is a token. Scaled by the best
+        // commander on hand (a 名將 wrings more out of the same drill).
+        const garrison = Object.values(state.officers).filter(
+          (o) => o.locationCityId === cityId && o.forceId === state.playerForceId
+            && o.status !== 'dead' && o.status !== 'unsearched' && o.status !== 'imprisoned',
+        );
+        const bestLead = garrison.reduce((m, o) => Math.max(m, o.stats.leadership), 60);
+        const leadScale = 0.8 + bestLead / 250; // ~1.0 at 50, ~1.2 at 100
+        const held = tb.winner === 'defender' || tb.winner == null;
+        const inconclusive = tb.winner == null;
+        const baseGain = inconclusive ? 1 : tb.winner === 'defender' ? 6 : 3;
+        const gain = Math.max(1, Math.round(baseGain * leadScale));
+        const drilled = Math.min(100, (city.drill ?? 0) + gain);
+        // 臨陣歷練 — the officers who sparred gain a little XP (war/leadership
+        // honed), more for holding the walls. No XP for an instant bail-out.
+        let officers = state.officers;
+        if (!inconclusive) {
+          const xp = held ? 18 : 11;
+          const next = { ...officers };
+          for (const o of garrison) {
+            next[o.id] = grantXp(next[o.id] ?? o, xp, Math.random, ['war', 'leadership']).officer;
+          }
+          officers = next;
+        }
+        set({
+          tacticalBattle: null,
+          officers,
+          cities: { ...state.cities, [cityId]: { ...city, drill: drilled } },
+        });
+        get().notify(
+          inconclusive ? `演習未竟,略有所得 — 練度 +${gain}` : tb.winner === 'defender'
+            ? `演習克捷,守備精進 — 練度 +${gain},眾將歷練+` : `演習失守,記取教訓 — 練度 +${gain},眾將歷練+`,
+          inconclusive ? `Drill cut short — drill +${gain}` : tb.winner === 'defender'
+            ? `Drill won — drill +${gain}, officers seasoned` : `Walls fell in drill — drill +${gain}, lessons learned`,
+          tb.winner === 'attacker' ? 'warn' : 'ok',
+        );
       },
       cancelTacticalBattle: () => {
         const tb = get().tacticalBattle;

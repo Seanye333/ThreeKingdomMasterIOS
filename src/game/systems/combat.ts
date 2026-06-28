@@ -19,6 +19,7 @@ import { deriveTactics, tacticsTotalBonus, combosPowerMultiplier, findActiveComb
 import { combatModifiers, conquestLoyaltyMod, combatRoleFit, type CombatMods } from './traitEffects';
 import { describeBattleSite, isRiverside } from '../data/geography';
 import { cityPos } from '../data/cityGeo';
+import { FACILITY_DEFS, fortMaxHpForLevel } from '../types/fort';
 import { sidePoolRelationshipBonus, rivalShowdownMultiplier, parentsOf, childrenOf, spousesOf, siblingsOf, allSwornBrothersOf, swornAcrossLinesPenalty, areSwornBrothers } from './relationshipEffects';
 import { effectivePrestigeEffects } from '../data/prestige';
 import { honorificEffects, honorificById } from '../data/honorifics';
@@ -163,6 +164,59 @@ export function cityDrillDefenseMultiplier(drill: number | undefined): number {
   const d = Math.max(0, Math.min(100, drill ?? 0));
   if (d <= 0) return 1;
   return 1 + d * 0.0025;
+}
+
+/**
+ * 城戍助守 — what a city's surrounding 施設 (forts/facilities) lend to its
+ * defence when it is besieged. Previously these only shelled columns on the
+ * march and joined a *tactical* battle; the abstract siege (the common path)
+ * ignored them entirely — a city ringed by 投石臺 fought as if bare. Now a
+ * defender-owned facility *guarding* the besieged city pitches in:
+ *   箭樓/投石臺 (ranged) → pre-strike the besieging column + overwatch (守軍威);
+ *   陣 (supply)        → musters extra garrison (糧秣周濟,守卒益眾);
+ *   防壁 (block)       → adds to the wall (壘壁深固).
+ * Effect scales with the facility's level (each +50%) and is muted by HP loss
+ * (a half-wrecked tower fires at half strength). Razed forts (hp≤0) give nothing.
+ */
+export interface SiegeFacilityAid {
+  /** Troops shelled off the attacker before the assault math. */
+  prestrike: number;
+  /** Extra defenders mustered by supply camps. */
+  garrison: number;
+  /** Flat addition to the city's effective defence (barricades). */
+  defenseAdd: number;
+  /** Multiplier on defender power from ranged overwatch (≥1). */
+  defenderMul: number;
+  /** Count of contributing facilities, for the player report. */
+  count: number;
+}
+
+export function siegeFacilityAid(
+  forts: Record<EntityId, import('../types/fort').Fort> | undefined,
+  defenderForceId: EntityId | null,
+  cityId: EntityId,
+): SiegeFacilityAid {
+  const aid: SiegeFacilityAid = { prestrike: 0, garrison: 0, defenseAdd: 0, defenderMul: 1, count: 0 };
+  if (!forts || !defenderForceId) return aid;
+  for (const f of Object.values(forts)) {
+    if (!f.facility || f.hp <= 0) continue;
+    if (f.ownerForceId !== defenderForceId) continue;
+    if (!f.guards.includes(cityId)) continue;       // only forts guarding THIS city
+    const def = FACILITY_DEFS[f.facility];
+    const levelMul = fortMaxHpForLevel(1, f.level); // 1 / 1.5 / 2 by level
+    const hpFrac = Math.max(0.25, Math.min(1, f.hp / Math.max(1, fortMaxHpForLevel(def.hp, f.level))));
+    const scale = levelMul * hpFrac;
+    aid.count++;
+    if (def.effect === 'ranged') {
+      aid.prestrike += Math.round(def.power * 0.6 * scale);  // a volley as the column closes
+      aid.defenderMul *= 1 + 0.05 * scale;                   // sustained overwatch
+    } else if (def.effect === 'supply') {
+      aid.garrison += Math.round(def.power * 1.4 * scale);   // 糧道周濟 → more defenders hold
+    } else if (def.effect === 'block') {
+      aid.defenseAdd += Math.round(8 * scale);               // 壘壁 stiffens the wall
+    }
+  }
+  return aid;
 }
 
 /**
@@ -1021,6 +1075,9 @@ export interface MarchContext {
   duelChanceMul?: number;
   /** City interior buildings — 城壁/武庫/甕城/譙樓 add to the defender's wall. */
   buildings?: Building[];
+  /** 城戍 — strategic-map forts/facilities. A defender's 箭樓/投石臺/陣/防壁
+   *  guarding the besieged city lends its fire/garrison/wall to the siege. */
+  forts?: Record<EntityId, import('../types/fort').Fort>;
 }
 
 export interface MarchOutcome {
@@ -1154,12 +1211,24 @@ export function handleMarch(
   const cityBuildBonus = buildingBonuses(target.id, ctx.buildings ?? []);
   const buildingDefenseAdd = cityBuildBonus.defenseAdd
     + (isWaterBattle({ city: target }) ? cityBuildBonus.navalPower : 0);
+  // 城戍助守 — surrounding 箭樓/投石臺/陣/防壁 guarding this city now pitch into
+  // the abstract siege too (not just the tactical battle): they shell the
+  // besieger, muster extra garrison, and stiffen the wall.
+  const fortAid = siegeFacilityAid(ctx.forts, target.ownerForceId, target.id);
   const effectiveDefense =
-    (target.defense + defenseBonusFromPolicy + slotEffects.defenseBonus + siegeMods.defenseBonus + buildingDefenseAdd) * worksDefenseMul;
-  const defenderTroops = Math.max(1, Math.floor((target.troops + siegeMods.garrisonBonus) * worksTroopsMul));
+    (target.defense + defenseBonusFromPolicy + slotEffects.defenseBonus + siegeMods.defenseBonus + buildingDefenseAdd + fortAid.defenseAdd) * worksDefenseMul;
+  const defenderTroops = Math.max(1, Math.floor((target.troops + siegeMods.garrisonBonus + fortAid.garrison) * worksTroopsMul));
 
-  // Watchtower / arrow-platform / rockfall pre-strike the attacker before battle math.
-  const adjustedAttackerTroops = Math.max(0, sentTroops - slotEffects.rangedPrestrike);
+  // Watchtower / arrow-platform / rockfall pre-strike the attacker before battle math —
+  // plus a volley from any 箭樓/投石臺 guarding the city from the outskirts.
+  const adjustedAttackerTroops = Math.max(0, sentTroops - slotEffects.rangedPrestrike - fortAid.prestrike);
+  if (fortAid.count > 0 && target.ownerForceId === ctx.playerForceId) {
+    entries.push({
+      cityId: target.id, kind: 'note',
+      text: `${target.name.en}: ${fortAid.count} fort(s) aided the defence (shelling, garrison, ramparts).`,
+      textZh: `${target.name.zh}：城戍 ${fortAid.count} 處助守 —— 箭石轟敵、周濟守卒、深固壘壁。`,
+    });
+  }
 
   // Civic title force multipliers (軍師/太尉/丞相). Looked up by attacker
   // and defender force; null target owner ⇒ 1.
@@ -1204,7 +1273,7 @@ export function handleMarch(
       runtimeBonds: ctx.runtimeBonds,
       rapport: ctx.rapport,
       attackerTitlePowerMul: attackerTitlePowerMul * siegeMods.attackerPowerMul,
-      defenderTitlePowerMul: defenderTitlePowerMul * siegeMods.defenderPowerMul * terrainDefMul * foreignAuxDefenseMultiplier(target.foreignAux) * cityDrillDefenseMultiplier(target.drill),
+      defenderTitlePowerMul: defenderTitlePowerMul * siegeMods.defenderPowerMul * terrainDefMul * foreignAuxDefenseMultiplier(target.foreignAux) * cityDrillDefenseMultiplier(target.drill) * fortAid.defenderMul,
       attackerCasusBelliMul,
       defenderCasusBelliMul,
       duelChanceMul: ctx.duelChanceMul ?? 1,
