@@ -2176,6 +2176,10 @@ export function attackUnits(
       let effects = u.effects.filter((e) => e.kind !== 'feign-rout');
       if (chargeMul > 1.05 && newTroops > 0 && !effects.some((e) => e.kind === 'disorder')) {
         effects = [...effects, { kind: 'disorder' as const, turnsLeft: 1 }];
+      } else if (ambushBonus > 1 && newTroops > 0 && !effects.some((e) => e.kind === 'disorder')) {
+        // 伏兵驟起 — a sprung ambush doesn't just bite harder, it throws the
+        // ambushed ranks into disorder (陣腳大亂),longer than a mere charge.
+        effects = [...effects, { kind: 'disorder' as const, turnsLeft: 2 }];
       }
       return { ...u, troops: newTroops, morale, effects };
     }
@@ -2503,7 +2507,7 @@ function weatherDamageMul(w: Weather, unitType: UnitType): number {
      ambushes bite harder, every line fights at night odds.
    地道 tunnel: siege attackers only — sappers carry your weakest
      contingent under the wall line; it surfaces inside the city. */
-export type BattlePrepKind = 'ambush' | 'night' | 'tunnel';
+export type BattlePrepKind = 'ambush' | 'night' | 'tunnel' | 'caltrops-trap' | 'fire-prep' | 'decoy';
 
 /**
  * 計接戰場 — when an abstract-combat scheme (§5.3) is played out on the hex grid,
@@ -2550,6 +2554,8 @@ export function applyBattlePrep(
   b: TacticalBattle,
   side: 'attacker' | 'defender',
   kind: BattlePrepKind,
+  /** Officer table — lets a wary defender 看破 a 地道, and gates nothing else. */
+  officers?: Record<EntityId, Officer>,
 ): { battle: TacticalBattle; ok: boolean; reason?: string } {
   if (b.turn !== 1) return { battle: b, ok: false, reason: 'the battle is already joined' };
   if (b.prepUsed?.[side]) return { battle: b, ok: false, reason: 'already prepared' };
@@ -2558,6 +2564,69 @@ export function applyBattlePrep(
     prepUsed: { ...b.prepUsed, [side]: kind },
     log: [...(nb.log ?? []), { turn: 1, text, kind: 'event' as const }],
   });
+  const foe: 'attacker' | 'defender' = side === 'attacker' ? 'defender' : 'attacker';
+  // The wits of the opposing marshal — used by tunnel counterplay (地道破解).
+  const foeCommanderInt = (): number => {
+    let best = 0;
+    for (const u of b.units) {
+      if (u.side !== foe || u.troops <= 0 || !u.isCommander) continue;
+      const o = officers?.[u.officerId];
+      if (o) best = Math.max(best, o.stats.intelligence
+        + (o.skills?.includes('celestial-tactician') || o.skills?.includes('crouching-dragon') ? 8 : 0));
+    }
+    return best;
+  };
+
+  // 拒馬陷坑 — the DEFENDER'S exclusive prep: a line of caltrops & pits across
+  // the mid-field. The first ranks to cross it bleed and bog down — murder on
+  // a cavalry charge. (Mirrors the attacker-only 地道, balancing the asymmetry.)
+  if (kind === 'caltrops-trap') {
+    if (side !== 'defender') return { battle: b, ok: false, reason: 'only defenders lay traps before their own walls' };
+    const occupied = new Set(b.units.filter((u) => u.troops > 0).map((u) => `${u.coord.col},${u.coord.row}`));
+    const trapCol = Math.max(2, Math.floor(b.width / 2) + 1); // a little forward of centre, toward the attacker
+    const midRow = Math.floor(b.height / 2);
+    const placed: NonNullable<TacticalBattle['cityStructures']> = [];
+    for (const row of [midRow - 1, midRow, midRow + 1]) {
+      const key = `${trapCol},${row}`;
+      if (occupied.has(key)) continue;
+      const g = tileAt(b, { col: trapCol, row })?.terrain;
+      if (g === 'wall' || g === 'gate' || g === 'marsh') continue;
+      placed.push({ slotIndex: 200 + placed.length, buildingId: 'caltrops', level: 2, coord: { col: trapCol, row }, hp: 200 });
+    }
+    if (placed.length === 0) return { battle: b, ok: false, reason: 'no ground to lay the trap line' };
+    return {
+      battle: mark({ ...b, cityStructures: [...(b.cityStructures ?? []), ...placed] },
+        '🪤 拒馬陷坑已布 — 一道鐵蒺藜橫亙陣前,騎陣慎入!'),
+      ok: true,
+    };
+  }
+
+  // 火計備料 — the ATTACKER caches oil & kindling on the approaches: the battle
+  // opens with the enemy front already smouldering, and any fire spreads hotter
+  // (handled by groundFires + the wind-fed spread). Doused by rain/snow.
+  if (kind === 'fire-prep') {
+    if (side !== 'attacker') return { battle: b, ok: false, reason: 'the assault lays the kindling' };
+    if (b.weather === 'rain' || b.weather === 'snow') return { battle: b, ok: false, reason: 'too wet to lay a fire' };
+    const front = b.units.filter((u) => u.side === foe && u.troops > 0)
+      .sort((a, z) => a.coord.col - z.coord.col)[0];
+    if (!front) return { battle: b, ok: false, reason: 'no enemy front to set alight' };
+    return {
+      battle: mark({ ...b, groundFires: [...(b.groundFires ?? []), { coord: front.coord, turnsLeft: 3 }] },
+        '🔥 火計備料 — 油薪已伏敵營之前,烈焰騰起,風助火勢!'),
+      ok: true,
+    };
+  }
+
+  // 疑兵 — either side plants false banners & raises dust: the enemy, misreading
+  // the host's strength, opens the fight hesitant (−10 morale across their line).
+  if (kind === 'decoy') {
+    const shaken = b.units.map((u) => (u.side === foe && u.troops > 0 ? { ...u, morale: Math.max(0, u.morale - 10) } : u));
+    return {
+      battle: mark({ ...b, units: shaken },
+        '🚩 疑兵之計 — 虛張旗鼓、揚塵蔽野,敵疑我眾而心怯(士氣挫)。'),
+      ok: true,
+    };
+  }
 
   if (kind === 'night') {
     // 夜襲劫營 — the enemy is roused from camp in disarray: every foe opens the
@@ -2602,13 +2671,90 @@ export function applyBattlePrep(
     && !occupied.has(`${t.coord.col},${t.coord.row}`)
     && !['wall', 'gate', 'river', 'deep-water'].includes(t.terrain));
   if (!exit) return { battle: b, ok: false, reason: 'no ground inside the walls' };
+  // 地道破解 — a wary, sharp-witted defender hears the digging and is ready: the
+  // tunnellers still surface inside the walls, but into a counter-ambush — they
+  // arrive shaken (−30 morale) and in disarray (陣腳大亂), not at full poise.
+  const detected = Math.random() < Math.max(0, Math.min(0.6, (foeCommanderInt() - 70) / 60));
+  const surfaced = b.units.map((u) => {
+    if (u.id !== movers[0].id) return u;
+    const moved = { ...u, coord: exit.coord };
+    if (!detected) return moved;
+    return {
+      ...moved,
+      morale: Math.max(0, moved.morale - 30),
+      effects: moved.effects.some((e) => e.kind === 'disorder') ? moved.effects : [...moved.effects, { kind: 'disorder' as const, turnsLeft: 2 }],
+    };
+  });
   return {
-    battle: mark(
-      { ...b, units: b.units.map((u) => (u.id === movers[0].id ? { ...u, coord: exit.coord } : u)) },
-      '⛏ 地道既成 — 一軍自城下湧出,已在牆內!',
-    ),
+    battle: mark({ ...b, units: surfaced },
+      detected
+        ? '⛏ 地道既成,然守將早有提防 — 伏卒湧出即遭迎頭痛擊,陣腳大亂!'
+        : '⛏ 地道既成 — 一軍自城下湧出,已在牆內!'),
     ok: true,
   };
+}
+
+/**
+ * 廟算 — pick sensible battle preps for an AI-controlled side at turn 1, gated by
+ * the marshal's wits & nerve and what the ground allows. Returns a priority list
+ * (the caller tries each until one takes), or [] for a dullard / a quiet field.
+ * Without this an AI side fought every played-out battle BARE while the human
+ * freely set ambushes — the whole §5.7 prep system lay dormant against the AI.
+ */
+export function pickAiBattlePrep(
+  b: TacticalBattle,
+  side: 'attacker' | 'defender',
+  officers: Record<EntityId, Officer>,
+): BattlePrepKind[] {
+  const commander = b.units.find((u) => u.side === side && u.isCommander && u.troops > 0);
+  const o = commander ? officers[commander.officerId] : undefined;
+  const int = o?.stats.intelligence ?? 55;
+  const traits = (o?.traits as string[] | undefined) ?? [];
+  // Dullards rarely scheme; a 智將 almost always does.
+  if (Math.random() > Math.max(0.12, Math.min(0.9, (int - 35) / 75))) return [];
+  const hasForest = b.tiles.some((t) => t.terrain === 'forest');
+  const hasWalls = b.tiles.some((t) => t.terrain === 'wall' || t.terrain === 'gate');
+  const foe: 'attacker' | 'defender' = side === 'attacker' ? 'defender' : 'attacker';
+  const foeCavalry = b.units.some((u) => u.side === foe && u.troops > 0 && u.unitType === 'cavalry');
+  const dry = b.weather !== 'rain' && b.weather !== 'snow';
+  const aggressive = traits.includes('aggressive') || traits.includes('brave') || traits.includes('reckless') || traits.includes('cruel');
+  const out: BattlePrepKind[] = [];
+  if (side === 'attacker') {
+    if (hasWalls && int >= 68) out.push('tunnel');                                  // 地道 against walls
+    if (int >= 72 && dry && (traits.includes('fire-tactician') || int >= 85)) out.push('fire-prep'); // 火計備料
+    if (hasForest || int >= 78) out.push('ambush');                                 // 伏兵 in cover / by wits
+    if (int >= 64 && (aggressive || hasForest)) out.push('night');                  // 夜襲劫營
+    out.push('decoy');                                                              // 疑兵 fallback
+  } else {
+    if (foeCavalry || int >= 70) out.push('caltrops-trap');                         // 拒馬陷坑 vs horse
+    if (hasForest || int >= 78) out.push('ambush');
+    if (int >= 70 && aggressive) out.push('night');
+    out.push('decoy');
+  }
+  return out;
+}
+
+/**
+ * Apply an AI-chosen prep to each NON-player, non-practice side at battle setup
+ * (turn 1). The human's own side is left untouched — they pick via the prep UI.
+ */
+export function applyAiBattlePreps(
+  b: TacticalBattle,
+  playerForceId: EntityId | null,
+  officers: Record<EntityId, Officer>,
+): TacticalBattle {
+  if (b.practice || b.turn !== 1) return b;
+  let battle = b;
+  for (const side of ['attacker', 'defender'] as const) {
+    const forceId = side === 'attacker' ? battle.attackerForceId : battle.defenderForceId;
+    if (forceId == null || forceId === playerForceId) continue; // neutral or human-controlled
+    if (battle.prepUsed?.[side]) continue;                       // a scheme already set one
+    for (const kind of pickAiBattlePrep(battle, side, officers)) {
+      const r = applyBattlePrep(battle, side, kind, officers);
+      if (r.ok) { battle = r.battle; break; }
+    }
+  }
+  return battle;
 }
 
 export function applyStratagem(
@@ -3733,6 +3879,9 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
         }
       }
       if (!target) continue;
+      // 鐵蒺藜挫銳騎 — caltrops & pits are murder on a cavalry charge: a mounted
+      // unit that blunders onto the trap line takes 2.5× the bite (foot less so).
+      if (s.buildingId === 'caltrops' && target.unitType === 'cavalry') dmg = Math.round(dmg * 2.5);
       // 投石臺 vs 箭樓 — a catapult lobs a stone that SCATTERS through the press:
       // it splashes half-damage onto attackers adjacent to the impact, where the
       // tower's single precise arrow strikes one mark. 亂石穿空,一發而眾傷.
@@ -3919,9 +4068,37 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
     });
   }
 
+  // 斥候識破伏兵 — the side that just manoeuvred may uncover a hidden enemy: a
+  // sharp commander's scouts read the broken ground. 夜霧 halves both the reach
+  // AND the odds, so an ambush set in the dark is far harder to spot (this is
+  // why 夜利伏兵). Without it, a set ambush was only ever revealed by stumbling
+  // adjacent — a clever defender could never pre-empt one.
+  let scoutedUnits = finalUnits;
+  const scoutLog: NonNullable<TacticalBattle['log']> = [];
+  if (officers) {
+    const scouts = scoutedUnits.filter((u) => u.side === b.activeSide && u.troops > 0 && u.isCommander);
+    const hiddenFoes = scoutedUnits.filter((u) => u.side !== b.activeSide && u.troops > 0 && u.hidden);
+    if (scouts.length > 0 && hiddenFoes.length > 0) {
+      const nightMul = b.timeOfDay === 'night' ? 0.5 : 1;
+      const reveal = new Set<EntityId>();
+      for (const f of hiddenFoes) {
+        for (const sc of scouts) {
+          const int = officers[sc.officerId]?.stats.intelligence ?? 50;
+          const reach = Math.max(1, (2 + Math.floor((int - 60) / 20)) * nightMul);
+          if (hexDistance(sc.coord, f.coord) > reach) continue;
+          if (Math.random() < Math.max(0, Math.min(0.7, (int - 65) / 70)) * nightMul) { reveal.add(f.id); break; }
+        }
+      }
+      if (reveal.size > 0) {
+        scoutedUnits = scoutedUnits.map((u) => (reveal.has(u.id) ? { ...u, hidden: false } : u));
+        scoutLog.push({ turn: newTurn, text: '🔍 斥候識破伏兵 — 敵伏路已露,難再偷襲!', kind: 'event' });
+      }
+    }
+  }
+
   const next: TacticalBattle = {
     ...b,
-    units: finalUnits,
+    units: scoutedUnits,
     tiles: nextTiles,
     weather: nextWeather,
     timeOfDay: nextTimeOfDay,
@@ -3940,7 +4117,7 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
     defenderObjective: defenderObj,
     reinforcements: remaining,
     casualties,
-    log: [...(b.log ?? []), ...grainLog, ...fireLog, ...weatherLog, ...windLog, ...timeLog, ...arrivalLog, ...structureLog, ...eventLog],
+    log: [...(b.log ?? []), ...grainLog, ...fireLog, ...weatherLog, ...windLog, ...timeLog, ...arrivalLog, ...structureLog, ...scoutLog, ...eventLog],
     damagePopups: structurePopups, // visible briefly on turn flip
     cityStructures: updatedStructures,
   };

@@ -209,7 +209,7 @@ function bestRapportWith(state: { officers: Record<string, Officer>; rapport: Re
   }
   return best;
 }
-import { setupTacticalBattle, inferUnitType, planSiegeRelief, rollTimeOfDay, pickAiFormation, applyOpeningScheme } from '../systems/tactical';
+import { setupTacticalBattle, inferUnitType, planSiegeRelief, rollTimeOfDay, pickAiFormation, applyOpeningScheme, applyAiBattlePreps } from '../systems/tactical';
 import { pickAutoStratagem } from '../data/stratagems2';
 import { BUILDING_DEFS_BY_ID } from '../data/buildings';
 import { DEFENSE_BUILDINGS } from '../data/defenseBuildings';
@@ -1101,6 +1101,9 @@ function buildFieldBattle(
     });
     if (scheme) battle = applyOpeningScheme(battle, scheme);
   }
+  // 廟算 — the AI-controlled side(s) lay their own pre-battle preparations
+  // (伏兵/夜襲/地道/拒馬/火計/疑兵), gated by the marshal's wits (§5.7).
+  battle = applyAiBattlePreps(battle, s.playerForceId, s.officers);
   battle.attackerArmyId = playerArmyId;
   battle.defenderArmyId = enemyArmyId;
   return battle;
@@ -7864,7 +7867,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           target: tgt, cities: state.cities, officers: state.officers,
           defenderForceId: state.playerForceId, bearing,
         });
-        const battle = setupTacticalBattle({
+        let battle = setupTacticalBattle({
           cityId: tgt.id,
           width: 18,
           height: 12,
@@ -7882,6 +7885,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           siegeWorks: works,
           reinforcements: relief.reinforcements,
         });
+        // 廟算 — the AI besieger lays its own pre-battle prep (地道/伏兵/夜襲/火計…).
+        battle = applyAiBattlePreps(battle, state.playerForceId, state.officers);
         battle.siegeDefenseSourceCityId = item.sourceCityId;
         battle.reliefPlans = relief.plans;
         const citiesAfterRelief = { ...state.cities };
