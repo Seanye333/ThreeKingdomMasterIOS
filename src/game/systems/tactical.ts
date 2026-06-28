@@ -1552,6 +1552,13 @@ function processRout(b: TacticalBattle): TacticalBattle {
   let cur = b;
   const routers = cur.units.filter((u) => u.side === cur.activeSide && isRouting(u));
   for (const r of routers) {
+    // 背水置死地 — a 背水陣 has no line of retreat: a unit that would break
+    // instead turns and fights (置之死地而後生), its morale steadied above rout.
+    const rForm = r.side === 'attacker' ? cur.attackerFormation : cur.defenderFormation;
+    if (rForm === 'back-to-water') {
+      cur = { ...cur, units: cur.units.map((x) => (x.id === r.id ? { ...x, morale: Math.max(x.morale, 20) } : x)) };
+      continue;
+    }
     const edgeCol = homeEdgeCol(cur, r.side);
     let safety = 8;
     while (safety-- > 0) {
@@ -2934,7 +2941,10 @@ export function applyStratagem(
 
   // 看破/反計 — a rival master strategist on the receiving side may see through
   // a 計略 and foil it; the caster wastes the turn (AP + cooldown spent).
-  const COUNTERABLE: StratagemId[] = ['fire-attack', 'confusion', 'false-retreat', 'lightning', 'rain-of-arrows'];
+  // 看破 reaches every PLOT (計謀), not just five — a 連環/劫糧/兵糧攻 is as
+  // readable to a master as a 火計. Physical flourishes (突/衝/接舷/落石) are not
+  // schemes and stand outside it.
+  const COUNTERABLE: StratagemId[] = ['fire-attack', 'confusion', 'false-retreat', 'lightning', 'rain-of-arrows', 'chain-ships', 'supply-strike', 'raid-supply'];
   if (COUNTERABLE.includes(stratagem)) {
     const t0 = unitAt(b, targetCoord);
     const foeSide = t0 ? t0.side : unit.side === 'attacker' ? 'defender' : 'attacker';
@@ -2947,7 +2957,10 @@ export function applyStratagem(
       if (!seer || o.stats.intelligence > seer.stats.intelligence) seer = o;
     }
     if (seer) {
-      const chance = Math.max(0, Math.min(0.5, (seer.stats.intelligence - (off?.stats.intelligence ?? 60) + 18) / 100));
+      // 七星增計 — schemes cast from within the 七星陣 are far harder to read
+      // (the formation veils the gambit): the enemy's 看破 chance drops 40%.
+      const sevenStar = (unit.side === 'attacker' ? b.attackerFormation : b.defenderFormation) === 'seven-star';
+      const chance = Math.max(0, Math.min(0.5, (seer.stats.intelligence - (off?.stats.intelligence ?? 60) + 18) / 100)) * (sevenStar ? 0.6 : 1);
       if (Math.random() < chance) {
         return {
           battle: {
@@ -3521,7 +3534,19 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
     // defensive); a spent unit (≥70) fields one fewer AP next turn.
     const wasDefending = u.effects.some((e) => e.kind === 'defending');
     const fatigue = Math.max(0, (u.fatigue ?? 0) - (wasDefending ? FATIGUE_REST_DEFEND : FATIGUE_REST));
-    const ap = Math.max(1, u.maxAp - (fatigue >= FATIGUE_SPENT ? 1 : 0));
+    let apPenalty = fatigue >= FATIGUE_SPENT ? 1 : 0;
+    // 玄門困敵 — a foe locked against the enemy's mystic formation loses its
+    // footing: the 八門遁甲 saps a step outright (困敵 −1 AP), the 十面埋伏 may
+    // freeze it in confusion (慌亂 20% −1 AP). Only a foe actually in contact.
+    const enemyFormation = u.side === 'attacker' ? b.defenderFormation : b.attackerFormation;
+    if (enemyFormation === 'eight-trigrams' || enemyFormation === 'ten-ambush') {
+      const adjEnemy = b.units.some((e) => e.side !== u.side && e.troops > 0 && hexDistance(e.coord, u.coord) === 1);
+      if (adjEnemy && (enemyFormation === 'eight-trigrams' || Math.random() < 0.20)) apPenalty += 1;
+    }
+    const ap = Math.max(1, u.maxAp - apPenalty);
+    // 天候撼軍 — heavy snow chills the ranks (軍士畏寒): a cold camp loses heart
+    // a little each turn, on top of the mud that already slows the march.
+    if (b.weather === 'snow' && morale > 0) morale = Math.max(0, morale - 2);
     // 就地補給 — a ranged unit beside a 糧車 or supply tile draws fresh arrows.
     let ammo = u.ammo;
     if (u.maxAmmo !== undefined && (u.ammo ?? 0) < u.maxAmmo) {
@@ -4187,7 +4212,9 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
     const scouts = scoutedUnits.filter((u) => u.side === b.activeSide && u.troops > 0 && u.isCommander);
     const hiddenFoes = scoutedUnits.filter((u) => u.side !== b.activeSide && u.troops > 0 && u.hidden);
     if (scouts.length > 0 && hiddenFoes.length > 0) {
-      const nightMul = b.timeOfDay === 'night' ? 0.5 : 1;
+      // 夜霧蔽視 — darkness AND a fog-bank both halve the scouts' reach & odds,
+      // so an ambush set in the murk is far harder to uncover (草船借箭之利).
+      const nightMul = (b.timeOfDay === 'night' || b.weather === 'fog') ? 0.5 : 1;
       const reveal = new Set<EntityId>();
       for (const f of hiddenFoes) {
         for (const sc of scouts) {
@@ -5076,6 +5103,20 @@ export function aiTakeTurn(
   // player never has a bout snatched away.
   const autoDuel = opts?.autoDuel ?? false;
   let cur = b;
+  // 臨陣變陣 — on turn 1 (before the lines meet) a sharp AI re-forms if the
+  // enemy's shape hard-counters its own, paying the turn of disorder while it's
+  // still cheap. No more tactically-static armies fighting in a beaten formation.
+  if (cur.turn === 1) {
+    const side = cur.activeSide;
+    const ourForm = side === 'attacker' ? cur.attackerFormation : cur.defenderFormation;
+    const enemyForm = side === 'attacker' ? cur.defenderFormation : cur.attackerFormation;
+    const cmd = cur.units.find((u) => u.side === side && u.isCommander && u.troops > 0);
+    const int = cmd ? officers[cmd.officerId]?.stats.intelligence ?? 70 : 70;
+    if (ourForm && enemyForm && int >= 75 && canChangeFormation(cur, side) && formationCounterMul(enemyForm, ourForm) > 1) {
+      const arms = cur.units.filter((u) => u.side === side && u.troops > 0).map((u) => u.unitType);
+      cur = changeFormation(cur, side, pickAiFormation(arms, int, { counter: enemyForm }));
+    }
+  }
   const signatures: AITurnResult['signatures'] = [];
   let safety = 120;
   while (safety-- > 0) {

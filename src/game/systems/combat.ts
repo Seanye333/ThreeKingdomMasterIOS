@@ -24,7 +24,9 @@ import { sidePoolRelationshipBonus, rivalShowdownMultiplier, parentsOf, children
 import { effectivePrestigeEffects } from '../data/prestige';
 import { honorificEffects, honorificById } from '../data/honorifics';
 import { gradeAuraPowerMul, gradeAuraMorale, itemMasteryMul, enemyMoraleShock, holdsTheLine } from './gradeCombat';
-import { growthPowerMul } from './growth';
+import { growthPowerMul, grantXp } from './growth';
+import { deriveWeaponType, type WeaponType } from '../data/weaponTypes';
+import { weaponMatchupMul, weaponMasterySkill } from './tactical';
 import { arrivalFatigueMorale } from './marchPace';
 import { itemSetBonuses } from '../data/itemSets';
 import { selectSiegeEngine } from '../data/siegeEngines';
@@ -110,6 +112,15 @@ export function attackerArm(pool: Array<Officer | null | undefined>): AttackerAr
   const has = (skill: string) => pool.some((o) => o?.skills.includes(skill));
   if (has('siegemaster')) return 'siege';
   if (has('cavalry-master')) return 'cavalry';
+  return 'infantry';
+}
+
+/** Approximate the unit type a weapon class implies, for the abstract-battle
+ *  weapon matchup (which has no per-officer arm data, only the lead's weapon). */
+function weaponToUnitApprox(w: WeaponType): import('../types').UnitType {
+  if (w === 'cavalry') return 'cavalry';
+  if (w === 'bow' || w === 'crossbow') return 'archers';
+  if (w === 'siege') return 'siege';
   return 'infantry';
 }
 
@@ -791,10 +802,20 @@ export function resolveBattle(
   const dSet = defender.commander ? itemSetBonuses(defender.commander) : NO_SET;
   const aSetMul = aSet.powerMul * (water ? aSet.navalMul : 1);
   const dSetMul = dSet.powerMul * (water ? dSet.navalMul : 1);
+  // 兵裝相剋(接抽象戰) — the lead commanders' weapon classes clash even in an
+  // auto-resolved battle, so a halberd marshal still drags down a cavalry lord
+  // and a crossbow leader still punches armour. (§5.9 was tactical-only before;
+  // now the player's weapon/officer picks carry into the 70% common path.)
+  const aWeapon = attacker.commander ? deriveWeaponType(attacker.commander) : 'none';
+  const dWeapon = defender.commander ? deriveWeaponType(defender.commander) : 'none';
+  const masters = (o: Officer | undefined, w: WeaponType) =>
+    !!o && !!weaponMasterySkill(w) && !!o.skills?.includes(weaponMasterySkill(w) as never);
+  const aWeaponMul = weaponMatchupMul(aWeapon, dWeapon, weaponToUnitApprox(dWeapon), false, masters(attacker.commander, aWeapon)).mul;
+  const dWeaponMul = weaponMatchupMul(dWeapon, aWeapon, weaponToUnitApprox(aWeapon), false, masters(defender.commander, dWeapon)).mul;
   const aPower =
     aBlended * Math.sqrt(attacker.troops) * aSkillEffects.powerMultiplier * aElitePower *
     (stratEffect.attackerPowerMul ?? 1) * aPolicy.attackMul * aTraitMods.attackMul * aComboMul *
-    aRelBonus.powerMul * rivalMul * aTitlePowerMul * aCasusMul * aNavalMul * aGuardMul * aPrestigeMul * aThemeMul * aGradeMul * aSetMul;
+    aRelBonus.powerMul * rivalMul * aTitlePowerMul * aCasusMul * aNavalMul * aGuardMul * aPrestigeMul * aThemeMul * aGradeMul * aSetMul * aWeaponMul;
 
   const defenderIds = defenderPool.map((o) => o.id);
   const dBaseBlended =
@@ -830,7 +851,7 @@ export function resolveBattle(
     dElitePower *
     (stratEffect.defenderPowerMul ?? 1) *
     dPolicy.attackMul * dTraitMods.attackMul * dComboMul * dRelBonus.powerMul * rivalMul *
-    dTitlePowerMul * dCasusMul * dNavalMul * dGuardMul * dPrestigeMul * dThemeMul * dGradeMul * dSetMul / Math.max(0.5, dPolicy.defenseMul);
+    dTitlePowerMul * dCasusMul * dNavalMul * dGuardMul * dPrestigeMul * dThemeMul * dGradeMul * dSetMul * dWeaponMul / Math.max(0.5, dPolicy.defenseMul);
 
   const total = aPower + dPower || 1;
   const aRatio = aPower / total;
@@ -1807,6 +1828,20 @@ export function handleMarch(
       text: `${commander.name.en} was repulsed at ${target.name.en}. ${attackerSurvivors.toLocaleString()} troops returned.`,
       textZh: `${commander.name.zh}於${target.name.zh}受挫敗退，餘 ${attackerSurvivors.toLocaleString()} 兵歸營。`,
     });
+  }
+
+  // 沙場歷練 — auto-resolved battles now season their officers too, where before
+  // only a played-out hex battle granted XP (100 abstract sieges left a commander
+  // as green as a recruit; one tactical fight rocketed him). Modest, win-weighted,
+  // capped by the stat ceiling — both sides learn, the lead most.
+  for (const { o, won, lead } of [
+    ...[commander, ...companions].map((x) => ({ o: x, won: result.attackerWins, lead: x.id === commander.id })),
+    ...defenderOfficers.map((x) => ({ o: x, won: !result.attackerWins, lead: false })),
+  ]) {
+    const cur = officers[o.id];
+    if (!cur || cur.status === 'dead') continue;
+    const amt = (won ? 16 : 9) + (lead ? 6 : 0);
+    officers[o.id] = grantXp(cur, amt, ctx.rng, ['war', 'leadership']).officer;
   }
 
   return { cities, officers, entries };
