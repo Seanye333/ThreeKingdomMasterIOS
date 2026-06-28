@@ -16,6 +16,7 @@ import type {
 import { BUILDING_DEFS_BY_ID, BUILDING_PREREQ, BUILDING_MIN_SIZE } from '../data/buildings';
 import { citySize, cityMeetsSize } from './citySize';
 import { FACILITY_DEFS, isHostilePermitted } from '../types';
+import { DEFENSE_BUILDINGS, type DefenseBuildingId } from '../data/defenseBuildings';
 import { CITY_GEO_OVERRIDES, cityPos } from '../data/cityGeo';
 import { geoToPixel, WORLD_SCALE } from '../data/geography';
 import { TRIBES } from '../data/tribes';
@@ -208,6 +209,60 @@ export function planAIFacilities(ctx: AIFacilityContext): AIFacilityOutput {
   }
 
   return { cities, newForts, entries };
+}
+
+const AI_PERIMETER_CHANCE = 0.30; // per non-player force per season
+const AI_PERIMETER_CAP = 4;       // perimeter works a single city stacks (of 8 slots)
+
+export interface AIPerimeterOutput {
+  cities: Record<EntityId, City>;
+  entries: ReportEntry[];
+}
+
+/**
+ * 城防自固 — an AI force fortifies a frontier city's PERIMETER (the 8-slot inner
+ * defences: 拒馬/箭樓/烽火台/外營…), paid from that city's own coffers. Before
+ * this only the human raised perimeter works, so AI cities stormed far softer
+ * than they should. Picks a cheap anti-cavalry 拒馬, or a 箭樓 if flush, and
+ * slots it into a free compass point.
+ */
+export function planAIPerimeterDefense(ctx: AIFacilityContext): AIPerimeterOutput {
+  const cities = { ...ctx.cities };
+  const entries: ReportEntry[] = [];
+  for (const force of Object.values(ctx.forces)) {
+    if (force.id === ctx.playerForceId) continue;
+    if (ctx.rng() > AI_PERIMETER_CHANCE) continue;
+    const frontier = Object.values(cities).filter((c) =>
+      c.ownerForceId === force.id
+      && (c.buildSlots ?? []).filter((s) => s.buildingId).length < AI_PERIMETER_CAP
+      && (c.adjacentCityIds ?? []).some((aid) => {
+        const adj = cities[aid];
+        return !!adj?.ownerForceId && adj.ownerForceId !== force.id
+          && isHostilePermitted(ctx.diplomacy, force.id, adj.ownerForceId);
+      }));
+    if (frontier.length === 0) continue;
+    const host = [...frontier].sort((a, b) => b.troops - a.troops)[0];
+    const buildingId: DefenseBuildingId = host.gold >= 1200 ? 'watchtower' : 'caltrops';
+    const def = DEFENSE_BUILDINGS[buildingId];
+    if (host.gold < def.goldCost) continue;
+    const used = new Set((host.buildSlots ?? []).map((s) => s.slot));
+    let slot = -1;
+    for (let i = 0; i < 8; i++) if (!used.has(i)) { slot = i; break; }
+    if (slot < 0) continue;
+    cities[host.id] = {
+      ...host,
+      gold: host.gold - def.goldCost,
+      buildSlots: [...(host.buildSlots ?? []), { slot, buildingId, level: 1 }],
+    };
+    if ((host.adjacentCityIds ?? []).some((aid) => cities[aid]?.ownerForceId === ctx.playerForceId)) {
+      entries.push({
+        cityId: host.id, kind: 'battle',
+        text: `${force.name.en} fortified ${host.name.en}'s walls with ${def.name.en}.`,
+        textZh: `${force.name.zh}於${host.name.zh}增築${def.name.zh},城防愈固。`,
+      });
+    }
+  }
+  return { cities, entries };
 }
 
 // ─── AI 拔點 — assaulting the player's forts & facilities ────────────────
