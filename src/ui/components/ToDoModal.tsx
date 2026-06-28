@@ -5,6 +5,7 @@ import { useT } from '../i18n';
 import { Modal } from './Modal';
 import { playSfx } from '../../game/systems/sound';
 import { CHIP_TONES } from './Chip';
+import { requestMapFocus } from './mapFocusBus';
 
 type Tone = 'urgent' | 'warn' | 'info';
 
@@ -49,7 +50,9 @@ export function ToDoModal({ onClose, onOpenLetters }: { onClose: () => void; onO
   const todos = useMemo<Todo[]>(() => {
     if (!playerForceId) return [];
     const list: Todo[] = [];
-    const jump = (id: string) => () => { selectCity(id); onClose(); };
+    // Select the city AND fly the map camera over to it (not just select), so
+    // a to-do item lands you looking right at it.
+    const jump = (id: string) => () => { selectCity(id); requestMapFocus(id); onClose(); };
     const mine = Object.values(cities).filter((c) => c.ownerForceId === playerForceId);
     const officersList = Object.values(officers);
     const officersByCity: Record<string, typeof officersList> = {};

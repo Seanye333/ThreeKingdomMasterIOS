@@ -1,4 +1,5 @@
-import { lazy, Suspense, useState, useEffect, useMemo } from 'react';
+import { lazy, Suspense, useState, useEffect, useMemo, useRef } from 'react';
+import { requestMapFocus } from '../components/mapFocusBus';
 import { playSfx } from '../../game/systems/sound';
 import { useGameStore } from '../../game/state/store';
 import { DEED_TITLES_BY_ID } from '../../game/systems/deedTitles';
@@ -245,20 +246,34 @@ export function MapScreen() {
   });
   const selectCityFromHud = useGameStore((s) => s.selectCity);
   const autoAssignIdle = useGameStore((s) => s.autoAssignIdle);
-  // Jump to the first city that still has an idle commander.
+  // Cycle through EVERY city that still has an idle commander — repeated taps
+  // walk them one by one (like Tab does for cities), selecting each and flying
+  // the map camera over to it, so a turn never leaves an officer forgotten
+  // off-screen.
+  const idleCycleRef = useRef(0);
   const jumpToIdle = () => {
     const s = useGameStore.getState();
     if (!s.playerForceId) return;
     const delegated = new Set(Object.keys(s.cityDelegations ?? {}));
     const training = new Set(s.pendingTrainings.map((tr) => tr.officerId));
+    const seen = new Set<string>();
+    const idleCities = [];
     for (const o of Object.values(s.officers)) {
       if (o.forceId !== s.playerForceId || o.task) continue;
       if (training.has(o.id)) continue;
       const city = o.locationCityId ? s.cities[o.locationCityId] : null;
       if (!city || city.ownerForceId !== s.playerForceId || delegated.has(city.id)) continue;
-      selectCityFromHud(city.id);
-      return;
+      if (seen.has(city.id)) continue;
+      seen.add(city.id);
+      idleCities.push(city);
     }
+    if (idleCities.length === 0) return;
+    idleCities.sort((a, b) => a.id.localeCompare(b.id));   // stable cycle order
+    const idx = idleCycleRef.current % idleCities.length;
+    idleCycleRef.current = idx + 1;
+    const city = idleCities[idx];
+    selectCityFromHud(city.id);
+    requestMapFocus(city.id);
   };
   // 敵軍逼近 — player-owned cities a hostile field army is marching on, with
   // its combined strength and how far along the road it is. Sorted nearest-to-

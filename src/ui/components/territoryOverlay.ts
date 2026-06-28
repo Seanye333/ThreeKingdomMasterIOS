@@ -64,16 +64,18 @@ function computeOverlay(
   cities: Record<EntityId, City>,
   forces: Record<EntityId, Force>,
   territoryOwnership: Record<EntityId, EntityId | null> = {},
+  ss: number = SS,
 ): HTMLCanvasElement {
   // Supersample: render at 2× then let drawImage/texture downsample, so the
   // fine grid lines stay crisp instead of blurring when the map is shown
-  // smaller than 1000px or stretched over the 3D terrain.
+  // smaller than 1000px or stretched over the 3D terrain. The replay panel
+  // passes ss=1 since it draws the snapshot small and recomputes per step.
   const off = document.createElement('canvas');
-  off.width = W * SS;
-  off.height = H * SS;
+  off.width = W * ss;
+  off.height = H * ss;
   const ctx = off.getContext('2d');
   if (!ctx) return off;
-  ctx.scale(SS, SS); // draw everything below in logical 1000×720 space
+  ctx.scale(ss, ss); // draw everything below in logical 1000×720 space
 
   // Effective owner per territory: 3c override wins, else parent city.
   const tx = territories.map((t) => t.coords.x);
@@ -251,6 +253,29 @@ export function getTerritorySignature(
 ): string {
   const territories = generateTerritories(Object.values(cities));
   return buildSignature(territories, cities, territoryOwnership);
+}
+
+/**
+ * Render an arbitrary historical ownership snapshot to a FRESH canvas (no
+ * shared cache) — for the campaign timelapse replay. Territory geometry comes
+ * from the live city positions (cities never move on the map); only ownership
+ * differs per snapshot. `colors` carries forceId→banner colour so a force that
+ * has since been wiped out still paints correctly when you scrub back to its
+ * heyday. Drawn at single sample (ss=1) since the replay panel shows it small.
+ */
+export function renderTerritorySnapshot(
+  cities: Record<EntityId, City>,
+  ownerByCityId: Record<string, string | null>,
+  colors: Record<string, string>,
+): HTMLCanvasElement {
+  const synthCities: Record<EntityId, City> = {};
+  for (const id in cities) {
+    synthCities[id] = { ...cities[id], ownerForceId: ownerByCityId[id] ?? null } as City;
+  }
+  const synthForces: Record<EntityId, Force> = {};
+  for (const fid in colors) synthForces[fid] = { color: colors[fid] } as Force;
+  const territories = generateTerritories(Object.values(synthCities));
+  return computeOverlay(territories, synthCities, synthForces, {}, 1);
 }
 
 /**

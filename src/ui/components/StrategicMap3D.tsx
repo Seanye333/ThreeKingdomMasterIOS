@@ -1,9 +1,11 @@
 import { Suspense, createContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Html, Line, OrbitControls } from '@react-three/drei';
+import { Html, Line, OrbitControls, MeshReflectorMaterial } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { RENDER_HI } from '../renderQuality';
-import { getTerritoryCanvas, getTerritorySignature } from './territoryOverlay';
+import { getTerritoryCanvas, getTerritorySignature, renderTerritorySnapshot } from './territoryOverlay';
+import { useReplayStore } from './replayHistory';
+import { setMapFocusHandler, requestMapFocus } from './mapFocusBus';
 import { positionAlongRoute, marchDestCoords, terrainRoute, generateTerritories } from '../../game/data/territories';
 import { snapToHexCenter, geoToPixel, battleGroundAt, MAP_W as PX_W, MAP_H as PX_H, WORLD_SCALE } from '../../game/data/geography';
 import { getEmbassyTarget } from '../../game/systems/foreignRealm';
@@ -16,7 +18,7 @@ import * as THREE from 'three';
 import { useGameStore } from '../../game/state/store';
 import { PROVINCE_BY_CITY } from '../../game/data';
 import { citySize } from '../../game/systems/citySize';
-import type { City, Force, HexCoord, Port, Season } from '../../game/types';
+import type { Army, City, Force, HexCoord, Port, Season } from '../../game/types';
 import { FACILITY_DEFS, isHostilePermitted } from '../../game/types';
 // The battle diorama reuses the real battle scene (embedded mode) + its hex
 // coordinate helper, so the fight on the world map IS the fight.
@@ -54,7 +56,7 @@ import { useT, useLanguage, pickName } from '../i18n';
 const IS_MOBILE = typeof window !== 'undefined'
   && (window.matchMedia?.('(pointer: coarse)')?.matches || window.innerWidth < 700);
 
-type OverlayMode = 'none' | 'gold' | 'food' | 'troops' | 'loyalty' | 'province' | 'supply' | 'diplomacy' | 'threat' | 'specialty';
+type OverlayMode = 'none' | 'gold' | 'food' | 'troops' | 'loyalty' | 'province' | 'supply' | 'diplomacy' | 'threat' | 'specialty' | 'intent';
 
 const PROVINCE_COLOR: Record<string, string> = {
   sili: '#d4a84a', yu: '#c19a3b', ji: '#3a5a8a', qing: '#5a8a8a',
@@ -81,6 +83,14 @@ function hashStr(s: string): number {
 const PIXEL_TO_WORLD = 1 / 24;          // pixel-space → 3D world units
 const MAP_W = PX_W * PIXEL_TO_WORLD;   // 3D width — auto-scales with WORLD_SCALE
 const MAP_D = PX_H * PIXEL_TO_WORLD;   // 3D depth — auto-scales with WORLD_SCALE
+// Furthest zoom-out — the distance that frames the WHOLE map (its ground-plane
+// bounding circle, half-diagonal ≈128) inside the 45° vertical FOV, plus ~15%
+// margin. Big enough to see the full map on desktop, yet far tighter than the
+// old 200·WORLD_SCALE (~1000 ≈ 5× the map) that shrank the land to a speck in a
+// sea of empty water/sky. (MAP_W*1.25≈260 framed nothing — too close.)
+const MAP_FOV_DEG = 45;     // matches the <Canvas camera fov>
+const MAP_MAX_DIST =
+  (Math.hypot(MAP_W / 2, MAP_D / 2) / Math.sin((MAP_FOV_DEG / 2) * Math.PI / 180)) * 1.15;
 // City models + army tokens are fixed world-size, so a bigger world makes
 // them read as tiny dots. Grow them GENTLY (sub-linear) with WORLD_SCALE so
 // they stay legible at the strategic overview without dominating up close.
@@ -752,6 +762,11 @@ function TerritoryGroundLayer({
     [cities, territoryOwnership],
   );
   const [texture, setTexture] = useState<THREE.CanvasTexture | null>(null);
+  // Free the last tint texture on unmount (e.g. when the Canvas remounts after
+  // a context loss) — the rebuild path already disposes superseded ones.
+  const texRef = useRef<THREE.CanvasTexture | null>(null);
+  texRef.current = texture;
+  useEffect(() => () => { texRef.current?.dispose(); }, []);
   useEffect(() => {
     let cancelled = false;
     const build = () => {
@@ -857,7 +872,7 @@ function MapTerrain({ onGroundClick }: { onGroundClick?: (px: number, py: number
 /* ─── Ocean plane sitting just below sea-level terrain ─────────── */
 /** Living water — a low-subdivision plane whose vertices roll in layered
  *  swells, so the sea shimmers and undulates instead of sitting glassy-flat. */
-function Ocean() {
+function Ocean({ night = false }: { night?: boolean }) {
   const ref = useRef<THREE.Mesh>(null);
   const geom = useMemo(() => new THREE.PlaneGeometry(MAP_W * 1.1, MAP_D * 1.1, 24, 24), []);
   const orig = useMemo(() => Float32Array.from(geom.attributes.position.array), [geom]);
@@ -877,13 +892,41 @@ function Ocean() {
     // with the swells without paying the cost every single frame.
     if ((frame.current++ & 3) === 0) geom.computeVertexNormals();
   });
+  const color = night ? '#0a2c3a' : '#0e5e74';
+  // 倒影 — on desktop the sea becomes a real mirror: sky, sunset and the moon
+  // glide across it (a planar reflection pass). Phones keep the cheap shimmer
+  // material so the extra render pass never touches the mobile framerate.
+  // Gate on !IS_MOBILE, NOT just RENDER_HI: capable iPhones resolve RENDER_HI
+  // to true, but the per-frame 512² render-to-texture + blur pass is exactly
+  // the kind of sustained GPU-memory pressure that makes iOS WKWebView drop
+  // the WebGL context (→ black map) after a long session. The mirror is a
+  // desktop-only luxury.
+  if (RENDER_HI && !IS_MOBILE) {
+    return (
+      <mesh ref={ref} geometry={geom} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.18, 0]}>
+        <MeshReflectorMaterial
+          resolution={512}
+          mixBlur={6}
+          mixStrength={night ? 0.95 : 0.55}
+          blur={[300, 90]}
+          mirror={night ? 0.85 : 0.55}
+          color={color}
+          roughness={0.22}
+          metalness={0.72}
+          depthScale={1.1}
+          minDepthThreshold={0.85}
+          maxDepthThreshold={1.2}
+        />
+      </mesh>
+    );
+  }
   return (
     <mesh ref={ref} geometry={geom} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.18, 0]} receiveShadow>
       <meshStandardMaterial
-        color="#0e5e74"
+        color={color}
         roughness={0.16}
         metalness={0.74}
-        emissive="#0a3a48"
+        emissive={night ? '#05202c' : '#0a3a48'}
         emissiveIntensity={0.34}
         transparent
         opacity={0.9}
@@ -1768,6 +1811,10 @@ const ZoomLODCtx = createContext<'near' | 'far'>('near');
 // Zoom gauged by camera HEIGHT (pan-independent — distance-from-origin flips
 // erratically once you pan off-centre). City names show below this height.
 const LOD_FAR_DIST = 220;
+// Below this camera height the full road network paints; above it (the strategic
+// overview, where the default camera sits at ~MAP_D·0.9) only trunk roads show,
+// dimmed, so the web stops blanketing the map. Lower than the label LOD.
+const ROAD_DETAIL_Y = 120;
 function ZoomLODTracker({ onChange }: { onChange: (lod: 'near' | 'far') => void }) {
   const { camera } = useThree();
   const last = useRef<'near' | 'far'>('near');
@@ -2054,14 +2101,30 @@ function Roads({ cities }: { cities: Record<string, City> }) {
 
   // Two-pass worn path: a wider dark bed + a lighter trodden centre, so roads
   // read as packed-earth highways instead of GPU-hairlines. Trunk roads thicken.
+  // 縮放分級 — at the strategic overview the full road web blankets the map and
+  // drowns the cities/rivers/borders, so back-country tracks drop out and the
+  // trunk roads dim; zoom into a region (camera drops below ROAD_DETAIL_Y) and
+  // the whole network paints at full strength. Own threshold (lower than the
+  // label LOD) with hysteresis so it flips once, around the default overview.
+  const { camera } = useThree();
+  const [far, setFar] = useState(true);
+  useFrame(() => {
+    const y = camera.position.y;
+    setFar((cur) => (cur ? y >= ROAD_DETAIL_Y - 10 : y > ROAD_DETAIL_Y + 10));
+  });
   return (
     <group>
-      {linePts.map(({ pts, imp }, i) => (
-        <group key={i}>
-          <Line points={pts} color="#6b4a28" lineWidth={3.6 + imp * 3.2} transparent opacity={0.55} />
-          <Line points={pts} color="#cda268" lineWidth={1.7 + imp * 1.6} transparent opacity={0.82} />
-        </group>
-      ))}
+      {linePts.map(({ pts, imp }, i) => {
+        if (far && imp < 0.4) return null;          // hide minor tracks at distance
+        const bedOp = far ? 0.26 : 0.55;
+        const topOp = far ? 0.4 : 0.82;
+        return (
+          <group key={i}>
+            <Line points={pts} color="#6b4a28" lineWidth={3.6 + imp * 3.2} transparent opacity={bedOp} />
+            <Line points={pts} color="#cda268" lineWidth={1.7 + imp * 1.6} transparent opacity={topOp} />
+          </group>
+        );
+      })}
     </group>
   );
 }
@@ -2117,6 +2180,7 @@ function MarchingArmies({ cities, pendingCommands, forces, officers, ports, sele
           to,
           color: hostile ? '#b8442e' : (force?.color ?? '#d4a84a'),
           commanderName: commander ? pickName(commander.name, lang) : '',
+          targetName: to ? pickName(to.name, lang) : '',
           troops: cmd.troops,
           seasonsRemaining,
           totalSeasons,
@@ -2134,7 +2198,7 @@ function MarchingArmies({ cities, pendingCommands, forces, officers, ports, sele
     <group>
       {armies.map((a, i) => (
         <MarchingArmy key={i} from={a.from} to={a.to} color={a.color}
-          commanderName={a.commanderName} troops={a.troops}
+          commanderName={a.commanderName} targetName={a.targetName} troops={a.troops}
           seasonsRemaining={a.seasonsRemaining} totalSeasons={a.totalSeasons}
           landRoute={a.landRoute} weaponType={a.weaponType}
           selected={a.selected} holding={a.holding} cellTarget={a.cellTarget}
@@ -2155,9 +2219,9 @@ const UNIT_TAG: Record<WeaponType, string> = {
 // between.
 const ARMY_TOKEN_SCALE = 0.7 * MARKER_SCALE;
 
-function MarchingArmy({ from, to, color, commanderName, troops, seasonsRemaining, totalSeasons, landRoute, weaponType, selected, holding, cellTarget, ports, onClick }: {
+function MarchingArmy({ from, to, color, commanderName, targetName, troops, seasonsRemaining, totalSeasons, landRoute, weaponType, selected, holding, cellTarget, ports, onClick }: {
   from: City; to: City; color: string;
-  commanderName: string; troops: number;
+  commanderName: string; targetName: string; troops: number;
   seasonsRemaining: number; totalSeasons: number;
   landRoute: Array<{ x: number; y: number }>;
   weaponType: WeaponType;
@@ -2167,6 +2231,8 @@ function MarchingArmy({ from, to, color, commanderName, troops, seasonsRemaining
   ports: Record<string, import('../../game/types').Port>;
   onClick?: () => void;
 }) {
+  const [hovered, setHovered] = useState(false);
+  const tHover = useT();
   const [fpx, fpy] = cityPixel(from.id, from.coords.x, from.coords.y);
   const [tpx, tpy] = cityPixel(to.id, to.coords.x, to.coords.y);
   const [fx, fz] = pxToWorld(fpx, fpy);
@@ -2260,12 +2326,33 @@ function MarchingArmy({ from, to, color, commanderName, troops, seasonsRemaining
         <mesh
           position={[0, 0.5, 0]}
           onClick={(e) => { e.stopPropagation(); onClick(); }}
-          onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}
-          onPointerOut={() => { document.body.style.cursor = ''; }}
+          onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer'; if (!IS_MOBILE) setHovered(true); }}
+          onPointerOut={() => { document.body.style.cursor = ''; setHovered(false); }}
         >
           <cylinderGeometry args={[1.1, 1.1, 1.3, 10]} />
           <meshBasicMaterial transparent opacity={0} depthWrite={false} />
         </mesh>
+      )}
+      {/* 懸停快覽 — desktop: name the column's destination + full status, which
+          the terse always-on label leaves out. */}
+      {hovered && (
+        <Html position={[0, 1.15, 0]} center distanceFactor={9} zIndexRange={[44, 34]} style={{ pointerEvents: 'none' }}>
+          <div style={{
+            background: 'rgba(18,12,6,0.94)', border: `1px solid ${color}`, borderRadius: 4,
+            padding: '3px 9px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px',
+            color: '#e7d6ad', whiteSpace: 'nowrap', lineHeight: 1.5, boxShadow: '0 2px 10px rgba(0,0,0,0.6)',
+          }}>
+            <div style={{ fontWeight: 'bold', letterSpacing: '0.5px' }}>
+              {commanderName || tHover('無名軍', 'Column')}
+              <span style={{ color: '#c0a878', marginLeft: 6, fontWeight: 'normal' }}>{tHover('兵 ', 'Troops ')}{Math.round(troops).toLocaleString()}</span>
+            </div>
+            <div style={{ color: '#bfae86' }}>
+              {holding
+                ? tHover('駐守紮營', 'Holding — encamped')
+                : `→ ${targetName || (cellTarget ? tHover('野地', 'field') : '—')}${totalSeasons > 1 ? ` · ${seasonsRemaining}/${totalSeasons} ${tHover('季', 'seasons')}` : ''}`}
+            </div>
+          </div>
+        </Html>
       )}
       {/* Selection ring on the ground under the squad. */}
       {selected && (
@@ -3806,6 +3893,42 @@ const SEASON_PRESETS: Record<Season, SeasonPreset> = {
   },
 };
 
+/* ─── 晝夜 — time of day, read off the 旬 (third of the month) ────────
+   上旬 = day, 中旬 = dusk (golden hour), 下旬 = a moonlit night. Each tints
+   the sky dome, swaps sun⇄moon, recolours fog/ambient and decides whether
+   the settlements light their lamps and the stars come out — so a full
+   month visibly rolls noon → sunset → night and back. */
+export type TimeOfDay = 'day' | 'dusk' | 'night';
+export function phaseToTOD(phase: string | undefined): TimeOfDay {
+  return phase === 'lower' ? 'night' : phase === 'middle' ? 'dusk' : 'day';
+}
+interface TODPreset {
+  ambientMul: number; ambientColor: string | null;   // null = keep the season's colour
+  sunMul: number; sunColor: string | null;
+  sunPos: [number, number, number];
+  skyTop: string; horizon: string | null; fog: string | null;
+  celestial: 'sun' | 'moon'; celestialColor: string;
+  lights: boolean;    // settlements light their lamps
+  stars: boolean;
+}
+const TOD_PRESETS: Record<TimeOfDay, TODPreset> = {
+  day: {
+    ambientMul: 1, ambientColor: null, sunMul: 1, sunColor: null,
+    sunPos: [8, 16, 6], skyTop: '#5f8ec8', horizon: null, fog: null,
+    celestial: 'sun', celestialColor: '#fff2c8', lights: false, stars: false,
+  },
+  dusk: {
+    ambientMul: 0.72, ambientColor: '#d8b890', sunMul: 0.8, sunColor: '#ffb070',
+    sunPos: [12, 7, 10], skyTop: '#1f2a52', horizon: '#caa37e', fog: '#caa37e',
+    celestial: 'sun', celestialColor: '#ff9848', lights: true, stars: false,
+  },
+  night: {
+    ambientMul: 0.42, ambientColor: '#5a6a92', sunMul: 0.26, sunColor: '#9fb6e0',
+    sunPos: [10, 9, 12], skyTop: '#070b1c', horizon: '#1a2440', fog: '#141d33',
+    celestial: 'moon', celestialColor: '#dfe8ff', lights: true, stars: true,
+  },
+};
+
 /* ─── Weather presets ──────────────────────────────────────────── */
 interface WeatherPreset {
   particles: 'none' | 'rain' | 'snow';
@@ -4602,38 +4725,65 @@ function MarchPreviewLine({ fromId, toId, cities }: {
  *  zenith blue → horizon haze (matched to the fog colour so land melts into
  *  sky). Shifts to a warm sunset at dusk. A bloom-haloed sun rides the
  *  sunlight direction. */
-function SkyDome({ dusk, horizon }: { dusk: boolean; horizon: string }) {
+function SkyDome({ top, horizon, sunPos: sunPosArr, celestialColor, moon, stars }: {
+  top: string; horizon: string; sunPos: [number, number, number];
+  celestialColor: string; moon: boolean; stars: boolean;
+}) {
   const ref = useRef<THREE.Group>(null);
   const { camera } = useThree();
   useFrame(() => { if (ref.current) ref.current.position.copy(camera.position); });
   const material = useMemo(() => {
-    const top = new THREE.Color(dusk ? '#1f2a52' : '#5f8ec8');
+    const topC = new THREE.Color(top);
     const bottom = new THREE.Color(horizon);
     return new THREE.ShaderMaterial({
       side: THREE.BackSide, depthWrite: false, fog: false,
-      uniforms: { top: { value: top }, bottom: { value: bottom }, exponent: { value: 0.7 } },
+      uniforms: { top: { value: topC }, bottom: { value: bottom }, exponent: { value: 0.7 } },
       vertexShader: `varying float vH; void main(){ vH = normalize(position).y; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
       fragmentShader: `uniform vec3 top; uniform vec3 bottom; uniform float exponent; varying float vH;
         void main(){ float t = pow(max(vH,0.0), exponent); gl_FragColor = vec4(mix(bottom, top, t), 1.0); }`,
     });
-  }, [dusk, horizon]);
+  }, [top, horizon]);
   const R = 1500;
-  const sunDir = useMemo(() => new THREE.Vector3(...(dusk ? [12, 7, 10] : [8, 16, 6])).normalize(), [dusk]);
+  const sunDir = useMemo(() => new THREE.Vector3(...sunPosArr).normalize(), [sunPosArr]);
   const sunPos = sunDir.clone().multiplyScalar(R * 0.9);
-  const sunColor = dusk ? '#ff9848' : '#fff2c8';
+  // 星空 — a deterministic field of stars on the upper inner dome, only mounted
+  // at night. Pixel-sized points so they stay crisp at every zoom.
+  const starGeom = useMemo(() => {
+    const N = IS_MOBILE ? 220 : 520;
+    const arr = new Float32Array(N * 3);
+    for (let i = 0; i < N; i++) {
+      const h1 = Math.abs(Math.sin(i * 12.9898) * 43758.5453) % 1;
+      const h2 = Math.abs(Math.sin(i * 78.233) * 12543.213) % 1;
+      const theta = h1 * Math.PI * 2;
+      const phi = Math.acos(0.12 + h2 * 0.82);     // bias toward the upper sky
+      const r = R * 0.94;
+      arr[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      arr[i * 3 + 1] = r * Math.cos(phi);
+      arr[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(arr, 3));
+    return g;
+  }, []);
   return (
     <group ref={ref}>
       <mesh material={material}>
         <sphereGeometry args={[R, 32, 16]} />
       </mesh>
-      {/* Sun — small bright core + a soft halo the bloom pass catches. */}
+      {stars && (
+        <points geometry={starGeom}>
+          <pointsMaterial size={IS_MOBILE ? 1.6 : 2} sizeAttenuation={false} color="#e6ecff"
+            transparent opacity={0.85} toneMapped={false} fog={false} depthWrite={false} />
+        </points>
+      )}
+      {/* Sun (or moon) — a small bright core + a soft halo the bloom pass catches. */}
       <mesh position={sunPos}>
-        <sphereGeometry args={[34, 16, 12]} />
-        <meshBasicMaterial color={sunColor} toneMapped={false} fog={false} />
+        <sphereGeometry args={[moon ? 26 : 34, 16, 12]} />
+        <meshBasicMaterial color={celestialColor} toneMapped={false} fog={false} />
       </mesh>
       <mesh position={sunPos}>
-        <sphereGeometry args={[78, 16, 12]} />
-        <meshBasicMaterial color={sunColor} transparent opacity={0.28} depthWrite={false} fog={false} />
+        <sphereGeometry args={[moon ? 54 : 78, 16, 12]} />
+        <meshBasicMaterial color={celestialColor} transparent opacity={moon ? 0.16 : 0.28} depthWrite={false} fog={false} />
       </mesh>
     </group>
   );
@@ -4762,6 +4912,106 @@ function Birds3D() {
           ))}
         </group>
       ))}
+    </group>
+  );
+}
+
+/* ─── 兵鋒脈動 — one ripple ring expanding off a city about to be hit ──── */
+function ThreatPulse({ pos }: { pos: THREE.Vector3 }) {
+  const ref = useRef<THREE.Mesh>(null);
+  const matRef = useRef<THREE.MeshBasicMaterial>(null);
+  useFrame(({ clock }) => {
+    const t = (clock.elapsedTime % 1.5) / 1.5;     // 0→1 ripple, then resets
+    const s = 0.5 + t * 1.7;
+    if (ref.current) ref.current.scale.set(s, s, s);
+    if (matRef.current) matRef.current.opacity = (1 - t) * 0.55;
+  });
+  return (
+    <mesh ref={ref} position={pos} rotation={[-Math.PI / 2, 0, 0]}>
+      <ringGeometry args={[0.5, 0.64, 44]} />
+      <meshBasicMaterial ref={matRef} color="#ff4d3a" transparent opacity={0.55}
+        side={THREE.DoubleSide} depthWrite={false} toneMapped={false} />
+    </mesh>
+  );
+}
+
+/* ─── 兵鋒 — the strategic-intent layer (戰雲 overlay) ──────────────────
+   Turns the map into a command board: every marching column draws a flowing
+   dashed arrow from where it is now to the city it's aiming at, coloured by
+   its force, thicker the bigger the host. Columns aimed at YOUR cities glow
+   red and the target city pulses with a ripple ring, so an incoming storm is
+   impossible to miss. Fog still hides hostile columns you can't actually see. */
+function IntentLayer({ cities, forces, armies, playerForceId, fog }: {
+  cities: Record<string, City>;
+  forces: Record<string, Force>;
+  armies: Record<string, Army>;
+  playerForceId: string | null;
+  fog: { isVisiblePx: (x: number, y: number) => boolean } | null;
+}) {
+  const { arrows, pulses } = useMemo(() => {
+    const arrows: Array<{ key: string; pts: THREE.Vector3[]; head: THREE.Vector3; dir: THREE.Vector3; color: string; width: number; danger: boolean }> = [];
+    const pulseMap = new Map<string, THREE.Vector3>();
+    for (const a of Object.values(armies)) {
+      if (a.holding) continue;
+      const tgt = cities[a.targetCityId];
+      if (!tgt) continue;                                   // field marches have no city
+      // 迷霧 — hostile columns out of sight don't betray their heading.
+      if (fog && a.forceId !== playerForceId && !fog.isVisiblePx(a.x, a.y)) continue;
+      const [tpx, tpy] = cityPixel(tgt.id, tgt.coords.x, tgt.coords.y);
+      const route = terrainRoute(a.x, a.y, tpx, tpy);
+      if (route.length < 2) continue;
+      const pts = route.map((p) => {
+        const [wx, wz] = pxToWorld(p.x, p.y);
+        return new THREE.Vector3(wx, sampleTerrainHeight(wx, wz) + 0.2, wz);
+      });
+      const head = pts[pts.length - 1];
+      const dir = head.clone().sub(pts[pts.length - 2]).normalize();
+      const danger = !!playerForceId && tgt.ownerForceId === playerForceId && a.forceId !== playerForceId;
+      arrows.push({
+        key: a.id, pts, head, dir,
+        color: forces[a.forceId]?.color ?? '#bcbcbc',
+        width: 1.6 + Math.min(4, a.troops / 3500),
+        danger,
+      });
+      if (danger && !pulseMap.has(tgt.id)) {
+        const [cwx, cwz] = pxToWorld(tpx, tpy);
+        pulseMap.set(tgt.id, new THREE.Vector3(cwx, cityElevation(cwx, cwz) + 0.06, cwz));
+      }
+    }
+    return { arrows, pulses: Array.from(pulseMap.entries()) };
+  }, [armies, cities, forces, fog, playerForceId]);
+
+  // Animate the dashes so each arrow visibly *flows* toward its target.
+  const lineRefs = useRef<Array<{ material: { dashOffset: number } } | null>>([]);
+  useFrame((_, delta) => {
+    for (const m of lineRefs.current) {
+      if (m && m.material) m.material.dashOffset -= delta * 0.8;
+    }
+  });
+
+  const up = useMemo(() => new THREE.Vector3(0, 1, 0), []);
+  return (
+    <group renderOrder={4}>
+      {arrows.map((ar, i) => (
+        <group key={ar.key}>
+          {/* soft under-glow so danger arrows read even over busy terrain */}
+          <Line points={ar.pts} color={ar.danger ? '#ff3a28' : ar.color}
+            lineWidth={ar.width + (ar.danger ? 2.6 : 1.4)} transparent opacity={0.16} depthTest={false} />
+          <Line
+            ref={(o) => { lineRefs.current[i] = o as unknown as { material: { dashOffset: number } } | null; }}
+            points={ar.pts}
+            color={ar.danger ? '#ff6a4d' : ar.color}
+            lineWidth={ar.width}
+            dashed dashSize={0.5} gapSize={0.32}
+            transparent opacity={0.92} depthTest={false}
+          />
+          <mesh position={ar.head} quaternion={new THREE.Quaternion().setFromUnitVectors(up, ar.dir)}>
+            <coneGeometry args={[0.14 + ar.width * 0.03, 0.42 + ar.width * 0.06, 8]} />
+            <meshBasicMaterial color={ar.danger ? '#ff6a4d' : ar.color} transparent opacity={0.95} toneMapped={false} depthTest={false} />
+          </mesh>
+        </group>
+      ))}
+      {pulses.map(([id, pos]) => <ThreatPulse key={`pulse-${id}`} pos={pos} />)}
     </group>
   );
 }
@@ -6254,7 +6504,88 @@ function ScenicSites3D({ onScenicClick }: { onScenicClick: (siteId: string) => v
   );
 }
 
-function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteClick, onScenicClick, onQuickAction, mapStyle, dioSelectedId, dioMode, dioCast, dioArcs, dioFx, dioHover, onDioHover, onDioramaTile }: {
+/* ─── 行軍時距環 — concentric rings around a selected column's source city,
+   one per march-time band (moveArmyToCell: <100px=1 季, <195=2, <275=3, else
+   4). Shows at a glance how many seasons a march to any spot will cost, so you
+   stop guessing where you can reach this turn. Rings hug the terrain. ─────── */
+const MARCH_BANDS: Array<{ r: number; seasons: number; color: string }> = [
+  { r: 100, seasons: 1, color: '#5ad17a' },
+  { r: 195, seasons: 2, color: '#e3c948' },
+  { r: 275, seasons: 3, color: '#e0863a' },
+];
+function MarchRangeRings({ cx, cy }: { cx: number; cy: number }) {
+  const t = useT();
+  const rings = useMemo(() => MARCH_BANDS.map((b) => {
+    const N = 90;
+    const pts: Array<[number, number, number]> = [];
+    for (let i = 0; i <= N; i++) {
+      const ang = (i / N) * Math.PI * 2;
+      const [wx, wz] = pxToWorld(cx + Math.cos(ang) * b.r, cy + Math.sin(ang) * b.r);
+      pts.push([wx, sampleTerrainHeight(wx, wz) + 0.14, wz]);
+    }
+    const [lx, lz] = pxToWorld(cx, cy - b.r);   // north point — anchor the label
+    return { pts, color: b.color, seasons: b.seasons, label: [lx, sampleTerrainHeight(lx, lz) + 0.5, lz] as [number, number, number] };
+  }), [cx, cy]);
+  return (
+    <group>
+      {rings.map((rg, i) => (
+        <group key={i}>
+          <Line points={rg.pts} color={rg.color} lineWidth={2} transparent opacity={0.7} dashed dashSize={2.4} gapSize={1.4} />
+          <Html position={rg.label} center distanceFactor={11} zIndexRange={[40, 30]} style={{ pointerEvents: 'none' }}>
+            <div style={{
+              background: 'rgba(20,14,8,0.82)', border: `1px solid ${rg.color}`, borderRadius: 3,
+              padding: '1px 6px', fontFamily: 'var(--tkm-font-body)', fontSize: '10px', color: rg.color, whiteSpace: 'nowrap',
+            }}>{t(`${rg.seasons} 季`, `${rg.seasons} season${rg.seasons > 1 ? 's' : ''}`)}</div>
+          </Html>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+/* ─── 海域 — faint sea names drift in the open water around the coast so the
+   empty margin reads as ocean on an old chart, not dead space. They sit past
+   the map edges (the pan clamp keeps the land from covering them) and hold a
+   constant on-screen size, so they mostly register at the strategic zoom. ── */
+const SEA_LABELS: Array<{ zh: string; en: string; pos: [number, number, number]; size: number }> = [
+  { zh: '東海', en: 'East Sea', pos: [MAP_W * 0.58, 1, MAP_D * 0.16], size: 25 },
+  { zh: '南海', en: 'South Sea', pos: [MAP_W * 0.16, 1, MAP_D * 0.72], size: 23 },
+  { zh: '渤海', en: 'Bohai', pos: [MAP_W * 0.46, 1, -MAP_D * 0.42], size: 17 },
+];
+function SeaLabels() {
+  const lang = useLanguage();
+  return (
+    <>
+      {SEA_LABELS.map((s) => (
+        <Html key={s.zh} position={s.pos} center zIndexRange={[8, 2]} style={{ pointerEvents: 'none' }}>
+          <div style={{
+            fontFamily: 'var(--tkm-font-display, serif)', fontSize: s.size, fontStyle: 'italic',
+            color: 'rgba(176,202,224,0.55)', letterSpacing: lang === 'en' ? '2px' : '10px',
+            whiteSpace: 'nowrap', textShadow: '0 1px 8px rgba(0,0,0,0.6)', userSelect: 'none',
+          }}>{lang === 'en' ? s.en : s.zh}</div>
+        </Html>
+      ))}
+    </>
+  );
+}
+
+/* ─── 羅盤 — reports the camera's heading (azimuth, in whole degrees) up to the
+   DOM compass rose, which counter-rotates so 北 always points to true north. */
+function HeadingTracker({ controlsRef, onHeading }: {
+  controlsRef: React.MutableRefObject<{ target: THREE.Vector3; update: () => void; enabled: boolean } | null>;
+  onHeading: (deg: number) => void;
+}) {
+  const last = useRef(999);
+  useFrame(() => {
+    const c = controlsRef.current as unknown as { getAzimuthalAngle?: () => number } | null;
+    if (!c?.getAzimuthalAngle) return;
+    const deg = Math.round((c.getAzimuthalAngle() * 180) / Math.PI);
+    if (deg !== last.current) { last.current = deg; onHeading(deg); }
+  });
+  return null;
+}
+
+function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteClick, onScenicClick, onQuickAction, mapStyle, dioSelectedId, dioMode, dioCast, dioArcs, dioFx, dioHover, onDioHover, onDioramaTile, onFocusWorld }: {
   overlayMode: OverlayMode;
   mapStyle: 'classic' | 'hex';
   onPortClick: (portId: string) => void;
@@ -6274,6 +6605,8 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
   dioHover: HexCoord | null;
   onDioHover: (c: HexCoord | null) => void;
   onDioramaTile: (c: HexCoord) => void;
+  /** 雙擊飛鏡 — fly+zoom the camera to a double-clicked ground point. */
+  onFocusWorld?: (wx: number, wz: number) => void;
 }) {
   const cities = useGameStore((s) => s.cities);
   const forces = useGameStore((s) => s.forces);
@@ -6329,9 +6662,10 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
   const weatherPreset = WEATHER_PRESETS[weather.kind];
   const season = useGameStore((s) => s.date.season) as Season;
   const seasonPreset = SEASON_PRESETS[season];
-  // 晝夜隨旬 — 上旬 plays in daylight, 下旬 sinks into a warm dusk, so time
-  // visibly passes as the half-month ticks resolve.
-  const dusk = useGameStore((s) => (s.date.phase ?? 'upper') === 'lower');
+  // 晝夜隨旬 — the month rolls 上旬→day, 中旬→dusk, 下旬→a moonlit night, so
+  // time visibly passes as each third of the month resolves.
+  const tod = phaseToTOD(useGameStore((s) => s.date.phase));
+  const todP = TOD_PRESETS[tod];
   // 行程測距 — with a city selected, hovering another shows the march time.
   const [hoverCityId, setHoverCityId] = useState<string | null>(null);
 
@@ -6425,17 +6759,24 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
   return (
     <>
       {/* Distance fog — restored; blends the far horizon into the sky dome. */}
-      <fog attach="fog" args={[dusk ? '#caa37e' : seasonPreset.fogColor, 150 * WORLD_SCALE, 560 * WORLD_SCALE]} />
+      <fog attach="fog" args={[todP.fog ?? seasonPreset.fogColor, 150 * WORLD_SCALE, 560 * WORLD_SCALE]} />
 
-      {/* 天穹 — gradient sky + sun, horizon matched to the fog colour. */}
-      <SkyDome dusk={dusk} horizon={dusk ? '#caa37e' : seasonPreset.fogColor} />
+      {/* 天穹 — gradient sky + sun/moon (+ stars at night), horizon matched to fog. */}
+      <SkyDome
+        top={todP.skyTop}
+        horizon={todP.horizon ?? seasonPreset.fogColor}
+        sunPos={todP.sunPos}
+        celestialColor={todP.celestialColor}
+        moon={todP.celestial === 'moon'}
+        stars={todP.stars}
+      />
 
-      {/* Per-season lighting */}
-      <ambientLight intensity={seasonPreset.ambient * (dusk ? 0.72 : 1)} color={dusk ? '#d8b890' : seasonPreset.ambientColor} />
+      {/* Per-season lighting, dimmed and recoloured by time of day */}
+      <ambientLight intensity={seasonPreset.ambient * todP.ambientMul} color={todP.ambientColor ?? seasonPreset.ambientColor} />
       <directionalLight
-        position={dusk ? [12, 7, 10] : [8, 16, 6]}
-        intensity={seasonPreset.sun.intensity * (dusk ? 0.8 : 1)}
-        color={dusk ? '#ffb070' : seasonPreset.sun.color}
+        position={todP.sunPos}
+        intensity={seasonPreset.sun.intensity * todP.sunMul}
+        color={todP.sunColor ?? seasonPreset.sun.color}
         castShadow
         // 2048 halves shadow VRAM/fill on weak GPUs; at map scale the
         // difference is invisible.
@@ -6454,6 +6795,14 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
       {weatherPreset.particles === 'rain' && <RainParticles bounds={particleBounds} />}
       {weatherPreset.particles === 'snow' && <SnowParticles bounds={particleBounds} />}
 
+      {/* 雙擊空地飛鏡 — double-clicking bare ground (when not placing a march)
+          flies + zooms the camera to that spot. Cities keep their own click
+          semantics, so this only fires on open terrain. */}
+      <group onDoubleClick={(e) => {
+        if (selectedArmyId3D) return;   // march-placement mode — don't hijack
+        e.stopPropagation();
+        onFocusWorld?.(e.point.x, e.point.z);
+      }}>
       {mapStyle === 'hex' ? (
         // ⬡ 棋盤世界 — hex-prism quilt; rivers/lakes are blue hexes, the sea
         // is the living Ocean below. Same ground-click contract as the scroll.
@@ -6483,7 +6832,8 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
           <TerritoryGroundLayer cities={cities} forces={forces} territoryOwnership={territoryOwnership} />
         </Suspense>
       )}
-      <Ocean />
+      </group>
+      <Ocean night={tod === 'night'} />
       {mapStyle === 'classic' && <Lakes3D />}
       {/* 河流流光 — the smooth shimmering ribbon rides BOTH maps; on the hex
           quilt it flows as living water down the blue channel of river tiles. */}
@@ -6496,17 +6846,18 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
       <Villages3D />
       <GreatWall3D />
       <DriftingClouds />
-      {!dusk && <Birds3D />}
+      {tod === 'day' && <Birds3D />}
       <CitySmoke3D cities={cities} />
       <Caravans3D cities={cities} />
       <TradeShips3D ports={portsForMarch} cities={cities} />
-      {dusk && <DuskCityLights cities={cities} />}
+      {todP.lights && <DuskCityLights cities={cities} />}
       {/* Province borders are flat ground decals — they'd sink into the
           raised hex prisms, so the quilt view goes without them. */}
       {mapStyle === 'classic' && <ProvinceBorders3D cities={cities} />}
       {overlayMode === 'province' && <ProvinceLabels3D />}
       {/* 天下大勢 — lord names over their domains when zoomed out (RTK-XIV). */}
       <FactionLabels3D cities={cities} forces={forces} officers={officers} />
+      <SeaLabels />
       {marchPreview && (
         <MarchPreviewLine fromId={marchPreview.fromId} toId={marchPreview.toId} cities={cities} />
       )}
@@ -6522,6 +6873,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
       <Envoys cities={cities} expeditions={expeditionsState} forces={forces} />
       {overlayMode === 'supply' && <SupplyLines3D />}
       {overlayMode === 'diplomacy' && <DiplomacyLines3D cities={cities} forces={forces} />}
+      {overlayMode === 'intent' && <IntentLayer cities={cities} forces={forces} armies={armiesState} playerForceId={playerForceId} fog={fog} />}
       <FieldBattleMarks3D marks={fieldBattleMarks} />
       <FieldClashMelee3D marks={fieldBattleMarks} />
       <IgnitionDust3D />
@@ -6704,6 +7056,14 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
         );
       })()}
 
+      {/* 行軍時距環 — a selected column shows its march-time bands. */}
+      {selectedArmyId3D && armiesState[selectedArmyId3D]
+        && cities[armiesState[selectedArmyId3D]!.fromCityId] && (() => {
+        const src = cities[armiesState[selectedArmyId3D]!.fromCityId]!;
+        const [cx, cy] = cityPixel(src.id, src.coords.x, src.coords.y);
+        return <MarchRangeRings cx={cx} cy={cy} />;
+      })()}
+
       {/* 改道測距 — column selected + hovering a city: how long the redirect
           would take from the column's source (the order's own math). */}
       {selectedArmyId3D && hoverCityId && armiesState[selectedArmyId3D]
@@ -6746,6 +7106,40 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
               color: '#f0d98a', whiteSpace: 'nowrap', letterSpacing: '1px',
             }}>
               {pickName(from.name, lang)} → {pickName(to.name, lang)}{t(` · 行軍約 ${ticks} 旬`, ` · march ~${ticks} wk`)}
+            </div>
+          </Html>
+        );
+      })()}
+
+      {/* 懸停快覽 — hovering a city (desktop) cards its owner + troops/food,
+          unless a march/redirect distance preview is already on it. Fogged
+          enemy cities show name only. */}
+      {!IS_MOBILE && hoverCityId && cities[hoverCityId]
+        && !(selectedArmyId3D && armiesState[selectedArmyId3D])
+        && !(selectedCityId && hoverCityId !== selectedCityId) && (() => {
+        const c = cities[hoverCityId]!;
+        const owner = c.ownerForceId ? forces[c.ownerForceId] : null;
+        const fogged = !!fog && c.ownerForceId !== playerForceId && !fog.visibleCityIds.has(c.id);
+        const [px, py] = cityPixel(c.id, c.coords.x, c.coords.y);
+        const [wx, wz] = pxToWorld(px, py);
+        const y = cityElevation(wx, wz);
+        const fmt = (n: number) => Math.round(n).toLocaleString();
+        return (
+          <Html position={[wx, y + 1.75, wz]} center distanceFactor={9} zIndexRange={[43, 33]} style={{ pointerEvents: 'none' }}>
+            <div style={{
+              background: 'rgba(18,12,6,0.92)', border: '1px solid #6a5230', borderRadius: 4,
+              padding: '3px 9px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px',
+              color: '#e7d6ad', whiteSpace: 'nowrap', lineHeight: 1.5, boxShadow: '0 2px 10px rgba(0,0,0,0.5)',
+            }}>
+              <div style={{ fontWeight: 'bold', letterSpacing: '1px' }}>
+                {pickName(c.name, lang)}
+                <span style={{ color: owner?.color ?? '#8a7a58', marginLeft: 6, fontWeight: 'normal' }}>
+                  {owner ? pickName(owner.name, lang) : t('中立', 'Neutral')}
+                </span>
+              </div>
+              {fogged
+                ? <div style={{ color: '#9a8a66' }}>{t('情報不足', 'No intel')}</div>
+                : <div>{t('兵 ', 'Troops ')}{fmt(c.troops)} · {t('糧 ', 'Food ')}{fmt(c.food)}</div>}
             </div>
           </Html>
         );
@@ -6938,6 +7332,7 @@ const OVERLAY_OPTIONS: Array<{ id: OverlayMode; zh: string; en: string }> = [
   { id: 'supply',   zh: '糧道', en: 'SUPPLY' },
   { id: 'diplomacy', zh: '邦交', en: 'TIES' },
   { id: 'threat',   zh: '威脅', en: 'THREAT' },
+  { id: 'intent',   zh: '兵鋒', en: 'INTENT' },
 ];
 
 const WEATHER_ZH: Record<WeatherKind, string> = {
@@ -7046,6 +7441,376 @@ function BattleFocusFly({ controlsRef, onSettled }: {
   return null;
 }
 
+/* ─── 大事飛鏡 — a cinematic sweep when a city changes hands ───────────
+   When YOU take a city (cityCaptured) or lose one (cityLost), the camera
+   dives to it and slowly arcs around the newly-won (or newly-burning) walls
+   before handing control back — a beat that makes a conquest *feel* like one.
+   Battle ignitions keep their own fly (BattleFocusFly); this defers to them,
+   and honours prefers-reduced-motion. */
+function EventFocusFly({ controlsRef, onSettled }: {
+  controlsRef: React.RefObject<{ target: THREE.Vector3; update: () => void; enabled: boolean } | null>;
+  onSettled: (target: [number, number, number]) => void;
+}) {
+  const { camera } = useThree();
+  const capturedKey = useGameStore((s) => s.cityCaptured?.key ?? 0);
+  const lostKey = useGameStore((s) => s.cityLost?.key ?? 0);
+  const battleActive = useGameStore((s) => !!s.tacticalBattle);
+  const seen = useRef<{ cap: number; lost: number }>({ cap: capturedKey, lost: lostKey });
+  const anim = useRef<null | {
+    from: THREE.Vector3; orbitCenter: THREE.Vector3; radius: number;
+    ang0: number; ang1: number; height: number;
+    fromT: THREE.Vector3; toT: THREE.Vector3; t: number;
+  }>(null);
+
+  useEffect(() => {
+    // Battle fly owns the camera while a fight is live; just keep our markers
+    // current so we don't replay the move the instant the battle clears.
+    if (battleActive) { seen.current = { cap: capturedKey, lost: lostKey }; return; }
+    const capBumped = capturedKey !== seen.current.cap;
+    const lostBumped = lostKey !== seen.current.lost;
+    if (!capBumped && !lostBumped) return;
+    seen.current = { cap: capturedKey, lost: lostKey };
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) return;
+    const st = useGameStore.getState();
+    const cityId = capBumped ? st.cityCaptured?.cityId : st.cityLost?.cityId;
+    const city = cityId ? st.cities[cityId] : null;
+    if (!city) return;
+    const [wx, wz] = pxToWorld(...cityPixel(city.id, city.coords.x, city.coords.y));
+    const h = sampleTerrainHeight(wx, wz);
+    const ang0 = Math.PI * 0.28;
+    anim.current = {
+      from: camera.position.clone(),
+      orbitCenter: new THREE.Vector3(wx, h, wz),
+      radius: 3.2, ang0, ang1: ang0 + 0.95, height: h + 2.9,
+      fromT: controlsRef.current?.target.clone() ?? new THREE.Vector3(0, 0, 0),
+      toT: new THREE.Vector3(wx, h, wz),
+      t: 0,
+    };
+  }, [capturedKey, lostKey, battleActive, camera, controlsRef]);
+
+  useFrame((_, delta) => {
+    const a = anim.current;
+    if (!a) return;
+    const ctrl = controlsRef.current;
+    if (ctrl) ctrl.enabled = false;
+    a.t = Math.min(1, a.t + delta / 2.1);          // ~2.1s: dive then slow arc
+    const FLY = 0.45;
+    if (a.t < FLY) {
+      const e = a.t / FLY;
+      const ease = e < 0.5 ? 2 * e * e : 1 - Math.pow(-2 * e + 2, 2) / 2;
+      const start = new THREE.Vector3(
+        a.orbitCenter.x + Math.cos(a.ang0) * a.radius, a.height, a.orbitCenter.z + Math.sin(a.ang0) * a.radius);
+      camera.position.lerpVectors(a.from, start, ease);
+      if (ctrl) { ctrl.target.lerpVectors(a.fromT, a.toT, ease); ctrl.update(); }
+    } else {
+      const e = (a.t - FLY) / (1 - FLY);
+      const ang = a.ang0 + (a.ang1 - a.ang0) * e;
+      camera.position.set(
+        a.orbitCenter.x + Math.cos(ang) * a.radius, a.height, a.orbitCenter.z + Math.sin(ang) * a.radius);
+      if (ctrl) { ctrl.target.copy(a.toT); ctrl.update(); }
+    }
+    if (a.t >= 1) {
+      anim.current = null;
+      if (ctrl) ctrl.enabled = true;
+      onSettled([a.toT.x, a.toT.y, a.toT.z]);
+    }
+  });
+  return null;
+}
+
+/* ─── 戰役回放 — record one territory snapshot per season (headless) ───── */
+function ReplayRecorder() {
+  const dateSig = useGameStore((s) => `${s.date.year}-${s.date.season}-${s.date.phase}`);
+  useEffect(() => {
+    const st = useGameStore.getState();
+    const owners: Record<string, string | null> = {};
+    for (const c of Object.values(st.cities)) owners[c.id] = c.ownerForceId ?? null;
+    const colors: Record<string, string> = {};
+    for (const f of Object.values(st.forces)) colors[f.id] = f.color;
+    const ph = st.date.phase === 'lower' ? '下' : st.date.phase === 'middle' ? '中' : '上';
+    const label = `${st.date.year} ${SEASON_ZH[st.date.season as Season]}${ph}`;
+    useReplayStore.getState().record({ label, owners }, colors);
+  }, [dateSig]);
+  return null;
+}
+
+/* ─── 戰役回放面板 — scrub / play the campaign's territory timelapse ───── */
+function ReplayPanel({ onClose }: { onClose: () => void }) {
+  const snapshots = useReplayStore((s) => s.snapshots);
+  const colors = useReplayStore((s) => s.colors);
+  const cities = useGameStore((s) => s.cities);
+  const t = useT();
+  const maxIdx = Math.max(0, snapshots.length - 1);
+  const [idx, setIdx] = useState(maxIdx);
+  const [playing, setPlaying] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const cur = Math.min(idx, maxIdx);
+
+  useEffect(() => {
+    if (!playing) return;
+    const h = window.setInterval(() => {
+      setIdx((i) => { if (i >= maxIdx) { setPlaying(false); return maxIdx; } return i + 1; });
+    }, 300);
+    return () => window.clearInterval(h);
+  }, [playing, maxIdx]);
+
+  useEffect(() => {
+    const snap = snapshots[cur];
+    const canvas = canvasRef.current;
+    if (!snap || !canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const src = renderTerritorySnapshot(cities, snap.owners, colors);
+    ctx.fillStyle = '#0e0a06';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(src, 0, 0, canvas.width, canvas.height);
+  }, [cur, snapshots, cities, colors]);
+
+  const togglePlay = () => {
+    if (playing) { setPlaying(false); return; }
+    if (cur >= maxIdx) setIdx(0);    // at the end → replay from the start
+    setPlaying(true);
+  };
+
+  const cw = IS_MOBILE ? 320 : 520;
+  const ch = Math.round((cw * 720) / 1000);
+
+  return (
+    <div onClick={onClose} style={{
+      position: 'absolute', inset: 0, zIndex: 40,
+      background: 'rgba(8,5,2,0.72)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <div onClick={(e) => e.stopPropagation()} style={{
+        background: 'linear-gradient(180deg, #1c1409 0%, #120c06 100%)',
+        border: '1px solid #5a4530', borderRadius: 12, padding: '0.9rem 1rem',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.7)', maxWidth: '94vw',
+        fontFamily: 'var(--tkm-font-body)', color: '#d8c4a0',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+          <div style={{ fontWeight: 'bold', letterSpacing: '0.08rem' }}>🎞 {t('戰役回放', 'Campaign Timelapse')}</div>
+          <button onClick={onClose} style={{
+            background: 'transparent', color: '#a89070', border: '1px solid #5a4530',
+            borderRadius: 8, cursor: 'pointer', padding: '0.15rem 0.5rem', fontSize: '0.8rem',
+          }}>✕</button>
+        </div>
+        {snapshots.length === 0 ? (
+          <div style={{ width: cw, padding: '2rem 0', textAlign: 'center', color: '#8a7858' }}>
+            {t('尚無記錄 — 推進幾季後即可回放天下消長。', 'No history yet — advance a few seasons to build the timelapse.')}
+          </div>
+        ) : (
+          <>
+            <canvas ref={canvasRef} width={cw} height={ch} style={{
+              width: cw, height: ch, borderRadius: 8, border: '1px solid #3a2c18', display: 'block', background: '#0e0a06',
+            }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '0.6rem' }}>
+              <button onClick={togglePlay} style={{
+                background: '#d4a84a', color: '#1a1410', border: 'none', borderRadius: 8,
+                cursor: 'pointer', padding: '0.3rem 0.7rem', fontWeight: 'bold', fontSize: '0.85rem', minWidth: 64,
+              }}>{playing ? t('⏸ 暫停', '⏸ Pause') : t('▶ 播放', '▶ Play')}</button>
+              <input type="range" min={0} max={maxIdx} value={cur}
+                onChange={(e) => { setPlaying(false); setIdx(Number(e.target.value)); }}
+                style={{ flex: 1, accentColor: '#d4a84a', cursor: 'pointer' }} />
+              <div style={{ minWidth: 86, textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: '0.82rem', color: '#e0c98a' }}>
+                {snapshots[cur]?.label ?? ''}
+              </div>
+            </div>
+            <div style={{ marginTop: '0.35rem', fontSize: '0.68rem', color: '#7a6a4a', textAlign: 'right' }}>
+              {cur + 1} / {snapshots.length}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const GROUND_UP = new THREE.Vector3(0, 1, 0);
+type CamApi = {
+  zoomBy: (factor: number) => void;
+  recenter: () => void;
+  /** Fly to a ground point. dist = fixed focus distance (idle-jump); omit for
+   *  the progressive "zoom in a notch" double-click behaviour. */
+  flyTo: (wx: number, wz: number, dist?: number) => void;
+};
+
+/* ─── 鏡頭 API — the map's one camera controller. Publishes imperative
+   zoom / recenter / flyTo for the DOM buttons & double-click, and each frame
+   applies held keyboard / screen-edge panning, then clamps the look-at point
+   to the map. All of it sits OUTSIDE OrbitControls but inside the Canvas. ── */
+function MapCamApi({ apiRef, controlsRef, panInputRef }: {
+  apiRef: React.MutableRefObject<CamApi | null>;
+  controlsRef: React.MutableRefObject<{ target: THREE.Vector3; update: () => void; enabled: boolean } | null>;
+  panInputRef: React.MutableRefObject<{ x: number; z: number }>;
+}) {
+  const { camera } = useThree();
+  // Active double-click fly — eased lerp of camera+target, owns the camera
+  // until it settles.
+  const fly = useRef<null | {
+    t: number; dur: number;
+    fromP: THREE.Vector3; toP: THREE.Vector3; fromT: THREE.Vector3; toT: THREE.Vector3;
+  }>(null);
+
+  useEffect(() => {
+    apiRef.current = {
+      // factor < 1 zooms in, > 1 zooms out — scales the camera→target distance,
+      // clamped to OrbitControls' OWN live min/max (read off the instance, so a
+      // battle's closer 0.9 floor is honoured and '+' never jumps backward).
+      zoomBy: (factor) => {
+        fly.current = null;
+        const ctrl = controlsRef.current as unknown as
+          ({ target: THREE.Vector3; update: () => void; minDistance?: number; maxDistance?: number } | null);
+        if (!ctrl) return;
+        const offset = camera.position.clone().sub(ctrl.target);
+        const min = ctrl.minDistance ?? 3;
+        const max = ctrl.maxDistance ?? MAP_MAX_DIST;
+        const dist = THREE.MathUtils.clamp(offset.length() * factor, min, max);
+        camera.position.copy(ctrl.target).add(offset.setLength(dist));
+        ctrl.update();
+      },
+      // Snap back to the opening overview (map centre, default height/angle).
+      recenter: () => {
+        fly.current = null;
+        const ctrl = controlsRef.current;
+        if (!ctrl) return;
+        ctrl.target.set(0, 0, 0);
+        camera.position.set(0, MAP_D * 0.9, MAP_D * 0.7);
+        ctrl.update();
+      },
+      // 雙擊飛鏡 — ease the camera over the double-clicked point and zoom in a
+      // notch, keeping the current viewing direction so it never disorients.
+      flyTo: (wx, wz, dist) => {
+        const ctrl = controlsRef.current as unknown as
+          ({ target: THREE.Vector3; update: () => void; minDistance?: number } | null);
+        if (!ctrl) return;
+        const toT = new THREE.Vector3(wx, sampleTerrainHeight(wx, wz), wz);
+        const dir = camera.position.clone().sub(ctrl.target);
+        const curDist = dir.length() || 1;
+        dir.normalize();
+        const min = ctrl.minDistance ?? 3;
+        // dist given (idle-jump → consistent city view); else zoom in a notch.
+        const want = dist ?? Math.min(curDist * 0.55, MAP_D * 0.5);
+        const focusDist = THREE.MathUtils.clamp(want, min, MAP_MAX_DIST);
+        const toP = toT.clone().add(dir.multiplyScalar(focusDist));
+        fly.current = { t: 0, dur: 0.5, fromP: camera.position.clone(), toP, fromT: ctrl.target.clone(), toT };
+      },
+    };
+    return () => { apiRef.current = null; };
+  }, [camera, apiRef, controlsRef]);
+
+  useFrame((_, delta) => {
+    const ctrl = controlsRef.current;
+    if (!ctrl) return;
+    // dt is clamped — a long stall (tab backgrounded) shouldn't teleport.
+    const dt = Math.min(delta, 0.05);
+
+    // 1) A double-click fly takes over the camera until it lands.
+    const a = fly.current;
+    if (a) {
+      a.t = Math.min(1, a.t + dt / a.dur);
+      const e = a.t < 0.5 ? 2 * a.t * a.t : 1 - Math.pow(-2 * a.t + 2, 2) / 2;
+      camera.position.lerpVectors(a.fromP, a.toP, e);
+      ctrl.target.lerpVectors(a.fromT, a.toT, e);
+      ctrl.update();
+      if (a.t >= 1) fly.current = null;
+      return;
+    }
+
+    // 2) Held keyboard / screen-edge panning — glide target+camera across the
+    //    ground plane, faster the further you're zoomed out.
+    const inp = panInputRef.current;
+    if (inp && (inp.x !== 0 || inp.z !== 0)) {
+      const speed = camera.position.distanceTo(ctrl.target) * 0.6 * dt;
+      const fwd = new THREE.Vector3();
+      camera.getWorldDirection(fwd);
+      fwd.y = 0;
+      if (fwd.lengthSq() > 1e-6) {
+        fwd.normalize();
+        const right = new THREE.Vector3().crossVectors(fwd, GROUND_UP).normalize();
+        const move = right.multiplyScalar(inp.x * speed).add(fwd.multiplyScalar(inp.z * speed));
+        camera.position.add(move);
+        ctrl.target.add(move);
+        ctrl.update();
+      }
+    }
+
+    // 3) 平移邊界 — keep the look-at point inside the map so a pan can't drag
+    //    the land off into open water/sky. A pan moves target AND camera in
+    //    lockstep, so we shift the camera by the same delta we clamp off the
+    //    target — the view simply stops dead at the coastline. Target can still
+    //    reach the very edge, so every coastal city can sit centre-screen.
+    const t = ctrl.target;
+    const cx = THREE.MathUtils.clamp(t.x, -MAP_W / 2, MAP_W / 2);
+    const cz = THREE.MathUtils.clamp(t.z, -MAP_D / 2, MAP_D / 2);
+    if (cx !== t.x || cz !== t.z) {
+      camera.position.x += cx - t.x;
+      camera.position.z += cz - t.z;
+      t.x = cx;
+      t.z = cz;
+    }
+  });
+  return null;
+}
+
+/* ─── 操作說明 — a one-glance cheat-sheet for every map control, opened by the
+   ? on the controls hint, so the many gestures/shortcuts stay discoverable. ─ */
+function MapHelpPanel({ onClose }: { onClose: () => void }) {
+  const t = useT();
+  const rows: Array<[string, string]> = IS_MOBILE
+    ? [
+        [t('單指拖曳', '1-finger drag'), t('平移地圖', 'pan the map')],
+        [t('雙指捏合', 'pinch'), t('縮放(朝手指)', 'zoom toward fingers')],
+        [t('雙指擰轉', '2-finger twist'), t('旋轉視角', 'rotate the view')],
+        [t('輕點城市', 'tap a city'), t('選取 · 再點進城', 'select · tap again to enter')],
+        [t('輕點空地', 'tap ground'), t('選軍時下令移動', 'move a selected column')],
+        ['🔍 ＋－ ⌖ 🏯', t('尋城 / 縮放 / 復位 / 回都', 'search / zoom / recenter / capital')],
+      ]
+    : [
+        [t('左鍵拖曳', 'left-drag'), t('平移地圖', 'pan the map')],
+        [t('右鍵拖曳', 'right-drag'), t('旋轉視角', 'rotate the view')],
+        [t('滾輪', 'scroll'), t('縮放(朝光標)', 'zoom toward cursor')],
+        [t('雙擊空地', 'double-click ground'), t('飛近並放大', 'fly in + zoom')],
+        [t('WASD / 方向鍵', 'WASD / arrows'), t('移動地圖', 'pan the map')],
+        [t('滑鼠移到邊緣', 'mouse to edge'), t('滾屏', 'edge-scroll')],
+        [t('點城市', 'click a city'), t('選取 · 再點進城', 'select · click again to enter')],
+        ['1-9 / 0', t('切換疊圖', 'toggle overlays')],
+        ['Tab', t('巡視自己的城', 'cycle your cities')],
+        ['Home', t('回都城', 'jump to capital')],
+        ['Esc', t('取消選取', 'clear selection')],
+        ['＋－ ⌖ 🏯 🔍', t('縮放 / 復位 / 回都 / 尋城', 'zoom / recenter / capital / search')],
+      ];
+  return (
+    <div onClick={onClose} style={{
+      position: 'absolute', inset: 0, zIndex: 45,
+      background: 'rgba(8,5,2,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <div onClick={(e) => e.stopPropagation()} style={{
+        background: 'linear-gradient(180deg, #1c1409 0%, #120c06 100%)',
+        border: '1px solid #5a4530', borderRadius: 12, padding: '1rem 1.2rem',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.7)', maxWidth: '92vw', minWidth: 270,
+        fontFamily: 'var(--tkm-font-body)', color: '#d8c4a0',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
+          <div style={{ fontWeight: 'bold', letterSpacing: '0.08rem' }}>🎮 {t('地圖操作', 'Map Controls')}</div>
+          <button onClick={onClose} style={{
+            background: 'transparent', color: '#a89070', border: '1px solid #5a4530',
+            borderRadius: 8, cursor: 'pointer', padding: '0.15rem 0.5rem', fontSize: '0.8rem',
+          }}>✕</button>
+        </div>
+        <table style={{ borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+          <tbody>
+            {rows.map(([k, v], i) => (
+              <tr key={i}>
+                <td style={{ padding: '3px 14px 3px 0', color: '#e0c98a', whiteSpace: 'nowrap', fontWeight: 600 }}>{k}</td>
+                <td style={{ padding: '3px 0', color: '#bfae86' }}>{v}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 export function StrategicMap3D() {
   const [overlayMode, setOverlayMode] = useState<OverlayMode>('none');
   const [selectedPortId, setSelectedPortId] = useState<string | null>(null);
@@ -7062,20 +7827,148 @@ export function StrategicMap3D() {
   const battleActive = useGameStore((s) => !!s.tacticalBattle);
   // 標籤分級 — quantized camera distance, provided to City3D labels.
   const [zoomLod, setZoomLod] = useState<'near' | 'far'>('near');
-  const duskBg = useGameStore((s) => (s.date.phase ?? 'upper') === 'lower');
+  const tod = phaseToTOD(useGameStore((s) => s.date.phase));
 
-  // 環境音 — wind under everything; birds by day, crickets at dusk, war
+  // 畫面復原 — WebGL context-loss guard. On a long session iOS WKWebView can
+  // drop the GL context under GPU-memory pressure; three.js calls
+  // preventDefault() (so the browser *may* restore it) and the continuous
+  // render loop repaints once it does. But on a hard out-of-memory loss the
+  // browser may never fire 'webglcontextrestored', leaving a permanently black
+  // map. If no restore arrives within a short grace window we bump this epoch
+  // to fully remount the <Canvas> with a brand-new GL context — the cached
+  // terrain/normal/water textures simply re-upload into the fresh renderer.
+  const [glEpoch, setGlEpoch] = useState(0);
+  const glRestoreTimer = useRef<number | null>(null);
+  useEffect(() => () => {
+    if (glRestoreTimer.current != null) window.clearTimeout(glRestoreTimer.current);
+  }, []);
+
+  // 鏡頭按鈕橋接 — an in-Canvas rig (MapCamApi) publishes imperative zoom /
+  // recenter / flyTo helpers here, so the DOM corner buttons (which live
+  // outside the Canvas) and double-click can drive the camera without
+  // re-implementing OrbitControls.
+  const camApiRef = useRef<CamApi | null>(null);
+  // 前往閒置武將 — the HUD's idle-officer button (outside the Canvas) asks the
+  // map to fly to a city through this bus; we smooth-fly to a steady city view.
+  useEffect(() => {
+    setMapFocusHandler((cityId) => {
+      const c = useGameStore.getState().cities[cityId];
+      if (!c) return;
+      const [px, py] = cityPixel(c.id, c.coords.x, c.coords.y);
+      const [wx, wz] = pxToWorld(px, py);
+      camApiRef.current?.flyTo(wx, wz, MAP_D * 0.45);
+    });
+    return () => setMapFocusHandler(null);
+  }, []);
+  // 回都 — select the player's capital and fly to it (Home key + the 🏛 button).
+  const jumpToCapital = () => {
+    const st = useGameStore.getState();
+    const cap = st.playerForceId ? st.forces[st.playerForceId]?.capitalCityId : null;
+    if (!cap || !st.cities[cap]) return;
+    st.selectCity(cap);
+    requestMapFocus(cap);
+  };
+  // 羅盤朝向 — camera azimuth (deg), fed by an in-Canvas tracker; drives the
+  // compass rose so 北 always points north even after you twist the view.
+  const [heading, setHeading] = useState(0);
+
+  // 開局取景 — once the map mounts, ease the camera from the default whole-map
+  // overview onto YOUR realm (the bounding circle of your cities), so you open
+  // looking at your own situation instead of the dead centre of the map.
+  const framedRef = useRef(false);
+  useEffect(() => {
+    if (framedRef.current) return;
+    const s = useGameStore.getState();
+    const pid = s.playerForceId;
+    if (!pid) return;
+    const own = Object.values(s.cities).filter((c) => c.ownerForceId === pid);
+    if (own.length === 0) return;
+    const pts = own.map((c) => cityPixel(c.id, c.coords.x, c.coords.y));
+    const ccx = pts.reduce((a, p) => a + p[0], 0) / pts.length;
+    const ccy = pts.reduce((a, p) => a + p[1], 0) / pts.length;
+    const maxR = pts.reduce((m, p) => Math.max(m, Math.hypot(p[0] - ccx, p[1] - ccy)), 0);
+    const [wx, wz] = pxToWorld(ccx, ccy);
+    const radiusWorld = (maxR + 120) * PIXEL_TO_WORLD;   // pad so cities sit off the very edge
+    const fitDist = THREE.MathUtils.clamp(
+      (radiusWorld / Math.sin((MAP_FOV_DEG / 2) * Math.PI / 180)) * 1.1, 45, MAP_MAX_DIST);
+    framedRef.current = true;
+    let tries = 0;
+    const tryFrame = () => {
+      if (camApiRef.current) { camApiRef.current.flyTo(wx, wz, fitDist); return; }
+      if (tries++ < 40) requestAnimationFrame(tryFrame);   // wait for the GL scene to mount
+    };
+    const id = window.setTimeout(() => requestAnimationFrame(tryFrame), 220);
+    return () => window.clearTimeout(id);
+  }, []);
+  // 鍵盤 / 邊緣平移 — held-direction state (desktop only). MapCamApi reads the
+  // combined {x,z} each frame; DOM listeners below keep the parts in sync.
+  const panInputRef = useRef<{ x: number; z: number }>({ x: 0, z: 0 });
+  const heldKeysRef = useRef<Set<string>>(new Set());
+  const edgePanRef = useRef<{ x: number; z: number }>({ x: 0, z: 0 });
+  // Combine held keys + edge state into the {x,z} MapCamApi reads each frame.
+  // Stored in a ref so both the keyboard and the edge-scroll effects share it.
+  const recomputePanRef = useRef<() => void>(() => {});
+  recomputePanRef.current = () => {
+    const k = heldKeysRef.current, eg = edgePanRef.current;
+    let x = eg.x, z = eg.z;
+    if (k.has('left')) x -= 1;
+    if (k.has('right')) x += 1;
+    if (k.has('up')) z += 1;
+    if (k.has('down')) z -= 1;
+    panInputRef.current = { x: Math.max(-1, Math.min(1, x)), z: Math.max(-1, Math.min(1, z)) };
+  };
+  useEffect(() => {
+    if (IS_MOBILE) return;   // touch users pan with a finger; no keys / edges
+    const recompute = () => recomputePanRef.current();
+    const dirOf = (key: string): string | null => {
+      switch (key) {
+        case 'w': case 'W': case 'ArrowUp': return 'up';
+        case 's': case 'S': case 'ArrowDown': return 'down';
+        case 'a': case 'A': case 'ArrowLeft': return 'left';
+        case 'd': case 'D': case 'ArrowRight': return 'right';
+        default: return null;
+      }
+    };
+    const onDown = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const dir = dirOf(e.key);
+      if (!dir) return;
+      if (e.key.startsWith('Arrow')) e.preventDefault();   // stop the page scrolling
+      heldKeysRef.current.add(dir);
+      recompute();
+    };
+    const onUp = (e: KeyboardEvent) => {
+      const dir = dirOf(e.key);
+      if (!dir) return;
+      heldKeysRef.current.delete(dir);
+      recompute();
+    };
+    // Focus loss can swallow a keyup — clear everything so a key never sticks.
+    const clearAll = () => { heldKeysRef.current.clear(); edgePanRef.current = { x: 0, z: 0 }; recompute(); };
+    window.addEventListener('keydown', onDown);
+    window.addEventListener('keyup', onUp);
+    window.addEventListener('blur', clearAll);
+    return () => {
+      window.removeEventListener('keydown', onDown);
+      window.removeEventListener('keyup', onUp);
+      window.removeEventListener('blur', clearAll);
+    };
+  }, []);
+
+  // 環境音 — wind under everything; birds by day, crickets at dusk/night, war
   // drums while a battle burns. Follows the sound toggle live.
   const soundOn = useGameStore((s) => s.soundEnabled);
   useEffect(() => {
     if (!soundOn) { stopMapAmbience(); return; }
-    startMapAmbience(battleActive ? 'war' : duskBg ? 'dusk' : 'day');
+    startMapAmbience(battleActive ? 'war' : tod === 'day' ? 'day' : 'dusk');
     return () => stopMapAmbience();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [soundOn]);
   useEffect(() => {
-    setMapAmbienceMode(battleActive ? 'war' : duskBg ? 'dusk' : 'day');
-  }, [battleActive, duskBg]);
+    setMapAmbienceMode(battleActive ? 'war' : tod === 'day' ? 'day' : 'dusk');
+  }, [battleActive, tod]);
 
   // 迷你導航 — camera view window for the corner minimap + click-to-jump.
   const [navView, setNavView] = useState<{ cx: number; cy: number; span: number } | null>(null);
@@ -7086,6 +7979,9 @@ export function StrategicMap3D() {
   // 手機收納 — objective card and the map-tools tray fold away by default.
   const [objOpen, setObjOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
+  // 戰役回放面板開關。
+  const [showReplay, setShowReplay] = useState(false);
+  const [showMapHelp, setShowMapHelp] = useState(false);
 
   // 鍵盤快捷鍵 — 1..9 switch overlays, Tab cycles own cities (camera in
   // tow), Esc backs out of selections. Typing in any input is exempt.
@@ -7094,7 +7990,11 @@ export function StrategicMap3D() {
       const el = e.target as HTMLElement | null;
       if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
-      if (e.key >= '1' && e.key <= '9') {
+      if (e.key === '0') {
+        // 0 toggles the strategic-intent (兵鋒) overlay — it's the 10th mode,
+        // past the 1–9 number row.
+        setOverlayMode((cur) => (cur === 'intent' ? 'none' : 'intent'));
+      } else if (e.key >= '1' && e.key <= '9') {
         const opt = OVERLAY_OPTIONS.filter((o) => o.id !== 'none')[Number(e.key) - 1];
         if (opt) setOverlayMode((cur) => (cur === opt.id ? 'none' : opt.id));
       } else if (e.key === 'Tab') {
@@ -7114,6 +8014,8 @@ export function StrategicMap3D() {
         if (s.selectedArmyId) s.selectArmy(null);
         else if (s.selectedCityId) s.selectCity(null);
         setQuickPick(null);
+      } else if (e.key === 'Home' || e.key === 'h' || e.key === 'H') {
+        jumpToCapital();   // 回都
       }
     };
     window.addEventListener('keydown', onKey);
@@ -7173,6 +8075,31 @@ export function StrategicMap3D() {
   const [cine, setCine] = useState<{ key: number; weight: number; color: string } | null>(null);
   const cineCount = useRef(0);
   const mapCanvasWrapRef = useRef<HTMLDivElement>(null);
+  // 邊緣滾屏 — nudging the mouse into the canvas edge band pans the map
+  // (desktop only). Corner UI lives outside this wrapper, so hovering a button
+  // never triggers a scroll.
+  useEffect(() => {
+    if (IS_MOBILE) return;
+    const el = mapCanvasWrapRef.current;
+    if (!el) return;
+    const M = 42;   // edge band thickness in px
+    const onMove = (e: PointerEvent) => {
+      if (e.pointerType === 'touch') return;
+      const r = el.getBoundingClientRect();
+      let x = 0, z = 0;
+      if (e.clientX <= r.left + M) x = -1; else if (e.clientX >= r.right - M) x = 1;
+      if (e.clientY <= r.top + M) z = 1; else if (e.clientY >= r.bottom - M) z = -1;
+      edgePanRef.current = { x, z };
+      recomputePanRef.current();
+    };
+    const onLeave = () => { edgePanRef.current = { x: 0, z: 0 }; recomputePanRef.current(); };
+    el.addEventListener('pointermove', onMove);
+    el.addEventListener('pointerleave', onLeave);
+    return () => {
+      el.removeEventListener('pointermove', onMove);
+      el.removeEventListener('pointerleave', onLeave);
+    };
+  }, []);
   const punchFx = (kind: StratagemFxKind, color: string) => {
     const weight = FX_IMPACT[kind];
     if (weight > 0) setCine({ key: ++cineCount.current, weight, color });
@@ -7327,7 +8254,11 @@ export function StrategicMap3D() {
   return (
     <div ref={mapRootRef} style={{
       position: 'absolute', inset: 0,
-      background: duskBg ? 'linear-gradient(180deg, #6a5a78 0%, #d89060 100%)' : 'linear-gradient(180deg, #88a0c0 0%, #c8b890 100%)',
+      background: tod === 'night'
+        ? 'linear-gradient(180deg, #060a1c 0%, #1a2440 100%)'
+        : tod === 'dusk'
+        ? 'linear-gradient(180deg, #6a5a78 0%, #d89060 100%)'
+        : 'linear-gradient(180deg, #88a0c0 0%, #c8b890 100%)',
     }}>
       {/* Objective tracker — top-left. Phones fold it into a chip; the
           full card is a tap away instead of owning a third of the screen. */}
@@ -7380,16 +8311,25 @@ export function StrategicMap3D() {
         }}>{WEATHER_ZH[weather.kind]}{weather.windPower >= 2 ? ` ${weather.windPower}` : ''}</span>
       </div>
 
-      {/* Controls hint — desktop only; on touch it was just noise. */}
+      {/* Controls hint — desktop only; corrected for the map-app controls
+          (left-drag now PANS, right-drag rotates), with a ? that opens the full
+          cheat-sheet so every gesture/shortcut is discoverable. */}
       {!IS_MOBILE && (
         <div style={{
           position: 'absolute', top: 12, right: 12, zIndex: 10,
+          display: 'flex', alignItems: 'center', gap: 6,
           background: 'rgba(20, 14, 8, 0.85)', color: '#a89070',
           border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
           padding: '0.3rem 0.6rem',
           fontFamily: 'var(--tkm-font-body)', fontSize: '0.72rem',
-          pointerEvents: 'none',
-        }}>{t('拖曳旋轉 · 滾輪縮放 · 1-9 圖層 · Tab 巡城 · 空格過旬 · Esc 取消', 'drag rotate · scroll zoom · 1-9 overlays · Tab cycle cities · Space end turn · Esc cancel')}</div>
+        }}>
+          <span style={{ pointerEvents: 'none' }}>{t('左拖平移 · 右拖旋轉 · 滾輪縮放 · 雙擊飛近', 'left-drag pan · right-drag rotate · scroll zoom · double-click fly')}</span>
+          <button onClick={() => setShowMapHelp(true)} title={t('操作說明', 'Controls')} style={{
+            width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
+            background: 'transparent', color: '#d4a84a', border: '1px solid #6a5230',
+            cursor: 'pointer', fontSize: 11, lineHeight: 1, padding: 0, fontWeight: 'bold',
+          }}>?</button>
+        </div>
       )}
 
       {/* 尋城 — search-and-fly. Desktop: input under the controls hint.
@@ -7497,8 +8437,21 @@ export function StrategicMap3D() {
           }}
           title={t('把當前天下大勢存成 PNG', 'Save the current realm view as a PNG')}
         >📷 {t('大勢', 'Snap')}</button>
+        <button
+          onClick={() => setShowReplay(true)}
+          style={{
+            marginLeft: 8, background: '#241c12', color: '#c0a878',
+            border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '0.3rem 0.55rem',
+            cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.78rem',
+          }}
+          title={t('戰役回放 — 快進重現整局天下消長', "Campaign timelapse — fast-forward the whole campaign's territory changes")}
+        >🎞 {t('回放', 'Replay')}</button>
       </div>
       )}
+      {/* 戰役回放:無頭記錄器(每季存一幀)+ 開啟後的面板。 */}
+      <ReplayRecorder />
+      {showReplay && <ReplayPanel onClose={() => setShowReplay(false)} />}
+      {showMapHelp && <MapHelpPanel onClose={() => setShowMapHelp(false)} />}
 
       <div ref={mapCanvasWrapRef} style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
       {/* 戰鬥運鏡 — impact flash for big-map casts, remounted per cast */}
@@ -7514,12 +8467,39 @@ export function StrategicMap3D() {
         />
       )}
       <Canvas
+        // Remounts with a fresh GL context if the old one is lost and never
+        // restored (see glEpoch / onCreated below).
+        key={glEpoch}
         // Shadow maps are the single biggest GPU cost on this scene — high tier only.
         shadows={RENDER_HI}
         dpr={RENDER_HI ? [1, 2] : [1, 1.5]}
         camera={{ position: [0, MAP_D * 0.9, MAP_D * 0.7], fov: 45, near: 0.5, far: 400 * WORLD_SCALE }}
         // preserveDrawingBuffer lets the 📷 button read the frame back.
         gl={{ antialias: RENDER_HI, preserveDrawingBuffer: true }}
+        onCreated={({ gl }) => {
+          // Recover from WebGL context loss instead of going black forever.
+          const canvas = gl.domElement;
+          const onLost = (e: Event) => {
+            e.preventDefault();                 // ask the browser to attempt a restore
+            if (glRestoreTimer.current != null) return;
+            // Grace period: a transient loss (tab switch, brief pressure) is
+            // restored by the browser + three.js on its own. If it isn't, the
+            // context is dead for good — hard-remount with a fresh one.
+            glRestoreTimer.current = window.setTimeout(() => {
+              glRestoreTimer.current = null;
+              console.warn('[StrategicMap3D] WebGL context not restored — remounting canvas');
+              setGlEpoch((n) => n + 1);
+            }, 1800);
+          };
+          const onRestored = () => {
+            if (glRestoreTimer.current != null) {
+              window.clearTimeout(glRestoreTimer.current);
+              glRestoreTimer.current = null;
+            }
+          };
+          canvas.addEventListener('webglcontextlost', onLost as EventListener, false);
+          canvas.addEventListener('webglcontextrestored', onRestored as EventListener, false);
+        }}
       >
         <BattleCinematics trigger={cine} />
         <Suspense fallback={null}>
@@ -7542,6 +8522,7 @@ export function StrategicMap3D() {
             dioHover={worldBattleMinimized ? dioHover : null}
             onDioHover={setDioHover}
             onDioramaTile={handleDioramaTile}
+            onFocusWorld={(wx, wz) => camApiRef.current?.flyTo(wx, wz)}
           />
           </ZoomLODCtx.Provider>
           <OrbitControls
@@ -7549,12 +8530,25 @@ export function StrategicMap3D() {
             target={orbitTarget}
             maxPolarAngle={Math.PI / 2.1}
             minDistance={battleActive ? 0.9 : 3}
-            maxDistance={200 * WORLD_SCALE}
+            maxDistance={MAP_MAX_DIST}
             enableDamping
             dampingFactor={0.1}
+            // 地圖 App 式操作 — drag the ground with one finger / left mouse,
+            // pinch (or scroll) to zoom toward where you're looking, twist with
+            // two fingers / right-drag to rotate. screenSpacePanning=false keeps
+            // a pan gliding across the terrain instead of drifting skyward when
+            // the camera is tilted; zoomToCursor homes the zoom on the cursor.
+            screenSpacePanning={false}
+            zoomToCursor
+            touches={{ ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_ROTATE }}
+            mouseButtons={{ LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE }}
           />
+          <MapCamApi apiRef={camApiRef} controlsRef={controlsRef} panInputRef={panInputRef} />
+          <HeadingTracker controlsRef={controlsRef} onHeading={setHeading} />
           {/* Fly to a battle the moment it ignites — before its screen mounts. */}
           <BattleFocusFly controlsRef={controlsRef} onSettled={setOrbitTarget} />
+          {/* Cinematic arc when a city changes hands (capture / loss). */}
+          <EventFocusFly controlsRef={controlsRef} onSettled={setOrbitTarget} />
           <MiniNavRig controlsRef={controlsRef} onView={setNavView} jump={navJump} />
           {/* Gentle bloom — beacons, fires and water shimmer get a halo. High tier only. */}
           {RENDER_HI && (
@@ -7564,6 +8558,54 @@ export function StrategicMap3D() {
           )}
         </Suspense>
       </Canvas>
+      </div>
+
+      {/* 鏡頭控制 — zoom in/out + recenter on the right edge, clear of the
+          bottom-right minimap and top-right buttons. Big round tap targets for
+          touch; they drive the OrbitControls camera via MapCamApi. */}
+      <div style={{
+        position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+        zIndex: 11, display: 'flex', flexDirection: 'column', gap: 8,
+      }}>
+        {([
+          { key: 'in', label: '＋', title: t('放大', 'Zoom in'), onClick: () => camApiRef.current?.zoomBy(0.78) },
+          { key: 'out', label: '－', title: t('縮小', 'Zoom out'), onClick: () => camApiRef.current?.zoomBy(1.28) },
+          { key: 'home', label: '⌖', title: t('復位 — 回到全局俯視', 'Recenter — overview'), onClick: () => { camApiRef.current?.recenter(); setOrbitTarget([0, 0, 0]); } },
+          { key: 'capital', label: '🏯', title: t('回都城 (Home)', 'Capital (Home)'), onClick: jumpToCapital },
+        ] as const).map((b) => (
+          <button
+            key={b.key}
+            title={b.title}
+            aria-label={b.title}
+            onClick={b.onClick}
+            style={{
+              width: 40, height: 40, borderRadius: '50%',
+              background: 'rgba(20, 14, 8, 0.92)', color: '#c0a878',
+              border: '1px solid #5a4530', cursor: 'pointer',
+              fontSize: b.key === 'in' || b.key === 'out' ? 22 : 17, lineHeight: 1, padding: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.55)',
+            }}
+          >{b.label}</button>
+        ))}
+      </div>
+
+      {/* 羅盤 — a parchment compass rose on the left edge; the whole rose turns
+          with the camera so the red 北 spike always points to true north. Pure
+          decoration (pointer-events off) that also doubles as a heading read. */}
+      <div style={{
+        position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)',
+        zIndex: 9, pointerEvents: 'none', opacity: 0.5,
+      }}>
+        <svg width="54" height="54" viewBox="0 0 100 100"
+          style={{ transform: `rotate(${heading}deg)`, transition: 'transform 0.12s linear' }}>
+          <circle cx="50" cy="50" r="47" fill="rgba(20,14,8,0.4)" stroke="#caa86a" strokeWidth="1.5" />
+          <circle cx="50" cy="50" r="39" fill="none" stroke="#caa86a" strokeWidth="0.6" opacity="0.4" />
+          <polygon points="50,14 55,50 50,86 45,50" fill="#caa86a" opacity="0.5" />
+          <polygon points="14,50 50,45 86,50 50,55" fill="#caa86a" opacity="0.3" />
+          <polygon points="50,8 54,50 46,50" fill="#d9434a" opacity="0.78" />
+          <text x="50" y="27" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#f0dca8" fontFamily="serif">北</text>
+        </svg>
       </div>
 
       {/* 快捷輪盤的 DOM 端 — the pickers the ring opens (ordinary modals,
