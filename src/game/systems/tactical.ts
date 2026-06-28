@@ -4785,6 +4785,20 @@ export function pickAdjacentTarget(
 /** A commander steers toward an unresolved movement objective. */
 function objectiveStep(b: TacticalBattle, unit: TacticalUnit): HexCoord | null {
   if (!unit.isCommander) return null;
+  // 決堰水淹 — an unbroken dam (漢水堰) that would drown MORE of the enemy than
+  // of us (more foe units standing on river/bridge) is worth making for: reach
+  // it and break it for a 水淹七軍. The flood hits both sides, so only when the
+  // maths favour us. (Named-map AI no longer ignores the battlefield's lever.)
+  if (!b.damBroken) {
+    const dam = (b.specialTiles ?? []).find((s) => s.label.zh.includes('堰') || s.label.zh.includes('堤'));
+    if (dam && hexDistance(unit.coord, dam.coord) > 0) {
+      const onWater = (side: 'attacker' | 'defender') => b.units.filter(
+        (u) => u.side === side && u.troops > 0 && ['river', 'bridge'].includes(tileAt(b, u.coord)?.terrain ?? ''),
+      ).length;
+      const foe = unit.side === 'attacker' ? 'defender' : 'attacker';
+      if (onWater(foe) >= onWater(unit.side) + 1) return bestStepToward(b, unit, dam.coord);
+    }
+  }
   const obj = unit.side === 'attacker' ? b.attackerObjective : b.defenderObjective;
   if (!obj || obj.resolved) return null;
   let goal: HexCoord | null = null;

@@ -34,7 +34,11 @@ export type BattleStratagemId =
   | 'lure-tiger'         // 調虎離山 — lure commander out
   | 'cut-supply-strike'  // 釜底抽薪 — supply strike
   | 'besiege-relief'     // 圍魏救趙 — indirect pressure
-  | 'wait-tired';        // 以逸待勞 — counter-attack bonus
+  | 'wait-tired'         // 以逸待勞 — counter-attack bonus
+  // ── Three iconic plots the novel demands ──
+  | 'empty-fort'         // 空城計 — defender bluff: outnumbered master cows the attacker
+  | 'bitter-flesh'       // 苦肉計 — a feigned sacrifice sets up a devastating surprise (黃蓋)
+  | 'feint-strike';      // 聲東擊西 — misdirect, then strike the undefended flank
 
 export interface StratagemDef {
   id: BattleStratagemId;
@@ -334,6 +338,44 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
     isApplicable: (ctx) => ctx.defenderTroops > ctx.attackerTroops * 1.3,
     successEffect: { defenderPowerMul: 0.75, ownLossMul: 0.80 },
   },
+  // ── 空城計 — a DEFENSIVE bluff (see DEFENSIVE_SCHEMES). Only a master holding
+  // a near-empty city dares it: the eerie calm reads as a trap and the besieger
+  // baulks. Written attacker-centric (mirrored when the defender casts it):
+  // saps the attacker's nerve and spares the thin garrison. Catastrophic if
+  // seen through (the bluff collapses) — hence the steep INT gate + penalty.
+  'empty-fort': {
+    id: 'empty-fort',
+    name: { zh: '空城計', en: 'Empty Fort' },
+    description: '空城計 — a vastly outnumbered master bluffs a trap; the besieger hesitates.',
+    descriptionZh: "空城計。寡不敵眾之際,憑膽識虛張伏兵之疑,逼退來犯之師。敗則城破。",
+    minIntelligence: 92,
+    isApplicable: (ctx) => ctx.defenderTroops < ctx.attackerTroops * 0.5,
+    successEffect: { defenderPowerMul: 0.74, ownLossMul: 0.65 },
+    failurePenalty: { attackerPowerMul: 1.20, ownLossMul: 1.25 },
+  },
+  // 苦肉計 — a feigned sacrifice (黃蓋 flogged before 赤壁): take a real wound to
+  // sell the deceit, then land a devastating surprise blow.
+  'bitter-flesh': {
+    id: 'bitter-flesh',
+    name: { zh: '苦肉計', en: 'Bitter Flesh' },
+    description: '苦肉計 — sacrifice to sell a deceit, then strike with crushing surprise.',
+    descriptionZh: "苦肉計。先自損以取信於敵,而後一擊致命(黃蓋詐降之本)。",
+    minIntelligence: 80,
+    isApplicable: (ctx) => ctx.attackerIntelligence >= 80,
+    successEffect: { ownLossMul: 1.15, enemyLossMul: 1.45, surpriseRoll: 0.18 },
+    failurePenalty: { ownLossMul: 1.20 },
+  },
+  // 聲東擊西 — feint at one face, fall on the undefended other. Needs the wit
+  // edge to pull the misdirection off.
+  'feint-strike': {
+    id: 'feint-strike',
+    name: { zh: '聲東擊西', en: 'Feint East, Strike West' },
+    description: '聲東擊西 — misdirect the defence, then fall on the open flank.',
+    descriptionZh: "聲東擊西。佯動於東、實擊於西,敵備左而我攻右。需智略佔優。",
+    minIntelligence: 75,
+    isApplicable: (ctx) => ctx.attackerIntelligence > ctx.defenderIntelligence + 5,
+    successEffect: { defenderPowerMul: 0.85, ownLossMul: 0.88, surpriseRoll: 0.15 },
+  },
 };
 
 /**
@@ -343,7 +385,7 @@ export const STRATAGEM_DEFS: Record<BattleStratagemId, StratagemDef> = {
 /** 守城之計 — schemes a DEFENDER can throw (the rest are an attacker's plots).
  *  A besieged marshal answers with these (resolved with mirrored semantics). */
 export const DEFENSIVE_SCHEMES: ReadonlySet<BattleStratagemId> = new Set<BattleStratagemId>([
-  'iron-wall', 'wait-tired', 'last-stand', 'sow-discord', 'ambush', 'false-surrender',
+  'iron-wall', 'wait-tired', 'last-stand', 'sow-discord', 'ambush', 'false-surrender', 'empty-fort',
 ]);
 
 /** 反制 — a defending scheme's effect read from the DEFENDER's point of view:
