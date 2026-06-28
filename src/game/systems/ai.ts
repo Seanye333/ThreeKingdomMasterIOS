@@ -24,6 +24,7 @@ import { citySize, cityCarryingCapacity, cityEconCap, cityStatCap } from './city
 import { marchDurationFor } from '../data/cities';
 import { marchSpeedMul, adjustMarchSeasons } from './marchPace';
 import { marchSpeedMultiplier } from './weather';
+import { siegeFacilityAid } from './combat';
 import { isLand, terrainMarchCost, WORLD_SCALE } from '../data/geography';
 import { cityPos } from '../data/cityGeo';
 import {
@@ -92,6 +93,9 @@ export interface AIPlanInput {
   /** This season's weather — 知天候 AI strikes while the wind serves a fire
    *  attack and waits out a snowbound march (see weatherAttackMul). */
   weather?: import('./weather').Weather;
+  /** Strategic forts/facilities — 識城防 AI counts an enemy city's 箭樓/投石臺
+   *  network as a stiffer defence and shies off (see siegeFacilityAid). */
+  forts?: Record<EntityId, import('../types/fort').Fort>;
   rng?: () => number;
 }
 
@@ -209,6 +213,7 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
         input.date.season,
         aiAggressionMul,
         input.weather,
+        input.forts,
       );
       if (!decision) continue;
 
@@ -1094,6 +1099,7 @@ function decideCommand(
   season?: 'spring' | 'summer' | 'autumn' | 'winter',
   aiAggressionMul = 1,
   weather?: import('./weather').Weather,
+  forts?: Record<EntityId, import('../types/fort').Fort>,
 ): Decision | null {
   const ownRulerId = forces[forceId]?.rulerOfficerId;
   // 前線 — a city bordering an enemy (or neutral) realm. Computed up-front so
@@ -1301,11 +1307,19 @@ function decideCommand(
       const weatherMul = weatherAttackMul(weather, hasFireMind);
       const attackThreshold = baseThreshold * deterrence * focusRelax * postureMul * aiAggressionMul * personalityMul * weatherMul;
 
+      // 識城防 — a city ringed by enemy 箭樓/投石臺/陣/防壁 is a far harder nut: the
+      // forts shell the storming column, muster extra garrison and stiffen the
+      // wall (the very siege aid they now lend, §5.5). The AI reads it the same
+      // way the siege math will, so it shies off a fort-defended target and only
+      // commits with a bigger edge — or goes to raze the forts first.
+      const aid = siegeFacilityAid(forts, target.ownerForceId, target.id);
       // Effective defender strength factors in city defense: a fortress at
       // defense 88 (Tongguan) counts as if the garrison were ~60% larger.
-      const defenseMultiplier = 1 + target.defense / 200;
-      const effectiveDefenderTroops = target.troops * defenseMultiplier;
-      const ratio = effectiveDefenderTroops / Math.max(1, city.troops);
+      const defenseMultiplier = 1 + (target.defense + aid.defenseAdd) / 200;
+      const effectiveDefenderTroops = (target.troops + aid.garrison) * defenseMultiplier * aid.defenderMul;
+      // The besieging column is shelled before it reaches the walls.
+      const effectiveAttackerTroops = Math.max(1, city.troops - aid.prestrike);
+      const ratio = effectiveDefenderTroops / effectiveAttackerTroops;
       if (ratio > attackThreshold) continue;
       // P4 — exclude cowardly/frail officers from leading marches.
       const marchPool = officersHere.filter((c) => !isCombatLiability(c));

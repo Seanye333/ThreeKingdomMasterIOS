@@ -3891,6 +3891,7 @@ export function TacticalBattleScreen3D() {
   const afflictOfficer = useGameStore((s) => s.afflictOfficer);
   const recordDeed = useGameStore((s) => s.recordDeed);
   const cancelBattle = useGameStore((s) => s.cancelTacticalBattle);
+  const endDrill = useGameStore((s) => s.endPracticeDrill);
   const setBattleViewMinimized = useGameStore((s) => s.setBattleViewMinimized);
   const battleSpeed = useGameStore((s) => s.battleSpeed);
   const difficulty = useGameStore((s) => s.difficulty);
@@ -4616,7 +4617,8 @@ export function TacticalBattleScreen3D() {
             (forfeiting / 棄城 has consequences). The 2D view is retired. */}
         <button
           onClick={() => {
-            if (battle.practice || window.confirm(t('確定退出此戰?', 'Leave this battle?'))) {
+            if (battle.practice) { endDrill(); return; } // bank 練度/歷練 by result
+            if (window.confirm(t('確定退出此戰?', 'Leave this battle?'))) {
               cancelBattle();
             }
           }}
@@ -5016,10 +5018,10 @@ export function TacticalBattleScreen3D() {
           battle={battle}
           playerSide={playerSide}
           onClose={() => {
-            // 演習 — a drill leaves no trace: dismiss without writeback.
-            // (Clearing the battle unmounts the whole host; no extra close.)
+            // 演習 — a drill leaves no real casualties, but now banks 練度 +
+            // 武將歷練 scaled by how the garrison fared (endPracticeDrill).
             if (battle.practice) {
-              cancelBattle();
+              endDrill();
               setShowResults(false);
               return;
             }

@@ -1135,6 +1135,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       noBattleDeath: input.noBattleDeath ?? false,
       duelChanceMul: input.duelChanceMul ?? 1,
       buildings: input.buildings,
+      forts: input.forts,
     });
     cities = outcome.cities;
     officers = outcome.officers;

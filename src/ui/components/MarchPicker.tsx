@@ -9,6 +9,9 @@ import { generateTerritories, terrainRoute } from '../../game/data/territories';
 import { useT, useLanguage } from '../i18n';
 import { BattlePrepModal } from './BattlePrepModal';
 import { applicableStratagems } from '../../game/data/stratagems2';
+import { cityPos } from '../../game/data/cityGeo';
+import { geoToPixel } from '../../game/data/geography';
+import { FACILITY_DEFS } from '../../game/types/fort';
 import type { EntityId } from '../../game/types';
 import { OfficerHoverCard } from './OfficerHoverCard';
 import { OfficerStats } from './OfficerStats';
@@ -131,6 +134,7 @@ export function MarchPicker({ cityId, onClose }: Props) {
   const [pace, setPace] = useState<MarchPace>('normal');
   const [forcedStratagem, setForcedStratagem] = useState<string>('');
   const weather = useGameStore((s) => s.weather);
+  const forts = useGameStore((s) => s.forts);
   const [troops, setTroops] = useState<number>(
     Math.min(2000, source?.troops ?? 0),
   );
@@ -181,6 +185,30 @@ export function MarchPicker({ cityId, onClose }: Props) {
   useEffect(() => {
     if (forcedStratagem && !schemeOptions.some((s) => s.id === forcedStratagem)) setForcedStratagem('');
   }, [schemeOptions, forcedStratagem]);
+  // 城防情報 — does this march line pass through a hostile 箭樓/投石臺's fire? The
+  // column would be shelled en route (§5.5). Warn before the player commits, so
+  // a tower network actually deters — same fire the resolution then deals out.
+  const fortWarning = useMemo(() => {
+    if (!source || !target) return null;
+    const a = cityPos(source), b = cityPos(target);
+    const segLen2 = (b.x - a.x) ** 2 + (b.y - a.y) ** 2 || 1;
+    let count = 0, dmg = 0;
+    for (const f of Object.values(forts)) {
+      if (!f.facility || f.hp <= 0) continue;
+      const def = FACILITY_DEFS[f.facility];
+      if (def.effect !== 'ranged') continue;                              // only shellers threaten a march
+      if (!f.ownerForceId || f.ownerForceId === source.ownerForceId) continue; // skip our own
+      const [fx, fy] = geoToPixel(f.coords.lon, f.coords.lat);
+      let tt = ((fx - a.x) * (b.x - a.x) + (fy - a.y) * (b.y - a.y)) / segLen2;
+      tt = Math.max(0, Math.min(1, tt));
+      const d = Math.hypot(fx - (a.x + tt * (b.x - a.x)), fy - (a.y + tt * (b.y - a.y)));
+      if (d <= def.range) {
+        count++;
+        dmg += Math.round(def.power * 2 * (1 + 0.5 * ((f.level ?? 1) - 1))); // ~2 ticks of fire
+      }
+    }
+    return count > 0 ? { count, dmg } : null;
+  }, [source, target, forts]);
   const maxTroops = source.troops;
   const canAfford = source.gold >= def.goldCost;
   const valid =
@@ -467,6 +495,15 @@ export function MarchPicker({ cityId, onClose }: Props) {
           </div>
         </section>
 
+        {targetId && fortWarning && (
+          <div style={{ padding: '0.4rem 0.75rem', borderTop: '1px solid #3a2818', fontSize: '0.78rem', color: '#e0a060', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+            title={t('行軍途經敵箭樓/投石臺火力範圍,縱隊將沿途遭轟。改道、先拔設施或加兵。', "The march route runs through hostile arrow-tower/catapult fire — the column will be shelled en route. Reroute, raze the forts first, or send more.")}>
+            ⚠ {t(
+              `此路經 ${fortWarning.count} 處敵城戍火力 — 預估沿途折兵約 ${fortWarning.dmg.toLocaleString()}`,
+              `Route passes ${fortWarning.count} hostile fort(s) — est. ~${fortWarning.dmg.toLocaleString()} losses en route`,
+            )}
+          </div>
+        )}
         {isHostile && schemeOptions.length > 0 && (
           <div style={{ padding: '0.4rem 0.75rem', borderTop: '1px solid #3a2818', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '0.78rem', color: '#c178c7' }} title={t('速決戰時軍師獻上之計;過智謀門檻且合戰場條件方可施。戰術對戰請改用左鍵「戰術」', 'A scheme your strategist offers for a quick-resolved assault — INT-gated & condition-bound. For a played-out battle use “Tactical”.')}>

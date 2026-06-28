@@ -3733,11 +3733,31 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
         }
       }
       if (!target) continue;
-      unitsAfterStructures = unitsAfterStructures.map((u) =>
-        u.id === target!.id ? { ...u, troops: Math.max(0, u.troops - dmg) } : u,
+      // 投石臺 vs 箭樓 — a catapult lobs a stone that SCATTERS through the press:
+      // it splashes half-damage onto attackers adjacent to the impact, where the
+      // tower's single precise arrow strikes one mark. 亂石穿空,一發而眾傷.
+      const isCatapult = s.buildingId === 'arrow-platform';
+      const splashDmg = Math.round(dmg * 0.5);
+      const splashIds = new Set(
+        isCatapult
+          ? unitsAfterStructures
+              .filter((u) => u.side === 'attacker' && u.troops > 0 && u.id !== target!.id
+                && hexDistance(u.coord, target!.coord) === 1)
+              .map((u) => u.id)
+          : [],
       );
-      additionalAttackerLoss += Math.min(target.troops, dmg);
-      // UI popup at the target's hex.
+      unitsAfterStructures = unitsAfterStructures.map((u) => {
+        if (u.id === target!.id) {
+          additionalAttackerLoss += Math.min(u.troops, dmg);
+          return { ...u, troops: Math.max(0, u.troops - dmg) };
+        }
+        if (splashIds.has(u.id)) {
+          additionalAttackerLoss += Math.min(u.troops, splashDmg);
+          return { ...u, troops: Math.max(0, u.troops - splashDmg) };
+        }
+        return u;
+      });
+      // UI popup at the target's hex (+ splash markers around it).
       const popupId = `struct-${s.slotIndex}-t${b.turn}`;
       structurePopups.push({
         id: popupId,
@@ -3746,13 +3766,24 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
         color: '#d4a84a',
         spawnedAt: Date.now(),
       });
+      if (splashIds.size > 0) {
+        for (const u of unitsAfterStructures) {
+          if (!splashIds.has(u.id)) continue;
+          structurePopups.push({
+            id: `struct-${s.slotIndex}-splash-${u.id}-t${b.turn}`,
+            coord: u.coord, text: `−${splashDmg}`, color: '#c46a3a', spawnedAt: Date.now(),
+          });
+        }
+      }
       const ZH: Record<string, string> = {
         'watchtower': '箭樓', 'arrow-platform': '箭台', 'rockfall': '落石',
         'caltrops': '拒馬', 'iron-chains': '鐵索',
       };
       structureLog.push({
         turn: b.turn,
-        text: `${ZH[s.buildingId] ?? s.buildingId} 射出！${dmg} 兵傷亡。`,
+        text: isCatapult && splashIds.size > 0
+          ? `${ZH[s.buildingId] ?? s.buildingId} 投石！亂石穿空,${dmg + splashDmg * splashIds.size} 兵傷亡。`
+          : `${ZH[s.buildingId] ?? s.buildingId} 射出！${dmg} 兵傷亡。`,
         kind: 'event',
       });
       if (oneShot) s.triggered = true;
