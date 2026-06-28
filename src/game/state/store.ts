@@ -353,6 +353,8 @@ interface GameStore extends GameState {
     /** Suppress the 大軍出征 慶典彈窗 — set by bulk dispatchers (集結/自動) that
      *  fire their own popup or shouldn't pop at all. Manual marches leave it off. */
     quiet?: boolean,
+    /** 軍師獻策 — a battle scheme the player chose for this assault (§5.3). */
+    forcedStratagem?: string,
   ) => { ok: boolean; reason?: string };
   /** 召回行軍 — turn a column still on the road back toward its source city; it
    *  abandons the objective and streams home, shedding stragglers (deeper = more).
@@ -1600,7 +1602,7 @@ export const useGameStore = create<GameStore>()(
         return { assigned, goldSpent };
       },
 
-      issueMarch: (sourceId, targetId, officerId, troops, additionalOfficerIds, pace = 'normal', quiet = false) => {
+      issueMarch: (sourceId, targetId, officerId, troops, additionalOfficerIds, pace = 'normal', quiet = false, forcedStratagem) => {
         const state = get();
         const source = state.cities[sourceId];
         const target = state.cities[targetId];
@@ -1699,6 +1701,7 @@ export const useGameStore = create<GameStore>()(
               seasonsRemaining: dur,
               totalSeasons: dur,
               pace,
+              forcedStratagem,
             } as MarchCommand,
           },
           // Mirror the order into the persistent army layer at the source

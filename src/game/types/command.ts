@@ -80,6 +80,9 @@ export interface MarchCommand extends CommandBase {
   /** 都督之旗 — extra opening morale a legion column carries from its marshal's
    *  renown (§4.3). Applied to the arrival battle. */
   legionBanner?: number;
+  /** 軍師獻策 — a battle scheme the player picked for this assault (§5.3). Honoured
+   *  by handleMarch only if its INT gate & conditions are met. */
+  forcedStratagem?: string;
 }
 
 export type Command = InternalAffairsCommand | MarchCommand;

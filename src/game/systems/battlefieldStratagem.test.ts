@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { applyOpeningScheme } from './tactical';
 import { resolveBattle, type BattleSide } from './combat';
-import { pickAutoStratagem, mirrorDefenderEffect, DEFENSIVE_SCHEMES, STRATAGEM_DEFS } from '../data/stratagems2';
+import { pickAutoStratagem, mirrorDefenderEffect, DEFENSIVE_SCHEMES, STRATAGEM_DEFS, applicableStratagems } from '../data/stratagems2';
 import { mkUnit, mkBattle, mkTiles, seededRng } from '../../test/factories';
 import type { Officer, City } from '../types';
 
@@ -30,6 +30,17 @@ describe('守城之計 — defender scheme pool + mirrored effect', () => {
     expect(first).not.toBeNull();
     const second = pickAutoStratagem(ctx(95, 60), { exclude: new Set([first!]) });
     expect(second).not.toBe(first);
+  });
+  it('軍師獻策 — lists deployable schemes (gated + applicable) with odds, best-first', () => {
+    const opts = applicableStratagems(ctx(95, 60), 4);
+    expect(opts.length).toBeGreaterThan(0);
+    expect(opts.length).toBeLessThanOrEqual(4);
+    for (const o of opts) {
+      expect(STRATAGEM_DEFS[o.id].minIntelligence).toBeLessThanOrEqual(95); // within the commander's wits
+      expect(o.odds).toBeGreaterThan(0); expect(o.odds).toBeLessThanOrEqual(0.95);
+    }
+    // a dullard (INT 55) has few or no schemes to offer
+    expect(applicableStratagems(ctx(55, 60)).length).toBeLessThanOrEqual(opts.length);
   });
   it('mirrors a defender scheme to attacker-centric fields', () => {
     const m = mirrorDefenderEffect({ attackerPowerMul: 1.2, defenderPowerMul: 0.8, ownLossMul: 0.7, enemyLossMul: 1.3, surpriseRoll: 0.1 });
