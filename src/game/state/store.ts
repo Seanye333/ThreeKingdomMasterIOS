@@ -231,7 +231,7 @@ import { evaluateCoalition } from '../systems/coalition';
 import { rollDialogue } from '../systems/dialogueRoll';
 import { DIALOGUE_EVENTS_BY_ID } from '../data/dialogues';
 import { applyAutoBuild } from '../systems/autoBuild';
-import { planAIBuildOrders, planAIFacilities, planAIFortAssaults, planAISiteSeizures, planAIFrontierExploits } from '../systems/aiBuild';
+import { planAIBuildOrders, planAIFacilities, planAIPerimeterDefense, planAIFortAssaults, planAISiteSeizures, planAIFrontierExploits } from '../systems/aiBuild';
 import { SCENARIO_OBJECTIVES } from '../data/objectives';
 import { SCENARIOS } from '../data';
 import { PROVINCES_BY_ID } from '../data/provinces';
@@ -4747,6 +4747,20 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           postCities = aiFac.cities;
           Object.assign(nextForts, aiFac.newForts);
           if (aiFac.entries.length > 0) result.report.entries.push(...aiFac.entries);
+
+          // 城防自固 — AI forces also raise PERIMETER works (拒馬/箭樓) on their
+          // frontier cities' walls, so they no longer storm far softer than the
+          // player's fortified holds.
+          const aiPerim = planAIPerimeterDefense({
+            cities: postCities,
+            forces: postForces,
+            forts: nextForts,
+            diplomacy: planned.diplomacy,
+            playerForceId: state.playerForceId,
+            rng: Math.random,
+          });
+          postCities = aiPerim.cities;
+          if (aiPerim.entries.length > 0) result.report.entries.push(...aiPerim.entries);
 
           // AI 拔點 — hostile forces storm the player's nearby forts/facilities
           // (HP damage, razed at 0; the assaulting garrison bleeds for it).
