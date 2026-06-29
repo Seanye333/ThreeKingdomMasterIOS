@@ -47,6 +47,10 @@
  *   province-governor ✅      州牧晉升
  *   evaluation-results ✅     考課殿最榜
  *   advisor-scheme ✅        軍師獻策(executeScheme 謀略獻策得售)
+ *   — 第六章 單挑 —
+ *   duel-slay-champion ✅     陣斬名將(slayOfficerInDuel 玩家方斬殺敵將)
+ *   duel-rival-callout ⏳     宿敵搦戰(宿敵重逢陣前搦戰)
+ *   duel-hall-legend ⏳       名局廊(精彩單挑入武鬥館)
  */
 export const KNOWN_POPUP_KEYS = [
   // 第一章 — 城市/內政/經濟
@@ -83,6 +87,10 @@ export const KNOWN_POPUP_KEYS = [
   'province-governor',
   'evaluation-results',
   'advisor-scheme',
+  // 第六章 — 單挑
+  'duel-slay-champion',
+  'duel-rival-callout',
+  'duel-hall-legend',
 ] as const;
 
 /** Candidate image URLs for a key, tried in order (jpg first — best for the

@@ -151,3 +151,22 @@ A Han-dynasty court assembly for the annual performance review: a great merit-ra
 ```
 A military strategist presenting a bold plan in a Han-dynasty war tent at night, leaning over a lamplit map of cities and rivers, generals listening intently around the table, candle and brazier glow, scrolls and a feather fan, the spark of a winning stratagem.
 ```
+
+---
+
+## 第六章 · 單挑
+
+### `duel-slay-champion` ✅
+```
+A mounted Han-dynasty tiger-general cleaving down an enemy champion in single combat, the foe toppling from his horse, the victor reining in with bloodied blade held level, blood-red setting sun, swirling battlefield dust, the two armies frozen watching, somber and awe-striking triumph.
+```
+
+### `duel-rival-callout` ⏳
+```
+Between two facing armies, a lone champion rides out before the ranks and points his weapon to name his sworn rival on the opposing line, the two old adversaries locking eyes across the gap, banners snapping, killing intent and old grudge, tense standoff at dusk.
+```
+
+### `duel-hall-legend` ⏳
+```
+The candle-lit gallery of a Hall of Famous Bouts, scroll paintings freezing the finest single-combat duels in heroic poses, later visitors pausing in awe beneath them, elegant golden lamplight, dark lacquered beams, the enshrining of a timeless legendary bout.
+```

@@ -51,6 +51,13 @@ Drop generated art here. Each file's name is a **popup key**:
 | `evaluation-results` ✅ | 考課殿最公佈 | 朝會揭殿最榜、上考者受袍、下考者低首、主公臨朝判決 |
 | `advisor-scheme` ✅ | 謀略獻策得售 | 夜帳燈下軍師俯案指圖、諸將傾聽、燭爐光、羽扇卷宗、奇策 |
 
+### 第六章 · 單挑
+| Key | 觸發 | 建議畫面 |
+|---|---|---|
+| `duel-slay-champion` ✅ | 玩家方陣前斬殺敵將(生死之鬥) | 馬上虎將一刀劈落敵將、敵將墜馬、血色殘陽、勝者勒馬橫刀、塵土飛揚、悲壯震撼 |
+| `duel-rival-callout` ⏳ | 宿敵重逢陣前搦戰 | 兩軍對陣間,宿敵單騎出列指名搦戰、與對面老對手隔陣相望、殺氣與恩怨、肅殺對峙 |
+| `duel-hall-legend` ⏳ | 精彩單挑入武鬥館(名局廊) | 武鬥館內燭照畫廊、卷軸定格名局單挑英姿、後人駐足仰觀、典雅金光、傳世名局 |
+
 Formats:
 - Image: `<key>.jpg` (preferred) or `<key>.png` (fallback). Absent → styled card.
 - Video: `<key>.mp4` (only used when the event asks for video)
