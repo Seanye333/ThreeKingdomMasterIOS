@@ -6,6 +6,8 @@ import { playSfx } from '../../../game/systems/sound';
 import { useGameStore } from '../../../game/state/store';
 import { isNotableBout, type BoutRecord } from '../../../game/systems/duelHall';
 import { duelCommentary } from '../../../game/systems/combatCommentary';
+import { rivalryBetween, isNemesis, headToHead } from '../../../game/systems/rivalries';
+import { ratingOf, duelCareerBonus } from '../../../game/systems/warRanking';
 import { DuelArena3D, type DuelArenaEvent } from './DuelArena3D';
 
 const SEASON_IDX = ['spring', 'summer', 'autumn', 'winter'];
@@ -35,6 +37,20 @@ export function Duel3DStage(props: ComponentProps<typeof DuelGameModal>) {
   const [announce, setAnnounce] = useState<{ key: number; text: string } | null>(null);
   const archived = useRef(false);
 
+  // 宿敵 — the head-to-head record going INTO this bout (snapshot once, before it
+  // is folded in below), so the banner reads "宿敵 · 戰績 2-1" as they square off.
+  const rivalryRef = useRef(rivalryBetween(useGameStore.getState().rivalries ?? {}, attacker.id, defender.id));
+  const swornRef = useRef(isNemesis(useGameStore.getState().rivalries ?? {}, attacker.id, defender.id));
+  // 鬥將生涯 — the duel prowess each fighter has EARNED (武評榜段位 + 百戰勝績),
+  // folded into the bout so a recognised duellist fights above their stat line.
+  const careerRef = useRef((() => {
+    const st = useGameStore.getState();
+    const meRat = ratingOf(st.warRatings ?? {}, attacker), foeRat = ratingOf(st.warRatings ?? {}, defender);
+    const me = duelCareerBonus(meRat, st.deeds?.[attacker.id]?.duelsWon ?? 0);
+    const foe = duelCareerBonus(foeRat, st.deeds?.[defender.id]?.duelsWon ?? 0);
+    return { me, foe };
+  })());
+
   const emit = (fx: DuelRoundFx) => { keyRef.current += 1; setEvent({ ...fx, key: keyRef.current }); };
 
   const handleRound = (fx: DuelRoundFx) => {
@@ -49,7 +65,7 @@ export function Duel3DStage(props: ComponentProps<typeof DuelGameModal>) {
       // can be replayed from the hall later.
       if (!archived.current) {
         archived.current = true;
-        const { date, recordBout, recordDuelRating } = useGameStore.getState();
+        const { date, recordBout, recordDuelRating, recordRivalry } = useGameStore.getState();
         const rec: BoutRecord = {
           id: `duel-${attacker.id}-${defender.id}-${Date.now()}-${boutSeq++}`,
           kind: 'duel', aId: attacker.id, dId: defender.id,
@@ -60,6 +76,8 @@ export function Duel3DStage(props: ComponentProps<typeof DuelGameModal>) {
         if (isNotableBout(rec)) recordBout(rec);
         // 武評榜 — fold the result into the ELO ladder (from the attacker's view).
         recordDuelRating(attacker.id, defender.id, fx.winner === 'attacker' ? 'win' : fx.winner === 'defender' ? 'loss' : 'draw');
+        // 恩怨簿 — accrue the head-to-head record (and close it if it ended in blood).
+        recordRivalry(attacker.id, defender.id, fx.winner ?? 'draw', !!fx.killed);
       }
     }
     onRound?.(fx); // preserve any host-supplied behaviour
@@ -106,7 +124,35 @@ export function Duel3DStage(props: ComponentProps<typeof DuelGameModal>) {
         event={event}
         terrain={props.terrain}
       />
-      <DuelGameModal {...props} staged onRound={handleRound} />
+      {/* 知己知彼 — a sworn rival has fought you enough to read you a tier sharper. */}
+      <DuelGameModal
+        {...props}
+        staged
+        onRound={handleRound}
+        difficulty={swornRef.current
+          ? (props.difficulty === 'rookie' ? 'veteran' : 'peerless')
+          : props.difficulty}
+        meCareer={careerRef.current.me.prowess}
+        foeCareer={careerRef.current.foe.prowess}
+      />
+
+      {/* 宿敵 — the head-to-head going into the bout (kills the loop between the
+          恩怨簿 and the arena: rivals who keep meeting see their tally). */}
+      {rivalryRef.current && (
+        <div style={{ position: 'fixed', left: '50%', top: 28, transform: 'translateX(-50%)', zIndex: 131, pointerEvents: 'none', background: swornRef.current ? 'rgba(120,30,30,0.9)' : 'rgba(20,28,38,0.86)', border: `1px solid ${swornRef.current ? '#e07a5a' : '#5a4a2a'}`, borderRadius: 5, padding: '0.18rem 0.8rem', color: swornRef.current ? '#ffd0c0' : '#e6c473', fontFamily: 'var(--tkm-font-body)', fontSize: '0.78rem', letterSpacing: '0.05rem', textShadow: '0 1px 3px #000', whiteSpace: 'nowrap' }}>
+          {(() => { const h = headToHead(rivalryRef.current!, attacker.id); return (
+            <>{swornRef.current ? '⚔ ' + t('宿敵', 'Sworn Rivals') : t('舊識', 'Old foes')} · {leftName} {h.mine}–{h.theirs} {rightName}{h.draws ? t(` ・平${h.draws}`, ` · ${h.draws}d`) : ''}</>
+          ); })()}
+        </div>
+      )}
+
+      {/* 鬥將生涯 — show a fighter's 段位 + earned edge when it's worth noting. */}
+      {(careerRef.current.me.prowess > 0 || careerRef.current.foe.prowess > 0) && (
+        <div style={{ position: 'fixed', left: '50%', top: rivalryRef.current ? 50 : 28, transform: 'translateX(-50%)', zIndex: 130, pointerEvents: 'none', display: 'flex', gap: 10, fontFamily: 'var(--tkm-font-body)', fontSize: '0.66rem', color: '#c9b87a', textShadow: '0 1px 3px #000', whiteSpace: 'nowrap' }}>
+          {careerRef.current.me.prowess > 0 && <span>🏅 {leftName} {lang === 'en' ? careerRef.current.me.tierEn : careerRef.current.me.tierZh} +{careerRef.current.me.prowess}</span>}
+          {careerRef.current.foe.prowess > 0 && <span>{rightName} {lang === 'en' ? careerRef.current.foe.tierEn : careerRef.current.foe.tierZh} +{careerRef.current.foe.prowess} 🏅</span>}
+        </div>
+      )}
 
       {/* 實況解說 — a ringside announcer line, refreshed each notable exchange. */}
       {announce && (

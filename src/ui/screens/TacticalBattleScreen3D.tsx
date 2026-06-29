@@ -19,9 +19,10 @@ import { applyBattlePrep,
   moveUnit, resolveBattleEnd, unitAt, forecastAttack, matchupLabel, battleStratagemSituation, eliteUnitOf,
   findPath, moveUnitAlong, reachableHexes, isRouting, changeFormation, canChangeFormation,
   pickAiBattlePrep, pickAiFormation, formationCounterMul,
+  pickDuelChampion, canIssuePreBattleDuel, applyPreBattleDuel, aiMaybePreBattleDuel,
 } from '../../game/systems/tactical';
 import { FORMATIONS } from '../../game/data/formations';
-import { canDuel, pickDuelTerrain } from '../../game/systems/duel';
+import { canDuel, pickDuelTerrain, rollDuelScar } from '../../game/systems/duel';
 import { duelWound } from '../../game/systems/afflictions';
 import { personalTacticsForUnit } from '../../game/systems/personalTactics';
 import { FORMATIONS_BY_ID, STRATAGEMS } from '../../game/data';
@@ -3890,6 +3891,7 @@ export function TacticalBattleScreen3D() {
   useEffect(() => () => { recorderRef.current?.stop(); }, []);
   const applyResolution = useGameStore((s) => s.applyTacticalResolution);
   const afflictOfficer = useGameStore((s) => s.afflictOfficer);
+  const inflictDuelScar = useGameStore((s) => s.inflictDuelScar);
   const recordDeed = useGameStore((s) => s.recordDeed);
   const cancelBattle = useGameStore((s) => s.cancelTacticalBattle);
   const endDrill = useGameStore((s) => s.endPracticeDrill);
@@ -3995,7 +3997,7 @@ export function TacticalBattleScreen3D() {
     const id = setTimeout(() => setShowOpening(false), 2800);
     return () => clearTimeout(id);
   }, []);
-  const [interactiveDuel, setInteractiveDuel] = useState<{ me: Officer; foe: Officer; meFatigue: number; foeFatigue: number; reinforcements: Officer[]; terrain?: import('../../game/systems/duel').DuelTerrain } | null>(null);
+  const [interactiveDuel, setInteractiveDuel] = useState<{ me: Officer; foe: Officer; meFatigue: number; foeFatigue: number; reinforcements: Officer[]; terrain?: import('../../game/systems/duel').DuelTerrain; preBattle?: boolean } | null>(null);
   // 敵將叫陣 — an aggressive enemy adjacent to one of your officers may challenge
   // you at the top of your turn; accept to duel, or refuse.
   const [challenge, setChallenge] = useState<{ me: Officer; foe: Officer; meFatigue: number; foeFatigue: number; reinforcements: Officer[] } | null>(null);
@@ -4101,6 +4103,17 @@ export function TacticalBattleScreen3D() {
             if (r.ok) { working = r.battle; break; }
           }
           if (working !== battle) { start(working); return; }
+        }
+        // 敵將致師 — on turn 1 the enemy may open with its own champion's challenge
+        // (auto-resolved; it sets the tone before either host advances).
+        if (battle.turn === 1 && battle.activeSide !== playerSide && !battle.preDuelUsed?.[battle.activeSide]) {
+          const pd = aiMaybePreBattleDuel(battle, battle.activeSide, officers, Math.random);
+          if (pd.issued) {
+            if (pd.line) { setSignatureBanner({ ...pd.line, key: Date.now() }); setTimeout(() => setSignatureBanner(null), 2200); }
+            setCine({ key: ++cineCount.current, weight: 3, color: '#ffd54a' });
+            start(pd.battle);
+            return;
+          }
         }
         const result = aiTakeTurn(battle, officers, Math.random, {
           skill: aiSkillForDifficulty(battleDiff, aiStrength),
@@ -4596,6 +4609,25 @@ export function TacticalBattleScreen3D() {
                 }}
               >{p.zh}</button>
             ))}
+            {/* 致師 — call out the enemy's champion before a blow is struck; a
+                win sets the tone of the whole battle (士氣大振). Spends the slot. */}
+            {canIssuePreBattleDuel(battle, playerSide, officers) && (
+              <button
+                title={t('致師搦戰 — 遣本陣最強之將陣前單挑敵將。勝則三軍士氣大振(+18),敗則奪氣(−22)。佔本回合部署。',
+                  'Pre-battle challenge — send your champion to duel the enemy\'s. A win lifts your whole host (+18 morale), a loss cows it (−22). Spends your turn-1 prep.')}
+                onClick={() => {
+                  const myChamp = pickDuelChampion(battle, playerSide, officers);
+                  const foeSide = playerSide === 'attacker' ? 'defender' : 'attacker';
+                  const foeChamp = pickDuelChampion(battle, foeSide, officers);
+                  if (!myChamp || !foeChamp) { setPrepMsg(t('無人可出陣', 'no champion to send')); return; }
+                  const me = officers[myChamp.officerId];
+                  const foe = officers[foeChamp.officerId];
+                  if (!me || !foe) return;
+                  setInteractiveDuel({ me, foe, meFatigue: myChamp.duelFatigue ?? 0, foeFatigue: foeChamp.duelFatigue ?? 0, reinforcements: [], terrain: pickDuelTerrain(), preBattle: true });
+                }}
+                style={{ background: 'rgba(70, 30, 24, 0.85)', border: '1px solid #e0846a', color: '#ffb098', fontSize: '0.7rem', padding: '2px 7px', cursor: 'pointer', fontFamily: 'inherit' }}
+              >{t('🐎 致師', '🐎 Challenge')}</button>
+            )}
             <button
               onClick={() => setPrepDismissed(true)}
               style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#8a7050', fontSize: '0.7rem', padding: '2px 6px', cursor: 'pointer', fontFamily: 'inherit' }}
@@ -5147,11 +5179,16 @@ export function TacticalBattleScreen3D() {
             };
             // 一騎討 — a decisive duel sways both armies: the victor's side is
             // emboldened (+10), the bested side shaken (−15), with a banner + kick.
+            // 致師 — a pre-battle challenge sets the tone, so it swings harder
+            // (+18 / −22) and spends the side's turn-1 special (applyPreBattleDuel).
+            const meSide = battle.units.find((u) => u.officerId === me.id)?.side;
+            const preBattle = !!interactiveDuel.preBattle;
             if (outcome.winner !== 'draw') {
-              const meSide = battle.units.find((u) => u.officerId === me.id)?.side;
               const winSide = outcome.winner === 'attacker' ? meSide : (meSide === 'attacker' ? 'defender' : 'attacker');
               const loseSide = winSide === 'attacker' ? 'defender' : 'attacker';
-              if (winSide) {
+              if (winSide && preBattle && meSide) {
+                next = applyPreBattleDuel(next, meSide, winSide);
+              } else if (winSide) {
                 next = {
                   ...next,
                   units: next.units.map((u) => u.side === winSide ? { ...u, morale: Math.min(100, u.morale + 10) }
@@ -5166,12 +5203,16 @@ export function TacticalBattleScreen3D() {
                 next = { ...next, units: next.units.map((u) => u.officerId === loserId ? { ...u, troops: Math.round(u.troops * 0.82) } : u) };
               }
               const wn = outcome.winner === 'attacker' ? me : foe;
-              setSignatureBanner({ zh: `一騎討 — ${wn.name.zh} 力克強敵!`, en: `${wn.name.en} wins the duel!`, key: Date.now() });
+              setSignatureBanner(preBattle
+                ? { zh: `致師奏功 — ${wn.name.zh} 陣前折服敵將!`, en: `${wn.name.en} wins the pre-battle challenge!`, key: Date.now() }
+                : { zh: `一騎討 — ${wn.name.zh} 力克強敵!`, en: `${wn.name.en} wins the duel!`, key: Date.now() });
               setCine({ key: ++cineCount.current, weight: 3, color: '#ffd54a' });
               setTimeout(() => setSignatureBanner(null), 2200);
             } else {
               // 兩敗俱傷 — a draw mauls both: each loses ~10% of its troops.
               next = { ...next, units: next.units.map((u) => (u.officerId === me.id || u.officerId === foe.id) ? { ...u, troops: Math.round(u.troops * 0.9) } : u) };
+              // A drawn 致師 still spends the slot and leaves both hosts tense.
+              if (preBattle && meSide) next = applyPreBattleDuel(next, meSide, 'draw');
             }
             // 車輪戰 — both surviving fighters are more winded for any next bout.
             next = { ...next, units: next.units.map((u) => (u.officerId === me.id || u.officerId === foe.id) ? { ...u, duelFatigue: (u.duelFatigue ?? 0) + 24 } : u) };
@@ -5183,7 +5224,13 @@ export function TacticalBattleScreen3D() {
               if (foe.id !== killedId) afflictOfficer(foe.id, duelWound(false));
             } else {
               const woundedId = outcome.winner === 'attacker' ? foe.id : me.id;
-              if (woundedId !== killedId) afflictOfficer(woundedId, duelWound(true));
+              if (woundedId !== killedId) {
+                afflictOfficer(woundedId, duelWound(true));
+                // 傷殘 — a brutal field duel may cripple the bested-but-living fighter
+                // for good (斷臂/目眇/跛足) — a permanent narrowing of their craft.
+                const scar = rollDuelScar();
+                if (scar) inflictDuelScar(woundedId, scar);
+              }
               // 名聲榜 — the victor banks a 單挑 win toward their renown.
               recordDeed(outcome.winner === 'attacker' ? me.id : foe.id, { duelsWon: 1 });
             }

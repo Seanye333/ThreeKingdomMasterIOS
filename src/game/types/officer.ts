@@ -53,6 +53,10 @@ export interface Officer {
    *  that sap effective stats for a few seasons. Optional; ticks down each
    *  season. See systems/afflictions.ts. */
   afflictions?: import('../systems/afflictions').Affliction[];
+  /** 傷殘 — PERMANENT maims from a brutal single combat (斷臂 / 目眇 / 跛足).
+   *  Unlike 養傷 these never heal: they narrow the officer's duel move-pool and
+   *  sap their prowess for good. See systems/duel.ts (duelScars). */
+  duelScars?: import('../systems/duel').DuelScar[];
   task: CommandType | null;
   equipment: Equipment;
   /** Innate skill IDs (referencing SKILLS_BY_ID). 0–4 per officer. */

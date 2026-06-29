@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
-import { canDuel, type DuelDifficulty } from '../../game/systems/duel';
+import { canDuel, staticProwess, rollDuelScar, type DuelDifficulty } from '../../game/systems/duel';
 import { initDuelSeries, advanceDuelSeries, seriesOver, seriesWinner, type DuelSeriesState } from '../../game/systems/duelSeries';
 import { wagerMultiplier, wagerProfit } from '../../game/systems/wager';
 import { findRivalryChallenge } from '../../game/systems/rivalries';
+import { duelChallengeTargets, willAcceptChallenge, challengeResultLine, findIncomingChallenge, duelRecruitChance } from '../../game/systems/duelChallenge';
 import { DUEL_SCENARIOS, DUEL_CAMPAIGNS, campaignSteps, duelScenarioOutcome, duelScenarioResultLine, type DuelScenario } from '../../game/systems/duelScenarios';
 import { renownFromDeeds, fameTier, rollChallenger } from '../../game/systems/fame';
 import { trainKey, trainsLeft, TRAIN_PER_SEASON } from '../../game/systems/sparLimit';
@@ -24,6 +25,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
   const t = useT();
   const lang = useLanguage();
   const officers = useGameStore((s) => s.officers);
+  const forces = useGameStore((s) => s.forces);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const year = useGameStore((s) => s.date.year);
   const grantSparXp = useGameStore((s) => s.grantSparXp);
@@ -36,21 +38,38 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
   const clearedScenarios = useGameStore((s) => s.clearedDuelScenarios);
   const markDuelScenarioCleared = useGameStore((s) => s.markDuelScenarioCleared);
   const rapport = useGameStore((s) => s.rapport);
+  const rivalries = useGameStore((s) => s.rivalries);
 
   // 宿敵 — a rival of one of your generals, present & hostile, rides out to fight.
+  // A grudge forged in play (恩怨簿) qualifies just as a famous pairing does.
   const rivalry = useMemo(() => {
-    const ch = findRivalryChallenge(officers, playerForceId, rapport);
+    const ch = findRivalryChallenge(officers, playerForceId, rapport, () => 0, rivalries);
     if (!ch) return null;
     const champ = officers[ch.championId];
     const rival = officers[ch.rivalId];
     return champ && rival ? { ...ch, champ, rival } : null;
-  }, [officers, playerForceId, rapport]);
+  }, [officers, playerForceId, rapport, rivalries]);
   const [rivalDuel, setRivalDuel] = useState(false);
+  // 敵將約戰 — an enemy champion (a sworn 宿敵, or an aggressive confident foe)
+  // calls out one of your generals. Answer it (a real, lethal bout) or duck it.
+  const incoming = useMemo(() => {
+    const ch = findIncomingChallenge(officers, playerForceId, rivalries);
+    if (!ch) return null;
+    const champ = officers[ch.championId];
+    const foe = officers[ch.foeId];
+    return champ && foe ? { ...ch, champ, foe } : null;
+  }, [officers, playerForceId, rivalries]);
+  const [incomingDuel, setIncomingDuel] = useState(false);
   // 國庫 — the capital's coffers, the ceiling on any wager.
   const playerGold = useGameStore((s) => {
     const f = s.forces[s.playerForceId ?? ''];
     return f ? (s.cities[f.capitalCityId]?.gold ?? 0) : 0;
   });
+  const playerCapitalId = useGameStore((s) => s.forces[s.playerForceId ?? '']?.capitalCityId);
+  const spendCityGold = useGameStore((s) => s.spendCityGold);
+  // 約戰 — dispatching a herald with a challenge costs gold, and the champion
+  // who rides out to settle it spends their seasonal spar slot (約戰耗一檔演武)。
+  const CALLOUT_COST = 200;
 
   const roster = useMemo(
     () => Object.values(officers)
@@ -59,7 +78,16 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
     [officers, playerForceId],
   );
 
-  const [mode, setMode] = useState<'spar' | 'story' | 'team'>('spar');
+  const [mode, setMode] = useState<'spar' | 'story' | 'team' | 'callout'>('spar');
+  // 約戰 — call out an enemy champion to a formal duel (strategic-layer).
+  const applyDuelChallengeStakes = useGameStore((s) => s.applyDuelChallengeStakes);
+  const slayOfficerInDuel = useGameStore((s) => s.slayOfficerInDuel);
+  const inflictDuelScar = useGameStore((s) => s.inflictDuelScar);
+  const recruitViaDuel = useGameStore((s) => s.recruitViaDuel);
+  const adjustForceFavor = useGameStore((s) => s.adjustForceFavor);
+  const calloutTargets = useMemo(() => duelChallengeTargets(officers, playerForceId, { limit: 12 }), [officers, playerForceId]);
+  const [calloutFoeId, setCalloutFoeId] = useState<string | null>(null);
+  const [calloutDuel, setCalloutDuel] = useState(false);
   // 車輪團戰 — two squads, king-of-the-hill: the winner stays (wounds carry), the
   // loser sends in their next fighter. The side that runs out of fighters loses.
   const [teamSel, setTeamSel] = useState<string[]>([]);
@@ -119,7 +147,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
   const pick = (id: string) => {
     setResult(null);
     if (mode === 'team') { setTeamSel((s) => s.includes(id) ? s.filter((x) => x !== id) : s.length < 5 ? [...s, id] : s); return; }
-    if (mode === 'story') { setAId(aId === id ? null : id); return; } // story picks one champion
+    if (mode === 'story' || mode === 'callout') { setAId(aId === id ? null : id); return; } // these pick one champion
     if (aId === id) { setAId(null); return; }
     if (bId === id) { setBId(null); return; }
     if (!aId) setAId(id);
@@ -214,6 +242,92 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
     );
   }
 
+  // 約戰 — your champion has called out an enemy who accepted; a real, lethal bout
+  // with 威名 (and the foe's loyalty) on the line.
+  if (calloutDuel && a && calloutFoeId && officers[calloutFoeId]) {
+    const foe = officers[calloutFoeId];
+    return (
+      <Duel3DStage
+        attacker={a}
+        defender={foe}
+        lethal
+        difficulty="veteran"
+        onComplete={(outcome) => {
+          setCalloutDuel(false);
+          const oc = outcome.winner === 'attacker' ? 'win' : outcome.winner === 'defender' ? 'loss' : 'draw';
+          applyDuelChallengeStakes(a.id, foe.id, oc); // 威名/忠誠 stakes (ELO+恩怨 auto-recorded by the stage)
+          if (oc === 'win') recordDeed(a.id, { duelsWon: 1 });
+          // 生死之鬥 — a knockout in a 約戰 cuts the loser down for real (seeds 復仇).
+          const slewFoe = outcome.killedId === 'defender';
+          const slewMe = outcome.killedId === 'attacker';
+          if (slewFoe) slayOfficerInDuel(a.id, foe.id);
+          else if (slewMe) slayOfficerInDuel(foe.id, a.id);
+          // 傷殘 — the bested-but-living loser of this 生死之鬥 may be maimed for good.
+          if (oc === 'win' && !slewFoe) { const s = rollDuelScar(); if (s) inflictDuelScar(foe.id, s); }
+          else if (oc === 'loss' && !slewMe) { const s = rollDuelScar(); if (s) inflictDuelScar(a.id, s); }
+          // 折服來投 — a foe bested-and-spared may be so moved he comes over to you.
+          const foeForce = foe.forceId; // captured before any recruit/slay below
+          const wonOver = oc === 'win' && !slewFoe && Math.random() < duelRecruitChance(foe, a) && recruitViaDuel(foe.id);
+          // 約戰牽動外交 — folding their champion before the realm breeds a grudge
+          // (a kill, deeper); an honourable draw breeds mutual respect.
+          if (foeForce && a.forceId && foeForce !== a.forceId && !wonOver) {
+            adjustForceFavor(a.forceId, foeForce, slewFoe ? -14 : oc === 'win' ? -8 : oc === 'draw' ? 4 : 0);
+          }
+          const line = challengeResultLine(oc, pickName(a.name, lang), pickName(foe.name, lang));
+          setResult({ text: slewFoe ? t(`${pickName(a.name, lang)} 約戰陣斬 ${pickName(foe.name, lang)}!`, `${pickName(a.name, lang)} cuts down ${pickName(foe.name, lang)} in the called duel!`)
+              : slewMe ? t(`${pickName(a.name, lang)} 約戰殞於 ${pickName(foe.name, lang)} 之手!`, `${pickName(a.name, lang)} falls to ${pickName(foe.name, lang)} in the called duel!`)
+              : wonOver ? t(`${pickName(foe.name, lang)} 感佩 ${pickName(a.name, lang)} 之勇,棄暗投明來投!`, `${pickName(foe.name, lang)}, moved by ${pickName(a.name, lang)}'s valour, comes over to your side!`)
+              : t(line.zh, line.en),
+            notes: slewFoe ? [t('陣斬敵將,威震天下 — 其親族銜恨。', 'A famous kill — and the slain foe\'s kin swear vengeance.')]
+              : wonOver ? [t('英雄惜英雄 — 一場單挑,勝過千言招攬。', 'A hero honours a hero — one duel wins what a thousand words could not.')]
+              : oc === 'win' ? [t('折服敵將,威名遠播 — 其忠誠動搖。', 'A humbling defeat for the foe — their loyalty wavers.')]
+              : [] });
+        }}
+      />
+    );
+  }
+
+  // 敵將約戰 — an enemy called you out and you chose to answer; a lethal bout.
+  if (incomingDuel && incoming) {
+    return (
+      <Duel3DStage
+        attacker={incoming.champ}
+        defender={incoming.foe}
+        lethal
+        difficulty={incoming.sworn ? 'peerless' : 'veteran'}
+        onComplete={(outcome) => {
+          setIncomingDuel(false);
+          const oc = outcome.winner === 'attacker' ? 'win' : outcome.winner === 'defender' ? 'loss' : 'draw';
+          applyDuelChallengeStakes(incoming.champ.id, incoming.foe.id, oc);
+          if (oc === 'win') recordDeed(incoming.champ.id, { duelsWon: 1 });
+          const slewFoe = outcome.killedId === 'defender';
+          const slewMe = outcome.killedId === 'attacker';
+          if (slewFoe) slayOfficerInDuel(incoming.champ.id, incoming.foe.id);
+          else if (slewMe) slayOfficerInDuel(incoming.foe.id, incoming.champ.id);
+          if (oc === 'win' && !slewFoe) { const s = rollDuelScar(); if (s) inflictDuelScar(incoming.foe.id, s); }
+          else if (oc === 'loss' && !slewMe) { const s = rollDuelScar(); if (s) inflictDuelScar(incoming.champ.id, s); }
+          // 折服來投 — the humbled challenger may be won over to your side.
+          const foeForce = incoming.foe.forceId;
+          const wonOver = oc === 'win' && !slewFoe && Math.random() < duelRecruitChance(incoming.foe, incoming.champ) && recruitViaDuel(incoming.foe.id);
+          // 約戰牽動外交 — beating their champion who came to taunt you sours relations.
+          if (foeForce && incoming.champ.forceId && foeForce !== incoming.champ.forceId && !wonOver) {
+            adjustForceFavor(incoming.champ.forceId, foeForce, slewFoe ? -14 : oc === 'win' ? -8 : oc === 'draw' ? 4 : 0);
+          }
+          setResult({
+            text: slewFoe ? t(`${pickName(incoming.champ.name, lang)} 接戰陣斬 ${pickName(incoming.foe.name, lang)}!`, `${pickName(incoming.champ.name, lang)} answers the call and cuts down ${pickName(incoming.foe.name, lang)}!`)
+              : slewMe ? t(`${pickName(incoming.champ.name, lang)} 接戰殞於 ${pickName(incoming.foe.name, lang)} 之手!`, `${pickName(incoming.champ.name, lang)} falls to ${pickName(incoming.foe.name, lang)}!`)
+              : wonOver ? t(`${pickName(incoming.foe.name, lang)} 感佩 ${pickName(incoming.champ.name, lang)} 之勇,棄暗投明來投!`, `${pickName(incoming.foe.name, lang)}, moved by ${pickName(incoming.champ.name, lang)}'s valour, comes over to your side!`)
+              : oc === 'win' ? t(`${pickName(incoming.champ.name, lang)} 力克來犯之 ${pickName(incoming.foe.name, lang)}!`, `${pickName(incoming.champ.name, lang)} bests the challenger ${pickName(incoming.foe.name, lang)}!`)
+              : oc === 'draw' ? t(`與 ${pickName(incoming.foe.name, lang)} 接戰平手,英雄相惜。`, `A draw with ${pickName(incoming.foe.name, lang)} — worthy foes.`)
+              : t(`不敵來犯之 ${pickName(incoming.foe.name, lang)},失了威風。`, `Bested by ${pickName(incoming.foe.name, lang)} — a humbling day.`),
+            notes: slewFoe ? [t('力斬挑釁之敵將,威震天下。', 'A famous kill — your name rings through the realm.')]
+              : wonOver ? [t('英雄惜英雄 — 一場單挑,勝過千言招攬。', 'A hero honours a hero — one duel wins what a thousand words could not.')] : [],
+          });
+        }}
+      />
+    );
+  }
+
   // 踢館 — the renowned champion faces the visiting challenger; a real bout with a
   // gold bounty on the line.
   if (duelChallenge && challenge) {
@@ -278,6 +392,10 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
             const effects = duelScenarioOutcome(sc, { won, slain });
             applyScenarioEffects(effects);
             if (won) { recordDeed(story.championId, { duelsWon: 1 }); markDuelScenarioCleared(sc.id); }
+            // 陣斬 — slaying the famous foe removes them for real (and seeds 復仇);
+            // losing your own champion to the bout is just as final.
+            if (slain) slayOfficerInDuel(story.championId, sc.opponentId);
+            else if (outcome.killedId === 'attacker') slayOfficerInDuel(sc.opponentId, story.championId);
             const head = duelScenarioResultLine(sc, { won, slain });
             setResult({
               text: lang === 'en' ? head.en : head.zh,
@@ -363,7 +481,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
     <Modal onClose={onClose} title={t('演武場', 'Sparring Ground')} icon="⚔" width="min(560px, 100%)" scrollBody>
       {/* 切磋 (sparring) vs 劇情 (scripted famous duels with stakes). */}
       <div style={{ display: 'flex', gap: 6, marginBottom: '0.8rem' }}>
-        {(['spar', 'story', 'team'] as const).map((m) => (
+        {(['spar', 'story', 'team', 'callout'] as const).map((m) => (
           <button
             key={m}
             onClick={() => { setMode(m); setResult(null); }}
@@ -372,7 +490,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
               background: mode === m ? 'rgba(230,196,115,0.18)' : '#10161e',
               border: `1px solid ${mode === m ? '#e6c473' : '#26323e'}`, color: mode === m ? '#f2dd9a' : '#8a96a0',
             }}
-          >{m === 'spar' ? t('切磋', 'Spar') : m === 'story' ? t('劇情', 'Scenarios') : t('車輪戰', 'Gauntlet')}</button>
+          >{m === 'spar' ? t('切磋', 'Spar') : m === 'story' ? t('劇情', 'Scenarios') : m === 'team' ? t('車輪戰', 'Gauntlet') : t('約戰', 'Call Out')}</button>
         ))}
       </div>
 
@@ -383,7 +501,10 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
           : mode === 'story'
             ? t('挑一段史詩單挑,遣一員猛將出陣。力克強敵有真實獎賞 — 揚名、賞金,陣斬更佳。',
                 'Pick a famous duel and send a warrior. A win carries real spoils — fame and gold, more for a kill.')
-            : t('編一支隊伍(最多 5 人)打車輪戰。勝者留陣(帶傷續戰),敗者換人上 — 拼到一方無人。',
+            : mode === 'callout'
+              ? t('遣本陣猛將,約戰他勢力名將(生死之鬥)。對方或應或避 — 勝則揚名、辱敵將威名動其忠誠;避戰者為天下所輕。',
+                  'Send your champion to call out an enemy general (a lethal bout). They may answer or duck it — a win spreads your fame and shakes the humbled foe\'s loyalty; a coward who ducks is scorned.')
+              : t('編一支隊伍(最多 5 人)打車輪戰。勝者留陣(帶傷續戰),敗者換人上 — 拼到一方無人。',
                 'Form a squad (up to 5) for a gauntlet. The winner holds the field (wounds carry); the loser tags in a fresh fighter — until one side is spent.')}
       </div>
 
@@ -420,6 +541,31 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
           }}
         >⚔ {t('開始車輪戰', 'Begin the Gauntlet')}</button>
       </>)}
+
+      {/* 敵將約戰 — an enemy champion calls out one of your generals. */}
+      {(mode === 'spar' || mode === 'callout') && incoming && (
+        <div style={{ background: 'linear-gradient(180deg, rgba(120,40,30,0.32), rgba(40,16,12,0.32))', border: `1px solid ${incoming.sworn ? '#e07a5a' : '#e0a060'}`, borderRadius: 6, padding: '0.6rem 0.8rem', marginBottom: '0.8rem' }}>
+          <div style={{ color: '#ffd0b8', fontSize: '0.84rem', marginBottom: 4 }}>
+            ⚔ {incoming.sworn ? t('宿敵約戰', 'A Sworn Rival Calls You Out') : t('敵將約戰', 'An Enemy Calls You Out')} — <b style={{ color: '#ffe0d0' }}>{pickName(incoming.foe.name, lang)}</b>
+            <span style={{ color: '#caa86a', fontSize: '0.74rem' }}> {t('約戰', 'challenges')} {pickName(incoming.champ.name, lang)}（{t('武', 'W')}{incoming.foe.stats.war}）</span>
+          </div>
+          <div style={{ fontSize: '0.74rem', color: '#d8b0a0', fontStyle: 'italic', marginBottom: 6 }}>「{lang === 'en' ? incoming.lineEn : incoming.lineZh}」</div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button
+              onClick={() => { setResult(null); setIncomingDuel(true); }}
+              style={{ flex: 1, padding: '0.45rem', background: 'linear-gradient(180deg,#7a2a20,#4a1810)', border: '1px solid #e0846a', color: '#ffe0d0', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', letterSpacing: '0.06rem', borderRadius: 4 }}
+            >⚔ {t(`遣 ${pickName(incoming.champ.name, lang)} 應戰`, `Send ${pickName(incoming.champ.name, lang)}`)}</button>
+            <button
+              onClick={() => {
+                // 拒戰 — ducking the challenge shames your own general.
+                applyDuelChallengeStakes(incoming.foe.id, incoming.champ.id, 'refused');
+                setResult({ text: t(`${pickName(incoming.champ.name, lang)} 避而不戰 — 為敵所輕,威望受損。`, `${pickName(incoming.champ.name, lang)} ducks the challenge — and loses face.`), notes: [] });
+              }}
+              style={{ padding: '0.45rem 0.8rem', background: '#1e2832', border: '1px solid #5f6c76', color: '#9aa6b0', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', borderRadius: 4 }}
+            >{t('拒戰', 'Duck')}</button>
+          </div>
+        </div>
+      )}
 
       {/* 宿敵 — a rival rides out to settle an old score. */}
       {mode === 'spar' && rivalry && (
@@ -563,7 +709,18 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
           const steps = campaignSteps(camp, new Set(clearedScenarios));
           const done = steps.filter((s) => s.cleared).length;
           return (
-            <div key={camp.id} style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid #3a4754', borderRadius: 6, padding: '0.5rem 0.7rem', marginBottom: '0.8rem' }}>
+            <div key={camp.id} style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid #3a4754', borderRadius: 6, overflow: 'hidden', marginBottom: '0.8rem' }}>
+              {/* 戰役封面 — optional banner; drop public/duel-campaigns/<id>.jpg to
+                  light it up (cropped to a strip). Absent → onError hides it and the
+                  card looks exactly as before. key=id remounts so a prior miss resets. */}
+              <img
+                key={camp.id}
+                src={`${import.meta.env.BASE_URL}duel-campaigns/${camp.id}.jpg`}
+                alt=""
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                style={{ width: '100%', aspectRatio: '16 / 5', objectFit: 'cover', display: 'block', borderBottom: '1px solid #3a4754' }}
+              />
+              <div style={{ padding: '0.5rem 0.7rem' }}>
               <div style={{ fontSize: '0.78rem', color: '#e6c473', marginBottom: 6 }}>🏯 {lang === 'en' ? camp.titleEn : camp.titleZh} <span style={{ color: '#7a8893', fontSize: '0.7rem' }}>({done}/{steps.length})</span></div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap' }}>
                 {steps.map((st, i) => {
@@ -582,6 +739,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
                     </span>
                   );
                 })}
+              </div>
               </div>
             </div>
           );
@@ -622,6 +780,78 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
         >⚔ {a ? t(`遣 ${pickName(a.name, lang)} 出陣`, `Send ${pickName(a.name, lang)}`) : t('選一員猛將', 'Pick a warrior')}</button>
       </>)}
 
+      {/* 約戰 — pick an enemy champion to call out; they may answer or duck it. */}
+      {mode === 'callout' && (<>
+        <div style={{ fontSize: '0.68rem', color: '#7a8893', letterSpacing: '0.1rem', marginBottom: '0.4rem' }}>
+          {t('約戰對象 — 他勢力名將', 'Call out — an enemy general')} ({calloutTargets.length})
+        </div>
+        <div style={{ display: 'grid', gap: 6, marginBottom: '0.8rem', maxHeight: 184, overflowY: 'auto' }}>
+          {calloutTargets.map((o) => {
+            const sel = calloutFoeId === o.id;
+            const force = forces[o.forceId ?? ''];
+            return (
+              <button
+                key={o.id}
+                onClick={() => { setCalloutFoeId(sel ? null : o.id); setResult(null); }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left', padding: '0.35rem 0.5rem', borderRadius: 5, cursor: 'pointer', fontFamily: 'var(--tkm-font-body)',
+                  background: sel ? 'rgba(224,132,106,0.18)' : '#10161e', border: `1px solid ${sel ? '#e0846a' : '#26323e'}`, color: '#e6edf3',
+                }}
+              >
+                <OfficerPortrait officer={o} size={30} forceColor={sel ? '#e0846a' : '#26323e'} year={year} />
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ color: '#ffd0b8', fontSize: '0.86rem' }}>{pickName(o.name, lang)}</span>
+                  <span style={{ display: 'block', fontSize: '0.66rem', color: '#8a96a0' }}>
+                    {force ? pickName(force.name, lang) : t('某勢力', 'a rival force')} · {t('武', 'WAR')} {o.stats.war} · {t('勇', 'PWR')} {staticProwess(o)}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+          {calloutTargets.length === 0 && (
+            <div style={{ color: '#7a8893', fontStyle: 'italic', padding: '0.8rem 0' }}>{t('目前無可約戰的敵將(無敵對勢力名將現身)。', 'No enemy champions to call out right now.')}</div>
+          )}
+        </div>
+        {(() => {
+          const canAfford = playerGold >= CALLOUT_COST && !!playerCapitalId;
+          const champReady = sparLeftFor(aId) > 0;
+          const ready = !!(a && calloutFoeId && canAfford && champReady);
+          const blockMsg = !a || !calloutFoeId ? null
+            : !canAfford ? t(`國庫不足(需 ${CALLOUT_COST} 金遣使)`, `Treasury short (${CALLOUT_COST}g to send a herald)`)
+            : !champReady ? t(`${pickName(a.name, lang)} 本季已疲憊,無力遠赴約戰`, `${pickName(a.name, lang)} is spent for the season`)
+            : null;
+          return (<>
+            <button
+              disabled={!ready}
+              onClick={() => {
+                if (!ready || !a || !calloutFoeId || !playerCapitalId) return;
+                const foe = officers[calloutFoeId];
+                if (!foe) return;
+                setResult(null);
+                // 遣使下戰書 — pay the herald + spend the champion's seasonal slot.
+                spendCityGold(playerCapitalId, CALLOUT_COST);
+                recordTrainingUse('spar', [a.id]);
+                if (willAcceptChallenge(foe, a, Math.random)) {
+                  setCalloutDuel(true);
+                } else {
+                  applyDuelChallengeStakes(a.id, foe.id, 'refused');
+                  const line = challengeResultLine('refused', pickName(a.name, lang), pickName(foe.name, lang));
+                  setResult({ text: t(line.zh, line.en), notes: [t('避戰者為天下所輕,威望受損。', 'The one who ducked loses face before the realm.')] });
+                }
+              }}
+              style={{
+                width: '100%', padding: '0.6rem', marginBottom: blockMsg ? '0.3rem' : '0.8rem',
+                background: ready ? 'linear-gradient(180deg,#7a2a20,#4a1810)' : '#1e2832',
+                border: `1px solid ${ready ? '#e0846a' : '#2b3845'}`,
+                color: ready ? '#ffe0d0' : '#5f6c76', cursor: ready ? 'pointer' : 'default',
+                fontFamily: 'var(--tkm-font-body)', fontSize: '1rem', letterSpacing: '0.1rem',
+              }}
+            >⚔ {a && calloutFoeId ? t(`遣 ${pickName(a.name, lang)} 約戰 ${pickName(officers[calloutFoeId].name, lang)}(${CALLOUT_COST} 金)`, `Send ${pickName(a.name, lang)} vs ${pickName(officers[calloutFoeId].name, lang)} (${CALLOUT_COST}g)`) : t('選將與敵', 'Pick a champion + a foe')}</button>
+            {blockMsg && <div style={{ fontSize: '0.72rem', color: '#e0846a', marginBottom: '0.7rem', textAlign: 'center' }}>{blockMsg}</div>}
+          </>);
+        })()}
+      </>)}
+
       {result && (
         <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid #3a4754', borderRadius: 6, padding: '0.6rem 0.8rem', marginBottom: '0.8rem' }}>
           <div style={{ color: '#e6c473', marginBottom: result.notes.length ? '0.4rem' : 0 }}>{result.text}</div>
@@ -635,7 +865,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
       )}
 
       <div style={{ fontSize: '0.68rem', color: '#7a8893', letterSpacing: '0.1rem', margin: '0.2rem 0 0.4rem' }}>
-        {mode === 'story' ? t('遣誰出陣', 'Choose your warrior') : t('麾下武將', 'Your Officers')} ({roster.length})
+        {mode === 'story' || mode === 'callout' ? t('遣誰出陣', 'Choose your warrior') : t('麾下武將', 'Your Officers')} ({roster.length})
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 6 }}>
         {roster.map((o) => {

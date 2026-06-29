@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import type { BoutRecord } from '../../game/systems/duelHall';
 import { ladderBoard, ratingTier } from '../../game/systems/warRanking';
+import { NEMESIS_THRESHOLD, type RivalryRecord } from '../../game/systems/rivalries';
 import { resolveDuel, canDuel } from '../../game/systems/duel';
 import { wagerMultiplier, wagerProfit } from '../../game/systems/wager';
 import { Modal } from './Modal';
@@ -24,12 +25,13 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
   const deeds = useGameStore((s) => s.deeds);
   const duelHall = useGameStore((s) => s.duelHall);
   const warRatings = useGameStore((s) => s.warRatings);
+  const rivalries = useGameStore((s) => s.rivalries);
   const applyScenarioEffects = useGameStore((s) => s.applyScenarioEffects);
   const playerGold = useGameStore((s) => {
     const f = s.forces[s.playerForceId ?? ''];
     return f ? (s.cities[f.capitalCityId]?.gold ?? 0) : 0;
   });
-  const [tab, setTab] = useState<'ranks' | 'ladder' | 'gallery' | 'bet'>('ranks');
+  const [tab, setTab] = useState<'ranks' | 'ladder' | 'feuds' | 'gallery' | 'bet'>('ranks');
   const [replay, setReplay] = useState<BoutRecord | null>(null);
   // 賭坊 — bet on a duel between any two warriors; the house resolves it.
   const fighters = useMemo(
@@ -81,6 +83,16 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
 
   const ladder = useMemo(() => ladderBoard(warRatings, officers).slice(0, 12), [warRatings, officers]);
 
+  // 恩怨簿 — every pair that has crossed blades, most-fought first; sworn 宿敵
+  // and blood-ended feuds flagged. Drop pairs where an officer no longer exists.
+  const feuds = useMemo(
+    () => Object.values(rivalries ?? {})
+      .filter((r) => officers[r.aId] && officers[r.bId])
+      .sort((a, b) => b.bouts - a.bouts)
+      .slice(0, 20),
+    [rivalries, officers],
+  );
+
   if (replay) {
     return <BoutReplay3D rec={replay} onClose={() => setReplay(null)} />;
   }
@@ -111,7 +123,7 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
   return (
     <Modal onClose={onClose} title={t('武鬥館', 'Hall of Bouts')} icon="🏆" width="min(560px, 100%)" scrollBody>
       <div style={{ display: 'flex', gap: 6, marginBottom: '0.9rem' }}>
-        {(['ranks', 'ladder', 'gallery', 'bet'] as const).map((m) => (
+        {(['ranks', 'ladder', 'feuds', 'gallery', 'bet'] as const).map((m) => (
           <button
             key={m}
             onClick={() => setTab(m)}
@@ -120,7 +132,7 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
               background: tab === m ? 'rgba(230,196,115,0.18)' : '#10161e',
               border: `1px solid ${tab === m ? '#e6c473' : '#26323e'}`, color: tab === m ? '#f2dd9a' : '#8a96a0',
             }}
-          >{m === 'ranks' ? t('戰績', 'Wins') : m === 'ladder' ? t('武評', 'Ladder') : m === 'bet' ? t('賭坊', 'Wagers') : `${t('名局', 'Replays')}${duelHall.length > 0 ? ` (${duelHall.length})` : ''}`}</button>
+          >{m === 'ranks' ? t('戰績', 'Wins') : m === 'ladder' ? t('武評', 'Ladder') : m === 'feuds' ? `${t('恩怨', 'Feuds')}${feuds.length > 0 ? ` (${feuds.length})` : ''}` : m === 'bet' ? t('賭坊', 'Wagers') : `${t('名局', 'Replays')}${duelHall.length > 0 ? ` (${duelHall.length})` : ''}`}</button>
         ))}
       </div>
 
@@ -204,6 +216,49 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
           )}
           {betResult && (
             <div style={{ background: 'rgba(0,0,0,0.3)', border: `1px solid ${betResult.win ? '#6aae73' : '#a05050'}`, borderRadius: 6, padding: '0.6rem 0.8rem', color: betResult.win ? '#9ed68a' : '#e0a0a0' }}>{betResult.text}</div>
+          )}
+        </>
+      )}
+
+      {tab === 'feuds' && (
+        <>
+          <div style={{ fontSize: '0.72rem', color: '#aab6c0', lineHeight: 1.5, margin: '0 0 0.6rem 2px' }}>
+            {t('恩怨簿 — 凡反覆交手者皆記逐對戰績;交手三次以上即結「宿敵」(重逢知己知彼);一方斬殺即血仇了結。', 'The book of feuds — every pair who keep crossing blades, with their head-to-head. Three bouts forge sworn 宿敵; a kill closes it in blood.')}
+          </div>
+          {feuds.length === 0 ? (
+            <div style={{ color: '#7a8893', fontStyle: 'italic', padding: '1rem 0' }}>
+              {t('尚無恩怨。同一對武將反覆單挑,便會在此結下宿敵。', 'No feuds yet. When the same two warriors keep dueling, a rivalry forms here.')}
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gap: 5 }}>
+              {feuds.map((r: RivalryRecord) => {
+                const a = officers[r.aId], b = officers[r.bId];
+                const sworn = r.bouts >= NEMESIS_THRESHOLD && !r.killerId;
+                const blood = !!r.killerId;
+                const border = blood ? '#a05050' : sworn ? '#e07a5a' : '#26323e';
+                return (
+                  <div key={`${r.aId}|${r.bId}`} style={{ display: 'flex', alignItems: 'center', gap: 8, background: sworn || blood ? 'rgba(120,40,30,0.12)' : '#10161e', border: `1px solid ${border}`, borderRadius: 5, padding: '0.35rem 0.55rem' }}>
+                    {a && <OfficerPortrait officer={a} size={28} forceColor="#e0846a" year={useGameStore.getState().date.year} />}
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ color: '#f2dd9a', fontSize: '0.86rem' }}>
+                        {nm(r.aId)} <span style={{ color: '#ffd28a', fontWeight: 700 }}>{r.aWins}</span>
+                        <span style={{ color: '#7a8893' }}> – </span>
+                        <span style={{ color: '#ffd28a', fontWeight: 700 }}>{r.bWins}</span> {nm(r.bId)}
+                        {r.draws > 0 && <span style={{ color: '#7a8893', fontSize: '0.72rem' }}> ・{t('平', 'draw')}{r.draws}</span>}
+                      </span>
+                      <span style={{ display: 'block', fontSize: '0.66rem', color: '#8a96a0' }}>
+                        {blood
+                          ? <span style={{ color: '#e06a5a' }}>🩸 {t('血仇了結', 'Settled in blood')} — {nm(r.killerId!)} {t('斬', 'slew')} {nm(r.victimId!)}</span>
+                          : sworn
+                            ? <span style={{ color: '#e0846a' }}>⚔ {t('宿敵', 'Sworn rivals')} · {t('交手', 'fought')} {r.bouts} {t('場', '×')}</span>
+                            : <>{t('舊識', 'Old foes')} · {t('交手', 'fought')} {r.bouts} {t('場', '×')}</>}
+                      </span>
+                    </span>
+                    {b && <OfficerPortrait officer={b} size={28} forceColor="#88b7e8" year={useGameStore.getState().date.year} />}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </>
       )}

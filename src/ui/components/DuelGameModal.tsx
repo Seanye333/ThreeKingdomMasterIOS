@@ -1,9 +1,10 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Officer } from '../../game/types';
 import {
   initDuelBout, duelRound, aiDuelMove, POWER_GUARD_COST, THRUST_COST, COMBO_COST, SPIRIT_MAX, staticProwess, weaponArtFor, duelPersona, ultReady, DUEL_TERRAIN_INFO,
-  isDuelMoveUnlocked, duelMoveUnlockLevel,
-  type DuelMove, type DuelBout, type DuelDifficulty, type DuelTerrain,
+  isDuelMoveUnlocked, duelMoveUnlockLevel, signatureUlt, mountEdge, duelPassive, duelScars, DUEL_SCAR_INFO,
+  resolveChargePass, applyChargePass,
+  type DuelMove, type DuelBout, type DuelDifficulty, type DuelTerrain, type UltKind,
 } from '../../game/systems/duel';
 import { OfficerPortrait } from './OfficerPortrait';
 import { playSfx, speakLine } from '../../game/systems/sound';
@@ -28,29 +29,19 @@ export interface DuelRoundFx {
   disarm?: 'attacker' | 'defender';
   /** 連招 — a landed 3rd+ consecutive strike (named = the 斬→突刺→奮 finisher). */
   combo?: { side: 'attacker' | 'defender'; length: number; named: boolean };
+  /** 必殺技 — set when a side unleashes its finisher, with its kind, so the 3D
+   *  arena can sweep a colour-keyed crescent matching the signature move. */
+  ult?: { side: 'attacker' | 'defender'; kind: UltKind };
+  /** 挑落下馬 — set to the side just unhorsed by a parry-disarm. */
+  unhorsed?: 'attacker' | 'defender';
 }
 
-/** 必殺技 — a named signature move for famous warriors; the rest of the great
- *  (matchless / war ≥ 90) fall back to a generic 奮命一擊. */
-const SIGNATURE_MOVES: Record<string, { zh: string; en: string }> = {
-  'lu-bu': { zh: '方天畫戟', en: 'Sky Piercer' },
-  'guan-yu': { zh: '拖刀計', en: 'Dragging-Blade Feint' },
-  'zhang-fei': { zh: '丈八蛇矛', en: 'Serpent Lance' },
-  'zhao-yun': { zh: '七進七出', en: 'Seven In, Seven Out' },
-  'ma-chao': { zh: '錦帆銀槍', en: 'Silver Spear' },
-  'dian-wei': { zh: '雙戟摧鋒', en: 'Twin Halberds' },
-  'xu-chu': { zh: '虎癡裸衣', en: 'Tiger Fury' },
-  'sun-ce': { zh: '江東霸王', en: 'Little Conqueror' },
-  'huang-zhong': { zh: '百步穿楊', en: 'Hundred-Pace Shot' },
-  'taishi-ci': { zh: '猿臂神射', en: 'Ape-Arm Volley' },
-  'gan-ning': { zh: '錦帆百騎', en: 'Hundred Riders' },
-  'yan-liang': { zh: '河北上將', en: 'Champion of Hebei' },
-};
-
+/** 必殺技 — the named finisher for the ult / a decisive 奮. Reads the engine's
+ *  {@link signatureUlt} so the flare always matches the move's real mechanics
+ *  (拖刀計 baits a guard, 七進七出 cuts through, 無雙 shatters the foe's 武魂…). */
 function signatureFor(o: Officer): { zh: string; en: string } | null {
-  if (SIGNATURE_MOVES[o.id]) return SIGNATURE_MOVES[o.id];
-  if (o.traits?.includes('matchless') || o.stats.war >= 90) return { zh: '奮命一擊', en: 'All-Out Strike' };
-  return null;
+  const u = signatureUlt(o);
+  return u ? { zh: u.zh, en: u.en } : null;
 }
 
 /**
@@ -76,7 +67,7 @@ const MOVES: Array<{ id: DuelMove; zh: string; en: string; kind: MoveKind; cost?
 ];
 
 export function DuelGameModal({
-  attacker, defender, onComplete, meFatigue = 0, foeFatigue = 0, lethal = true, reinforcements = [], staged = false, onRound, difficulty = 'veteran', terrain = 'plain', hotSeat = false,
+  attacker, defender, onComplete, meFatigue = 0, foeFatigue = 0, lethal = true, reinforcements = [], staged = false, onRound, difficulty = 'veteran', terrain = 'plain', hotSeat = false, meCareer = 0, foeCareer = 0,
 }: {
   attacker: Officer;
   defender: Officer;
@@ -100,11 +91,15 @@ export function DuelGameModal({
   /** 雙人對戰 — hot-seat: a second human picks the defender's move each round
    *  (P1 commits the attack, then P2 commits the defense) instead of the AI. */
   hotSeat?: boolean;
+  /** 鬥將生涯 — fixed-prowess bonus each fighter has earned on the 武評榜 (段位 +
+   *  百戰); the host (Duel3DStage) computes it from the store. Default 0. */
+  meCareer?: number;
+  foeCareer?: number;
 }) {
   const t = useT();
   const lang = useLanguage();
   const reduced = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  const [bout, setBout] = useState<DuelBout>(() => initDuelBout(attacker, defender, meFatigue, foeFatigue, difficulty, terrain));
+  const [bout, setBout] = useState<DuelBout>(() => initDuelBout(attacker, defender, meFatigue, foeFatigue, difficulty, terrain, meCareer, foeCareer));
   // 當前出戰者 — starts as `attacker`; an ally can take over mid-bout (援護).
   const [me, setMe] = useState<Officer>(attacker);
   const [used, setUsed] = useState<Set<string>>(() => new Set([attacker.id]));
@@ -116,6 +111,30 @@ export function DuelGameModal({
   // 必殺技 — a named signature move flares when a great warrior lands a 奮.
   const [signature, setSignature] = useState<{ key: number; text: string } | null>(null);
   const sigKey = useRef(0);
+  // 衝鋒對撞 — when a rider enters the bout, the two thunder past in an opening
+  // charge before blows are traded. Resolved once on mount: the bested rider opens
+  // wounded (and unhorsed on a crushing pass). Automatic — not a player choice.
+  const chargeDone = useRef(false);
+  useEffect(() => {
+    if (chargeDone.current) return;
+    chargeDone.current = true;
+    const pass = resolveChargePass(attacker, defender, Math.random);
+    if (!pass) return;
+    setBout((b) => applyChargePass(b, pass));
+    setLog((l) => [`🐎 ${t(pass.textZh, pass.textEn)}`, ...l]);
+    sigKey.current += 1;
+    const key = sigKey.current;
+    setSignature({ key, text: t('兩馬相交！', 'The Charge!') });
+    playSfx('crash');
+    window.setTimeout(() => setSignature((s) => (s && s.key === key ? null : s)), 1500);
+    if (pass.dmgToAttacker > 0 || pass.dmgToDefender > 0) {
+      fxKey.current += 1;
+      const hit: 'a' | 'd' = pass.dmgToDefender >= pass.dmgToAttacker ? 'd' : 'a';
+      setFx({ key: fxKey.current, hit, dmg: Math.max(pass.dmgToAttacker, pass.dmgToDefender), killed: false });
+      onRound?.({ hit, killed: false, aMove: 'thrust', dMove: 'thrust', unhorsed: pass.unhorsed });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // 罵陣 — a one-time pre-duel psychological exchange: pick a tack, read the foe.
   // 挑衅 (goad) > 不動 (stoic) > 嘲諷 (mock) > 挑衅. Win it to bank a 奮; lose and
   // open the bout rattled; a wash leaves you wary. The foe leans on its 性格.
@@ -270,7 +289,10 @@ export function DuelGameModal({
       : 'both';
     fxKey.current += 1;
     setFx({ key: fxKey.current, hit, dmg: Math.max(res.dmgToAttacker, res.dmgToDefender), killed: !!res.bout.killedId });
-    onRound?.({ hit, killed: !!res.bout.killedId, aMove: move, dMove: foeMove, over: res.bout.over, winner: res.bout.winner, disarm: res.disarm, combo: res.combo });
+    const ultFx = res.ultimate === 'attacker' ? { side: 'attacker' as const, kind: (bout.aUlt?.kind ?? 'power') as UltKind }
+      : res.ultimate === 'defender' ? { side: 'defender' as const, kind: (bout.dUlt?.kind ?? 'power') as UltKind }
+      : undefined;
+    onRound?.({ hit, killed: !!res.bout.killedId, aMove: move, dMove: foeMove, over: res.bout.over, winner: res.bout.winner, disarm: res.disarm, combo: res.combo, ult: ultFx, unhorsed: res.unhorsed });
     // 台詞庫 — voice a short barb on a notable blow.
     if (res.ultimate === 'attacker') {
       const l = officerDuelLine(me.id, 'ult', res.bout.round) ?? duelUltLine(bout.aPersona);
@@ -293,9 +315,19 @@ export function DuelGameModal({
       setLog((l) => [`🔥 ${who} ${label}`, ...l].slice(0, 7));
       if (res.combo.named) { playSfx('crash'); }
     }
-    if (res.disarm) {
+    if (res.unhorsed) {
+      const victim = res.unhorsed === 'attacker' ? nm(me) : nm(defender);
+      setLog((l) => [`🐴 ${victim} ${t('被挑落馬下 — 失了坐騎之利!', 'is unhorsed — the steed\'s edge is lost!')}`, ...l].slice(0, 7));
+      playSfx('crash');
+    } else if (res.disarm) {
       const victim = res.disarm === 'attacker' ? nm(me) : nm(defender);
       setLog((l) => [`⚡ ${victim} ${t('被架開兵器,氣勢盡失!', 'is disarmed — weapon knocked aside!')}`, ...l].slice(0, 7));
+    }
+    // 的盧救主 — a wonder-horse bears its downed rider clear of the killing blow.
+    if (res.mountSaved) {
+      const saved = res.mountSaved === 'attacker' ? nm(me) : nm(defender);
+      setLog((l) => [`🐎 ${saved} ${t('坐騎神駿,負主一躍脫險 — 的盧救主!', 'is borne clear by a wonder-horse — saved from the killing blow!')}`, ...l].slice(0, 7));
+      playSfx('bell');
     }
 
     // 必殺 — an unleashed 武魂 finisher, or a decisive 奮 from a great warrior,
@@ -447,11 +479,25 @@ export function DuelGameModal({
             <div style={{ color: '#e6c473', whiteSpace: 'nowrap' }}>{nm(o)}</div>
             <div style={{ fontSize: '0.72rem', color: '#aab6c0' }}>{t('武', 'WAR')} {o.stats.war}</div>
             {art && <div style={{ fontSize: '0.64rem', color: '#e0b060', whiteSpace: 'nowrap' }}>⚔ {lang === 'en' ? art.en : art.zh}</div>}
+            {(() => { const me = mountEdge(o); return me && (
+              <div style={{ fontSize: '0.64rem', color: '#9ed0a0', whiteSpace: 'nowrap' }}>🐎 {me === 'charge' ? t('神駒·先發', 'Charger') : t('寶馬·救主', 'Life-Saver')}</div>
+            ); })()}
+            {(() => { const p = duelPassive(o); return p && (
+              <div style={{ fontSize: '0.64rem', color: '#e0a0d0', whiteSpace: 'nowrap', fontWeight: 700 }}>✦ {lang === 'en' ? p.en : p.zh}</div>
+            ); })()}
+            {duelScars(o).map((s) => (
+              <div key={s} style={{ fontSize: '0.62rem', color: '#c08070', whiteSpace: 'nowrap' }}>🩹 {lang === 'en' ? DUEL_SCAR_INFO[s].en : DUEL_SCAR_INFO[s].zh}</div>
+            ))}
           </div>
         </div>
         <div style={{ marginTop: '0.4rem' }}>{bar(stamina, color)}</div>
         {guardPips(guard)}
         {spiritBar(spirit, ultUsed)}
+        {(() => { const flaw = who === 'me' ? bout.aFlaw : bout.dFlaw; return flaw >= 18 && (
+          <div style={{ fontSize: '0.6rem', color: flaw >= 50 ? '#ff7a5a' : '#e0a060', letterSpacing: '0.04rem', marginTop: 1 }}>
+            ⚠ {t('破綻', 'Open')} {flaw}%
+          </div>
+        ); })()}
         {fx && fx.dmg > 0 && isHit && (
           <span key={`d${who}${fx.key}`} className="tkm-damage-num" style={{ position: 'absolute', [right ? 'left' : 'right']: 8, top: 4, fontSize: '1.1rem' }}>−{fx.dmg}</span>
         )}

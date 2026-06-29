@@ -48,3 +48,27 @@ describe('武評榜 (ELO ladder)', () => {
     expect(ratingTier(1340).zh).toBe('神將');
   });
 });
+
+import { duelCareerBonus } from './warRanking';
+import { initDuelBout } from './duel';
+import { mkOfficer as _mk } from '../../test/factories';
+
+describe('鬥將生涯 — duelCareerBonus', () => {
+  it('rewards a high 段位 and a deep tally of duel wins', () => {
+    expect(duelCareerBonus(900, 0).prowess).toBe(0);          // 末將, no wins
+    expect(duelCareerBonus(1330, 0).prowess).toBe(10);        // 神將 tier
+    expect(duelCareerBonus(900, 40).prowess).toBe(6);         // 百戰 veterancy
+    const elite = duelCareerBonus(1330, 40);
+    expect(elite.prowess).toBe(16);                            // both stack
+    expect(elite.tierZh).toBe('神將');
+  });
+
+  it('folds into the bout\'s fixed prowess via initDuelBout', () => {
+    const a = _mk({ id: 'a', stats: { war: 85, leadership: 60, intelligence: 60, politics: 50, charisma: 60 } });
+    const b = _mk({ id: 'b', stats: { war: 85, leadership: 60, intelligence: 60, politics: 50, charisma: 60 } });
+    const base = initDuelBout(a, b);
+    const careered = initDuelBout(a, b, 0, 0, 'veteran', 'plain', 12, 0);
+    expect(careered.aStatic).toBe(base.aStatic + 12);
+    expect(careered.dStatic).toBe(base.dStatic);
+  });
+});

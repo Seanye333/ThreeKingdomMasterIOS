@@ -72,3 +72,17 @@ export function ratingTier(rating: number): { zh: string; en: string } {
   if (rating >= 920) return { zh: '偏將', en: 'Journeyman' };
   return { zh: '末將', en: 'Novice' };
 }
+
+/**
+ * 鬥將生涯 — the duel prowess a fighter has earned over a career, NOT from raw
+ * 武力 but from the arena itself: a high 段位 on the 武評榜 (climbed by beating
+ * worthy foes) and a deep tally of 單挑勝 (百戰宿將). The bonus folds into the
+ * bout's fixed prowess, so the realm's recognised duellists actually fight better
+ * than their stat line — single combat becomes its own ladder of growth.
+ */
+export function duelCareerBonus(rating: number, duelsWon: number): { prowess: number; tierZh: string; tierEn: string } {
+  const tier = rating >= 1320 ? 10 : rating >= 1220 ? 7 : rating >= 1120 ? 5 : rating >= 1020 ? 3 : 0;
+  const veterancy = duelsWon >= 30 ? 6 : duelsWon >= 15 ? 4 : duelsWon >= 6 ? 2 : 0;
+  const t = ratingTier(rating);
+  return { prowess: tier + veterancy, tierZh: t.zh, tierEn: t.en };
+}

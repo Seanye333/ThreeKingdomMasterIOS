@@ -27,6 +27,7 @@ export function TournamentModal({ onClose }: { onClose: () => void }) {
   const playerForceId = useGameStore((s) => s.playerForceId);
   const year = useGameStore((s) => s.date.year);
   const grantOfficerXp = useGameStore((s) => s.grantOfficerXp);
+  const awardTournamentChampion = useGameStore((s) => s.awardTournamentChampion);
 
   const eligible = useMemo(
     () => Object.values(officers)
@@ -71,6 +72,13 @@ export function TournamentModal({ onClose }: { onClose: () => void }) {
       const res = grantOfficerXp(o.id, amt);
       if (res) collected.push(...res.notes);
     }
+    // 天下無雙 — the champion climbs the 武評榜 steeply (often a tier up → 鬥將生涯
+    // bonus) and his fame soars; the other finalist shares a lesser climb. The steep
+    // climb is the year's championship — a second tournament the same year is practice.
+    const annual = awardTournamentChampion(champId, [...finalists]);
+    collected.unshift(annual
+      ? t('🏅 天下無雙 — 年度武道會奪魁,武評榜大漲、威名遠播!', '🏅 Peerless Under Heaven — this year\'s championship: a steep climb on the war ladder, and fame to match!')
+      : t('🏅 奪魁 — 然本年度武道會已決,此番僅作切磋。', '🏅 Champion — but this year\'s title is already settled; this was but a friendly bout.'));
     setNotes(collected);
   };
 

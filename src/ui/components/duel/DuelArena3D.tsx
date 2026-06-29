@@ -10,7 +10,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import type { Group } from 'three';
 import type { Officer } from '../../../game/types';
 import type { DuelRoundFx } from '../DuelGameModal';
-import { weaponClassFor, weaponIsTwoHanded, type WeaponClass, type DuelTerrain } from '../../../game/systems/duel';
+import { weaponClassFor, weaponIsTwoHanded, mountEdge, type WeaponClass, type DuelTerrain } from '../../../game/systems/duel';
 import { playSfx } from '../../../game/systems/sound';
 import {
   DUEL_ASSETS_READY, DUEL_FORMAT, DUEL_PACKS, type DuelAnim, type DuelPackId,
@@ -674,15 +674,16 @@ function Spectators() {
   );
 }
 
-/** Backdrop wall, banners, torches, onlookers and drifting dust. */
-function ArenaStage() {
+/** Backdrop wall, banners, torches, onlookers and drifting dust. The banners fly
+ *  the two combatants' own colours, so the arena reads as *their* contest. */
+function ArenaStage({ tint = ['#b8442e', '#3a7dd9'] }: { tint?: [string, string] }) {
   const banners: Array<{ position: [number, number, number]; color: string; rot: number }> = useMemo(() => {
-    const cols = ['#b8442e', '#3a7dd9', '#caa64a', '#5a8f4a'];
+    const cols = [tint[0], tint[1], '#caa64a', tint[0], tint[1], '#caa64a'];
     return Array.from({ length: 6 }, (_, i) => {
       const a = (i / 6) * Math.PI * 2 + 0.3;
       return { position: [Math.cos(a) * 4.2, 0, Math.sin(a) * 4.2] as [number, number, number], color: cols[i % cols.length], rot: -a + Math.PI / 2 };
     });
-  }, []);
+  }, [tint]);
   return (
     <>
       {/* dark stone perimeter wall */}
@@ -701,6 +702,136 @@ function ArenaStage() {
   );
 }
 
+// ─────────────────────────── 長坂橋 (the narrow bridge stage) ───────────────
+// 長坂橋 isn't just a tan floor — it's an actual plank bridge over a dark river,
+// with rails, piers sunk into the water, and mist curling off it (張飛據水斷橋).
+
+/** A gently rippling dark river beneath the bridge, with a drifting sheen. */
+function River() {
+  const mat = useRef<THREE.MeshStandardMaterial>(null);
+  useFrame(({ clock }) => { if (mat.current) mat.current.opacity = 0.86 + Math.sin(clock.elapsedTime * 0.8) * 0.06; });
+  return (
+    <>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.7, 0]}>
+        <planeGeometry args={[44, 44]} />
+        <meshStandardMaterial ref={mat} color="#10171f" roughness={0.18} metalness={0.7} transparent opacity={0.9} />
+      </mesh>
+      <Sparkles count={50} scale={[20, 0.3, 20]} position={[0, -1.55, 0]} size={5} speed={0.25} opacity={0.35} color="#7d97b5" />
+      {/* river mist curling off the water */}
+      <Sparkles count={40} scale={[16, 1.4, 8]} position={[0, -0.6, 0]} size={9} speed={0.18} opacity={0.22} color="#9fb2c6" />
+    </>
+  );
+}
+
+/** The plank deck + rails + piers that span the gorge. Fighters stand at x≈±0.95. */
+function BridgeStage() {
+  const planks = useMemo(() => Array.from({ length: 13 }, (_, i) => -7.2 + i * 1.2), []);
+  const posts = useMemo(() => Array.from({ length: 11 }, (_, i) => -6.5 + i * 1.3), []);
+  return (
+    <>
+      {/* deck base */}
+      <mesh position={[0, -0.12, 0]} receiveShadow castShadow>
+        <boxGeometry args={[15, 0.22, 2.6]} />
+        <meshStandardMaterial color="#5a4228" roughness={0.92} />
+      </mesh>
+      {/* cross planks for texture */}
+      {planks.map((x, i) => (
+        <mesh key={i} position={[x, 0.005, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+          <planeGeometry args={[1.05, 2.5]} />
+          <meshStandardMaterial color={i % 2 ? '#6a4f30' : '#5e4528'} roughness={0.95} />
+        </mesh>
+      ))}
+      {/* two side rails — posts + a top beam */}
+      {([-1.18, 1.18] as const).map((z) => (
+        <group key={z}>
+          {posts.map((x, i) => (
+            <mesh key={i} position={[x, 0.34, z]} castShadow>
+              <cylinderGeometry args={[0.055, 0.06, 0.92, 6]} />
+              <meshStandardMaterial color="#3f2e1b" roughness={0.9} />
+            </mesh>
+          ))}
+          <mesh position={[0, 0.74, z]} castShadow>
+            <boxGeometry args={[14.4, 0.1, 0.12]} />
+            <meshStandardMaterial color="#4a371f" roughness={0.9} />
+          </mesh>
+        </group>
+      ))}
+      {/* piers sunk into the river */}
+      {[-4.4, 0, 4.4].map((x, i) => (
+        <mesh key={i} position={[x, -1.0, 0]} castShadow>
+          <boxGeometry args={[0.5, 1.9, 2.2]} />
+          <meshStandardMaterial color="#33271a" roughness={0.95} />
+        </mesh>
+      ))}
+      <River />
+      <ContactShadows position={[0, 0.02, 0]} opacity={0.45} scale={9} blur={2.4} far={3} />
+    </>
+  );
+}
+
+// ─────────────────────────── 坐騎 (the general's war-horse) ─────────────────
+// A general who rode in on a famed steed (赤兔/的盧/絕影…) has it stand at their
+// side in the arena — a low-poly war-horse with a caparison in the rider's colour.
+// (The duel itself is fought on foot; the steed waits, tossing its head.)
+function WarHorse({ x, faceRight, body, cloth }: { x: number; faceRight: boolean; body: string; cloth: string }) {
+  const head = useRef<Group>(null);
+  useFrame(({ clock }) => {
+    if (head.current) head.current.rotation.x = -0.15 + Math.sin(clock.elapsedTime * 1.4 + x) * 0.12; // toss the head
+  });
+  const dir = faceRight ? 1 : -1;
+  return (
+    <group position={[x, 0, 1.5]} rotation={[0, faceRight ? Math.PI / 2 : -Math.PI / 2, 0]}>
+      {/* barrel */}
+      <mesh position={[0, 0.92, 0]} castShadow>
+        <capsuleGeometry args={[0.34, 0.95, 6, 10]} />
+        <meshStandardMaterial color={body} roughness={0.7} />
+      </mesh>
+      {/* caparison cloth in the rider's colour */}
+      <mesh position={[0, 0.86, 0]} castShadow>
+        <capsuleGeometry args={[0.37, 0.6, 4, 8]} />
+        <meshStandardMaterial color={cloth} roughness={0.85} />
+      </mesh>
+      {/* neck + head */}
+      <group ref={head} position={[0, 1.18, dir * 0.62]}>
+        <mesh position={[0, 0.18, dir * 0.12]} rotation={[dir * 0.5, 0, 0]} castShadow>
+          <capsuleGeometry args={[0.14, 0.5, 4, 8]} />
+          <meshStandardMaterial color={body} roughness={0.7} />
+        </mesh>
+        <mesh position={[0, 0.42, dir * 0.34]} rotation={[dir * 0.9, 0, 0]} castShadow>
+          <boxGeometry args={[0.2, 0.46, 0.24]} />
+          <meshStandardMaterial color={body} roughness={0.7} />
+        </mesh>
+      </group>
+      {/* four legs */}
+      {[[0.2, 0.52], [-0.2, 0.52], [0.2, -0.52], [-0.2, -0.52]].map(([lx, lz], i) => (
+        <mesh key={i} position={[lx, 0.4, lz]} castShadow>
+          <cylinderGeometry args={[0.07, 0.05, 0.84, 6]} />
+          <meshStandardMaterial color={body} roughness={0.8} />
+        </mesh>
+      ))}
+      {/* tail */}
+      <mesh position={[0, 0.95, -dir * 0.7]} rotation={[-dir * 0.7, 0, 0]}>
+        <coneGeometry args={[0.1, 0.55, 6]} />
+        <meshStandardMaterial color="#1c140c" roughness={0.95} />
+      </mesh>
+    </group>
+  );
+}
+
+/** The steed's coat by famous mount id; default a bay-brown war-horse. */
+function mountColors(o: Officer): { body: string } | null {
+  const e = mountEdge(o);
+  if (!e) return null;
+  for (const id of o.equipment) {
+    if (id === 'red-hare') return { body: '#a13522' };          // 赤兔 — fiery red
+    if (id === 'dilu') return { body: '#d6cfbe' };              // 的盧 — pale
+    if (id === 'jue-ying') return { body: '#23232b' };          // 絕影 — shadow-black
+    if (id === 'zhaoye-yushizi' || id === 'bailong') return { body: '#e2e0d6' }; // 玉獅子/白龍 — white
+    if (id === 'wuzhui-ma' || id === 'wuzhui' || id === 'heizhui') return { body: '#2b2620' }; // 烏騅/黑追 — dark
+  }
+  return { body: '#6b4f32' };
+}
+
 // ─────────────────────────── 地形/天候 (terrain & weather) ──────────────────
 // The bout's DuelTerrain re-skins the whole stage: floor, sky, fog, ambient
 // light and a weather layer. 演武/比武 are on the neutral 校場 (plain); a
@@ -712,7 +843,7 @@ interface TerrainLook {
 }
 const TERRAIN_LOOK: Record<DuelTerrain, TerrainLook> = {
   plain:  { floor: '#3c352a', bg: '#14110c', fog: [7, 16], ambient: 0.35, key: '#ffe0b0', keyColor: '#ffe0b0', weather: null,   descZh: '校場', descEn: 'Open Ground' },
-  bridge: { floor: '#6a5236', bg: '#1a1814', fog: [8, 18], ambient: 0.42, key: '#ffe6c0', keyColor: '#ffe6c0', weather: null,   descZh: '長坂橋', descEn: 'Narrow Bridge' },
+  bridge: { floor: '#6a5236', bg: '#0d1118', fog: [9, 22], ambient: 0.34, key: '#cdd8ea', keyColor: '#cdd8ea', weather: null,   descZh: '長坂橋', descEn: 'Narrow Bridge' },
   mud:    { floor: '#352a1b', bg: '#100d09', fog: [6, 14], ambient: 0.3,  key: '#d8c098', keyColor: '#d8c098', weather: 'mud',  descZh: '泥濘', descEn: 'Mire' },
   fire:   { floor: '#2a1610', bg: '#1c0b05', fog: [5, 12], ambient: 0.52, key: '#ff9050', keyColor: '#ff7a40', weather: 'fire', descZh: '火海', descEn: 'Burning Field' },
   rain:   { floor: '#2c2e30', bg: '#0b0d11', fog: [5, 12], ambient: 0.26, key: '#a8c0e0', keyColor: '#9fb6d8', weather: 'rain', descZh: '雨夜', descEn: 'Rainy Night' },
@@ -908,15 +1039,17 @@ class ArenaErrorBoundary extends Component<{ children: ReactNode }, { failed: bo
 
 function Scene({
   left, right, leftName, rightName, leftClass, rightClass, shakeKey, big, timeScale, spark, killKey, killX,
-  look, blood, leftWounds, rightWounds, finisher, photo,
+  look, terrain, blood, leftWounds, rightWounds, finisher, photo, leftMount, rightMount,
 }: {
   left: FighterAction; right: FighterAction; leftName: string; rightName: string;
   leftClass: WeaponClass; rightClass: WeaponClass; shakeKey: number; big: boolean;
   timeScale: number; spark: { key: number; x: number; killed: boolean; heavy: boolean } | null; killKey: number; killX: number;
-  look: TerrainLook; blood: { key: number; x: number; big: boolean } | null;
+  look: TerrainLook; terrain: DuelTerrain; blood: { key: number; x: number; big: boolean } | null;
   leftWounds: number; rightWounds: number; finisher: { key: number; x: number; color: string } | null; photo: boolean;
+  leftMount: { body: string } | null; rightMount: { body: string } | null;
 }) {
   const wet = look.weather === 'rain' || look.weather === 'mud';
+  const onBridge = terrain === 'bridge';
   return (
     <>
       {!photo && <CameraRig shakeKey={shakeKey} big={big} killKey={killKey} killX={killX} />}
@@ -933,24 +1066,35 @@ function Scene({
       />
       <directionalLight position={[-4, 3, -3]} intensity={0.35} color="#7088b0" />
 
-      {/* arena floor — re-coloured per terrain (a wet sheen on rain/mud) */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <circleGeometry args={[4.5, 48]} />
-        <meshStandardMaterial color={look.floor} roughness={wet ? 0.4 : 0.95} metalness={wet ? 0.3 : 0} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
-        <ringGeometry args={[4.3, 4.5, 48]} />
-        <meshBasicMaterial color="#caa64a" transparent opacity={0.4} />
-      </mesh>
-      <ContactShadows position={[0, 0.02, 0]} opacity={0.5} scale={6} blur={2.2} far={3} />
-
-      <ArenaStage />
+      {/* 長坂橋 swaps the whole stage for a plank bridge over a river; every other
+          terrain uses the circular drill-ground floor + themed arena wall. */}
+      {onBridge ? (
+        <BridgeStage />
+      ) : (
+        <>
+          {/* arena floor — re-coloured per terrain (a wet sheen on rain/mud) */}
+          <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+            <circleGeometry args={[4.5, 48]} />
+            <meshStandardMaterial color={look.floor} roughness={wet ? 0.4 : 0.95} metalness={wet ? 0.3 : 0} />
+          </mesh>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+            <ringGeometry args={[4.3, 4.5, 48]} />
+            <meshBasicMaterial color="#caa64a" transparent opacity={0.4} />
+          </mesh>
+          <ContactShadows position={[0, 0.02, 0]} opacity={0.5} scale={6} blur={2.2} far={3} />
+          <ArenaStage tint={[RED, BLUE]} />
+        </>
+      )}
       <StageProps knockKey={killKey} knockX={killX} />
       <Weather kind={look.weather} />
 
       {/* 伤痕 — blood pools deepen beneath each fighter as they take wounds. */}
       <WoundStain x={-0.95} wounds={leftWounds} />
       <WoundStain x={0.95} wounds={rightWounds} />
+
+      {/* 坐騎 — a famed-mount general's steed waits at their side. */}
+      {leftMount && <WarHorse x={-2.15} faceRight body={leftMount.body} cloth={RED} />}
+      {rightMount && <WarHorse x={2.15} faceRight={false} body={rightMount.body} cloth={BLUE} />}
 
       <Fighter side="left" tunic={RED} action={left} name={leftName} weaponClass={leftClass} timeScale={timeScale} />
       <Fighter side="right" tunic={BLUE} action={right} name={rightName} weaponClass={rightClass} timeScale={timeScale} />
@@ -979,6 +1123,9 @@ export function DuelArena3D({
   // Each officer's 3D weapon (drives both the pack and the hand mesh).
   const leftClass = useMemo(() => weaponClassFor(attacker), [attacker]);
   const rightClass = useMemo(() => weaponClassFor(defender), [defender]);
+  // 坐騎 — a general who rode in on a famed steed gets it staged at their side.
+  const leftMount = useMemo(() => mountColors(attacker), [attacker]);
+  const rightMount = useMemo(() => mountColors(defender), [defender]);
   const look = TERRAIN_LOOK[terrain] ?? TERRAIN_LOOK.plain;
   const idle = (): FighterAction => ({ anim: 'idle', rot: 0, stamp: 0 });
   const [left, setLeft] = useState<FighterAction>(idle);
@@ -995,6 +1142,8 @@ export function DuelArena3D({
   const [blood, setBlood] = useState<{ key: number; x: number; big: boolean } | null>(null);
   // 名將終結技 — a colour-keyed crescent on the kill.
   const [finisher, setFinisher] = useState<{ key: number; x: number; color: string } | null>(null);
+  // 挑落下馬 — which side has been unhorsed (their steed bolts off the arena).
+  const [unhorsedSides, setUnhorsedSides] = useState<{ left: boolean; right: boolean }>({ left: false, right: false });
   // 拍照模式 — freeze + free-orbit for a screenshot.
   const [photo, setPhoto] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -1005,7 +1154,16 @@ export function DuelArena3D({
     if (!event || event.key === lastKey.current) return;
     lastKey.current = event.key;
     const k = event.key;
-    const { hit, killed, aMove, dMove, over, winner, disarm } = event;
+    const { hit, killed, aMove, dMove, over, winner, disarm, ult, unhorsed } = event;
+    // 挑落下馬 — the unhorsed rider's steed bolts off; mark the side so the arena
+    // stops rendering their horse (and a knock jolts the camera).
+    if (unhorsed === 'attacker') setUnhorsedSides((s) => ({ ...s, left: true }));
+    if (unhorsed === 'defender') setUnhorsedSides((s) => ({ ...s, right: true }));
+    // 必殺技分型 — each signature finisher sweeps its own colour-keyed crescent:
+    // 拖刀計 blood-red, 七進七出 azure, 無雙/斷橋 violet, 百步穿楊 gold, 奮命 amber.
+    const ULT_COLOR: Record<string, string> = {
+      feint: '#ff3a2c', multi: '#4ab4ff', sunder: '#b86aff', volley: '#ffcf4a', power: '#ffa84a',
+    };
 
     const leftDied = killed && winner === 'defender';
     const rightDied = killed && winner === 'attacker';
@@ -1076,12 +1234,26 @@ export function DuelArena3D({
     if (killed) {
       const slainX = leftDied ? -0.95 : 0.95;
       const victorId = winner === 'attacker' ? attacker.id : defender.id;
-      const color = FINISHER[victorId]?.color ?? (winner === 'attacker' ? RED : BLUE);
+      // A finishing 必殺技 sweeps in its own kind-keyed colour; else the victor's.
+      const color = (ult && ULT_COLOR[ult.kind]) ?? FINISHER[victorId]?.color ?? (winner === 'attacker' ? RED : BLUE);
       setKillX(slainX);
       setKillKey((s) => s + 1);
       setFinisher({ key: k, x: slainX, color });
       setTimeScale(0.32);
       const tid = window.setTimeout(() => setTimeScale(1), 1300);
+      return () => window.clearTimeout(tid);
+    }
+    // 必殺技未斃敵 — an unleashed finisher that didn't kill still gets the full
+    // cinematic beat: its colour-keyed crescent sweeps the foe, the camera kicks,
+    // and a half-speed punch lets the blow land (so every 必殺技 reads in 3D).
+    if (ult && !killed) {
+      const foeX = ult.side === 'attacker' ? 0.95 : -0.95;
+      setFinisher({ key: k, x: foeX, color: ULT_COLOR[ult.kind] ?? '#ffa84a' });
+      setBig(true);
+      setShakeKey((s) => s + 1);
+      playSfx('crash');
+      setTimeScale(0.45);
+      const tid = window.setTimeout(() => setTimeScale(1), 700);
       return () => window.clearTimeout(tid);
     }
 
@@ -1133,7 +1305,8 @@ export function DuelArena3D({
               leftClass={leftClass} rightClass={rightClass}
               timeScale={photo ? 0 : timeScale} spark={spark} killKey={killKey} killX={killX}
               shakeKey={shakeKey} big={big}
-              look={look} blood={blood} leftWounds={leftWounds} rightWounds={rightWounds} finisher={finisher} photo={photo}
+              look={look} terrain={terrain} blood={blood} leftWounds={leftWounds} rightWounds={rightWounds} finisher={finisher} photo={photo}
+              leftMount={unhorsedSides.left ? null : leftMount} rightMount={unhorsedSides.right ? null : rightMount}
             />
           </Suspense>
         </Canvas>

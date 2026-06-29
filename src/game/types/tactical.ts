@@ -353,6 +353,8 @@ export interface TacticalBattle {
   timeOfDay: TimeOfDay;
   /** 戰前準備 — one preparation per side, spent before the first move. */
   prepUsed?: Partial<Record<'attacker' | 'defender', import('../systems/tactical').BattlePrepKind>>;
+  /** 致師 — a pre-battle champion's challenge, at most once per side (turn 1). */
+  preDuelUsed?: Partial<Record<'attacker' | 'defender', true>>;
   /** Wind direction (snapshot of strategic weather). Biases fire spread. */
   windDirection?: 'north' | 'south' | 'east' | 'west' | 'calm';
   /** Scripted reinforcements (consumed when they arrive). */

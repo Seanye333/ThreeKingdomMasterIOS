@@ -28,7 +28,9 @@ import { isHostilePermitted } from '../types';
 import { createDeeds } from '../types/deeds';
 import { grantDeedTitles } from '../systems/deedTitles';
 import { pushBoutRecord } from '../systems/duelHall';
-import { applyBout } from '../systems/warRanking';
+import { recordRivalryBout } from '../systems/rivalries';
+import { challengeStakes } from '../systems/duelChallenge';
+import { applyBout, seedRating } from '../systems/warRanking';
 import { tickAfflictions, withAffliction, type Affliction } from '../systems/afflictions';
 import { routConsequence, type RoutConsequence } from '../systems/wordWar';
 import { canAppraise, appraisalVerdict, appraisalRenownGain, discernment, isLegendaryCritic, legendaryVerdict, appraisalMisread, pickMonthlyAppraisal } from '../systems/appraisal';
@@ -118,7 +120,7 @@ import { appendPowerHistory, takePowerSnapshot } from '../systems/powerHistory';
 import { pickAdvisor } from '../systems/advisor';
 import { canTrain, trainingCost, tickTrainings, trainingDurationSeasons, sweepStaleTrainings, mentorDurationSeasons, isParentMentor, canTrainTactic, tacticTrainingCost, tacticDurationSeasons, tacticMentorDurationSeasons } from '../systems/training';
 import { loyaltyDriftPerSeason, rollFlavorEvent, defectionChance, sharedBondableTrait, maritalCompatibility, itemResonanceCandidate, policyResonanceCandidate, rollMarriageAssimilation, itemTacticCandidate, deedTraitCandidate, isIncapacitated } from '../systems/traitEffects';
-import { loyaltyFloor, rollMentorPolicyTransfer, mentorsOf, deepenBonds, camaraderieLoyaltyDelta } from '../systems/relationshipEffects';
+import { loyaltyFloor, rollMentorPolicyTransfer, mentorsOf, deepenBonds, camaraderieLoyaltyDelta, parentsOf, childrenOf, spousesOf, siblingsOf, allSwornBrothersOf } from '../systems/relationshipEffects';
 import { TRAIT_DEFS_BY_ID } from '../data/personality';
 import {
   ALLIANCE_PROPOSAL_COST,
@@ -722,6 +724,23 @@ interface GameStore extends GameState {
   recordBout: (rec: import('../systems/duelHall').BoutRecord) => void;
   /** 武評榜 — fold an interactive duel result into the ELO ladder (a from a's view). */
   recordDuelRating: (aId: EntityId, bId: EntityId, result: 'win' | 'loss' | 'draw') => void;
+  /** 恩怨簿 — record a finished duel into the head-to-head history (forges 宿敵). */
+  recordRivalry: (aId: EntityId, bId: EntityId, winner: 'attacker' | 'defender' | 'draw', killed: boolean) => void;
+  /** 約戰 — apply a formal challenge's 威名/忠誠 stakes to challenger + target. */
+  applyDuelChallengeStakes: (challengerId: EntityId, targetId: EntityId, outcome: import('../systems/duelChallenge').ChallengeOutcome) => void;
+  /** 陣斬 — a non-battlefield duel (約戰/劇情) cuts an officer down for real: mark
+   *  them dead and seed 復仇/為兄弟復仇 grudges on their kin (as a field kill does). */
+  slayOfficerInDuel: (slayerId: EntityId, victimId: EntityId) => void;
+  /** 傷殘 — a brutal single combat leaves a permanent maim (斷臂/目眇/跛足). */
+  inflictDuelScar: (officerId: EntityId, scar: import('../systems/duel').DuelScar) => void;
+  /** 折服來投 — a foe bested (and spared) in a 約戰 comes over to the player's side. */
+  recruitViaDuel: (officerId: EntityId) => boolean;
+  /** 天下無雙 — crown the 比武大會 champion: a 武評榜 climb + 威名 for the field.
+   *  The steep climb is a once-a-year prize; returns false if already held this year. */
+  awardTournamentChampion: (championId: EntityId, finalistIds: EntityId[]) => boolean;
+  /** 約戰牽動外交 — shift the 好感 between two forces (e.g. a humbling 約戰 breeds
+   *  a grudge; an honourable draw breeds mutual respect). Clamped −100..100. */
+  adjustForceFavor: (forceA: EntityId, forceB: EntityId, delta: number) => void;
   /** 單挑戰役 — mark a duel scenario cleared (campaign progress). */
   markDuelScenarioCleared: (scenarioId: EntityId) => void;
   /** 劇情舌戰 — apply a scripted scenario's outcome effects to live state
@@ -7563,6 +7582,115 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const u = applyBout(state.warRatings, a, b, result);
         set({ warRatings: { ...state.warRatings, [u.winnerId]: u.winnerRating, [u.loserId]: u.loserRating } });
       },
+      recordRivalry: (aId, bId, winner, killed) => {
+        if (aId === bId) return;
+        const state = get();
+        const SEASON_IDX = ['spring', 'summer', 'autumn', 'winter'];
+        const w = winner === 'attacker' ? 'a' : winner === 'defender' ? 'b' : 'draw';
+        set({ rivalries: recordRivalryBout(state.rivalries ?? {}, aId, bId, w, killed, state.date.year, Math.max(0, SEASON_IDX.indexOf(state.date.season))) });
+      },
+      applyDuelChallengeStakes: (challengerId, targetId, outcome) => {
+        const state = get();
+        const champ = state.officers[challengerId];
+        const target = state.officers[targetId];
+        if (!champ || !target) return;
+        const s = challengeStakes(outcome);
+        const officers = { ...state.officers };
+        officers[challengerId] = { ...champ, renown: Math.max(0, (champ.renown ?? 0) + s.challengerRenown) };
+        officers[targetId] = {
+          ...target,
+          renown: Math.max(0, (target.renown ?? 0) + s.targetRenown),
+          loyalty: Math.max(0, Math.min(100, target.loyalty + s.targetLoyalty)),
+        };
+        set({ officers });
+      },
+      slayOfficerInDuel: (slayerId, victimId) => {
+        const state = get();
+        const slayer = state.officers[slayerId];
+        const victim = state.officers[victimId];
+        if (!victim || victim.status === 'dead' || slayerId === victimId) return;
+        const officers = { ...state.officers };
+        // 復仇種子 — record the slayer's force on the fallen officer's surviving
+        // kin & sworn brothers, so a vengeful relative bears a grudge (mirrors the
+        // battlefield duel-kill path in combat.ts).
+        const killerForce = slayer?.forceId;
+        if (killerForce) {
+          const fam = state.family ?? [];
+          const relIds = [...parentsOf(victimId, fam), ...childrenOf(victimId, fam), ...spousesOf(victimId, fam), ...siblingsOf(victimId, fam)];
+          for (const relId of relIds) {
+            const rel = officers[relId];
+            if (!rel || rel.status === 'dead') continue;
+            officers[relId] = { ...rel, killedRelativesBy: { ...(rel.killedRelativesBy ?? {}), [victimId]: killerForce } };
+          }
+          for (const swornId of allSwornBrothersOf(victimId, state.runtimeBonds ?? [])) {
+            const sw = officers[swornId];
+            if (!sw || sw.status === 'dead') continue;
+            officers[swornId] = { ...sw, killedSwornBy: { ...(sw.killedSwornBy ?? {}), [victimId]: killerForce } };
+          }
+        }
+        officers[victimId] = { ...victim, status: 'dead', forceId: null, task: null, woundedSeasons: undefined, woundSeverity: undefined };
+        set({ officers });
+        // 陣斬名將 — a momentous, real death-match kill by one of your champions.
+        if (killerForce && killerForce === state.playerForceId) {
+          get().pushPopup({
+            key: 'duel-slay-champion', media: 'image',
+            titleZh: '陣斬名將', titleEn: 'A Champion Felled',
+            captionZh: `${slayer?.name.zh ?? '你的猛將'}於陣前斬殺 ${victim.name.zh}`,
+            captionEn: `${slayer?.name.en ?? 'Your champion'} slew ${victim.name.en} in single combat`,
+          });
+        }
+      },
+      inflictDuelScar: (officerId, scar) => {
+        const state = get();
+        const o = state.officers[officerId];
+        if (!o || o.status === 'dead') return;
+        const have = o.duelScars ?? [];
+        if (have.includes(scar)) return; // a fighter bears each maim only once
+        set({ officers: { ...state.officers, [officerId]: { ...o, duelScars: [...have, scar] } } });
+      },
+      awardTournamentChampion: (championId, finalistIds) => {
+        const state = get();
+        // 年度武道會 — the steep ladder climb is the year's championship prize; a
+        // second tournament the same year is mere practice (XP only, no climb).
+        const annual = state.lastTournamentYear !== state.date.year;
+        const ratings = { ...state.warRatings };
+        const officers = { ...state.officers };
+        const bump = (id: EntityId, rat: number, ren: number) => {
+          if (!officers[id]) return;
+          ratings[id] = Math.round((ratings[id] ?? seedRating(officers[id])) + rat);
+          officers[id] = { ...officers[id], renown: Math.max(0, (officers[id].renown ?? 0) + ren) };
+        };
+        // 奪魁 — the realm's tournament victor climbs the 武評榜 steeply (often a tier
+        // up → the 鬥將生涯 bonus) and his fame soars; the other finalists climb too.
+        bump(championId, annual ? 80 : 12, annual ? 8 : 2);
+        if (annual) for (const id of finalistIds) if (id !== championId) bump(id, 30, 3);
+        set({ warRatings: ratings, officers, lastTournamentYear: state.date.year });
+        return annual;
+      },
+      adjustForceFavor: (forceA, forceB, delta) => {
+        if (!forceA || !forceB || forceA === forceB || !delta) return;
+        const state = get();
+        const relations = { ...state.diplomacy.relations };
+        const key = pairKey(forceA, forceB);
+        const rel = relations[key] ?? { forceA: forceA < forceB ? forceA : forceB, forceB: forceA < forceB ? forceB : forceA, score: 0, status: 'neutral' as const };
+        relations[key] = { ...rel, score: Math.max(-100, Math.min(100, rel.score + delta)) };
+        set({ diplomacy: { ...state.diplomacy, relations } });
+      },
+      recruitViaDuel: (officerId) => {
+        const state = get();
+        const o = state.officers[officerId];
+        const pid = state.playerForceId;
+        if (!o || !pid || o.status === 'dead' || o.forceId === pid) return false;
+        // 折服來投 — the bested foe joins the player's house, posted to the capital.
+        const capId = state.forces[pid]?.capitalCityId ?? o.locationCityId;
+        set({
+          officers: {
+            ...state.officers,
+            [officerId]: { ...o, forceId: pid, status: 'idle', task: null, locationCityId: capId, loyalty: Math.max(55, Math.min(70, o.loyalty + 20)) },
+          },
+        });
+        return true;
+      },
       markDuelScenarioCleared: (scenarioId) => {
         const cur = get().clearedDuelScenarios ?? [];
         if (cur.includes(scenarioId)) return;
@@ -10816,6 +10944,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // 名局廊 — small fx-only records, safe to persist in full.
         duelHall: state.duelHall,
         warRatings: state.warRatings,
+        rivalries: state.rivalries,
+        lastTournamentYear: state.lastTournamentYear,
         clearedDuelScenarios: state.clearedDuelScenarios,
         deeds: state.deeds,
         fogOfWar: state.fogOfWar,
@@ -10873,6 +11003,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (!state.debateUsage) state.debateUsage = {};
         if (!state.duelHall) state.duelHall = [];
         if (!state.warRatings) state.warRatings = {};
+        if (!state.rivalries) state.rivalries = {};
+        if (state.lastTournamentYear == null) state.lastTournamentYear = 0;
         if (!state.clearedDuelScenarios) state.clearedDuelScenarios = [];
         if (!state.customEvents) state.customEvents = [];
         if (!state.recentPrestige) state.recentPrestige = [];

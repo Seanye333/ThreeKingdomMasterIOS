@@ -281,6 +281,11 @@ export interface GameState {
   duelHall: import('../systems/duelHall').BoutRecord[];
   /** 武評榜 — per-officer ELO rating for single combat (seeded from 武力 if absent). */
   warRatings: Record<EntityId, number>;
+  /** 恩怨簿 — head-to-head single-combat history per pair (forges 宿敵 in play). */
+  rivalries: import('../systems/rivalries').RivalryMap;
+  /** 天下武道會 — the year the realm's tournament last crowned a champion; the
+   *  steep 武評榜 climb is a once-a-year prize (not farmable). 0 = never held. */
+  lastTournamentYear: number;
   /** 單挑戰役 — ids of duel scenarios the player has cleared (campaign progress). */
   clearedDuelScenarios: EntityId[];
   /** Per-turn snapshots of the CURRENT battle (transient, not persisted) —
@@ -611,6 +616,8 @@ export const EMPTY_STATE: GameState = {
   battleReplays: [],
   duelHall: [],
   warRatings: {},
+  rivalries: {},
+  lastTournamentYear: 0,
   clearedDuelScenarios: [],
   currentBattleSnapshots: [],
   deeds: {},
@@ -980,6 +987,8 @@ export function loadScenario(
     battleReplays: [],
     duelHall: [],
     warRatings: {},
+    rivalries: {},
+  lastTournamentYear: 0,
     clearedDuelScenarios: [],
   currentBattleSnapshots: [],
     deeds: {},

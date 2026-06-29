@@ -35,7 +35,7 @@ import { itemSetPowerMul } from '../data/itemSets';
 import { SIGNATURE_OVERRIDES } from './personalTactics';
 import { predictAttackDamage } from './damagePredict';
 import { stratagemSituation, type Situation } from './tacticSituation';
-import { resolveDuel, canDuel } from './duel';
+import { resolveDuel, canDuel, staticProwess } from './duel';
 
 /**
  * Unit-type counter matrix. counterBonus[attacker][defender] = multiplier on
@@ -2452,6 +2452,126 @@ export function challengeDuel(
   }
 
   return { ...b, units, log, damagePopups: [...(b.damagePopups ?? []), ...popups] };
+}
+
+// ─── 致師 — the pre-battle champion's challenge ──────────────────────────────
+// Before a blow is struck, a side may send its best out to call for single
+// combat. Unlike a mid-battle 陣前單挑 (which sways the two units), a 致師 win
+// SETS THE TONE of the whole battle: the victor's host rides in heartened, the
+// bested host cowed — a larger army-wide morale swing, spent as the side's
+// one turn-1 special. A 平手 leaves both armies tense, no edge gained.
+
+/** The champion a side fields for a 致師: its strongest duel-capable, non-supply
+ *  fighter, the commander winning a tie. Null if the side has no able champion. */
+export function pickDuelChampion(
+  b: TacticalBattle,
+  side: 'attacker' | 'defender',
+  officers: Record<EntityId, Officer>,
+): TacticalUnit | null {
+  let best: TacticalUnit | null = null;
+  let bestScore = -Infinity;
+  for (const u of b.units) {
+    if (u.side !== side || u.troops <= 0 || u.isSupply || isRouting(u)) continue;
+    const o = officers[u.officerId];
+    if (!o || !canDuel(o).ok) continue;
+    const score = staticProwess(o) + (u.isCommander ? 0.5 : 0); // commander breaks ties
+    if (score > bestScore) { bestScore = score; best = u; }
+  }
+  return best;
+}
+
+/** Whether a side may issue a 致師: turn 1, its special unspent, and both sides
+ *  can field a champion. */
+export function canIssuePreBattleDuel(
+  b: TacticalBattle,
+  side: 'attacker' | 'defender',
+  officers: Record<EntityId, Officer>,
+): boolean {
+  if (b.turn !== 1) return false;
+  if (b.preDuelUsed?.[side] || b.prepUsed?.[side]) return false;
+  const foe: 'attacker' | 'defender' = side === 'attacker' ? 'defender' : 'attacker';
+  return !!pickDuelChampion(b, side, officers) && !!pickDuelChampion(b, foe, officers);
+}
+
+/**
+ * Fold a settled 致師 into the battle: the victor's host takes heart, the bested
+ * host is cowed, and the challenging side's turn-1 special is spent. Morale only;
+ * the duel's personal toll (wounds/kill/車輪) is applied by the duel path itself.
+ */
+export function applyPreBattleDuel(
+  b: TacticalBattle,
+  challengerSide: 'attacker' | 'defender',
+  winnerSide: 'attacker' | 'defender' | 'draw',
+): TacticalBattle {
+  const loserSide: 'attacker' | 'defender' | null =
+    winnerSide === 'draw' ? null : winnerSide === 'attacker' ? 'defender' : 'attacker';
+  const units = b.units.map((u) => {
+    if (u.troops <= 0) return u;
+    if (winnerSide === 'draw') return { ...u, morale: Math.max(0, u.morale - 5) }; // 對峙 — both tense
+    if (u.side === winnerSide) return { ...u, morale: Math.min(100, u.morale + 18) }; // 士氣大振
+    if (u.side === loserSide) return { ...u, morale: Math.max(0, u.morale - 22) };   // 奪其先聲
+    return u;
+  });
+  const text = winnerSide === 'draw'
+    ? '致師搦戰 — 兩將鬥得難分難解,兩軍對峙凝立。'
+    : `致師奏功 — ${winnerSide === 'attacker' ? '攻方' : '守方'}陣前折服敵將,三軍士氣大振!`;
+  return {
+    ...b,
+    units,
+    preDuelUsed: { ...b.preDuelUsed, [challengerSide]: true },
+    log: [...(b.log ?? []), { turn: b.turn, text, kind: 'event' as const }],
+  };
+}
+
+/**
+ * 敵將致師 — the AI side may open with its own challenge. It calls you out when
+ * it likes its odds (its champion at least a match for yours), eagerly when much
+ * stronger. Auto-resolved (the foe doesn't wait for the player) and NON-lethal at
+ * the gate — a beaten champion is mauled and their host cowed, not slain before a
+ * blow. Returns the (possibly unchanged) battle and a banner line when issued.
+ */
+export function aiMaybePreBattleDuel(
+  b: TacticalBattle,
+  aiSide: 'attacker' | 'defender',
+  officers: Record<EntityId, Officer>,
+  rng: () => number,
+): { battle: TacticalBattle; issued: boolean; line?: { zh: string; en: string } } {
+  if (!canIssuePreBattleDuel(b, aiSide, officers)) return { battle: b, issued: false };
+  const foeSide: 'attacker' | 'defender' = aiSide === 'attacker' ? 'defender' : 'attacker';
+  const aiUnit = pickDuelChampion(b, aiSide, officers);
+  const foeUnit = pickDuelChampion(b, foeSide, officers);
+  if (!aiUnit || !foeUnit) return { battle: b, issued: false };
+  const aiOff = officers[aiUnit.officerId];
+  const foeOff = officers[foeUnit.officerId];
+  if (!aiOff || !foeOff) return { battle: b, issued: false };
+  const edge = staticProwess(aiOff) - staticProwess(foeOff);
+  // 量力 — challenge when not clearly outmatched; an edge makes the AI eager.
+  const eager = aiOff.traits?.some((tr) => tr === 'matchless' || tr === 'duelist' || tr === 'reckless' || tr === 'martial-valor');
+  const chance = Math.max(0, Math.min(0.6, 0.22 + edge * 0.02)) + (eager ? 0.15 : 0);
+  if (edge < -8 || rng() >= chance) return { battle: b, issued: false };
+
+  const r = resolveDuel({ attacker: aiOff, defender: foeOff, rng });
+  const winnerSide: 'attacker' | 'defender' | 'draw' =
+    r.winner === 'draw' ? 'draw' : r.winner === 'attacker' ? aiSide : foeSide;
+  let nb = applyPreBattleDuel(b, aiSide, winnerSide);
+  // The bested champion is personally mauled (non-lethal at the gate); both tire.
+  const loserUnitId = winnerSide === 'draw' ? null
+    : winnerSide === aiSide ? foeUnit.id : aiUnit.id;
+  nb = {
+    ...nb,
+    units: nb.units.map((u) => {
+      let nu = u;
+      if (u.id === loserUnitId) nu = { ...nu, troops: Math.round(nu.troops * 0.82) };
+      if (u.id === aiUnit.id || u.id === foeUnit.id) nu = { ...nu, duelFatigue: (nu.duelFatigue ?? 0) + 24 };
+      return nu;
+    }),
+  };
+  const line = winnerSide === 'draw'
+    ? { zh: `${aiOff.name.zh} 出陣致師,與 ${foeOff.name.zh} 鬥得難分難解!`, en: `${aiOff.name.en} challenges ${foeOff.name.en} — and the bout is a draw!` }
+    : winnerSide === aiSide
+      ? { zh: `${aiOff.name.zh} 致師逞威,陣前折服 ${foeOff.name.zh}!`, en: `${aiOff.name.en} rides out and bests ${foeOff.name.en} before the hosts!` }
+      : { zh: `${foeOff.name.zh} 接戰致師,反挫 ${aiOff.name.zh} 之鋒!`, en: `${foeOff.name.en} answers the challenge and turns back ${aiOff.name.en}!` };
+  return { battle: nb, issued: true, line };
 }
 
 /**
