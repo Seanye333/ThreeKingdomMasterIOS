@@ -125,6 +125,25 @@ export interface GameState {
   runtimeBonds: OathBond[];
   /** 聯姻同盟 — binding marriage alliances the player has sealed. */
   marriageAlliances: import('../types/diplomacy').MarriageAlliance[];
+  /** 共討會盟 — active player-led war leagues (§7.1). Each names a 盟主, a foe,
+   *  and the sworn members; resolved/expired in systems/diplomacyPacts. */
+  warCoalitions: import('../types/diplomacy').WarCoalition[];
+  /** 附庸不臣 — per-vassal discontent (0..100). Rises when a suzerain over-levies
+   *  (索貢) or summons a vassal to war (徵召); high discontent + a vassal that has
+   *  outgrown its lord feeds 叛附 (systems/diplomacyPacts.tickVassalRevolt). */
+  vassalDiscontent: Record<EntityId, number>;
+  /** 援盟之請 — standing calls to arms from menaced player allies (§7.1 ④),
+   *  refreshed each season; answered via store.answerCallToArms. */
+  pendingCallsToArms: import('../types/diplomacy').CallToArms[];
+  /** 索貢來牒 — ultimatums AI realms have pressed on the player (§7.1 ③ AI-side);
+   *  yielded to or defied via store.answerDemand. */
+  pendingDemands: import('../types/diplomacy').DiplomaticDemand[];
+  /** 假途・借道 — active grants of passage (§7.1 B). Each lets its grantee stage
+   *  attacks through the grantor's land; expired/pruned each season. */
+  passageGrants: import('../types/diplomacy').PassageGrant[];
+  /** 求和乞降 — standing pleas from beaten AI realms to end a war (§7.1 ②');
+   *  granted/refused via store.answerPeaceOffer. */
+  pendingPeaceOffers: import('../types/diplomacy').PeaceOffer[];
   /** Pairwise officer rapport (好感, −100..100) — positive grown via social
    *  actions/co-service, negative accrued from friction (嫌隙) and 離間計. */
   rapport: Record<string, number>;
@@ -554,6 +573,12 @@ export const EMPTY_STATE: GameState = {
   diplomacy: { relations: {} },
   runtimeBonds: [],
     marriageAlliances: [],
+  warCoalitions: [],
+  vassalDiscontent: {},
+  pendingCallsToArms: [],
+  pendingDemands: [],
+  passageGrants: [],
+  pendingPeaceOffers: [],
   rapport: {},
   lordRapport: {},
   battleHistory: [],
@@ -904,6 +929,12 @@ export function loadScenario(
     diplomacy: { relations: initialRelations },
     runtimeBonds: [],
     marriageAlliances: [],
+    warCoalitions: [],
+    vassalDiscontent: {},
+    pendingCallsToArms: [],
+    pendingDemands: [],
+    passageGrants: [],
+    pendingPeaceOffers: [],
     rapport: {},
     lordRapport: {},
     battleHistory: [],

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { COMMAND_DEFS } from '../../game/systems/commands';
 import { navalReachableCityIds } from '../../game/data/ports';
+import { passageTargets } from '../../game/systems/diplomacyPacts';
 import { marchDurationFor } from '../../game/data/cities';
 import { marchSpeedMul, adjustMarchSeasons, MARCH_PACES, PACE_LABEL, type MarchPace } from '../../game/systems/marchPace';
 import { playSfx } from '../../game/systems/sound';
@@ -79,13 +80,28 @@ export function MarchPicker({ cityId, onClose }: Props) {
       .filter((c) => !!c);
   }, [cityId, ports, adjacentCities, cities]);
 
-  /** Combined target candidates (land + sea). */
+  /** 假途・借道 — foes (and the host itself) reachable through an ally's land
+   *  by an active passage grant; the dropdown marks them 借道 / 假途. */
+  const playerForceId = useGameStore((s) => s.playerForceId);
+  const passageGrants = useGameStore((s) => s.passageGrants);
+  const passageCities = useMemo(() => {
+    if (!playerForceId) return [] as Array<{ city: typeof cities[string]; betrayal: boolean }>;
+    const adjacentSet = new Set(adjacentCities.map((c) => c.id));
+    const navalSet = new Set(navalCities.map((c) => c.id));
+    return passageTargets(passageGrants ?? [], playerForceId, cityId, cities)
+      .filter((p) => !adjacentSet.has(p.cityId) && !navalSet.has(p.cityId))
+      .map((p) => ({ city: cities[p.cityId], betrayal: p.betrayal }))
+      .filter((p) => !!p.city);
+  }, [passageGrants, playerForceId, cityId, cities, adjacentCities, navalCities]);
+
+  /** Combined target candidates (land + sea + 借道). */
   const targetCandidates = useMemo(
     () => [
-      ...adjacentCities.map((c) => ({ city: c, naval: false })),
-      ...navalCities.map((c) => ({ city: c, naval: true })),
+      ...adjacentCities.map((c) => ({ city: c, naval: false, passage: false, betrayal: false })),
+      ...navalCities.map((c) => ({ city: c, naval: true, passage: false, betrayal: false })),
+      ...passageCities.map((p) => ({ city: p.city, naval: false, passage: true, betrayal: p.betrayal })),
     ],
-    [adjacentCities, navalCities],
+    [adjacentCities, navalCities, passageCities],
   );
 
   const [targetId, setTargetId] = useState<EntityId | null>(
@@ -276,7 +292,7 @@ export function MarchPicker({ cityId, onClose }: Props) {
             <div className={styles.empty}>{t('無相鄰或海路可達之城。', 'No adjacent or sea-reachable cities.')}</div>
           ) : (
             <ul className={styles.targetList}>
-              {targetCandidates.map(({ city: c, naval }) => {
+              {targetCandidates.map(({ city: c, naval, passage, betrayal }) => {
                 const f = c.ownerForceId ? forces[c.ownerForceId] : null;
                 const hostile = c.ownerForceId !== source.ownerForceId;
                 return (
@@ -292,16 +308,18 @@ export function MarchPicker({ cityId, onClose }: Props) {
                       <span className={styles.targetText}>
                         <span className={styles.targetNameZh}>
                           {naval && <span style={{ color: '#5a9bc8', marginRight: 4 }}>🚢</span>}
+                          {passage && <span style={{ color: betrayal ? '#e0707a' : '#c8a85a', marginRight: 4 }}>{betrayal ? '⚔' : '⇢'}</span>}
                           {c.name.zh}
                         </span>
                         <span className={styles.targetNameEn}>
                           {t(f?.name.zh ?? '無主', `${c.name.en} · ${f?.name.en ?? 'Neutral'}`)}
                           {naval && <span style={{ color: '#5a9bc8', marginLeft: 6 }}>{t('海路', 'by sea')}</span>}
+                          {passage && <span style={{ color: betrayal ? '#e0707a' : '#c8a85a', marginLeft: 6 }}>{betrayal ? t('假途滅虢', 'betray host') : t('借道', 'via passage')}</span>}
                         </span>
                       </span>
                       <span className={styles.targetMeta}>
                         {hostile ? (
-                          <span className={styles.hostile}>{t('攻', 'ATK')}</span>
+                          <span className={styles.hostile}>{betrayal ? t('叛', 'BTR') : t('攻', 'ATK')}</span>
                         ) : (
                           <span className={styles.friendly}>{t('移', 'MOVE')}</span>
                         )}

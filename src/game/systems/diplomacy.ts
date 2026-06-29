@@ -447,7 +447,7 @@ function clamp(lo: number, hi: number, v: number): number {
   return Math.max(lo, Math.min(hi, v));
 }
 
-function addSeasons(date: GameDate, count: number): GameDate {
+export function addSeasons(date: GameDate, count: number): GameDate {
   const seasons: Array<GameDate['season']> = ['spring', 'summer', 'autumn', 'winter'];
   let year = date.year;
   let idx = seasons.indexOf(date.season);
@@ -461,7 +461,7 @@ function addSeasons(date: GameDate, count: number): GameDate {
   return { year, season: seasons[idx] };
 }
 
-function isOnOrAfter(a: GameDate, b: GameDate): boolean {
+export function isOnOrAfter(a: GameDate, b: GameDate): boolean {
   if (a.year !== b.year) return a.year > b.year;
   const seasons: Array<GameDate['season']> = ['spring', 'summer', 'autumn', 'winter'];
   return seasons.indexOf(a.season) >= seasons.indexOf(b.season);

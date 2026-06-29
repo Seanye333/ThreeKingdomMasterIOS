@@ -49,6 +49,11 @@ export interface Officer {
   /** 故主 — the force this officer served when captured. Set on imprisonment so
    *  that force can later ransom (贖回) them back. Cleared on release/recruit. */
   capturedFromForceId?: EntityId;
+  /** 質子 — when this officer lives at another realm's court as a diplomatic
+   *  hostage (§7.1), the holder's force id. Distinguishes a peace surety (who
+   *  can be recalled, may escape, and is slain if their home betrays the pact)
+   *  from a war captive. Status is 'imprisoned'; cleared on return/death. */
+  hostageOfForceId?: EntityId;
   /** 後遺 — short-lived afflictions (養傷 from a duel, 羞憤 from a lost debate)
    *  that sap effective stats for a few seasons. Optional; ticks down each
    *  season. See systems/afflictions.ts. */

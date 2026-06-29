@@ -222,3 +222,64 @@
 .napBtn      { border-color: #5a9b3a; color: #88c060; }
 .tributeBtn  { border-color: #e6c473; color: #e6c473; }
 .breakBtn    { border-color: #b8442e; color: #e09b6c; margin-left: auto; }
+/* 縱橫 coercion/league buttons — same warm-danger tone, but left-aligned so a
+   row of them lines up rather than each jumping to the right edge. */
+.coerceBtn   { border-color: #9b6a3a; color: #d6a86a; }
+.coerceBtn:hover:not(:disabled),
+.actions .coerceBtn:hover:not(:disabled) { background: #26323e; }
+
+.vassalTag {
+  font-size: 0.7rem;
+  letter-spacing: 0.04rem;
+  padding: 0.05rem 0.35rem;
+  background: #3a2e1a;
+  color: #d6a86a;
+  border: 1px solid #5a4326;
+  font-family: ui-monospace, monospace;
+}
+
+/* §7.1 ④ 援盟之請 — a banner of standing calls to arms above the force list. */
+.callsToArms {
+  border: 1px solid #9b6a3a;
+  background: rgba(155, 106, 58, 0.12);
+  padding: 0.5rem 0.6rem;
+  margin-bottom: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.callsTitle {
+  font-size: 0.78rem;
+  letter-spacing: 0.08rem;
+  color: #e0b072;
+  font-family: ui-monospace, monospace;
+}
+
+.callRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.callText {
+  flex: 1;
+  font-size: 0.78rem;
+  color: #d8c4a0;
+}
+
+.callRow button {
+  background: #10161e;
+  color: #e6edf3;
+  border: 1px solid #26323e;
+  padding: 0.3rem 0.6rem;
+  font-family: inherit;
+  font-size: 0.75rem;
+  letter-spacing: 0.05rem;
+  cursor: pointer;
+}
+
+.callRow button:hover { background: #26323e; }
+.callRow .allianceBtn { border-color: #3a7dd9; color: #88b7e8; }
+.callRow .breakBtn { border-color: #b8442e; color: #e09b6c; margin-left: 0; }

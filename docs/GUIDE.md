@@ -17,7 +17,7 @@
 | 4 | [軍事指揮・委任](#第四章-軍事指揮委任) | muster, legion, governor, governorEval, advisor | ✅ |
 | 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, combat, formations, stratagems, weather, battlefieldTerrain, personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
 | 6 | [單挑](#第六章-單挑) | duel(招式/必殺技/獨門被動/破綻/傷殘/挑落下馬/兵裝/坐騎/地形/性格/AI), gauntlet, duelSeries, duelScenarios(劇情+戰役), duelHall(名局廊), warRanking(武評榜), rivalries(宿敵/恩怨簿), duelChallenge(約戰), tactical(致師) | ✅ |
-| 7 | [外交・謀略・天子](#第七章-外交謀略天子) | diplomacy, coalition, schemes, aiSchemes, ambition, espionage, expedition, foreignRealm, intrigue, courtFactions, factionEvents, emperor, imperialEffects, mandate, appointmentEffects, clans, statecraft | ✅ |
+| 7 | [外交・謀略・天子](#第七章-外交謀略天子) | diplomacy, diplomacyPacts(稱臣/索貢/會盟/援盟/調停/質子/借道), coalition, schemes, aiSchemes, ambition, espionage, expedition, foreignRealm, intrigue, courtFactions, factionEvents, emperor, imperialEffects, mandate, appointmentEffects, clans, statecraft | ✅ |
 | 8 | [事件・天命・異族・宗教](#第八章-事件天命異族宗教) | events, historicalEvents, customEvents, factionEvents, religion, tribes | ✅ |
 | 9 | [元遊戲・收藏・分享](#第九章-元遊戲收藏分享) | achievements, deedTitles, dailyChallenge, leaderboard, mods, powerHistory, historyBook, romance, sound, voiceLines, dialogueRoll | ✅ |
 | 10 | [AI](#第十章-ai) | ai, aiBuild, aiCourt, aiAppointments, aiSchemes, aiRansom, aiWishesFlavor | ✅ |
@@ -167,6 +167,34 @@
 | 遠邦關係 | 0–100,成功遠使 +18;降凶險 關係/400、提回報檔 關係/250 |
 | 反向來使 | 已通商邦每季 6%+關係/500 遣使來朝,奉貢金(商利×2)+天命 |
 | 異域義從 | 邊城 foreignAux 守備加成 = 1+min(0.15, aux/20000);關係≥50 可借兵成軍 |
+
+### 外交・縱橫(§7.1)
+
+| 項 | 值 |
+|---|---|
+| 關係/信譽/積怨 | 中立/NAP/同盟,好感 −100~100;信譽守約+5・背盟−25;積怨高則難議和 |
+| 借糧 | 盟友 ≤6000、NAP/交好(score≥20)≤3000,出自對方存糧 |
+| 通商條約 | 需同盟或 NAP;雙方各 +200 金/季(交戰休眠) |
+| 稱臣納貢 | 成算 = 戰力比×0.35 + 好感/300 + 君主柔順 − 積怨/250;成則鎖同盟+地板 60 |
+| 藩屬季貢 | 100 + 30×(城數−1),上限 400 /季,自藩屬庫入宗主都 |
+| 徵召藩屬 | 藩屬即與指定敵開戰;不臣 vassalDiscontent +18 |
+| 叛附 | 機率 = max(0,兵力比−0.85)×0.18 + 不臣/400,上限 0.5;成則 −40 好感+宗主積怨 20 |
+| 弱者求附 | AI 被 ≥2.5× 強鄰壓且交好,12%/季主動稱臣(含向玩家) |
+| 索貢/通牒 | 成算 0.25 + 戰力比×0.4 + 好感/400 + 柔順 − 積怨/250 − 重(金0/糧.08/稱臣.3) |
+| 索貢得手 | 金:其都 35% 入我都・信譽−4・積怨+12;拒 = 開戰之釁 |
+| 共討會盟 | 8 季;盟軍 AI 攻目標 ×1.8;滅敵→盟主信譽+10 天命+8,期滿存→信譽−5 |
+| 援盟之請 | 盟友被 ≥1.15× 強敵壓境每季列出;參戰 +盟誼12 信譽+6,坐視 −盟誼20 信譽−8 |
+| AI 索貢來牒 | 好戰且 ≥1.8× 接壤強鄰 10%/季下牒(≥3× 可逼降);屈服輸款/稱臣、抗牒開戰 |
+| AI 合縱共討你 | 玩家 ≥1.4× 最強鄰時,最強自由鄰 10%/季任盟主糾眾組正式會盟;一時僅一個 |
+| AI 盟友驰援 | 玩家被 ≥1.15× 強敵壓時,接壤該敵之 AI 盟友 30%/季自動宣戰來救 |
+| 調停斡旋 | 600 金請第三強國止戈;成算 0.28+居間者兵威+與敵交情+你好感/400−敵積怨/200,成→8季NAP+積怨−20 |
+| 質子 | 真武將質居敵都;索還(好感−8)、興兵討宿主則處死、5%/季越獄、滅國獲釋 |
+| 假途借道 | 向盟友/NAP 借道 8 季(盟友幾必允、NAP 看交情);可遠擊與其接壤之敵城 |
+| 假途滅虢 | 借道後反咬授道之主:信譽 −30、關係 −50 轉敵、積怨 +30、借道權即焚 |
+| 天子敕令 | 挾天子者外交帶 imperialSanction(挾 +0.15、天命>50 +至0.1);抗詔者天命 −5 |
+| 求和/受降 | 求和輸歲幣≤800 換 8季NAP(對方占優不允);AI 積怨≥25 且 <0.7× 遣使乞降(輸 40%庫金/稱臣) |
+| 盟主分贓 | 會盟滅敵:盟主 +戰償金1500、盟軍各 +信譽3 |
+| 信譽連鎖 | 信譽<30:舊盟每季 −2、藩屬不臣 +4、會盟乏人響應 |
 
 ### 戰鬥・單挑
 
@@ -1586,10 +1614,56 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
 
 ## 第七章 外交・謀略・天子
 
-### 7.1 外交(diplomacy.ts)
+### 7.1 外交(diplomacy.ts / diplomacyPacts.ts)
 
-- 關係狀態:中立 / 互不侵犯 / 同盟;好感 −100~+100。
-- 行動:同盟、互不侵犯(臨時和平)、歲貢(+好感)、聯姻、送質子(+50 好感、16 季 NAP)、破盟(−50)。
+- 關係狀態:中立 / 互不侵犯 / 同盟;好感 −100~+100。`isHostilePermitted` 只在「中立」時放行互攻 —— NAP / 同盟 / **臣屬** / **會盟同袍** 皆封鎖。
+- **平起平坐的行動**(diplomacy.ts):同盟、互不侵犯(臨時和平)、歲貢(+好感)、**借糧**(向友邦調糧入都:盟友 ≤6000、NAP/交好 ≤3000,出自對方存糧)、**通商條約**(需先盟或 NAP,和平期間兩國歲入俱增)、聯姻、送質子(+50 好感、16 季 NAP)、破盟(−50)。
+- **信譽 `credibility` / 積怨 `grudges`** 是外交的兩條暗線:守約 +信譽、背盟/勒索 −信譽,低信譽他國難與結盟;對你動兵、被你勒索者積怨日深,積怨越高越難議和。守信/失信性格再加減成。
+
+> **§7.1 縱橫(diplomacyPacts.ts)** —— 在「平起平坐」之上補齊**縱向等級**與**多邊聯動**四件套。保護關係(宗主⇄藩屬、會盟同袍)一律借用既有的 `status:'allied'`,故 `isHostilePermitted` 自動封鎖,不新增關係態。
+
+**① 稱臣納貢・附庸** —— 同盟之上的**不對等**盟約(`force.vassalOfForceId`):
+- **招撫稱臣**(DiplomacyModal「招撫稱臣」,對更弱的中立國):逼其俯首為藩屬。成算看**戰力比 × 好感 × 對方君主性格(性情越柔越易服)× 積怨**(`evaluateSubjugation`);成則關係鎖「同盟」、好感地板 60,雙向封鎖互攻。
+- **納款稱臣**(「納款稱臣」,向更強鄰):反向自貶為藩屬以求庇護;強者幾乎照單全收(白得貢賦 + 緩衝),除非積怨深寧可吞併(`evaluateProtection`)。
+- **季貢**(resolution.ts):藩屬每季向宗主都城納貢 —— 基礎 100 金,**每多領一城 +30(上限 400)**,出自藩屬自家庫;無力則少納,無罰。
+- **徵召藩屬**(「徵召討之」):命麾下藩屬出兵討某敵 —— 該藩屬即與此敵開戰,但**徵召之苦累積不臣**(`vassalDiscontent` +18)。
+- **叛附**(`tickVassalRevolt`,每季):**已坐大**(兵力 ≥ 宗主)或**不臣積重**的藩屬有機率扯旗自立 —— 解約、好感驟降 −40、宗主積怨 +20。宗主**被滅或失盡城池**則盟約自然失效(清掉懸空指標,非背信)。
+- **釋放/背主**:宗主可「釋放」藩屬(以德懷之);若你身為藩屬,可「背主自立」(信譽 −20、宿主積怨 +25)。
+- **弱者求附**(`tickAIVassalage`,AI 側):走投無路的 AI(被 ≥2.5× 強鄰壓境且交好)每季有機率**主動稱臣**,含向玩家稱臣。
+
+**③ 索貢・最後通牒** —— 強者外交(`evaluateDemand`,DiplomacyModal「索貢/逼降」):以戰相脅索要 **金 / 糧 / 稱臣**。成算看戰力比 × 好感 × 君主性格 × 積怨,且**索求越重越難**(金 < 糧 < 稱臣)。服:金/糧自其都轉入我都(且我信譽 −4、其積怨 +12)、稱臣則直接立藩;**拒:即為開戰之釁**(好感崩、積怨 +10)。
+
+**② 共討會盟・聯軍**(`WarCoalition`) —— 玩家當**盟主**主動組多國聯軍(「共討」一鍵號召所有盟友/NAP 夥伴):接受者(`evaluateCoalitionJoin`:看親盟主、恨目標、勝算、性情)入盟即與目標開戰;會盟期 8 季內**盟軍 AI 把矛頭偏向約定之敵**(`pickForceTarget` ×1.8,與合縱 ×1.6 並存)。**滅敵則盟主 +信譽 +天命**,期滿敵存則盟主失面子(−信譽)。是 §7.1 末「合縱」(AI 反應式抗霸)的**玩家主動版**。
+
+**④ 盟約義務・連坐參戰**(`detectCallsToArms` / `answerCallToArms`) —— 讓「同盟」真有重量:每季掃描**受強敵壓境的玩家盟友**,在外交面板頂端列出「援盟之請」。**參戰**→ 對其敵宣戰、盟誼 +12、信譽 +6;**坐視**→ 盟誼 −20、信譽 −8,普通同盟更可能就此自解。
+
+> **AI 對等(縱橫不再單向)** —— ①②③④ 的強者外交,AI 也會反過來用在玩家身上:
+> - **③ 索貢來牒(AI→玩家,`tickAIDemands`)**:好戰(aggressive/tyrant/expansionist/opportunist)且兵力 ≥1.8× 的接壤強鄰每季可能下牒,索金或(≥3× 時)逼降,列於外交面板「索貢來牒」。**屈服**輸款/稱臣息兵、**抗牒**即開戰之釁(`answerDemand`)。
+> - **② 合縱共討(AI→玩家,`tickAICoalitionVsPlayer`)**:當玩家兵力 ≥1.4× 最強鄰而成眾矢之的,最強的自由強鄰可自任盟主,糾集他國組**正式會盟**討你(主動版,有別於被動合縱;同享 ×1.8 兵鋒偏置)。一時僅一個討你之盟。
+> - **④ 盟友驰援(AI→玩家,`tickAllyRally`)**:鏡像援盟之請 —— 玩家受 ≥1.15× 強敵壓境時,接壤該敵的 AI 盟友每季 30% 機率**自動**對其宣戰來救。同盟自此雙向。
+
+**調停斡旋(diplomacyPacts.evaluateMediation / store.requestMediation)** —— **③' 第三方止戈**:花 600 金請一個受敵敬重的強國居中調停(外交面板「調停」對中立之敵,自動擇最佳居間者)。成算看**居間者兵威 × 其與敵之交情 × 敵之積怨/對你好感 ×(大鴻臚倍率)**;成則與敵締 8 季互不侵犯、敵積怨 −20、居間者好感 +6,敗則僅耗金而稍緩。
+
+**質子深化(§7.1 D)** —— 把外交質子(DiplomacyModal「人質」)從抽象的「+50 好感/16 季 NAP」坐實為**真有一名武將質居敵都**(`officer.hostageOfForceId`,status `imprisoned`):
+- **索還質子**(`recallHostage`,外交面板):撤回人質,武將歸國(status idle),撤質之舉令對方好感 −8。
+- **質子之殤(假途之殤)**:質期內若**興兵討其宿主**(issueMarch 出兵其城),人質即被處死(背盟血代,與聯姻質子同理)。
+- **越獄/獲釋**(`tickHostages`,每季):每季 5% 機率脫身潛歸;宿主**滅國**則人質獲釋歸國,自家**滅國**則人質流落敵廷(status idle,可被招攬)。
+
+**假途・借道(§7.1 B,`PassageGrant`)** —— 向**盟友/互不侵犯夥伴借道**,打開穿其國境的進兵走廊:
+- **求借道**(`requestPassage`,DiplomacyModal「借道」):盟友幾乎必允、NAP 夥伴看交情、戒心重的君主稍吝(`evaluatePassage`);成則得 8 季假道之權(`tickPassageGrants` 期滿/滅國則失效)。
+- **借道擊敵**:出兵面板(MarchPicker)多列**借道目標** —— 凡與授道方接壤之敵城(`⇢ 借道`),從你接壤授道方的城出兵即可遠擊(腳程按地理實距,`marchDurationFor`);行軍/攔截/守城一切照常。
+- **假途滅虢**(借道目標中標 `⚔ 假途`):亦可**反咬授道之主**,襲取其邊城 —— issueMarch 放行此違盟之擊,但代價酷烈:**信譽 −30**、與其關係驟降 −50 轉敵、積怨 +30、該借道權即焚。背信之名播於四鄰。
+- 移動按坐標、非相鄰亦可達(同漕運),故引擎複用既有行軍/會戰系統,無新戰鬥路徑。
+
+**① 天子敕令外交(§7.1 ↔ §7.4)** —— 「奉天子以令不臣」接入外交:**挾天子者**(emperorCustodian)的索貢/逼降/招撫稱臣帶**天子之威**(`imperialSanction`:挾天子 +0.15、天命 >50 再加至 +0.1),更易成;**抗詔不從**者除開戰外**天命 −5**。霸道之主可借天子號令諸侯。
+
+**② 求和乞降(戰爭終結閉環,`evaluatePeaceOffer` / `PeaceOffer`)** —— 補上「打到一半如何收場」:
+- **求和**(`sueForPeace`,外交面板對交惡之敵):輸歲幣(≤800)乞締 8 季互不侵犯;**對方占優則志在必得不允**,均勢/劣勢方肯罷兵(成算 = 兵力比 + 好感/400 − 積怨/200 + 歲幣甜頭)。
+- **AI 乞降**(`tickAIPeaceOffers`):被你打崩的 AI(對你積怨 ≥25、兵力 <0.7× 且接壤)每季可能**遣使乞和** —— 列於外交面板「乞降求和」,**受降**(取其 40% 庫金歲幣 / 殘破者舉國稱臣,締 NAP)或**不受**續討滅之(`answerPeaceOffer`)。
+
+**③ 盟主分贓** —— 共討會盟**滅敵**時(tickCoalitions),盟主除 +信譽 +天命外,另得**戰償金 1500 入都**,盟軍各 +3 信譽分潤,號召不再是白忙。
+
+**④ 信譽連鎖(`tickCredibilityCascade`)** —— 信譽 **< 30** 則背信之累浮現:**舊盟每季 −2 漸疏**(貌合神離但盟約仍在)、**藩屬不臣 +4**(催 §7.1① 叛附)、且**號召會盟乏人響應**(信譽折進 `evaluateCoalitionJoin`,無人願隨失信之主)。
 
 **聯姻同盟(marriageAlliance.ts)** —— 把「婚姻」從一次性 +好感升格為**硬外交盟約**:
 
@@ -1829,6 +1903,7 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
    - 瘟疫蔓延 rollPlagueOutbreak → 朝堂黨爭 rollIntrigue → 天氣轉換(借東風)→ 天命祥瑞凶兆 rollOmen
    - **AI 養世家 aiArrangeMarriages(春季)**→ **家族 tickFamily**(春季生育擲卵/5–13 歲教養/14 歲及冠出仕入家門,見 §2.5)+ 繼承 applySuccession(世子優先 + 諸子奪嫡)
    - 派系事件 rollFactionEvents(黨錮/武人干政/九品官人/新政,門閥權重含家門聲望,見 §7.4)
+   - **§7.1 縱橫維護 + 聯姻同盟維護**:聯姻盟維護(地板/漸暖/滅國剪除)→ **共討會盟結算 tickCoalitions**(滅敵 → 盟主 +信譽 +天命;期滿敵存 → 盟主 −信譽)→ **叛附 tickVassalRevolt**(藩屬坐大/不臣則自立、死主自動解約)→ **弱者求附 tickAIVassalage**(AI 主動稱臣)→ **援盟之請刷新 detectCallsToArms** → **AI 對等**(`tickAIDemands` 下牒索貢 / `tickAICoalitionVsPlayer` 合縱討你 / `tickAllyRally` 盟友驰援)→ **質子維護 tickHostages**(越獄/獲釋)→ **借道維護 tickPassageGrants**(期滿/滅國則失效)→ **失信之累 tickCredibilityCascade**(信譽<30 舊盟疏/藩屬叛)→ **AI 乞降 tickAIPeaceOffers**(殘破 AI 遣使求和;見 §7.1 全)
    - **AI 計略 resolveAISchemes**(見 §10)→ AI 朝廷請願旁白
    - **家門聲望 tickClanStandings(僅冬季,出仕/亡故/繼承落定後)**+ 世家蔭澤忠誠(見 §2.5/§7.8)
    - 傷兵恢復(含瀕死致死)+ 後遺 tick → 截糧延遲效果 tick

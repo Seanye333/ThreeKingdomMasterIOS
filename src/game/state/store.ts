@@ -44,6 +44,34 @@ import { stanceRecruitModifier, deriveInitialClanStandings, tickClanStandings, c
 import { statecraftRecruitBonus } from '../systems/statecraft';
 import { holdFounding } from '../systems/founding';
 import { allianceBetween, breakAlliance as breakMarriageTie, tickMarriageAlliances } from '../systems/marriageAlliance';
+import {
+  evaluateSubjugation,
+  evaluateProtection,
+  evaluateDemand,
+  evaluateCoalitionJoin,
+  sealVassalage,
+  dissolveVassalage,
+  tickVassalRevolt,
+  tickAIVassalage,
+  formCoalition,
+  tickCoalitions,
+  detectCallsToArms,
+  tickAIDemands,
+  tickAICoalitionVsPlayer,
+  tickAllyRally,
+  tickHostages,
+  tickCredibilityCascade,
+  evaluateMediation,
+  evaluatePassage,
+  passageActive,
+  passageReachableTarget,
+  tickPassageGrants,
+  PASSAGE_DURATION_SEASONS,
+  evaluatePeaceOffer,
+  tickAIPeaceOffers,
+  forceCityCount as pactForceCityCount,
+  type DemandKind,
+} from '../systems/diplomacyPacts';
 import { FORGE_RECIPES_BY_ID } from '../data/forging';
 import { STARTER_RECIPE_IDS, forgeQualityPlus, discoverableRecipe, dismantleYield } from '../systems/forging';
 import { assignAiGear } from '../systems/aiGear';
@@ -124,9 +152,12 @@ import { loyaltyFloor, rollMentorPolicyTransfer, mentorsOf, deepenBonds, camarad
 import { TRAIT_DEFS_BY_ID } from '../data/personality';
 import {
   ALLIANCE_PROPOSAL_COST,
+  NAP_DURATION_SEASONS,
   NAP_PROPOSAL_COST,
+  addSeasons as addDiploSeasons,
   breakAlliance,
   computeTotalTroops,
+  isOnOrAfter,
   payTribute,
   proposeAlliance,
   proposeHostage,
@@ -210,6 +241,20 @@ function bestRapportWith(state: { officers: Record<string, Officer>; rapport: Re
     if (r > best) best = r;
   }
   return best;
+}
+
+/** 天子之威 — the imperial sanction (0..~0.25) backing the player's demands (§7.1 ①):
+ *  holding the 天子 (奉天子以令不臣) lends +0.15; a Mandate above 50 adds up to +0.10. */
+function playerImperialSanction(state: {
+  cities: Record<string, City>;
+  emperorCityId?: string | null;
+  mandate: { byForce: Record<string, number> };
+  playerForceId: string | null;
+}): number {
+  if (!state.playerForceId) return 0;
+  const custodian = emperorCustodian(state.cities, state.emperorCityId ?? null);
+  const mandate = state.mandate.byForce[state.playerForceId] ?? 50;
+  return (custodian === state.playerForceId ? 0.15 : 0) + Math.max(0, Math.min(0.1, (mandate - 50) / 500));
 }
 import { setupTacticalBattle, inferUnitType, planSiegeRelief, rollTimeOfDay, pickAiFormation, applyOpeningScheme, applyAiBattlePreps } from '../systems/tactical';
 import { pickAutoStratagem } from '../data/stratagems2';
@@ -440,6 +485,46 @@ interface GameStore extends GameState {
   /** 通商條約 — open commerce with a force you're at peace with; both earn a
    *  steady gold income each season while the peace holds. */
   proposeTradeTreaty: (targetForceId: EntityId) => { ok: boolean; accepted?: boolean; message: string };
+  /** 招撫稱臣 — demand a weaker realm bow as your vassal (§7.1 ①). On consent it
+   *  becomes your protected subordinate: tribute each season, summonable to war. */
+  demandVassalage: (targetForceId: EntityId) => { ok: boolean; accepted?: boolean; message: string };
+  /** 納款稱臣 — offer yourself as vassal to a stronger protector (§7.1 ①). */
+  seekProtection: (targetForceId: EntityId) => { ok: boolean; accepted?: boolean; message: string };
+  /** 釋放藩屬 — free a vassal of yours (or, if you are a vassal, renounce your
+   *  own submission at a 信譽 cost). */
+  releaseVassal: (targetForceId: EntityId) => { ok: boolean; message: string };
+  /** 徵召藩屬 — summon a vassal into your war against `foeForceId`: the vassal
+   *  goes to war with the foe; over-summoning breeds 叛附 discontent. */
+  summonVassal: (vassalForceId: EntityId, foeForceId: EntityId) => { ok: boolean; message: string };
+  /** 最後通牒 — extort gold/grain, or demand submission, under threat of war
+   *  (§7.1 ③). Refusal is a casus belli; acquiescence stokes their 積怨. */
+  demandTribute: (targetForceId: EntityId, kind: DemandKind) => { ok: boolean; accepted?: boolean; message: string };
+  /** 共討會盟 — forge a war league against `targetForceId`, inviting friendly
+   *  realms to swear in (§7.1 ②). Returns who joined. */
+  proposeCoalition: (targetForceId: EntityId, inviteeForceIds: EntityId[]) => { ok: boolean; joined: EntityId[]; message: string };
+  /** 援盟參戰 — answer (or refuse) a called ally's plea to join their war against
+   *  `foeForceId` (§7.1 ④). Honour lifts your repute; refusal marks you down. */
+  answerCallToArms: (allyForceId: EntityId, foeForceId: EntityId, join: boolean) => { ok: boolean; message: string };
+  /** 應牒 — yield to (or defy) an AI's ultimatum (§7.1 ③ AI-side). Yielding pays
+   *  gold/grain or submits as vassal; defiance is a casus belli for the coercer. */
+  answerDemand: (fromForceId: EntityId, comply: boolean) => { ok: boolean; message: string };
+  /** 索還質子 — recall a 質子 you placed at another court (§7.1 D). The surety
+   *  withdrawn, the officer comes home and that realm cools toward you. */
+  recallHostage: (officerId: EntityId) => { ok: boolean; message: string };
+  /** 調停斡旋 — pay a respected third realm (`brokerForceId`) to broker a peace
+   *  between you and `foeForceId` (§7.1 C). Success signs a NAP and eases the
+   *  foe's grudge; failure just spends the silver. */
+  requestMediation: (brokerForceId: EntityId, foeForceId: EntityId) => { ok: boolean; accepted?: boolean; message: string };
+  /** 假途借道 — ask an ally / NAP partner for leave to march through their land
+   *  (§7.1 B). While granted you may strike foes bordering their territory (and,
+   *  treacherously, the host itself — 假途滅虢 — at a ruinous cost to your name). */
+  requestPassage: (grantorForceId: EntityId) => { ok: boolean; accepted?: boolean; message: string };
+  /** 求和 — sue a foe to end a war (§7.1 ②'), offering gold reparations for an
+   *  8-season NAP. A foe that's winning fights on; a beaten one settles. */
+  sueForPeace: (foeForceId: EntityId) => { ok: boolean; accepted?: boolean; message: string };
+  /** 受降 — grant (or refuse) a beaten AI's plea for terms (§7.1 ②'): take their
+   *  reparations or their submission and end the war, or fight on. */
+  answerPeaceOffer: (fromForceId: EntityId, grant: boolean) => { ok: boolean; message: string };
   /** 鑄錢 — debase the coinage for an immediate windfall in the capital at the
    *  cost of rising inflation (which saps future tax income until it eases). */
   mintCoin: () => { ok: boolean; gold: number; inflation: number };
@@ -1645,9 +1730,18 @@ export const useGameStore = create<GameStore>()(
         // 漕運 — non-adjacent targets are reachable when both cities have
         // linked ports on a connected sea/river route (the picker lists
         // them with 🚢). The fleet does the marching.
-        const isNaval = !source.adjacentCityIds.includes(targetId);
-        if (isNaval && !navalReachableCityIds(sourceId, state.ports).has(targetId))
+        const adjacent = source.adjacentCityIds.includes(targetId);
+        const navalReach = !adjacent && navalReachableCityIds(sourceId, state.ports).has(targetId);
+        // 假途・借道 (§7.1 B) — leave-to-pass opens a corridor through an ally's land,
+        // bringing foes beyond it into reach AND letting you turn on the host itself
+        // (假途滅虢). Computed regardless of adjacency, since a betrayal target (the
+        // grantor's own city) is typically adjacent to the staging city.
+        const passage = (!!state.playerForceId && source.ownerForceId === state.playerForceId && (state.passageGrants ?? []).length > 0)
+          ? passageReachableTarget(state.passageGrants ?? [], state.playerForceId, targetId, state.cities)
+          : { reachable: false, betrayal: false, grantorId: null as EntityId | null };
+        if (!adjacent && !navalReach && !passage.reachable)
           return { ok: false, reason: 'not adjacent' };
+        const isNaval = navalReach;
         if (officer.locationCityId !== sourceId)
           return { ok: false, reason: 'officer not in this city' };
         if (officer.task)
@@ -1667,7 +1761,10 @@ export const useGameStore = create<GameStore>()(
             state.diplomacy,
             source.ownerForceId!,
             target.ownerForceId,
-          )
+          ) &&
+          // 假途滅虢 — turning on the host whose road you borrowed is permitted,
+          // but at a ruinous cost to your name (applied on commit below).
+          !passage.betrayal
         )
           return {
             ok: false,
@@ -1699,6 +1796,18 @@ export const useGameStore = create<GameStore>()(
             ...state.officers[extraId],
             task: 'march' as const,
           };
+        }
+
+        // 質子之殤 — marching on a realm that holds your 質子 is a betrayal of the
+        // surety: the affronted court puts the hostage to the sword (§7.1 D).
+        let hostageSlain: Officer | null = null;
+        if (target.ownerForceId && target.ownerForceId !== source.ownerForceId) {
+          for (const o of Object.values(state.officers)) {
+            if (o.hostageOfForceId === target.ownerForceId && o.forceId === state.playerForceId && o.status !== 'dead') {
+              officersUpdate[o.id] = { ...o, status: 'dead', deathYear: state.date.year, hostageOfForceId: undefined };
+              hostageSlain = o;
+            }
+          }
         }
 
         // Sea legs run on the fleet's schedule — two seasons however far the
@@ -1755,10 +1864,25 @@ export const useGameStore = create<GameStore>()(
               pace,
             },
           },
-          // 積怨 — marching on a force's own city stokes its lasting resentment.
-          ...(target.ownerForceId && target.ownerForceId !== source.ownerForceId
-            ? { grudges: { ...state.grudges, [target.ownerForceId]: Math.min(100, (state.grudges[target.ownerForceId] ?? 0) + 6) } }
-            : {}),
+          // 假途滅虢 — betraying the host whose road you borrowed craters relations,
+          // brands you an oathbreaker (−30 信譽), stokes a deep grudge, and spends
+          // the grant. Otherwise just the ordinary 積怨 of marching on a rival.
+          ...(passage.betrayal && target.ownerForceId
+            ? (() => {
+                const gid = target.ownerForceId;
+                const key = pairKey(state.playerForceId!, gid);
+                const rel = getRelation(state.diplomacy, state.playerForceId!, gid);
+                const cred = state.credibility[state.playerForceId!] ?? 100;
+                return {
+                  diplomacy: { relations: { ...state.diplomacy.relations, [key]: { ...rel, status: 'neutral' as const, score: -50, expiresAt: undefined } } },
+                  credibility: { ...state.credibility, [state.playerForceId!]: Math.max(0, cred - 30) },
+                  grudges: { ...state.grudges, [gid]: Math.min(100, (state.grudges[gid] ?? 0) + 30) },
+                  passageGrants: (state.passageGrants ?? []).filter((g) => !(g.grantorForceId === gid && g.granteeForceId === state.playerForceId)),
+                };
+              })()
+            : (target.ownerForceId && target.ownerForceId !== source.ownerForceId
+                ? { grudges: { ...state.grudges, [target.ownerForceId]: Math.min(100, (state.grudges[target.ownerForceId] ?? 0) + 6) } }
+                : {})),
         });
         const paceTag = pace !== 'normal' && !isNaval ? `·${PACE_LABEL[pace].zh}` : '';
         const paceTagEn = pace !== 'normal' && !isNaval ? ` · ${PACE_LABEL[pace].en}` : '';
@@ -1766,6 +1890,20 @@ export const useGameStore = create<GameStore>()(
           `出兵${paceTag} · ${officer.name.zh} 領 ${troops.toLocaleString()} 兵 → ${target.name.zh}（${dur}季抵達）`,
           `March${paceTagEn} · ${officer.name.en} leads ${troops.toLocaleString()} → ${target.name.en} (${dur} seasons)`,
         );
+        if (hostageSlain) {
+          get().notify(
+            `質子之殤 · ${hostageSlain.name.zh} 質於 ${target.name.zh},今興兵背盟,身死他鄉`,
+            `${hostageSlain.name.en}, your hostage at ${target.name.en}, is slain for this betrayal`,
+            'warn',
+          );
+        }
+        if (passage.betrayal) {
+          get().notify(
+            `假途滅虢 · 借 ${target.name.zh} 之道而襲之 — 背信之名播於四鄰(信譽 −30)`,
+            `假途滅虢 — you turn on ${target.name.en} whose road you borrowed (−30 credibility)`,
+            'warn',
+          );
+        }
         // 大軍出征 — a host of size marching forth earns a 慶典 (manual marches only;
         // 集結令 fires its own 全軍集結 popup, so those columns pass quiet).
         if (!quiet && troops >= 5000) {
@@ -3008,6 +3146,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           weather: state.weather,
           forts: state.forts,
           fogOfWar: state.fogOfWar,
+          warCoalitions: state.warCoalitions,
         });
         // Compute whether this period transition crosses a season boundary.
         // Boundary = the period BEFORE advance is the last (lower) phase of
@@ -5454,6 +5593,120 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           : { diplomacy: postDiplomacy, alliances: state.marriageAlliances, entries: [] };
         postDiplomacy = allianceTick.diplomacy;
 
+        // §7.1 縱橫 upkeep — resolve war leagues (②), vassal revolts (①), and
+        // refresh the calls-to-arms board (④). All season-bounded & pure.
+        let nextCoalitions = state.warCoalitions;
+        let nextVassalDiscontent = state.vassalDiscontent;
+        let nextPendingCalls = state.pendingCallsToArms;
+        let nextPendingDemands = state.pendingDemands;
+        let nextPassageGrants = state.passageGrants;
+        let nextPendingPeace = state.pendingPeaceOffers;
+        let credibilityAfterPacts = state.credibility;
+        let grudgesAfterPacts = grudgesAfterSpies;
+        if (seasonBoundary) {
+          // ② A sworn league whose foe has fallen crowns its 盟主; one that
+          //    lapses with the foe intact shames them.
+          const coTick = tickCoalitions({ coalitions: state.warCoalitions, cities: postCities, forces: postForces, date: result.date });
+          nextCoalitions = coTick.coalitions;
+          result.report.entries.push(...coTick.entries);
+          if (Object.keys(coTick.credibilityDelta).length > 0) {
+            const cred = { ...credibilityAfterPacts };
+            for (const [fid, d] of Object.entries(coTick.credibilityDelta)) cred[fid] = Math.max(0, Math.min(100, (cred[fid] ?? 100) + d));
+            credibilityAfterPacts = cred;
+          }
+          if (Object.keys(coTick.mandateDelta).length > 0) {
+            const byForce = { ...nextMandate.byForce };
+            for (const [fid, d] of Object.entries(coTick.mandateDelta)) byForce[fid] = Math.max(0, Math.min(100, (byForce[fid] ?? 50) + d));
+            nextMandate = { ...nextMandate, byForce };
+          }
+          // 分贓 — pay each victorious 盟主's war indemnity into its capital.
+          for (const [fid, gold] of Object.entries(coTick.goldDelta)) {
+            const capId = postForces[fid]?.capitalCityId;
+            const cap = capId ? postCities[capId] : null;
+            if (cap) postCities = { ...postCities, [cap.id]: { ...cap, gold: cap.gold + gold } };
+          }
+          // ① 叛附 — vassals that have outgrown or come to resent their lords break free.
+          const vrTick = tickVassalRevolt({ forces: postForces, cities: postCities, diplomacy: postDiplomacy, discontent: state.vassalDiscontent, playerForceId: state.playerForceId });
+          postForces = vrTick.forces;
+          postDiplomacy = vrTick.diplomacy;
+          nextVassalDiscontent = vrTick.discontent;
+          result.report.entries.push(...vrTick.entries);
+          if (Object.keys(vrTick.grudgeBumps).length > 0) {
+            const g = { ...grudgesAfterPacts };
+            for (const [fid, d] of Object.entries(vrTick.grudgeBumps)) g[fid] = Math.max(0, Math.min(100, (g[fid] ?? 0) + d));
+            grudgesAfterPacts = g;
+          }
+          // ① 弱者求附 — a cornered AI realm may sue to become a stronger neighbour's vassal.
+          const avTick = tickAIVassalage({ forces: postForces, cities: postCities, diplomacy: postDiplomacy, grudges: grudgesAfterPacts, playerForceId: state.playerForceId });
+          postForces = avTick.forces;
+          postDiplomacy = avTick.diplomacy;
+          result.report.entries.push(...avTick.entries);
+          // ④ Refresh the standing pleas: which allies are menaced this season?
+          nextPendingCalls = detectCallsToArms({ forces: postForces, cities: postCities, diplomacy: postDiplomacy, playerForceId: state.playerForceId, date: result.date });
+
+          // AI-side reciprocity — the strong-arm tools turned back on the player.
+          // ③ A stronger neighbour may press an ultimatum (drop stale ones first).
+          const livingDemands = (nextPendingDemands ?? []).filter(
+            (d) => isOnOrAfter(d.expiresAt, result.date) && postForces[d.fromForceId] && pactForceCityCount(d.fromForceId, postCities) > 0,
+          );
+          const freshDemands = tickAIDemands({ forces: postForces, cities: postCities, diplomacy: postDiplomacy, playerForceId: state.playerForceId, existing: livingDemands, date: result.date });
+          nextPendingDemands = [...livingDemands, ...freshDemands];
+          for (const d of freshDemands) {
+            const from = postForces[d.fromForceId];
+            result.report.entries.push({
+              cityId: null, kind: 'note',
+              text: `${from?.name.en ?? 'A rival'} presses an ultimatum on you — ${d.kind === 'submit' ? 'submit or face war' : `hand over ${d.kind} or face war`}.`,
+              textZh: `${from?.name.zh ?? '強鄰'}遣使下牒,${d.kind === 'submit' ? '逼君稱臣' : `索我${d.kind === 'gold' ? '金帛' : '糧秣'}`},否則興兵。`,
+            });
+          }
+          // ② A dominant player may find the free realms banding against them.
+          const aiLeague = tickAICoalitionVsPlayer({ forces: postForces, cities: postCities, diplomacy: postDiplomacy, grudges: grudgesAfterPacts, credibility: credibilityAfterPacts, coalitions: nextCoalitions, playerForceId: state.playerForceId, date: result.date, year: result.date.year });
+          if (aiLeague) {
+            postDiplomacy = aiLeague.diplomacy;
+            nextCoalitions = [...nextCoalitions, aiLeague.coalition];
+            const leader = postForces[aiLeague.leaderId];
+            result.report.entries.push({
+              cityId: null, kind: 'note',
+              text: `${leader?.name.en ?? 'A rival'} forges a coalition against your growing power — the realm bands together to bring you down.`,
+              textZh: `${leader?.name.zh ?? '強鄰'}倡合縱之盟,糾集諸侯共討君之強盛。`,
+            });
+          }
+          // ④ The mirror of the call-to-arms: AI allies rally to a hard-pressed player.
+          const rally = tickAllyRally({ forces: postForces, cities: postCities, diplomacy: postDiplomacy, playerForceId: state.playerForceId });
+          postDiplomacy = rally.diplomacy;
+          result.report.entries.push(...rally.entries);
+
+          // D 質子 upkeep — frees on a realm's fall, the odd escape home (越獄);
+          // betrayal-death fires at the betraying march, not here.
+          const hoTick = tickHostages({ officers: officersWithMarchTask, forces: postForces, cities: postCities });
+          officersWithMarchTask = hoTick.officers;
+          result.report.entries.push(...hoTick.entries);
+
+          // B 假途 — lapse passage grants past their term or whose parties fell.
+          nextPassageGrants = tickPassageGrants({ grants: state.passageGrants ?? [], cities: postCities, forces: postForces, date: result.date });
+
+          // ④ 失信之累 — a realm of broken faith sees allies cool & vassals chafe.
+          const ccTick = tickCredibilityCascade({ credibility: credibilityAfterPacts, diplomacy: postDiplomacy, forces: postForces, discontent: nextVassalDiscontent, playerForceId: state.playerForceId });
+          postDiplomacy = ccTick.diplomacy;
+          nextVassalDiscontent = ccTick.discontent;
+          result.report.entries.push(...ccTick.entries);
+
+          // ②' 求和乞降 — a beaten AI at war with the player sues for terms.
+          const livingOffers = (nextPendingPeace ?? []).filter(
+            (o) => isOnOrAfter(o.expiresAt, result.date) && postForces[o.fromForceId] && pactForceCityCount(o.fromForceId, postCities) > 0,
+          );
+          const freshOffers = tickAIPeaceOffers({ forces: postForces, cities: postCities, diplomacy: postDiplomacy, grudges: grudgesAfterPacts, playerForceId: state.playerForceId, existing: livingOffers, date: result.date });
+          nextPendingPeace = [...livingOffers, ...freshOffers];
+          for (const o of freshOffers) {
+            const from = postForces[o.fromForceId];
+            result.report.entries.push({
+              cityId: null, kind: 'note',
+              text: `${from?.name.en ?? 'A beaten realm'} sues for peace — ${o.kind === 'vassal' ? 'offering to submit' : 'offering reparations'}.`,
+              textZh: `${from?.name.zh ?? '殘破之邦'}遣使乞和 —— ${o.kind === 'vassal' ? '願舉國稱臣' : '願輸款罷兵'}。`,
+            });
+          }
+        }
+
         // 失都遷治 — any force whose 治所 changed hands this season relocates its
         // seat to its largest surviving city, and its whole realm's 民忠 reels
         // from the shock. Covers conquests from every path (AI, interactive,
@@ -5807,7 +6060,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           firedEventIds: postFiredIds,
           pendingEspionage: [],
           embeddedSpies: embeddedSpiesNext,
-          grudges: grudgesAfterSpies,
+          grudges: grudgesAfterPacts,
+          credibility: credibilityAfterPacts,
+          warCoalitions: nextCoalitions,
+          vassalDiscontent: nextVassalDiscontent,
+          pendingCallsToArms: nextPendingCalls,
+          pendingDemands: nextPendingDemands,
+          passageGrants: nextPassageGrants,
+          pendingPeaceOffers: nextPendingPeace,
           tribeState: { ...tribeResult.state, aggression: nextAggression as typeof tribeResult.state.aggression },
           scenicLooted: nextScenicLooted,
           buildings: bldEvt.buildings,
@@ -6481,6 +6741,488 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         return { ok: true, accepted: true, message: `通商條約締成 — 商旅互通,兩國歲入俱增。` };
       },
 
+      // ── §7.1 ① 稱臣納貢 ──────────────────────────────────────────────
+      demandVassalage: (targetForceId) => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        const player = state.forces[state.playerForceId];
+        const target = state.forces[targetForceId];
+        if (!player || !target) return { ok: false, message: 'Invalid forces.' };
+        if (player.vassalOfForceId) return { ok: false, message: '臣屬之身,不可受人稱臣。' };
+        if (target.vassalOfForceId) return { ok: false, message: `${target.name.zh}已臣屬他人。` };
+        const rel = getRelation(state.diplomacy, player.id, targetForceId);
+        if (rel.status === 'allied') return { ok: false, message: '盟友之國,不便逼其稱臣。' };
+        const myTroops = computeTotalTroops(player.id, state.cities);
+        const theirTroops = computeTotalTroops(targetForceId, state.cities);
+        const imperialSanction = playerImperialSanction(state);
+        const { accepted } = evaluateSubjugation({
+          suzerainTroops: myTroops, vassalTroops: theirTroops,
+          relationScore: rel.score, vassalPersonality: target.personality,
+          grudge: state.grudges[targetForceId] ?? 0,
+          imperialSanction,
+        });
+        if (!accepted) {
+          // 折辱使臣 — a refused ultimatum to bow sours relations and breeds spite;
+          // defying one backed by the 天子 (抗詔) further bleeds the target's Mandate.
+          const key = pairKey(player.id, targetForceId);
+          set({
+            diplomacy: { relations: { ...state.diplomacy.relations, [key]: { ...rel, score: Math.max(-100, rel.score - 15) } } },
+            grudges: { ...state.grudges, [targetForceId]: Math.min(100, (state.grudges[targetForceId] ?? 0) + 12) },
+            ...(imperialSanction > 0 ? { mandate: { ...state.mandate, byForce: { ...state.mandate.byForce, [targetForceId]: Math.max(0, (state.mandate.byForce[targetForceId] ?? 50) - 5) } } } : {}),
+          });
+          return { ok: true, accepted: false, message: imperialSanction > 0 ? `${target.name.zh}抗詔拒臣 — 天命有損,反生怨懟。` : `${target.name.zh}斷然拒絕稱臣,反生怨懟。` };
+        }
+        const sealed = sealVassalage({ suzerainId: player.id, vassalId: targetForceId, forces: state.forces, diplomacy: state.diplomacy });
+        set({ forces: sealed.forces, diplomacy: sealed.diplomacy });
+        get().notify(`招撫稱臣 · ${target.name.zh} 俯首納貢`, `${target.name.en} bows as your vassal`);
+        return { ok: true, accepted: true, message: `${target.name.zh}稱臣納貢,願奉君為主。` };
+      },
+
+      seekProtection: (targetForceId) => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        const player = state.forces[state.playerForceId];
+        const target = state.forces[targetForceId];
+        if (!player || !target) return { ok: false, message: 'Invalid forces.' };
+        if (player.vassalOfForceId) return { ok: false, message: '已臣屬他人。' };
+        if (target.vassalOfForceId) return { ok: false, message: `${target.name.zh}本身即為藩屬。` };
+        const rel = getRelation(state.diplomacy, player.id, targetForceId);
+        const myTroops = computeTotalTroops(player.id, state.cities);
+        const theirTroops = computeTotalTroops(targetForceId, state.cities);
+        const { accepted } = evaluateProtection({
+          protectorTroops: theirTroops, supplicantTroops: myTroops,
+          relationScore: rel.score, grudge: state.grudges[targetForceId] ?? 0,
+        });
+        if (!accepted) {
+          return { ok: true, accepted: false, message: `${target.name.zh}不屑納君為屬。` };
+        }
+        // Player becomes the vassal: target is suzerain.
+        const sealed = sealVassalage({ suzerainId: targetForceId, vassalId: player.id, forces: state.forces, diplomacy: state.diplomacy });
+        set({ forces: sealed.forces, diplomacy: sealed.diplomacy });
+        get().notify(`納款稱臣 · 奉 ${target.name.zh} 為主`, `You become a vassal of ${target.name.en}`);
+        return { ok: true, accepted: true, message: `君納款稱臣,奉${target.name.zh}為主,受其庇護。` };
+      },
+
+      releaseVassal: (targetForceId) => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        const player = state.forces[state.playerForceId];
+        const target = state.forces[targetForceId];
+        if (!player || !target) return { ok: false, message: 'Invalid forces.' };
+        // Case A: target is MY vassal → I free them (a magnanimous, relation-warming act).
+        if (target.vassalOfForceId === player.id) {
+          const out = dissolveVassalage({ suzerainId: player.id, vassalId: targetForceId, forces: state.forces, diplomacy: state.diplomacy, hostile: false });
+          set({ forces: out.forces, diplomacy: out.diplomacy,
+            vassalDiscontent: (() => { const d = { ...state.vassalDiscontent }; delete d[targetForceId]; return d; })() });
+          get().notify(`釋放藩屬 · ${target.name.zh} 復為自主`, `You free your vassal ${target.name.en}`);
+          return { ok: true, message: `君釋${target.name.zh}之屬,以德報之。` };
+        }
+        // Case B: I am THEIR vassal → I renounce my submission (an oathbreaker's act).
+        if (player.vassalOfForceId === targetForceId) {
+          const out = dissolveVassalage({ suzerainId: targetForceId, vassalId: player.id, forces: state.forces, diplomacy: state.diplomacy, hostile: true });
+          const cur = state.credibility[state.playerForceId] ?? 100;
+          set({ forces: out.forces, diplomacy: out.diplomacy,
+            credibility: { ...state.credibility, [state.playerForceId]: Math.max(0, cur - 20) },
+            grudges: { ...state.grudges, [targetForceId]: Math.min(100, (state.grudges[targetForceId] ?? 0) + 25) } });
+          get().notify(`背主自立 · 不復臣 ${target.name.zh}`, `You renounce your vassalage to ${target.name.en}`, 'warn');
+          return { ok: true, message: `君叛${target.name.zh}而自立 — 信譽受損,宿主含怨。` };
+        }
+        return { ok: false, message: '無此臣屬之約。' };
+      },
+
+      summonVassal: (vassalForceId, foeForceId) => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        const vassal = state.forces[vassalForceId];
+        const foe = state.forces[foeForceId];
+        if (!vassal || !foe) return { ok: false, message: 'Invalid forces.' };
+        if (vassal.vassalOfForceId !== state.playerForceId) return { ok: false, message: `${vassal.name.zh}非我藩屬。` };
+        if (foeForceId === vassalForceId) return { ok: false, message: '不可徵召藩屬攻其自身。' };
+        // The vassal goes to war with the foe (pact dropped, hostile tone).
+        const key = pairKey(vassalForceId, foeForceId);
+        const cur = getRelation(state.diplomacy, vassalForceId, foeForceId);
+        set({
+          diplomacy: { relations: { ...state.diplomacy.relations, [key]: { ...cur, status: 'neutral', score: Math.min(cur.score, -20), expiresAt: undefined } } },
+          // 徵召之苦 — being marched off to your lord's wars wears on a vassal.
+          vassalDiscontent: { ...state.vassalDiscontent, [vassalForceId]: Math.min(100, (state.vassalDiscontent[vassalForceId] ?? 0) + 18) },
+        });
+        get().notify(`徵召藩屬 · 命 ${vassal.name.zh} 討 ${foe.name.zh}`, `${vassal.name.en} is summoned to war against ${foe.name.en}`);
+        return { ok: true, message: `${vassal.name.zh}受徵召,出兵討${foe.name.zh}。` };
+      },
+
+      // ── §7.1 ③ 索貢・最後通牒 ────────────────────────────────────────
+      demandTribute: (targetForceId, kind) => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        const player = state.forces[state.playerForceId];
+        const target = state.forces[targetForceId];
+        if (!player || !target) return { ok: false, message: 'Invalid forces.' };
+        const rel = getRelation(state.diplomacy, player.id, targetForceId);
+        if (rel.status === 'allied') return { ok: false, message: '盟友之邦,不便相逼。' };
+        const myTroops = computeTotalTroops(player.id, state.cities);
+        const theirTroops = computeTotalTroops(targetForceId, state.cities);
+        const imperialSanction = playerImperialSanction(state);
+        const { accede } = evaluateDemand({
+          demanderTroops: myTroops, targetTroops: theirTroops, relationScore: rel.score,
+          targetPersonality: target.personality, grudge: state.grudges[targetForceId] ?? 0, kind,
+          imperialSanction,
+        });
+        const myCap = state.cities[player.capitalCityId];
+        const theirCap = state.cities[target.capitalCityId];
+        const key = pairKey(player.id, targetForceId);
+        if (!accede) {
+          // 抗命 — defiance: a casus belli. Relations crater, spite deepens; defying
+          // a demand backed by the 天子 (抗詔) also bleeds the defier's Mandate.
+          set({
+            diplomacy: { relations: { ...state.diplomacy.relations, [key]: { ...rel, status: 'neutral', score: Math.max(-100, rel.score - 20), expiresAt: undefined } } },
+            grudges: { ...state.grudges, [targetForceId]: Math.min(100, (state.grudges[targetForceId] ?? 0) + 10) },
+            ...(imperialSanction > 0 ? { mandate: { ...state.mandate, byForce: { ...state.mandate.byForce, [targetForceId]: Math.max(0, (state.mandate.byForce[targetForceId] ?? 50) - 5) } } } : {}),
+          });
+          return { ok: true, accepted: false, message: imperialSanction > 0 ? `${target.name.zh}抗詔不從 — 天命有損,兵釁已開。` : `${target.name.zh}抗命不從 — 兵釁已開。` };
+        }
+        if (kind === 'submit') {
+          const sealed = sealVassalage({ suzerainId: player.id, vassalId: targetForceId, forces: state.forces, diplomacy: state.diplomacy });
+          set({ forces: sealed.forces, diplomacy: sealed.diplomacy,
+            grudges: { ...state.grudges, [targetForceId]: Math.min(100, (state.grudges[targetForceId] ?? 0) + 8) } });
+          get().notify(`最後通牒 · ${target.name.zh} 屈服稱臣`, `${target.name.en} submits as your vassal`);
+          return { ok: true, accepted: true, message: `${target.name.zh}畏威而服,稱臣納貢。` };
+        }
+        // gold / grain extortion: transfer from their capital to yours.
+        if (!myCap || !theirCap) return { ok: false, message: 'No capital city.' };
+        const cred = state.credibility[state.playerForceId] ?? 100;
+        const grab = kind === 'gold'
+          ? Math.min(theirCap.gold, Math.max(0, Math.floor(theirCap.gold * 0.35)))
+          : Math.min(Math.max(0, theirCap.food - 1500), Math.floor(theirCap.food * 0.3));
+        const cities = { ...state.cities };
+        if (kind === 'gold') {
+          cities[theirCap.id] = { ...theirCap, gold: theirCap.gold - grab };
+          cities[myCap.id] = { ...cities[myCap.id], gold: cities[myCap.id].gold + grab };
+        } else {
+          cities[theirCap.id] = { ...theirCap, food: theirCap.food - grab };
+          cities[myCap.id] = { ...cities[myCap.id], food: cities[myCap.id].food + grab };
+        }
+        set({
+          cities,
+          // Extortion is profitable but ignoble — relations cool, spite grows,
+          // and strong-arming tarnishes your name a touch.
+          diplomacy: { relations: { ...state.diplomacy.relations, [key]: { ...rel, score: Math.max(-100, rel.score - 12) } } },
+          grudges: { ...state.grudges, [targetForceId]: Math.min(100, (state.grudges[targetForceId] ?? 0) + 12) },
+          credibility: { ...state.credibility, [state.playerForceId]: Math.max(0, cred - 4) },
+        });
+        const what = kind === 'gold' ? `金 ${grab.toLocaleString()}` : `糧 ${grab.toLocaleString()}`;
+        get().notify(`索貢 · 自 ${target.name.zh} 勒得${what}`, `Extorted ${grab.toLocaleString()} ${kind} from ${target.name.en}`);
+        return { ok: true, accepted: true, message: `${target.name.zh}畏威輸${what},然其心生怨。` };
+      },
+
+      // ── §7.1 ② 共討會盟 ──────────────────────────────────────────────
+      proposeCoalition: (targetForceId, inviteeForceIds) => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, joined: [], message: 'No player force.' };
+        const player = state.forces[state.playerForceId];
+        const target = state.forces[targetForceId];
+        if (!player || !target) return { ok: false, joined: [], message: 'Invalid forces.' };
+        if (getRelation(state.diplomacy, player.id, targetForceId).status === 'allied') {
+          return { ok: false, joined: [], message: '不可號召共討盟友。' };
+        }
+        const targetTroops = computeTotalTroops(targetForceId, state.cities);
+        let coalitionTroops = computeTotalTroops(player.id, state.cities);
+        const members: EntityId[] = [state.playerForceId];
+        for (const inviteeId of inviteeForceIds) {
+          const invitee = state.forces[inviteeId];
+          if (!invitee || inviteeId === targetForceId || inviteeId === state.playerForceId) continue;
+          if (invitee.vassalOfForceId === targetForceId) continue; // a foe's vassal won't turn
+          const inviteeTroops = computeTotalTroops(inviteeId, state.cities);
+          const { join } = evaluateCoalitionJoin({
+            relationToLeader: getRelation(state.diplomacy, player.id, inviteeId).score,
+            relationToTarget: getRelation(state.diplomacy, inviteeId, targetForceId).score,
+            grudgeToTarget: 0,
+            coalitionTroops: coalitionTroops + inviteeTroops,
+            targetTroops, invitePersonality: invitee.personality,
+            leaderCredibility: state.credibility[state.playerForceId] ?? 100,
+          });
+          if (join) { members.push(inviteeId); coalitionTroops += inviteeTroops; }
+        }
+        const { coalition, diplomacy } = formCoalition({
+          leaderId: state.playerForceId, targetId: targetForceId, memberIds: members,
+          diplomacy: state.diplomacy, date: state.date, year: state.date.year,
+        });
+        set({ diplomacy, warCoalitions: [...state.warCoalitions, coalition] });
+        const joined = members.filter((m) => m !== state.playerForceId);
+        const joinedNames = joined.map((id) => state.forces[id]?.name.zh ?? id).join('、');
+        get().notify(
+          joined.length > 0 ? `共討會盟 · 討 ${target.name.zh}(盟軍:${joinedNames})` : `共討 ${target.name.zh}(無人響應)`,
+          joined.length > 0 ? `Coalition against ${target.name.en} — ${joined.length} joined` : `No realm answered the call against ${target.name.en}`,
+          joined.length > 0 ? 'ok' : 'warn',
+        );
+        return { ok: true, joined, message: joined.length > 0 ? `會盟既成,共討${target.name.zh}。` : `無人響應,然君已自與${target.name.zh}開釁。` };
+      },
+
+      // ── §7.1 ④ 盟約義務・連坐參戰 ────────────────────────────────────
+      answerCallToArms: (allyForceId, foeForceId, join) => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        const player = state.forces[state.playerForceId];
+        const ally = state.forces[allyForceId];
+        const foe = state.forces[foeForceId];
+        if (!player || !ally || !foe) return { ok: false, message: 'Invalid forces.' };
+        const pending = (state.pendingCallsToArms ?? []).filter((c) => !(c.allyForceId === allyForceId && c.foeForceId === foeForceId));
+        const relKey = pairKey(player.id, allyForceId);
+        const allyRel = getRelation(state.diplomacy, player.id, allyForceId);
+        const cred = state.credibility[state.playerForceId] ?? 100;
+        if (join) {
+          // Declare war on the foe; the grateful ally warms, your name rises.
+          const foeKey = pairKey(player.id, foeForceId);
+          const foeRel = getRelation(state.diplomacy, player.id, foeForceId);
+          set({
+            pendingCallsToArms: pending,
+            diplomacy: { relations: {
+              ...state.diplomacy.relations,
+              [relKey]: { ...allyRel, score: Math.min(100, allyRel.score + 12) },
+              [foeKey]: { ...foeRel, status: 'neutral', score: Math.min(foeRel.score, -15), expiresAt: undefined },
+            } },
+            credibility: { ...state.credibility, [state.playerForceId]: Math.min(100, cred + 6) },
+          });
+          get().notify(`援盟參戰 · 助 ${ally.name.zh} 討 ${foe.name.zh}`, `You answer ${ally.name.en}'s call against ${foe.name.en}`);
+          return { ok: true, message: `君踐盟義,助${ally.name.zh}討${foe.name.zh} — 信義昭著。` };
+        }
+        // Refusing a sworn ally's plea: relations sour, repute dings, the pact may lapse.
+        const lapse = allyRel.status === 'allied' && (state.marriageAlliances ?? []).every(
+          (m) => !((m.forceA === player.id && m.forceB === allyForceId) || (m.forceB === player.id && m.forceA === allyForceId)),
+        );
+        set({
+          pendingCallsToArms: pending,
+          diplomacy: { relations: { ...state.diplomacy.relations, [relKey]: { ...allyRel, status: lapse ? 'neutral' : allyRel.status, score: Math.max(-100, allyRel.score - 20) } } },
+          credibility: { ...state.credibility, [state.playerForceId]: Math.max(0, cred - 8) },
+        });
+        get().notify(`坐視盟友 · 拒 ${ally.name.zh} 之請`, `You ignore ${ally.name.en}'s plea`, 'warn');
+        return { ok: true, message: `君坐視${ally.name.zh}之危 — 盟誼受損,信義蒙塵。` };
+      },
+
+      answerDemand: (fromForceId, comply) => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        const player = state.forces[state.playerForceId];
+        const coercer = state.forces[fromForceId];
+        const demand = (state.pendingDemands ?? []).find((d) => d.fromForceId === fromForceId);
+        if (!player || !coercer || !demand) return { ok: false, message: '無此來牒。' };
+        const pending = (state.pendingDemands ?? []).filter((d) => d.fromForceId !== fromForceId);
+        const key = pairKey(player.id, fromForceId);
+        const rel = getRelation(state.diplomacy, player.id, fromForceId);
+        if (!comply) {
+          // 抗牒 — defiance: the coercer takes it as a casus belli and nurses spite.
+          set({
+            pendingDemands: pending,
+            diplomacy: { relations: { ...state.diplomacy.relations, [key]: { ...rel, status: 'neutral', score: Math.max(-100, rel.score - 18), expiresAt: undefined } } },
+            grudges: { ...state.grudges, [fromForceId]: Math.min(100, (state.grudges[fromForceId] ?? 0) + 6) },
+          });
+          get().notify(`抗牒不從 · ${coercer.name.zh} 銜怒`, `You defy ${coercer.name.en}'s ultimatum — war looms`, 'warn');
+          return { ok: true, message: `君斷然拒牒,${coercer.name.zh}銜怒,兵釁已開。` };
+        }
+        if (demand.kind === 'submit') {
+          const sealed = sealVassalage({ suzerainId: fromForceId, vassalId: player.id, forces: state.forces, diplomacy: state.diplomacy });
+          set({ pendingDemands: pending, forces: sealed.forces, diplomacy: sealed.diplomacy });
+          get().notify(`屈服稱臣 · 奉 ${coercer.name.zh} 為主`, `You submit as ${coercer.name.en}'s vassal`, 'warn');
+          return { ok: true, message: `君畏威而服,稱臣於${coercer.name.zh}。` };
+        }
+        // gold / grain: hand over from your capital to theirs.
+        const myCap = state.cities[player.capitalCityId];
+        const theirCap = state.cities[coercer.capitalCityId];
+        if (!myCap || !theirCap) return { ok: false, message: 'No capital city.' };
+        const give = demand.kind === 'gold'
+          ? Math.min(myCap.gold, Math.max(0, Math.floor(myCap.gold * 0.3)))
+          : Math.min(Math.max(0, myCap.food - 1500), Math.floor(myCap.food * 0.25));
+        const cities = { ...state.cities };
+        if (demand.kind === 'gold') {
+          cities[myCap.id] = { ...myCap, gold: myCap.gold - give };
+          cities[theirCap.id] = { ...cities[theirCap.id], gold: cities[theirCap.id].gold + give };
+        } else {
+          cities[myCap.id] = { ...myCap, food: myCap.food - give };
+          cities[theirCap.id] = { ...cities[theirCap.id], food: cities[theirCap.id].food + give };
+        }
+        set({
+          pendingDemands: pending,
+          cities,
+          // Buying peace cools the immediate threat a little (they got what they wanted).
+          diplomacy: { relations: { ...state.diplomacy.relations, [key]: { ...rel, score: Math.min(100, rel.score + 6) } } },
+        });
+        const what = demand.kind === 'gold' ? `金 ${give.toLocaleString()}` : `糧 ${give.toLocaleString()}`;
+        get().notify(`輸款息兵 · 予 ${coercer.name.zh}${what}`, `You buy off ${coercer.name.en} with ${give.toLocaleString()} ${demand.kind}`);
+        return { ok: true, message: `君輸${what}以息其兵,暫免刀兵。` };
+      },
+
+      recallHostage: (officerId) => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        const officer = state.officers[officerId];
+        if (!officer || !officer.hostageOfForceId) return { ok: false, message: '無此質子。' };
+        if (officer.forceId !== state.playerForceId) return { ok: false, message: '非我質子。' };
+        const holderId = officer.hostageOfForceId;
+        const holder = state.forces[holderId];
+        const player = state.forces[state.playerForceId];
+        const cap = player ? state.cities[player.capitalCityId] : null;
+        const key = pairKey(state.playerForceId, holderId);
+        const rel = getRelation(state.diplomacy, state.playerForceId, holderId);
+        set({
+          officers: { ...state.officers, [officerId]: { ...officer, status: 'idle', hostageOfForceId: undefined, locationCityId: cap?.id ?? officer.locationCityId } },
+          // Withdrawing a surety is a small affront — the keeper cools a touch.
+          diplomacy: { relations: { ...state.diplomacy.relations, [key]: { ...rel, score: Math.max(-100, rel.score - 8) } } },
+        });
+        get().notify(`索還質子 · ${officer.name.zh} 歸國`, `You recall your hostage ${officer.name.en}`);
+        return { ok: true, message: `${officer.name.zh}歸國 — 質既撤,${holder?.name.zh ?? '對方'}稍以為憾。` };
+      },
+
+      requestMediation: (brokerForceId, foeForceId) => {
+        const MEDIATION_COST = 600;
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        const player = state.forces[state.playerForceId];
+        const broker = state.forces[brokerForceId];
+        const foe = state.forces[foeForceId];
+        if (!player || !broker || !foe) return { ok: false, message: 'Invalid forces.' };
+        if (brokerForceId === foeForceId || brokerForceId === state.playerForceId || foeForceId === state.playerForceId) {
+          return { ok: false, message: '調停須三方:君、敵、與居中之國。' };
+        }
+        const foeRel = getRelation(state.diplomacy, player.id, foeForceId);
+        if (foeRel.status !== 'neutral') return { ok: false, message: '與其無釁可調。' };
+        const capital = state.cities[player.capitalCityId];
+        if (!capital || capital.gold < MEDIATION_COST) return { ok: false, message: `需 ${MEDIATION_COST} 金行斡旋。` };
+        const diploMul = appointmentBonusFor(player.id, state.appointments, state.officers).diplomacyMultiplier * (1 + buildingBonuses(capital.id, state.buildings).diploRelMul);
+        const { success } = evaluateMediation({
+          brokerTroops: computeTotalTroops(brokerForceId, state.cities),
+          foeTroops: computeTotalTroops(foeForceId, state.cities),
+          brokerRelationToFoe: getRelation(state.diplomacy, brokerForceId, foeForceId).score,
+          foeGrudge: state.grudges[foeForceId] ?? 0,
+          foeRelationToPlayer: foeRel.score,
+          diplomacyMultiplier: diploMul,
+        });
+        const cities = { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - MEDIATION_COST } };
+        const foeKey = pairKey(player.id, foeForceId);
+        const brokerKey = pairKey(player.id, brokerForceId);
+        const brokerRel = getRelation(state.diplomacy, player.id, brokerForceId);
+        if (!success) {
+          // The errand still earns the broker's goodwill, and softens the foe a touch.
+          set({
+            cities,
+            diplomacy: { relations: {
+              ...state.diplomacy.relations,
+              [foeKey]: { ...foeRel, score: Math.min(100, foeRel.score + 5) },
+              [brokerKey]: { ...brokerRel, score: Math.min(100, brokerRel.score + 4) },
+            } },
+          });
+          get().notify(`調停未成 · ${foe.name.zh} 不領 ${broker.name.zh} 之情`, `${foe.name.en} rebuffs ${broker.name.en}'s mediation`, 'warn');
+          return { ok: true, accepted: false, message: `斡旋未成,${foe.name.zh}不肯罷兵。` };
+        }
+        set({
+          cities,
+          diplomacy: { relations: {
+            ...state.diplomacy.relations,
+            [foeKey]: { ...foeRel, status: 'non-aggression', score: Math.min(100, foeRel.score + 25), expiresAt: addDiploSeasons(state.date, NAP_DURATION_SEASONS) },
+            [brokerKey]: { ...brokerRel, score: Math.min(100, brokerRel.score + 6) },
+          } },
+          grudges: { ...state.grudges, [foeForceId]: Math.max(0, (state.grudges[foeForceId] ?? 0) - 20) },
+        });
+        get().notify(`調停成 · ${broker.name.zh} 斡旋,與 ${foe.name.zh} 罷兵`, `${broker.name.en} brokers a truce with ${foe.name.en}`);
+        return { ok: true, accepted: true, message: `${broker.name.zh}居中斡旋,與${foe.name.zh}締互不侵犯之盟。` };
+      },
+
+      requestPassage: (grantorForceId) => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        const player = state.forces[state.playerForceId];
+        const grantor = state.forces[grantorForceId];
+        if (!player || !grantor) return { ok: false, message: 'Invalid forces.' };
+        if (grantorForceId === state.playerForceId) return { ok: false, message: '不可向己借道。' };
+        if (passageActive(state.passageGrants ?? [], state.playerForceId, grantorForceId)) {
+          return { ok: true, accepted: true, message: `${grantor.name.zh}已許借道。` };
+        }
+        const rel = getRelation(state.diplomacy, state.playerForceId, grantorForceId);
+        const { granted } = evaluatePassage({ relStatus: rel.status, relScore: rel.score, grantorPersonality: grantor.personality });
+        if (!granted) {
+          return { ok: true, accepted: false, message: rel.status === 'neutral' ? '須先締盟或互不侵犯,方可商借道。' : `${grantor.name.zh}不允假道。` };
+        }
+        const grant = { grantorForceId, granteeForceId: state.playerForceId, expiresAt: addDiploSeasons(state.date, PASSAGE_DURATION_SEASONS) };
+        set({ passageGrants: [...(state.passageGrants ?? []), grant] });
+        get().notify(`假途借道 · ${grantor.name.zh} 許我假道`, `${grantor.name.en} grants you passage`);
+        return { ok: true, accepted: true, message: `${grantor.name.zh}許借道 ${PASSAGE_DURATION_SEASONS} 季 — 可經其境擊其外之敵。` };
+      },
+
+      sueForPeace: (foeForceId) => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        const player = state.forces[state.playerForceId];
+        const foe = state.forces[foeForceId];
+        if (!player || !foe) return { ok: false, message: 'Invalid forces.' };
+        const rel = getRelation(state.diplomacy, player.id, foeForceId);
+        if (rel.status !== 'neutral') return { ok: false, message: '與其本無戰事可和。' };
+        const capital = state.cities[player.capitalCityId];
+        if (!capital) return { ok: false, message: 'No capital city.' };
+        // 歲幣求和 — reparations scaled to your means (capped), sweetening the plea.
+        const reparations = Math.min(capital.gold, 800);
+        const { accepted } = evaluatePeaceOffer({
+          suerTroops: computeTotalTroops(player.id, state.cities),
+          foeTroops: computeTotalTroops(foeForceId, state.cities),
+          foeRelation: rel.score,
+          foeGrudge: state.grudges[foeForceId] ?? 0,
+          reparations,
+          foePersonality: foe.personality,
+        });
+        const key = pairKey(player.id, foeForceId);
+        if (!accepted) {
+          return { ok: true, accepted: false, message: `${foe.name.zh}志在必得,不肯罷兵。` };
+        }
+        const theirCap = state.cities[foe.capitalCityId];
+        const cities = { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - reparations } };
+        if (theirCap) cities[theirCap.id] = { ...cities[theirCap.id], gold: cities[theirCap.id].gold + reparations };
+        set({
+          cities,
+          diplomacy: { relations: { ...state.diplomacy.relations, [key]: { ...rel, status: 'non-aggression', score: Math.min(100, rel.score + 15), expiresAt: addDiploSeasons(state.date, NAP_DURATION_SEASONS) } } },
+          grudges: { ...state.grudges, [foeForceId]: Math.max(0, (state.grudges[foeForceId] ?? 0) - 15) },
+        });
+        get().notify(`求和成 · 輸 ${foe.name.zh} 歲幣 ${reparations.toLocaleString()},罷兵`, `${foe.name.en} accepts your terms — war ends`);
+        return { ok: true, accepted: true, message: `輸歲幣 ${reparations.toLocaleString()},與${foe.name.zh}締互不侵犯,兵戈暫息。` };
+      },
+
+      answerPeaceOffer: (fromForceId, grant) => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        const player = state.forces[state.playerForceId];
+        const foe = state.forces[fromForceId];
+        const offer = (state.pendingPeaceOffers ?? []).find((o) => o.fromForceId === fromForceId);
+        if (!player || !foe || !offer) return { ok: false, message: '無此乞降之使。' };
+        const pending = (state.pendingPeaceOffers ?? []).filter((o) => o.fromForceId !== fromForceId);
+        if (!grant) {
+          // 不受降 — fight on; the plea simply clears.
+          set({ pendingPeaceOffers: pending });
+          get().notify(`不受降 · 續討 ${foe.name.zh}`, `You spurn ${foe.name.en}'s plea and fight on`, 'warn');
+          return { ok: true, message: `君不納降,誓滅${foe.name.zh}。` };
+        }
+        const key = pairKey(player.id, fromForceId);
+        const rel = getRelation(state.diplomacy, player.id, fromForceId);
+        if (offer.kind === 'vassal') {
+          const sealed = sealVassalage({ suzerainId: player.id, vassalId: fromForceId, forces: state.forces, diplomacy: state.diplomacy });
+          set({ pendingPeaceOffers: pending, forces: sealed.forces, diplomacy: sealed.diplomacy });
+          get().notify(`受降納臣 · ${foe.name.zh} 舉國稱臣`, `${foe.name.en} submits as your vassal`);
+          return { ok: true, message: `${foe.name.zh}舉國乞降,稱臣納貢。` };
+        }
+        // reparations: the suing foe pays YOU to end the war + signs a NAP.
+        const myCap = state.cities[player.capitalCityId];
+        const theirCap = state.cities[foe.capitalCityId];
+        const indemnity = theirCap ? Math.min(theirCap.gold, Math.floor(theirCap.gold * 0.4)) : 0;
+        const cities = { ...state.cities };
+        if (myCap && theirCap && indemnity > 0) {
+          cities[theirCap.id] = { ...theirCap, gold: theirCap.gold - indemnity };
+          cities[myCap.id] = { ...cities[myCap.id], gold: cities[myCap.id].gold + indemnity };
+        }
+        set({
+          pendingPeaceOffers: pending,
+          cities,
+          diplomacy: { relations: { ...state.diplomacy.relations, [key]: { ...rel, status: 'non-aggression', score: Math.min(100, rel.score + 12), expiresAt: addDiploSeasons(state.date, NAP_DURATION_SEASONS) } } },
+          grudges: { ...state.grudges, [fromForceId]: Math.max(0, (state.grudges[fromForceId] ?? 0) - 20) },
+        });
+        get().notify(`受降罷兵 · ${foe.name.zh} 輸款 ${indemnity.toLocaleString()} 乞和`, `${foe.name.en} pays ${indemnity.toLocaleString()} reparations — war ends`);
+        return { ok: true, message: `${foe.name.zh}輸款 ${indemnity.toLocaleString()} 乞和,締互不侵犯。` };
+      },
+
       mintCoin: () => {
         const state = get();
         if (!state.playerForceId) return { ok: false, gold: 0, inflation: state.inflation ?? 0 };
@@ -6678,6 +7420,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               ...hostage,
               status: 'imprisoned',
               locationCityId: target.capitalCityId,
+              // 質子 marker — distinguishes a peace surety from a war captive.
+              hostageOfForceId: target.id,
             },
           },
         });
@@ -10847,6 +11591,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           gemStock: loaded.gemStock ?? {},
           // 家門聲望 — backfill from the loaded roster for legacy saves.
           clanStandings: loaded.clanStandings ?? deriveInitialClanStandings(loaded.officers ?? {}),
+          // §7.1 縱橫 — legacy saves predate these; default empty.
+          warCoalitions: loaded.warCoalitions ?? [],
+          vassalDiscontent: loaded.vassalDiscontent ?? {},
+          pendingCallsToArms: loaded.pendingCallsToArms ?? [],
+          pendingDemands: loaded.pendingDemands ?? [],
+          passageGrants: loaded.passageGrants ?? [],
+          pendingPeaceOffers: loaded.pendingPeaceOffers ?? [],
         };
         // 精煉/突破/鑲嵌登記 — re-point the denormalized registries at the loaded maps.
         setRefineRegistry(fresh.itemRefinements);

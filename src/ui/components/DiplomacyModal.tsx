@@ -56,6 +56,25 @@ export function DiplomacyModal({ onClose }: Props) {
   const grudges = useGameStore((s) => s.grudges);
   const tradePartners = useGameStore((s) => s.tradePartners);
   const credibility = useGameStore((s) => (playerForceId ? s.credibility[playerForceId] : undefined) ?? 100);
+  // §7.1 縱橫 — vassalage, coercion, leagues, call-to-arms.
+  const demandVassalage = useGameStore((s) => s.demandVassalage);
+  const seekProtection = useGameStore((s) => s.seekProtection);
+  const releaseVassal = useGameStore((s) => s.releaseVassal);
+  const summonVassal = useGameStore((s) => s.summonVassal);
+  const demandTribute = useGameStore((s) => s.demandTribute);
+  const proposeCoalition = useGameStore((s) => s.proposeCoalition);
+  const answerCallToArms = useGameStore((s) => s.answerCallToArms);
+  const pendingCallsToArms = useGameStore((s) => s.pendingCallsToArms);
+  const answerDemand = useGameStore((s) => s.answerDemand);
+  const pendingDemands = useGameStore((s) => s.pendingDemands);
+  const recallHostage = useGameStore((s) => s.recallHostage);
+  const requestMediation = useGameStore((s) => s.requestMediation);
+  const requestPassage = useGameStore((s) => s.requestPassage);
+  const passageGrants = useGameStore((s) => s.passageGrants);
+  const sueForPeace = useGameStore((s) => s.sueForPeace);
+  const answerPeaceOffer = useGameStore((s) => s.answerPeaceOffer);
+  const pendingPeaceOffers = useGameStore((s) => s.pendingPeaceOffers);
+  const officers = useGameStore((s) => s.officers);
 
   const [feedback, setFeedback] = useState<{
     forceId: EntityId;
@@ -88,6 +107,21 @@ export function DiplomacyModal({ onClose }: Props) {
     out.sort((a, b) => b.relation.score - a.relation.score);
     return out;
   }, [playerForceId, forces, cities, diplomacy]);
+
+  const playerForce = playerForceId ? forces[playerForceId] : null;
+  const myTroops = useMemo(
+    () => Object.values(cities).reduce((s, c) => (c.ownerForceId === playerForceId ? s + c.troops : s), 0),
+    [cities, playerForceId],
+  );
+  // Allies/NAP partners eligible to be rallied into a war league.
+  const leagueInvitees = useMemo(
+    () => rows.filter((r) => r.relation.status === 'allied' || r.relation.status === 'non-aggression').map((r) => r.id),
+    [rows],
+  );
+  const myVassalCount = useMemo(
+    () => Object.values(forces).filter((f) => f.vassalOfForceId === playerForceId).length,
+    [forces, playerForceId],
+  );
 
   if (!playerForceId) return null;
 
@@ -122,6 +156,122 @@ export function DiplomacyModal({ onClose }: Props) {
           </button>
         </header>
 
+        {pendingDemands.length > 0 && (
+          <div className={styles.callsToArms}>
+            <div className={styles.callsTitle}>{t('索貢來牒', 'Ultimatums')}</div>
+            {pendingDemands.map((d) => {
+              const from = forces[d.fromForceId];
+              if (!from) return null;
+              const what = d.kind === 'submit'
+                ? t('逼君稱臣', 'demands you submit as vassal')
+                : d.kind === 'gold' ? t('索我金帛', 'demands gold') : t('索我糧秣', 'demands grain');
+              return (
+                <div key={d.fromForceId} className={styles.callRow}>
+                  <span className={styles.callText}>
+                    {t(`${from.name.zh} 下牒 — ${what},否則興兵`, `${from.name.en} ${what} — or war`)}
+                  </span>
+                  <button
+                    className={styles.breakBtn}
+                    onClick={() => {
+                      const r = answerDemand(d.fromForceId, true);
+                      setFeedback({ forceId: d.fromForceId, text: r.message, accepted: false });
+                    }}
+                    title={t('屈服 — 輸款/稱臣息兵', 'Yield — pay up / submit to avoid war')}
+                  >
+                    {d.kind === 'submit' ? t('屈服稱臣', 'Submit') : t('輸款', 'Pay')}
+                  </button>
+                  <button
+                    className={styles.allianceBtn}
+                    onClick={() => {
+                      const r = answerDemand(d.fromForceId, false);
+                      setFeedback({ forceId: d.fromForceId, text: r.message, accepted: true });
+                    }}
+                    title={t('抗牒 — 寧戰不屈(即為開戰之釁)', 'Defy — refuse and accept war')}
+                  >
+                    {t('抗牒', 'Defy')}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {pendingPeaceOffers.length > 0 && (
+          <div className={styles.callsToArms}>
+            <div className={styles.callsTitle}>{t('乞降求和', 'Pleas for Peace')}</div>
+            {pendingPeaceOffers.map((o) => {
+              const from = forces[o.fromForceId];
+              if (!from) return null;
+              const what = o.kind === 'vassal' ? t('願舉國稱臣', 'offers to submit as your vassal') : t('願輸款罷兵', 'offers reparations to end the war');
+              return (
+                <div key={o.fromForceId} className={styles.callRow}>
+                  <span className={styles.callText}>
+                    {t(`${from.name.zh} 遣使乞和 — ${what}`, `${from.name.en} sues for peace — ${what}`)}
+                  </span>
+                  <button
+                    className={styles.allianceBtn}
+                    onClick={() => {
+                      const r = answerPeaceOffer(o.fromForceId, true);
+                      setFeedback({ forceId: o.fromForceId, text: r.message, accepted: true });
+                    }}
+                    title={t('受降 — 取其歲幣/稱臣,罷兵言和', 'Grant terms — take their reparations / submission and end the war')}
+                  >
+                    {t('受降', 'Grant')}
+                  </button>
+                  <button
+                    className={styles.breakBtn}
+                    onClick={() => {
+                      const r = answerPeaceOffer(o.fromForceId, false);
+                      setFeedback({ forceId: o.fromForceId, text: r.message, accepted: false });
+                    }}
+                    title={t('不受降 — 續討滅之', 'Refuse — fight on to destroy them')}
+                  >
+                    {t('不受', 'Refuse')}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {pendingCallsToArms.length > 0 && (
+          <div className={styles.callsToArms}>
+            <div className={styles.callsTitle}>{t('援盟之請', 'Calls to Arms')}</div>
+            {pendingCallsToArms.map((c) => {
+              const ally = forces[c.allyForceId];
+              const foe = forces[c.foeForceId];
+              if (!ally || !foe) return null;
+              return (
+                <div key={`${c.allyForceId}-${c.foeForceId}`} className={styles.callRow}>
+                  <span className={styles.callText}>
+                    {t(`盟友 ${ally.name.zh} 受 ${foe.name.zh} 所逼,求君發兵`, `${ally.name.en} begs your aid against ${foe.name.en}`)}
+                  </span>
+                  <button
+                    className={styles.allianceBtn}
+                    onClick={() => {
+                      const r = answerCallToArms(c.allyForceId, c.foeForceId, true);
+                      setFeedback({ forceId: c.foeForceId, text: r.message, accepted: true });
+                    }}
+                    title={t('踐盟參戰 — 對其敵宣戰,信譽上升', 'Honour the pact — declare war on the foe; your repute rises')}
+                  >
+                    {t('參戰', 'Answer')}
+                  </button>
+                  <button
+                    className={styles.breakBtn}
+                    onClick={() => {
+                      const r = answerCallToArms(c.allyForceId, c.foeForceId, false);
+                      setFeedback({ forceId: c.allyForceId, text: r.message, accepted: false });
+                    }}
+                    title={t('坐視盟友 — 盟誼與信譽俱損,盟約或自解', 'Sit idle — relations and repute suffer; the pact may lapse')}
+                  >
+                    {t('坐視', 'Ignore')}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {rows.length === 0 ? (
           <div className={styles.empty}>{t('天下唯餘一勢力。', 'No other forces remain in the realm.')}</div>
         ) : (
@@ -154,6 +304,13 @@ export function DiplomacyModal({ onClose }: Props) {
                       {t('積怨', 'Grudge')} <strong style={{ color: (grudges[row.id] ?? 0) >= 50 ? '#e0707a' : '#e0a070' }}>{grudges[row.id] ?? 0}</strong>
                     </span>
                   )}
+                  {(() => {
+                    const vof = forces[row.id]?.vassalOfForceId;
+                    if (vof === playerForceId) return <span className={styles.vassalTag}>{t('我之藩屬', 'Your vassal')}</span>;
+                    if (playerForce?.vassalOfForceId === row.id) return <span className={styles.vassalTag}>{t('我奉其為主', 'Your suzerain')}</span>;
+                    if (vof && forces[vof]) return <span className={styles.vassalTag}>{t(`${forces[vof].name.zh}之屬`, `Vassal of ${forces[vof].name.en}`)}</span>;
+                    return null;
+                  })()}
                 </div>
 
                 {feedback?.forceId === row.id && (
@@ -287,6 +444,156 @@ export function DiplomacyModal({ onClose }: Props) {
                     return null;
                   })()}
                 </div>
+
+                {(() => {
+                  const isMyVassal = forces[row.id]?.vassalOfForceId === playerForceId;
+                  const iAmTheirVassal = playerForce?.vassalOfForceId === row.id;
+                  const iAmAnyVassal = !!playerForce?.vassalOfForceId;
+                  const neutral = row.relation.status === 'neutral';
+                  const allied = row.relation.status === 'allied';
+                  const weaker = row.troops < myTroops * 0.7;
+                  const muchWeaker = row.troops < myTroops * 0.5;
+                  const stronger = row.troops > myTroops * 1.4;
+                  const canCoerce = !allied && !isMyVassal && !iAmTheirVassal;
+                  const myHostageHere = Object.values(officers).find(
+                    (o) => o.hostageOfForceId === row.id && o.forceId === playerForceId && o.status !== 'dead',
+                  );
+                  const isPartner = allied || row.relation.status === 'non-aggression';
+                  const hasPassage = (passageGrants ?? []).some((g) => g.grantorForceId === row.id && g.granteeForceId === playerForceId);
+                  const showRow = isMyVassal || iAmTheirVassal || !!myHostageHere || isPartner ||
+                    (canCoerce && (neutral || leagueInvitees.length > 0 || myVassalCount > 0));
+                  if (!showRow) return null;
+                  return (
+                    <div className={styles.actions}>
+                      {isPartner && (
+                        <button
+                          className={styles.tributeBtn}
+                          onClick={() => !hasPassage && handle(row.id, () => requestPassage(row.id))}
+                          disabled={hasPassage}
+                          title={t('假途借道 — 求其許我假道,可經其境擊其外之敵(8季);亦可假途滅虢', 'Ask for passage — march through their land to strike foes beyond it (8 seasons); or betray the host (假途滅虢)')}
+                        >
+                          {hasPassage ? t('借道✓', 'Passage✓') : t('借道', 'Passage')}
+                        </button>
+                      )}
+                      {myHostageHere && (
+                        <button
+                          className={styles.tributeBtn}
+                          onClick={() => handle(row.id, () => recallHostage(myHostageHere.id))}
+                          title={t(`索還質子 ${myHostageHere.name.zh} — 撤回人質,對方稍以為憾`, `Recall your hostage ${myHostageHere.name.en} — withdraws the surety, the keeper cools a little`)}
+                        >
+                          {t('索還質子', 'Recall hostage')}
+                        </button>
+                      )}
+                      {isMyVassal && (
+                        <button
+                          className={styles.tributeBtn}
+                          onClick={() => handle(row.id, () => releaseVassal(row.id))}
+                          title={t('釋放藩屬 — 復其自主,以德懷之', 'Free this vassal — a magnanimous, relation-warming act')}
+                        >
+                          {t('釋放', 'Free')}
+                        </button>
+                      )}
+                      {iAmTheirVassal && (
+                        <button
+                          className={styles.breakBtn}
+                          onClick={() => handle(row.id, () => releaseVassal(row.id))}
+                          title={t('背主自立 — 不復臣屬(信譽 −20、宿主含怨)', 'Renounce your vassalage (−20 credibility, the lord nurses a grudge)')}
+                        >
+                          {t('背主自立', 'Renounce')}
+                        </button>
+                      )}
+                      {canCoerce && neutral && !iAmAnyVassal && (
+                        <button
+                          className={styles.tributeBtn}
+                          onClick={() => handle(row.id, () => demandVassalage(row.id))}
+                          disabled={!weaker}
+                          title={t('招撫稱臣 — 逼弱邦俯首為藩屬(納貢、可徵召)', 'Demand a weaker realm bow as your vassal (tribute + summonable)')}
+                        >
+                          {t('招撫稱臣', 'Subjugate')}
+                        </button>
+                      )}
+                      {canCoerce && neutral && stronger && myVassalCount === 0 && !iAmAnyVassal && (
+                        <button
+                          className={styles.tributeBtn}
+                          onClick={() => handle(row.id, () => seekProtection(row.id))}
+                          title={t('納款稱臣 — 奉強鄰為主,以求庇護', 'Offer yourself as a stronger realm’s vassal for protection')}
+                        >
+                          {t('納款稱臣', 'Submit')}
+                        </button>
+                      )}
+                      {canCoerce && (
+                        <button
+                          className={styles.coerceBtn}
+                          onClick={() => handle(row.id, () => demandTribute(row.id, 'gold'))}
+                          disabled={!weaker}
+                          title={t('索貢 — 以戰相脅,勒其金帛(拒則開戰)', 'Extort gold under threat of war (refusal is a casus belli)')}
+                        >
+                          {t('索貢', 'Extort')}
+                        </button>
+                      )}
+                      {canCoerce && (
+                        <button
+                          className={styles.coerceBtn}
+                          onClick={() => handle(row.id, () => demandTribute(row.id, 'submit'))}
+                          disabled={!muchWeaker || iAmAnyVassal}
+                          title={t('最後通牒 — 逼其稱臣,否則兵戎相見', 'Ultimatum: submit as vassal or face war')}
+                        >
+                          {t('逼降', 'Ultimatum')}
+                        </button>
+                      )}
+                      {canCoerce && leagueInvitees.length > 0 && (
+                        <button
+                          className={styles.coerceBtn}
+                          onClick={() => handle(row.id, () => proposeCoalition(row.id, leagueInvitees))}
+                          title={t('共討會盟 — 號召盟友共擊此敵(數季協同)', 'Forge a war league — rally your allies to jointly attack this foe')}
+                        >
+                          {t('共討', 'Coalition')}
+                        </button>
+                      )}
+                      {canCoerce && neutral && (() => {
+                        // Auto-pick the weightiest third realm the foe most respects.
+                        const broker = rows
+                          .filter((r) => r.id !== row.id)
+                          .map((r) => ({ r, rapport: getRelation(diplomacy, r.id, row.id).score, troops: r.troops }))
+                          .sort((a, b) => (b.rapport + b.troops / 5000) - (a.rapport + a.troops / 5000))[0];
+                        if (!broker) return null;
+                        return (
+                          <button
+                            className={styles.tributeBtn}
+                            onClick={() => handle(row.id, () => requestMediation(broker.r.id, row.id))}
+                            disabled={playerCapitalGold < 600}
+                            title={t(`調停斡旋 — 請 ${broker.r.zh} 居中調停,與其罷兵(600金)`, `Pay ${broker.r.en} to broker a truce with this foe (600g)`)}
+                          >
+                            {t('調停', 'Mediate')}
+                          </button>
+                        );
+                      })()}
+                      {canCoerce && neutral && row.relation.score < 0 && (
+                        <button
+                          className={styles.tributeBtn}
+                          onClick={() => handle(row.id, () => sueForPeace(row.id))}
+                          title={t('求和 — 輸歲幣乞和,締互不侵犯(對方占優則不允)', 'Sue for peace — offer reparations for a NAP (a winning foe refuses)')}
+                        >
+                          {t('求和', 'Sue peace')}
+                        </button>
+                      )}
+                      {canCoerce && myVassalCount > 0 && (
+                        <button
+                          className={styles.coerceBtn}
+                          onClick={() => handle(row.id, () => {
+                            const vassals = Object.values(forces).filter((f) => f.vassalOfForceId === playerForceId);
+                            let last = { ok: false, message: t('無藩屬可徵召。', 'No vassals to summon.') };
+                            for (const v of vassals) last = summonVassal(v.id, row.id);
+                            return last;
+                          })}
+                          title={t('徵召藩屬 — 命麾下藩屬出兵討之', 'Summon your vassals to war against this foe')}
+                        >
+                          {t('徵召討之', 'Summon')}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })()}
               </li>
             ))}
           </ul>

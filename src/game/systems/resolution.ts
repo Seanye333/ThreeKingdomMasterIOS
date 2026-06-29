@@ -1748,10 +1748,15 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     }
   }
 
-  // 2a. Vassal tribute: each vassal force auto-pays 100g/season to its
-  // suzerain's capital. If the vassal can't pay, no penalty — they're
-  // already a vassal.
+  // 2a. Vassal tribute (§7.1 ①): each vassal force auto-pays seasonal 納貢 to its
+  // suzerain's capital. A larger vassal is a richer subordinate — base 100g + 30g
+  // per held city beyond the first (capped), out of the vassal's own coffers. If
+  // it can't pay, no penalty (a destitute vassal simply renders less).
   if (seasonBoundary) {
+    const cityCountByForce: Record<string, number> = {};
+    for (const c of Object.values(cities)) {
+      if (c.ownerForceId) cityCountByForce[c.ownerForceId] = (cityCountByForce[c.ownerForceId] ?? 0) + 1;
+    }
     for (const vassal of Object.values(forces)) {
       if (!vassal.vassalOfForceId) continue;
       const suzerain = forces[vassal.vassalOfForceId];
@@ -1759,7 +1764,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const vCap = cities[vassal.capitalCityId];
       const sCap = cities[suzerain.capitalCityId];
       if (!vCap || !sCap) continue;
-      const tribute = Math.min(vCap.gold, 100);
+      const due = Math.min(400, 100 + 30 * Math.max(0, (cityCountByForce[vassal.id] ?? 1) - 1));
+      const tribute = Math.min(vCap.gold, due);
       if (tribute <= 0) continue;
       cities[vCap.id] = { ...vCap, gold: vCap.gold - tribute };
       cities[sCap.id] = { ...cities[sCap.id], gold: cities[sCap.id].gold + tribute };

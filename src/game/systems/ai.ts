@@ -12,8 +12,10 @@ import type {
   OfficerStats,
   ReportEntry,
   TaxRate,
+  WarCoalition,
 } from '../types';
 import { getRelation, isHostilePermitted, pairKey } from '../types';
+import { coalitionTargetFor } from './diplomacyPacts';
 import type { Difficulty } from '../state/gameState';
 import { OATH_BONDS, type OathBond } from '../data/bonds';
 import { COMMAND_DEFS, meetsMinSize } from './commands';
@@ -84,6 +86,9 @@ export interface AIPlanInput {
   /** Persistent field armies — so the AI can dispatch interceptors to meet
    *  hostile columns in the open field rather than only at city walls. */
   armies?: Record<EntityId, import('../types').Army>;
+  /** 共討會盟 — active war leagues. A member force biases its offensive focus
+   *  toward the sworn foe (see pickForceTarget) — §7.1 ②. */
+  warCoalitions?: WarCoalition[];
   /** Current per-force tax rates — the AI reads & updates its own forces'. */
   taxPolicy?: Record<EntityId, TaxRate>;
   date: GameDate;
@@ -179,7 +184,9 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
   const hegemonId = findHegemon(cities);
   for (const [forceId, forceCities] of citiesByForce) {
     // Force-level offensive focus for the season — bordering cities mass on it.
-    const forceTargetId = pickForceTarget(forceId, forceCities, cities, input.diplomacy, hegemonId);
+    // A sworn coalition member trains its spear on the league's foe (§7.1 ②).
+    const coalitionFoeId = coalitionTargetFor(forceId, input.warCoalitions ?? []);
+    const forceTargetId = pickForceTarget(forceId, forceCities, cities, input.diplomacy, hegemonId, coalitionFoeId);
     // Season posture: consolidate when a bordering force overshadows us.
     const posture = forcePosture(forceId, forceCities, cities);
     // 迷霧對等 — this force's own sight of the map (own cities + borders + its
@@ -973,6 +980,7 @@ export function pickForceTarget(
   allCities: Record<EntityId, City>,
   diplomacy: DiplomaticState,
   hegemonId: EntityId | null = null,
+  coalitionFoeId: EntityId | null = null,
 ): EntityId | null {
   // City count per force — used to spot a death blow (an enemy's last city).
   const cityCount: Record<EntityId, number> = {};
@@ -1012,7 +1020,9 @@ export function pickForceTarget(
     const elimination = cand.ownerForceId && cityCount[cand.ownerForceId] === 1 ? 2.5 : 1;
     // 合縱抗霸: pile onto the hegemon's frontier so the lesser powers gang up.
     const hegemon = cand.ownerForceId && cand.ownerForceId === hegemonId ? 1.6 : 1;
-    const score = feasibility * value * elimination * hegemon;
+    // 共討會盟: a sworn league member throws its weight at the agreed foe (§7.1 ②).
+    const coalition = cand.ownerForceId && cand.ownerForceId === coalitionFoeId ? 1.8 : 1;
+    const score = feasibility * value * elimination * hegemon * coalition;
     if (score > bestScore) { bestScore = score; best = candId; }
   }
   return best;
