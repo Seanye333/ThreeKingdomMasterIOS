@@ -42,6 +42,25 @@ try:
 except ImportError:
     sys.exit("Pillow not installed — run: pip install --user Pillow")
 
+# Optional face detection — when OpenCV is present the square thumbnail is cropped
+# centred on the detected face (so a full-body 立繪 yields a head-and-shoulders
+# avatar instead of a torso with the head sliced off). Without it we fall back to
+# a top-anchored crop, since in these portraits the head is always near the top.
+#   pip install --user opencv-python-headless
+try:
+    import cv2
+    import numpy as np
+    _CASC = [
+        cv2.CascadeClassifier(cv2.data.haarcascades + n)
+        for n in ("haarcascade_frontalface_default.xml",
+                  "haarcascade_frontalface_alt2.xml",
+                  "haarcascade_profileface.xml")
+    ]
+except Exception:
+    cv2 = None
+    print("(note) OpenCV not installed — face-centred crop disabled, using top anchor.\n"
+          "       pip install --user opencv-python-headless")
+
 try:
     from opencc import OpenCC
     _t2s = OpenCC("t2s").convert
@@ -77,15 +96,42 @@ def resolve(stem, index):
     return None
 
 
+def _detect_face(im):
+    """Largest face in the upper ~65% of the image, or None."""
+    if cv2 is None:
+        return None
+    gray = cv2.equalizeHist(cv2.cvtColor(np.array(im), cv2.COLOR_RGB2GRAY))
+    H, W = gray.shape
+    dets = []
+    for cc in _CASC:
+        for d in cc.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5,
+                                     minSize=(int(W * 0.06), int(W * 0.06))):
+            dets.append(tuple(int(v) for v in d))
+    if not dets:
+        return None
+    up = [d for d in dets if (d[1] + d[3] / 2) < H * 0.65]
+    return max(up or dets, key=lambda d: d[2] * d[3])
+
+
 def square_crop(im):
-    """A 512×512 face-biased square: full width near the top for tall portraits,
-    centered for wide ones."""
+    """A 512×512 square avatar. With OpenCV, centred on the detected face with
+    headroom (so full-body 立繪 still give a head-and-shoulders crop); otherwise
+    anchored near the top, where the head sits in these portraits."""
     w, h = im.size
-    if h >= w:                       # portrait → keep width, bias so the face (usually
-        side = w                     # the upper third of a full-body figure) lands in
-        top = min(int(h * 0.14), h - side)  # the upper ~40% of the square
+    f = _detect_face(im)
+    if f is not None:
+        fx, fy, fw, fh = f
+        cx = fx + fw / 2
+        side = min(int(fh * 2.5), w, h)          # face ≈ 40% of the square height
+        top = int(fy - 0.55 * fh)                # headroom above the face
+        left = max(0, min(int(cx - side / 2), w - side))
+        top = max(0, min(top, h - side))
+        box = (left, top, left + side, top + side)
+    elif h >= w:                                 # portrait → anchor at the top
+        side = w
+        top = min(int(h * 0.03), h - side)
         box = (0, top, side, top + side)
-    else:                            # landscape → center horizontally
+    else:                                        # landscape → centre horizontally
         side = h
         left = (w - side) // 2
         box = (left, 0, left + side, side)
