@@ -13,7 +13,10 @@ export type EspionageKind =
   | 'assassinate'   // 暗殺 — attempt to kill a specific enemy officer
   | 'defect'        // 寝返 — turn an enemy officer to your side
   | 'frame'         // 離間 — drop loyalty of an enemy officer toward their lord
-  | 'sow-discord';  // 離間計 — poison the rapport between two enemy officers
+  | 'sow-discord'   // 離間計 — poison the rapport between two enemy officers
+  | 'steal-gold'    // 盜竊金庫 — rob an enemy city's treasury into yours
+  | 'seduce'        // 美人計 — turn an enemy officer via a honey-trap (好色 → easy)
+  | 'false-intel';  // 偽書反間 — forge proof of treason; the enemy lord may jail his own general
 
 export interface EspionageDef {
   kind: EspionageKind;
@@ -73,6 +76,10 @@ export interface EmbeddedSpy {
   originCityId: EntityId;
   /** The force that owned the target city when planted (for resentment on discovery). */
   targetForceId: EntityId;
+  /** 細作之主 — the force running this agent. Player spies = the player force; an
+   *  AI's spy embedded in a *player* city carries that AI's id (§7.3 ①). Legacy
+   *  saves without it are treated as the player's. */
+  ownerForceId?: EntityId;
   plantedYear: number;
   /** 0–100; rises each season by target vigilance − agent stealth. ≥100 = caught. */
   exposure: number;

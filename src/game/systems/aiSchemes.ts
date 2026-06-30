@@ -19,7 +19,7 @@ import type { City, EntityId, Force, Officer, ReportEntry } from '../types';
 import type { RulerPersonality } from '../types/personality';
 import type { DiplomaticState } from '../types/diplomacy';
 import { getRelation, pairKey } from '../types/diplomacy';
-import { SCHEME_DEFS, schemeOdds, forcesAdjacent, type SchemeId } from './schemes';
+import { SCHEME_DEFS, schemeOdds, schemeExposureChance, forcesAdjacent, type SchemeId } from './schemes';
 import { pickAdvisor } from './advisor';
 
 type Season = 'spring' | 'summer' | 'autumn' | 'winter';
@@ -154,6 +154,26 @@ export function resolveAISchemes(ctx: AISchemeContext): AISchemeOutput {
       }
     }
 
+    // ── 2.5) 離間盟好 — shatter the protective pact of our worst neighbour, ──
+    //         isolating it (and, by preference, prying apart the player's friends).
+    if (!plan && adjacentRivals.length > 0) {
+      const E = adjacentRivals[0].id;
+      const partners = others
+        .filter((id) => id !== E)
+        .map((id) => ({ id, rel: getRelation(ctx.diplomacy, E, id) }))
+        .filter((p) => p.rel.status === 'allied' || p.rel.status === 'non-aggression')
+        // Prefer breaking a pact that involves the player, then the shallowest bond.
+        .sort((a, b) => (a.id === playerForceId ? -1 : b.id === playerForceId ? 1 : a.rel.score - b.rel.score));
+      if (partners.length > 0) {
+        plan = { scheme: 'sow-discord', a: E, b: partners[0].id, relText: '' };
+      }
+    }
+
+    // ── 2.7) 流言亂政 — sow realm-wide unrest in our single biggest threat. ──
+    if (!plan && adjacentRivals.length > 0 && rng() < 0.5) {
+      plan = { scheme: 'sow-chaos', a: adjacentRivals[0].id, relText: '' };
+    }
+
     // ── 3) 遠交近攻 — else court a strong, non-bordering power. ──
     if (!plan) {
       const distant = others
@@ -178,7 +198,27 @@ export function resolveAISchemes(ctx: AISchemeContext): AISchemeOutput {
     const fnameEn = (id: EntityId) => forces[id]?.name.en ?? id;
     const involvesPlayer = playerForceId != null && (plan.a === playerForceId || plan.b === playerForceId);
 
-    if (plan.scheme === 'far-friend') {
+    if (plan.scheme === 'sow-discord') {
+      // Break A & B's pact: status → neutral, relation sours.
+      const key = pairKey(plan.a, plan.b!);
+      const cur = relations[key] ?? { forceA: plan.a < plan.b! ? plan.a : plan.b!, forceB: plan.a < plan.b! ? plan.b! : plan.a, score: 0, status: 'neutral' as const };
+      relations[key] = { ...cur, status: 'neutral', score: Math.max(-100, Math.min(100, cur.score - 30)) };
+      entries.push({
+        cityId: null, kind: 'note',
+        text: `${fnameEn(force.id)} sows discord, shattering the pact between ${fnameEn(plan.a)} and ${fnameEn(plan.b!)}${involvesPlayer ? ' — your alliance is undone' : ''}.`,
+        textZh: `${fname(force.id)}行離間之計，破${fname(plan.a)}與${fname(plan.b!)}之盟${involvesPlayer ? '（汝之盟好頓裂！）' : ''}。`,
+      });
+    } else if (plan.scheme === 'sow-chaos') {
+      // Realm-wide unrest: every city of the target loses heart.
+      for (const c of Object.values(outCities)) {
+        if (c.ownerForceId === plan.a) outCities[c.id] = { ...c, loyalty: Math.max(0, c.loyalty - 7) };
+      }
+      entries.push({
+        cityId: null, kind: 'note',
+        text: `${fnameEn(force.id)} spreads rumours through ${fnameEn(plan.a)}'s realm — its cities lose heart${involvesPlayer ? ' (your people waver)' : ''}.`,
+        textZh: `${fname(force.id)}散布流言於${fname(plan.a)}全境，民心動搖${involvesPlayer ? '（汝境亦惑！）' : ''}。`,
+      });
+    } else if (plan.scheme === 'far-friend') {
       setRel(force.id, plan.a, +25);
       entries.push({
         cityId: null, kind: 'note',
@@ -201,6 +241,19 @@ export function resolveAISchemes(ctx: AISchemeContext): AISchemeOutput {
         cityId: null, kind: 'note',
         text: `${fnameEn(force.id)} sets ${fnameEn(plan.a)} and ${fnameEn(plan.b!)} at each other${involvesPlayer ? ' — you are drawn in' : ''}.`,
         textZh: `${fname(force.id)}行二虎競食之計，使${fname(plan.a)}與${fname(plan.b!)}相攻${involvesPlayer ? '（汝亦在局中）' : ''}。`,
+      });
+    }
+
+    // 反間敗露 — even a landed plot may be traced back; the dupes sour toward the schemer
+    // (so a scheme aimed at YOU can be seen through, souring you on its author).
+    if (plan.scheme !== 'far-friend' && rng() < schemeExposureChance(plan.scheme, true, strategist.stats.intelligence)) {
+      const dupes = plan.b ? [plan.a, plan.b] : [plan.a];
+      for (const d of dupes) setRel(d, force.id, -12);
+      const sawThrough = playerForceId != null && dupes.includes(playerForceId);
+      entries.push({
+        cityId: null, kind: 'note',
+        text: `${fnameEn(force.id)}'s plot is exposed — ${dupes.map(fnameEn).join(' & ')} turn cold toward it${sawThrough ? ' (you see through the scheme)' : ''}.`,
+        textZh: `${fname(force.id)}之計敗露，${dupes.map(fname).join('、')}識破而疏之${sawThrough ? '（汝已識破其謀）' : ''}。`,
       });
     }
   }

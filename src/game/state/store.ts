@@ -110,6 +110,7 @@ import {
 } from '../systems/historicalEvents';
 import { resolveEspionage } from '../systems/espionage';
 import { tickEmbeddedSpies, PLANT_SPY_COST } from '../systems/spies';
+import { resolveAIEspionage } from '../systems/aiEspionage';
 import {
   resolveTribeRaids,
   canCampaignTribe,
@@ -127,6 +128,9 @@ import { planAITurn } from '../systems/ai';
 import { planAIAppointments } from '../systems/aiAppointments';
 import { planAICourt } from '../systems/aiCourt';
 import { rollFactionEvents } from '../systems/factionEvents';
+import { rollGarrisonMutiny } from '../systems/ambition';
+import { deriveCourtFactions, tickCourtPatronage, FACTION_LABEL } from '../systems/courtFactions';
+import { clanGentryWeight } from '../systems/clans';
 import { rollBehaviorEvent } from '../systems/behaviorEvents';
 import { rollAIWishFlavor } from '../systems/aiWishesFlavor';
 import { appointmentBonusFor, pruneStaleAppointments, traitRefusal, isOnCooldown } from '../systems/appointmentEffects';
@@ -142,13 +146,13 @@ import { rollRecommendations } from '../systems/recommendation';
 import { codexMarkRecruited, codexMarkRecruitedMany, codexMarkSeen, codexMarkSlain } from '../systems/codex';
 import { itemCodexMarkCarried } from '../systems/itemCodex';
 import { recordDailyResult } from '../systems/dailyChallenge';
-import { SCHEME_DEFS, schemeOdds, validateScheme, type SchemeId } from '../systems/schemes';
+import { SCHEME_DEFS, schemeOdds, schemeExposureChance, validateScheme, type SchemeId } from '../systems/schemes';
 import { resolveAISchemes } from '../systems/aiSchemes';
 import { appendPowerHistory, takePowerSnapshot } from '../systems/powerHistory';
 import { pickAdvisor } from '../systems/advisor';
 import { canTrain, trainingCost, tickTrainings, trainingDurationSeasons, sweepStaleTrainings, mentorDurationSeasons, isParentMentor, canTrainTactic, tacticTrainingCost, tacticDurationSeasons, tacticMentorDurationSeasons } from '../systems/training';
 import { loyaltyDriftPerSeason, rollFlavorEvent, defectionChance, sharedBondableTrait, maritalCompatibility, itemResonanceCandidate, policyResonanceCandidate, rollMarriageAssimilation, itemTacticCandidate, deedTraitCandidate, isIncapacitated } from '../systems/traitEffects';
-import { loyaltyFloor, rollMentorPolicyTransfer, mentorsOf, deepenBonds, camaraderieLoyaltyDelta, parentsOf, childrenOf, spousesOf, siblingsOf, allSwornBrothersOf } from '../systems/relationshipEffects';
+import { loyaltyFloor, rollMentorPolicyTransfer, mentorsOf, deepenBonds, camaraderieLoyaltyDelta, parentsOf, childrenOf, spousesOf, siblingsOf, allSwornBrothersOf, runtimeSwornPair } from '../systems/relationshipEffects';
 import { TRAIT_DEFS_BY_ID } from '../data/personality';
 import {
   ALLIANCE_PROPOSAL_COST,
@@ -469,7 +473,7 @@ interface GameStore extends GameState {
    *  relations), 策反 (turn an enemy officer), 刺探 (deep intel + sabotage). He
    *  travels alone, resolves the errand on arrival, and rides home. The foreign
    *  errands (envoy/subvert/infiltrate) require a target held by another force. */
-  dispatchExpedition: (officerId: EntityId, fromCityId: EntityId, toCityId: EntityId, mode: ExpeditionMode) => { ok: boolean; seasons: number; reason?: string };
+  dispatchExpedition: (officerId: EntityId, fromCityId: EntityId, toCityId: EntityId, mode: ExpeditionMode, companionId?: EntityId) => { ok: boolean; seasons: number; reason?: string };
   /** 召回游历 — recall a roaming officer; he turns straight for home, errand
    *  abandoned (an officer already on his way back is left to it). */
   recallExpedition: (id: EntityId) => void;
@@ -640,6 +644,10 @@ interface GameStore extends GameState {
   /** 舌戰失利 — lock a free agent until next season (lost the war of words). */
   lockFreeAgentRecruit: (officerId: EntityId) => void;
   executeOfficer: (officerId: EntityId) => void;
+  /** 君主彈壓 (§7.5 ①) — pre-empt a brewing rebel among your own officers:
+   *  安撫 placate (gold → loyalty), 調離 reassign (to capital, strips the power
+   *  base), 下獄 imprison, or 誅殺 execute (decisive, but breeds grudges). */
+  disciplineOfficer: (officerId: EntityId, action: 'placate' | 'reassign' | 'imprison' | 'execute') => { ok: boolean; message: string };
   /** 釋放俘虜。`honorable`(義釋)→ the freed officer remembers the kindness
    *  (`freedByForceId`, easier to recruit later) and the lord earns renown. */
   releaseOfficer: (officerId: EntityId, honorable?: boolean) => void;
@@ -872,6 +880,17 @@ interface GameStore extends GameState {
   plantSpy: (agentOfficerId: EntityId, targetCityId: EntityId) => { ok: boolean; reason?: string };
   /** Extract an embedded spy safely before they are exposed. */
   recallSpy: (spyId: EntityId) => void;
+  /** 眠龍出淵 — activate an embedded spy as an inside agent for one devastating
+   *  strike (§7.3 ④): the host city is thrown into chaos (loyalty/food/troops), and
+   *  the spy's cover is spent (the agent slips home, burned). */
+  activateSpy: (spyId: EntityId) => { ok: boolean; message: string };
+  /** 肅諜清查 — sweep your realm for enemy 潛伏細作 (§7.3 ②): each found spy is
+   *  rooted out (caught & held), and counter-intel stiffens for a few seasons. */
+  counterIntelSweep: () => { ok: boolean; caught: number; message: string };
+  /** 反間 — turn a captured enemy spy/officer (§7.3 ②/④). `asDoubleAgent` false →
+   *  they join you outright + their realm's cities are laid bare; true → they slip
+   *  back into their former realm as YOUR embedded double agent (ongoing intel). */
+  turnSpy: (officerId: EntityId, asDoubleAgent?: boolean) => { ok: boolean; message: string };
   issueEdict: (
     kind: EdictKind,
     targetForceId?: EntityId,
@@ -880,6 +899,12 @@ interface GameStore extends GameState {
     forceId: EntityId,
     rank: ImperialRank,
   ) => { ok: boolean; reason?: string };
+  /** 朝政傾向 — patronise a court faction (or null to withdraw), §7.4 ①. Each
+   *  season the favoured bloc rallies and the realm reaps that faction's boon. */
+  setCourtPatronage: (faction: import('../systems/courtFactions').FactionId | null) => void;
+  /** 黨錮 — purge a court faction (§7.4 ①): its members' loyalty craters and the
+   *  Mandate dips, but a purged capable officer may defect in fury. */
+  purgeFaction: (faction: import('../systems/courtFactions').FactionId) => { ok: boolean; message: string };
   setSoundEnabled: (enabled: boolean) => void;
   setMusicTrack: (track: string | null) => void;
   setLanguage: (lang: 'zh' | 'en' | 'both') => void;
@@ -1881,7 +1906,11 @@ export const useGameStore = create<GameStore>()(
                 };
               })()
             : (target.ownerForceId && target.ownerForceId !== source.ownerForceId
-                ? { grudges: { ...state.grudges, [target.ownerForceId]: Math.min(100, (state.grudges[target.ownerForceId] ?? 0) + 6) } }
+                // 師出有名 — a war waged under an active 討伐令 (casus belli) breeds
+                // far less lasting resentment than naked aggression (§7.2 ④).
+                ? { grudges: { ...state.grudges, [target.ownerForceId]: Math.min(100, (state.grudges[target.ownerForceId] ?? 0) + (
+                    (state.casusBelliMarks ?? []).some((m) => m.byForceId === state.playerForceId && m.targetForceId === target.ownerForceId) ? 2 : 6
+                  )) } }
                 : {})),
         });
         const paceTag = pace !== 'normal' && !isNaval ? `·${PACE_LABEL[pace].zh}` : '';
@@ -2013,41 +2042,103 @@ export const useGameStore = create<GameStore>()(
         const capital = force ? state.cities[force.capitalCityId] : null;
         if (!capital || capital.gold < def.goldCost)
           return { ok: false, message: `國庫不足(需${def.goldCost}金於首都)` };
-        const bad = validateScheme(schemeId, state.cities, state.playerForceId, targetA, targetB);
+        const bad = validateScheme(schemeId, state.cities, state.playerForceId, targetA, targetB, state.diplomacy);
         if (bad) return { ok: false, message: bad };
         const strategist = pickAdvisor(state.officers, state.playerForceId, state.appointments);
-        const odds = schemeOdds(schemeId, state.diplomacy, strategist, targetA, targetB);
+        const strategistIQ = strategist?.stats.intelligence ?? 50;
+        // 抗謀 — the target realm's sharpest counsel resists the ploy.
+        const counselIQ = (fid: EntityId) => pickAdvisor(state.officers, fid)?.stats.intelligence ?? 50;
+        const targetCounselIQ = Math.max(counselIQ(targetA), targetB ? counselIQ(targetB) : 0);
+        const odds = schemeOdds(schemeId, state.diplomacy, strategist, targetA, targetB, targetCounselIQ);
         // Pay either way — schemes spend silver before they spend luck.
         const cities = { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - def.goldCost } };
-        if (Math.random() >= odds) {
-          set({ cities });
-          return { ok: false, message: `計不售 — ${state.forces[targetA]?.name.zh ?? targetA}未為所動(耗${def.goldCost}金)` };
-        }
         const relations = { ...state.diplomacy.relations };
+        const grudges = { ...(state.grudges ?? {}) };
         const drop = (x: EntityId, y: EntityId, delta: number) => {
           const key = pairKey(x, y);
           const rel = relations[key] ?? { forceA: x < y ? x : y, forceB: x < y ? y : x, score: 0, status: 'neutral' as const };
           relations[key] = { ...rel, score: Math.max(-100, Math.min(100, rel.score + delta)) };
         };
+        // 反間敗露 — a plot may be traced back to you; the manipulated realm(s) resent it.
+        const resenters = schemeId === 'far-friend' ? []
+          : targetB ? [targetA, targetB] : [targetA];
+        const applyExposure = (): string => {
+          for (const r of resenters) {
+            if (!state.playerForceId) break;
+            const key = pairKey(state.playerForceId, r);
+            const rel = relations[key] ?? { forceA: state.playerForceId < r ? state.playerForceId : r, forceB: state.playerForceId < r ? r : state.playerForceId, score: 0, status: 'neutral' as const };
+            relations[key] = { ...rel, score: Math.max(-100, rel.score - 12) };
+            grudges[r] = Math.min(100, (grudges[r] ?? 0) + 12);
+          }
+          return resenters.length ? `(然事洩,${state.forces[resenters[0]]?.name.zh ?? ''}等知為我所謀,積怨而疏)` : '';
+        };
+        const succeeded = Math.random() < odds;
+        if (!succeeded) {
+          // A botched plot is the likeliest to be exposed.
+          const exposed = Math.random() < schemeExposureChance(schemeId, false, strategistIQ);
+          const suffix = exposed ? applyExposure() : '';
+          set({ cities, ...(exposed ? { diplomacy: { ...state.diplomacy, relations }, grudges } : {}) });
+          return { ok: false, message: `計不售 — ${state.forces[targetA]?.name.zh ?? targetA}未為所動(耗${def.goldCost}金)${exposed ? `,且事機敗露${suffix}` : ''}` };
+        }
         const seasonNow = state.date.season as 'spring' | 'summer' | 'autumn' | 'winter';
         const marks = [...(state.casusBelliMarks ?? [])];
         let message = '';
+        let citiesOut = cities;
+        const deterrences = [...(state.deterrences ?? [])];
+        const fname = (id: EntityId) => state.forces[id]?.name.zh ?? id;
         if (schemeId === 'far-friend') {
           drop(state.playerForceId, targetA, +25);
-          message = `遠交近攻得售 — 與${state.forces[targetA]?.name.zh ?? targetA}交好(+25)。`;
+          message = `遠交近攻得售 — 與${fname(targetA)}交好(+25)。`;
         } else if (schemeId === 'tiger-wolf') {
           drop(targetA, targetB!, -50);
           marks.push({ byForceId: targetA, targetForceId: targetB!, expiresYear: state.date.year + 2, expiresSeason: seasonNow });
-          message = `驅虎吞狼得售 — ${state.forces[targetA]?.name.zh}與${state.forces[targetB!]?.name.zh}交惡,虎已出柙。`;
-        } else {
+          message = `驅虎吞狼得售 — ${fname(targetA)}與${fname(targetB!)}交惡,虎已出柙。`;
+        } else if (schemeId === 'two-tigers') {
           drop(targetA, targetB!, -30);
           marks.push(
             { byForceId: targetA, targetForceId: targetB!, expiresYear: state.date.year + 2, expiresSeason: seasonNow },
             { byForceId: targetB!, targetForceId: targetA, expiresYear: state.date.year + 2, expiresSeason: seasonNow },
           );
           message = `二虎競食得售 — 兩虎相向,皆得討伐之名。`;
+        } else if (schemeId === 'sow-discord') {
+          // 離間盟好 — break A & B's pact: status back to neutral, relation sours.
+          const key = pairKey(targetA, targetB!);
+          const rel = relations[key] ?? { forceA: targetA < targetB! ? targetA : targetB!, forceB: targetA < targetB! ? targetB! : targetA, score: 0, status: 'neutral' as const };
+          relations[key] = { ...rel, status: 'neutral', score: Math.max(-100, Math.min(100, rel.score - 30)), expiresAt: undefined };
+          message = `離間盟好得售 — ${fname(targetA)}與${fname(targetB!)}盟好頓裂,反目成仇。`;
+        } else if (schemeId === 'sow-chaos') {
+          // 流言亂政 — every city of the target loses heart; its weakest teeters toward revolt.
+          const next = { ...citiesOut };
+          let weakest: EntityId | null = null;
+          for (const c of Object.values(next)) {
+            if (c.ownerForceId !== targetA) continue;
+            next[c.id] = { ...c, loyalty: Math.max(0, c.loyalty - 7) };
+            if (!weakest || next[c.id].loyalty < next[weakest].loyalty) weakest = c.id;
+          }
+          if (weakest) next[weakest] = { ...next[weakest], loyalty: Math.max(0, next[weakest].loyalty - 5) };
+          citiesOut = next;
+          message = `流言亂政得售 — ${fname(targetA)}全境民心搖動,弱城瀕亂。`;
+        } else if (schemeId === 'feign-strength') {
+          // 疑兵之計 — the rival, fearing an ambush, holds off marching on you (≈1 year).
+          deterrences.push({ byForceId: state.playerForceId, targetForceId: targetA, expiresYear: state.date.year + 1, expiresSeason: seasonNow });
+          message = `疑兵之計得售 — ${fname(targetA)}疑我有伏,數季不敢來犯。`;
+        } else if (schemeId === 'loot-fire') {
+          // 趁火打劫 — take a casus belli against the embroiled rival (+10% combat, 師出有名).
+          marks.push({ byForceId: state.playerForceId, targetForceId: targetA, expiresYear: state.date.year + 2, expiresSeason: seasonNow });
+          message = `趁火打劫得售 — 得討伐${fname(targetA)}之名,可乘其危而擊。`;
+        } else {
+          // 連環計 — chain two plots: break A & B's pact AND drive A to war with B.
+          const key = pairKey(targetA, targetB!);
+          const rel = relations[key] ?? { forceA: targetA < targetB! ? targetA : targetB!, forceB: targetA < targetB! ? targetB! : targetA, score: 0, status: 'neutral' as const };
+          relations[key] = { ...rel, status: 'neutral', score: Math.max(-100, Math.min(100, rel.score - 50)), expiresAt: undefined };
+          marks.push({ byForceId: targetA, targetForceId: targetB!, expiresYear: state.date.year + 2, expiresSeason: seasonNow });
+          message = `連環計得售 — 破${fname(targetA)}${fname(targetB!)}之盟,復驅${fname(targetA)}攻之,環環相扣。`;
         }
-        set({ cities, diplomacy: { ...state.diplomacy, relations }, casusBelliMarks: marks });
+        // 反間敗露 — even a successful plot may leak; the dupes resent being played.
+        if (Math.random() < schemeExposureChance(schemeId, true, strategistIQ)) {
+          message += applyExposure();
+        }
+        set({ cities: citiesOut, diplomacy: { ...state.diplomacy, relations }, grudges, casusBelliMarks: marks, deterrences });
         // 謀略獻策 — the 軍師's stratagem lands.
         get().pushPopup({
           key: 'advisor-scheme', media: 'image',
@@ -2395,7 +2486,7 @@ export const useGameStore = create<GameStore>()(
         return { ok: true };
       },
 
-      dispatchExpedition: (officerId, fromCityId, toCityId, mode) => {
+      dispatchExpedition: (officerId, fromCityId, toCityId, mode, companionId) => {
         const state = get();
         const pid = state.playerForceId;
         if (!pid) return { ok: false, seasons: 0 };
@@ -2408,18 +2499,38 @@ export const useGameStore = create<GameStore>()(
         if (officer.locationCityId !== fromCityId) return { ok: false, seasons: 0, reason: 'officer not in this city' };
         if (officer.task || state.pendingCommands[officerId]) return { ok: false, seasons: 0, reason: 'officer is busy' };
         if (state.pendingTrainings.some((tr) => tr.officerId === officerId)) return { ok: false, seasons: 0, reason: 'officer is training' };
-        // 出使/策反/刺探 act on a foreign power — the target must be someone else's.
+        // Target eligibility by errand: 出使/策反/刺探/結交 strike abroad; 巡視/募兵
+        // act on your OWN land; 探索/訪賢 may go anywhere a city stands.
         const foreign = to.ownerForceId != null && to.ownerForceId !== pid;
-        if (mode !== 'explore' && !foreign) return { ok: false, seasons: 0, reason: 'target must be a foreign city' };
+        if ((mode === 'envoy' || mode === 'subvert' || mode === 'infiltrate' || mode === 'befriend') && !foreign) {
+          return { ok: false, seasons: 0, reason: 'target must be a foreign city' };
+        }
+        if ((mode === 'tour' || mode === 'levy') && to.ownerForceId !== pid) {
+          return { ok: false, seasons: 0, reason: 'target must be one of your own cities' };
+        }
+        // 護衛 — an optional guard: your own idle officer in the same city.
+        let companion: typeof officer | null = null;
+        if (companionId && companionId !== officerId) {
+          const c = state.officers[companionId];
+          if (!c || c.forceId !== pid || c.locationCityId !== fromCityId || c.task || (c.status !== 'idle' && c.status !== 'active')
+            || state.pendingCommands[companionId] || state.pendingTrainings.some((tr) => tr.officerId === companionId)) {
+            return { ok: false, seasons: 0, reason: 'invalid escort' };
+          }
+          companion = c;
+        }
         const baseSeasons = Math.max(1, marchDurationFor(from, to, state.date.season));
         const legSeasons = expeditionLegSeasons(baseSeasons, officer);
         const id = `exp-${officerId}-${toCityId}-${state.date.year}-${state.date.season}-${Object.keys(state.expeditions ?? {}).length}`;
         set({
-          // The officer rides out alone (off the city rosters until he returns).
-          officers: { ...state.officers, [officerId]: { ...officer, locationCityId: null, task: null, status: 'active' } },
+          // The officer (and any guard) ride out, off the city rosters until they return.
+          officers: {
+            ...state.officers,
+            [officerId]: { ...officer, locationCityId: null, task: null, status: 'active' },
+            ...(companion ? { [companion.id]: { ...companion, locationCityId: null, task: null, status: 'active' as const } } : {}),
+          },
           expeditions: {
             ...state.expeditions,
-            [id]: { id, officerId, forceId: pid, fromCityId, toCityId, mode, phase: 'outbound', seasonsRemaining: legSeasons, legSeasons },
+            [id]: { id, officerId, forceId: pid, fromCityId, toCityId, mode, ...(companion ? { companionId: companion.id } : {}), phase: 'outbound', seasonsRemaining: legSeasons, legSeasons },
           },
         });
         get().notify(
@@ -3147,6 +3258,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           forts: state.forts,
           fogOfWar: state.fogOfWar,
           warCoalitions: state.warCoalitions,
+          deterrences: state.deterrences,
         });
         // Compute whether this period transition crosses a season boundary.
         // Boundary = the period BEFORE advance is the last (lower) phase of
@@ -3351,6 +3463,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           lordRapport: state.lordRapport,
           rapport: planned.rapport ?? state.rapport,
           runtimeBonds: planned.runtimeBonds,
+          diplomacy: planned.diplomacy ?? state.diplomacy,
+          forces: result.forces,
         });
         // Free agents.
         for (const o of Object.values(espResult.officers)) {
@@ -3400,6 +3514,22 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           if (spyTick.entries.length > 0) result.report.entries.push(...spyTick.entries);
           embeddedSpiesNext = spyTick.spies;
           spyGrudgeBumps = spyTick.grudgeBumps;
+        }
+        // 敵諜來犯 (§7.3 ①) — rival courts run espionage against the PLAYER each
+        // season: incite/burn/slander/suborn/assassinate, and plant sleepers in
+        // your cities (which 肅諜 must later root out). Mutates the same maps.
+        if (seasonBoundary && state.playerForceId) {
+          const aiEsp = resolveAIEspionage({
+            forces: result.forces, officers: espResult.officers, cities: espResult.cities,
+            embeddedSpies: embeddedSpiesNext, playerForceId: state.playerForceId,
+            buildings: state.buildings, family: state.family, lordRapport: state.lordRapport,
+            counterIntelActive: (state.counterIntelSeasons ?? 0) > 0,
+            date: { year: result.date.year, season: result.date.season }, rng: Math.random,
+          });
+          Object.assign(espResult.cities, aiEsp.cities);
+          Object.assign(espResult.officers, aiEsp.officers);
+          if (aiEsp.newSpies.length > 0) embeddedSpiesNext = [...embeddedSpiesNext, ...aiEsp.newSpies];
+          if (aiEsp.entries.length > 0) result.report.entries.push(...aiEsp.entries);
         }
         // 游历細探 — intel an expedition (探索/刺探) lit on the cities it reached.
         for (const [cid, ticks] of Object.entries(result.espionageReveals ?? {})) {
@@ -3975,6 +4105,52 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           postCities = facOut.cities;
           nextMandate = facOut.mandate;
           if (facOut.entries.length > 0) result.report.entries.push(...facOut.entries);
+
+          // 朝政傾向 (§7.4 ①) — the patronised bloc rallies + the realm reaps its boon.
+          if (state.courtPatronage && state.playerForceId) {
+            const cpTick = tickCourtPatronage({
+              officers: postOfficers, cities: postCities, playerForceId: state.playerForceId,
+              capitalCityId: postForces[state.playerForceId]?.capitalCityId,
+              patronage: state.courtPatronage,
+              clanWeight: clanGentryWeight(postOfficers, state.clanStandings ?? {}),
+            });
+            postOfficers = cpTick.officers;
+            postCities = cpTick.cities;
+          }
+
+          // 衣帶詔 (§7.4 ③) — holding the Son of Heaven breeds plots. A custodian
+          // short of overwhelming Mandate risks a loyalist conspiracy: a wavering
+          // courtier's heart turns, and a rival seizes the 奉詔討賊 casus belli.
+          {
+            const custodian = emperorCustodian(postCities, state.emperorCityId ?? null);
+            const cm = custodian ? (nextMandate.byForce[custodian] ?? 50) : 0;
+            if (custodian && cm < 85 && Math.random() < 0.12) {
+              const lr = state.lordRapport ?? {};
+              const ruler = postForces[custodian]?.rulerOfficerId;
+              const courtiers = Object.values(postOfficers).filter((o) => o.forceId === custodian && o.status !== 'dead' && o.id !== ruler);
+              if (courtiers.length > 0) {
+                const conspirator = courtiers.reduce((a, b) => ((lr[b.id] ?? 0) < (lr[a.id] ?? 0) ? b : a));
+                postOfficers = { ...postOfficers, [conspirator.id]: { ...conspirator, loyalty: Math.max(0, conspirator.loyalty - 15) } };
+              }
+              const rivals = Object.values(postForces).filter((f) => f.id !== custodian && f.vassalOfForceId !== custodian
+                && Object.values(postCities).some((c) => c.ownerForceId === f.id) && isHostilePermitted(postDiplomacy, f.id, custodian));
+              if (rivals.length > 0) {
+                const champion = rivals[Math.floor(Math.random() * rivals.length)];
+                aiSchemeMarks.push({ byForceId: champion.id, targetForceId: custodian, expiresYear: result.date.year + 2, expiresSeason: result.date.season as 'spring' | 'summer' | 'autumn' | 'winter' });
+                result.report.entries.push({
+                  cityId: null, kind: 'note',
+                  text: `衣帶詔 — a secret edict circulates against ${postForces[custodian]?.name.en ?? 'the captor'}; ${champion.name.en} answers the call to "rescue the Emperor".`,
+                  textZh: `衣帶詔密布 —— 討${postForces[custodian]?.name.zh ?? '挾天子者'}之檄起,${champion.name.zh}奉詔討賊。`,
+                });
+              }
+            }
+          }
+          // 兵變嘩變 (§7.5 ④) — starving, mutinous garrisons break ranks and bolt.
+          {
+            const mut = rollGarrisonMutiny({ cities: postCities, forces: postForces, seed: (result.date.year * 4 + (['spring', 'summer', 'autumn', 'winter'].indexOf(result.date.season))) >>> 0 });
+            postCities = mut.cities;
+            for (const ev of mut.events) result.report.entries.push({ cityId: ev.cityId, kind: ev.kind, text: ev.text, textZh: ev.textZh });
+          }
           // 邦交 — prestige a 遠使 embassy won at a foreign court (受封親魏倭王…).
           if (result.expeditionMandateDeltas) {
             const byForce = { ...nextMandate.byForce };
@@ -4716,6 +4892,21 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           (id) => state.cities[id]?.ownerForceId === state.playerForceId &&
             postCities[id]?.ownerForceId !== state.playerForceId,
         );
+        // 師出有名之賞 (§7.2 ③) — cities the player took this turn FROM a force it
+        // held a 討伐令 against: a just conquest wins the people's heart (Mandate)
+        // and rallies talent to the cause. +2 天命 each (capped), and a recruit boon.
+        let righteousMandate = 0;
+        if (state.playerForceId) {
+          for (const id of conqueredThisTurn) {
+            if (postCities[id]?.ownerForceId !== state.playerForceId) continue;
+            const prior = state.cities[id]?.ownerForceId;
+            if (prior && prior !== state.playerForceId && (state.casusBelliMarks ?? []).some((m) => m.byForceId === state.playerForceId && m.targetForceId === prior)) {
+              righteousMandate += 2;
+            }
+          }
+          righteousMandate = Math.min(6, righteousMandate);
+        }
+        const righteousConquest = righteousMandate > 0;
         const decayed = state.burningCities
           .map((b) => ({ ...b, seasonsLeft: b.seasonsLeft - 1 }))
           .filter((b) => b.seasonsLeft > 0);
@@ -6060,6 +6251,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           firedEventIds: postFiredIds,
           pendingEspionage: [],
           embeddedSpies: embeddedSpiesNext,
+          counterIntelSeasons: seasonBoundary ? Math.max(0, (state.counterIntelSeasons ?? 0) - 1) : state.counterIntelSeasons,
           grudges: grudgesAfterPacts,
           credibility: credibilityAfterPacts,
           warCoalitions: nextCoalitions,
@@ -6183,15 +6375,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             : (state.powerHistory ?? []),
           mandate: (() => {
             if (!seasonBoundary) return nextMandate;
+            const byForce = { ...nextMandate.byForce };
+            // 師出有名之賞 (§7.2 ③) — a just conquest (under 討伐令) lifts the player's Mandate.
+            if (righteousMandate > 0 && state.playerForceId) {
+              byForce[state.playerForceId] = Math.min(100, (byForce[state.playerForceId] ?? 50) + righteousMandate);
+            }
             const custodian = emperorCustodian(postCities, state.emperorCityId ?? null);
-            if (!custodian) return nextMandate;
-            return {
-              ...nextMandate,
-              byForce: {
-                ...nextMandate.byForce,
-                [custodian]: Math.min(100, (nextMandate.byForce[custodian] ?? 50) + MANDATE_PER_SEASON),
-              },
-            };
+            if (custodian) byForce[custodian] = Math.min(100, (byForce[custodian] ?? 50) + MANDATE_PER_SEASON);
+            return { ...nextMandate, byForce };
           })(),
           embargoes: nextEmbargoes,
           pendingDelayedEffects: remainingDelayed,
@@ -6218,6 +6409,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                 return nextAbs <= expAbs;
               })
             : state.casusBelliMarks,
+          // 疑兵之計 deterrences expire on the same clock as 討伐令 marks.
+          deterrences: seasonBoundary
+            ? (state.deterrences ?? []).filter((m) => {
+                const seasonIdx = { spring: 0, summer: 1, autumn: 2, winter: 3 } as const;
+                const nextAbs = result.date.year * 4 + seasonIdx[result.date.season];
+                const expAbs = m.expiresYear * 4 + seasonIdx[m.expiresSeason];
+                return nextAbs <= expAbs;
+              })
+            : state.deterrences,
           // 求賢令 recruit bonus tick: decrement seasonsLeft, drop expired; then
           // fold in any AI 求賢令 issued this tick (so it rings next season too).
           recruitBonusSeasons: (() => {
@@ -6229,6 +6429,11 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                 )
               : { ...state.recruitBonusSeasons };
             for (const fid of aiCourt.talentEdicts) next[fid] = { multiplier: 1.5, seasonsLeft: 1 };
+            // 一鼓作氣 (§7.2 ③) — a just conquest rallies talent to the player's cause.
+            if (righteousConquest && state.playerForceId) {
+              const cur = next[state.playerForceId];
+              if (!cur || cur.multiplier < 1.3) next[state.playerForceId] = { multiplier: 1.3, seasonsLeft: 2 };
+            }
             return next;
           })(),
         });
@@ -6511,6 +6716,61 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           diplomacy = { ...state.diplomacy, relations };
         }
         set({ officers, diplomacy });
+      },
+
+      // ── §7.5 ① 君主彈壓 ─────────────────────────────────────────────
+      disciplineOfficer: (officerId, action) => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        const o = state.officers[officerId];
+        const player = state.forces[state.playerForceId];
+        if (!o || !player || o.forceId !== state.playerForceId) return { ok: false, message: '非我臣屬。' };
+        if (o.id === player.rulerOfficerId) return { ok: false, message: '不可彈壓君主。' };
+        const capital = state.cities[player.capitalCityId];
+
+        if (action === 'placate') {
+          if (!capital || capital.gold < 400) return { ok: false, message: '需 400 金行安撫。' };
+          set({
+            cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - 400 } },
+            officers: { ...state.officers, [officerId]: { ...o, loyalty: Math.min(100, o.loyalty + 15), grievanceCount: Math.max(0, (o.grievanceCount ?? 0) - 2) } },
+            lordRapport: { ...state.lordRapport, [officerId]: Math.min(100, (state.lordRapport?.[officerId] ?? 0) + 10) },
+          });
+          get().notify(`安撫 · 賞 ${o.name.zh},忠誠回升`, `You placate ${o.name.en} — loyalty restored`);
+          return { ok: true, message: `賞${o.name.zh}以金,忠誠 +15、積怨稍解、君臣好感 +10。` };
+        }
+        if (action === 'reassign') {
+          if (o.status !== 'idle' && o.status !== 'active') return { ok: false, message: '此人不在任,無從調離。' };
+          // 調離權力根基 — to the capital (a 割據 needs a non-capital seat held).
+          set({ officers: { ...state.officers, [officerId]: { ...o, locationCityId: player.capitalCityId, task: null, loyalty: Math.max(0, o.loyalty - 3) } } });
+          get().notify(`調離 · 召 ${o.name.zh} 還都`, `You recall ${o.name.en} to the capital — their power base stripped`);
+          return { ok: true, message: `召${o.name.zh}還都,奪其外鎮之基(忠 −3,然難再割據)。` };
+        }
+        if (action === 'imprison') {
+          if (o.status !== 'idle' && o.status !== 'active') return { ok: false, message: '此人不在任,無從下獄。' };
+          // 同黨離心 — jailing one stirs unease among kin/sworn brothers.
+          const officers = { ...state.officers, [officerId]: { ...o, status: 'imprisoned' as const, task: null, locationCityId: player.capitalCityId, capturedFromForceId: state.playerForceId } };
+          for (const other of Object.values(officers)) {
+            if (other.id === officerId || other.forceId !== state.playerForceId || other.status === 'dead') continue;
+            if (runtimeSwornPair(officerId, other.id, state.runtimeBonds ?? [])) officers[other.id] = { ...other, loyalty: Math.max(0, other.loyalty - 5) };
+          }
+          set({ officers });
+          get().notify(`下獄 · 囚 ${o.name.zh} 於都`, `You imprison ${o.name.en} — the threat is caged`, 'warn');
+          return { ok: true, message: `下${o.name.zh}於獄,異志暫戢(其義兄弟離心)。可再贖/釋/誅。` };
+        }
+        // execute — 誅殺 a free officer outright (decisive, costly to your name).
+        const officers = markSlainVendetta(state.officers, officerId, state.playerForceId, state.family, state.runtimeBonds ?? []);
+        officers[officerId] = applyExecute({ ...o, capturedFromForceId: state.playerForceId });
+        // 兔死狐悲 — the court reels; every officer cools, the lord loses renown.
+        for (const other of Object.values(officers)) {
+          if (other.id === officerId || other.forceId !== state.playerForceId || other.status === 'dead') continue;
+          officers[other.id] = { ...other, loyalty: Math.max(0, other.loyalty - 5) };
+        }
+        const ruler = officers[player.rulerOfficerId];
+        if (ruler) officers[player.rulerOfficerId] = { ...ruler, renown: Math.max(0, (ruler.renown ?? 0) - 4) };
+        codexMarkSlain(officerId);
+        set({ officers });
+        get().notify(`誅殺 · 斬 ${o.name.zh} 以絕後患`, `You execute ${o.name.en} — the threat ends, but the court reels`, 'warn');
+        return { ok: true, message: `斬${o.name.zh}以絕後患 —— 然兔死狐悲,全軍忠誠 −5、威望受損,其親族義兄結怨。` };
       },
 
       releaseOfficer: (officerId, honorable) => {
@@ -9381,6 +9641,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               targetCityId,
               originCityId: origin.id,
               targetForceId: target.ownerForceId,
+              ownerForceId: state.playerForceId,
               plantedYear: state.date.year,
               exposure: 0,
             },
@@ -9409,6 +9670,121 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               }
             : state.officers,
         });
+      },
+
+      // ── §7.3 ④ 眠龍出淵 ─────────────────────────────────────────────
+      activateSpy: (spyId) => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        const spy = state.embeddedSpies.find((s) => s.id === spyId && (s.ownerForceId ?? state.playerForceId) === state.playerForceId);
+        if (!spy) return { ok: false, message: '無此潛伏細作。' };
+        const city = state.cities[spy.targetCityId];
+        if (!city || !city.ownerForceId || city.ownerForceId === state.playerForceId) {
+          return { ok: false, message: '潛伏之城已非敵手。' };
+        }
+        const agent = state.officers[spy.agentOfficerId];
+        // 内應作亂 — chaos from within:民心崩、焚糧、亂兵.
+        const cities = { ...state.cities, [city.id]: {
+          ...city,
+          loyalty: Math.max(0, city.loyalty - 30),
+          food: Math.floor(city.food * 0.5),
+          troops: Math.floor(city.troops * 0.8),
+        } };
+        // The agent's cover is spent — slip them home (burned).
+        let home: City | null = state.cities[spy.originCityId] ?? null;
+        if (!home || home.ownerForceId !== state.playerForceId) {
+          home = Object.values(state.cities).find((c) => c.ownerForceId === state.playerForceId) ?? null;
+        }
+        set({
+          cities,
+          embeddedSpies: state.embeddedSpies.filter((s) => s.id !== spyId),
+          officers: agent ? { ...state.officers, [spy.agentOfficerId]: { ...agent, status: 'idle', task: null, locationCityId: home ? home.id : agent.locationCityId } } : state.officers,
+        });
+        get().notify(
+          `眠龍出淵 · ${city.name.zh} 內應作亂(民心 −30、焚糧過半、亂兵)`,
+          `${agent?.name.en ?? 'Your inside agent'} strikes from within ${city.name.en} — chaos engulfs it`,
+        );
+        return { ok: true, message: `${city.name.zh}內應作亂 —— 民心崩、糧倉焚、亂兵四起。細作功成身退,潛蹤已露。` };
+      },
+
+      // ── §7.3 ② 反諜 ─────────────────────────────────────────────────
+      counterIntelSweep: () => {
+        const COST = 300;
+        const state = get();
+        if (!state.playerForceId) return { ok: false, caught: 0, message: 'No player force.' };
+        const player = state.forces[state.playerForceId];
+        const capital = player ? state.cities[player.capitalCityId] : null;
+        if (!capital || capital.gold < COST) return { ok: false, caught: 0, message: `需 ${COST} 金行肅諜。` };
+        // 反諜之眼 — the realm's sharpest minds run the sweep.
+        const bestIq = Math.max(60, ...Object.values(state.officers).filter((o) => o.forceId === state.playerForceId && o.status !== 'dead').map((o) => o.stats.intelligence));
+        const catchChance = Math.min(0.92, 0.55 + bestIq / 300);
+        const playerCityIds = new Set(Object.values(state.cities).filter((c) => c.ownerForceId === state.playerForceId).map((c) => c.id));
+        const officers = { ...state.officers };
+        let caught = 0;
+        const keptSpies = state.embeddedSpies.filter((s) => {
+          const isEnemySpy = (s.ownerForceId ?? state.playerForceId) !== state.playerForceId && playerCityIds.has(s.targetCityId);
+          if (!isEnemySpy) return true;
+          if (Math.random() >= catchChance) return true; // slipped the net this time
+          // Caught — the enemy agent is seized in the city they lurked in.
+          const a = officers[s.agentOfficerId];
+          if (a) officers[s.agentOfficerId] = { ...a, status: 'imprisoned', task: null, locationCityId: s.targetCityId, capturedFromForceId: s.ownerForceId ?? a.forceId ?? undefined };
+          caught++;
+          return false;
+        });
+        set({
+          cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - COST } },
+          embeddedSpies: keptSpies,
+          officers,
+          counterIntelSeasons: 4,
+        });
+        get().notify(
+          caught > 0 ? `肅諜清查 · 揪出敵細作 ${caught} 名,全境戒嚴` : `肅諜清查 · 未見潛伏之諜,然戒備已嚴`,
+          caught > 0 ? `Counter-intel sweep — ${caught} enemy spy(ies) rooted out` : `Counter-intel sweep — no spies found, but vigilance is up`,
+        );
+        return { ok: true, caught, message: caught > 0 ? `肅諜得力,擒敵細作 ${caught} 名,且四境戒嚴 4 季。` : `未見潛伏之諜,然戒備已嚴(4 季)。` };
+      },
+
+      turnSpy: (officerId, asDoubleAgent = false) => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        const officer = state.officers[officerId];
+        if (!officer || officer.status !== 'imprisoned' || !officer.capturedFromForceId) {
+          return { ok: false, message: '此人非可反間之俘諜。' };
+        }
+        const formerForce = officer.capturedFromForceId;
+        if (asDoubleAgent) {
+          // 為間 — slip them back into their old realm as YOUR embedded double agent.
+          let nest = state.forces[formerForce]?.capitalCityId ? state.cities[state.forces[formerForce].capitalCityId] : null;
+          if (!nest || nest.ownerForceId !== formerForce) {
+            nest = Object.values(state.cities).find((c) => c.ownerForceId === formerForce) ?? null;
+          }
+          if (!nest) return { ok: false, message: '故主已無城,無處安插。' };
+          const home = Object.values(state.cities).find((c) => c.ownerForceId === state.playerForceId);
+          if (state.embeddedSpies.some((s) => s.agentOfficerId === officerId)) return { ok: false, message: '此人已在潛伏。' };
+          set({
+            officers: { ...state.officers, [officerId]: { ...officer, forceId: state.playerForceId, status: 'active', task: null, loyalty: 50, capturedFromForceId: undefined, locationCityId: nest.id } },
+            embeddedSpies: [...state.embeddedSpies, {
+              id: `spy-dbl-${officerId}`, agentOfficerId: officerId, targetCityId: nest.id,
+              originCityId: home?.id ?? nest.id, targetForceId: formerForce, ownerForceId: state.playerForceId,
+              plantedYear: state.date.year, exposure: 25, // a trusted insider — a head start, not zero
+            }],
+          });
+          get().notify(`反間・為間 · ${officer.name.zh} 潛回 ${state.forces[formerForce]?.name.zh ?? '故主'} 為我細作`, `${officer.name.en} returns to their old realm as your double agent`);
+          return { ok: true, message: `${officer.name.zh}反為我用,潛回故主之側,源源回報。` };
+        }
+        // 反正入伙 — they join you outright, and their old realm's cities are laid bare.
+        const reveals = { ...(state.espionageReveals ?? {}) };
+        for (const c of Object.values(state.cities)) {
+          if (c.ownerForceId === formerForce) reveals[c.id] = Math.max(reveals[c.id] ?? 0, 30);
+        }
+        set({
+          officers: { ...state.officers, [officerId]: { ...officer, forceId: state.playerForceId, status: 'idle', task: null, loyalty: 45, capturedFromForceId: undefined } },
+          espionageReveals: reveals,
+        });
+        get().notify(
+          `反間 · ${officer.name.zh} 反正,盡洩故主虛實`, `${officer.name.en} is turned — their old realm's secrets are laid bare`,
+        );
+        return { ok: true, message: `${officer.name.zh}反正歸我,故主${state.forces[formerForce]?.name.zh ?? ''}之虛實盡入我手。` };
       },
 
       issueEdict: (kind, targetForceId) => {
@@ -9548,6 +9924,53 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             },
           };
           message = 'You shoulder the blame. Mandate −5; loyalty +15 throughout the realm.';
+        } else if (kind === 'nine-bestowments') {
+          // 九錫 — must hold the Son of Heaven; an open prelude to usurpation.
+          if (emperorCustodian(state.cities, state.emperorCityId ?? null) !== state.playerForceId) {
+            return { ok: false, reason: '須挾天子方可受九錫。' };
+          }
+          const playerId = state.playerForceId!;
+          const officers = { ...state.officers };
+          for (const o of Object.values(officers)) {
+            if (!o.forceId || o.status === 'dead') continue;
+            if (o.forceId === playerId) officers[o.id] = { ...o, loyalty: Math.min(100, o.loyalty + 5) };
+            else {
+              const f = state.forces[o.forceId];
+              if (!f || f.vassalOfForceId !== playerId) officers[o.id] = { ...o, loyalty: Math.max(0, o.loyalty - 8) };
+            }
+          }
+          updates.officers = officers;
+          updates.cities = { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - edictCost } };
+          updates.mandate = { ...state.mandate, byForce: { ...state.mandate.byForce, [playerId]: Math.min(100, (state.mandate.byForce[playerId] ?? 50) + 5) } };
+          updates.eventFlags = { ...state.eventFlags, ['nine-bestowments-' + playerId]: true };
+          message = '九錫加身 — 帝王儀仗已備,離龍位僅一步。麾下擁戴,然天下側目其僭。';
+        } else if (kind === 'feng-shan') {
+          const playerId = state.playerForceId!;
+          const cities = { ...state.cities };
+          for (const c of Object.values(cities)) {
+            if (c.ownerForceId === playerId) cities[c.id] = { ...c, loyalty: Math.min(100, c.loyalty + 6) };
+          }
+          cities[capital.id] = { ...cities[capital.id], gold: cities[capital.id].gold - edictCost };
+          updates.cities = cities;
+          updates.mandate = { ...state.mandate, byForce: { ...state.mandate.byForce, [playerId]: Math.min(100, (state.mandate.byForce[playerId] ?? 50) + 12) } };
+          message = '泰山封禪,告成於天 —— 天命大昌,四海歸心。';
+        } else if (kind === 'grace-favor' && targetForceId) {
+          // 推恩令 — splinter a rival: stir its vassals (§7.1) or sow officer division.
+          const tgt = state.forces[targetForceId];
+          const tgtVassals = Object.values(state.forces).filter((f) => f.vassalOfForceId === targetForceId);
+          if (tgtVassals.length > 0) {
+            const disc = { ...state.vassalDiscontent };
+            for (const v of tgtVassals) disc[v.id] = Math.min(100, (disc[v.id] ?? 0) + 25);
+            updates.vassalDiscontent = disc;
+          } else {
+            const officers = { ...state.officers };
+            for (const o of Object.values(officers)) {
+              if (o.forceId === targetForceId && o.status !== 'dead') officers[o.id] = { ...o, loyalty: Math.max(0, o.loyalty - 5) };
+            }
+            updates.officers = officers;
+          }
+          updates.cities = { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - edictCost } };
+          message = `推恩之詔下,離析${tgt?.name.zh ?? '敵國'} —— ${tgtVassals.length > 0 ? '其藩屬離心' : '其君臣生隙'}。`;
         } else if (kind === 'declare-vassal' && targetForceId) {
           const forces = { ...state.forces };
           const target = forces[targetForceId];
@@ -9578,12 +10001,20 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           forces[state.playerForceId] = { ...force, imperialRank: 'emperor' as ImperialRank };
           const officers = { ...state.officers };
           const playerId = state.playerForceId;
-          // All non-vassal force officers lose loyalty (toward you).
+          // 受禪 vs 篡位 (§7.4 ②) — legitimacy hinges on holding the Son of Heaven
+          // with Heaven's favour (or having taken the Nine Bestowments). A lawful
+          // abdication is taken in stride; a naked usurpation brings the realm down
+          // on your head (奉詔討賊).
+          const holdsEmperor = emperorCustodian(state.cities, state.emperorCityId ?? null) === playerId;
+          const mandateNow = state.mandate.byForce[playerId] ?? 50;
+          const hasNineBestowments = !!state.eventFlags?.['nine-bestowments-' + playerId];
+          const legit = holdsEmperor && (mandateNow >= 70 || hasNineBestowments);
+          const rivalDrop = legit ? 4 : 12;
           for (const o of Object.values(officers)) {
             if (o.forceId && o.forceId !== playerId) {
               const otherForce = forces[o.forceId];
               if (!otherForce || otherForce.vassalOfForceId !== playerId) {
-                officers[o.id] = { ...o, loyalty: Math.max(0, o.loyalty - 10) };
+                officers[o.id] = { ...o, loyalty: Math.max(0, o.loyalty - rivalDrop) };
               }
             }
           }
@@ -9592,6 +10023,16 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           updates.forces = forces;
           updates.officers = officers;
           updates.cities = cities;
+          // Mandate swings: +8 受天命 for a lawful accession, −15 失天命 for usurpation.
+          updates.mandate = { ...state.mandate, byForce: { ...state.mandate.byForce, [playerId]: Math.max(0, Math.min(100, mandateNow + (legit ? 8 : -15))) } };
+          // 奉詔討賊 — a usurpation hands every living rival a casus belli against you.
+          if (!legit) {
+            const seasonNow = state.date.season as 'spring' | 'summer' | 'autumn' | 'winter';
+            const newMarks = Object.values(forces)
+              .filter((f) => f.id !== playerId && f.vassalOfForceId !== playerId && Object.values(state.cities).some((c) => c.ownerForceId === f.id))
+              .map((f) => ({ byForceId: f.id, targetForceId: playerId, expiresYear: state.date.year + 2, expiresSeason: seasonNow }));
+            updates.casusBelliMarks = [...(state.casusBelliMarks ?? []), ...newMarks];
+          }
           // Auto-grant 丞相 to the new emperor's ruler if vacant. (帝即位
           // 必有相輔。) Bypasses cooldowns / refusals — imperial fiat.
           const ruler = officers[force.rulerOfficerId];
@@ -9626,7 +10067,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             ...state.eventFlags,
             ['enthroned-' + state.playerForceId]: true,
           };
-          message = 'You have proclaimed yourself Emperor. All non-vassal rivals lose 10 loyalty.';
+          message = legit
+            ? '受漢禪而踐祚 —— 正統所歸,天命 +8,諸侯雖失意而難非。'
+            : '僭號自立 —— 失天命(−15),諸侯得奉詔討賊之名,天下共討!';
         }
 
         const issued = {
@@ -9680,6 +10123,46 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           },
         });
         return { ok: true };
+      },
+
+      // ── §7.4 ① 朝堂黨爭 ─────────────────────────────────────────────
+      setCourtPatronage: (faction) => set({ courtPatronage: faction }),
+
+      purgeFaction: (faction) => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        const player = state.forces[state.playerForceId];
+        const capital = player ? state.cities[player.capitalCityId] : null;
+        if (!capital || capital.gold < 500) return { ok: false, message: '需 500 金行黨錮。' };
+        const clanWeight = clanGentryWeight(state.officers, state.clanStandings ?? {});
+        const list = deriveCourtFactions(state.officers, clanWeight)[state.playerForceId] ?? [];
+        const members = list.filter((f) => f.faction === faction).map((f) => f.officerId);
+        if (members.length === 0) return { ok: false, message: '朝中無此一派可黨錮。' };
+        const officers = { ...state.officers };
+        let defector: Officer | null = null;
+        for (const id of members) {
+          const o = officers[id];
+          if (!o || o.status === 'dead') continue;
+          // A purged but capable, proud officer may bolt to the wilds in fury.
+          if (o.loyalty >= 70 && o.id !== player.rulerOfficerId && Math.random() < 0.3 && !defector) {
+            officers[id] = { ...o, forceId: null, status: 'idle', task: null, loyalty: 50, locationCityId: null };
+            defector = o;
+          } else {
+            officers[id] = { ...o, loyalty: Math.max(0, o.loyalty - 12) };
+          }
+        }
+        const mandate = state.mandate.byForce[state.playerForceId] ?? 50;
+        set({
+          officers,
+          cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - 500 } },
+          mandate: { ...state.mandate, byForce: { ...state.mandate.byForce, [state.playerForceId]: Math.max(0, mandate - 5) } },
+        });
+        get().notify(
+          defector ? `黨錮 · 清洗${FACTION_LABEL[faction].zh},${defector.name.zh} 憤而出走` : `黨錮 · 清洗${FACTION_LABEL[faction].zh}(忠誠驟降、天命 −5)`,
+          defector ? `Purge of the ${faction} faction — ${defector.name.en} defects in fury` : `Purge of the ${faction} faction (loyalty crashes, mandate −5)`,
+          'warn',
+        );
+        return { ok: true, message: defector ? `黨錮${FACTION_LABEL[faction].zh} —— ${defector.name.zh}憤而棄官,餘者忠誠驟降,天命 −5。` : `黨錮${FACTION_LABEL[faction].zh} —— 其黨忠誠驟降,天命 −5。` };
       },
 
       setSoundEnabled: (enabled) => set({ soundEnabled: enabled }),
@@ -11557,6 +12040,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           appointments: loaded.appointments ?? [],
           appointmentHistory: loaded.appointmentHistory ?? [],
           casusBelliMarks: loaded.casusBelliMarks ?? [],
+          deterrences: loaded.deterrences ?? [],
           recruitBonusSeasons: loaded.recruitBonusSeasons ?? {},
           pendingWishEntries: loaded.pendingWishEntries ?? [],
           itemHistory: loaded.itemHistory ?? [],

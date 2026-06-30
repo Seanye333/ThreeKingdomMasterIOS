@@ -34,6 +34,11 @@ export interface EspionageContext {
   rapport?: Record<string, number>;
   /** Runtime bonds — 離間計 may sever a shallow 義結; deep bonds resist. */
   runtimeBonds?: import('../data/bonds').OathBond[];
+  /** Diplomatic state — 諜報 (gather-intel) reads it to report the target's
+   *  treaties and intentions (§7.3 ① actionable intel). */
+  diplomacy?: import('../types/diplomacy').DiplomaticState;
+  /** Forces — for naming a target's treaty partners in the intel report. */
+  forces?: Record<EntityId, import('../types').Force>;
 }
 
 export interface EspionageOutput {
@@ -68,6 +73,16 @@ export function resolveEspionage(ctx: EspionageContext): EspionageOutput {
   let runtimeBonds = ctx.runtimeBonds ? [...ctx.runtimeBonds] : [];
   let socialChanged = false;
 
+  // 校事 (§7.3 ②) — the realm's sharpest covert mind oversees every operation,
+  // lending a realm-wide edge to all the player's ops. Picks the player officer
+  // with the highest (intelligence + espionage knack).
+  const spymasterBonus = (() => {
+    const own = Object.values(officers).filter((o) => o.forceId === ctx.playerForceId && o.status !== 'dead');
+    if (own.length === 0) return 0;
+    const best = own.reduce((a, b) => (b.stats.intelligence + espionageBonus(b) * 100) > (a.stats.intelligence + espionageBonus(a) * 100) ? b : a);
+    return Math.min(0.15, Math.max(0, (best.stats.intelligence - 70) / 300) + espionageBonus(best) * 0.5);
+  })();
+
   for (const op of ctx.ops) {
     const def = ESPIONAGE_DEFS_BY_KIND[op.kind];
     const agent = officers[op.agentOfficerId];
@@ -88,6 +103,7 @@ export function resolveEspionage(ctx: EspionageContext): EspionageOutput {
     // T7 — agent traits: cunning/stealthy/strategist boost; target-side
     // counter-intel traits reduce success (averaged across target officers).
     chance += espionageBonus(agent);
+    chance += spymasterBonus; // 校事 — the realm's spymaster sharpens every op.
     const counterResist =
       targetForceOfficers.length > 0
         ? targetForceOfficers.reduce((s, o) => s + counterEspionageResist(o), 0) /
@@ -129,6 +145,21 @@ export function resolveEspionage(ctx: EspionageContext): EspionageOutput {
       }
     }
 
+    // 美人計 — a honey-trap. Lust is its great lever; a confidant/kin-anchored
+    // officer (心腹/仁孝) still resists absolutely.
+    if (op.kind === 'seduce' && op.targetOfficerId) {
+      const t = officers[op.targetOfficerId];
+      if (t) {
+        if (hasBloodKinInForce(t, officers, ctx.family ?? []) || isConfidant(ctx.lordRapport ?? {}, t.id)) {
+          chance = 0; hardBlock = true;
+        } else {
+          chance += (100 - t.loyalty) / 80;
+          chance += (t.traits as string[] | undefined ?? []).includes('lustful') ? 0.45 : -0.15;
+          chance -= Math.max(0, getLordRapport(ctx.lordRapport ?? {}, t.id)) / 150;
+        }
+      }
+    }
+
     // 離間計 — a deep 義結 (or even high warmth) resists estrangement.
     if (op.kind === 'sow-discord' && op.targetOfficerId && op.targetOfficerId2) {
       const depth = swornDepth(op.targetOfficerId, op.targetOfficerId2, runtimeBonds);
@@ -136,6 +167,14 @@ export function resolveEspionage(ctx: EspionageContext): EspionageOutput {
       else if (runtimeSwornPair(op.targetOfficerId, op.targetOfficerId2, runtimeBonds)) chance *= 0.6;
       const warmth = getRapport(rapport, op.targetOfficerId, op.targetOfficerId2);
       if (warmth > 0) chance -= warmth / 250;        // genuine friendship is hard to poison
+    }
+
+    // 護衛 (§7.3 ③) — a lord is heavily guarded, and a great captain keeps a
+    // bodyguard: both are far harder to reach with a blade.
+    if (op.kind === 'assassinate' && op.targetOfficerId) {
+      const t = officers[op.targetOfficerId];
+      if (t && ctx.forces?.[op.targetForceId]?.rulerOfficerId === t.id) chance -= 0.18;
+      if (t && (t.stats.leadership + t.stats.war) > 160) chance -= 0.08;
     }
 
     chance = hardBlock ? 0 : Math.max(0.02, Math.min(0.95, chance));
@@ -156,8 +195,42 @@ export function resolveEspionage(ctx: EspionageContext): EspionageOutput {
         const cityListZh = targetCities
           .map((c) => `${c.name.zh}（兵${c.troops.toLocaleString()}、金${c.gold}、糧${c.food}）`)
           .join('、');
-        message = `${agent.name.en}'s spies report: ${cityList || '(no cities)'}.`;
-        messageZh = `${agent.name.zh}細作來報：${cityListZh || '（無城）'}。`;
+        // §7.3 ① 實用情報 — beyond raw numbers, read the foe's TREATIES and INTENT.
+        const intel: string[] = [];
+        const intelZh: string[] = [];
+        if (ctx.diplomacy) {
+          // Treaties — the target's standing alliances / NAPs (lift the diplo fog).
+          const partners: string[] = [];
+          const partnersZh: string[] = [];
+          for (const rel of Object.values(ctx.diplomacy.relations)) {
+            if (rel.status === 'neutral') continue;
+            const other = rel.forceA === op.targetForceId ? rel.forceB : rel.forceB === op.targetForceId ? rel.forceA : null;
+            if (!other) continue;
+            const tag = rel.status === 'allied' ? (lang: 'en' | 'zh') => (lang === 'en' ? 'ally' : '盟') : (lang: 'en' | 'zh') => (lang === 'en' ? 'NAP' : '不戰');
+            partners.push(`${ctx.forces?.[other]?.name.en ?? other} (${tag('en')})`);
+            partnersZh.push(`${ctx.forces?.[other]?.name.zh ?? other}(${tag('zh')})`);
+          }
+          if (partners.length > 0) { intel.push(`treaties: ${partners.join(', ')}`); intelZh.push(`盟約:${partnersZh.join('、')}`); }
+          // Intent — which of OUR cities its border host most threatens.
+          if (ctx.playerForceId) {
+            let worst: { city: City; pressure: number } | null = null;
+            for (const c of Object.values(cities)) {
+              if (c.ownerForceId !== ctx.playerForceId) continue;
+              let pressure = 0;
+              for (const adjId of c.adjacentCityIds ?? []) {
+                const adj = cities[adjId];
+                if (adj?.ownerForceId === op.targetForceId) pressure += adj.troops;
+              }
+              const eff = pressure / Math.max(1, c.troops * (1 + (c.defense ?? 0) / 200));
+              if (pressure > 0 && (!worst || eff > worst.pressure)) worst = { city: c, pressure: eff };
+            }
+            if (worst) { intel.push(`eyeing ${worst.city.name.en}`); intelZh.push(`兵鋒似指${worst.city.name.zh}`); }
+          }
+        }
+        const intelStr = intel.length ? ` — ${intel.join('; ')}` : '';
+        const intelStrZh = intelZh.length ? ` —— ${intelZh.join(';')}` : '';
+        message = `${agent.name.en}'s spies report: ${cityList || '(no cities)'}${intelStr}.`;
+        messageZh = `${agent.name.zh}細作來報：${cityListZh || '（無城）'}${intelStrZh}。`;
       } else {
         message = `${agent.name.en}'s spy ring was uncovered. The agent escaped with nothing.`;
         messageZh = `${agent.name.zh}細作為敵所察，無功而還。`;
@@ -199,21 +272,33 @@ export function resolveEspionage(ctx: EspionageContext): EspionageOutput {
         message = `Target unavailable.`;
         messageZh = `目標已不可及。`;
       } else if (success) {
+        const isRuler = ctx.forces?.[op.targetForceId]?.rulerOfficerId === t.id;
         officers[op.targetOfficerId] = {
           ...t,
           status: 'dead',
           forceId: null,
           task: null,
         };
-        message = `${t.name.en} was struck down by an unknown assassin.`;
-        messageZh = `${t.name.zh}為不知名刺客所殺。`;
+        // 弒君之亂 (§7.3 ③) — striking down a lord throws the whole realm into shock.
+        if (isRuler && op.targetForceId) {
+          for (const c of Object.values(cities)) {
+            if (c.ownerForceId === op.targetForceId) cities[c.id] = { ...c, loyalty: Math.max(0, c.loyalty - 10) };
+          }
+        }
+        message = isRuler
+          ? `${t.name.en}, lord of their realm, is struck down — the realm reels in turmoil.`
+          : `${t.name.en} was struck down by an unknown assassin.`;
+        messageZh = isRuler
+          ? `${t.name.zh}身為一國之主,竟為刺客所弒,舉國震動。`
+          : `${t.name.zh}為不知名刺客所殺。`;
       } else {
+        const isRuler = ctx.forces?.[op.targetForceId]?.rulerOfficerId === t.id;
         message = `The assassin failed. ${t.name.en} survives — and the plot is traced back.`;
         messageZh = `刺客失手，${t.name.zh}得以倖免，且行刺敗露為人所察。`;
-        // 行刺敗露 — a botched assassination is traced to its sponsor: the target's
-        // realm nurses a lasting grudge (the gold was already spent for nothing).
+        // 行刺敗露 — a botched hit is traced to its sponsor (grudge). An attempt on a
+        // LORD's very life is an outrage — far deeper resentment.
         if (op.targetForceId) {
-          grudgeDelta[op.targetForceId] = (grudgeDelta[op.targetForceId] ?? 0) + 14;
+          grudgeDelta[op.targetForceId] = (grudgeDelta[op.targetForceId] ?? 0) + (isRuler ? 26 : 14);
         }
       }
     } else if (op.kind === 'defect' && op.targetOfficerId) {
@@ -292,6 +377,57 @@ export function resolveEspionage(ctx: EspionageContext): EspionageOutput {
       } else {
         message = `The attempt to estrange ${t1.name.en} and ${t2.name.en} came to nothing.`;
         messageZh = `離間${t1.name.zh}與${t2.name.zh}之計未成。`;
+      }
+    } else if (op.kind === 'steal-gold' && op.targetCityId) {
+      const c = cities[op.targetCityId];
+      if (!c) {
+        message = `Target city no longer exists.`; messageZh = `目標城池已不復存在。`;
+      } else if (success) {
+        const taken = Math.floor(c.gold * (0.25 + ctx.rng() * 0.15));
+        cities[op.targetCityId] = { ...c, gold: Math.max(0, c.gold - taken) };
+        // The loot lands in the agent's home city, if it's still yours.
+        const home = agent.locationCityId ? cities[agent.locationCityId] : null;
+        if (home && home.ownerForceId === ctx.playerForceId) {
+          cities[home.id] = { ...home, gold: home.gold + taken };
+        }
+        message = `Thieves spirit ${taken.toLocaleString()} gold out of ${c.name.en}'s treasury.`;
+        messageZh = `細作盜${c.name.zh}府庫之金 ${taken.toLocaleString()},輸歸我帑。`;
+      } else {
+        message = `The theft at ${c.name.en} was foiled.`; messageZh = `${c.name.zh}盜金之謀為人所敗。`;
+      }
+    } else if (op.kind === 'seduce' && op.targetOfficerId) {
+      const t = officers[op.targetOfficerId];
+      if (!t || t.status === 'dead') {
+        message = `Target unavailable.`; messageZh = `目標已不可及。`;
+      } else if (success && ctx.playerForceId) {
+        officers[op.targetOfficerId] = { ...t, forceId: ctx.playerForceId, loyalty: 55, status: 'idle', task: null };
+        message = `${t.name.en}, ensnared by a honey-trap, defects to your service!`;
+        messageZh = `${t.name.zh}中美人之計,傾心來歸!`;
+      } else {
+        if (t) officers[op.targetOfficerId] = { ...t, loyalty: Math.min(100, t.loyalty + 6) };
+        message = `${t?.name.en ?? 'The mark'} resisted the honey-trap.`;
+        messageZh = `${t?.name.zh ?? '目標'}不為美人計所動。`;
+      }
+    } else if (op.kind === 'false-intel' && op.targetOfficerId) {
+      const t = officers[op.targetOfficerId];
+      if (!t || t.status === 'dead') {
+        message = `Target unavailable.`; messageZh = `目標已不可及。`;
+      } else if (success) {
+        const drop = 25 + Math.floor(ctx.rng() * 11); // 25–35
+        // 蔣幹盜書 — a suspicious lord may jail (or worse) his own slandered general.
+        const jailed = ctx.rng() < 0.4;
+        officers[op.targetOfficerId] = jailed
+          ? { ...t, status: 'imprisoned', task: null, loyalty: Math.max(0, t.loyalty - drop), capturedFromForceId: t.forceId ?? undefined }
+          : { ...t, loyalty: Math.max(0, t.loyalty - drop) };
+        message = jailed
+          ? `Forged letters convince ${t.name.en}'s lord of treason — the general is thrown in irons!`
+          : `Forged proof of treason ruins ${t.name.en} — loyalty −${drop}.`;
+        messageZh = jailed
+          ? `偽書既成,其主信以為真,${t.name.zh}竟為己主所囚!`
+          : `偽書反間,陷${t.name.zh}通敵之名,忠誠 −${drop}。`;
+      } else {
+        message = `The forged letter against ${t.name.en} was seen for what it was.`;
+        messageZh = `偽書反間${t.name.zh}之計為其主識破。`;
       }
     }
 

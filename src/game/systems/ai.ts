@@ -89,6 +89,9 @@ export interface AIPlanInput {
   /** 共討會盟 — active war leagues. A member force biases its offensive focus
    *  toward the sworn foe (see pickForceTarget) — §7.1 ②. */
   warCoalitions?: WarCoalition[];
+  /** 疑兵之計 deterrences (§7.2) — `byForceId` has bluffed `targetForceId` into
+   *  not marching on it. A deterred force skips that foe in pickForceTarget. */
+  deterrences?: Array<{ byForceId: EntityId; targetForceId: EntityId; expiresYear: number; expiresSeason: GameDate['season'] }>;
   /** Current per-force tax rates — the AI reads & updates its own forces'. */
   taxPolicy?: Record<EntityId, TaxRate>;
   date: GameDate;
@@ -182,11 +185,17 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
 
   // The map's runaway power, if any — lesser forces gang up on it (合縱抗霸).
   const hegemonId = findHegemon(cities);
+  // 疑兵之計 — active deterrences this season (§7.2): a bluffed force won't march on its cower-er.
+  const seasonIdx = { spring: 0, summer: 1, autumn: 2, winter: 3 } as const;
+  const nowAbs = input.date.year * 4 + seasonIdx[input.date.season];
+  const activeDeterrences = (input.deterrences ?? []).filter((d) => nowAbs <= d.expiresYear * 4 + seasonIdx[d.expiresSeason]);
   for (const [forceId, forceCities] of citiesByForce) {
     // Force-level offensive focus for the season — bordering cities mass on it.
     // A sworn coalition member trains its spear on the league's foe (§7.1 ②).
     const coalitionFoeId = coalitionTargetFor(forceId, input.warCoalitions ?? []);
-    const forceTargetId = pickForceTarget(forceId, forceCities, cities, input.diplomacy, hegemonId, coalitionFoeId);
+    // Foes this force has been cowed off attacking (疑兵之計).
+    const deterredFrom = new Set(activeDeterrences.filter((d) => d.targetForceId === forceId).map((d) => d.byForceId));
+    const forceTargetId = pickForceTarget(forceId, forceCities, cities, input.diplomacy, hegemonId, coalitionFoeId, deterredFrom);
     // Season posture: consolidate when a bordering force overshadows us.
     const posture = forcePosture(forceId, forceCities, cities);
     // 迷霧對等 — this force's own sight of the map (own cities + borders + its
@@ -981,6 +990,7 @@ export function pickForceTarget(
   diplomacy: DiplomaticState,
   hegemonId: EntityId | null = null,
   coalitionFoeId: EntityId | null = null,
+  deterredFrom: Set<EntityId> | null = null,
 ): EntityId | null {
   // City count per force — used to spot a death blow (an enemy's last city).
   const cityCount: Record<EntityId, number> = {};
@@ -1006,6 +1016,8 @@ export function pickForceTarget(
   for (const [candId, force] of Object.entries(pressure)) {
     const cand = allCities[candId];
     if (!cand) continue;
+    // 疑兵之計 — a bluffed force shies off the realm that cowed it (§7.2).
+    if (deterredFrom && cand.ownerForceId && deterredFrom.has(cand.ownerForceId)) continue;
     const effDef = cand.troops * (1 + cand.defense / 200);
     const feasibility = force / Math.max(1, effDef);
     if (feasibility < 1.05) continue; // can't realistically take it, even massed

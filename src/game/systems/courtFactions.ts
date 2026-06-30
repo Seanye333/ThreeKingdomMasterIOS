@@ -1,4 +1,4 @@
-import type { EntityId, Officer } from '../types';
+import type { City, EntityId, Officer } from '../types';
 
 export type FactionId = 'reformer' | 'eunuch' | 'gentry' | 'military';
 
@@ -54,4 +54,48 @@ function classify(o: Officer, clanWeight = 0): FactionId | null {
       || traits.includes('crowd-pleaser') || traits.includes('meritocratic')
       || traits.includes('hates-evil')) return 'reformer';
   return null;
+}
+
+/**
+ * 朝政傾向 (§7.4 ①) — patronage of one court faction. Each season the favoured
+ * bloc's officers rally (+loyalty) and the realm reaps that faction's distinctive
+ * boon: 革新 lifts city morale, 門閥 fills the treasury, 軍方 swells the guard, 宦黨
+ * tightens loyalty realm-wide. Pure; the caller commits the maps.
+ */
+export function tickCourtPatronage(input: {
+  officers: Record<EntityId, Officer>;
+  cities: Record<EntityId, City>;
+  playerForceId: EntityId | null | undefined;
+  capitalCityId: EntityId | null | undefined;
+  patronage: FactionId | null | undefined;
+  clanWeight?: Record<EntityId, number>;
+}): { officers: Record<EntityId, Officer>; cities: Record<EntityId, City> } {
+  const { officers, cities, playerForceId, patronage } = input;
+  if (!patronage || !playerForceId) return { officers, cities };
+  const officersOut = { ...officers };
+  const citiesOut = { ...cities };
+  const list = deriveCourtFactions(officers, input.clanWeight)[playerForceId] ?? [];
+  // The favoured bloc rallies.
+  for (const f of list) {
+    if (f.faction !== patronage) continue;
+    const o = officersOut[f.officerId];
+    if (o && o.status !== 'dead') officersOut[f.officerId] = { ...o, loyalty: Math.min(100, o.loyalty + 2) };
+  }
+  // …and the realm reaps the faction's boon.
+  if (patronage === 'reformer') {
+    for (const c of Object.values(citiesOut)) {
+      if (c.ownerForceId === playerForceId) citiesOut[c.id] = { ...c, loyalty: Math.min(100, c.loyalty + 2) };
+    }
+  } else if (patronage === 'eunuch') {
+    for (const o of Object.values(officersOut)) {
+      if (o.forceId === playerForceId && o.status !== 'dead') officersOut[o.id] = { ...o, loyalty: Math.min(100, o.loyalty + 1) };
+    }
+  } else if (patronage === 'gentry' && input.capitalCityId) {
+    const cap = citiesOut[input.capitalCityId];
+    if (cap && cap.ownerForceId === playerForceId) citiesOut[cap.id] = { ...cap, gold: cap.gold + Math.round((cap.commerce ?? 0) * 3) };
+  } else if (patronage === 'military' && input.capitalCityId) {
+    const cap = citiesOut[input.capitalCityId];
+    if (cap && cap.ownerForceId === playerForceId) citiesOut[cap.id] = { ...cap, troops: cap.troops + Math.min(800, Math.round((cap.population ?? 0) * 0.003)) };
+  }
+  return { officers: officersOut, cities: citiesOut };
 }

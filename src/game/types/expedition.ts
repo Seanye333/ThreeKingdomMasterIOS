@@ -11,7 +11,11 @@ export type ExpeditionMode =
   | 'envoy' // 出使 — foreign force: warm relations with that power
   | 'subvert' // 策反 — foreign force: try to turn one of its officers to your side
   | 'infiltrate' // 刺探 — foreign force: deep intel + a chance to sabotage; risk of capture
-  | 'embassy'; // 遠使異域 — a long journey to a distant land / border tribe (see foreignRealm.ts)
+  | 'embassy' // 遠使異域 — a long journey to a distant land / border tribe (see foreignRealm.ts)
+  | 'recruit' // 訪賢 — 三顧茅廬: court a specific known wanderer (legends need repeated visits)
+  | 'tour' // 巡視 — tour one of YOUR cities: lift its loyalty + sniff out disaffection
+  | 'befriend' // 結交 — befriend a rival's officer: warm them toward you (eases a later turn)
+  | 'levy'; // 募兵 — raise a body of troops from a far/frontier city, brought home
 
 /** Outbound to the target, or homeward after the errand is done. */
 export type ExpeditionPhase = 'outbound' | 'returning';
@@ -60,6 +64,9 @@ export interface Expedition {
    *  tribe (TribeId) the envoy is bound for. */
   toRealmId?: EntityId;
   mode: ExpeditionMode;
+  /** 護衛 — an optional guard riding along (§7.6): lowers capture peril and is
+   *  seasoned alongside the envoy; shares his fate (taken/stranded) if it turns ill. */
+  companionId?: EntityId;
   phase: ExpeditionPhase;
   /** Seasons left until the current leg finishes (arrival, then homecoming). */
   seasonsRemaining: number;

@@ -158,6 +158,9 @@ export interface GameState {
   appointmentHistory: import('../types').AppointmentHistoryEntry[];
   /** Per-force casus-belli marks set by 討伐令 — combat power +10% vs targets while active. */
   casusBelliMarks: Array<{ byForceId: EntityId; targetForceId: EntityId; expiresYear: number; expiresSeason: 'spring' | 'summer' | 'autumn' | 'winter' }>;
+  /** 疑兵之計 — bluffed deterrences (§7.2). `byForceId` has cowed `targetForceId`
+   *  into NOT marching on byForceId's cities while active (read by ai.pickForceTarget). */
+  deterrences: Array<{ byForceId: EntityId; targetForceId: EntityId; expiresYear: number; expiresSeason: 'spring' | 'summer' | 'autumn' | 'winter' }>;
   /** Transient recruit multipliers from 求賢令. Decrements each season. */
   recruitBonusSeasons: Record<EntityId, { multiplier: number; seasonsLeft: number }>;
   /** Generic event flags (e.g. "luoyang-burned", "emperor-with-cao"). */
@@ -191,6 +194,12 @@ export interface GameState {
   pendingEspionage: EspionageOp[];
   /** 潛伏細作 — persistent undercover agents embedded in enemy cities. */
   embeddedSpies: import('../types').EmbeddedSpy[];
+  /** 肅諜 — seasons of heightened counter-intel remaining (§7.3 ②), set by a
+   *  counter-intel sweep; while >0, enemy espionage against the player is blunted. */
+  counterIntelSeasons?: number;
+  /** 朝政傾向 — the court faction the player patronises (§7.4 ①), if any: each
+   *  season the favoured bloc rallies and the realm reaps that faction's boon. */
+  courtPatronage?: import('../systems/courtFactions').FactionId | null;
   /** Historical record of all issued edicts. */
   edictHistory: IssuedEdict[];
   /** Per-edict cooldown tracking: season-count when each kind is available again. */
@@ -585,6 +594,7 @@ export const EMPTY_STATE: GameState = {
   appointments: [],
   appointmentHistory: [],
   casusBelliMarks: [],
+  deterrences: [],
   recruitBonusSeasons: {},
   eventFlags: {},
   firedEventIds: [],
@@ -941,6 +951,7 @@ export function loadScenario(
     appointments: [],
   appointmentHistory: [],
   casusBelliMarks: [],
+  deterrences: [],
   recruitBonusSeasons: {},
     eventFlags: {},
     firedEventIds: [],

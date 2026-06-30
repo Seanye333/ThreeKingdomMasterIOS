@@ -21,11 +21,27 @@ export function EspionageModal({ onClose }: Props) {
   const pendingEspionage = useGameStore((s) => s.pendingEspionage);
   const queueEspionage = useGameStore((s) => s.queueEspionage);
   const cancelEspionage = useGameStore((s) => s.cancelEspionage);
-  const embeddedSpies = useGameStore((s) => s.embeddedSpies);
+  const allEmbeddedSpies = useGameStore((s) => s.embeddedSpies);
   const plantSpy = useGameStore((s) => s.plantSpy);
   const recallSpy = useGameStore((s) => s.recallSpy);
+  const activateSpy = useGameStore((s) => s.activateSpy);
+  const counterIntelSweep = useGameStore((s) => s.counterIntelSweep);
+  const turnSpy = useGameStore((s) => s.turnSpy);
+  const counterIntelSeasons = useGameStore((s) => s.counterIntelSeasons ?? 0);
   const lang = useLanguage();
   const desc = useDesc();
+  // Only the player's own embedded agents belong in the 潛伏 list (an enemy's
+  // spy in your city also lives in this array — surfaced via 肅諜, not here).
+  const embeddedSpies = useMemo(
+    () => allEmbeddedSpies.filter((s) => (s.ownerForceId ?? playerForceId) === playerForceId),
+    [allEmbeddedSpies, playerForceId],
+  );
+  // 反間 — captured enemy spies/officers held in your cities, ripe to be turned.
+  const capturableSpies = useMemo(
+    () => Object.values(officers).filter((o) => o.status === 'imprisoned' && !!o.capturedFromForceId
+      && o.locationCityId != null && cities[o.locationCityId]?.ownerForceId === playerForceId),
+    [officers, cities, playerForceId],
+  );
 
   const [pickedKind, setPickedKind] = useState<EspionageKind | null>(null);
   const [pickedAgentId, setPickedAgentId] = useState<EntityId | null>(null);
@@ -154,7 +170,14 @@ export function EspionageModal({ onClose }: Props) {
         <header className={styles.header}>
           <div>
             <div className={styles.titleZh}>{lang === 'en' ? 'Espionage' : '密偵'}</div>
-            <div className={styles.titleEn}>Espionage</div>
+            {(() => {
+              const spymaster = Object.values(officers)
+                .filter((o) => o.forceId === playerForceId && o.status !== 'dead')
+                .sort((a, b) => b.stats.intelligence - a.stats.intelligence)[0];
+              return spymaster
+                ? <div className={styles.titleEn}>{lang === 'en' ? `Spymaster: ${spymaster.name.en} (INT ${spymaster.stats.intelligence}) — all ops sharpened` : `校事:${spymaster.name.zh}(智 ${spymaster.stats.intelligence})— 全境諜效提升`}</div>
+                : <div className={styles.titleEn}>Espionage</div>;
+            })()}
           </div>
           <button className={styles.closeButton} onClick={onClose}>×</button>
         </header>
@@ -212,7 +235,10 @@ export function EspionageModal({ onClose }: Props) {
                     <div key={spy.id} className={styles.pendingOp} style={{ display: 'block' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
                         <span>{(lang === 'en' ? agent?.name.en : agent?.name.zh) ?? '?'} → {(lang === 'en' ? city?.name.en : city?.name.zh) ?? '?'}</span>
-                        <button className={styles.cancelBtn} title={lang === 'en' ? 'Recall' : '召回'} onClick={() => recallSpy(spy.id)}>↩</button>
+                        <span style={{ display: 'flex', gap: 4 }}>
+                          <button className={styles.cancelBtn} style={{ color: '#e0a060' }} title={lang === 'en' ? 'Activate (one-shot strike from within; burns the spy)' : '眠龍出淵 — 內應作亂一擊(民心−30/焚糧半/亂兵),細作功成身退'} onClick={() => { const r = activateSpy(spy.id); if (!r.ok) alert(r.message); }}>⚡</button>
+                          <button className={styles.cancelBtn} title={lang === 'en' ? 'Recall' : '召回'} onClick={() => recallSpy(spy.id)}>↩</button>
+                        </span>
                       </div>
                       <div title={`${lang === 'en' ? 'Exposure' : '暴露'} ${exp}%`} style={{ height: 5, background: '#10161e', border: '1px solid #2b3845', marginTop: 3 }}>
                         <div style={{ width: `${exp}%`, height: '100%', background: exp > 66 ? '#b8442e' : exp > 33 ? '#e6c473' : '#7ed68a' }} />
@@ -222,6 +248,38 @@ export function EspionageModal({ onClose }: Props) {
                 })}
               </div>
             )}
+
+            {/* §7.3 ② 反諜 — counter-intelligence sweep + turning caught spies. */}
+            <div className={styles.pending}>
+              <div className={styles.colLabel}>{lang === 'en' ? 'Counter-Intel' : '反諜'}{counterIntelSeasons > 0 ? `（${lang === 'en' ? 'vigilant' : '戒嚴'} ${counterIntelSeasons}）` : ''}</div>
+              <button
+                className={styles.confirmBtn}
+                style={{ width: '100%', marginBottom: 4 }}
+                onClick={() => { const r = counterIntelSweep(); alert(r.message); }}
+                title={lang === 'en' ? 'Sweep your realm for enemy spies; stiffens counter-intel for 4 seasons (300g)' : '肅諜清查 — 揪出敵潛伏細作,並令四境戒嚴 4 季(300金)'}
+              >
+                {lang === 'en' ? 'Counter-Intel Sweep (300g)' : '肅諜清查（300金）'}
+              </button>
+              {capturableSpies.map((o) => (
+                <div key={o.id} className={styles.pendingOp}>
+                  <span>{(lang === 'en' ? o.name.en : o.name.zh)} · {lang === 'en' ? 'captive' : '俘'}</span>
+                  <span style={{ display: 'flex', gap: 4 }}>
+                    <button
+                      className={styles.cancelBtn}
+                      style={{ color: '#88c060' }}
+                      title={lang === 'en' ? 'Turn — they join you & bare their old realm' : '反間 — 策反入伙,盡洩故主虛實'}
+                      onClick={() => { const r = turnSpy(o.id, false); if (!r.ok) alert(r.message); }}
+                    >↺</button>
+                    <button
+                      className={styles.cancelBtn}
+                      style={{ color: '#5a9bc8' }}
+                      title={lang === 'en' ? 'Double agent — slip them back as your embedded spy' : '為間 — 潛回故主之側,為我常駐細作'}
+                      onClick={() => { const r = turnSpy(o.id, true); if (!r.ok) alert(r.message); }}
+                    >👁</button>
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className={styles.column}>

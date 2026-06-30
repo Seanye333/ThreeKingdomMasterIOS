@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import type { City, Force } from '../types';
 import { mkOfficer } from '../../test/factories';
-import { resolveAmbitions } from './ambition';
+import { resolveAmbitions, brewingRebels, rollGarrisonMutiny } from './ambition';
 
 const mkCity = (over: Partial<City> & { id: string }): City =>
   ({
@@ -145,5 +145,74 @@ describe('resolveAmbitions', () => {
     };
     // The same discontented noble rebels more often when he holds a 王 fief.
     expect(rebellions('wang')).toBeGreaterThan(rebellions(undefined));
+  });
+});
+
+describe('§7.5 round 2 (內應/前兆/兵變)', () => {
+  it('② 內應獻城 — a traitor with a bordering rival can hand his city to them', () => {
+    let defected = false;
+    for (let seed = 0; seed < 200 && !defected; seed++) {
+      const cities = {
+        cap: mkCity({ id: 'cap', ownerForceId: 'wei', adjacentCityIds: ['border'] }),
+        border: mkCity({ id: 'border', ownerForceId: 'wei', troops: 6000, adjacentCityIds: ['cap', 'shucity'] }),
+        shucity: mkCity({ id: 'shucity', ownerForceId: 'shu', adjacentCityIds: ['border'] }),
+        shucap: mkCity({ id: 'shucap', ownerForceId: 'shu', adjacentCityIds: ['shucity'] }),
+      };
+      const forces = {
+        wei: mkForce({ id: 'wei', rulerOfficerId: 'lord', capitalCityId: 'cap' }),
+        shu: mkForce({ id: 'shu', rulerOfficerId: 'shulord', capitalCityId: 'shucap' }),
+      };
+      const officers = {
+        lord: mkOfficer({ id: 'lord', forceId: 'wei', locationCityId: 'cap', loyalty: 100 }),
+        shulord: mkOfficer({ id: 'shulord', forceId: 'shu', locationCityId: 'shucap', loyalty: 100 }),
+        rebel: mkOfficer({ id: 'rebel', forceId: 'wei', locationCityId: 'border', loyalty: 5, grievanceCount: 5, traits: ['ambitious'] as never }),
+      };
+      const ev = resolveAmbitions({ officers, cities, forces, playerForceId: null, seed });
+      if (cities.border.ownerForceId === 'shu' || officers.rebel.forceId === 'shu') {
+        defected = true;
+        expect(ev.some((e) => !e.usurp)).toBe(true);
+      }
+    }
+    expect(defected).toBe(true);
+  });
+
+  it('① brewingRebels flags a disaffected player officer, not a loyal one', () => {
+    const cities = {
+      cap: mkCity({ id: 'cap', ownerForceId: 'me' }),
+      border: mkCity({ id: 'border', ownerForceId: 'me' }),
+    };
+    const forces = { me: mkForce({ id: 'me', rulerOfficerId: 'lord', capitalCityId: 'cap', isPlayer: true }) };
+    const officers = {
+      lord: mkOfficer({ id: 'lord', forceId: 'me', locationCityId: 'cap', loyalty: 100 }),
+      rebel: mkOfficer({ id: 'rebel', forceId: 'me', locationCityId: 'border', loyalty: 12, grievanceCount: 4, traits: ['ambitious'] as never }),
+      faithful: mkOfficer({ id: 'faithful', forceId: 'me', locationCityId: 'border', loyalty: 10, traits: ['loyal', 'ambitious'] as never }),
+    };
+    const risk = brewingRebels(officers, forces, cities, 'me');
+    expect(risk['rebel']).toBeGreaterThan(0);
+    expect(risk['faithful']).toBeUndefined(); // 'loyal' trait → never flagged
+    expect(risk['lord']).toBeUndefined();     // the lord doesn't rebel against himself
+  });
+
+  it('④ 兵變 — a starving, mutinous garrison sheds troops', () => {
+    let mutinied = false;
+    for (let seed = 0; seed < 100 && !mutinied; seed++) {
+      const cities = {
+        c: mkCity({ id: 'c', ownerForceId: 'wei', troops: 8000, food: 500, loyalty: 10 }), // starving + disaffected
+      };
+      const out = rollGarrisonMutiny({ cities, forces: { wei: mkForce({ id: 'wei' }) }, seed });
+      if (out.events.length > 0) {
+        mutinied = true;
+        expect(out.cities['c'].troops).toBeLessThan(8000);
+      }
+    }
+    expect(mutinied).toBe(true);
+  });
+
+  it('④ a content, fed garrison never mutinies', () => {
+    for (let seed = 0; seed < 100; seed++) {
+      const cities = { c: mkCity({ id: 'c', ownerForceId: 'wei', troops: 8000, food: 40000, loyalty: 70 }) };
+      const out = rollGarrisonMutiny({ cities, forces: { wei: mkForce({ id: 'wei' }) }, seed });
+      expect(out.events).toHaveLength(0);
+    }
   });
 });

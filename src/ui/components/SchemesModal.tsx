@@ -36,7 +36,7 @@ export function SchemesModal({ onClose }: { onClose: () => void }) {
   }, [cities, forces, playerForceId]);
 
   const problem = playerForceId
-    ? (targetA ? validateScheme(schemeId, cities, playerForceId, targetA, def.targets === 2 ? targetB || undefined : undefined) : t('選定目標', 'Pick a target'))
+    ? (targetA ? validateScheme(schemeId, cities, playerForceId, targetA, def.targets === 2 ? targetB || undefined : undefined, diplomacy) : t('選定目標', 'Pick a target'))
     : 'no force';
   const ready = !problem && targetA && (def.targets === 1 || targetB);
   const odds = ready ? schemeOdds(schemeId, diplomacy, strategist, targetA, targetB || undefined) : null;
@@ -69,7 +69,7 @@ export function SchemesModal({ onClose }: { onClose: () => void }) {
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.4rem', cursor: 'pointer' }}>×</button>
         </div>
 
-        <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
           {SCHEME_DEFS.map((d) => (
             <button
               key={d.id}
@@ -89,14 +89,14 @@ export function SchemesModal({ onClose }: { onClose: () => void }) {
 
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
           <select value={targetA} onChange={(e) => { setTargetA(e.target.value); setResult(null); }} style={sel}>
-            <option value="">{def.targets === 2 ? t('甲(動手方)…', 'Force A…') : t('結好對象…', 'Target…')}</option>
+            <option value="">{def.targets === 2 ? t('甲…', 'Force A…') : schemeId === 'far-friend' ? t('結好對象…', 'Befriend…') : t('目標…', 'Target…')}</option>
             {living.map((f) => <option key={f.id} value={f.id}>{f.name.zh}</option>)}
           </select>
           {def.targets === 2 && (
             <>
               <span style={{ color: '#7a8893' }}>⚔</span>
               <select value={targetB} onChange={(e) => { setTargetB(e.target.value); setResult(null); }} style={sel}>
-                <option value="">{t('乙(被攻方)…', 'Force B…')}</option>
+                <option value="">{t('乙…', 'Force B…')}</option>
                 {living.filter((f) => f.id !== targetA).map((f) => <option key={f.id} value={f.id}>{f.name.zh}</option>)}
               </select>
             </>

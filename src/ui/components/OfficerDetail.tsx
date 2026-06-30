@@ -310,6 +310,23 @@ export function OfficerDetail({
                 ⚠ {lang === 'en' ? `Growing resentment (×${officer.grievanceCount})` : `怨望日深(怨次 ${officer.grievanceCount})`}
               </div>
             )}
+            {/* 君主彈壓 (§7.5 ①) — pre-empt a brewing rebel among your own officers. */}
+            {isPlayerOfficer && officer.id !== storeForces[playerForceId ?? '']?.rulerOfficerId
+              && (officer.status === 'idle' || officer.status === 'active')
+              && (officer.loyalty < 40 || (officer.grievanceCount ?? 0) >= 2) && (() => {
+              const disc = useGameStore.getState().disciplineOfficer;
+              const act = (a: 'placate' | 'reassign' | 'imprison' | 'execute') => { const r = disc(officer.id, a); if (r.message) alert(r.message); };
+              const btn: React.CSSProperties = { background: 'transparent', border: '1px solid #5a4326', color: '#d6a86a', cursor: 'pointer', fontSize: '0.68rem', padding: '0.1rem 0.4rem', borderRadius: 2 };
+              return (
+                <div style={{ marginTop: '0.35rem', display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.68rem', color: '#7a8893' }}>{lang === 'en' ? 'Discipline:' : '君主彈壓:'}</span>
+                  <button style={btn} title={lang === 'en' ? 'Placate — 400g → loyalty +15' : '安撫 — 400金 → 忠誠+15、消積怨'} onClick={() => act('placate')}>{lang === 'en' ? 'Placate' : '安撫'}</button>
+                  <button style={btn} title={lang === 'en' ? 'Recall to capital — strips their power base' : '調離 — 召還都城,奪其割據之基'} onClick={() => act('reassign')}>{lang === 'en' ? 'Reassign' : '調離'}</button>
+                  <button style={{ ...btn, borderColor: '#5a2d2d', color: '#e0707a' }} title={lang === 'en' ? 'Imprison' : '下獄'} onClick={() => act('imprison')}>{lang === 'en' ? 'Imprison' : '下獄'}</button>
+                  <button style={{ ...btn, borderColor: '#5a2d2d', color: '#e0707a' }} title={lang === 'en' ? 'Execute — decisive, but breeds grudges' : '誅殺 — 絕後患,然全軍離心、結怨'} onClick={() => act('execute')}>{lang === 'en' ? 'Execute' : '誅殺'}</button>
+                </div>
+              );
+            })()}
           </div>
           <button className={styles.closeButton} onClick={onClose}>
             ×

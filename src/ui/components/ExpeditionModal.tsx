@@ -31,11 +31,15 @@ import { Modal } from './Modal';
  *    or a border tribe (匈奴/南蠻…), for trade wealth, exotica, auxiliaries,
  *    prestige, and pacifying the frontier.
  */
-const MODES: Array<{ id: ExpeditionMode; zh: string; en: string; descZh: string; descEn: string; foreign: boolean; icon: string }> = [
-  { id: 'explore', zh: '探索', en: 'Explore', descZh: '探查虛實,或訪賢、奇遇、攜民心歸', descEn: 'Scout a city; maybe find talent, a windfall, or goodwill', foreign: false, icon: '🧭' },
-  { id: 'envoy', zh: '出使', en: 'Envoy', descZh: '出使他國,睦鄰修好', descEn: 'Warm relations with a rival power', foreign: true, icon: '🕊️' },
-  { id: 'subvert', zh: '策反', en: 'Subvert', descZh: '潛入策反敵將來投(高風險)', descEn: 'Turn an enemy officer to your side (risky)', foreign: true, icon: '🎭' },
-  { id: 'infiltrate', zh: '刺探', en: 'Infiltrate', descZh: '細探虛實,伺機破壞(有被擒之險)', descEn: 'Deep intel + a chance to sabotage (capture risk)', foreign: true, icon: '🕵️' },
+const MODES: Array<{ id: ExpeditionMode; zh: string; en: string; descZh: string; descEn: string; foreign: boolean; target: 'foreign' | 'own' | 'any'; icon: string }> = [
+  { id: 'explore', zh: '探索', en: 'Explore', descZh: '探查虛實,或訪賢、奇遇、攜民心歸', descEn: 'Scout a city; maybe find talent, a windfall, or goodwill', foreign: false, target: 'any', icon: '🧭' },
+  { id: 'recruit', zh: '訪賢', en: 'Court Sage', descZh: '三顧茅廬:專程拜訪在野賢才(高才需累積誠意)', descEn: 'Court a known wanderer (legends need repeated visits)', foreign: false, target: 'any', icon: '📜' },
+  { id: 'tour', zh: '巡視', en: 'Tour', descZh: '巡視自家城池,升民心、察貳心', descEn: 'Tour your own city — loyalty + sniff out disaffection', foreign: false, target: 'own', icon: '🏯' },
+  { id: 'levy', zh: '募兵', en: 'Levy', descZh: '於自家遠城募兵引歸', descEn: 'Raise troops at a far city of yours', foreign: false, target: 'own', icon: '🚩' },
+  { id: 'envoy', zh: '出使', en: 'Envoy', descZh: '出使他國,睦鄰修好', descEn: 'Warm relations with a rival power', foreign: true, target: 'foreign', icon: '🕊️' },
+  { id: 'befriend', zh: '結交', en: 'Befriend', descZh: '結交敵將,暖其心(為日後策反鋪路)', descEn: "Befriend a rival's officer (eases a later turn)", foreign: true, target: 'foreign', icon: '🤝' },
+  { id: 'subvert', zh: '策反', en: 'Subvert', descZh: '潛入策反敵將來投(高風險)', descEn: 'Turn an enemy officer to your side (risky)', foreign: true, target: 'foreign', icon: '🎭' },
+  { id: 'infiltrate', zh: '刺探', en: 'Infiltrate', descZh: '細探虛實,伺機破壞(有被擒之險)', descEn: 'Deep intel + a chance to sabotage (capture risk)', foreign: true, target: 'foreign', icon: '🕵️' },
 ];
 
 export function ExpeditionModal({ fromCityId, onClose }: { fromCityId: string; onClose: () => void }) {
@@ -109,15 +113,26 @@ function CityErrandView({ fromCityId, roamers, onClose }: { fromCityId: string; 
   const [officerId, setOfficerId] = useState(roamers[0]?.id ?? '');
   const officer = officers[officerId] && roamers.some((o) => o.id === officerId) ? officers[officerId] : roamers[0];
 
-  const foreignOnly = MODES.find((m) => m.id === mode)?.foreign ?? false;
+  const target = MODES.find((m) => m.id === mode)?.target ?? 'any';
   const dests = useMemo(
     () => Object.values(cities)
-      .filter((c) => c.id !== fromCityId && (foreignOnly ? (c.ownerForceId != null && c.ownerForceId !== playerForceId) : true))
+      .filter((c) => {
+        if (c.id === fromCityId) return false;
+        if (target === 'foreign') return c.ownerForceId != null && c.ownerForceId !== playerForceId;
+        if (target === 'own') return c.ownerForceId === playerForceId;
+        return true;
+      })
       .sort((a, b) => (from?.adjacentCityIds.includes(b.id) ? 1 : 0) - (from?.adjacentCityIds.includes(a.id) ? 1 : 0) || a.name.zh.localeCompare(b.name.zh)),
-    [cities, fromCityId, foreignOnly, playerForceId, from],
+    [cities, fromCityId, target, playerForceId, from],
   );
   const [destId, setDestId] = useState(dests[0]?.id ?? '');
   const dest = cities[destId] && dests.some((c) => c.id === destId) ? cities[destId] : dests[0];
+  // 護衛 — an optional second officer (own, idle, in this city, not the envoy).
+  const [companionId, setCompanionId] = useState('');
+  const escorts = useMemo(
+    () => roamers.filter((o) => o.id !== officerId),
+    [roamers, officerId],
+  );
 
   const leg = officer && dest ? expeditionLegSeasons(Math.max(1, marchDurationFor(from, dest, date.season)), officer) : 0;
   const targetForceId = dest?.ownerForceId ?? null;
@@ -132,7 +147,7 @@ function CityErrandView({ fromCityId, roamers, onClose }: { fromCityId: string; 
 
   const send = () => {
     if (!officer || !dest) return;
-    const r = dispatchExpedition(officer.id, fromCityId, dest.id, mode);
+    const r = dispatchExpedition(officer.id, fromCityId, dest.id, mode, companionId || undefined);
     if (r.ok) { playSfx('coin'); onClose(); }
   };
 
@@ -175,6 +190,15 @@ function CityErrandView({ fromCityId, roamers, onClose }: { fromCityId: string; 
               <option key={o.id} value={o.id}>
                 {(lang === 'en' ? o.name.en : o.name.zh)} · {t('智', 'INT')}{o.stats.intelligence} · {t('魅', 'CHA')}{o.stats.charisma} · {t('政', 'POL')}{o.stats.politics}
               </option>
+            ))}
+          </select>
+        </label>
+        <label style={{ display: 'grid', gridTemplateColumns: '3.4rem 1fr', gap: 8, alignItems: 'center' }}>
+          <span style={{ fontSize: '0.78rem', color: '#7a8893' }}>{t('護衛', 'Escort')}</span>
+          <select value={companionId} onChange={(e) => setCompanionId(e.target.value)} style={selectStyle} title={t('帶一名護衛同行 → 降被擒之險、共享歷練', 'Bring a guard → lower capture risk, shared XP')}>
+            <option value="">{t('（無,單騎)', '(none, ride alone)')}</option>
+            {escorts.map((o) => (
+              <option key={o.id} value={o.id}>{(lang === 'en' ? o.name.en : o.name.zh)} · {t('武', 'WAR')}{o.stats.war}</option>
             ))}
           </select>
         </label>

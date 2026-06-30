@@ -2096,6 +2096,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       factionBoost,
       buildings: input.buildings,
       lordRapport: input.lordRapport,
+      diplomacy: input.diplomacy,
     });
     for (const ev of ambitionEvents) {
       entries.push({ cityId: ev.cityId, kind: ev.kind, text: ev.text, textZh: ev.textZh });

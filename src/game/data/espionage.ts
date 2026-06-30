@@ -71,6 +71,36 @@ export const ESPIONAGE_DEFS: EspionageDef[] = [
     targetsOfficer: true,
     baseSuccess: 0.45,
   },
+  {
+    kind: 'steal-gold',
+    name: { en: 'Rob the Treasury', zh: '盜竊金庫' },
+    description: "Spirit gold out of an enemy city's treasury and into your own coffers.",
+    descriptionZh: "潛入敵城,盜其府庫之金,輸歸我帑。",
+    goldCost: 200,
+    minIntelligence: 65,
+    targetsOfficer: false,
+    baseSuccess: 0.4,
+  },
+  {
+    kind: 'seduce',
+    name: { en: 'Honey Trap', zh: '美人計' },
+    description: 'A honey-trap to turn an enemy officer. Devastating against the lustful (好色); a chaste mark resists.',
+    descriptionZh: "以美人計招誘敵將反正 —— 對好色之徒一誘即倒,持身謹嚴者則難動。",
+    goldCost: 350,
+    minIntelligence: 65,
+    targetsOfficer: true,
+    baseSuccess: 0.3,
+  },
+  {
+    kind: 'false-intel',
+    name: { en: 'Forged Letter', zh: '偽書反間' },
+    description: "Plant forged proof of an enemy officer's treason (蔣幹盜書) — their loyalty craters and their own paranoid lord may jail them.",
+    descriptionZh: "偽造敵將通敵之書(蔣幹盜書)—— 其忠誠驟崩,猜忌之主甚或自囚其將。",
+    goldCost: 350,
+    minIntelligence: 80,
+    targetsOfficer: true,
+    baseSuccess: 0.35,
+  },
 ];
 
 export const ESPIONAGE_DEFS_BY_KIND: Record<string, EspionageDef> =

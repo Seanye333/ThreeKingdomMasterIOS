@@ -21,7 +21,7 @@ import type { DiplomaticState } from '../types/diplomacy';
 import { getRelation } from '../types/diplomacy';
 import { COMMAND_DEFS } from './commands';
 import { foodRate } from './market';
-import { forcesAdjacent, SCHEME_DEFS, type SchemeId } from './schemes';
+import { forcesAdjacent, forceEmbroiled, SCHEME_DEFS, type SchemeId } from './schemes';
 
 export interface AdvisorTip {
   id: string;
@@ -359,6 +359,61 @@ export function adviseTips(input: AdvisorInput): AdvisorTip[] {
           en: `${nameEn(far)} shares no border with us — court them as a distant ally against the neighbours.`,
           priority: 44,
           action: { kind: 'scheme', schemeId: 'far-friend', targetA: far },
+        });
+      }
+    }
+
+    // 離間盟好 — two rivals stand in a pact, at least one pressing on us: prise them apart.
+    const sowDiscord = SCHEME_DEFS.find((d) => d.id === 'sow-discord')!;
+    if (capital && capital.gold >= sowDiscord.goldCost && input.diplomacy) {
+      let pact: { a: EntityId; b: EntityId; score: number } | null = null;
+      for (let i = 0; i < rivalIds.length; i++) {
+        for (let j = i + 1; j < rivalIds.length; j++) {
+          const a = rivalIds[i], b = rivalIds[j];
+          const rel = getRelation(input.diplomacy, a, b);
+          if (rel.status !== 'allied' && rel.status !== 'non-aggression') continue;
+          if (!forcesAdjacent(input.cities, input.playerForceId, a) && !forcesAdjacent(input.cities, input.playerForceId, b)) continue;
+          if (!pact || rel.score < pact.score) pact = { a, b, score: rel.score }; // shallow bonds break easiest
+        }
+      }
+      if (pact) {
+        tips.push({
+          id: `scheme-sd-${pact.a}-${pact.b}`,
+          zh: `${nameOf(pact.a)}與${nameOf(pact.b)}締盟相倚 — 宜行離間,破其盟好,各個擊破。`,
+          en: `${nameEn(pact.a)} and ${nameEn(pact.b)} stand together — sow discord to break their pact and beat them apart.`,
+          priority: 52,
+          action: { kind: 'scheme', schemeId: 'sow-discord', targetA: pact.a, targetB: pact.b },
+        });
+      }
+    }
+
+    // 趁火打劫 — a bordering rival already embroiled is ripe to be denounced and struck.
+    const lootFire = SCHEME_DEFS.find((d) => d.id === 'loot-fire')!;
+    if (capital && capital.gold >= lootFire.goldCost && input.diplomacy) {
+      const ripe = rivalIds.find((f) => forcesAdjacent(input.cities, input.playerForceId, f) && forceEmbroiled(input.cities, input.diplomacy!, f, input.playerForceId));
+      if (ripe) {
+        tips.push({
+          id: `scheme-lf-${ripe}`,
+          zh: `${nameOf(ripe)}內外交困 — 正可趁火打劫,得討伐之名而乘其危。`,
+          en: `${nameEn(ripe)} is embroiled — loot the burning house: take a casus belli and fall on it.`,
+          priority: 50,
+          action: { kind: 'scheme', schemeId: 'loot-fire', targetA: ripe },
+        });
+      }
+    }
+
+    // 疑兵之計 — a much stronger bordering rival: bluff to buy quiet on that front.
+    const feign = SCHEME_DEFS.find((d) => d.id === 'feign-strength')!;
+    if (capital && capital.gold >= feign.goldCost) {
+      const myStr = strength(input.playerForceId);
+      const bully = rivalIds.find((f) => forcesAdjacent(input.cities, input.playerForceId, f) && strength(f) > myStr * 1.5);
+      if (bully) {
+        tips.push({
+          id: `scheme-fs-${bully}`,
+          zh: `${nameOf(bully)}兵勢凌我 — 可施疑兵之計,虛張聲勢,使其數季不敢來犯。`,
+          en: `${nameEn(bully)} overshadows us — feign strength to cow them off our border for a while.`,
+          priority: 46,
+          action: { kind: 'scheme', schemeId: 'feign-strength', targetA: bully },
         });
       }
     }

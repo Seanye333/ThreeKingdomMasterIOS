@@ -47,7 +47,10 @@ export type EdictKind =
   | 'era-change'       // 改元 — declare a new era; restores morale, resets edict cooldowns
   | 'reward-merit'     // 賞功 — single out the highest-deeds officer for honors
   | 'call-for-talent'  // 求賢令 — recruit multiplier for next season
-  | 'self-deprecation';// 罪己詔 — admit fault; mandate cost for loyalty gain
+  | 'self-deprecation' // 罪己詔 — admit fault; mandate cost for loyalty gain
+  | 'nine-bestowments' // 九錫 — accept the Nine Bestowments (a usurpation prelude)
+  | 'feng-shan'        // 封禪 — the grand mandate ceremony at Mt. Tai
+  | 'grace-favor';     // 推恩令 — splinter a rival's vassals/cohesion
 
 export interface EdictDef {
   kind: EdictKind;

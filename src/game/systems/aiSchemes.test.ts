@@ -71,7 +71,10 @@ describe('resolveAISchemes', () => {
       if (out.entries.length > 0) {
         plotted = true;
         const movedRel = Object.keys(out.diplomacy.relations).length > 0;
-        expect(movedRel || out.marks.length > 0).toBe(true);
+        // A plot's bite is a soured relation, a casus belli, OR — for 流言亂政
+        // (sow-chaos, §7.2) — a city's loyalty dropped below its starting 70.
+        const loyaltyDropped = Object.values(out.cities).some((c) => c.loyalty < 70);
+        expect(movedRel || out.marks.length > 0 || loyaltyDropped).toBe(true);
       }
     }
     expect(plotted).toBe(true);

@@ -196,3 +196,50 @@ describe('游历 — helpers', () => {
     expect(expeditionSuccessChance(o, 'subvert', 20)).toBeGreaterThan(expeditionSuccessChance(o, 'subvert', 95));
   });
 });
+
+describe('§7.6 new modes', () => {
+  it('① 訪賢 — a successful call banks the sage as a recruit; a refusal accrues 三顧 誠意', () => {
+    const wild = mkOfficer({ id: 'wolong', forceId: null, locationCityId: 'far', status: 'idle', stats: { leadership: 70, war: 40, intelligence: 99, politics: 95, charisma: 80 } });
+    const input = baseInput({
+      expeditions: { e1: mkExp({ mode: 'recruit', seasonsRemaining: 1 }) },
+      cities: { home: mkCity('home'), far: mkCity('far', { ownerForceId: null }) },
+      officers: {
+        env: mkOfficer({ id: 'env', forceId: 'me', locationCityId: null, status: 'active', stats: { leadership: 60, war: 60, intelligence: 80, politics: 90, charisma: 95 } }),
+        wolong: wild,
+      },
+    });
+    const win = stepExpeditions({ ...input, rng: () => 0.0 });
+    expect(win.expeditions.e1.haul?.recruitOfficerId).toBe('wolong');
+    const lose = stepExpeditions({ ...input, rng: () => 0.999 });
+    expect(lose.officers['wolong'].courtVisits).toBe(1); // 誠意 accrues for the next visit
+  });
+
+  it('② 巡視 lifts your own city’s loyalty', () => {
+    const r = stepExpeditions(baseInput({
+      expeditions: { e1: mkExp({ mode: 'tour', seasonsRemaining: 1 }) },
+      cities: { home: mkCity('home'), far: mkCity('far', { ownerForceId: 'me', loyalty: 50 }) },
+    }));
+    expect(r.cities.far.loyalty).toBeGreaterThan(50);
+  });
+
+  it('② 募兵 banks auxiliary troops to bring home', () => {
+    const r = stepExpeditions(baseInput({
+      expeditions: { e1: mkExp({ mode: 'levy', seasonsRemaining: 1 }) },
+      cities: { home: mkCity('home'), far: mkCity('far', { ownerForceId: 'me', population: 300000 }) },
+    }));
+    expect(r.expeditions.e1.haul?.auxTroops).toBeGreaterThan(0);
+  });
+
+  it('③ 護衛 — a guard rides home idle alongside the envoy', () => {
+    const r = stepExpeditions(baseInput({
+      expeditions: { e1: mkExp({ phase: 'returning', seasonsRemaining: 1, companionId: 'guard', haul: { note: 'x', noteZh: 'x' } }) },
+      officers: {
+        env: mkOfficer({ id: 'env', forceId: 'me', locationCityId: null, status: 'active' }),
+        guard: mkOfficer({ id: 'guard', forceId: 'me', locationCityId: null, status: 'active' }),
+      },
+      cities: { home: mkCity('home', { ownerForceId: 'me' }), far: mkCity('far', { ownerForceId: 'wei' }) },
+    }));
+    expect(r.officers['guard'].status).toBe('idle');
+    expect(r.officers['guard'].locationCityId).toBe('home');
+  });
+});

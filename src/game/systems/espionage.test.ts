@@ -44,6 +44,113 @@ describe('行刺敗露 — botched assassination blowback', () => {
   });
 });
 
+describe('new ops (§7.3 ③)', () => {
+  // Local builders that actually apply overrides (the shared `officer` ignores them).
+  const mk = (id: string, over: Partial<Officer> = {}): Officer => ({
+    id, name: { zh: id, en: id }, forceId: 'enemy', status: 'idle',
+    stats: { war: 50, leadership: 50, intelligence: 80, politics: 50, charisma: 50 },
+    loyalty: 80, traits: [], ...over,
+  } as unknown as Officer);
+  const cityFix = (id: string, over: Record<string, unknown> = {}) =>
+    ({ id, name: { zh: id, en: id }, ownerForceId: 'enemy', troops: 3000, gold: 4000, food: 6000, loyalty: 60, ...over } as unknown as import('../types').City);
+
+  it('盜竊金庫 moves gold from the enemy city to the agent’s home', () => {
+    const out = resolveEspionage({
+      ops: [{ id: 'op', kind: 'steal-gold', agentOfficerId: 'spy', targetForceId: 'enemy', targetCityId: 'ec', issuedYear: 200, issuedSeason: 'spring' }],
+      cities: { ec: cityFix('ec'), home: cityFix('home', { ownerForceId: 'me', gold: 1000 }) },
+      officers: { spy: mk('spy', { forceId: 'me', locationCityId: 'home', stats: { war: 50, leadership: 50, intelligence: 95, politics: 50, charisma: 50 } as Officer['stats'] }) },
+      playerForceId: 'me', rng: () => 0.0,
+    });
+    expect(out.results[0].success).toBe(true);
+    expect(out.cities['ec'].gold).toBeLessThan(4000);
+    expect(out.cities['home'].gold).toBeGreaterThan(1000); // loot landed home
+  });
+
+  it('美人計 turns a lustful mark far more readily than a chaste one', () => {
+    const run = (lustful: boolean) => resolveEspionage({
+      ops: [{ id: 'op', kind: 'seduce', agentOfficerId: 'spy', targetForceId: 'enemy', targetOfficerId: 't', issuedYear: 200, issuedSeason: 'spring' }],
+      cities: {},
+      officers: {
+        spy: mk('spy', { forceId: 'me' }),
+        t: mk('t', { forceId: 'enemy', loyalty: 70, traits: lustful ? ['lustful'] : [] } as Partial<Officer>),
+      },
+      playerForceId: 'me', rng: () => 0.8, // a high roll: lustful (~.95) succeeds, chaste (~.62) fails
+    });
+    expect(run(true).officers['t'].forceId).toBe('me');
+    expect(run(false).officers['t'].forceId).toBe('enemy');
+  });
+
+  it('偽書反間 can have the enemy lord jail his own general', () => {
+    const out = resolveEspionage({
+      ops: [{ id: 'op', kind: 'false-intel', agentOfficerId: 'spy', targetForceId: 'enemy', targetOfficerId: 'g', issuedYear: 200, issuedSeason: 'spring' }],
+      cities: {},
+      officers: {
+        spy: mk('spy', { forceId: 'me', stats: { war: 50, leadership: 50, intelligence: 99, politics: 50, charisma: 50 } as Officer['stats'] }),
+        g: mk('g', { forceId: 'enemy', loyalty: 70 }),
+      },
+      playerForceId: 'me', rng: () => 0.0, // success + jail roll (0.0 < 0.4)
+    });
+    expect(out.results[0].success).toBe(true);
+    expect(out.officers['g'].status).toBe('imprisoned');
+    expect(out.officers['g'].capturedFromForceId).toBe('enemy');
+  });
+});
+
+describe('§7.3 round 2 (intel / assassination / spymaster)', () => {
+  const mk = (id: string, over: Partial<Officer> = {}): Officer => ({
+    id, name: { zh: id, en: id }, forceId: 'enemy', status: 'idle',
+    stats: { war: 50, leadership: 50, intelligence: 60, politics: 50, charisma: 50 },
+    loyalty: 80, traits: [], ...over,
+  } as unknown as Officer);
+
+  it('① gather-intel reports the target’s treaties and intent', () => {
+    const out = resolveEspionage({
+      ops: [{ id: 'op', kind: 'gather-intel', agentOfficerId: 'spy', targetForceId: 'enemy', targetCityId: 'ec', issuedYear: 200, issuedSeason: 'spring' }],
+      cities: {
+        ec: ({ id: 'ec', name: { zh: '敵城', en: 'EC' }, ownerForceId: 'enemy', troops: 5000, gold: 1000, food: 2000, defense: 50, adjacentCityIds: ['mc'] } as unknown as import('../types').City),
+        mc: ({ id: 'mc', name: { zh: '我城', en: 'MC' }, ownerForceId: 'me', troops: 1000, defense: 20, adjacentCityIds: ['ec'] } as unknown as import('../types').City),
+      },
+      officers: { spy: mk('spy', { forceId: 'me', stats: { war: 50, leadership: 50, intelligence: 90, politics: 50, charisma: 50 } as Officer['stats'] }) },
+      playerForceId: 'me', rng: () => 0.0,
+      diplomacy: { relations: { enemy__ally: { forceA: 'ally', forceB: 'enemy', score: 60, status: 'allied' } } },
+      forces: { ally: ({ id: 'ally', name: { zh: '盟', en: 'Ally' } } as import('../types').Force) },
+    });
+    expect(out.results[0].success).toBe(true);
+    // Treaty (ally) + intent (eyeing our city) surfaced in the report text.
+    expect(out.entries[0].textZh).toContain('盟約');
+    expect(out.entries[0].textZh).toContain('兵鋒似指');
+  });
+
+  it('③ an attempt on a lord’s life breeds far deeper resentment when it fails', () => {
+    const run = (ruler: boolean) => resolveEspionage({
+      ops: [{ id: 'op', kind: 'assassinate', agentOfficerId: 'spy', targetForceId: 'enemy', targetOfficerId: 't', issuedYear: 200, issuedSeason: 'spring' }],
+      cities: {},
+      officers: { spy: mk('spy', { forceId: 'me' }), t: mk('t', { forceId: 'enemy' }) },
+      playerForceId: 'me', rng: () => 0.99, // certain failure
+      forces: { enemy: ({ id: 'enemy', name: { zh: 'e', en: 'e' }, rulerOfficerId: ruler ? 't' : 'someone-else' } as import('../types').Force) },
+    });
+    expect(run(false).grudgeDelta['enemy']).toBe(14);
+    expect(run(true).grudgeDelta['enemy']).toBe(26);
+  });
+
+  it('② 校事 — a sharper realm spymaster lifts op odds', () => {
+    const base = (extraOfficer: Officer | null) => resolveEspionage({
+      ops: [{ id: 'op', kind: 'instigate', agentOfficerId: 'spy', targetForceId: 'enemy', targetCityId: 'ec', issuedYear: 200, issuedSeason: 'spring' }],
+      cities: { ec: ({ id: 'ec', name: { zh: 'e', en: 'e' }, ownerForceId: 'enemy', loyalty: 60, troops: 1000 } as unknown as import('../types').City) },
+      officers: {
+        spy: mk('spy', { forceId: 'me', stats: { war: 50, leadership: 50, intelligence: 60, politics: 50, charisma: 50 } as Officer['stats'] }),
+        ...(extraOfficer ? { sage: extraOfficer } : {}),
+      },
+      // A roll that lands between the two odds: with a 95-INT spymaster present it succeeds, without it fails.
+      playerForceId: 'me', rng: () => 0.32,
+    });
+    const withSage = base(mk('sage', { forceId: 'me', stats: { war: 50, leadership: 50, intelligence: 95, politics: 50, charisma: 50 } as Officer['stats'] }));
+    const without = base(null);
+    expect(withSage.results[0].success).toBe(true);
+    expect(without.results[0].success).toBe(false);
+  });
+});
+
 describe('心腹 — a confidant can never be turned', () => {
   const out = resolveEspionage({
     ops: [{

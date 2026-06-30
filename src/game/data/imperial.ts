@@ -127,6 +127,33 @@ export const EDICTS: EdictDef[] = [
     goldCost: 0,
     cooldownSeasons: 12,
   },
+  {
+    kind: 'nine-bestowments',
+    name: { en: 'Nine Bestowments', zh: '九錫' },
+    description: 'Accept the Nine Bestowments — imperial regalia short of the throne. Requires holding the Emperor. Mandate +5, your officers rally (+5), but rivals see the usurpation coming (−8 loyalty). Eases a later abdication.',
+    descriptionZh: "受九錫之賜 —— 帝王儀仗,僅差一步。須挾天子方可行。天命 +5、麾下擁戴(忠 +5),然諸侯側目其僭(忠 −8),且日後受禪更易。",
+    minRank: 'king',
+    goldCost: 2000,
+    cooldownSeasons: 99,
+  },
+  {
+    kind: 'feng-shan',
+    name: { en: 'Feng-Shan Rites', zh: '封禪' },
+    description: "The supreme rite at Mount Tai, proclaiming Heaven's favour. Mandate +12; every city you own +6 loyalty.",
+    descriptionZh: "泰山封禪,告成於天。天命 +12;所轄各城民心 +6。",
+    minRank: 'emperor',
+    goldCost: 3000,
+    cooldownSeasons: 24,
+  },
+  {
+    kind: 'grace-favor',
+    name: { en: 'Edict of Grace', zh: '推恩令' },
+    description: "Splinter a rival realm — encourage its vassals to break away (discontent +25) and, lacking vassals, sow division among its officers (−5 loyalty).",
+    descriptionZh: "下推恩之詔,離析敵國 —— 慫其藩屬離心(不臣 +25),無藩屬則播其君臣之隙(忠 −5)。",
+    minRank: 'king',
+    goldCost: 600,
+    cooldownSeasons: 8,
+  },
 ];
 
 export const EDICTS_BY_KIND: Record<string, EdictDef> = Object.fromEntries(

@@ -54,6 +54,9 @@ export interface Officer {
    *  can be recalled, may escape, and is slain if their home betrays the pact)
    *  from a war captive. Status is 'imprisoned'; cleared on return/death. */
   hostageOfForceId?: EntityId;
+  /** 三顧之誠 — for a rootless sage, how many times a 訪賢 expedition (§7.6) has
+   *  courted them; each visit raises the odds they finally agree to serve. */
+  courtVisits?: number;
   /** 後遺 — short-lived afflictions (養傷 from a duel, 羞憤 from a lost debate)
    *  that sap effective stats for a few seasons. Optional; ticks down each
    *  season. See systems/afflictions.ts. */

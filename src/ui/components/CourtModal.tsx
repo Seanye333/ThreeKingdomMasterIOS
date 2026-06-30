@@ -24,6 +24,9 @@ export function CourtModal({ onClose }: Props) {
   const date = useGameStore((s) => s.date);
   const issueEdict = useGameStore((s) => s.issueEdict);
   const promoteImperialRank = useGameStore((s) => s.promoteImperialRank);
+  const setCourtPatronage = useGameStore((s) => s.setCourtPatronage);
+  const purgeFaction = useGameStore((s) => s.purgeFaction);
+  const courtPatronage = useGameStore((s) => s.courtPatronage);
   const allCities = useGameStore((s) => s.cities);
   const allAppointments = useGameStore((s) => s.appointments);
   const allOfficers = useGameStore((s) => s.officers);
@@ -179,9 +182,20 @@ export function CourtModal({ onClose }: Props) {
                 const n = counts[fid] ?? 0;
                 if (n === 0) return null;
                 const pct = Math.round((n / total) * 100);
+                const favoured = courtPatronage === fid;
                 return (
-                  <span key={fid} style={{ color: pct > 50 ? '#e6c473' : '#aab6c0' }}>
-                    {FACTION_LABEL[fid].zh} {n} ({pct}%)
+                  <span key={fid} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, color: favoured ? '#f2dd9a' : pct > 50 ? '#e6c473' : '#aab6c0' }}>
+                    {favoured && '★'}{FACTION_LABEL[fid].zh} {n} ({pct}%)
+                    <button
+                      onClick={() => setCourtPatronage(favoured ? null : fid)}
+                      title={lang === 'en' ? (favoured ? 'Withdraw patronage' : 'Patronise this faction — its bloc rallies & the realm reaps its boon') : (favoured ? '撤回扶植' : '扶植此派 —— 其黨擁戴,並得其派之利')}
+                      style={{ background: 'transparent', border: `1px solid ${favoured ? '#e6c473' : '#2b3845'}`, color: favoured ? '#f2dd9a' : '#7a8893', cursor: 'pointer', fontSize: '0.6rem', padding: '0 0.2rem', borderRadius: 2 }}
+                    >{favoured ? '✓扶' : '扶'}</button>
+                    <button
+                      onClick={() => { const r = purgeFaction(fid); if (r.message) alert(r.message); }}
+                      title={lang === 'en' ? 'Purge this faction (黨錮) — loyalty crashes, mandate −5, 500g; a proud officer may defect' : '黨錮此派 —— 忠誠驟降、天命 −5、500金;倨傲之臣或憤而出走'}
+                      style={{ background: 'transparent', border: '1px solid #5a2d2d', color: '#e0707a', cursor: 'pointer', fontSize: '0.6rem', padding: '0 0.2rem', borderRadius: 2 }}
+                    >錮</button>
                   </span>
                 );
               })}
@@ -201,7 +215,7 @@ export function CourtModal({ onClose }: Props) {
             const minRankDef = IMPERIAL_RANKS_BY_ID[e.minRank];
             const meetsRank = currentRankDef.tier >= minRankDef.tier;
             const cd = onCooldown(e.kind);
-            const needsTarget = e.kind === 'denounce' || e.kind === 'declare-vassal' || e.kind === 'levy-tribute';
+            const needsTarget = e.kind === 'denounce' || e.kind === 'declare-vassal' || e.kind === 'levy-tribute' || e.kind === 'grace-favor';
             const target = edictTargets[e.kind];
             const canIssue = meetsRank && !cd && (!needsTarget || !!target);
             return (

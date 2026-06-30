@@ -13,6 +13,10 @@ import { getRelation, pairKey } from '../types';
 import { getEmbassyTarget, resolveEmbassy } from './foreignRealm';
 import { grantXp } from './growth';
 import type { OfficerStats } from '../types';
+import { ITEMS } from '../data/items';
+
+/** 秘笈 — the consumable war-manuals a 探索 might unearth (§7.6 ④). */
+const BOOK_ITEM_IDS: EntityId[] = ITEMS.filter((i) => i.kind === 'book').map((i) => i.id);
 
 /* ─── 游历 — a lone officer roaming abroad ──────────────────────────────────
    A general (not an army) rides out to a distant city to探索/出使/策反/刺探,
@@ -61,6 +65,14 @@ export function expeditionAptitude(officer: Officer, mode: ExpeditionMode): numb
       return s.intelligence;
     case 'embassy':
       return (s.charisma + s.politics) / 2; // long-range diplomacy (see foreignRealm.ts)
+    case 'recruit':
+      return (s.charisma + s.politics) / 2; // 三顧之誠 — courtesy & standing court a sage
+    case 'tour':
+      return (s.politics + s.charisma) / 2; // 巡視 — administration + the common touch
+    case 'befriend':
+      return (s.charisma + s.intelligence) / 2; // 結交 — charm + reading the mark
+    case 'levy':
+      return (s.leadership + s.politics) / 2; // 募兵 — command presence + local sway
   }
 }
 
@@ -84,6 +96,14 @@ export function expeditionSuccessChance(
       return clamp(0.2, 0.9, 0.3 + apt / 150);
     case 'embassy':
       return clamp(0.3, 0.95, 0.4 + apt / 170); // see embassy peril/reward in foreignRealm.ts
+    case 'recruit':
+      return clamp(0.15, 0.92, 0.25 + apt / 160); // legends raise the bar (see resolveRecruit)
+    case 'tour':
+      return clamp(0.4, 0.97, 0.55 + apt / 200);
+    case 'befriend':
+      return clamp(0.25, 0.9, 0.35 + apt / 160);
+    case 'levy':
+      return clamp(0.35, 0.95, 0.45 + apt / 180);
   }
 }
 
@@ -103,6 +123,14 @@ export function expeditionPeril(officer: Officer, mode: ExpeditionMode): number 
       return clamp(0.08, 0.45, 0.42 - apt / 340);
     case 'embassy':
       return 0.1; // embassy peril is realm-specific — see embassyPeril() in foreignRealm.ts
+    case 'recruit':
+      return clamp(0.02, 0.16, 0.14 - apt / 1000); // courting a sage is rarely dangerous
+    case 'tour':
+      return 0; // touring your own land is safe
+    case 'befriend':
+      return clamp(0.04, 0.22, 0.18 - apt / 800); // a social call in rival lands, lightly watched
+    case 'levy':
+      return clamp(0.03, 0.18, 0.15 - apt / 900);
   }
 }
 
@@ -128,6 +156,14 @@ export function expeditionFavoredStats(mode: ExpeditionMode): Array<keyof Office
       return ['intelligence'];
     case 'embassy':
       return ['charisma', 'politics', 'intelligence'];
+    case 'recruit':
+      return ['charisma', 'politics'];
+    case 'tour':
+      return ['politics', 'charisma'];
+    case 'befriend':
+      return ['charisma', 'intelligence'];
+    case 'levy':
+      return ['leadership', 'politics'];
   }
 }
 
@@ -304,6 +340,11 @@ export function stepExpeditions(input: ExpeditionStepInput): ExpeditionStepResul
           capturedFromForceId: exp.forceId,
           task: null,
         };
+        // 護衛同擒 — a guard riding along shares his fate.
+        const guard = exp.companionId ? officers[exp.companionId] : null;
+        if (guard && guard.status !== 'dead') {
+          officers[exp.companionId!] = { ...guard, status: 'imprisoned', locationCityId: exp.toCityId, capturedFromForceId: exp.forceId, task: null };
+        }
         continue;
       }
       // Turn for home, carrying whatever was found.
@@ -318,10 +359,13 @@ export function stepExpeditions(input: ExpeditionStepInput): ExpeditionStepResul
 
     // ── Homecoming — deliver the haul and step the officer back on duty. ──
     const home = cities[exp.fromCityId];
+    // 護衛 — a guard rode along; restore him to the same fate as the envoy.
+    const guard = exp.companionId ? officers[exp.companionId] : null;
     if (!home || home.ownerForceId !== exp.forceId) {
       // Home fell while he was away — he wanders back to whatever city he set
       // out for (now lost too) idle; the haul is forfeit.
       officers[exp.officerId] = { ...officer, status: 'idle', locationCityId: exp.toCityId, task: null };
+      if (guard && guard.status !== 'dead') officers[exp.companionId!] = { ...guard, status: 'idle', locationCityId: exp.toCityId, task: null };
       report(exp, {
         cityId: exp.toCityId,
         kind: 'expedition',
@@ -378,6 +422,12 @@ export function stepExpeditions(input: ExpeditionStepInput): ExpeditionStepResul
       textZh: `${officer.name.zh}游历归来 · ${home.name.zh}。${haul.noteZh ?? ''}`,
     });
     for (const e of xpRes.entries) report(exp, e); // 升級 notices
+    // 護衛歸來 — the guard comes home too, seasoned by the road (shared 歷練).
+    if (guard && guard.status !== 'dead') {
+      const gXp = grantXp(guard, expeditionXp(exp.mode, exp.legSeasons), rng, expeditionFavoredStats(exp.mode));
+      officers[exp.companionId!] = { ...gXp.officer, status: 'idle', locationCityId: exp.fromCityId, task: null };
+      for (const e of gXp.entries) report(exp, e);
+    }
   }
 
   return { expeditions: nextExpeditions, cities, officers, diplomacy, espionageReveals, entries, aggressionDeltas, mandateDeltas, realmsOpened, realmRelationDeltas };
@@ -407,9 +457,12 @@ function resolveErrand(exp: Expedition, ctx: ErrandCtx): ErrandResult {
   const officer = ctx.officers[exp.officerId];
   const target = ctx.cities[exp.toCityId];
   const targetName = target?.name ?? { zh: '?', en: '?' };
-  const peril = expeditionPeril(officer, exp.mode);
-  // 出使 enjoys diplomatic immunity; the other foreign errands run the gauntlet.
-  const captured = exp.mode !== 'envoy' && exp.mode !== 'explore' && ctx.rng() < peril;
+  // 護衛同行 — a guard at his side cuts the risk of being taken (§7.6 ③).
+  const peril = expeditionPeril(officer, exp.mode) * (exp.companionId ? 0.55 : 1);
+  // 出使 enjoys diplomatic immunity; 巡視 is at home, 訪賢 is a guest's courtesy —
+  // the cloak-and-dagger (and the social call abroad) run the gauntlet.
+  const safe = exp.mode === 'envoy' || exp.mode === 'explore' || exp.mode === 'tour' || exp.mode === 'recruit';
+  const captured = !safe && ctx.rng() < peril;
 
   if (captured) {
     return {
@@ -434,10 +487,143 @@ function resolveErrand(exp: Expedition, ctx: ErrandCtx): ErrandResult {
       return resolveSubvert(exp, ctx, officer, targetName);
     case 'infiltrate':
       return resolveInfiltrate(exp, ctx, officer, target, targetName);
+    case 'recruit':
+      return resolveRecruit(exp, ctx, officer, targetName);
+    case 'tour':
+      return resolveTour(exp, ctx, officer, target, targetName);
+    case 'befriend':
+      return resolveBefriend(exp, ctx, officer, targetName);
+    case 'levy':
+      return resolveLevy(exp, ctx, officer, target, targetName);
     case 'embassy':
       // 遠使 is resolved by foreignRealm.ts before reaching here; unreachable.
       throw new Error('embassy resolved via foreignRealm, not resolveErrand');
   }
+}
+
+/**
+ * 訪賢・三顧茅廬 — court a specific wanderer biding his time in the target city.
+ * A peerless sage (臥龍鳳雛) will not come at the first call: each visit builds
+ * 誠意 (`officer.courtVisits`) until charm + persistence overcome his reserve.
+ */
+function resolveRecruit(
+  exp: Expedition,
+  ctx: ErrandCtx,
+  officer: Officer,
+  targetName: { zh: string; en: string },
+): ErrandResult {
+  // The most able wanderer holding court in that city.
+  const wild = Object.values(ctx.officers)
+    .filter((o) => o.locationCityId === exp.toCityId && o.forceId == null && o.status !== 'dead' && o.id !== officer.id)
+    .sort((a, b) => (b.stats.intelligence + b.stats.politics + b.stats.charisma) - (a.stats.intelligence + a.stats.politics + a.stats.charisma))[0];
+  if (!wild) {
+    return {
+      cities: ctx.cities, diplomacy: ctx.diplomacy,
+      haul: { note: `No wanderer was found at ${targetName.en}.`, noteZh: `${targetName.zh}並無在野之賢可訪。` },
+      entry: { cityId: exp.toCityId, kind: 'expedition', text: `${officer.name.en} found no sage at ${targetName.en}.`, textZh: `${officer.name.zh}訪${targetName.zh},未遇其賢。` },
+    };
+  }
+  // 高才難致 — a brilliant recluse raises the bar; persistence (誠意) lowers it.
+  const calibre = Math.max(wild.stats.intelligence, wild.stats.politics, wild.stats.war, wild.stats.leadership);
+  const difficulty = clamp(0, 0.4, (calibre - 70) / 90);
+  const visits = wild.courtVisits ?? 0;
+  const chance = clamp(0.05, 0.95, expeditionSuccessChance(officer, 'recruit') - difficulty + visits * 0.18);
+  if (ctx.rng() < chance) {
+    ctx.officers[wild.id] = { ...wild, courtVisits: 0 };
+    return {
+      cities: ctx.cities, diplomacy: ctx.diplomacy,
+      haul: { recruitOfficerId: wild.id, note: `Courted the sage ${wild.name.en} — he agrees to serve!`, noteZh: `三顧之誠既至,${wild.name.zh}慨然應命來歸!` },
+      entry: { cityId: exp.toCityId, kind: 'expedition', text: `${officer.name.en} won over the recluse ${wild.name.en} at ${targetName.en}.`, textZh: `${officer.name.zh}訪${targetName.zh}之隱士${wild.name.zh},得其首肯。` },
+    };
+  }
+  // 不遇 — record the visit; the next call starts with more 誠意 banked.
+  ctx.officers[wild.id] = { ...wild, courtVisits: visits + 1 };
+  return {
+    cities: ctx.cities, diplomacy: ctx.diplomacy,
+    haul: { note: `${wild.name.en} was not yet moved — call again (visit ${visits + 1}).`, noteZh: `${wild.name.zh}尚未為所動,當再顧(已訪 ${visits + 1} 次)。` },
+    entry: { cityId: exp.toCityId, kind: 'expedition', text: `${officer.name.en} called on ${wild.name.en} but was politely refused (visit ${visits + 1}).`, textZh: `${officer.name.zh}顧${wild.name.zh}於${targetName.zh},未得;誠意漸積(${visits + 1} 顧)。` },
+  };
+}
+
+/**
+ * 巡視 — tour one of your OWN cities: the lord's emissary lifts its loyalty and
+ * takes the measure of the local officers, flagging any who harbour designs.
+ */
+function resolveTour(
+  exp: Expedition,
+  ctx: ErrandCtx,
+  officer: Officer,
+  target: City | undefined,
+  targetName: { zh: string; en: string },
+): ErrandResult {
+  let cities = ctx.cities;
+  const bump = 4 + Math.floor(ctx.rng() * 5); // +4..8
+  if (target && target.ownerForceId === exp.forceId) {
+    cities = { ...cities, [exp.toCityId]: { ...target, loyalty: clamp(0, 100, target.loyalty + bump) } };
+  }
+  // 察貳心 — name a disaffected officer stationed here, if any (a warning).
+  const disaffected = Object.values(ctx.officers)
+    .filter((o) => o.forceId === exp.forceId && o.locationCityId === exp.toCityId && o.status !== 'dead' && o.loyalty < 40 && o.id !== ctx.forces[exp.forceId]?.rulerOfficerId)
+    .sort((a, b) => a.loyalty - b.loyalty)[0];
+  const warnEn = disaffected ? ` Noted ${disaffected.name.en}'s discontent.` : '';
+  const warnZh = disaffected ? `察得${disaffected.name.zh}心懷怨望。` : '';
+  return {
+    cities, diplomacy: ctx.diplomacy,
+    haul: { note: `Toured ${targetName.en} (loyalty +${bump}).${warnEn}`, noteZh: `巡視${targetName.zh}(民心 +${bump})。${warnZh}` },
+    entry: { cityId: exp.toCityId, kind: 'expedition', text: `${officer.name.en} toured ${targetName.en} — loyalty +${bump}.${warnEn}`, textZh: `${officer.name.zh}巡視${targetName.zh},民心 +${bump}。${warnZh}` },
+  };
+}
+
+/**
+ * 結交 — pay a friendly call on a rival's officer, warming them toward you. It
+ * shaves their loyalty to their own lord a touch (sowing the seed of a later
+ * defection) — a gentler, slower 策反 with no risk of a turn this trip.
+ */
+function resolveBefriend(
+  exp: Expedition,
+  ctx: ErrandCtx,
+  officer: Officer,
+  targetName: { zh: string; en: string },
+): ErrandResult {
+  const targetForceId = ctx.cities[exp.toCityId]?.ownerForceId ?? null;
+  const ruler = targetForceId ? ctx.forces[targetForceId]?.rulerOfficerId : undefined;
+  const mark = Object.values(ctx.officers)
+    .filter((o) => o.locationCityId === exp.toCityId && o.forceId === targetForceId && o.id !== ruler && (o.status === 'idle' || o.status === 'active'))
+    .sort((a, b) => a.loyalty - b.loyalty)[0];
+  let drop = 0;
+  if (mark && ctx.rng() < expeditionSuccessChance(officer, 'befriend')) {
+    drop = 4 + Math.floor(ctx.rng() * 5); // −4..8 loyalty toward their lord
+    ctx.officers[mark.id] = { ...mark, loyalty: clamp(0, 100, mark.loyalty - drop) };
+  }
+  return {
+    cities: ctx.cities, diplomacy: ctx.diplomacy,
+    haul: mark
+      ? { note: drop > 0 ? `Befriended ${mark.name.en} (loyalty to their lord −${drop}).` : `Called on ${mark.name.en}, but won little ground.`, noteZh: drop > 0 ? `結交${mark.name.zh},其忠於故主 −${drop}(他日易策)。` : `欲結${mark.name.zh},未得其心。` }
+      : { note: `No approachable officer at ${targetName.en}.`, noteZh: `${targetName.zh}無可結交之將。` },
+    entry: { cityId: exp.toCityId, kind: 'expedition', text: `${officer.name.en} cultivated ties at ${targetName.en}.`, textZh: `${officer.name.zh}至${targetName.zh},廣結交遊。` },
+  };
+}
+
+/**
+ * 募兵 — raise a body of troops at a far or frontier city, marched home with the
+ * envoy. Yields more where the populace is large and content.
+ */
+function resolveLevy(
+  exp: Expedition,
+  ctx: ErrandCtx,
+  officer: Officer,
+  target: City | undefined,
+  targetName: { zh: string; en: string },
+): ErrandResult {
+  const apt = expeditionAptitude(officer, 'levy');
+  const pop = target?.population ?? 60000;
+  const base = Math.round(400 + apt * 8 + (pop / 100000) * 600);
+  const raised = Math.round(base * (0.7 + ctx.rng() * 0.6));
+  return {
+    cities: ctx.cities, diplomacy: ctx.diplomacy,
+    haul: { auxTroops: raised, note: `Levied ${raised.toLocaleString()} troops at ${targetName.en}.`, noteZh: `於${targetName.zh}募得 ${raised.toLocaleString()} 兵,引歸故城。` },
+    entry: { cityId: exp.toCityId, kind: 'expedition', text: `${officer.name.en} raised ${raised.toLocaleString()} troops at ${targetName.en}.`, textZh: `${officer.name.zh}於${targetName.zh}招募 ${raised.toLocaleString()} 卒。` },
+  };
 }
 
 function resolveExplore(
@@ -462,6 +648,13 @@ function resolveExplore(
     haul.recruitOfficerId = wild.id;
     notesZh.push(`訪得在野賢才 ${wild.name.zh}`);
     notesEn.push(`found the talent ${wild.name.en}`);
+  } else if (BOOK_ITEM_IDS.length > 0 && ctx.rng() < chance * 0.28) {
+    // 秘笈 — a lost war-manual unearthed on the road (§7.6 ④); studied back home.
+    const book = BOOK_ITEM_IDS[Math.floor(ctx.rng() * BOOK_ITEM_IDS.length)];
+    haul.itemId = book;
+    const bookName = ITEMS.find((i) => i.id === book)?.name;
+    notesZh.push(`於坊間訪得兵書〈${bookName?.zh ?? '秘笈'}〉`);
+    notesEn.push(`unearthed the manual “${bookName?.en ?? 'a war-manual'}”`);
   } else if (ctx.rng() < chance * 0.6) {
     // 奇遇 — a windfall of coin/grain from the road.
     const gold = 200 + Math.floor(ctx.rng() * 600);
