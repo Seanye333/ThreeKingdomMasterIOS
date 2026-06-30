@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { City, Force, Officer } from '../types';
 import { clanOf, isCommoner, isAristocrat, CLANS_BY_ID } from '../data/clans';
-import { tickClans, clanInfluence, effectiveStance, stanceRecruitModifier } from './clans';
+import { tickClans, clanInfluence, effectiveStance, stanceRecruitModifier, clanScions, clanCohesion, clanLevyTarget, clanDefectionChance, clanSubvertChance } from './clans';
 
 function mkOfficer(id: string, over: Partial<Officer> = {}): Officer {
   return {
@@ -130,5 +130,58 @@ describe('clanInfluence + recruit modifier', () => {
     const officers = { 'sima-yi': mkOfficer('sima-yi', { loyalty: 80 }) };
     expect(stanceRecruitModifier(officers, 'wei', 'aristocratic')).toBeGreaterThan(0);
     expect(stanceRecruitModifier(officers, 'wei', 'meritocratic')).toBe(0);
+  });
+});
+
+describe('§7.8-deep E 門第聯姻 — a bound clan keeps faith', () => {
+  it('a bound clan holds a loyalty floor and is spared the usurpation push', () => {
+    const officers: Record<string, Officer> = {};
+    for (const id of CLANS_BY_ID.sima.members) {
+      officers[id] = mkOfficer(id, { loyalty: 30, stats: { leadership: 95, war: 80, intelligence: 98, politics: 95, charisma: 80 } });
+    }
+    const r = tickClans({
+      officers,
+      forces: { wei: mkForce({ recruitmentStance: 'aristocratic' }) },
+      cities: city,
+      playerForceId: 'player',
+      clanBonds: { sima: 'wei' },
+      seed: 7,
+    });
+    // No strongman gets a usurpation boost…
+    expect(Object.values(r.factionBoost).some((v) => v > 0)).toBe(false);
+    // …and their loyalty is pulled up toward the floor, not down.
+    expect(r.officers['sima-yi'].loyalty).toBeGreaterThan(30);
+  });
+});
+
+describe('§7.8-deep G/H — levies, defection & subversion', () => {
+  const scions = (loy: number, n = 3) =>
+    CLANS_BY_ID.sima.members.slice(0, n).map((id) => mkOfficer(id, { loyalty: loy, forceId: 'wei' }));
+
+  it('clanScions/clanCohesion read serving members', () => {
+    const officers = { 'sima-yi': mkOfficer('sima-yi', { loyalty: 70 }), 'sima-shi': mkOfficer('sima-shi', { loyalty: 50 }) };
+    const s = clanScions(officers, 'wei', 'sima');
+    expect(s.length).toBe(2);
+    expect(clanCohesion(s)).toBe(60);
+  });
+
+  it('content clans field 部曲; disaffected ones field none', () => {
+    expect(clanLevyTarget(scions(80))).toBeGreaterThan(0);
+    expect(clanLevyTarget(scions(40))).toBe(0); // below the content floor
+    expect(clanLevyTarget([])).toBe(0);
+  });
+
+  it('deep disaffection breeds defection; a bond prevents it', () => {
+    expect(clanDefectionChance(scions(15), false)).toBeGreaterThan(0);
+    expect(clanDefectionChance(scions(15), true)).toBe(0); // bound → never
+    expect(clanDefectionChance(scions(60), false)).toBe(0); // loyal → never
+    expect(clanDefectionChance(scions(15, 1), false)).toBe(0); // a lone scion isn't a clan
+  });
+
+  it('subversion odds rise with disaffection, prestige & coin', () => {
+    const cold = clanSubvertChance({ scions: scions(30), myStandingTier: 'humble', spend: 0 });
+    const rich = clanSubvertChance({ scions: scions(30), myStandingTier: 'great', spend: 4000 });
+    expect(rich).toBeGreaterThan(cold);
+    expect(clanSubvertChance({ scions: scions(80), myStandingTier: 'humble', spend: 0 })).toBe(0); // a loyal clan won't turn
   });
 });

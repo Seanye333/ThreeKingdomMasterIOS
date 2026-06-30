@@ -84,6 +84,8 @@ export interface ResolutionInput {
   family?: import('../types/family').FamilyRelation[];
   /** 家門聲望 — clan standings, for 門閥 weighting in court-faction coup math. */
   clanStandings?: Record<string, import('../types').ClanStanding>;
+  /** §7.8-deep E 門第聯姻 — clans bound by marriage (clanId → forceId). */
+  clanBonds?: Record<string, EntityId>;
   /** Civic-title appointments — drive force-wide bonuses in commands + combat. */
   appointments?: import('../types').Appointment[];
   /** 考課・連續考績 — prefect officerId → signed streak, compounded each annual review. */
@@ -122,6 +124,8 @@ export interface ResolutionInput {
   espionageReveals?: Record<EntityId, number>;
   /** 遠邦關係 — player's standing with each distant realm (0–100). */
   realmRelations?: Record<string, number>;
+  /** §7.7 ① 邦交競逐 — who holds each realm's 封號 (realmId → forceId). */
+  realmPatron?: Record<string, EntityId>;
   /** 常運糧道 — player standing routes; each season auto-ships surplus grain. */
   standingRoutes?: Array<{ fromCityId: EntityId; toCityId: EntityId }>;
   /** 流民 — the realm-wide pool of displaced people carried between seasons. */
@@ -194,6 +198,9 @@ export interface ResolutionOutput {
   expeditionRealmsOpened?: Record<string, EntityId>;
   /** 遠邦關係 — relation deltas from player embassies (realmId → delta). */
   expeditionRealmRelationDeltas?: Record<string, number>;
+  /** §7.7 ① 邦交競逐 — realms whose 封號 was claimed by an embassy this step
+   *  (realmId → claiming forceId, player or AI). */
+  expeditionRealmsPatronClaimed?: Record<string, EntityId>;
   /** Field-battle sites this season (ambush/camp-storm/clash) to mark on the
    *  map. Coords in 1000×720 map space. */
   fieldBattleMarks?: Array<{
@@ -2026,6 +2033,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       forces,
       cities,
       playerForceId: input.playerForceId,
+      clanBonds: input.clanBonds,
       seed: ((input.date.year * 4 + seasonIdx0) ^ 0x5c1a) >>> 0,
     });
     officers = clanResult.officers;
@@ -2035,10 +2043,24 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     }
 
     // 治國理念 — each realm's school of statecraft slants its cities (民心/稅/糧/
-    // 耕戰) and rallies doctrine-aligned scholars.
-    const craft = tickStatecraft({ forces, cities, officers });
+    // 耕戰) and rallies doctrine-aligned scholars; 造詣 (mastery) climbs and scales
+    // it, faster for a realm with a 太學/書院 (§7.9-deep I/J/K).
+    const academyForces = new Set<EntityId>();
+    for (const b of input.buildings ?? []) {
+      if (b.id !== 'grandacademy' && b.id !== 'academy') continue;
+      const owner = cities[b.cityId]?.ownerForceId;
+      if (owner) academyForces.add(owner);
+    }
+    const craft = tickStatecraft({ forces, cities, officers, academyForces });
     cities = craft.cities;
     officers = craft.officers;
+    // Fold the freshly-climbed 造詣 back onto each realm.
+    if (Object.keys(craft.mastery).length > 0) {
+      forces = { ...forces };
+      for (const [fid, m] of Object.entries(craft.mastery)) {
+        if (forces[fid]) forces[fid] = { ...forces[fid], statecraftMastery: m };
+      }
+    }
     for (const e of craft.entries) {
       entries.push({ cityId: e.cityId, kind: 'note', text: e.text, textZh: e.textZh });
     }
@@ -2669,6 +2691,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   let expeditionMandateDeltas: Record<string, number> | undefined;
   let expeditionRealmsOpened: Record<string, EntityId> | undefined;
   let expeditionRealmRelationDeltas: Record<string, number> | undefined;
+  let expeditionRealmsPatronClaimed: Record<string, EntityId> | undefined;
   if (seasonBoundary && Object.keys(nextExpeditions).length > 0) {
     const stepped = stepExpeditions({
       expeditions: nextExpeditions,
@@ -2680,6 +2703,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       rng,
       playerForceId: input.playerForceId,
       realmRelations: input.realmRelations,
+      realmPatron: input.realmPatron,
     });
     nextExpeditions = stepped.expeditions;
     cities = stepped.cities;
@@ -2691,6 +2715,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     if (Object.keys(stepped.mandateDeltas).length > 0) expeditionMandateDeltas = stepped.mandateDeltas;
     if (Object.keys(stepped.realmsOpened).length > 0) expeditionRealmsOpened = stepped.realmsOpened;
     if (Object.keys(stepped.realmRelationDeltas).length > 0) expeditionRealmRelationDeltas = stepped.realmRelationDeltas;
+    if (Object.keys(stepped.realmsPatronClaimed).length > 0) expeditionRealmsPatronClaimed = stepped.realmsPatronClaimed;
   }
 
   // 8c. AI 游历 — each rival may send out one roamer a season: scout a far city,
@@ -2781,6 +2806,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     expeditionMandateDeltas,
     expeditionRealmsOpened,
     expeditionRealmRelationDeltas,
+    expeditionRealmsPatronClaimed,
     territoryOwnership,
     fieldBattleMarks: fieldBattleMarks.length > 0 ? fieldBattleMarks : undefined,
     pendingFieldBattles: pendingFieldBattles.length > 0 ? pendingFieldBattles : undefined,

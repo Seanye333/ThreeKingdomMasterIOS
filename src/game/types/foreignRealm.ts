@@ -54,5 +54,9 @@ export interface ForeignRealm {
   /** Earliest year the realm will receive an embassy (historical gating;
    *  omitted = always reachable). */
   minYear?: number;
+  /** 封號 — the exclusive title the realm bestows on its 邦交 patron (e.g. 倭's
+   *  親魏倭王). Held by whoever last courted it best (§7.7 ① 邦交競逐); a rival
+   *  who out-courts you takes the title — and its standing prestige — away. */
+  title?: BilingualName;
   reward: RealmReward;
 }

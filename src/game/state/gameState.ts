@@ -249,6 +249,14 @@ export interface GameState {
   /** 家門聲望 — accrued clan standing keyed by clan id (curated id or an
    *  emergent `house-<founderId>`). Recomputed yearly. See systems/clans.ts. */
   clanStandings: Record<string, ClanStanding>;
+  /** §7.8-deep E 門第聯姻 — great clans the realm has bound by marriage
+   *  (clanId → forceId). A bound clan holds a loyalty floor and its strongmen
+   *  are far less apt to grow over-mighty (聯姻之家不易簒). */
+  clanBonds: Record<string, EntityId>;
+  /** §7.8-deep G 部曲莊園 — private retainer troops a content clan currently
+   *  fields at its anchor city (clanId → {cityId, troops}). A disaffected clan
+   *  withdraws them; an over-mighty one can march them. */
+  clanLevies: Record<string, { cityId: EntityId; troops: number }>;
   /** Officer wishes awaiting player response. */
   officerWishes: OfficerWish[];
   /** Pending grant/reject report entries to prepend to next season report. */
@@ -369,6 +377,35 @@ export interface GameState {
    *  repeated embassies. Higher = safer journeys, richer rewards, and the
    *  realm more likely to send a tribute envoy of its own (反向來使). */
   realmRelations: Record<string, number>;
+  /** §7.7 ① 邦交競逐·封號獨占 — who currently holds each titled realm's 封號
+   *  (realmId → forceId). The latest force to send a successful embassy holds
+   *  it; the patron draws standing 天命 and is the only one a realm will lend
+   *  troops to (借兵). A rival who out-courts you takes the title away. */
+  realmPatron: Record<string, EntityId>;
+  /** §7.7 ③ 西域都護府 — the player city designated Protectorate of the Western
+   *  Regions (null = none). While it stands and is held, every 西域 caravan pays
+   *  half again as much and those routes are far harder to cut. */
+  protectorateCityId: EntityId | null;
+  /** §7.7 ③ 絲路風險 — opened caravans cut by tribe raids or a lost frontier
+   *  city (realmId → seasons the route stays severed; absent/0 = flowing). No
+   *  trade income or tribute crosses a severed route until it heals. */
+  realmRouteDisruption: Record<string, number>;
+  /** §7.7 ④ 常駐使節 — officers stationed long-term at an opened realm
+   *  (realmId → posting). A resident envoy is off the home rosters, but holds
+   *  the realm's goodwill, eases its caravan, and sends intel home each season. */
+  residentEnvoys: Record<string, { officerId: EntityId; realmId: string; sinceYear: number; sinceSeason: GameDate['season'] }>;
+  /** §7.7-deep ①(A)異域援軍 — last time each realm answered a call for its
+   *  義従遠征軍 (realmId → when), so the favour can't be summoned every season. */
+  realmAidCooldown: Record<string, { year: number; season: GameDate['season'] }>;
+  /** §7.7-deep ②(B)遠邦之怒 — how aggrieved each realm is with the player
+   *  (realmId → 0–100). Built by losing a 封號 to a rival, letting standing rot,
+   *  or leaving a caravan severed; bled down by courting. High enmity → 邊釁
+   *  (frontier raids) and 禁運 (embargo). */
+  realmHostility: Record<string, number>;
+  /** §7.7-deep ③(C)絹馬互市 — what each opened caravan trades home: 'gold'
+   *  (default commerce) or 'horses' (買馬 — horse realms stable warhorses at the
+   *  frontier city, raising its cavalry ceiling, in place of coin). */
+  realmTradeMode: Record<string, 'gold' | 'horses'>;
   /** 常運糧道 — standing supply routes: each season any surplus grain at the
    *  source auto-ships to the destination. */
   standingRoutes: Array<{ fromCityId: EntityId; toCityId: EntityId }>;
@@ -630,6 +667,8 @@ export const EMPTY_STATE: GameState = {
   family: [],
   pendingHeirs: [],
   clanStandings: {},
+  clanBonds: {},
+  clanLevies: {},
   officerWishes: [],
   pendingWishEntries: [],
   endingsAchieved: [],
@@ -668,6 +707,13 @@ export const EMPTY_STATE: GameState = {
   expeditions: {},
   openedRealms: {},
   realmRelations: {},
+  realmPatron: {},
+  protectorateCityId: null,
+  realmRouteDisruption: {},
+  residentEnvoys: {},
+  realmAidCooldown: {},
+  realmHostility: {},
+  realmTradeMode: {},
   standingRoutes: [],
   espionageReveals: {},
   cityDelegations: {},
@@ -1011,6 +1057,8 @@ export function loadScenario(
     clanStandings: deriveInitialClanStandings(
       Object.fromEntries(officers.map((o) => [o.id, o])),
     ),
+    clanBonds: {},
+    clanLevies: {},
     officerWishes: [],
   pendingWishEntries: [],
     endingsAchieved: state.endingsAchieved,
@@ -1049,6 +1097,13 @@ export function loadScenario(
     expeditions: state.expeditions ?? {},
     openedRealms: state.openedRealms ?? {},
     realmRelations: state.realmRelations ?? {},
+    realmPatron: state.realmPatron ?? {},
+    protectorateCityId: state.protectorateCityId ?? null,
+    realmRouteDisruption: state.realmRouteDisruption ?? {},
+    residentEnvoys: state.residentEnvoys ?? {},
+    realmAidCooldown: state.realmAidCooldown ?? {},
+    realmHostility: state.realmHostility ?? {},
+    realmTradeMode: state.realmTradeMode ?? {},
     standingRoutes: state.standingRoutes ?? [],
     commandTemplates: state.commandTemplates,
     autoBuildQueues: {},

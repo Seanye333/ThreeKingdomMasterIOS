@@ -6,6 +6,13 @@ import {
   embassyPeril,
   resolveEmbassy,
   realmTradeIncome,
+  realmTitle,
+  realmPatronPrestige,
+  routeDisruptionChance,
+  realmAidProfile,
+  isHorseRealm,
+  realmTradeHorses,
+  naturalizedName,
 } from './foreignRealm';
 import { mkOfficer } from '../../test/factories';
 
@@ -104,5 +111,106 @@ describe('遠使異域 — resolution', () => {
     const out = resolveEmbassy({ target: rome, officer: ablEnvoy, freeChieftain: false, rng: () => 0.12 });
     expect(out.perished).toBe(false);
     expect(out.wounded).toBe(true);
+  });
+});
+
+describe('§7.7 ② 進貢厚禮 + 遠使團 — gifts & a deputy ease the road', () => {
+  const rome = getEmbassyTarget('daqin')!; // danger 0.6 — the road can kill
+
+  it('a lavish gift turns a deadly road into a survivable mishap', () => {
+    // A green envoy at roll 0.10 lands in Rome's death band; a fat gift shrinks
+    // the peril (and thus that band) enough that the same roll only wounds him.
+    const cold = resolveEmbassy({ target: rome, officer: greenEnvoy, freeChieftain: false, rng: () => 0.10 });
+    const gifted = resolveEmbassy({ target: rome, officer: greenEnvoy, freeChieftain: false, giftGold: 8000, rng: () => 0.10 });
+    expect(cold.perished).toBe(true);
+    expect(gifted.perished).toBe(false);
+  });
+
+  it('a capable 副使 likewise eases the road', () => {
+    const withDeputy = resolveEmbassy({ target: rome, officer: greenEnvoy, freeChieftain: false, deputy: ablEnvoy, rng: () => 0.10 });
+    expect(withDeputy.perished).toBe(false);
+  });
+
+  it('a gift lifts the reward tier (richer haul)', () => {
+    const turfan = getEmbassyTarget('gaochang')!;
+    const plain = resolveEmbassy({ target: turfan, officer: greenEnvoy, freeChieftain: false, rng: () => 0.9 });
+    const lavish = resolveEmbassy({ target: turfan, officer: greenEnvoy, freeChieftain: false, giftGold: 8000, rng: () => 0.9 });
+    expect((lavish.haul.gold ?? 0)).toBeGreaterThan(plain.haul.gold ?? 0);
+  });
+});
+
+describe('§7.7 ① 邦交競逐·封號獨占 — titles & the patron-only loan', () => {
+  it('titled realms expose a 封號; untitled ones do not', () => {
+    expect(realmTitle('wa')?.zh).toBe('親魏倭王');
+    expect(realmTitle('gaochang')).not.toBeNull();
+    expect(realmTitle('sanhan')).toBeNull(); // 三韓 — no exclusive title
+  });
+
+  it('only titled realms confer standing patron prestige', () => {
+    expect(realmPatronPrestige('wa')).toBeGreaterThan(0);
+    expect(realmPatronPrestige('sanhan')).toBe(0);
+  });
+
+  it('the troop loan is the patron\'s privilege', () => {
+    const turfan = getEmbassyTarget('gaochang')!; // no auxTroops in base reward
+    const patron = resolveEmbassy({ target: turfan, officer: ablEnvoy, freeChieftain: false, relation: 90, isPatron: true, rng: () => 0.9 });
+    const outsider = resolveEmbassy({ target: turfan, officer: ablEnvoy, freeChieftain: false, relation: 90, isPatron: false, rng: () => 0.9 });
+    expect(patron.haul.auxTroops ?? 0).toBeGreaterThan(0);
+    expect(outsider.haul.auxTroops ?? 0).toBe(0);
+  });
+});
+
+describe('§7.7 ③ 絲路風險 — route disruption odds', () => {
+  it('farther roads are riskier; a protectorate/resident makes them safer', () => {
+    expect(routeDisruptionChance('daqin')).toBeGreaterThan(routeDisruptionChance('gaochang'));
+    // 都護府 only shields the 西域 oases.
+    expect(routeDisruptionChance('gaochang', { protectorate: true })).toBeLessThan(routeDisruptionChance('gaochang'));
+    expect(routeDisruptionChance('daqin', { protectorate: true })).toBe(routeDisruptionChance('daqin')); // not 西域 — no shield
+    expect(routeDisruptionChance('daqin', { resident: true })).toBeLessThan(routeDisruptionChance('daqin'));
+    expect(routeDisruptionChance('nope')).toBe(0);
+  });
+});
+
+describe('§7.7-deep ①(A)異域援軍 — the expeditionary host', () => {
+  it('each region marches in its signature host; horse realms also bring warhorses', () => {
+    const xiyu = realmAidProfile('gaochang')!;
+    expect(xiyu.isCavalry).toBe(true);
+    expect(xiyu.warhorses).toBeGreaterThan(0);
+    const nanhai = realmAidProfile('funan')!;
+    expect(nanhai.isCavalry).toBe(false);
+    expect(nanhai.warhorses).toBe(0); // war-elephants, not horse
+    const ferghana = realmAidProfile('dayuan')!;
+    expect(ferghana.warhorses).toBeGreaterThan(xiyu.warhorses); // 汗血馬 of Ferghana
+    expect(realmAidProfile('nope')).toBeNull();
+  });
+
+  it('farther/grander realms send a larger host', () => {
+    expect(realmAidProfile('daqin')!.troops).toBeGreaterThan(realmAidProfile('gaochang')!.troops);
+  });
+});
+
+describe('§7.7-deep ③(C)絹馬互市 — the horse trade', () => {
+  it('only the 西域 oases & Ferghana breed warhorses', () => {
+    expect(isHorseRealm('gaochang')).toBe(true);
+    expect(isHorseRealm('dayuan')).toBe(true);
+    expect(isHorseRealm('daqin')).toBe(false);
+    expect(isHorseRealm('funan')).toBe(false);
+  });
+
+  it('horse caravans stable warhorses (more under a protectorate); others none', () => {
+    expect(realmTradeHorses('gaochang')).toBeGreaterThan(0);
+    expect(realmTradeHorses('gaochang', { protectorate: true })).toBeGreaterThan(realmTradeHorses('gaochang'));
+    expect(realmTradeHorses('funan')).toBe(0);
+  });
+});
+
+describe('§7.7-deep ④(D)異域歸化 — naturalized names', () => {
+  it('produces a foreign-flavoured name per region', () => {
+    const seq = [0.1, 0.6];
+    let i = 0;
+    const rng = () => seq[Math.min(i++, seq.length - 1)];
+    const n = naturalizedName('xiyu', rng);
+    expect(n.zh.length).toBeGreaterThan(0);
+    expect(n.en).toContain(' '); // "Surname given"
   });
 });

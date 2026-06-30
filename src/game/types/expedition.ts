@@ -65,8 +65,13 @@ export interface Expedition {
   toRealmId?: EntityId;
   mode: ExpeditionMode;
   /** 護衛 — an optional guard riding along (§7.6): lowers capture peril and is
-   *  seasoned alongside the envoy; shares his fate (taken/stranded) if it turns ill. */
+   *  seasoned alongside the envoy; shares his fate (taken/stranded) if it turns ill.
+   *  For an 'embassy' this is the 副使 (deputy envoy) — §7.7 ② 遠使團. */
   companionId?: EntityId;
+  /** 厚禮 — gold sent abroad as a gift with an 'embassy' (§7.7 ② 進貢厚禮):
+   *  spent up front from the home city, it warms the realm (richer reward, a
+   *  safer road, and a bigger jump in standing). */
+  giftGold?: number;
   phase: ExpeditionPhase;
   /** Seasons left until the current leg finishes (arrival, then homecoming). */
   seasonsRemaining: number;

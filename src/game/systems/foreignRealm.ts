@@ -63,11 +63,106 @@ function clamp(lo: number, hi: number, v: number): number {
 
 /** 絲路商利 — gold a standing caravan to an opened realm pays its frontier city
  *  each season. The farther the realm, the richer the trade (大秦琉璃 worth a
- *  city). Tribes don't run caravans (they pay in auxiliaries, not commerce). */
-export function realmTradeIncome(realmId: string): number {
+ *  city). Tribes don't run caravans (they pay in auxiliaries, not commerce).
+ *
+ *  §7.7 ③ 都護府 — a standing 西域都護府 brings the Silk Road oases under one hand:
+ *  every 西域 caravan pays half again as much while the protectorate stands. */
+export function realmTradeIncome(realmId: string, opts?: { protectorate?: boolean }): number {
   const r = FOREIGN_REALMS_BY_ID[realmId];
   if (!r) return 0;
-  return Math.round(r.baseSeasons * 40); // 高昌5→200 … 大秦12→480 per season
+  const base = Math.round(r.baseSeasons * 40); // 高昌5→200 … 大秦12→480 per season
+  const xiyu = r.region === 'xiyu';
+  return opts?.protectorate && xiyu ? Math.round(base * 1.5) : base;
+}
+
+/** §7.7 ① — the exclusive 封號 a realm bestows on its 邦交 patron, if any. */
+export function realmTitle(realmId: string): { zh: string; en: string } | null {
+  return FOREIGN_REALMS_BY_ID[realmId]?.title ?? null;
+}
+
+/** §7.7 ① — standing 天命 the patron of an opened realm draws each season from
+ *  holding its 封號 (scaled by the realm's prestige; titled realms count most). */
+export function realmPatronPrestige(realmId: string): number {
+  const r = FOREIGN_REALMS_BY_ID[realmId];
+  if (!r) return 0;
+  const base = Math.round((r.reward.prestige ?? 0) / 6); // 大秦12→2, 倭10→2, 高昌4→1
+  return r.title ? Math.max(1, base) : 0; // only titled realms confer standing honour
+}
+
+/** §7.7 ③ 絲路風險 — the per-season odds that an opened caravan is cut by raiders
+ *  on the long road. Distant routes are riskier; a 西域都護府 (for the Silk Road
+ *  oases) or a 常駐使節 watching the route keeps it far safer. Returns 0 for an
+ *  unknown realm. */
+export function routeDisruptionChance(realmId: string, opts?: { protectorate?: boolean; resident?: boolean }): number {
+  const r = FOREIGN_REALMS_BY_ID[realmId];
+  if (!r) return 0;
+  let p = 0.035 + r.danger * 0.06; // 高昌0.25→0.05 … 大秦0.6→0.071
+  if (opts?.protectorate && r.region === 'xiyu') p *= 0.3; // 都護府鎮西域
+  if (opts?.resident) p *= 0.45; // a resident envoy smooths the caravan's passage
+  return clamp(0, 0.5, p);
+}
+
+/** §7.7-deep ①(A)異域援軍 — the fighting contingent a realm's patron may call
+ *  in (a 義従遠征軍). Each region marches in its signature host: the Silk Road
+ *  oases and Ferghana send heavy horse (and warhorses to stable); the southern
+ *  seas send war-elephants; the eastern seas spearmen; the far west mercenaries.
+ *  Returns null for an unknown / tribe realm (tribes are reached another way). */
+export function realmAidProfile(realmId: string): {
+  troops: number; warhorses: number; isCavalry: boolean; unitZh: string; unitEn: string;
+} | null {
+  const r = FOREIGN_REALMS_BY_ID[realmId];
+  if (!r) return null;
+  // Scale the host by how far/prestigious the realm is.
+  const scale = 1 + (r.reward.prestige ?? 0) / 10; // 高昌4→1.4 … 大秦12→2.2
+  switch (r.region) {
+    case 'xiyu':
+      return { troops: Math.round(2200 * scale), warhorses: Math.round(900 * scale), isCavalry: true, unitZh: '西域突騎', unitEn: 'Western cataphracts' };
+    case 'nanhai':
+      return { troops: Math.round(2600 * scale), warhorses: 0, isCavalry: false, unitZh: '南海象兵', unitEn: 'war-elephant corps' };
+    case 'dongyi':
+      return { troops: Math.round(2400 * scale), warhorses: 0, isCavalry: false, unitZh: '東夷義從', unitEn: 'eastern levies' };
+    case 'jiyuan':
+    default:
+      // 大宛 sits in 西域; the far west sends mixed mercenary horse.
+      return r.id === 'dayuan'
+        ? { troops: Math.round(2000 * scale), warhorses: Math.round(1400 * scale), isCavalry: true, unitZh: '大宛汗血騎', unitEn: 'Ferghana heavy horse' }
+        : { troops: Math.round(2200 * scale), warhorses: Math.round(300 * scale), isCavalry: false, unitZh: '異域傭兵', unitEn: 'far-western mercenaries' };
+  }
+}
+
+/** §7.7-deep ③(C)絹馬互市 — realms that can supply warhorses through the Silk
+ *  Road horse-trade: the 西域 oases and Ferghana's heavenly horses. */
+export function isHorseRealm(realmId: string): boolean {
+  const r = FOREIGN_REALMS_BY_ID[realmId];
+  return !!r && (r.region === 'xiyu' || r.id === 'dayuan');
+}
+
+/** §7.7-deep ③(C)絹馬互市 — warhorses a 買馬 caravan stables at its frontier
+ *  city each season (in place of trade gold). Scales with distance; a 都護府
+ *  secures the herds west. Returns 0 for a realm that breeds no horses. */
+export function realmTradeHorses(realmId: string, opts?: { protectorate?: boolean }): number {
+  if (!isHorseRealm(realmId)) return 0;
+  const r = FOREIGN_REALMS_BY_ID[realmId];
+  if (!r) return 0;
+  const base = Math.round(r.baseSeasons * 14); // 高昌5→70 … 大宛8→112 /season
+  return opts?.protectorate ? Math.round(base * 1.5) : base;
+}
+
+/** §7.7-deep ④(D)異域歸化 — a foreign-flavoured name for a notable a deep-tied
+ *  realm sends to serve. Surnames lean on the historically attested foreign
+ *  families of each region (西域 昭武九姓, 扶南 范, 倭 …). */
+export function naturalizedName(region: TargetRegion, rng: () => number): { zh: string; en: string } {
+  const POOLS: Record<TargetRegion, { sur: Array<[string, string]>; given: Array<[string, string]> }> = {
+    xiyu: { sur: [['康', 'Kang'], ['安', 'An'], ['曹', 'Cao'], ['米', 'Mi'], ['何', 'He'], ['史', 'Shi']], given: [['槃陀', 'Panto'], ['那', 'Na'], ['烏那', 'Wuna'], ['延', 'Yan'], ['毗沙', 'Pisha'], ['遮', 'Zhe']] },
+    dongyi: { sur: [['難升', 'Nansheng'], ['卑', 'Bi'], ['伊', 'Yi'], ['都', 'Du'], ['辰', 'Chen']], given: [['米', 'mi'], ['彌呼', 'miko'], ['沴', 'li'], ['狗', 'gou'], ['支', 'zhi']] },
+    nanhai: { sur: [['范', 'Fan'], ['竺', 'Zhu'], ['闍', 'She'], ['僑', 'Qiao']], given: [['旃', 'Zhan'], ['尋', 'Xun'], ['曼', 'Man'], ['栴檀', 'Chandan'], ['金生', 'Jinsheng']] },
+    jiyuan: { sur: [['秦', 'Qin'], ['竺', 'Zhu'], ['安', 'An'], ['支', 'Zhi'], ['白', 'Bai']], given: [['論', 'Lun'], ['世高', 'Shigao'], ['讖', 'Chen'], ['難提', 'Nandi'], ['婁迦', 'Louga']] },
+    tribe: { sur: [['呼', 'Hu'], ['禿', 'Tu'], ['宇文', 'Yuwen'], ['慕容', 'Murong']], given: [['廚泉', 'Chuquan'], ['比能', 'Bineng'], ['歸', 'Gui'], ['延', 'Yan']] },
+  };
+  const pool = POOLS[region] ?? POOLS.xiyu;
+  const [sz, se] = pool.sur[Math.floor(rng() * pool.sur.length)];
+  const [gz, ge] = pool.given[Math.floor(rng() * pool.given.length)];
+  return { zh: `${sz}${gz}`, en: `${se} ${ge}` };
 }
 
 /** An envoy's all-round measure for a far journey: persuasion carries the most
@@ -123,14 +218,28 @@ export function resolveEmbassy(args: {
   freeChieftain: boolean; // tribe chieftain alive & unaffiliated → recruitable
   /** 遠邦關係 (0–100) — prior standing with this realm: safer road, richer haul. */
   relation?: number;
+  /** §7.7 ② 副使 — a deputy envoy riding along: steadies the mission (eases the
+   *  road, lifts the reward tier a notch). */
+  deputy?: Officer;
+  /** §7.7 ② 厚禮 — gold carried abroad as a gift: warms the court (richer haul,
+   *  a safer road, a bigger jump in standing). */
+  giftGold?: number;
+  /** §7.7 ① — whether the dispatching force currently holds this realm's 封號.
+   *  Only a patron may call in a 借兵 troop loan from the realm. */
+  isPatron?: boolean;
   rng: () => number;
 }): EmbassyOutcome {
   const { target, officer, rng } = args;
   const relation = clamp(0, 100, args.relation ?? 0);
   const comp = envoyCompetence(officer); // 0..~100
+  // §7.7 ② 遠使團 — a capable 副使 adds a slice of his own competence to the mission.
+  const deputyComp = args.deputy ? envoyCompetence(args.deputy) : 0;
+  // §7.7 ② 厚禮 — a lavish gift (per 1000 gold ≈ +0.12 tier, capped) opens doors.
+  const giftT = clamp(0, 0.3, (args.giftGold ?? 0) / 8000);
   // 故交易行 — a warm prior relationship lifts the reward tier and eases the road.
-  const t = clamp(0, 1, comp / 100 + relation / 250);
-  const peril = clamp(0.02, 0.8, embassyPeril(target, officer) - relation / 400);
+  const t = clamp(0, 1, comp / 100 + relation / 250 + deputyComp / 320 + giftT);
+  // The road is safer with a deputy at your side and gifts to buy safe passage.
+  const peril = clamp(0.02, 0.8, embassyPeril(target, officer) - relation / 400 - deputyComp / 360 - giftT * 0.4);
   const roll = rng();
 
   // Catastrophe — only realms perilous enough (≥0.45) can claim the envoy's life.
@@ -186,8 +295,9 @@ export function resolveEmbassy(args: {
     if (r.prestige) { prestige = r.prestige; notesZh.push(`邦交既通,聲威遠播(天命 +${prestige})`); notesEn.push(`prestige +${prestige}`); }
     // 借兵成軍 — a trusted friend (relation ≥ 50) lends a fighting contingent on
     // top of any reward, scaled by how warm the standing is. These arrive at the
-    // frontier and can be marched like any garrison.
-    if (relation >= 50) {
+    // frontier and can be marched like any garrison. §7.7 ① — the loan is the
+    // patron's privilege: a realm only marches for the lord who holds its 封號.
+    if (relation >= 50 && args.isPatron !== false) {
       const loan = Math.round((relation - 40) * 70 * (0.7 + t * 0.6)); // rel 50→~700, rel 100→~5000
       haul.auxTroops = (haul.auxTroops ?? 0) + loan;
       notesZh.push(`友邦借兵 ${loan} 至邊`);

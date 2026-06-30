@@ -25,6 +25,12 @@ export interface Force {
    *  per-season statecraft loop + doctrine-matched officer loyalty. Absent →
    *  雜糅 (no slant). See data/statecraft.ts + systems/statecraft.ts. */
   statecraft?: import('../data/statecraft').StatecraftSchool;
+  /** §7.9-deep I 學派造詣 — 0–100, climbs while the school is held (faster with a
+   *  太學/書院); the school's effects scale with it. Reset to 0 on switching. */
+  statecraftMastery?: number;
+  /** §7.9-deep L 國策大政 — when the school's signature decree was last enacted
+   *  (for the cooldown). */
+  statecraftDecreeAt?: { year: number; season: import('./common').Season };
   /** 國號 — the dynasty name proclaimed at the 建國大典 (e.g. 魏/蜀漢/吳/晉). */
   dynastyTitle?: string;
   /** 年號 — the reign era declared at the founding (e.g. 章武/黃龍/景初). */

@@ -8,10 +8,12 @@ import { useDesc, useLanguage } from '../i18n';
 import { Name } from './Name';
 import { officerGrade, gradeRank, gradeMeta } from '../../game/systems/officerGrade';
 import { PEERAGES, peerageById, peerageTier, meritScore } from '../../game/data/peerage';
-import { STATECRAFT } from '../../game/data/statecraft';
+import { STATECRAFT, statecraftById, STATECRAFT_DECREE_THRESHOLD } from '../../game/data/statecraft';
 import { DYNASTY_TITLES, ERA_NAMES } from '../../game/data/foundingNames';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import { HONORIFICS, honorificById, honorificTier, HONORIFIC_THEME_ZH, bestFitHonorific, honorificThemeFit } from '../../game/data/honorifics';
+import { CLANS } from '../../game/data/clans';
+import { clanScions, clanCohesion, clanDefectionChance } from '../../game/systems/clans';
 
 function pickBestFit(
   officers: Officer[],
@@ -50,6 +52,12 @@ export function TitlesModal({ onClose }: Props) {
   const revokeHonorific = useGameStore((s) => s.revokeHonorific);
   const setRecruitmentStance = useGameStore((s) => s.setRecruitmentStance);
   const setStatecraft = useGameStore((s) => s.setStatecraft);
+  const enactStatecraftDecree = useGameStore((s) => s.enactStatecraftDecree);
+  const clanBonds = useGameStore((s) => s.clanBonds);
+  const clanLevies = useGameStore((s) => s.clanLevies);
+  const cultivateClan = useGameStore((s) => s.cultivateClan);
+  const subvertClan = useGameStore((s) => s.subvertClan);
+  const [showClans, setShowClans] = useState(false);
   const holdFoundingCeremony = useGameStore((s) => s.holdFoundingCeremony);
   const deeds = useGameStore((s) => s.deeds);
   const playerForce = useGameStore((s) => (s.playerForceId ? s.forces[s.playerForceId] : undefined));
@@ -190,7 +198,58 @@ export function TitlesModal({ onClose }: Props) {
               {lang === 'en' ? en : zh}
             </button>
           ))}
+          <button
+            className={`${styles.tab} ${showClans ? styles.tabActive : ''}`}
+            style={{ marginLeft: 'auto' }}
+            title={lang === 'en' ? 'Manage the great clans: bind by marriage, raise their levies, subvert a rival\'s house.' : '經營門閥世族:聯姻厚結、坐收部曲、策反敵族。'}
+            onClick={() => setShowClans((v) => !v)}
+          >
+            {lang === 'en' ? '🏛 Great Clans' : '🏛 世族經營'}
+          </button>
         </div>
+        {showClans && (
+          <div style={{ padding: '0 1rem 0.6rem', display: 'flex', flexDirection: 'column', gap: '0.3rem', maxHeight: '13rem', overflowY: 'auto' }}>
+            {CLANS.map((clan) => {
+              const mine = playerForceId ? clanScions(officers, playerForceId, clan.id) : [];
+              const rivalScions = Object.values(officers).filter((o) => clan.members.includes(o.id) && o.forceId != null && o.forceId !== playerForceId && o.status !== 'dead' && o.status !== 'imprisoned');
+              if (mine.length === 0 && rivalScions.length === 0) return null;
+              const bound = playerForceId ? clanBonds?.[clan.id] === playerForceId : false;
+              const avg = Math.round(clanCohesion(mine));
+              const levy = clanLevies?.[clan.id]?.troops ?? 0;
+              const defRisk = clanDefectionChance(mine, bound) > 0;
+              return (
+                <div key={clan.id} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.72rem', borderBottom: '1px solid #1c2530', paddingBottom: '0.25rem', flexWrap: 'wrap' }}>
+                  <span style={{ minWidth: '5.5rem', color: '#cdd8e0' }}>{bound ? '★ ' : ''}{lang === 'en' ? clan.name.en : clan.name.zh}<span style={{ color: '#5d6b76' }}> · {lang === 'en' ? clan.seat.en : clan.seat.zh}</span></span>
+                  {mine.length > 0 && (
+                    <span style={{ color: avg >= 55 ? '#9ad6a8' : avg >= 35 ? '#e6c473' : '#e0707a' }}>
+                      {lang === 'en' ? `serving ${mine.length} · loy ${avg}` : `仕你 ${mine.length} 人 · 忠 ${avg}`}
+                    </span>
+                  )}
+                  {levy > 0 && <span style={{ color: '#9fb2c0' }}>{lang === 'en' ? `部曲 ${levy.toLocaleString()}` : `部曲 ${levy.toLocaleString()}`}</span>}
+                  {defRisk && <span style={{ color: '#e0707a' }}>{lang === 'en' ? '⚠ defection risk' : '⚠ 叛附之虞'}</span>}
+                  <span style={{ marginLeft: 'auto', display: 'flex', gap: '0.3rem' }}>
+                    {mine.length > 0 && !bound && (
+                      <button className={styles.tab} onClick={() => { const r = cultivateClan(clan.id); if (!r.ok && r.reason) alert(r.reason); }}>
+                        {lang === 'en' ? 'Marry (聯姻)' : '聯姻厚結'}
+                      </button>
+                    )}
+                    {bound && <span style={{ color: '#caa53d' }}>{lang === 'en' ? 'bound' : '已聯姻'}</span>}
+                    {rivalScions.length > 0 && (
+                      <button className={styles.tab} onClick={() => { const r = subvertClan(clan.id); if (!r.ok && r.reason) alert(r.reason); }}>
+                        {lang === 'en' ? `Subvert (${rivalScions.length})` : `策反 (${rivalScions.length})`}
+                      </button>
+                    )}
+                  </span>
+                </div>
+              );
+            })}
+            <div style={{ fontSize: '0.64rem', color: '#5d6b76', lineHeight: 1.5 }}>
+              {lang === 'en'
+                ? '聯姻 binds a serving clan: +loyalty, a loyalty floor, and no usurpation. Content clans field 部曲 retainers at their seat; aggrieved ones defect. 策反 turns a rival\'s whole house.'
+                : '聯姻厚結:提忠誠、守忠誠底線、不再簒奪。滿意之族為你屯部曲私兵;懷怨之族則舉族叛附。策反可奪敵國一整族。'}
+            </div>
+          </div>
+        )}
         <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', padding: '0 1rem 0.5rem', flexWrap: 'wrap' }}>
           <span className={styles.officerStats}>{lang === 'en' ? 'Statecraft 治國理念:' : '治國理念:'}</span>
           <button
@@ -226,6 +285,33 @@ export function TitlesModal({ onClose }: Props) {
             </button>
           )}
         </div>
+        {/* §7.9-deep 治國理念深化 — 造詣 bar + 大政 decree */}
+        {statecraft && (() => {
+          const def = statecraftById(statecraft);
+          const mastery = Math.round(playerForce?.statecraftMastery ?? 0);
+          const ready = mastery >= STATECRAFT_DECREE_THRESHOLD;
+          return (
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', padding: '0 1rem 0.55rem', flexWrap: 'wrap', fontSize: '0.74rem' }}>
+              <span className={styles.officerStats}>{lang === 'en' ? '造詣 Mastery' : '學派造詣'}</span>
+              <span style={{ width: 120, height: 8, background: '#0e1318', border: '1px solid #2b3845', borderRadius: 4, overflow: 'hidden' }}>
+                <span style={{ display: 'block', width: `${mastery}%`, height: '100%', background: ready ? '#caa53d' : '#4a6a8a' }} />
+              </span>
+              <span style={{ color: ready ? '#e6c473' : '#9fb2c0' }}>{mastery}/100</span>
+              <span style={{ color: '#5d6b76' }}>{lang === 'en' ? '· effects scale with mastery; switching resets it' : '· 效果隨造詣放大;改弦更張則歸零'}</span>
+              {def && (
+                <button
+                  className={styles.tab}
+                  style={{ marginLeft: 'auto', borderColor: ready ? '#caa53d' : undefined, color: ready ? '#e6c473' : '#5d6b76' }}
+                  disabled={!ready}
+                  title={lang === 'en' ? `Enact the signature decree of ${def.name.en} (needs mastery ≥ ${STATECRAFT_DECREE_THRESHOLD}).` : `行${def.name.zh}之國策大政(造詣須 ≥ ${STATECRAFT_DECREE_THRESHOLD})。`}
+                  onClick={() => { const r = enactStatecraftDecree(); if (!r.ok && r.reason) alert(r.reason); }}
+                >
+                  📜 {lang === 'en' ? def.decree.en : def.decree.zh}
+                </button>
+              )}
+            </div>
+          );
+        })()}
         {showCeremony && canFound && (
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', padding: '0 1rem 0.6rem', flexWrap: 'wrap' }}>
             <span className={styles.officerStats}>{lang === 'en' ? 'Dynasty 國號' : '國號'}</span>

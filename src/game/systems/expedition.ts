@@ -197,6 +197,9 @@ export interface ExpeditionStepInput {
   /** 遠邦關係 — the player's current standing with each realm (0–100); a warm
    *  relationship makes an embassy safer and richer. */
   realmRelations?: Record<string, number>;
+  /** §7.7 ① 邦交競逐 — who currently holds each realm's 封號 (realmId → forceId).
+   *  Only the patron may call in a realm's 借兵 troop loan. */
+  realmPatron?: Record<string, EntityId>;
 }
 
 export interface ExpeditionStepResult {
@@ -218,6 +221,11 @@ export interface ExpeditionStepResult {
   /** 遠邦關係 — relation gained with realms a PLAYER embassy reached this step
    *  (realmId → delta). The store adds these (capped 100). */
   realmRelationDeltas: Record<string, number>;
+  /** §7.7 ① 邦交競逐 — realms whose 封號 was claimed this step by a successful
+   *  embassy (realmId → the claiming forceId, player or AI). Latest claim holds
+   *  the title; the store transfers patronage and reports any title that
+   *  changed hands. */
+  realmsPatronClaimed: Record<string, EntityId>;
 }
 
 /**
@@ -240,6 +248,7 @@ export function stepExpeditions(input: ExpeditionStepInput): ExpeditionStepResul
   const mandateDeltas: Record<string, number> = {};
   const realmsOpened: Record<string, EntityId> = {};
   const realmRelationDeltas: Record<string, number> = {};
+  const realmsPatronClaimed: Record<string, EntityId> = {};
   const pf = input.playerForceId;
   // Surface an errand to the player only when it's his, or it touches a city he
   // holds (a rival scouting/turning/raiding HIS land). Undefined pf ⇒ report all.
@@ -298,17 +307,35 @@ export function stepExpeditions(input: ExpeditionStepInput): ExpeditionStepResul
         const chief = target.chieftainId ? officers[target.chieftainId] : undefined;
         const freeChieftain = !!(chief && chief.status !== 'dead' && chief.forceId == null);
         const relation = input.realmRelations?.[exp.toRealmId ?? ''] ?? 0;
-        const out = resolveEmbassy({ target, officer, freeChieftain, relation, rng });
+        // §7.7 ② 遠使團 — a 副使 (the embassy's companion) steadies the mission.
+        const deputy = exp.companionId ? officers[exp.companionId] : undefined;
+        // §7.7 ① — only the realm's current patron can call in its troop loan.
+        const isPatron = input.realmPatron?.[target.id] === exp.forceId;
+        const out = resolveEmbassy({
+          target, officer, freeChieftain, relation,
+          deputy: deputy && deputy.status !== 'dead' ? deputy : undefined,
+          giftGold: exp.giftGold, isPatron, rng,
+        });
+        // §7.7 ① 邦交競逐 — a successful embassy to a distant realm claims (or
+        // defends) its 封號: latest success holds it, so the title is contested.
+        if (!target.isTribe && !out.perished && !out.wounded) {
+          realmsPatronClaimed[target.id] = exp.forceId;
+        }
         // 邦誼漸篤 — a player embassy that reaches a realm warms the standing
-        // (more for a clean call, a little even for a battered one).
+        // (more for a clean call, a little even for a battered one; a lavish
+        // gift warms it further still — §7.7 ②).
         if (!target.isTribe && exp.forceId === pf) {
-          realmRelationDeltas[target.id] = (realmRelationDeltas[target.id] ?? 0) + (out.wounded ? 6 : 18);
+          const giftBonus = Math.min(12, Math.floor((exp.giftGold ?? 0) / 800));
+          realmRelationDeltas[target.id] = (realmRelationDeltas[target.id] ?? 0) + (out.wounded ? 6 : 18) + (out.wounded ? 0 : giftBonus);
         }
         report(exp, { cityId: exp.fromCityId, kind: 'expedition', text: out.arrivalEn, textZh: out.arrivalZh });
         if (out.aggressionDelta) aggressionDeltas[out.aggressionDelta.tribeId] = (aggressionDeltas[out.aggressionDelta.tribeId] ?? 0) + out.aggressionDelta.delta;
         if (out.prestige) mandateDeltas[exp.forceId] = (mandateDeltas[exp.forceId] ?? 0) + out.prestige;
         if (out.perished) {
           officers[exp.officerId] = { ...officer, status: 'dead', locationCityId: null, task: null };
+          // §7.7 ② — a 副使 sharing the long road shares its end.
+          const dep = exp.companionId ? officers[exp.companionId] : null;
+          if (dep && dep.status !== 'dead') officers[exp.companionId!] = { ...dep, status: 'dead', locationCityId: null, task: null };
           continue;
         }
         // 通商 — a clean embassy (not a mishap) to a distant realm opens a
@@ -430,7 +457,7 @@ export function stepExpeditions(input: ExpeditionStepInput): ExpeditionStepResul
     }
   }
 
-  return { expeditions: nextExpeditions, cities, officers, diplomacy, espionageReveals, entries, aggressionDeltas, mandateDeltas, realmsOpened, realmRelationDeltas };
+  return { expeditions: nextExpeditions, cities, officers, diplomacy, espionageReveals, entries, aggressionDeltas, mandateDeltas, realmsOpened, realmRelationDeltas, realmsPatronClaimed };
 }
 
 interface ErrandCtx {

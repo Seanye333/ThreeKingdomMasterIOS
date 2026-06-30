@@ -16,6 +16,7 @@ export const FOREIGN_REALMS: ForeignRealm[] = [
     homeland: { lon: 89.2, lat: 42.9 },
     baseSeasons: 5,
     danger: 0.25,
+    title: { zh: '西域長史', en: 'Chief Clerk of the Western Regions' },
     reward: { gold: [600, 1400], food: [400, 900], itemIds: ['yutian-meiyu'], prestige: 4 },
   },
   {
@@ -60,6 +61,7 @@ export const FOREIGN_REALMS: ForeignRealm[] = [
     homeland: { lon: 71.8, lat: 40.4 },
     baseSeasons: 8,
     danger: 0.42,
+    title: { zh: '大宛貳師之友', en: 'Friend of Ferghana' },
     reward: { gold: [500, 1200], itemIds: ['hanxue-baoma'], auxTroops: [800, 2000], prestige: 5 },
   },
 
@@ -85,6 +87,7 @@ export const FOREIGN_REALMS: ForeignRealm[] = [
     baseSeasons: 6,
     danger: 0.35,
     minYear: 230,
+    title: { zh: '親魏倭王', en: 'Wa King, Friend of Wei' },
     reward: { gold: [500, 1200], itemIds: ['nanhai-xiangya'], prestige: 10 },
   },
 
@@ -98,6 +101,7 @@ export const FOREIGN_REALMS: ForeignRealm[] = [
     homeland: { lon: 104.9, lat: 11.5 },
     baseSeasons: 7,
     danger: 0.4,
+    title: { zh: '扶南大將軍', en: 'Grand General of Funan' },
     reward: { gold: [700, 1700], itemIds: ['nanhai-xiangya'], auxTroops: [600, 1500], prestige: 5 },
   },
 
@@ -122,6 +126,7 @@ export const FOREIGN_REALMS: ForeignRealm[] = [
     homeland: { lon: 52.0, lat: 33.0 },
     baseSeasons: 9,
     danger: 0.55,
+    title: { zh: '安息通好侯', en: 'Marquis of Parthian Amity' },
     reward: { gold: [900, 2200], itemIds: ['anxi-xiangliao'], prestige: 7 },
   },
   {
@@ -133,6 +138,7 @@ export const FOREIGN_REALMS: ForeignRealm[] = [
     homeland: { lon: 12.5, lat: 41.9 },
     baseSeasons: 10,
     danger: 0.6,
+    title: { zh: '大秦親善王', en: 'Friend-King of Da Qin (Rome)' },
     reward: { gold: [1200, 3000], itemIds: ['daqin-liuli'], prestige: 12 },
   },
 ];

@@ -40,8 +40,9 @@ import type { Difficulty } from './gameState';
 import { CIVIC_TITLES_BY_ID, MILITARY_RANKS_BY_ID } from '../data/titles';
 import { PEERAGES_BY_ID, meritScore, peerageTier } from '../data/peerage';
 import { HONORIFICS_BY_ID, honorificTier } from '../data/honorifics';
-import { stanceRecruitModifier, deriveInitialClanStandings, tickClanStandings, clanPrestigeBonus } from '../systems/clans';
-import { statecraftRecruitBonus } from '../systems/statecraft';
+import { stanceRecruitModifier, deriveInitialClanStandings, tickClanStandings, clanPrestigeBonus, clanScions, clanLevyTarget, clanDefectionChance, clanSubvertChance, clanTierOf } from '../systems/clans';
+import { statecraftRecruitBonus, doctrineOf } from '../systems/statecraft';
+import { statecraftById, statecraftScale, STATECRAFT_DECREE_THRESHOLD, STATECRAFT_DECREE_COOLDOWN } from '../data/statecraft';
 import { holdFounding } from '../systems/founding';
 import { allianceBetween, breakAlliance as breakMarriageTie, tickMarriageAlliances } from '../systems/marriageAlliance';
 import {
@@ -98,7 +99,8 @@ import {
   type SpecialtyControl, type SpecialtyRealmEffects, type Embargo, type SpecialtyRole,
 } from '../data/specialties';
 import { expeditionLegSeasons } from '../systems/expedition';
-import { getEmbassyTarget, embassyLegSeasons, realmTradeIncome } from '../systems/foreignRealm';
+import { getEmbassyTarget, embassyLegSeasons, realmTradeIncome, realmTitle, realmPatronPrestige, envoyCompetence, routeDisruptionChance, realmAidProfile, isHorseRealm, realmTradeHorses, naturalizedName } from '../systems/foreignRealm';
+import { generateFictionalOfficer } from '../systems/officerGen';
 import { FOREIGN_REALMS_BY_ID } from '../data/foreignRealms';
 import { terrainTypeAt, isRiverside, WORLD_SCALE } from '../data/geography';
 import { FAMILY_LINEAGE } from '../data/familyLineage';
@@ -302,7 +304,7 @@ import {
   saveAchievementProgress,
 } from '../systems/achievements';
 import { tickFamily, addSpouse, addParentChild, aiArrangeMarriages } from '../systems/family';
-import { clanOf } from '../data/clans';
+import { clanOf, CLANS_BY_ID, CLANS } from '../data/clans';
 import { rollWishes, applyWishGrant, applyWishReject, expireWishes, maybeWoundedRetireWish, decayGrievances } from '../systems/wishes';
 import { checkEndings } from '../systems/endings';
 import { generateRandomScenario } from '../systems/randomScenario';
@@ -320,6 +322,9 @@ const SEASON_INDEX: Record<string, number> = {
   autumn: 2,
   winter: 3,
 };
+/** §7.7-deep ①(A) — seasons a realm needs before it will answer another call
+ *  for its 義従遠征軍 (a favour spent can't be spent again right away). */
+const AID_COOLDOWN_SEASONS = 8;
 const SEASONS_ORDER: Array<'spring' | 'summer' | 'autumn' | 'winter'> = [
   'spring', 'summer', 'autumn', 'winter',
 ];
@@ -480,8 +485,29 @@ interface GameStore extends GameState {
   /** 遠使異域 — send an officer on a long embassy to a distant land (FOREIGN_REALMS:
    *  西域/倭/大秦…) or a border tribe (TribeId). He travels far, opens relations
    *  / placates the frontier, and rides home with coin, exotica, auxiliaries and
-   *  prestige — if the road doesn't claim him. Reuses the expedition machinery. */
-  dispatchEmbassy: (officerId: EntityId, fromCityId: EntityId, realmId: EntityId) => { ok: boolean; seasons: number; reason?: string };
+   *  prestige — if the road doesn't claim him. Reuses the expedition machinery.
+   *  §7.7 ② — an optional 副使 (companionId) steadies the mission and 厚禮
+   *  (giftGold, spent up front) warms the court for a richer, safer call. */
+  dispatchEmbassy: (officerId: EntityId, fromCityId: EntityId, realmId: EntityId, opts?: { companionId?: EntityId; giftGold?: number }) => { ok: boolean; seasons: number; reason?: string };
+  /** §7.7 ③ 西域都護府 — designate (or clear, with null) the player frontier city
+   *  that consolidates the Silk Road oases: while it stands, every 西域 caravan
+   *  pays half again as much and those routes are far harder to cut. */
+  designateProtectorate: (cityId: EntityId | null) => { ok: boolean; reason?: string };
+  /** §7.7 ④ 常駐使節 — station a free officer long-term at an opened realm. He
+   *  leaves the home rosters but holds the realm's goodwill, smooths its caravan,
+   *  and slips intel home each season — until recalled. */
+  stationEnvoy: (officerId: EntityId, realmId: EntityId) => { ok: boolean; reason?: string };
+  /** §7.7 ④ — recall a resident envoy; he returns idle to the realm's frontier
+   *  city (or, if it is lost, to the capital). */
+  recallEnvoy: (realmId: EntityId) => { ok: boolean; reason?: string };
+  /** §7.7-deep ①(A)異域援軍 — call in a realm's 義従遠征軍 to a held city: the
+   *  patron of an opened realm (relation ≥ 50) may, for gold and a dip in
+   *  standing, summon its signature host (突騎/象兵/汗血騎…) — once per realm per
+   *  cooldown. Cavalry realms also stable warhorses there. */
+  summonRealmAid: (realmId: EntityId, toCityId: EntityId) => { ok: boolean; reason?: string };
+  /** §7.7-deep ③(C)絹馬互市 — set what an opened caravan trades home: 'gold'
+   *  (commerce) or 'horses' (買馬 — horse realms only). */
+  setRealmTradeMode: (realmId: EntityId, mode: 'gold' | 'horses') => { ok: boolean; reason?: string };
   /** 借糧 — ask a friendly force to send grain to your capital. Allies and NAP
    *  partners (or anyone you're on good terms with) oblige; the grain comes out
    *  of their own stores. */
@@ -730,11 +756,23 @@ interface GameStore extends GameState {
   setRecruitmentStance: (
     stance: 'aristocratic' | 'meritocratic' | 'balanced',
   ) => void;
+  /** §7.8-deep E 門第聯姻 — bind a great clan that serves you by marriage: a
+   *  one-off gold cost lifts every serving scion's loyalty, holds them to a
+   *  floor thereafter, and stays the clan's hand from usurpation. */
+  cultivateClan: (clanId: string) => { ok: boolean; reason?: string };
+  /** §7.8-deep H 策反世族 — try to turn a rival's whole clan to your side: their
+   *  cool faith + your house prestige + the coin you offer set the odds; success
+   *  flips every serving scion to you at your capital. */
+  subvertClan: (clanId: string) => { ok: boolean; reason?: string; turned?: number };
   /** 治國理念 — set the player realm's school of statecraft (法/儒/道/兵), or
    *  null to revert to 雜糅 (no slant). */
   setStatecraft: (
     school: import('../data/statecraft').StatecraftSchool | null,
   ) => void;
+  /** §7.9-deep L 國策大政 — enact the held school's signature decree (變法強國 /
+   *  興太學舉孝廉 / 輕徭薄賦 / 屯田耕戰). Needs 造詣 ≥ threshold; effects scale with
+   *  mastery; on a cooldown. */
+  enactStatecraftDecree: () => { ok: boolean; reason?: string };
   /** 建國大典 — hold the founding ceremony (requires 王/帝 standing, once only):
    *  proclaim 國號/年號, 大赦天下, 封賞百官 (mass enfeoffment), swell 天命. */
   holdFoundingCeremony: (
@@ -2555,7 +2593,7 @@ export const useGameStore = create<GameStore>()(
         get().notify(`游历召回 · ${o?.name.zh ?? ''}啟程歸返`, `Recalled ${o?.name.en ?? 'officer'} — heading home`);
       },
 
-      dispatchEmbassy: (officerId, fromCityId, realmId) => {
+      dispatchEmbassy: (officerId, fromCityId, realmId, opts) => {
         const state = get();
         const pid = state.playerForceId;
         if (!pid) return { ok: false, seasons: 0 };
@@ -2568,20 +2606,158 @@ export const useGameStore = create<GameStore>()(
         if (state.pendingTrainings.some((tr) => tr.officerId === officerId)) return { ok: false, seasons: 0, reason: 'officer is training' };
         const target = getEmbassyTarget(realmId);
         if (!target) return { ok: false, seasons: 0, reason: 'unknown realm' };
+        // §7.7 ② 遠使團 — an optional 副使 riding along must be a free officer in
+        // the same city; he is taken off the rosters alongside the envoy.
+        const deputyId = opts?.companionId;
+        let deputy = deputyId ? state.officers[deputyId] : undefined;
+        if (deputyId) {
+          if (!deputy || deputy.forceId !== pid || deputy.locationCityId !== fromCityId || deputy.id === officerId) {
+            return { ok: false, seasons: 0, reason: 'deputy unavailable' };
+          }
+          if (deputy.task || state.pendingCommands[deputyId] || state.pendingTrainings.some((tr) => tr.officerId === deputyId)) {
+            return { ok: false, seasons: 0, reason: 'deputy is busy' };
+          }
+        }
+        // §7.7 ② 進貢厚禮 — gold sent abroad as a gift is spent up front.
+        const gift = Math.max(0, Math.floor(opts?.giftGold ?? 0));
+        if (gift > from.gold) return { ok: false, seasons: 0, reason: 'not enough gold for the gift' };
         const leg = embassyLegSeasons(target, officer);
         const id = `emb-${officerId}-${realmId}-${state.date.year}-${state.date.season}-${Object.keys(state.expeditions ?? {}).length}`;
+        const officers = { ...state.officers, [officerId]: { ...officer, locationCityId: null, task: null, status: 'active' as const } };
+        if (deputy) officers[deputy.id] = { ...deputy, locationCityId: null, task: null, status: 'active' as const };
         set({
-          officers: { ...state.officers, [officerId]: { ...officer, locationCityId: null, task: null, status: 'active' } },
+          officers,
+          cities: gift > 0 ? { ...state.cities, [fromCityId]: { ...from, gold: from.gold - gift } } : state.cities,
           expeditions: {
             ...state.expeditions,
-            [id]: { id, officerId, forceId: pid, fromCityId, toCityId: '', toRealmId: realmId, mode: 'embassy', phase: 'outbound', seasonsRemaining: leg, legSeasons: leg },
+            [id]: { id, officerId, forceId: pid, fromCityId, toCityId: '', toRealmId: realmId, mode: 'embassy', phase: 'outbound', seasonsRemaining: leg, legSeasons: leg, ...(deputy ? { companionId: deputy.id } : {}), ...(gift > 0 ? { giftGold: gift } : {}) },
           },
         });
+        const extra = [
+          deputy ? `副使 ${deputy.name.zh}` : '',
+          gift > 0 ? `厚禮 ${gift.toLocaleString()} 金` : '',
+        ].filter(Boolean).join(' · ');
         get().notify(
-          `遠使啟程 · ${officer.name.zh} → ${target.name.zh}(來回約 ${leg * 2} 季)`,
+          `遠使啟程 · ${officer.name.zh} → ${target.name.zh}(來回約 ${leg * 2} 季)${extra ? ' · ' + extra : ''}`,
           `${officer.name.en} sets out for ${target.name.en} (~${leg * 2} seasons round trip)`,
         );
         return { ok: true, seasons: leg };
+      },
+
+      // §7.7 ③ 西域都護府 — consolidate the Silk Road under one frontier seat.
+      designateProtectorate: (cityId) => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid) return { ok: false, reason: 'no force' };
+        if (cityId === null) {
+          if (!state.protectorateCityId) return { ok: false, reason: 'none to dissolve' };
+          set({ protectorateCityId: null });
+          get().notify('西域都護府廢置', 'Protectorate of the Western Regions dissolved');
+          return { ok: true };
+        }
+        const city = state.cities[cityId];
+        if (!city || city.ownerForceId !== pid) return { ok: false, reason: 'not your city' };
+        // 通西域者方可開府 — you must already run at least one 西域 caravan.
+        const hasXiyu = Object.keys(state.openedRealms ?? {}).some((rid) => FOREIGN_REALMS_BY_ID[rid]?.region === 'xiyu');
+        if (!hasXiyu) return { ok: false, reason: 'open a Western-Regions caravan first' };
+        set({ protectorateCityId: cityId });
+        get().notify(`西域都護府設於 ${city.name.zh}`, `Protectorate of the Western Regions seated at ${city.name.en}`);
+        return { ok: true };
+      },
+
+      // §7.7 ④ 常駐使節 — post an officer abroad for standing goodwill & intel.
+      stationEnvoy: (officerId, realmId) => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid) return { ok: false, reason: 'no force' };
+        if (!state.openedRealms?.[realmId]) return { ok: false, reason: 'realm not opened' };
+        if (state.residentEnvoys?.[realmId]) return { ok: false, reason: 'a resident envoy is already posted there' };
+        const realm = FOREIGN_REALMS_BY_ID[realmId];
+        if (!realm) return { ok: false, reason: 'unknown realm' };
+        const officer = state.officers[officerId];
+        if (!officer || officer.forceId !== pid) return { ok: false, reason: 'need an officer' };
+        if (officer.locationCityId == null || state.cities[officer.locationCityId]?.ownerForceId !== pid) return { ok: false, reason: 'officer must be in one of your cities' };
+        if (officer.task || state.pendingCommands[officerId] || state.pendingTrainings.some((tr) => tr.officerId === officerId)) return { ok: false, reason: 'officer is busy' };
+        set({
+          officers: { ...state.officers, [officerId]: { ...officer, locationCityId: null, task: null, status: 'active' } },
+          residentEnvoys: { ...state.residentEnvoys, [realmId]: { officerId, realmId, sinceYear: state.date.year, sinceSeason: state.date.season } },
+        });
+        get().notify(`常駐使節 · ${officer.name.zh} 駐 ${realm.name.zh}`, `${officer.name.en} is now resident envoy at ${realm.name.en}`);
+        return { ok: true };
+      },
+
+      recallEnvoy: (realmId) => {
+        const state = get();
+        const posting = state.residentEnvoys?.[realmId];
+        if (!posting) return { ok: false, reason: 'no envoy there' };
+        const officer = state.officers[posting.officerId];
+        const residentEnvoys = { ...state.residentEnvoys };
+        delete residentEnvoys[realmId];
+        if (!officer || officer.status === 'dead') { set({ residentEnvoys }); return { ok: true }; }
+        // Bring him home to the realm's frontier city, or the capital if it's lost.
+        const pid = state.playerForceId;
+        const frontier = state.openedRealms?.[realmId];
+        const player = pid ? state.forces[pid] : undefined;
+        const fc = frontier && state.cities[frontier]?.ownerForceId === pid ? frontier : player?.capitalCityId ?? null;
+        set({
+          residentEnvoys,
+          officers: { ...state.officers, [posting.officerId]: { ...officer, locationCityId: fc, task: null, status: 'idle' } },
+        });
+        const realm = FOREIGN_REALMS_BY_ID[realmId];
+        get().notify(`使節召還 · ${officer.name.zh}`, `${officer.name.en} recalled from ${realm?.name.en ?? 'abroad'}`);
+        return { ok: true };
+      },
+
+      // §7.7-deep ①(A)異域援軍·義従遠征 — call a realm's host to a held city.
+      summonRealmAid: (realmId, toCityId) => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid) return { ok: false, reason: 'no force' };
+        if (!state.openedRealms?.[realmId]) return { ok: false, reason: 'realm not opened' };
+        const realm = FOREIGN_REALMS_BY_ID[realmId];
+        const profile = realmAidProfile(realmId);
+        if (!realm || !profile) return { ok: false, reason: 'unknown realm' };
+        // 借兵乃封號之私 — only the realm's patron, on warm terms, can call its host.
+        if (state.realmPatron?.[realmId] !== pid) return { ok: false, reason: 'you must hold this realm\'s favour (封號)' };
+        if ((state.realmRelations?.[realmId] ?? 0) < 50) return { ok: false, reason: 'relation too low (need ≥ 50)' };
+        // Cooldown — a realm answers the call at most once in a long while.
+        const cd = state.realmAidCooldown?.[realmId];
+        const seasonsSince = cd ? (state.date.year - cd.year) * 4 + (SEASON_INDEX[state.date.season] - SEASON_INDEX[cd.season]) : Infinity;
+        if (seasonsSince < AID_COOLDOWN_SEASONS) return { ok: false, reason: `the realm answered recently (${AID_COOLDOWN_SEASONS - seasonsSince} season(s) to ready)` };
+        const city = state.cities[toCityId];
+        if (!city || city.ownerForceId !== pid) return { ok: false, reason: 'not your city' };
+        // Cost — calling in the favour spends coin and a slice of standing.
+        const cost = 600 + Math.round(profile.troops * 0.25);
+        if (city.gold < cost) return { ok: false, reason: `need ${cost} gold to provision the march` };
+        const horses = Math.min(WARHORSE_CITY_CAP, (city.warhorses ?? 0) + profile.warhorses);
+        set({
+          cities: {
+            ...state.cities,
+            [toCityId]: {
+              ...city,
+              gold: city.gold - cost,
+              troops: city.troops + profile.troops,
+              foreignAux: (city.foreignAux ?? 0) + profile.troops,
+              ...(profile.warhorses > 0 ? { warhorses: horses } : {}),
+            },
+          },
+          realmRelations: { ...state.realmRelations, [realmId]: Math.max(0, (state.realmRelations?.[realmId] ?? 0) - 20) },
+          realmAidCooldown: { ...state.realmAidCooldown, [realmId]: { year: state.date.year, season: state.date.season } },
+        });
+        get().notify(
+          `${realm.name.zh}遣${profile.unitZh} ${profile.troops.toLocaleString()} 抵 ${city.name.zh}${profile.warhorses > 0 ? `(戰馬 +${profile.warhorses})` : ''}`,
+          `${realm.name.en} sends ${profile.troops.toLocaleString()} ${profile.unitEn} to ${city.name.en}`,
+        );
+        return { ok: true };
+      },
+
+      // §7.7-deep ③(C)絹馬互市 — toggle a caravan between coin and warhorses.
+      setRealmTradeMode: (realmId, mode) => {
+        const state = get();
+        if (!state.openedRealms?.[realmId]) return { ok: false, reason: 'realm not opened' };
+        if (mode === 'horses' && !isHorseRealm(realmId)) return { ok: false, reason: 'this realm breeds no horses' };
+        set({ realmTradeMode: { ...state.realmTradeMode, [realmId]: mode } });
+        return { ok: true };
       },
 
       createLegion: (legion) => {
@@ -3285,6 +3461,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           playerForceId: state.playerForceId,
           family: state.family,
           clanStandings: state.clanStandings,
+          clanBonds: state.clanBonds,
           appointments: appointmentsAfterAI,
           governorEvalStreaks: state.governorEvalStreaks,
           provinceGovernors: state.provinceGovernors,
@@ -3303,6 +3480,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           raids: state.raids,
           expeditions: state.expeditions,
           realmRelations: state.realmRelations,
+          realmPatron: state.realmPatron,
           standingRoutes: state.standingRoutes,
           refugees: state.refugees ?? 0,
           lifespanMode: state.lifespanMode ?? 'historical',
@@ -5689,6 +5867,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
 
         // 絲路商路 — a 遠使 that opened a distant realm establishes a standing
         // caravan; opened realms pay seasonal trade gold to their frontier city.
+        const pfid7 = state.playerForceId;
         const nextOpenedRealms = { ...(state.openedRealms ?? {}), ...(result.expeditionRealmsOpened ?? {}) };
         if (result.expeditionRealmsOpened) {
           for (const [realmId, cid] of Object.entries(result.expeditionRealmsOpened)) {
@@ -5703,14 +5882,62 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             });
           }
         }
-        if (seasonBoundary) {
-          for (const [realmId, cid] of Object.entries(nextOpenedRealms)) {
-            const c = postCities[cid];
-            if (!c || c.ownerForceId !== state.playerForceId) continue;
-            const inc = realmTradeIncome(realmId);
-            if (inc > 0) postCities = { ...postCities, [cid]: { ...c, gold: c.gold + inc } };
+
+        // §7.7 ① 邦交競逐·封號獨占 — fold in this season's patron claims; the latest
+        // successful embassy holds a realm's 封號. Report only the player's own
+        // 受封 / 旁落 (a rival out-courting him, or him seizing it back).
+        const nextRealmPatron = { ...(state.realmPatron ?? {}) };
+        if (result.expeditionRealmsPatronClaimed) {
+          for (const [realmId, claimer] of Object.entries(result.expeditionRealmsPatronClaimed)) {
+            const prev = nextRealmPatron[realmId];
+            if (prev === claimer) continue;
+            nextRealmPatron[realmId] = claimer;
+            const title = realmTitle(realmId);
+            const realm = FOREIGN_REALMS_BY_ID[realmId];
+            if (!title || !realm) continue;
+            const cid = nextOpenedRealms[realmId] ?? state.openedRealms?.[realmId] ?? '';
+            if (claimer === pfid7) {
+              result.report.entries.push({
+                cityId: cid, kind: 'expedition',
+                text: `${realm.name.en} bestows the title "${title.en}" — you hold its favour over all rivals.`,
+                textZh: `${realm.name.zh}冊封「${title.zh}」之號,邦交獨尊,諸雄莫及。`,
+              });
+            } else if (prev === pfid7) {
+              const rival = postForces[claimer];
+              result.report.entries.push({
+                cityId: cid, kind: 'expedition',
+                text: `${rival?.name.en ?? 'A rival'} has out-courted you at ${realm.name.en} — the title "${title.en}" passes to them.`,
+                textZh: `${rival?.name.zh ?? '勁敵'}遣使厚交${realm.name.zh},「${title.zh}」之號為其所奪。`,
+              });
+            }
           }
         }
+
+        // §7.7 ③ 西域都護府 — the protectorate stands only while its city is held.
+        let nextProtectorateCityId = state.protectorateCityId ?? null;
+        if (nextProtectorateCityId) {
+          const pc = postCities[nextProtectorateCityId];
+          if (!pc || pc.ownerForceId !== pfid7) {
+            if (pc) result.report.entries.push({
+              cityId: nextProtectorateCityId, kind: 'expedition',
+              text: `${pc.name.en} is lost — the Protectorate of the Western Regions is dissolved.`,
+              textZh: `${pc.name.zh}失守,西域都護府廢置。`,
+            });
+            nextProtectorateCityId = null;
+          }
+        }
+        const protectorateActive = !!nextProtectorateCityId;
+
+        // §7.7 ④ 常駐使節 — drop any posting whose envoy died/vanished abroad.
+        const nextResidentEnvoys = { ...(state.residentEnvoys ?? {}) };
+        for (const [realmId, posting] of Object.entries(nextResidentEnvoys)) {
+          const o = postOfficers[posting.officerId];
+          if (!o || o.status === 'dead') delete nextResidentEnvoys[realmId];
+        }
+        const residentRealms = new Set(Object.keys(nextResidentEnvoys));
+        // §7.7-deep ②(B)遠邦之怒 — running enmity; ④(D)異域歸化 arrivals.
+        const nextRealmHostility = { ...(state.realmHostility ?? {}) };
+        const naturalizedArrivals: Record<string, Officer> = {};
 
         // 遠邦關係 — fold in relation gained by this season's embassies (cap 100).
         const nextRealmRelations = { ...(state.realmRelations ?? {}) };
@@ -5720,24 +5947,144 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
-        // 反向來使 — a realm the player has opened may send a tribute embassy of
-        // its own (the warmer the standing, the likelier). 受其朝貢、得異寶。
+        // §7.7 ③ 絲路風險 / ① 封號之榮 / ④ 常駐使節 upkeep — once a season.
+        const nextRealmRouteDisruption = { ...(state.realmRouteDisruption ?? {}) };
         let nextMandateAfterEnvoy = nextMandate;
         if (seasonBoundary) {
           for (const [realmId, cid] of Object.entries(nextOpenedRealms)) {
             const c = postCities[cid];
             const realm = FOREIGN_REALMS_BY_ID[realmId];
-            if (!c || !realm || c.ownerForceId !== state.playerForceId) continue;
+            if (!realm) continue;
+            const playerHolds = c && c.ownerForceId === pfid7;
+            const resident = residentRealms.has(realmId);
+
+            // ④ 常駐使節 — a resident envoy holds the realm's goodwill (relation
+            // creeps up) and, now and then, slips intel of a rival's land home.
+            if (resident && pfid7) {
+              const env = postOfficers[nextResidentEnvoys[realmId].officerId];
+              const comp = env ? envoyCompetence(env) : 40;
+              nextRealmRelations[realmId] = Math.max(0, Math.min(100, (nextRealmRelations[realmId] ?? 0) + 2 + Math.round(comp / 40)));
+              if (Math.random() < 0.12 + comp / 500) {
+                const foreign = Object.values(postCities).filter((fc) => fc.ownerForceId && fc.ownerForceId !== pfid7);
+                if (foreign.length > 0) {
+                  const mark = foreign[Math.floor(Math.random() * foreign.length)];
+                  espionageRevealsNext[mark.id] = Math.max(espionageRevealsNext[mark.id] ?? 0, 4);
+                  result.report.entries.push({
+                    cityId: cid, kind: 'expedition',
+                    text: `Your resident envoy at ${realm.name.en} sends word of ${mark.name.en}.`,
+                    textZh: `${realm.name.zh}常駐使節密報${mark.name.zh}虛實。`,
+                  });
+                }
+              }
+            }
+
+            // ① 封號之榮 — the patron of a titled realm draws standing 天命.
+            if (playerHolds && pfid7 && nextRealmPatron[realmId] === pfid7) {
+              const honour = realmPatronPrestige(realmId);
+              if (honour > 0) {
+                const m = { ...nextMandateAfterEnvoy.byForce };
+                m[pfid7] = Math.max(0, Math.min(100, (m[pfid7] ?? 50) + honour));
+                nextMandateAfterEnvoy = { ...nextMandateAfterEnvoy, byForce: m };
+              }
+            }
+
+            // ③ 絲路風險 — caravans on the long road can be cut. Decrement an
+            // existing break; otherwise roll a fresh one (都護府/常駐 keep it safe).
+            const severed = nextRealmRouteDisruption[realmId] ?? 0;
+            if (severed > 0) {
+              const left = severed - 1;
+              if (left <= 0) {
+                delete nextRealmRouteDisruption[realmId];
+                if (playerHolds) result.report.entries.push({
+                  cityId: cid, kind: 'expedition',
+                  text: `The caravan road to ${realm.name.en} is open again.`,
+                  textZh: `${realm.name.zh}商道復通,絲路再啟。`,
+                });
+              } else nextRealmRouteDisruption[realmId] = left;
+            } else if (playerHolds) {
+              const chance = routeDisruptionChance(realmId, { protectorate: protectorateActive, resident });
+              if (Math.random() < chance) {
+                nextRealmRouteDisruption[realmId] = 2 + Math.floor(Math.random() * 2); // 2–3 seasons
+                const xiyu = realm.region === 'xiyu';
+                result.report.entries.push({
+                  cityId: cid, kind: 'expedition',
+                  text: `Raiders cut the caravan road to ${realm.name.en} — trade halts.`,
+                  textZh: xiyu ? `胡騎掠邊,${realm.name.zh}絲路中斷,商旅不行。` : `海盜/盜匪劫道,${realm.name.zh}商路中斷。`,
+                });
+              }
+            }
+
+            // 絲路商利 — a flowing caravan pays its frontier city each season
+            // (都護府 enriches the 西域 oases by half again). §7.7-deep ③(C)
+            // 絹馬互市 — a 買馬 caravan stables warhorses there instead of coin.
+            const flowing = !(nextRealmRouteDisruption[realmId] > 0);
+            if (playerHolds && flowing) {
+              const buyHorsesMode = (state.realmTradeMode?.[realmId] === 'horses') && isHorseRealm(realmId);
+              if (buyHorsesMode) {
+                const h = realmTradeHorses(realmId, { protectorate: protectorateActive });
+                if (h > 0) {
+                  const held = postCities[cid].warhorses ?? 0;
+                  postCities = { ...postCities, [cid]: { ...postCities[cid], warhorses: Math.min(WARHORSE_CITY_CAP, held + h) } };
+                }
+              } else {
+                const inc = realmTradeIncome(realmId, { protectorate: protectorateActive });
+                if (inc > 0) postCities = { ...postCities, [cid]: { ...postCities[cid], gold: postCities[cid].gold + inc } };
+              }
+            }
+
+            // §7.7-deep ②(B)遠邦之怒 — enmity builds when a rival flaunts your
+            // former 封號, when standing rots, or when a caravan lies severed;
+            // it bleeds away while you court the realm. High enmity spills into
+            // 邊釁 — the realm's irregulars raid the frontier city.
+            if (pfid7) {
+              let h = nextRealmHostility[realmId] ?? 0;
+              const rel = nextRealmRelations[realmId] ?? 0;
+              const isPatronNow = nextRealmPatron[realmId] === pfid7;
+              if (realm.title && nextRealmPatron[realmId] && !isPatronNow) h += 6; // a rival holds the title
+              if (rel < 15) h += 4;
+              if ((nextRealmRouteDisruption[realmId] ?? 0) > 0) h += 2;
+              if (resident || isPatronNow || rel >= 60) h -= 8;
+              h = Math.max(0, Math.min(100, h));
+              if (playerHolds && h >= 55 && Math.random() < Math.min(0.4, (h - 50) / 120)) {
+                const cc = postCities[cid];
+                const raid = Math.floor(1500 + Math.random() * 3000);
+                const defWins = cc.troops > raid * 0.7;
+                const defLoss = Math.floor(raid * (defWins ? 0.35 : 0.6));
+                const goldLoot = defWins ? 0 : Math.floor(cc.gold * (0.12 + Math.random() * 0.18));
+                postCities = { ...postCities, [cid]: { ...cc, troops: Math.max(0, cc.troops - defLoss), gold: Math.max(0, cc.gold - goldLoot), loyalty: Math.max(0, cc.loyalty - (defWins ? 3 : 10)) } };
+                result.report.entries.push({
+                  cityId: cid, kind: 'tribe-raid',
+                  text: defWins
+                    ? `${realm.name.en}'s irregulars raid ${cc.name.en} but are repulsed (−${defLoss.toLocaleString()} troops).`
+                    : `${realm.name.en}'s irregulars sack ${cc.name.en}! −${defLoss.toLocaleString()} troops, −${goldLoot} gold.`,
+                  textZh: defWins
+                    ? `${realm.name.zh}邊騎犯${cc.name.zh},為守軍所卻(折兵 ${defLoss.toLocaleString()})。`
+                    : `${realm.name.zh}邊騎襲掠${cc.name.zh}!折兵 ${defLoss.toLocaleString()}、失金 ${goldLoot}。`,
+                });
+                h = Math.max(0, h - 25); // they raided and pulled back
+              }
+              if (h > 0) nextRealmHostility[realmId] = h; else delete nextRealmHostility[realmId];
+            }
+          }
+        }
+
+        // 反向來使 — a realm the player has opened may send a tribute embassy of
+        // its own (the warmer the standing, the likelier). 受其朝貢、得異寶。
+        if (seasonBoundary) {
+          for (const [realmId, cid] of Object.entries(nextOpenedRealms)) {
+            const c = postCities[cid];
+            const realm = FOREIGN_REALMS_BY_ID[realmId];
+            if (!c || !realm || c.ownerForceId !== pfid7) continue;
+            if (nextRealmRouteDisruption[realmId] > 0) continue; // a severed road carries no tribute
             const rel = nextRealmRelations[realmId] ?? 0;
             if (Math.random() >= 0.06 + rel / 500) continue; // ~6–26%/season
-            const tribute = realmTradeIncome(realmId) * 2 + Math.floor(Math.random() * 400);
+            const tribute = realmTradeIncome(realmId, { protectorate: protectorateActive }) * 2 + Math.floor(Math.random() * 400);
             postCities = { ...postCities, [cid]: { ...c, gold: c.gold + tribute } };
             const parts: string[] = [`金 ${tribute.toLocaleString()}`];
             const partsEn: string[] = [`${tribute.toLocaleString()} gold`];
-            const pfid = state.playerForceId;
-            if (pfid && realm.reward.prestige) {
+            if (pfid7 && realm.reward.prestige) {
               const m = { ...nextMandateAfterEnvoy.byForce };
-              m[pfid] = Math.max(0, Math.min(100, (m[pfid] ?? 50) + 2));
+              m[pfid7] = Math.max(0, Math.min(100, (m[pfid7] ?? 50) + 2));
               nextMandateAfterEnvoy = { ...nextMandateAfterEnvoy, byForce: m };
               parts.push('天命 +2'); partsEn.push('prestige +2');
             }
@@ -5749,7 +6096,193 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             });
           }
         }
+
+        // §7.7-deep ④(D)異域歸化·賢才文物 — a realm on warm terms (relation ≥ 70)
+        // may send a notable to take service (歸化武將), or transmit a boon of its
+        // culture (天竺佛法 settles a city, 大秦奇器 enriches it, 西域樂舞…).
+        if (seasonBoundary && pfid7) {
+          for (const [realmId, cid] of Object.entries(nextOpenedRealms)) {
+            const c = postCities[cid];
+            const realm = FOREIGN_REALMS_BY_ID[realmId];
+            if (!c || !realm || c.ownerForceId !== pfid7) continue;
+            if ((nextRealmRouteDisruption[realmId] ?? 0) > 0) continue;
+            const rel = nextRealmRelations[realmId] ?? 0;
+            if (rel < 70 || Math.random() >= 0.05 + (rel - 70) / 400) continue; // ~5–12%/season once warm
+            if (Math.random() < 0.5) {
+              // 歸化武將 — a foreign notable enters service at the frontier city.
+              const existing = new Set([...Object.keys(postOfficers), ...Object.keys(naturalizedArrivals)]);
+              const gen = generateFictionalOfficer(result.date.year, Math.random, existing);
+              const nm = naturalizedName(realm.region, Math.random);
+              const s = gen.stats;
+              // Tilt toward the region's gift: 西域/大宛 horse → war/leadership;
+              // 極遠/天竺 → wits/politics; others a touch of charisma.
+              const tilt = realm.region === 'xiyu' || realmId === 'dayuan'
+                ? { war: Math.min(99, s.war + 12), leadership: Math.min(99, s.leadership + 8) }
+                : realm.region === 'jiyuan'
+                  ? { intelligence: Math.min(99, s.intelligence + 12), politics: Math.min(99, s.politics + 8) }
+                  : { charisma: Math.min(99, s.charisma + 8) };
+              const officer: Officer = {
+                ...gen, name: nm, forceId: pfid7, locationCityId: cid, status: 'idle', task: null,
+                loyalty: 62, stats: { ...s, ...tilt },
+              };
+              naturalizedArrivals[officer.id] = officer;
+              result.report.entries.push({
+                cityId: cid, kind: 'talent',
+                text: `${nm.en}, a notable of ${realm.name.en}, takes service at ${c.name.en} (歸化).`,
+                textZh: `${realm.name.zh}名士${nm.zh}慕義來歸,仕於${c.name.zh}。`,
+              });
+            } else {
+              // 文物之利 — a standing boon of the realm's culture.
+              if (realm.region === 'jiyuan' || realm.region === 'nanhai') {
+                const gift = 800 + Math.floor(Math.random() * 1200); // 大秦奇器/南海珍寶 — coin
+                postCities = { ...postCities, [cid]: { ...postCities[cid], gold: postCities[cid].gold + gift } };
+                result.report.entries.push({
+                  cityId: cid, kind: 'expedition',
+                  text: `${realm.name.en} sends artisans and curiosities to ${c.name.en} (+${gift} gold).`,
+                  textZh: `${realm.name.zh}傳奇技珍玩於${c.name.zh}(+金 ${gift})。`,
+                });
+              } else {
+                const lift = 6 + Math.floor(Math.random() * 6); // 佛法/樂舞 — settles the city
+                postCities = { ...postCities, [cid]: { ...postCities[cid], loyalty: Math.min(100, postCities[cid].loyalty + lift) } };
+                result.report.entries.push({
+                  cityId: cid, kind: 'expedition',
+                  text: `${realm.name.en}'s teachings settle the people of ${c.name.en} (+${lift} loyalty).`,
+                  textZh: `${realm.name.zh}之教化安${c.name.zh}民心(+民心 ${lift})。`,
+                });
+              }
+            }
+          }
+        }
         nextMandate = nextMandateAfterEnvoy;
+
+        // ── §7.8 門閥深化 — 察舉薦才(F)/ 部曲私兵(G)/ 舉族叛附(H) ──────────────
+        const nextClanLevies = { ...(state.clanLevies ?? {}) };
+        const clanOfficerPatches: Record<string, Officer> = {};
+        if (seasonBoundary && pfid7) {
+          const playerStance = postForces[pfid7]?.recruitmentStance ?? 'balanced';
+          const rivals = Object.values(postForces).filter((f) => f.id !== pfid7);
+          const strongestRival = rivals.length > 0
+            ? rivals.map((f) => ({ f, n: Object.values(postCities).filter((c) => c.ownerForceId === f.id).length })).sort((a, b) => b.n - a.n)[0]?.f
+            : undefined;
+
+          for (const clan of CLANS) {
+            const scions = clanScions({ ...postOfficers, ...clanOfficerPatches }, pfid7, clan.id);
+            const bound = state.clanBonds?.[clan.id] === pfid7;
+            const tier = state.clanStandings?.[clan.id]?.tier ?? 'humble';
+
+            // F 察舉薦才 — a serving clan recommends a 門生故吏 into your service.
+            if (scions.length > 0) {
+              const tierMul = tier === 'great' ? 2 : tier === 'gentry' ? 1.4 : 0.7;
+              const stanceMul = playerStance === 'aristocratic' ? 1.6 : playerStance === 'meritocratic' ? 0.4 : 1;
+              if (Math.random() < 0.04 * tierMul * stanceMul) {
+                const strongman = [...scions].sort((a, b) => b.stats.leadership - a.stats.leadership)[0];
+                const seat = strongman.locationCityId && postCities[strongman.locationCityId]?.ownerForceId === pfid7
+                  ? strongman.locationCityId
+                  : postForces[pfid7]?.capitalCityId;
+                const seatCity = seat ? postCities[seat] : undefined;
+                if (seatCity) {
+                  const existing = new Set([...Object.keys(postOfficers), ...Object.keys(clanOfficerPatches)]);
+                  const gen = generateFictionalOfficer(result.date.year, Math.random, existing);
+                  const officer: Officer = { ...gen, clanId: clan.id, forceId: pfid7, locationCityId: seat!, status: 'idle', task: null, loyalty: 60 };
+                  clanOfficerPatches[officer.id] = officer;
+                  result.report.entries.push({
+                    cityId: seat!, kind: 'talent',
+                    text: `The ${clan.name.en} recommend ${officer.name.en} into your service at ${seatCity.name.en} (察舉).`,
+                    textZh: `${clan.name.zh}舉${officer.name.zh}入仕${seatCity.name.zh}(察舉徵辟)。`,
+                  });
+                }
+              }
+            }
+
+            // H 舉族叛附 — a disaffected, unbound clan defects to your strongest rival.
+            const defChance = clanDefectionChance(scions, bound);
+            if (defChance > 0 && strongestRival && Math.random() < defChance) {
+              const toCap = strongestRival.capitalCityId;
+              for (const s of scions) clanOfficerPatches[s.id] = { ...s, forceId: strongestRival.id, locationCityId: toCap ?? s.locationCityId, status: 'idle', task: null, loyalty: 50 };
+              // pull any private levy this clan fielded
+              const lv = nextClanLevies[clan.id];
+              if (lv && postCities[lv.cityId]?.ownerForceId === pfid7) postCities = { ...postCities, [lv.cityId]: { ...postCities[lv.cityId], troops: Math.max(0, postCities[lv.cityId].troops - lv.troops) } };
+              delete nextClanLevies[clan.id];
+              result.report.entries.push({
+                cityId: postForces[pfid7]?.capitalCityId ?? null, kind: 'note',
+                text: `The ${clan.name.en}, long aggrieved, defect en masse to ${strongestRival.name.en} (${scions.length}).`,
+                textZh: `${clan.name.zh}久懷怨望,舉族叛投${strongestRival.name.zh}(${scions.length} 人)。`,
+              });
+              continue; // gone — no levy upkeep this season
+            }
+
+            // G 部曲莊園 — a content clan fields private troops at its anchor city;
+            // a clan whose faith cooled withdraws them.
+            const target = clanLevyTarget(scions);
+            const ablest = [...scions].sort((a, b) => b.stats.leadership - a.stats.leadership)[0];
+            const anchor: string | null = ablest && ablest.locationCityId && postCities[ablest.locationCityId]?.ownerForceId === pfid7 ? ablest.locationCityId : null;
+            const prev = nextClanLevies[clan.id];
+            if (!anchor || target === 0) {
+              if (prev && postCities[prev.cityId]?.ownerForceId === pfid7) {
+                postCities = { ...postCities, [prev.cityId]: { ...postCities[prev.cityId], troops: Math.max(0, postCities[prev.cityId].troops - prev.troops) } };
+                if (prev.troops > 0) result.report.entries.push({ cityId: prev.cityId, kind: 'note', text: `The ${clan.name.en} withdraw their retainers from ${postCities[prev.cityId].name.en}.`, textZh: `${clan.name.zh}撤其部曲於${postCities[prev.cityId].name.zh}。` });
+              }
+              delete nextClanLevies[clan.id];
+              continue;
+            }
+            let current = prev?.troops ?? 0;
+            if (prev && prev.cityId !== anchor) {
+              if (postCities[prev.cityId]?.ownerForceId === pfid7) postCities = { ...postCities, [prev.cityId]: { ...postCities[prev.cityId], troops: Math.max(0, postCities[prev.cityId].troops - prev.troops) } };
+              current = 0;
+            }
+            const nextTroops = Math.round(current + (target - current) * 0.5);
+            const delta = nextTroops - current;
+            if (delta !== 0) postCities = { ...postCities, [anchor]: { ...postCities[anchor], troops: Math.max(0, postCities[anchor].troops + delta) } };
+            if (current === 0 && nextTroops > 0) result.report.entries.push({ cityId: anchor, kind: 'note', text: `The ${clan.name.en} field ${nextTroops.toLocaleString()} retainers (部曲) at ${postCities[anchor].name.en}.`, textZh: `${clan.name.zh}部曲 ${nextTroops.toLocaleString()} 屯於${postCities[anchor].name.zh}。` });
+            nextClanLevies[clan.id] = { cityId: anchor, troops: nextTroops };
+          }
+        }
+
+        // ── §7.9 治國理念深化 — 興學養士(K)/ 學派相違離心(J 名士拂袖) ───────────
+        const statecraftPatches: Record<string, Officer> = {};
+        if (seasonBoundary && pfid7) {
+          const def = statecraftById(postForces[pfid7]?.statecraft);
+          if (def) {
+            const favored = new Set(def.favoredDoctrines);
+            const opposed = new Set(def.opposedDoctrines);
+            // K 興學養士 — a 太學/書院 drills & converts its garrison and graduates scholars.
+            const academies = (state.buildings ?? []).filter((b) => (b.id === 'grandacademy' || b.id === 'academy') && postCities[b.cityId]?.ownerForceId === pfid7);
+            for (const b of academies) {
+              const grand = b.id === 'grandacademy';
+              for (const o of Object.values(postOfficers)) {
+                if (o.forceId !== pfid7 || o.locationCityId !== b.cityId || o.status === 'dead' || o.status === 'imprisoned') continue;
+                const cur = statecraftPatches[o.id] ?? o;
+                if (Math.random() < (grand ? 0.25 : 0.12)) {
+                  const st = { ...cur.stats }; st[def.trainStat] = Math.min(100, st[def.trainStat] + 1);
+                  statecraftPatches[o.id] = { ...cur, stats: st };
+                }
+                if (!favored.has(doctrineOf(statecraftPatches[o.id] ?? cur)) && Math.random() < (grand ? 0.06 : 0.03)) {
+                  statecraftPatches[o.id] = { ...(statecraftPatches[o.id] ?? cur), doctrine: def.favoredDoctrines[0] };
+                }
+              }
+              if (Math.random() < (grand ? 0.10 : 0.05)) {
+                const existing = new Set([...Object.keys(postOfficers), ...Object.keys(statecraftPatches), ...Object.keys(clanOfficerPatches), ...Object.keys(naturalizedArrivals)]);
+                const gen = generateFictionalOfficer(result.date.year, Math.random, existing);
+                const st = { ...gen.stats }; st[def.trainStat] = Math.min(100, st[def.trainStat] + 10);
+                const officer: Officer = { ...gen, doctrine: def.favoredDoctrines[0], stats: st, forceId: pfid7, locationCityId: b.cityId, status: 'idle', task: null, loyalty: 62 };
+                statecraftPatches[officer.id] = officer;
+                result.report.entries.push({ cityId: b.cityId, kind: 'talent', text: `A scholar trained in the academy at ${postCities[b.cityId].name.en} enters your service (${def.name.en}).`, textZh: `${postCities[b.cityId].name.zh}學宮育士${officer.name.zh}學成出仕(${def.name.zh})。` });
+              }
+            }
+            // J 名士拂袖 — a deeply-aggrieved officer the creed offends quits in disgust.
+            const rulerId = postForces[pfid7]?.rulerOfficerId;
+            for (const o of Object.values(postOfficers)) {
+              if (o.forceId !== pfid7 || o.status === 'dead' || o.status === 'imprisoned') continue;
+              if (o.id === rulerId || statecraftPatches[o.id]?.forceId === null) continue;
+              if (!opposed.has(doctrineOf(o)) || o.loyalty >= 18) continue;
+              if ((state.appointments ?? []).some((a) => a.officerId === o.id)) continue; // a title-holder stays
+              if (Math.random() < 0.12) {
+                statecraftPatches[o.id] = { ...o, forceId: null, status: 'idle', task: null };
+                result.report.entries.push({ cityId: o.locationCityId ?? null, kind: 'note', text: `${o.name.en}, at odds with the realm's ${def.name.en}, resigns and departs.`, textZh: `${o.name.zh}不容於${def.name.zh}之政,拂袖去職而隱。` });
+              }
+            }
+          }
+        }
 
         // 遠使勳功 — embassy achievements (reuse the fire-event trigger pipeline).
         const embassyAchUnlocks: string[] = [];
@@ -6184,7 +6717,11 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           itemLore: loreAfterSeason, // 名器威名 grown by this season's strategic battles
           merchantLoan: nextMerchantLoan,
           popupQueue: [...state.popupQueue, ...sizePopups, ...wallPopups, ...buildPopups, ...officerPopups.slice(0, 3), ...livePopups],
-          officers: officersWithMarchTask,
+          // §7.7-deep ④ 歸化武將 + §7.8 察舉薦才/舉族叛附 + §7.9 興學養士/拂袖 —
+          // fold this season's arrivals, defections and departures into the roster.
+          officers: (Object.keys(naturalizedArrivals).length > 0 || Object.keys(clanOfficerPatches).length > 0 || Object.keys(statecraftPatches).length > 0)
+            ? { ...officersWithMarchTask, ...naturalizedArrivals, ...clanOfficerPatches, ...statecraftPatches }
+            : officersWithMarchTask,
           marriageAlliances: allianceTick.alliances,
           forces: postForces,
           refugees: result.refugees,
@@ -6287,6 +6824,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           expeditions: result.expeditions ?? {},
           openedRealms: nextOpenedRealms,
           realmRelations: nextRealmRelations,
+          realmPatron: nextRealmPatron,
+          protectorateCityId: nextProtectorateCityId,
+          realmRouteDisruption: nextRealmRouteDisruption,
+          residentEnvoys: nextResidentEnvoys,
+          realmHostility: nextRealmHostility,
+          clanLevies: nextClanLevies,
           recentAchievementUnlocks: (embassyAchUnlocks.length > 0 || bldAch.length > 0)
             ? [...state.recentAchievementUnlocks, ...embassyAchUnlocks, ...bldAch]
             : state.recentAchievementUnlocks,
@@ -6526,7 +7069,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           giftBonus,
           stanceModifier:
             stanceRecruitModifier(state.officers, force.id, force.recruitmentStance) +
-            statecraftRecruitBonus(force.statecraft) +
+            statecraftRecruitBonus(force.statecraft, force.statecraftMastery) +
             // 招賢館 — a hall of worthies in the recruiting city sweetens the offer.
             buildingBonuses(cityId, state.buildings).recruitOfficerBonus +
             // 世家蔭澤 — a scion of a great house is easier to bring on board.
@@ -8334,13 +8877,142 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         set({ forces: { ...state.forces, [fid]: { ...force, recruitmentStance: stance } } });
       },
 
+      // §7.8-deep E 門第聯姻 — bind a serving great clan by marriage.
+      cultivateClan: (clanId) => {
+        const state = get();
+        const fid = state.playerForceId;
+        if (!fid) return { ok: false, reason: 'no force' };
+        const clan = CLANS_BY_ID[clanId];
+        if (!clan) return { ok: false, reason: 'unknown clan' };
+        const scions = clanScions(state.officers, fid, clanId);
+        if (scions.length === 0) return { ok: false, reason: 'no scion of this clan serves you' };
+        if (state.clanBonds?.[clanId] === fid) return { ok: false, reason: 'already bound by marriage' };
+        const cost = 1500 + scions.length * 800;
+        const cap = state.forces[fid]?.capitalCityId;
+        const capCity = cap ? state.cities[cap] : undefined;
+        if (!capCity || capCity.gold < cost) return { ok: false, reason: `need ${cost} gold at your capital` };
+        const officers = { ...state.officers };
+        for (const s of scions) officers[s.id] = { ...s, loyalty: Math.min(100, s.loyalty + 15) };
+        set({
+          officers,
+          cities: { ...state.cities, [cap!]: { ...capCity, gold: capCity.gold - cost } },
+          clanBonds: { ...state.clanBonds, [clanId]: fid },
+        });
+        get().notify(`門第聯姻 · 厚結${clan.name.zh}`, `Bound the ${clan.name.en} by marriage`);
+        return { ok: true };
+      },
+
+      // §7.8-deep H 策反世族 — turn a rival's whole clan to your side.
+      subvertClan: (clanId) => {
+        const state = get();
+        const fid = state.playerForceId;
+        if (!fid) return { ok: false, reason: 'no force' };
+        const clan = CLANS_BY_ID[clanId];
+        if (!clan) return { ok: false, reason: 'unknown clan' };
+        // The rival lord who fields the most of this clan's scions.
+        const byForce: Record<string, Officer[]> = {};
+        for (const id of clan.members) {
+          const o = state.officers[id];
+          if (!o || o.forceId == null || o.forceId === fid) continue;
+          if (o.status === 'dead' || o.status === 'imprisoned') continue;
+          (byForce[o.forceId] ??= []).push(o);
+        }
+        const lord = Object.entries(byForce).sort((a, b) => b[1].length - a[1].length)[0];
+        if (!lord) return { ok: false, reason: 'no rival scion of this clan to turn' };
+        const scions = lord[1];
+        const cap = state.forces[fid]?.capitalCityId;
+        const capCity = cap ? state.cities[cap] : undefined;
+        const spend = 2000;
+        if (!capCity || capCity.gold < spend) return { ok: false, reason: `need ${spend} gold to court them` };
+        const rulerHouseId = (() => {
+          const ruler = state.forces[fid]?.rulerOfficerId ? state.officers[state.forces[fid].rulerOfficerId] : undefined;
+          return ruler ? clanOf(ruler) : null;
+        })();
+        const myTier = rulerHouseId ? clanTierOf({ id: '', clanId: rulerHouseId } as Officer, state.clanStandings ?? {}) : undefined;
+        const chance = clanSubvertChance({ scions, myStandingTier: myTier, spend });
+        const officers = { ...state.officers };
+        const success = Math.random() < chance;
+        if (success) {
+          for (const s of scions) officers[s.id] = { ...s, forceId: fid, locationCityId: cap!, status: 'idle', task: null, loyalty: 55, capturedFromForceId: undefined };
+        }
+        set({ officers, cities: { ...state.cities, [cap!]: { ...capCity, gold: capCity.gold - spend } } });
+        if (success) {
+          get().notify(`策反成功 · ${clan.name.zh}舉族來投(${scions.length} 人)`, `Turned the ${clan.name.en} — ${scions.length} scion(s) defect to you`);
+          return { ok: true, turned: scions.length };
+        }
+        get().notify(`策反${clan.name.zh}未果`, `Failed to turn the ${clan.name.en}`, 'warn');
+        return { ok: false, reason: 'they refused', turned: 0 };
+      },
+
       setStatecraft: (school) => {
         const state = get();
         const fid = state.playerForceId;
         if (!fid) return;
         const force = state.forces[fid];
         if (!force) return;
-        set({ forces: { ...state.forces, [fid]: { ...force, statecraft: school ?? undefined } } });
+        const next = school ?? undefined;
+        if (force.statecraft === next) return; // no change
+        // §7.9-deep I 朝令夕改 — abandoning a settled creed (mastery built up)
+        // shakes the realm: reset 造詣, and a switch from a deep school costs 民心
+        // (and a little 天命). Adopting from 雜糅 (no prior school) is free.
+        const hadMastery = force.statecraft ? (force.statecraftMastery ?? 0) : 0;
+        let cities = state.cities;
+        let mandate = state.mandate;
+        if (hadMastery >= 20 && next) {
+          const drop = Math.round(hadMastery / 20); // mastery 100 → −5 loyalty/city
+          cities = { ...cities };
+          for (const c of Object.values(cities)) {
+            if (c.ownerForceId === fid) cities[c.id] = { ...c, loyalty: Math.max(0, c.loyalty - drop) };
+          }
+          mandate = { ...mandate, byForce: { ...mandate.byForce, [fid]: Math.max(0, Math.min(100, (mandate.byForce[fid] ?? 50) - 3)) } };
+          get().notify('朝令夕改 · 改弦更張動搖民心', 'Changing the realm\'s creed unsettles the people', 'warn');
+        }
+        set({
+          cities,
+          mandate,
+          forces: { ...state.forces, [fid]: { ...force, statecraft: next, statecraftMastery: 0, statecraftDecreeAt: undefined } },
+        });
+      },
+
+      // §7.9-deep L 國策大政 — the held school's signature decree.
+      enactStatecraftDecree: () => {
+        const state = get();
+        const fid = state.playerForceId;
+        if (!fid) return { ok: false, reason: 'no force' };
+        const force = state.forces[fid];
+        const def = statecraftById(force?.statecraft);
+        if (!force || !def) return { ok: false, reason: 'adopt a school of statecraft first' };
+        const mastery = force.statecraftMastery ?? 0;
+        if (mastery < STATECRAFT_DECREE_THRESHOLD) return { ok: false, reason: `造詣不足(須 ≥ ${STATECRAFT_DECREE_THRESHOLD},今 ${Math.round(mastery)})` };
+        const cd = force.statecraftDecreeAt;
+        if (cd) {
+          const since = (state.date.year - cd.year) * 4 + (SEASON_INDEX[state.date.season] - SEASON_INDEX[cd.season]);
+          if (since < STATECRAFT_DECREE_COOLDOWN) return { ok: false, reason: `大政方行,須俟 ${STATECRAFT_DECREE_COOLDOWN - since} 季` };
+        }
+        const scale = statecraftScale(mastery);
+        const cities = { ...state.cities };
+        const officers = { ...state.officers };
+        const myCities = Object.values(cities).filter((c) => c.ownerForceId === fid);
+        switch (def.id) {
+          case 'legalist': // 變法強國 — coffers swell & order firms, but the gentry resent it.
+            for (const c of myCities) cities[c.id] = { ...c, gold: c.gold + Math.round(400 * scale), loyalty: Math.max(c.loyalty, Math.min(60, c.loyalty + 6)) };
+            for (const o of Object.values(officers)) if (o.forceId === fid && clanOf(o) && o.status !== 'dead') officers[o.id] = { ...o, loyalty: Math.max(0, o.loyalty - 5) };
+            break;
+          case 'confucian': // 興太學舉孝廉 — hearts won, the whole court heartened.
+            for (const c of myCities) cities[c.id] = { ...c, loyalty: Math.min(100, c.loyalty + Math.round(8 * scale)) };
+            for (const o of Object.values(officers)) if (o.forceId === fid && o.status !== 'dead' && o.status !== 'imprisoned') officers[o.id] = { ...o, loyalty: Math.min(100, o.loyalty + 3) };
+            break;
+          case 'daoist': // 輕徭薄賦・與民休息 — the people rest, grow and prosper.
+            for (const c of myCities) cities[c.id] = { ...c, loyalty: Math.min(100, c.loyalty + Math.round(6 * scale)), food: c.food + Math.round(600 * scale), population: Math.round(c.population * (1 + 0.03 * scale)) };
+            break;
+          case 'militarist': // 屯田耕戰 — the colonies fill the ranks and the granaries.
+            for (const c of myCities) cities[c.id] = { ...c, troops: c.troops + Math.round(700 * scale), food: c.food + Math.round(400 * scale) };
+            break;
+        }
+        const mandate = { ...state.mandate, byForce: { ...state.mandate.byForce, [fid]: Math.max(0, Math.min(100, (state.mandate.byForce[fid] ?? 50) + 2)) } };
+        set({ cities, officers, mandate, forces: { ...state.forces, [fid]: { ...force, statecraftDecreeAt: { year: state.date.year, season: state.date.season } } } });
+        get().notify(`國策大政 · ${def.decree.zh}`, def.decree.en);
+        return { ok: true };
       },
 
       holdFoundingCeremony: (dynastyTitle, eraName) => {
@@ -12082,6 +12754,17 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           pendingDemands: loaded.pendingDemands ?? [],
           passageGrants: loaded.passageGrants ?? [],
           pendingPeaceOffers: loaded.pendingPeaceOffers ?? [],
+          // §7.7 遠使異域 — legacy saves predate the embassy-depth state.
+          realmPatron: loaded.realmPatron ?? {},
+          protectorateCityId: loaded.protectorateCityId ?? null,
+          realmRouteDisruption: loaded.realmRouteDisruption ?? {},
+          residentEnvoys: loaded.residentEnvoys ?? {},
+          realmAidCooldown: loaded.realmAidCooldown ?? {},
+          realmHostility: loaded.realmHostility ?? {},
+          realmTradeMode: loaded.realmTradeMode ?? {},
+          // §7.8 門閥深化 — legacy saves predate clan bonds & private levies.
+          clanBonds: loaded.clanBonds ?? {},
+          clanLevies: loaded.clanLevies ?? {},
         };
         // 精煉/突破/鑲嵌登記 — re-point the denormalized registries at the loaded maps.
         setRefineRegistry(fresh.itemRefinements);

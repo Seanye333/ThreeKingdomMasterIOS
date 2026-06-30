@@ -14,6 +14,10 @@ import {
   embassyPeril,
   envoyCompetence,
   realmTradeIncome,
+  realmTitle,
+  realmAidProfile,
+  isHorseRealm,
+  realmTradeHorses,
   type EmbassyTarget,
   type TargetRegion,
 } from '../../game/systems/foreignRealm';
@@ -246,13 +250,32 @@ function FarEmbassyView({ fromCityId, roamers, onClose }: { fromCityId: string; 
   const lang = useLanguage();
   const officers = useGameStore((s) => s.officers);
   const cities = useGameStore((s) => s.cities);
+  const forces = useGameStore((s) => s.forces);
   const date = useGameStore((s) => s.date);
+  const playerForceId = useGameStore((s) => s.playerForceId);
   const dispatchEmbassy = useGameStore((s) => s.dispatchEmbassy);
+  const designateProtectorate = useGameStore((s) => s.designateProtectorate);
+  const stationEnvoy = useGameStore((s) => s.stationEnvoy);
+  const recallEnvoy = useGameStore((s) => s.recallEnvoy);
+  const summonRealmAid = useGameStore((s) => s.summonRealmAid);
+  const setRealmTradeMode = useGameStore((s) => s.setRealmTradeMode);
   const openedRealms = useGameStore((s) => s.openedRealms);
   const realmRelations = useGameStore((s) => s.realmRelations);
+  const realmPatron = useGameStore((s) => s.realmPatron);
+  const realmRouteDisruption = useGameStore((s) => s.realmRouteDisruption);
+  const residentEnvoys = useGameStore((s) => s.residentEnvoys);
+  const protectorateCityId = useGameStore((s) => s.protectorateCityId);
+  const realmHostility = useGameStore((s) => s.realmHostility);
+  const realmTradeModeMap = useGameStore((s) => s.realmTradeMode);
 
   const [officerId, setOfficerId] = useState(roamers[0]?.id ?? '');
   const officer = officers[officerId] && roamers.some((o) => o.id === officerId) ? officers[officerId] : roamers[0];
+  // §7.7 ② 遠使團 — an optional 副使 + a 厚禮 of gold carried abroad.
+  const [deputyId, setDeputyId] = useState('');
+  const [gift, setGift] = useState(0);
+  const deputies = roamers.filter((o) => o.id !== officer?.id);
+  const deputy = deputyId && deputies.some((o) => o.id === deputyId) ? officers[deputyId] : undefined;
+  const fromGold = cities[fromCityId]?.gold ?? 0;
 
   const targets = useMemo(() => embassyTargets(date.year), [date.year]);
   const byRegion = useMemo(() => {
@@ -267,10 +290,29 @@ function FarEmbassyView({ fromCityId, roamers, onClose }: { fromCityId: string; 
   const peril = officer && target ? embassyPeril(target, officer) : 0;
   const comp = officer ? Math.round(envoyCompetence(officer)) : 0;
   const realm = target && !target.isTribe ? (FOREIGN_REALMS_BY_ID[target.id]?.reward ?? null) : null;
+  // §7.7 ① 邦交競逐 — who holds this realm's 封號; ③ whether its road is cut.
+  const title = target && !target.isTribe ? realmTitle(target.id) : null;
+  const patronId = target ? realmPatron?.[target.id] : undefined;
+  const isPatron = !!patronId && patronId === playerForceId;
+  const patronName = patronId ? (lang === 'en' ? forces[patronId]?.name.en : forces[patronId]?.name.zh) : null;
+  const severed = target ? (realmRouteDisruption?.[target.id] ?? 0) : 0;
+  const resident = target ? residentEnvoys?.[target.id] : undefined;
+  const residentOfficer = resident ? officers[resident.officerId] : undefined;
+  const canProtectorate = Object.keys(openedRealms ?? {}).some((rid) => FOREIGN_REALMS_BY_ID[rid]?.region === 'xiyu');
+  const protectorateHere = protectorateCityId === fromCityId;
+  // §7.7-deep ②(B)敵意 / ①(A)援軍 / ③(C)互市
+  const hostility = target ? (realmHostility?.[target.id] ?? 0) : 0;
+  const aid = target && !target.isTribe ? realmAidProfile(target.id) : null;
+  const canSummonAid = !!target && !target.isTribe && isPatron && (realmRelations?.[target.id] ?? 0) >= 50 && !!openedRealms?.[target.id];
+  const tradeMode = target ? (realmTradeModeMap?.[target.id] ?? 'gold') : 'gold';
+  const horseRealm = target ? isHorseRealm(target.id) : false;
 
   const send = () => {
     if (!officer || !target) return;
-    const r = dispatchEmbassy(officer.id, fromCityId, target.id);
+    const r = dispatchEmbassy(officer.id, fromCityId, target.id, {
+      companionId: deputy?.id,
+      giftGold: Math.min(gift, fromGold),
+    });
     if (r.ok) { playSfx('coin'); onClose(); }
   };
 
@@ -297,11 +339,34 @@ function FarEmbassyView({ fromCityId, roamers, onClose }: { fromCityId: string; 
             {REGION_ORDER.filter((r) => byRegion[r]?.length).map((r) => (
               <optgroup key={r} label={regionName(r)}>
                 {byRegion[r].map((tg) => (
-                  <option key={tg.id} value={tg.id}>{(lang === 'en' ? tg.name.en : tg.name.zh)}{openedRealms?.[tg.id] ? ' ✓' : ''}</option>
+                  <option key={tg.id} value={tg.id}>{(lang === 'en' ? tg.name.en : tg.name.zh)}{openedRealms?.[tg.id] ? ' ✓' : ''}{realmPatron?.[tg.id] === playerForceId && realmTitle(tg.id) ? ' ★' : ''}</option>
                 ))}
               </optgroup>
             ))}
           </select>
+        </label>
+        {/* §7.7 ② 遠使團 — 副使 + 厚禮 */}
+        <label style={{ display: 'grid', gridTemplateColumns: '3.4rem 1fr', gap: 8, alignItems: 'center' }}>
+          <span style={{ fontSize: '0.78rem', color: '#7a8893' }}>{t('副使', 'Deputy')}</span>
+          <select value={deputyId} onChange={(e) => setDeputyId(e.target.value)} style={selectStyle}>
+            <option value="">{t('— 無(獨行)—', '— none —')}</option>
+            {deputies.map((o) => (
+              <option key={o.id} value={o.id}>{(lang === 'en' ? o.name.en : o.name.zh)} · {t('使才', 'skill')} {Math.round(envoyCompetence(o))}</option>
+            ))}
+          </select>
+        </label>
+        <label style={{ display: 'grid', gridTemplateColumns: '3.4rem 1fr', gap: 8, alignItems: 'center' }}>
+          <span style={{ fontSize: '0.78rem', color: '#7a8893' }}>{t('厚禮', 'Gift')}</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input
+              type="range" min={0} max={Math.min(8000, Math.floor(fromGold / 100) * 100)} step={200}
+              value={Math.min(gift, fromGold)} onChange={(e) => setGift(Number(e.target.value))}
+              style={{ flex: 1 }}
+            />
+            <span style={{ fontSize: '0.74rem', color: gift > 0 ? '#e6c473' : '#7a8893', minWidth: '4.5rem', textAlign: 'right' }}>
+              {gift > 0 ? `${gift.toLocaleString()} ${t('金', 'gold')}` : t('無', 'none')}
+            </span>
+          </span>
         </label>
       </div>
 
@@ -317,6 +382,32 @@ function FarEmbassyView({ fromCityId, roamers, onClose }: { fromCityId: string; 
               </div>
             );
           })()}
+          {/* §7.7 ① 邦交競逐·封號獨占 */}
+          {title && (
+            <div style={{ color: isPatron ? '#e6c473' : '#7a8893' }}>
+              {t('封號', 'Title')} 「{lang === 'en' ? title.en : title.zh}」 ·{' '}
+              {isPatron
+                ? t('★ 由你獨尊(每季享天命、可借兵)', '★ held by you (standing prestige + troop loans)')
+                : patronName
+                  ? t(`現為 ${patronName} 所執——再遣使可奪回`, `held by ${patronName} — out-court them to seize it`)
+                  : t('尚無歸屬,遣使可受封', 'unclaimed — an embassy can win it')}
+            </div>
+          )}
+          {/* §7.7 ③ 絲路風險 */}
+          {!target.isTribe && openedRealms?.[target.id] && (
+            severed > 0
+              ? <div style={{ color: '#e0707a' }}>{t(`商道中斷,尚需 ${severed} 旬復通`, `caravan road cut — ${severed} season(s) to reopen`)}</div>
+              : <div style={{ color: '#9ad6a8' }}>{t('商道通暢', 'caravan road open')}{resident ? t(' · 常駐使節護路', ' · resident envoy guards it') : ''}{protectorateCityId && target.region === 'xiyu' ? t(' · 都護府鎮西域', ' · protectorate secures it') : ''}</div>
+          )}
+          {/* §7.7-deep ②(B)遠邦之怒 */}
+          {!target.isTribe && hostility > 0 && (
+            <div style={{ color: hostility >= 55 ? '#e0707a' : '#e6c473' }}>
+              {t('遠邦之怒', 'enmity')} {hostility}/100
+              {hostility >= 55
+                ? t(' · 邊釁將起,速修好(常駐/通好/奪回封號可解)', ' · border raids loom — court them to cool it')
+                : t(' · 標心生怨,宜加修好', ' · resentment building')}
+            </div>
+          )}
           {officer && (
             <div>
               {t(`來回約 ${leg * 2} 旬`, `≈ ${leg * 2} seasons round trip`)} · {t('使才', 'envoy skill')} {comp} · {t('歷練', 'XP')} +{expeditionXp('embassy', leg)}
@@ -356,12 +447,73 @@ function FarEmbassyView({ fromCityId, roamers, onClose }: { fromCityId: string; 
         </div>
       )}
 
+      {/* §7.7 ④ 常駐使節 — station/recall a resident envoy at an opened realm. */}
+      {target && !target.isTribe && openedRealms?.[target.id] && (
+        <div style={{ fontSize: '0.68rem', color: '#7a8893', marginBottom: '0.5rem', lineHeight: 1.5 }}>
+          {resident
+            ? <>
+                {t('常駐使節', 'Resident envoy')}: <span style={{ color: '#9ad6a8' }}>{residentOfficer ? (lang === 'en' ? residentOfficer.name.en : residentOfficer.name.zh) : '—'}</span>
+                {t(' · 每季增遠邦關係、護商道、密報敵情', ' · warms ties, guards the road, sends intel each season')}
+                <button onClick={() => { if (recallEnvoy(target.id).ok) playSfx('click'); }} style={miniBtn}>{t('召還', 'Recall')}</button>
+              </>
+            : <>
+                {t('常駐使節', 'Resident envoy')}: {t('無——可遣一員久駐,坐收邦誼與情報', 'none — post an officer for standing goodwill & intel')}
+                {officer && <button onClick={() => { if (stationEnvoy(officer.id, target.id).ok) playSfx('click'); }} style={miniBtn}>{t('遣使常駐', 'Station')}</button>}
+              </>}
+        </div>
+      )}
+
+      {/* §7.7-deep ③(C)絹馬互市 — toggle a horse realm's caravan to 買馬. */}
+      {target && horseRealm && openedRealms?.[target.id] && (
+        <div style={{ fontSize: '0.68rem', color: '#7a8893', marginBottom: '0.5rem', lineHeight: 1.5 }}>
+          {t('互市', 'Trade')}:{' '}
+          <button onClick={() => { if (setRealmTradeMode(target.id, 'gold').ok) playSfx('click'); }} style={tradeMode === 'gold' ? miniBtnOn : miniBtn}>{t('通商(金)', 'Coin')}</button>
+          <button onClick={() => { if (setRealmTradeMode(target.id, 'horses').ok) playSfx('click'); }} style={tradeMode === 'horses' ? miniBtnOn : miniBtn}>{t('買馬(戰馬)', 'Buy horses')}</button>
+          <span style={{ marginLeft: 6, color: '#9fb2c0' }}>
+            {tradeMode === 'horses'
+              ? t(`每季戰馬 +${realmTradeHorses(target.id, { protectorate: protectorateCityId != null })}(升騎兵上限)`, `+${realmTradeHorses(target.id, { protectorate: protectorateCityId != null })} warhorses/season`)
+              : t(`每季入金 ${realmTradeIncome(target.id, { protectorate: protectorateCityId != null && target.region === 'xiyu' })}`, `${realmTradeIncome(target.id)} gold/season`)}
+          </span>
+        </div>
+      )}
+
+      {/* §7.7-deep ①(A)異域援軍 — call the realm's host to this city. */}
+      {target && aid && openedRealms?.[target.id] && (
+        <div style={{ fontSize: '0.68rem', color: '#7a8893', marginBottom: '0.5rem', lineHeight: 1.5 }}>
+          {t('義従遠征軍', 'Expeditionary host')}: {aid.unitZh ? (lang === 'en' ? aid.unitEn : aid.unitZh) : ''} ≈ {aid.troops.toLocaleString()}{aid.warhorses > 0 ? t(` + 戰馬 ${aid.warhorses}`, ` + ${aid.warhorses} horses`) : ''}
+          {canSummonAid
+            ? <button onClick={() => { if (summonRealmAid(target.id, fromCityId).ok) playSfx('coin'); }} style={miniBtn}>{t('召至此城', 'Summon here')}</button>
+            : <span style={{ color: '#5d6b76' }}>{t(' · 須執其封號且關係≥50', ' · needs its 封號 + relation ≥ 50')}</span>}
+        </div>
+      )}
+
+      {/* §7.7 ③ 西域都護府 — designate this city as the Silk Road seat. */}
+      {canProtectorate && (
+        <div style={{ fontSize: '0.68rem', color: '#7a8893', marginBottom: '0.6rem', lineHeight: 1.5 }}>
+          {t('西域都護府', 'Protectorate of the Western Regions')}:{' '}
+          {protectorateHere
+            ? <><span style={{ color: '#e6c473' }}>{t('設於此城——西域商利 +50%、商道難斷', 'seated here — +50% Silk Road trade, routes hard to cut')}</span>
+                <button onClick={() => { if (designateProtectorate(null).ok) playSfx('click'); }} style={miniBtn}>{t('廢置', 'Dissolve')}</button></>
+            : protectorateCityId
+              ? <>{t('設於他城', 'seated elsewhere')}<button onClick={() => { if (designateProtectorate(fromCityId).ok) playSfx('click'); }} style={miniBtn}>{t('改設此城', 'Move here')}</button></>
+              : <>{t('未設——統西域諸路於一城', 'not set — consolidate the Silk Road under one seat')}<button onClick={() => { if (designateProtectorate(fromCityId).ok) playSfx('click'); }} style={miniBtn}>{t('開府', 'Establish')}</button></>}
+        </div>
+      )}
+
       <button onClick={send} disabled={!officer || !target} style={sendBtn(!!officer && !!target)}>
-        {t('遣使遠行', 'Send the embassy')}
+        {t('遣使遠行', 'Send the embassy')}{deputy ? t(' · 攜副使', ' · w/ deputy') : ''}{gift > 0 ? t(` · 厚禮 ${gift.toLocaleString()}`, ` · gift ${gift.toLocaleString()}`) : ''}
       </button>
     </>
   );
 }
+
+const miniBtn = {
+  marginLeft: 8, background: '#0e1318', border: '1px solid #2b3845', color: '#9fb2c0',
+  padding: '0.1rem 0.5rem', fontFamily: 'inherit', fontSize: '0.68rem', borderRadius: 4, cursor: 'pointer',
+} as const;
+const miniBtnOn = {
+  ...miniBtn, background: '#1c2a18', border: '1px solid #4a6a3a', color: '#9ad6a8',
+} as const;
 
 const selectStyle = {
   background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473',

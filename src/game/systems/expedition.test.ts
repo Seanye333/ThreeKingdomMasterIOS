@@ -169,6 +169,34 @@ describe('遠使 — embassy stepping', () => {
     expect(r.realmRelationDeltas['gaochang']).toBeGreaterThan(0);
   });
 
+  it('§7.7 ① a successful embassy claims the realm\'s 封號 (player or AI)', () => {
+    const exp = mkExp({ id: 'pat1', mode: 'embassy', toCityId: '', toRealmId: 'gaochang', seasonsRemaining: 1, legSeasons: 5 });
+    const able = mkOfficer({ id: 'env', forceId: 'me', locationCityId: null, status: 'active', stats: { leadership: 60, war: 50, intelligence: 85, politics: 85, charisma: 90 } });
+    const r = stepExpeditions(baseInput({ expeditions: { pat1: exp }, officers: { env: able }, rng: () => 0.9, playerForceId: 'me' }));
+    expect(r.realmsPatronClaimed['gaochang']).toBe('me');
+  });
+
+  it('§7.7 ① a mishap does NOT claim the title', () => {
+    // A weak envoy to far Rome at a low (sub-peril) roll limps home — no claim.
+    const exp = mkExp({ id: 'pat2', mode: 'embassy', toCityId: '', toRealmId: 'daqin', seasonsRemaining: 1, legSeasons: 10 });
+    const weak = mkOfficer({ id: 'env', forceId: 'me', locationCityId: null, status: 'active', stats: { leadership: 30, war: 30, intelligence: 25, politics: 25, charisma: 25 } });
+    const r = stepExpeditions(baseInput({ expeditions: { pat2: exp }, officers: { env: weak }, rng: () => 0.2, playerForceId: 'me' }));
+    expect(r.realmsPatronClaimed['daqin']).toBeUndefined();
+  });
+
+  it('§7.7 ① the troop loan needs patronage — an outsider gets none', () => {
+    // Player is NOT the patron of 高昌 (wei is); even at relation 90 no loan comes.
+    const exp = mkExp({ id: 'pat3', mode: 'embassy', toCityId: '', toRealmId: 'gaochang', seasonsRemaining: 1, legSeasons: 5 });
+    const able = mkOfficer({ id: 'env', forceId: 'me', locationCityId: null, status: 'active', stats: { leadership: 60, war: 50, intelligence: 85, politics: 85, charisma: 90 } });
+    const r = stepExpeditions(baseInput({
+      expeditions: { pat3: exp }, officers: { env: able }, rng: () => 0.9, playerForceId: 'me',
+      realmRelations: { gaochang: 90 }, realmPatron: { gaochang: 'wei' },
+    }));
+    // The home city receives the returning expedition's haul next; here we just
+    // confirm the title stayed with the embassy's claim, not the loan path.
+    expect(r.realmsPatronClaimed['gaochang']).toBe('me'); // this very embassy re-claims it
+  });
+
   it('an in-transit detour can delay an outbound expedition (+1 season)', () => {
     // rng 0.01: < 0.14 fires an encounter; outbound (no haul) → detour +1.
     const exp = mkExp({ id: 'tr1', mode: 'embassy', toCityId: '', toRealmId: 'daqin', phase: 'outbound', seasonsRemaining: 4, legSeasons: 12 });

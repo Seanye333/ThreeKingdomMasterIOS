@@ -16,9 +16,17 @@ export interface ClanTickContext {
   /** Player realm — its stance is opt-in (undefined → 並用); AI realms derive a
    *  default from how clan-heavy they are, so 司馬代魏 can emerge unprompted. */
   playerForceId?: EntityId | null;
+  /** §7.8-deep E 門第聯姻 — clans bound by marriage (clanId → forceId). A clan
+   *  bound to its serving lord holds a loyalty floor and its strongmen are far
+   *  less apt to grow over-mighty. */
+  clanBonds?: Record<string, EntityId>;
   /** Deterministic seed (derive from the campaign date). */
   seed: number;
 }
+
+/** §7.8-deep E — loyalty a bound clan's scions will not drift below while they
+ *  serve the lord they married into. */
+const BOND_LOYALTY_FLOOR = 60;
 
 /**
  * Effective 門第政策 for a realm. The player's is exactly what they set (absent
@@ -128,6 +136,12 @@ export function tickClans(ctx: ClanTickContext): ClanTickResult {
         .filter((o): o is Officer => !!o && o.forceId === force.id && o.status !== 'dead' && o.status !== 'imprisoned');
       if (scions.length === 0) continue;
       const inf = clanInfluence(officers, force.id, clan.id, stance);
+      // §7.8-deep E 聯姻 — a clan married into this lord's house keeps faith:
+      // its scions hold a loyalty floor.
+      const bound = ctx.clanBonds?.[clan.id] === force.id;
+      if (bound) for (const o of scions) {
+        if (o.loyalty < BOND_LOYALTY_FLOOR) adjust(o.id, Math.min(2, BOND_LOYALTY_FLOOR - o.loyalty));
+      }
       const avgLoyalty = scions.reduce((s, o) => s + o.loyalty, 0) / scions.length;
 
       if (stance === 'meritocratic' && scions.length >= 2 && avgLoyalty < 40) {
@@ -138,8 +152,9 @@ export function tickClans(ctx: ClanTickContext): ClanTickResult {
         });
       }
 
-      if (stance === 'aristocratic' && inf >= 70) {
+      if (stance === 'aristocratic' && inf >= 70 && !bound) {
         // Over-mighty clan: its ablest low-loyalty scion gets a usurpation push.
+        // A clan bound by 聯姻 is exempt — kin of the ruling house don't usurp it.
         let strongman: Officer | null = null;
         for (const o of scions) {
           if (o.loyalty >= 45) continue;
@@ -184,6 +199,63 @@ export function stanceRecruitModifier(
     if (serving) bonus += clan.perk.recruitBonus;
   }
   return Math.min(0.3, bonus);
+}
+
+/** §7.8-deep — the serving scions of a clan under one lord (alive, not jailed). */
+export function clanScions(
+  officers: Record<EntityId, Officer>,
+  forceId: EntityId,
+  clanId: string,
+): Officer[] {
+  const clan = CLANS_BY_ID[clanId];
+  if (!clan) return [];
+  return clan.members
+    .map((id) => officers[id])
+    .filter((o): o is Officer => !!o && o.forceId === forceId && o.status !== 'dead' && o.status !== 'imprisoned');
+}
+
+/** Average loyalty across a clan's serving scions (0 if none serve). */
+export function clanCohesion(scions: Officer[]): number {
+  if (scions.length === 0) return 0;
+  return scions.reduce((s, o) => s + o.loyalty, 0) / scions.length;
+}
+
+/** §7.8-deep G 部曲莊園 — the private retainer troops a *content* clan fields at
+ *  its anchor city, from the martial weight of its serving scions. A clan whose
+ *  faith has cooled (avg loyalty < 50) withholds them (target 0). */
+export function clanLevyTarget(scions: Officer[]): number {
+  const avg = clanCohesion(scions);
+  if (scions.length === 0 || avg < 50) return 0;
+  // Each scion's retinue scales with his command; warmer faith fields more.
+  const base = scions.reduce((s, o) => s + 120 + o.stats.leadership * 14, 0);
+  return Math.round(base * Math.min(1.2, (avg - 40) / 50)); // avg 50→~0.2× … 90→1×
+}
+
+/** §7.8-deep H 舉族叛附 — per-season odds a disaffected serving clan defects en
+ *  masse. A clan bound by 聯姻 never does; otherwise deep, shared disaffection
+ *  (≥2 scions, low average loyalty) breeds wholesale betrayal. */
+export function clanDefectionChance(scions: Officer[], bound: boolean): number {
+  if (bound || scions.length < 2) return 0;
+  const avg = clanCohesion(scions);
+  if (avg >= 28) return 0;
+  return Math.min(0.35, (28 - avg) / 90); // avg 27→~0.01 … avg 0→0.31
+}
+
+/** §7.8-deep H 策反世族 — the player's chance to turn a rival's whole clan: their
+ *  cooler faith and your house's prestige open the door; the rival lord's hold
+ *  (his realm's pull) shuts it. Returns 0..~0.9. */
+export function clanSubvertChance(args: {
+  scions: Officer[];
+  myStandingTier: ClanStanding['tier'] | undefined;
+  spend: number; // gold offered (per 1000 ≈ +0.06, capped)
+}): number {
+  const { scions, myStandingTier, spend } = args;
+  if (scions.length === 0) return 0;
+  const avg = clanCohesion(scions);
+  const disaffection = Math.max(0, (60 - avg) / 100); // loyal clans (>60) won't turn
+  const prestige = myStandingTier === 'great' ? 0.18 : myStandingTier === 'gentry' ? 0.09 : 0;
+  const coin = Math.min(0.24, spend / 1000 * 0.06);
+  return Math.max(0, Math.min(0.9, disaffection + prestige + coin));
 }
 
 // ─── 家門聲望 — cross-generation prestige layered on the curated identity ──────
