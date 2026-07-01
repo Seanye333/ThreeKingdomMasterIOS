@@ -250,10 +250,23 @@ export function resolveAISchemes(ctx: AISchemeContext): AISchemeOutput {
       const dupes = plan.b ? [plan.a, plan.b] : [plan.a];
       for (const d of dupes) setRel(d, force.id, -12);
       const sawThrough = playerForceId != null && dupes.includes(playerForceId);
+      // 將計就計 (§7.2-2) — a plot aimed at YOU, once seen through, can be turned
+      // back on its author: a sharp court makes the schemer pay for the attempt
+      // (extra ill-will) and hands you a casus belli to punish the treachery.
+      const counterIQ = playerForceId ? (pickAdvisor(officers, playerForceId)?.stats.intelligence ?? 50) : 0;
+      const turned = sawThrough && playerForceId != null && rng() < 0.3 + counterIQ / 300;
+      if (turned && playerForceId) {
+        setRel(force.id, playerForceId, -14);
+        marks.push({ byForceId: playerForceId, targetForceId: force.id, expiresYear: date.year + 2, expiresSeason: date.season });
+      }
       entries.push({
         cityId: null, kind: 'note',
-        text: `${fnameEn(force.id)}'s plot is exposed — ${dupes.map(fnameEn).join(' & ')} turn cold toward it${sawThrough ? ' (you see through the scheme)' : ''}.`,
-        textZh: `${fname(force.id)}之計敗露，${dupes.map(fname).join('、')}識破而疏之${sawThrough ? '（汝已識破其謀）' : ''}。`,
+        text: turned
+          ? `${fnameEn(force.id)}'s plot against you is turned back on its author (將計就計) — you gain a casus belli.`
+          : `${fnameEn(force.id)}'s plot is exposed — ${dupes.map(fnameEn).join(' & ')} turn cold toward it${sawThrough ? ' (you see through the scheme)' : ''}.`,
+        textZh: turned
+          ? `${fname(force.id)}謀我之計為我識破,將計就計反施其身 —— 汝得討伐其之名。`
+          : `${fname(force.id)}之計敗露，${dupes.map(fname).join('、')}識破而疏之${sawThrough ? '（汝已識破其謀）' : ''}。`,
       });
     }
   }

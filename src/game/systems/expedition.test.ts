@@ -271,3 +271,65 @@ describe('§7.6 new modes', () => {
     expect(r.officers['guard'].locationCityId).toBe('home');
   });
 });
+
+describe('§7.6 再深化 — 尋寶 / 游學 / 微服 / 奇遇', () => {
+  const able = () => mkOfficer({ id: 'env', forceId: 'me', locationCityId: null, status: 'active', stats: { leadership: 60, war: 80, intelligence: 85, politics: 70, charisma: 70 } });
+
+  it('Z 尋寶 — a clean hunt banks a treasure/gold haul', () => {
+    const r = stepExpeditions(baseInput({
+      expeditions: { e1: mkExp({ mode: 'treasure', seasonsRemaining: 1 }) },
+      officers: { env: able() }, rng: () => 0.9, // dodge peril, then roll rewards
+    }));
+    // Turned for home carrying something (an item or gold).
+    const haul = r.expeditions.e1.haul;
+    expect(haul && (haul.itemId || (haul.gold ?? 0) > 0)).toBeTruthy();
+  });
+
+  it('Z 尋寶 — a deep-peril site can bury a weak seeker', () => {
+    const weak = mkOfficer({ id: 'env', forceId: 'me', locationCityId: null, status: 'active', stats: { leadership: 20, war: 20, intelligence: 20, politics: 20, charisma: 20 } });
+    const r = stepExpeditions(baseInput({
+      expeditions: { e1: mkExp({ mode: 'treasure', seasonsRemaining: 1 }) },
+      officers: { env: weak }, rng: () => 0.001, // certain catastrophe
+    }));
+    expect(r.officers['env'].status).toBe('dead');
+  });
+
+  it('AA 游學 — the officer comes home sharper (statGain applied)', () => {
+    const start = able();
+    const r = stepExpeditions(baseInput({
+      // returning leg completes → homecoming applies the statGain
+      expeditions: { e1: mkExp({ mode: 'study', phase: 'returning', seasonsRemaining: 1, haul: { statGain: { stat: 'intelligence', amount: 2 }, note: 'x', noteZh: 'x' } }) },
+      officers: { env: start },
+      cities: { home: mkCity('home', { ownerForceId: 'me' }), far: mkCity('far', { ownerForceId: 'wei' }) },
+    }));
+    expect(r.officers['env'].stats.intelligence).toBeGreaterThanOrEqual(start.stats.intelligence + 2);
+  });
+
+  it('AA 游學 — arriving at a cultured city yields a statGain haul', () => {
+    const r = stepExpeditions(baseInput({
+      expeditions: { e1: mkExp({ mode: 'study', seasonsRemaining: 1 }) },
+      cities: { home: mkCity('home'), far: mkCity('far', { ownerForceId: 'me', commerce: 90 }) },
+      officers: { env: able() }, rng: () => 0.3,
+    }));
+    expect(r.expeditions.e1.haul?.statGain?.amount).toBeGreaterThan(0);
+  });
+
+  it('AB 微服 — touring your own city in disguise lifts its loyalty', () => {
+    const r = stepExpeditions(baseInput({
+      expeditions: { e1: mkExp({ mode: 'incognito', seasonsRemaining: 1 }) },
+      cities: { home: mkCity('home'), far: mkCity('far', { ownerForceId: 'me', loyalty: 40 }) },
+      officers: { env: able() }, rng: () => 0.5,
+    }));
+    expect(r.cities.far.loyalty).toBeGreaterThan(40);
+  });
+
+  it('AB 微服 — abroad it is a scouting run (lights enemy intel)', () => {
+    const r = stepExpeditions(baseInput({
+      expeditions: { e1: mkExp({ mode: 'incognito', seasonsRemaining: 1 }) },
+      cities: { home: mkCity('home'), far: mkCity('far', { ownerForceId: 'wei' }) },
+      officers: { env: able() }, rng: () => 0.99, // dodge the discovery roll
+      playerForceId: 'me',
+    }));
+    expect(r.espionageReveals['far'] ?? 0).toBeGreaterThan(0);
+  });
+});

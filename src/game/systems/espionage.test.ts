@@ -214,3 +214,64 @@ describe('離間計 — sow discord between two enemy officers', () => {
     expect((out.runtimeBonds ?? [bond]).some((b) => b.kind === 'sibling')).toBe(true);
   });
 });
+
+describe('§7.3 再深化 — 流言 / 死士 / 細作網絡', () => {
+  const mk = (id: string, over: Partial<Officer> = {}): Officer => ({
+    id, name: { zh: id, en: id }, forceId: 'enemy', status: 'idle',
+    stats: { war: 50, leadership: 50, intelligence: 80, politics: 50, charisma: 50 },
+    loyalty: 80, traits: [], ...over,
+  } as unknown as Officer);
+  const city = (id: string, over: Record<string, unknown> = {}) => ({
+    id, name: { zh: id, en: id }, ownerForceId: 'enemy', loyalty: 60, gold: 500, food: 500, troops: 3000,
+    adjacentCityIds: [], ...over,
+  } as never);
+
+  it('V 流言惑眾 — a successful rumour saps the city\'s 民心', () => {
+    const out = resolveEspionage({
+      ops: [{ id: 'r1', kind: 'spread-rumor', agentOfficerId: 'spy', targetForceId: 'enemy', targetCityId: 'c1', issuedYear: 200, issuedSeason: 'spring' }],
+      cities: { c1: city('c1', { loyalty: 60 }) },
+      officers: { spy: mk('spy', { forceId: 'me', stats: { war: 50, leadership: 50, intelligence: 90, politics: 50, charisma: 50 } as Officer['stats'] }) },
+      playerForceId: 'me', rng: () => 0.0, buildings: [],
+    });
+    expect(out.results[0].success).toBe(true);
+    expect(out.cities.c1.loyalty).toBeLessThan(60);
+  });
+
+  it('W 死士 — the agent dies and a caught 死士 leaves no grudge', () => {
+    const base = {
+      cities: {}, officers: {
+        spy: mk('spy', { forceId: 'me', stats: { war: 50, leadership: 50, intelligence: 60, politics: 50, charisma: 50 } as Officer['stats'] }),
+        lord: mk('lord', { forceId: 'enemy' }),
+      }, playerForceId: 'me', buildings: [] as never[],
+    };
+    // Failure (rng high): a 死士 leaves no traced-back grudge, and dies anyway.
+    const failed = resolveEspionage({ ...base, ops: [{ id: 'a1', kind: 'assassinate', agentOfficerId: 'spy', targetForceId: 'enemy', targetOfficerId: 'lord', deathAgent: true, issuedYear: 200, issuedSeason: 'spring' }], rng: () => 0.99 });
+    expect(failed.results[0].success).toBe(false);
+    expect(failed.grudgeDelta['enemy']).toBeUndefined(); // 死士 gives nothing up
+    expect(failed.officers['spy'].status).toBe('dead');   // spent
+  });
+
+  it('W 死士 — the +25% boost lifts a marginal op over the line', () => {
+    const mkArgs = (deathAgent: boolean) => ({
+      ops: [{ id: 's1', kind: 'sabotage' as const, agentOfficerId: 'spy', targetForceId: 'enemy', targetCityId: 'c1', ...(deathAgent ? { deathAgent: true } : {}), issuedYear: 200, issuedSeason: 'spring' as const }],
+      cities: { c1: city('c1') },
+      officers: { spy: mk('spy', { forceId: 'me', stats: { war: 50, leadership: 50, intelligence: 60, politics: 50, charisma: 50 } as Officer['stats'] }) },
+      playerForceId: 'me', rng: () => 0.5, buildings: [] as never[],
+    });
+    // At rng 0.5, base sabotage (~0.33) fails but the 死士 boost (+0.25) clears it.
+    expect(resolveEspionage(mkArgs(false)).results[0].success).toBe(false);
+    expect(resolveEspionage(mkArgs(true)).results[0].success).toBe(true);
+  });
+
+  it('U 細作網絡 — a deep network sharpens an op against that realm', () => {
+    const mkArgs = (network: number) => ({
+      ops: [{ id: 'i1', kind: 'instigate' as const, agentOfficerId: 'spy', targetForceId: 'enemy', targetCityId: 'c1', issuedYear: 200, issuedSeason: 'spring' as const }],
+      cities: { c1: city('c1') },
+      officers: { spy: mk('spy', { forceId: 'me', stats: { war: 50, leadership: 50, intelligence: 70, politics: 50, charisma: 50 } as Officer['stats'] }) },
+      playerForceId: 'me', rng: () => 0.5, buildings: [] as never[], spyNetwork: { enemy: network },
+    });
+    // instigate base ~0.36 at rng 0.5 fails; a full network (+0.25) clears it.
+    expect(resolveEspionage(mkArgs(0)).results[0].success).toBe(false);
+    expect(resolveEspionage(mkArgs(100)).results[0].success).toBe(true);
+  });
+});

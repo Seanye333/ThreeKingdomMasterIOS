@@ -101,6 +101,16 @@ export const ESPIONAGE_DEFS: EspionageDef[] = [
     targetsOfficer: true,
     baseSuccess: 0.35,
   },
+  {
+    kind: 'spread-rumor',
+    name: { en: 'Spread Rumours', zh: '流言惑眾' },
+    description: 'Loose rumours in an enemy city (三人成虎): its 民心 sinks, and the whispers spread to neighbouring cities season by season.',
+    descriptionZh: "於敵城散布流言(三人成虎):其民心日蝕,且謠言逐季蔓延及鄰城。",
+    goldCost: 220,
+    minIntelligence: 68,
+    targetsOfficer: false,
+    baseSuccess: 0.6,
+  },
 ];
 
 export const ESPIONAGE_DEFS_BY_KIND: Record<string, EspionageDef> =

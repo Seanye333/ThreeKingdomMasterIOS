@@ -32,7 +32,10 @@ export type SchemeId =
   | 'sow-chaos'
   | 'feign-strength'
   | 'loot-fire'
-  | 'chain-link';
+  | 'chain-link'
+  | 'imperial-edict' // 假詔討賊 — hold the 天子: command a rival to attack another (§7.2-2)
+  | 'feign-defeat'   // 詐敗誘敵 — feign weakness to bait a bordering rival into a rash war
+  | 'fabricate';     // 無中生有 — conjure a false threat: cow a rival and sour it on its ally
 
 export interface SchemeDef {
   id: SchemeId;
@@ -54,6 +57,9 @@ export const SCHEME_DEFS: SchemeDef[] = [
   { id: 'feign-strength', zh: '疑兵之計', en: 'Feign Strength', hintZh: '虛張聲勢,使接壤強鄰數季不敢來犯', hintEn: 'Bluff strength to cow a bordering rival into not attacking you for a while.', goldCost: 400, targets: 1 },
   { id: 'loot-fire', zh: '趁火打劫', en: 'Loot the Burning House', hintZh: '乘敵內外交困,得討伐之名而擊之', hintEn: 'When a rival is embroiled (unrest or a war elsewhere), take a casus belli against it.', goldCost: 400, targets: 1 },
   { id: 'chain-link', zh: '連環計', en: 'Chain Stratagem', hintZh: '一計連環 — 破甲乙之盟,並驅甲攻乙(需上智之謀,所費不貲)', hintEn: 'Chain two plots: shatter A & B’s pact AND goad A to war with B. Needs a brilliant mind; costly.', goldCost: 1200, targets: 2 },
+  { id: 'imperial-edict', zh: '假詔討賊', en: 'Forged Imperial Edict', hintZh: '挾天子者:假詔命甲討乙 — 奉詔之名,甲乙大惡且甲得討伐之名(須挾天子)', hintEn: 'With the Son of Heaven in hand: forge an edict sending A to war on B — A gains a righteous casus belli.', goldCost: 700, targets: 2 },
+  { id: 'feign-defeat', zh: '詐敗誘敵', en: 'Feign Defeat', hintZh: '詐示虛弱,驕接壤強鄰之心 — 予我討伐其之名、以逸待勞', hintEn: 'Feign weakness to make a bordering rival overconfident — it covets your land, handing YOU a casus belli.', goldCost: 450, targets: 1 },
+  { id: 'fabricate', zh: '無中生有', en: 'Conjure Threat', hintZh: '偽造盟軍/大兵之虛 — 使一國疑我有備而不敢犯,且疑其盟友', hintEn: 'Conjure a false alliance/army: cow a rival into holding off, and sour it on its own ally.', goldCost: 500, targets: 1 },
 ];
 
 /** Do two forces share a border (any adjacent city pair)? */
@@ -107,6 +113,9 @@ export function schemeOdds(
   if (scheme === 'far-friend') return fin(0.55 + iq / 300); // overt courtship — but resistance still applies
   if (scheme === 'sow-chaos') return fin(0.35 + iq / 300, 0.05, 0.9);
   if (scheme === 'feign-strength') return fin(0.45 + iq / 280);
+  if (scheme === 'feign-defeat') return fin(0.45 + iq / 280); // 驕兵之計 — as easy to bait as to cow
+  if (scheme === 'fabricate') return fin(0.4 + iq / 280);
+  if (scheme === 'imperial-edict') return fin(0.5 + iq / 260); // 天子之命,難拒 — the edict carries weight
   if (scheme === 'loot-fire') return fin(0.5 + iq / 300);
   if (scheme === 'chain-link') {
     // An ambitious double-plot: hard, and dearly bought; needs a brilliant mind.
@@ -163,10 +172,15 @@ export function validateScheme(
     if (forcesAdjacent(cities, playerForceId, a)) return ZH_EN.adjacent;
     return null;
   }
-  if (scheme === 'sow-chaos') return null; // any rival realm
-  if (scheme === 'feign-strength') {
+  if (scheme === 'sow-chaos' || scheme === 'fabricate') return null; // any rival realm
+  if (scheme === 'feign-strength' || scheme === 'feign-defeat') {
     if (!forcesAdjacent(cities, playerForceId, a)) return ZH_EN.notAdjacentPlayer;
     return null;
+  }
+  if (scheme === 'imperial-edict') {
+    // 奉詔討賊 — command A to war on B; the 天子 speaks from afar (no adjacency).
+    if (!b || a === b) return ZH_EN.twoDistinct;
+    return null; // the 挾天子 requirement is checked in the store (it holds the emperor state)
   }
   if (scheme === 'loot-fire') {
     if (diplomacy && !forceEmbroiled(cities, diplomacy, a, playerForceId)) return ZH_EN.notEmbroiled;

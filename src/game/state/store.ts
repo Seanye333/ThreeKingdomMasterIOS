@@ -143,6 +143,8 @@ import { planGovernorCommand, governorMisruleEffect } from '../systems/governor'
 import { planLegionOrders, planLegionLogistics, legionBannerBonus, type Legion } from '../systems/legion';
 import { buyQuote, sellQuote, borderTariff, buyHorses, sellHorses, WARHORSE_CITY_CAP, buyIron, sellIron, IRON_CITY_CAP, MEDICINE_CITY_CAP, IRON_FORGE_COST, FORGE_IRON_DISCOUNT } from '../systems/market';
 import { EDICT_DISCOUNT, EMPEROR_HOME, MANDATE_PER_SEASON, RESENTMENT_PER_SEASON, canWelcomeEmperor, emperorCustodian } from '../systems/emperor';
+import { isMinorRuler, pickRegent, regentAmbitionBoost, consortAmbitionBoost, orthodoxyScore, isProclaimed } from '../systems/imperialCourt';
+import { LADDER_STAGES, LADDER_TOP, overmightyMinister, ladderAdvanceChance, cabalCandidates, righteousReason } from '../systems/usurpation';
 import { commonerArrivalCity, generateCommonerOfficer, lordTalentDraw, commonerArrivalChance } from '../systems/commonerTalent';
 import { rollRecommendations } from '../systems/recommendation';
 import { codexMarkRecruited, codexMarkRecruitedMany, codexMarkSeen, codexMarkSlain } from '../systems/codex';
@@ -912,7 +914,12 @@ interface GameStore extends GameState {
     targetCityId?: EntityId,
     targetOfficerId?: EntityId,
     targetOfficerId2?: EntityId,
+    deathAgent?: boolean,
   ) => { ok: boolean; reason?: string };
+  /** §7.3-deep X 繡衣校事 — seat (or clear, with null) the intelligence bureau at
+   *  a held city: while it stands it runs a free scouting op each season and
+   *  stiffens counter-intel. */
+  designateSpyBureau: (cityId: EntityId | null) => { ok: boolean; reason?: string };
   cancelEspionage: (opId: EntityId) => void;
   /** 潛伏 — plant one of your officers as a persistent spy in an enemy city. */
   plantSpy: (agentOfficerId: EntityId, targetCityId: EntityId) => { ok: boolean; reason?: string };
@@ -943,6 +950,29 @@ interface GameStore extends GameState {
   /** 黨錮 — purge a court faction (§7.4 ①): its members' loyalty craters and the
    *  Mandate dips, but a purged capable officer may defect in fury. */
   purgeFaction: (faction: import('../systems/courtFactions').FactionId) => { ok: boolean; message: string };
+  /** §7.4-deep N 外戚干政 — raise an officer's kin as consort-kin (立后納妃): he
+   *  and his house grow loyal and lend the court a standing hand. */
+  elevateConsort: (officerId: EntityId) => { ok: boolean; reason?: string };
+  /** §7.4-deep O 賣官鬻爵 — the inner court sells offices for coin (needs the 天子
+   *  and a strong 學官): quick gold, but 民心 and 清流 pay for it. */
+  sellOffices: () => { ok: boolean; reason?: string };
+  /** §7.4-deep O 盡誅學官 — purge the inner court (袁紹之舉): resets 學官 power, a
+   *  one-off shock — 清流 rejoice, the 學官 fall, the palace reels. */
+  purgeEunuchs: () => { ok: boolean; reason?: string };
+  /** §7.4-deep P 改元 — a sovereign proclaims a new era, swelling the Mandate
+   *  (on a cooldown). */
+  declareNewEra: (eraName: string) => { ok: boolean; reason?: string };
+  /** §7.5-deep T 翦除肘腋 — move against an over-mighty minister climbing toward
+   *  your throne: scatter his 心腹黨羽 and knock him down a rung. Costs coin and
+   *  risks provoking a premature revolt. */
+  curbUsurper: () => { ok: boolean; reason?: string };
+  /** §7.5-deep R 清君側 — raise a righteous banner against a realm that invites
+   *  one (a usurper / tyrant / runaway inner court): gain a 討逆 casus belli. */
+  raiseRighteousBanner: (targetForceId: EntityId) => { ok: boolean; reason?: string };
+  /** §7.5-deep S 納流亡客將 — shelter a deposed lord wandering in exile: he and a
+   *  few faithful followers enter your service — but a sheltered claimant may one
+   *  day turn on his host (鳩占鵲巢). */
+  shelterExile: (officerId: EntityId) => { ok: boolean; reason?: string };
   setSoundEnabled: (enabled: boolean) => void;
   setMusicTrack: (track: string | null) => void;
   setLanguage: (lang: 'zh' | 'en' | 'both') => void;
@@ -2082,6 +2112,10 @@ export const useGameStore = create<GameStore>()(
           return { ok: false, message: `國庫不足(需${def.goldCost}金於首都)` };
         const bad = validateScheme(schemeId, state.cities, state.playerForceId, targetA, targetB, state.diplomacy);
         if (bad) return { ok: false, message: bad };
+        // §7.2-2 假詔討賊 — only the custodian of the 天子 may forge his edicts.
+        if (schemeId === 'imperial-edict' && emperorCustodian(state.cities, state.emperorCityId ?? null) !== state.playerForceId) {
+          return { ok: false, message: '須挾天子方可假詔討賊。' };
+        }
         const strategist = pickAdvisor(state.officers, state.playerForceId, state.appointments);
         const strategistIQ = strategist?.stats.intelligence ?? 50;
         // 抗謀 — the target realm's sharpest counsel resists the ploy.
@@ -2123,6 +2157,7 @@ export const useGameStore = create<GameStore>()(
         let message = '';
         let citiesOut = cities;
         const deterrences = [...(state.deterrences ?? [])];
+        let mandateOut = state.mandate; // §7.2-2 假詔討賊 may lift the player's 天命
         const fname = (id: EntityId) => state.forces[id]?.name.zh ?? id;
         if (schemeId === 'far-friend') {
           drop(state.playerForceId, targetA, +25);
@@ -2164,6 +2199,34 @@ export const useGameStore = create<GameStore>()(
           // 趁火打劫 — take a casus belli against the embroiled rival (+10% combat, 師出有名).
           marks.push({ byForceId: state.playerForceId, targetForceId: targetA, expiresYear: state.date.year + 2, expiresSeason: seasonNow });
           message = `趁火打劫得售 — 得討伐${fname(targetA)}之名,可乘其危而擊。`;
+        } else if (schemeId === 'imperial-edict') {
+          // 假詔討賊 — the forged edict sends A to war on B; wielding the 天子's
+          // name lifts the player's own Mandate a touch.
+          drop(targetA, targetB!, -60);
+          marks.push({ byForceId: targetA, targetForceId: targetB!, expiresYear: state.date.year + 2, expiresSeason: seasonNow });
+          if (state.playerForceId) mandateOut = { ...mandateOut, byForce: { ...mandateOut.byForce, [state.playerForceId]: Math.max(0, Math.min(100, (mandateOut.byForce[state.playerForceId] ?? 50) + 3)) } };
+          message = `假詔討賊得售 — 矯天子詔命${fname(targetA)}討${fname(targetB!)},奉詔之名既立,二家大惡(天命 +3)。`;
+        } else if (schemeId === 'feign-defeat') {
+          // 詐敗誘敵 — the rival, thinking you weak, grows covetous: it sours toward
+          // you (an aggressor), handing YOU the casus belli to punish its rashness.
+          drop(state.playerForceId, targetA, -15);
+          marks.push({ byForceId: state.playerForceId, targetForceId: targetA, expiresYear: state.date.year + 2, expiresSeason: seasonNow });
+          message = `詐敗誘敵得售 — ${fname(targetA)}疑我虛弱,覬覦之心既萌,反予我討伐之名,可以逸待勞。`;
+        } else if (schemeId === 'fabricate') {
+          // 無中生有 — a conjured host cows the rival (holds off ~1.5y) and a forged
+          // pact-of-betrayal sours it on its strongest ally.
+          deterrences.push({ byForceId: state.playerForceId, targetForceId: targetA, expiresYear: state.date.year + 2, expiresSeason: seasonNow });
+          let ally: EntityId | null = null; let allyScore = 20;
+          for (const rel of Object.values(state.diplomacy.relations)) {
+            if (rel.status !== 'allied' && rel.status !== 'non-aggression') continue;
+            const other = rel.forceA === targetA ? rel.forceB : rel.forceB === targetA ? rel.forceA : null;
+            if (!other || other === state.playerForceId) continue;
+            if (rel.score > allyScore) { allyScore = rel.score; ally = other; }
+          }
+          if (ally) drop(targetA, ally, -25);
+          message = ally
+            ? `無中生有得售 — ${fname(targetA)}疑我有備而不敢犯,且疑其盟友${fname(ally)}生二心。`
+            : `無中生有得售 — ${fname(targetA)}疑我暗蓄大兵,數季不敢來犯。`;
         } else {
           // 連環計 — chain two plots: break A & B's pact AND drive A to war with B.
           const key = pairKey(targetA, targetB!);
@@ -2176,7 +2239,7 @@ export const useGameStore = create<GameStore>()(
         if (Math.random() < schemeExposureChance(schemeId, true, strategistIQ)) {
           message += applyExposure();
         }
-        set({ cities: citiesOut, diplomacy: { ...state.diplomacy, relations }, grudges, casusBelliMarks: marks, deterrences });
+        set({ cities: citiesOut, diplomacy: { ...state.diplomacy, relations }, grudges, casusBelliMarks: marks, deterrences, mandate: mandateOut });
         // 謀略獻策 — the 軍師's stratagem lands.
         get().pushPopup({
           key: 'advisor-scheme', media: 'image',
@@ -3643,6 +3706,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           runtimeBonds: planned.runtimeBonds,
           diplomacy: planned.diplomacy ?? state.diplomacy,
           forces: result.forces,
+          spyNetwork: state.spyNetwork,
         });
         // Free agents.
         for (const o of Object.values(espResult.officers)) {
@@ -6284,6 +6348,224 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // ── §7.4 帝室朝政再深化 — 太后臨朝(M)/外戚(N)/學官(O)/正統(P) ──────────
+        const nextConsortKin = { ...(state.consortKin ?? {}) };
+        const nextEunuchPower = { ...(state.eunuchPower ?? {}) };
+        const nextRegencies = { ...(state.regencies ?? {}) };
+        const courtPatches: Record<string, Officer> = {};
+        if (seasonBoundary) {
+          const yr = result.date.year;
+          const custodian = emperorCustodian(postCities, state.emperorCityId ?? null);
+          // M 太后臨朝·幼主輔政 — form/maintain a regency for a minor ruler.
+          for (const force of Object.values(postForces)) {
+            const reg = nextRegencies[force.id];
+            if (isMinorRuler(force, postOfficers, yr)) {
+              if (!reg) {
+                const regent = pickRegent(force, postOfficers, yr);
+                if (regent) {
+                  nextRegencies[force.id] = { regentId: regent.id, sinceYear: yr };
+                  if (force.id === pfid7) result.report.entries.push({ cityId: force.capitalCityId, kind: 'note', text: `${postOfficers[force.rulerOfficerId]?.name.en ?? 'A child'} takes the throne young — ${regent.name.en} governs as regent (輔政).`, textZh: `幼主${postOfficers[force.rulerOfficerId]?.name.zh ?? ''}即位,${regent.name.zh}輔政秉國(太后臨朝)。` });
+                }
+              }
+            } else if (reg) {
+              // 親政 — the ruler has come of age; the regency ends.
+              delete nextRegencies[force.id];
+              if (force.id === pfid7) {
+                const m = { ...nextMandate.byForce }; m[force.id] = Math.max(0, Math.min(100, (m[force.id] ?? 50) + 3));
+                nextMandate = { ...nextMandate, byForce: m };
+                result.report.entries.push({ cityId: force.capitalCityId, kind: 'note', text: `${postOfficers[force.rulerOfficerId]?.name.en ?? 'The ruler'} comes of age and assumes personal rule (親政).`, textZh: `${postOfficers[force.rulerOfficerId]?.name.zh ?? '主公'}既冠,收權親政(天命 +3)。` });
+              }
+            }
+            // A settled regent steadies the realm — or, able and disloyal, strains it.
+            const active = nextRegencies[force.id];
+            if (active && force.id === pfid7) {
+              const regent = postOfficers[active.regentId];
+              const boost = regentAmbitionBoost(regent);
+              if (boost > 0.02 && Math.random() < 0.25) result.report.entries.push({ cityId: force.capitalCityId, kind: 'note', text: `Regent ${regent?.name.en} eclipses the young throne — the court murmurs of a 權臣.`, textZh: `輔政${regent?.name.zh}權傾幼主,朝野側目,恐成權臣。` });
+            }
+          }
+
+          // N 外戚干政 — the consort-kin lend a hand; an over-mighty one strains the throne.
+          for (const [fid, anchorId] of Object.entries(nextConsortKin)) {
+            const anchor = postOfficers[anchorId];
+            if (!anchor || anchor.status === 'dead' || anchor.forceId !== fid) { delete nextConsortKin[fid]; continue; }
+            if (fid !== pfid7) continue;
+            const cap = postForces[fid]?.capitalCityId;
+            if (cap && postCities[cap]?.ownerForceId === fid) postCities = { ...postCities, [cap]: { ...postCities[cap], gold: postCities[cap].gold + 120 } };
+            if (consortAmbitionBoost(anchor) > 0.02 && Math.random() < 0.2) result.report.entries.push({ cityId: cap ?? null, kind: 'note', text: `The consort-kin ${anchor.name.en} grows over-mighty (外戚專權).`, textZh: `國舅${anchor.name.zh}權勢日盛,外戚干政之患漸起。` });
+          }
+
+          // O 學官專權 — in the realm that holds the 天子, the inner court waxes/wanes.
+          if (custodian) {
+            let power = nextEunuchPower[custodian] ?? 0;
+            const eunuchPatron = custodian === pfid7 && state.courtPatronage === 'eunuch';
+            power = Math.max(0, Math.min(100, power + (eunuchPatron ? 5 : -3)));
+            nextEunuchPower[custodian] = power;
+            // 亂政 — a strong inner court drives off 清流 and unsettles the capital.
+            if (power >= 60 && custodian === pfid7) {
+              const clanW = clanGentryWeight(postOfficers, state.clanStandings ?? {});
+              const list = deriveCourtFactions(postOfficers, clanW)[custodian] ?? [];
+              for (const f of list) if (f.faction === 'reformer' || f.faction === 'gentry') {
+                const o = courtPatches[f.officerId] ?? postOfficers[f.officerId];
+                if (o && o.status !== 'dead') courtPatches[f.officerId] = { ...o, loyalty: Math.max(0, o.loyalty - 1) };
+              }
+              const cap = postForces[custodian]?.capitalCityId;
+              if (cap && postCities[cap]?.ownerForceId === custodian) postCities = { ...postCities, [cap]: { ...postCities[cap], loyalty: Math.max(0, postCities[cap].loyalty - 1) } };
+            }
+          }
+
+          // P 正統之爭 — when rival emperors stand, the higher legitimacy draws heaven.
+          const emperors = Object.values(postForces).filter((f) => isProclaimed(f));
+          if (emperors.length >= 2) {
+            const scored = emperors.map((f) => ({
+              f, s: orthodoxyScore({ force: f, mandate: nextMandate, holdsEmperor: custodian === f.id, cityCount: Object.values(postCities).filter((c) => c.ownerForceId === f.id).length, year: yr }),
+            })).sort((a, b) => b.s - a.s);
+            const top = scored[0];
+            const m = { ...nextMandate.byForce };
+            for (let i = 0; i < scored.length; i++) {
+              const { f } = scored[i];
+              const delta = i === 0 ? 2 : -1; // the orthodox line gains, pretenders bleed
+              m[f.id] = Math.max(0, Math.min(100, (m[f.id] ?? 50) + delta));
+            }
+            nextMandate = { ...nextMandate, byForce: m };
+            if (top.f.id === pfid7 && Math.random() < 0.25) result.report.entries.push({ cityId: postForces[pfid7]?.capitalCityId ?? null, kind: 'note', text: `Your line is held the orthodox succession — Heaven's favour flows to you over the pretenders.`, textZh: `正朔在我,天命歸心,僭偽之君莫能與爭。` });
+          }
+        }
+
+        // ── §7.5 禪代之階再深化 — 權臣逼宮(Q)/心腹黨羽(T)/清君側(R)/流亡(S) ──────
+        const nextUsurpLadder = { ...(state.usurpLadder ?? {}) };
+        const nextExiledLords = { ...(state.exiledLords ?? {}) };
+        const nextRighteousTargets: Record<string, { reasonZh: string; reasonEn: string }> = {};
+        if (seasonBoundary) {
+          const yr = result.date.year;
+          // Q/T 禪代之階 — an over-mighty minister climbs toward the PLAYER's throne
+          // (ambition.ts already usurps AI lords; the player was immune — no longer).
+          if (pfid7) {
+            const pForce = postForces[pfid7];
+            const existing = nextUsurpLadder[pfid7];
+            const minister = pForce ? overmightyMinister(pForce, postOfficers, yr) : null;
+            if (!minister || (existing && existing.officerId !== minister.id)) {
+              // the danger has passed (or shifted) — the old climb lapses
+              if (existing && (!minister || existing.officerId !== minister.id)) delete nextUsurpLadder[pfid7];
+            }
+            if (minister && pForce) {
+              const cur = nextUsurpLadder[pfid7] ?? { officerId: minister.id, stage: 0, sinceYear: yr, cabal: [] as string[] };
+              // T 心腹黨羽 — the cabal gathers over time.
+              if (cur.cabal.length < 4 && Math.random() < 0.5) {
+                const cands = cabalCandidates(minister, postOfficers, 4).filter((id) => !cur.cabal.includes(id));
+                if (cands[0]) cur.cabal = [...cur.cabal, cands[0]];
+              }
+              const ruler = postOfficers[pForce.rulerOfficerId];
+              const climb = ladderAdvanceChance(minister, ruler, cur.cabal.length);
+              const wasStage = cur.stage;
+              if (Math.random() < climb) cur.stage = Math.min(LADDER_TOP, cur.stage + 1);
+              nextUsurpLadder[pfid7] = cur;
+              if (cur.stage > wasStage) {
+                const st = LADDER_STAGES[cur.stage];
+                result.report.entries.push({ cityId: pForce.capitalCityId, kind: 'note', text: `${minister.name.en} ${st.blurbEn} (${st.en}). Check him — 翦除肘腋 — before he reaches the throne.`, textZh: `${minister.name.zh}${st.blurbZh}(${st.zh})。宜速翦除肘腋,毋令登鼎。` });
+              }
+              // 受禪 — the ladder's top: the dynasty changes hands under the player.
+              if (cur.stage >= LADDER_TOP) {
+                const oldRuler = postOfficers[pForce.rulerOfficerId];
+                if (oldRuler) {
+                  courtPatches[oldRuler.id] = { ...oldRuler, forceId: null, status: 'idle', task: null, loyalty: 50, locationCityId: pForce.capitalCityId };
+                  nextExiledLords[oldRuler.id] = { formerForceId: pfid7, formerNameZh: pForce.name.zh, formerNameEn: pForce.name.en, sinceYear: yr };
+                }
+                courtPatches[minister.id] = { ...minister, loyalty: 100, grievanceCount: 0, task: null };
+                postForces = { ...postForces, [pfid7]: { ...pForce, rulerOfficerId: minister.id } };
+                const m = { ...nextMandate.byForce }; m[pfid7] = Math.max(0, (m[pfid7] ?? 50) - 15);
+                nextMandate = { ...nextMandate, byForce: m };
+                delete nextUsurpLadder[pfid7];
+                result.report.entries.push({ cityId: pForce.capitalCityId, kind: 'rebellion', text: `${minister.name.en} receives the abdication — your dynasty falls; the realm is now his line. (mandate −15)`, textZh: `${minister.name.zh}受禪代立!神器易主,${pForce.name.zh}江山已改姓(天命 −15)。` });
+              }
+            }
+          }
+
+          // S 流亡君主 — lords deposed this season (by usurpation/conquest) wander in exile.
+          for (const [prevFid, prevForce] of Object.entries(state.forces)) {
+            const rid = prevForce.rulerOfficerId;
+            const now = postOfficers[rid];
+            if (!now || now.status === 'dead') continue;
+            const stillRulesSomewhere = Object.values(postForces).some((f) => f.rulerOfficerId === rid);
+            if (now.forceId == null && !stillRulesSomewhere && !nextExiledLords[rid]) {
+              nextExiledLords[rid] = { formerForceId: prevFid, formerNameZh: prevForce.name.zh, formerNameEn: prevForce.name.en, sinceYear: yr };
+              result.report.entries.push({ cityId: null, kind: 'note', text: `${now.name.en}, lord of the fallen ${prevForce.name.en}, wanders in exile — a claimant a host might shelter.`, textZh: `${prevForce.name.zh}既亡,其主${now.name.zh}流亡在外,持名分待時,或可招其來投。` });
+            }
+          }
+          // prune exiles who have died or found a home
+          for (const id of Object.keys(nextExiledLords)) {
+            const o = postOfficers[id];
+            if (!o || o.status === 'dead' || o.forceId != null) delete nextExiledLords[id];
+          }
+
+          // R 清君側 — mark the realms that invite a righteous war this season.
+          for (const force of Object.values(postForces)) {
+            if (force.id === pfid7) continue;
+            const usurperRuler = false; // (a fresh usurper is caught by low mandate + revolt anyway)
+            const reason = righteousReason({ force, cities: postCities, eunuchPower: nextEunuchPower[force.id] ?? 0, usurperRuler });
+            if (reason) nextRighteousTargets[force.id] = { reasonZh: reason.zh, reasonEn: reason.en };
+          }
+        }
+
+        // ── §7.3 諜報再深化 — 細作網絡(U)/流言蔓延(V)/校事府(X) ─────────────────
+        const nextSpyNetwork = { ...(state.spyNetwork ?? {}) };
+        const nextRumorCities = { ...(state.rumorCities ?? {}) };
+        let spyBureauActive = false;
+        if (seasonBoundary && pfid7) {
+          // U 細作網絡 — successful ops & standing spies deepen the network into a rival.
+          for (const r of espResult.results) {
+            if (r.success && r.op.targetForceId && r.op.targetForceId !== pfid7) nextSpyNetwork[r.op.targetForceId] = Math.min(100, (nextSpyNetwork[r.op.targetForceId] ?? 0) + 6);
+          }
+          for (const spy of embeddedSpiesNext) {
+            if ((spy.ownerForceId ?? pfid7) !== pfid7) continue;
+            const host = postCities[spy.targetCityId]?.ownerForceId;
+            if (host && host !== pfid7) nextSpyNetwork[host] = Math.min(100, (nextSpyNetwork[host] ?? 0) + 2);
+          }
+          // X 繡衣校事 — a free scouting op + a small network deepening each season.
+          const bureauId = state.spyBureauCityId;
+          if (bureauId && postCities[bureauId]?.ownerForceId === pfid7) {
+            spyBureauActive = true;
+            const rivals = Object.values(postForces).filter((f) => f.id !== pfid7 && Object.values(postCities).some((c) => c.ownerForceId === f.id));
+            if (rivals.length > 0) {
+              const rf = rivals[Math.floor(Math.random() * rivals.length)];
+              const rc = Object.values(postCities).filter((c) => c.ownerForceId === rf.id);
+              if (rc.length > 0) {
+                const c = rc[Math.floor(Math.random() * rc.length)];
+                espionageRevealsNext[c.id] = Math.max(espionageRevealsNext[c.id] ?? 0, 6);
+                nextSpyNetwork[rf.id] = Math.min(100, (nextSpyNetwork[rf.id] ?? 0) + 2);
+              }
+            }
+          }
+          // 網絡消長 — decay idle networks; a deep one lights a rival city each season.
+          for (const fid of Object.keys(nextSpyNetwork)) {
+            const alive = !!postForces[fid] && Object.values(postCities).some((c) => c.ownerForceId === fid);
+            if (!alive) { delete nextSpyNetwork[fid]; continue; }
+            nextSpyNetwork[fid] = Math.max(0, nextSpyNetwork[fid] - 1);
+            if (nextSpyNetwork[fid] <= 0) { delete nextSpyNetwork[fid]; continue; }
+            if (nextSpyNetwork[fid] >= 40 && Math.random() < nextSpyNetwork[fid] / 150) {
+              const rc = Object.values(postCities).filter((c) => c.ownerForceId === fid);
+              if (rc.length > 0) espionageRevealsNext[rc[Math.floor(Math.random() * rc.length)].id] = Math.max(espionageRevealsNext[rc[Math.floor(Math.random() * rc.length)].id] ?? 0, 4);
+            }
+          }
+
+          // V 流言蔓延 — seed from successful 流言 ops; each rumour saps 民心 and spreads.
+          for (const r of espResult.results) {
+            if (r.success && r.op.kind === 'spread-rumor' && r.op.targetCityId) nextRumorCities[r.op.targetCityId] = { seasonsLeft: 3, byForceId: r.op.targetForceId };
+          }
+          for (const [cid, rum] of Object.entries(nextRumorCities)) {
+            const c = postCities[cid];
+            if (!c || c.ownerForceId === pfid7) { delete nextRumorCities[cid]; continue; } // fizzles in our own / lost city
+            postCities = { ...postCities, [cid]: { ...c, loyalty: Math.max(0, c.loyalty - 3) } };
+            if (Math.random() < 0.35) {
+              const adj = (c.adjacentCityIds ?? []).map((a) => postCities[a]).find((a) => a && a.ownerForceId === c.ownerForceId && !nextRumorCities[a.id]);
+              if (adj) nextRumorCities[adj.id] = { seasonsLeft: 2, byForceId: rum.byForceId };
+            }
+            const left = rum.seasonsLeft - 1;
+            if (left <= 0) delete nextRumorCities[cid]; else nextRumorCities[cid] = { ...rum, seasonsLeft: left };
+            result.report.entries.push({ cityId: cid, kind: 'espionage', text: `Rumours gnaw at ${c.name.en}'s people (民心 −3).`, textZh: `流言蝕${c.name.zh}民心(−3)。` });
+          }
+        }
+
         // 遠使勳功 — embassy achievements (reuse the fire-event trigger pipeline).
         const embassyAchUnlocks: string[] = [];
         if (result.expeditionRealmsOpened) {
@@ -6717,10 +6999,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           itemLore: loreAfterSeason, // 名器威名 grown by this season's strategic battles
           merchantLoan: nextMerchantLoan,
           popupQueue: [...state.popupQueue, ...sizePopups, ...wallPopups, ...buildPopups, ...officerPopups.slice(0, 3), ...livePopups],
-          // §7.7-deep ④ 歸化武將 + §7.8 察舉薦才/舉族叛附 + §7.9 興學養士/拂袖 —
-          // fold this season's arrivals, defections and departures into the roster.
-          officers: (Object.keys(naturalizedArrivals).length > 0 || Object.keys(clanOfficerPatches).length > 0 || Object.keys(statecraftPatches).length > 0)
-            ? { ...officersWithMarchTask, ...naturalizedArrivals, ...clanOfficerPatches, ...statecraftPatches }
+          // §7.7-deep ④ 歸化武將 + §7.8 察舉薦才/舉族叛附 + §7.9 興學養士/拂袖 +
+          // §7.4 學官亂政 — fold this season's roster changes in.
+          officers: (Object.keys(naturalizedArrivals).length > 0 || Object.keys(clanOfficerPatches).length > 0 || Object.keys(statecraftPatches).length > 0 || Object.keys(courtPatches).length > 0)
+            ? { ...officersWithMarchTask, ...naturalizedArrivals, ...clanOfficerPatches, ...statecraftPatches, ...courtPatches }
             : officersWithMarchTask,
           marriageAlliances: allianceTick.alliances,
           forces: postForces,
@@ -6788,7 +7070,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           firedEventIds: postFiredIds,
           pendingEspionage: [],
           embeddedSpies: embeddedSpiesNext,
-          counterIntelSeasons: seasonBoundary ? Math.max(0, (state.counterIntelSeasons ?? 0) - 1) : state.counterIntelSeasons,
+          counterIntelSeasons: seasonBoundary ? Math.max(spyBureauActive ? 2 : 0, (state.counterIntelSeasons ?? 0) - 1) : state.counterIntelSeasons,
+          spyNetwork: nextSpyNetwork,
+          rumorCities: nextRumorCities,
           grudges: grudgesAfterPacts,
           credibility: credibilityAfterPacts,
           warCoalitions: nextCoalitions,
@@ -6830,6 +7114,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           residentEnvoys: nextResidentEnvoys,
           realmHostility: nextRealmHostility,
           clanLevies: nextClanLevies,
+          consortKin: nextConsortKin,
+          eunuchPower: nextEunuchPower,
+          regencies: nextRegencies,
+          usurpLadder: nextUsurpLadder,
+          exiledLords: nextExiledLords,
+          righteousTargets: nextRighteousTargets,
           recentAchievementUnlocks: (embassyAchUnlocks.length > 0 || bldAch.length > 0)
             ? [...state.recentAchievementUnlocks, ...embassyAchUnlocks, ...bldAch]
             : state.recentAchievementUnlocks,
@@ -10222,7 +10512,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         });
       },
 
-      queueEspionage: (kind, agentOfficerId, targetForceId, targetCityId, targetOfficerId, targetOfficerId2) => {
+      queueEspionage: (kind, agentOfficerId, targetForceId, targetCityId, targetOfficerId, targetOfficerId2, deathAgent) => {
         const state = get();
         const def = ESPIONAGE_DEFS_BY_KIND[kind];
         const agent = state.officers[agentOfficerId];
@@ -10253,6 +10543,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           targetCityId,
           targetOfficerId,
           targetOfficerId2,
+          ...(deathAgent ? { deathAgent: true } : {}),
           issuedYear: state.date.year,
           issuedSeason: state.date.season,
         };
@@ -10414,6 +10705,24 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           caught > 0 ? `Counter-intel sweep — ${caught} enemy spy(ies) rooted out` : `Counter-intel sweep — no spies found, but vigilance is up`,
         );
         return { ok: true, caught, message: caught > 0 ? `肅諜得力,擒敵細作 ${caught} 名,且四境戒嚴 4 季。` : `未見潛伏之諜,然戒備已嚴(4 季)。` };
+      },
+
+      // §7.3-deep X 繡衣校事 — seat the intelligence bureau.
+      designateSpyBureau: (cityId) => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid) return { ok: false, reason: 'no force' };
+        if (cityId === null) {
+          if (!state.spyBureauCityId) return { ok: false, reason: 'none seated' };
+          set({ spyBureauCityId: null });
+          get().notify('校事府廢置', 'Intelligence bureau dissolved');
+          return { ok: true };
+        }
+        const city = state.cities[cityId];
+        if (!city || city.ownerForceId !== pid) return { ok: false, reason: 'not your city' };
+        set({ spyBureauCityId: cityId });
+        get().notify(`繡衣校事府設於 ${city.name.zh}`, `Intelligence bureau seated at ${city.name.en}`);
+        return { ok: true };
       },
 
       turnSpy: (officerId, asDoubleAgent = false) => {
@@ -10835,6 +11144,182 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           'warn',
         );
         return { ok: true, message: defector ? `黨錮${FACTION_LABEL[faction].zh} —— ${defector.name.zh}憤而棄官,餘者忠誠驟降,天命 −5。` : `黨錮${FACTION_LABEL[faction].zh} —— 其黨忠誠驟降,天命 −5。` };
+      },
+
+      // ── §7.4 帝室朝政再深化 ──────────────────────────────────────────────
+      // N 外戚干政 — raise an officer's kin as consort-kin.
+      elevateConsort: (officerId) => {
+        const state = get();
+        const fid = state.playerForceId;
+        if (!fid) return { ok: false, reason: 'no force' };
+        const force = state.forces[fid];
+        const officer = state.officers[officerId];
+        if (!officer || officer.forceId !== fid) return { ok: false, reason: 'need an officer of yours' };
+        if (officer.id === force?.rulerOfficerId) return { ok: false, reason: 'the ruler cannot be his own consort-kin' };
+        const capital = force ? state.cities[force.capitalCityId] : null;
+        const cost = 1200;
+        if (!capital || capital.gold < cost) return { ok: false, reason: `need ${cost} gold at your capital` };
+        const officers = { ...state.officers };
+        const kinClan = clanOf(officer);
+        for (const o of Object.values(officers)) {
+          if (o.forceId !== fid || o.status === 'dead') continue;
+          if (o.id === officerId) officers[o.id] = { ...o, loyalty: Math.min(100, o.loyalty + 12) };
+          else if (kinClan && clanOf(o) === kinClan) officers[o.id] = { ...o, loyalty: Math.min(100, o.loyalty + 6) };
+        }
+        set({ officers, cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - cost } }, consortKin: { ...state.consortKin, [fid]: officerId } });
+        get().notify(`外戚 · 立${officer.name.zh}之族為國舅`, `${officer.name.en}'s kin raised as consort-kin`);
+        return { ok: true };
+      },
+
+      // O 賣官鬻爵 — the inner court sells offices.
+      sellOffices: () => {
+        const state = get();
+        const fid = state.playerForceId;
+        if (!fid) return { ok: false, reason: 'no force' };
+        if (emperorCustodian(state.cities, state.emperorCityId ?? null) !== fid) return { ok: false, reason: '須挾天子方可賣官鬻爵' };
+        const power = state.eunuchPower[fid] ?? 0;
+        if (power < 30) return { ok: false, reason: `學官之勢未成(須 ≥ 30,今 ${Math.round(power)})` };
+        const force = state.forces[fid];
+        const capital = force ? state.cities[force.capitalCityId] : null;
+        if (!capital) return { ok: false, reason: 'no capital' };
+        const gold = Math.round(power * 30); // power 100 → 3000
+        const cities = { ...state.cities };
+        for (const c of Object.values(cities)) if (c.ownerForceId === fid) cities[c.id] = { ...c, loyalty: Math.max(0, c.loyalty - 3) };
+        cities[capital.id] = { ...cities[capital.id], gold: cities[capital.id].gold + gold };
+        // 清流不齒 — reformer/gentry officers lose heart.
+        const clanWeight = clanGentryWeight(state.officers, state.clanStandings ?? {});
+        const list = deriveCourtFactions(state.officers, clanWeight)[fid] ?? [];
+        const officers = { ...state.officers };
+        for (const f of list) if ((f.faction === 'reformer' || f.faction === 'gentry') && officers[f.officerId]?.status !== 'dead') officers[f.officerId] = { ...officers[f.officerId], loyalty: Math.max(0, officers[f.officerId].loyalty - 4) };
+        set({ cities, officers });
+        get().notify(`賣官鬻爵 · 得金 ${gold.toLocaleString()}(民心・清流損)`, `Sold offices for ${gold.toLocaleString()} gold (loyalty & 清流 suffer)`, 'warn');
+        return { ok: true };
+      },
+
+      // O 盡誅學官 — purge the inner court.
+      purgeEunuchs: () => {
+        const state = get();
+        const fid = state.playerForceId;
+        if (!fid) return { ok: false, reason: 'no force' };
+        if ((state.eunuchPower[fid] ?? 0) <= 0) return { ok: false, reason: '朝中學官之勢未成' };
+        const force = state.forces[fid];
+        const clanWeight = clanGentryWeight(state.officers, state.clanStandings ?? {});
+        const list = deriveCourtFactions(state.officers, clanWeight)[fid] ?? [];
+        const officers = { ...state.officers };
+        for (const f of list) {
+          const o = officers[f.officerId];
+          if (!o || o.status === 'dead') continue;
+          if (f.faction === 'eunuch') officers[f.officerId] = { ...o, loyalty: Math.max(0, o.loyalty - 15) };
+          else if (f.faction === 'reformer' || f.faction === 'gentry') officers[f.officerId] = { ...o, loyalty: Math.min(100, o.loyalty + 6) };
+        }
+        let cities = state.cities;
+        const capital = force ? state.cities[force.capitalCityId] : null;
+        if (capital) cities = { ...cities, [capital.id]: { ...capital, loyalty: Math.max(0, capital.loyalty - 5) } };
+        set({ officers, cities, eunuchPower: { ...state.eunuchPower, [fid]: 0 } });
+        get().notify('盡誅學官 · 清流復振,宮廷動盪', 'The inner court is purged — 清流 rejoice, the palace reels', 'warn');
+        return { ok: true };
+      },
+
+      // P 改元 — a sovereign proclaims a new era.
+      declareNewEra: (eraName) => {
+        const state = get();
+        const fid = state.playerForceId;
+        if (!fid) return { ok: false, reason: 'no force' };
+        const force = state.forces[fid];
+        if (!force || (force.imperialRank !== 'king' && force.imperialRank !== 'emperor')) return { ok: false, reason: '須稱王稱帝方可改元頒朔' };
+        const last = state.eraChangedYear[fid];
+        if (last != null && state.date.year - last < 3) return { ok: false, reason: `改元方行,須俟 ${3 - (state.date.year - last)} 年` };
+        const name = eraName.trim() || force.eraName || '建初';
+        const mv = Math.max(0, Math.min(100, (state.mandate.byForce[fid] ?? 50) + 4));
+        set({
+          forces: { ...state.forces, [fid]: { ...force, eraName: name } },
+          mandate: { ...state.mandate, byForce: { ...state.mandate.byForce, [fid]: mv } },
+          eraChangedYear: { ...state.eraChangedYear, [fid]: state.date.year },
+        });
+        get().notify(`改元「${name}」· 天命 +4`, `New era "${name}" proclaimed · mandate +4`);
+        return { ok: true };
+      },
+
+      // §7.5-deep T 翦除肘腋 — cut a rising 權臣 down a rung.
+      curbUsurper: () => {
+        const state = get();
+        const fid = state.playerForceId;
+        if (!fid) return { ok: false, reason: 'no force' };
+        const ladder = state.usurpLadder?.[fid];
+        if (!ladder) return { ok: false, reason: '朝中並無權臣坐大之患' };
+        const force = state.forces[fid];
+        const capital = force ? state.cities[force.capitalCityId] : null;
+        const cost = 800 + (ladder.stage + 1) * 400;
+        if (!capital || capital.gold < cost) return { ok: false, reason: `需 ${cost} 金以行翦除` };
+        const officers = { ...state.officers };
+        const minister = officers[ladder.officerId];
+        // Scatter the cabal — its members lose their footing (loyalty toward the plot cools into fear).
+        for (const id of ladder.cabal) { const o = officers[id]; if (o && o.status !== 'dead') officers[id] = { ...o, loyalty: Math.max(0, o.loyalty - 8), grievanceCount: Math.max(0, (o.grievanceCount ?? 0) - 1) }; }
+        // The minister is knocked down a rung — but a cornered 權臣 may bolt.
+        const provoked = !!minister && minister.loyalty < 20 && Math.random() < 0.25;
+        const nextLadder = { ...state.usurpLadder };
+        if (ladder.stage <= 0 || provoked) delete nextLadder[fid];
+        else nextLadder[fid] = { ...ladder, stage: ladder.stage - 1, cabal: [] };
+        set({
+          officers,
+          cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - cost } },
+          usurpLadder: nextLadder,
+        });
+        if (provoked && minister) {
+          get().notify(`翦除肘腋 · ${minister.name.zh}狗急跳牆,恐生變`, `${minister.name.en} is cornered — he may bolt`, 'warn');
+        } else {
+          get().notify('翦除肘腋 · 權臣之勢暫挫', 'The over-mighty minister is checked', 'ok');
+        }
+        return { ok: true };
+      },
+
+      // §7.5-deep R 清君側 — raise a righteous banner (a 討逆 casus belli).
+      raiseRighteousBanner: (targetForceId) => {
+        const state = get();
+        const fid = state.playerForceId;
+        if (!fid) return { ok: false, reason: 'no force' };
+        if (targetForceId === fid) return { ok: false, reason: 'cannot denounce yourself' };
+        const cause = state.righteousTargets?.[targetForceId];
+        if (!cause) return { ok: false, reason: '此國無討逆之名可興' };
+        const target = state.forces[targetForceId];
+        if (!target) return { ok: false, reason: 'unknown force' };
+        // A moral casus belli — 2 years, like 討伐令 (feeds the +combat mark).
+        const marks = [
+          ...state.casusBelliMarks.filter((m) => !(m.byForceId === fid && m.targetForceId === targetForceId)),
+          { byForceId: fid, targetForceId, expiresYear: state.date.year + 2, expiresSeason: state.date.season },
+        ];
+        const m = { ...state.mandate.byForce }; m[fid] = Math.max(0, Math.min(100, (m[fid] ?? 50) + 3));
+        set({ casusBelliMarks: marks, mandate: { ...state.mandate, byForce: m } });
+        get().notify(`清君側 · 討${target.name.zh}(${cause.reasonZh})· 天命 +3`, `Righteous banner raised against ${target.name.en} · mandate +3`);
+        return { ok: true };
+      },
+
+      // §7.5-deep S 納流亡客將 — shelter a deposed lord.
+      shelterExile: (officerId) => {
+        const state = get();
+        const fid = state.playerForceId;
+        if (!fid) return { ok: false, reason: 'no force' };
+        const exile = state.exiledLords?.[officerId];
+        const lord = state.officers[officerId];
+        if (!exile || !lord || lord.status === 'dead') return { ok: false, reason: 'no such exile' };
+        if (lord.forceId != null) return { ok: false, reason: 'that lord has found a home already' };
+        const force = state.forces[fid];
+        const cap = force?.capitalCityId;
+        if (!cap || state.cities[cap]?.ownerForceId !== fid) return { ok: false, reason: 'no capital to receive him' };
+        const officers = { ...state.officers };
+        // The lord takes service (loyal-ish, a guest); a couple of faithful followers come too.
+        officers[officerId] = { ...lord, forceId: fid, locationCityId: cap, status: 'idle', task: null, loyalty: 58 };
+        let followers = 0;
+        for (const o of Object.values(state.officers)) {
+          if (followers >= 2) break;
+          if (o.forceId != null || o.status === 'dead' || o.status === 'unsearched' || o.id === officerId) continue;
+          // a wandering officer of his fallen house / former realm rallies to him
+          if (o.clanId && lord.clanId && o.clanId === lord.clanId) { officers[o.id] = { ...o, forceId: fid, locationCityId: cap, status: 'idle', task: null, loyalty: 60 }; followers++; }
+        }
+        const exiledLords = { ...state.exiledLords }; delete exiledLords[officerId];
+        set({ officers, exiledLords });
+        get().notify(`納流亡客將 · ${lord.name.zh}來投(從者 ${followers})`, `${lord.name.en}, a lord in exile, takes shelter with you`, 'ok');
+        return { ok: true };
       },
 
       setSoundEnabled: (enabled) => set({ soundEnabled: enabled }),
@@ -12765,6 +13250,19 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           // §7.8 門閥深化 — legacy saves predate clan bonds & private levies.
           clanBonds: loaded.clanBonds ?? {},
           clanLevies: loaded.clanLevies ?? {},
+          // §7.4 帝室朝政再深化 — legacy saves predate court-politics state.
+          consortKin: loaded.consortKin ?? {},
+          eunuchPower: loaded.eunuchPower ?? {},
+          regencies: loaded.regencies ?? {},
+          eraChangedYear: loaded.eraChangedYear ?? {},
+          // §7.5 禪代之階再深化 — legacy saves predate the usurpation ladder.
+          usurpLadder: loaded.usurpLadder ?? {},
+          exiledLords: loaded.exiledLords ?? {},
+          righteousTargets: loaded.righteousTargets ?? {},
+          // §7.3 諜報再深化 — legacy saves predate the network / rumours / bureau.
+          spyNetwork: loaded.spyNetwork ?? {},
+          rumorCities: loaded.rumorCities ?? {},
+          spyBureauCityId: loaded.spyBureauCityId ?? null,
         };
         // 精煉/突破/鑲嵌登記 — re-point the denormalized registries at the loaded maps.
         setRefineRegistry(fresh.itemRefinements);

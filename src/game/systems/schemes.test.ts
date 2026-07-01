@@ -92,3 +92,28 @@ describe('抗謀 + 反間敗露 (§7.2 ①)', () => {
     expect(schemeExposureChance('far-friend', false, 0)).toBe(0); // overt courtship hides nothing
   });
 });
+
+describe('§7.2 再深化 — 假詔 / 詐敗 / 無中生有', () => {
+  const sage = mkOfficer({ stats: { intelligence: 90 } });
+  it('假詔討賊 needs two distinct targets (not self), no adjacency required', () => {
+    expect(validateScheme('imperial-edict', cities, 'wei', 'wu', 'shu')).toBeNull(); // wu↔shu need not border
+    expect(validateScheme('imperial-edict', cities, 'wei', 'wu', 'wu')).toBe('需選兩個不同目標');
+    expect(validateScheme('imperial-edict', cities, 'wei', 'wei', 'shu')).toBe('不可以己方為目標');
+  });
+  it('詐敗誘敵 needs a bordering rival, like 疑兵', () => {
+    expect(validateScheme('feign-defeat', cities, 'wei', 'wu')).toBeNull();       // wei↔wu adjacent
+    expect(validateScheme('feign-defeat', cities, 'wei', 'shu')).toBe('其與我不接壤,疑兵無用');
+  });
+  it('無中生有 targets any rival realm', () => {
+    expect(validateScheme('fabricate', cities, 'wei', 'shu')).toBeNull();
+    expect(validateScheme('fabricate', cities, 'wei', 'wei')).toBe('不可以己方為目標');
+  });
+  it('all three carry sane odds that reward a clever strategist', () => {
+    for (const s of ['imperial-edict', 'feign-defeat', 'fabricate'] as const) {
+      const dull = schemeOdds(s, diplo(0), mkOfficer({ stats: { intelligence: 40 } }), 'shu', 'wu');
+      const sharp = schemeOdds(s, diplo(0), sage, 'shu', 'wu');
+      expect(sharp).toBeGreaterThan(dull);
+      expect(sharp).toBeLessThanOrEqual(0.95);
+    }
+  });
+});

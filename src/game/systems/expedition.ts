@@ -17,6 +17,9 @@ import { ITEMS } from '../data/items';
 
 /** 秘笈 — the consumable war-manuals a 探索 might unearth (§7.6 ④). */
 const BOOK_ITEM_IDS: EntityId[] = ITEMS.filter((i) => i.kind === 'book').map((i) => i.id);
+/** 神兵寶馬珍玩 — the treasures a 尋寶 errand might dig out of an old site
+ *  (§7.6-2 Z): weapons, warhorses, and curios. */
+const TREASURE_ITEM_IDS: EntityId[] = ITEMS.filter((i) => i.kind === 'weapon' || i.kind === 'horse' || i.kind === 'treasure').map((i) => i.id);
 
 /* ─── 游历 — a lone officer roaming abroad ──────────────────────────────────
    A general (not an army) rides out to a distant city to探索/出使/策反/刺探,
@@ -73,6 +76,12 @@ export function expeditionAptitude(officer: Officer, mode: ExpeditionMode): numb
       return (s.charisma + s.intelligence) / 2; // 結交 — charm + reading the mark
     case 'levy':
       return (s.leadership + s.politics) / 2; // 募兵 — command presence + local sway
+    case 'treasure':
+      return (s.intelligence + s.war) / 2; // 尋寶 — wit to read the site, nerve for its perils
+    case 'study':
+      return s.intelligence; // 游學 — the scholar's own capacity to learn
+    case 'incognito':
+      return (s.intelligence + s.charisma) / 2; // 微服 — discretion + the common touch
   }
 }
 
@@ -104,6 +113,12 @@ export function expeditionSuccessChance(
       return clamp(0.25, 0.9, 0.35 + apt / 160);
     case 'levy':
       return clamp(0.35, 0.95, 0.45 + apt / 180);
+    case 'treasure':
+      return clamp(0.2, 0.85, 0.3 + apt / 170); // finding anything at all
+    case 'study':
+      return clamp(0.4, 0.97, 0.5 + apt / 200); // the diligent always learn something
+    case 'incognito':
+      return clamp(0.35, 0.95, 0.45 + apt / 190);
   }
 }
 
@@ -131,6 +146,12 @@ export function expeditionPeril(officer: Officer, mode: ExpeditionMode): number 
       return clamp(0.04, 0.22, 0.18 - apt / 800); // a social call in rival lands, lightly watched
     case 'levy':
       return clamp(0.03, 0.18, 0.15 - apt / 900);
+    case 'treasure':
+      return clamp(0.1, 0.5, 0.45 - apt / 320); // tomb traps, bandits, the wild — a real gauntlet
+    case 'study':
+      return 0; // sitting at a master's feet is safe
+    case 'incognito':
+      return clamp(0.02, 0.3, 0.24 - apt / 500); // discovery is the danger — worse in a rival's land
   }
 }
 
@@ -164,6 +185,12 @@ export function expeditionFavoredStats(mode: ExpeditionMode): Array<keyof Office
       return ['charisma', 'intelligence'];
     case 'levy':
       return ['leadership', 'politics'];
+    case 'treasure':
+      return ['war', 'intelligence'];
+    case 'study':
+      return ['intelligence', 'politics'];
+    case 'incognito':
+      return ['intelligence', 'charisma'];
   }
 }
 
@@ -356,6 +383,13 @@ export function stepExpeditions(input: ExpeditionStepInput): ExpeditionStepResul
       diplomacy = res.diplomacy;
       if (res.intelTarget) espionageReveals[exp.toCityId] = Math.max(espionageReveals[exp.toCityId] ?? 0, res.intelTarget);
       report(exp, res.entry);
+      if (res.perished) {
+        // 葬身其中 — a 尋寶 seeker lost to the wild; a guard along shares the end.
+        officers[exp.officerId] = { ...officer, status: 'dead', locationCityId: null, task: null };
+        const guard = exp.companionId ? officers[exp.companionId] : null;
+        if (guard && guard.status !== 'dead') officers[exp.companionId!] = { ...guard, status: 'dead', locationCityId: null, task: null };
+        continue;
+      }
       if (res.captured) {
         // Taken on enemy soil — held at the target city; the赎回 system can
         // later ransom him back. The expedition ends here.
@@ -432,8 +466,13 @@ export function stepExpeditions(input: ExpeditionStepInput): ExpeditionStepResul
     // 歷練 — the journey seasons the officer; pay XP on his return (level-ups
     // steer toward the stats the errand exercised + his own 練兵 focus).
     const xpRes = grantXp(officer, expeditionXp(exp.mode, exp.legSeasons), rng, expeditionFavoredStats(exp.mode));
+    // 游學所得 / 劍客授藝 — a stat the road honed (§7.6-2), applied on return (cap 100).
+    const gainedStats = haul.statGain
+      ? { ...xpRes.officer.stats, [haul.statGain.stat]: Math.min(100, xpRes.officer.stats[haul.statGain.stat] + haul.statGain.amount) }
+      : xpRes.officer.stats;
     officers[exp.officerId] = {
       ...xpRes.officer,
+      stats: gainedStats,
       // 風霜 — a battered envoy comes home to recover; otherwise straight to idle.
       ...(haul.wounded
         ? { status: 'wounded' as const, woundedSeasons: 2, woundSeverity: 'minor' as const }
@@ -476,6 +515,8 @@ interface ErrandResult {
   intelTarget?: number;
   haul?: ExpeditionHaul;
   captured?: boolean;
+  /** 葬身其中 — a 尋寶 errand can bury the seeker (§7.6-2 Z). */
+  perished?: boolean;
   entry: ReportEntry;
 }
 
@@ -488,7 +529,12 @@ function resolveErrand(exp: Expedition, ctx: ErrandCtx): ErrandResult {
   const peril = expeditionPeril(officer, exp.mode) * (exp.companionId ? 0.55 : 1);
   // 出使 enjoys diplomatic immunity; 巡視 is at home, 訪賢 is a guest's courtesy —
   // the cloak-and-dagger (and the social call abroad) run the gauntlet.
-  const safe = exp.mode === 'envoy' || exp.mode === 'explore' || exp.mode === 'tour' || exp.mode === 'recruit';
+  // 微服私訪 abroad runs the gauntlet of discovery; at home it is safe. 尋寶's
+  // peril is the wild/traps (wound/death, handled in its resolver), not capture;
+  // 游學 is a guest's courtesy.
+  const incognitoAtHome = exp.mode === 'incognito' && target?.ownerForceId === exp.forceId;
+  const safe = exp.mode === 'envoy' || exp.mode === 'explore' || exp.mode === 'tour'
+    || exp.mode === 'recruit' || exp.mode === 'study' || exp.mode === 'treasure' || incognitoAtHome;
   const captured = !safe && ctx.rng() < peril;
 
   if (captured) {
@@ -522,6 +568,12 @@ function resolveErrand(exp: Expedition, ctx: ErrandCtx): ErrandResult {
       return resolveBefriend(exp, ctx, officer, targetName);
     case 'levy':
       return resolveLevy(exp, ctx, officer, target, targetName);
+    case 'treasure':
+      return resolveTreasure(exp, ctx, officer, targetName);
+    case 'study':
+      return resolveStudy(exp, ctx, officer, target, targetName);
+    case 'incognito':
+      return resolveIncognito(exp, ctx, officer, target, targetName);
     case 'embassy':
       // 遠使 is resolved by foreignRealm.ts before reaching here; unreachable.
       throw new Error('embassy resolved via foreignRealm, not resolveErrand');
@@ -653,6 +705,127 @@ function resolveLevy(
   };
 }
 
+/**
+ * 尋寶・訪古探幽 — hunt an old battlefield / tomb / holy peak for 神兵寶馬. The
+ * wild and its traps run a real gauntlet: a bad turn wounds the seeker, and the
+ * very worst can bury him. A clean find brings home a weapon, a warhorse, a
+ * curio, a lost manual — or at least a cache of coin.
+ */
+function resolveTreasure(
+  exp: Expedition,
+  ctx: ErrandCtx,
+  officer: Officer,
+  targetName: { zh: string; en: string },
+): ErrandResult {
+  const peril = expeditionPeril(officer, 'treasure') * (exp.companionId ? 0.7 : 1);
+  const roll = ctx.rng();
+  // 葬身其中 — only a deep-peril site claims a life (rare).
+  if (peril > 0.3 && roll < peril * 0.12) {
+    return {
+      cities: ctx.cities, diplomacy: ctx.diplomacy, perished: true,
+      entry: { cityId: exp.toCityId, kind: 'expedition', text: `${officer.name.en} vanished exploring the ruins near ${targetName.en} — never to return.`, textZh: `${officer.name.zh}探${targetName.zh}古蹟,身沒其中,再無音訊。` },
+    };
+  }
+  if (roll < peril) {
+    return {
+      cities: ctx.cities, diplomacy: ctx.diplomacy,
+      haul: { wounded: true, note: `Bandits and traps drove ${officer.name.en} off empty-handed.`, noteZh: `盜匪機關交攻,空手負傷而還。` },
+      entry: { cityId: exp.toCityId, kind: 'expedition', text: `${officer.name.en} was driven from the ruins near ${targetName.en}, wounded and empty-handed.`, textZh: `${officer.name.zh}尋寶${targetName.zh}遇險,負傷空返。` },
+    };
+  }
+  const chance = expeditionSuccessChance(officer, 'treasure');
+  const haul: ExpeditionHaul = {};
+  if (TREASURE_ITEM_IDS.length > 0 && ctx.rng() < 0.45 + chance * 0.3) {
+    haul.itemId = TREASURE_ITEM_IDS[Math.floor(ctx.rng() * TREASURE_ITEM_IDS.length)];
+    const nm = ITEMS.find((i) => i.id === haul.itemId)?.name;
+    haul.note = `Unearthed the treasure “${nm?.en ?? 'a relic'}” near ${targetName.en}.`;
+    haul.noteZh = `於${targetName.zh}古蹟掘得〈${nm?.zh ?? '寶物'}〉。`;
+  } else if (BOOK_ITEM_IDS.length > 0 && ctx.rng() < 0.4) {
+    haul.itemId = BOOK_ITEM_IDS[Math.floor(ctx.rng() * BOOK_ITEM_IDS.length)];
+    const nm = ITEMS.find((i) => i.id === haul.itemId)?.name;
+    haul.note = `Recovered the lost manual “${nm?.en ?? 'a war-manual'}”.`;
+    haul.noteZh = `覓得失傳兵書〈${nm?.zh ?? '秘笈'}〉。`;
+  } else {
+    const gold = 500 + Math.floor(ctx.rng() * 1500);
+    haul.gold = gold;
+    haul.note = `Dug up a cache of ${gold} gold near ${targetName.en}.`;
+    haul.noteZh = `於${targetName.zh}掘得窖藏 ${gold} 金。`;
+  }
+  return {
+    cities: ctx.cities, diplomacy: ctx.diplomacy, haul,
+    entry: { cityId: exp.toCityId, kind: 'expedition', text: `${officer.name.en} explored the old sites near ${targetName.en}. ${haul.note}`, textZh: `${officer.name.zh}訪古${targetName.zh}。${haul.noteZh}` },
+  };
+}
+
+/**
+ * 游學・訪師問道 — study at a famed academy or under a master. The diligent
+ * always come away sharper (a stat honed); the gifted may also carry home a
+ * treatise (秘笈).
+ */
+function resolveStudy(
+  exp: Expedition,
+  ctx: ErrandCtx,
+  officer: Officer,
+  target: City | undefined,
+  targetName: { zh: string; en: string },
+): ErrandResult {
+  // A cultured seat (rich commerce ≈ 文教昌盛) teaches a little more.
+  const cultured = (target?.commerce ?? 50) >= 60;
+  const gain = 1 + (ctx.rng() < (cultured ? 0.45 : 0.25) ? 1 : 0);
+  const stat = ctx.rng() < 0.6 ? 'intelligence' as const : 'politics' as const;
+  const haul: ExpeditionHaul = { statGain: { stat, amount: gain } };
+  const notesZh = [`游學${targetName.zh},學問精進(${stat === 'intelligence' ? '智' : '政'} +${gain})`];
+  const notesEn = [`studied at ${targetName.en} (+${gain} ${stat})`];
+  if (BOOK_ITEM_IDS.length > 0 && ctx.rng() < 0.25) {
+    haul.itemId = BOOK_ITEM_IDS[Math.floor(ctx.rng() * BOOK_ITEM_IDS.length)];
+    const nm = ITEMS.find((i) => i.id === haul.itemId)?.name;
+    notesZh.push(`並得師傳〈${nm?.zh ?? '秘笈'}〉`); notesEn.push(`and a treatise`);
+  }
+  haul.note = notesEn.join(', ') + '.';
+  haul.noteZh = notesZh.join('、') + '。';
+  return {
+    cities: ctx.cities, diplomacy: ctx.diplomacy, haul,
+    entry: { cityId: exp.toCityId, kind: 'expedition', text: `${officer.name.en} ${notesEn.join(', ')}.`, textZh: `${officer.name.zh}${notesZh.join('、')}。` },
+  };
+}
+
+/**
+ * 微服私訪・明察暗訪 — travel in disguise. In your own land the hidden truth is
+ * heard: the people's mood lifts and a corrupt or disloyal official is exposed.
+ * In a rival's land it is a scouting run (deep intel), run at the risk of being
+ * recognised (handled by the generic capture roll).
+ */
+function resolveIncognito(
+  exp: Expedition,
+  ctx: ErrandCtx,
+  officer: Officer,
+  target: City | undefined,
+  targetName: { zh: string; en: string },
+): ErrandResult {
+  const own = target?.ownerForceId === exp.forceId;
+  if (own && target) {
+    const bump = 6 + Math.floor(ctx.rng() * 5); // +6..10 — heard grievances redressed
+    const cities = { ...ctx.cities, [exp.toCityId]: { ...target, loyalty: clamp(0, 100, target.loyalty + bump) } };
+    // 揪貪劣/貳心 — the sharpest-eyed sees through a rotten or disloyal local officer.
+    const rot = Object.values(ctx.officers)
+      .filter((o) => o.forceId === exp.forceId && o.locationCityId === exp.toCityId && o.status !== 'dead' && o.id !== ctx.forces[exp.forceId]?.rulerOfficerId && (o.loyalty < 45 || o.stats.politics < 45))
+      .sort((a, b) => a.loyalty - b.loyalty)[0];
+    const noteEn = rot ? ` Unmasked ${rot.name.en}'s misrule.` : '';
+    const noteZh = rot ? `並察${rot.name.zh}之貪劣貳心。` : '';
+    return {
+      cities, diplomacy: ctx.diplomacy,
+      haul: { note: `Travelled ${targetName.en} in disguise (loyalty +${bump}).${noteEn}`, noteZh: `微服私訪${targetName.zh}(民心 +${bump})。${noteZh}` },
+      entry: { cityId: exp.toCityId, kind: 'expedition', text: `${officer.name.en} travelled ${targetName.en} incognito — loyalty +${bump}.${noteEn}`, textZh: `${officer.name.zh}微服${targetName.zh},察民情、恤冤抑,民心 +${bump}。${noteZh}` },
+    };
+  }
+  // Abroad — a scouting run.
+  return {
+    cities: ctx.cities, diplomacy: ctx.diplomacy, intelTarget: 20,
+    haul: { note: `Scouted ${targetName.en} in disguise — deep intel.`, noteZh: `微服潛入${targetName.zh},細察其虛實。` },
+    entry: { cityId: exp.toCityId, kind: 'expedition', text: `${officer.name.en} walked ${targetName.en} in disguise, gathering deep intel.`, textZh: `${officer.name.zh}微服行${targetName.zh},盡窺其虛實。` },
+  };
+}
+
 function resolveExplore(
   exp: Expedition,
   ctx: ErrandCtx,
@@ -672,6 +845,7 @@ function resolveExplore(
     (o) => o.locationCityId === exp.toCityId && o.forceId == null && o.status !== 'dead' && o.id !== officer.id,
   );
   if (wild && ctx.rng() < chance * 0.5) {
+    // 隱士 — a hidden talent biding his time joins on return.
     haul.recruitOfficerId = wild.id;
     notesZh.push(`訪得在野賢才 ${wild.name.zh}`);
     notesEn.push(`found the talent ${wild.name.en}`);
@@ -682,19 +856,43 @@ function resolveExplore(
     const bookName = ITEMS.find((i) => i.id === book)?.name;
     notesZh.push(`於坊間訪得兵書〈${bookName?.zh ?? '秘笈'}〉`);
     notesEn.push(`unearthed the manual “${bookName?.en ?? 'a war-manual'}”`);
-  } else if (ctx.rng() < chance * 0.6) {
-    // 奇遇 — a windfall of coin/grain from the road.
-    const gold = 200 + Math.floor(ctx.rng() * 600);
-    const food = 300 + Math.floor(ctx.rng() * 800);
-    haul.gold = gold;
-    haul.food = food;
-    notesZh.push(`奇遇得金${gold}、糧${food}`);
-    notesEn.push(`a windfall of ${gold} gold, ${food} grain`);
   } else {
-    // 民心 — goodwill brought home.
-    haul.homeLoyaltyDelta = 3 + Math.floor(ctx.rng() * 4);
-    notesZh.push(`攜民心歸,故城民望 +${haul.homeLoyaltyDelta}`);
-    notesEn.push(`brought home goodwill (+${haul.homeLoyaltyDelta} loyalty)`);
+    // §7.6-2 Y 江湖際遇 — a richer table of who the road throws in the officer's path.
+    const roll = ctx.rng();
+    if (roll < 0.22) {
+      // 劍客 — a wandering swordsman crosses blades and teaches a trick.
+      haul.statGain = { stat: ctx.rng() < 0.5 ? 'war' : 'leadership', amount: 1 + (ctx.rng() < 0.25 ? 1 : 0) };
+      notesZh.push(`遇遊俠劍客,論武授藝(${haul.statGain.stat === 'war' ? '武' : '統'} +${haul.statGain.amount})`);
+      notesEn.push(`crossed blades with a wandering swordsman (+${haul.statGain.amount} ${haul.statGain.stat})`);
+    } else if (roll < 0.40) {
+      // 方士術士 — a mystic reads the omens; a keepsake / a flash of insight.
+      haul.statGain = { stat: 'intelligence', amount: 1 };
+      notesZh.push(`遇方士論道,智慮頓開(智 +1)`);
+      notesEn.push(`a wandering mystic sharpened his wits (+1 INT)`);
+    } else if (roll < 0.62) {
+      // 商賈 — a grateful merchant showers coin (and now and then a curio).
+      const gold = 400 + Math.floor(ctx.rng() * 900);
+      haul.gold = gold;
+      notesZh.push(`結交巨賈,饋金 ${gold}`);
+      notesEn.push(`befriended a great merchant (${gold} gold)`);
+      if (TREASURE_ITEM_IDS.length > 0 && ctx.rng() < 0.2) {
+        haul.itemId = TREASURE_ITEM_IDS[Math.floor(ctx.rng() * TREASURE_ITEM_IDS.length)];
+        const nm = ITEMS.find((i) => i.id === haul.itemId)?.name;
+        notesZh.push(`並購得奇珍〈${nm?.zh ?? '珍玩'}〉`); notesEn.push(`and a curio`);
+      }
+    } else if (roll < 0.80) {
+      // 落難之人 — the officer aids someone in need; the deed lifts his home's name.
+      haul.homeLoyaltyDelta = 4 + Math.floor(ctx.rng() * 4);
+      notesZh.push(`途中濟一落難之人,義聲遠播(故城民望 +${haul.homeLoyaltyDelta})`);
+      notesEn.push(`aided a soul in need — his good name lifts home (+${haul.homeLoyaltyDelta} loyalty)`);
+    } else {
+      // 奇遇 — a plain windfall of coin & grain.
+      const gold = 200 + Math.floor(ctx.rng() * 600);
+      const food = 300 + Math.floor(ctx.rng() * 800);
+      haul.gold = gold; haul.food = food;
+      notesZh.push(`奇遇得金${gold}、糧${food}`);
+      notesEn.push(`a windfall of ${gold} gold, ${food} grain`);
+    }
   }
   haul.note = `Scouted ${targetName.en}; ${notesEn.join(', ')}.`;
   haul.noteZh = `探得${targetName.zh}虛實;${notesZh.join('、')}。`;

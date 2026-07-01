@@ -39,6 +39,9 @@ export interface EspionageContext {
   diplomacy?: import('../types/diplomacy').DiplomaticState;
   /** Forces — for naming a target's treaty partners in the intel report. */
   forces?: Record<EntityId, import('../types').Force>;
+  /** §7.3 U 細作網絡 — the player's standing spy network into each rival realm
+   *  (forceId → 0–100). A deep network sharpens every op against that realm. */
+  spyNetwork?: Record<EntityId, number>;
 }
 
 export interface EspionageOutput {
@@ -104,6 +107,10 @@ export function resolveEspionage(ctx: EspionageContext): EspionageOutput {
     // counter-intel traits reduce success (averaged across target officers).
     chance += espionageBonus(agent);
     chance += spymasterBonus; // 校事 — the realm's spymaster sharpens every op.
+    // §7.3 U 細作網絡 — a deep-rooted network into the target realm sharpens every op.
+    chance += (ctx.spyNetwork?.[op.targetForceId] ?? 0) / 400; // network 100 → +0.25
+    // §7.3 W 死士 — an agent who has made his peace with death gets far closer.
+    if (op.deathAgent) chance += 0.25;
     const counterResist =
       targetForceOfficers.length > 0
         ? targetForceOfficers.reduce((s, o) => s + counterEspionageResist(o), 0) /
@@ -293,11 +300,16 @@ export function resolveEspionage(ctx: EspionageContext): EspionageOutput {
           : `${t.name.zh}為不知名刺客所殺。`;
       } else {
         const isRuler = ctx.forces?.[op.targetForceId]?.rulerOfficerId === t.id;
-        message = `The assassin failed. ${t.name.en} survives — and the plot is traced back.`;
-        messageZh = `刺客失手，${t.name.zh}得以倖免，且行刺敗露為人所察。`;
+        // §7.3 W 死士 — a caught 死士 dies with his secret; no trail leads home.
+        message = op.deathAgent
+          ? `The assassin failed and was cut down — but died without a word; no trail leads home.`
+          : `The assassin failed. ${t.name.en} survives — and the plot is traced back.`;
+        messageZh = op.deathAgent
+          ? `死士行刺不成,力戰而歿 —— 然守口如瓶,主使無從追索。`
+          : `刺客失手，${t.name.zh}得以倖免，且行刺敗露為人所察。`;
         // 行刺敗露 — a botched hit is traced to its sponsor (grudge). An attempt on a
-        // LORD's very life is an outrage — far deeper resentment.
-        if (op.targetForceId) {
+        // LORD's very life is an outrage — far deeper resentment. A 死士 gives nothing up.
+        if (op.targetForceId && !op.deathAgent) {
           grudgeDelta[op.targetForceId] = (grudgeDelta[op.targetForceId] ?? 0) + (isRuler ? 26 : 14);
         }
       }
@@ -429,6 +441,26 @@ export function resolveEspionage(ctx: EspionageContext): EspionageOutput {
         message = `The forged letter against ${t.name.en} was seen for what it was.`;
         messageZh = `偽書反間${t.name.zh}之計為其主識破。`;
       }
+    } else if (op.kind === 'spread-rumor' && op.targetCityId) {
+      const c = cities[op.targetCityId];
+      if (!c) { message = `Target unavailable.`; messageZh = `目標已不可及。`; }
+      else if (success) {
+        const drop = 10 + Math.floor(ctx.rng() * 9); // 10–18
+        cities[op.targetCityId] = { ...c, loyalty: Math.max(0, c.loyalty - drop) };
+        message = `Rumours take root in ${c.name.en} — 民心 −${drop}, and the whispers begin to spread.`;
+        messageZh = `流言惑${c.name.zh}之眾,民心 −${drop},且謠言將蔓延鄰城。`;
+        // The spread itself is seeded by the store from this successful result.
+      } else {
+        message = `The rumour-mongers were caught before the whispers could take.`;
+        messageZh = `散布流言者為敵察覺,謠言未及生根。`;
+      }
+    }
+
+    // §7.3 W 死士 — spent on the deed, the agent does not come home (win or lose).
+    if (op.deathAgent && officers[op.agentOfficerId] && officers[op.agentOfficerId].status !== 'dead') {
+      officers[op.agentOfficerId] = { ...officers[op.agentOfficerId], status: 'dead', forceId: null, task: null };
+      messageZh += '(死士殞身)';
+      message += ' (the death-agent is spent)';
     }
 
     results.push({ op, success, message });

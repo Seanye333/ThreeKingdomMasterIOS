@@ -197,6 +197,18 @@ export interface GameState {
   /** 肅諜 — seasons of heightened counter-intel remaining (§7.3 ②), set by a
    *  counter-intel sweep; while >0, enemy espionage against the player is blunted. */
   counterIntelSeasons?: number;
+  /** §7.3-deep U 細作網絡 — the player's standing spy network into each rival
+   *  realm (forceId → 0–100): grows with successful ops & embedded spies, decays
+   *  when idle. A deep network sharpens ops, lights a city each season, and warns
+   *  of the rival's own schemes. */
+  spyNetwork: Record<EntityId, number>;
+  /** §7.3-deep V 流言惑眾 — cities where a rumour is loose (cityId → the spread):
+   *  each season it saps 民心 and may leap to a neighbouring enemy city. */
+  rumorCities: Record<EntityId, { seasonsLeft: number; byForceId: EntityId }>;
+  /** §7.3-deep X 繡衣校事 — the city seated as the realm's intelligence bureau
+   *  (校事府): while held it runs a free scouting op each season and stiffens
+   *  counter-intel realm-wide. */
+  spyBureauCityId: EntityId | null;
   /** 朝政傾向 — the court faction the player patronises (§7.4 ①), if any: each
    *  season the favoured bloc rallies and the realm reaps that faction's boon. */
   courtPatronage?: import('../systems/courtFactions').FactionId | null;
@@ -581,6 +593,29 @@ export interface GameState {
   chronicle: Array<{ year: number; season: string; zh: string; en: string; kind: 'conquest' | 'works' | 'event' | 'rebellion' | 'defense' }>;
   /** Heaven's Mandate per force (0-100). */
   mandate: MandateState;
+  /** §7.4-deep N 外戚干政 — the officer whose kin the realm has raised as
+   *  consort-kin (forceId → anchor officerId). They lend the court a boon and
+   *  counterweight, but an over-mighty 大將軍 strains the throne. */
+  consortKin: Record<EntityId, EntityId>;
+  /** §7.4-deep O 學官專權 — the inner court's grip in the realm that holds the
+   *  天子 (forceId → 0–100). High power sells offices but drives off 清流. */
+  eunuchPower: Record<EntityId, number>;
+  /** §7.4-deep M 太后臨朝·幼主輔政 — active regencies for realms whose ruler is a
+   *  minor (forceId → the 輔政 regent). */
+  regencies: Record<EntityId, { regentId: EntityId; sinceYear: number }>;
+  /** §7.4-deep P 改元 — the year each realm last declared a new era (cooldown). */
+  eraChangedYear: Record<EntityId, number>;
+  /** §7.5-deep Q/T 禪代之階 — an over-mighty minister climbing toward the throne
+   *  in a realm (forceId → the climb). The player is not immune: an unchecked
+   *  權臣 in your own court can reach 受禪 and take the realm. */
+  usurpLadder: Record<EntityId, { officerId: EntityId; stage: number; sinceYear: number; cabal: EntityId[] }>;
+  /** §7.5-deep S 流亡君主 — lords deposed by usurpation/conquest who wander as
+   *  guest-generals with a lingering claim (ex-ruler officerId → the exile). */
+  exiledLords: Record<EntityId, { formerForceId: EntityId; formerNameZh: string; formerNameEn: string; sinceYear: number }>;
+  /** §7.5-deep R 清君側 — realms that invite a righteous war this season (a
+   *  usurper / tyrant / runaway inner court), with the cause (forceId → reason).
+   *  Recomputed each season; drives the 討逆 casus belli. */
+  righteousTargets: Record<EntityId, { reasonZh: string; reasonEn: string }>;
   /** Active 截糧 / delayed stratagem effects ticking down per season. */
   pendingDelayedEffects: Array<{
     targetCityId?: EntityId;
@@ -644,6 +679,9 @@ export const EMPTY_STATE: GameState = {
   battleFxBatch: null,
   pendingEspionage: [],
   embeddedSpies: [],
+  spyNetwork: {},
+  rumorCities: {},
+  spyBureauCityId: null,
   edictHistory: [],
   edictCooldowns: {},
   tribeState: createInitialTribeState(),
@@ -771,6 +809,13 @@ export const EMPTY_STATE: GameState = {
   marchPreview: null,
   chronicle: [],
   mandate: { byForce: {} },
+  consortKin: {},
+  eunuchPower: {},
+  regencies: {},
+  eraChangedYear: {},
+  usurpLadder: {},
+  exiledLords: {},
+  righteousTargets: {},
   pendingDelayedEffects: [],
   pendingBattleTheaters: [],
 };
@@ -1014,6 +1059,9 @@ export function loadScenario(
     battleFxBatch: null,
     pendingEspionage: [],
     embeddedSpies: [],
+    spyNetwork: {},
+    rumorCities: {},
+    spyBureauCityId: null,
     espionageReveals: {},
     cityDelegations: {},
     governorStances: {},
@@ -1150,6 +1198,13 @@ export function loadScenario(
   marchPreview: null,
   chronicle: [],
     mandate: createInitialMandate(scenario.forces.map((f) => f.id)),
+    consortKin: {},
+    eunuchPower: {},
+    regencies: {},
+    eraChangedYear: {},
+    usurpLadder: {},
+    exiledLords: {},
+    righteousTargets: {},
     pendingDelayedEffects: [],
     pendingBattleTheaters: [],
   };

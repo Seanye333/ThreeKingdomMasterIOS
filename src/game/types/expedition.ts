@@ -15,7 +15,10 @@ export type ExpeditionMode =
   | 'recruit' // 訪賢 — 三顧茅廬: court a specific known wanderer (legends need repeated visits)
   | 'tour' // 巡視 — tour one of YOUR cities: lift its loyalty + sniff out disaffection
   | 'befriend' // 結交 — befriend a rival's officer: warm them toward you (eases a later turn)
-  | 'levy'; // 募兵 — raise a body of troops from a far/frontier city, brought home
+  | 'levy' // 募兵 — raise a body of troops from a far/frontier city, brought home
+  | 'treasure' // 尋寶 — 訪古探幽: hunt an old battlefield / tomb / holy peak for 神兵寶馬 (real peril)
+  | 'study' // 游學 — 訪師問道: study at a famed academy/master — the officer grows in skill
+  | 'incognito'; // 微服 — 明察暗訪: travel in disguise to hear the ground truth (own land or a rival's)
 
 /** Outbound to the target, or homeward after the errand is done. */
 export type ExpeditionPhase = 'outbound' | 'returning';
@@ -44,6 +47,9 @@ export interface ExpeditionHaul {
   prestige?: number;
   /** 風霜 — the long road battered the envoy; he returns wounded. */
   wounded?: boolean;
+  /** 歷練所得 — a stat the journey honed (游學/劍客奇遇, §7.6-2): applied to the
+   *  officer on homecoming. */
+  statGain?: { stat: 'leadership' | 'war' | 'intelligence' | 'politics' | 'charisma'; amount: number };
   /** One-line summary of what was found, for the homecoming report. */
   note?: string;
   noteZh?: string;

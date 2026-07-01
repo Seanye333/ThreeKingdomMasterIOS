@@ -18,7 +18,10 @@ export function SchemesModal({ onClose }: { onClose: () => void }) {
   const officers = useGameStore((s) => s.officers);
   const diplomacy = useGameStore((s) => s.diplomacy);
   const playerForceId = useGameStore((s) => s.playerForceId);
+  const emperorCityId = useGameStore((s) => s.emperorCityId);
   const executeScheme = useGameStore((s) => s.executeScheme);
+  // §7.2-2 假詔討賊 — needs the 天子 in hand.
+  const holdsEmperor = !!emperorCityId && cities[emperorCityId]?.ownerForceId === playerForceId;
 
   const [schemeId, setSchemeId] = useState<SchemeId>('tiger-wolf');
   const [targetA, setTargetA] = useState('');
@@ -36,7 +39,9 @@ export function SchemesModal({ onClose }: { onClose: () => void }) {
   }, [cities, forces, playerForceId]);
 
   const problem = playerForceId
-    ? (targetA ? validateScheme(schemeId, cities, playerForceId, targetA, def.targets === 2 ? targetB || undefined : undefined, diplomacy) : t('選定目標', 'Pick a target'))
+    ? (schemeId === 'imperial-edict' && !holdsEmperor
+        ? t('須挾天子方可假詔', 'Needs the Son of Heaven in hand')
+        : targetA ? validateScheme(schemeId, cities, playerForceId, targetA, def.targets === 2 ? targetB || undefined : undefined, diplomacy) : t('選定目標', 'Pick a target'))
     : 'no force';
   const ready = !problem && targetA && (def.targets === 1 || targetB);
   const odds = ready ? schemeOdds(schemeId, diplomacy, strategist, targetA, targetB || undefined) : null;

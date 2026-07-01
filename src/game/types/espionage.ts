@@ -16,7 +16,8 @@ export type EspionageKind =
   | 'sow-discord'   // 離間計 — poison the rapport between two enemy officers
   | 'steal-gold'    // 盜竊金庫 — rob an enemy city's treasury into yours
   | 'seduce'        // 美人計 — turn an enemy officer via a honey-trap (好色 → easy)
-  | 'false-intel';  // 偽書反間 — forge proof of treason; the enemy lord may jail his own general
+  | 'false-intel'   // 偽書反間 — forge proof of treason; the enemy lord may jail his own general
+  | 'spread-rumor'; // 流言惑眾 (§7.3 V) — plant a rumour that saps a city's 民心 and spreads to its neighbours
 
 export interface EspionageDef {
   kind: EspionageKind;
@@ -47,6 +48,10 @@ export interface EspionageOp {
   targetOfficerId?: EntityId;
   /** Second targeted officer — for 離間計 (sow-discord), the pair to estrange. */
   targetOfficerId2?: EntityId;
+  /** 死士 (§7.3 W) — send an expendable agent: the op's success leaps, and a
+   *  caught agent gives nothing away (no 敗露 backlash) — but he never returns
+   *  (the officer is spent). */
+  deathAgent?: boolean;
   /** Season the op was issued. */
   issuedYear: number;
   issuedSeason: 'spring' | 'summer' | 'autumn' | 'winter';

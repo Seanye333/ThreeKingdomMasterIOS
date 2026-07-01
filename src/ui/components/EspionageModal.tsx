@@ -28,6 +28,9 @@ export function EspionageModal({ onClose }: Props) {
   const counterIntelSweep = useGameStore((s) => s.counterIntelSweep);
   const turnSpy = useGameStore((s) => s.turnSpy);
   const counterIntelSeasons = useGameStore((s) => s.counterIntelSeasons ?? 0);
+  const spyNetwork = useGameStore((s) => s.spyNetwork);
+  const spyBureauCityId = useGameStore((s) => s.spyBureauCityId);
+  const designateSpyBureau = useGameStore((s) => s.designateSpyBureau);
   const lang = useLanguage();
   const desc = useDesc();
   // Only the player's own embedded agents belong in the 潛伏 list (an enemy's
@@ -49,8 +52,11 @@ export function EspionageModal({ onClose }: Props) {
   const [pickedTargetCityId, setPickedTargetCityId] = useState<EntityId | null>(null);
   const [pickedTargetOfficerId, setPickedTargetOfficerId] = useState<EntityId | null>(null);
   const [pickedTargetOfficerId2, setPickedTargetOfficerId2] = useState<EntityId | null>(null);
+  const [deathAgent, setDeathAgent] = useState(false);
 
   const def = pickedKind ? ESPIONAGE_DEFS.find((d) => d.kind === pickedKind) : null;
+  // §7.3 W 死士 — only for the aggressive infiltrations.
+  const deathAgentAllowed = pickedKind === 'assassinate' || pickedKind === 'sabotage' || pickedKind === 'instigate' || pickedKind === 'spread-rumor';
 
   const availableAgents = useMemo(
     () =>
@@ -151,6 +157,7 @@ export function EspionageModal({ onClose }: Props) {
       pickedTargetCityId ?? undefined,
       pickedTargetOfficerId ?? undefined,
       pickedTargetOfficerId2 ?? undefined,
+      deathAgent && deathAgentAllowed,
     );
     if (r.ok) {
       setPickedKind(null);
@@ -159,6 +166,7 @@ export function EspionageModal({ onClose }: Props) {
       setPickedTargetCityId(null);
       setPickedTargetOfficerId(null);
       setPickedTargetOfficerId2(null);
+      setDeathAgent(false);
     } else {
       alert(r.reason ?? 'Failed');
     }
@@ -427,10 +435,40 @@ export function EspionageModal({ onClose }: Props) {
           >
             {lang === 'en' ? 'Plant Spy' : '潛伏'}
           </button>
+          {/* §7.3 W 死士 — send an expendable agent (huge success, no trail, agent dies). */}
+          {deathAgentAllowed && (
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.72rem', color: deathAgent ? '#e0707a' : '#9fb2c0', cursor: 'pointer' }}
+              title={lang === 'en' ? 'Death-agent (死士): +25% success, no exposure backlash — but the agent is spent (dies).' : '遣死士:成算 +25%、被擒無敗露反噬 —— 然死士一去不回(殞身)。'}>
+              <input type="checkbox" checked={deathAgent} onChange={(e) => setDeathAgent(e.target.checked)} />
+              {lang === 'en' ? '死士 Death-agent' : '遣死士'}
+            </label>
+          )}
           <button className={styles.confirmBtn} disabled={!canConfirm} onClick={submit}>
-            Queue Op
+            Queue Op{deathAgent && deathAgentAllowed ? (lang === 'en' ? ' · 死士' : ' · 死士') : ''}
           </button>
         </div>
+        {/* §7.3-deep U 細作網絡 + X 繡衣校事 */}
+        {playerForceId && (
+          <div style={{ padding: '0.4rem 0.9rem', borderTop: '1px solid #2b3845', display: 'flex', flexWrap: 'wrap', gap: '0.7rem', alignItems: 'center', fontSize: '0.7rem' }}>
+            <span style={{ color: '#7a8893' }}>{lang === 'en' ? '細作網絡 Network:' : '細作網絡:'}</span>
+            {Object.entries(spyNetwork ?? {}).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([fid, lvl]) => {
+              const f = forces[fid];
+              if (!f) return null;
+              return <span key={fid} style={{ color: lvl >= 40 ? '#9ad6a8' : '#aab6c0' }}>{lang === 'en' ? f.name.en : f.name.zh} {Math.round(lvl)}</span>;
+            })}
+            {Object.values(spyNetwork ?? {}).every((v) => v <= 0) && <span style={{ color: '#5d6b76' }}>{lang === 'en' ? 'none yet (build it with ops & embedded spies)' : '未成(以密事、潛伏漸積)'}</span>}
+            <span style={{ marginLeft: 'auto', color: '#7a8893' }}>{lang === 'en' ? '校事府 Bureau:' : '繡衣校事府:'}</span>
+            {spyBureauCityId
+              ? <>
+                  <span style={{ color: '#e6c473' }}>{(lang === 'en' ? cities[spyBureauCityId]?.name.en : cities[spyBureauCityId]?.name.zh) ?? '—'}</span>
+                  <button className={styles.cancelBtn} onClick={() => { const r = designateSpyBureau(null); if (!r.ok && r.reason) alert(r.reason); }} title={lang === 'en' ? 'Dissolve the bureau' : '廢置校事府'}>×</button>
+                </>
+              : <select defaultValue="" onChange={(e) => { if (e.target.value) { const r = designateSpyBureau(e.target.value); if (!r.ok && r.reason) alert(r.reason); } }} style={{ background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473', fontSize: '0.68rem', borderRadius: 3 }} title={lang === 'en' ? 'Seat the intelligence bureau: a free scouting op each season + stiffer counter-intel.' : '設校事府:每季自行一次免費刺探 + 強化反諜。'}>
+                  <option value="">{lang === 'en' ? '— seat at —' : '— 設於 —'}</option>
+                  {Object.values(cities).filter((c) => c.ownerForceId === playerForceId).slice(0, 40).map((c) => <option key={c.id} value={c.id}>{lang === 'en' ? c.name.en : c.name.zh}</option>)}
+                </select>}
+          </div>
+        )}
       </div>
     </div>
   );
