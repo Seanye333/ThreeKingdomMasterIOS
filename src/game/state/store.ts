@@ -71,6 +71,7 @@ import {
   evaluatePeaceOffer,
   tickAIPeaceOffers,
   forceCityCount as pactForceCityCount,
+  canExactTribute,
   type DemandKind,
 } from '../systems/diplomacyPacts';
 import { FORGE_RECIPES_BY_ID } from '../data/forging';
@@ -547,6 +548,22 @@ interface GameStore extends GameState {
    *  between you and `foeForceId` (§7.1 C). Success signs a NAP and eases the
    *  foe's grudge; failure just spends the silver. */
   requestMediation: (brokerForceId: EntityId, foeForceId: EntityId) => { ok: boolean; accepted?: boolean; message: string };
+  /** §7.1-deep AC 歲幣買安 — pay a rival a recurring seasonal tribute to keep a
+   *  firm peace (it holds off marching on you while paid). */
+  offerTribute: (targetForceId: EntityId, amount: number) => { ok: boolean; reason?: string };
+  /** §7.1-deep AC 勒索歲貢 — exact a recurring tribute from a much weaker, cowed
+   *  rival (needs a decisive strength edge / a casus belli). */
+  exactTribute: (targetForceId: EntityId, amount: number) => { ok: boolean; reason?: string };
+  dissolveTribute: (targetForceId: EntityId) => { ok: boolean; reason?: string };
+  /** §7.1-deep AE 攻守同盟·連橫 — bind a friendly realm into a standing offensive-
+   *  and-defensive bloc: it shares your casus belli against a common foe. */
+  proposeDefensivePact: (targetForceId: EntityId) => { ok: boolean; reason?: string };
+  dissolveDefensivePact: (targetForceId: EntityId) => { ok: boolean; reason?: string };
+  /** §7.1-deep AF 朝聘常駐使 — station one of your officers as a resident envoy at
+   *  a rival court (he leaves the rosters): each season he holds the relation,
+   *  slips intel home, and warns of the rival's designs. Recall to bring him back. */
+  stationCourtEnvoy: (officerId: EntityId, targetForceId: EntityId) => { ok: boolean; reason?: string };
+  recallCourtEnvoy: (targetForceId: EntityId) => { ok: boolean; reason?: string };
   /** 假途借道 — ask an ally / NAP partner for leave to march through their land
    *  (§7.1 B). While granted you may strike foes bordering their territory (and,
    *  treacherously, the host itself — 假途滅虢 — at a ruinous cost to your name). */
@@ -6607,6 +6624,11 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         let nextPendingDemands = state.pendingDemands;
         let nextPassageGrants = state.passageGrants;
         let nextPendingPeace = state.pendingPeaceOffers;
+        // §7.1-deep — tribute/defence pacts & resident envoys (pruned in the tick).
+        let nextTributePacts = state.tributePacts ?? [];
+        let nextDefensivePacts = state.defensivePacts ?? [];
+        let nextCourtEnvoys = state.courtEnvoys ?? {};
+        let nextDeterrences = state.deterrences ?? []; // §7.1 買安 refreshes a hold
         let credibilityAfterPacts = state.credibility;
         let grudgesAfterPacts = grudgesAfterSpies;
         if (seasonBoundary) {
@@ -6710,6 +6732,90 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               text: `${from?.name.en ?? 'A beaten realm'} sues for peace — ${o.kind === 'vassal' ? 'offering to submit' : 'offering reparations'}.`,
               textZh: `${from?.name.zh ?? '殘破之邦'}遣使乞和 —— ${o.kind === 'vassal' ? '願舉國稱臣' : '願輸款罷兵'}。`,
             });
+          }
+
+          // ── §7.1 外交再深化 — 互市(AC)/攻守同盟(AE)/常駐使節(AF)/和親(AD) ──
+          const alive7 = new Set(Object.values(postCities).map((c) => c.ownerForceId).filter(Boolean) as EntityId[]);
+          const relWarm = (a: EntityId, b: EntityId, floor: number, step: number) => {
+            const key = pairKey(a, b);
+            const rel = postDiplomacy.relations[key];
+            const cur = rel?.score ?? 0;
+            if (cur >= floor) return;
+            const next = Math.min(floor, cur + step);
+            const lo = a < b ? a : b, hi = a < b ? b : a;
+            postDiplomacy = { ...postDiplomacy, relations: { ...postDiplomacy.relations, [key]: rel ? { ...rel, score: next } : { forceA: lo, forceB: hi, score: next, status: 'neutral' as const } } };
+          };
+          // AC 歲幣納貢 — each season the payer's capital ships tribute to the
+          // payee's; a payer that can't pay lapses the pact (and sours the bond).
+          // While a 買安 pact stands (player pays), the payee is deterred (holds off).
+          nextTributePacts = [];
+          for (const p of (state.tributePacts ?? [])) {
+            if (!alive7.has(p.payerForceId) || !alive7.has(p.payeeForceId)) continue;
+            const payerCap = postForces[p.payerForceId]?.capitalCityId;
+            const payeeCap = postForces[p.payeeForceId]?.capitalCityId;
+            const pc = payerCap ? postCities[payerCap] : undefined;
+            const yc = payeeCap ? postCities[payeeCap] : undefined;
+            if (!pc || pc.ownerForceId !== p.payerForceId || pc.gold < p.amount) {
+              // 貢賦不繼 — the pact collapses; the slighted payee sours.
+              relWarm(p.payerForceId, p.payeeForceId, -1, 0); // no-op if already low
+              const key = pairKey(p.payerForceId, p.payeeForceId);
+              const rel = postDiplomacy.relations[key];
+              if (rel) postDiplomacy = { ...postDiplomacy, relations: { ...postDiplomacy.relations, [key]: { ...rel, score: Math.max(-100, rel.score - 8) } } };
+              if (p.payerForceId === pfid7 || p.payeeForceId === pfid7) result.report.entries.push({ cityId: null, kind: 'note', text: `The tribute to/from ${postForces[p.payerForceId === pfid7 ? p.payeeForceId : p.payerForceId]?.name.en ?? 'a realm'} lapses — the pact breaks.`, textZh: `歲幣不繼,與${postForces[p.payerForceId === pfid7 ? p.payeeForceId : p.payerForceId]?.name.zh ?? '一國'}之貢約遂廢。` });
+              continue;
+            }
+            postCities = { ...postCities, [payerCap!]: { ...pc, gold: pc.gold - p.amount }, ...(yc && yc.ownerForceId === p.payeeForceId ? { [payeeCap!]: { ...yc, gold: yc.gold + p.amount } } : {}) };
+            relWarm(p.payerForceId, p.payeeForceId, 15, 2); // tribute keeps the peace warm
+            // 買安 — a player paying a rival cows it from marching (a rolling deterrence).
+            if (p.payerForceId === pfid7) {
+              const dkey = (m: { byForceId: EntityId; targetForceId: EntityId }) => m.byForceId === p.payeeForceId && m.targetForceId === pfid7;
+              // remove any stale mark, refresh a 1-year hold
+              nextDeterrences = [...nextDeterrences.filter((m) => !dkey(m)), { byForceId: p.payeeForceId, targetForceId: pfid7, expiresYear: result.date.year + 1, expiresSeason: result.date.season }];
+            }
+            nextTributePacts.push(p);
+          }
+          // AE 攻守同盟·連橫 — a defensive-pact ally shares the player's casus belli.
+          nextDefensivePacts = (state.defensivePacts ?? []).filter((p) => alive7.has(p.forceA) && alive7.has(p.forceB));
+          if (pfid7) {
+            const myMarks = casusBelliAfterCourt.filter((m) => m.byForceId === pfid7);
+            for (const p of nextDefensivePacts) {
+              const ally = p.forceA === pfid7 ? p.forceB : p.forceB === pfid7 ? p.forceA : null;
+              if (!ally) continue;
+              relWarm(pfid7, ally, 45, 4);
+              for (const m of myMarks) {
+                if (m.targetForceId === ally) continue;
+                const has = (arr: typeof casusBelliAfterCourt) => arr.some((x) => x.byForceId === ally && x.targetForceId === m.targetForceId);
+                if (!has(casusBelliAfterCourt) && !has(aiSchemeMarks)) aiSchemeMarks.push({ byForceId: ally, targetForceId: m.targetForceId, expiresYear: result.date.year + 1, expiresSeason: result.date.season });
+              }
+            }
+          }
+          // AF 朝聘常駐使 — hold the tie, slip intel, warn of designs.
+          nextCourtEnvoys = { ...(state.courtEnvoys ?? {}) };
+          if (pfid7) for (const [tid, posting] of Object.entries(nextCourtEnvoys)) {
+            const env = officersWithMarchTask[posting.officerId] ?? postOfficers[posting.officerId];
+            if (!env || env.status === 'dead' || !alive7.has(tid)) { delete nextCourtEnvoys[tid]; continue; }
+            relWarm(pfid7, tid, 25, 3);
+            const tcs = Object.values(postCities).filter((c) => c.ownerForceId === tid);
+            if (tcs.length > 0 && Math.random() < 0.4) { const c = tcs[Math.floor(Math.random() * tcs.length)]; espionageRevealsNext[c.id] = Math.max(espionageRevealsNext[c.id] ?? 0, 4); }
+            const threat = casusBelliAfterCourt.some((m) => m.byForceId === tid && m.targetForceId === pfid7) || (grudgesAfterPacts[tid] ?? 0) >= 40;
+            if (threat && Math.random() < 0.5) result.report.entries.push({ cityId: null, kind: 'note', text: `Your envoy at ${postForces[tid]?.name.en ?? 'a rival court'} warns: they mean you harm.`, textZh: `常駐${postForces[tid]?.name.zh ?? '敵'}之使密報:其有圖我之意,宜備之。` });
+          }
+          // AD 秦晉之好 — an enduring in-law bond firms; a fallen in-law realm's
+          // succession passes a claim (承其統之名 → 天命).
+          const nextExiledClaimed = new Set<EntityId>();
+          if (pfid7) {
+            for (const al of state.marriageAlliances) {
+              const partner = al.forceA === pfid7 ? al.forceB : al.forceB === pfid7 ? al.forceA : null;
+              if (!partner) continue;
+              if (alive7.has(partner)) {
+                if (result.date.year - al.sinceYear >= 3) relWarm(pfid7, partner, 55, 3); // 血盟之固
+              } else if (!nextExiledClaimed.has(partner)) {
+                nextExiledClaimed.add(partner);
+                const m = { ...nextMandate.byForce }; m[pfid7] = Math.max(0, Math.min(100, (m[pfid7] ?? 50) + 8));
+                nextMandate = { ...nextMandate, byForce: m };
+                result.report.entries.push({ cityId: null, kind: 'note', text: `The in-law realm of ${postForces[partner]?.name.en ?? 'your kin'} has fallen — its succession passes to your line (mandate +8).`, textZh: `姻親${postForces[partner]?.name.zh ?? ''}之國既亡,秦晉之好,汝得承其統之名(天命 +8)。` });
+              }
+            }
           }
         }
 
@@ -7005,6 +7111,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             ? { ...officersWithMarchTask, ...naturalizedArrivals, ...clanOfficerPatches, ...statecraftPatches, ...courtPatches }
             : officersWithMarchTask,
           marriageAlliances: allianceTick.alliances,
+          tributePacts: nextTributePacts,
+          defensivePacts: nextDefensivePacts,
+          courtEnvoys: nextCourtEnvoys,
           forces: postForces,
           refugees: result.refugees,
           runtimeBonds: bondsAfterTraits,
@@ -7244,7 +7353,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             : state.casusBelliMarks,
           // 疑兵之計 deterrences expire on the same clock as 討伐令 marks.
           deterrences: seasonBoundary
-            ? (state.deterrences ?? []).filter((m) => {
+            ? nextDeterrences.filter((m) => {
                 const seasonIdx = { spring: 0, summer: 1, autumn: 2, winter: 3 } as const;
                 const nextAbs = result.date.year * 4 + seasonIdx[result.date.season];
                 const expAbs = m.expiresYear * 4 + seasonIdx[m.expiresSeason];
@@ -8216,6 +8325,96 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         });
         get().notify(`調停成 · ${broker.name.zh} 斡旋,與 ${foe.name.zh} 罷兵`, `${broker.name.en} brokers a truce with ${foe.name.en}`);
         return { ok: true, accepted: true, message: `${broker.name.zh}居中斡旋,與${foe.name.zh}締互不侵犯之盟。` };
+      },
+
+      // §7.1-deep AC 歲幣買安 — pay a rival a recurring tribute to keep the peace.
+      offerTribute: (targetForceId, amount) => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid || targetForceId === pid) return { ok: false, reason: 'invalid' };
+        if (!state.forces[targetForceId]) return { ok: false, reason: 'unknown realm' };
+        const amt = Math.max(50, Math.floor(amount));
+        if ((state.tributePacts ?? []).some((p) => p.payerForceId === pid && p.payeeForceId === targetForceId)) return { ok: false, reason: '已有歲幣之約' };
+        const cap = state.forces[pid]?.capitalCityId;
+        if (!cap || (state.cities[cap]?.gold ?? 0) < amt) return { ok: false, reason: `國庫不足(每季須 ${amt} 金)` };
+        set({ tributePacts: [...(state.tributePacts ?? []), { payerForceId: pid, payeeForceId: targetForceId, amount: amt, sinceYear: state.date.year }] });
+        get().notify(`歲幣買安 · 每季輸 ${state.forces[targetForceId].name.zh} ${amt} 金`, `Paying ${state.forces[targetForceId].name.en} ${amt} gold/season for peace`);
+        return { ok: true };
+      },
+      exactTribute: (targetForceId, amount) => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid || targetForceId === pid) return { ok: false, reason: 'invalid' };
+        if (!state.forces[targetForceId]) return { ok: false, reason: 'unknown realm' };
+        if ((state.tributePacts ?? []).some((p) => p.payerForceId === targetForceId && p.payeeForceId === pid)) return { ok: false, reason: '已勒其歲貢' };
+        // 勒索須勢:兵力壓倒 (≥2×) 或持討伐令之名。
+        const myTroops = Object.values(state.cities).filter((c) => c.ownerForceId === pid).reduce((s, c) => s + c.troops, 0);
+        const theirTroops = Object.values(state.cities).filter((c) => c.ownerForceId === targetForceId).reduce((s, c) => s + c.troops, 0);
+        const hasCB = state.casusBelliMarks.some((m) => m.byForceId === pid && m.targetForceId === targetForceId);
+        if (!canExactTribute(myTroops, theirTroops, hasCB)) return { ok: false, reason: '勢未壓倒,難勒其貢(須兵力≈2倍或持討伐令)' };
+        const amt = Math.max(50, Math.floor(amount));
+        set({ tributePacts: [...(state.tributePacts ?? []), { payerForceId: targetForceId, payeeForceId: pid, amount: amt, sinceYear: state.date.year }] });
+        get().notify(`勒索歲貢 · ${state.forces[targetForceId].name.zh} 每季輸 ${amt} 金`, `Extorting ${amt} gold/season from ${state.forces[targetForceId].name.en}`, 'warn');
+        return { ok: true };
+      },
+      dissolveTribute: (targetForceId) => {
+        const state = get();
+        const pid = state.playerForceId;
+        set({ tributePacts: (state.tributePacts ?? []).filter((p) => !((p.payerForceId === pid && p.payeeForceId === targetForceId) || (p.payerForceId === targetForceId && p.payeeForceId === pid))) });
+        return { ok: true };
+      },
+
+      // §7.1-deep AE 攻守同盟·連橫 — a standing offensive-and-defensive bloc.
+      proposeDefensivePact: (targetForceId) => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid || targetForceId === pid) return { ok: false, reason: 'invalid' };
+        if (!state.forces[targetForceId]) return { ok: false, reason: 'unknown realm' };
+        if ((state.defensivePacts ?? []).some((p) => (p.forceA === pid && p.forceB === targetForceId) || (p.forceA === targetForceId && p.forceB === pid))) return { ok: false, reason: 'already bound' };
+        // A defensive league needs real warmth (an ally or a near-ally).
+        const rel = getRelation(state.diplomacy, pid, targetForceId);
+        if (rel.status !== 'allied' && rel.score < 40) return { ok: false, reason: '交誼未篤,難結攻守之盟(須同盟或關係≥40)' };
+        set({ defensivePacts: [...(state.defensivePacts ?? []), { forceA: pid, forceB: targetForceId, sinceYear: state.date.year }] });
+        get().notify(`攻守同盟 · 與 ${state.forces[targetForceId].name.zh} 連橫`, `Defensive pact with ${state.forces[targetForceId].name.en}`);
+        return { ok: true };
+      },
+      dissolveDefensivePact: (targetForceId) => {
+        const state = get();
+        const pid = state.playerForceId;
+        set({ defensivePacts: (state.defensivePacts ?? []).filter((p) => !((p.forceA === pid && p.forceB === targetForceId) || (p.forceA === targetForceId && p.forceB === pid))) });
+        return { ok: true };
+      },
+
+      // §7.1-deep AF 朝聘常駐使 — station / recall a resident envoy at a rival court.
+      stationCourtEnvoy: (officerId, targetForceId) => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid || targetForceId === pid) return { ok: false, reason: 'invalid' };
+        if (!state.forces[targetForceId]) return { ok: false, reason: 'unknown realm' };
+        if (state.courtEnvoys?.[targetForceId]) return { ok: false, reason: 'an envoy is already posted there' };
+        const officer = state.officers[officerId];
+        if (!officer || officer.forceId !== pid) return { ok: false, reason: 'need an officer' };
+        if (officer.locationCityId == null || state.cities[officer.locationCityId]?.ownerForceId !== pid) return { ok: false, reason: 'officer must be in one of your cities' };
+        if (officer.task || state.pendingCommands[officerId] || state.pendingTrainings.some((tr) => tr.officerId === officerId)) return { ok: false, reason: 'officer is busy' };
+        set({
+          officers: { ...state.officers, [officerId]: { ...officer, locationCityId: null, task: null, status: 'active' } },
+          courtEnvoys: { ...state.courtEnvoys, [targetForceId]: { officerId, targetForceId, sinceYear: state.date.year } },
+        });
+        get().notify(`常駐使節 · ${officer.name.zh} 使 ${state.forces[targetForceId].name.zh}`, `${officer.name.en} is now resident envoy at ${state.forces[targetForceId].name.en}`);
+        return { ok: true };
+      },
+      recallCourtEnvoy: (targetForceId) => {
+        const state = get();
+        const posting = state.courtEnvoys?.[targetForceId];
+        if (!posting) return { ok: false, reason: 'no envoy there' };
+        const officer = state.officers[posting.officerId];
+        const courtEnvoys = { ...state.courtEnvoys }; delete courtEnvoys[targetForceId];
+        const pid = state.playerForceId;
+        const cap = pid ? state.forces[pid]?.capitalCityId : null;
+        if (!officer || officer.status === 'dead') { set({ courtEnvoys }); return { ok: true }; }
+        set({ courtEnvoys, officers: { ...state.officers, [posting.officerId]: { ...officer, locationCityId: cap ?? null, task: null, status: 'idle' } } });
+        get().notify(`使節召還 · ${officer.name.zh}`, `${officer.name.en} recalled`);
+        return { ok: true };
       },
 
       requestPassage: (grantorForceId) => {
@@ -13263,6 +13462,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           spyNetwork: loaded.spyNetwork ?? {},
           rumorCities: loaded.rumorCities ?? {},
           spyBureauCityId: loaded.spyBureauCityId ?? null,
+          // §7.1 外交再深化 — legacy saves predate tribute/defence pacts & envoys.
+          tributePacts: loaded.tributePacts ?? [],
+          defensivePacts: loaded.defensivePacts ?? [],
+          courtEnvoys: loaded.courtEnvoys ?? {},
         };
         // 精煉/突破/鑲嵌登記 — re-point the denormalized registries at the loaded maps.
         setRefineRegistry(fresh.itemRefinements);

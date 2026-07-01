@@ -69,6 +69,17 @@ export function DiplomacyModal({ onClose }: Props) {
   const pendingDemands = useGameStore((s) => s.pendingDemands);
   const recallHostage = useGameStore((s) => s.recallHostage);
   const requestMediation = useGameStore((s) => s.requestMediation);
+  // §7.1-deep 外交再深化
+  const offerTribute = useGameStore((s) => s.offerTribute);
+  const exactTribute = useGameStore((s) => s.exactTribute);
+  const dissolveTribute = useGameStore((s) => s.dissolveTribute);
+  const proposeDefensivePact = useGameStore((s) => s.proposeDefensivePact);
+  const dissolveDefensivePact = useGameStore((s) => s.dissolveDefensivePact);
+  const stationCourtEnvoy = useGameStore((s) => s.stationCourtEnvoy);
+  const recallCourtEnvoy = useGameStore((s) => s.recallCourtEnvoy);
+  const tributePacts = useGameStore((s) => s.tributePacts);
+  const defensivePacts = useGameStore((s) => s.defensivePacts);
+  const courtEnvoys = useGameStore((s) => s.courtEnvoys);
   const requestPassage = useGameStore((s) => s.requestPassage);
   const passageGrants = useGameStore((s) => s.passageGrants);
   const sueForPeace = useGameStore((s) => s.sueForPeace);
@@ -399,6 +410,36 @@ export function DiplomacyModal({ onClose }: Props) {
                   >
                     {t('人質', 'Hostage')}
                   </button>
+                  {/* §7.1-deep 歲幣 / 攻守同盟 / 常駐使節 */}
+                  {(() => {
+                    const payingThem = (tributePacts ?? []).some((p) => p.payerForceId === playerForceId && p.payeeForceId === row.id);
+                    const exactingThem = (tributePacts ?? []).some((p) => p.payerForceId === row.id && p.payeeForceId === playerForceId);
+                    const bonded = (defensivePacts ?? []).some((p) => p.forceA === row.id || p.forceB === row.id);
+                    const envoyHere = !!courtEnvoys?.[row.id];
+                    const ablestIdle = Object.values(officers)
+                      .filter((o) => o.forceId === playerForceId && o.status === 'idle' && !o.task && o.locationCityId != null && cities[o.locationCityId]?.ownerForceId === playerForceId)
+                      .sort((a, b) => (b.stats.intelligence + b.stats.charisma) - (a.stats.intelligence + a.stats.charisma))[0];
+                    const wrap = (r: { ok: boolean; reason?: string }) => ({ ok: r.ok, message: r.ok ? '' : (r.reason ?? '') });
+                    return <>
+                      <button className={styles.tributeBtn}
+                        onClick={() => handle(row.id, () => wrap(payingThem || exactingThem ? dissolveTribute(row.id) : offerTribute(row.id, 300)))}
+                        title={t('歲幣買安 — 每季輸 300 金換其不犯(再按取消)', 'Pay 300 gold/season for a firm peace (click again to end)')}
+                      >{payingThem ? t('歲幣✓', 'Tribute✓') : t('歲幣', 'Tribute')}</button>
+                      <button className={styles.tributeBtn}
+                        onClick={() => handle(row.id, () => wrap(exactingThem ? dissolveTribute(row.id) : exactTribute(row.id, 300)))}
+                        title={t('勒索歲貢 — 壓其勢/持討伐令,每季勒 300 金', 'Extort 300 gold/season from a much weaker or war-marked rival')}
+                      >{exactingThem ? t('勒貢✓', 'Exact✓') : t('勒貢', 'Exact')}</button>
+                      <button className={styles.tributeBtn}
+                        onClick={() => handle(row.id, () => wrap(bonded ? dissolveDefensivePact(row.id) : proposeDefensivePact(row.id)))}
+                        title={t('攻守同盟·連橫 — 盟友共享你的討伐令(須同盟或關係≥40)', 'Defensive bloc — the ally shares your casus belli (needs alliance / relation ≥40)')}
+                      >{bonded ? t('攻守✓', 'Bloc✓') : t('攻守', 'Bloc')}</button>
+                      <button className={styles.tributeBtn}
+                        disabled={!envoyHere && !ablestIdle}
+                        onClick={() => handle(row.id, () => wrap(envoyHere ? recallCourtEnvoy(row.id) : ablestIdle ? stationCourtEnvoy(ablestIdle.id, row.id) : { ok: false, reason: 'no idle officer' }))}
+                        title={t('朝聘常駐使 — 遣一員常駐其朝:維關係、探情報、預警其動(再按召還)', 'Station a resident envoy: holds ties, gathers intel, warns of their designs (click to recall)')}
+                      >{envoyHere ? t('召使', 'Recall') : t('常駐使', 'Envoy')}</button>
+                    </>;
+                  })()}
                   {(() => {
                     const married = marriageAlliances.some(
                       (m) => m.forceA === row.id || m.forceB === row.id,

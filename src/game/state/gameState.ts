@@ -125,6 +125,19 @@ export interface GameState {
   runtimeBonds: OathBond[];
   /** 聯姻同盟 — binding marriage alliances the player has sealed. */
   marriageAlliances: import('../types/diplomacy').MarriageAlliance[];
+  /** §7.1-deep AC 歲幣納貢 — standing seasonal tribute pacts. Paying a stronger
+   *  rival buys a firm peace (it holds off while paid); extorting a cowed weaker
+   *  one milks a steady stream into your coffers. (互市 mutual-trade income is the
+   *  separate 通商條約 / tradePartners system.) */
+  tributePacts: Array<{ payerForceId: EntityId; payeeForceId: EntityId; amount: number; sinceYear: number }>;
+  /** §7.1-deep AE 攻守同盟·連橫 — standing offensive-and-defensive pacts (pairs):
+   *  a bloc member share a common foe's casus belli and rally harder to a
+   *  partner under attack — a step beyond a mere alliance/NAP. */
+  defensivePacts: Array<{ forceA: EntityId; forceB: EntityId; sinceYear: number }>;
+  /** §7.1-deep AF 朝聘常駐使 — officers the player has stationed as resident
+   *  envoys at rival courts (targetForceId → posting): each season they hold the
+   *  relation, slip intel home, and give advance warning of the rival's designs. */
+  courtEnvoys: Record<EntityId, { officerId: EntityId; targetForceId: EntityId; sinceYear: number }>;
   /** 共討會盟 — active player-led war leagues (§7.1). Each names a 盟主, a foe,
    *  and the sworn members; resolved/expired in systems/diplomacyPacts. */
   warCoalitions: import('../types/diplomacy').WarCoalition[];
@@ -654,6 +667,9 @@ export const EMPTY_STATE: GameState = {
   diplomacy: { relations: {} },
   runtimeBonds: [],
     marriageAlliances: [],
+    tributePacts: [],
+    defensivePacts: [],
+    courtEnvoys: {},
   warCoalitions: [],
   vassalDiscontent: {},
   pendingCallsToArms: [],
@@ -1030,6 +1046,9 @@ export function loadScenario(
     diplomacy: { relations: initialRelations },
     runtimeBonds: [],
     marriageAlliances: [],
+    tributePacts: [],
+    defensivePacts: [],
+    courtEnvoys: {},
     warCoalitions: [],
     vassalDiscontent: {},
     pendingCallsToArms: [],

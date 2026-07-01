@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { City, Force, GameDate, Officer, WarCoalition } from '../types';
 import { getRelation, isHostilePermitted } from '../types/diplomacy';
+import { canExactTribute } from "./diplomacyPacts";
 import {
   evaluateSubjugation,
   evaluateProtection,
@@ -457,5 +458,14 @@ describe('tickHostages (質子 upkeep)', () => {
     const out = tickHostages({ officers, forces: w.forces, cities: w.cities, rng: () => 0.99 });
     expect(out.officers.h.hostageOfForceId).toBe('holder');
     expect(out.entries.length).toBe(0);
+  });
+});
+
+describe('§7.1-deep AC canExactTribute — 勒索歲貢 needs leverage', () => {
+  it('a decisive troop edge OR a casus belli lets you extort; parity does not', () => {
+    expect(canExactTribute(20000, 10000, false)).toBe(true);   // ~2× troops
+    expect(canExactTribute(9000, 10000, true)).toBe(true);     // war-marked (討伐令)
+    expect(canExactTribute(11000, 10000, false)).toBe(false);  // near parity, no CB
+    expect(canExactTribute(5000, 10000, false)).toBe(false);   // weaker
   });
 });

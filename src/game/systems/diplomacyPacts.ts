@@ -62,6 +62,14 @@ export function forceTroops(forceId: EntityId, cities: Record<EntityId, City>): 
   return total;
 }
 
+
+/** §7.1-deep AC 勒索歲貢 — may a realm extort a recurring tribute from a rival?
+ *  It takes a decisive strength edge (≈ twice the troops) or a standing casus
+ *  belli (討伐令) to cow them into paying. */
+export function canExactTribute(myTroops: number, theirTroops: number, hasCasusBelli: boolean): boolean {
+  return hasCasusBelli || myTroops >= theirTroops * 1.8;
+}
+
 /** Cities a force still holds. A force at 0 has been wiped from the map. */
 export function forceCityCount(forceId: EntityId, cities: Record<EntityId, City>): number {
   let n = 0;
