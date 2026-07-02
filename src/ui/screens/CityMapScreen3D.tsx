@@ -2678,6 +2678,24 @@ function Hinterland3D({
               onClick={() => onSlotClick(i)}
               showLabel={showOverlays}
             />
+            {/* 防守扇形 — the selected slot lights the octant it guards, so
+                the defence's facing reads at a glance (E16). */}
+            {selectedSlot === i && (() => {
+              const thetaC = Math.atan2(-dzC, dxC);
+              const r0 = (innerX + innerZ) / 2;
+              return (
+                <group position={[cx, 0.07, cz]}>
+                  <mesh rotation={[-Math.PI / 2, 0, 0]}>
+                    <ringGeometry args={[r0 * 0.82, r0 * 2.1, 24, 1, thetaC - Math.PI / 8, Math.PI / 4]} />
+                    <meshBasicMaterial color="#7fb4ff" transparent opacity={0.2} side={THREE.DoubleSide} depthWrite={false} toneMapped={false} />
+                  </mesh>
+                  <mesh rotation={[-Math.PI / 2, 0, 0]}>
+                    <ringGeometry args={[r0 * 0.82, r0 * 0.9, 24, 1, thetaC - Math.PI / 8, Math.PI / 4]} />
+                    <meshBasicMaterial color="#aecdff" transparent opacity={0.55} side={THREE.DoubleSide} depthWrite={false} toneMapped={false} />
+                  </mesh>
+                </group>
+              );
+            })()}
             {occupied && s && (() => {
               const maxHp = 100 * s.level + 100;
               return (
