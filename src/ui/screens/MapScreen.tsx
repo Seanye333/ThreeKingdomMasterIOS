@@ -325,22 +325,45 @@ export function MapScreen() {
   const dayFlowTogglePause = useGameStore((s) => s.dayFlowTogglePause);
   const dayFlowSetSpeed = useGameStore((s) => s.dayFlowSetSpeed);
   const dayFlowSkip = useGameStore((s) => s.dayFlowSkip);
-  const battleScreenUpForFlow = useGameStore((s) => !!s.tacticalBattle);
-  useEffect(() => {
-    // 全屏戰鬥凍結日數 — the month holds its breath while you fight.
-    if (!dayFlow?.playing || battleScreenUpForFlow) return;
-    const iv = setInterval(() => dayFlowTick(), 420 / (dayFlow.speed || 1));
-    return () => clearInterval(iv);
-  }, [dayFlow?.playing, dayFlow?.speed, dayFlow?.key, dayFlowTick, battleScreenUpForFlow]);
-
-  const advanceTurn = () => {
-    playSfx('horn');
+  const beginDayFlow = useGameStore((s) => s.beginDayFlow);
+  const hasColumns = useGameStore((s) => Object.keys(s.armies ?? {}).length > 0);
+  // 本旬結算本體 — the flow's day 15 (or a flow-less advance) lands here.
+  const commitTurn = () => {
     if (hotSeatPlayers.length > 1) {
       if (hotSeatActiveIndex === hotSeatPlayers.length - 1) endSeason();
       cycleHotSeat();
     } else {
       endSeason();
     }
+  };
+  useEffect(() => {
+    if (!dayFlow?.playing) return;
+    const iv = setInterval(() => {
+      const df = useGameStore.getState().dayFlow;
+      if (!df) { clearInterval(iv); return; }
+      if (df.day + 1 >= df.total) {
+        // 第 15 日 — the month closes: NOW the sim resolves (battles, reports).
+        clearInterval(iv);
+        dayFlowSkip();
+        commitTurn();
+        return;
+      }
+      dayFlowTick();
+    }, 420 / (dayFlow.speed || 1));
+    return () => clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dayFlow?.playing, dayFlow?.speed, dayFlow?.key]);
+
+  const advanceTurn = () => {
+    playSfx('horn');
+    // 日流(前置)— with columns on the road, the half-month WALKS first
+    // (pause mid-way and reroute: the order genuinely lands this turn);
+    // resolution fires at day 15. Hot-seat/observe/empty roads skip straight.
+    if (hotSeatPlayers.length <= 1 && hasColumns && !dayFlow) {
+      beginDayFlow();
+      return;
+    }
+    commitTurn();
   };
   // 演義模擬器 — no player force means observe mode: auto-advance ticks
   // (auto-dismissing the season report) until a force unifies the realm.
@@ -790,8 +813,8 @@ export function MapScreen() {
         </ErrorBoundary>
       )}
       <ErrorBoundary fallbackLabel="Battle theater crashed">
-        {(!dayFlow || dayFlow.day >= Math.floor(dayFlow.total * 0.55)) && <BattleTheaterMount />}
-        {(!dayFlow || dayFlow.day >= Math.floor(dayFlow.total * 0.55)) && <FieldBattleMount />}
+        <BattleTheaterMount />
+        <FieldBattleMount />
       </ErrorBoundary>
       {showForces && <ForcesOverview onClose={() => setShowForces(false)} />}
       {showDiplomacy && (

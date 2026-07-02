@@ -1178,6 +1178,7 @@ interface GameStore extends GameState {
   /** §8.5 祈雨 — in a drought season, pray for rain (politics-led). */
   prayForRain: () => { ok: boolean; success?: boolean; message: string };
   /** 日流 — playback controls for the day-by-day turn flow. */
+  beginDayFlow: () => void;
   dayFlowTick: () => void;
   dayFlowTogglePause: () => void;
   dayFlowSetSpeed: (speed: number) => void;
@@ -1598,7 +1599,7 @@ export const useGameStore = create<GameStore>()(
           // 日流中改道 — the order is taken NOW; the column swings onto the
           // new road from the next tick of the sim. Say so plainly.
           ...(state.dayFlow
-            ? { actionToast: { key: (state.actionToast?.key ?? 0) + 1, zh: '改道令已下 — 縱隊自下一旬轉向新目標', en: 'Rerouted — the column swings over next turn', tone: 'ok' as const } }
+            ? { actionToast: { key: (state.actionToast?.key ?? 0) + 1, zh: '改道令已下 — 本旬即刻轉向新目標', en: 'Rerouted — takes effect this very turn', tone: 'ok' as const } }
             : {}),
         });
         return true;
@@ -7712,11 +7713,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           sites: nextSites,
           tradeRoutes: nextTradeRoutes,
           territoryOwnership: result.territoryOwnership ?? state.territoryOwnership ?? {},
-          // 日流 — with columns on the road, the half-month plays back day by
-          // day (15 days); empty roads skip straight to the reports.
-          dayFlow: state.playerForceId && Object.keys(result.armies ?? {}).length > 0
-            ? { key: (state.dayFlow?.key ?? 0) + 1, day: 0, total: 15, playing: true, speed: state.dayFlow?.speed ?? 1 }
-            : null,
+          // 日流(前置)— the month already played out BEFORE this commit;
+          // clear any residue so reports/battles surface immediately.
+          dayFlow: null,
           // 塗色 — season prune: TTL trails grass over, dead forces sweep.
           hexPaint: seasonBoundary
             ? prunePaint(
@@ -10103,21 +10102,22 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         };
       },
 
-      dayFlowTick: () => {
+      beginDayFlow: () => {
         const state = get();
-        const df = state.dayFlow;
+        set({
+          dayFlow: {
+            key: (state.dayFlow?.key ?? 0) + 1,
+            day: 0,
+            total: 15,
+            playing: true,
+            speed: state.dayFlow?.speed ?? 1,
+          },
+        });
+      },
+      dayFlowTick: () => {
+        const df = get().dayFlow;
         if (!df || !df.playing) return;
-        if (df.day + 1 >= df.total) { set({ dayFlow: null }); return; }
-        // 日流第二步 — the month's BATTLES land mid-flow (day 8, the armies
-        // have met): the playback auto-pauses and the theatres open. Press
-        // ▶ afterwards and the rest of the month walks on.
-        const battleDay = Math.floor(df.total * 0.55);
-        const hasBattles = state.pendingBattleTheaters.length > 0;
-        if (df.day + 1 === battleDay && hasBattles) {
-          set({ dayFlow: { ...df, day: df.day + 1, playing: false } });
-          return;
-        }
-        set({ dayFlow: { ...df, day: df.day + 1 } });
+        set({ dayFlow: { ...df, day: Math.min(df.total, df.day + 1) } });
       },
       dayFlowTogglePause: () => {
         const df = get().dayFlow;

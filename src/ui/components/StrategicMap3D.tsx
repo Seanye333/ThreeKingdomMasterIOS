@@ -2276,12 +2276,13 @@ function MarchingArmy({ from, to, color, commanderName, targetName, troops, seas
   useFrame(() => {
     if (!groupRef.current) return;
     const elapsed = totalSeasons - seasonsRemaining;
-    // 日流 — during turn playback the column walks its fresh slice day by
-    // day (cell-stepped by the hex snap below); lands exactly on the static
-    // mid-slice pose when playback ends, so the handoff is seamless.
+    // 日流(前置)— the playback runs BEFORE resolution: the column walks
+    // one whole slice from its between-turns pose (elapsed+0.5) to the pose
+    // the coming resolution will leave it at (elapsed+1.5's midpoint), so
+    // the handoff at day 15 is seamless in both directions.
     const df = useGameStore.getState().dayFlow;
     const phase = df && df.total > 0
-      ? Math.max(0, elapsed - 1) + 0.5 + Math.min(1, df.day / df.total)
+      ? elapsed + 0.5 + Math.min(1, df.day / df.total)
       : elapsed + 0.5;
     const t = Math.min(0.95, Math.max(0.05, phase / totalSeasons));
     let x: number, z: number, heading: number;
