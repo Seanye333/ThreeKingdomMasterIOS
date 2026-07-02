@@ -100,35 +100,80 @@ export function isLand(x: number, y: number, margin = 0): boolean {
   return landSDF(x, y) > margin;
 }
 
-// ── Hex grid geometry (pointy-top, odd-r offset) ──────────────────
-// Shared by the territory overlay (which draws the grid) and the army
-// movement code (which snaps units to hex centres), so they always
-// agree on cell positions.
-// Fine RTK-XIV-style grid: ~145 hexes across the 1000px map width.
-export const HEX_SIZE = 4;                        // centre → corner
-export const HEX_W = Math.sqrt(3) * HEX_SIZE;     // horizontal spacing
-export const HEX_V = 1.5 * HEX_SIZE;              // vertical (row) spacing
+// ── Canonical hex lattice (flat-top, odd-q offset) ─────────────────
+// THE one grid of the game world. Shared by: the territory overlay
+// (which paints it), army snapping, city placement, the hex-board map
+// skin, AND battlefield generation — a battle board is an axis-aligned
+// window of THIS lattice, so tactical tile (col,row) IS a strategic-map
+// cell and the two views always agree on distance and terrain.
+// RTK-XIV density: ~139 columns across the map width.
+export const HEX_R = 4.8 * WORLD_SCALE;               // centre → corner
+export const HEX_COL_SPACING = 1.5 * HEX_R;           // horizontal col step
+export const HEX_ROW_SPACING = Math.sqrt(3) * HEX_R;  // vertical row step
+export const HEX_COLS = Math.ceil(MAP_W / HEX_COL_SPACING);
+export const HEX_ROWS = Math.ceil(MAP_H / HEX_ROW_SPACING);
 
-/** Six pointy-top corners of the hex centred at (cx, cy). */
-export function hexCorners(cx: number, cy: number): Array<[number, number]> {
+/** Centre of lattice cell (col,row) — odd columns sit half a row lower. */
+export function hexCenter(col: number, row: number): { x: number; y: number } {
+  return {
+    x: col * HEX_COL_SPACING,
+    y: row * HEX_ROW_SPACING + ((col & 1) ? HEX_ROW_SPACING / 2 : 0),
+  };
+}
+
+/** The lattice cell containing pixel (px,py) — nearest-centre search over
+ *  the 3×3 candidate neighbourhood (exact for hexes). */
+export function hexAt(px: number, py: number): { col: number; row: number } {
+  const col0 = Math.round(px / HEX_COL_SPACING);
+  let best = { col: col0, row: 0 };
+  let bestD = Infinity;
+  for (let dc = -1; dc <= 1; dc++) {
+    const c = col0 + dc;
+    const r0 = Math.round((py - ((c & 1) ? HEX_ROW_SPACING / 2 : 0)) / HEX_ROW_SPACING);
+    for (let dr = -1; dr <= 1; dr++) {
+      const cc = hexCenter(c, r0 + dr);
+      const d = (px - cc.x) * (px - cc.x) + (py - cc.y) * (py - cc.y);
+      if (d < bestD) { bestD = d; best = { col: c, row: r0 + dr }; }
+    }
+  }
+  return best;
+}
+
+/** Six flat-top corners of the hex centred at (cx, cy). */
+export function hexCorners(cx: number, cy: number, r: number = HEX_R): Array<[number, number]> {
   const pts: Array<[number, number]> = [];
   for (let i = 0; i < 6; i++) {
-    const ang = (Math.PI / 180) * (60 * i - 90);
-    pts.push([cx + HEX_SIZE * Math.cos(ang), cy + HEX_SIZE * Math.sin(ang)]);
+    const ang = (Math.PI / 180) * (60 * i);
+    pts.push([cx + r * Math.cos(ang), cy + r * Math.sin(ang)]);
   }
   return pts;
 }
 
 /**
- * Snap an arbitrary pixel to the centre of the hex that contains it,
- * on the same odd-r grid the overlay draws. Used to make marching units
- * sit on cells and step cell-to-cell instead of gliding.
+ * Snap an arbitrary pixel to the centre of the lattice cell containing it.
+ * Cities sit on cell centres; marching units step cell-to-cell.
  */
 export function snapToHexCenter(px: number, py: number): { x: number; y: number } {
-  const r = Math.round(py / HEX_V);
-  const xOff = (((r % 2) + 2) % 2) === 1 ? HEX_W / 2 : 0;
-  const q = Math.round((px - xOff) / HEX_W);
-  return { x: q * HEX_W + xOff, y: r * HEX_V };
+  const h = hexAt(px, py);
+  return hexCenter(h.col, h.row);
+}
+
+/** Odd-q offset neighbours of a lattice cell (N, S, NE, SE, NW, SW). */
+export function hexNeighbors(col: number, row: number): Array<{ col: number; row: number }> {
+  const d = (col & 1)
+    ? [[0, -1], [0, +1], [+1, 0], [+1, +1], [-1, 0], [-1, +1]]
+    : [[0, -1], [0, +1], [+1, -1], [+1, 0], [-1, -1], [-1, 0]];
+  return d.map(([dc, dr]) => ({ col: col + dc, row: row + dr }));
+}
+
+/** Lattice distance in cells (cube-coordinate hex distance). */
+export function hexDistance(a: { col: number; row: number }, b: { col: number; row: number }): number {
+  const az = a.row - ((a.col - (a.col & 1)) >> 1);
+  const bz = b.row - ((b.col - (b.col & 1)) >> 1);
+  const dx = b.col - a.col;
+  const dz = bz - az;
+  const dy = -dx - dz;
+  return (Math.abs(dx) + Math.abs(dy) + Math.abs(dz)) / 2;
 }
 
 // ── Terrain cost for marching ─────────────────────────────────────

@@ -2,6 +2,7 @@
  * 戰爭迷霧 — locks the visibility rules: own + adjacent cities in view,
  * marching columns scout, everything else stays dark.
  */
+import { snapToHexCenter } from '../data/geography';
 import { describe, it, expect } from 'vitest';
 import type { Army, City, EntityId } from '../types';
 import type { Officer } from '../types';
@@ -79,11 +80,14 @@ describe('computeFog', () => {
   });
 
   it('斥候之明 — a keen mind in the city sees further than a dullard', () => {
-    const justBeyond = 200 + FOG_CITY_RADIUS + 15; // outside the flat radius
+    // P0 統一格網 — cities occupy lattice cells, so probe from the SNAPPED
+    // centre the fog actually radiates from.
+    const hc = snapToHexCenter(200, 200);
+    const justBeyond = hc.x + FOG_CITY_RADIUS + 15; // outside the flat radius
     const dull: Record<EntityId, Officer> = { d: mkOfficer({ id: 'd', forceId: 'wei', locationCityId: 'home', stats: { intelligence: 60 } as never }) };
     const keen: Record<EntityId, Officer> = { k: mkOfficer({ id: 'k', forceId: 'wei', locationCityId: 'home', stats: { intelligence: 100 } as never }) };
-    expect(computeFog(world(), {}, 'wei', undefined, dull).isVisiblePx(justBeyond, 200)).toBe(false);
-    expect(computeFog(world(), {}, 'wei', undefined, keen).isVisiblePx(justBeyond, 200)).toBe(true);
+    expect(computeFog(world(), {}, 'wei', undefined, dull).isVisiblePx(justBeyond, hc.y)).toBe(false);
+    expect(computeFog(world(), {}, 'wei', undefined, keen).isVisiblePx(justBeyond, hc.y)).toBe(true);
   });
 
   it('a keen column commander scouts further ahead', () => {

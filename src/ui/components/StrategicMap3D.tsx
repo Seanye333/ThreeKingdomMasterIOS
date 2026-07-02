@@ -7,7 +7,7 @@ import { getTerritoryCanvas, getTerritorySignature, renderTerritorySnapshot } fr
 import { useReplayStore } from './replayHistory';
 import { setMapFocusHandler, requestMapFocus } from './mapFocusBus';
 import { positionAlongRoute, marchDestCoords, terrainRoute, generateTerritories } from '../../game/data/territories';
-import { snapToHexCenter, geoToPixel, battleGroundAt, MAP_W as PX_W, MAP_H as PX_H, WORLD_SCALE } from '../../game/data/geography';
+import { snapToHexCenter, geoToPixel, battleGroundAt, MAP_W as PX_W, MAP_H as PX_H, WORLD_SCALE, HEX_R as GEO_HEX_R, hexAt as geoHexAt, hexCenter as geoHexCenter, HEX_ROW_SPACING as GEO_HEX_ROW, terrainMarchCost } from '../../game/data/geography';
 import { getEmbassyTarget } from '../../game/systems/foreignRealm';
 import { cityPixel, cityPos } from '../../game/data/cityGeo';
 import { marchDurationFor } from '../../game/data/cities';
@@ -23,6 +23,7 @@ import { FACILITY_DEFS, isHostilePermitted } from '../../game/types';
 // The battle diorama reuses the real battle scene (embedded mode) + its hex
 // coordinate helper, so the fight on the world map IS the fight.
 import { BattleScene, BattleCinematics, hexWorld as battleHexWorld, FX_DURATION, SIGNATURE_FLAVOR } from '../screens/TacticalBattleScreen3D';
+import { battleWindow } from '../../game/systems/battlefieldTerrain';
 import { tacticFxSpec, FX_IMPACT, type StratagemFxInstance, type StratagemFxKind, type TacticFxSpec } from '../../game/data/stratagemFx';
 import { categoryOfTactic } from '../../game/data/officerAttributes';
 // In-place battle commanding — the SAME pure battle ops the fullscreen uses.
@@ -4684,7 +4685,31 @@ function MarchPreviewLine({ fromId, toId, cities }: {
       const near = route.some((p) => Math.hypot(p.x - cp.x, p.y - cp.y) < 67);
       if (near) risky.push(pxToWorld(cp.x, cp.y));
     }
-    return { pts, risky };
+    // P2 行軍上格 — quantise the route onto the canonical lattice and show
+    // the actual CELLS the column will cross, tinted by terrain cost
+    // (green plains → red ridge/river crossings): 所見即所行.
+    const cells: Array<{ x: number; z: number; color: string }> = [];
+    const seenCells = new Set<string>();
+    for (let i = 0; i < route.length - 1; i++) {
+      const p0 = route[i], p1 = route[i + 1];
+      const steps = Math.max(1, Math.ceil(Math.hypot(p1.x - p0.x, p1.y - p0.y) / (GEO_HEX_ROW / 2)));
+      for (let k = 0; k <= steps; k++) {
+        const px = p0.x + (p1.x - p0.x) * (k / steps);
+        const py = p0.y + (p1.y - p0.y) * (k / steps);
+        const h = geoHexAt(px, py);
+        const key = `${h.col},${h.row}`;
+        if (seenCells.has(key)) continue;
+        seenCells.add(key);
+        const cc = geoHexCenter(h.col, h.row);
+        const cost = terrainMarchCost(cc.x, cc.y);
+        const [wx, wz] = pxToWorld(cc.x, cc.y);
+        cells.push({
+          x: wx, z: wz,
+          color: cost < 0.25 ? '#69d47e' : cost < 0.7 ? '#e8c15a' : '#ef7350',
+        });
+      }
+    }
+    return { pts, risky, cells };
   }, [fromId, toId, cities]);
   const matRef = useRef<THREE.LineDashedMaterial>(null);
   useFrame(({ clock }) => {
@@ -4709,6 +4734,14 @@ function MarchPreviewLine({ fromId, toId, cities }: {
   return (
     <group>
       <primitive object={lineObj.l} />
+      {/* P2 行軍上格 — the lattice cells the column will actually cross,
+          tinted by march cost (green open ground → red ridge/river). */}
+      {data.cells.map((c, i) => (
+        <mesh key={`c${i}`} position={[c.x, sampleTerrainHeight(c.x, c.z) + 0.08, c.z]} rotation={[-Math.PI / 2, 0, Math.PI / 6]}>
+          <ringGeometry args={[HEXW_R * 0.62, HEXW_R * 0.8, 6]} />
+          <meshBasicMaterial color={c.color} transparent opacity={0.85} side={THREE.DoubleSide} toneMapped={false} depthWrite={false} />
+        </mesh>
+      ))}
       {/* 邀擊 risk — hostile garrisons within sally reach of the route */}
       {data.risky.map(([wx, wz], i) => (
         <mesh key={i} position={[wx, sampleTerrainHeight(wx, wz) + 0.1, wz]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -5503,7 +5536,10 @@ function Caravans3D({ cities }: { cities: Record<string, City> }) {
 
 type HexWorldTile = { x: number; z: number; topY: number; kind: string; c: number; r: number };
 
-const HEXW_R = IS_MOBILE ? 0.18 : 0.12;       // hex radius (world units) — fine quilt (~22k land tiles desktop)
+// P1 統一格網 — the quilt IS the canonical lattice (geography.ts): the
+// board you see is the board battles are cut from, and armies/cities sit
+// on its cell centres. ONE logical grid on every device (~12k cells).
+const HEXW_R = GEO_HEX_R * PIXEL_TO_WORLD;    // canonical radius in world units
 const HEXW_COL = 1.5 * HEXW_R;
 const HEXW_ROW = Math.sqrt(3) * HEXW_R;
 const HEXWORLD_COLOR: Record<string, string> = {
@@ -5518,10 +5554,10 @@ let HEXWORLD_CACHE: HexWorldTile[] | null = null;
 const hexWarmPartial: HexWorldTile[] = [];
 let hexWarmCol = 0;
 function buildHexColumn(c: number, out: HexWorldTile[]): boolean {
-  const x = -MAP_W / 2 + HEXW_R + c * HEXW_COL;
+  const x = -MAP_W / 2 + c * HEXW_COL;
   if (x > MAP_W / 2) return false;
   for (let r = 0; ; r++) {
-    const z = -MAP_D / 2 + HEXW_ROW / 2 + r * HEXW_ROW + (c & 1 ? HEXW_ROW / 2 : 0);
+    const z = -MAP_D / 2 + r * HEXW_ROW + (c & 1 ? HEXW_ROW / 2 : 0);
     if (z > MAP_D / 2) break;
     const px = (x + MAP_W / 2) / PIXEL_TO_WORLD;
     const py = (z + MAP_D / 2) / PIXEL_TO_WORLD;
@@ -5637,12 +5673,8 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, fogCityId
           for (let k = 0; k <= steps; k++) {
             const px = p0.x + (p1.x - p0.x) * (k / steps);
             const py = p0.y + (p1.y - p0.y) * (k / steps);
-            const x = px * PIXEL_TO_WORLD - MAP_W / 2;
-            const z = py * PIXEL_TO_WORLD - MAP_D / 2;
-            const c = Math.round((x + MAP_W / 2 - HEXW_R) / HEXW_COL);
-            const zoff = c & 1 ? HEXW_ROW / 2 : 0;
-            const r = Math.round((z + MAP_D / 2 - HEXW_ROW / 2 - zoff) / HEXW_ROW);
-            const i = tileIndex.get(`${c},${r}`);
+            const h = geoHexAt(px, py);
+            const i = tileIndex.get(`${h.col},${h.row}`);
             if (i !== undefined) set.add(i);
           }
         }
@@ -5790,9 +5822,8 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, fogCityId
           // Touch has no hover — a tap doubles as the tile inspector
           // (auto-dismisses; doesn't interfere with march-to-cell orders).
           if (IS_MOBILE) {
-            const c = Math.round((e.point.x + MAP_W / 2 - HEXW_R) / HEXW_COL);
-            const zoff = c & 1 ? HEXW_ROW / 2 : 0;
-            const r = Math.round((e.point.z + MAP_D / 2 - HEXW_ROW / 2 - zoff) / HEXW_ROW);
+            const hpt = geoHexAt((e.point.x + MAP_W / 2) / PIXEL_TO_WORLD, (e.point.z + MAP_D / 2) / PIXEL_TO_WORLD);
+            const c = hpt.col, r = hpt.row;
             const i = tileIndex.get(`${c},${r}`) ?? null;
             setHoverIdx(i);
             if (i != null) window.setTimeout(() => setHoverIdx((cur) => (cur === i ? null : cur)), 2600);
@@ -5803,9 +5834,8 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, fogCityId
           onGroundClick(px, py);
         }}
         onPointerMove={IS_MOBILE ? undefined : (e) => {
-          const c = Math.round((e.point.x + MAP_W / 2 - HEXW_R) / HEXW_COL);
-          const zoff = c & 1 ? HEXW_ROW / 2 : 0;
-          const r = Math.round((e.point.z + MAP_D / 2 - HEXW_ROW / 2 - zoff) / HEXW_ROW);
+          const hpt2 = geoHexAt((e.point.x + MAP_W / 2) / PIXEL_TO_WORLD, (e.point.z + MAP_D / 2) / PIXEL_TO_WORLD);
+          const c = hpt2.col, r = hpt2.row;
           const i = tileIndex.get(`${c},${r}`) ?? null;
           if (i !== hoverIdx) setHoverIdx(i);
         }}
@@ -6853,7 +6883,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
       {todP.lights && <DuskCityLights cities={cities} />}
       {/* Province borders are flat ground decals — they'd sink into the
           raised hex prisms, so the quilt view goes without them. */}
-      {mapStyle === 'classic' && <ProvinceBorders3D cities={cities} />}
+      <ProvinceBorders3D cities={cities} />
       {overlayMode === 'province' && <ProvinceLabels3D />}
       {/* 天下大勢 — lord names over their domains when zoomed out (RTK-XIV). */}
       <FactionLabels3D cities={cities} forces={forces} officers={officers} />
@@ -6898,13 +6928,15 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
           anchored on its geoAnchor column). Tap to enter the fullscreen view. */}
       {showDiorama && tacticalBattle?.geoAnchor && (() => {
         const ga = tacticalBattle.geoAnchor;
-        const [bwx, bwz] = pxToWorld(ga.x, ga.y);
+        // P3 圖上開戰 — the battle renders 1:1 ON the world lattice: the same
+        // battleWindow() that cut the board out of the map now puts it back,
+        // cell-for-cell (flip mirrors east-approach boards; no rotation).
+        const win = battleWindow(ga, tacticalBattle.width, tacticalBattle.height);
+        const apx = geoHexCenter(win.anchor.col, win.anchor.row);
+        const [bwx, bwz] = pxToWorld(apx.x, apx.y);
         const by = sampleTerrainHeight(bwx, bwz) + 0.12;
-        const S = 0.16;
-        const [acx, acz] = battleHexWorld(
-          ga.anchorCol ?? Math.floor(tacticalBattle.width / 2),
-          Math.floor(tacticalBattle.height / 2),
-        );
+        const S = HEXW_R; // canonical cell size — board hex = world hex
+        const [acx, acz] = battleHexWorld(win.anchorCol, win.anchorRow);
         const [bcx, bcz] = battleHexWorld(
           Math.floor(tacticalBattle.width / 2),
           Math.floor(tacticalBattle.height / 2),
@@ -6912,7 +6944,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
         const pSide = tacticalBattle.attackerForceId === playerForceId ? 'attacker' as const
           : tacticalBattle.defenderForceId === playerForceId ? 'defender' as const : null;
         return (
-          <group position={[bwx, by, bwz]} rotation={[0, -ga.bearing, 0]} scale={S}>
+          <group position={[bwx, by, bwz]} scale={[win.flip * S, S, S]}>
             <group position={[-acx, 0, -acz]}>
               {/* Dark plinth so the board reads cleanly over sloped terrain */}
               <mesh position={[bcx, -0.7, bcz]} receiveShadow>
@@ -8044,7 +8076,9 @@ export function StrategicMap3D() {
   // ⬡ 棋盤世界 experiment — hex-tile world terrain; the painted scroll map
   // stays the default and is always one tap away (backup).
   const [mapStyle, setMapStyle] = useState<'classic' | 'hex'>(
-    () => (localStorage.getItem('tkm-map-style') === 'hex' ? 'hex' : 'classic'),
+    // P1 統一格網 — the hex board is the primary form (ROTK-XIV style);
+    // the painted scroll stays as the opt-in 鑑賞 mode.
+    () => (localStorage.getItem('tkm-map-style') === 'classic' ? 'classic' : 'hex'),
   );
   const toggleMapStyle = () => {
     const next = mapStyle === 'hex' ? 'classic' : 'hex';

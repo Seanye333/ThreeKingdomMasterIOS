@@ -15,7 +15,7 @@
  */
 import type { TerrainKind, TacticalTile } from '../types';
 import type { Terrain } from '../data/cities';
-import { battleGroundAt, isFrozenWater, forestDensityAt, aridityAt, WORLD_SCALE } from '../data/geography';
+import { battleGroundAt, isFrozenWater, forestDensityAt, aridityAt, WORLD_SCALE, hexAt, hexCenter, HEX_ROW_SPACING } from '../data/geography';
 
 /**
  * Real-geography placement of a battle on the strategic map — when
@@ -123,17 +123,37 @@ function makeRng(cityId: string): () => number {
   };
 }
 
-/** Map px per battlefield tile — an 18-wide grid spans ~32px (~0.9°,
- *  ~100km): generous tactically, but wide enough that ridge bands and
- *  river lines from the strategic map appear as coherent features. */
-const TILE_PX = 1.8 * WORLD_SCALE;   // world-px per battle tile — scales so a board covers the same geographic area at any WORLD_SCALE
+
+/** P0/P3 — the battle board's placement on the canonical lattice, shared by
+ *  terrain generation AND the on-map 1:1 battle rendering so they can never
+ *  disagree. `anchor` is parity-locked: odd-q half-row offsets only line up
+ *  when the anchor's world column parity matches the board's anchor column,
+ *  so the anchor may shift one column east. */
+export interface BattleWindow {
+  anchorCol: number;
+  anchorRow: number;
+  flip: 1 | -1;
+  anchor: { col: number; row: number };
+}
+export function battleWindow(geo: BattleGeo, width: number, height: number): BattleWindow {
+  const anchorCol = geo.anchorCol ?? Math.floor(width / 2);
+  const midRow = Math.floor(height / 2);
+  const anchorRow = Math.max(2, Math.min(height - 3,
+    midRow + Math.round((height / 2 - 2) * Math.sin(geo.bearing))));
+  const flip: 1 | -1 = Math.cos(geo.bearing) < 0 ? -1 : 1;
+  const anchor = hexAt(geo.x, geo.y);
+  if (((anchor.col & 1) !== (anchorCol & 1))) anchor.col += 1;
+  return { anchorCol, anchorRow, flip, anchor };
+}
 
 /**
- * Real-geography battlefield: lay the grid over the strategic map along
- * the approach bearing and sample the actual ground per tile. The march
- * road runs along the centre row (the bearing line); forest stays a
- * latitude-themed sprinkle (no strategic forest data); pass/port/naval
- * guarantees are applied by the caller's shared post-pass.
+ * P0 統一格網 — the battle board is an AXIS-ALIGNED WINDOW of the game's
+ * canonical hex lattice: battle tile (col,row) IS strategic-map lattice
+ * cell (anchor.col ± dc, anchor.row + dr). The only degree of freedom is
+ * an east/west flip so the attacker's entry edge (col 0) faces their
+ * approach; the march road is painted along the TRUE bearing line
+ * through the anchor, whatever its angle. Pass/port/naval guarantees are
+ * applied by the caller's shared post-pass.
  */
 function generateRealTerrain(
   cityId: string,
@@ -142,17 +162,30 @@ function generateRealTerrain(
   geo: BattleGeo,
 ): TacticalTile[] {
   const rng = makeRng(`${cityId}:${Math.round(geo.x)},${Math.round(geo.y)}`);
-  const anchorCol = geo.anchorCol ?? Math.floor(width / 2);
   const midRow = Math.floor(height / 2);
+  // Window placement (flip + approach slide + parity-locked anchor) comes
+  // from the shared battleWindow() so the on-map 1:1 rendering agrees.
+  const { anchorCol, anchorRow, flip, anchor } = battleWindow(geo, width, height);
+  const anchorC = hexCenter(anchor.col, anchor.row);
   const ux = Math.cos(geo.bearing), uy = Math.sin(geo.bearing);
-  const vx = -uy, vy = ux;
+  // Perpendicular distance (map px) from a lattice-cell centre to the
+  // bearing line through the anchor — the war road the armies travelled.
+  // For sieges (anchorCol set) the road exists only on the APPROACH side:
+  // the column marched up to the walls, not a phantom road beyond them.
+  const siege = geo.anchorCol != null;
+  const roadDist = (mx: number, my: number): number => {
+    const along = ux * (mx - anchorC.x) + uy * (my - anchorC.y);
+    if (siege && along > HEX_ROW_SPACING) return Infinity;
+    return Math.abs(-(uy) * (mx - anchorC.x) + ux * (my - anchorC.y));
+  };
+  const onRoad: boolean[] = [];
   const tiles: TacticalTile[] = [];
   for (let row = 0; row < height; row++) {
     for (let col = 0; col < width; col++) {
-      const dc = col - anchorCol;
-      const dr = row - midRow;
-      const mx = geo.x + (ux * dc + vx * dr) * TILE_PX;
-      const my = geo.y + (uy * dc + vy * dr) * TILE_PX;
+      const wc = anchor.col + flip * (col - anchorCol);
+      const wr = anchor.row + (row - anchorRow);
+      const { x: mx, y: my } = hexCenter(wc, wr);
+      onRoad.push(roadDist(mx, my) < HEX_ROW_SPACING * 0.55);
       const g = battleGroundAt(mx, my);
       let terrain: TerrainKind = 'plain';
       if (g === 'sea' || g === 'lake' || g === 'river') {
@@ -179,13 +212,16 @@ function generateRealTerrain(
   }
 
   // ── Playability guarantees over the real sample ──
-  for (const t of tiles) {
+  for (let i = 0; i < tiles.length; i++) {
+    const t = tiles[i];
     const { col, row } = t.coord;
-    // The march road runs along the bearing line through the field — armies
-    // clash ON the road they were travelling. Through mountains it is the
-    // pass road (陳倉道…); across a river it narrows to a bridge/ford, so
-    // crossings become fightable chokepoints instead of a wall of water.
-    if (row === midRow) {
+    // The march road runs along the TRUE bearing line through the field —
+    // armies clash ON the road they were travelling. Through mountains it
+    // is the pass road (陳倉道…); across a river it narrows to a bridge/
+    // ford, so crossings become fightable chokepoints instead of a wall
+    // of water. Fall back to the centre row if the bearing line clips the
+    // window too briefly to connect the entry edges.
+    if (onRoad[i]) {
       if (t.terrain === 'river') t.terrain = 'bridge';
       else if (t.terrain === 'mountain' || t.terrain === 'hill' || t.terrain === 'plain' || t.terrain === 'desert') t.terrain = 'road';
       // ice stays ice — in winter the frozen river itself is the road.

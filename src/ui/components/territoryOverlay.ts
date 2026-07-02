@@ -8,7 +8,16 @@
 
 import type { City, EntityId, Force } from '../../game/types';
 import { generateTerritories, type Territory } from '../../game/data/territories';
-import { isLand, hexCorners, HEX_W, HEX_V, HEX_SIZE } from '../../game/data/geography';
+import {
+  isLand,
+  hexCorners,
+  hexCenter,
+  hexNeighbors,
+  HEX_R,
+  HEX_COLS,
+  HEX_ROWS,
+  WORLD_SCALE,
+} from '../../game/data/geography';
 
 const W = 1000;
 const H = 720;
@@ -91,8 +100,9 @@ function computeOverlay(
   // Spatial hash over territory centroids so the per-hex nearest search is
   // ~O(1) instead of O(territories). Lets the grid go very fine without the
   // recompute cost blowing up.
-  const BUCKET = 70;
-  const cols = Math.ceil(W / BUCKET) + 2;
+  // Buckets live in the SCALED map space (same as territory coords).
+  const BUCKET = 70 * WORLD_SCALE;
+  const cols = Math.ceil((W * WORLD_SCALE) / BUCKET) + 2;
   const buckets = new Map<number, number[]>();
   const bkey = (bx: number, by: number) => by * cols + bx;
   for (let i = 0; i < territories.length; i++) {
@@ -136,30 +146,38 @@ function computeOverlay(
     return best;
   };
 
-  // Build the hex grid, tagging each hex with the owner of its nearest
-  // territory. Ocean hexes (off the landmass) stay clear.
+  // Build the hex grid on the CANONICAL lattice (P0 統一格網), tagging each
+  // cell with the owner of its nearest territory. All ownership logic runs
+  // in the scaled map space; only the final draw divides down to the
+  // 1000×720 canvas. Ocean cells (off the landmass) stay clear.
   type Hex = { cx: number; cy: number; owner: EntityId | null; painted: boolean };
   const grid: Hex[][] = [];
-  for (let row = -1, y = -HEX_V; y < H + HEX_SIZE; row++, y = row * HEX_V) {
-    const xOff = (((row % 2) + 2) % 2) * (HEX_W / 2);
+  for (let row = 0; row <= HEX_ROWS; row++) {
     const line: Hex[] = [];
-    for (let col = -1, x = -HEX_W + xOff; x < W + HEX_W; col++, x = col * HEX_W + xOff) {
+    for (let col = 0; col <= HEX_COLS; col++) {
+      const c = hexCenter(col, row);
       // Only land hexes paint — the SE ocean wedge stays clear. Whole
       // landmass is divided among forces by nearest-territory (Voronoi),
       // RTK-XIV style.
-      const onLand = isLand(x, y, 2);
-      const best = onLand ? nearestTerritory(x, y) : -1;
+      const onLand = isLand(c.x, c.y, 2 * WORLD_SCALE);
+      const best = onLand ? nearestTerritory(c.x, c.y) : -1;
       const painted = onLand && best >= 0;
-      line.push({ cx: x, cy: y, owner: painted ? ownerOf[best] : null, painted });
+      line.push({
+        cx: c.x / WORLD_SCALE,
+        cy: c.y / WORLD_SCALE,
+        owner: painted ? ownerOf[best] : null,
+        painted,
+      });
     }
     grid.push(line);
   }
+  const drawR = HEX_R / WORLD_SCALE; // hex radius on the 1000×720 canvas
 
   // Append a hex outline to a Path2D (batched drawing — far fewer canvas
   // calls than stroking each hex individually, so even a very fine grid
   // recomputes fast).
   const addHex = (path: Path2D, cx: number, cy: number) => {
-    const c = hexCorners(cx, cy);
+    const c = hexCorners(cx, cy, drawR);
     path.moveTo(c[0][0], c[0][1]);
     for (let i = 1; i < 6; i++) path.lineTo(c[i][0], c[i][1]);
     path.closePath();
@@ -186,21 +204,17 @@ function computeOverlay(
   ctx.strokeStyle = '#1a120a';
   ctx.stroke(gridPath);
 
-  // Frontier hexes (any odd-r neighbour has a different owner), batched:
+  // Frontier hexes (any lattice neighbour has a different owner), batched:
   // one dark base path + per-colour bright core paths.
   const basePath = new Path2D();
   const corePaths = new Map<string, Path2D>();
   for (let r = 0; r < grid.length; r++) {
-    const even = r % 2 === 0;
-    const deltas = even
-      ? [[+1, 0], [-1, 0], [0, -1], [-1, -1], [0, +1], [-1, +1]]
-      : [[+1, 0], [-1, 0], [+1, -1], [0, -1], [+1, +1], [0, +1]];
     for (let q = 0; q < grid[r].length; q++) {
       const h = grid[r][q];
       if (!h.painted) continue;
       let isFrontier = false;
-      for (const [dq, dr] of deltas) {
-        const nb = grid[r + dr]?.[q + dq];
+      for (const nbc of hexNeighbors(q, r)) {
+        const nb = grid[nbc.row]?.[nbc.col];
         if (!nb || !nb.painted || nb.owner !== h.owner) { isFrontier = true; break; }
       }
       if (!isFrontier) continue;

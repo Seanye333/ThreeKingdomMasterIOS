@@ -2326,7 +2326,7 @@
 | 戈船 Halberd-Ship | 750 | 3 | 180 | 200 |
 | 大翼 Great-Wing | 2800 | 6 | 750 | 600 |
 
-### 精兵 Elite Troops(6)
+### 精兵 Elite Troops(7)
 
 | 精兵 | 戰力× | 損耗× | 武力+ |
 |---|---|---|---|
@@ -2335,6 +2335,7 @@
 | 白毦兵 White-Plume Guard | 1.15 | 0.78 | 6 |
 | 藤甲兵 Rattan-Armor Troops | 1.2 | 0.55 | 5 |
 | 丹陽兵 Danyang Troops | 1.12 | 0.85 | 4 |
+| 南中象兵 Nanzhong War Elephants | 1.22 | 0.85 | 9 |
 | 烏丸突騎 Wuhuan Mounted Vanguard | 1.1 | 0.82 | 5 |
 
 ### 攻城器械 Siege Engines(9)

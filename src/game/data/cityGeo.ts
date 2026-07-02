@@ -15,7 +15,7 @@
  * remain only as a fallback for ids missing here, and as the 2D map's
  * legacy layout.
  */
-import { geoToPixel } from './geography';
+import { geoToPixel, snapToHexCenter } from './geography';
 
 /** Real historical positions. Values are modern (lon, lat). */
 export const CITY_GEO_OVERRIDES: Record<string, [number, number]> = {
@@ -152,11 +152,14 @@ export const CITY_GEO_OVERRIDES: Record<string, [number, number]> = {
 };
 
 /** Pixel coords for a city, preferring the geographic override.
- *  Falls back to the supplied painted-map pixel coords. */
+ *  Falls back to the supplied painted-map pixel coords.
+ *  Always snapped to the canonical hex lattice (P0 統一格網) — a city
+ *  OCCUPIES a cell, so map distances and battle boards line up exactly. */
 export function cityPixel(cityId: string, fallbackX: number, fallbackY: number): [number, number] {
   const geo = CITY_GEO_OVERRIDES[cityId];
-  if (geo) return geoToPixel(geo[0], geo[1]);
-  return [fallbackX, fallbackY];
+  const [x, y] = geo ? geoToPixel(geo[0], geo[1]) : [fallbackX, fallbackY];
+  const s = snapToHexCenter(x, y);
+  return [s.x, s.y];
 }
 
 /** Convenience: the geo-anchored map position of a city object. */
