@@ -1,4 +1,5 @@
 import { Suspense, createContext, useContext, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { STRATAGEM_RANGE } from '../../game/data/stratagemRanges';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Html, OrbitControls, Stars, SoftShadows, Sparkles } from '@react-three/drei';
 import {
@@ -245,8 +246,9 @@ export function HexTile({
   onClick: () => void;
   hovered: boolean;
   /** 'move' = walkable destination, 'attack' = attackable enemy hex,
-   *  'path' = a queued march waypoint, undefined = no highlight */
-  highlight: 'move' | 'attack' | 'path' | undefined;
+   *  'path' = a queued march waypoint, 'cast' = in stratagem range,
+   *  'aoe' = splash of the hovered cast, undefined = no highlight */
+  highlight: 'move' | 'attack' | 'path' | 'cast' | 'aoe' | undefined;
   windStrength: number;
   /** 火攻 — this hex is ablaze (ground fire). */
   burning?: boolean;
@@ -272,7 +274,9 @@ export function HexTile({
   // 高亮配色 — brighter, more saturated than the terrain so move/attack/path
   // reads at a glance on a phone.
   const hlColor = highlight === 'move' ? '#5ef088'
-    : highlight === 'path' ? '#ffd24a' : '#ff6242';
+    : highlight === 'path' ? '#ffd24a'
+    : highlight === 'cast' ? '#7fb4ff'
+    : highlight === 'aoe' ? '#ff9c3a' : '#ff6242';
 
   return (
     <group position={[x, 0, z]}>
@@ -3565,7 +3569,7 @@ export function BattleScene({
   // Highlight set: which hexes glow green (move) or red (attack)?
   const selectedUnit = selectedId ? battle.units.find((u) => u.id === selectedId) : null;
   const highlights = useMemo(() => {
-    const m = new Map<string, 'move' | 'attack' | 'path'>();
+    const m = new Map<string, 'move' | 'attack' | 'path' | 'cast' | 'aoe'>();
     if (!selectedUnit || !playerSide || selectedUnit.side !== playerSide) return m;
     if (actionMode.kind === 'move') {
       // Full move range this turn (multi-step), not just adjacent hexes.
@@ -3576,11 +3580,29 @@ export function BattleScene({
           m.set(`${u.coord.col},${u.coord.row}`, 'attack');
         }
       }
+    } else if (actionMode.kind === 'stratagem') {
+      // 計謀預覽 — tint the castable range; ring the hovered cell's splash.
+      const def = STRATAGEM_RANGE[actionMode.id];
+      if (def && !def.self) {
+        const maxR = def.nightMax != null && battle.timeOfDay === 'night' ? def.nightMax : def.max;
+        for (const t of tiles) {
+          const d = hexDistance(selectedUnit.coord, t.coord);
+          if (d >= def.min && d <= maxR) m.set(`${t.coord.col},${t.coord.row}`, 'cast');
+        }
+        if (hovered && def.aoe > 0) {
+          const hd = hexDistance(selectedUnit.coord, hovered);
+          if (hd >= def.min && hd <= maxR) {
+            for (const t of tiles) {
+              if (hexDistance(hovered, t.coord) <= def.aoe) m.set(`${t.coord.col},${t.coord.row}`, 'aoe');
+            }
+          }
+        }
+      }
     }
     // 行軍路線 — show the selected unit's standing march order (amber waypoints).
     for (const w of selectedUnit.path ?? []) m.set(`${w.col},${w.row}`, 'path');
     return m;
-  }, [battle, selectedUnit, playerSide, actionMode, tiles, units]);
+  }, [battle, selectedUnit, playerSide, actionMode, tiles, units, hovered]);
 
   return (
     <EmbeddedSceneCtx.Provider value={embedded}>
