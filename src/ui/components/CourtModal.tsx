@@ -51,6 +51,9 @@ export function CourtModal({ onClose }: Props) {
   const curbUsurper = useGameStore((s) => s.curbUsurper);
   const raiseRighteousBanner = useGameStore((s) => s.raiseRighteousBanner);
   const shelterExile = useGameStore((s) => s.shelterExile);
+  const guestGenerals = useGameStore((s) => s.guestGenerals);
+  const sponsorReclaim = useGameStore((s) => s.sponsorReclaim);
+  const [reclaimCity, setReclaimCity] = useState('');
   const [consortPick, setConsortPick] = useState('');
   const [eraInput, setEraInput] = useState('');
   const lang = useLanguage();
@@ -290,7 +293,7 @@ export function CourtModal({ onClose }: Props) {
           const ladder = usurpLadder?.[playerForceId];
           const exiles = Object.entries(exiledLords ?? {});
           const targets = Object.entries(righteousTargets ?? {});
-          if (!ladder && exiles.length === 0 && targets.length === 0) return null;
+          if (!ladder && exiles.length === 0 && targets.length === 0 && Object.keys(guestGenerals ?? {}).length === 0) return null;
           const minister = ladder ? allOfficers[ladder.officerId] : null;
           const st = ladder ? LADDER_STAGES[ladder.stage] : null;
           return (
@@ -329,6 +332,24 @@ export function CourtModal({ onClose }: Props) {
                       </button>
                     );
                   })}
+                </div>
+              )}
+              {/* §7.10 客將 — sheltered guests; 借兵復國 installs one as a vassal-ally. */}
+              {Object.keys(guestGenerals ?? {}).length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', color: '#aab6c0' }}>
+                  <span>{lang === 'en' ? '客將 Guests:' : '客將:'}</span>
+                  {Object.entries(guestGenerals ?? {}).slice(0, 4).map(([gid, g]) => {
+                    const o = allOfficers[gid];
+                    if (!o || o.forceId !== playerForceId) return null;
+                    return <span key={gid} style={{ color: o.loyalty < 30 ? '#e0707a' : '#9ad6a8' }}>{lang === 'en' ? o.name.en : o.name.zh}<span style={{ color: '#5d6b76' }}>({lang === 'en' ? `loy ${o.loyalty}` : `忠${o.loyalty}`}, {lang === 'en' ? g.formerNameEn : g.formerNameZh})</span></span>;
+                  })}
+                  <select value={reclaimCity} onChange={(e) => setReclaimCity(e.target.value)} style={{ background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473', fontSize: '0.68rem', borderRadius: 3 }}>
+                    <option value="">{lang === 'en' ? '— cede a city —' : '— 割城 —'}</option>
+                    {Object.values(allCities).filter((c) => c.ownerForceId === playerForceId && c.id !== playerForce?.capitalCityId).slice(0, 40).map((c) => <option key={c.id} value={c.id}>{lang === 'en' ? c.name.en : c.name.zh}</option>)}
+                  </select>
+                  <button disabled={!reclaimCity} onClick={() => { const gid = Object.keys(guestGenerals ?? {})[0]; if (!gid) return; const r = sponsorReclaim(gid, reclaimCity); if (r.ok) setReclaimCity(''); else if (r.reason) alert(r.reason); }} style={miniCourtBtn(!!reclaimCity)} title={lang === 'en' ? 'Cede this city to install your (first) guest as a grateful vassal-ally (借兵復國 借荊州).' : '割此城,扶你的客將(首位)復立為感恩之藩屬盟友(借兵復國·借荊州)。'}>
+                    {lang === 'en' ? 'Sponsor (借兵復國)' : '借兵復國'}
+                  </button>
                 </div>
               )}
             </div>

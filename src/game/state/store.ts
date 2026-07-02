@@ -990,6 +990,9 @@ interface GameStore extends GameState {
    *  few faithful followers enter your service — but a sheltered claimant may one
    *  day turn on his host (鳩占鵲巢). */
   shelterExile: (officerId: EntityId) => { ok: boolean; reason?: string };
+  /** §7.10 AH 借兵復國 — cede a border city to install a sheltered guest exile as
+   *  his own realm again: a grateful vassal-and-ally puppet state (借荊州). */
+  sponsorReclaim: (officerId: EntityId, cityId: EntityId) => { ok: boolean; reason?: string };
   setSoundEnabled: (enabled: boolean) => void;
   setMusicTrack: (track: string | null) => void;
   setLanguage: (lang: 'zh' | 'en' | 'both') => void;
@@ -2297,6 +2300,13 @@ export const useGameStore = create<GameStore>()(
             },
           },
         });
+        // 奉迎天子 — the Son of Heaven is escorted into your capital.
+        get().pushPopup({
+          key: 'welcome-emperor', media: 'image',
+          titleZh: '奉迎天子', titleEn: 'Welcoming the Son of Heaven',
+          captionZh: `迎天子鑾駕入${state.cities[force.capitalCityId]?.name.zh ?? '都'}`,
+          captionEn: 'The Emperor is escorted into your capital',
+        });
         return { ok: true };
       },
 
@@ -2721,6 +2731,13 @@ export const useGameStore = create<GameStore>()(
           `遠使啟程 · ${officer.name.zh} → ${target.name.zh}(來回約 ${leg * 2} 季)${extra ? ' · ' + extra : ''}`,
           `${officer.name.en} sets out for ${target.name.en} (~${leg * 2} seasons round trip)`,
         );
+        // 遠使異域 — an envoy sets out down the Silk Road to a distant realm.
+        get().pushPopup({
+          key: 'foreign-embassy', media: 'image',
+          titleZh: '遠使異域', titleEn: 'Embassy to a Distant Land',
+          captionZh: `${officer.name.zh} 出使 ${target.name.zh},踏上絲路`,
+          captionEn: `${officer.name.en} sets out for ${target.name.en}`,
+        });
         return { ok: true, seasons: leg };
       },
 
@@ -3777,6 +3794,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // 敵諜來犯 (§7.3 ①) — rival courts run espionage against the PLAYER each
         // season: incite/burn/slander/suborn/assassinate, and plant sleepers in
         // your cities (which 肅諜 must later root out). Mutates the same maps.
+        let aiRumorSeeds: Array<{ cityId: EntityId; byForceId: EntityId }> = [];
         if (seasonBoundary && state.playerForceId) {
           const aiEsp = resolveAIEspionage({
             forces: result.forces, officers: espResult.officers, cities: espResult.cities,
@@ -3789,6 +3807,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           Object.assign(espResult.officers, aiEsp.officers);
           if (aiEsp.newSpies.length > 0) embeddedSpiesNext = [...embeddedSpiesNext, ...aiEsp.newSpies];
           if (aiEsp.entries.length > 0) result.report.entries.push(...aiEsp.entries);
+          aiRumorSeeds = aiEsp.rumorSeeds;
         }
         // 游历細探 — intel an expedition (探索/刺探) lit on the cities it reached.
         for (const [cid, ticks] of Object.entries(result.espionageReveals ?? {})) {
@@ -6455,46 +6474,46 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const nextRighteousTargets: Record<string, { reasonZh: string; reasonEn: string }> = {};
         if (seasonBoundary) {
           const yr = result.date.year;
-          // Q/T 禪代之階 — an over-mighty minister climbs toward the PLAYER's throne
-          // (ambition.ts already usurps AI lords; the player was immune — no longer).
-          if (pfid7) {
-            const pForce = postForces[pfid7];
-            const existing = nextUsurpLadder[pfid7];
-            const minister = pForce ? overmightyMinister(pForce, postOfficers, yr) : null;
-            if (!minister || (existing && existing.officerId !== minister.id)) {
-              // the danger has passed (or shifted) — the old climb lapses
-              if (existing && (!minister || existing.officerId !== minister.id)) delete nextUsurpLadder[pfid7];
+          // Q/T 禪代之階 — an over-mighty minister climbs toward the throne. The
+          // PLAYER is no longer immune (ambition.ts only usurps AI lords in ONE
+          // roll); and a rival's court runs the same slow, telegraphed climb —
+          // 司馬代魏 plays out for the world to see, not just for you.
+          for (const force of Object.values(postForces)) {
+            const isP = force.id === pfid7;
+            const existing = nextUsurpLadder[force.id];
+            const minister = overmightyMinister(force, postOfficers, yr);
+            if (existing && (!minister || existing.officerId !== minister.id)) delete nextUsurpLadder[force.id];
+            if (!minister) continue;
+            const cur = nextUsurpLadder[force.id] ?? { officerId: minister.id, stage: 0, sinceYear: yr, cabal: [] as string[] };
+            if (cur.cabal.length < 4 && Math.random() < 0.5) {
+              const cands = cabalCandidates(minister, postOfficers, 4).filter((id) => !cur.cabal.includes(id));
+              if (cands[0]) cur.cabal = [...cur.cabal, cands[0]];
             }
-            if (minister && pForce) {
-              const cur = nextUsurpLadder[pfid7] ?? { officerId: minister.id, stage: 0, sinceYear: yr, cabal: [] as string[] };
-              // T 心腹黨羽 — the cabal gathers over time.
-              if (cur.cabal.length < 4 && Math.random() < 0.5) {
-                const cands = cabalCandidates(minister, postOfficers, 4).filter((id) => !cur.cabal.includes(id));
-                if (cands[0]) cur.cabal = [...cur.cabal, cands[0]];
+            const ruler = postOfficers[force.rulerOfficerId];
+            // AI courts climb a touch slower, so the abdication doesn't sweep the map.
+            const climb = ladderAdvanceChance(minister, ruler, cur.cabal.length) * (isP ? 1 : 0.7);
+            const wasStage = cur.stage;
+            if (Math.random() < climb) cur.stage = Math.min(LADDER_TOP, cur.stage + 1);
+            nextUsurpLadder[force.id] = cur;
+            // Only the player is warned rung-by-rung (he alone can act — 翦除肘腋).
+            if (isP && cur.stage > wasStage) {
+              const st = LADDER_STAGES[cur.stage];
+              result.report.entries.push({ cityId: force.capitalCityId, kind: 'note', text: `${minister.name.en} ${st.blurbEn} (${st.en}). Check him — 翦除肘腋 — before he reaches the throne.`, textZh: `${minister.name.zh}${st.blurbZh}(${st.zh})。宜速翦除肘腋,毋令登鼎。` });
+            }
+            if (cur.stage >= LADDER_TOP) {
+              const oldRuler = postOfficers[force.rulerOfficerId];
+              if (oldRuler) {
+                courtPatches[oldRuler.id] = { ...oldRuler, forceId: null, status: 'idle', task: null, loyalty: 50, locationCityId: force.capitalCityId };
+                nextExiledLords[oldRuler.id] = { formerForceId: force.id, formerNameZh: force.name.zh, formerNameEn: force.name.en, sinceYear: yr };
               }
-              const ruler = postOfficers[pForce.rulerOfficerId];
-              const climb = ladderAdvanceChance(minister, ruler, cur.cabal.length);
-              const wasStage = cur.stage;
-              if (Math.random() < climb) cur.stage = Math.min(LADDER_TOP, cur.stage + 1);
-              nextUsurpLadder[pfid7] = cur;
-              if (cur.stage > wasStage) {
-                const st = LADDER_STAGES[cur.stage];
-                result.report.entries.push({ cityId: pForce.capitalCityId, kind: 'note', text: `${minister.name.en} ${st.blurbEn} (${st.en}). Check him — 翦除肘腋 — before he reaches the throne.`, textZh: `${minister.name.zh}${st.blurbZh}(${st.zh})。宜速翦除肘腋,毋令登鼎。` });
-              }
-              // 受禪 — the ladder's top: the dynasty changes hands under the player.
-              if (cur.stage >= LADDER_TOP) {
-                const oldRuler = postOfficers[pForce.rulerOfficerId];
-                if (oldRuler) {
-                  courtPatches[oldRuler.id] = { ...oldRuler, forceId: null, status: 'idle', task: null, loyalty: 50, locationCityId: pForce.capitalCityId };
-                  nextExiledLords[oldRuler.id] = { formerForceId: pfid7, formerNameZh: pForce.name.zh, formerNameEn: pForce.name.en, sinceYear: yr };
-                }
-                courtPatches[minister.id] = { ...minister, loyalty: 100, grievanceCount: 0, task: null };
-                postForces = { ...postForces, [pfid7]: { ...pForce, rulerOfficerId: minister.id } };
-                const m = { ...nextMandate.byForce }; m[pfid7] = Math.max(0, (m[pfid7] ?? 50) - 15);
-                nextMandate = { ...nextMandate, byForce: m };
-                delete nextUsurpLadder[pfid7];
-                result.report.entries.push({ cityId: pForce.capitalCityId, kind: 'rebellion', text: `${minister.name.en} receives the abdication — your dynasty falls; the realm is now his line. (mandate −15)`, textZh: `${minister.name.zh}受禪代立!神器易主,${pForce.name.zh}江山已改姓(天命 −15)。` });
-              }
+              courtPatches[minister.id] = { ...minister, loyalty: 100, grievanceCount: 0, task: null };
+              postForces = { ...postForces, [force.id]: { ...force, rulerOfficerId: minister.id } };
+              const m = { ...nextMandate.byForce }; m[force.id] = Math.max(0, (m[force.id] ?? 50) - (isP ? 15 : 8));
+              nextMandate = { ...nextMandate, byForce: m };
+              delete nextUsurpLadder[force.id];
+              result.report.entries.push(isP
+                ? { cityId: force.capitalCityId, kind: 'rebellion', text: `${minister.name.en} receives the abdication — your dynasty falls; the realm is now his line. (mandate −15)`, textZh: `${minister.name.zh}受禪代立!神器易主,${force.name.zh}江山已改姓(天命 −15)。` }
+                : { cityId: force.capitalCityId, kind: 'rebellion', text: `${minister.name.en} usurps ${force.name.en} — the realm passes to his line (司馬代魏).`, textZh: `${minister.name.zh}受禪代${force.name.zh},神器易主 —— 司馬代魏之事,今復見於世。` });
             }
           }
 
@@ -6521,6 +6540,48 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             const usurperRuler = false; // (a fresh usurper is caught by low mandate + revolt anyway)
             const reason = righteousReason({ force, cities: postCities, eunuchPower: nextEunuchPower[force.id] ?? 0, usurperRuler });
             if (reason) nextRighteousTargets[force.id] = { reasonZh: reason.zh, reasonEn: reason.en };
+          }
+        }
+
+        // ── §7.10 客將寄寓 — 客將去留(AG)/鳩占鵲巢(AI)/群雄來投(AJ) ────────────
+        const nextGuestGenerals = { ...(state.guestGenerals ?? {}) };
+        if (seasonBoundary && pfid7) {
+          const seizePalette = ['#7a5a3a', '#5a7a4a', '#4a5a7a', '#7a4a5a'];
+          for (const [gid, guest] of Object.entries(nextGuestGenerals)) {
+            const g = courtPatches[gid] ?? postOfficers[gid];
+            if (!g || g.status === 'dead' || g.forceId !== pfid7) { delete nextGuestGenerals[gid]; continue; }
+            // AI 鳩占鵲巢 — an able, ambitious, ill-treated guest seizes the city he holds.
+            const able = (g.stats.war + g.stats.leadership) >= 150;
+            const ambitious = !!g.traits?.includes('ambitious' as never) || g.loyalty < 22;
+            const homeCity = g.locationCityId ? postCities[g.locationCityId] : undefined;
+            const notCapital = homeCity && homeCity.id !== postForces[pfid7]?.capitalCityId && homeCity.ownerForceId === pfid7;
+            if (able && ambitious && g.loyalty < 30 && notCapital && Math.random() < 0.1 + (30 - g.loyalty) * 0.01) {
+              const nf = `guest-${gid}`;
+              if (!postForces[nf]) {
+                const color = seizePalette[Math.abs(gid.split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % seizePalette.length];
+                postForces = { ...postForces, [nf]: { id: nf, name: { zh: `${g.name.zh}軍`, en: `${g.name.en}'s Host` }, rulerOfficerId: gid, capitalCityId: homeCity!.id, color, isPlayer: false, imperialRank: 'commoner', personality: 'opportunist' } };
+                postCities = { ...postCities, [homeCity!.id]: { ...homeCity!, ownerForceId: nf, loyalty: Math.max(30, Math.min(65, homeCity!.loyalty)) } };
+                courtPatches[gid] = { ...g, forceId: nf, loyalty: 100, task: null };
+                delete nextGuestGenerals[gid];
+                result.report.entries.push({ cityId: homeCity!.id, kind: 'rebellion', text: `${g.name.en}, the guest you sheltered, seizes ${homeCity!.name.en} and raises his own banner (鳩占鵲巢).`, textZh: `寄寓之客${g.name.zh}反客為主,據${homeCity!.name.zh}復立旗號 —— 鳩占鵲巢,養虎為患!` });
+                continue;
+              }
+            }
+            // AG 去留 — a bitterly discontented guest simply takes his leave.
+            if (g.loyalty < 22 && Math.random() < 0.15) {
+              courtPatches[gid] = { ...g, forceId: null, status: 'idle', task: null };
+              nextExiledLords[gid] = { formerForceId: guest.formerForceId, formerNameZh: guest.formerNameZh, formerNameEn: guest.formerNameEn, sinceYear: guest.sinceYear };
+              delete nextGuestGenerals[gid];
+              result.report.entries.push({ cityId: null, kind: 'note', text: `${g.name.en}, ill-content as your guest, takes his leave.`, textZh: `客將${g.name.zh}不得志,辭去復為流亡。` });
+            }
+          }
+          // AJ 群雄來投 — a humane, prestigious lord (天命 ≥60) draws wandering exiles.
+          if ((nextMandate.byForce[pfid7] ?? 50) >= 60) {
+            for (const [eid] of Object.entries(nextExiledLords)) {
+              const e = postOfficers[eid];
+              if (!e || e.status === 'dead' || e.forceId != null || nextGuestGenerals[eid]) continue;
+              if (Math.random() < 0.2) { result.report.entries.push({ cityId: null, kind: 'note', text: `${e.name.en}, a lord in exile, looks to your name and would take shelter with you.`, textZh: `流亡之主${e.name.zh}慕汝仁德高名,有意來投 —— 可納為客將。` }); break; }
+            }
           }
         }
 
@@ -6569,9 +6630,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           for (const r of espResult.results) {
             if (r.success && r.op.kind === 'spread-rumor' && r.op.targetCityId) nextRumorCities[r.op.targetCityId] = { seasonsLeft: 3, byForceId: r.op.targetForceId };
           }
+          // AI 流言惑眾 — rival rumour campaigns spread on the player's cities too.
+          for (const s of aiRumorSeeds) if (postCities[s.cityId]) nextRumorCities[s.cityId] = { seasonsLeft: 3, byForceId: s.byForceId };
           for (const [cid, rum] of Object.entries(nextRumorCities)) {
             const c = postCities[cid];
-            if (!c || c.ownerForceId === pfid7) { delete nextRumorCities[cid]; continue; } // fizzles in our own / lost city
+            // A rumour fizzles in the schemer's OWN (or an ownerless) city; it
+            // gnaws the victim's — so an AI rumour spreads on the player's land.
+            if (!c || !c.ownerForceId || c.ownerForceId === rum.byForceId) { delete nextRumorCities[cid]; continue; }
             postCities = { ...postCities, [cid]: { ...c, loyalty: Math.max(0, c.loyalty - 3) } };
             if (Math.random() < 0.35) {
               const adj = (c.adjacentCityIds ?? []).map((a) => postCities[a]).find((a) => a && a.ownerForceId === c.ownerForceId && !nextRumorCities[a.id]);
@@ -6579,7 +6644,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             }
             const left = rum.seasonsLeft - 1;
             if (left <= 0) delete nextRumorCities[cid]; else nextRumorCities[cid] = { ...rum, seasonsLeft: left };
-            result.report.entries.push({ cityId: cid, kind: 'espionage', text: `Rumours gnaw at ${c.name.en}'s people (民心 −3).`, textZh: `流言蝕${c.name.zh}民心(−3)。` });
+            const mine = c.ownerForceId === pfid7;
+            result.report.entries.push({ cityId: cid, kind: 'espionage', text: `Rumours gnaw at ${c.name.en}'s people (民心 −3).`, textZh: mine ? `流言蝕我${c.name.zh}民心(−3),宜安撫。` : `流言蝕${c.name.zh}民心(−3)。` });
           }
         }
 
@@ -6814,6 +6880,26 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                 const m = { ...nextMandate.byForce }; m[pfid7] = Math.max(0, Math.min(100, (m[pfid7] ?? 50) + 8));
                 nextMandate = { ...nextMandate, byForce: m };
                 result.report.entries.push({ cityId: null, kind: 'note', text: `The in-law realm of ${postForces[partner]?.name.en ?? 'your kin'} has fallen — its succession passes to your line (mandate +8).`, textZh: `姻親${postForces[partner]?.name.zh ?? ''}之國既亡,秦晉之好,汝得承其統之名(天命 +8)。` });
+              }
+            }
+          }
+          // AI 對稱 · 歲幣索取 — a far stronger rival that resents you may impose a
+          // recurring 歲幣 (you as payer). You can refuse it (dissolve, in the
+          // Diplomacy panel), but a spurned demand hardens the grudge.
+          if (pfid7) {
+            const myTroops = Object.values(postCities).filter((c) => c.ownerForceId === pfid7).reduce((s, c) => s + c.troops, 0);
+            const alreadyPaying = new Set(nextTributePacts.filter((p) => p.payerForceId === pfid7).map((p) => p.payeeForceId));
+            for (const force of Object.values(postForces)) {
+              if (force.id === pfid7 || alreadyPaying.has(force.id)) continue;
+              const rel = getRelation(postDiplomacy, pfid7, force.id);
+              if (rel.status === 'allied') continue;
+              const theirTroops = Object.values(postCities).filter((c) => c.ownerForceId === force.id).reduce((s, c) => s + c.troops, 0);
+              const dislikes = rel.score < -10 || (grudgesAfterPacts[force.id] ?? 0) >= 30;
+              if (theirTroops < myTroops * 1.8 || !dislikes) continue;
+              if (Math.random() < 0.06) {
+                const amt = 200 + Math.floor(Math.random() * 300);
+                nextTributePacts = [...nextTributePacts, { payerForceId: pfid7, payeeForceId: force.id, amount: amt, sinceYear: result.date.year }];
+                result.report.entries.push({ cityId: null, kind: 'note', text: `${force.name.en} — far the stronger — demands ${amt} gold/season in tribute. Pay, or refuse it (and harden the enmity).`, textZh: `${force.name.zh}恃強索歲幣 ${amt} 金/季。納之buy安,或斷貢以硬其怨(外交面板可拒)。` });
               }
             }
           }
@@ -7228,6 +7314,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           regencies: nextRegencies,
           usurpLadder: nextUsurpLadder,
           exiledLords: nextExiledLords,
+          guestGenerals: nextGuestGenerals,
           righteousTargets: nextRighteousTargets,
           recentAchievementUnlocks: (embassyAchUnlocks.length > 0 || bldAch.length > 0)
             ? [...state.recentAchievementUnlocks, ...embassyAchUnlocks, ...bldAch]
@@ -7784,6 +7871,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                 }
               : {}),
           });
+          // 會盟結盟 — the two realms swear an alliance.
+          if (outcome.accepted) {
+            get().pushPopup({
+              key: 'alliance-sealed', media: 'image',
+              titleZh: '會盟結盟', titleEn: 'An Alliance is Sworn',
+              captionZh: `${player.name.zh} 與 ${target.name.zh} 歃血為盟`,
+              captionEn: `${player.name.en} and ${target.name.en} swear an alliance`,
+            });
+          }
         }
         return {
           ok: outcome.ok,
@@ -7977,6 +8073,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const sealed = sealVassalage({ suzerainId: player.id, vassalId: targetForceId, forces: state.forces, diplomacy: state.diplomacy });
         set({ forces: sealed.forces, diplomacy: sealed.diplomacy });
         get().notify(`招撫稱臣 · ${target.name.zh} 俯首納貢`, `${target.name.en} bows as your vassal`);
+        // 稱臣納貢 — a rival lord bows to become your vassal.
+        get().pushPopup({
+          key: 'vassal-submits', media: 'image',
+          titleZh: '稱臣納貢', titleEn: 'A Rival Bows',
+          captionZh: `${target.name.zh} 俯首稱臣,願奉君為主`,
+          captionEn: `${target.name.en} bows as your vassal`,
+        });
         return { ok: true, accepted: true, message: `${target.name.zh}稱臣納貢,願奉君為主。` };
       },
 
@@ -8360,7 +8463,19 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       dissolveTribute: (targetForceId) => {
         const state = get();
         const pid = state.playerForceId;
-        set({ tributePacts: (state.tributePacts ?? []).filter((p) => !((p.payerForceId === pid && p.payeeForceId === targetForceId) || (p.payerForceId === targetForceId && p.payeeForceId === pid))) });
+        if (!pid) return { ok: false };
+        const wasPaying = (state.tributePacts ?? []).some((p) => p.payerForceId === pid && p.payeeForceId === targetForceId);
+        const patch: Partial<typeof state> = {
+          tributePacts: (state.tributePacts ?? []).filter((p) => !((p.payerForceId === pid && p.payeeForceId === targetForceId) || (p.payerForceId === targetForceId && p.payeeForceId === pid))),
+        };
+        // 斷貢 — refusing a tribute you were paying hardens the payee's enmity.
+        if (wasPaying) {
+          const key = pairKey(pid, targetForceId);
+          const rel = state.diplomacy.relations[key];
+          if (rel) patch.diplomacy = { ...state.diplomacy, relations: { ...state.diplomacy.relations, [key]: { ...rel, score: Math.max(-100, rel.score - 10) } } };
+          patch.grudges = { ...state.grudges, [targetForceId]: Math.min(100, (state.grudges?.[targetForceId] ?? 0) + 12) };
+        }
+        set(patch);
         return { ok: true };
       },
 
@@ -8823,6 +8938,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           diplomacy: nextDiplomacy,
           marriageAlliances: [...state.marriageAlliances, newAlliance],
           clanStandings: clanStandingsNext,
+        });
+
+        // 秦晉之好 — a binding marriage alliance between the two realms.
+        get().pushPopup({
+          key: 'marriage-alliance', media: 'image',
+          titleZh: '秦晉之好', titleEn: 'A Marriage Alliance',
+          captionZh: `${yours.name.zh} ⚭ ${theirs.name.zh} — 與 ${target.name.zh} 聯姻結盟`,
+          captionEn: `${yours.name.en} ⚭ ${theirs.name.en} — a marriage alliance with ${target.name.en}`,
         });
 
         return {
@@ -9537,6 +9660,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             ...state.forces,
             [fid]: { ...force, dynastyTitle: dynastyTitle.trim(), eraName: eraName.trim(), foundingYear: state.date.year },
           },
+        });
+        // 建國大典 — a new dynasty is proclaimed (國號/年號/大赦/封賞百官/天命大盛).
+        get().pushPopup({
+          key: 'founding-ceremony', media: 'image',
+          titleZh: '建國大典', titleEn: 'Founding of the Dynasty',
+          captionZh: `${dynastyTitle.trim()}・${eraName.trim()} 元年 — 大赦天下,封賞百官 ${r.enfeoffed.length} 人`,
+          captionEn: `${dynastyTitle.trim()} proclaimed — a new dynasty rises`,
         });
         return {
           ok: true,
@@ -11280,6 +11410,22 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                 [kind]: nextSeason,
               },
         });
+        // 帝業敕令的高光時刻 — 即位踐祚(受禪/僭號)與加九錫・封禪各彈一圖。
+        if (kind === 'enthronement') {
+          get().pushPopup({
+            key: 'throne-abdication', media: 'image',
+            titleZh: '即位踐祚', titleEn: 'Ascension to the Throne',
+            captionZh: `${force.name.zh} 受禪踐祚,神器易主`,
+            captionEn: `${force.name.en} ascends the imperial throne`,
+          });
+        } else if (kind === 'nine-bestowments' || kind === 'feng-shan') {
+          get().pushPopup({
+            key: 'imperial-honors', media: 'image',
+            titleZh: def.name.zh, titleEn: def.name.en,
+            captionZh: kind === 'feng-shan' ? '泰山封禪,告成於天' : '九錫加身,帝王儀仗已備',
+            captionEn: kind === 'feng-shan' ? 'Feng-Shan rites upon Mount Tai' : 'The Nine Bestowments are conferred',
+          });
+        }
         return { ok: true, message };
       },
 
@@ -11490,6 +11636,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const m = { ...state.mandate.byForce }; m[fid] = Math.max(0, Math.min(100, (m[fid] ?? 50) + 3));
         set({ casusBelliMarks: marks, mandate: { ...state.mandate, byForce: m } });
         get().notify(`清君側 · 討${target.name.zh}(${cause.reasonZh})· 天命 +3`, `Righteous banner raised against ${target.name.en} · mandate +3`);
+        // 清君側 — a righteous war is proclaimed against a tyrant / usurper.
+        get().pushPopup({
+          key: 'righteous-banner', media: 'image',
+          titleZh: '清君側', titleEn: 'A Righteous Banner',
+          captionZh: `興義師討${target.name.zh}(${cause.reasonZh})`,
+          captionEn: `A righteous war is declared against ${target.name.en}`,
+        });
         return { ok: true };
       },
 
@@ -11516,8 +11669,55 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           if (o.clanId && lord.clanId && o.clanId === lord.clanId) { officers[o.id] = { ...o, forceId: fid, locationCityId: cap, status: 'idle', task: null, loyalty: 60 }; followers++; }
         }
         const exiledLords = { ...state.exiledLords }; delete exiledLords[officerId];
-        set({ officers, exiledLords });
+        // §7.10 客將 — he serves as a guest general, keeping his claim.
+        const guestGenerals = { ...state.guestGenerals, [officerId]: { hostForceId: fid, formerForceId: exile.formerForceId, formerNameZh: exile.formerNameZh, formerNameEn: exile.formerNameEn, sinceYear: state.date.year } };
+        set({ officers, exiledLords, guestGenerals });
         get().notify(`納流亡客將 · ${lord.name.zh}來投(從者 ${followers})`, `${lord.name.en}, a lord in exile, takes shelter with you`, 'ok');
+        return { ok: true };
+      },
+
+      // §7.10 AH 借兵復國·扶立備國 — cede a border city to install a guest exile
+      // as a grateful vassal-and-ally (a puppet state 借荊州).
+      sponsorReclaim: (officerId, cityId) => {
+        const state = get();
+        const fid = state.playerForceId;
+        if (!fid) return { ok: false, reason: 'no force' };
+        const guest = state.guestGenerals?.[officerId];
+        const lord = state.officers[officerId];
+        if (!guest || !lord || lord.status === 'dead' || lord.forceId !== fid) return { ok: false, reason: 'not your guest general' };
+        const city = state.cities[cityId];
+        if (!city || city.ownerForceId !== fid) return { ok: false, reason: 'must cede one of your cities' };
+        // 借兵 — the founding host comes out of the ceded city's garrison + a levy.
+        const cap = state.forces[fid]?.capitalCityId;
+        const capCity = cap ? state.cities[cap] : undefined;
+        const cost = 1500;
+        if (!capCity || capCity.gold < cost) return { ok: false, reason: `need ${cost} gold to arm his host` };
+        const newForceId = `guest-${officerId}`;
+        if (state.forces[newForceId]) return { ok: false, reason: 'already sponsored' };
+        const newForce = {
+          id: newForceId,
+          name: { zh: `${lord.name.zh}軍`, en: `${lord.name.en}'s Host` },
+          rulerOfficerId: officerId,
+          capitalCityId: cityId,
+          color: '#7a8a5a',
+          isPlayer: false,
+          imperialRank: 'commoner' as const,
+          personality: 'defensive' as const,
+          vassalOfForceId: fid, // a grateful vassal
+        };
+        // The city (and its guest lord + any same-clan followers) pass to the new realm.
+        const officers = { ...state.officers };
+        officers[officerId] = { ...lord, forceId: newForceId, locationCityId: cityId, status: 'idle', task: null, loyalty: 100 };
+        for (const o of Object.values(state.officers)) {
+          if (o.forceId === fid && o.clanId && lord.clanId && o.clanId === lord.clanId && o.id !== officerId && o.status !== 'dead') officers[o.id] = { ...o, forceId: newForceId, locationCityId: cityId, task: null, loyalty: 90 };
+        }
+        const cities = { ...state.cities, [cityId]: { ...city, ownerForceId: newForceId, loyalty: Math.max(40, city.loyalty) }, [cap!]: { ...capCity, gold: capCity.gold - cost } };
+        // Firm alliance + the vassal bond.
+        const key = pairKey(fid, newForceId);
+        const relations = { ...state.diplomacy.relations, [key]: { forceA: fid < newForceId ? fid : newForceId, forceB: fid < newForceId ? newForceId : fid, score: 80, status: 'allied' as const } };
+        const guestGenerals = { ...state.guestGenerals }; delete guestGenerals[officerId];
+        set({ forces: { ...state.forces, [newForceId]: newForce }, officers, cities, diplomacy: { ...state.diplomacy, relations }, guestGenerals });
+        get().notify(`借兵復國 · 扶${lord.name.zh}立${newForce.name.zh}於${city.name.zh}`, `You install ${lord.name.en} at ${city.name.en} — a grateful vassal-ally`);
         return { ok: true };
       },
 
@@ -13457,6 +13657,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           // §7.5 禪代之階再深化 — legacy saves predate the usurpation ladder.
           usurpLadder: loaded.usurpLadder ?? {},
           exiledLords: loaded.exiledLords ?? {},
+          guestGenerals: loaded.guestGenerals ?? {},
           righteousTargets: loaded.righteousTargets ?? {},
           // §7.3 諜報再深化 — legacy saves predate the network / rumours / bureau.
           spyNetwork: loaded.spyNetwork ?? {},

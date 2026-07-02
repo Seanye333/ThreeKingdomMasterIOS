@@ -625,6 +625,12 @@ export interface GameState {
   /** §7.5-deep S 流亡君主 — lords deposed by usurpation/conquest who wander as
    *  guest-generals with a lingering claim (ex-ruler officerId → the exile). */
   exiledLords: Record<EntityId, { formerForceId: EntityId; formerNameZh: string; formerNameEn: string; sinceYear: number }>;
+  /** §7.10 客將寄寓 — deposed lords the player has sheltered, now serving as guest
+   *  generals (officerId → posting). A guest keeps his own faith and a claim to
+   *  his lost realm: treat him ill and he leaves; sponsor his return (借兵復國)
+   *  and he becomes a grateful vassal; neglect a strong, ambitious one and he may
+   *  turn on his host (鳩占鵲巢). */
+  guestGenerals: Record<EntityId, { hostForceId: EntityId; formerForceId: EntityId; formerNameZh: string; formerNameEn: string; sinceYear: number }>;
   /** §7.5-deep R 清君側 — realms that invite a righteous war this season (a
    *  usurper / tyrant / runaway inner court), with the cause (forceId → reason).
    *  Recomputed each season; drives the 討逆 casus belli. */
@@ -831,6 +837,7 @@ export const EMPTY_STATE: GameState = {
   eraChangedYear: {},
   usurpLadder: {},
   exiledLords: {},
+  guestGenerals: {},
   righteousTargets: {},
   pendingDelayedEffects: [],
   pendingBattleTheaters: [],
@@ -1223,6 +1230,7 @@ export function loadScenario(
     eraChangedYear: {},
     usurpLadder: {},
     exiledLords: {},
+    guestGenerals: {},
     righteousTargets: {},
     pendingDelayedEffects: [],
     pendingBattleTheaters: [],

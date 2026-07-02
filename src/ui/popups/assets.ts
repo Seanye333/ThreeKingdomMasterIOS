@@ -51,6 +51,17 @@
  *   duel-slay-champion ✅     陣斬名將(slayOfficerInDuel 玩家方斬殺敵將)
  *   duel-rival-callout ⏳     宿敵搦戰(宿敵重逢陣前搦戰)
  *   duel-hall-legend ⏳       名局廊(精彩單挑入武鬥館)
+ *   — 第七章 外交・謀略・天子 —
+ *   founding-ceremony ✅      建國大典(holdFoundingCeremony 定國號稱制)
+ *   welcome-emperor ✅        奉迎天子(welcomeEmperor 迎鑾入都)
+ *   throne-abdication ✅      即位踐祚·受禪(issueEdict enthronement)
+ *   imperial-honors ✅        加九錫·封禪(issueEdict nine-bestowments / feng-shan)
+ *   alliance-sealed ✅        會盟結盟(proposeAlliance 締盟)
+ *   vassal-submits ✅         稱臣納貢(demandVassalage 招撫俯首)
+ *   marriage-alliance ✅      秦晉之好(proposeMarriage 聯姻同盟)
+ *   foreign-embassy ✅        遠使異域(dispatchEmbassy 絲路使團)
+ *   righteous-banner ✅       清君側·勤王(raiseRighteousBanner 興義師)
+ *   espionage-success ⏳      諜報得手(離間/縱火/暗殺;季結算,觸發暫缺)
  */
 export const KNOWN_POPUP_KEYS = [
   // 第一章 — 城市/內政/經濟
@@ -91,6 +102,17 @@ export const KNOWN_POPUP_KEYS = [
   'duel-slay-champion',
   'duel-rival-callout',
   'duel-hall-legend',
+  // 第七章 — 外交・謀略・天子
+  'founding-ceremony',
+  'welcome-emperor',
+  'throne-abdication',
+  'imperial-honors',
+  'alliance-sealed',
+  'vassal-submits',
+  'marriage-alliance',
+  'foreign-embassy',
+  'righteous-banner',
+  'espionage-success',
 ] as const;
 
 /** Candidate image URLs for a key, tried in order (jpg first — best for the

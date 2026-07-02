@@ -55,4 +55,14 @@ describe('resolveAIEspionage (§7.3 ①)', () => {
     expect(out.entries).toHaveLength(0);
     expect(out.newSpies).toHaveLength(0);
   });
+
+  it('§7.3-deep AI 流言 — the output carries a rumorSeeds array, always on the player\'s own cities', () => {
+    const w = world();
+    const out = resolveAIEspionage({
+      forces: w.forces, officers: w.officers, cities: w.cities, embeddedSpies: [],
+      playerForceId: 'me', date: { year: 200, season: 'spring' }, rng: () => 0.05,
+    });
+    expect(Array.isArray(out.rumorSeeds)).toBe(true);
+    for (const s of out.rumorSeeds) expect(w.cities[s.cityId]?.ownerForceId).toBe('me');
+  });
 });

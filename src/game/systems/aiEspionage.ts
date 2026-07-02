@@ -48,6 +48,9 @@ export interface AIEspionageOutput {
   officers: Record<EntityId, Officer>;
   /** AI 潛伏細作 newly planted in player cities (append to state.embeddedSpies). */
   newSpies: EmbeddedSpy[];
+  /** §7.3-deep AI 流言惑眾 — player cities where the AI loosed a spreading rumour
+   *  this season (cityId → the schemer's forceId). The store seeds rumorCities. */
+  rumorSeeds: Array<{ cityId: EntityId; byForceId: EntityId }>;
   entries: ReportEntry[];
 }
 
@@ -64,9 +67,10 @@ export function resolveAIEspionage(ctx: AIEspionageContext): AIEspionageOutput {
   const cities = { ...ctx.cities };
   const officers = { ...ctx.officers };
   const newSpies: EmbeddedSpy[] = [];
+  const rumorSeeds: AIEspionageOutput['rumorSeeds'] = [];
   const entries: ReportEntry[] = [];
   const { playerForceId } = ctx;
-  if (!playerForceId || !ctx.forces[playerForceId]) return { cities, officers, newSpies, entries };
+  if (!playerForceId || !ctx.forces[playerForceId]) return { cities, officers, newSpies, rumorSeeds, entries };
 
   const counterResist = playerCounterResist(officers, playerForceId) + (ctx.counterIntelActive ? 0.25 : 0);
   const playerCities = () => Object.values(cities).filter((c) => c.ownerForceId === playerForceId);
@@ -158,7 +162,14 @@ export function resolveAIEspionage(ctx: AIEspionageContext): AIEspionageOutput {
       if (ctx.rng() < Math.max(0.05, Math.min(0.9, baseChance('instigate')))) {
         const drop = 12 + Math.floor(ctx.rng() * 13);
         cities[midCity.id] = { ...cities[midCity.id], loyalty: Math.max(0, midCity.loyalty - drop) };
-        entries.push({ cityId: midCity.id, kind: 'espionage',
+        // §7.3-deep AI 流言 — sometimes the agitation is a whispering campaign that
+        // will spread to the city's neighbours (mirrors the player's 流言惑眾).
+        if (ctx.rng() < 0.35) {
+          rumorSeeds.push({ cityId: midCity.id, byForceId: force.id });
+          entries.push({ cityId: midCity.id, kind: 'espionage',
+            text: `${fnE} looses rumours in ${midCity.name.en} — loyalty −${drop}, and the whispers will spread.`,
+            textZh: `${fnZ}於我${midCity.name.zh}散布流言,民忠 −${drop},且謠言將蔓延。` });
+        } else entries.push({ cityId: midCity.id, kind: 'espionage',
           text: `${fnE} foments unrest in ${midCity.name.en} — loyalty −${drop}.`,
           textZh: `${fnZ}煽動我${midCity.name.zh}民心,民忠 −${drop}。` });
       } else {
@@ -200,5 +211,5 @@ export function resolveAIEspionage(ctx: AIEspionageContext): AIEspionageOutput {
     }
   }
 
-  return { cities, officers, newSpies, entries };
+  return { cities, officers, newSpies, rumorSeeds, entries };
 }
