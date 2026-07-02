@@ -364,8 +364,12 @@ export function MapScreen() {
       const typing = !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
       const s = useGameStore.getState();
       const blocked = !!s.lastReport || s.cityMapOpen || !!s.tacticalBattle || s.victoryStatus !== 'playing';
+      // 鬆綁 — the palette stays reachable while a report/event modal is up
+      // (it opens VIEW panels, which are safe under either); only a battle,
+      // the city interior or a finished campaign truly own the keyboard.
+      const paletteBlocked = s.cityMapOpen || !!s.tacticalBattle || s.victoryStatus !== 'playing';
       // 命令臺 — / or ⌘K/Ctrl-K opens the command palette.
-      if (!typing && !blocked && (e.key === '/' || ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')))) {
+      if (!typing && !paletteBlocked && (e.key === '/' || ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')))) {
         e.preventDefault();
         setShowPalette(true);
         return;
