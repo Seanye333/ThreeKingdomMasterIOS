@@ -159,6 +159,26 @@ export function SettingsModal({ onClose }: Props) {
           </Section>
 
           <Section title={t('輔助', 'Accessibility')}>
+            <Row label={t('字體大小', 'Text size')} hint={t('整體縮放介面字級(重載生效)', 'Scales the whole UI text (reloads)')}>
+              <div style={{ display: 'flex', gap: 4 }}>
+                {([['16', t('標準', 'Std')], ['18', t('大', 'Large')], ['20', t('特大', 'XL')]] as Array<[string, string]>).map(([px, lbl]) => {
+                  const cur = (typeof window !== 'undefined' && localStorage.getItem('tkm-font-px')) || '16';
+                  const on = cur === px;
+                  return (
+                    <button
+                      key={px}
+                      onClick={() => { localStorage.setItem('tkm-font-px', px); window.location.reload(); }}
+                      style={{
+                        background: on ? '#26323e' : 'transparent',
+                        border: '1px solid ' + (on ? '#e6c473' : '#2b3845'),
+                        color: on ? '#e6c473' : '#7a8893',
+                        padding: '0.25rem 0.7rem', cursor: 'pointer', fontFamily: 'inherit',
+                      }}
+                    >{lbl}</button>
+                  );
+                })}
+              </div>
+            </Row>
             <Toggle
               label={t('減少動畫', 'Reduce motion')}
               hint={t('關閉畫面閃動、脈動警示與彈跳提示', 'Stop flashes, pulses & bouncing toasts')}

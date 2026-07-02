@@ -212,9 +212,9 @@ export function GovernorsModal({ onClose }: Props) {
                                 >
                                   <div style={{ color: '#e6c473' }}>
                                     <Name pair={o.name} />
-                                    {ready && <span style={{ color: '#9ed68a', fontSize: '0.6rem', marginLeft: 4 }}>{t('考績卓著·堪為州牧', 'proven · 州牧-ready')}</span>}
+                                    {ready && <span style={{ color: '#9ed68a', fontSize: '0.7rem', marginLeft: 4 }}>{t('考績卓著·堪為州牧', 'proven · 州牧-ready')}</span>}
                                   </div>
-                                  <div style={{ fontSize: '0.65rem', color: '#7a8893', fontFamily: 'ui-monospace, monospace' }}>
+                                  <div style={{ fontSize: '0.72rem', color: '#7a8893', fontFamily: 'ui-monospace, monospace' }}>
                                     政 {o.stats.politics} · 知 {o.stats.intelligence} · 魅 {o.stats.charisma}
                                   </div>
                                 </button>

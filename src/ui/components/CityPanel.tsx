@@ -107,18 +107,18 @@ export function CityPanel() {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.4rem', fontSize: '0.72rem' }}>
               <span style={{ background: '#10161e', border: `1px solid ${terrain.color}`, color: terrain.color, padding: '0.15rem 0.4rem', letterSpacing: '0.1rem' }}>
                 {lang === 'en' ? terrain.en : terrain.zh}
-                {lang === 'both' && <> <span style={{ fontSize: '0.6rem', color: '#7a8893', fontStyle: 'italic' }}>{terrain.en}</span></>}
+                {lang === 'both' && <> <span style={{ fontSize: '0.7rem', color: '#7a8893', fontStyle: 'italic' }}>{terrain.en}</span></>}
               </span>
               {city.port && (
                 <span style={{ background: '#10161e', border: '1px solid #88b7e8', color: '#88b7e8', padding: '0.15rem 0.4rem', letterSpacing: '0.1rem' }}>
                   {lang === 'en' ? 'Port' : '港'}
-                  {lang === 'both' && <> <span style={{ fontSize: '0.6rem', color: '#5a7090', fontStyle: 'italic' }}>Port</span></>}
+                  {lang === 'both' && <> <span style={{ fontSize: '0.7rem', color: '#5a7090', fontStyle: 'italic' }}>Port</span></>}
                 </span>
               )}
               {province && (
                 <span style={{ background: '#10161e', border: `1px solid ${province.color}`, color: province.color, padding: '0.15rem 0.4rem', letterSpacing: '0.1rem' }}>
                   {lang === 'en' ? province.name.en : province.name.zh}
-                  {lang === 'both' && <> <span style={{ fontSize: '0.6rem', color: '#7a8893', fontStyle: 'italic' }}>{province.name.en}</span></>}
+                  {lang === 'both' && <> <span style={{ fontSize: '0.7rem', color: '#7a8893', fontStyle: 'italic' }}>{province.name.en}</span></>}
                 </span>
               )}
             </div>
@@ -367,7 +367,7 @@ function ExpeditionSection({ cityId, isPlayerCity }: { cityId: EntityId; isPlaye
                     <button
                       onClick={() => recallExpedition(e.id)}
                       title={t('召回', 'recall')}
-                      style={{ background: 'none', border: '1px solid #3a4651', color: '#9aa6b0', borderRadius: 3, fontSize: '0.62rem', padding: '0 0.3rem', cursor: 'pointer', fontFamily: 'inherit' }}
+                      style={{ background: 'none', border: '1px solid #3a4651', color: '#9aa6b0', borderRadius: 3, fontSize: '0.7rem', padding: '0 0.3rem', cursor: 'pointer', fontFamily: 'inherit' }}
                     >
                       {t('召回', 'recall')}
                     </button>
@@ -435,7 +435,7 @@ function OfficerListItem({
               color: cityGold >= 50 ? '#e6c473' : '#364654',
               padding: '0.05rem 0.4rem',
               fontFamily: 'inherit',
-              fontSize: '0.65rem',
+              fontSize: '0.72rem',
               cursor: cityGold >= 50 ? 'pointer' : 'not-allowed',
               letterSpacing: '0.05rem',
             }}
@@ -563,7 +563,7 @@ function ResourcesSection({ city, cityOfficers, isPlayerCity }: { city: City; ci
         <span style={{ display: 'block', width: `${Math.min(100, capPct)}%`, height: '100%', background: capTone }} />
       </span>
       {fill >= 0.92 && (
-        <span style={{ fontSize: '0.6rem', color: capTone }}>
+        <span style={{ fontSize: '0.7rem', color: capTone }}>
           {fill >= 1 ? t('已飽和 — 升農業擴容', 'At capacity — raise 農業') : t('近飽和 — 升農業擴容', 'Near cap — raise 農業')}
         </span>
       )}
@@ -705,7 +705,7 @@ function CityMiniMapText({ builtCount, wallTier }: { builtCount: number; wallTie
       <div style={{ color: '#aab6c0', fontSize: '0.68rem', letterSpacing: '0.1rem', marginTop: '0.15rem' }}>
         {builtCount}/8 {t('建築', 'buildings')} · {t('城壁', 'Wall')} Tier {wallTier}
       </div>
-      <div style={{ color: '#7a8893', fontSize: '0.6rem', marginTop: '0.15rem' }}>
+      <div style={{ color: '#7a8893', fontSize: '0.7rem', marginTop: '0.15rem' }}>
         {t('點擊進城建造 箭樓 / 拒馬 / 鐵索 …', 'Tap to enter — build towers / caltrops / chains …')}
       </div>
     </div>
@@ -779,7 +779,7 @@ function Bar({ icon, label, zh, value, cap = 100, tone = '#9fb0bd', warn = false
           {icon && <Icon name={icon} size={12} color={warn ? '#e0707a' : '#8a98a4'} />}
           {lang === 'en' ? label : zh}
           {lang === 'both' && <span className={styles.statZh}>{label}</span>}
-          {working && <span style={{ fontSize: '0.6rem', color: '#7ed68a', letterSpacing: '0.05rem' }}>▸ {t('施政中', 'in progress')}</span>}
+          {working && <span style={{ fontSize: '0.7rem', color: '#7ed68a', letterSpacing: '0.05rem' }}>▸ {t('施政中', 'in progress')}</span>}
         </span>
         <span className={styles.barValue}>
           <AnimatedNumber value={value} flash /> / {cap}
@@ -824,7 +824,7 @@ function CitySizeBadge({ city }: { city: import('../../game/types').City }) {
       {next && (
         <div style={{
           marginTop: '0.4rem',
-          fontSize: '0.65rem',
+          fontSize: '0.72rem',
           color: '#7a8893',
           letterSpacing: '0.05rem',
         }}>
@@ -891,7 +891,7 @@ function PolicyEffectsSection({
         })}
       </div>
       <div style={{
-        marginTop: '0.4rem', fontSize: '0.65rem', color: '#7a8893',
+        marginTop: '0.4rem', fontSize: '0.72rem', color: '#7a8893',
         letterSpacing: '0.1rem',
       }}>
         {cityOfficers.length} {t('武將在城 · 政策由其個人專業聚合而成', 'officers stationed · policies emerge from their personal specialties')}

@@ -66,7 +66,7 @@ export function DebateModal({ me, foe, onDone }: {
                 <OfficerAvatar officer={o} size={44} />
                 <div style={{ textAlign: side === 'b' ? 'right' : 'left' }}>
                   <div style={{ color: '#f2dd9a' }}>{o.name.zh}</div>
-                  <div style={{ fontSize: '0.65rem', color: '#7a8893' }}>{t('氣勢', 'Composure')} {Math.max(0, state[side].composure)}</div>
+                  <div style={{ fontSize: '0.72rem', color: '#7a8893' }}>{t('氣勢', 'Composure')} {Math.max(0, state[side].composure)}</div>
                 </div>
               </div>
               {bar(state[side].composure, side === 'a' ? '#7ed68a' : '#ff7050')}
@@ -118,7 +118,7 @@ export function DebateModal({ me, foe, onDone }: {
             ))}
           </div>
         )}
-        <div style={{ fontSize: '0.62rem', color: '#5f6c76', marginTop: 6, textAlign: 'center' }}>
+        <div style={{ fontSize: '0.7rem', color: '#5f6c76', marginTop: 6, textAlign: 'center' }}>
           {t('相剋:大義→激將→折服→詭辯→大義(剋者傷倍,被剋傷半)', 'Counters: righteous→taunt→logic→sophistry→righteous')}
         </div>
       </div>

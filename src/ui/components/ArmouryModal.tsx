@@ -219,7 +219,7 @@ export function ArmouryModal({ onClose }: Props) {
                     <span className={`${styles.kindTag} ${styles[`kindTag_${item.kind}`]}`}>
                       {item.kind}
                     </span>
-                    <span style={{ fontSize: '0.65rem', color: tierColor, letterSpacing: '0.1rem' }}>
+                    <span style={{ fontSize: '0.72rem', color: tierColor, letterSpacing: '0.1rem' }}>
                       {RARITY_LABEL_ZH[tier]}
                     </span>
                   </div>

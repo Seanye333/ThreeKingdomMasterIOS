@@ -82,7 +82,7 @@ export function AchievementsModal({ onClose }: Props) {
                   </div>
                   <span style={{
                     fontFamily: 'ui-monospace, monospace',
-                    fontSize: '0.6rem',
+                    fontSize: '0.7rem',
                     color,
                     letterSpacing: '0.05rem',
                     textTransform: 'uppercase',

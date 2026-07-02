@@ -161,7 +161,7 @@ export function CommandMenu({ cityId }: Props) {
       }}>
         <span>
           {t('太守', 'Governor')}{governor ? `:${lang === 'en' ? governor.name.en : governor.name.zh}` : ''}
-          <span style={{ display: 'block', fontSize: '0.6rem', color: '#7a8893' }}>
+          <span style={{ display: 'block', fontSize: '0.7rem', color: '#7a8893' }}>
             {governor
               ? t('已委任 — 每旬自動施政', 'Delegated — auto-governs each tick')
               : t('委任後此城自動內政', 'Delegate to auto-run internal affairs')}

@@ -149,7 +149,7 @@ export function DebateGameModal({
     const tl = bout.topic ? TOPIC_LABEL[bout.topic] : null;
     return (
       <div style={{ margin: '0.35rem auto', maxWidth: 320 }}>
-        <div style={{ fontSize: '0.6rem', color: '#caa3d6', textAlign: 'center', letterSpacing: '0.1rem', marginBottom: 2 }}>
+        <div style={{ fontSize: '0.7rem', color: '#caa3d6', textAlign: 'center', letterSpacing: '0.1rem', marginBottom: 2 }}>
           {t('民心', 'The Hall')}{tl ? <span style={{ color: '#9fb4c8' }}> · {t('論題', 'Topic')} {lang === 'en' ? tl.en : tl.zh}</span> : null}
         </div>
         <div style={{ position: 'relative', height: 8, background: '#1b2531', border: '1px solid #2b3845', borderRadius: 4, overflow: 'hidden' }}>
@@ -321,7 +321,7 @@ export function DebateGameModal({
                   title={lang === 'en' ? m.hint.en : m.hint.zh}
                 >
                   <div style={{ fontSize: '1.25rem', color: disabled ? '#5a4a36' : cost ? '#e6c473' : '#88b7e8' }}>{m.zh}{apt ? '◎' : ''}{cost ? ` ${'◆'.repeat(cost)}` : ''}</div>
-                  <div style={{ fontSize: '0.6rem', color: '#7a8893' }}>{lang === 'en' ? m.en : m.hint.zh}</div>
+                  <div style={{ fontSize: '0.7rem', color: '#7a8893' }}>{lang === 'en' ? m.en : m.hint.zh}</div>
                 </button>
               );
             })}

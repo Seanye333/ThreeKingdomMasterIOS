@@ -117,7 +117,7 @@ export function BuildingsPanel({ cityId }: Props) {
               <div style={{ fontSize: '0.78rem' }}>
                 {lang === 'en' ? d.name.en : lang === 'both' ? `${d.name.zh} ${d.name.en}` : d.name.zh} {lvl > 0 && `Lv.${lvl}`}
               </div>
-              <div style={{ fontSize: '0.65rem', color: '#7a8893' }}>
+              <div style={{ fontSize: '0.72rem', color: '#7a8893' }}>
                 {inProgress
                   ? t(`建造中 (${b?.progress ?? 0}/${d.seasonsPerLevel}季)`, `building (${b?.progress ?? 0}/${d.seasonsPerLevel}s)`)
                   : lvl >= d.maxLevel
@@ -139,7 +139,7 @@ export function BuildingsPanel({ cityId }: Props) {
           o.status !== 'dead' && o.status !== 'unsearched' && o.status !== 'imprisoned');
         return (
           <div style={{ marginTop: '0.5rem', borderTop: '1px dotted #26323e', paddingTop: '0.4rem' }}>
-            <div style={{ fontSize: '0.65rem', letterSpacing: '0.07rem', color: '#7a8893', textTransform: 'uppercase', marginBottom: '0.3rem' }}>
+            <div style={{ fontSize: '0.72rem', letterSpacing: '0.07rem', color: '#7a8893', textTransform: 'uppercase', marginBottom: '0.3rem' }}>
               {t('山長 · 學館主事', 'Headmasters')}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
@@ -163,7 +163,7 @@ export function BuildingsPanel({ cityId }: Props) {
                 );
               })}
             </div>
-            <div style={{ fontSize: '0.6rem', color: '#7a8893', marginTop: '0.2rem' }}>
+            <div style={{ fontSize: '0.7rem', color: '#7a8893', marginTop: '0.2rem' }}>
               {t('山長以智力放大學館歷練,並以所長偏導講學', "A headmaster's Intellect boosts the school's XP; their strongest stat tilts what 講學 teaches")}
             </div>
           </div>
@@ -172,7 +172,7 @@ export function BuildingsPanel({ cityId }: Props) {
 
       {/* Auto-build queue */}
       <div style={{ marginTop: '0.5rem', borderTop: '1px dotted #26323e', paddingTop: '0.4rem' }}>
-        <div style={{ fontSize: '0.65rem', letterSpacing: '0.07rem', color: '#7a8893', textTransform: 'uppercase', marginBottom: '0.3rem' }}>
+        <div style={{ fontSize: '0.72rem', letterSpacing: '0.07rem', color: '#7a8893', textTransform: 'uppercase', marginBottom: '0.3rem' }}>
           {t('自動建造佇列', 'Auto-Build Queue')} {autoQueue.length > 0 && `(${autoQueue.length})`}
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
@@ -207,7 +207,7 @@ export function BuildingsPanel({ cityId }: Props) {
                 border: '1px dashed #26323e',
                 color: '#7a8893',
                 padding: '0.15rem 0.4rem',
-                fontSize: '0.65rem',
+                fontSize: '0.72rem',
                 cursor: 'pointer',
                 fontFamily: 'inherit',
               }}

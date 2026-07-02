@@ -485,19 +485,19 @@ export function OfficerDetail({
                 const renown = Math.round(officer.renown ?? 0);
                 return (
                   <div title={t(`品階 ${g.rank.zh} · 評分 ${g.score}${renown ? ` · 戰功威望 ${renown}` : ''}`, `Grade ${g.rank.en} · score ${g.score}${renown ? ` · renown ${renown}` : ''}`)}>
-                    <span style={{ fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('品階', 'Grade')} </span>
+                    <span style={{ fontSize: '0.72rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('品階', 'Grade')} </span>
                     <span style={{
                       display: 'inline-block', padding: '0.1rem 0.5rem', borderRadius: 2,
                       background: '#10161e', border: `1px solid ${g.color}`, color: g.color,
                       fontSize: '0.85rem', letterSpacing: '0.08rem',
                     }}>
                       {lang === 'en' ? g.name.en : g.name.zh}
-                      <span style={{ marginLeft: 4, fontSize: '0.62rem', opacity: 0.8 }}>
+                      <span style={{ marginLeft: 4, fontSize: '0.7rem', opacity: 0.8 }}>
                         {lang === 'en' ? g.rank.en : g.rank.zh}
                       </span>
                     </span>
                     {renown > 0 && (
-                      <span style={{ marginLeft: 6, fontSize: '0.62rem', color: '#c8a24e' }}>
+                      <span style={{ marginLeft: 6, fontSize: '0.7rem', color: '#c8a24e' }}>
                         {t('威望', 'Renown')} {renown}
                       </span>
                     )}
@@ -507,7 +507,7 @@ export function OfficerDetail({
                       if (!gap.next) return null;
                       const nm = gradeMeta(gap.next);
                       return (
-                        <span style={{ marginLeft: 6, fontSize: '0.6rem', color: '#7a8893' }}>
+                        <span style={{ marginLeft: 6, fontSize: '0.7rem', color: '#7a8893' }}>
                           {t(`距${nm.name.zh} +${gap.toNext}`, `+${gap.toNext} to ${nm.name.en}`)}
                         </span>
                       );
@@ -525,7 +525,7 @@ export function OfficerDetail({
                 return (
                   <div style={{ minWidth: 150 }}>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem' }}>
-                      <span style={{ fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('歷練', 'Level')}</span>
+                      <span style={{ fontSize: '0.72rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('歷練', 'Level')}</span>
                       <span style={{ fontSize: '1.1rem', color: '#e6c473', fontFamily: 'ui-monospace, monospace' }}>
                         Lv.{lvl}
                       </span>
@@ -533,7 +533,7 @@ export function OfficerDetail({
                     <div style={{ marginTop: 3, height: 5, width: 150, background: '#10161e', border: '1px solid #26323e', borderRadius: 3, overflow: 'hidden' }}>
                       <div style={{ height: '100%', width: `${pct}%`, background: p.atMax ? 'linear-gradient(90deg,#c9a64e,#e6c473)' : '#3a7dd9' }} />
                     </div>
-                    <div style={{ marginTop: 2, fontSize: '0.6rem', color: '#7a8893', fontFamily: 'ui-monospace, monospace' }}>
+                    <div style={{ marginTop: 2, fontSize: '0.7rem', color: '#7a8893', fontFamily: 'ui-monospace, monospace' }}>
                       {p.atMax
                         ? t(`已臻化境 · 頓悟 ${officer.epiphany ?? 0}/${EPIPHANY_THRESHOLD}`, `Mastery · Epiphany ${officer.epiphany ?? 0}/${EPIPHANY_THRESHOLD}`)
                         : t(`距下次成長 · 再 ${p.toNext} 經驗`, `${p.toNext} XP to next growth`)}
@@ -572,7 +572,7 @@ export function OfficerDetail({
                 };
                 return (
                   <div style={{ minWidth: 150 }}>
-                    <span style={{ fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' }}>
+                    <span style={{ fontSize: '0.72rem', color: '#7a8893', letterSpacing: '0.05rem' }}>
                       {t('成長資質', 'Aptitude')}{recognized && <span style={{ color: '#9ed68a' }} title={t('知遇之恩 — 你曾賞識他,招攬大加成', 'You recognized him — far easier for you to recruit')}> · {t('知遇', 'Recognized')}</span>}
                     </span>
                     {known ? (
@@ -580,13 +580,13 @@ export function OfficerDetail({
                         {STATS.map((s) => (
                           <span key={s.key}
                             title={t(`${s.zh} · ${aptitudeLabel(apt[s.key]).zh}`, `${s.en} · ${apt[s.key]} aptitude`)}
-                            style={{ fontSize: '0.62rem', padding: '0.05rem 0.32rem', borderRadius: 2, background: '#10161e', border: `1px solid ${col(apt[s.key])}`, color: col(apt[s.key]), fontFamily: 'ui-monospace, monospace' }}>
+                            style={{ fontSize: '0.7rem', padding: '0.05rem 0.32rem', borderRadius: 2, background: '#10161e', border: `1px solid ${col(apt[s.key])}`, color: col(apt[s.key]), fontFamily: 'ui-monospace, monospace' }}>
                             {lang === 'en' ? s.en.slice(0, 1) : s.zh}{apt[s.key]}
                           </span>
                         ))}
                       </div>
                     ) : (
-                      <div style={{ marginTop: 3, fontSize: '0.62rem', color: ap?.misread ? '#c79a6a' : '#6a7682', fontStyle: 'italic' }}>
+                      <div style={{ marginTop: 3, fontSize: '0.7rem', color: ap?.misread ? '#c79a6a' : '#6a7682', fontStyle: 'italic' }}>
                         {ap?.misread ? t('識者走眼 — 資質難辨', 'Misjudged — aptitude unclear') : t('資質未明 — 待名士品評', 'Unknown — needs a 名士’s appraisal')}
                       </div>
                     )}
@@ -600,11 +600,11 @@ export function OfficerDetail({
                     {canAppraiseNow && (
                       <button
                         onClick={doAppraise}
-                        style={{ marginTop: 4, fontSize: '0.62rem', padding: '0.1rem 0.5rem', borderRadius: 3, cursor: 'pointer', background: '#1a2230', border: '1px solid #4a5a48', color: '#cfe0ff', fontFamily: 'var(--tkm-font-body)' }}
+                        style={{ marginTop: 4, fontSize: '0.7rem', padding: '0.1rem 0.5rem', borderRadius: 3, cursor: 'pointer', background: '#1a2230', border: '1px solid #4a5a48', color: '#cfe0ff', fontFamily: 'var(--tkm-font-body)' }}
                       >🔍 {ap?.misread ? t('另請高明', 'Re-appraise') : t('遣名士品評', 'Appraise (月旦評)')}</button>
                     )}
                     {appraiseMsg && (
-                      <div style={{ marginTop: 3, fontSize: '0.62rem', color: '#9ed68a', lineHeight: 1.5 }}>{appraiseMsg}</div>
+                      <div style={{ marginTop: 3, fontSize: '0.7rem', color: '#9ed68a', lineHeight: 1.5 }}>{appraiseMsg}</div>
                     )}
                   </div>
                 );
@@ -614,7 +614,7 @@ export function OfficerDetail({
                 const band = ageBand(age);
                 return (
                   <div title={t(`${age} 歲 · ${band.zh}${band.declining ? '（武力漸衰）' : ''}`, `Age ${age} · ${band.en}${band.declining ? ' (waning)' : ''}`)}>
-                    <span style={{ fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('年歲', 'Age')} </span>
+                    <span style={{ fontSize: '0.72rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('年歲', 'Age')} </span>
                     <span style={{
                       display: 'inline-block', padding: '0.1rem 0.5rem', borderRadius: 2,
                       background: '#10161e', border: `1px solid ${band.color}`, color: band.color, fontSize: '0.85rem',
@@ -636,7 +636,7 @@ export function OfficerDetail({
                   : { zh: '漸衰', en: 'Aging', color: '#caa15a' };
                 return (
                   <div title={t(`今冬殞落機率約 ${pct}%`, `~${pct}% chance to pass this winter`)} style={{ marginTop: '0.2rem' }}>
-                    <span style={{ fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('壽算', 'Mortality')} </span>
+                    <span style={{ fontSize: '0.72rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('壽算', 'Mortality')} </span>
                     <span style={{
                       display: 'inline-block', padding: '0.1rem 0.5rem', borderRadius: 2,
                       background: '#10161e', border: `1px solid ${color}`, color, fontSize: '0.8rem',
@@ -658,14 +658,14 @@ export function OfficerDetail({
                 const rm = itemRarityMeta(itemRarity(best));
                 return (
                   <div title={t(`持有 ${owned.length} 件寶物，最高 ${rm.zh}`, `Carries ${owned.length} item(s), best ${rm.en}`)}>
-                    <span style={{ fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('寶物', 'Gear')} </span>
+                    <span style={{ fontSize: '0.72rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('寶物', 'Gear')} </span>
                     <span style={{
                       display: 'inline-block', padding: '0.1rem 0.5rem', borderRadius: 2,
                       background: '#10161e', border: `1px solid ${rm.color}`, color: rm.color,
                       fontSize: '0.85rem', letterSpacing: '0.08rem',
                     }}>
                       {lang === 'en' ? rm.en : rm.zh}
-                      {owned.length > 1 && <span style={{ marginLeft: 4, fontSize: '0.62rem', opacity: 0.8 }}>×{owned.length}</span>}
+                      {owned.length > 1 && <span style={{ marginLeft: 4, fontSize: '0.7rem', opacity: 0.8 }}>×{owned.length}</span>}
                     </span>
                   </div>
                 );
@@ -674,7 +674,7 @@ export function OfficerDetail({
                 const d = DOCTRINE_DEFS[officer.doctrine];
                 return (
                   <div>
-                    <span style={{ fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('主義', 'Doctrine')} </span>
+                    <span style={{ fontSize: '0.72rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('主義', 'Doctrine')} </span>
                     <span
                       title={`${d.zh} · ${d.en}`}
                       style={{
@@ -683,7 +683,7 @@ export function OfficerDetail({
                         }}
                     >
                       {lang === 'en' ? d.en : d.zh}
-                      {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#7a8893', fontStyle: 'italic' }}>{d.en}</span></>}
+                      {lang === 'both' && <> <span style={{ fontSize: '0.72rem', color: '#7a8893', fontStyle: 'italic' }}>{d.en}</span></>}
                     </span>
                   </div>
                 );
@@ -693,7 +693,7 @@ export function OfficerDetail({
                 const w = WEAPON_TYPE_DEFS[wt];
                 return (
                   <div>
-                    <span style={{ fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('兵裝', 'Weapon')} </span>
+                    <span style={{ fontSize: '0.72rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('兵裝', 'Weapon')} </span>
                     <span
                       title={`${w.zh} · ${w.en}`}
                       style={{
@@ -702,7 +702,7 @@ export function OfficerDetail({
                         }}
                     >
                       {lang === 'en' ? w.en : w.zh}
-                      {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#7a8893', fontStyle: 'italic' }}>{w.en}</span></>}
+                      {lang === 'both' && <> <span style={{ fontSize: '0.72rem', color: '#7a8893', fontStyle: 'italic' }}>{w.en}</span></>}
                     </span>
                   </div>
                 );
@@ -729,7 +729,7 @@ export function OfficerDetail({
               const cityIron = city?.iron ?? 0;
               const canBT = cityGold >= cost && cityIron >= ironCost;
               const pool = learnableSkills(live);
-              const labelStyle = { fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' } as const;
+              const labelStyle = { fontSize: '0.72rem', color: '#7a8893', letterSpacing: '0.05rem' } as const;
               return (
                 <div style={{ marginTop: '0.7rem', display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
                   {/* 品階威儀 — what the grade actually does in a fight */}
@@ -909,7 +909,7 @@ export function OfficerDetail({
                     }}
                   >
                     {lang === 'en' ? f.en : f.zh}
-                    {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#5a7090', fontStyle: 'italic' }}>{f.en}</span></>}
+                    {lang === 'both' && <> <span style={{ fontSize: '0.72rem', color: '#5a7090', fontStyle: 'italic' }}>{f.en}</span></>}
                   </span>
                 );
               })}
@@ -947,7 +947,7 @@ export function OfficerDetail({
                   >
                     {isTacticSignature(tid) && <span style={{ color: '#e6c473', marginRight: 2 }}>★</span>}
                     {lang === 'en' ? tac.en : tac.zh}
-                    {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#8a4530', fontStyle: 'italic' }}>{tac.en}</span></>}
+                    {lang === 'both' && <> <span style={{ fontSize: '0.72rem', color: '#8a4530', fontStyle: 'italic' }}>{tac.en}</span></>}
                   </span>
                 );
               })}
@@ -1009,7 +1009,7 @@ export function OfficerDetail({
                     }}
                   >
                     {lang === 'en' ? p.en : p.zh}
-                    {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#5a7a4a', fontStyle: 'italic' }}>{p.en}</span></>}
+                    {lang === 'both' && <> <span style={{ fontSize: '0.72rem', color: '#5a7a4a', fontStyle: 'italic' }}>{p.en}</span></>}
                   </span>
                 );
               })}
@@ -1130,7 +1130,7 @@ export function OfficerDetail({
                         }}
                     >
                       {lang === 'en' ? s.name.en : s.name.zh}
-                      {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#7a8893', fontStyle: 'italic' }}>{s.name.en}</span></>}
+                      {lang === 'both' && <> <span style={{ fontSize: '0.72rem', color: '#7a8893', fontStyle: 'italic' }}>{s.name.en}</span></>}
                     </span>
                   );
                 })}
@@ -1158,7 +1158,7 @@ export function OfficerDetail({
                         }}
                     >
                       {lang === 'en' ? tr.name.en : tr.name.zh}
-                      {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#7a8893', fontStyle: 'italic' }}>{tr.name.en}</span></>}
+                      {lang === 'both' && <> <span style={{ fontSize: '0.72rem', color: '#7a8893', fontStyle: 'italic' }}>{tr.name.en}</span></>}
                     </span>
                   );
                 })}
@@ -1189,7 +1189,7 @@ export function OfficerDetail({
                       }}
                     >
                       {lang === 'en' ? tDef.name.en : tDef.name.zh}
-                      {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#7a8893', fontStyle: 'italic' }}>{tDef.name.en}</span></>}
+                      {lang === 'both' && <> <span style={{ fontSize: '0.72rem', color: '#7a8893', fontStyle: 'italic' }}>{tDef.name.en}</span></>}
                     </span>
                   );
                 })}
@@ -1250,7 +1250,7 @@ export function OfficerDetail({
                 if (sets.length === 0) return null;
                 return (
                   <div style={{ marginBottom: '0.5rem', display: 'flex', flexWrap: 'wrap', gap: '0.4rem', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.65rem', color: '#7a8893' }}>{t('神兵譜', 'Set')}</span>
+                    <span style={{ fontSize: '0.72rem', color: '#7a8893' }}>{t('神兵譜', 'Set')}</span>
                     {sets.map((s) => (
                       <span key={s.id} title={t(`套裝共鳴 — 戰力 +${Math.round(s.powerBonus * 100)}%`, `Set resonance — power +${Math.round(s.powerBonus * 100)}%`)}
                         style={{ padding: '0.1rem 0.5rem', borderRadius: 2, background: '#10161e', border: `1px solid ${s.color}`, color: s.color, fontSize: '0.78rem' }}>
@@ -1307,9 +1307,9 @@ export function OfficerDetail({
                         {(() => {
                           const lore = itemLoreLevel(id);
                           const lt = itemLoreTitle(lore);
-                          return lt ? <span title={t(`名器威名 · 歷 ${lore} 戰`, `${lore} battles carried`)} style={{ marginLeft: '0.25rem', color: '#8ee8ff', fontSize: '0.62rem' }}>〈{lang === 'en' ? lt.en : lt.zh}〉</span> : null;
+                          return lt ? <span title={t(`名器威名 · 歷 ${lore} 戰`, `${lore} battles carried`)} style={{ marginLeft: '0.25rem', color: '#8ee8ff', fontSize: '0.7rem' }}>〈{lang === 'en' ? lt.en : lt.zh}〉</span> : null;
                         })()}
-                        {lang === 'both' && <> <span style={{ fontSize: '0.65rem', color: '#7a8893', fontStyle: 'italic' }}>{item.name.en}</span></>}
+                        {lang === 'both' && <> <span style={{ fontSize: '0.72rem', color: '#7a8893', fontStyle: 'italic' }}>{item.name.en}</span></>}
                       </span>
                       {/* 鑲嵌 — socketed gem dots */}
                       {gems.map((gid, gi) => {
@@ -1356,7 +1356,7 @@ export function OfficerDetail({
                           title={t(`鑲嵌寶石（${gems.length}/${maxSockets} 孔）`, `Socket a gem (${gems.length}/${maxSockets})`)}
                           style={{
                             background: '#10161e', border: '1px solid #6a8fb0', borderRadius: 2, color: '#9fb0bf',
-                            cursor: 'pointer', padding: '0 0.1rem', fontSize: '0.62rem', maxWidth: 26,
+                            cursor: 'pointer', padding: '0 0.1rem', fontSize: '0.7rem', maxWidth: 26,
                           }}
                         >
                           <option value="">💎</option>
@@ -1566,7 +1566,7 @@ function RelationshipsSection({ officerId, officersOverride }: { officerId: stri
             {lang === 'both' && <> <span style={{ fontSize: '0.7rem', color: '#7a8893', fontStyle: 'italic' }}>{other.name.en}</span></>}
           </span>
           <span style={{
-            fontSize: '0.65rem', letterSpacing: '0.05rem', textTransform: 'uppercase',
+            fontSize: '0.72rem', letterSpacing: '0.05rem', textTransform: 'uppercase',
             color: meta.color,
           }}>
             {lang === 'en' ? meta.en : lang === 'both' ? `${meta.zh} ${meta.en}` : meta.zh}
@@ -1614,7 +1614,7 @@ function RelationshipsSection({ officerId, officersOverride }: { officerId: stri
                   letterSpacing: '0.07rem',
                 }}>
                   {isCollapsed ? '▸' : '▾'} {lang === 'en' ? meta.en : meta.zh}
-                  <span style={{ marginLeft: 4, fontSize: '0.62rem', opacity: 0.7 }}>({arr.length})</span>
+                  <span style={{ marginLeft: 4, fontSize: '0.7rem', opacity: 0.7 }}>({arr.length})</span>
                 </span>
               </div>
               {!isCollapsed && (
@@ -2220,15 +2220,15 @@ function FamilyTreeSection({ officerId, officersOverride }: {
         onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = '#1b2531'; }}
         onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = '#10161e'; }}
       >
-        <span style={{ color, fontSize: '0.62rem', letterSpacing: '0.1rem' }}>{role}</span>
+        <span style={{ color, fontSize: '0.7rem', letterSpacing: '0.1rem' }}>{role}</span>
         <span style={{ color: '#e6c473', fontSize: '0.82rem', marginTop: 2 }}>
           {lang === 'en' ? o.name.en : o.name.zh}
         </span>
         {o.status === 'dead' && (
-          <span style={{ fontSize: '0.6rem', color: '#6b3a3a', marginTop: 1 }}>† {t('卒', 'dec.')}</span>
+          <span style={{ fontSize: '0.7rem', color: '#6b3a3a', marginTop: 1 }}>† {t('卒', 'dec.')}</span>
         )}
         {o.status === 'retired' && (
-          <span style={{ fontSize: '0.6rem', color: '#7a8a5a', marginTop: 1 }}>{t('歸隱', 'retired')}</span>
+          <span style={{ fontSize: '0.7rem', color: '#7a8a5a', marginTop: 1 }}>{t('歸隱', 'retired')}</span>
         )}
       </div>
     );
@@ -2278,7 +2278,7 @@ function FamilyTreeSection({ officerId, officersOverride }: {
               boxShadow: '0 0 12px rgba(212,168,74,0.4)',
             }}
           >
-            <span style={{ color: '#e6c473', fontSize: '0.62rem', letterSpacing: '0.05rem' }}>
+            <span style={{ color: '#e6c473', fontSize: '0.7rem', letterSpacing: '0.05rem' }}>
               {t('本人', 'Self')}
             </span>
             <span style={{ color: '#ffd47a', fontSize: '0.95rem', marginTop: 2, fontWeight: 600 }}>
@@ -2416,10 +2416,10 @@ function HeirsAndClanSection({ officerId }: { officerId: string }) {
                 {age}{t('歲', 'y')} · {toCome > 0 ? t(`${toCome}年後及冠`, `${toCome}y to age`) : t('將及冠', 'coming of age')}
               </span>
               {h.upbringing?.prodigyRevealed && (
-                <span style={{ color: '#ffce4a', border: '1px solid #ffce4a', fontSize: '0.62rem', padding: '0.02rem 0.3rem' }}>{t('神童', 'Prodigy')}</span>
+                <span style={{ color: '#ffce4a', border: '1px solid #ffce4a', fontSize: '0.7rem', padding: '0.02rem 0.3rem' }}>{t('神童', 'Prodigy')}</span>
               )}
               {h.designatedHeir && (
-                <span style={{ color: '#7ed68a', border: '1px solid #7ed68a', fontSize: '0.62rem', padding: '0.02rem 0.3rem' }}>{t('世子', 'Heir')}</span>
+                <span style={{ color: '#7ed68a', border: '1px solid #7ed68a', fontSize: '0.7rem', padding: '0.02rem 0.3rem' }}>{t('世子', 'Heir')}</span>
               )}
             </div>
 
@@ -2472,7 +2472,7 @@ function HeirsAndClanSection({ officerId }: { officerId: string }) {
             <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.2rem' }}>
               <span style={{ color: '#7ed68a', fontSize: '0.78rem' }}>{lang === 'en' ? c.name.en : c.name.zh}</span>
               {c.designatedHeir && (
-                <span style={{ color: '#7ed68a', border: '1px solid #7ed68a', fontSize: '0.62rem', padding: '0.02rem 0.3rem' }}>{t('世子', 'Heir')}</span>
+                <span style={{ color: '#7ed68a', border: '1px solid #7ed68a', fontSize: '0.7rem', padding: '0.02rem 0.3rem' }}>{t('世子', 'Heir')}</span>
               )}
               {isMine && !c.designatedHeir && (
                 <button

@@ -152,7 +152,7 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
                   <span style={{ flex: 1, color: '#f2dd9a', fontSize: '0.86rem' }}>{nm(r.id)}</span>
                   <span style={{ color: '#8aa0b8', fontSize: '0.68rem' }}>{lang === 'en' ? tier.en : tier.zh}</span>
                   <span style={{ color: '#e0b060', fontWeight: 600, minWidth: 42, textAlign: 'right' }}>{r.rating}</span>
-                  {r.seeded && <span style={{ color: '#5f6c76', fontSize: '0.62rem' }}>{t('評', '~')}</span>}
+                  {r.seeded && <span style={{ color: '#5f6c76', fontSize: '0.7rem' }}>{t('評', '~')}</span>}
                 </div>
               );
             })}

@@ -91,7 +91,7 @@ export function SchemesModal({ onClose }: { onClose: () => void }) {
                 border: `1px solid ${schemeId === d.id ? '#e6c473' : '#26323e'}`,
                 color: schemeId === d.id ? '#f2dd9a' : '#a08a60', fontSize: '0.85rem',
               }}
-            >{d.zh}<div style={{ fontSize: '0.6rem', color: '#7a8893' }}>{d.goldCost}g</div></button>
+            >{d.zh}<div style={{ fontSize: '0.7rem', color: '#7a8893' }}>{d.goldCost}g</div></button>
           ))}
         </div>
 

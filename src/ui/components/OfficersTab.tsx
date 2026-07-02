@@ -418,7 +418,7 @@ function OfficerRow({
           <span
             title={`${pickName(grade.name, lang)} ${pickName(grade.rank, lang)} · Lv.${lvl}`}
             style={{
-              flexShrink: 0, fontSize: '0.6rem', fontFamily: 'ui-monospace, monospace',
+              flexShrink: 0, fontSize: '0.7rem', fontFamily: 'ui-monospace, monospace',
               color: grade.color, border: `1px solid ${grade.color}`, borderRadius: 2,
               padding: '0 0.22rem', letterSpacing: '0.02rem', alignSelf: 'center',
             }}

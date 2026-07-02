@@ -66,7 +66,7 @@ export function MusterModal({ targetCityId, onClose }: { targetCityId: string; o
           [t('最慢抵達', 'Slowest ETA'), preview.slowestSeasons > 0 ? t(`${preview.slowestSeasons} 季`, `${preview.slowestSeasons}s`) : '—'],
         ] as const).map(([k, v]) => (
           <div key={k} style={{ background: '#10161e', border: '1px solid #26323e', borderRadius: 5, padding: '0.4rem 0.6rem' }}>
-            <div style={{ fontSize: '0.62rem', color: '#7a8893', letterSpacing: '0.08rem' }}>{k}</div>
+            <div style={{ fontSize: '0.7rem', color: '#7a8893', letterSpacing: '0.08rem' }}>{k}</div>
             <div style={{ color: '#f2dd9a', fontSize: '1rem' }}>{v}</div>
           </div>
         ))}

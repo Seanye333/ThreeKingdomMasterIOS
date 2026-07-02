@@ -223,7 +223,7 @@ export function BattleHistoryModal({ onClose }: Props) {
 function Stat({ label, value, color }: { label: string; value: string | number; color: string }) {
   return (
     <div style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.07rem' }}>{label}</div>
+      <div style={{ fontSize: '0.72rem', color: '#7a8893', letterSpacing: '0.07rem' }}>{label}</div>
       <div style={{ fontSize: '1rem', color, fontFamily: 'ui-monospace, monospace', marginTop: '0.15rem' }}>{value}</div>
     </div>
   );

@@ -130,7 +130,7 @@ export function CatalogModal({ onClose, title, items, categories = [] }: Props) 
                   }}
                 >
                   {lang === 'en' ? c.en : c.zh}
-                  {lang === 'both' && <> <span style={{ fontSize: '0.65rem', opacity: 0.7 }}>{c.en}</span></>}
+                  {lang === 'both' && <> <span style={{ fontSize: '0.72rem', opacity: 0.7 }}>{c.en}</span></>}
                 </button>
               );
             })}

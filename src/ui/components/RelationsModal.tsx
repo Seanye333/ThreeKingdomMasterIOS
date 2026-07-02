@@ -99,7 +99,7 @@ export function RelationsModal({ onClose }: { onClose: () => void }) {
                   color: row.id === playerForceId ? '#f2dd9a' : row.color, whiteSpace: 'nowrap',
                 }}>
                   {row.id === playerForceId ? '★ ' : ''}{name(row)}
-                  <span style={{ color: '#5a4a35', fontSize: '0.62rem' }}> {cityCount}{t('城', '')}</span>
+                  <span style={{ color: '#5a4a35', fontSize: '0.7rem' }}> {cityCount}{t('城', '')}</span>
                 </th>
                 {living.map(({ force: col }) => {
                   const cell = cellFor(row.id, col.id);

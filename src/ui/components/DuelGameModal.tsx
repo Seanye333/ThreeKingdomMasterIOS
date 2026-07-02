@@ -365,7 +365,7 @@ export function DuelGameModal({
     const full = spirit >= SPIRIT_MAX && !used;
     return (
       <div style={{ marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
-        <span style={{ fontSize: '0.6rem', color: full ? '#ffd86a' : used ? '#5a4a36' : '#9a7a40' }}>{t('魂', 'SP')}</span>
+        <span style={{ fontSize: '0.7rem', color: full ? '#ffd86a' : used ? '#5a4a36' : '#9a7a40' }}>{t('魂', 'SP')}</span>
         <div style={{ flex: 1, height: 6, background: '#1b1408', border: `1px solid ${full ? '#ffd86a' : '#3a2c14'}`, borderRadius: 2, overflow: 'hidden', boxShadow: full ? '0 0 8px rgba(255,200,90,0.7)' : undefined }}>
           <div style={{ width: `${used ? 0 : spirit}%`, height: '100%', background: full ? 'linear-gradient(90deg,#ffcf5a,#ff8a3a)' : '#b88a3a', transition: 'width 0.4s' }} />
         </div>
@@ -432,7 +432,7 @@ export function DuelGameModal({
     </div>
   );
   const groupLabel = (zh: string, en: string, kind: MoveKind) => (
-    <div style={{ fontSize: '0.62rem', color: KIND_TINT[kind], letterSpacing: '0.08rem', margin: '0 0 3px 2px', textShadow: '0 1px 3px #000' }}>
+    <div style={{ fontSize: '0.7rem', color: KIND_TINT[kind], letterSpacing: '0.08rem', margin: '0 0 3px 2px', textShadow: '0 1px 3px #000' }}>
       {lang === 'en' ? en : zh}
     </div>
   );
@@ -486,7 +486,7 @@ export function DuelGameModal({
               <div style={{ fontSize: '0.64rem', color: '#e0a0d0', whiteSpace: 'nowrap', fontWeight: 700 }}>✦ {lang === 'en' ? p.en : p.zh}</div>
             ); })()}
             {duelScars(o).map((s) => (
-              <div key={s} style={{ fontSize: '0.62rem', color: '#c08070', whiteSpace: 'nowrap' }}>🩹 {lang === 'en' ? DUEL_SCAR_INFO[s].en : DUEL_SCAR_INFO[s].zh}</div>
+              <div key={s} style={{ fontSize: '0.7rem', color: '#c08070', whiteSpace: 'nowrap' }}>🩹 {lang === 'en' ? DUEL_SCAR_INFO[s].en : DUEL_SCAR_INFO[s].zh}</div>
             ))}
           </div>
         </div>
@@ -494,7 +494,7 @@ export function DuelGameModal({
         {guardPips(guard)}
         {spiritBar(spirit, ultUsed)}
         {(() => { const flaw = who === 'me' ? bout.aFlaw : bout.dFlaw; return flaw >= 18 && (
-          <div style={{ fontSize: '0.6rem', color: flaw >= 50 ? '#ff7a5a' : '#e0a060', letterSpacing: '0.04rem', marginTop: 1 }}>
+          <div style={{ fontSize: '0.7rem', color: flaw >= 50 ? '#ff7a5a' : '#e0a060', letterSpacing: '0.04rem', marginTop: 1 }}>
             ⚠ {t('破綻', 'Open')} {flaw}%
           </div>
         ); })()}

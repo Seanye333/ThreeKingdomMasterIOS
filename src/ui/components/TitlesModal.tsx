@@ -581,7 +581,7 @@ function CivicTab({
               <div>
                 <span className={styles.titleName}><Name pair={t.name} /></span>
                 {t.minGrade && (
-                  <span style={{ marginLeft: '0.4rem', fontSize: '0.62rem', color: gradeMeta(t.minGrade).color, border: `1px solid ${gradeMeta(t.minGrade).color}`, borderRadius: 2, padding: '0 0.3rem' }}>
+                  <span style={{ marginLeft: '0.4rem', fontSize: '0.7rem', color: gradeMeta(t.minGrade).color, border: `1px solid ${gradeMeta(t.minGrade).color}`, borderRadius: 2, padding: '0 0.3rem' }}>
                     需{gradeMeta(t.minGrade).name.zh}
                   </span>
                 )}
@@ -633,7 +633,7 @@ function CivicTab({
                       <span>
                         {recommended && meets && <span style={{ color: '#e6c473' }}>★ </span>}
                         <Name pair={o.name} />
-                        <span style={{ marginLeft: '0.35rem', fontSize: '0.62rem', color: g.color }}>{g.name.zh}</span>
+                        <span style={{ marginLeft: '0.35rem', fontSize: '0.7rem', color: g.color }}>{g.name.zh}</span>
                       </span>
                       <span className={styles.officerStats}>
                         {t.primaryStat.slice(0, 3).toUpperCase()} {o.stats[t.primaryStat]}

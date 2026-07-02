@@ -4248,17 +4248,17 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
                             <span style={{ float: 'right', opacity: 0.8 }}>{cost}g · {def.seasonsPerLevel}季</span>
                           </div>
                           {prereqLocked ? (
-                            <div style={{ fontSize: '0.62rem', color: '#b8442e', marginTop: 1 }}>
+                            <div style={{ fontSize: '0.7rem', color: '#b8442e', marginTop: 1 }}>
                               需先建「{BUILDING_DEFS_BY_ID[prereq!]?.name.zh ?? prereq}」
                             </div>
                           ) : sizeLocked ? (
-                            <div style={{ fontSize: '0.62rem', color: '#b8442e', marginTop: 1 }}>
+                            <div style={{ fontSize: '0.7rem', color: '#b8442e', marginTop: 1 }}>
                               需「{CITY_SIZES_BY_ID[minSize!]?.name.zh ?? minSize}」級以上城市
                             </div>
                           ) : (() => {
                             const after = groupPct((catCountCity[cat] ?? 0) + 1);
                             return (
-                              <div style={{ fontSize: '0.62rem', color: '#7f9f6f', marginTop: 1 }}>
+                              <div style={{ fontSize: '0.7rem', color: '#7f9f6f', marginTop: 1 }}>
                                 {BUILDING_CATEGORY_LABEL[cat].zh}群{after > 0 ? ` → 同類 +${after}%` : ''}
                                 {affine ? ' · 地利 +10%/造價 −15%' : ''}
                               </div>
@@ -4416,7 +4416,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
           color: '#b8a274', fontFamily: 'var(--tkm-font-body)',
           fontSize: '0.66rem', lineHeight: 1.55, textAlign: 'right',
         }}>
-          <div style={{ color: '#8a7858', fontSize: '0.6rem', letterSpacing: '0.05rem', marginBottom: 2 }}>城景 · 實況</div>
+          <div style={{ color: '#8a7858', fontSize: '0.7rem', letterSpacing: '0.05rem', marginBottom: 2 }}>城景 · 實況</div>
           <div>市集 <span style={{ color: '#d4a84a' }}>商業 {city.commerce}/{econCap}</span></div>
           <div>屯田 <span style={{ color: '#9ac06a' }}>農業 {city.agriculture}/{econCap}</span></div>
           <div>行人 <span style={{ color: '#88b7e8' }}>人口 {city.population.toLocaleString()}</span></div>

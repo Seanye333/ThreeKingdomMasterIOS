@@ -143,7 +143,7 @@ export function TrainingPicker({ cityId, onClose }: Props) {
                 }}
               >
                 {lang === 'en' ? o.name.en : o.name.zh}
-                <span style={{ marginLeft: 4, fontSize: '0.65rem', color: '#7a8893' }}>
+                <span style={{ marginLeft: 4, fontSize: '0.72rem', color: '#7a8893' }}>
                   ({(o.policies ?? []).length})
                 </span>
               </button>
@@ -243,7 +243,7 @@ export function TrainingPicker({ cityId, onClose }: Props) {
                                   border: `1px solid ${tierColor}`, color: tierColor, fontSize: '0.78rem',
                                 }}>
                                   {lang === 'en' ? td?.en : td?.zh}
-                                  <span style={{ marginLeft: 4, fontSize: '0.6rem', opacity: 0.7 }}>· {tierLabel}</span>
+                                  <span style={{ marginLeft: 4, fontSize: '0.7rem', opacity: 0.7 }}>· {tierLabel}</span>
                                 </span>
                                 {hasAcademy && (
                                   <button
@@ -329,7 +329,7 @@ export function TrainingPicker({ cityId, onClose }: Props) {
                           }}>
                             {wished && <span title={t('武將夙願 — 半價學費,完成後忠誠 +14', 'Officer wish — half tuition, +14 loyalty on completion')} style={{ color: '#e6c473', marginRight: 4 }}>★</span>}
                             {lang === 'en' ? p?.en : p?.zh}
-                            <span style={{ marginLeft: 4, fontSize: '0.6rem', opacity: 0.7 }}>· {tierLabel}</span>
+                            <span style={{ marginLeft: 4, fontSize: '0.7rem', opacity: 0.7 }}>· {tierLabel}</span>
                           </span>
                           {hasAcademy && (
                             <button
@@ -378,7 +378,7 @@ export function TrainingPicker({ cityId, onClose }: Props) {
                             );
                           })}
                           {mentors.length > 3 && (
-                            <span style={{ fontSize: '0.65rem', color: '#7a8893' }}>+{mentors.length - 3}</span>
+                            <span style={{ fontSize: '0.72rem', color: '#7a8893' }}>+{mentors.length - 3}</span>
                           )}
                           {!hasAcademy && mentors.length === 0 && (
                             <span style={{ fontSize: '0.7rem', color: '#7a8893', fontStyle: 'italic' }}>
@@ -421,7 +421,7 @@ export function TrainingPicker({ cityId, onClose }: Props) {
                           }}
                         >
                           🔒 {lang === 'en' ? p?.en : p?.zh}
-                          <span style={{ marginLeft: 4, fontSize: '0.62rem', opacity: 0.7 }}>
+                          <span style={{ marginLeft: 4, fontSize: '0.7rem', opacity: 0.7 }}>
                             · {futureDur === 0 ? t('即時', 'now') : `${futureDur}${t('季', 's')}`}
                           </span>
                         </span>

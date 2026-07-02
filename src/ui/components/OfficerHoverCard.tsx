@@ -108,7 +108,7 @@ export function OfficerHoverCard({ officer, children }: Props) {
           </div>
           {t.length > 0 && (
             <div style={{ marginTop: '0.3rem' }}>
-              <div style={{ fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' }}>
+              <div style={{ fontSize: '0.72rem', color: '#7a8893', letterSpacing: '0.05rem' }}>
                 {lang === 'en' ? 'TRAITS' : lang === 'both' ? '性格 TRAITS' : '性格'}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
@@ -134,7 +134,7 @@ export function OfficerHoverCard({ officer, children }: Props) {
           )}
           {skills.length > 0 && (
             <div style={{ marginTop: '0.3rem' }}>
-              <div style={{ fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' }}>
+              <div style={{ fontSize: '0.72rem', color: '#7a8893', letterSpacing: '0.05rem' }}>
                 {lang === 'en' ? 'SKILLS' : lang === 'both' ? '特技 SKILLS' : '特技'}
               </div>
               <div style={{ fontSize: '0.72rem', color: '#c9a64e' }}>
@@ -144,7 +144,7 @@ export function OfficerHoverCard({ officer, children }: Props) {
           )}
           {items.length > 0 && (
             <div style={{ marginTop: '0.3rem' }}>
-              <div style={{ fontSize: '0.65rem', color: '#7a8893', letterSpacing: '0.05rem' }}>
+              <div style={{ fontSize: '0.72rem', color: '#7a8893', letterSpacing: '0.05rem' }}>
                 {lang === 'en' ? 'ITEMS' : lang === 'both' ? '持有 ITEMS' : '持有'} ({items.length})
               </div>
               <div style={{ fontSize: '0.72rem', color: '#88b7e8' }}>

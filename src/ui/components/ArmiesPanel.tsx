@@ -58,7 +58,7 @@ export function ArmiesPanel() {
       boxShadow: '0 0 10px rgba(0,0,0,0.6)',
       pointerEvents: 'auto',
     }}>
-      <div style={{ fontSize: '0.62rem', letterSpacing: '0.05rem', color: '#7a8893', textTransform: 'uppercase', marginBottom: 3, display: 'flex', justifyContent: 'space-between' }}>
+      <div style={{ fontSize: '0.7rem', letterSpacing: '0.05rem', color: '#7a8893', textTransform: 'uppercase', marginBottom: 3, display: 'flex', justifyContent: 'space-between' }}>
         <span>{lang === 'en' ? 'Armies in transit' : '在途部隊'}</span>
         {IS_MOBILE && (
           <button
@@ -77,7 +77,7 @@ export function ArmiesPanel() {
                 background: armies[selectedArmyId].holding ? '#2a3a1a' : '#1a2410',
                 border: `1px solid ${armies[selectedArmyId].holding ? '#a8c87a' : '#5a7a3a'}`,
                 color: armies[selectedArmyId].holding ? '#c8e8a0' : '#a8c87a',
-                fontSize: '0.6rem', padding: '1px 6px', cursor: 'pointer',
+                fontSize: '0.7rem', padding: '1px 6px', cursor: 'pointer',
                 fontFamily: 'var(--tkm-font-body)',
               }}
             >{armies[selectedArmyId].holding ? (lang === 'en' ? 'Release' : '解除') : (lang === 'en' ? 'Hold' : '駐守')}</button>
@@ -85,7 +85,7 @@ export function ArmiesPanel() {
               onClick={() => resupplyArmy(selectedArmyId)}
               style={{
                 background: '#2a2410', border: '1px solid #b89a4a', color: '#e8d09a',
-                fontSize: '0.6rem', padding: '1px 6px', cursor: 'pointer',
+                fontSize: '0.7rem', padding: '1px 6px', cursor: 'pointer',
                 fontFamily: 'var(--tkm-font-body)',
               }}
               title={lang === 'en' ? 'Resupply this army from the nearest friendly city (so it won’t starve and scatter)' : '從最近的友城輸糧補給此軍(免其糧盡逃散)'}
@@ -95,7 +95,7 @@ export function ArmiesPanel() {
                 onClick={() => splitArmy(selectedArmyId)}
                 style={{
                   background: '#1a2030', border: '1px solid #5a78a0', color: '#a8c0e8',
-                  fontSize: '0.6rem', padding: '1px 6px', cursor: 'pointer',
+                  fontSize: '0.7rem', padding: '1px 6px', cursor: 'pointer',
                   fontFamily: 'var(--tkm-font-body)',
                 }}
                 title={lang === 'en' ? 'Split off half the troops with one lieutenant to hold this tile' : '分出一半兵力與一名副將,駐守當前格'}
@@ -111,7 +111,7 @@ export function ArmiesPanel() {
               }}
               style={{
                 background: '#3a1410', border: '1px solid #b8442e', color: '#e8a890',
-                fontSize: '0.6rem', padding: '1px 6px', cursor: 'pointer',
+                fontSize: '0.7rem', padding: '1px 6px', cursor: 'pointer',
                 fontFamily: 'var(--tkm-font-body)',
               }}
               title={lang === 'en' ? 'Recall — turn the column home (keeps most troops; deeper marches shed more stragglers)' : '召回 — 折返本城(保留大部兵力;行得越深散卒越多)'}
@@ -149,7 +149,7 @@ export function ArmiesPanel() {
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6 }}>
               <span style={{ color: '#ffe9a8', whiteSpace: 'nowrap' }}>
                 {cmdr?.name.zh ?? '？'}
-                <span style={{ color: '#7a8893', marginLeft: 4, fontSize: '0.62rem', fontFamily: 'ui-monospace, monospace' }}>{troopLabel}</span>
+                <span style={{ color: '#7a8893', marginLeft: 4, fontSize: '0.7rem', fontFamily: 'ui-monospace, monospace' }}>{troopLabel}</span>
                 {a.food !== undefined && (() => {
                   const seasons = Math.floor(a.food / Math.max(1, a.troops * 0.25));
                   return (

@@ -80,7 +80,7 @@ export function TutorialOverlay() {
     >
       <div
         style={{
-          fontSize: '0.65rem',
+          fontSize: '0.72rem',
           letterSpacing: '0.1rem',
           color: '#c9a64e',
           textTransform: 'uppercase',

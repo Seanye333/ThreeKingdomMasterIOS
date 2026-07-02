@@ -50,7 +50,7 @@ export function ObjectivePanel() {
           fontFamily: 'var(--tkm-font-body)', display: 'flex', flexDirection: 'column', gap: '0.2rem', minWidth: 260,
         }}
       >
-        <div style={{ fontSize: '0.6rem', letterSpacing: '0.07rem', color: '#7a8893', textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between' }}>
+        <div style={{ fontSize: '0.7rem', letterSpacing: '0.07rem', color: '#7a8893', textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between' }}>
           <span>⚔ Hero Mode · 英雄模式</span>
           <span style={{ color: '#c0504a' }}>{'★'.repeat(challenge.star)}</span>
         </div>
@@ -91,7 +91,7 @@ export function ObjectivePanel() {
         minWidth: 260,
       }}
     >
-      <div style={{ fontSize: '0.6rem', letterSpacing: '0.07rem', color: '#7a8893', textTransform: 'uppercase' }}>
+      <div style={{ fontSize: '0.7rem', letterSpacing: '0.07rem', color: '#7a8893', textTransform: 'uppercase' }}>
         Objective · 目標
       </div>
       <div style={{ fontSize: '0.95rem', color: primaryRes.status === 'success' ? '#7ed68a' : primaryRes.status === 'failure' ? '#b8442e' : '#e6c473' }}>

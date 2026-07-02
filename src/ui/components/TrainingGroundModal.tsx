@@ -895,7 +895,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
                 </span>
               </span>
               {(mode === 'spar' || mode === 'team') && (
-                <span style={{ fontSize: '0.6rem', color: winded ? '#d8956a' : '#7a8893', whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: '0.7rem', color: winded ? '#d8956a' : '#7a8893', whiteSpace: 'nowrap' }}>
                   {winded ? t('疲', 'Rest') : `演 ${left}/${TRAIN_PER_SEASON}`}
                 </span>
               )}

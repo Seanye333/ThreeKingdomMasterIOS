@@ -244,7 +244,7 @@ export function TitleScreen() {
   const whatIfBadge: CSSProperties = {
     marginLeft: 'auto', background: '#26323e', color: '#c178c7',
     border: '1px solid #c178c7', padding: '0.08rem 0.4rem',
-    fontSize: '0.6rem', letterSpacing: '0.05rem', borderRadius: 2,
+    fontSize: '0.7rem', letterSpacing: '0.05rem', borderRadius: 2,
   };
   const navPrimary = (enabled: boolean): CSSProperties => ({
     borderColor: enabled ? '#e6c473' : 'rgba(255,255,255,0.08)',
@@ -297,7 +297,7 @@ export function TitleScreen() {
       <WhatsNewModal />
       {boardDate && <LeaderboardModal date={boardDate} onClose={() => setBoardDate(null)} />}
       {/* 版本號 — bottom corner, quiet */}
-      <div style={{ position: 'fixed', right: 10, bottom: 6, zIndex: 5, fontSize: '0.62rem', color: '#5f6c76', fontFamily: 'ui-monospace, monospace' }}>
+      <div style={{ position: 'fixed', right: 10, bottom: 6, zIndex: 5, fontSize: '0.7rem', color: '#5f6c76', fontFamily: 'ui-monospace, monospace' }}>
         v{GAME_VERSION}
       </div>
       <header className={styles.header} style={{ position: 'relative' }}>
@@ -442,7 +442,7 @@ export function TitleScreen() {
                 {/* 補打日曆 — the last seven days, replayable; older days
                     show their result but the window has closed. */}
                 <div style={{ flexBasis: '100%', display: 'flex', gap: 4, alignItems: 'center', marginTop: 2 }}>
-                  <span style={{ fontSize: '0.62rem', color: '#7a8893' }}>{t('近七日', 'Last 7')}</span>
+                  <span style={{ fontSize: '0.7rem', color: '#7a8893' }}>{t('近七日', 'Last 7')}</span>
                   {recent.map((d) => {
                     const r = allResults[d];
                     const isToday = d === todayStr;
@@ -452,7 +452,7 @@ export function TitleScreen() {
                         onClick={() => launchFor(d)}
                         title={`${d}${r ? (r.victory ? ` 🏆 ${r.seasons}旬` : ' ☠') : t(' 未戰', ' unplayed')}`}
                         style={{
-                          width: 26, height: 22, cursor: 'pointer', fontSize: '0.62rem',
+                          width: 26, height: 22, cursor: 'pointer', fontSize: '0.7rem',
                           fontFamily: 'ui-monospace, monospace',
                           background: r ? (r.victory ? 'rgba(212,168,74,0.3)' : 'rgba(184,68,46,0.25)') : 'transparent',
                           border: `1px solid ${isToday ? '#ff9080' : r ? (r.victory ? '#e6c473' : '#8a4538') : '#26323e'}`,
@@ -1098,7 +1098,7 @@ export function TitleScreen() {
                         <input type="checkbox" checked={on} onChange={() => toggleDynasty(d.id)} />
                         <span style={{ width: 8, height: 8, borderRadius: '50%', background: d.color, flexShrink: 0 }} />
                         <span style={{ flex: 1 }}>{lang === 'en' ? d.name.en : d.name.zh}</span>
-                        <span style={{ fontSize: '0.65rem', color: '#6a5238' }}>{lang === 'en' ? d.era.en : d.era.zh}</span>
+                        <span style={{ fontSize: '0.72rem', color: '#6a5238' }}>{lang === 'en' ? d.era.en : d.era.zh}</span>
                       </label>
                     );
                   })}

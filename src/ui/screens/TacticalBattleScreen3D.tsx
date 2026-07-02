@@ -4632,7 +4632,7 @@ export function TacticalBattleScreen3D() {
               onClick={() => setPrepDismissed(true)}
               style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#8a7050', fontSize: '0.7rem', padding: '2px 6px', cursor: 'pointer', fontFamily: 'inherit' }}
             >{t('不備', 'Skip')}</button>
-            {prepMsg && <span style={{ fontSize: '0.65rem', color: '#ff9080' }}>{prepMsg}</span>}
+            {prepMsg && <span style={{ fontSize: '0.72rem', color: '#ff9080' }}>{prepMsg}</span>}
           </span>
         )}
         {battle.attackerFormation && battle.attackerFormation !== 'none' && (
@@ -5328,7 +5328,7 @@ function UnitPanel3D({
       boxShadow: '0 0 16px rgba(212, 168, 74, 0.4)',
       overflowY: 'auto',
     }}>
-      <div style={{ fontSize: '0.62rem', color: '#8a7050', letterSpacing: '0.05rem' }}>{t('已選', 'SELECTED')}</div>
+      <div style={{ fontSize: '0.7rem', color: '#8a7050', letterSpacing: '0.05rem' }}>{t('已選', 'SELECTED')}</div>
       {/* 武將立繪(風格化頭像)— 姓字印 + 角色徽,無美術資源時的代位畫像。 */}
       {(() => {
         const st = officer?.stats;
@@ -5349,7 +5349,7 @@ function UnitPanel3D({
             }}>
               <span style={{ fontSize: '2rem', fontWeight: 700, color: '#f4e8c8', fontFamily: 'var(--tkm-font-body)', textShadow: '0 2px 4px #000' }}>{surname}</span>
               <span style={{
-                position: 'absolute', bottom: -1, right: -1, fontSize: '0.62rem',
+                position: 'absolute', bottom: -1, right: -1, fontSize: '0.7rem',
                 background: rc, color: '#1a120a', padding: '0 3px', fontWeight: 700, borderRadius: 2,
               }}>{role}</span>
             </div>
@@ -5404,7 +5404,7 @@ function UnitPanel3D({
               : '#88b7e8';
             return (
               <span key={i} style={{
-                fontSize: '0.62rem', padding: '1px 5px',
+                fontSize: '0.7rem', padding: '1px 5px',
                 border: `1px solid ${col}`, color: col, borderRadius: 2,
               }}>{t(EFF_ZH[e.kind] ?? e.kind, e.kind)} {e.turnsLeft}t</span>
             );
@@ -5432,7 +5432,7 @@ function UnitPanel3D({
 
       {availableStratagems.length > 0 && (
         <div style={{ marginTop: '0.6rem', borderTop: '1px dotted #3a2818', paddingTop: '0.4rem' }}>
-          <div style={{ fontSize: '0.62rem', color: '#d4a84a', letterSpacing: '0.05rem', marginBottom: '0.3rem' }}>{t('計略', 'STRATAGEMS')}</div>
+          <div style={{ fontSize: '0.7rem', color: '#d4a84a', letterSpacing: '0.05rem', marginBottom: '0.3rem' }}>{t('計略', 'STRATAGEMS')}</div>
           {availableStratagems.map((s) => {
             const cdKey = `${unit.id}-${s.id}`;
             const cd = (battle.stratagemCooldowns[cdKey] ?? 0) - battle.turn;
@@ -5459,7 +5459,7 @@ function UnitPanel3D({
                 onClick={() => setActionMode(active ? { kind: 'none' } : { kind: 'stratagem', id: s.id })}
               >
                 {isSig && <span style={{ color: '#d4a84a' }}>★ </span>}
-                <span style={{ color: badge.color, fontSize: '0.6rem', marginRight: 3 }}>[{badge.label}]</span>
+                <span style={{ color: badge.color, fontSize: '0.7rem', marginRight: 3 }}>[{badge.label}]</span>
                 {pickName(s.name, lang)}
                 <span style={{ float: 'right', color: '#8a7050', fontSize: '0.66rem' }}>
                   {onCd ? `CD ${cd}t` : `r${s.range}`}
@@ -5472,7 +5472,7 @@ function UnitPanel3D({
 
       {personalTactics.length > 0 && (
         <div style={{ marginTop: '0.6rem', borderTop: '1px dotted #3a2818', paddingTop: '0.4rem' }}>
-          <div style={{ fontSize: '0.62rem', color: '#d4a84a', letterSpacing: '0.05rem', marginBottom: '0.3rem' }}>
+          <div style={{ fontSize: '0.7rem', color: '#d4a84a', letterSpacing: '0.05rem', marginBottom: '0.3rem' }}>
             ★ {t('個人戰法', 'PERSONAL')} <span style={{ color: '#6a5238' }}>({personalTactics.length})</span>
           </div>
           <div style={{ maxHeight: 232, overflowY: 'auto', paddingRight: 2 }}>
@@ -5506,7 +5506,7 @@ function UnitPanel3D({
               >
                 {pt.isSignature && <span style={{ color: '#d4a84a' }}>★ </span>}
                 {sitMark && <span style={{ color: sitColor, marginRight: 2 }}>{sitMark}</span>}
-                <span style={{ color: badge.color, fontSize: '0.6rem', marginRight: 3 }}>[{badge.label}]</span>
+                <span style={{ color: badge.color, fontSize: '0.7rem', marginRight: 3 }}>[{badge.label}]</span>
                 {pt.nameZh}
                 <span style={{ float: 'right', color: '#8a7050', fontSize: '0.66rem' }}>
                   {onCd ? `CD ${cd}t` : `r${pt.range}`}

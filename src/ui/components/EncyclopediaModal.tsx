@@ -243,7 +243,7 @@ export function EncyclopediaModal({ onClose }: Props) {
                         <div style={{ fontSize: '0.85rem', color: isRec ? '#f2dd9a' : isSeen ? '#aab6c0' : '#5a4a38' }}>
                           {isSeen ? o.name.zh : '???'}{isSlain ? ' ☠' : ''}
                         </div>
-                        <div style={{ fontSize: '0.6rem', color: '#5f6c76' }}>
+                        <div style={{ fontSize: '0.7rem', color: '#5f6c76' }}>
                           {isRec ? '仕' : isSeen ? '遇' : '未遇'}
                         </div>
                       </div>

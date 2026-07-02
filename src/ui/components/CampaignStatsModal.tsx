@@ -36,7 +36,7 @@ export function CampaignStatsModal({ onClose }: Props) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ fontSize: '0.65rem', letterSpacing: '0.14rem', color: '#c9a64e', textTransform: 'uppercase', textAlign: 'center', marginBottom: '0.5rem' }}>
+        <div style={{ fontSize: '0.72rem', letterSpacing: '0.14rem', color: '#c9a64e', textTransform: 'uppercase', textAlign: 'center', marginBottom: '0.5rem' }}>
           {t('戰記', 'Campaign Statistics')}
         </div>
         <div style={{ fontSize: '1.6rem', color: '#e6c473', letterSpacing: '0.1rem', textAlign: 'center', marginBottom: '0.4rem' }}>
@@ -119,7 +119,7 @@ function Row({ label, value }: { label: string; value: string | number }) {
 function Card({ label, children }: { label: string; children: import('react').ReactNode }) {
   return (
     <div style={{ background: '#10161e', border: '1px solid #2b3845', padding: '0.5rem 0.7rem', marginBottom: '0.4rem' }}>
-      <div style={{ fontSize: '0.65rem', letterSpacing: '0.05rem', color: '#7a8893', textTransform: 'uppercase', marginBottom: '0.2rem' }}>
+      <div style={{ fontSize: '0.72rem', letterSpacing: '0.05rem', color: '#7a8893', textTransform: 'uppercase', marginBottom: '0.2rem' }}>
         {label}
       </div>
       {children}

@@ -440,7 +440,7 @@ export function BattlePrepModal({
                     </div>
                     <FormationDiagram id={f.id} />
                     <div className={styles.formDesc}>{desc(f)}</div>
-                    <div style={{ fontSize: '0.65rem', color: '#7a8893' }}>
+                    <div style={{ fontSize: '0.72rem', color: '#7a8893' }}>
                       req INT {f.minIntelligence}
                     </div>
                   </button>

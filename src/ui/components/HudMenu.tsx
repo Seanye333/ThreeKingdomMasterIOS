@@ -81,7 +81,7 @@ export function HudMenu({ label, items, title }: Props) {
             whiteSpace: 'nowrap',
           }}
         >
-          {label} <span style={{ fontSize: '0.6rem', opacity: 0.6 }}>▾</span>
+          {label} <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>▾</span>
         </button>
       </Tip>
       {open && createPortal(

@@ -376,7 +376,7 @@ function ItemCard({ item }: { item: Item }) {
         </div>
         <div
           style={{
-            fontSize: '0.6rem', color, letterSpacing: '0.05rem', textTransform: 'uppercase',
+            fontSize: '0.7rem', color, letterSpacing: '0.05rem', textTransform: 'uppercase',
           }}
         >
           {lang === 'en' ? KIND_LABEL[item.kind].en : KIND_LABEL[item.kind].zh}

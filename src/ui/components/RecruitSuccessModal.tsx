@@ -99,7 +99,7 @@ export function RecruitSuccessModal({ officer, onClose }: { officer: Officer; on
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 4, marginTop: '0.7rem', marginBottom: '0.7rem' }}>
             {stats.map(([zh, v, en], i) => (
               <div key={en} style={{ background: '#10161e', border: '1px solid #26323e', padding: '0.35rem 0', animation: anim(`tkmTroopMarchIn 0.45s cubic-bezier(0.2,0.9,0.3,1) ${0.35 + i * 0.08}s both`) }}>
-                <div style={{ fontSize: '0.62rem', color: '#7a8893' }}>{lang === 'en' ? en : zh}</div>
+                <div style={{ fontSize: '0.7rem', color: '#7a8893' }}>{lang === 'en' ? en : zh}</div>
                 <AnimatedNumber
                   value={revealed ? v : 0}
                   durationMs={700}

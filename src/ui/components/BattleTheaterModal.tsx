@@ -572,7 +572,7 @@ function ArmyPanel({
       {/* Morale bar */}
       <div style={{ width: '100%', minWidth: 140 }}>
         <div style={{
-          fontSize: '0.65rem',
+          fontSize: '0.72rem',
           color: 'var(--tkm-text-muted)',
           letterSpacing: '0.05rem',
           textAlign: align,

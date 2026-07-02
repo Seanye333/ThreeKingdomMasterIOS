@@ -165,7 +165,7 @@ export function FormationsModal({ onClose }: Props) {
                 }}
               >
                 {lang === 'en' ? CATEGORY_LABEL[c].en : CATEGORY_LABEL[c].zh}
-                {lang === 'both' && <> <span style={{ fontSize: '0.65rem', opacity: 0.7 }}>{CATEGORY_LABEL[c].en}</span></>}
+                {lang === 'both' && <> <span style={{ fontSize: '0.72rem', opacity: 0.7 }}>{CATEGORY_LABEL[c].en}</span></>}
               </button>
             );
           })}

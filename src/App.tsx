@@ -94,6 +94,11 @@ function CampaignBoot() {
 }
 
 export default function App() {
+  // 大字模式 — rem-based UI scales wholesale off the root font size.
+  useEffect(() => {
+    const px = localStorage.getItem('tkm-font-px');
+    if (px) document.documentElement.style.fontSize = px + 'px';
+  }, []);
   // 閒時預熱 — a beat after boot, pull the 3D-map chunk in the background
   // and grind the hex-quilt cache so the first map open doesn't stutter.
   useEffect(() => {

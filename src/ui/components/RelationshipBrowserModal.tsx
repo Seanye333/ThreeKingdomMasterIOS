@@ -232,7 +232,7 @@ export function RelationshipBrowserModal({ onClose, officersOverride }: Props) {
                         </span>
                       </span>
                       <span style={{
-                        fontSize: '0.62rem',
+                        fontSize: '0.7rem',
                         letterSpacing: '0.05rem',
                         color: meta?.color ?? '#7a8893',
                       }}>

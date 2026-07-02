@@ -219,12 +219,12 @@ export function CourtModal({ onClose }: Props) {
                     <button
                       onClick={() => setCourtPatronage(favoured ? null : fid)}
                       title={lang === 'en' ? (favoured ? 'Withdraw patronage' : 'Patronise this faction — its bloc rallies & the realm reaps its boon') : (favoured ? '撤回扶植' : '扶植此派 —— 其黨擁戴,並得其派之利')}
-                      style={{ background: 'transparent', border: `1px solid ${favoured ? '#e6c473' : '#2b3845'}`, color: favoured ? '#f2dd9a' : '#7a8893', cursor: 'pointer', fontSize: '0.6rem', padding: '0 0.2rem', borderRadius: 2 }}
+                      style={{ background: 'transparent', border: `1px solid ${favoured ? '#e6c473' : '#2b3845'}`, color: favoured ? '#f2dd9a' : '#7a8893', cursor: 'pointer', fontSize: '0.7rem', padding: '0 0.2rem', borderRadius: 2 }}
                     >{favoured ? '✓扶' : '扶'}</button>
                     <button
                       onClick={() => { const r = purgeFaction(fid); if (r.message) alert(r.message); }}
                       title={lang === 'en' ? 'Purge this faction (黨錮) — loyalty crashes, mandate −5, 500g; a proud officer may defect' : '黨錮此派 —— 忠誠驟降、天命 −5、500金;倨傲之臣或憤而出走'}
-                      style={{ background: 'transparent', border: '1px solid #5a2d2d', color: '#e0707a', cursor: 'pointer', fontSize: '0.6rem', padding: '0 0.2rem', borderRadius: 2 }}
+                      style={{ background: 'transparent', border: '1px solid #5a2d2d', color: '#e0707a', cursor: 'pointer', fontSize: '0.7rem', padding: '0 0.2rem', borderRadius: 2 }}
                     >錮</button>
                   </span>
                 );
@@ -430,6 +430,6 @@ function miniCourtBtn(enabled: boolean) {
   return {
     background: 'transparent', border: `1px solid ${enabled ? '#2b3845' : '#1c2530'}`,
     color: enabled ? '#9fb2c0' : '#4a5560', cursor: enabled ? 'pointer' : 'default',
-    fontSize: '0.62rem', padding: '0.05rem 0.35rem', borderRadius: 3,
+    fontSize: '0.7rem', padding: '0.05rem 0.35rem', borderRadius: 3,
   } as const;
 }

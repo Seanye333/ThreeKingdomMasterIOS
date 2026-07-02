@@ -149,7 +149,7 @@ export function DeedsModal({ onClose }: Props) {
                       onClick={() => setSortBy(c.key)}
                     >
                       {lang === 'en' ? c.en : c.zh}
-                      {lang === 'both' && <div style={{ fontSize: '0.6rem', fontStyle: 'italic' }}>{c.en}</div>}
+                      {lang === 'both' && <div style={{ fontSize: '0.7rem', fontStyle: 'italic' }}>{c.en}</div>}
                     </th>
                   ))}
                 </tr>
