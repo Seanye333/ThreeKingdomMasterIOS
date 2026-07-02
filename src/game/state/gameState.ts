@@ -279,6 +279,9 @@ export interface GameState {
   /** 持續集結 — active standing muster campaigns (player + AI 總動員), each
    *  re-issuing a wave toward its objective every season until it falls. */
   musters: Record<string, import('../systems/muster').MusterCampaign>;
+  /** 日流 — turn playback: after 進行, the half-month plays out day by day
+   *  (armies step cell-to-cell); pausable/speedable. Transient, not saved. */
+  dayFlow: { key: number; day: number; total: number; playing: boolean; speed: number } | null;
   /** 塗色 (RTK-XIV) — lattice cells walked by marching columns (deviation
    *  dictionary "col,row" → {force, seasonStamp}); TTL-pruned each season. */
   hexPaint: import('../systems/hexPaint').HexPaint;
@@ -750,6 +753,7 @@ export const EMPTY_STATE: GameState = {
   scenicLooted: {},
   scenicVisits: {},
   musters: {},
+  dayFlow: null,
   hexPaint: {},
   territoryOwnership: {},
   armies: {},
@@ -1154,7 +1158,8 @@ export function loadScenario(
     ),
     sites: buildInitialSites(),
     scenicLooted: {},
-    hexPaint: {},
+    dayFlow: null,
+  hexPaint: {},
   territoryOwnership: {},
     armies: {},
     // Pre-populate canonical Three Kingdoms family lineages — filtered

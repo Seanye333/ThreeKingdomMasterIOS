@@ -2276,7 +2276,14 @@ function MarchingArmy({ from, to, color, commanderName, targetName, troops, seas
   useFrame(() => {
     if (!groupRef.current) return;
     const elapsed = totalSeasons - seasonsRemaining;
-    const t = Math.min(0.95, Math.max(0.05, (elapsed + 0.5) / totalSeasons));
+    // 日流 — during turn playback the column walks its fresh slice day by
+    // day (cell-stepped by the hex snap below); lands exactly on the static
+    // mid-slice pose when playback ends, so the handoff is seamless.
+    const df = useGameStore.getState().dayFlow;
+    const phase = df && df.total > 0
+      ? Math.max(0, elapsed - 1) + 0.5 + Math.min(1, df.day / df.total)
+      : elapsed + 0.5;
+    const t = Math.min(0.95, Math.max(0.05, phase / totalSeasons));
     let x: number, z: number, heading: number;
     if (naval) {
       // Naval marches glide across open water — no hex snapping.

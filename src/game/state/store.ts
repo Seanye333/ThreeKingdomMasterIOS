@@ -1177,6 +1177,11 @@ interface GameStore extends GameState {
   performImperialRite: () => { ok: boolean; message: string };
   /** §8.5 祈雨 — in a drought season, pray for rain (politics-led). */
   prayForRain: () => { ok: boolean; success?: boolean; message: string };
+  /** 日流 — playback controls for the day-by-day turn flow. */
+  dayFlowTick: () => void;
+  dayFlowTogglePause: () => void;
+  dayFlowSetSpeed: (speed: number) => void;
+  dayFlowSkip: () => void;
   /** §8.2-deep 賑災 — answer a disaster: 開倉賑濟 / 徙民就食 / 坐視不理. */
   answerRelief: (cityId: EntityId, choice: 'grant' | 'migrate' | 'ignore') => { ok: boolean; message: string };
   /** §8.4-deep 招安 — send an envoy to talk a cult banner into surrender
@@ -7702,6 +7707,11 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           sites: nextSites,
           tradeRoutes: nextTradeRoutes,
           territoryOwnership: result.territoryOwnership ?? state.territoryOwnership ?? {},
+          // 日流 — with columns on the road, the half-month plays back day by
+          // day (15 days); empty roads skip straight to the reports.
+          dayFlow: state.playerForceId && Object.keys(result.armies ?? {}).length > 0
+            ? { key: (state.dayFlow?.key ?? 0) + 1, day: 0, total: 15, playing: true, speed: state.dayFlow?.speed ?? 1 }
+            : null,
           // 塗色 — season prune: TTL trails grass over, dead forces sweep.
           hexPaint: seasonBoundary
             ? prunePaint(
@@ -10087,6 +10097,22 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           enfeoffed: r.enfeoffed.length,
         };
       },
+
+      dayFlowTick: () => {
+        const df = get().dayFlow;
+        if (!df || !df.playing) return;
+        if (df.day + 1 >= df.total) { set({ dayFlow: null }); return; }
+        set({ dayFlow: { ...df, day: df.day + 1 } });
+      },
+      dayFlowTogglePause: () => {
+        const df = get().dayFlow;
+        if (df) set({ dayFlow: { ...df, playing: !df.playing } });
+      },
+      dayFlowSetSpeed: (speed) => {
+        const df = get().dayFlow;
+        if (df) set({ dayFlow: { ...df, speed } });
+      },
+      dayFlowSkip: () => set({ dayFlow: null }),
 
       resolveEventChoice: (choiceId) => {
         const state = get();
@@ -14494,6 +14520,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           pendingRelief: loaded.pendingRelief ?? [],
           plagueRiskCityIds: loaded.plagueRiskCityIds ?? [],
           hexPaint: loaded.hexPaint ?? {},
+          dayFlow: null,
           pacifyMissions: loaded.pacifyMissions ?? {},
           annals: loaded.annals ?? [],
           pendingEspionage: loaded.pendingEspionage ?? [],

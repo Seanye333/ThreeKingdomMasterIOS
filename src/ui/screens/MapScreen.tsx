@@ -318,6 +318,18 @@ export function MapScreen() {
   // 空格過旬 — the same path as the advance button (hot-seat cycling and
   // all), but only when nothing modal owns the keyboard: no report up, not
   // inside a city, no battle running.
+  // 日流 — drive the day-by-day playback while it runs.
+  const dayFlow = useGameStore((s) => s.dayFlow);
+  const dayFlowTick = useGameStore((s) => s.dayFlowTick);
+  const dayFlowTogglePause = useGameStore((s) => s.dayFlowTogglePause);
+  const dayFlowSetSpeed = useGameStore((s) => s.dayFlowSetSpeed);
+  const dayFlowSkip = useGameStore((s) => s.dayFlowSkip);
+  useEffect(() => {
+    if (!dayFlow?.playing) return;
+    const iv = setInterval(() => dayFlowTick(), 420 / (dayFlow.speed || 1));
+    return () => clearInterval(iv);
+  }, [dayFlow?.playing, dayFlow?.speed, dayFlow?.key, dayFlowTick]);
+
   const advanceTurn = () => {
     playSfx('horn');
     if (hotSeatPlayers.length > 1) {
@@ -742,12 +754,37 @@ export function MapScreen() {
       {/* 季度過場 — washes a season card over the realm when 春→夏→秋→冬 turns,
           settling just above the season report it then reveals. */}
       <SeasonTransition />
-      <ErrorBoundary fallbackLabel="Season report panel crashed">
-        <SeasonReportModal />
-      </ErrorBoundary>
+      {/* 日流控制條 — day counter + pause/speed/skip while the turn plays out. */}
+      {dayFlow && (
+        <div style={{
+          position: 'fixed', bottom: 'calc(4.6rem + var(--tkm-safe-bottom))', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 640, display: 'flex', alignItems: 'center', gap: 8,
+          background: 'rgba(16, 22, 30, 0.92)', border: '1px solid #d4a84a', borderRadius: 8,
+          padding: '0.3rem 0.7rem', color: '#f0d98a', fontFamily: 'var(--tkm-font-body)', fontSize: '0.85rem',
+        }}>
+          <span style={{ fontVariantNumeric: 'tabular-nums' }}>{t(`第 ${dayFlow.day + 1} 日 / ${dayFlow.total}`, `Day ${dayFlow.day + 1} / ${dayFlow.total}`)}</span>
+          <button onClick={dayFlowTogglePause} style={{ background: 'transparent', border: '1px solid #d4a84a', color: '#f0d98a', borderRadius: 5, cursor: 'pointer', padding: '0.1rem 0.5rem', fontFamily: 'inherit' }}>
+            {dayFlow.playing ? '⏸' : '▶'}
+          </button>
+          {[1, 2, 4].map((sp) => (
+            <button key={sp} onClick={() => dayFlowSetSpeed(sp)} style={{
+              background: dayFlow.speed === sp ? 'rgba(212,168,74,0.25)' : 'transparent',
+              border: `1px solid ${dayFlow.speed === sp ? '#d4a84a' : '#4a5568'}`,
+              color: dayFlow.speed === sp ? '#f0d98a' : '#97a4ae', borderRadius: 5, cursor: 'pointer', padding: '0.1rem 0.4rem', fontFamily: 'inherit', fontSize: '0.78rem',
+            }}>{sp}×</button>
+          ))}
+          <button onClick={dayFlowSkip} style={{ background: 'transparent', border: '1px solid #4a5568', color: '#97a4ae', borderRadius: 5, cursor: 'pointer', padding: '0.1rem 0.5rem', fontFamily: 'inherit' }}>⏭</button>
+        </div>
+      )}
+      {/* 日流播放時,季報壓後 — the report pops once the days finish walking. */}
+      {!dayFlow && (
+        <ErrorBoundary fallbackLabel="Season report panel crashed">
+          <SeasonReportModal />
+        </ErrorBoundary>
+      )}
       <ErrorBoundary fallbackLabel="Battle theater crashed">
-        <BattleTheaterMount />
-        <FieldBattleMount />
+        {!dayFlow && <BattleTheaterMount />}
+        {!dayFlow && <FieldBattleMount />}
       </ErrorBoundary>
       {showForces && <ForcesOverview onClose={() => setShowForces(false)} />}
       {showDiplomacy && (
@@ -982,7 +1019,7 @@ export function MapScreen() {
           onClose={() => setShowSave(null)}
         />
       )}
-      <EventModal />
+      {!dayFlow && <EventModal />}
       <VictoryModal />
       {(victoryStatus === 'victory' || showEnding) && (
         <EndingsModal onClose={() => setShowEnding(false)} />
