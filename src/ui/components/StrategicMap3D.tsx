@@ -5597,11 +5597,21 @@ function HexQuilt({ tiles, colors }: { tiles: HexWorldTile[]; colors: string[] }
     if (!mesh) return;
     const m = new THREE.Matrix4();
     const q = new THREE.Quaternion();
+    // 手機減負 — flat discs lie ON the terrain instead of extruded prisms:
+    // 6× fewer triangles, or the fine lattice OOM-kills the WKWebView GPU
+    // process (iPhone context-loss lesson: heavy GPU features need their
+    // own mobile gate).
+    if (IS_MOBILE) q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2);
     const pos = new THREE.Vector3();
     const scl = new THREE.Vector3();
     tiles.forEach((t, i) => {
-      pos.set(t.x, (t.topY - 0.3) / 2, t.z);
-      scl.set(HEXW_R * 0.995, t.topY + 0.3, HEXW_R * 0.995);
+      if (IS_MOBILE) {
+        pos.set(t.x, t.topY + 0.012, t.z);
+        scl.set(HEXW_R * 0.995, HEXW_R * 0.995, 1);
+      } else {
+        pos.set(t.x, (t.topY - 0.3) / 2, t.z);
+        scl.set(HEXW_R * 0.995, t.topY + 0.3, HEXW_R * 0.995);
+      }
       mesh.setMatrixAt(i, m.compose(pos, q, scl));
     });
     mesh.instanceMatrix.needsUpdate = true;
@@ -5623,10 +5633,13 @@ function HexQuilt({ tiles, colors }: { tiles: HexWorldTile[]; colors: string[] }
       receiveShadow
       frustumCulled={false}
     >
-      {/* thetaStart π/6 points the hex vertices along ±x — the flat-top
-          orientation our 1.5R/√3R column layout tessellates with. Without
-          it the hexes sit 30° off and leave diagonal gaps. */}
-      <cylinderGeometry args={[1, 1, 1, 6, 1, false, Math.PI / 6]} />
+      {/* thetaStart π/6 (cylinder) / 0 (circle) points the hex vertices
+          along ±x — the flat-top orientation our 1.5R/√3R column layout
+          tessellates with. Without it the hexes sit 30° off and leave
+          diagonal gaps. Mobile renders flat discs (see matrix setup). */}
+      {IS_MOBILE
+        ? <circleGeometry args={[1, 6]} />
+        : <cylinderGeometry args={[1, 1, 1, 6, 1, false, Math.PI / 6]} />}
       <meshStandardMaterial roughness={0.93} metalness={0.02} />
     </instancedMesh>
   );
