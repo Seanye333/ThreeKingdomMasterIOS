@@ -139,6 +139,12 @@ export function SettingsModal({ onClose }: Props) {
               </div>
             </Row>
             <Toggle label={t('戰霧', 'Fog of war')} hint={t('隱藏未偵察的城邑', 'Hide unscouted cities')} checked={fogOfWar} onChange={setFogOfWar} />
+            <Toggle
+              label={t('幀率計', 'FPS meter')}
+              hint={t('左上顯示即時幀率(除錯/調校用)', 'Live FPS readout for perf tuning')}
+              checked={typeof window !== 'undefined' && localStorage.getItem('tkm-fps') === '1'}
+              onChange={(v) => { localStorage.setItem('tkm-fps', v ? '1' : '0'); window.location.reload(); }}
+            />
             <Row label={t('語言', 'Language')}>
               <select
                 value={language}

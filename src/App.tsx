@@ -6,6 +6,7 @@
 
 
 import { useEffect, useState } from 'react';
+import { FpsMeter } from './ui/components/FpsMeter';
 import { PROVINCE_BY_CITY } from './game/data';
 import { useGameStore } from './game/state/store';
 import {
@@ -161,6 +162,7 @@ export default function App() {
   return (
     <ErrorBoundary fallbackLabel="Game crashed">
       {scenarioId ? <CampaignBoot /> : <TitleScreen />}
+      <FpsMeter />
     </ErrorBoundary>
   );
 }
