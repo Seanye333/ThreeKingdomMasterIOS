@@ -7933,8 +7933,10 @@ export function StrategicMap3D() {
     const maxR = pts.reduce((m, p) => Math.max(m, Math.hypot(p[0] - ccx, p[1] - ccy)), 0);
     const [wx, wz] = pxToWorld(ccx, ccy);
     const radiusWorld = (maxR + 120) * PIXEL_TO_WORLD;   // pad so cities sit off the very edge
+    // Cap well below MAP_MAX_DIST — a realm spanning half of China (漢室
+    // 39 城) would otherwise open at the fog wall and read as a blank wash.
     const fitDist = THREE.MathUtils.clamp(
-      (radiusWorld / Math.sin((MAP_FOV_DEG / 2) * Math.PI / 180)) * 1.1, 45, MAP_MAX_DIST);
+      (radiusWorld / Math.sin((MAP_FOV_DEG / 2) * Math.PI / 180)) * 1.1, 45, 130);
     framedRef.current = true;
     let tries = 0;
     const tryFrame = () => {

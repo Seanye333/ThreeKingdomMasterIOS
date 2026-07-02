@@ -137,6 +137,16 @@ describe('§8.4-deep 黃巾總爆發', () => {
     expect(out.forces['cult-taiping-184'].rulerOfficerId).toBe('zhang-jiao');
   });
 
+  it('skips when Zhang Jiao already leads a force (黃巾之亂 scenario)', () => {
+    const zj = mkOfficerYT('zhang-jiao');
+    const out = rollYellowTurbanRising({
+      cities: { a: bigRestless('a', 40) }, forces,
+      officers: { 'zhang-jiao': { ...zj, forceId: 'huangjin' } as never },
+      date: { year: 184, season: 'spring' }, rng: () => 0.5, eventFlags: {},
+    });
+    expect(out.flagSet).toBe(false);
+  });
+
   it('fires once, and never outside 184', () => {
     const base = {
       cities: { a: bigRestless('a', 40) }, forces, officers: {},

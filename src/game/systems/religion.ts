@@ -288,6 +288,11 @@ export function rollYellowTurbanRising(
   if (input.eventFlags[YELLOW_TURBAN_FLAG]) return none;
   if (input.date.year !== YELLOW_TURBAN_YEAR) return none;
   if (input.date.season !== 'spring' && input.date.season !== 'summer') return none;
+  // 黃巾之亂 scenario — Zhang Jiao already leads a playable force at start;
+  // the rising has ALREADY happened. Don't conjure a second Great Peace
+  // banner (or poach its ruler).
+  const zj = input.officers[YELLOW_TURBAN_LEADERS[0]];
+  if (zj && zj.forceId) return none;
 
   const cities = { ...input.cities };
   const forces = { ...input.forces };
