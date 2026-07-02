@@ -33,6 +33,17 @@ export function Tip({ text, placement = 'bottom', children }: TipProps) {
 
   if (!text) return <>{children}</>;
 
+  // 觸屏長按 — coarse pointers have no hover: press-and-hold 350ms shows the
+  // bubble, releasing (or tapping elsewhere) hides it. Desktop keeps hover.
+  const holdTimer = useRef<number | null>(null);
+  const onTouchStart = () => {
+    holdTimer.current = window.setTimeout(show, 350);
+  };
+  const onTouchEnd = () => {
+    if (holdTimer.current) window.clearTimeout(holdTimer.current);
+    window.setTimeout(hide, 1600); // linger long enough to read
+  };
+
   return (
     <span
       ref={ref}
@@ -41,6 +52,9 @@ export function Tip({ text, placement = 'bottom', children }: TipProps) {
       onMouseLeave={hide}
       onFocusCapture={show}
       onBlurCapture={hide}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={onTouchEnd}
     >
       {children}
       {pos &&

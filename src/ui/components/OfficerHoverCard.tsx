@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { TRAIT_DEFS_BY_ID, SKILLS_BY_ID, ITEMS_BY_ID } from '../../game/data';
 import type { Officer } from '../../game/types';
 import { OfficerPortrait } from './OfficerPortrait';
@@ -34,12 +34,29 @@ export function OfficerHoverCard({ officer, children }: Props) {
   const skills = officer.skills.map((id) => SKILLS_BY_ID[id]).filter(Boolean);
   const items = officer.equipment.map((id) => ITEMS_BY_ID[id]).filter(Boolean);
 
+  // 觸屏長按 — hover doesn't exist on phones: press-and-hold 350ms pops the
+  // card at the touch point; release hides it after a reading beat.
+  const holdTimer = useRef<number | null>(null);
+
   return (
     <span
       style={{ display: 'inline-block' }}
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
       onMouseMove={(e) => setPos({ x: e.clientX, y: e.clientY })}
+      onTouchStart={(e) => {
+        const t0 = e.touches[0];
+        if (t0) setPos({ x: t0.clientX, y: t0.clientY });
+        holdTimer.current = window.setTimeout(() => setOpen(true), 350);
+      }}
+      onTouchEnd={() => {
+        if (holdTimer.current) window.clearTimeout(holdTimer.current);
+        window.setTimeout(() => setOpen(false), 1800);
+      }}
+      onTouchCancel={() => {
+        if (holdTimer.current) window.clearTimeout(holdTimer.current);
+        setOpen(false);
+      }}
     >
       {children}
       {open && (
