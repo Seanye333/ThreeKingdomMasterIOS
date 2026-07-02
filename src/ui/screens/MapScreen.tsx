@@ -35,7 +35,8 @@ import { SeasonReportModal } from '../components/SeasonReportModal';
 import { SeasonTransition } from '../components/SeasonTransition';
 import { Chip } from '../components/Chip';
 import { BattleTheaterModal } from '../components/BattleTheaterModal';
-import { StrategicMap3D } from '../components/StrategicMap3D';
+// 啟動提速 — the 3D map bundle (≈360KB) loads on demand, not at boot.
+const StrategicMap3D = lazy(() => import('../components/StrategicMap3D').then(m => ({ default: m.StrategicMap3D })));
 import { TutorialOverlay } from '../components/TutorialOverlay';
 import { TutorialTasks } from '../components/TutorialTasks';
 import { VictoryModal } from '../components/VictoryModal';
@@ -742,7 +743,7 @@ export function MapScreen() {
               tab reload — which drops the player back to the map mid-fight and
               forces a re-出阵. Minimizing the battle to its map diorama clears
               battleScreenUp, so the map remounts and 观战 still works. */}
-          {!battleScreenUp && <StrategicMap3D />}
+          {!battleScreenUp && <Suspense fallback={null}><StrategicMap3D /></Suspense>}
           {/* In-transit armies overview — shown over both map modes. */}
           <div style={{ position: 'absolute', left: 8, top: 92, zIndex: 15 }}>
             <ArmiesPanel />

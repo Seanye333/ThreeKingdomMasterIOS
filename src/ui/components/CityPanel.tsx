@@ -8,7 +8,9 @@ import { citySize, nextTierPop, cityCarryingCapacity } from '../../game/systems/
 import { buildingBonuses } from '../../game/systems/buildings';
 import { tickCityEconomy } from '../../game/systems/economy';
 import type { City, EntityId, Officer } from '../../game/types';
-import { CityMapScreen3D } from '../screens/CityMapScreen3D';
+import { lazy, Suspense } from 'react';
+// 啟動提速 — the city 3D scene (≈175KB) loads when a city is first entered.
+const CityMapScreen3D = lazy(() => import('../screens/CityMapScreen3D').then(m => ({ default: m.CityMapScreen3D })));
 import { BuildingsPanel } from './BuildingsPanel';
 import { AnimatedNumber } from './AnimatedNumber';
 import { CaptivesSection } from './CaptivesSection';
@@ -179,10 +181,12 @@ export function CityPanel() {
         )}
       </section>
       {showCityMap && (
-        <CityMapScreen3D
-          cityId={city.id}
-          onClose={() => setShowCityMap(false)}
-        />
+        <Suspense fallback={null}>
+          <CityMapScreen3D
+            cityId={city.id}
+            onClose={() => setShowCityMap(false)}
+          />
+        </Suspense>
       )}
     </aside>
   );
