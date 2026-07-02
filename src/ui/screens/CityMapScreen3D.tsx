@@ -147,6 +147,34 @@ function InsideBuilding3D({ coord, buildingId, level }: {
   const inspect = useContext(InspectCtx);
   const def = INSIDE_BUILDING_DEF[buildingId];
   const h = def.height + level * 0.15;
+  // 落成之慶 — a level-up lands with a quick swell-and-settle pop plus a
+  // golden burst ring, so an upgrade finishing is felt, not just listed.
+  const prevLevel = useRef(level);
+  const popAt = useRef(-1);
+  const popRef = useRef<THREE.Group>(null);
+  const burstRef = useRef<THREE.Mesh>(null);
+  useFrame(({ clock }) => {
+    if (prevLevel.current !== level) {
+      if (level > prevLevel.current) popAt.current = clock.elapsedTime;
+      prevLevel.current = level;
+    }
+    const g = popRef.current;
+    if (!g) return;
+    const dt = popAt.current >= 0 ? clock.elapsedTime - popAt.current : 99;
+    if (dt < 0.9) {
+      const k = 1 + Math.sin(Math.min(1, dt / 0.9) * Math.PI) * 0.22;
+      g.scale.setScalar(k);
+      if (burstRef.current) {
+        burstRef.current.visible = true;
+        const r = 0.4 + dt * 1.6;
+        burstRef.current.scale.setScalar(r);
+        (burstRef.current.material as THREE.MeshBasicMaterial).opacity = Math.max(0, 0.7 - dt * 0.8);
+      }
+    } else {
+      g.scale.setScalar(1);
+      if (burstRef.current) burstRef.current.visible = false;
+    }
+  });
   // Temple & academy get a gilded, ornamented roof; the rest tile-blue.
   const grand = buildingId === 'temple' || buildingId === 'academy';
   const roofColor = grand ? '#b9952f' : '#39444f';
@@ -166,6 +194,12 @@ function InsideBuilding3D({ coord, buildingId, level }: {
   };
   return (
     <group position={[x, 0, z]} onClick={onInspectBuilding}>
+      {/* 落成金環 — expanding burst on level-up */}
+      <mesh ref={burstRef} visible={false} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.12, 0]} raycast={() => null}>
+        <ringGeometry args={[0.82, 1, 28]} />
+        <meshBasicMaterial color="#ffd75e" transparent opacity={0} depthWrite={false} toneMapped={false} />
+      </mesh>
+      <group ref={popRef}>
       {/* Stone plinth */}
       <mesh position={[0, 0.09, 0]} receiveShadow castShadow>
         <boxGeometry args={[1.28, 0.18, 1.28]} />
@@ -220,6 +254,7 @@ function InsideBuilding3D({ coord, buildingId, level }: {
           {def.nameZh} <span style={{ opacity: 0.7 }}>lv{level}</span>
         </div>
       </Html>
+      </group>
     </group>
   );
 }
