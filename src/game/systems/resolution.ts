@@ -2394,6 +2394,25 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   let nextConvoys = input.convoys ?? {};
   let nextRaids = input.raids ?? {};
   if (seasonBoundary && Object.keys(nextConvoys).length > 0) {
+    // 補給線 — the grain trains PAVE the corridor too: a running convoy
+    // re-walks (and re-paints) the ribbon each season, so a long siege stays
+    // supplied as long as the trains keep getting through.
+    for (const cv of Object.values(nextConvoys)) {
+      const cvFrom = cities[cv.fromCityId];
+      const cvTo = cities[cv.toCityId];
+      const total = Math.max(1, cv.totalSeasons ?? 1);
+      if (!cvFrom || !cvTo) continue;
+      const fp = cityPos(cvFrom);
+      const tp = cityPos(cvTo);
+      const cvRoute = terrainRoute(fp.x, fp.y, tp.x, tp.y);
+      if (cvRoute.length < 2) continue;
+      let cvLen = 0;
+      for (let i = 0; i < cvRoute.length - 1; i++) cvLen += Math.hypot(cvRoute[i + 1].x - cvRoute[i].x, cvRoute[i + 1].y - cvRoute[i].y);
+      const remBefore = cv.seasonsRemaining;
+      const tStart = (total - remBefore) / total;
+      const tEnd = (total - Math.max(0, remBefore - 1)) / total;
+      stampPaintAlongRoute(hexPaintOut, cvRoute, tStart * cvLen, tEnd * cvLen, cv.forceId, paintStamp);
+    }
     const stepped = stepConvoys(nextConvoys, cities, outArmies);
     nextConvoys = stepped.convoys;
     cities = stepped.cities;
