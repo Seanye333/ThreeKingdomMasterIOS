@@ -106,8 +106,9 @@ export function isLand(x: number, y: number, margin = 0): boolean {
 // skin, AND battlefield generation — a battle board is an axis-aligned
 // window of THIS lattice, so tactical tile (col,row) IS a strategic-map
 // cell and the two views always agree on distance and terrain.
-// RTK-XIV density: ~139 columns across the map width.
-export const HEX_R = 4.8 * WORLD_SCALE;               // centre → corner
+// Denser than RTK-XIV (~278 columns across the map): cities sit many
+// cells apart, so a march reads as a real journey, not two steps.
+export const HEX_R = 2.4 * WORLD_SCALE;               // centre → corner
 export const HEX_COL_SPACING = 1.5 * HEX_R;           // horizontal col step
 export const HEX_ROW_SPACING = Math.sqrt(3) * HEX_R;  // vertical row step
 export const HEX_COLS = Math.ceil(MAP_W / HEX_COL_SPACING);

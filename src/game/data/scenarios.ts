@@ -758,6 +758,8 @@ const CITY_OWNERSHIP_208: Record<string, string> = {
   wuxi:      'sun',
   // ── Liu Cong (succeeded Liu Biao) — about to fold ──
   xiangyang: 'liu-biao',
+  fancheng:  'liu-biao', // 就近填充在細格下會翻給新野的曹 — 顯式錨定
+
   jiangling: 'liu-biao',
   wuling:    'liu-biao',
   lingling:  'liu-biao',

@@ -57,9 +57,9 @@ describe('canonical lattice geometry', () => {
     }
   });
 
-  it('grid density is RTK-XIV-ish (~139 columns across the map)', () => {
-    expect(HEX_COLS).toBeGreaterThan(120);
-    expect(HEX_COLS).toBeLessThan(160);
+  it('grid density is RTK-XIV-plus (~278 columns across the map)', () => {
+    expect(HEX_COLS).toBeGreaterThan(240);
+    expect(HEX_COLS).toBeLessThan(320);
     expect(HEX_COL_SPACING * HEX_COLS).toBeGreaterThanOrEqual(MAP_W);
   });
 });
