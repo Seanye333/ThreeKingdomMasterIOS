@@ -122,7 +122,39 @@ import {
   TRIBE_PLACATE_COST,
   TRIBE_PLACATE_AGGRESSION_DROP,
 } from '../systems/tribes';
+import {
+  emptyTribeDiplomacy,
+  rollAITribeIncitement,
+  tickTribeHostages,
+  tickTribeMarkets,
+  makeHostagePrince,
+  canHeqin,
+  canRequestHostage,
+  canIncite,
+  resolveTribeClash,
+  tribesShareFrontier,
+  nanmanCaptureText,
+  HEQIN_COST,
+  HEQIN_AGGRESSION_DROP,
+  TRIBE_MARKET_COST,
+  INCITE_COST,
+  INCITE_SEASONS,
+  INCITE_AGGRESSION_SURGE,
+  TRIBE_CLASH_COST,
+  MENG_HUO_SUBMIT_CAPTURES,
+  NANMAN_OFFICER_IDS,
+} from '../systems/tribesDiplomacy';
+import {
+  performSuburbanRite,
+  performRainRite,
+  bestRitePresider,
+  SUBURBAN_RITE_GOLD,
+  SUBURBAN_RITE_FOOD,
+  RAIN_RITE_GOLD,
+} from '../systems/mandateRituals';
+import { reliefFoodCost, rollGreatPlague, GREAT_PLAGUE_FLAG, RELIEF_LOYALTY_BONUS, RELIEF_IGNORE_LOYALTY_LOSS, RELIEF_MIGRATE_SHARE } from '../systems/events';
 import { TRIBES_BY_ID } from '../data/tribes';
+import type { TribeId } from '../types';
 import { addRapport, mingleRapport, getRapport, growRapportFromProximity, decayRapport, addLordRapport, decayLordRapport, getLordRapport } from '../systems/rapport';
 import { growFrictionFromProximity, reconcilePair } from '../systems/friction';
 import { pairKey, getRelation } from '../types/diplomacy';
@@ -315,7 +347,19 @@ import { rollWeather, describeWeather, marchSpeedMultiplier, seasonWeatherOutloo
 import { rollPlagueOutbreak, rollIntrigue } from '../systems/intrigue';
 import { rollSpecialtyEvents } from '../systems/specialtyEvents';
 import { rollOmen } from '../systems/mandate';
-import { rollReligiousRebellion, spreadCultUnrest } from '../systems/religion';
+import {
+  rollReligiousRebellion,
+  spreadCultUnrest,
+  rollYellowTurbanRising,
+  resolveCultPacify,
+  isCultForce,
+  YELLOW_TURBAN_FLAG,
+  CULT_PACIFY_GOLD,
+  PACIFY_MISSION_COST,
+  PACIFY_MISSION_SEASONS,
+  type PacifyMission,
+} from '../systems/religion';
+import type { AnnalsEntry } from '../types/event';
 import { resolveAIRansoms } from '../systems/aiRansom';
 import { resolveAICaptives } from '../systems/aiCaptiveFate';
 
@@ -1105,10 +1149,41 @@ interface GameStore extends GameState {
     tribeId: string,
     attackerOfficerId: EntityId,
     troops: number,
-  ) => { ok: boolean; win?: boolean; message: string };
+  ) => { ok: boolean; win?: boolean; message: string; mengHuo?: { captures: number; submitted: boolean } };
   /** 招撫異族 — pay tribute/gifts (gold from capital) to cool a tribe's
    *  aggression for a while. Always succeeds if gold available. */
   placateTribe: (tribeId: string) => { ok: boolean; message: string };
+  /** §8.3-deep 七擒孟獲 — decide a captured Meng Huo's fate: release (義釋,
+   *  cools the frontier and walks the 七擒 road) or execute (ends the chain,
+   *  enrages the south). */
+  resolveMengHuoCapture: (release: boolean) => { ok: boolean; message: string };
+  /** §8.3-deep 和親 — marry a clanswoman to the chieftain: the tribe stops
+   *  raiding YOUR cities for a generation (背盟 possible at extreme fervor). */
+  proposeTribeMarriage: (tribeId: string) => { ok: boolean; message: string };
+  /** §8.3-deep 互市 — open a border horse-market with the tribe: seasonal
+   *  coin + occasional horsemen; closes itself if the frontier burns. */
+  openTribeMarket: (tribeId: string) => { ok: boolean; message: string };
+  /** §8.3-deep 質子 — a pacified tribe sends a hostage-prince who serves as
+   *  a real officer; while he serves, tribal aggression stays capped. */
+  requestTribeHostage: (tribeId: string) => { ok: boolean; message: string };
+  /** §8.3-deep 以夷制夷 — pay a tribe to raid a rival's border cities for
+   *  two seasons. */
+  inciteTribeRaid: (tribeId: string, targetForceId: EntityId) => { ok: boolean; message: string };
+  /** §8.3-deep 二虜相攻 — set two tribes with overlapping ranges at each
+   *  other; both bleed and the frontier goes quiet. */
+  clashTribes: (tribeIdA: string, tribeIdB: string) => { ok: boolean; message: string };
+  /** §8.5 郊祀 — the yearly suburban sacrifice: gold + grain for mandate. */
+  performImperialRite: () => { ok: boolean; message: string };
+  /** §8.5 祈雨 — in a drought season, pray for rain (politics-led). */
+  prayForRain: () => { ok: boolean; success?: boolean; message: string };
+  /** §8.2-deep 賑災 — answer a disaster: 開倉賑濟 / 徙民就食 / 坐視不理. */
+  answerRelief: (cityId: EntityId, choice: 'grant' | 'migrate' | 'ignore') => { ok: boolean; message: string };
+  /** §8.4-deep 招安 — send an envoy to talk a cult banner into surrender
+   *  (張魯 model): success flips its cities and officers to you. */
+  pacifyCultForce: (cultForceId: EntityId, envoyOfficerId: EntityId) => { ok: boolean; success?: boolean; message: string };
+  /** §8.4-deep 宣撫 — post an officer to a threatened city; his presence
+   *  blunts cult contagion there for a few seasons. */
+  dispatchPacifyMission: (officerId: EntityId, cityId: EntityId) => { ok: boolean; message: string };
   /** 剿賊/取津/佔礦 — officer-led assault on a wild site. Same flow as
    *  attackFort; on capture the site flips to the player (bandit nests are
    *  pacified + drop loot, fords/deposits come under control). */
@@ -2141,7 +2216,7 @@ export const useGameStore = create<GameStore>()(
         // 抗謀 — the target realm's sharpest counsel resists the ploy.
         const counselIQ = (fid: EntityId) => pickAdvisor(state.officers, fid)?.stats.intelligence ?? 50;
         const targetCounselIQ = Math.max(counselIQ(targetA), targetB ? counselIQ(targetB) : 0);
-        const odds = schemeOdds(schemeId, state.diplomacy, strategist, targetA, targetB, targetCounselIQ);
+        const odds = schemeOdds(schemeId, state.diplomacy, strategist, targetA, targetB, targetCounselIQ, state.mandate.byForce[targetA] ?? 50);
         // Pay either way — schemes spend silver before they spend luck.
         const cities = { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - def.goldCost } };
         const relations = { ...state.diplomacy.relations };
@@ -2232,6 +2307,15 @@ export const useGameStore = create<GameStore>()(
           drop(state.playerForceId, targetA, -15);
           marks.push({ byForceId: state.playerForceId, targetForceId: targetA, expiresYear: state.date.year + 2, expiresSeason: seasonNow });
           message = `詐敗誘敵得售 — ${fname(targetA)}疑我虛弱,覬覦之心既萌,反予我討伐之名,可以逸待勞。`;
+        } else if (schemeId === 'prophecy') {
+          // 造讖惑眾 (§8.5) — the forged portent guts the rival's mandate and
+          // quietly lifts your own.
+          const propDrop = 8 + Math.floor(Math.random() * 9);
+          const by = { ...mandateOut.byForce };
+          by[targetA] = Math.max(0, (by[targetA] ?? 50) - propDrop);
+          if (state.playerForceId) by[state.playerForceId] = Math.min(100, (by[state.playerForceId] ?? 50) + 4);
+          mandateOut = { ...mandateOut, byForce: by };
+          message = `造讖惑眾得售 — 「代漢者,當塗高也」之讖遍傳里巷,${fname(targetA)}天命 −${propDrop},我方 +4。`;
         } else if (schemeId === 'fabricate') {
           // 無中生有 — a conjured host cows the rival (holds off ~1.5y) and a forged
           // pact-of-betrayal sours it on its strongest ally.
@@ -2258,6 +2342,13 @@ export const useGameStore = create<GameStore>()(
         // 反間敗露 — even a successful plot may leak; the dupes resent being played.
         if (Math.random() < schemeExposureChance(schemeId, true, strategistIQ)) {
           message += applyExposure();
+          // 妖言反噬 — an exposed forged prophecy stains YOUR mandate.
+          if (schemeId === 'prophecy' && state.playerForceId) {
+            const by = { ...mandateOut.byForce };
+            by[state.playerForceId] = Math.max(0, (by[state.playerForceId] ?? 50) - 8);
+            mandateOut = { ...mandateOut, byForce: by };
+            message += '(妖言反噬,我方天命 −8)';
+          }
         }
         set({ cities: citiesOut, diplomacy: { ...state.diplomacy, relations }, grudges, casusBelliMarks: marks, deterrences, mandate: mandateOut });
         // 謀略獻策 — the 軍師's stratagem lands.
@@ -3588,6 +3679,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           searchSuccessMul: state.talentDiscovery === 'scarce' ? 0.6 : state.talentDiscovery === 'plentiful' ? 1.4 : 1,
           duelChanceMul: state.duelFrequency === 'rare' ? 0.5 : state.duelFrequency === 'frequent' ? 2 : 1,
           disasterMul: state.disasterFrequency === 'low' ? 0.5 : state.disasterFrequency === 'high' ? 1.7 : 1,
+          plagueRiskCityIds: state.plagueRiskCityIds,
           newOfficerChance: state.newOfficers === 'rare' ? 0.05 : state.newOfficers === 'normal' ? 0.12 : state.newOfficers === 'common' ? 0.25 : 0,
           seasonBoundary,
         });
@@ -3827,18 +3919,24 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             })()
           : (state.grudges ?? {});
 
-        // Resolve tribe raids.
+        // Resolve tribe raids (pacts/incitements/submissions considered).
         const tribeResult = resolveTribeRaids({
           state: state.tribeState,
           cities: espResult.cities,
           date: result.date,
           rng: Math.random,
+          diplo: state.tribeDiplomacy ?? emptyTribeDiplomacy(),
+          playerForceId: state.playerForceId,
+          officers: espResult.officers,
         });
         if (tribeResult.entries.length > 0) {
           result.report.entries.push(...tribeResult.entries);
         }
         // Tribe aggression carried forward; AI 征討 may beat it down below.
         let nextAggression: Record<string, number> = { ...tribeResult.state.aggression };
+        // §8.3-deep — pact bookkeeping accumulated through the season ticks.
+        let nextTribeDiplomacy = state.tribeDiplomacy ?? emptyTribeDiplomacy();
+        let hostageFledIds: EntityId[] = [];
         // 安邊 — a 遠使 embassy to a border tribe placates it (raids subside).
         if (result.expeditionAggressionDeltas) {
           for (const [tid, d] of Object.entries(result.expeditionAggressionDeltas)) {
@@ -3862,14 +3960,88 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             result.report.entries.push(...siteTick.entries);
           }
           // 異族雇傭 — thoroughly pacified tribes send auxiliaries to the
-          // border city that holds their frontier quiet.
+          // border city that holds their frontier quiet (submitted tribes double).
           const merc = tickTribeMercenaries({
             aggression: nextAggression,
             cities: siteCities,
             rng: Math.random,
+            submitted: nextTribeDiplomacy.submitted,
           });
           siteCities = merc.cities;
           if (merc.entries.length > 0) result.report.entries.push(...merc.entries);
+
+          // ── §8.3-deep 異族內交 seasonal ticks ──
+          // 互市 — coin and horsemen flow through the open border markets.
+          const tribeMarket = tickTribeMarkets({
+            diplomacyState: nextTribeDiplomacy,
+            aggression: nextAggression,
+            cities: siteCities,
+            playerForceId: state.playerForceId,
+            rng: Math.random,
+          });
+          siteCities = tribeMarket.cities;
+          nextAggression = tribeMarket.aggression;
+          if (tribeMarket.entries.length > 0) result.report.entries.push(...tribeMarket.entries);
+          // 質子 — the prince at court stays the raiders; a restive tribe may
+          // call him home.
+          const hostageTick = tickTribeHostages({
+            diplomacyState: nextTribeDiplomacy,
+            aggression: nextAggression,
+            officers: espResult.officers,
+            playerForceId: state.playerForceId,
+            rng: Math.random,
+          });
+          nextAggression = hostageTick.aggression;
+          hostageFledIds = hostageTick.fledOfficerIds;
+          if (hostageTick.entries.length > 0) result.report.entries.push(...hostageTick.entries);
+          // AI 以夷制夷 — a rival court may bribe a tribe onto an enemy frontier.
+          const aiIncite = rollAITribeIncitement({
+            diplomacyState: nextTribeDiplomacy,
+            aggression: nextAggression,
+            cities: siteCities,
+            forces: state.forces,
+            playerForceId: state.playerForceId,
+            relationOf: (a, b) => getRelation(state.diplomacy, a, b).score,
+            rng: Math.random,
+          });
+          if (aiIncite.entry) result.report.entries.push(aiIncite.entry);
+
+          // Assemble the next pact state: broken marriages, closed markets,
+          // ended hostages, decremented incitements, new foundings.
+          {
+            const pacts = { ...nextTribeDiplomacy.pacts };
+            for (const tid of tribeResult.brokenMarriages) {
+              const p = pacts[tid];
+              if (p) pacts[tid] = { ...p, marriageYear: undefined };
+            }
+            for (const tid of tribeMarket.closedTribeIds) {
+              const p = pacts[tid];
+              if (p) pacts[tid] = { ...p, marketOpen: false };
+            }
+            for (const tid of hostageTick.endedTribeIds) {
+              const p = pacts[tid];
+              if (p) pacts[tid] = { ...p, hostageOfficerId: undefined, hostageSinceYear: undefined };
+            }
+            const incitements = { ...nextTribeDiplomacy.incitements };
+            for (const [tid, inc] of Object.entries(incitements)) {
+              if (!inc) continue;
+              const left = inc.seasonsLeft - 1;
+              if (left <= 0) delete incitements[tid as TribeId];
+              else incitements[tid as TribeId] = { ...inc, seasonsLeft: left };
+            }
+            if (aiIncite.incitement) {
+              incitements[aiIncite.incitement.tribeId] = {
+                byForceId: aiIncite.incitement.byForceId,
+                targetForceId: aiIncite.incitement.targetForceId,
+                seasonsLeft: INCITE_SEASONS,
+              };
+            }
+            const foundedStates = { ...nextTribeDiplomacy.foundedStates };
+            for (const f of tribeResult.foundings) {
+              foundedStates[f.force.id.replace('tribe-state-', '') as TribeId] = f.force.id;
+            }
+            nextTribeDiplomacy = { ...nextTribeDiplomacy, pacts, incitements, foundedStates };
+          }
 
           // 名產商路 — connect same-owner specialty cities (land + 漕運) and pay
           // the margins, throttled where war/banditry threatens the road and
@@ -3914,6 +4086,23 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         let postFlags = eventFlagsAfterCourt;
         let postFiredIds = state.firedEventIds;
         const forcedEventWishes: import('../types').OfficerWish[] = [];
+        // §8.5 — 天命 deltas emitted by event effects (mandate-ruler).
+        const eventMandateDeltas: Array<{ forceId: EntityId; delta: number }> = [];
+        // §8.3-deep 入主建國 — the new tribal state joins the force roster.
+        for (const f of tribeResult.foundings) {
+          postForces = { ...postForces, [f.force.id]: f.force };
+          postOfficers = { ...postOfficers, [f.ruler.id]: f.ruler };
+        }
+        // 質子亡歸 — a fled prince leaves the player's service.
+        for (const oid of hostageFledIds) {
+          const o = postOfficers[oid];
+          if (o) {
+            postOfficers = {
+              ...postOfficers,
+              [oid]: { ...o, forceId: null, status: 'idle', loyalty: 0, task: null },
+            };
+          }
+        }
         const eventCtx = {
           date: result.date,
           cities: postCities,
@@ -3937,6 +4126,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             taxPolicy: state.taxPolicy,
             playerForceId: state.playerForceId,
             firedEventIds: state.firedEventIds,
+            mandateByForce: state.mandate.byForce,
             rng: Math.random,
           }) ??
           (state.customEvents.length > 0
@@ -3965,6 +4155,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           postFlags = after.eventFlags;
           postFiredIds = [...state.firedEventIds, eventCheck.id];
           firingEvent = eventCheck;
+          if (after.mandateDeltas && after.mandateDeltas.length > 0) {
+            eventMandateDeltas.push(...after.mandateDeltas);
+          }
           // 抉擇 — if the player rules the chooser's force the decision
           // waits for the modal; anyone else walks the historical path
           // (first choice) right now.
@@ -3989,6 +4182,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               postOfficers = histPath.officers;
               postForces = histPath.forces;
               postFlags = histPath.eventFlags;
+              if (histPath.mandateDeltas && histPath.mandateDeltas.length > 0) {
+                eventMandateDeltas.push(...histPath.mandateDeltas);
+              }
             }
           }
           // Apply any 'grant-title' effects emitted by this event. These
@@ -4238,6 +4434,16 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // ── Season-bound rolls (every 9 periods only) ──
         let nextWeather = state.weather;
         let nextMandate = state.mandate;
+        // §8.5 — 天命 deltas from this season's event effects (mandate-ruler).
+        if (eventMandateDeltas.length > 0) {
+          const byForce = { ...nextMandate.byForce };
+          for (const d of eventMandateDeltas) {
+            byForce[d.forceId] = Math.max(0, Math.min(100, (byForce[d.forceId] ?? 50) + d.delta));
+          }
+          nextMandate = { byForce };
+        }
+        // §8.1-deep 事件簿 — extra annals lines gathered along the pipeline.
+        const annalsExtras: AnnalsEntry[] = [];
         let nextEmbargoes = state.embargoes;
         if (seasonBoundary) {
           // 禁運失依 — an embargo lapses once its imposer no longer holds the 專營.
@@ -4364,12 +4570,90 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
 
           const omenOut = rollOmen({
             forces: postForces,
-            mandate: state.mandate,
+            mandate: nextMandate,
             date: result.date,
             rng: Math.random,
+            // 靈台禳星 — the player's best Star Terrace may deflect an ill omen.
+            playerLingtaiLevel: state.buildings.reduce(
+              (best, b) =>
+                b.id === 'lingtai' && postCities[b.cityId]?.ownerForceId === state.playerForceId
+                  ? Math.max(best, b.level)
+                  : best,
+              0,
+            ),
+            playerForceId: state.playerForceId,
           });
           nextMandate = omenOut.mandate;
-          if (omenOut.entry) result.report.entries.push(omenOut.entry);
+          if (omenOut.entry) {
+            result.report.entries.push(omenOut.entry);
+            annalsExtras.push({
+              year: result.date.year,
+              season: result.date.season,
+              kind: 'omen',
+              titleZh: '天象',
+              textZh: omenOut.entry.textZh ?? omenOut.entry.text,
+              cityId: null,
+            });
+          }
+
+          // §8.5 AI 造讖 — a rival court with a sharp mind forges portents
+          // against the mightiest mandate on the board (often yours).
+          if (Math.random() < 0.05) {
+            const rivals = Object.values(postForces).filter(
+              (f) => f.id !== state.playerForceId && !f.id.startsWith('cult-') && !f.id.startsWith('tribe-state-'),
+            );
+            if (rivals.length > 0) {
+              const schemer = rivals[Math.floor(Math.random() * rivals.length)];
+              const iq = Object.values(postOfficers).reduce(
+                (best, o) => (o.forceId === schemer.id && o.status !== 'dead' ? Math.max(best, o.stats.intelligence) : best),
+                0,
+              );
+              const target = Object.values(postForces)
+                .filter((f) => f.id !== schemer.id && !f.id.startsWith('cult-') && !f.id.startsWith('tribe-state-'))
+                .sort((a, b) => (nextMandate.byForce[b.id] ?? 50) - (nextMandate.byForce[a.id] ?? 50))[0];
+              if (target && iq >= 80 && Math.random() < 0.35 + iq / 280) {
+                const drop = 6 + Math.floor(Math.random() * 8);
+                const byForce = { ...nextMandate.byForce };
+                byForce[target.id] = Math.max(0, (byForce[target.id] ?? 50) - drop);
+                byForce[schemer.id] = Math.min(100, (byForce[schemer.id] ?? 50) + 3);
+                nextMandate = { byForce };
+                if (target.id === state.playerForceId) {
+                  const entry = {
+                    cityId: null,
+                    kind: 'note' as const,
+                    text: `A forged prophecy spreads against your mandate — 天命 −${drop}.`,
+                    textZh: `讖言流布:「代漢者,當塗高也…」矛頭直指主公,街談巷議,天命 −${drop}。`,
+                  };
+                  result.report.entries.push(entry);
+                  annalsExtras.push({
+                    year: result.date.year,
+                    season: result.date.season,
+                    kind: 'omen',
+                    titleZh: '讖緯',
+                    textZh: entry.textZh,
+                    cityId: null,
+                  });
+                }
+              }
+            }
+          }
+
+          // §8.5 AI 郊祀 — a court whose mandate gutters spends treasure to
+          // prop it back up (10%/season below 40, needs the rite's gold).
+          for (const f of Object.values(postForces)) {
+            if (f.id === state.playerForceId || f.id.startsWith('cult-') || f.id.startsWith('tribe-state-')) continue;
+            const m = nextMandate.byForce[f.id] ?? 50;
+            if (m >= 40 || Math.random() > 0.10) continue;
+            const cap = postCities[f.capitalCityId];
+            if (!cap || cap.ownerForceId !== f.id || cap.gold < SUBURBAN_RITE_GOLD) continue;
+            postCities = { ...postCities, [cap.id]: { ...cap, gold: cap.gold - SUBURBAN_RITE_GOLD } };
+            nextMandate = {
+              byForce: {
+                ...nextMandate.byForce,
+                [f.id]: Math.min(100, m + 6 + Math.floor(Math.random() * 5)),
+              },
+            };
+          }
           // Faction-imbalance events: 黨錮/武人干政/九品官人/新政
           const facOut = rollFactionEvents({
             forces: postForces,
@@ -4612,7 +4896,60 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         }
 
         // ── Religious rebellion roll (season boundary only) ──
+        let nextPacifyMissions = state.pacifyMissions ?? {};
         if (seasonBoundary) {
+          // §8.4-deep 黃巾總爆發 — spring 184: the Way of Great Peace rises in
+          // several provinces at once (fires once; only pre-184 campaigns).
+          const yt = rollYellowTurbanRising({
+            cities: postCities,
+            forces: postForces,
+            officers: postOfficers,
+            date: result.date,
+            rng: Math.random,
+            eventFlags: postFlags,
+          });
+          if (yt.flagSet) {
+            postCities = yt.cities;
+            postForces = yt.forces;
+            postOfficers = yt.officers;
+            postFlags = { ...postFlags, [YELLOW_TURBAN_FLAG]: true };
+            result.report.entries.push(...yt.entries);
+            for (const en of yt.entries) {
+              annalsExtras.push({
+                year: result.date.year,
+                season: result.date.season,
+                kind: 'unrest',
+                titleZh: '黃巾之亂',
+                textZh: en.textZh ?? en.text,
+                cityId: en.cityId,
+              });
+            }
+          }
+          // §8.2-deep 建安大疫 — winter 217, once: the empire-wide pestilence.
+          const greatPlague = rollGreatPlague({
+            cities: postCities,
+            officers: postOfficers,
+            date: result.date,
+            buildings: state.buildings,
+            eventFlags: postFlags,
+            rng: Math.random,
+          });
+          if (greatPlague.flagSet) {
+            postCities = greatPlague.cities;
+            postOfficers = greatPlague.officers;
+            postFlags = { ...postFlags, [GREAT_PLAGUE_FLAG]: true };
+            result.report.entries.push(...greatPlague.entries);
+            for (const en of greatPlague.entries) {
+              annalsExtras.push({
+                year: result.date.year,
+                season: result.date.season,
+                kind: 'disaster',
+                titleZh: '建安大疫',
+                textZh: en.textZh ?? en.text,
+                cityId: null,
+              });
+            }
+          }
           const religion = rollReligiousRebellion({
             cities: postCities,
             forces: postForces,
@@ -4625,6 +4962,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           postOfficers = religion.officers;
           if (religion.entries.length > 0) result.report.entries.push(...religion.entries);
           // 流民四起 — an active cult erodes its neighbours and may spread.
+          // 宣撫使 posted to threatened cities blunt the erosion (§8.4-deep).
           const contagion = spreadCultUnrest({
             cities: postCities,
             forces: postForces,
@@ -4632,9 +4970,26 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             date: result.date,
             rng: Math.random,
             buildings: state.buildings,
+            pacifyMissions: nextPacifyMissions,
           });
           postCities = contagion.cities;
           if (contagion.entries.length > 0) result.report.entries.push(...contagion.entries);
+          // 宣撫 missions run their course; the envoy returns to the roster.
+          if (Object.keys(nextPacifyMissions).length > 0) {
+            const kept: Record<EntityId, PacifyMission> = {};
+            for (const [oid, m] of Object.entries(nextPacifyMissions)) {
+              const left = m.seasonsLeft - 1;
+              if (left > 0) {
+                kept[oid] = { ...m, seasonsLeft: left };
+              } else {
+                const o = postOfficers[oid];
+                if (o && o.status === 'active') {
+                  postOfficers = { ...postOfficers, [oid]: { ...o, status: 'idle', task: null } };
+                }
+              }
+            }
+            nextPacifyMissions = kept;
+          }
           // 俘虜處置 — AI captors pass verdict on their prisoners (招降/義釋/處決),
           // bearing the same costs the player does, before the ransom clears the rest.
           const captiveFate = resolveAICaptives({
@@ -7057,6 +7412,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             { kind: 'famine', key: 'disaster-drought', zh: '旱蝗之災', en: 'Famine Strikes', capZh: '田疇歉收,饑饉迫境', capEn: 'Drought and locusts blight the fields' },
             { kind: 'flood', key: 'disaster-flood', zh: '水患', en: 'The Floods Rise', capZh: '濁流破堤,田廬盡淹', capEn: 'A river bursts its banks' },
             { kind: 'plague', key: 'disaster-plague', zh: '瘟疫', en: 'Plague', capZh: '疫癘橫行,人心惶惶', capEn: 'Pestilence sweeps the realm' },
+            { kind: 'quake', key: 'disaster-quake', zh: '地動', en: 'Earthquake', capZh: '地動山搖,城垣崩裂', capEn: 'The earth shakes; walls crack and fall' },
           ];
           for (const d of DISASTERS) {
             if (!hitKinds.has(d.kind)) continue;
@@ -7183,6 +7539,39 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           if (loyaltyMutated) officersWithMarchTask = bumped;
         }
 
+        // §8.1-deep 事件簿 — append this season's noteworthy beats to the 災異志.
+        let nextAnnals = state.annals ?? [];
+        {
+          const adds: AnnalsEntry[] = [...annalsExtras];
+          const y = result.date.year;
+          const s = result.date.season;
+          const kindTitle: Partial<Record<import('../types').ReportEntryKind, [AnnalsEntry['kind'], string]>> = {
+            famine: ['disaster', '饑荒'],
+            flood: ['disaster', '洪災'],
+            plague: ['disaster', '瘟疫'],
+            quake: ['disaster', '地動'],
+            harvest: ['disaster', '豐稔'],
+            'tribe-raid': ['frontier', '邊患'],
+            rebellion: ['unrest', '亂事'],
+          };
+          for (const en of result.report.entries) {
+            const kt = kindTitle[en.kind];
+            if (!kt) continue;
+            adds.push({ year: y, season: s, kind: kt[0], titleZh: kt[1], textZh: en.textZh ?? en.text, cityId: en.cityId });
+          }
+          if (firingEvent) {
+            adds.push({
+              year: y,
+              season: s,
+              kind: 'event',
+              titleZh: firingEvent.name.zh,
+              textZh: firingEvent.descriptionZh ?? firingEvent.description,
+              cityId: null,
+            });
+          }
+          if (adds.length > 0) nextAnnals = [...nextAnnals, ...adds].slice(-500);
+        }
+
         set({
           date: result.date,
           cities: postCities,
@@ -7277,8 +7666,22 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           passageGrants: nextPassageGrants,
           pendingPeaceOffers: nextPendingPeace,
           tribeState: { ...tribeResult.state, aggression: nextAggression as typeof tribeResult.state.aggression },
+          tribeDiplomacy: nextTribeDiplomacy,
+          pendingRelief: seasonBoundary ? (result.reliefPrompts ?? []) : state.pendingRelief,
+          plagueRiskCityIds: seasonBoundary ? (result.struckCityIds ?? []) : state.plagueRiskCityIds,
+          pacifyMissions: nextPacifyMissions,
+          rainRiteDone: seasonBoundary ? false : state.rainRiteDone,
+          annals: nextAnnals,
           scenicLooted: nextScenicLooted,
-          buildings: bldEvt.buildings,
+          // §8.2-deep 地動 — quakes topple built structures a level.
+          buildings: (result.buildingLevelDrops && result.buildingLevelDrops.length > 0)
+            ? bldEvt.buildings.map((b) => {
+                const hits = result.buildingLevelDrops!.filter(
+                  (d) => d.cityId === b.cityId && d.buildingId === b.id,
+                ).length;
+                return hits > 0 ? { ...b, level: Math.max(0, b.level - hits) } : b;
+              })
+            : bldEvt.buildings,
           family: fam.family,
           pendingHeirs: fam.pendingHeirs,
           clanStandings: clanStandingsNext,
@@ -9691,11 +10094,21 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             firedEventIds: state.firedEventIds,
           },
         );
+        // §8.5 — mandate-ruler effects riding on the chosen path.
+        let mandateAfterChoice = state.mandate;
+        if (after.mandateDeltas && after.mandateDeltas.length > 0) {
+          const byForce = { ...mandateAfterChoice.byForce };
+          for (const d of after.mandateDeltas) {
+            byForce[d.forceId] = Math.max(0, Math.min(100, (byForce[d.forceId] ?? 50) + d.delta));
+          }
+          mandateAfterChoice = { byForce };
+        }
         set({
           cities: after.cities,
           officers: after.officers,
           forces: after.forces,
           eventFlags: after.eventFlags,
+          mandate: mandateAfterChoice,
           pendingEvent: null,
         });
       },
@@ -12613,10 +13026,56 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             },
           },
         };
+        // §8.3-deep 七擒孟獲 — against the Nanman, a crushing win CAPTURES the
+        // king instead of rolling a recruit. Seven captures-and-releases win
+        // the whole south for good (孟獲 + 祝融 + 兀突骨 + 木鹿, and with them
+        // the 藤甲兵/象兵 elite corps their commanders carry).
+        let mengHuo: { captures: number; submitted: boolean } | null = null;
+        const diploNow = state.tribeDiplomacy ?? emptyTribeDiplomacy();
+        if (r.win && tribe.id === 'nanban' && !diploNow.submitted['nanban']) {
+          const chief = state.officers['meng-huo'];
+          const free =
+            !!chief && chief.status !== 'dead' && chief.status !== 'imprisoned' && chief.forceId === null;
+          if (free) {
+            const captures = (diploNow.mengHuoCaptures ?? 0) + 1;
+            if (captures >= MENG_HUO_SUBMIT_CAPTURES) {
+              // 七擒 — 心悅誠服. The king and his champions ride in together.
+              const officersNext = { ...state.officers };
+              for (const oid of NANMAN_OFFICER_IDS) {
+                const o = officersNext[oid];
+                if (o && o.status !== 'dead' && o.status !== 'imprisoned' && o.forceId === null) {
+                  codexMarkRecruited(oid);
+                  officersNext[oid] = {
+                    ...o,
+                    forceId: state.playerForceId,
+                    locationCityId: sourceCity.id,
+                    status: 'idle',
+                    loyalty: oid === 'meng-huo' ? 95 : 75,
+                    task: null,
+                  };
+                }
+              }
+              updates.officers = officersNext;
+              updates.tribeDiplomacy = {
+                ...diploNow,
+                mengHuoCaptures: captures,
+                submitted: { ...diploNow.submitted, nanban: state.playerForceId },
+              };
+              updates.tribeState = {
+                ...(updates.tribeState as typeof state.tribeState),
+                aggression: { ...(updates.tribeState as typeof state.tribeState).aggression, nanban: 0.02 },
+              };
+              mengHuo = { captures, submitted: true };
+            } else {
+              updates.tribeDiplomacy = { ...diploNow, mengHuoCaptures: captures };
+              mengHuo = { captures, submitted: false };
+            }
+          }
+        }
         // 招降 — a crushing win may win the tribe's chieftain to your banner,
-        // if he's still a free agent (孟獲/蹋頓/軻比能).
+        // if he's still a free agent (蹋頓/軻比能; 孟獲 walks the 七擒 road).
         let recruited: string | null = null;
-        if (r.win && tribe.chieftainId) {
+        if (r.win && tribe.chieftainId && !mengHuo && tribe.id !== 'nanban') {
           const chief = state.officers[tribe.chieftainId];
           if (chief && chief.forceId === null && (chief.status === 'idle' || chief.status === 'unsearched')
               && Math.random() < 0.45) {
@@ -12635,13 +13094,47 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
         set(updates);
+        const mengHuoMsg = mengHuo
+          ? mengHuo.submitted
+            ? ` ${nanmanCaptureText(mengHuo.captures).zh} 孟獲率祝融、兀突骨、木鹿諸部盡數來歸,南中永不復反!`
+            : ` 陣前生擒孟獲!(第 ${mengHuo.captures} 擒)`
+          : '';
         return {
           ok: true,
           win: r.win,
+          mengHuo: mengHuo ?? undefined,
           message: r.win
-            ? `${attacker.name.zh}大破${tribe.name.zh}!獲貢金 ${r.tributeGold}、附庸騎兵 ${r.auxTroops},損兵 ${r.attackerLosses}。${recruited ? `${recruited}感服來降!` : ''}`
+            ? `${attacker.name.zh}大破${tribe.name.zh}!獲貢金 ${r.tributeGold}、附庸騎兵 ${r.auxTroops},損兵 ${r.attackerLosses}。${recruited ? `${recruited}感服來降!` : ''}${mengHuoMsg}`
             : `${attacker.name.zh}討${tribe.name.zh}不利,損兵 ${r.attackerLosses},其勢稍挫。`,
         };
+      },
+
+      resolveMengHuoCapture: (release) => {
+        const state = get();
+        const diplo = state.tribeDiplomacy ?? emptyTribeDiplomacy();
+        const captures = diplo.mengHuoCaptures ?? 0;
+        if (captures <= 0 || diplo.submitted['nanban']) return { ok: false, message: '帳下無此俘。' };
+        const agg = state.tribeState.aggression['nanban'] ?? 0.18;
+        if (release) {
+          set({
+            tribeState: {
+              ...state.tribeState,
+              aggression: { ...state.tribeState.aggression, nanban: Math.max(0.02, agg - 0.06) },
+            },
+          });
+          return { ok: true, message: `義釋孟獲 — ${nanmanCaptureText(captures).zh}(侵略度 −0.06)` };
+        }
+        const chief = state.officers['meng-huo'];
+        set({
+          ...(chief
+            ? { officers: { ...state.officers, 'meng-huo': { ...chief, status: 'dead' as const, forceId: null, task: null } } }
+            : {}),
+          tribeState: {
+            ...state.tribeState,
+            aggression: { ...state.tribeState.aggression, nanban: Math.min(1, agg + 0.25) },
+          },
+        });
+        return { ok: true, message: '斬孟獲於轅門 — 南中諸洞聞之震怒,叛服無常,邊釁愈熾(侵略度 +0.25)。' };
       },
 
       placateTribe: (tribeId) => {
@@ -12672,6 +13165,402 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           ok: true,
           message: `賜物招撫${tribe.name.zh},邊釁暫息(−${TRIBE_PLACATE_COST}g)。`,
         };
+      },
+
+      proposeTribeMarriage: (tribeId) => {
+        const state = get();
+        const tribe = TRIBES_BY_ID[tribeId];
+        if (!tribe) return { ok: false, message: 'Tribe not found.' };
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        const reach = canCampaignTribe(tribe, state.cities, state.playerForceId);
+        if (!reach.ok) return { ok: false, message: reach.reason ?? 'Cannot reach.' };
+        const diplo = state.tribeDiplomacy ?? emptyTribeDiplomacy();
+        const can = canHeqin(diplo.pacts[tribe.id], state.date.year);
+        if (!can.ok) return { ok: false, message: can.reasonZh ?? '不可和親。' };
+        const player = state.forces[state.playerForceId];
+        const capital = player ? state.cities[player.capitalCityId] : null;
+        if (!capital || capital.gold < HEQIN_COST)
+          return { ok: false, message: `和親需金 ${HEQIN_COST}(妝奩聘禮,自國都支付)。` };
+        const prevAgg = state.tribeState.aggression[tribe.id] ?? tribe.baseAggression;
+        set({
+          cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - HEQIN_COST } },
+          tribeState: {
+            ...state.tribeState,
+            aggression: { ...state.tribeState.aggression, [tribe.id]: Math.max(0.02, prevAgg - HEQIN_AGGRESSION_DROP) },
+          },
+          tribeDiplomacy: {
+            ...diplo,
+            pacts: { ...diplo.pacts, [tribe.id]: { ...(diplo.pacts[tribe.id] ?? {}), marriageYear: state.date.year } },
+          },
+          annals: [
+            ...(state.annals ?? []),
+            { year: state.date.year, season: state.date.season, kind: 'frontier' as const, titleZh: '和親', textZh: `宗女出塞,和親${tribe.name.zh} — 一代人之約。`, cityId: null },
+          ].slice(-500),
+        });
+        return {
+          ok: true,
+          message: `宗女出塞,和親${tribe.name.zh} — 一代人之內兵鋒不向我境,唯兵燹極熾時恐其背盟(侵略度 −${HEQIN_AGGRESSION_DROP})。`,
+        };
+      },
+
+      openTribeMarket: (tribeId) => {
+        const state = get();
+        const tribe = TRIBES_BY_ID[tribeId];
+        if (!tribe) return { ok: false, message: 'Tribe not found.' };
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        const diplo = state.tribeDiplomacy ?? emptyTribeDiplomacy();
+        if (diplo.pacts[tribe.id]?.marketOpen) return { ok: false, message: '互市已開。' };
+        const ownsBorder = tribe.raidableCityIds.some(
+          (id) => state.cities[id]?.ownerForceId === state.playerForceId,
+        );
+        if (!ownsBorder) return { ok: false, message: '須領有其邊城,方可開市。' };
+        const agg = state.tribeState.aggression[tribe.id] ?? tribe.baseAggression;
+        if (agg > 0.5) return { ok: false, message: '邊釁正熾,商旅不行 — 先安其鋒。' };
+        const player = state.forces[state.playerForceId];
+        const capital = player ? state.cities[player.capitalCityId] : null;
+        if (!capital || capital.gold < TRIBE_MARKET_COST)
+          return { ok: false, message: `開市需金 ${TRIBE_MARKET_COST}(建榷場,自國都支付)。` };
+        set({
+          cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - TRIBE_MARKET_COST } },
+          tribeDiplomacy: {
+            ...diplo,
+            pacts: { ...diplo.pacts, [tribe.id]: { ...(diplo.pacts[tribe.id] ?? {}), marketOpen: true } },
+          },
+          annals: [
+            ...(state.annals ?? []),
+            { year: state.date.year, season: state.date.season, kind: 'frontier' as const, titleZh: '互市', textZh: `與${tribe.name.zh}開邊互市,榷場初立。`, cityId: null },
+          ].slice(-500),
+        });
+        return { ok: true, message: `與${tribe.name.zh}開邊互市 — 每季市利入邊城,胡騎時來投效,其性亦漸馴。` };
+      },
+
+      requestTribeHostage: (tribeId) => {
+        const state = get();
+        const tribe = TRIBES_BY_ID[tribeId];
+        if (!tribe) return { ok: false, message: 'Tribe not found.' };
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        const reach = canCampaignTribe(tribe, state.cities, state.playerForceId);
+        if (!reach.ok) return { ok: false, message: reach.reason ?? 'Cannot reach.' };
+        const diplo = state.tribeDiplomacy ?? emptyTribeDiplomacy();
+        const agg = state.tribeState.aggression[tribe.id] ?? tribe.baseAggression;
+        const can = canRequestHostage(diplo.pacts[tribe.id], agg, state.officers);
+        if (!can.ok) return { ok: false, message: can.reasonZh ?? '其部不肯納質。' };
+        const player = state.forces[state.playerForceId];
+        const capital = player ? state.cities[player.capitalCityId] : null;
+        if (!capital) return { ok: false, message: 'No capital.' };
+        const prince = makeHostagePrince(tribe, capital.id, state.playerForceId, state.date.year, Math.random);
+        set({
+          officers: { ...state.officers, [prince.id]: prince },
+          tribeDiplomacy: {
+            ...diplo,
+            pacts: {
+              ...diplo.pacts,
+              [tribe.id]: {
+                ...(diplo.pacts[tribe.id] ?? {}),
+                hostageOfficerId: prince.id,
+                hostageSinceYear: state.date.year,
+              },
+            },
+          },
+          annals: [
+            ...(state.annals ?? []),
+            { year: state.date.year, season: state.date.season, kind: 'frontier' as const, titleZh: '質子', textZh: `${tribe.name.zh}遣${prince.name.zh}入質於朝。`, cityId: null },
+          ].slice(-500),
+        });
+        return {
+          ok: true,
+          message: `${tribe.name.zh}遣${prince.name.zh}入侍 — 質子在朝,其部不敢大舉;然邊釁若熾,恐其亡歸。`,
+        };
+      },
+
+      inciteTribeRaid: (tribeId, targetForceId) => {
+        const state = get();
+        const tribe = TRIBES_BY_ID[tribeId];
+        if (!tribe) return { ok: false, message: 'Tribe not found.' };
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        const diplo = state.tribeDiplomacy ?? emptyTribeDiplomacy();
+        if (diplo.incitements[tribe.id]) return { ok: false, message: '此虜已為人所用。' };
+        if (diplo.submitted[tribe.id] || diplo.foundedStates[tribe.id])
+          return { ok: false, message: '其部已非可嗾之寇。' };
+        const can = canIncite(tribe, targetForceId, state.cities, state.playerForceId);
+        if (!can.ok) return { ok: false, message: can.reasonZh ?? '不可唆使。' };
+        const player = state.forces[state.playerForceId];
+        const capital = player ? state.cities[player.capitalCityId] : null;
+        if (!capital || capital.gold < INCITE_COST)
+          return { ok: false, message: `唆使需金 ${INCITE_COST}(賂其渠帥,自國都支付)。` };
+        const agg = state.tribeState.aggression[tribe.id] ?? tribe.baseAggression;
+        set({
+          cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - INCITE_COST } },
+          tribeState: {
+            ...state.tribeState,
+            aggression: { ...state.tribeState.aggression, [tribe.id]: Math.min(1, agg + INCITE_AGGRESSION_SURGE) },
+          },
+          tribeDiplomacy: {
+            ...diplo,
+            incitements: {
+              ...diplo.incitements,
+              [tribe.id]: { byForceId: state.playerForceId, targetForceId, seasonsLeft: INCITE_SEASONS },
+            },
+          },
+          annals: [
+            ...(state.annals ?? []),
+            { year: state.date.year, season: state.date.season, kind: 'frontier' as const, titleZh: '以夷制夷', textZh: `以金帛嗾${tribe.name.zh}寇${state.forces[targetForceId]?.name.zh ?? targetForceId}之邊。`, cityId: null },
+          ].slice(-500),
+        });
+        return {
+          ok: true,
+          message: `以金帛啖${tribe.name.zh},嗾其寇${state.forces[targetForceId]?.name.zh ?? targetForceId}之邊 — 兩季之內,虜騎為我所用。`,
+        };
+      },
+
+      clashTribes: (tribeIdA, tribeIdB) => {
+        const state = get();
+        const a = TRIBES_BY_ID[tribeIdA];
+        const b = TRIBES_BY_ID[tribeIdB];
+        if (!a || !b || a.id === b.id) return { ok: false, message: '需擇兩不同之部。' };
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        if (!tribesShareFrontier(a, b)) return { ok: false, message: '二虜疆界不接,挑之不動。' };
+        const player = state.forces[state.playerForceId];
+        const capital = player ? state.cities[player.capitalCityId] : null;
+        if (!capital || capital.gold < TRIBE_CLASH_COST)
+          return { ok: false, message: `挑動互鬥需金 ${TRIBE_CLASH_COST}(自國都支付)。` };
+        const res = resolveTribeClash(a, b, Math.random);
+        const aggA = state.tribeState.aggression[a.id] ?? a.baseAggression;
+        const aggB = state.tribeState.aggression[b.id] ?? b.baseAggression;
+        set({
+          cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - TRIBE_CLASH_COST } },
+          tribeState: {
+            ...state.tribeState,
+            aggression: {
+              ...state.tribeState.aggression,
+              [a.id]: Math.max(0.02, aggA - res.dropA),
+              [b.id]: Math.max(0.02, aggB - res.dropB),
+            },
+          },
+          annals: [
+            ...(state.annals ?? []),
+            { year: state.date.year, season: state.date.season, kind: 'frontier' as const, titleZh: '二虜相攻', textZh: res.textZh, cityId: null },
+          ].slice(-500),
+        });
+        return { ok: true, message: res.textZh };
+      },
+
+      performImperialRite: () => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        const player = state.forces[state.playerForceId];
+        const capital = player ? state.cities[player.capitalCityId] : null;
+        if (!capital) return { ok: false, message: 'No capital.' };
+        if (capital.gold < SUBURBAN_RITE_GOLD || capital.food < SUBURBAN_RITE_FOOD)
+          return { ok: false, message: `郊祀需金 ${SUBURBAN_RITE_GOLD}、糧 ${SUBURBAN_RITE_FOOD}(國都)。` };
+        const holdsEmperor = emperorCustodian(state.cities, state.emperorCityId ?? null) === state.playerForceId;
+        const res = performSuburbanRite({
+          mandate: state.mandate.byForce[state.playerForceId] ?? 50,
+          holdsEmperor,
+          lastRiteYear: state.lastSuburbanRiteYear ?? null,
+          year: state.date.year,
+          rng: Math.random,
+        });
+        if (!res.ok) return { ok: false, message: res.messageZh };
+        set({
+          cities: {
+            ...state.cities,
+            [capital.id]: { ...capital, gold: capital.gold - SUBURBAN_RITE_GOLD, food: capital.food - SUBURBAN_RITE_FOOD },
+          },
+          mandate: {
+            byForce: {
+              ...state.mandate.byForce,
+              [state.playerForceId]: Math.min(100, (state.mandate.byForce[state.playerForceId] ?? 50) + res.mandateDelta),
+            },
+          },
+          lastSuburbanRiteYear: state.date.year,
+          annals: [
+            ...(state.annals ?? []),
+            { year: state.date.year, season: state.date.season, kind: 'rite' as const, titleZh: '郊祀', textZh: res.messageZh, cityId: capital.id },
+          ].slice(-500),
+        });
+        return { ok: true, message: res.messageZh };
+      },
+
+      prayForRain: () => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        if (state.rainRiteDone) return { ok: false, message: '本季已禱,天意未回。' };
+        const player = state.forces[state.playerForceId];
+        const capital = player ? state.cities[player.capitalCityId] : null;
+        if (!capital || capital.gold < RAIN_RITE_GOLD)
+          return { ok: false, message: `祈雨需金 ${RAIN_RITE_GOLD}(築壇備牲,國都支付)。` };
+        const presider = bestRitePresider(state.officers, state.playerForceId);
+        const res = performRainRite({
+          weatherKind: state.weather.kind,
+          presiderPolitics: presider?.stats.politics ?? 50,
+          rng: Math.random,
+        });
+        if (!res.ok) return { ok: false, message: res.messageZh };
+        const cities = { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - RAIN_RITE_GOLD } };
+        if (res.success) {
+          for (const c of Object.values(cities)) {
+            if (c.ownerForceId === state.playerForceId) {
+              cities[c.id] = { ...cities[c.id], loyalty: Math.min(100, cities[c.id].loyalty + res.loyaltyDelta) };
+            }
+          }
+        }
+        set({
+          cities,
+          rainRiteDone: true,
+          ...(res.success
+            ? {
+                weather: { ...state.weather, kind: 'rain' as const },
+                mandate: {
+                  byForce: {
+                    ...state.mandate.byForce,
+                    [state.playerForceId]: Math.min(100, (state.mandate.byForce[state.playerForceId] ?? 50) + res.mandateDelta),
+                  },
+                },
+              }
+            : {}),
+          annals: [
+            ...(state.annals ?? []),
+            { year: state.date.year, season: state.date.season, kind: 'rite' as const, titleZh: '祈雨', textZh: res.messageZh, cityId: capital.id },
+          ].slice(-500),
+        });
+        return { ok: true, success: res.success, message: res.messageZh };
+      },
+
+      answerRelief: (cityId, choice) => {
+        const state = get();
+        const prompt = (state.pendingRelief ?? []).find((p) => p.cityId === cityId);
+        if (!prompt) return { ok: false, message: '此城無待賑之災。' };
+        const city = state.cities[cityId];
+        if (!city || city.ownerForceId !== state.playerForceId) return { ok: false, message: 'Not your city.' };
+        const remaining = (state.pendingRelief ?? []).filter((p) => p.cityId !== cityId);
+        if (choice === 'grant') {
+          const cost = reliefFoodCost(city);
+          if (city.food < cost) return { ok: false, message: `開倉需糧 ${cost},${city.name.zh}存糧不足。` };
+          set({
+            cities: {
+              ...state.cities,
+              [cityId]: { ...city, food: city.food - cost, loyalty: Math.min(100, city.loyalty + RELIEF_LOYALTY_BONUS) },
+            },
+            pendingRelief: remaining,
+            mandate: state.playerForceId
+              ? {
+                  byForce: {
+                    ...state.mandate.byForce,
+                    [state.playerForceId]: Math.min(100, (state.mandate.byForce[state.playerForceId] ?? 50) + 2),
+                  },
+                }
+              : state.mandate,
+          });
+          return { ok: true, message: `開倉賑濟${city.name.zh}(−${cost} 糧)— 老幼得食,民心大安(民忠 +${RELIEF_LOYALTY_BONUS},天命 +2)。` };
+        }
+        if (choice === 'migrate') {
+          const dest = (city.adjacentCityIds ?? [])
+            .map((id) => state.cities[id])
+            .filter((c): c is typeof city => !!c && c.ownerForceId === state.playerForceId)
+            .sort((a, b) => b.food - a.food)[0];
+          if (!dest) return { ok: false, message: '四鄰無我城可徙。' };
+          const moved = Math.floor(city.population * RELIEF_MIGRATE_SHARE);
+          set({
+            cities: {
+              ...state.cities,
+              [cityId]: { ...city, population: city.population - moved, loyalty: Math.min(100, city.loyalty + 4) },
+              [dest.id]: { ...dest, population: dest.population + moved, loyalty: Math.max(0, dest.loyalty - 3) },
+            },
+            pendingRelief: remaining,
+          });
+          return { ok: true, message: `徙民就食 — ${city.name.zh}災民 ${moved.toLocaleString()} 口移於${dest.name.zh}(災城民忠 +4,受民之城 −3)。` };
+        }
+        set({
+          cities: {
+            ...state.cities,
+            [cityId]: { ...city, loyalty: Math.max(0, city.loyalty - RELIEF_IGNORE_LOYALTY_LOSS) },
+          },
+          pendingRelief: remaining,
+        });
+        return { ok: true, message: `坐視${city.name.zh}之災 — 道殣相望,民怨載道(民忠 −${RELIEF_IGNORE_LOYALTY_LOSS})。` };
+      },
+
+      pacifyCultForce: (cultForceId, envoyOfficerId) => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        const cult = state.forces[cultForceId];
+        if (!cult || !isCultForce(cultForceId)) return { ok: false, message: '非邪教之眾,無所謂招安。' };
+        const envoy = state.officers[envoyOfficerId];
+        if (!envoy || envoy.forceId !== state.playerForceId || (envoy.status !== 'idle' && envoy.status !== 'active'))
+          return { ok: false, message: '使者不可用。' };
+        const cultCities = Object.values(state.cities).filter((c) => c.ownerForceId === cultForceId);
+        if (cultCities.length === 0) return { ok: false, message: '其眾已無城可據。' };
+        const reachable = cultCities.some((c) =>
+          (c.adjacentCityIds ?? []).some((id) => state.cities[id]?.ownerForceId === state.playerForceId),
+        );
+        if (!reachable) return { ok: false, message: '賊城不與我境相鄰,使節無路可通。' };
+        const player = state.forces[state.playerForceId];
+        const capital = player ? state.cities[player.capitalCityId] : null;
+        if (!capital || capital.gold < CULT_PACIFY_GOLD)
+          return { ok: false, message: `招安需金 ${CULT_PACIFY_GOLD}(賞賜安撫,國都支付)。` };
+        const cultTroops = cultCities.reduce((a, c) => a + c.troops, 0);
+        const res = resolveCultPacify({
+          cultForce: cult,
+          envoy,
+          cultCityCount: cultCities.length,
+          cultTroops,
+          mandate: state.mandate.byForce[state.playerForceId] ?? 50,
+          rng: Math.random,
+        });
+        const cities = { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - CULT_PACIFY_GOLD } };
+        if (res.success) {
+          for (const c of cultCities) {
+            cities[c.id] = { ...cities[c.id], ownerForceId: state.playerForceId, loyalty: 55, troops: Math.floor(cities[c.id].troops * 0.75) };
+          }
+          const officers = { ...state.officers };
+          for (const o of Object.values(state.officers)) {
+            if (o.forceId === cultForceId && o.status !== 'dead') {
+              officers[o.id] = { ...o, forceId: state.playerForceId, loyalty: 60, status: 'idle', task: null };
+            }
+          }
+          const forces = { ...state.forces };
+          delete forces[cultForceId];
+          set({
+            cities,
+            officers,
+            forces,
+            annals: [
+              ...(state.annals ?? []),
+              { year: state.date.year, season: state.date.season, kind: 'unrest' as const, titleZh: '招安', textZh: res.messageZh, cityId: cultCities[0].id },
+            ].slice(-500),
+          });
+          return { ok: true, success: true, message: res.messageZh };
+        }
+        for (const c of cultCities) {
+          cities[c.id] = { ...cities[c.id], troops: cities[c.id].troops + 400 };
+        }
+        const officers = res.envoySeized
+          ? { ...state.officers, [envoy.id]: { ...envoy, status: 'imprisoned' as const, locationCityId: cult.capitalCityId, task: null } }
+          : state.officers;
+        set({ cities, officers });
+        return { ok: true, success: false, message: res.messageZh };
+      },
+
+      dispatchPacifyMission: (officerId, cityId) => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: 'No player force.' };
+        const officer = state.officers[officerId];
+        if (!officer || officer.forceId !== state.playerForceId || officer.status !== 'idle')
+          return { ok: false, message: '此人不可差遣。' };
+        if (state.pacifyMissions?.[officerId]) return { ok: false, message: '其人已在宣撫任上。' };
+        const city = state.cities[cityId];
+        if (!city || city.ownerForceId !== state.playerForceId) return { ok: false, message: 'Not your city.' };
+        const player = state.forces[state.playerForceId];
+        const capital = player ? state.cities[player.capitalCityId] : null;
+        if (!capital || capital.gold < PACIFY_MISSION_COST)
+          return { ok: false, message: `宣撫需金 ${PACIFY_MISSION_COST}(齎賞開倉,國都支付)。` };
+        set({
+          cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - PACIFY_MISSION_COST } },
+          officers: { ...state.officers, [officerId]: { ...officer, status: 'active', locationCityId: cityId, task: null } },
+          pacifyMissions: { ...(state.pacifyMissions ?? {}), [officerId]: { cityId, seasonsLeft: PACIFY_MISSION_SEASONS } },
+        });
+        return { ok: true, message: `${officer.name.zh}奉命宣撫${city.name.zh} — 開倉講道、曉諭愚民,${PACIFY_MISSION_SEASONS} 季之內妖言難侵。` };
       },
 
       seizeSite: (siteId, attackerOfficerId, troops) => {
@@ -13589,6 +14478,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const fresh = {
           ...loaded,
           tribeState: loaded.tribeState ?? EMPTY_STATE.tribeState,
+          tribeDiplomacy: loaded.tribeDiplomacy ?? emptyTribeDiplomacy(),
+          lastSuburbanRiteYear: loaded.lastSuburbanRiteYear ?? null,
+          rainRiteDone: loaded.rainRiteDone ?? false,
+          pendingRelief: loaded.pendingRelief ?? [],
+          plagueRiskCityIds: loaded.plagueRiskCityIds ?? [],
+          pacifyMissions: loaded.pacifyMissions ?? {},
+          annals: loaded.annals ?? [],
           pendingEspionage: loaded.pendingEspionage ?? [],
           embeddedSpies: loaded.embeddedSpies ?? [],
           edictHistory: loaded.edictHistory ?? [],
@@ -13722,6 +14618,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         edictHistory: state.edictHistory,
         edictCooldowns: state.edictCooldowns,
         tribeState: state.tribeState,
+        tribeDiplomacy: state.tribeDiplomacy,
+        lastSuburbanRiteYear: state.lastSuburbanRiteYear,
+        rainRiteDone: state.rainRiteDone,
+        pendingRelief: state.pendingRelief,
+        plagueRiskCityIds: state.plagueRiskCityIds,
+        pacifyMissions: state.pacifyMissions,
+        annals: state.annals,
         soundEnabled: state.soundEnabled,
         buildings: state.buildings,
         tradeRoutes: state.tradeRoutes,

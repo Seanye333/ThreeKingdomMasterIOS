@@ -128,3 +128,33 @@ describe('rollBehaviorEvent', () => {
     expect(ev).toBeNull();
   });
 });
+
+describe('§8.5 天命 beats — 勸進 & 眾叛親離', () => {
+  const eightCities = Object.fromEntries(
+    Array.from({ length: 8 }, (_, i) => [`c${i}`, city(`c${i}`, 'p', 500, 70)]),
+  );
+
+  it('at 天命所歸 with a broad realm the court urges the throne', () => {
+    const ev = rollBehaviorEvent(ctx({
+      cities: eightCities,
+      officers: { r: ruler('r', 'p'), a: idleOfficer('a', 'p', 70) },
+      mandateByForce: { p: 92 },
+    }));
+    expect(ev?.id).toBe('behavior-mandate-urge');
+    expect(ev?.chooserRulerId).toBe('r');
+    expect(ev?.choices?.some((c) => c.effects.some((e) => e.kind === 'mandate-ruler'))).toBe(true);
+  });
+
+  it('needs both the mandate and the realm — 90 mandate with 2 cities stays quiet', () => {
+    const ev = rollBehaviorEvent(ctx({ mandateByForce: { p: 92 } }));
+    expect(ev?.id).not.toBe('behavior-mandate-urge');
+  });
+
+  it('a mandate in ashes brings 眾叛親離', () => {
+    const ev = rollBehaviorEvent(ctx({ mandateByForce: { p: 5 } }));
+    expect(ev?.id).toBe('behavior-mandate-collapse');
+    // The penance path lifts the mandate back.
+    const penance = ev?.choices?.find((c) => c.id === 'penance');
+    expect(penance?.effects.some((e) => e.kind === 'mandate-ruler' && e.delta > 0)).toBe(true);
+  });
+});

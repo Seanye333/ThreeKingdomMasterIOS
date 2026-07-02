@@ -86,6 +86,21 @@ export const ELITE_TROOPS: EliteTroop[] = [
     warBonus: 4,
   },
   {
+    id: 'nanzhong-elephants',
+    name: { zh: '南中象兵', en: 'Nanzhong War Elephants' },
+    description:
+      "The tusked war-beasts of the deep south — Mu Lu's beast-corps and Meng Huo's royal herd. Horses bolt at their scent; a charge flattens palisades.",
+    descriptionZh: "南中深林之戰象——木鹿大王之獸兵、孟獲王帳之象陣。馬聞其氣而驚潰,衝鋒之勢可摧柵壘。",
+    commanderIds: ['meng-huo', 'mu-lu'],
+    powerMultiplier: 1.22,
+    ownLossMultiplier: 0.85,
+    warBonus: 9,
+    weakness: {
+      zh: '性畏火光鑼鼓 — 火攻驚象,反踐己陣',
+      en: 'Fire and din panic the beasts — they trample their own lines.',
+    },
+  },
+  {
     id: 'wuhuan-cavalry',
     name: { zh: '烏丸突騎', en: 'Wuhuan Mounted Vanguard' },
     description:

@@ -117,3 +117,21 @@ describe('§7.2 再深化 — 假詔 / 詐敗 / 無中生有', () => {
     }
   });
 });
+
+describe('§8.5 造讖惑眾', () => {
+  it('targets any rival realm, never yourself', () => {
+    expect(validateScheme('prophecy', cities, 'wei', 'shu')).toBeNull();
+    expect(validateScheme('prophecy', cities, 'wei', 'wei')).toBe('不可以己方為目標');
+  });
+  it('a lofty mandate makes a juicier target; a sharp mind forges better', () => {
+    const sage = mkOfficer({ stats: { intelligence: 90 } });
+    const vsLofty = schemeOdds('prophecy', diplo(0), sage, 'shu', undefined, undefined, 90);
+    const vsLow = schemeOdds('prophecy', diplo(0), sage, 'shu', undefined, undefined, 20);
+    expect(vsLofty).toBeGreaterThan(vsLow);
+    const dull = schemeOdds('prophecy', diplo(0), mkOfficer({ stats: { intelligence: 40 } }), 'shu', undefined, undefined, 90);
+    expect(vsLofty).toBeGreaterThan(dull);
+  });
+  it('a plot, not an embassy — exposure is possible', () => {
+    expect(schemeExposureChance('prophecy', true, 70)).toBeGreaterThan(0);
+  });
+});

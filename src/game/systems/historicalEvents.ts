@@ -165,6 +165,8 @@ export interface EventApplyOutput {
     rejectPenalty?: number;
     grantBonus?: number;
   }>;
+  /** §8.5 — 天命 deltas emitted by 'mandate-ruler' effects (forceId resolved). */
+  mandateDeltas?: Array<{ forceId: EntityId; delta: number }>;
 }
 
 /**
@@ -181,11 +183,12 @@ export function applyEventEffects(
   const eventFlags = { ...ctx.eventFlags };
   const appointmentGrants: NonNullable<EventApplyOutput['appointmentGrants']> = [];
   const forcedWishes: NonNullable<EventApplyOutput['forcedWishes']> = [];
+  const mandateDeltas: NonNullable<EventApplyOutput['mandateDeltas']> = [];
 
   for (const e of evt.effects) {
-    applySingleEffect(e, { cities, officers, forces, eventFlags, appointmentGrants, forcedWishes });
+    applySingleEffect(e, { cities, officers, forces, eventFlags, appointmentGrants, forcedWishes, mandateDeltas });
   }
-  return { cities, officers, forces, eventFlags, appointmentGrants, forcedWishes };
+  return { cities, officers, forces, eventFlags, appointmentGrants, forcedWishes, mandateDeltas };
 }
 
 function applySingleEffect(
@@ -321,5 +324,42 @@ function applySingleEffect(
         grantBonus: e.grantBonus,
       });
       break;
+    case 'mandate-ruler': {
+      // §8.5 — resolve the force by its ruler; the store applies the delta.
+      const f = Object.values(mut.forces).find(
+        (force) => force.rulerOfficerId === e.rulerOfficerId,
+      );
+      if (f) mut.mandateDeltas?.push({ forceId: f.id, delta: e.delta });
+      break;
+    }
+    case 'force-troops-multiplier-ruler': {
+      const f = Object.values(mut.forces).find(
+        (force) => force.rulerOfficerId === e.rulerOfficerId,
+      );
+      if (!f) break;
+      for (const c of Object.values(mut.cities)) {
+        if (c.ownerForceId === f.id) {
+          mut.cities[c.id] = {
+            ...c,
+            troops: Math.max(100, Math.floor(c.troops * e.multiplier)),
+          };
+        }
+      }
+      break;
+    }
+    case 'force-gold-ruler': {
+      const f = Object.values(mut.forces).find(
+        (force) => force.rulerOfficerId === e.rulerOfficerId,
+      );
+      if (!f) break;
+      const capital = mut.cities[f.capitalCityId];
+      if (capital) {
+        mut.cities[f.capitalCityId] = {
+          ...capital,
+          gold: Math.max(0, capital.gold + e.delta),
+        };
+      }
+      break;
+    }
   }
 }

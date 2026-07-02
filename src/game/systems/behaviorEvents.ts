@@ -20,6 +20,8 @@ export interface BehaviorEventContext {
   taxPolicy: Record<EntityId, TaxRate>;
   playerForceId: EntityId | null;
   firedEventIds: EntityId[];
+  /** §8.5 — per-force 天命 (0–100); drives the 勸進/眾叛親離 beats. */
+  mandateByForce?: Record<EntityId, number>;
   rng?: () => number;
 }
 
@@ -68,7 +70,86 @@ export function rollBehaviorEvent(ctx: BehaviorEventContext): HistoricalEvent | 
   const cityLoyaltyAll = (delta: number): EventEffect[] =>
     cities.map((c) => ({ kind: 'city-loyalty', cityId: c.id, delta }));
 
+  const playerMandate = ctx.mandateByForce?.[playerForceId] ?? 50;
+  const loyalOfficers = Object.values(ctx.officers)
+    .filter((o) => o.forceId === playerForceId && o.id !== rulerId && o.status !== 'dead' && o.status !== 'imprisoned')
+    .sort((a, b) => b.loyalty - a.loyalty);
+
   const candidates: Candidate[] = [
+    // §8.5 勸進 — at 天命所歸 the court presses the throne on you.
+    {
+      id: 'behavior-mandate-urge',
+      build: () => {
+        if (playerMandate < 90 || cities.length < 8) return null;
+        const choices: EventChoice[] = [
+          {
+            id: 'accept',
+            label: { zh: '順天應人,築壇備禮', en: 'Bow to Heaven — raise the altar' },
+            effects: [
+              { kind: 'mandate-ruler', rulerOfficerId: rulerId, delta: 6 },
+              { kind: 'force-gold', forceId: playerForceId, delta: -2000 },
+              ...loyalOfficers.slice(0, 8).map((o): EventEffect => ({ kind: 'officer-loyalty', officerId: o.id, delta: 5 })),
+              { kind: 'flag', key: 'urged-enthrone' },
+            ],
+          },
+          {
+            id: 'decline',
+            label: { zh: '三讓而不受,以示謙德', en: 'Decline thrice — let virtue speak' },
+            effects: [
+              { kind: 'mandate-ruler', rulerOfficerId: rulerId, delta: 3 },
+              ...cityLoyaltyAll(3),
+            ],
+          },
+        ];
+        return event(
+          'behavior-mandate-urge', rulerId,
+          { zh: '群臣勸進', en: 'The Court Urges the Throne' },
+          {
+            zh: '祥瑞屢見,天命所歸。群臣百官伏闕上表:「天與不取,反受其咎 — 願主公早正大位,以安天下!」',
+            en: 'Portent upon portent — Heaven\'s favor is plain. The assembled court kneels with a memorial: "What Heaven offers and one refuses becomes a curse. Take the high seat, my lord, and steady the realm!"',
+          },
+          'auspicious',
+          choices,
+        );
+      },
+    },
+
+    // §8.5 眾叛親離 — with the mandate in ashes, the court starts eyeing the door.
+    {
+      id: 'behavior-mandate-collapse',
+      build: () => {
+        if (playerMandate >= 12) return null;
+        const shakiest = [...loyalOfficers].reverse()[0] ?? null;
+        const choices: EventChoice[] = [
+          {
+            id: 'penance',
+            label: { zh: '下罪己詔,開倉賑民', en: 'Issue a penance edict — open the granaries' },
+            effects: [
+              { kind: 'mandate-ruler', rulerOfficerId: rulerId, delta: 10 },
+              { kind: 'force-gold', forceId: playerForceId, delta: -500 },
+              ...cityLoyaltyAll(4),
+            ],
+          },
+          {
+            id: 'deny',
+            label: { zh: '諱而不宣,鎮之以威', en: 'Say nothing — rule by awe' },
+            effects: shakiest
+              ? [{ kind: 'officer-loyalty', officerId: shakiest.id, delta: -15 }]
+              : [],
+          },
+        ];
+        return event(
+          'behavior-mandate-collapse', rulerId,
+          { zh: '天命已去,眾叛親離', en: 'The Mandate in Ashes' },
+          {
+            zh: '彗星再見,讖謠四起:「天厭之矣。」朝士交頭接耳,吏民逃亡日眾。老臣泣諫:「主公,人心將散,不可不察!」',
+            en: 'The comet returns and the ballads say Heaven has turned its face. Courtiers whisper; clerks and commoners slip away by night. An old minister weeps: "My lord — the hearts of men are scattering."',
+          },
+          'ominous',
+          choices,
+        );
+      },
+    },
     // 倉廩盈溢 — a swollen treasury invites a choice: spend it on the people,
     // on the army, or sit on it.
     {

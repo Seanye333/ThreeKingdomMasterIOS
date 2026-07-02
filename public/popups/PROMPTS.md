@@ -48,6 +48,11 @@ A vast dark swarm of locusts blotting out the sun over Han-dynasty grain fields,
 ```
 MOTION: `the locust swarm churns and surges across the sky, peasants flail, dust drifts.`
 
+### `disaster-quake` ⏳(§8.2 地動;缺圖前以樣式卡顯示)
+```
+A Han-dynasty walled mountain city shaken by a violent earthquake, rammed-earth ramparts cracking and a watchtower collapsing in a plume of dust, roof tiles cascading into the streets, fleeing townsfolk shielding their heads, a great fissure splitting the stone-flagged avenue, ominous ochre dust-light.
+```
+
 ### `specialty-discovered` ⏳
 ```
 Officials and merchants marveling at a freshly opened chest of rare regional treasure (bolts of fine silk, jade, lacquerware, or a string of fine horses) in a bustling Han-dynasty market courtyard, golden light, banners, prosperity and discovery.
@@ -169,4 +174,58 @@ Between two facing armies, a lone champion rides out before the ranks and points
 ### `duel-hall-legend` ⏳
 ```
 The candle-lit gallery of a Hall of Famous Bouts, scroll paintings freezing the finest single-combat duels in heroic poses, later visitors pausing in awe beneath them, elegant golden lamplight, dark lacquered beams, the enshrining of a timeless legendary bout.
+```
+
+---
+
+## 第七章 · 外交/謀略/天子
+
+### `founding-ceremony` ✅ 🎬
+```
+The grand founding rite of a new dynasty: a new sovereign in imperial crown (mianliu bead-curtain) and dragon robes ascending a great altar to receive the seal of state, ranks of officials in court dress bowing on the red terrace below, the banners of the new dynasty filling the sky, golden light and drifting incense, the dawn of an imperial age, awe and grandeur.
+```
+
+### `welcome-emperor` ✅
+```
+A Han-dynasty capital receiving the Son of Heaven: the imperial carriage under a yellow silk canopy and jade-fitted chariot rolling through the great city gate, ranks of officials kneeling in welcome at the outskirts, forests of imperial standards and feathered halberds, reverent solemnity, warm golden light.
+```
+
+### `throne-abdication` ✅
+```
+An abdication ceremony on a high altar terrace: the old sovereign descending the steps as he yields the Imperial Seal, the new emperor receiving it and ascending to the throne, blue incense smoke and offerings of jade and silk, assembled ministers, a bittersweet and solemn changing of the mandate, cold dawn light.
+```
+
+### `imperial-honors` ✅
+```
+Rites at the summit of Mount Tai (Feng-Shan): an emperor performing the sacrifice to Heaven at a stone altar above a sea of clouds at sunrise, the Nine Bestowments — ceremonial chariot, crown, robes, bow-and-arrows, axes — arrayed on the terrace, banners and attendants, telling of accomplishment to Heaven, sublime and majestic.
+```
+
+### `alliance-sealed` ✅
+```
+Two rival lords swearing a blood alliance at an oath altar, drinking the pledge from bronze vessels, the banners of both realms standing side by side, an envoy holding the oath-covenant scroll, braziers and incense, solemn mutual vow, golden dusk light.
+```
+
+### `vassal-submits` ✅
+```
+A weaker lord presenting his submission before a mightier ruler: the vassal kneeling and offering up a memorial of fealty, tribute and a seal-ribbon held out in both hands, the suzerain seated high receiving the homage, ranks of guards and banners, clear hierarchy of lord and vassal, solemn court hall.
+```
+
+### `marriage-alliance` ✅
+```
+A political marriage alliance between two houses: a bridal procession with a red-canopied palanquin, a bride in phoenix coronet and red wedding robes, the banners of the two clans intertwined, musicians and lantern-bearers, festive yet stately, the sealing of a bond between realms, warm celebratory light.
+```
+
+### `foreign-embassy` ✅ 🎬
+```
+An embassy caravan crossing the Silk Road toward a distant foreign realm: a camel train with an envoy bearing a feathered diplomatic staff winding across vast desert dunes toward exotic Roman/Persian palace domes on the horizon, camel bells, ceremonial banners, sweeping golden light, the opening of relations with a far land.
+```
+
+### `righteous-banner` ✅
+```
+A righteous war proclaimed: a general raising a great banner of just cause atop an oath-swearing platform, reading a denunciation to massed troops below, white yak-tail standard and golden axe of command, indignant soldiers, dust and dawn light, a war of righteous rebuke, martial solemnity.
+```
+
+### `espionage-success` ⏳
+```
+A covert operation succeeding under cover of night: a shadowy agent slipping through the dark to set a fire at an enemy camp, or in a lamplit chamber passing a forged discord-letter, glinting dagger in shadow, tense and clandestine, deep chiaroscuro, the intrigue of spies.
 ```

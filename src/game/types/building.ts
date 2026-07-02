@@ -36,6 +36,7 @@ export type BuildingId =
   | 'signaltower' // 譙樓 — signal tower: city defense + watch (instigate resistance)
   | 'fieldhospital' // 傷兵營 — field hospital: speeds officer wound recovery + loyalty
   | 'daotemple'  // 道觀 — Daoist temple: resists cult contagion + loyalty
+  | 'lingtai'    // 靈台 — star terrace: disaster loyalty shield + ill-omen deflection
   | 'worksbureau' // 將作監 — works bureau: cheaper & faster construction of other buildings
   | 'tavern'     // 酒肆 — tavern: faster officer rapport growth + loyalty + commerce
   | 'prison'     // 牢城 — prison/court: defection resistance + instigate resistance

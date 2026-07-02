@@ -13,6 +13,10 @@ export type EventEffect =
   | { kind: 'officer-status'; officerId: EntityId; status: 'dead' | 'idle' | 'imprisoned' }
   | { kind: 'officer-join'; officerId: EntityId; forceId: EntityId }
   | { kind: 'officer-join-ruler'; officerId: EntityId; rulerOfficerId: EntityId } // join the force whose ruler is rulerOfficerId (resolved at runtime — scenario-agnostic)
+  // Ruler-resolved force effects (scenario-agnostic, like officer-join-ruler):
+  | { kind: 'mandate-ruler'; rulerOfficerId: EntityId; delta: number }            // §8.5 — shift the 天命 of the force this officer rules
+  | { kind: 'force-troops-multiplier-ruler'; rulerOfficerId: EntityId; multiplier: number }
+  | { kind: 'force-gold-ruler'; rulerOfficerId: EntityId; delta: number }
   | { kind: 'spawn-rebel-force'; cityId: EntityId; troops: number; label: BilingualName }
   | { kind: 'grant-title'; officerId: EntityId; titleId: import('./title').CivicTitleId; cityId?: EntityId }
   | { kind: 'force-wish'; officerId: EntityId; wishKind: import('./family').WishKind; text: BilingualName; rejectPenalty?: number; grantBonus?: number }
@@ -67,4 +71,17 @@ export interface EventChoice {
   id: string;
   label: BilingualName;
   effects: EventEffect[];
+}
+
+/** §8.1-deep 事件簿(本朝災異志)— one line of the running annals the
+ *  player can browse: history beats, omens, disasters, frontier alarms,
+ *  risings and rites, in the order they befell the realm. (Distinct from
+ *  the victory-recap `chronicle`, which tracks conquests/works.) */
+export interface AnnalsEntry {
+  year: number;
+  season: 'spring' | 'summer' | 'autumn' | 'winter';
+  kind: 'event' | 'omen' | 'disaster' | 'frontier' | 'unrest' | 'rite';
+  titleZh: string;
+  textZh: string;
+  cityId?: EntityId | null;
 }

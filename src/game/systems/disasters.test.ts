@@ -40,12 +40,13 @@ describe('flood vs levee', () => {
 
 describe('famine vs granary / plague vs infirmary', () => {
   it('granary blunts the famine loss', () => {
+    // First roll = the §8.2-deep 地動 gate (0.9 → no quake), then the famine roll.
     const bare = rollEvents({
-      season: 'spring', cities: { ye: mkCity() }, officers: {}, rng: rngFrom([0.001]),
+      season: 'spring', cities: { ye: mkCity() }, officers: {}, rng: rngFrom([0.9, 0.001]),
     });
     const insured = rollEvents({
       season: 'spring', cities: { ye: mkCity() }, officers: {},
-      buildings: [works('granary', 3)], rng: rngFrom([0.001]),
+      buildings: [works('granary', 3)], rng: rngFrom([0.9, 0.001]),
     });
     const bareLoss = 40_000 - bare.cities.ye.food;
     const insuredLoss = 40_000 - insured.cities.ye.food;
@@ -57,12 +58,13 @@ describe('famine vs granary / plague vs infirmary', () => {
     // 0.009 < PLAGUE_CHANCE 0.01 fires bare; with L3 infirmary the
     // threshold drops to 0.0025 and the same roll passes safely.
     const mk = () => mkCity({ food: 0 }); // famine roll consumes nothing when food=0
+    // First roll = the §8.2-deep 地動 gate (0.9 → no quake), then the plague roll.
     const bare = rollEvents({
-      season: 'spring', cities: { ye: mk() }, officers: {}, rng: rngFrom([0.009]),
+      season: 'spring', cities: { ye: mk() }, officers: {}, rng: rngFrom([0.9, 0.009]),
     });
     const treated = rollEvents({
       season: 'spring', cities: { ye: mk() }, officers: {},
-      buildings: [works('infirmary', 3)], rng: rngFrom([0.009]),
+      buildings: [works('infirmary', 3)], rng: rngFrom([0.9, 0.009]),
     });
     expect(bare.entries.some((e) => e.kind === 'plague')).toBe(true);
     expect(treated.entries.some((e) => e.kind === 'plague')).toBe(false);

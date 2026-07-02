@@ -110,6 +110,7 @@ export type ReportEntryKind =
   | 'expedition'
   | 'tribe-raid'
   | 'edict'
+  | 'quake'
   | 'note';
 
 export interface BattleSideDetail {

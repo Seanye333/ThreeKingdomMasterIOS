@@ -203,6 +203,16 @@ export const BUILDING_DEFS: BuildingDef[] = [
     effect: 'cult contagion resist / +1 loyalty per season per level',
   },
   {
+    id: 'lingtai',
+    name: { en: 'Star Terrace', zh: '靈台' },
+    description: 'Observatory of the court astronomers. Disaster loyalty hits in this city −25% per level; realm-wide, ill omens may be ritually deflected (20% per best level).',
+    descriptionZh: "太史觀星之台。本城天災民忠損失每等級 −25%;且太史令可禳解凶兆 — 凶兆襲主公時,每最高等級 20% 機率移禍他國。",
+    goldPerLevel: 700,
+    seasonsPerLevel: 3,
+    maxLevel: 3,
+    effect: 'disaster loyalty shield / ill-omen deflection per level',
+  },
+  {
     id: 'worksbureau',
     name: { en: 'Works Bureau', zh: '將作監' },
     description: 'Directs construction. Other buildings here cost 10% less and build faster per level.',
@@ -454,6 +464,7 @@ export const BUILDING_CATEGORY: Record<BuildingId, BuildingCategory> = {
   // 民政
   temple: 'civic', infirmary: 'civic', levee: 'civic', civicoffice: 'civic',
   fieldhospital: 'civic', daotemple: 'civic', tavern: 'civic', prison: 'civic',
+  lingtai: 'civic',
   // 諜報
   spyoffice: 'intel', scoutcamp: 'intel',
 };

@@ -15,12 +15,31 @@ export interface EventsInput {
   rng: () => number;
   /** 天災頻率 — multiplier on famine/plague/flood chances. Default 1. */
   disasterMul?: number;
+  /** §8.2-deep 賑災 — disasters in this force's cities queue relief prompts;
+   *  AI-owned cities self-relieve when their granaries allow. */
+  playerForceId?: EntityId | null;
+  /** §8.2-deep 大災之後必有大疫 — cities struck by flood/famine/quake LAST
+   *  season carry 3× plague odds this season. */
+  plagueRiskCityIds?: EntityId[];
+}
+
+/** §8.2-deep — a disaster the player may still answer (開倉賑濟/徙民/坐視). */
+export interface ReliefPrompt {
+  cityId: EntityId;
+  kind: 'famine' | 'plague' | 'flood' | 'quake';
 }
 
 export interface EventsOutput {
   cities: Record<EntityId, City>;
   officers: Record<EntityId, Officer>;
   entries: ReportEntry[];
+  /** §8.2-deep 賑災 — player cities awaiting a relief decision this season. */
+  reliefPrompts: ReliefPrompt[];
+  /** §8.2-deep 地動 — buildings toppled a level by this season's earthquakes. */
+  buildingLevelDrops: Array<{ cityId: EntityId; buildingId: string }>;
+  /** §8.2-deep — every city struck by flood/famine/quake this season (any
+   *  owner); they carry elevated plague odds NEXT season. */
+  struckCityIds: EntityId[];
 }
 
 const REBELLION_CHANCE = 0.12; // when loyalty < 30
@@ -28,6 +47,7 @@ const HARVEST_BOON_CHANCE = 0.12; // autumn only
 const FAMINE_CHANCE = 0.02;
 const PLAGUE_CHANCE = 0.01;
 const FLOOD_CHANCE = 0.02; // summer only — the rivers rise
+const QUAKE_CHANCE = 0.008; // 地動 — rare, terrain-biased (mountains ×2.5)
 const WANDERING_TALENT_CHANCE = 0.18; // overall, per season
 
 export function rollEvents(input: EventsInput): EventsOutput {
@@ -37,8 +57,37 @@ export function rollEvents(input: EventsInput): EventsOutput {
   const worksLevel = (cityId: EntityId, id: string): number =>
     input.buildings?.find((b) => b.cityId === cityId && b.id === id)?.level ?? 0;
   const entries: ReportEntry[] = [];
+  const reliefPrompts: ReliefPrompt[] = [];
+  const buildingLevelDrops: Array<{ cityId: EntityId; buildingId: string }> = [];
+  const struckCityIds: EntityId[] = [];
+  const plagueRisk = new Set(input.plagueRiskCityIds ?? []);
   // 天災頻率 — scales famine/plague/flood likelihood (after works mitigation).
   const dm = input.disasterMul ?? 1;
+  // 靈台 — the astronomers' warnings steady the populace: disaster LOYALTY
+  // hits in a 靈台 city shrink 25% per level (the physical loss stands).
+  const loyaltyHit = (cityId: EntityId, base: number): number =>
+    Math.round(base * (1 - 0.25 * Math.min(3, worksLevel(cityId, 'lingtai'))));
+  // §8.2-deep — the aftermath: player cities queue a relief decision; a
+  // provisioned AI court opens its own granaries on the spot (half the
+  // loyalty hit, at a price in food). Returns the loyalty delta to apply.
+  const afterDisaster = (
+    c: City,
+    kind: ReliefPrompt['kind'],
+    baseLoyaltyLoss: number,
+  ): { loyaltyLoss: number; foodSpent: number } => {
+    // 大災之後必有大疫 — a struck city breeds next season's pestilence.
+    if (kind !== 'plague') struckCityIds.push(c.id);
+    const shielded = loyaltyHit(c.id, baseLoyaltyLoss);
+    if (c.ownerForceId && c.ownerForceId === input.playerForceId) {
+      reliefPrompts.push({ cityId: c.id, kind });
+      return { loyaltyLoss: shielded, foodSpent: 0 };
+    }
+    const cost = Math.max(300, Math.floor(c.population / 40));
+    if (c.ownerForceId && c.food > c.population / 20 && input.rng() < 0.6) {
+      return { loyaltyLoss: Math.floor(shielded / 2), foodSpent: cost };
+    }
+    return { loyaltyLoss: shielded, foodSpent: 0 };
+  };
 
   // Per-city rolls.
   for (const c of Object.values(cities)) {
@@ -88,11 +137,12 @@ export function rollEvents(input: EventsInput): EventsOutput {
         input.rng() < FLOOD_CHANCE * dm * (1 - levee / 3)
       ) {
         const lost = Math.floor(cities[c.id].food * 0.3);
+        const relief = afterDisaster(cities[c.id], 'flood', 4);
         cities[c.id] = {
           ...cities[c.id],
-          food: cities[c.id].food - lost,
+          food: Math.max(0, cities[c.id].food - lost - relief.foodSpent),
           defense: Math.max(0, cities[c.id].defense - 8),
-          loyalty: Math.max(0, cities[c.id].loyalty - 4),
+          loyalty: Math.max(0, cities[c.id].loyalty - relief.loyaltyLoss),
         };
         entries.push({
           cityId: c.id,
@@ -104,14 +154,53 @@ export function rollEvents(input: EventsInput): EventsOutput {
       }
     }
 
+    // 地動 — the earth shakes. Walls crack, roofs fall, works topple a level;
+    // mountain cities sit closest to the fault. 靈台 steadies the people.
+    {
+      const quakeChance =
+        QUAKE_CHANCE * dm * (c.terrain === 'mountain' ? 2.5 : 1);
+      if (input.rng() < quakeChance) {
+        const cur = cities[c.id];
+        const defLost = 10 + Math.floor(input.rng() * 10);
+        const troopLost = Math.floor(cur.troops * 0.02);
+        const foodLost = Math.floor(cur.food * 0.05);
+        const relief = afterDisaster(cur, 'quake', 6);
+        cities[c.id] = {
+          ...cur,
+          defense: Math.max(0, cur.defense - defLost),
+          troops: Math.max(0, cur.troops - troopLost),
+          food: Math.max(0, cur.food - foodLost - relief.foodSpent),
+          loyalty: Math.max(0, cur.loyalty - relief.loyaltyLoss),
+        };
+        // Up to two built structures each lose a level in the rubble.
+        const built = (input.buildings ?? []).filter(
+          (b) => b.cityId === c.id && b.level > 0,
+        );
+        const toppleCount = Math.min(built.length, 1 + (input.rng() < 0.5 ? 1 : 0));
+        for (let i = 0; i < toppleCount; i++) {
+          const idx = Math.floor(input.rng() * built.length);
+          const [hit] = built.splice(idx, 1);
+          if (hit) buildingLevelDrops.push({ cityId: c.id, buildingId: hit.id });
+        }
+        entries.push({
+          cityId: c.id,
+          kind: 'quake',
+          text: `The earth shakes at ${c.name.en}! Walls crack (−${defLost} defense)${toppleCount ? `, ${toppleCount} structure(s) damaged` : ''}.`,
+          textZh: `${c.name.zh}地動山搖!城垣崩裂(城防 −${defLost})${toppleCount ? `,${toppleCount} 處工事傾頹` : ''},民情惶惶。`,
+        });
+        continue;
+      }
+    }
+
     // Famine: spoiled stores / drought. Granaries blunt both odds and loss.
     const granary = worksLevel(c.id, 'granary');
     if (cities[c.id].food > 0 && input.rng() < FAMINE_CHANCE * dm * (1 - 0.2 * granary)) {
       const lost = Math.floor(cities[c.id].food * 0.4 * (1 - 0.25 * granary));
+      const relief = afterDisaster(cities[c.id], 'famine', 5);
       cities[c.id] = {
         ...cities[c.id],
-        food: cities[c.id].food - lost,
-        loyalty: Math.max(0, cities[c.id].loyalty - 5),
+        food: Math.max(0, cities[c.id].food - lost - relief.foodSpent),
+        loyalty: Math.max(0, cities[c.id].loyalty - relief.loyaltyLoss),
       };
       entries.push({
         cityId: c.id,
@@ -124,14 +213,19 @@ export function rollEvents(input: EventsInput): EventsOutput {
 
     // Plague: hits population & troops. Infirmaries quarantine and treat.
     const infirmary = worksLevel(c.id, 'infirmary');
-    if (cities[c.id].population > 50_000 && input.rng() < PLAGUE_CHANCE * dm * (1 - 0.25 * infirmary)) {
+    if (
+      cities[c.id].population > 50_000 &&
+      input.rng() < PLAGUE_CHANCE * dm * (1 - 0.25 * infirmary) * (plagueRisk.has(c.id) ? 3 : 1)
+    ) {
       const popLost = Math.floor(cities[c.id].population * 0.1 * (1 - 0.25 * infirmary));
       const troopLost = Math.floor(cities[c.id].troops * 0.05 * (1 - 0.25 * infirmary));
+      const relief = afterDisaster(cities[c.id], 'plague', 5);
       cities[c.id] = {
         ...cities[c.id],
         population: cities[c.id].population - popLost,
         troops: Math.max(0, cities[c.id].troops - troopLost),
-        loyalty: Math.max(0, cities[c.id].loyalty - 5),
+        food: Math.max(0, cities[c.id].food - relief.foodSpent),
+        loyalty: Math.max(0, cities[c.id].loyalty - relief.loyaltyLoss),
       };
       entries.push({
         cityId: c.id,
@@ -174,7 +268,85 @@ export function rollEvents(input: EventsInput): EventsOutput {
     }
   }
 
-  return { cities, officers, entries };
+  return { cities, officers, entries, reliefPrompts, buildingLevelDrops, struckCityIds };
+}
+
+// ── §8.2-deep 建安大疫 — the Great Plague of 217 ──
+
+export const GREAT_PLAGUE_YEAR = 217;
+export const GREAT_PLAGUE_FLAG = 'jianan-plague';
+/** 建安七子 taken by the winter of 217 (孔融/阮瑀 were already gone). */
+export const GREAT_PLAGUE_VICTIMS = ['wang-can', 'chen-lin', 'xu-gan', 'ying-yang', 'liu-zhen'];
+
+/**
+ * 建安二十二年,大疫 — the empire-wide pestilence of 217. Every city bleeds
+ * population, troops and heart (醫館/靈台 blunt their shares); the surviving
+ * masters of the Jian'an literary age die in a single winter. Fires once,
+ * winter 217 only.
+ */
+export function rollGreatPlague(input: {
+  cities: Record<EntityId, City>;
+  officers: Record<EntityId, Officer>;
+  date: { year: number; season: Season };
+  buildings?: import('../types').Building[];
+  eventFlags: Record<string, boolean>;
+  rng: () => number;
+}): {
+  cities: Record<EntityId, City>;
+  officers: Record<EntityId, Officer>;
+  entries: ReportEntry[];
+  flagSet: boolean;
+} {
+  const none = { cities: input.cities, officers: input.officers, entries: [], flagSet: false };
+  if (input.eventFlags[GREAT_PLAGUE_FLAG]) return none;
+  if (input.date.year !== GREAT_PLAGUE_YEAR || input.date.season !== 'winter') return none;
+
+  const worksLevel = (cityId: EntityId, id: string): number =>
+    input.buildings?.find((b) => b.cityId === cityId && b.id === id)?.level ?? 0;
+
+  const cities = { ...input.cities };
+  const officers = { ...input.officers };
+  const entries: ReportEntry[] = [];
+
+  for (const c of Object.values(cities)) {
+    const infirmary = worksLevel(c.id, 'infirmary');
+    const keep = 1 - 0.2 * infirmary;
+    const lingtai = Math.min(3, worksLevel(c.id, 'lingtai'));
+    cities[c.id] = {
+      ...c,
+      population: Math.max(0, c.population - Math.floor(c.population * (0.05 + input.rng() * 0.03) * keep)),
+      troops: Math.max(0, c.troops - Math.floor(c.troops * 0.04 * keep)),
+      loyalty: Math.max(0, c.loyalty - Math.round(4 * (1 - 0.25 * lingtai))),
+    };
+  }
+
+  const fallen: string[] = [];
+  for (const oid of GREAT_PLAGUE_VICTIMS) {
+    const o = officers[oid];
+    if (o && o.status !== 'dead') {
+      officers[oid] = { ...o, status: 'dead', forceId: null, task: null };
+      fallen.push(o.name.zh);
+    }
+  }
+
+  entries.push({
+    cityId: null,
+    kind: 'plague',
+    text: `The Great Plague of 217 sweeps every province. ${fallen.length ? `The Jian'an masters — ${fallen.join(', ')} — die within the season.` : ''}`,
+    textZh: `建安二十二年,大疫 — 家家有僵屍之痛,室室有號泣之哀。${fallen.length ? `${fallen.join('、')}相繼殞於斯疫,建安風骨,一冬凋零。` : ''}`,
+  });
+
+  return { cities, officers, entries, flagSet: true };
+}
+
+// ── §8.2-deep 賑災 — answering a disaster ──
+export const RELIEF_LOYALTY_BONUS = 9;
+export const RELIEF_IGNORE_LOYALTY_LOSS = 5;
+export const RELIEF_MIGRATE_SHARE = 0.08;
+
+/** 開倉賑濟 food cost for a city (scaled to mouths to feed). */
+export function reliefFoodCost(city: City): number {
+  return Math.max(500, Math.floor(city.population / 40));
 }
 
 // ── Inn / tavern / wandering-swordsman flavor variations ──

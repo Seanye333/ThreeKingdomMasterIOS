@@ -462,6 +462,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     requires: [
       { kind: 'force-alive', forceId: 'force-cao-cao' },
       { kind: 'force-alive', forceId: 'force-sun-quan' },
+      { kind: 'flag-unset', key: 'chibi-chain-started' }, // superseded by the §8.1 choice chain
     ],
     description:
       'On the Yangtze, the allied fleets of Sun Quan and Liu Bei break the host of Cao Cao with a chained-ship fire attack. The dream of unification dies in the river\'s reflection.',
@@ -540,7 +541,10 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     name: { en: 'Liu Bei Dies at Baidicheng', zh: '劉備，白帝城没' },
     yearMin: 223,
     yearMax: 223,
-    requires: [{ kind: 'officer-active', officerId: 'liu-bei' }],
+    requires: [
+      { kind: 'officer-active', officerId: 'liu-bei' },
+      { kind: 'flag-unset', key: 'baidi-chain-started' }, // superseded by the §8.1 choice chain
+    ],
     description:
       'Heartbroken in defeat, Liu Bei dies at the White Emperor City, entrusting his son and his cause to Zhuge Liang.',
     descriptionZh: "劉備兵敗心碎,崩於白帝城,託孤於諸葛亮,以保其子嗣與大業。",
@@ -880,6 +884,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     season: 'spring',
     requires: [
       { kind: 'officer-active', officerId: 'sima-yi' },
+      { kind: 'flag-unset', key: 'gaopingling-chain-started' }, // superseded by the §8.1 choice chain
     ],
     description:
       'When Cao Shuang escorts the young emperor to sacrifice at the Gaoping tombs, Sima Yi seizes the capital, executes the Cao clan regents, and takes the reins of Wei. The Cao house survives in name only.',
@@ -1400,6 +1405,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     requires: [
       { kind: 'officer-active', officerId: 'zhuge-liang' },
       { kind: 'officer-alive', officerId: 'ma-su' },
+      { kind: 'flag-unset', key: 'jieting-chain-started' }, // superseded by the §8.1 choice chain
     ],
     description:
       'Against every instruction, Ma Su camps on the waterless hilltop at Jieting; Zhang He cuts the road and the army breaks. The law of the camp is the law: Zhuge Liang signs the order with tears on his face, then demotes himself three ranks for the defeat.',
@@ -1441,6 +1447,352 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     effects: [
       { kind: 'officer-loyalty', officerId: 'guan-yu', delta: 4 },
       { kind: 'flag', key: 'single-blade-meeting' },
+    ],
+  },
+  /* ─── §8.1-deep 赤壁連環 — three-step chain with choices ─────────────
+     苦肉計 (chooser 孫權) → 龐統獻連環 (chooser 曹操) → 火燒赤壁 (chooser
+     孫權). Each side of the war gets its own decision; the legacy one-shot
+     evt-battle-of-red-cliffs is gated off once this chain begins. */
+  {
+    id: 'evt-chibi-1',
+    name: { en: 'The Flesh-and-Blood Ruse', zh: '苦肉計' },
+    yearMin: 208,
+    yearMax: 209,
+    requires: [
+      { kind: 'officer-active', officerId: 'zhou-yu' },
+      { kind: 'officer-alive', officerId: 'huang-gai' },
+      { kind: 'officer-rules-cities-min', officerId: 'cao-cao', count: 6 },
+      { kind: 'flag-unset', key: 'three-kingdoms-formed' },
+    ],
+    description:
+      'Cao Cao\'s host darkens the northern bank. Zhou Yu proposes the oldest trick with the highest price: beat the veteran Huang Gai bloody before the assembled fleet, so his "defection" rings true.',
+    descriptionZh: '曹軍百萬,飲馬長江。周瑜獻計:當眾杖責老將黃蓋,以詐降取信曹操 — 苦肉之計,非至誠不能行。',
+    effects: [{ kind: 'flag', key: 'chibi-chain-started' }],
+    chooserRulerId: 'sun-quan',
+    mood: 'martial',
+    choices: [
+      {
+        id: 'kurou',
+        label: { zh: '依計行事 — 杖責黃蓋', en: 'Stage the beating' },
+        effects: [
+          { kind: 'flag', key: 'chibi-kurou' },
+          { kind: 'officer-loyalty', officerId: 'huang-gai', delta: 10 },
+        ],
+      },
+      {
+        id: 'refuse',
+        label: { zh: '不忍老將受辱,另尋他策', en: 'Spare the old general' },
+        effects: [{ kind: 'flag', key: 'chibi-no-kurou' }],
+      },
+    ],
+  },
+  {
+    id: 'evt-chibi-2',
+    name: { en: 'The Chained Ships', zh: '龐統獻連環' },
+    yearMin: 208,
+    yearMax: 209,
+    requires: [
+      { kind: 'flag-set', key: 'chibi-kurou' },
+      { kind: 'officer-alive', officerId: 'pang-tong' },
+      { kind: 'officer-alive', officerId: 'cao-cao' },
+    ],
+    description:
+      'Huang Gai\'s surrender letter has been received. Now a famed scholar, Pang Tong, arrives in the northern camp with a remedy for seasick soldiers: chain the ships bow to stern into one steady floating fortress.',
+    descriptionZh: '黃蓋降書已納。名士龐統復至曹營,獻策治北軍暈眩之疾:「以鐵環連舟,首尾相接,則如履平地。」',
+    effects: [],
+    chooserRulerId: 'cao-cao',
+    mood: 'mystic',
+    choices: [
+      {
+        id: 'chain',
+        label: { zh: '納連環之策,鎖艦為城', en: 'Chain the fleet' },
+        effects: [{ kind: 'flag', key: 'chibi-chained' }],
+      },
+      {
+        id: 'wary',
+        label: { zh: '疑其中詐,分屯艦隊', en: 'Suspect a trap — disperse the fleet' },
+        effects: [{ kind: 'flag', key: 'chibi-wary' }],
+      },
+    ],
+  },
+  {
+    id: 'evt-chibi-3',
+    name: { en: 'Fire on the Yangtze', zh: '火燒赤壁' },
+    yearMin: 208,
+    yearMax: 209,
+    requires: [
+      { kind: 'flag-set', key: 'chibi-chained' },
+      { kind: 'officer-active', officerId: 'zhou-yu' },
+    ],
+    description:
+      'The south-east wind rises against all season. The chained fleet lies fat on the water. Huang Gai\'s "surrender" squadron stands ready, holds full of oil and tinder. One signal will decide the age.',
+    descriptionZh: '東南風逆季而起,連環艦隊臃腫於江心。黃蓋「降船」二十艘滿載膏油,只待都督一聲令下。',
+    effects: [],
+    chooserRulerId: 'sun-quan',
+    mood: 'martial',
+    choices: [
+      {
+        id: 'burn',
+        label: { zh: '縱火!', en: 'Loose the fire ships!' },
+        effects: [
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'cao-cao', multiplier: 0.55 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: -10 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-quan', delta: 8 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'liu-bei', delta: 6 },
+          { kind: 'flag', key: 'chibi-burned' },
+          { kind: 'flag', key: 'three-kingdoms-formed' },
+        ],
+      },
+      {
+        id: 'clash',
+        label: { zh: '不用火攻,堂堂正正水戰決勝', en: 'Meet them ship to ship' },
+        effects: [
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'cao-cao', multiplier: 0.85 },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'sun-quan', multiplier: 0.9 },
+          { kind: 'flag', key: 'three-kingdoms-formed' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'evt-chibi-3b',
+    name: { en: 'Cao Cao Burns His Own Ships', zh: '曹操焚舟自退' },
+    yearMin: 208,
+    yearMax: 210,
+    requires: [
+      { kind: 'flag-set', key: 'chibi-wary' },
+      { kind: 'officer-alive', officerId: 'cao-cao' },
+    ],
+    description:
+      'Plague spreads through the dispersed northern fleet and the alliance holds the river. Rather than hand his ships to the enemy, Cao Cao burns them at anchor and marches home. The south stays unconquered.',
+    descriptionZh: '疫病流行,北軍分屯之艦隊士氣日沮,而孫劉聯軍扼守大江。曹操不欲以舟師資敵,自焚戰船,引軍北歸 — 江南遂不可圖。',
+    effects: [
+      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'cao-cao', multiplier: 0.8 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: -4 },
+      { kind: 'flag', key: 'three-kingdoms-formed' },
+    ],
+    mood: 'somber',
+  },
+
+  /* ─── §8.1-deep 街亭之守 — the 228 northern-expedition gamble ─────────
+     Choose the hill-loving theorist or the steady veteran; the 斬馬謖
+     reckoning only comes if the pass is lost. Gates off the legacy
+     one-shot evt-jieting-ma-su. */
+  {
+    id: 'evt-jieting-1',
+    name: { en: 'Who Holds Jieting?', zh: '街亭之守' },
+    yearMin: 228,
+    yearMax: 229,
+    requires: [
+      { kind: 'officer-active', officerId: 'zhuge-liang' },
+      { kind: 'officer-active', officerId: 'ma-su' },
+      { kind: 'officer-active', officerId: 'wang-ping' },
+      { kind: 'flag-unset', key: 'jieting-lost' },
+    ],
+    description:
+      'The northern expedition hangs on one mountain road. Ma Su — brilliant in council, untested in the field — begs for the command; the veteran Wang Ping stands silent at his shoulder. Zhang He\'s columns are three days out.',
+    descriptionZh: '北伐糧道,繫於街亭一線。馬謖願立軍令狀請守;宿將王平默立其側。張郃大軍,三日可至。',
+    effects: [{ kind: 'flag', key: 'jieting-chain-started' }],
+    chooserRulerId: 'liu-shan',
+    mood: 'martial',
+    choices: [
+      {
+        id: 'masu',
+        label: { zh: '用馬謖為主將(立軍令狀)', en: 'Give Ma Su the command' },
+        effects: [{ kind: 'flag', key: 'jieting-masu' }],
+      },
+      {
+        id: 'wangping',
+        label: { zh: '以王平為主將,當道下寨', en: 'Trust Wang Ping — camp astride the road' },
+        effects: [
+          { kind: 'flag', key: 'jieting-wangping' },
+          { kind: 'officer-loyalty', officerId: 'wang-ping', delta: 8 },
+          { kind: 'officer-loyalty', officerId: 'ma-su', delta: -5 },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'evt-jieting-2',
+    name: { en: 'Tears for Ma Su', zh: '揮淚斬馬謖' },
+    yearMin: 228,
+    yearMax: 230,
+    requires: [
+      { kind: 'flag-set', key: 'jieting-masu' },
+      { kind: 'officer-alive', officerId: 'ma-su' },
+      { kind: 'officer-active', officerId: 'zhuge-liang' },
+    ],
+    description:
+      'Against every instruction Ma Su camped on the waterless hilltop; Zhang He cut the road and the army broke. The signed pledge lies on the table. The law of the camp is the law — or is mercy wiser?',
+    descriptionZh: '馬謖違節度,捨水上山;張郃絕其汲道,街亭遂失,大軍倉皇而還。軍令狀在案 — 軍法如山,抑或惜才留之?',
+    effects: [
+      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'liu-shan', multiplier: 0.93 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'liu-shan', delta: -6 },
+      { kind: 'flag', key: 'jieting-lost' },
+    ],
+    chooserRulerId: 'liu-shan',
+    mood: 'somber',
+    choices: [
+      {
+        id: 'execute',
+        label: { zh: '依法斬之,以明軍紀', en: 'The law is the law — execute him' },
+        effects: [
+          { kind: 'officer-status', officerId: 'ma-su', status: 'dead' },
+          { kind: 'mandate-ruler', rulerOfficerId: 'liu-shan', delta: 4 },
+        ],
+      },
+      {
+        id: 'spare',
+        label: { zh: '免死貶為庶人,留其後效', en: 'Spare him — strip his rank' },
+        effects: [
+          { kind: 'officer-loyalty', officerId: 'ma-su', delta: 15 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'liu-shan', delta: -3 },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'evt-jieting-2b',
+    name: { en: 'The Road Holds', zh: '街亭不失' },
+    yearMin: 228,
+    yearMax: 230,
+    requires: [
+      { kind: 'flag-set', key: 'jieting-wangping' },
+      { kind: 'officer-alive', officerId: 'wang-ping' },
+    ],
+    description:
+      'Wang Ping camps astride the road, wells within the palisade. Zhang He probes for ten days and finds no opening; the supply line to the north holds, and with it the whole campaign.',
+    descriptionZh: '王平當道下寨,井在壘中。張郃攻旬日而無隙可乘,引軍自退 — 糧道既全,北伐之勢得以不墮。',
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'liu-shan', delta: 6 },
+      { kind: 'officer-loyalty', officerId: 'wang-ping', delta: 10 },
+      { kind: 'flag', key: 'jieting-held' },
+    ],
+    mood: 'auspicious',
+  },
+
+  /* ─── §8.1-deep 白帝托孤 — Liu Bei's deathbed (chooser: 劉備) ─────────
+     The player-as-Liu-Bei chooses how much to trust the Sleeping Dragon.
+     Gates off the legacy one-shot evt-liu-bei-dies. */
+  {
+    id: 'evt-baidi-1',
+    name: { en: 'The Trust at White Emperor City', zh: '白帝托孤' },
+    yearMin: 222,
+    yearMax: 224,
+    requires: [
+      { kind: 'officer-active', officerId: 'liu-bei' },
+      { kind: 'officer-active', officerId: 'zhuge-liang' },
+      { kind: 'flag-set', key: 'three-kingdoms-formed' },
+    ],
+    description:
+      'Broken at Yiling, Liu Bei lies dying at White Emperor City. Zhuge Liang kneels at the bedside. The last words of a dynasty\'s founder will bind — or fracture — everything that follows.',
+    descriptionZh: '夷陵兵敗,劉備病篤於白帝城,召丞相諸葛亮至榻前。開國之君的遺言,將定蜀漢此後數十年之向背。',
+    effects: [{ kind: 'flag', key: 'baidi-chain-started' }],
+    chooserRulerId: 'liu-bei',
+    mood: 'somber',
+    choices: [
+      {
+        id: 'trust',
+        label: { zh: '「君才十倍曹丕…君可自取。」全權托孤', en: '"Take the throne yourself if my son fails."' },
+        effects: [
+          { kind: 'officer-status', officerId: 'liu-bei', status: 'dead' },
+          { kind: 'officer-loyalty', officerId: 'zhuge-liang', delta: 40 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'liu-shan', delta: 5 },
+          { kind: 'flag', key: 'baidi-trust' },
+        ],
+      },
+      {
+        id: 'balance',
+        label: { zh: '託孤於亮,而分權李嚴以制衡', en: 'Entrust Zhuge Liang — but split the regency' },
+        effects: [
+          { kind: 'officer-status', officerId: 'liu-bei', status: 'dead' },
+          { kind: 'officer-loyalty', officerId: 'zhuge-liang', delta: 10 },
+          { kind: 'flag', key: 'baidi-balance' },
+        ],
+      },
+    ],
+  },
+
+  /* ─── §8.1-deep 高平陵之變 — the Wei court's last free choice ─────────
+     Chooser is the boy emperor 曹芳 (i.e. whoever plays Wei): ride out to
+     the tombs as history did, or heed the warnings about the "sick" old
+     man. Gates off the legacy one-shot evt-sima-yi-coup (and vice versa). */
+  {
+    id: 'evt-gaopingling-1',
+    name: { en: 'The Sick Man of Luoyang', zh: '司馬懿稱病' },
+    yearMin: 247,
+    yearMax: 250,
+    requires: [
+      { kind: 'officer-active', officerId: 'sima-yi' },
+      { kind: 'officer-active', officerId: 'cao-shuang' },
+      { kind: 'flag-unset', key: 'sima-coup-249' },
+    ],
+    description:
+      'Sima Yi has not left his sickbed in a year — drooling, they say, spilling his gruel. Cao Shuang plans to escort the young emperor to the ancestral sacrifice at the Gaoping tombs, leaving the capital gates behind him.',
+    descriptionZh: '司馬懿臥病經年,聞者謂其飲粥沾襟、老耄昏聵。曹爽欲奉天子出謁高平陵祭祖,盡攜心腹而行,都城為之一空。',
+    effects: [{ kind: 'flag', key: 'gaopingling-chain-started' }],
+    chooserRulerId: 'cao-fang',
+    mood: 'ominous',
+    choices: [
+      {
+        id: 'ride',
+        label: { zh: '從曹爽出謁高平陵(史實)', en: 'Ride out with Cao Shuang' },
+        effects: [
+          { kind: 'officer-status', officerId: 'cao-shuang', status: 'dead' },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-fang', delta: -12 },
+          { kind: 'officer-loyalty', officerId: 'sima-yi', delta: -20 },
+          { kind: 'flag', key: 'sima-coup-249' },
+        ],
+      },
+      {
+        id: 'stay',
+        label: { zh: '疑其詐病,留重兵守洛陽', en: 'Distrust the sickbed — garrison Luoyang' },
+        effects: [
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-fang', delta: 4 },
+          { kind: 'officer-loyalty', officerId: 'sima-yi', delta: -10 },
+          { kind: 'flag', key: 'gaopingling-averted' },
+        ],
+      },
+    ],
+  },
+
+  /* ─── §8.4-deep 浮屠祠 — Ze Rong's Buddhist temple at Xiapi ──────────
+     The era's one great Buddhist beat: bathe the Buddha and feast ten
+     thousand — at ruinous public expense. Chooser: 陶謙 (Ze Rong's lord). */
+  {
+    id: 'evt-futu-temple',
+    name: { en: 'The Buddha of Xiapi', zh: '笮融建浮屠祠' },
+    yearMin: 193,
+    yearMax: 196,
+    requires: [
+      { kind: 'officer-active', officerId: 'ze-rong' },
+      { kind: 'officer-active', officerId: 'tao-qian' },
+    ],
+    description:
+      'Ze Rong, entrusted with the grain transports, has poured them into a tower of bronze and gold — a Buddha nine stories high. On bathing days he lays feasts along the road for ten thousand; the treasury bleeds.',
+    descriptionZh: '督運糧曹之笮融,竟移公帑建九層浮屠,黃金塗身,衣以錦采。每浴佛日,設酒飯於路,費以巨億計 — 民悅之,而府庫為之一空。',
+    effects: [],
+    chooserRulerId: 'tao-qian',
+    mood: 'mystic',
+    choices: [
+      {
+        id: 'allow',
+        label: { zh: '聽其建祠,與民同會', en: 'Let the temple stand' },
+        effects: [
+          { kind: 'city-loyalty', cityId: 'xiapi', delta: 7 },
+          { kind: 'force-gold-ruler', rulerOfficerId: 'tao-qian', delta: -300 },
+          { kind: 'flag', key: 'futu-built' },
+        ],
+      },
+      {
+        id: 'forbid',
+        label: { zh: '禁之,追還挪用之公帑', en: 'Forbid it — reclaim the funds' },
+        effects: [
+          { kind: 'city-loyalty', cityId: 'xiapi', delta: -3 },
+          { kind: 'force-gold-ruler', rulerOfficerId: 'tao-qian', delta: 200 },
+          { kind: 'officer-loyalty', officerId: 'ze-rong', delta: -12 },
+        ],
+      },
     ],
   },
 ];

@@ -44,7 +44,12 @@ export function SchemesModal({ onClose }: { onClose: () => void }) {
         : targetA ? validateScheme(schemeId, cities, playerForceId, targetA, def.targets === 2 ? targetB || undefined : undefined, diplomacy) : t('選定目標', 'Pick a target'))
     : 'no force';
   const ready = !problem && targetA && (def.targets === 1 || targetB);
-  const odds = ready ? schemeOdds(schemeId, diplomacy, strategist, targetA, targetB || undefined) : null;
+  // 抗謀/天命 — mirror the store's real odds (target counsel IQ; 造讖 rides
+  // the target's mandate) so the shown 成算 matches what actually rolls.
+  const counselIQ = (fid: string) => pickAdvisor(officers, fid)?.stats.intelligence ?? 50;
+  const targetCounselIQ = targetA ? Math.max(counselIQ(targetA), targetB ? counselIQ(targetB) : 0) : undefined;
+  const targetMandate = useGameStore((s) => (targetA ? s.mandate.byForce[targetA] ?? 50 : 50));
+  const odds = ready ? schemeOdds(schemeId, diplomacy, strategist, targetA, targetB || undefined, targetCounselIQ, targetMandate) : null;
 
   const sel: React.CSSProperties = {
     background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473',

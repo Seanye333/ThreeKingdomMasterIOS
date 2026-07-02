@@ -88,6 +88,7 @@ const INSIDE_BUILDING_DEF: Record<BuildingId, { glyph: string; color: string; he
   signaltower: { glyph: '譙', color: '#6b5a44', height: 2.0, nameZh: '譙樓' },
   fieldhospital: { glyph: '療', color: '#9ec8b0', height: 1.0, nameZh: '傷兵營' },
   daotemple: { glyph: '道', color: '#c8a85a', height: 1.7, nameZh: '道觀' },
+  lingtai: { glyph: '靈', color: '#7a8ac8', height: 2.2, nameZh: '靈台' },
   worksbureau: { glyph: '匠', color: '#8a7a5a', height: 1.3, nameZh: '將作監' },
   tavern: { glyph: '酒', color: '#c47a4a', height: 1.0, nameZh: '酒肆' },
   prison: { glyph: '牢', color: '#5a5550', height: 1.1, nameZh: '牢城' },

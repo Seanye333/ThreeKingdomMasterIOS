@@ -150,6 +150,8 @@ export interface ResolutionInput {
   duelChanceMul?: number;
   /** 天災頻率 — multiplier on famine/plague/flood chances. Default 1. */
   disasterMul?: number;
+  /** §8.2-deep 大災之後必有大疫 — cities struck LAST season (3× plague odds). */
+  plagueRiskCityIds?: EntityId[];
   /** 新武將登場 — per-season chance a brand-new fictional officer appears as a
    *  free agent. 0 (default) = off. */
   newOfficerChance?: number;
@@ -171,6 +173,13 @@ export interface ResolutionOutput {
   /** 流民 — the refugee pool after this season's shedding + resettlement. */
   refugees: number;
   report: SeasonReport;
+  /** §8.2-deep 賑災 — player cities hit by disaster, awaiting an answer. */
+  reliefPrompts?: import('./events').ReliefPrompt[];
+  /** §8.2-deep 地動 — buildings toppled a level by earthquakes this season. */
+  buildingLevelDrops?: Array<{ cityId: EntityId; buildingId: string }>;
+  /** §8.2-deep — cities struck by flood/famine/quake this season (3× plague
+   *  odds next season). */
+  struckCityIds?: EntityId[];
   /**
    * Marches still in transit (seasonsRemaining > 1 at start of resolution).
    * The store assigns these to next season's pendingCommands instead of
@@ -2219,6 +2228,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   }
 
   // 4. Random events — only on season boundary.
+  let reliefPromptsOut: import('./events').ReliefPrompt[] = [];
+  let buildingLevelDropsOut: Array<{ cityId: EntityId; buildingId: string }> = [];
+  let struckCityIdsOut: EntityId[] = [];
   if (seasonBoundary) {
     const eventResult = rollEvents({
       season: input.date.season,
@@ -2227,10 +2239,15 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       buildings: input.buildings,
       rng,
       disasterMul: input.disasterMul,
+      playerForceId: input.playerForceId,
+      plagueRiskCityIds: input.plagueRiskCityIds,
     });
     cities = eventResult.cities;
     officers = eventResult.officers;
     entries.push(...eventResult.entries);
+    reliefPromptsOut = eventResult.reliefPrompts;
+    buildingLevelDropsOut = eventResult.buildingLevelDrops;
+    struckCityIdsOut = eventResult.struckCityIds;
 
     // 新武將登場 — fresh fictional talent may step onto the stage (opt-in).
     const newChance = input.newOfficerChance ?? 0;
@@ -2820,6 +2837,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     provinceGovernors: provinceGovernorsOut,
     provinceWarlordism: provinceWarlordismOut,
     provinceGovernorSince: provinceGovernorSinceOut,
+    reliefPrompts: reliefPromptsOut.length > 0 ? reliefPromptsOut : undefined,
+    buildingLevelDrops: buildingLevelDropsOut.length > 0 ? buildingLevelDropsOut : undefined,
+    struckCityIds: struckCityIdsOut.length > 0 ? struckCityIdsOut : undefined,
   };
 }
 

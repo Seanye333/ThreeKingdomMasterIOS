@@ -56,6 +56,9 @@ const AchievementsModal = lazy(() => import('../components/AchievementsModal').t
 const CampaignStatsModal = lazy(() => import('../components/CampaignStatsModal').then(m => ({ default: m.CampaignStatsModal })));
 const GlossaryModal = lazy(() => import('../components/GlossaryModal').then(m => ({ default: m.GlossaryModal })));
 const ChronicleModal = lazy(() => import('../components/ChronicleModal').then(m => ({ default: m.ChronicleModal })));
+const AnnalsModal = lazy(() => import('../components/AnnalsModal').then(m => ({ default: m.AnnalsModal })));
+const RitesModal = lazy(() => import('../components/RitesModal').then(m => ({ default: m.RitesModal })));
+const ReliefModal = lazy(() => import('../components/ReliefModal').then(m => ({ default: m.ReliefModal })));
 const RelationsModal = lazy(() => import('../components/RelationsModal').then(m => ({ default: m.RelationsModal })));
 const LegionsModal = lazy(() => import('../components/LegionsModal').then(m => ({ default: m.LegionsModal })));
 const AdvisorModal = lazy(() => import('../components/AdvisorModal').then(m => ({ default: m.AdvisorModal })));
@@ -128,6 +131,14 @@ export function MapScreen() {
   const [showKaoke, setShowKaoke] = useState(false);
   const [showCampaignStats, setShowCampaignStats] = useState(false);
   const [showChronicle, setShowChronicle] = useState(false);
+  const [showAnnals, setShowAnnals] = useState(false);
+  const [showRites, setShowRites] = useState(false);
+  const [showRelief, setShowRelief] = useState(false);
+  // §8.2-deep 賑災 — auto-surface the relief desk when disasters land.
+  const pendingReliefCount = useGameStore((s) => (s.pendingRelief ?? []).length);
+  useEffect(() => {
+    if (pendingReliefCount > 0) setShowRelief(true);
+  }, [pendingReliefCount]);
   const [showRelations, setShowRelations] = useState(false);
   const [showLegions, setShowLegions] = useState(false);
   const [showAdvisor, setShowAdvisor] = useState(false);
@@ -391,6 +402,9 @@ export function MapScreen() {
       { id: 'rumors', zh: '市井流言', en: 'Rumors', hint: g.rec, run: () => setShowRumors(true) },
       { id: 'annals', zh: '史書', en: 'Annals', hint: g.rec, run: () => setShowHistoryBook(true) },
       { id: 'chronicle', zh: '國史', en: 'Chronicle', hint: g.rec, run: () => setShowChronicle(true) },
+      { id: 'zaiyi', zh: '災異志 — 天象災異編年', en: 'Annals of portents', hint: g.rec, run: () => setShowAnnals(true) },
+      { id: 'rites', zh: '祭祀 — 郊祀/祈雨/招安/宣撫', en: 'Rites & pacification', hint: g.court, run: () => setShowRites(true) },
+      { id: 'relief', zh: '賑災 — 開倉/徙民', en: 'Disaster relief', hint: g.court, run: () => setShowRelief(true) },
       { id: 'ach', zh: '勳功', en: 'Achievements', hint: g.rec, run: () => setShowAch(true) },
       { id: 'stats', zh: '戰記', en: 'Campaign stats', hint: g.rec, run: () => setShowCampaignStats(true) },
       { id: 'glossary', zh: '概念 — 機制詞條', en: 'Concepts glossary', hint: g.rec, run: () => setShowGlossary(true) },
@@ -530,6 +544,8 @@ export function MapScreen() {
             { label: t('任官', 'Titles'),    onClick: () => setShowTitles(true) },
             { label: t('州牧', 'Governors'), onClick: () => setShowGovernors(true) },
             { label: t('朝廷', 'Court'),     onClick: () => setShowCourt(true) },
+            { label: t('祭祀', 'Rites'),     onClick: () => setShowRites(true) },
+            { label: t('賑災', 'Relief'),    onClick: () => setShowRelief(true), badge: pendingReliefCount },
             { label: t('邦交', 'Relations'), onClick: () => setShowRelations(true) },
             { label: t('書信', 'Letters'),   onClick: () => setShowWishes(true), badge: wishes.length },
           ]}
@@ -577,6 +593,7 @@ export function MapScreen() {
             { label: t('戰記', 'Stats'),        onClick: () => setShowCampaignStats(true) },
             { label: t('概念', 'Concepts'),     onClick: () => setShowGlossary(true) },
             { label: t('📜 國史', '📜 Chronicle'), onClick: () => setShowChronicle(true) },
+            { label: t('☄ 災異志', '☄ Portents'), onClick: () => setShowAnnals(true) },
           ]}
         />
         <HudMenu
@@ -771,6 +788,9 @@ export function MapScreen() {
         {showGlossary && <GlossaryModal onClose={() => setShowGlossary(false)} />}
         {showCampaignStats && <CampaignStatsModal onClose={() => setShowCampaignStats(false)} />}
         {showChronicle && <ChronicleModal onClose={() => setShowChronicle(false)} />}
+        {showAnnals && <AnnalsModal onClose={() => setShowAnnals(false)} />}
+        {showRites && <RitesModal onClose={() => setShowRites(false)} />}
+        {showRelief && <ReliefModal onClose={() => setShowRelief(false)} />}
         {showRelations && <RelationsModal onClose={() => setShowRelations(false)} />}
         {showLegions && <LegionsModal onClose={() => setShowLegions(false)} />}
         {showAdvisor && <AdvisorModal onClose={() => setShowAdvisor(false)} />}

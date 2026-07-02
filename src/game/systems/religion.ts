@@ -34,6 +34,9 @@ export interface ReligionInput {
   rng: () => number;
   /** City buildings — a 道觀 blunts cult-contagion loyalty erosion. */
   buildings?: import('../types').Building[];
+  /** §8.4-deep 宣撫 — standing missions (officerId → posting); a posted
+   *  envoy stiffens his city against the contagion. */
+  pacifyMissions?: Record<EntityId, PacifyMission>;
 }
 
 export interface ReligionOutput {
@@ -46,6 +49,21 @@ export interface ReligionOutput {
 /** A cult banner (spawned by rollReligiousRebellion) carries a `cult-` id. */
 export function isCultForce(forceId: EntityId | null | undefined): boolean {
   return typeof forceId === 'string' && forceId.startsWith('cult-');
+}
+
+/** §8.4-deep 宣撫 — an officer posted to a threatened city to steady the
+ *  faithful (stacks with the 道觀; decays each season). */
+export interface PacifyMission {
+  cityId: EntityId;
+  seasonsLeft: number;
+}
+
+export const PACIFY_MISSION_COST = 200;
+export const PACIFY_MISSION_SEASONS = 2;
+
+/** The contagion resistance a posted envoy contributes (rides charisma). */
+export function pacifierResist(charisma: number): number {
+  return Math.min(0.9, 0.4 + charisma / 300);
 }
 
 /**
@@ -73,10 +91,21 @@ export function spreadCultUnrest(input: ReligionInput): ReligionOutput {
       if (!adj || isCultForce(adj.ownerForceId) || adj.ownerForceId === null) continue;
       const baseDrop = adj.loyalty < 40 ? 4 : 2; // shakier cities slip faster
       // 道觀 — a Daoist temple steadies the faithful against the contagion.
-      const cultResist = buildingBonuses(adjId, input.buildings ?? []).cultResist;
+      let cultResist = buildingBonuses(adjId, input.buildings ?? []).cultResist;
+      // 宣撫 — a posted envoy preaches the court's case in the market square.
+      let pacified = false;
+      for (const [oid, m] of Object.entries(input.pacifyMissions ?? {})) {
+        if (m.cityId !== adjId || m.seasonsLeft <= 0) continue;
+        const envoy = officers[oid];
+        if (envoy && envoy.status !== 'dead') {
+          cultResist = Math.min(0.95, cultResist + pacifierResist(envoy.stats.charisma));
+          pacified = true;
+        }
+      }
       const drop = Math.round(baseDrop * (1 - cultResist));
       cities[adjId] = { ...adj, loyalty: Math.max(0, cities[adjId].loyalty - drop) };
-      if (cities[adjId].loyalty < 22 && cities[adjId].population > 40_000) {
+      // A city under a pacifier's hand will not rise this season.
+      if (!pacified && cities[adjId].loyalty < 22 && cities[adjId].population > 40_000) {
         flipCandidates.push({ city: cities[adjId], cultForceId: cc.ownerForceId as EntityId });
       }
     }
@@ -176,4 +205,174 @@ export function rollReligiousRebellion(input: ReligionInput): ReligionOutput {
   });
 
   return { cities, forces, officers, entries };
+}
+
+// ── §8.4-deep 招安歸正 — the Zhang Lu model ──
+
+export const CULT_PACIFY_GOLD = 800;
+
+/** 招安 odds — an eloquent envoy, a legitimate court, a one-city sect. */
+export function cultPacifyChance(args: {
+  envoyCharisma: number;
+  cultCityCount: number;
+  cultTroops: number;
+  mandate: number;
+}): number {
+  let p = 0.22 + args.envoyCharisma / 250;
+  p += args.cultCityCount === 1 ? 0.18 : -0.08 * (args.cultCityCount - 1);
+  if (args.mandate >= 60) p += 0.08;
+  if (args.cultTroops > 15_000) p -= 0.1;
+  return Math.max(0.05, Math.min(0.85, p));
+}
+
+export interface CultPacifyResult {
+  success: boolean;
+  /** On failure: the envoy is seized and held in the cult capital. */
+  envoySeized: boolean;
+  messageZh: string;
+}
+
+/** Resolve a 招安 attempt (pure roll; the store applies city/officer flips).
+ *  Success: every cult city and every cult officer (the 師君 included) comes
+ *  over — 張魯舉漢中而降 in miniature. Failure hardens the sect, and may cost
+ *  the envoy his freedom. */
+export function resolveCultPacify(args: {
+  cultForce: Force;
+  envoy: Officer;
+  cultCityCount: number;
+  cultTroops: number;
+  mandate: number;
+  rng: () => number;
+}): CultPacifyResult {
+  const chance = cultPacifyChance({
+    envoyCharisma: args.envoy.stats.charisma,
+    cultCityCount: args.cultCityCount,
+    cultTroops: args.cultTroops,
+    mandate: args.mandate,
+  });
+  if (args.rng() < chance) {
+    return {
+      success: true,
+      envoySeized: false,
+      messageZh: `${args.envoy.name.zh}單車入營,陳說禍福 — ${args.cultForce.name.zh}焚符水、開城歸命!信眾編戶,教主拜於階下。`,
+    };
+  }
+  const seized = args.rng() < 0.25;
+  return {
+    success: false,
+    envoySeized: seized,
+    messageZh: seized
+      ? `${args.cultForce.name.zh}斥為妖言,扣押使者${args.envoy.name.zh}!賊勢愈熾。`
+      : `${args.cultForce.name.zh}不納招安,逐使者出營 — 裹脅之眾反增。`,
+  };
+}
+
+// ── §8.4-deep 黃巾總爆發 — the year 184 ──
+
+export const YELLOW_TURBAN_YEAR = 184;
+export const YELLOW_TURBAN_FLAG = 'yellow-turban-risen';
+/** The Zhang brothers, if the scenario carries them. */
+export const YELLOW_TURBAN_LEADERS = ['zhang-jiao', 'zhang-bao-yt', 'zhang-liang-yt'];
+
+/**
+ * 蒼天已死,黃天當立 — in the spring of 184 the Way of Great Peace rises in
+ * EIGHT provinces at once. Up to four of the realm's most restless great
+ * cities flip to a single 太平道 banner under Zhang Jiao (or a synthesized
+ * 大賢良師 if the scenario lacks him). Fires once, only in campaigns that
+ * begin before the rising.
+ */
+export function rollYellowTurbanRising(
+  input: ReligionInput & { eventFlags: Record<string, boolean> },
+): ReligionOutput & { flagSet: boolean } {
+  const none = { cities: input.cities, forces: input.forces, officers: input.officers, entries: [], flagSet: false };
+  if (input.eventFlags[YELLOW_TURBAN_FLAG]) return none;
+  if (input.date.year !== YELLOW_TURBAN_YEAR) return none;
+  if (input.date.season !== 'spring' && input.date.season !== 'summer') return none;
+
+  const cities = { ...input.cities };
+  const forces = { ...input.forces };
+  const officers = { ...input.officers };
+  const entries: ReportEntry[] = [];
+
+  // The most combustible big cities — low loyalty, many mouths.
+  const targets = Object.values(cities)
+    .filter((c) => c.ownerForceId !== null && c.population > 60_000 && c.loyalty < 70)
+    .sort((a, b) => a.loyalty - b.loyalty)
+    .slice(0, 4);
+  if (targets.length === 0) return none;
+
+  const label = CULT_LABEL.taiping;
+  const forceId = 'cult-taiping-184';
+
+  // 大賢良師 — Zhang Jiao if he walks this scenario, else a stand-in.
+  let rulerId = YELLOW_TURBAN_LEADERS[0];
+  const zhangJiao = officers[rulerId];
+  if (zhangJiao && zhangJiao.status !== 'dead') {
+    officers[rulerId] = {
+      ...zhangJiao,
+      forceId,
+      locationCityId: targets[0].id,
+      status: 'idle',
+      loyalty: 100,
+      task: null,
+    };
+  } else {
+    rulerId = 'cult-leader-taiping-184';
+    officers[rulerId] = {
+      id: rulerId,
+      name: { en: 'Great Teacher', zh: '大賢良師' },
+      birthYear: input.date.year - 44,
+      stats: { leadership: 78, war: 55, intelligence: 85, politics: 70, charisma: 96 },
+      loyalty: 100,
+      locationCityId: targets[0].id,
+      forceId,
+      status: 'idle',
+      task: null,
+      equipment: [],
+      skills: [],
+      rank: 'general',
+    };
+  }
+  // The brothers ride to the other risen cities.
+  for (let i = 1; i < YELLOW_TURBAN_LEADERS.length && i < targets.length; i++) {
+    const bro = officers[YELLOW_TURBAN_LEADERS[i]];
+    if (bro && bro.status !== 'dead') {
+      officers[bro.id] = {
+        ...bro,
+        forceId,
+        locationCityId: targets[i].id,
+        status: 'idle',
+        loyalty: 100,
+        task: null,
+      };
+    }
+  }
+
+  forces[forceId] = {
+    id: forceId,
+    name: { en: 'Way of Great Peace', zh: label.zh },
+    color: label.color,
+    capitalCityId: targets[0].id,
+    rulerOfficerId: rulerId,
+    isPlayer: false,
+  };
+
+  for (const t of targets) {
+    cities[t.id] = {
+      ...cities[t.id],
+      ownerForceId: forceId,
+      loyalty: 70,
+      troops: Math.max(3_000, Math.floor(t.troops * 0.7) + 3_000),
+      population: Math.max(20_000, Math.floor(t.population * 0.9)),
+    };
+  }
+
+  entries.push({
+    cityId: targets[0].id,
+    kind: 'rebellion',
+    text: `"The Azure Sky is dead!" — the Way of Great Peace rises in ${targets.length} cities at once. The Yellow Turban rebellion has begun.`,
+    textZh: `「蒼天已死,黃天當立;歲在甲子,天下大吉!」— 太平道八州並起,${targets.map((t) => t.name.zh).join('、')}同日舉義,黃巾之亂爆發!`,
+  });
+
+  return { cities, forces, officers, entries, flagSet: true };
 }

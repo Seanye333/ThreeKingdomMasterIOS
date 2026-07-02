@@ -65,6 +65,10 @@ export function rollOmen(input: {
   mandate: MandateState;
   date: GameDate;
   rng: () => number;
+  /** §8.2-deep 靈台 — the player's best Star Terrace level (0–3). The 太史令
+   *  may ritually deflect an ill omen off the player (20%/level). */
+  playerLingtaiLevel?: number;
+  playerForceId?: EntityId | null;
 }): { mandate: MandateState; entry: ReportEntry | null } {
   if (input.rng() > 0.08) return { mandate: input.mandate, entry: null };
 
@@ -80,7 +84,20 @@ export function rollOmen(input: {
     const mb = input.mandate.byForce[b.id] ?? 50;
     return info.auspicious ? ma - mb : mb - ma;
   });
-  const target = sorted[Math.floor(input.rng() * Math.min(3, sorted.length))];
+  let target = sorted[Math.floor(input.rng() * Math.min(3, sorted.length))];
+
+  // 禳星 — the astronomers read the portent early and turn it aside.
+  if (
+    !info.auspicious &&
+    input.playerForceId &&
+    target.id === input.playerForceId &&
+    (input.playerLingtaiLevel ?? 0) > 0 &&
+    input.rng() < 0.2 * Math.min(3, input.playerLingtaiLevel ?? 0)
+  ) {
+    const other = sorted.filter((f) => f.id !== input.playerForceId);
+    if (other.length === 0) return { mandate: input.mandate, entry: null };
+    target = other[Math.floor(input.rng() * Math.min(3, other.length))];
+  }
 
   const delta = info.auspicious ? 8 + Math.floor(input.rng() * 8) : -(6 + Math.floor(input.rng() * 8));
   const cur = input.mandate.byForce[target.id] ?? 50;

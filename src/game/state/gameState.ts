@@ -35,6 +35,7 @@ import type { Relation } from '../types/diplomacy';
 import { generateFictionalOfficer } from '../systems/officerGen';
 import type { MonthPhase } from '../types';
 import { createInitialTribeState } from '../systems/tribes';
+import { emptyTribeDiplomacy } from '../systems/tribesDiplomacy';
 import { rollWeather, type Weather } from '../systems/weather';
 import { createInitialMandate, type MandateState } from '../systems/mandate';
 import { ITEMS } from '../data/items';
@@ -231,6 +232,23 @@ export interface GameState {
   edictCooldowns: Partial<Record<EdictKind, { year: number; season: GameDate['season'] }>>;
   /** Foreign tribe pressure state. */
   tribeState: TribeState;
+  /** §8.3-deep 異族內交 — 和親/互市/質子 pacts, 以夷制夷 incitements, 入主建國
+   *  foundings, 七擒 submission state. */
+  tribeDiplomacy: import('../systems/tribesDiplomacy').TribeDiplomacyState;
+  /** §8.5 郊祀 — the year the great suburban sacrifice was last performed. */
+  lastSuburbanRiteYear: number | null;
+  /** §8.5 祈雨 — one rain-prayer per season (reset at season boundary). */
+  rainRiteDone: boolean;
+  /** §8.2-deep 賑災 — disasters in player cities awaiting an answer (開倉/
+   *  徙民/坐視); unanswered prompts lapse at the next season boundary. */
+  pendingRelief: import('../systems/events').ReliefPrompt[];
+  /** §8.2-deep 大災之後必有大疫 — cities struck by flood/famine/quake last
+   *  season; they carry 3× plague odds this season. Replaced each season. */
+  plagueRiskCityIds: EntityId[];
+  /** §8.4-deep 宣撫 — standing missions (officerId → posted city). */
+  pacifyMissions: Record<EntityId, import('../systems/religion').PacifyMission>;
+  /** §8.1-deep 事件簿 — the browsable 災異志 annals (capped at 500). */
+  annals: import('../types/event').AnnalsEntry[];
   /** Sound on/off — persisted preference. */
   soundEnabled: boolean;
   /** All buildings in all cities. */
@@ -707,6 +725,13 @@ export const EMPTY_STATE: GameState = {
   edictHistory: [],
   edictCooldowns: {},
   tribeState: createInitialTribeState(),
+  tribeDiplomacy: emptyTribeDiplomacy(),
+  lastSuburbanRiteYear: null,
+  rainRiteDone: false,
+  pendingRelief: [],
+  plagueRiskCityIds: [],
+  pacifyMissions: {},
+  annals: [],
   customEvents: [],
   soundEnabled: true,
   buildings: [],
@@ -1102,6 +1127,13 @@ export function loadScenario(
     edictHistory: [],
     edictCooldowns: {},
     tribeState: createInitialTribeState(),
+    tribeDiplomacy: emptyTribeDiplomacy(),
+    lastSuburbanRiteYear: null,
+    rainRiteDone: false,
+    pendingRelief: [],
+    plagueRiskCityIds: [],
+    pacifyMissions: {},
+    annals: [],
     soundEnabled: state.soundEnabled,
     buildings: [],
     tradeRoutes: [],

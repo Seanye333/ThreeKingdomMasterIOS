@@ -35,7 +35,8 @@ export type SchemeId =
   | 'chain-link'
   | 'imperial-edict' // 假詔討賊 — hold the 天子: command a rival to attack another (§7.2-2)
   | 'feign-defeat'   // 詐敗誘敵 — feign weakness to bait a bordering rival into a rash war
-  | 'fabricate';     // 無中生有 — conjure a false threat: cow a rival and sour it on its ally
+  | 'fabricate'      // 無中生有 — conjure a false threat: cow a rival and sour it on its ally
+  | 'prophecy';      // 造讖惑眾 — forge a portent against a rival's 天命 (§8.5)
 
 export interface SchemeDef {
   id: SchemeId;
@@ -60,6 +61,7 @@ export const SCHEME_DEFS: SchemeDef[] = [
   { id: 'imperial-edict', zh: '假詔討賊', en: 'Forged Imperial Edict', hintZh: '挾天子者:假詔命甲討乙 — 奉詔之名,甲乙大惡且甲得討伐之名(須挾天子)', hintEn: 'With the Son of Heaven in hand: forge an edict sending A to war on B — A gains a righteous casus belli.', goldCost: 700, targets: 2 },
   { id: 'feign-defeat', zh: '詐敗誘敵', en: 'Feign Defeat', hintZh: '詐示虛弱,驕接壤強鄰之心 — 予我討伐其之名、以逸待勞', hintEn: 'Feign weakness to make a bordering rival overconfident — it covets your land, handing YOU a casus belli.', goldCost: 450, targets: 1 },
   { id: 'fabricate', zh: '無中生有', en: 'Conjure Threat', hintZh: '偽造盟軍/大兵之虛 — 使一國疑我有備而不敢犯,且疑其盟友', hintEn: 'Conjure a false alliance/army: cow a rival into holding off, and sour it on its own ally.', goldCost: 500, targets: 1 },
+  { id: 'prophecy', zh: '造讖惑眾', en: 'Forge a Prophecy', hintZh: '造作圖讖謗其天命(「代漢者…」)— 其天命愈高,讖言愈易著;敗露則反噬己身', hintEn: "Forge portents against a rival's Mandate — the loftier their mandate, the harder the fall; exposure recoils on you.", goldCost: 600, targets: 1 },
 ];
 
 /** Do two forces share a border (any adjacent city pair)? */
@@ -105,11 +107,15 @@ export function schemeOdds(
   /** 抗謀 — the target realm's sharpest counsel resists the ploy (its best
    *  advisor's intelligence); a clever court sees through a clumsy scheme. */
   targetCounselIQ?: number,
+  /** 造讖 only — the target's current 天命 (0–100). Lofty mandates make juicier
+   *  targets: the crowd BELIEVES portents about the prominent. */
+  targetMandate?: number,
 ): number {
   const iq = strategist?.stats.intelligence ?? 50;
   // A wary, intelligent target shaves the odds (0 at IQ ≤ 50, −0.125 at IQ 100).
   const resist = Math.max(0, ((targetCounselIQ ?? 50) - 50) / 400);
   const fin = (x: number, lo = 0.05, hi = 0.95) => Math.max(lo, Math.min(hi, x - resist));
+  if (scheme === 'prophecy') return fin(0.35 + iq / 280 + ((targetMandate ?? 50) - 50) / 300, 0.05, 0.9);
   if (scheme === 'far-friend') return fin(0.55 + iq / 300); // overt courtship — but resistance still applies
   if (scheme === 'sow-chaos') return fin(0.35 + iq / 300, 0.05, 0.9);
   if (scheme === 'feign-strength') return fin(0.45 + iq / 280);
@@ -172,7 +178,7 @@ export function validateScheme(
     if (forcesAdjacent(cities, playerForceId, a)) return ZH_EN.adjacent;
     return null;
   }
-  if (scheme === 'sow-chaos' || scheme === 'fabricate') return null; // any rival realm
+  if (scheme === 'sow-chaos' || scheme === 'fabricate' || scheme === 'prophecy') return null; // any rival realm
   if (scheme === 'feign-strength' || scheme === 'feign-defeat') {
     if (!forcesAdjacent(cities, playerForceId, a)) return ZH_EN.notAdjacentPlayer;
     return null;

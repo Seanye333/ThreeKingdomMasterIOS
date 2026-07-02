@@ -25,6 +25,7 @@
  *   disaster-flood ✅         水患
  *   disaster-plague ✅        瘟疫
  *   disaster-locust ✅        蝗災(engine 以 famine 出;與 drought 按年輪替出圖)
+ *   disaster-quake ✅         地動(§8.2 地震,山城多發)
  *   specialty-discovered ✅   特產名物開發(名產作坊臻極盛)
  *   forge-masterpiece ✅      名器鑄成(神兵/gold 級;另 ForgingModal 內也有 ForgedReveal)
  *   — 第二章 武將/成長/家族 —
@@ -76,6 +77,7 @@ export const KNOWN_POPUP_KEYS = [
   'disaster-flood',
   'disaster-plague',
   'disaster-locust',
+  'disaster-quake',
   'specialty-discovered',
   'forge-masterpiece',
   // 第二章 — 武將/成長/家族
