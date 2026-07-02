@@ -697,6 +697,24 @@ function UnitWeapon({ unit, yLift }: { unit: TacticalUnit; yLift: number }) {
   return null; // siege/navy already have their own props on the mount
 }
 
+
+/* ─── FPS 自適應 — sustained sub-26fps drops the cinematic post stack for
+ *  the rest of the battle (one-way: no oscillating on/off flicker). ─── */
+function AdaptiveFx({ onDegrade }: { onDegrade: () => void }) {
+  const acc = useRef({ t: 0, n: 0, bad: 0 });
+  useFrame((_, delta) => {
+    const a = acc.current;
+    a.t += delta; a.n++;
+    if (a.t >= 1) {
+      const fps = a.n / a.t;
+      a.bad = fps < 26 ? a.bad + 1 : 0;
+      a.t = 0; a.n = 0;
+      if (a.bad >= 3) onDegrade();
+    }
+  });
+  return null;
+}
+
 /* ─── A unit standing on a hex ─────────────────────────────────────── */
 /* ─── 千軍萬馬 — a small block of rank-and-file behind the hero figure so a
  *  unit reads as a host, not a lone general. Count scales with troop strength;
@@ -3672,8 +3690,10 @@ export function BattleScene({
             intensity={lighting.sun.intensity}
             color={lighting.sun.color}
             castShadow
-            shadow-mapSize-width={4096}
-            shadow-mapSize-height={4096}
+            // 陰影分檔 — the map resolution follows the board: a skirmish
+            // board doesn't rasterise a 4k shadow atlas (D15).
+            shadow-mapSize-width={battle.width * battle.height <= 120 ? 1024 : battle.width * battle.height <= 216 ? 2048 : 4096}
+            shadow-mapSize-height={battle.width * battle.height <= 120 ? 1024 : battle.width * battle.height <= 216 ? 2048 : 4096}
             shadow-bias={-0.0004}
             shadow-normalBias={0.02}
             shadow-camera-left={-24}
@@ -4076,6 +4096,8 @@ export function TacticalBattleScreen3D() {
   const [voiceLine, setVoiceLine] = useState<{ text: string; key: number } | null>(null);
   // N7 — signature-tactic banner overlay state
   const [signatureBanner, setSignatureBanner] = useState<{ zh: string; en: string; key: number } | null>(null);
+  // FPS 自適應 — once the frame rate stays low, shed the post stack for good.
+  const [fxDegraded, setFxDegraded] = useState(false);
   // Stratagem FX particles
   const [stratagemFx, setStratagemFx] = useState<StratagemFxInstance[]>([]);
   // 戰鬥運鏡 — impact event driving screen-shake / flash / zoom-punch.
@@ -4835,7 +4857,8 @@ export function TacticalBattleScreen3D() {
                 the priciest thing on screen (N8AO especially), so it runs on the
                 精緻 tier only — the 流暢 tier renders straight to screen with the
                 renderer's own AgX tone mapping (set on the Canvas gl above). */}
-            {RENDER_HI && (
+            {RENDER_HI && !fxDegraded && <AdaptiveFx onDegrade={() => setFxDegraded(true)} />}
+            {RENDER_HI && !fxDegraded && (
             <EffectComposer enableNormalPass multisampling={0}>
               <N8AO
                 aoRadius={1.2}
