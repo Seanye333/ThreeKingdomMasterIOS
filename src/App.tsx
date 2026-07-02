@@ -94,6 +94,17 @@ function CampaignBoot() {
 }
 
 export default function App() {
+  // 閒時預熱 — a beat after boot, pull the 3D-map chunk in the background
+  // and grind the hex-quilt cache so the first map open doesn't stutter.
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      import('./ui/components/StrategicMap3D').then((m) => {
+        const grind = () => { if (!m.warmHexWorldTiles(12)) window.setTimeout(grind, 40); };
+        grind();
+      }).catch(() => {});
+    }, 2500);
+    return () => window.clearTimeout(id);
+  }, []);
   const scenarioId = useGameStore((s) => s.scenarioId);
   const soundEnabled = useGameStore((s) => s.soundEnabled);
   const pendingEvent = useGameStore((s) => s.pendingEvent);

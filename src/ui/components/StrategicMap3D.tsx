@@ -5664,7 +5664,26 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, hexPaint,
   fogCityIds?: Set<string> | null;
   onGroundClick?: (px: number, py: number) => void;
 }) {
-  const tiles = useMemo(() => buildHexWorldTiles(), []);
+  // 漸進鋪盤 — if the idle warmer hasn't finished the quilt, grind it in
+  // frame-sized chunks and reveal columns as they land (west→east sweep)
+  // instead of freezing the main thread for the whole 48k-cell build.
+  const [tiles, setTiles] = useState<HexWorldTile[]>(() => (warmHexWorldTiles(0), HEXWORLD_CACHE ?? []));
+  useEffect(() => {
+    if (HEXWORLD_CACHE) { setTiles(HEXWORLD_CACHE); return; }
+    let raf = 0;
+    let chunk = 0;
+    const grind = () => {
+      const done = warmHexWorldTiles(24);
+      chunk++;
+      if (done) setTiles(buildHexWorldTiles());
+      else {
+        if (chunk % 4 === 0) setTiles([...hexWarmPartial]); // reveal every ~96 cols
+        raf = requestAnimationFrame(grind);
+      }
+    };
+    raf = requestAnimationFrame(grind);
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   // Shared (c,r) → tile-index lookup for neighbours, roads and hover.
   const tileIndex = useMemo(() => {
