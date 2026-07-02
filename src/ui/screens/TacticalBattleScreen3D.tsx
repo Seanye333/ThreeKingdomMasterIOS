@@ -706,7 +706,7 @@ function UnitWeapon({ unit, yLift }: { unit: TacticalUnit; yLift: number }) {
  * stack reads as an ARMY, not a lone general. Count scales with troops; each
  * soldier idle-bobs in formation. Instanced → dozens cost almost nothing. */
 const HOST_MAX = IS_MOBILE ? 16 : 48;
-function UnitRetinue({ troops, color, unitType }: { troops: number; color: string; unitType?: string }) {
+function UnitRetinue({ troops, color, unitType, formation }: { troops: number; color: string; unitType?: string; formation?: string }) {
   const bodyRef = useRef<THREE.InstancedMesh>(null);
   const headRef = useRef<THREE.InstancedMesh>(null);
   const helmetRef = useRef<THREE.InstancedMesh>(null);
@@ -719,20 +719,61 @@ function UnitRetinue({ troops, color, unitType }: { troops: number; color: strin
   const spearLen = unitType === 'spearmen' ? 1.1 : unitType === 'archers' ? 0.3
     : unitType === 'cavalry' ? 0.5 : 0.5;
   const spearColor = unitType === 'archers' ? '#6a5230' : '#3a2818';
+  // 陣形佈列 — the rank-and-file REARRANGES with the side's formation, so a
+  // formation switch is visible on the field: wedge for 錐行/鋒矢, ring for
+  // 方圓/八卦, deep column for 長蛇/衝軛, wide crescent for 鶴翼/雁行/偃月,
+  // loose skirmish scatter for 疏開, tight block otherwise.
+  const shape = useMemo(() => {
+    switch (formation) {
+      case 'arrow-tip': case 'awl': case 'fish-scale': return 'wedge';
+      case 'wheel': case 'eight-trigrams': case 'square': return 'ring';
+      case 'crane-wing': case 'wild-goose': case 'crescent-moon': return 'crescent';
+      case 'spread-out': case 'ten-ambush': return 'scatter';
+      case 'back-to-water': case 'trinity': return 'column';
+      default: return 'block';
+    }
+  }, [formation]);
   const slots = useMemo(() => {
     const count = Math.min(HOST_MAX, Math.max(6, Math.round(troops / 420)));
-    const cols = Math.max(4, Math.round(Math.sqrt(count * 2.4)));   // wide & shallow so it doesn't spill far back
     const out: Array<{ x: number; z: number; ph: number; spear: boolean }> = [];
     for (let i = 0; i < count; i++) {
-      const r = Math.floor(i / cols), c = i % cols;
       const h1 = Math.abs(Math.sin(i * 12.9898 + 1.3));
       const h2 = Math.abs(Math.sin(i * 78.233 + 0.7));
-      const x = (c - (cols - 1) / 2) * 0.165 + (h1 - 0.5) * 0.07;
-      const z = -0.5 - r * 0.17 + (h2 - 0.5) * 0.07;
-      out.push({ x, z, ph: (i * 0.9) % (Math.PI * 2), spear: i % 4 !== 0 });
+      const jx = (h1 - 0.5) * 0.07, jz = (h2 - 0.5) * 0.07;
+      let x = 0, z = 0;
+      if (shape === 'wedge') {
+        // rows of 1,2,3… — the point faces the enemy (forward = -z? host sits behind hero at -z, point toward hero)
+        let row = 0, acc = 0;
+        while (acc + row + 1 < i + 1) { acc += row + 1; row++; }
+        const idxInRow = i - acc;
+        x = (idxInRow - row / 2) * 0.19;
+        z = -0.42 - row * 0.17;
+      } else if (shape === 'ring') {
+        const ang = (i / count) * Math.PI * 2;
+        const ringR = 0.34 + 0.12 * (i % 2);
+        x = Math.cos(ang) * ringR;
+        z = -0.62 + Math.sin(ang) * ringR * 0.8;
+      } else if (shape === 'crescent') {
+        const tArc = i / Math.max(1, count - 1) - 0.5;       // -0.5..0.5
+        x = tArc * 1.35;
+        z = -0.78 + Math.abs(tArc) * 0.55; // wings swept forward, centre held back
+      } else if (shape === 'scatter') {
+        x = (h1 - 0.5) * 1.3;
+        z = -0.35 - h2 * 0.9;
+      } else if (shape === 'column') {
+        const colW = 2;
+        x = ((i % colW) - (colW - 1) / 2) * 0.19;
+        z = -0.45 - Math.floor(i / colW) * 0.15;
+      } else {
+        const cols = Math.max(4, Math.round(Math.sqrt(count * 2.4)));
+        const r = Math.floor(i / cols), c = i % cols;
+        x = (c - (cols - 1) / 2) * 0.165;
+        z = -0.5 - r * 0.17;
+      }
+      out.push({ x: x + jx, z: z + jz, ph: (i * 0.9) % (Math.PI * 2), spear: i % 4 !== 0 });
     }
     return out;
-  }, [troops]);
+  }, [troops, shape]);
   const spearCount = useMemo(() => slots.filter((s) => s.spear).length, [slots]);
 
   useFrame(({ clock }) => {
@@ -1044,7 +1085,7 @@ function WarriorFigure({
 }
 
 function UnitMesh({
-  unit, terrainH, isPlayer, selected, onClick, isWounded, lunge,
+  unit, terrainH, isPlayer, selected, onClick, isWounded, lunge, formation,
 }: {
   unit: TacticalUnit;
   terrainH: number;
@@ -1054,6 +1095,8 @@ function UnitMesh({
   isWounded?: boolean;
   /** 突刺 — when this unit just struck a melee blow, thrust toward the target. */
   lunge?: { to: HexCoord; at: number } | null;
+  /** 陣形 — the side's active formation shapes the rank-and-file layout. */
+  formation?: string;
 }) {
   const t = useT();
   const [tx, tz] = hexWorld(unit.coord.col, unit.coord.row);
@@ -1242,7 +1285,7 @@ function UnitMesh({
       {/* Mount or vehicle (cavalry horse / siege cart / navy boat) */}
       <UnitMount unit={unit} onClick={onClick} />
       {/* Rank-and-file host behind the hero (footmen read wrong on a boat). */}
-      {unit.unitType !== 'navy' && <UnitRetinue troops={unit.troops} color={color} unitType={unit.unitType} />}
+      {unit.unitType !== 'navy' && <UnitRetinue troops={unit.troops} color={color} unitType={unit.unitType} formation={formation} />}
       {/* 戰袍 — war-cloak for generals and riders. */}
       {(unit.isCommander || unit.unitType === 'cavalry') && (
         <UnitCape color={color} yLift={yLift} big={unit.isCommander} />
@@ -3810,6 +3853,7 @@ export function BattleScene({
             onClick={() => onTileClick(u.coord)}
             isWounded={isWounded}
             lunge={arc ? { to: arc.to, at: arc.spawnedAt } : null}
+            formation={u.side === 'attacker' ? battle.attackerFormation : battle.defenderFormation}
           />
         );
       })}
