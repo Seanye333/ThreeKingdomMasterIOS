@@ -5686,7 +5686,7 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, fogCityId
   // 領土歸屬 — each land hex takes its nearest territory centroid's owner
   // (override ?? parent city's lord), the SAME resolution the painted
   // territory layer uses, so both map styles always agree on borders.
-  const { tileOwner, tileProvince, tileCity } = useMemo(() => {
+  const { tileOwner, tileCity } = useMemo(() => {
     const seeds = generateTerritories(Object.values(cities)).map((t) => ({
       x: t.coords.x,
       y: t.coords.y,
@@ -5713,29 +5713,13 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, fogCityId
       provinces.push(bestProv);
       citySeeds.push(bestCity);
     }
-    return { tileOwner: owners, tileProvince: provinces, tileCity: citySeeds };
+    void provinces; // province seams retired with the flat realm wash
+    return { tileOwner: owners, tileCity: citySeeds };
   }, [tiles, cities, territoryOwnership]);
 
   // 州界 — province seams (decals sink into the prisms, so the quilt carves
   // its own): a land tile whose neighbour belongs to a different province
   // takes a subtle charcoal seam (realm borders win when both apply).
-  const tileProvBorder = useMemo(() => {
-    const isWater = (k: string) => k === 'river' || k === 'lake';
-    return tiles.map((t, i) => {
-      if (isWater(t.kind) || !tileProvince[i]) return false;
-      const nbs = t.c & 1
-        ? [[0, -1], [0, 1], [-1, 0], [1, 0], [-1, 1], [1, 1]]
-        : [[0, -1], [0, 1], [-1, 0], [1, 0], [-1, -1], [1, -1]];
-      for (const [dc, dr] of nbs) {
-        const j = tileIndex.get(`${t.c + dc},${t.r + dr}`);
-        if (j === undefined) continue;
-        if (isWater(tiles[j].kind)) continue;
-        if (tileProvince[j] && tileProvince[j] !== tileProvince[i]) return true;
-      }
-      return false;
-    });
-  }, [tiles, tileIndex, tileProvince]);
-
   // 國界 — an owned hex bordering a DIFFERENT owner (or unowned wilderness)
   // is a frontier tile: it gets a deeper, more saturated realm colour so the
   // borders cut sharply. Sea/river neighbours don't count (coasts and rivers
@@ -5771,7 +5755,7 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, fogCityId
       const roadW = !water && roadTiles.has(i);
       const snow = water ? '#bcd2dc' : roadW ? '#a89878' : t.kind === 'mountain' ? '#cfd4d8' : '#c9cfc3';
       if (!owner || water || roadW) return snow; // packed dirt shows through the snow
-      const col = new THREE.Color(snow).lerp(new THREE.Color(owner), border ? 0.5 : 0.26);
+      const col = new THREE.Color(snow).lerp(new THREE.Color(owner), border ? 0.55 : 0.4);
       if (border) col.offsetHSL(0, 0, -0.06);
       return `#${col.getHexString()}`;
     }
@@ -5782,7 +5766,7 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, fogCityId
     // tile takes a mottle + relief shading off its north neighbour, and the
     // high ranges a cool atmospheric cast.
     if (!road && !water) {
-      const mottle = Math.abs(Math.sin(t.x * 9.1 + t.z * 4.7)) * 0.12 - 0.06;
+      const mottle = Math.abs(Math.sin(t.x * 9.1 + t.z * 4.7)) * 0.06 - 0.03; // 平涂:斑驳减半
       const ni = tileIndex.get(`${t.c},${t.r - 1}`);
       const northTop = ni !== undefined ? tiles[ni].topY : t.topY;
       const shade = Math.max(-0.1, Math.min(0.1, (t.topY - northTop) * 0.6));
@@ -5791,16 +5775,14 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, fogCityId
     }
     if (owner && !water) {
       // Roads take only a light realm wash so the network stays readable.
-      col.lerp(new THREE.Color(owner), road ? 0.18 : border ? 0.68 : 0.38);
+      // ROTK-XIV 平涂 — a deep, even realm wash; terrain only ghosts through.
+      col.lerp(new THREE.Color(owner), road ? 0.18 : border ? 0.72 : 0.55);
       if (border && !road) col.offsetHSL(0, 0.05, -0.08);
     }
-    // Province seam — subtle, and only where a realm border isn't already
-    // doing the talking.
-    if (!water && !border && tileProvBorder[i]) col.offsetHSL(0, 0, -0.07);
     // 戰爭迷霧 — ground seeded by a city you can't see fades toward dusk.
     if (fogCityIds && !water && tileCity[i] && !fogCityIds.has(tileCity[i]!)) col.offsetHSL(0, -0.12, -0.13);
     return `#${col.getHexString()}`;
-  }), [tiles, winter, tileOwner, tileBorder, tileProvBorder, roadTiles, forces, fogCityIds, tileCity]);
+  }), [tiles, winter, tileOwner, tileBorder, roadTiles, forces, fogCityIds, tileCity]);
 
   // 地塊資訊 — hover (desktop) names the tile: terrain, road, owning realm.
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
