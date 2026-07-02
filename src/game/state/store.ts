@@ -1595,6 +1595,11 @@ export const useGameStore = create<GameStore>()(
             ...state.armies,
             [armyId]: { ...army, totalSeasons: total, holding: false, cellTarget: true },
           },
+          // 日流中改道 — the order is taken NOW; the column swings onto the
+          // new road from the next tick of the sim. Say so plainly.
+          ...(state.dayFlow
+            ? { actionToast: { key: (state.actionToast?.key ?? 0) + 1, zh: '改道令已下 — 縱隊自下一旬轉向新目標', en: 'Rerouted — the column swings over next turn', tone: 'ok' as const } }
+            : {}),
         });
         return true;
       },
@@ -10099,9 +10104,19 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       },
 
       dayFlowTick: () => {
-        const df = get().dayFlow;
+        const state = get();
+        const df = state.dayFlow;
         if (!df || !df.playing) return;
         if (df.day + 1 >= df.total) { set({ dayFlow: null }); return; }
+        // 日流第二步 — the month's BATTLES land mid-flow (day 8, the armies
+        // have met): the playback auto-pauses and the theatres open. Press
+        // ▶ afterwards and the rest of the month walks on.
+        const battleDay = Math.floor(df.total * 0.55);
+        const hasBattles = state.pendingBattleTheaters.length > 0;
+        if (df.day + 1 === battleDay && hasBattles) {
+          set({ dayFlow: { ...df, day: df.day + 1, playing: false } });
+          return;
+        }
         set({ dayFlow: { ...df, day: df.day + 1 } });
       },
       dayFlowTogglePause: () => {

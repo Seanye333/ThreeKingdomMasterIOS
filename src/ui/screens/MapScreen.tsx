@@ -325,11 +325,13 @@ export function MapScreen() {
   const dayFlowTogglePause = useGameStore((s) => s.dayFlowTogglePause);
   const dayFlowSetSpeed = useGameStore((s) => s.dayFlowSetSpeed);
   const dayFlowSkip = useGameStore((s) => s.dayFlowSkip);
+  const battleScreenUpForFlow = useGameStore((s) => !!s.tacticalBattle);
   useEffect(() => {
-    if (!dayFlow?.playing) return;
+    // 全屏戰鬥凍結日數 — the month holds its breath while you fight.
+    if (!dayFlow?.playing || battleScreenUpForFlow) return;
     const iv = setInterval(() => dayFlowTick(), 420 / (dayFlow.speed || 1));
     return () => clearInterval(iv);
-  }, [dayFlow?.playing, dayFlow?.speed, dayFlow?.key, dayFlowTick]);
+  }, [dayFlow?.playing, dayFlow?.speed, dayFlow?.key, dayFlowTick, battleScreenUpForFlow]);
 
   const advanceTurn = () => {
     playSfx('horn');
@@ -788,8 +790,8 @@ export function MapScreen() {
         </ErrorBoundary>
       )}
       <ErrorBoundary fallbackLabel="Battle theater crashed">
-        {!dayFlow && <BattleTheaterMount />}
-        {!dayFlow && <FieldBattleMount />}
+        {(!dayFlow || dayFlow.day >= Math.floor(dayFlow.total * 0.55)) && <BattleTheaterMount />}
+        {(!dayFlow || dayFlow.day >= Math.floor(dayFlow.total * 0.55)) && <FieldBattleMount />}
       </ErrorBoundary>
       {showForces && <ForcesOverview onClose={() => setShowForces(false)} />}
       {showDiplomacy && (
