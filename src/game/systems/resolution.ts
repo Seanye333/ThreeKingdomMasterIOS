@@ -12,7 +12,8 @@ import type {
 import { OATH_BONDS, type OathBond } from '../data/bonds';
 import { isHostilePermitted } from '../types';
 import { generateTerritories, terrainRoute, positionAlongRoute, marchDestCoords, type Territory } from '../data/territories';
-import { stampPaintAlongRoute, stampPaintDisc, seasonStampOf, type HexPaint } from './hexPaint';
+import { hexAt as paintHexAt } from '../data/geography';
+import { stampPaintAlongRoute, stampPaintDisc, seasonStampOf, isSupplyConnected, type HexPaint } from './hexPaint';
 import { terrainMarchCost, describeBattleSite, geoToPixel, WORLD_SCALE, isLand } from '../data/geography';
 import { navalEngagement } from './navalBattle';
 import { cityPos } from '../data/cityGeo';
@@ -1127,6 +1128,47 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const tStart = (total - remainingBefore) / total;
     const tEnd = (total - remainingAfter) / total;
     stampRouteSlice(cmd, tStart, tEnd);
+  }
+
+  // 補給線 (塗色第二步) — a column deep in the field must keep an unbroken
+  // corridor of its own paint back to a friendly city. Cut the ribbon
+  // (enemy boots repaint it, the trail grasses over, the home city falls)
+  // and the column starves: troops bleed each season until it reconnects.
+  {
+    const cityCellsByForce = new Map<EntityId, Array<{ col: number; row: number }>>();
+    for (const c of Object.values(cities)) {
+      if (!c.ownerForceId) continue;
+      const arr = cityCellsByForce.get(c.ownerForceId) ?? [];
+      const cp = cityPos(c);
+      arr.push(paintHexAt(cp.x, cp.y));
+      cityCellsByForce.set(c.ownerForceId, arr);
+    }
+    for (const cmd of liveMarches) {
+      const total = Math.max(1, cmd.totalSeasons ?? 1);
+      if (total < 2) continue;                       // short hops carry their own packs
+      const cmdr = officers[cmd.officerId];
+      if (!cmdr || !cmdr.forceId) continue;
+      const src = cities[cmd.cityId];
+      const dst = marchDestCoords(cmd, cities);
+      if (!src || !dst) continue;
+      const sp = cityPos(src);
+      const route = terrainRoute(sp.x, sp.y, dst.x, dst.y);
+      if (route.length < 2) continue;
+      const tNow = Math.min(0.98, (total - Math.max(0, (cmd.seasonsRemaining ?? 1) - 1)) / total);
+      const pos = positionAlongRoute(route, tNow);
+      const cell = paintHexAt(pos.x, pos.y);
+      const own = cityCellsByForce.get(cmdr.forceId) ?? [];
+      if (isSupplyConnected(hexPaintOut, cmdr.forceId, cell, own)) continue;
+      const loss = Math.max(120, Math.floor(cmd.troops * 0.07));
+      if (cmd.troops - loss < 300) continue;         // a remnant limps on rather than vanishing
+      cmd.troops -= loss;                            // command objects carry into keptCommands
+      entries.push({
+        cityId: null,
+        kind: 'desertion',
+        text: `${cmdr.name.en}'s column is CUT OFF — ${loss.toLocaleString()} troops lost to hunger. Reopen the supply ribbon or turn back.`,
+        textZh: `糧道已斷 — ${cmdr.name.zh}縱隊補給色帶被截,飢卒散去 ${loss.toLocaleString()}。速通糧道,或引軍而還。`,
+      });
+    }
   }
 
   // Storming a camp seizes the cells it held for the victor — the routed

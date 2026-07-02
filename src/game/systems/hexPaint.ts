@@ -125,3 +125,40 @@ export function prunePaint(
   }
   return changed ? next : paint;
 }
+
+/**
+ * 補給線 — is a column's cell connected, through ITS OWN paint, back to any
+ * friendly city? BFS over painted cells only (the dictionary stays small);
+ * a trail always starts at the origin city, so a healthy march is connected
+ * by construction — the cut happens when the corridor is repainted by enemy
+ * boots, grasses over (TTL), or the origin city falls.
+ */
+export function isSupplyConnected(
+  paint: HexPaint,
+  forceId: EntityId,
+  from: { col: number; row: number },
+  ownCityCells: Array<{ col: number; row: number }>,
+  maxVisit = 4000,
+): boolean {
+  const nearCity = (c: { col: number; row: number }): boolean =>
+    ownCityCells.some((cc) => Math.abs(cc.col - c.col) <= 2 && Math.abs(cc.row - c.row) <= 2);
+  if (nearCity(from)) return true;
+  const startKey = hexPaintKey(from.col, from.row);
+  if (paint[startKey]?.f !== forceId) return false; // not even standing on own colour
+  const seen = new Set<string>([startKey]);
+  const queue: Array<{ col: number; row: number }> = [from];
+  let visits = 0;
+  while (queue.length > 0 && visits < maxVisit) {
+    const cur = queue.shift()!;
+    visits++;
+    for (const nb of hexNeighbors(cur.col, cur.row)) {
+      const k = hexPaintKey(nb.col, nb.row);
+      if (seen.has(k)) continue;
+      if (paint[k]?.f !== forceId) continue;
+      if (nearCity(nb)) return true;
+      seen.add(k);
+      queue.push(nb);
+    }
+  }
+  return false;
+}

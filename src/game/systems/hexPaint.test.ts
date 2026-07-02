@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { hexCenter, hexAt } from '../data/geography';
 import {
+  isSupplyConnected,
   stampPaintAlongRoute,
   stampPaintDisc,
   prunePaint,
@@ -82,5 +83,28 @@ describe('seasonStampOf', () => {
   it('is monotonic across seasons and years', () => {
     expect(seasonStampOf(200, 'summer')).toBeGreaterThan(seasonStampOf(200, 'spring'));
     expect(seasonStampOf(201, 'spring')).toBeGreaterThan(seasonStampOf(200, 'winter'));
+  });
+});
+
+describe('isSupplyConnected(補給線)', () => {
+  const cells = (pairs: Array<[number, number]>, f = 'wei', t = 100): HexPaint =>
+    Object.fromEntries(pairs.map(([c, r]) => [hexPaintKey(c, r), { f, t }]));
+
+  it('an unbroken trail back to a friendly city is supplied', () => {
+    const a = hexCenter(60, 40);
+    const b = hexCenter(70, 40);
+    const paint: HexPaint = {};
+    stampPaintAlongRoute(paint, [a, b], 0, Math.hypot(b.x - a.x, b.y - a.y), 'wei', 100);
+    expect(isSupplyConnected(paint, 'wei', { col: 70, row: 40 }, [{ col: 60, row: 40 }])).toBe(true);
+  });
+
+  it('a repainted gap cuts the corridor', () => {
+    const paint = cells([[60, 40], [61, 40], [62, 40], [63, 40], [64, 40]]);
+    paint[hexPaintKey(62, 40)] = { f: 'shu', t: 101 }; // enemy boots on the road
+    expect(isSupplyConnected(paint, 'wei', { col: 64, row: 40 }, [{ col: 59, row: 40 }])).toBe(false);
+  });
+
+  it('standing next to your own city never starves', () => {
+    expect(isSupplyConnected({}, 'wei', { col: 60, row: 40 }, [{ col: 61, row: 41 }])).toBe(true);
   });
 });
