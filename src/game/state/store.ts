@@ -14833,3 +14833,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
     },
   ),
 );
+
+// 除錯後門 — expose the store for headless playtests & console debugging.
+if (typeof window !== 'undefined') {
+  (window as unknown as { __tkm?: unknown }).__tkm = useGameStore;
+}

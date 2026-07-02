@@ -326,7 +326,6 @@ export function MapScreen() {
   const dayFlowSetSpeed = useGameStore((s) => s.dayFlowSetSpeed);
   const dayFlowSkip = useGameStore((s) => s.dayFlowSkip);
   const beginDayFlow = useGameStore((s) => s.beginDayFlow);
-  const hasColumns = useGameStore((s) => Object.keys(s.armies ?? {}).length > 0);
   // 本旬結算本體 — the flow's day 15 (or a flow-less advance) lands here.
   const commitTurn = () => {
     if (hotSeatPlayers.length > 1) {
@@ -359,7 +358,12 @@ export function MapScreen() {
     // 日流(前置)— with columns on the road, the half-month WALKS first
     // (pause mid-way and reroute: the order genuinely lands this turn);
     // resolution fires at day 15. Hot-seat/observe/empty roads skip straight.
-    if (hotSeatPlayers.length <= 1 && hasColumns && !dayFlow) {
+    // Read fresh store state — this closure is held by a once-bound keydown
+    // handler, so hook-captured values here would be stale (day-flow would
+    // never trigger from the space bar).
+    const live = useGameStore.getState();
+    if (hotSeatPlayers.length <= 1 && live.playerForceId
+        && Object.keys(live.armies ?? {}).length > 0 && !live.dayFlow) {
       beginDayFlow();
       return;
     }
