@@ -98,6 +98,7 @@ const MAP_MAX_DIST =
 // (At WORLD_SCALE 1 → 1.0, unchanged; 6 → 1.75.) Tune the 0.15 to taste.
 const MARKER_SCALE = 1 + (WORLD_SCALE - 1) * 0.15;
 /** Stable fallback for selectors that may return undefined on old saves. */
+const EMPTY_HEX_PAINT: Record<string, { f: string; t: number }> = {};
 const EMPTY_TERRITORY_OWNERSHIP: Record<string, string | null> = {};
 function pxToWorld(x: number, y: number): [number, number] {
   return [x * PIXEL_TO_WORLD - MAP_W / 2, y * PIXEL_TO_WORLD - MAP_D / 2];
@@ -5645,11 +5646,13 @@ function HexQuilt({ tiles, colors }: { tiles: HexWorldTile[]; colors: string[] }
   );
 }
 
-function HexWorldTerrain({ winter, cities, forces, territoryOwnership, fogCityIds, onGroundClick }: {
+function HexWorldTerrain({ winter, cities, forces, territoryOwnership, hexPaint, fogCityIds, onGroundClick }: {
   winter: boolean;
   cities: Record<string, City>;
   forces: Record<string, Force>;
   territoryOwnership: Record<string, string | null>;
+  /** 塗色 — walked-cell paint overriding the nearest-city tint. */
+  hexPaint: Record<string, { f: string; t: number }>;
   /** 戰爭迷霧 — when set, tiles seeded by an out-of-view city dim. */
   fogCityIds?: Set<string> | null;
   onGroundClick?: (px: number, py: number) => void;
@@ -5712,6 +5715,11 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, fogCityId
     const citySeeds: Array<string | null> = [];
     for (const t of tiles) {
       if (t.kind === 'river' || t.kind === 'lake') { owners.push(null); provinces.push(null); citySeeds.push(null); continue; }
+      // 塗色 — a walked cell wears the walker's colour (RTK-XIV trail).
+      const painted = hexPaint[`${t.c},${t.r}`];
+      if (painted && forces[painted.f]) {
+        owners.push(painted.f); provinces.push(null); citySeeds.push(null); continue;
+      }
       const px = (t.x + MAP_W / 2) / PIXEL_TO_WORLD;
       const py = (t.z + MAP_D / 2) / PIXEL_TO_WORLD;
       let best: string | null = null;
@@ -5728,7 +5736,7 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, fogCityId
     }
     void provinces; // province seams retired with the flat realm wash
     return { tileOwner: owners, tileCity: citySeeds };
-  }, [tiles, cities, territoryOwnership]);
+  }, [tiles, cities, territoryOwnership, hexPaint]);
 
   // 州界 — province seams (decals sink into the prisms, so the quilt carves
   // its own): a land tile whose neighbour belongs to a different province
@@ -6637,6 +6645,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
   const forces = useGameStore((s) => s.forces);
   const officers = useGameStore((s) => s.officers);
   const territoryOwnership = useGameStore((s) => s.territoryOwnership ?? EMPTY_TERRITORY_OWNERSHIP);
+  const hexPaint = useGameStore((s) => s.hexPaint ?? EMPTY_HEX_PAINT);
   const selectedCityId = useGameStore((s) => s.selectedCityId);
   const selectCity = useGameStore((s) => s.selectCity);
   const openCityMap = useGameStore((s) => s.openCityMap);
@@ -6836,6 +6845,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
           cities={cities}
           forces={forces}
           territoryOwnership={territoryOwnership}
+          hexPaint={hexPaint}
           fogCityIds={fog ? fog.visibleCityIds : null}
           onGroundClick={(px, py) => {
             if (selectedArmyId3D && isLandPx(px, py) && moveArmyToCell(selectedArmyId3D, px, py)) {

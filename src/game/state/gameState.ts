@@ -279,6 +279,9 @@ export interface GameState {
   /** 持續集結 — active standing muster campaigns (player + AI 總動員), each
    *  re-issuing a wave toward its objective every season until it falls. */
   musters: Record<string, import('../systems/muster').MusterCampaign>;
+  /** 塗色 (RTK-XIV) — lattice cells walked by marching columns (deviation
+   *  dictionary "col,row" → {force, seasonStamp}); TTL-pruned each season. */
+  hexPaint: import('../systems/hexPaint').HexPaint;
   /** Phase 3c — territory ownership keyed by territory id. Null/missing
    *  means the cell inherits from its parent city. Set explicitly when
    *  an army marches through it, regardless of march outcome. */
@@ -747,6 +750,7 @@ export const EMPTY_STATE: GameState = {
   scenicLooted: {},
   scenicVisits: {},
   musters: {},
+  hexPaint: {},
   territoryOwnership: {},
   armies: {},
   family: [],
@@ -1150,7 +1154,8 @@ export function loadScenario(
     ),
     sites: buildInitialSites(),
     scenicLooted: {},
-    territoryOwnership: {},
+    hexPaint: {},
+  territoryOwnership: {},
     armies: {},
     // Pre-populate canonical Three Kingdoms family lineages — filtered
     // to entries where BOTH officers are in the loaded roster.

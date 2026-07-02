@@ -12,6 +12,7 @@ import type {
 import { OATH_BONDS, type OathBond } from '../data/bonds';
 import { isHostilePermitted } from '../types';
 import { generateTerritories, terrainRoute, positionAlongRoute, marchDestCoords, type Territory } from '../data/territories';
+import { stampPaintAlongRoute, stampPaintDisc, seasonStampOf, type HexPaint } from './hexPaint';
 import { terrainMarchCost, describeBattleSite, geoToPixel, WORLD_SCALE, isLand } from '../data/geography';
 import { navalEngagement } from './navalBattle';
 import { cityPos } from '../data/cityGeo';
@@ -78,6 +79,8 @@ export interface ResolutionInput {
   /** Phase 3c — current per-territory owner overrides (null/missing
    *  means inherit from parent city). */
   territoryOwnership?: Record<EntityId, EntityId | null>;
+  /** 塗色 — walked-cell paint dictionary (RTK-XIV trail). */
+  hexPaint?: HexPaint;
   /** Player's force — used to summarise their territory gains/losses. */
   playerForceId?: EntityId | null;
   /** Runtime family relations — flow through into combat for kinship bonuses. */
@@ -188,6 +191,8 @@ export interface ResolutionOutput {
   keptCommands?: Record<EntityId, Command>;
   /** Phase 3c — territory ownership map after capture stamps applied. */
   territoryOwnership?: Record<EntityId, EntityId | null>;
+  /** 塗色 — walked-cell paint dictionary (RTK-XIV trail). */
+  hexPaint?: HexPaint;
   /** Persistent field armies still on the map after this season (derived
    *  from in-transit marches — the canonical "unit on the map" layer). */
   armies?: Record<EntityId, import('../types').Army>;
@@ -1055,6 +1060,11 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   const territoryOwnership: Record<EntityId, EntityId | null> = {
     ...(input.territoryOwnership ?? {}),
   };
+  // 塗色 (RTK-XIV) — the same route slices also paint the lattice cells the
+  // column walked, one boot-width wide. Deviation dictionary; pruned by the
+  // store each season (TTL + dead forces).
+  const hexPaintOut: HexPaint = { ...(input.hexPaint ?? {}) };
+  const paintStamp = seasonStampOf(input.date.year, input.date.season);
   const stampRouteSlice = (cmd: Extract<Command, { type: 'march' }>, tStart: number, tEnd: number) => {
     const src = cities[cmd.cityId];
     const dst = marchDestCoords(cmd, cities);
@@ -1074,6 +1084,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     }
     const sliceStart = tStart * total;
     const sliceEnd = tEnd * total;
+    stampPaintAlongRoute(hexPaintOut, route, sliceStart, sliceEnd, cmdr.forceId, paintStamp);
     for (const ter of territories) {
       // Distance of this territory's centroid from the polyline, plus its
       // projected arc length. Reject anything not close to the road.
@@ -1129,6 +1140,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
           territoryOwnership[ter.id] = seizure.forceId;
         }
       }
+      stampPaintDisc(hexPaintOut, seizure.x, seizure.y, 3, seizure.forceId, paintStamp);
     }
   }
 
@@ -2825,6 +2837,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     expeditionRealmRelationDeltas,
     expeditionRealmsPatronClaimed,
     territoryOwnership,
+    hexPaint: hexPaintOut,
     fieldBattleMarks: fieldBattleMarks.length > 0 ? fieldBattleMarks : undefined,
     pendingFieldBattles: pendingFieldBattles.length > 0 ? pendingFieldBattles : undefined,
     pendingSiegeDefenses: pendingSiegeDefenses.length > 0 ? pendingSiegeDefenses : undefined,

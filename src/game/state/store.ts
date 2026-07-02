@@ -153,6 +153,7 @@ import {
   RAIN_RITE_GOLD,
 } from '../systems/mandateRituals';
 import { reliefFoodCost, rollGreatPlague, GREAT_PLAGUE_FLAG, RELIEF_LOYALTY_BONUS, RELIEF_IGNORE_LOYALTY_LOSS, RELIEF_MIGRATE_SHARE } from '../systems/events';
+import { prunePaint, seasonStampOf } from '../systems/hexPaint';
 import { TRIBES_BY_ID } from '../data/tribes';
 import type { TribeId } from '../types';
 import { addRapport, mingleRapport, getRapport, growRapportFromProximity, decayRapport, addLordRapport, decayLordRapport, getLordRapport } from '../systems/rapport';
@@ -3646,6 +3647,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           lordRapport: state.lordRapport,
           lostItems: state.lostItems,
           territoryOwnership: state.territoryOwnership ?? {},
+          hexPaint: state.hexPaint ?? {},
           playerForceId: state.playerForceId,
           family: state.family,
           clanStandings: state.clanStandings,
@@ -7700,6 +7702,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           sites: nextSites,
           tradeRoutes: nextTradeRoutes,
           territoryOwnership: result.territoryOwnership ?? state.territoryOwnership ?? {},
+          // 塗色 — season prune: TTL trails grass over, dead forces sweep.
+          hexPaint: seasonBoundary
+            ? prunePaint(
+                result.hexPaint ?? state.hexPaint ?? {},
+                seasonStampOf(result.date.year, result.date.season),
+                new Set(Object.values(postCities).map((c) => c.ownerForceId).filter(Boolean) as EntityId[]),
+              )
+            : (result.hexPaint ?? state.hexPaint ?? {}),
           armies: result.armies ?? {},
           convoys: result.convoys ?? {},
           raids: result.raids ?? {},
@@ -14483,6 +14493,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           rainRiteDone: loaded.rainRiteDone ?? false,
           pendingRelief: loaded.pendingRelief ?? [],
           plagueRiskCityIds: loaded.plagueRiskCityIds ?? [],
+          hexPaint: loaded.hexPaint ?? {},
           pacifyMissions: loaded.pacifyMissions ?? {},
           annals: loaded.annals ?? [],
           pendingEspionage: loaded.pendingEspionage ?? [],
@@ -14623,6 +14634,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         rainRiteDone: state.rainRiteDone,
         pendingRelief: state.pendingRelief,
         plagueRiskCityIds: state.plagueRiskCityIds,
+        hexPaint: state.hexPaint,
         pacifyMissions: state.pacifyMissions,
         annals: state.annals,
         soundEnabled: state.soundEnabled,
