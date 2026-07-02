@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { playSfx } from '../../game/systems/sound';
 import styles from './Modal.module.css';
 
@@ -81,14 +82,7 @@ export function Modal({
   // 弹窗開合 — a soft sting on open; whoosh on close (in requestClose).
   useEffect(() => { playSfx('open-modal'); }, []);
 
-  useEffect(() => {
-    if (!closeOnEsc) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') requestClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [requestClose, closeOnEsc]);
+  useEscapeKey(requestClose, closeOnEsc);
 
   const hasHeader = title != null || icon != null || headerRight != null || !hideClose;
 

@@ -68,7 +68,7 @@ export function TutorialOverlay() {
         position: 'fixed',
         bottom: 20,
         right: 20,
-        zIndex: 980,
+        zIndex: 970, // Z.tutorial(見 ui/zIndex.ts 層級表)
         background: 'linear-gradient(160deg,#1b2531 0%,#10161e 100%)',
         border: '2px solid #e6c473',
         width: 'min(400px, 92vw)',

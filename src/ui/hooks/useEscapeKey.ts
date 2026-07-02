@@ -1,20 +1,33 @@
 import { useEffect } from 'react';
 
 /**
- * Close-on-Escape for hand-rolled modals/windows. The shared <Modal> wrapper
- * already does this; this hook gives the same courtesy to components that roll
- * their own `position:fixed` backdrop without adopting the wrapper.
- *
- * Listens on `keydown` while `enabled` (default true) and fires `onEscape` for
- * the Escape key. Cleans up on unmount / dependency change.
+ * Close-on-Escape for modals/windows — STACKED: with several layers open
+ * (e.g. a detail window over a roster over the map), Escape closes only the
+ * TOPMOST layer (the most recently mounted listener), not every layer at
+ * once. The shared <Modal> wrapper and hand-rolled backdrops both register
+ * here, so the whole UI peels one layer per press.
  */
+type EscHandler = () => void;
+const escStack: EscHandler[] = [];
+let bound = false;
+function ensureBound() {
+  if (bound || typeof window === 'undefined') return;
+  bound = true;
+  window.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key !== 'Escape' || escStack.length === 0) return;
+    escStack[escStack.length - 1]();
+  });
+}
+
+/** Register a handler on the escape stack for the lifetime of the caller. */
 export function useEscapeKey(onEscape: () => void, enabled = true): void {
   useEffect(() => {
     if (!enabled) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onEscape();
+    ensureBound();
+    escStack.push(onEscape);
+    return () => {
+      const i = escStack.lastIndexOf(onEscape);
+      if (i >= 0) escStack.splice(i, 1);
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
   }, [onEscape, enabled]);
 }

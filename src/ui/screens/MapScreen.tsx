@@ -865,7 +865,7 @@ export function MapScreen() {
             color: '#e6c473',
             fontFamily: 'var(--tkm-font-body)',
             cursor: 'pointer',
-            zIndex: 980,
+            zIndex: 985, // Z.toast — 蓋過教學浮層(見 ui/zIndex.ts 層級表)
           }}
         >
           <div className="tkm-ach-toast-title" style={{ fontSize: '0.7rem', color: '#c9a64e' }}>
@@ -893,7 +893,7 @@ export function MapScreen() {
             color: '#e6c473',
             fontFamily: 'var(--tkm-font-body)',
             cursor: 'pointer',
-            zIndex: 980,
+            zIndex: 985, // Z.toast — 蓋過教學浮層(見 ui/zIndex.ts 層級表)
             boxShadow: '0 0 14px rgba(193, 154, 59, 0.4)',
             animation: 'tkmFadeIn 0.4s ease-out',
             maxWidth: 280,
@@ -936,7 +936,7 @@ export function MapScreen() {
             color: '#e2a07a',
             fontFamily: 'var(--tkm-font-body)',
             cursor: 'pointer',
-            zIndex: 980,
+            zIndex: 985, // Z.toast — 蓋過教學浮層(見 ui/zIndex.ts 層級表)
             boxShadow: '0 0 14px rgba(217, 106, 74, 0.4)',
             animation: 'tkmFadeIn 0.4s ease-out',
             maxWidth: 280,
