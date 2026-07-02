@@ -871,7 +871,17 @@ export function MapScreen() {
         {showPowerGraph && <PowerGraphModal onClose={() => setShowPowerGraph(false)} />}
         {showCityRoster && <CityRosterModal onClose={() => setShowCityRoster(false)} />}
         {showBudget && <BudgetModal onClose={() => setShowBudget(false)} />}
-        {showToDo && <ToDoModal onClose={() => setShowToDo(false)} onOpenLetters={() => setShowWishes(true)} />}
+        {showToDo && <ToDoModal onClose={() => setShowToDo(false)} onOpenLetters={() => setShowWishes(true)}
+          onOpenFeature={(id) => {
+            // 探索建議 — the To-Do nudges route into the real feature panels.
+            if (id === 'schemes') setShowSchemes(true);
+            else if (id === 'espionage') setShowEspionage(true);
+            else if (id === 'rites') setShowRites(true);
+            else if (id === 'annals') setShowAnnals(true);
+            else if (id === 'forge') setShowForge(true);
+            else if (id === 'tournament') setShowTournament(true);
+            else if (id === 'debate-ground') setShowDebateGround(true);
+          }} />}
         {showPalette && <CommandPalette commands={paletteCommands} onClose={() => setShowPalette(false)} />}
         {showCompare && <ForceCompareModal onClose={() => setShowCompare(false)} />}
         {showRumors && <RumorsModal onClose={() => setShowRumors(false)} />}

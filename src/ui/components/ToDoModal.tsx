@@ -33,7 +33,26 @@ const TONE_COLOR: Record<Tone, { fg: string; border: string; bg: string }> = {
  * wild, unanswered letters — and lets you leap straight to each. Pure read of
  * existing state; clears to 天下無事 when nothing's pressing.
  */
-export function ToDoModal({ onClose, onOpenLetters }: { onClose: () => void; onOpenLetters?: () => void }) {
+/** 未曾涉足的玩法 — discovery nudges for the game's deeper systems. */
+const DISCOVER_FEATURES: Array<{ id: string; icon: string; zh: string; en: string; subZh: string }> = [
+  { id: 'schemes',      icon: '🪄', zh: '計略 — 驅虎吞狼、造讖惑眾', en: 'Schemes', subZh: '不費一兵而亂敵國' },
+  { id: 'espionage',    icon: '🕵', zh: '密偵 — 細作與反間',        en: 'Espionage', subZh: '潛伏敵城,開眼蝕心' },
+  { id: 'rites',        icon: '⛩', zh: '祭祀 — 郊祀/祈雨/招安',    en: 'Rites', subZh: '天命亦可經營' },
+  { id: 'annals',       icon: '☄', zh: '災異志 — 本朝編年',        en: 'Annals', subZh: '史事天象盡入誌' },
+  { id: 'forge',        icon: '⚒', zh: '鍛造 — 神兵自鑄',          en: 'Forge', subZh: '鐵與火,養一把名器' },
+  { id: 'tournament',   icon: '🏆', zh: '比武大會 — 群英校技',      en: 'Tournament', subZh: '擂台之上見真章' },
+  { id: 'debate-ground',icon: '💬', zh: '論辯場 — 舌戰練膽',        en: 'Debate', subZh: '不戰而屈人之口' },
+];
+const SEEN_KEY = 'tkm-seen-features';
+const seenFeatures = (): Set<string> => {
+  try { return new Set(JSON.parse(localStorage.getItem(SEEN_KEY) ?? '[]')); } catch { return new Set(); }
+};
+export const markFeatureSeen = (id: string) => {
+  const s = seenFeatures(); s.add(id);
+  localStorage.setItem(SEEN_KEY, JSON.stringify([...s]));
+};
+
+export function ToDoModal({ onClose, onOpenLetters, onOpenFeature }: { onClose: () => void; onOpenLetters?: () => void; onOpenFeature?: (id: string) => void }) {
   const t = useT();
   const cities = useGameStore((s) => s.cities);
   const officers = useGameStore((s) => s.officers);
@@ -174,9 +193,21 @@ export function ToDoModal({ onClose, onOpenLetters }: { onClose: () => void; onO
       });
     }
 
+    // 7) 尚未涉足 — nudge toward the systems this campaign hasn't touched.
+    if (onOpenFeature) {
+      const seen = seenFeatures();
+      for (const f of DISCOVER_FEATURES.filter((x) => !seen.has(x.id)).slice(0, 3)) {
+        list.push({
+          key: `discover-${f.id}`, icon: f.icon, tone: 'info',
+          zh: `試試:${f.zh}`, en: `Try: ${f.en}`, sub: f.subZh,
+          onClick: () => { markFeatureSeen(f.id); onOpenFeature(f.id); onClose(); },
+        });
+      }
+    }
+
     const rank: Record<Tone, number> = { urgent: 0, warn: 1, info: 2 };
     return list.sort((a, b) => rank[a.tone] - rank[b.tone]);
-  }, [cities, officers, allBuildings, armies, season, playerForceId, cityDelegations, pendingTrainings, wishCount, onOpenLetters, selectCity, dispatchConvoy, onClose, t]);
+  }, [cities, officers, allBuildings, armies, season, playerForceId, cityDelegations, pendingTrainings, wishCount, onOpenLetters, onOpenFeature, selectCity, dispatchConvoy, onClose, t]);
 
   const urgent = todos.filter((td) => td.tone === 'urgent').length;
 
