@@ -4015,7 +4015,7 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, hexPaint,
   // 領土歸屬 — each land hex takes its nearest territory centroid's owner
   // (override ?? parent city's lord), the SAME resolution the painted
   // territory layer uses, so both map styles always agree on borders.
-  const { tileOwner, tileCity } = useMemo(() => {
+  const { baseOwner, tileCity } = useMemo(() => {
     const seeds = generateTerritories(Object.values(cities)).map((t) => ({
       x: t.coords.x,
       y: t.coords.y,
@@ -4028,11 +4028,6 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, hexPaint,
     const citySeeds: Array<string | null> = [];
     for (const t of tiles) {
       if (t.kind === 'river' || t.kind === 'lake') { owners.push(null); provinces.push(null); citySeeds.push(null); continue; }
-      // 塗色 — a walked cell wears the walker's colour (RTK-XIV trail).
-      const painted = hexPaint[`${t.c},${t.r}`];
-      if (painted && forces[painted.f]) {
-        owners.push(painted.f); provinces.push(null); citySeeds.push(null); continue;
-      }
       const px = (t.x + MAP_W / 2) / PIXEL_TO_WORLD;
       const py = (t.z + MAP_D / 2) / PIXEL_TO_WORLD;
       let best: string | null = null;
@@ -4048,8 +4043,18 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, hexPaint,
       citySeeds.push(bestCity);
     }
     void provinces; // province seams retired with the flat realm wash
-    return { tileOwner: owners, tileCity: citySeeds };
-  }, [tiles, cities, territoryOwnership, hexPaint]);
+    return { baseOwner: owners, tileCity: citySeeds };
+  }, [tiles, cities, territoryOwnership]);
+
+  // 塗色 — a walked cell wears the walker's colour (RTK-XIV trail). Split
+  // from the nearest-seed scan above so the LIVE day-flow painting (hexPaint
+  // changes every few ticks) only pays this cheap overlay pass, never the
+  // 48k×seeds ownership scan.
+  const tileOwner = useMemo(() => tiles.map((t, i) => {
+    if (t.kind === 'river' || t.kind === 'lake') return baseOwner[i];
+    const painted = hexPaint[`${t.c},${t.r}`];
+    return painted && forces[painted.f] ? painted.f : baseOwner[i];
+  }), [tiles, baseOwner, hexPaint, forces]);
 
   // 州界 — province seams (decals sink into the prisms, so the quilt carves
   // its own): a land tile whose neighbour belongs to a different province

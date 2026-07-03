@@ -103,7 +103,7 @@ import { expeditionLegSeasons } from '../systems/expedition';
 import { getEmbassyTarget, embassyLegSeasons, realmTradeIncome, realmTitle, realmPatronPrestige, envoyCompetence, routeDisruptionChance, realmAidProfile, isHorseRealm, realmTradeHorses, naturalizedName } from '../systems/foreignRealm';
 import { generateFictionalOfficer } from '../systems/officerGen';
 import { FOREIGN_REALMS_BY_ID } from '../data/foreignRealms';
-import { terrainTypeAt, isRiverside, WORLD_SCALE } from '../data/geography';
+import { terrainTypeAt, isRiverside, WORLD_SCALE, hexAt, hexNeighbors, hexCenter, isLand } from '../data/geography';
 import { FAMILY_LINEAGE } from '../data/familyLineage';
 import { POLICY_DEFS, TACTIC_DEFS } from '../data/officerAttributes';
 import {
@@ -153,8 +153,8 @@ import {
   RAIN_RITE_GOLD,
 } from '../systems/mandateRituals';
 import { reliefFoodCost, rollGreatPlague, GREAT_PLAGUE_FLAG, RELIEF_LOYALTY_BONUS, RELIEF_IGNORE_LOYALTY_LOSS, RELIEF_MIGRATE_SHARE } from '../systems/events';
-import { prunePaint, seasonStampOf } from '../systems/hexPaint';
-import { computeDayEncounters } from '../systems/dayEncounters';
+import { prunePaint, seasonStampOf, hexPaintKey } from '../systems/hexPaint';
+import { computeDayEncounters, marchPositionAtDay } from '../systems/dayEncounters';
 import { TRIBES_BY_ID } from '../data/tribes';
 import type { TribeId } from '../types';
 import { addRapport, mingleRapport, getRapport, growRapportFromProximity, decayRapport, addLordRapport, decayLordRapport, getLordRapport } from '../systems/rapport';
@@ -10161,6 +10161,32 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const df = get().dayFlow;
         if (!df || !df.playing) return;
         const day = Math.min(df.total, df.day + 1);
+        // 走到哪染到哪 — every column stamps its colour under today's step
+        // (cell + one ring; the season commit re-stamps the full slice, so
+        // this is presentation catching up to truth). The paint object is
+        // only REPLACED when ownership actually flips somewhere — pure
+        // timestamp refreshes mutate in place so the 48k-cell quilt overlay
+        // isn't re-derived every tick.
+        const live = get();
+        const stampNow = seasonStampOf(live.date.year, live.date.season);
+        let paint = live.hexPaint;
+        let repainted = false;
+        for (const cmd of Object.values(live.pendingCommands)) {
+          if (cmd.type !== 'march' || cmd.holding) continue;
+          const fid = live.officers[cmd.officerId]?.forceId;
+          if (!fid) continue;
+          const pos = marchPositionAtDay(cmd, live.cities, day);
+          if (!pos) continue;
+          const h0 = hexAt(pos.x, pos.y);
+          for (const cell of [h0, ...hexNeighbors(h0.col, h0.row)]) {
+            const cc = hexCenter(cell.col, cell.row);
+            if (!isLand(cc.x, cc.y, 0)) continue;
+            const k = hexPaintKey(cell.col, cell.row);
+            if (paint[k]?.f === fid) { paint[k].t = stampNow; continue; }
+            if (!repainted) { paint = { ...paint }; repainted = true; }
+            paint[k] = { f: fid, t: stampNow };
+          }
+        }
         // 真日級 — did the walk just reach a predicted first contact? Fire
         // the banner, pause the flow, lock the pair (no rerouting out now).
         const hit = df.encounters?.find((e) => !e.fired && e.day <= day);
@@ -10176,11 +10202,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               ...df, day, playing: false,
               encounters: df.encounters!.map((e) => (e === hit ? { ...e, fired: true } : e)),
             },
+            ...(repainted ? { hexPaint: paint } : {}),
             actionToast: { key: (state.actionToast?.key ?? 0) + 1, ...msg, tone: 'warn' as const },
           });
           return;
         }
-        set({ dayFlow: { ...df, day } });
+        set({ dayFlow: { ...df, day }, ...(repainted ? { hexPaint: paint } : {}) });
       },
       dayFlowTogglePause: () => {
         const df = get().dayFlow;
