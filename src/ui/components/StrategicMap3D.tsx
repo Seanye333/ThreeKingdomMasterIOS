@@ -5512,14 +5512,36 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
         const [px, py] = cityPixel(to.id, to.coords.x, to.coords.y);
         const [wx, wz] = pxToWorld(px, py);
         const y = cityElevation(wx, wz);
+        // 遭遇預告 — the same day-sweep the drag ghost runs: would THIS
+        // redirect walk into a hostile column, and on which day?
+        const live = useGameStore.getState();
+        const myCmd = live.pendingCommands[selectedArmyId3D];
+        let fc: { day: number; foe: string } | null = null;
+        if (myCmd?.type === 'march') {
+          const myArmy = live.armies[selectedArmyId3D];
+          const remaining = Math.max(1, Math.ceil((1 - (myArmy?.progress ?? 0)) * ticks));
+          const trial = { ...myCmd, targetCityId: to.id, targetX: undefined, targetY: undefined, holding: false, totalSeasons: ticks, seasonsRemaining: remaining };
+          const others = Object.values(live.pendingCommands)
+            .filter((c): c is typeof myCmd => c.type === 'march' && c.officerId !== myCmd.officerId);
+          const mine = computeDayEncounters([trial, ...others], live.officers, live.cities, live.diplomacy)
+            .find((c) => c.a.officerId === myCmd.officerId || c.b.officerId === myCmd.officerId);
+          if (mine) {
+            const foeId = mine.a.officerId === myCmd.officerId ? mine.b.officerId : mine.a.officerId;
+            const foe = live.officers[foeId];
+            fc = { day: Math.max(1, mine.day), foe: foe ? pickName(foe.name, lang) : '?' };
+          }
+        }
         return (
           <Html position={[wx, y + 1.35, wz]} center distanceFactor={9} zIndexRange={[42, 32]} style={{ pointerEvents: 'none' }}>
             <div style={{
-              background: 'rgba(20,14,8,0.9)', border: '1px solid #f0d98a', borderRadius: 'var(--tkm-radius-xs)',
+              background: 'rgba(20,14,8,0.9)', border: `1px solid ${fc ? '#e0552a' : '#f0d98a'}`, borderRadius: 'var(--tkm-radius-xs)',
               padding: '2px 8px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px',
               color: '#f0d98a', whiteSpace: 'nowrap', letterSpacing: '1px',
             }}>
               {t('改道 → ', 'Reroute → ')}{pickName(to.name, lang)}{t(` · 約 ${ticks} 旬`, ` · ~${ticks} wk`)}
+              {fc && (
+                <div style={{ color: '#ff9c7a' }}>⚠ {t(`第${fc.day}日遇 ${fc.foe}`, `Day ${fc.day}: meets ${fc.foe}`)}</div>
+              )}
             </div>
           </Html>
         );
