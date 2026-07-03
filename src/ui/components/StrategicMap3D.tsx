@@ -41,6 +41,7 @@ import type { Officer, StratagemId } from '../../game/types';
 import type { WeatherKind } from '../../game/systems/weather';
 import { LocatorMap } from './LocatorMap';
 import { ObjectivePanel } from './ObjectivePanel';
+import { SelectionRing3D } from './SelectionRing3D';
 import { PortPanel } from './PortPanel';
 import { FortPanel } from './FortPanel';
 import { TribePanel } from './TribePanel';
@@ -1891,14 +1892,10 @@ function City3D({
   // dense clusters (Luoyang basin, Shu passes, Xiangyang/Fancheng) without
   // moving any city off its real-geography position.
   const worldScale = PIXEL_TO_WORLD * 50 * 0.6 * MARKER_SCALE;   // 0.5→0.6: cities ~20% larger to read as proper cities under the name pills (still de-crowded enough for the dense clusters)
-  // Selection pulse + own-city beacon pulse
-  const ringRef = useRef<THREE.MeshBasicMaterial>(null);
+  // Own-city beacon pulse (selection pulse lives in SelectionRing3D)
   const ownRingRef = useRef<THREE.MeshBasicMaterial>(null);
   const lang = useLanguage();
   useFrame(({ clock }) => {
-    if (ringRef.current && isSelected) {
-      ringRef.current.opacity = 0.5 + Math.sin(clock.elapsedTime * 3) * 0.3;
-    }
     if (ownRingRef.current && isOwn) {
       ownRingRef.current.opacity = 0.55 + Math.sin(clock.elapsedTime * 2.2) * 0.25;
     }
@@ -1949,13 +1946,8 @@ function City3D({
       {/* Old in-city port docks removed — ports are now independent entities
        *  rendered by <Ports3D />. Cities with city.port=true still pass the
        *  flag for legacy lookup but no longer draw their own dock here. */}
-      {/* Selection ring */}
-      {isSelected && (
-        <mesh position={[0, 0.04, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[radius + 0.12, radius + 0.20, 32]} />
-          <meshBasicMaterial ref={ringRef} color="#d4a84a" side={THREE.DoubleSide} transparent opacity={0.7} />
-        </mesh>
-      )}
+      {/* Selection ring — shared gold twin-ring, same as battle/city maps */}
+      {isSelected && <SelectionRing3D radius={radius + 0.2} y={0.04} />}
       {/* Overlay heatmap disk + value label */}
       {overlay && (
         <>
@@ -2364,13 +2356,8 @@ function MarchingArmy({ from, to, color, commanderName, targetName, troops, seas
           </div>
         </Html>
       )}
-      {/* Selection ring on the ground under the squad. */}
-      {selected && (
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
-          <ringGeometry args={[0.32, 0.42, 28]} />
-          <meshBasicMaterial color="#fff4d0" transparent opacity={0.85} side={THREE.DoubleSide} />
-        </mesh>
-      )}
+      {/* Selection ring on the ground under the squad — shared gold marker. */}
+      {selected && <SelectionRing3D radius={0.42} y={0.02} segments={28} />}
       {holding ? (
         <>
           <FieldCamp color={color} troops={troops} />

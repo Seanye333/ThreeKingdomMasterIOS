@@ -9,6 +9,7 @@ import {
 import { ToneMappingMode } from 'postprocessing';
 import * as THREE from 'three';
 import { RENDER_HI } from '../renderQuality';
+import { SelectionRing3D } from '../components/SelectionRing3D';
 import { useGameStore } from '../../game/state/store';
 import { playSfx, playFxSfx, startBattleAmbience, stopBattleAmbience, playMusic, stopMusic, type MusicTrack } from '../../game/systems/sound';
 import type { EntityId, FormationId, HexCoord, Officer, StratagemId, TacticalBattle, TacticalTile, TacticalUnit, TerrainKind, TimeOfDay, UnitType, Weather } from '../../game/types';
@@ -938,39 +939,7 @@ function BattleWear({ unit, yLift }: { unit: TacticalUnit; yLift: number }) {
  *  head, so the picked unit is unmistakable even on a small phone screen.
  *  Self-animating (own useFrame) and non-raycasting so it never eats taps. */
 function SelectionMarker({ yLift }: { yLift: number }) {
-  const ringRef = useRef<THREE.Mesh>(null);
-  const haloRef = useRef<THREE.MeshBasicMaterial>(null);
-  const chevRef = useRef<THREE.Group>(null);
-  useFrame(({ clock }) => {
-    const t = clock.elapsedTime;
-    if (ringRef.current) {
-      const s = 1 + Math.sin(t * 3) * 0.08;
-      ringRef.current.scale.set(s, s, s);
-    }
-    if (haloRef.current) haloRef.current.opacity = 0.5 + Math.sin(t * 3) * 0.25;
-    if (chevRef.current) chevRef.current.position.y = 1.5 + yLift + Math.sin(t * 3) * 0.09;
-  });
-  return (
-    <group raycast={() => null}>
-      {/* bright inner ring */}
-      <mesh ref={ringRef} position={[0, 0.06, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
-        <ringGeometry args={[0.5, 0.66, 40]} />
-        <meshBasicMaterial color="#ffe08a" side={THREE.DoubleSide} transparent opacity={0.9} toneMapped={false} depthWrite={false} />
-      </mesh>
-      {/* faint outer halo */}
-      <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
-        <ringGeometry args={[0.72, 0.98, 40]} />
-        <meshBasicMaterial ref={haloRef} color="#d4a84a" side={THREE.DoubleSide} transparent opacity={0.4} toneMapped={false} depthWrite={false} />
-      </mesh>
-      {/* down-pointing chevron floating over the head */}
-      <group ref={chevRef} position={[0, 1.5 + yLift, 0]}>
-        <mesh rotation={[Math.PI, 0, 0]} raycast={() => null}>
-          <coneGeometry args={[0.13, 0.22, 4]} />
-          <meshBasicMaterial color="#ffe08a" toneMapped={false} transparent opacity={0.95} />
-        </mesh>
-      </group>
-    </group>
-  );
+  return <SelectionRing3D radius={0.66} y={0.05} chevronY={1.5 + yLift} />;
 }
 
 /** 武將立繪 — a properly proportioned low-poly warrior to replace the old

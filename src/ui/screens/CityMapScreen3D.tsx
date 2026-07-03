@@ -4,6 +4,7 @@ import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { OrbitControls, Html, Instances, Instance } from '@react-three/drei';
 import * as THREE from 'three';
 import { RENDER_HI } from '../renderQuality';
+import { SelectionRing3D } from '../components/SelectionRing3D';
 import { useGameStore } from '../../game/state/store';
 import {
   DEFENSE_BUILDINGS,
@@ -513,18 +514,13 @@ function FoundationPlot3D({ x, z, occupied, selected, onClick }: {
         <boxGeometry args={[1.35, 0.18, 1.35]} />
         <meshStandardMaterial color={occupied ? '#7a6a52' : selected ? '#cdb888' : '#9a8a68'} roughness={0.96} />
       </mesh>
-      {!occupied && (
+      {!occupied && !selected && (
         <mesh position={[0, 0.19, 0]} rotation={[-Math.PI / 2, 0, Math.PI / 4]}>
           <ringGeometry args={[0.42, 0.56, 4]} />
-          <meshBasicMaterial color={selected ? '#ffe9a8' : '#d4a84a'} transparent opacity={selected ? 0.85 : 0.5} side={THREE.DoubleSide} />
+          <meshBasicMaterial color="#d4a84a" transparent opacity={0.5} side={THREE.DoubleSide} />
         </mesh>
       )}
-      {selected && (
-        <mesh position={[0, 0.75, 0]} rotation={[Math.PI, 0, 0]}>
-          <coneGeometry args={[0.22, 0.4, 4]} />
-          <meshStandardMaterial color="#ffe9a8" emissive="#d4a84a" emissiveIntensity={0.5} />
-        </mesh>
-      )}
+      {selected && <SelectionRing3D radius={0.62} y={0.2} chevronY={0.85} chevronSize={0.2} />}
     </group>
   );
 }
@@ -2508,12 +2504,7 @@ function HinterlandSlot3D({
           roughness={0.6}
         />
       </mesh>
-      {selected && (
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
-          <ringGeometry args={[1.05, 1.3, 24]} />
-          <meshBasicMaterial color="#f0e0b0" transparent opacity={0.8} side={THREE.DoubleSide} />
-        </mesh>
-      )}
+      {selected && <SelectionRing3D radius={1.18} y={0.02} segments={24} />}
       {showLabel && (
         <Html center position={[0, 1.0, 0]} distanceFactor={26} occlude={false}>
           <div style={{
