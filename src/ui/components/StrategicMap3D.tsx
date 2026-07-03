@@ -4083,6 +4083,41 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, hexPaint,
     });
   }, [tiles, tileIndex, tileOwner]);
 
+  // 國界墨線 — a crisp ink stroke along every edge where ownership flips
+  // (owner vs different owner / wilderness). One LineSegments for the whole
+  // realm map; rebuilt only when ownership actually changes.
+  const borderGeom = useMemo(() => {
+    const isWater = (k: string) => k === 'river' || k === 'lake';
+    const pts: number[] = [];
+    const HALF = HEXW_R * 0.49;   // side length = circumradius; slight inset
+    for (let i = 0; i < tiles.length; i++) {
+      const t = tiles[i];
+      if (isWater(t.kind)) continue;
+      const own = tileOwner[i];
+      const nbs = t.c & 1
+        ? [[0, -1], [0, 1], [-1, 0], [1, 0], [-1, 1], [1, 1]]
+        : [[0, -1], [0, 1], [-1, 0], [1, 0], [-1, -1], [1, -1]];
+      for (const [dc, dr] of nbs) {
+        const j = tileIndex.get(`${t.c + dc},${t.r + dr}`);
+        if (j === undefined || j <= i) continue;       // dedupe pairs
+        const n = tiles[j];
+        if (isWater(n.kind)) continue;
+        const other = tileOwner[j];
+        if (other === own || (!own && !other)) continue;
+        const mx = (t.x + n.x) / 2, mz = (t.z + n.z) / 2;
+        let dx = n.x - t.x, dz = n.z - t.z;
+        const len = Math.hypot(dx, dz) || 1;
+        dx /= len; dz /= len;
+        const y = Math.max(t.topY, n.topY) + 0.02;
+        pts.push(mx - dz * HALF, y, mz + dx * HALF, mx + dz * HALF, y, mz - dx * HALF);
+      }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+    return g;
+  }, [tiles, tileIndex, tileOwner]);
+  useEffect(() => () => { borderGeom.dispose(); }, [borderGeom]);
+
   // Per-tile colour — terrain base blended toward the owning force's colour
   // (deeper on frontier tiles); seasonal: snow-dusted land in winter.
   const colors = useMemo(() => tiles.map((t, i) => {
@@ -4166,6 +4201,10 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, hexPaint,
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
       <HexQuilt tiles={tiles} colors={colors} />
+      {/* 國界墨線 — the realm outline reads at a glance, RTK-XIV style. */}
+      <lineSegments geometry={borderGeom} frustumCulled={false} raycast={() => null}>
+        <lineBasicMaterial color="#161009" transparent opacity={0.55} depthWrite={false} />
+      </lineSegments>
       {hoverTile && (() => {
         const ownerId = tileOwner[hoverIdx!];
         const ownerForce = ownerId ? forces[ownerId] : null;
