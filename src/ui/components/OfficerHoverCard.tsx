@@ -104,7 +104,7 @@ export function OfficerHoverCard({ officer, children }: Props) {
               )}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: '0.25rem', alignItems: 'center' }}>
                 <span style={{
-                  fontSize: '0.66rem', padding: '0.04rem 0.34rem', borderRadius: 2,
+                  fontSize: '0.66rem', padding: '0.04rem 0.34rem', borderRadius: 'var(--tkm-radius-xs)',
                   border: `1px solid ${grade.color}`, color: grade.color, letterSpacing: '0.04rem',
                 }}>
                   {pickName(grade.name, lang)} {pickName(grade.rank, lang)}

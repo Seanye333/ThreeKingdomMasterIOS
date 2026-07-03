@@ -122,7 +122,7 @@ export function SitePanel({ siteId, onClose }: Props) {
 
           <span style={{ color: '#7a8893' }}>{site.subtype === 'bandit' ? t('賊眾', 'Strength') : t('守備', 'Garrison')}</span>
           <span>
-            <div style={{ height: 8, background: '#1e2832', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', width: '100%' }}>
+            <div style={{ height: 8, background: '#1e2832', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', width: '100%' }}>
               <div style={{ height: '100%', width: `${Math.round(hpPct * 100)}%`, background: hpPct > 0.5 ? '#b8442e' : '#7ed68a' }} />
             </div>
             <span style={{ fontSize: '0.72rem', color: '#97a4ae' }}>
@@ -156,7 +156,7 @@ export function SitePanel({ siteId, onClose }: Props) {
               }}
               style={{
                 width: '100%', padding: '0.3rem 0.5rem', background: '#10161e', color: '#eef4f8',
-                border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', fontFamily: 'var(--tkm-font-body)', fontSize: '0.82rem', marginBottom: '0.4rem',
+                border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', fontFamily: 'var(--tkm-font-body)', fontSize: '0.82rem', marginBottom: '0.4rem',
               }}
             >
               {candidates.map(({ officer: o, city }) => (

@@ -139,7 +139,7 @@ export function Duel3DStage(props: ComponentProps<typeof DuelGameModal>) {
       {/* 宿敵 — the head-to-head going into the bout (kills the loop between the
           恩怨簿 and the arena: rivals who keep meeting see their tally). */}
       {rivalryRef.current && (
-        <div style={{ position: 'fixed', left: '50%', top: 28, transform: 'translateX(-50%)', zIndex: 131, pointerEvents: 'none', background: swornRef.current ? 'rgba(120,30,30,0.9)' : 'rgba(20,28,38,0.86)', border: `1px solid ${swornRef.current ? '#e07a5a' : '#5a4a2a'}`, borderRadius: 5, padding: '0.18rem 0.8rem', color: swornRef.current ? '#ffd0c0' : '#e6c473', fontFamily: 'var(--tkm-font-body)', fontSize: '0.78rem', letterSpacing: '0.05rem', textShadow: '0 1px 3px #000', whiteSpace: 'nowrap' }}>
+        <div style={{ position: 'fixed', left: '50%', top: 28, transform: 'translateX(-50%)', zIndex: 131, pointerEvents: 'none', background: swornRef.current ? 'rgba(120,30,30,0.9)' : 'rgba(20,28,38,0.86)', border: `1px solid ${swornRef.current ? '#e07a5a' : '#5a4a2a'}`, borderRadius: 'var(--tkm-radius-sm)', padding: '0.18rem 0.8rem', color: swornRef.current ? '#ffd0c0' : '#e6c473', fontFamily: 'var(--tkm-font-body)', fontSize: '0.78rem', letterSpacing: '0.05rem', textShadow: '0 1px 3px #000', whiteSpace: 'nowrap' }}>
           {(() => { const h = headToHead(rivalryRef.current!, attacker.id); return (
             <>{swornRef.current ? '⚔ ' + t('宿敵', 'Sworn Rivals') : t('舊識', 'Old foes')} · {leftName} {h.mine}–{h.theirs} {rightName}{h.draws ? t(` ・平${h.draws}`, ` · ${h.draws}d`) : ''}</>
           ); })()}
@@ -167,11 +167,11 @@ export function Duel3DStage(props: ComponentProps<typeof DuelGameModal>) {
           <button
             onClick={replay}
             disabled={replaying}
-            style={{ padding: '0.4rem 0.9rem', background: 'rgba(20,28,38,0.94)', border: '1px solid #6aae73', borderRadius: 5, color: replaying ? '#5a6a5a' : '#cfe8c8', cursor: replaying ? 'default' : 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.85rem' }}
+            style={{ padding: '0.4rem 0.9rem', background: 'rgba(20,28,38,0.94)', border: '1px solid #6aae73', borderRadius: 'var(--tkm-radius-sm)', color: replaying ? '#5a6a5a' : '#cfe8c8', cursor: replaying ? 'default' : 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.85rem' }}
           >🔁 {replaying ? t('回放中…', 'Replaying…') : t('回放', 'Replay')}</button>
           <button
             onClick={share}
-            style={{ padding: '0.4rem 0.9rem', background: 'rgba(20,28,38,0.94)', border: '1px solid #e6c473', borderRadius: 5, color: '#f2dd9a', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.85rem' }}
+            style={{ padding: '0.4rem 0.9rem', background: 'rgba(20,28,38,0.94)', border: '1px solid #e6c473', borderRadius: 'var(--tkm-radius-sm)', color: '#f2dd9a', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.85rem' }}
           >📤 {t('分享', 'Share')}</button>
           {toast && <span style={{ alignSelf: 'center', color: '#9ed68a', fontSize: '0.78rem', textShadow: '0 1px 3px #000' }}>{toast}</span>}
         </div>

@@ -474,7 +474,7 @@ function MarketPanel({ cityId, onClose }: { cityId: EntityId; onClose: () => voi
   const sellLots = [2000, 5000, 10000];
   const row: React.CSSProperties = { display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' };
   const btn: React.CSSProperties = {
-    background: '#241c12', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#e6edf3',
+    background: '#241c12', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', color: '#e6edf3',
     padding: '0.35rem 0.7rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.78rem',
   };
   return (

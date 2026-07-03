@@ -70,7 +70,7 @@ export function PromotionCeremony({ officer, grade, color, year, onDone }: Props
           style={{
             position: 'relative', padding: '0.5rem 2.2rem',
             background: `linear-gradient(160deg, ${hexA(accent, 0.95)}, ${hexA(accent, 0.55)})`,
-            border: '3px solid #eef4f8', borderRadius: 6,
+            border: '3px solid #eef4f8', borderRadius: 'var(--tkm-radius)',
             boxShadow: `0 0 26px ${hexA(accent, 0.7)}, inset 0 0 14px rgba(0,0,0,0.3)`,
             ...anim('tkmBannerUnfurl 0.7s cubic-bezier(0.2,1.1,0.3,1) 0.4s both'),
           }}

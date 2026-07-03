@@ -101,7 +101,7 @@ export function ChronicleModal({ onClose }: { onClose: () => void }) {
                 }}>
                   <span style={{
                     fontSize: '1.05rem', color: '#e6c473', letterSpacing: '0.08rem',
-                    border: '1px solid #8a6f3a', padding: '0.1rem 0.6rem', borderRadius: 2,
+                    border: '1px solid #8a6f3a', padding: '0.1rem 0.6rem', borderRadius: 'var(--tkm-radius-xs)',
                     background: 'rgba(212, 168, 74, 0.07)',
                   }}>{year}{t('年', ' AD')}</span>
                   <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, #364654, transparent)' }} />

@@ -76,12 +76,12 @@ export function DialogueModal() {
         <div style={{
           position: 'absolute', left: 0, right: 0, top: -2, height: 4,
           background: 'linear-gradient(90deg, #6a4828 0%, #e6c473 50%, #6a4828 100%)',
-          borderRadius: 2, pointerEvents: 'none',
+          borderRadius: 'var(--tkm-radius-xs)', pointerEvents: 'none',
         }} />
         <div style={{
           position: 'absolute', left: 0, right: 0, bottom: -2, height: 4,
           background: 'linear-gradient(90deg, #6a4828 0%, #e6c473 50%, #6a4828 100%)',
-          borderRadius: 2, pointerEvents: 'none',
+          borderRadius: 'var(--tkm-radius-xs)', pointerEvents: 'none',
         }} />
         <div style={{
           fontSize: '0.72rem',
@@ -145,7 +145,7 @@ export function DialogueModal() {
                 onClick={() => setChoseIdx(i)}
                 style={{
                   background: '#26323e',
-                  border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+                  border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
                   color: '#e6c473',
                   padding: '0.6rem 1rem',
                   fontFamily: 'inherit',

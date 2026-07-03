@@ -202,7 +202,7 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
   }
 
   const slot = (o: typeof a, label: string) => (
-    <div style={{ flex: 1, textAlign: 'center', border: '1px dashed #3a4754', borderRadius: 6, padding: '0.6rem', background: o ? 'rgba(136,183,232,0.07)' : 'transparent' }}>
+    <div style={{ flex: 1, textAlign: 'center', border: '1px dashed #3a4754', borderRadius: 'var(--tkm-radius)', padding: '0.6rem', background: o ? 'rgba(136,183,232,0.07)' : 'transparent' }}>
       <div style={{ fontSize: '0.68rem', color: '#7a8893', letterSpacing: '0.1rem', marginBottom: '0.4rem' }}>{label}</div>
       {o ? (
         <>
@@ -229,7 +229,7 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
             key={m}
             onClick={() => { setMode(m); setResult(null); }}
             style={{
-              flex: 1, padding: '0.4rem', borderRadius: 4, cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.84rem',
+              flex: 1, padding: '0.4rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.84rem',
               background: mode === m ? 'rgba(136,183,232,0.18)' : '#10161e',
               border: `1px solid ${mode === m ? '#88b7e8' : '#26323e'}`, color: mode === m ? '#d8ecff' : '#8a96a0',
             }}
@@ -247,7 +247,7 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
             <span style={{ color: '#f2dd9a', fontSize: '0.86rem' }}>{pickName(a.name, lang)}</span>
             <span style={{ color: '#7a8893' }}>vs</span>
             {gauntletFoes.map((f, i) => (
-              <span key={f.id} style={{ fontSize: '0.72rem', color: '#9aa6b0', background: '#10161e', border: '1px solid #26323e', borderRadius: 4, padding: '0.1rem 0.4rem' }}>
+              <span key={f.id} style={{ fontSize: '0.72rem', color: '#9aa6b0', background: '#10161e', border: '1px solid #26323e', borderRadius: 'var(--tkm-radius-sm)', padding: '0.1rem 0.4rem' }}>
                 {i + 1}. {pickName(f.name, lang)}
               </span>
             ))}
@@ -300,7 +300,7 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
                 key={id}
                 onClick={() => setDifficulty(id)}
                 style={{
-                  flex: 1, padding: '0.35rem', borderRadius: 4, cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.82rem',
+                  flex: 1, padding: '0.35rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.82rem',
                   background: on ? 'rgba(136,183,232,0.18)' : '#10161e',
                   border: `1px solid ${on ? '#88b7e8' : '#26323e'}`, color: on ? '#d8ecff' : '#8a96a0',
                 }}
@@ -339,7 +339,7 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
                 key={sc.id}
                 onClick={() => { setScenario(sel ? null : sc); setResult(null); }}
                 style={{
-                  textAlign: 'left', padding: '0.5rem 0.6rem', borderRadius: 5, cursor: 'pointer', fontFamily: 'var(--tkm-font-body)',
+                  textAlign: 'left', padding: '0.5rem 0.6rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)',
                   background: sel ? 'rgba(136,183,232,0.16)' : '#10161e', border: `1px solid ${sel ? '#88b7e8' : '#26323e'}`, color: '#e6edf3',
                 }}
               >
@@ -366,7 +366,7 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
       </>)}
 
       {result && (
-        <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid #3a4754', borderRadius: 6, padding: '0.6rem 0.8rem', marginBottom: '0.8rem' }}>
+        <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid #3a4754', borderRadius: 'var(--tkm-radius)', padding: '0.6rem 0.8rem', marginBottom: '0.8rem' }}>
           <div style={{ color: '#e6c473', marginBottom: result.notes.length ? '0.4rem' : 0 }}>{result.text}</div>
           {result.notes.map((n, i) => (
             <div key={i} style={{ fontSize: '0.8rem', color: '#9ed68a', lineHeight: 1.6 }}>✦ {n}</div>
@@ -396,7 +396,7 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
                 display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left',
                 background: sel ? 'rgba(136,183,232,0.16)' : '#10161e',
                 border: `1px solid ${sel ? '#88b7e8' : '#26323e'}`,
-                borderRadius: 4, padding: '0.4rem 0.5rem', cursor: winded ? 'default' : 'pointer',
+                borderRadius: 'var(--tkm-radius-sm)', padding: '0.4rem 0.5rem', cursor: winded ? 'default' : 'pointer',
                 color: '#e6edf3', opacity: winded ? 0.5 : 1, fontFamily: 'var(--tkm-font-body)',
               }}
             >

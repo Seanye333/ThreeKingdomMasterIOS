@@ -194,7 +194,7 @@ export function EventEditorModal({ scenario, onClose }: Props) {
 }
 
 const overlay: CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'grid', placeItems: 'center', zIndex: 900, padding: '1rem' };
-const panel: CSSProperties = { background: 'linear-gradient(160deg,#1b2531,#10161e)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', width: 'min(720px,100%)', maxHeight: '90vh', display: 'flex', flexDirection: 'column', color: '#e6edf3', fontFamily: 'var(--tkm-font-body)' };
+const panel: CSSProperties = { background: 'linear-gradient(160deg,#1b2531,#10161e)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', width: 'min(720px,100%)', maxHeight: '90vh', display: 'flex', flexDirection: 'column', color: '#e6edf3', fontFamily: 'var(--tkm-font-body)' };
 const header: CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '1rem 1.5rem', borderBottom: '1px solid #2b3845' };
 const sectionLabel: CSSProperties = { fontSize: '0.7rem', letterSpacing: '0.07rem', color: '#7a8893', textTransform: 'uppercase', marginBottom: '0.4rem' };
 const inp: CSSProperties = { background: '#14100c', border: '1px solid #2b3845', color: '#e6edf3', padding: '0.35rem 0.5rem', fontFamily: 'inherit', fontSize: '0.82rem' };

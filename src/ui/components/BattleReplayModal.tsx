@@ -60,7 +60,7 @@ export function BattleReplayModal({ onClose }: Props) {
       <div
         style={{
           background: 'linear-gradient(160deg,#1b2531,#10161e)',
-          border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+          border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
           width: 'min(820px,100%)',
           maxHeight: '90vh',
           display: 'flex',

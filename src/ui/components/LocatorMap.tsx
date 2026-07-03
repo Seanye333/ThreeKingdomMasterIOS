@@ -48,7 +48,7 @@ export function LocatorMap({
     <div style={{
       background: 'rgba(12, 10, 6, 0.82)',
       border: '1px solid rgba(255,255,255,0.1)',
-      borderRadius: 6,
+      borderRadius: 'var(--tkm-radius)',
       padding: '4px 5px 2px',
       boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
     }}>

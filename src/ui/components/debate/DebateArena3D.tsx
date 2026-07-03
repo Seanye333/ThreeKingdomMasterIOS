@@ -280,7 +280,7 @@ function Scholar({
       </mesh>
       <Html position={[0, 2.0, 0]} center distanceFactor={6} style={{ pointerEvents: 'none' }}>
         <div style={{
-          color: '#fff', background: 'rgba(0,0,0,0.45)', padding: '1px 7px', borderRadius: 4,
+          color: '#fff', background: 'rgba(0,0,0,0.45)', padding: '1px 7px', borderRadius: 'var(--tkm-radius-sm)',
           fontFamily: 'var(--tkm-font-body)', fontSize: 13, letterSpacing: '0.05em',
           border: `1px solid ${robe}`, whiteSpace: 'nowrap',
         }}>{name}</div>
@@ -554,7 +554,7 @@ function PhotoControls() {
 
 function photoBtn(border: string, color: string): React.CSSProperties {
   return {
-    width: 34, height: 30, borderRadius: 5, cursor: 'pointer',
+    width: 34, height: 30, borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer',
     background: 'rgba(20,28,38,0.86)', border: `1px solid ${border}`, color, fontSize: 14,
   };
 }

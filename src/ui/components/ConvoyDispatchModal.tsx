@@ -184,7 +184,7 @@ export function ConvoyDispatchModal({ fromCityId, onClose }: { fromCityId: strin
           <span>{t('載量', 'Load')}</span>
           <span style={{ fontFamily: 'ui-monospace, monospace', color: overCap ? '#e0707a' : '#cdd8e0' }}>{total.toLocaleString()} / {cap.toLocaleString()}</span>
         </div>
-        <div style={{ height: 8, background: '#10161e', border: '1px solid #2b3845', borderRadius: 3, overflow: 'hidden' }}>
+        <div style={{ height: 8, background: '#10161e', border: '1px solid #2b3845', borderRadius: 'var(--tkm-radius-xs)', overflow: 'hidden' }}>
           <div style={{ width: `${cap > 0 ? Math.min(100, (total / cap) * 100) : 0}%`, height: '100%', background: overCap ? '#b8442e' : total / Math.max(1, cap) > 0.85 ? '#e6c473' : '#6fae73' }} />
         </div>
       </div>
@@ -227,7 +227,7 @@ export function ConvoyDispatchModal({ fromCityId, onClose }: { fromCityId: strin
         onClick={send}
         disabled={!escort || total <= 0}
         style={{
-          width: '100%', padding: '0.5rem', borderRadius: 6, cursor: !escort || total <= 0 ? 'default' : 'pointer',
+          width: '100%', padding: '0.5rem', borderRadius: 'var(--tkm-radius)', cursor: !escort || total <= 0 ? 'default' : 'pointer',
           fontFamily: 'inherit', fontSize: '0.92rem', letterSpacing: '0.1rem',
           background: !escort || total <= 0 ? '#1b2531' : 'linear-gradient(180deg, rgba(230,196,115,0.22), rgba(230,196,115,0.08))',
           border: `1px solid ${!escort || total <= 0 ? '#2b3845' : '#e6c473'}`,
@@ -242,5 +242,5 @@ export function ConvoyDispatchModal({ fromCityId, onClose }: { fromCityId: strin
 
 const selectStyle = {
   background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473',
-  padding: '0.3rem 0.4rem', fontFamily: 'inherit', fontSize: '0.82rem', borderRadius: 4,
+  padding: '0.3rem 0.4rem', fontFamily: 'inherit', fontSize: '0.82rem', borderRadius: 'var(--tkm-radius-sm)',
 } as const;

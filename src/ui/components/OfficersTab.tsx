@@ -419,7 +419,7 @@ function OfficerRow({
             title={`${pickName(grade.name, lang)} ${pickName(grade.rank, lang)} · Lv.${lvl}`}
             style={{
               flexShrink: 0, fontSize: '0.7rem', fontFamily: 'ui-monospace, monospace',
-              color: grade.color, border: `1px solid ${grade.color}`, borderRadius: 2,
+              color: grade.color, border: `1px solid ${grade.color}`, borderRadius: 'var(--tkm-radius-xs)',
               padding: '0 0.22rem', letterSpacing: '0.02rem', alignSelf: 'center',
             }}
           >

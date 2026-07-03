@@ -177,7 +177,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
       <>
         {/* 系列賽 — running score banner over the 3D bout. */}
         {series && (
-          <div style={{ position: 'fixed', top: 10, left: '50%', transform: 'translateX(-50%)', zIndex: 134, pointerEvents: 'none', background: 'rgba(20,28,38,0.92)', border: '1px solid #e6c473', borderRadius: 6, padding: '0.3rem 0.8rem', color: '#f2dd9a', fontFamily: 'var(--tkm-font-body)', fontSize: '0.86rem', letterSpacing: '0.04rem', whiteSpace: 'nowrap' }}>
+          <div style={{ position: 'fixed', top: 10, left: '50%', transform: 'translateX(-50%)', zIndex: 134, pointerEvents: 'none', background: 'rgba(20,28,38,0.92)', border: '1px solid #e6c473', borderRadius: 'var(--tkm-radius)', padding: '0.3rem 0.8rem', color: '#f2dd9a', fontFamily: 'var(--tkm-font-body)', fontSize: '0.86rem', letterSpacing: '0.04rem', whiteSpace: 'nowrap' }}>
             {t(`${series.bestOf} 局${Math.floor(series.bestOf / 2) + 1}勝`, `Best of ${series.bestOf}`)} · {pickName(a.name, lang)} <b style={{ color: '#ffe8a8' }}>{series.aWins}</b> : <b style={{ color: '#ffe8a8' }}>{series.dWins}</b> {pickName(b.name, lang)} · {t(`第 ${series.bout} 局`, `Bout ${series.bout}`)}
           </div>
         )}
@@ -416,7 +416,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
       const FAT = (n: number) => Math.min(55, n + 16);
       return (
         <>
-          <div style={{ position: 'fixed', top: 10, left: '50%', transform: 'translateX(-50%)', zIndex: 134, pointerEvents: 'none', background: 'rgba(20,28,38,0.92)', border: '1px solid #e6c473', borderRadius: 6, padding: '0.3rem 0.8rem', color: '#f2dd9a', fontFamily: 'var(--tkm-font-body)', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>
+          <div style={{ position: 'fixed', top: 10, left: '50%', transform: 'translateX(-50%)', zIndex: 134, pointerEvents: 'none', background: 'rgba(20,28,38,0.92)', border: '1px solid #e6c473', borderRadius: 'var(--tkm-radius)', padding: '0.3rem 0.8rem', color: '#f2dd9a', fontFamily: 'var(--tkm-font-body)', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>
             {t('車輪戰', 'Gauntlet')} · {t('我方', 'Ours')} {team.aIds.length - team.aDown}/{team.aIds.length} · {t('敵方', 'Foe')} {team.bIds.length - team.bDown}/{team.bIds.length} — {pickName(aCur.name, lang)} vs {pickName(bCur.name, lang)}
           </div>
           <Duel3DStage
@@ -459,7 +459,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
   }
 
   const slot = (o: typeof a, label: string) => (
-    <div style={{ flex: 1, textAlign: 'center', border: '1px dashed #3a4754', borderRadius: 6, padding: '0.6rem', background: o ? 'rgba(230,196,115,0.06)' : 'transparent' }}>
+    <div style={{ flex: 1, textAlign: 'center', border: '1px dashed #3a4754', borderRadius: 'var(--tkm-radius)', padding: '0.6rem', background: o ? 'rgba(230,196,115,0.06)' : 'transparent' }}>
       <div style={{ fontSize: '0.68rem', color: '#7a8893', letterSpacing: '0.1rem', marginBottom: '0.4rem' }}>{label}</div>
       {o ? (
         <>
@@ -486,7 +486,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
             key={m}
             onClick={() => { setMode(m); setResult(null); }}
             style={{
-              flex: 1, padding: '0.4rem', borderRadius: 4, cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.84rem',
+              flex: 1, padding: '0.4rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.84rem',
               background: mode === m ? 'rgba(230,196,115,0.18)' : '#10161e',
               border: `1px solid ${mode === m ? '#e6c473' : '#26323e'}`, color: mode === m ? '#f2dd9a' : '#8a96a0',
             }}
@@ -510,13 +510,13 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
 
       {mode === 'team' && (<>
         <div style={{ display: 'flex', gap: 8, marginBottom: '0.8rem' }}>
-          <div style={{ flex: 1, border: '1px dashed #6aae73', borderRadius: 6, padding: '0.5rem', background: 'rgba(106,174,115,0.06)' }}>
+          <div style={{ flex: 1, border: '1px dashed #6aae73', borderRadius: 'var(--tkm-radius)', padding: '0.5rem', background: 'rgba(106,174,115,0.06)' }}>
             <div style={{ fontSize: '0.68rem', color: '#7a8893', letterSpacing: '0.08rem', marginBottom: 4 }}>{t('我方隊伍', 'Your squad')} ({teamSel.length})</div>
             <div style={{ fontSize: '0.78rem', color: '#bfe6b8', lineHeight: 1.6, minHeight: '1.4rem' }}>
               {teamSel.length === 0 ? <span style={{ color: '#5f6c76' }}>{t('（下方點選）', '(pick below)')}</span> : teamSel.map((id) => pickName(officers[id].name, lang)).join('、')}
             </div>
           </div>
-          <div style={{ flex: 1, border: '1px dashed #e0846a', borderRadius: 6, padding: '0.5rem', background: 'rgba(224,132,106,0.06)' }}>
+          <div style={{ flex: 1, border: '1px dashed #e0846a', borderRadius: 'var(--tkm-radius)', padding: '0.5rem', background: 'rgba(224,132,106,0.06)' }}>
             <div style={{ fontSize: '0.68rem', color: '#7a8893', letterSpacing: '0.08rem', marginBottom: 4 }}>{t('敵方隊伍', 'Foe squad')} ({teamB.length})</div>
             <div style={{ fontSize: '0.78rem', color: '#ffd0b8', lineHeight: 1.6, minHeight: '1.4rem' }}>
               {teamB.length === 0 ? <span style={{ color: '#5f6c76' }}>—</span> : teamB.map((o) => pickName(o.name, lang)).join('、')}
@@ -544,7 +544,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
 
       {/* 敵將約戰 — an enemy champion calls out one of your generals. */}
       {(mode === 'spar' || mode === 'callout') && incoming && (
-        <div style={{ background: 'linear-gradient(180deg, rgba(120,40,30,0.32), rgba(40,16,12,0.32))', border: `1px solid ${incoming.sworn ? '#e07a5a' : '#e0a060'}`, borderRadius: 6, padding: '0.6rem 0.8rem', marginBottom: '0.8rem' }}>
+        <div style={{ background: 'linear-gradient(180deg, rgba(120,40,30,0.32), rgba(40,16,12,0.32))', border: `1px solid ${incoming.sworn ? '#e07a5a' : '#e0a060'}`, borderRadius: 'var(--tkm-radius)', padding: '0.6rem 0.8rem', marginBottom: '0.8rem' }}>
           <div style={{ color: '#ffd0b8', fontSize: '0.84rem', marginBottom: 4 }}>
             ⚔ {incoming.sworn ? t('宿敵約戰', 'A Sworn Rival Calls You Out') : t('敵將約戰', 'An Enemy Calls You Out')} — <b style={{ color: '#ffe0d0' }}>{pickName(incoming.foe.name, lang)}</b>
             <span style={{ color: '#caa86a', fontSize: '0.74rem' }}> {t('約戰', 'challenges')} {pickName(incoming.champ.name, lang)}（{t('武', 'W')}{incoming.foe.stats.war}）</span>
@@ -553,7 +553,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
           <div style={{ display: 'flex', gap: 6 }}>
             <button
               onClick={() => { setResult(null); setIncomingDuel(true); }}
-              style={{ flex: 1, padding: '0.45rem', background: 'linear-gradient(180deg,#7a2a20,#4a1810)', border: '1px solid #e0846a', color: '#ffe0d0', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', letterSpacing: '0.06rem', borderRadius: 4 }}
+              style={{ flex: 1, padding: '0.45rem', background: 'linear-gradient(180deg,#7a2a20,#4a1810)', border: '1px solid #e0846a', color: '#ffe0d0', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', letterSpacing: '0.06rem', borderRadius: 'var(--tkm-radius-sm)' }}
             >⚔ {t(`遣 ${pickName(incoming.champ.name, lang)} 應戰`, `Send ${pickName(incoming.champ.name, lang)}`)}</button>
             <button
               onClick={() => {
@@ -561,7 +561,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
                 applyDuelChallengeStakes(incoming.foe.id, incoming.champ.id, 'refused');
                 setResult({ text: t(`${pickName(incoming.champ.name, lang)} 避而不戰 — 為敵所輕,威望受損。`, `${pickName(incoming.champ.name, lang)} ducks the challenge — and loses face.`), notes: [] });
               }}
-              style={{ padding: '0.45rem 0.8rem', background: '#1e2832', border: '1px solid #5f6c76', color: '#9aa6b0', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', borderRadius: 4 }}
+              style={{ padding: '0.45rem 0.8rem', background: '#1e2832', border: '1px solid #5f6c76', color: '#9aa6b0', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', borderRadius: 'var(--tkm-radius-sm)' }}
             >{t('拒戰', 'Duck')}</button>
           </div>
         </div>
@@ -569,7 +569,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
 
       {/* 宿敵 — a rival rides out to settle an old score. */}
       {mode === 'spar' && rivalry && (
-        <div style={{ background: 'linear-gradient(180deg, rgba(80,30,90,0.32), rgba(30,12,40,0.32))', border: '1px solid #b070c8', borderRadius: 6, padding: '0.6rem 0.8rem', marginBottom: '0.8rem' }}>
+        <div style={{ background: 'linear-gradient(180deg, rgba(80,30,90,0.32), rgba(30,12,40,0.32))', border: '1px solid #b070c8', borderRadius: 'var(--tkm-radius)', padding: '0.6rem 0.8rem', marginBottom: '0.8rem' }}>
           <div style={{ color: '#e8c8ff', fontSize: '0.84rem', marginBottom: 4 }}>
             ⚔ {t('宿敵', 'A Rival Rides Out')} — <b style={{ color: '#f0d8ff' }}>{pickName(rivalry.rival.name, lang)}</b>
             <span style={{ color: '#b8a0c8', fontSize: '0.74rem' }}> {t('挑戰', 'challenges')} {pickName(rivalry.champ.name, lang)}</span>
@@ -577,18 +577,18 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
           <div style={{ fontSize: '0.74rem', color: '#d0b8d8', fontStyle: 'italic', marginBottom: 6 }}>「{lang === 'en' ? rivalry.lineEn : rivalry.lineZh}」</div>
           <button
             onClick={() => { setResult(null); setRivalDuel(true); }}
-            style={{ width: '100%', padding: '0.45rem', background: 'linear-gradient(180deg,#5a2a6e,#2e1840)', border: '1px solid #b070c8', color: '#f0d8ff', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', letterSpacing: '0.08rem', borderRadius: 4 }}
+            style={{ width: '100%', padding: '0.45rem', background: 'linear-gradient(180deg,#5a2a6e,#2e1840)', border: '1px solid #b070c8', color: '#f0d8ff', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', letterSpacing: '0.08rem', borderRadius: 'var(--tkm-radius-sm)' }}
           >⚔ {t(`遣 ${pickName(rivalry.champ.name, lang)} 應戰(賞 300 金)`, `Send ${pickName(rivalry.champ.name, lang)} (300g)`)}</button>
         </div>
       )}
 
       {/* 踢館 — an outsider drawn by your champion's renown waits to test them. */}
       {mode === 'spar' && challenge && (
-        <div style={{ background: 'linear-gradient(180deg, rgba(120,40,30,0.3), rgba(40,16,12,0.3))', border: '1px solid #e0846a', borderRadius: 6, padding: '0.6rem 0.8rem', marginBottom: '0.8rem' }}>
+        <div style={{ background: 'linear-gradient(180deg, rgba(120,40,30,0.3), rgba(40,16,12,0.3))', border: '1px solid #e0846a', borderRadius: 'var(--tkm-radius)', padding: '0.6rem 0.8rem', marginBottom: '0.8rem' }}>
           <div style={{ color: '#ffd0b8', fontSize: '0.84rem', marginBottom: 4 }}>
             🏯 {t('踢館', 'A Challenger Arrives')} — <b style={{ color: '#ffe0d0' }}>{pickName(challenge.challenger.name, lang)}</b>
             {(() => { const g = officerGrade(challenge.challenger); return (
-              <span style={{ marginLeft: 5, padding: '0 0.35rem', borderRadius: 2, border: `1px solid ${g.color}`, color: g.color, fontSize: '0.68rem' }}>
+              <span style={{ marginLeft: 5, padding: '0 0.35rem', borderRadius: 'var(--tkm-radius-xs)', border: `1px solid ${g.color}`, color: g.color, fontSize: '0.68rem' }}>
                 {lang === 'en' ? g.name.en : g.name.zh}
               </span>
             ); })()}
@@ -609,7 +609,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
                   disabled={!affordable}
                   onClick={() => setStake(amt)}
                   style={{
-                    padding: '0.2rem 0.5rem', fontFamily: 'inherit', fontSize: '0.74rem', borderRadius: 4,
+                    padding: '0.2rem 0.5rem', fontFamily: 'inherit', fontSize: '0.74rem', borderRadius: 'var(--tkm-radius-sm)',
                     cursor: affordable ? 'pointer' : 'default',
                     background: on ? 'rgba(230,196,115,0.22)' : '#1a1410', border: `1px solid ${on ? '#e6c473' : '#3a2c1c'}`,
                     color: !affordable ? '#5a4a36' : on ? '#ffe8a8' : '#c8a878',
@@ -625,7 +625,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
           </div>
           <button
             onClick={() => { setResult(null); setDuelChallenge(true); }}
-            style={{ width: '100%', padding: '0.45rem', background: 'linear-gradient(180deg,#7a2a20,#4a1810)', border: '1px solid #e0846a', color: '#ffe0d0', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', letterSpacing: '0.08rem', borderRadius: 4 }}
+            style={{ width: '100%', padding: '0.45rem', background: 'linear-gradient(180deg,#7a2a20,#4a1810)', border: '1px solid #e0846a', color: '#ffe0d0', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', letterSpacing: '0.08rem', borderRadius: 'var(--tkm-radius-sm)' }}
           >⚔ {t(`遣 ${pickName(challenge.champ.name, lang)} 應戰(賞 ${challenge.bounty} 金)`, `Send ${pickName(challenge.champ.name, lang)} (${challenge.bounty}g bounty)`)}</button>
         </div>
       )}
@@ -647,7 +647,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
               key={id}
               onClick={() => setDifficulty(id)}
               style={{
-                flex: 1, padding: '0.3rem', fontFamily: 'inherit', fontSize: '0.8rem', cursor: 'pointer', borderRadius: 4,
+                flex: 1, padding: '0.3rem', fontFamily: 'inherit', fontSize: '0.8rem', cursor: 'pointer', borderRadius: 'var(--tkm-radius-sm)',
                 background: on ? 'rgba(230,196,115,0.16)' : '#10161e', border: `1px solid ${on ? '#e6c473' : '#26323e'}`,
                 color: on ? '#f2dd9a' : '#8a96a0',
               }}
@@ -666,7 +666,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
               key={n}
               onClick={() => setBestOf(n as 1 | 3 | 5)}
               style={{
-                flex: 1, padding: '0.3rem', fontFamily: 'inherit', fontSize: '0.8rem', cursor: 'pointer', borderRadius: 4,
+                flex: 1, padding: '0.3rem', fontFamily: 'inherit', fontSize: '0.8rem', cursor: 'pointer', borderRadius: 'var(--tkm-radius-sm)',
                 background: on ? 'rgba(230,196,115,0.16)' : '#10161e', border: `1px solid ${on ? '#e6c473' : '#26323e'}`,
                 color: on ? '#f2dd9a' : '#8a96a0',
               }}
@@ -709,7 +709,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
           const steps = campaignSteps(camp, new Set(clearedScenarios));
           const done = steps.filter((s) => s.cleared).length;
           return (
-            <div key={camp.id} style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid #3a4754', borderRadius: 6, overflow: 'hidden', marginBottom: '0.8rem' }}>
+            <div key={camp.id} style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid #3a4754', borderRadius: 'var(--tkm-radius)', overflow: 'hidden', marginBottom: '0.8rem' }}>
               {/* 戰役封面 — optional banner; drop public/duel-campaigns/<id>.jpg to
                   light it up (cropped to a strip). Absent → onError hides it and the
                   card looks exactly as before. key=id remounts so a prior miss resets. */}
@@ -733,7 +733,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
                         disabled={!st.unlocked || !sc || !officers[sc.opponentId]}
                         onClick={() => { if (sc && officers[sc.opponentId]) { setScenario(sc); setResult(null); } }}
                         title={sc ? (lang === 'en' ? sc.titleEn : sc.titleZh) : st.id}
-                        style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '0.16rem 0.4rem', borderRadius: 4, cursor: st.unlocked && sc && officers[sc.opponentId] ? 'pointer' : 'default', background: scenario?.id === st.id ? 'rgba(230,196,115,0.2)' : '#10161e', border: `1px solid ${col}`, color: col, fontFamily: 'inherit', fontSize: '0.68rem', whiteSpace: 'nowrap' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '0.16rem 0.4rem', borderRadius: 'var(--tkm-radius-sm)', cursor: st.unlocked && sc && officers[sc.opponentId] ? 'pointer' : 'default', background: scenario?.id === st.id ? 'rgba(230,196,115,0.2)' : '#10161e', border: `1px solid ${col}`, color: col, fontFamily: 'inherit', fontSize: '0.68rem', whiteSpace: 'nowrap' }}
                       >{icon} {sc ? (lang === 'en' ? sc.titleEn : sc.titleZh) : st.id}</button>
                       {i < steps.length - 1 && <span style={{ color: '#5f6c76', fontSize: '0.7rem' }}>›</span>}
                     </span>
@@ -754,7 +754,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
                 key={sc.id}
                 onClick={() => { setScenario(sel ? null : sc); setResult(null); }}
                 style={{
-                  textAlign: 'left', padding: '0.5rem 0.6rem', borderRadius: 5, cursor: 'pointer', fontFamily: 'var(--tkm-font-body)',
+                  textAlign: 'left', padding: '0.5rem 0.6rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)',
                   background: sel ? 'rgba(230,196,115,0.16)' : '#10161e', border: `1px solid ${sel ? '#e6c473' : '#26323e'}`, color: '#e6edf3',
                 }}
               >
@@ -794,7 +794,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
                 key={o.id}
                 onClick={() => { setCalloutFoeId(sel ? null : o.id); setResult(null); }}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left', padding: '0.35rem 0.5rem', borderRadius: 5, cursor: 'pointer', fontFamily: 'var(--tkm-font-body)',
+                  display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left', padding: '0.35rem 0.5rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)',
                   background: sel ? 'rgba(224,132,106,0.18)' : '#10161e', border: `1px solid ${sel ? '#e0846a' : '#26323e'}`, color: '#e6edf3',
                 }}
               >
@@ -853,7 +853,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
       </>)}
 
       {result && (
-        <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid #3a4754', borderRadius: 6, padding: '0.6rem 0.8rem', marginBottom: '0.8rem' }}>
+        <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid #3a4754', borderRadius: 'var(--tkm-radius)', padding: '0.6rem 0.8rem', marginBottom: '0.8rem' }}>
           <div style={{ color: '#e6c473', marginBottom: result.notes.length ? '0.4rem' : 0 }}>{result.text}</div>
           {result.notes.map((n, i) => (
             <div key={i} style={{ fontSize: '0.8rem', color: '#9ed68a', lineHeight: 1.6 }}>✦ {n}</div>
@@ -883,7 +883,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
                 display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left',
                 background: sel ? 'rgba(230,196,115,0.14)' : '#10161e',
                 border: `1px solid ${sel ? '#e6c473' : '#26323e'}`,
-                borderRadius: 4, padding: '0.4rem 0.5rem', cursor: winded ? 'default' : 'pointer',
+                borderRadius: 'var(--tkm-radius-sm)', padding: '0.4rem 0.5rem', cursor: winded ? 'default' : 'pointer',
                 color: '#e6edf3', opacity: winded ? 0.5 : 1, fontFamily: 'var(--tkm-font-body)',
               }}
             >

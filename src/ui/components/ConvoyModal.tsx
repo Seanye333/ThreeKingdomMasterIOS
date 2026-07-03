@@ -53,7 +53,7 @@ export function ConvoyModal({ onClose }: { onClose: () => void }) {
               const from = cities[c.fromCityId];
               const to = cities[c.toCityId];
               return (
-                <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.5rem 0.7rem', background: '#141c25', border: '1px solid #243240', borderRadius: 5 }}>
+                <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.5rem 0.7rem', background: '#141c25', border: '1px solid #243240', borderRadius: 'var(--tkm-radius-sm)' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ color: '#eef4f8', fontSize: '0.88rem' }}>
                       {from?.name.zh ?? '?'} <span style={{ color: '#7a8893' }}>→</span> {to?.name.zh ?? '?'}
@@ -65,7 +65,7 @@ export function ConvoyModal({ onClose }: { onClose: () => void }) {
                   <button
                     onClick={() => recallConvoy(c.id)}
                     title={t('召回 — 貨物返回出發城', 'Recall — cargo returns to the origin city')}
-                    style={{ background: 'rgba(184,68,46,0.16)', border: '1px solid #b8442e', color: '#e8a890', padding: '0.2rem 0.55rem', borderRadius: 4, cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.74rem', whiteSpace: 'nowrap' }}
+                    style={{ background: 'rgba(184,68,46,0.16)', border: '1px solid #b8442e', color: '#e8a890', padding: '0.2rem 0.55rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.74rem', whiteSpace: 'nowrap' }}
                   >{t('召回', 'Recall')}</button>
                 </div>
               );
@@ -86,7 +86,7 @@ export function ConvoyModal({ onClose }: { onClose: () => void }) {
                 const to = cities[c.toCityId];
                 const launch = cities[fromCityId];
                 return (
-                  <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.5rem 0.7rem', background: '#1c1614', border: '1px solid #3a2a24', borderRadius: 5 }}>
+                  <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.5rem 0.7rem', background: '#1c1614', border: '1px solid #3a2a24', borderRadius: 'var(--tkm-radius-sm)' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ color: '#f0d2c4', fontSize: '0.84rem' }}>
                         {(lang === 'en' ? enemy?.en : enemy?.zh) ?? '?'} · {from?.name.zh ?? '?'} <span style={{ color: '#7a8893' }}>→</span> {to?.name.zh ?? '?'}
@@ -99,7 +99,7 @@ export function ConvoyModal({ onClose }: { onClose: () => void }) {
                     <button
                       onClick={() => setRaidTarget({ convoyId: c.id, fromCityId })}
                       title={t('遣輕騎截劫此糧道', 'Send a raiding column after this convoy')}
-                      style={{ background: 'rgba(184,68,46,0.22)', border: '1px solid #b8442e', color: '#f0b9a4', padding: '0.2rem 0.6rem', borderRadius: 4, cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.76rem', whiteSpace: 'nowrap' }}
+                      style={{ background: 'rgba(184,68,46,0.22)', border: '1px solid #b8442e', color: '#f0b9a4', padding: '0.2rem 0.6rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.76rem', whiteSpace: 'nowrap' }}
                     >🐎 {t('劫', 'Raid')}</button>
                   </div>
                 );
@@ -124,7 +124,7 @@ export function ConvoyModal({ onClose }: { onClose: () => void }) {
                 const send = launch ? Math.floor((launch.troops - 100) * 0.6) : 0;
                 const can = !!captain && send >= 1 && (launch?.gold ?? 0) >= 100;
                 return (
-                  <div key={col.armyId} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.5rem 0.7rem', background: '#1c1614', border: '1px solid #3a2a24', borderRadius: 5 }}>
+                  <div key={col.armyId} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.5rem 0.7rem', background: '#1c1614', border: '1px solid #3a2a24', borderRadius: 'var(--tkm-radius-sm)' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ color: '#f0d2c4', fontSize: '0.84rem' }}>{lang === 'en' ? col.commanderName.en : col.commanderName.zh} · {col.troops.toLocaleString()}{t('兵', 't')}</div>
                       <div style={{ color: '#b0a098', fontSize: '0.74rem' }}>
@@ -139,7 +139,7 @@ export function ConvoyModal({ onClose }: { onClose: () => void }) {
                         setFeedback(r.ok ? t('已遣軍邀擊 — 將於途中接戰', 'Column dispatched — it clashes on the road') : t('邀擊未成', 'Could not intercept'));
                       }}
                       title={t('遣將出城截擊此敵軍縱隊(急行軍,途中接戰)', 'Sortie a captain to run down this column (forced march; clashes en route)')}
-                      style={{ background: can ? 'rgba(184,68,46,0.22)' : '#1e2832', border: `1px solid ${can ? '#b8442e' : '#2b3845'}`, color: can ? '#f0b9a4' : '#5f6c76', padding: '0.2rem 0.6rem', borderRadius: 4, cursor: can ? 'pointer' : 'default', fontFamily: 'inherit', fontSize: '0.76rem', whiteSpace: 'nowrap' }}
+                      style={{ background: can ? 'rgba(184,68,46,0.22)' : '#1e2832', border: `1px solid ${can ? '#b8442e' : '#2b3845'}`, color: can ? '#f0b9a4' : '#5f6c76', padding: '0.2rem 0.6rem', borderRadius: 'var(--tkm-radius-sm)', cursor: can ? 'pointer' : 'default', fontFamily: 'inherit', fontSize: '0.76rem', whiteSpace: 'nowrap' }}
                     >⚔ {t('邀擊', 'Intercept')}</button>
                   </div>
                 );

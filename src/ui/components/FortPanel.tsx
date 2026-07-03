@@ -162,7 +162,7 @@ export function FortPanel({ fortId, onClose }: Props) {
 
           <span style={{ color: '#7a8893' }}>HP</span>
           <span>
-            <div style={{ height: 8, background: '#1e2832', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', position: 'relative', width: '100%' }}>
+            <div style={{ height: 8, background: '#1e2832', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', position: 'relative', width: '100%' }}>
               <div style={{
                 height: '100%',
                 width: `${Math.round(hpPct * 100)}%`,
@@ -209,7 +209,7 @@ export function FortPanel({ fortId, onClose }: Props) {
               style={{
                 width: '100%', padding: '0.3rem 0.5rem',
                 background: '#10161e', color: '#eef4f8',
-                border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+                border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
                 fontFamily: 'var(--tkm-font-body)', fontSize: '0.82rem',
                 marginBottom: '0.4rem',
               }}

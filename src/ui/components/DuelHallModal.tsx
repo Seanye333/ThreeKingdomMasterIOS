@@ -107,7 +107,7 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
           {rows.map((r, i) => {
             const o = officers[r.id];
             return (
-              <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: i < 3 ? 'rgba(230,196,115,0.08)' : '#10161e', border: `1px solid ${i < 3 ? '#caa86a' : '#26323e'}`, borderRadius: 4, padding: '0.3rem 0.5rem' }}>
+              <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: i < 3 ? 'rgba(230,196,115,0.08)' : '#10161e', border: `1px solid ${i < 3 ? '#caa86a' : '#26323e'}`, borderRadius: 'var(--tkm-radius-sm)', padding: '0.3rem 0.5rem' }}>
                 <span style={{ width: 24, textAlign: 'center', color: '#caa86a' }}>{medal(i)}</span>
                 {o && <OfficerPortrait officer={o} size={28} forceColor={color} year={useGameStore.getState().date.year} />}
                 <span style={{ flex: 1, color: '#f2dd9a', fontSize: '0.88rem' }}>{nm(r.id)}</span>
@@ -128,7 +128,7 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
             key={m}
             onClick={() => setTab(m)}
             style={{
-              flex: 1, padding: '0.4rem 0.2rem', borderRadius: 4, cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.78rem',
+              flex: 1, padding: '0.4rem 0.2rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.78rem',
               background: tab === m ? 'rgba(230,196,115,0.18)' : '#10161e',
               border: `1px solid ${tab === m ? '#e6c473' : '#26323e'}`, color: tab === m ? '#f2dd9a' : '#8a96a0',
             }}
@@ -146,7 +146,7 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
               const o = officers[r.id];
               const tier = ratingTier(r.rating);
               return (
-                <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: i < 3 ? 'rgba(230,196,115,0.08)' : '#10161e', border: `1px solid ${i < 3 ? '#caa86a' : '#26323e'}`, borderRadius: 4, padding: '0.3rem 0.5rem' }}>
+                <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: i < 3 ? 'rgba(230,196,115,0.08)' : '#10161e', border: `1px solid ${i < 3 ? '#caa86a' : '#26323e'}`, borderRadius: 'var(--tkm-radius-sm)', padding: '0.3rem 0.5rem' }}>
                   <span style={{ width: 24, textAlign: 'center', color: '#caa86a' }}>{medal(i)}</span>
                   {o && <OfficerPortrait officer={o} size={28} forceColor="#e0846a" year={useGameStore.getState().date.year} />}
                   <span style={{ flex: 1, color: '#f2dd9a', fontSize: '0.86rem' }}>{nm(r.id)}</span>
@@ -181,7 +181,7 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
                 key={side}
                 value={side === 'a' ? betAId : betBId}
                 onChange={(e) => side === 'a' ? setBetAId(e.target.value) : setBetBId(e.target.value)}
-                style={{ flex: 1, minWidth: 0, background: '#10161e', color: '#e6edf3', border: `1px solid ${side === 'a' ? '#e0846a' : '#88b7e8'}`, borderRadius: 4, padding: '0.35rem', fontFamily: 'var(--tkm-font-body)', fontSize: '0.78rem' }}
+                style={{ flex: 1, minWidth: 0, background: '#10161e', color: '#e6edf3', border: `1px solid ${side === 'a' ? '#e0846a' : '#88b7e8'}`, borderRadius: 'var(--tkm-radius-sm)', padding: '0.35rem', fontFamily: 'var(--tkm-font-body)', fontSize: '0.78rem' }}
               >
                 <option value="">{side === 'a' ? t('紅方…', 'Red…') : t('藍方…', 'Blue…')}</option>
                 {fighters.map((o) => <option key={o.id} value={o.id}>{nm(o.id)}（{t('武', 'W')}{o.stats.war}）</option>)}
@@ -195,7 +195,7 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
                   const on = back === side;
                   const o = side === 'a' ? betA : betB;
                   return (
-                    <button key={side} onClick={() => setBack(side)} style={{ flex: 1, padding: '0.35rem', borderRadius: 4, cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.8rem', background: on ? 'rgba(230,196,115,0.2)' : '#10161e', border: `1px solid ${on ? '#e6c473' : '#26323e'}`, color: on ? '#f2dd9a' : '#8a96a0' }}>
+                    <button key={side} onClick={() => setBack(side)} style={{ flex: 1, padding: '0.35rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.8rem', background: on ? 'rgba(230,196,115,0.2)' : '#10161e', border: `1px solid ${on ? '#e6c473' : '#26323e'}`, color: on ? '#f2dd9a' : '#8a96a0' }}>
                       {t('押', 'Back')} {nm(o.id)} ×{wagerMultiplier(o, side === 'a' ? betB : betA)}
                     </button>
                   );
@@ -204,18 +204,18 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8, flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '0.72rem', color: '#caa86a' }}>{t('籌碼', 'Stake')}</span>
                 {[100, 250, 500, 1000].map((amt) => (
-                  <button key={amt} disabled={amt > playerGold} onClick={() => setStake(amt)} style={{ padding: '0.2rem 0.5rem', fontFamily: 'inherit', fontSize: '0.74rem', borderRadius: 4, cursor: amt <= playerGold ? 'pointer' : 'default', background: stake === amt ? 'rgba(230,196,115,0.22)' : '#1a1410', border: `1px solid ${stake === amt ? '#e6c473' : '#3a2c1c'}`, color: amt > playerGold ? '#5a4a36' : stake === amt ? '#ffe8a8' : '#c8a878' }}>{amt}</button>
+                  <button key={amt} disabled={amt > playerGold} onClick={() => setStake(amt)} style={{ padding: '0.2rem 0.5rem', fontFamily: 'inherit', fontSize: '0.74rem', borderRadius: 'var(--tkm-radius-sm)', cursor: amt <= playerGold ? 'pointer' : 'default', background: stake === amt ? 'rgba(230,196,115,0.22)' : '#1a1410', border: `1px solid ${stake === amt ? '#e6c473' : '#3a2c1c'}`, color: amt > playerGold ? '#5a4a36' : stake === amt ? '#ffe8a8' : '#c8a878' }}>{amt}</button>
                 ))}
               </div>
               <button
                 onClick={runBet}
                 disabled={playerGold < Math.min(stake, playerGold) || playerGold <= 0}
-                style={{ width: '100%', padding: '0.5rem', marginBottom: 8, background: 'linear-gradient(180deg,#6e4a23,#3e2813)', border: '1px solid #e0b060', color: '#ffe8c0', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.95rem', letterSpacing: '0.08rem', borderRadius: 5 }}
+                style={{ width: '100%', padding: '0.5rem', marginBottom: 8, background: 'linear-gradient(180deg,#6e4a23,#3e2813)', border: '1px solid #e0b060', color: '#ffe8c0', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.95rem', letterSpacing: '0.08rem', borderRadius: 'var(--tkm-radius-sm)' }}
               >🎲 {t('開賭', 'Place the Wager')}</button>
             </>
           )}
           {betResult && (
-            <div style={{ background: 'rgba(0,0,0,0.3)', border: `1px solid ${betResult.win ? '#6aae73' : '#a05050'}`, borderRadius: 6, padding: '0.6rem 0.8rem', color: betResult.win ? '#9ed68a' : '#e0a0a0' }}>{betResult.text}</div>
+            <div style={{ background: 'rgba(0,0,0,0.3)', border: `1px solid ${betResult.win ? '#6aae73' : '#a05050'}`, borderRadius: 'var(--tkm-radius)', padding: '0.6rem 0.8rem', color: betResult.win ? '#9ed68a' : '#e0a0a0' }}>{betResult.text}</div>
           )}
         </>
       )}
@@ -237,7 +237,7 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
                 const blood = !!r.killerId;
                 const border = blood ? '#a05050' : sworn ? '#e07a5a' : '#26323e';
                 return (
-                  <div key={`${r.aId}|${r.bId}`} style={{ display: 'flex', alignItems: 'center', gap: 8, background: sworn || blood ? 'rgba(120,40,30,0.12)' : '#10161e', border: `1px solid ${border}`, borderRadius: 5, padding: '0.35rem 0.55rem' }}>
+                  <div key={`${r.aId}|${r.bId}`} style={{ display: 'flex', alignItems: 'center', gap: 8, background: sworn || blood ? 'rgba(120,40,30,0.12)' : '#10161e', border: `1px solid ${border}`, borderRadius: 'var(--tkm-radius-sm)', padding: '0.35rem 0.55rem' }}>
                     {a && <OfficerPortrait officer={a} size={28} forceColor="#e0846a" year={useGameStore.getState().date.year} />}
                     <span style={{ flex: 1, minWidth: 0 }}>
                       <span style={{ color: '#f2dd9a', fontSize: '0.86rem' }}>
@@ -282,7 +282,7 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
               <button
                 key={rec.id}
                 onClick={() => setReplay(rec)}
-                style={{ textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, background: '#10161e', border: `1px solid ${rec.kind === 'duel' ? '#3a2c1c' : '#243240'}`, borderRadius: 5, padding: '0.45rem 0.6rem', cursor: 'pointer', color: '#e6edf3', fontFamily: 'var(--tkm-font-body)' }}
+                style={{ textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, background: '#10161e', border: `1px solid ${rec.kind === 'duel' ? '#3a2c1c' : '#243240'}`, borderRadius: 'var(--tkm-radius-sm)', padding: '0.45rem 0.6rem', cursor: 'pointer', color: '#e6edf3', fontFamily: 'var(--tkm-font-body)' }}
               >
                 <span style={{ fontSize: '1.1rem' }}>{rec.kind === 'duel' ? '⚔' : '💬'}</span>
                 <span style={{ flex: 1, minWidth: 0 }}>

@@ -49,7 +49,7 @@ export function ProvinceModal({ onClose }: { onClose: () => void }) {
             const frac = r.held > 0 ? r.mine / r.held : 0;
             return (
               <div key={r.id} style={{
-                padding: '0.5rem 0.7rem', borderRadius: 5, background: '#141c25',
+                padding: '0.5rem 0.7rem', borderRadius: 'var(--tkm-radius-sm)', background: '#141c25',
                 border: `1px solid ${r.mine > 0 ? '#2b3845' : '#18212b'}`,
                 borderLeft: `4px solid ${r.color}`,
               }}>
@@ -64,7 +64,7 @@ export function ProvinceModal({ onClose }: { onClose: () => void }) {
                   )}
                 </div>
                 {/* control bar — player share of the held cities */}
-                <div style={{ height: 4, background: '#18212b', borderRadius: 2, margin: '4px 0', overflow: 'hidden' }}>
+                <div style={{ height: 4, background: '#18212b', borderRadius: 'var(--tkm-radius-xs)', margin: '4px 0', overflow: 'hidden' }}>
                   <div style={{ height: '100%', width: `${frac * 100}%`, background: frac >= 0.5 ? '#7ed68a' : '#e6c473' }} />
                 </div>
                 {r.mine > 0 && (

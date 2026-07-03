@@ -116,7 +116,7 @@ export function BuildStockadePicker({ onClose }: Props) {
             style={{
               width: '100%', padding: '0.4rem 0.6rem',
               background: '#10161e', color: '#eef4f8',
-              border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+              border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
               fontFamily: 'var(--tkm-font-body)',
             }}
           />

@@ -65,7 +65,7 @@ export function MusterModal({ targetCityId, onClose }: { targetCityId: string; o
           [t('耗金', 'Gold cost'), `${preview.totalGold}`],
           [t('最慢抵達', 'Slowest ETA'), preview.slowestSeasons > 0 ? t(`${preview.slowestSeasons} 季`, `${preview.slowestSeasons}s`) : '—'],
         ] as const).map(([k, v]) => (
-          <div key={k} style={{ background: '#10161e', border: '1px solid #26323e', borderRadius: 5, padding: '0.4rem 0.6rem' }}>
+          <div key={k} style={{ background: '#10161e', border: '1px solid #26323e', borderRadius: 'var(--tkm-radius-sm)', padding: '0.4rem 0.6rem' }}>
             <div style={{ fontSize: '0.7rem', color: '#7a8893', letterSpacing: '0.08rem' }}>{k}</div>
             <div style={{ color: '#f2dd9a', fontSize: '1rem' }}>{v}</div>
           </div>
@@ -95,7 +95,7 @@ export function MusterModal({ targetCityId, onClose }: { targetCityId: string; o
           <label style={{ fontSize: '0.78rem', color: '#aab6c0', display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ width: 96 }}>{t('集結點', 'Rally at')}</span>
             <select value={rallyCityId} onChange={(e) => setRallyCityId(e.target.value)}
-              style={{ flex: 1, background: '#10161e', border: '1px solid #26323e', color: '#e6edf3', borderRadius: 4, padding: '0.2rem', fontFamily: 'var(--tkm-font-body)', fontSize: '0.74rem' }}>
+              style={{ flex: 1, background: '#10161e', border: '1px solid #26323e', color: '#e6edf3', borderRadius: 'var(--tkm-radius-sm)', padding: '0.2rem', fontFamily: 'var(--tkm-font-body)', fontSize: '0.74rem' }}>
               <option value="">{t('— 直撲(不設集結點) —', '— Direct (no rally) —')}</option>
               {ownCities.map((c) => <option key={c.id} value={c.id}>{pickName(c.name, lang)}</option>)}
             </select>
@@ -105,12 +105,12 @@ export function MusterModal({ targetCityId, onClose }: { targetCityId: string; o
 
       {/* 持續集結進行中 — show & allow calling off an active standing campaign. */}
       {activeCampaign && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: '0.8rem', padding: '0.45rem 0.6rem', background: 'rgba(110,52,35,0.18)', border: '1px solid #b8584a', borderRadius: 5 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: '0.8rem', padding: '0.45rem 0.6rem', background: 'rgba(110,52,35,0.18)', border: '1px solid #b8584a', borderRadius: 'var(--tkm-radius-sm)' }}>
           <span style={{ fontSize: '0.76rem', color: '#f0c4b4' }}>
             🚩 {t('持續集結進行中', 'Standing muster active')}{(activeCampaign.gatherSeasonsLeft ?? 0) > 0 ? t('(集結中)', ' (gathering)') : ''} · {t(`餘 ${activeCampaign.seasonsLeft} 季`, `${activeCampaign.seasonsLeft}s left`)}
           </span>
           <button onClick={() => cancelMusterCampaign(activeCampaign.id)}
-            style={{ background: 'rgba(184,68,46,0.22)', border: '1px solid #b8442e', color: '#f0b9a4', padding: '0.15rem 0.55rem', borderRadius: 4, cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.74rem' }}>
+            style={{ background: 'rgba(184,68,46,0.22)', border: '1px solid #b8442e', color: '#f0b9a4', padding: '0.15rem 0.55rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.74rem' }}>
             {t('罷集結', 'Call off')}
           </button>
         </div>
@@ -125,7 +125,7 @@ export function MusterModal({ targetCityId, onClose }: { targetCityId: string; o
               const c = cities[e.cityId];
               const r = REASON_LABEL[e.reason];
               return (
-                <span key={e.cityId} style={{ fontSize: '0.66rem', color: '#9aa6b0', background: '#10161e', border: '1px solid #26323e', borderRadius: 4, padding: '0.1rem 0.4rem' }}>
+                <span key={e.cityId} style={{ fontSize: '0.66rem', color: '#9aa6b0', background: '#10161e', border: '1px solid #26323e', borderRadius: 'var(--tkm-radius-sm)', padding: '0.1rem 0.4rem' }}>
                   {c ? pickName(c.name, lang) : e.cityId} · {r ? (lang === 'en' ? r.en : r.zh) : e.reason}
                 </span>
               );

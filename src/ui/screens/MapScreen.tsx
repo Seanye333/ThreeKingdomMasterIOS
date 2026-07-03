@@ -527,8 +527,8 @@ export function MapScreen() {
               <span className={styles.playerName}>{playerForce.name.zh}</span>
               <span className={styles.playerNameEn}>{t('', playerForce.name.en)}</span>
               <span style={{ marginLeft: 10, fontSize: '0.82rem', color: '#d6dde4', fontFamily: 'ui-monospace, monospace', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 11 }}>
-                <span className={goldLow ? 'tkm-threat-chip' : undefined} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, borderRadius: 4, padding: goldLow ? '0 3px' : undefined, color: goldLow ? '#e0707a' : undefined }} title={goldLow ? t('國庫見底!', 'Treasury empty!') : t('金', 'Gold')}><Icon name="gold" size={13} color={goldLow ? '#e0707a' : '#e6c473'} /><AnimatedNumber value={playerGold} flash /></span>
-                <span className={foodLow ? 'tkm-threat-chip' : undefined} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, borderRadius: 4, padding: foodLow ? '0 3px' : undefined, color: foodLow ? '#e0707a' : undefined }} title={foodLow ? t('糧倉見底!', 'Granary empty!') : t('糧', 'Grain')}><Icon name="grain" size={13} color={foodLow ? '#e0707a' : '#d8c88a'} /><AnimatedNumber value={playerFood} flash /></span>
+                <span className={goldLow ? 'tkm-threat-chip' : undefined} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, borderRadius: 'var(--tkm-radius-sm)', padding: goldLow ? '0 3px' : undefined, color: goldLow ? '#e0707a' : undefined }} title={goldLow ? t('國庫見底!', 'Treasury empty!') : t('金', 'Gold')}><Icon name="gold" size={13} color={goldLow ? '#e0707a' : '#e6c473'} /><AnimatedNumber value={playerGold} flash /></span>
+                <span className={foodLow ? 'tkm-threat-chip' : undefined} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, borderRadius: 'var(--tkm-radius-sm)', padding: foodLow ? '0 3px' : undefined, color: foodLow ? '#e0707a' : undefined }} title={foodLow ? t('糧倉見底!', 'Granary empty!') : t('糧', 'Grain')}><Icon name="grain" size={13} color={foodLow ? '#e0707a' : '#d8c88a'} /><AnimatedNumber value={playerFood} flash /></span>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }} title={t('兵', 'Troops')}><Icon name="war" size={13} color="#9ec0d8" /><AnimatedNumber value={playerTroops} flash /></span>
               </span>
             </>
@@ -663,7 +663,7 @@ export function MapScreen() {
                       display: 'inline-flex',
                       width: 30,
                       height: 14,
-                      borderRadius: 2,
+                      borderRadius: 'var(--tkm-radius-xs)',
                       overflow: 'hidden',
                       border: '1px solid rgba(0,0,0,0.3)',
                     }}
@@ -701,7 +701,7 @@ export function MapScreen() {
                     background: simSpeed === sp ? 'rgba(122,106,168,0.4)' : 'transparent',
                     border: `1px solid ${simSpeed === sp ? '#a890d0' : '#4a3a5a'}`,
                     color: simSpeed === sp ? '#d0c0f0' : '#8a7aa0',
-                    padding: '0.2rem 0.5rem', borderRadius: 4, cursor: 'pointer',
+                    padding: '0.2rem 0.5rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer',
                     fontFamily: 'var(--tkm-font-body)', fontSize: '0.78rem',
                   }}
                 >{sp}×</button>
@@ -747,7 +747,7 @@ export function MapScreen() {
                 style={{
                   marginRight: 8, cursor: 'pointer',
                   background: 'rgba(126,214,138,0.16)', border: '1px solid #6fae73',
-                  color: '#9ad6a8', padding: '0.2rem 0.55rem', borderRadius: 4,
+                  color: '#9ad6a8', padding: '0.2rem 0.55rem', borderRadius: 'var(--tkm-radius-sm)',
                   fontFamily: 'var(--tkm-font-body)', fontSize: '0.8rem', whiteSpace: 'nowrap',
                 }}
               >
@@ -793,24 +793,24 @@ export function MapScreen() {
         <div style={{
           position: 'fixed', bottom: 'calc(4.6rem + var(--tkm-safe-bottom))', left: '50%', transform: 'translateX(-50%)',
           zIndex: 640, display: 'flex', alignItems: 'center', gap: 8,
-          background: 'rgba(16, 22, 30, 0.92)', border: '1px solid #d4a84a', borderRadius: 8,
+          background: 'rgba(16, 22, 30, 0.92)', border: '1px solid #d4a84a', borderRadius: 'var(--tkm-radius)',
           padding: '0.3rem 0.7rem', color: '#f0d98a', fontFamily: 'var(--tkm-font-body)', fontSize: '0.85rem',
         }}>
           <span style={{ fontVariantNumeric: 'tabular-nums' }}>{t(`第 ${dayFlow.day + 1} 日 / ${dayFlow.total}`, `Day ${dayFlow.day + 1} / ${dayFlow.total}`)}</span>
-          <button onClick={dayFlowTogglePause} style={{ background: 'transparent', border: '1px solid #d4a84a', color: '#f0d98a', borderRadius: 5, cursor: 'pointer', padding: '0.1rem 0.5rem', fontFamily: 'inherit' }}>
+          <button onClick={dayFlowTogglePause} style={{ background: 'transparent', border: '1px solid #d4a84a', color: '#f0d98a', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', padding: '0.1rem 0.5rem', fontFamily: 'inherit' }}>
             {dayFlow.playing ? '⏸' : '▶'}
           </button>
           {[1, 2, 4].map((sp) => (
             <button key={sp} onClick={() => dayFlowSetSpeed(sp)} style={{
               background: dayFlow.speed === sp ? 'rgba(212,168,74,0.25)' : 'transparent',
               border: `1px solid ${dayFlow.speed === sp ? '#d4a84a' : '#4a5568'}`,
-              color: dayFlow.speed === sp ? '#f0d98a' : '#97a4ae', borderRadius: 5, cursor: 'pointer', padding: '0.1rem 0.4rem', fontFamily: 'inherit', fontSize: '0.78rem',
+              color: dayFlow.speed === sp ? '#f0d98a' : '#97a4ae', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', padding: '0.1rem 0.4rem', fontFamily: 'inherit', fontSize: '0.78rem',
             }}>{sp}×</button>
           ))}
           <button
             onClick={() => { dayFlowSkip(); commitTurn(); }}
             title={t('跳過日播,直接結算本旬', 'Skip the days, resolve the turn now')}
-            style={{ background: 'transparent', border: '1px solid #4a5568', color: '#97a4ae', borderRadius: 5, cursor: 'pointer', padding: '0.1rem 0.5rem', fontFamily: 'inherit' }}
+            style={{ background: 'transparent', border: '1px solid #4a5568', color: '#97a4ae', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', padding: '0.1rem 0.5rem', fontFamily: 'inherit' }}
           >⏭</button>
         </div>
       )}

@@ -232,7 +232,7 @@ export function ToDoModal({ onClose, onOpenLetters, onOpenFeature }: { onClose: 
                   onClick={td.onClick}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '0.5rem 0.7rem', borderRadius: 5,
+                    padding: '0.5rem 0.7rem', borderRadius: 'var(--tkm-radius-sm)',
                     background: c.bg, border: `1px solid ${c.border}`,
                     cursor: td.onClick ? 'pointer' : 'default',
                   }}

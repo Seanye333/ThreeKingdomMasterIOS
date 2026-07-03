@@ -173,7 +173,7 @@ export function RelationshipBrowserModal({ onClose, officersOverride }: Props) {
             style={{
               marginLeft: 'auto',
               background: '#10161e',
-              border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+              border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
               color: '#aab6c0',
               padding: '0.3rem 0.5rem',
               fontFamily: 'inherit',

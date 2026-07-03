@@ -32,7 +32,7 @@ export function ReliefModal({ onClose }: { onClose: () => void }) {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: 'linear-gradient(160deg,#2a1f18,#141009)', border: '1px solid #b8863e', borderRadius: '10px',
+          background: 'linear-gradient(160deg,#2a1f18,#141009)', border: '1px solid #b8863e', borderRadius: 'var(--tkm-radius-lg)',
           width: 'min(560px,100%)', maxHeight: '75vh', overflowY: 'auto',
           color: '#eee6d8', fontFamily: 'var(--tkm-font-body)', padding: '1rem 1.3rem',
         }}

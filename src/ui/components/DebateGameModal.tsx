@@ -133,7 +133,7 @@ export function DebateGameModal({
   };
 
   const bar = (val: number, color: string) => (
-    <div style={{ height: 14, background: '#1b2531', border: '1px solid #2b3845', borderRadius: 2, overflow: 'hidden' }}>
+    <div style={{ height: 14, background: '#1b2531', border: '1px solid #2b3845', borderRadius: 'var(--tkm-radius-xs)', overflow: 'hidden' }}>
       <div style={{ width: `${val}%`, height: '100%', background: color, transition: 'width 0.5s cubic-bezier(0.4,0,0.2,1)' }} />
     </div>
   );
@@ -152,7 +152,7 @@ export function DebateGameModal({
         <div style={{ fontSize: '0.7rem', color: '#caa3d6', textAlign: 'center', letterSpacing: '0.1rem', marginBottom: 2 }}>
           {t('民心', 'The Hall')}{tl ? <span style={{ color: '#9fb4c8' }}> · {t('論題', 'Topic')} {lang === 'en' ? tl.en : tl.zh}</span> : null}
         </div>
-        <div style={{ position: 'relative', height: 8, background: '#1b2531', border: '1px solid #2b3845', borderRadius: 4, overflow: 'hidden' }}>
+        <div style={{ position: 'relative', height: 8, background: '#1b2531', border: '1px solid #2b3845', borderRadius: 'var(--tkm-radius-sm)', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 1, background: '#5a6a78' }} />
           {a >= 0
             ? <div style={{ position: 'absolute', right: '50%', top: 0, bottom: 0, width: `${(a / 100) * 50}%`, background: '#6abf6a', transition: 'width 0.4s' }} />
@@ -187,7 +187,7 @@ export function DebateGameModal({
       </div>
     );
     return (
-      <div style={{ position: 'fixed', left: '50%', bottom: 14, transform: 'translateX(-50%)', width: 560, maxWidth: '96vw', background: 'rgba(18,16,11,0.92)', border: '1px solid #88b7e8', borderRadius: 8, padding: '0.7rem 0.9rem', fontFamily: 'var(--tkm-font-body)', color: '#e6edf3', zIndex: 130, boxShadow: '0 6px 24px rgba(0,0,0,0.5)' }}>
+      <div style={{ position: 'fixed', left: '50%', bottom: 14, transform: 'translateX(-50%)', width: 560, maxWidth: '96vw', background: 'rgba(18,16,11,0.92)', border: '1px solid #88b7e8', borderRadius: 'var(--tkm-radius)', padding: '0.7rem 0.9rem', fontFamily: 'var(--tkm-font-body)', color: '#e6edf3', zIndex: 130, boxShadow: '0 6px 24px rgba(0,0,0,0.5)' }}>
         <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', marginBottom: '0.5rem' }}>
           {side(me, bout.aMomentum, '#6abf6a', 'a', 'left')}
           <div style={{ alignSelf: 'center', color: '#88b7e8', letterSpacing: '0.1rem', fontSize: '0.95rem' }}>舌{t('戰', '')}</div>

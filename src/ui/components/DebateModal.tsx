@@ -39,8 +39,8 @@ export function DebateModal({ me, foe, onDone }: {
   };
 
   const bar = (v: number, color: string) => (
-    <div style={{ height: 8, background: '#10161e', border: '1px solid #26323e', borderRadius: 3 }}>
-      <div style={{ height: '100%', width: `${Math.max(0, Math.min(100, v))}%`, background: color, borderRadius: 3, transition: 'width 0.5s cubic-bezier(0.4,0,0.2,1)' }} />
+    <div style={{ height: 8, background: '#10161e', border: '1px solid #26323e', borderRadius: 'var(--tkm-radius-xs)' }}>
+      <div style={{ height: '100%', width: `${Math.max(0, Math.min(100, v))}%`, background: color, borderRadius: 'var(--tkm-radius-xs)', transition: 'width 0.5s cubic-bezier(0.4,0,0.2,1)' }} />
     </div>
   );
 
@@ -111,7 +111,7 @@ export function DebateModal({ me, foe, onDone }: {
                 onClick={() => play(c.id)}
                 title={c.line}
                 style={{
-                  background: '#241c12', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#e6edf3',
+                  background: '#241c12', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', color: '#e6edf3',
                   padding: '0.5rem 0.4rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.82rem',
                 }}
               >{c.zh}</button>

@@ -69,7 +69,7 @@ export function GovernorEvalModal({ onClose }: { onClose: () => void }) {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: 'linear-gradient(160deg,#1b2531,#10161e)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+          background: 'linear-gradient(160deg,#1b2531,#10161e)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
           width: 'min(640px,100%)', maxHeight: '85vh', overflowY: 'auto',
           color: '#e6edf3', fontFamily: 'var(--tkm-font-body)', padding: '1rem 1.3rem',
           animation: reduced ? undefined : 'tkmVictorySub 0.4s cubic-bezier(0.16,1,0.3,1) both',
@@ -127,7 +127,7 @@ export function GovernorEvalModal({ onClose }: { onClose: () => void }) {
                       <div style={{ display: 'flex', justifyContent: 'space-between', color: '#8a98a4' }}>
                         <span>{t(p.zh, p.en)}</span><span>{Math.round(fill * 100)}</span>
                       </div>
-                      <div style={{ height: 4, background: '#1e2a36', borderRadius: 2, overflow: 'hidden' }}>
+                      <div style={{ height: 4, background: '#1e2a36', borderRadius: 'var(--tkm-radius-xs)', overflow: 'hidden' }}>
                         <div style={{ width: `${Math.round(fill * 100)}%`, height: '100%', background: fill >= 0.66 ? '#5fc26a' : fill >= 0.33 ? '#e6c473' : '#e0623a' }} />
                       </div>
                     </div>

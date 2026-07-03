@@ -74,7 +74,7 @@ export function Tip({ text, placement = 'bottom', children }: TipProps) {
               fontSize: '0.76rem',
               fontFamily: 'var(--tkm-font-body)',
               lineHeight: 1.45,
-              borderRadius: 6,
+              borderRadius: 'var(--tkm-radius)',
               boxShadow: '0 4px 16px rgba(0,0,0,0.55)',
               pointerEvents: 'none',
               zIndex: 10000,

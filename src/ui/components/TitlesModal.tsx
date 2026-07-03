@@ -293,7 +293,7 @@ export function TitlesModal({ onClose }: Props) {
           return (
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', padding: '0 1rem 0.55rem', flexWrap: 'wrap', fontSize: '0.74rem' }}>
               <span className={styles.officerStats}>{lang === 'en' ? '造詣 Mastery' : '學派造詣'}</span>
-              <span style={{ width: 120, height: 8, background: '#0e1318', border: '1px solid #2b3845', borderRadius: 4, overflow: 'hidden' }}>
+              <span style={{ width: 120, height: 8, background: '#0e1318', border: '1px solid #2b3845', borderRadius: 'var(--tkm-radius-sm)', overflow: 'hidden' }}>
                 <span style={{ display: 'block', width: `${mastery}%`, height: '100%', background: ready ? '#caa53d' : '#4a6a8a' }} />
               </span>
               <span style={{ color: ready ? '#e6c473' : '#9fb2c0' }}>{mastery}/100</span>
@@ -581,7 +581,7 @@ function CivicTab({
               <div>
                 <span className={styles.titleName}><Name pair={t.name} /></span>
                 {t.minGrade && (
-                  <span style={{ marginLeft: '0.4rem', fontSize: '0.7rem', color: gradeMeta(t.minGrade).color, border: `1px solid ${gradeMeta(t.minGrade).color}`, borderRadius: 2, padding: '0 0.3rem' }}>
+                  <span style={{ marginLeft: '0.4rem', fontSize: '0.7rem', color: gradeMeta(t.minGrade).color, border: `1px solid ${gradeMeta(t.minGrade).color}`, borderRadius: 'var(--tkm-radius-xs)', padding: '0 0.3rem' }}>
                     需{gradeMeta(t.minGrade).name.zh}
                   </span>
                 )}
@@ -765,7 +765,7 @@ function PeerageTab({
             {peers.map((o) => {
               const p = peerageById(o.peerageId);
               return (
-                <span key={o.id} style={{ fontSize: '0.76rem', color: '#caa53d', border: '1px solid #5a4a2a', borderRadius: 3, padding: '0.05rem 0.4rem' }}>
+                <span key={o.id} style={{ fontSize: '0.76rem', color: '#caa53d', border: '1px solid #5a4a2a', borderRadius: 'var(--tkm-radius-xs)', padding: '0.05rem 0.4rem' }}>
                   <Name pair={o.name} /> · {p ? (lang === 'en' ? p.name.en : p.name.zh) : ''}
                 </span>
               );
@@ -818,7 +818,7 @@ function PeerageTab({
                 style={{
                   marginLeft: '0.6rem', fontSize: '0.72rem', cursor: 'pointer',
                   background: 'none', border: '1px solid #7a3a2a', color: '#c97a5a',
-                  borderRadius: 3, padding: '0.1rem 0.45rem', fontFamily: 'inherit',
+                  borderRadius: 'var(--tkm-radius-xs)', padding: '0.1rem 0.45rem', fontFamily: 'inherit',
                 }}
               >{lang === 'en' ? 'Strip title' : '削爵'}</button>
             )}
@@ -898,7 +898,7 @@ function HonorificTab({
             {bearers.map((o) => {
               const hon = honorificById(o.honorificId);
               return (
-                <span key={o.id} style={{ fontSize: '0.76rem', color: '#e08a6a', border: '1px solid #5a3a2a', borderRadius: 3, padding: '0.05rem 0.4rem' }}>
+                <span key={o.id} style={{ fontSize: '0.76rem', color: '#e08a6a', border: '1px solid #5a3a2a', borderRadius: 'var(--tkm-radius-xs)', padding: '0.05rem 0.4rem' }}>
                   <Name pair={o.name} /> · {hon ? (lang === 'en' ? hon.name.en : hon.name.zh) : ''}
                 </span>
               );
@@ -949,7 +949,7 @@ function HonorificTab({
                 style={{
                   marginLeft: '0.6rem', fontSize: '0.72rem', cursor: 'pointer',
                   background: 'none', border: '1px solid #7a3a2a', color: '#c97a5a',
-                  borderRadius: 3, padding: '0.1rem 0.45rem', fontFamily: 'inherit',
+                  borderRadius: 'var(--tkm-radius-xs)', padding: '0.1rem 0.45rem', fontFamily: 'inherit',
                 }}
               >{lang === 'en' ? 'Strip honorific' : '奪號'}</button>
             )}

@@ -84,7 +84,7 @@ export function ExpeditionModal({ fromCityId, onClose }: { fromCityId: string; o
               key={id}
               onClick={() => setTab(id)}
               style={{
-                flex: 1, padding: '0.4rem', borderRadius: 5, cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.84rem',
+                flex: 1, padding: '0.4rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.84rem',
                 background: active ? 'linear-gradient(180deg, rgba(230,196,115,0.2), rgba(230,196,115,0.06))' : '#10161e',
                 border: `1px solid ${active ? '#e6c473' : '#26323e'}`,
                 color: active ? '#f2dd9a' : '#aab6c0',
@@ -176,7 +176,7 @@ function CityErrandView({ fromCityId, roamers, onClose }: { fromCityId: string; 
               onClick={() => setMode(m.id)}
               title={lang === 'en' ? m.descEn : m.descZh}
               style={{
-                textAlign: 'left', padding: '0.4rem 0.55rem', borderRadius: 5, cursor: 'pointer', fontFamily: 'inherit',
+                textAlign: 'left', padding: '0.4rem 0.55rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'inherit',
                 background: active ? 'linear-gradient(180deg, rgba(230,196,115,0.2), rgba(230,196,115,0.06))' : '#10161e',
                 border: `1px solid ${active ? '#e6c473' : '#26323e'}`,
                 color: active ? '#f2dd9a' : '#aab6c0',
@@ -512,7 +512,7 @@ function FarEmbassyView({ fromCityId, roamers, onClose }: { fromCityId: string; 
 
 const miniBtn = {
   marginLeft: 8, background: '#0e1318', border: '1px solid #2b3845', color: '#9fb2c0',
-  padding: '0.1rem 0.5rem', fontFamily: 'inherit', fontSize: '0.68rem', borderRadius: 4, cursor: 'pointer',
+  padding: '0.1rem 0.5rem', fontFamily: 'inherit', fontSize: '0.68rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer',
 } as const;
 const miniBtnOn = {
   ...miniBtn, background: '#1c2a18', border: '1px solid #4a6a3a', color: '#9ad6a8',
@@ -520,16 +520,16 @@ const miniBtnOn = {
 
 const selectStyle = {
   background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473',
-  padding: '0.3rem 0.4rem', fontFamily: 'inherit', fontSize: '0.82rem', borderRadius: 4,
+  padding: '0.3rem 0.4rem', fontFamily: 'inherit', fontSize: '0.82rem', borderRadius: 'var(--tkm-radius-sm)',
 } as const;
 
 const infoBox = {
   fontSize: '0.76rem', color: '#aab6c0', marginBottom: '0.8rem', lineHeight: 1.8,
-  background: '#10161e', border: '1px solid #1d2731', borderRadius: 4, padding: '0.4rem 0.6rem',
+  background: '#10161e', border: '1px solid #1d2731', borderRadius: 'var(--tkm-radius-sm)', padding: '0.4rem 0.6rem',
 } as const;
 
 const sendBtn = (enabled: boolean) => ({
-  width: '100%', padding: '0.5rem', borderRadius: 6, cursor: enabled ? 'pointer' : 'default',
+  width: '100%', padding: '0.5rem', borderRadius: 'var(--tkm-radius)', cursor: enabled ? 'pointer' : 'default',
   fontFamily: 'inherit', fontSize: '0.92rem', letterSpacing: '0.1rem',
   background: enabled ? 'linear-gradient(180deg, rgba(230,196,115,0.22), rgba(230,196,115,0.08))' : '#1b2531',
   border: `1px solid ${enabled ? '#e6c473' : '#2b3845'}`,

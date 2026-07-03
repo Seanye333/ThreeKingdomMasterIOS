@@ -140,7 +140,7 @@ export function HudMenu({ label, items, title }: Props) {
                     color: 'white',
                     fontSize: '0.7rem',
                     padding: '0 0.4rem',
-                    borderRadius: 8,
+                    borderRadius: 'var(--tkm-radius)',
                     fontFamily: 'var(--tkm-font-mono)',
                   }}
                 >

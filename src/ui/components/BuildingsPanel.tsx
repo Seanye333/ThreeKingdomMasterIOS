@@ -51,7 +51,7 @@ export function BuildingsPanel({ cityId }: Props) {
             <div style={{ fontSize: '0.72rem', color: '#e0c070', display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
               <span style={{
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                width: '1.25rem', height: '1.25rem', borderRadius: 3,
+                width: '1.25rem', height: '1.25rem', borderRadius: 'var(--tkm-radius-xs)',
                 background: '#3a2c14', border: '1px solid #c9a23c',
                 fontFamily: 'var(--tkm-font-body)', fontSize: '0.8rem',
               }}>{specialty.glyph}</span>

@@ -93,7 +93,7 @@ export function VictoryModal() {
             maxHeight: 260, overflowY: 'auto', margin: '0.8rem 0',
             padding: '0.7rem 1rem',
             background: 'rgba(12, 8, 4, 0.55)',
-            border: '1px solid #6a4a20', borderRadius: 4,
+            border: '1px solid #6a4a20', borderRadius: 'var(--tkm-radius-sm)',
             textAlign: 'left',
           }}>
             <div style={{

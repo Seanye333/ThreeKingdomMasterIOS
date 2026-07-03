@@ -101,7 +101,7 @@ export function PortPanel({ portId, onClose }: Props) {
 
           <span style={{ color: '#7a8893' }}>HP</span>
           <span>
-            <div style={{ height: 8, background: '#1e2832', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', position: 'relative', width: '100%' }}>
+            <div style={{ height: 8, background: '#1e2832', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', position: 'relative', width: '100%' }}>
               <div style={{
                 height: '100%',
                 width: `${Math.round(hpPct * 100)}%`,

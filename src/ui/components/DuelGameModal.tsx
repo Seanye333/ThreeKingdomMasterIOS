@@ -351,7 +351,7 @@ export function DuelGameModal({
   };
 
   const bar = (val: number, color: string) => (
-    <div style={{ height: 14, background: '#1b2531', border: '1px solid #2b3845', borderRadius: 2, overflow: 'hidden' }}>
+    <div style={{ height: 14, background: '#1b2531', border: '1px solid #2b3845', borderRadius: 'var(--tkm-radius-xs)', overflow: 'hidden' }}>
       <div style={{ width: `${val}%`, height: '100%', background: color, transition: 'width 0.5s cubic-bezier(0.4,0,0.2,1)' }} />
     </div>
   );
@@ -366,7 +366,7 @@ export function DuelGameModal({
     return (
       <div style={{ marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
         <span style={{ fontSize: '0.7rem', color: full ? '#ffd86a' : used ? '#5a4a36' : '#9a7a40' }}>{t('魂', 'SP')}</span>
-        <div style={{ flex: 1, height: 6, background: '#1b1408', border: `1px solid ${full ? '#ffd86a' : '#3a2c14'}`, borderRadius: 2, overflow: 'hidden', boxShadow: full ? '0 0 8px rgba(255,200,90,0.7)' : undefined }}>
+        <div style={{ flex: 1, height: 6, background: '#1b1408', border: `1px solid ${full ? '#ffd86a' : '#3a2c14'}`, borderRadius: 'var(--tkm-radius-xs)', overflow: 'hidden', boxShadow: full ? '0 0 8px rgba(255,200,90,0.7)' : undefined }}>
           <div style={{ width: `${used ? 0 : spirit}%`, height: '100%', background: full ? 'linear-gradient(90deg,#ffcf5a,#ff8a3a)' : '#b88a3a', transition: 'width 0.4s' }} />
         </div>
       </div>
@@ -401,7 +401,7 @@ export function DuelGameModal({
           width: '100%', padding: '0.4rem 0.3rem', background: disabled ? '#241c12' : 'rgba(20,28,38,0.96)',
           border: `1px solid ${disabled ? '#243240' : tint}`,
           color: disabled ? '#5a4a36' : '#e6edf3', cursor: disabled ? 'default' : 'pointer',
-          fontFamily: 'inherit', textAlign: 'center', borderRadius: 4,
+          fontFamily: 'inherit', textAlign: 'center', borderRadius: 'var(--tkm-radius-sm)',
         }}
         title={locked ? t(`Lv.${duelMoveUnlockLevel(m.id)} 解鎖`, `unlocks at Lv.${duelMoveUnlockLevel(m.id)}`) : (lang === 'en' ? m.hint.en : m.hint.zh)}
       >
@@ -421,13 +421,13 @@ export function DuelGameModal({
         onClick={throwDart}
         disabled={usedDart || bout.over}
         title={t('擲暗器:傷敵氣力(不致命),每局一次', 'Throw a dart: chip the foe (never lethal), once per bout')}
-        style={{ flex: 1, padding: '0.32rem 0.2rem', borderRadius: 4, cursor: usedDart ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: '0.8rem', background: usedDart ? '#241c12' : 'rgba(20,28,38,0.96)', border: `1px solid ${usedDart ? '#243240' : '#9a7ad0'}`, color: usedDart ? '#5a4a36' : '#cbb6ef' }}
+        style={{ flex: 1, padding: '0.32rem 0.2rem', borderRadius: 'var(--tkm-radius-sm)', cursor: usedDart ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: '0.8rem', background: usedDart ? '#241c12' : 'rgba(20,28,38,0.96)', border: `1px solid ${usedDart ? '#243240' : '#9a7ad0'}`, color: usedDart ? '#5a4a36' : '#cbb6ef' }}
       >🗡 {t('暗器', 'Dart')}</button>
       <button
         onClick={useSalve}
         disabled={usedHeal || bout.over}
         title={t('金瘡藥:回復氣力,每局一次', 'Wound-salve: recover stamina, once per bout')}
-        style={{ flex: 1, padding: '0.32rem 0.2rem', borderRadius: 4, cursor: usedHeal ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: '0.8rem', background: usedHeal ? '#241c12' : 'rgba(20,28,38,0.96)', border: `1px solid ${usedHeal ? '#243240' : '#6aae73'}`, color: usedHeal ? '#5a4a36' : '#bfe6b8' }}
+        style={{ flex: 1, padding: '0.32rem 0.2rem', borderRadius: 'var(--tkm-radius-sm)', cursor: usedHeal ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: '0.8rem', background: usedHeal ? '#241c12' : 'rgba(20,28,38,0.96)', border: `1px solid ${usedHeal ? '#243240' : '#6aae73'}`, color: usedHeal ? '#5a4a36' : '#bfe6b8' }}
       >🧪 {t('療傷', 'Salve')}</button>
     </div>
   );
@@ -444,7 +444,7 @@ export function DuelGameModal({
       onClick={() => play('ultimate')}
       className={reduced ? undefined : 'tkm-ult-pulse'}
       style={{
-        width: '100%', padding: '0.45rem 0.3rem', borderRadius: 5, cursor: 'pointer', fontFamily: 'inherit',
+        width: '100%', padding: '0.45rem 0.3rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'inherit',
         background: 'linear-gradient(90deg, rgba(255,140,40,0.25), rgba(255,200,90,0.3))',
         border: '1px solid #ffd86a', color: '#ffe8a8', letterSpacing: '0.06rem',
         textShadow: '0 0 10px rgba(255,190,70,0.8)',
@@ -511,7 +511,7 @@ export function DuelGameModal({
       : { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', display: 'grid', placeItems: 'center', zIndex: 130 }}>
       {/* Status card — slim bar at the TOP when staged (so the fighters stay clear) */}
       <div style={staged
-        ? { position: 'fixed', top: 8, left: '50%', transform: 'translateX(-50%)', width: 'min(340px, 42vw)', overflow: 'hidden', background: 'rgba(31,24,16,0.9)', border: '1px solid #e6c473', borderRadius: 6, padding: '0.55rem 0.9rem', fontFamily: 'var(--tkm-font-body)', color: '#e6edf3', pointerEvents: 'auto', boxShadow: '0 6px 30px rgba(0,0,0,0.6)' }
+        ? { position: 'fixed', top: 8, left: '50%', transform: 'translateX(-50%)', width: 'min(340px, 42vw)', overflow: 'hidden', background: 'rgba(31,24,16,0.9)', border: '1px solid #e6c473', borderRadius: 'var(--tkm-radius)', padding: '0.55rem 0.9rem', fontFamily: 'var(--tkm-font-body)', color: '#e6edf3', pointerEvents: 'auto', boxShadow: '0 6px 30px rgba(0,0,0,0.6)' }
         : { position: 'relative', overflow: 'hidden', width: 560, maxWidth: '95vw', background: '#1f1810', border: '1px solid #e6c473', padding: '1.25rem', fontFamily: 'var(--tkm-font-body)', color: '#e6edf3', pointerEvents: 'auto' }}>
         {/* 受創血暈 — the card edges flush red when *you* (the attacker) take a blow. */}
         {fx && !reduced && fx.hit === 'a' && <div key={`v${fx.key}`} className="tkm-blood-vignette" />}
@@ -542,7 +542,7 @@ export function DuelGameModal({
                 fontFamily: 'var(--tkm-font-zh, "Ma Shan Zheng", "Songti SC", serif)',
                 fontSize: '2.1rem', color: '#ffe08a', letterSpacing: '0.12rem', textAlign: 'center',
                 textShadow: '0 0 26px rgba(255,180,60,0.9), 0 2px 6px #000',
-                background: 'rgba(20,10,4,0.55)', padding: '0.35rem 1.5rem', borderRadius: 6,
+                background: 'rgba(20,10,4,0.55)', padding: '0.35rem 1.5rem', borderRadius: 'var(--tkm-radius)',
                 border: '1px solid rgba(255,200,90,0.5)',
               }}
             >{signature.text}</div>
@@ -577,7 +577,7 @@ export function DuelGameModal({
                 <button
                   key={c}
                   onClick={() => taunt(c)}
-                  style={{ padding: '0.4rem 0.2rem', background: 'rgba(184, 88, 74, 0.18)', border: '1px solid #b8584a', color: '#e8b0a0', cursor: 'pointer', fontFamily: 'inherit', borderRadius: 4 }}
+                  style={{ padding: '0.4rem 0.2rem', background: 'rgba(184, 88, 74, 0.18)', border: '1px solid #b8584a', color: '#e8b0a0', cursor: 'pointer', fontFamily: 'inherit', borderRadius: 'var(--tkm-radius-sm)' }}
                   title={t(PSYCH_LINE[c].zh, PSYCH_LINE[c].en)}
                 >
                   <div style={{ fontSize: '0.95rem' }}>{t(PSYCH_ZH[c], PSYCH_EN[c])}</div>
@@ -598,7 +598,7 @@ export function DuelGameModal({
                 <button
                   key={r.id}
                   onClick={() => swapIn(r)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#2a3a2a', border: '1px solid #6aae73', borderRadius: 4, padding: '0.25rem 0.5rem', color: '#d0ffd8', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.8rem' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#2a3a2a', border: '1px solid #6aae73', borderRadius: 'var(--tkm-radius-sm)', padding: '0.25rem 0.5rem', color: '#d0ffd8', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.8rem' }}
                 >🛡 {nm(r)} <span style={{ color: '#9ed68a', fontSize: '0.68rem' }}>{t('武', 'W')}{r.stats.war}</span></button>
               ))}
             </div>
@@ -655,7 +655,7 @@ export function DuelGameModal({
           <div style={{
             position: 'fixed', top: 10, ...(who === 'me' ? { left: 10 } : { right: 10 }),
             width: 'min(220px, 28vw)', pointerEvents: 'none', zIndex: 131,
-            background: 'rgba(15,12,8,0.72)', border: '1px solid #5a4a2a', borderRadius: 6, padding: '0.45rem 0.6rem',
+            background: 'rgba(15,12,8,0.72)', border: '1px solid #5a4a2a', borderRadius: 'var(--tkm-radius)', padding: '0.45rem 0.6rem',
           }}>{fighterStatus(who)}</div>
         );
         return <>{corner('me')}{corner('foe')}</>;
@@ -663,7 +663,7 @@ export function DuelGameModal({
 
       {/* 雙人對戰 — whose turn it is (P1 attacks, then P2 defends). */}
       {hotSeat && !bout.over && (
-        <div style={{ position: 'fixed', top: 78, left: '50%', transform: 'translateX(-50%)', zIndex: 133, pointerEvents: 'none', background: pickSide === 'attacker' ? 'rgba(184,68,46,0.92)' : 'rgba(58,125,217,0.92)', borderRadius: 6, padding: '0.28rem 0.9rem', color: '#fff', fontFamily: 'var(--tkm-font-body)', fontSize: '0.88rem', letterSpacing: '0.05rem', textShadow: '0 1px 3px #000', whiteSpace: 'nowrap' }}>
+        <div style={{ position: 'fixed', top: 78, left: '50%', transform: 'translateX(-50%)', zIndex: 133, pointerEvents: 'none', background: pickSide === 'attacker' ? 'rgba(184,68,46,0.92)' : 'rgba(58,125,217,0.92)', borderRadius: 'var(--tkm-radius)', padding: '0.28rem 0.9rem', color: '#fff', fontFamily: 'var(--tkm-font-body)', fontSize: '0.88rem', letterSpacing: '0.05rem', textShadow: '0 1px 3px #000', whiteSpace: 'nowrap' }}>
           {pickSide === 'attacker'
             ? t(`玩家① ${nm(me)} — 出招 ⚔`, `Player 1 ${nm(me)} — attack ⚔`)
             : t(`玩家② ${nm(defender)} — 應招 🛡`, `Player 2 ${nm(defender)} — defend 🛡`)}

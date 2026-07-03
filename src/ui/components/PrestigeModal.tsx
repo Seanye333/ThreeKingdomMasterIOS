@@ -70,7 +70,7 @@ export function PrestigeModal({ onClose }: Props) {
               <div key={title.id} style={{ background: '#10161e', border: '1px solid #2b3845', borderLeft: `3px solid ${path.color}`, padding: '0.7rem 0.9rem' }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: '1.05rem', color: '#e6c473' }}>{lang === 'en' ? title.name.en : title.name.zh}</span>
-                  <span style={{ fontSize: '0.68rem', color: path.color, border: `1px solid ${path.color}`, padding: '0.03rem 0.3rem', borderRadius: 2 }}>{lang === 'en' ? path.en : path.zh}</span>
+                  <span style={{ fontSize: '0.68rem', color: path.color, border: `1px solid ${path.color}`, padding: '0.03rem 0.3rem', borderRadius: 'var(--tkm-radius-xs)' }}>{lang === 'en' ? path.en : path.zh}</span>
                   <span style={{ fontSize: '0.74rem', color: '#7ed68a', marginLeft: 'auto' }}>{fmtEff(title.effects)}</span>
                 </div>
                 <div style={{ fontSize: '0.74rem', color: '#a08c6a', marginTop: '0.3rem' }}>
@@ -97,5 +97,5 @@ export function PrestigeModal({ onClose }: Props) {
 }
 
 const overlay: CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'grid', placeItems: 'center', zIndex: 900, padding: '1rem' };
-const panel: CSSProperties = { background: 'linear-gradient(160deg,#1b2531,#10161e)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', width: 'min(720px,100%)', maxHeight: '88vh', display: 'flex', flexDirection: 'column', color: '#e6edf3', fontFamily: 'var(--tkm-font-body)' };
+const panel: CSSProperties = { background: 'linear-gradient(160deg,#1b2531,#10161e)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', width: 'min(720px,100%)', maxHeight: '88vh', display: 'flex', flexDirection: 'column', color: '#e6edf3', fontFamily: 'var(--tkm-font-body)' };
 const header: CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '1rem 1.2rem', borderBottom: '1px solid #2b3845' };

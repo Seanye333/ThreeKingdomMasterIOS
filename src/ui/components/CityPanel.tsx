@@ -88,7 +88,7 @@ export function CityPanel() {
                 <span
                   style={{
                     marginLeft: '0.4rem', background: '#2a2410', border: '1px solid #c8a23a',
-                    color: '#e6c473', padding: '0.05rem 0.4rem', borderRadius: '4px',
+                    color: '#e6c473', padding: '0.05rem 0.4rem', borderRadius: 'var(--tkm-radius-sm)',
                     fontSize: '0.7rem', letterSpacing: '0.08rem',
                   }}
                 >{t('★治所', '★ Capital')}</span>
@@ -245,7 +245,7 @@ function GrainTransferSection({ cityId, isPlayerCity }: { cityId: EntityId; isPl
             border: `1px solid ${escortCount === 0 ? '#26323e' : '#e6c473'}`,
             color: escortCount === 0 ? '#4a5660' : '#f2dd9a',
             padding: '0.2rem 0.7rem', fontFamily: 'inherit', fontSize: '0.72rem',
-            cursor: escortCount === 0 ? 'not-allowed' : 'pointer', borderRadius: 4, letterSpacing: '0.05rem',
+            cursor: escortCount === 0 ? 'not-allowed' : 'pointer', borderRadius: 'var(--tkm-radius-sm)', letterSpacing: '0.05rem',
           }}
         >
           {t('派車 ⇨', 'Dispatch ⇨')}
@@ -264,7 +264,7 @@ function GrainTransferSection({ cityId, isPlayerCity }: { cityId: EntityId; isPl
               c.troops ? `兵${Math.round(c.troops / 1000)}k` : '',
             ].filter(Boolean).join(' ');
             return (
-              <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, fontSize: '0.7rem', color: '#aab6c0', background: '#10161e', border: '1px solid #1d2731', borderRadius: 3, padding: '0.18rem 0.45rem' }}>
+              <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, fontSize: '0.7rem', color: '#aab6c0', background: '#10161e', border: '1px solid #1d2731', borderRadius: 'var(--tkm-radius-xs)', padding: '0.18rem 0.45rem' }}>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {c.naval ? '🚢' : '🐂'} → {to ? (lang === 'en' ? to.name.en : to.name.zh) : '?'}
                   {esc && <span style={{ color: '#7a8893' }}> · {lang === 'en' ? esc.name.en : esc.name.zh}</span>}
@@ -340,7 +340,7 @@ function ExpeditionSection({ cityId, isPlayerCity }: { cityId: EntityId; isPlaye
             border: `1px solid ${roamerCount === 0 ? '#26323e' : '#e6c473'}`,
             color: roamerCount === 0 ? '#4a5660' : '#f2dd9a',
             padding: '0.2rem 0.7rem', fontFamily: 'inherit', fontSize: '0.72rem',
-            cursor: roamerCount === 0 ? 'not-allowed' : 'pointer', borderRadius: 4, letterSpacing: '0.05rem',
+            cursor: roamerCount === 0 ? 'not-allowed' : 'pointer', borderRadius: 'var(--tkm-radius-sm)', letterSpacing: '0.05rem',
           }}
         >
           {t('遣行 ⇨', 'Send ⇨')}
@@ -356,7 +356,7 @@ function ExpeditionSection({ cityId, isPlayerCity }: { cityId: EntityId; isPlaye
             const o = officers[e.officerId];
             const m = MODE_LABEL[e.mode] ?? { zh: e.mode, en: e.mode, icon: '•' };
             return (
-              <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, fontSize: '0.7rem', color: '#aab6c0', background: '#10161e', border: '1px solid #1d2731', borderRadius: 3, padding: '0.18rem 0.45rem' }}>
+              <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, fontSize: '0.7rem', color: '#aab6c0', background: '#10161e', border: '1px solid #1d2731', borderRadius: 'var(--tkm-radius-xs)', padding: '0.18rem 0.45rem' }}>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {m.icon} {o ? (lang === 'en' ? o.name.en : o.name.zh) : '?'}
                   <span style={{ color: '#7a8893' }}> {e.phase === 'returning' ? t('歸途', 'homeward') : `→ ${destName}`} · {lang === 'en' ? m.en : m.zh}</span>
@@ -367,7 +367,7 @@ function ExpeditionSection({ cityId, isPlayerCity }: { cityId: EntityId; isPlaye
                     <button
                       onClick={() => recallExpedition(e.id)}
                       title={t('召回', 'recall')}
-                      style={{ background: 'none', border: '1px solid #3a4651', color: '#9aa6b0', borderRadius: 3, fontSize: '0.7rem', padding: '0 0.3rem', cursor: 'pointer', fontFamily: 'inherit' }}
+                      style={{ background: 'none', border: '1px solid #3a4651', color: '#9aa6b0', borderRadius: 'var(--tkm-radius-xs)', fontSize: '0.7rem', padding: '0 0.3rem', cursor: 'pointer', fontFamily: 'inherit' }}
                     >
                       {t('召回', 'recall')}
                     </button>
@@ -559,7 +559,7 @@ function ResourcesSection({ city, cityOfficers, isPlayerCity }: { city: City; ci
       <span style={{ fontSize: '0.64rem', color: '#8a98a4' }}>
         {t('承載力', 'Capacity')} {capacity.toLocaleString()} ({capPct}%)
       </span>
-      <span style={{ width: 88, height: 4, background: '#10161e', borderRadius: 2, overflow: 'hidden' }}>
+      <span style={{ width: 88, height: 4, background: '#10161e', borderRadius: 'var(--tkm-radius-xs)', overflow: 'hidden' }}>
         <span style={{ display: 'block', width: `${Math.min(100, capPct)}%`, height: '100%', background: capTone }} />
       </span>
       {fill >= 0.92 && (
@@ -607,7 +607,7 @@ function ResourcesSection({ city, cityOfficers, isPlayerCity }: { city: City; ci
       )}
       {/* 缺糧警示 — a real, imminent problem the player should act on */}
       {proj && desertion > 0 && (
-        <div style={{ marginTop: 4, fontSize: '0.7rem', color: '#f0a0a0', background: 'rgba(180,60,50,0.12)', border: '1px solid #7a3030', borderRadius: 3, padding: '0.2rem 0.45rem' }}>
+        <div style={{ marginTop: 4, fontSize: '0.7rem', color: '#f0a0a0', background: 'rgba(180,60,50,0.12)', border: '1px solid #7a3030', borderRadius: 'var(--tkm-radius-xs)', padding: '0.2rem 0.45rem' }}>
           {t('⚠ 兵糧不足 — 本季缺糧,士卒逃亡!速運糧或裁軍', '⚠ Out of grain — troops desert this season! Ship food or disband.')}
         </div>
       )}
@@ -809,7 +809,7 @@ function CitySizeBadge({ city }: { city: import('../../game/types').City }) {
           letterSpacing: '0.08rem',
           padding: '0.15rem 0.55rem',
           border: `1px solid ${size.color}`,
-          borderRadius: 2,
+          borderRadius: 'var(--tkm-radius-xs)',
           background: 'rgba(212, 168, 74, 0.08)',
         }}>
           {lang === 'en' ? size.name.en : size.name.zh}
@@ -859,7 +859,7 @@ function PolicyEffectsSection({
               background: 'rgba(212, 168, 74, 0.12)',
               border: '1px solid rgba(212, 168, 74, 0.4)',
               color: '#e6c473',
-              borderRadius: '2px',
+              borderRadius: 'var(--tkm-radius-xs)',
               letterSpacing: '0.05rem',
               fontFamily: 'var(--tkm-font-zh)',
             }}
@@ -879,7 +879,7 @@ function PolicyEffectsSection({
                 background: 'rgba(90, 70, 60, 0.4)',
                 border: '1px dashed rgba(138, 112, 80, 0.6)',
                 color: '#7a8893',
-                borderRadius: '2px',
+                borderRadius: 'var(--tkm-radius-xs)',
                 letterSpacing: '0.05rem',
                 fontFamily: 'var(--tkm-font-zh)',
                 textDecoration: 'line-through',
@@ -961,7 +961,7 @@ function CapitalControls({ cityId }: { cityId: EntityId }) {
           <button
             onClick={() => setConfirming(false)}
             style={{
-              background: 'transparent', color: '#97a4ae', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+              background: 'transparent', color: '#97a4ae', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
               padding: '0.35rem 0.7rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.8rem',
             }}
           >{t('取消', 'Cancel')}</button>
@@ -1039,7 +1039,7 @@ function RuinControls({ cityId }: { cityId: EntityId }) {
           <button
             onClick={() => setConfirming(false)}
             style={{
-              background: 'transparent', color: '#97a4ae', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+              background: 'transparent', color: '#97a4ae', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
               padding: '0.35rem 0.7rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.8rem',
             }}
           >{t('取消', 'Cancel')}</button>

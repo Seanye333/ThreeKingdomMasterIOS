@@ -54,7 +54,7 @@ export function CommandPalette({ commands, onClose }: { commands: PaletteCommand
       <div onClick={(e) => e.stopPropagation()} style={{
         background: 'linear-gradient(160deg,#1b2531,#0e141b)', border: '1px solid rgba(255,255,255,0.1)',
         width: 'min(520px,100%)', maxHeight: '70vh', display: 'flex', flexDirection: 'column',
-        color: '#e6edf3', fontFamily: 'var(--tkm-font-body)', borderRadius: 10,
+        color: '#e6edf3', fontFamily: 'var(--tkm-font-body)', borderRadius: 'var(--tkm-radius-lg)',
         boxShadow: '0 18px 50px rgba(0,0,0,0.6)', overflow: 'hidden',
       }}>
         <input

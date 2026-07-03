@@ -92,7 +92,7 @@ export function SaveSlotsModal({ onClose, mode }: Props) {
                 onChange={(e) => setSortKey(e.target.value as SortKey)}
                 style={{
                   marginLeft: 4, background: '#10161e',
-                  color: '#eef4f8', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+                  color: '#eef4f8', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
                   padding: '2px 4px', fontSize: 11,
                 }}
               >
@@ -140,7 +140,7 @@ export function SaveSlotsModal({ onClose, mode }: Props) {
                       height={62}
                       viewBox="0 0 1000 720"
                       style={{
-                        flexShrink: 0, marginRight: 10, borderRadius: 3,
+                        flexShrink: 0, marginRight: 10, borderRadius: 'var(--tkm-radius-xs)',
                         background: '#10202e', border: '1px solid #26323e',
                       }}
                     >

@@ -54,7 +54,7 @@ export function SpecialtyDominionPanel() {
   };
 
   return (
-    <div style={{ background: '#10171f', border: '1px solid #1e2a34', borderRadius: 4, padding: '0.5rem 0.6rem', marginBottom: '0.6rem' }}>
+    <div style={{ background: '#10171f', border: '1px solid #1e2a34', borderRadius: 'var(--tkm-radius-sm)', padding: '0.5rem 0.6rem', marginBottom: '0.6rem' }}>
       <div style={{ color: '#9fb0bc', fontSize: '0.74rem', marginBottom: 4 }}>{t('名產版圖', 'Specialty Dominion')}</div>
       {held.length === 0 && <div style={{ color: '#5f6c76', fontSize: '0.72rem' }}>{t('未握任何名產之地。', 'You hold no specialty cities.')}</div>}
       {held.map((r) => (
@@ -85,7 +85,7 @@ export function SpecialtyDominionPanel() {
                       background: on ? 'rgba(224,112,122,0.18)' : 'transparent',
                       border: `1px solid ${on ? '#e0707a' : '#2b3845'}`,
                       color: on ? '#f0a0a8' : '#7a8893',
-                      padding: '0.1rem 0.4rem', borderRadius: 4, cursor: 'pointer',
+                      padding: '0.1rem 0.4rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer',
                       fontFamily: 'inherit', fontSize: '0.68rem',
                     }}
                     title={on ? t('點擊解禁', 'Click to lift') : t('點擊禁運', 'Click to embargo')}

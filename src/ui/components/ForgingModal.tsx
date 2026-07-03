@@ -147,7 +147,7 @@ export function ForgingModal({ onClose }: Props) {
       <div
         style={{
           background: 'linear-gradient(160deg,#1b2531,#10161e)',
-          border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+          border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
           borderTop: '3px solid #f55a20',  // ember orange — 炉火
           width: 'min(820px,100%)',
           maxHeight: '90vh',
@@ -345,7 +345,7 @@ export function ForgingModal({ onClose }: Props) {
                     return (
                       <div key={g.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#10161e', border: '1px solid #2b3845', padding: '0.35rem 0.7rem', marginBottom: '0.3rem' }}>
                         <div style={{ fontSize: '0.82rem' }}>
-                          <span style={{ width: 9, height: 9, borderRadius: 2, background: g.color, display: 'inline-block', marginRight: '0.4rem', boxShadow: '0 0 3px ' + g.color }} />
+                          <span style={{ width: 9, height: 9, borderRadius: 'var(--tkm-radius-xs)', background: g.color, display: 'inline-block', marginRight: '0.4rem', boxShadow: '0 0 3px ' + g.color }} />
                           <span style={{ color: g.color }}>{lang === 'en' ? g.name.en : g.name.zh}</span>
                           <span style={{ color: '#9fb0bf' }}> ×{n}</span>
                           {out && <span style={{ color: '#7a8893', fontSize: '0.7rem' }}> → {lang === 'en' ? GEMS_BY_ID[out].name.en : GEMS_BY_ID[out].name.zh}</span>}

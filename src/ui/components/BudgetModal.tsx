@@ -86,7 +86,7 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
     { zh: '兵糧', en: 'Upkeep', v: -foodLines.upkeep },
   ].filter((r) => r.v !== 0);
 
-  const card = { background: '#141c25', border: '1px solid #243240', padding: '0.5rem 0.6rem', borderRadius: 4 } as const;
+  const card = { background: '#141c25', border: '1px solid #243240', padding: '0.5rem 0.6rem', borderRadius: 'var(--tkm-radius-sm)' } as const;
   const labelStyle = { color: '#7a8893', fontSize: '0.72rem' } as const;
   const mono = { fontFamily: 'ui-monospace, monospace' } as const;
 
@@ -140,7 +140,7 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
         {refugees > 0 && (
           <div style={{
             display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.5rem',
-            background: '#1c1814', border: '1px solid #5a4a2a', borderRadius: 4, padding: '0.35rem 0.6rem',
+            background: '#1c1814', border: '1px solid #5a4a2a', borderRadius: 'var(--tkm-radius-sm)', padding: '0.35rem 0.6rem',
           }}>
             <Icon name="city" size={14} color="#d4b070" />
             <span style={{ color: '#d4b070', fontSize: '0.8rem' }}>{t('天下流民', 'Refugees afield')}</span>
@@ -164,7 +164,7 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
                     background: tax === r ? '#26323e' : 'transparent',
                     border: `1px solid ${tax === r ? '#e6c473' : '#2b3845'}`,
                     color: tax === r ? '#f2dd9a' : '#7a8893',
-                    padding: '0.2rem 0.6rem', borderRadius: 4, cursor: 'pointer',
+                    padding: '0.2rem 0.6rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer',
                     fontFamily: 'inherit', fontSize: '0.78rem',
                   }}
                 >{t(TAX_EFFECT[r].zh, TAX_EFFECT[r].en)}</button>
@@ -186,7 +186,7 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
               title={t('鑄小錢 — 即入大筆金,然通脹上揚,蝕日後稅入(漸消)', 'Debase the coinage — a gold windfall now, but inflation rises and saps future tax income (eases over time)')}
               style={{
                 background: 'rgba(212,168,74,0.16)', border: '1px solid #e6c473', color: '#f2dd9a',
-                padding: '0.25rem 0.7rem', borderRadius: 4, cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.8rem',
+                padding: '0.25rem 0.7rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.8rem',
               }}
             ><Icon name="gold" size={13} /> {t('鑄錢', 'Mint coin')}</button>
             <button
@@ -197,7 +197,7 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
                 background: donateWait > 0 ? 'transparent' : 'rgba(124,214,138,0.14)',
                 border: `1px solid ${donateWait > 0 ? '#2b3845' : '#7ed68a'}`,
                 color: donateWait > 0 ? '#5f6c76' : '#9ad6a8',
-                padding: '0.25rem 0.7rem', borderRadius: 4, cursor: donateWait > 0 ? 'default' : 'pointer',
+                padding: '0.25rem 0.7rem', borderRadius: 'var(--tkm-radius-sm)', cursor: donateWait > 0 ? 'default' : 'pointer',
                 fontFamily: 'inherit', fontSize: '0.8rem',
               }}
             ><Icon name="city" size={13} /> {donateWait > 0 ? t(`勸募(待 ${donateWait} 季)`, `Donate (${donateWait}q)`) : t('勸募', 'Donate')}</button>
@@ -209,7 +209,7 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
                 background: merchantLoan && merchantLoan.owed > 0 ? 'transparent' : 'rgba(124,170,214,0.14)',
                 border: `1px solid ${merchantLoan && merchantLoan.owed > 0 ? '#2b3845' : '#7ea8d6'}`,
                 color: merchantLoan && merchantLoan.owed > 0 ? '#5f6c76' : '#9abce0',
-                padding: '0.25rem 0.7rem', borderRadius: 4, cursor: merchantLoan && merchantLoan.owed > 0 ? 'default' : 'pointer',
+                padding: '0.25rem 0.7rem', borderRadius: 'var(--tkm-radius-sm)', cursor: merchantLoan && merchantLoan.owed > 0 ? 'default' : 'pointer',
                 fontFamily: 'inherit', fontSize: '0.8rem',
               }}
             ><Icon name="gold" size={13} /> {t('借餉', 'War-loan')}</button>
@@ -269,7 +269,7 @@ function Ledger({ title, rows, net, num, signed, t, note }: {
 }) {
   const mono = { fontFamily: 'ui-monospace, monospace' } as const;
   return (
-    <div style={{ background: '#10171f', border: '1px solid #1e2a34', borderRadius: 4, padding: '0.45rem 0.55rem' }}>
+    <div style={{ background: '#10171f', border: '1px solid #1e2a34', borderRadius: 'var(--tkm-radius-sm)', padding: '0.45rem 0.55rem' }}>
       <div style={{ color: '#9fb0bc', fontSize: '0.74rem', marginBottom: 3, display: 'flex', justifyContent: 'space-between' }}>
         <span>{title}</span>
         {note && <span style={{ color: '#6f7c86', fontSize: '0.66rem' }}>{note}</span>}

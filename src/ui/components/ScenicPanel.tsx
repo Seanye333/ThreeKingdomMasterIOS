@@ -133,7 +133,7 @@ export function ScenicPanel({ siteId, onClose }: Props) {
               onChange={(e) => setPickOfficer(e.target.value)}
               style={{
                 width: '100%', padding: '0.3rem 0.5rem', background: '#10161e', color: '#eef4f8',
-                border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', fontFamily: 'var(--tkm-font-body)', fontSize: '0.82rem',
+                border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', fontFamily: 'var(--tkm-font-body)', fontSize: '0.82rem',
               }}
             >
               {candidates.map(({ officer: o, city }) => (

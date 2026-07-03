@@ -102,7 +102,7 @@ export function PersuasionModal({ onClose }: { onClose: () => void }) {
           const sel = o.id === envoyId;
           return (
             <button key={o.id} onClick={() => { setEnvoyId(sel ? null : o.id); setResult(null); }}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left', background: sel ? 'rgba(136,183,232,0.16)' : '#10161e', border: `1px solid ${sel ? '#88b7e8' : '#26323e'}`, borderRadius: 4, padding: '0.4rem 0.5rem', cursor: 'pointer', color: '#e6edf3', fontFamily: 'var(--tkm-font-body)' }}>
+              style={{ display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left', background: sel ? 'rgba(136,183,232,0.16)' : '#10161e', border: `1px solid ${sel ? '#88b7e8' : '#26323e'}`, borderRadius: 'var(--tkm-radius-sm)', padding: '0.4rem 0.5rem', cursor: 'pointer', color: '#e6edf3', fontFamily: 'var(--tkm-font-body)' }}>
               <OfficerPortrait officer={o} size={32} forceColor="#88b7e8" year={year} />
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ color: '#f2dd9a', fontSize: '0.85rem' }}>{pickName(o.name, lang)}</span>
@@ -123,7 +123,7 @@ export function PersuasionModal({ onClose }: { onClose: () => void }) {
           const diff = tg.difficulty === 'peerless' ? t('宗師', 'Master') : tg.difficulty === 'veteran' ? t('名士', 'Adept') : t('學徒', 'Novice');
           return (
             <button key={`${tg.kind}-${tg.officerId}`} onClick={() => { setTarget(sel ? null : tg); setResult(null); }}
-              style={{ textAlign: 'left', padding: '0.5rem 0.6rem', borderRadius: 5, cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', background: sel ? 'rgba(230,176,96,0.16)' : '#10161e', border: `1px solid ${sel ? '#e0b060' : '#26323e'}`, color: '#e6edf3' }}>
+              style={{ textAlign: 'left', padding: '0.5rem 0.6rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', background: sel ? 'rgba(230,176,96,0.16)' : '#10161e', border: `1px solid ${sel ? '#e0b060' : '#26323e'}`, color: '#e6edf3' }}>
               <div style={{ color: '#f2dd9a', fontSize: '0.9rem' }}>
                 {k.icon} {t(k.zh, k.en)} · {pickName(tg.officerName, lang)}
                 <span style={{ color: '#8a96a0', fontSize: '0.72rem' }}> — {pickName(tg.forceName, lang)} · {pickName(tg.cityName, lang)}</span>
@@ -155,7 +155,7 @@ export function PersuasionModal({ onClose }: { onClose: () => void }) {
       )}
 
       {result && (
-        <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid #3a4754', borderRadius: 6, padding: '0.6rem 0.8rem', marginBottom: '0.4rem' }}>
+        <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid #3a4754', borderRadius: 'var(--tkm-radius)', padding: '0.6rem 0.8rem', marginBottom: '0.4rem' }}>
           <div style={{ color: '#e6c473', marginBottom: result.notes.length ? '0.4rem' : 0 }}>{result.text}</div>
           {result.notes.map((n, i) => <div key={i} style={{ fontSize: '0.8rem', color: '#9ed68a', lineHeight: 1.6 }}>✦ {n}</div>)}
         </div>

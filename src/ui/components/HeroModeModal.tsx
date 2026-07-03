@@ -48,7 +48,7 @@ export function HeroModeModal({ onClose }: Props) {
       <div
         style={{
           background: 'linear-gradient(160deg,#1b2531,#10161e)',
-          border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+          border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
           width: 'min(760px,100%)',
           maxHeight: '90vh',
           display: 'flex',
@@ -108,7 +108,7 @@ export function HeroModeModal({ onClose }: Props) {
                     <span style={{ color: '#c0504a', letterSpacing: '0.1rem', fontSize: '0.85rem' }}>
                       {'★'.repeat(c.star)}<span style={{ color: '#2b3845' }}>{'★'.repeat(3 - c.star)}</span>
                     </span>
-                    <span style={{ fontSize: '0.7rem', color: diff.color, border: `1px solid ${diff.color}`, padding: '0.05rem 0.35rem', borderRadius: 2 }}>
+                    <span style={{ fontSize: '0.7rem', color: diff.color, border: `1px solid ${diff.color}`, padding: '0.05rem 0.35rem', borderRadius: 'var(--tkm-radius-xs)' }}>
                       {lang === 'en' ? diff.en : diff.zh}
                     </span>
                     <span style={{ fontSize: '0.72rem', color: '#7a8893' }}>

@@ -165,7 +165,7 @@ export function ArmiesPanel() {
             </div>
             {/* advancement bar — only for armies actually on the move */}
             {!a.holding && a.totalSeasons > 1 && (
-              <div style={{ height: 3, background: '#2a2010', borderRadius: 2, marginTop: 1, overflow: 'hidden' }}>
+              <div style={{ height: 3, background: '#2a2010', borderRadius: 'var(--tkm-radius-xs)', marginTop: 1, overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: `${pct}%`, background: status.color, transition: 'width 0.3s' }} />
               </div>
             )}

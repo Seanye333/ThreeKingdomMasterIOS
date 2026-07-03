@@ -65,7 +65,7 @@ export function GovernorsModal({ onClose }: Props) {
       <div
         style={{
           background: 'linear-gradient(160deg,#1b2531,#10161e)',
-          border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+          border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
           width: 'min(880px,100%)',
           maxHeight: '88vh',
           display: 'flex', flexDirection: 'column',
@@ -146,7 +146,7 @@ export function GovernorsModal({ onClose }: Props) {
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.64rem', color: mColor }}>
                               <span>{t('割據', 'Warlordism')}</span><span>{meter}/{WARLORDISM_CAP}</span>
                             </div>
-                            <div style={{ height: 5, background: '#1e2a36', borderRadius: 2, overflow: 'hidden' }}>
+                            <div style={{ height: 5, background: '#1e2a36', borderRadius: 'var(--tkm-radius-xs)', overflow: 'hidden' }}>
                               <div style={{ width: `${meter}%`, height: '100%', background: mColor }} />
                             </div>
                           </div>

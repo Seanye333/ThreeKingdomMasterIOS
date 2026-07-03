@@ -1354,7 +1354,7 @@ function UnitMesh({
           color: '#f0e0b0',
           whiteSpace: 'nowrap',
           textAlign: 'center',
-          borderRadius: 2,
+          borderRadius: 'var(--tkm-radius-xs)',
           boxShadow: unit.isCommander
             ? `0 0 14px rgba(212,168,74,0.7)`
             : `0 0 8px ${color}`,
@@ -1636,7 +1636,7 @@ export function DefenseStructure({
           fontSize: '11px',
           color: visual.color,
           textAlign: 'center',
-          borderRadius: 2,
+          borderRadius: 'var(--tkm-radius-xs)',
           whiteSpace: 'nowrap',
         }}>
           {visual.glyph} {'★'.repeat(level)}
@@ -3125,7 +3125,7 @@ function FormationViz({ battle, side }: { battle: TacticalBattle; side: 'attacke
           background: 'rgba(20, 14, 8, 0.85)',
           border: `1px solid ${color}`,
           padding: '2px 8px',
-          borderRadius: 2,
+          borderRadius: 'var(--tkm-radius-xs)',
           whiteSpace: 'nowrap',
           boxShadow: `0 0 8px ${color}`,
         }}>{side === 'attacker' ? 'A' : 'D'} · {label}</div>
@@ -4525,9 +4525,9 @@ export function TacticalBattleScreen3D() {
             <span title={t('戰局氣勢 — 殺敵/斬將取勢,順勢全軍勇,頹勢軍心搖', 'Battle momentum — kills & felling commanders swing the tide; the leader presses, the loser bleeds')}
               style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.72rem', color: col }}>
               {t('氣勢', 'Tide')}
-              <span style={{ position: 'relative', width: 72, height: 7, background: '#2a1f12', border: '1px solid #5a4530', borderRadius: 3 }}>
+              <span style={{ position: 'relative', width: 72, height: 7, background: '#2a1f12', border: '1px solid #5a4530', borderRadius: 'var(--tkm-radius-xs)' }}>
                 <span style={{ position: 'absolute', left: '50%', top: -1, bottom: -1, width: 1, background: '#7a6038' }} />
-                <span style={{ position: 'absolute', left: `${Math.min(pct, 50)}%`, width: `${Math.abs(pct - 50)}%`, top: 0, bottom: 0, background: col, opacity: 0.85, borderRadius: 2 }} />
+                <span style={{ position: 'absolute', left: `${Math.min(pct, 50)}%`, width: `${Math.abs(pct - 50)}%`, top: 0, bottom: 0, background: col, opacity: 0.85, borderRadius: 'var(--tkm-radius-xs)' }} />
               </span>
               {label}
             </span>
@@ -4553,7 +4553,7 @@ export function TacticalBattleScreen3D() {
               onChange={(e) => { if (ready) start(changeFormation(battle, playerSide, e.target.value as FormationId)); }}
               style={{
                 fontSize: '0.72rem', background: 'rgba(20,14,8,0.9)', color: ready ? '#d4a84a' : '#7a6038',
-                border: '1px solid #5a4530', borderRadius: 3, padding: '1px 4px', fontFamily: 'var(--tkm-font-body)',
+                border: '1px solid #5a4530', borderRadius: 'var(--tkm-radius-xs)', padding: '1px 4px', fontFamily: 'var(--tkm-font-body)',
                 opacity: ready ? 1 : 0.6,
               }}
             >
@@ -4600,7 +4600,7 @@ export function TacticalBattleScreen3D() {
         })()}
         <span style={{
           fontSize: '0.72rem', padding: '2px 7px',
-          background: 'rgba(40, 28, 18, 0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#a89070',
+          background: 'rgba(40, 28, 18, 0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', color: '#a89070',
         }}>{WEATHER_LABEL[battle.weather]}</span>
         {battle.windDirection && battle.windDirection !== 'calm' && (
           <span style={{
@@ -4612,7 +4612,7 @@ export function TacticalBattleScreen3D() {
         )}
         <span style={{
           fontSize: '0.72rem', padding: '2px 7px',
-          background: 'rgba(40, 28, 18, 0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#a89070',
+          background: 'rgba(40, 28, 18, 0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', color: '#a89070',
         }}>{TOD_LABEL[battle.timeOfDay]}</span>
         <button
           onClick={toggleRecording}
@@ -4650,7 +4650,7 @@ export function TacticalBattleScreen3D() {
           title={t('推演速度', 'Playback speed')}
           style={{
             fontSize: '0.72rem', padding: '2px 8px', cursor: 'pointer',
-            background: 'rgba(40, 28, 18, 0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+            background: 'rgba(40, 28, 18, 0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
             color: '#a89070', fontFamily: 'inherit',
           }}
         >⏩ {battleSpeed}×</button>
@@ -4718,7 +4718,7 @@ export function TacticalBattleScreen3D() {
             )}
             <button
               onClick={() => setPrepDismissed(true)}
-              style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#8a7050', fontSize: '0.7rem', padding: '2px 6px', cursor: 'pointer', fontFamily: 'inherit' }}
+              style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', color: '#8a7050', fontSize: '0.7rem', padding: '2px 6px', cursor: 'pointer', fontFamily: 'inherit' }}
             >{t('不備', 'Skip')}</button>
             {prepMsg && <span style={{ fontSize: '0.72rem', color: '#ff9080' }}>{prepMsg}</span>}
           </span>
@@ -5034,7 +5034,7 @@ export function TacticalBattleScreen3D() {
           return (
             <div style={{
               position: 'absolute', top: 12, right: 12,
-              background: 'rgba(20, 14, 8, 0.85)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+              background: 'rgba(20, 14, 8, 0.85)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
               padding: '0.3rem 0.6rem', color: '#d4a84a',
               fontFamily: 'ui-monospace, monospace', fontSize: '0.78rem',
             }}>
@@ -5342,7 +5342,7 @@ function BattleMinimap({ battle, playerSide }: { battle: TacticalBattle; playerS
   return (
     <div style={{
       position: 'absolute', left: 12, bottom: 12, width: W, height: H,
-      background: 'rgba(16, 12, 8, 0.82)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6,
+      background: 'rgba(16, 12, 8, 0.82)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius)',
       boxShadow: '0 0 10px rgba(0,0,0,0.5)', pointerEvents: 'none', overflow: 'hidden',
     }}>
       {battle.units.filter((u) => u.troops > 0 && !(u.hidden && u.side !== playerSide)).map((u) => {
@@ -5392,7 +5392,7 @@ function UnitPanel3D({
     display: 'block', width: '100%',
     padding: '0.4rem 0.6rem', marginBottom: '0.25rem',
     background: 'rgba(40, 28, 18, 0.7)',
-    border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+    border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
     color: '#f0e0b0',
     fontFamily: 'var(--tkm-font-body)',
     fontSize: '0.78rem',
@@ -5431,7 +5431,7 @@ function UnitPanel3D({
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', marginTop: 4 }}>
             <div style={{
               position: 'relative', width: 52, height: 64, flexShrink: 0,
-              border: `2px solid ${rc}`, borderRadius: 3,
+              border: `2px solid ${rc}`, borderRadius: 'var(--tkm-radius-xs)',
               background: `linear-gradient(160deg, rgba(40,28,18,0.9), ${rc}33)`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               boxShadow: `0 0 10px ${rc}66`,
@@ -5439,7 +5439,7 @@ function UnitPanel3D({
               <span style={{ fontSize: '2rem', fontWeight: 700, color: '#f4e8c8', fontFamily: 'var(--tkm-font-body)', textShadow: '0 2px 4px #000' }}>{surname}</span>
               <span style={{
                 position: 'absolute', bottom: -1, right: -1, fontSize: '0.7rem',
-                background: rc, color: '#1a120a', padding: '0 3px', fontWeight: 700, borderRadius: 2,
+                background: rc, color: '#1a120a', padding: '0 3px', fontWeight: 700, borderRadius: 'var(--tkm-radius-xs)',
               }}>{role}</span>
             </div>
             <div>
@@ -5494,7 +5494,7 @@ function UnitPanel3D({
             return (
               <span key={i} style={{
                 fontSize: '0.7rem', padding: '1px 5px',
-                border: `1px solid ${col}`, color: col, borderRadius: 2,
+                border: `1px solid ${col}`, color: col, borderRadius: 'var(--tkm-radius-xs)',
               }}>{t(EFF_ZH[e.kind] ?? e.kind, e.kind)} {e.turnsLeft}t</span>
             );
           })}

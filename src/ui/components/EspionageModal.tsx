@@ -463,7 +463,7 @@ export function EspionageModal({ onClose }: Props) {
                   <span style={{ color: '#e6c473' }}>{(lang === 'en' ? cities[spyBureauCityId]?.name.en : cities[spyBureauCityId]?.name.zh) ?? '—'}</span>
                   <button className={styles.cancelBtn} onClick={() => { const r = designateSpyBureau(null); if (!r.ok && r.reason) alert(r.reason); }} title={lang === 'en' ? 'Dissolve the bureau' : '廢置校事府'}>×</button>
                 </>
-              : <select defaultValue="" onChange={(e) => { if (e.target.value) { const r = designateSpyBureau(e.target.value); if (!r.ok && r.reason) alert(r.reason); } }} style={{ background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473', fontSize: '0.68rem', borderRadius: 3 }} title={lang === 'en' ? 'Seat the intelligence bureau: a free scouting op each season + stiffer counter-intel.' : '設校事府:每季自行一次免費刺探 + 強化反諜。'}>
+              : <select defaultValue="" onChange={(e) => { if (e.target.value) { const r = designateSpyBureau(e.target.value); if (!r.ok && r.reason) alert(r.reason); } }} style={{ background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473', fontSize: '0.68rem', borderRadius: 'var(--tkm-radius-xs)' }} title={lang === 'en' ? 'Seat the intelligence bureau: a free scouting op each season + stiffer counter-intel.' : '設校事府:每季自行一次免費刺探 + 強化反諜。'}>
                   <option value="">{lang === 'en' ? '— seat at —' : '— 設於 —'}</option>
                   {Object.values(cities).filter((c) => c.ownerForceId === playerForceId).slice(0, 40).map((c) => <option key={c.id} value={c.id}>{lang === 'en' ? c.name.en : c.name.zh}</option>)}
                 </select>}

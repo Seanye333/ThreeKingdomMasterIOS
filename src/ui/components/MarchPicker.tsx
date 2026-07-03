@@ -386,7 +386,7 @@ export function MarchPicker({ cityId, onClose }: Props) {
                   : t('常行', 'Normal pace');
                 return (
                   <button key={p} onClick={() => setPace(p)} title={tip}
-                    style={{ flex: 1, padding: '0.25rem', borderRadius: 4, cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.74rem',
+                    style={{ flex: 1, padding: '0.25rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.74rem',
                       background: on ? 'rgba(230,196,115,0.18)' : '#10161e', border: `1px solid ${on ? '#e6c473' : '#26323e'}`, color: on ? '#f2dd9a' : '#8a96a0' }}>
                     {lang === 'en' ? PACE_LABEL[p].en : PACE_LABEL[p].zh}
                   </button>
@@ -557,7 +557,7 @@ export function MarchPicker({ cityId, onClose }: Props) {
             <select
               value={forcedStratagem}
               onChange={(e) => setForcedStratagem(e.target.value)}
-              style={{ fontSize: '0.78rem', background: 'rgba(20,14,8,0.9)', color: '#d4a84a', border: '1px solid #5a4530', borderRadius: 3, padding: '2px 5px', fontFamily: 'var(--tkm-font-body)' }}
+              style={{ fontSize: '0.78rem', background: 'rgba(20,14,8,0.9)', color: '#d4a84a', border: '1px solid #5a4530', borderRadius: 'var(--tkm-radius-xs)', padding: '2px 5px', fontFamily: 'var(--tkm-font-body)' }}
             >
               <option value="">{t('不獻計(主將自擇)', 'None (let the marshal decide)')}</option>
               {schemeOptions.map((s) => (

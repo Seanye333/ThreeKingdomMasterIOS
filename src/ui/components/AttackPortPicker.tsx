@@ -127,7 +127,7 @@ export function AttackPortPicker({ portId, onClose, onCommit }: Props) {
             margin: '0.8rem 0',
             padding: '0.5rem 0.8rem',
             background: 'rgba(40, 28, 18, 0.6)',
-            border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
             color: '#eef4f8',
             fontFamily: 'var(--tkm-font-body)',
             fontSize: '0.85rem',

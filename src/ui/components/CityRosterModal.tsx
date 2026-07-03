@@ -46,7 +46,7 @@ export function CityRosterModal({ onClose }: { onClose: () => void }) {
           autoFocus
           style={{
             width: '100%', boxSizing: 'border-box', marginBottom: '0.6rem',
-            background: '#14100a', border: '1px solid #2b3845', borderRadius: 4,
+            background: '#14100a', border: '1px solid #2b3845', borderRadius: 'var(--tkm-radius-sm)',
             color: '#e6edf3', padding: '0.35rem 0.6rem', fontFamily: 'inherit', fontSize: '0.85rem',
           }}
         />

@@ -42,7 +42,7 @@ export function WishesModal({ onClose }: Props) {
       <div
         style={{
           background: 'linear-gradient(160deg,#1b2531 0%,#10161e 100%)',
-          border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+          border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
           borderTop: '3px solid #e8c878',  // parchment yellow — 紙卷
           width: 'min(620px,100%)',
           maxHeight: '88vh',
@@ -124,7 +124,7 @@ export function WishesModal({ onClose }: Props) {
                   }}
                 >
                   {o && (
-                    <div style={{ flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 4, overflow: 'hidden' }}>
+                    <div style={{ flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-sm)', overflow: 'hidden' }}>
                       <OfficerAvatar officer={o} size={56} />
                     </div>
                   )}
@@ -135,7 +135,7 @@ export function WishesModal({ onClose }: Props) {
                       {!isInfo && WISH_TAG[w.kind] && (
                         <span style={{
                           marginRight: '0.4rem', fontSize: '0.7rem', color: '#caa15a',
-                          border: '1px solid #5a4a2a', borderRadius: 3, padding: '0 0.25rem',
+                          border: '1px solid #5a4a2a', borderRadius: 'var(--tkm-radius-xs)', padding: '0 0.25rem',
                         }}>{WISH_TAG[w.kind]}</span>
                       )}
                       {o ? pickName(o.name, lang) : ''}

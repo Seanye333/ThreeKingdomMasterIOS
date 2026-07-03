@@ -45,7 +45,7 @@ export function GlossaryModal({ onClose }: { onClose: () => void }) {
         placeholder={t('搜索概念…', 'Search concepts…')}
         style={{
           width: '100%', boxSizing: 'border-box', marginBottom: '0.8rem',
-          background: '#14100a', border: '1px solid #2b3845', borderRadius: 5,
+          background: '#14100a', border: '1px solid #2b3845', borderRadius: 'var(--tkm-radius-sm)',
           color: '#e6edf3', padding: '0.4rem 0.6rem', fontFamily: 'inherit', fontSize: '0.86rem',
         }}
       />
@@ -66,7 +66,7 @@ export function GlossaryModal({ onClose }: { onClose: () => void }) {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
             {cat.terms.map((term) => (
-              <div key={term.zh} style={{ background: '#141c25', border: '1px solid #243240', borderRadius: 5, padding: '0.5rem 0.7rem' }}>
+              <div key={term.zh} style={{ background: '#141c25', border: '1px solid #243240', borderRadius: 'var(--tkm-radius-sm)', padding: '0.5rem 0.7rem' }}>
                 <div style={{ color: '#e6c473', fontSize: '0.92rem', marginBottom: 3 }}>
                   {term.zh}
                   <span style={{ color: '#7a8893', fontSize: '0.76rem', marginLeft: 8, fontStyle: 'italic' }}>{term.en}</span>

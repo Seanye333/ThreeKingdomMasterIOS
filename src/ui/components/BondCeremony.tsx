@@ -67,7 +67,7 @@ export function BondCeremony({ a, b, titleZh, titleEn, color, year, onDone }: Pr
         <div
           style={{
             position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)',
-            width: 96, height: 96, borderRadius: 10,
+            width: 96, height: 96, borderRadius: 'var(--tkm-radius-lg)',
             background: `linear-gradient(150deg, ${hexA(color, 0.95)}, ${hexA(color, 0.65)})`,
             border: '3px solid #eef4f8', boxShadow: `0 0 26px ${hexA(color, 0.8)}, inset 0 0 14px rgba(0,0,0,0.35)`,
             display: 'grid', placeItems: 'center', zIndex: 3,

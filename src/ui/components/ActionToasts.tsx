@@ -47,7 +47,7 @@ export function ActionToasts() {
             background: 'rgba(20, 14, 8, 0.94)',
             border: `1px solid ${x.tone === 'warn' ? '#c08a4a' : '#6fae73'}`,
             color: '#eef4f8', fontFamily: 'var(--tkm-font-body)', fontSize: '0.84rem',
-            padding: '0.34rem 0.5rem 0.34rem 0.85rem', borderRadius: 4,
+            padding: '0.34rem 0.5rem 0.34rem 0.85rem', borderRadius: 'var(--tkm-radius-sm)',
             boxShadow: '0 2px 12px rgba(0,0,0,0.55)', whiteSpace: 'nowrap',
             overflow: 'hidden', maxWidth: '92vw',
           }}

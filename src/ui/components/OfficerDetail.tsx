@@ -234,7 +234,7 @@ export function OfficerDetail({
                 <div style={{
                   display: 'inline-block', marginTop: '0.3rem', padding: '0.12rem 0.5rem',
                   background: 'linear-gradient(180deg, #4a3a1a, #2a2010)', border: '1px solid #e6c473',
-                  color: '#f0d890', fontSize: '0.82rem', letterSpacing: '0.05rem', borderRadius: 2,
+                  color: '#f0d890', fontSize: '0.82rem', letterSpacing: '0.05rem', borderRadius: 'var(--tkm-radius-xs)',
                 }}>
                   威名 · {lang === 'en' ? prestige.name.en : prestige.name.zh}
                 </div>
@@ -250,7 +250,7 @@ export function OfficerDetail({
                 <div style={{
                   display: 'inline-block', marginTop: '0.3rem', marginLeft: '0.4rem', padding: '0.12rem 0.5rem',
                   background: 'linear-gradient(180deg, #1a3a2a, #102018)', border: '1px solid #6aae8a',
-                  color: '#9ed8b8', fontSize: '0.82rem', letterSpacing: '0.05rem', borderRadius: 2,
+                  color: '#9ed8b8', fontSize: '0.82rem', letterSpacing: '0.05rem', borderRadius: 'var(--tkm-radius-xs)',
                 }}>
                   {medal && (
                     <span title={lang === 'en' ? medal.name.en : medal.name.zh} style={{ marginRight: '0.3rem' }}>
@@ -269,7 +269,7 @@ export function OfficerDetail({
                   style={{
                     display: 'inline-block', marginTop: '0.3rem', marginLeft: '0.4rem', padding: '0.12rem 0.5rem',
                     background: 'linear-gradient(180deg,#2a2418,#161208)', border: '1px solid #8a7244',
-                    color: '#d8c08a', fontSize: '0.78rem', letterSpacing: '0.05rem', borderRadius: 2,
+                    color: '#d8c08a', fontSize: '0.78rem', letterSpacing: '0.05rem', borderRadius: 'var(--tkm-radius-xs)',
                   }}>
                   {t(`舊部 · ${lord.name.zh}之故將`, `Retainer of ${lord.name.en}`)}{serving ? ' ✦' : ''}
                 </div>
@@ -316,7 +316,7 @@ export function OfficerDetail({
               && (officer.loyalty < 40 || (officer.grievanceCount ?? 0) >= 2) && (() => {
               const disc = useGameStore.getState().disciplineOfficer;
               const act = (a: 'placate' | 'reassign' | 'imprison' | 'execute') => { const r = disc(officer.id, a); if (r.message) alert(r.message); };
-              const btn: React.CSSProperties = { background: 'transparent', border: '1px solid #5a4326', color: '#d6a86a', cursor: 'pointer', fontSize: '0.68rem', padding: '0.1rem 0.4rem', borderRadius: 2 };
+              const btn: React.CSSProperties = { background: 'transparent', border: '1px solid #5a4326', color: '#d6a86a', cursor: 'pointer', fontSize: '0.68rem', padding: '0.1rem 0.4rem', borderRadius: 'var(--tkm-radius-xs)' };
               return (
                 <div style={{ marginTop: '0.35rem', display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.68rem', color: '#7a8893' }}>{lang === 'en' ? 'Discipline:' : '君主彈壓:'}</span>
@@ -487,7 +487,7 @@ export function OfficerDetail({
                   <div title={t(`品階 ${g.rank.zh} · 評分 ${g.score}${renown ? ` · 戰功威望 ${renown}` : ''}`, `Grade ${g.rank.en} · score ${g.score}${renown ? ` · renown ${renown}` : ''}`)}>
                     <span style={{ fontSize: '0.72rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('品階', 'Grade')} </span>
                     <span style={{
-                      display: 'inline-block', padding: '0.1rem 0.5rem', borderRadius: 2,
+                      display: 'inline-block', padding: '0.1rem 0.5rem', borderRadius: 'var(--tkm-radius-xs)',
                       background: '#10161e', border: `1px solid ${g.color}`, color: g.color,
                       fontSize: '0.85rem', letterSpacing: '0.08rem',
                     }}>
@@ -530,7 +530,7 @@ export function OfficerDetail({
                         Lv.{lvl}
                       </span>
                     </div>
-                    <div style={{ marginTop: 3, height: 5, width: 150, background: '#10161e', border: '1px solid #26323e', borderRadius: 3, overflow: 'hidden' }}>
+                    <div style={{ marginTop: 3, height: 5, width: 150, background: '#10161e', border: '1px solid #26323e', borderRadius: 'var(--tkm-radius-xs)', overflow: 'hidden' }}>
                       <div style={{ height: '100%', width: `${pct}%`, background: p.atMax ? 'linear-gradient(90deg,#c9a64e,#e6c473)' : '#3a7dd9' }} />
                     </div>
                     <div style={{ marginTop: 2, fontSize: '0.7rem', color: '#7a8893', fontFamily: 'ui-monospace, monospace' }}>
@@ -580,7 +580,7 @@ export function OfficerDetail({
                         {STATS.map((s) => (
                           <span key={s.key}
                             title={t(`${s.zh} · ${aptitudeLabel(apt[s.key]).zh}`, `${s.en} · ${apt[s.key]} aptitude`)}
-                            style={{ fontSize: '0.7rem', padding: '0.05rem 0.32rem', borderRadius: 2, background: '#10161e', border: `1px solid ${col(apt[s.key])}`, color: col(apt[s.key]), fontFamily: 'ui-monospace, monospace' }}>
+                            style={{ fontSize: '0.7rem', padding: '0.05rem 0.32rem', borderRadius: 'var(--tkm-radius-xs)', background: '#10161e', border: `1px solid ${col(apt[s.key])}`, color: col(apt[s.key]), fontFamily: 'ui-monospace, monospace' }}>
                             {lang === 'en' ? s.en.slice(0, 1) : s.zh}{apt[s.key]}
                           </span>
                         ))}
@@ -600,7 +600,7 @@ export function OfficerDetail({
                     {canAppraiseNow && (
                       <button
                         onClick={doAppraise}
-                        style={{ marginTop: 4, fontSize: '0.7rem', padding: '0.1rem 0.5rem', borderRadius: 3, cursor: 'pointer', background: '#1a2230', border: '1px solid #4a5a48', color: '#cfe0ff', fontFamily: 'var(--tkm-font-body)' }}
+                        style={{ marginTop: 4, fontSize: '0.7rem', padding: '0.1rem 0.5rem', borderRadius: 'var(--tkm-radius-xs)', cursor: 'pointer', background: '#1a2230', border: '1px solid #4a5a48', color: '#cfe0ff', fontFamily: 'var(--tkm-font-body)' }}
                       >🔍 {ap?.misread ? t('另請高明', 'Re-appraise') : t('遣名士品評', 'Appraise (月旦評)')}</button>
                     )}
                     {appraiseMsg && (
@@ -616,7 +616,7 @@ export function OfficerDetail({
                   <div title={t(`${age} 歲 · ${band.zh}${band.declining ? '（武力漸衰）' : ''}`, `Age ${age} · ${band.en}${band.declining ? ' (waning)' : ''}`)}>
                     <span style={{ fontSize: '0.72rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('年歲', 'Age')} </span>
                     <span style={{
-                      display: 'inline-block', padding: '0.1rem 0.5rem', borderRadius: 2,
+                      display: 'inline-block', padding: '0.1rem 0.5rem', borderRadius: 'var(--tkm-radius-xs)',
                       background: '#10161e', border: `1px solid ${band.color}`, color: band.color, fontSize: '0.85rem',
                     }}>
                       {age} · {lang === 'en' ? band.en : band.zh}
@@ -638,7 +638,7 @@ export function OfficerDetail({
                   <div title={t(`今冬殞落機率約 ${pct}%`, `~${pct}% chance to pass this winter`)} style={{ marginTop: '0.2rem' }}>
                     <span style={{ fontSize: '0.72rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('壽算', 'Mortality')} </span>
                     <span style={{
-                      display: 'inline-block', padding: '0.1rem 0.5rem', borderRadius: 2,
+                      display: 'inline-block', padding: '0.1rem 0.5rem', borderRadius: 'var(--tkm-radius-xs)',
                       background: '#10161e', border: `1px solid ${color}`, color, fontSize: '0.8rem',
                     }}>
                       {lang === 'en' ? en : zh} · {pct}%
@@ -660,7 +660,7 @@ export function OfficerDetail({
                   <div title={t(`持有 ${owned.length} 件寶物，最高 ${rm.zh}`, `Carries ${owned.length} item(s), best ${rm.en}`)}>
                     <span style={{ fontSize: '0.72rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('寶物', 'Gear')} </span>
                     <span style={{
-                      display: 'inline-block', padding: '0.1rem 0.5rem', borderRadius: 2,
+                      display: 'inline-block', padding: '0.1rem 0.5rem', borderRadius: 'var(--tkm-radius-xs)',
                       background: '#10161e', border: `1px solid ${rm.color}`, color: rm.color,
                       fontSize: '0.85rem', letterSpacing: '0.08rem',
                     }}>
@@ -764,7 +764,7 @@ export function OfficerDetail({
                               onClick={() => setTrainingFocusFn(officer.id, on ? null : s.key)}
                               title={t('成長偏向此能力', 'Bias level-up growth toward this stat')}
                               style={{
-                                cursor: 'pointer', padding: '0.1rem 0.45rem', borderRadius: 2,
+                                cursor: 'pointer', padding: '0.1rem 0.45rem', borderRadius: 'var(--tkm-radius-xs)',
                                 background: on ? '#2a2010' : '#10161e',
                                 border: `1px solid ${on ? '#e6c473' : '#26323e'}`,
                                 color: on ? '#e6c473' : '#8a97a3', fontSize: '0.78rem',
@@ -792,7 +792,7 @@ export function OfficerDetail({
                             value={live.mentorId ?? ''}
                             onChange={(e) => assignMentorFn(officer.id, e.target.value || null)}
                             title={t('同城拜師:成長偏向師父所長,並可習其衣缽', 'Apprentice (same city): grow toward the master’s strength and inherit their craft')}
-                            style={{ background: '#10161e', border: '1px solid #26323e', color: '#cdd6df', fontSize: '0.74rem', borderRadius: 2, padding: '0.1rem 0.3rem', maxWidth: 130 }}
+                            style={{ background: '#10161e', border: '1px solid #26323e', color: '#cdd6df', fontSize: '0.74rem', borderRadius: 'var(--tkm-radius-xs)', padding: '0.1rem 0.3rem', maxWidth: 130 }}
                           >
                             <option value="">{t('（無）', '(none)')}</option>
                             {masters.map((m) => (
@@ -808,7 +808,7 @@ export function OfficerDetail({
                             setProgressMsg(r.ok ? t('特訓已下令', 'Training ordered') : t('無法特訓(金/狀態)', 'Cannot train (gold/status)'));
                           }}
                           title={t('特訓 · 400 黃金 · 苦練一季,可習技/性格/潛能', 'Special Training · 400g · a hard season; may yield skill/trait/potential')}
-                          style={{ cursor: 'pointer', padding: '0.12rem 0.55rem', borderRadius: 2, background: 'linear-gradient(180deg,#1a3a2a,#102018)', border: '1px solid #9ed8b8', color: '#bfeacf', fontSize: '0.76rem' }}
+                          style={{ cursor: 'pointer', padding: '0.12rem 0.55rem', borderRadius: 'var(--tkm-radius-xs)', background: 'linear-gradient(180deg,#1a3a2a,#102018)', border: '1px solid #9ed8b8', color: '#bfeacf', fontSize: '0.76rem' }}
                         >
                           {t('特訓', 'Train')}
                         </button>
@@ -848,7 +848,7 @@ export function OfficerDetail({
                                 disabled={!canBT}
                                 title={t(`${p.zh} — 偏 ${p.stats.map((s) => STAT_META.find((m) => m.key === s)?.zh ?? s).join('/')}`, `${p.en} — favours ${p.stats.join('/')}`)}
                                 style={{
-                                  cursor: canBT ? 'pointer' : 'not-allowed', padding: '0.1rem 0.4rem', borderRadius: 2,
+                                  cursor: canBT ? 'pointer' : 'not-allowed', padding: '0.1rem 0.4rem', borderRadius: 'var(--tkm-radius-xs)',
                                   background: canBT ? 'linear-gradient(180deg,#4a3a1a,#2a2010)' : '#10161e',
                                   border: '1px solid #e6c473', color: canBT ? '#f0d890' : '#6a7480', fontSize: '0.74rem',
                                 }}
@@ -872,7 +872,7 @@ export function OfficerDetail({
                       <span style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '0.3rem', marginLeft: '0.3rem', verticalAlign: 'middle' }}>
                         {pool.slice(0, 8).map((sk) => (
                           <span key={sk.id} style={{
-                            padding: '0.08rem 0.4rem', borderRadius: 2, background: '#10161e',
+                            padding: '0.08rem 0.4rem', borderRadius: 'var(--tkm-radius-xs)', background: '#10161e',
                             border: '1px dashed #3a4a5a', color: '#8a97a3', fontSize: '0.72rem',
                           }}>
                             {lang === 'en' ? sk.name.en : sk.name.zh}
@@ -1253,7 +1253,7 @@ export function OfficerDetail({
                     <span style={{ fontSize: '0.72rem', color: '#7a8893' }}>{t('神兵譜', 'Set')}</span>
                     {sets.map((s) => (
                       <span key={s.id} title={t(`套裝共鳴 — 戰力 +${Math.round(s.powerBonus * 100)}%`, `Set resonance — power +${Math.round(s.powerBonus * 100)}%`)}
-                        style={{ padding: '0.1rem 0.5rem', borderRadius: 2, background: '#10161e', border: `1px solid ${s.color}`, color: s.color, fontSize: '0.78rem' }}>
+                        style={{ padding: '0.1rem 0.5rem', borderRadius: 'var(--tkm-radius-xs)', background: '#10161e', border: `1px solid ${s.color}`, color: s.color, fontSize: '0.78rem' }}>
                         {lang === 'en' ? s.name.en : s.name.zh} <span style={{ fontSize: '0.66rem', opacity: 0.85 }}>+{Math.round(s.powerBonus * 100)}%</span>
                       </span>
                     ))}
@@ -1317,7 +1317,7 @@ export function OfficerDetail({
                         return gem ? (
                           <span key={gi} title={`${lang === 'en' ? gem.name.en : gem.name.zh}${isPlayerOfficer ? t('（點擊卸下）', ' (click to remove)') : ''}`}
                             onClick={isPlayerOfficer ? () => unsocketGemFn(id, gi) : undefined}
-                            style={{ width: 9, height: 9, borderRadius: 2, background: gem.color, cursor: isPlayerOfficer ? 'pointer' : 'default', flexShrink: 0, boxShadow: '0 0 3px ' + gem.color }} />
+                            style={{ width: 9, height: 9, borderRadius: 'var(--tkm-radius-xs)', background: gem.color, cursor: isPlayerOfficer ? 'pointer' : 'default', flexShrink: 0, boxShadow: '0 0 3px ' + gem.color }} />
                         ) : null;
                       })}
                       {isPlayerOfficer && !atMax && (
@@ -1325,7 +1325,7 @@ export function OfficerDetail({
                           onClick={() => refineItemFn(id)}
                           title={t(`精煉 +${plus + 1}（${cost} 金，本城金庫支付）`, `Refine to +${plus + 1} (${cost} gold from this city)`)}
                           style={{
-                            background: 'none', border: '1px solid #e6c473', borderRadius: 2, color: '#e6c473',
+                            background: 'none', border: '1px solid #e6c473', borderRadius: 'var(--tkm-radius-xs)', color: '#e6c473',
                             cursor: 'pointer', padding: '0 0.25rem', fontSize: '0.68rem',
                           }}
                         >{t('煉', '⚒')}</button>
@@ -1343,7 +1343,7 @@ export function OfficerDetail({
                               ? t('突破需鐵工坊', 'Breakthrough needs a foundry city')
                               : t(`突破 ★${stars + 1}（${bc.gold} 金 + ${bc.iron} 鐵）`, `Breakthrough to ★${stars + 1} (${bc.gold} gold + ${bc.iron} iron)`)}
                             style={{
-                              background: 'none', border: `1px solid ${canBreak ? '#ff9f5a' : '#5a4636'}`, borderRadius: 2, color: canBreak ? '#ff9f5a' : '#6a5238',
+                              background: 'none', border: `1px solid ${canBreak ? '#ff9f5a' : '#5a4636'}`, borderRadius: 'var(--tkm-radius-xs)', color: canBreak ? '#ff9f5a' : '#6a5238',
                               cursor: canBreak ? 'pointer' : 'not-allowed', padding: '0 0.25rem', fontSize: '0.68rem',
                             }}
                           >{t('突', '★')}</button>
@@ -1355,7 +1355,7 @@ export function OfficerDetail({
                           onChange={(e) => { if (e.target.value) { const r = socketGemFn(id, e.target.value); if (!r.ok) alert(gearReason(r.reason)); } }}
                           title={t(`鑲嵌寶石（${gems.length}/${maxSockets} 孔）`, `Socket a gem (${gems.length}/${maxSockets})`)}
                           style={{
-                            background: '#10161e', border: '1px solid #6a8fb0', borderRadius: 2, color: '#9fb0bf',
+                            background: '#10161e', border: '1px solid #6a8fb0', borderRadius: 'var(--tkm-radius-xs)', color: '#9fb0bf',
                             cursor: 'pointer', padding: '0 0.1rem', fontSize: '0.7rem', maxWidth: 26,
                           }}
                         >
@@ -1381,7 +1381,7 @@ export function OfficerDetail({
                           title={t('研讀此兵書(一次性,讀後即毀)', 'Study this manual (one-time; consumed on use)')}
                           style={{
                             background: 'linear-gradient(180deg,#1a2a3a,#101820)', border: '1px solid #3a7dd9', color: '#9cc6f0',
-                            cursor: 'pointer', padding: '0 0.35rem', fontSize: '0.7rem', borderRadius: 2, marginRight: 4,
+                            cursor: 'pointer', padding: '0 0.35rem', fontSize: '0.7rem', borderRadius: 'var(--tkm-radius-xs)', marginRight: 4,
                           }}
                         >{t('研讀', 'Study')}</button>
                       )}
@@ -1728,7 +1728,7 @@ function CampaignChronicleBlock({ officer, officersOverride }: { officer: Office
 const refChip: React.CSSProperties = {
   background: 'rgba(212,168,74,0.10)', border: '1px solid #5a4a2a', color: '#e6c473',
   padding: '0.05rem 0.45rem', fontSize: '0.72rem', cursor: 'pointer',
-  fontFamily: 'var(--tkm-font-body)', borderRadius: 2,
+  fontFamily: 'var(--tkm-font-body)', borderRadius: 'var(--tkm-radius-xs)',
 };
 
 function BiographyBlock({ officer }: { officer: Officer }) {

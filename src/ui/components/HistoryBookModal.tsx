@@ -67,12 +67,12 @@ export function HistoryBookModal({ onClose }: { onClose: () => void }) {
         <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
           <button
             onClick={() => setMode(mode === 'annals' ? 'romance' : 'annals')}
-            style={{ background: '#1b2531', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#e6c473', padding: '0.3rem 0.8rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.78rem' }}
+            style={{ background: '#1b2531', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius)', color: '#e6c473', padding: '0.3rem 0.8rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.78rem' }}
             title={t('在紀傳體《本紀》與章回體《演義》間切換', 'Toggle between the annals and the romance')}
           >{mode === 'annals' ? t('改讀演義', 'Read as Romance') : t('改讀本紀', 'Read as Annals')}</button>
           <button
             onClick={exportText}
-            style={{ background: '#1b2531', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#e6c473', padding: '0.3rem 0.8rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.78rem' }}
+            style={{ background: '#1b2531', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius)', color: '#e6c473', padding: '0.3rem 0.8rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.78rem' }}
           >⬇ {t('導出', 'Export')}</button>
         </div>
       }

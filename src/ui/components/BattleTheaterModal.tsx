@@ -285,7 +285,7 @@ export function BattleTheaterModal({ battle, onClose }: Props) {
                   onClick={() => setShowSiege(true)}
                   style={{
                     background: 'linear-gradient(135deg,#7a3a1a,#caa53d)', color: '#1a1206',
-                    border: 'none', borderRadius: '6px', padding: '0.45rem 1.1rem',
+                    border: 'none', borderRadius: 'var(--tkm-radius)', padding: '0.45rem 1.1rem',
                     cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.85rem', letterSpacing: '0.08rem',
                   }}
                 >

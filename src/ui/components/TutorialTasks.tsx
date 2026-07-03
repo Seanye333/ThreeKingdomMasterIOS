@@ -63,7 +63,7 @@ export function TutorialTasks() {
   return (
     <div style={{
       position: 'absolute', right: 12, top: 96, zIndex: 12, width: 215,
-      background: 'rgba(20, 14, 8, 0.92)', border: '1px solid #5a8a50', borderRadius: 4,
+      background: 'rgba(20, 14, 8, 0.92)', border: '1px solid #5a8a50', borderRadius: 'var(--tkm-radius-sm)',
       fontFamily: 'var(--tkm-font-body)', color: '#e6edf3',
       boxShadow: '0 2px 10px rgba(0,0,0,0.5)',
     }}>

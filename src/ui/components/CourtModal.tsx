@@ -219,12 +219,12 @@ export function CourtModal({ onClose }: Props) {
                     <button
                       onClick={() => setCourtPatronage(favoured ? null : fid)}
                       title={lang === 'en' ? (favoured ? 'Withdraw patronage' : 'Patronise this faction — its bloc rallies & the realm reaps its boon') : (favoured ? '撤回扶植' : '扶植此派 —— 其黨擁戴,並得其派之利')}
-                      style={{ background: 'transparent', border: `1px solid ${favoured ? '#e6c473' : '#2b3845'}`, color: favoured ? '#f2dd9a' : '#7a8893', cursor: 'pointer', fontSize: '0.7rem', padding: '0 0.2rem', borderRadius: 2 }}
+                      style={{ background: 'transparent', border: `1px solid ${favoured ? '#e6c473' : '#2b3845'}`, color: favoured ? '#f2dd9a' : '#7a8893', cursor: 'pointer', fontSize: '0.7rem', padding: '0 0.2rem', borderRadius: 'var(--tkm-radius-xs)' }}
                     >{favoured ? '✓扶' : '扶'}</button>
                     <button
                       onClick={() => { const r = purgeFaction(fid); if (r.message) alert(r.message); }}
                       title={lang === 'en' ? 'Purge this faction (黨錮) — loyalty crashes, mandate −5, 500g; a proud officer may defect' : '黨錮此派 —— 忠誠驟降、天命 −5、500金;倨傲之臣或憤而出走'}
-                      style={{ background: 'transparent', border: '1px solid #5a2d2d', color: '#e0707a', cursor: 'pointer', fontSize: '0.7rem', padding: '0 0.2rem', borderRadius: 2 }}
+                      style={{ background: 'transparent', border: '1px solid #5a2d2d', color: '#e0707a', cursor: 'pointer', fontSize: '0.7rem', padding: '0 0.2rem', borderRadius: 'var(--tkm-radius-xs)' }}
                     >錮</button>
                   </span>
                 );
@@ -255,7 +255,7 @@ export function CourtModal({ onClose }: Props) {
               {myConsortId
                 ? <span style={{ color: '#f2dd9a' }}>{(lang === 'en' ? allOfficers[myConsortId]?.name.en : allOfficers[myConsortId]?.name.zh) ?? '—'}</span>
                 : <>
-                    <select value={consortPick} onChange={(e) => setConsortPick(e.target.value)} style={{ background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473', fontSize: '0.68rem', borderRadius: 3 }}>
+                    <select value={consortPick} onChange={(e) => setConsortPick(e.target.value)} style={{ background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473', fontSize: '0.68rem', borderRadius: 'var(--tkm-radius-xs)' }}>
                       <option value="">{lang === 'en' ? '— pick —' : '— 擇 —'}</option>
                       {myIdlerOfficers.slice(0, 40).map((o) => <option key={o.id} value={o.id}>{lang === 'en' ? o.name.en : o.name.zh}</option>)}
                     </select>
@@ -279,7 +279,7 @@ export function CourtModal({ onClose }: Props) {
             {/* 改元 */}
             {isSovereign && (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginLeft: 'auto', color: '#aab6c0' }}>
-                <input value={eraInput} onChange={(e) => setEraInput(e.target.value)} placeholder={playerForce?.eraName ?? (lang === 'en' ? 'era' : '年號')} style={{ width: '5rem', background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473', fontSize: '0.68rem', borderRadius: 3, padding: '0.1rem 0.3rem' }} />
+                <input value={eraInput} onChange={(e) => setEraInput(e.target.value)} placeholder={playerForce?.eraName ?? (lang === 'en' ? 'era' : '年號')} style={{ width: '5rem', background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473', fontSize: '0.68rem', borderRadius: 'var(--tkm-radius-xs)', padding: '0.1rem 0.3rem' }} />
                 <button onClick={() => { const r = declareNewEra(eraInput); if (r.ok) setEraInput(''); else if (r.reason) alert(r.reason); }} style={miniCourtBtn(true)} title={lang === 'en' ? 'Proclaim a new era (改元): mandate +4, on a cooldown.' : '改元頒朔:天命 +4,數年一次。'}>
                   {lang === 'en' ? 'New era 改元' : '改元'}
                 </button>
@@ -343,7 +343,7 @@ export function CourtModal({ onClose }: Props) {
                     if (!o || o.forceId !== playerForceId) return null;
                     return <span key={gid} style={{ color: o.loyalty < 30 ? '#e0707a' : '#9ad6a8' }}>{lang === 'en' ? o.name.en : o.name.zh}<span style={{ color: '#5d6b76' }}>({lang === 'en' ? `loy ${o.loyalty}` : `忠${o.loyalty}`}, {lang === 'en' ? g.formerNameEn : g.formerNameZh})</span></span>;
                   })}
-                  <select value={reclaimCity} onChange={(e) => setReclaimCity(e.target.value)} style={{ background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473', fontSize: '0.68rem', borderRadius: 3 }}>
+                  <select value={reclaimCity} onChange={(e) => setReclaimCity(e.target.value)} style={{ background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473', fontSize: '0.68rem', borderRadius: 'var(--tkm-radius-xs)' }}>
                     <option value="">{lang === 'en' ? '— cede a city —' : '— 割城 —'}</option>
                     {Object.values(allCities).filter((c) => c.ownerForceId === playerForceId && c.id !== playerForce?.capitalCityId).slice(0, 40).map((c) => <option key={c.id} value={c.id}>{lang === 'en' ? c.name.en : c.name.zh}</option>)}
                   </select>
@@ -430,6 +430,6 @@ function miniCourtBtn(enabled: boolean) {
   return {
     background: 'transparent', border: `1px solid ${enabled ? '#2b3845' : '#1c2530'}`,
     color: enabled ? '#9fb2c0' : '#4a5560', cursor: enabled ? 'pointer' : 'default',
-    fontSize: '0.7rem', padding: '0.05rem 0.35rem', borderRadius: 3,
+    fontSize: '0.7rem', padding: '0.05rem 0.35rem', borderRadius: 'var(--tkm-radius-xs)',
   } as const;
 }

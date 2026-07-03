@@ -68,6 +68,6 @@ export function BoutReplay3D({ rec, onClose }: { rec: BoutRecord; onClose: () =>
 function btnStyle(border: string, color: string): React.CSSProperties {
   return {
     padding: '0.45rem 1rem', background: 'rgba(20,28,38,0.94)', border: `1px solid ${border}`,
-    borderRadius: 5, color, cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.9rem',
+    borderRadius: 'var(--tkm-radius-sm)', color, cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.9rem',
   };
 }

@@ -137,7 +137,7 @@ export function SeasonReportModal() {
               <span key={s.label} style={{
                 display: 'inline-flex', alignItems: 'center', gap: '0.25rem',
                 background: 'rgba(0,0,0,0.25)', border: `1px solid ${s.color}55`,
-                borderRadius: 12, padding: '0.12rem 0.6rem',
+                borderRadius: 'var(--tkm-radius-lg)', padding: '0.12rem 0.6rem',
                 color: s.color, fontSize: '0.82rem', fontFamily: 'var(--tkm-font-body)',
                 animation: `tkmTroopMarchIn 0.4s cubic-bezier(0.2,0.9,0.3,1) ${0.5 + i * 0.07}s both`,
               }}>
@@ -227,7 +227,7 @@ export function SeasonReportModal() {
                       style={{
                         marginLeft: 6, background: 'transparent', border: '1px solid #2b3845',
                         color: '#e6c473', cursor: 'pointer', fontSize: '0.7rem',
-                        padding: '0 0.35rem', borderRadius: 2, flexShrink: 0,
+                        padding: '0 0.35rem', borderRadius: 'var(--tkm-radius-xs)', flexShrink: 0,
                       }}
                     >📍 {lang === 'zh' ? cities[e.cityId]!.name.zh : cities[e.cityId]!.name.en}</button>
                   )}

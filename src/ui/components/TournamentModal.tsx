@@ -180,7 +180,7 @@ export function TournamentModal({ onClose }: { onClose: () => void }) {
                       style={{
                         display: 'flex', alignItems: 'center', gap: 6, textAlign: 'left', cursor: 'pointer',
                         background: picked ? 'rgba(230,196,115,0.16)' : '#10161e',
-                        border: `1px solid ${picked ? '#e6c473' : '#26323e'}`, borderRadius: 4, padding: '0.35rem 0.5rem',
+                        border: `1px solid ${picked ? '#e6c473' : '#26323e'}`, borderRadius: 'var(--tkm-radius-sm)', padding: '0.35rem 0.5rem',
                         color: '#e6edf3', fontFamily: 'var(--tkm-font-body)',
                       }}
                     >
@@ -226,7 +226,7 @@ export function TournamentModal({ onClose }: { onClose: () => void }) {
                   </span>
                 );
                 return (
-                  <div key={mi} style={{ fontSize: '0.84rem', padding: '0.25rem 0.5rem', background: '#10161e', border: '1px solid #1e2832', borderRadius: 3, marginBottom: 3 }}>
+                  <div key={mi} style={{ fontSize: '0.84rem', padding: '0.25rem 0.5rem', background: '#10161e', border: '1px solid #1e2832', borderRadius: 'var(--tkm-radius-xs)', marginBottom: 3 }}>
                     {side(a, m.winnerId === a.id)} <span style={{ color: '#5f6c76' }}>vs</span> {side(b, m.winnerId === b.id)}
                   </div>
                 );
@@ -235,7 +235,7 @@ export function TournamentModal({ onClose }: { onClose: () => void }) {
           ))}
 
           {notes.length > 0 && (
-            <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid #3a4754', borderRadius: 6, padding: '0.6rem 0.8rem', marginTop: '0.6rem' }}>
+            <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid #3a4754', borderRadius: 'var(--tkm-radius)', padding: '0.6rem 0.8rem', marginTop: '0.6rem' }}>
               <div style={{ fontSize: '0.7rem', color: '#7a8893', marginBottom: '0.3rem' }}>{t('賽後成長', 'Growth')}</div>
               {notes.map((n, i) => <div key={i} style={{ fontSize: '0.78rem', color: '#9ed68a', lineHeight: 1.6 }}>✦ {n}</div>)}
             </div>

@@ -76,7 +76,7 @@ export function DeedsModal({ onClose }: Props) {
       <div
         style={{
           background: 'linear-gradient(160deg,#1b2531,#10161e)',
-          border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+          border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
           borderTop: '3px solid #e6c473',  // gold — 金石之功
           width: 'min(1100px,100%)', maxHeight: '90vh',
           display: 'flex', flexDirection: 'column', color: '#e6edf3',

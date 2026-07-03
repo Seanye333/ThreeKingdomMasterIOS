@@ -64,7 +64,7 @@ export function RaidDispatchModal({ targetConvoyId, fromCityId, onClose }: { tar
   return (
     <Modal onClose={onClose} icon="🐎" title={t('劫糧道', 'Raid Supply Column')} badge={t(`自 ${from.name.zh}`, `from ${from.name.en}`)} width="min(440px, 100%)">
       {/* The quarry */}
-      <div style={{ background: '#141c25', border: '1px solid #243240', borderRadius: 5, padding: '0.55rem 0.7rem', marginBottom: '0.8rem', fontSize: '0.8rem' }}>
+      <div style={{ background: '#141c25', border: '1px solid #243240', borderRadius: 'var(--tkm-radius-sm)', padding: '0.55rem 0.7rem', marginBottom: '0.8rem', fontSize: '0.8rem' }}>
         <div style={{ color: '#e8a890' }}>
           {t('敵糧道', 'Enemy column')} · {(lang === 'en' ? enemy?.en : enemy?.zh) ?? '—'}
         </div>
@@ -114,7 +114,7 @@ export function RaidDispatchModal({ targetConvoyId, fromCityId, onClose }: { tar
         onClick={launch}
         disabled={!captain || send < 1}
         style={{
-          width: '100%', padding: '0.5rem', borderRadius: 6, cursor: !captain || send < 1 ? 'default' : 'pointer',
+          width: '100%', padding: '0.5rem', borderRadius: 'var(--tkm-radius)', cursor: !captain || send < 1 ? 'default' : 'pointer',
           fontFamily: 'inherit', fontSize: '0.92rem', letterSpacing: '0.1rem',
           background: !captain || send < 1 ? '#1b2531' : 'linear-gradient(180deg, rgba(184,68,46,0.28), rgba(184,68,46,0.1))',
           border: `1px solid ${!captain || send < 1 ? '#2b3845' : '#b8442e'}`,
@@ -129,5 +129,5 @@ export function RaidDispatchModal({ targetConvoyId, fromCityId, onClose }: { tar
 
 const selectStyle = {
   background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473',
-  padding: '0.3rem 0.4rem', fontFamily: 'inherit', fontSize: '0.82rem', borderRadius: 4,
+  padding: '0.3rem 0.4rem', fontFamily: 'inherit', fontSize: '0.82rem', borderRadius: 'var(--tkm-radius-sm)',
 } as const;

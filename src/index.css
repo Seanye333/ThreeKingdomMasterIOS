@@ -18,8 +18,10 @@
   --tkm-text-muted:   #7a8893;
 
   /* Modern chrome primitives */
-  --tkm-radius:       8px;
-  --tkm-radius-sm:    5px;
+  --tkm-radius-xs:    3px;   /* 標籤/小徽章 */
+  --tkm-radius-sm:    4px;   /* 小按鈕/輸入框 */
+  --tkm-radius:       8px;   /* 卡片/按鈕 */
+  --tkm-radius-lg:    10px;  /* 面板/彈窗 */
   --tkm-hairline:     rgba(255, 255, 255, 0.08);
   --tkm-elev-1:       0 2px 10px rgba(0, 0, 0, 0.35);
   --tkm-elev-2:       0 10px 34px rgba(0, 0, 0, 0.5);

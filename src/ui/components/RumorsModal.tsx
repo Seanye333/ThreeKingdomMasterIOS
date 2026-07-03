@@ -98,7 +98,7 @@ export function RumorsModal({ onClose }: { onClose: () => void }) {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {rumors.map((r) => (
-            <div key={r.key} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '0.5rem 0.6rem', background: '#141c25', border: '1px solid #243240', borderRadius: 5 }}>
+            <div key={r.key} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '0.5rem 0.6rem', background: '#141c25', border: '1px solid #243240', borderRadius: 'var(--tkm-radius-sm)' }}>
               <span style={{ fontSize: '1.1rem' }}>{r.icon}</span>
               <span style={{ fontSize: '0.86rem', lineHeight: 1.5, color: '#cdd8e0' }}>{t(r.zh, r.en)}</span>
             </div>

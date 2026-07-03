@@ -90,7 +90,7 @@ export function LegionsModal({ onClose }: { onClose: () => void }) {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: 'linear-gradient(160deg,#1b2531,#10161e)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+          background: 'linear-gradient(160deg,#1b2531,#10161e)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
           width: 'min(640px,100%)', maxHeight: '88vh', overflowY: 'auto',
           color: '#e6edf3', fontFamily: 'var(--tkm-font-body)', padding: '1rem 1.4rem',
         }}

@@ -244,7 +244,7 @@ export function TitleScreen() {
   const whatIfBadge: CSSProperties = {
     marginLeft: 'auto', background: '#26323e', color: '#c178c7',
     border: '1px solid #c178c7', padding: '0.08rem 0.4rem',
-    fontSize: '0.7rem', letterSpacing: '0.05rem', borderRadius: 2,
+    fontSize: '0.7rem', letterSpacing: '0.05rem', borderRadius: 'var(--tkm-radius-xs)',
   };
   const navPrimary = (enabled: boolean): CSSProperties => ({
     borderColor: enabled ? '#e6c473' : 'rgba(255,255,255,0.08)',
@@ -411,7 +411,7 @@ export function TitleScreen() {
                   <button
                     onClick={() => navigator.clipboard?.writeText(dailyShareString(daily, dailyForce.name.zh, dailyResult)).catch(() => undefined)}
                     style={{
-                      background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#aab6c0',
+                      background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', color: '#aab6c0',
                       padding: '0.2rem 0.6rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.72rem',
                     }}
                     title={t('複製戰績', 'Copy result')}
@@ -427,7 +427,7 @@ export function TitleScreen() {
                   style={{
                     marginLeft: 'auto', background: 'linear-gradient(180deg,#4a2418,#321810)',
                     border: '1px solid #ff7050', color: '#ffb0a0', padding: '0.3rem 1rem',
-                    borderRadius: 6,
+                    borderRadius: 'var(--tkm-radius)',
                     cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.07rem',
                   }}
                 >{dailyResult ? t('再戰', 'Again') : t('應戰', 'Accept')}</button>
@@ -436,7 +436,7 @@ export function TitleScreen() {
                   title={t('每日排行榜', 'Daily leaderboard')}
                   style={{
                     background: 'transparent', border: '1px solid #e6c473', color: '#f2dd9a',
-                    padding: '0.3rem 0.7rem', cursor: 'pointer', fontFamily: 'inherit', borderRadius: 6,
+                    padding: '0.3rem 0.7rem', cursor: 'pointer', fontFamily: 'inherit', borderRadius: 'var(--tkm-radius)',
                   }}
                 >🏆</button>
                 {/* 補打日曆 — the last seven days, replayable; older days
@@ -1226,7 +1226,7 @@ function pillStyle(on: boolean): CSSProperties {
     border: '1px solid ' + (on ? '#e6c473' : '#2b3845'),
     color: on ? '#e6c473' : '#7a8893',
     padding: '0.2rem 0.55rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.76rem',
-    borderRadius: 4,
+    borderRadius: 'var(--tkm-radius-sm)',
   };
 }
 
@@ -1244,7 +1244,7 @@ function MiniMap({ scenario, highlightForceId, labelCapitals, onSelectForce }: {
     <svg
       viewBox="110 150 790 570"
       preserveAspectRatio="xMidYMid meet"
-      style={{ width: '100%', height: 'auto', display: 'block', background: '#14100c', border: '1px solid #1e2832', borderRadius: 4 }}
+      style={{ width: '100%', height: 'auto', display: 'block', background: '#14100c', border: '1px solid #1e2832', borderRadius: 'var(--tkm-radius-sm)' }}
     >
       {/* Schematic rivers — the Yellow (north) and Yangtze (south) */}
       <path d="M 150 380 Q 330 300 500 322 Q 660 342 808 306" stroke="#33424f" strokeWidth={5} fill="none" opacity={0.5} strokeLinecap="round" />

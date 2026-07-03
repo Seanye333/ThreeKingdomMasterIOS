@@ -116,7 +116,7 @@ export function RecruitSuccessModal({ officer, onClose }: { officer: Officer; on
                 if (!d) return null;
                 return (
                   <span key={tid} style={{
-                    fontSize: '0.68rem', padding: '1px 7px', borderRadius: 2,
+                    fontSize: '0.68rem', padding: '1px 7px', borderRadius: 'var(--tkm-radius-xs)',
                     border: `1px solid ${d.color}`, color: d.color,
                     animation: anim(`tkmTroopMarchIn 0.4s cubic-bezier(0.2,0.9,0.3,1) ${0.75 + i * 0.1}s both`),
                   }}>{lang === 'en' ? d.name.en : d.name.zh}</span>

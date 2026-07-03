@@ -105,7 +105,7 @@ export function EncyclopediaModal({ onClose }: Props) {
       <div
         style={{
           background: 'linear-gradient(160deg,#1b2531,#10161e)',
-          border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+          border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
           width: 'min(1000px,100%)',
           height: '88vh',
           display: 'flex',
@@ -379,7 +379,7 @@ function xrefChip(color: string): React.CSSProperties {
   return {
     background: 'rgba(255,255,255,0.04)', border: `1px solid ${color}55`, color,
     padding: '0.05rem 0.45rem', fontSize: '0.72rem', cursor: 'pointer',
-    fontFamily: 'inherit', borderRadius: 2,
+    fontFamily: 'inherit', borderRadius: 'var(--tkm-radius-xs)',
   };
 }
 

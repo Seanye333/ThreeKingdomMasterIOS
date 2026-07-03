@@ -58,7 +58,7 @@ export function CareerModal({ onClose }: Props) {
       >
         <div
           style={{
-            background: '#1b2531', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '2rem',
+            background: '#1b2531', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', padding: '2rem',
             color: '#aab6c0', fontFamily: 'var(--tkm-font-body)', textAlign: 'center',
           }}
         >
@@ -83,7 +83,7 @@ export function CareerModal({ onClose }: Props) {
       <div
         style={{
           background: 'linear-gradient(160deg,#1b2531,#10161e)',
-          border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+          border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
           width: 'min(720px,100%)',
           maxHeight: '90vh',
           display: 'flex',
@@ -158,7 +158,7 @@ export function CareerModal({ onClose }: Props) {
                     {t('功績', 'Merit')} {s.merit}{s.nextRankMerit !== null ? ` / ${s.nextRankMerit}` : ` (${t('登峰', 'pinnacle')})`}
                   </div>
                 </div>
-                <div style={{ height: 10, background: '#1b2531', border: '1px solid #2b3845', borderRadius: 2, overflow: 'hidden' }}>
+                <div style={{ height: 10, background: '#1b2531', border: '1px solid #2b3845', borderRadius: 'var(--tkm-radius-xs)', overflow: 'hidden' }}>
                   <div style={{ width: `${pct}%`, height: '100%', background: 'linear-gradient(90deg,#8a6a3a,#e6c473)' }} />
                 </div>
                 <div style={{ fontSize: '0.68rem', color: '#6a5238', marginTop: '0.35rem' }}>
@@ -225,7 +225,7 @@ export function CareerModal({ onClose }: Props) {
                     <div key={i} style={{ marginBottom: '0.7rem', position: 'relative' }}>
                       <span style={{
                         position: 'absolute', left: -22, top: 6,
-                        width: 8, height: 8, borderRadius: 4,
+                        width: 8, height: 8, borderRadius: 'var(--tkm-radius-sm)',
                         background: '#e6c473',
                         boxShadow: '0 0 6px #e6c473',
                       }} />

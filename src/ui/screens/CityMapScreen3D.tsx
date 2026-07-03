@@ -248,7 +248,7 @@ function InsideBuilding3D({ coord, buildingId, level }: {
           fontSize: '11px',
           color: def.color,
           textAlign: 'center',
-          borderRadius: 2,
+          borderRadius: 'var(--tkm-radius-xs)',
           whiteSpace: 'nowrap',
         }}>
           {def.nameZh} <span style={{ opacity: 0.7 }}>lv{level}</span>
@@ -560,7 +560,7 @@ function ConstructionSite3D({ x, z, nameZh }: { x: number; z: number; nameZh: st
         <div style={{
           background: 'rgba(20, 14, 8, 0.85)', border: '1px solid #c19a3b',
           padding: '1px 5px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px',
-          color: '#e0c060', whiteSpace: 'nowrap', borderRadius: 2,
+          color: '#e0c060', whiteSpace: 'nowrap', borderRadius: 'var(--tkm-radius-xs)',
         }}>
           🔨 {nameZh}·建造中
         </div>
@@ -992,7 +992,7 @@ function GovernmentHall3D({ x, z, bannerColor, isCapital = false }: { x: number;
         </group>
       )}
       <Html position={[0, isCapital ? 4.5 : 2.7, 0]} center distanceFactor={9} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
-        <div style={{ background: 'rgba(20,14,8,0.85)', border: `1px solid ${isCapital ? '#ffd86a' : '#d4a84a'}`, padding: '1px 6px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px', color: isCapital ? '#ffe69a' : '#f0d98a', borderRadius: 2, whiteSpace: 'nowrap' }}>
+        <div style={{ background: 'rgba(20,14,8,0.85)', border: `1px solid ${isCapital ? '#ffd86a' : '#d4a84a'}`, padding: '1px 6px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px', color: isCapital ? '#ffe69a' : '#f0d98a', borderRadius: 'var(--tkm-radius-xs)', whiteSpace: 'nowrap' }}>
           {isCapital ? '★ 治所' : '府衙'}
         </div>
       </Html>
@@ -1699,7 +1699,7 @@ function Pagoda3D({ x, z }: { x: number; z: number }) {
         <meshStandardMaterial color="#e8c860" metalness={0.6} roughness={0.35} />
       </mesh>
       <Html position={[0, topY + 0.7, 0]} center distanceFactor={11} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
-        <div style={{ background: 'rgba(20,14,8,0.8)', border: '1px solid #c19a3b', padding: '0 5px', fontFamily: 'var(--tkm-font-body)', fontSize: '10px', color: '#e0c060', borderRadius: 2, whiteSpace: 'nowrap' }}>
+        <div style={{ background: 'rgba(20,14,8,0.8)', border: '1px solid #c19a3b', padding: '0 5px', fontFamily: 'var(--tkm-font-body)', fontSize: '10px', color: '#e0c060', borderRadius: 'var(--tkm-radius-xs)', whiteSpace: 'nowrap' }}>
           寶塔
         </div>
       </Html>
@@ -1798,7 +1798,7 @@ function DrumTower3D({ x, z }: { x: number; z: number }) {
       <group position={[0, 2.0, 0]}><ChineseRoof3D size={1.45} color="#2f3a48" ornament beasts /></group>
       <group position={[0, 2.45, 0]}><ChineseRoof3D size={0.95} color="#2f3a48" ornament /></group>
       <Html position={[0, 3.0, 0]} center distanceFactor={11} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
-        <div style={{ background: 'rgba(20,14,8,0.8)', border: '1px solid #c19a3b', padding: '0 5px', fontFamily: 'var(--tkm-font-body)', fontSize: '10px', color: '#e0c060', borderRadius: 2, whiteSpace: 'nowrap' }}>
+        <div style={{ background: 'rgba(20,14,8,0.8)', border: '1px solid #c19a3b', padding: '0 5px', fontFamily: 'var(--tkm-font-body)', fontSize: '10px', color: '#e0c060', borderRadius: 'var(--tkm-radius-xs)', whiteSpace: 'nowrap' }}>
           鼓樓
         </div>
       </Html>
@@ -1844,7 +1844,7 @@ function BellTower3D({ x, z }: { x: number; z: number }) {
       <group position={[0, 2.15, 0]}><ChineseRoof3D size={1.45} color="#2f3a48" ornament beasts /></group>
       <group position={[0, 2.6, 0]}><ChineseRoof3D size={0.95} color="#2f3a48" ornament /></group>
       <Html position={[0, 3.15, 0]} center distanceFactor={11} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
-        <div style={{ background: 'rgba(20,14,8,0.8)', border: '1px solid #c19a3b', padding: '0 5px', fontFamily: 'var(--tkm-font-body)', fontSize: '10px', color: '#e0c060', borderRadius: 2, whiteSpace: 'nowrap' }}>
+        <div style={{ background: 'rgba(20,14,8,0.8)', border: '1px solid #c19a3b', padding: '0 5px', fontFamily: 'var(--tkm-font-body)', fontSize: '10px', color: '#e0c060', borderRadius: 'var(--tkm-radius-xs)', whiteSpace: 'nowrap' }}>
           鐘樓
         </div>
       </Html>
@@ -1972,7 +1972,7 @@ function Farmland3D({ x, z, lush = 0.5 }: { x: number; z: number; lush?: number 
       </group>
       <Villager3D x={-1.15} z={0.95} seed={88} />
       <Html position={[0, 1.2, 0]} center distanceFactor={11} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
-        <div style={{ background: 'rgba(20,14,8,0.78)', border: '1px solid #7a8a3a', padding: '0 5px', fontFamily: 'var(--tkm-font-body)', fontSize: '10px', color: '#bcd07a', borderRadius: 2, whiteSpace: 'nowrap' }}>
+        <div style={{ background: 'rgba(20,14,8,0.78)', border: '1px solid #7a8a3a', padding: '0 5px', fontFamily: 'var(--tkm-font-body)', fontSize: '10px', color: '#bcd07a', borderRadius: 'var(--tkm-radius-xs)', whiteSpace: 'nowrap' }}>
           屯田
         </div>
       </Html>
@@ -2015,7 +2015,7 @@ function SpecialtyProp3D({ specialty, x, z }: { specialty: SpecialtyDef; x: numb
       <mesh position={[0.28, 0.14, 0.1]} castShadow><boxGeometry args={[0.3, 0.28, 0.3]} /><meshStandardMaterial color="#8a6a3a" roughness={0.92} /></mesh>
       <mesh position={[-0.1, 0.5, 0]} castShadow><boxGeometry args={[0.34, 0.3, 0.34]} /><meshStandardMaterial color={tint} roughness={0.9} /></mesh>
       <Html position={[0, 0.98, 0]} center distanceFactor={10} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
-        <div style={{ background: 'rgba(20,14,8,0.82)', border: '1px solid #caa24a', padding: '0 5px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px', color: '#e8c46a', borderRadius: 2, whiteSpace: 'nowrap' }}>
+        <div style={{ background: 'rgba(20,14,8,0.82)', border: '1px solid #caa24a', padding: '0 5px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px', color: '#e8c46a', borderRadius: 'var(--tkm-radius-xs)', whiteSpace: 'nowrap' }}>
           {specialty.glyph} {specialty.zh}
         </div>
       </Html>
@@ -2094,7 +2094,7 @@ function CommandActivity3D({ x, z, color, label, build = false, soldier = false 
         </group>
       )}
       <Html position={[x, build ? 1.5 : 1.1, z]} center distanceFactor={9} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
-        <div style={{ background: 'rgba(18,26,12,0.86)', border: `1px solid ${color}`, padding: '0 5px', fontFamily: 'var(--tkm-font-body)', fontSize: '10px', color: '#dceec4', borderRadius: 2, whiteSpace: 'nowrap' }}>
+        <div style={{ background: 'rgba(18,26,12,0.86)', border: `1px solid ${color}`, padding: '0 5px', fontFamily: 'var(--tkm-font-body)', fontSize: '10px', color: '#dceec4', borderRadius: 'var(--tkm-radius-xs)', whiteSpace: 'nowrap' }}>
           {label}中
         </div>
       </Html>
@@ -2683,7 +2683,7 @@ function Hinterland3D({
               <div style={{
                 background: 'rgba(20,14,8,0.82)',
                 border: `1px solid ${n.color}`,
-                borderRadius: 3,
+                borderRadius: 'var(--tkm-radius-xs)',
                 padding: '2px 7px',
                 color: n.rel === 'self' ? '#7ed68a' : n.rel === 'other' ? '#e0a0a0' : '#c0a878',
                 fontFamily: 'var(--tkm-font-body)', fontSize: '12px',
@@ -3913,7 +3913,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
               title={t('把城中閒置武將按需求×適性自動派活', 'Auto-assign idle officers by need × aptitude')}
               style={{
                 background: 'rgba(126, 214, 138, 0.16)',
-                border: '1px solid rgba(126, 214, 138, 0.5)', borderRadius: '10px',
+                border: '1px solid rgba(126, 214, 138, 0.5)', borderRadius: 'var(--tkm-radius-lg)',
                 color: '#bfeebf', padding: '0.3rem 0.6rem',
                 fontFamily: 'var(--tkm-font-body)', fontSize: '0.7rem', cursor: 'pointer',
                 letterSpacing: '0.08rem',
@@ -3926,7 +3926,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
             onClick={() => setShowOverlays(!showOverlays)}
             style={{
               background: showOverlays ? 'rgba(212, 168, 74, 0.2)' : 'transparent',
-              border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+              border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
               color: showOverlays ? '#d4a84a' : '#8a7050',
               padding: '0.3rem 0.6rem',
               fontFamily: 'var(--tkm-font-body)', fontSize: '0.7rem', cursor: 'pointer',
@@ -3946,7 +3946,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
         <div style={{
           position: 'absolute', top: 58, left: '50%', transform: 'translateX(-50%)',
           zIndex: 12, background: 'rgba(20,32,18,0.94)', border: '1px solid #7ed68a',
-          borderRadius: 4, padding: '0.35rem 0.8rem', color: '#bfeebf',
+          borderRadius: 'var(--tkm-radius-sm)', padding: '0.35rem 0.8rem', color: '#bfeebf',
           fontFamily: 'var(--tkm-font-body)', fontSize: '0.76rem', whiteSpace: 'nowrap',
         }}>{assignMsg}</div>
       )}
@@ -4336,7 +4336,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
           <div style={{
             position: 'absolute', bottom: 14, left: 14,
             background: 'rgba(20, 14, 8, 0.8)',
-            border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
             padding: '0.3rem 0.6rem',
             color: '#8a7050', fontFamily: 'var(--tkm-font-body)',
             fontSize: '0.7rem', letterSpacing: '0.05rem',
@@ -4351,7 +4351,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
             position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)',
             width: 'min(420px, 80vw)',
             background: 'rgba(20, 14, 8, 0.94)',
-            border: `1px solid ${inspect.color}`, borderRadius: 4,
+            border: `1px solid ${inspect.color}`, borderRadius: 'var(--tkm-radius-sm)',
             padding: '0.6rem 0.9rem',
             fontFamily: 'var(--tkm-font-body)',
             boxShadow: '0 4px 18px rgba(0,0,0,0.5)',
@@ -4464,7 +4464,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
         <div style={{
           position: 'absolute', bottom: 14, right: 14,
           background: 'rgba(20, 14, 8, 0.82)',
-          border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6,
+          border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius)',
           padding: '0.34rem 0.6rem',
           color: '#b8a274', fontFamily: 'var(--tkm-font-body)',
           fontSize: '0.66rem', lineHeight: 1.55, textAlign: 'right',

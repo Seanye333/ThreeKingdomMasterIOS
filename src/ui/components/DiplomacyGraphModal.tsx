@@ -57,7 +57,7 @@ export function DiplomacyGraphModal({ onClose }: Props) {
       <div
         style={{
           background: 'linear-gradient(160deg,#1b2531,#10161e)',
-          border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+          border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
           width: 'min(820px,100%)',
           color: '#e6edf3',
           fontFamily: 'var(--tkm-font-body)',

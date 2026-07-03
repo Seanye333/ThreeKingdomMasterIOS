@@ -121,7 +121,7 @@ export function PowerGraphModal({ onClose }: { onClose: () => void }) {
                 {t('統一', 'Unify')} {unif}% <span style={{ color: '#7a8893' }}>({rows.find((r) => r.fid === playerForceId)?.cities ?? 0}/{totalCities})</span>
               </span>
             </div>
-            <div style={{ height: 5, background: '#241c12', borderRadius: 3, marginBottom: 6, overflow: 'hidden' }}>
+            <div style={{ height: 5, background: '#241c12', borderRadius: 'var(--tkm-radius-xs)', marginBottom: 6, overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${unif}%`, background: unif >= 50 ? '#7ed68a' : '#e6c473' }} />
             </div>
             <div style={{ maxHeight: 150, overflowY: 'auto', fontSize: '0.76rem' }}>

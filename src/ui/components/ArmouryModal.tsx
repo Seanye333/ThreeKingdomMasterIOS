@@ -281,7 +281,7 @@ export function ArmouryModal({ onClose }: Props) {
                             <span style={{ color: '#7a8893' }}>
                               {plus > 0 && <span style={{ color: '#e6c473' }}>+{plus} </span>}
                               {stars > 0 && <span style={{ color: '#ff9f5a' }}>{'★'.repeat(stars)} </span>}
-                              {gems.map((gid, gi) => { const g = GEMS_BY_ID[gid]; return g ? <span key={gi} title={g.name.zh} style={{ width: 8, height: 8, borderRadius: 2, background: g.color, display: 'inline-block', marginRight: 2 }} /> : null; })}
+                              {gems.map((gid, gi) => { const g = GEMS_BY_ID[gid]; return g ? <span key={gi} title={g.name.zh} style={{ width: 8, height: 8, borderRadius: 'var(--tkm-radius-xs)', background: g.color, display: 'inline-block', marginRight: 2 }} /> : null; })}
                             </span>
                             {plus < REFINE_MAX && <button className={styles.actionBtn} onClick={() => refineItemFn(item.id)}>{t('精煉', 'Refine')}</button>}
                             {plus >= REFINE_MAX && stars < BREAKTHROUGH_MAX && (

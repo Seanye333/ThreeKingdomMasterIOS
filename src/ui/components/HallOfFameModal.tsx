@@ -62,14 +62,14 @@ export function HallOfFameModal({ onClose }: { onClose: () => void }) {
         <div style={{ display: 'flex', gap: '0.4rem', padding: '0.7rem 1.5rem 0' }}>
           {(['all', 'mine'] as const).map((s) => (
             <button key={s} onClick={() => setScope(s)} style={{
-              padding: '0.2rem 0.7rem', borderRadius: 2, cursor: 'pointer', fontSize: '0.78rem',
+              padding: '0.2rem 0.7rem', borderRadius: 'var(--tkm-radius-xs)', cursor: 'pointer', fontSize: '0.78rem',
               background: scope === s ? '#2a2010' : '#10161e', border: `1px solid ${scope === s ? '#e6c473' : '#26323e'}`, color: scope === s ? '#e6c473' : '#8a97a3',
             }}>{s === 'all' ? t('天下', 'All') : t('本勢力', 'My force')}</button>
           ))}
           <span style={{ width: 1, background: '#2b3845', margin: '0 0.2rem' }} />
           {([['all', t('全品', 'All')], ['gold', t('金牌+', 'Gold+')], ['platinum', t('白金+', 'Platinum+')]] as const).map(([tk, label]) => (
             <button key={tk} onClick={() => setTier(tk as typeof tier)} style={{
-              padding: '0.2rem 0.7rem', borderRadius: 2, cursor: 'pointer', fontSize: '0.78rem',
+              padding: '0.2rem 0.7rem', borderRadius: 'var(--tkm-radius-xs)', cursor: 'pointer', fontSize: '0.78rem',
               background: tier === tk ? '#2a2010' : '#10161e', border: `1px solid ${tier === tk ? '#e6c473' : '#26323e'}`, color: tier === tk ? '#e6c473' : '#8a97a3',
             }}>{label}</button>
           ))}
@@ -87,14 +87,14 @@ export function HallOfFameModal({ onClose }: { onClose: () => void }) {
                 width: '100%', display: 'flex', alignItems: 'center', gap: '0.6rem', textAlign: 'left',
                 padding: '0.4rem 0.5rem', marginBottom: '0.25rem', cursor: 'pointer',
                 background: o.forceId === playerForceId ? 'rgba(212,168,74,0.06)' : '#10161e',
-                border: '1px solid #1f2a36', borderRadius: 2, color: '#e6edf3',
+                border: '1px solid #1f2a36', borderRadius: 'var(--tkm-radius-xs)', color: '#e6edf3',
               }}>
                 <span style={{ width: 26, textAlign: 'right', color: i < 3 ? '#e6c473' : '#7a8893', fontFamily: 'ui-monospace, monospace' }}>{i + 1}</span>
                 <span style={{ minWidth: 110, fontSize: '0.92rem' }}>
                   {lang === 'en' ? o.name.en : o.name.zh}
                   {medal && <span style={{ marginLeft: 4 }}>{medal.glyph}</span>}
                 </span>
-                <span style={{ padding: '0.05rem 0.4rem', borderRadius: 2, border: `1px solid ${g.color}`, color: g.color, fontSize: '0.72rem' }}>
+                <span style={{ padding: '0.05rem 0.4rem', borderRadius: 'var(--tkm-radius-xs)', border: `1px solid ${g.color}`, color: g.color, fontSize: '0.72rem' }}>
                   {lang === 'en' ? g.name.en : g.name.zh}
                 </span>
                 <span style={{ width: 34, color: '#9aa7b3', fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem' }}>{score}</span>

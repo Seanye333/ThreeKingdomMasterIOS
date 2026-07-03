@@ -294,7 +294,7 @@ export function BondsModal({ onClose }: Props) {
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
                 {warming.map(({ a, b, r }) => (
-                  <span key={`${a.id}|${b.id}`} style={{ fontSize: '0.74rem', color: '#aab6c0', border: '1px solid #2b3845', padding: '0.1rem 0.4rem', borderRadius: 2 }}>
+                  <span key={`${a.id}|${b.id}`} style={{ fontSize: '0.74rem', color: '#aab6c0', border: '1px solid #2b3845', padding: '0.1rem 0.4rem', borderRadius: 'var(--tkm-radius-xs)' }}>
                     {oName(a)}–{oName(b)} <span style={{ color: r >= 80 ? '#7ed68a' : '#e6c473', fontFamily: 'ui-monospace, monospace' }}>{r}</span>
                   </span>
                 ))}
@@ -308,7 +308,7 @@ export function BondsModal({ onClose }: Props) {
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
                 {souring.map(({ a, b, r }) => (
-                  <span key={`${a.id}|${b.id}`} style={{ fontSize: '0.74rem', color: '#c99', border: '1px solid #3a2b2b', padding: '0.1rem 0.4rem', borderRadius: 2 }}>
+                  <span key={`${a.id}|${b.id}`} style={{ fontSize: '0.74rem', color: '#c99', border: '1px solid #3a2b2b', padding: '0.1rem 0.4rem', borderRadius: 'var(--tkm-radius-xs)' }}>
                     {oName(a)}–{oName(b)} <span style={{ color: '#d98a8a', fontFamily: 'ui-monospace, monospace' }}>{r}</span>
                   </span>
                 ))}
@@ -477,7 +477,7 @@ function OfficerCell({
 }
 
 const selStyle: CSSProperties = {
-  background: '#1b2531', color: '#e6edf3', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+  background: '#1b2531', color: '#e6edf3', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
   padding: '0.25rem 0.4rem', fontFamily: 'inherit', fontSize: '0.8rem',
 };
 function btnStyle(enabled: boolean): CSSProperties {

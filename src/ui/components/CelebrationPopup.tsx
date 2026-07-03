@@ -62,7 +62,7 @@ export function CelebrationPopup() {
           width: 'min(560px, 88vw)',
           background: 'linear-gradient(180deg, #1c140a 0%, #14100a 100%)',
           border: '1px solid #c79a3c',
-          borderRadius: 8,
+          borderRadius: 'var(--tkm-radius)',
           boxShadow: '0 12px 50px rgba(0,0,0,0.6), 0 0 30px rgba(199,154,60,0.25)',
           overflow: 'hidden',
           fontFamily: 'var(--tkm-font-body)',
@@ -114,7 +114,7 @@ export function CelebrationPopup() {
             onClick={dismissPopup}
             style={{
               marginTop: 10, background: '#2a1f12', border: '1px solid #c79a3c',
-              color: '#f0d98a', padding: '0.32rem 1.4rem', borderRadius: 4,
+              color: '#f0d98a', padding: '0.32rem 1.4rem', borderRadius: 'var(--tkm-radius-sm)',
               cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.82rem', letterSpacing: '0.1rem',
             }}
           >{lang === 'en' ? 'Continue' : '繼續'}</button>

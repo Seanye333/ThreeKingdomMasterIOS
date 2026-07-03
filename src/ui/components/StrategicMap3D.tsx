@@ -1990,7 +1990,7 @@ function City3D({
               color: isSelected ? '#fff6df' : isOwn ? '#eafff0' : '#f2e8d2',
               background: isOwn ? 'rgba(20,42,26,0.85)' : 'rgba(22,16,10,0.8)',
               border: `1.5px solid ${isSelected ? '#f0d488' : isOwn ? '#86f29a' : forceColor}`,
-              borderRadius: 4,
+              borderRadius: 'var(--tkm-radius-sm)',
               padding: '0px 7px',
               whiteSpace: 'nowrap',
               boxShadow: isSelected
@@ -2348,7 +2348,7 @@ function MarchingArmy({ from, to, color, commanderName, targetName, troops, seas
       {hovered && (
         <Html position={[0, 1.15, 0]} center distanceFactor={9} zIndexRange={[44, 34]} style={{ pointerEvents: 'none' }}>
           <div style={{
-            background: 'rgba(18,12,6,0.94)', border: `1px solid ${color}`, borderRadius: 4,
+            background: 'rgba(18,12,6,0.94)', border: `1px solid ${color}`, borderRadius: 'var(--tkm-radius-sm)',
             padding: '3px 9px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px',
             color: '#e7d6ad', whiteSpace: 'nowrap', lineHeight: 1.5, boxShadow: '0 2px 10px rgba(0,0,0,0.6)',
           }}>
@@ -2404,7 +2404,7 @@ function MarchingArmy({ from, to, color, commanderName, targetName, troops, seas
           }}>
             <span style={{
               display: 'inline-block', minWidth: 13, textAlign: 'center',
-              background: color, color: '#1a120a', borderRadius: 2,
+              background: color, color: '#1a120a', borderRadius: 'var(--tkm-radius-xs)',
               fontSize: '9px', marginRight: 4, padding: '0 1px', fontWeight: 700,
             }}>{UNIT_TAG[weaponType]}</span>
             <span style={{ color: '#ffe9a8' }}>{commanderName}</span>
@@ -2752,7 +2752,7 @@ function SupplyLines3D() {
             <BattlePulseRing3D wx={wx} y={y + 0.05} wz={wz} color="#e0552a" phase={0.2} />
             <Html position={[wx, y + 1.0, wz]} center distanceFactor={9} zIndexRange={[40, 30]} style={{ pointerEvents: 'none' }}>
               <div style={{
-                background: 'rgba(40,14,8,0.9)', border: '1px solid #e0552a', borderRadius: 3,
+                background: 'rgba(40,14,8,0.9)', border: '1px solid #e0552a', borderRadius: 'var(--tkm-radius-xs)',
                 padding: '1px 7px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px',
                 color: '#f0b0a0', whiteSpace: 'nowrap', letterSpacing: '1px',
               }}>⚠ 斷補 — 不通都城</div>
@@ -2942,7 +2942,7 @@ function QueuedBattles3D() {
             <BattlePulseRing3D wx={wx} y={y} wz={wz} color="#e0552a" phase={i * 0.31} />
             <Html position={[wx, y + 0.7, wz]} center distanceFactor={10} zIndexRange={[45, 35]} style={{ pointerEvents: 'none' }}>
               <div style={{
-                background: 'rgba(40, 14, 8, 0.88)', border: '1px solid #e0552a', borderRadius: 3,
+                background: 'rgba(40, 14, 8, 0.88)', border: '1px solid #e0552a', borderRadius: 'var(--tkm-radius-xs)',
                 padding: '1px 7px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px',
                 color: '#f0b0a0', whiteSpace: 'nowrap', letterSpacing: '1px',
               }}>⚔ {s.zh}</div>
@@ -3307,7 +3307,7 @@ function ClashResultFlag({ name, color, startRef }: {
   return (
     <Html position={[0, 0.42, 0]} center distanceFactor={10} zIndexRange={[40, 30]} style={{ pointerEvents: 'none' }}>
       <div style={{
-        background: 'rgba(15, 10, 5, 0.85)', border: `1px solid ${color}`, borderRadius: 3,
+        background: 'rgba(15, 10, 5, 0.85)', border: `1px solid ${color}`, borderRadius: 'var(--tkm-radius-xs)',
         padding: '1px 8px', color: '#ffe9a8', fontFamily: '"Ma Shan Zheng", "Songti SC", serif',
         fontSize: '12px', whiteSpace: 'nowrap', boxShadow: `0 0 9px ${color}99`,
       }}>{name}軍 勝</div>
@@ -3374,7 +3374,7 @@ function BattleIgnitionCard() {
   }, [battleId, forces, cities, lang]);
   if (!card) return null;
   const side = (c: string): React.CSSProperties => ({
-    background: 'rgba(15, 10, 5, 0.86)', border: `2px solid ${c}`, borderRadius: 4,
+    background: 'rgba(15, 10, 5, 0.86)', border: `2px solid ${c}`, borderRadius: 'var(--tkm-radius-sm)',
     padding: '0.45rem 1.1rem', color: '#ffe9a8', fontFamily: '"Ma Shan Zheng", "Songti SC", serif',
     fontSize: '1.9rem', letterSpacing: '2px', textShadow: '0 0 8px rgba(0,0,0,0.9)',
     boxShadow: `0 0 18px ${c}aa`, whiteSpace: 'nowrap',
@@ -4598,7 +4598,7 @@ function FactionLabels3D({ cities, forces, officers }: {
               display: 'inline-block',
               background: 'rgba(14,10,6,0.72)',
               border: `3px solid ${l.color}`,
-              borderRadius: 10,
+              borderRadius: 'var(--tkm-radius-lg)',
               padding: '2px 16px',
               fontFamily: '"Ma Shan Zheng", "Songti SC", serif',
               fontSize: `${fs}px`, fontWeight: 800,
@@ -5143,7 +5143,7 @@ function DiplomacyLines3D({ cities, forces }: {
             />
             <Html position={l.mid} center distanceFactor={11} zIndexRange={[28, 18]} style={{ pointerEvents: 'none' }}>
               <div style={{
-                background: 'rgba(20,14,8,0.88)', border: `1px solid ${st.color}`, borderRadius: 3,
+                background: 'rgba(20,14,8,0.88)', border: `1px solid ${st.color}`, borderRadius: 'var(--tkm-radius-xs)',
                 padding: '1px 6px', fontFamily: 'var(--tkm-font-body)', fontSize: 10,
                 color: st.color, whiteSpace: 'nowrap', letterSpacing: '1px',
               }}>
@@ -5883,7 +5883,7 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, hexPaint,
         return (
           <Html position={[hoverTile.x, hoverTile.topY + 0.35, hoverTile.z]} center distanceFactor={9} zIndexRange={[30, 20]} style={{ pointerEvents: 'none' }}>
             <div style={{
-              background: 'rgba(20, 14, 8, 0.88)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6,
+              background: 'rgba(20, 14, 8, 0.88)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius)',
               padding: '2px 7px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px',
               color: '#e8d9b0', whiteSpace: 'nowrap', letterSpacing: '0.5px',
             }}>
@@ -6106,7 +6106,7 @@ function Landmarks3D({ cities }: { cities: Record<string, City> }) {
             <mesh position={[0, 0.25, 0]} castShadow><boxGeometry args={[0.085, 0.03, 0.06]} /><meshStandardMaterial color="#46423b" roughness={0.8} /></mesh>
             <Html position={[0, 0.37, 0]} center distanceFactor={13} zIndexRange={[8, 0]} style={{ pointerEvents: 'none' }}>
               <div style={{
-                background: 'rgba(28, 18, 10, 0.8)', border: '1px solid #8a7050', borderRadius: 3,
+                background: 'rgba(28, 18, 10, 0.8)', border: '1px solid #8a7050', borderRadius: 'var(--tkm-radius-xs)',
                 padding: '1px 6px', color: '#e0c89a', fontFamily: '"Ma Shan Zheng", "Songti SC", serif',
                 fontSize: '11px', whiteSpace: 'nowrap',
               }}>⚔ {s.name}</div>
@@ -6231,7 +6231,7 @@ function UniqueLandmarks3D({ cities }: { cities: Record<string, City> }) {
               : <PalaceHall3D />}
             <Html position={[0, s.kind === 'terrace' ? 0.95 : 0.5, 0]} center distanceFactor={11} zIndexRange={[8, 0]} style={{ pointerEvents: 'none' }}>
               <div style={{
-                background: 'rgba(28, 18, 10, 0.82)', border: '1px solid #c9a23c', borderRadius: 3,
+                background: 'rgba(28, 18, 10, 0.82)', border: '1px solid #c9a23c', borderRadius: 'var(--tkm-radius-xs)',
                 padding: '1px 6px', color: '#f0d89a', fontFamily: '"Ma Shan Zheng", "Songti SC", serif',
                 fontSize: '11px', whiteSpace: 'nowrap',
               }}>🏯 {s.zh}</div>
@@ -6306,7 +6306,7 @@ function Tribes3D({ onTribeClick }: { onTribeClick: (tribeId: string) => void })
             )}
             <Html position={[0, 0.78, 0]} center distanceFactor={12} zIndexRange={[8, 0]} style={{ pointerEvents: 'none' }}>
               <div style={{
-                background: 'rgba(28, 18, 10, 0.82)', border: `1px solid ${s.color}`, borderRadius: 3,
+                background: 'rgba(28, 18, 10, 0.82)', border: `1px solid ${s.color}`, borderRadius: 'var(--tkm-radius-xs)',
                 padding: '1px 6px', color: '#f0d8a8', fontFamily: '"Ma Shan Zheng", "Songti SC", serif',
                 fontSize: '11px', whiteSpace: 'nowrap',
               }}>⛺ {s.zh}</div>
@@ -6389,7 +6389,7 @@ function WildSite3D({ site, color, onClick }: {
       {body}
       <Html position={[0, 0.8, 0]} center distanceFactor={12} zIndexRange={[8, 0]} style={{ pointerEvents: 'none' }}>
         <div style={{
-          background: 'rgba(28, 18, 10, 0.8)', border: `1px solid ${color}`, borderRadius: 3,
+          background: 'rgba(28, 18, 10, 0.8)', border: `1px solid ${color}`, borderRadius: 'var(--tkm-radius-xs)',
           padding: '1px 6px', color: '#e8d4a0', fontFamily: '"Ma Shan Zheng", "Songti SC", serif',
           fontSize: '10.5px', whiteSpace: 'nowrap',
         }}>{site.subtype === 'bandit' ? '🏴' : site.subtype === 'ford' ? '⛵' : '⛏'} {pickName(site.name, lang)}</div>
@@ -6467,7 +6467,7 @@ function EspionageAgents3D({ cities }: { cities: Record<string, City> }) {
           <mesh position={[0, 0.17, 0]}><sphereGeometry args={[0.03, 6, 5]} /><meshStandardMaterial color="#1c1c22" roughness={0.85} /></mesh>
           <Html position={[0, 0.3, 0]} center distanceFactor={10} zIndexRange={[7, 0]} style={{ pointerEvents: 'none' }}>
             <div style={{
-              background: 'rgba(20,12,28,0.82)', border: '1px solid #7a5a9a', borderRadius: 3,
+              background: 'rgba(20,12,28,0.82)', border: '1px solid #7a5a9a', borderRadius: 'var(--tkm-radius-xs)',
               padding: '0 5px', color: '#c8a8e0', fontFamily: 'var(--tkm-font-body)', fontSize: 9.5, whiteSpace: 'nowrap',
             }}>諜 {r.label}</div>
           </Html>
@@ -6552,7 +6552,7 @@ function ScenicSites3D({ onScenicClick }: { onScenicClick: (siteId: string) => v
             )}
             <Html position={[0, 0.7, 0]} center distanceFactor={12} zIndexRange={[8, 0]} style={{ pointerEvents: 'none' }}>
               <div style={{
-                background: 'rgba(28, 18, 10, 0.8)', border: '1px solid #c9a23c', borderRadius: 3,
+                background: 'rgba(28, 18, 10, 0.8)', border: '1px solid #c9a23c', borderRadius: 'var(--tkm-radius-xs)',
                 padding: '1px 6px', color: '#f0d89a', fontFamily: '"Ma Shan Zheng", "Songti SC", serif',
                 fontSize: '10.5px', whiteSpace: 'nowrap',
               }}>⛰ {s.zh}</div>
@@ -6593,7 +6593,7 @@ function MarchRangeRings({ cx, cy }: { cx: number; cy: number }) {
           <Line points={rg.pts} color={rg.color} lineWidth={2} transparent opacity={0.7} dashed dashSize={2.4} gapSize={1.4} />
           <Html position={rg.label} center distanceFactor={11} zIndexRange={[40, 30]} style={{ pointerEvents: 'none' }}>
             <div style={{
-              background: 'rgba(20,14,8,0.82)', border: `1px solid ${rg.color}`, borderRadius: 3,
+              background: 'rgba(20,14,8,0.82)', border: `1px solid ${rg.color}`, borderRadius: 'var(--tkm-radius-xs)',
               padding: '1px 6px', fontFamily: 'var(--tkm-font-body)', fontSize: '10px', color: rg.color, whiteSpace: 'nowrap',
             }}>{t(`${rg.seasons} 季`, `${rg.seasons} season${rg.seasons > 1 ? 's' : ''}`)}</div>
           </Html>
@@ -7011,7 +7011,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
               onClick={() => setBattleViewMinimized(false)}
               style={{
                 background: 'rgba(26, 16, 10, 0.92)', color: '#f0d98a',
-                border: '1px solid #d4a84a', borderRadius: 3,
+                border: '1px solid #d4a84a', borderRadius: 'var(--tkm-radius-xs)',
                 padding: '3px 10px', cursor: 'pointer',
                 fontFamily: 'var(--tkm-font-body)', fontSize: '13px',
                 letterSpacing: '1px', whiteSpace: 'nowrap',
@@ -7110,7 +7110,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
             {rings.map((r, i) => (
               <Html key={`l${i}`} position={[wx + r.rpx * PIXEL_TO_WORLD * 0.7071, 0.25, wz - r.rpx * PIXEL_TO_WORLD * 0.7071]} center distanceFactor={11} zIndexRange={[26, 16]} style={{ pointerEvents: 'none' }}>
                 <div style={{
-                  background: 'rgba(20,14,8,0.82)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6,
+                  background: 'rgba(20,14,8,0.82)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius)',
                   padding: '0 5px', fontFamily: 'var(--tkm-font-body)', fontSize: 10, color: '#f0d98a',
                   whiteSpace: 'nowrap',
                 }}>{r.zh}</div>
@@ -7142,7 +7142,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
         return (
           <Html position={[wx, y + 1.35, wz]} center distanceFactor={9} zIndexRange={[42, 32]} style={{ pointerEvents: 'none' }}>
             <div style={{
-              background: 'rgba(20,14,8,0.9)', border: '1px solid #f0d98a', borderRadius: 3,
+              background: 'rgba(20,14,8,0.9)', border: '1px solid #f0d98a', borderRadius: 'var(--tkm-radius-xs)',
               padding: '2px 8px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px',
               color: '#f0d98a', whiteSpace: 'nowrap', letterSpacing: '1px',
             }}>
@@ -7165,7 +7165,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
         return (
           <Html position={[wx, y + 1.35, wz]} center distanceFactor={9} zIndexRange={[42, 32]} style={{ pointerEvents: 'none' }}>
             <div style={{
-              background: 'rgba(20,14,8,0.9)', border: '1px solid #d4a84a', borderRadius: 3,
+              background: 'rgba(20,14,8,0.9)', border: '1px solid #d4a84a', borderRadius: 'var(--tkm-radius-xs)',
               padding: '2px 8px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px',
               color: '#f0d98a', whiteSpace: 'nowrap', letterSpacing: '1px',
             }}>
@@ -7191,7 +7191,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
         return (
           <Html position={[wx, y + 1.75, wz]} center distanceFactor={9} zIndexRange={[43, 33]} style={{ pointerEvents: 'none' }}>
             <div style={{
-              background: 'rgba(18,12,6,0.92)', border: '1px solid #6a5230', borderRadius: 4,
+              background: 'rgba(18,12,6,0.92)', border: '1px solid #6a5230', borderRadius: 'var(--tkm-radius-sm)',
               padding: '3px 9px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px',
               color: '#e7d6ad', whiteSpace: 'nowrap', lineHeight: 1.5, boxShadow: '0 2px 10px rgba(0,0,0,0.5)',
             }}>
@@ -7261,7 +7261,7 @@ function CityQuickRing({ own, onEnter, onMarch, onRecruit, onMuster }: {
             background: 'rgba(20,14,8,0.92)', border: '1px solid #b8584a',
             color: '#e8b0a0', cursor: 'pointer',
             fontFamily: 'var(--tkm-font-body)', fontSize: 12, letterSpacing: 2,
-            padding: '0.32rem 0', borderRadius: 4, boxShadow: '0 2px 8px rgba(0,0,0,0.55)',
+            padding: '0.32rem 0', borderRadius: 'var(--tkm-radius-sm)', boxShadow: '0 2px 8px rgba(0,0,0,0.55)',
             whiteSpace: 'nowrap',
           }}
         >{t('🚩 全軍集結', '🚩 Mass muster')}</button>
@@ -7330,7 +7330,7 @@ function CitySearchBox({ onJump, compact }: {
           onClick={() => { setOpen(false); setQ(''); }}
           style={{
             width: 30, background: 'rgba(20, 14, 8, 0.88)', color: '#c0a878',
-            border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', cursor: 'pointer', fontSize: 13, order: 2,
+            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', cursor: 'pointer', fontSize: 13, order: 2,
           }}
         >✕</button>
       )}
@@ -7347,14 +7347,14 @@ function CitySearchBox({ onJump, compact }: {
         style={{
           width: compact ? 'min(56vw, 210px)' : 138,
           background: 'rgba(20, 14, 8, 0.88)', color: '#e8d9b0',
-          border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '0.3rem 0.5rem', outline: 'none',
+          border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', padding: '0.3rem 0.5rem', outline: 'none',
           fontFamily: 'inherit', fontSize: '0.75rem',
         }}
       />
       {matches.length > 0 && (
         <div style={{
           position: 'absolute', top: '100%', right: 0, marginTop: 2, minWidth: 170,
-          background: 'rgba(20, 14, 8, 0.96)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+          background: 'rgba(20, 14, 8, 0.96)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
           boxShadow: '0 4px 12px rgba(0,0,0,0.6)', zIndex: 30,
         }}>
           {matches.map((c) => {
@@ -7426,7 +7426,7 @@ function ArmyOrdersHint() {
     <div style={{
       position: 'absolute', bottom: battleBarUp ? 64 : 14, left: '50%', transform: 'translateX(-50%)',
       zIndex: 12, display: 'flex', alignItems: 'center', gap: '0.6rem',
-      background: 'rgba(20, 14, 8, 0.92)', border: '1px solid #d4a84a', borderRadius: 4,
+      background: 'rgba(20, 14, 8, 0.92)', border: '1px solid #d4a84a', borderRadius: 'var(--tkm-radius-sm)',
       padding: '0.4rem 0.8rem', fontFamily: 'var(--tkm-font-body)',
       boxShadow: '0 2px 12px rgba(0,0,0,0.55)',
       flexWrap: 'wrap', justifyContent: 'center', maxWidth: '94vw',
@@ -7441,7 +7441,7 @@ function ArmyOrdersHint() {
       <button
         onClick={() => selectArmy(null)}
         style={{
-          background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#c0a878',
+          background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', color: '#c0a878',
           padding: '0.15rem 0.5rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.72rem',
         }}
       >✕ {t('取消', 'Cancel')}</button>
@@ -7646,7 +7646,7 @@ function ReplayPanel({ onClose }: { onClose: () => void }) {
     }}>
       <div onClick={(e) => e.stopPropagation()} style={{
         background: 'linear-gradient(180deg, #1c1409 0%, #120c06 100%)',
-        border: '1px solid #5a4530', borderRadius: 12, padding: '0.9rem 1rem',
+        border: '1px solid #5a4530', borderRadius: 'var(--tkm-radius-lg)', padding: '0.9rem 1rem',
         boxShadow: '0 8px 32px rgba(0,0,0,0.7)', maxWidth: '94vw',
         fontFamily: 'var(--tkm-font-body)', color: '#d8c4a0',
       }}>
@@ -7654,7 +7654,7 @@ function ReplayPanel({ onClose }: { onClose: () => void }) {
           <div style={{ fontWeight: 'bold', letterSpacing: '0.08rem' }}>🎞 {t('戰役回放', 'Campaign Timelapse')}</div>
           <button onClick={onClose} style={{
             background: 'transparent', color: '#a89070', border: '1px solid #5a4530',
-            borderRadius: 8, cursor: 'pointer', padding: '0.15rem 0.5rem', fontSize: '0.8rem',
+            borderRadius: 'var(--tkm-radius)', cursor: 'pointer', padding: '0.15rem 0.5rem', fontSize: '0.8rem',
           }}>✕</button>
         </div>
         {snapshots.length === 0 ? (
@@ -7664,11 +7664,11 @@ function ReplayPanel({ onClose }: { onClose: () => void }) {
         ) : (
           <>
             <canvas ref={canvasRef} width={cw} height={ch} style={{
-              width: cw, height: ch, borderRadius: 8, border: '1px solid #3a2c18', display: 'block', background: '#0e0a06',
+              width: cw, height: ch, borderRadius: 'var(--tkm-radius)', border: '1px solid #3a2c18', display: 'block', background: '#0e0a06',
             }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '0.6rem' }}>
               <button onClick={togglePlay} style={{
-                background: '#d4a84a', color: '#1a1410', border: 'none', borderRadius: 8,
+                background: '#d4a84a', color: '#1a1410', border: 'none', borderRadius: 'var(--tkm-radius)',
                 cursor: 'pointer', padding: '0.3rem 0.7rem', fontWeight: 'bold', fontSize: '0.85rem', minWidth: 64,
               }}>{playing ? t('⏸ 暫停', '⏸ Pause') : t('▶ 播放', '▶ Play')}</button>
               <input type="range" min={0} max={maxIdx} value={cur}
@@ -7849,7 +7849,7 @@ function MapHelpPanel({ onClose }: { onClose: () => void }) {
     }}>
       <div onClick={(e) => e.stopPropagation()} style={{
         background: 'linear-gradient(180deg, #1c1409 0%, #120c06 100%)',
-        border: '1px solid #5a4530', borderRadius: 12, padding: '1rem 1.2rem',
+        border: '1px solid #5a4530', borderRadius: 'var(--tkm-radius-lg)', padding: '1rem 1.2rem',
         boxShadow: '0 8px 32px rgba(0,0,0,0.7)', maxWidth: '92vw', minWidth: 270,
         fontFamily: 'var(--tkm-font-body)', color: '#d8c4a0',
       }}>
@@ -7857,7 +7857,7 @@ function MapHelpPanel({ onClose }: { onClose: () => void }) {
           <div style={{ fontWeight: 'bold', letterSpacing: '0.08rem' }}>🎮 {t('地圖操作', 'Map Controls')}</div>
           <button onClick={onClose} style={{
             background: 'transparent', color: '#a89070', border: '1px solid #5a4530',
-            borderRadius: 8, cursor: 'pointer', padding: '0.15rem 0.5rem', fontSize: '0.8rem',
+            borderRadius: 'var(--tkm-radius)', cursor: 'pointer', padding: '0.15rem 0.5rem', fontSize: '0.8rem',
           }}>✕</button>
         </div>
         <table style={{ borderCollapse: 'collapse', fontSize: '0.82rem' }}>
@@ -8336,7 +8336,7 @@ export function StrategicMap3D() {
             onClick={() => setObjOpen(true)}
             style={{
               pointerEvents: 'auto', background: 'rgba(20, 14, 8, 0.88)', color: '#d4a84a',
-              border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '0.3rem 0.55rem', cursor: 'pointer',
+              border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', padding: '0.3rem 0.55rem', cursor: 'pointer',
               fontFamily: 'var(--tkm-font-body)', fontSize: '0.75rem',
             }}
           >🎯 {t('目標', 'Goal')}</button>
@@ -8365,7 +8365,7 @@ export function StrategicMap3D() {
                 style={{
                   pointerEvents: 'auto',
                   background: 'rgba(40, 14, 8, 0.92)', border: '1px solid #e0552a',
-                  color: '#f0b0a0', borderRadius: 3, padding: '3px 9px',
+                  color: '#f0b0a0', borderRadius: 'var(--tkm-radius-xs)', padding: '3px 9px',
                   cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.75rem',
                   letterSpacing: '0.08rem', textAlign: 'left',
                   boxShadow: '0 0 10px rgba(224,85,42,0.35)',
@@ -8390,12 +8390,12 @@ export function StrategicMap3D() {
       }}>
         <span style={{
           background: 'rgba(20, 14, 8, 0.85)', color: '#d4a84a',
-          border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '0.3rem 0.7rem',
+          border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', padding: '0.3rem 0.7rem',
           fontFamily: 'var(--tkm-font-body)', fontSize: '0.85rem',
         }}>{SEASON_ZH[season]} {season}</span>
         <span style={{
           background: 'rgba(20, 14, 8, 0.85)', color: '#a8c4e0',
-          border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '0.3rem 0.7rem',
+          border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', padding: '0.3rem 0.7rem',
           fontFamily: 'var(--tkm-font-body)', fontSize: '0.85rem',
         }}>{WEATHER_ZH[weather.kind]}{weather.windPower >= 2 ? ` ${weather.windPower}` : ''}</span>
       </div>
@@ -8408,7 +8408,7 @@ export function StrategicMap3D() {
           position: 'absolute', top: 12, right: 12, zIndex: 10,
           display: 'flex', alignItems: 'center', gap: 6,
           background: 'rgba(20, 14, 8, 0.85)', color: '#a89070',
-          border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+          border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
           padding: '0.3rem 0.6rem',
           fontFamily: 'var(--tkm-font-body)', fontSize: '0.72rem',
         }}>
@@ -8455,7 +8455,7 @@ export function StrategicMap3D() {
         flexWrap: 'wrap',
         maxWidth: 'calc(100vw - 24px)',
         background: 'rgba(20, 14, 8, 0.88)',
-        border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+        border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
         padding: 4,
         boxShadow: '0 0 8px rgba(0,0,0,0.6)',
       }}>
@@ -8481,7 +8481,7 @@ export function StrategicMap3D() {
           style={{
             marginLeft: 8,
             background: '#3a2818', color: '#a89070',
-            border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
             padding: '0.3rem 0.55rem',
             cursor: 'pointer',
             fontFamily: 'var(--tkm-font-body)',
@@ -8521,7 +8521,7 @@ export function StrategicMap3D() {
           onClick={exportSnapshot}
           style={{
             marginLeft: 8, background: '#241c12', color: '#c0a878',
-            border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '0.3rem 0.55rem',
+            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', padding: '0.3rem 0.55rem',
             cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.78rem',
           }}
           title={t('把當前天下大勢存成 PNG', 'Save the current realm view as a PNG')}
@@ -8530,7 +8530,7 @@ export function StrategicMap3D() {
           onClick={() => setShowReplay(true)}
           style={{
             marginLeft: 8, background: '#241c12', color: '#c0a878',
-            border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '0.3rem 0.55rem',
+            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', padding: '0.3rem 0.55rem',
             cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.78rem',
           }}
           title={t('戰役回放 — 快進重現整局天下消長', "Campaign timelapse — fast-forward the whole campaign's territory changes")}
@@ -8734,7 +8734,7 @@ export function StrategicMap3D() {
           <div style={{
             position: 'absolute', bottom: 14, left: '50%', transform: 'translateX(-50%)',
             zIndex: 13, display: 'flex', alignItems: 'center', gap: IS_MOBILE ? '0.35rem' : '0.55rem',
-            background: 'rgba(20, 14, 8, 0.94)', border: '1px solid #b8584a', borderRadius: 4,
+            background: 'rgba(20, 14, 8, 0.94)', border: '1px solid #b8584a', borderRadius: 'var(--tkm-radius-sm)',
             padding: IS_MOBILE ? '0.3rem 0.5rem' : '0.4rem 0.8rem', fontFamily: 'var(--tkm-font-body)',
             boxShadow: '0 2px 14px rgba(0,0,0,0.6)',
             // Phones: wrap the chips instead of overflowing off-screen.

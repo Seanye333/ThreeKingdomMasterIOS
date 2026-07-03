@@ -451,7 +451,7 @@ function SaveTransferRows() {
   };
 
   const btn: React.CSSProperties = {
-    background: '#1b2531', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#e6c473',
+    background: '#1b2531', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', color: '#e6c473',
     padding: '0.3rem 0.8rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.82rem',
   };
 
@@ -506,7 +506,7 @@ function ModRows() {
   };
 
   const btn: React.CSSProperties = {
-    background: '#1b2531', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#e6c473',
+    background: '#1b2531', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', color: '#e6c473',
     padding: '0.3rem 0.8rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.82rem',
   };
 
