@@ -7842,6 +7842,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           campaignStats: {
             ...state.campaignStats,
             seasonsPlayed: (state.campaignStats.seasonsPlayed ?? 0) + 1,
+            fieldClashesWon: (state.campaignStats.fieldClashesWon ?? 0) + (result.playerFieldClashesWon ?? 0),
+            enemyColumnsStarved: (state.campaignStats.enemyColumnsStarved ?? 0) + (result.enemyColumnsStarved ?? 0),
           },
           lostItems: result.lostItems,
           diplomacy: (() => {
@@ -10313,6 +10315,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           selectedArmyId: null,
           dayFlow: df ? { ...df, encounters: df.encounters!.map((e) => (e === hit ? { ...e, fought: true } : e)) } : df,
           foughtPairs: [...(state.foughtPairs ?? []), [mineId, foeId]],
+          campaignStats: { ...state.campaignStats, engagementsFought: (state.campaignStats.engagementsFought ?? 0) + 1 },
         });
         return true;
       },
@@ -11280,6 +11283,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           nextArmies = armies;
           nextFieldPending = pending;
         }
+        // 戰記 — an interactive field clash won by the player counts too
+        // (buildFieldBattle always seats the player as attacker).
+        const playerWonFieldClash = !!tb.field && winner === 'attacker'
+          && tb.attackerForceId === state.playerForceId;
 
         // 守城戰 — assault repelled: surviving besiegers stream back to
         // their home city, their officers stand down there.
@@ -11401,6 +11408,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
 
         // Campaign stats updates.
         const newStats = { ...state.campaignStats };
+        if (playerWonFieldClash) newStats.fieldClashesWon = (newStats.fieldClashesWon ?? 0) + 1;
         newStats.totalBattles = (newStats.totalBattles ?? 0) + 1;
         const battleTotalTroops =
           tb.units.reduce((s, u) => s + u.maxTroops, 0);

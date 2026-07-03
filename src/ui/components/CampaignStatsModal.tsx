@@ -47,6 +47,9 @@ export function CampaignStatsModal({ onClose }: Props) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.82rem' }}>
           <Row label={t('遊玩季數', 'Seasons played')} value={stats.seasonsPlayed} />
           <Row label={t('交戰次數', 'Battles fought')} value={stats.totalBattles} />
+          <Row label={t('野戰截勝', 'Interceptions won')} value={stats.fieldClashesWon ?? 0} />
+          <Row label={t('親征迎戰', 'Engagements fought')} value={stats.engagementsFought ?? 0} />
+          <Row label={t('斷敵糧道', 'Enemy columns starved')} value={stats.enemyColumnsStarved ?? 0} />
         </div>
 
         <h3 style={{ fontSize: '0.7rem', letterSpacing: '0.07rem', color: '#7a8893', textTransform: 'uppercase', margin: '1rem 0 0.5rem' }}>{t('記錄', 'Records')}</h3>

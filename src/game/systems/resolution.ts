@@ -172,6 +172,9 @@ export interface ResolutionInput {
 }
 
 export interface ResolutionOutput {
+  /** 戰記 — player field-clash wins / enemy columns starved this season. */
+  playerFieldClashesWon?: number;
+  enemyColumnsStarved?: number;
   date: GameDate;
   cities: Record<EntityId, City>;
   officers: Record<EntityId, Officer>;
@@ -355,6 +358,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     attackerLosses: atk.losses, defenderLosses: def.losses, field: true,
   });
   const cancelledMarchOfficers = new Set<EntityId>();
+  // 戰記 — player field-clash wins + enemy columns starved (returned for stats).
+  let playerFieldClashesWon = 0;
+  let enemyColumnsStarved = 0;
   const troopOverride: Record<EntityId, number> = {};
   // Player-involved clashes deferred to an interactive tactical battle (AI
   // 亲征) — the armies are left intact this season and the battle is fought
@@ -484,6 +490,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       if (winSrc) cities[winSrc.id] = { ...winSrc, troops: Math.max(0, winSrc.troops - winnerCasualty) };
       if (loseSrc) cities[loseSrc.id] = { ...loseSrc, troops: Math.max(0, loseSrc.troops - loserCasualty) };
       troopOverride[winner.officerId] = Math.max(0, winner.troops - winnerCasualty);
+      if (input.playerForceId && winnerCmdr?.forceId === input.playerForceId) playerFieldClashesWon++;
       cancelledMarchOfficers.add(loser.officerId);
       // Free the loser's commander + companions so they idle at source.
       for (const id of [loser.officerId, ...(loser.additionalOfficerIds ?? [])]) {
@@ -1171,6 +1178,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const loss = Math.max(120, Math.floor(cmd.troops * 0.07));
       if (cmd.troops - loss < 300) continue;         // a remnant limps on rather than vanishing
       cmd.troops -= loss;                            // command objects carry into keptCommands
+      if (input.playerForceId && cmdr.forceId !== input.playerForceId) enemyColumnsStarved++;
       entries.push({
         cityId: null,
         kind: 'desertion',
@@ -2923,6 +2931,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     reliefPrompts: reliefPromptsOut.length > 0 ? reliefPromptsOut : undefined,
     buildingLevelDrops: buildingLevelDropsOut.length > 0 ? buildingLevelDropsOut : undefined,
     struckCityIds: struckCityIdsOut.length > 0 ? struckCityIdsOut : undefined,
+    playerFieldClashesWon: playerFieldClashesWon || undefined,
+    enemyColumnsStarved: enemyColumnsStarved || undefined,
   };
 }
 
