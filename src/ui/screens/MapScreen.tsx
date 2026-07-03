@@ -427,6 +427,15 @@ export function MapScreen() {
       if (s.tacticalBattle || s.victoryStatus === 'victory') return;
       if (s.lastReport) { s.dismissReport(); return; }
       if (s.pendingEvent) { s.dismissEvent(); return; }
+      // 觀日行軍 — with columns on the road the spectator month WALKS too:
+      // start the day flow (the flow driver above commits at day 15; no
+      // player force, so nothing pauses it). Otherwise commit straight.
+      if (s.dayFlow) return;   // a month is already walking
+      if (Object.keys(s.armies ?? {}).length > 0) {
+        s.beginDayFlow();
+        s.dayFlowSetSpeed(simSpeed * 2, false);   // brisker gait; don't clobber the player's saved pace
+        return;
+      }
       s.endSeason();
     }, Math.round(1400 / simSpeed));
     return () => clearInterval(id);

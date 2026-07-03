@@ -1186,7 +1186,7 @@ interface GameStore extends GameState {
   engageEncounter: () => boolean;
   dayFlowTick: () => void;
   dayFlowTogglePause: () => void;
-  dayFlowSetSpeed: (speed: number) => void;
+  dayFlowSetSpeed: (speed: number, persist?: boolean) => void;
   dayFlowSkip: () => void;
   /** §8.2-deep 賑災 — answer a disaster: 開倉賑濟 / 徙民就食 / 坐視不理. */
   answerRelief: (cityId: EntityId, choice: 'grant' | 'migrate' | 'ignore') => { ok: boolean; message: string };
@@ -10293,11 +10293,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const df = get().dayFlow;
         if (df) set({ dayFlow: { ...df, playing: !df.playing } });
       },
-      dayFlowSetSpeed: (speed) => {
+      dayFlowSetSpeed: (speed, persist = true) => {
         const df = get().dayFlow;
         if (df) set({ dayFlow: { ...df, speed } });
         // 記住玩家的節奏 — the chosen pace carries into every later month.
-        try { localStorage.setItem('tkm-flow-speed', String(speed)); } catch { /* headless */ }
+        // (Spectator sim passes persist=false so it never clobbers it.)
+        if (persist) { try { localStorage.setItem('tkm-flow-speed', String(speed)); } catch { /* headless */ } }
       },
       dayFlowSkip: () => set({ dayFlow: null }),
       engageEncounter: () => {
