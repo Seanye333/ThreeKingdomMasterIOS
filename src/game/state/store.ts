@@ -154,6 +154,7 @@ import {
 } from '../systems/mandateRituals';
 import { reliefFoodCost, rollGreatPlague, GREAT_PLAGUE_FLAG, RELIEF_LOYALTY_BONUS, RELIEF_IGNORE_LOYALTY_LOSS, RELIEF_MIGRATE_SHARE } from '../systems/events';
 import { prunePaint, seasonStampOf } from '../systems/hexPaint';
+import { computeDayEncounters } from '../systems/dayEncounters';
 import { TRIBES_BY_ID } from '../data/tribes';
 import type { TribeId } from '../types';
 import { addRapport, mingleRapport, getRapport, growRapportFromProximity, decayRapport, addLordRapport, decayLordRapport, getLordRapport } from '../systems/rapport';
@@ -1480,6 +1481,31 @@ function musterOptsFor(
   return { fraction: opts.fraction, keepGarrison: opts.keepGarrison, excludeCityIds };
 }
 
+/** 真日級 — predict this half-month's player-involved first contacts for
+ *  the day-flow playback. Shares its geometry with season resolution
+ *  (dayEncounters.ts), so the collision the player watches at day N is
+ *  the one the commit resolves. */
+function predictPlayerEncounters(state: GameState) {
+  const pf = state.playerForceId;
+  if (!pf) return [];
+  const marches = Object.values(state.pendingCommands).filter(
+    (c): c is Extract<Command, { type: 'march' }> => c.type === 'march',
+  );
+  if (marches.length < 2) return [];
+  const contacts = computeDayEncounters(marches, state.officers, state.cities, state.diplomacy);
+  return contacts
+    .filter((c) => state.officers[c.a.officerId]?.forceId === pf
+      || state.officers[c.b.officerId]?.forceId === pf)
+    .map((c) => ({
+      aId: c.a.officerId, bId: c.b.officerId, day: c.day,
+      x: (c.pa.x + c.pb.x) / 2, y: (c.pa.y + c.pb.y) / 2,
+      aZh: state.officers[c.a.officerId]?.name.zh ?? '?',
+      aEn: state.officers[c.a.officerId]?.name.en ?? '?',
+      bZh: state.officers[c.b.officerId]?.name.zh ?? '?',
+      bEn: state.officers[c.b.officerId]?.name.en ?? '?',
+    }));
+}
+
 export const useGameStore = create<GameStore>()(
   persist(
     (set, get) => ({
@@ -1581,6 +1607,12 @@ export const useGameStore = create<GameStore>()(
         const army = state.armies[armyId];
         if (!cmd || cmd.type !== 'march' || !army) return false;
         if (army.forceId !== state.playerForceId) return false;
+        // 真日級 — once the encounter banner fired, this column is ENGAGED:
+        // the enemy is upon it; there is no marching order that un-meets them.
+        if (state.dayFlow?.encounters?.some((e) => e.fired && (e.aId === armyId || e.bId === armyId))) {
+          set({ actionToast: { key: (state.actionToast?.key ?? 0) + 1, zh: '兩軍已接戰 — 此軍無法改道!', en: 'Engaged — this column can no longer reroute!', tone: 'warn' as const } });
+          return false;
+        }
         const src = state.cities[cmd.cityId];
         if (!src) return false;
         const sp = cityPos(src);
@@ -1602,6 +1634,15 @@ export const useGameStore = create<GameStore>()(
             ? { actionToast: { key: (state.actionToast?.key ?? 0) + 1, zh: '改道令已下 — 本旬即刻轉向新目標', en: 'Rerouted — takes effect this very turn', tone: 'ok' as const } }
             : {}),
         });
+        // 真日級 — the road changed, so the collision forecast changes with
+        // it: keep engagements already fired, re-sweep everything else.
+        const after = get();
+        if (after.dayFlow) {
+          const fired = (after.dayFlow.encounters ?? []).filter((e) => e.fired);
+          const firedPairs = new Set(fired.map((e) => `${e.aId}|${e.bId}`));
+          const fresh = predictPlayerEncounters(after).filter((e) => !firedPairs.has(`${e.aId}|${e.bId}`));
+          set({ dayFlow: { ...after.dayFlow, encounters: [...fired, ...fresh].sort((a, b) => a.day - b.day) } });
+        }
         return true;
       },
 
@@ -10112,13 +10153,34 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             playing: true,
             speed: state.dayFlow?.speed
               ?? (typeof localStorage !== 'undefined' ? Number(localStorage.getItem('tkm-flow-speed')) || 1 : 1),
+            encounters: predictPlayerEncounters(state),
           },
         });
       },
       dayFlowTick: () => {
         const df = get().dayFlow;
         if (!df || !df.playing) return;
-        set({ dayFlow: { ...df, day: Math.min(df.total, df.day + 1) } });
+        const day = Math.min(df.total, df.day + 1);
+        // 真日級 — did the walk just reach a predicted first contact? Fire
+        // the banner, pause the flow, lock the pair (no rerouting out now).
+        const hit = df.encounters?.find((e) => !e.fired && e.day <= day);
+        if (hit) {
+          const state = get();
+          const lang2 = (zh: string, en: string) => ({ zh, en });
+          const msg = lang2(
+            `⚔ 第${Math.max(1, hit.day)}日 — ${hit.aZh} 與 ${hit.bZh} 兩軍相遇!`,
+            `⚔ Day ${Math.max(1, hit.day)} — ${hit.aEn} and ${hit.bEn} collide on the march!`,
+          );
+          set({
+            dayFlow: {
+              ...df, day, playing: false,
+              encounters: df.encounters!.map((e) => (e === hit ? { ...e, fired: true } : e)),
+            },
+            actionToast: { key: (state.actionToast?.key ?? 0) + 1, ...msg, tone: 'warn' as const },
+          });
+          return;
+        }
+        set({ dayFlow: { ...df, day } });
       },
       dayFlowTogglePause: () => {
         const df = get().dayFlow;

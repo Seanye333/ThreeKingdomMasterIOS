@@ -2941,6 +2941,35 @@ function QueuedBattles3D() {
   );
 }
 
+/** 真日級遭遇 — while the day-flow plays, a fired first-contact shows a
+ *  pulsing ⚔ at the meeting point (the pair is engaged; resolution lands
+ *  the actual clash at commit). Transient with the flow. */
+function DayEncounterMarks3D() {
+  const dayFlow = useGameStore((s) => s.dayFlow);
+  const fired = (dayFlow?.encounters ?? []).filter((e) => e.fired);
+  if (fired.length === 0) return null;
+  return (
+    <group>
+      {fired.map((e, i) => {
+        const [wx, wz] = pxToWorld(e.x, e.y);
+        const y = sampleTerrainHeight(wx, wz) + 0.06;
+        return (
+          <group key={`${e.aId}-${e.bId}`}>
+            <BattlePulseRing3D wx={wx} y={y} wz={wz} color="#e0552a" phase={i * 0.31} />
+            <Html position={[wx, y + 0.7, wz]} center distanceFactor={10} zIndexRange={[45, 35]} style={{ pointerEvents: 'none' }}>
+              <div style={{
+                background: 'rgba(40, 14, 8, 0.88)', border: '1px solid #e0552a', borderRadius: 'var(--tkm-radius-xs)',
+                padding: '1px 7px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px',
+                color: '#f0b0a0', whiteSpace: 'nowrap', letterSpacing: '1px',
+              }}>⚔ {e.aZh} × {e.bZh}</div>
+            </Html>
+          </group>
+        );
+      })}
+    </group>
+  );
+}
+
 function FieldBattleMarks3D({ marks }: {
   marks: Array<{ x: number; y: number; kind: 'ambush' | 'camp' | 'clash'; seasonsLeft: number }>;
 }) {
@@ -6927,6 +6956,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
       <FieldClashMelee3D marks={fieldBattleMarks} />
       <IgnitionDust3D />
       <QueuedBattles3D />
+      <DayEncounterMarks3D />
       <BeaconAlerts3D />
       <BurningCities3D />
       <EventMarks3D cities={cities} hidePx={battleSitePx} visibleCityIds={fog?.visibleCityIds ?? null} onPick={(id) => selectCity(id)} />

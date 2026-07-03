@@ -281,7 +281,16 @@ export interface GameState {
   musters: Record<string, import('../systems/muster').MusterCampaign>;
   /** 日流 — turn playback: after 進行, the half-month plays out day by day
    *  (armies step cell-to-cell); pausable/speedable. Transient, not saved. */
-  dayFlow: { key: number; day: number; total: number; playing: boolean; speed: number } | null;
+  dayFlow: {
+    key: number; day: number; total: number; playing: boolean; speed: number;
+    /** 真日級遭遇 — player-involved first contacts predicted for this
+     *  half-month (same geometry the resolution uses). `fired` = the flow
+     *  reached that day: banner up, pair engaged — no rerouting out. */
+    encounters?: Array<{
+      aId: string; bId: string; day: number; x: number; y: number;
+      aZh: string; aEn: string; bZh: string; bEn: string; fired?: boolean;
+    }>;
+  } | null;
   /** 塗色 (RTK-XIV) — lattice cells walked by marching columns (deviation
    *  dictionary "col,row" → {force, seasonStamp}); TTL-pruned each season. */
   hexPaint: import('../systems/hexPaint').HexPaint;

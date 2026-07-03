@@ -41,6 +41,7 @@ import { rollCivicEvents } from './civicEvents';
 import { settleRefugees, REFUGEE_SHED_FRAC } from './refugees';
 import { stepConvoys, resolveConvoyRaids, resolveRaidStrike, provisionNeeded, consumeRations, type Convoy, type ConvoyRaid } from './convoy';
 import { forcedMarchAttrition, cautiousAttritionMul, paceExposureMul } from './marchPace';
+import { computeDayEncounters, INTERCEPT_DIST } from './dayEncounters';
 import { stepExpeditions, expeditionSpeedMul } from './expedition';
 import { embassyTargets, embassyLegSeasons } from './foreignRealm';
 import type { Expedition, ExpeditionMode } from '../types';
@@ -357,24 +358,22 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   // after the report; these officers are skipped by the abstract passes.
   const deferredOfficers = new Set<EntityId>();
   const pendingFieldBattles: Array<{ playerArmyId: EntityId; enemyArmyId: EntityId; x: number; y: number }> = [];
-  const INTERCEPT_DIST = 55 * WORLD_SCALE;   // scaled ×1.21, then ×WORLD_SCALE
-  for (let i = 0; i < allMarches.length; i++) {
-    for (let j = i + 1; j < allMarches.length; j++) {
-      const a = allMarches[i];
-      const b = allMarches[j];
+  // 真日級 — day-swept first contacts (see dayEncounters.ts): each hostile
+  // pair is sampled along its actual daily walk, so columns can no longer
+  // phase through each other between season samples. Contacts resolve in
+  // DAY order — a column broken on day 3 never makes its day 11 clash.
+  // The day-flow playback shares this exact geometry, so the collision the
+  // player watched at day 8 is the one resolved here.
+  const dayContacts = computeDayEncounters(allMarches, officers, cities, input.diplomacy);
+  for (const contact of dayContacts) {
+    {
+      const { a, b, pa, pb } = contact;
+      const contactDay = Math.max(1, contact.day);
       if (cancelledMarchOfficers.has(a.officerId) || cancelledMarchOfficers.has(b.officerId)) continue;
       if (deferredOfficers.has(a.officerId) || deferredOfficers.has(b.officerId)) continue;
       const oa = officers[a.officerId];
       const ob = officers[b.officerId];
-      if (!oa?.forceId || !ob?.forceId || oa.forceId === ob.forceId) continue;
-      if (!isHostilePermitted(input.diplomacy, oa.forceId, ob.forceId)) continue;
-      const pa = armyPosition(a);
-      const pb = armyPosition(b);
-      if (!pa || !pb) continue;
-      // 行軍暴露 — a forced-marched column (strung out) is caught at longer range;
-      // a cautious, screened one is harder to run down. Use the more exposed side.
-      const catchDist = INTERCEPT_DIST * Math.max(paceExposureMul(a.pace), paceExposureMul(b.pace));
-      if (Math.hypot(pa.x - pb.x, pa.y - pb.y) > catchDist) continue;
+      if (!oa?.forceId || !ob?.forceId) continue;
 
       // AI 亲征 — a significant clash involving the player is handed off to an
       // interactive tactical battle instead of being auto-resolved here. Both
@@ -530,12 +529,12 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       entries.push({
         cityId: winner.targetCityId,
         kind: 'battle',
-        text: navEn + (ambush
+        text: `Day ${contactDay}: ` + navEn + (ambush
           ? `Ambush: ${wName.en} lay in wait${siteEn} and fell upon ${lName.en}'s column, shattering it (−${winnerCasualty} vs −${loserCasualty}). ${lName.en}'s advance is broken.`
           : campStormed
             ? `Camp stormed: ${detEn}${wName.en} overran ${lName.en}'s dug-in camp${siteEn} and seized the ground (−${winnerCasualty} vs −${loserCasualty}).`
             : `${onWater ? 'Naval clash' : 'Field clash'}: ${wName.en} intercepted ${lName.en}${siteEn} and routed them (−${winnerCasualty} vs −${loserCasualty}). ${lName.en}'s advance is broken.`),
-        textZh: navZh + (ambush
+        textZh: `第${contactDay}日,` + navZh + (ambush
           ? `伏擊：${wName.zh}${siteZh}設伏以待,驟擊${lName.zh}之軍而潰之（我軍 −${winnerCasualty}，敵軍 −${loserCasualty}）。${lName.zh}之進軍受挫。`
           : campStormed
             ? `拔寨：${detZh}${wName.zh}${siteZh}強攻${lName.zh}之營寨,破之而據其地（我軍 −${winnerCasualty}，敵軍 −${loserCasualty}）。`
