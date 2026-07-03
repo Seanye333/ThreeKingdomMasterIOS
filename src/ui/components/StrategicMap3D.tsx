@@ -1,4 +1,4 @@
-import { Suspense, createContext, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, createContext, useEffect, useMemo, useRef, useState , useLayoutEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Html, Line, OrbitControls } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
@@ -43,6 +43,7 @@ import { LocatorMap } from './LocatorMap';
 import { ObjectivePanel } from './ObjectivePanel';
 import { SelectionRing3D } from './SelectionRing3D';
 import { computeDayEncounters, marchPositionAtDay } from '../../game/systems/dayEncounters';
+import { supplyPath } from '../../game/systems/hexPaint';
 import { PortPanel } from './PortPanel';
 import { FortPanel } from './FortPanel';
 import { TribePanel } from './TribePanel';
@@ -4788,6 +4789,74 @@ function HeadingTracker({ controlsRef, onHeading }: {
   return null;
 }
 
+/** 糧道可視 — the selected long-range column's supply ribbon: the actual
+ *  BFS corridor of own paint back to a friendly city glows gold; a cut
+ *  ribbon flags the column red with a 斷糧 chip. Same reachability the
+ *  season resolution starves by, so what you see is what will bleed. */
+function SupplyCorridor3D({ armyId }: { armyId: string }) {
+  const hexPaint = useGameStore((s) => s.hexPaint ?? EMPTY_HEX_PAINT);
+  const cities = useGameStore((s) => s.cities);
+  const pendingCommands = useGameStore((s) => s.pendingCommands);
+  const armies = useGameStore((s) => s.armies);
+  const playerForceId = useGameStore((s) => s.playerForceId);
+  const t = useT();
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const viz = useMemo(() => {
+    const cmd = pendingCommands[armyId];
+    const army = armies[armyId];
+    if (!cmd || cmd.type !== 'march' || !army || !playerForceId) return null;
+    if (army.forceId !== playerForceId) return null;
+    if (Math.max(1, cmd.totalSeasons ?? 1) < 2) return null;  // short hops carry their own packs
+    const cell = geoHexAt(army.x, army.y);
+    const own = Object.values(cities)
+      .filter((c) => c.ownerForceId === playerForceId)
+      .map((c) => { const cp = cityPos(c); return geoHexAt(cp.x, cp.y); });
+    const path = supplyPath(hexPaint, playerForceId, cell, own);
+    return { path, ax: army.x, ay: army.y };
+  }, [armyId, pendingCommands, armies, cities, hexPaint, playerForceId]);
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+  useLayoutEffect(() => {
+    const m = ref.current;
+    if (!m || !viz?.path) return;
+    viz.path.forEach((cell, i) => {
+      const c = geoHexCenter(cell.col, cell.row);
+      const [wx, wz] = pxToWorld(c.x, c.y);
+      dummy.position.set(wx, sampleTerrainHeight(wx, wz) + 0.045, wz);
+      dummy.rotation.set(-Math.PI / 2, 0, 0);
+      dummy.updateMatrix();
+      m.setMatrixAt(i, dummy.matrix);
+    });
+    m.instanceMatrix.needsUpdate = true;
+    m.computeBoundingSphere();
+  }, [viz, dummy]);
+  if (!viz) return null;
+  if (!viz.path) {
+    const [wx, wz] = pxToWorld(viz.ax, viz.ay);
+    const y = sampleTerrainHeight(wx, wz);
+    return (
+      <group raycast={() => null}>
+        <mesh position={[wx, y + 0.05, wz]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
+          <ringGeometry args={[0.5, 0.72, 28]} />
+          <meshBasicMaterial color="#e0552a" transparent opacity={0.85} depthWrite={false} toneMapped={false} />
+        </mesh>
+        <Html position={[wx, y + 1.35, wz]} center distanceFactor={10} zIndexRange={[45, 35]} style={{ pointerEvents: 'none' }}>
+          <div style={{
+            background: 'rgba(40, 14, 8, 0.92)', border: '1px solid #e0552a', borderRadius: 'var(--tkm-radius-xs)',
+            padding: '1px 7px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px',
+            color: '#f0b0a0', whiteSpace: 'nowrap', letterSpacing: '1px',
+          }}>⚠ {t('糧道已斷 — 每季折兵', 'Supply CUT — bleeding every turn')}</div>
+        </Html>
+      </group>
+    );
+  }
+  return (
+    <instancedMesh key={viz.path.length} ref={ref} args={[undefined, undefined, viz.path.length]} raycast={() => null}>
+      <circleGeometry args={[HEXW_R * 0.55, 6]} />
+      <meshBasicMaterial color="#e8c05a" transparent opacity={0.42} depthWrite={false} toneMapped={false} />
+    </instancedMesh>
+  );
+}
+
 function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteClick, onScenicClick, onQuickAction, mapStyle, dioSelectedId, dioMode, dioCast, dioArcs, dioFx, dioHover, onDioHover, onDioramaTile, onFocusWorld, onDragLock }: {
   overlayMode: OverlayMode;
   mapStyle: 'classic' | 'hex';
@@ -5136,6 +5205,8 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
       <Landmarks3D cities={cities} />
       <UniqueLandmarks3D cities={cities} />
       <MarchingArmies cities={cities} pendingCommands={visibleCommands} forces={forces} officers={officers} ports={portsForMarch} selectedArmyId={selectedArmyId3D} onArmyClick={handleArmyClick} onArmyPressStart={handleArmyPressStart} hideNearPx={battleSitePx} />
+      {/* 糧道可視 — selected long-range column shows its supply ribbon. */}
+      {selectedArmyId3D && <SupplyCorridor3D armyId={selectedArmyId3D} />}
       {/* 拖拽行軍 — live drag: capture plane + ghost line + landing ring/ETA. */}
       {dragMarch && (() => {
         const a = armiesState[dragMarch.id];

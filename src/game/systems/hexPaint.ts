@@ -133,6 +133,54 @@ export function prunePaint(
  * by construction — the cut happens when the corridor is repainted by enemy
  * boots, grasses over (TTL), or the origin city falls.
  */
+/**
+ * 糧道尋徑 — the actual corridor: BFS (with parents) from the column's cell
+ * through its own paint to the nearest friendly-city cell. Returns the cell
+ * path (column → city) for the UI to light up, or null when the ribbon is
+ * cut. Same reachability as isSupplyConnected, so what the map shows is
+ * what the season resolves.
+ */
+export function supplyPath(
+  paint: HexPaint,
+  forceId: EntityId,
+  from: { col: number; row: number },
+  ownCityCells: Array<{ col: number; row: number }>,
+  maxVisit = 4000,
+): Array<{ col: number; row: number }> | null {
+  const nearCity = (c: { col: number; row: number }): boolean =>
+    ownCityCells.some((cc) => Math.abs(cc.col - c.col) <= 2 && Math.abs(cc.row - c.row) <= 2);
+  if (nearCity(from)) return [from];
+  const startKey = hexPaintKey(from.col, from.row);
+  if (paint[startKey]?.f !== forceId) return null;
+  const parent = new Map<string, string | null>([[startKey, null]]);
+  const queue: Array<{ col: number; row: number }> = [from];
+  let visits = 0;
+  const unwind = (endKey: string, end: { col: number; row: number }) => {
+    const path: Array<{ col: number; row: number }> = [end];
+    let k: string | null = parent.get(endKey) ?? null;
+    while (k) {
+      const [c, r] = k.split(',').map(Number);
+      path.push({ col: c, row: r });
+      k = parent.get(k) ?? null;
+    }
+    return path.reverse();   // column → ... → city-adjacent cell? (start first)
+  };
+  while (queue.length > 0 && visits < maxVisit) {
+    const cur = queue.shift()!;
+    visits++;
+    const curKey = hexPaintKey(cur.col, cur.row);
+    for (const nb of hexNeighbors(cur.col, cur.row)) {
+      const k = hexPaintKey(nb.col, nb.row);
+      if (parent.has(k)) continue;
+      if (paint[k]?.f !== forceId) continue;
+      parent.set(k, curKey);
+      if (nearCity(nb)) return unwind(k, nb);
+      queue.push(nb);
+    }
+  }
+  return null;
+}
+
 export function isSupplyConnected(
   paint: HexPaint,
   forceId: EntityId,

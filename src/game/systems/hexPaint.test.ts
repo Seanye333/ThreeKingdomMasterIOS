@@ -10,6 +10,7 @@ import {
   hexPaintKey,
   PAINT_TTL_SEASONS,
   type HexPaint,
+  supplyPath,
 } from './hexPaint';
 
 describe('stampPaintAlongRoute', () => {
@@ -106,5 +107,30 @@ describe('isSupplyConnected(補給線)', () => {
 
   it('standing next to your own city never starves', () => {
     expect(isSupplyConnected({}, 'wei', { col: 60, row: 40 }, [{ col: 61, row: 41 }])).toBe(true);
+  });
+});
+
+describe('supplyPath — 糧道尋徑', () => {
+  const cells = (pairs: Array<[number, number]>, f = 'wei', t = 100): HexPaint =>
+    Object.fromEntries(pairs.map(([c, r]) => [hexPaintKey(c, r), { f, t }]));
+
+  it('returns the corridor from column back to the city', () => {
+    const paint = cells([[60, 40], [61, 40], [62, 40], [63, 40], [64, 40]]);
+    const path = supplyPath(paint, 'wei', { col: 64, row: 40 }, [{ col: 59, row: 40 }]);
+    expect(path).toBeTruthy();
+    expect(path![0]).toEqual({ col: 64, row: 40 });
+    // ends beside the city (within Chebyshev 2 of 59,40)
+    const last = path![path!.length - 1];
+    expect(Math.abs(last.col - 59)).toBeLessThanOrEqual(2);
+  });
+
+  it('a cut ribbon yields null (matches isSupplyConnected)', () => {
+    const paint = cells([[60, 40], [61, 40], [62, 40], [63, 40], [64, 40]]);
+    paint[hexPaintKey(62, 40)] = { f: 'shu', t: 101 };
+    expect(supplyPath(paint, 'wei', { col: 64, row: 40 }, [{ col: 59, row: 40 }])).toBeNull();
+  });
+
+  it('standing beside your own city returns a trivial one-cell path', () => {
+    expect(supplyPath({}, 'wei', { col: 60, row: 40 }, [{ col: 61, row: 41 }])).toEqual([{ col: 60, row: 40 }]);
   });
 });
