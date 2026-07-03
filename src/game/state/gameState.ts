@@ -290,6 +290,13 @@ export interface GameState {
       aId: string; bId: string; day: number; x: number; y: number;
       aZh: string; aEn: string; bZh: string; bEn: string; fired?: boolean;
     }>;
+    /** 兵臨之日 — arrivals landing this half-month (own assaults/garrisons
+     *  and hostile columns reaching YOUR city); playback pauses on the day. */
+    arrivals?: Array<{
+      id: string; day: number; x: number; y: number;
+      kind: 'assault' | 'garrison' | 'incoming';
+      zh: string; en: string; fired?: boolean;
+    }>;
   } | null;
   /** 跟拍 — during the day flow the camera glides after your lead column. */
   dayFlowFollow: boolean;

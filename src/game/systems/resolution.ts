@@ -41,7 +41,7 @@ import { rollCivicEvents } from './civicEvents';
 import { settleRefugees, REFUGEE_SHED_FRAC } from './refugees';
 import { stepConvoys, resolveConvoyRaids, resolveRaidStrike, provisionNeeded, consumeRations, type Convoy, type ConvoyRaid } from './convoy';
 import { forcedMarchAttrition, cautiousAttritionMul, paceExposureMul } from './marchPace';
-import { computeDayEncounters, INTERCEPT_DIST } from './dayEncounters';
+import { computeDayEncounters, arrivalDayOf, INTERCEPT_DIST } from './dayEncounters';
 import { stepExpeditions, expeditionSpeedMul } from './expedition';
 import { embassyTargets, embassyLegSeasons } from './foreignRealm';
 import type { Expedition, ExpeditionMode } from '../types';
@@ -826,8 +826,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       entries.push({
         cityId: target.id,
         kind: 'battle',
-        text: `${atkOff.name.en}'s host (${cmd.troops.toLocaleString()}) is at the gates of ${target.name.en} — man the walls!`,
-        textZh: `${atkOff.name.zh}率軍 ${cmd.troops.toLocaleString()} 兵臨${target.name.zh}城下 — 守城戰開！`,
+        text: `Day ${arrivalDayOf(cmd) ?? '?'}: ${atkOff.name.en}'s host (${cmd.troops.toLocaleString()}) is at the gates of ${target.name.en} — man the walls!`,
+        textZh: `第${arrivalDayOf(cmd) ?? '?'}日,${atkOff.name.zh}率軍 ${cmd.troops.toLocaleString()} 兵臨${target.name.zh}城下 — 守城戰開！`,
       });
     }
     if (pendingSiegeDefenses.length > 0) {

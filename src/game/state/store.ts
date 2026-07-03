@@ -154,7 +154,7 @@ import {
 } from '../systems/mandateRituals';
 import { reliefFoodCost, rollGreatPlague, GREAT_PLAGUE_FLAG, RELIEF_LOYALTY_BONUS, RELIEF_IGNORE_LOYALTY_LOSS, RELIEF_MIGRATE_SHARE } from '../systems/events';
 import { prunePaint, seasonStampOf, hexPaintKey } from '../systems/hexPaint';
-import { computeDayEncounters, marchPositionAtDay } from '../systems/dayEncounters';
+import { computeDayEncounters, marchPositionAtDay, arrivalDayOf } from '../systems/dayEncounters';
 import { TRIBES_BY_ID } from '../data/tribes';
 import type { TribeId } from '../types';
 import { addRapport, mingleRapport, getRapport, growRapportFromProximity, decayRapport, addLordRapport, decayLordRapport, getLordRapport } from '../systems/rapport';
@@ -1507,6 +1507,45 @@ function predictPlayerEncounters(state: GameState) {
     }));
 }
 
+/** 兵臨之日 — player-relevant arrivals for the day-flow playback. */
+function predictPlayerArrivals(state: GameState) {
+  const pf = state.playerForceId;
+  if (!pf) return [];
+  const out: NonNullable<NonNullable<GameState['dayFlow']>['arrivals']> = [];
+  for (const cmd of Object.values(state.pendingCommands)) {
+    if (cmd.type !== 'march') continue;
+    const day = arrivalDayOf(cmd);
+    if (day == null) continue;
+    const o = state.officers[cmd.officerId];
+    if (!o?.forceId) continue;
+    const dst = marchDestCoords(cmd, state.cities);
+    if (!dst) continue;
+    const target = state.cities[cmd.targetCityId];
+    const mine = o.forceId === pf;
+    if (mine && cmd.targetX == null && target) {
+      const hostile = !!target.ownerForceId && target.ownerForceId !== pf;
+      out.push({
+        id: cmd.officerId, day, x: dst.x, y: dst.y,
+        kind: hostile ? 'assault' : 'garrison',
+        zh: hostile ? `${o.name.zh}兵臨${target.name.zh}城下` : `${o.name.zh}抵達${target.name.zh}`,
+        en: hostile ? `${o.name.en} reaches the walls of ${target.name.en}` : `${o.name.en} arrives at ${target.name.en}`,
+      });
+    } else if (mine && cmd.targetX != null) {
+      out.push({
+        id: cmd.officerId, day, x: dst.x, y: dst.y, kind: 'garrison',
+        zh: `${o.name.zh}進駐野地紮營`, en: `${o.name.en} digs in on the field`,
+      });
+    } else if (!mine && cmd.targetX == null && target?.ownerForceId === pf) {
+      out.push({
+        id: cmd.officerId, day, x: dst.x, y: dst.y, kind: 'incoming',
+        zh: `${o.name.zh}軍兵臨${target.name.zh}!`, en: `${o.name.en}'s host reaches ${target.name.zh}!`,
+      });
+    }
+  }
+  out.sort((a, b) => a.day - b.day);
+  return out;
+}
+
 export const useGameStore = create<GameStore>()(
   persist(
     (set, get) => ({
@@ -1642,7 +1681,14 @@ export const useGameStore = create<GameStore>()(
           const fired = (after.dayFlow.encounters ?? []).filter((e) => e.fired);
           const firedPairs = new Set(fired.map((e) => `${e.aId}|${e.bId}`));
           const fresh = predictPlayerEncounters(after).filter((e) => !firedPairs.has(`${e.aId}|${e.bId}`));
-          set({ dayFlow: { ...after.dayFlow, encounters: [...fired, ...fresh].sort((a, b) => a.day - b.day) } });
+          const firedArr = (after.dayFlow.arrivals ?? []).filter((a) => a.fired);
+          const firedIds = new Set(firedArr.map((a) => a.id));
+          const freshArr = predictPlayerArrivals(after).filter((a) => !firedIds.has(a.id));
+          set({ dayFlow: {
+            ...after.dayFlow,
+            encounters: [...fired, ...fresh].sort((a, b) => a.day - b.day),
+            arrivals: [...firedArr, ...freshArr].sort((a, b) => a.day - b.day),
+          } });
         }
         return true;
       },
@@ -10155,6 +10201,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             speed: state.dayFlow?.speed
               ?? (typeof localStorage !== 'undefined' ? Number(localStorage.getItem('tkm-flow-speed')) || 1 : 1),
             encounters: predictPlayerEncounters(state),
+            arrivals: predictPlayerArrivals(state),
           },
           dayFlowFollow: state.dayFlowFollow
             || (typeof localStorage !== 'undefined' && localStorage.getItem('tkm-flow-follow') === '1'),
@@ -10207,6 +10254,25 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             },
             ...(repainted ? { hexPaint: paint } : {}),
             actionToast: { key: (state.actionToast?.key ?? 0) + 1, ...msg, tone: 'warn' as const },
+          });
+          return;
+        }
+        // 兵臨之日 — pause the walk when a relevant column reaches its goal.
+        const landed = df.arrivals?.find((a) => !a.fired && a.day <= day);
+        if (landed) {
+          const icon = landed.kind === 'incoming' ? '🔥' : landed.kind === 'assault' ? '⛨' : '🏕';
+          set({
+            dayFlow: {
+              ...df, day, playing: false,
+              arrivals: df.arrivals!.map((a) => (a === landed ? { ...a, fired: true } : a)),
+            },
+            ...(repainted ? { hexPaint: paint } : {}),
+            actionToast: {
+              key: (get().actionToast?.key ?? 0) + 1,
+              zh: `${icon} 第${landed.day}日 — ${landed.zh}`,
+              en: `${icon} Day ${landed.day} — ${landed.en}`,
+              tone: landed.kind === 'incoming' ? 'warn' as const : 'ok' as const,
+            },
           });
           return;
         }

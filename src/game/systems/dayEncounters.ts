@@ -126,3 +126,20 @@ export function computeDayEncounters<M extends MarchGeom>(
   contacts.sort((x, y) => x.day - y.day);
   return contacts;
 }
+
+/**
+ * 兵臨之日 — the day (1..DAY_TICKS) an arriving column reaches its
+ * destination this half-month, or null if it isn't arriving yet. Derived
+ * from the same clamped walk the playback plays: t caps at 0.95, so a
+ * final-slice column stands at the gates when (elapsed+0.5+d/15)/total
+ * crosses it — assault day, not assault turn.
+ */
+export function arrivalDayOf(cmd: MarchGeom): number | null {
+  if (cmd.holding) return null;
+  const total = Math.max(1, cmd.totalSeasons ?? 1);
+  const remaining = cmd.seasonsRemaining ?? 1;
+  if (remaining > 1) return null;
+  const elapsed = total - remaining;
+  const d = Math.ceil(DAY_TICKS * (0.95 * total - elapsed - 0.5));
+  return Math.max(1, Math.min(DAY_TICKS, d));
+}

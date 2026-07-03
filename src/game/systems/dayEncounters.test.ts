@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeDayEncounters, marchPositionAtDay, INTERCEPT_DIST } from './dayEncounters';
+import { computeDayEncounters, marchPositionAtDay, arrivalDayOf, INTERCEPT_DIST } from './dayEncounters';
 import { resolveSeason } from './resolution';
 import { buildInitialCities } from '../data/cities';
 import { cityPos } from '../data/cityGeo';
@@ -118,5 +118,20 @@ describe('resolveSeason — 真日級拦截接入', () => {
     const clash = out.report.entries.find((e) => /第\d+日,/.test(e.textZh ?? ''));
     expect(clash).toBeTruthy();
     expect(clash!.kind).toBe('battle');
+  });
+});
+
+describe('arrivalDayOf — 兵臨之日', () => {
+  it('a one-season march stands at the gates around day 7', () => {
+    const d = arrivalDayOf({ officerId: 'x', cityId: 'a', targetCityId: 'b', totalSeasons: 1, seasonsRemaining: 1 });
+    expect(d).toBe(7);
+  });
+  it('the final slice of a two-season march lands around day 6', () => {
+    const d = arrivalDayOf({ officerId: 'x', cityId: 'a', targetCityId: 'b', totalSeasons: 2, seasonsRemaining: 1 });
+    expect(d).toBe(6);
+  });
+  it('columns still on the road (or dug in) yield null', () => {
+    expect(arrivalDayOf({ officerId: 'x', cityId: 'a', targetCityId: 'b', totalSeasons: 3, seasonsRemaining: 2 })).toBeNull();
+    expect(arrivalDayOf({ officerId: 'x', cityId: 'a', targetCityId: 'b', totalSeasons: 1, seasonsRemaining: 1, holding: true })).toBeNull();
   });
 });

@@ -444,9 +444,30 @@ export function QueuedBattles3D() {
 export function DayEncounterMarks3D() {
   const dayFlow = useGameStore((s) => s.dayFlow);
   const fired = (dayFlow?.encounters ?? []).filter((e) => e.fired);
-  if (fired.length === 0) return null;
+  const landed = (dayFlow?.arrivals ?? []).filter((a) => a.fired);
+  if (fired.length === 0 && landed.length === 0) return null;
   return (
     <group>
+      {/* 兵臨之日 — fired arrivals: own assault gold, incoming host red. */}
+      {landed.map((a, i) => {
+        const [wx, wz] = pxToWorld(a.x, a.y);
+        const y = sampleTerrainHeight(wx, wz) + 0.06;
+        const hot = a.kind === 'incoming';
+        const tint = hot ? '#e0552a' : '#d4a84a';
+        return (
+          <group key={`arr-${a.id}`}>
+            <BattlePulseRing3D wx={wx} y={y} wz={wz} color={tint} phase={0.5 + i * 0.29} />
+            <Html position={[wx, y + 0.7, wz]} center distanceFactor={10} zIndexRange={[45, 35]} style={{ pointerEvents: 'none' }}>
+              <div style={{
+                background: hot ? 'rgba(40, 14, 8, 0.88)' : 'rgba(30, 22, 8, 0.88)',
+                border: `1px solid ${tint}`, borderRadius: 'var(--tkm-radius-xs)',
+                padding: '1px 7px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px',
+                color: hot ? '#f0b0a0' : '#f0d98a', whiteSpace: 'nowrap', letterSpacing: '1px',
+              }}>{hot ? '🔥' : a.kind === 'assault' ? '⛨' : '🏕'} {a.zh}</div>
+            </Html>
+          </group>
+        );
+      })}
       {fired.map((e, i) => {
         const [wx, wz] = pxToWorld(e.x, e.y);
         const y = sampleTerrainHeight(wx, wz) + 0.06;
