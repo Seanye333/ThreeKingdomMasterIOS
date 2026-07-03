@@ -194,8 +194,31 @@ function InsideBuilding3D({ coord, buildingId, level }: {
       commands: cat === 'culture' ? ['promote-learning'] : undefined,
     });
   };
+  // 懸停快覽 — desktop: name + level + what the building does, without the
+  // click-through to the full inspect card. (Touch taps = inspect already.)
+  const [hoveredB, setHoveredB] = useState(false);
   return (
-    <group position={[x, 0, z]} onClick={onInspectBuilding}>
+    <group
+      position={[x, 0, z]}
+      onClick={onInspectBuilding}
+      onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer'; setHoveredB(true); }}
+      onPointerOut={() => { document.body.style.cursor = ''; setHoveredB(false); }}
+    >
+      {hoveredB && (
+        <Html position={[0, h + 1.15, 0]} center distanceFactor={13} zIndexRange={[44, 34]} style={{ pointerEvents: 'none' }}>
+          <div style={{
+            background: 'rgba(18,12,6,0.94)', border: `1px solid ${def.color}`, borderRadius: 'var(--tkm-radius-sm)',
+            padding: '3px 9px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px',
+            color: '#e7d6ad', whiteSpace: 'nowrap', lineHeight: 1.5, maxWidth: 260,
+            boxShadow: '0 2px 10px rgba(0,0,0,0.6)',
+          }}>
+            <div style={{ fontWeight: 'bold', letterSpacing: '0.5px' }}>{def.nameZh} <span style={{ color: '#c0a878', fontWeight: 'normal' }}>lv{level}</span></div>
+            <div style={{ color: '#bfae86', whiteSpace: 'normal', maxWidth: 240 }}>
+              {(BUILDING_DEFS_BY_ID[buildingId]?.descriptionZh ?? BUILDING_DEFS_BY_ID[buildingId]?.description ?? '').slice(0, 60)}
+            </div>
+          </div>
+        </Html>
+      )}
       {/* 落成金環 — expanding burst on level-up */}
       <mesh ref={burstRef} visible={false} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.12, 0]} raycast={() => null}>
         <ringGeometry args={[0.82, 1, 28]} />
