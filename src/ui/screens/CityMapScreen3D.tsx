@@ -2339,20 +2339,26 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, g
         avenueLanterns.push({ x: a.x + 0.92, z: a.z });
       }
     });
-    // Pedestrians strolling the main avenue (more when populous) + an ox-cart.
+    // Pedestrians strolling the main avenue — density is the city's pulse:
+    // population brings people, commerce brings traders; a bustling
+    // market-town street and a hollowed-out frontier town read apart at
+    // a glance. High commerce also rolls a second ox-cart (goods moving).
     const avZ = [...avenue].sort((a, b) => a.z - b.z);
-    const walkerN = Math.round(3 + stats.fPop * 8);
+    const walkerN = Math.round(2 + stats.fPop * 6 + stats.fCommerce * 6);
     const walkers: Array<{ ax: number; az: number; bx: number; bz: number; seed: number }> = [];
-    for (let i = 0; i + 3 < avZ.length && walkers.length < walkerN; i += 2) {
+    for (let i = 0; i + 3 < avZ.length && walkers.length < walkerN; i += 1) {
       const a = avZ[i], b = avZ[i + 3];
-      const side = i % 4 < 2 ? -0.5 : 0.5;
+      const side = (i % 4 < 2 ? -0.5 : 0.5) + ((i * 37) % 5) * 0.08;
       walkers.push({ ax: a.x + side, az: a.z, bx: b.x + side, bz: b.z, seed: i * 13 + 5 });
     }
     const oxcart = avZ.length > 3
       ? { ax: avZ[1].x + 0.1, az: avZ[1].z, bx: avZ[avZ.length - 2].x + 0.1, bz: avZ[avZ.length - 2].z, seed: 1.7 }
       : null;
-    return { braziers, well, cart, folk, paifang, avenueLanterns, walkers, oxcart };
-  }, [hall, market, avenue, stats.fPop, stats.fLoyalty]);
+    const oxcart2 = avZ.length > 5 && stats.fCommerce > 0.55
+      ? { ax: avZ[avZ.length - 2].x - 0.35, az: avZ[avZ.length - 2].z, bx: avZ[1].x - 0.35, bz: avZ[1].z, seed: 4.3 }
+      : null;
+    return { braziers, well, cart, folk, paifang, avenueLanterns, walkers, oxcart, oxcart2 };
+  }, [hall, market, avenue, stats.fPop, stats.fCommerce, stats.fLoyalty]);
 
   return (
     <>
@@ -2389,6 +2395,7 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, g
       {!ruined && props.folk.map((v, i) => <Villager3D key={`mf-${i}`} x={v.x} z={v.z} seed={v.seed} />)}
       {!ruined && props.walkers.map((wk, i) => <Walker3D key={`wk-${i}`} ax={wk.ax} az={wk.az} bx={wk.bx} bz={wk.bz} seed={wk.seed} />)}
       {!ruined && props.oxcart && <MovingCart3D ax={props.oxcart.ax} az={props.oxcart.az} bx={props.oxcart.bx} bz={props.oxcart.bz} seed={props.oxcart.seed} />}
+      {!ruined && props.oxcart2 && <MovingCart3D ax={props.oxcart2.ax} az={props.oxcart2.az} bx={props.oxcart2.bx} bz={props.oxcart2.bz} seed={props.oxcart2.seed} />}
       {/* Chimney smoke from a scattering of homes (peaceful) — black pillars of
           ruin smoke if the city has been razed. */}
       {!ruined && houses.filter((_, i) => i % 8 === 0).slice(0, 5).map((h) => (
