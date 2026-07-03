@@ -8330,7 +8330,7 @@ export function StrategicMap3D() {
     }}>
       {/* Objective tracker — top-left. Phones fold it into a chip; the
           full card is a tap away instead of owning a third of the screen. */}
-      <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 10, pointerEvents: 'none' }}>
+      <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 10, pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start' }}>
         {IS_MOBILE && !objOpen ? (
           <button
             onClick={() => setObjOpen(true)}
@@ -8353,6 +8353,27 @@ export function StrategicMap3D() {
               >✕</button>
             )}
             <ObjectivePanel />
+          </div>
+        )}
+        {/* 烽火示警 — stacked under the objective card so neither covers the other. */}
+        {beaconAlerts.threatened.size > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontFamily: 'var(--tkm-font-body)' }}>
+            {[...beaconAlerts.threatened].slice(0, 4).map((id) => (
+              <button
+                key={id}
+                onClick={() => beaconSelectCity(id)}
+                style={{
+                  pointerEvents: 'auto',
+                  background: 'rgba(40, 14, 8, 0.92)', border: '1px solid #e0552a',
+                  color: '#f0b0a0', borderRadius: 3, padding: '3px 9px',
+                  cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.75rem',
+                  letterSpacing: '0.08rem', textAlign: 'left',
+                  boxShadow: '0 0 10px rgba(224,85,42,0.35)',
+                }}
+              >
+                🔥 {t('烽火示警', 'Beacons lit')} · {beaconCities[id] ? pickName(beaconCities[id].name, lang) : id}{t('告急', ' under threat')}
+              </button>
+            ))}
           </div>
         )}
       </div>
@@ -8866,31 +8887,6 @@ export function StrategicMap3D() {
             width={IS_MOBILE ? 108 : 138}
             onPickPx={(px, py) => setNavJump({ px, py, seq: Date.now() })}
           />
-        </div>
-      )}
-
-      {/* 烽火示警 — who is marching on us, one tap to look. */}
-      {beaconAlerts.threatened.size > 0 && (
-        <div style={{
-          position: 'absolute', top: 56, left: 12, zIndex: 12,
-          display: 'flex', flexDirection: 'column', gap: 4,
-          fontFamily: 'var(--tkm-font-body)',
-        }}>
-          {[...beaconAlerts.threatened].slice(0, 4).map((id) => (
-            <button
-              key={id}
-              onClick={() => beaconSelectCity(id)}
-              style={{
-                background: 'rgba(40, 14, 8, 0.92)', border: '1px solid #e0552a',
-                color: '#f0b0a0', borderRadius: 3, padding: '3px 9px',
-                cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.75rem',
-                letterSpacing: '0.08rem', textAlign: 'left',
-                boxShadow: '0 0 10px rgba(224,85,42,0.35)',
-              }}
-            >
-              🔥 {t('烽火示警', 'Beacons lit')} · {beaconCities[id] ? pickName(beaconCities[id].name, lang) : id}{t('告急', ' under threat')}
-            </button>
-          ))}
         </div>
       )}
 
