@@ -549,6 +549,33 @@ function FoundationPlot3D({ x, z, occupied, selected, onClick }: {
   );
 }
 
+/** 營建幻影 — hovering a build option projects a translucent ghost of the
+ *  building onto the selected plot, so you see the massing before paying. */
+function GhostBuilding3D({ x, z, buildingId }: { x: number; z: number; buildingId: BuildingId }) {
+  const def = INSIDE_BUILDING_DEF[buildingId];
+  const matRef = useRef<THREE.MeshStandardMaterial>(null);
+  const roofRef = useRef<THREE.MeshStandardMaterial>(null);
+  useFrame(({ clock }) => {
+    const k = 0.32 + Math.sin(clock.elapsedTime * 2.4) * 0.1;
+    if (matRef.current) matRef.current.opacity = k;
+    if (roofRef.current) roofRef.current.opacity = k;
+  });
+  if (!def) return null;
+  const h = def.height + 0.15;
+  return (
+    <group position={[x, 0, z]} raycast={() => null}>
+      <mesh position={[0, h / 2 + 0.18, 0]} raycast={() => null}>
+        <boxGeometry args={[1.05, h, 1.05]} />
+        <meshStandardMaterial ref={matRef} color={def.color} transparent opacity={0.35} depthWrite={false} />
+      </mesh>
+      <mesh position={[0, h + 0.34, 0]} rotation={[0, Math.PI / 4, 0]} raycast={() => null}>
+        <coneGeometry args={[0.95, 0.42, 4]} />
+        <meshStandardMaterial ref={roofRef} color="#39444f" transparent opacity={0.35} depthWrite={false} />
+      </mesh>
+    </group>
+  );
+}
+
 /** Scaffolding shown on a plot whose building is still under construction
  *  (level 0, progress > 0) — wooden frame + a 建造中 banner. */
 function ConstructionSite3D({ x, z, nameZh }: { x: number; z: number; nameZh: string }) {
@@ -2931,7 +2958,7 @@ function Hinterland3D({
 
 function CityScene({
   preview, slots, buildings, construction, plots, cityWallCol, bannerColor, light, season, stats, grand, onInspect,
-  selectedPlot, onPlotClick, hovered, onHover, onClick, showOverlays,
+  selectedPlot, onPlotClick, hovered, onHover, onClick, showOverlays, ghostBuilding,
   city, neighbors, facilities, armies, stockades, ports, scars, selectedSlot, onSlotClick, landmarkInfo,
   weatherKind, isCapital, specialty, activity,
 }: {
@@ -2948,6 +2975,8 @@ function CityScene({
   onInspect: (info: InspectInfo) => void;
   bannerColor: string;
   selectedPlot: number | null;
+  /** 營建幻影 — build option being hovered in the panel (ghost on the plot). */
+  ghostBuilding?: BuildingId | null;
   onPlotClick: (plotIndex: number) => void;
   hovered: { col: number; row: number } | null;
   onHover: (c: { col: number; row: number } | null) => void;
@@ -3199,6 +3228,12 @@ function CityScene({
           />
         );
       })}
+
+      {/* 營建幻影 — hover a build option: its ghost stands on the plot. */}
+      {ghostBuilding != null && selectedPlot != null && plots[selectedPlot] && (() => {
+        const [gx, gz] = hexWorld(plots[selectedPlot].col, plots[selectedPlot].row);
+        return <GhostBuilding3D x={gx} z={gz} buildingId={ghostBuilding} />;
+      })()}
 
       {/* Buildings still under construction — scaffolding + 建造中 banner. */}
       {construction.map((c) => {
@@ -3459,6 +3494,9 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
   }, [baseLight, weatherKind, city.ruined]);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [selectedPlot, setSelectedPlot] = useState<number | null>(null);
+  // 營建幻影 — the build option currently hovered in the panel.
+  const [ghostBuilding, setGhostBuilding] = useState<BuildingId | null>(null);
+  useEffect(() => { setGhostBuilding(null); }, [selectedPlot]);
   const [buildMsg, setBuildMsg] = useState<string | null>(null);
   const [inspect, setInspect] = useState<InspectInfo | null>(null);
   const [pickerCmd, setPickerCmd] = useState<InternalAffairsType | null>(null);
@@ -4013,6 +4051,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
             grand={grandCity}
             onInspect={(info) => { playSfx('click'); setInspect(info); }}
             selectedPlot={selectedPlot}
+            ghostBuilding={ghostBuilding}
             onPlotClick={handlePlotClick}
             hovered={hovered}
             onHover={setHovered}
@@ -4301,6 +4340,8 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
                         <button
                           key={def.id}
                           onClick={() => !locked && tryStartBuilding(selectedPlot, def.id)}
+                          onMouseEnter={() => setGhostBuilding(def.id)}
+                          onMouseLeave={() => setGhostBuilding((g) => (g === def.id ? null : g))}
                           disabled={!usable}
                           title={def.descriptionZh}
                           style={{
