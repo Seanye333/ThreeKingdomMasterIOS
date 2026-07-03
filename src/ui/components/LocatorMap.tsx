@@ -25,6 +25,7 @@ export function LocatorMap({
   const armies = useGameStore((s) => s.armies);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const fogOfWar = useGameStore((s) => s.fogOfWar);
+  const fieldBattleMarks = useGameStore((s) => s.fieldBattleMarks);
   const espionageReveals = useGameStore((s) => s.espionageReveals);
   const t = useT();
 
@@ -64,6 +65,24 @@ export function LocatorMap({
         {/* Sea backdrop */}
         <rect x={0} y={0} width={width} height={height} fill="#10202e" rx={2} />
 
+        {/* 勢力暈染 — a soft realm-coloured blob per owned city; the blobs
+            merge into territory blotches, so the balance of power reads at
+            minimap scale. */}
+        {cityList.map((c) => {
+          const owner = c.ownerForceId ? forces[c.ownerForceId] : null;
+          if (!owner) return null;
+          return (
+            <circle
+              key={`wash-${c.id}`}
+              cx={c.coords.x * sx}
+              cy={c.coords.y * sy}
+              r={9}
+              fill={owner.color}
+              opacity={0.16}
+            />
+          );
+        })}
+
         {/* City dots — coloured by owner; player cities brighter. */}
         {cityList.map((c) => {
           const owner = c.ownerForceId ? forces[c.ownerForceId] : null;
@@ -102,6 +121,19 @@ export function LocatorMap({
             />
           );
         })}
+
+        {/* 烽煙 — fresh field-battle sites this season. */}
+        {(fieldBattleMarks ?? []).filter((m) => (m.seasonsLeft ?? 0) >= 2).map((m, i) => (
+          <text
+            key={`clash-${i}`}
+            x={m.x * sx}
+            y={m.y * sy + 2.5}
+            textAnchor="middle"
+            fontSize={7}
+            style={{ paintOrder: 'stroke', stroke: '#000', strokeWidth: 1.6 }}
+            fill="#ff8a5a"
+          >⚔</text>
+        ))}
 
         {/* The current view's window, rotated to its true bearing. */}
         {win && (
