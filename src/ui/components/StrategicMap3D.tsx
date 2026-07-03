@@ -43,7 +43,7 @@ import { LocatorMap } from './LocatorMap';
 import { ObjectivePanel } from './ObjectivePanel';
 import { SelectionRing3D } from './SelectionRing3D';
 import { computeDayEncounters, marchPositionAtDay } from '../../game/systems/dayEncounters';
-import { supplyPath } from '../../game/systems/hexPaint';
+import { supplyPath, seasonStampOf } from '../../game/systems/hexPaint';
 import { PortPanel } from './PortPanel';
 import { FortPanel } from './FortPanel';
 import { TribePanel } from './TribePanel';
@@ -4085,6 +4085,19 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, hexPaint,
     });
   }, [tiles, tileIndex, tileOwner]);
 
+  // 前線餘燼 — cells walked THIS season by a force that isn't the ground's
+  // base owner: the active incursion corridor. Blended into the tile colour
+  // as a scorched ember cast, so「哪裡正在拉鋸」reads at a glance.
+  const dateNow = useGameStore((st) => st.date);
+  const tileEmber = useMemo(() => {
+    const nowStamp = seasonStampOf(dateNow.year, dateNow.season);
+    return tiles.map((t, i) => {
+      if (t.kind === 'river' || t.kind === 'lake') return false;
+      const painted = hexPaint[`${t.c},${t.r}`];
+      return !!painted && painted.t >= nowStamp && painted.f !== baseOwner[i];
+    });
+  }, [tiles, hexPaint, baseOwner, dateNow]);
+
   // 國界墨線 — a crisp ink stroke along every edge where ownership flips
   // (owner vs different owner / wilderness). One LineSegments for the whole
   // realm map; rebuilt only when ownership actually changes.
@@ -4133,6 +4146,7 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, hexPaint,
       if (!owner || water || roadW) return snow; // packed dirt shows through the snow
       const col = new THREE.Color(snow).lerp(new THREE.Color(owner), border ? 0.55 : 0.4);
       if (border) col.offsetHSL(0, 0, -0.06);
+      if (tileEmber[i]) col.lerp(new THREE.Color('#8a3a1a'), 0.24);
       return `#${col.getHexString()}`;
     }
     const road = !water && roadTiles.has(i);
@@ -4155,10 +4169,12 @@ function HexWorldTerrain({ winter, cities, forces, territoryOwnership, hexPaint,
       col.lerp(new THREE.Color(owner), road ? 0.18 : border ? 0.72 : 0.55);
       if (border && !road) col.offsetHSL(0, 0.05, -0.08);
     }
+    // 前線餘燼 — this season's incursion corridor smoulders warm.
+    if (tileEmber[i] && !water) col.lerp(new THREE.Color('#8a3a1a'), 0.3);
     // 戰爭迷霧 — ground seeded by a city you can't see fades toward dusk.
     if (fogCityIds && !water && tileCity[i] && !fogCityIds.has(tileCity[i]!)) col.offsetHSL(0, -0.12, -0.13);
     return `#${col.getHexString()}`;
-  }), [tiles, winter, tileOwner, tileBorder, roadTiles, forces, fogCityIds, tileCity]);
+  }), [tiles, winter, tileOwner, tileBorder, tileEmber, roadTiles, forces, fogCityIds, tileCity]);
 
   // 地塊資訊 — hover (desktop) names the tile: terrain, road, owning realm.
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
