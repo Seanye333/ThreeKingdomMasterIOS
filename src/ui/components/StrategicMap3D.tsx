@@ -2124,7 +2124,7 @@ function Roads({ cities }: { cities: Record<string, City> }) {
 }
 
 /* ─── Marching army arrows (animated) ──────────────────────── */
-function MarchingArmies({ cities, pendingCommands, forces, officers, ports, selectedArmyId, onArmyClick, hideNearPx }: {
+function MarchingArmies({ cities, pendingCommands, forces, officers, ports, selectedArmyId, onArmyClick, onArmyPressStart, hideNearPx }: {
   cities: Record<string, City>;
   pendingCommands: Record<string, { cityId?: string; type: string; targetCityId?: string; troops?: number; officerId?: string; seasonsRemaining?: number; totalSeasons?: number }>;
   forces: Record<string, { color: string }>;
@@ -2132,6 +2132,7 @@ function MarchingArmies({ cities, pendingCommands, forces, officers, ports, sele
   ports: Record<string, import('../../game/types').Port>;
   selectedArmyId: string | null;
   onArmyClick?: (officerId: string) => void;
+  onArmyPressStart?: (officerId: string, e: { clientX: number; clientY: number }) => void;
   /** Suppress tokens near an active battle site (they're IN the diorama). */
   hideNearPx?: { x: number; y: number } | null;
 }) {
@@ -2196,7 +2197,8 @@ function MarchingArmies({ cities, pendingCommands, forces, officers, ports, sele
           seasonsRemaining={a.seasonsRemaining} totalSeasons={a.totalSeasons}
           landRoute={a.landRoute} weaponType={a.weaponType}
           selected={a.selected} holding={a.holding} cellTarget={a.cellTarget}
-          ports={ports} onClick={onArmyClick ? () => onArmyClick(a.officerId) : undefined} />
+          ports={ports} onClick={onArmyClick ? () => onArmyClick(a.officerId) : undefined}
+          onPressStart={onArmyPressStart ? (e) => onArmyPressStart(a.officerId, e) : undefined} />
       ))}
     </group>
   );
@@ -2213,7 +2215,7 @@ const UNIT_TAG: Record<WeaponType, string> = {
 // between.
 const ARMY_TOKEN_SCALE = 0.7 * MARKER_SCALE;
 
-function MarchingArmy({ from, to, color, commanderName, targetName, troops, seasonsRemaining, totalSeasons, landRoute, weaponType, selected, holding, cellTarget, ports, onClick }: {
+function MarchingArmy({ from, to, color, commanderName, targetName, troops, seasonsRemaining, totalSeasons, landRoute, weaponType, selected, holding, cellTarget, ports, onClick, onPressStart }: {
   from: City; to: City; color: string;
   commanderName: string; targetName: string; troops: number;
   seasonsRemaining: number; totalSeasons: number;
@@ -2224,6 +2226,8 @@ function MarchingArmy({ from, to, color, commanderName, targetName, troops, seas
   cellTarget: boolean;
   ports: Record<string, import('../../game/types').Port>;
   onClick?: () => void;
+  /** 拖拽行軍 — press-hold begins a drag-to-reroute gesture (MapScene owns it). */
+  onPressStart?: (e: { clientX: number; clientY: number }) => void;
 }) {
   const [hovered, setHovered] = useState(false);
   const tHover = useT();
@@ -2328,6 +2332,7 @@ function MarchingArmy({ from, to, color, commanderName, targetName, troops, seas
         <mesh
           position={[0, 0.5, 0]}
           onClick={(e) => { e.stopPropagation(); onClick(); }}
+          onPointerDown={onPressStart ? (e) => onPressStart({ clientX: e.nativeEvent.clientX, clientY: e.nativeEvent.clientY }) : undefined}
           onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer'; if (!IS_MOBILE) setHovered(true); }}
           onPointerOut={() => { document.body.style.cursor = ''; setHovered(false); }}
         >
@@ -6661,7 +6666,7 @@ function HeadingTracker({ controlsRef, onHeading }: {
   return null;
 }
 
-function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteClick, onScenicClick, onQuickAction, mapStyle, dioSelectedId, dioMode, dioCast, dioArcs, dioFx, dioHover, onDioHover, onDioramaTile, onFocusWorld }: {
+function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteClick, onScenicClick, onQuickAction, mapStyle, dioSelectedId, dioMode, dioCast, dioArcs, dioFx, dioHover, onDioHover, onDioramaTile, onFocusWorld, onDragLock }: {
   overlayMode: OverlayMode;
   mapStyle: 'classic' | 'hex';
   onPortClick: (portId: string) => void;
@@ -6683,6 +6688,8 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
   onDioramaTile: (c: HexCoord) => void;
   /** 雙擊飛鏡 — fly+zoom the camera to a double-clicked ground point. */
   onFocusWorld?: (wx: number, wz: number) => void;
+  /** 拖拽行軍 — lock/unlock the orbit controls while a drag is live. */
+  onDragLock?: (locked: boolean) => void;
 }) {
   const cities = useGameStore((s) => s.cities);
   const forces = useGameStore((s) => s.forces);
@@ -6706,6 +6713,8 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
   const lang = useLanguage();
   const t = useT();
   const handleArmyClick = (officerId: string) => {
+    // A completed drag also emits a click on release — swallow it.
+    if (performance.now() - dragEndedAtRef.current < 300) return;
     const clicked = armiesState[officerId];
     if (!clicked) return;
     // No selection yet → select own column.
@@ -6722,6 +6731,59 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
       if (startFieldBattle(selectedArmyId3D, officerId)) selectArmy(null);
     }
   };
+  // 拖拽行軍 — press-hold an own column ~0.35s (hold still: >9px slop =
+  // camera pan and the hold cancels), then drag; release on land reroutes
+  // it there (same moveArmyToCell semantics as select+tap).
+  const [dragMarch, setDragMarch] = useState<{ id: string; px: number; py: number } | null>(null);
+  const dragMarchRef = useRef<typeof dragMarch>(null);
+  dragMarchRef.current = dragMarch;
+  const dragPendingRef = useRef<{ timer: ReturnType<typeof setTimeout>; sx: number; sy: number } | null>(null);
+  const dragEndedAtRef = useRef(0);
+  const cancelPendingDrag = () => {
+    if (dragPendingRef.current) { clearTimeout(dragPendingRef.current.timer); dragPendingRef.current = null; }
+  };
+  const endDrag = (commit: boolean) => {
+    const d = dragMarchRef.current;
+    dragMarchRef.current = null;   // double-fire guard (plane up + window up)
+    if (d) {
+      dragEndedAtRef.current = performance.now();
+      if (commit && isLandPx(d.px, d.py) && useGameStore.getState().moveArmyToCell(d.id, d.px, d.py)) {
+        useGameStore.getState().selectArmy(null);
+      }
+    }
+    setDragMarch(null);
+    onDragLock?.(false);
+    document.body.style.cursor = '';
+  };
+  const handleArmyPressStart = (officerId: string, e: { clientX: number; clientY: number }) => {
+    const live = useGameStore.getState();
+    const a = live.armies[officerId];
+    if (!a || a.forceId !== live.playerForceId) return;
+    cancelPendingDrag();
+    const timer = setTimeout(() => {
+      dragPendingRef.current = null;
+      setDragMarch({ id: officerId, px: a.x, py: a.y });
+      onDragLock?.(true);
+      document.body.style.cursor = 'grabbing';
+    }, 350);
+    dragPendingRef.current = { timer, sx: e.clientX, sy: e.clientY };
+  };
+  useEffect(() => {
+    const move = (ev: PointerEvent) => {
+      const pend = dragPendingRef.current;
+      if (pend && Math.hypot(ev.clientX - pend.sx, ev.clientY - pend.sy) > 9) cancelPendingDrag();
+    };
+    const up = () => { cancelPendingDrag(); if (dragMarchRef.current) endDrag(true); };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+    return () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const fieldBattleMarks = useGameStore((s) => s.fieldBattleMarks);
   const portsForMarch = useGameStore((s) => s.ports);
   // 戰場立體微縮 — the live battle rendered in place on the world map.
@@ -6946,7 +7008,52 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
       <PostStations3D cities={cities} />
       <Landmarks3D cities={cities} />
       <UniqueLandmarks3D cities={cities} />
-      <MarchingArmies cities={cities} pendingCommands={visibleCommands} forces={forces} officers={officers} ports={portsForMarch} selectedArmyId={selectedArmyId3D} onArmyClick={handleArmyClick} hideNearPx={battleSitePx} />
+      <MarchingArmies cities={cities} pendingCommands={visibleCommands} forces={forces} officers={officers} ports={portsForMarch} selectedArmyId={selectedArmyId3D} onArmyClick={handleArmyClick} onArmyPressStart={handleArmyPressStart} hideNearPx={battleSitePx} />
+      {/* 拖拽行軍 — live drag: capture plane + ghost line + landing ring/ETA. */}
+      {dragMarch && (() => {
+        const a = armiesState[dragMarch.id];
+        if (!a) return null;
+        const [ax, az] = pxToWorld(a.x, a.y);
+        const [txw, tzw] = pxToWorld(dragMarch.px, dragMarch.py);
+        const land = isLandPx(dragMarch.px, dragMarch.py);
+        const cmd = pendingCommands[dragMarch.id];
+        const srcCity = cmd?.type === 'march' ? cities[cmd.cityId] : null;
+        let eta = 1;
+        if (srcCity) {
+          const sp = cityPos(srcCity);
+          const dist = Math.hypot(dragMarch.px - sp.x, dragMarch.py - sp.y);
+          eta = dist < 100 ? 1 : dist < 195 ? 2 : dist < 275 ? 3 : 4;
+        }
+        const ay = sampleTerrainHeight(ax, az) + 0.35;
+        const ty = sampleTerrainHeight(txw, tzw) + 0.15;
+        const tint = land ? '#ffe08a' : '#c0504a';
+        return (
+          <group>
+            <mesh
+              rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.12, 0]}
+              onPointerMove={(e) => {
+                const px = (e.point.x + MAP_W / 2) / PIXEL_TO_WORLD;
+                const py = (e.point.z + MAP_D / 2) / PIXEL_TO_WORLD;
+                setDragMarch((d) => (d ? { ...d, px, py } : d));
+              }}
+              onPointerUp={(e) => { e.stopPropagation(); endDrag(true); }}
+            >
+              <planeGeometry args={[MAP_W * 2.2, MAP_D * 2.2]} />
+              <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+            </mesh>
+            <Line points={[[ax, ay, az], [txw, ty + 0.25, tzw]]} color={tint} lineWidth={2} dashed dashSize={0.4} gapSize={0.25} />
+            <mesh position={[txw, ty, tzw]} rotation={[-Math.PI / 2, 0, 0]}>
+              <ringGeometry args={[0.5, 0.72, 32]} />
+              <meshBasicMaterial color={tint} transparent opacity={0.9} depthWrite={false} />
+            </mesh>
+            <Html position={[txw, ty + 0.9, tzw]} center distanceFactor={10} zIndexRange={[46, 36]} style={{ pointerEvents: 'none' }}>
+              <div style={{ background: 'rgba(18,12,6,0.92)', border: `1px solid ${tint}`, borderRadius: 'var(--tkm-radius-xs)', padding: '1px 7px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px', color: land ? '#ffe9a8' : '#f0b0a0', whiteSpace: 'nowrap' }}>
+                {land ? `${t('進駐此地', 'March here')} · ${eta}${t('旬', ' turn(s)')}` : t('不可入水', 'Water — no landing')}
+              </div>
+            </Html>
+          </group>
+        );
+      })()}
       <Convoys cities={cities} convoys={convoysState} forces={forces} />
       <Envoys cities={cities} expeditions={expeditionsState} forces={forces} />
       {overlayMode === 'supply' && <SupplyLines3D />}
@@ -8629,6 +8736,10 @@ export function StrategicMap3D() {
             onDioHover={setDioHover}
             onDioramaTile={handleDioramaTile}
             onFocusWorld={(wx, wz) => camApiRef.current?.flyTo(wx, wz)}
+            onDragLock={(locked) => {
+              const c = controlsRef.current as { enabled?: boolean } | null;
+              if (c) c.enabled = !locked;
+            }}
           />
           </ZoomLODCtx.Provider>
           <OrbitControls
