@@ -1633,7 +1633,7 @@ export function DefenseStructure({
  *  Per-instance color carries the terrain tint (same jitter hash as
  *  HexTile) and the hover flash; interaction stays on each tile's
  *  invisible hit disk, so clicks/hover behave exactly as before. */
-function InstancedTilePrisms({ tiles, hovered }: { tiles: TacticalTile[]; hovered: HexCoord | null }) {
+export function InstancedTilePrisms({ tiles, hovered }: { tiles: TacticalTile[]; hovered: HexCoord | null }) {
   const ref = useRef<THREE.InstancedMesh>(null);
   const surf = useMemo(() => ({ normal: groundNormalTexture(), rough: groundRoughnessTexture() }), []);
   const dummy = useMemo(() => new THREE.Object3D(), []);

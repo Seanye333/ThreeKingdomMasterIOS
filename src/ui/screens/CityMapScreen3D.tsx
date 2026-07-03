@@ -43,6 +43,7 @@ import {
   HEX_COL_STEP,
   HEX_ROW_STEP,
   HexTile,
+  InstancedTilePrisms,
   DefenseStructure,
 } from './TacticalBattleScreen3D';
 
@@ -2993,7 +2994,9 @@ function CityScene({
         );
       })()}
 
-      {/* Terrain tiles — uses shared HexTile from tactical for full fidelity */}
+      {/* Terrain tiles — prisms batched into one InstancedMesh (same as the
+          battle board); per-tile groups keep hover/click. */}
+      <InstancedTilePrisms tiles={preview.tiles} hovered={hovered} />
       {preview.tiles.map((tile) => {
         const isHovered = !!hovered && hovered.col === tile.coord.col && hovered.row === tile.coord.row;
         return (
@@ -3008,6 +3011,7 @@ function CityScene({
               highlight={undefined}
               windStrength={0.4}
               onClick={() => onClick(tile.coord)}
+              instancedBase
             />
           </group>
         );
