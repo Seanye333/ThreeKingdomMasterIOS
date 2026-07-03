@@ -14,7 +14,7 @@ export const SCENARIO_OBJECTIVES: Record<string, ScenarioObjective[]> = {
       id: 'obj-184-han',
       forceId: 'han',
       primary: {
-        title: { zh: '黃巾之鎮圧', en: 'Suppress the Yellow Turbans' },
+        title: { zh: '黃巾之鎮壓', en: 'Suppress the Yellow Turbans' },
         description: 'Defeat the Yellow Turban force entirely by 187 AD.',
         descriptionZh: "於187年前徹底擊潰黃巾軍。",
         goal: { kind: 'defeat-force', forceId: 'yellow-turban', byYear: 187 },

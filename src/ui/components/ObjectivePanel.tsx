@@ -61,7 +61,7 @@ export function ObjectivePanel() {
           <span>
             {res.status === 'success' && '✓ 達成 Won'}
             {res.status === 'failure' && '✗ 失敗 Lost'}
-            {res.status === 'pending' && (res.progress ?? 'in progress…')}
+            {res.status === 'pending' && (res.progress ?? '進行中…')}
           </span>
           {res.status === 'pending' && (
             <span style={{ color: yearsLeft <= 1 ? '#c0504a' : '#7a8893' }}>
@@ -100,7 +100,7 @@ export function ObjectivePanel() {
       <div style={{ fontSize: '0.7rem', fontFamily: 'ui-monospace, monospace' }}>
         {primaryRes.status === 'success' && '✓ 達成 Achieved'}
         {primaryRes.status === 'failure' && '✗ 失敗 Failed'}
-        {primaryRes.status === 'pending' && (primaryRes.progress ?? 'in progress…')}
+        {primaryRes.status === 'pending' && (primaryRes.progress ?? '進行中…')}
       </div>
     </div>
   );
