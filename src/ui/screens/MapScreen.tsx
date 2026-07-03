@@ -807,7 +807,11 @@ export function MapScreen() {
               color: dayFlow.speed === sp ? '#f0d98a' : '#97a4ae', borderRadius: 5, cursor: 'pointer', padding: '0.1rem 0.4rem', fontFamily: 'inherit', fontSize: '0.78rem',
             }}>{sp}×</button>
           ))}
-          <button onClick={dayFlowSkip} style={{ background: 'transparent', border: '1px solid #4a5568', color: '#97a4ae', borderRadius: 5, cursor: 'pointer', padding: '0.1rem 0.5rem', fontFamily: 'inherit' }}>⏭</button>
+          <button
+            onClick={() => { dayFlowSkip(); commitTurn(); }}
+            title={t('跳過日播,直接結算本旬', 'Skip the days, resolve the turn now')}
+            style={{ background: 'transparent', border: '1px solid #4a5568', color: '#97a4ae', borderRadius: 5, cursor: 'pointer', padding: '0.1rem 0.5rem', fontFamily: 'inherit' }}
+          >⏭</button>
         </div>
       )}
       {/* 日流播放時,季報壓後 — the report pops once the days finish walking. */}

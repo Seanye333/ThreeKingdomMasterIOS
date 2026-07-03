@@ -10110,7 +10110,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             day: 0,
             total: 15,
             playing: true,
-            speed: state.dayFlow?.speed ?? 1,
+            speed: state.dayFlow?.speed
+              ?? (typeof localStorage !== 'undefined' ? Number(localStorage.getItem('tkm-flow-speed')) || 1 : 1),
           },
         });
       },
@@ -10126,6 +10127,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       dayFlowSetSpeed: (speed) => {
         const df = get().dayFlow;
         if (df) set({ dayFlow: { ...df, speed } });
+        // 記住玩家的節奏 — the chosen pace carries into every later month.
+        try { localStorage.setItem('tkm-flow-speed', String(speed)); } catch { /* headless */ }
       },
       dayFlowSkip: () => set({ dayFlow: null }),
 
