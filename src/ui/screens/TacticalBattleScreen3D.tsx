@@ -18,7 +18,7 @@ import { stratagemFxKind, tacticFxKind, tacticFxSpec, FX_DURATION, FX_IMPACT, ty
 import { categoryOfTactic } from '../../game/data/officerAttributes';
 import { applyBattlePrep,
   aiTakeTurn, aiSkillForDifficulty, applyStratagem, attackUnits, canAttack, canMove, endTurn, hexDistance,
-  moveUnit, resolveBattleEnd, unitAt, forecastAttack, matchupLabel, battleStratagemSituation, eliteUnitOf,
+  moveUnit, resolveBattleEnd, unitAt, tileAt, hexNeighbours, forecastAttack, matchupLabel, battleStratagemSituation, eliteUnitOf,
   findPath, moveUnitAlong, reachableHexes, isRouting, changeFormation, canChangeFormation,
   pickAiBattlePrep, pickAiFormation, formationCounterMul,
   pickDuelChampion, canIssuePreBattleDuel, applyPreBattleDuel, aiMaybePreBattleDuel,
@@ -1766,6 +1766,58 @@ function SkirtRingMesh({ cells, opacity }: {
     <instancedMesh ref={ref} args={[undefined, undefined, cells.length]} raycast={() => null}>
       <circleGeometry args={[R * 0.96, 6]} />
       <meshBasicMaterial color="#ffffff" transparent opacity={opacity} depthWrite={false} />
+    </instancedMesh>
+  );
+}
+
+/** 控制區紅網 — while one of YOUR units is selected, every cell adjacent
+ *  to a visible living enemy wears a thin red hex net: melee is sticky
+ *  (breaking contact costs +1 AP), and this shows exactly where the line
+ *  grips. Pure overlay, no raycast. */
+function ZocOverlay({ battle, selectedUnit, playerSide }: {
+  battle: TacticalBattle;
+  selectedUnit: TacticalUnit | null;
+  playerSide: 'attacker' | 'defender' | null;
+}) {
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+  const cells = useMemo(() => {
+    if (!selectedUnit || !playerSide || selectedUnit.side !== playerSide) return [];
+    const occupied = new Set(battle.units.filter((u) => u.troops > 0).map((u) => `${u.coord.col},${u.coord.row}`));
+    const seen = new Set<string>();
+    const out: HexCoord[] = [];
+    for (const e of battle.units) {
+      if (e.side === playerSide || e.troops <= 0 || e.hidden) continue;
+      for (const nb of hexNeighbours(e.coord)) {
+        const k = `${nb.col},${nb.row}`;
+        if (seen.has(k) || occupied.has(k)) continue;
+        const tl = tileAt(battle, nb);
+        if (!tl) continue;
+        seen.add(k);
+        out.push(nb);
+      }
+    }
+    return out;
+  }, [battle, selectedUnit, playerSide]);
+  useLayoutEffect(() => {
+    const m = ref.current;
+    if (!m || cells.length === 0) return;
+    cells.forEach((c, i) => {
+      const [x, z] = hexWorld(c.col, c.row);
+      const h = TERRAIN_HEIGHT[tileAt(battle, c)?.terrain ?? 'plain'];
+      dummy.position.set(x, h + 0.03, z);
+      dummy.rotation.set(-Math.PI / 2, 0, 0);
+      dummy.updateMatrix();
+      m.setMatrixAt(i, dummy.matrix);
+    });
+    m.instanceMatrix.needsUpdate = true;
+    m.computeBoundingSphere();
+  }, [cells, dummy, battle]);
+  if (cells.length === 0) return null;
+  return (
+    <instancedMesh key={cells.length} ref={ref} args={[undefined, undefined, cells.length]} raycast={() => null}>
+      <ringGeometry args={[R * 0.7, R * 0.86, 6]} />
+      <meshBasicMaterial color="#c0504a" transparent opacity={0.3} depthWrite={false} toneMapped={false} />
     </instancedMesh>
   );
 }
@@ -3871,6 +3923,8 @@ export function BattleScene({
           overlays/interaction rendered on top. */}
       <InstancedTilePrisms tiles={tiles} hovered={hovered} />
       <BoardSkirt tiles={tiles} />
+      {/* 控制區紅網 — where the enemy line grips (ZoC +1 AP to break away). */}
+      <ZocOverlay battle={battle} selectedUnit={selectedUnit ?? null} playerSide={playerSide} />
       {(() => {
         const fireSet = new Set((battle.groundFires ?? []).map((f) => `${f.coord.col},${f.coord.row}`));
         return tiles.map((t) => {
