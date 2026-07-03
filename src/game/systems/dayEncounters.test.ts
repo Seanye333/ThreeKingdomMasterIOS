@@ -121,6 +121,41 @@ describe('resolveSeason — 真日級拦截接入', () => {
   });
 });
 
+describe('resolveSeason — 真日級親征去重', () => {
+  it('a pair fought mid-flow is skipped by the commit interception pass', () => {
+    const { cities, campAt } = fixtures();
+    cities['luoyang'] = { ...cities['luoyang'], ownerForceId: 'me', troops: 20000 };
+    cities['changan'] = { ...cities['changan'], ownerForceId: 'foe', troops: 20000 };
+    const input = {
+      date: { year: 200, season: 'spring', month: 1, phase: 'upper' } as never,
+      cities: cities as never,
+      officers: { mover: mkOfficer('mover', 'me'), blocker: mkOfficer('blocker', 'foe') } as never,
+      forces: {} as never,
+      pendingCommands: {
+        mover: {
+          type: 'march', cityId: 'luoyang', targetCityId: 'chengdu', officerId: 'mover',
+          troops: 6000, totalSeasons: 1, seasonsRemaining: 1,
+        } as never,
+        blocker: {
+          type: 'march', cityId: 'changan', targetCityId: 'luoyang', officerId: 'blocker',
+          troops: 2000, holding: true, targetX: campAt.x, targetY: campAt.y,
+          totalSeasons: 5, seasonsRemaining: 5,
+        } as never,
+      },
+      diplomacy: { relations: {} } as never,
+      runtimeBonds: [], lostItems: [],
+      playerForceId: 'me',
+      rng: () => 0.0,
+    };
+    // Control: without the fought marker the clash fires.
+    const out1 = resolveSeason({ ...input } as never);
+    expect(out1.report.entries.some((e) => /第\d+日,/.test(e.textZh ?? ''))).toBe(true);
+    // Fought mid-flow (either id order) → the commit must not re-roll it.
+    const out2 = resolveSeason({ ...input, foughtPairs: [['blocker', 'mover']] } as never);
+    expect(out2.report.entries.some((e) => /第\d+日,/.test(e.textZh ?? ''))).toBe(false);
+  });
+});
+
 describe('arrivalDayOf — 兵臨之日', () => {
   it('a one-season march stands at the gates around day 7', () => {
     const d = arrivalDayOf({ officerId: 'x', cityId: 'a', targetCityId: 'b', totalSeasons: 1, seasonsRemaining: 1 });

@@ -1181,6 +1181,8 @@ interface GameStore extends GameState {
   /** 日流 — playback controls for the day-by-day turn flow. */
   beginDayFlow: () => void;
   setDayFlowFollow: (on: boolean) => void;
+  /** 真日級親征 — fight the currently-fired encounter NOW (mid-flow). */
+  engageEncounter: () => boolean;
   dayFlowTick: () => void;
   dayFlowTogglePause: () => void;
   dayFlowSetSpeed: (speed: number) => void;
@@ -3735,6 +3737,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
 
         const result = resolveSeason({
           date: state.date,
+          foughtPairs: state.foughtPairs ?? undefined,
           cities: planned.cities,
           officers: planned.officers,
           buildings: state.buildings,
@@ -7804,6 +7807,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           // 日流(前置)— the month already played out BEFORE this commit;
           // clear any residue so reports/battles surface immediately.
           dayFlow: null,
+          foughtPairs: null,
           // 塗色 — season prune: TTL trails grass over, dead forces sweep.
           hexPaint: seasonBoundary
             ? prunePaint(
@@ -10289,6 +10293,29 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         try { localStorage.setItem('tkm-flow-speed', String(speed)); } catch { /* headless */ }
       },
       dayFlowSkip: () => set({ dayFlow: null }),
+      engageEncounter: () => {
+        const state = get();
+        const df = state.dayFlow;
+        if (state.tacticalBattle) return false;   // one battle at a time
+        const hit = df?.encounters?.find((e) => e.fired && !e.fought);
+        if (!hit || !state.playerForceId) return false;
+        const mineId = state.armies[hit.aId]?.forceId === state.playerForceId ? hit.aId : hit.bId;
+        const foeId = mineId === hit.aId ? hit.bId : hit.aId;
+        if (state.armies[mineId]?.forceId !== state.playerForceId) return false;
+        if (!state.armies[foeId]) return false;
+        // Contact positions were validated by the day-sweep; the armies'
+        // stored between-turn poses can sit wider than the tap-to-engage
+        // gate, so range is NOT re-enforced here.
+        const battle = buildFieldBattle(state, mineId, foeId, false);
+        if (!battle) return false;
+        set({
+          tacticalBattle: battle,
+          selectedArmyId: null,
+          dayFlow: df ? { ...df, encounters: df.encounters!.map((e) => (e === hit ? { ...e, fought: true } : e)) } : df,
+          foughtPairs: [...(state.foughtPairs ?? []), [mineId, foeId]],
+        });
+        return true;
+      },
       setDayFlowFollow: (on) => {
         set({ dayFlowFollow: on });
         try { localStorage.setItem('tkm-flow-follow', on ? '1' : '0'); } catch { /* headless */ }

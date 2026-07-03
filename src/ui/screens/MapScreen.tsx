@@ -360,6 +360,17 @@ export function MapScreen() {
   const beginDayFlow = useGameStore((s) => s.beginDayFlow);
   const dayFlowFollow = useGameStore((s) => s.dayFlowFollow);
   const setDayFlowFollow = useGameStore((s) => s.setDayFlowFollow);
+  const engageEncounter = useGameStore((s) => s.engageEncounter);
+  // 真日級親征 — a fired, not-yet-fought, player-involved encounter while
+  // the flow is paused ⇒ offer to fight it RIGHT NOW.
+  const engageable = useGameStore((s) => {
+    if (!s.dayFlow || s.dayFlow.playing || s.tacticalBattle) return false;
+    const pf = s.playerForceId;
+    if (!pf) return false;
+    return (s.dayFlow.encounters ?? []).some((e) => e.fired && !e.fought
+      && (s.armies[e.aId]?.forceId === pf || s.armies[e.bId]?.forceId === pf)
+      && !!s.armies[e.aId] && !!s.armies[e.bId]);
+  });
   // 本旬結算本體 — the flow's day 15 (or a flow-less advance) lands here.
   const commitTurn = () => {
     if (hotSeatPlayers.length > 1) {
@@ -841,6 +852,17 @@ export function MapScreen() {
               color: dayFlow.speed === sp ? '#f0d98a' : '#97a4ae', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', padding: '0.1rem 0.4rem', fontFamily: 'inherit', fontSize: '0.78rem',
             }}>{sp}×</button>
           ))}
+          {engageable && (
+            <button
+              onClick={() => { playSfx('horn'); engageEncounter(); }}
+              title={t('親征 — 就在相遇之日開打;勝負即時寫回,餘日繼續行軍', 'Engage NOW — fight on the day you met; the verdict writes back and the march goes on')}
+              style={{
+                background: 'rgba(224,85,42,0.22)', border: '1px solid #e0552a',
+                color: '#ffb09a', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer',
+                padding: '0.1rem 0.55rem', fontFamily: 'inherit', fontWeight: 'bold',
+              }}
+            >⚔ {t('迎戰', 'Engage')}</button>
+          )}
           <button
             onClick={() => setDayFlowFollow(!dayFlowFollow)}
             title={t('跟拍 — 鏡頭隨主力縱隊行進', 'Follow — camera rides your lead column')}

@@ -85,6 +85,9 @@ export interface ResolutionInput {
   hexPaint?: HexPaint;
   /** Player's force — used to summarise their territory gains/losses. */
   playerForceId?: EntityId | null;
+  /** 真日級親征 — officer-id pairs already fought interactively mid-flow;
+   *  the interception pass skips them (verdict already written back). */
+  foughtPairs?: Array<[EntityId, EntityId]>;
   /** Runtime family relations — flow through into combat for kinship bonuses. */
   family?: import('../types/family').FamilyRelation[];
   /** 家門聲望 — clan standings, for 門閥 weighting in court-faction coup math. */
@@ -365,10 +368,17 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   // The day-flow playback shares this exact geometry, so the collision the
   // player watched at day 8 is the one resolved here.
   const dayContacts = computeDayEncounters(allMarches, officers, cities, input.diplomacy);
+  // 已親征之遭遇 — the player fought this pair mid-flow (真日級親征);
+  // its verdict is already written back, so the commit must not re-roll it.
+  const foughtSet = new Set((input.foughtPairs ?? []).map(([x, y]) =>
+    (x < y ? `${x}|${y}` : `${y}|${x}`)));
   for (const contact of dayContacts) {
     {
       const { a, b, pa, pb } = contact;
       const contactDay = Math.max(1, contact.day);
+      const pairKey = a.officerId < b.officerId
+        ? `${a.officerId}|${b.officerId}` : `${b.officerId}|${a.officerId}`;
+      if (foughtSet.has(pairKey)) continue;
       if (cancelledMarchOfficers.has(a.officerId) || cancelledMarchOfficers.has(b.officerId)) continue;
       if (deferredOfficers.has(a.officerId) || deferredOfficers.has(b.officerId)) continue;
       const oa = officers[a.officerId];

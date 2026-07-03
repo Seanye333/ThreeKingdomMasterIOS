@@ -289,6 +289,8 @@ export interface GameState {
     encounters?: Array<{
       aId: string; bId: string; day: number; x: number; y: number;
       aZh: string; aEn: string; bZh: string; bEn: string; fired?: boolean;
+      /** 已於日播中親征此遭遇(結算不再重打這一對)。 */
+      fought?: boolean;
     }>;
     /** 兵臨之日 — arrivals landing this half-month (own assaults/garrisons
      *  and hostile columns reaching YOUR city); playback pauses on the day. */
@@ -300,6 +302,9 @@ export interface GameState {
   } | null;
   /** 跟拍 — during the day flow the camera glides after your lead column. */
   dayFlowFollow: boolean;
+  /** 真日級親征 — pairs already fought mid-flow this turn; the commit's
+   *  interception pass skips them. Transient. */
+  foughtPairs: Array<[string, string]> | null;
   /** 塗色 (RTK-XIV) — lattice cells walked by marching columns (deviation
    *  dictionary "col,row" → {force, seasonStamp}); TTL-pruned each season. */
   hexPaint: import('../systems/hexPaint').HexPaint;
@@ -773,6 +778,7 @@ export const EMPTY_STATE: GameState = {
   musters: {},
   dayFlow: null,
   dayFlowFollow: false,
+  foughtPairs: null,
   hexPaint: {},
   territoryOwnership: {},
   armies: {},
@@ -1179,6 +1185,7 @@ export function loadScenario(
     scenicLooted: {},
     dayFlow: null,
   dayFlowFollow: false,
+  foughtPairs: null,
   hexPaint: {},
   territoryOwnership: {},
     armies: {},
