@@ -854,7 +854,7 @@ export function MapScreen() {
           ))}
           {engageable && (
             <button
-              onClick={() => { playSfx('horn'); engageEncounter(); }}
+              onClick={() => { playSfx('wardrum'); engageEncounter(); }}
               title={t('親征 — 就在相遇之日開打;勝負即時寫回,餘日繼續行軍', 'Engage NOW — fight on the day you met; the verdict writes back and the march goes on')}
               style={{
                 background: 'rgba(224,85,42,0.22)', border: '1px solid #e0552a',

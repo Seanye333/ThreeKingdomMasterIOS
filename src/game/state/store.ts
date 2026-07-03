@@ -154,6 +154,7 @@ import {
 } from '../systems/mandateRituals';
 import { reliefFoodCost, rollGreatPlague, GREAT_PLAGUE_FLAG, RELIEF_LOYALTY_BONUS, RELIEF_IGNORE_LOYALTY_LOSS, RELIEF_MIGRATE_SHARE } from '../systems/events';
 import { prunePaint, seasonStampOf, hexPaintKey } from '../systems/hexPaint';
+import { playSfx } from '../systems/sound';
 import { computeDayEncounters, marchPositionAtDay, arrivalDayOf } from '../systems/dayEncounters';
 import { TRIBES_BY_ID } from '../data/tribes';
 import type { TribeId } from '../types';
@@ -10253,6 +10254,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             `⚔ 第${Math.max(1, hit.day)}日 — ${hit.aZh} 與 ${hit.bZh} 兩軍相遇!`,
             `⚔ Day ${Math.max(1, hit.day)} — ${hit.aEn} and ${hit.bEn} collide on the march!`,
           );
+          playSfx('shout');   // 短兵相接 — the lines collide
           set({
             dayFlow: {
               ...df, day, playing: false,
@@ -10267,6 +10269,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const landed = df.arrivals?.find((a) => !a.fired && a.day <= day);
         if (landed) {
           const icon = landed.kind === 'incoming' ? '🔥' : landed.kind === 'assault' ? '⛨' : '🏕';
+          // 兵臨之聲 — enemy at YOUR walls rumbles; your assault beats drums;
+          // a quiet camp pitches with marching boots.
+          playSfx(landed.kind === 'incoming' ? 'quake' : landed.kind === 'assault' ? 'wardrum' : 'march');
           set({
             dayFlow: {
               ...df, day, playing: false,
