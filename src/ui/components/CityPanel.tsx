@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { cityEconCap } from '../../game/systems/citySize';
 import { useGameStore } from '../../game/state/store';
 import { COMMAND_DEFS } from '../../game/systems/commands';
@@ -11,6 +11,7 @@ import type { City, EntityId, Officer } from '../../game/types';
 import { lazy, Suspense } from 'react';
 // 啟動提速 — the city 3D scene (≈175KB) loads when a city is first entered.
 const CityMapScreen3D = lazy(() => import('../screens/CityMapScreen3D').then(m => ({ default: m.CityMapScreen3D })));
+import { requestMapFocus } from './mapFocusBus';
 import { BuildingsPanel } from './BuildingsPanel';
 import { AnimatedNumber } from './AnimatedNumber';
 import { CaptivesSection } from './CaptivesSection';
@@ -55,7 +56,47 @@ export function CityPanel() {
   const showCityMap = useGameStore((s) => s.cityMapOpen);
   const openCityMap = useGameStore((s) => s.openCityMap);
   const closeCityMap = useGameStore((s) => s.closeCityMap);
-  const setShowCityMap = (open: boolean) => (open ? openCityMap() : closeCityMap());
+  // 進出城墨幕 — choreographs world map ↔ city interior: veil closes while
+  // the world camera dives at the gate, the city mounts beneath, veil lifts.
+  const [cityVeil, setCityVeil] = useState<'idle' | 'closed' | 'lifting'>('idle');
+  const veilTimers = useRef<number[]>([]);
+  const queueVeil = (fn: () => void, ms: number) => { veilTimers.current.push(window.setTimeout(fn, ms)); };
+  const playVeil = () => {
+    veilTimers.current.forEach(clearTimeout); veilTimers.current = [];
+    setCityVeil('closed');
+    queueVeil(() => setCityVeil('lifting'), 430);
+    queueVeil(() => setCityVeil('idle'), 900);
+  };
+  const enterCity = () => {
+    veilTimers.current.forEach(clearTimeout); veilTimers.current = [];
+    if (city) requestMapFocus(city.id);   // camera dives at the gate under the veil
+    setCityVeil('closed');
+    queueVeil(() => {
+      openCityMap();
+      queueVeil(() => setCityVeil('lifting'), 140);
+      queueVeil(() => setCityVeil('idle'), 600);
+    }, 430);
+  };
+  const exitCity = () => {
+    veilTimers.current.forEach(clearTimeout); veilTimers.current = [];
+    setCityVeil('closed');
+    queueVeil(() => {
+      closeCityMap();
+      queueVeil(() => setCityVeil('lifting'), 140);
+      queueVeil(() => setCityVeil('idle'), 600);
+    }, 380);
+  };
+  useEffect(() => () => { veilTimers.current.forEach(clearTimeout); }, []);
+  // External opens (re-clicking a selected city on the strategic map flips
+  // the store flag directly) still get the veil, reactively.
+  const prevCityOpen = useRef(showCityMap);
+  useEffect(() => {
+    if (showCityMap !== prevCityOpen.current) {
+      prevCityOpen.current = showCityMap;
+      if (cityVeil === 'idle') playVeil();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showCityMap]);
   const t = useT();
   const lang = useLanguage();
 
@@ -133,7 +174,7 @@ export function CityPanel() {
           opens the full 3D city map; it also shows walls + 8 build slots so
           the player sees at a glance what's built. Reliable tap target on
           mobile (the re-click-to-enter gesture only works with a mouse). */}
-      <CityMiniMap city={city} onClick={() => setShowCityMap(true)} />
+      <CityMiniMap city={city} onClick={enterCity} />
 
       <ResourcesSection city={city} cityOfficers={officers} isPlayerCity={isPlayerCity} />
 
@@ -184,10 +225,20 @@ export function CityPanel() {
         <Suspense fallback={null}>
           <CityMapScreen3D
             cityId={city.id}
-            onClose={() => setShowCityMap(false)}
+            onClose={exitCity}
           />
         </Suspense>
       )}
+      {/* 進出城墨幕 — the ink veil that stitches world map ↔ city interior:
+          entering dives the world camera at the gate while the veil closes,
+          the city mounts under it, then it lifts. Exiting mirrors it. */}
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 1600, pointerEvents: 'none',
+        background: 'radial-gradient(ellipse at center, #0a0c10 40%, #05060a 100%)',
+        opacity: cityVeil === 'closed' ? 1 : 0,
+        transition: 'opacity 0.4s ease',
+        visibility: cityVeil === 'idle' ? 'hidden' : 'visible',
+      }} />
     </aside>
   );
 }
