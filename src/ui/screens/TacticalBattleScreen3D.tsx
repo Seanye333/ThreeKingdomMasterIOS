@@ -1,4 +1,4 @@
-import { Suspense, createContext, useContext, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { Suspense, createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { STRATAGEM_RANGE } from '../../game/data/stratagemRanges';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Html, OrbitControls, Stars, SoftShadows, Sparkles } from '@react-three/drei';
@@ -1637,7 +1637,10 @@ function InstancedTilePrisms({ tiles, hovered }: { tiles: TacticalTile[]; hovere
   const ref = useRef<THREE.InstancedMesh>(null);
   const surf = useMemo(() => ({ normal: groundNormalTexture(), rough: groundRoughnessTexture() }), []);
   const dummy = useMemo(() => new THREE.Object3D(), []);
-  useEffect(() => {
+  // Layout effects: matrices + instance colours must land BEFORE the first
+  // painted frame — the shader compiles with (or without) instancing colour
+  // on first render, and a colour-less first compile leaves the board white.
+  useLayoutEffect(() => {
     const m = ref.current;
     if (!m) return;
     tiles.forEach((t, i) => {
@@ -1652,7 +1655,7 @@ function InstancedTilePrisms({ tiles, hovered }: { tiles: TacticalTile[]; hovere
     m.instanceMatrix.needsUpdate = true;
     m.computeBoundingSphere();
   }, [tiles, dummy]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const m = ref.current;
     if (!m) return;
     const c = new THREE.Color();
