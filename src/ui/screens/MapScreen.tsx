@@ -37,6 +37,38 @@ import { Chip } from '../components/Chip';
 import { BattleTheaterModal } from '../components/BattleTheaterModal';
 // 啟動提速 — the 3D map bundle (≈360KB) loads on demand, not at boot.
 const StrategicMap3D = lazy(() => import('../components/StrategicMap3D').then(m => ({ default: m.StrategicMap3D })));
+
+/** Coarse-pointer / small-screen device — gets the bottom thumb dock. */
+const IS_COARSE = typeof window !== 'undefined'
+  && (window.matchMedia?.('(pointer: coarse)')?.matches || window.innerWidth < 700);
+
+/** 拇指塢 — one bottom-dock button: icon over label, 44px+ touch target. */
+function DockBtn({ icon, label, onClick, badge, primary }: {
+  icon: string; label: string; onClick: () => void; badge?: number; primary?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        flex: primary ? 1.3 : 1, minHeight: 46, position: 'relative',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
+        background: primary ? 'rgba(212,168,74,0.18)' : 'transparent',
+        border: `1px solid ${primary ? '#d4a84a' : 'rgba(255,255,255,0.10)'}`,
+        color: primary ? '#f0d98a' : '#c8d2da', borderRadius: 'var(--tkm-radius)',
+        fontFamily: 'var(--tkm-font-body)', cursor: 'pointer', padding: '0.2rem 0.2rem',
+      }}
+    >
+      <span style={{ fontSize: '1.05rem', lineHeight: 1 }}>{icon}</span>
+      <span style={{ fontSize: '0.68rem', letterSpacing: '0.05rem', whiteSpace: 'nowrap' }}>{label}</span>
+      {badge != null && badge > 0 && (
+        <span style={{
+          position: 'absolute', top: 2, right: '18%', minWidth: 15, height: 15, borderRadius: 999,
+          background: '#c0504a', color: '#fff', fontSize: '0.62rem', lineHeight: '15px', padding: '0 3px',
+        }}>{badge}</span>
+      )}
+    </button>
+  );
+}
 import { TutorialOverlay } from '../components/TutorialOverlay';
 import { TutorialTasks } from '../components/TutorialTasks';
 import { VictoryModal } from '../components/VictoryModal';
@@ -813,6 +845,23 @@ export function MapScreen() {
             style={{ background: 'transparent', border: '1px solid #4a5568', color: '#97a4ae', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', padding: '0.1rem 0.5rem', fontFamily: 'inherit' }}
           >⏭</button>
         </div>
+      )}
+      {/* 拇指塢 — phone-only bottom dock: the five actions a thumb reaches
+          for every turn. Desktop keeps the top bar it already has. */}
+      {IS_COARSE && !observing && !battleScreenUp && (
+        <nav style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 630,
+          display: 'flex', alignItems: 'stretch', gap: 6,
+          padding: '0.35rem 0.55rem calc(0.35rem + var(--tkm-safe-bottom))',
+          background: 'linear-gradient(180deg, rgba(14,18,22,0.88), rgba(10,14,18,0.97))',
+          borderTop: '1px solid var(--tkm-border-gold)', backdropFilter: 'blur(8px)',
+        }}>
+          <DockBtn icon="⚔" label={t('武將', 'Officers')} onClick={() => setShowOfficers(true)} />
+          <DockBtn icon="🏯" label={t('郡縣', 'Cities')} onClick={() => setShowCityRoster(true)} />
+          <DockBtn icon="⚡" label={t('委派', 'Assign')} onClick={() => autoAssignIdle()} badge={idleCount} />
+          <DockBtn icon="📋" label={t('待辦', 'To-Do')} onClick={() => setShowToDo(true)} />
+          <DockBtn primary icon="▶" label={t(`下旬 ${monthNum}月${phaseInfo.zh}`, `Next`)} onClick={advanceTurn} />
+        </nav>
       )}
       {/* 日流播放時,季報壓後 — the report pops once the days finish walking. */}
       {!dayFlow && (
