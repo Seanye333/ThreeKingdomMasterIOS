@@ -14728,6 +14728,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           plagueRiskCityIds: loaded.plagueRiskCityIds ?? [],
           hexPaint: loaded.hexPaint ?? {},
           dayFlow: null,
+          dayFlowFollow: loaded.dayFlowFollow ?? false,
+          foughtPairs: null,
           pacifyMissions: loaded.pacifyMissions ?? {},
           annals: loaded.annals ?? [],
           pendingEspionage: loaded.pendingEspionage ?? [],
