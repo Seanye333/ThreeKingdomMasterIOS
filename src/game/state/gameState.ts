@@ -291,6 +291,8 @@ export interface GameState {
       aZh: string; aEn: string; bZh: string; bEn: string; fired?: boolean;
     }>;
   } | null;
+  /** 跟拍 — during the day flow the camera glides after your lead column. */
+  dayFlowFollow: boolean;
   /** 塗色 (RTK-XIV) — lattice cells walked by marching columns (deviation
    *  dictionary "col,row" → {force, seasonStamp}); TTL-pruned each season. */
   hexPaint: import('../systems/hexPaint').HexPaint;
@@ -763,6 +765,7 @@ export const EMPTY_STATE: GameState = {
   scenicVisits: {},
   musters: {},
   dayFlow: null,
+  dayFlowFollow: false,
   hexPaint: {},
   territoryOwnership: {},
   armies: {},
@@ -1168,6 +1171,7 @@ export function loadScenario(
     sites: buildInitialSites(),
     scenicLooted: {},
     dayFlow: null,
+  dayFlowFollow: false,
   hexPaint: {},
   territoryOwnership: {},
     armies: {},

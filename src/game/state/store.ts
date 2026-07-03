@@ -1180,6 +1180,7 @@ interface GameStore extends GameState {
   prayForRain: () => { ok: boolean; success?: boolean; message: string };
   /** 日流 — playback controls for the day-by-day turn flow. */
   beginDayFlow: () => void;
+  setDayFlowFollow: (on: boolean) => void;
   dayFlowTick: () => void;
   dayFlowTogglePause: () => void;
   dayFlowSetSpeed: (speed: number) => void;
@@ -10155,6 +10156,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               ?? (typeof localStorage !== 'undefined' ? Number(localStorage.getItem('tkm-flow-speed')) || 1 : 1),
             encounters: predictPlayerEncounters(state),
           },
+          dayFlowFollow: state.dayFlowFollow
+            || (typeof localStorage !== 'undefined' && localStorage.getItem('tkm-flow-follow') === '1'),
         });
       },
       dayFlowTick: () => {
@@ -10220,6 +10223,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         try { localStorage.setItem('tkm-flow-speed', String(speed)); } catch { /* headless */ }
       },
       dayFlowSkip: () => set({ dayFlow: null }),
+      setDayFlowFollow: (on) => {
+        set({ dayFlowFollow: on });
+        try { localStorage.setItem('tkm-flow-follow', on ? '1' : '0'); } catch { /* headless */ }
+      },
 
       resolveEventChoice: (choiceId) => {
         const state = get();

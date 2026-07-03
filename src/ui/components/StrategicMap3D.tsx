@@ -42,7 +42,7 @@ import type { WeatherKind } from '../../game/systems/weather';
 import { LocatorMap } from './LocatorMap';
 import { ObjectivePanel } from './ObjectivePanel';
 import { SelectionRing3D } from './SelectionRing3D';
-import { computeDayEncounters } from '../../game/systems/dayEncounters';
+import { computeDayEncounters, marchPositionAtDay } from '../../game/systems/dayEncounters';
 import { PortPanel } from './PortPanel';
 import { FortPanel } from './FortPanel';
 import { TribePanel } from './TribePanel';
@@ -6210,6 +6210,28 @@ export function StrategicMap3D() {
     });
     return () => setMapFocusHandler(null);
   }, []);
+  // 跟拍 — while the day flow plays with follow enabled, glide the camera
+  // after the player's lead marching column (largest troops). One flyTo per
+  // day tick keeps the ride smooth without fighting manual panning between
+  // ticks; the encounter auto-pause then lands with the camera on scene.
+  const dfFollowOn = useGameStore((st) => (st.dayFlow ? st.dayFlowFollow : false));
+  const dfDayForCam = useGameStore((st) => st.dayFlow?.day ?? -1);
+  useEffect(() => {
+    if (!dfFollowOn || dfDayForCam < 0) return;
+    const live = useGameStore.getState();
+    const pf = live.playerForceId;
+    if (!pf) return;
+    const marches = Object.values(live.pendingCommands).filter(
+      (c): c is Extract<typeof c, { type: 'march' }> =>
+        c.type === 'march' && !c.holding && live.officers[c.officerId]?.forceId === pf,
+    );
+    if (marches.length === 0) return;
+    const lead = marches.reduce((a, b) => ((b.troops ?? 0) > (a.troops ?? 0) ? b : a));
+    const pos = marchPositionAtDay(lead, live.cities, dfDayForCam);
+    if (!pos) return;
+    const [wx, wz] = pxToWorld(pos.x, pos.y);
+    camApiRef.current?.flyTo(wx, wz);
+  }, [dfFollowOn, dfDayForCam]);
   // 回都 — select the player's capital and fly to it (Home key + the 🏛 button).
   const jumpToCapital = () => {
     const st = useGameStore.getState();

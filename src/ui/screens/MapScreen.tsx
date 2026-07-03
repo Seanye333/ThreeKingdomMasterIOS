@@ -358,6 +358,8 @@ export function MapScreen() {
   const dayFlowSetSpeed = useGameStore((s) => s.dayFlowSetSpeed);
   const dayFlowSkip = useGameStore((s) => s.dayFlowSkip);
   const beginDayFlow = useGameStore((s) => s.beginDayFlow);
+  const dayFlowFollow = useGameStore((s) => s.dayFlowFollow);
+  const setDayFlowFollow = useGameStore((s) => s.setDayFlowFollow);
   // 本旬結算本體 — the flow's day 15 (or a flow-less advance) lands here.
   const commitTurn = () => {
     if (hotSeatPlayers.length > 1) {
@@ -839,6 +841,15 @@ export function MapScreen() {
               color: dayFlow.speed === sp ? '#f0d98a' : '#97a4ae', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', padding: '0.1rem 0.4rem', fontFamily: 'inherit', fontSize: '0.78rem',
             }}>{sp}×</button>
           ))}
+          <button
+            onClick={() => setDayFlowFollow(!dayFlowFollow)}
+            title={t('跟拍 — 鏡頭隨主力縱隊行進', 'Follow — camera rides your lead column')}
+            style={{
+              background: dayFlowFollow ? 'rgba(212,168,74,0.25)' : 'transparent',
+              border: `1px solid ${dayFlowFollow ? '#d4a84a' : '#4a5568'}`,
+              color: dayFlowFollow ? '#f0d98a' : '#97a4ae', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', padding: '0.1rem 0.45rem', fontFamily: 'inherit',
+            }}
+          >📍</button>
           <button
             onClick={() => { dayFlowSkip(); commitTurn(); }}
             title={t('跳過日播,直接結算本旬', 'Skip the days, resolve the turn now')}
