@@ -167,6 +167,8 @@ export interface EventApplyOutput {
   }>;
   /** §8.5 — 天命 deltas emitted by 'mandate-ruler' effects (forceId resolved). */
   mandateDeltas?: Array<{ forceId: EntityId; delta: number }>;
+  /** 斷糧 — forces whose hex-paint (supply ribbons) must be swept by the caller. */
+  stripPaintForceIds?: EntityId[];
 }
 
 /**
@@ -184,11 +186,12 @@ export function applyEventEffects(
   const appointmentGrants: NonNullable<EventApplyOutput['appointmentGrants']> = [];
   const forcedWishes: NonNullable<EventApplyOutput['forcedWishes']> = [];
   const mandateDeltas: NonNullable<EventApplyOutput['mandateDeltas']> = [];
+  const stripPaintForceIds: NonNullable<EventApplyOutput['stripPaintForceIds']> = [];
 
   for (const e of evt.effects) {
-    applySingleEffect(e, { cities, officers, forces, eventFlags, appointmentGrants, forcedWishes, mandateDeltas });
+    applySingleEffect(e, { cities, officers, forces, eventFlags, appointmentGrants, forcedWishes, mandateDeltas, stripPaintForceIds });
   }
-  return { cities, officers, forces, eventFlags, appointmentGrants, forcedWishes, mandateDeltas };
+  return { cities, officers, forces, eventFlags, appointmentGrants, forcedWishes, mandateDeltas, stripPaintForceIds };
 }
 
 function applySingleEffect(
@@ -208,6 +211,11 @@ function applySingleEffect(
           };
         }
       }
+      break;
+    }
+    case 'strip-force-paint': {
+      const fid = resolveForceId(e.forceId, mut.forces);
+      if (fid) mut.stripPaintForceIds?.push(fid);
       break;
     }
     case 'force-gold': {

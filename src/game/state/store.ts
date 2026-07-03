@@ -1510,6 +1510,17 @@ function predictPlayerEncounters(state: GameState) {
     }));
 }
 
+/** 斷糧掃色 — remove every painted cell belonging to the given forces
+ *  (火燒烏巢-style events: the ribbon burns, the deep columns starve). */
+function stripPaint(
+  paint: import('../systems/hexPaint').HexPaint,
+  forceIds: EntityId[],
+): import('../systems/hexPaint').HexPaint {
+  if (forceIds.length === 0) return paint;
+  const drop = new Set(forceIds);
+  return Object.fromEntries(Object.entries(paint).filter(([, v]) => !drop.has(v.f)));
+}
+
 /** 兵臨之日 — player-relevant arrivals for the day-flow playback. */
 function predictPlayerArrivals(state: GameState) {
   const pf = state.playerForceId;
@@ -4193,6 +4204,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const forcedEventWishes: import('../types').OfficerWish[] = [];
         // §8.5 — 天命 deltas emitted by event effects (mandate-ruler).
         const eventMandateDeltas: Array<{ forceId: EntityId; delta: number }> = [];
+        const eventStripPaintIds: EntityId[] = [];
         // §8.3-deep 入主建國 — the new tribal state joins the force roster.
         for (const f of tribeResult.foundings) {
           postForces = { ...postForces, [f.force.id]: f.force };
@@ -4263,6 +4275,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           if (after.mandateDeltas && after.mandateDeltas.length > 0) {
             eventMandateDeltas.push(...after.mandateDeltas);
           }
+          if (after.stripPaintForceIds) eventStripPaintIds.push(...after.stripPaintForceIds);
           // 抉擇 — if the player rules the chooser's force the decision
           // waits for the modal; anyone else walks the historical path
           // (first choice) right now.
@@ -4290,6 +4303,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               if (histPath.mandateDeltas && histPath.mandateDeltas.length > 0) {
                 eventMandateDeltas.push(...histPath.mandateDeltas);
               }
+              if (histPath.stripPaintForceIds) eventStripPaintIds.push(...histPath.stripPaintForceIds);
             }
           }
           // Apply any 'grant-title' effects emitted by this event. These
@@ -7810,13 +7824,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           dayFlow: null,
           foughtPairs: null,
           // 塗色 — season prune: TTL trails grass over, dead forces sweep.
-          hexPaint: seasonBoundary
+          // 斷糧事件(火燒烏巢)先掃掉被剝奪勢力的整條色帶。
+          hexPaint: stripPaint(seasonBoundary
             ? prunePaint(
                 result.hexPaint ?? state.hexPaint ?? {},
                 seasonStampOf(result.date.year, result.date.season),
                 new Set(Object.values(postCities).map((c) => c.ownerForceId).filter(Boolean) as EntityId[]),
               )
-            : (result.hexPaint ?? state.hexPaint ?? {}),
+            : (result.hexPaint ?? state.hexPaint ?? {}), eventStripPaintIds),
           armies: result.armies ?? {},
           convoys: result.convoys ?? {},
           raids: result.raids ?? {},
@@ -10362,6 +10377,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           eventFlags: after.eventFlags,
           mandate: mandateAfterChoice,
           pendingEvent: null,
+          // 斷糧 — a strip-force-paint effect (火燒烏巢) sweeps the force's
+          // whole supply ribbon: its deep columns start starving next season.
+          ...(after.stripPaintForceIds && after.stripPaintForceIds.length > 0
+            ? {
+                hexPaint: Object.fromEntries(Object.entries(state.hexPaint ?? {})
+                  .filter(([, v]) => !after.stripPaintForceIds!.includes(v.f))),
+              }
+            : {}),
         });
       },
 

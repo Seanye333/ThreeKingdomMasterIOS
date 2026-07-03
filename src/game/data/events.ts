@@ -179,6 +179,10 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
         label: { zh: '親率輕騎,夜襲烏巢', en: 'Ride tonight — burn it all' },
         effects: [
           { kind: 'force-troops-multiplier', forceId: 'force-yuan-shao', multiplier: 0.65 },
+          // 糧道盡毀 — the granary fire sweeps Yuan Shao's whole supply
+          // ribbon off the map: his deep columns starve (§4.1 補給線)
+          // until they re-walk a corridor home.
+          { kind: 'strip-force-paint', forceId: 'force-yuan-shao' },
           { kind: 'flag', key: 'wuchao-burned' },
         ],
       },

@@ -7,6 +7,9 @@ import type { BilingualName, EntityId } from './common';
  */
 export type EventEffect =
   | { kind: 'force-troops-multiplier'; forceId: EntityId; multiplier: number }
+  /** 斷糧 — strip a force's ENTIRE hex-paint (its supply ribbons grass over
+   *  at once): deep columns start starving until they re-walk a corridor. */
+  | { kind: 'strip-force-paint'; forceId: EntityId }
   | { kind: 'force-gold'; forceId: EntityId; delta: number }
   | { kind: 'city-loyalty'; cityId: EntityId; delta: number }
   | { kind: 'officer-loyalty'; officerId: EntityId; delta: number }
