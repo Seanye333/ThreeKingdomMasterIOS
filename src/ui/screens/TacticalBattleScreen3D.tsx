@@ -19,6 +19,7 @@ import { categoryOfTactic } from '../../game/data/officerAttributes';
 import { applyBattlePrep,
   aiTakeTurn, aiSkillForDifficulty, applyStratagem, attackUnits, canAttack, canMove, endTurn, hexDistance,
   moveUnit, resolveBattleEnd, unitAt, tileAt, hexNeighbours, forecastAttack, matchupLabel, battleStratagemSituation, eliteUnitOf,
+  defenderTerrainShield, terrainDamageMod, moveCost,
   findPath, moveUnitAlong, reachableHexes, isRouting, changeFormation, canChangeFormation,
   pickAiBattlePrep, pickAiFormation, formationCounterMul,
   pickDuelChampion, canIssuePreBattleDuel, applyPreBattleDuel, aiMaybePreBattleDuel,
@@ -5207,14 +5208,46 @@ export function TacticalBattleScreen3D() {
               </div>
             );
           }
+          // 地勢一覽 — terrain name + what standing here actually does:
+          // defence shield, move cost, and (with one of yours selected)
+          // how the ground bends that unit's blows.
+          const tl = tileAt(battle, hovered);
+          const TER_ZH: Record<string, [string, string]> = {
+            plain: ['平原', 'Plain'], forest: ['森林', 'Forest'], mountain: ['山地', 'Mountain'],
+            river: ['大河', 'River'], road: ['道路', 'Road'], ice: ['冰面', 'Ice'],
+            hill: ['高地', 'Hill'], marsh: ['沼澤', 'Marsh'], desert: ['沙磧', 'Desert'],
+            chokepoint: ['隘口', 'Defile'], bridge: ['橋樑', 'Bridge'], gate: ['城門', 'Gate'],
+            wall: ['城牆', 'Wall'], watchtower: ['瞭望台', 'Watchtower'],
+          };
+          const ter = tl ? (TER_ZH[tl.terrain] ?? [tl.terrain, tl.terrain]) : null;
+          const shield = tl ? defenderTerrainShield(tl.terrain) : 1;
+          const cost = moveCost(battle, hovered);
+          const atkMod = tl && mine ? terrainDamageMod(selectedUnit!.unitType, tl.terrain) : 1;
           return (
             <div style={{
-              position: 'absolute', top: 12, right: 12,
-              background: 'rgba(20, 14, 8, 0.85)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
-              padding: '0.3rem 0.6rem', color: '#d4a84a',
-              fontFamily: 'ui-monospace, monospace', fontSize: '0.78rem',
+              position: 'absolute', top: 12, right: 12, minWidth: 128,
+              background: 'rgba(20, 14, 8, 0.88)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 'var(--tkm-radius-lg)',
+              padding: '0.35rem 0.6rem', color: '#d4b98a',
+              fontFamily: 'var(--tkm-font-body)', fontSize: '0.76rem', lineHeight: 1.5,
             }}>
-              ({hovered.col}, {hovered.row})
+              <div style={{ color: '#e8d9b0' }}>
+                {ter ? (lang === 'zh' ? ter[0] : ter[1]) : '—'}
+                <span style={{ color: '#7a8893', marginLeft: 6, fontFamily: 'ui-monospace, monospace', fontSize: '0.68rem' }}>({hovered.col},{hovered.row})</span>
+              </div>
+              {shield < 1 && (
+                <div style={{ color: '#9ad6a8' }}>🛡 {t(`守此格受擊 ×${shield.toFixed(2)}`, `defence ×${shield.toFixed(2)}`)}</div>
+              )}
+              {cost < 99 && cost > 1 && (
+                <div style={{ color: '#c0a878' }}>👣 {t(`移入耗 ${cost} AP`, `${cost} AP to enter`)}</div>
+              )}
+              {cost >= 99 && (
+                <div style={{ color: '#e8a07a' }}>✕ {t('不可通行', 'impassable')}</div>
+              )}
+              {mine && atkMod !== 1 && (
+                <div style={{ color: atkMod > 1 ? '#9ad6a8' : '#e8a07a' }}>
+                  {atkMod > 1 ? '⤴' : '⤵'} {t(`我軍在此出擊 ×${atkMod.toFixed(2)}`, `attacking from here ×${atkMod.toFixed(2)}`)}
+                </div>
+              )}
             </div>
           );
         })()}
