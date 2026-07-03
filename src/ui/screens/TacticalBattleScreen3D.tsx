@@ -1693,6 +1693,83 @@ export function InstancedTilePrisms({ tiles, hovered }: { tiles: TacticalTile[];
   );
 }
 
+/** 戰場收邊 — two rings of fading ghost hexes beyond the board's true
+ *  edge (each wearing its nearest real tile's terrain colour), so the
+ *  battlefield dissolves into the dark ground instead of ending at a
+ *  cliff. Pure dressing: no raycast, no shadows, two draw calls. */
+function BoardSkirt({ tiles }: { tiles: TacticalTile[] }) {
+  const rings = useMemo(() => {
+    const board = new Map<string, TacticalTile>();
+    for (const t of tiles) board.set(`${t.coord.col},${t.coord.row}`, t);
+    const nbsOf = (c: number, r: number) => (c & 1
+      ? [[0, -1], [0, 1], [-1, 0], [1, 0], [-1, 1], [1, 1]]
+      : [[0, -1], [0, 1], [-1, 0], [1, 0], [-1, -1], [1, -1]])
+      .map(([dc, dr]) => ({ col: c + dc, row: r + dr }));
+    const grow = (seen: Set<string>, seeds: Array<{ col: number; row: number }>) => {
+      const ring: Array<{ col: number; row: number; near: TacticalTile }> = [];
+      for (const sd of seeds) {
+        for (const nb of nbsOf(sd.col, sd.row)) {
+          const k = `${nb.col},${nb.row}`;
+          if (board.has(k) || seen.has(k)) continue;
+          seen.add(k);
+          // nearest real tile = the seed we grew from (good enough for tint)
+          const near = board.get(`${sd.col},${sd.row}`) ?? ring.find(() => true)?.near ?? tiles[0];
+          ring.push({ col: nb.col, row: nb.row, near });
+        }
+      }
+      return ring;
+    };
+    const seen = new Set<string>(board.keys());
+    const ring1 = grow(seen, tiles.map((t) => t.coord));
+    const r1ByKey = new Map(ring1.map((c) => [`${c.col},${c.row}`, c]));
+    const ring2raw = grow(seen, ring1);
+    const ring2 = ring2raw.map((c) => {
+      // inherit tint through ring1
+      const parent = nbsOf(c.col, c.row).map((nb) => r1ByKey.get(`${nb.col},${nb.row}`)).find(Boolean);
+      return { ...c, near: parent?.near ?? c.near };
+    });
+    return { ring1, ring2 };
+  }, [tiles]);
+  const ringMesh = (cells: Array<{ col: number; row: number; near: TacticalTile }>, opacity: number, keyId: string) => {
+    if (cells.length === 0) return null;
+    return (
+      <SkirtRingMesh key={`${keyId}-${cells.length}`} cells={cells} opacity={opacity} />
+    );
+  };
+  return <group raycast={() => null}>{ringMesh(rings.ring1, 0.4, 'r1')}{ringMesh(rings.ring2, 0.16, 'r2')}</group>;
+}
+
+function SkirtRingMesh({ cells, opacity }: {
+  cells: Array<{ col: number; row: number; near: TacticalTile }>; opacity: number;
+}) {
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+  useLayoutEffect(() => {
+    const m = ref.current;
+    if (!m) return;
+    const c = new THREE.Color();
+    cells.forEach((cell, i) => {
+      const [x, z] = hexWorld(cell.col, cell.row);
+      dummy.position.set(x, 0.015, z);
+      dummy.rotation.set(-Math.PI / 2, 0, 0);
+      dummy.scale.set(1, 1, 1);
+      dummy.updateMatrix();
+      m.setMatrixAt(i, dummy.matrix);
+      c.set(TERRAIN_COLOR[cell.near.terrain]).offsetHSL(0, -0.08, -0.1);
+      m.setColorAt(i, c);
+    });
+    m.instanceMatrix.needsUpdate = true;
+    if (m.instanceColor) m.instanceColor.needsUpdate = true;
+    m.computeBoundingSphere();
+  }, [cells, dummy]);
+  return (
+    <instancedMesh ref={ref} args={[undefined, undefined, cells.length]} raycast={() => null}>
+      <circleGeometry args={[R * 0.96, 6]} />
+      <meshBasicMaterial color="#ffffff" transparent opacity={opacity} depthWrite={false} />
+    </instancedMesh>
+  );
+}
+
 /* ─── Weather particles ─────────────────────────────────────────── */
 function RainParticles({ count = 800, bounds }: { count?: number; bounds: { x: number; z: number } }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
@@ -3793,6 +3870,7 @@ export function BattleScene({
       {/* All tiles — prisms batched into one InstancedMesh, per-tile
           overlays/interaction rendered on top. */}
       <InstancedTilePrisms tiles={tiles} hovered={hovered} />
+      <BoardSkirt tiles={tiles} />
       {(() => {
         const fireSet = new Set((battle.groundFires ?? []).map((f) => `${f.coord.col},${f.coord.row}`));
         return tiles.map((t) => {
