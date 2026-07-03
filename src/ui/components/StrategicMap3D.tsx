@@ -42,6 +42,7 @@ import type { WeatherKind } from '../../game/systems/weather';
 import { LocatorMap } from './LocatorMap';
 import { ObjectivePanel } from './ObjectivePanel';
 import { SelectionRing3D } from './SelectionRing3D';
+import { computeDayEncounters } from '../../game/systems/dayEncounters';
 import { PortPanel } from './PortPanel';
 import { FortPanel } from './FortPanel';
 import { TribePanel } from './TribePanel';
@@ -4855,7 +4856,12 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
   // 拖拽行軍 — press-hold an own column ~0.35s (hold still: >9px slop =
   // camera pan and the hold cancels), then drag; release on land reroutes
   // it there (same moveArmyToCell semantics as select+tap).
-  const [dragMarch, setDragMarch] = useState<{ id: string; px: number; py: number } | null>(null);
+  const [dragMarch, setDragMarch] = useState<{
+    id: string; px: number; py: number;
+    /** 遭遇預告 — first predicted contact on the CURRENT drop target. */
+    forecast?: { day: number; foeZh: string; foeEn: string } | null;
+  } | null>(null);
+  const dragCellRef = useRef<string>('');
   const dragMarchRef = useRef<typeof dragMarch>(null);
   dragMarchRef.current = dragMarch;
   const dragPendingRef = useRef<{ timer: ReturnType<typeof setTimeout>; sx: number; sy: number } | null>(null);
@@ -5155,6 +5161,36 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
               onPointerMove={(e) => {
                 const px = (e.point.x + MAP_W / 2) / PIXEL_TO_WORLD;
                 const py = (e.point.z + MAP_D / 2) / PIXEL_TO_WORLD;
+                // 遭遇預告 — re-sweep only when the drop CELL changes (the
+                // day-sweep walks every march's route; too dear per move).
+                const cell = geoHexAt(px, py);
+                const cellKey = `${cell.col},${cell.row}`;
+                if (cellKey !== dragCellRef.current) {
+                  dragCellRef.current = cellKey;
+                  const live = useGameStore.getState();
+                  const myCmd = live.pendingCommands[dragMarch.id];
+                  let forecast: { day: number; foeZh: string; foeEn: string } | null = null;
+                  if (myCmd?.type === 'march') {
+                    const myArmy = live.armies[dragMarch.id];
+                    const srcC = live.cities[myCmd.cityId];
+                    const sp2 = srcC ? cityPos(srcC) : null;
+                    const dist = sp2 ? Math.hypot(px - sp2.x, py - sp2.y) : 0;
+                    const total = dist < 100 ? 1 : dist < 195 ? 2 : dist < 275 ? 3 : 4;
+                    const remaining = Math.max(1, Math.ceil((1 - (myArmy?.progress ?? 0)) * total));
+                    const trial = { ...myCmd, targetX: px, targetY: py, holding: false, totalSeasons: total, seasonsRemaining: remaining };
+                    const others = Object.values(live.pendingCommands)
+                      .filter((c): c is typeof myCmd => c.type === 'march' && c.officerId !== myCmd.officerId);
+                    const contacts = computeDayEncounters([trial, ...others], live.officers, live.cities, live.diplomacy);
+                    const mine = contacts.find((c) => c.a.officerId === myCmd.officerId || c.b.officerId === myCmd.officerId);
+                    if (mine) {
+                      const foeId = mine.a.officerId === myCmd.officerId ? mine.b.officerId : mine.a.officerId;
+                      const foe = live.officers[foeId];
+                      forecast = { day: Math.max(1, mine.day), foeZh: foe?.name.zh ?? '敵軍', foeEn: foe?.name.en ?? 'enemy' };
+                    }
+                  }
+                  setDragMarch((d) => (d ? { ...d, px, py, forecast } : d));
+                  return;
+                }
                 setDragMarch((d) => (d ? { ...d, px, py } : d));
               }}
               onPointerUp={(e) => { e.stopPropagation(); endDrag(true); }}
@@ -5168,8 +5204,13 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
               <meshBasicMaterial color={tint} transparent opacity={0.9} depthWrite={false} />
             </mesh>
             <Html position={[txw, ty + 0.9, tzw]} center distanceFactor={10} zIndexRange={[46, 36]} style={{ pointerEvents: 'none' }}>
-              <div style={{ background: 'rgba(18,12,6,0.92)', border: `1px solid ${tint}`, borderRadius: 'var(--tkm-radius-xs)', padding: '1px 7px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px', color: land ? '#ffe9a8' : '#f0b0a0', whiteSpace: 'nowrap' }}>
+              <div style={{ background: 'rgba(18,12,6,0.92)', border: `1px solid ${dragMarch.forecast ? '#e0552a' : tint}`, borderRadius: 'var(--tkm-radius-xs)', padding: '1px 7px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px', color: land ? '#ffe9a8' : '#f0b0a0', whiteSpace: 'nowrap' }}>
                 {land ? `${t('進駐此地', 'March here')} · ${eta}${t('旬', ' turn(s)')}` : t('不可入水', 'Water — no landing')}
+                {land && dragMarch.forecast && (
+                  <div style={{ color: '#ff9c7a' }}>
+                    ⚠ {t(`第${dragMarch.forecast.day}日遇 ${dragMarch.forecast.foeZh}`, `Day ${dragMarch.forecast.day}: meets ${dragMarch.forecast.foeEn}`)}
+                  </div>
+                )}
               </div>
             </Html>
           </group>
