@@ -241,11 +241,15 @@ const WEATHER_FOG_MUL: Record<Weather, number> = {
 
 /* ─── A single hex tile + its terrain art (trees, peaks, water) ─────── */
 export function HexTile({
-  tile, onClick, hovered, highlight, windStrength, burning = false,
+  tile, onClick, hovered, highlight, windStrength, burning = false, instancedBase = false,
 }: {
   tile: TacticalTile;
   onClick: () => void;
   hovered: boolean;
+  /** The battle board draws all prisms in ONE InstancedMesh (see
+   *  InstancedTilePrisms); the tile then skips its own prism and keeps
+   *  only interaction + overlays. City map keeps per-tile prisms. */
+  instancedBase?: boolean;
   /** 'move' = walkable destination, 'attack' = attackable enemy hex,
    *  'path' = a queued march waypoint, 'cast' = in stratagem range,
    *  'aoe' = splash of the hovered cast, undefined = no highlight */
@@ -281,23 +285,26 @@ export function HexTile({
 
   return (
     <group position={[x, 0, z]}>
-      {/* Hex prism — 6-sided cylinder, height by terrain */}
-      <mesh
-        position={[0, h / 2, 0]}
-        onClick={(e) => { e.stopPropagation(); onClick(); }}
-        receiveShadow
-        castShadow
-      >
-        <cylinderGeometry args={[R * 0.98, R * 0.98, h, 6]} />
-        <meshStandardMaterial
-          color={hovered ? '#f0e0b0' : tint}
-          normalMap={surf.normal ?? undefined}
-          normalScale={SURFACE_NORMAL_SCALE}
-          roughnessMap={surf.rough ?? undefined}
-          roughness={0.92}
-          metalness={0.05}
-        />
-      </mesh>
+      {/* Hex prism — 6-sided cylinder, height by terrain. Skipped when the
+          board batches all prisms into one InstancedMesh. */}
+      {!instancedBase && (
+        <mesh
+          position={[0, h / 2, 0]}
+          onClick={(e) => { e.stopPropagation(); onClick(); }}
+          receiveShadow
+          castShadow
+        >
+          <cylinderGeometry args={[R * 0.98, R * 0.98, h, 6]} />
+          <meshStandardMaterial
+            color={hovered ? '#f0e0b0' : tint}
+            normalMap={surf.normal ?? undefined}
+            normalScale={SURFACE_NORMAL_SCALE}
+            roughnessMap={surf.rough ?? undefined}
+            roughness={0.92}
+            metalness={0.05}
+          />
+        </mesh>
+      )}
       {/* 觸控擴大命中區 — a flat invisible disk over the whole hex top makes the
           tile easy to tap on a phone. It sits low (at the hex surface) so the
           taller unit figures still win the raycast and stay individually tappable. */}
@@ -1618,6 +1625,68 @@ export function DefenseStructure({
         </div>
       </Html>}
     </group>
+  );
+}
+
+/** 棋盤一体成型 — every tile prism in ONE InstancedMesh: a 216-cell board
+ *  drops ~216 shadow-casting meshes to a single draw (+ single depth pass).
+ *  Per-instance color carries the terrain tint (same jitter hash as
+ *  HexTile) and the hover flash; interaction stays on each tile's
+ *  invisible hit disk, so clicks/hover behave exactly as before. */
+function InstancedTilePrisms({ tiles, hovered }: { tiles: TacticalTile[]; hovered: HexCoord | null }) {
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const surf = useMemo(() => ({ normal: groundNormalTexture(), rough: groundRoughnessTexture() }), []);
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+  useEffect(() => {
+    const m = ref.current;
+    if (!m) return;
+    tiles.forEach((t, i) => {
+      const [x, z] = hexWorld(t.coord.col, t.coord.row);
+      const h = TERRAIN_HEIGHT[t.terrain];
+      dummy.position.set(x, h / 2, z);
+      dummy.scale.set(1, Math.max(0.001, h), 1);
+      dummy.rotation.set(0, 0, 0);
+      dummy.updateMatrix();
+      m.setMatrixAt(i, dummy.matrix);
+    });
+    m.instanceMatrix.needsUpdate = true;
+    m.computeBoundingSphere();
+  }, [tiles, dummy]);
+  useEffect(() => {
+    const m = ref.current;
+    if (!m) return;
+    const c = new THREE.Color();
+    tiles.forEach((t, i) => {
+      if (hovered && hovered.col === t.coord.col && hovered.row === t.coord.row) {
+        c.set('#f0e0b0');
+      } else {
+        c.set(TERRAIN_COLOR[t.terrain]);
+        const j = ((((t.coord.col * 73856093) ^ (t.coord.row * 19349663)) >>> 0) % 1000) / 1000;
+        c.offsetHSL((j - 0.5) * 0.02, (j - 0.5) * 0.05, (j - 0.5) * 0.07);
+      }
+      m.setColorAt(i, c);
+    });
+    if (m.instanceColor) m.instanceColor.needsUpdate = true;
+  }, [tiles, hovered]);
+  return (
+    <instancedMesh
+      key={tiles.length}
+      ref={ref}
+      args={[undefined, undefined, tiles.length]}
+      castShadow
+      receiveShadow
+      raycast={() => null}
+    >
+      <cylinderGeometry args={[R * 0.98, R * 0.98, 1, 6]} />
+      <meshStandardMaterial
+        color="#ffffff"
+        normalMap={surf.normal ?? undefined}
+        normalScale={SURFACE_NORMAL_SCALE}
+        roughnessMap={surf.rough ?? undefined}
+        roughness={0.92}
+        metalness={0.05}
+      />
+    </instancedMesh>
   );
 }
 
@@ -3718,7 +3787,9 @@ export function BattleScene({
       {/* 兵器交擊 — clash spark between the duelists (also in the map diorama). */}
       {duelFocus && duelClashKey > 0 && <DuelClash3D key={duelClashKey} pos={[duelFocus[0], 1.0, duelFocus[1]]} big={duelClashBig} />}
 
-      {/* All tiles */}
+      {/* All tiles — prisms batched into one InstancedMesh, per-tile
+          overlays/interaction rendered on top. */}
+      <InstancedTilePrisms tiles={tiles} hovered={hovered} />
       {(() => {
         const fireSet = new Set((battle.groundFires ?? []).map((f) => `${f.coord.col},${f.coord.row}`));
         return tiles.map((t) => {
@@ -3737,6 +3808,7 @@ export function BattleScene({
                 highlight={highlights.get(key)}
                 windStrength={windStrength}
                 burning={fireSet.has(key)}
+                instancedBase
               />
             </group>
           );
