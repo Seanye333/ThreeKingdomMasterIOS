@@ -129,6 +129,18 @@ function conditionsMet(evt: HistoricalEvent, ctx: HistoricalEventContext): boole
         if (!o || o.status === 'dead' || o.forceId) return false;
         break;
       }
+      case 'officer-in-city': {
+        const o = ctx.officers[req.officerId];
+        if (!o || o.status === 'dead' || o.locationCityId !== req.cityId) return false;
+        break;
+      }
+      case 'city-owner-ruler': {
+        const f = Object.values(ctx.forces).find(
+          (force) => force.rulerOfficerId === req.rulerOfficerId,
+        );
+        if (!f || ctx.cities[req.cityId]?.ownerForceId !== f.id) return false;
+        break;
+      }
       case 'officer-rules-cities-min': {
         // Find the force this officer rules, then count its cities.
         const f = Object.values(ctx.forces).find(
@@ -241,6 +253,21 @@ function applySingleEffect(
           loyalty: Math.max(0, Math.min(100, c.loyalty + e.delta)),
         };
       }
+      break;
+    }
+    case 'city-defense': {
+      const c = mut.cities[e.cityId];
+      if (c) mut.cities[e.cityId] = { ...c, defense: Math.max(0, c.defense + e.delta) };
+      break;
+    }
+    case 'city-food': {
+      const c = mut.cities[e.cityId];
+      if (c) mut.cities[e.cityId] = { ...c, food: Math.max(0, c.food + e.delta) };
+      break;
+    }
+    case 'city-troops-multiplier': {
+      const c = mut.cities[e.cityId];
+      if (c) mut.cities[e.cityId] = { ...c, troops: Math.max(0, Math.floor(c.troops * e.multiplier)) };
       break;
     }
     case 'officer-loyalty': {

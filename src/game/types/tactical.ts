@@ -309,6 +309,8 @@ export interface TacticalBattle {
    *  resolveBattleEnd maps them back to WORLD hexes via geoAnchor so the
    *  strategic map remembers the scar (store.worldScars). */
   terrainScars?: Array<{ coord: HexCoord; kind: 'burned-forest' | 'burned-bridge' }>;
+  /** 火燒連營 — fieldworks torched this battle (3+ = the Lu Xun feat). */
+  fieldworksBurned?: number;
   attackerForceId: EntityId | null;
   defenderForceId: EntityId | null;
   width: number;

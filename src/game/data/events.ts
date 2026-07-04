@@ -194,6 +194,90 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
   },
 
+  /* ─── 下邳之圍 — 泗沂灌城,白門樓上 (chooser: 曹操) ─────────────── */
+  {
+    id: 'evt-xiapi-flood',
+    name: { en: 'The Rivers Turned on Xiapi', zh: '決泗沂之水灌下邳' },
+    yearMin: 198,
+    yearMax: 201,
+    requires: [
+      { kind: 'officer-alive', officerId: 'cao-cao' },
+      { kind: 'officer-in-city', officerId: 'lu-bu', cityId: 'xiapi' },
+      { kind: 'flag-unset', key: 'xiapi-resolved' },
+    ],
+    description:
+      'Lü Bu holds Xiapi and will not come out. Guo Jia points at the map: the Si and Yi rivers run right past the walls. Break the dikes, drown the town — or sit down and starve him out.',
+    descriptionZh: '呂布嬰城自守,不肯出戰。郭嘉指圖而言:泗、沂二水繞城而過 — 決堤灌城,可不攻自破;或深溝高壘,坐困之。',
+    effects: [],
+    chooserRulerId: 'cao-cao',
+    mood: 'martial',
+    choices: [
+      {
+        id: 'flood',
+        label: { zh: '決泗沂之水,灌其城郭', en: 'Break the dikes — drown the walls' },
+        effects: [
+          // 水灌下邳 — ramparts undermined, garrison drowned and shaken:
+          // the follow-up siege (長圍 or storm) meets a broken city.
+          { kind: 'city-defense', cityId: 'xiapi', delta: -40 },
+          { kind: 'city-troops-multiplier', cityId: 'xiapi', multiplier: 0.8 },
+          { kind: 'city-food', cityId: 'xiapi', delta: -8000 },
+          { kind: 'city-loyalty', cityId: 'xiapi', delta: -10 },
+          { kind: 'flag', key: 'xiapi-flooded' },
+        ],
+      },
+      {
+        id: 'invest',
+        label: { zh: '深溝高壘,圍而不攻', en: 'Dig in — starve him out' },
+        effects: [
+          // 圍困之始 — the market roads are cut ahead of the formal siege
+          // (pair it with the 長圍 stance for the bloodless finish).
+          { kind: 'city-food', cityId: 'xiapi', delta: -12000 },
+          { kind: 'city-loyalty', cityId: 'xiapi', delta: -6 },
+          { kind: 'flag', key: 'xiapi-invested' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'evt-baimenlou',
+    name: { en: 'The White Gate Tower', zh: '白門樓' },
+    yearMin: 198,
+    yearMax: 202,
+    requires: [
+      { kind: 'officer-alive', officerId: 'lu-bu' },
+      { kind: 'city-owner-ruler', cityId: 'xiapi', rulerOfficerId: 'cao-cao' },
+      { kind: 'flag-unset', key: 'xiapi-resolved' },
+    ],
+    description:
+      'Xiapi has fallen; Lü Bu is bound beneath the White Gate tower, offering his lance to your service. Liu Bei says one quiet sentence about Ding Yuan and Dong Zhuo.',
+    descriptionZh: '下邳城破,呂布縛於白門樓下,願獻戟效力。玄德在旁,只輕聲提了丁原、董卓二人。',
+    effects: [],
+    chooserRulerId: 'cao-cao',
+    mood: 'somber',
+    choices: [
+      {
+        id: 'hang',
+        label: { zh: '縊殺之,以絕後患(史實)', en: 'Hang him — no third master' },
+        effects: [
+          { kind: 'officer-status', officerId: 'lu-bu', status: 'dead' },
+          { kind: 'officer-status', officerId: 'chen-gong', status: 'dead' },
+          { kind: 'flag', key: 'xiapi-resolved' },
+        ],
+      },
+      {
+        id: 'spare',
+        label: { zh: '收為己用 — 飛將難得,隱患自負', en: 'Take the Flying General — and the risk' },
+        effects: [
+          { kind: 'officer-join-ruler', officerId: 'lu-bu', rulerOfficerId: 'cao-cao' },
+          { kind: 'officer-loyalty', officerId: 'lu-bu', delta: -25 },
+          { kind: 'officer-join-ruler', officerId: 'chen-gong', rulerOfficerId: 'cao-cao' },
+          { kind: 'officer-loyalty', officerId: 'chen-gong', delta: -15 },
+          { kind: 'flag', key: 'xiapi-resolved' },
+        ],
+      },
+    ],
+  },
+
   /* ─── 白衣渡江 — Jingzhou changes hands in merchant robes (chooser: 孫權) ── */
   {
     id: 'evt-baiyi',
@@ -809,7 +893,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     descriptionZh: "劉備留張飛守下邳,自率軍攻袁術。張飛縱酒,夜前鞭撻曹豹。曹豹遂開城門納呂布。徐州一夜易主。",
     effects: [
       { kind: 'officer-loyalty', officerId: 'zhang-fei', delta: -15 },
-      { kind: 'city-loyalty', cityId: 'city-xiapi', delta: -30 },
+      { kind: 'city-loyalty', cityId: 'xiapi', delta: -30 },
     ],
   },
   {

@@ -12,6 +12,9 @@ export type EventEffect =
   | { kind: 'strip-force-paint'; forceId: EntityId }
   | { kind: 'force-gold'; forceId: EntityId; delta: number }
   | { kind: 'city-loyalty'; cityId: EntityId; delta: number }
+  | { kind: 'city-defense'; cityId: EntityId; delta: number }
+  | { kind: 'city-food'; cityId: EntityId; delta: number }
+  | { kind: 'city-troops-multiplier'; cityId: EntityId; multiplier: number }
   | { kind: 'officer-loyalty'; officerId: EntityId; delta: number }
   | { kind: 'officer-status'; officerId: EntityId; status: 'dead' | 'idle' | 'imprisoned' }
   | { kind: 'officer-join'; officerId: EntityId; forceId: EntityId }
@@ -52,6 +55,10 @@ export interface HistoricalEvent {
     | { kind: 'officer-rules-cities-min'; officerId: EntityId; count: number }
     // The officer serves no force (在野/未仕) — gate for recruitment chains.
     | { kind: 'officer-unaffiliated'; officerId: EntityId }
+    // The officer currently resides in this city (alive) — siege-chain gate.
+    | { kind: 'officer-in-city'; officerId: EntityId; cityId: EntityId }
+    // The city is owned by the force this officer rules — conquest payoffs.
+    | { kind: 'city-owner-ruler'; cityId: EntityId; rulerOfficerId: EntityId }
   >;
   /** Narrative description shown in the event modal. */
   description: string;

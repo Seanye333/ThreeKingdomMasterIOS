@@ -446,6 +446,9 @@ interface GameStore extends GameState {
    *  each turn the town bleeds food + loyalty; dry granaries open the gates
    *  without a fight. The garrison may sortie and rout the besiegers. */
   besiegeCity: (armyId: EntityId) => { ok: boolean; reason?: string };
+  /** 火炬燒鎖 — a fleet beside a hostile river boom burns the chain through
+   *  (王濬故智): 300g from the capital, the boom is destroyed. */
+  burnBoom: (armyId: EntityId) => { ok: boolean; reason?: string };
   /** 補給野戰軍 — rush provisions from the nearest stocked friendly city to a
    *  field army, topping up its baggage so it doesn't starve in the field. */
   resupplyArmy: (armyId: EntityId) => { ok: boolean; sent: number };
@@ -1874,6 +1877,34 @@ export const useGameStore = create<GameStore>()(
         });
         playSfx('wardrum');
         get().notify(`⭕ 兵圍${best.name.zh} — 斷其市易耕稼,坐待糧盡`, `Investing ${best.name.en} — starving it out`, 'warn');
+        return { ok: true };
+      },
+
+      burnBoom: (armyId) => {
+        const state = get();
+        const army = state.armies[armyId];
+        if (!army || army.forceId !== state.playerForceId) return { ok: false, reason: 'not yours' };
+        if (isLand(army.x, army.y, 0)) return { ok: false, reason: '須以舟師臨鎖' };
+        // The nearest hostile boom within striking reach.
+        let boom: (typeof state.forts)[string] | null = null;
+        for (const f of Object.values(state.forts)) {
+          if (f.facility !== 'boom' || !f.ownerForceId || f.ownerForceId === state.playerForceId) continue;
+          if (!isHostilePermitted(state.diplomacy, state.playerForceId, f.ownerForceId)) continue;
+          const [fx, fy] = geoToPixel(f.coords.lon, f.coords.lat);
+          if (Math.hypot(fx - army.x, fy - army.y) <= FACILITY_DEFS.boom.range + 12 * WORLD_SCALE) { boom = f; break; }
+        }
+        if (!boom) return { ok: false, reason: '左近無敵鎖可燒' };
+        const force = state.forces[state.playerForceId!];
+        const capital = force ? state.cities[force.capitalCityId] : null;
+        if (!capital || capital.gold < 300) return { ok: false, reason: '都城庫金不足 300(火油巨筏之費)' };
+        const nextForts = { ...state.forts };
+        delete nextForts[boom.id];
+        set({
+          forts: nextForts,
+          cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - 300 } },
+        });
+        playSfx('fire');
+        get().notify('🔥 火炬熔鎖 — 鐵鎖沉江,航路已開!(−300金)', 'Torch-rafts melt the boom — the river is open! (−300g)');
         return { ok: true };
       },
 
@@ -6042,6 +6073,27 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           Object.assign(nextForts, assault.forts);
           if (assault.entries.length > 0) result.report.entries.push(...assault.entries);
 
+          // AI 火炬燒鎖 — a hostile fleet stalled beside the player's river
+          // boom burns it through (30%/season), same trick 王濬 pulls on you.
+          for (const f of Object.values(nextForts)) {
+            if (f.facility !== 'boom' || f.ownerForceId !== state.playerForceId) continue;
+            const [bx, by] = geoToPixel(f.coords.lon, f.coords.lat);
+            const burner = Object.values(result.armies ?? {}).find((a) =>
+              a.forceId && a.forceId !== state.playerForceId
+              && !isLand(a.x, a.y, 0)
+              && isHostilePermitted(planned.diplomacy, a.forceId, state.playerForceId!)
+              && Math.hypot(a.x - bx, a.y - by) <= FACILITY_DEFS.boom.range + 12 * WORLD_SCALE);
+            if (burner && Math.random() < 0.3) {
+              delete nextForts[f.id];
+              const bo = result.officers[burner.commanderId];
+              result.report.entries.push({
+                cityId: null, kind: 'battle',
+                text: `${bo?.name.en ?? 'An enemy fleet'} burned through your river boom!`,
+                textZh: `${bo?.name.zh ?? '敵舟師'}以火筏熔斷我攔江鎖 — 航路洞開!`,
+              });
+            }
+          }
+
           // AI 拓野 — hostile forces grab neutral mines/fords/bandit nests
           // near their garrisons (income/control; clears raiders on their land).
           const aiSeize = planAISiteSeizures({
@@ -8089,6 +8141,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             };
             for (const e of result.report.entries) {
               const zhText = e.textZh ?? '';
+              // 圍城之章 — starve-outs and broken sieges belong in the record.
+              if (zhText.includes('開城出降')) {
+                push(zhText.replace(/ — .*$/, ''), e.text.replace(/ — .*$/, ''), 'conquest');
+                continue;
+              }
+              if (zhText.includes('突圍!')) {
+                push(zhText.replace(/!.*$/, '!'), 'A besieged garrison broke the siege', 'defense');
+                continue;
+              }
               if (e.battle?.cityFalls && e.battle.attacker.forceId) {
                 const f = result.forces[e.battle.attacker.forceId];
                 const c = result.cities[e.battle.cityId];
@@ -8181,6 +8242,33 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           if (zhAll.includes('開城出降')) playSfx('horn');        // a city starved open
           else if (zhAll.includes('突圍!')) playSfx('shout');     // a sortie broke a siege
           else if (zhAll.includes('據水斷橋')) playSfx('fire');    // AI burned a crossing
+        }
+
+        // 圍城/伏擊功業 — instant achievements + the chronicle keeps the tale.
+        {
+          let achS = loadAchievementProgress();
+          const newly: string[] = [];
+          // 兵不血刃 — a city the player was besieging opened its gates.
+          const starved = Object.values(state.pendingCommands).some((c) =>
+            c.type === 'march' && c.besieging
+            && state.officers[c.officerId]?.forceId === state.playerForceId
+            && state.cities[c.besieging]?.ownerForceId !== state.playerForceId
+            && result.cities[c.besieging]?.ownerForceId === state.playerForceId);
+          if (starved) {
+            const r = processTrigger(achS, { kind: 'starve-out-city' });
+            achS = r.progress; newly.push(...r.newlyUnlocked);
+          }
+          // 十面埋伏 — the player's laid ambush sprang and won the clash.
+          const ambushed = result.report.entries.some((e) =>
+            e.battle?.ambush && e.battle.attacker.forceId === state.playerForceId);
+          if (ambushed) {
+            const r = processTrigger(achS, { kind: 'ambush-victory' });
+            achS = r.progress; newly.push(...r.newlyUnlocked);
+          }
+          if (newly.length > 0) {
+            saveAchievementProgress(achS);
+            set({ recentAchievementUnlocks: [...get().recentAchievementUnlocks, ...newly] });
+          }
         }
 
         // 軍師點撥 — turn-report-driven one-shot tips for the new systems.
@@ -11828,6 +11916,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           ach = bumpCounters(ach, { kills: enemyLossesForCounters });
         }
         if (winner) ach = bumpCounters(ach, { battlesWon: 1 });
+        // 火燒連營 — 3+ fieldworks torched in a battle the player WON.
+        const playerWonSide = tb.attackerForceId === state.playerForceId ? 'attacker'
+          : tb.defenderForceId === state.playerForceId ? 'defender' : null;
+        if (playerWonSide && winner === playerWonSide && (tb.fieldworksBurned ?? 0) >= 3) {
+          const r = processTrigger(ach, { kind: 'burning-camps' });
+          ach = r.progress;
+          newlyAch.push(...r.newlyUnlocked);
+        }
         const cum = checkCumulativeThresholds(ach);
         ach = cum.progress;
         newlyAch.push(...cum.newlyUnlocked);

@@ -4,6 +4,32 @@ import type { Achievement } from '../types';
  * Persistent cross-game achievements.
  */
 export const ACHIEVEMENTS: Achievement[] = [
+  // ─── 2026-07 map feats ─────────────────────────────────────────
+  {
+    id: 'ach-starve-out',
+    name: { en: 'Without Drawing Blood', zh: '兵不血刃' },
+    description: 'Starve a besieged city into opening its gates — no assault.',
+    descriptionZh: '長圍困城,坐待糧盡 — 敵城開門出降,一卒未折。',
+    tier: 'silver',
+    trigger: { kind: 'starve-out-city' },
+  },
+  {
+    id: 'ach-ambush-victory',
+    name: { en: 'Ten Ambushes Deep', zh: '十面埋伏' },
+    description: 'Spring a laid ambush on an enemy column and rout it.',
+    descriptionZh: '設伏於林莽,候敵縱隊自投羅網而殲之。',
+    tier: 'silver',
+    trigger: { kind: 'ambush-victory' },
+  },
+  {
+    id: 'ach-burning-camps',
+    name: { en: 'Camps Aflame for Miles', zh: '火燒連營' },
+    description: 'Burn three or more fieldworks in a single battle you win.',
+    descriptionZh: '一戰之內火焚敵壘三座以上而勝之 — 陸遜故智。',
+    tier: 'gold',
+    trigger: { kind: 'burning-camps' },
+  },
+
   // ─── Iconic recruits ───────────────────────────────────────────
   {
     id: 'ach-recruit-zhuge',

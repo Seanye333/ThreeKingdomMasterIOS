@@ -3995,6 +3995,7 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
   let nextGroundFires = b.groundFires ?? [];
   const fireLog: NonNullable<TacticalBattle['log']> = [];
   const newScars: NonNullable<TacticalBattle['terrainScars']> = [];
+  let fieldworksBurnedNow = 0;
   if (nextGroundFires.length > 0) {
     const fireKey = (c: HexCoord) => `${c.col},${c.row}`;
     const burningSet = new Set(nextGroundFires.map((f) => fireKey(f.coord)));
@@ -4064,7 +4065,13 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
           x.coord.col === f.coord.col && x.coord.row === f.coord.row
             ? { ...x, terrain: 'plain' as TerrainKind }
             : x);
-        fireLog.push({ turn: b.turn, text: '築壘焚毀，鹿砦化為灰燼！', kind: 'event' });
+        fieldworksBurnedNow += 1;
+        const totalBurned = (b.fieldworksBurned ?? 0) + fieldworksBurnedNow;
+        fireLog.push({
+          turn: b.turn,
+          text: totalBurned === 3 ? '🔥 火燒連營！烈焰沿壘而走，營柵連片俱焚！' : '築壘焚毀，鹿砦化為灰燼！',
+          kind: 'event',
+        });
       }
     }
     if (b.weather === 'rain' && expiring.length > 0) fireLog.push({ turn: b.turn, text: '大雨傾盆，野火漸熄。', kind: 'event' });
@@ -4530,6 +4537,7 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
     windDirection: nextWind,
     groundFires: nextGroundFires.length > 0 ? nextGroundFires : undefined,
     terrainScars: newScars.length > 0 ? [...(b.terrainScars ?? []), ...newScars] : b.terrainScars,
+    fieldworksBurned: fieldworksBurnedNow > 0 ? (b.fieldworksBurned ?? 0) + fieldworksBurnedNow : b.fieldworksBurned,
     turn: newTurn,
     activeSide: b.activeSide === 'attacker' ? 'defender' : 'attacker',
     // 氣勢回落 — the tide eases back toward even each turn unless fed afresh.

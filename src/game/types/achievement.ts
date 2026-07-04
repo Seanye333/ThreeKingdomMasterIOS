@@ -20,7 +20,11 @@ export type AchievementTriggerKind =
   | 'cumulative-recruits'
   | 'cumulative-battles-won'
   | 'reach-imperial-rank'
-  | 'learn-skill';
+  | 'learn-skill'
+  // 2026-07 map-batch feats (instant, no targetId):
+  | 'starve-out-city'   // 兵不血刃 — a besieged city opened its gates
+  | 'ambush-victory'    // 十面埋伏 — a laid ambush sprang and won
+  | 'burning-camps';    // 火燒連營 — 3+ fieldworks torched in one won battle
 
 export interface AchievementTrigger {
   kind: AchievementTriggerKind;

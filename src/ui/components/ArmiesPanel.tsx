@@ -24,6 +24,7 @@ export function ArmiesPanel() {
   const setArmyAmbush = useGameStore((s) => s.setArmyAmbush);
   const burnBridge = useGameStore((s) => s.burnBridge);
   const besiegeCity = useGameStore((s) => s.besiegeCity);
+  const burnBoom = useGameStore((s) => s.burnBoom);
   const notify = useGameStore((s) => s.notify);
   const resupplyArmy = useGameStore((s) => s.resupplyArmy);
   const splitArmy = useGameStore((s) => s.splitArmy);
@@ -120,6 +121,22 @@ export function ArmiesPanel() {
                   ? 'Invest the nearest enemy city: its food and loyalty bleed every turn; dry granaries open the gates without a fight. The garrison may sortie.'
                   : '長圍 — 兵圍左近敵城:斷其市易耕稼,每旬糧秣民忠俱蹙;糧盡則開城出降。守軍勢眾時或傾城突圍。'}
               >{armies[selectedArmyId].besieging ? (lang === 'en' ? 'Lifting?' : '圍中') : (lang === 'en' ? 'Besiege' : '圍城')}</button>
+            )}
+            {armies[selectedArmyId].naval && (
+              <button
+                onClick={() => {
+                  const r = burnBoom(selectedArmyId);
+                  if (!r.ok && r.reason) notify(r.reason, r.reason, 'warn');
+                }}
+                style={{
+                  background: '#14202e', border: '1px solid #6a8ab8', color: '#a8c8e8',
+                  fontSize: '0.7rem', padding: '1px 6px', cursor: 'pointer',
+                  fontFamily: 'var(--tkm-font-body)',
+                }}
+                title={lang === 'en'
+                  ? 'Torch-rafts: burn a hostile river boom beside this fleet (−300g from capital) — the waterway reopens.'
+                  : '火炬燒鎖(王濬故智)— 以火筏熔斷近旁敵之攔江鎖(都城 −300金),航路重開。'}
+              >{lang === 'en' ? 'Burn boom' : '燒鎖'}</button>
             )}
             <button
               onClick={() => {
