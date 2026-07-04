@@ -14,7 +14,7 @@
 | 1 | [城市・內政・經濟](#第一章-城市內政經濟) | citySize, economy, commands, civicEvents, market(行情/榷場/馬市/鐵市), buildings(含戰損修繕), cityCivic(民情街景/城中人物/晝夜/街頭際遇/官邸家眷), autoBuild, policyEffects, forging, specialties, specialtyEvents, tradeRoutes, convoy | ✅ |
 | 2 | [武將・成長・家族](#第二章-武將成長家族) | growth, officerGrade, gradeCombat, officerFate, traitEffects, personality, biography, posthumous, aging, officerGen, family, clans, retinues, wishes, rapport, friction, relationshipEffects, career, codex, peerage, honorifics | ✅ |
 | 3 | [人才・招攬・舌戰](#第三章-人才招攬舌戰) | commands(search), officerFate, recommendation, commonerTalent, appraisal(月旦評), scenicSites(三顧), captiveFate(處決後果/AI處置), aiRansom, debate, wordWar, persuasion(說客) | ✅ |
-| 4 | [軍事指揮・委任](#第四章-軍事指揮委任) | muster, legion, governor, governorEval, advisor | ✅ |
+| 4 | [軍事指揮・委任](#第四章-軍事指揮委任) | muster, legion(都督之斷·長圍), governor, governorEval, advisor, 在途指令(駐守/設伏/圍城/焚橋/燒鎖/補給/分兵/召回) | ✅ |
 | 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, tacticalAi, combat, formations, stratagems, weather(區域天候), battlefieldTerrain, worldScars(戰場烙印), fieldworks(築壘), columnReinforcements(會戰), wallTier城郭分層, 入城三選, personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
 | 6 | [單挑](#第六章-單挑) | duel(招式/必殺技/獨門被動/破綻/傷殘/挑落下馬/兵裝/坐騎/地形/性格/AI), gauntlet, duelSeries, duelScenarios(劇情+戰役), duelHall(名局廊), warRanking(武評榜), rivalries(宿敵/恩怨簿), duelChallenge(約戰), tactical(致師) | ✅ |
 | 7 | [外交・謀略・天子](#第七章-外交謀略天子) | diplomacy, diplomacyPacts(稱臣/索貢/會盟/援盟/調停/質子/借道), coalition, schemes, aiSchemes, ambition, espionage, expedition, foreignRealm, intrigue, courtFactions, factionEvents, emperor, imperialEffects, mandate, appointmentEffects, clans, statecraft | ✅ |
@@ -1271,6 +1271,8 @@
 - **行軍捷疾(`marchSpeedMul`)**:**健行 +15% / 嚴峻治軍·騎將 +10% / 鐵律 +5% / 驛站(`post-roads` 國策)+10%** 加速縱隊(取最佳一項,不疊),**鈍重**主將 −10% 拖累 —— 快則長途**省一旬**,慢則**多一旬**。此前這些性格/國策只是描述,如今真正生效(玩家+AI 對稱)。
 - **隨軍糧**:出征縱隊出發時從本城支取全程口糧;糧盡則沿途逃散(每季 −10%)。
 - **孤軍深入**(resolution.ts):向**非己方**領地的遠征(規劃 ≥3 旬),每季再折兵 **1.5%~6%**(愈深愈烈)—— 沿途遭襲、就糧困難。短補給線、或派輜重接濟,才能把大軍完整送到。**此攻防皆對稱**:過深的 AI 大軍同樣師老兵疲掉兵(≥300 損入季報,讓你看清並趁機),故你的**坚壁清野/斷糧/長補給線防御**對 AI 真有意義。
+- **在途部隊指令(2026-07,在途部隊面板)**:選中縱隊後一排按鈕 ——
+  **駐守**(紮營守格,可被攔截者撞上時享營壘加成)→ 紮營後可再:**設伏**(掩蔽地藏軍,敵圖上不可見;§11.5)、**圍城**(45px 內敵城斷糧迫降;§11.5);任何時候可:**焚橋**(臨河焚渡,蓋 4 季斷渡戰痕)、**燒鎖**(舟師臨敵攔江鎖 −300 金熔斷)、**補給**(最近友城輸糧)、**分兵**(半兵+副將駐當前格)、**召回**。
 - **召回行軍(`recallMarch`)**:在途縱隊可**折返本城** —— 保留大部兵力(行得越深散卒越多,−5%~25%),按已行旬數歸返、抵城併入守軍(優於舊「召回」之徑直解散)。
 - **行軍迷霧・斥候之明(`fogOfWar.ts`,可於工具列開關)**:開霧時敵軍縱隊**只在你城池/部隊的斥候範圍內可見**;**范围隨守望者智力放大**(`computeFog` 傳 officers:城以駐軍最強智者、縱隊以主將智力,每點 >60 增視野)—— 高智明君/良將斥候遠探,偵察與奇襲始有意義。烽燧仍不受霧限。
 - **邀擊(`interceptColumn`)**:對**斥候可見**(其最近城為我城)的敵軍縱隊,可從該邊城**遣將出擊截擊**(費 100 金,急行軍);截擊縱隊瞄向敵軍前路,於途中**接戰**(既有野戰攔截結算)—— 化被動守軍出擊為主動。輜重面板列出可邀擊之敵縱隊。
@@ -1305,6 +1307,8 @@
 - **軍團戰報**:每旬出一條摘要「X軍團〔攻略→Y〕:N 路發兵(兵數)、M 城補軍」。
 - **軍團改編(`updateLegion`)**:不拆建即可改**方略/目標/城池/都督**(改任之督仍須金牌+)。
 - 失城/忙碌武將自動跳過。內政請配合委任太守(各路仍走正規行軍管線)。
+
+- **都督之斷(2026-07)**:軍團縱隊(帶都督之旗)兵臨堅城(wallTier≥2 或城防 ≥80 且守軍夠硬)時,**自行改為長圍**而非浪戰強攻(同 AI 判準,60% 機率);玩家手令的出陣不受此判,永遠照令執行。
 
 ### 4.4 委任太守(governor.ts)
 
@@ -2254,13 +2258,17 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
 
 ---
 
+### 10.x AI 新武備(2026-07 大批次後的對稱清單)
+
+2026-07 的 56 項地圖機制全部雙向:**AI 長圍**(兵臨堅城 60% 改圍不攻,同一套突圍/開城規則)、**AI 設伏**(分遣隊落高掩蔽格自動入伏,對你隱形)、**AI 焚橋**(守河駐軍見敵近 25%/旬斷渡)、**AI 兵站**(擴張/侵略型 30% 為長路建錨點)、**AI 攔江鎖**(臨江邊城 25% 鎖水)、**AI 火炬燒鎖**(敵艦臨你的鎖 30%/季燒斷)、**AI 入城定調**(暴君搜捕 −8 忠、文主安民 +10 忠)、**盟軍會戰**(AI 盟友縱隊照樣馳援其盟主之戰)。你能玩的把戲,天下群雄都能玩。
+
 ## 第十一章 核心流程・勝敗・培訓・其他模式
 
 ### 11.1 結算流程(resolution.ts,每旬一次)
 
 一旬(上/下半月)結算順序:
 
-1. **命令處理**:先行軍(出陣/集結/軍團)—— 含中途攔截、領土佔領、城池易主;後內政令。
+1. **命令處理**:先行軍(出陣/集結/軍團)—— 依序:**真日級遭遇掃描**(§4.1,設伏方帶伏擊加成 0.45/識破減半,斥候已破者減益)→ **施設生效**(箭樓/投石轟擊、防壁攔陸軍、**攔江鎖 70% 攔水軍**、陣/**兵站**回兵、渡口關隘扼阻)→ **AI/委任軍團長圍轉化**(兵臨堅城改圍不攻,§11.5)→ **圍城結算**(守軍勢眾 50%/旬突圍 → 糧 −(守軍×0.8+人口×0.004)、民忠 −2 → 糧盡且圍軍≥守軍八成**開城出降**)→ **AI 焚橋**(守河 AI 見敵近 25%/旬斷渡)→ 塗色蓋章與**斷糧判定**(色帶不通 −7%/旬)→ 抵達攻城/合流/城池易主;後內政令。
 2. **季度結算**(每季,即每 9 旬一次,`seasonBoundary`)。實際鏈條頗長,分兩段:
 
    **甲・resolveSeason 內(resolution.ts)**,依序:
@@ -2296,9 +2304,9 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
    - **建安大疫 rollGreatPlague**(217 冬一次,§8.2)→ **黃巾總爆發 rollYellowTurbanRising**(184 春夏一次,§8.4)→ **宗教叛亂 rollReligiousRebellion + 蔓延 spreadCultUnrest**(**宣撫使**駐城抗蝕免叛,§8.4)
    - **AI 贖俘 resolveAIRansoms**(見 §10)
    - 性格忠誠漂移 + 叛逃 roll
-3. 勢力消長快照、討伐令 + 疑兵 deterrences 到期清理(§7.2)、求賢令衰減、**結局檢查**、自動存檔。
+3. 勢力消長快照、討伐令 + 疑兵 deterrences 到期清理(§7.2)、**戰場烙印癒合**(季界:焦土 8 季/斷渡 4 季,§5.11)、**斥候伏標清理**(伏存標存)、塗色還草(4 季),求賢令衰減、**結局檢查**、自動存檔。
 
-> 設施每旬(非每季)生效:箭樓 180 / 投石臺 320 / 兵營補給 150;拒馬每旬 50% 機率攔停。
+> 設施每旬(非每季)生效:箭樓 180 / 投石臺 320 / 陣補給 150 / **兵站補給 60(且為糧道錨點)**;防壁 50% 攔停(僅陸軍)、**攔江鎖 70% 攔停(僅水軍,火炬燒鎖可破)**。
 
 ### 11.2 勝敗結局(endings.ts)
 
@@ -2389,9 +2397,9 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
 
 ```mermaid
 flowchart TD
-  A["一旬開始 · 設施生效(箭樓180/投石320/兵營150/拒馬50%攔停)"] --> B["命令處理:先行軍(攔截/佔領/城池易主)→ 後內政令"]
+  A["一旬開始 · 設施生效(箭樓180/投石320/陣150/兵站60·糧道錨點/防壁50%攔陸/攔江鎖70%攔水)"] --> B["行軍段:日掃遭遇(設伏/斥候)→ AI·軍團長圍轉化 → 圍城結算(突圍→糧耗→開城)→ AI焚橋 → 塗色·斷糧 → 抵達攻城/合流 → 內政令"]
   B --> C{"季界?(每9旬 seasonBoundary)"}
-  C -->|否| H["勢力快照 → 自動存檔"]
+  C -->|否| H["勢力快照 → 戰痕癒合(季界)·伏標清理 → 自動存檔"]
   C -->|是| D["經濟:金/糧/糧耗/逃兵/人口"]
   D --> D2["領土補給壓力 + 附庸進貢 + 軍俸"]
   D2 --> D3["任務重置 + 忠誠漂移 + 叛離"]
