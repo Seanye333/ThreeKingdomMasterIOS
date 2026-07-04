@@ -655,6 +655,9 @@ const SEASON_LIGHT: Record<SeasonKey, { ambient: number; ambientColor: string; s
 // city dresses for the season (snow in winter, gold leaves in autumn…) without
 // threading a prop through dozens of components.
 const SeasonCtx = createContext<SeasonKey>('spring');
+// 下旬月夜 — lets every dwelling/lantern know it's night without threading
+// a prop through the whole scene tree.
+const NightCtx = createContext<boolean>(false);
 
 // Normalised (0..1) city stats the 3D scene scales itself by.
 type CityStats = { fCommerce: number; fAgri: number; fLoyalty: number; fPop: number };
@@ -773,11 +776,13 @@ function Dwelling({ x, z, seed }: { x: number; z: number; seed: number }) {
   const rot = ((seed >> 4) % 4) * (Math.PI / 12);
   const post = '#5a4530';
   const front = w / 2 + 0.01;
-  // Windows glow warm in the dusky seasons (autumn/winter) — lamplit homes.
-  const lit = (season === 'winter' || season === 'autumn') && (seed % 5 !== 0);
+  // Windows glow warm in the dusky seasons (autumn/winter) — and on a
+  // moonlit lower-phase night nearly every home is lamplit, brighter.
+  const night = useContext(NightCtx);
+  const lit = (night ? seed % 7 !== 0 : (season === 'winter' || season === 'autumn') && (seed % 5 !== 0));
   const winColor = lit ? '#ffce82' : '#2a2018';
   const winEmissive = lit ? '#ff9c3a' : '#000000';
-  const winGlow = lit ? 0.9 : 0;
+  const winGlow = lit ? (night ? 1.4 : 0.9) : 0;
   return (
     <group position={[x, 0, z]} rotation={[0, rot, 0]}>
       {/* Stone plinth */}
@@ -3516,6 +3521,7 @@ function CityScene({
   // Season-driven lighting mood.
   return (
     <SeasonCtx.Provider value={season}>
+     <NightCtx.Provider value={night}>
       <SeasonalDrift season={season} />
       <WeatherFX kind={weatherKind} width={preview.width} height={preview.height} />
      <InspectCtx.Provider value={onInspect}>
@@ -3767,6 +3773,7 @@ function CityScene({
       ))}
 
      </InspectCtx.Provider>
+     </NightCtx.Provider>
     </SeasonCtx.Provider>
   );
 }

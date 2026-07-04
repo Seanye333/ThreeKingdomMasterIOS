@@ -3349,11 +3349,16 @@ function FormationViz({ battle, side }: { battle: TacticalBattle; side: 'attacke
 /* ─── The whole 3D scene ────────────────────────────────────────────── */
 /* ─── 战场天地 — ground skirt + horizon hills so the field sits in a
  *  world instead of floating in the void. Fog fades both away. ───── */
-function BattleSurround({ width, height, timeOfDay }: { width: number; height: number; timeOfDay: TimeOfDay }) {
+function BattleSurround({ width, height, timeOfDay, weather }: { width: number; height: number; timeOfDay: TimeOfDay; weather: Weather }) {
   const [cx] = hexWorld(Math.floor(width / 2), Math.floor(height / 2));
   const [, cz] = hexWorld(Math.floor(width / 2), Math.floor(height / 2));
   const earth = timeOfDay === 'night' ? '#11161f' : timeOfDay === 'dusk' ? '#4a3828' : '#3d4a2c';
   const hillCol = timeOfDay === 'night' ? '#0c1118' : timeOfDay === 'dusk' ? '#3a2c22' : '#2c3824';
+  // 遠山如黛 — a second, taller mountain ring further out, hazed toward the
+  // sky (atmospheric perspective): dusk paints it rust, night sinks it blue.
+  const farCol = timeOfDay === 'night' ? '#16202e'
+    : timeOfDay === 'dusk' ? '#6a4a3c'
+    : timeOfDay === 'dawn' ? '#5a5468' : '#54687a';
   // Deterministic ring of silhouette hills.
   const hills = useMemo(() => Array.from({ length: 26 }, (_, i) => {
     const a = (i / 26) * Math.PI * 2;
@@ -3365,6 +3370,16 @@ function BattleSurround({ width, height, timeOfDay }: { width: number; height: n
       w: 5 + ((i * 29) % 11),
     };
   }), [cx, cz]);
+  const farPeaks = useMemo(() => Array.from({ length: 18 }, (_, i) => {
+    const a = (i / 18) * Math.PI * 2 + 0.17;
+    const r = 56 + ((i * 41) % 14);
+    return {
+      x: cx + Math.cos(a) * r * 1.25,
+      z: cz + Math.sin(a) * r * 0.85,
+      h: 7 + ((i * 67) % 23) / 23 * 10,
+      w: 10 + ((i * 31) % 13),
+    };
+  }), [cx, cz]);
   return (
     <group>
       {/* Ground skirt — a vast earthen disc under and beyond the board */}
@@ -3372,6 +3387,20 @@ function BattleSurround({ width, height, timeOfDay }: { width: number; height: n
         <circleGeometry args={[90, 48]} />
         <meshStandardMaterial color={earth} roughness={1} />
       </mesh>
+      {/* Far range — parallax depth behind the near hills */}
+      {farPeaks.map((h, i) => (
+        <mesh key={`f${i}`} position={[h.x, h.h / 2 - 0.1, h.z]}>
+          <coneGeometry args={[h.w, h.h, 6]} />
+          <meshStandardMaterial color={farCol} roughness={1} fog={false} />
+        </mesh>
+      ))}
+      {/* 雪嶺 — snowfall caps the far range white */}
+      {weather === 'snow' && farPeaks.map((h, i) => (
+        <mesh key={`fs${i}`} position={[h.x, h.h * 0.82, h.z]}>
+          <coneGeometry args={[h.w * 0.34, h.h * 0.36, 6]} />
+          <meshStandardMaterial color="#dbe4ec" roughness={0.9} fog={false} />
+        </mesh>
+      ))}
       {/* Horizon hills — dark silhouettes swallowed by the fog */}
       {hills.map((h, i) => (
         <mesh key={i} position={[h.x, h.h / 2 - 0.1, h.z]}>
@@ -3885,7 +3914,7 @@ export function BattleScene({
       {!embedded && (
         <>
           <fog attach="fog" args={[lighting.fog[0], fogNear, fogFar]} />
-          <BattleSurround width={battle.width} height={battle.height} timeOfDay={battle.timeOfDay} />
+          <BattleSurround width={battle.width} height={battle.height} timeOfDay={battle.timeOfDay} weather={battle.weather} />
           {lighting.showStars && <Stars radius={80} depth={50} count={2500} factor={3} fade speed={0.5} />}
           <SkyBody position={lighting.sun.position} color={lighting.sun.color} night={lighting.showStars} />
           <CameraFollow battle={battle} playerSide={playerSide} home={[hexWorld(battle.width / 2, battle.height / 2)[0], hexWorld(battle.width / 2, battle.height / 2)[1]]} focus={duelFocus} />

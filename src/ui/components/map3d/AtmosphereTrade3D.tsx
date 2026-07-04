@@ -83,6 +83,65 @@ export function SkyDome({ top, horizon, sunPos: sunPosArr, celestialColor, moon,
 }
 
 /* ─── 雲影 — soft clouds drifting over the land, shadows in tow ───── */
+/** 雲影掠地 — soft cloud shadows drifting across the lowlands: two
+ *  offset layers of a blob-noise alpha texture scrolling at different
+ *  speeds. Sits just above the plains; hills and peaks poke through
+ *  (which reads as "the shadow fell in the valley"). Desktop only. */
+let CLOUD_SHADOW_TEX: THREE.Texture | null = null;
+function cloudShadowTexture(): THREE.Texture {
+  if (CLOUD_SHADOW_TEX) return CLOUD_SHADOW_TEX;
+  const c = document.createElement('canvas');
+  c.width = 512; c.height = 512;
+  const g = c.getContext('2d')!;
+  g.clearRect(0, 0, 512, 512);
+  let seed = 7;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  for (let i = 0; i < 26; i++) {
+    const x = rnd() * 512, y = rnd() * 512, r = 30 + rnd() * 80;
+    const grad = g.createRadialGradient(x, y, 0, x, y, r);
+    grad.addColorStop(0, 'rgba(0,0,0,0.55)');
+    grad.addColorStop(0.7, 'rgba(0,0,0,0.22)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = grad;
+    g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  CLOUD_SHADOW_TEX = tex;
+  return tex;
+}
+
+export function CloudShadows() {
+  const m1 = useRef<THREE.MeshBasicMaterial>(null);
+  const m2 = useRef<THREE.MeshBasicMaterial>(null);
+  const tex = useMemo(() => {
+    const t = cloudShadowTexture().clone();
+    t.needsUpdate = true; t.repeat.set(3, 2.2);
+    return t;
+  }, []);
+  const tex2 = useMemo(() => {
+    const t = cloudShadowTexture().clone();
+    t.needsUpdate = true; t.repeat.set(2.1, 1.6); t.offset.set(0.4, 0.7);
+    return t;
+  }, []);
+  useFrame((_, dt) => {
+    tex.offset.x += dt * 0.0045; tex.offset.y += dt * 0.0016;
+    tex2.offset.x += dt * 0.0028; tex2.offset.y -= dt * 0.0011;
+  });
+  return (
+    <group raycast={() => null}>
+      <mesh position={[0, 0.28, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
+        <planeGeometry args={[MAP_W * 1.05, MAP_D * 1.05]} />
+        <meshBasicMaterial ref={m1} alphaMap={tex} color="#0a0f14" transparent opacity={0.12} depthWrite={false} />
+      </mesh>
+      <mesh position={[0, 0.3, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
+        <planeGeometry args={[MAP_W * 1.05, MAP_D * 1.05]} />
+        <meshBasicMaterial ref={m2} alphaMap={tex2} color="#0a0f14" transparent opacity={0.09} depthWrite={false} />
+      </mesh>
+    </group>
+  );
+}
+
 export function DriftingClouds() {
   const ref = useRef<THREE.Group>(null);
   // Deterministic cloud field: position, scale, speed per cloud.

@@ -2,7 +2,7 @@
  * warm-up cache, per-tile ownership/paint/scar colouring and the ground
  * click/hover contract. Split out of StrategicMap3D.tsx (2026-07, batch 3);
  * pure mechanical move. */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Html } from '@react-three/drei';
 import { useGameStore } from '../../../game/state/store';
@@ -11,7 +11,7 @@ import { cityPos } from '../../../game/data/cityGeo';
 import { generateTerritories, terrainRoute } from '../../../game/data/territories';
 import { PROVINCE_BY_CITY } from '../../../game/data/provinces';
 import { seasonStampOf } from '../../../game/systems/hexPaint';
-import { HEX_R as GEO_HEX_R, hexAt as geoHexAt, battleGroundAt } from '../../../game/data/geography';
+import { HEX_R as GEO_HEX_R, hexAt as geoHexAt, battleGroundAt, forestDensityAt } from '../../../game/data/geography';
 import { useLanguage, useT, pickName } from '../../i18n';
 import { IS_MOBILE, PIXEL_TO_WORLD, MAP_W, MAP_D, sampleTerrainHeight } from './shared';
 
@@ -135,8 +135,135 @@ export function HexQuilt({ tiles, colors }: { tiles: HexWorldTile[]; colors: str
   );
 }
 
-export function HexWorldTerrain({ winter, cities, forces, territoryOwnership, hexPaint, worldScars, fogCityIds, onGroundClick }: {
-  winter: boolean;
+/** 山巒林相實體化 — instanced low-poly peaks on mountain hexes and conifer
+ *  clusters on densely wooded ground, so the board reads as LAND, not tiles.
+ *  Trees dress for the season (spring fresh / summer deep / autumn gilt /
+ *  winter frosted); peaks wear snow in winter (tall ones year-round).
+ *  Phones thin the planting to a quarter density. */
+function TerrainFeatures({ tiles, forestAt, season, cityCells }: {
+  tiles: HexWorldTile[];
+  forestAt: number[];
+  season: string;
+  cityCells: Set<string>;
+}) {
+  const { peaks, snows, trees, treeColors } = useMemo(() => {
+    const peaks: Array<{ x: number; z: number; y: number; h: number; r: number; rot: number }> = [];
+    const snows: Array<{ x: number; z: number; y: number; h: number; r: number; rot: number }> = [];
+    const trees: Array<{ x: number; z: number; y: number; s: number }> = [];
+    const colors: number[] = [];
+    const winter = season === 'winter';
+    const TREE_PALETTE: Record<string, string[]> = {
+      spring: ['#4d8a42', '#5d9a4c', '#6aa858'],
+      summer: ['#2f6b35', '#28603a', '#3a7a40'],
+      autumn: ['#c9973a', '#b8672e', '#a8542a', '#8a7a3a'],
+      winter: ['#3a4a3e', '#42524a', '#4a5a50'],
+    };
+    const palette = TREE_PALETTE[season] ?? TREE_PALETTE.summer;
+    const treeEvery = IS_MOBILE ? 4 : 1;
+    const c = new THREE.Color();
+    let ti = 0;
+    for (let i = 0; i < tiles.length; i++) {
+      const t = tiles[i];
+      if (cityCells.has(`${t.c},${t.r}`)) continue;
+      const hash = ((t.c * 73856093) ^ (t.r * 19349663)) >>> 0;
+      const j1 = ((hash % 100) / 100 - 0.5) * HEXW_R * 0.7;
+      const j2 = (((hash >> 7) % 100) / 100 - 0.5) * HEXW_R * 0.7;
+      if (t.kind === 'mountain') {
+        if (IS_MOBILE && hash % 2 === 0) continue;
+        const h = HEXW_R * (1.0 + ((hash >> 3) % 60) / 100);
+        const r = HEXW_R * (0.5 + ((hash >> 9) % 30) / 100);
+        peaks.push({ x: t.x + j1, z: t.z + j2, y: t.topY, h, r, rot: (hash % 628) / 100 });
+        // 雪線 — winter caps every peak; the tall ones stay white all year.
+        if (winter || h > HEXW_R * 1.38) {
+          snows.push({ x: t.x + j1, z: t.z + j2, y: t.topY + h * 0.62, h: h * 0.38, r: r * 0.42, rot: (hash % 628) / 100 });
+        }
+        if (hash % 3 === 0 && !IS_MOBILE) {
+          peaks.push({ x: t.x - j2 * 0.9, z: t.z + j1 * 0.9, y: t.topY, h: h * 0.55, r: r * 0.7, rot: ((hash >> 5) % 628) / 100 });
+        }
+      } else if ((t.kind === 'plain' || t.kind === 'hill' || t.kind === 'riverbank') && forestAt[i] > 0.42) {
+        if ((ti++ % treeEvery) !== 0) continue;
+        const n = IS_MOBILE ? 1 : 2 + (hash % 2);
+        for (let k = 0; k < n; k++) {
+          const a = ((hash >> (k * 4)) % 628) / 100;
+          trees.push({
+            x: t.x + Math.cos(a) * HEXW_R * 0.34,
+            z: t.z + Math.sin(a) * HEXW_R * 0.34,
+            y: t.topY,
+            s: 0.75 + (((hash >> (k * 3)) % 40) / 100),
+          });
+          c.set(palette[(hash + k * 7) % palette.length]);
+          colors.push(c.r, c.g, c.b);
+        }
+      }
+    }
+    return { peaks, snows, trees, treeColors: new Float32Array(colors) };
+  }, [tiles, forestAt, season, cityCells]);
+
+  const peakRef = useRef<THREE.InstancedMesh>(null);
+  const snowRef = useRef<THREE.InstancedMesh>(null);
+  const treeRef = useRef<THREE.InstancedMesh>(null);
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+  useLayoutEffect(() => {
+    const fill = (
+      m: THREE.InstancedMesh | null,
+      list: Array<{ x: number; z: number; y: number; h?: number; r?: number; rot?: number; s?: number }>,
+      kind: 'cone' | 'tree',
+    ) => {
+      if (!m) return;
+      list.forEach((p, i) => {
+        if (kind === 'cone') {
+          dummy.position.set(p.x, p.y + (p.h ?? 1) / 2, p.z);
+          dummy.scale.set(p.r ?? 1, p.h ?? 1, p.r ?? 1);
+          dummy.rotation.set(0, p.rot ?? 0, 0);
+        } else {
+          const s = p.s ?? 1;
+          dummy.position.set(p.x, p.y + 0.11 * s, p.z);
+          dummy.scale.set(s, s, s);
+          dummy.rotation.set(0, 0, 0);
+        }
+        dummy.updateMatrix();
+        m.setMatrixAt(i, dummy.matrix);
+      });
+      m.count = list.length;
+      m.instanceMatrix.needsUpdate = true;
+      m.computeBoundingSphere();
+    };
+    fill(peakRef.current, peaks, 'cone');
+    fill(snowRef.current, snows, 'cone');
+    fill(treeRef.current, trees, 'tree');
+    if (treeRef.current && treeColors.length > 0) {
+      treeRef.current.instanceColor = new THREE.InstancedBufferAttribute(treeColors, 3);
+      treeRef.current.instanceColor.needsUpdate = true;
+    }
+  }, [peaks, snows, trees, treeColors, dummy]);
+
+  return (
+    <group raycast={() => null}>
+      {peaks.length > 0 && (
+        <instancedMesh key={`pk-${peaks.length}`} ref={peakRef} args={[undefined, undefined, peaks.length]} raycast={() => null} frustumCulled={false}>
+          <coneGeometry args={[1, 1, 5]} />
+          <meshStandardMaterial color={season === 'winter' ? '#7a7f86' : '#6a6154'} roughness={0.95} flatShading />
+        </instancedMesh>
+      )}
+      {snows.length > 0 && (
+        <instancedMesh key={`sn-${snows.length}`} ref={snowRef} args={[undefined, undefined, snows.length]} raycast={() => null} frustumCulled={false}>
+          <coneGeometry args={[1, 1, 5]} />
+          <meshStandardMaterial color="#e8eef4" roughness={0.85} flatShading />
+        </instancedMesh>
+      )}
+      {trees.length > 0 && (
+        <instancedMesh key={`tr-${trees.length}`} ref={treeRef} args={[undefined, undefined, trees.length]} raycast={() => null} frustumCulled={false}>
+          <coneGeometry args={[0.09, 0.24, 5]} />
+          <meshStandardMaterial roughness={0.9} />
+        </instancedMesh>
+      )}
+    </group>
+  );
+}
+
+export function HexWorldTerrain({ season, cities, forces, territoryOwnership, hexPaint, worldScars, fogCityIds, onGroundClick }: {
+  /** Current season — drives snow, autumn gilding, spring/summer palettes. */
+  season: string;
   cities: Record<string, City>;
   forces: Record<string, Force>;
   territoryOwnership: Record<string, string | null>;
@@ -148,6 +275,7 @@ export function HexWorldTerrain({ winter, cities, forces, territoryOwnership, he
   fogCityIds?: Set<string> | null;
   onGroundClick?: (px: number, py: number) => void;
 }) {
+  const winter = season === 'winter';
   // 漸進鋪盤 — if the idle warmer hasn't finished the quilt, grind it in
   // frame-sized chunks and reveal columns as they land (west→east sweep)
   // instead of freezing the main thread for the whole 48k-cell build.
@@ -293,6 +421,50 @@ export function HexWorldTerrain({ winter, cities, forces, territoryOwnership, he
     });
   }, [tiles, hexPaint, baseOwner, dateNow]);
 
+  // 城座淨空 — no peaks/woods on (or right beside) a city's hex, so the
+  // city models never poke out of a mountain.
+  const cityCells = useMemo(() => {
+    const set = new Set<string>();
+    for (const c of Object.values(cities)) {
+      const p = cityPos(c);
+      const h = geoHexAt(p.x, p.y);
+      set.add(`${h.col},${h.row}`);
+      const nbs = h.col & 1
+        ? [[0, -1], [0, 1], [-1, 0], [1, 0], [-1, 1], [1, 1]]
+        : [[0, -1], [0, 1], [-1, 0], [1, 0], [-1, -1], [1, -1]];
+      for (const [dc, dr] of nbs) set.add(`${h.col + dc},${h.row + dr}`);
+    }
+    return set;
+  }, [cities]);
+
+  // 林相密度 — per-tile forest density from the real geography; drives the
+  // autumn gilding and the instanced tree clusters.
+  const forestAt = useMemo(() => tiles.map((t) => {
+    if (t.kind === 'river' || t.kind === 'lake' || t.kind === 'mountain') return 0;
+    const px = (t.x + MAP_W / 2) / PIXEL_TO_WORLD;
+    const py = (t.z + MAP_D / 2) / PIXEL_TO_WORLD;
+    return forestDensityAt(px, py);
+  }), [tiles]);
+
+  // 海岸線 — soften the land/water seam: shoreline hexes take a sandy rim
+  // tint, the water off a coast reads shallow. Sea tiles are absent from the
+  // quilt, so a land tile with a MISSING neighbour is a sea coast too.
+  const tileCoast = useMemo(() => tiles.map((t) => {
+    const isWater = (k: string) => k === 'river' || k === 'lake';
+    const nbs = t.c & 1
+      ? [[0, -1], [0, 1], [-1, 0], [1, 0], [-1, 1], [1, 1]]
+      : [[0, -1], [0, 1], [-1, 0], [1, 0], [-1, -1], [1, -1]];
+    for (const [dc, dr] of nbs) {
+      const j = tileIndex.get(`${t.c + dc},${t.r + dr}`);
+      if (isWater(t.kind)) {
+        if (j !== undefined && !isWater(tiles[j].kind)) return 'shallow' as const;
+      } else if (j === undefined || isWater(tiles[j].kind)) {
+        return 'shore' as const;
+      }
+    }
+    return false as const;
+  }), [tiles, tileIndex]);
+
   // 戰場烙印 — torched hexes read charred; a burned crossing greys the water.
   const tileScar = useMemo(() => tiles.map((t): false | 'char' | 'broken' => {
     const sc = worldScars?.[`${t.c},${t.r}`]?.kind;
@@ -344,10 +516,12 @@ export function HexWorldTerrain({ winter, cities, forces, territoryOwnership, he
     const border = tileBorder[i];
     if (winter) {
       const roadW = !water && roadTiles.has(i);
-      const snow = water ? '#bcd2dc' : roadW ? '#a89878' : t.kind === 'mountain' ? '#cfd4d8' : '#c9cfc3';
+      let snow = water ? '#bcd2dc' : roadW ? '#a89878' : t.kind === 'mountain' ? '#cfd4d8' : '#c9cfc3';
+      if (water && tileCoast[i] === 'shallow') snow = '#cde2ea';
       if (!owner || water || roadW) return snow; // packed dirt shows through the snow
       const col = new THREE.Color(snow).lerp(new THREE.Color(owner), border ? 0.55 : 0.4);
       if (border) col.offsetHSL(0, 0, -0.06);
+      if (tileCoast[i] === 'shore') col.lerp(new THREE.Color('#cfc4a4'), 0.16);
       if (tileEmber[i]) col.lerp(new THREE.Color('#8a3a1a'), 0.24);
       if (tileScar[i] === 'char') col.lerp(new THREE.Color('#2e2620'), 0.5); // char shows through the snow
       if (tileScar[i] === 'broken') col.lerp(new THREE.Color('#2c3540'), 0.5);
@@ -367,12 +541,30 @@ export function HexWorldTerrain({ winter, cities, forces, territoryOwnership, he
       col.offsetHSL(0, 0, mottle + shade);
       if (t.topY > 0.55) col.lerp(new THREE.Color('#8a98aa'), Math.min(0.26, (t.topY - 0.55) * 0.4));
     }
+    // 四季調色 — the land dresses for the season: spring fresh, summer deep,
+    // autumn gilds the wooded ground gold-and-rust.
+    if (!road && !water) {
+      if (season === 'autumn') {
+        const f = forestAt[i];
+        if (f > 0.25) col.lerp(new THREE.Color((t.c * 7 + t.r * 13) % 3 === 0 ? '#b8672e' : '#c9973a'), Math.min(0.5, f * 0.75));
+        else col.lerp(new THREE.Color('#a08a4a'), 0.1);
+      } else if (season === 'spring') {
+        col.lerp(new THREE.Color('#6fae52'), 0.12);
+      } else if (season === 'summer') {
+        col.lerp(new THREE.Color('#2e6a34'), 0.14);
+      }
+    }
+    // 淺灘 — coastal water lightens toward the land.
+    if (water && tileCoast[i] === 'shallow') col.lerp(new THREE.Color('#7fb2c8'), 0.38);
     if (owner && !water) {
       // Roads take only a light realm wash so the network stays readable.
       // ROTK-XIV 平涂 — a deep, even realm wash; terrain only ghosts through.
       col.lerp(new THREE.Color(owner), road ? 0.18 : border ? 0.72 : 0.55);
       if (border && !road) col.offsetHSL(0, 0.05, -0.08);
     }
+    // 岸沿 — a sandy rim where the land meets water (after the realm wash,
+    // so coastlines stay readable inside deep-coloured territory).
+    if (!water && !road && tileCoast[i] === 'shore') col.lerp(new THREE.Color('#c9b482'), 0.15);
     // 前線餘燼 — this season's incursion corridor smoulders warm.
     if (tileEmber[i] && !water) col.lerp(new THREE.Color('#8a3a1a'), 0.3);
     // 戰場烙印 — torched ground stays charred until the land heals.
@@ -382,7 +574,7 @@ export function HexWorldTerrain({ winter, cities, forces, territoryOwnership, he
     // 戰爭迷霧 — ground seeded by a city you can't see fades toward dusk.
     if (fogCityIds && !water && tileCity[i] && !fogCityIds.has(tileCity[i]!)) col.offsetHSL(0, -0.12, -0.13);
     return `#${col.getHexString()}`;
-  }), [tiles, winter, tileOwner, tileBorder, tileEmber, tileScar, roadTiles, forces, fogCityIds, tileCity]);
+  }), [tiles, winter, season, forestAt, tileOwner, tileBorder, tileEmber, tileScar, tileCoast, roadTiles, forces, fogCityIds, tileCity]);
 
   // 地塊資訊 — hover (desktop) names the tile: terrain, road, owning realm.
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
@@ -427,6 +619,8 @@ export function HexWorldTerrain({ winter, cities, forces, territoryOwnership, he
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
       <HexQuilt tiles={tiles} colors={colors} />
+      {/* 山巒林相 — the board grows real peaks and woods. */}
+      <TerrainFeatures tiles={tiles} forestAt={forestAt} season={season} cityCells={cityCells} />
       {/* 國界墨線 — the realm outline reads at a glance, RTK-XIV style. */}
       <lineSegments geometry={borderGeom} frustumCulled={false} raycast={() => null}>
         <lineBasicMaterial color="#161009" transparent opacity={0.55} depthWrite={false} />

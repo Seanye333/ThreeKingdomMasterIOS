@@ -56,7 +56,7 @@ import { HexWorldTerrain, warmHexWorldTiles, HEXW_R } from './map3d/HexWorld3D';
 import { IntentLayer, DiplomacyLines3D } from './map3d/Intent3D';
 import { SupplyLines3D, SupplyCorridor3D } from './map3d/Supply3D';
 import { Forts3D, Ports3D } from './map3d/Strongholds3D';
-import { SkyDome, DriftingClouds, CitySmoke3D, Birds3D, EventMarks3D, TradeShips3D, DuskCityLights, Caravans3D, EMPTY_THREATS, FOG_OVERLAY, EMPTY_REVEALS } from './map3d/AtmosphereTrade3D';
+import { SkyDome, DriftingClouds, CloudShadows, CitySmoke3D, Birds3D, EventMarks3D, TradeShips3D, DuskCityLights, Caravans3D, EMPTY_THREATS, FOG_OVERLAY, EMPTY_REVEALS } from './map3d/AtmosphereTrade3D';
 import { Tribes3D, WildSites3D, ScenicSites3D } from './map3d/WildSites3D';
 export { warmHexWorldTiles } from './map3d/HexWorld3D';
 // Preserve this module's public surface — computeBeaconAlerts was exported from here.
@@ -2055,7 +2055,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
         // ⬡ 棋盤世界 — hex-prism quilt; rivers/lakes are blue hexes, the sea
         // is the living Ocean below. Same ground-click contract as the scroll.
         <HexWorldTerrain
-          winter={season === 'winter'}
+          season={season}
           cities={cities}
           forces={forces}
           territoryOwnership={territoryOwnership}
@@ -2096,6 +2096,8 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
       <Villages3D />
       <GreatWall3D />
       <DriftingClouds />
+      {/* 雲影掠地 — the clouds above cast drifting shade on the lowlands. */}
+      {!IS_MOBILE && <CloudShadows />}
       {tod === 'day' && <Birds3D />}
       <CitySmoke3D cities={cities} />
       <Caravans3D cities={cities} />
@@ -3973,10 +3975,16 @@ export function StrategicMap3D() {
           {/* Cinematic arc when a city changes hands (capture / loss). */}
           <EventFocusFly controlsRef={controlsRef} onSettled={setOrbitTarget} />
           <MiniNavRig controlsRef={controlsRef} onView={setNavView} jump={navJump} />
-          {/* Gentle bloom — beacons, fires and water shimmer get a halo. High tier only. */}
+          {/* Gentle bloom — beacons, fires and water shimmer get a halo; on a
+              moonlit lower-phase NIGHT it opens up so the city lamps, beacon
+              chains and ember fields truly glow (萬家燈火). High tier only. */}
           {RENDER_HI && (
             <EffectComposer>
-              <Bloom luminanceThreshold={0.85} intensity={0.35} mipmapBlur />
+              <Bloom
+                luminanceThreshold={tod === 'night' ? 0.5 : 0.85}
+                intensity={tod === 'night' ? 0.9 : 0.35}
+                mipmapBlur
+              />
             </EffectComposer>
           )}
         </Suspense>
