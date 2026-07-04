@@ -1,7 +1,8 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ComponentProps } from 'react';
 import { DuelGameModal, type DuelRoundFx } from '../DuelGameModal';
 import { pickName, useLanguage, useT } from '../../i18n';
+import { OfficerPortrait } from '../OfficerPortrait';
 import { playSfx } from '../../../game/systems/sound';
 import { useGameStore } from '../../../game/state/store';
 import { isNotableBout, type BoutRecord } from '../../../game/systems/duelHall';
@@ -29,6 +30,12 @@ export function Duel3DStage(props: ComponentProps<typeof DuelGameModal>) {
   const leftName = pickName(attacker.name, lang);
   const rightName = pickName(defender.name, lang);
   const [event, setEvent] = useState<DuelArenaEvent | null>(null);
+  // 對陣亮相 — both fighters' faces square off for a breath, then fade.
+  const [introUp, setIntroUp] = useState(true);
+  useEffect(() => {
+    const id = window.setTimeout(() => setIntroUp(false), 2600);
+    return () => window.clearTimeout(id);
+  }, []);
   const keyRef = useRef(0);
   const history = useRef<DuelRoundFx[]>([]);
   const [ended, setEnded] = useState<DuelRoundFx | null>(null);
@@ -135,6 +142,25 @@ export function Duel3DStage(props: ComponentProps<typeof DuelGameModal>) {
         meCareer={careerRef.current.me.prowess}
         foeCareer={careerRef.current.foe.prowess}
       />
+
+      {/* 對陣亮相 — portraits face off, then step aside for the bout. */}
+      {introUp && (
+        <div style={{
+          position: 'fixed', left: '50%', top: '30%', transform: 'translateX(-50%)',
+          zIndex: 133, pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: 22,
+          animation: 'tkm-fade-in 0.35s ease',
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <OfficerPortrait officer={attacker} size={96} />
+            <div style={{ marginTop: 4, color: '#ffe6b0', fontFamily: 'var(--tkm-font-body)', fontSize: '0.95rem', textShadow: '0 2px 6px #000' }}>{leftName}</div>
+          </div>
+          <div style={{ fontSize: '2rem', color: '#e0846a', fontFamily: 'var(--tkm-font-body)', textShadow: '0 0 14px rgba(224,132,106,0.8)' }}>⚔</div>
+          <div style={{ textAlign: 'center' }}>
+            <OfficerPortrait officer={defender} size={96} />
+            <div style={{ marginTop: 4, color: '#ffe6b0', fontFamily: 'var(--tkm-font-body)', fontSize: '0.95rem', textShadow: '0 2px 6px #000' }}>{rightName}</div>
+          </div>
+        </div>
+      )}
 
       {/* 宿敵 — the head-to-head going into the bout (kills the loop between the
           恩怨簿 and the arena: rivals who keep meeting see their tally). */}

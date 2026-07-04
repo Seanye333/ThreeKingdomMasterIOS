@@ -8116,7 +8116,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           weather: nextWeather,
           burningCities: nextBurning,
           cityCaptured: playerConquest
-            ? { key: (state.cityCaptured?.key ?? 0) + 1, cityId: playerConquest }
+            ? {
+                key: (state.cityCaptured?.key ?? 0) + 1,
+                cityId: playerConquest,
+                // 開城出降 — a starve-out gets the white-flag flourish, not the storm.
+                surrender: result.report.entries.some((e) =>
+                  e.cityId === playerConquest && (e.textZh ?? '').includes('開城出降')) || undefined,
+              }
             : state.cityCaptured,
           cityLost: playerLoss
             ? { key: (state.cityLost?.key ?? 0) + 1, cityId: playerLoss }

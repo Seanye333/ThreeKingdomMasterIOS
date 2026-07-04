@@ -125,6 +125,13 @@ export default function App() {
       const c = s.cities[a.targetCityId];
       if (c && c.ownerForceId === pid) return true;
     }
+    // 圍城亦張弦 — an active siege (yours OR on your city) keeps the strings
+    // taut until the gates open or the camp breaks.
+    for (const a of Object.values(s.armies)) {
+      if (!a.besieging) continue;
+      if (a.forceId === pid) return true;
+      if (s.cities[a.besieging]?.ownerForceId === pid) return true;
+    }
     return false;
   });
 

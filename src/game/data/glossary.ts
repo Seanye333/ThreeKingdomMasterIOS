@@ -21,6 +21,39 @@ export interface GlossaryCategory {
 
 export const GLOSSARY: GlossaryCategory[] = [
   {
+    zh: '軍略新篇', en: 'New Arts of War', icon: '🗺',
+    terms: [
+      { zh: '長圍(圍城)', en: 'Siege (map)', descZh: '紮營於敵城 45px 內、兵≥3000 可下「圍城」(在途部隊面板):每旬城中糧 −(守軍×0.8+人口×0.004)、民忠 −2;糧盡且圍軍≥守軍八成 → 開城出降,兵不血刃(舊臣半數就擒)。守軍多於圍軍 1.3 倍時每旬五成傾城突圍,打贏當旬解圍;援軍攔截圍軍亦解。AI 兵臨堅城同樣會圍你。', descEn: 'Camp within reach of an enemy city (3000+ troops) and INVEST it: its food and loyalty bleed each turn; dry granaries open the gates without a fight. A much larger garrison may sortie and rout you; relief columns lift the siege. The AI does it back.' },
+      { zh: '設伏', en: 'Ambush stance', descZh: '紮營於掩蔽之地(林/丘/山道)可再下「設伏」:敵圖上整支軍隱形(遭遇預告亦不洩),敵縱隊撞入時伏擊加成 0.45(明營 0.3)且識破減半;親征遇伏,伏方免費帶「伏兵」戰前準備。AI 分遣隊亦會入伏。', descEn: 'A camp in cover can go to ground: invisible on the enemy map, springing harder on contact. AI detachments do the same.' },
+      { zh: '斥候偵騎', en: 'Scouts', descZh: '行軍縱隊日流中逐日偵查前路:主將智力決定半徑與識破率(急行軍減半、緩進加半)。揭破的敵伏標紅「⚠伏」現形於圖、入預告,接戰時識破≥50%。破伏之道:緩進+智將。', descEn: "Marching columns scout day by day (commander INT drives it; cautious pace scouts half again as well). Flushed ambushes show on your map and are half-read on contact." },
+      { zh: '兵站', en: 'Supply depot', descZh: '寨柵選單施設(320 金,木朽 16 季):補給色帶通至己方兵站即算連通 — 遠征前沿鋪兵站鏈即可深入;兼為過境友軍每半月回 +60 兵。可被敵攻拔;擴張型 AI 亦建。', descEn: 'A buildable supply anchor: the paint ribbon only has to reach a friendly depot chain, not walk home. Enemies can storm it.' },
+      { zh: '糧道色帶', en: 'Supply ribbon', descZh: '行軍縱隊沿路把格子染成己色(帶一圈鄰格);2 季以上遠征須有己色連續帶通回友城/兵站,被踩斷/還草(4 季)/母城陷落 → 每旬 −7% 兵。糧道疊圖一鍵總覽全軍走廊(斷線閃紅)。', descEn: 'Columns paint the hexes they walk; a deep expedition must stay connected through its own colour or it starves 7%/turn. The SUPPLY overlay shows every corridor at once.' },
+      { zh: '攔江鎖', en: 'River boom', descZh: '臨江之城可橫鐵鎖於水面(500 金):敵水軍過境每半月 70% 攔停,陸軍不受阻。反制「火炬燒鎖」:舟師臨鎖 −300 金即熔(AI 艦隊亦會燒你的鎖)。', descEn: 'Chain the river: hostile fleets stall 70%/half-month. Counter with torch-rafts (−300g) — the AI will burn yours too.' },
+      { zh: '焚橋斷渡', en: 'Burn the crossing', descZh: '臨河縱隊一鍵焚毀近旁渡口:蓋 4 季「斷渡」戰痕,此地開戰時橋樑已斷 — 撤退斷追兵、守險斷敵路。守河 AI 見敵近亦會自焚渡口。', descEn: 'Torch the ford beside your column: battles here open with the span down for ~a year. Retreat cover, or denial.' },
+      { zh: '會戰', en: 'Converging battle', descZh: '互動戰開打時,90px 內交戰雙方(及其同盟)的在途縱隊按真實方位入場助陣:每側至多 2 支、依距 3/5/7 回合到;倖存者戰後寫回地圖軍團。圍城戰自然滾成解圍會戰。', descEn: 'Columns (and allies!) near a battle ride to the drums, entering from their true bearings mid-fight; survivors return to the map.' },
+      { zh: '烽火連天', en: 'Beacon chain', descZh: '敵軍犯境且邊城建有「烽燧」時,警訊沿己方烽燧鏈逐座點燃直傳都城(只有帶烽燧的城接得住火)— 烽燧線佈到哪,警報傳到哪。', descEn: 'Raise beacons on the frontier: alarms relay station-to-station to your capital, fire by fire.' },
+      { zh: '戰場烙印', en: 'Battle scars', descZh: '戰鬥中燒毀的森林(焦土 8 季)與焚斷的橋(斷渡 4 季)回寫大地圖:棋盤變色、同一片地再開戰直接承襲(林已燼無從設伏、渡口仍斷)。', descEn: 'Forests torched and bridges dropped in battle scar the WORLD map; new battles over the same ground inherit them.' },
+    ],
+  },
+  {
+    zh: '戰陣新篇', en: 'New Battlefield', icon: '🏯',
+    terms: [
+      { zh: '陣中築壘', en: 'Fieldworks', descZh: '戰鬥中任一步/騎/弓於開闊硬地花 2 AP 就地築壘:該格受擊 ×0.85、敵入格耗 2 步、騎兵衝鋒被鹿砦完全化解。木柵怕火 — 焚毀還為白地(一戰燒敵壘三座而勝 = 成就「火燒連營」)。AI 守方亦築。', descEn: 'Any unit can entrench open ground (2 AP): damage shield, slowed entry, cavalry charges broken. Burns like tinder.' },
+      { zh: '城郭分層', en: 'Layered walls', descZh: '城壁強化(§內政令)所見即所戰:wallTier 2 攻城戰場多一道內城牆(門 HP600/牆 800),tier 3 主攻面再加護城河(唯門前橋道可渡)。攻堅城備攻城器或用水攻。', descEn: 'Wall upgrades appear IN the siege: tier 2 adds an inner ring, tier 3 a moat with one causeway.' },
+      { zh: '區域天候', en: 'Regional weather', descZh: '戰場天氣按開戰地點修正:北國冬戰 45% 落雪、江南夏戰 35% 逢梅雨、西陲雨化風沙、秋日河域偶起晨霧。冬征河北與夏征江東是兩種仗。', descEn: 'Battle weather bends to WHERE you fight: northern winters snow, southern summers squall, the west dries the rain to dust.' },
+      { zh: '入城三選', en: 'Conquest policy', descZh: '親征破城後一令定調:安民(民忠 +12)/犒軍(輕傷歸隊=攻方損失 15%,民忠 −3)/搜捕(舊臣各 40% 就擒,民忠 −8)。AI 破城亦按性格定調(暴君搜捕、文主安民)。', descEn: 'After storming a city in person, set the tone: pacify, reward the host, or hunt the old regime. AI conquerors pick by personality.' },
+      { zh: '攻城戰損', en: 'Siege damage', descZh: '攻城結算逐建築擲損毀(陷城 20%/守住 8%/戰中用火 +12%):損毀建築零加成、城內 3D 焦黑冒煙,城建面板紅框「修繕」(40%×造價×等級)復原。攻下敵城常接手一片瘡痍。', descEn: 'Sieges wreck buildings; wrecked works give no bonus until repaired. Conquest usually hands you a fixer-upper.' },
+    ],
+  },
+  {
+    zh: '城邦新篇', en: 'New City Life', icon: '🏮',
+    terms: [
+      { zh: '街頭際遇', en: 'Street encounters', descZh: '每城每季至多一遇(35%):牌坊邊的 ✨人物 — 行商獻寶(300 金→馬 40 鐵 40 藥 20)/遊俠比武(最強武將得歷練+練度 3)/相士設壇(100 金→民忠 +4)/說書開講(民忠 +3)。婉拒也算過,本季不再遇。', descEn: 'Once a season a special figure may stand in the street: a caravan lot, a sparring knight, a soothsayer, a storyteller.' },
+      { zh: '城中人物', en: 'Officers in town', descZh: '在城武將以人偶現於其所:文官府衙前、武官校場、已知在野之士在酒樓外(點擊直達互動);兜帽剪影=有未發現的賢士,搜索有戲。都城另有官邸,君主妻兒現於庭中。', descEn: 'Stationed officers stand where they would be found; hooded silhouettes hint at undiscovered talent. Your family lives at the capital residence.' },
+      { zh: '民情街景', en: 'Civic streets', descZh: '城的境況寫在街上:民忠 <35% 道旁現流民(點之直達賑濟)、上季疫城掛白幡且人流減半、秋季民忠 >66% 大街張綵旗辦廟會、下旬月夜家家窗紙透光+打更人巡街。', descEn: "The town's condition shows in its streets: refugees, mourning banners, festivals — and lamplit windows on moonlit nights." },
+    ],
+  },
+  {
     zh: '內政', en: 'Domestic', icon: '🌾',
     terms: [
       { zh: '民忠', en: 'Loyalty', descZh: '一城百姓對你的歸心(0–100)。過低則民變、城池易主或武將離心。以「撫民」提升,重稅與徵兵會使其下降。', descEn: "A city's loyalty to you (0–100). Too low risks revolt, defection, or losing the city. Raise it with 撫民; heavy taxes and conscription lower it." },

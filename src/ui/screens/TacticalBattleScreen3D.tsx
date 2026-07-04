@@ -10,6 +10,7 @@ import { ToneMappingMode } from 'postprocessing';
 import * as THREE from 'three';
 import { RENDER_HI } from '../renderQuality';
 import { SelectionRing3D } from '../components/SelectionRing3D';
+import { OfficerPortrait } from '../components/OfficerPortrait';
 import { useGameStore } from '../../game/state/store';
 import { playSfx, playFxSfx, startBattleAmbience, stopBattleAmbience, playMusic, stopMusic, type MusicTrack } from '../../game/systems/sound';
 import type { EntityId, FormationId, HexCoord, Officer, StratagemId, TacticalBattle, TacticalTile, TacticalUnit, TerrainKind, TimeOfDay, UnitType, Weather } from '../../game/types';
@@ -5719,7 +5720,11 @@ function UnitPanel3D({
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               boxShadow: `0 0 10px ${rc}66`,
             }}>
-              <span style={{ fontSize: '2rem', fontWeight: 700, color: '#f4e8c8', fontFamily: 'var(--tkm-font-body)', textShadow: '0 2px 4px #000' }}>{surname}</span>
+              {officer ? (
+                <OfficerPortrait officer={officer} size={48} forceColor={rc} />
+              ) : (
+                <span style={{ fontSize: '2rem', fontWeight: 700, color: '#f4e8c8', fontFamily: 'var(--tkm-font-body)', textShadow: '0 2px 4px #000' }}>{surname}</span>
+              )}
               <span style={{
                 position: 'absolute', bottom: -1, right: -1, fontSize: '0.7rem',
                 background: rc, color: '#1a120a', padding: '0 3px', fontWeight: 700, borderRadius: 'var(--tkm-radius-xs)',

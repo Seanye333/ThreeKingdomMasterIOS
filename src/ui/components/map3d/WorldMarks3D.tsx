@@ -175,7 +175,7 @@ export function ConquestFlourish3D() {
   const cap = useGameStore((s) => s.cityCaptured);
   const cities = useGameStore((s) => s.cities);
   const forces = useGameStore((s) => s.forces);
-  const [active, setActive] = useState<{ key: number; x: number; y: number; z: number; color: string } | null>(null);
+  const [active, setActive] = useState<{ key: number; x: number; y: number; z: number; color: string; surrender?: boolean } | null>(null);
   useEffect(() => {
     if (!cap) return;
     const city = cities[cap.cityId];
@@ -184,13 +184,60 @@ export function ConquestFlourish3D() {
     const [wx, wz] = pxToWorld(px, py);
     const wy = sampleTerrainHeight(wx, wz) + 0.04;
     const color = (city.ownerForceId && forces[city.ownerForceId]?.color) || '#e6c473';
-    setActive({ key: cap.key, x: wx, y: wy, z: wz, color });
-    const id = window.setTimeout(() => setActive(null), 2600);
+    setActive({ key: cap.key, x: wx, y: wy, z: wz, color, surrender: cap.surrender });
+    const id = window.setTimeout(() => setActive(null), cap.surrender ? 4200 : 2600);
     return () => window.clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cap?.key]);
   if (!active) return null;
+  if (active.surrender) {
+    return <SurrenderAnim key={active.key} x={active.x} y={active.y} z={active.z} color={active.color} />;
+  }
   return <ConquestAnim key={active.key} x={active.x} y={active.y} z={active.z} color={active.color} />;
+}
+
+/** 開城出降演出 — the white flag climbs the pole first (the town yields),
+ *  holds a beat, then drops as the conqueror's colours run up in its place.
+ *  Longer and quieter than the storm's flag-plant (~4.2s). */
+function SurrenderAnim({ x, y, z, color }: { x: number; y: number; z: number; color: string }) {
+  const start = useRef<number | null>(null);
+  const whiteRef = useRef<THREE.Mesh>(null);
+  const newRef = useRef<THREE.Mesh>(null);
+  useFrame(({ clock }) => {
+    if (start.current === null) start.current = clock.elapsedTime;
+    const e = clock.elapsedTime - start.current;
+    if (whiteRef.current) {
+      // White flag rises 0→1.3s, holds, then sinks 2.2→3s.
+      const up = Math.min(1, e / 1.3);
+      const down = Math.max(0, Math.min(1, (e - 2.2) / 0.8));
+      whiteRef.current.position.y = 0.18 + (up - down) * 0.42;
+      (whiteRef.current.material as THREE.MeshStandardMaterial).opacity = 1 - down * 0.8;
+      whiteRef.current.rotation.y = Math.sin(clock.elapsedTime * 4) * 0.2;
+    }
+    if (newRef.current) {
+      // The conqueror's colours run up as the white comes down.
+      const up2 = Math.max(0, Math.min(1, (e - 2.6) / 0.9));
+      newRef.current.position.y = 0.18 + up2 * 0.42;
+      (newRef.current.material as THREE.MeshStandardMaterial).opacity = up2;
+      newRef.current.rotation.y = Math.sin(clock.elapsedTime * 4 + 1) * 0.2;
+    }
+  });
+  return (
+    <group position={[x, y, z]} scale={ARMY_TOKEN_SCALE}>
+      <mesh position={[0, 0.32, 0]}>
+        <cylinderGeometry args={[0.014, 0.014, 0.64, 5]} />
+        <meshStandardMaterial color="#1a1410" />
+      </mesh>
+      <mesh ref={whiteRef} position={[0.11, 0.18, 0]}>
+        <planeGeometry args={[0.22, 0.14]} />
+        <meshStandardMaterial color="#efe9dc" side={THREE.DoubleSide} roughness={0.85} transparent />
+      </mesh>
+      <mesh ref={newRef} position={[0.11, 0.18, 0]}>
+        <planeGeometry args={[0.22, 0.14]} />
+        <meshStandardMaterial color={color} side={THREE.DoubleSide} roughness={0.7} transparent opacity={0} />
+      </mesh>
+    </group>
+  );
 }
 
 /** 失守演出 — a somber beat when the player loses a city: their colours topple

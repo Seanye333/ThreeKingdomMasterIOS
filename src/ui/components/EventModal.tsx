@@ -4,7 +4,8 @@ import { SEASON_LABEL } from '../../game/types';
 import type { HistoricalEvent } from '../../game/types/event';
 import { playEventCue, type EventCueMood } from '../../game/systems/sound';
 import styles from './EventModal.module.css';
-import { useT, useLanguage, useDesc } from '../i18n';
+import { useT, useLanguage, useDesc, pickName } from '../i18n';
+import { OfficerPortrait } from './OfficerPortrait';
 
 /** 事件配樂 — classify an event's mood from its effects (language-agnostic)
  *  with id/name keyword hints, so the right motif greets it. */
@@ -33,10 +34,30 @@ const MOOD_STYLE: Record<EventCueMood, { accent: string; glow: string; seal: str
   ominous:    { accent: '#d89048', glow: 'rgba(216,144,72,0.38)', seal: '凶' },
 };
 
+/** 事件面孔 — every officer the event names (conditions, effects, choices,
+ *  chooser), deduped in mention order: the cast of the scene. */
+function eventOfficerIds(event: HistoricalEvent): string[] {
+  const ids: string[] = [];
+  const push = (id?: string) => { if (id && !ids.includes(id)) ids.push(id); };
+  for (const r of event.requires ?? []) {
+    push((r as { officerId?: string }).officerId);
+    push((r as { rulerOfficerId?: string }).rulerOfficerId);
+  }
+  push(event.chooserRulerId);
+  const effs = [...event.effects, ...(event.choices?.flatMap((c) => c.effects) ?? [])];
+  for (const e of effs) {
+    push((e as { officerId?: string }).officerId);
+    push((e as { rulerOfficerId?: string }).rulerOfficerId);
+  }
+  return ids;
+}
+
 export function EventModal() {
   const pending = useGameStore((s) => s.pendingEvent);
   const dismiss = useGameStore((s) => s.dismissEvent);
   const resolveChoice = useGameStore((s) => s.resolveEventChoice);
+  const officers = useGameStore((s) => s.officers);
+  const forces = useGameStore((s) => s.forces);
   const t = useT();
   const lang = useLanguage();
   const desc = useDesc();
@@ -65,6 +86,31 @@ export function EventModal() {
           {year} AD · {lang === 'en' ? seasonLabel.en : seasonLabel.zh}
         </div>
         <hr className={styles.divider} />
+        {/* 登場人物 — the faces this moment belongs to. */}
+        {(() => {
+          const cast = eventOfficerIds(event)
+            .map((id) => officers[id])
+            .filter((o): o is NonNullable<typeof o> => !!o && o.status !== 'dead')
+            .slice(0, 3);
+          if (cast.length === 0) return null;
+          return (
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 14, margin: '2px 0 6px' }}>
+              {cast.map((o) => (
+                <div key={o.id} style={{ textAlign: 'center' }}>
+                  <OfficerPortrait
+                    officer={o}
+                    size={64}
+                    year={year}
+                    forceColor={o.forceId ? forces[o.forceId]?.color : undefined}
+                  />
+                  <div style={{ fontSize: '0.66rem', color: '#c9b87a', marginTop: 2, fontFamily: 'var(--tkm-font-body)' }}>
+                    {pickName(o.name, lang)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
         <p className={`${styles.description} ${styles.descAnim}`}>{desc(event)}</p>
         {pending.awaitingChoice && event.choices?.length ? (
           /* 抉擇 — history holds its breath; the player picks the branch. */

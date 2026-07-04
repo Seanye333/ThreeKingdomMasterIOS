@@ -194,7 +194,7 @@ export interface GameState {
   marchDeparture: { key: number; cityId: EntityId; hostile: boolean } | null;
   /** 克城 — transient signal that the player just took a city, so the map can
    *  play a flag-planting flourish there. Not persisted. */
-  cityCaptured: { key: number; cityId: EntityId } | null;
+  cityCaptured: { key: number; cityId: EntityId; surrender?: boolean } | null;
   /** 失守 — transient signal that the player just lost a city, for a somber
    *  banner-toppling beat there. Not persisted. */
   cityLost: { key: number; cityId: EntityId } | null;
