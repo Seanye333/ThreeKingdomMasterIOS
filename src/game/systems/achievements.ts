@@ -81,7 +81,8 @@ export function processTrigger(
       // Discrete: targetId must match.
       ((['recruit-officer', 'defeat-officer', 'duel-won-vs', 'capture-city',
          'fire-event', 'reach-ending', 'reach-imperial-rank', 'learn-skill',
-         'starve-out-city', 'ambush-victory', 'burning-camps'] as const)
+         'starve-out-city', 'ambush-victory', 'burning-camps',
+         'boom-stall', 'beacon-relay', 'bridge-burned', 'ally-battle'] as const)
         .includes(ach.trigger.kind as never) &&
         ach.trigger.targetId === trigger.targetId) ||
       // Cumulative: counter ≥ threshold.

@@ -1831,6 +1831,14 @@ export const useGameStore = create<GameStore>()(
         for (const c of riverCells) scars[worldScarKey(c.col, c.row)] = { kind: 'bridge-broken', t: stamp };
         set({ worldScars: scars });
         playSfx('fire');
+        {
+          let achB = loadAchievementProgress();
+          const r = processTrigger(achB, { kind: 'bridge-burned' });
+          if (r.newlyUnlocked.length > 0) {
+            saveAchievementProgress(r.progress);
+            set({ recentAchievementUnlocks: [...get().recentAchievementUnlocks, ...r.newlyUnlocked] });
+          }
+        }
         const cmdr = state.officers[army.commanderId];
         get().notify(
           `🔥 ${cmdr?.name.zh ?? '守軍'}焚橋斷渡 — 此處渡口一年難復!`,
@@ -8271,6 +8279,43 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             const r = processTrigger(achS, { kind: 'ambush-victory' });
             achS = r.progress; newly.push(...r.newlyUnlocked);
           }
+          // 鐵鎖橫江 — your boom chained a hostile fleet this turn.
+          if (result.report.entries.some((e) => (e.textZh ?? '').includes('我攔江鎖鎖住'))) {
+            const r = processTrigger(achS, { kind: 'boom-stall' });
+            achS = r.progress; newly.push(...r.newlyUnlocked);
+          }
+          // 烽火傳京 — a threatened, beaconed frontier city can relay its
+          // alarm through player-held ground to the capital.
+          if (state.playerForceId) {
+            const pid2 = state.playerForceId;
+            const cap = result.forces[pid2]?.capitalCityId;
+            const hasBeacon = (c?: { buildSlots?: Array<{ buildingId?: string }> }) =>
+              !!c && (c.buildSlots ?? []).some((sl) => sl.buildingId === 'beacon');
+            const relayFires = cap != null && Object.values(result.armies ?? {}).some((a) => {
+              if (a.forceId === pid2) return false;
+              const tgt = result.cities[a.targetCityId];
+              if (!tgt || tgt.ownerForceId !== pid2 || !hasBeacon(tgt) || tgt.id === cap) return false;
+              // BFS through player cities to the capital (chain has a route home).
+              const seen = new Set<string>([tgt.id]);
+              const queue = [tgt.id];
+              while (queue.length) {
+                const cur = queue.shift()!;
+                for (const adj of result.cities[cur]?.adjacentCityIds ?? []) {
+                  if (seen.has(adj)) continue;
+                  const n = result.cities[adj];
+                  if (!n || n.ownerForceId !== pid2) continue;
+                  if (adj === cap) return true;
+                  seen.add(adj);
+                  queue.push(adj);
+                }
+              }
+              return false;
+            });
+            if (relayFires) {
+              const r = processTrigger(achS, { kind: 'beacon-relay' });
+              achS = r.progress; newly.push(...r.newlyUnlocked);
+            }
+          }
           if (newly.length > 0) {
             saveAchievementProgress(achS);
             set({ recentAchievementUnlocks: [...get().recentAchievementUnlocks, ...newly] });
@@ -11657,6 +11702,19 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         let conquestPolicyPrompt: GameState['pendingConquestPolicy'] = null;
         let nextArmies = state.armies;
         let nextFieldPending = state.pendingCommands;
+        // 盟軍來會 — an allied (third-force) column answered your drums.
+        if ((tb.attackerForceId === state.playerForceId || tb.defenderForceId === state.playerForceId)
+          && (tb.columnPlans ?? []).some((pl) => {
+            const a = state.armies[pl.armyId];
+            return a && a.forceId !== tb.attackerForceId && a.forceId !== tb.defenderForceId;
+          })) {
+          let achA = loadAchievementProgress();
+          const rA = processTrigger(achA, { kind: 'ally-battle' });
+          if (rA.newlyUnlocked.length > 0) {
+            saveAchievementProgress(rA.progress);
+            set({ recentAchievementUnlocks: [...get().recentAchievementUnlocks, ...rA.newlyUnlocked] });
+          }
+        }
         // 會戰 — units that rode in from map columns belong to their OWN armies:
         // they must never be double-counted into the main sides' writebacks
         // (field armies, siege garrisons, homebound besiegers).

@@ -2096,7 +2096,7 @@ export const SCENARIO_198_XIAPI: Scenario = {
     'Winter 198 AD. Cao Cao, with the Emperor at Xuchang, marches east in alliance with Liu Bei to ' +
     'crush Lü Bu at Xiapi. Yuan Shao watches from Ye with twice their strength; Sun Ce sweeps the ' +
     'Yangtze; Liu Biao guards Jing. Chen Gong and Gao Shun stand last beside the Flying General.',
-  descriptionZh: "公元198年冬。曹操挾天子以令諸侯，會同劉備東征下邳，欲擒呂布。袁紹於鄴擁兵倍於曹氏，虎視中原；孫策席捲江東；劉表據荊州自守。陳宮、高順誓死隨飛將軍，困守孤城。",
+  descriptionZh: "公元198年冬。曹操挾天子以令諸侯，會同劉備東征下邳，欲擒呂布。袁紹於鄴擁兵倍於曹氏，虎視中原；孫策席捲江東；劉表據荊州自守。陳宮、高順誓死隨飛將軍，困守孤城。此局宜長圍：決泗沂之水，或圍而不攻坐待糧盡 — 白門樓上，自有分曉。",
   startDate: { year: 198, season: 'winter' },
   cities: buildInitialCities(CITY_OWNERSHIP_198),
   forces: FORCES_198,
@@ -4298,7 +4298,7 @@ export const SCENARIO_204_YECHENG: Scenario = {
     'at one another while the central army closes in. Cao Pi will find Lady Zhen in the burning house ' +
     'and take her for his own. In the south Sun Quan steadies the heir-stool his brother left him; in ' +
     "Jing province Liu Bei sleeps under Liu Biao's wing at Xinye, still without a strategist worthy of him.",
-  descriptionZh: "公元204年夏。曹操決漳水以灌鄴城，袁氏故都垣牆既圮。袁本初崩於官渡之後二年，諸子譚、尚鬩牆於外，中軍合圍於內。曹丕將於焚宅中得甄氏而納之。江東孫權承兄業已四載；荊州劉備寄食劉景升之新野，臥龍未顯，求賢正切。",
+  descriptionZh: "公元204年夏。曹操決漳水以灌鄴城，袁氏故都垣牆既圮。袁本初崩於官渡之後二年，諸子譚、尚鬩牆於外，中軍合圍於內。曹丕將於焚宅中得甄氏而納之。江東孫權承兄業已四載；荊州劉備寄食劉景升之新野，臥龍未顯，求賢正切。此局命脈在糧道：色帶即補給，烏巢一炬可定北方。",
   startDate: { year: 204, season: 'summer' },
   cities: buildInitialCities(CITY_OWNERSHIP_204),
   forces: FORCES_204,

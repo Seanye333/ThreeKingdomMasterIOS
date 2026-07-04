@@ -24,7 +24,11 @@ export type AchievementTriggerKind =
   // 2026-07 map-batch feats (instant, no targetId):
   | 'starve-out-city'   // 兵不血刃 — a besieged city opened its gates
   | 'ambush-victory'    // 十面埋伏 — a laid ambush sprang and won
-  | 'burning-camps';    // 火燒連營 — 3+ fieldworks torched in one won battle
+  | 'burning-camps'     // 火燒連營 — 3+ fieldworks torched in one won battle
+  | 'boom-stall'        // 鐵鎖橫江 — your chain-boom stalled a hostile fleet
+  | 'beacon-relay'      // 烽火傳京 — a frontier alarm relayed to the capital
+  | 'bridge-burned'     // 據水斷橋 — you torched a crossing on the march
+  | 'ally-battle';      // 盟軍來會 — an ally's column joined your battle
 
 export interface AchievementTrigger {
   kind: AchievementTriggerKind;

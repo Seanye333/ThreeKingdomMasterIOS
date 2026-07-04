@@ -45,6 +45,12 @@ const TUTORIAL_STEPS: Array<{ titleZh: string; titleEn: string; bodyZh: string; 
     bodyEn: 'The ⬡ toggle re-renders the whole realm as a hex-tile board — realms tinted, borders deepened, roads paved into the quilt. Switch back to the painted scroll any time.',
   },
   {
+    titleZh: '军略进阶',
+    titleEn: 'Deeper Arts of War',
+    bodyZh: '扎营的部队可「围城」断粮迫降、可在林丘「设伏」隐身截击;远征三季以上要铺「兵站」保粮道;临江之城可横「拦江锁」锁敌水军。军师会在你第一次用得上时点拨提示,完整条目见「记录→概念」的军略新篇。',
+    bodyEn: 'A camped army can BESIEGE a city into surrender or AMBUSH from cover; long expeditions need supply DEPOTS; riverside cities can chain the water with a BOOM. Your advisor tips each mechanic the first time it matters — full entries live under Records → Concepts.',
+  },
+  {
     titleZh: '探索',
     titleEn: 'Explore',
     bodyZh: '使用上方按钮探索:武将(全员)，宝物(装备)，密偵(谍报)，朝廷(诏令)，保存。准备好结束本季时点「End Season →」。',

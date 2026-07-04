@@ -730,6 +730,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const pos = armyPosition(cmd);
       if (!pos) continue;
       let dmg = 0, heal = 0, blocked = false;
+      let boomStall = false; // the stall came from a chain-boom (fleet)
       let byPlayer = false; // a player-owned facility contributed damage/block
       // Distinct messaging for a stalled crossing (渡口) vs a barred pass (關隘).
       let crossBlocked: 'ford' | 'pass' | null = null;
@@ -774,6 +775,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
           const applies = f.facility === 'boom' ? colNaval : !colNaval;
           if (applies && (input.rng ?? Math.random)() < (f.facility === 'boom' ? 0.7 : 0.5)) {
             blocked = true;
+            if (f.facility === 'boom') boomStall = true;
             if (f.ownerForceId === pf) byPlayer = true;
           }
         }
@@ -815,11 +817,15 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
               ? `Your hold on ${crossName?.en ?? 'the ford'} stalled ${nm.en}'s crossing half a month.`
               : crossBlocked === 'pass'
               ? `Your hold on ${crossName?.en ?? 'the pass'} barred ${nm.en}'s march half a month.`
+              : boomStall
+              ? `Your river boom chained ${nm.en}'s fleet in place half a month.`
               : `Your barricade stalled ${nm.en}'s march half a month.`,
             textZh: crossBlocked === 'ford'
               ? `我軍扼守${crossName?.zh ?? '津渡'}，阻${nm.zh}半月不得渡。`
               : crossBlocked === 'pass'
               ? `我軍據${crossName?.zh ?? '關'}阻${nm.zh}之師，滯其半月。`
+              : boomStall
+              ? `我攔江鎖鎖住${nm.zh}舟師，滯其半月。`
               : `我軍防壁攔阻${nm.zh}之師，滯其半月。` });
         }
       }
@@ -849,8 +855,12 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     for (const m of marches) {
       const atk = officers[m.officerId];
       const tgt = cities[m.targetCityId];
+      // 都督之斷 — the player's hand-ordered assaults always go in as
+      // ordered, but a DELEGATED legion column (它帶著都督之旗) exercises
+      // the marshal's judgement, same as an AI host.
+      const delegated = m.legionBanner != null;
       if (!atk?.forceId || !tgt?.ownerForceId
-        || atk.forceId === input.playerForceId
+        || (atk.forceId === input.playerForceId && !delegated)
         || tgt.ownerForceId === atk.forceId
         || !isHostilePermitted(input.diplomacy, atk.forceId, tgt.ownerForceId)) { stay.push(m); continue; }
       const strongWalls = (tgt.wallTier ?? 1) >= 2 || tgt.defense >= 80;
@@ -877,7 +887,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       entries.push({
         cityId: tgt.id, kind: 'battle',
         text: `${atk.name.en} reaches ${tgt.name.en} — and settles in to INVEST it rather than storm the walls.`,
-        textZh: `${atk.name.zh}兵臨${tgt.name.zh} — 見城堅不攻,紮營長圍,斷其市易耕稼!`,
+        textZh: atk.forceId === input.playerForceId
+          ? `都督${atk.name.zh}兵臨${tgt.name.zh},見城堅不浪戰 — 傳令紮營長圍,坐待糧盡!`
+          : `${atk.name.zh}兵臨${tgt.name.zh} — 見城堅不攻,紮營長圍,斷其市易耕稼!`,
       });
     }
     marches = stay;
