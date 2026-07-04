@@ -1,4 +1,5 @@
 import type { ReportEntry, Season } from '../types';
+import { WORLD_SCALE } from '../data/geography';
 
 export type WindDirection = 'east' | 'south' | 'west' | 'north' | 'calm';
 export type WeatherKind = 'clear' | 'rain' | 'snow' | 'wind' | 'drought';
@@ -188,4 +189,47 @@ export function describeWeather(weather: Weather): ReportEntry {
     kind: 'note',
     text,
   };
+}
+
+/**
+ * 區域天候 — the realm-wide weather roll bent by WHERE a battle is fought:
+ * the far north snows when the capital merely clouds over, the deep south
+ * squalls through summer, and the arid west shrugs the rain off. Pure and
+ * deterministic (hash of location + date key), so the same battle always
+ * opens under the same sky. Returns a TACTICAL kind ('drought' → 'clear' at
+ * the site level; the parch is an economic state, not a battlefield sky).
+ */
+export function regionalTacticalWeather(
+  base: WeatherKind,
+  x: number,
+  y: number,
+  season: Season,
+  dateKey: string,
+): 'clear' | 'rain' | 'wind' | 'fog' | 'snow' {
+  // Authored thresholds live in the base 1000×720 space; scale with the world.
+  const WS = WORLD_SCALE;
+  const north = y < 300 * WS;
+  const south = y >= 480 * WS;
+  const west = x < 350 * WS;
+  const key = `${Math.round(x)},${Math.round(y)}:${dateKey}`;
+  let h = 2166136261;
+  for (let i = 0; i < key.length; i++) h = Math.imul(h ^ key.charCodeAt(i), 16777619);
+  const r = ((h >>> 0) % 1000) / 1000;
+  let kind: 'clear' | 'rain' | 'wind' | 'fog' | 'snow' =
+    base === 'drought' ? 'clear' : base;
+  // 北國早雪 — northern winters snow even when the realm roll came up clear;
+  // northern rain freezes over.
+  if (north && season === 'winter') {
+    if (kind === 'rain') kind = 'snow';
+    else if (kind === 'clear' && r < 0.45) kind = 'snow';
+  }
+  // 江南梅雨 — the deep south squalls through summer fights.
+  if (south && season === 'summer' && kind === 'clear' && r < 0.35) kind = 'rain';
+  // 南國無雪 — snow rarely settles below the Yangtze: it falls as cold rain.
+  if (south && kind === 'snow' && r < 0.7) kind = 'rain';
+  // 西陲亢旱 — the arid west dries the rain out (dust-wind instead).
+  if (west && kind === 'rain') kind = r < 0.6 ? 'wind' : kind;
+  // 大河晨霧 — riverine autumn mornings mist over now and then.
+  if (!west && season === 'autumn' && kind === 'clear' && r > 0.9) kind = 'fog';
+  return kind;
 }

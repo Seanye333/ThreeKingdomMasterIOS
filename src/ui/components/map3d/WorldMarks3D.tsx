@@ -7,6 +7,7 @@ import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { useGameStore } from '../../../game/state/store';
+import { playSfx } from '../../../game/systems/sound';
 import { cityPixel, cityPos } from '../../../game/data/cityGeo';
 import { terrainRoute } from '../../../game/data/territories';
 import type { City } from '../../../game/types';
@@ -373,18 +374,108 @@ function BeaconFlame3D({ wx, wy, wz }: { wx: number; wy: number; wz: number }) {
   );
 }
 
-export function BeaconAlerts3D() {
+/** 長圍 — a dashed amber noose pulses around every invested city, so a
+ *  siege-in-progress reads from across the map. */
+export function SiegeRings3D() {
+  const pendingCommands = useGameStore((s) => s.pendingCommands);
   const cities = useGameStore((s) => s.cities);
-  const armies = useGameStore((s) => s.armies);
-  const playerForceId = useGameStore((s) => s.playerForceId);
-  const { lit } = useMemo(
-    () => computeBeaconAlerts(cities, armies, playerForceId),
-    [cities, armies, playerForceId],
+  const ringRef = useRef<THREE.Group>(null);
+  const besieged = useMemo(() => {
+    const out: string[] = [];
+    for (const cmd of Object.values(pendingCommands)) {
+      if (cmd.type === 'march' && cmd.holding && cmd.besieging && cities[cmd.besieging]) out.push(cmd.besieging);
+    }
+    return [...new Set(out)];
+  }, [pendingCommands, cities]);
+  useFrame(({ clock }) => {
+    const g = ringRef.current;
+    if (!g) return;
+    const k = 1 + Math.sin(clock.elapsedTime * 2.4) * 0.06;
+    g.scale.set(k, 1, k);
+  });
+  if (besieged.length === 0) return null;
+  return (
+    <group ref={ringRef}>
+      {besieged.map((id) => {
+        const c = cities[id];
+        const [px, py] = cityPixel(c.id, c.coords.x, c.coords.y);
+        const [wx, wz] = pxToWorld(px, py);
+        const wy = cityElevation(wx, wz);
+        return (
+          <group key={id} position={[wx, wy + 0.06, wz]}>
+            {/* Dashed noose — 12 short arc segments */}
+            {Array.from({ length: 12 }).map((_, i) => {
+              const a = (i / 12) * Math.PI * 2;
+              return (
+                <mesh key={i} position={[Math.cos(a) * 1.7, 0, Math.sin(a) * 1.7]} rotation={[-Math.PI / 2, 0, -a]}>
+                  <planeGeometry args={[0.5, 0.14]} />
+                  <meshBasicMaterial color="#e8a040" transparent opacity={0.8} depthWrite={false} toneMapped={false} />
+                </mesh>
+              );
+            })}
+          </group>
+        );
+      })}
+    </group>
   );
-  if (lit.size === 0) return null;
+}
+
+/** 烽火連天 — when a threatened city has a beacon, the alarm relays
+ *  station-to-station along the shortest friendly path to the capital:
+ *  every beacon-equipped city on the way lights, capital always lights.
+ *  Returns one chain (ordered city ids) per beaconed threatened city. */
+export function computeBeaconChains(
+  cities: Record<string, City>,
+  armies: Record<string, import('../../../game/types').Army>,
+  playerForceId: string | null,
+  capitalId: string | null,
+): string[][] {
+  if (!playerForceId || !capitalId) return [];
+  const { threatened } = computeBeaconAlerts(cities, armies, playerForceId);
+  const hasBeacon = (c: City | undefined) => !!c && (c.buildSlots ?? []).some((sl) => sl.buildingId === 'beacon');
+  const chains: string[][] = [];
+  for (const origin of threatened) {
+    if (!hasBeacon(cities[origin]) || origin === capitalId) continue;
+    // BFS through player-owned cities to the capital.
+    const parent: Map<string, string | null> = new Map([[origin, null]]);
+    const queue: string[] = [origin];
+    let found = false;
+    while (queue.length && !found) {
+      const cur = queue.shift()!;
+      for (const adj of cities[cur]?.adjacentCityIds ?? []) {
+        if (parent.has(adj)) continue;
+        const n = cities[adj];
+        if (!n || n.ownerForceId !== playerForceId) continue;
+        parent.set(adj, cur);
+        if (adj === capitalId) { found = true; break; }
+        queue.push(adj);
+      }
+    }
+    if (!found) continue;
+    const path: string[] = [];
+    let walk: string | null = capitalId;
+    while (walk) { path.push(walk); walk = parent.get(walk) ?? null; }
+    path.reverse(); // origin → capital
+    // Only the beacon stations (and the capital itself) carry the fire.
+    const chain = path.filter((id, i) => i === 0 || id === capitalId || hasBeacon(cities[id]));
+    if (chain.length >= 2) chains.push(chain);
+  }
+  return chains;
+}
+
+/** One relay: flames appear station by station, ~0.6s apart, then burn on. */
+function BeaconChainFlames({ chain, cities }: { chain: string[]; cities: Record<string, City> }) {
+  const startRef = useRef<number | null>(null);
+  const [litCount, setLitCount] = useState(1);
+  useEffect(() => { playSfx('quake'); }, []); // 烽火起 — the alarm rolls out once
+  useFrame(({ clock }) => {
+    if (startRef.current == null) startRef.current = clock.elapsedTime;
+    const n = Math.min(chain.length, 1 + Math.floor((clock.elapsedTime - startRef.current) / 0.6));
+    if (n !== litCount) setLitCount(n);
+  });
   return (
     <group>
-      {[...lit].map((id) => {
+      {chain.slice(0, litCount).map((id) => {
         const c = cities[id];
         if (!c) return null;
         const [px, py] = cityPixel(c.id, c.coords.x, c.coords.y);
@@ -392,6 +483,39 @@ export function BeaconAlerts3D() {
         const wy = cityElevation(wx, wz);
         return <BeaconFlame3D key={id} wx={wx + 0.45} wy={wy} wz={wz - 0.45} />;
       })}
+    </group>
+  );
+}
+
+export function BeaconAlerts3D() {
+  const cities = useGameStore((s) => s.cities);
+  const armies = useGameStore((s) => s.armies);
+  const playerForceId = useGameStore((s) => s.playerForceId);
+  const capitalId = useGameStore((s) => (s.playerForceId ? s.forces[s.playerForceId]?.capitalCityId ?? null : null));
+  const { lit } = useMemo(
+    () => computeBeaconAlerts(cities, armies, playerForceId),
+    [cities, armies, playerForceId],
+  );
+  // 烽火連天 — beaconed origins relay the alarm all the way home.
+  const chains = useMemo(
+    () => computeBeaconChains(cities, armies, playerForceId, capitalId),
+    [cities, armies, playerForceId, capitalId],
+  );
+  const chained = useMemo(() => new Set(chains.flat()), [chains]);
+  if (lit.size === 0 && chains.length === 0) return null;
+  return (
+    <group>
+      {[...lit].filter((id) => !chained.has(id)).map((id) => {
+        const c = cities[id];
+        if (!c) return null;
+        const [px, py] = cityPixel(c.id, c.coords.x, c.coords.y);
+        const [wx, wz] = pxToWorld(px, py);
+        const wy = cityElevation(wx, wz);
+        return <BeaconFlame3D key={id} wx={wx + 0.45} wy={wy} wz={wz - 0.45} />;
+      })}
+      {chains.map((chain) => (
+        <BeaconChainFlames key={`chain-${chain[0]}`} chain={chain} cities={cities} />
+      ))}
     </group>
   );
 }

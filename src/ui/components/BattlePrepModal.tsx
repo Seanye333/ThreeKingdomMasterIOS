@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import { FORMATIONS, NAMED_MAPS_BY_CITY, NAMED_MAPS_BY_ID } from '../../game/data';
-import { inferUnitType, setupTacticalBattle, planSiegeRelief, rollTimeOfDay } from '../../game/systems/tactical';
+import { inferUnitType, setupTacticalBattle, planSiegeRelief, planColumnReinforcements, rollTimeOfDay } from '../../game/systems/tactical';
+import { regionalTacticalWeather } from '../../game/systems/weather';
 import { cityPos } from '../../game/data/cityGeo';
 import { isRiverside } from '../../game/data/geography';
 import { useGameStore } from '../../game/state/store';
@@ -108,11 +109,22 @@ export function BattlePrepModal({
   const startTactical = useGameStore((s) => s.startTacticalBattle);
   const currentWeather = useGameStore((s) => s.weather);
   const currentSeason = useGameStore((s) => s.date.season);
+  const worldScars = useGameStore((s) => s.worldScars);
+  const mapArmies = useGameStore((s) => s.armies);
+  const maybeHint = useGameStore((s) => s.maybeHint);
   const lang = useLanguage();
   const desc = useDesc();
 
   const source = cities[sourceCityId];
   const target = cities[targetCityId];
+  // 軍師點撥 — first assault on a reinforced citadel: warn about the layers.
+  useEffect(() => {
+    if ((target?.wallTier ?? 1) >= 2) {
+      maybeHint('walltier',
+        '軍師:此城城壁經強化 — 破外郭後尚有內城牆,三重者更有護城河,唯門前橋道可渡。備攻城器與水攻方略。',
+        'This citadel has INNER walls (tier 3 adds a moat) — bring siege gear or flood the dikes.');
+    }
+  }, [target?.wallTier, maybeHint]);
 
   const ourOfficers = useMemo(
     () =>
@@ -203,7 +215,12 @@ export function BattlePrepModal({
     // 'drought' maps to 'clear' (the existing tactical kinds don't include
     // it). Everything else is 1:1.
     const stratWeather = currentWeather?.kind ?? 'clear';
-    const tacticalWeather = stratWeather === 'drought' ? 'clear' : stratWeather;
+    // 區域天候 — the sky over the TARGET city, not the realm-wide roll:
+    // storm 遼東 in winter and expect snow whatever the capital saw.
+    const dateNow = useGameStore.getState().date;
+    const tacticalWeather = target
+      ? regionalTacticalWeather(stratWeather, cityPos(target).x, cityPos(target).y, currentSeason, `${dateNow.year}-${dateNow.season}-${dateNow.phase ?? ''}`)
+      : (stratWeather === 'drought' ? 'clear' : stratWeather);
 
     // 馳援 — the defender's neighbouring cities ride to the rescue
     // mid-battle (their troops leave home now; survivors return after).
@@ -214,16 +231,26 @@ export function BattlePrepModal({
       target, cities, officers,
       defenderForceId: target.ownerForceId, bearing: bearing0,
     });
+    // 會戰 — map columns of either belligerent near the walls join the field
+    // mid-battle, entering from their true bearings.
+    const columnJoin = planColumnReinforcements({
+      site: { x: tp0.x, y: tp0.y }, bearing: bearing0,
+      attackerForceId: source.ownerForceId, defenderForceId: target.ownerForceId,
+      armies: mapArmies, officers,
+      diplomacy: useGameStore.getState().diplomacy,
+    });
     const battle = setupTacticalBattle({
       cityId: target.id,
       // Procedural default sized for tactical depth — named maps still
       // use their own hand-crafted dimensions.
       width: namedMap?.width ?? 18,
       height: namedMap?.height ?? 12,
+      worldScars,
       attackerForceId: source.ownerForceId,
       defenderForceId: target.ownerForceId,
       attackers,
       defenders: defenderEntries,
+      wallTier: target.wallTier,
       attackerFormation: formation,
       weather: tacticalWeather as 'clear' | 'rain' | 'wind' | 'fog' | 'snow',
       timeOfDay: rollTimeOfDay(),
@@ -253,9 +280,10 @@ export function BattlePrepModal({
         };
       })(),
       siegeWorks,
-      reinforcements: relief.reinforcements,
+      reinforcements: [...relief.reinforcements, ...columnJoin.reinforcements],
     });
     battle.reliefPlans = relief.plans;
+    if (columnJoin.columnPlans.length > 0) battle.columnPlans = columnJoin.columnPlans;
     for (const plan of relief.plans) dispatchRelief(plan.cityId, plan.troops);
 
     // 舌戰 is now triggered AFTER the 3D battle opens — see TacticalBattleScreen.

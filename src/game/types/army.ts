@@ -30,6 +30,10 @@ export interface Army {
   food?: number;
   /** Holding its current cell as a garrison (not advancing). */
   holding?: boolean;
+  /** 設伏 — gone to ground in cover (see MarchCommand.ambush). */
+  ambush?: boolean;
+  /** 長圍 — investing this enemy city (see MarchCommand.besieging). */
+  besieging?: EntityId;
   /** True if marching to an open cell (targetX/Y) rather than a city. */
   cellTarget?: boolean;
   /** 行軍節奏 — 急行軍 / 常行 / 緩進 (see MarchCommand.pace). */

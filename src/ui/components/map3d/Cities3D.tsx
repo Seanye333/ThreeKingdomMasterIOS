@@ -75,6 +75,11 @@ function ChineseCity({ city, radius, height, forceColor, development = 0, onClic
   const stories  = tier === 'town' ? 1 : tier === 'city' ? 2 : tier === 'large' ? 3 : 5;
   const towers   = tier === 'town' ? 0 : tier === 'city' ? 2 : 4;
   const wallHigh = tier === 'town' ? 0.40 : tier === 'city' ? 0.55 : tier === 'large' ? 0.65 : 0.75;
+  // 城壁強化 — the upgrade-wall command's tiers show on the map: tier 2 raises
+  // an inner-city wall ring (內城), tier 3 rings the works with a moat (三重
+  // 城郭 — the Hefei/Luoyang/Chang'an look). Reads at a glance which cities
+  // have been fortified beyond their size.
+  const wallTier = city.wallTier ?? 1;
   return (
     <>
       <ChineseBrickWall
@@ -84,6 +89,24 @@ function ChineseCity({ city, radius, height, forceColor, development = 0, onClic
         forceColor={forceColor}
         onClick={click}
       />
+      {wallTier >= 2 && (
+        <group>
+          <mesh position={[0, height * (wallHigh + 0.10) / 2, 0]} castShadow receiveShadow>
+            <boxGeometry args={[radius * 1.5, height * (wallHigh + 0.10), radius * 1.5]} />
+            <meshStandardMaterial color="#8a6a56" roughness={0.9} />
+          </mesh>
+          <mesh position={[0, height * (wallHigh + 0.10) + 0.004, 0]} castShadow>
+            <boxGeometry args={[radius * 1.58, height * 0.035, radius * 1.58]} />
+            <meshStandardMaterial color="#32323f" roughness={0.7} />
+          </mesh>
+        </group>
+      )}
+      {wallTier >= 3 && (
+        <mesh position={[0, 0.008, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+          <ringGeometry args={[radius * 1.62, radius * 1.95, 24]} />
+          <meshStandardMaterial color="#3f6a8a" roughness={0.35} metalness={0.1} transparent opacity={0.85} />
+        </mesh>
+      )}
       <Pagoda
         x={0} z={0}
         radius={radius * 0.55}

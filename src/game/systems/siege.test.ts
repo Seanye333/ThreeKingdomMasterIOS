@@ -1,13 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  setupTacticalBattle,
-  breakGate,
-  scaleWall,
-  siegeAssaultPower,
-  moveCost,
-  bestStepToward,
-  hexDistance,
-} from './tactical';
+  setupTacticalBattle, breakGate, scaleWall, siegeAssaultPower, moveCost, bestStepToward, hexDistance } from './tactical';
 import { mkOfficer, mkUnit, mkBattle, mkTiles } from '../../test/factories';
 
 describe('setupTacticalBattle — city rampart', () => {

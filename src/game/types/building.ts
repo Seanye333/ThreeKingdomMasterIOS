@@ -96,4 +96,7 @@ export interface Building {
    *  Their relevant stat boosts the school's XP multiplier and tilts which 圍 the
    *  schooling trains. Ignored for non-school buildings. See buildings.buildingBonuses. */
   headmasterId?: EntityId;
+  /** 戰損 — wrecked in a siege: gives NO bonus until repaired (修繕, a gold
+   *  cost via repairBuilding). Fire-heavy assaults wreck more of the town. */
+  damaged?: boolean;
 }

@@ -14,7 +14,8 @@ import { isHostilePermitted } from '../types';
 import { generateTerritories, terrainRoute, positionAlongRoute, marchDestCoords, type Territory } from '../data/territories';
 import { hexAt as paintHexAt } from '../data/geography';
 import { stampPaintAlongRoute, stampPaintDisc, seasonStampOf, isSupplyConnected, type HexPaint } from './hexPaint';
-import { terrainMarchCost, describeBattleSite, geoToPixel, WORLD_SCALE, isLand } from '../data/geography';
+import { worldScarKey } from './worldScars';
+import { terrainMarchCost, describeBattleSite, geoToPixel, WORLD_SCALE, isLand, hexAt, hexNeighbors, hexCenter, battleGroundAt } from '../data/geography';
 import { navalEngagement } from './navalBattle';
 import { cityPos } from '../data/cityGeo';
 import { marchDurationFor } from '../data/cities';
@@ -83,6 +84,12 @@ export interface ResolutionInput {
   territoryOwnership?: Record<EntityId, EntityId | null>;
   /** 塗色 — walked-cell paint dictionary (RTK-XIV trail). */
   hexPaint?: HexPaint;
+  /** 斥候偵騎 — enemy ambush army ids the PLAYER has flushed out; their
+   *  spring is blunted when a player column still walks in. */
+  spottedAmbushIds?: EntityId[];
+  /** 戰場烙印 — world scars carried in so AI bridge-burning can add to them
+   *  (returned via output when changed). */
+  worldScars?: import('./worldScars').WorldScars;
   /** Player's force — used to summarise their territory gains/losses. */
   playerForceId?: EntityId | null;
   /** 真日級親征 — officer-id pairs already fought interactively mid-flow;
@@ -201,6 +208,8 @@ export interface ResolutionOutput {
   territoryOwnership?: Record<EntityId, EntityId | null>;
   /** 塗色 — walked-cell paint dictionary (RTK-XIV trail). */
   hexPaint?: HexPaint;
+  /** 戰場烙印 — updated scars when AI bridge-burning fired this season. */
+  worldScars?: import('./worldScars').WorldScars;
   /** Persistent field armies still on the map after this season (derived
    *  from in-transit marches — the canonical "unit on the map" layer). */
   armies?: Record<EntityId, import('../types').Army>;
@@ -426,11 +435,24 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const aHolds = !!a.holding && !b.holding;
       const bHolds = !!b.holding && !a.holding;
       const oneHolds = aHolds || bHolds;
-      const AMBUSH_BASE = 0.3, COVER_SCALE = 0.45, COVER_CAP = 0.55;
+      // 設伏 — a camp gone to ground (ambush stance) springs harder than a
+      // visible earthwork, and its concealment halves the scouts' read.
+      const holderCmd = aHolds ? a : bHolds ? b : null;
+      const concealed = !!holderCmd?.ambush;
+      const AMBUSH_BASE = concealed ? 0.45 : 0.3, COVER_SCALE = 0.45, COVER_CAP = 0.55;
       // The mover (the side NOT dug in) is the one who can detect the ambush.
       const moverCmd = aHolds ? b : bHolds ? a : null;
       const moverIntel = moverCmd ? armyMaxIntel(moverCmd) : 0;
-      const detect = oneHolds ? Math.min(0.5, Math.max(0, (moverIntel - 70) / 80)) : 0;
+      let detect = oneHolds
+        ? Math.min(0.5, Math.max(0, (moverIntel - 70) / 80)) * (concealed ? 0.5 : 1)
+        : 0;
+      // 斥候已破 — a player column that walks into an ambush its scouts had
+      // already flushed does so with eyes open: the spring is half-read.
+      if (holderCmd && moverCmd
+        && officers[moverCmd.officerId]?.forceId === input.playerForceId
+        && (input.spottedAmbushIds ?? []).includes(moverCmd === a ? b.officerId : a.officerId)) {
+        detect = Math.max(detect, 0.5);
+      }
       const holdBonus = (p: { x: number; y: number }) =>
         (AMBUSH_BASE + Math.min(COVER_CAP, terrainMarchCost(p.x, p.y) * COVER_SCALE)) * (1 - detect);
       const multA = aHolds ? 1 + holdBonus(pa) : 1;
@@ -746,7 +768,11 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
           // A barricade STALLS rather than pins — 50%/tick, else the column
           // works around it. (A guaranteed stall would freeze the column in
           // radius forever: stalled → no advance → still in radius next tick.)
-          if ((input.rng ?? Math.random)() < 0.5) {
+          // 攔江鎖 stalls only FLEETS (and harder, 70% — a chain has no
+          // "going around"); a land barricade stalls only foot columns.
+          const colNaval = !isLand(pos.x, pos.y, 0); // afloat = a fleet
+          const applies = f.facility === 'boom' ? colNaval : !colNaval;
+          if (applies && (input.rng ?? Math.random)() < (f.facility === 'boom' ? 0.7 : 0.5)) {
             blocked = true;
             if (f.ownerForceId === pf) byPlayer = true;
           }
@@ -811,6 +837,52 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   // City-target arrivals assault/merge; open-cell arrivals become garrisons.
   let marches = arriving.filter((c) => c.targetX == null).map(withTroops);
 
+  // ── AI 長圍 — 兵法「十則圍之」: an AI column arriving at a WALLED,
+  // well-garrisoned hostile city with no clear storming edge digs in and
+  // INVESTS instead of bleeding on the ramparts. The command converts to a
+  // holding+besieging camp just outside the walls; the siege pass below
+  // (sortie / food drain / 開城) then plays it out symmetrically. ──
+  const investedCamps: typeof marches = [];
+  {
+    const rngA = input.rng ?? Math.random;
+    const stay: typeof marches = [];
+    for (const m of marches) {
+      const atk = officers[m.officerId];
+      const tgt = cities[m.targetCityId];
+      if (!atk?.forceId || !tgt?.ownerForceId
+        || atk.forceId === input.playerForceId
+        || tgt.ownerForceId === atk.forceId
+        || !isHostilePermitted(input.diplomacy, atk.forceId, tgt.ownerForceId)) { stay.push(m); continue; }
+      const strongWalls = (tgt.wallTier ?? 1) >= 2 || tgt.defense >= 80;
+      const garrisonHolds = tgt.troops * (1 + tgt.defense / 150) >= m.troops * 0.95;
+      if (!(m.troops >= 4000 && strongWalls && garrisonHolds && rngA() < 0.6)) { stay.push(m); continue; }
+      const orig = liveMarches.find((c) => c.officerId === m.officerId);
+      if (!orig) { stay.push(m); continue; }
+      // Pitch the camp on the approach bearing, just outside the walls.
+      const src = cities[m.cityId];
+      const tp = cityPos(tgt);
+      const sp = src ? cityPos(src) : { x: tp.x + 40, y: tp.y };
+      const len = Math.max(1, Math.hypot(sp.x - tp.x, sp.y - tp.y));
+      const ux = (sp.x - tp.x) / len, uy = (sp.y - tp.y) / len;
+      let cx = tp.x + ux * 30 * WORLD_SCALE, cy = tp.y + uy * 30 * WORLD_SCALE;
+      for (const r of [30, 38, 46]) {
+        const tx = tp.x + ux * r * WORLD_SCALE, ty = tp.y + uy * r * WORLD_SCALE;
+        if (isLand(tx, ty, 0)) { cx = tx; cy = ty; break; }
+      }
+      orig.holding = true;
+      orig.besieging = tgt.id;
+      orig.targetX = cx; orig.targetY = cy;
+      orig.seasonsRemaining = 1;
+      investedCamps.push({ ...m, holding: true, besieging: tgt.id, targetX: cx, targetY: cy });
+      entries.push({
+        cityId: tgt.id, kind: 'battle',
+        text: `${atk.name.en} reaches ${tgt.name.en} — and settles in to INVEST it rather than storm the walls.`,
+        textZh: `${atk.name.zh}兵臨${tgt.name.zh} — 見城堅不攻,紮營長圍,斷其市易耕稼!`,
+      });
+    }
+    marches = stay;
+  }
+
   // ── 守城戰 — an AI column arriving at a garrisoned player city becomes
   // an interactive defence battle instead of an abstract roll. The column
   // is committed (troops leave its source now); survivors stream home only
@@ -857,7 +929,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     .filter((c) => c.targetX != null)
     .map(withTroops)
     .map((c) => ({ ...c, holding: true }));
-  const heldRaw = [...explicitlyHeld, ...arrivedCells];
+  const heldRaw = [...explicitlyHeld, ...arrivedCells, ...investedCamps];
   const inTransit = moving.filter((c) => (c.seasonsRemaining ?? 1) > 1).map(withTroops);
 
   // ── Field army merge ────────────────────────────────────────────
@@ -1062,6 +1134,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       totalSeasons: total,
       food: suppliedFood[cmd.officerId],
       holding,
+      ambush: holding ? cmd.ambush : undefined,
+      besieging: holding ? cmd.besieging : undefined,
       cellTarget: cmd.targetX != null,
       pace: cmd.pace,
       returning: cmd.returning,
@@ -1159,6 +1233,15 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       arr.push(paintHexAt(cp.x, cp.y));
       cityCellsByForce.set(c.ownerForceId, arr);
     }
+    // 兵站錨點 — a standing friendly depot counts as a supply terminus: the
+    // corridor only has to reach the depot chain, not walk all the way home.
+    for (const f of Object.values(input.forts ?? {})) {
+      if (f.facility !== 'depot' || !f.ownerForceId || f.hp <= 0) continue;
+      const [fx, fy] = geoToPixel(f.coords.lon, f.coords.lat);
+      const arr = cityCellsByForce.get(f.ownerForceId) ?? [];
+      arr.push(paintHexAt(fx, fy));
+      cityCellsByForce.set(f.ownerForceId, arr);
+    }
     for (const cmd of liveMarches) {
       const total = Math.max(1, cmd.totalSeasons ?? 1);
       if (total < 2) continue;                       // short hops carry their own packs
@@ -1184,6 +1267,135 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         kind: 'desertion',
         text: `${cmdr.name.en}'s column is CUT OFF — ${loss.toLocaleString()} troops lost to hunger. Reopen the supply ribbon or turn back.`,
         textZh: `糧道已斷 — ${cmdr.name.zh}縱隊補給色帶被截,飢卒散去 ${loss.toLocaleString()}。速通糧道,或引軍而還。`,
+      });
+    }
+  }
+
+  // ── 長圍困城 — investing armies choke the town every turn: markets cut,
+  // fields untended (food + loyalty bleed); dry granaries open the gates
+  // without a fight. A garrison that outmuscles the besiegers may sortie
+  // and rout them; relief columns lift sieges the ordinary way (they
+  // intercept the dug-in besieger via the day sweep). ──
+  {
+    const rngS = input.rng ?? Math.random;
+    for (const cmd of liveMarches) {
+      if (cmd.type !== 'march' || !cmd.holding || !cmd.besieging) continue;
+      if (cancelledMarchOfficers.has(cmd.officerId)) continue;
+      const cmdr = officers[cmd.officerId];
+      if (!cmdr?.forceId) continue;
+      const cityAtStart = cities[cmd.besieging];
+      if (!cityAtStart || !cityAtStart.ownerForceId || cityAtStart.ownerForceId === cmdr.forceId) continue;
+      const pos = armyPosition(cmd);
+      if (!pos) continue;
+      const cp = cityPos(cityAtStart);
+      if (Math.hypot(cp.x - pos.x, cp.y - pos.y) > 50 * WORLD_SCALE) continue; // drifted off — inert
+      const besiegerTroops = troopOverride[cmd.officerId] ?? cmd.troops;
+      // ① 突圍 — a garrison that clearly outmuscles the besiegers sallies out.
+      if (cityAtStart.troops > besiegerTroops * 1.3 && rngS() < 0.5) {
+        const gPower = cityAtStart.troops * (1 + (cityAtStart.drill ?? 0) * 0.0025);
+        const aPower = besiegerTroops * 1.15; // dug-in on picked ground
+        if (gPower > aPower) {
+          cancelledMarchOfficers.add(cmd.officerId);
+          delete keptCommands[cmd.officerId]; // the siege IS lifted — no camp next turn
+          for (const id of [cmd.officerId, ...(cmd.additionalOfficerIds ?? [])]) {
+            const o = officers[id];
+            if (o) officers[id] = { ...o, task: null, status: 'idle' };
+          }
+          cities[cityAtStart.id] = { ...cityAtStart, troops: Math.max(0, cityAtStart.troops - Math.floor(cityAtStart.troops * 0.15)) };
+          entries.push({
+            cityId: cityAtStart.id, kind: 'battle',
+            text: `SORTIE — the garrison of ${cityAtStart.name.en} storms out and routs the besiegers!`,
+            textZh: `突圍!${cityAtStart.name.zh}守軍傾城而出,圍城之軍潰散!`,
+          });
+          continue;
+        }
+        cities[cityAtStart.id] = { ...cityAtStart, troops: Math.max(0, cityAtStart.troops - Math.floor(cityAtStart.troops * 0.2)) };
+        entries.push({
+          cityId: cityAtStart.id, kind: 'battle',
+          text: `The garrison of ${cityAtStart.name.en} sallied and was thrown back.`,
+          textZh: `${cityAtStart.name.zh}守軍突圍不成,折兵而回。`,
+        });
+      }
+      // ② 圍困日蹙 — the noose tightens.
+      const cur = cities[cmd.besieging];
+      const drain = Math.floor(cur.troops * 0.8 + cur.population * 0.004);
+      const nextFood = Math.max(0, cur.food - drain);
+      cities[cmd.besieging] = { ...cur, food: nextFood, loyalty: Math.max(0, cur.loyalty - 2) };
+      // ③ 開城 — dry granaries and no relief in sight: the gates open.
+      if (nextFood <= 0 && besiegerTroops >= Math.floor(cur.troops * 0.8)) {
+        const former = cur.ownerForceId;
+        cities[cmd.besieging] = {
+          ...cities[cmd.besieging],
+          ownerForceId: cmdr.forceId,
+          troops: besiegerTroops,
+          loyalty: Math.max(20, Math.floor(cur.loyalty * 0.6)),
+          food: 0,
+        };
+        for (const o of Object.values(officers)) {
+          if (o.locationCityId !== cmd.besieging || o.forceId !== former) continue;
+          if (o.status === 'dead' || o.status === 'imprisoned' || o.status === 'unsearched') continue;
+          officers[o.id] = rngS() < 0.5
+            ? { ...o, status: 'imprisoned', capturedFromForceId: o.forceId ?? undefined, task: null }
+            : { ...o, task: null, status: 'idle' };
+        }
+        cancelledMarchOfficers.add(cmd.officerId);
+        delete keptCommands[cmd.officerId]; // the column marched in — no camp next turn
+        for (const id of [cmd.officerId, ...(cmd.additionalOfficerIds ?? [])]) {
+          const o = officers[id];
+          if (o) officers[id] = { ...o, locationCityId: cmd.besieging, task: null, status: 'idle' };
+        }
+        entries.push({
+          cityId: cmd.besieging, kind: 'conquest',
+          text: `${cityAtStart.name.en} STARVED OUT — the gates open without a fight.`,
+          textZh: `${cityAtStart.name.zh}糧盡援絕,開城出降 — ${cmdr.name.zh}兵不血刃而入!`,
+        });
+        continue;
+      }
+      // Progress note, player-relevant only.
+      if (cmdr.forceId === input.playerForceId || cityAtStart.ownerForceId === input.playerForceId) {
+        entries.push({
+          cityId: cityAtStart.id, kind: 'note',
+          text: `Siege of ${cityAtStart.name.en}: granaries down to ${nextFood.toLocaleString()}.`,
+          textZh: `圍${cityAtStart.name.zh}日久 — 城中存糧僅餘 ${nextFood.toLocaleString()}。`,
+        });
+      }
+    }
+  }
+
+  // ── AI 焚橋 — a dug-in AI garrison holding a river line with a hostile
+  // column bearing down torches the crossing behind it (據水斷橋, played
+  // back at the player): nearby river hexes take a bridge-broken scar. ──
+  let worldScarsOut: import('./worldScars').WorldScars | undefined;
+  {
+    const rngB = input.rng ?? Math.random;
+    for (const cmd of liveMarches) {
+      if (!cmd.holding || cmd.targetX == null || cmd.targetY == null) continue;
+      const holder = officers[cmd.officerId];
+      if (!holder?.forceId || holder.forceId === input.playerForceId) continue;
+      const key0 = worldScarKey(hexAt(cmd.targetX, cmd.targetY).col, hexAt(cmd.targetX, cmd.targetY).row);
+      if ((worldScarsOut ?? input.worldScars ?? {})[key0]?.kind === 'bridge-broken') continue; // already cut
+      // A hostile column closing in?
+      const threatened = liveMarches.some((m) => {
+        if (m === cmd || m.holding) return false;
+        const mo = officers[m.officerId];
+        if (!mo?.forceId || !isHostilePermitted(input.diplomacy, mo.forceId, holder.forceId!)) return false;
+        const mp = armyPosition(m);
+        return !!mp && Math.hypot(mp.x - cmd.targetX!, mp.y - cmd.targetY!) < 45 * WORLD_SCALE;
+      });
+      if (!threatened || rngB() >= 0.25) continue;
+      const c0 = hexAt(cmd.targetX, cmd.targetY);
+      const riverCells = [c0, ...hexNeighbors(c0.col, c0.row)].filter((c) => {
+        const cc = hexCenter(c.col, c.row);
+        return battleGroundAt(cc.x, cc.y) === 'river';
+      });
+      if (riverCells.length === 0) continue;
+      worldScarsOut = worldScarsOut ?? { ...(input.worldScars ?? {}) };
+      const stampB = seasonStampOf(input.date.year, input.date.season);
+      for (const c of riverCells) worldScarsOut[worldScarKey(c.col, c.row)] = { kind: 'bridge-broken', t: stampB };
+      entries.push({
+        cityId: null, kind: 'note',
+        text: `${holder.name.en}'s garrison burned the river crossing behind its line.`,
+        textZh: `${holder.name.zh}所部見敵軍逼近,焚斷身後渡口 — 據水斷橋!`,
       });
     }
   }
@@ -1238,6 +1450,37 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         for (const ter of territories) {
           if (ter.parentCityId === cityId) {
             delete territoryOwnership[ter.id];
+          }
+        }
+        // AI 入城之令(性格化)— the conqueror sets the tone the player gets
+        // to pick by hand: a 暴君 hunts the old regime through the wards, a
+        // 文治之主 posts pacification notices. Reads in the loyalty ledger.
+        if (afterOwner && afterOwner !== input.playerForceId) {
+          const pers = forces[afterOwner]?.personality ?? 'opportunist';
+          const conquered = cities[cityId];
+          if (conquered) {
+            if (pers === 'tyrant' || pers === 'aggressive') {
+              cities[cityId] = { ...conquered, loyalty: Math.max(0, conquered.loyalty - 8) };
+              for (const o of Object.values(officers)) {
+                if (o.locationCityId !== cityId || o.forceId !== beforeOwner) continue;
+                if (o.status === 'dead' || o.status === 'imprisoned' || o.status === 'unsearched') continue;
+                if (rng() < 0.4) {
+                  officers[o.id] = { ...o, status: 'imprisoned', capturedFromForceId: o.forceId ?? undefined, task: null };
+                }
+              }
+              entries.push({
+                cityId, kind: 'note',
+                text: `${forces[afterOwner]?.name.en ?? '?'} swept ${conquered.name.en} for the old regime's men.`,
+                textZh: `${forces[afterOwner]?.name.zh ?? '?'}入${conquered.name.zh}即行搜捕,舊臣多被繫獄,民心惶惶。`,
+              });
+            } else if (pers === 'scholar' || pers === 'cautious' || pers === 'hesitant') {
+              cities[cityId] = { ...conquered, loyalty: Math.min(100, conquered.loyalty + 10) };
+              entries.push({
+                cityId, kind: 'note',
+                text: `${forces[afterOwner]?.name.en ?? '?'} posted pacification notices in ${conquered.name.en}.`,
+                textZh: `${forces[afterOwner]?.name.zh ?? '?'}入${conquered.name.zh}出榜安民,秋毫無犯。`,
+              });
+            }
           }
         }
       }
@@ -2917,6 +3160,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     territoryOwnership,
     hexPaint: hexPaintOut,
     fieldBattleMarks: fieldBattleMarks.length > 0 ? fieldBattleMarks : undefined,
+    worldScars: worldScarsOut,
     pendingFieldBattles: pendingFieldBattles.length > 0 ? pendingFieldBattles : undefined,
     pendingSiegeDefenses: pendingSiegeDefenses.length > 0 ? pendingSiegeDefenses : undefined,
     delayedEffects: delayedEffects.length > 0 ? delayedEffects : undefined,

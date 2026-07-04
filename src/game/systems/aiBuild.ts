@@ -18,7 +18,7 @@ import { citySize, cityMeetsSize } from './citySize';
 import { FACILITY_DEFS, isHostilePermitted } from '../types';
 import { DEFENSE_BUILDINGS, type DefenseBuildingId } from '../data/defenseBuildings';
 import { CITY_GEO_OVERRIDES, cityPos } from '../data/cityGeo';
-import { geoToPixel, WORLD_SCALE } from '../data/geography';
+import { geoToPixel, WORLD_SCALE, isRiverside, battleGroundAt } from '../data/geography';
 import { TRIBES } from '../data/tribes';
 import { resolveTribePunitive } from './tribes';
 import { SCENIC_SITES, rollHermitRecruit } from '../data/scenicSites';
@@ -167,34 +167,62 @@ export function planAIFacilities(ctx: AIFacilityContext): AIFacilityOutput {
     if (!capital) continue;
 
     // Pick a kind by temperament + budget, falling back to the cheap 箭樓.
+    // 兵站 — expansion-minded realms occasionally anchor their long roads
+    // with a depot instead (the supply-line terminus the player also gets).
     let kind: FacilityKind = 'tower';
     const pers = force.personality;
     if ((pers === 'aggressive' || pers === 'tyrant' || pers === 'expansionist') && capital.gold > 900) kind = 'catapult';
     else if ((pers === 'defensive' || pers === 'cautious') && ctx.rng() < 0.4) kind = 'wall';
+    // 兵站 — expansion-minded realms occasionally anchor their long roads
+    // with a depot instead (the supply-line terminus the player also gets).
+    if ((pers === 'expansionist' || pers === 'aggressive') && ctx.rng() < 0.3) kind = 'depot';
+    // Build near the most contested (most-garrisoned) frontier city.
+    const host = [...frontier].sort((a, b) => b.troops - a.troops)[0];
+    const hostPos = cityPos(host);
+    // 攔江鎖 — a riverside frontier realm sometimes chains its water instead
+    // (the 江東 answer to hostile fleets).
+    if (isRiverside(hostPos.x, hostPos.y) && ctx.rng() < 0.25) kind = 'boom';
     if (capital.gold < FACILITY_DEFS[kind].cost) kind = 'tower';
     const def = FACILITY_DEFS[kind];
     if (capital.gold < def.cost) continue;
 
-    // Build near the most contested (most-garrisoned) frontier city.
-    const host = [...frontier].sort((a, b) => b.troops - a.troops)[0];
     const geo = CITY_GEO_OVERRIDES[host.id];
     const cityLon = geo ? geo[0] : 96 + (host.coords.x / 1000) * 29;
     const cityLat = geo ? geo[1] : 43 - (host.coords.y / 720) * 26;
-    const angle = ctx.rng() * Math.PI * 2;
+    let angle = ctx.rng() * Math.PI * 2;
+    let fLon = cityLon + Math.cos(angle) * 0.4;
+    let fLat = cityLat + Math.sin(angle) * 0.4;
+    if (kind === 'boom') {
+      // The chain must sit ON the water — scan the compass for a wet spot.
+      let found = false;
+      for (let k = 0; k < 12 && !found; k++) {
+        const a = (k / 12) * Math.PI * 2;
+        for (const r of [0.35, 0.55]) {
+          const [bx, by] = geoToPixel(cityLon + Math.cos(a) * r, cityLat + Math.sin(a) * r);
+          const g = battleGroundAt(bx, by);
+          if (g === 'river' || g === 'sea' || g === 'lake') {
+            fLon = cityLon + Math.cos(a) * r; fLat = cityLat + Math.sin(a) * r;
+            angle = a; found = true; break;
+          }
+        }
+      }
+      if (!found) kind = 'tower';
+    }
+    const finalDef = FACILITY_DEFS[kind];
     const id = `ai-fac-${host.id}-${Math.floor(ctx.rng() * 1e9)}`;
     newForts[id] = {
       id,
-      name: { zh: def.name.zh, en: def.name.en },
+      name: { zh: finalDef.name.zh, en: finalDef.name.en },
       subtype: 'stockade',
       facility: kind,
-      coords: { lon: cityLon + Math.cos(angle) * 0.4, lat: cityLat + Math.sin(angle) * 0.4 },
+      coords: { lon: fLon, lat: fLat },
       ownerForceId: force.id,
-      hp: def.hp,
-      maxHp: def.hp,
+      hp: finalDef.hp,
+      maxHp: finalDef.hp,
       guards: [host.id],
-      seasonsRemaining: def.seasons,
+      seasonsRemaining: finalDef.seasons,
     };
-    cities[capital.id] = { ...capital, gold: capital.gold - def.cost };
+    cities[capital.id] = { ...capital, gold: capital.gold - finalDef.cost };
     countByForce[force.id] = (countByForce[force.id] ?? 0) + 1;
 
     // Warn the player only when the new work sits on their doorstep.
@@ -202,8 +230,8 @@ export function planAIFacilities(ctx: AIFacilityContext): AIFacilityOutput {
     if (nearPlayer) {
       entries.push({
         cityId: host.id, kind: 'battle',
-        text: `${force.name.en} raised a ${def.name.en} near ${host.name.en}.`,
-        textZh: `${force.name.zh}於${host.name.zh}近郊築起${def.name.zh}。`,
+        text: `${force.name.en} raised a ${finalDef.name.en} near ${host.name.en}.`,
+        textZh: `${force.name.zh}於${host.name.zh}近郊築起${finalDef.name.zh}。`,
       });
     }
   }

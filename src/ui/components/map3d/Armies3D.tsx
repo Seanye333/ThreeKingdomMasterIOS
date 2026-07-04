@@ -101,7 +101,7 @@ function WarJunk({ color }: { color: string }) {
 }
 
 /* ─── Marching army arrows (animated) ──────────────────────── */
-export function MarchingArmies({ cities, pendingCommands, forces, officers, ports, selectedArmyId, onArmyClick, onArmyPressStart, hideNearPx }: {
+export function MarchingArmies({ cities, pendingCommands, forces, officers, ports, selectedArmyId, onArmyClick, onArmyPressStart, hideNearPx, playerForceId, spottedAmbushIds }: {
   cities: Record<string, City>;
   pendingCommands: Record<string, { cityId?: string; type: string; targetCityId?: string; troops?: number; officerId?: string; seasonsRemaining?: number; totalSeasons?: number }>;
   forces: Record<string, { color: string }>;
@@ -112,11 +112,16 @@ export function MarchingArmies({ cities, pendingCommands, forces, officers, port
   onArmyPressStart?: (officerId: string, e: { clientX: number; clientY: number }) => void;
   /** Suppress tokens near an active battle site (they're IN the diorama). */
   hideNearPx?: { x: number; y: number } | null;
+  /** 設伏隱蔽 — enemy armies gone to ground are not rendered for this player. */
+  playerForceId?: string | null;
+  /** 斥候已破 — enemy ambush army ids the player's scouts have flushed:
+   *  these DO render, marked ⚠伏. */
+  spottedAmbushIds?: string[];
 }) {
   const lang = useLanguage();
   const armies = useMemo(() => {
     return Object.values(pendingCommands)
-      .filter((cmd): cmd is { cityId: string; type: string; targetCityId: string; troops: number; officerId: string; seasonsRemaining?: number; totalSeasons?: number; targetX?: number; targetY?: number; holding?: boolean } =>
+      .filter((cmd): cmd is { cityId: string; type: string; targetCityId: string; troops: number; officerId: string; seasonsRemaining?: number; totalSeasons?: number; targetX?: number; targetY?: number; holding?: boolean; ambush?: boolean; besieging?: string } =>
         cmd.type === 'march' && !!cmd.cityId)
       .map((cmd) => {
         const from = cities[cmd.cityId];
@@ -126,6 +131,12 @@ export function MarchingArmies({ cities, pendingCommands, forces, officers, port
         const force = forces[from.ownerForceId ?? ''];
         const hostile = !cmd.targetX && to ? to.ownerForceId !== from.ownerForceId : false;
         const commander = officers[cmd.officerId];
+        // 設伏隱蔽 — an enemy army gone to ground simply isn't on your map
+        // (you learn of it when a column blunders in — or your scouts
+        // flush it, in which case it shows with a ⚠伏 mark).
+        const foreignAmbush = !!cmd.holding && !!cmd.ambush && !!playerForceId && commander?.forceId !== playerForceId;
+        const ambushRevealed = foreignAmbush && (spottedAmbushIds ?? []).includes(cmd.officerId);
+        if (foreignAmbush && !ambushRevealed) return null;
         const totalSeasons = Math.max(1, cmd.totalSeasons ?? 1);
         const seasonsRemaining = cmd.seasonsRemaining ?? 1;
         // Route endpoints in geo-pixel space so the marching token lines up
@@ -160,11 +171,14 @@ export function MarchingArmies({ cities, pendingCommands, forces, officers, port
           weaponType,
           selected: cmd.officerId === selectedArmyId,
           holding: !!cmd.holding,
+          ambush: !!cmd.ambush,
+          besieging: !!cmd.besieging,
+          ambushRevealed,
           cellTarget: cmd.targetX != null,
         };
       })
       .filter((a): a is NonNullable<typeof a> => !!a);
-  }, [cities, pendingCommands, forces, officers, selectedArmyId, hideNearPx, lang]);
+  }, [cities, pendingCommands, forces, officers, selectedArmyId, hideNearPx, lang, playerForceId, spottedAmbushIds]);
 
   return (
     <group>
@@ -173,7 +187,7 @@ export function MarchingArmies({ cities, pendingCommands, forces, officers, port
           commanderName={a.commanderName} targetName={a.targetName} troops={a.troops}
           seasonsRemaining={a.seasonsRemaining} totalSeasons={a.totalSeasons}
           landRoute={a.landRoute} weaponType={a.weaponType}
-          selected={a.selected} holding={a.holding} cellTarget={a.cellTarget}
+          selected={a.selected} holding={a.holding} ambush={a.ambush} besieging={a.besieging} ambushRevealed={a.ambushRevealed} cellTarget={a.cellTarget}
           ports={ports} onClick={onArmyClick ? () => onArmyClick(a.officerId) : undefined}
           onPressStart={onArmyPressStart ? (e) => onArmyPressStart(a.officerId, e) : undefined} />
       ))}
@@ -187,7 +201,7 @@ const UNIT_TAG: Record<WeaponType, string> = {
   sabre: '刀', sword: '劍', fan: '師', siege: '械', none: '步',
 };
 
-function MarchingArmy({ from, to, color, commanderName, targetName, troops, seasonsRemaining, totalSeasons, landRoute, weaponType, selected, holding, cellTarget, ports, onClick, onPressStart }: {
+function MarchingArmy({ from, to, color, commanderName, targetName, troops, seasonsRemaining, totalSeasons, landRoute, weaponType, selected, holding, ambush, besieging, ambushRevealed, cellTarget, ports, onClick, onPressStart }: {
   from: City; to: City; color: string;
   commanderName: string; targetName: string; troops: number;
   seasonsRemaining: number; totalSeasons: number;
@@ -195,6 +209,9 @@ function MarchingArmy({ from, to, color, commanderName, targetName, troops, seas
   weaponType: WeaponType;
   selected: boolean;
   holding: boolean;
+  ambush?: boolean;
+  besieging?: boolean;
+  ambushRevealed?: boolean;
   cellTarget: boolean;
   ports: Record<string, import('../../../game/types').Port>;
   onClick?: () => void;
@@ -327,7 +344,7 @@ function MarchingArmy({ from, to, color, commanderName, targetName, troops, seas
             </div>
             <div style={{ color: '#bfae86' }}>
               {holding
-                ? tHover('駐守紮營', 'Holding — encamped')
+                ? (ambush ? tHover('設伏 — 藏兵於掩蔽', 'In ambush — gone to ground') : tHover('駐守紮營', 'Holding — encamped'))
                 : `→ ${targetName || (cellTarget ? tHover('野地', 'field') : '—')}${totalSeasons > 1 ? ` · ${seasonsRemaining}/${totalSeasons} ${tHover('季', 'seasons')}` : ''}`}
             </div>
           </div>
@@ -372,6 +389,23 @@ function MarchingArmy({ from, to, color, commanderName, targetName, troops, seas
               fontSize: '9px', marginRight: 4, padding: '0 1px', fontWeight: 700,
             }}>{UNIT_TAG[weaponType]}</span>
             <span style={{ color: '#ffe9a8' }}>{commanderName}</span>
+            {ambush && (
+              <span style={{
+                display: 'inline-block', marginLeft: 4, padding: '0 3px',
+                background: ambushRevealed ? '#4a1a12' : '#3a2a4a',
+                color: ambushRevealed ? '#ffb09a' : '#d8b8f0',
+                borderRadius: 'var(--tkm-radius-xs)',
+                fontSize: '9px', fontWeight: 700,
+              }}>{ambushRevealed ? '⚠伏' : '伏'}</span>
+            )}
+            {besieging && (
+              <span style={{
+                display: 'inline-block', marginLeft: 4, padding: '0 3px',
+                background: '#3a2408', color: '#ffd090',
+                borderRadius: 'var(--tkm-radius-xs)',
+                fontSize: '9px', fontWeight: 700,
+              }}>圍</span>
+            )}
             <span style={{ color: '#c0a878', marginLeft: 5, fontSize: '9px', fontFamily: 'ui-monospace, monospace' }}>{troopLabel}{etaLabel}</span>
           </div>
         </Html>

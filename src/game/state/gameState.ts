@@ -308,6 +308,23 @@ export interface GameState {
   /** 塗色 (RTK-XIV) — lattice cells walked by marching columns (deviation
    *  dictionary "col,row" → {force, seasonStamp}); TTL-pruned each season. */
   hexPaint: import('../systems/hexPaint').HexPaint;
+  /** 戰場烙印 — world hexes scarred by battles (燒林→焦土、焚橋→斷渡),
+   *  keyed "col,row"; new battles over the same ground inherit the scar,
+   *  and the land heals after a TTL (see systems/worldScars.ts). */
+  worldScars: import('../systems/worldScars').WorldScars;
+  /** 入城三選 — pending post-conquest policy choice for a city the player
+   *  just stormed interactively (安民/犒軍/搜捕). Transient (not saved). */
+  pendingConquestPolicy: { cityId: EntityId; attackerLosses: number; formerOwnerForceId: EntityId | null } | null;
+  /** 斥候偵騎 — enemy ambush armies your scouts have flushed out (army ids):
+   *  they render on your map (⚠伏), appear in march forecasts, and their
+   *  spring bonus is blunted on contact. Pruned each season commit. */
+  spottedAmbushIds: EntityId[];
+  /** 街頭際遇 — per-city season stamp of the last street encounter consumed
+   *  (行商/遊俠/相士/說書人). One encounter per city per season at most. */
+  streetEncounters: Record<EntityId, number>;
+  /** 軍師點撥 — one-shot contextual mechanic hints already shown (keyed by
+   *  hint id), so each new-system tip fires exactly once per campaign. */
+  mechanicHints: Record<string, true>;
   /** Phase 3c — territory ownership keyed by territory id. Null/missing
    *  means the cell inherits from its parent city. Set explicitly when
    *  an army marches through it, regardless of march outcome. */
@@ -780,6 +797,11 @@ export const EMPTY_STATE: GameState = {
   dayFlowFollow: false,
   foughtPairs: null,
   hexPaint: {},
+  worldScars: {},
+  pendingConquestPolicy: null,
+  spottedAmbushIds: [],
+  streetEncounters: {},
+  mechanicHints: {},
   territoryOwnership: {},
   armies: {},
   family: [],
@@ -1187,6 +1209,11 @@ export function loadScenario(
   dayFlowFollow: false,
   foughtPairs: null,
   hexPaint: {},
+  worldScars: {},
+  pendingConquestPolicy: null,
+  spottedAmbushIds: [],
+  streetEncounters: {},
+  mechanicHints: {},
   territoryOwnership: {},
     armies: {},
     // Pre-populate canonical Three Kingdoms family lineages — filtered

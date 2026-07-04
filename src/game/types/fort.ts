@@ -39,7 +39,7 @@ export interface Fort {
 }
 
 /** Strategic facilities that act on passing armies each season. */
-export type FacilityKind = 'tower' | 'catapult' | 'camp' | 'wall';
+export type FacilityKind = 'tower' | 'catapult' | 'camp' | 'wall' | 'depot' | 'boom';
 
 export interface FacilityDef {
   name: BilingualName;
@@ -82,6 +82,23 @@ export const FACILITY_DEFS: Record<FacilityKind, FacilityDef> = {
     name: { zh: '防壁', en: 'Barricade' },
     effect: 'block', cost: 350, hp: 520, seasons: 14, range: 16, power: 0,
     color: '#9aa6b4',
+  },
+  boom: {
+    // 攔江鎖 — an iron chain-boom strung across the water: hostile FLEETS
+    // within reach stall (~70%/half-month) until the boom is broken. Land
+    // columns walk past it. 王濬樓船,鐵鎖橫江.
+    name: { zh: '攔江鎖', en: 'River Boom' },
+    effect: 'block', cost: 500, hp: 400, seasons: 20, range: 20, power: 0,
+    color: '#6a8ab8',
+  },
+  depot: {
+    // 兵站 — a supply anchor: the hex-paint corridor counts as connected
+    // when it reaches a friendly depot (see resolution's supply pass), so a
+    // depot chain lets a deep expedition keep its grain flowing. Also heals
+    // passing friendly columns a little, like a small 陣.
+    name: { zh: '兵站', en: 'Supply Depot' },
+    effect: 'supply', cost: 320, hp: 260, seasons: 16, range: 24, power: 60,
+    color: '#e8c56a',
   },
 };
 

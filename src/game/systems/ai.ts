@@ -900,6 +900,9 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
       type: 'march', cityId: bestCmd.cityId, officerId: detachId,
       targetCityId: bestCmd.targetCityId, targetX: bx, targetY: by,
       troops: detachTroops, holding: true, seasonsRemaining: 1, totalSeasons: 1,
+      // 設伏 — enough cover and the detachment goes to ground: hidden from
+      // the player's map, springs harder (same stance the player can order).
+      ambush: bestCover >= 0.3 || undefined,
     };
     const dOff = officers[detachId];
     if (dOff) officers[detachId] = { ...dOff, task: 'march' };

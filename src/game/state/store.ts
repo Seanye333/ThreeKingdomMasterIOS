@@ -103,7 +103,7 @@ import { expeditionLegSeasons } from '../systems/expedition';
 import { getEmbassyTarget, embassyLegSeasons, realmTradeIncome, realmTitle, realmPatronPrestige, envoyCompetence, routeDisruptionChance, realmAidProfile, isHorseRealm, realmTradeHorses, naturalizedName } from '../systems/foreignRealm';
 import { generateFictionalOfficer } from '../systems/officerGen';
 import { FOREIGN_REALMS_BY_ID } from '../data/foreignRealms';
-import { terrainTypeAt, isRiverside, WORLD_SCALE, hexAt, hexNeighbors, hexCenter, isLand } from '../data/geography';
+import { terrainTypeAt, isRiverside, WORLD_SCALE, hexAt, hexNeighbors, hexCenter, isLand, terrainMarchCost, battleGroundAt, geoToPixel } from '../data/geography';
 import { FAMILY_LINEAGE } from '../data/familyLineage';
 import { POLICY_DEFS, TACTIC_DEFS } from '../data/officerAttributes';
 import {
@@ -154,6 +154,7 @@ import {
 } from '../systems/mandateRituals';
 import { reliefFoodCost, rollGreatPlague, GREAT_PLAGUE_FLAG, RELIEF_LOYALTY_BONUS, RELIEF_IGNORE_LOYALTY_LOSS, RELIEF_MIGRATE_SHARE } from '../systems/events';
 import { prunePaint, seasonStampOf, hexPaintKey } from '../systems/hexPaint';
+import { scarsFromBattle, pruneScars, worldScarKey } from '../systems/worldScars';
 import { playSfx } from '../systems/sound';
 import { computeDayEncounters, marchPositionAtDay, arrivalDayOf } from '../systems/dayEncounters';
 import { TRIBES_BY_ID } from '../data/tribes';
@@ -300,7 +301,8 @@ function playerImperialSanction(state: {
   const mandate = state.mandate.byForce[state.playerForceId] ?? 50;
   return (custodian === state.playerForceId ? 0.15 : 0) + Math.max(0, Math.min(0.1, (mandate - 50) / 500));
 }
-import { setupTacticalBattle, inferUnitType, planSiegeRelief, rollTimeOfDay, pickAiFormation, applyOpeningScheme, applyAiBattlePreps } from '../systems/tactical';
+import { setupTacticalBattle, inferUnitType, planSiegeRelief, planColumnReinforcements, rollTimeOfDay, pickAiFormation, applyOpeningScheme, applyAiBattlePreps, applyBattlePrep } from '../systems/tactical';
+import { regionalTacticalWeather } from '../systems/weather';
 import { pickAutoStratagem } from '../data/stratagems2';
 import { BUILDING_DEFS_BY_ID } from '../data/buildings';
 import { DEFENSE_BUILDINGS } from '../data/defenseBuildings';
@@ -431,6 +433,19 @@ interface GameStore extends GameState {
   selectArmy: (armyId: EntityId | null) => void;
   redirectArmy: (armyId: EntityId, newTargetId: EntityId) => boolean;
   holdArmy: (armyId: EntityId) => boolean;
+  /** 設伏 — toggle a HOLDING army into ambush stance (needs cover at its
+   *  cell). Hidden from the enemy map view; springs harder on contact. */
+  setArmyAmbush: (armyId: EntityId) => { ok: boolean; reason?: string };
+  /** 焚橋斷渡 — the army torches the crossing it stands beside: nearby river
+   *  hexes are stamped with a bridge-broken scar (~1 year), so battles fought
+   *  over this ground open with the span already down. */
+  burnBridge: (armyId: EntityId) => { ok: boolean; reason?: string };
+  /** 軍師點撥 — show a one-shot contextual hint for a new mechanic. */
+  maybeHint: (key: string, zh: string, en: string) => void;
+  /** 長圍 — toggle a HOLDING army into investing the nearest enemy city:
+   *  each turn the town bleeds food + loyalty; dry granaries open the gates
+   *  without a fight. The garrison may sortie and rout the besiegers. */
+  besiegeCity: (armyId: EntityId) => { ok: boolean; reason?: string };
   /** 補給野戰軍 — rush provisions from the nearest stocked friendly city to a
    *  field army, topping up its baggage so it doesn't starve in the field. */
   resupplyArmy: (armyId: EntityId) => { ok: boolean; sent: number };
@@ -1250,6 +1265,20 @@ interface GameStore extends GameState {
     buildingId: BuildingId,
     plot?: number,
   ) => { ok: boolean; reason?: string };
+  /** 修繕 — repair a siege-damaged building (gold cost ~40% of its level
+   *  build price); its bonuses come back immediately. */
+  repairBuilding: (cityId: EntityId, buildingId: BuildingId) => { ok: boolean; reason?: string };
+  /** 入城三選 — resolve the post-conquest policy for a freshly stormed city:
+   *  安民 (loyalty)、犒軍 (recover walking wounded)、搜捕 (hunt down the old
+   *  regime's officers, at a loyalty price). */
+  resolveConquestPolicy: (kind: 'pacify' | 'reward' | 'roundup') => void;
+  /** 街頭際遇 — resolve a city-street encounter (行商/遊俠/相士/說書人).
+   *  Consumes this city's encounter for the season either way. */
+  resolveStreetEncounter: (
+    cityId: EntityId,
+    kind: 'merchant' | 'knight' | 'soothsayer' | 'storyteller',
+    accept: boolean,
+  ) => { ok: boolean; reason?: string };
   appointGovernor: (
     provinceId: ProvinceId,
     officerId: EntityId,
@@ -1354,20 +1383,37 @@ function buildFieldBattle(
     if (d < bestD) { bestD = d; nominalCity = c.id; }
   }
   const stratWeather = s.weather?.kind ?? 'clear';
-  const tacticalWeather = stratWeather === 'drought' ? 'clear' : stratWeather;
+  // 區域天候 — the sky over THIS clash site, not the realm-wide roll.
+  const tacticalWeather = regionalTacticalWeather(
+    stratWeather, midX, midY, s.date.season,
+    `${s.date.year}-${s.date.season}-${s.date.phase ?? ''}`);
   // 乾風忌密 — a dry gale (or parched 旱地) means a stray spark chains down the
   // ranks, so both marshals fight looser. Let the formation picker know.
   const fireWeather = stratWeather === 'drought'
     || (stratWeather === 'wind' && (s.weather?.windPower ?? 0) >= 2);
 
+  // 會戰 — nearby columns of both belligerents ride to the sound of the
+  // drums, entering mid-battle from their true bearings.
+  const columnJoin = planColumnReinforcements({
+    site: { x: midX, y: midY },
+    bearing: Math.atan2(eArmy.y - pArmy.y, eArmy.x - pArmy.x),
+    attackerForceId: pArmy.forceId,
+    defenderForceId: eArmy.forceId,
+    armies: s.armies,
+    officers: s.officers,
+    excludeArmyIds: [pArmy.id, eArmy.id],
+    diplomacy: s.diplomacy,
+  });
   let battle = setupTacticalBattle({
     cityId: nominalCity,
     width: 18,
     height: 12,
+    worldScars: s.worldScars,
     attackerForceId: pArmy.forceId,
     defenderForceId: eArmy.forceId,
     attackers,
     defenders,
+    reinforcements: columnJoin.reinforcements,
     // 疲勞 less 都督之旗 — weary from a forced march, steadied by the marshal's banner.
     attackerFatigue: arrivalFatigueMorale(pArmy.pace) - (pArmy.legionBanner ?? 0),
     // 排兵布陣 — a dug-in side fights from 十面埋伏; otherwise each marshal draws
@@ -1408,8 +1454,13 @@ function buildFieldBattle(
   // 廟算 — the AI-controlled side(s) lay their own pre-battle preparations
   // (伏兵/夜襲/地道/拒馬/火計/疑兵), gated by the marshal's wits (§5.7).
   battle = applyAiBattlePreps(battle, s.playerForceId, s.officers);
+  // 設伏遇伏 — a dug-in army that had gone to ground springs its trap: its
+  // side opens with the 伏兵 preparation for free (vanguard hidden in cover).
+  if (pArmy.holding && pArmy.ambush) battle = applyBattlePrep(battle, 'attacker', 'ambush', s.officers).battle;
+  if (eArmy.holding && eArmy.ambush && !(s.spottedAmbushIds ?? []).includes(eArmy.id)) battle = applyBattlePrep(battle, 'defender', 'ambush', s.officers).battle;
   battle.attackerArmyId = playerArmyId;
   battle.defenderArmyId = enemyArmyId;
+  if (columnJoin.columnPlans.length > 0) battle.columnPlans = columnJoin.columnPlans;
   return battle;
 }
 
@@ -1715,10 +1766,115 @@ export const useGameStore = create<GameStore>()(
         if (army.forceId !== state.playerForceId) return false;
         const next = !army.holding;
         set({
-          pendingCommands: { ...state.pendingCommands, [armyId]: { ...cmd, holding: next } },
-          armies: { ...state.armies, [armyId]: { ...army, holding: next } },
+          pendingCommands: { ...state.pendingCommands, [armyId]: { ...cmd, holding: next, ambush: next ? cmd.ambush : undefined, besieging: next ? cmd.besieging : undefined } },
+          armies: { ...state.armies, [armyId]: { ...army, holding: next, ambush: next ? army.ambush : undefined, besieging: next ? army.besieging : undefined } },
         });
+        // 軍師點撥 — the moment a camp goes down is when 圍城/設伏 first matter.
+        if (next && state.playerForceId) {
+          const nearEnemyCity = Object.values(state.cities).some((c) =>
+            c.ownerForceId && c.ownerForceId !== state.playerForceId
+            && isHostilePermitted(state.diplomacy, state.playerForceId!, c.ownerForceId)
+            && Math.hypot(cityPos(c).x - army.x, cityPos(c).y - army.y) < 45 * WORLD_SCALE);
+          if (nearEnemyCity) {
+            get().maybeHint('besiege',
+              '軍師:兵臨堅城,強攻非上策 — 可下「圍城」斷其市易耕稼,坐待糧盡開城(在途部隊面板)。',
+              'Camped by an enemy city you can BESIEGE it — starve it open (armies panel).');
+          } else if (terrainMarchCost(army.x, army.y) >= 0.3) {
+            get().maybeHint('ambush',
+              '軍師:此地林深足以藏兵 — 「設伏」可令敵圖上不見我軍,候其縱隊自投羅網。',
+              'Good cover here — set an AMBUSH and vanish from the enemy map.');
+          }
+        }
         return true;
+      },
+
+      setArmyAmbush: (armyId) => {
+        const state = get();
+        const cmd = state.pendingCommands[armyId];
+        const army = state.armies[armyId];
+        if (!cmd || cmd.type !== 'march' || !army) return { ok: false, reason: 'no such army' };
+        if (army.forceId !== state.playerForceId) return { ok: false, reason: 'not yours' };
+        if (!army.holding) return { ok: false, reason: '先紮營方可設伏' };
+        const next = !army.ambush;
+        // 掩蔽 — an ambush needs ground that hides an army: forest, hills,
+        // mountain passes. Open plain won't do (march-cost is the cover proxy,
+        // same as the AI's detachment picker and the spring bonus).
+        if (next && terrainMarchCost(army.x, army.y) < 0.3) {
+          return { ok: false, reason: '此地無掩蔽,平野難藏兵' };
+        }
+        set({
+          pendingCommands: { ...state.pendingCommands, [armyId]: { ...cmd, ambush: next || undefined } },
+          armies: { ...state.armies, [armyId]: { ...army, ambush: next || undefined } },
+        });
+        return { ok: true };
+      },
+
+      burnBridge: (armyId) => {
+        const state = get();
+        const army = state.armies[armyId];
+        if (!army || army.forceId !== state.playerForceId) return { ok: false, reason: 'not yours' };
+        // 據水斷橋 — the crossing is whatever river hexes touch the army's
+        // cell; stamping them bridge-broken keeps future battle windows from
+        // raising a bridge there (the war road stays cut for ~1 year).
+        const c0 = hexAt(army.x, army.y);
+        const cells = [c0, ...hexNeighbors(c0.col, c0.row)];
+        const riverCells = cells.filter((c) => {
+          const cc = hexCenter(c.col, c.row);
+          return battleGroundAt(cc.x, cc.y) === 'river';
+        });
+        if (riverCells.length === 0) return { ok: false, reason: '附近無渡橋可焚 — 須臨河而立' };
+        const stamp = seasonStampOf(state.date.year, state.date.season);
+        const scars = { ...state.worldScars };
+        for (const c of riverCells) scars[worldScarKey(c.col, c.row)] = { kind: 'bridge-broken', t: stamp };
+        set({ worldScars: scars });
+        playSfx('fire');
+        const cmdr = state.officers[army.commanderId];
+        get().notify(
+          `🔥 ${cmdr?.name.zh ?? '守軍'}焚橋斷渡 — 此處渡口一年難復!`,
+          `${cmdr?.name.en ?? 'The column'} burns the crossing — the span stays down ~1 year`, 'warn');
+        return { ok: true };
+      },
+
+      maybeHint: (key, zh, en) => {
+        const st = get();
+        if (st.mechanicHints?.[key]) return;
+        set({ mechanicHints: { ...st.mechanicHints, [key]: true } });
+        st.notify(`💡 ${zh}`, `Tip: ${en}`);
+      },
+
+      besiegeCity: (armyId) => {
+        const state = get();
+        const cmd = state.pendingCommands[armyId];
+        const army = state.armies[armyId];
+        if (!cmd || cmd.type !== 'march' || !army) return { ok: false, reason: 'no such army' };
+        if (army.forceId !== state.playerForceId) return { ok: false, reason: 'not yours' };
+        if (!army.holding) return { ok: false, reason: '先紮營方可圍城' };
+        if (army.besieging) {
+          set({
+            pendingCommands: { ...state.pendingCommands, [armyId]: { ...cmd, besieging: undefined } },
+            armies: { ...state.armies, [armyId]: { ...army, besieging: undefined } },
+          });
+          return { ok: true };
+        }
+        // Nearest hostile city within investment reach.
+        let best: (typeof state.cities)[string] | null = null;
+        let bd = Infinity;
+        for (const c of Object.values(state.cities)) {
+          if (!c.ownerForceId || c.ownerForceId === state.playerForceId) continue;
+          if (!isHostilePermitted(state.diplomacy, state.playerForceId, c.ownerForceId)) continue;
+          const cp = cityPos(c);
+          const d = Math.hypot(cp.x - army.x, cp.y - army.y);
+          if (d < bd) { bd = d; best = c; }
+        }
+        if (!best || bd > 45 * WORLD_SCALE) return { ok: false, reason: '左近無可圍之敵城 — 須紮營於敵城之側' };
+        if (army.troops < 3000) return { ok: false, reason: '兵不滿三千,難成合圍' };
+        set({
+          pendingCommands: { ...state.pendingCommands, [armyId]: { ...cmd, besieging: best.id } },
+          armies: { ...state.armies, [armyId]: { ...army, besieging: best.id } },
+        });
+        playSfx('wardrum');
+        get().notify(`⭕ 兵圍${best.name.zh} — 斷其市易耕稼,坐待糧盡`, `Investing ${best.name.en} — starving it out`, 'warn');
+        return { ok: true };
       },
 
       resupplyArmy: (armyId) => {
@@ -2119,6 +2275,12 @@ export const useGameStore = create<GameStore>()(
         const marchPool = [officer, ...extras.map((e) => state.officers[e]).filter(Boolean)];
         const speedMul = marchSpeedMul(marchPool) * marchSpeedMultiplier(state.weather);
         const dur = isNaval ? 2 : adjustMarchSeasons(marchDurationFor(source, state.cities[targetId], state.date.season), pace, speedMul);
+        // 軍師點撥 — a deep expedition lives or dies by its supply ribbon.
+        if (dur >= 3) {
+          get().maybeHint('supply-line',
+            '軍師:遠征三季以上,糧道即命脈 — 沿路修「兵站」錨定補給,並以「糧道」疊圖總覽全軍走廊。',
+            'Long march: anchor your supply ribbon with DEPOTS and watch the SUPPLY overlay.');
+        }
         set({
           cities: {
             ...state.cities,
@@ -3762,6 +3924,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           lostItems: state.lostItems,
           territoryOwnership: state.territoryOwnership ?? {},
           hexPaint: state.hexPaint ?? {},
+          spottedAmbushIds: state.spottedAmbushIds ?? [],
+          worldScars: state.worldScars ?? {},
           playerForceId: state.playerForceId,
           family: state.family,
           clanStandings: state.clanStandings,
@@ -7832,6 +7996,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                 new Set(Object.values(postCities).map((c) => c.ownerForceId).filter(Boolean) as EntityId[]),
               )
             : (result.hexPaint ?? state.hexPaint ?? {}), eventStripPaintIds),
+          // 戰場烙印 — TTL heal at season boundaries (forest regrows, spans
+          // rebuilt); AI bridge-burning merges in via the resolution result.
+          worldScars: seasonBoundary
+            ? pruneScars(result.worldScars ?? state.worldScars ?? {}, seasonStampOf(result.date.year, result.date.season))
+            : (result.worldScars ?? state.worldScars ?? {}),
+          // 斥候情報 — spotted-ambush marks survive only while the ambush does.
+          spottedAmbushIds: (state.spottedAmbushIds ?? []).filter((id) => !!(result.armies ?? {})[id]?.ambush),
           armies: result.armies ?? {},
           convoys: result.convoys ?? {},
           raids: result.raids ?? {},
@@ -8003,6 +8174,40 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             return next;
           })(),
         });
+
+        // 新時刻音效 — the season's dramatic beats get their stingers.
+        {
+          const zhAll = result.report.entries.map((e) => e.textZh ?? '').join('|');
+          if (zhAll.includes('開城出降')) playSfx('horn');        // a city starved open
+          else if (zhAll.includes('突圍!')) playSfx('shout');     // a sortie broke a siege
+          else if (zhAll.includes('據水斷橋')) playSfx('fire');    // AI burned a crossing
+        }
+
+        // 軍師點撥 — turn-report-driven one-shot tips for the new systems.
+        {
+          const hints = get();
+          // ① first ambush sprung on (or by) the player → scouting counterplay.
+          if (result.report.entries.some((e) => e.battle?.ambush
+            && (e.battle.attacker.forceId === state.playerForceId || e.battle.defender.forceId === state.playerForceId))) {
+            hints.maybeHint('scouting',
+              '軍師:伏兵之患,在於不見 — 行軍改「緩進」偵查加半,智將領軍更易識破林間藏兵。',
+              'Ambushes hide — march CAUTIOUS to scout better; a wise commander flushes them out.');
+          }
+          // ② an enemy column bearing down on a beacon-less player city → 烽燧.
+          if (state.playerForceId) {
+            const threatened = Object.values(result.armies ?? {}).some((a) => {
+              if (a.forceId === state.playerForceId) return false;
+              const tgt = result.cities[a.targetCityId];
+              return tgt?.ownerForceId === state.playerForceId
+                && !(tgt.buildSlots ?? []).some((sl) => sl.buildingId === 'beacon');
+            });
+            if (threatened) {
+              hints.maybeHint('beacon',
+                '軍師:敵蹤已近而烽燧未備 — 於邊城外環建「烽燧」,警訊可沿烽燧鏈直傳都城。',
+                'Raise BEACONS on frontier cities — alarms then relay station-to-station to your capital.');
+            }
+          }
+        }
 
         // 自動存檔 — every season boundary writes one of three rolling
         // autosave slots, so a bad turn (or a crash) costs at most a season.
@@ -10261,6 +10466,47 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         }
         // 真日級 — did the walk just reach a predicted first contact? Fire
         // the banner, pause the flow, lock the pair (no rerouting out now).
+        // 斥候偵騎 — each marching day your columns probe the ground ahead:
+        // a hidden enemy ambush within scout reach may be flushed out (it
+        // then renders on your map with a ⚠伏 mark and enters forecasts;
+        // its spring is blunted if you still walk into it). 急行軍 scouts
+        // half as well; 緩進 half again as well.
+        {
+          const live2 = get();
+          const already = new Set(live2.spottedAmbushIds ?? []);
+          const hiddenFoes = Object.values(live2.armies).filter((a) =>
+            a.holding && a.ambush && a.forceId !== live2.playerForceId && !already.has(a.id));
+          if (hiddenFoes.length > 0) {
+            const myColumns = Object.values(live2.armies).filter((a) =>
+              a.forceId === live2.playerForceId && !a.holding && !a.returning);
+            let flushed = false;
+            outer: for (const amb of hiddenFoes) {
+              for (const col of myColumns) {
+                const cmdrInt = live2.officers[col.commanderId]?.stats.intelligence ?? 50;
+                const reach = (28 + Math.max(0, cmdrInt - 50) * 0.35) * WORLD_SCALE;
+                if (Math.hypot(col.x - amb.x, col.y - amb.y) > reach) continue;
+                const paceMul = col.pace === 'forced' ? 0.5 : col.pace === 'cautious' ? 1.5 : 1;
+                if (Math.random() >= (0.06 + Math.max(0, cmdrInt - 60) / 500) * paceMul) continue;
+                const foe = live2.officers[amb.commanderId];
+                playSfx('shout');
+                set({
+                  spottedAmbushIds: [...(live2.spottedAmbushIds ?? []), amb.id],
+                  dayFlow: { ...df, day, playing: false },
+                  ...(repainted ? { hexPaint: paint } : {}),
+                  actionToast: {
+                    key: (live2.actionToast?.key ?? 0) + 1,
+                    zh: `🔍 第${Math.max(1, day)}日 — 斥候來報:${foe?.name.zh ?? '敵軍'}伏於林莽,已標於圖上!`,
+                    en: `🔍 Day ${Math.max(1, day)} — scouts flush a hidden ambush (${foe?.name.en ?? 'enemy'})!`,
+                    tone: 'warn' as const,
+                  },
+                });
+                flushed = true;
+                break outer;
+              }
+            }
+            if (flushed) return;
+          }
+        }
         const hit = df.encounters?.find((e) => !e.fired && e.day <= day);
         if (hit) {
           const state = get();
@@ -10907,6 +11153,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           cityId,
           width: 18,
           height: 12,
+          worldScars: state.worldScars,
+          wallTier: city.wallTier,
           // Player holds the walls (defender); the sparring assault is AI-run
           // under a sentinel force id so playerSide resolves to 'defender'.
           attackerForceId: '__spar__',
@@ -10987,21 +11235,35 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           else if (tgt.food < tgt.troops * 6 && src.food >= Math.max(800, item.troops) + 5000) works = 'invest';
         }
         const stratWeather = state.weather?.kind ?? 'clear';
+        // 區域天候 — the sky over the besieged city itself.
+        const siteWeather = regionalTacticalWeather(
+          stratWeather, tp.x, tp.y, state.date.season,
+          `${state.date.year}-${state.date.season}-${state.date.phase ?? ''}`);
         const bearing = Math.atan2(tp.y - sp.y, tp.x - sp.x);
         // 馳援 — the player's neighbouring cities ride to the rescue.
         const relief = planSiegeRelief({
           target: tgt, cities: state.cities, officers: state.officers,
           defenderForceId: state.playerForceId, bearing,
         });
+        // 會戰 — map columns of either belligerent near the walls join in.
+        const columnJoin = planColumnReinforcements({
+          site: { x: tp.x, y: tp.y }, bearing,
+          attackerForceId: offs[0].forceId, defenderForceId: state.playerForceId,
+          armies: state.armies, officers: state.officers,
+          excludeArmyIds: item.officerIds,
+          diplomacy: state.diplomacy,
+        });
         let battle = setupTacticalBattle({
           cityId: tgt.id,
           width: 18,
           height: 12,
+          worldScars: state.worldScars,
           attackerForceId: offs[0].forceId,
           defenderForceId: state.playerForceId,
           attackers,
           defenders,
-          weather: (stratWeather === 'drought' ? 'clear' : stratWeather) as 'clear' | 'rain' | 'wind' | 'fog' | 'snow',
+          wallTier: tgt.wallTier,
+          weather: siteWeather,
           timeOfDay: rollTimeOfDay(),
           windDirection: state.weather?.wind ?? 'calm',
           buildSlots: tgt.buildSlots,
@@ -11009,12 +11271,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           terrainHint: { terrain: tgt.terrain, port: tgt.port, x: tgt.coords.x, y: tgt.coords.y },
           battleGeo: { x: tp.x, y: tp.y, bearing, anchorCol: 16, season: state.date.season },
           siegeWorks: works,
-          reinforcements: relief.reinforcements,
+          reinforcements: [...relief.reinforcements, ...columnJoin.reinforcements],
         });
         // 廟算 — the AI besieger lays its own pre-battle prep (地道/伏兵/夜襲/火計…).
         battle = applyAiBattlePreps(battle, state.playerForceId, state.officers);
         battle.siegeDefenseSourceCityId = item.sourceCityId;
         battle.reliefPlans = relief.plans;
+        if (columnJoin.columnPlans.length > 0) battle.columnPlans = columnJoin.columnPlans;
         const citiesAfterRelief = { ...state.cities };
         for (const plan of relief.plans) {
           const c = citiesAfterRelief[plan.cityId];
@@ -11248,6 +11511,26 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // 會戰縱隊的損耗不出城庫 — a defender-side map column's casualties
+        // bled from its OWN army (written back below), never the garrison.
+        let columnDefLosses = 0;
+        if (tb.columnPlans?.length) {
+          const unspawnedT = new Map<string, number>();
+          for (const r of tb.reinforcements ?? []) {
+            unspawnedT.set(r.officerId, (unspawnedT.get(r.officerId) ?? 0) + r.troops);
+          }
+          for (const plan of tb.columnPlans) {
+            if (plan.side !== 'defender') continue;
+            const spawnedIds = plan.officerIds.filter((id) => !unspawnedT.has(id));
+            if (spawnedIds.length === 0) continue;
+            const surv = tb.units
+              .filter((u) => spawnedIds.includes(u.officerId))
+              .reduce((x, u) => x + Math.max(0, u.troops), 0)
+              + plan.officerIds.reduce((x, id) => x + (unspawnedT.get(id) ?? 0), 0);
+            columnDefLosses += Math.max(0, plan.troops - surv);
+          }
+        }
+
         // Apply troop losses to the source/target cities (siege only — a
         // field battle's casualties write back to the armies below).
         const target = cities[tb.cityId];
@@ -11256,7 +11539,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           // relief columns bled (those came out of their home garrisons).
           cities[tb.cityId] = {
             ...target,
-            troops: Math.max(0, target.troops - Math.max(0, tb.defenderLosses - reliefLosses)),
+            troops: Math.max(0, target.troops - Math.max(0, tb.defenderLosses - reliefLosses - columnDefLosses)),
           };
         }
 
@@ -11275,13 +11558,21 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
 
         // ── Field battle writeback (亲征野战) — casualties to the two armies,
         // the routed army removed, no city changes hands. ──
+        // 入城三選 — set inside the conquest block when the player themselves
+        // stormed the city; surfaced as a modal after the battle closes.
+        let conquestPolicyPrompt: GameState['pendingConquestPolicy'] = null;
         let nextArmies = state.armies;
         let nextFieldPending = state.pendingCommands;
+        // 會戰 — units that rode in from map columns belong to their OWN armies:
+        // they must never be double-counted into the main sides' writebacks
+        // (field armies, siege garrisons, homebound besiegers).
+        const columnOfficerIds = new Set((tb.columnPlans ?? []).flatMap((p) => p.officerIds));
         if (tb.field) {
           const armies = { ...state.armies };
           const pending = { ...state.pendingCommands };
           const survivorsOf = (side: 'attacker' | 'defender') =>
-            tb.units.filter((u) => u.side === side).reduce((s, u) => s + Math.max(0, u.troops), 0);
+            tb.units.filter((u) => u.side === side && !columnOfficerIds.has(u.officerId))
+              .reduce((s, u) => s + Math.max(0, u.troops), 0);
           const cmdAlive = (side: 'attacker' | 'defender') =>
             tb.units.some((u) => u.side === side && u.isCommander && u.troops > 0);
           const resolveArmy = (armyId: EntityId | undefined, side: 'attacker' | 'defender') => {
@@ -11312,6 +11603,47 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           nextArmies = armies;
           nextFieldPending = pending;
         }
+        // 會戰回寫 — each joined column's survivors return to its map army;
+        // a column whose call never spawned (battle ended first) is untouched;
+        // a column wiped on the field is removed (officers stand down unless
+        // slain/taken by the casualty pass).
+        if (tb.columnPlans && tb.columnPlans.length > 0) {
+          const armies = { ...nextArmies };
+          const pending = { ...nextFieldPending };
+          const unspawned = new Map<string, number>();
+          for (const r of tb.reinforcements ?? []) {
+            unspawned.set(r.officerId, (unspawned.get(r.officerId) ?? 0) + r.troops);
+          }
+          for (const plan of tb.columnPlans) {
+            const spawnedIds = plan.officerIds.filter((id) => !unspawned.has(id));
+            if (spawnedIds.length === 0) continue; // never reached the field
+            const army = armies[plan.armyId];
+            if (!army) continue;
+            const fieldSurvivors = tb.units
+              .filter((u) => spawnedIds.includes(u.officerId))
+              .reduce((sum, u) => sum + Math.max(0, u.troops), 0);
+            // Officers still en route when the battle ended keep their share.
+            const reserved = plan.officerIds
+              .reduce((sum, id) => sum + (unspawned.get(id) ?? 0), 0);
+            const survivors = fieldSurvivors + reserved;
+            if (survivors > 0) {
+              armies[plan.armyId] = { ...army, troops: survivors };
+              const cmd = pending[plan.armyId];
+              if (cmd && cmd.type === 'march') pending[plan.armyId] = { ...cmd, troops: survivors };
+            } else {
+              delete armies[plan.armyId];
+              delete pending[plan.armyId];
+              for (const id of [army.commanderId, ...army.companionIds]) {
+                const o = officers[id];
+                if (o && o.status !== 'dead' && o.status !== 'imprisoned') {
+                  officers[id] = { ...o, task: null, status: 'idle' };
+                }
+              }
+            }
+          }
+          nextArmies = armies;
+          nextFieldPending = pending;
+        }
         // 戰記 — an interactive field clash won by the player counts too
         // (buildFieldBattle always seats the player as attacker).
         const playerWonFieldClash = !!tb.field && winner === 'attacker'
@@ -11323,10 +11655,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           const homeId = tb.siegeDefenseSourceCityId;
           const home = cities[homeId];
           const survivors = tb.units
-            .filter((u) => u.side === 'attacker')
+            .filter((u) => u.side === 'attacker' && !columnOfficerIds.has(u.officerId))
             .reduce((s, u) => s + Math.max(0, u.troops), 0);
           if (home) cities[homeId] = { ...home, troops: home.troops + survivors };
-          for (const u of tb.units.filter((u) => u.side === 'attacker')) {
+          for (const u of tb.units.filter((u) => u.side === 'attacker' && !columnOfficerIds.has(u.officerId))) {
             const o = officers[u.officerId];
             if (o && o.status !== 'dead' && o.status !== 'imprisoned') {
               officers[u.officerId] = { ...o, locationCityId: homeId, task: null, status: 'idle' };
@@ -11339,7 +11671,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           const attackerCmd = tb.units.find((u) => u.side === 'attacker' && u.isCommander);
           if (attackerCmd) {
             const survivingTroops = tb.units
-              .filter((u) => u.side === 'attacker')
+              .filter((u) => u.side === 'attacker' && !columnOfficerIds.has(u.officerId))
               .reduce((s, u) => s + u.troops, 0);
             // 兵燹 — the storm costs the city a fifth of its people; some flee
             // as 流民 to an adjacent city still held by the former owner.
@@ -11381,8 +11713,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                 season: state.date.season,
               });
             }
-            // Move all attacker officers to the conquered city.
-            for (const u of tb.units.filter((u) => u.side === 'attacker')) {
+            // Move all attacker officers to the conquered city (map-column
+            // officers stay with their armies — they ride on).
+            for (const u of tb.units.filter((u) => u.side === 'attacker' && !columnOfficerIds.has(u.officerId))) {
               const o = officers[u.officerId];
               if (o && o.status !== 'dead' && o.status !== 'imprisoned') {
                 officers[u.officerId] = {
@@ -11391,6 +11724,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                   task: null,
                 };
               }
+            }
+            // 入城三選 — the player stormed this city in person: queue the
+            // post-conquest policy choice (安民/犒軍/搜捕).
+            if (tb.attackerForceId === state.playerForceId && !tb.practice) {
+              conquestPolicyPrompt = {
+                cityId: tb.cityId,
+                attackerLosses: tb.attackerLosses,
+                formerOwnerForceId: formerOwner,
+              };
             }
           }
         }
@@ -11513,12 +11855,35 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             }].slice(-40)
           : state.fieldBattleMarks;
 
+        // 戰場烙印 — map the battle's terrain scars back to world hexes.
+        const carvedScars = scarsFromBattle(tb, seasonStampOf(state.date.year, state.date.season));
+        // 攻城戰損 — the fighting wrecks part of the city's works. Each built
+        // structure risks damage (fire-heavy assaults wreck more; a repelled
+        // assault still batters the town a little). Damaged works give no
+        // bonus until repaired (修繕 — see repairBuilding).
+        let nextBuildings = state.buildings;
+        const wreckedNames: string[] = [];
+        if (!tb.field && !tb.practice && !tb.naval && winner) {
+          const fireHeavy = (tb.groundFires?.length ?? 0) > 0 || (tb.terrainScars?.length ?? 0) > 0;
+          const wreckChance = (winner === 'attacker' ? 0.2 : 0.08) + (fireHeavy ? 0.12 : 0);
+          nextBuildings = state.buildings.map((b) => {
+            if (b.cityId !== tb.cityId || b.level < 1 || b.damaged) return b;
+            if (Math.random() >= wreckChance) return b;
+            wreckedNames.push(BUILDING_DEFS_BY_ID[b.id]?.name.zh ?? b.id);
+            return { ...b, damaged: true };
+          });
+        }
         set({
           officers: titleGrant.officers,
           cities,
           armies: nextArmies,
           pendingCommands: nextFieldPending,
           fieldBattleMarks: battleSiteMarks,
+          pendingConquestPolicy: conquestPolicyPrompt ?? state.pendingConquestPolicy,
+          ...(wreckedNames.length > 0 ? { buildings: nextBuildings } : {}),
+          ...(Object.keys(carvedScars).length > 0
+            ? { worldScars: { ...state.worldScars, ...carvedScars } }
+            : {}),
           currentBattleSnapshots: [],
           tacticalBattle: null,
           deeds: titleGrant.deeds,
@@ -11532,6 +11897,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             ? [...(state.chronicle ?? []), ...chronicleAppend].slice(0, 240)
             : state.chronicle,
         });
+        if (wreckedNames.length > 0) {
+          const cityZh = state.cities[tb.cityId]?.name.zh ?? '';
+          get().notify(
+            `${cityZh}戰火焚城 — ${wreckedNames.join('、')}毀於兵燹,修繕方復其效`,
+            `Siege damage at ${state.cities[tb.cityId]?.name.en ?? ''}: ${wreckedNames.length} building(s) wrecked — repair to restore`,
+            'warn',
+          );
+        }
       },
 
       queueEspionage: (kind, agentOfficerId, targetForceId, targetCityId, targetOfficerId, targetOfficerId2, deathAgent) => {
@@ -13064,8 +13437,22 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const geo = CITY_GEO_OVERRIDES[city.id];
         const cityLon = geo ? geo[0] : 96 + (city.coords.x / 1000) * 29;
         const cityLat = geo ? geo[1] : 43 - (city.coords.y / 720) * 26;
-        const lon = cityLon + Math.cos(angle) * 0.4;
-        const lat = cityLat + Math.sin(angle) * 0.4;
+        let lon = cityLon + Math.cos(angle) * 0.4;
+        let lat = cityLat + Math.sin(angle) * 0.4;
+        // 攔江鎖 must sit ON the water — scan the compass for a river/sea spot.
+        if (kind === 'boom') {
+          let found = false;
+          for (let k = 0; k < 12 && !found; k++) {
+            const a = (k / 12) * Math.PI * 2;
+            for (const r of [0.35, 0.55]) {
+              const L = cityLon + Math.cos(a) * r, T = cityLat + Math.sin(a) * r;
+              const [bx, by] = geoToPixel(L, T);
+              const g = battleGroundAt(bx, by);
+              if (g === 'river' || g === 'sea' || g === 'lake') { lon = L; lat = T; found = true; break; }
+            }
+          }
+          if (!found) return { ok: false, message: '此城不臨大江 — 鐵鎖無處可橫。' };
+        }
         const id = `facility-${kind}-${Date.now()}`;
         set({
           cities: {
@@ -14134,6 +14521,145 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         };
       },
 
+      repairBuilding: (cityId, buildingId) => {
+        const state = get();
+        const city = state.cities[cityId];
+        const def = BUILDING_DEFS_BY_ID[buildingId];
+        if (!city || !def) return { ok: false, reason: 'invalid' };
+        if (city.ownerForceId !== state.playerForceId) return { ok: false, reason: 'not your city' };
+        const b = state.buildings.find((x) => x.cityId === cityId && x.id === buildingId);
+        if (!b || !b.damaged) return { ok: false, reason: 'not damaged' };
+        const cost = Math.max(50, Math.round(def.goldPerLevel * 0.4 * Math.max(1, b.level)));
+        if (city.gold < cost) return { ok: false, reason: `need ${cost}g` };
+        set({
+          cities: { ...state.cities, [cityId]: { ...city, gold: city.gold - cost } },
+          buildings: state.buildings.map((x) =>
+            x.cityId === cityId && x.id === buildingId ? { ...x, damaged: undefined } : x),
+        });
+        get().notify(`${def.name.zh}修繕完畢,復其效用(−${cost}金)`, `${def.name.en} repaired (−${cost}g)`);
+        return { ok: true };
+      },
+
+      resolveStreetEncounter: (cityId, kind, accept) => {
+        const state = get();
+        const city = state.cities[cityId];
+        if (!city) return { ok: false, reason: 'no city' };
+        const stamp = seasonStampOf(state.date.year, state.date.season);
+        const consume = { streetEncounters: { ...state.streetEncounters, [cityId]: stamp } };
+        if (!accept) { set(consume); return { ok: true }; }
+        if (kind === 'merchant') {
+          // 行商獻寶 — a caravan master offers a lot of strategic goods.
+          if (city.gold < 300) return { ok: false, reason: '庫金不足 300' };
+          set({
+            ...consume,
+            cities: {
+              ...state.cities,
+              [cityId]: {
+                ...city, gold: city.gold - 300,
+                warhorses: (city.warhorses ?? 0) + 40,
+                iron: (city.iron ?? 0) + 40,
+                medicine: (city.medicine ?? 0) + 20,
+              },
+            },
+          });
+          get().notify('行商獻寶 — 得戰馬40・鐵40・藥材20(−300金)', 'Caravan lot bought: +40 horses, +40 iron, +20 medicine (−300g)');
+          return { ok: true };
+        }
+        if (kind === 'knight') {
+          // 遊俠比武 — the best blade in town crosses swords with a wandering knight.
+          const best = Object.values(state.officers)
+            .filter((o) => o.locationCityId === cityId && o.forceId === city.ownerForceId
+              && (o.status === 'idle' || o.status === 'active'))
+            .sort((a, b) => b.stats.war - a.stats.war)[0];
+          if (!best) return { ok: false, reason: '城中無將可赴' };
+          const officers = { ...state.officers };
+          officers[best.id] = grantXp(officers[best.id] ?? best, 30, Math.random, ['war']).officer;
+          set({
+            ...consume,
+            officers,
+            cities: { ...state.cities, [cityId]: { ...city, drill: Math.min(100, (city.drill ?? 0) + 3) } },
+          });
+          get().notify(`遊俠與${best.name.zh}演武三合而去 — ${best.name.zh}武藝有得(練度 +3)`, `${best.name.en} sparred the wandering knight (+war XP, drill +3)`);
+          return { ok: true };
+        }
+        if (kind === 'soothsayer') {
+          if (city.gold < 100) return { ok: false, reason: '庫金不足 100' };
+          set({
+            ...consume,
+            cities: { ...state.cities, [cityId]: { ...city, gold: city.gold - 100, loyalty: Math.min(100, city.loyalty + 4) } },
+          });
+          get().notify('相士設壇禳解,民心稍安(民忠 +4,−100金)', 'The soothsayer calms the wards (+4 loyalty, −100g)');
+          return { ok: true };
+        }
+        // storyteller — free, small heart-lift.
+        set({
+          ...consume,
+          cities: { ...state.cities, [cityId]: { ...city, loyalty: Math.min(100, city.loyalty + 3) } },
+        });
+        get().notify('說書人講古於市,滿座喝彩(民忠 +3)', 'The storyteller packs the square (+3 loyalty)');
+        return { ok: true };
+      },
+
+      resolveConquestPolicy: (kind) => {
+        const state = get();
+        const p = state.pendingConquestPolicy;
+        if (!p) return;
+        const city = state.cities[p.cityId];
+        if (!city || city.ownerForceId !== state.playerForceId) {
+          set({ pendingConquestPolicy: null });
+          return;
+        }
+        if (kind === 'pacify') {
+          // 安民 — proclamations, soup kitchens, no reprisals: the town breathes.
+          set({
+            cities: { ...state.cities, [p.cityId]: { ...city, loyalty: Math.min(100, city.loyalty + 12) } },
+            pendingConquestPolicy: null,
+          });
+          get().notify(`${city.name.zh}出榜安民,民心稍定(民忠 +12)`, `Pacified ${city.name.en} (+12 loyalty)`);
+          return;
+        }
+        if (kind === 'reward') {
+          // 犒軍 — the walking wounded rejoin the colours; the town pays for the feast.
+          const recovered = Math.max(100, Math.floor(p.attackerLosses * 0.15));
+          set({
+            cities: {
+              ...state.cities,
+              [p.cityId]: {
+                ...city,
+                troops: city.troops + recovered,
+                loyalty: Math.max(0, city.loyalty - 3),
+              },
+            },
+            pendingConquestPolicy: null,
+          });
+          get().notify(`犒賞三軍 — 輕傷歸隊 ${recovered.toLocaleString()} 兵(民忠 −3)`, `Rewarded the host: ${recovered.toLocaleString()} walking wounded rejoin (−3 loyalty)`);
+          return;
+        }
+        // 搜捕 — hunt the old regime's officers through the wards: each has a
+        // 40% chance to be dragged in; the searches sour the townsfolk.
+        const officers = { ...state.officers };
+        const caught: string[] = [];
+        for (const o of Object.values(state.officers)) {
+          if (o.locationCityId !== p.cityId) continue;
+          if (!p.formerOwnerForceId || o.forceId !== p.formerOwnerForceId) continue;
+          if (o.status === 'dead' || o.status === 'imprisoned' || o.status === 'unsearched') continue;
+          if (Math.random() < 0.4) {
+            officers[o.id] = { ...o, status: 'imprisoned', capturedFromForceId: o.forceId ?? undefined, task: null };
+            caught.push(o.name.zh);
+          }
+        }
+        set({
+          officers,
+          cities: { ...state.cities, [p.cityId]: { ...city, loyalty: Math.max(0, city.loyalty - 8) } },
+          pendingConquestPolicy: null,
+        });
+        get().notify(
+          caught.length > 0 ? `全城搜捕 — 擒獲 ${caught.join('、')}(民忠 −8)` : '全城搜捕無所獲,徒擾百姓(民忠 −8)',
+          caught.length > 0 ? `Roundup: captured ${caught.length} officer(s) (−8 loyalty)` : 'Roundup found no one (−8 loyalty)',
+          caught.length > 0 ? 'ok' : 'warn',
+        );
+      },
+
       startBuilding: (cityId, buildingId, plot) => {
         const state = get();
         const city = state.cities[cityId];
@@ -14764,6 +15290,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           pendingRelief: loaded.pendingRelief ?? [],
           plagueRiskCityIds: loaded.plagueRiskCityIds ?? [],
           hexPaint: loaded.hexPaint ?? {},
+          worldScars: loaded.worldScars ?? {},
+          spottedAmbushIds: loaded.spottedAmbushIds ?? [],
+          streetEncounters: loaded.streetEncounters ?? {},
+          pendingConquestPolicy: null,
           dayFlow: null,
           dayFlowFollow: loaded.dayFlowFollow ?? false,
           foughtPairs: null,
@@ -14908,6 +15438,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         pendingRelief: state.pendingRelief,
         plagueRiskCityIds: state.plagueRiskCityIds,
         hexPaint: state.hexPaint,
+        worldScars: state.worldScars,
+        spottedAmbushIds: state.spottedAmbushIds,
+        streetEncounters: state.streetEncounters,
         pacifyMissions: state.pacifyMissions,
         annals: state.annals,
         soundEnabled: state.soundEnabled,

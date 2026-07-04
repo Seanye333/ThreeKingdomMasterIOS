@@ -74,6 +74,7 @@ import { TutorialTasks } from '../components/TutorialTasks';
 import { VictoryModal } from '../components/VictoryModal';
 import { WishesModal } from '../components/WishesModal';
 import { TacticalBattleScreen } from './TacticalBattleScreen';
+import { ConquestPolicyModal } from '../components/ConquestPolicyModal';
 import { BattleAIDriver } from '../components/BattleAIDriver';
 import { HudMenu } from '../components/HudMenu';
 import { THEMES, getStoredTheme, applyTheme, type ThemeId } from '../theme';
@@ -1170,6 +1171,8 @@ export function MapScreen() {
           own driver. */}
       <BattleAIDriver active={!!tacticalBattle && !battleScreenUp} />
       {battleScreenUp && <TacticalBattleScreen />}
+      {/* 入城三選 — surfaces once the stormed city's battle screen closes. */}
+      {!tacticalBattle && <ConquestPolicyModal />}
     </div>
   );
 }

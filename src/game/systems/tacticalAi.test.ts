@@ -1,15 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
-  aiTakeTurn,
-  aiSkillForDifficulty,
-  unitRole,
-  pickAiTarget,
-  pickAdjacentTarget,
-  tileValueFor,
-  bestStepToward,
-  bandRepositionStep,
-  hexDistance,
-} from './tactical';
+  tileValueFor, bestStepToward, hexDistance } from './tactical';
+import { aiTakeTurn, aiSkillForDifficulty, unitRole, pickAiTarget, pickAdjacentTarget, bandRepositionStep } from './tacticalAi';
 import { mkOfficer, mkUnit, mkBattle, mkTiles, officerMap, seededRng } from '../../test/factories';
 
 describe('aiSkillForDifficulty', () => {

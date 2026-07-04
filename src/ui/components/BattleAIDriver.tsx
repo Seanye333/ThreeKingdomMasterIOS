@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { aiTakeTurn, aiSkillForDifficulty } from '../../game/systems/tactical';
+import { aiTakeTurn, aiSkillForDifficulty } from '../../game/systems/tacticalAi';
 import { useGameStore } from '../../game/state/store';
 import { SIGNATURE_FLAVOR } from '../screens/TacticalBattleScreen3D';
 

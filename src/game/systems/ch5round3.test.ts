@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { STRATAGEM_DEFS, DEFENSIVE_SCHEMES, applicableStratagems } from '../data/stratagems2';
 import { resolveDuel } from './duel';
 import { resolveBattle, type BattleSide } from './combat';
-import { aiTakeTurn } from './tactical';
+import { aiTakeTurn } from './tacticalAi';
 import { mkOfficer, mkUnit, mkBattle, mkTiles, officerMap, seededRng } from '../../test/factories';
 import type { Officer, City } from '../types';
 

@@ -1,4 +1,4 @@
-import { Suspense, createContext, useEffect, useMemo, useRef, useState , useLayoutEffect } from 'react';
+import { Suspense, createContext, useEffect, useMemo, useRef, useState  } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Html, Line, OrbitControls } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
@@ -6,8 +6,8 @@ import { RENDER_HI } from '../renderQuality';
 import { getTerritoryCanvas, getTerritorySignature, renderTerritorySnapshot } from './territoryOverlay';
 import { useReplayStore } from './replayHistory';
 import { setMapFocusHandler, requestMapFocus } from './mapFocusBus';
-import { positionAlongRoute, terrainRoute, generateTerritories } from '../../game/data/territories';
-import { geoToPixel, battleGroundAt, MAP_W as PX_W, MAP_H as PX_H, WORLD_SCALE, HEX_R as GEO_HEX_R, hexAt as geoHexAt, hexCenter as geoHexCenter, HEX_ROW_SPACING as GEO_HEX_ROW, terrainMarchCost } from '../../game/data/geography';
+import { positionAlongRoute, terrainRoute } from '../../game/data/territories';
+import { geoToPixel, battleGroundAt, MAP_W as PX_W, MAP_H as PX_H, WORLD_SCALE, hexAt as geoHexAt, hexCenter as geoHexCenter, HEX_ROW_SPACING as GEO_HEX_ROW, terrainMarchCost } from '../../game/data/geography';
 import { getEmbassyTarget } from '../../game/systems/foreignRealm';
 import { cityPixel, cityPos } from '../../game/data/cityGeo';
 import { marchDurationFor } from '../../game/data/cities';
@@ -17,8 +17,8 @@ import * as THREE from 'three';
 import { useGameStore } from '../../game/state/store';
 import { PROVINCE_BY_CITY } from '../../game/data';
 import { citySize } from '../../game/systems/citySize';
-import type { Army, City, Force, HexCoord, Port, Season } from '../../game/types';
-import { FACILITY_DEFS, isHostilePermitted } from '../../game/types';
+import type { City, Force, HexCoord, Port, Season } from '../../game/types';
+import { isHostilePermitted } from '../../game/types';
 // The battle diorama reuses the real battle scene (embedded mode) + its hex
 // coordinate helper, so the fight on the world map IS the fight.
 import { BattleScene, BattleCinematics, hexWorld as battleHexWorld, FX_DURATION, SIGNATURE_FLAVOR } from '../screens/TacticalBattleScreen3D';
@@ -41,21 +41,24 @@ import type { WeatherKind } from '../../game/systems/weather';
 import { LocatorMap } from './LocatorMap';
 import { ObjectivePanel } from './ObjectivePanel';
 import { computeDayEncounters, marchPositionAtDay } from '../../game/systems/dayEncounters';
-import { supplyPath, seasonStampOf } from '../../game/systems/hexPaint';
 import { PortPanel } from './PortPanel';
 import { FortPanel } from './FortPanel';
 import { TribePanel } from './TribePanel';
-import { TRIBES } from '../../game/data/tribes';
 import { SitePanel } from './SitePanel';
 import { ScenicPanel } from './ScenicPanel';
-import { SCENIC_SITES } from '../../game/data/scenicSites';
 import { BuildStockadePicker } from './BuildStockadePicker';
 import { useT, useLanguage, pickName } from '../i18n';
 import { IS_MOBILE, PIXEL_TO_WORLD, MAP_W, MAP_D, MARKER_SCALE, ARMY_TOKEN_SCALE, EMPTY_HEX_PAINT, EMPTY_TERRITORY_OWNERSHIP, pxToWorld, isLandPx, landSDF, distToPolyline, RIVERS, LAKES, valueNoise, sampleTerrain, sampleTerrainHeight, cityElevation } from './map3d/shared';
-import { BattlePulseRing3D, computeBeaconAlerts, QueuedBattles3D, DayEncounterMarks3D, FieldBattleMarks3D, FieldClashMelee3D, IgnitionDust3D, BeaconAlerts3D, BurningCities3D, DepartureFlourish3D, ConquestFlourish3D, LossFlourish3D, EspionageAgents3D } from './map3d/WorldMarks3D';
+import { computeBeaconAlerts, QueuedBattles3D, DayEncounterMarks3D, FieldBattleMarks3D, FieldClashMelee3D, IgnitionDust3D, BeaconAlerts3D, SiegeRings3D, BurningCities3D, DepartureFlourish3D, ConquestFlourish3D, LossFlourish3D, EspionageAgents3D } from './map3d/WorldMarks3D';
 import { Ocean, Lakes3D, RiverRibbons, SnowBlanket, Forest3D, Farmland3D, Villages3D, GeoLabels3D, TradeRouteLines3D, RainParticles, SnowParticles } from './map3d/NatureLayers3D';
 import { MarchingArmies } from './map3d/Armies3D';
 import { City3D } from './map3d/Cities3D';
+import { HexWorldTerrain, warmHexWorldTiles, HEXW_R } from './map3d/HexWorld3D';
+import { IntentLayer, DiplomacyLines3D } from './map3d/Intent3D';
+import { SupplyLines3D, SupplyCorridor3D } from './map3d/Supply3D';
+import { Forts3D, Ports3D } from './map3d/Strongholds3D';
+import { Tribes3D, WildSites3D, ScenicSites3D } from './map3d/WildSites3D';
+export { warmHexWorldTiles } from './map3d/HexWorld3D';
 // Preserve this module's public surface — computeBeaconAlerts was exported from here.
 export { computeBeaconAlerts };
 
@@ -841,79 +844,6 @@ function EnvoyRider({ route, t, color, embassy }: { route: Array<{ x: number; y:
   );
 }
 
-/* ─── 糧道 — the supply web ──────────────────────────────────────────────
-   Overlay mode 糧道: gold supply lines trace every adjacent pair of player
-   cities CONNECTED to the capital (BFS over owned adjacency); an owned city
-   that cannot reach the capital through friendly territory is cut off —
-   marked with a pulsing red ring and a ⚠斷補 chip. Information layer only
-   (no gameplay penalty yet), but it answers "can my front be fed?" at a
-   glance before a campaign.*/
-function SupplyLines3D() {
-  const cities = useGameStore((s) => s.cities);
-  const playerForceId = useGameStore((s) => s.playerForceId);
-  const forces = useGameStore((s) => s.forces);
-  const net = useMemo(() => {
-    if (!playerForceId) return null;
-    const capitalId = forces[playerForceId]?.capitalCityId;
-    const owned = new Set(Object.values(cities).filter((c) => c.ownerForceId === playerForceId).map((c) => c.id));
-    if (!capitalId || !owned.has(capitalId)) return { connected: new Set<string>(), owned, edges: [] as Array<[string, string]>, cut: [...owned] };
-    const connected = new Set<string>([capitalId]);
-    const queue = [capitalId];
-    while (queue.length) {
-      const id = queue.pop()!;
-      for (const adj of cities[id]?.adjacentCityIds ?? []) {
-        if (owned.has(adj) && !connected.has(adj)) { connected.add(adj); queue.push(adj); }
-      }
-    }
-    const edges: Array<[string, string]> = [];
-    for (const id of connected) {
-      for (const adj of cities[id]?.adjacentCityIds ?? []) {
-        if (connected.has(adj) && id < adj) edges.push([id, adj]);
-      }
-    }
-    const cut = [...owned].filter((id) => !connected.has(id));
-    return { connected, owned, edges, cut };
-  }, [cities, forces, playerForceId]);
-  if (!net) return null;
-  return (
-    <group>
-      {net.edges.map(([a, b]) => {
-        const ca = cities[a], cb = cities[b];
-        if (!ca || !cb) return null;
-        const [ax, az] = pxToWorld(...cityPixel(ca.id, ca.coords.x, ca.coords.y));
-        const [bx, bz] = pxToWorld(...cityPixel(cb.id, cb.coords.x, cb.coords.y));
-        const mx = (ax + bx) / 2, mz = (az + bz) / 2;
-        const len = Math.hypot(bx - ax, bz - az);
-        const y = Math.max(sampleTerrainHeight(ax, az), sampleTerrainHeight(bx, bz), sampleTerrainHeight(mx, mz)) + 0.16;
-        return (
-          <mesh key={`${a}-${b}`} position={[mx, y, mz]} rotation={[0, Math.atan2(-(bz - az), bx - ax), 0]}>
-            <boxGeometry args={[len, 0.025, 0.06]} />
-            <meshBasicMaterial color="#e8c060" transparent opacity={0.75} depthWrite={false} />
-          </mesh>
-        );
-      })}
-      {net.cut.map((id) => {
-        const c = cities[id];
-        if (!c) return null;
-        const [wx, wz] = pxToWorld(...cityPixel(c.id, c.coords.x, c.coords.y));
-        const y = cityElevation(wx, wz);
-        return (
-          <group key={`cut-${id}`}>
-            <BattlePulseRing3D wx={wx} y={y + 0.05} wz={wz} color="#e0552a" phase={0.2} />
-            <Html position={[wx, y + 1.0, wz]} center distanceFactor={9} zIndexRange={[40, 30]} style={{ pointerEvents: 'none' }}>
-              <div style={{
-                background: 'rgba(40,14,8,0.9)', border: '1px solid #e0552a', borderRadius: 'var(--tkm-radius-xs)',
-                padding: '1px 7px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px',
-                color: '#f0b0a0', whiteSpace: 'nowrap', letterSpacing: '1px',
-              }}>⚠ 斷補 — 不通都城</div>
-            </Html>
-          </group>
-        );
-      })}
-    </group>
-  );
-}
-
 /** 城防一目了然 — a city's BUILT perimeter defences (buildSlots) show as tiny
  *  gold watch-posts around its token at their true compass positions, so the
  *  world map reads which cities are fortified and on which approaches. */
@@ -1124,286 +1054,6 @@ const WEATHER_PRESETS: Record<WeatherKind, WeatherPreset> = {
   wind:    { particles: 'none' },
   drought: { particles: 'none' },
 };
-
-/* ─── Independent ports (RTK 14-style) ─────────────────────────────
- *  Placed at real (lon, lat). Owner color independent of any city.
- *  Sea routes drawn as faint blue lines connecting linked ports. */
-/* ─── Forts (砦/壘) — small wooden military strongpoints ─────────── */
-function Forts3D({ onFortClick, hideNearPx }: {
-  onFortClick: (fortId: string) => void;
-  hideNearPx?: { x: number; y: number } | null;
-}) {
-  const forts = useGameStore((s) => s.forts);
-  const forces = useGameStore((s) => s.forces);
-  const playerForceId = useGameStore((s) => s.playerForceId);
-  const lang = useLanguage();
-  return (
-    <group>
-      {Object.values(forts).map((fort) => {
-        const color = fort.ownerForceId ? (forces[fort.ownerForceId]?.color ?? '#5a4530') : '#5a4530';
-        const fac = fort.facility ? FACILITY_DEFS[fort.facility] : null;
-        const [fpx, fpy] = geoToPixel(fort.coords.lon, fort.coords.lat);
-        // Hidden under the battle diorama (in-range facilities fight ON it).
-        if (hideNearPx && Math.hypot(fpx - hideNearPx.x, fpy - hideNearPx.y) < 42) return null;
-        const [wx, wz] = pxToWorld(fpx, fpy);
-        const wy = sampleTerrainHeight(wx, wz) + 0.04;
-        // Scale grows with level: Lv1 ×0.5, Lv2 ×0.62, Lv3 ×0.75
-        const levelMul = 0.50 + 0.125 * ((fort.level ?? 1) - 1);
-        const s = PIXEL_TO_WORLD * 50 * levelMul;
-        const hpPct = Math.max(0, Math.min(1, fort.hp / fort.maxHp));
-        return (
-          <group key={fort.id} position={[wx, wy, wz]} scale={s}>
-            {/* Wooden palisade square base — also the click target */}
-            <mesh
-              position={[0, 0.15, 0]}
-              castShadow receiveShadow
-              onClick={(e) => { e.stopPropagation(); onFortClick(fort.id); }}
-              onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}
-              onPointerOut={() => { document.body.style.cursor = ''; }}
-            >
-              <boxGeometry args={[0.5, 0.30, 0.5]} />
-              <meshStandardMaterial color="#5a4530" roughness={0.95} />
-            </mesh>
-            {/* Central watchtower */}
-            <mesh position={[0, 0.50, 0]} castShadow>
-              <boxGeometry args={[0.20, 0.40, 0.20]} />
-              <meshStandardMaterial color={color} roughness={0.75} />
-            </mesh>
-            {/* Pyramidal roof */}
-            <mesh position={[0, 0.75, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
-              <coneGeometry args={[0.18, 0.20, 4]} />
-              <meshStandardMaterial color="#3a3a4a" roughness={0.85} />
-            </mesh>
-            {/* Banner pole */}
-            <mesh position={[0.20, 0.50, 0]} castShadow>
-              <cylinderGeometry args={[0.012, 0.012, 0.55, 4]} />
-              <meshStandardMaterial color="#1a1410" />
-            </mesh>
-            <mesh position={[0.30, 0.65, 0]} castShadow>
-              <planeGeometry args={[0.16, 0.10]} />
-              <meshStandardMaterial color={color} side={THREE.DoubleSide} />
-            </mesh>
-            {/* 施設 accent + interdiction range ring. The ring radius is the
-                facility's range in map-pixels, undone through the group scale so
-                it reads at true world size. Own facilities ring brightest. */}
-            {fac && (
-              <mesh position={[0, 0.96, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
-                <coneGeometry args={[0.13, 0.26, fort.facility === 'catapult' ? 3 : 4]} />
-                <meshStandardMaterial color={fac.color} emissive={fac.color} emissiveIntensity={0.25} roughness={0.6} />
-              </mesh>
-            )}
-            {fac && fac.range > 0 && (
-              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
-                <ringGeometry args={[fac.range / (50 * levelMul) - 0.06, fac.range / (50 * levelMul), 48]} />
-                <meshBasicMaterial
-                  color={fac.color}
-                  transparent
-                  opacity={fort.ownerForceId === playerForceId ? 0.5 : 0.22}
-                  side={THREE.DoubleSide}
-                />
-              </mesh>
-            )}
-            {/* Label + HP bar */}
-            <Html position={[0, 1.10, 0]} center distanceFactor={10} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
-              <div style={{
-                fontFamily: 'var(--tkm-font-body)',
-                fontSize: '10px',
-                color: '#f0e8d0',
-                background: 'rgba(20, 14, 8, 0.78)',
-                border: `1px solid ${color}`,
-                padding: '1px 5px',
-                whiteSpace: 'nowrap',
-                textAlign: 'center',
-              }}>
-                <div>⚔ {pickName(fort.name, lang)} <span style={{ color: '#d4a84a' }}>{'★'.repeat(fort.level ?? 1)}</span></div>
-                <div style={{ height: 2, marginTop: 2, background: '#1a1410' }}>
-                  <div style={{
-                    height: '100%',
-                    width: `${Math.round(hpPct * 100)}%`,
-                    background: hpPct > 0.5 ? '#7ed68a' : '#b8442e',
-                  }} />
-                </div>
-              </div>
-            </Html>
-          </group>
-        );
-      })}
-    </group>
-  );
-}
-
-function Ports3D({ onPortClick }: { onPortClick: (portId: string) => void }) {
-  const ports = useGameStore((s) => s.ports);
-  const forces = useGameStore((s) => s.forces);
-  const portList = useMemo(() => Object.values(ports), [ports]);
-
-  // Sea routes geometry (one per connection, dedup'd)
-  const routeGeoms = useMemo(() => {
-    const seen = new Set<string>();
-    const list: THREE.BufferGeometry[] = [];
-    for (const p of portList) {
-      for (const otherId of p.connectedPortIds) {
-        const a = p.id < otherId ? p.id : otherId;
-        const b = p.id < otherId ? otherId : p.id;
-        const key = `${a}|${b}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        const other = ports[otherId];
-        if (!other) continue;
-        const [fx, fz] = pxToWorld(...geoToPixel(p.coords.lon, p.coords.lat));
-        const [tx, tz] = pxToWorld(...geoToPixel(other.coords.lon, other.coords.lat));
-        list.push(new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(fx, 0.02, fz),
-          new THREE.Vector3(tx, 0.02, tz),
-        ]));
-      }
-    }
-    return list;
-  }, [portList, ports]);
-
-  return (
-    <group>
-      {/* Sea-route lines — pale blue dashed-look */}
-      {routeGeoms.map((g, i) => (
-        <line key={`route-${i}`}>
-          <primitive object={g} attach="geometry" />
-          <lineBasicMaterial color="#5a9bc8" transparent opacity={0.45} />
-        </line>
-      ))}
-      {/* Each port as a small dock structure */}
-      {portList.map((p) => {
-        const color = p.ownerForceId ? (forces[p.ownerForceId]?.color ?? '#5a4530') : '#5a4530';
-        return <Port3D key={p.id} port={p} color={color} onClick={() => onPortClick(p.id)} />;
-      })}
-    </group>
-  );
-}
-
-function Port3D({ port, color, onClick }: {
-  port: import('../../game/types').Port;
-  color: string;
-  onClick: () => void;
-}) {
-  const lang = useLanguage();
-  const [wx, wz] = pxToWorld(...geoToPixel(port.coords.lon, port.coords.lat));
-  // Scale to match enlarged world
-  const s = PIXEL_TO_WORLD * 50 * 0.6;
-  const hpPct = Math.max(0, Math.min(1, port.hp / port.maxHp));
-  return (
-    <group position={[wx, 0, wz]} scale={s}>
-      {/* Stone quay — main slab — click target */}
-      <mesh
-        position={[0, 0.05, 0]}
-        castShadow receiveShadow
-        onClick={(e) => { e.stopPropagation(); onClick(); }}
-        onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}
-        onPointerOut={() => { document.body.style.cursor = ''; }}
-      >
-        <boxGeometry args={[0.6, 0.08, 0.25]} />
-        <meshStandardMaterial color="#7a6750" roughness={0.92} />
-      </mesh>
-      {/* Wooden jetty running out over the water (L-shape) on stilts */}
-      <mesh position={[-0.10, 0.045, 0.32]} castShadow receiveShadow>
-        <boxGeometry args={[0.14, 0.035, 0.45]} />
-        <meshStandardMaterial color="#6b5238" roughness={0.9} />
-      </mesh>
-      {[0.16, 0.34, 0.50].map((dz, i) => (
-        <mesh key={i} position={[-0.10, -0.02, dz]} castShadow>
-          <cylinderGeometry args={[0.012, 0.012, 0.12, 4]} />
-          <meshStandardMaterial color="#4a3826" roughness={0.95} />
-        </mesh>
-      ))}
-      {/* Warehouse hut on the shore end */}
-      <mesh position={[0.18, 0.135, -0.04]} castShadow receiveShadow>
-        <boxGeometry args={[0.16, 0.11, 0.13]} />
-        <meshStandardMaterial color="#8a6a4a" roughness={0.85} />
-      </mesh>
-      <mesh position={[0.18, 0.215, -0.04]} rotation={[0, Math.PI / 4, 0]} castShadow>
-        <coneGeometry args={[0.125, 0.09, 4]} />
-        <meshStandardMaterial color="#3a3a4a" roughness={0.8} />
-      </mesh>
-      {/* Beacon — pole with a glowing brazier at the jetty head */}
-      <mesh position={[-0.10, 0.16, 0.52]} castShadow>
-        <cylinderGeometry args={[0.010, 0.013, 0.24, 4]} />
-        <meshStandardMaterial color="#1a1410" />
-      </mesh>
-      <mesh position={[-0.10, 0.30, 0.52]}>
-        <sphereGeometry args={[0.030, 8, 6]} />
-        <meshStandardMaterial color="#ffb238" emissive="#ff8c1a" emissiveIntensity={1.6} />
-      </mesh>
-      {/* Breakwater — three stone blocks arcing off the quay */}
-      {[[-0.42, 0.30], [-0.52, 0.16], [-0.56, 0.00]].map(([bx, bz], i) => (
-        <mesh key={i} position={[bx, 0.015, bz]} rotation={[0, i * 0.5, 0]} castShadow>
-          <boxGeometry args={[0.14, 0.07, 0.09]} />
-          <meshStandardMaterial color="#6e6354" roughness={0.96} />
-        </mesh>
-      ))}
-      {/* Owner banner pole + flag */}
-      <mesh position={[0.28, 0.35, 0]} castShadow>
-        <cylinderGeometry args={[0.015, 0.015, 0.55, 4]} />
-        <meshStandardMaterial color="#1a1410" />
-      </mesh>
-      <mesh position={[0.40, 0.50, 0]} castShadow>
-        <planeGeometry args={[0.22, 0.15]} />
-        <meshStandardMaterial color={color} side={THREE.DoubleSide} />
-      </mesh>
-      {/* War junk moored at the jetty — hull, raised stern, batten sail */}
-      <group position={[-0.30, 0.06, 0.42]} rotation={[0, 0.35, 0]}>
-        <mesh position={[0, 0.04, 0]} castShadow>
-          <boxGeometry args={[0.34, 0.07, 0.11]} />
-          <meshStandardMaterial color="#5a4530" roughness={0.85} />
-        </mesh>
-        <mesh position={[-0.145, 0.095, 0]} castShadow>
-          <boxGeometry args={[0.06, 0.05, 0.10]} />
-          <meshStandardMaterial color="#6b5238" roughness={0.85} />
-        </mesh>
-        <mesh position={[0.02, 0.22, 0]} castShadow>
-          <cylinderGeometry args={[0.008, 0.008, 0.30, 4]} />
-          <meshStandardMaterial color="#3a2818" />
-        </mesh>
-        <mesh position={[0.02, 0.24, 0.015]} rotation={[0, 0, -0.08]}>
-          <planeGeometry args={[0.16, 0.20]} />
-          <meshStandardMaterial color="#c8b078" roughness={0.9} side={THREE.DoubleSide} />
-        </mesh>
-        {/* sail battens */}
-        {[-0.06, 0, 0.06].map((dy, i) => (
-          <mesh key={i} position={[0.02, 0.24 + dy, 0.018]} rotation={[0, 0, -0.08]}>
-            <boxGeometry args={[0.165, 0.006, 0.004]} />
-            <meshStandardMaterial color="#7a5c38" />
-          </mesh>
-        ))}
-      </group>
-      {/* Second, smaller sampan */}
-      <mesh position={[0.10, 0.075, 0.50]} rotation={[0, -0.4, 0]} castShadow>
-        <boxGeometry args={[0.18, 0.05, 0.07]} />
-        <meshStandardMaterial color="#6b5238" roughness={0.88} />
-      </mesh>
-      {/* Label + HP bar — drei Html */}
-      <Html position={[0, 0.85, 0]} center distanceFactor={9} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
-        <div style={{
-          fontFamily: 'var(--tkm-font-body)',
-          fontSize: '11px',
-          color: '#f0e8d0',
-          background: 'rgba(20, 14, 8, 0.78)',
-          border: `1px solid ${color}`,
-          padding: '1px 5px',
-          whiteSpace: 'nowrap',
-          textAlign: 'center',
-          minWidth: 40,
-        }}>
-          <div>⚓ {pickName(port.name, lang)}</div>
-          <div style={{ height: 2, marginTop: 2, background: '#1a1410' }}>
-            <div style={{
-              height: '100%',
-              width: `${Math.round(hpPct * 100)}%`,
-              background: hpPct > 0.5 ? '#7ed68a' : '#b8442e',
-            }} />
-          </div>
-        </div>
-      </Html>
-    </group>
-  );
-}
 
 /* ─── 北疆长城 — Qin/Han Great Wall draped along the northern frontier ─
  *  A stone rampart following the Yinshan/Yan ranges from the Hexi west end
@@ -1976,205 +1626,6 @@ function Birds3D() {
   );
 }
 
-/* ─── 兵鋒脈動 — one ripple ring expanding off a city about to be hit ──── */
-function ThreatPulse({ pos }: { pos: THREE.Vector3 }) {
-  const ref = useRef<THREE.Mesh>(null);
-  const matRef = useRef<THREE.MeshBasicMaterial>(null);
-  useFrame(({ clock }) => {
-    const t = (clock.elapsedTime % 1.5) / 1.5;     // 0→1 ripple, then resets
-    const s = 0.5 + t * 1.7;
-    if (ref.current) ref.current.scale.set(s, s, s);
-    if (matRef.current) matRef.current.opacity = (1 - t) * 0.55;
-  });
-  return (
-    <mesh ref={ref} position={pos} rotation={[-Math.PI / 2, 0, 0]}>
-      <ringGeometry args={[0.5, 0.64, 44]} />
-      <meshBasicMaterial ref={matRef} color="#ff4d3a" transparent opacity={0.55}
-        side={THREE.DoubleSide} depthWrite={false} toneMapped={false} />
-    </mesh>
-  );
-}
-
-/* ─── 兵鋒 — the strategic-intent layer (戰雲 overlay) ──────────────────
-   Turns the map into a command board: every marching column draws a flowing
-   dashed arrow from where it is now to the city it's aiming at, coloured by
-   its force, thicker the bigger the host. Columns aimed at YOUR cities glow
-   red and the target city pulses with a ripple ring, so an incoming storm is
-   impossible to miss. Fog still hides hostile columns you can't actually see. */
-function IntentLayer({ cities, forces, armies, playerForceId, fog }: {
-  cities: Record<string, City>;
-  forces: Record<string, Force>;
-  armies: Record<string, Army>;
-  playerForceId: string | null;
-  fog: { isVisiblePx: (x: number, y: number) => boolean } | null;
-}) {
-  const { arrows, pulses } = useMemo(() => {
-    const arrows: Array<{ key: string; pts: THREE.Vector3[]; head: THREE.Vector3; dir: THREE.Vector3; color: string; width: number; danger: boolean }> = [];
-    const pulseMap = new Map<string, THREE.Vector3>();
-    for (const a of Object.values(armies)) {
-      if (a.holding) continue;
-      const tgt = cities[a.targetCityId];
-      if (!tgt) continue;                                   // field marches have no city
-      // 迷霧 — hostile columns out of sight don't betray their heading.
-      if (fog && a.forceId !== playerForceId && !fog.isVisiblePx(a.x, a.y)) continue;
-      const [tpx, tpy] = cityPixel(tgt.id, tgt.coords.x, tgt.coords.y);
-      const route = terrainRoute(a.x, a.y, tpx, tpy);
-      if (route.length < 2) continue;
-      const pts = route.map((p) => {
-        const [wx, wz] = pxToWorld(p.x, p.y);
-        return new THREE.Vector3(wx, sampleTerrainHeight(wx, wz) + 0.2, wz);
-      });
-      const head = pts[pts.length - 1];
-      const dir = head.clone().sub(pts[pts.length - 2]).normalize();
-      const danger = !!playerForceId && tgt.ownerForceId === playerForceId && a.forceId !== playerForceId;
-      arrows.push({
-        key: a.id, pts, head, dir,
-        color: forces[a.forceId]?.color ?? '#bcbcbc',
-        width: 1.6 + Math.min(4, a.troops / 3500),
-        danger,
-      });
-      if (danger && !pulseMap.has(tgt.id)) {
-        const [cwx, cwz] = pxToWorld(tpx, tpy);
-        pulseMap.set(tgt.id, new THREE.Vector3(cwx, cityElevation(cwx, cwz) + 0.06, cwz));
-      }
-    }
-    return { arrows, pulses: Array.from(pulseMap.entries()) };
-  }, [armies, cities, forces, fog, playerForceId]);
-
-  // Animate the dashes so each arrow visibly *flows* toward its target.
-  const lineRefs = useRef<Array<{ material: { dashOffset: number } } | null>>([]);
-  useFrame((_, delta) => {
-    for (const m of lineRefs.current) {
-      if (m && m.material) m.material.dashOffset -= delta * 0.8;
-    }
-  });
-
-  const up = useMemo(() => new THREE.Vector3(0, 1, 0), []);
-  return (
-    <group renderOrder={4}>
-      {arrows.map((ar, i) => (
-        <group key={ar.key}>
-          {/* soft under-glow so danger arrows read even over busy terrain */}
-          <Line points={ar.pts} color={ar.danger ? '#ff3a28' : ar.color}
-            lineWidth={ar.width + (ar.danger ? 2.6 : 1.4)} transparent opacity={0.16} depthTest={false} />
-          <Line
-            ref={(o) => { lineRefs.current[i] = o as unknown as { material: { dashOffset: number } } | null; }}
-            points={ar.pts}
-            color={ar.danger ? '#ff6a4d' : ar.color}
-            lineWidth={ar.width}
-            dashed dashSize={0.5} gapSize={0.32}
-            transparent opacity={0.92} depthTest={false}
-          />
-          <mesh position={ar.head} quaternion={new THREE.Quaternion().setFromUnitVectors(up, ar.dir)}>
-            <coneGeometry args={[0.14 + ar.width * 0.03, 0.42 + ar.width * 0.06, 8]} />
-            <meshBasicMaterial color={ar.danger ? '#ff6a4d' : ar.color} transparent opacity={0.95} toneMapped={false} depthTest={false} />
-          </mesh>
-        </group>
-      ))}
-      {pulses.map(([id, pos]) => <ThreatPulse key={`pulse-${id}`} pos={pos} />)}
-    </group>
-  );
-}
-
-/* ─── 邦交關係線 — the web of pacts and grudges, capital to capital ────
-   The 邦交 overlay arcs every meaningful relation between living forces:
-   gold solid = alliance, green dashed = non-aggression pact, red = open
-   hostility (neutral status soured to score ≤ -40). Plain neutrals stay
-   undrawn or the map turns to spaghetti. Lines involving the player ride
-   slightly thicker; the midpoint chip carries the relation score. */
-function DiplomacyLines3D({ cities, forces }: {
-  cities: Record<string, City>;
-  forces: Record<string, Force>;
-}) {
-  const diplomacy = useGameStore((s) => s.diplomacy);
-  const playerForceId = useGameStore((s) => s.playerForceId);
-
-  const links = useMemo(() => {
-    // A force is alive if it still holds a city; anchor at its capital,
-    // falling back to any city it holds (capitals do fall).
-    const holdings = new Map<string, City[]>();
-    for (const c of Object.values(cities)) {
-      if (!c.ownerForceId) continue;
-      if (!holdings.has(c.ownerForceId)) holdings.set(c.ownerForceId, []);
-      holdings.get(c.ownerForceId)!.push(c);
-    }
-    const anchorOf = (forceId: string): City | null => {
-      const owned = holdings.get(forceId);
-      if (!owned || owned.length === 0) return null;
-      const cap = forces[forceId] ? cities[forces[forceId].capitalCityId] : null;
-      return cap && cap.ownerForceId === forceId ? cap : owned[0];
-    };
-    const out: Array<{
-      pts: THREE.Vector3[];
-      mid: THREE.Vector3;
-      kind: 'allied' | 'pact' | 'hostile';
-      score: number;
-      mine: boolean;
-    }> = [];
-    for (const rel of Object.values(diplomacy.relations)) {
-      const hostile = rel.status === 'neutral' && rel.score <= -40;
-      if (rel.status === 'neutral' && !hostile) continue;
-      const a = anchorOf(rel.forceA);
-      const b = anchorOf(rel.forceB);
-      if (!a || !b) continue;
-      const [ax, az] = pxToWorld(...cityPixel(a.id, a.coords.x, a.coords.y));
-      const [bx, bz] = pxToWorld(...cityPixel(b.id, b.coords.x, b.coords.y));
-      const ay = cityElevation(ax, az) + 0.25;
-      const by = cityElevation(bx, bz) + 0.25;
-      const dist = Math.hypot(bx - ax, bz - az);
-      const mid = new THREE.Vector3((ax + bx) / 2, Math.max(ay, by) + 0.7 + dist * 0.16, (az + bz) / 2);
-      const curve = new THREE.QuadraticBezierCurve3(
-        new THREE.Vector3(ax, ay, az), mid, new THREE.Vector3(bx, by, bz),
-      );
-      out.push({
-        pts: curve.getPoints(28),
-        mid,
-        kind: rel.status === 'allied' ? 'allied' : rel.status === 'non-aggression' ? 'pact' : 'hostile',
-        score: rel.score,
-        mine: rel.forceA === playerForceId || rel.forceB === playerForceId,
-      });
-    }
-    return out;
-  }, [diplomacy, cities, forces, playerForceId]);
-
-  const STYLE = {
-    allied:  { color: '#f0c060', zh: '盟' },
-    pact:    { color: '#9ed68a', zh: '約' },
-    hostile: { color: '#ff5040', zh: '仇' },
-  } as const;
-
-  return (
-    <group>
-      {links.map((l, i) => {
-        const st = STYLE[l.kind];
-        return (
-          <group key={i}>
-            <Line
-              points={l.pts}
-              color={st.color}
-              dashed={l.kind === 'pact'}
-              dashSize={0.4}
-              gapSize={0.22}
-              lineWidth={l.mine ? 2.2 : 1.3}
-              transparent
-              opacity={l.mine ? 0.95 : 0.65}
-            />
-            <Html position={l.mid} center distanceFactor={11} zIndexRange={[28, 18]} style={{ pointerEvents: 'none' }}>
-              <div style={{
-                background: 'rgba(20,14,8,0.88)', border: `1px solid ${st.color}`, borderRadius: 'var(--tkm-radius-xs)',
-                padding: '1px 6px', fontFamily: 'var(--tkm-font-body)', fontSize: 10,
-                color: st.color, whiteSpace: 'nowrap', letterSpacing: '1px',
-              }}>
-                {st.zh} {l.score > 0 ? `+${l.score}` : l.score}
-              </div>
-            </Html>
-          </group>
-        );
-      })}
-    </group>
-  );
-}
-
 /* ─── 事件地標 — the season's calamities and windfalls, on the map ─────
    The report scrolls past once; the land remembers. Each city the tick
    touched (饑荒/瘟疫/豐收/民變/襲擾) wears a single-character chip until
@@ -2520,429 +1971,6 @@ function Caravans3D({ cities }: { cities: Record<string, City> }) {
   );
 }
 
-/* ─── ⬡ 棋盤世界 — experimental hex-tile world terrain ──────────────────
-   The whole strategic map rendered as the same hex-prism quilt the battle
-   board and city hinterland use — one visual language from world to battle.
-   Each hex samples the REAL geography (battleGroundAt) for its kind and the
-   SAME height function the entities already stand on (sampleTerrainHeight),
-   so cities/armies/forts sit perfectly without touching any of them. Sea
-   hexes are skipped — the animated Ocean shows through. Toggleable; the
-   painted scroll map stays as the default/backup. */
-
-type HexWorldTile = { x: number; z: number; topY: number; kind: string; c: number; r: number };
-
-// P1 統一格網 — the quilt IS the canonical lattice (geography.ts): the
-// board you see is the board battles are cut from, and armies/cities sit
-// on its cell centres. ONE logical grid on every device (~12k cells).
-const HEXW_R = GEO_HEX_R * PIXEL_TO_WORLD;    // canonical radius in world units
-const HEXW_COL = 1.5 * HEXW_R;
-const HEXW_ROW = Math.sqrt(3) * HEXW_R;
-const HEXWORLD_COLOR: Record<string, string> = {
-  river: '#2c5882', lake: '#27607f', riverbank: '#8a8a5e',
-  mountain: '#6f5e4d', hill: '#7c7250', plain: '#5f7a42',
-};
-// Generated once per session — ~60k geography samples are far too slow per
-// render, and even one synchronous build hitches the first toggle. The cache
-// builds COLUMN-CHUNKED so the title screen's asset warmer can grind it out
-// during idle time before the player ever opens the map.
-let HEXWORLD_CACHE: HexWorldTile[] | null = null;
-const hexWarmPartial: HexWorldTile[] = [];
-let hexWarmCol = 0;
-function buildHexColumn(c: number, out: HexWorldTile[]): boolean {
-  const x = -MAP_W / 2 + c * HEXW_COL;
-  if (x > MAP_W / 2) return false;
-  for (let r = 0; ; r++) {
-    const z = -MAP_D / 2 + r * HEXW_ROW + (c & 1 ? HEXW_ROW / 2 : 0);
-    if (z > MAP_D / 2) break;
-    const px = (x + MAP_W / 2) / PIXEL_TO_WORLD;
-    const py = (z + MAP_D / 2) / PIXEL_TO_WORLD;
-    const kind = battleGroundAt(px, py);
-    if (kind === 'sea') continue; // let the living ocean show through
-    const water = kind === 'river' || kind === 'lake';
-    const topY = water ? 0.012 : Math.max(0.05, sampleTerrainHeight(x, z));
-    out.push({ x, z, topY, kind, c, r });
-  }
-  return true;
-}
-/** Build a slice of the hex world; true once the whole quilt is cached. */
-export function warmHexWorldTiles(cols = 10): boolean {
-  if (HEXWORLD_CACHE) return true;
-  for (let i = 0; i < cols; i++) {
-    if (!buildHexColumn(hexWarmCol, hexWarmPartial)) {
-      HEXWORLD_CACHE = hexWarmPartial;
-      return true;
-    }
-    hexWarmCol++;
-  }
-  return false;
-}
-function buildHexWorldTiles(): HexWorldTile[] {
-  while (!warmHexWorldTiles(64)) { /* finish synchronously if still cold */ }
-  return HEXWORLD_CACHE!;
-}
-
-/** The hex quilt as one InstancedMesh — matrices are written once (tiles never
- *  move), and ownership/season changes only rewrite the instanceColor buffer,
- *  so a conquest recolours ~22k prisms without touching the scene graph. */
-function HexQuilt({ tiles, colors }: { tiles: HexWorldTile[]; colors: string[] }) {
-  const meshRef = useRef<THREE.InstancedMesh>(null!);
-
-  useEffect(() => {
-    const mesh = meshRef.current;
-    if (!mesh) return;
-    const m = new THREE.Matrix4();
-    const q = new THREE.Quaternion();
-    // 手機減負 — flat discs lie ON the terrain instead of extruded prisms:
-    // 6× fewer triangles, or the fine lattice OOM-kills the WKWebView GPU
-    // process (iPhone context-loss lesson: heavy GPU features need their
-    // own mobile gate).
-    if (IS_MOBILE) q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2);
-    const pos = new THREE.Vector3();
-    const scl = new THREE.Vector3();
-    tiles.forEach((t, i) => {
-      if (IS_MOBILE) {
-        pos.set(t.x, t.topY + 0.012, t.z);
-        scl.set(HEXW_R * 0.995, HEXW_R * 0.995, 1);
-      } else {
-        pos.set(t.x, (t.topY - 0.3) / 2, t.z);
-        scl.set(HEXW_R * 0.995, t.topY + 0.3, HEXW_R * 0.995);
-      }
-      mesh.setMatrixAt(i, m.compose(pos, q, scl));
-    });
-    mesh.instanceMatrix.needsUpdate = true;
-    mesh.computeBoundingSphere();
-  }, [tiles]);
-
-  useEffect(() => {
-    const mesh = meshRef.current;
-    if (!mesh) return;
-    const c = new THREE.Color();
-    for (let i = 0; i < colors.length; i++) mesh.setColorAt(i, c.set(colors[i]));
-    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-  }, [colors]);
-
-  return (
-    <instancedMesh
-      ref={meshRef}
-      args={[undefined, undefined, Math.max(1, tiles.length)]}
-      receiveShadow
-      frustumCulled={false}
-    >
-      {/* thetaStart π/6 (cylinder) / 0 (circle) points the hex vertices
-          along ±x — the flat-top orientation our 1.5R/√3R column layout
-          tessellates with. Without it the hexes sit 30° off and leave
-          diagonal gaps. Mobile renders flat discs (see matrix setup). */}
-      {IS_MOBILE
-        ? <circleGeometry args={[1, 6]} />
-        : <cylinderGeometry args={[1, 1, 1, 6, 1, false, Math.PI / 6]} />}
-      <meshStandardMaterial roughness={0.93} metalness={0.02} />
-    </instancedMesh>
-  );
-}
-
-function HexWorldTerrain({ winter, cities, forces, territoryOwnership, hexPaint, fogCityIds, onGroundClick }: {
-  winter: boolean;
-  cities: Record<string, City>;
-  forces: Record<string, Force>;
-  territoryOwnership: Record<string, string | null>;
-  /** 塗色 — walked-cell paint overriding the nearest-city tint. */
-  hexPaint: Record<string, { f: string; t: number }>;
-  /** 戰爭迷霧 — when set, tiles seeded by an out-of-view city dim. */
-  fogCityIds?: Set<string> | null;
-  onGroundClick?: (px: number, py: number) => void;
-}) {
-  // 漸進鋪盤 — if the idle warmer hasn't finished the quilt, grind it in
-  // frame-sized chunks and reveal columns as they land (west→east sweep)
-  // instead of freezing the main thread for the whole 48k-cell build.
-  const [tiles, setTiles] = useState<HexWorldTile[]>(() => (warmHexWorldTiles(0), HEXWORLD_CACHE ?? []));
-  useEffect(() => {
-    if (HEXWORLD_CACHE) { setTiles(HEXWORLD_CACHE); return; }
-    let raf = 0;
-    let chunk = 0;
-    const grind = () => {
-      const done = warmHexWorldTiles(24);
-      chunk++;
-      if (done) setTiles(buildHexWorldTiles());
-      else {
-        if (chunk % 4 === 0) setTiles([...hexWarmPartial]); // reveal every ~96 cols
-        raf = requestAnimationFrame(grind);
-      }
-    };
-    raf = requestAnimationFrame(grind);
-    return () => cancelAnimationFrame(raf);
-  }, []);
-
-  // Shared (c,r) → tile-index lookup for neighbours, roads and hover.
-  const tileIndex = useMemo(() => {
-    const m = new Map<string, number>();
-    tiles.forEach((t, i) => m.set(`${t.c},${t.r}`, i));
-    return m;
-  }, [tiles]);
-
-  // 道路地塊 — walk every adjacent-city pair's REAL march route and stamp the
-  // hexes under it as road, so the network armies actually travel is the one
-  // you see paved into the quilt.
-  const roadTiles = useMemo(() => {
-    const set = new Set<number>();
-    const seen = new Set<string>();
-    const stepPx = (HEXW_ROW / PIXEL_TO_WORLD) * 0.5;
-    for (const a of Object.values(cities)) {
-      for (const adjId of a.adjacentCityIds ?? []) {
-        const b = cities[adjId];
-        if (!b) continue;
-        const key = a.id < adjId ? a.id + adjId : adjId + a.id;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        const pa = cityPos(a);
-        const pb = cityPos(b);
-        const route = terrainRoute(pa.x, pa.y, pb.x, pb.y);
-        for (let s = 0; s < route.length - 1; s++) {
-          const p0 = route[s], p1 = route[s + 1];
-          const steps = Math.max(1, Math.ceil(Math.hypot(p1.x - p0.x, p1.y - p0.y) / stepPx));
-          for (let k = 0; k <= steps; k++) {
-            const px = p0.x + (p1.x - p0.x) * (k / steps);
-            const py = p0.y + (p1.y - p0.y) * (k / steps);
-            const h = geoHexAt(px, py);
-            const i = tileIndex.get(`${h.col},${h.row}`);
-            if (i !== undefined) set.add(i);
-          }
-        }
-      }
-    }
-    return set;
-  }, [tiles, tileIndex, cities]);
-
-  // 領土歸屬 — each land hex takes its nearest territory centroid's owner
-  // (override ?? parent city's lord), the SAME resolution the painted
-  // territory layer uses, so both map styles always agree on borders.
-  const { baseOwner, tileCity } = useMemo(() => {
-    const seeds = generateTerritories(Object.values(cities)).map((t) => ({
-      x: t.coords.x,
-      y: t.coords.y,
-      owner: territoryOwnership[t.id] ?? cities[t.parentCityId]?.ownerForceId ?? null,
-      province: PROVINCE_BY_CITY[t.parentCityId] ?? null,
-      city: t.parentCityId,
-    }));
-    const owners: Array<string | null> = [];
-    const provinces: Array<string | null> = [];
-    const citySeeds: Array<string | null> = [];
-    for (const t of tiles) {
-      if (t.kind === 'river' || t.kind === 'lake') { owners.push(null); provinces.push(null); citySeeds.push(null); continue; }
-      const px = (t.x + MAP_W / 2) / PIXEL_TO_WORLD;
-      const py = (t.z + MAP_D / 2) / PIXEL_TO_WORLD;
-      let best: string | null = null;
-      let bestProv: string | null = null;
-      let bestCity: string | null = null;
-      let bestD = Infinity;
-      for (const s of seeds) {
-        const d = (s.x - px) * (s.x - px) + (s.y - py) * (s.y - py);
-        if (d < bestD) { bestD = d; best = s.owner; bestProv = s.province; bestCity = s.city; }
-      }
-      owners.push(best);
-      provinces.push(bestProv);
-      citySeeds.push(bestCity);
-    }
-    void provinces; // province seams retired with the flat realm wash
-    return { baseOwner: owners, tileCity: citySeeds };
-  }, [tiles, cities, territoryOwnership]);
-
-  // 塗色 — a walked cell wears the walker's colour (RTK-XIV trail). Split
-  // from the nearest-seed scan above so the LIVE day-flow painting (hexPaint
-  // changes every few ticks) only pays this cheap overlay pass, never the
-  // 48k×seeds ownership scan.
-  const tileOwner = useMemo(() => tiles.map((t, i) => {
-    if (t.kind === 'river' || t.kind === 'lake') return baseOwner[i];
-    const painted = hexPaint[`${t.c},${t.r}`];
-    return painted && forces[painted.f] ? painted.f : baseOwner[i];
-  }), [tiles, baseOwner, hexPaint, forces]);
-
-  // 州界 — province seams (decals sink into the prisms, so the quilt carves
-  // its own): a land tile whose neighbour belongs to a different province
-  // takes a subtle charcoal seam (realm borders win when both apply).
-  // 國界 — an owned hex bordering a DIFFERENT owner (or unowned wilderness)
-  // is a frontier tile: it gets a deeper, more saturated realm colour so the
-  // borders cut sharply. Sea/river neighbours don't count (coasts and rivers
-  // already outline themselves).
-  const tileBorder = useMemo(() => {
-    const isWater = (k: string) => k === 'river' || k === 'lake';
-    return tiles.map((t, i) => {
-      if (isWater(t.kind)) return false;
-      const own = tileOwner[i];
-      if (!own) return false;
-      // Flat-top hex neighbours; odd columns are shifted +half a row.
-      const nbs = t.c & 1
-        ? [[0, -1], [0, 1], [-1, 0], [1, 0], [-1, 1], [1, 1]]
-        : [[0, -1], [0, 1], [-1, 0], [1, 0], [-1, -1], [1, -1]];
-      for (const [dc, dr] of nbs) {
-        const j = tileIndex.get(`${t.c + dc},${t.r + dr}`);
-        if (j === undefined) continue;          // sea — no edge
-        if (isWater(tiles[j].kind)) continue;   // river — no edge
-        if (tileOwner[j] !== own) return true;
-      }
-      return false;
-    });
-  }, [tiles, tileIndex, tileOwner]);
-
-  // 前線餘燼 — cells walked THIS season by a force that isn't the ground's
-  // base owner: the active incursion corridor. Blended into the tile colour
-  // as a scorched ember cast, so「哪裡正在拉鋸」reads at a glance.
-  const dateNow = useGameStore((st) => st.date);
-  const tileEmber = useMemo(() => {
-    const nowStamp = seasonStampOf(dateNow.year, dateNow.season);
-    return tiles.map((t, i) => {
-      if (t.kind === 'river' || t.kind === 'lake') return false;
-      const painted = hexPaint[`${t.c},${t.r}`];
-      return !!painted && painted.t >= nowStamp && painted.f !== baseOwner[i];
-    });
-  }, [tiles, hexPaint, baseOwner, dateNow]);
-
-  // 國界墨線 — a crisp ink stroke along every edge where ownership flips
-  // (owner vs different owner / wilderness). One LineSegments for the whole
-  // realm map; rebuilt only when ownership actually changes.
-  const borderGeom = useMemo(() => {
-    const isWater = (k: string) => k === 'river' || k === 'lake';
-    const pts: number[] = [];
-    const HALF = HEXW_R * 0.49;   // side length = circumradius; slight inset
-    for (let i = 0; i < tiles.length; i++) {
-      const t = tiles[i];
-      if (isWater(t.kind)) continue;
-      const own = tileOwner[i];
-      const nbs = t.c & 1
-        ? [[0, -1], [0, 1], [-1, 0], [1, 0], [-1, 1], [1, 1]]
-        : [[0, -1], [0, 1], [-1, 0], [1, 0], [-1, -1], [1, -1]];
-      for (const [dc, dr] of nbs) {
-        const j = tileIndex.get(`${t.c + dc},${t.r + dr}`);
-        if (j === undefined || j <= i) continue;       // dedupe pairs
-        const n = tiles[j];
-        if (isWater(n.kind)) continue;
-        const other = tileOwner[j];
-        if (other === own || (!own && !other)) continue;
-        const mx = (t.x + n.x) / 2, mz = (t.z + n.z) / 2;
-        let dx = n.x - t.x, dz = n.z - t.z;
-        const len = Math.hypot(dx, dz) || 1;
-        dx /= len; dz /= len;
-        const y = Math.max(t.topY, n.topY) + 0.02;
-        pts.push(mx - dz * HALF, y, mz + dx * HALF, mx + dz * HALF, y, mz - dx * HALF);
-      }
-    }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
-    return g;
-  }, [tiles, tileIndex, tileOwner]);
-  useEffect(() => () => { borderGeom.dispose(); }, [borderGeom]);
-
-  // Per-tile colour — terrain base blended toward the owning force's colour
-  // (deeper on frontier tiles); seasonal: snow-dusted land in winter.
-  const colors = useMemo(() => tiles.map((t, i) => {
-    const water = t.kind === 'river' || t.kind === 'lake';
-    const ownerId = tileOwner[i];
-    const owner = ownerId ? (forces[ownerId]?.color ?? null) : null;
-    const border = tileBorder[i];
-    if (winter) {
-      const roadW = !water && roadTiles.has(i);
-      const snow = water ? '#bcd2dc' : roadW ? '#a89878' : t.kind === 'mountain' ? '#cfd4d8' : '#c9cfc3';
-      if (!owner || water || roadW) return snow; // packed dirt shows through the snow
-      const col = new THREE.Color(snow).lerp(new THREE.Color(owner), border ? 0.55 : 0.4);
-      if (border) col.offsetHSL(0, 0, -0.06);
-      if (tileEmber[i]) col.lerp(new THREE.Color('#8a3a1a'), 0.24);
-      return `#${col.getHexString()}`;
-    }
-    const road = !water && roadTiles.has(i);
-    const base = road ? '#9a8358' : (HEXWORLD_COLOR[t.kind] ?? HEXWORLD_COLOR.plain);
-    const col = new THREE.Color(base);
-    // 地塊質感 — match the painted map's PBR bake on the quilt: every land
-    // tile takes a mottle + relief shading off its north neighbour, and the
-    // high ranges a cool atmospheric cast.
-    if (!road && !water) {
-      const mottle = Math.abs(Math.sin(t.x * 9.1 + t.z * 4.7)) * 0.06 - 0.03; // 平涂:斑驳减半
-      const ni = tileIndex.get(`${t.c},${t.r - 1}`);
-      const northTop = ni !== undefined ? tiles[ni].topY : t.topY;
-      const shade = Math.max(-0.1, Math.min(0.1, (t.topY - northTop) * 0.6));
-      col.offsetHSL(0, 0, mottle + shade);
-      if (t.topY > 0.55) col.lerp(new THREE.Color('#8a98aa'), Math.min(0.26, (t.topY - 0.55) * 0.4));
-    }
-    if (owner && !water) {
-      // Roads take only a light realm wash so the network stays readable.
-      // ROTK-XIV 平涂 — a deep, even realm wash; terrain only ghosts through.
-      col.lerp(new THREE.Color(owner), road ? 0.18 : border ? 0.72 : 0.55);
-      if (border && !road) col.offsetHSL(0, 0.05, -0.08);
-    }
-    // 前線餘燼 — this season's incursion corridor smoulders warm.
-    if (tileEmber[i] && !water) col.lerp(new THREE.Color('#8a3a1a'), 0.3);
-    // 戰爭迷霧 — ground seeded by a city you can't see fades toward dusk.
-    if (fogCityIds && !water && tileCity[i] && !fogCityIds.has(tileCity[i]!)) col.offsetHSL(0, -0.12, -0.13);
-    return `#${col.getHexString()}`;
-  }), [tiles, winter, tileOwner, tileBorder, tileEmber, roadTiles, forces, fogCityIds, tileCity]);
-
-  // 地塊資訊 — hover (desktop) names the tile: terrain, road, owning realm.
-  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
-  const hoverTile = hoverIdx != null ? tiles[hoverIdx] : null;
-  const lang = useLanguage();
-  const t = useT();
-  const KIND_ZH: Record<string, string> = lang === 'en'
-    ? { plain: 'Plain', hill: 'Hills', mountain: 'Mountain', river: 'River', lake: 'Lake', riverbank: 'Riverbank' }
-    : { plain: '平原', hill: '丘陵', mountain: '山地', river: '大河', lake: '湖泊', riverbank: '河岸' };
-
-  return (
-    <group>
-      {/* Invisible click/hover-catcher — same click contract as MapTerrain. */}
-      <mesh
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, 0, 0]}
-        onClick={(e) => {
-          e.stopPropagation();
-          // Touch has no hover — a tap doubles as the tile inspector
-          // (auto-dismisses; doesn't interfere with march-to-cell orders).
-          if (IS_MOBILE) {
-            const hpt = geoHexAt((e.point.x + MAP_W / 2) / PIXEL_TO_WORLD, (e.point.z + MAP_D / 2) / PIXEL_TO_WORLD);
-            const c = hpt.col, r = hpt.row;
-            const i = tileIndex.get(`${c},${r}`) ?? null;
-            setHoverIdx(i);
-            if (i != null) window.setTimeout(() => setHoverIdx((cur) => (cur === i ? null : cur)), 2600);
-          }
-          if (!onGroundClick) return;
-          const px = (e.point.x + MAP_W / 2) / PIXEL_TO_WORLD;
-          const py = (e.point.z + MAP_D / 2) / PIXEL_TO_WORLD;
-          onGroundClick(px, py);
-        }}
-        onPointerMove={IS_MOBILE ? undefined : (e) => {
-          const hpt2 = geoHexAt((e.point.x + MAP_W / 2) / PIXEL_TO_WORLD, (e.point.z + MAP_D / 2) / PIXEL_TO_WORLD);
-          const c = hpt2.col, r = hpt2.row;
-          const i = tileIndex.get(`${c},${r}`) ?? null;
-          if (i !== hoverIdx) setHoverIdx(i);
-        }}
-        onPointerOut={IS_MOBILE ? undefined : () => setHoverIdx(null)}
-      >
-        <planeGeometry args={[MAP_W, MAP_D]} />
-        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
-      </mesh>
-      <HexQuilt tiles={tiles} colors={colors} />
-      {/* 國界墨線 — the realm outline reads at a glance, RTK-XIV style. */}
-      <lineSegments geometry={borderGeom} frustumCulled={false} raycast={() => null}>
-        <lineBasicMaterial color="#161009" transparent opacity={0.55} depthWrite={false} />
-      </lineSegments>
-      {hoverTile && (() => {
-        const ownerId = tileOwner[hoverIdx!];
-        const ownerForce = ownerId ? forces[ownerId] : null;
-        const ownerName = ownerForce ? pickName(ownerForce.name, lang) : null;
-        const road = roadTiles.has(hoverIdx!);
-        return (
-          <Html position={[hoverTile.x, hoverTile.topY + 0.35, hoverTile.z]} center distanceFactor={9} zIndexRange={[30, 20]} style={{ pointerEvents: 'none' }}>
-            <div style={{
-              background: 'rgba(20, 14, 8, 0.88)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius)',
-              padding: '2px 7px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px',
-              color: '#e8d9b0', whiteSpace: 'nowrap', letterSpacing: '0.5px',
-            }}>
-              {KIND_ZH[hoverTile.kind] ?? hoverTile.kind}{road ? t(' · 道', ' · Road') : ''}
-              {ownerName ? <span style={{ color: forces[ownerId!]?.color ?? '#c0a878' }}> · {ownerName}{t('領', '')}</span> : t(' · 無主之地', ' · Unclaimed')}
-            </div>
-          </Html>
-        );
-      })()}
-    </group>
-  );
-}
-
 /* ─── 橋樑 — timber bridges where a road crosses a river/lake. Each
  *  city-adjacency edge is sampled; a crossing run gets one bridge oriented
  *  along the road. ── */
@@ -3199,229 +2227,6 @@ function UniqueLandmarks3D({ cities }: { cities: Record<string, City> }) {
   );
 }
 
-/* ─── 異族部落 — frontier tribe homelands ─────────────────────────────
- * The Nanman jungles, Wuhuan steppe, Qiang highlands… each raid-source
- * tribe now sits as a 部落寨 (tent cluster + totem) just beyond the cities
- * it harries. Clicking opens the 征討/招撫 panel. */
-function Tribes3D({ onTribeClick }: { onTribeClick: (tribeId: string) => void }) {
-  const aggression = useGameStore((s) => s.tribeState.aggression);
-  const lang = useLanguage();
-  const sites = useMemo(() => TRIBES.map((tb) => {
-    const [px, py] = geoToPixel(tb.homeland.lon, tb.homeland.lat);
-    const [wx, wz] = pxToWorld(px, py);
-    return { id: tb.id, zh: pickName(tb.name, lang), color: tb.color, wx, wz };
-  }), [lang]);
-  const scale = PIXEL_TO_WORLD * 50 * 0.5 * MARKER_SCALE;
-  return (
-    <group>
-      {sites.map((s) => {
-        const y = sampleTerrainHeight(s.wx, s.wz);
-        const agg = aggression[s.id] ?? 0.15;
-        const restless = agg > 0.22;
-        return (
-          <group key={s.id} position={[s.wx, y, s.wz]} scale={scale}>
-            {/* Click target — a low ground disc */}
-            <mesh
-              position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}
-              onClick={(e) => { e.stopPropagation(); onTribeClick(s.id); }}
-              onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}
-              onPointerOut={() => { document.body.style.cursor = ''; }}
-            >
-              <circleGeometry args={[0.55, 20]} />
-              <meshBasicMaterial color={s.color} transparent opacity={0.32} />
-            </mesh>
-            {/* Three hide tents */}
-            {([[-0.28, 0.1], [0.26, -0.04], [0.02, 0.3]] as const).map(([tx, tz], i) => (
-              <group key={i} position={[tx, 0, tz]}>
-                <mesh position={[0, 0.16, 0]} castShadow>
-                  <coneGeometry args={[0.17, 0.34, 7]} />
-                  <meshStandardMaterial color={i === 1 ? '#8a7256' : '#766350'} roughness={0.92} />
-                </mesh>
-                {/* Tent-pole tips poking through the top */}
-                <mesh position={[0, 0.35, 0]}>
-                  <coneGeometry args={[0.02, 0.08, 4]} />
-                  <meshStandardMaterial color="#4a3c2c" roughness={0.9} />
-                </mesh>
-              </group>
-            ))}
-            {/* Central totem / banner pole in the tribe colour */}
-            <mesh position={[0, 0.3, 0]} castShadow>
-              <cylinderGeometry args={[0.022, 0.022, 0.6, 6]} />
-              <meshStandardMaterial color="#3a2c1c" roughness={0.85} />
-            </mesh>
-            <mesh position={[0.09, 0.5, 0]} castShadow>
-              <boxGeometry args={[0.16, 0.12, 0.02]} />
-              <meshStandardMaterial color={s.color} side={THREE.DoubleSide} roughness={0.7} />
-            </mesh>
-            {/* Restless tribes smoulder a warning campfire glow */}
-            {restless && (
-              <mesh position={[0, 0.05, -0.3]}>
-                <sphereGeometry args={[0.07, 8, 6]} />
-                <meshBasicMaterial color="#e0662a" transparent opacity={0.7} />
-              </mesh>
-            )}
-            <Html position={[0, 0.78, 0]} center distanceFactor={12} zIndexRange={[8, 0]} style={{ pointerEvents: 'none' }}>
-              <div style={{
-                background: 'rgba(28, 18, 10, 0.82)', border: `1px solid ${s.color}`, borderRadius: 'var(--tkm-radius-xs)',
-                padding: '1px 6px', color: '#f0d8a8', fontFamily: '"Ma Shan Zheng", "Songti SC", serif',
-                fontSize: '11px', whiteSpace: 'nowrap',
-              }}>⛺ {s.zh}</div>
-            </Html>
-          </group>
-        );
-      })}
-    </group>
-  );
-}
-
-/* ─── 野外據點 — bandit nests, river fords, resource deposits ─────────── */
-function WildSite3D({ site, color, onClick }: {
-  site: import('../../game/types').WildSite;
-  color: string;
-  onClick: () => void;
-}) {
-  const lang = useLanguage();
-  const [px, py] = geoToPixel(site.coords.lon, site.coords.lat);
-  const [wx, wz] = pxToWorld(px, py);
-  const y = sampleTerrainHeight(wx, wz);
-  const scale = PIXEL_TO_WORLD * 50 * 0.45 * MARKER_SCALE;
-  const disc = (
-    <mesh
-      position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}
-      onClick={(e) => { e.stopPropagation(); onClick(); }}
-      onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}
-      onPointerOut={() => { document.body.style.cursor = ''; }}
-    >
-      <circleGeometry args={[0.5, 18]} />
-      <meshBasicMaterial color={color} transparent opacity={0.34} />
-    </mesh>
-  );
-  let body: React.ReactNode = null;
-  if (site.subtype === 'bandit') {
-    // Palisade ring + raised black banner.
-    body = (
-      <group>
-        {Array.from({ length: 8 }).map((_, i) => {
-          const a = (i / 8) * Math.PI * 2;
-          return (
-            <mesh key={i} position={[Math.cos(a) * 0.34, 0.16, Math.sin(a) * 0.34]} rotation={[0, -a, 0.12]} castShadow>
-              <cylinderGeometry args={[0.03, 0.04, 0.34, 5]} />
-              <meshStandardMaterial color="#4a3a28" roughness={0.95} />
-            </mesh>
-          );
-        })}
-        <mesh position={[0, 0.34, 0]} castShadow><cylinderGeometry args={[0.022, 0.022, 0.66, 6]} /><meshStandardMaterial color="#2a2018" roughness={0.9} /></mesh>
-        <mesh position={[0.1, 0.58, 0]} castShadow><boxGeometry args={[0.18, 0.13, 0.02]} /><meshStandardMaterial color="#1a1a1a" side={THREE.DoubleSide} roughness={0.6} /></mesh>
-      </group>
-    );
-  } else if (site.subtype === 'ford') {
-    // A short jetty with two pilings and a moored skiff.
-    body = (
-      <group>
-        <mesh position={[0, 0.08, 0]} castShadow receiveShadow><boxGeometry args={[0.5, 0.05, 0.16]} /><meshStandardMaterial color="#6a553a" roughness={0.9} /></mesh>
-        <mesh position={[-0.2, 0.04, 0.12]} castShadow><cylinderGeometry args={[0.025, 0.025, 0.18, 6]} /><meshStandardMaterial color="#4a3a28" roughness={0.92} /></mesh>
-        <mesh position={[0.2, 0.04, 0.12]} castShadow><cylinderGeometry args={[0.025, 0.025, 0.18, 6]} /><meshStandardMaterial color="#4a3a28" roughness={0.92} /></mesh>
-        <mesh position={[0.3, 0.1, -0.05]} rotation={[0, 0.3, 0]} castShadow><boxGeometry args={[0.34, 0.06, 0.12]} /><meshStandardMaterial color="#5a4a36" roughness={0.85} /></mesh>
-      </group>
-    );
-  } else {
-    // Resource — an ore pile + a pick-frame; tint by variant.
-    const oreColor = site.variant === 'salt' ? '#e8e4dc'
-      : site.variant === 'gold' ? '#d8b13a'
-      : site.variant === 'copper' ? '#b5703a'
-      : site.variant === 'horse' ? '#7a8a5a'
-      : '#6a6a72';   // iron
-    body = (
-      <group>
-        <mesh position={[0, 0.12, 0]} castShadow><coneGeometry args={[0.26, 0.26, 8]} /><meshStandardMaterial color={oreColor} roughness={0.85} metalness={site.variant === 'gold' || site.variant === 'copper' ? 0.4 : 0.1} /></mesh>
-        <mesh position={[-0.22, 0.16, 0.06]} rotation={[0, 0, 0.5]} castShadow><cylinderGeometry args={[0.018, 0.018, 0.34, 5]} /><meshStandardMaterial color="#5a4a36" roughness={0.9} /></mesh>
-        <mesh position={[-0.28, 0.32, 0.06]} rotation={[0, 0, 1.3]} castShadow><boxGeometry args={[0.16, 0.03, 0.03]} /><meshStandardMaterial color="#7a7a82" roughness={0.6} metalness={0.4} /></mesh>
-      </group>
-    );
-  }
-  return (
-    <group position={[wx, y, wz]} scale={scale}>
-      {disc}
-      {body}
-      <Html position={[0, 0.8, 0]} center distanceFactor={12} zIndexRange={[8, 0]} style={{ pointerEvents: 'none' }}>
-        <div style={{
-          background: 'rgba(28, 18, 10, 0.8)', border: `1px solid ${color}`, borderRadius: 'var(--tkm-radius-xs)',
-          padding: '1px 6px', color: '#e8d4a0', fontFamily: '"Ma Shan Zheng", "Songti SC", serif',
-          fontSize: '10.5px', whiteSpace: 'nowrap',
-        }}>{site.subtype === 'bandit' ? '🏴' : site.subtype === 'ford' ? '⛵' : '⛏'} {pickName(site.name, lang)}</div>
-      </Html>
-    </group>
-  );
-}
-
-function WildSites3D({ onSiteClick }: { onSiteClick: (siteId: string) => void }) {
-  const sites = useGameStore((s) => s.sites);
-  const forces = useGameStore((s) => s.forces);
-  return (
-    <group>
-      {Object.values(sites).map((site) => {
-        const color = site.ownerForceId
-          ? (forces[site.ownerForceId]?.color ?? '#5a4530')
-          : site.subtype === 'bandit' ? '#7a2a22' : '#6a6250';
-        return <WildSite3D key={site.id} site={site} color={color} onClick={() => onSiteClick(site.id)} />;
-      })}
-    </group>
-  );
-}
-
-/* ─── 名所 — legendary scenic sites (訪賢尋寶) ───────────────────────── */
-function ScenicSites3D({ onScenicClick }: { onScenicClick: (siteId: string) => void }) {
-  const scenicLooted = useGameStore((s) => s.scenicLooted);
-  const lang = useLanguage();
-  const sites = useMemo(() => SCENIC_SITES.map((s) => {
-    const [px, py] = geoToPixel(s.coords.lon, s.coords.lat);
-    const [wx, wz] = pxToWorld(px, py);
-    return { id: s.id, zh: pickName(s.name, lang), wx, wz };
-  }), [lang]);
-  const scale = PIXEL_TO_WORLD * 50 * 0.45 * MARKER_SCALE;
-  return (
-    <group>
-      {sites.map((s) => {
-        const y = sampleTerrainHeight(s.wx, s.wz);
-        const fresh = !scenicLooted[s.id];
-        return (
-          <group key={s.id} position={[s.wx, y, s.wz]} scale={scale}>
-            <mesh
-              position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}
-              onClick={(e) => { e.stopPropagation(); onScenicClick(s.id); }}
-              onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}
-              onPointerOut={() => { document.body.style.cursor = ''; }}
-            >
-              <circleGeometry args={[0.5, 18]} />
-              <meshBasicMaterial color="#c9a23c" transparent opacity={0.3} />
-            </mesh>
-            {/* A thatched scholar's pavilion (草廬) */}
-            <mesh position={[0, 0.14, 0]} castShadow><boxGeometry args={[0.34, 0.22, 0.3]} /><meshStandardMaterial color="#caa878" roughness={0.9} /></mesh>
-            <mesh position={[0, 0.3, 0]} castShadow><coneGeometry args={[0.3, 0.18, 4]} /><meshStandardMaterial color="#9a7b4a" roughness={0.95} /></mesh>
-            {/* A 賢 banner — gold pole + flag */}
-            <mesh position={[0.22, 0.3, 0.16]} castShadow><cylinderGeometry args={[0.014, 0.014, 0.4, 6]} /><meshStandardMaterial color="#6a553a" roughness={0.85} /></mesh>
-            <mesh position={[0.3, 0.42, 0.16]} castShadow><boxGeometry args={[0.14, 0.1, 0.015]} /><meshStandardMaterial color="#c9a23c" side={THREE.DoubleSide} roughness={0.6} /></mesh>
-            {/* A soft glow while there's still something to find */}
-            {fresh && (
-              <mesh position={[0, 0.5, 0]}>
-                <sphereGeometry args={[0.06, 8, 6]} />
-                <meshBasicMaterial color="#f0e08a" transparent opacity={0.7} />
-              </mesh>
-            )}
-            <Html position={[0, 0.7, 0]} center distanceFactor={12} zIndexRange={[8, 0]} style={{ pointerEvents: 'none' }}>
-              <div style={{
-                background: 'rgba(28, 18, 10, 0.8)', border: '1px solid #c9a23c', borderRadius: 'var(--tkm-radius-xs)',
-                padding: '1px 6px', color: '#f0d89a', fontFamily: '"Ma Shan Zheng", "Songti SC", serif',
-                fontSize: '10.5px', whiteSpace: 'nowrap',
-              }}>⛰ {s.zh}</div>
-            </Html>
-          </group>
-        );
-      })}
-    </group>
-  );
-}
-
 /* ─── 行軍時距環 — concentric rings around a selected column's source city,
    one per march-time band (moveArmyToCell: <100px=1 季, <195=2, <275=3, else
    4). Shows at a glance how many seasons a march to any spot will cost, so you
@@ -3503,73 +2308,6 @@ function HeadingTracker({ controlsRef, onHeading }: {
   return null;
 }
 
-/** 糧道可視 — the selected long-range column's supply ribbon: the actual
- *  BFS corridor of own paint back to a friendly city glows gold; a cut
- *  ribbon flags the column red with a 斷糧 chip. Same reachability the
- *  season resolution starves by, so what you see is what will bleed. */
-function SupplyCorridor3D({ armyId }: { armyId: string }) {
-  const hexPaint = useGameStore((s) => s.hexPaint ?? EMPTY_HEX_PAINT);
-  const cities = useGameStore((s) => s.cities);
-  const pendingCommands = useGameStore((s) => s.pendingCommands);
-  const armies = useGameStore((s) => s.armies);
-  const playerForceId = useGameStore((s) => s.playerForceId);
-  const t = useT();
-  const ref = useRef<THREE.InstancedMesh>(null);
-  const viz = useMemo(() => {
-    const cmd = pendingCommands[armyId];
-    const army = armies[armyId];
-    if (!cmd || cmd.type !== 'march' || !army || !playerForceId) return null;
-    if (army.forceId !== playerForceId) return null;
-    if (Math.max(1, cmd.totalSeasons ?? 1) < 2) return null;  // short hops carry their own packs
-    const cell = geoHexAt(army.x, army.y);
-    const own = Object.values(cities)
-      .filter((c) => c.ownerForceId === playerForceId)
-      .map((c) => { const cp = cityPos(c); return geoHexAt(cp.x, cp.y); });
-    const path = supplyPath(hexPaint, playerForceId, cell, own);
-    return { path, ax: army.x, ay: army.y };
-  }, [armyId, pendingCommands, armies, cities, hexPaint, playerForceId]);
-  const dummy = useMemo(() => new THREE.Object3D(), []);
-  useLayoutEffect(() => {
-    const m = ref.current;
-    if (!m || !viz?.path) return;
-    viz.path.forEach((cell, i) => {
-      const c = geoHexCenter(cell.col, cell.row);
-      const [wx, wz] = pxToWorld(c.x, c.y);
-      dummy.position.set(wx, sampleTerrainHeight(wx, wz) + 0.045, wz);
-      dummy.rotation.set(-Math.PI / 2, 0, 0);
-      dummy.updateMatrix();
-      m.setMatrixAt(i, dummy.matrix);
-    });
-    m.instanceMatrix.needsUpdate = true;
-    m.computeBoundingSphere();
-  }, [viz, dummy]);
-  if (!viz) return null;
-  if (!viz.path) {
-    const [wx, wz] = pxToWorld(viz.ax, viz.ay);
-    const y = sampleTerrainHeight(wx, wz);
-    return (
-      <group raycast={() => null}>
-        <mesh position={[wx, y + 0.05, wz]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
-          <ringGeometry args={[0.5, 0.72, 28]} />
-          <meshBasicMaterial color="#e0552a" transparent opacity={0.85} depthWrite={false} toneMapped={false} />
-        </mesh>
-        <Html position={[wx, y + 1.35, wz]} center distanceFactor={10} zIndexRange={[45, 35]} style={{ pointerEvents: 'none' }}>
-          <div style={{
-            background: 'rgba(40, 14, 8, 0.92)', border: '1px solid #e0552a', borderRadius: 'var(--tkm-radius-xs)',
-            padding: '1px 7px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px',
-            color: '#f0b0a0', whiteSpace: 'nowrap', letterSpacing: '1px',
-          }}>⚠ {t('糧道已斷 — 每季折兵', 'Supply CUT — bleeding every turn')}</div>
-        </Html>
-      </group>
-    );
-  }
-  return (
-    <instancedMesh key={viz.path.length} ref={ref} args={[undefined, undefined, viz.path.length]} raycast={() => null}>
-      <circleGeometry args={[HEXW_R * 0.55, 6]} />
-      <meshBasicMaterial color="#e8c05a" transparent opacity={0.42} depthWrite={false} toneMapped={false} />
-    </instancedMesh>
-  );
-}
 
 function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteClick, onScenicClick, onQuickAction, mapStyle, dioSelectedId, dioMode, dioCast, dioArcs, dioFx, dioHover, onDioHover, onDioramaTile, onFocusWorld, onDragLock }: {
   overlayMode: OverlayMode;
@@ -3601,6 +2339,8 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
   const officers = useGameStore((s) => s.officers);
   const territoryOwnership = useGameStore((s) => s.territoryOwnership ?? EMPTY_TERRITORY_OWNERSHIP);
   const hexPaint = useGameStore((s) => s.hexPaint ?? EMPTY_HEX_PAINT);
+  const worldScars = useGameStore((s) => s.worldScars);
+  const spottedAmbushIds = useGameStore((s) => s.spottedAmbushIds);
   const selectedCityId = useGameStore((s) => s.selectedCityId);
   const selectCity = useGameStore((s) => s.selectCity);
   const openCityMap = useGameStore((s) => s.openCityMap);
@@ -3861,6 +2601,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
           forces={forces}
           territoryOwnership={territoryOwnership}
           hexPaint={hexPaint}
+          worldScars={worldScars}
           fogCityIds={fog ? fog.visibleCityIds : null}
           onGroundClick={(px, py) => {
             if (selectedArmyId3D && isLandPx(px, py) && moveArmyToCell(selectedArmyId3D, px, py)) {
@@ -3918,7 +2659,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
       <PostStations3D cities={cities} />
       <Landmarks3D cities={cities} />
       <UniqueLandmarks3D cities={cities} />
-      <MarchingArmies cities={cities} pendingCommands={visibleCommands} forces={forces} officers={officers} ports={portsForMarch} selectedArmyId={selectedArmyId3D} onArmyClick={handleArmyClick} onArmyPressStart={handleArmyPressStart} hideNearPx={battleSitePx} />
+      <MarchingArmies cities={cities} pendingCommands={visibleCommands} forces={forces} officers={officers} ports={portsForMarch} selectedArmyId={selectedArmyId3D} onArmyClick={handleArmyClick} onArmyPressStart={handleArmyPressStart} hideNearPx={battleSitePx} playerForceId={playerForceId} spottedAmbushIds={spottedAmbushIds} />
       {/* 糧道可視 — selected long-range column shows its supply ribbon. */}
       {selectedArmyId3D && <SupplyCorridor3D armyId={selectedArmyId3D} />}
       {/* 拖拽行軍 — live drag: capture plane + ghost line + landing ring/ETA. */}
@@ -3964,7 +2705,12 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
                     const remaining = Math.max(1, Math.ceil((1 - (myArmy?.progress ?? 0)) * total));
                     const trial = { ...myCmd, targetX: px, targetY: py, holding: false, totalSeasons: total, seasonsRemaining: remaining };
                     const others = Object.values(live.pendingCommands)
-                      .filter((c): c is typeof myCmd => c.type === 'march' && c.officerId !== myCmd.officerId);
+                      .filter((c): c is typeof myCmd => c.type === 'march' && c.officerId !== myCmd.officerId)
+                      // 設伏不入卦 — a hidden enemy ambush must not leak through the
+                      // forecast; you find out when you blunder into it (unless
+                      // your scouts already flushed it — then it forecasts).
+                      .filter((c) => !(c.holding && c.ambush && live.officers[c.officerId]?.forceId !== live.playerForceId
+                        && !(live.spottedAmbushIds ?? []).includes(c.officerId)));
                     const contacts = computeDayEncounters([trial, ...others], live.officers, live.cities, live.diplomacy);
                     const mine = contacts.find((c) => c.a.officerId === myCmd.officerId || c.b.officerId === myCmd.officerId);
                     if (mine) {
@@ -4004,6 +2750,12 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
       <Convoys cities={cities} convoys={convoysState} forces={forces} />
       <Envoys cities={cities} expeditions={expeditionsState} forces={forces} />
       {overlayMode === 'supply' && <SupplyLines3D />}
+      {/* 糧道總覽 — the supply overlay also lights EVERY long-range column's
+          corridor at once (cut ones flag red), not just the selected army:
+          the whole logistics picture in one keypress. */}
+      {overlayMode === 'supply' && Object.values(armiesState)
+        .filter((a) => a.forceId === playerForceId && a.id !== selectedArmyId3D)
+        .map((a) => <SupplyCorridor3D key={`sup-${a.id}`} armyId={a.id} />)}
       {overlayMode === 'diplomacy' && <DiplomacyLines3D cities={cities} forces={forces} />}
       {overlayMode === 'intent' && <IntentLayer cities={cities} forces={forces} armies={armiesState} playerForceId={playerForceId} fog={fog} />}
       <FieldBattleMarks3D marks={fieldBattleMarks} />
@@ -4012,6 +2764,8 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
       <QueuedBattles3D />
       <DayEncounterMarks3D />
       <BeaconAlerts3D />
+      {/* 長圍 — invested cities wear a pulsing amber noose. */}
+      <SiegeRings3D />
       <BurningCities3D />
       <EventMarks3D cities={cities} hidePx={battleSitePx} visibleCityIds={fog?.visibleCityIds ?? null} onPick={(id) => selectCity(id)} />
       <Ports3D onPortClick={onPortClick} />
@@ -4220,7 +2974,9 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
           const remaining = Math.max(1, Math.ceil((1 - (myArmy?.progress ?? 0)) * ticks));
           const trial = { ...myCmd, targetCityId: to.id, targetX: undefined, targetY: undefined, holding: false, totalSeasons: ticks, seasonsRemaining: remaining };
           const others = Object.values(live.pendingCommands)
-            .filter((c): c is typeof myCmd => c.type === 'march' && c.officerId !== myCmd.officerId);
+            .filter((c): c is typeof myCmd => c.type === 'march' && c.officerId !== myCmd.officerId)
+            .filter((c) => !(c.holding && c.ambush && live.officers[c.officerId]?.forceId !== live.playerForceId
+              && !(live.spottedAmbushIds ?? []).includes(c.officerId)));
           const mine = computeDayEncounters([trial, ...others], live.officers, live.cities, live.diplomacy)
             .find((c) => c.a.officerId === myCmd.officerId || c.b.officerId === myCmd.officerId);
           if (mine) {

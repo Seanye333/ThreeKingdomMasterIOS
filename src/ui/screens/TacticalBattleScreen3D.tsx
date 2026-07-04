@@ -16,14 +16,8 @@ import type { EntityId, FormationId, HexCoord, Officer, StratagemId, TacticalBat
 import type { DefenseBuildingId } from '../../game/data/defenseBuildings';
 import { stratagemFxKind, tacticFxKind, tacticFxSpec, FX_DURATION, FX_IMPACT, type TacticFxSpec, type StratagemFxInstance, type StratagemFxKind } from '../../game/data/stratagemFx';
 import { categoryOfTactic } from '../../game/data/officerAttributes';
-import { applyBattlePrep,
-  aiTakeTurn, aiSkillForDifficulty, applyStratagem, attackUnits, canAttack, canMove, endTurn, hexDistance,
-  moveUnit, resolveBattleEnd, unitAt, tileAt, hexNeighbours, forecastAttack, matchupLabel, battleStratagemSituation, eliteUnitOf,
-  defenderTerrainShield, terrainDamageMod, moveCost,
-  findPath, moveUnitAlong, reachableHexes, isRouting, changeFormation, canChangeFormation,
-  pickAiBattlePrep, pickAiFormation, formationCounterMul,
-  pickDuelChampion, canIssuePreBattleDuel, applyPreBattleDuel, aiMaybePreBattleDuel,
-} from '../../game/systems/tactical';
+import { applyBattlePrep, applyStratagem, attackUnits, canAttack, canMove, endTurn, hexDistance, moveUnit, resolveBattleEnd, unitAt, tileAt, hexNeighbours, forecastAttack, matchupLabel, battleStratagemSituation, eliteUnitOf, defenderTerrainShield, terrainDamageMod, moveCost, findPath, moveUnitAlong, reachableHexes, isRouting, changeFormation, canChangeFormation, canFortify, fortifyTile, FIELDWORKS_AP_COST, pickAiBattlePrep, pickAiFormation, formationCounterMul, pickDuelChampion, canIssuePreBattleDuel, applyPreBattleDuel, aiMaybePreBattleDuel } from '../../game/systems/tactical';
+import { aiTakeTurn, aiSkillForDifficulty } from '../../game/systems/tacticalAi';
 import { FORMATIONS } from '../../game/data/formations';
 import { canDuel, pickDuelTerrain, rollDuelScar } from '../../game/systems/duel';
 import { duelWound } from '../../game/systems/afflictions';
@@ -164,6 +158,7 @@ export const TERRAIN_HEIGHT: Record<TerrainKind, number> = {
   gate:       0.20,
   wall:       0.32,
   watchtower: 0.20,
+  fieldworks: 0.13,   // packed earth bank
 };
 export const TERRAIN_COLOR: Record<TerrainKind, string> = {
   river:    '#2c5882',
@@ -180,6 +175,7 @@ export const TERRAIN_COLOR: Record<TerrainKind, string> = {
   gate:       '#4a2820',  // dark masonry
   wall:       '#6a5650',  // grey rampart stone
   watchtower: '#8a7050',  // stone platform
+  fieldworks: '#7a5f3c',  // fresh-dug earth + timber stakes
 };
 
 const UNIT_GLYPH: Record<UnitType, string> = {
@@ -341,7 +337,52 @@ export function HexTile({
       {tile.terrain === 'mountain' && <MountainArt y={h} />}
       {tile.terrain === 'river' && <RiverArt y={h} />}
       {tile.terrain === 'bridge' && <BridgeArt y={h} />}
+      {tile.terrain === 'fieldworks' && <FieldworksArt y={h} />}
       {burning && <FireArt y={h} />}
+    </group>
+  );
+}
+
+/** 陣中築壘 — a ring of sharpened stakes leaning outward over a fresh earth
+ *  bank, with a crossed 拒馬 frame at the front. Reads as dug-in ground. */
+export function FieldworksArt({ y }: { y: number }) {
+  return (
+    <group position={[0, y, 0]}>
+      {/* Fresh earth bank */}
+      <mesh position={[0, 0.03, 0]}>
+        <cylinderGeometry args={[R * 0.72, R * 0.85, 0.08, 8]} />
+        <meshStandardMaterial color="#6a5236" roughness={0.98} />
+      </mesh>
+      {/* Outward-leaning sharpened stakes */}
+      {[0, 1, 2, 3, 4, 5].map((i) => {
+        const a = (i / 6) * Math.PI * 2 + 0.26;
+        const px = Math.cos(a) * R * 0.68, pz = Math.sin(a) * R * 0.68;
+        return (
+          <mesh key={i} position={[px, 0.22, pz]} rotation={[Math.sin(a) * 0.55, 0, -Math.cos(a) * 0.55]} castShadow>
+            <coneGeometry args={[0.05, 0.42, 5]} />
+            <meshStandardMaterial color="#8a6a42" roughness={0.9} />
+          </mesh>
+        );
+      })}
+      {/* 拒馬 — crossed-stake frame on a bar */}
+      <group position={[0, 0.16, R * 0.3]} rotation={[0, 0.35, 0]}>
+        <mesh rotation={[0, 0, Math.PI / 2]} castShadow>
+          <cylinderGeometry args={[0.035, 0.035, R * 0.9, 5]} />
+          <meshStandardMaterial color="#5a4226" roughness={0.9} />
+        </mesh>
+        {[-0.28, 0, 0.28].map((px, i) => (
+          <group key={i} position={[px, 0, 0]}>
+            <mesh rotation={[0.7, 0, 0]} castShadow>
+              <cylinderGeometry args={[0.025, 0.025, 0.36, 4]} />
+              <meshStandardMaterial color="#7a5c38" roughness={0.9} />
+            </mesh>
+            <mesh rotation={[-0.7, 0, 0]} castShadow>
+              <cylinderGeometry args={[0.025, 0.025, 0.36, 4]} />
+              <meshStandardMaterial color="#7a5c38" roughness={0.9} />
+            </mesh>
+          </group>
+        ))}
+      </group>
     </group>
   );
 }
@@ -4453,6 +4494,9 @@ export function TacticalBattleScreen3D() {
     const last = battle.log[battle.log.length - 1];
     if (last.kind === 'voice' || last.kind === 'arrival') {
       setVoiceLine({ text: last.text, key: Date.now() });
+      // 會戰入場 — a column riding onto the field gets its horn; allied
+      // relief blows a touch grander than a plain reinforcement.
+      if (last.kind === 'arrival') playSfx(last.text.includes('盟軍') ? 'victory' : 'horn');
     }
   }, [battle?.log?.length]);
 
@@ -5217,7 +5261,7 @@ export function TacticalBattleScreen3D() {
             river: ['大河', 'River'], road: ['道路', 'Road'], ice: ['冰面', 'Ice'],
             hill: ['高地', 'Hill'], marsh: ['沼澤', 'Marsh'], desert: ['沙磧', 'Desert'],
             chokepoint: ['隘口', 'Defile'], bridge: ['橋樑', 'Bridge'], gate: ['城門', 'Gate'],
-            wall: ['城牆', 'Wall'], watchtower: ['瞭望台', 'Watchtower'],
+            wall: ['城牆', 'Wall'], watchtower: ['瞭望台', 'Watchtower'], fieldworks: ['築壘', 'Fieldworks'],
           };
           const ter = tl ? (TER_ZH[tl.terrain] ?? [tl.terrain, tl.terrain]) : null;
           const shield = tl ? defenderTerrainShield(tl.terrain) : 1;
@@ -5584,6 +5628,7 @@ function UnitPanel3D({
   const t = useT();
   const lang = useLanguage();
   const desc = useDesc();
+  const startBattle = useGameStore((s) => s.startTacticalBattle);
   // Show the officer's FULL 戰法 pool (was silently capped at 8); the list
   // scrolls if it's long, so nothing is hidden.
   const personalTactics = personalTacticsForUnit(officer, unit, 16);
@@ -5726,6 +5771,16 @@ function UnitPanel3D({
           disabled={apDisabled}
           onClick={() => setActionMode(actionMode.kind === 'duel' ? { kind: 'none' } : { kind: 'duel' })}
         >{t('一騎打', 'Duel')} <span style={{ float: 'right', color: '#d4a84a' }}>{t('生死', 'kill')}</span></button>
+        {/* 陣中築壘 — entrench the current hex: shield ×0.85, slows entry,
+            breaks cavalry charges. Open firm ground only; burns if fired. */}
+        {canFortify(battle, unit) && (
+          <button
+            style={{ ...btnBase, opacity: apDisabled ? 0.4 : 1 }}
+            disabled={apDisabled}
+            title={t('就地築壘:本格化為工事 — 受擊×0.85、敵入耗步、破騎兵衝鋒。木柵怕火。', 'Entrench: this hex becomes fieldworks — damage ×0.85, slows entry, breaks cavalry charges. Burns.')}
+            onClick={() => { playSfx('click'); startBattle(fortifyTile(battle, unit.id)); setActionMode({ kind: 'none' }); }}
+          >⛏ {t('築壘', 'Entrench')} <span style={{ float: 'right', color: '#8a7050' }}>{FIELDWORKS_AP_COST} AP</span></button>
+        )}
       </div>
 
       {availableStratagems.length > 0 && (

@@ -134,7 +134,9 @@ export function buildingBonuses(
    *  市易 spread, and blunts large-order slippage (see market.ts MarketContext). */
   priceStability: number;
 } {
-  const inCity = buildings.filter((b) => b.cityId === cityId);
+  // 戰損建築不給加成 — a siege-wrecked works contributes nothing (and doesn't
+  // count toward its district cluster) until repaired.
+  const inCity = buildings.filter((b) => b.cityId === cityId && !b.damaged);
   // 建築群方略 — count built (level≥1) buildings per category so a cluster of
   // same-category works compounds that category's output (district set-bonus).
   const catCount: Partial<Record<string, number>> = {};

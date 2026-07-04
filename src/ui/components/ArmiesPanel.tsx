@@ -21,6 +21,10 @@ export function ArmiesPanel() {
   const cancelCommand = useGameStore((s) => s.cancelCommand);
   const recallMarch = useGameStore((s) => s.recallMarch);
   const holdArmy = useGameStore((s) => s.holdArmy);
+  const setArmyAmbush = useGameStore((s) => s.setArmyAmbush);
+  const burnBridge = useGameStore((s) => s.burnBridge);
+  const besiegeCity = useGameStore((s) => s.besiegeCity);
+  const notify = useGameStore((s) => s.notify);
   const resupplyArmy = useGameStore((s) => s.resupplyArmy);
   const splitArmy = useGameStore((s) => s.splitArmy);
   const lang = useLanguage();
@@ -81,6 +85,56 @@ export function ArmiesPanel() {
                 fontFamily: 'var(--tkm-font-body)',
               }}
             >{armies[selectedArmyId].holding ? (lang === 'en' ? 'Release' : '解除') : (lang === 'en' ? 'Hold' : '駐守')}</button>
+            {armies[selectedArmyId].holding && (
+              <button
+                onClick={() => {
+                  const r = setArmyAmbush(selectedArmyId);
+                  if (!r.ok && r.reason) notify(r.reason, r.reason);
+                }}
+                style={{
+                  background: armies[selectedArmyId].ambush ? '#2a1a30' : '#1c1424',
+                  border: `1px solid ${armies[selectedArmyId].ambush ? '#c08ae0' : '#7a5a9a'}`,
+                  color: armies[selectedArmyId].ambush ? '#e0c0f0' : '#b090d0',
+                  fontSize: '0.7rem', padding: '1px 6px', cursor: 'pointer',
+                  fontFamily: 'var(--tkm-font-body)',
+                }}
+                title={lang === 'en'
+                  ? 'Go to ground: hidden from enemy view, springs harder on contact. Needs cover (forest/hills/pass).'
+                  : '設伏 — 匿於林丘,敵圖上不見此軍;敵縱隊撞入,伏擊加成更烈、識破減半。需有掩蔽之地。'}
+              >{armies[selectedArmyId].ambush ? (lang === 'en' ? 'Ambushing' : '伏中') : (lang === 'en' ? 'Ambush' : '設伏')}</button>
+            )}
+            {armies[selectedArmyId].holding && (
+              <button
+                onClick={() => {
+                  const r = besiegeCity(selectedArmyId);
+                  if (!r.ok && r.reason) notify(r.reason, r.reason, 'warn');
+                }}
+                style={{
+                  background: armies[selectedArmyId].besieging ? '#3a2008' : '#241708',
+                  border: `1px solid ${armies[selectedArmyId].besieging ? '#e8a040' : '#a07030'}`,
+                  color: armies[selectedArmyId].besieging ? '#ffd090' : '#d0a060',
+                  fontSize: '0.7rem', padding: '1px 6px', cursor: 'pointer',
+                  fontFamily: 'var(--tkm-font-body)',
+                }}
+                title={lang === 'en'
+                  ? 'Invest the nearest enemy city: its food and loyalty bleed every turn; dry granaries open the gates without a fight. The garrison may sortie.'
+                  : '長圍 — 兵圍左近敵城:斷其市易耕稼,每旬糧秣民忠俱蹙;糧盡則開城出降。守軍勢眾時或傾城突圍。'}
+              >{armies[selectedArmyId].besieging ? (lang === 'en' ? 'Lifting?' : '圍中') : (lang === 'en' ? 'Besiege' : '圍城')}</button>
+            )}
+            <button
+              onClick={() => {
+                const r = burnBridge(selectedArmyId);
+                if (!r.ok && r.reason) notify(r.reason, r.reason, 'warn');
+              }}
+              style={{
+                background: '#2a1410', border: '1px solid #c46a3a', color: '#e8a87a',
+                fontSize: '0.7rem', padding: '1px 6px', cursor: 'pointer',
+                fontFamily: 'var(--tkm-font-body)',
+              }}
+              title={lang === 'en'
+                ? 'Burn the crossing beside this column — battles here open with the span down (~1 year). Needs a riverside position.'
+                : '焚橋斷渡 — 焚毀本軍近旁渡口:此地開戰時橋樑已斷(約一年方復)。須臨河。'}
+            >{lang === 'en' ? 'Burn bridge' : '焚橋'}</button>
             <button
               onClick={() => resupplyArmy(selectedArmyId)}
               style={{

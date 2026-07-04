@@ -25,6 +25,10 @@ const BUILD_TYPES: Array<{
     descZh: `補給 · 友軍過境每半月回 +${FACILITY_DEFS.camp.power} 兵`, descEn: `Supply · friendly columns +${FACILITY_DEFS.camp.power} troops/half-month`, color: FACILITY_DEFS.camp.color },
   { id: 'wall', zh: FACILITY_DEFS.wall.name.zh, en: FACILITY_DEFS.wall.name.en, cost: FACILITY_DEFS.wall.cost,
     descZh: '阻斷 · 敵軍行軍經過受阻滯(每半月約半數機率攔停)', descEn: 'Barricade · stalls passing enemy marches (~50% per half-month)', color: FACILITY_DEFS.wall.color },
+  { id: 'boom', zh: FACILITY_DEFS.boom.name.zh, en: FACILITY_DEFS.boom.name.en, cost: FACILITY_DEFS.boom.cost,
+    descZh: '鐵鎖橫江 · 敵水軍過境每半月 70% 攔停(陸軍不受阻);須臨大江之城', descEn: 'Chain-boom · stalls hostile FLEETS 70%/half-month; needs a riverside city', color: FACILITY_DEFS.boom.color },
+  { id: 'depot', zh: FACILITY_DEFS.depot.name.zh, en: FACILITY_DEFS.depot.name.en, cost: FACILITY_DEFS.depot.cost,
+    descZh: `糧道錨點 · 補給色帶通至兵站即算連通;友軍過境每半月回 +${FACILITY_DEFS.depot.power} 兵`, descEn: `Supply anchor · the ribbon only has to reach a depot; friendly columns +${FACILITY_DEFS.depot.power}/half-month`, color: FACILITY_DEFS.depot.color },
 ];
 
 export function BuildStockadePicker({ onClose }: Props) {

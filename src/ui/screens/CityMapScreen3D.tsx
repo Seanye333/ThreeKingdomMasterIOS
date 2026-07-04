@@ -25,7 +25,7 @@ import { CITY_SPECIALTY } from '../../game/data/specialties';
 import { getRelation } from '../../game/types/diplomacy';
 import { useMarketShock } from '../hooks/useMarketShock';
 import type { WeatherKind } from '../../game/systems/weather';
-import type { InternalAffairsType, CommandType } from '../../game/types';
+import type { InternalAffairsType, CommandType, Officer } from '../../game/types';
 import { OfficerPicker } from '../components/OfficerPicker';
 import { LocatorMap } from '../components/LocatorMap';
 import { IntroDive } from '../components/IntroDive';
@@ -140,10 +140,12 @@ function Banner3D({ color, w, h, phase, faceX = 0 }: {
 }
 
 /* ─── Inside-city building (3D block + roof + glyph label) ──────────── */
-function InsideBuilding3D({ coord, buildingId, level }: {
+function InsideBuilding3D({ coord, buildingId, level, damaged }: {
   coord: { col: number; row: number };
   buildingId: BuildingId;
   level: number;
+  /** 戰損 — wrecked in a siege: charred, smoking, no bonus until repaired. */
+  damaged?: boolean;
 }) {
   const [x, z] = hexWorld(coord.col, coord.row);
   const inspect = useContext(InspectCtx);
@@ -188,10 +190,12 @@ function InsideBuilding3D({ coord, buildingId, level }: {
     const cat = BUILDING_CATEGORY[buildingId];
     const catLabel = BUILDING_CATEGORY_LABEL[cat];
     inspect({
-      title: `${def.nameZh} · ${catLabel?.zh ?? ''} lv${level}`,
-      body: bdef?.descriptionZh ?? bdef?.description ?? '城中營造,其加成已接入本城模擬。',
-      color: def.color,
-      commands: cat === 'culture' ? ['promote-learning'] : undefined,
+      title: damaged ? `${def.nameZh} · 毀於兵燹` : `${def.nameZh} · ${catLabel?.zh ?? ''} lv${level}`,
+      body: damaged
+        ? '攻城戰火焚及此坊,梁柱焦黑、匠作俱廢 — 修繕之前不供加成(於城建面板修繕)。'
+        : (bdef?.descriptionZh ?? bdef?.description ?? '城中營造,其加成已接入本城模擬。'),
+      color: damaged ? '#b8442e' : def.color,
+      commands: !damaged && cat === 'culture' ? ['promote-learning'] : undefined,
     });
   };
   // 懸停快覽 — desktop: name + level + what the building does, without the
@@ -212,7 +216,7 @@ function InsideBuilding3D({ coord, buildingId, level }: {
             color: '#e7d6ad', whiteSpace: 'nowrap', lineHeight: 1.5, maxWidth: 260,
             boxShadow: '0 2px 10px rgba(0,0,0,0.6)',
           }}>
-            <div style={{ fontWeight: 'bold', letterSpacing: '0.5px' }}>{def.nameZh} <span style={{ color: '#c0a878', fontWeight: 'normal' }}>lv{level}</span></div>
+            <div style={{ fontWeight: 'bold', letterSpacing: '0.5px' }}>{def.nameZh} <span style={{ color: '#c0a878', fontWeight: 'normal' }}>lv{level}</span>{damaged && <span style={{ color: '#e05a3a', marginLeft: 4 }}>毀</span>}</div>
             <div style={{ color: '#bfae86', whiteSpace: 'normal', maxWidth: 240 }}>
               {(BUILDING_DEFS_BY_ID[buildingId]?.descriptionZh ?? BUILDING_DEFS_BY_ID[buildingId]?.description ?? '').slice(0, 60)}
             </div>
@@ -230,10 +234,10 @@ function InsideBuilding3D({ coord, buildingId, level }: {
         <boxGeometry args={[1.28, 0.18, 1.28]} />
         <meshStandardMaterial color="#9a8f78" roughness={0.95} />
       </mesh>
-      {/* Main block */}
+      {/* Main block — charred black-brown when siege-wrecked */}
       <mesh position={[0, h / 2 + 0.18, 0]} castShadow receiveShadow>
         <boxGeometry args={[1.05, h, 1.05]} />
-        <meshStandardMaterial color={def.color} roughness={0.7} />
+        <meshStandardMaterial color={damaged ? '#33291f' : def.color} roughness={damaged ? 0.98 : 0.7} />
       </mesh>
       {/* Front colonnade */}
       {[-0.36, -0.12, 0.12, 0.36].map((px, i) => (
@@ -249,10 +253,12 @@ function InsideBuilding3D({ coord, buildingId, level }: {
           <meshStandardMaterial color="#241c14" roughness={0.6} />
         </mesh>
       ))}
-      {/* Swept tiled roof */}
-      <group position={[0, h + 0.18, 0]}>
-        <ChineseRoof3D size={1.05} color={roofColor} ornament={grand} />
+      {/* Swept tiled roof — half-collapsed and soot-black when wrecked */}
+      <group position={[0, h + 0.18, 0]} rotation={damaged ? [0.12, 0, -0.09] : [0, 0, 0]}>
+        <ChineseRoof3D size={damaged ? 0.9 : 1.05} color={damaged ? '#1c1712' : roofColor} ornament={grand && !damaged} />
       </group>
+      {/* 兵燹餘煙 — a wrecked building still smoulders */}
+      {damaged && <Smoke3D x={0.2} z={0.1} base={h + 0.3} />}
       {/* The foundry has a smoking chimney */}
       {buildingId === 'foundry' && (
         <>
@@ -655,6 +661,12 @@ type CityStats = { fCommerce: number; fAgri: number; fLoyalty: number; fPop: num
 
 // Tapping a landmark reports a little "what is this" card up to the screen.
 type InspectInfo = { title: string; body: string; color: string; commands?: InternalAffairsType[] };
+
+/** 城中人物 — officers standing in the city view, bucketed by where they'd
+ *  plausibly be found: court officers at the yamen, martial officers on the
+ *  drill ground, discovered wanderers at the tavern. `hiddenCount` counts
+ *  undiscovered talents rendered as anonymous silhouettes (a 搜索 hint). */
+type CityFigures = { hall: Officer[]; barracks: Officer[]; tavern: Officer[]; hiddenCount: number };
 /** Live, city-derived flavour text for the decorative landmarks (報時/瞭望/休憩). */
 type LandmarkInfo = { timeBody: string; pagodaBody: string; gardenBody: string };
 
@@ -1274,6 +1286,336 @@ function Villager3D({ x, z, seed }: { x: number; z: number; seed: number }) {
           <meshStandardMaterial color="#2a2018" />
         </mesh>
       )}
+    </group>
+  );
+}
+
+/** 城中武將 — a named officer standing in the city: taller and straighter
+ *  than townsfolk, headgear by calling (進賢冠/兜鍪/斗笠), name pill overhead,
+ *  clickable. `hidden` renders an anonymous hooded silhouette (undiscovered
+ *  talent — a hint that 搜索 would pay off). */
+function OfficerFigure3D({ x, z, nameZh, kind, seed, onClick }: {
+  x: number; z: number;
+  nameZh?: string;
+  kind: 'court' | 'martial' | 'wanderer' | 'hidden';
+  seed: number;
+  onClick: () => void;
+}) {
+  const ROBES = { court: '#5a6f9e', martial: '#8a3a2e', wanderer: '#4a7a5a', hidden: '#3a3a42' } as const;
+  const robe = ROBES[kind];
+  const rot = ((seed % 5) - 2) * 0.5;
+  return (
+    <group
+      position={[x, 0, z]}
+      rotation={[0, rot, 0]}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}
+      onPointerOut={() => { document.body.style.cursor = ''; }}
+    >
+      {/* Body — a head taller than a villager, straight-backed */}
+      <mesh position={[0, 0.24, 0]} castShadow>
+        <cylinderGeometry args={[0.095, 0.15, 0.48, 8]} />
+        <meshStandardMaterial color={robe} roughness={0.8} />
+      </mesh>
+      {/* Sash */}
+      <mesh position={[0, 0.28, 0]}>
+        <cylinderGeometry args={[0.107, 0.107, 0.045, 8]} />
+        <meshStandardMaterial color={kind === 'martial' ? '#3a2418' : '#c8b070'} roughness={0.7} />
+      </mesh>
+      <mesh position={[0, 0.56, 0]} castShadow>
+        <sphereGeometry args={[0.075, 9, 8]} />
+        <meshStandardMaterial color={kind === 'hidden' ? '#8a7a66' : '#e6c39a'} roughness={0.8} />
+      </mesh>
+      {/* Headgear by calling */}
+      {kind === 'court' && (
+        <mesh position={[0, 0.65, -0.01]} castShadow>
+          <boxGeometry args={[0.09, 0.07, 0.11]} />
+          <meshStandardMaterial color="#22283a" roughness={0.7} />
+        </mesh>
+      )}
+      {kind === 'martial' && (
+        <>
+          <mesh position={[0, 0.635, 0]} castShadow>
+            <coneGeometry args={[0.085, 0.1, 8]} />
+            <meshStandardMaterial color="#4a4a54" metalness={0.5} roughness={0.5} />
+          </mesh>
+          <mesh position={[0, 0.71, 0]}>
+            <sphereGeometry args={[0.022, 6, 5]} />
+            <meshStandardMaterial color="#c23a2e" roughness={0.6} />
+          </mesh>
+          {/* Shoulder guards */}
+          {[-0.13, 0.13].map((sx, i) => (
+            <mesh key={i} position={[sx, 0.43, 0]} castShadow>
+              <sphereGeometry args={[0.05, 7, 6]} />
+              <meshStandardMaterial color="#5a4a3a" metalness={0.3} roughness={0.6} />
+            </mesh>
+          ))}
+        </>
+      )}
+      {kind === 'wanderer' && (
+        <mesh position={[0, 0.64, 0]} castShadow>
+          <coneGeometry args={[0.14, 0.07, 10]} />
+          <meshStandardMaterial color="#9a8050" roughness={0.9} />
+        </mesh>
+      )}
+      {kind === 'hidden' && (
+        <mesh position={[0, 0.6, -0.015]} rotation={[0.25, 0, 0]} castShadow>
+          <coneGeometry args={[0.1, 0.16, 8]} />
+          <meshStandardMaterial color="#2e2e36" roughness={0.95} />
+        </mesh>
+      )}
+      {/* Name pill */}
+      <Html position={[0, 0.92, 0]} center distanceFactor={10} zIndexRange={[8, 0]} style={{ pointerEvents: 'none' }}>
+        <div style={{
+          fontSize: 10, fontWeight: 'bold', whiteSpace: 'nowrap',
+          color: kind === 'hidden' ? '#b8b0a0' : '#f2e8d2',
+          background: 'rgba(22,16,10,0.75)',
+          border: `1px solid ${kind === 'martial' ? '#c86a4a' : kind === 'wanderer' ? '#7ab88a' : kind === 'hidden' ? '#6a6a72' : '#8fa8d8'}`,
+          borderRadius: 4, padding: '0 5px',
+        }}>{kind === 'hidden' ? '？' : nameZh}</div>
+      </Html>
+    </group>
+  );
+}
+
+/** 官邸 — a modest residence hall + the lord's family in the courtyard:
+ *  spouse in a rose robe, children scaled by age. Capital only. */
+function Residence3D({ x, z, household, onClick }: {
+  x: number; z: number;
+  household: { spouses: string[]; kids: Array<{ nameZh: string; age: number; female: boolean }> };
+  onClick: () => void;
+}) {
+  return (
+    <group
+      position={[x, 0, z]}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}
+      onPointerOut={() => { document.body.style.cursor = ''; }}
+    >
+      {/* Hall */}
+      <mesh position={[0, 0.42, 0]} castShadow receiveShadow>
+        <boxGeometry args={[1.7, 0.84, 1.15]} />
+        <meshStandardMaterial color="#a0705a" roughness={0.85} />
+      </mesh>
+      <group position={[0, 0.9, 0]}><ChineseRoof3D size={1.35} color="#3c3648" /></group>
+      {/* Courtyard fence */}
+      {[-1.15, 1.15].map((sx, i) => (
+        <mesh key={i} position={[sx, 0.16, 0.9]} castShadow>
+          <boxGeometry args={[0.5, 0.32, 0.06]} />
+          <meshStandardMaterial color="#6a5238" roughness={0.9} />
+        </mesh>
+      ))}
+      {/* Spouse — rose robe */}
+      {household.spouses.length > 0 && (
+        <group position={[-0.55, 0, 1.15]}>
+          <mesh position={[0, 0.2, 0]} castShadow>
+            <cylinderGeometry args={[0.085, 0.13, 0.4, 7]} />
+            <meshStandardMaterial color="#b06a80" roughness={0.8} />
+          </mesh>
+          <mesh position={[0, 0.46, 0]} castShadow>
+            <sphereGeometry args={[0.065, 8, 7]} />
+            <meshStandardMaterial color="#e6c39a" roughness={0.8} />
+          </mesh>
+        </group>
+      )}
+      {/* Children — small figures, one per heir (up to 3 shown) */}
+      {household.kids.slice(0, 3).map((k, i) => (
+        <group key={i} position={[0.15 + i * 0.42, 0, 1.2 + (i % 2) * 0.22]}>
+          <mesh position={[0, 0.13, 0]} castShadow>
+            <cylinderGeometry args={[0.06, 0.09, 0.26, 7]} />
+            <meshStandardMaterial color={k.female ? '#c08a9a' : '#7a8ab0'} roughness={0.85} />
+          </mesh>
+          <mesh position={[0, 0.31, 0]} castShadow>
+            <sphereGeometry args={[0.05, 7, 6]} />
+            <meshStandardMaterial color="#e6c39a" roughness={0.8} />
+          </mesh>
+        </group>
+      ))}
+      <Html position={[0, 1.5, 0]} center distanceFactor={11} zIndexRange={[8, 0]} style={{ pointerEvents: 'none' }}>
+        <div style={{
+          fontSize: 10, fontWeight: 'bold', whiteSpace: 'nowrap',
+          color: '#f0d8e0', background: 'rgba(22,16,10,0.78)',
+          border: '1px solid #b06a80', borderRadius: 4, padding: '0 5px',
+        }}>官邸</div>
+      </Html>
+    </group>
+  );
+}
+
+const ENCOUNTER_LOOK = {
+  merchant:    { zh: '行商', robe: '#8a6a3a', hat: true },
+  knight:      { zh: '遊俠', robe: '#5a3a3a', hat: false },
+  soothsayer:  { zh: '相士', robe: '#4a4a6a', hat: true },
+  storyteller: { zh: '說書', robe: '#3a5a4a', hat: false },
+} as const;
+
+/** 街頭際遇 — a special figure by the archway with a gold shimmer ring;
+ *  tap to hear their offer (one per city per season). */
+function StreetEncounterFigure({ x, z, kind, onClick }: {
+  x: number; z: number;
+  kind: keyof typeof ENCOUNTER_LOOK;
+  onClick: () => void;
+}) {
+  const look = ENCOUNTER_LOOK[kind];
+  const ringRef = useRef<THREE.MeshBasicMaterial>(null);
+  useFrame(({ clock }) => {
+    if (ringRef.current) ringRef.current.opacity = 0.45 + Math.sin(clock.elapsedTime * 3) * 0.25;
+  });
+  return (
+    <group
+      position={[x, 0, z]}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}
+      onPointerOut={() => { document.body.style.cursor = ''; }}
+    >
+      <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.28, 0.4, 24]} />
+        <meshBasicMaterial ref={ringRef} color="#ffd75e" transparent opacity={0.5} depthWrite={false} />
+      </mesh>
+      <mesh position={[0, 0.2, 0]} castShadow>
+        <cylinderGeometry args={[0.09, 0.14, 0.4, 7]} />
+        <meshStandardMaterial color={look.robe} roughness={0.85} />
+      </mesh>
+      <mesh position={[0, 0.46, 0]} castShadow>
+        <sphereGeometry args={[0.07, 8, 7]} />
+        <meshStandardMaterial color="#e6c39a" roughness={0.8} />
+      </mesh>
+      {look.hat && (
+        <mesh position={[0, 0.54, 0]} castShadow>
+          <coneGeometry args={[0.12, 0.09, 10]} />
+          <meshStandardMaterial color="#6a5838" roughness={0.85} />
+        </mesh>
+      )}
+      <Html position={[0, 0.85, 0]} center distanceFactor={10} zIndexRange={[8, 0]} style={{ pointerEvents: 'none' }}>
+        <div style={{
+          fontSize: 10, fontWeight: 'bold', whiteSpace: 'nowrap',
+          color: '#ffe9a8', background: 'rgba(22,16,10,0.8)',
+          border: '1px solid #ffd75e', borderRadius: 4, padding: '0 5px',
+        }}>✨ {look.zh}</div>
+      </Html>
+    </group>
+  );
+}
+
+/** 打更人 — the night watchman pacing the main avenue with a glowing
+ *  hand-lantern. Only appears on lower-phase (moonlit) nights. */
+function Watchman3D({ ax, az, bx, bz }: { ax: number; az: number; bx: number; bz: number }) {
+  const ref = useRef<THREE.Group>(null);
+  useFrame((s) => {
+    const g = ref.current; if (!g) return;
+    const t = s.clock.elapsedTime * 0.08 + 2.4;
+    const u = (Math.sin(t) + 1) / 2;
+    g.position.x = ax + (bx - ax) * u;
+    g.position.z = az + (bz - az) * u;
+    g.position.y = Math.abs(Math.sin(t * 8)) * 0.03;
+    const fwd = Math.cos(t) >= 0 ? 1 : -1;
+    g.rotation.y = Math.atan2((bx - ax) * fwd, (bz - az) * fwd);
+  });
+  return (
+    <group ref={ref}>
+      <mesh position={[0, 0.18, 0]} castShadow>
+        <cylinderGeometry args={[0.085, 0.135, 0.36, 7]} />
+        <meshStandardMaterial color="#3a3f4e" roughness={0.9} />
+      </mesh>
+      <mesh position={[0, 0.42, 0]} castShadow>
+        <sphereGeometry args={[0.07, 8, 7]} />
+        <meshStandardMaterial color="#e6c39a" roughness={0.8} />
+      </mesh>
+      <mesh position={[0, 0.5, 0]} castShadow>
+        <coneGeometry args={[0.11, 0.09, 10]} />
+        <meshStandardMaterial color="#2c3040" roughness={0.85} />
+      </mesh>
+      {/* Hand lantern on a short pole — warm glow that reads at night */}
+      <mesh position={[0.16, 0.36, 0.06]} rotation={[0, 0, -0.3]}>
+        <cylinderGeometry args={[0.012, 0.012, 0.3, 5]} />
+        <meshStandardMaterial color="#4a3520" />
+      </mesh>
+      <mesh position={[0.22, 0.24, 0.06]}>
+        <sphereGeometry args={[0.05, 8, 7]} />
+        <meshStandardMaterial color="#ffb84a" emissive="#ff9a2e" emissiveIntensity={1.6} />
+      </mesh>
+    </group>
+  );
+}
+
+/** 流民 — a hunched refugee huddled by the roadside with a cloth bundle:
+ *  visible poverty when a city's loyalty has cratered. */
+function Refugee3D({ x, z, seed }: { x: number; z: number; seed: number }) {
+  const rot = (seed % 8) * (Math.PI / 4);
+  const sitting = seed % 3 !== 0;
+  return (
+    <group position={[x, 0, z]} rotation={[0, rot, 0]}>
+      <mesh position={[0, sitting ? 0.11 : 0.15, 0]} rotation={[sitting ? 0.35 : 0.2, 0, 0]} castShadow>
+        <cylinderGeometry args={[0.09, 0.13, sitting ? 0.2 : 0.28, 7]} />
+        <meshStandardMaterial color={seed % 2 ? '#6a5d48' : '#75604a'} roughness={0.98} />
+      </mesh>
+      <mesh position={[0, sitting ? 0.26 : 0.33, 0.045]} castShadow>
+        <sphereGeometry args={[0.062, 8, 7]} />
+        <meshStandardMaterial color="#cfa87e" roughness={0.9} />
+      </mesh>
+      {/* Ragged straw cape */}
+      <mesh position={[0, sitting ? 0.2 : 0.26, -0.02]} rotation={[0.3, 0, 0]} castShadow>
+        <coneGeometry args={[0.13, 0.16, 8]} />
+        <meshStandardMaterial color="#8a7a4e" roughness={1} />
+      </mesh>
+      {/* Cloth bundle beside them */}
+      <mesh position={[0.16, 0.05, 0.05]} castShadow>
+        <sphereGeometry args={[0.075, 7, 6]} />
+        <meshStandardMaterial color="#9a8a68" roughness={0.95} />
+      </mesh>
+    </group>
+  );
+}
+
+/** 白幡 — a white mourning streamer hung out by a plague-struck household. */
+function MourningBanner3D({ x, z, seed }: { x: number; z: number; seed: number }) {
+  const ref = useRef<THREE.Mesh>(null);
+  useFrame(({ clock }) => {
+    if (ref.current) ref.current.rotation.y = Math.sin(clock.elapsedTime * 1.6 + seed) * 0.22;
+  });
+  return (
+    <group position={[x, 0, z]}>
+      <mesh position={[0, 0.75, 0]} castShadow>
+        <cylinderGeometry args={[0.02, 0.025, 1.5, 5]} />
+        <meshStandardMaterial color="#4a3b2a" roughness={0.9} />
+      </mesh>
+      <mesh ref={ref} position={[0, 1.24, 0]} castShadow>
+        <boxGeometry args={[0.04, 0.6, 0.18]} />
+        <meshStandardMaterial color="#e8e4da" roughness={0.9} />
+      </mesh>
+    </group>
+  );
+}
+
+/** 綵旗 — a sagging string of festival pennants strung across the avenue
+ *  between two lantern posts (秋社廟會). */
+function FestivalPennants3D({ ax, az, bx, bz }: { ax: number; az: number; bx: number; bz: number }) {
+  const COLORS = ['#d9583a', '#e8b34a', '#4a8a5a', '#5a72b8', '#b85a8a'];
+  const len = Math.hypot(bx - ax, bz - az);
+  const angY = Math.atan2(-(bz - az), bx - ax);
+  const N = 7;
+  return (
+    <group>
+      <group position={[(ax + bx) / 2, 1.38, (az + bz) / 2]} rotation={[0, angY, 0]}>
+        <mesh rotation={[0, 0, Math.PI / 2]}>
+          <cylinderGeometry args={[0.008, 0.008, len, 4]} />
+          <meshStandardMaterial color="#3a2c1c" roughness={0.9} />
+        </mesh>
+      </group>
+      {Array.from({ length: N - 1 }).map((_, j) => {
+        const i = j + 1;
+        const t = i / N;
+        return (
+          <mesh
+            key={i}
+            position={[ax + (bx - ax) * t, 1.38 - Math.sin(t * Math.PI) * 0.16 - 0.08, az + (bz - az) * t]}
+            rotation={[Math.PI, 0, 0]}
+          >
+            <coneGeometry args={[0.055, 0.15, 4]} />
+            <meshStandardMaterial color={COLORS[i % COLORS.length]} roughness={0.7} />
+          </mesh>
+        );
+      })}
     </group>
   );
 }
@@ -2150,7 +2492,7 @@ function CommandActivity3D({ x, z, color, label, build = false, soldier = false 
 }
 
 /** Scatter dwellings across the inside-city land, leaving gaps for streets. */
-function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, grand, landmarkInfo, weatherKind, ruined, isCapital, specialty, troops, activity }: {
+function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, grand, landmarkInfo, weatherKind, ruined, isCapital, specialty, troops, activity, plagued, season, figures, night, encounter, onEncounterClick, household }: {
   preview: ReturnType<typeof previewBattlefield>;
   cityWallCol: number;
   occupied: Set<string>;
@@ -2164,6 +2506,15 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, g
   specialty: SpecialtyDef | null;
   troops: number;
   activity: CityActivity;
+  /** 疫病 — city was struck by plague last season (white banners, empty lanes). */
+  plagued: boolean;
+  season: SeasonKey;
+  figures: CityFigures;
+  /** 下旬月夜 — lanes empty out, the night watchman walks the avenue. */
+  night: boolean;
+  encounter: { kind: 'merchant' | 'knight' | 'soothsayer' | 'storyteller' } | null;
+  onEncounterClick: () => void;
+  household: { lordZh: string; spouses: string[]; kids: Array<{ nameZh: string; age: number; heir: boolean; female: boolean; comingSoon: boolean }> } | null;
 }) {
   const inspect = useContext(InspectCtx);
   // The market grows with commerce — a sleepy 2-stall corner at low trade,
@@ -2320,8 +2671,10 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, g
     const m0 = market[0];
     const well = m0 ? { x: m0.x - 1.3, z: m0.z + 1.0 } : { x: hall.x + 2.6, z: hall.z + 1.7 };
     const cart = m0 ? { x: m0.x + 1.5, z: m0.z + 0.5, seed: m0.seed >> 1 } : null;
-    // Shoppers crowd the stalls in proportion to population.
-    const folkCount = Math.max(2, Math.round(2 + stats.fPop * 8));
+    // Shoppers crowd the stalls in proportion to population — a plague
+    // empties the lanes (folk shut their doors and stay in).
+    const crowdMul = (plagued ? 0.45 : 1) * (night ? 0.55 : 1);
+    const folkCount = Math.max(plagued ? 1 : 2, Math.round((2 + stats.fPop * 8) * crowdMul));
     const folk = market.flatMap((m, i) => [
       { x: m.x + (i % 2 ? 0.72 : -0.72), z: m.z - 0.72, seed: (m.seed >> 2) + i * 7 },
       { x: m.x - 0.5, z: m.z + 0.7, seed: (m.seed >> 4) + i * 13 },
@@ -2344,7 +2697,7 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, g
     // market-town street and a hollowed-out frontier town read apart at
     // a glance. High commerce also rolls a second ox-cart (goods moving).
     const avZ = [...avenue].sort((a, b) => a.z - b.z);
-    const walkerN = Math.round(2 + stats.fPop * 6 + stats.fCommerce * 6);
+    const walkerN = Math.round((2 + stats.fPop * 6 + stats.fCommerce * 6) * crowdMul);
     const walkers: Array<{ ax: number; az: number; bx: number; bz: number; seed: number }> = [];
     for (let i = 0; i + 3 < avZ.length && walkers.length < walkerN; i += 1) {
       const a = avZ[i], b = avZ[i + 3];
@@ -2358,7 +2711,40 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, g
       ? { ax: avZ[avZ.length - 2].x - 0.35, az: avZ[avZ.length - 2].z, bx: avZ[1].x - 0.35, bz: avZ[1].z, seed: 4.3 }
       : null;
     return { braziers, well, cart, folk, paifang, avenueLanterns, walkers, oxcart, oxcart2 };
-  }, [hall, market, avenue, stats.fPop, stats.fCommerce, stats.fLoyalty]);
+  }, [hall, market, avenue, stats.fPop, stats.fCommerce, stats.fLoyalty, plagued, night]);
+
+  // 民情 — the city's living condition written into the streets: cratered
+  // loyalty puts refugees at the roadside, a plague hangs mourning banners
+  // over stricken households, and a loyal city in autumn strings festival
+  // pennants over the avenue (秋社廟會).
+  const festival = season === 'autumn' && stats.fLoyalty > 0.66 && !plagued && !ruined;
+  const civic = useMemo(() => {
+    const avZ = [...avenue].sort((a, b) => b.z - a.z); // gate end first
+    const refugees: Array<{ x: number; z: number; seed: number }> = [];
+    if (stats.fLoyalty < 0.35 && !ruined) {
+      const n = stats.fLoyalty < 0.18 ? 6 : 4;
+      for (let i = 0; i < n; i++) {
+        const a = avZ[Math.min(avZ.length - 1, (i >> 1) + 1)];
+        if (!a) break;
+        const side = i % 2 ? 1.05 : -1.05;
+        refugees.push({ x: a.x + side + ((i * 29) % 3) * 0.14, z: a.z + ((i * 17) % 3) * 0.2 - 0.2, seed: i * 31 + 7 });
+      }
+    }
+    const banners = plagued && !ruined
+      ? houses.filter((_, i) => i % 5 === 0).slice(0, 6).map((h, i) => ({ x: h.x + 0.55, z: h.z + 0.3, seed: i }))
+      : [];
+    const pennants: Array<{ ax: number; az: number; bx: number; bz: number }> = [];
+    if (festival) {
+      // Cap the strings (8 desktop / 5 phone) — a long, loyal avenue could
+      // otherwise hang dozens of pennant lines.
+      const maxStrings = RENDER_HI ? 8 : 5;
+      for (let i = 0; i + 1 < props.avenueLanterns.length && pennants.length < maxStrings; i += 2) {
+        const a = props.avenueLanterns[i], b = props.avenueLanterns[i + 1];
+        pennants.push({ ax: a.x, az: a.z, bx: b.x, bz: b.z });
+      }
+    }
+    return { refugees, banners, pennants };
+  }, [avenue, houses, stats.fLoyalty, plagued, ruined, festival, props.avenueLanterns]);
 
   return (
     <>
@@ -2396,6 +2782,33 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, g
       {!ruined && props.walkers.map((wk, i) => <Walker3D key={`wk-${i}`} ax={wk.ax} az={wk.az} bx={wk.bx} bz={wk.bz} seed={wk.seed} />)}
       {!ruined && props.oxcart && <MovingCart3D ax={props.oxcart.ax} az={props.oxcart.az} bx={props.oxcart.bx} bz={props.oxcart.bz} seed={props.oxcart.seed} />}
       {!ruined && props.oxcart2 && <MovingCart3D ax={props.oxcart2.ax} az={props.oxcart2.az} bx={props.oxcart2.bx} bz={props.oxcart2.bz} seed={props.oxcart2.seed} />}
+      {/* 流民 — poverty made visible; tap them to open the relief levers. */}
+      {civic.refugees.length > 0 && (
+        <group onClick={(e) => { e.stopPropagation(); inspect({ title: '流民 · 饑寒', body: '民忠已墮,流民聚於道旁,扶老攜幼、席地而棲。可賑濟安民,或招撫入籍以充戶口。', color: '#b89060', commands: ['relief', 'improve-loyalty', 'encourage-migration'] }); }}>
+        {civic.refugees.map((r, i) => <Refugee3D key={`rf-${i}`} x={r.x} z={r.z} seed={r.seed} />)}
+        </group>
+      )}
+      {/* 白幡 — plague mourning banners on stricken households. */}
+      {civic.banners.map((b, i) => <MourningBanner3D key={`mb-${i}`} x={b.x} z={b.z} seed={b.seed} />)}
+      {/* 秋社廟會 — festival pennants over the avenue in a loyal autumn. */}
+      {civic.pennants.map((p, i) => <FestivalPennants3D key={`fp-${i}`} ax={p.ax} az={p.az} bx={p.bx} bz={p.bz} />)}
+      {/* 街頭際遇 — a special figure stands by the archway this season:
+          sparkling ring underfoot, tap to hear them out. */}
+      {!ruined && encounter && props.paifang && (
+        <StreetEncounterFigure
+          x={props.paifang.x + 1.2}
+          z={props.paifang.z + 0.6}
+          kind={encounter.kind}
+          onClick={onEncounterClick}
+        />
+      )}
+      {/* 打更人 — on a moonlit lower-phase night the watchman walks the
+          avenue, lantern in hand (梆子聲遠,燈火獨行). */}
+      {!ruined && night && avenue.length > 3 && (() => {
+        const avZ2 = [...avenue].sort((a, b) => a.z - b.z);
+        const a0 = avZ2[0], b0 = avZ2[avZ2.length - 1];
+        return <Watchman3D ax={a0.x} az={a0.z} bx={b0.x} bz={b0.z} />;
+      })()}
       {/* Chimney smoke from a scattering of homes (peaceful) — black pillars of
           ruin smoke if the city has been razed. */}
       {!ruined && houses.filter((_, i) => i % 8 === 0).slice(0, 5).map((h) => (
@@ -2443,6 +2856,80 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, g
       <group onClick={(e) => { e.stopPropagation(); inspect({ title: '酒樓', body: '杯酒之間,常聞在野賢才之名。可於此遣人探訪。', color: '#d98a6a', commands: ['search'] }); }}>
         <Tavern3D x={landmarks.tavern.x} z={landmarks.tavern.z} />
       </group>
+      {/* 城中人物 — stationed officers stand where they'd be found: court
+          officers before the yamen, martial officers on the drill ground,
+          discovered wanderers outside the tavern. Anonymous hooded figures
+          hint at undiscovered talent (搜索 pays). All clickable. */}
+      {!ruined && figures.hall.map((o, i) => (
+        <OfficerFigure3D
+          key={`ofh-${o.id}`}
+          x={hall.x + (i - (figures.hall.length - 1) / 2) * 0.85}
+          z={hall.z + 2.15}
+          nameZh={o.name.zh} kind="court" seed={i * 5 + 1}
+          onClick={() => inspect({
+            title: `${o.name.zh} · 在城武將`,
+            body: `統${o.stats.leadership} 武${o.stats.war} 智${o.stats.intelligence} 政${o.stats.politics} 魅${o.stats.charisma}。現於府衙聽候調遣,可委以政務或特訓。`,
+            color: '#8fa8d8', commands: ['special-training'],
+          })}
+        />
+      ))}
+      {!ruined && figures.barracks.map((o, i) => (
+        <OfficerFigure3D
+          key={`ofb-${o.id}`}
+          x={landmarks.barracks.x + (i === 0 ? -1.0 : 1.0)}
+          z={landmarks.barracks.z + 1.55}
+          nameZh={o.name.zh} kind="martial" seed={i * 7 + 3}
+          onClick={() => inspect({
+            title: `${o.name.zh} · 在城武將`,
+            body: `統${o.stats.leadership} 武${o.stats.war} 智${o.stats.intelligence} 政${o.stats.politics} 魅${o.stats.charisma}。正於校場操演士卒,可領兵、練兵或特訓。`,
+            color: '#c86a4a', commands: ['drill-troops', 'special-training'],
+          })}
+        />
+      ))}
+      {!ruined && figures.tavern.map((o, i) => (
+        <OfficerFigure3D
+          key={`oft-${o.id}`}
+          x={landmarks.tavern.x + (i - (figures.tavern.length - 1) / 2) * 0.8}
+          z={landmarks.tavern.z + 1.4}
+          nameZh={o.name.zh} kind="wanderer" seed={i * 11 + 5}
+          onClick={() => inspect({
+            title: `${o.name.zh} · 在野`,
+            body: `統${o.stats.leadership} 武${o.stats.war} 智${o.stats.intelligence} 政${o.stats.politics} 魅${o.stats.charisma}。在野之士,寓居此城。杯酒論交,或可延攬入幕。`,
+            color: '#7ab88a', commands: ['search'],
+          })}
+        />
+      ))}
+      {/* 官邸 — the lord's household at the capital: residence by the yamen,
+          spouse + children in the courtyard. Tap for the family card. */}
+      {!ruined && household && (
+        <Residence3D
+          x={hall.x - 3.1} z={hall.z + 2.4}
+          household={household}
+          onClick={() => inspect({
+            title: `官邸 · ${household.lordZh}家眷`,
+            body: [
+              household.spouses.length > 0 ? `妻室:${household.spouses.join('、')}` : '',
+              ...household.kids.map((k) =>
+                `${k.female ? '女' : '子'} ${k.nameZh} · ${k.age}歲${k.heir ? ' · 世子' : ''}${k.comingSoon ? '(將於14歲出仕)' : ''}`),
+              household.kids.length === 0 ? '膝下尚虛 — 子嗣未降。' : '',
+            ].filter(Boolean).join('\n'),
+            color: '#e8b4c8',
+          })}
+        />
+      )}
+      {!ruined && Array.from({ length: figures.hiddenCount }).map((_, i) => (
+        <OfficerFigure3D
+          key={`ofx-${i}`}
+          x={landmarks.tavern.x + 1.55}
+          z={landmarks.tavern.z + 0.45 + i * 0.75}
+          kind="hidden" seed={i * 13 + 9}
+          onClick={() => inspect({
+            title: '市井傳聞',
+            body: '酒肆之間風聞有賢士隱於此城,姓名未詳、蹤跡難尋。遣人探訪,或有所獲。',
+            color: '#9a9aa4', commands: ['search'],
+          })}
+        />
+      ))}
     </>
   );
 }
@@ -2967,11 +3454,11 @@ function CityScene({
   preview, slots, buildings, construction, plots, cityWallCol, bannerColor, light, season, stats, grand, onInspect,
   selectedPlot, onPlotClick, hovered, onHover, onClick, showOverlays, ghostBuilding,
   city, neighbors, facilities, armies, stockades, ports, scars, selectedSlot, onSlotClick, landmarkInfo,
-  weatherKind, isCapital, specialty, activity,
+  weatherKind, isCapital, specialty, activity, plagued, figures, night, encounter, onEncounterClick, household,
 }: {
   preview: ReturnType<typeof previewBattlefield>;
   slots: ReturnType<typeof useGameStore.getState>['cities'][string]['buildSlots'];
-  buildings: Array<{ coord: { col: number; row: number }; buildingId: BuildingId; level: number }>;
+  buildings: Array<{ coord: { col: number; row: number }; buildingId: BuildingId; level: number; damaged?: boolean }>;
   construction: Array<{ coord: { col: number; row: number }; nameZh: string }>;
   plots: Array<{ col: number; row: number }>;
   cityWallCol: number;
@@ -3003,6 +3490,15 @@ function CityScene({
   isCapital: boolean;
   specialty: SpecialtyDef | null;
   activity: CityActivity;
+  plagued: boolean;
+  figures: CityFigures;
+  /** 下旬月夜 — night crowd thinning + the watchman making his rounds. */
+  night: boolean;
+  /** 街頭際遇 — this season's special street figure (if any). */
+  encounter: { kind: 'merchant' | 'knight' | 'soothsayer' | 'storyteller' } | null;
+  onEncounterClick: () => void;
+  /** 家眷 — the lord's household at the capital (spouse + underage heirs). */
+  household: { lordZh: string; spouses: string[]; kids: Array<{ nameZh: string; age: number; heir: boolean; female: boolean; comingSoon: boolean }> } | null;
 }) {
   // Defence slots now ride the outer hinterland ring (directional defence),
   // not the city-wall hexes — so they no longer occupy any grid hex here.
@@ -3249,7 +3745,7 @@ function CityScene({
       })}
 
       {/* Living-city dwellings + central 府衙 (cosmetic) */}
-      <CityDwellings3D preview={preview} cityWallCol={cityWallCol} occupied={occupiedHexes} bannerColor={bannerColor} stats={stats} grand={grand} landmarkInfo={landmarkInfo} weatherKind={weatherKind} ruined={!!city.ruined} isCapital={isCapital} specialty={specialty} troops={city.troops} activity={activity} />
+      <CityDwellings3D preview={preview} cityWallCol={cityWallCol} occupied={occupiedHexes} bannerColor={bannerColor} stats={stats} grand={grand} landmarkInfo={landmarkInfo} weatherKind={weatherKind} ruined={!!city.ruined} isCapital={isCapital} specialty={specialty} troops={city.troops} activity={activity} plagued={plagued} season={season} figures={figures} night={night} encounter={encounter} onEncounterClick={onEncounterClick} household={household} />
 
       {/* A few birds wheeling over the rooftops */}
       <Birds3D
@@ -3266,6 +3762,7 @@ function CityScene({
           coord={b.coord}
           buildingId={b.buildingId}
           level={b.level}
+          damaged={b.damaged}
         />
       ))}
 
@@ -3470,6 +3967,13 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
   const taxPolicy = useGameStore((s) => s.taxPolicy);
   const inflation = useGameStore((s) => s.inflation ?? 0);
   const weatherKind = useGameStore((s) => (s.weather?.kind ?? 'clear') as WeatherKind);
+  // 疫病 — struck by plague last season: mourning banners + emptied lanes.
+  const plagued = useGameStore((s) => (s.plagueRiskCityIds ?? []).includes(cityId));
+  // 街頭際遇 — at most one per city per season, deterministic per (city,
+  // season) so re-entering the view never re-rolls it.
+  const streetEncounters = useGameStore((s) => s.streetEncounters);
+  const resolveStreetEncounter = useGameStore((s) => s.resolveStreetEncounter);
+  const [encounterOpen, setEncounterOpen] = useState(false);
   const tradeFood = useGameStore((s) => s.tradeFood);
   const autoAssignIdle = useGameStore((s) => s.autoAssignIdle);
   const relocateCapital = useGameStore((s) => s.relocateCapital);
@@ -3481,12 +3985,21 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
   const startBuilding = useGameStore((s) => s.startBuilding);
   const startPracticeBattle = useGameStore((s) => s.startPracticeBattle);
   const season = useGameStore((s) => s.date.season) as SeasonKey;
+  const phase = useGameStore((s) => s.date.phase);
   const baseLight = SEASON_LIGHT[season] ?? SEASON_LIGHT.spring;
   // 天時入景 — the weather bends the city's light, not just its harvest:
   // a drought bakes the air amber and hazy, rain greys it down, ruin drains
   // the colour out. The scene reads its own crisis at a glance.
   const light = useMemo(() => {
     let L = { ...baseLight };
+    // 旬相入城 — the city keeps the strategic map's clock: 上旬白晝、中旬
+    // 黃昏、下旬月夜. Dusk warms and lowers the sun; night goes deep blue,
+    // lanterns carrying the streets (nightGlow → full).
+    if (phase === 'middle') {
+      L = { ...L, ambient: L.ambient * 0.72, ambientColor: '#f4c890', sun: '#ff9a58', sunI: L.sunI * 0.6, sunPos: [18, 5, 6], fog: '#c8a080', sky: 'linear-gradient(180deg, #b8683a 0%, #e0aa74 100%)', nightGlow: Math.max(L.nightGlow, 0.6) };
+    } else if (phase === 'lower') {
+      L = { ...L, ambient: L.ambient * 0.42, ambientColor: '#9aa8c8', sun: '#b8c8e8', sunI: L.sunI * 0.3, sunPos: [-8, 14, -6], fog: '#3a4458', sky: 'linear-gradient(180deg, #1a2338 0%, #2c3a54 100%)', nightGlow: 1 };
+    }
     if (weatherKind === 'drought') {
       L = { ...L, ambient: L.ambient * 1.05, ambientColor: '#f4d79a', sun: '#ffdf9a', sunI: L.sunI * 1.12, fog: '#d8c690' };
     } else if (weatherKind === 'rain') {
@@ -3498,7 +4011,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
       L = { ...L, ambient: L.ambient * 0.78, ambientColor: '#b8a890', sun: '#c8b89a', sunI: L.sunI * 0.7, fog: '#7a6e5c', nightGlow: Math.max(L.nightGlow, 0.4) };
     }
     return L;
-  }, [baseLight, weatherKind, city.ruined]);
+  }, [baseLight, phase, weatherKind, city.ruined]);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [selectedPlot, setSelectedPlot] = useState<number | null>(null);
   // 營建幻影 — the build option currently hovered in the panel.
@@ -3662,6 +4175,68 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
     fLoyalty: Math.min(1, city.loyalty / (size.loyaltyCap || 100)),
     fPop: Math.min(1, city.population / 320000),
   };
+  // 街頭際遇 — hash (city, season) → does a special figure stand in the
+  // street this season, and who? Consumed via resolveStreetEncounter.
+  const encounterInfo = useMemo(() => {
+    const SEASON_IDX: Record<string, number> = { spring: 0, summer: 1, autumn: 2, winter: 3 };
+    const stamp = date.year * 4 + (SEASON_IDX[date.season] ?? 0);
+    if ((streetEncounters?.[cityId] ?? -1) >= stamp) return null;
+    if (city.ruined || plagued) return null;
+    const key = `${cityId}:${stamp}`;
+    let h = 2166136261;
+    for (let i = 0; i < key.length; i++) h = Math.imul(h ^ key.charCodeAt(i), 16777619);
+    if (((h >>> 0) % 1000) / 1000 > 0.35) return null;
+    const kinds = ['merchant', 'knight', 'soothsayer', 'storyteller'] as const;
+    return { kind: kinds[(h >>> 4) % 4] };
+  }, [cityId, date.year, date.season, streetEncounters, city.ruined, plagued]);
+
+  // 家眷 — at the player's CAPITAL, the lord's household lives in the
+  // residence by the yamen: spouse + children (heirs age toward 出仕 at 14).
+  const familyRels = useGameStore((s) => s.family);
+  const pendingHeirs = useGameStore((s) => s.pendingHeirs);
+  const forcesAll = useGameStore((s) => s.forces);
+  const playerForceIdSel = useGameStore((s) => s.playerForceId);
+  const household = useMemo(() => {
+    if (!playerForceIdSel) return null;
+    const force = forcesAll[playerForceIdSel];
+    if (!force || force.capitalCityId !== cityId) return null;
+    const lord = officersMap[force.rulerOfficerId];
+    if (!lord) return null;
+    const spouseIds = familyRels
+      .filter((r) => r.kind === 'spouse' && (r.officerA === lord.id || r.officerB === lord.id))
+      .map((r) => (r.officerA === lord.id ? r.officerB : r.officerA));
+    const spouses = spouseIds.map((id) => officersMap[id]).filter(Boolean);
+    const kids = pendingHeirs
+      .filter((h) => h.parentAId === lord.id || h.parentBId === lord.id)
+      .map((h) => {
+        const age = Math.max(0, date.year - h.birthYear);
+        return { nameZh: h.name.zh, age, heir: !!(h as { designated?: boolean }).designated, female: h.female, comingSoon: age >= 12 };
+      });
+    if (spouses.length === 0 && kids.length === 0) return null;
+    return { lordZh: lord.name.zh, spouses: spouses.map((o) => o!.name.zh), kids };
+  }, [playerForceIdSel, forcesAll, cityId, officersMap, familyRels, pendingHeirs, date.year]);
+
+  // 城中人物 — bucket this city's officers into the spots they'd be found:
+  // martial officers (武≥72) drill at the barracks, the rest of the top
+  // stationed officers stand before the yamen, discovered wanderers drink
+  // at the tavern, and undiscovered ones show as anonymous silhouettes.
+  const officerFigures = useMemo<CityFigures>(() => {
+    const all = Object.values(officersMap);
+    const stationed = all.filter((o) =>
+      o.locationCityId === cityId && !!o.forceId && o.forceId === city.ownerForceId
+      && (o.status === 'idle' || o.status === 'active'));
+    const score = (o: Officer) =>
+      o.stats.leadership + o.stats.war + o.stats.intelligence + o.stats.politics + o.stats.charisma;
+    const byRank = [...stationed].sort((a, b) => score(b) - score(a));
+    const martial = byRank.filter((o) => o.stats.war >= 72).slice(0, 2);
+    const mIds = new Set(martial.map((o) => o.id));
+    const hall = byRank.filter((o) => !mIds.has(o.id)).slice(0, 3);
+    const wanderers = all.filter((o) =>
+      o.locationCityId === cityId && !o.forceId && o.status !== 'dead' && o.status !== 'imprisoned');
+    const tavern = wanderers.filter((o) => o.status !== 'unsearched').slice(0, 3);
+    const hiddenCount = Math.min(2, wanderers.filter((o) => o.status === 'unsearched').length);
+    return { hall, barracks: martial, tavern, hiddenCount };
+  }, [officersMap, cityId, city.ownerForceId]);
   // Great cities raise a second, inner palace wall around the civic centre.
   const grandCity = size.id === 'capital' || size.id === 'large';
 
@@ -3692,7 +4267,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
   // progress > 0) show scaffolding so you can watch them go up.
   const insideBuildings = useMemo(
     () => placed.filter((p) => p.building.level > 0)
-      .map((p) => ({ coord: p.coord, buildingId: p.building.id, level: p.building.level })),
+      .map((p) => ({ coord: p.coord, buildingId: p.building.id, level: p.building.level, damaged: !!p.building.damaged })),
     [placed],
   );
   const construction = useMemo(
@@ -4078,6 +4653,12 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
             isCapital={isCapital}
             specialty={specialty}
             activity={activity}
+            plagued={plagued}
+            figures={officerFigures}
+            night={phase === 'lower'}
+            encounter={encounterInfo}
+            onEncounterClick={() => setEncounterOpen(true)}
+            household={household}
           />
           <OrbitControls
             enabled={introDone && !exiting}
@@ -4412,6 +4993,43 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
         )}
 
         {/* Landmark inspect card — appears when a 地标 is tapped */}
+        {encounterOpen && encounterInfo && (() => {
+          const K = encounterInfo.kind;
+          const info = K === 'merchant'
+            ? { title: '行商獻寶', body: '西域行商停駐坊前:「上好貨色 — 戰馬四十、精鐵四十、藥材二十,作價三百金,概不還價。」', yes: '買下(−300金)', color: '#e0c060' }
+            : K === 'knight'
+              ? { title: '遊俠叫陣', body: '一名遊俠倚劍於牌坊之下,揚言欲會城中第一好漢,點到為止。', yes: '遣將赴會(武將得歷練)', color: '#e0846a' }
+              : K === 'soothsayer'
+                ? { title: '相士設壇', body: '相士自稱能觀星禳厄:「百金設壇,可安一城人心。」', yes: '設壇(−100金,民忠+4)', color: '#8fa8d8' }
+                : { title: '說書開講', body: '說書人拍響醒木,滿街百姓圍攏 — 講的是本朝英雄的段子。', yes: '賞他一場(民忠+3)', color: '#9ac06a' };
+          return (
+            <div style={{
+              position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)',
+              width: 'min(420px, 80vw)', zIndex: 30,
+              background: 'rgba(20, 14, 8, 0.96)',
+              border: `1px solid ${info.color}`, borderRadius: 'var(--tkm-radius-sm)',
+              padding: '0.6rem 0.9rem', fontFamily: 'var(--tkm-font-body)',
+              boxShadow: '0 4px 18px rgba(0,0,0,0.5)',
+            }}>
+              <div style={{ color: info.color, fontSize: '1rem', letterSpacing: '0.07rem' }}>✨ {info.title}</div>
+              <div style={{ color: '#c0a878', fontSize: '0.78rem', lineHeight: 1.6, margin: '4px 0 8px' }}>{info.body}</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => {
+                    const r = resolveStreetEncounter(cityId, K, true);
+                    if (!r.ok && r.reason) setBuildMsg(r.reason);
+                    setEncounterOpen(false);
+                  }}
+                  style={{ flex: 1, padding: '0.35rem', background: '#2a2410', border: `1px solid ${info.color}`, color: '#f0e0b0', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.78rem' }}
+                >{info.yes}</button>
+                <button
+                  onClick={() => { resolveStreetEncounter(cityId, K, false); setEncounterOpen(false); }}
+                  style={{ flex: 1, padding: '0.35rem', background: '#1a1410', border: '1px solid #4a3a28', color: '#8a7050', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.78rem' }}
+                >婉拒(此季不再遇)</button>
+              </div>
+            </div>
+          );
+        })()}
         {inspect && (
           <div style={{
             position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)',

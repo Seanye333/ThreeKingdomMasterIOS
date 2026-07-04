@@ -18,6 +18,7 @@ export function BuildingsPanel({ cityId }: Props) {
   const buildings = useGameStore((s) => s.buildings);
   const cities = useGameStore((s) => s.cities);
   const startBuilding = useGameStore((s) => s.startBuilding);
+  const repairBuilding = useGameStore((s) => s.repairBuilding);
   const developSpecialty = useGameStore((s) => s.developSpecialty);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const autoQueueRaw = useGameStore((s) => s.autoBuildQueues[cityId]);
@@ -92,37 +93,44 @@ export function BuildingsPanel({ cityId }: Props) {
           const b = buildings.find((x) => x.cityId === cityId && x.id === d.id);
           const lvl = b?.level ?? 0;
           const inProgress = (b?.progress ?? 0) > 0 && lvl < d.maxLevel;
+          // 戰損 — a siege-wrecked building repairs instead of upgrading.
+          const damaged = !!b?.damaged;
+          const repairCost = Math.max(50, Math.round(d.goldPerLevel * 0.4 * Math.max(1, lvl)));
           const canBuild =
             city.ownerForceId !== null &&
             !inProgress &&
-            lvl < d.maxLevel &&
-            city.gold >= d.goldPerLevel;
+            (damaged ? city.gold >= repairCost : lvl < d.maxLevel && city.gold >= d.goldPerLevel);
           return (
             <button
               key={d.id}
-              onClick={() => startBuilding(cityId, d.id as BuildingId)}
+              onClick={() => damaged
+                ? repairBuilding(cityId, d.id as BuildingId)
+                : startBuilding(cityId, d.id as BuildingId)}
               disabled={!canBuild}
               style={{
-                background: '#080b0e',
-                border: '1px solid ' + (canBuild ? '#e6c473' : '#26323e'),
-                color: canBuild ? '#e6c473' : '#7a8893',
+                background: damaged ? '#170b08' : '#080b0e',
+                border: '1px solid ' + (damaged ? '#b8442e' : canBuild ? '#e6c473' : '#26323e'),
+                color: damaged ? '#e8a07a' : canBuild ? '#e6c473' : '#7a8893',
                 padding: '0.4rem 0.5rem',
                 fontFamily: 'inherit',
                 textAlign: 'left',
                 cursor: canBuild ? 'pointer' : 'not-allowed',
                 opacity: canBuild ? 1 : 0.6,
               }}
-              title={desc(d)}
+              title={damaged ? t('毀於兵燹 — 修繕前不供加成', 'Wrecked in a siege — no bonus until repaired') : desc(d)}
             >
               <div style={{ fontSize: '0.78rem' }}>
                 {lang === 'en' ? d.name.en : lang === 'both' ? `${d.name.zh} ${d.name.en}` : d.name.zh} {lvl > 0 && `Lv.${lvl}`}
+                {damaged && <span style={{ color: '#e05a3a', marginLeft: 4 }}>✦{t('損毀', 'wrecked')}</span>}
               </div>
               <div style={{ fontSize: '0.72rem', color: '#7a8893' }}>
-                {inProgress
-                  ? t(`建造中 (${b?.progress ?? 0}/${d.seasonsPerLevel}季)`, `building (${b?.progress ?? 0}/${d.seasonsPerLevel}s)`)
-                  : lvl >= d.maxLevel
-                    ? t('已達上限', 'max')
-                    : `${d.goldPerLevel}g · ${d.seasonsPerLevel}${t('季', 's')}`}
+                {damaged
+                  ? t(`修繕 ${repairCost}g`, `repair ${repairCost}g`)
+                  : inProgress
+                    ? t(`建造中 (${b?.progress ?? 0}/${d.seasonsPerLevel}季)`, `building (${b?.progress ?? 0}/${d.seasonsPerLevel}s)`)
+                    : lvl >= d.maxLevel
+                      ? t('已達上限', 'max')
+                      : `${d.goldPerLevel}g · ${d.seasonsPerLevel}${t('季', 's')}`}
               </div>
             </button>
           );

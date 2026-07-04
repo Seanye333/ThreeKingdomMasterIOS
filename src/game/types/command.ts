@@ -66,6 +66,17 @@ export interface MarchCommand extends CommandBase {
    *  garrisons it (still fights enemies that reach it). Cleared on
    *  redirect. */
   holding?: boolean;
+  /** 設伏 — the holding army has gone to ground (only meaningful with
+   *  `holding`): hidden from the enemy's map view, a stronger spring bonus
+   *  when a column blunders in, and harder to scout out (識破減半). Needs
+   *  cover at the cell (forest/hill/mountain); cleared on redirect. */
+  ambush?: boolean;
+  /** 長圍 — the holding army has invested a nearby enemy city (city id):
+   *  the town's markets and fields are cut each turn (loyalty + food drain);
+   *  when the granaries run dry it opens its gates without a fight. The
+   *  garrison may sortie; relief columns lift the siege by driving the
+   *  besieger off. Only meaningful with `holding`; cleared on redirect. */
+  besieging?: import('./common').EntityId;
   /** Free-cell destination (pixel coords). When set the army marches to
    *  this open cell instead of `targetCityId` and garrisons it on arrival
    *  rather than assaulting a city. */

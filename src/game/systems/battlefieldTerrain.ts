@@ -15,6 +15,7 @@
  */
 import type { TerrainKind, TacticalTile } from '../types';
 import type { Terrain } from '../data/cities';
+import type { WorldScars } from './worldScars';
 import { battleGroundAt, isFrozenWater, forestDensityAt, aridityAt, WORLD_SCALE, hexAt, hexCenter, HEX_ROW_SPACING } from '../data/geography';
 
 /**
@@ -160,6 +161,7 @@ function generateRealTerrain(
   width: number,
   height: number,
   geo: BattleGeo,
+  scars?: WorldScars,
 ): TacticalTile[] {
   const rng = makeRng(`${cityId}:${Math.round(geo.x)},${Math.round(geo.y)}`);
   const midRow = Math.floor(height / 2);
@@ -179,6 +181,7 @@ function generateRealTerrain(
     return Math.abs(-(uy) * (mx - anchorC.x) + ux * (my - anchorC.y));
   };
   const onRoad: boolean[] = [];
+  const scarKinds: Array<WorldScars[string]['kind'] | undefined> = [];
   const tiles: TacticalTile[] = [];
   for (let row = 0; row < height; row++) {
     for (let col = 0; col < width; col++) {
@@ -186,6 +189,7 @@ function generateRealTerrain(
       const wr = anchor.row + (row - anchorRow);
       const { x: mx, y: my } = hexCenter(wc, wr);
       onRoad.push(roadDist(mx, my) < HEX_ROW_SPACING * 0.55);
+      scarKinds.push(scars?.[`${wc},${wr}`]?.kind);
       const g = battleGroundAt(mx, my);
       let terrain: TerrainKind = 'plain';
       if (g === 'sea' || g === 'lake' || g === 'river') {
@@ -207,6 +211,9 @@ function generateRealTerrain(
         if (r < fp) terrain = 'forest';
         else if (r < fp + 0.04) terrain = 'hill';
       }
+      // 戰場烙印繼承 — ground torched in an earlier battle is still bare:
+      // the wood that WOULD grow here has already burned (no ambush cover).
+      if (scarKinds[scarKinds.length - 1] === 'scorched' && terrain === 'forest') terrain = 'plain';
       tiles.push({ coord: { col, row }, terrain });
     }
   }
@@ -222,7 +229,9 @@ function generateRealTerrain(
     // of water. Fall back to the centre row if the bearing line clips the
     // window too briefly to connect the entry edges.
     if (onRoad[i]) {
-      if (t.terrain === 'river') t.terrain = 'bridge';
+      // 斷渡 — a bridge burned in an earlier battle is still down: the
+      // crossing stays open water until the span is rebuilt (scar TTL).
+      if (t.terrain === 'river') { if (scarKinds[i] !== 'bridge-broken') t.terrain = 'bridge'; }
       else if (t.terrain === 'mountain' || t.terrain === 'hill' || t.terrain === 'plain' || t.terrain === 'desert') t.terrain = 'road';
       // ice stays ice — in winter the frozen river itself is the road.
     }
@@ -250,12 +259,13 @@ export function generateTerrain(
   hint: TerrainHint,
   overrides?: Record<string, TerrainKind>,
   geo?: BattleGeo,
+  scars?: WorldScars,
 ): TacticalTile[] {
   const rng = makeRng(cityId);
 
   // ── Real-geography battlefield (战斗地图写实) ──
   if (geo && !overrides && !hint.naval) {
-    const tiles = generateRealTerrain(cityId, width, height, geo);
+    const tiles = generateRealTerrain(cityId, width, height, geo, scars);
     // Thematic guarantees on top of the real sample:
     const midRow = Math.floor(height / 2);
     if (hint.terrain === 'pass') {

@@ -150,6 +150,7 @@ export const TERRAIN_FILL_URL: Record<TerrainKind, string> = {
   gate:       'url(#tkmGateGrad)',
   wall:       'url(#tkmGateGrad)',
   watchtower: 'url(#tkmWatchtowerGrad)',
+  fieldworks: 'url(#tkmChokepointGrad)',  // dug earth ≈ dark defile tone on the 2D map
 };
 
 /** Rich per-terrain art: layered pines, shadowed mountains with snow caps,

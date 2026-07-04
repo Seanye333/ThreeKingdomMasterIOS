@@ -141,7 +141,8 @@ export type TerrainKind =
   | 'bridge'      // 橋樑 — river-crossing bridge; allows non-navy over rivers
   | 'gate'        // 城門 — siege-only; tougher than wall but a bottleneck
   | 'wall'        // 城牆 — impassable rampart; siege engines batter it down (HP)
-  | 'watchtower'; // 瞭望台 — +1 range + reveals hidden adjacent units
+  | 'watchtower'  // 瞭望台 — +1 range + reveals hidden adjacent units
+  | 'fieldworks'; // 築壘 — stakes + earthworks raised mid-battle: cover, breaks cavalry charges, burns like tinder
 
 /**
  * Unit specialty types. Each has a counter / counter-by relationship:
@@ -294,10 +295,20 @@ export interface TacticalBattle {
    *  neighbouring cities. Troops were deducted at dispatch; survivors
    *  return home afterwards (refunded in full if they never arrived). */
   reliefPlans?: Array<{ cityId: EntityId; officerId: EntityId; troops: number }>;
+  /** 會戰 — map columns (either side) that answered the drums: scheduled as
+   *  reinforcements entering from their TRUE bearing; at battle end their
+   *  survivors are written back to the map armies (never double-counted
+   *  into the main sides' writebacks). See planColumnReinforcements. */
+  columnPlans?: Array<{ armyId: EntityId; officerIds: EntityId[]; side: 'attacker' | 'defender'; troops: number }>;
   /** 火攻 — ground hexes ablaze: damage whoever stands on them, creep
    *  downwind through flammable terrain, die in the rain, and burn
    *  forests down to open ground. */
   groundFires?: Array<{ coord: HexCoord; turnsLeft: number }>;
+  /** 戰場烙印 — lasting terrain mutations this battle carved (a forest burned
+   *  to the ground, a bridge dropped into the river). Battle-tile coords;
+   *  resolveBattleEnd maps them back to WORLD hexes via geoAnchor so the
+   *  strategic map remembers the scar (store.worldScars). */
+  terrainScars?: Array<{ coord: HexCoord; kind: 'burned-forest' | 'burned-bridge' }>;
   attackerForceId: EntityId | null;
   defenderForceId: EntityId | null;
   width: number;
