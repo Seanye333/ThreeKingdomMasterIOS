@@ -19,6 +19,12 @@ function ensureBound() {
   });
 }
 
+/** True while any modal/window is registered on the escape stack — lets
+ *  global hotkey handlers (e.g. the map's Esc-to-deselect) yield to it. */
+export function hasEscapeLayers(): boolean {
+  return escStack.length > 0;
+}
+
 /** Register a handler on the escape stack for the lifetime of the caller. */
 export function useEscapeKey(onEscape: () => void, enabled = true): void {
   useEffect(() => {

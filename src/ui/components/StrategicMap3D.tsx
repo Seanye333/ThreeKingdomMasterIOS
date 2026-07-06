@@ -6,6 +6,7 @@ import { RENDER_HI } from '../renderQuality';
 import { getTerritoryCanvas, getTerritorySignature, renderTerritorySnapshot } from './territoryOverlay';
 import { useReplayStore } from './replayHistory';
 import { setMapFocusHandler, requestMapFocus } from './mapFocusBus';
+import { hasEscapeLayers } from '../hooks/useEscapeKey';
 import { positionAlongRoute, terrainRoute } from '../../game/data/territories';
 import { geoToPixel, battleGroundAt, MAP_W as PX_W, MAP_H as PX_H, WORLD_SCALE, hexAt as geoHexAt, hexCenter as geoHexCenter, HEX_ROW_SPACING as GEO_HEX_ROW, terrainMarchCost } from '../../game/data/geography';
 import { getEmbassyTarget } from '../../game/systems/foreignRealm';
@@ -3408,6 +3409,9 @@ export function StrategicMap3D() {
         const [px, py] = cityPixel(next.id, next.coords.x, next.coords.y);
         setNavJump({ px, py, seq: Date.now() });
       } else if (e.key === 'Escape') {
+        // A modal/window owns this Esc (its escape-stack handler closes it on
+        // the same keydown) — don't also deselect the city underneath.
+        if (hasEscapeLayers()) return;
         const s = useGameStore.getState();
         if (s.selectedArmyId) s.selectArmy(null);
         else if (s.selectedCityId) s.selectCity(null);

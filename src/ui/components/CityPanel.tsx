@@ -29,6 +29,16 @@ import { rebuildCost } from '../../game/systems/cityRuin';
 import styles from './CityPanel.module.css';
 import { useT, useLanguage } from '../i18n';
 
+// 分頁 — the panel's sections live under four tabs so the sidebar never
+// becomes one long scroll. Non-player cities only show 總覽/武將.
+type CityTab = 'overview' | 'domestic' | 'military' | 'officers';
+const CITY_TABS: { id: CityTab; zh: string; en: string; playerOnly?: boolean }[] = [
+  { id: 'overview', zh: '總覽', en: 'City' },
+  { id: 'domestic', zh: '內政', en: 'Domestic', playerOnly: true },
+  { id: 'military', zh: '軍務', en: 'Military', playerOnly: true },
+  { id: 'officers', zh: '武將', en: 'Officers' },
+];
+
 export function CityPanel() {
   const selectedCityId = useGameStore((s) => s.selectedCityId);
   const playerForceId = useGameStore((s) => s.playerForceId);
@@ -100,6 +110,13 @@ export function CityPanel() {
   const t = useT();
   const lang = useLanguage();
 
+  const [tab, setTab] = useState<CityTab>('overview');
+  const isPlayerCity = !!city && city.ownerForceId === playerForceId;
+  // Player-only tabs fold away on enemy/neutral cities — bounce back to 總覽.
+  useEffect(() => {
+    if (!isPlayerCity && (tab === 'domestic' || tab === 'military')) setTab('overview');
+  }, [isPlayerCity, tab]);
+
   if (!city) {
     return (
       <aside className={styles.root}>
@@ -108,10 +125,9 @@ export function CityPanel() {
     );
   }
 
-  const isPlayerCity = city.ownerForceId === playerForceId;
-
   return (
     <aside className={styles.root}>
+      <div className={styles.panelTop}>
       <header className={styles.header}>
         {lang !== 'en' && <div className={styles.nameZh}>{city.name.zh}</div>}
         {lang !== 'zh' && <div className={styles.nameEn}>{city.name.en}</div>}
@@ -167,60 +183,98 @@ export function CityPanel() {
         })()}
       </header>
 
-      {/* City size badge — derived from population */}
-      <CitySizeBadge city={city} />
+      <nav className={styles.tabs}>
+        {CITY_TABS.filter((tb) => !tb.playerOnly || isPlayerCity).map((tb) => (
+          <button
+            key={tb.id}
+            className={tab === tb.id ? `${styles.tab} ${styles.tabActive}` : styles.tab}
+            onClick={() => setTab(tb.id)}
+          >
+            {lang === 'en' ? tb.en : tb.zh}
+            {tb.id === 'officers' && officers.length > 0 && (
+              <span className={styles.tabBadge}>{officers.length}</span>
+            )}
+          </button>
+        ))}
+      </nav>
+      </div>
 
-      {/* Inline mini-map preview — the single "enter city" entry. Clicking
-          opens the full 3D city map; it also shows walls + 8 build slots so
-          the player sees at a glance what's built. Reliable tap target on
-          mobile (the re-click-to-enter gesture only works with a mouse). */}
-      <CityMiniMap city={city} onClick={enterCity} />
+      <div className={styles.tabBody}>
+      {tab === 'overview' && (
+        <>
+          {/* City size badge — derived from population */}
+          <CitySizeBadge city={city} />
 
-      <ResourcesSection city={city} cityOfficers={officers} isPlayerCity={isPlayerCity} />
+          {/* Inline mini-map preview — the single "enter city" entry. Clicking
+              opens the full 3D city map; it also shows walls + 8 build slots so
+              the player sees at a glance what's built. Reliable tap target on
+              mobile (the re-click-to-enter gesture only works with a mouse). */}
+          <CityMiniMap city={city} onClick={enterCity} />
 
-      <GrainTransferSection cityId={city.id} isPlayerCity={isPlayerCity} />
-      <ExpeditionSection cityId={city.id} isPlayerCity={isPlayerCity} />
+          <ResourcesSection city={city} cityOfficers={officers} isPlayerCity={isPlayerCity} />
 
-      <DevelopmentSection city={city} isPlayerCity={isPlayerCity} />
+          <DevelopmentSection city={city} isPlayerCity={isPlayerCity} />
 
-      {/* Active policy effects from resident officers — REAL gameplay impact */}
-      <PolicyEffectsSection city={city} cityOfficers={officers} />
-
-      {isPlayerCity && (
-        <section className={styles.section}>
-          <h3 className={styles.sectionTitle}>{t('命令', 'Orders')}</h3>
-          <CommandMenu cityId={city.id} />
-        </section>
+          {/* Active policy effects from resident officers — REAL gameplay impact */}
+          <PolicyEffectsSection city={city} cityOfficers={officers} />
+        </>
       )}
 
-      {isPlayerCity && <BuildingsPanel cityId={city.id} />}
+      {tab === 'domestic' && isPlayerCity && (
+        <>
+          <section className={styles.section}>
+            <h3 className={styles.sectionTitle}>{t('內政令', 'Civil Orders')}</h3>
+            <CommandMenu cityId={city.id} section="civil" />
+          </section>
 
-      {isPlayerCity && <CapitalControls cityId={city.id} />}
-      {isPlayerCity && <RuinControls cityId={city.id} />}
+          <BuildingsPanel cityId={city.id} />
 
-      <FreeAgentsSection cityId={city.id} isPlayerCity={isPlayerCity} />
+          <CapitalControls cityId={city.id} />
+          <RuinControls cityId={city.id} />
+        </>
+      )}
 
-      {isPlayerCity && <CaptivesSection cityId={city.id} />}
+      {tab === 'military' && isPlayerCity && (
+        <>
+          <section className={styles.section}>
+            <h3 className={styles.sectionTitle}>{t('軍令', 'Military Orders')}</h3>
+            <CommandMenu cityId={city.id} section="military" />
+          </section>
 
-      <section className={styles.section}>
-        <h3 className={styles.sectionTitle}>
-          {t('武將', 'Officers')} ({officers.length})
-        </h3>
-        {officers.length === 0 ? (
-          <div className={styles.muted}>{t('無武將駐紮。', 'No officers stationed.')}</div>
-        ) : (
-          <ul className={styles.officerList}>
-            {officers.map((o) => (
-              <OfficerListItem
-                key={o.id}
-                officer={o}
-                cityId={city.id}
-                isPlayerCity={isPlayerCity}
-              />
-            ))}
-          </ul>
-        )}
-      </section>
+          <GrainTransferSection cityId={city.id} isPlayerCity={isPlayerCity} />
+          <CaptivesSection cityId={city.id} />
+        </>
+      )}
+
+      {tab === 'officers' && (
+        <>
+          <section className={styles.section}>
+            <h3 className={styles.sectionTitle}>
+              {t('武將', 'Officers')} ({officers.length})
+            </h3>
+            {officers.length === 0 ? (
+              <div className={styles.muted}>{t('無武將駐紮。', 'No officers stationed.')}</div>
+            ) : (
+              <ul className={styles.officerList}>
+                {officers.map((o) => (
+                  <OfficerListItem
+                    key={o.id}
+                    officer={o}
+                    cityId={city.id}
+                    isPlayerCity={isPlayerCity}
+                  />
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {isPlayerCity && <CommandMenu cityId={city.id} section="training" />}
+          {isPlayerCity && <ExpeditionSection cityId={city.id} isPlayerCity={isPlayerCity} />}
+
+          <FreeAgentsSection cityId={city.id} isPlayerCity={isPlayerCity} />
+        </>
+      )}
+      </div>
       {showCityMap && (
         <Suspense fallback={null}>
           <CityMapScreen3D

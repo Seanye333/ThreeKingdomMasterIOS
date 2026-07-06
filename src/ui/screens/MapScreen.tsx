@@ -76,7 +76,7 @@ import { WishesModal } from '../components/WishesModal';
 import { TacticalBattleScreen } from './TacticalBattleScreen';
 import { ConquestPolicyModal } from '../components/ConquestPolicyModal';
 import { BattleAIDriver } from '../components/BattleAIDriver';
-import { HudMenu } from '../components/HudMenu';
+import { HudMenu, type MenuEntry } from '../components/HudMenu';
 import { THEMES, getStoredTheme, applyTheme, type ThemeId } from '../theme';
 import { useT } from '../i18n';
 import styles from './MapScreen.module.css';
@@ -163,6 +163,15 @@ export function MapScreen() {
   const [showGlossary, setShowGlossary] = useState(false);
   const [showGovernors, setShowGovernors] = useState(false);
   const [showKaoke, setShowKaoke] = useState(false);
+  // 窄欄 — below tablet width the seven top-bar dropdowns collapse into one 選單.
+  const [narrowBar, setNarrowBar] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    const on = (e: MediaQueryListEvent) => setNarrowBar(e.matches);
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, []);
   const [showCampaignStats, setShowCampaignStats] = useState(false);
   const [showChronicle, setShowChronicle] = useState(false);
   const [showAnnals, setShowAnnals] = useState(false);
@@ -522,7 +531,7 @@ export function MapScreen() {
       { id: 'governors', zh: '州牧', en: 'Governors', hint: g.court, run: () => setShowGovernors(true) },
       { id: 'kaoke', zh: '考課', en: 'Reviews', hint: g.court, run: () => setShowKaoke(true) },
       { id: 'courtm', zh: '朝廷', en: 'Court', hint: g.court, run: () => setShowCourt(true) },
-      { id: 'relations', zh: '邦交關係', en: 'Relations', hint: g.court, run: () => setShowRelations(true) },
+      { id: 'relations', zh: '形勢一覽 — 邦交矩陣', en: 'Standings matrix', hint: g.diplo, run: () => setShowRelations(true) },
       { id: 'letters', zh: '書信', en: 'Letters', hint: g.court, run: () => setShowWishes(true) },
       { id: 'advisor', zh: '錦囊', en: 'Advisor', hint: g.mil, run: () => setShowAdvisor(true) },
       { id: 'schemes', zh: '計略', en: 'Schemes', hint: g.mil, run: () => setShowSchemes(true) },
@@ -544,6 +553,100 @@ export function MapScreen() {
     if (careerMode) c.push({ id: 'career', zh: '一代記', en: 'Career chronicle', hint: g.people, run: () => setShowCareer(true) });
     return c;
   })();
+
+  // ── 頂欄下拉 — cut by intent: 治國 / 兵事 / 邦交 / 朝儀 / 人 / 翻閱.
+  // Declared once so the wide bar (seven triggers) and the narrow bar
+  // (one merged 選單) render the same entries.
+  const hudMenus: { label: string; title: string; items: MenuEntry[] }[] = [
+    {
+      label: t('內政', 'Domestic'),
+      title: t('內政 — 郡縣、輜重、度支、賑災', 'Domestic — cities, convoys, treasury, relief'),
+      items: [
+        { label: t('郡縣', 'Cities'),    onClick: () => setShowCityRoster(true) },
+        { label: t('州域', 'Provinces'), onClick: () => setShowProvinces(true) },
+        { label: t('輜重', 'Convoys'),   onClick: () => setShowConvoys(true) },
+        { label: t('度支', 'Treasury'),  onClick: () => setShowBudget(true) },
+        { label: t('賑災', 'Relief'),    onClick: () => setShowRelief(true), badge: pendingReliefCount },
+        { label: t('待辦', 'To-Do'),     onClick: () => setShowToDo(true) },
+      ],
+    },
+    {
+      label: t('軍務', 'Military'),
+      title: t('軍務 — 軍團、計略、演武場、武備', 'Military — legions, schemes, arenas, armoury'),
+      items: [
+        { label: t('錦囊', 'Advisor'),    onClick: () => setShowAdvisor(true) },
+        { label: t('軍團', 'Legions'),    onClick: () => setShowLegions(true) },
+        { label: t('陣形', 'Formations'), onClick: () => setShowFormations(true) },
+        { label: t('私兵', 'Guard'),      onClick: () => setShowPrivateForces(true) },
+        { label: t('計略', 'Schemes'),    onClick: () => setShowSchemes(true) },
+        { label: t('密偵', 'Espionage'),  onClick: () => setShowEspionage(true) },
+        { header: t('演武場', 'Arenas') },
+        { label: t('演武', 'Sparring'),   onClick: () => setShowTraining(true) },
+        { label: t('比武', 'Tournament'), onClick: () => setShowTournament(true) },
+        { label: t('論辯', 'Debate'),     onClick: () => setShowDebateGround(true) },
+        { label: t('武鬥館', 'Hall'),     onClick: () => setShowDuelHall(true) },
+        { header: t('武備', 'Smithy') },
+        { label: t('寶物', 'Armoury'),    onClick: () => setShowArmoury(true) },
+        { label: t('鍛造', 'Forge'),      onClick: () => setShowForge(true) },
+      ],
+    },
+    {
+      label: t('外交', 'Diplomacy'),
+      title: t('外交 — 邦交、形勢一覽、關係図', 'Diplomacy — relations, standings, graph'),
+      items: [
+        { label: t('邦交', 'Relations'),     onClick: () => setShowDiplomacy(true) },
+        { label: t('形勢一覽', 'Standings'), onClick: () => setShowRelations(true) },
+        { label: t('關係図', 'Graph'),       onClick: () => setShowDipGraph(true) },
+      ],
+    },
+    {
+      label: t('朝堂', 'Court'),
+      title: t('朝堂 — 任官、州牧、考課、朝廷、祭祀', 'Court — appointments, governors, reviews, edicts, rites'),
+      items: [
+        { label: t('任官', 'Titles'),    onClick: () => setShowTitles(true) },
+        { label: t('州牧', 'Governors'), onClick: () => setShowGovernors(true) },
+        { label: t('考課', 'Reviews'),   onClick: () => setShowKaoke(true) },
+        { label: t('朝廷', 'Court'),     onClick: () => setShowCourt(true) },
+        { label: t('祭祀', 'Rites'),     onClick: () => setShowRites(true) },
+      ],
+    },
+    {
+      label: t('人才', 'Personnel'),
+      title: t('人才 — 因緣、武功、書信、列傳', 'Personnel — bonds, deeds, letters, biographies'),
+      items: [
+        { label: t('因緣', 'Relations'), onClick: () => setShowRelationships(true) },
+        { label: t('結義', 'Bonds'),     onClick: () => setShowBonds(true) },
+        { label: t('威名', 'Prestige'),  onClick: () => setShowPrestige(true) },
+        { label: t('武功', 'Deeds'),     onClick: () => setShowDeeds(true) },
+        { label: t('書信', 'Letters'),   onClick: () => setShowWishes(true), badge: wishes.length },
+        { label: t('名將榜', 'Hall of Fame'), onClick: () => setShowHallOfFame(true) },
+        { label: t('列傳', 'Wiki'),      onClick: () => setShowEncyclopedia(true) },
+        ...(careerMode
+          ? [{ label: t('一代記', 'Chronicle'), onClick: () => setShowCareer(true) }]
+          : []),
+      ],
+    },
+    {
+      label: t('記錄', 'Records'),
+      title: t('記錄 — 情勢、戰功、典籍', 'Records — standings, war record, chronicles'),
+      items: [
+        { header: t('情勢', 'Standings') },
+        { label: t('大勢', 'Powers'),    onClick: () => setShowPowerGraph(true) },
+        { label: t('較量', 'Compare'),   onClick: () => setShowCompare(true) },
+        { label: t('市井', 'Rumors'),    onClick: () => setShowRumors(true) },
+        { header: t('戰功', 'War Record') },
+        { label: t('戰史', 'Battles'),   onClick: () => setShowHistory(true) },
+        { label: t('戰錄', 'Replays'),   onClick: () => setShowReplays(true) },
+        { label: t('勳功', 'Achievements'), onClick: () => setShowAch(true) },
+        { label: t('戰記', 'Stats'),        onClick: () => setShowCampaignStats(true) },
+        { header: t('典籍', 'Chronicles') },
+        { label: t('史書', 'Annals'),    onClick: () => setShowHistoryBook(true) },
+        { label: t('📜 國史', '📜 Chronicle'), onClick: () => setShowChronicle(true) },
+        { label: t('☄ 災異志', '☄ Portents'), onClick: () => setShowAnnals(true) },
+        { label: t('概念', 'Concepts'),     onClick: () => setShowGlossary(true) },
+      ],
+    },
+  ];
 
   return (
     <div className={styles.root}>
@@ -601,102 +704,47 @@ export function MapScreen() {
           )}
         </div>
         {/* Top-tier (always visible — most clicked) */}
-        <button
-          className={styles.forcesButton}
-          onClick={() => setShowOfficers(true)}
-        >
-          {t('武將', 'Officers')}
-        </button>
-        <HudMenu
-          label={t('外交', 'Diplomacy')}
-          title={t('外交 — 邦交、關係図', 'Diplomacy — relations & graph')}
-          items={[
-            { label: t('邦交', 'Relations'), onClick: () => setShowDiplomacy(true) },
-            { label: t('關係図', 'Graph'),   onClick: () => setShowDipGraph(true) },
-          ]}
-        />
-        <button
-          className={styles.forcesButton}
-          onClick={() => setShowForces(true)}
-        >
-          {t('群雄', 'Forces')}
-        </button>
-
-        {/* ── Grouped dropdowns ── */}
-        <HudMenu
-          label={t('人才', 'Personnel')}
-          title={t('人才 — 因緣、武功、列傳', 'Personnel — bonds, deeds, biographies')}
-          items={[
-            { label: t('因緣', 'Relations'), onClick: () => setShowRelationships(true) },
-            { label: t('結義', 'Bonds'),     onClick: () => setShowBonds(true) },
-            { label: t('威名', 'Prestige'),  onClick: () => setShowPrestige(true) },
-            { label: t('武功', 'Deeds'),     onClick: () => setShowDeeds(true) },
-            { label: t('名將榜', 'Hall of Fame'), onClick: () => setShowHallOfFame(true) },
-            { label: t('列傳', 'Wiki'),      onClick: () => setShowEncyclopedia(true) },
-            ...(careerMode
-              ? [{ label: t('一代記', 'Chronicle'), onClick: () => setShowCareer(true) }]
-              : []),
-          ]}
-        />
-        <HudMenu
-          label={t('朝堂', 'Court')}
-          title={t('朝堂 — 任官、州牧、朝廷', 'Court — appointments, governors, edicts')}
-          items={[
-            { label: t('任官', 'Titles'),    onClick: () => setShowTitles(true) },
-            { label: t('州牧', 'Governors'), onClick: () => setShowGovernors(true) },
-            { label: t('朝廷', 'Court'),     onClick: () => setShowCourt(true) },
-            { label: t('祭祀', 'Rites'),     onClick: () => setShowRites(true) },
-            { label: t('賑災', 'Relief'),    onClick: () => setShowRelief(true), badge: pendingReliefCount },
-            { label: t('邦交', 'Relations'), onClick: () => setShowRelations(true) },
-            { label: t('書信', 'Letters'),   onClick: () => setShowWishes(true), badge: wishes.length },
-          ]}
-        />
-        <HudMenu
-          label={t('軍務', 'Military')}
-          title={t('軍務 — 戰史、密偵、陣形', 'Military — battles, espionage, formations')}
-          items={[
-            { label: t('錦囊', 'Advisor'),    onClick: () => setShowAdvisor(true) },
-            { label: t('演武', 'Sparring'),   onClick: () => setShowTraining(true) },
-            { label: t('論辯', 'Debate'),     onClick: () => setShowDebateGround(true) },
-            { label: t('比武', 'Tournament'), onClick: () => setShowTournament(true) },
-            { label: t('武鬥館', 'Hall'),     onClick: () => setShowDuelHall(true) },
-            { label: t('計略', 'Schemes'),    onClick: () => setShowSchemes(true) },
-            { label: t('軍團', 'Legions'),    onClick: () => setShowLegions(true) },
-            { label: t('戰史', 'Battles'),    onClick: () => setShowHistory(true) },
-            { label: t('戰錄', 'Replays'),    onClick: () => setShowReplays(true) },
-            { label: t('私兵', 'Guard'),      onClick: () => setShowPrivateForces(true) },
-            { label: t('密偵', 'Espionage'),  onClick: () => setShowEspionage(true) },
-            { label: t('陣形', 'Formations'), onClick: () => setShowFormations(true) },
-          ]}
-        />
-        <HudMenu
-          label={t('匠工', 'Crafting')}
-          title={t('匠工 — 寶物、鍛造', 'Crafting — armoury and forge')}
-          items={[
-            { label: t('寶物', 'Armoury'), onClick: () => setShowArmoury(true) },
-            { label: t('鍛造', 'Forge'),   onClick: () => setShowForge(true) },
-          ]}
-        />
-        <HudMenu
-          label={t('記錄', 'Records')}
-          title={t('記錄 — 勳功、戰記、概念', 'Records — achievements, stats & concepts')}
-          items={[
-            { label: t('史書', 'Annals'),    onClick: () => setShowHistoryBook(true) },
-            { label: t('大勢', 'Powers'),    onClick: () => setShowPowerGraph(true) },
-            { label: t('較量', 'Compare'),   onClick: () => setShowCompare(true) },
-            { label: t('市井', 'Rumors'),    onClick: () => setShowRumors(true) },
-            { label: t('待辦', 'To-Do'),     onClick: () => setShowToDo(true) },
-            { label: t('郡縣', 'Cities'),    onClick: () => setShowCityRoster(true) },
-            { label: t('州域', 'Provinces'), onClick: () => setShowProvinces(true) },
-            { label: t('輜重', 'Convoys'),   onClick: () => setShowConvoys(true) },
-            { label: t('度支', 'Treasury'),  onClick: () => setShowBudget(true) },
-            { label: t('勳功', 'Achievements'), onClick: () => setShowAch(true) },
-            { label: t('戰記', 'Stats'),        onClick: () => setShowCampaignStats(true) },
-            { label: t('概念', 'Concepts'),     onClick: () => setShowGlossary(true) },
-            { label: t('📜 國史', '📜 Chronicle'), onClick: () => setShowChronicle(true) },
-            { label: t('☄ 災異志', '☄ Portents'), onClick: () => setShowAnnals(true) },
-          ]}
-        />
+        {!narrowBar && (
+          <>
+            <button
+              className={styles.forcesButton}
+              onClick={() => setShowOfficers(true)}
+            >
+              {t('武將', 'Officers')}
+            </button>
+            <button
+              className={styles.forcesButton}
+              onClick={() => setShowForces(true)}
+            >
+              {t('群雄', 'Forces')}
+            </button>
+            {hudMenus.map((m) => (
+              <HudMenu key={m.label} label={m.label} title={m.title} items={m.items} />
+            ))}
+            {/* ／命令臺 — the fastest path to everything; surface the hotkey. */}
+            <button
+              className={styles.forcesButton}
+              onClick={() => setShowPalette(true)}
+              title={t('命令臺 — 按 / 或 ⌘K,直搜全部功能', 'Command palette — press / or ⌘K to search every screen')}
+              style={{ fontFamily: 'var(--tkm-font-mono)', padding: '0.35rem 0.55rem' }}
+            >
+              ／
+            </button>
+          </>
+        )}
+        {/* 窄欄 — one merged 選單 replaces the seven dropdowns; section
+            headers keep the same grouping, it only folds. */}
+        {narrowBar && (
+          <HudMenu
+            label={t('選單', 'Menu')}
+            title={t('全部功能', 'All screens')}
+            items={[
+              { label: t('武將', 'Officers'), onClick: () => setShowOfficers(true) },
+              { label: t('群雄', 'Forces'),   onClick: () => setShowForces(true) },
+              ...hudMenus.flatMap((m): MenuEntry[] => [{ header: m.label }, ...m.items]),
+            ]}
+          />
+        )}
         <HudMenu
           label={t('設定', 'System')}
           title={t('系統 — 設定、存讀、音效', 'System — settings, save/load, sound')}
@@ -812,6 +860,7 @@ export function MapScreen() {
             <button
               className={styles.advanceButton}
               onClick={advanceTurn}
+              title={t('過旬結算 — 空格亦可', 'Resolve the turn — Space works too')}
             >
               {hotSeatPlayers.length > 1
                 ? t(`結束 ${hotSeatPlayers[hotSeatActiveIndex]?.label ?? '回合'} →`,
@@ -836,6 +885,9 @@ export function MapScreen() {
           <div style={{ position: 'absolute', left: 8, top: 92, zIndex: 15 }}>
             <ArmiesPanel />
           </div>
+          {/* 新手五事 — anchored over the map's right edge (inside the
+              positioned mapWrap) so it never covers the city panel's tabs. */}
+          <TutorialTasks />
         </div>
         <CityPanel />
       </main>
@@ -1165,7 +1217,6 @@ export function MapScreen() {
         <EndingsModal onClose={() => setShowEnding(false)} />
       )}
       <TutorialOverlay />
-      <TutorialTasks />
       {/* Headless AI turns while the fullscreen battle view is down (fly-in
           delay or minimized to the diorama) — never alongside the screen's
           own driver. */}

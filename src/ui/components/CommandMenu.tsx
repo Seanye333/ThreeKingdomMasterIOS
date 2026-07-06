@@ -17,35 +17,39 @@ import { useT, useLanguage, useDesc } from '../i18n';
 
 interface Props {
   cityId: EntityId;
+  /** Which band of orders to render — the city panel's 內政 tab shows civil
+   *  affairs, 軍務 shows troop/defence/war orders, 武將 shows officer 培訓. */
+  section: 'civil' | 'military' | 'training';
 }
 
 const EMPTY_DELEGATIONS: Record<string, string> = {};
 
-// 基本內政 — always available.
-const BASIC_ORDER: InternalAffairsType[] = [
+// 文政 — civil administration (內政 tab).
+const CIVIL_ORDER: InternalAffairsType[] = [
   'develop-agriculture',
   'develop-commerce',
-  'build-defense',
-  'recruit-troops',
-  'military-farming',
-  'drill-troops',
-  'special-training',
   'improve-loyalty',
   'relief',
   'anti-corruption',
   'promote-learning',
   'flood-control',
-  'garrison',
   'search',
   'encourage-migration',
 ];
-// 大型工程 — unlocked once the city reaches a higher tier.
-const MAJOR_ORDER: InternalAffairsType[] = [
-  'major-agriculture',
-  'major-commerce',
-  'major-defense',
-  'upgrade-wall',
+// 軍備 — troops & defence orders (軍務 tab).
+const MIL_ORDER: InternalAffairsType[] = [
+  'recruit-troops',
+  'drill-troops',
+  'special-training',
+  'military-farming',
+  'build-defense',
+  'garrison',
 ];
+// 大型工程 — unlocked once the city reaches a higher tier; split the same way.
+const MAJOR_CIVIL: InternalAffairsType[] = ['major-agriculture', 'major-commerce'];
+const MAJOR_MIL: InternalAffairsType[] = ['major-defense', 'upgrade-wall'];
+// march + every 軍備/城防 order — used to split pending-command rows per tab.
+const MIL_TYPES = new Set<string>([...MIL_ORDER, ...MAJOR_MIL, 'march']);
 
 type ModalState =
   | { kind: 'closed' }
@@ -55,15 +59,17 @@ type ModalState =
   | { kind: 'drill' }
   | { kind: 'market' };
 
-export function CommandMenu({ cityId }: Props) {
+export function CommandMenu({ cityId, section }: Props) {
   const [modal, setModal] = useState<ModalState>({ kind: 'closed' });
   const city = useGameStore((s) => s.cities[cityId]);
   // Select the map by reference (stable) — filter inside useMemo to avoid creating
   // a new array on every render (which would trigger an infinite re-render loop).
   const allPending = useGameStore((s) => s.pendingCommands);
   const pendingInCity = useMemo(
-    () => Object.values(allPending).filter((c) => c.cityId === cityId),
-    [allPending, cityId],
+    () => Object.values(allPending).filter((c) =>
+      c.cityId === cityId &&
+      (section === 'military' ? MIL_TYPES.has(c.type) : !MIL_TYPES.has(c.type))),
+    [allPending, cityId, section],
   );
   const officersMap = useGameStore((s) => s.officers);
   const citiesMap = useGameStore((s) => s.cities);
@@ -101,7 +107,8 @@ export function CommandMenu({ cityId }: Props) {
   const governor = governorId ? officersMap[governorId] : null;
 
   const currentSize = citySize(city);
-  const majorUnlocked = MAJOR_ORDER.some((type) => meetsMinSize(currentSize.id, COMMAND_DEFS[type].minSize));
+  const majorCivilUnlocked = MAJOR_CIVIL.some((type) => meetsMinSize(currentSize.id, COMMAND_DEFS[type].minSize));
+  const majorMilUnlocked = MAJOR_MIL.some((type) => meetsMinSize(currentSize.id, COMMAND_DEFS[type].minSize));
 
   // Small full-width divider that labels a band of related orders.
   const groupHead = (key: string, icon: IconName, label: string) => (
@@ -110,7 +117,7 @@ export function CommandMenu({ cityId }: Props) {
       style={{
         gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 6,
         fontSize: '0.64rem', color: '#8a98a4', letterSpacing: '0.14rem',
-        marginTop: key === 'basic' ? 0 : 6, paddingBottom: 3, borderBottom: '1px solid #1d2731',
+        marginTop: key === 'basic' || key === 'war' ? 0 : 6, paddingBottom: 3, borderBottom: '1px solid #1d2731',
       }}
     >
       <Icon name={icon} size={11} color="#8a98a4" />{label}
@@ -148,8 +155,46 @@ export function CommandMenu({ cityId }: Props) {
     );
   };
 
+  // 培訓 — officer development; rendered alone on the 武將 tab.
+  const hasAcad = cityHasAcademy(city, buildings);
+  const hasMentor = cityHasMentors(city, officersMap, pendingTrainings);
+  if (section === 'training') {
+    if (!hasAcad && !hasMentor) return null;
+    const label = hasAcad ? t('書院培訓', 'Academy Training') : t('師徒傳授', 'Mentor Teaching');
+    const labelEn = hasAcad ? 'Academy' : 'Mentor';
+    const tip = hasAcad
+      ? t('書院培訓 — 武將學一個新政策(費用視政策難度而定)', 'Academy training — train an officer in a new policy (cost varies by tier)')
+      : t('師徒傳授 — 同城武將傳授其已通政策,無需書院,免費但較慢', 'Mentor teaching — a senior officer teaches a policy they know, no academy needed, free but slower');
+    return (
+      <div style={{ marginBottom: '1.25rem' }}>
+        <div style={{ fontSize: '0.7rem', letterSpacing: '0.07rem', textTransform: 'uppercase', color: '#7a8893', margin: '0 0 0.5rem 0' }}>
+          {t('培育', 'Training')}
+        </div>
+        <div className={styles.menu}>
+          <button
+            className={styles.cmdButton}
+            onClick={() => setModal({ kind: 'training' })}
+            title={tip}
+            style={{ borderColor: hasAcad ? '#88b7e8' : '#7ed68a' }}
+          >
+            <span className={styles.cmdLabelZh}>{lang === 'en' ? labelEn : label}</span>
+            {lang === 'both' && <span className={styles.cmdLabelEn}>{labelEn}</span>}
+            <span className={styles.cmdCost}>{t('政', 'policy')}</span>
+          </button>
+        </div>
+        {modal.kind === 'training' && (
+          <TrainingPicker
+            cityId={cityId}
+            onClose={() => setModal({ kind: 'closed' })}
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <>
+      {section === 'civil' && (<>
       {/* 委任太守 — hand the city to a governor; every tick they file one
           internal command for you through the normal pipeline. */}
       <div style={{
@@ -200,6 +245,7 @@ export function CommandMenu({ cityId }: Props) {
           </select>
         </div>
       )}
+      </>)}
       {/* Currently pending commands in this city — one per assigned officer */}
       {pendingInCity.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginBottom: '0.5rem' }}>
@@ -252,72 +298,60 @@ export function CommandMenu({ cityId }: Props) {
       )}
 
       <div className={styles.menu}>
-        {groupHead('basic', 'scroll', t('基本內政', 'Internal Affairs'))}
-        {BASIC_ORDER.map(renderInternal)}
-        {majorUnlocked && groupHead('major', 'city', t('大型工程', 'Major Works'))}
-        {majorUnlocked && MAJOR_ORDER.map(renderInternal)}
-        {groupHead('mil', 'war', t('軍事 · 特務', 'Military & Special'))}
-        <button
-          className={`${styles.cmdButton} ${styles.marchButton}`}
-          onClick={() => setModal({ kind: 'march' })}
-          disabled={!canMarch}
-          title={
-            !canMarch
-              ? city.troops === 0
-                ? t('無兵可出', 'No troops to march')
-                : t('金錢不足', 'Not enough gold')
-              : desc(marchDef)
-          }
-        >
-          <span className={styles.cmdLabelZh}>{lang === 'en' ? marchDef.label.en : marchDef.label.zh}</span>
-          {lang === 'both' && <span className={styles.cmdLabelEn}>{marchDef.label.en}</span>}
-          <span className={styles.cmdCost}>{marchDef.goldCost}g</span>
-        </button>
-        <button
-          className={styles.cmdButton}
-          onClick={() => setModal({ kind: 'market' })}
-          title={t('市易 — 金糧互市,秋賤冬貴,缺糧之城價高', 'Grain market — gold↔food; cheap after harvest, dear in winter and in want')}
-          style={{ borderColor: '#c8a258' }}
-        >
-          <span className={styles.cmdLabelZh}>{t('市易', 'Market')}</span>
-          {lang === 'both' && <span className={styles.cmdLabelEn}>Market</span>}
-          <span className={styles.cmdCost}>{t('糧', 'food')}</span>
-        </button>
-        <button
-          className={styles.cmdButton}
-          onClick={() => setModal({ kind: 'drill' })}
-          disabled={garrisonCount === 0}
-          title={
-            garrisonCount === 0
-              ? t('需有武將駐城方可演習', 'Need a stationed officer to drill')
-              : t('守城演習 — 在本城真實戰場(城牆+你建的箭樓拒馬)上操演守備,不損兵將', 'Siege drill — defend this city\'s real battlefield (walls + the towers/traps you built). No losses; practice only.')
-          }
-          style={{ borderColor: '#7ed68a' }}
-        >
-          <span className={styles.cmdLabelZh}>{t('演習', 'Drill')}</span>
-          {lang === 'both' && <span className={styles.cmdLabelEn}>Drill</span>}
-          <span className={styles.cmdCost}>{t('練', 'free')}</span>
-        </button>
-        {(cityHasAcademy(city, buildings) || cityHasMentors(city, officersMap, pendingTrainings)) && (() => {
-          const hasAcad = cityHasAcademy(city, buildings);
-          const label = hasAcad ? t('書院培訓', 'Academy Training') : t('師徒傳授', 'Mentor Teaching');
-          const labelEn = hasAcad ? 'Academy' : 'Mentor';
-          const tip = hasAcad
-            ? t('書院培訓 — 武將學一個新政策(費用視政策難度而定)', 'Academy training — train an officer in a new policy (cost varies by tier)')
-            : t('師徒傳授 — 同城武將傳授其已通政策,無需書院,免費但較慢', 'Mentor teaching — a senior officer teaches a policy they know, no academy needed, free but slower');
-          return (
-            <button
-              className={styles.cmdButton}
-              onClick={() => setModal({ kind: 'training' })}
-              title={tip}
-              style={{ borderColor: hasAcad ? '#88b7e8' : '#7ed68a' }}
-            >
-              <span className={styles.cmdLabelZh}>{lang === 'en' ? labelEn : label}</span>
-              {lang === 'both' && <span className={styles.cmdLabelEn}>{labelEn}</span>}
-              <span className={styles.cmdCost}>{t('政', 'policy')}</span>
-            </button>
-          );
-        })()}
+        {section === 'civil' && (<>
+          {groupHead('basic', 'scroll', t('基本內政', 'Internal Affairs'))}
+          {CIVIL_ORDER.map(renderInternal)}
+          <button
+            className={styles.cmdButton}
+            onClick={() => setModal({ kind: 'market' })}
+            title={t('市易 — 金糧互市,秋賤冬貴,缺糧之城價高', 'Grain market — gold↔food; cheap after harvest, dear in winter and in want')}
+            style={{ borderColor: '#c8a258' }}
+          >
+            <span className={styles.cmdLabelZh}>{t('市易', 'Market')}</span>
+            {lang === 'both' && <span className={styles.cmdLabelEn}>Market</span>}
+            <span className={styles.cmdCost}>{t('糧', 'food')}</span>
+          </button>
+          {majorCivilUnlocked && groupHead('major', 'city', t('大型工程', 'Major Works'))}
+          {majorCivilUnlocked && MAJOR_CIVIL.map(renderInternal)}
+        </>)}
+        {section === 'military' && (<>
+          {groupHead('war', 'war', t('征戰', 'Warfare'))}
+          <button
+            className={`${styles.cmdButton} ${styles.marchButton}`}
+            onClick={() => setModal({ kind: 'march' })}
+            disabled={!canMarch}
+            title={
+              !canMarch
+                ? city.troops === 0
+                  ? t('無兵可出', 'No troops to march')
+                  : t('金錢不足', 'Not enough gold')
+                : desc(marchDef)
+            }
+          >
+            <span className={styles.cmdLabelZh}>{lang === 'en' ? marchDef.label.en : marchDef.label.zh}</span>
+            {lang === 'both' && <span className={styles.cmdLabelEn}>{marchDef.label.en}</span>}
+            <span className={styles.cmdCost}>{marchDef.goldCost}g</span>
+          </button>
+          <button
+            className={styles.cmdButton}
+            onClick={() => setModal({ kind: 'drill' })}
+            disabled={garrisonCount === 0}
+            title={
+              garrisonCount === 0
+                ? t('需有武將駐城方可演習', 'Need a stationed officer to drill')
+                : t('守城演習 — 在本城真實戰場(城牆+你建的箭樓拒馬)上操演守備,不損兵將', 'Siege drill — defend this city\'s real battlefield (walls + the towers/traps you built). No losses; practice only.')
+            }
+            style={{ borderColor: '#7ed68a' }}
+          >
+            <span className={styles.cmdLabelZh}>{t('演習', 'Drill')}</span>
+            {lang === 'both' && <span className={styles.cmdLabelEn}>Drill</span>}
+            <span className={styles.cmdCost}>{t('練', 'free')}</span>
+          </button>
+          {groupHead('mil', 'scroll', t('軍備', 'Muster & Drill'))}
+          {MIL_ORDER.map(renderInternal)}
+          {majorMilUnlocked && groupHead('walls', 'city', t('城防工程', 'Fortifications'))}
+          {majorMilUnlocked && MAJOR_MIL.map(renderInternal)}
+        </>)}
       </div>
 
       {modal.kind === 'internal' && (
@@ -329,12 +363,6 @@ export function CommandMenu({ cityId }: Props) {
       )}
       {modal.kind === 'march' && (
         <MarchPicker
-          cityId={cityId}
-          onClose={() => setModal({ kind: 'closed' })}
-        />
-      )}
-      {modal.kind === 'training' && (
-        <TrainingPicker
           cityId={cityId}
           onClose={() => setModal({ kind: 'closed' })}
         />

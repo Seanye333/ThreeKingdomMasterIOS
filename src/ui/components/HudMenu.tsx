@@ -11,9 +11,18 @@ interface MenuItem {
   title?: string;
 }
 
+/** A non-clickable section label inside the dropdown, e.g. 演武場 / 武備. */
+interface MenuHeader {
+  header: ReactNode;
+}
+
+export type MenuEntry = MenuItem | MenuHeader;
+
+const isHeader = (e: MenuEntry): e is MenuHeader => 'header' in e;
+
 interface Props {
   label: ReactNode;
-  items: MenuItem[];
+  items: MenuEntry[];
   /** Optional title attribute on the trigger. */
   title?: string;
 }
@@ -27,6 +36,9 @@ interface Props {
  */
 export function HudMenu({ label, items, title }: Props) {
   const [open, setOpen] = useState(false);
+  // 待辦加總 — surface the sum of item badges on the closed trigger, so a
+  // pending 賑災/書信 still pings the player without opening the menu.
+  const badgeSum = items.reduce((n, it) => n + (isHeader(it) ? 0 : it.badge ?? 0), 0);
   const [pos, setPos] = useState<{ left: number; top: number; width: number }>({
     left: 0, top: 0, width: 0,
   });
@@ -82,6 +94,22 @@ export function HudMenu({ label, items, title }: Props) {
           }}
         >
           {label} <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>▾</span>
+          {badgeSum > 0 && (
+            <span
+              style={{
+                marginLeft: '0.3rem',
+                background: 'var(--tkm-danger)',
+                color: 'white',
+                fontSize: '0.68rem',
+                padding: '0 0.35rem',
+                borderRadius: 'var(--tkm-radius)',
+                fontFamily: 'var(--tkm-font-mono)',
+                verticalAlign: 'middle',
+              }}
+            >
+              {badgeSum}
+            </span>
+          )}
         </button>
       </Tip>
       {open && createPortal(
@@ -92,6 +120,8 @@ export function HudMenu({ label, items, title }: Props) {
             top: pos.top,
             left: pos.left,
             minWidth: Math.max(200, pos.width),
+            maxHeight: '70vh',
+            overflowY: 'auto',
             background: 'var(--tkm-bg-modal)',
             border: '1px solid var(--tkm-text-h2)',
             boxShadow: '0 4px 20px rgba(0,0,0,0.7)',
@@ -99,7 +129,22 @@ export function HudMenu({ label, items, title }: Props) {
             animation: 'tkmFadeIn 0.12s ease-out',
           }}
         >
-          {items.map((it, i) => (
+          {items.map((it, i) => isHeader(it) ? (
+            <div
+              key={i}
+              style={{
+                padding: '0.4rem 0.75rem 0.2rem',
+                fontSize: '0.64rem',
+                letterSpacing: '0.14rem',
+                color: 'var(--tkm-text-muted)',
+                borderBottom: '1px solid var(--tkm-border-soft)',
+                marginTop: i === 0 ? 0 : 4,
+                fontFamily: 'var(--tkm-font-body)',
+              }}
+            >
+              {it.header}
+            </div>
+          ) : (
             <button
               key={i}
               onClick={() => {

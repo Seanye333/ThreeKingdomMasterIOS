@@ -67,7 +67,7 @@ export function RelationsModal({ onClose }: { onClose: () => void }) {
       >
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.7rem' }}>
           <div>
-            <span style={{ fontSize: '1.25rem', letterSpacing: '0.04rem', color: '#f2dd9a' }}>{t('邦 交', 'Relations')}</span>
+            <span style={{ fontSize: '1.25rem', letterSpacing: '0.04rem', color: '#f2dd9a' }}>{t('形勢一覽', 'Standings')}</span>
             <span style={{ marginLeft: '0.8rem', fontSize: '0.7rem', color: '#7a8893' }}>
               <span style={{ color: '#9ed68a' }}>盟 {t('同盟', 'allied')}</span> ·{' '}
               <span style={{ color: '#88b7e8' }}>約 {t('互不侵犯', 'pact')}</span> ·{' '}
