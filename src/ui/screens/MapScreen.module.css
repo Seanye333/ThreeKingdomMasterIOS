@@ -122,6 +122,21 @@
   margin-left: 0.2rem;
 }
 
+/* 次要資訊 — weather/mandate/EN names fold away on mid-width windows so the
+   menu triggers keep fitting without a horizontal scroll (their facts stay
+   reachable via the date-block tooltips). */
+@media (max-width: 1180px) {
+  .aux {
+    display: none;
+  }
+  .dateBlock {
+    min-width: 0;
+  }
+  .orderBlock {
+    padding: 0 0.3rem;
+  }
+}
+
 .playerBlock {
   display: flex;
   align-items: center;

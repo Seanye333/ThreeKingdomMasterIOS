@@ -163,11 +163,13 @@ export function MapScreen() {
   const [showGlossary, setShowGlossary] = useState(false);
   const [showGovernors, setShowGovernors] = useState(false);
   const [showKaoke, setShowKaoke] = useState(false);
-  // 窄欄 — below tablet width the seven top-bar dropdowns collapse into one 選單.
+  // 窄欄 — below ~tablet width the seven top-bar dropdowns collapse into one
+  // 選單 (900px: with all seven triggers + info blocks the bar starts to
+  // scroll around 1100, and by 900 scrolling is constant).
   const [narrowBar, setNarrowBar] = useState(() =>
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches);
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 900px)').matches);
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 768px)');
+    const mq = window.matchMedia('(max-width: 900px)');
     const on = (e: MediaQueryListEvent) => setNarrowBar(e.matches);
     mq.addEventListener('change', on);
     return () => mq.removeEventListener('change', on);
@@ -562,67 +564,67 @@ export function MapScreen() {
       label: t('內政', 'Domestic'),
       title: t('內政 — 郡縣、輜重、度支、賑災', 'Domestic — cities, convoys, treasury, relief'),
       items: [
-        { label: t('郡縣', 'Cities'),    onClick: () => setShowCityRoster(true) },
-        { label: t('州域', 'Provinces'), onClick: () => setShowProvinces(true) },
-        { label: t('輜重', 'Convoys'),   onClick: () => setShowConvoys(true) },
-        { label: t('度支', 'Treasury'),  onClick: () => setShowBudget(true) },
-        { label: t('賑災', 'Relief'),    onClick: () => setShowRelief(true), badge: pendingReliefCount },
-        { label: t('待辦', 'To-Do'),     onClick: () => setShowToDo(true) },
+        { label: t('郡縣', 'Cities'),    onClick: () => setShowCityRoster(true), title: t('全境城池一覽 — 排序、跳轉', 'Every city at a glance — sort & jump') },
+        { label: t('州域', 'Provinces'), onClick: () => setShowProvinces(true), title: t('各州控勢與州牧', 'Provincial control & governors') },
+        { label: t('輜重', 'Convoys'),   onClick: () => setShowConvoys(true), title: t('在途運輸與常運糧道一覽', 'Columns on the road & standing routes') },
+        { label: t('度支', 'Treasury'),  onClick: () => setShowBudget(true), title: t('全國收支簿 — 稅入/俸祿/軍費', 'Realm budget — income & upkeep') },
+        { label: t('賑災', 'Relief'),    onClick: () => setShowRelief(true), badge: pendingReliefCount, title: t('開倉賑濟受災城池', 'Open granaries for stricken cities') },
+        { label: t('待辦', 'To-Do'),     onClick: () => setShowToDo(true), title: t('本旬該辦之事的提醒清單', 'Reminders for this turn') },
       ],
     },
     {
       label: t('軍務', 'Military'),
       title: t('軍務 — 軍團、計略、演武場、武備', 'Military — legions, schemes, arenas, armoury'),
       items: [
-        { label: t('錦囊', 'Advisor'),    onClick: () => setShowAdvisor(true) },
-        { label: t('軍團', 'Legions'),    onClick: () => setShowLegions(true) },
-        { label: t('陣形', 'Formations'), onClick: () => setShowFormations(true) },
-        { label: t('私兵', 'Guard'),      onClick: () => setShowPrivateForces(true) },
-        { label: t('計略', 'Schemes'),    onClick: () => setShowSchemes(true) },
-        { label: t('密偵', 'Espionage'),  onClick: () => setShowEspionage(true) },
+        { label: t('錦囊', 'Advisor'),    onClick: () => setShowAdvisor(true), title: t('軍師建議 — 當下最值得做的事', "Advisor — what's worth doing now") },
+        { label: t('軍團', 'Legions'),    onClick: () => setShowLegions(true), title: t('委任軍團 — 都督自主征伐', 'Delegated legions under a marshal') },
+        { label: t('陣形', 'Formations'), onClick: () => setShowFormations(true), title: t('演練與指派會戰陣形', 'Drill & assign battle formations') },
+        { label: t('私兵', 'Guard'),      onClick: () => setShowPrivateForces(true), title: t('武將部曲 — 私兵編制', "Officers' private retinues") },
+        { label: t('計略', 'Schemes'),    onClick: () => setShowSchemes(true), title: t('離間/流言/疑兵等謀略', 'Sow discord, rumors, feints…') },
+        { label: t('密偵', 'Espionage'),  onClick: () => setShowEspionage(true), title: t('細作網絡與反間', 'Spy networks & counter-intel') },
         { header: t('演武場', 'Arenas') },
-        { label: t('演武', 'Sparring'),   onClick: () => setShowTraining(true) },
-        { label: t('比武', 'Tournament'), onClick: () => setShowTournament(true) },
-        { label: t('論辯', 'Debate'),     onClick: () => setShowDebateGround(true) },
-        { label: t('武鬥館', 'Hall'),     onClick: () => setShowDuelHall(true) },
+        { label: t('演武', 'Sparring'),   onClick: () => setShowTraining(true), title: t('武將切磋練級,不傷和氣', 'Sparring bouts — XP, no blood') },
+        { label: t('比武', 'Tournament'), onClick: () => setShowTournament(true), title: t('比武大會 — 奪魁揚名', 'Martial tournament') },
+        { label: t('論辯', 'Debate'),     onClick: () => setShowDebateGround(true), title: t('舌戰論辯 — 以智服人', 'Debate hall — win with wits') },
+        { label: t('武鬥館', 'Hall'),     onClick: () => setShowDuelHall(true), title: t('3D 單挑武鬥館', '3D duel hall') },
         { header: t('武備', 'Smithy') },
-        { label: t('寶物', 'Armoury'),    onClick: () => setShowArmoury(true) },
-        { label: t('鍛造', 'Forge'),      onClick: () => setShowForge(true) },
+        { label: t('寶物', 'Armoury'),    onClick: () => setShowArmoury(true), title: t('寶物庫 — 授予/回收裝備', 'Armoury — grant & reclaim gear') },
+        { label: t('鍛造', 'Forge'),      onClick: () => setShowForge(true), title: t('鍛造/精煉/鑲嵌裝備', 'Forge, refine & socket gear') },
       ],
     },
     {
       label: t('外交', 'Diplomacy'),
       title: t('外交 — 邦交、形勢一覽、關係図', 'Diplomacy — relations, standings, graph'),
       items: [
-        { label: t('邦交', 'Relations'),     onClick: () => setShowDiplomacy(true) },
-        { label: t('形勢一覽', 'Standings'), onClick: () => setShowRelations(true) },
-        { label: t('關係図', 'Graph'),       onClick: () => setShowDipGraph(true) },
+        { label: t('邦交', 'Relations'),     onClick: () => setShowDiplomacy(true), title: t('結盟/停戰/歲幣等外交指令', 'Alliances, truces, tribute…') },
+        { label: t('形勢一覽', 'Standings'), onClick: () => setShowRelations(true), title: t('勢力 × 勢力關係矩陣', 'Force × force relation matrix') },
+        { label: t('關係図', 'Graph'),       onClick: () => setShowDipGraph(true), title: t('邦交關係圖(節點圖)', 'Diplomacy as a node graph') },
       ],
     },
     {
       label: t('朝堂', 'Court'),
       title: t('朝堂 — 任官、州牧、考課、朝廷、祭祀', 'Court — appointments, governors, reviews, edicts, rites'),
       items: [
-        { label: t('任官', 'Titles'),    onClick: () => setShowTitles(true) },
-        { label: t('州牧', 'Governors'), onClick: () => setShowGovernors(true) },
-        { label: t('考課', 'Reviews'),   onClick: () => setShowKaoke(true) },
-        { label: t('朝廷', 'Court'),     onClick: () => setShowCourt(true) },
-        { label: t('祭祀', 'Rites'),     onClick: () => setShowRites(true) },
+        { label: t('任官', 'Titles'),    onClick: () => setShowTitles(true), title: t('授予官職與稱號', 'Grant offices & titles') },
+        { label: t('州牧', 'Governors'), onClick: () => setShowGovernors(true), title: t('委任州牧,分州而治', 'Appoint provincial governors') },
+        { label: t('考課', 'Reviews'),   onClick: () => setShowKaoke(true), title: t('太守/州牧政績考評', 'Governor performance reviews') },
+        { label: t('朝廷', 'Court'),     onClick: () => setShowCourt(true), title: t('天子朝廷 — 黨爭/上表/禪讓', 'The imperial court — factions & edicts') },
+        { label: t('祭祀', 'Rites'),     onClick: () => setShowRites(true), title: t('郊祀/祈雨/招安/宣撫', 'Rites, rain prayers, pacification') },
       ],
     },
     {
       label: t('人才', 'Personnel'),
       title: t('人才 — 因緣、武功、書信、列傳', 'Personnel — bonds, deeds, letters, biographies'),
       items: [
-        { label: t('因緣', 'Relations'), onClick: () => setShowRelationships(true) },
-        { label: t('結義', 'Bonds'),     onClick: () => setShowBonds(true) },
-        { label: t('威名', 'Prestige'),  onClick: () => setShowPrestige(true) },
-        { label: t('武功', 'Deeds'),     onClick: () => setShowDeeds(true) },
-        { label: t('書信', 'Letters'),   onClick: () => setShowWishes(true), badge: wishes.length },
-        { label: t('名將榜', 'Hall of Fame'), onClick: () => setShowHallOfFame(true) },
-        { label: t('列傳', 'Wiki'),      onClick: () => setShowEncyclopedia(true) },
+        { label: t('因緣', 'Relations'), onClick: () => setShowRelationships(true), title: t('武將間的恩怨情仇網', 'Officer relationship web') },
+        { label: t('結義', 'Bonds'),     onClick: () => setShowBonds(true), title: t('桃園結義 — 義兄弟與師徒', 'Sworn bonds & mentorships') },
+        { label: t('威名', 'Prestige'),  onClick: () => setShowPrestige(true), title: t('武將聲望與威名稱號', 'Officer renown & epithets') },
+        { label: t('武功', 'Deeds'),     onClick: () => setShowDeeds(true), title: t('斬將/奪城等功業記錄', 'Feats — duels won, cities taken…') },
+        { label: t('書信', 'Letters'),   onClick: () => setShowWishes(true), badge: wishes.length, title: t('武將心願與請命書信', "Officers' wishes & petitions") },
+        { label: t('名將榜', 'Hall of Fame'), onClick: () => setShowHallOfFame(true), title: t('本局名將排行榜', "This campaign's hall of fame") },
+        { label: t('列傳', 'Wiki'),      onClick: () => setShowEncyclopedia(true), title: t('人物列傳百科', 'Officer biographies') },
         ...(careerMode
-          ? [{ label: t('一代記', 'Chronicle'), onClick: () => setShowCareer(true) }]
+          ? [{ label: t('一代記', 'Chronicle'), onClick: () => setShowCareer(true), title: t('你這一代武將的生涯記', 'Your career chronicle') }]
           : []),
       ],
     },
@@ -631,19 +633,19 @@ export function MapScreen() {
       title: t('記錄 — 情勢、戰功、典籍', 'Records — standings, war record, chronicles'),
       items: [
         { header: t('情勢', 'Standings') },
-        { label: t('大勢', 'Powers'),    onClick: () => setShowPowerGraph(true) },
-        { label: t('較量', 'Compare'),   onClick: () => setShowCompare(true) },
-        { label: t('市井', 'Rumors'),    onClick: () => setShowRumors(true) },
+        { label: t('大勢', 'Powers'),    onClick: () => setShowPowerGraph(true), title: t('天下大勢曲線 — 勢力消長', 'Balance-of-power graph') },
+        { label: t('較量', 'Compare'),   onClick: () => setShowCompare(true), title: t('與他國並列比較國力', 'Side-by-side force comparison') },
+        { label: t('市井', 'Rumors'),    onClick: () => setShowRumors(true), title: t('市井流言 — 天下風聞', 'Street rumors from across the realm') },
         { header: t('戰功', 'War Record') },
-        { label: t('戰史', 'Battles'),   onClick: () => setShowHistory(true) },
-        { label: t('戰錄', 'Replays'),   onClick: () => setShowReplays(true) },
-        { label: t('勳功', 'Achievements'), onClick: () => setShowAch(true) },
-        { label: t('戰記', 'Stats'),        onClick: () => setShowCampaignStats(true) },
+        { label: t('戰史', 'Battles'),   onClick: () => setShowHistory(true), title: t('歷次會戰戰報', 'Past battle reports') },
+        { label: t('戰錄', 'Replays'),   onClick: () => setShowReplays(true), title: t('會戰回放存檔', 'Saved battle replays') },
+        { label: t('勳功', 'Achievements'), onClick: () => setShowAch(true), title: t('成就勳功', 'Achievements') },
+        { label: t('戰記', 'Stats'),        onClick: () => setShowCampaignStats(true), title: t('本局統計數據', 'Campaign statistics') },
         { header: t('典籍', 'Chronicles') },
-        { label: t('史書', 'Annals'),    onClick: () => setShowHistoryBook(true) },
-        { label: t('📜 國史', '📜 Chronicle'), onClick: () => setShowChronicle(true) },
-        { label: t('☄ 災異志', '☄ Portents'), onClick: () => setShowAnnals(true) },
-        { label: t('概念', 'Concepts'),     onClick: () => setShowGlossary(true) },
+        { label: t('史書', 'Annals'),    onClick: () => setShowHistoryBook(true), title: t('編年史書 — 大事記', 'The chronicle of events') },
+        { label: t('📜 國史', '📜 Chronicle'), onClick: () => setShowChronicle(true), title: t('攻城/工程等勝敗回顧', 'Sieges & works, reviewed') },
+        { label: t('☄ 災異志', '☄ Portents'), onClick: () => setShowAnnals(true), title: t('天象災異編年誌', 'Annals of portents & disasters') },
+        { label: t('概念', 'Concepts'),     onClick: () => setShowGlossary(true), title: t('機制詞條字典', 'Mechanics glossary') },
       ],
     },
   ];
@@ -661,14 +663,14 @@ export function MapScreen() {
             {monthNum}月{phaseInfo.zh} <span className={styles.seasonZh} style={{ color: seasonAccent }}>{season.zh}</span>
           </span>
           <span
-            className={styles.season}
+            className={`${styles.season} ${styles.aux}`}
             title={`Weather affects fire attacks and march speed. Wind power: ${weather.windPower}.`}
             style={{ color: '#9aa6b0' }}
           >
             {weatherZh}·{windZh}
           </span>
           <span
-            className={styles.season}
+            className={`${styles.season} ${styles.aux}`}
             title={`Heaven's Mandate (天命): ${mandate}/100. Affects recruitment and rebellion risk.`}
             style={{ color: mandateColor }}
           >
@@ -683,7 +685,7 @@ export function MapScreen() {
                 style={{ background: playerForce.color }}
               />
               <span className={styles.playerName}>{playerForce.name.zh}</span>
-              <span className={styles.playerNameEn}>{t('', playerForce.name.en)}</span>
+              <span className={`${styles.playerNameEn} ${styles.aux}`}>{t('', playerForce.name.en)}</span>
               <span style={{ marginLeft: 10, fontSize: '0.82rem', color: '#d6dde4', fontFamily: 'ui-monospace, monospace', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 11 }}>
                 <span className={goldLow ? 'tkm-threat-chip' : undefined} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, borderRadius: 'var(--tkm-radius-sm)', padding: goldLow ? '0 3px' : undefined, color: goldLow ? '#e0707a' : undefined }} title={goldLow ? t('國庫見底!', 'Treasury empty!') : t('金', 'Gold')}><Icon name="gold" size={13} color={goldLow ? '#e0707a' : '#e6c473'} /><AnimatedNumber value={playerGold} flash /></span>
                 <span className={foodLow ? 'tkm-threat-chip' : undefined} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, borderRadius: 'var(--tkm-radius-sm)', padding: foodLow ? '0 3px' : undefined, color: foodLow ? '#e0707a' : undefined }} title={foodLow ? t('糧倉見底!', 'Granary empty!') : t('糧', 'Grain')}><Icon name="grain" size={13} color={foodLow ? '#e0707a' : '#d8c88a'} /><AnimatedNumber value={playerFood} flash /></span>

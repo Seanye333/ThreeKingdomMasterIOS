@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { BUILDING_DEFS } from '../../game/data';
+import { citySize } from '../../game/systems/citySize';
 import { buildingBonuses, SCHOOL_BUILDINGS } from '../../game/systems/buildings';
 import { citySpecialty, cityRole, ROLE_ZH, SPECIALTY_DEV_MAX, SPECIALTY_DEV_GAIN } from '../../game/data/specialties';
 import { useGameStore } from '../../game/state/store';
@@ -40,9 +41,13 @@ export function BuildingsPanel({ cityId }: Props) {
   const specialty = citySpecialty(cityId);
 
   const mine = buildings.filter((b) => b.cityId === cityId);
-  const builtCount = mine.filter((b) => b.level > 0).length;
   const inProgressCount = mine.filter((b) => (b.progress ?? 0) > 0).length;
   const damagedCount = mine.filter((b) => b.damaged).length;
+  // 建設位 — the same cap the store enforces (and the 3D city screen shows),
+  // so both build entries tell one story.
+  const slotsUsed = mine.length;
+  const slotsCap = citySize(city).buildingSlots;
+  const atSlotCap = slotsUsed >= slotsCap;
 
   const summaryLine = (margin: string) => (
     <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.7rem', color: '#aab6c0', marginBottom: margin }}>
@@ -66,7 +71,9 @@ export function BuildingsPanel({ cityId }: Props) {
       >
         <span>⚒ {t('營造 · 建設圖冊', 'Construction')}</span>
         <span style={{ fontSize: '0.68rem', color: '#aab6c0' }}>
-          {t(`已建 ${builtCount}`, `built ${builtCount}`)}
+          <span style={{ color: atSlotCap ? '#e05a3a' : undefined }}>
+            {t(`建設位 ${slotsUsed}/${slotsCap}`, `slots ${slotsUsed}/${slotsCap}`)}
+          </span>
           {inProgressCount > 0 && ` · ${t(`建造中 ${inProgressCount}`, `in progress ${inProgressCount}`)}`}
           {autoQueue.length > 0 && ` · ${t(`佇列 ${autoQueue.length}`, `queued ${autoQueue.length}`)}`}
           {damagedCount > 0 && <span style={{ color: '#e05a3a' }}> · {t(`損毀 ${damagedCount}`, `wrecked ${damagedCount}`)}</span>}
@@ -77,7 +84,7 @@ export function BuildingsPanel({ cityId }: Props) {
           onClose={() => setOpen(false)}
           title={t('營造 · 建設', 'Construction')}
           icon="⚒"
-          badge={lang !== 'en' ? city.name.zh : city.name.en}
+          badge={`${lang !== 'en' ? city.name.zh : city.name.en} · ${t(`建設位 ${slotsUsed}/${slotsCap}`, `slots ${slotsUsed}/${slotsCap}`)}`}
           scrollBody
           width="min(640px, 100%)"
           ariaLabel={t('建設', 'Buildings')}
@@ -137,9 +144,13 @@ export function BuildingsPanel({ cityId }: Props) {
               // 戰損 — a siege-wrecked building repairs instead of upgrading.
               const damaged = !!b?.damaged;
               const repairCost = Math.max(50, Math.round(d.goldPerLevel * 0.4 * Math.max(1, lvl)));
+              // 滿位 — a NEW building needs a free slot (the store rejects it
+              // anyway; disabling here keeps the click from failing silently).
+              const slotBlocked = !b && atSlotCap;
               const canBuild =
                 city.ownerForceId !== null &&
                 !inProgress &&
+                !slotBlocked &&
                 (damaged ? city.gold >= repairCost : lvl < d.maxLevel && city.gold >= d.goldPerLevel);
               return (
                 <button
@@ -158,7 +169,11 @@ export function BuildingsPanel({ cityId }: Props) {
                     cursor: canBuild ? 'pointer' : 'not-allowed',
                     opacity: canBuild ? 1 : 0.6,
                   }}
-                  title={damaged ? t('毀於兵燹 — 修繕前不供加成', 'Wrecked in a siege — no bonus until repaired') : desc(d)}
+                  title={damaged
+                ? t('毀於兵燹 — 修繕前不供加成', 'Wrecked in a siege — no bonus until repaired')
+                : slotBlocked
+                  ? t('建設位已滿 — 城市升級可增加建設位', 'No free build slot — a bigger city unlocks more')
+                  : desc(d)}
                 >
                   <div style={{ fontSize: '0.78rem' }}>
                     {lang === 'en' ? d.name.en : lang === 'both' ? `${d.name.zh} ${d.name.en}` : d.name.zh} {lvl > 0 && `Lv.${lvl}`}

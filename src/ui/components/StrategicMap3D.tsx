@@ -3767,110 +3767,141 @@ export function StrategicMap3D() {
         }} />
       </div>
 
-      {/* Map tools — bottom-left. Desktop: the full row. Phones: folded
-          behind one 🗺 button so the map stays clean; the tray opens above
-          it. Buttons are real toggles either way. */}
-      {IS_MOBILE && (
-        <button
-          onClick={() => setToolsOpen((v) => !v)}
-          style={{
-            position: 'absolute', bottom: 12, left: 12, zIndex: 11,
-            width: 40, height: 40, borderRadius: '50%',
-            background: toolsOpen ? '#d4a84a' : 'rgba(20, 14, 8, 0.92)',
-            color: toolsOpen ? '#1a1410' : '#c0a878',
-            border: '1px solid ' + (toolsOpen ? '#d4a84a' : '#5a4530'),
-            cursor: 'pointer', fontSize: 17,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.55)',
-          }}
-        >🗺</button>
-      )}
-      {(!IS_MOBILE || toolsOpen) && (
+      {/* Map layers & tools — bottom-left, folded on every device behind one
+          ◧ 圖層 trigger (the old always-open 15-button row read as clutter).
+          The tray opens above it: overlay chips grouped 資源/政情/軍情, then
+          view toggles and tools. 1-9/0 hotkeys still switch overlays directly;
+          the trigger echoes the active overlay so a hidden tray never lies. */}
+      <button
+        onClick={() => setToolsOpen((v) => !v)}
+        style={{
+          position: 'absolute', bottom: 12, left: 12, zIndex: 11,
+          background: toolsOpen ? '#d4a84a' : 'rgba(20, 14, 8, 0.92)',
+          color: toolsOpen ? '#1a1410' : overlayMode !== 'none' ? '#f0d98a' : '#c0a878',
+          border: '1px solid ' + (toolsOpen || overlayMode !== 'none' ? '#d4a84a' : '#5a4530'),
+          borderRadius: 'var(--tkm-radius-lg)',
+          padding: '0.35rem 0.7rem', cursor: 'pointer',
+          fontFamily: 'var(--tkm-font-body)', fontSize: '0.78rem',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.55)',
+          display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap',
+        }}
+        title={t('圖層與地圖工具 — 疊圖亦可按 1–9/0 直切', 'Map layers & tools — overlays also on hotkeys 1–9/0')}
+      >
+        ◧ {t('圖層', 'Layers')}
+        {overlayMode !== 'none' && (() => {
+          const act = OVERLAY_OPTIONS.find((o) => o.id === overlayMode);
+          return act ? <span style={{ fontFamily: 'ui-monospace, monospace', fontWeight: 'bold' }}>· {t(act.zh, act.en)}</span> : null;
+        })()}
+        {fogOfWar && <span title={t('戰爭迷霧開啟', 'Fog of war on')}>🌫</span>}
+      </button>
+      {toolsOpen && (
       <div style={{
-        position: 'absolute', bottom: IS_MOBILE ? 60 : 12, left: 12, zIndex: 10,
-        display: 'flex', gap: 4,
-        flexWrap: 'wrap',
-        maxWidth: 'calc(100vw - 24px)',
-        background: 'rgba(20, 14, 8, 0.88)',
+        position: 'absolute', bottom: 52, left: 12, zIndex: 10,
+        width: 300, maxWidth: 'calc(100vw - 24px)',
+        background: 'rgba(20, 14, 8, 0.94)',
         border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
-        padding: 4,
-        boxShadow: '0 0 8px rgba(0,0,0,0.6)',
+        padding: '0.5rem 0.6rem',
+        boxShadow: '0 0 12px rgba(0,0,0,0.6)',
+        display: 'flex', flexDirection: 'column', gap: 7,
       }}>
-        {OVERLAY_OPTIONS.filter((o) => o.id !== 'none').map((opt) => (
-          <button
-            key={opt.id}
-            onClick={() => setOverlayMode((cur) => (cur === opt.id ? 'none' : opt.id))}
-            style={{
-              background: overlayMode === opt.id ? '#d4a84a' : 'transparent',
-              color: overlayMode === opt.id ? '#1a1410' : '#a89070',
-              border: '1px solid ' + (overlayMode === opt.id ? '#d4a84a' : '#5a4530'),
-              padding: '0.3rem 0.55rem',
-              cursor: 'pointer',
-              fontFamily: 'ui-monospace, monospace',
-              fontSize: '0.72rem',
-              fontWeight: 'bold',
-              letterSpacing: '0.05rem',
-            }}
-          >{t(opt.zh, opt.en)}</button>
+        {([
+          [t('資源疊圖', 'Resource overlays'), ['gold', 'food', 'troops', 'loyalty'] as OverlayMode[]],
+          [t('政情疊圖', 'Realm overlays'), ['province', 'specialty', 'diplomacy'] as OverlayMode[]],
+          [t('軍情疊圖', 'War overlays'), ['supply', 'threat', 'intent'] as OverlayMode[]],
+        ] as Array<[string, OverlayMode[]]>).map(([head, ids]) => (
+          <div key={head}>
+            <div style={{ fontSize: '0.62rem', letterSpacing: '0.12rem', color: '#8a7658', marginBottom: 3 }}>{head}</div>
+            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+              {ids.map((id) => {
+                const opt = OVERLAY_OPTIONS.find((o) => o.id === id)!;
+                // 1-9 follow OVERLAY_OPTIONS order (sans 'none'); 兵鋒 rides on 0.
+                const numbered = OVERLAY_OPTIONS.filter((o) => o.id !== 'none');
+                const hotkey = id === 'intent' ? '0' : String(numbered.findIndex((o) => o.id === id) + 1);
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setOverlayMode((cur) => (cur === id ? 'none' : id))}
+                    title={t(`快捷鍵 ${hotkey}`, `Hotkey ${hotkey}`)}
+                    style={{
+                      background: overlayMode === id ? '#d4a84a' : 'transparent',
+                      color: overlayMode === id ? '#1a1410' : '#a89070',
+                      border: '1px solid ' + (overlayMode === id ? '#d4a84a' : '#5a4530'),
+                      padding: '0.28rem 0.5rem',
+                      cursor: 'pointer',
+                      fontFamily: 'ui-monospace, monospace',
+                      fontSize: '0.72rem',
+                      fontWeight: 'bold',
+                      letterSpacing: '0.05rem',
+                    }}
+                  >
+                    {t(opt.zh, opt.en)}
+                    <span style={{ opacity: 0.5, fontSize: '0.6rem', marginLeft: 3 }}>{hotkey}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         ))}
-        <button
-          onClick={() => setShowStockadeBuild(true)}
-          style={{
-            marginLeft: 8,
-            background: '#3a2818', color: '#a89070',
-            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
-            padding: '0.3rem 0.55rem',
-            cursor: 'pointer',
-            fontFamily: 'var(--tkm-font-body)',
-            fontSize: '0.78rem',
-          }}
-          title={t('築壘寨 / 箭樓 / 投石臺 — 施設可轟擊路過敵軍', 'Build stockade / arrow tower / catapult — facilities shell passing enemies')}
-        >{t('築堡施設', 'Build')}</button>
-        <button
-          onClick={toggleMapStyle}
-          style={{
-            marginLeft: 8,
-            background: mapStyle === 'hex' ? 'rgba(212, 168, 74, 0.18)' : '#1a2415',
-            color: mapStyle === 'hex' ? '#d4a84a' : '#9ab87a',
-            border: `1px solid ${mapStyle === 'hex' ? '#d4a84a' : '#4a5a3a'}`,
-            padding: '0.3rem 0.55rem',
-            cursor: 'pointer',
-            fontFamily: 'var(--tkm-font-body)',
-            fontSize: '0.78rem',
-          }}
-          title={t('切換地圖風格 — 棋盤六角地塊 / 畫卷地圖(實驗)', 'Toggle map style — hex-tile board / painted scroll (experimental)')}
-        >{mapStyle === 'hex' ? t('🗺 畫卷地圖', 'Scroll Map') : t('⬡ 棋盤地圖', 'Hex Map')}</button>
-        <button
-          onClick={() => setFogOfWar(!fogOfWar)}
-          style={{
-            marginLeft: 8,
-            background: fogOfWar ? 'rgba(120, 130, 150, 0.22)' : '#241c12',
-            color: fogOfWar ? '#b8c4d8' : '#a89070',
-            border: `1px solid ${fogOfWar ? '#8a96ac' : '#5a4530'}`,
-            padding: '0.3rem 0.55rem',
-            cursor: 'pointer',
-            fontFamily: 'var(--tkm-font-body)',
-            fontSize: '0.78rem',
-          }}
-          title={t('戰爭迷霧 — 只看得見自己城池與行軍縱隊周邊的敵情;烽火台照常預警', 'Fog of war — intel limited to what your cities and columns can see; beacons still warn')}
-        >🌫 {fogOfWar ? t('迷霧:開', 'Fog ON') : t('迷霧:關', 'Fog OFF')}</button>
-        <button
-          onClick={exportSnapshot}
-          style={{
-            marginLeft: 8, background: '#241c12', color: '#c0a878',
-            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', padding: '0.3rem 0.55rem',
-            cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.78rem',
-          }}
-          title={t('把當前天下大勢存成 PNG', 'Save the current realm view as a PNG')}
-        >📷 {t('大勢', 'Snap')}</button>
-        <button
-          onClick={() => setShowReplay(true)}
-          style={{
-            marginLeft: 8, background: '#241c12', color: '#c0a878',
-            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', padding: '0.3rem 0.55rem',
-            cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.78rem',
-          }}
-          title={t('戰役回放 — 快進重現整局天下消長', "Campaign timelapse — fast-forward the whole campaign's territory changes")}
-        >🎞 {t('回放', 'Replay')}</button>
+        <div>
+          <div style={{ fontSize: '0.62rem', letterSpacing: '0.12rem', color: '#8a7658', marginBottom: 3 }}>{t('顯示', 'View')}</div>
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+            <button
+              onClick={toggleMapStyle}
+              style={{
+                background: mapStyle === 'hex' ? 'rgba(212, 168, 74, 0.18)' : '#1a2415',
+                color: mapStyle === 'hex' ? '#d4a84a' : '#9ab87a',
+                border: `1px solid ${mapStyle === 'hex' ? '#d4a84a' : '#4a5a3a'}`,
+                padding: '0.3rem 0.55rem', cursor: 'pointer',
+                fontFamily: 'var(--tkm-font-body)', fontSize: '0.76rem',
+              }}
+              title={t('切換地圖風格 — 棋盤六角地塊 / 畫卷地圖(實驗)', 'Toggle map style — hex-tile board / painted scroll (experimental)')}
+            >{mapStyle === 'hex' ? t('🗺 畫卷地圖', 'Scroll Map') : t('⬡ 棋盤地圖', 'Hex Map')}</button>
+            <button
+              onClick={() => setFogOfWar(!fogOfWar)}
+              style={{
+                background: fogOfWar ? 'rgba(120, 130, 150, 0.22)' : '#241c12',
+                color: fogOfWar ? '#b8c4d8' : '#a89070',
+                border: `1px solid ${fogOfWar ? '#8a96ac' : '#5a4530'}`,
+                padding: '0.3rem 0.55rem', cursor: 'pointer',
+                fontFamily: 'var(--tkm-font-body)', fontSize: '0.76rem',
+              }}
+              title={t('戰爭迷霧 — 只看得見自己城池與行軍縱隊周邊的敵情;烽火台照常預警', 'Fog of war — intel limited to what your cities and columns can see; beacons still warn')}
+            >🌫 {fogOfWar ? t('迷霧:開', 'Fog ON') : t('迷霧:關', 'Fog OFF')}</button>
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: '0.62rem', letterSpacing: '0.12rem', color: '#8a7658', marginBottom: 3 }}>{t('工具', 'Tools')}</div>
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setShowStockadeBuild(true)}
+              style={{
+                background: '#3a2818', color: '#c8a878',
+                border: '1px solid rgba(255,255,255,0.14)', borderRadius: 'var(--tkm-radius-lg)',
+                padding: '0.3rem 0.55rem', cursor: 'pointer',
+                fontFamily: 'var(--tkm-font-body)', fontSize: '0.76rem',
+              }}
+              title={t('築壘寨 / 箭樓 / 投石臺 — 施設可轟擊路過敵軍', 'Build stockade / arrow tower / catapult — facilities shell passing enemies')}
+            >⚒ {t('築堡施設', 'Build')}</button>
+            <button
+              onClick={exportSnapshot}
+              style={{
+                background: '#241c12', color: '#c0a878',
+                border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', padding: '0.3rem 0.55rem',
+                cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.76rem',
+              }}
+              title={t('把當前天下大勢存成 PNG', 'Save the current realm view as a PNG')}
+            >📷 {t('大勢', 'Snap')}</button>
+            <button
+              onClick={() => setShowReplay(true)}
+              style={{
+                background: '#241c12', color: '#c0a878',
+                border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', padding: '0.3rem 0.55rem',
+                cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.76rem',
+              }}
+              title={t('戰役回放 — 快進重現整局天下消長', "Campaign timelapse — fast-forward the whole campaign's territory changes")}
+            >🎞 {t('回放', 'Replay')}</button>
+          </div>
+        </div>
       </div>
       )}
       {/* 戰役回放:無頭記錄器(每季存一幀)+ 開啟後的面板。 */}

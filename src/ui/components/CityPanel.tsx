@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { cityEconCap } from '../../game/systems/citySize';
 import { useGameStore } from '../../game/state/store';
 import { COMMAND_DEFS } from '../../game/systems/commands';
@@ -23,11 +23,19 @@ import { FreeAgentsSection } from './FreeAgentsSection';
 import { Icon, type IconName } from './Icon';
 import { OfficerStats } from './OfficerStats';
 import { OfficerHoverCard } from './OfficerHoverCard';
+import { OfficerPortrait } from './OfficerPortrait';
 import { TERRAIN_DEFS } from '../../game/data/cities';
 import { PROVINCE_BY_CITY, PROVINCES_BY_ID } from '../../game/data';
 import { rebuildCost } from '../../game/systems/cityRuin';
 import styles from './CityPanel.module.css';
 import { useT, useLanguage } from '../i18n';
+
+// 巡城箭頭 — compact ghost buttons beside the city name.
+const cyclerBtnStyle: CSSProperties = {
+  background: 'transparent', border: '1px solid #2b3845', color: '#aab6c0',
+  borderRadius: 'var(--tkm-radius-sm)', width: 26, height: 24, padding: 0,
+  cursor: 'pointer', fontSize: '0.68rem', lineHeight: 1,
+};
 
 // 分頁 — the panel's sections live under four tabs so the sidebar never
 // becomes one long scroll. Non-player cities only show 總覽/武將.
@@ -112,6 +120,20 @@ export function CityPanel() {
 
   const [tab, setTab] = useState<CityTab>('overview');
   const isPlayerCity = !!city && city.ownerForceId === playerForceId;
+  // 巡城 — how many cities the player owns (arrows only make sense for ≥2).
+  const ownCityCount = useGameStore((s) =>
+    Object.values(s.cities).filter((c) => c.ownerForceId === s.playerForceId).length);
+  const cycleCity = (dir: 1 | -1) => {
+    const s = useGameStore.getState();
+    const own = Object.values(s.cities)
+      .filter((c) => c.ownerForceId === s.playerForceId)
+      .sort((a, b) => a.name.zh.localeCompare(b.name.zh));
+    if (own.length === 0) return;
+    const idx = own.findIndex((c) => c.id === s.selectedCityId);
+    const next = own[(idx + dir + own.length) % own.length];
+    s.selectCity(next.id);
+    requestMapFocus(next.id);   // camera glides along
+  };
   // Player-only tabs fold away on enemy/neutral cities — bounce back to 總覽.
   useEffect(() => {
     if (!isPlayerCity && (tab === 'domestic' || tab === 'military')) setTab('overview');
@@ -129,8 +151,19 @@ export function CityPanel() {
     <aside className={styles.root}>
       <div className={styles.panelTop}>
       <header className={styles.header}>
-        {lang !== 'en' && <div className={styles.nameZh}>{city.name.zh}</div>}
-        {lang !== 'zh' && <div className={styles.nameEn}>{city.name.en}</div>}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {lang !== 'en' && <div className={styles.nameZh}>{city.name.zh}</div>}
+            {lang !== 'zh' && <div className={styles.nameEn}>{city.name.en}</div>}
+          </div>
+          {/* 巡城 — ◀▶ cycle through own cities (the Tab hotkey, but tappable). */}
+          {ownCityCount > 1 && (
+            <div style={{ display: 'flex', gap: 4, marginTop: 6 }}>
+              <button onClick={() => cycleCity(-1)} title={t('上一座自城', 'Previous own city')} style={cyclerBtnStyle}>◀</button>
+              <button onClick={() => cycleCity(1)} title={t('下一座自城(Tab)', 'Next own city (Tab)')} style={cyclerBtnStyle}>▶</button>
+            </div>
+          )}
+        </div>
         <div className={styles.owner}>
           {force ? (
             <>
@@ -516,6 +549,7 @@ function OfficerListItem({
   }, [allCities, cityId, playerForceId]);
   const transferOfficer = useGameStore((s) => s.transferOfficer);
   const cityGold = useGameStore((s) => s.cities[cityId]?.gold ?? 0);
+  const forceColor = useGameStore((s) => (o.forceId ? s.forces[o.forceId]?.color : undefined));
   const taskDef = o.task ? COMMAND_DEFS[o.task] : null;
   const canTransfer = isPlayerCity && !o.task && o.status === 'idle';
   const t = useT();
@@ -523,9 +557,17 @@ function OfficerListItem({
 
   return (
     <li className={styles.officerRow}>
+      <OfficerPortrait officer={o} size={34} forceColor={forceColor} />
       <OfficerHoverCard officer={o}>
-        {lang !== 'en' && <span className={styles.officerNameZh}>{o.name.zh}</span>}
-        {lang !== 'zh' && <span className={styles.officerNameEn}>{o.name.en}</span>}
+        <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.25 }}>
+          <span>
+            {lang !== 'en' && <span className={styles.officerNameZh}>{o.name.zh}</span>}
+            {lang !== 'zh' && <span className={styles.officerNameEn}>{o.name.en}</span>}
+          </span>
+          <span className={styles.officerStats}>
+            <OfficerStats officer={o} keys={['war', 'intelligence', 'politics', 'charisma']} lang={lang === 'en' ? 'en' : 'zh'} />
+          </span>
+        </span>
       </OfficerHoverCard>
       <span className={styles.officerStats}>
         {taskDef ? (
@@ -548,9 +590,7 @@ function OfficerListItem({
           >
             {t('移送', 'Transfer')} ⇨
           </button>
-        ) : (
-          <OfficerStats officer={o} keys={['war', 'intelligence', 'politics', 'charisma']} lang={lang === 'en' ? 'en' : 'zh'} />
-        )}
+        ) : null}
       </span>
       {transferOpen && canTransfer && (
         <div
