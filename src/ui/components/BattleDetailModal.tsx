@@ -2,8 +2,9 @@ import { useGameStore } from '../../game/state/store';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import type { BattleDetail, BattleSideDetail, Officer } from '../../game/types';
 import { OfficerStats } from './OfficerStats';
+import { OfficerPortrait } from './OfficerPortrait';
 import { Name } from './Name';
-import { useLanguage } from '../i18n';
+import { useLanguage, useT } from '../i18n';
 import styles from './BattleDetailModal.module.css';
 
 interface Props {
@@ -19,6 +20,7 @@ export function BattleDetailModal({ battle, onClose }: Props) {
 
   const city = cities[battle.cityId];
   const lang = useLanguage();
+  const t = useT();
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
@@ -63,14 +65,14 @@ export function BattleDetailModal({ battle, onClose }: Props) {
 
         <div className={styles.sides}>
           <Side
-            label="Attacker 攻"
+            label={t('攻方', 'Attacker')}
             detail={battle.attacker}
             officers={officers}
             forces={forces}
           />
           <div className={styles.versus}>vs</div>
           <Side
-            label="Defender 守"
+            label={t('守方', 'Defender')}
             detail={battle.defender}
             officers={officers}
             forces={forces}
@@ -78,24 +80,25 @@ export function BattleDetailModal({ battle, onClose }: Props) {
         </div>
 
         <section className={styles.section}>
-          <h3 className={styles.sectionTitle}>Power calculation</h3>
+          <h3 className={styles.sectionTitle}>{t('戰力推算', 'Power calculation')}</h3>
           <PowerLine
-            label="Attacker"
+            label={t('攻', 'ATK')}
             blended={battle.attacker.blendedStat}
             troops={battle.attacker.troops}
             power={battle.attacker.power}
             extra={battle.attacker.bondBonus > 0
-              ? `bond +${battle.attacker.bondBonus}`
+              ? t(`結義 +${battle.attacker.bondBonus}`, `bond +${battle.attacker.bondBonus}`)
               : undefined}
           />
           <PowerLine
-            label="Defender"
+            label={t('守', 'DEF')}
             blended={battle.defender.blendedStat}
             troops={battle.defender.troops}
             power={battle.defender.power}
             extra={battle.field
-              ? (battle.defender.bondBonus > 0 ? `bond +${battle.defender.bondBonus}` : 'open field')
-              : `defense ${battle.cityDefense} (×${battle.defenseFactor}) ${battle.defender.bondBonus > 0 ? `· bond +${battle.defender.bondBonus}` : ''}`}
+              ? (battle.defender.bondBonus > 0 ? t(`結義 +${battle.defender.bondBonus}`, `bond +${battle.defender.bondBonus}`) : t('平原野地', 'open field'))
+              : t(`守備 ${battle.cityDefense} (×${battle.defenseFactor}) ${battle.defender.bondBonus > 0 ? `· 結義 +${battle.defender.bondBonus}` : ''}`,
+                  `defense ${battle.cityDefense} (×${battle.defenseFactor}) ${battle.defender.bondBonus > 0 ? `· bond +${battle.defender.bondBonus}` : ''}`)}
           />
           <div className={styles.shareRow}>
             <PowerShareBar
@@ -106,26 +109,10 @@ export function BattleDetailModal({ battle, onClose }: Props) {
         </section>
 
         <section className={styles.section}>
-          <h3 className={styles.sectionTitle}>Casualties</h3>
+          <h3 className={styles.sectionTitle}>{t('傷亡', 'Casualties')}</h3>
           <div className={styles.casRow}>
-            <div className={styles.casBlock}>
-              <span className={styles.casLabel}>Attacker</span>
-              <span className={styles.casLoss}>
-                −{battle.attackerLosses.toLocaleString()}
-              </span>
-              <span className={styles.casPct}>
-                {Math.round((battle.attackerLosses / Math.max(1, battle.attacker.troops)) * 100)}% lost
-              </span>
-            </div>
-            <div className={styles.casBlock}>
-              <span className={styles.casLabel}>Defender</span>
-              <span className={styles.casLoss}>
-                −{battle.defenderLosses.toLocaleString()}
-              </span>
-              <span className={styles.casPct}>
-                {Math.round((battle.defenderLosses / Math.max(1, battle.defender.troops)) * 100)}% lost
-              </span>
-            </div>
+            <CasBlock label={t('攻方', 'Attacker')} losses={battle.attackerLosses} troops={battle.attacker.troops} />
+            <CasBlock label={t('守方', 'Defender')} losses={battle.defenderLosses} troops={battle.defender.troops} />
           </div>
         </section>
 
@@ -147,6 +134,26 @@ export function BattleDetailModal({ battle, onClose }: Props) {
   );
 }
 
+/** 傷亡塊 — the raw loss plus a proportion bar tinted by severity, so the
+ *  price of the battle reads at a glance instead of as a number wall. */
+function CasBlock({ label, losses, troops }: { label: string; losses: number; troops: number }) {
+  const t = useT();
+  const pct = Math.min(100, Math.round((losses / Math.max(1, troops)) * 100));
+  const tone = pct >= 50 ? '#e05a3a' : pct >= 25 ? '#e0a050' : '#9ab87a';
+  return (
+    <div className={styles.casBlock}>
+      <span className={styles.casLabel}>{label}</span>
+      <span className={styles.casLoss} style={{ color: tone }}>
+        −{losses.toLocaleString()}
+      </span>
+      <span className={styles.casTrack} title={`${losses.toLocaleString()} / ${troops.toLocaleString()}`}>
+        <span className={styles.casFill} style={{ width: `${pct}%`, background: tone }} />
+      </span>
+      <span className={styles.casPct}>{pct}% {t('折損', 'lost')}</span>
+    </div>
+  );
+}
+
 function Side({
   label,
   detail,
@@ -158,6 +165,7 @@ function Side({
   officers: Record<string, Officer>;
   forces: Record<string, { color: string; name: { en: string; zh: string } }>;
 }) {
+  const t = useT();
   const force = detail.forceId ? forces[detail.forceId] : null;
   const all = [detail.commanderId, ...detail.companionIds]
     .map((id) => officers[id])
@@ -179,8 +187,9 @@ function Side({
       <ul className={styles.officerList}>
         {all.map((o, i) => (
           <li key={o.id} className={i === 0 ? styles.commander : ''}>
-            <span className={styles.officerNameZh}>
-              {i === 0 ? '★ ' : '  '}
+            <span className={styles.officerNameZh} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+              <OfficerPortrait officer={o} size={22} forceColor={force?.color} />
+              {i === 0 ? '★ ' : ''}
               <Name pair={o.name} />
             </span>
             <span className={styles.officerStats}>
@@ -190,7 +199,7 @@ function Side({
         ))}
       </ul>
       <div className={styles.troopLine}>
-        Troops: <strong>{detail.troops.toLocaleString()}</strong>
+        {t('兵力', 'Troops')}: <strong>{detail.troops.toLocaleString()}</strong>
       </div>
     </div>
   );

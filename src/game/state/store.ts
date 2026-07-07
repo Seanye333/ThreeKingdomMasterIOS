@@ -495,7 +495,12 @@ interface GameStore extends GameState {
   /** 一鍵委派 — auto-assign every idle officer in a self-run city a sensible
    *  internal-affairs task (by city need × aptitude). Returns how many were
    *  dispatched and the gold spent. */
-  autoAssignIdle: () => { assigned: number; goldSpent: number };
+  autoAssignIdle: () => {
+    assigned: number;
+    goldSpent: number;
+    /** Who went where — feeds the 委派錄 summary card in the HUD. */
+    details: Array<{ officerId: EntityId; cityId: EntityId; type: InternalAffairsType }>;
+  };
   /** 大局計略 — 驅虎吞狼 / 二虎競食 / 遠交近攻. */
   executeScheme: (schemeId: SchemeId, targetA: EntityId, targetB?: EntityId)
     => { ok: boolean; message: string };
@@ -2157,7 +2162,7 @@ export const useGameStore = create<GameStore>()(
       autoAssignIdle: () => {
         const state = get();
         const pid = state.playerForceId;
-        if (!pid) return { assigned: 0, goldSpent: 0 };
+        if (!pid) return { assigned: 0, goldSpent: 0, details: [] };
         const delegated = new Set(Object.keys(state.cityDelegations ?? {}));
         const training = new Set(state.pendingTrainings.map((tr) => tr.officerId));
         const cities = { ...state.cities };
@@ -2165,6 +2170,7 @@ export const useGameStore = create<GameStore>()(
         const pending = { ...state.pendingCommands };
         let assigned = 0;
         let goldSpent = 0;
+        const details: Array<{ officerId: EntityId; cityId: EntityId; type: InternalAffairsType }> = [];
 
         const idle = Object.values(state.officers).filter((o) =>
           o.forceId === pid && !o.task && !pending[o.id] && !training.has(o.id) &&
@@ -2202,6 +2208,7 @@ export const useGameStore = create<GameStore>()(
           pending[o.id] = { type: chosen, cityId: cid, officerId: o.id };
           assigned++;
           goldSpent += def.goldCost;
+          details.push({ officerId: o.id, cityId: cid, type: chosen });
         }
 
         if (assigned > 0) {
@@ -2211,7 +2218,7 @@ export const useGameStore = create<GameStore>()(
             `Auto-assigned ${assigned} officers (−${goldSpent} gold)`,
           );
         }
-        return { assigned, goldSpent };
+        return { assigned, goldSpent, details };
       },
 
       issueMarch: (sourceId, targetId, officerId, troops, additionalOfficerIds, pace = 'normal', quiet = false, forcedStratagem) => {

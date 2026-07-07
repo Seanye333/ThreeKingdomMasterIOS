@@ -289,3 +289,22 @@
   color: #e6c473;
   font-weight: normal;
 }
+
+/* 折損比例條 — losses as a tinted share of the side's strength. */
+.casTrack {
+  display: block;
+  width: 100%;
+  height: 5px;
+  margin: 0.3rem 0 0.2rem;
+  background: #10161e;
+  border: 1px solid #26323e;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.casFill {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s cubic-bezier(0.2, 0.8, 0.3, 1);
+}

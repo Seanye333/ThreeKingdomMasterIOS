@@ -78,7 +78,11 @@ import { ConquestPolicyModal } from '../components/ConquestPolicyModal';
 import { BattleAIDriver } from '../components/BattleAIDriver';
 import { HudMenu, type MenuEntry } from '../components/HudMenu';
 import { THEMES, getStoredTheme, applyTheme, type ThemeId } from '../theme';
-import { useT } from '../i18n';
+import { useT, useLanguage } from '../i18n';
+import { Modal } from '../components/Modal';
+import { OfficerPortrait } from '../components/OfficerPortrait';
+import { COMMAND_DEFS } from '../../game/systems/commands';
+import type { City, InternalAffairsType, Officer } from '../../game/types';
 import styles from './MapScreen.module.css';
 
 // Code-split heavy / rarely-opened modals. They are loaded on demand the
@@ -126,6 +130,21 @@ const DuelHallModal = lazy(() => import('../components/DuelHallModal').then(m =>
 
 export function MapScreen() {
   const t = useT();
+  const lang = useLanguage();
+  // 委派錄 — after ⚡一鍵委派, a summary card of who went where doing what
+  // (the old toast only said "N officers assigned").
+  const [assignReport, setAssignReport] = useState<Array<{ officer: Officer; city: City; type: InternalAffairsType }> | null>(null);
+  const [assignGold, setAssignGold] = useState(0);
+  const runAutoAssign = () => {
+    const r = autoAssignIdle();
+    if (r.assigned === 0) return;
+    const s = useGameStore.getState();
+    const rows = r.details
+      .map((d) => ({ officer: s.officers[d.officerId], city: s.cities[d.cityId], type: d.type }))
+      .filter((x): x is { officer: Officer; city: City; type: InternalAffairsType } => !!x.officer && !!x.city);
+    setAssignGold(r.goldSpent);
+    setAssignReport(rows);
+  };
   const [showForces, setShowForces] = useState(false);
   const [showDiplomacy, setShowDiplomacy] = useState(false);
   const [showOfficers, setShowOfficers] = useState(false);
@@ -501,7 +520,7 @@ export function MapScreen() {
     const g = { diplo: t('外交', 'Diplomacy'), people: t('人才', 'Personnel'), court: t('朝堂', 'Court'), mil: t('軍務', 'Military'), craft: t('匠工', 'Crafting'), rec: t('記錄', 'Records'), act: t('指令', 'Action'), sys: t('系統', 'System') };
     const c: PaletteCommand[] = [
       { id: 'idle', zh: '前往閒置武將', en: 'Go to idle commander', hint: g.act, run: jumpToIdle },
-      { id: 'autoassign', zh: '一鍵委派閒置武將', en: 'Auto-assign idle officers', hint: g.act, run: () => autoAssignIdle() },
+      { id: 'autoassign', zh: '一鍵委派閒置武將', en: 'Auto-assign idle officers', hint: g.act, run: () => runAutoAssign() },
       ...(threats.length > 0 ? [{ id: 'threat', zh: '前往受襲城池', en: 'Go to threatened city', hint: g.act, run: jumpToThreat }] : []),
       { id: 'advance', zh: '結束本旬', en: 'End the turn', hint: g.act, run: advanceTurn },
       { id: 'todo', zh: '待辦', en: 'To-Do', hint: g.rec, run: () => setShowToDo(true) },
@@ -847,7 +866,7 @@ export function MapScreen() {
             {/* 一鍵委派 — auto-assign every idle officer a sensible task. */}
             {idleCount > 0 && (
               <button
-                onClick={() => autoAssignIdle()}
+                onClick={runAutoAssign}
                 title={t('一鍵委派 — 依城所需與才能,自動派遣全部閒置武將', 'Auto-assign all idle officers by city need & aptitude')}
                 style={{
                   marginRight: 8, cursor: 'pointer',
@@ -955,7 +974,7 @@ export function MapScreen() {
         }}>
           <DockBtn icon="⚔" label={t('武將', 'Officers')} onClick={() => setShowOfficers(true)} />
           <DockBtn icon="🏯" label={t('郡縣', 'Cities')} onClick={() => setShowCityRoster(true)} />
-          <DockBtn icon="⚡" label={t('委派', 'Assign')} onClick={() => autoAssignIdle()} badge={idleCount} />
+          <DockBtn icon="⚡" label={t('委派', 'Assign')} onClick={runAutoAssign} badge={idleCount} />
           <DockBtn icon="📋" label={t('待辦', 'To-Do')} onClick={() => setShowToDo(true)} />
           <DockBtn primary icon="▶" label={t(`下旬 ${monthNum}月${phaseInfo.zh}`, `Next`)} onClick={advanceTurn} />
         </nav>
@@ -1038,6 +1057,47 @@ export function MapScreen() {
         {showProvinces && <ProvinceModal onClose={() => setShowProvinces(false)} />}
         {showConvoys && <ConvoyModal onClose={() => setShowConvoys(false)} />}
       </Suspense>
+      {/* 委派錄 — who ⚡一鍵委派 sent where, grouped by city. */}
+      {assignReport && (
+        <Modal
+          onClose={() => setAssignReport(null)}
+          title={t('委派錄', 'Assignments')}
+          icon="⚡"
+          badge={t(`${assignReport.length} 員 · 耗金 ${assignGold}`, `${assignReport.length} officers · −${assignGold}g`)}
+          width="min(430px, 100%)"
+          maxHeight="72vh"
+          scrollBody
+        >
+          {(() => {
+            const byCity = new Map<string, typeof assignReport>();
+            for (const row of assignReport) {
+              const arr = byCity.get(row.city.id) ?? [];
+              arr.push(row);
+              byCity.set(row.city.id, arr);
+            }
+            return [...byCity.values()].map((rows) => (
+              <div key={rows[0].city.id} style={{ marginBottom: '0.65rem' }}>
+                <div style={{ fontSize: '0.72rem', color: '#e6c473', letterSpacing: '0.08rem', marginBottom: 4, borderBottom: '1px solid #1d2731', paddingBottom: 3 }}>
+                  {lang === 'en' ? rows[0].city.name.en : rows[0].city.name.zh}
+                </div>
+                {rows.map((r) => {
+                  const def = COMMAND_DEFS[r.type];
+                  return (
+                    <div key={r.officer.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.18rem 0', fontSize: '0.8rem', color: '#cdd6df' }}>
+                      <OfficerPortrait officer={r.officer} size={24} />
+                      <span style={{ flex: 1 }}>{lang === 'en' ? r.officer.name.en : r.officer.name.zh}</span>
+                      <span style={{ color: '#9ab87a' }}>▸ {def ? (lang === 'en' ? def.label.en : def.label.zh) : r.type}</span>
+                      <span style={{ color: '#7a8893', fontFamily: 'ui-monospace, monospace', fontSize: '0.7rem', minWidth: 38, textAlign: 'right' }}>
+                        {(def?.goldCost ?? 0) > 0 ? `${def?.goldCost}g` : t('免費', 'free')}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            ));
+          })()}
+        </Modal>
+      )}
       {/* 戰略層回饋 — order-confirmation toasts, top-centre */}
       <ActionToasts />
       {/* 慶典彈窗 — celebratory image/video on milestones (升城/遷都…) */}
