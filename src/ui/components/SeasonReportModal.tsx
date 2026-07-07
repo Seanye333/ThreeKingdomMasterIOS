@@ -1,5 +1,6 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useGameStore } from '../../game/state/store';
+import { playSfx } from '../../game/systems/sound';
 import { Icon } from './Icon';
 import { SEASON_LABEL } from '../../game/types';
 import type { BattleDetail, Season } from '../../game/types';
@@ -22,6 +23,10 @@ export function SeasonReportModal() {
   const [selectedBattle, setSelectedBattle] = useState<BattleDetail | null>(null);
   const t = useT();
   const lang = useLanguage();
+
+  // 開卷鑼 — one soft gong as the scroll unfurls; keyed on the report itself
+  // (the component stays mounted between turns).
+  useEffect(() => { if (report) playSfx('gong'); }, [report]);
 
   if (!report) return null;
   const season = SEASON_LABEL[report.date.season as Season];

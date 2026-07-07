@@ -43,6 +43,28 @@
   color: var(--tkm-text-muted, #7a8893);
 }
 
+/* 語錄 — one period line at a time, easing in as the carousel turns. */
+.quote {
+  max-width: 340px;
+  min-height: 2.6em;
+  text-align: center;
+  font-family: var(--tkm-font-serif, 'Songti SC', serif);
+  font-size: 0.8rem;
+  line-height: 1.7;
+  letter-spacing: 0.12rem;
+  color: rgba(184, 168, 120, 0.78);
+  animation: tkmQuoteIn 0.7s ease-out both;
+}
+
+@keyframes tkmQuoteIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quote { animation: none; }
+}
+
 /* Indeterminate ink sweep — a bright segment sliding under a faint rail. */
 .bar {
   position: relative;

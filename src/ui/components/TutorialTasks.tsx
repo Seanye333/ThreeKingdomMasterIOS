@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
+import { playSfx } from '../../game/systems/sound';
 import { useT } from '../i18n';
 
 /**
@@ -48,11 +49,40 @@ export function TutorialTasks() {
   const doneCount = tasks.filter((x) => x.done).length;
   const allDone = doneCount === tasks.length;
 
+  // 禮成 — the moment all five tick: one victory sting, a golden card for a
+  // few seconds, then the checklist bows out for good.
+  const celebrated = useRef(false);
+  useEffect(() => {
+    if (!allDone || dismissed || tutorialStep !== null || celebrated.current) return;
+    celebrated.current = true;
+    playSfx('victory');
+    try { localStorage.setItem(DONE_KEY, '1'); } catch { /* quota */ }
+    const id = window.setTimeout(() => setDismissed(true), 4600);
+    return () => window.clearTimeout(id);
+  }, [allDone, dismissed, tutorialStep]);
+
   // Quiet conditions: dismissed before, late campaign, slideshow still up.
   if (dismissed || seasonsPlayed > 12 || tutorialStep !== null) return null;
+
   if (allDone) {
-    // Celebrate once, then never return.
-    try { localStorage.setItem(DONE_KEY, '1'); } catch { /* quota */ }
+    return (
+      <div style={{
+        position: 'absolute', right: 12, top: 96, zIndex: 12, width: 232,
+        background: 'linear-gradient(160deg, rgba(58,45,24,0.96), rgba(32,24,12,0.96))',
+        border: '1px solid #d4a84a', borderRadius: 'var(--tkm-radius-sm)',
+        boxShadow: '0 0 22px rgba(212,168,74,0.35)',
+        fontFamily: 'var(--tkm-font-body)', textAlign: 'center', padding: '0.8rem 0.7rem',
+        animation: 'tkmFadeIn 0.4s ease-out',
+      }}>
+        <div style={{ fontSize: '1.5rem' }}>🎓</div>
+        <div style={{ color: '#f2dd9a', letterSpacing: '0.12rem', margin: '0.25rem 0', fontSize: '0.95rem' }}>
+          {t('五事皆成 · 出師矣!', 'First steps complete!')}
+        </div>
+        <div style={{ fontSize: '0.7rem', color: '#b8a878', lineHeight: 1.5 }}>
+          {t('新手引導功成身退,天下在前。', 'The checklist bows out — the realm awaits.')}
+        </div>
+      </div>
+    );
   }
 
   const markDismissed = () => {
@@ -81,11 +111,7 @@ export function TutorialTasks() {
       </div>
       {!collapsed && (
         <div style={{ padding: '0 0.6rem 0.5rem' }}>
-          {allDone ? (
-            <div style={{ fontSize: '0.78rem', color: '#9ed68a', padding: '0.3rem 0' }}>
-              🎉 {t('五事皆備 — 天下之事,盡在掌握。', 'All five done — the realm awaits.')}
-            </div>
-          ) : tasks.map((task, i) => (
+          {tasks.map((task, i) => (
             <div key={i} title={task.hint} style={{
               fontSize: '0.74rem', lineHeight: 1.9,
               color: task.done ? '#9ed68a' : '#aab6c0',
