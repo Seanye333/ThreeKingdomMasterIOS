@@ -3378,6 +3378,19 @@ export function StrategicMap3D() {
   // 手機收納 — objective card and the map-tools tray fold away by default.
   const [objOpen, setObjOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
+  // 圖層托盤外點即收 — same manner as the HUD dropdowns.
+  const toolsTrayRef = useRef<HTMLDivElement | null>(null);
+  const toolsTriggerRef = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    if (!toolsOpen) return;
+    const onDown = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (toolsTrayRef.current?.contains(target) || toolsTriggerRef.current?.contains(target)) return;
+      setToolsOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [toolsOpen]);
   // 戰役回放面板開關。
   const [showReplay, setShowReplay] = useState(false);
   const [showMapHelp, setShowMapHelp] = useState(false);
@@ -3773,6 +3786,7 @@ export function StrategicMap3D() {
           view toggles and tools. 1-9/0 hotkeys still switch overlays directly;
           the trigger echoes the active overlay so a hidden tray never lies. */}
       <button
+        ref={toolsTriggerRef}
         onClick={() => setToolsOpen((v) => !v)}
         style={{
           position: 'absolute', bottom: 12, left: 12, zIndex: 11,
@@ -3795,7 +3809,7 @@ export function StrategicMap3D() {
         {fogOfWar && <span title={t('戰爭迷霧開啟', 'Fog of war on')}>🌫</span>}
       </button>
       {toolsOpen && (
-      <div style={{
+      <div ref={toolsTrayRef} style={{
         position: 'absolute', bottom: 52, left: 12, zIndex: 10,
         width: 300, maxWidth: 'calc(100vw - 24px)',
         background: 'rgba(20, 14, 8, 0.94)',

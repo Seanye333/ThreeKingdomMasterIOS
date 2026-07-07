@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { BUILDING_DEFS } from '../../game/data';
+import { BUILDING_CATEGORY, BUILDING_CATEGORY_LABEL } from '../../game/data/buildings';
 import { citySize } from '../../game/systems/citySize';
 import { buildingBonuses, SCHOOL_BUILDINGS } from '../../game/systems/buildings';
 import { citySpecialty, cityRole, ROLE_ZH, SPECIALTY_DEV_MAX, SPECIALTY_DEV_GAIN } from '../../game/data/specialties';
 import { useGameStore } from '../../game/state/store';
-import type { BuildingId, EntityId } from '../../game/types';
+import type { BuildingCategory, BuildingId, EntityId } from '../../game/types';
 import { useT, useLanguage, useDesc } from '../i18n';
 import { Modal } from './Modal';
 
@@ -12,6 +13,9 @@ import { Modal } from './Modal';
 // from the selector each render (which would loop-detect in React 19's
 // useSyncExternalStore).
 const EMPTY_QUEUE: BuildingId[] = [];
+
+// 圖冊分類 — the modal's grid groups buildings by trade so 40+ entries scan.
+const CATEGORY_ORDER: BuildingCategory[] = ['economy', 'agriculture', 'military', 'defense', 'culture', 'civic', 'intel'];
 
 interface Props {
   cityId: EntityId;
@@ -137,7 +141,19 @@ export function BuildingsPanel({ cityId }: Props) {
           })()}
           {summaryLine('0.5rem')}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.3rem' }}>
-            {BUILDING_DEFS.map((d) => {
+            {CATEGORY_ORDER.map((cat) => {
+            const defs = BUILDING_DEFS.filter((d) => BUILDING_CATEGORY[d.id] === cat);
+            if (defs.length === 0) return null;
+            const catLabel = BUILDING_CATEGORY_LABEL[cat];
+            return (
+            <Fragment key={cat}>
+            <div style={{
+              gridColumn: '1 / -1', fontSize: '0.64rem', letterSpacing: '0.14rem', color: '#8a98a4',
+              borderBottom: '1px solid #1d2731', paddingBottom: 3, marginTop: cat === CATEGORY_ORDER[0] ? 0 : 8,
+            }}>
+              {lang === 'en' ? catLabel.en : catLabel.zh}
+            </div>
+            {defs.map((d) => {
               const b = buildings.find((x) => x.cityId === cityId && x.id === d.id);
               const lvl = b?.level ?? 0;
               const inProgress = (b?.progress ?? 0) > 0 && lvl < d.maxLevel;
@@ -190,6 +206,9 @@ export function BuildingsPanel({ cityId }: Props) {
                   </div>
                 </button>
               );
+            })}
+            </Fragment>
+            );
             })}
           </div>
 

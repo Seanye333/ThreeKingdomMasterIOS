@@ -11,6 +11,9 @@ import type { City, EntityId, Officer } from '../../game/types';
 import { lazy, Suspense } from 'react';
 // 啟動提速 — the city 3D scene (≈175KB) loads when a city is first entered.
 const CityMapScreen3D = lazy(() => import('../screens/CityMapScreen3D').then(m => ({ default: m.CityMapScreen3D })));
+// 列傳詳情 — heavy, and only needed once a row is tapped.
+const OfficerDetail = lazy(() => import('./OfficerDetail').then(m => ({ default: m.OfficerDetail })));
+import { playSfx } from '../../game/systems/sound';
 import { requestMapFocus } from './mapFocusBus';
 import { BuildingsPanel } from './BuildingsPanel';
 import { AnimatedNumber } from './AnimatedNumber';
@@ -120,6 +123,14 @@ export function CityPanel() {
 
   const [tab, setTab] = useState<CityTab>('overview');
   const isPlayerCity = !!city && city.ownerForceId === playerForceId;
+  // 情報點 — per-city chores surface on the tab strip itself: a warm dot on
+  // 內政 while stationed officers sit idle, a red count on 軍務 for captives
+  // awaiting a verdict. You see where you're needed without opening the tab.
+  const hasPendingHere = useGameStore((s) =>
+    Object.values(s.pendingCommands).some((c) => c.cityId === selectedCityId));
+  const idleHere = isPlayerCity && !hasPendingHere && officers.some((o) => !o.task && o.status === 'idle');
+  const captiveCount = useGameStore((s) =>
+    Object.values(s.officers).filter((o) => o.locationCityId === selectedCityId && o.status === 'imprisoned').length);
   // 巡城 — how many cities the player owns (arrows only make sense for ≥2).
   const ownCityCount = useGameStore((s) =>
     Object.values(s.cities).filter((c) => c.ownerForceId === s.playerForceId).length);
@@ -221,11 +232,20 @@ export function CityPanel() {
           <button
             key={tb.id}
             className={tab === tb.id ? `${styles.tab} ${styles.tabActive}` : styles.tab}
-            onClick={() => setTab(tb.id)}
+            onClick={() => { if (tab !== tb.id) { playSfx('click'); setTab(tb.id); } }}
+            title={tb.id === 'domestic' && idleHere
+              ? t('有武將閒置 — 可下內政令', 'Idle officers here — issue an order')
+              : tb.id === 'military' && captiveCount > 0
+                ? t(`俘虜 ${captiveCount} 人待處置`, `${captiveCount} captive(s) await a verdict`)
+                : undefined}
           >
             {lang === 'en' ? tb.en : tb.zh}
             {tb.id === 'officers' && officers.length > 0 && (
               <span className={styles.tabBadge}>{officers.length}</span>
+            )}
+            {tb.id === 'domestic' && idleHere && <span className={styles.tabDot} />}
+            {tb.id === 'military' && captiveCount > 0 && (
+              <span className={styles.tabBadge} style={{ color: '#e08070' }}>{captiveCount}</span>
             )}
           </button>
         ))}
@@ -233,6 +253,8 @@ export function CityPanel() {
       </div>
 
       <div className={styles.tabBody}>
+      {/* keyed by tab — remounting the wrapper plays the entrance fade */}
+      <div key={tab} className={styles.tabFade}>
       {tab === 'overview' && (
         <>
           {/* City size badge — derived from population */}
@@ -307,6 +329,7 @@ export function CityPanel() {
           <FreeAgentsSection cityId={city.id} isPlayerCity={isPlayerCity} />
         </>
       )}
+      </div>
       </div>
       {showCityMap && (
         <Suspense fallback={null}>
@@ -538,6 +561,8 @@ function OfficerListItem({
   isPlayerCity: boolean;
 }) {
   const [transferOpen, setTransferOpen] = useState(false);
+  // 點開列傳 — hover 卡是速覽,點一下才進完整詳情(手機沒有 hover)。
+  const [detailOpen, setDetailOpen] = useState(false);
   const allCities = useGameStore((s) => s.cities);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const adjacent = useMemo(() => {
@@ -557,18 +582,20 @@ function OfficerListItem({
 
   return (
     <li className={styles.officerRow}>
-      <OfficerPortrait officer={o} size={34} forceColor={forceColor} />
-      <OfficerHoverCard officer={o}>
-        <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.25 }}>
-          <span>
-            {lang !== 'en' && <span className={styles.officerNameZh}>{o.name.zh}</span>}
-            {lang !== 'zh' && <span className={styles.officerNameEn}>{o.name.en}</span>}
+      <span onClick={() => setDetailOpen(true)} style={{ cursor: 'pointer', display: 'contents' }}>
+        <OfficerPortrait officer={o} size={34} forceColor={forceColor} />
+        <OfficerHoverCard officer={o}>
+          <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.25, cursor: 'pointer' }} title={t('點擊看列傳', 'Tap for full biography')}>
+            <span>
+              {lang !== 'en' && <span className={styles.officerNameZh}>{o.name.zh}</span>}
+              {lang !== 'zh' && <span className={styles.officerNameEn}>{o.name.en}</span>}
+            </span>
+            <span className={styles.officerStats}>
+              <OfficerStats officer={o} keys={['war', 'intelligence', 'politics', 'charisma']} lang={lang === 'en' ? 'en' : 'zh'} />
+            </span>
           </span>
-          <span className={styles.officerStats}>
-            <OfficerStats officer={o} keys={['war', 'intelligence', 'politics', 'charisma']} lang={lang === 'en' ? 'en' : 'zh'} />
-          </span>
-        </span>
-      </OfficerHoverCard>
+        </OfficerHoverCard>
+      </span>
       <span className={styles.officerStats}>
         {taskDef ? (
           <span className={styles.officerTask}>▸ {lang === 'en' ? taskDef.label.en : taskDef.label.zh}</span>
@@ -638,6 +665,11 @@ function OfficerListItem({
             ))
           )}
         </div>
+      )}
+      {detailOpen && (
+        <Suspense fallback={null}>
+          <OfficerDetail officer={o} onClose={() => setDetailOpen(false)} />
+        </Suspense>
       )}
     </li>
   );
