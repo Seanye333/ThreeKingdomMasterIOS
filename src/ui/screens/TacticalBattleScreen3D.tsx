@@ -92,15 +92,15 @@ export const SIGNATURE_FLAVOR: Record<string, { zh: string; en: string }> = {
   'thunder':        { zh: '五雷正法 — 天威震軍!', en: 'Five Thunder method — heaven\'s wrath strikes!' },
 };
 
-const UNIT_TYPE_LABEL: Record<UnitType, string> = {
-  infantry: 'Infantry', spearmen: 'Spearmen', cavalry: 'Cavalry',
-  archers: 'Archers', siege: 'Siege', navy: 'Navy',
+const UNIT_TYPE_LABEL: Record<UnitType, { zh: string; en: string }> = {
+  infantry: { zh: '步兵', en: 'Infantry' }, spearmen: { zh: '槍兵', en: 'Spearmen' }, cavalry: { zh: '騎兵', en: 'Cavalry' },
+  archers: { zh: '弓兵', en: 'Archers' }, siege: { zh: '攻城', en: 'Siege' }, navy: { zh: '水軍', en: 'Navy' },
 };
-const WEATHER_LABEL: Record<Weather, string> = {
-  clear: '☀ clear', rain: '☂ rain', wind: '🌀 wind', fog: '≋ fog', snow: '❄ snow',
+const WEATHER_LABEL: Record<Weather, { zh: string; en: string }> = {
+  clear: { zh: '☀ 晴', en: '☀ Clear' }, rain: { zh: '☂ 雨', en: '☂ Rain' }, wind: { zh: '🌀 風', en: '🌀 Wind' }, fog: { zh: '≋ 霧', en: '≋ Fog' }, snow: { zh: '❄ 雪', en: '❄ Snow' },
 };
-const TOD_LABEL: Record<TimeOfDay, string> = {
-  dawn: '🌅 dawn', day: '☀ day', dusk: '🌇 dusk', night: '🌙 night',
+const TOD_LABEL: Record<TimeOfDay, { zh: string; en: string }> = {
+  dawn: { zh: '🌅 拂曉', en: '🌅 Dawn' }, day: { zh: '☀ 白晝', en: '☀ Day' }, dusk: { zh: '🌇 黃昏', en: '🌇 Dusk' }, night: { zh: '🌙 夜', en: '🌙 Night' },
 };
 
 /* ─── Hex world-coord math (flat-top, odd-col offset) ────────────────────
@@ -4183,6 +4183,16 @@ export function TacticalBattleScreen3D() {
   // 戰前準備 — bar visibility + last refusal reason.
   const [prepDismissed, setPrepDismissed] = useState(false);
   const [prepMsg, setPrepMsg] = useState<string | null>(null);
+  // 提示 — a transient in-HUD toast (bottom-centre) for rule feedback that
+  // used to fire a jarring, English-only OS alert() mid-battle.
+  const [hudToast, setHudToast] = useState<string | null>(null);
+  const hudToastTimer = useRef(0);
+  const flashToast = (msg: string) => {
+    setHudToast(msg);
+    window.clearTimeout(hudToastTimer.current);
+    hudToastTimer.current = window.setTimeout(() => setHudToast(null), 2600);
+  };
+  useEffect(() => () => window.clearTimeout(hudToastTimer.current), []);
   // 🎬 戰鬥錄影 — MediaRecorder over the battle canvas; one button
   // toggles, stop downloads the clip. Recorder dies with the screen.
   const screenRootRef = useRef<HTMLDivElement>(null);
@@ -4675,7 +4685,7 @@ export function TacticalBattleScreen3D() {
     }
     if (actionMode.kind === 'duel' && u && u.side !== playerSide) {
       if (hexDistance(selectedUnit.coord, u.coord) !== 1) {
-        alert('Must be adjacent for a duel.');
+        flashToast(t('須與敵將相鄰方可單挑', 'Must be adjacent to duel'));
         return;
       }
       const me = officers[selectedUnit.officerId];
@@ -4683,8 +4693,12 @@ export function TacticalBattleScreen3D() {
       if (!me || !foe) return;
       const meCheck = canDuel(me);
       const foeCheck = canDuel(foe);
-      if (!meCheck.ok) { alert(`Your officer cannot duel: ${meCheck.reason}`); return; }
-      if (!foeCheck.ok) { alert(`Enemy cannot duel: ${foeCheck.reason}`); return; }
+      // 單挑資格 — translate the terse engine reason for the toast.
+      const duelReason = (r?: string) => r === 'war stat too low' ? t('武力不足', 'war too low')
+        : r === 'too frail' ? t('體弱不堪戰', 'too frail')
+        : r === 'unavailable' ? t('無法出戰', 'unavailable') : (r ?? '');
+      if (!meCheck.ok) { flashToast(t(`我方將領不可單挑:${duelReason(meCheck.reason)}`, `Your officer can't duel: ${duelReason(meCheck.reason)}`)); return; }
+      if (!foeCheck.ok) { flashToast(t(`敵將不可單挑:${duelReason(foeCheck.reason)}`, `Enemy can't duel: ${duelReason(foeCheck.reason)}`)); return; }
       // Spend AP and open the interactive bout; the kill is applied on finish.
       start({ ...battle, units: battle.units.map((unit) => unit.id === selectedUnit.id ? { ...unit, ap: 0 } : unit) });
       // 三英戰呂布 — allies pressing the same foe can leap in mid-bout.
@@ -4734,7 +4748,7 @@ export function TacticalBattleScreen3D() {
         start(next);
         setActionMode({ kind: 'none' });
       } else if (r.reason) {
-        alert(r.reason);
+        flashToast(r.reason);
       }
       return;
     }
@@ -4753,14 +4767,16 @@ export function TacticalBattleScreen3D() {
       background: `linear-gradient(180deg, ${lighting.sky[0]} 0%, ${lighting.sky[1]} 100%)`,
       display: 'flex', flexDirection: 'column',
     }}>
-      {/* Top bar */}
+      {/* Top bar — wraps so a narrow / phone viewport can never shove the
+          primary actions (End Turn · World · Exit) past the screen edge. */}
       <div style={{
         padding: '0.6rem 1rem',
         background: 'rgba(20, 14, 8, 0.85)',
         borderBottom: '1px solid #5a4530',
         color: '#f0e0b0',
         fontFamily: 'var(--tkm-font-body)',
-        display: 'flex', alignItems: 'center', gap: '1rem',
+        display: 'flex', alignItems: 'center', gap: '0.7rem',
+        flexWrap: 'wrap', rowGap: '0.4rem',
       }}>
         <strong>{t('戰術戰鬥', 'Tactical Battle')} · 3D</strong>
         <span style={{ fontSize: '0.85rem', color: '#d4a84a' }}>
@@ -4849,56 +4865,64 @@ export function TacticalBattleScreen3D() {
             }}>{ready > 0 ? `⚑ ${t('可動', 'ready')} ${ready}/${live.length}` : `✓ ${t('全員已動', 'all moved')}`}</span>
           );
         })()}
-        <span style={{
-          fontSize: '0.72rem', padding: '2px 7px',
-          background: 'rgba(40, 28, 18, 0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', color: '#a89070',
-        }}>{WEATHER_LABEL[battle.weather]}</span>
+        <span
+          title={t('天候 — 影響火計、射程與行軍', 'Weather — affects fire, range and movement')}
+          style={{
+            fontSize: '0.72rem', padding: '2px 7px',
+            background: 'rgba(40, 28, 18, 0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', color: '#a89070',
+          }}>{lang === 'en' ? WEATHER_LABEL[battle.weather].en : WEATHER_LABEL[battle.weather].zh}</span>
         {battle.windDirection && battle.windDirection !== 'calm' && (
           <span style={{
             fontSize: '0.72rem', padding: '2px 7px',
             background: 'rgba(40, 28, 18, 0.7)', border: '1px solid #6a88a8', color: '#a8c4e0',
           }} title={t('風向 — 火勢順風蔓延', 'Wind — fire spreads downwind')}>
-            {battle.windDirection === 'east' ? '🌬→ 東風' : battle.windDirection === 'west' ? '🌬← 西風' : battle.windDirection === 'south' ? '🌬↓ 南風' : '🌬↑ 北風'}
+            {battle.windDirection === 'east' ? t('🌬→ 東風', '🌬→ E wind') : battle.windDirection === 'west' ? t('🌬← 西風', '🌬← W wind') : battle.windDirection === 'south' ? t('🌬↓ 南風', '🌬↓ S wind') : t('🌬↑ 北風', '🌬↑ N wind')}
           </span>
         )}
-        <span style={{
-          fontSize: '0.72rem', padding: '2px 7px',
-          background: 'rgba(40, 28, 18, 0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', color: '#a89070',
-        }}>{TOD_LABEL[battle.timeOfDay]}</span>
+        <span
+          title={t('時段 — 夜戰射程縮短、視野受限', 'Time of day — night shortens range and sight')}
+          style={{
+            fontSize: '0.72rem', padding: '2px 7px',
+            background: 'rgba(40, 28, 18, 0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', color: '#a89070',
+          }}>{lang === 'en' ? TOD_LABEL[battle.timeOfDay].en : TOD_LABEL[battle.timeOfDay].zh}</span>
         <button
           onClick={toggleRecording}
           title={recording ? t('停止並下載錄影', 'Stop & download') : t('錄製戰鬥畫面(WebM)', 'Record the battle (WebM)')}
+          aria-label={recording ? t('停止並下載錄影', 'Stop & download recording') : t('錄製戰鬥畫面', 'Record the battle')}
           style={{
             fontSize: '0.72rem', padding: '2px 8px', cursor: 'pointer',
             background: recording ? 'rgba(184, 68, 46, 0.35)' : 'rgba(40, 28, 18, 0.7)',
             border: `1px solid ${recording ? '#ff6a50' : '#5a4530'}`,
             color: recording ? '#ffb0a0' : '#a89070', fontFamily: 'inherit',
           }}
-        >{recording ? '⏹ 錄影中' : '🎬 錄影'}</button>
+        >{recording ? t('⏹ 錄影中', '⏹ REC') : t('🎬 錄影', '🎬 Record')}</button>
         <button
           onClick={() => setAutoPilot((v) => !v)}
           title={autoPilot ? t('收回指揮權', 'Take back command') : t('委託軍師指揮 — 戰術 AI 替你打,隨時可收回', 'Let the tactical AI play your side; toggle any time')}
+          aria-label={autoPilot ? t('收回指揮權', 'Take back command') : t('委託軍師指揮', 'Delegate to the tactical AI')}
           style={{
             fontSize: '0.72rem', padding: '2px 8px', cursor: 'pointer',
             background: autoPilot ? 'rgba(126, 214, 138, 0.25)' : 'rgba(40, 28, 18, 0.7)',
             border: `1px solid ${autoPilot ? '#7ed68a' : '#5a4530'}`,
             color: autoPilot ? '#c8e8a0' : '#a89070', fontFamily: 'inherit',
           }}
-        >{autoPilot ? '🤖 軍師代戰中' : '🤖 委託指揮'}</button>
+        >{autoPilot ? t('🤖 軍師代戰中', '🤖 AI in command') : t('🤖 委託指揮', '🤖 Delegate')}</button>
         {/* 速度 / 暫停 — pace the auto-advance, or freeze to read the board. */}
         <button
           onClick={() => setPaused((v) => !v)}
           title={t('暫停 / 繼續推演', 'Pause / resume')}
+          aria-label={paused ? t('繼續推演', 'Resume') : t('暫停', 'Pause')}
           style={{
             fontSize: '0.72rem', padding: '2px 8px', cursor: 'pointer',
             background: paused ? 'rgba(212,168,74,0.25)' : 'rgba(40, 28, 18, 0.7)',
             border: `1px solid ${paused ? '#d4a84a' : '#5a4530'}`,
             color: paused ? '#f0d98a' : '#a89070', fontFamily: 'inherit',
           }}
-        >{paused ? '▶ 繼續' : '⏸ 暫停'}</button>
+        >{paused ? t('▶ 繼續', '▶ Resume') : t('⏸ 暫停', '⏸ Pause')}</button>
         <button
           onClick={() => setBattleSpeed(battleSpeed >= 4 ? 1 : battleSpeed * 2)}
           title={t('推演速度', 'Playback speed')}
+          aria-label={t('推演速度', 'Playback speed')}
           style={{
             fontSize: '0.72rem', padding: '2px 8px', cursor: 'pointer',
             background: 'rgba(40, 28, 18, 0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
@@ -4927,16 +4951,16 @@ export function TacticalBattleScreen3D() {
           <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
             <span style={{ fontSize: '0.7rem', color: '#d4a84a' }}>{t('戰前部署:', 'Prep:')}</span>
             {([
-              { kind: 'ambush' as const, zh: '⚔ 伏兵', tip: '最強一軍潛伏 — 敵近不見,首擊帶伏擊加成、且亂敵陣腳' },
-              { kind: 'night' as const, zh: '🌙 夜襲', tip: '入夜開戰 — 弓弩射程縮短,夜霧蔽視,伏兵傷害更狠' },
-              { kind: 'tunnel' as const, side: 'attacker' as const, zh: '⛏ 地道', tip: '攻城方限定 — 最弱一軍自地道潛入牆內(守將機警則中伏)' },
-              { kind: 'caltrops-trap' as const, side: 'defender' as const, zh: '🪤 拒馬', tip: '守方限定 — 陣前布鐵蒺藜陷坑,挫銳騎(騎兵 2.5× 傷)' },
-              { kind: 'fire-prep' as const, side: 'attacker' as const, zh: '🔥 火計', tip: '攻城方限定 — 預伏油薪,開局敵營已起火(雨雪不可)' },
-              { kind: 'decoy' as const, zh: '🚩 疑兵', tip: '虛張旗鼓 — 敵疑我眾,開局士氣 −10' },
+              { kind: 'ambush' as const, zh: '⚔ 伏兵', en: '⚔ Ambush', tip: '最強一軍潛伏 — 敵近不見,首擊帶伏擊加成、且亂敵陣腳', tipEn: 'Your strongest unit lies hidden — unseen until it strikes, the first blow lands with an ambush bonus and rattles the enemy line' },
+              { kind: 'night' as const, zh: '🌙 夜襲', en: '🌙 Night raid', tip: '入夜開戰 — 弓弩射程縮短,夜霧蔽視,伏兵傷害更狠', tipEn: 'Open at night — bows lose range, night fog cuts sight, ambushes hit harder' },
+              { kind: 'tunnel' as const, side: 'attacker' as const, zh: '⛏ 地道', en: '⛏ Tunnel', tip: '攻城方限定 — 最弱一軍自地道潛入牆內(守將機警則中伏)', tipEn: 'Attacker only — your weakest unit slips inside the walls via a tunnel (a wary defender springs a trap)' },
+              { kind: 'caltrops-trap' as const, side: 'defender' as const, zh: '🪤 拒馬', en: '🪤 Caltrops', tip: '守方限定 — 陣前布鐵蒺藜陷坑,挫銳騎(騎兵 2.5× 傷)', tipEn: 'Defender only — sow iron caltrops before your line to break charging horse (2.5× damage vs cavalry)' },
+              { kind: 'fire-prep' as const, side: 'attacker' as const, zh: '🔥 火計', en: '🔥 Fire plot', tip: '攻城方限定 — 預伏油薪,開局敵營已起火(雨雪不可)', tipEn: 'Attacker only — pre-laid oil and kindling set the enemy camp ablaze at the start (not in rain/snow)' },
+              { kind: 'decoy' as const, zh: '🚩 疑兵', en: '🚩 Decoy', tip: '虛張旗鼓 — 敵疑我眾,開局士氣 −10', tipEn: 'False banners — the enemy overcounts your host and opens at −10 morale' },
             ]).filter((p) => !('side' in p) || p.side === playerSide).map((p) => (
               <button
                 key={p.kind}
-                title={p.tip}
+                title={lang === 'en' ? p.tipEn : p.tip}
                 onClick={() => {
                   const r = applyBattlePrep(battle, playerSide, p.kind, officers);
                   if (r.ok) { start(r.battle); playSfx('shout'); }
@@ -4946,7 +4970,7 @@ export function TacticalBattleScreen3D() {
                   background: 'rgba(58, 45, 24, 0.8)', border: '1px solid #d4a84a', color: '#f0d98a',
                   fontSize: '0.7rem', padding: '2px 7px', cursor: 'pointer', fontFamily: 'inherit',
                 }}
-              >{p.zh}</button>
+              >{lang === 'en' ? p.en : p.zh}</button>
             ))}
             {/* 致師 — call out the enemy's champion before a blow is struck; a
                 win sets the tone of the whole battle (士氣大振). Spends the slot. */}
@@ -4975,16 +4999,20 @@ export function TacticalBattleScreen3D() {
           </span>
         )}
         {battle.attackerFormation && battle.attackerFormation !== 'none' && (
-          <span style={{
-            fontSize: '0.72rem', padding: '2px 7px',
-            background: 'rgba(60, 26, 22, 0.7)', border: '1px solid #b8442e', color: '#ff9078',
-          }}>A: {(() => { const f = FORMATIONS_BY_ID[battle.attackerFormation]; return f ? pickName(f.name, lang) : battle.attackerFormation; })()}</span>
+          <span
+            title={t('攻方陣形', 'Attacker formation')}
+            style={{
+              fontSize: '0.72rem', padding: '2px 7px',
+              background: 'rgba(60, 26, 22, 0.7)', border: '1px solid #b8442e', color: '#ff9078',
+            }}>{t('攻', 'ATK')}·{(() => { const f = FORMATIONS_BY_ID[battle.attackerFormation]; return f ? pickName(f.name, lang) : battle.attackerFormation; })()}</span>
         )}
         {battle.defenderFormation && battle.defenderFormation !== 'none' && (
-          <span style={{
-            fontSize: '0.72rem', padding: '2px 7px',
-            background: 'rgba(26, 40, 60, 0.7)', border: '1px solid #3a7dd9', color: '#88b7e8',
-          }}>D: {(() => { const f = FORMATIONS_BY_ID[battle.defenderFormation]; return f ? pickName(f.name, lang) : battle.defenderFormation; })()}</span>
+          <span
+            title={t('守方陣形', 'Defender formation')}
+            style={{
+              fontSize: '0.72rem', padding: '2px 7px',
+              background: 'rgba(26, 40, 60, 0.7)', border: '1px solid #3a7dd9', color: '#88b7e8',
+            }}>{t('守', 'DEF')}·{(() => { const f = FORMATIONS_BY_ID[battle.defenderFormation]; return f ? pickName(f.name, lang) : battle.defenderFormation; })()}</span>
         )}
         <button
           onClick={onEndTurn}
@@ -5007,6 +5035,7 @@ export function TacticalBattleScreen3D() {
             fontFamily: 'var(--tkm-font-body)',
           }}
           title={t('回大地圖觀戰 — 戰鬥在原地繼續', 'Watch from the world map — the battle continues in place')}
+          aria-label={t('回大地圖觀戰', 'Watch from the world map')}
         >🌏 {t('大地圖', 'World')}</button>
         {/* Direct way out — instant for a drill, confirmed for a real battle
             (forfeiting / 棄城 has consequences). The 2D view is retired. */}
@@ -5024,6 +5053,7 @@ export function TacticalBattleScreen3D() {
             fontFamily: 'var(--tkm-font-body)',
           }}
           title={battle.practice ? t('結束演習', 'End the drill') : t('退出戰鬥', 'Leave the battle')}
+          aria-label={battle.practice ? t('結束演習', 'End the drill') : t('退出戰鬥', 'Leave the battle')}
         >✕ {battle.practice ? t('結束演習', 'End Drill') : t('退出', 'Exit')}</button>
       </div>
 
@@ -5170,8 +5200,8 @@ export function TacticalBattleScreen3D() {
               {t('敵', 'ENEMY')} · {t(officers[selectedUnit.officerId]?.name.zh ?? '', officers[selectedUnit.officerId]?.name.en ?? '')}
             </div>
             <div style={{ fontSize: '0.85rem', marginTop: '0.3rem' }}>
-              HP {selectedUnit.troops.toLocaleString()}/{selectedUnit.maxTroops.toLocaleString()} ·
-              AP {selectedUnit.ap}/{selectedUnit.maxAp} · Mor {selectedUnit.morale}
+              {t('兵', 'HP')} {selectedUnit.troops.toLocaleString()}/{selectedUnit.maxTroops.toLocaleString()} ·
+              {t('行', 'AP')} {selectedUnit.ap}/{selectedUnit.maxAp} · {t('氣', 'Mor')} {selectedUnit.morale}
               {isRouting(selectedUnit) && <span style={{ color: '#e0623a', fontWeight: 'bold' }}> · {t('潰走', 'ROUTING')}</span>}
               {(selectedUnit.fatigue ?? 0) > 0 && <span style={{ color: (selectedUnit.fatigue ?? 0) >= 70 ? '#e0623a' : '#caa15a' }}> · {t('疲', 'Ftg')} {Math.round(selectedUnit.fatigue ?? 0)}</span>}
               {selectedUnit.maxAmmo !== undefined && <span style={{ color: (selectedUnit.ammo ?? 0) <= 0 ? '#e0623a' : '#88b7e8' }}> · {t('矢', 'Amo')} {selectedUnit.ammo ?? 0}/{selectedUnit.maxAmmo}</span>}
@@ -5235,6 +5265,28 @@ export function TacticalBattleScreen3D() {
             }}>
               {lang === 'zh' ? '★ 簽名戰法 ★' : '★ Signature Stratagem ★'}
             </div>
+          </div>
+        )}
+
+        {/* 提示 — transient rule-feedback toast (replaces mid-battle alert()). */}
+        {hudToast && (
+          <div
+            key={hudToast}
+            role="status"
+            style={{
+              position: 'absolute', bottom: '14%', left: '50%',
+              transform: 'translateX(-50%)',
+              pointerEvents: 'none', zIndex: 60,
+              background: 'rgba(48, 22, 16, 0.94)',
+              border: '1px solid #b8584a', borderRadius: 'var(--tkm-radius)',
+              color: '#ffcbb8', fontFamily: 'var(--tkm-font-body)', fontSize: '0.85rem',
+              padding: '0.4rem 0.9rem', letterSpacing: '0.04rem',
+              boxShadow: '0 4px 18px rgba(0,0,0,0.5)',
+              animation: 'tkmFadeIn 0.18s ease-out',
+              whiteSpace: 'nowrap', maxWidth: '90vw', overflow: 'hidden', textOverflow: 'ellipsis',
+            }}
+          >
+            ⚠ {hudToast}
           </div>
         )}
 
@@ -5744,18 +5796,18 @@ function UnitPanel3D({
       })()}
       {officer && (
         <div style={{ fontSize: '0.66rem', color: '#8a7050', marginTop: 4, letterSpacing: '0.08rem' }}>
-          LED {officer.stats.leadership} · WAR {officer.stats.war} · INT {officer.stats.intelligence}
+          {t('統', 'LED')} {officer.stats.leadership} · {t('武', 'WAR')} {officer.stats.war} · {t('智', 'INT')} {officer.stats.intelligence}
         </div>
       )}
       <div style={{
         display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.2rem',
         fontSize: '0.72rem', marginTop: '0.5rem',
       }}>
-        <span>HP <strong>{unit.troops.toLocaleString()}</strong>/{unit.maxTroops.toLocaleString()}</span>
-        <span>AP <strong style={{ color: unit.ap === 0 ? '#b8442e' : '#7ed68a' }}>{unit.ap}</strong>/{unit.maxAp}</span>
+        <span title={t('兵力', 'Troops')}>{t('兵', 'HP')} <strong>{unit.troops.toLocaleString()}</strong>/{unit.maxTroops.toLocaleString()}</span>
+        <span title={t('行動點', 'Action points')}>{t('行', 'AP')} <strong style={{ color: unit.ap === 0 ? '#b8442e' : '#7ed68a' }}>{unit.ap}</strong>/{unit.maxAp}</span>
         <span>{t('士氣', 'Morale')} <strong style={{ color: isRouting(unit) ? '#e0623a' : unit.morale < 40 ? '#caa15a' : unit.morale >= 80 ? '#7ed68a' : '#cdbb95' }}>{unit.morale}</strong>
           {isRouting(unit) ? ` ${t('潰走', 'ROUT')}` : unit.morale < 40 ? ` ${t('動搖', 'shaken')}` : unit.morale >= 80 ? ` ${t('高昂', 'high')}` : ''}</span>
-        <span>{UNIT_TYPE_LABEL[unit.unitType]}</span>
+        <span>{lang === 'en' ? UNIT_TYPE_LABEL[unit.unitType].en : UNIT_TYPE_LABEL[unit.unitType].zh}</span>
         {(unit.charge?.dist ?? 0) >= 2 && (
           <span style={{ color: '#ffb24a' }}>{t('衝鋒', 'Charge')} <strong>×{unit.charge!.dist}</strong></span>
         )}
