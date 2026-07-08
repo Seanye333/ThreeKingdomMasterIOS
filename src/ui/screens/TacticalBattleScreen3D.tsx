@@ -25,6 +25,7 @@ import { duelWound } from '../../game/systems/afflictions';
 import { personalTacticsForUnit } from '../../game/systems/personalTactics';
 import { FORMATIONS_BY_ID, STRATAGEMS } from '../../game/data';
 import { BattleResultsModal } from '../components/BattleResultsModal';
+import { Modal } from '../components/Modal';
 import { IntroDive } from '../components/IntroDive';
 import { Duel3DStage } from '../components/duel/Duel3DStage';
 import { useT, useDesc, useLanguage, pickName } from '../i18n';
@@ -4186,6 +4187,9 @@ export function TacticalBattleScreen3D() {
   // 提示 — a transient in-HUD toast (bottom-centre) for rule feedback that
   // used to fire a jarring, English-only OS alert() mid-battle.
   const [hudToast, setHudToast] = useState<string | null>(null);
+  // 戰報 — a collapsible drawer of the recent battle log (the ticker only
+  // flashes the last line for ~3.6s; this lets a player review what happened).
+  const [showLog, setShowLog] = useState(false);
   const hudToastTimer = useRef(0);
   const flashToast = (msg: string) => {
     setHudToast(msg);
@@ -4929,6 +4933,17 @@ export function TacticalBattleScreen3D() {
             color: '#a89070', fontFamily: 'inherit',
           }}
         >⏩ {battleSpeed}×</button>
+        <button
+          onClick={() => setShowLog((v) => !v)}
+          title={t('戰報 — 回看近況記錄', 'Battle log — review recent events')}
+          aria-label={t('戰報記錄', 'Battle log')}
+          style={{
+            fontSize: '0.72rem', padding: '2px 8px', cursor: 'pointer',
+            background: showLog ? 'rgba(212,168,74,0.25)' : 'rgba(40, 28, 18, 0.7)',
+            border: `1px solid ${showLog ? '#d4a84a' : '#5a4530'}`,
+            color: showLog ? '#f0d98a' : '#a89070', fontFamily: 'inherit',
+          }}
+        >📜 {t('戰報', 'Log')}</button>
         {/* 撤退 — concede and pull out: you lose the field, but your standing
             units withdraw intact (no pursuit / 掩殺). */}
         {myTurn && !battle.winner && playerSide && !battle.practice && (
@@ -5181,16 +5196,18 @@ export function TacticalBattleScreen3D() {
             canAct={!!myTurn}
           />
         )}
-        {/* Read-only info for enemy units */}
+        {/* Read-only info for enemy units — mirrors the friendly UnitPanel3D's
+            top-right anchor (they're mutually exclusive: one unit selected at a
+            time), keeping the bottom-left corner clear for the two maps. */}
         {selectedUnit && (!playerSide || selectedUnit.side !== playerSide) && (
           <div style={{
-            position: 'absolute', bottom: 16, left: 16,
+            position: 'absolute', top: 16, right: 16,
+            width: 280, maxWidth: 'calc(100vw - 32px)',
             background: 'rgba(20, 14, 8, 0.92)',
             border: '1px solid #b8442e',
             padding: '0.6rem 0.9rem',
             color: '#f0e0b0',
             fontFamily: 'var(--tkm-font-body)',
-            minWidth: 200,
             boxShadow: '0 0 16px rgba(184, 68, 46, 0.4)',
           }}>
             <div style={{ fontWeight: 'bold', fontSize: '1.05rem' }}>
@@ -5287,6 +5304,50 @@ export function TacticalBattleScreen3D() {
             }}
           >
             ⚠ {hudToast}
+          </div>
+        )}
+
+        {/* 戰報抽屜 — the recent battle log, newest first; toggled from the top bar. */}
+        {showLog && (
+          <div style={{
+            position: 'absolute', left: '50%', bottom: '11%',
+            transform: 'translateX(-50%)',
+            width: 'min(460px, 88vw)', maxHeight: '34vh', overflowY: 'auto',
+            zIndex: 55,
+            background: 'rgba(16, 12, 8, 0.94)',
+            border: '1px solid #5a4530', borderRadius: 'var(--tkm-radius)',
+            boxShadow: '0 6px 22px rgba(0,0,0,0.55)',
+            fontFamily: 'var(--tkm-font-body)',
+            animation: 'tkmFadeIn 0.18s ease-out',
+          }}>
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '0.4rem 0.7rem', borderBottom: '1px solid #2a2015', position: 'sticky', top: 0,
+              background: 'rgba(16, 12, 8, 0.98)',
+            }}>
+              <span style={{ fontSize: '0.72rem', letterSpacing: '0.12rem', color: '#d4a84a' }}>📜 {t('戰報', 'Battle Log')}</span>
+              <button
+                onClick={() => setShowLog(false)}
+                aria-label={t('關閉戰報', 'Close log')}
+                style={{ background: 'transparent', border: 'none', color: '#8a7050', cursor: 'pointer', fontSize: '1rem', lineHeight: 1 }}
+              >×</button>
+            </div>
+            <div style={{ padding: '0.4rem 0.7rem' }}>
+              {(() => {
+                const entries = (battle.log ?? []).slice(-40).reverse();
+                if (entries.length === 0) return <div style={{ fontSize: '0.75rem', color: '#7a6850', fontStyle: 'italic', padding: '0.3rem 0' }}>{t('尚無戰報。', 'No events yet.')}</div>;
+                return entries.map((e, i) => (
+                  <div key={i} style={{
+                    fontSize: '0.75rem', lineHeight: 1.6, padding: '0.12rem 0',
+                    color: e.kind === 'event' ? '#e8c878' : e.kind === 'arrival' ? '#9ed6c0' : '#bcb090',
+                    borderBottom: i < entries.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                  }}>
+                    <span style={{ color: '#6a5c44', fontFamily: 'ui-monospace, monospace', fontSize: '0.66rem', marginRight: 6 }}>{t(`第${e.turn}回`, `T${e.turn}`)}</span>
+                    {e.text}
+                  </div>
+                ));
+              })()}
+            </div>
           </div>
         )}
 
@@ -5516,11 +5577,18 @@ export function TacticalBattleScreen3D() {
           }}
         />
       )}
-      {/* 敵將叫陣 — accept to duel, or refuse. */}
+      {/* 敵將叫陣 — accept to duel, or refuse. Esc / backdrop = 避戰 (the app-wide
+          dismiss gesture now works, instead of trapping the player). */}
       {challenge && !interactiveDuel && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.62)', display: 'grid', placeItems: 'center', zIndex: 140 }}>
-          <div style={{ width: 'min(420px,92vw)', background: 'linear-gradient(160deg,#241a10,#140d06)', border: '1px solid #b8442e', padding: '1.4rem', textAlign: 'center', fontFamily: 'var(--tkm-font-body)', color: '#e6edf3', boxShadow: '0 0 30px rgba(184,68,46,0.4)' }}>
-            <div style={{ fontSize: '0.8rem', letterSpacing: '0.3rem', color: '#e0846a', marginBottom: '0.5rem' }}>⚔ {t('陣前叫陣', 'A CHALLENGE')}</div>
+        <Modal
+          onClose={() => setChallenge(null)}
+          title={t('陣前叫陣', 'A Challenge')}
+          icon="⚔"
+          width="min(420px, 92vw)"
+          zIndex={1400}
+          ariaLabel={t('陣前叫陣', 'A challenge')}
+        >
+          <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '1.5rem', color: '#f2dd9a', marginBottom: '0.3rem' }}>
               {t(`${challenge.foe.name.zh} 立馬陣前,大喝挑戰!`, `${challenge.foe.name.en} rides forth and calls you out!`)}
             </div>
@@ -5538,13 +5606,22 @@ export function TacticalBattleScreen3D() {
               >{t('避戰', 'Refuse')}</button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
-      {/* 斬/擒 — the defeated foe's fate is yours to decide. */}
+      {/* 斬/擒 — the defeated foe's fate is yours to decide. A forced choice:
+          no Esc/backdrop/close so the player must pick 斬 or 生擒. */}
       {captureChoice && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'grid', placeItems: 'center', zIndex: 145 }}>
-          <div style={{ width: 'min(420px,92vw)', background: 'linear-gradient(160deg,#241a10,#140d06)', border: '1px solid #e6c473', padding: '1.4rem', textAlign: 'center', fontFamily: 'var(--tkm-font-body)', color: '#e6edf3' }}>
+        <Modal
+          onClose={() => {}}
+          hideClose
+          closeOnEsc={false}
+          closeOnBackdrop={false}
+          width="min(420px, 92vw)"
+          zIndex={1450}
+          ariaLabel={t('處置敗將', "The captive's fate")}
+        >
+          <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '1.4rem', color: '#f2dd9a', marginBottom: '0.3rem' }}>
               {t(`${captureChoice.name.zh} 已敗於你劍下!`, `${captureChoice.name.en} falls before you!`)}
             </div>
@@ -5560,7 +5637,7 @@ export function TacticalBattleScreen3D() {
               >🪢 {t('生擒', 'Capture')}</button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       {interactiveDuel && (

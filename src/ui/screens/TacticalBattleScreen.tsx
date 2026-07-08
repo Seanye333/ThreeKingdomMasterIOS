@@ -110,9 +110,10 @@ export function TacticalBattleScreen() {
       </ErrorBoundary>
 
       {/* "You are here" locator — this battlefield's window on the world map.
-          Above the 3D screen (z-1000); hidden during the cinematic. */}
+          Stacked ABOVE the tactical minimap (which owns the very bottom-left
+          corner) so the two no longer overlap. Hidden during the cinematic. */}
       {!showCinematic && (
-        <div style={{ position: 'fixed', left: 10, bottom: 10, zIndex: 1010 }}>
+        <div style={{ position: 'fixed', left: 12, bottom: 178, zIndex: 1010 }}>
           <LocatorMap window={battleViewWindow(battle)} focusCityId={battle.cityId} width={132} />
         </div>
       )}
