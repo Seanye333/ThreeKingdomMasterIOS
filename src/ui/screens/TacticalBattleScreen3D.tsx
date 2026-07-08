@@ -4190,6 +4190,8 @@ export function TacticalBattleScreen3D() {
   // 戰報 — a collapsible drawer of the recent battle log (the ticker only
   // flashes the last line for ~3.6s; this lets a player review what happened).
   const [showLog, setShowLog] = useState(false);
+  // 確認 — a styled confirm dialog (replaces jarring window.confirm mid-battle).
+  const [confirmDialog, setConfirmDialog] = useState<{ title: { zh: string; en: string }; body: { zh: string; en: string }; confirmLabel: { zh: string; en: string }; danger?: boolean; onConfirm: () => void } | null>(null);
   const hudToastTimer = useRef(0);
   const flashToast = (msg: string) => {
     setHudToast(msg);
@@ -4869,26 +4871,21 @@ export function TacticalBattleScreen3D() {
             }}>{ready > 0 ? `⚑ ${t('可動', 'ready')} ${ready}/${live.length}` : `✓ ${t('全員已動', 'all moved')}`}</span>
           );
         })()}
+        {/* 天候一覽 — weather · wind · time-of-day merged into one chip (was
+            three), trimming the top-bar clutter while keeping each fact. */}
         <span
-          title={t('天候 — 影響火計、射程與行軍', 'Weather — affects fire, range and movement')}
+          title={t('天候·風向·時段 — 影響火計蔓延、弓弩射程與夜戰視野', 'Weather · wind · time of day — governs fire spread, bow range and night sight')}
           style={{
-            fontSize: '0.72rem', padding: '2px 7px',
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            fontSize: '0.72rem', padding: '2px 8px',
             background: 'rgba(40, 28, 18, 0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', color: '#a89070',
-          }}>{lang === 'en' ? WEATHER_LABEL[battle.weather].en : WEATHER_LABEL[battle.weather].zh}</span>
-        {battle.windDirection && battle.windDirection !== 'calm' && (
-          <span style={{
-            fontSize: '0.72rem', padding: '2px 7px',
-            background: 'rgba(40, 28, 18, 0.7)', border: '1px solid #6a88a8', color: '#a8c4e0',
-          }} title={t('風向 — 火勢順風蔓延', 'Wind — fire spreads downwind')}>
-            {battle.windDirection === 'east' ? t('🌬→ 東風', '🌬→ E wind') : battle.windDirection === 'west' ? t('🌬← 西風', '🌬← W wind') : battle.windDirection === 'south' ? t('🌬↓ 南風', '🌬↓ S wind') : t('🌬↑ 北風', '🌬↑ N wind')}
-          </span>
-        )}
-        <span
-          title={t('時段 — 夜戰射程縮短、視野受限', 'Time of day — night shortens range and sight')}
-          style={{
-            fontSize: '0.72rem', padding: '2px 7px',
-            background: 'rgba(40, 28, 18, 0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', color: '#a89070',
-          }}>{lang === 'en' ? TOD_LABEL[battle.timeOfDay].en : TOD_LABEL[battle.timeOfDay].zh}</span>
+          }}>
+          <span>{lang === 'en' ? WEATHER_LABEL[battle.weather].en : WEATHER_LABEL[battle.weather].zh}</span>
+          {battle.windDirection && battle.windDirection !== 'calm' && (
+            <span style={{ color: '#a8c4e0' }}>· {battle.windDirection === 'east' ? t('🌬→東', '🌬→E') : battle.windDirection === 'west' ? t('🌬←西', '🌬←W') : battle.windDirection === 'south' ? t('🌬↓南', '🌬↓S') : t('🌬↑北', '🌬↑N')}</span>
+          )}
+          <span style={{ opacity: 0.85 }}>· {lang === 'en' ? TOD_LABEL[battle.timeOfDay].en : TOD_LABEL[battle.timeOfDay].zh}</span>
+        </span>
         <button
           onClick={toggleRecording}
           title={recording ? t('停止並下載錄影', 'Stop & download') : t('錄製戰鬥畫面(WebM)', 'Record the battle (WebM)')}
@@ -4948,12 +4945,17 @@ export function TacticalBattleScreen3D() {
             units withdraw intact (no pursuit / 掩殺). */}
         {myTurn && !battle.winner && playerSide && !battle.practice && (
           <button
-            onClick={() => {
-              if (!window.confirm(t('撤兵退走?此戰判負,但現存部隊得以保全。', 'Withdraw? You concede the field, but your standing units escape intact.'))) return;
-              const foe = playerSide === 'attacker' ? 'defender' : 'attacker';
-              playSfx('horn');
-              start({ ...battle, winner: foe, withdrew: true });
-            }}
+            onClick={() => setConfirmDialog({
+              title: { zh: '撤兵退走', en: 'Withdraw' },
+              body: { zh: '此戰判負,但現存部隊得以保全,不遭掩殺。', en: 'You concede the field, but your standing units escape intact — no pursuit.' },
+              confirmLabel: { zh: '撤兵', en: 'Withdraw' },
+              danger: true,
+              onConfirm: () => {
+                const foe = playerSide === 'attacker' ? 'defender' : 'attacker';
+                playSfx('horn');
+                start({ ...battle, winner: foe, withdrew: true });
+              },
+            })}
             title={t('撤兵 — 判負但保全現存兵力', 'Withdraw — concede but save your surviving troops')}
             style={{
               fontSize: '0.72rem', padding: '2px 8px', cursor: 'pointer',
@@ -5057,9 +5059,13 @@ export function TacticalBattleScreen3D() {
         <button
           onClick={() => {
             if (battle.practice) { endDrill(); return; } // bank 練度/歷練 by result
-            if (window.confirm(t('確定退出此戰?', 'Leave this battle?'))) {
-              cancelBattle();
-            }
+            setConfirmDialog({
+              title: { zh: '退出戰鬥', en: 'Leave Battle' },
+              body: { zh: '確定退出此戰?棄戰/棄城將有後果。', en: 'Leave this battle? Forfeiting the field has consequences.' },
+              confirmLabel: { zh: '退出', en: 'Leave' },
+              danger: true,
+              onConfirm: () => cancelBattle(),
+            });
           }}
           style={{
             marginLeft: '0.4rem',
@@ -5577,6 +5583,39 @@ export function TacticalBattleScreen3D() {
           }}
         />
       )}
+      {/* 確認 — styled confirm for 撤退 / 退出 (was a jarring OS window.confirm). */}
+      {confirmDialog && (
+        <Modal
+          onClose={() => setConfirmDialog(null)}
+          title={lang === 'en' ? confirmDialog.title.en : confirmDialog.title.zh}
+          icon="⚠"
+          width="min(400px, 92vw)"
+          zIndex={1500}
+          ariaLabel={lang === 'en' ? confirmDialog.title.en : confirmDialog.title.zh}
+        >
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '0.9rem', color: '#cdd6df', lineHeight: 1.7, marginBottom: '1.1rem' }}>
+              {lang === 'en' ? confirmDialog.body.en : confirmDialog.body.zh}
+            </div>
+            <div style={{ display: 'flex', gap: '0.7rem', justifyContent: 'center' }}>
+              <button
+                onClick={() => { const fn = confirmDialog.onConfirm; setConfirmDialog(null); fn(); }}
+                style={{
+                  flex: 1, padding: '0.55rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.95rem', letterSpacing: '0.08rem',
+                  background: confirmDialog.danger ? 'linear-gradient(180deg,#7a2a20,#4a1810)' : 'linear-gradient(180deg,#3a2d18,#2a1f10)',
+                  border: `1px solid ${confirmDialog.danger ? '#e0846a' : '#e6c473'}`,
+                  color: confirmDialog.danger ? '#ffe0d0' : '#f2dd9a',
+                }}
+              >{lang === 'en' ? confirmDialog.confirmLabel.en : confirmDialog.confirmLabel.zh}</button>
+              <button
+                onClick={() => setConfirmDialog(null)}
+                style={{ flex: 1, padding: '0.55rem', background: '#1e2832', border: '1px solid #364654', color: '#aab6c0', cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.08rem' }}
+              >{t('取消', 'Cancel')}</button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
       {/* 敵將叫陣 — accept to duel, or refuse. Esc / backdrop = 避戰 (the app-wide
           dismiss gesture now works, instead of trapping the player). */}
       {challenge && !interactiveDuel && (
@@ -5750,13 +5789,19 @@ export function TacticalBattleScreen3D() {
  *  unit (your side blue, the foe red, commanders ringed), so a big board stays
  *  legible at a glance. */
 function BattleMinimap({ battle, playerSide }: { battle: TacticalBattle; playerSide: 'attacker' | 'defender' | null }) {
+  const t = useT();
   const W = 150, H = Math.round(150 * (battle.height / battle.width));
+  const dot = (bg: string, ring?: boolean) => (
+    <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: bg, border: ring ? '1.5px solid #f0d070' : 'none', verticalAlign: 'middle' }} />
+  );
   return (
-    <div style={{
-      position: 'absolute', left: 12, bottom: 12, width: W, height: H,
-      background: 'rgba(16, 12, 8, 0.82)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius)',
-      boxShadow: '0 0 10px rgba(0,0,0,0.5)', pointerEvents: 'none', overflow: 'hidden',
-    }}>
+    <div
+      title={t('戰場全覽 — 藍:我方 · 紅:敵軍 · 金圈:主將', 'Battlefield overview — blue: yours · red: enemy · gold ring: commander')}
+      style={{
+        position: 'absolute', left: 12, bottom: 12, width: W, height: H,
+        background: 'rgba(16, 12, 8, 0.82)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius)',
+        boxShadow: '0 0 10px rgba(0,0,0,0.5)', pointerEvents: 'none', overflow: 'hidden',
+      }}>
       {battle.units.filter((u) => u.troops > 0 && !(u.hidden && u.side !== playerSide)).map((u) => {
         const mine = playerSide ? u.side === playerSide : u.side === 'attacker';
         const x = (u.coord.col / Math.max(1, battle.width - 1)) * (W - 8) + 4;
@@ -5770,6 +5815,17 @@ function BattleMinimap({ battle, playerSide }: { battle: TacticalBattle; playerS
           }} />
         );
       })}
+      {/* 圖例 — a thin caption strip decodes the dots (was an unexplained blob). */}
+      <div style={{
+        position: 'absolute', left: 0, right: 0, bottom: 0,
+        display: 'flex', gap: 7, justifyContent: 'center', alignItems: 'center',
+        padding: '1px 0', fontSize: '0.56rem', letterSpacing: '0.03rem',
+        color: '#c8b59a', background: 'rgba(10, 8, 5, 0.72)',
+      }}>
+        <span>{dot('#5a9ee0')} {t('我', 'You')}</span>
+        <span>{dot('#e06a52')} {t('敵', 'Foe')}</span>
+        <span>{dot('#2a2015', true)} {t('主將', 'Cmdr')}</span>
+      </div>
     </div>
   );
 }
