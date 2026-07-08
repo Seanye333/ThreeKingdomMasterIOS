@@ -683,14 +683,14 @@ export function MapScreen() {
           </span>
           <span
             className={`${styles.season} ${styles.aux}`}
-            title={`Weather affects fire attacks and march speed. Wind power: ${weather.windPower}.`}
+            title={t(`天候 — 影響火攻與行軍速度。風力:${weather.windPower}。`, `Weather affects fire attacks and march speed. Wind power: ${weather.windPower}.`)}
             style={{ color: '#9aa6b0' }}
           >
             {weatherZh}·{windZh}
           </span>
           <span
             className={`${styles.season} ${styles.aux}`}
-            title={`Heaven's Mandate (天命): ${mandate}/100. Affects recruitment and rebellion risk.`}
+            title={t(`天命:${mandate}/100 — 影響徵募與叛亂風險。`, `Heaven's Mandate: ${mandate}/100. Affects recruitment and rebellion risk.`)}
             style={{ color: mandateColor }}
           >
             天命 {mandateInfo.zh}

@@ -32,6 +32,7 @@ import { personalTacticsForUnit } from '../../game/systems/personalTactics';
 import { Duel3DStage } from './duel/Duel3DStage';
 import { MarchPicker } from './MarchPicker';
 import { MusterModal } from './MusterModal';
+import { Modal } from './Modal';
 import { OfficerPicker } from './OfficerPicker';
 import { playSfx, playFxSfx, startMapAmbience, setMapAmbienceMode, stopMapAmbience } from '../../game/systems/sound';
 import { computeFog } from '../../game/systems/fogOfWar';
@@ -921,9 +922,9 @@ function BattleIgnitionCard() {
     }}>
       <style>{'@keyframes tkm-ignite{0%{opacity:0;transform:scale(0.65)}14%{opacity:1;transform:scale(1.06)}28%{transform:scale(1)}82%{opacity:1}100%{opacity:0;transform:scale(1.02)}}'}</style>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', animation: 'tkm-ignite 2.2s ease-out forwards' }}>
-        <span style={side(card.ac)}>{card.a}軍</span>
+        <span style={side(card.ac)}>{card.a}{lang === 'en' ? '' : '軍'}</span>
         <span style={{ fontSize: '2.6rem', color: '#e0552a', textShadow: '0 0 18px #e0552a, 0 0 4px #fff' }}>⚔</span>
-        <span style={side(card.bc)}>{card.b}軍</span>
+        <span style={side(card.bc)}>{card.b}{lang === 'en' ? '' : '軍'}</span>
       </div>
     </div>
   );
@@ -2305,7 +2306,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
                 boxShadow: '0 0 10px rgba(212,168,74,0.45)',
               }}
             >
-              ⚔ 戰鬥進行中 · 第{tacticalBattle.turn}回 ▸ 進入
+              {t(`⚔ 戰鬥進行中 · 第${tacticalBattle.turn}回 ▸ 進入`, `⚔ Battle in progress · T${tacticalBattle.turn} ▸ Enter`)}
             </button>
           </Html>
         );
@@ -2713,8 +2714,14 @@ const OVERLAY_OPTIONS: Array<{ id: OverlayMode; zh: string; en: string }> = [
 const WEATHER_ZH: Record<WeatherKind, string> = {
   clear: '☀ 晴', rain: '☂ 雨', snow: '❄ 雪', wind: '🌀 風', drought: '☼ 旱',
 };
+const WEATHER_EN: Record<WeatherKind, string> = {
+  clear: '☀ Clear', rain: '☂ Rain', snow: '❄ Snow', wind: '🌀 Wind', drought: '☼ Drought',
+};
 const SEASON_ZH: Record<Season, string> = {
   spring: '春', summer: '夏', autumn: '秋', winter: '冬',
+};
+const SEASON_EN: Record<Season, string> = {
+  spring: 'Spring', summer: 'Summer', autumn: 'Autumn', winter: 'Winter',
 };
 
 /**
@@ -3402,6 +3409,10 @@ export function StrategicMap3D() {
       const el = e.target as HTMLElement | null;
       if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
+      // 讓位彈窗 — while any modal/window owns the screen, none of these map
+      // hotkeys (overlay switch / Tab city-cycle / Home / Esc-deselect) should
+      // fire behind it and silently change the map underneath the dialog.
+      if (hasEscapeLayers()) return;
       if (e.key === '0') {
         // 0 toggles the strategic-intent (兵鋒) overlay — it's the 10th mode,
         // past the 1–9 number row.
@@ -3422,9 +3433,6 @@ export function StrategicMap3D() {
         const [px, py] = cityPixel(next.id, next.coords.x, next.coords.y);
         setNavJump({ px, py, seq: Date.now() });
       } else if (e.key === 'Escape') {
-        // A modal/window owns this Esc (its escape-stack handler closes it on
-        // the same keydown) — don't also deselect the city underneath.
-        if (hasEscapeLayers()) return;
         const s = useGameStore.getState();
         if (s.selectedArmyId) s.selectArmy(null);
         else if (s.selectedCityId) s.selectCity(null);
@@ -3741,12 +3749,12 @@ export function StrategicMap3D() {
           background: 'rgba(20, 14, 8, 0.85)', color: '#d4a84a',
           border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', padding: '0.3rem 0.7rem',
           fontFamily: 'var(--tkm-font-body)', fontSize: '0.85rem',
-        }}>{SEASON_ZH[season]} {season}</span>
+        }}>{lang === 'en' ? SEASON_EN[season] : SEASON_ZH[season]}</span>
         <span style={{
           background: 'rgba(20, 14, 8, 0.85)', color: '#a8c4e0',
           border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', padding: '0.3rem 0.7rem',
           fontFamily: 'var(--tkm-font-body)', fontSize: '0.85rem',
-        }}>{WEATHER_ZH[weather.kind]}{weather.windPower >= 2 ? ` ${weather.windPower}` : ''}</span>
+        }}>{(lang === 'en' ? WEATHER_EN : WEATHER_ZH)[weather.kind]}{weather.windPower >= 2 ? ` ${weather.windPower}` : ''}</span>
       </div>
 
       {/* Controls hint — desktop only; corrected for the map-app controls
@@ -4323,13 +4331,18 @@ export function StrategicMap3D() {
                   : prevCas,
               };
             }
+            const duelWinner = outcome.winner === 'attacker' ? me : foe;
+            const duelLoser = outcome.winner === 'attacker' ? foe : me;
             next = {
               ...next,
               log: [...(next.log ?? []), {
                 turn: next.turn,
                 text: outcome.winner === 'draw'
+                  ? `${me.name.zh} 與 ${foe.name.zh} 大戰不分勝負 — 俱各帶傷。`
+                  : `${duelWinner.name.zh} 於陣前力克 ${duelLoser.name.zh}!`,
+                textEn: outcome.winner === 'draw'
                   ? `${me.name.en} and ${foe.name.en} fought to a draw — both wounded.`
-                  : `${outcome.winner === 'attacker' ? me.name.en : foe.name.en} bested ${outcome.winner === 'attacker' ? foe.name.en : me.name.en} in single combat!`,
+                  : `${duelWinner.name.en} bested ${duelLoser.name.en} in single combat!`,
                 kind: 'event' as const,
               }],
             };
@@ -4351,24 +4364,35 @@ export function StrategicMap3D() {
         />
       )}
 
-      {/* 斬/擒 — choose the defeated foe's fate. */}
+      {/* 斬/擒 — choose the defeated foe's fate. A forced choice: no Esc/backdrop
+          so the player must decide, but now via the shared Modal + bilingual. */}
       {captureChoice && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'grid', placeItems: 'center', zIndex: 1400 }}>
-          <div style={{ width: 'min(420px,92vw)', background: 'linear-gradient(160deg,#241a10,#140d06)', border: '1px solid #e6c473', padding: '1.4rem', textAlign: 'center', fontFamily: 'var(--tkm-font-body)', color: '#e6edf3' }}>
-            <div style={{ fontSize: '1.4rem', color: '#f2dd9a', marginBottom: '0.3rem' }}>{captureChoice.name.zh} 已敗於你劍下!</div>
-            <div style={{ fontSize: '0.85rem', color: '#aab6c0', marginBottom: '1.2rem' }}>斬之以絕後患,還是生擒以圖招攬?</div>
+        <Modal
+          onClose={() => {}}
+          hideClose
+          closeOnEsc={false}
+          closeOnBackdrop={false}
+          width="min(420px, 92vw)"
+          zIndex={1450}
+          ariaLabel={t('處置敗將', "The captive's fate")}
+        >
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '1.4rem', color: '#f2dd9a', marginBottom: '0.3rem' }}>
+              {t(`${captureChoice.name.zh} 已敗於你劍下!`, `${captureChoice.name.en} falls before you!`)}
+            </div>
+            <div style={{ fontSize: '0.85rem', color: '#aab6c0', marginBottom: '1.2rem' }}>{t('斬之以絕後患,還是生擒以圖招攬?', 'Cut them down — or take them alive to win over?')}</div>
             <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'center' }}>
               <button
                 onClick={() => { const b = useGameStore.getState().tacticalBattle; if (b) startBattleUpdate({ ...b, forcedKills: [...(b.forcedKills ?? []), captureChoice.id] }); setCaptureChoice(null); }}
                 style={{ flex: 1, padding: '0.6rem', background: 'linear-gradient(180deg,#7a2a20,#4a1810)', border: '1px solid #e0846a', color: '#ffe0d0', cursor: 'pointer', fontFamily: 'inherit', fontSize: '1.05rem', letterSpacing: '0.1rem' }}
-              >🗡 斬</button>
+              >🗡 {t('斬', 'Slay')}</button>
               <button
                 onClick={() => { const b = useGameStore.getState().tacticalBattle; if (b) startBattleUpdate({ ...b, forcedCaptures: [...(b.forcedCaptures ?? []), captureChoice.id] }); setCaptureChoice(null); }}
                 style={{ flex: 1, padding: '0.6rem', background: 'linear-gradient(180deg,#2a4a2a,#16301a)', border: '1px solid #86f29a', color: '#d0ffd8', cursor: 'pointer', fontFamily: 'inherit', fontSize: '1.05rem', letterSpacing: '0.1rem' }}
-              >🪢 生擒</button>
+              >🪢 {t('生擒', 'Capture')}</button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* 軍令提示 — with a column selected, spell out what a tap does. The
