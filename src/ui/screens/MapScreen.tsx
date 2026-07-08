@@ -902,8 +902,10 @@ export function MapScreen() {
               forces a re-出阵. Minimizing the battle to its map diorama clears
               battleScreenUp, so the map remounts and 观战 still works. */}
           {!battleScreenUp && <Suspense fallback={null}><StrategicMap3D /></Suspense>}
-          {/* In-transit armies overview — shown over both map modes. */}
-          <div style={{ position: 'absolute', left: 8, top: 92, zIndex: 15 }}>
+          {/* In-transit armies overview — shown over both map modes. Sits
+              below the objective card (top-left, ~top:12–110); the beacon
+              column above it (z:20) stays on top when both are present. */}
+          <div style={{ position: 'absolute', left: 8, top: 118, zIndex: 15 }}>
             <ArmiesPanel />
           </div>
           {/* 新手五事 — anchored over the map's right edge (inside the

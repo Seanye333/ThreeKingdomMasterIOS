@@ -6,7 +6,7 @@ import { RENDER_HI } from '../renderQuality';
 import { getTerritoryCanvas, getTerritorySignature, renderTerritorySnapshot } from './territoryOverlay';
 import { useReplayStore } from './replayHistory';
 import { setMapFocusHandler, requestMapFocus } from './mapFocusBus';
-import { hasEscapeLayers } from '../hooks/useEscapeKey';
+import { hasEscapeLayers, useEscapeKey } from '../hooks/useEscapeKey';
 import { positionAlongRoute, terrainRoute } from '../../game/data/territories';
 import { geoToPixel, battleGroundAt, MAP_W as PX_W, MAP_H as PX_H, WORLD_SCALE, hexAt as geoHexAt, hexCenter as geoHexCenter, HEX_ROW_SPACING as GEO_HEX_ROW, terrainMarchCost } from '../../game/data/geography';
 import { getEmbassyTarget } from '../../game/systems/foreignRealm';
@@ -2640,6 +2640,8 @@ function CitySearchBox({ onJump, compact }: {
       {compact && (
         <button
           onClick={() => { setOpen(false); setQ(''); }}
+          aria-label={t('關閉搜尋', 'Close search')}
+          title={t('關閉搜尋', 'Close search')}
           style={{
             width: 30, background: 'rgba(20, 14, 8, 0.88)', color: '#c0a878',
             border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', cursor: 'pointer', fontSize: 13, order: 2,
@@ -2918,6 +2920,8 @@ function ReplayRecorder() {
 
 /* ─── 戰役回放面板 — scrub / play the campaign's territory timelapse ───── */
 function ReplayPanel({ onClose }: { onClose: () => void }) {
+  // Esc closes + registers an escape layer so map hotkeys don't fire behind it.
+  useEscapeKey(onClose);
   const snapshots = useReplayStore((s) => s.snapshots);
   const colors = useReplayStore((s) => s.colors);
   const cities = useGameStore((s) => s.cities);
@@ -2970,7 +2974,7 @@ function ReplayPanel({ onClose }: { onClose: () => void }) {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
           <div style={{ fontWeight: 'bold', letterSpacing: '0.08rem' }}>🎞 {t('戰役回放', 'Campaign Timelapse')}</div>
-          <button onClick={onClose} style={{
+          <button onClick={onClose} aria-label={t('關閉', 'Close')} title={t('關閉', 'Close')} style={{
             background: 'transparent', color: '#a89070', border: '1px solid #5a4530',
             borderRadius: 'var(--tkm-radius)', cursor: 'pointer', padding: '0.15rem 0.5rem', fontSize: '0.8rem',
           }}>✕</button>
@@ -3136,6 +3140,8 @@ function MapCamApi({ apiRef, controlsRef, panInputRef }: {
 /* ─── 操作說明 — a one-glance cheat-sheet for every map control, opened by the
    ? on the controls hint, so the many gestures/shortcuts stay discoverable. ─ */
 function MapHelpPanel({ onClose }: { onClose: () => void }) {
+  // Esc closes + registers an escape layer so map hotkeys don't fire behind it.
+  useEscapeKey(onClose);
   const t = useT();
   const rows: Array<[string, string]> = IS_MOBILE
     ? [
@@ -3173,7 +3179,7 @@ function MapHelpPanel({ onClose }: { onClose: () => void }) {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
           <div style={{ fontWeight: 'bold', letterSpacing: '0.08rem' }}>🎮 {t('地圖操作', 'Map Controls')}</div>
-          <button onClick={onClose} style={{
+          <button onClick={onClose} aria-label={t('關閉', 'Close')} title={t('關閉', 'Close')} style={{
             background: 'transparent', color: '#a89070', border: '1px solid #5a4530',
             borderRadius: 'var(--tkm-radius)', cursor: 'pointer', padding: '0.15rem 0.5rem', fontSize: '0.8rem',
           }}>✕</button>
@@ -3448,12 +3454,26 @@ export function StrategicMap3D() {
   const mapRootRef = useRef<HTMLDivElement>(null);
   const snapYear = useGameStore((s) => s.date.year);
   const exportSnapshot = () => {
-    const canvas = mapRootRef.current?.querySelector('canvas');
-    if (!canvas) return;
-    const a = document.createElement('a');
-    a.href = (canvas as HTMLCanvasElement).toDataURL('image/png');
-    a.download = `天下大勢-${snapYear}年.png`;
-    a.click();
+    const notify = useGameStore.getState().notify;
+    const canvas = mapRootRef.current?.querySelector('canvas') as HTMLCanvasElement | null;
+    if (!canvas) { notify('無法擷取畫面 — 地圖尚未就緒', "Couldn't capture — map not ready", 'warn'); return; }
+    try {
+      const url = canvas.toDataURL('image/png');
+      if (IS_MOBILE) {
+        // 手機 — a.download is a no-op in iOS Safari; open the PNG so the
+        // player can long-press → save. Either way, confirm something happened.
+        window.open(url, '_blank');
+        notify('已產生天下大勢圖 — 長按可儲存', 'Realm snapshot opened — long-press to save');
+      } else {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `天下大勢-${snapYear}年.png`;
+        a.click();
+        notify(`已存為 天下大勢-${snapYear}年.png`, `Saved 天下大勢-${snapYear}年.png`);
+      }
+    } catch {
+      notify('擷取失敗', 'Snapshot failed', 'warn');
+    }
   };
   // 烽火示警 — hostile columns marching on player cities (chip top-left).
   const beaconCities = useGameStore((s) => s.cities);
@@ -3687,7 +3707,10 @@ export function StrategicMap3D() {
     }}>
       {/* Objective tracker — top-left. Phones fold it into a chip; the
           full card is a tap away instead of owning a third of the screen. */}
-      <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 10, pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start' }}>
+      {/* z:20 keeps the objective + 烽火 beacon column above the in-transit
+          ArmiesPanel (z:15) — a lit beacon (enemy marching on you) must never
+          be hidden behind the columns list during an invasion. */}
+      <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 20, pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start' }}>
         {IS_MOBILE && !objOpen ? (
           <button
             onClick={() => setObjOpen(true)}
@@ -3702,10 +3725,14 @@ export function StrategicMap3D() {
             {IS_MOBILE && (
               <button
                 onClick={() => setObjOpen(false)}
+                aria-label={t('收起目標', 'Collapse objective')}
+                title={t('收起目標', 'Collapse objective')}
                 style={{
-                  pointerEvents: 'auto', position: 'absolute', top: 2, right: 2, zIndex: 1,
+                  pointerEvents: 'auto', position: 'absolute', top: 0, right: 0, zIndex: 1,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  minWidth: 34, minHeight: 34,
                   background: 'transparent', color: '#8a7050', border: 'none',
-                  fontSize: '0.85rem', cursor: 'pointer',
+                  fontSize: '0.95rem', cursor: 'pointer',
                 }}
               >✕</button>
             )}
