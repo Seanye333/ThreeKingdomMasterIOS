@@ -1,6 +1,7 @@
 import { useGameStore } from '../../game/state/store';
+import { SEASON_LABEL, type Season } from '../../game/types';
 import { Seal } from './Seal';
-import { useLanguage, pickName } from '../i18n';
+import { useLanguage, useT, pickName } from '../i18n';
 import styles from './VictoryModal.module.css';
 
 const MOTES = Array.from({ length: 14 }, (_, i) => i);
@@ -16,9 +17,13 @@ export function VictoryModal() {
   const reset = useGameStore((s) => s.reset);
   const chronicle = useGameStore((s) => s.chronicle ?? []);
   const lang = useLanguage();
+  const t = useT();
 
   if (victoryStatus !== 'victory' && victoryStatus !== 'defeat') return null;
   const isVictory = victoryStatus === 'victory';
+  const seasonZh = SEASON_LABEL[date.season as Season]?.zh ?? '';
+  const seasonEn = SEASON_LABEL[date.season as Season]?.en ?? String(date.season);
+  const forceName = playerForce ? pickName(playerForce.name, lang) : '';
 
   return (
     <div className={styles.backdrop}>
@@ -66,24 +71,36 @@ export function VictoryModal() {
 
         <p className={styles.body}>
           {isVictory ? (
-            <>
-              In the {date.season} of <strong>{date.year} AD</strong>, every city
-              of the empire flies the banner of{' '}
-              <strong style={{ color: playerForce?.color }}>
-                {playerForce ? pickName(playerForce.name, lang) : ''}
-              </strong>
-              . The Three Kingdoms era ends — your name shall be written in the
-              records of the Han successor.
-            </>
+            lang === 'en' ? (
+              <>
+                In the {seasonEn} of <strong>{date.year} AD</strong>, every city
+                of the empire flies the banner of{' '}
+                <strong style={{ color: playerForce?.color }}>{forceName}</strong>
+                . The Three Kingdoms era ends — your name shall be written in the
+                records of the Han successor.
+              </>
+            ) : (
+              <>
+                <strong>{date.year} 年</strong>{seasonZh}，天下城池盡歸{' '}
+                <strong style={{ color: playerForce?.color }}>{forceName}</strong>
+                {' '}麾下。三國亂世於此終焉——公之名，當書於漢室繼統之青史。
+              </>
+            )
           ) : (
-            <>
-              In the {date.season} of <strong>{date.year} AD</strong>, the last
-              city of{' '}
-              <strong style={{ color: playerForce?.color }}>
-                {playerForce ? pickName(playerForce.name, lang) : ''}
-              </strong>{' '}
-              fell. Your campaign is over.
-            </>
+            lang === 'en' ? (
+              <>
+                In the {seasonEn} of <strong>{date.year} AD</strong>, the last
+                city of{' '}
+                <strong style={{ color: playerForce?.color }}>{forceName}</strong>{' '}
+                fell. Your campaign is over.
+              </>
+            ) : (
+              <>
+                <strong>{date.year} 年</strong>{seasonZh}，{' '}
+                <strong style={{ color: playerForce?.color }}>{forceName}</strong>
+                {' '}最後一座城池陷落。爾之霸業，就此而止。
+              </>
+            )
           )}
         </p>
 
@@ -99,7 +116,7 @@ export function VictoryModal() {
             <div style={{
               fontFamily: '"Ma Shan Zheng", "Songti SC", serif',
               color: '#e6c473', letterSpacing: '0.3em', marginBottom: 6,
-            }}>本局戰史 · The Chronicle</div>
+            }}>{t('本局戰史', 'The Chronicle')}</div>
             {(() => {
               const ICON: Record<string, string> = {
                 conquest: '⚔', works: '🌊', event: '📜', rebellion: '🔥', defense: '🛡',
@@ -111,7 +128,7 @@ export function VictoryModal() {
                     <div style={{ color: '#a08050', marginTop: 6, fontFamily: 'ui-monospace, monospace' }}>— {c.year} —</div>
                   )}
                   <span style={{ marginRight: 6 }}>{ICON[c.kind] ?? '·'}</span>
-                  <span style={{ fontFamily: 'var(--tkm-font-body)' }}>{c.zh}</span>
+                  <span style={{ fontFamily: 'var(--tkm-font-body)' }}>{lang === 'en' ? (c.en ?? c.zh) : c.zh}</span>
                 </div>
               ));
             })()}
@@ -123,13 +140,13 @@ export function VictoryModal() {
             <button
               className={styles.continueButton}
               onClick={acknowledge}
-              title="Continue managing the unified realm"
+              title={t('繼續治理已統一的天下', 'Continue managing the unified realm')}
             >
-              Continue Reign
+              {t('繼續統治', 'Continue Reign')}
             </button>
           )}
           <button className={styles.titleButton} onClick={reset}>
-            Return to Title
+            {t('返回標題', 'Return to Title')}
           </button>
         </div>
       </div>

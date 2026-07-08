@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { useLanguage } from '../i18n';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { playSfx } from '../../game/systems/sound';
 import { popupImageCandidates, popupVideoUrl } from '../popups/assets';
 
@@ -16,6 +17,8 @@ export function CelebrationPopup() {
   const queueLen = useGameStore((s) => s.popupQueue.length);
   const dismissPopup = useGameStore((s) => s.dismissPopup);
   const lang = useLanguage();
+  // Esc advances the queue too (matches the tap/timeout dismissal).
+  useEscapeKey(dismissPopup, !!event);
   // Walk the candidate image URLs (jpg → png) on error; -1 once all fail →
   // styled fallback card. Reset whenever the queue advances.
   const [imgIdx, setImgIdx] = useState(0);
@@ -99,7 +102,7 @@ export function CelebrationPopup() {
             // Styled fallback when no asset is present yet.
             <div style={{ textAlign: 'center', color: '#e8c46a', padding: '1rem' }}>
               <div style={{ fontSize: '3rem', lineHeight: 1, filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.5))' }}>🏯</div>
-              <div style={{ marginTop: 8, fontSize: '0.72rem', color: '#8a7858', letterSpacing: '0.12rem' }}>慶 · 賀</div>
+              <div style={{ marginTop: 8, fontSize: '0.72rem', color: '#8a7858', letterSpacing: '0.12rem' }}>{lang === 'en' ? 'CELEBRATION' : '慶 · 賀'}</div>
             </div>
           )}
         </div>
