@@ -251,7 +251,11 @@ export function TitleScreen() {
     color: enabled ? '#e6c473' : '#6a5238',
     background: enabled ? 'rgba(230,196,115,0.14)' : 'transparent',
     fontWeight: 'bold',
+    // A disabled primary shouldn't invite a click (was pointer + hover glow).
+    cursor: enabled ? 'pointer' : 'not-allowed',
   });
+  // 已複製 — brief label swap so the Copy button confirms it did something.
+  const [copied, setCopied] = useState(false);
 
   return (
     <div className={styles.root} style={{ isolation: 'isolate' }}>
@@ -409,13 +413,20 @@ export function TitleScreen() {
                 </span>
                 {dailyResult && (
                   <button
-                    onClick={() => navigator.clipboard?.writeText(dailyShareString(daily, dailyForce.name.zh, dailyResult)).catch(() => undefined)}
+                    onClick={() => {
+                      navigator.clipboard?.writeText(dailyShareString(daily, dailyForce.name.zh, dailyResult))
+                        .then(() => { setCopied(true); window.setTimeout(() => setCopied(false), 1600); })
+                        .catch(() => undefined);
+                    }}
                     style={{
-                      background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', color: '#aab6c0',
+                      background: copied ? 'rgba(126,214,138,0.14)' : 'transparent',
+                      border: `1px solid ${copied ? '#7ed68a' : 'rgba(255,255,255,0.1)'}`,
+                      borderRadius: 'var(--tkm-radius-lg)', color: copied ? '#9ed6a8' : '#aab6c0',
                       padding: '0.2rem 0.6rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.72rem',
+                      transition: 'background 0.15s, border-color 0.15s, color 0.15s',
                     }}
                     title={t('複製戰績', 'Copy result')}
-                  >{dailyResult.victory ? `🏆 ${dailyResult.seasons}旬` : '☠'} {t('複製', 'Copy')}</button>
+                  >{copied ? `✓ ${t('已複製', 'Copied')}` : `${dailyResult.victory ? `🏆 ${dailyResult.seasons}旬` : '☠'} ${t('複製', 'Copy')}`}</button>
                 )}
                 {streak > 0 && (
                   <span style={{ color: '#f2dd9a', fontSize: '0.72rem' }} title={t('連勝天數', 'Win streak')}>
@@ -434,6 +445,7 @@ export function TitleScreen() {
                 <button
                   onClick={() => setBoardDate(todayStr)}
                   title={t('每日排行榜', 'Daily leaderboard')}
+                  aria-label={t('每日排行榜', 'Daily leaderboard')}
                   style={{
                     background: 'transparent', border: '1px solid #e6c473', color: '#f2dd9a',
                     padding: '0.3rem 0.7rem', cursor: 'pointer', fontFamily: 'inherit', borderRadius: 'var(--tkm-radius)',
@@ -472,9 +484,17 @@ export function TitleScreen() {
                 return (
                   <button
                     key={e.id}
-                    onClick={() => setActiveEra(e.id)}
+                    onClick={() => {
+                      setActiveEra(e.id);
+                      // 同步選取 — jump the highlight + detail panel to this era's
+                      // first scenario so they never show a stale other-era pick.
+                      const first = SCENARIOS.find((s) => eraOf(s) === e.id);
+                      if (first) { setScenarioId(first.id); setSelectedForceId(null); }
+                    }}
+                    onMouseEnter={(ev) => { if (!on) { ev.currentTarget.style.color = '#c9b58a'; ev.currentTarget.style.borderColor = 'rgba(230,196,115,0.35)'; } }}
+                    onMouseLeave={(ev) => { if (!on) { ev.currentTarget.style.color = '#7a8893'; ev.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; } }}
                     style={{
-                      padding: '0.35rem 0.9rem',
+                      padding: '0.4rem 0.95rem',
                       border: `1px solid ${on ? '#e6c473' : 'rgba(255,255,255,0.08)'}`,
                       borderRadius: 999,
                       background: on ? 'rgba(230,196,115,0.12)' : 'transparent',
@@ -556,6 +576,16 @@ export function TitleScreen() {
               {t('下一步：選擇勢力 →', 'Next: Choose Force →')}
             </button>
 
+            {/* 載入存檔 — a returning player's #1 action; pulled out of the
+                secondary tool grid below so it doesn't read as one of 10 lookups. */}
+            <button
+              className={styles.officersButton}
+              style={{ marginTop: '0.6rem', letterSpacing: '0.04rem' }}
+              onClick={() => setShowLoad(true)}
+            >
+              📂 {t('載入存檔 — 繼續已存戰役', 'Load Game — continue a saved campaign')}
+            </button>
+
             {/* Hero Mode — timed challenge scenarios */}
             <button
               className={styles.officersButton}
@@ -565,15 +595,28 @@ export function TitleScreen() {
               ⚔ {t('英雄模式 — 限時挑戰', 'Hero Mode — Timed Challenges')}
             </button>
 
-            {/* Secondary tools (encyclopaedia / load / random / custom) */}
+            {/* Secondary tools (encyclopaedia / random / custom). Load moved out
+                above as a primary action. */}
             <div style={{ marginTop: '1rem', borderTop: '1px solid #1e2832', paddingTop: '0.7rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
-              <button className={styles.officersButton} onClick={() => setShowLoad(true)}>{t('載入存檔', 'Load Game')}</button>
               <button
                 className={styles.officersButton}
                 onClick={() => {
-                  const count = Number(prompt(t('勢力數量？(3–8)', 'How many forces? (3–8)'), '5') ?? '5');
-                  const year = Number(prompt(t('年份？(180–240)', 'Year? (180–240)'), '200') ?? '200');
-                  if (count >= 2 && count <= 10 && year >= 100 && year <= 280) loadRandom(count, year);
+                  // 範圍與驗證單一來源,避免廣告範圍與實際不符、且越界靜默失敗。
+                  const askNum = (zh: string, en: string, def: number, min: number, max: number): number | null => {
+                    const raw = prompt(t(`${zh}(${min}–${max})`, `${en} (${min}–${max})`), String(def));
+                    if (raw === null) return null; // cancelled
+                    const n = Math.round(Number(raw));
+                    if (!Number.isFinite(n) || n < min || n > max) {
+                      useGameStore.getState().notify(`請輸入 ${min}–${max} 之間的數`, `Enter a number between ${min} and ${max}`, 'warn');
+                      return null;
+                    }
+                    return n;
+                  };
+                  const count = askNum('勢力數量？', 'How many forces?', 5, 2, 10);
+                  if (count === null) return;
+                  const year = askNum('年份？', 'Year?', 200, 100, 280);
+                  if (year === null) return;
+                  loadRandom(count, year);
                 }}
               >{t('隨機劇本', 'Random')}</button>
               <button className={styles.officersButton} onClick={() => setShowOfficers(true)}>{t('武將一覽', 'Officers')}</button>
@@ -650,8 +693,8 @@ export function TitleScreen() {
                       </div>
                       {/* ruler abilities */}
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: '0.3rem', margin: '0.8rem 0', textAlign: 'center', fontSize: '0.75rem' }}>
-                        {([['統', selectedRuler.stats.leadership], ['武', selectedRuler.stats.war], ['智', selectedRuler.stats.intelligence], ['政', selectedRuler.stats.politics], ['魅', selectedRuler.stats.charisma]] as const).map(([k, v]) => (
-                          <div key={k}><div style={{ color: '#7a8893' }}>{k}</div><div style={{ color: '#e6c473', fontSize: '0.95rem' }}>{v}</div></div>
+                        {([['統', 'LDR', selectedRuler.stats.leadership], ['武', 'WAR', selectedRuler.stats.war], ['智', 'INT', selectedRuler.stats.intelligence], ['政', 'POL', selectedRuler.stats.politics], ['魅', 'CHA', selectedRuler.stats.charisma]] as const).map(([zh, en, v]) => (
+                          <div key={zh}><div style={{ color: '#7a8893' }} title={t(zh, en)}>{lang === 'en' ? en : zh}</div><div style={{ color: '#e6c473', fontSize: '0.95rem' }}>{v}</div></div>
                         ))}
                       </div>
                       {/* force data */}
@@ -1171,7 +1214,8 @@ export function TitleScreen() {
       {/* Settings gear in top-right corner */}
       <button
         onClick={() => setShowSettings(true)}
-        title={lang === 'en' ? 'Settings' : '設定'}
+        title={t('設定', 'Settings')}
+        aria-label={t('設定', 'Settings')}
         style={{
           position: 'fixed', top: 16, right: 16, width: 44, height: 44,
           background: 'rgba(20, 14, 8, 0.85)', border: '1px solid #e6c473',
