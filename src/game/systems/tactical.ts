@@ -965,9 +965,10 @@ export function setupTacticalBattle(p: SetupParams): TacticalBattle {
 
   // Generate spawn voice lines for famous officers.
   const log: TacticalBattle['log'] = [];
-  // 戰役腳本 — a named historical battle opens with its scene-setting line.
+  // 戰役腳本 — a named historical battle opens with its scene-setting line
+  // (zh-first display, English variant kept for en players).
   if (namedMap?.introZh || namedMap?.introEn) {
-    log.push({ turn: 1, text: namedMap.introEn ?? namedMap.introZh ?? '', kind: 'event' });
+    log.push({ turn: 1, text: namedMap.introZh ?? namedMap.introEn ?? '', textEn: namedMap.introEn ?? namedMap.introZh, kind: 'event' });
   }
   for (const u of units) {
     const voice = pickVoiceLine(u.officerId, 'spawn', Math.random);
@@ -1793,7 +1794,7 @@ export function breakGate(b: TacticalBattle, unitId: EntityId, coord: HexCoord):
       t.coord.col === coord.col && t.coord.row === coord.row ? { ...t, terrain: 'plain' } : t,
     ),
     units: b.units.map(spendAp),
-    log: [...(b.log ?? []), { turn: b.turn, text: 'Siege engine smashes the gate down!', kind: 'event' }],
+    log: [...(b.log ?? []), { turn: b.turn, text: '攻城槌破門而入!', textEn: 'Siege engine smashes the gate down!', kind: 'event' }],
   };
 }
 

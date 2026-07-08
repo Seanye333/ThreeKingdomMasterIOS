@@ -4498,7 +4498,7 @@ export function TacticalBattleScreen3D() {
               ...battleAfterLogs,
               log: [
                 ...(battleAfterLogs.log ?? []),
-                { turn: battleAfterLogs.turn, text: flavor.en, kind: 'event' as const },
+                { turn: battleAfterLogs.turn, text: flavor.zh, textEn: flavor.en, kind: 'event' as const },
               ],
             };
             // Only show one banner per turn (the last one) so they don't queue up forever
@@ -4539,7 +4539,7 @@ export function TacticalBattleScreen3D() {
     if (!battle?.log || battle.log.length === 0) return;
     const last = battle.log[battle.log.length - 1];
     if (last.kind === 'voice' || last.kind === 'arrival') {
-      setVoiceLine({ text: last.text, key: Date.now() });
+      setVoiceLine({ text: lang === 'en' && last.textEn ? last.textEn : last.text, key: Date.now() });
       // 會戰入場 — a column riding onto the field gets its horn; allied
       // relief blows a touch grander than a plain reinforcement.
       if (last.kind === 'arrival') playSfx(last.text.includes('盟軍') ? 'victory' : 'horn');
@@ -4743,7 +4743,7 @@ export function TacticalBattleScreen3D() {
             ...next,
             log: [
               ...(next.log ?? []),
-              { turn: next.turn, text: flavor.en, kind: 'event' as const },
+              { turn: next.turn, text: flavor.zh, textEn: flavor.en, kind: 'event' as const },
             ],
           };
           // N7 — show a transient on-screen banner for signature tactics
@@ -5349,7 +5349,7 @@ export function TacticalBattleScreen3D() {
                     borderBottom: i < entries.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
                   }}>
                     <span style={{ color: '#6a5c44', fontFamily: 'ui-monospace, monospace', fontSize: '0.66rem', marginRight: 6 }}>{t(`第${e.turn}回`, `T${e.turn}`)}</span>
-                    {e.text}
+                    {lang === 'en' && e.textEn ? e.textEn : e.text}
                   </div>
                 ));
               })()}
@@ -5707,13 +5707,18 @@ export function TacticalBattleScreen3D() {
                   : prevCas,
               };
             }
+            const duelWinner = outcome.winner === 'attacker' ? me : foe;
+            const duelLoser = outcome.winner === 'attacker' ? foe : me;
             next = {
               ...next,
               log: [...(next.log ?? []), {
                 turn: next.turn,
                 text: outcome.winner === 'draw'
+                  ? `${me.name.zh} 與 ${foe.name.zh} 大戰不分勝負 — 俱各帶傷。`
+                  : `${duelWinner.name.zh} 於陣前力克 ${duelLoser.name.zh}!`,
+                textEn: outcome.winner === 'draw'
                   ? `${me.name.en} and ${foe.name.en} fought to a draw — both wounded.`
-                  : `${outcome.winner === 'attacker' ? me.name.en : foe.name.en} bested ${outcome.winner === 'attacker' ? foe.name.en : me.name.en} in single combat!`,
+                  : `${duelWinner.name.en} bested ${duelLoser.name.en} in single combat!`,
                 kind: 'event',
               }],
             };

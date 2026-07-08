@@ -380,10 +380,13 @@ export interface TacticalBattle {
   }>;
   /** Floating damage popups (UI-only, cleared per frame). */
   damagePopups?: DamagePopup[];
-  /** Battle log entries (voice lines, milestones). */
+  /** Battle log entries (voice lines, milestones). `text` is the zh-first
+   *  display string; `textEn` is an optional English variant (the log is
+   *  zh-first, so most entries omit it and show `text` in either language). */
   log?: Array<{
     turn: number;
     text: string;
+    textEn?: string;
     speaker?: EntityId;
     kind: 'voice' | 'event' | 'arrival';
   }>;
