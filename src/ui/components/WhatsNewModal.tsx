@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { CHANGELOG, GAME_VERSION } from '../../game/data/changelog';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useT } from '../i18n';
 
 /**
@@ -23,12 +24,14 @@ export function WhatsNewModal() {
     } catch { /* private mode */ }
   }, []);
 
-  if (!open) return null;
-
   const dismiss = () => {
     try { localStorage.setItem(SEEN_KEY, GAME_VERSION); } catch { /* quota */ }
     setOpen(false);
   };
+  // Hook must run every render (before the early return) — the `open` flag gates it.
+  useEscapeKey(dismiss, open);
+
+  if (!open) return null;
 
   const entries = showAll ? CHANGELOG : CHANGELOG.slice(0, 1);
 

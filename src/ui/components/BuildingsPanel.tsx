@@ -5,6 +5,7 @@ import { citySize } from '../../game/systems/citySize';
 import { buildingBonuses, SCHOOL_BUILDINGS } from '../../game/systems/buildings';
 import { citySpecialty, cityRole, ROLE_ZH, SPECIALTY_DEV_MAX, SPECIALTY_DEV_GAIN } from '../../game/data/specialties';
 import { useGameStore } from '../../game/state/store';
+import { playSfx } from '../../game/systems/sound';
 import type { BuildingCategory, BuildingId, EntityId } from '../../game/types';
 import { useT, useLanguage, useDesc } from '../i18n';
 import { Modal } from './Modal';
@@ -122,7 +123,7 @@ export function BuildingsPanel({ cityId }: Props) {
                 </div>
                 {owned && (
                   <button
-                    onClick={() => { const r = developSpecialty(cityId); if (!r.ok) alert(r.message); }}
+                    onClick={() => { const r = developSpecialty(cityId); if (r.ok) playSfx('coin'); else alert(r.message); }}
                     disabled={!canDev}
                     title={maxed ? t('名產已臻極盛', 'Specialty fully developed') : city.loyalty < 40 ? t('民心未附(需民忠 ≥ 40)', 'needs loyalty ≥ 40') : `${cost}g`}
                     style={{
@@ -171,9 +172,9 @@ export function BuildingsPanel({ cityId }: Props) {
               return (
                 <button
                   key={d.id}
-                  onClick={() => damaged
+                  onClick={() => { playSfx('thud'); return damaged
                     ? repairBuilding(cityId, d.id as BuildingId)
-                    : startBuilding(cityId, d.id as BuildingId)}
+                    : startBuilding(cityId, d.id as BuildingId); }}
                   disabled={!canBuild}
                   style={{
                     background: damaged ? '#170b08' : '#080b0e',
