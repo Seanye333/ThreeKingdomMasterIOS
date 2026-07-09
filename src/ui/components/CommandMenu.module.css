@@ -101,13 +101,15 @@
   background: transparent;
   border: 1px solid #2b3845;
   color: #7a8893;
-  width: 24px;
-  height: 24px;
+  /* ≥36px hit area so undoing an order isn't a tiny target on touch. */
+  min-width: 36px;
+  height: 36px;
   cursor: pointer;
   font-family: inherit;
   font-size: 1.1rem;
   line-height: 1;
   padding: 0;
+  flex-shrink: 0;
 }
 
 .cancelButton:hover {

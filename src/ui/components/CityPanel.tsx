@@ -145,10 +145,10 @@ export function CityPanel() {
     s.selectCity(next.id);
     requestMapFocus(next.id);   // camera glides along
   };
-  // Player-only tabs fold away on enemy/neutral cities — bounce back to 總覽.
-  useEffect(() => {
-    if (!isPlayerCity && (tab === 'domestic' || tab === 'military')) setTab('overview');
-  }, [isPlayerCity, tab]);
+  // 記住分頁 — the chosen tab persists; on an enemy/neutral city the player-only
+  // tabs simply render as 總覽 (via effectiveTab) WITHOUT clobbering the memory,
+  // so scouting a foe mid-turn and returning to an own city restores 內政/軍務.
+  const effectiveTab: CityTab = (!isPlayerCity && (tab === 'domestic' || tab === 'military')) ? 'overview' : tab;
 
   if (!city) {
     return (
@@ -231,7 +231,7 @@ export function CityPanel() {
         {CITY_TABS.filter((tb) => !tb.playerOnly || isPlayerCity).map((tb) => (
           <button
             key={tb.id}
-            className={tab === tb.id ? `${styles.tab} ${styles.tabActive}` : styles.tab}
+            className={effectiveTab === tb.id ? `${styles.tab} ${styles.tabActive}` : styles.tab}
             onClick={() => { if (tab !== tb.id) { playSfx('click'); setTab(tb.id); } }}
             title={tb.id === 'domestic' && idleHere
               ? t('有武將閒置 — 可下內政令', 'Idle officers here — issue an order')
@@ -255,7 +255,7 @@ export function CityPanel() {
       <div className={styles.tabBody}>
       {/* keyed by tab — remounting the wrapper plays the entrance fade */}
       <div key={tab} className={styles.tabFade}>
-      {tab === 'overview' && (
+      {effectiveTab === 'overview' && (
         <>
           {/* City size badge — derived from population */}
           <CitySizeBadge city={city} />
@@ -275,7 +275,7 @@ export function CityPanel() {
         </>
       )}
 
-      {tab === 'domestic' && isPlayerCity && (
+      {effectiveTab === 'domestic' && isPlayerCity && (
         <>
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>{t('內政令', 'Civil Orders')}</h3>
@@ -289,7 +289,7 @@ export function CityPanel() {
         </>
       )}
 
-      {tab === 'military' && isPlayerCity && (
+      {effectiveTab === 'military' && isPlayerCity && (
         <>
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>{t('軍令', 'Military Orders')}</h3>
@@ -301,7 +301,7 @@ export function CityPanel() {
         </>
       )}
 
-      {tab === 'officers' && (
+      {effectiveTab === 'officers' && (
         <>
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>

@@ -275,6 +275,13 @@
   margin-top: 1rem;
   padding-top: 0.75rem;
   border-top: 1px solid #2b3845;
+  /* 常駐確認列 — pin 出陣! to the bottom so it's always reachable without
+     scrolling past target list + route + intel + officer grids on mobile. */
+  position: sticky;
+  bottom: 0;
+  background: var(--tkm-bg-modal, #12161c);
+  padding-bottom: 0.4rem;
+  z-index: 2;
 }
 
 .footerMeta {

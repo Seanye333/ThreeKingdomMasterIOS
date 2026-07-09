@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { COMMAND_DEFS, previewCommandGain } from '../../game/systems/commands';
 import type { EntityId, InternalAffairsType } from '../../game/types';
@@ -63,6 +63,21 @@ export function OfficerPicker({ cityId, commandType, onClose }: Props) {
   );
 
   const gold = city?.gold ?? 0;
+
+  // 預選最佳人選 — the list is sorted best-fit-first (⭐ on top). Pre-check that
+  // officer on open so the dispatch button is immediately live: the whole picker
+  // collapses to a single confirm tap. Only auto-selects once, and only when the
+  // treasury can fund at least one dispatch (else nothing would be actionable).
+  const didAutoPick = useRef(false);
+  useEffect(() => {
+    if (didAutoPick.current || picked.size > 0) return;
+    const best = officers[0];
+    if (!best) return;
+    if (def.goldCost > 0 && gold < def.goldCost) return; // can't afford — leave empty
+    didAutoPick.current = true;
+    setPicked(new Set([best.id]));
+  }, [officers, picked.size, def.goldCost, gold]);
+
   const totalCost = picked.size * def.goldCost;
   // How many MORE officers the treasury can still fund for SEPARATE dispatch
   // (free commands: no cap).
