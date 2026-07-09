@@ -259,25 +259,33 @@ export function BuildingsPanel({ cityId }: Props) {
             <div style={{ fontSize: '0.72rem', letterSpacing: '0.07rem', color: '#7a8893', textTransform: 'uppercase', marginBottom: '0.3rem' }}>
               {t('自動建造佇列', 'Auto-Build Queue')} {autoQueue.length > 0 && `(${autoQueue.length})`}
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
               {autoQueue.map((bid, i) => {
                 const def = BUILDING_DEFS.find((b) => b.id === bid);
                 const label = def ? (lang === 'en' ? def.name.en : def.name.zh) : bid;
                 return (
+                  // 佇列項 — the label is NOT a remove trigger any more; only the
+                  // dedicated × button removes it (was a whole-chip tap = easy
+                  // accidental deletion on touch).
                   <span
                     key={i}
-                    onClick={() => setAutoBuildQueue(cityId, autoQueue.filter((_, j) => j !== i))}
                     style={{
-                      background: '#080b0e',
-                      border: '1px solid #26323e',
-                      color: '#aab6c0',
-                      padding: '0.15rem 0.4rem',
-                      fontSize: '0.7rem',
-                      cursor: 'pointer',
+                      display: 'inline-flex', alignItems: 'center', gap: 4,
+                      background: '#080b0e', border: '1px solid #26323e',
+                      color: '#aab6c0', paddingLeft: '0.45rem', fontSize: '0.72rem',
                     }}
-                    title={t('點擊移除', 'Click to remove')}
                   >
-                    {i + 1}. {label} ×
+                    {i + 1}. {label}
+                    <button
+                      onClick={() => setAutoBuildQueue(cityId, autoQueue.filter((_, j) => j !== i))}
+                      title={t('自佇列移除', 'Remove from queue')}
+                      aria-label={t('自佇列移除', 'Remove from queue')}
+                      style={{
+                        background: 'transparent', border: 'none', color: '#7a8893',
+                        cursor: 'pointer', fontSize: '0.9rem', lineHeight: 1,
+                        minWidth: 28, height: 28, padding: 0,
+                      }}
+                    >×</button>
                   </span>
                 );
               })}
@@ -290,7 +298,7 @@ export function BuildingsPanel({ cityId }: Props) {
                     background: 'transparent',
                     border: '1px dashed #26323e',
                     color: '#7a8893',
-                    padding: '0.15rem 0.4rem',
+                    padding: '0.3rem 0.5rem',
                     fontSize: '0.72rem',
                     cursor: 'pointer',
                     fontFamily: 'inherit',

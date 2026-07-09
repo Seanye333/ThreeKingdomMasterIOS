@@ -152,9 +152,13 @@ export function MarchPicker({ cityId, onClose }: Props) {
   const [forcedStratagem, setForcedStratagem] = useState<string>('');
   const weather = useGameStore((s) => s.weather);
   const forts = useGameStore((s) => s.forts);
-  const [troops, setTroops] = useState<number>(
-    Math.min(2000, source?.troops ?? 0),
-  );
+  // 出陣兵力預設 — send a real army by default: ~60% of the garrison (leaving a
+  // defensive rump), rounded to 500, floored at 2000, capped at the garrison.
+  // A 20k-city thus opens at ~12k instead of a token 2k (fewer +1k/slider taps).
+  const [troops, setTroops] = useState<number>(() => {
+    const g = source?.troops ?? 0;
+    return Math.min(g, Math.max(2000, Math.round((g * 0.6) / 500) * 500));
+  });
 
   const toggleAdditional = (id: EntityId) => {
     setAdditionalIds((prev) => {
