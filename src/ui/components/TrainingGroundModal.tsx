@@ -14,6 +14,7 @@ import { OfficerPortrait } from './OfficerPortrait';
 import { OfficerStats } from './OfficerStats';
 import { Duel3DStage } from './duel/Duel3DStage';
 import { useT, useLanguage, pickName } from '../i18n';
+import { EmptyState } from './EmptyState';
 
 /**
  * 演武場 — sparring ground. Pick two of your own duel-capable officers and let
@@ -764,7 +765,12 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
             );
           })}
           {scenarios.length === 0 && (
-            <div style={{ color: '#7a8893', fontStyle: 'italic', padding: '0.8rem 0' }}>{t('目前無可進行的劇情單挑(對手未現身)。', 'No scenarios available (the famous foes are not on the field).')}</div>
+            <EmptyState
+              compact
+              icon="⚔️"
+              title={t('目前無可進行的劇情單挑', 'No scenarios available')}
+              hint={t('對手未現身。', 'The famous foes are not on the field.')}
+            />
           )}
         </div>
         <button
@@ -809,7 +815,12 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
             );
           })}
           {calloutTargets.length === 0 && (
-            <div style={{ color: '#7a8893', fontStyle: 'italic', padding: '0.8rem 0' }}>{t('目前無可約戰的敵將(無敵對勢力名將現身)。', 'No enemy champions to call out right now.')}</div>
+            <EmptyState
+              compact
+              icon="🥁"
+              title={t('目前無可約戰的敵將', 'No enemy champions to call out')}
+              hint={t('無敵對勢力名將現身。', 'No rival champions are on the field right now.')}
+            />
           )}
         </div>
         {(() => {

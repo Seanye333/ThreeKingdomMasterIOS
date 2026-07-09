@@ -7,6 +7,7 @@ import { Modal } from './Modal';
 import { Icon } from './Icon';
 import { playSfx } from '../../game/systems/sound';
 import { SpecialtyDominionPanel } from './SpecialtyDominionPanel';
+import { EmptyState } from './EmptyState';
 
 /**
  * 度支簿 — the realm's full season ledger. It runs realmBudget(), the same
@@ -55,7 +56,7 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
   if (!budget) {
     return (
       <Modal onClose={onClose} width="min(720px, 100%)" icon={<Icon name="gold" size={18} />} title={t('度支簿', 'Treasury')}>
-        <div style={{ color: '#7a8893', fontSize: '0.85rem', padding: '1rem 0' }}>{t('尚無勢力。', 'No force yet.')}</div>
+        <EmptyState icon="🪙" title={t('尚無勢力。', 'No force yet.')} />
       </Modal>
     );
   }
@@ -251,7 +252,7 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
           </tbody>
         </table>
         {rows.length === 0 && (
-          <div style={{ color: '#7a8893', fontSize: '0.85rem', padding: '1rem 0' }}>{t('尚無城池。', 'No cities yet.')}</div>
+          <EmptyState compact icon="🏯" title={t('尚無城池。', 'No cities yet.')} />
         )}
     </Modal>
   );

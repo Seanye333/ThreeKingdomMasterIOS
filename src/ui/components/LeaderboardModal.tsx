@@ -3,6 +3,7 @@ import { fetchLeaderboard, savedPlayerName, submitScore, type LeaderRow } from '
 import { loadDailyResults } from '../../game/systems/dailyChallenge';
 import { useT } from '../i18n';
 import { Modal } from './Modal';
+import { EmptyState } from './EmptyState';
 
 /**
  * 每日排行榜 — today's global board (when the backend KV is attached)
@@ -65,7 +66,11 @@ export function LeaderboardModal({ date, onClose }: { date: string; onClose: () 
           {rows == null ? (
             <div style={{ color: '#7a8893', fontSize: '0.8rem', padding: '0.8rem 0' }}>{t('載入中…', 'Loading…')}</div>
           ) : rows.length === 0 && configured ? (
-            <div style={{ color: '#7a8893', fontSize: '0.8rem', padding: '0.8rem 0' }}>{t('今日尚無人上榜 — 拔得頭籌吧!', 'No entries yet — be the first!')}</div>
+            <EmptyState
+              icon="🥇"
+              title={t('今日尚無人上榜', 'No entries yet')}
+              hint={t('拔得頭籌吧!', 'Be the first!')}
+            />
           ) : rows.map((r, i) => (
             <div key={i} style={{
               display: 'flex', justifyContent: 'space-between', padding: '0.25rem 0.4rem',

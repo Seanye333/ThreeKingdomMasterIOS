@@ -229,6 +229,16 @@ body {
     box-shadow: 0 3px 12px rgba(0, 0, 0, 0.35);
   }
 }
+/* 可點列 hover — a faint jin wash on clickable table/list rows (inline styles
+   can't express :hover). */
+.tkm-row-hover {
+  transition: background 0.12s ease;
+}
+@media (hover: hover) {
+  .tkm-row-hover:hover {
+    background: rgba(230, 196, 115, 0.07);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .tkm-row-in { animation: none; }
   .tkm-lift { transition: none; }

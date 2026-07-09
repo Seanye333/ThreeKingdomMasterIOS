@@ -7,6 +7,7 @@ import { OfficerPortrait } from './OfficerPortrait';
 import { Name } from './Name';
 import styles from './MarriagePicker.module.css';
 import { useT } from '../i18n';
+import { EmptyState } from './EmptyState';
 
 interface Props {
   targetForceId: EntityId;
@@ -226,7 +227,7 @@ function Column({ label, color, officers, cities, picked, onPick }: ColumnProps)
         <span>{label}</span>
       </div>
       {officers.length === 0 ? (
-        <div className={styles.empty}>{t('無可用武將。', 'No available officers.')}</div>
+        <EmptyState compact icon="🕊️" title={t('無可用武將。', 'No available officers.')} />
       ) : (
         <ul className={styles.officerList}>
           {officers.map((o) => {

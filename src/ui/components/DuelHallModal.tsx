@@ -9,6 +9,7 @@ import { Modal } from './Modal';
 import { OfficerPortrait } from './OfficerPortrait';
 import { BoutReplay3D } from './duel/BoutReplay3D';
 import { useT, useLanguage, pickName } from '../i18n';
+import { EmptyState } from './EmptyState';
 
 const SEASON_ZH = ['春', '夏', '秋', '冬'];
 const SEASON_EN = ['Spring', 'Summer', 'Autumn', 'Winter'];
@@ -101,7 +102,7 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
 
   const rankList = (rows: Array<{ id: string; n: number }>, unit: string, color: string) => (
     rows.length === 0
-      ? <div style={{ color: '#7a8893', fontStyle: 'italic', padding: '0.6rem 0' }}>{t('尚無紀錄。', 'No records yet.')}</div>
+      ? <EmptyState compact icon="🏆" title={t('尚無紀錄。', 'No records yet.')} />
       : (
         <div style={{ display: 'grid', gap: 4 }}>
           {rows.map((r, i) => {
@@ -226,9 +227,11 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
             {t('恩怨簿 — 凡反覆交手者皆記逐對戰績;交手三次以上即結「宿敵」(重逢知己知彼);一方斬殺即血仇了結。', 'The book of feuds — every pair who keep crossing blades, with their head-to-head. Three bouts forge sworn 宿敵; a kill closes it in blood.')}
           </div>
           {feuds.length === 0 ? (
-            <div style={{ color: '#7a8893', fontStyle: 'italic', padding: '1rem 0' }}>
-              {t('尚無恩怨。同一對武將反覆單挑,便會在此結下宿敵。', 'No feuds yet. When the same two warriors keep dueling, a rivalry forms here.')}
-            </div>
+            <EmptyState
+              icon="⚔️"
+              title={t('尚無恩怨。', 'No feuds yet.')}
+              hint={t('同一對武將反覆單挑,便會在此結下宿敵。', 'When the same two warriors keep dueling, a rivalry forms here.')}
+            />
           ) : (
             <div style={{ display: 'grid', gap: 5 }}>
               {feuds.map((r: RivalryRecord) => {
@@ -266,9 +269,11 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
       {tab === 'gallery' && (
         <div style={{ display: 'grid', gap: 6 }}>
           {duelHall.length === 0 && (
-            <div style={{ color: '#7a8893', fontStyle: 'italic', padding: '1rem 0' }}>
-              {t('尚無名局。一場斬將或罵死、一場酣戰,皆會載入此廊。', 'No famous bouts yet. A kill, a 罵死 rout, or a long hard fight will be recorded here.')}
-            </div>
+            <EmptyState
+              icon="🏛️"
+              title={t('尚無名局。', 'No famous bouts yet.')}
+              hint={t('一場斬將或罵死、一場酣戰,皆會載入此廊。', 'A kill, a 罵死 rout, or a long hard fight will be recorded here.')}
+            />
           )}
           {duelHall.map((rec) => {
             const aWon = rec.kind === 'duel' ? rec.winner === 'attacker' : rec.winner === 'a';

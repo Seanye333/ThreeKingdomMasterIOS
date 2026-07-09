@@ -10,6 +10,7 @@ import { OfficerPortrait } from './OfficerPortrait';
 import { OfficerStats } from './OfficerStats';
 import { Debate3DStage } from './debate/Debate3DStage';
 import { useT, useLanguage, pickName } from '../i18n';
+import { EmptyState } from './EmptyState';
 
 /**
  * 論辯場 — the war-of-words sparring ground. Pick two of your own officers and
@@ -349,7 +350,7 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
             );
           })}
           {scenarios.length === 0 && (
-            <div style={{ color: '#7a8893', fontStyle: 'italic', padding: '0.8rem 0' }}>{t('目前無可進行的劇情舌戰。', 'No scenarios available right now.')}</div>
+            <EmptyState compact icon="💬" title={t('目前無可進行的劇情舌戰。', 'No scenarios available right now.')} />
           )}
         </div>
         <button

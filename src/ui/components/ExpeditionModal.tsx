@@ -27,6 +27,7 @@ import type { ExpeditionMode } from '../../game/types';
 import { playSfx } from '../../game/systems/sound';
 import { useLanguage, useT } from '../i18n';
 import { Modal } from './Modal';
+import { EmptyState } from './EmptyState';
 
 /**
  * 游历 — send one officer roaming. Two tabs:
@@ -68,7 +69,7 @@ export function ExpeditionModal({ fromCityId, onClose }: { fromCityId: string; o
   if (!from || roamers.length === 0) {
     return (
       <Modal onClose={onClose} icon="🧭" title={t('游历', 'Expedition')} width="min(440px, 100%)">
-        <div style={{ color: '#7a8893', fontSize: '0.86rem', padding: '1rem 0' }}>{t('此城無閒置武將可遣。', 'No idle officer here to send.')}</div>
+        <EmptyState icon="🐎" title={t('此城無閒置武將可遣。', 'No idle officer here to send.')} />
       </Modal>
     );
   }

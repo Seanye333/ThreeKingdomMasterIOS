@@ -8,6 +8,7 @@ import { marchSpeedMul, adjustMarchSeasons, MARCH_PACES, PACE_LABEL, type MarchP
 import { playSfx } from '../../game/systems/sound';
 import { generateTerritories, terrainRoute } from '../../game/data/territories';
 import { useT, useLanguage } from '../i18n';
+import { EmptyState } from './EmptyState';
 import { BattlePrepModal } from './BattlePrepModal';
 import { applicableStratagems } from '../../game/data/stratagems2';
 import { cityPos } from '../../game/data/cityGeo';
@@ -459,7 +460,7 @@ export function MarchPicker({ cityId, onClose }: Props) {
         <section className={styles.section}>
           <h3 className={styles.sectionTitle}>{t('大將', 'Commander')}</h3>
           {officers.length === 0 ? (
-            <div className={styles.empty}>{t('無可用武將。', 'No available officers.')}</div>
+            <EmptyState compact icon="🎖️" title={t('無可用武將。', 'No available officers.')} />
           ) : (
             <div className={styles.officerGrid}>
               {officers.map((o) => (

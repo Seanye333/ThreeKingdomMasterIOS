@@ -4,6 +4,7 @@ import { renameSlot } from '../../game/state/saveSlots';
 import { SCENARIOS } from '../../game/data/scenarios';
 import styles from './SaveSlotsModal.module.css';
 import { useT, useLanguage, pickName } from '../i18n';
+import { EmptyState } from './EmptyState';
 
 interface Props {
   onClose: () => void;
@@ -121,9 +122,13 @@ export function SaveSlotsModal({ onClose, mode }: Props) {
           )}
 
           {slots.length === 0 ? (
-            <div className={styles.empty}>
-              {mode === 'save' ? t('尚無存檔，可從上方新建。', 'No saves yet. Create one above.') : t('沒有存檔。', 'No saved games.')}
-              <div style={{ marginTop: 8, fontSize: 11 }}>refresh #{refresh}</div>
+            <div>
+              <EmptyState
+                icon="💾"
+                title={mode === 'save' ? t('尚無存檔', 'No saves yet.') : t('沒有存檔。', 'No saved games.')}
+                hint={mode === 'save' ? t('可從上方新建。', 'Create one above.') : undefined}
+              />
+              <div className={styles.empty} style={{ padding: 0, marginTop: 8, fontSize: 11 }}>refresh #{refresh}</div>
             </div>
           ) : (
             slots.map((s) => {

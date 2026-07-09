@@ -4,6 +4,7 @@ import { POLICY_DEFS, TACTIC_DEFS, type TacticId } from '../../game/data/officer
 import { trainingCost, eligiblePolicies, cityHasAcademy, trainingDurationSeasons, policyTier, academyLevel, academyCapacity, trainingsInCity, eligibleMentors, mentorDurationSeasons, cityHasMentors, busyOfficerIds, isParentMentor, eligibleTactics, eligibleTacticMentors, tacticDurationSeasons, tacticMentorDurationSeasons, tacticTier, tacticTrainingCost } from '../../game/systems/training';
 import type { EntityId, Officer, PolicyId } from '../../game/types';
 import { useT, useLanguage } from '../i18n';
+import { EmptyState } from './EmptyState';
 import styles from './OfficerPicker.module.css';
 
 interface Props {
@@ -219,9 +220,12 @@ export function TrainingPicker({ cityId, onClose }: Props) {
                       {' · '}{t('已通', 'Known')}: {(pickedOfficer.tactics ?? []).length}
                     </div>
                     {tAvail.length === 0 && (
-                      <div style={{ color: '#7a8893', fontStyle: 'italic', fontSize: '0.78rem' }}>
-                        {t('無可學戰法 — 需先學前置。', 'No tactics available — need to study prerequisites.')}
-                      </div>
+                      <EmptyState
+                        compact
+                        icon="📖"
+                        title={t('無可學戰法', 'No tactics available')}
+                        hint={t('需先學前置。', 'Need to study prerequisites.')}
+                      />
                     )}
                     {tAvail.length > 0 && (
                       <>

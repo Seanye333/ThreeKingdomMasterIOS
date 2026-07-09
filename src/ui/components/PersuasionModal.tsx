@@ -7,6 +7,7 @@ import { Modal } from './Modal';
 import { OfficerPortrait } from './OfficerPortrait';
 import { Debate3DStage } from './debate/Debate3DStage';
 import { useT, useLanguage, pickName } from '../i18n';
+import { EmptyState } from './EmptyState';
 
 /**
  * 说客 — the live 舌戰 as a strategic verb (§3.4). Send a silver-tongued envoy to
@@ -111,7 +112,11 @@ export function PersuasionModal({ onClose }: { onClose: () => void }) {
             </button>
           );
         })}
-        {envoys.length === 0 && <div style={{ color: '#7a8893', fontStyle: 'italic', padding: '0.8rem 0', gridColumn: '1 / -1' }}>{t('無可遣之說客。', 'No envoy available.')}</div>}
+        {envoys.length === 0 && (
+          <div style={{ gridColumn: '1 / -1' }}>
+            <EmptyState compact icon="🗣️" title={t('無可遣之說客。', 'No envoy available.')} />
+          </div>
+        )}
       </div>
 
       {/* 訪何人 — pick the mark. */}
@@ -134,7 +139,14 @@ export function PersuasionModal({ onClose }: { onClose: () => void }) {
             </button>
           );
         })}
-        {targets.length === 0 && <div style={{ color: '#7a8893', fontStyle: 'italic', padding: '0.8rem 0' }}>{t('鄰境無可游說之人 —— 需與他勢力接壤。', 'No reachable marks — you must border a rival.')}</div>}
+        {targets.length === 0 && (
+          <EmptyState
+            compact
+            icon="🗺️"
+            title={t('鄰境無可游說之人', 'No reachable marks')}
+            hint={t('需與他勢力接壤。', 'You must border a rival.')}
+          />
+        )}
       </div>
 
       <button

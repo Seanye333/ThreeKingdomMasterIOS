@@ -31,6 +31,7 @@ import { canDuel } from '../../game/systems/duel';
 import { personalTacticsForUnit } from '../../game/systems/personalTactics';
 import { Duel3DStage } from './duel/Duel3DStage';
 import { MarchPicker } from './MarchPicker';
+import { EmptyState } from './EmptyState';
 import { MusterModal } from './MusterModal';
 import { Modal } from './Modal';
 import { OfficerPicker } from './OfficerPicker';
@@ -2985,8 +2986,12 @@ function ReplayPanel({ onClose }: { onClose: () => void }) {
           }}>✕</button>
         </div>
         {snapshots.length === 0 ? (
-          <div style={{ width: cw, padding: '2rem 0', textAlign: 'center', color: '#8a7858' }}>
-            {t('尚無記錄 — 推進幾季後即可回放天下消長。', 'No history yet — advance a few seasons to build the timelapse.')}
+          <div style={{ width: cw }}>
+            <EmptyState
+              icon="⏳"
+              title={t('尚無記錄', 'No history yet')}
+              hint={t('推進幾季後即可回放天下消長。', 'Advance a few seasons to build the timelapse.')}
+            />
           </div>
         ) : (
           <>

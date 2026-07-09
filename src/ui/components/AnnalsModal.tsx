@@ -3,6 +3,7 @@ import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useGameStore } from '../../game/state/store';
 import type { AnnalsEntry } from '../../game/types/event';
 import { useT } from '../i18n';
+import { EmptyState } from './EmptyState';
 
 const KIND_META: Record<AnnalsEntry['kind'], { zh: string; icon: string; color: string }> = {
   event:    { zh: '史事', icon: '📜', color: '#e6c473' },
@@ -68,9 +69,11 @@ export function AnnalsModal({ onClose }: { onClose: () => void }) {
 
         <div style={{ overflowY: 'auto', flex: 1 }}>
           {shown.length === 0 && (
-            <div style={{ color: '#7a8893', fontSize: '0.85rem', padding: '1rem 0' }}>
-              {t('尚無記載 — 史官持筆以待。', 'Nothing recorded yet — the historians wait, brush in hand.')}
-            </div>
+            <EmptyState
+              icon="📜"
+              title={t('尚無記載', 'Nothing recorded yet')}
+              hint={t('史官持筆以待。', 'The historians wait, brush in hand.')}
+            />
           )}
           {shown.map((e, i) => {
             const meta = KIND_META[e.kind];

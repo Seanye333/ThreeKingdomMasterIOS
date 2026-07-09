@@ -172,6 +172,7 @@ export function BuildingsPanel({ cityId }: Props) {
               return (
                 <button
                   key={d.id}
+                  className="tkm-lift"
                   onClick={() => { playSfx('thud'); return damaged
                     ? repairBuilding(cityId, d.id as BuildingId)
                     : startBuilding(cityId, d.id as BuildingId); }}

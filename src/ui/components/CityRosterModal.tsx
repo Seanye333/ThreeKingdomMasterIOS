@@ -64,7 +64,7 @@ export function CityRosterModal({ onClose }: { onClose: () => void }) {
           </thead>
           <tbody>
             {rows.map((c) => (
-              <tr key={c.id} onClick={() => { selectCity(c.id); onClose(); }} style={{ cursor: 'pointer', borderBottom: '1px solid #18212b' }}>
+              <tr key={c.id} className="tkm-row-hover" onClick={() => { selectCity(c.id); onClose(); }} style={{ cursor: 'pointer', borderBottom: '1px solid #18212b' }}>
                 <td style={{ padding: '3px 6px', color: c.ruined ? '#a06a5a' : '#eef4f8' }}><Name pair={c.name} />{c.ruined ? ' 🔥' : ''}</td>
                 {cols.map((col) => (
                   <td key={col.key} style={{ textAlign: 'right', padding: '3px 6px', fontFamily: 'ui-monospace, monospace', color: col.key === 'loyalty' && c.loyalty < 40 ? '#e8704a' : '#aab6c0' }}>

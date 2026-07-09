@@ -5,6 +5,7 @@ import { careerStanding, careerPrivileges } from '../../game/systems/career';
 import { composeBiography } from '../../game/systems/biography';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useT, useLanguage } from '../i18n';
+import { EmptyState } from './EmptyState';
 
 interface Props {
   onClose: () => void;
@@ -216,7 +217,7 @@ export function CareerModal({ onClose }: Props) {
               {t('年譜', 'Chronicle')} ({career.milestones.length})
             </div>
             {career.milestones.length === 0 ? (
-              <div style={{ color: '#6a5238', fontStyle: 'italic' }}>{t('尚無里程碑記錄。', 'No milestones recorded yet.')}</div>
+              <EmptyState compact icon="🪶" title={t('尚無里程碑記錄。', 'No milestones recorded yet.')} />
             ) : (
               <div style={{ position: 'relative', paddingLeft: '1.5rem', borderLeft: '2px solid #2b3845' }}>
                 {[...career.milestones].reverse().map((m, i) => {
