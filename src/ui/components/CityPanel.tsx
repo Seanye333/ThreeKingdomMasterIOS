@@ -19,6 +19,7 @@ import { BuildingsPanel } from './BuildingsPanel';
 import { AnimatedNumber } from './AnimatedNumber';
 import { CaptivesSection } from './CaptivesSection';
 import { CommandMenu } from './CommandMenu';
+import { EmptyState } from './EmptyState';
 import { ConvoyDispatchModal } from './ConvoyDispatchModal';
 import { ExpeditionModal } from './ExpeditionModal';
 import { getEmbassyTarget } from '../../game/systems/foreignRealm';
@@ -153,7 +154,13 @@ export function CityPanel() {
   if (!city) {
     return (
       <aside className={styles.root}>
-        <div className={styles.empty}>{t('於地圖選擇城市', 'Select a city on the map')}</div>
+        <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
+          <EmptyState
+            icon="🗺"
+            title={t('於地圖選擇城市', 'Select a city')}
+            hint={t('點地圖上的城池,查看內政、軍務與武將。', 'Tap a city on the map to see its affairs, forces and officers.')}
+          />
+        </div>
       </aside>
     );
   }
@@ -308,7 +315,8 @@ export function CityPanel() {
               {t('武將', 'Officers')} ({officers.length})
             </h3>
             {officers.length === 0 ? (
-              <div className={styles.muted}>{t('無武將駐紮。', 'No officers stationed.')}</div>
+              <EmptyState compact icon="👤" title={t('無武將駐紮', 'No officers stationed')}
+                hint={isPlayerCity ? t('自鄰城移送武將前來,或招攬在野之士。', 'Transfer officers from a neighbor, or recruit free agents.') : undefined} />
             ) : (
               <ul className={styles.officerList}>
                 {officers.map((o) => (
@@ -581,7 +589,7 @@ function OfficerListItem({
   const lang = useLanguage();
 
   return (
-    <li className={styles.officerRow}>
+    <li className={`${styles.officerRow} tkm-lift tkm-row-in`}>
       <span onClick={() => setDetailOpen(true)} style={{ cursor: 'pointer', display: 'contents' }}>
         <OfficerPortrait officer={o} size={34} forceColor={forceColor} />
         <OfficerHoverCard officer={o}>

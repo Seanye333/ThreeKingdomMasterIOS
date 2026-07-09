@@ -211,6 +211,30 @@ body {
   to   { opacity: 1; }
 }
 
+/* 微互動 — subtle "juice" utilities. Keep them quiet: a 1px lift and a soft
+   glow on hover, a short rise on entrance. Reduced-motion opts out below. */
+@keyframes tkmRowIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+.tkm-row-in {
+  animation: tkmRowIn 0.22s ease-out both;
+}
+.tkm-lift {
+  transition: transform 0.13s ease, box-shadow 0.13s ease, border-color 0.13s ease;
+}
+@media (hover: hover) {
+  .tkm-lift:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.35);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tkm-row-in { animation: none; }
+  .tkm-lift { transition: none; }
+  .tkm-lift:hover { transform: none; }
+}
+
 @keyframes tkmModalIn {
   from { opacity: 0; transform: scale(0.96) translateY(8px); }
   to   { opacity: 1; transform: scale(1) translateY(0); }

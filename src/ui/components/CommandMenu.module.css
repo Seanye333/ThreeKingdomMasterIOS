@@ -31,12 +31,21 @@
   cursor: pointer;
   font-family: inherit;
   text-align: left;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.15s, border-color 0.15s, transform 0.13s ease, box-shadow 0.13s ease;
 }
 
-.cmdButton:hover:not(:disabled) {
-  background: #26323e;
-  border-color: #e6c473;
+@media (hover: hover) {
+  .cmdButton:hover:not(:disabled) {
+    background: #26323e;
+    border-color: #e6c473;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cmdButton { transition: background 0.15s, border-color 0.15s; }
+  .cmdButton:hover:not(:disabled) { transform: none; box-shadow: none; }
 }
 
 .cmdButton:disabled {

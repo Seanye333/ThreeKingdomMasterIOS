@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { playSfx } from '../../game/systems/sound';
 import { Icon } from './Icon';
+import { EmptyState } from './EmptyState';
 import { SEASON_LABEL } from '../../game/types';
 import type { BattleDetail, Season } from '../../game/types';
 import { BattleDetailModal } from './BattleDetailModal';
@@ -196,9 +197,8 @@ export function SeasonReportModal() {
         )}
 
         {playerEntries.length === 0 ? (
-          <div className={styles.empty}>
-            {t('季內無事,境內安寧。', 'A quiet season. Nothing of note in your domain.')}
-          </div>
+          <EmptyState icon="🌾" title={t('季內無事,境內安寧', 'A quiet season')}
+            hint={t('境內平順,無戰報與變故。', 'All calm — no battles or upheavals to report.')} />
         ) : (
           <ul className={styles.entries}>
             {playerEntries.map((e, i) => {
