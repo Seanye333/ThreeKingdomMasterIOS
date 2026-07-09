@@ -495,7 +495,9 @@ interface GameStore extends GameState {
   /** 一鍵委派 — auto-assign every idle officer in a self-run city a sensible
    *  internal-affairs task (by city need × aptitude). Returns how many were
    *  dispatched and the gold spent. */
-  autoAssignIdle: () => {
+  /** Assign idle officers their best-fit civil order. Pass a cityId to govern
+   *  just that one city (the map quick-ring 施政 spoke); omit for all cities. */
+  autoAssignIdle: (onlyCityId?: EntityId) => {
     assigned: number;
     goldSpent: number;
     /** Who went where — feeds the 委派錄 summary card in the HUD. */
@@ -2159,7 +2161,7 @@ export const useGameStore = create<GameStore>()(
         return { ok: true };
       },
 
-      autoAssignIdle: () => {
+      autoAssignIdle: (onlyCityId) => {
         const state = get();
         const pid = state.playerForceId;
         if (!pid) return { assigned: 0, goldSpent: 0, details: [] };
@@ -2175,7 +2177,8 @@ export const useGameStore = create<GameStore>()(
         const idle = Object.values(state.officers).filter((o) =>
           o.forceId === pid && !o.task && !pending[o.id] && !training.has(o.id) &&
           !!o.locationCityId && cities[o.locationCityId]?.ownerForceId === pid &&
-          !delegated.has(o.locationCityId),
+          !delegated.has(o.locationCityId) &&
+          (!onlyCityId || o.locationCityId === onlyCityId),
         );
 
         for (const o of idle) {

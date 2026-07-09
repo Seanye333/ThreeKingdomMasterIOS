@@ -1780,7 +1780,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
   onScenicClick: (siteId: string) => void;
   /** 快捷輪盤 — open the march/recruit picker for a city (DOM modals live
    *  in the outer shell, outside the Canvas). */
-  onQuickAction: (kind: 'march' | 'recruit' | 'muster', cityId: string) => void;
+  onQuickAction: (kind: 'march' | 'recruit' | 'muster' | 'govern', cityId: string) => void;
   /** 原地指揮 — in-place battle commanding state, owned by the outer shell. */
   dioSelectedId: string | null;
   dioMode: 'move' | 'attack';
@@ -2370,6 +2370,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
               onMarch={() => onQuickAction('march', c.id)}
               onRecruit={() => onQuickAction('recruit', c.id)}
               onMuster={() => onQuickAction('muster', c.id)}
+              onGovern={() => onQuickAction('govern', c.id)}
             />
           </Html>
         );
@@ -2529,12 +2530,13 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
    you actually do every turn, one tap instead of a trip through the city
    screen. Hostile city: a single 全軍集結 button (armed by a first tap so
    a stray click can't commit the whole realm to war). */
-function CityQuickRing({ own, onEnter, onMarch, onRecruit, onMuster }: {
+function CityQuickRing({ own, onEnter, onMarch, onRecruit, onMuster, onGovern }: {
   own: boolean;
   onEnter: () => void;
   onMarch: () => void;
   onRecruit: () => void;
   onMuster: () => void;
+  onGovern: () => void;
 }) {
   const t = useT();
 
@@ -2585,6 +2587,9 @@ function CityQuickRing({ own, onEnter, onMarch, onRecruit, onMuster }: {
       {radial('⛩', '進城', 'Enter', 150, onEnter)}
       {radial('⚔', '出陣', 'March', 90, onMarch)}
       {radial('👥', '徵兵', 'Recruit', 30, onRecruit)}
+      {/* 施政 — one-tap civil governance: idle officers here each take their
+          best-fit internal order, without a trip through the city panel. */}
+      {radial('📜', '施政', 'Govern', 270, onGovern)}
       {/* 勤王 — rally the realm to reinforce this own city. */}
       {radial('🚩', '集結', 'Muster', 210, onMuster)}
     </div>
@@ -4018,7 +4023,18 @@ export function StrategicMap3D() {
             onTribeClick={setSelectedTribeId}
             onSiteClick={setSelectedSiteId}
             onScenicClick={setSelectedScenicId}
-            onQuickAction={(kind, cityId) => setQuickPick({ kind, cityId })}
+            onQuickAction={(kind, cityId) => {
+              if (kind === 'govern') {
+                // 一鍵施政 — govern just this city: idle officers take their
+                // best-fit internal order. No picker; a toast reports the result.
+                const st = useGameStore.getState();
+                const r = st.autoAssignIdle(cityId);
+                if (r.assigned === 0) st.notify('此城無閒置武將可施政', 'No idle officers to govern here', 'warn');
+                playSfx('coin');
+                return;
+              }
+              setQuickPick({ kind, cityId });
+            }}
             dioSelectedId={worldBattleMinimized ? dioSelectedId : null}
             dioMode={dioMode}
             dioCast={worldBattleMinimized ? dioCast : null}
