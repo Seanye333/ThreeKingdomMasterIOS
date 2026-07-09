@@ -3,6 +3,7 @@ import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useGameStore } from '../../game/state/store';
 import { getRelation, pairKey } from '../../game/types';
 import { Name } from './Name';
+import { useT } from '../i18n';
 
 interface Props {
   onClose: () => void;
@@ -13,6 +14,7 @@ interface Props {
  */
 export function DiplomacyGraphModal({ onClose }: Props) {
   useEscapeKey(onClose);
+  const t = useT();
   const forces = useGameStore((s) => s.forces);
   const cities = useGameStore((s) => s.cities);
   const diplomacy = useGameStore((s) => s.diplomacy);
@@ -69,7 +71,7 @@ export function DiplomacyGraphModal({ onClose }: Props) {
             <div style={{ fontSize: '1.4rem', color: '#e6c473', letterSpacing: '0.07rem' }}>關係図</div>
             <div style={{ fontSize: '0.85rem', color: '#7a8893', fontStyle: 'italic' }}>Diplomacy Web</div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
+          <button onClick={onClose} aria-label={t('關閉', 'Close')} title={t('關閉', 'Close')} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
         </header>
         <svg viewBox="0 0 700 600" style={{ width: '100%', maxHeight: '70vh', display: 'block' }}>
           {/* Edges */}
@@ -105,10 +107,10 @@ export function DiplomacyGraphModal({ onClose }: Props) {
             </g>
           ))}
         </svg>
-        <div style={{ display: 'flex', gap: '1rem', padding: '0.75rem 1.5rem', fontSize: '0.78rem', borderTop: '1px solid #2b3845' }}>
-          <span><span style={{ background: '#e6c473', display: 'inline-block', width: 14, height: 3, marginRight: 4 }} /> Allied 同盟</span>
-          <span><span style={{ background: '#88b7e8', display: 'inline-block', width: 14, height: 3, marginRight: 4 }} /> Non-Aggression 不戰</span>
-          <span><span style={{ background: '#b8442e', display: 'inline-block', width: 14, height: 3, marginRight: 4 }} /> Hostile 敵対</span>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', padding: '0.75rem 1.5rem', fontSize: '0.78rem', borderTop: '1px solid #2b3845', color: '#aab6c0' }}>
+          <span><span style={{ background: '#e6c473', display: 'inline-block', width: 14, height: 3, marginRight: 4, verticalAlign: 'middle' }} /> {t('同盟', 'Allied')}</span>
+          <span><span style={{ background: '#88b7e8', display: 'inline-block', width: 14, height: 3, marginRight: 4, verticalAlign: 'middle' }} /> {t('互不侵犯', 'Non-aggression')}</span>
+          <span><span style={{ background: '#b8442e', display: 'inline-block', width: 14, height: 3, marginRight: 4, verticalAlign: 'middle' }} /> {t('敵對', 'Hostile')}</span>
         </div>
       </div>
     </div>

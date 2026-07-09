@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { useT } from '../i18n';
 import { Modal } from './Modal';
+import { EmptyState } from './EmptyState';
 
 interface Agg {
   fid: string;
@@ -82,9 +83,9 @@ export function ForceCompareModal({ onClose }: { onClose: () => void }) {
   return (
     <Modal onClose={onClose} width="min(600px, 100%)" icon="⚖" title={t('較量', 'Compare')}>
         {!me ? (
-          <div style={{ color: '#7a8893', fontSize: '0.85rem', padding: '1.5rem 0' }}>{t('觀戰模式無從較量。', 'No force to compare in spectator mode.')}</div>
+          <EmptyState icon="⚖" title={t('觀戰模式無從較量', 'No force to compare')} hint={t('旁觀模式下沒有你的勢力可供對比。', 'Spectating — there is no force of yours to weigh.')} />
         ) : rivals.length === 0 ? (
-          <div style={{ color: '#7a8893', fontSize: '0.85rem', padding: '1.5rem 0' }}>{t('天下已定,別無對手。', 'No rivals left — the realm is yours.')}</div>
+          <EmptyState icon="👑" title={t('天下已定,別無對手', 'The realm is yours')} hint={t('群雄已盡,無人可與君較量。', 'No rivals remain to measure against.')} />
         ) : (
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: '0.7rem' }}>
@@ -117,11 +118,11 @@ export function ForceCompareModal({ onClose }: { onClose: () => void }) {
                         </div>
                         <div style={{ display: 'flex', gap: 3, alignItems: 'center', height: 12 }}>
                           <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
-                            <div style={{ width: `${(mv / max) * 100}%`, height: '100%', background: me.color, borderRadius: '3px 0 0 3px', opacity: 0.85 }} />
+                            <div style={{ width: `${(mv / max) * 100}%`, height: '100%', background: me.color, borderRadius: '3px 0 0 3px', opacity: 0.85, transition: 'width 0.4s cubic-bezier(0.2,0.8,0.3,1)' }} />
                           </div>
                           <div style={{ width: 1, height: '100%', background: '#364654' }} />
                           <div style={{ flex: 1 }}>
-                            <div style={{ width: `${(rv / max) * 100}%`, height: '100%', background: rival.color, borderRadius: '0 3px 3px 0', opacity: 0.85 }} />
+                            <div style={{ width: `${(rv / max) * 100}%`, height: '100%', background: rival.color, borderRadius: '0 3px 3px 0', opacity: 0.85, transition: 'width 0.4s cubic-bezier(0.2,0.8,0.3,1)' }} />
                           </div>
                         </div>
                       </div>
