@@ -3,6 +3,7 @@ import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useGameStore } from '../../game/state/store';
 import { privateGuardMultiplier } from '../../game/systems/combat';
 import { playSfx } from '../../game/systems/sound';
+import { EmptyState } from './EmptyState';
 import { useT, useLanguage } from '../i18n';
 
 const MARCH_GLYPHS = ['卒', '卒', '卒', '卒', '卒'];
@@ -133,7 +134,7 @@ export function PrivateForcesModal({ onClose }: Props) {
             );
           })}
           {mine.length === 0 && (
-            <div style={{ color: '#6a5238', fontStyle: 'italic', padding: '1rem 0' }}>{t('無可用武將。', 'No officers available.')}</div>
+            <EmptyState compact icon="🛡" title={t('無可用武將', 'No officers available')} />
           )}
         </div>
       </div>

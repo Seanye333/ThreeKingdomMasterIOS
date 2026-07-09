@@ -3,6 +3,7 @@ import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useGameStore } from '../../game/state/store';
 import { useT, useLanguage } from '../i18n';
 import { DEED_TITLES_BY_ID } from '../../game/systems/deedTitles';
+import { EmptyState } from './EmptyState';
 import { OfficerDetail } from './OfficerDetail';
 import type { Officer } from '../../game/types';
 
@@ -133,9 +134,8 @@ export function DeedsModal({ onClose }: Props) {
 
         <div style={{ overflow: 'auto', padding: '1rem 1.5rem' }}>
           {rows.length === 0 ? (
-            <div style={{ color: '#6a5238', fontStyle: 'italic', padding: '2rem', textAlign: 'center' }}>
-              {t('尚無功業記載。征戰、興邦、謀略,皆待後人傳頌。', 'No deeds recorded yet. Wage battles, build, scheme.')}
-            </div>
+            <EmptyState icon="📜" title={t('尚無功業記載', 'No deeds recorded yet')}
+              hint={t('征戰、興邦、謀略,皆待後人傳頌。', 'Wage battles, build the realm, scheme — and be remembered.')} />
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
               <thead>

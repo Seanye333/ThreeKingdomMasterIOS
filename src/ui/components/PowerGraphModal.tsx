@@ -80,10 +80,17 @@ export function PowerGraphModal({ onClose }: { onClose: () => void }) {
         ) : (
           <>
             <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ background: '#14100a', border: '1px solid #18212b' }}>
-              {/* Frame + axis labels */}
-              {[0.25, 0.5, 0.75].map((f) => (
-                <line key={f} x1={PAD} x2={W - PAD} y1={H - PAD - f * (H - PAD * 2)} y2={H - PAD - f * (H - PAD * 2)} stroke="#241c12" />
-              ))}
+              {/* Y 軸網格 + 數值標 — the gridlines now carry the power value they
+                  mark (was unlabeled), so a line's height reads as a number. */}
+              {[0.25, 0.5, 0.75, 1].map((f) => {
+                const y = H - PAD - f * (H - PAD * 2);
+                return (
+                  <g key={f}>
+                    <line x1={PAD} x2={W - PAD} y1={y} y2={y} stroke="#241c12" strokeDasharray={f === 1 ? undefined : '2 3'} />
+                    <text x={PAD - 5} y={y + 3} fontSize={9} fill="#5f6c76" textAnchor="end">{Math.round((maxP * f) / 1000)}k</text>
+                  </g>
+                );
+              })}
               {lines.map((l) => (
                 <polyline
                   key={l.fid}
@@ -92,13 +99,28 @@ export function PowerGraphModal({ onClose }: { onClose: () => void }) {
                   stroke={l.color}
                   strokeWidth={l.fid === playerForceId ? 2.6 : 1.4}
                   opacity={l.alive ? 0.95 : 0.35}
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
                 />
               ))}
+              {/* 端點標記 — a dot at each living line's latest point; the player's
+                  is ringed so you can find yourself at a glance. */}
+              {lines.filter((l) => l.alive && l.pts).map((l) => {
+                const last = l.pts.split(' ').pop()!.split(',');
+                const cx = Number(last[0]), cy = Number(last[1]);
+                const me = l.fid === playerForceId;
+                return (
+                  <circle key={l.fid} cx={cx} cy={cy} r={me ? 4 : 2.5} fill={l.color}
+                    stroke={me ? '#fff' : 'none'} strokeWidth={me ? 1.3 : 0}>
+                    <title>{l.name}: {Math.round(l.latest / 1000)}k</title>
+                  </circle>
+                );
+              })}
               {years && (
                 <>
                   <text x={PAD} y={H - 10} fontSize={11} fill="#7a8893">{years[0]}年</text>
                   <text x={W - PAD} y={H - 10} fontSize={11} fill="#7a8893" textAnchor="end">{years[1]}年</text>
-                  <text x={PAD} y={16} fontSize={10} fill="#5f6c76">{t('國力(城+兵+財)峰值', 'Power (cities+troops+gold), peak')} {Math.round(maxP / 1000)}k</text>
+                  <text x={PAD} y={16} fontSize={10} fill="#5f6c76">{t('國力 = 城+兵+財', 'Power = cities + troops + gold')}</text>
                 </>
               )}
             </svg>
