@@ -1799,6 +1799,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
         effects: [
           { kind: 'officer-status', officerId: 'ma-su', status: 'dead' },
           { kind: 'mandate-ruler', rulerOfficerId: 'liu-shan', delta: 4 },
+          { kind: 'flag', key: 'masu-executed' }, // hook for the 抉擇勳功
         ],
       },
       {
