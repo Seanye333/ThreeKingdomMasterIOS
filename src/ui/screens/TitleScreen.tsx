@@ -67,6 +67,9 @@ export function TitleScreen() {
       };
       timer = setTimeout(tick, 400);
     });
+    // MapScreen 殼層 chunk 一併預取 — 不然要等「開始遊戲」按下才拉(慢網下
+    // 是按鈕後的一段可見等待)。fire-and-forget;失敗就照舊按需載入。
+    import('./MapScreen').catch(() => undefined);
     return () => { stop = true; clearTimeout(timer); };
   }, []);
   const [difficulty, setDifficulty] = useState<Difficulty>('normal');
