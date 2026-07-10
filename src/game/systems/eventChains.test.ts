@@ -156,3 +156,43 @@ describe('名場面補完批 — 甘露寺→截江 / 逍遙津→甘寧劫營',
     expect(fall.effects.some((e) => e.kind === 'flag' && e.key === 'shu-fallen-263')).toBe(true);
   });
 });
+
+describe('千里走單騎鏈修復 + 名場面第二批', () => {
+  it('土山約三事 finally sets guan-yu-with-cao — the ride can fire at last', () => {
+    // The flag five-passes has always required must now have exactly one producer.
+    const producers = HISTORICAL_EVENTS.filter((e) =>
+      [...e.effects, ...(e.choices ?? []).flatMap((c) => c.effects)]
+        .some((f) => f.kind === 'flag' && f.key === 'guan-yu-with-cao'));
+    expect(producers.map((e) => e.id)).toEqual(['evt-tushan-terms']);
+    // Historical first choice joins Guan Yu to Cao; five-passes returns him.
+    const tushan = producers[0];
+    expect(tushan.choices?.[0].id).toBe('accept');
+    const ride = HISTORICAL_EVENTS.find((e) => e.id === 'evt-guan-yu-five-passes')!;
+    expect(ride.effects.some((f) => f.kind === 'officer-join-ruler' && f.rulerOfficerId === 'liu-bei')).toBe(true);
+  });
+
+  it('白馬斬顏良 sits between 土山 and 五關 in array order (same-season priority)', () => {
+    const idx = (id: string) => HISTORICAL_EVENTS.findIndex((e) => e.id === id);
+    expect(idx('evt-tushan-terms')).toBeLessThan(idx('evt-baima-yanliang'));
+    expect(idx('evt-baima-yanliang')).toBeLessThan(idx('evt-guan-yu-five-passes'));
+    const baima = HISTORICAL_EVENTS.find((e) => e.id === 'evt-baima-yanliang')!;
+    expect(baima.requires?.some((r) => r.kind === 'flag-set' && r.key === 'guan-yu-with-cao')).toBe(true);
+  });
+
+  it('死諸葛/諸葛恪 ride the death flags newly set by 孔明/孫權 death events', () => {
+    const star = HISTORICAL_EVENTS.find((e) => e.id === 'evt-zhuge-liang-dies')!;
+    expect(star.effects.some((f) => f.kind === 'flag' && f.key === 'wuzhang-star-falls')).toBe(true);
+    const scare = HISTORICAL_EVENTS.find((e) => e.id === 'evt-dead-zhuge-scare')!;
+    expect(scare.requires?.some((r) => r.kind === 'flag-set' && r.key === 'wuzhang-star-falls')).toBe(true);
+    const gone = HISTORICAL_EVENTS.find((e) => e.id === 'evt-sun-quan-dies')!;
+    expect(gone.effects.some((f) => f.kind === 'flag' && f.key === 'sun-quan-gone')).toBe(true);
+    const ke = HISTORICAL_EVENTS.find((e) => e.id === 'evt-zhugeke-fall')!;
+    expect(ke.requires?.some((r) => r.kind === 'flag-set' && r.key === 'sun-quan-gone')).toBe(true);
+  });
+
+  it('文姬歸漢 uses the scenario-wired id and only fires while she is unaffiliated', () => {
+    const evt = HISTORICAL_EVENTS.find((e) => e.id === 'evt-wenji-return')!;
+    expect(evt.requires?.some((r) => r.kind === 'officer-unaffiliated' && r.officerId === 'cai-wenji')).toBe(true);
+    expect(evt.choices?.[0].effects.some((f) => f.kind === 'officer-join-ruler' && f.officerId === 'cai-wenji')).toBe(true);
+  });
+});

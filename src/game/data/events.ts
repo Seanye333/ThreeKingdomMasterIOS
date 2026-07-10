@@ -668,6 +668,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     descriptionZh: "與司馬懿對峙於五丈原前,蜀漢丞相終於油盡燈枯。一顆大星自西南天際隕落,巨人之世就此終結。",
     effects: [
       { kind: 'officer-status', officerId: 'zhuge-liang', status: 'dead' },
+      { kind: 'flag', key: 'wuzhang-star-falls' },
     ],
   },
 
@@ -860,6 +861,74 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       { kind: 'officer-loyalty', officerId: 'lu-bu', delta: 10 },
     ],
   },
+  /* ─── 千里走單騎鏈(2026-07 補鏈)─────────────────────────────────
+     evt-guan-yu-five-passes has required `guan-yu-with-cao` since it was
+     written, but NOTHING ever set that flag — the ride never fired. 土山約三事
+     now opens the chain (and joins Guan Yu to Cao), 白馬斬顏良 sits between
+     (array order = same-season priority), and five-passes finally returns
+     him to Liu Bei. */
+  {
+    id: 'evt-tushan-terms',
+    name: { en: 'Three Terms on Earthen Hill', zh: '土山約三事' },
+    yearMin: 199,
+    yearMax: 200,
+    requires: [
+      { kind: 'officer-active', officerId: 'guan-yu' },
+      { kind: 'officer-active', officerId: 'liu-bei' },
+      { kind: 'officer-alive', officerId: 'cao-cao' },
+      { kind: 'city-owner-ruler', cityId: 'xiapi', rulerOfficerId: 'cao-cao' },
+    ],
+    description:
+      'Xuzhou has fallen and Liu Bei has fled north; Guan Yu stands ringed on an earthen hill with the brothers\' families in the city below. Zhang Liao climbs up alone with an offer. Guan Yu names three terms: he surrenders to the Han, not to Cao; the ladies are kept safe; and the day he learns where his brother is, he leaves. Accept such a surrender?',
+    descriptionZh: '徐州已破,劉備北奔,關羽被圍土山,二嫂陷於城中。張遼單騎上山來說。關羽約三事:降漢不降曹;禮待二嫂;但知皇叔去向,雖遠必往。——納此降乎?',
+    effects: [],
+    chooserRulerId: 'cao-cao',
+    mood: 'martial',
+    choices: [
+      {
+        id: 'accept',
+        label: { zh: '雲長義士,吾深敬之——許之', en: 'Such honor deserves honor — accept' },
+        effects: [
+          { kind: 'officer-join-ruler', officerId: 'guan-yu', rulerOfficerId: 'cao-cao' },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: 1 },
+          { kind: 'flag', key: 'guan-yu-with-cao' },
+        ],
+      },
+      {
+        id: 'refuse',
+        label: { zh: '不從則圍而攻之,以絕後患', en: 'Refuse — storm the hill' },
+        effects: [
+          { kind: 'officer-status', officerId: 'guan-yu', status: 'dead' },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: -3 },
+          { kind: 'flag', key: 'tushan-stormed' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'evt-baima-yanliang',
+    name: { en: 'Yan Liang Falls at White Horse', zh: '白馬斬顏良' },
+    yearMin: 200,
+    yearMax: 201,
+    requires: [
+      { kind: 'flag-set', key: 'guan-yu-with-cao' },
+      { kind: 'officer-active', officerId: 'guan-yu' },
+      { kind: 'officer-alive', officerId: 'yan-liang' },
+      { kind: 'officer-alive', officerId: 'yuan-shao' },
+    ],
+    description:
+      'Yuan Shao\'s vanguard under Yan Liang crushes everything before it at White Horse. Guan Yu, repaying Cao Cao\'s courtesy, sights the general\'s standard from the ridge, rides down alone through ten thousand men, and takes Yan Liang\'s head in one pass. Wen Chou comes for revenge and follows him. Two of Hebei\'s pillars, gone in days.',
+    descriptionZh: '袁紹遣顏良攻白馬,鋒不可當。關羽為報曹公之恩,於萬軍之中望見其麾蓋,匹馬單刀,斬顏良首級而還。文醜引軍來報仇,亦歿於刀下。河北雙柱,旬日俱折。',
+    effects: [
+      { kind: 'officer-status', officerId: 'yan-liang', status: 'dead' },
+      { kind: 'officer-status', officerId: 'wen-chou', status: 'dead' },
+      { kind: 'officer-loyalty', officerId: 'guan-yu', delta: 5 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: 2 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'yuan-shao', delta: -2 },
+      { kind: 'flag', key: 'baima-yanliang' },
+    ],
+    mood: 'martial',
+  },
   {
     id: 'evt-guan-yu-five-passes',
     name: { en: "Past Five Passes, Six Generals", zh: '過五關斬六将' },
@@ -874,6 +943,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       'Learning his brother lives, Guan Yu rides a thousand li to rejoin him. Five passes bar his way; six famed Wei commanders try to stop him. The Green Dragon Blade rises six times, and the road opens.',
     descriptionZh: "得知兄長尚在,關羽千里走單騎以歸劉備。五關阻路,六將攔截。青龍偃月刀六起六落,前路豁然。",
     effects: [
+      { kind: 'officer-join-ruler', officerId: 'guan-yu', rulerOfficerId: 'liu-bei' },
       { kind: 'officer-loyalty', officerId: 'guan-yu', delta: 20 },
       { kind: 'flag', key: 'guan-yu-returned' },
     ],
@@ -1040,6 +1110,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     effects: [
       { kind: 'officer-status', officerId: 'sun-quan', status: 'dead' },
       { kind: 'force-troops-multiplier', forceId: 'force-wu', multiplier: 0.90 },
+      { kind: 'flag', key: 'sun-quan-gone' },
     ],
   },
   {
@@ -1956,7 +2027,10 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     yearMin: 206,
     yearMax: 210,
     requires: [
-      { kind: 'officer-alive', officerId: 'cai-yan' },
+      // cai-wenji is the id the scenarios wire (200+ starts place her in Cao's
+      // Xuchang, post-return) — the unaffiliated gate keeps this from firing
+      // there: she is already home.
+      { kind: 'officer-unaffiliated', officerId: 'cai-wenji' },
       { kind: 'officer-rules-cities-min', officerId: 'cao-cao', count: 3 },
     ],
     description:
@@ -1971,7 +2045,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
         label: { zh: '遣使齎金璧,贖文姬歸漢', en: 'Send gold and jade to bring her home' },
         effects: [
           { kind: 'force-gold-ruler', rulerOfficerId: 'cao-cao', delta: -400 },
-          { kind: 'officer-join-ruler', officerId: 'cai-yan', rulerOfficerId: 'cao-cao' },
+          { kind: 'officer-join-ruler', officerId: 'cai-wenji', rulerOfficerId: 'cao-cao' },
           { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: 2 },
           { kind: 'flag', key: 'wenji-returned' },
         ],
@@ -2227,6 +2301,162 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     descriptionZh: '安樂公劉禪徙居洛陽。司馬昭設宴,故奏蜀樂,蜀之舊臣盡皆墮淚,禪嬉笑自若。昭問:「頗思蜀否?」禪曰:「此間樂,不思蜀。」——天下笑之,而安樂公竟以此善終。',
     effects: [{ kind: 'flag', key: 'lebusishu' }],
     mood: 'somber',
+  },
+
+  /* ─── 名場面第二批(2026-07)───────────────────────────────────────
+     Seven more beats, early to late: 神亭嶺 (Sun Ce's choice), 郭嘉遺計,
+     罵死王朗, 木牛流馬, 死諸葛嚇走活仲達 (rides the new wuzhang-star-falls
+     flag), 甘露之變 (Cao Mao's blood on the palace road), and 諸葛恪之敗
+     (rides sun-quan-gone). */
+  {
+    id: 'evt-shenting-duel',
+    name: { en: 'Duel at Shenting Ridge', zh: '太史慈酣鬥小霸王' },
+    yearMin: 195,
+    yearMax: 199,
+    requires: [
+      { kind: 'officer-alive', officerId: 'taishi-ci' },
+      { kind: 'officer-alive', officerId: 'sun-ce' },
+      { kind: 'officer-rules-cities-min', officerId: 'sun-ce', count: 1 },
+    ],
+    description:
+      'Scouting with a dozen riders, Sun Ce runs into Taishi Ci below Shenting Ridge. The two close alone — a hundred passes, horses lathered, then wrestling in the dirt, each tearing a trophy from the other: Sun Ce takes the short halberd, Taishi Ci the helmet. Neither yields before the armies arrive. Later the ridge-duelist is brought in a prisoner.',
+    descriptionZh: '孫策引十三騎探神亭,正遇太史慈。二人獨鬥百合,馬打盤旋,揪撦下馬,策奪其手戟,慈掣其兜鍪,直至兩軍齊至方休。後太史慈兵敗被擒,縛至帳前。',
+    effects: [],
+    chooserRulerId: 'sun-ce',
+    mood: 'martial',
+    choices: [
+      {
+        id: 'recruit',
+        label: { zh: '親解其縛:「神亭相戰,公若擒我,還相害否?」', en: 'Unbind him yourself — win him over' },
+        effects: [
+          { kind: 'officer-join-ruler', officerId: 'taishi-ci', rulerOfficerId: 'sun-ce' },
+          { kind: 'officer-loyalty', officerId: 'taishi-ci', delta: 10 },
+          { kind: 'flag', key: 'shenting-recruited' },
+        ],
+      },
+      {
+        id: 'release',
+        label: { zh: '各為其主,義而縱之', en: 'Each serves his lord — set him free' },
+        effects: [
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-ce', delta: 1 },
+          { kind: 'flag', key: 'shenting-released' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'evt-guojia-legacy',
+    name: { en: "Guo Jia's Dying Counsel", zh: '郭嘉遺計定遼東' },
+    yearMin: 207,
+    yearMax: 208,
+    requires: [
+      { kind: 'officer-alive', officerId: 'guo-jia' },
+      { kind: 'officer-rules-cities-min', officerId: 'cao-cao', count: 5 },
+    ],
+    description:
+      'On the hard road back from Liucheng, Guo Fengxiao dies at thirty-eight — leaving a sealed letter. Do not march on Liaodong: press it, and Gongsun Kang will shelter the Yuan brothers; wait, and he will send their heads. Cao Cao waits. The heads arrive. "Fengxiao knew men to the bone."',
+    descriptionZh: '柳城歸途,郭奉孝病卒,年三十八,遺書一封:遼東不可攻——急之則公孫康與二袁併力,緩之則自相圖。曹公按兵不動,旬日,公孫康果送二袁首級至。公臨其喪,哀甚:「奉孝知人,吾不及也。」',
+    effects: [
+      { kind: 'officer-status', officerId: 'guo-jia', status: 'dead' },
+      { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: 2 },
+      { kind: 'force-gold-ruler', rulerOfficerId: 'cao-cao', delta: 300 },
+      { kind: 'flag', key: 'guojia-farewell' },
+    ],
+    mood: 'somber',
+  },
+  {
+    id: 'evt-scolding-wanglang',
+    name: { en: 'Scolding Wang Lang to Death', zh: '武鄉侯罵死王朗' },
+    yearMin: 227,
+    yearMax: 229,
+    requires: [
+      { kind: 'officer-active', officerId: 'zhuge-liang' },
+      { kind: 'officer-alive', officerId: 'wang-lang' },
+      { kind: 'officer-rules-cities-min', officerId: 'liu-shan', count: 3 },
+    ],
+    description:
+      'Before the lines at Qishan, old Minister Wang Lang rides out to talk Zhuge Liang into surrender with smooth words about the Mandate having shifted. The Prime Minister answers from his carriage — a public accounting of every year Wang Lang served the Han and every year he helped bury it. The old man reels, cries out once, and drops dead from his horse.',
+    descriptionZh: '兩軍陣前,司徒王朗出馬,巧言天命有歸,勸丞相倒戈卸甲。孔明於車上朗聲數其歷仕漢朝、反助篡逆之罪:「皓首匹夫!蒼髯老賊!汝即日將歸於九泉之下,何面目見二十四帝乎!」朗聽罷,大叫一聲,撞死於馬下。',
+    effects: [
+      { kind: 'officer-status', officerId: 'wang-lang', status: 'dead' },
+      { kind: 'mandate-ruler', rulerOfficerId: 'liu-shan', delta: 1 },
+      { kind: 'flag', key: 'wanglang-scolded' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-muniu-liuma',
+    name: { en: 'Wooden Oxen, Gliding Horses', zh: '木牛流馬' },
+    yearMin: 231,
+    yearMax: 234,
+    requires: [
+      { kind: 'officer-active', officerId: 'zhuge-liang' },
+      { kind: 'city-owner-ruler', cityId: 'chengdu', rulerOfficerId: 'liu-shan' },
+    ],
+    description:
+      'Grain has broken every northern campaign before the soldiers did. This time carpenters fill the Xie Valley road with Zhuge Liang\'s contraptions — wooden oxen and gliding horses that walk the plank-roads without fodder or complaint, tongues that lock so captured ones stand useless. The granaries of Chengdu flow to the front.',
+    descriptionZh: '歷次北伐,皆困於糧。此番丞相造木牛流馬,不食不飲,踏棧道而行,扭其舌則不能動,魏人奪之無用。成都之糧,源源濟於祁山前線。',
+    effects: [
+      { kind: 'city-food', cityId: 'chengdu', delta: 6000 },
+      { kind: 'flag', key: 'muniu-liuma' },
+    ],
+    mood: 'auspicious',
+  },
+  {
+    id: 'evt-dead-zhuge-scare',
+    name: { en: 'A Dead Zhuge Routs a Living Zhongda', zh: '死諸葛嚇走活仲達' },
+    yearMin: 234,
+    yearMax: 235,
+    requires: [
+      { kind: 'flag-set', key: 'wuzhang-star-falls' },
+      { kind: 'officer-alive', officerId: 'sima-yi' },
+      { kind: 'officer-alive', officerId: 'jiang-wei' },
+    ],
+    description:
+      'The star has fallen, and Sima Yi finally gives chase — until the Shu rearguard wheels about, banners parting around a four-wheeled carriage and a seated figure in a crane cloak, feather fan in hand. Sima Yi flees fifty li clutching his own head: "Is it still on my neck?" The figure was wood. The retreat is flawless.',
+    descriptionZh: '將星既隕,司馬懿方敢來追。蜀軍忽然回旗返鼓,四輪車上,綸巾羽扇,端坐如生。懿大驚:「孔明尚在!」策馬奔五十里,撫首問:「吾頭尚在否?」——車上乃木人也。蜀軍從容全師而退。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'jiang-wei', delta: 5 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'liu-shan', delta: 1 },
+      { kind: 'flag', key: 'dead-zhuge-scare' },
+    ],
+    mood: 'mystic',
+  },
+  {
+    id: 'evt-caomao-blood',
+    name: { en: "Sima Zhao's Heart", zh: '司馬昭之心' },
+    yearMin: 260,
+    yearMax: 260,
+    requires: [
+      { kind: 'officer-alive', officerId: 'cao-mao' },
+      { kind: 'officer-alive', officerId: 'sima-zhao' },
+    ],
+    description:
+      '"Sima Zhao\'s heart — every passerby knows it." The boy emperor Cao Mao will not sit and wait to be deposed: he gathers the palace guards and pot-boys and drives his carriage at the regent\'s gates. On the southern avenue Cheng Ji runs a halberd through the Son of Heaven. Sima Zhao weeps in public, executes the hand that did it, and takes another step toward the throne.',
+    descriptionZh: '「司馬昭之心,路人所知也!」少帝曹髦不甘坐而受廢,率殿中宿衛蒼頭數百,鼓譟而出討昭。至南闕,成濟抽戈犯蹕,弒帝於車下。昭匿其主謀,斬成濟三族以塞天下之口——而代魏之階,又進一級。',
+    effects: [
+      { kind: 'officer-status', officerId: 'cao-mao', status: 'dead' },
+      { kind: 'flag', key: 'caomao-slain' },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-zhugeke-fall',
+    name: { en: 'The Fall of Zhuge Ke', zh: '諸葛恪之敗' },
+    yearMin: 253,
+    yearMax: 254,
+    requires: [
+      { kind: 'flag-set', key: 'sun-quan-gone' },
+      { kind: 'officer-alive', officerId: 'zhuge-ke' },
+    ],
+    description:
+      'Regent since Sun Quan\'s death and drunk on his victory at Dongxing, Zhuge Ke throws two hundred thousand men at Xincheng against every remonstrance — and brings back plague, defeat, and a court that has stopped forgiving him. At a banquet in the palace, Sun Jun\'s swordsmen step out from behind the screens. The wisest clan of the age loses its Wu branch in one evening.',
+    descriptionZh: '孫權既沒,諸葛恪輔政,恃東興之捷,違眾議舉二十萬攻新城,師老疫起,喪敗而還,猶自若也。孫峻伏兵於殿,宴中殺之,夷其三族。諸葛一門,吳枝一夕而折。',
+    effects: [
+      { kind: 'officer-status', officerId: 'zhuge-ke', status: 'dead' },
+      { kind: 'flag', key: 'zhugeke-purged' },
+    ],
+    mood: 'ominous',
   },
 ];
 
