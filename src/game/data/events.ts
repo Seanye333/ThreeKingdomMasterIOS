@@ -1883,6 +1883,351 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       },
     ],
   },
+
+  /* ─── 名場面補完批(2026-07)────────────────────────────────────────
+     Twelve beloved beats the catalog still lacked, in rough chronology.
+     Two new chains: 甘露寺招親 → 截江奪阿斗 (ganlu-married gates the
+     river intercept) and 威震逍遙津 → 甘寧百騎劫營 (Wu's revenge raid
+     only fires after the shame of Xiaoyao Ford). Five are choice events;
+     per the engine contract the FIRST choice is always the historical
+     path the AI walks. */
+  {
+    id: 'evt-wangmei',
+    name: { en: 'Plums Beyond the Ridge', zh: '望梅止渴' },
+    yearMin: 196,
+    yearMax: 200,
+    season: 'summer',
+    requires: [
+      { kind: 'officer-alive', officerId: 'cao-cao' },
+      { kind: 'officer-rules-cities-min', officerId: 'cao-cao', count: 1 },
+    ],
+    description:
+      'On a parched summer march the columns stagger, tongues cracked. Cao Cao rises in his stirrups and points past the ridge: "Plum groves ahead — sweet-sour fruit, all you can eat!" Mouths water at the very word, and the army makes the next spring in one push.',
+    descriptionZh: '盛夏行軍,道乏水源,三軍口渴難行。曹公揚鞭遙指:「前有大梅林,饒子甘酸,可以解渴!」士卒聞之,口皆生津,一鼓作氣趕至前源。',
+    effects: [
+      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'cao-cao', multiplier: 1.03 },
+      { kind: 'flag', key: 'wangmei' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-birou-lament',
+    name: { en: 'The Lament at Jingzhou', zh: '髀肉之嘆' },
+    yearMin: 201,
+    yearMax: 206,
+    requires: [
+      { kind: 'officer-alive', officerId: 'liu-bei' },
+      { kind: 'officer-rules-cities-min', officerId: 'liu-bei', count: 1 },
+    ],
+    description:
+      'A guest in Jingzhou, Liu Bei catches sight of the soft flesh grown back on his thighs and weeps: "Once I never left the saddle, and my thighs were hard as wood. The months gallop past, old age comes on — and still no great work stands to my name." His sworn brothers hear, and burn.',
+    descriptionZh: '寄寓荊州,一日如廁,見髀裡肉生,慨然流涕:「吾常身不離鞍,髀肉皆消;今不復騎,髀裡肉生。日月若馳,老將至矣,而功業不建,是以悲耳!」左右聞之,無不奮然。',
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'liu-bei', delta: 1 },
+      { kind: 'officer-loyalty', officerId: 'guan-yu', delta: 3 },
+      { kind: 'officer-loyalty', officerId: 'zhang-fei', delta: 3 },
+      { kind: 'flag', key: 'birou-lament' },
+    ],
+    mood: 'somber',
+  },
+  {
+    id: 'evt-caochong-elephant',
+    name: { en: 'Weighing the Elephant', zh: '曹沖稱象' },
+    yearMin: 201,
+    yearMax: 207,
+    requires: [
+      { kind: 'officer-alive', officerId: 'cao-chong' },
+      { kind: 'officer-alive', officerId: 'cao-cao' },
+      { kind: 'officer-rules-cities-min', officerId: 'cao-cao', count: 2 },
+    ],
+    description:
+      'Sun Quan sends a great elephant; the court is stumped for a way to weigh it. The boy Cao Chong pipes up: "Lead it onto a barge, mark the waterline, then load stones to the same mark and weigh those." Cao Cao beams — word of the prodigy runs through the realm.',
+    descriptionZh: '孫權致巨象,曹公欲知其斤重,訪之群下,咸莫能出其理。沖曰:「置象大船之上,而刻其水痕所至,稱物以載之,則校可知矣。」公大悅,施行焉——神童之名,傳於天下。',
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: 1 },
+      { kind: 'officer-loyalty', officerId: 'cao-chong', delta: 5 },
+      { kind: 'flag', key: 'chong-elephant' },
+    ],
+    mood: 'auspicious',
+  },
+  {
+    id: 'evt-wenji-return',
+    name: { en: 'Wenji Returns to the Han', zh: '文姬歸漢' },
+    yearMin: 206,
+    yearMax: 210,
+    requires: [
+      { kind: 'officer-alive', officerId: 'cai-yan' },
+      { kind: 'officer-rules-cities-min', officerId: 'cao-cao', count: 3 },
+    ],
+    description:
+      "Cai Yong's daughter Wenji has lived twelve years a captive of the southern Xiongnu; her Eighteen Songs of the Nomad Flute drift back across the border and wound every heart that hears them. Cao Cao, who loved her father, may yet ransom her home — at a price in gold and jade.",
+    descriptionZh: '蔡邕之女文姬,亂中沒於南匈奴十二載,作《胡笳十八拍》,聲聞中原。曹公素與邕善,痛其無嗣,聞之愴然——遣使者以金璧贖之乎?',
+    effects: [],
+    chooserRulerId: 'cao-cao',
+    mood: 'somber',
+    choices: [
+      {
+        id: 'ransom',
+        label: { zh: '遣使齎金璧,贖文姬歸漢', en: 'Send gold and jade to bring her home' },
+        effects: [
+          { kind: 'force-gold-ruler', rulerOfficerId: 'cao-cao', delta: -400 },
+          { kind: 'officer-join-ruler', officerId: 'cai-yan', rulerOfficerId: 'cao-cao' },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: 2 },
+          { kind: 'flag', key: 'wenji-returned' },
+        ],
+      },
+      {
+        id: 'later',
+        label: { zh: '兵戈未息,俟諸他日', en: 'The wars come first — another day' },
+        effects: [{ kind: 'flag', key: 'wenji-stays' }],
+      },
+    ],
+  },
+  {
+    id: 'evt-ganlu-wedding',
+    name: { en: 'Wedding at Ganlu Temple', zh: '甘露寺招親' },
+    yearMin: 209,
+    yearMax: 211,
+    requires: [
+      { kind: 'officer-alive', officerId: 'liu-bei' },
+      { kind: 'officer-alive', officerId: 'lady-sun' },
+      { kind: 'officer-alive', officerId: 'sun-quan' },
+      { kind: 'officer-rules-cities-min', officerId: 'liu-bei', count: 2 },
+      { kind: 'officer-rules-cities-min', officerId: 'sun-quan', count: 2 },
+    ],
+    description:
+      "Zhou Yu baits the hook: lure Liu Bei across the river to wed Sun Quan's sister, then hold him hostage for Jingzhou. But at Ganlu Temple the Dowager takes one look at the guest and approves in earnest. A trap that may turn into a true marriage — cross the river, or refuse?",
+    descriptionZh: '周瑜獻計,以主公之妹為餌,誆劉備過江招親,實欲囚之以索荊州。豈料吳國太甘露寺相看,竟真愛其英雄之器。弄假成真乎?——過江,或是不過?',
+    effects: [],
+    chooserRulerId: 'liu-bei',
+    mood: 'auspicious',
+    choices: [
+      {
+        id: 'cross',
+        label: { zh: '龍鳳呈祥,過江赴會', en: 'Cross the river to the wedding' },
+        effects: [
+          { kind: 'officer-join-ruler', officerId: 'lady-sun', rulerOfficerId: 'liu-bei' },
+          { kind: 'mandate-ruler', rulerOfficerId: 'liu-bei', delta: 2 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-quan', delta: -1 },
+          { kind: 'flag', key: 'ganlu-married' },
+        ],
+      },
+      {
+        id: 'decline',
+        label: { zh: '恐是鴻門之宴,辭之', en: 'Smell the trap — decline' },
+        effects: [
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-quan', delta: 1 },
+          { kind: 'flag', key: 'ganlu-declined' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'evt-jiejiang-aduo',
+    name: { en: 'Seizing A-Dou on the River', zh: '截江奪阿斗' },
+    yearMin: 210,
+    yearMax: 215,
+    requires: [
+      { kind: 'flag-set', key: 'ganlu-married' },
+      { kind: 'officer-alive', officerId: 'zhao-yun' },
+      { kind: 'officer-alive', officerId: 'lady-sun' },
+    ],
+    description:
+      'With Liu Bei away in Shu, Sun Quan sends ships for his sister — and Lady Sun carries little A-Dou aboard with her! Zhao Yun gallops the bank alone, Zhang Fei swings his boats across the current. Wrest the heir back?',
+    descriptionZh: '劉備方入蜀,孫權遣舟迎妹歸吳,夫人竟攜阿斗登船!趙雲聞訊單騎沿江追至,張飛引舟橫截江面。奪回幼主乎?',
+    effects: [],
+    chooserRulerId: 'liu-bei',
+    mood: 'martial',
+    choices: [
+      {
+        id: 'intercept',
+        label: { zh: '子龍截江,奪回阿斗', en: 'Zhao Yun boards — take back the heir' },
+        effects: [
+          { kind: 'officer-join-ruler', officerId: 'lady-sun', rulerOfficerId: 'sun-quan' },
+          { kind: 'officer-loyalty', officerId: 'zhao-yun', delta: 8 },
+          { kind: 'flag', key: 'aduo-rescued' },
+        ],
+      },
+      {
+        id: 'let-go',
+        label: { zh: '夫人既去,骨肉隨她去罷', en: 'Let wife and child go' },
+        effects: [
+          { kind: 'officer-join-ruler', officerId: 'lady-sun', rulerOfficerId: 'sun-quan' },
+          { kind: 'mandate-ruler', rulerOfficerId: 'liu-bei', delta: -2 },
+          { kind: 'officer-loyalty', officerId: 'zhao-yun', delta: -4 },
+          { kind: 'flag', key: 'aduo-taken' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'evt-zuoci-mocks',
+    name: { en: 'Zuo Ci Mocks the King', zh: '左慈擲杯戲曹' },
+    yearMin: 213,
+    yearMax: 219,
+    requires: [
+      { kind: 'officer-alive', officerId: 'zuo-ci' },
+      { kind: 'officer-rules-cities-min', officerId: 'cao-cao', count: 4 },
+    ],
+    description:
+      'At the feast the hermit Zuo Ci tosses his wine-cup into the air — it becomes a white dove and flies off. The delicacies on the table, he says, were fetched this very hour from a thousand li away. Half the hall cries sorcery and calls for his head.',
+    descriptionZh: '宴上有隱者左慈,擲杯於空,化白鳩飛去;席間美酒佳肴,自雲皆頃刻取自千里之外。滿座失色,或言妖人惑眾,當捕而誅之。',
+    effects: [],
+    chooserRulerId: 'cao-cao',
+    mood: 'mystic',
+    choices: [
+      {
+        id: 'hunt',
+        label: { zh: '妖人惑眾,發兵搜捕', en: 'Sorcerer! Hunt him down' },
+        effects: [
+          { kind: 'force-gold-ruler', rulerOfficerId: 'cao-cao', delta: -200 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: -1 },
+          { kind: 'flag', key: 'zuoci-hunted' },
+        ],
+      },
+      {
+        id: 'laugh',
+        label: { zh: '神仙之事,一笑置之', en: 'Smile, and let the immortal be' },
+        effects: [
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: 1 },
+          { kind: 'flag', key: 'zuoci-shrugged' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'evt-xiaoyaojin',
+    name: { en: 'Terror at Xiaoyao Ford', zh: '威震逍遙津' },
+    yearMin: 214,
+    yearMax: 217,
+    season: 'autumn',
+    requires: [
+      { kind: 'officer-alive', officerId: 'zhang-liao' },
+      { kind: 'city-owner-ruler', cityId: 'hefei', rulerOfficerId: 'cao-cao' },
+      { kind: 'officer-alive', officerId: 'sun-quan' },
+      { kind: 'officer-rules-cities-min', officerId: 'sun-quan', count: 3 },
+    ],
+    description:
+      "Sun Quan rings Hefei with a hundred thousand men. At first light Zhang Liao straps on his armor and leads eight hundred picked soldiers straight into the Wu host, roaring his own name, and cuts through to Sun Quan's very standard. The Wu army breaks back across Xiaoyao Ford — and in Jiangdong they hush crying children with his name.",
+    descriptionZh: '孫權十萬眾圍合肥,張遼被甲執戟,率八百死士凌晨直衝吳陣,大呼「張遼在此!」直抵孫權麾旗之下。吳軍披靡,退渡逍遙津。自是江東小兒聞遼名,夜不敢啼。',
+    effects: [
+      { kind: 'city-defense', cityId: 'hefei', delta: 15 },
+      { kind: 'officer-loyalty', officerId: 'zhang-liao', delta: 8 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: 2 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'sun-quan', delta: -2 },
+      { kind: 'flag', key: 'xiaoyaojin' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-ganning-raid',
+    name: { en: 'A Hundred Riders Raid the Camp', zh: '甘寧百騎劫魏營' },
+    yearMin: 214,
+    yearMax: 220,
+    requires: [
+      { kind: 'flag-set', key: 'xiaoyaojin' },
+      { kind: 'officer-alive', officerId: 'gan-ning' },
+      { kind: 'officer-alive', officerId: 'sun-quan' },
+    ],
+    description:
+      'To wash out the shame of Xiaoyao Ford, Gan Ning picks a hundred riders — bits in the horses\' mouths, bells muffled — and storms the Cao camp by night, back before dawn with dozens of heads and not a man lost. Sun Quan claps his back: "Mengde has Zhang Liao; I have Xingba. It is answer enough."',
+    descriptionZh: '為雪逍遙津之恥,甘寧選百騎,人銜枚、馬摘鈴,夜劫曹營,斬首數十級而還,不折一人一騎。孫權撫其背曰:「孟德有張遼,孤有興霸,足相敵也!」',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'gan-ning', delta: 8 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'sun-quan', delta: 2 },
+      { kind: 'flag', key: 'ganning-raid' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-jilei-yangxiu',
+    name: { en: 'Chicken Ribs', zh: '雞肋・楊修之死' },
+    yearMin: 218,
+    yearMax: 220,
+    requires: [
+      { kind: 'officer-alive', officerId: 'yang-xiu' },
+      { kind: 'officer-alive', officerId: 'cao-cao' },
+      { kind: 'officer-rules-cities-min', officerId: 'cao-cao', count: 4 },
+    ],
+    description:
+      'Deadlocked at Hanzhong, Cao Cao mutters the night watchword: "chicken ribs." Clerk Yang Xiu hears it and tells the men to pack: "Chicken ribs — no meat to eat, yet a shame to throw away. The King has already decided to withdraw." The word spreads; the camp stirs.',
+    descriptionZh: '漢中相持,進不能勝,退恐人笑。夜傳口令,曹公隨口曰「雞肋」。主簿楊修聞之,竟教軍士收拾行裝:「雞肋者,食之無肉,棄之有味——魏王歸計已決矣。」語泄,軍心浮動。',
+    effects: [],
+    chooserRulerId: 'cao-cao',
+    mood: 'ominous',
+    choices: [
+      {
+        id: 'execute',
+        label: { zh: '造言亂軍,斬之', en: 'He unsettles the army — behead him' },
+        effects: [
+          { kind: 'officer-status', officerId: 'yang-xiu', status: 'dead' },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: -1 },
+          { kind: 'flag', key: 'yangxiu-dead' },
+        ],
+      },
+      {
+        id: 'spare',
+        label: { zh: '恃才放曠,姑恕之', en: 'Brilliant and reckless — pardon him' },
+        effects: [
+          { kind: 'officer-loyalty', officerId: 'yang-xiu', delta: 10 },
+          { kind: 'flag', key: 'yangxiu-spared' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'evt-huatuo-prison',
+    name: { en: 'Death of the Divine Physician', zh: '神醫之死' },
+    yearMin: 218,
+    yearMax: 220,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hua-tuo' },
+      { kind: 'officer-alive', officerId: 'cao-cao' },
+      { kind: 'officer-rules-cities-min', officerId: 'cao-cao', count: 4 },
+    ],
+    description:
+      'The headaches grow blinding. The divine physician Hua Tuo examines the King of Wei: "The root sits inside the skull. Drink my numbing draught and let me open it with an axe, and the sickness ends." Cao Cao goes white with rage: "An assassin — Guan Yu\'s man!" Prison and death — or trust the healer?',
+    descriptionZh: '頭風愈烈,召神醫華佗。佗曰:「病根在腦中,須飲麻肺湯,以利斧開顱,方可除根。」曹公勃然:「安敢害孤!此必為關羽報仇之細作!」——下獄拷殺,或信其醫道?',
+    effects: [],
+    chooserRulerId: 'cao-cao',
+    mood: 'ominous',
+    choices: [
+      {
+        id: 'kill',
+        label: { zh: '必是行刺,下獄殺之', en: 'An assassin — to prison and death' },
+        effects: [
+          { kind: 'officer-status', officerId: 'hua-tuo', status: 'dead' },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: -2 },
+          { kind: 'flag', key: 'huatuo-dead' },
+        ],
+      },
+      {
+        id: 'trust',
+        label: { zh: '信其醫道,留為侍醫', en: 'Trust him — keep him as court physician' },
+        effects: [
+          { kind: 'officer-join-ruler', officerId: 'hua-tuo', rulerOfficerId: 'cao-cao' },
+          { kind: 'officer-loyalty', officerId: 'hua-tuo', delta: 10 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: 1 },
+          { kind: 'flag', key: 'huatuo-spared' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'evt-lebusishu',
+    name: { en: 'No Longing for Shu', zh: '樂不思蜀' },
+    yearMin: 264,
+    yearMax: 270,
+    requires: [
+      { kind: 'flag-set', key: 'shu-fallen-263' },
+      { kind: 'officer-alive', officerId: 'liu-shan' },
+    ],
+    description:
+      'Liu Shan, now "Duke of Comfort," is settled at Luoyang. At a banquet Sima Zhao has the musicians play the airs of Shu; the old Shu officials weep into their sleeves while Liu Shan giggles on. "Do you miss Shu?" — "It is pleasant here. I do not think of Shu." The empire laughs; the Duke dies in bed.',
+    descriptionZh: '安樂公劉禪徙居洛陽。司馬昭設宴,故奏蜀樂,蜀之舊臣盡皆墮淚,禪嬉笑自若。昭問:「頗思蜀否?」禪曰:「此間樂,不思蜀。」——天下笑之,而安樂公竟以此善終。',
+    effects: [{ kind: 'flag', key: 'lebusishu' }],
+    mood: 'somber',
+  },
 ];
 
 export const EVENTS_BY_ID: Record<string, HistoricalEvent> = Object.fromEntries(

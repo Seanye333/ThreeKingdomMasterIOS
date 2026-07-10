@@ -113,3 +113,46 @@ describe('新增四鏈 — 連環計/烏巢/白衣/空城', () => {
     expect(evt.choices?.[0].id).toBe('retreat');
   });
 });
+
+describe('名場面補完批 — 甘露寺→截江 / 逍遙津→甘寧劫營', () => {
+  it('截江奪阿斗 only fires after the Ganlu wedding actually happened', () => {
+    const evt = HISTORICAL_EVENTS.find((e) => e.id === 'evt-jiejiang-aduo')!;
+    expect(evt.requires?.some((r) => r.kind === 'flag-set' && r.key === 'ganlu-married')).toBe(true);
+    // Declining the wedding sets a different flag — the intercept never fires.
+    const wedding = HISTORICAL_EVENTS.find((e) => e.id === 'evt-ganlu-wedding')!;
+    const decline = wedding.choices!.find((c) => c.id === 'decline')!;
+    expect(decline.effects.some((e) => e.kind === 'flag' && e.key === 'ganlu-married')).toBe(false);
+    // Historical first choice recovers the heir and returns Lady Sun to Wu.
+    expect(evt.choices?.[0].id).toBe('intercept');
+    expect(evt.choices?.[0].effects.some((e) => e.kind === 'officer-join-ruler' && e.rulerOfficerId === 'sun-quan')).toBe(true);
+  });
+
+  it("甘寧百騎劫營 is gated on Xiaoyao Ford's shame", () => {
+    const raid = HISTORICAL_EVENTS.find((e) => e.id === 'evt-ganning-raid')!;
+    expect(raid.requires?.some((r) => r.kind === 'flag-set' && r.key === 'xiaoyaojin')).toBe(true);
+    const ford = HISTORICAL_EVENTS.find((e) => e.id === 'evt-xiaoyaojin')!;
+    expect(ford.effects.some((e) => e.kind === 'flag' && e.key === 'xiaoyaojin')).toBe(true);
+  });
+
+  it('the choice events walk history on their first choice (AI contract)', () => {
+    const firsts: Record<string, string> = {
+      'evt-wenji-return': 'ransom',
+      'evt-ganlu-wedding': 'cross',
+      'evt-jiejiang-aduo': 'intercept',
+      'evt-jilei-yangxiu': 'execute',
+      'evt-huatuo-prison': 'kill',
+      'evt-zuoci-mocks': 'hunt',
+    };
+    for (const [id, choiceId] of Object.entries(firsts)) {
+      const evt = HISTORICAL_EVENTS.find((e) => e.id === id)!;
+      expect(evt.choices?.[0].id, id).toBe(choiceId);
+    }
+  });
+
+  it('樂不思蜀 rides the fall-of-Shu flag set by 鄧艾偷渡陰平', () => {
+    const evt = HISTORICAL_EVENTS.find((e) => e.id === 'evt-lebusishu')!;
+    expect(evt.requires?.some((r) => r.kind === 'flag-set' && r.key === 'shu-fallen-263')).toBe(true);
+    const fall = HISTORICAL_EVENTS.find((e) => e.id === 'evt-shu-falls-deng-ai')!;
+    expect(fall.effects.some((e) => e.kind === 'flag' && e.key === 'shu-fallen-263')).toBe(true);
+  });
+});
