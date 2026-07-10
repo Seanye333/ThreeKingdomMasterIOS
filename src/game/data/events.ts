@@ -273,6 +273,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
           { kind: 'officer-join-ruler', officerId: 'chen-gong', rulerOfficerId: 'cao-cao' },
           { kind: 'officer-loyalty', officerId: 'chen-gong', delta: -15 },
           { kind: 'flag', key: 'xiapi-resolved' },
+          { kind: 'flag', key: 'lubu-spared' }, // distinct hook for the 抉擇勳功
         ],
       },
     ],

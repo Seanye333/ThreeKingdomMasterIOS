@@ -594,6 +594,98 @@ export const ACHIEVEMENTS: Achievement[] = [
     tier: 'legendary',
     trigger: { kind: 'fire-event', targetId: 'evt-grand-city' },
   },
+
+  // ─── 2026-07 名場面勳功 — historical beats & the roads not taken ──
+  // fire-event = the beat happened in your campaign (any force);
+  // event-choice = YOU sat in the chooser's seat and picked that path.
+  {
+    id: 'ach-thousand-li-ride',
+    name: { en: 'A Thousand Li Alone', zh: '千里走單騎' },
+    description: 'See Guan Yu cut through five passes and return to Liu Bei.',
+    descriptionZh: '關羽掛印封金,過五關斬六將,終歸劉備麾下。',
+    tier: 'gold',
+    trigger: { kind: 'fire-event', targetId: 'evt-guan-yu-five-passes' },
+  },
+  {
+    id: 'ach-xiaoyaojin',
+    name: { en: 'Eight Hundred at the Ford', zh: '威震逍遙津' },
+    description: 'Zhang Liao breaks a hundred thousand at Xiaoyao Ford.',
+    descriptionZh: '張遼八百死士破十萬 — 江東小兒,聞名止啼。',
+    tier: 'silver',
+    trigger: { kind: 'fire-event', targetId: 'evt-xiaoyaojin' },
+  },
+  {
+    id: 'ach-dead-zhuge',
+    name: { en: 'The Wooden Chancellor', zh: '死諸葛走生仲達' },
+    description: 'A carved figure in a carriage routs Sima Yi.',
+    descriptionZh: '將星已隕,四輪車上木人端坐 — 仲達奔五十里,撫首自問。',
+    tier: 'silver',
+    trigger: { kind: 'fire-event', targetId: 'evt-dead-zhuge-scare' },
+  },
+  {
+    id: 'ach-lebusishu',
+    name: { en: 'It Is Pleasant Here', zh: '此間樂,不思蜀' },
+    description: 'Watch the Duke of Comfort outlive his kingdom, smiling.',
+    descriptionZh: '蜀樂既奏,舊臣墮淚,安樂公嬉笑自若 — 竟以此善終。',
+    tier: 'bronze',
+    trigger: { kind: 'fire-event', targetId: 'evt-lebusishu' },
+  },
+  {
+    id: 'ach-tushan-stormed',
+    name: { en: 'No Terms on Earthen Hill', zh: '土山無約' },
+    description: 'Refuse Guan Yu\'s three terms and storm the hill. History will not forgive you.',
+    descriptionZh: '不納三事,縱兵攻山 — 武聖殞於土山,青史為之改寫。',
+    tier: 'gold',
+    trigger: { kind: 'event-choice', targetId: 'tushan-stormed' },
+  },
+  {
+    id: 'ach-huatuo-spared',
+    name: { en: 'The Physician Lives', zh: '神醫侍側' },
+    description: 'Trust Hua Tuo with the axe and keep him as court physician.',
+    descriptionZh: '不疑開顱之言,留神醫為侍醫 — 頭風自此有主。',
+    tier: 'gold',
+    trigger: { kind: 'event-choice', targetId: 'huatuo-spared' },
+  },
+  {
+    id: 'ach-yangxiu-spared',
+    name: { en: 'Pardon the Chicken Ribs', zh: '雞肋容才' },
+    description: 'Pardon Yang Xiu for reading your mind once too often.',
+    descriptionZh: '恃才放曠,姑恕之 — 主簿之首,留於頸上。',
+    tier: 'bronze',
+    trigger: { kind: 'event-choice', targetId: 'yangxiu-spared' },
+  },
+  {
+    id: 'ach-shenting-released',
+    name: { en: 'Each Serves His Lord', zh: '神亭縱義' },
+    description: 'Set Taishi Ci free after the duel at Shenting Ridge.',
+    descriptionZh: '神亭酣鬥之後,義而縱之 — 各為其主,英雄相惜。',
+    tier: 'silver',
+    trigger: { kind: 'event-choice', targetId: 'shenting-released' },
+  },
+  {
+    id: 'ach-aduo-taken',
+    name: { en: 'The Heir Sails East', zh: '阿斗渡江' },
+    description: 'Let Lady Sun carry little A-Dou away to Wu.',
+    descriptionZh: '夫人既去,骨肉隨她去罷 — 幼主渡江,國本東流。',
+    tier: 'silver',
+    trigger: { kind: 'event-choice', targetId: 'aduo-taken' },
+  },
+  {
+    id: 'ach-wenji-ransom',
+    name: { en: 'Gold and Jade for a Song', zh: '文姬歸漢' },
+    description: 'Ransom Cai Wenji home from the Xiongnu yourself.',
+    descriptionZh: '親遣使者齎金璧,贖文姬歸漢 — 胡笳十八拍,終得故土聞。',
+    tier: 'silver',
+    trigger: { kind: 'event-choice', targetId: 'wenji-returned' },
+  },
+  {
+    id: 'ach-lubu-spared',
+    name: { en: 'A Third Master After All', zh: '轅門再拜' },
+    description: 'Take Lü Bu into your service at White Gate Tower — and live with it.',
+    descriptionZh: '白門樓上不縊飛將,收為己用 — 三姓家奴,今拜第四主;隱患自負。',
+    tier: 'gold',
+    trigger: { kind: 'event-choice', targetId: 'lubu-spared' },
+  },
 ];
 
 export const ACHIEVEMENTS_BY_ID: Record<string, Achievement> = Object.fromEntries(

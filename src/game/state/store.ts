@@ -10765,6 +10765,20 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
           mandateAfterChoice = { byForce };
         }
+        // 抉擇勳功 — every flag THIS choice set is an 'event-choice' trigger.
+        // Only the player's own resolveEventChoice reports (the AI walking
+        // the historical path applies flags without passing through here).
+        const choiceUnlocks: string[] = [];
+        {
+          let achC = loadAchievementProgress();
+          for (const eff of choice.effects) {
+            if (eff.kind !== 'flag') continue;
+            const r = processTrigger(achC, { kind: 'event-choice', targetId: eff.key });
+            achC = r.progress;
+            choiceUnlocks.push(...r.newlyUnlocked);
+          }
+          if (choiceUnlocks.length > 0) saveAchievementProgress(achC);
+        }
         set({
           cities: after.cities,
           officers: after.officers,
@@ -10772,6 +10786,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           eventFlags: after.eventFlags,
           mandate: mandateAfterChoice,
           pendingEvent: null,
+          ...(choiceUnlocks.length > 0
+            ? { recentAchievementUnlocks: [...state.recentAchievementUnlocks, ...choiceUnlocks] }
+            : {}),
           // 斷糧 — a strip-force-paint effect (火燒烏巢) sweeps the force's
           // whole supply ribbon: its deep columns start starving next season.
           ...(after.stripPaintForceIds && after.stripPaintForceIds.length > 0

@@ -28,7 +28,10 @@ export type AchievementTriggerKind =
   | 'boom-stall'        // 鐵鎖橫江 — your chain-boom stalled a hostile fleet
   | 'beacon-relay'      // 烽火傳京 — a frontier alarm relayed to the capital
   | 'bridge-burned'     // 據水斷橋 — you torched a crossing on the march
-  | 'ally-battle';      // 盟軍來會 — an ally's column joined your battle
+  | 'ally-battle'       // 盟軍來會 — an ally's column joined your battle
+  // 2026-07 event-chain choices — targetId is a flag key the PLAYER's own
+  // resolveEventChoice set (AI walking the historical path does not count):
+  | 'event-choice';
 
 export interface AchievementTrigger {
   kind: AchievementTriggerKind;
