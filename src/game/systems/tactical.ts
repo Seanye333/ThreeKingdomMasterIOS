@@ -661,6 +661,9 @@ export interface SetupParams {
   /** 疲勞 — points the attacker's units open at below full morale (a forced-marched
    *  column arrives weary; 以逸待勞). Default 0. */
   attackerFatigue?: number;
+  /** 疲勞(守方) — same for the defender's units (a worn enemy column you
+   *  bring to battle opens shaken; 師老兵疲 made visible in person). */
+  defenderFatigue?: number;
 }
 
 // (Legacy TERRAIN_RNG_SEED removed — terrain generation now lives in
@@ -946,7 +949,8 @@ export function setupTacticalBattle(p: SetupParams): TacticalBattle {
         maxAp,
         // 疲勞 / 都督之旗 — a forced-marched attacker opens below full morale; a
         // legion banner offsets it (negative fatigue) but can't exceed full.
-        morale: side === 'attacker' ? Math.min(100, Math.max(40, 100 - (p.attackerFatigue ?? 0))) : 100,
+        morale: Math.min(100, Math.max(40,
+          100 - (side === 'attacker' ? (p.attackerFatigue ?? 0) : (p.defenderFatigue ?? 0)))),
         isCommander,
         effects: [],
         unitType,

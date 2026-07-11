@@ -257,6 +257,8 @@ export interface ResolutionOutput {
   pendingSiegeDefenses?: Array<{
     sourceCityId: EntityId; targetCityId: EntityId;
     officerIds: EntityId[]; troops: number;
+    /** 師老兵疲 — the column's campaign fatigue at the gates (opens weary). */
+    fatigue?: number;
   }>;
   /** Pending delayed effects from stratagems (e.g. 截糧 troop drain). */
   delayedEffects?: Array<{ targetCityId?: EntityId; seasons: number; perSeason: number }>;
@@ -706,16 +708,38 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       }
       troopOverride[winner.officerId] = Math.max(0, winner.troops - winnerCasualty);
       if (input.playerForceId && winnerCmdr?.forceId === input.playerForceId) playerFieldClashesWon++;
+      // 陣擒 — officers can be taken in the crush of a broken field army:
+      // 8% each (a sprung ambush 15%); a rear guard halves his comrades'
+      // odds and himself always cuts free. Taken men ride to the victor's
+      // home city in chains.
+      const fieldCaptives: Officer[] = [];
+      for (const id of officersOf(loser)) {
+        const o = officers[id];
+        if (!o || o.status === 'dead' || o.status === 'imprisoned') continue;
+        if (loserRearGuard && id === loserRearGuard.id) continue;
+        const capChance = (ambush ? 0.15 : 0.08) * (loserRearGuard ? 0.5 : 1);
+        if (rng() < capChance) {
+          officers[id] = { ...o, status: 'imprisoned', capturedFromForceId: o.forceId ?? undefined, task: null, locationCityId: winner.cityId };
+          fieldCaptives.push(o);
+        }
+      }
+      // Captured companions leave the column's roster; a captured COMMANDER
+      // means no one holds the survivors together — they scatter, no rout.
+      const cmdrTaken = officers[loser.officerId]?.status === 'imprisoned';
+      if (!cmdrTaken && fieldCaptives.length > 0 && (loser.additionalOfficerIds?.length ?? 0) > 0) {
+        loser.additionalOfficerIds = loser.additionalOfficerIds!.filter((id) => officers[id]?.status !== 'imprisoned');
+      }
       // 潰走 — the beaten column no longer evaporates: enough survivors with
       // a shelter to run to become a rout on the map (huntable, shedding).
       const loserPos = aWins ? pb : pa;
-      const routShelter = convertToRout(loser, Math.max(0, loser.troops - loserCasualty), loserPos);
+      const routShelter = cmdrTaken ? null : convertToRout(loser, Math.max(0, loser.troops - loserCasualty), loserPos);
       if (!routShelter) {
         cancelledMarchOfficers.add(loser.officerId);
-        // Free the loser's commander + companions so they idle at source.
+        // Free the loser's commander + companions so they idle at source
+        // (the captured and the dead stay as they are).
         for (const id of [loser.officerId, ...(loser.additionalOfficerIds ?? [])]) {
           const o = officers[id];
-          if (o) officers[id] = { ...o, task: null, status: 'idle' };
+          if (o && o.status !== 'dead' && o.status !== 'imprisoned') officers[id] = { ...o, task: null, status: 'idle' };
         }
       }
       const wName = winnerCmdr?.name ?? { en: '?', zh: '？' };
@@ -754,6 +778,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         ambush,
         campAssault: campStormed,
         detected,
+        capturedIds: fieldCaptives.length > 0 ? fieldCaptives.map((o) => o.id) : undefined,
       };
       const detEn = detected ? `${wName.en}'s scouts saw the trap; ` : '';
       const detZh = detected ? `${wName.zh}早察其謀,` : '';
@@ -772,12 +797,12 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         ? ` The remnants${loserRearGuard ? ` (${loserRearGuard.name.en}'s rear guard covering)` : ''} rout toward ${routShelter.name.en}.`
         : '';
       // 繳獲入報 — name the spoils so a field victory reads as a real prize.
-      const spoilsZh = foodSpoil > 0 || goldSpoil > 0
+      const spoilsZh = (foodSpoil > 0 || goldSpoil > 0
         ? `繳獲糧秣 ${foodSpoil.toLocaleString()}${goldSpoil > 0 ? `、金 ${goldSpoil.toLocaleString()}` : ''}。`
-        : '';
-      const spoilsEn = foodSpoil > 0 || goldSpoil > 0
+        : '') + (fieldCaptives.length > 0 ? `陣擒${fieldCaptives.map((o) => o.name.zh).join('、')}!` : '');
+      const spoilsEn = (foodSpoil > 0 || goldSpoil > 0
         ? ` Spoils: ${foodSpoil.toLocaleString()} grain${goldSpoil > 0 ? `, ${goldSpoil.toLocaleString()} gold` : ''}.`
-        : '';
+        : '') + (fieldCaptives.length > 0 ? ` Taken in the press: ${fieldCaptives.map((o) => o.name.en).join(', ')}.` : '');
       entries.push({
         cityId: winner.targetCityId,
         kind: 'battle',
@@ -917,12 +942,28 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         food: cities[bestCity.id].food + sallyFoodSpoil,
         gold: cities[bestCity.id].gold + sallyGoldSpoil,
       };
-      const sallyShelter = convertToRout(a, Math.max(0, a.troops - marchLoss), pos);
+      // 陣擒 — the sally can drag officers off the broken column too (8%,
+      // rear guard halves it and himself always cuts free).
+      const sallyCaptives: Officer[] = [];
+      for (const id of officersOf(a)) {
+        const o = officers[id];
+        if (!o || o.status === 'dead' || o.status === 'imprisoned') continue;
+        if (sallyRearGuard && id === sallyRearGuard.id) continue;
+        if (rng() < 0.08 * (sallyRearGuard ? 0.5 : 1)) {
+          officers[id] = { ...o, status: 'imprisoned', capturedFromForceId: o.forceId ?? undefined, task: null, locationCityId: bestCity.id };
+          sallyCaptives.push(o);
+        }
+      }
+      const sallyCmdrTaken = officers[a.officerId]?.status === 'imprisoned';
+      if (!sallyCmdrTaken && sallyCaptives.length > 0 && (a.additionalOfficerIds?.length ?? 0) > 0) {
+        a.additionalOfficerIds = a.additionalOfficerIds!.filter((id) => officers[id]?.status !== 'imprisoned');
+      }
+      const sallyShelter = sallyCmdrTaken ? null : convertToRout(a, Math.max(0, a.troops - marchLoss), pos);
       if (!sallyShelter) {
         cancelledMarchOfficers.add(a.officerId);
         for (const id of [a.officerId, ...(a.additionalOfficerIds ?? [])]) {
           const o = officers[id];
-          if (o) officers[id] = { ...o, task: null, status: 'idle' };
+          if (o && o.status !== 'dead' && o.status !== 'imprisoned') officers[id] = { ...o, task: null, status: 'idle' };
         }
       }
       entries.push({
@@ -932,7 +973,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
           + (sallyFoodSpoil > 0 ? ` Spoils: ${sallyFoodSpoil.toLocaleString()} grain, ${sallyGoldSpoil.toLocaleString()} gold.` : ''),
         textZh: `${leader.name.zh}自${bestCity.name.zh}出擊,於途中擊潰${mName.zh}之軍（敵 −${marchLoss}，我 −${defLoss}）。`
           + (sallyShelter ? `殘部${sallyRearGuard ? `賴${sallyRearGuard.name.zh}斷後,` : ''}潰走,奔${sallyShelter.name.zh}而去。` : '')
-          + (sallyFoodSpoil > 0 ? `繳獲糧秣 ${sallyFoodSpoil.toLocaleString()}、金 ${sallyGoldSpoil.toLocaleString()}。` : ''),
+          + (sallyFoodSpoil > 0 ? `繳獲糧秣 ${sallyFoodSpoil.toLocaleString()}、金 ${sallyGoldSpoil.toLocaleString()}。` : '')
+          + (sallyCaptives.length > 0 ? `陣擒${sallyCaptives.map((o) => o.name.zh).join('、')}!` : ''),
         battle: makeFieldBattle(bestCity.id,
           { forceId: leader.forceId ?? null, commanderId: leader.id, companionIds: [], troops: sallyTroops, blended: sallyBlended, power: sallyPower, losses: defLoss },
           { forceId: oa.forceId ?? null, commanderId: a.officerId, companionIds: a.additionalOfficerIds ?? [], troops: a.troops, blended: marchStats.blended, power: marchStats.power, losses: marchLoss }),
@@ -1217,6 +1259,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         targetCityId: target.id,
         officerIds: [cmd.officerId, ...(cmd.additionalOfficerIds ?? [])],
         troops: cmd.troops,
+        fatigue: cmd.fatigue,
       });
       entries.push({
         cityId: target.id,

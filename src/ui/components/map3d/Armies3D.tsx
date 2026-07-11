@@ -371,12 +371,13 @@ function MarchingArmy({ from, to, color, commanderName, targetName, troops, seas
         <WarJunk color={color} />
       ) : (
         <>
+          {/* 潰不成軍 — a rout straggles wide with its banner in the mud. */}
           {FORMATION.map(([sx, sz], i) => (
-            <Soldier key={i} dx={sx} dz={sz} color={color} phase={i * 0.6}
+            <Soldier key={i} dx={sx * (routed ? 1.8 : 1)} dz={sz * (routed ? 1.5 : 1)} color={color} phase={i * (routed ? 1.1 : 0.6)}
               isLeader={i === 0} weaponType={weaponType} />
           ))}
           <MarchDust />
-          <MarchBanner color={color} />
+          {!routed && <MarchBanner color={color} />}
         </>
       )}
       {commanderName && (

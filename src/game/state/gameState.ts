@@ -662,6 +662,8 @@ export interface GameState {
   pendingSiegeDefenseQueue: Array<{
     sourceCityId: EntityId; targetCityId: EntityId;
     officerIds: EntityId[]; troops: number;
+    /** 師老兵疲 — the besieging column arrives worn (opens at lower morale). */
+    fatigue?: number;
   }>;
   /** 行軍預覽 — transient route highlight while the march picker is open. */
   marchPreview: { fromId: EntityId; toId: EntityId } | null;

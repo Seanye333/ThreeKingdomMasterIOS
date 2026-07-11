@@ -1428,8 +1428,10 @@ function buildFieldBattle(
     defenders,
     reinforcements: columnJoin.reinforcements,
     // 疲勞 less 都督之旗 — weary from a forced march (and a long campaign),
-    // steadied by the marshal's banner.
+    // steadied by the marshal's banner. The enemy column's own campaign
+    // fatigue shows up on ITS side of the field too (師老兵疲,親征可見).
     attackerFatigue: arrivalFatigueMorale(pArmy.pace) + fatigueMoraleMalus(pArmy.fatigue) - (pArmy.legionBanner ?? 0),
+    defenderFatigue: arrivalFatigueMorale(eArmy.pace) + fatigueMoraleMalus(eArmy.fatigue) - (eArmy.legionBanner ?? 0),
     // 排兵布陣 — a dug-in side fights from 十面埋伏; otherwise each marshal draws
     // up a formation suited to its arms & wits, the attacker reading the
     // defender's to counter it (陣克陣). No more formation-less NPC armies.
@@ -8435,6 +8437,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               '軍師:敵軍已潰,倉皇奔逃 — 潰軍無力再戰,以近城之兵「邀擊」掩殺,可收降卒、擒敵將;縱之則歸城復振。',
               'An enemy ROUT is fleeing — intercept it: routs cannot fight back, and cutting one down yields surrendered troops and captured officers.');
           }
+          // ④ a player column worn past 60 fatigue → remind them to rest it.
+          if (state.playerForceId
+            && Object.values(result.armies ?? {}).some((a) => a.forceId === state.playerForceId && (a.fatigue ?? 0) >= 60)) {
+            hints.maybeHint('fatigue-rest',
+              '軍師:師老兵疲 — 久役之軍戰力士氣俱衰(面板「疲」值),擇安地「駐守」休整數旬可復;圍城之營不得息。',
+              'A column past 60 FATIGUE fights well below strength — camp it somewhere safe to rest (siege camps grind on).');
+          }
         }
 
         // 自動存檔 — every season boundary writes one of three rolling
@@ -11517,6 +11526,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           battleGeo: { x: tp.x, y: tp.y, bearing, anchorCol: 16, season: state.date.season },
           siegeWorks: works,
           reinforcements: [...relief.reinforcements, ...columnJoin.reinforcements],
+          // 師老兵疲 — a long-campaigning besieger reaches your walls weary.
+          attackerFatigue: fatigueMoraleMalus(item.fatigue),
         });
         // 廟算 — the AI besieger lays its own pre-battle prep (地道/伏兵/夜襲/火計…).
         battle = applyAiBattlePreps(battle, state.playerForceId, state.officers);

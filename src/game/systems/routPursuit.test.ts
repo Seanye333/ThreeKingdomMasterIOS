@@ -58,7 +58,9 @@ describe('潰軍生成 — a broken field army routs instead of evaporating', ()
         troops: 20000, holding: true, targetX: campAt.x, targetY: campAt.y,
         totalSeasons: 5, seasonsRemaining: 5,
       },
-    }, () => 0.0) as never);
+      // rng 0.5 — above every 陣擒 capture chance, so the beaten commander
+      // stays free to hold his survivors together (the rout must form).
+    }, () => 0.5) as never);
     const kept = out.keptCommands?.['mover'] as { routed?: boolean; returning?: boolean; targetCityId?: string; fleeX?: number; troops?: number } | undefined;
     expect(kept?.routed).toBe(true);
     expect(kept?.returning).toBe(true);
@@ -153,6 +155,52 @@ describe('掩殺與收降 — hostile armies ride a rout down', () => {
     expect((strike?.textZh ?? '')).toContain('斷後');
     // Nobody was captured — the column still stands.
     expect((out.officers['runner'] as { status: string }).status).not.toBe('imprisoned');
+    expect((out.officers['dianjun'] as { status: string }).status).not.toBe('imprisoned');
+  });
+});
+
+describe('陣擒 — officers taken in the crush of a broken army', () => {
+  const clashScene = (companions?: { id: string; skills: string[] }) => {
+    const { cities } = fixtures();
+    const lp = cityPos(cities['luoyang'] as never);
+    const cp = cityPos(cities['chengdu'] as never);
+    const campAt = positionAlongRoute(terrainRoute(lp.x, lp.y, cp.x, cp.y), 0.75);
+    const officers: Record<string, unknown> = {
+      mover: mkOfficer('mover', 'me'),
+      blocker: mkOfficer('blocker', 'foe'),
+    };
+    if (companions) officers[companions.id] = mkOfficer(companions.id, 'me', companions.skills);
+    return {
+      cities, officers,
+      pendingCommands: {
+        mover: {
+          type: 'march', cityId: 'luoyang', targetCityId: 'chengdu', officerId: 'mover',
+          troops: 2400, totalSeasons: 1, seasonsRemaining: 1,
+          ...(companions ? { additionalOfficerIds: [companions.id] } : {}),
+        },
+        blocker: {
+          type: 'march', cityId: 'changan', targetCityId: 'luoyang', officerId: 'blocker',
+          troops: 20000, holding: true, targetX: campAt.x, targetY: campAt.y,
+          totalSeasons: 5, seasonsRemaining: 5,
+        },
+      },
+    };
+  };
+
+  it('a low roll takes the beaten commander captive — the survivors scatter, no rout', () => {
+    const { cities, officers, pendingCommands } = clashScene();
+    const out = resolveSeason(baseInput(cities, officers, pendingCommands, () => 0.0) as never);
+    const mover = out.officers['mover'] as { status: string; locationCityId?: string; capturedFromForceId?: string };
+    expect(mover.status).toBe('imprisoned');
+    expect(mover.locationCityId).toBe('changan'); // dragged to the victor's city
+    expect(mover.capturedFromForceId).toBe('me');
+    expect(out.keptCommands?.['mover']).toBeUndefined(); // no commander, no rout
+    expect(out.report.entries.some((e) => (e.textZh ?? '').includes('陣擒'))).toBe(true);
+  });
+
+  it('殿軍 himself always cuts free of the press', () => {
+    const { cities, officers, pendingCommands } = clashScene({ id: 'dianjun', skills: ['rear-guard'] });
+    const out = resolveSeason(baseInput(cities, officers, pendingCommands, () => 0.0) as never);
     expect((out.officers['dianjun'] as { status: string }).status).not.toBe('imprisoned');
   });
 });
