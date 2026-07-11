@@ -1561,6 +1561,9 @@ function predictPlayerEncounters(state: GameState) {
   return contacts
     .filter((c) => state.officers[c.a.officerId]?.forceId === pf
       || state.officers[c.b.officerId]?.forceId === pf)
+    // 掩殺非會戰 — catching (or being) a rout is a commit-time slaughter,
+    // not an interactive battle: no mid-flow stop for routed pairs.
+    .filter((c) => !c.a.routed && !c.b.routed)
     .map((c) => ({
       aId: c.a.officerId, bId: c.b.officerId, day: c.day,
       x: (c.pa.x + c.pb.x) / 2, y: (c.pa.y + c.pb.y) / 2,
@@ -1694,6 +1697,7 @@ export const useGameStore = create<GameStore>()(
         const army = state.armies[armyId];
         if (!cmd || cmd.type !== 'march' || !army) return false;
         if (army.forceId !== state.playerForceId) return false;
+        if (cmd.routed) return false; // 潰軍無令 — a rout answers to no orders
         const src = state.cities[cmd.cityId];
         const tgt = state.cities[newTargetId];
         if (!src || !tgt) return false;
@@ -1722,6 +1726,7 @@ export const useGameStore = create<GameStore>()(
         const army = state.armies[armyId];
         if (!cmd || cmd.type !== 'march' || !army) return false;
         if (army.forceId !== state.playerForceId) return false;
+        if (cmd.routed) return false; // 潰軍無令 — a rout answers to no orders
         // 真日級 — once the encounter banner fired, this column is ENGAGED:
         // the enemy is upon it; there is no marching order that un-meets them.
         if (state.dayFlow?.encounters?.some((e) => e.fired && (e.aId === armyId || e.bId === armyId))) {
@@ -1774,6 +1779,7 @@ export const useGameStore = create<GameStore>()(
         const army = state.armies[armyId];
         if (!cmd || cmd.type !== 'march' || !army) return false;
         if (army.forceId !== state.playerForceId) return false;
+        if (cmd.routed) return false; // 潰軍無令 — a rout cannot dig in
         const next = !army.holding;
         set({
           pendingCommands: { ...state.pendingCommands, [armyId]: { ...cmd, holding: next, ambush: next ? cmd.ambush : undefined, besieging: next ? cmd.besieging : undefined } },
@@ -1962,6 +1968,7 @@ export const useGameStore = create<GameStore>()(
         if (!dstCmd || dstCmd.type !== 'march' || !dstArmy) return false;
         if (srcArmy.forceId !== state.playerForceId) return false;
         if (dstArmy.forceId !== state.playerForceId) return false;
+        if (srcCmd.routed || dstCmd.routed) return false; // 潰軍不併 — a rout can't rendezvous
 
         // Current on-map positions (same math the renderer uses) — the two
         // columns must be close enough to rendezvous this season.
@@ -2019,6 +2026,7 @@ export const useGameStore = create<GameStore>()(
         const army = state.armies[armyId];
         if (!cmd || cmd.type !== 'march' || !army) return null;
         if (army.forceId !== state.playerForceId) return null;
+        if (cmd.routed) return null; // 潰軍不分兵
         const companions = cmd.additionalOfficerIds ?? [];
         if (companions.length === 0) return null; // no officer to lead a detachment
         // Detach under the chosen companion (default: the first).
@@ -2437,6 +2445,7 @@ export const useGameStore = create<GameStore>()(
         const state = get();
         const cmd = state.pendingCommands[officerId];
         if (!cmd || cmd.type !== 'march') return { ok: false, reason: 'no march' };
+        if (cmd.routed) return { ok: false, reason: 'routing' }; // 已在潰走
         if (cmd.returning) return { ok: false, reason: 'already returning' };
         const remaining = cmd.seasonsRemaining ?? 1;
         if (remaining <= 1) return { ok: false, reason: 'about to arrive' };
@@ -8289,6 +8298,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             const r = processTrigger(achS, { kind: 'ambush-victory' });
             achS = r.progress; newly.push(...r.newlyUnlocked);
           }
+          // 追亡逐北 — the player's army (or garrison) wiped out a fleeing rout.
+          const routWiped = result.report.entries.some((e) =>
+            e.battle?.routDestroyed && e.battle.attacker.forceId === state.playerForceId);
+          if (routWiped) {
+            const r = processTrigger(achS, { kind: 'rout-annihilated' });
+            achS = r.progress; newly.push(...r.newlyUnlocked);
+          }
           // 鐵鎖橫江 — your boom chained a hostile fleet this turn.
           if (result.report.entries.some((e) => (e.textZh ?? '').includes('我攔江鎖鎖住'))) {
             const r = processTrigger(achS, { kind: 'boom-stall' });
@@ -8355,6 +8371,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                 '軍師:敵蹤已近而烽燧未備 — 於邊城外環建「烽燧」,警訊可沿烽燧鏈直傳都城。',
                 'Raise BEACONS on frontier cities — alarms then relay station-to-station to your capital.');
             }
+          }
+          // ③ an enemy rout is fleeing across the map → hunt it down.
+          if (state.playerForceId
+            && Object.values(result.armies ?? {}).some((a) => a.routed && a.forceId !== state.playerForceId)) {
+            hints.maybeHint('rout-hunt',
+              '軍師:敵軍已潰,倉皇奔逃 — 潰軍無力再戰,以近城之兵「邀擊」掩殺,可收降卒、擒敵將;縱之則歸城復振。',
+              'An enemy ROUT is fleeing — intercept it: routs cannot fight back, and cutting one down yields surrendered troops and captured officers.');
           }
         }
 

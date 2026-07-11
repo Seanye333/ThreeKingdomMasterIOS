@@ -72,7 +72,14 @@ export function ArmiesPanel() {
           >✕</button>
         )}
       </div>
-      {selectedArmyId && armies[selectedArmyId] && (
+      {selectedArmyId && armies[selectedArmyId]?.routed && (
+        <div style={{ marginBottom: 3, fontSize: '0.62rem', color: '#e0707a' }}>
+          {lang === 'en'
+            ? '⚠ ROUTING — this column answers to no orders; it flees for shelter and can be ridden down.'
+            : '⚠ 潰走中 — 此軍不受號令,唯亡命奔還;途中可被敵軍掩殺。'}
+        </div>
+      )}
+      {selectedArmyId && armies[selectedArmyId] && !armies[selectedArmyId].routed && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4, marginBottom: 3 }}>
           <span style={{ fontSize: '0.58rem', color: '#e6c473' }}>{lang === 'en' ? 'Tap city to reroute · field to garrison · ally to merge · enemy to attack' : '點城改道 · 點野地進駐 · 點友軍合流 · 點近敵親征'}</span>
           <div style={{ display: 'flex', gap: 4 }}>
@@ -198,8 +205,10 @@ export function ArmiesPanel() {
         const selected = a.id === selectedArmyId;
         const pct = Math.max(0, Math.min(100, Math.round(a.progress * 100)));
         const dest = a.cellTarget ? (lang === 'en' ? 'field' : '野地') : (target ? pickName(target.name, lang) : '?');
-        // States: returning home · hold (parked) · marching · arriving next season.
-        const status = a.returning
+        // States: routed · returning home · hold (parked) · marching · arriving.
+        const status = a.routed
+          ? { icon: '⚠', text: lang === 'en' ? `ROUT · ${remaining}s` : `潰走·${remaining}季`, color: '#e0707a', tip: lang === 'en' ? 'Beaten in the field — fleeing for shelter, shedding stragglers; enemies can ride it down' : '野戰敗北,亡命奔還;沿途散卒,敵可掩殺' }
+          : a.returning
           ? { icon: '↩', text: lang === 'en' ? `home · ${remaining}s` : `歸返·${remaining}季`, color: '#c79a6a', tip: lang === 'en' ? 'Recalled — streaming home; merges into its source city on arrival' : '已召回,折返本城,抵達即併入守軍' }
           : a.holding
           ? { icon: '⏸', text: lang === 'en' ? 'Hold' : '駐守', color: '#a8c87a', tip: lang === 'en' ? 'Holding position; won’t advance this season (Release to resume)' : '原地駐守,本季不前進(可「解除」續行)' }

@@ -88,6 +88,16 @@ export interface MarchCommand extends CommandBase {
   /** 召回 — the column has abandoned its objective and is streaming home to its
    *  source city (targetCityId is then the source; it merges on arrival). */
   returning?: boolean;
+  /** 潰走 — beaten in the field, the column flees toward targetCityId (its
+   *  nearest friendly city) with no fight left in it. Its troops are CARRIED
+   *  (already struck from the source city's books, unlike a normal march);
+   *  hostile armies and garrisons that catch it cut it down (掩殺) rather
+   *  than fight it. Cleared when it reaches shelter. */
+  routed?: boolean;
+  /** 潰走起點 — where the defeat happened; the flee route runs from here to
+   *  the shelter city (only meaningful with `routed`). */
+  fleeX?: number;
+  fleeY?: number;
   /** 都督之旗 — extra opening morale a legion column carries from its marshal's
    *  renown (§4.3). Applied to the arrival battle. */
   legionBanner?: number;
@@ -177,6 +187,11 @@ export interface BattleDetail {
   /** True when the moving side's scouts saw through the ambush (识破伏兵),
    *  blunting the dug-in bonus. */
   detected?: boolean;
+  /** True for a world-map pursuit strike on a routed column (掩殺潰兵) —
+   *  the "defender" was a fleeing rout, not a fighting army. */
+  routHunt?: boolean;
+  /** True when the pursuit wiped the routed column out entirely (追亡逐北). */
+  routDestroyed?: boolean;
 }
 
 export interface HistoricBattle extends BattleDetail {

@@ -29,6 +29,7 @@ export type AchievementTriggerKind =
   | 'beacon-relay'      // 烽火傳京 — a frontier alarm relayed to the capital
   | 'bridge-burned'     // 據水斷橋 — you torched a crossing on the march
   | 'ally-battle'       // 盟軍來會 — an ally's column joined your battle
+  | 'rout-annihilated'  // 追亡逐北 — you hunted a fleeing rout down to the last man
   // 2026-07 event-chain choices — targetId is a flag key the PLAYER's own
   // resolveEventChoice set (AI walking the historical path does not count):
   | 'event-choice';

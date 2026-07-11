@@ -35,6 +35,23 @@ export interface MarchGeom {
   seasonsRemaining?: number;
   holding?: boolean;
   pace?: MarchPace;
+  routed?: boolean;
+  fleeX?: number;
+  fleeY?: number;
+}
+
+/** 潰走之路 — a routed column flees from its defeat site to shelter, not
+ *  along the source→target road; a normal column walks its issued route. */
+function marchRoute(cmd: MarchGeom, cities: CitiesLike): Array<{ x: number; y: number }> | null {
+  const dst = marchDestCoords(cmd, cities);
+  if (!dst) return null;
+  if (cmd.routed && cmd.fleeX != null && cmd.fleeY != null) {
+    return terrainRoute(cmd.fleeX, cmd.fleeY, dst.x, dst.y);
+  }
+  const src = cities[cmd.cityId];
+  if (!src) return null;
+  const sp = cityPos(src);
+  return terrainRoute(sp.x, sp.y, dst.x, dst.y);
 }
 
 export interface DayContact<M extends MarchGeom> {
@@ -63,11 +80,8 @@ export function marchPositionAtDay(
     return { x: cmd.targetX, y: cmd.targetY };
   }
   if (!route) {
-    const src = cities[cmd.cityId];
-    const dst = marchDestCoords(cmd, cities);
-    if (!src || !dst) return null;
-    const sp = cityPos(src);
-    route = terrainRoute(sp.x, sp.y, dst.x, dst.y);
+    route = marchRoute(cmd, cities) ?? undefined;
+    if (!route) return null;
   }
   const total = Math.max(1, cmd.totalSeasons ?? 1);
   const remaining = cmd.seasonsRemaining ?? 1;
@@ -90,11 +104,7 @@ export function computeDayEncounters<M extends MarchGeom>(
   // Route + per-day positions cached per march (routes are the cost).
   const routes = marches.map((m) => {
     if (m.holding && m.targetX != null && m.targetY != null) return null;
-    const src = cities[m.cityId];
-    const dst = marchDestCoords(m, cities);
-    if (!src || !dst) return null;
-    const sp = cityPos(src);
-    return terrainRoute(sp.x, sp.y, dst.x, dst.y);
+    return marchRoute(m, cities);
   });
   const posAt = (i: number, d: number) =>
     marchPositionAtDay(marches[i], cities, d, routes[i] ?? undefined);

@@ -28,6 +28,7 @@ import { growthPowerMul, grantXp } from './growth';
 import { deriveWeaponType, type WeaponType } from '../data/weaponTypes';
 import { weaponMatchupMul, weaponMasterySkill, pickAiFormation, formationCounterMul } from './tactical';
 import { arrivalFatigueMorale } from './marchPace';
+import { ROUT_MIN_TROOPS, nearestShelterCity } from './rout';
 import { itemSetBonuses } from '../data/itemSets';
 import { selectSiegeEngine } from '../data/siegeEngines';
 import {
@@ -1199,6 +1200,10 @@ export interface MarchOutcome {
   cities: Record<EntityId, City>;
   officers: Record<EntityId, Officer>;
   entries: ReportEntry[];
+  /** 潰走 — set when a repulsed assault broke into a rout instead of
+   *  teleporting home: the survivors flee overland from the walls toward
+   *  `shelterCityId` (the caller registers the fleeing column). */
+  rout?: { troops: number; shelterCityId: EntityId; fromX: number; fromY: number };
 }
 
 export function handleMarch(
@@ -1213,6 +1218,45 @@ export function handleMarch(
   const target = cities[cmd.targetCityId];
   const commander = officers[cmd.officerId];
   if (!source || !target || !commander) {
+    return { cities, officers, entries };
+  }
+
+  // ── 潰軍歸城 — a rout CARRIES its men (already struck from the source's
+  // books when it broke), so reaching shelter folds them straight into the
+  // garrison — no source deduction. Beaten men unsettle the town (−2 民忠).
+  // If the shelter fell to the enemy while they ran, the remnants scatter.
+  if (cmd.routed) {
+    const routCompanions: Officer[] = (cmd.additionalOfficerIds ?? [])
+      .map((id) => officers[id])
+      .filter((o): o is Officer => !!o && o.status !== 'dead' && o.status !== 'imprisoned');
+    if (target.ownerForceId && target.ownerForceId === commander.forceId) {
+      cities[target.id] = {
+        ...target,
+        troops: target.troops + cmd.troops,
+        loyalty: Math.max(0, target.loyalty - 2),
+      };
+      officers[commander.id] = { ...commander, locationCityId: target.id, task: null };
+      for (const co of routCompanions) {
+        officers[co.id] = { ...co, locationCityId: target.id, task: null };
+      }
+      entries.push({
+        cityId: target.id,
+        kind: 'march',
+        text: `${commander.name.en}'s routed column reached ${target.name.en} — ${cmd.troops.toLocaleString()} survivors taken in (the town is shaken).`,
+        textZh: `${commander.name.zh}率潰軍奔還${target.name.zh},收容殘卒 ${cmd.troops.toLocaleString()}（敗軍入城,人心浮動）。`,
+      });
+    } else {
+      officers[commander.id] = { ...commander, task: null, status: 'idle' };
+      for (const co of routCompanions) {
+        officers[co.id] = { ...co, task: null };
+      }
+      entries.push({
+        cityId: null,
+        kind: 'dissolution',
+        text: `${commander.name.en}'s rout found ${target.name.en} in enemy hands — the remnants scattered to the winds.`,
+        textZh: `${commander.name.zh}之潰軍奔至${target.name.zh},見城頭已易幟 — 殘部星散,諸將隻身遁去。`,
+      });
+    }
     return { cities, officers, entries };
   }
 
@@ -1757,6 +1801,9 @@ export function handleMarch(
     battle: battleDetail,
   });
 
+  // 潰走 — set by the repulsed branch; surfaced to the caller for registration.
+  let rout: MarchOutcome['rout'];
+
   // Helper: reset task + optionally move companions
   const finalizeCompanions = (newLocation: EntityId | null) => {
     for (const co of companions) {
@@ -1839,20 +1886,43 @@ export function handleMarch(
       textZh: `${commander.name.zh}雖勝於野戰，然未能破${target.name.zh}城，餘眾撤回。`,
     });
   } else {
-    // Repulsed.
-    cities[source.id] = {
-      ...cities[source.id],
-      troops: cities[source.id].troops + attackerSurvivors,
-    };
+    // Repulsed. Enough survivors with somewhere to run become a ROUT — a
+    // fleeing column on the map (huntable, shedding) instead of an instant
+    // teleport home. Too few, or nowhere to run: the old instant return.
     cities[target.id] = { ...target, troops: defenderSurvivors };
-    officers[commander.id] = { ...commander, task: null };
-    finalizeCompanions(source.id);
-    entries.push({
-      cityId: target.id,
-      kind: 'defeat',
-      text: `${commander.name.en} was repulsed at ${target.name.en}. ${attackerSurvivors.toLocaleString()} troops returned.`,
-      textZh: `${commander.name.zh}於${target.name.zh}受挫敗退，餘 ${attackerSurvivors.toLocaleString()} 兵歸營。`,
-    });
+    const tpR = cityPos(target);
+    // Only a still-fit commander can hold a rout together (dead/captured/
+    // wounded in the battle above → the men scatter home the old way).
+    const cmdrNow = officers[commander.id];
+    const cmdrFit = !!cmdrNow && cmdrNow.status !== 'dead'
+      && cmdrNow.status !== 'imprisoned' && cmdrNow.status !== 'wounded';
+    const shelter = cmdrFit && attackerSurvivors >= ROUT_MIN_TROOPS && source.ownerForceId
+      ? nearestShelterCity(tpR.x, tpR.y, source.ownerForceId, cities)
+      : null;
+    if (shelter) {
+      // Officers stay with the fleeing column (task 'march' persists); the
+      // caller registers the rout so it walks home over the next seasons.
+      rout = { troops: attackerSurvivors, shelterCityId: shelter.id, fromX: tpR.x, fromY: tpR.y };
+      entries.push({
+        cityId: target.id,
+        kind: 'defeat',
+        text: `${commander.name.en} was repulsed at ${target.name.en} — ${attackerSurvivors.toLocaleString()} survivors rout toward ${shelter.name.en}.`,
+        textZh: `${commander.name.zh}於${target.name.zh}城下大敗，殘部 ${attackerSurvivors.toLocaleString()} 潰走,奔${shelter.name.zh}而去。`,
+      });
+    } else {
+      cities[source.id] = {
+        ...cities[source.id],
+        troops: cities[source.id].troops + attackerSurvivors,
+      };
+      officers[commander.id] = { ...commander, task: null };
+      finalizeCompanions(source.id);
+      entries.push({
+        cityId: target.id,
+        kind: 'defeat',
+        text: `${commander.name.en} was repulsed at ${target.name.en}. ${attackerSurvivors.toLocaleString()} troops returned.`,
+        textZh: `${commander.name.zh}於${target.name.zh}受挫敗退，餘 ${attackerSurvivors.toLocaleString()} 兵歸營。`,
+      });
+    }
   }
 
   // 沙場歷練 — auto-resolved battles now season their officers too, where before
@@ -1869,7 +1939,7 @@ export function handleMarch(
     officers[o.id] = grantXp(cur, amt, ctx.rng, ['war', 'leadership']).officer;
   }
 
-  return { cities, officers, entries };
+  return { cities, officers, entries, rout };
 }
 
 // Fallback "garrison commander" when target has no officers stationed.

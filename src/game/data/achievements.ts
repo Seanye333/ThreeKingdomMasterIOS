@@ -54,6 +54,14 @@ export const ACHIEVEMENTS: Achievement[] = [
     trigger: { kind: 'ally-battle' },
   },
   {
+    id: 'ach-rout-hunt',
+    name: { en: 'Chase the Broken to the Last', zh: '追亡逐北' },
+    description: 'Hunt a fleeing rout down and wipe it out before it reaches shelter.',
+    descriptionZh: '敵軍既潰,乘勝掩殺 — 於其奔還之前盡殲之。',
+    tier: 'silver',
+    trigger: { kind: 'rout-annihilated' },
+  },
+  {
     id: 'ach-burning-camps',
     name: { en: 'Camps Aflame for Miles', zh: '火燒連營' },
     description: 'Burn three or more fieldworks in a single battle you win.',

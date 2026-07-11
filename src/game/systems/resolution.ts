@@ -27,6 +27,11 @@ import { handleSearch, resolveInternalAffairs, type LostItemRef } from './comman
 import { awardInternalAffairsXp, canBreakthrough, breakthroughCost, breakthroughIronCost, applyBreakthrough, defaultBreakthroughPath, grantXp, tickMentorBonds, specialTraining } from './growth';
 import { officerGrade, gradeRank, officerLevel } from './officerGrade';
 import { handleMarch } from './combat';
+import {
+  ROUT_MIN_TROOPS, ROUT_DISSOLVE_BELOW, PURSUIT_KILL_BASE, PURSUIT_SKILL_BONUS,
+  REAR_GUARD_MUL, PURSUIT_ABSORB_FRAC, ROUT_CAPTURE_CHANCE, ROUT_SHED_FRAC,
+  rearGuardOfficer, nearestShelterCity,
+} from './rout';
 import { tickDiplomacy, applyCoalitionPressure } from './diplomacy';
 import { tickCityEconomy, tradeTreatyGrants } from './economy';
 import { rollWeatherDisaster } from './weather';
@@ -324,7 +329,11 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const src = cities[cmd.cityId];
     const dst = marchDestCoords(cmd, cities);
     if (!src || !dst) return null;
-    const sp = cityPos(src);
+    // 潰走 — a rout flees from its defeat site to shelter, not along the
+    // road it was issued (its source city may lie the other way entirely).
+    const sp = cmd.routed && cmd.fleeX != null && cmd.fleeY != null
+      ? { x: cmd.fleeX, y: cmd.fleeY }
+      : cityPos(src);
     const route = terrainRoute(sp.x, sp.y, dst.x, dst.y);
     const total = Math.max(1, cmd.totalSeasons ?? 1);
     const remaining = cmd.seasonsRemaining ?? 1;
@@ -346,6 +355,54 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   const armyMaxIntel = (cmd: Extract<Command, { type: 'march' }>) =>
     Math.max(0, ...[cmd.officerId, ...(cmd.additionalOfficerIds ?? [])]
       .map((id) => officers[id]?.stats.intelligence ?? 0));
+
+  // ── 潰軍 — a beaten field army no longer evaporates: it streams toward its
+  // nearest friendly city as a fragile, huntable rout (constants in rout.ts).
+  const routedThisSeason = new Set<EntityId>(); // fresh routs escape in the chaos this turn
+  const officersOf = (cmd: Extract<Command, { type: 'march' }>) =>
+    [cmd.officerId, ...(cmd.additionalOfficerIds ?? [])];
+  const rearGuardOf = (cmd: Extract<Command, { type: 'march' }>) =>
+    rearGuardOfficer(officersOf(cmd), officers);
+  const hunterHasPursuit = (ids: EntityId[]) =>
+    ids.some((id) => officers[id]?.skills.includes('pursuit'));
+  // Convert a beaten march IN PLACE into a fleeing rout (the AI-invest block
+  // set the mutate-the-command precedent). Returns the shelter city it runs
+  // for, or null when the survivors scatter instead (no shelter / too few) —
+  // the caller keeps its cancel path then.
+  const convertToRout = (
+    cmd: Extract<Command, { type: 'march' }>,
+    survivors: number,
+    at: { x: number; y: number },
+  ): City | null => {
+    const cmdr = officers[cmd.officerId];
+    if (!cmdr?.forceId || survivors < ROUT_MIN_TROOPS) return null;
+    const shelter = nearestShelterCity(at.x, at.y, cmdr.forceId, cities);
+    if (!shelter) return null;
+    const dist = Math.hypot(cityPos(shelter).x - at.x, cityPos(shelter).y - at.y);
+    const dur = dist < 120 * WORLD_SCALE ? 2 : 3;
+    // The survivors leave the source city's books — a rout CARRIES its men
+    // (a normal march's troops notionally stay home until it resolves).
+    const src = cities[cmd.cityId];
+    if (src) cities[src.id] = { ...src, troops: Math.max(0, src.troops - survivors) };
+    cmd.routed = true;
+    cmd.returning = true;
+    cmd.fleeX = at.x;
+    cmd.fleeY = at.y;
+    cmd.targetCityId = shelter.id;
+    cmd.targetX = undefined;
+    cmd.targetY = undefined;
+    cmd.troops = survivors;
+    cmd.totalSeasons = dur;
+    cmd.seasonsRemaining = dur;
+    cmd.holding = false;
+    cmd.ambush = undefined;
+    cmd.besieging = undefined;
+    cmd.legionBanner = undefined;
+    cmd.forcedStratagem = undefined;
+    troopOverride[cmd.officerId] = survivors;
+    routedThisSeason.add(cmd.officerId);
+    return shelter;
+  };
   // Camps stormed this season → the victor seizes the broken camp's ground.
   const campSeizures: Array<{ x: number; y: number; forceId: EntityId }> = [];
   // Field-battle sites to mark on the map this season.
@@ -399,6 +456,86 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const oa = officers[a.officerId];
       const ob = officers[b.officerId];
       if (!oa?.forceId || !ob?.forceId) continue;
+
+      // ── 追擊潰軍 — a rout crossing a hostile army's path is not a battle
+      // but a slaughter (掩殺): the hunter cuts it down, absorbs stragglers
+      // (收降), and on a full kill rolls to take its officers. A 殿軍 on the
+      // routed side blunts the strike and always cuts his own way out.
+      // Two routs passing each other just keep running.
+      if (a.routed || b.routed) {
+        if (a.routed && b.routed) continue;
+        const routCmd = a.routed ? a : b;
+        const hunter = a.routed ? b : a;
+        if (routedThisSeason.has(routCmd.officerId)) continue; // broke this turn — escapes in the chaos
+        const routPos = a.routed ? pa : pb;
+        const hunterPos = a.routed ? pb : pa;
+        const routTroops = troopOverride[routCmd.officerId] ?? routCmd.troops;
+        const rearGuard = rearGuardOf(routCmd);
+        let killFrac = PURSUIT_KILL_BASE + (hunterHasPursuit(officersOf(hunter)) ? PURSUIT_SKILL_BONUS : 0);
+        if (rearGuard) killFrac *= REAR_GUARD_MUL;
+        const kills = Math.min(routTroops, Math.floor(routTroops * killFrac));
+        const absorbed = Math.floor(kills * PURSUIT_ABSORB_FRAC);
+        const remaining = routTroops - kills;
+        const hunterLoss = Math.floor(hunter.troops * 0.02);
+        // Hunter accounting follows the normal-march convention (troops on
+        // the source city's books); the rout CARRIES its men — no city touch.
+        const hSrc = cities[hunter.cityId];
+        if (hSrc) cities[hSrc.id] = { ...hSrc, troops: Math.max(0, hSrc.troops - hunterLoss + absorbed) };
+        troopOverride[hunter.officerId] = Math.max(0, (troopOverride[hunter.officerId] ?? hunter.troops) - hunterLoss + absorbed);
+        const destroyed = remaining < ROUT_DISSOLVE_BELOW;
+        const capturedNames: string[] = [];
+        if (destroyed) {
+          cancelledMarchOfficers.add(routCmd.officerId);
+          for (const id of officersOf(routCmd)) {
+            const o = officers[id];
+            if (!o || o.status === 'dead') continue;
+            if (!rearGuard || o.id !== rearGuard.id) {
+              const capChance = ROUT_CAPTURE_CHANCE * (rearGuard ? 0.5 : 1);
+              if ((input.rng ?? Math.random)() < capChance) {
+                officers[id] = { ...o, status: 'imprisoned', capturedFromForceId: o.forceId ?? undefined, task: null, locationCityId: hunter.cityId };
+                capturedNames.push(o.name.zh);
+                continue;
+              }
+            }
+            officers[id] = { ...o, task: null, status: o.status === 'wounded' ? o.status : 'idle' };
+          }
+        } else {
+          troopOverride[routCmd.officerId] = remaining;
+          routCmd.troops = remaining;
+        }
+        const hunterCmdr = officers[hunter.officerId];
+        const routCmdr = officers[routCmd.officerId];
+        const hName = hunterCmdr?.name ?? { en: '?', zh: '？' };
+        const rName = routCmdr?.name ?? { en: '?', zh: '？' };
+        if (input.playerForceId && hunterCmdr?.forceId === input.playerForceId) playerFieldClashesWon++;
+        const hStats = fieldStats(hunter);
+        const rStats = fieldStats(routCmd);
+        fieldBattleMarks.push({
+          x: (routPos.x + hunterPos.x) / 2, y: (routPos.y + hunterPos.y) / 2, kind: 'clash',
+          aColor: (oa.forceId && forces[oa.forceId]?.color) || undefined,
+          bColor: (ob.forceId && forces[ob.forceId]?.color) || undefined,
+          winner: a.routed ? 1 : -1, winName: hName.zh,
+          aTroops: a.troops, bTroops: b.troops,
+        });
+        const site = describeBattleSite(routPos.x, routPos.y);
+        const rgZh = rearGuard ? `${rearGuard.name.zh}親率殿軍斷後,` : '';
+        const rgEn = rearGuard ? `${rearGuard.name.en}'s rear guard covered the flight; ` : '';
+        const capZh = capturedNames.length > 0 ? `,擒${capturedNames.join('、')}` : '';
+        entries.push({
+          cityId: null,
+          kind: 'battle',
+          text: `Day ${Math.max(1, contact.day)}: ${hName.en} rode down ${rName.en}'s routed column${site ? ` ${site.en}` : ''} — ${rgEn}${kills} cut down, ${absorbed} pressed into service${destroyed ? '; the rout is wiped out' : ''}.`,
+          textZh: `第${Math.max(1, contact.day)}日,${hName.zh}${site ? `於${site.zh}` : '於途中'}掩殺${rName.zh}之潰軍 — ${rgZh}斬獲 ${kills},收降 ${absorbed}${destroyed ? `,潰軍就此覆滅${capZh},追亡逐北!` : ',殘部奪路而走。'}`,
+          battle: {
+            ...makeFieldBattle(hunter.targetCityId,
+              { forceId: hunterCmdr?.forceId ?? null, commanderId: hunter.officerId, companionIds: hunter.additionalOfficerIds ?? [], troops: hunter.troops, blended: hStats.blended, power: hStats.power, losses: hunterLoss },
+              { forceId: routCmdr?.forceId ?? null, commanderId: routCmd.officerId, companionIds: routCmd.additionalOfficerIds ?? [], troops: routTroops, blended: rStats.blended, power: rStats.power, losses: kills }),
+            routHunt: true,
+            routDestroyed: destroyed || undefined,
+          },
+        });
+        continue;
+      }
 
       // AI 亲征 — a significant clash involving the player is handed off to an
       // interactive tactical battle instead of being auto-resolved here. Both
@@ -484,8 +621,11 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const loserCmdr = officers[loser.officerId];
       // Sprung ambush: lopsided. Stormed camp: the dug-in defenders are
       // overrun (heavy), the stormers pay a price breaching the earthworks.
+      // 殿軍斷後 — a rear-guard officer on the beaten side holds the line as
+      // the army breaks, trimming the slaughter.
+      const loserRearGuard = rearGuardOf(loser);
       const winnerCasualty = Math.floor(winner.troops * (ambush ? 0.12 : campStormed ? 0.25 : 0.2));
-      const loserCasualty = Math.floor(loser.troops * (ambush ? 0.72 : campStormed ? 0.75 : 0.6));
+      const loserCasualty = Math.floor(loser.troops * (ambush ? 0.72 : campStormed ? 0.75 : 0.6) * (loserRearGuard ? 0.8 : 1));
       // Storming a camp seizes the ground it held for the victor.
       if (campStormed && winnerCmdr?.forceId) {
         const lp = aWins ? pb : pa;
@@ -513,11 +653,17 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       if (loseSrc) cities[loseSrc.id] = { ...loseSrc, troops: Math.max(0, loseSrc.troops - loserCasualty) };
       troopOverride[winner.officerId] = Math.max(0, winner.troops - winnerCasualty);
       if (input.playerForceId && winnerCmdr?.forceId === input.playerForceId) playerFieldClashesWon++;
-      cancelledMarchOfficers.add(loser.officerId);
-      // Free the loser's commander + companions so they idle at source.
-      for (const id of [loser.officerId, ...(loser.additionalOfficerIds ?? [])]) {
-        const o = officers[id];
-        if (o) officers[id] = { ...o, task: null, status: 'idle' };
+      // 潰走 — the beaten column no longer evaporates: enough survivors with
+      // a shelter to run to become a rout on the map (huntable, shedding).
+      const loserPos = aWins ? pb : pa;
+      const routShelter = convertToRout(loser, Math.max(0, loser.troops - loserCasualty), loserPos);
+      if (!routShelter) {
+        cancelledMarchOfficers.add(loser.officerId);
+        // Free the loser's commander + companions so they idle at source.
+        for (const id of [loser.officerId, ...(loser.additionalOfficerIds ?? [])]) {
+          const o = officers[id];
+          if (o) officers[id] = { ...o, task: null, status: 'idle' };
+        }
       }
       const wName = winnerCmdr?.name ?? { en: '?', zh: '？' };
       const lName = loserCmdr?.name ?? { en: '?', zh: '？' };
@@ -565,6 +711,13 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const site = describeBattleSite((pa.x + pb.x) / 2, (pa.y + pb.y) / 2);
       const siteZh = site ? `於${site.zh}` : '於行軍途中';
       const siteEn = site ? ` ${site.en}` : ' on the march';
+      // 潰走去向 — the beaten remnants are now a rout on the map, worth hunting.
+      const routZh = routShelter
+        ? `殘部${loserRearGuard ? `賴${loserRearGuard.name.zh}斷後,` : ''}潰走,奔${routShelter.name.zh}而去。`
+        : '';
+      const routEn = routShelter
+        ? ` The remnants${loserRearGuard ? ` (${loserRearGuard.name.en}'s rear guard covering)` : ''} rout toward ${routShelter.name.en}.`
+        : '';
       entries.push({
         cityId: winner.targetCityId,
         kind: 'battle',
@@ -572,12 +725,12 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
           ? `Ambush: ${wName.en} lay in wait${siteEn} and fell upon ${lName.en}'s column, shattering it (−${winnerCasualty} vs −${loserCasualty}). ${lName.en}'s advance is broken.`
           : campStormed
             ? `Camp stormed: ${detEn}${wName.en} overran ${lName.en}'s dug-in camp${siteEn} and seized the ground (−${winnerCasualty} vs −${loserCasualty}).`
-            : `${onWater ? 'Naval clash' : 'Field clash'}: ${wName.en} intercepted ${lName.en}${siteEn} and routed them (−${winnerCasualty} vs −${loserCasualty}). ${lName.en}'s advance is broken.`),
+            : `${onWater ? 'Naval clash' : 'Field clash'}: ${wName.en} intercepted ${lName.en}${siteEn} and routed them (−${winnerCasualty} vs −${loserCasualty}). ${lName.en}'s advance is broken.`) + routEn,
         textZh: `第${contactDay}日,` + navZh + (ambush
           ? `伏擊：${wName.zh}${siteZh}設伏以待,驟擊${lName.zh}之軍而潰之（我軍 −${winnerCasualty}，敵軍 −${loserCasualty}）。${lName.zh}之進軍受挫。`
           : campStormed
             ? `拔寨：${detZh}${wName.zh}${siteZh}強攻${lName.zh}之營寨,破之而據其地（我軍 −${winnerCasualty}，敵軍 −${loserCasualty}）。`
-            : `${onWater ? '水戰' : '野戰'}：${wName.zh}${siteZh}截擊${lName.zh}並擊潰之（我軍 −${winnerCasualty}，敵軍 −${loserCasualty}）。${lName.zh}之進軍受挫。`),
+            : `${onWater ? '水戰' : '野戰'}：${wName.zh}${siteZh}截擊${lName.zh}並擊潰之（我軍 −${winnerCasualty}，敵軍 −${loserCasualty}）。${lName.zh}之進軍受挫。`) + routZh,
         battle: fieldBattle,
       });
     }
@@ -620,25 +773,83 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const sallyBlended = leader.stats.war * 0.6 + leader.stats.leadership * 0.4;
     const sallyPower = sallyBlended * Math.sqrt(Math.max(1, sallyTroops));
     const marchStats = fieldStats(a);
-    const defWins = sallyPower >= marchStats.power;
     const marchCmdr = officers[a.officerId];
     const mName = marchCmdr?.name ?? { en: '?', zh: '？' };
+    // ── 出城掩殺 — a rout limping past a garrisoned enemy city is easy meat:
+    // the garrison rides out and cuts it down where it stands. No fight.
+    if (a.routed) {
+      if (routedThisSeason.has(a.officerId)) continue; // broke this turn — escapes in the chaos
+      const routTroops = troopOverride[a.officerId] ?? a.troops;
+      const rearGuard = rearGuardOf(a);
+      let killFrac = PURSUIT_KILL_BASE + (leader.skills.includes('pursuit') ? PURSUIT_SKILL_BONUS : 0);
+      if (rearGuard) killFrac *= REAR_GUARD_MUL;
+      const kills = Math.min(routTroops, Math.floor(routTroops * killFrac));
+      const absorbed = Math.floor(kills * PURSUIT_ABSORB_FRAC);
+      const remaining = routTroops - kills;
+      const defLoss = Math.floor(sallyTroops * 0.01);
+      cities[bestCity.id] = { ...cities[bestCity.id], troops: Math.max(0, cities[bestCity.id].troops - defLoss + absorbed) };
+      const destroyed = remaining < ROUT_DISSOLVE_BELOW;
+      const capturedNames: string[] = [];
+      if (destroyed) {
+        cancelledMarchOfficers.add(a.officerId);
+        for (const id of officersOf(a)) {
+          const o = officers[id];
+          if (!o || o.status === 'dead') continue;
+          if (!rearGuard || o.id !== rearGuard.id) {
+            const capChance = ROUT_CAPTURE_CHANCE * (rearGuard ? 0.5 : 1);
+            if (rng() < capChance) {
+              officers[id] = { ...o, status: 'imprisoned', capturedFromForceId: o.forceId ?? undefined, task: null, locationCityId: bestCity.id };
+              capturedNames.push(o.name.zh);
+              continue;
+            }
+          }
+          officers[id] = { ...o, task: null, status: o.status === 'wounded' ? o.status : 'idle' };
+        }
+      } else {
+        troopOverride[a.officerId] = remaining;
+        a.troops = remaining;
+      }
+      if (input.playerForceId && leader.forceId === input.playerForceId) playerFieldClashesWon++;
+      const rgZh = rearGuard ? `${rearGuard.name.zh}死戰斷後,` : '';
+      const capZh = capturedNames.length > 0 ? `,擒${capturedNames.join('、')}` : '';
+      entries.push({
+        cityId: bestCity.id, kind: 'battle',
+        text: `${leader.name.en} rode out of ${bestCity.name.en} and cut down ${mName.en}'s routed column — ${kills} slain, ${absorbed} pressed into service${destroyed ? '; the rout is wiped out' : ''}.`,
+        textZh: `${leader.name.zh}自${bestCity.name.zh}出城掩殺${mName.zh}之潰軍 — ${rgZh}斬獲 ${kills},收降 ${absorbed}${destroyed ? `,潰軍就此覆滅${capZh}!` : ',殘部奪路而走。'}`,
+        battle: {
+          ...makeFieldBattle(bestCity.id,
+            { forceId: leader.forceId ?? null, commanderId: leader.id, companionIds: [], troops: sallyTroops, blended: sallyBlended, power: sallyPower, losses: defLoss },
+            { forceId: marchCmdr?.forceId ?? null, commanderId: a.officerId, companionIds: a.additionalOfficerIds ?? [], troops: routTroops, blended: marchStats.blended, power: marchStats.power, losses: kills }),
+          routHunt: true,
+          routDestroyed: destroyed || undefined,
+        },
+      });
+      continue;
+    }
+    const defWins = sallyPower >= marchStats.power;
     if (defWins) {
-      // Column routed: heavy losses, march cancelled, sally takes light losses.
-      const marchLoss = Math.floor(a.troops * 0.55);
+      // Column broken: heavy losses, sally takes light losses. The remnants
+      // rout for the nearest friendly city (殿軍 trims the toll) — or scatter.
+      const sallyRearGuard = rearGuardOf(a);
+      const marchLoss = Math.floor(a.troops * 0.55 * (sallyRearGuard ? 0.8 : 1));
       const defLoss = Math.floor(sallyTroops * 0.2);
       const mSrc = cities[a.cityId];
       if (mSrc) cities[mSrc.id] = { ...mSrc, troops: Math.max(0, mSrc.troops - marchLoss) };
       cities[bestCity.id] = { ...cities[bestCity.id], troops: Math.max(0, cities[bestCity.id].troops - defLoss) };
-      cancelledMarchOfficers.add(a.officerId);
-      for (const id of [a.officerId, ...(a.additionalOfficerIds ?? [])]) {
-        const o = officers[id];
-        if (o) officers[id] = { ...o, task: null, status: 'idle' };
+      const sallyShelter = convertToRout(a, Math.max(0, a.troops - marchLoss), pos);
+      if (!sallyShelter) {
+        cancelledMarchOfficers.add(a.officerId);
+        for (const id of [a.officerId, ...(a.additionalOfficerIds ?? [])]) {
+          const o = officers[id];
+          if (o) officers[id] = { ...o, task: null, status: 'idle' };
+        }
       }
       entries.push({
         cityId: bestCity.id, kind: 'battle',
-        text: `${leader.name.en} sallied from ${bestCity.name.en} and broke ${mName.en}'s column on the march (−${marchLoss} vs −${defLoss}).`,
-        textZh: `${leader.name.zh}自${bestCity.name.zh}出擊,於途中擊潰${mName.zh}之軍（敵 −${marchLoss}，我 −${defLoss}）。`,
+        text: `${leader.name.en} sallied from ${bestCity.name.en} and broke ${mName.en}'s column on the march (−${marchLoss} vs −${defLoss}).`
+          + (sallyShelter ? ` The remnants rout toward ${sallyShelter.name.en}.` : ''),
+        textZh: `${leader.name.zh}自${bestCity.name.zh}出擊,於途中擊潰${mName.zh}之軍（敵 −${marchLoss}，我 −${defLoss}）。`
+          + (sallyShelter ? `殘部${sallyRearGuard ? `賴${sallyRearGuard.name.zh}斷後,` : ''}潰走,奔${sallyShelter.name.zh}而去。` : ''),
         battle: makeFieldBattle(bestCity.id,
           { forceId: leader.forceId ?? null, commanderId: leader.id, companionIds: [], troops: sallyTroops, blended: sallyBlended, power: sallyPower, losses: defLoss },
           { forceId: oa.forceId ?? null, commanderId: a.officerId, companionIds: a.additionalOfficerIds ?? [], troops: a.troops, blended: marchStats.blended, power: marchStats.power, losses: marchLoss }),
@@ -1095,13 +1306,46 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     if (h.troops <= 0) continue;
     const f = forcedAttrition(cmd, h.troops);
     if (f.lost > 0) noteForced(cmd, f.lost);
-    suppliedTroops[cmd.officerId] = f.troops;
+    // 潰散 — a routing column bleeds stragglers every season it is on the run;
+    // shed it to nothing and the rout melts away on the road.
+    let troopsAfter = f.troops;
+    if (cmd.routed) {
+      const shed = Math.floor(troopsAfter * ROUT_SHED_FRAC);
+      troopsAfter = troopsAfter - shed;
+      const cmdr = officers[cmd.officerId];
+      if (shed > 0 && cmdr && cmdr.forceId === pfId) {
+        entries.push({
+          cityId: null,
+          kind: 'desertion',
+          text: `${cmdr.name.en}'s routed column sheds ${shed} more men on the run.`,
+          textZh: `${cmdr.name.zh}之潰軍亡命於途,又散 ${shed} 卒。`,
+        });
+      }
+      if (troopsAfter < ROUT_DISSOLVE_BELOW) {
+        for (const id of officersOf(cmd)) {
+          const o = officers[id];
+          if (o && o.status !== 'dead' && o.status !== 'imprisoned') {
+            officers[id] = { ...o, task: null, status: o.status === 'wounded' ? o.status : 'idle' };
+          }
+        }
+        if (cmdr && cmdr.forceId === pfId) {
+          entries.push({
+            cityId: null,
+            kind: 'dissolution',
+            text: `${cmdr.name.en}'s rout melted away on the road — the officers make their own way back.`,
+            textZh: `${cmdr.name.zh}之潰軍散盡於途,諸將隻身歸還。`,
+          });
+        }
+        continue;
+      }
+    }
+    suppliedTroops[cmd.officerId] = troopsAfter;
     suppliedFood[cmd.officerId] = s.food;
     // 防壁 — a barricade in the column's path stalls it this season (no advance).
     const advance = blockedOfficers.has(cmd.officerId) ? 0 : 1;
     keptCommands[cmd.officerId] = {
       ...cmd,
-      troops: f.troops,
+      troops: troopsAfter,
       food: s.food,
       seasonsRemaining: (cmd.seasonsRemaining ?? 1) - advance,
     };
@@ -1151,6 +1395,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       cellTarget: cmd.targetX != null,
       pace: cmd.pace,
       returning: cmd.returning,
+      routed: cmd.routed,
+      fleeX: cmd.fleeX,
+      fleeY: cmd.fleeY,
       legionBanner: cmd.legionBanner,
     };
   };
@@ -1214,6 +1461,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     }
   };
   for (const cmd of liveMarches) {
+    // 潰軍不奪土 — a fleeing rout claims no ground (and its flee route isn't
+    // the src→dst road the stamper would walk anyway).
+    if (cmd.routed) continue;
     const total = Math.max(1, cmd.totalSeasons ?? 1);
     if (cmd.holding) {
       // A garrison holds the cell it sits on — stamp a small slice around
@@ -1255,6 +1505,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       cityCellsByForce.set(f.ownerForceId, arr);
     }
     for (const cmd of liveMarches) {
+      if (cmd.routed) continue;                      // a rout is already bleeding — no double toll
       const total = Math.max(1, cmd.totalSeasons ?? 1);
       if (total < 2) continue;                       // short hops carry their own packs
       const cmdr = officers[cmd.officerId];
@@ -1451,6 +1702,36 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     cities = outcome.cities;
     officers = outcome.officers;
     entries.push(...outcome.entries);
+    // 潰走 — a repulsed assault broke into a rout: register the fleeing
+    // column so it walks home over the next seasons (huntable on the way).
+    if (outcome.rout) {
+      const shelter = cities[outcome.rout.shelterCityId];
+      if (shelter) {
+        const spR = cityPos(shelter);
+        const distR = Math.hypot(spR.x - outcome.rout.fromX, spR.y - outcome.rout.fromY);
+        const durR = distR < 120 * WORLD_SCALE ? 2 : 3;
+        const routCmd: Extract<Command, { type: 'march' }> = {
+          ...cmd,
+          routed: true,
+          returning: true,
+          fleeX: outcome.rout.fromX,
+          fleeY: outcome.rout.fromY,
+          targetCityId: shelter.id,
+          targetX: undefined,
+          targetY: undefined,
+          troops: outcome.rout.troops,
+          totalSeasons: durR,
+          seasonsRemaining: durR,
+          holding: false,
+          ambush: undefined,
+          besieging: undefined,
+          legionBanner: undefined,
+          forcedStratagem: undefined,
+        };
+        keptCommands[cmd.officerId] = routCmd;
+        deriveArmy(routCmd, durR, false);
+      }
+    }
     // Phase 3d — city fell to a new owner this march: clear any captured
     // sub-territory overrides for that city, so its inner cells follow
     // the new owner instead of showing the previous invader's banner.

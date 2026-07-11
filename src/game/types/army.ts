@@ -40,6 +40,11 @@ export interface Army {
   pace?: import('./command').MarchCommand['pace'];
   /** 召回 — streaming home to its source (rendered/labelled as a return). */
   returning?: boolean;
+  /** 潰走 — beaten in the field, fleeing to shelter (see MarchCommand.routed). */
+  routed?: boolean;
+  /** 潰走起點 — the defeat site the flee route starts from. */
+  fleeX?: number;
+  fleeY?: number;
   /** 都督之旗 — opening-morale bonus a legion column carries (§4.3). */
   legionBanner?: number;
 }

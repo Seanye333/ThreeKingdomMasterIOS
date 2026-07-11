@@ -121,7 +121,7 @@ export function MarchingArmies({ cities, pendingCommands, forces, officers, port
   const lang = useLanguage();
   const armies = useMemo(() => {
     return Object.values(pendingCommands)
-      .filter((cmd): cmd is { cityId: string; type: string; targetCityId: string; troops: number; officerId: string; seasonsRemaining?: number; totalSeasons?: number; targetX?: number; targetY?: number; holding?: boolean; ambush?: boolean; besieging?: string } =>
+      .filter((cmd): cmd is { cityId: string; type: string; targetCityId: string; troops: number; officerId: string; seasonsRemaining?: number; totalSeasons?: number; targetX?: number; targetY?: number; holding?: boolean; ambush?: boolean; besieging?: string; routed?: boolean; fleeX?: number; fleeY?: number } =>
         cmd.type === 'march' && !!cmd.cityId)
       .map((cmd) => {
         const from = cities[cmd.cityId];
@@ -143,7 +143,10 @@ export function MarchingArmies({ cities, pendingCommands, forces, officers, port
         // with the geo-positioned cities (and the roads, which already use
         // cityPixel) — not the old painted-map coords. A straight segment
         // between the two geo points; matches how the roads are drawn.
-        const [fgx, fgy] = cityPixel(cmd.cityId, from.coords.x, from.coords.y);
+        // 潰走 — a rout flees from its defeat site, not from its source city.
+        const [fgx, fgy] = cmd.routed && cmd.fleeX != null && cmd.fleeY != null
+          ? [cmd.fleeX, cmd.fleeY]
+          : cityPixel(cmd.cityId, from.coords.x, from.coords.y);
         const [dgx, dgy] = (cmd.targetX == null && to)
           ? cityPixel(cmd.targetCityId, dest.x, dest.y)
           : [dest.x, dest.y];
@@ -173,6 +176,7 @@ export function MarchingArmies({ cities, pendingCommands, forces, officers, port
           holding: !!cmd.holding,
           ambush: !!cmd.ambush,
           besieging: !!cmd.besieging,
+          routed: !!cmd.routed,
           ambushRevealed,
           cellTarget: cmd.targetX != null,
         };
@@ -187,7 +191,7 @@ export function MarchingArmies({ cities, pendingCommands, forces, officers, port
           commanderName={a.commanderName} targetName={a.targetName} troops={a.troops}
           seasonsRemaining={a.seasonsRemaining} totalSeasons={a.totalSeasons}
           landRoute={a.landRoute} weaponType={a.weaponType}
-          selected={a.selected} holding={a.holding} ambush={a.ambush} besieging={a.besieging} ambushRevealed={a.ambushRevealed} cellTarget={a.cellTarget}
+          selected={a.selected} holding={a.holding} ambush={a.ambush} besieging={a.besieging} routed={a.routed} ambushRevealed={a.ambushRevealed} cellTarget={a.cellTarget}
           ports={ports} onClick={onArmyClick ? () => onArmyClick(a.officerId) : undefined}
           onPressStart={onArmyPressStart ? (e) => onArmyPressStart(a.officerId, e) : undefined} />
       ))}
@@ -201,7 +205,7 @@ const UNIT_TAG: Record<WeaponType, string> = {
   sabre: '刀', sword: '劍', fan: '師', siege: '械', none: '步',
 };
 
-function MarchingArmy({ from, to, color, commanderName, targetName, troops, seasonsRemaining, totalSeasons, landRoute, weaponType, selected, holding, ambush, besieging, ambushRevealed, cellTarget, ports, onClick, onPressStart }: {
+function MarchingArmy({ from, to, color, commanderName, targetName, troops, seasonsRemaining, totalSeasons, landRoute, weaponType, selected, holding, ambush, besieging, routed, ambushRevealed, cellTarget, ports, onClick, onPressStart }: {
   from: City; to: City; color: string;
   commanderName: string; targetName: string; troops: number;
   seasonsRemaining: number; totalSeasons: number;
@@ -211,6 +215,7 @@ function MarchingArmy({ from, to, color, commanderName, targetName, troops, seas
   holding: boolean;
   ambush?: boolean;
   besieging?: boolean;
+  routed?: boolean;
   ambushRevealed?: boolean;
   cellTarget: boolean;
   ports: Record<string, import('../../../game/types').Port>;
@@ -345,7 +350,9 @@ function MarchingArmy({ from, to, color, commanderName, targetName, troops, seas
             <div style={{ color: '#bfae86' }}>
               {holding
                 ? (ambush ? tHover('設伏 — 藏兵於掩蔽', 'In ambush — gone to ground') : tHover('駐守紮營', 'Holding — encamped'))
-                : `→ ${targetName || (cellTarget ? tHover('野地', 'field') : '—')}${totalSeasons > 1 ? ` · ${seasonsRemaining}/${totalSeasons} ${tHover('季', 'seasons')}` : ''}`}
+                : routed
+                  ? `${tHover('潰走中 — 無力再戰', 'ROUTING — no fight left')} → ${targetName || '—'}`
+                  : `→ ${targetName || (cellTarget ? tHover('野地', 'field') : '—')}${totalSeasons > 1 ? ` · ${seasonsRemaining}/${totalSeasons} ${tHover('季', 'seasons')}` : ''}`}
             </div>
           </div>
         </Html>
@@ -405,6 +412,14 @@ function MarchingArmy({ from, to, color, commanderName, targetName, troops, seas
                 borderRadius: 'var(--tkm-radius-xs)',
                 fontSize: '9px', fontWeight: 700,
               }}>圍</span>
+            )}
+            {routed && (
+              <span style={{
+                display: 'inline-block', marginLeft: 4, padding: '0 3px',
+                background: '#4a1212', color: '#ff9a8a',
+                borderRadius: 'var(--tkm-radius-xs)',
+                fontSize: '9px', fontWeight: 700,
+              }}>潰</span>
             )}
             <span style={{ color: '#c0a878', marginLeft: 5, fontSize: '9px', fontFamily: 'ui-monospace, monospace' }}>{troopLabel}{etaLabel}</span>
           </div>
