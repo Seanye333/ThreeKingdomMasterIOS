@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { NAMED_BATTLE_MAPS, NAMED_MAPS_BY_CITY, NAMED_MAPS_BY_ID } from '../data/namedMaps';
 import { OFFICER_IDS, TALENT_POOL_IDS } from '../data/officers';
 import { CITY_IDS } from '../data/cities';
-import { setupTacticalBattle, pickAiBattlePrep } from './tactical';
+import { setupTacticalBattle } from './tacticalSetup';
+import { pickAiBattlePrep } from './tacticalSchemes';
 import { mkOfficer, mkUnit, mkBattle, mkTiles } from '../../test/factories';
 import type { Officer, EntityId } from '../types';
 

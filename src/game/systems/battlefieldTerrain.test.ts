@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { generateTerrain, type BattleGeo } from './battlefieldTerrain';
-import { setupTacticalBattle, moveCost, hexDistance, movementCost, repairWall, planSiegeRelief, endTurn, attackUnits, applyStratagem } from './tactical';
+import { moveCost, hexDistance, movementCost, repairWall, endTurn, attackUnits } from './tactical';
+import { setupTacticalBattle, planSiegeRelief } from './tacticalSetup';
+import { applyStratagem } from './tacticalSchemes';
 import { aiTakeTurn } from './tacticalAi';
 import { handleMarch } from './combat';
 import { resolveSeason } from './resolution';

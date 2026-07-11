@@ -1,7 +1,7 @@
 /** 致師 — the pre-battle champion's challenge. */
 import { describe, expect, it } from 'vitest';
 import { mkBattle, mkUnit, mkOfficer } from '../../test/factories';
-import { pickDuelChampion, canIssuePreBattleDuel, applyPreBattleDuel, aiMaybePreBattleDuel } from './tactical';
+import { pickDuelChampion, canIssuePreBattleDuel, applyPreBattleDuel, aiMaybePreBattleDuel } from './tacticalSchemes';
 import { seededRng } from '../../test/factories';
 import type { Officer } from '../types';
 

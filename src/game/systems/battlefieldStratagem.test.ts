@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { applyOpeningScheme } from './tactical';
+import { applyOpeningScheme } from './tacticalSchemes';
 import { resolveBattle, type BattleSide } from './combat';
 import { pickAutoStratagem, mirrorDefenderEffect, DEFENSIVE_SCHEMES, STRATAGEM_DEFS, applicableStratagems } from '../data/stratagems2';
 import { mkUnit, mkBattle, mkTiles, seededRng } from '../../test/factories';

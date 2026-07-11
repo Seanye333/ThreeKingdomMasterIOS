@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import { FORMATIONS, NAMED_MAPS_BY_CITY, NAMED_MAPS_BY_ID } from '../../game/data';
-import { inferUnitType, setupTacticalBattle, planSiegeRelief, planColumnReinforcements, rollTimeOfDay } from '../../game/systems/tactical';
+import { inferUnitType } from '../../game/systems/tactical';
+import { setupTacticalBattle, planSiegeRelief, planColumnReinforcements, rollTimeOfDay } from '../../game/systems/tacticalSetup';
 import { regionalTacticalWeather } from '../../game/systems/weather';
 import { cityPos } from '../../game/data/cityGeo';
 import { isRiverside } from '../../game/data/geography';

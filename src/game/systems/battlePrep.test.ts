@@ -1,7 +1,7 @@
 /** 戰前準備 — locks the three preparations and their gates. */
 import { describe, expect, it } from 'vitest';
 import { mkBattle, mkTiles, mkUnit } from '../../test/factories';
-import { applyBattlePrep } from './tactical';
+import { applyBattlePrep } from './tacticalSchemes';
 
 const base = () => mkBattle({
   units: [

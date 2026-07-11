@@ -1,12 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import {
-  attackUnits,
-  endTurn,
-  moveUnit,
-  challengeDuel,
-  canChallengeDuel,
-  isRouting,
-} from './tactical';
+import { attackUnits, endTurn, moveUnit, isRouting } from './tactical';
+import { challengeDuel, canChallengeDuel } from './tacticalSchemes';
 import { mkOfficer, mkUnit, mkBattle, mkTiles, officerMap, fixedRng, seededRng } from '../../test/factories';
 
 // fixedRng(0.5): no crit (0.5 > 0.22), damage roll factor = 0.85 + 0.5·0.3 = 1.0.

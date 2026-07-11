@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import {
-  applyBattlePrep, applyAiBattlePreps, pickAiBattlePrep, attackUnits, endTurn,
-} from './tactical';
+import { attackUnits, endTurn } from './tactical';
+import { applyBattlePrep, applyAiBattlePreps, pickAiBattlePrep } from './tacticalSchemes';
 import { mkOfficer, mkUnit, mkBattle, mkTiles, officerMap, fixedRng } from '../../test/factories';
 import type { Officer, EntityId } from '../types';
 

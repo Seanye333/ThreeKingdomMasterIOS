@@ -11,7 +11,7 @@ import {
   type DefenseBuildingId,
   aggregateSlotEffects,
 } from '../../game/data/defenseBuildings';
-import { previewBattlefield } from '../../game/systems/tactical';
+import { previewBattlefield } from '../../game/systems/tacticalSetup';
 import { battleGroundAt, geoToPixel } from '../../game/data/geography';
 import { FACILITY_DEFS, type FacilityKind } from '../../game/types';
 import { citySize, cityMeetsSize, CITY_SIZES_BY_ID } from '../../game/systems/citySize';

@@ -9,17 +9,8 @@ import type {
   EntityId, Officer, TacticalBattle, TacticalUnit, HexCoord, TerrainKind,
   UnitType, StratagemId,
 } from '../types';
-import {
-  hexDistance, hexNeighbours, tileAt,
-  canMove, moveUnit, attackUnits,
-  forecastAttack, applyStratagem, endTurn, isRouting, changeFormation,
-  canChangeFormation, pickAiFormation, formationCounterMul, canFortify,
-  fortifyTile, retreatUnit,
-  counterMultiplier, repairWall, breakGate, scaleWall,
-  attackRange, hasLineOfSight, canChallengeDuel, challengeDuel,
-  WIND_DELTA, TERRAIN_MOVE_COST,
-  terrainAffinity, tileValueFor, bestStepToward,
-} from './tactical';
+import { hexDistance, hexNeighbours, tileAt, canMove, moveUnit, attackUnits, forecastAttack, endTurn, isRouting, changeFormation, canChangeFormation, pickAiFormation, formationCounterMul, canFortify, fortifyTile, retreatUnit, counterMultiplier, repairWall, breakGate, scaleWall, attackRange, hasLineOfSight, WIND_DELTA, TERRAIN_MOVE_COST, terrainAffinity, tileValueFor, bestStepToward } from './tactical';
+import { applyStratagem, canChallengeDuel, challengeDuel } from './tacticalSchemes';
 import { SIGNATURE_OVERRIDES } from './personalTactics';
 
 /**

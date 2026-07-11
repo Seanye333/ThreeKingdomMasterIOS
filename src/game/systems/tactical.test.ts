@@ -1,26 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import {
-  hexDistance,
-  hexNeighbours,
-  hexDirection,
-  applyStratagem,
-  counterMultiplier,
-  terrainDamageMod,
-  defenderTerrainShield,
-  inferUnitType,
-  moveCost,
-  canMove,
-  canAttack,
-  moveUnit,
-  breakGate,
-  attackUnits,
-  endTurn,
-  resolveBattleEnd,
-  computeSlotPositions,
-  findPath,
-  moveUnitAlong,
-  reachableHexes,
-} from './tactical';
+import { hexDistance, hexNeighbours, hexDirection, counterMultiplier, terrainDamageMod, defenderTerrainShield, inferUnitType, moveCost, canMove, canAttack, moveUnit, breakGate, attackUnits, endTurn, resolveBattleEnd, findPath, moveUnitAlong, reachableHexes } from './tactical';
+import { computeSlotPositions } from './tacticalSetup';
+import { applyStratagem } from './tacticalSchemes';
 import { mkOfficer, mkUnit, mkBattle, mkTiles, officerMap, fixedRng } from '../../test/factories';
 
 describe('hex geometry', () => {

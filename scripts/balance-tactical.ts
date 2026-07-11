@@ -11,7 +11,9 @@
  *
  * Run:  node --import tsx scripts/balance-tactical.ts [battlesPerConfig]
  */
-import { setupTacticalBattle, aiTakeTurn, pickAiFormation } from '../src/game/systems/tactical';
+import { pickAiFormation } from '../src/game/systems/tactical';
+import { aiTakeTurn } from '../src/game/systems/tacticalAi';
+import { setupTacticalBattle } from '../src/game/systems/tacticalSetup';
 import type { Officer, UnitType, TacticalBattle, FormationId, Weather } from '../src/game/types';
 
 const N = Number(process.argv[2] ?? 240);

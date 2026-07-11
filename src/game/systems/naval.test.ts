@@ -1,12 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import {
-  assignShipClass,
-  shipPowerMul,
-  setupTacticalBattle,
-  applyStratagem,
-  attackUnits,
-  endTurn,
-} from './tactical';
+import { assignShipClass, shipPowerMul, attackUnits, endTurn } from './tactical';
+import { setupTacticalBattle } from './tacticalSetup';
+import { applyStratagem } from './tacticalSchemes';
 import { mkOfficer, mkUnit, mkBattle, officerMap, fixedRng } from '../../test/factories';
 
 describe('assignShipClass', () => {

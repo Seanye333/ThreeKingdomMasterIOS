@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { attackUnits, endTurn, moveUnit, weaponMatchupMul, applyStratagem } from './tactical';
+import { attackUnits, endTurn, moveUnit, weaponMatchupMul } from './tactical';
+import { applyStratagem } from './tacticalSchemes';
 import { mkOfficer, mkUnit, mkBattle, mkTiles, officerMap, fixedRng } from '../../test/factories';
 
 const HP = 1_000_000;

@@ -17,7 +17,8 @@ import type { EntityId, FormationId, HexCoord, Officer, StratagemId, TacticalBat
 import type { DefenseBuildingId } from '../../game/data/defenseBuildings';
 import { stratagemFxKind, tacticFxKind, tacticFxSpec, FX_DURATION, FX_IMPACT, type TacticFxSpec, type StratagemFxInstance, type StratagemFxKind } from '../../game/data/stratagemFx';
 import { categoryOfTactic } from '../../game/data/officerAttributes';
-import { applyBattlePrep, applyStratagem, attackUnits, canAttack, canMove, endTurn, hexDistance, moveUnit, resolveBattleEnd, unitAt, tileAt, hexNeighbours, forecastAttack, matchupLabel, battleStratagemSituation, eliteUnitOf, defenderTerrainShield, terrainDamageMod, moveCost, findPath, moveUnitAlong, reachableHexes, isRouting, changeFormation, canChangeFormation, canFortify, fortifyTile, FIELDWORKS_AP_COST, pickAiBattlePrep, pickAiFormation, formationCounterMul, pickDuelChampion, canIssuePreBattleDuel, applyPreBattleDuel, aiMaybePreBattleDuel } from '../../game/systems/tactical';
+import { attackUnits, canAttack, canMove, endTurn, hexDistance, moveUnit, resolveBattleEnd, unitAt, tileAt, hexNeighbours, forecastAttack, matchupLabel, battleStratagemSituation, eliteUnitOf, defenderTerrainShield, terrainDamageMod, moveCost, findPath, moveUnitAlong, reachableHexes, isRouting, changeFormation, canChangeFormation, canFortify, fortifyTile, FIELDWORKS_AP_COST, pickAiFormation, formationCounterMul } from '../../game/systems/tactical';
+import { applyBattlePrep, applyStratagem, pickAiBattlePrep, pickDuelChampion, canIssuePreBattleDuel, applyPreBattleDuel, aiMaybePreBattleDuel } from '../../game/systems/tacticalSchemes';
 import { aiTakeTurn, aiSkillForDifficulty } from '../../game/systems/tacticalAi';
 import { FORMATIONS } from '../../game/data/formations';
 import { canDuel, pickDuelTerrain, rollDuelScar } from '../../game/systems/duel';

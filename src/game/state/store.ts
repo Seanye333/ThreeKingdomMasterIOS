@@ -301,7 +301,9 @@ function playerImperialSanction(state: {
   const mandate = state.mandate.byForce[state.playerForceId] ?? 50;
   return (custodian === state.playerForceId ? 0.15 : 0) + Math.max(0, Math.min(0.1, (mandate - 50) / 500));
 }
-import { setupTacticalBattle, inferUnitType, planSiegeRelief, planColumnReinforcements, rollTimeOfDay, pickAiFormation, applyOpeningScheme, applyAiBattlePreps, applyBattlePrep } from '../systems/tactical';
+import { inferUnitType, pickAiFormation } from '../systems/tactical';
+import { setupTacticalBattle, planSiegeRelief, planColumnReinforcements, rollTimeOfDay } from '../systems/tacticalSetup';
+import { applyOpeningScheme, applyAiBattlePreps, applyBattlePrep } from '../systems/tacticalSchemes';
 import { regionalTacticalWeather } from '../systems/weather';
 import { pickAutoStratagem } from '../data/stratagems2';
 import { BUILDING_DEFS_BY_ID } from '../data/buildings';

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { pickAiFormation, applyStratagem, smokeOnLine, forecastAttack } from './tactical';
+import { pickAiFormation, smokeOnLine, forecastAttack } from './tactical';
+import { applyStratagem } from './tacticalSchemes';
 import { weatherAttackMul } from './ai';
 import {
   fireAttackMultiplier, marchSpeedMultiplier, rollWeatherDisaster, seasonWeatherOutlook,

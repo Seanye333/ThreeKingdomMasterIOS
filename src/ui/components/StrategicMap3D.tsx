@@ -19,7 +19,8 @@ import { battleWindow } from '../../game/systems/battlefieldTerrain';
 import { tacticFxSpec, FX_IMPACT, type StratagemFxInstance, type StratagemFxKind, type TacticFxSpec } from '../../game/data/stratagemFx';
 import { categoryOfTactic } from '../../game/data/officerAttributes';
 // In-place battle commanding — the SAME pure battle ops the fullscreen uses.
-import { unitAt, canMove, canAttack, moveUnit, attackUnits, endTurn, applyStratagem, hexDistance, forecastAttack, matchupLabel, battleStratagemSituation } from '../../game/systems/tactical';
+import { unitAt, canMove, canAttack, moveUnit, attackUnits, endTurn, hexDistance, forecastAttack, matchupLabel, battleStratagemSituation } from '../../game/systems/tactical';
+import { applyStratagem } from '../../game/systems/tacticalSchemes';
 import { canDuel } from '../../game/systems/duel';
 import { personalTacticsForUnit } from '../../game/systems/personalTactics';
 import { Duel3DStage } from './duel/Duel3DStage';

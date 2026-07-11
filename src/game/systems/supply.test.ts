@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { applyStratagem, attackUnits, endTurn } from './tactical';
+import { attackUnits, endTurn } from './tactical';
+import { applyStratagem } from './tacticalSchemes';
 import { mkUnit, mkBattle, mkTiles, officerMap, fixedRng } from '../../test/factories';
 
 describe('raid-supply (劫糧道 / 烏巢)', () => {
