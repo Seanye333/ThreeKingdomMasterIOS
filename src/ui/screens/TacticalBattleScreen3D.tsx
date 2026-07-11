@@ -1,4 +1,4 @@
-import { Suspense, createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { Suspense, createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { STRATAGEM_RANGE } from '../../game/data/stratagemRanges';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Html, OrbitControls, Stars, SoftShadows, Sparkles } from '@react-three/drei';
@@ -134,6 +134,69 @@ function targetTypeBadge(type: 'enemy' | 'ally' | 'self' | 'aoe', langZh: boolea
     case 'self':  return { label: langZh ? '己' : 'self', color: '#88b7e8' };
     case 'aoe':   return { label: langZh ? '範' : 'aoe', color: '#d4a84a' };
   }
+}
+
+// ─── HUD 共用元件 — the top bar used to restate the same parchment palette
+// inline on every chip and button; these two carry it once (and give the
+// buttons the hover state the inline styles never had). `tone` colours the
+// ACTIVE state; idle is always parchment-on-leather.
+const HUD_TONES = {
+  gold:  { border: '#d4a84a', color: '#f0d98a', bg: 'rgba(212,168,74,0.25)' },
+  green: { border: '#7ed68a', color: '#c8e8a0', bg: 'rgba(126,214,138,0.25)' },
+  red:   { border: '#ff6a50', color: '#ffb0a0', bg: 'rgba(184,68,46,0.35)' },
+  blue:  { border: '#7ec0e0', color: '#9ed0ea', bg: 'rgba(126,192,224,0.15)' },
+  ember: { border: '#b8584a', color: '#e0a090', bg: 'rgba(60,30,20,0.7)' },
+} as const;
+type HudTone = keyof typeof HUD_TONES;
+
+function HudButton({ active, tone = 'gold', danger, title, ariaLabel, onClick, children }: {
+  active?: boolean;
+  tone?: HudTone;
+  /** Always-tinted action (撤退-style) rather than a toggle. */
+  danger?: boolean;
+  title?: string;
+  ariaLabel?: string;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  const [hover, setHover] = useState(false);
+  const tn = HUD_TONES[danger ? 'ember' : tone];
+  const lit = !!active || !!danger;
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      aria-label={ariaLabel ?? title}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        fontSize: '0.72rem', padding: '2px 8px', cursor: 'pointer', fontFamily: 'inherit',
+        background: lit ? tn.bg : hover ? 'rgba(58,45,24,0.85)' : 'rgba(40, 28, 18, 0.7)',
+        border: `1px solid ${lit ? tn.border : hover ? '#8a7048' : '#5a4530'}`,
+        color: lit ? tn.color : hover ? '#d8c090' : '#a89070',
+        filter: lit && hover ? 'brightness(1.12)' : undefined,
+      }}
+    >{children}</button>
+  );
+}
+
+function HudChip({ tone, bg, title, children }: {
+  /** Border/text tint; omitted = quiet parchment. */
+  tone?: HudTone;
+  /** Optional tinted background (e.g. the ready-count chip). */
+  bg?: string;
+  title?: string;
+  children: ReactNode;
+}) {
+  const tn = tone ? HUD_TONES[tone] : { border: 'rgba(255,255,255,0.1)', color: '#a89070' };
+  return (
+    <span title={title} style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      fontSize: '0.72rem', padding: '2px 7px',
+      background: bg ?? 'rgba(40, 28, 18, 0.7)',
+      border: `1px solid ${tn.border}`, color: tn.color,
+    }}>{children}</span>
+  );
 }
 
 export function hexWorld(col: number, row: number): [number, number] {
@@ -4191,6 +4254,10 @@ export function TacticalBattleScreen3D() {
   // 戰報 — a collapsible drawer of the recent battle log (the ticker only
   // flashes the last line for ~3.6s; this lets a player review what happened).
   const [showLog, setShowLog] = useState(false);
+  // ⚙ 工具托盤 — the utility buttons (錄影/委託/暫停/速度/戰報) fold behind one
+  // gear by default; any ENGAGED tool keeps its button out so its state (and
+  // off-switch) is never hidden (e.g. stop-recording while recording).
+  const [showTools, setShowTools] = useState(false);
   // 確認 — a styled confirm dialog (replaces jarring window.confirm mid-battle).
   const [confirmDialog, setConfirmDialog] = useState<{ title: { zh: string; en: string }; body: { zh: string; en: string }; confirmLabel: { zh: string; en: string }; danger?: boolean; onConfirm: () => void } | null>(null);
   const hudToastTimer = useRef(0);
@@ -4808,12 +4875,9 @@ export function TacticalBattleScreen3D() {
           );
         })()}
         {battle.turn >= 10 && (
-          <span style={{
-            fontSize: '0.72rem', padding: '2px 7px',
-            background: 'rgba(90,40,20,0.5)', border: '1px solid #c0703a', color: '#e0a070',
-          }} title={t('久戰糧道枯竭 — 雙方傷害遞減', 'Prolonged siege drains supply — both sides take falling damage')}>
+          <HudChip tone="ember" bg="rgba(90,40,20,0.5)" title={t('久戰糧道枯竭 — 雙方傷害遞減', 'Prolonged siege drains supply — both sides take falling damage')}>
             ⏳ {t('久戰', 'Fatigue')} −{Math.min(40, 5 * (battle.turn - 9))}%
-          </span>
+          </HudChip>
         )}
         {/* 臨陣變陣 — re-form mid-battle (costs a turn of disorder; few-turn cooldown). */}
         {playerSide && (() => {
@@ -4852,100 +4916,84 @@ export function TacticalBattleScreen3D() {
           const [zh, en] = lbl[k] ?? ['殲敵或斬將', 'Rout or slay the foe'];
           const prog = obj?.turnsRequired ? ` ${obj.progress ?? 0}/${obj.turnsRequired}` : '';
           return (
-            <span style={{
-              fontSize: '0.72rem', padding: '2px 7px',
-              background: 'rgba(40,28,18,0.7)', border: '1px solid #7ec0e0', color: '#9ed0ea',
-            }} title={t('本戰勝利條件', 'Victory condition')}>
+            <HudChip tone="blue" title={t('本戰勝利條件', 'Victory condition')}>
               🎯 {t(zh, en)}{prog}
-            </span>
+            </HudChip>
           );
         })()}
         {myTurn && (() => {
           const live = battle.units.filter((u) => u.side === playerSide && u.troops > 0);
           const ready = live.filter((u) => u.ap > 0).length;
           return (
-            <span style={{
-              fontSize: '0.72rem', padding: '2px 7px',
-              background: ready > 0 ? 'rgba(212,168,74,0.18)' : 'rgba(110,174,115,0.16)',
-              border: `1px solid ${ready > 0 ? '#d4a84a' : '#6fae73'}`,
-              color: ready > 0 ? '#f0d98a' : '#9ad6a8',
-            }}>{ready > 0 ? `⚑ ${t('可動', 'ready')} ${ready}/${live.length}` : `✓ ${t('全員已動', 'all moved')}`}</span>
+            <HudChip
+              tone={ready > 0 ? 'gold' : 'green'}
+              bg={ready > 0 ? 'rgba(212,168,74,0.18)' : 'rgba(110,174,115,0.16)'}
+            >{ready > 0 ? `⚑ ${t('可動', 'ready')} ${ready}/${live.length}` : `✓ ${t('全員已動', 'all moved')}`}</HudChip>
           );
         })()}
         {/* 天候一覽 — weather · wind · time-of-day merged into one chip (was
             three), trimming the top-bar clutter while keeping each fact. */}
-        <span
-          title={t('天候·風向·時段 — 影響火計蔓延、弓弩射程與夜戰視野', 'Weather · wind · time of day — governs fire spread, bow range and night sight')}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5,
-            fontSize: '0.72rem', padding: '2px 8px',
-            background: 'rgba(40, 28, 18, 0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', color: '#a89070',
-          }}>
+        <HudChip
+          title={t('天候·風向·時段 — 影響火計蔓延、弓弩射程與夜戰視野', 'Weather · wind · time of day — governs fire spread, bow range and night sight')}>
           <span>{lang === 'en' ? WEATHER_LABEL[battle.weather].en : WEATHER_LABEL[battle.weather].zh}</span>
           {battle.windDirection && battle.windDirection !== 'calm' && (
             <span style={{ color: '#a8c4e0' }}>· {battle.windDirection === 'east' ? t('🌬→東', '🌬→E') : battle.windDirection === 'west' ? t('🌬←西', '🌬←W') : battle.windDirection === 'south' ? t('🌬↓南', '🌬↓S') : t('🌬↑北', '🌬↑N')}</span>
           )}
           <span style={{ opacity: 0.85 }}>· {lang === 'en' ? TOD_LABEL[battle.timeOfDay].en : TOD_LABEL[battle.timeOfDay].zh}</span>
-        </span>
-        <button
-          onClick={toggleRecording}
-          title={recording ? t('停止並下載錄影', 'Stop & download') : t('錄製戰鬥畫面(WebM)', 'Record the battle (WebM)')}
-          aria-label={recording ? t('停止並下載錄影', 'Stop & download recording') : t('錄製戰鬥畫面', 'Record the battle')}
-          style={{
-            fontSize: '0.72rem', padding: '2px 8px', cursor: 'pointer',
-            background: recording ? 'rgba(184, 68, 46, 0.35)' : 'rgba(40, 28, 18, 0.7)',
-            border: `1px solid ${recording ? '#ff6a50' : '#5a4530'}`,
-            color: recording ? '#ffb0a0' : '#a89070', fontFamily: 'inherit',
-          }}
-        >{recording ? t('⏹ 錄影中', '⏹ REC') : t('🎬 錄影', '🎬 Record')}</button>
-        <button
-          onClick={() => setAutoPilot((v) => !v)}
-          title={autoPilot ? t('收回指揮權', 'Take back command') : t('委託軍師指揮 — 戰術 AI 替你打,隨時可收回', 'Let the tactical AI play your side; toggle any time')}
-          aria-label={autoPilot ? t('收回指揮權', 'Take back command') : t('委託軍師指揮', 'Delegate to the tactical AI')}
-          style={{
-            fontSize: '0.72rem', padding: '2px 8px', cursor: 'pointer',
-            background: autoPilot ? 'rgba(126, 214, 138, 0.25)' : 'rgba(40, 28, 18, 0.7)',
-            border: `1px solid ${autoPilot ? '#7ed68a' : '#5a4530'}`,
-            color: autoPilot ? '#c8e8a0' : '#a89070', fontFamily: 'inherit',
-          }}
-        >{autoPilot ? t('🤖 軍師代戰中', '🤖 AI in command') : t('🤖 委託指揮', '🤖 Delegate')}</button>
-        {/* 速度 / 暫停 — pace the auto-advance, or freeze to read the board. */}
-        <button
-          onClick={() => setPaused((v) => !v)}
-          title={t('暫停 / 繼續推演', 'Pause / resume')}
-          aria-label={paused ? t('繼續推演', 'Resume') : t('暫停', 'Pause')}
-          style={{
-            fontSize: '0.72rem', padding: '2px 8px', cursor: 'pointer',
-            background: paused ? 'rgba(212,168,74,0.25)' : 'rgba(40, 28, 18, 0.7)',
-            border: `1px solid ${paused ? '#d4a84a' : '#5a4530'}`,
-            color: paused ? '#f0d98a' : '#a89070', fontFamily: 'inherit',
-          }}
-        >{paused ? t('▶ 繼續', '▶ Resume') : t('⏸ 暫停', '⏸ Pause')}</button>
-        <button
-          onClick={() => setBattleSpeed(battleSpeed >= 4 ? 1 : battleSpeed * 2)}
-          title={t('推演速度', 'Playback speed')}
-          aria-label={t('推演速度', 'Playback speed')}
-          style={{
-            fontSize: '0.72rem', padding: '2px 8px', cursor: 'pointer',
-            background: 'rgba(40, 28, 18, 0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
-            color: '#a89070', fontFamily: 'inherit',
-          }}
-        >⏩ {battleSpeed}×</button>
-        <button
-          onClick={() => setShowLog((v) => !v)}
-          title={t('戰報 — 回看近況記錄', 'Battle log — review recent events')}
-          aria-label={t('戰報記錄', 'Battle log')}
-          style={{
-            fontSize: '0.72rem', padding: '2px 8px', cursor: 'pointer',
-            background: showLog ? 'rgba(212,168,74,0.25)' : 'rgba(40, 28, 18, 0.7)',
-            border: `1px solid ${showLog ? '#d4a84a' : '#5a4530'}`,
-            color: showLog ? '#f0d98a' : '#a89070', fontFamily: 'inherit',
-          }}
-        >📜 {t('戰報', 'Log')}</button>
+        </HudChip>
+        {/* ⚙ 工具托盤 — utilities fold behind the gear; an ENGAGED tool's
+            button stays out so its state (and off-switch) is never hidden. */}
+        <HudButton
+          active={showTools}
+          onClick={() => setShowTools((v) => !v)}
+          title={t('工具 — 錄影/委託/暫停/速度/戰報', 'Tools — record / delegate / pause / speed / log')}
+          ariaLabel={t('工具托盤', 'Tool tray')}
+        >⚙{showTools ? '' : ' ▸'}</HudButton>
+        {(showTools || recording) && (
+          <HudButton
+            active={recording} tone="red"
+            onClick={toggleRecording}
+            title={recording ? t('停止並下載錄影', 'Stop & download') : t('錄製戰鬥畫面(WebM)', 'Record the battle (WebM)')}
+            ariaLabel={recording ? t('停止並下載錄影', 'Stop & download recording') : t('錄製戰鬥畫面', 'Record the battle')}
+          >{recording ? t('⏹ 錄影中', '⏹ REC') : t('🎬 錄影', '🎬 Record')}</HudButton>
+        )}
+        {(showTools || autoPilot) && (
+          <HudButton
+            active={autoPilot} tone="green"
+            onClick={() => setAutoPilot((v) => !v)}
+            title={autoPilot ? t('收回指揮權', 'Take back command') : t('委託軍師指揮 — 戰術 AI 替你打,隨時可收回', 'Let the tactical AI play your side; toggle any time')}
+            ariaLabel={autoPilot ? t('收回指揮權', 'Take back command') : t('委託軍師指揮', 'Delegate to the tactical AI')}
+          >{autoPilot ? t('🤖 軍師代戰中', '🤖 AI in command') : t('🤖 委託指揮', '🤖 Delegate')}</HudButton>
+        )}
+        {(showTools || paused) && (
+          <HudButton
+            active={paused}
+            onClick={() => setPaused((v) => !v)}
+            title={t('暫停 / 繼續推演', 'Pause / resume')}
+            ariaLabel={paused ? t('繼續推演', 'Resume') : t('暫停', 'Pause')}
+          >{paused ? t('▶ 繼續', '▶ Resume') : t('⏸ 暫停', '⏸ Pause')}</HudButton>
+        )}
+        {(showTools || battleSpeed !== 1) && (
+          <HudButton
+            active={battleSpeed !== 1}
+            onClick={() => setBattleSpeed(battleSpeed >= 4 ? 1 : battleSpeed * 2)}
+            title={t('推演速度', 'Playback speed')}
+            ariaLabel={t('推演速度', 'Playback speed')}
+          >⏩ {battleSpeed}×</HudButton>
+        )}
+        {(showTools || showLog) && (
+          <HudButton
+            active={showLog}
+            onClick={() => setShowLog((v) => !v)}
+            title={t('戰報 — 回看近況記錄', 'Battle log — review recent events')}
+            ariaLabel={t('戰報記錄', 'Battle log')}
+          >📜 {t('戰報', 'Log')}</HudButton>
+        )}
         {/* 撤退 — concede and pull out: you lose the field, but your standing
             units withdraw intact (no pursuit / 掩殺). */}
         {myTurn && !battle.winner && playerSide && !battle.practice && (
-          <button
+          <HudButton
+            danger
             onClick={() => setConfirmDialog({
               title: { zh: '撤兵退走', en: 'Withdraw' },
               body: { zh: '此戰判負,但現存部隊得以保全,不遭掩殺。', en: 'You concede the field, but your standing units escape intact — no pursuit.' },
@@ -4958,11 +5006,7 @@ export function TacticalBattleScreen3D() {
               },
             })}
             title={t('撤兵 — 判負但保全現存兵力', 'Withdraw — concede but save your surviving troops')}
-            style={{
-              fontSize: '0.72rem', padding: '2px 8px', cursor: 'pointer',
-              background: 'rgba(60,30,20,0.7)', border: '1px solid #b8584a', color: '#e0a090', fontFamily: 'inherit',
-            }}
-          >🏳 {t('撤退', 'Withdraw')}</button>
+          >🏳 {t('撤退', 'Withdraw')}</HudButton>
         )}
         {/* 戰前準備 — one card, played before your first move. */}
         {myTurn && battle.turn === 1 && playerSide && !battle.prepUsed?.[playerSide] && !prepDismissed && (
