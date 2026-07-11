@@ -138,3 +138,42 @@
   background: linear-gradient(180deg, #6a5538, #4a3528);
   box-shadow: 0 0 10px rgba(212, 168, 74, 0.4);
 }
+
+/* ─── 事之效 — consequence chips under the prose / inside choice buttons ── */
+.fxChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: center;
+  margin-top: 7px;
+}
+.fxChip {
+  font-size: 0.68rem;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid #3a4654;
+  color: #aab6c0;
+  background: rgba(10, 14, 19, 0.55);
+  white-space: nowrap;
+}
+.fxGood { color: #8fce7a; border-color: rgba(122, 190, 96, 0.45); }
+.fxBad  { color: #e8907a; border-color: rgba(216, 110, 84, 0.45); }
+
+.choiceLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+/* 史實印 — marks the branch history itself took (always the first choice). */
+.histBadge {
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid var(--evt-accent, #e6c473);
+  color: var(--evt-accent, #e6c473);
+  opacity: 0.85;
+}

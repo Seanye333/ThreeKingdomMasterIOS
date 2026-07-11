@@ -6,6 +6,7 @@ import { playEventCue, type EventCueMood } from '../../game/systems/sound';
 import styles from './EventModal.module.css';
 import { useT, useLanguage, useDesc, pickName } from '../i18n';
 import { OfficerPortrait } from './OfficerPortrait';
+import { effectChips, type EffectChip } from './eventEffectChips';
 
 /** 事件配樂 — classify an event's mood from its effects (language-agnostic)
  *  with id/name keyword hints, so the right motif greets it. */
@@ -58,6 +59,7 @@ export function EventModal() {
   const resolveChoice = useGameStore((s) => s.resolveEventChoice);
   const officers = useGameStore((s) => s.officers);
   const forces = useGameStore((s) => s.forces);
+  const cities = useGameStore((s) => s.cities);
   const t = useT();
   const lang = useLanguage();
   const desc = useDesc();
@@ -69,6 +71,18 @@ export function EventModal() {
   }, [eventId]);
   if (!pending) return null;
   const { event, year, season } = pending;
+  const chipCtx = { officers, cities, forces, lang };
+  // 事之效 — chips spelling out an effect list's mechanical consequences.
+  const ChipRow = ({ chips, dim }: { chips: EffectChip[]; dim?: boolean }) =>
+    chips.length === 0 ? null : (
+      <div className={styles.fxChips} style={dim ? { opacity: 0.85 } : undefined}>
+        {chips.map((c, i) => (
+          <span key={i} className={`${styles.fxChip} ${c.tone === 'good' ? styles.fxGood : c.tone === 'bad' ? styles.fxBad : ''}`}>
+            {c.text}
+          </span>
+        ))}
+      </div>
+    );
   const seasonLabel = SEASON_LABEL[season];
   const mood = MOOD_STYLE[eventMood(event)];
   return (
@@ -112,17 +126,26 @@ export function EventModal() {
           );
         })()}
         <p className={`${styles.description} ${styles.descAnim}`}>{desc(event)}</p>
+        {!(pending.awaitingChoice && event.choices?.length) && (
+          <ChipRow chips={effectChips(event.effects, chipCtx)} />
+        )}
         {pending.awaitingChoice && event.choices?.length ? (
-          /* 抉擇 — history holds its breath; the player picks the branch. */
+          /* 抉擇 — history holds its breath; the player picks the branch.
+             Each branch spells out its mechanical consequences, and the
+             first carries the 史實 seal (the path history itself took). */
           <div className={styles.actions} style={{ flexDirection: 'column', gap: 8 }}>
-            {event.choices.map((c) => (
+            {event.choices.map((c, idx) => (
               <button
                 key={c.id}
                 className={styles.ackButton}
                 style={{ width: '100%' }}
                 onClick={() => resolveChoice(c.id)}
               >
-                {lang === 'en' ? c.label.en : lang === 'both' ? `${c.label.zh} · ${c.label.en}` : c.label.zh}
+                <span className={styles.choiceLabel}>
+                  {lang === 'en' ? c.label.en : lang === 'both' ? `${c.label.zh} · ${c.label.en}` : c.label.zh}
+                  {idx === 0 && <span className={styles.histBadge}>{lang === 'en' ? 'history' : '史實'}</span>}
+                </span>
+                <ChipRow chips={effectChips(c.effects, chipCtx)} dim />
               </button>
             ))}
           </div>
