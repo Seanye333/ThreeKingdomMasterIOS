@@ -153,8 +153,17 @@ def main():
     index, officer_ids = build_index()
     print(f"Indexed {len(officer_ids)} officers from data.\n")
 
+    requested = set(sys.argv[1:])
+    if requested:
+        missing = [fn for fn in sorted(requested) if not os.path.exists(os.path.join(SRC_DIR, fn))]
+        if missing:
+            sys.exit("Missing source file(s): " + ", ".join(missing))
+        source_files = sorted(requested)
+    else:
+        source_files = sorted(os.listdir(SRC_DIR))
+
     matched, unresolved, failed = [], [], []
-    for fn in sorted(os.listdir(SRC_DIR)):
+    for fn in source_files:
         stem, ext = os.path.splitext(fn)
         if ext.lower() not in IMAGE_EXTS:
             continue
