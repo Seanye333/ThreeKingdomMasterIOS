@@ -46,7 +46,10 @@ import { corruptionAccrualMultiplier } from './traitEffects';
 import { rollCivicEvents } from './civicEvents';
 import { settleRefugees, REFUGEE_SHED_FRAC } from './refugees';
 import { stepConvoys, resolveConvoyRaids, resolveRaidStrike, provisionNeeded, consumeRations, type Convoy, type ConvoyRaid } from './convoy';
-import { forcedMarchAttrition, cautiousAttritionMul, paceExposureMul } from './marchPace';
+import {
+  forcedMarchAttrition, cautiousAttritionMul, paceExposureMul,
+  accrueFatigue, fatiguePowerMul, evadeSlipChance, EVADE_CAUGHT_MUL,
+} from './marchPace';
 import { computeDayEncounters, arrivalDayOf, INTERCEPT_DIST } from './dayEncounters';
 import { stepExpeditions, expeditionSpeedMul } from './expedition';
 import { embassyTargets, embassyLegSeasons } from './foreignRealm';
@@ -348,7 +351,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       .map((id) => officers[id])
       .filter((o): o is Officer => !!o)];
     const blended = pool.reduce((s, o) => s + o.stats.war * 0.6 + o.stats.leadership * 0.4, 0) / pool.length;
-    return { blended, power: blended * Math.sqrt(Math.max(1, cmd.troops)) };
+    // 師老兵疲 — a worn column swings below its paper strength (§4.1).
+    return { blended, power: blended * Math.sqrt(Math.max(1, cmd.troops)) * fatiguePowerMul(cmd.fatigue) };
   };
   // Best intelligence among an army's officers — a wise commander scouts
   // ahead and sees through enemy ambushes (识破伏兵).
@@ -397,6 +401,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     cmd.holding = false;
     cmd.ambush = undefined;
     cmd.besieging = undefined;
+    cmd.evading = undefined;
     cmd.legionBanner = undefined;
     cmd.forcedStratagem = undefined;
     troopOverride[cmd.officerId] = survivors;
@@ -537,6 +542,35 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         continue;
       }
 
+      // ── 避戰迂迴 — an evading column tries to SLIP the contact (wits vs
+      // wits) instead of fighting: back roads, screens, night marches. A
+      // concealed ambush is far harder to see coming (slip halved). Two
+      // evaders simply pass each other in the hills. Caught mid-slip = the
+      // evader fights strung out (×0.85).
+      let caughtMulA = 1, caughtMulB = 1;
+      if (a.evading || b.evading) {
+        if (a.evading && b.evading) continue;
+        const evader = a.evading ? a : b;
+        const hunter = a.evading ? b : a;
+        const concealed = !!hunter.holding && !!hunter.ambush;
+        const slip = evadeSlipChance(armyMaxIntel(evader), armyMaxIntel(hunter), evader.pace)
+          * (concealed ? 0.5 : 1);
+        if (rng() < slip) {
+          const eo = officers[evader.officerId];
+          const ho = officers[hunter.officerId];
+          if (eo?.forceId === input.playerForceId || ho?.forceId === input.playerForceId) {
+            entries.push({
+              cityId: null,
+              kind: 'note',
+              text: `Day ${contactDay}: ${eo?.name.en ?? '?'}'s column slipped past ${ho?.name.en ?? '?'} by back roads — no blood drawn.`,
+              textZh: `第${contactDay}日,${eo?.name.zh ?? '?'}迂迴避戰,取間道繞開${ho?.name.zh ?? '?'}之軍 — 兵不血刃,各自去遠。`,
+            });
+          }
+          continue;
+        }
+        if (a.evading) caughtMulA = EVADE_CAUGHT_MUL; else caughtMulB = EVADE_CAUGHT_MUL;
+      }
+
       // AI 亲征 — a significant clash involving the player is handed off to an
       // interactive tactical battle instead of being auto-resolved here. Both
       // columns are left intact this season; the battle is fought after the
@@ -608,7 +642,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
             rng: input.rng ?? Math.random,
           })
         : { aMul: 1, bMul: 1, fire: null as 'a' | 'b' | null, recapZh: undefined as string | undefined, recapEn: undefined as string | undefined };
-      const aWins = statsA.power * multA * naval.aMul >= statsB.power * multB * naval.bMul;
+      const aWins = statsA.power * multA * caughtMulA * naval.aMul >= statsB.power * multB * caughtMulB * naval.bMul;
       const winner = aWins ? a : b;
       const loser = aWins ? b : a;
       const wStats = aWins ? statsA : statsB;
@@ -651,6 +685,20 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const loseSrc = cities[loser.cityId];
       if (winSrc) cities[winSrc.id] = { ...winSrc, troops: Math.max(0, winSrc.troops - winnerCasualty) };
       if (loseSrc) cities[loseSrc.id] = { ...loseSrc, troops: Math.max(0, loseSrc.troops - loserCasualty) };
+      // 繳獲 — the victor strips the broken column's baggage train: grain
+      // feeds the column on the spot (if it carries provisions), coin goes
+      // home; a stormed camp yields its stores on top (拔寨得輜重).
+      const spoilMul = campStormed ? 1.5 : 1;
+      const foodSpoil = Math.floor(loserCasualty * 1.5 * spoilMul);
+      const goldSpoil = Math.floor(loserCasualty * 0.04 * spoilMul);
+      if (foodSpoil > 0 && winner.food != null) {
+        winner.food += foodSpoil; // command objects carry into keptCommands
+      } else if (foodSpoil > 0 && cities[winner.cityId]) {
+        cities[winner.cityId] = { ...cities[winner.cityId], food: cities[winner.cityId].food + foodSpoil };
+      }
+      if (goldSpoil > 0 && cities[winner.cityId]) {
+        cities[winner.cityId] = { ...cities[winner.cityId], gold: cities[winner.cityId].gold + goldSpoil };
+      }
       troopOverride[winner.officerId] = Math.max(0, winner.troops - winnerCasualty);
       if (input.playerForceId && winnerCmdr?.forceId === input.playerForceId) playerFieldClashesWon++;
       // 潰走 — the beaten column no longer evaporates: enough survivors with
@@ -718,6 +766,13 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const routEn = routShelter
         ? ` The remnants${loserRearGuard ? ` (${loserRearGuard.name.en}'s rear guard covering)` : ''} rout toward ${routShelter.name.en}.`
         : '';
+      // 繳獲入報 — name the spoils so a field victory reads as a real prize.
+      const spoilsZh = foodSpoil > 0 || goldSpoil > 0
+        ? `繳獲糧秣 ${foodSpoil.toLocaleString()}${goldSpoil > 0 ? `、金 ${goldSpoil.toLocaleString()}` : ''}。`
+        : '';
+      const spoilsEn = foodSpoil > 0 || goldSpoil > 0
+        ? ` Spoils: ${foodSpoil.toLocaleString()} grain${goldSpoil > 0 ? `, ${goldSpoil.toLocaleString()} gold` : ''}.`
+        : '';
       entries.push({
         cityId: winner.targetCityId,
         kind: 'battle',
@@ -725,12 +780,12 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
           ? `Ambush: ${wName.en} lay in wait${siteEn} and fell upon ${lName.en}'s column, shattering it (−${winnerCasualty} vs −${loserCasualty}). ${lName.en}'s advance is broken.`
           : campStormed
             ? `Camp stormed: ${detEn}${wName.en} overran ${lName.en}'s dug-in camp${siteEn} and seized the ground (−${winnerCasualty} vs −${loserCasualty}).`
-            : `${onWater ? 'Naval clash' : 'Field clash'}: ${wName.en} intercepted ${lName.en}${siteEn} and routed them (−${winnerCasualty} vs −${loserCasualty}). ${lName.en}'s advance is broken.`) + routEn,
+            : `${onWater ? 'Naval clash' : 'Field clash'}: ${wName.en} intercepted ${lName.en}${siteEn} and routed them (−${winnerCasualty} vs −${loserCasualty}). ${lName.en}'s advance is broken.`) + routEn + spoilsEn,
         textZh: `第${contactDay}日,` + navZh + (ambush
           ? `伏擊：${wName.zh}${siteZh}設伏以待,驟擊${lName.zh}之軍而潰之（我軍 −${winnerCasualty}，敵軍 −${loserCasualty}）。${lName.zh}之進軍受挫。`
           : campStormed
             ? `拔寨：${detZh}${wName.zh}${siteZh}強攻${lName.zh}之營寨,破之而據其地（我軍 −${winnerCasualty}，敵軍 −${loserCasualty}）。`
-            : `${onWater ? '水戰' : '野戰'}：${wName.zh}${siteZh}截擊${lName.zh}並擊潰之（我軍 −${winnerCasualty}，敵軍 −${loserCasualty}）。${lName.zh}之進軍受挫。`) + routZh,
+            : `${onWater ? '水戰' : '野戰'}：${wName.zh}${siteZh}截擊${lName.zh}並擊潰之（我軍 −${winnerCasualty}，敵軍 −${loserCasualty}）。${lName.zh}之進軍受挫。`) + routZh + spoilsZh,
         battle: fieldBattle,
       });
     }
@@ -826,7 +881,20 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       });
       continue;
     }
-    const defWins = sallyPower >= marchStats.power;
+    // 避戰迂迴 — an evading column may slink past the stronghold unseen
+    // (wits vs the sally leader's); caught anyway = fights strung out.
+    if (a.evading && rng() < evadeSlipChance(armyMaxIntel(a), leader.stats.intelligence, a.pace)) {
+      if (oa.forceId === input.playerForceId || bestCity.ownerForceId === input.playerForceId) {
+        entries.push({
+          cityId: bestCity.id,
+          kind: 'note',
+          text: `${mName.en}'s column slinked past ${bestCity.name.en} by back roads — the garrison never stirred.`,
+          textZh: `${mName.zh}之軍銜枚疾走,取間道繞過${bestCity.name.zh} — 守軍未及出擊。`,
+        });
+      }
+      continue;
+    }
+    const defWins = sallyPower >= marchStats.power * (a.evading ? EVADE_CAUGHT_MUL : 1);
     if (defWins) {
       // Column broken: heavy losses, sally takes light losses. The remnants
       // rout for the nearest friendly city (殿軍 trims the toll) — or scatter.
@@ -835,7 +903,15 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const defLoss = Math.floor(sallyTroops * 0.2);
       const mSrc = cities[a.cityId];
       if (mSrc) cities[mSrc.id] = { ...mSrc, troops: Math.max(0, mSrc.troops - marchLoss) };
-      cities[bestCity.id] = { ...cities[bestCity.id], troops: Math.max(0, cities[bestCity.id].troops - defLoss) };
+      // 繳獲 — the garrison hauls the broken column's baggage back inside.
+      const sallyFoodSpoil = Math.floor(marchLoss * 1.5);
+      const sallyGoldSpoil = Math.floor(marchLoss * 0.04);
+      cities[bestCity.id] = {
+        ...cities[bestCity.id],
+        troops: Math.max(0, cities[bestCity.id].troops - defLoss),
+        food: cities[bestCity.id].food + sallyFoodSpoil,
+        gold: cities[bestCity.id].gold + sallyGoldSpoil,
+      };
       const sallyShelter = convertToRout(a, Math.max(0, a.troops - marchLoss), pos);
       if (!sallyShelter) {
         cancelledMarchOfficers.add(a.officerId);
@@ -847,9 +923,11 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       entries.push({
         cityId: bestCity.id, kind: 'battle',
         text: `${leader.name.en} sallied from ${bestCity.name.en} and broke ${mName.en}'s column on the march (−${marchLoss} vs −${defLoss}).`
-          + (sallyShelter ? ` The remnants rout toward ${sallyShelter.name.en}.` : ''),
+          + (sallyShelter ? ` The remnants rout toward ${sallyShelter.name.en}.` : '')
+          + (sallyFoodSpoil > 0 ? ` Spoils: ${sallyFoodSpoil.toLocaleString()} grain, ${sallyGoldSpoil.toLocaleString()} gold.` : ''),
         textZh: `${leader.name.zh}自${bestCity.name.zh}出擊,於途中擊潰${mName.zh}之軍（敵 −${marchLoss}，我 −${defLoss}）。`
-          + (sallyShelter ? `殘部${sallyRearGuard ? `賴${sallyRearGuard.name.zh}斷後,` : ''}潰走,奔${sallyShelter.name.zh}而去。` : ''),
+          + (sallyShelter ? `殘部${sallyRearGuard ? `賴${sallyRearGuard.name.zh}斷後,` : ''}潰走,奔${sallyShelter.name.zh}而去。` : '')
+          + (sallyFoodSpoil > 0 ? `繳獲糧秣 ${sallyFoodSpoil.toLocaleString()}、金 ${sallyGoldSpoil.toLocaleString()}。` : ''),
         battle: makeFieldBattle(bestCity.id,
           { forceId: leader.forceId ?? null, commanderId: leader.id, companionIds: [], troops: sallyTroops, blended: sallyBlended, power: sallyPower, losses: defLoss },
           { forceId: oa.forceId ?? null, commanderId: a.officerId, companionIds: a.additionalOfficerIds ?? [], troops: a.troops, blended: marchStats.blended, power: marchStats.power, losses: marchLoss }),
@@ -1339,10 +1417,47 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         continue;
       }
     }
+    // 冬行苦寒 — winter marching bleeds stragglers on top of everything else
+    // (a cautious pace tents and forages, halving the toll). Routs are
+    // already bleeding their own way.
+    if (input.date.season === 'winter' && !cmd.routed) {
+      const wLost = Math.floor(troopsAfter * 0.03 * cautiousAttritionMul(cmd.pace));
+      if (wLost > 0) {
+        troopsAfter = Math.max(1, troopsAfter - wLost);
+        const cmdrW = officers[cmd.officerId];
+        if (cmdrW && cmdrW.forceId === pfId) {
+          entries.push({
+            cityId: null,
+            kind: 'desertion',
+            text: `${cmdrW.name.en}'s column marches through the winter cold — ${wLost} men lost to frost and desertion.`,
+            textZh: `${cmdrW.name.zh}之軍冒雪而行,凍餒交加,折兵 ${wLost}。`,
+          });
+        }
+      }
+    }
+    // 師老兵疲 — a season on the road wears the column (harder when forced).
+    cmd.fatigue = accrueFatigue(cmd.fatigue, { pace: cmd.pace, holding: false });
     suppliedTroops[cmd.officerId] = troopsAfter;
     suppliedFood[cmd.officerId] = s.food;
     // 防壁 — a barricade in the column's path stalls it this season (no advance).
-    const advance = blockedOfficers.has(cmd.officerId) ? 0 : 1;
+    let advance = blockedOfficers.has(cmd.officerId) ? 0 : 1;
+    // 大雪封山 — a winter column deep in the mountains may be snowed in for
+    // the season (the frozen rivers that OPEN in winter are the trade-off).
+    if (advance === 1 && input.date.season === 'winter' && !cmd.routed) {
+      const posW = armyPosition(cmd);
+      if (posW && terrainMarchCost(posW.x, posW.y) >= 0.55 && rng() < 0.5) {
+        advance = 0;
+        const cmdrW = officers[cmd.officerId];
+        if (cmdrW && cmdrW.forceId === pfId) {
+          entries.push({
+            cityId: null,
+            kind: 'note',
+            text: `Snow seals the passes — ${cmdrW.name.en}'s column makes no headway this season.`,
+            textZh: `大雪封山 — ${cmdrW.name.zh}之軍困於隘路,本季寸步難進。`,
+          });
+        }
+      }
+    }
     keptCommands[cmd.officerId] = {
       ...cmd,
       troops: troopsAfter,
@@ -1359,9 +1474,29 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const h = hostileMarchAttrition(cmd, s.troops);
     if (h.lost > 0) noteHarass(cmd, h.lost);
     if (h.troops <= 0) continue;
-    suppliedTroops[cmd.officerId] = h.troops;
+    let heldTroops = h.troops;
+    // 冬圍之苦 — a siege camp shivering through winter sheds men to the cold
+    // (an ordinary rest camp has shelter and fires; it does not).
+    if (input.date.season === 'winter' && cmd.besieging) {
+      const wLost = Math.floor(heldTroops * 0.04);
+      if (wLost > 0) {
+        heldTroops = Math.max(1, heldTroops - wLost);
+        const cmdrW = officers[cmd.officerId];
+        if (cmdrW && cmdrW.forceId === pfId) {
+          entries.push({
+            cityId: cmd.besieging,
+            kind: 'desertion',
+            text: `Winter grinds the siege lines — ${cmdrW.name.en}'s camp loses ${wLost} men to the cold.`,
+            textZh: `圍城之軍苦寒 — ${cmdrW.name.zh}營中凍損 ${wLost} 卒。`,
+          });
+        }
+      }
+    }
+    // 師老兵疲 — a rest camp recovers; a siege camp is itself grinding work.
+    cmd.fatigue = accrueFatigue(cmd.fatigue, { holding: true, besieging: !!cmd.besieging });
+    suppliedTroops[cmd.officerId] = heldTroops;
     suppliedFood[cmd.officerId] = s.food;
-    keptCommands[cmd.officerId] = { ...cmd, troops: h.troops, food: s.food };
+    keptCommands[cmd.officerId] = { ...cmd, troops: heldTroops, food: s.food };
   }
 
   // Derive the persistent Army layer from marches still on the map next
@@ -1398,6 +1533,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       routed: cmd.routed,
       fleeX: cmd.fleeX,
       fleeY: cmd.fleeY,
+      evading: cmd.evading,
+      fatigue: cmd.fatigue,
       legionBanner: cmd.legionBanner,
     };
   };
@@ -1462,8 +1599,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   };
   for (const cmd of liveMarches) {
     // 潰軍不奪土 — a fleeing rout claims no ground (and its flee route isn't
-    // the src→dst road the stamper would walk anyway).
-    if (cmd.routed) continue;
+    // the src→dst road the stamper would walk anyway). 避戰迂迴 slinks by
+    // back roads — it plants no banners either.
+    if (cmd.routed || cmd.evading) continue;
     const total = Math.max(1, cmd.totalSeasons ?? 1);
     if (cmd.holding) {
       // A garrison holds the cell it sits on — stamp a small slice around

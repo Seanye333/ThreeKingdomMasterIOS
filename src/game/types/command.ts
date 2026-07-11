@@ -85,6 +85,15 @@ export interface MarchCommand extends CommandBase {
   /** 行軍節奏 — 急行軍 (faster, but 累毙 + 疲勞) / 常行 / 緩進 (slower, rested).
    *  Defaults to 'normal' when unset (old saves). */
   pace?: import('../systems/marchPace').MarchPace;
+  /** 避戰迂迴 — the column takes back roads and screens its movement: on a
+   *  hostile contact (day sweep or a garrison sally) it rolls to SLIP away
+   *  (wits vs wits) instead of fighting; caught anyway = fights strung out
+   *  (×0.85). While evading it claims no territory. Cleared on hold. */
+  evading?: boolean;
+  /** 師老兵疲 — cumulative campaign fatigue 0..100 (marchPace.accrueFatigue):
+   *  marching wears it up, camping rests it off, a siege camp grinds it up.
+   *  Saps field power (×0.75 at 100) and opening morale (−15 at 100). */
+  fatigue?: number;
   /** 召回 — the column has abandoned its objective and is streaming home to its
    *  source city (targetCityId is then the source; it merges on arrival). */
   returning?: boolean;

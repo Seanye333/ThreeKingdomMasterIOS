@@ -27,7 +27,7 @@ import { gradeAuraPowerMul, gradeAuraMorale, itemMasteryMul, enemyMoraleShock, h
 import { growthPowerMul, grantXp } from './growth';
 import { deriveWeaponType, type WeaponType } from '../data/weaponTypes';
 import { weaponMatchupMul, weaponMasterySkill, pickAiFormation, formationCounterMul } from './tactical';
-import { arrivalFatigueMorale } from './marchPace';
+import { arrivalFatigueMorale, fatigueMoraleMalus } from './marchPace';
 import { ROUT_MIN_TROOPS, nearestShelterCity } from './rout';
 import { itemSetBonuses } from '../data/itemSets';
 import { selectSiegeEngine } from '../data/siegeEngines';
@@ -1446,7 +1446,7 @@ export function handleMarch(
       duelChanceMul: ctx.duelChanceMul ?? 1,
       // 疲勞 less 都督之旗 — a forced march opens weary (以逸待勞), but a renowned
       // legion marshal's banner steadies the column (legionBanner offsets it).
-      attackerMoraleMod: arrivalFatigueMorale(cmd.pace) - (cmd.legionBanner ?? 0),
+      attackerMoraleMod: arrivalFatigueMorale(cmd.pace) + fatigueMoraleMalus(cmd.fatigue) - (cmd.legionBanner ?? 0),
       // 軍師獻策 — a scheme the player chose for this assault (if any).
       forcedStratagem: cmd.forcedStratagem,
     },

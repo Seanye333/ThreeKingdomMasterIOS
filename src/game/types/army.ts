@@ -38,6 +38,10 @@ export interface Army {
   cellTarget?: boolean;
   /** 行軍節奏 — 急行軍 / 常行 / 緩進 (see MarchCommand.pace). */
   pace?: import('./command').MarchCommand['pace'];
+  /** 避戰迂迴 — slipping contacts instead of fighting (see MarchCommand.evading). */
+  evading?: boolean;
+  /** 師老兵疲 — cumulative campaign fatigue 0..100 (see MarchCommand.fatigue). */
+  fatigue?: number;
   /** 召回 — streaming home to its source (rendered/labelled as a return). */
   returning?: boolean;
   /** 潰走 — beaten in the field, fleeing to shelter (see MarchCommand.routed). */

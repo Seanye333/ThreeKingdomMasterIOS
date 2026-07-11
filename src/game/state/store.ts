@@ -86,7 +86,7 @@ import { ITEMS_BY_ID, refineCost, REFINE_MAX, setRefineRegistry, itemRarity,
   itemGrowthGoldSpent } from '../data/items';
 import { SKILLS_BY_ID } from '../data/skills';
 import { marchDurationFor } from '../data/cities';
-import { marchSpeedMul, adjustMarchSeasons, PACE_LABEL, arrivalFatigueMorale } from '../systems/marchPace';
+import { marchSpeedMul, adjustMarchSeasons, PACE_LABEL, arrivalFatigueMorale, fatigueMoraleMalus } from '../systems/marchPace';
 import { terrainRoute, positionAlongRoute, marchDestCoords } from '../data/territories';
 import { cityPos, CITY_GEO_OVERRIDES } from '../data/cityGeo';
 import { provisionNeeded, convoyCapacity, planConvoy } from '../systems/convoy';
@@ -433,6 +433,9 @@ interface GameStore extends GameState {
   selectArmy: (armyId: EntityId | null) => void;
   redirectArmy: (armyId: EntityId, newTargetId: EntityId) => boolean;
   holdArmy: (armyId: EntityId) => boolean;
+  /** 避戰迂迴 — toggle a moving column's evade stance (slip contacts instead
+   *  of fighting; claims no territory while evading). */
+  setArmyEvade: (armyId: EntityId) => { ok: boolean; reason?: string };
   /** 設伏 — toggle a HOLDING army into ambush stance (needs cover at its
    *  cell). Hidden from the enemy map view; springs harder on contact. */
   setArmyAmbush: (armyId: EntityId) => { ok: boolean; reason?: string };
@@ -1424,8 +1427,9 @@ function buildFieldBattle(
     attackers,
     defenders,
     reinforcements: columnJoin.reinforcements,
-    // 疲勞 less 都督之旗 — weary from a forced march, steadied by the marshal's banner.
-    attackerFatigue: arrivalFatigueMorale(pArmy.pace) - (pArmy.legionBanner ?? 0),
+    // 疲勞 less 都督之旗 — weary from a forced march (and a long campaign),
+    // steadied by the marshal's banner.
+    attackerFatigue: arrivalFatigueMorale(pArmy.pace) + fatigueMoraleMalus(pArmy.fatigue) - (pArmy.legionBanner ?? 0),
     // 排兵布陣 — a dug-in side fights from 十面埋伏; otherwise each marshal draws
     // up a formation suited to its arms & wits, the attacker reading the
     // defender's to counter it (陣克陣). No more formation-less NPC armies.
@@ -1782,8 +1786,8 @@ export const useGameStore = create<GameStore>()(
         if (cmd.routed) return false; // 潰軍無令 — a rout cannot dig in
         const next = !army.holding;
         set({
-          pendingCommands: { ...state.pendingCommands, [armyId]: { ...cmd, holding: next, ambush: next ? cmd.ambush : undefined, besieging: next ? cmd.besieging : undefined } },
-          armies: { ...state.armies, [armyId]: { ...army, holding: next, ambush: next ? army.ambush : undefined, besieging: next ? army.besieging : undefined } },
+          pendingCommands: { ...state.pendingCommands, [armyId]: { ...cmd, holding: next, ambush: next ? cmd.ambush : undefined, besieging: next ? cmd.besieging : undefined, evading: next ? undefined : cmd.evading } },
+          armies: { ...state.armies, [armyId]: { ...army, holding: next, ambush: next ? army.ambush : undefined, besieging: next ? army.besieging : undefined, evading: next ? undefined : army.evading } },
         });
         // 軍師點撥 — the moment a camp goes down is when 圍城/設伏 first matter.
         if (next && state.playerForceId) {
@@ -1802,6 +1806,28 @@ export const useGameStore = create<GameStore>()(
           }
         }
         return true;
+      },
+
+      setArmyEvade: (armyId) => {
+        const state = get();
+        const cmd = state.pendingCommands[armyId];
+        const army = state.armies[armyId];
+        if (!cmd || cmd.type !== 'march' || !army) return { ok: false, reason: 'no such army' };
+        if (army.forceId !== state.playerForceId) return { ok: false, reason: 'not yours' };
+        if (cmd.routed) return { ok: false, reason: '潰軍無令' };
+        if (army.holding) return { ok: false, reason: '紮營之軍無所謂避戰 — 先解除駐守' };
+        const next = !cmd.evading;
+        set({
+          pendingCommands: { ...state.pendingCommands, [armyId]: { ...cmd, evading: next || undefined } },
+          armies: { ...state.armies, [armyId]: { ...army, evading: next || undefined } },
+        });
+        if (next) {
+          get().notify(
+            `🌫 ${state.officers[army.commanderId]?.name.zh ?? '縱隊'}改走間道 — 遇敵先求脫離,不奪寸土`,
+            `Evading — the column takes back roads: slips contacts, claims no ground`,
+          );
+        }
+        return { ok: true };
       },
 
       setArmyAmbush: (armyId) => {

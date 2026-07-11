@@ -22,6 +22,7 @@ export function ArmiesPanel() {
   const recallMarch = useGameStore((s) => s.recallMarch);
   const holdArmy = useGameStore((s) => s.holdArmy);
   const setArmyAmbush = useGameStore((s) => s.setArmyAmbush);
+  const setArmyEvade = useGameStore((s) => s.setArmyEvade);
   const burnBridge = useGameStore((s) => s.burnBridge);
   const besiegeCity = useGameStore((s) => s.besiegeCity);
   const burnBoom = useGameStore((s) => s.burnBoom);
@@ -93,6 +94,24 @@ export function ArmiesPanel() {
                 fontFamily: 'var(--tkm-font-body)',
               }}
             >{armies[selectedArmyId].holding ? (lang === 'en' ? 'Release' : '解除') : (lang === 'en' ? 'Hold' : '駐守')}</button>
+            {!armies[selectedArmyId].holding && (
+              <button
+                onClick={() => {
+                  const r = setArmyEvade(selectedArmyId);
+                  if (!r.ok && r.reason) notify(r.reason, r.reason);
+                }}
+                style={{
+                  background: armies[selectedArmyId].evading ? '#122a30' : '#0e1e24',
+                  border: `1px solid ${armies[selectedArmyId].evading ? '#7ac0d8' : '#4a7a90'}`,
+                  color: armies[selectedArmyId].evading ? '#b0e0f0' : '#80b0c8',
+                  fontSize: '0.7rem', padding: '1px 6px', cursor: 'pointer',
+                  fontFamily: 'var(--tkm-font-body)',
+                }}
+                title={lang === 'en'
+                  ? 'Evade: take back roads — roll to SLIP hostile contacts and garrison sallies (wits vs wits; cautious pace helps). Claims no territory; caught = fights strung out.'
+                  : '避戰迂迴 — 取間道而行:遇敵縱隊/守軍出擊時以智鬥智擲脫離(緩進加成、急行減成);行軍不奪土;被抓住則倉皇接戰(×0.85)。'}
+              >{armies[selectedArmyId].evading ? (lang === 'en' ? 'Evading' : '避戰中') : (lang === 'en' ? 'Evade' : '避戰')}</button>
+            )}
             {armies[selectedArmyId].holding && (
               <button
                 onClick={() => {
@@ -213,7 +232,9 @@ export function ArmiesPanel() {
           : a.holding
           ? { icon: '⏸', text: lang === 'en' ? 'Hold' : '駐守', color: '#a8c87a', tip: lang === 'en' ? 'Holding position; won’t advance this season (Release to resume)' : '原地駐守,本季不前進(可「解除」續行)' }
           : remaining <= 1
-            ? { icon: '⚑', text: lang === 'en' ? `${dest} · arriving` : `${dest}·抵達在即`, color: '#f2dd9a', tip: lang === 'en' ? 'Arrives next season' : '下季抵達目的地' }
+            ? { icon: a.evading ? '🌫' : '⚑', text: lang === 'en' ? `${dest} · arriving` : `${dest}·抵達在即`, color: '#f2dd9a', tip: lang === 'en' ? 'Arrives next season' : '下季抵達目的地' }
+            : a.evading
+            ? { icon: '🌫', text: lang === 'en' ? `${dest} · evade · ${remaining}s` : `${dest}·避戰·${remaining}季`, color: '#8ac0d8', tip: lang === 'en' ? 'Evading — slips contacts by back roads; claims no territory' : '避戰迂迴 — 遇敵擲脫離;行軍不奪土' }
             : { icon: '▸', text: lang === 'en' ? `${dest} · ${remaining}s` : `${dest}·${remaining}季`, color: '#aab6c0', tip: lang === 'en' ? `Marching · ${pct}% done` : `行軍中 · 已行 ${pct}%` };
         return (
           <div
@@ -238,6 +259,14 @@ export function ArmiesPanel() {
                     </span>
                   );
                 })()}
+                {(a.fatigue ?? 0) >= 24 && (
+                  <span
+                    style={{ marginLeft: 4, fontSize: '0.58rem', color: (a.fatigue ?? 0) >= 64 ? '#e0707a' : '#e0a070' }}
+                    title={lang === 'en'
+                      ? `Campaign fatigue ${a.fatigue} — saps field power & opening morale; camp (not besieging) to rest`
+                      : `師老兵疲 ${a.fatigue} — 野戰戰力與開戰士氣俱減;紮營(非圍城)可休整`}
+                  >疲{a.fatigue}</span>
+                )}
               </span>
               <span style={{ color: status.color, whiteSpace: 'nowrap' }}>
                 {status.icon} {status.text}

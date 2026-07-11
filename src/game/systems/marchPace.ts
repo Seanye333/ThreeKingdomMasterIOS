@@ -72,3 +72,46 @@ export function arrivalFatigueMorale(pace: MarchPace | undefined): number {
 export function paceExposureMul(pace: MarchPace | undefined): number {
   return pace === 'forced' ? 1.25 : pace === 'cautious' ? 0.8 : 1;
 }
+
+// ── 師老兵疲 — cumulative campaign fatigue (0..100) a column carries across
+// seasons. Marching wears it up (harder at a forced pace), camping rests it
+// off — but a siege camp is itself grinding work. Fatigue saps field power
+// and opens battles with lower morale, so deep multi-season campaigns need
+// rest stops, not just supply.
+export const FATIGUE_MAX = 100;
+/** Per-season fatigue change. Returns the new value, clamped 0..100. */
+export function accrueFatigue(
+  fatigue: number | undefined,
+  opts: { pace?: MarchPace; holding?: boolean; besieging?: boolean },
+): number {
+  const f = fatigue ?? 0;
+  const delta = opts.holding
+    ? (opts.besieging ? 4 : -8)                      // siege camps grind; rest camps recover
+    : opts.pace === 'forced' ? 14
+    : opts.pace === 'cautious' ? 4
+    : 8;
+  return Math.max(0, Math.min(FATIGUE_MAX, f + delta));
+}
+/** 疲兵之弱 — field-power multiplier from fatigue (100 疲 → ×0.75). */
+export function fatiguePowerMul(fatigue: number | undefined): number {
+  return 1 - Math.min(0.25, (fatigue ?? 0) / 400);
+}
+/** 疲兵之靡 — extra opening-morale malus in an arrival/field battle (cap 15). */
+export function fatigueMoraleMalus(fatigue: number | undefined): number {
+  return Math.min(15, Math.round((fatigue ?? 0) / 8));
+}
+
+// ── 避戰迂迴 — an evading column takes back roads and screens its movement,
+// trying to SLIP a contact instead of fighting it. Wits decide: the evader's
+// best intelligence against the hunter's. A cautious pace helps, a forced
+// march (strung-out files) hurts. Caught anyway = fighting strung out.
+export function evadeSlipChance(
+  evaderIntel: number,
+  hunterIntel: number,
+  pace: MarchPace | undefined,
+): number {
+  const paceAdj = pace === 'cautious' ? 0.15 : pace === 'forced' ? -0.1 : 0;
+  return Math.max(0.2, Math.min(0.85, 0.4 + (evaderIntel - hunterIntel) * 0.004 + paceAdj));
+}
+/** 倉皇接戰 — power multiplier on an evader caught mid-slip. */
+export const EVADE_CAUGHT_MUL = 0.85;

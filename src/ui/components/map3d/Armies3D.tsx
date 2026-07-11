@@ -121,7 +121,7 @@ export function MarchingArmies({ cities, pendingCommands, forces, officers, port
   const lang = useLanguage();
   const armies = useMemo(() => {
     return Object.values(pendingCommands)
-      .filter((cmd): cmd is { cityId: string; type: string; targetCityId: string; troops: number; officerId: string; seasonsRemaining?: number; totalSeasons?: number; targetX?: number; targetY?: number; holding?: boolean; ambush?: boolean; besieging?: string; routed?: boolean; fleeX?: number; fleeY?: number } =>
+      .filter((cmd): cmd is { cityId: string; type: string; targetCityId: string; troops: number; officerId: string; seasonsRemaining?: number; totalSeasons?: number; targetX?: number; targetY?: number; holding?: boolean; ambush?: boolean; besieging?: string; routed?: boolean; fleeX?: number; fleeY?: number; evading?: boolean } =>
         cmd.type === 'march' && !!cmd.cityId)
       .map((cmd) => {
         const from = cities[cmd.cityId];
@@ -177,6 +177,7 @@ export function MarchingArmies({ cities, pendingCommands, forces, officers, port
           ambush: !!cmd.ambush,
           besieging: !!cmd.besieging,
           routed: !!cmd.routed,
+          evading: !!cmd.evading,
           ambushRevealed,
           cellTarget: cmd.targetX != null,
         };
@@ -191,7 +192,7 @@ export function MarchingArmies({ cities, pendingCommands, forces, officers, port
           commanderName={a.commanderName} targetName={a.targetName} troops={a.troops}
           seasonsRemaining={a.seasonsRemaining} totalSeasons={a.totalSeasons}
           landRoute={a.landRoute} weaponType={a.weaponType}
-          selected={a.selected} holding={a.holding} ambush={a.ambush} besieging={a.besieging} routed={a.routed} ambushRevealed={a.ambushRevealed} cellTarget={a.cellTarget}
+          selected={a.selected} holding={a.holding} ambush={a.ambush} besieging={a.besieging} routed={a.routed} evading={a.evading} ambushRevealed={a.ambushRevealed} cellTarget={a.cellTarget}
           ports={ports} onClick={onArmyClick ? () => onArmyClick(a.officerId) : undefined}
           onPressStart={onArmyPressStart ? (e) => onArmyPressStart(a.officerId, e) : undefined} />
       ))}
@@ -205,7 +206,7 @@ const UNIT_TAG: Record<WeaponType, string> = {
   sabre: '刀', sword: '劍', fan: '師', siege: '械', none: '步',
 };
 
-function MarchingArmy({ from, to, color, commanderName, targetName, troops, seasonsRemaining, totalSeasons, landRoute, weaponType, selected, holding, ambush, besieging, routed, ambushRevealed, cellTarget, ports, onClick, onPressStart }: {
+function MarchingArmy({ from, to, color, commanderName, targetName, troops, seasonsRemaining, totalSeasons, landRoute, weaponType, selected, holding, ambush, besieging, routed, evading, ambushRevealed, cellTarget, ports, onClick, onPressStart }: {
   from: City; to: City; color: string;
   commanderName: string; targetName: string; troops: number;
   seasonsRemaining: number; totalSeasons: number;
@@ -216,6 +217,7 @@ function MarchingArmy({ from, to, color, commanderName, targetName, troops, seas
   ambush?: boolean;
   besieging?: boolean;
   routed?: boolean;
+  evading?: boolean;
   ambushRevealed?: boolean;
   cellTarget: boolean;
   ports: Record<string, import('../../../game/types').Port>;
@@ -420,6 +422,14 @@ function MarchingArmy({ from, to, color, commanderName, targetName, troops, seas
                 borderRadius: 'var(--tkm-radius-xs)',
                 fontSize: '9px', fontWeight: 700,
               }}>潰</span>
+            )}
+            {evading && !routed && (
+              <span style={{
+                display: 'inline-block', marginLeft: 4, padding: '0 3px',
+                background: '#0e2830', color: '#9ad0e8',
+                borderRadius: 'var(--tkm-radius-xs)',
+                fontSize: '9px', fontWeight: 700,
+              }}>避</span>
             )}
             <span style={{ color: '#c0a878', marginLeft: 5, fontSize: '9px', fontFamily: 'ui-monospace, monospace' }}>{troopLabel}{etaLabel}</span>
           </div>
