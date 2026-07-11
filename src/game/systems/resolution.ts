@@ -693,18 +693,27 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       if (winSrc) cities[winSrc.id] = { ...winSrc, troops: Math.max(0, winSrc.troops - winnerCasualty) };
       if (loseSrc) cities[loseSrc.id] = { ...loseSrc, troops: Math.max(0, loseSrc.troops - loserCasualty) };
       // 繳獲 — the victor strips the broken column's baggage train: grain
-      // feeds the column on the spot (if it carries provisions), coin goes
-      // home; a stormed camp yields its stores on top (拔寨得輜重).
+      // feeds the column on the spot (if it carries provisions), coin and
+      // materiel (loose mounts, dropped arms → 馬/鐵) go home; a stormed
+      // camp yields its stores on top (拔寨得輜重).
       const spoilMul = campStormed ? 1.5 : 1;
       const foodSpoil = Math.floor(loserCasualty * 1.5 * spoilMul);
       const goldSpoil = Math.floor(loserCasualty * 0.04 * spoilMul);
+      const horseSpoil = Math.floor(loserCasualty * 0.015 * spoilMul);
+      const ironSpoil = Math.floor(loserCasualty * 0.025 * spoilMul);
       if (foodSpoil > 0 && winner.food != null) {
         winner.food += foodSpoil; // command objects carry into keptCommands
       } else if (foodSpoil > 0 && cities[winner.cityId]) {
         cities[winner.cityId] = { ...cities[winner.cityId], food: cities[winner.cityId].food + foodSpoil };
       }
-      if (goldSpoil > 0 && cities[winner.cityId]) {
-        cities[winner.cityId] = { ...cities[winner.cityId], gold: cities[winner.cityId].gold + goldSpoil };
+      if (cities[winner.cityId]) {
+        const ws = cities[winner.cityId];
+        cities[winner.cityId] = {
+          ...ws,
+          gold: ws.gold + goldSpoil,
+          warhorses: Math.min(WARHORSE_CITY_CAP, (ws.warhorses ?? 0) + horseSpoil),
+          iron: Math.min(IRON_CITY_CAP, (ws.iron ?? 0) + ironSpoil),
+        };
       }
       troopOverride[winner.officerId] = Math.max(0, winner.troops - winnerCasualty);
       if (input.playerForceId && winnerCmdr?.forceId === input.playerForceId) playerFieldClashesWon++;
@@ -798,10 +807,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         : '';
       // 繳獲入報 — name the spoils so a field victory reads as a real prize.
       const spoilsZh = (foodSpoil > 0 || goldSpoil > 0
-        ? `繳獲糧秣 ${foodSpoil.toLocaleString()}${goldSpoil > 0 ? `、金 ${goldSpoil.toLocaleString()}` : ''}。`
+        ? `繳獲糧秣 ${foodSpoil.toLocaleString()}${goldSpoil > 0 ? `、金 ${goldSpoil.toLocaleString()}` : ''}${horseSpoil > 0 ? `、馬 ${horseSpoil.toLocaleString()}` : ''}${ironSpoil > 0 ? `、鐵 ${ironSpoil.toLocaleString()}` : ''}。`
         : '') + (fieldCaptives.length > 0 ? `陣擒${fieldCaptives.map((o) => o.name.zh).join('、')}!` : '');
       const spoilsEn = (foodSpoil > 0 || goldSpoil > 0
-        ? ` Spoils: ${foodSpoil.toLocaleString()} grain${goldSpoil > 0 ? `, ${goldSpoil.toLocaleString()} gold` : ''}.`
+        ? ` Spoils: ${foodSpoil.toLocaleString()} grain${goldSpoil > 0 ? `, ${goldSpoil.toLocaleString()} gold` : ''}${horseSpoil > 0 ? `, ${horseSpoil.toLocaleString()} horses` : ''}${ironSpoil > 0 ? `, ${ironSpoil.toLocaleString()} iron` : ''}.`
         : '') + (fieldCaptives.length > 0 ? ` Taken in the press: ${fieldCaptives.map((o) => o.name.en).join(', ')}.` : '');
       entries.push({
         cityId: winner.targetCityId,
@@ -933,14 +942,19 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const defLoss = Math.floor(sallyTroops * 0.2);
       const mSrc = cities[a.cityId];
       if (mSrc) cities[mSrc.id] = { ...mSrc, troops: Math.max(0, mSrc.troops - marchLoss) };
-      // 繳獲 — the garrison hauls the broken column's baggage back inside.
+      // 繳獲 — the garrison hauls the broken column's baggage back inside
+      // (grain, coin, loose mounts and dropped arms).
       const sallyFoodSpoil = Math.floor(marchLoss * 1.5);
       const sallyGoldSpoil = Math.floor(marchLoss * 0.04);
+      const sallyHorseSpoil = Math.floor(marchLoss * 0.015);
+      const sallyIronSpoil = Math.floor(marchLoss * 0.025);
       cities[bestCity.id] = {
         ...cities[bestCity.id],
         troops: Math.max(0, cities[bestCity.id].troops - defLoss),
         food: cities[bestCity.id].food + sallyFoodSpoil,
         gold: cities[bestCity.id].gold + sallyGoldSpoil,
+        warhorses: Math.min(WARHORSE_CITY_CAP, (cities[bestCity.id].warhorses ?? 0) + sallyHorseSpoil),
+        iron: Math.min(IRON_CITY_CAP, (cities[bestCity.id].iron ?? 0) + sallyIronSpoil),
       };
       // 陣擒 — the sally can drag officers off the broken column too (8%,
       // rear guard halves it and himself always cuts free).

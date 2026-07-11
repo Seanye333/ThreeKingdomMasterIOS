@@ -1421,6 +1421,10 @@ function decideCommand(
         marchDurationFor(city, target, season), 'normal',
         marchSpeedMul([o, ...picked]) * marchSpeedMultiplier(weather),
       );
+      // 奇襲走間道 — a wise head on the column (智 ≥78) takes a LONG approach
+      // by back roads, slipping interceptors and sallies the way a player
+      // evades a deep strike (偷渡陰平, mirrored).
+      const wiseIntel = Math.max(o.stats.intelligence, ...picked.map((c) => c.stats.intelligence), 0);
       const cmd: MarchCommand = {
         type: 'march',
         cityId: city.id,
@@ -1430,6 +1434,7 @@ function decideCommand(
         additionalOfficerIds: companions.length > 0 ? companions : undefined,
         seasonsRemaining: dur,
         totalSeasons: dur,
+        evading: wiseIntel >= 78 && dur >= 2 ? true : undefined,
       };
       return { command: cmd, officer: o, companions };
     }

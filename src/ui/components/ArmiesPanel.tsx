@@ -144,8 +144,8 @@ export function ArmiesPanel() {
                   fontFamily: 'var(--tkm-font-body)',
                 }}
                 title={lang === 'en'
-                  ? 'Invest the nearest enemy city: its food and loyalty bleed every turn; dry granaries open the gates without a fight. The garrison may sortie.'
-                  : '長圍 — 兵圍左近敵城:斷其市易耕稼,每旬糧秣民忠俱蹙;糧盡則開城出降。守軍勢眾時或傾城突圍。'}
+                  ? 'Invest the nearest enemy city: its food and loyalty bleed every turn; dry granaries open the gates without a fight. The garrison may sortie — and relief columns walk into your prepared lines (圍點打援, automatic).'
+                  : '長圍 — 兵圍左近敵城:斷其市易耕稼,每旬糧秣民忠俱蹙;糧盡則開城出降。守軍勢眾時或傾城突圍;敵援軍來撲則自動以逸待勞(圍點打援,伏擊級加成)。'}
               >{armies[selectedArmyId].besieging ? (lang === 'en' ? 'Lifting?' : '圍中') : (lang === 'en' ? 'Besiege' : '圍城')}</button>
             )}
             {armies[selectedArmyId].naval && (
@@ -229,6 +229,8 @@ export function ArmiesPanel() {
           ? { icon: '⚠', text: lang === 'en' ? `ROUT · ${remaining}s` : `潰走·${remaining}季`, color: '#e0707a', tip: lang === 'en' ? 'Beaten in the field — fleeing for shelter, shedding stragglers; enemies can ride it down' : '野戰敗北,亡命奔還;沿途散卒,敵可掩殺' }
           : a.returning
           ? { icon: '↩', text: lang === 'en' ? `home · ${remaining}s` : `歸返·${remaining}季`, color: '#c79a6a', tip: lang === 'en' ? 'Recalled — streaming home; merges into its source city on arrival' : '已召回,折返本城,抵達即併入守軍' }
+          : a.besieging
+          ? { icon: '⭕', text: lang === 'en' ? 'Siege · anvil' : '圍城·打援', color: '#e8a040', tip: lang === 'en' ? 'Investing the city — and meeting any relief column from prepared lines (ambush-grade spring, automatic)' : '長圍斷糧;敵援軍來撲時自動以逸待勞(伏擊級加成,無須設伏)' }
           : a.holding
           ? { icon: '⏸', text: lang === 'en' ? 'Hold' : '駐守', color: '#a8c87a', tip: lang === 'en' ? 'Holding position; won’t advance this season (Release to resume)' : '原地駐守,本季不前進(可「解除」續行)' }
           : remaining <= 1

@@ -351,7 +351,9 @@ function MarchingArmy({ from, to, color, commanderName, targetName, troops, seas
             </div>
             <div style={{ color: '#bfae86' }}>
               {holding
-                ? (ambush ? tHover('設伏 — 藏兵於掩蔽', 'In ambush — gone to ground') : tHover('駐守紮營', 'Holding — encamped'))
+                ? (ambush ? tHover('設伏 — 藏兵於掩蔽', 'In ambush — gone to ground')
+                  : besieging ? tHover('圍城中 — 敵援來撲以逸待勞', 'Besieging — relief columns meet prepared lines')
+                  : tHover('駐守紮營', 'Holding — encamped'))
                 : routed
                   ? `${tHover('潰走中 — 無力再戰', 'ROUTING — no fight left')} → ${targetName || '—'}`
                   : `→ ${targetName || (cellTarget ? tHover('野地', 'field') : '—')}${totalSeasons > 1 ? ` · ${seasonsRemaining}/${totalSeasons} ${tHover('季', 'seasons')}` : ''}`}
