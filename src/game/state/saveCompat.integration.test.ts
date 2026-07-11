@@ -61,6 +61,38 @@ describe('存檔遷移 — new map-batch fields', () => {
     expect(s.mechanicHints.besiege).toBe(true);
   });
 
+  it('round-trips 潰軍/避戰/疲勞 march fields through save → load', () => {
+    const st = useGameStore;
+    const s0 = st.getState();
+    const cityId = Object.keys(s0.cities)[0];
+    st.setState({
+      pendingCommands: {
+        'compat-runner': {
+          type: 'march', cityId, targetCityId: cityId, officerId: 'compat-runner',
+          troops: 900, routed: true, returning: true, fleeX: 400, fleeY: 300,
+          totalSeasons: 2, seasonsRemaining: 2, fatigue: 37,
+        },
+        'compat-sneak': {
+          type: 'march', cityId, targetCityId: cityId, officerId: 'compat-sneak',
+          troops: 1200, evading: true, totalSeasons: 3, seasonsRemaining: 3,
+        },
+      } as never,
+    });
+    st.getState().saveSlot('compat-test', '潰軍欄位');
+    const parsed = JSON.parse(localStorage.getItem(SLOT_KEY)!);
+    expect(parsed.pendingCommands['compat-runner'].routed).toBe(true);
+    expect(parsed.pendingCommands['compat-runner'].fleeX).toBe(400);
+    expect(parsed.pendingCommands['compat-runner'].fatigue).toBe(37);
+    expect(parsed.pendingCommands['compat-sneak'].evading).toBe(true);
+
+    st.setState({ pendingCommands: {} });
+    expect(st.getState().loadSlot('compat-test')).toBe(true);
+    const cmds = st.getState().pendingCommands as Record<string, Record<string, unknown>>;
+    expect(cmds['compat-runner'].routed).toBe(true);
+    expect(cmds['compat-runner'].fleeY).toBe(300);
+    expect(cmds['compat-sneak'].evading).toBe(true);
+  });
+
   it('an OLD save (fields absent) loads with defaults and still resolves a season', () => {
     const st = useGameStore;
     st.getState().saveSlot('compat-test', '舊檔模擬');
@@ -75,6 +107,11 @@ describe('存檔遷移 — new map-batch fields', () => {
     for (const cmd of Object.values(parsed.pendingCommands ?? {}) as Array<Record<string, unknown>>) {
       delete cmd.ambush;
       delete cmd.besieging;
+      delete cmd.routed;
+      delete cmd.fleeX;
+      delete cmd.fleeY;
+      delete cmd.evading;
+      delete cmd.fatigue;
     }
     localStorage.setItem(SLOT_KEY, JSON.stringify(parsed));
 
@@ -90,6 +127,7 @@ describe('存檔遷移 — new map-batch fields', () => {
     expect(st.getState().setArmyAmbush('no-such-army').ok).toBe(false);
     expect(st.getState().besiegeCity('no-such-army').ok).toBe(false);
     expect(st.getState().burnBridge('no-such-army').ok).toBe(false);
+    expect(st.getState().setArmyEvade('no-such-army').ok).toBe(false);
 
     // And a full season resolves without touching the missing fields.
     st.getState().endSeason();

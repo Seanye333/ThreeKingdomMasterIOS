@@ -50,6 +50,20 @@ function assertInvariants(turn: number): void {
       expect(a.holding, `t${turn} army ${a.id} besieging ⇒ holding`).toBe(true);
       expect(s.cities[a.besieging], `t${turn} army ${a.id} besieging a real city`).toBeTruthy();
     }
+    // 潰軍 — a rout is always streaming home with a flee anchor, never dug in.
+    if (a.routed) {
+      expect(a.returning, `t${turn} army ${a.id} routed ⇒ returning`).toBe(true);
+      expect(a.holding ?? false, `t${turn} army ${a.id} routed ⇒ not holding`).toBe(false);
+      expect(Number.isFinite(a.fleeX ?? 0) && Number.isFinite(a.fleeY ?? 0),
+        `t${turn} army ${a.id} flee anchor finite`).toBe(true);
+    }
+    // 避戰 — only meaningful on the move.
+    if (a.evading) expect(a.holding ?? false, `t${turn} army ${a.id} evading ⇒ not holding`).toBe(false);
+    // 師老兵疲 — clamped 0..100.
+    if (a.fatigue != null) {
+      expect(a.fatigue, `t${turn} army ${a.id} fatigue ≥ 0`).toBeGreaterThanOrEqual(0);
+      expect(a.fatigue, `t${turn} army ${a.id} fatigue ≤ 100`).toBeLessThanOrEqual(100);
+    }
   }
   // ── Officers ──
   for (const o of Object.values(s.officers)) {
