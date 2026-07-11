@@ -610,7 +610,12 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       // visible earthwork, and its concealment halves the scouts' read.
       const holderCmd = aHolds ? a : bHolds ? b : null;
       const concealed = !!holderCmd?.ambush;
-      const AMBUSH_BASE = concealed ? 0.45 : 0.3, COVER_SCALE = 0.45, COVER_CAP = 0.55;
+      // 圍點打援 — a besieger meeting a RELIEF column bound for its besieged
+      // city fights from prepared lines (壕壘既成,以逸待勞): same spring as a
+      // laid ambush, no cover needed. The siege IS the bait.
+      const mCmd = aHolds ? b : bHolds ? a : null;
+      const relief = !!holderCmd?.besieging && mCmd?.targetCityId === holderCmd.besieging;
+      const AMBUSH_BASE = (concealed || relief) ? 0.45 : 0.3, COVER_SCALE = 0.45, COVER_CAP = 0.55;
       // The mover (the side NOT dug in) is the one who can detect the ambush.
       const moverCmd = aHolds ? b : bHolds ? a : null;
       const moverIntel = moverCmd ? armyMaxIntel(moverCmd) : 0;

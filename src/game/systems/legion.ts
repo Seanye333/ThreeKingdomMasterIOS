@@ -17,6 +17,8 @@ import type { City, EntityId, Officer } from '../types';
 import { COMMAND_DEFS } from './commands';
 import { nextHopToward } from './muster';
 import { officerGrade, gradeRank } from './officerGrade';
+import { cityPos } from '../data/cityGeo';
+import { terrainMarchCost, isLand } from '../data/geography';
 
 /** 都督之旗 — the morale a renowned marshal's banner lends the legion's columns
  *  on the battlefield (名帥坐鎮、旗鼓肅然): from 武力, 品階 and 威望. */
@@ -47,7 +49,10 @@ export interface Legion {
 
 export type LegionOrder =
   | { kind: 'march'; cityId: EntityId; officerId: EntityId; troops: number; toCityId: EntityId }
-  | { kind: 'recruit'; cityId: EntityId; officerId: EntityId };
+  | { kind: 'recruit'; cityId: EntityId; officerId: EntityId }
+  /** 迎伏 — a threatened legion city sends a detachment to cover on the
+   *  enemy's approach road; it digs in and goes to ground on arrival. */
+  | { kind: 'ambush-camp'; cityId: EntityId; officerId: EntityId; troops: number; x: number; y: number };
 
 /** 軍團戰報 — what a legion did this season, for the player's report. */
 export interface LegionSummary {
@@ -58,7 +63,7 @@ export interface LegionSummary {
   troopsSent: number;
 }
 
-const MIN_GARRISON = 3000;
+export const MIN_GARRISON = 3000;
 const SPARE_THRESHOLD = 6000;
 const ATTACK_FRACTION = 0.65;
 
@@ -91,6 +96,9 @@ export function planLegionOrders(input: {
   /** 應敵 — legion cities a hostile column is marching on; 固守 rushes these
    *  reinforcements pre-emptively rather than only topping up the weakest. */
   threatenedCityIds?: ReadonlySet<EntityId>;
+  /** 來犯縱隊 — current positions of the columns behind those threats, so a
+   *  clever marshal can lay an ambush on their approach road (迎伏). */
+  threatColumns?: ReadonlyArray<{ x: number; y: number; toCityId: EntityId }>;
 }): { orders: LegionOrder[]; summary: LegionSummary } {
   const { cities, officers, playerForceId, legion, busyOfficerIds } = input;
   const orders: LegionOrder[] = [];
@@ -151,6 +159,12 @@ export function planLegionOrders(input: {
   const stagingCity = coordinated ? (held.find((c) => c.id !== attackTarget && c.adjacentCityIds.includes(attackTarget!))?.id ?? null) : null;
   const threats = input.threatenedCityIds ?? new Set<EntityId>();
 
+  // 迎伏 — a clever marshal (智 ≥75) answers an incoming column with an
+  // ambush on its own road: the threatened city sends a detachment to a
+  // covered point (forest/hills) on the approach, where it digs in and goes
+  // to ground. One trap per legion per season — 兵不厭詐,亦不濫用.
+  let ambushLaid = false;
+
   for (const city of held) {
     const idle = idleOfficersIn(officers, city.id, playerForceId, busyOfficerIds);
     if (idle.length === 0) continue;
@@ -159,6 +173,27 @@ export function planLegionOrders(input: {
     if (city.troops < MIN_GARRISON && city.gold >= recruitCost) {
       orders.push({ kind: 'recruit', cityId: city.id, officerId: idle[0].id });
       continue;
+    }
+
+    if (!ambushLaid && intel >= 75 && threats.has(city.id)
+      && city.troops >= MIN_GARRISON + 2000 && city.gold >= marchCost) {
+      const column = (input.threatColumns ?? []).find((k) => k.toCityId === city.id);
+      if (column) {
+        const cp = cityPos(city);
+        // Sample the approach road for ground that hides an army.
+        let spot: { x: number; y: number } | null = null;
+        for (const t of [0.35, 0.5, 0.65]) {
+          const x = column.x + (cp.x - column.x) * t;
+          const y = column.y + (cp.y - column.y) * t;
+          if (isLand(x, y, 0) && terrainMarchCost(x, y) >= 0.3) { spot = { x, y }; break; }
+        }
+        if (spot) {
+          const troops = Math.min(Math.floor(city.troops * 0.4), city.troops - MIN_GARRISON);
+          orders.push({ kind: 'ambush-camp', cityId: city.id, officerId: idle[0].id, troops, x: spot.x, y: spot.y });
+          ambushLaid = true;
+          continue;
+        }
+      }
     }
 
     if (d.kind === 'defend') {
@@ -189,7 +224,9 @@ export function planLegionOrders(input: {
     }
   }
 
-  const marched = orders.filter((o) => o.kind === 'march');
+  const marched = orders.filter(
+    (o): o is Extract<LegionOrder, { kind: 'march' | 'ambush-camp' }> =>
+      o.kind === 'march' || o.kind === 'ambush-camp');
   return {
     orders,
     summary: {
@@ -197,7 +234,7 @@ export function planLegionOrders(input: {
       targetCityId: attackTarget ?? undefined,
       marched: marched.length,
       recruited: orders.length - marched.length,
-      troopsSent: marched.reduce((s, o) => s + (o.kind === 'march' ? o.troops : 0), 0),
+      troopsSent: marched.reduce((s, o) => s + o.troops, 0),
     },
   };
 }

@@ -177,7 +177,7 @@ import { canPromoteToRank } from '../systems/imperialEffects';
 import { COMMAND_DEFS } from '../systems/commands';
 import { planMassMuster, musterStrain, MUSTER_GATHER_SEASONS, MUSTER_CAMPAIGN_SEASONS, type MusterOptions } from '../systems/muster';
 import { planGovernorCommand, governorMisruleEffect } from '../systems/governor';
-import { planLegionOrders, planLegionLogistics, legionBannerBonus, type Legion } from '../systems/legion';
+import { planLegionOrders, planLegionLogistics, legionBannerBonus, MIN_GARRISON as MIN_LEGION_GARRISON, type Legion } from '../systems/legion';
 import { buyQuote, sellQuote, borderTariff, buyHorses, sellHorses, WARHORSE_CITY_CAP, buyIron, sellIron, IRON_CITY_CAP, MEDICINE_CITY_CAP, IRON_FORGE_COST, FORGE_IRON_DISCOUNT } from '../systems/market';
 import { EDICT_DISCOUNT, EMPEROR_HOME, MANDATE_PER_SEASON, RESENTMENT_PER_SEASON, canWelcomeEmperor, emperorCustodian } from '../systems/emperor';
 import { isMinorRuler, pickRegent, regentAmbitionBoost, consortAmbitionBoost, orthodoxyScore, isProclaimed } from '../systems/imperialCourt';
@@ -3841,11 +3841,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           // 應敵 — legion-held cities a hostile column is marching on (pre-empt).
           const legionCityIds = new Set((s0.legions ?? []).flatMap((l) => l.cityIds));
           const threatenedCityIds = new Set<EntityId>();
+          const threatColumns: Array<{ x: number; y: number; toCityId: EntityId }> = [];
           for (const a of Object.values(get().armies)) {
             if (!a.forceId || a.forceId === pidL || a.returning) continue;
             if (!legionCityIds.has(a.targetCityId)) continue;
             if (!isHostilePermitted(get().diplomacy, pidL, a.forceId)) continue;
             threatenedCityIds.add(a.targetCityId);
+            threatColumns.push({ x: a.x, y: a.y, toCityId: a.targetCityId });
           }
           for (const legion of s0.legions ?? []) {
             const cur = get();
@@ -3876,6 +3878,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               // 方略擇敵 — only cities we may actually attack count as targets.
               isEnemyCity: (c) => !!c.ownerForceId && c.ownerForceId !== pid && isHostilePermitted(cur2.diplomacy, pid, c.ownerForceId),
               threatenedCityIds,
+              threatColumns,
             });
             // 都督之旗 — the marshal's renown lends the legion's columns morale.
             const banner = legionBannerBonus(cur2.officers[legion.commanderId]);
@@ -3894,6 +3897,33 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                     });
                   }
                 }
+              } else if (o.kind === 'ambush-camp') {
+                // 迎伏 — the detachment marches to the covered spot with the
+                // trap already ordered: `ambush: true` is inert on the road
+                // and springs live the moment the camp digs in on arrival.
+                // Cell-target columns CARRY their men (interceptColumn's
+                // convention), so the wall deducts them now.
+                const st = get();
+                const from = st.cities[o.cityId];
+                const off = st.officers[o.officerId];
+                if (!from || from.ownerForceId !== pid || !off || off.task || st.pendingCommands[o.officerId]) continue;
+                const send = Math.min(o.troops, Math.max(0, from.troops - MIN_LEGION_GARRISON));
+                if (send < 1000) continue;
+                const fp = cityPos(from);
+                const dur = Math.hypot(o.x - fp.x, o.y - fp.y) < 100 * WORLD_SCALE ? 1 : 2;
+                set({
+                  cities: { ...st.cities, [from.id]: { ...from, gold: from.gold - COMMAND_DEFS['march'].goldCost, troops: from.troops - send } },
+                  officers: { ...st.officers, [o.officerId]: { ...off, task: 'march' as const } },
+                  pendingCommands: {
+                    ...st.pendingCommands,
+                    [o.officerId]: { type: 'march', cityId: from.id, officerId: o.officerId, targetCityId: from.id, targetX: o.x, targetY: o.y, troops: send, seasonsRemaining: dur, totalSeasons: dur, ambush: true, legionBanner: banner > 0 ? banner : undefined } as MarchCommand,
+                  },
+                  armies: {
+                    ...st.armies,
+                    [o.officerId]: { id: o.officerId, forceId: pid, commanderId: o.officerId, companionIds: [], troops: send, fromCityId: from.id, targetCityId: from.id, x: fp.x, y: fp.y, progress: 0, totalSeasons: dur, cellTarget: true, legionBanner: banner > 0 ? banner : undefined },
+                  },
+                });
+                did++;
               } else { get().issueCommand(o.cityId, 'recruit-troops', o.officerId); did++; }
             }
             // 軍團戰報 — a consolidated line so the legion isn't a silent black box.

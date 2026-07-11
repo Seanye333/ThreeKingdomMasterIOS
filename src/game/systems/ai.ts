@@ -1448,9 +1448,11 @@ function decideCommand(
         const o = officersHere.find((c) => !isCombatLiability(c)) ?? officersHere[0];
         if (o) {
           const dur = adjustMarchSeasons(marchDurationFor(city, dest, season), 'normal', marchSpeedMul([o]));
+          // 避戰迂迴 — a ferry column has no business fighting: it slinks by
+          // back roads and slips interceptors (the player's evade, mirrored).
           const cmd: MarchCommand = {
             type: 'march', cityId: city.id, officerId: o.id, targetCityId: dest.id,
-            troops: send, seasonsRemaining: dur, totalSeasons: dur,
+            troops: send, seasonsRemaining: dur, totalSeasons: dur, evading: true,
           };
           return { command: cmd, officer: o };
         }
