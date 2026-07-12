@@ -3,6 +3,30 @@ import { resolveSeason } from './resolution';
 import { buildInitialCities } from '../data/cities';
 import { cityPos } from '../data/cityGeo';
 import { terrainRoute, positionAlongRoute } from '../data/territories';
+import { fieldWinChance, casualtyScale, UPSET_BAND } from './rout';
+
+describe('野戰解析 — 兵無常勢與傷亡縮放(純函數)', () => {
+  it('outside the upset band the stronger side simply wins', () => {
+    expect(fieldWinChance(1000 * (1 + UPSET_BAND) + 1, 1000)).toBe(1);
+    expect(fieldWinChance(1000, 1000 * (1 + UPSET_BAND) + 1)).toBe(0);
+  });
+  it('inside the band it goes to power² odds — 50% at parity', () => {
+    expect(fieldWinChance(1000, 1000)).toBeCloseTo(0.5);
+    const p = fieldWinChance(1200, 1000);
+    expect(p).toBeGreaterThan(0.5);
+    expect(p).toBeLessThan(1);
+  });
+  it('a crushing edge wins cheap and kills deep; an upset win bleeds', () => {
+    const even = casualtyScale(1000, 1000);
+    expect(even.winner).toBeCloseTo(1);
+    expect(even.loser).toBeCloseTo(1);
+    const crush = casualtyScale(3000, 1000);
+    expect(crush.winner).toBeLessThan(0.5);
+    expect(crush.loser).toBeCloseTo(1.25);
+    const upset = casualtyScale(900, 1000);
+    expect(upset.winner).toBeGreaterThan(1);
+  });
+});
 
 /** 潰軍與追擊 — a beaten army becomes a fleeing rout on the map instead of
  *  evaporating; hostile armies/garrisons cut routs down (掩殺), absorb
@@ -45,13 +69,16 @@ describe('潰軍生成 — a broken field army routs instead of evaporating', ()
     const campAt = positionAlongRoute(terrainRoute(lp.x, lp.y, cp.x, cp.y), 0.75);
     const out = resolveSeason(baseInput(cities, {
       mover: mkOfficer('mover', 'me'),
+      // 殿軍 — trims the (advantage-scaled ×1.25) slaughter back to ×1.0,
+      // so a crushing ambush still leaves enough survivors to form a rout.
+      dian: mkOfficer('dian', 'me', ['rear-guard']),
       blocker: mkOfficer('blocker', 'foe'),
     }, {
       // Player column (under the 2500 AI-亲征 bar) walks into a massive camp
       // — it loses the clash, and the survivors must ROUT, not vanish.
       mover: {
         type: 'march', cityId: 'luoyang', targetCityId: 'chengdu', officerId: 'mover',
-        troops: 2400, totalSeasons: 1, seasonsRemaining: 1,
+        troops: 2400, totalSeasons: 1, seasonsRemaining: 1, additionalOfficerIds: ['dian'],
       },
       blocker: {
         type: 'march', cityId: 'changan', targetCityId: 'luoyang', officerId: 'blocker',
@@ -66,7 +93,7 @@ describe('潰軍生成 — a broken field army routs instead of evaporating', ()
     expect(kept?.returning).toBe(true);
     expect(kept?.targetCityId).toBe('luoyang'); // nearest (only) friendly city
     expect(kept?.fleeX).toBeTypeOf('number');
-    // 2400 − 72% clash toll = 672 survivors, then −8% rout shed = 619 on the books.
+    // 2400 − 72%×1.25(碾壓)×0.8(殿軍) = 672 survivors, then −8% shed = 619.
     expect(kept?.troops).toBe(619);
     expect(out.armies?.['mover']?.routed).toBe(true);
     // The clash report names the rout's shelter.

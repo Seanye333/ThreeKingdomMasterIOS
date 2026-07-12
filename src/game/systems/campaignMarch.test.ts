@@ -227,13 +227,13 @@ describe('野戰繳獲 — a field victory strips the loser\'s baggage', () => {
         totalSeasons: 5, seasonsRemaining: 5, food: 50000,
       },
     }, () => 0.0) as never);
-    // Ambush victory: loser casualty 1728 → 2592 grain + 69 gold + 25 horses
-    // + 43 iron of spoils.
+    // Crushing ambush (ratio clamps ×1.25): loser casualty 2160 → 3240 grain
+    // + 86 gold + 32 horses + 54 iron of spoils.
     const clash = out.report.entries.find((e) => e.battle?.field);
-    expect((clash?.textZh ?? '')).toContain('繳獲糧秣 2,592');
-    expect((clash?.textZh ?? '')).toContain('金 69');
-    expect((clash?.textZh ?? '')).toContain('馬 25');
-    expect((clash?.textZh ?? '')).toContain('鐵 43');
+    expect((clash?.textZh ?? '')).toContain('繳獲糧秣 3,240');
+    expect((clash?.textZh ?? '')).toContain('金 86');
+    expect((clash?.textZh ?? '')).toContain('馬 32');
+    expect((clash?.textZh ?? '')).toContain('鐵 54');
     // The camp carries provisions, so the grain rode straight into its train.
     expect((out.keptCommands?.['blocker'] as { food?: number })?.food).toBeGreaterThan(2500);
   });

@@ -30,7 +30,7 @@ import { handleMarch } from './combat';
 import {
   ROUT_MIN_TROOPS, ROUT_DISSOLVE_BELOW, PURSUIT_KILL_BASE, PURSUIT_SKILL_BONUS,
   REAR_GUARD_MUL, PURSUIT_ABSORB_FRAC, ROUT_CAPTURE_CHANCE, ROUT_SHED_FRAC,
-  rearGuardOfficer, nearestShelterCity,
+  rearGuardOfficer, nearestShelterCity, fieldWinChance, casualtyScale,
 } from './rout';
 import { tickDiplomacy, applyCoalitionPressure } from './diplomacy';
 import { tickCityEconomy, tradeTreatyGrants } from './economy';
@@ -649,7 +649,12 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
             rng: input.rng ?? Math.random,
           })
         : { aMul: 1, bMul: 1, fire: null as 'a' | 'b' | null, recapZh: undefined as string | undefined, recapEn: undefined as string | undefined };
-      const aWins = statsA.power * multA * caughtMulA * naval.aMul >= statsB.power * multB * caughtMulB * naval.bMul;
+      // 兵無常勢 — an open-field meeting engagement inside the upset band
+      // goes to the dice; a dug-in or naval clash stays deterministic
+      // (堅陣無僥倖,水戰自有火船之數).
+      const pA = statsA.power * multA * caughtMulA * naval.aMul;
+      const pB = statsB.power * multB * caughtMulB * naval.bMul;
+      const aWins = (oneHolds || onWater) ? pA >= pB : rng() < fieldWinChance(pA, pB);
       const winner = aWins ? a : b;
       const loser = aWins ? b : a;
       const wStats = aWins ? statsA : statsB;
@@ -662,11 +667,14 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const loserCmdr = officers[loser.officerId];
       // Sprung ambush: lopsided. Stormed camp: the dug-in defenders are
       // overrun (heavy), the stormers pay a price breaching the earthworks.
+      // 傷亡隨優勢縮放 — a crushing edge wins cheap and kills deep; a
+      // near-run thing bleeds both hosts (碾壓與險勝自此是兩種仗).
       // 殿軍斷後 — a rear-guard officer on the beaten side holds the line as
       // the army breaks, trimming the slaughter.
       const loserRearGuard = rearGuardOf(loser);
-      const winnerCasualty = Math.floor(winner.troops * (ambush ? 0.12 : campStormed ? 0.25 : 0.2));
-      const loserCasualty = Math.floor(loser.troops * (ambush ? 0.72 : campStormed ? 0.75 : 0.6) * (loserRearGuard ? 0.8 : 1));
+      const cScale = casualtyScale(aWins ? pA : pB, aWins ? pB : pA);
+      const winnerCasualty = Math.floor(winner.troops * (ambush ? 0.12 : campStormed ? 0.25 : 0.2) * cScale.winner);
+      const loserCasualty = Math.floor(loser.troops * (ambush ? 0.72 : campStormed ? 0.75 : 0.6) * cScale.loser * (loserRearGuard ? 0.8 : 1));
       // Storming a camp seizes the ground it held for the victor.
       if (campStormed && winnerCmdr?.forceId) {
         const lp = aWins ? pb : pa;
@@ -933,13 +941,16 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       }
       continue;
     }
-    const defWins = sallyPower >= marchStats.power * (a.evading ? EVADE_CAUGHT_MUL : 1);
+    const marchEffPower = marchStats.power * (a.evading ? EVADE_CAUGHT_MUL : 1);
+    const defWins = sallyPower >= marchEffPower;
     if (defWins) {
-      // Column broken: heavy losses, sally takes light losses. The remnants
-      // rout for the nearest friendly city (殿軍 trims the toll) — or scatter.
+      // Column broken: heavy losses, sally takes light losses (both scaled
+      // by how lopsided the fight was). The remnants rout for the nearest
+      // friendly city (殿軍 trims the toll) — or scatter.
+      const sallyScale = casualtyScale(sallyPower, marchEffPower);
       const sallyRearGuard = rearGuardOf(a);
-      const marchLoss = Math.floor(a.troops * 0.55 * (sallyRearGuard ? 0.8 : 1));
-      const defLoss = Math.floor(sallyTroops * 0.2);
+      const marchLoss = Math.floor(a.troops * 0.55 * sallyScale.loser * (sallyRearGuard ? 0.8 : 1));
+      const defLoss = Math.floor(sallyTroops * 0.2 * sallyScale.winner);
       const mSrc = cities[a.cityId];
       if (mSrc) cities[mSrc.id] = { ...mSrc, troops: Math.max(0, mSrc.troops - marchLoss) };
       // 繳獲 — the garrison hauls the broken column's baggage back inside
@@ -994,9 +1005,11 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
           { forceId: oa.forceId ?? null, commanderId: a.officerId, companionIds: a.additionalOfficerIds ?? [], troops: a.troops, blended: marchStats.blended, power: marchStats.power, losses: marchLoss }),
       });
     } else {
-      // Column fights through: sally repulsed, both bleed, march continues.
-      const defLoss = Math.floor(sallyTroops * 0.5);
-      const marchLoss = Math.floor(a.troops * 0.2);
+      // Column fights through: sally repulsed, both bleed, march continues
+      // (scaled — a column that dwarfs the sally barely breaks stride).
+      const repScale = casualtyScale(marchEffPower, sallyPower);
+      const defLoss = Math.floor(sallyTroops * 0.5 * repScale.loser);
+      const marchLoss = Math.floor(a.troops * 0.2 * repScale.winner);
       cities[bestCity.id] = { ...cities[bestCity.id], troops: Math.max(0, cities[bestCity.id].troops - defLoss) };
       const mSrc = cities[a.cityId];
       if (mSrc) cities[mSrc.id] = { ...mSrc, troops: Math.max(0, mSrc.troops - marchLoss) };

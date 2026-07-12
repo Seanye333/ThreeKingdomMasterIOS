@@ -44,6 +44,37 @@ export function rearGuardOfficer(
       !!o && (o.skills.includes('rear-guard') || (o.traits ?? []).includes('rear-guard')));
 }
 
+// ── 野戰解析 — how an abstract field clash resolves (2026-07 深化) ──
+
+/** 兵無常勢 — the ± power-ratio window inside which an OPEN-FIELD meeting
+ *  engagement goes to the dice instead of straight to the stronger side.
+ *  Dug-in and naval clashes stay deterministic (堅陣無僥倖). */
+export const UPSET_BAND = 0.25;
+
+/** Win chance for side A in an open-field clash. Outside the band the
+ *  stronger side simply wins; inside it, power² odds (50% at parity,
+ *  ~61% at +25%). */
+export function fieldWinChance(pa: number, pb: number): number {
+  const ratio = pa / Math.max(1, pb);
+  if (ratio >= 1 + UPSET_BAND) return 1;
+  if (ratio <= 1 / (1 + UPSET_BAND)) return 0;
+  const a2 = pa * pa;
+  const b2 = pb * pb;
+  return a2 / (a2 + b2);
+}
+
+/** 傷亡隨優勢縮放 — multipliers on the base casualty fractions: the wider
+ *  the power gap, the cheaper the victory and the bloodier the defeat; an
+ *  upset win (ratio < 1) costs the winner dearly. 15000 對 5000 與 5100 對
+ *  5000 自此是兩種仗。 */
+export function casualtyScale(winnerPower: number, loserPower: number): { winner: number; loser: number } {
+  const ratio = Math.max(0.5, Math.min(3, winnerPower / Math.max(1, loserPower)));
+  return {
+    winner: Math.max(0.4, Math.min(1.35, 1 / ratio)),
+    loser: Math.max(0.9, Math.min(1.25, 0.75 + 0.25 * ratio)),
+  };
+}
+
 /** Nearest un-ruined city still held by `forceId` — where a rout runs to. */
 export function nearestShelterCity(
   x: number,
