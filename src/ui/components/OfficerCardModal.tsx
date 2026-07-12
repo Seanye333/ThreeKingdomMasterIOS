@@ -49,8 +49,9 @@ function frameStyle(grade: string): { wrap: React.CSSProperties; sheen: boolean;
 }
 
 /** The frame + face alone (no modal shell) — reused by the modal, the
- *  reveal flourish and the PNG exporter. */
-export function OfficerCardFace({ officer, onClose }: { officer: Officer; onClose?: () => void }) {
+ *  reveal flourish and the PNG exporter. `onJump` makes the 緣分 chips
+ *  clickable — the album hops card-to-card along the bond lines. */
+export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer; onClose?: () => void; onJump?: (officerId: string) => void }) {
   const t = useT();
   const lang = useLanguage();
   const year = useGameStore((s) => s.date.year);
@@ -227,14 +228,18 @@ export function OfficerCardFace({ officer, onClose }: { officer: Officer; onClos
                   {bonds.map((b) => {
                     const other = officers[b.otherId];
                     const together = !!other && other.status !== 'dead' && !!officer.forceId && other.forceId === officer.forceId;
+                    const jumpable = !!onJump && !!other;
                     return (
                       <span key={b.otherId}
-                        title={together ? t('同殿為臣 — 緣分生效', 'Serving together — bond active') : t('未聚 — 集齊以激活緣分', 'Apart — reunite to light this bond')}
+                        onClick={jumpable ? (e) => { e.stopPropagation(); onJump(b.otherId); } : undefined}
+                        title={(together ? t('同殿為臣 — 緣分生效', 'Serving together — bond active') : t('未聚 — 集齊以激活緣分', 'Apart — reunite to light this bond'))
+                          + (jumpable ? t('(點擊跳至其卡)', ' (tap to jump to their card)') : '')}
                         style={{
                           fontSize: '0.68rem', padding: '1px 7px', borderRadius: 9,
                           background: b.feud ? 'rgba(184,68,46,0.12)' : together ? 'rgba(138,200,138,0.14)' : 'rgba(122,136,147,0.1)',
                           border: `1px solid ${b.feud ? '#6a3028' : together ? '#3f5c3f' : '#2b3845'}`,
                           color: b.feud ? '#e0907a' : together ? '#a8d8a8' : '#7a8893',
+                          cursor: jumpable ? 'pointer' : 'default',
                         }}>
                         {b.feud ? '⚡' : together ? '❦' : '◌'} {other ? pickName(other.name, lang) : b.otherId} · {b.label}
                       </span>
@@ -281,7 +286,7 @@ export function OfficerCardFace({ officer, onClose }: { officer: Officer; onClos
   );
 }
 
-export function OfficerCardModal({ officer, onClose }: { officer: Officer; onClose: () => void }) {
+export function OfficerCardModal({ officer, onClose, onJump }: { officer: Officer; onClose: () => void; onJump?: (officerId: string) => void }) {
   const t = useT();
   return (
     <Modal
@@ -293,7 +298,7 @@ export function OfficerCardModal({ officer, onClose }: { officer: Officer; onClo
       frameStyle={{ background: 'transparent', border: 'none', boxShadow: 'none', overflow: 'visible' }}
       hideClose
     >
-      <OfficerCardFace officer={officer} onClose={onClose} />
+      <OfficerCardFace officer={officer} onClose={onClose} onJump={onJump} />
     </Modal>
   );
 }

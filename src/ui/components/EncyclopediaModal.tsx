@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import type { Officer } from '../../game/types';
 import {
   HISTORICAL_EVENTS,
   ITEMS,
@@ -14,6 +15,8 @@ import { OfficerStats } from './OfficerStats';
 import { OfficerDetail } from './OfficerDetail';
 import { Name } from './Name';
 import { CODEX_SETS, codexSetProgress, loadCodex } from '../../game/systems/codex';
+import { OfficerCardModal } from './OfficerCardModal';
+import { officerGrade, gradeMeta } from '../../game/systems/officerGrade';
 import { ITEM_CODEX_SETS, itemCodexSetProgress, loadItemCodex } from '../../game/systems/itemCodex';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useDesc } from '../i18n';
@@ -32,9 +35,13 @@ export function EncyclopediaModal({ onClose }: Props) {
   // 交叉引用 — clicking any officer chip opens their full detail (列傳 included)
   // in a stacked modal; clicking a famous-set pill filters the codex grid to it.
   const [drillId, setDrillId] = useState<string | null>(null);
+  const [cardId, setCardId] = useState<string | null>(null);
   const [setFilter, setSetFilter] = useState<string | null>(null);
   const desc = useDesc();
   useEscapeKey(onClose);
+  // 武將圖鑑 — cross-campaign officer album (read once per open; the ledgers
+  // only grow via play, not while browsing).
+  const codex = useMemo(() => loadCodex(), []);
 
   // D1/D2 — cross-tab jumps and "who carries this item" lookup.
   const jumpTo = (sec: Section, name: string) => { setSection(sec); setSearch(name); };
@@ -184,9 +191,8 @@ export function EncyclopediaModal({ onClose }: Props) {
             );
           })}
           {section === 'codex' && (() => {
-            /* 圖鑑 — the cross-campaign album: 灰 never met, 銅 seen on the
-               stage, 金 carried your colors, ☠ died at your order. */
-            const codex = loadCodex();
+            /* 圖鑑 — the cross-campaign card album: 仕 full-colour card with
+               a grade-tinted frame, 遇 greyed, 未遇 a black silhouette. */
             const seen = new Set(codex.seen);
             const recruited = new Set(codex.recruited);
             const slain = new Set(codex.slain);
@@ -198,8 +204,22 @@ export function EncyclopediaModal({ onClose }: Props) {
             const shown = roster
               .filter((o) => !setMembers || setMembers.has(o.id))
               .filter((o) => !q || o.name.zh.includes(q) || o.name.en.toLowerCase().includes(q.toLowerCase()));
+            const recHere = roster.filter((o) => recruited.has(o.id)).length;
+            const pct = roster.length > 0 ? Math.round((recHere / roster.length) * 100) : 0;
             return (
               <>
+                {/* 收集率 — this world's roster vs the everlasting album. */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '0.6rem' }}>
+                  <div style={{ flex: 1, height: 8, background: '#18212b', borderRadius: 4, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg, #8a6a2a, #e6c473)' }} />
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#e6c473', fontFamily: 'ui-monospace,monospace' }}>
+                    仕 {recHere}/{roster.length}({pct}%)
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: '#7a8893' }}>
+                    遇 {codex.seen.length} · 斬 {codex.slain.length}(跨戰役累積)
+                  </div>
+                </div>
                 <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: '0.8rem' }}>
                   {CODEX_SETS.map((set) => {
                     const p = codexSetProgress(codex, set.id);
@@ -220,35 +240,13 @@ export function EncyclopediaModal({ onClose }: Props) {
                       </button>
                     );
                   })}
-                  <div style={{ fontSize: '0.72rem', color: '#7a8893', alignSelf: 'center' }}>
-                    遇 {codex.seen.length} · 仕 {codex.recruited.length} · 斬 {codex.slain.length}(跨戰役累積)
-                  </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))', gap: 6 }}>
-                  {shown.map((o) => {
-                    const isRec = recruited.has(o.id);
-                    const isSeen = seen.has(o.id);
-                    const isSlain = slain.has(o.id);
-                    return (
-                      <div key={o.id}
-                        onClick={isSeen ? () => setDrillId(o.id) : undefined}
-                        title={isSeen ? (o.name.en) : undefined}
-                        style={{
-                          border: `1px solid ${isRec ? '#e6c473' : isSeen ? '#7a6244' : '#18212b'}`,
-                          background: isRec ? 'rgba(212,168,74,0.10)' : '#15100a',
-                          padding: '0.35rem 0.4rem', textAlign: 'center',
-                          opacity: isSeen ? 1 : 0.45,
-                          cursor: isSeen ? 'pointer' : 'default',
-                        }}>
-                        <div style={{ fontSize: '0.85rem', color: isRec ? '#f2dd9a' : isSeen ? '#aab6c0' : '#5a4a38' }}>
-                          {isSeen ? o.name.zh : '???'}{isSlain ? ' ☠' : ''}
-                        </div>
-                        <div style={{ fontSize: '0.7rem', color: '#5f6c76' }}>
-                          {isRec ? '仕' : isSeen ? '遇' : '未遇'}
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))', gap: 8 }}>
+                  {shown.map((o) => (
+                    <CodexTile key={o.id} officer={o}
+                      isSeen={seen.has(o.id)} isRec={recruited.has(o.id)} isSlain={slain.has(o.id)}
+                      onOpen={() => setCardId(o.id)} />
+                  ))}
                 </div>
               </>
             );
@@ -361,6 +359,60 @@ export function EncyclopediaModal({ onClose }: Props) {
         {drillId && officers[drillId] && (
           <OfficerDetail officer={officers[drillId]} onClose={() => setDrillId(null)} />
         )}
+        {cardId && officers[cardId] && (
+          <OfficerCardModal
+            officer={officers[cardId]}
+            onClose={() => setCardId(null)}
+            // 緣分跳卡 — hop along bond lines, but only to names already met.
+            onJump={(id) => { if (officers[id] && codex.seen.includes(id)) setCardId(id); }}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** 圖鑑小卡 — one album slot: 仕 full colour in a grade frame, 遇 greyed,
+ *  未遇 a faint black silhouette with its name withheld. */
+function CodexTile({ officer, isSeen, isRec, isSlain, onOpen }: {
+  officer: Officer;
+  isSeen: boolean; isRec: boolean; isSlain: boolean; onOpen: () => void;
+}) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const frameColor = isRec ? gradeMeta(officerGrade(officer).grade).color : isSeen ? '#7a6244' : '#1c2630';
+  return (
+    <div
+      onClick={isSeen ? onOpen : undefined}
+      title={isSeen ? officer.name.en : '未遇 — 讓他在某局登場即可解鎖'}
+      style={{
+        border: `1px solid ${frameColor}`, borderRadius: 6, overflow: 'hidden',
+        background: isRec ? 'rgba(212,168,74,0.08)' : '#0d1218',
+        cursor: isSeen ? 'pointer' : 'default',
+      }}>
+      <div style={{ position: 'relative', aspectRatio: '3 / 4', background: '#10161e' }}>
+        {!imgFailed ? (
+          <img
+            src={`${import.meta.env.BASE_URL}portraits/${officer.id}.webp`}
+            alt=""
+            loading="lazy"
+            onError={() => setImgFailed(true)}
+            style={{
+              position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+              filter: isRec ? 'none' : isSeen ? 'grayscale(0.9) brightness(0.75)' : 'brightness(0.16) saturate(0)',
+            }}
+          />
+        ) : (
+          <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', fontSize: '1.6rem', color: isSeen ? '#5f6c76' : '#232d38' }}>
+            {isSeen ? officer.name.zh.slice(0, 1) : '?'}
+          </div>
+        )}
+        {isSlain && isSeen && (
+          <span title="斬 — 死於我令" style={{ position: 'absolute', top: 3, right: 5, fontSize: '0.8rem', textShadow: '0 0 4px #000' }}>☠</span>
+        )}
+      </div>
+      <div style={{ padding: '0.2rem 0.3rem', textAlign: 'center', fontSize: '0.78rem', color: isRec ? '#f2dd9a' : isSeen ? '#aab6c0' : '#3d4a56', borderTop: `1px solid ${frameColor}` }}>
+        {isSeen ? officer.name.zh : '???'}
+        <span style={{ marginLeft: 4, fontSize: '0.66rem', color: '#5f6c76' }}>{isRec ? '仕' : isSeen ? '遇' : ''}</span>
       </div>
     </div>
   );

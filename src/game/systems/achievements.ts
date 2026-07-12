@@ -4,6 +4,7 @@ import type {
 } from '../types';
 import { ACHIEVEMENTS, ACHIEVEMENTS_BY_ID } from '../data/achievements';
 import { createEmptyAchievementProgress } from '../types';
+import { CODEX_SETS } from './codex';
 
 const STORAGE_KEY = 'tkm-achievements';
 
@@ -140,6 +141,40 @@ export function checkCumulativeThresholds(
       (t.kind === 'cumulative-cities'       && p.counters.citiesTaken  >= (t.threshold ?? Infinity)) ||
       (t.kind === 'cumulative-recruits'     && p.counters.recruits     >= (t.threshold ?? Infinity)) ||
       (t.kind === 'cumulative-battles-won'  && p.counters.battlesWon   >= (t.threshold ?? Infinity));
+    if (matched) {
+      const r = unlock(p, ach.id);
+      p = r.progress;
+      if (r.newlyUnlocked) newly.push(ach.id);
+    }
+  }
+  return { progress: p, newlyUnlocked: newly };
+}
+
+/**
+ * 圖鑑功業 — check the cross-campaign codex ledgers against the collection
+ * milestones ('codex-collection' thresholds and 'codex-set' completions).
+ * Called at season commit and after direct recruits; pure, like the rest.
+ */
+export function checkCodexAchievements(
+  progress: AchievementProgress,
+  codex: { recruited: string[] },
+): { progress: AchievementProgress; newlyUnlocked: string[] } {
+  let p = progress;
+  const newly: string[] = [];
+  const rec = new Set(codex.recruited);
+  const setDone = (id: string) => {
+    const def = CODEX_SETS.find((s) => s.id === id);
+    return !!def && def.members.every((m) => rec.has(m));
+  };
+  for (const ach of ACHIEVEMENTS) {
+    if (p.completed[ach.id]) continue;
+    const t = ach.trigger;
+    const matched =
+      (t.kind === 'codex-collection' && rec.size >= (t.threshold ?? Infinity)) ||
+      (t.kind === 'codex-set' && (
+        t.targetId === 'any' ? CODEX_SETS.some((s) => setDone(s.id))
+        : t.targetId === 'all' ? CODEX_SETS.every((s) => setDone(s.id))
+        : setDone(t.targetId ?? '')));
     if (matched) {
       const r = unlock(p, ach.id);
       p = r.progress;

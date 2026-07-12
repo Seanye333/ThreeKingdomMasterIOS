@@ -32,7 +32,14 @@ export type AchievementTriggerKind =
   | 'rout-annihilated'  // 追亡逐北 — you hunted a fleeing rout down to the last man
   // 2026-07 event-chain choices — targetId is a flag key the PLAYER's own
   // resolveEventChoice set (AI walking the historical path does not count):
-  | 'event-choice';
+  | 'event-choice'
+  // 2026-07 card-game batch — cross-campaign 圖鑑 collection milestones,
+  // checked against the codex ledgers at season commit (see achievements.ts
+  // checkCodexAchievements). 'codex-collection' compares the recruited count
+  // to `threshold`; 'codex-set' fires when the famous set `targetId`
+  // completes ('any' = first completed set, 'all' = every set).
+  | 'codex-collection'
+  | 'codex-set';
 
 export interface AchievementTrigger {
   kind: AchievementTriggerKind;

@@ -185,7 +185,7 @@ import { isMinorRuler, pickRegent, regentAmbitionBoost, consortAmbitionBoost, or
 import { LADDER_STAGES, LADDER_TOP, overmightyMinister, ladderAdvanceChance, cabalCandidates, righteousReason } from '../systems/usurpation';
 import { commonerArrivalCity, generateCommonerOfficer, lordTalentDraw, commonerArrivalChance } from '../systems/commonerTalent';
 import { rollRecommendations } from '../systems/recommendation';
-import { codexMarkRecruited, codexMarkRecruitedMany, codexMarkSeen, codexMarkSlain } from '../systems/codex';
+import { codexMarkRecruited, codexMarkRecruitedMany, codexMarkSeen, codexMarkSlain, loadCodex } from '../systems/codex';
 import { itemCodexMarkCarried } from '../systems/itemCodex';
 import { recordDailyResult } from '../systems/dailyChallenge';
 import { SCHEME_DEFS, schemeOdds, schemeExposureChance, validateScheme, type SchemeId } from '../systems/schemes';
@@ -342,6 +342,7 @@ import { evaluateGoal, findObjectiveFor } from '../systems/objectives';
 import { applySuccession } from '../systems/succession';
 import {
   bumpCounters,
+  checkCodexAchievements,
   checkCumulativeThresholds,
   loadAchievementProgress,
   processTrigger,
@@ -8551,6 +8552,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               const r = processTrigger(achS, { kind: 'beacon-relay' });
               achS = r.progress; newly.push(...r.newlyUnlocked);
             }
+          }
+          // 圖鑑功業 — collection milestones against the cross-campaign codex
+          // (this season's recruits/naturalizations already marked above).
+          {
+            const r = checkCodexAchievements(achS, loadCodex());
+            achS = r.progress; newly.push(...r.newlyUnlocked);
           }
           if (newly.length > 0) {
             saveAchievementProgress(achS);

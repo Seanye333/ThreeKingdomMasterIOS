@@ -792,6 +792,56 @@ export const ACHIEVEMENTS: Achievement[] = [
     tier: 'bronze',
     trigger: { kind: 'event-choice', targetId: 'maolu-abandoned' },
   },
+
+  // ─── 2026-07 圖鑑 collection — cross-campaign card-album milestones ────
+  {
+    id: 'ach-codex-30',
+    name: { en: 'A Gathering of Worthies', zh: '群賢畢至' },
+    description: '30 named officers have carried your colors, across all campaigns.',
+    descriptionZh: '跨戰役累計三十位名將曾入我麾下 — 圖鑑漸豐。',
+    tier: 'bronze',
+    trigger: { kind: 'codex-collection', threshold: 30 },
+  },
+  {
+    id: 'ach-codex-100',
+    name: { en: 'The Hundred Generals Scroll', zh: '百將圖' },
+    description: '100 named officers have carried your colors, across all campaigns.',
+    descriptionZh: '跨戰役累計百位名將曾仕於我 — 一卷百將圖。',
+    tier: 'silver',
+    trigger: { kind: 'codex-collection', threshold: 100 },
+  },
+  {
+    id: 'ach-codex-300',
+    name: { en: 'Stars in Their Multitudes', zh: '將星雲集' },
+    description: '300 named officers have carried your colors, across all campaigns.',
+    descriptionZh: '跨戰役累計三百將星聚於帳下 — 收藏家之名不虛。',
+    tier: 'gold',
+    trigger: { kind: 'codex-collection', threshold: 300 },
+  },
+  {
+    id: 'ach-codex-set-any',
+    name: { en: 'A Set Complete', zh: '成套之喜' },
+    description: 'Complete any famous set in the officer codex.',
+    descriptionZh: '圖鑑中任一名將成套(五虎/五子/八虎騎…)首度集齊。',
+    tier: 'silver',
+    trigger: { kind: 'codex-set', targetId: 'any' },
+  },
+  {
+    id: 'ach-codex-five-tigers',
+    name: { en: 'Five Tigers Assembled', zh: '五虎齊聚' },
+    description: 'Guan Yu, Zhang Fei, Zhao Yun, Ma Chao and Huang Zhong have all served you.',
+    descriptionZh: '關張趙馬黃,五虎上將盡入彀中。',
+    tier: 'gold',
+    trigger: { kind: 'codex-set', targetId: 'five-tigers' },
+  },
+  {
+    id: 'ach-codex-all-sets',
+    name: { en: 'The Grand Album', zh: '圖鑑大成' },
+    description: 'Complete every famous set in the officer codex.',
+    descriptionZh: '名將圖鑑諸套盡集 — 天下英雄,皆入吾彀。',
+    tier: 'legendary',
+    trigger: { kind: 'codex-set', targetId: 'all' },
+  },
 ];
 
 export const ACHIEVEMENTS_BY_ID: Record<string, Achievement> = Object.fromEntries(
