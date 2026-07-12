@@ -326,6 +326,33 @@ describe('追擊與候期 — hounding routs and marking time', () => {
   });
 });
 
+describe('水陸協同 — fleets beach and join converging battles', () => {
+  it('a naval column in reach joins, two turns later than a land one', async () => {
+    const { planColumnReinforcements } = await import('./tacticalSetup');
+    const officers = {
+      sailor: mkOfficer('sailor', 'me'),
+      rider: mkOfficer('rider', 'me'),
+    } as never;
+    const site = { x: 500, y: 300 };
+    const mkArmy = (id: string, naval: boolean) => ({
+      id, forceId: 'me', commanderId: id, companionIds: [],
+      troops: 3000, fromCityId: 'luoyang', targetCityId: 'changan',
+      x: site.x + 20, y: site.y, progress: 0.5, totalSeasons: 2, naval,
+    });
+    const out = planColumnReinforcements({
+      site, bearing: 0, attackerForceId: 'me', defenderForceId: 'foe',
+      armies: { sailor: mkArmy('sailor', true), rider: mkArmy('rider', false) } as never,
+      officers,
+    });
+    const fleet = out.reinforcements.find((r) => r.officerId === 'sailor');
+    const horse = out.reinforcements.find((r) => r.officerId === 'rider');
+    expect(fleet).toBeTruthy(); // fleets are no longer excluded
+    expect(horse).toBeTruthy();
+    expect(fleet!.arriveTurn).toBe(horse!.arriveTurn + 2); // 棄舟登岸
+    expect(fleet!.announcement).toContain('棄舟登岸');
+  });
+});
+
 describe('野戰繳獲 — a field victory strips the loser\'s baggage', () => {
   it('the victor takes grain (into its own train) and coin, named in the report', () => {
     const { cities } = fixtures();

@@ -216,8 +216,10 @@ export function planColumnReinforcements(args: {
   };
   const excluded = new Set(args.excludeArmyIds ?? []);
   const perSide: Record<'attacker' | 'defender', number> = { attacker: 0, defender: 0 };
+  // 水陸協同 — fleets within reach now beach and march to the drums too
+  // (棄舟登岸): they join like any column, only slower (see arriveTurn).
   const columns = Object.values(args.armies)
-    .filter((a) => !excluded.has(a.id) && !a.holding && !a.returning && !a.naval && a.troops >= 500)
+    .filter((a) => !excluded.has(a.id) && !a.holding && !a.returning && a.troops >= 500)
     .map((a) => ({ a, dist: Math.hypot(a.x - args.site.x, a.y - args.site.y) }))
     .filter((c) => c.dist <= REACH)
     .sort((x, y) => x.dist - y.dist);
@@ -248,7 +250,9 @@ export function planColumnReinforcements(args: {
     const edge: Reinforcement['edge'] = Math.abs(dc) > Math.abs(dr)
       ? (dc > 0 ? 'east' : 'west')
       : (dr > 0 ? 'south' : 'north');
-    const arriveTurn = 3 + Math.min(2, Math.floor(dist / (30 * WORLD_SCALE))) * 2;
+    // 棄舟登岸 — a fleet must beach and form up before it can march to the
+    // guns: +2 turns on top of the distance-based arrival.
+    const arriveTurn = 3 + Math.min(2, Math.floor(dist / (30 * WORLD_SCALE))) * 2 + (a.naval ? 2 : 0);
     const per = Math.floor(a.troops / officerIds.length);
     officerIds.forEach((oid, i) => {
       const o = args.officers[oid];
@@ -260,9 +264,11 @@ export function planColumnReinforcements(args: {
         unitType: inferUnitType(o),
         edge,
         announcement: i === 0
-          ? (isAlly
-            ? `盟軍來會!${o.name.zh}引軍 ${a.troops.toLocaleString()} 應盟而至!`
-            : `會戰!${o.name.zh}引軍 ${a.troops.toLocaleString()} 赴戰場馳到!`)
+          ? (a.naval
+            ? `${isAlly ? '盟' : ''}舟師來會!${o.name.zh}引軍 ${a.troops.toLocaleString()} 棄舟登岸,赴戰場馳到!`
+            : isAlly
+              ? `盟軍來會!${o.name.zh}引軍 ${a.troops.toLocaleString()} 應盟而至!`
+              : `會戰!${o.name.zh}引軍 ${a.troops.toLocaleString()} 赴戰場馳到!`)
           : undefined,
       });
     });
