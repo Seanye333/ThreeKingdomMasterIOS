@@ -100,7 +100,7 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
   }, [officer.stats, officer.id]);
 
   const artBase = `${import.meta.env.BASE_URL}portraits/${officer.id}`;
-  const stars = (officer as { stars?: number }).stars ?? 0;
+  const stars = officer.stars ?? 0;
 
   return (
     <>

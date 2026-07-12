@@ -36,7 +36,7 @@ export function combatBP(officer: Officer): { bp: number; parts: BattlePowerPart
         + Math.abs(e.politics ?? 0) + Math.abs(e.charisma ?? 0);
     }, 0) * 8),
     renown: Math.round(Math.sqrt(Math.max(0, officer.renown ?? 0)) * 10),
-    stars: ((officer as { stars?: number }).stars ?? 0) * 80,
+    stars: (officer.stars ?? 0) * 80,
   };
   const bp = parts.stats + parts.grade + parts.level + parts.skills + parts.equipment + parts.renown + parts.stars;
   return { bp, parts };

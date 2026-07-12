@@ -37,6 +37,9 @@ export interface Officer {
   status: 'active' | 'idle' | 'imprisoned' | 'dead' | 'unsearched' | 'wounded' | 'retired';
   /** 諡號 — granted by their court on a natural death (壯繆侯, 忠武侯…). */
   posthumousName?: string;
+  /** 星級 0–6 — the card-game ascension track (stars.ts). Bought with gold,
+   *  gated by growth level; amplifies 品階威儀 and 覺醒s at six. */
+  stars?: number;
   /** Historical hometown — fixed at scenario load from the template. Doesn't
    *  change as the officer moves around. Used by UI + search bonuses. */
   hometownCityId?: EntityId;

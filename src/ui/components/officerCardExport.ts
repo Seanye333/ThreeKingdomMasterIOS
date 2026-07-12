@@ -138,7 +138,7 @@ export async function exportOfficerCardPNG(officer: Officer, lang: Language): Pr
   ctx.fillText(bp.toLocaleString(), W - 20, 43);
 
   // Stars.
-  const stars = (officer as { stars?: number }).stars ?? 0;
+  const stars = officer.stars ?? 0;
   if (stars > 0) {
     ctx.textAlign = 'left';
     ctx.fillStyle = '#ffd66e';

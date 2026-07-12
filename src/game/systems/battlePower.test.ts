@@ -25,7 +25,7 @@ describe('綜合戰力 BP — the card\'s big number', () => {
     const famous = combatBP(mk({ renown: 100 }));
     expect(famous.parts.renown).toBe(100);
 
-    const starred = combatBP(mk({ stars: 4 } as never));
+    const starred = combatBP(mk({ stars: 4 }));
     expect(starred.parts.stars).toBe(320);
   });
 });

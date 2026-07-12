@@ -322,6 +322,7 @@ import { awardBattleXp, grantXp, applyBreakthrough, canBreakthrough, breakthroug
 import type { BreakthroughPath } from '../systems/growth';
 import { officerGrade, gradeRank, gradeMeta } from '../systems/officerGrade';
 import { combatBP } from '../systems/battlePower';
+import { applyStarUp, nextStarRequirement, planAiStarInvestments } from '../systems/stars';
 import { tickBuildings } from '../systems/buildings';
 import { tickBuildingEvents } from '../systems/buildingEvents';
 import { evaluateCoalition } from '../systems/coalition';
@@ -1220,6 +1221,8 @@ interface GameStore extends GameState {
   prayForRain: () => { ok: boolean; success?: boolean; message: string };
   /** 得將開卡 — show/clear the card-reveal flourish for an officer. */
   setCardReveal: (officerId: EntityId | null) => void;
+  /** 升星 — buy the officer's next 星級 (gold from their city; stars.ts). */
+  investStar: (officerId: EntityId) => { ok: boolean; message: string };
   /** 日流 — playback controls for the day-by-day turn flow. */
   beginDayFlow: () => void;
   setDayFlowFollow: (on: boolean) => void;
@@ -8051,6 +8054,26 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           aiGearNext = g;
         }
 
+        // 將星漸昇 — AI forces walk the 星級 track too (ace officer, richest
+        // city pays), so enemy elites shine and the passive stays symmetric.
+        if (seasonBoundary) {
+          const starActs = planAiStarInvestments({
+            officers: officersWithMarchTask, cities: postCities,
+            playerForceId: state.playerForceId, rng: Math.random,
+          });
+          if (starActs.length > 0) {
+            postCities = { ...postCities };
+            officersWithMarchTask = { ...officersWithMarchTask };
+            for (const a of starActs) {
+              const c = postCities[a.cityId];
+              const o = officersWithMarchTask[a.officerId];
+              if (!c || !o) continue;
+              postCities[a.cityId] = { ...c, gold: Math.max(0, c.gold - a.cost) };
+              officersWithMarchTask[a.officerId] = applyStarUp(o).officer;
+            }
+          }
+        }
+
         // 敵國鑄兵 — AI foundry cities arm their best still-unforged commanders
         // with a fresh 神兵 (uniqueness-respecting; deducts the city's gold+iron).
         if (seasonBoundary) {
@@ -10964,6 +10987,33 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       },
       dayFlowSkip: () => set({ dayFlow: null }),
       setCardReveal: (officerId) => set({ cardReveal: officerId }),
+      investStar: (officerId) => {
+        const state = get();
+        const o = state.officers[officerId];
+        if (!o || o.forceId !== state.playerForceId) return { ok: false, message: '非我麾下之將。' };
+        if (o.status === 'dead' || o.status === 'imprisoned' || o.status === 'unsearched')
+          return { ok: false, message: '此人現不可授星。' };
+        const req = nextStarRequirement(o);
+        if (!req.ok) return { ok: false, message: req.reasonZh ?? '不可升星。' };
+        const city = o.locationCityId ? state.cities[o.locationCityId] : null;
+        if (!city || city.ownerForceId !== state.playerForceId)
+          return { ok: false, message: '須居於我城中方可授星。' };
+        if (city.gold < req.cost) return { ok: false, message: `金不足(需 ${req.cost})。` };
+        const { officer: upped, awakened } = applyStarUp(o);
+        set({
+          officers: { ...state.officers, [officerId]: upped },
+          cities: { ...state.cities, [city.id]: { ...city, gold: city.gold - req.cost } },
+        });
+        get().notify(
+          awakened
+            ? `${o.name.zh}六星圓滿 — 將星覺醒!最強一圍 +2`
+            : `${o.name.zh}升星:${'★'.repeat(upped.stars ?? 0)}(金 −${req.cost})`,
+          awakened
+            ? `${o.name.en} awakens at six stars — best stat +2`
+            : `${o.name.en} rises to ${upped.stars}★ (−${req.cost} gold)`,
+        );
+        return { ok: true, message: awakened ? '覺醒!' : '升星成功。' };
+      },
       engageEncounter: () => {
         const state = get();
         const df = state.dayFlow;

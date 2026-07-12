@@ -1,5 +1,6 @@
 import type { Officer } from '../types';
 import { officerGrade, gradeRank, type OfficerGrade } from './officerGrade';
+import { officerStars, starCombatDelta } from './stars';
 import { itemRarity, itemLoreLevel, type Item, type ItemRarity } from '../data/items';
 
 /**
@@ -46,9 +47,23 @@ const GRADE_COMBAT: Record<OfficerGrade, GradeCombatBonus> = {
   iron:     { powerMul: 1.0,  morale: 0,  duelBonus: 0,  debatePoise: 0,  duelStamina: 0,  damageResist: 0 },
 };
 
-/** The combat passive for a single officer, keyed off their current 品階. */
+/** The combat passive for a single officer, keyed off their current 品階,
+ *  amplified by their 星級 (stars.ts) — a 6★ ace projects a touch more of
+ *  everything. Folding stars in here wires them into every consumer at once
+ *  (strategic aura, tactical damage, 單挑, 舌戰). */
 export function gradeCombatBonus(officer: Officer): GradeCombatBonus {
-  return GRADE_COMBAT[officerGrade(officer).grade];
+  const base = GRADE_COMBAT[officerGrade(officer).grade];
+  const s = officerStars(officer);
+  if (s === 0) return base;
+  const d = starCombatDelta(s);
+  return {
+    powerMul: base.powerMul + d.powerMul,
+    morale: base.morale + d.morale,
+    duelBonus: base.duelBonus + d.duelBonus,
+    debatePoise: base.debatePoise + d.debatePoise,
+    duelStamina: base.duelStamina + d.duelStamina,
+    damageResist: Math.min(0.2, base.damageResist + d.damageResist),
+  };
 }
 
 export function gradeCombatBonusFor(grade: OfficerGrade): GradeCombatBonus {

@@ -38,6 +38,7 @@ import { renownFromDeeds, fameTier, fameMedal } from '../../game/systems/fame';
 import { xpProgress, learnableSkills, canBreakthrough, breakthroughCost, breakthroughIronCost, BREAKTHROUGH_PATHS, MAX_BREAKTHROUGHS, breakthroughTitle, growthPowerMul, growthAptitude, aptitudeLabel, EPIPHANY_THRESHOLD } from '../../game/systems/growth';
 import { canAppraise, GRADE_LABEL } from '../../game/systems/appraisal';
 import { officerGrade, officerLevel, nextGradeGap, gradeMeta } from '../../game/systems/officerGrade';
+import { MAX_STARS, officerStars, nextStarRequirement } from '../../game/systems/stars';
 import { gradeCombatBonus, itemMasteryMul } from '../../game/systems/gradeCombat';
 import { itemRarity, itemRarityMeta, liveItemById, refineCost, REFINE_MAX,
   BREAKTHROUGH_MAX, breakthroughCost as itemBreakthroughCost, socketsFor, GEMS, GEMS_BY_ID,
@@ -200,6 +201,9 @@ export function OfficerDetail({
   const appointment = appointments.find((a) => a.officerId === officer.id);
   const titleDef = appointment ? CIVIC_TITLES_BY_ID[appointment.titleId] : null;
   const [showCard, setShowCard] = useState(false);
+  // 星級 — feedback line for the star-up button (成功/緣由 both land here).
+  const [starMsg, setStarMsg] = useState<string | null>(null);
+  const investStar = useGameStore((s) => s.investStar);
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
@@ -527,6 +531,40 @@ export function OfficerDetail({
                         </span>
                       );
                     })()}
+                  </div>
+                );
+              })()}
+              {(() => {
+                // 星級 — the card-game ascension track (stars.ts): six stars
+                // bought with gold, level-gated, awakening at the sixth.
+                const s = officerStars(officer);
+                const req = nextStarRequirement(officer);
+                const canBuy = isMine && req.ok;
+                return (
+                  <div title={t(
+                    `星級 ${s}/${MAX_STARS} — 每星微升品階威儀(戰力/單挑/舌戰);六星覺醒:最強一圍 +2`,
+                    `Stars ${s}/${MAX_STARS} — each star amplifies the grade passive; the sixth awakens (+2 best stat)`)}>
+                    <span style={{ fontSize: '0.72rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('星級', 'Stars')} </span>
+                    <span style={{ fontSize: '0.9rem', color: '#ffd66e', letterSpacing: '0.1rem' }}>
+                      {'★'.repeat(s)}<span style={{ color: '#3d4a56' }}>{'☆'.repeat(MAX_STARS - s)}</span>
+                    </span>
+                    {s >= MAX_STARS && <span style={{ marginLeft: 6, fontSize: '0.7rem', color: '#e6c473' }}>{t('覺醒', 'Awakened')}</span>}
+                    {isMine && s < MAX_STARS && (
+                      <button
+                        onClick={() => { setStarMsg(investStar(officer.id).message); }}
+                        disabled={!canBuy}
+                        title={req.ok
+                          ? t(`升第 ${req.next} 星:金 ${req.cost}(取自所在城)`, `Buy star ${req.next}: ${req.cost} gold (from their city)`)
+                          : (lang === 'en' ? req.reasonEn ?? '' : req.reasonZh ?? '')}
+                        style={{
+                          marginLeft: 8, padding: '0.05rem 0.5rem', fontSize: '0.72rem', cursor: canBuy ? 'pointer' : 'default',
+                          background: canBuy ? 'rgba(230,196,115,0.12)' : 'transparent',
+                          border: `1px solid ${canBuy ? '#8a6a2a' : '#2b3845'}`, borderRadius: 'var(--tkm-radius-xs)',
+                          color: canBuy ? '#e6c473' : '#5f6c76', fontFamily: 'inherit',
+                        }}
+                      >{t(`升星 ${req.cost}金`, `Star up ${req.cost}g`)}</button>
+                    )}
+                    {starMsg && <span style={{ marginLeft: 6, fontSize: '0.7rem', color: '#c8a24e' }}>{starMsg}</span>}
                   </div>
                 );
               })()}
