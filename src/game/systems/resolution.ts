@@ -49,6 +49,7 @@ import { stepConvoys, resolveConvoyRaids, resolveRaidStrike, provisionNeeded, co
 import {
   forcedMarchAttrition, cautiousAttritionMul, paceExposureMul,
   accrueFatigue, fatiguePowerMul, evadeSlipChance, EVADE_CAUGHT_MUL,
+  armyMoralePowerMul, driftMorale,
 } from './marchPace';
 import { computeDayEncounters, arrivalDayOf, INTERCEPT_DIST } from './dayEncounters';
 import { stepExpeditions, expeditionSpeedMul } from './expedition';
@@ -356,8 +357,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       .map((id) => officers[id])
       .filter((o): o is Officer => !!o)];
     const blended = pool.reduce((s, o) => s + o.stats.war * 0.6 + o.stats.leadership * 0.4, 0) / pool.length;
-    // 師老兵疲 — a worn column swings below its paper strength (§4.1).
-    return { blended, power: blended * Math.sqrt(Math.max(1, cmd.troops)) * fatiguePowerMul(cmd.fatigue) };
+    // 師老兵疲/軍心 — a worn column swings below its paper strength, a
+    // heartened one above it (§4.1).
+    return { blended, power: blended * Math.sqrt(Math.max(1, cmd.troops)) * fatiguePowerMul(cmd.fatigue) * armyMoralePowerMul(cmd.morale) };
   };
   // Best intelligence among an army's officers — a wise commander scouts
   // ahead and sees through enemy ambushes (识破伏兵).
@@ -775,6 +777,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         };
       }
       troopOverride[winner.officerId] = Math.max(0, winner.troops - winnerCasualty);
+      // 軍心大振 — a field victory hearts the winning column.
+      winner.morale = Math.min(100, (winner.morale ?? 60) + 8);
       if (input.playerForceId && winnerCmdr?.forceId === input.playerForceId) playerFieldClashesWon++;
       // 陣擒 — officers can be taken in the crush of a broken field army:
       // 8% each (a sprung ambush 15%); a rear guard halves his comrades'
@@ -1565,8 +1569,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         }
       }
     }
-    // 師老兵疲 — a season on the road wears the column (harder when forced).
+    // 師老兵疲 — a season on the road wears the column (harder when forced);
+    // 軍心 drifts back toward steady.
     cmd.fatigue = accrueFatigue(cmd.fatigue, { pace: cmd.pace, holding: false });
+    cmd.morale = driftMorale(cmd.morale);
     suppliedTroops[cmd.officerId] = troopsAfter;
     suppliedFood[cmd.officerId] = s.food;
     // 防壁 — a barricade in the column's path stalls it this season (no advance).
@@ -1625,7 +1631,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       }
     }
     // 師老兵疲 — a rest camp recovers; a siege camp is itself grinding work.
+    // 軍心 drifts back toward steady.
     cmd.fatigue = accrueFatigue(cmd.fatigue, { holding: true, besieging: !!cmd.besieging });
+    cmd.morale = driftMorale(cmd.morale);
     suppliedTroops[cmd.officerId] = heldTroops;
     suppliedFood[cmd.officerId] = s.food;
     keptCommands[cmd.officerId] = { ...cmd, troops: heldTroops, food: s.food };
@@ -1667,6 +1675,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       fleeY: cmd.fleeY,
       evading: cmd.evading,
       fatigue: cmd.fatigue,
+      morale: cmd.morale,
       pursueTargetId: cmd.pursueTargetId,
       waitSeasons: cmd.waitSeasons,
       legionBanner: cmd.legionBanner,
@@ -2054,6 +2063,27 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     for (const e of outcome.entries) {
       if (e.battle && e.battle.duelWinnerId) {
         bumpDeed(e.battle.duelWinnerId, { duelsWon: 1 });
+      }
+    }
+  }
+
+  // ── 城陷奪氣 — a realm that lost a city this season shakes every column
+  // it still has in the field (國都陷落更甚): the war is going badly and
+  // the men know it.
+  {
+    const shaken: Record<EntityId, number> = {};
+    for (const [cid, c] of Object.entries(cities)) {
+      const before = input.cities[cid]?.ownerForceId;
+      if (before && c.ownerForceId !== before) {
+        const isCapital = forces[before]?.capitalCityId === cid;
+        shaken[before] = Math.max(shaken[before] ?? 0, isCapital ? 20 : 10);
+      }
+    }
+    if (Object.keys(shaken).length > 0) {
+      for (const kc of Object.values(keptCommands)) {
+        if (kc.type !== 'march') continue;
+        const f = officers[kc.officerId]?.forceId;
+        if (f && shaken[f]) kc.morale = Math.max(0, (kc.morale ?? 60) - shaken[f]);
       }
     }
   }

@@ -4,7 +4,7 @@ import { buildInitialCities } from '../data/cities';
 import { cityPos } from '../data/cityGeo';
 import { terrainRoute, positionAlongRoute } from '../data/territories';
 import { terrainMarchCost } from '../data/geography';
-import { accrueFatigue, fatiguePowerMul, fatigueMoraleMalus, evadeSlipChance } from './marchPace';
+import { accrueFatigue, fatiguePowerMul, fatigueMoraleMalus, evadeSlipChance, armyMoralePowerMul, armyMoraleOpening, driftMorale } from './marchPace';
 
 /** 行軍博弈第二批 — 避戰迂迴(slip/倉皇接戰)、師老兵疲(累積/休整)、
  *  冬季行軍(苦寒/雪封/冬圍)、野戰繳獲。 */
@@ -205,6 +205,64 @@ describe('冬季行軍 — cold, snowed passes, freezing siege lines', () => {
     }, () => 0.99, 'winter') as never);
     expect((out.keptCommands?.['besieger'] as { troops?: number })?.troops).toBe(5760); // −4%
     expect(out.report.entries.some((e) => (e.textZh ?? '').includes('凍損'))).toBe(true);
+  });
+});
+
+describe('軍心 — map-level army morale', () => {
+  it('pure helpers: power swing, opening bonus, drift toward steady', () => {
+    expect(armyMoralePowerMul(undefined)).toBe(1);
+    expect(armyMoralePowerMul(100)).toBeCloseTo(1.12);
+    expect(armyMoralePowerMul(20)).toBeCloseTo(0.88);
+    expect(armyMoraleOpening(100)).toBe(10);
+    expect(armyMoraleOpening(20)).toBe(-10);
+    expect(driftMorale(100)).toBe(97);
+    expect(driftMorale(30)).toBe(33);
+    expect(driftMorale(undefined)).toBeUndefined();
+  });
+
+  it('a heartened army beats an equal but shaken one (outside the dice band)', () => {
+    const { cities } = fixtures(20000);
+    cities['luoyang'] = { ...(cities['luoyang'] as object), ownerForceId: 'f1' } as never;
+    cities['changan'] = { ...(cities['changan'] as object), ownerForceId: 'f2' } as never;
+    const out = resolveSeason(baseInput(cities, {
+      hearty: mkOfficer('hearty', 'f1'), shaken: mkOfficer('shaken', 'f2'),
+    }, {
+      hearty: {
+        type: 'march', cityId: 'luoyang', targetCityId: 'changan', officerId: 'hearty',
+        troops: 5000, totalSeasons: 2, seasonsRemaining: 2, morale: 100,
+      },
+      shaken: {
+        type: 'march', cityId: 'changan', targetCityId: 'luoyang', officerId: 'shaken',
+        troops: 5000, totalSeasons: 2, seasonsRemaining: 2, morale: 20,
+      },
+    }, () => 0.0) as never);
+    const clash = out.report.entries.find((e) => e.battle?.field);
+    expect(clash).toBeTruthy();
+    expect(clash!.battle!.attacker.commanderId).toBe('hearty');
+    // 軍心大振 — the winner's morale climbs (100 stays capped).
+    expect((out.keptCommands?.['hearty'] as { morale?: number })?.morale).toBeLessThanOrEqual(100);
+  });
+
+  it('城陷奪氣 — losing a city shakes every column the realm has afield', () => {
+    const { cities } = fixtures(500); // tiny changan garrison → falls to assault
+    cities['chengdu'] = { ...(cities['chengdu'] as object), ownerForceId: 'foe', troops: 3000, food: 90000, gold: 5000 } as never;
+    const out = resolveSeason(baseInput(cities, {
+      attacker: mkOfficer('attacker', 'me'),
+      foeMarcher: mkOfficer('foeMarcher', 'foe'),
+    }, {
+      // Player storms changan (garrison 500 → falls); the foe has a column
+      // marching elsewhere that should feel the loss.
+      attacker: {
+        type: 'march', cityId: 'luoyang', targetCityId: 'changan', officerId: 'attacker',
+        troops: 9000, totalSeasons: 1, seasonsRemaining: 1,
+      },
+      foeMarcher: {
+        type: 'march', cityId: 'chengdu', targetCityId: 'hanzhong', officerId: 'foeMarcher',
+        troops: 4000, totalSeasons: 3, seasonsRemaining: 3, morale: 60,
+      },
+    }, () => 0.0) as never);
+    expect(out.cities['changan']?.ownerForceId).toBe('me');
+    expect((out.keptCommands?.['foeMarcher'] as { morale?: number })?.morale).toBeLessThanOrEqual(50);
   });
 });
 

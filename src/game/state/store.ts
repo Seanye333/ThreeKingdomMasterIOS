@@ -86,7 +86,7 @@ import { ITEMS_BY_ID, refineCost, REFINE_MAX, setRefineRegistry, itemRarity,
   itemGrowthGoldSpent } from '../data/items';
 import { SKILLS_BY_ID } from '../data/skills';
 import { marchDurationFor } from '../data/cities';
-import { marchSpeedMul, adjustMarchSeasons, PACE_LABEL, arrivalFatigueMorale, fatigueMoraleMalus } from '../systems/marchPace';
+import { marchSpeedMul, adjustMarchSeasons, PACE_LABEL, arrivalFatigueMorale, fatigueMoraleMalus, armyMoraleOpening } from '../systems/marchPace';
 import { terrainRoute, positionAlongRoute, marchDestCoords } from '../data/territories';
 import { cityPos, CITY_GEO_OVERRIDES } from '../data/cityGeo';
 import { provisionNeeded, convoyCapacity, planConvoy } from '../systems/convoy';
@@ -1438,8 +1438,8 @@ function buildFieldBattle(
     // 疲勞 less 都督之旗 — weary from a forced march (and a long campaign),
     // steadied by the marshal's banner. The enemy column's own campaign
     // fatigue shows up on ITS side of the field too (師老兵疲,親征可見).
-    attackerFatigue: arrivalFatigueMorale(pArmy.pace) + fatigueMoraleMalus(pArmy.fatigue) - (pArmy.legionBanner ?? 0),
-    defenderFatigue: arrivalFatigueMorale(eArmy.pace) + fatigueMoraleMalus(eArmy.fatigue) - (eArmy.legionBanner ?? 0),
+    attackerFatigue: arrivalFatigueMorale(pArmy.pace) + fatigueMoraleMalus(pArmy.fatigue) - armyMoraleOpening(pArmy.morale) - (pArmy.legionBanner ?? 0),
+    defenderFatigue: arrivalFatigueMorale(eArmy.pace) + fatigueMoraleMalus(eArmy.fatigue) - armyMoraleOpening(eArmy.morale) - (eArmy.legionBanner ?? 0),
     // 排兵布陣 — a dug-in side fights from 十面埋伏; otherwise each marshal draws
     // up a formation suited to its arms & wits, the attacker reading the
     // defender's to counter it (陣克陣). No more formation-less NPC armies.
@@ -2459,6 +2459,8 @@ export const useGameStore = create<GameStore>()(
               totalSeasons: dur,
               pace,
               forcedStratagem,
+              // 軍心承練度 — a drilled garrison marches out heartened.
+              morale: Math.max(50, Math.min(80, 50 + Math.round((source.drill ?? 0) * 0.3))),
             } as MarchCommand,
           },
           // Mirror the order into the persistent army layer at the source

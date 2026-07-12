@@ -101,6 +101,24 @@ export function fatigueMoraleMalus(fatigue: number | undefined): number {
   return Math.min(15, Math.round((fatigue ?? 0) / 8));
 }
 
+// ── 軍心 — map-level army morale (0..100, 60 = steady). Set from the home
+// garrison's 練度 at muster, lifted by field victories, shaken when the
+// realm loses cities (國都陷落更甚), and drifting back toward steady on the
+// road. Feeds field power AND the opening morale of interactive battles —
+// a beaten realm's columns fight like it.
+export function armyMoralePowerMul(morale: number | undefined): number {
+  return 1 + ((morale ?? 60) - 60) * 0.003; // 100 氣 → ×1.12, 20 氣 → ×0.88
+}
+/** Opening-morale bonus (+) / malus (−) carried into an interactive battle. */
+export function armyMoraleOpening(morale: number | undefined): number {
+  return Math.round(((morale ?? 60) - 60) / 4); // 100 氣 → +10, 20 氣 → −10
+}
+/** Per-season drift back toward steady (±3). Undefined stays undefined. */
+export function driftMorale(morale: number | undefined): number | undefined {
+  if (morale == null) return undefined;
+  return morale + Math.max(-3, Math.min(3, 60 - morale));
+}
+
 // ── 避戰迂迴 — an evading column takes back roads and screens its movement,
 // trying to SLIP a contact instead of fighting it. Wits decide: the evader's
 // best intelligence against the hunter's. A cautious pace helps, a forced

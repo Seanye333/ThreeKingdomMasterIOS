@@ -290,6 +290,14 @@ export function ArmiesPanel() {
                       : `師老兵疲 ${a.fatigue} — 野戰戰力與開戰士氣俱減;紮營(非圍城)可休整`}
                   >疲{a.fatigue}</span>
                 )}
+                {a.morale != null && Math.abs(a.morale - 60) >= 8 && (
+                  <span
+                    style={{ marginLeft: 4, fontSize: '0.58rem', color: a.morale > 60 ? '#8ac88a' : '#e0707a' }}
+                    title={lang === 'en'
+                      ? `Army morale ${a.morale} (60 = steady) — victories lift it, the realm's lost cities shake it`
+                      : `軍心 ${a.morale}(60 為常)— 野戰勝則振,國失城則搖`}
+                  >氣{a.morale}</span>
+                )}
               </span>
               <span style={{ color: status.color, whiteSpace: 'nowrap' }}>
                 {status.icon} {status.text}

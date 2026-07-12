@@ -42,6 +42,8 @@ export interface Army {
   evading?: boolean;
   /** 師老兵疲 — cumulative campaign fatigue 0..100 (see MarchCommand.fatigue). */
   fatigue?: number;
+  /** 軍心 — map-level morale 0..100 (see MarchCommand.morale). */
+  morale?: number;
   /** 召回 — streaming home to its source (rendered/labelled as a return). */
   returning?: boolean;
   /** 潰走 — beaten in the field, fleeing to shelter (see MarchCommand.routed). */
