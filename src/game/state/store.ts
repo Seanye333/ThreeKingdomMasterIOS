@@ -2094,12 +2094,23 @@ export const useGameStore = create<GameStore>()(
         ];
         const mergedTroops = dstArmy.troops + srcArmy.troops;
 
+        // 攜行歸一 — merging a carried column into a legacy one converts the
+        // host to CARRIED (its own men come off the books now), so the fused
+        // column never double-exists at home. Pure-legacy merges stay legacy.
+        let citiesAfterMerge = state.cities;
+        let hostCarried = dstCmd.carried;
+        if ((srcCmd.carried || dstCmd.carried) && !dstCmd.carried) {
+          const dstHome = state.cities[dstCmd.cityId];
+          if (dstHome) citiesAfterMerge = { ...state.cities, [dstHome.id]: { ...dstHome, troops: Math.max(0, dstHome.troops - dstCmd.troops) } };
+          hostCarried = true;
+        }
         const nextCommands = { ...state.pendingCommands };
         delete nextCommands[sourceArmyId];
         nextCommands[destArmyId] = {
           ...dstCmd,
           troops: mergedTroops,
           additionalOfficerIds: mergedCompanions,
+          carried: hostCarried,
         };
         const nextArmies = { ...state.armies };
         delete nextArmies[sourceArmyId];
@@ -2109,6 +2120,7 @@ export const useGameStore = create<GameStore>()(
           companionIds: mergedCompanions,
         };
         set({
+          cities: citiesAfterMerge,
           pendingCommands: nextCommands,
           armies: nextArmies,
           selectedArmyId: destArmyId,
@@ -2169,6 +2181,7 @@ export const useGameStore = create<GameStore>()(
           seasonsRemaining: 1,
           totalSeasons: 1,
           holding: true,
+          carried: cmd.carried, // inherit the parent's troop-accounting convention
         } as MarchCommand;
 
         const nextArmies = { ...state.armies };
@@ -2437,7 +2450,9 @@ export const useGameStore = create<GameStore>()(
         set({
           cities: {
             ...state.cities,
-            [sourceId]: { ...source, gold: source.gold - def.goldCost },
+            // 兵隨軍行 — the column takes its men off the books NOW: a city
+            // stripped for an offensive really is empty (調虎離山成立).
+            [sourceId]: { ...source, gold: source.gold - def.goldCost, troops: source.troops - troops },
           },
           officers: officersUpdate,
           // 出征 — signal the map to play a departure flourish at the origin.
@@ -2461,6 +2476,7 @@ export const useGameStore = create<GameStore>()(
               forcedStratagem,
               // 軍心承練度 — a drilled garrison marches out heartened.
               morale: Math.max(50, Math.min(80, 50 + Math.round((source.drill ?? 0) * 0.3))),
+              carried: true,
             } as MarchCommand,
           },
           // Mirror the order into the persistent army layer at the source
@@ -2645,7 +2661,7 @@ export const useGameStore = create<GameStore>()(
           officers: { ...state.officers, [officerId]: { ...officer, task: 'march' as const } },
           pendingCommands: {
             ...state.pendingCommands,
-            [officerId]: { type: 'march', cityId: fromCityId, officerId, targetCityId: fromCityId, targetX: lead.x, targetY: lead.y, troops: send, seasonsRemaining: dur, totalSeasons: dur, pace: 'forced' } as MarchCommand,
+            [officerId]: { type: 'march', cityId: fromCityId, officerId, targetCityId: fromCityId, targetX: lead.x, targetY: lead.y, troops: send, seasonsRemaining: dur, totalSeasons: dur, pace: 'forced', carried: true } as MarchCommand,
           },
           armies: {
             ...state.armies,
@@ -3682,7 +3698,16 @@ export const useGameStore = create<GameStore>()(
         delete nextArmies[officerKey];
         set({
           cities: city
-            ? { ...state.cities, [cmd.cityId]: { ...city, gold: city.gold + def.goldCost } }
+            ? {
+                ...state.cities,
+                // 罷兵 — a carried column's men walk back onto the books;
+                // legacy marches never left them.
+                [cmd.cityId]: {
+                  ...city,
+                  gold: city.gold + def.goldCost,
+                  troops: city.troops + (cmd.type === 'march' && cmd.carried ? cmd.troops : 0),
+                },
+              }
             : state.cities,
           officers: officersUpdate,
           pendingCommands: next,
@@ -4018,7 +4043,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                   officers: { ...st.officers, [o.officerId]: { ...off, task: 'march' as const } },
                   pendingCommands: {
                     ...st.pendingCommands,
-                    [o.officerId]: { type: 'march', cityId: from.id, officerId: o.officerId, targetCityId: from.id, targetX: o.x, targetY: o.y, troops: send, seasonsRemaining: dur, totalSeasons: dur, ambush: true, legionBanner: banner > 0 ? banner : undefined } as MarchCommand,
+                    [o.officerId]: { type: 'march', cityId: from.id, officerId: o.officerId, targetCityId: from.id, targetX: o.x, targetY: o.y, troops: send, seasonsRemaining: dur, totalSeasons: dur, ambush: true, legionBanner: banner > 0 ? banner : undefined, carried: true } as MarchCommand,
                   },
                   armies: {
                     ...st.armies,

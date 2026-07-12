@@ -1260,9 +1260,10 @@ export function handleMarch(
     return { cities, officers, entries };
   }
 
-  // Deduct troops from source.
-  const sentTroops = Math.min(source.troops, cmd.troops);
-  cities[source.id] = { ...source, troops: source.troops - sentTroops };
+  // 兵隨軍行 — a carried column's men left the books at issue; a legacy
+  // (pre-marker save) march still draws them from the source now.
+  const sentTroops = cmd.carried ? cmd.troops : Math.min(source.troops, cmd.troops);
+  if (!cmd.carried) cities[source.id] = { ...source, troops: source.troops - sentTroops };
 
   // Friendly transfer: same owner — commander and any companions move too.
   const transferCompanions: Officer[] = (cmd.additionalOfficerIds ?? [])

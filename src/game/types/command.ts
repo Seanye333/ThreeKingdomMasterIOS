@@ -47,6 +47,11 @@ export interface MarchCommand extends CommandBase {
   type: 'march';
   targetCityId: EntityId;
   troops: number;
+  /** 兵隨軍行 — this column CARRIES its troops: they left the source city's
+   *  books when it marched out (調虎離山自此成立 — a stripped city really is
+   *  empty). Absent = legacy convention (troops notionally stay home until
+   *  arrival) so old saves' in-flight marches resolve under the old rules. */
+  carried?: boolean;
   /** Additional officers accompanying the commander, max 2. */
   additionalOfficerIds?: EntityId[];
   /**

@@ -391,10 +391,13 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     if (!shelter) return null;
     const dist = Math.hypot(cityPos(shelter).x - at.x, cityPos(shelter).y - at.y);
     const dur = dist < 120 * WORLD_SCALE ? 2 : 3;
-    // The survivors leave the source city's books — a rout CARRIES its men
-    // (a normal march's troops notionally stay home until it resolves).
-    const src = cities[cmd.cityId];
-    if (src) cities[src.id] = { ...src, troops: Math.max(0, src.troops - survivors) };
+    // A rout CARRIES its men. A carried column's men already left the books
+    // at issue; a legacy march's survivors get struck off them now.
+    if (!cmd.carried) {
+      const src = cities[cmd.cityId];
+      if (src) cities[src.id] = { ...src, troops: Math.max(0, src.troops - survivors) };
+    }
+    cmd.carried = true;
     cmd.routed = true;
     cmd.returning = true;
     cmd.fleeX = at.x;
@@ -536,7 +539,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         // Hunter accounting follows the normal-march convention (troops on
         // the source city's books); the rout CARRIES its men — no city touch.
         const hSrc = cities[hunter.cityId];
-        if (hSrc) cities[hSrc.id] = { ...hSrc, troops: Math.max(0, hSrc.troops - hunterLoss + absorbed) };
+        if (!hunter.carried && hSrc) cities[hSrc.id] = { ...hSrc, troops: Math.max(0, hSrc.troops - hunterLoss + absorbed) };
         troopOverride[hunter.officerId] = Math.max(0, (troopOverride[hunter.officerId] ?? hunter.troops) - hunterLoss + absorbed);
         const destroyed = remaining < ROUT_DISSOLVE_BELOW;
         const capturedNames: string[] = [];
@@ -747,12 +750,13 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         aTroops: a.troops,
         bTroops: b.troops,
       });
-      // Casualties are drawn from each army's source city (troops are
-      // notionally still there until the march resolves).
+      // Casualty accounting: a CARRIED column's men ride with it (nothing to
+      // touch at home); a legacy march's men are notionally still on the
+      // source city's books, so its losses come off there.
       const winSrc = cities[winner.cityId];
       const loseSrc = cities[loser.cityId];
-      if (winSrc) cities[winSrc.id] = { ...winSrc, troops: Math.max(0, winSrc.troops - winnerCasualty) };
-      if (loseSrc) cities[loseSrc.id] = { ...loseSrc, troops: Math.max(0, loseSrc.troops - loserCasualty) };
+      if (!winner.carried && winSrc) cities[winSrc.id] = { ...winSrc, troops: Math.max(0, winSrc.troops - winnerCasualty) };
+      if (!loser.carried && loseSrc) cities[loseSrc.id] = { ...loseSrc, troops: Math.max(0, loseSrc.troops - loserCasualty) };
       // 繳獲 — the victor strips the broken column's baggage train: grain
       // feeds the column on the spot (if it carries provisions), coin and
       // materiel (loose mounts, dropped arms → 馬/鐵) go home; a stormed
@@ -807,6 +811,13 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const routShelter = cmdrTaken ? null : convertToRout(loser, Math.max(0, loser.troops - loserCasualty), loserPos);
       if (!routShelter) {
         cancelledMarchOfficers.add(loser.officerId);
+        // 散卒歸鄉 — a CARRIED column that scatters trickles its survivors
+        // back onto the source city's books (a legacy march never took them
+        // off, so there is nothing to return).
+        if (loser.carried && cities[loser.cityId]) {
+          const back = Math.max(0, loser.troops - loserCasualty);
+          if (back > 0) cities[loser.cityId] = { ...cities[loser.cityId], troops: cities[loser.cityId].troops + back };
+        }
         // Free the loser's commander + companions so they idle at source
         // (the captured and the dead stay as they are).
         for (const id of [loser.officerId, ...(loser.additionalOfficerIds ?? [])]) {
@@ -1011,7 +1022,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const marchLoss = Math.floor(a.troops * 0.55 * sallyScale.loser * (sallyRearGuard ? 0.8 : 1));
       const defLoss = Math.floor(sallyTroops * 0.2 * sallyScale.winner);
       const mSrc = cities[a.cityId];
-      if (mSrc) cities[mSrc.id] = { ...mSrc, troops: Math.max(0, mSrc.troops - marchLoss) };
+      if (!a.carried && mSrc) cities[mSrc.id] = { ...mSrc, troops: Math.max(0, mSrc.troops - marchLoss) };
       // 繳獲 — the garrison hauls the broken column's baggage back inside
       // (grain, coin, loose mounts and dropped arms).
       const sallyFoodSpoil = Math.floor(marchLoss * 1.5);
@@ -1045,6 +1056,11 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const sallyShelter = sallyCmdrTaken ? null : convertToRout(a, Math.max(0, a.troops - marchLoss), pos);
       if (!sallyShelter) {
         cancelledMarchOfficers.add(a.officerId);
+        // 散卒歸鄉 — carried survivors trickle home (see the clash branch).
+        if (a.carried && cities[a.cityId]) {
+          const back = Math.max(0, a.troops - marchLoss);
+          if (back > 0) cities[a.cityId] = { ...cities[a.cityId], troops: cities[a.cityId].troops + back };
+        }
         for (const id of [a.officerId, ...(a.additionalOfficerIds ?? [])]) {
           const o = officers[id];
           if (o && o.status !== 'dead' && o.status !== 'imprisoned') officers[id] = { ...o, task: null, status: 'idle' };
@@ -1071,7 +1087,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const marchLoss = Math.floor(a.troops * 0.2 * repScale.winner);
       cities[bestCity.id] = { ...cities[bestCity.id], troops: Math.max(0, cities[bestCity.id].troops - defLoss) };
       const mSrc = cities[a.cityId];
-      if (mSrc) cities[mSrc.id] = { ...mSrc, troops: Math.max(0, mSrc.troops - marchLoss) };
+      if (!a.carried && mSrc) cities[mSrc.id] = { ...mSrc, troops: Math.max(0, mSrc.troops - marchLoss) };
       troopOverride[a.officerId] = Math.max(0, (troopOverride[a.officerId] ?? a.troops) - marchLoss);
       entries.push({
         cityId: bestCity.id, kind: 'battle',
@@ -1339,7 +1355,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         o.locationCityId === target.id && o.forceId === input.playerForceId
         && o.status !== 'dead' && o.status !== 'unsearched' && !o.task);
       if (target.troops < 500 || !garrison) continue;
-      cities[src.id] = { ...src, troops: Math.max(0, src.troops - cmd.troops) };
+      // Commit the column: a carried march's men are already off the books.
+      if (!cmd.carried) cities[src.id] = { ...src, troops: Math.max(0, src.troops - cmd.troops) };
       pendingSiegeDefenses.push({
         sourceCityId: src.id,
         targetCityId: target.id,

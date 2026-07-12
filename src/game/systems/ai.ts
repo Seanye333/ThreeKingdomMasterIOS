@@ -262,6 +262,12 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
           }
         }
       }
+      // 兵隨軍行 — a carried march takes its men off the city's books at
+      // issue, same as the player's issueMarch.
+      if (decision.command.type === 'march' && decision.command.carried) {
+        const src = cities[decision.command.cityId];
+        if (src) cities[src.id] = { ...src, troops: Math.max(0, src.troops - decision.command.troops) };
+      }
       pendingCommands[city.id] = decision.command;
     }
   }
@@ -903,6 +909,7 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
       // 設伏 — enough cover and the detachment goes to ground: hidden from
       // the player's map, springs harder (same stance the player can order).
       ambush: bestCover >= 0.3 || undefined,
+      carried: bestCmd.carried, // inherit the parent's troop-accounting convention
     };
     const dOff = officers[detachId];
     if (dOff) officers[detachId] = { ...dOff, task: 'march' };
@@ -949,10 +956,12 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
           .sort((a, b) => (b.stats.leadership * 0.6 + b.stats.war * 0.4) - (a.stats.leadership * 0.6 + a.stats.war * 0.4))[0];
         if (!lead) continue;
         const dur = adjustMarchSeasons(marchDurationFor(c, best.target, surgeSeason), 'normal', marchSpeedMul([lead]));
+        const surgeSend = Math.floor(c.troops * 0.65);
         pendingCommands[lead.id] = {
           type: 'march', cityId: c.id, officerId: lead.id, targetCityId: best.target.id,
-          troops: Math.floor(c.troops * 0.65), seasonsRemaining: dur, totalSeasons: dur,
+          troops: surgeSend, seasonsRemaining: dur, totalSeasons: dur, carried: true,
         };
+        cities[c.id] = { ...cities[c.id], troops: Math.max(0, cities[c.id].troops - surgeSend) };
         officers[lead.id] = { ...officers[lead.id], task: 'march' };
       }
     }
@@ -1274,6 +1283,7 @@ function decideCommand(
               additionalOfficerIds: companions.length > 0 ? companions : undefined,
               seasonsRemaining: dur,
               totalSeasons: dur,
+              carried: true,
             };
             return { command: cmd, officer: o, companions };
           }
@@ -1435,6 +1445,7 @@ function decideCommand(
         seasonsRemaining: dur,
         totalSeasons: dur,
         evading: wiseIntel >= 78 && dur >= 2 ? true : undefined,
+        carried: true,
       };
       return { command: cmd, officer: o, companions };
     }
@@ -1457,7 +1468,7 @@ function decideCommand(
           // back roads and slips interceptors (the player's evade, mirrored).
           const cmd: MarchCommand = {
             type: 'march', cityId: city.id, officerId: o.id, targetCityId: dest.id,
-            troops: send, seasonsRemaining: dur, totalSeasons: dur, evading: true,
+            troops: send, seasonsRemaining: dur, totalSeasons: dur, evading: true, carried: true,
           };
           return { command: cmd, officer: o };
         }
