@@ -231,12 +231,24 @@ export function bandRepositionStep(
   hi: number,
 ): HexCoord | null {
   if (enemies.length === 0) return null;
+  // 列陣於後 — a bow line wants a friendly MELEE screen between itself and
+  // the foe, not just abstract distance: hexes hugging a steadier brother
+  // score up, hexes where WE are the side's closest body to the enemy score
+  // down. Pure-ranged armies have no screen and fall back to the plain band.
+  const screens = b.units.filter((u) =>
+    u.side === unit.side && u.id !== unit.id && u.troops > 0 && u.morale > 0
+    && (u.unitType === 'infantry' || u.unitType === 'spearmen' || u.unitType === 'cavalry'));
   const score = (c: HexCoord): number => {
     const nd = Math.min(...enemies.map((e) => hexDistance(c, e.coord)));
     let band: number;
     if (nd < lo) band = (nd - lo) * 2; // too close → strong penalty
     else if (nd <= hi) band = 2; // sweet spot
     else band = (hi - nd) * 0.5; // too far → mild penalty
+    if (screens.length > 0) {
+      if (screens.some((f) => hexDistance(c, f.coord) <= 1)) band += 0.5; // behind the shields
+      const exposed = screens.every((f) => Math.min(...enemies.map((e) => hexDistance(f.coord, e.coord))) > nd);
+      if (exposed) band -= 0.75; // we're the closest body on our side — bad place for bows
+    }
     const tile = tileAt(b, c);
     return band + (tile ? terrainAffinity(unit.unitType, tile.terrain) : 0);
   };
@@ -432,6 +444,24 @@ function aiActOnce(
     }
   }
 
+  // 敗軍止損 — a side ground below ~30% of its foe's strength stops feeding
+  // the mill: every non-commander unit makes for its own edge and quits the
+  // field (retreatUnit banks 90% of the men as survivors) instead of dying to
+  // the last where the strategic layer would long have routed. The banner
+  // itself stands (commander can't exit) — the battle is lost, the army isn't.
+  if (!unit.isCommander && !unit.isSupply) {
+    const myTotal = b.units.filter((u) => u.side === unit.side && u.troops > 0).reduce((s, u) => s + u.troops, 0);
+    const foeTotal = enemies.reduce((s, u) => s + u.troops, 0);
+    if (foeTotal > 0 && myTotal < foeTotal * 0.30) {
+      const edgeCol2 = unit.side === 'attacker' ? 0 : b.width - 1;
+      if (Math.abs(unit.coord.col - edgeCol2) <= 2) {
+        return { battle: retreatUnit(b, unit.id), acted: true, signatures: [] };
+      }
+      const away = bestStepToward(b, unit, { col: edgeCol2, row: unit.coord.row });
+      if (away) return { battle: moveUnit(b, unit.id, away), acted: true, signatures: [] };
+    }
+  }
+
   const adjEnemies = enemies.filter((e) => hexDistance(unit.coord, e.coord) === 1);
 
   // Fragile units (archers, casters) keep their distance once the AI is
@@ -489,6 +519,31 @@ function aiActOnce(
       .sort((a, c) => (c.e.isCommander ? 1 : 0) - (a.e.isCommander ? 1 : 0) || c.edge - a.edge);
     if (beatable.length > 0) {
       return { battle: challengeDuel(b, unit.id, beatable[0].e.id, officers, rng), acted: true, signatures: [] };
+    }
+  }
+
+  // 騎兵游擊 — a rider that has already struck this turn doesn't loiter in
+  // the spear hedge: leftover AP slips it OUT of contact (the spear's melee
+  // counter grinds loitering horse to bone), ready to charge home again.
+  // Only when no adjacent foe can be finished this action.
+  if (unit.unitType === 'cavalry' && unit.ap < unit.maxAp && adjEnemies.length > 0
+      && adjEnemies.some((e) => e.unitType === 'spearmen' && !isRouting(e))) {
+    const finishable = adjEnemies.some((e) => {
+      const f = forecastAttack(b, unit, e, officers);
+      return (f.dmgMin + f.dmgMax) / 2 >= e.troops;
+    });
+    if (!finishable) {
+      const spears = enemies.filter((e) => e.unitType === 'spearmen' && !isRouting(e));
+      const away = hexNeighbours(unit.coord).filter((c) =>
+        canMove(b, unit, c) && !spears.some((e) => hexDistance(c, e.coord) === 1));
+      if (away.length > 0) {
+        const best = away.reduce((a, c) => {
+          const da = Math.min(...spears.map((e) => hexDistance(a, e.coord)));
+          const dc = Math.min(...spears.map((e) => hexDistance(c, e.coord)));
+          return dc > da ? c : a;
+        });
+        return { battle: moveUnit(b, unit.id, best), acted: true, signatures: [] };
+      }
     }
   }
 
