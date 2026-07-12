@@ -8,6 +8,19 @@
   --tkm-bg-sunken:    #0a0e12;
   --tkm-bg-modal:     #141c25;
 
+  /* 戰場 HUD 棕金系 — the tactical HUD's own palette (theme-stable) */
+  --tkm-hud-gold: #d4a84a;
+  --tkm-hud-cream: #f0e0b0;
+  --tkm-hud-blue: #88b7e8;
+  --tkm-hud-green: #7ed68a;
+  --tkm-hud-mint: #9ad6a8;
+  --tkm-hud-amber: #ffd54a;
+  --tkm-hud-red: #ff7050;
+  --tkm-hud-ember: #e8a07a;
+  --tkm-hud-crimson: #b8442e;
+  --tkm-hud-dim: #8a7050;
+  --tkm-hud-tan: #a89070;
+  --tkm-hud-grey: #aab6c0;
   --tkm-border:       #2b3845;
   --tkm-border-soft:  #1e2832;
   --tkm-border-gold:  #3c4f5e;

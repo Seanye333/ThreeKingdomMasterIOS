@@ -109,10 +109,10 @@ function stratagemTargetType(id: StratagemId): 'enemy' | 'ally' | 'self' | 'aoe'
 /** N4 — Short bilingual label for the target type, shown on tactic buttons. */
 function targetTypeBadge(type: 'enemy' | 'ally' | 'self' | 'aoe', langZh: boolean): { label: string; color: string } {
   switch (type) {
-    case 'enemy': return { label: langZh ? '敵' : 'enm', color: '#b8442e' };
-    case 'ally':  return { label: langZh ? '友' : 'ally', color: '#7ed68a' };
-    case 'self':  return { label: langZh ? '己' : 'self', color: '#88b7e8' };
-    case 'aoe':   return { label: langZh ? '範' : 'aoe', color: '#d4a84a' };
+    case 'enemy': return { label: langZh ? '敵' : 'enm', color: 'var(--tkm-hud-crimson)' };
+    case 'ally':  return { label: langZh ? '友' : 'ally', color: 'var(--tkm-hud-green)' };
+    case 'self':  return { label: langZh ? '己' : 'self', color: 'var(--tkm-hud-blue)' };
+    case 'aoe':   return { label: langZh ? '範' : 'aoe', color: 'var(--tkm-hud-gold)' };
   }
 }
 
@@ -121,8 +121,8 @@ function targetTypeBadge(type: 'enemy' | 'ally' | 'self' | 'aoe', langZh: boolea
 // buttons the hover state the inline styles never had). `tone` colours the
 // ACTIVE state; idle is always parchment-on-leather.
 const HUD_TONES = {
-  gold:  { border: '#d4a84a', color: '#f0d98a', bg: 'rgba(212,168,74,0.25)' },
-  green: { border: '#7ed68a', color: '#c8e8a0', bg: 'rgba(126,214,138,0.25)' },
+  gold:  { border: 'var(--tkm-hud-gold)', color: '#f0d98a', bg: 'rgba(212,168,74,0.25)' },
+  green: { border: 'var(--tkm-hud-green)', color: '#c8e8a0', bg: 'rgba(126,214,138,0.25)' },
   red:   { border: '#ff6a50', color: '#ffb0a0', bg: 'rgba(184,68,46,0.35)' },
   blue:  { border: '#7ec0e0', color: '#9ed0ea', bg: 'rgba(126,192,224,0.15)' },
   ember: { border: '#b8584a', color: '#e0a090', bg: 'rgba(60,30,20,0.7)' },
@@ -153,7 +153,7 @@ function HudButton({ active, tone = 'gold', danger, title, ariaLabel, onClick, c
         fontSize: '0.72rem', padding: '2px 8px', cursor: 'pointer', fontFamily: 'inherit',
         background: lit ? tn.bg : hover ? 'rgba(58,45,24,0.85)' : 'rgba(40, 28, 18, 0.7)',
         border: `1px solid ${lit ? tn.border : hover ? '#8a7048' : '#5a4530'}`,
-        color: lit ? tn.color : hover ? '#d8c090' : '#a89070',
+        color: lit ? tn.color : hover ? '#d8c090' : 'var(--tkm-hud-tan)',
         filter: lit && hover ? 'brightness(1.12)' : undefined,
       }}
     >{children}</button>
@@ -168,7 +168,7 @@ function HudChip({ tone, bg, title, children }: {
   title?: string;
   children: ReactNode;
 }) {
-  const tn = tone ? HUD_TONES[tone] : { border: 'rgba(255,255,255,0.1)', color: '#a89070' };
+  const tn = tone ? HUD_TONES[tone] : { border: 'rgba(255,255,255,0.1)', color: 'var(--tkm-hud-tan)' };
   return (
     <span title={title} style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
@@ -712,10 +712,10 @@ export function WallGate3D({ coord, bannerColor, rotY = 0 }: { coord: HexCoord; 
 
 /* ─── Defense building (watchtower / beacon / etc.) ─────────────── */
 const DEFENSE_BUILDING_VISUAL: Record<DefenseBuildingId, { color: string; height: number; glyph: string }> = {
-  'watchtower':     { color: '#d4a84a', height: 1.8, glyph: '箭' },
-  'beacon':         { color: '#b8442e', height: 1.6, glyph: '烽' },
+  'watchtower':     { color: 'var(--tkm-hud-gold)', height: 1.8, glyph: '箭' },
+  'beacon':         { color: 'var(--tkm-hud-crimson)', height: 1.6, glyph: '烽' },
   'caltrops':       { color: '#7a6750', height: 0.3, glyph: '拒' },
-  'lookout':        { color: '#88b7e8', height: 1.5, glyph: '瞭' },
+  'lookout':        { color: 'var(--tkm-hud-blue)', height: 1.5, glyph: '瞭' },
   'barracks-out':   { color: '#a87858', height: 1.0, glyph: '營' },
   'granary-out':    { color: '#b8c87a', height: 1.0, glyph: '倉' },
   'iron-chains':    { color: '#5a4530', height: 0.4, glyph: '索' },
@@ -789,7 +789,7 @@ export function DefenseStructure({
           <div style={{ height: 2, background: '#1a1410', marginTop: 1, width: 36 }}>
             <div style={{
               height: '100%', width: `${Math.round(hpPct * 100)}%`,
-              background: hpPct > 0.5 ? '#7ed68a' : '#b8442e',
+              background: hpPct > 0.5 ? 'var(--tkm-hud-green)' : 'var(--tkm-hud-crimson)',
             }} />
           </div>
         </div>
@@ -2949,7 +2949,7 @@ export function BattleScene({
     for (const u of units) {
       if (u.troops <= 0 && !fallenIds.current.has(u.id)) {
         fallenIds.current.add(u.id);
-        add.push({ id: u.id, coord: u.coord, color: u.side === playerSide ? '#3a7dd9' : '#b8442e' });
+        add.push({ id: u.id, coord: u.coord, color: u.side === playerSide ? '#3a7dd9' : 'var(--tkm-hud-crimson)' });
       }
     }
     if (add.length) setFallen((f) => [...f, ...add].slice(-50));
@@ -3592,7 +3592,7 @@ export function TacticalBattleScreen3D() {
           const pd = aiMaybePreBattleDuel(battle, battle.activeSide, officers, Math.random);
           if (pd.issued) {
             if (pd.line) { setSignatureBanner({ ...pd.line, key: Date.now() }); setTimeout(() => setSignatureBanner(null), 2200); }
-            setCine({ key: ++cineCount.current, weight: 3, color: '#ffd54a' });
+            setCine({ key: ++cineCount.current, weight: 3, color: 'var(--tkm-hud-amber)' });
             start(pd.battle);
             return;
           }
@@ -3644,7 +3644,7 @@ export function TacticalBattleScreen3D() {
         }
         if (bannerToShow) {
           setSignatureBanner({ zh: bannerToShow.zh, en: bannerToShow.en, key: Date.now() });
-          setCine({ key: ++cineCount.current, weight: 3, color: '#ffd54a' });  // 名場面:全運鏡
+          setCine({ key: ++cineCount.current, weight: 3, color: 'var(--tkm-hud-amber)' });  // 名場面:全運鏡
           setTimeout(() => setSignatureBanner(null), 2400);
         }
         start(battleAfterLogs);
@@ -3658,7 +3658,7 @@ export function TacticalBattleScreen3D() {
   useEffect(() => {
     if (battle?.winner && !showResults) {
       const won = playerSide && battle.winner === playerSide;
-      setCine({ key: ++cineCount.current, weight: 3, color: won ? '#ffd54a' : '#ff5030' });
+      setCine({ key: ++cineCount.current, weight: 3, color: won ? 'var(--tkm-hud-amber)' : '#ff5030' });
       const id = setTimeout(() => setShowResults(true), 1500);
       return () => clearTimeout(id);
     }
@@ -3716,7 +3716,7 @@ export function TacticalBattleScreen3D() {
       { id: id2, from: duelUnitCoords.b, to: duelUnitCoords.a, kind: 'melee' as const, spawnedAt: now },
     ]);
     setTimeout(() => setAttackArcs((arcs) => arcs.filter((x) => x.id !== id1 && x.id !== id2)), 600);
-    setCine({ key: ++cineCount.current, weight: r.killed ? 3 : 1, color: r.killed ? '#ff5030' : '#ffd54a' });
+    setCine({ key: ++cineCount.current, weight: r.killed ? 3 : 1, color: r.killed ? '#ff5030' : 'var(--tkm-hud-amber)' });
     // Replay the clash spark a beat later, when the lunges meet in the middle.
     // 決勝 — the killing blow gets a bigger, redder burst (the freeze-frame
     // hitstop + zoom-punch already fire via the weight-3 cine above).
@@ -3878,7 +3878,7 @@ export function TacticalBattleScreen3D() {
           };
           // N7 — show a transient on-screen banner for signature tactics
           setSignatureBanner({ zh: flavor.zh, en: flavor.en, key: Date.now() });
-          setCine({ key: ++cineCount.current, weight: 3, color: '#ffd54a' });  // 名場面:全運鏡
+          setCine({ key: ++cineCount.current, weight: 3, color: 'var(--tkm-hud-amber)' });  // 名場面:全運鏡
           setTimeout(() => setSignatureBanner(null), 2400);
         }
         start(next);
@@ -3909,14 +3909,14 @@ export function TacticalBattleScreen3D() {
         padding: '0.6rem 1rem',
         background: 'rgba(20, 14, 8, 0.85)',
         borderBottom: '1px solid #5a4530',
-        color: '#f0e0b0',
+        color: 'var(--tkm-hud-cream)',
         fontFamily: 'var(--tkm-font-body)',
         display: 'flex', alignItems: 'center', gap: '0.7rem',
         flexWrap: 'wrap', rowGap: '0.4rem',
       }}>
         <strong>{t('戰術戰鬥', 'Tactical Battle')} · 3D</strong>
-        <span style={{ fontSize: '0.85rem', color: '#d4a84a' }}>
-          {t('第', 'Turn')} {battle.turn} {t('回', '')} · {myTurn ? <span style={{ color: '#7ed68a' }}>{t('我方回合', 'YOUR TURN')}</span> : <span style={{ color: '#ff7050' }}>{t('敵方回合', 'ENEMY TURN')}</span>}
+        <span style={{ fontSize: '0.85rem', color: 'var(--tkm-hud-gold)' }}>
+          {t('第', 'Turn')} {battle.turn} {t('回', '')} · {myTurn ? <span style={{ color: 'var(--tkm-hud-green)' }}>{t('我方回合', 'YOUR TURN')}</span> : <span style={{ color: 'var(--tkm-hud-red)' }}>{t('敵方回合', 'ENEMY TURN')}</span>}
         </span>
         {(() => {
           // 戰局氣勢 — momentum is +ve for the attacker; show it from the player's view.
@@ -3952,7 +3952,7 @@ export function TacticalBattleScreen3D() {
               title={ready ? t('臨陣變陣 — 全軍暫陷亂一回合,冷卻3回合', 'Re-form mid-battle — the whole army is briefly disordered; few-turn cooldown') : t('變陣冷卻中 / 非我方回合', 'Re-form on cooldown / not your turn')}
               onChange={(e) => { if (ready) start(changeFormation(battle, playerSide, e.target.value as FormationId)); }}
               style={{
-                fontSize: '0.72rem', background: 'rgba(20,14,8,0.9)', color: ready ? '#d4a84a' : '#7a6038',
+                fontSize: '0.72rem', background: 'rgba(20,14,8,0.9)', color: ready ? 'var(--tkm-hud-gold)' : '#7a6038',
                 border: '1px solid #5a4530', borderRadius: 'var(--tkm-radius-xs)', padding: '1px 4px', fontFamily: 'var(--tkm-font-body)',
                 opacity: ready ? 1 : 0.6,
               }}
@@ -4073,7 +4073,7 @@ export function TacticalBattleScreen3D() {
         {/* 戰前準備 — one card, played before your first move. */}
         {myTurn && battle.turn === 1 && playerSide && !battle.prepUsed?.[playerSide] && !prepDismissed && (
           <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
-            <span style={{ fontSize: '0.7rem', color: '#d4a84a' }}>{t('戰前部署:', 'Prep:')}</span>
+            <span style={{ fontSize: '0.7rem', color: 'var(--tkm-hud-gold)' }}>{t('戰前部署:', 'Prep:')}</span>
             {([
               { kind: 'ambush' as const, zh: '⚔ 伏兵', en: '⚔ Ambush', tip: '最強一軍潛伏 — 敵近不見,首擊帶伏擊加成、且亂敵陣腳', tipEn: 'Your strongest unit lies hidden — unseen until it strikes, the first blow lands with an ambush bonus and rattles the enemy line' },
               { kind: 'night' as const, zh: '🌙 夜襲', en: '🌙 Night raid', tip: '入夜開戰 — 弓弩射程縮短,夜霧蔽視,伏兵傷害更狠', tipEn: 'Open at night — bows lose range, night fog cuts sight, ambushes hit harder' },
@@ -4091,7 +4091,7 @@ export function TacticalBattleScreen3D() {
                   else setPrepMsg(r.reason ?? null);
                 }}
                 style={{
-                  background: 'rgba(58, 45, 24, 0.8)', border: '1px solid #d4a84a', color: '#f0d98a',
+                  background: 'rgba(58, 45, 24, 0.8)', border: '1px solid var(--tkm-hud-gold)', color: '#f0d98a',
                   fontSize: '0.7rem', padding: '2px 7px', cursor: 'pointer', fontFamily: 'inherit',
                 }}
               >{lang === 'en' ? p.en : p.zh}</button>
@@ -4117,7 +4117,7 @@ export function TacticalBattleScreen3D() {
             )}
             <button
               onClick={() => setPrepDismissed(true)}
-              style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', color: '#8a7050', fontSize: '0.7rem', padding: '2px 6px', cursor: 'pointer', fontFamily: 'inherit' }}
+              style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', color: 'var(--tkm-hud-dim)', fontSize: '0.7rem', padding: '2px 6px', cursor: 'pointer', fontFamily: 'inherit' }}
             >{t('不備', 'Skip')}</button>
             {prepMsg && <span style={{ fontSize: '0.72rem', color: '#ff9080' }}>{prepMsg}</span>}
           </span>
@@ -4127,7 +4127,7 @@ export function TacticalBattleScreen3D() {
             title={t('攻方陣形', 'Attacker formation')}
             style={{
               fontSize: '0.72rem', padding: '2px 7px',
-              background: 'rgba(60, 26, 22, 0.7)', border: '1px solid #b8442e', color: '#ff9078',
+              background: 'rgba(60, 26, 22, 0.7)', border: '1px solid var(--tkm-hud-crimson)', color: '#ff9078',
             }}>{t('攻', 'ATK')}·{(() => { const f = FORMATIONS_BY_ID[battle.attackerFormation]; return f ? pickName(f.name, lang) : battle.attackerFormation; })()}</span>
         )}
         {battle.defenderFormation && battle.defenderFormation !== 'none' && (
@@ -4135,14 +4135,14 @@ export function TacticalBattleScreen3D() {
             title={t('守方陣形', 'Defender formation')}
             style={{
               fontSize: '0.72rem', padding: '2px 7px',
-              background: 'rgba(26, 40, 60, 0.7)', border: '1px solid #3a7dd9', color: '#88b7e8',
+              background: 'rgba(26, 40, 60, 0.7)', border: '1px solid #3a7dd9', color: 'var(--tkm-hud-blue)',
             }}>{t('守', 'DEF')}·{(() => { const f = FORMATIONS_BY_ID[battle.defenderFormation]; return f ? pickName(f.name, lang) : battle.defenderFormation; })()}</span>
         )}
         <button
           onClick={onEndTurn}
           disabled={!myTurn}
           style={{
-            background: '#5a4530', color: '#f0e0b0', border: '1px solid #d4a84a',
+            background: '#5a4530', color: 'var(--tkm-hud-cream)', border: '1px solid var(--tkm-hud-gold)',
             padding: '0.3rem 0.7rem', cursor: 'pointer',
             fontFamily: 'var(--tkm-font-body)',
             opacity: !myTurn ? 0.4 : 1,
@@ -4317,16 +4317,16 @@ export function TacticalBattleScreen3D() {
             position: 'absolute', top: 16, right: 16,
             width: 280, maxWidth: 'calc(100vw - 32px)',
             background: 'rgba(20, 14, 8, 0.92)',
-            border: '1px solid #b8442e',
+            border: '1px solid var(--tkm-hud-crimson)',
             padding: '0.6rem 0.9rem',
-            color: '#f0e0b0',
+            color: 'var(--tkm-hud-cream)',
             fontFamily: 'var(--tkm-font-body)',
             boxShadow: '0 0 16px rgba(184, 68, 46, 0.4)',
           }}>
             <div style={{ fontWeight: 'bold', fontSize: '1.05rem' }}>
               {(() => { const o = officers[selectedUnit.officerId]; return o ? pickName(o.name, lang) : '?'; })()} ({UNIT_GLYPH[selectedUnit.unitType]})
             </div>
-            <div style={{ fontSize: '0.75rem', color: '#a89070' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--tkm-hud-tan)' }}>
               {t('敵', 'ENEMY')} · {t(officers[selectedUnit.officerId]?.name.zh ?? '', officers[selectedUnit.officerId]?.name.en ?? '')}
             </div>
             <div style={{ fontSize: '0.85rem', marginTop: '0.3rem' }}>
@@ -4334,7 +4334,7 @@ export function TacticalBattleScreen3D() {
               {t('行', 'AP')} {selectedUnit.ap}/{selectedUnit.maxAp} · {t('氣', 'Mor')} {selectedUnit.morale}
               {isRouting(selectedUnit) && <span style={{ color: '#e0623a', fontWeight: 'bold' }}> · {t('潰走', 'ROUTING')}</span>}
               {(selectedUnit.fatigue ?? 0) > 0 && <span style={{ color: (selectedUnit.fatigue ?? 0) >= 70 ? '#e0623a' : '#caa15a' }}> · {t('疲', 'Ftg')} {Math.round(selectedUnit.fatigue ?? 0)}</span>}
-              {selectedUnit.maxAmmo !== undefined && <span style={{ color: (selectedUnit.ammo ?? 0) <= 0 ? '#e0623a' : '#88b7e8' }}> · {t('矢', 'Amo')} {selectedUnit.ammo ?? 0}/{selectedUnit.maxAmmo}</span>}
+              {selectedUnit.maxAmmo !== undefined && <span style={{ color: (selectedUnit.ammo ?? 0) <= 0 ? '#e0623a' : 'var(--tkm-hud-blue)' }}> · {t('矢', 'Amo')} {selectedUnit.ammo ?? 0}/{selectedUnit.maxAmmo}</span>}
             </div>
           </div>
         )}
@@ -4346,9 +4346,9 @@ export function TacticalBattleScreen3D() {
             style={{
               position: 'absolute', bottom: 130, left: '50%', transform: 'translateX(-50%)',
               background: 'rgba(20, 14, 8, 0.92)',
-              border: '1px solid #d4a84a',
+              border: '1px solid var(--tkm-hud-gold)',
               padding: '0.45rem 1.2rem',
-              color: '#f0e0b0',
+              color: 'var(--tkm-hud-cream)',
               fontFamily: 'var(--tkm-font-body)',
               fontSize: '0.95rem',
               pointerEvents: 'none',
@@ -4379,7 +4379,7 @@ export function TacticalBattleScreen3D() {
               fontSize: '3.4rem',
               color: '#ffd47a',
               letterSpacing: '0.5rem',
-              textShadow: '0 0 22px #d4a84a, 0 0 44px rgba(212,168,74,0.6), 0 4px 0 #2a1f15',
+              textShadow: '0 0 22px var(--tkm-hud-gold), 0 0 44px rgba(212,168,74,0.6), 0 4px 0 #2a1f15',
               fontWeight: 700,
               filter: 'drop-shadow(0 0 10px rgba(212,168,74,0.8))',
             }}>
@@ -4438,11 +4438,11 @@ export function TacticalBattleScreen3D() {
               padding: '0.4rem 0.7rem', borderBottom: '1px solid #2a2015', position: 'sticky', top: 0,
               background: 'rgba(16, 12, 8, 0.98)',
             }}>
-              <span style={{ fontSize: '0.72rem', letterSpacing: '0.12rem', color: '#d4a84a' }}>📜 {t('戰報', 'Battle Log')}</span>
+              <span style={{ fontSize: '0.72rem', letterSpacing: '0.12rem', color: 'var(--tkm-hud-gold)' }}>📜 {t('戰報', 'Battle Log')}</span>
               <button
                 onClick={() => setShowLog(false)}
                 aria-label={t('關閉戰報', 'Close log')}
-                style={{ background: 'transparent', border: 'none', color: '#8a7050', cursor: 'pointer', fontSize: '1rem', lineHeight: 1 }}
+                style={{ background: 'transparent', border: 'none', color: 'var(--tkm-hud-dim)', cursor: 'pointer', fontSize: '1rem', lineHeight: 1 }}
               >×</button>
             </div>
             <div style={{ padding: '0.4rem 0.7rem' }}>
@@ -4481,18 +4481,18 @@ export function TacticalBattleScreen3D() {
               <div style={{
                 position: 'absolute', top: 12, right: 12, minWidth: 168,
                 background: 'rgba(20, 14, 8, 0.92)', border: `1px solid ${verdictColor}`,
-                padding: '0.5rem 0.7rem', color: '#f0e0b0', fontFamily: 'var(--tkm-font-body)',
+                padding: '0.5rem 0.7rem', color: 'var(--tkm-hud-cream)', fontFamily: 'var(--tkm-font-body)',
                 fontSize: '0.82rem', boxShadow: `0 0 14px ${verdictColor}44`,
               }}>
                 <div style={{ fontWeight: 'bold', color: verdictColor, marginBottom: '0.25rem' }}>
                   ⚔ {t('戰鬥預判', 'Forecast')}{f.willKill ? ` · ${t('可殲滅', 'LETHAL')}` : ''}
                 </div>
                 <div>{t('預估傷害', 'Damage')}: <b>{f.dmgMin.toLocaleString()}–{f.dmgMax.toLocaleString()}</b></div>
-                <div style={{ color: f.counterMax > 0 ? '#e8a07a' : '#8a9a7a' }}>
+                <div style={{ color: f.counterMax > 0 ? 'var(--tkm-hud-ember)' : '#8a9a7a' }}>
                   {t('反擊', 'Counter')}: {f.counterMax > 0 ? `${f.counterMin.toLocaleString()}–${f.counterMax.toLocaleString()}` : t('無', 'none')}
                 </div>
                 {ml && (
-                  <div style={{ color: '#9ad6a8' }}>↑ {t(`${ml.zh} ×${f.counterMult.toFixed(2)}`, `${ml.en} ×${f.counterMult.toFixed(2)}`)}</div>
+                  <div style={{ color: 'var(--tkm-hud-mint)' }}>↑ {t(`${ml.zh} ×${f.counterMult.toFixed(2)}`, `${ml.en} ×${f.counterMult.toFixed(2)}`)}</div>
                 )}
                 {counterBad && (
                   <div style={{ color: '#e88a7a' }}>↓ {t(`被${counterBad.zh}`, `vuln ${counterBad.en}`)}</div>
@@ -4501,7 +4501,7 @@ export function TacticalBattleScreen3D() {
                   <div style={{ color: '#a0b8d8' }}>🛡 {t('敵據地利', 'enemy terrain')} ×{f.defShield.toFixed(2)}</div>
                 )}
                 {f.terrainAtk !== 1 && (
-                  <div style={{ color: f.terrainAtk > 1 ? '#9ad6a8' : '#e8a07a' }}>
+                  <div style={{ color: f.terrainAtk > 1 ? 'var(--tkm-hud-mint)' : 'var(--tkm-hud-ember)' }}>
                     {f.terrainAtk > 1 ? '⤴' : '⤵'} {t('我方地形', 'my terrain')} ×{f.terrainAtk.toFixed(2)}
                   </div>
                 )}
@@ -4535,16 +4535,16 @@ export function TacticalBattleScreen3D() {
                 <span style={{ color: '#7a8893', marginLeft: 6, fontFamily: 'ui-monospace, monospace', fontSize: '0.68rem' }}>({hovered.col},{hovered.row})</span>
               </div>
               {shield < 1 && (
-                <div style={{ color: '#9ad6a8' }}>🛡 {t(`守此格受擊 ×${shield.toFixed(2)}`, `defence ×${shield.toFixed(2)}`)}</div>
+                <div style={{ color: 'var(--tkm-hud-mint)' }}>🛡 {t(`守此格受擊 ×${shield.toFixed(2)}`, `defence ×${shield.toFixed(2)}`)}</div>
               )}
               {cost < 99 && cost > 1 && (
                 <div style={{ color: '#c0a878' }}>👣 {t(`移入耗 ${cost} AP`, `${cost} AP to enter`)}</div>
               )}
               {cost >= 99 && (
-                <div style={{ color: '#e8a07a' }}>✕ {t('不可通行', 'impassable')}</div>
+                <div style={{ color: 'var(--tkm-hud-ember)' }}>✕ {t('不可通行', 'impassable')}</div>
               )}
               {mine && atkMod !== 1 && (
-                <div style={{ color: atkMod > 1 ? '#9ad6a8' : '#e8a07a' }}>
+                <div style={{ color: atkMod > 1 ? 'var(--tkm-hud-mint)' : 'var(--tkm-hud-ember)' }}>
                   {atkMod > 1 ? '⤴' : '⤵'} {t(`我軍在此出擊 ×${atkMod.toFixed(2)}`, `attacking from here ×${atkMod.toFixed(2)}`)}
                 </div>
               )}
@@ -4558,9 +4558,9 @@ export function TacticalBattleScreen3D() {
         {/* Action mode hint */}
         {actionMode.kind !== 'none' && myTurn && (() => {
           const config = {
-            move: { color: '#7ed68a', text: t('點擊綠色格子移動', 'Click a green tile to move') },
-            attack: { color: '#ff7050', text: t('點擊紅色敵軍攻擊', 'Click a red enemy to attack') },
-            duel: { color: '#d4a84a', text: t('點擊相鄰敵將一騎打', 'Click an adjacent enemy to duel') },
+            move: { color: 'var(--tkm-hud-green)', text: t('點擊綠色格子移動', 'Click a green tile to move') },
+            attack: { color: 'var(--tkm-hud-red)', text: t('點擊紅色敵軍攻擊', 'Click a red enemy to attack') },
+            duel: { color: 'var(--tkm-hud-gold)', text: t('點擊相鄰敵將一騎打', 'Click an adjacent enemy to duel') },
             stratagem: { color: '#c19a3b', text: t('點擊目標施放計略', 'Click a target to cast stratagem') },
           }[actionMode.kind];
           // 戰法情境預覽 — while a stratagem is armed, read out how the current
@@ -4585,7 +4585,7 @@ export function TacticalBattleScreen3D() {
             }}>
               {config.text}
               {sitNote && (
-                <span style={{ color: sitUp ? '#9ad6a8' : '#e8a07a', marginLeft: '0.5rem' }}>
+                <span style={{ color: sitUp ? 'var(--tkm-hud-mint)' : 'var(--tkm-hud-ember)', marginLeft: '0.5rem' }}>
                   · {sitUp ? '⊕' : '⊖'} {t(sitNote.zh, sitNote.en)}
                 </span>
               )}
@@ -4622,15 +4622,15 @@ export function TacticalBattleScreen3D() {
             zIndex: 1400, pointerEvents: 'none', textAlign: 'center',
             fontFamily: 'var(--tkm-font-body)', whiteSpace: 'nowrap',
           }}>
-            <div style={{ fontSize: '0.9rem', color: '#d4a84a', letterSpacing: '0.5rem', marginBottom: '0.4rem' }}>
+            <div style={{ fontSize: '0.9rem', color: 'var(--tkm-hud-gold)', letterSpacing: '0.5rem', marginBottom: '0.4rem' }}>
               ⚔ {t('兩軍對壘', 'THE ARMIES MEET')} ⚔
             </div>
-            <div style={{ fontSize: 'clamp(1.4rem, 5vw, 2.6rem)', fontWeight: 700, color: '#f0e0b0', textShadow: '0 2px 12px #000, 0 0 20px rgba(0,0,0,0.6)' }}>
+            <div style={{ fontSize: 'clamp(1.4rem, 5vw, 2.6rem)', fontWeight: 700, color: 'var(--tkm-hud-cream)', textShadow: '0 2px 12px #000, 0 0 20px rgba(0,0,0,0.6)' }}>
               <span style={{ color: '#7ed6e0' }}>{cmdr(me)}</span>
-              <span style={{ color: '#e8a07a', margin: '0 1rem' }}>⚔</span>
+              <span style={{ color: 'var(--tkm-hud-ember)', margin: '0 1rem' }}>⚔</span>
               <span style={{ color: '#ff8a6a' }}>{cmdr(foe)}</span>
             </div>
-            <div style={{ fontSize: '0.95rem', color: '#a89070', marginTop: '0.3rem', fontFamily: 'ui-monospace, monospace' }}>
+            <div style={{ fontSize: '0.95rem', color: 'var(--tkm-hud-tan)', marginTop: '0.3rem', fontFamily: 'ui-monospace, monospace' }}>
               {tally(me).toLocaleString()} {t('對', 'vs')} {tally(foe).toLocaleString()}
             </div>
             <div style={{ fontSize: '0.9rem', color: winColor, marginTop: '0.35rem', letterSpacing: '0.07rem' }}>
@@ -4716,7 +4716,7 @@ export function TacticalBattleScreen3D() {
               >{lang === 'en' ? confirmDialog.confirmLabel.en : confirmDialog.confirmLabel.zh}</button>
               <button
                 onClick={() => setConfirmDialog(null)}
-                style={{ flex: 1, padding: '0.55rem', background: '#1e2832', border: '1px solid #364654', color: '#aab6c0', cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.08rem' }}
+                style={{ flex: 1, padding: '0.55rem', background: '#1e2832', border: '1px solid #364654', color: 'var(--tkm-hud-grey)', cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.08rem' }}
               >{t('取消', 'Cancel')}</button>
             </div>
           </div>
@@ -4738,7 +4738,7 @@ export function TacticalBattleScreen3D() {
             <div style={{ fontSize: '1.5rem', color: '#f2dd9a', marginBottom: '0.3rem' }}>
               {t(`${challenge.foe.name.zh} 立馬陣前,大喝挑戰!`, `${challenge.foe.name.en} rides forth and calls you out!`)}
             </div>
-            <div style={{ fontSize: '0.85rem', color: '#aab6c0', marginBottom: '1.2rem' }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--tkm-hud-grey)', marginBottom: '1.2rem' }}>
               {t(`「${challenge.me.name.zh},可敢與我一戰?」`, `"${challenge.me.name.en} — do you dare face me?"`)}
             </div>
             <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'center' }}>
@@ -4748,7 +4748,7 @@ export function TacticalBattleScreen3D() {
               >{t('應戰!', 'Accept!')}</button>
               <button
                 onClick={() => setChallenge(null)}
-                style={{ flex: 1, padding: '0.6rem', background: '#1e2832', border: '1px solid #364654', color: '#aab6c0', cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.1rem' }}
+                style={{ flex: 1, padding: '0.6rem', background: '#1e2832', border: '1px solid #364654', color: 'var(--tkm-hud-grey)', cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.1rem' }}
               >{t('避戰', 'Refuse')}</button>
             </div>
           </div>
@@ -4771,7 +4771,7 @@ export function TacticalBattleScreen3D() {
             <div style={{ fontSize: '1.4rem', color: '#f2dd9a', marginBottom: '0.3rem' }}>
               {t(`${captureChoice.name.zh} 已敗於你劍下!`, `${captureChoice.name.en} falls before you!`)}
             </div>
-            <div style={{ fontSize: '0.85rem', color: '#aab6c0', marginBottom: '1.2rem' }}>{t('斬之以絕後患,還是生擒以圖招攬?', 'Cut them down — or take them alive to win over?')}</div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--tkm-hud-grey)', marginBottom: '1.2rem' }}>{t('斬之以絕後患,還是生擒以圖招攬?', 'Cut them down — or take them alive to win over?')}</div>
             <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'center' }}>
               <button
                 onClick={() => { start({ ...battle, forcedKills: [...(battle.forcedKills ?? []), captureChoice.id] }); setCaptureChoice(null); }}
@@ -4858,7 +4858,7 @@ export function TacticalBattleScreen3D() {
               setSignatureBanner(preBattle
                 ? { zh: `致師奏功 — ${wn.name.zh} 陣前折服敵將!`, en: `${wn.name.en} wins the pre-battle challenge!`, key: Date.now() }
                 : { zh: `一騎討 — ${wn.name.zh} 力克強敵!`, en: `${wn.name.en} wins the duel!`, key: Date.now() });
-              setCine({ key: ++cineCount.current, weight: 3, color: '#ffd54a' });
+              setCine({ key: ++cineCount.current, weight: 3, color: 'var(--tkm-hud-amber)' });
               setTimeout(() => setSignatureBanner(null), 2200);
             } else {
               // 兩敗俱傷 — a draw mauls both: each loses ~10% of its troops.
@@ -4974,7 +4974,7 @@ function UnitPanel3D({
     padding: '0.4rem 0.6rem', marginBottom: '0.25rem',
     background: 'rgba(40, 28, 18, 0.7)',
     border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
-    color: '#f0e0b0',
+    color: 'var(--tkm-hud-cream)',
     fontFamily: 'var(--tkm-font-body)',
     fontSize: '0.78rem',
     cursor: 'pointer',
@@ -4982,8 +4982,8 @@ function UnitPanel3D({
   };
   const btnActive: React.CSSProperties = {
     background: 'rgba(212, 168, 74, 0.25)',
-    borderColor: '#d4a84a',
-    color: '#f0e0b0',
+    borderColor: 'var(--tkm-hud-gold)',
+    color: 'var(--tkm-hud-cream)',
   };
 
   return (
@@ -4991,14 +4991,14 @@ function UnitPanel3D({
       position: 'absolute', top: 16, right: 16, bottom: 16,
       width: 280,
       background: 'rgba(20, 14, 8, 0.94)',
-      border: '1px solid #d4a84a',
+      border: '1px solid var(--tkm-hud-gold)',
       padding: '0.7rem 0.8rem',
-      color: '#f0e0b0',
+      color: 'var(--tkm-hud-cream)',
       fontFamily: 'var(--tkm-font-body)',
       boxShadow: '0 0 16px rgba(212, 168, 74, 0.4)',
       overflowY: 'auto',
     }}>
-      <div style={{ fontSize: '0.7rem', color: '#8a7050', letterSpacing: '0.05rem' }}>{t('已選', 'SELECTED')}</div>
+      <div style={{ fontSize: '0.7rem', color: 'var(--tkm-hud-dim)', letterSpacing: '0.05rem' }}>{t('已選', 'SELECTED')}</div>
       {/* 武將立繪(風格化頭像)— 姓字印 + 角色徽,無美術資源時的代位畫像。 */}
       {(() => {
         const st = officer?.stats;
@@ -5029,7 +5029,7 @@ function UnitPanel3D({
             </div>
             <div>
               <div style={{ fontWeight: 'bold', fontSize: '1.15rem' }}>{officer ? pickName(officer.name, lang) : '?'}</div>
-              {lang !== 'en' && <div style={{ fontSize: '0.7rem', color: '#a89070' }}>{officer?.name.en ?? ''}</div>}
+              {lang !== 'en' && <div style={{ fontSize: '0.7rem', color: 'var(--tkm-hud-tan)' }}>{officer?.name.en ?? ''}</div>}
               {st && (
                 <div style={{ fontSize: '0.64rem', color: '#9a8a6a', marginTop: 2, fontFamily: 'ui-monospace, monospace' }}>
                   武{st.war} 智{st.intelligence} 統{st.leadership}
@@ -5040,7 +5040,7 @@ function UnitPanel3D({
         );
       })()}
       {officer && (
-        <div style={{ fontSize: '0.66rem', color: '#8a7050', marginTop: 4, letterSpacing: '0.08rem' }}>
+        <div style={{ fontSize: '0.66rem', color: 'var(--tkm-hud-dim)', marginTop: 4, letterSpacing: '0.08rem' }}>
           {t('統', 'LED')} {officer.stats.leadership} · {t('武', 'WAR')} {officer.stats.war} · {t('智', 'INT')} {officer.stats.intelligence}
         </div>
       )}
@@ -5049,8 +5049,8 @@ function UnitPanel3D({
         fontSize: '0.72rem', marginTop: '0.5rem',
       }}>
         <span title={t('兵力', 'Troops')}>{t('兵', 'HP')} <strong>{unit.troops.toLocaleString()}</strong>/{unit.maxTroops.toLocaleString()}</span>
-        <span title={t('行動點', 'Action points')}>{t('行', 'AP')} <strong style={{ color: unit.ap === 0 ? '#b8442e' : '#7ed68a' }}>{unit.ap}</strong>/{unit.maxAp}</span>
-        <span>{t('士氣', 'Morale')} <strong style={{ color: isRouting(unit) ? '#e0623a' : unit.morale < 40 ? '#caa15a' : unit.morale >= 80 ? '#7ed68a' : '#cdbb95' }}>{unit.morale}</strong>
+        <span title={t('行動點', 'Action points')}>{t('行', 'AP')} <strong style={{ color: unit.ap === 0 ? 'var(--tkm-hud-crimson)' : 'var(--tkm-hud-green)' }}>{unit.ap}</strong>/{unit.maxAp}</span>
+        <span>{t('士氣', 'Morale')} <strong style={{ color: isRouting(unit) ? '#e0623a' : unit.morale < 40 ? '#caa15a' : unit.morale >= 80 ? 'var(--tkm-hud-green)' : '#cdbb95' }}>{unit.morale}</strong>
           {isRouting(unit) ? ` ${t('潰走', 'ROUT')}` : unit.morale < 40 ? ` ${t('動搖', 'shaken')}` : unit.morale >= 80 ? ` ${t('高昂', 'high')}` : ''}</span>
         <span>{lang === 'en' ? UNIT_TYPE_LABEL[unit.unitType].en : UNIT_TYPE_LABEL[unit.unitType].zh}</span>
         {(unit.charge?.dist ?? 0) >= 2 && (
@@ -5060,7 +5060,7 @@ function UnitPanel3D({
           <span>{t('疲乏', 'Fatigue')} <strong style={{ color: (unit.fatigue ?? 0) >= 70 ? '#e0623a' : '#caa15a' }}>{Math.round(unit.fatigue ?? 0)}</strong>{(unit.fatigue ?? 0) >= 70 ? ` ⚠` : ''}</span>
         )}
         {unit.maxAmmo !== undefined && (
-          <span>{t('弓矢', 'Arrows')} <strong style={{ color: (unit.ammo ?? 0) <= 0 ? '#e0623a' : '#88b7e8' }}>{unit.ammo ?? 0}</strong>/{unit.maxAmmo}</span>
+          <span>{t('弓矢', 'Arrows')} <strong style={{ color: (unit.ammo ?? 0) <= 0 ? '#e0623a' : 'var(--tkm-hud-blue)' }}>{unit.ammo ?? 0}</strong>/{unit.maxAmmo}</span>
         )}
       </div>
       {unit.effects.length > 0 && (
@@ -5091,17 +5091,17 @@ function UnitPanel3D({
           style={{ ...btnBase, ...(actionMode.kind === 'move' ? btnActive : {}), opacity: apDisabled ? 0.4 : 1 }}
           disabled={apDisabled}
           onClick={() => setActionMode(actionMode.kind === 'move' ? { kind: 'none' } : { kind: 'move' })}
-        >{t('移動', 'Move')} <span style={{ float: 'right', color: '#8a7050' }}>1 AP/{t('格', 'hex')}</span></button>
+        >{t('移動', 'Move')} <span style={{ float: 'right', color: 'var(--tkm-hud-dim)' }}>1 AP/{t('格', 'hex')}</span></button>
         <button
           style={{ ...btnBase, ...(actionMode.kind === 'attack' ? btnActive : {}), opacity: apDisabled ? 0.4 : 1 }}
           disabled={apDisabled}
           onClick={() => setActionMode(actionMode.kind === 'attack' ? { kind: 'none' } : { kind: 'attack' })}
-        >{t('攻擊', 'Attack')} <span style={{ float: 'right', color: '#8a7050' }}>1 AP</span></button>
+        >{t('攻擊', 'Attack')} <span style={{ float: 'right', color: 'var(--tkm-hud-dim)' }}>1 AP</span></button>
         <button
           style={{ ...btnBase, ...(actionMode.kind === 'duel' ? btnActive : {}), opacity: apDisabled ? 0.4 : 1 }}
           disabled={apDisabled}
           onClick={() => setActionMode(actionMode.kind === 'duel' ? { kind: 'none' } : { kind: 'duel' })}
-        >{t('一騎打', 'Duel')} <span style={{ float: 'right', color: '#d4a84a' }}>{t('生死', 'kill')}</span></button>
+        >{t('一騎打', 'Duel')} <span style={{ float: 'right', color: 'var(--tkm-hud-gold)' }}>{t('生死', 'kill')}</span></button>
         {/* 陣中築壘 — entrench the current hex: shield ×0.85, slows entry,
             breaks cavalry charges. Open firm ground only; burns if fired. */}
         {canFortify(battle, unit) && (
@@ -5110,13 +5110,13 @@ function UnitPanel3D({
             disabled={apDisabled}
             title={t('就地築壘:本格化為工事 — 受擊×0.85、敵入耗步、破騎兵衝鋒。木柵怕火。', 'Entrench: this hex becomes fieldworks — damage ×0.85, slows entry, breaks cavalry charges. Burns.')}
             onClick={() => { playSfx('click'); startBattle(fortifyTile(battle, unit.id)); setActionMode({ kind: 'none' }); }}
-          >⛏ {t('築壘', 'Entrench')} <span style={{ float: 'right', color: '#8a7050' }}>{FIELDWORKS_AP_COST} AP</span></button>
+          >⛏ {t('築壘', 'Entrench')} <span style={{ float: 'right', color: 'var(--tkm-hud-dim)' }}>{FIELDWORKS_AP_COST} AP</span></button>
         )}
       </div>
 
       {availableStratagems.length > 0 && (
         <div style={{ marginTop: '0.6rem', borderTop: '1px dotted #3a2818', paddingTop: '0.4rem' }}>
-          <div style={{ fontSize: '0.7rem', color: '#d4a84a', letterSpacing: '0.05rem', marginBottom: '0.3rem' }}>{t('計略', 'STRATAGEMS')}</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--tkm-hud-gold)', letterSpacing: '0.05rem', marginBottom: '0.3rem' }}>{t('計略', 'STRATAGEMS')}</div>
           {availableStratagems.map((s) => {
             const cdKey = `${unit.id}-${s.id}`;
             const cd = (battle.stratagemCooldowns[cdKey] ?? 0) - battle.turn;
@@ -5135,17 +5135,17 @@ function UnitPanel3D({
                 style={{
                   ...btnBase,
                   ...(active ? btnActive : {}),
-                  ...(isSig ? { borderColor: '#d4a84a' } : {}),
+                  ...(isSig ? { borderColor: 'var(--tkm-hud-gold)' } : {}),
                   opacity: apDisabled || onCd ? 0.4 : 1,
                 }}
                 disabled={apDisabled || onCd}
                 title={`${desc(s)}\n\n${t('目標', 'Target')}: ${targetHint}\n${t('範圍', 'Range')}: ${s.range}${onCd ? `\n${t('冷卻', 'CD')}: ${cd}t` : ''}`}
                 onClick={() => setActionMode(active ? { kind: 'none' } : { kind: 'stratagem', id: s.id })}
               >
-                {isSig && <span style={{ color: '#d4a84a' }}>★ </span>}
+                {isSig && <span style={{ color: 'var(--tkm-hud-gold)' }}>★ </span>}
                 <span style={{ color: badge.color, fontSize: '0.7rem', marginRight: 3 }}>[{badge.label}]</span>
                 {pickName(s.name, lang)}
-                <span style={{ float: 'right', color: '#8a7050', fontSize: '0.66rem' }}>
+                <span style={{ float: 'right', color: 'var(--tkm-hud-dim)', fontSize: '0.66rem' }}>
                   {onCd ? `CD ${cd}t` : `r${s.range}`}
                 </span>
               </button>
@@ -5156,7 +5156,7 @@ function UnitPanel3D({
 
       {personalTactics.length > 0 && (
         <div style={{ marginTop: '0.6rem', borderTop: '1px dotted #3a2818', paddingTop: '0.4rem' }}>
-          <div style={{ fontSize: '0.7rem', color: '#d4a84a', letterSpacing: '0.05rem', marginBottom: '0.3rem' }}>
+          <div style={{ fontSize: '0.7rem', color: 'var(--tkm-hud-gold)', letterSpacing: '0.05rem', marginBottom: '0.3rem' }}>
             ★ {t('個人戰法', 'PERSONAL')} <span style={{ color: '#6a5238' }}>({personalTactics.length})</span>
           </div>
           <div style={{ maxHeight: 232, overflowY: 'auto', paddingRight: 2 }}>
@@ -5181,18 +5181,18 @@ function UnitPanel3D({
                 style={{
                   ...btnBase,
                   ...(active ? btnActive : {}),
-                  ...(pt.isSignature ? { borderColor: '#d4a84a' } : { borderColor: '#5a4530' }),
+                  ...(pt.isSignature ? { borderColor: 'var(--tkm-hud-gold)' } : { borderColor: '#5a4530' }),
                   opacity: apDisabled || onCd ? 0.4 : 1,
                 }}
                 disabled={apDisabled || onCd}
                 title={`${pt.description}\n\n${t('目標', 'Target')}: ${targetHint}\n${t('範圍', 'Range')}: ${pt.range}${sit.note ? `\n${t('情境', 'Situation')}: ${t(sit.note.zh, sit.note.en)}` : ''}${onCd ? `\n${t('冷卻', 'CD')}: ${cd}t` : ''}`}
                 onClick={() => setActionMode(active ? { kind: 'none' } : { kind: 'stratagem', id: pt.underlying, tacticId: pt.tacticId })}
               >
-                {pt.isSignature && <span style={{ color: '#d4a84a' }}>★ </span>}
+                {pt.isSignature && <span style={{ color: 'var(--tkm-hud-gold)' }}>★ </span>}
                 {sitMark && <span style={{ color: sitColor, marginRight: 2 }}>{sitMark}</span>}
                 <span style={{ color: badge.color, fontSize: '0.7rem', marginRight: 3 }}>[{badge.label}]</span>
                 {pt.nameZh}
-                <span style={{ float: 'right', color: '#8a7050', fontSize: '0.66rem' }}>
+                <span style={{ float: 'right', color: 'var(--tkm-hud-dim)', fontSize: '0.66rem' }}>
                   {onCd ? `CD ${cd}t` : `r${pt.range}`}
                 </span>
               </button>
