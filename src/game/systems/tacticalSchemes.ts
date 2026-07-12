@@ -711,7 +711,7 @@ export function applyStratagem(
       // charge home; forest/mountain bog it down (戰法情境).
       const chgSit = battleStratagemSituation(b, unit.coord, targetCoord, stratagem);
       const chgTraitMul = off ? stratagemDamageMul(off, stratagem) : 1;
-      const damage = shockDamage(b, unit, target, officers, 1.5 * chgSit.mult * chgTraitMul);
+      const { dmg: damage, braced: chgBraced } = shockDamage(b, unit, target, officers, 1.5 * chgSit.mult * chgTraitMul);
       const updated: TacticalBattle = {
         ...b,
         units: b.units.map((u) => {
@@ -720,6 +720,15 @@ export function applyStratagem(
           if (u.id === unit.id) return { ...u, ap: 0 };
           return u;
         }),
+        // 拒馬折戟 — the wall held: say so, the moment reads better than numbers.
+        log: chgBraced
+          ? [...(b.log ?? []), {
+              turn: b.turn,
+              text: `槍陣拒馬,${off?.name.zh ?? '騎軍'}衝勢折戟!`,
+              textEn: `The spear-wall holds — ${off?.name.en ?? 'the charge'} breaks on the pikes!`,
+              kind: 'event' as const,
+            }]
+          : b.log,
       };
       return finalize(updated, unitId, stratagem, 2);
     }
@@ -884,7 +893,7 @@ export function applyStratagem(
       const landing = neighbours.find(
         (c) => tileAt(b, c) && !unitAt(b, c),
       );
-      const damage = shockDamage(b, unit, target, officers, 1.75);
+      const { dmg: damage } = shockDamage(b, unit, target, officers, 1.75);
       const next: TacticalBattle = {
         ...b,
         units: b.units.map((u) => {
@@ -931,7 +940,7 @@ export function applyStratagem(
         units: b.units.map((u) => {
           const enemy = adjEnemies.find((e) => e.id === u.id);
           if (enemy) {
-            const dmg = shockDamage(b, unit, u, officers, 0.6);
+            const { dmg } = shockDamage(b, unit, u, officers, 0.6);
             popups.push({
               id: `dmg-${Date.now()}-veil-${u.id}`,
               coord: u.coord,
@@ -1144,7 +1153,7 @@ function shockDamage(
   target: TacticalUnit,
   officers: Record<EntityId, Officer>,
   mult: number,
-): number {
+): { dmg: number; braced: boolean } {
   const off = officers[unit.officerId];
   const To = officers[target.officerId];
   const aWar = off?.stats.war ?? 50;
@@ -1158,11 +1167,13 @@ function shockDamage(
   if (target.effects.some((e) => e.kind === 'defending')) dmg *= 0.5;
   dmg *= shieldWallMul(b, target); // 盾牆 — linked defending infantry
   if (tileAt(b, target.coord)?.terrain === 'fieldworks') dmg *= 0.6;
+  let braced = false;
   if (target.unitType === 'spearmen' && !isRouting(target) && typeof target.facing === 'number'
       && dirGap(hexDirection(target.coord, unit.coord), target.facing) <= 1) {
     dmg *= 0.5;
+    braced = true;
   }
-  return Math.min(Math.floor(dmg), Math.floor(target.troops * 0.7));
+  return { dmg: Math.min(Math.floor(dmg), Math.floor(target.troops * 0.7)), braced };
 }
 
 function finalize(

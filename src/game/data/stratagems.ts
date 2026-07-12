@@ -35,10 +35,10 @@ export const STRATAGEMS: Stratagem[] = [
   },
   {
     id: 'defend',
-    name: { en: 'Defend', zh: '防御' },
+    name: { en: 'Defend', zh: '立防' },
     description:
-      'Brace for impact. Incoming damage halved until your next turn.',
-    descriptionZh: "嚴陣以待，至下回合前所受傷害減半。",
+      'Brace for impact: incoming damage halved (charges & shock included) through the ENEMY turn; re-forms disordered ranks. Defending infantry shoulder-to-shoulder lock a shield wall (extra −15%).',
+    descriptionZh: "嚴陣以待:所受傷害減半(含衝鋒突貫),護整個敵方回合;並就地整隊(清除陷亂)。相鄰兩支立防步兵互鎖盾牆,再減 15%。",
     minIntelligence: 0,
     range: 0,
     cooldown: 0,

@@ -271,6 +271,8 @@ export function TitleScreen() {
   // 進階選項 — the ~30-control setup wall folds behind one disclosure so
   // Start is never buried below it.
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  // 進階分頁 — 8 個設定區塊按主題收成 4 頁(對手/經濟勝利/模式生死/世界外交)。
+  const [advTab, setAdvTab] = useState<'rival' | 'economy' | 'modes' | 'world'>('rival');
 
   return (
     <div className={styles.root} style={{ isolation: 'isolate' }}>
@@ -830,7 +832,19 @@ export function TitleScreen() {
               {advancedOpen ? '▾' : '▸'} {t('進階選項 — AI強度 · 國力 · 經濟 · 勝利 · 模式 · 生死 · 世界 · 外交', 'Advanced — AI · economy · victory · modes · rules · diplomacy')}
             </button>
             {advancedOpen && (<>
+            {/* 分頁 — 8 個區塊按主題收成 4 頁,一屏內看得完(設定牆瘦身)。 */}
+            <div style={{ display: 'flex', gap: 4, margin: '0.5rem 0 0.3rem', flexWrap: 'wrap' }}>
+              {([
+                ['rival', t('對手', 'Rival')],
+                ['economy', t('經濟·勝利', 'Economy·Victory')],
+                ['modes', t('模式·生死', 'Modes·Rules')],
+                ['world', t('世界·外交', 'World·Diplomacy')],
+              ] as const).map(([k, label]) => (
+                <button key={k} type="button" onClick={() => setAdvTab(k)} style={pillStyle(advTab === k)}>{label}</button>
+              ))}
+            </div>
 
+            {advTab === 'rival' && (<>
             {/* ── AI 強度 ── independent of difficulty (RoTK 思考 / Total War 戰役難度) */}
             <OptHeader>{t('AI 強度', 'AI strength')}</OptHeader>
             <div style={optRowStyle}>
@@ -901,6 +915,9 @@ export function TitleScreen() {
               </select>
             </div>
 
+            </>)}
+
+            {advTab === 'economy' && (<>
             {/* ── 經濟 ── default tax preset + starting inflation headwind */}
             <OptHeader>{t('經濟', 'Economy')}</OptHeader>
             <div style={optRowStyle}>
@@ -949,6 +966,9 @@ export function TitleScreen() {
               </select>
             </div>
 
+            </>)}
+
+            {advTab === 'modes' && (<>
             {/* ── 遊戲模式 ── */}
             <OptHeader>{t('遊戲模式', 'Game modes')}</OptHeader>
             <label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--tkm-text-muted)', cursor: 'pointer' }}>
@@ -1013,6 +1033,9 @@ export function TitleScreen() {
               {t('起死回生（已故武將或逐年復活，含開局前去世者）', 'Revive the dead (fallen officers may return over the years)')}
             </label>
 
+            </>)}
+
+            {advTab === 'world' && (<>
             {/* ── 世界規則 ── map/officer rules surfaced here (also in 設定). */}
             <OptHeader>{t('世界規則', 'World rules')}</OptHeader>
             <div style={optRowStyle}>
@@ -1176,6 +1199,7 @@ export function TitleScreen() {
                 </div>
               </div>
             )}
+            </>)}
 
             </>)}
 

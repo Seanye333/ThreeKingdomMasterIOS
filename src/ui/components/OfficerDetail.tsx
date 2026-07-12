@@ -205,6 +205,8 @@ export function OfficerDetail({
   // 星級 — feedback line for the star-up button (成功/緣由 both land here).
   const [starMsg, setStarMsg] = useState<string | null>(null);
   const investStar = useGameStore((s) => s.investStar);
+  // 退訂培訓的二段確認(取代 window.confirm)。
+  const [confirmCancelTraining, setConfirmCancelTraining] = useState(false);
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
@@ -1069,17 +1071,20 @@ export function OfficerDetail({
               })}
               {activeTraining && (() => {
                 const p = POLICY_DEFS[activeTraining.policyId];
+                // 二段確認 — first tap arms the button (turns red, shows the
+                // refund), second tap within 3s cancels. Replaces the jarring
+                // OS window.confirm (ugly native sheet on iOS).
+                const refund = Math.floor(activeTraining.goldSpent / 2);
                 const handleCancel = (e: React.MouseEvent) => {
                   e.stopPropagation();
                   if (!isMine) return;
-                  const refund = Math.floor(activeTraining.goldSpent / 2);
-                  const ok = window.confirm(
-                    t(
-                      `取消「${p?.zh ?? activeTraining.policyId}」培訓?\n退還 ${refund} 金 (原費 ${activeTraining.goldSpent} 金的一半)。`,
-                      `Cancel training of ${p?.en ?? activeTraining.policyId}?\nRefund ${refund} gold (half of ${activeTraining.goldSpent} spent).`,
-                    ),
-                  );
-                  if (ok) cancelTrainingFn(officer.id);
+                  if (!confirmCancelTraining) {
+                    setConfirmCancelTraining(true);
+                    window.setTimeout(() => setConfirmCancelTraining(false), 3000);
+                    return;
+                  }
+                  setConfirmCancelTraining(false);
+                  cancelTrainingFn(officer.id);
                 };
                 const trainCity = activeTraining ? storeCities[activeTraining.cityId] : null;
                 const mentor = activeTraining.mentorOfficerId
@@ -1136,19 +1141,22 @@ export function OfficerDetail({
                       <button
                         type="button"
                         onClick={handleCancel}
-                        title={t('取消培訓 (退還一半金錢)', 'Cancel training (50% refund)')}
+                        title={confirmCancelTraining
+                          ? t(`再點一次確認 — 退還 ${refund} 金`, `Tap again to confirm — refund ${refund} gold`)
+                          : t('取消培訓 (退還一半金錢)', 'Cancel training (50% refund)')}
                         style={{
-                          background: 'transparent',
-                          border: 'none',
-                          color: '#88b7e8',
+                          background: confirmCancelTraining ? 'rgba(184,68,46,0.25)' : 'transparent',
+                          border: confirmCancelTraining ? '1px solid #b8442e' : 'none',
+                          borderRadius: 'var(--tkm-radius-xs)',
+                          color: confirmCancelTraining ? '#e0907a' : '#88b7e8',
                           cursor: 'pointer',
-                          padding: '0 0.15rem',
-                          fontSize: '0.95rem',
-                          lineHeight: 1,
+                          padding: '0 0.3rem',
+                          fontSize: confirmCancelTraining ? '0.72rem' : '0.95rem',
+                          lineHeight: 1.4,
                           fontFamily: 'inherit',
                         }}
                       >
-                        ×
+                        {confirmCancelTraining ? t(`退訂 +${refund}金?`, `Cancel +${refund}g?`) : '×'}
                       </button>
                     )}
                   </span>
