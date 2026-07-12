@@ -26,6 +26,7 @@ import { honorificEffects, honorificById } from '../data/honorifics';
 import { gradeAuraPowerMul, gradeAuraMorale, itemMasteryMul, enemyMoraleShock, holdsTheLine } from './gradeCombat';
 import { growthPowerMul, grantXp } from './growth';
 import { skillEffectMul } from './skillMastery';
+import { setBondPowerMul } from './setBonds';
 import { deriveWeaponType, type WeaponType } from '../data/weaponTypes';
 import { weaponMatchupMul, weaponMasterySkill, pickAiFormation, formationCounterMul } from './tactical';
 import { arrivalFatigueMorale, fatigueMoraleMalus, armyMoraleOpening } from './marchPace';
@@ -794,6 +795,10 @@ export function resolveBattle(
   // 威名 — a side led by famous names hits harder.
   const aPrestigeMul = prestigeCombatMultiplier(attackerPool);
   const dPrestigeMul = prestigeCombatMultiplier(defenderPool);
+  // 名將成套 — a famous roster fielded together fights as the legend demands
+  // (五虎同陣 +力); sworn enemies pressed into one line grate (−).
+  const aSetBondMul = setBondPowerMul(attackerPool).mul;
+  const dSetBondMul = setBondPowerMul(defenderPool).mul;
   // 名號各司其職 — situational honorific edge by battle type (水戰/攻城/守城/野戰).
   const aThemeMul = honorificThemeMul(attackerPool, { water, siege: isSiegeBattle, defending: false });
   const dThemeMul = honorificThemeMul(defenderPool, { water, siege: isSiegeBattle, defending: true });
@@ -829,7 +834,7 @@ export function resolveBattle(
   const aPower =
     aBlended * Math.sqrt(attacker.troops) * aSkillEffects.powerMultiplier * aElitePower *
     (stratEffect.attackerPowerMul ?? 1) * aPolicy.attackMul * aTraitMods.attackMul * aComboMul *
-    aRelBonus.powerMul * rivalMul * aTitlePowerMul * aCasusMul * aNavalMul * aGuardMul * aPrestigeMul * aThemeMul * aGradeMul * aSetMul * aWeaponMul * aFormMul;
+    aRelBonus.powerMul * rivalMul * aTitlePowerMul * aCasusMul * aNavalMul * aGuardMul * aPrestigeMul * aSetBondMul * aThemeMul * aGradeMul * aSetMul * aWeaponMul * aFormMul;
 
   const defenderIds = defenderPool.map((o) => o.id);
   const dBaseBlended =
@@ -865,7 +870,7 @@ export function resolveBattle(
     dElitePower *
     (stratEffect.defenderPowerMul ?? 1) *
     dPolicy.attackMul * dTraitMods.attackMul * dComboMul * dRelBonus.powerMul * rivalMul *
-    dTitlePowerMul * dCasusMul * dNavalMul * dGuardMul * dPrestigeMul * dThemeMul * dGradeMul * dSetMul * dWeaponMul / Math.max(0.5, dPolicy.defenseMul);
+    dTitlePowerMul * dCasusMul * dNavalMul * dGuardMul * dPrestigeMul * dSetBondMul * dThemeMul * dGradeMul * dSetMul * dWeaponMul / Math.max(0.5, dPolicy.defenseMul);
 
   const total = aPower + dPower || 1;
   const aRatio = aPower / total;

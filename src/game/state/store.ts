@@ -28,7 +28,7 @@ import { isHostilePermitted } from '../types';
 import { createDeeds } from '../types/deeds';
 import { grantDeedTitles } from '../systems/deedTitles';
 import { pushBoutRecord } from '../systems/duelHall';
-import { recordRivalryBout } from '../systems/rivalries';
+import { recordRivalryBout, pairKey as rivalPairKey, NEMESIS_THRESHOLD } from '../systems/rivalries';
 import { challengeStakes } from '../systems/duelChallenge';
 import { applyBout, seedRating } from '../systems/warRanking';
 import { tickAfflictions, withAffliction, type Affliction } from '../systems/afflictions';
@@ -324,6 +324,7 @@ import { officerGrade, gradeRank, gradeMeta } from '../systems/officerGrade';
 import { combatBP } from '../systems/battlePower';
 import { applyStarUp, nextStarRequirement, planAiStarInvestments } from '../systems/stars';
 import { topBoardIds } from '../systems/powerBoard';
+import { pendingSetRewards, SET_REWARD_GOLD, SET_REWARD_LOYALTY } from '../systems/setBonds';
 import { tickBuildings } from '../systems/buildings';
 import { tickBuildingEvents } from '../systems/buildingEvents';
 import { evaluateCoalition } from '../systems/coalition';
@@ -6511,6 +6512,16 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // 慶典彈窗(本季結算觸發)— collected through resolution and merged into
         // popupQueue at season's end (alongside the city-tier popups, see set()).
         const livePopups: import('../types').PopupEvent[] = [];
+        // 諜報得手 — one covert success this resolution earns a single popup
+        // (espionageSuccesses are the player's own ops, see 4379).
+        if (espionageSuccesses.length > 0) {
+          livePopups.push({
+            key: 'espionage-success', media: 'image',
+            titleZh: '諜報得手', titleEn: 'A Covert Success',
+            captionZh: '細作潛行,計謀得售',
+            captionEn: 'Your agents strike from the shadows',
+          });
+        }
         for (const heir of fam.pendingHeirs) {
           // Credit only newly-added heirs this tick (not the carryover).
           if (state.pendingHeirs.some((h) => h.id === heir.id)) continue;
@@ -8603,6 +8614,41 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           if (newly.length > 0) {
             saveAchievementProgress(achS);
             set({ recentAchievementUnlocks: [...get().recentAchievementUnlocks, ...newly] });
+          }
+        }
+
+        // 成套之禮 — a famous roster standing complete under the player's
+        // banner for the first time this campaign: the court celebrates,
+        // the treasury opens, the honoured names warm (once per set).
+        if (seasonBoundary && state.playerForceId) {
+          const cur = get();
+          const rewards = pendingSetRewards(cur.officers, cur.playerForceId, cur.setRewardsClaimed ?? []);
+          if (rewards.length > 0) {
+            const capId = cur.playerForceId ? cur.forces[cur.playerForceId]?.capitalCityId : null;
+            const cities2 = { ...cur.cities };
+            if (capId && cities2[capId]) {
+              cities2[capId] = { ...cities2[capId], gold: cities2[capId].gold + SET_REWARD_GOLD * rewards.length };
+            }
+            const officers2 = { ...cur.officers };
+            for (const r of rewards) {
+              for (const mid of r.memberIds) {
+                const o = officers2[mid];
+                if (o) officers2[mid] = { ...o, loyalty: Math.min(100, o.loyalty + SET_REWARD_LOYALTY) };
+              }
+            }
+            set({
+              cities: cities2,
+              officers: officers2,
+              setRewardsClaimed: [...(cur.setRewardsClaimed ?? []), ...rewards.map((r) => r.setId)],
+              popupQueue: [...cur.popupQueue, ...rewards.map((r) => ({
+                key: 'set-complete',
+                media: 'image' as const,
+                titleZh: '名將成套',
+                titleEn: 'A Famous Set Complete',
+                captionZh: `${r.zh}齊聚我麾下!賜金 ${SET_REWARD_GOLD}、眾將忠誠 +${SET_REWARD_LOYALTY};同陣出征自有羈絆之力`,
+                captionEn: `${r.en} all serve your banner! +${SET_REWARD_GOLD} gold, members +${SET_REWARD_LOYALTY} loyalty`,
+              }))],
+            });
           }
         }
 
@@ -11289,6 +11335,17 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       },
       recordBout: (rec) => {
         set({ duelHall: pushBoutRecord(get().duelHall, rec) });
+        // 名局入館 — an epic bout is enshrined in the Hall of Famous Bouts. Lethal
+        // duels already fire 陣斬名將, so only the long non-lethal 名局/舌戰 pop here.
+        const isLethalDuel = rec.kind === 'duel' && rec.killed;
+        if (!isLethalDuel) {
+          get().pushPopup({
+            key: 'duel-hall-legend', media: 'image',
+            titleZh: '名局入館', titleEn: 'A Bout Enshrined',
+            captionZh: '一場名局,傳世於武鬥館名局廊',
+            captionEn: 'A famous bout is enshrined in the Hall',
+          });
+        }
       },
       recordDuelRating: (aId, bId, result) => {
         const state = get();
@@ -11303,7 +11360,22 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const state = get();
         const SEASON_IDX = ['spring', 'summer', 'autumn', 'winter'];
         const w = winner === 'attacker' ? 'a' : winner === 'defender' ? 'b' : 'draw';
-        set({ rivalries: recordRivalryBout(state.rivalries ?? {}, aId, bId, w, killed, state.date.year, Math.max(0, SEASON_IDX.indexOf(state.date.season))) });
+        const key = rivalPairKey(aId, bId);
+        const beforeBouts = (state.rivalries ?? {})[key]?.bouts ?? 0;
+        const nextRivalries = recordRivalryBout(state.rivalries ?? {}, aId, bId, w, killed, state.date.year, Math.max(0, SEASON_IDX.indexOf(state.date.season)));
+        set({ rivalries: nextRivalries });
+        // 宿敵結成 — the bout that forges a sworn rivalry (crossed the threshold,
+        // not ended in blood this time) earns a popup.
+        const nr = nextRivalries[key];
+        if (!killed && beforeBouts < NEMESIS_THRESHOLD && nr && nr.bouts >= NEMESIS_THRESHOLD && !nr.killerId) {
+          const a = state.officers[aId]; const b = state.officers[bId];
+          get().pushPopup({
+            key: 'duel-rival-callout', media: 'image',
+            titleZh: '宿敵結成', titleEn: 'A Rivalry is Forged',
+            captionZh: `${a?.name.zh ?? '一將'} 與 ${b?.name.zh ?? '一將'} 結為宿敵`,
+            captionEn: `${a?.name.en ?? 'A champion'} and ${b?.name.en ?? 'a champion'} become sworn rivals`,
+          });
+        }
       },
       applyDuelChallengeStakes: (challengerId, targetId, outcome) => {
         const state = get();
@@ -14225,6 +14297,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const prevAgg = state.tribeState.aggression[tribe.id] ?? tribe.baseAggression;
         const nextAgg = Math.max(0, prevAgg + r.aggressionDelta);
         const survivors = Math.max(0, troops - r.attackerLosses) + r.auxTroops;
+        // 異族內附 — a punitive victory brings the tribe to heel.
+        if (r.win) {
+          get().pushPopup({
+            key: 'tribe-submits', media: 'image',
+            titleZh: '異族內附', titleEn: 'A Tribe Brought to Heel',
+            captionZh: `討平${tribe.name.zh},其部俯首來附`,
+            captionEn: `${tribe.name.en} is subdued and submits`,
+          });
+        }
         const updates: Partial<GameState> = {
           tribeState: {
             ...state.tribeState,
@@ -14520,6 +14601,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             { year: state.date.year, season: state.date.season, kind: 'frontier' as const, titleZh: '以夷制夷', textZh: `以金帛嗾${tribe.name.zh}寇${state.forces[targetForceId]?.name.zh ?? targetForceId}之邊。`, cityId: null },
           ].slice(-500),
         });
+        // 異族入寇 — barbarian horse loosed on a rival's frontier (以夷制夷).
+        get().pushPopup({
+          key: 'tribe-raid', media: 'image',
+          titleZh: '以夷制夷', titleEn: 'Barbarians Unleashed',
+          captionZh: `嗾${tribe.name.zh}寇${state.forces[targetForceId]?.name.zh ?? targetForceId}之邊`,
+          captionEn: `${tribe.name.en} raiders loosed on ${state.forces[targetForceId]?.name.en ?? 'the enemy'}`,
+        });
         return {
           ok: true,
           message: `以金帛啖${tribe.name.zh},嗾其寇${state.forces[targetForceId]?.name.zh ?? targetForceId}之邊 — 兩季之內,虜騎為我所用。`,
@@ -14742,6 +14830,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               ...(state.annals ?? []),
               { year: state.date.year, season: state.date.season, kind: 'unrest' as const, titleZh: '招安', textZh: res.messageZh, cityId: cultCities[0].id },
             ].slice(-500),
+          });
+          // 招安民變 — a rebel cult (黃巾/邪教) is talked into surrender and folded in.
+          get().pushPopup({
+            key: 'pacify-rebels', media: 'image',
+            titleZh: '招安民變', titleEn: 'Rebels Pacified',
+            captionZh: `招安${cult.name.zh},其眾釋甲來歸`,
+            captionEn: `${cult.name.en} is pacified and folded into your realm`,
           });
           return { ok: true, success: true, message: res.messageZh };
         }
@@ -15841,6 +15936,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           streetEncounters: loaded.streetEncounters ?? {},
           pendingConquestPolicy: null,
           cardReveal: null,
+          setRewardsClaimed: loaded.setRewardsClaimed ?? [],
           dayFlow: null,
           dayFlowFollow: loaded.dayFlowFollow ?? false,
           foughtPairs: null,

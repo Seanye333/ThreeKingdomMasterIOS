@@ -282,6 +282,9 @@ export interface GameState {
   /** 得將開卡 — transient: officer id whose card-reveal flourish should play
    *  (a gold-or-better name newly under the player's banner). Not saved. */
   cardReveal: EntityId | null;
+  /** 成套之禮 — famous sets already celebrated this campaign (setBonds.ts);
+   *  each set pays out once when it first stands complete under the player. */
+  setRewardsClaimed: string[];
   /** 日流 — turn playback: after 進行, the half-month plays out day by day
    *  (armies step cell-to-cell); pausable/speedable. Transient, not saved. */
   dayFlow: {
@@ -799,6 +802,7 @@ export const EMPTY_STATE: GameState = {
   scenicVisits: {},
   musters: {},
   cardReveal: null,
+  setRewardsClaimed: [],
   dayFlow: null,
   dayFlowFollow: false,
   foughtPairs: null,
@@ -1212,6 +1216,7 @@ export function loadScenario(
     sites: buildInitialSites(),
     scenicLooted: {},
     cardReveal: null,
+    setRewardsClaimed: [],
     dayFlow: null,
   dayFlowFollow: false,
   foughtPairs: null,
