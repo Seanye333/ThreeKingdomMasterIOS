@@ -323,6 +323,7 @@ import type { BreakthroughPath } from '../systems/growth';
 import { officerGrade, gradeRank, gradeMeta } from '../systems/officerGrade';
 import { combatBP } from '../systems/battlePower';
 import { applyStarUp, nextStarRequirement, planAiStarInvestments } from '../systems/stars';
+import { topBoardIds } from '../systems/powerBoard';
 import { tickBuildings } from '../systems/buildings';
 import { tickBuildingEvents } from '../systems/buildingEvents';
 import { evaluateCoalition } from '../systems/coalition';
@@ -8581,6 +8582,23 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           {
             const r = checkCodexAchievements(achS, loadCodex());
             achS = r.progress; newly.push(...r.newlyUnlocked);
+          }
+          // 天下武評 — a player officer breaking into the realm's top ten is
+          // an event worth a herald (once per entry; board is pure BP).
+          if (seasonBoundary && state.playerForceId) {
+            const before = topBoardIds(state.officers, 10);
+            const after = topBoardIds(get().officers, 10);
+            let heralds = 0;
+            for (const [oid, rank] of after) {
+              if (heralds >= 2) break;
+              const o = get().officers[oid];
+              if (!o || o.forceId !== state.playerForceId || before.has(oid)) continue;
+              get().notify(
+                `天下武評 — ${o.name.zh}名列第${rank}!`,
+                `Realm power board: ${o.name.en} enters at #${rank}!`,
+              );
+              heralds += 1;
+            }
           }
           if (newly.length > 0) {
             saveAchievementProgress(achS);

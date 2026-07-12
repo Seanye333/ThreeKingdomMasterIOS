@@ -17,6 +17,7 @@ import { Name } from './Name';
 import { CODEX_SETS, codexSetProgress, loadCodex } from '../../game/systems/codex';
 import { OfficerCardModal } from './OfficerCardModal';
 import { officerGrade, gradeMeta } from '../../game/systems/officerGrade';
+import { bpLeaderboard } from '../../game/systems/powerBoard';
 import { ITEM_CODEX_SETS, itemCodexSetProgress, loadItemCodex } from '../../game/systems/itemCodex';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useDesc } from '../i18n';
@@ -25,11 +26,13 @@ interface Props {
   onClose: () => void;
 }
 
-type Section = 'officers' | 'codex' | 'items' | 'skills' | 'traits' | 'events' | 'provinces';
+type Section = 'officers' | 'codex' | 'ranking' | 'items' | 'skills' | 'traits' | 'events' | 'provinces';
 
 export function EncyclopediaModal({ onClose }: Props) {
   const officers = useGameStore((s) => s.officers);
   const cities = useGameStore((s) => s.cities);
+  const forces = useGameStore((s) => s.forces);
+  const playerForceId = useGameStore((s) => s.playerForceId);
   const [section, setSection] = useState<Section>('officers');
   const [search, setSearch] = useState('');
   // 交叉引用 — clicking any officer chip opens their full detail (列傳 included)
@@ -130,7 +133,7 @@ export function EncyclopediaModal({ onClose }: Props) {
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
         </header>
         <div style={{ display: 'flex', gap: '0.5rem', padding: '0.75rem 1.5rem', borderBottom: '1px solid #2b3845' }}>
-          {(['officers', 'codex', 'items', 'skills', 'traits', 'events', 'provinces'] as Section[]).map((s) => (
+          {(['officers', 'codex', 'ranking', 'items', 'skills', 'traits', 'events', 'provinces'] as Section[]).map((s) => (
             <button
               key={s}
               onClick={() => setSection(s)}
@@ -146,6 +149,7 @@ export function EncyclopediaModal({ onClose }: Props) {
             >
               {s === 'officers' ? '武将' :
                 s === 'codex' ? '圖鑑' :
+                s === 'ranking' ? '武評' :
                 s === 'items' ? '名品' :
                 s === 'skills' ? '特技' :
                 s === 'traits' ? '性格' :
@@ -248,6 +252,62 @@ export function EncyclopediaModal({ onClose }: Props) {
                       onOpen={() => setCardId(o.id)} />
                   ))}
                 </div>
+              </>
+            );
+          })()}
+          {section === 'ranking' && (() => {
+            /* 天下武評 — the realm's BP board (top 20 + wherever your own
+               officers actually sit). Clicking a row opens the card. */
+            const q = search.trim().toLowerCase();
+            const full = bpLeaderboard(officers, 0);
+            const top = full.slice(0, 20);
+            const mine = full.filter((r) => r.officer.forceId === playerForceId).slice(0, 5);
+            const shownRows = q
+              ? full.filter((r) => r.officer.name.zh.includes(search.trim()) || r.officer.name.en.toLowerCase().includes(q)).slice(0, 20)
+              : top;
+            const medal = (rank: number) => rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}`;
+            const row = (r: (typeof full)[number]) => {
+              const o = r.officer;
+              const force = o.forceId ? forces[o.forceId] : null;
+              const g = officerGrade(o);
+              const isMine = o.forceId === playerForceId;
+              return (
+                <div key={o.id} onClick={() => setCardId(o.id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10, padding: '0.35rem 0.6rem', cursor: 'pointer',
+                    background: isMine ? 'rgba(212,168,74,0.08)' : '#10161e',
+                    border: `1px solid ${isMine ? '#8a6a2a' : '#2b3845'}`, marginBottom: 4,
+                    borderLeft: r.rank <= 3 ? '3px solid #e6c473' : undefined,
+                  }}>
+                  <span style={{ width: 34, textAlign: 'center', fontSize: r.rank <= 3 ? '1rem' : '0.8rem', color: '#c9a64e', fontFamily: 'ui-monospace,monospace' }}>{medal(r.rank)}</span>
+                  <span style={{ flex: 1, color: isMine ? '#f2dd9a' : '#e6edf3' }}>
+                    {o.name.zh}
+                    {isMine && <span style={{ marginLeft: 6, fontSize: '0.65rem', color: '#c8a24e' }}>我方</span>}
+                  </span>
+                  {force && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.72rem', color: '#9aa6b0' }}>
+                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: force.color }} />
+                      {force.name.zh}
+                    </span>
+                  )}
+                  {(o.stars ?? 0) > 0 && <span style={{ fontSize: '0.7rem', color: '#ffd66e' }}>{'★'.repeat(o.stars ?? 0)}</span>}
+                  <span style={{ fontSize: '0.72rem', color: g.color }}>{g.name.zh}</span>
+                  <span style={{ width: 64, textAlign: 'right', fontSize: '0.85rem', color: '#ffe9a8', fontFamily: 'ui-monospace,monospace' }}>{r.bp.toLocaleString()}</span>
+                </div>
+              );
+            };
+            return (
+              <>
+                <div style={{ fontSize: '0.72rem', color: '#7a8893', marginBottom: '0.6rem' }}>
+                  天下武評 — 以綜合戰力(BP)論英雄,純屬品評、不入戰鬥;點列可開武將卡。在世且已現世者入榜。
+                </div>
+                {shownRows.map(row)}
+                {!q && mine.length > 0 && (
+                  <>
+                    <div style={{ fontSize: '0.72rem', color: '#c8a24e', margin: '0.8rem 0 0.4rem', letterSpacing: '0.08rem' }}>我方名次</div>
+                    {mine.map(row)}
+                  </>
+                )}
               </>
             );
           })()}
