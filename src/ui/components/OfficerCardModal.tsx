@@ -11,6 +11,8 @@ import { honorificById } from '../../game/data/honorifics';
 import { OATH_BONDS, isFeudKind } from '../../game/data/bonds';
 import { OFFICER_RELATIONSHIPS } from '../../game/data/relationships';
 import { deriveTactics, TACTIC_COMBOS } from '../../game/data/officerAttributes';
+import { isSignaturePair } from '../../game/data/signatureItems';
+import { skillLevelBadge } from '../../game/systems/skillMastery';
 import { exportOfficerCardPNG } from './officerCardExport';
 import { useT, useLanguage, pickName } from '../i18n';
 
@@ -197,10 +199,11 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
                 {officer.skills.slice(0, 8).map((sid) => {
                   const sk = SKILLS_BY_ID[sid];
                   if (!sk) return null;
+                  const badge = skillLevelBadge(officer, sid);
                   return (
-                    <span key={sid} title={lang === 'en' ? sk.description : sk.descriptionZh}
+                    <span key={sid} title={(lang === 'en' ? sk.description : sk.descriptionZh) + (badge ? t(`(精研 ${badge} 級)`, ` (mastery ${badge})`) : '')}
                       style={{ fontSize: '0.68rem', padding: '1px 7px', borderRadius: 9, background: 'rgba(230,196,115,0.1)', border: '1px solid #4a3f26', color: '#e6c473' }}>
-                      {pickName(sk.name, lang)}
+                      {pickName(sk.name, lang)}{badge && <span style={{ marginLeft: 3, color: '#ffd66e', fontWeight: 700 }}>{badge}</span>}
                     </span>
                   );
                 })}
@@ -212,9 +215,15 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
                 {officer.equipment.map((id) => {
                   const it = liveItemById(id);
                   if (!it) return null;
+                  // 神兵共鳴 — the hero's own legend glows gold on the card.
+                  const resonant = isSignaturePair(officer.id, id);
                   return (
-                    <span key={id} style={{ fontSize: '0.68rem', padding: '1px 7px', borderRadius: 9, background: 'rgba(126,192,224,0.08)', border: '1px solid #2c4454', color: '#9ed0ea' }}>
-                      ⚔ {pickName(it.name, lang)}
+                    <span key={id}
+                      title={resonant ? t('本命神兵 — 人器合一,效力 115%', 'Signature arm — resonates at 115% effect') : undefined}
+                      style={resonant
+                        ? { fontSize: '0.68rem', padding: '1px 7px', borderRadius: 9, background: 'rgba(230,196,115,0.16)', border: '1px solid #8a6a2a', color: '#ffe9a8', boxShadow: '0 0 8px rgba(230,196,115,0.25)' }
+                        : { fontSize: '0.68rem', padding: '1px 7px', borderRadius: 9, background: 'rgba(126,192,224,0.08)', border: '1px solid #2c4454', color: '#9ed0ea' }}>
+                      {resonant ? '✦' : '⚔'} {pickName(it.name, lang)}{resonant && <span style={{ marginLeft: 3, fontSize: '0.6rem', color: '#e6c473' }}>{t('本命', 'SIG')}</span>}
                     </span>
                   );
                 })}

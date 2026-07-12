@@ -25,6 +25,7 @@ import { processAging } from './aging';
 import { evaluateGovernors } from './governorEval';
 import { handleSearch, resolveInternalAffairs, type LostItemRef } from './commands';
 import { awardInternalAffairsXp, canBreakthrough, breakthroughCost, breakthroughIronCost, applyBreakthrough, defaultBreakthroughPath, grantXp, tickMentorBonds, specialTraining } from './growth';
+import { trainSkillMastery } from './skillMastery';
 import { officerGrade, gradeRank, officerLevel } from './officerGrade';
 import { handleMarch } from './combat';
 import {
@@ -2225,6 +2226,12 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const tr = specialTraining(officers[cmd.officerId] ?? officer, rng, input.date.year);
       officers[cmd.officerId] = tr.officer;
       entries.push(...tr.entries);
+      // 特訓精研 — the same season can deepen a known skill's 技能等級 (1–3).
+      const sm = trainSkillMastery(officers[cmd.officerId], rng);
+      if (sm) {
+        officers[cmd.officerId] = sm.officer;
+        entries.push(sm.entry);
+      }
       bumpDeed(cmd.officerId, { trainingsCompleted: 1 });
       continue;
     }

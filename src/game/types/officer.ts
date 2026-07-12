@@ -40,6 +40,9 @@ export interface Officer {
   /** 星級 0–6 — the card-game ascension track (stars.ts). Bought with gold,
    *  gated by growth level; amplifies 品階威儀 and 覺醒s at six. */
   stars?: number;
+  /** 技能等級 — mastery 1–3 per known skill (missing = 1; skillMastery.ts).
+   *  Deepened by 特訓; amplifies the skill's numeric combat effects. */
+  skillLevels?: Record<string, number>;
   /** Historical hometown — fixed at scenario load from the template. Doesn't
    *  change as the officer moves around. Used by UI + search bonuses. */
   hometownCityId?: EntityId;

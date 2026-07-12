@@ -25,6 +25,7 @@ import { effectivePrestigeEffects } from '../data/prestige';
 import { honorificEffects, honorificById } from '../data/honorifics';
 import { gradeAuraPowerMul, gradeAuraMorale, itemMasteryMul, enemyMoraleShock, holdsTheLine } from './gradeCombat';
 import { growthPowerMul, grantXp } from './growth';
+import { skillEffectMul } from './skillMastery';
 import { deriveWeaponType, type WeaponType } from '../data/weaponTypes';
 import { weaponMatchupMul, weaponMasterySkill, pickAiFormation, formationCounterMul } from './tactical';
 import { arrivalFatigueMorale, fatigueMoraleMalus, armyMoraleOpening } from './marchPace';
@@ -397,13 +398,17 @@ function effectsForOfficer(o: Officer, isWater = false): AggregatedSkillEffects 
     if (sid === 'navy-master' && !isWater) continue;
     const s: Skill | undefined = SKILLS_BY_ID[sid];
     if (!s?.combat) continue;
-    out.warBonus += s.combat.warBonus ?? 0;
-    out.leadershipBonus += s.combat.leadershipBonus ?? 0;
-    out.powerMultiplier *= s.combat.powerMultiplier ?? 1;
-    out.enemyLossMultiplier *= s.combat.enemyLossMultiplier ?? 1;
-    out.ownLossMultiplier *= s.combat.ownLossMultiplier ?? 1;
-    out.duelChanceBonus += s.combat.duelChanceBonus ?? 0;
-    out.defenseMultiplier *= s.combat.defenseMultiplier ?? 1;
+    // 技能等級 — mastery (特訓精研, 1–3) amplifies the skill's numbers;
+    // multiplier-style effects scale their distance from 1 so a discount
+    // (ownLoss 0.9) deepens toward 0.87, not past 1.
+    const m = skillEffectMul(o, sid);
+    out.warBonus += (s.combat.warBonus ?? 0) * m;
+    out.leadershipBonus += (s.combat.leadershipBonus ?? 0) * m;
+    out.powerMultiplier *= 1 + ((s.combat.powerMultiplier ?? 1) - 1) * m;
+    out.enemyLossMultiplier *= 1 + ((s.combat.enemyLossMultiplier ?? 1) - 1) * m;
+    out.ownLossMultiplier *= 1 + ((s.combat.ownLossMultiplier ?? 1) - 1) * m;
+    out.duelChanceBonus += (s.combat.duelChanceBonus ?? 0) * m;
+    out.defenseMultiplier *= 1 + ((s.combat.defenseMultiplier ?? 1) - 1) * m;
   }
   return out;
 }

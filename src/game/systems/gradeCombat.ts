@@ -2,6 +2,7 @@ import type { Officer } from '../types';
 import { officerGrade, gradeRank, type OfficerGrade } from './officerGrade';
 import { officerStars, starCombatDelta } from './stars';
 import { itemRarity, itemLoreLevel, type Item, type ItemRarity } from '../data/items';
+import { isSignaturePair } from '../data/signatureItems';
 
 /**
  * 品階威儀 — the combat passive an officer projects from their 品階. Until now a
@@ -107,6 +108,9 @@ const RARITY_REQUIRED_GRADE: Record<ItemRarity, OfficerGrade> = {
  * rarity and you get the full bonus — so legendary gear belongs on your elites.
  */
 export function itemMasteryMul(officer: Officer, item: Item): number {
+  // 神兵共鳴 — 本命神兵 in its rightful hero's hands answers beyond full
+  // effect (青龍偃月刀之於關羽), overriding any grade shortfall.
+  if (isSignaturePair(officer.id, item.id)) return 1.15;
   const need = gradeRank(RARITY_REQUIRED_GRADE[itemRarity(item)]);
   const have = gradeRank(officerGrade(officer).grade);
   const shortfall = Math.max(0, need - have);

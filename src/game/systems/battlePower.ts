@@ -1,5 +1,6 @@
 import type { Officer } from '../types';
 import { officerGrade, officerLevel, gradeRank } from './officerGrade';
+import { skillLevel } from './skillMastery';
 import { liveItemById } from '../data/items';
 
 /**
@@ -26,7 +27,7 @@ export function combatBP(officer: Officer): { bp: number; parts: BattlePowerPart
     stats: Math.round(s.war * 2.6 + s.leadership * 2.2 + s.intelligence * 2.0 + s.politics * 1.2 + s.charisma * 1.4),
     grade: gradeRank(officerGrade(officer).grade) * 120,
     level: officerLevel(officer) * 40,
-    skills: officer.skills.length * 45,
+    skills: officer.skills.reduce((sum, sid) => sum + 45 + 20 * (skillLevel(officer, sid) - 1), 0),
     equipment: Math.round(officer.equipment.reduce((sum, id) => {
       const it = liveItemById(id);
       if (!it) return sum;

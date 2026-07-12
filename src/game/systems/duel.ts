@@ -5,6 +5,7 @@ import { effectivePrestigeEffects } from '../data/prestige';
 import { afflictionDelta } from './afflictions';
 import { officerLevel } from './officerGrade';
 import { gradeCombatBonus, itemMasteryMul, duelFirstStrike } from './gradeCombat';
+import { skillEffectMul } from './skillMastery';
 import { deriveWeaponType, type WeaponType } from '../data/weaponTypes';
 
 /**
@@ -215,8 +216,10 @@ function prowessParts(o: Officer): { itemBonus: number; skillBonus: number; trai
   let skillBonus = 0;
   for (const sid of o.skills) {
     const s = SKILLS_BY_ID[sid];
-    if (s?.combat?.duelChanceBonus) skillBonus += s.combat.duelChanceBonus * 30;
-    if (s?.combat?.warBonus) skillBonus += (s.combat.warBonus ?? 0) * 0.5;
+    // 技能等級 — mastery deepens the champion's edge (skillMastery.ts).
+    const m = skillEffectMul(o, sid);
+    if (s?.combat?.duelChanceBonus) skillBonus += s.combat.duelChanceBonus * 30 * m;
+    if (s?.combat?.warBonus) skillBonus += (s.combat.warBonus ?? 0) * 0.5 * m;
   }
   let traitBonus = 0;
   for (const t of o.traits ?? []) {
