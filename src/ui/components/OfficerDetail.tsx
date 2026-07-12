@@ -1,4 +1,5 @@
 import { lazy, Suspense, useMemo, useState } from 'react';
+import { OfficerCardModal } from './OfficerCardModal';
 import { useGameStore } from '../../game/state/store';
 import { COMMAND_DEFS } from '../../game/systems/commands';
 import { composeBiography } from '../../game/systems/biography';
@@ -198,10 +199,24 @@ export function OfficerDetail({
   const rankDef = MILITARY_RANKS_BY_ID[officer.rank];
   const appointment = appointments.find((a) => a.officerId === officer.id);
   const titleDef = appointment ? CIVIC_TITLES_BY_ID[appointment.titleId] : null;
+  const [showCard, setShowCard] = useState(false);
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        {/* 🎴 武將卡 — the trading-card view (full art + grade frame + BP). */}
+        <button
+          onClick={() => setShowCard(true)}
+          aria-label={lang === 'en' ? 'Officer card' : '武將卡'}
+          title={lang === 'en' ? 'Officer card — full art, grade frame, battle power' : '武將卡 — 全身立繪·品階卡框·綜合戰力'}
+          style={{
+            position: 'absolute', top: 8, right: 44, zIndex: 4,
+            background: 'rgba(58,45,24,0.85)', border: '1px solid #d4a84a', color: '#f0d98a',
+            borderRadius: 'var(--tkm-radius-sm)', padding: '2px 9px', cursor: 'pointer',
+            fontFamily: 'inherit', fontSize: '0.78rem',
+          }}
+        >🎴 {lang === 'en' ? 'Card' : '武將卡'}</button>
+        {showCard && <OfficerCardModal officer={officer} onClose={() => setShowCard(false)} />}
         <PortraitColumn
           officer={officer}
           zh={officer.name.zh}
