@@ -38,6 +38,8 @@ export interface MarchGeom {
   routed?: boolean;
   fleeX?: number;
   fleeY?: number;
+  /** 候期 — a waiting column marks time: its day-walk is frozen in place. */
+  waitSeasons?: number;
 }
 
 /** 途中錨點 — a rout flees from its defeat site, a pursuit chases from its
@@ -87,7 +89,9 @@ export function marchPositionAtDay(
   const total = Math.max(1, cmd.totalSeasons ?? 1);
   const remaining = cmd.seasonsRemaining ?? 1;
   const elapsed = total - remaining;
-  const t = Math.min(0.95, Math.max(0.05, (elapsed + 0.5 + day / DAY_TICKS) / total));
+  // 候期 — a waiting column marks time in place (no day-walk this month).
+  const dayTerm = (cmd.waitSeasons ?? 0) > 0 ? 0 : day / DAY_TICKS;
+  const t = Math.min(0.95, Math.max(0.05, (elapsed + 0.5 + dayTerm) / total));
   return positionAlongRoute(route, t);
 }
 

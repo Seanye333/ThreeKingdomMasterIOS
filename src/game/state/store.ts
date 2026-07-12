@@ -87,6 +87,7 @@ import { ITEMS_BY_ID, refineCost, REFINE_MAX, setRefineRegistry, itemRarity,
 import { SKILLS_BY_ID } from '../data/skills';
 import { marchDurationFor } from '../data/cities';
 import { marchSpeedMul, adjustMarchSeasons, PACE_LABEL, arrivalFatigueMorale, fatigueMoraleMalus, armyMoraleOpening } from '../systems/marchPace';
+import { ROUT_MIN_TROOPS, nearestShelterCity } from '../systems/rout';
 import { terrainRoute, positionAlongRoute, marchDestCoords } from '../data/territories';
 import { cityPos, CITY_GEO_OVERRIDES } from '../data/cityGeo';
 import { provisionNeeded, convoyCapacity, planConvoy } from '../systems/convoy';
@@ -2182,6 +2183,8 @@ export const useGameStore = create<GameStore>()(
           totalSeasons: 1,
           holding: true,
           carried: cmd.carried, // inherit the parent's troop-accounting convention
+          fatigue: cmd.fatigue, // the men are as worn as the column they left
+          morale: cmd.morale,
         } as MarchCommand;
 
         const nextArmies = { ...state.armies };
@@ -11978,13 +11981,49 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             const survivors = survivorsOf(side);
             const routed = (winner && winner !== side) || !cmdAlive(side) || survivors <= 0;
             if (routed) {
-              // Column broken — remove it; free any officers not slain/taken.
-              delete armies[armyId];
-              delete pending[armyId];
-              for (const id of [army.commanderId, ...army.companionIds]) {
-                const o = officers[id];
-                if (o && o.status !== 'dead' && o.status !== 'imprisoned') {
-                  officers[id] = { ...o, task: null, status: 'idle' };
+              // 親征敗軍亦成潰 — mirror the abstract path: enough survivors
+              // under a still-fit commander become a ROUT on the map (huntable,
+              // shedding) instead of evaporating where they stood.
+              const cmdO = officers[army.commanderId];
+              const fit = !!cmdO && cmdO.status !== 'dead' && cmdO.status !== 'imprisoned' && cmdO.status !== 'wounded';
+              const shelter = fit && survivors >= ROUT_MIN_TROOPS && army.forceId
+                ? nearestShelterCity(army.x, army.y, army.forceId, cities)
+                : null;
+              const oldCmd = pending[armyId];
+              if (shelter) {
+                const shp = cityPos(shelter);
+                const dur = Math.hypot(shp.x - army.x, shp.y - army.y) < 120 * WORLD_SCALE ? 2 : 3;
+                const base = oldCmd && oldCmd.type === 'march'
+                  ? oldCmd
+                  : { type: 'march' as const, cityId: army.fromCityId, officerId: army.commanderId, targetCityId: shelter.id, troops: survivors };
+                pending[armyId] = {
+                  ...base, troops: survivors, targetCityId: shelter.id, targetX: undefined, targetY: undefined,
+                  routed: true, returning: true, carried: true, fleeX: army.x, fleeY: army.y,
+                  totalSeasons: dur, seasonsRemaining: dur, holding: false,
+                  ambush: undefined, besieging: undefined, evading: undefined,
+                  pursueTargetId: undefined, waitSeasons: undefined, legionBanner: undefined,
+                } as MarchCommand;
+                armies[armyId] = {
+                  ...army, troops: survivors, targetCityId: shelter.id, routed: true, returning: true,
+                  fleeX: army.x, fleeY: army.y, totalSeasons: dur, progress: 0, holding: false,
+                  ambush: undefined, besieging: undefined, evading: undefined, cellTarget: false,
+                };
+                // Officers stay with the fleeing column (task 'march' persists).
+              } else {
+                // Column broken — remove it; free any officers not slain/taken.
+                // 散卒歸鄉 — a carried column's survivors trickle back onto the
+                // source city's books (legacy marches never took them off).
+                if (survivors > 0 && oldCmd && oldCmd.type === 'march' && oldCmd.carried) {
+                  const home = cities[oldCmd.cityId];
+                  if (home) cities[oldCmd.cityId] = { ...home, troops: home.troops + survivors };
+                }
+                delete armies[armyId];
+                delete pending[armyId];
+                for (const id of [army.commanderId, ...army.companionIds]) {
+                  const o = officers[id];
+                  if (o && o.status !== 'dead' && o.status !== 'imprisoned') {
+                    officers[id] = { ...o, task: null, status: 'idle' };
+                  }
                 }
               }
             } else {

@@ -412,6 +412,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     cmd.ambush = undefined;
     cmd.besieging = undefined;
     cmd.evading = undefined;
+    cmd.pursueTargetId = undefined; // a broken hunter hunts no more
+    cmd.waitSeasons = undefined;
     cmd.legionBanner = undefined;
     cmd.forcedStratagem = undefined;
     troopOverride[cmd.officerId] = survivors;
@@ -490,6 +492,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   // the chase ended and await orders.
   for (const cmd of allMarches) {
     if (!cmd.pursueTargetId) continue;
+    // A pursuer that has itself been broken flees — it chases nothing.
+    if (cmd.routed) { cmd.pursueTargetId = undefined; continue; }
     const me = officers[cmd.officerId];
     const pos = armyPosition(cmd);
     const quarry = allMarches.find((m) => m.officerId === cmd.pursueTargetId);
@@ -3316,6 +3320,17 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     nextConvoys = stepped.convoys;
     cities = stepped.cities;
     Object.assign(outArmies, stepped.armies); // 直供前線 deliveries relieved sieges
+    // 帳入軍籍 — armies are re-DERIVED from keptCommands next season, so a
+    // delivery written only into the Army layer would silently evaporate at
+    // the season boundary. Post the grain/troops to the command too.
+    for (const a of stepped.arrivals) {
+      if (!a.toArmy || !a.convoy.toArmyId) continue;
+      const kc = keptCommands[a.convoy.toArmyId];
+      if (kc && kc.type === 'march') {
+        kc.troops += a.convoy.troops;
+        kc.food = (kc.food ?? 0) + a.convoy.food;
+      }
+    }
     // Nearest still-friendly city to a map point (for landing a front escort).
     const nearestFriendlyCityId = (x: number, y: number, fid: EntityId): EntityId | null => {
       let best: EntityId | null = null, bd = Infinity;

@@ -121,7 +121,7 @@ export function MarchingArmies({ cities, pendingCommands, forces, officers, port
   const lang = useLanguage();
   const armies = useMemo(() => {
     return Object.values(pendingCommands)
-      .filter((cmd): cmd is { cityId: string; type: string; targetCityId: string; troops: number; officerId: string; seasonsRemaining?: number; totalSeasons?: number; targetX?: number; targetY?: number; holding?: boolean; ambush?: boolean; besieging?: string; routed?: boolean; fleeX?: number; fleeY?: number; evading?: boolean; fatigue?: number; morale?: number } =>
+      .filter((cmd): cmd is { cityId: string; type: string; targetCityId: string; troops: number; officerId: string; seasonsRemaining?: number; totalSeasons?: number; targetX?: number; targetY?: number; holding?: boolean; ambush?: boolean; besieging?: string; routed?: boolean; fleeX?: number; fleeY?: number; evading?: boolean; fatigue?: number; morale?: number; waitSeasons?: number } =>
         cmd.type === 'march' && !!cmd.cityId)
       .map((cmd) => {
         const from = cities[cmd.cityId];
@@ -180,6 +180,7 @@ export function MarchingArmies({ cities, pendingCommands, forces, officers, port
           evading: !!cmd.evading,
           fatigue: cmd.fatigue,
           morale: cmd.morale,
+          waiting: (cmd.waitSeasons ?? 0) > 0,
           ambushRevealed,
           cellTarget: cmd.targetX != null,
         };
@@ -194,7 +195,7 @@ export function MarchingArmies({ cities, pendingCommands, forces, officers, port
           commanderName={a.commanderName} targetName={a.targetName} troops={a.troops}
           seasonsRemaining={a.seasonsRemaining} totalSeasons={a.totalSeasons}
           landRoute={a.landRoute} weaponType={a.weaponType}
-          selected={a.selected} holding={a.holding} ambush={a.ambush} besieging={a.besieging} routed={a.routed} evading={a.evading} fatigue={a.fatigue} morale={a.morale} ambushRevealed={a.ambushRevealed} cellTarget={a.cellTarget}
+          selected={a.selected} holding={a.holding} ambush={a.ambush} besieging={a.besieging} routed={a.routed} evading={a.evading} fatigue={a.fatigue} morale={a.morale} waiting={a.waiting} ambushRevealed={a.ambushRevealed} cellTarget={a.cellTarget}
           ports={ports} onClick={onArmyClick ? () => onArmyClick(a.officerId) : undefined}
           onPressStart={onArmyPressStart ? (e) => onArmyPressStart(a.officerId, e) : undefined} />
       ))}
@@ -208,7 +209,7 @@ const UNIT_TAG: Record<WeaponType, string> = {
   sabre: '刀', sword: '劍', fan: '師', siege: '械', none: '步',
 };
 
-function MarchingArmy({ from, to, color, commanderName, targetName, troops, seasonsRemaining, totalSeasons, landRoute, weaponType, selected, holding, ambush, besieging, routed, evading, fatigue, morale, ambushRevealed, cellTarget, ports, onClick, onPressStart }: {
+function MarchingArmy({ from, to, color, commanderName, targetName, troops, seasonsRemaining, totalSeasons, landRoute, weaponType, selected, holding, ambush, besieging, routed, evading, fatigue, morale, waiting, ambushRevealed, cellTarget, ports, onClick, onPressStart }: {
   from: City; to: City; color: string;
   commanderName: string; targetName: string; troops: number;
   seasonsRemaining: number; totalSeasons: number;
@@ -222,6 +223,7 @@ function MarchingArmy({ from, to, color, commanderName, targetName, troops, seas
   evading?: boolean;
   fatigue?: number;
   morale?: number;
+  waiting?: boolean;
   ambushRevealed?: boolean;
   cellTarget: boolean;
   ports: Record<string, import('../../../game/types').Port>;
@@ -277,9 +279,9 @@ function MarchingArmy({ from, to, color, commanderName, targetName, troops, seas
     // the coming resolution will leave it at (elapsed+1.5's midpoint), so
     // the handoff at day 15 is seamless in both directions.
     const df = useGameStore.getState().dayFlow;
-    const phase = df && df.total > 0
+    const phase = df && df.total > 0 && !waiting
       ? elapsed + 0.5 + Math.min(1, df.day / df.total)
-      : elapsed + 0.5;
+      : elapsed + 0.5; // 候期 — a waiting column marks time in place
     const t = Math.min(0.95, Math.max(0.05, phase / totalSeasons));
     let x: number, z: number, heading: number;
     if (naval) {

@@ -354,6 +354,31 @@ describe('追擊與候期 — hounding routs and marking time', () => {
   });
 });
 
+describe('直供前線 — deliveries must survive the season boundary', () => {
+  it('grain/troops delivered to a field army land in the KEPT COMMAND too', () => {
+    const { cities } = fixtures();
+    const out = resolveSeason({
+      ...baseInput(cities, { mover: mkOfficer('mover', 'me') }, {
+        mover: {
+          type: 'march', cityId: 'luoyang', targetCityId: 'chengdu', officerId: 'mover',
+          troops: 5000, totalSeasons: 3, seasonsRemaining: 3, food: 2000, carried: true,
+        },
+      }, () => 0.5),
+      convoys: {
+        c1: {
+          id: 'c1', forceId: 'me', fromCityId: 'luoyang', toCityId: 'chengdu',
+          toArmyId: 'mover', food: 9000, gold: 0, troops: 700, seasonsRemaining: 1,
+        },
+      },
+    } as never);
+    const kept = out.keptCommands?.['mover'] as { troops?: number; food?: number } | undefined;
+    // Armies re-derive from keptCommands next season — the delivery used to
+    // evaporate at this boundary. 5000 (march) + 700 (convoy) = 5700.
+    expect(kept?.troops).toBe(5700);
+    expect(kept?.food ?? 0).toBeGreaterThan(9000); // convoy grain banked, minus a season's rations
+  });
+});
+
 describe('水陸協同 — fleets beach and join converging battles', () => {
   it('a naval column in reach joins, two turns later than a land one', async () => {
     const { planColumnReinforcements } = await import('./tacticalSetup');
