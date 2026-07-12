@@ -23,6 +23,7 @@ import { ScenarioOfficersBrowser } from '../components/ScenarioOfficersBrowser';
 import { HeroModeModal } from '../components/HeroModeModal';
 import { EventEditorModal } from '../components/EventEditorModal';
 import { OfficerPortrait } from '../components/OfficerPortrait';
+import { Modal } from '../components/Modal';
 import { DYNASTY_DEFS, type Dynasty } from '../../game/data/dynasties';
 
 // Lazy — MapScreen also imports these dynamically; a static import here was
@@ -202,30 +203,32 @@ export function TitleScreen() {
     ? scenario.officers.find((o) => o.id === selectedForce.rulerOfficerId) ?? null
     : null;
 
-  // Launch with the chosen force, honouring hot-seat / chronicle modes.
+  // Launch with the chosen force. Hot-seat and chronicle mode detour through
+  // styled pickers (no more native prompt() with a typed-in number).
   const startGame = (forceId: string) => {
-    if (hotSeatMode) {
-      const human = prompt(t('人類玩家數量？(2–4)', 'How many human players? (2–4)'), '2');
-      const n = Math.max(2, Math.min(4, Number(human) || 2));
-      const allForces = scenario.forces.slice(0, n);
-      setHotSeatPlayers(allForces.map((f, i) => ({
-        forceId: f.id, label: `P${i + 1}: ${lang === 'zh' ? f.name.zh : f.name.en}`,
-      })));
-      loadScenario(scenario, allForces[0].id, difficulty);
-    } else {
-      loadScenario(scenario, forceId, difficulty, undefined, capitalChoice ?? undefined);
-    }
-    if (careerMode) {
-      const officersInForce = scenario.officers.filter((o) => o.forceId === forceId);
-      const list = officersInForce
-        .map((o, i) => `${i + 1}. ${lang === 'zh' ? o.name.zh : `${o.name.zh} ${o.name.en}`} (W${o.stats.war} I${o.stats.intelligence})`)
-        .join('\n');
-      const choice = prompt(`${t('一代記主角 — 請輸入編號：', 'Chronicle officer — pick a number:')}\n\n${list}`, '1');
-      const idx = Math.max(0, Math.min(officersInForce.length - 1, Number(choice) - 1));
-      const picked = officersInForce[idx] ?? officersInForce[0];
-      if (picked) enterCareerMode(picked.id);
-    }
+    if (careerMode) { setCareerPick(forceId); return; }   // 一代記 — pick a face, not a number
+    if (hotSeatMode) { setHotSeatPick(forceId); return; } // 熱座 — pick the player count
+    loadScenario(scenario, forceId, difficulty, undefined, capitalChoice ?? undefined);
     setTutorialStep(0);
+  };
+  const launchCareer = (forceId: string, officerId: string) => {
+    loadScenario(scenario, forceId, difficulty, undefined, capitalChoice ?? undefined);
+    enterCareerMode(officerId);
+    setTutorialStep(0);
+    setCareerPick(null);
+  };
+  const launchHotSeat = (forceId: string, humans: number) => {
+    // The chosen force is ALWAYS P1 (it used to be silently dropped when it
+    // wasn't among the scenario's first N forces).
+    const chosen = scenario.forces.find((f) => f.id === forceId);
+    const others = scenario.forces.filter((f) => f.id !== forceId);
+    const lineup = (chosen ? [chosen, ...others] : others).slice(0, humans);
+    setHotSeatPlayers(lineup.map((f, i) => ({
+      forceId: f.id, label: `P${i + 1}: ${lang === 'zh' ? f.name.zh : f.name.en}`,
+    })));
+    loadScenario(scenario, lineup[0].id, difficulty);
+    setTutorialStep(0);
+    setHotSeatPick(null);
   };
 
   // Per-force snapshot for the force-selection detail panel.
@@ -259,6 +262,15 @@ export function TitleScreen() {
   });
   // 已複製 — brief label swap so the Copy button confirms it did something.
   const [copied, setCopied] = useState(false);
+  // 一代記選角 / 熱座人數 / 隨機劇本 — styled pickers replacing native prompt().
+  const [careerPick, setCareerPick] = useState<string | null>(null);   // forceId
+  const [hotSeatPick, setHotSeatPick] = useState<string | null>(null); // forceId
+  const [showRandom, setShowRandom] = useState(false);
+  const [randomCount, setRandomCount] = useState(5);
+  const [randomYear, setRandomYear] = useState(200);
+  // 進階選項 — the ~30-control setup wall folds behind one disclosure so
+  // Start is never buried below it.
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   return (
     <div className={styles.root} style={{ isolation: 'isolate' }}>
@@ -603,24 +615,7 @@ export function TitleScreen() {
             <div style={{ marginTop: '1rem', borderTop: '1px solid #1e2832', paddingTop: '0.7rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
               <button
                 className={styles.officersButton}
-                onClick={() => {
-                  // 範圍與驗證單一來源,避免廣告範圍與實際不符、且越界靜默失敗。
-                  const askNum = (zh: string, en: string, def: number, min: number, max: number): number | null => {
-                    const raw = prompt(t(`${zh}(${min}–${max})`, `${en} (${min}–${max})`), String(def));
-                    if (raw === null) return null; // cancelled
-                    const n = Math.round(Number(raw));
-                    if (!Number.isFinite(n) || n < min || n > max) {
-                      useGameStore.getState().notify(`請輸入 ${min}–${max} 之間的數`, `Enter a number between ${min} and ${max}`, 'warn');
-                      return null;
-                    }
-                    return n;
-                  };
-                  const count = askNum('勢力數量？', 'How many forces?', 5, 2, 10);
-                  if (count === null) return;
-                  const year = askNum('年份？', 'Year?', 200, 100, 280);
-                  if (year === null) return;
-                  loadRandom(count, year);
-                }}
+                onClick={() => setShowRandom(true)}
               >{t('隨機劇本', 'Random')}</button>
               <button className={styles.officersButton} onClick={() => setShowOfficers(true)}>{t('武將一覽', 'Officers')}</button>
               <button className={styles.officersButton} onClick={() => setShowItems(true)}>{t('名品一覽', 'Items')}</button>
@@ -820,6 +815,19 @@ export function TitleScreen() {
             <p className={styles.difficultyNote}>
               {(() => { const d = DIFFICULTIES.find((x) => x.id === difficulty); return d ? t(d.noteZh, d.noteEn) : ''; })()}
             </p>
+
+            {/* 進階選項 — 30 幾個控制項收進一個揭露,開始鈕不再沉底;
+                預設值即推薦值,直接按「開始遊戲」就是推薦開局。 */}
+            <button
+              type="button"
+              className={styles.officersButton}
+              style={{ width: '100%', marginTop: '0.6rem', textAlign: 'left', color: advancedOpen ? '#e6c473' : undefined }}
+              onClick={() => setAdvancedOpen((v) => !v)}
+              aria-expanded={advancedOpen}
+            >
+              {advancedOpen ? '▾' : '▸'} {t('進階選項 — AI強度 · 國力 · 經濟 · 勝利 · 模式 · 生死 · 世界 · 外交', 'Advanced — AI · economy · victory · modes · rules · diplomacy')}
+            </button>
+            {advancedOpen && (<>
 
             {/* ── AI 強度 ── independent of difficulty (RoTK 思考 / Total War 戰役難度) */}
             <OptHeader>{t('AI 強度', 'AI strength')}</OptHeader>
@@ -1152,6 +1160,8 @@ export function TitleScreen() {
               </div>
             )}
 
+            </>)}
+
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
               <button className={styles.officersButton} style={{ flex: 1 }} onClick={() => setStep('force')}>
                 {t('← 返回', '← Back')}
@@ -1180,6 +1190,133 @@ export function TitleScreen() {
       {showOfficers && (
         <ScenarioOfficersBrowser scenario={scenario} onClose={() => setShowOfficers(false)} />
       )}
+      {/* 一代記選角 — a portrait grid instead of “type a number from this list”. */}
+      {careerPick && (() => {
+        const force = scenario.forces.find((f) => f.id === careerPick);
+        const pool = scenario.officers
+          .filter((o) => o.forceId === careerPick && o.status !== 'dead')
+          .sort((a, b) => (b.stats.war * 0.6 + b.stats.intelligence * 0.4) - (a.stats.war * 0.6 + a.stats.intelligence * 0.4));
+        return (
+          <Modal
+            onClose={() => setCareerPick(null)}
+            icon="🧭"
+            title={t('一代記 — 選擇主角', 'Chronicle — choose your officer')}
+            badge={force ? (lang === 'en' ? force.name.en : force.name.zh) : undefined}
+            width="min(720px, 96vw)"
+            scrollBody
+            ariaLabel={t('一代記選角', 'Chronicle officer picker')}
+          >
+            <p style={{ fontSize: '0.78rem', color: '#7a8893', margin: '0 0 0.6rem' }}>
+              {t('以一將之身歷經一代 — 點選頭像即開局。', 'Live one officer’s life — tap a portrait to begin.')}
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '0.45rem' }}>
+              {pool.map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => launchCareer(careerPick, o.id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem',
+                    background: 'rgba(27,37,49,0.55)', border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: 'var(--tkm-radius-sm, 5px)', cursor: 'pointer', textAlign: 'left',
+                    color: '#dfe9f2', fontFamily: 'inherit',
+                  }}
+                >
+                  <OfficerPortrait officer={o} size={44} year={startYear} />
+                  <span style={{ minWidth: 0 }}>
+                    <span style={{ display: 'block', fontSize: '0.84rem', color: '#e6c473', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {lang === 'en' ? o.name.en : o.name.zh}
+                    </span>
+                    <span style={{ display: 'block', fontSize: '0.7rem', color: '#7a8893' }}>
+                      {t('武', 'W')}{o.stats.war} · {t('智', 'I')}{o.stats.intelligence} · {t('政', 'P')}{o.stats.politics}
+                    </span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </Modal>
+        );
+      })()}
+
+      {/* 熱座人數 — pick 2–4 with the exact lineup shown; the chosen force is P1. */}
+      {hotSeatPick && (() => {
+        const chosen = scenario.forces.find((f) => f.id === hotSeatPick);
+        const others = scenario.forces.filter((f) => f.id !== hotSeatPick);
+        return (
+          <Modal
+            onClose={() => setHotSeatPick(null)}
+            icon="🔄"
+            title={t('熱座對戰 — 幾位玩家?', 'Hot seat — how many players?')}
+            width="min(480px, 96vw)"
+            ariaLabel={t('熱座人數', 'Hot-seat player count')}
+          >
+            <p style={{ fontSize: '0.78rem', color: '#7a8893', margin: '0 0 0.6rem' }}>
+              {t('同機輪流執掌各自勢力;你選定的勢力為 P1。', 'Take turns on one device; your chosen force plays first.')}
+            </p>
+            {[2, 3, 4].filter((n) => n <= scenario.forces.length).map((n) => {
+              const lineup = (chosen ? [chosen, ...others] : others).slice(0, n);
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  className={styles.officersButton}
+                  style={{ width: '100%', marginTop: '0.35rem', textAlign: 'left' }}
+                  onClick={() => launchHotSeat(hotSeatPick, n)}
+                >
+                  <b style={{ color: '#e6c473' }}>{n} {t('人', 'players')}</b>
+                  <span style={{ display: 'block', fontSize: '0.72rem', color: '#7a8893', marginTop: 2 }}>
+                    {lineup.map((f, i) => `P${i + 1} ${lang === 'en' ? f.name.en : f.name.zh}`).join(' · ')}
+                  </span>
+                </button>
+              );
+            })}
+          </Modal>
+        );
+      })()}
+
+      {/* 隨機劇本 — labelled fields instead of two chained prompt()s. */}
+      {showRandom && (
+        <Modal
+          onClose={() => setShowRandom(false)}
+          icon="🎲"
+          title={t('隨機劇本', 'Random scenario')}
+          width="min(420px, 96vw)"
+          ariaLabel={t('隨機劇本設定', 'Random scenario setup')}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '0.2rem' }}>
+            <span style={{ fontSize: '0.8rem', color: '#7a8893', flex: 1 }}>{t('勢力數量', 'Forces')}(2–10)</span>
+            <input
+              type="number" min={2} max={10} value={randomCount}
+              onChange={(e) => setRandomCount(Number(e.target.value))}
+              aria-label={t('勢力數量', 'Number of forces')}
+              style={{ width: 72, background: '#101820', color: '#e6c473', border: '1px solid #364654', borderRadius: 4, padding: '0.3rem 0.4rem', fontFamily: 'inherit' }}
+            />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '0.55rem' }}>
+            <span style={{ fontSize: '0.8rem', color: '#7a8893', flex: 1 }}>{t('起始年份', 'Year')}(100–280)</span>
+            <input
+              type="number" min={100} max={280} value={randomYear}
+              onChange={(e) => setRandomYear(Number(e.target.value))}
+              aria-label={t('起始年份', 'Starting year')}
+              style={{ width: 72, background: '#101820', color: '#e6c473', border: '1px solid #364654', borderRadius: 4, padding: '0.3rem 0.4rem', fontFamily: 'inherit' }}
+            />
+          </div>
+          <button
+            type="button"
+            className={styles.officersButton}
+            style={{ width: '100%', marginTop: '0.9rem', ...navPrimary(true) }}
+            onClick={() => {
+              const count = Math.max(2, Math.min(10, Math.round(randomCount) || 5));
+              const year = Math.max(100, Math.min(280, Math.round(randomYear) || 200));
+              setShowRandom(false);
+              loadRandom(count, year);
+            }}
+          >
+            ▶ {t('生成並開局', 'Generate & start')}
+          </button>
+        </Modal>
+      )}
+
       {showCustomOfficer && (
         <CustomOfficerCreator
           scenario={scenario}
