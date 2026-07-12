@@ -103,10 +103,18 @@ export interface MarchCommand extends CommandBase {
    *  hostile armies and garrisons that catch it cut it down (掩殺) rather
    *  than fight it. Cleared when it reaches shelter. */
   routed?: boolean;
-  /** 潰走起點 — where the defeat happened; the flee route runs from here to
-   *  the shelter city (only meaningful with `routed`). */
+  /** 途中錨點 — where this leg physically starts: the defeat site for a
+   *  rout, or the chaser's own position for a pursuit. When set, the march
+   *  walks fleeX/Y → destination instead of source-city → destination. */
   fleeX?: number;
   fleeY?: number;
+  /** 追擊 — this column is hunting an enemy ROUT (its command key). It
+   *  re-aims at the quarry's projected position every season until the
+   *  quarry dies or reaches shelter, then digs in where the chase ended. */
+  pursueTargetId?: EntityId;
+  /** 候期 — hold in place this many seasons before advancing (兩路合擊用:
+   *  delay one column so both arrive together). */
+  waitSeasons?: number;
   /** 都督之旗 — extra opening morale a legion column carries from its marshal's
    *  renown (§4.3). Applied to the arrival battle. */
   legionBanner?: number;

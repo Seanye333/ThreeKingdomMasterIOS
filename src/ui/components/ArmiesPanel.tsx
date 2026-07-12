@@ -23,6 +23,7 @@ export function ArmiesPanel() {
   const holdArmy = useGameStore((s) => s.holdArmy);
   const setArmyAmbush = useGameStore((s) => s.setArmyAmbush);
   const setArmyEvade = useGameStore((s) => s.setArmyEvade);
+  const delayMarch = useGameStore((s) => s.delayMarch);
   const burnBridge = useGameStore((s) => s.burnBridge);
   const besiegeCity = useGameStore((s) => s.besiegeCity);
   const burnBoom = useGameStore((s) => s.burnBoom);
@@ -82,7 +83,7 @@ export function ArmiesPanel() {
       )}
       {selectedArmyId && armies[selectedArmyId] && !armies[selectedArmyId].routed && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4, marginBottom: 3 }}>
-          <span style={{ fontSize: '0.58rem', color: '#e6c473' }}>{lang === 'en' ? 'Tap city to reroute · field to garrison · ally to merge · enemy to attack' : '點城改道 · 點野地進駐 · 點友軍合流 · 點近敵親征'}</span>
+          <span style={{ fontSize: '0.58rem', color: '#e6c473' }}>{lang === 'en' ? 'Tap city to reroute · field to garrison · ally to merge · enemy to attack · rout to pursue' : '點城改道 · 點野地進駐 · 點友軍合流 · 點近敵親征 · 點敵潰軍追擊'}</span>
           <div style={{ display: 'flex', gap: 4 }}>
             <button
               onClick={() => holdArmy(selectedArmyId)}
@@ -178,6 +179,22 @@ export function ArmiesPanel() {
                 ? 'Burn the crossing beside this column — battles here open with the span down (~1 year). Needs a riverside position.'
                 : '焚橋斷渡 — 焚毀本軍近旁渡口:此地開戰時橋樑已斷(約一年方復)。須臨河。'}
             >{lang === 'en' ? 'Burn bridge' : '焚橋'}</button>
+            {!armies[selectedArmyId].holding && (
+              <button
+                onClick={() => {
+                  const r = delayMarch(selectedArmyId);
+                  if (!r.ok && r.reason) notify(r.reason, r.reason);
+                }}
+                style={{
+                  background: '#20180e', border: '1px solid #8a7048', color: '#c8b088',
+                  fontSize: '0.7rem', padding: '1px 6px', cursor: 'pointer',
+                  fontFamily: 'var(--tkm-font-body)',
+                }}
+                title={lang === 'en'
+                  ? 'Wait: mark time in place one season before advancing (sync a two-pronged attack; stacks to 3)'
+                  : '候期 — 原地待命一旬再進(兩路合擊對錶用;至多疊三旬)'}
+              >⏳ {lang === 'en' ? 'Wait' : '候期'}{(armies[selectedArmyId].waitSeasons ?? 0) > 0 ? ` ${armies[selectedArmyId].waitSeasons}` : ''}</button>
+            )}
             <button
               onClick={() => resupplyArmy(selectedArmyId)}
               style={{
@@ -231,6 +248,10 @@ export function ArmiesPanel() {
           ? { icon: '↩', text: lang === 'en' ? `home · ${remaining}s` : `歸返·${remaining}季`, color: '#c79a6a', tip: lang === 'en' ? 'Recalled — streaming home; merges into its source city on arrival' : '已召回,折返本城,抵達即併入守軍' }
           : a.besieging
           ? { icon: '⭕', text: lang === 'en' ? 'Siege · anvil' : '圍城·打援', color: '#e8a040', tip: lang === 'en' ? 'Investing the city — and meeting any relief column from prepared lines (ambush-grade spring, automatic)' : '長圍斷糧;敵援軍來撲時自動以逸待勞(伏擊級加成,無須設伏)' }
+          : a.pursueTargetId
+          ? { icon: '⚔', text: lang === 'en' ? 'Pursuing' : '追擊中', color: '#e0907a', tip: lang === 'en' ? 'Hounding an enemy rout — re-aims every season, cuts it down on contact' : '咬住敵潰軍 — 每旬自動追瞄,追上即掩殺' }
+          : (a.waitSeasons ?? 0) > 0
+          ? { icon: '⏳', text: lang === 'en' ? `wait ${a.waitSeasons}` : `候期·${a.waitSeasons}旬`, color: '#c8b088', tip: lang === 'en' ? 'Marking time in place before advancing (pincer sync)' : '原地待命,期滿再進(兩路合擊對錶)' }
           : a.holding
           ? { icon: '⏸', text: lang === 'en' ? 'Hold' : '駐守', color: '#a8c87a', tip: lang === 'en' ? 'Holding position; won’t advance this season (Release to resume)' : '原地駐守,本季不前進(可「解除」續行)' }
           : remaining <= 1

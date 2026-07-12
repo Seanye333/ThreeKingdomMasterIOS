@@ -438,6 +438,12 @@ interface GameStore extends GameState {
   /** 避戰迂迴 — toggle a moving column's evade stance (slip contacts instead
    *  of fighting; claims no territory while evading). */
   setArmyEvade: (armyId: EntityId) => { ok: boolean; reason?: string };
+  /** 追擊 — set a column to hunt an enemy ROUT: it re-aims at the quarry
+   *  every season until it dies or reaches shelter. */
+  pursueRout: (armyId: EntityId, targetArmyId: EntityId) => { ok: boolean; reason?: string };
+  /** 候期 — hold an in-transit column in place one more season (兩路合擊;
+   *  stacks to 3). */
+  delayMarch: (armyId: EntityId) => { ok: boolean; reason?: string };
   /** 設伏 — toggle a HOLDING army into ambush stance (needs cover at its
    *  cell). Hidden from the enemy map view; springs harder on contact. */
   setArmyAmbush: (armyId: EntityId) => { ok: boolean; reason?: string };
@@ -1718,11 +1724,11 @@ export const useGameStore = create<GameStore>()(
         set({
           pendingCommands: {
             ...state.pendingCommands,
-            [armyId]: { ...cmd, targetCityId: newTargetId, totalSeasons: total, seasonsRemaining: remaining, holding: false },
+            [armyId]: { ...cmd, targetCityId: newTargetId, totalSeasons: total, seasonsRemaining: remaining, holding: false, pursueTargetId: undefined, fleeX: undefined, fleeY: undefined, waitSeasons: undefined },
           },
           armies: {
             ...state.armies,
-            [armyId]: { ...army, targetCityId: newTargetId, totalSeasons: total, holding: false },
+            [armyId]: { ...army, targetCityId: newTargetId, totalSeasons: total, holding: false, pursueTargetId: undefined, fleeX: undefined, fleeY: undefined, waitSeasons: undefined },
           },
         });
         return true;
@@ -1750,11 +1756,11 @@ export const useGameStore = create<GameStore>()(
         set({
           pendingCommands: {
             ...state.pendingCommands,
-            [armyId]: { ...cmd, targetX: x, targetY: y, totalSeasons: total, seasonsRemaining: remaining, holding: false },
+            [armyId]: { ...cmd, targetX: x, targetY: y, totalSeasons: total, seasonsRemaining: remaining, holding: false, pursueTargetId: undefined, fleeX: undefined, fleeY: undefined, waitSeasons: undefined },
           },
           armies: {
             ...state.armies,
-            [armyId]: { ...army, totalSeasons: total, holding: false, cellTarget: true },
+            [armyId]: { ...army, totalSeasons: total, holding: false, cellTarget: true, pursueTargetId: undefined, fleeX: undefined, fleeY: undefined, waitSeasons: undefined },
           },
           // 日流中改道 — the order is taken NOW; the column swings onto the
           // new road from the next tick of the sim. Say so plainly.
@@ -1790,8 +1796,8 @@ export const useGameStore = create<GameStore>()(
         if (cmd.routed) return false; // 潰軍無令 — a rout cannot dig in
         const next = !army.holding;
         set({
-          pendingCommands: { ...state.pendingCommands, [armyId]: { ...cmd, holding: next, ambush: next ? cmd.ambush : undefined, besieging: next ? cmd.besieging : undefined, evading: next ? undefined : cmd.evading } },
-          armies: { ...state.armies, [armyId]: { ...army, holding: next, ambush: next ? army.ambush : undefined, besieging: next ? army.besieging : undefined, evading: next ? undefined : army.evading } },
+          pendingCommands: { ...state.pendingCommands, [armyId]: { ...cmd, holding: next, ambush: next ? cmd.ambush : undefined, besieging: next ? cmd.besieging : undefined, evading: next ? undefined : cmd.evading, pursueTargetId: undefined, waitSeasons: undefined } },
+          armies: { ...state.armies, [armyId]: { ...army, holding: next, ambush: next ? army.ambush : undefined, besieging: next ? army.besieging : undefined, evading: next ? undefined : army.evading, pursueTargetId: undefined, waitSeasons: undefined } },
         });
         // 軍師點撥 — the moment a camp goes down is when 圍城/設伏 first matter.
         if (next && state.playerForceId) {
@@ -1810,6 +1816,66 @@ export const useGameStore = create<GameStore>()(
           }
         }
         return true;
+      },
+
+      pursueRout: (armyId, targetArmyId) => {
+        const state = get();
+        const cmd = state.pendingCommands[armyId];
+        const army = state.armies[armyId];
+        if (!cmd || cmd.type !== 'march' || !army) return { ok: false, reason: 'no such army' };
+        if (army.forceId !== state.playerForceId) return { ok: false, reason: 'not yours' };
+        if (cmd.routed) return { ok: false, reason: '潰軍無令' };
+        const quarryCmd = state.pendingCommands[targetArmyId];
+        const quarry = state.armies[targetArmyId];
+        if (!quarry || !quarryCmd || quarryCmd.type !== 'march' || !quarryCmd.routed) return { ok: false, reason: '目標並非潰軍' };
+        if (!quarry.forceId || quarry.forceId === state.playerForceId
+          || !isHostilePermitted(state.diplomacy, state.playerForceId, quarry.forceId)) return { ok: false, reason: 'not an enemy rout' };
+        // Anchor the chase at our own boots; aim at the quarry's current spot
+        // (the season pass re-aims one step ahead every turn thereafter).
+        const dur = Math.hypot(quarry.x - army.x, quarry.y - army.y) < 100 * WORLD_SCALE ? 1 : 2;
+        set({
+          pendingCommands: {
+            ...state.pendingCommands,
+            [armyId]: {
+              ...cmd, pursueTargetId: targetArmyId, fleeX: army.x, fleeY: army.y,
+              targetX: quarry.x, targetY: quarry.y, totalSeasons: dur, seasonsRemaining: dur,
+              holding: false, ambush: undefined, besieging: undefined, evading: undefined, waitSeasons: undefined,
+            },
+          },
+          armies: {
+            ...state.armies,
+            [armyId]: { ...army, pursueTargetId: targetArmyId, fleeX: army.x, fleeY: army.y, totalSeasons: dur, holding: false, ambush: undefined, besieging: undefined, evading: undefined, cellTarget: true },
+          },
+        });
+        playSfx('march');
+        const cmdr = state.officers[army.commanderId];
+        const prey = state.officers[quarry.commanderId];
+        get().notify(
+          `⚔ 追擊 · ${cmdr?.name.zh ?? '縱隊'}咬住${prey?.name.zh ?? '敵'}之潰軍 — 每旬自動追瞄,追上即掩殺`,
+          `Pursuit · ${cmdr?.name.en ?? 'column'} hounds ${prey?.name.en ?? 'the'} rout — re-aims each season, cuts it down on contact`,
+        );
+        return { ok: true };
+      },
+
+      delayMarch: (armyId) => {
+        const state = get();
+        const cmd = state.pendingCommands[armyId];
+        const army = state.armies[armyId];
+        if (!cmd || cmd.type !== 'march' || !army) return { ok: false, reason: 'no such army' };
+        if (army.forceId !== state.playerForceId) return { ok: false, reason: 'not yours' };
+        if (cmd.routed) return { ok: false, reason: '潰軍無令' };
+        if (cmd.holding) return { ok: false, reason: '紮營之軍本已駐止' };
+        const cur = cmd.waitSeasons ?? 0;
+        if (cur >= 3) return { ok: false, reason: '至多候期三旬' };
+        set({
+          pendingCommands: { ...state.pendingCommands, [armyId]: { ...cmd, waitSeasons: cur + 1 } },
+          armies: { ...state.armies, [armyId]: { ...army, waitSeasons: cur + 1 } },
+        });
+        get().notify(
+          `⏳ 候期 · ${state.officers[army.commanderId]?.name.zh ?? '縱隊'}原地待命 ${cur + 1} 旬後再進(兩路合擊用)`,
+          `Hold · the column marks time ${cur + 1} season(s) before advancing (sync a pincer)`,
+        );
+        return { ok: true };
       },
 
       setArmyEvade: (armyId) => {
@@ -2441,10 +2507,39 @@ export const useGameStore = create<GameStore>()(
         });
         const paceTag = pace !== 'normal' && !isNaval ? `·${PACE_LABEL[pace].zh}` : '';
         const paceTagEn = pace !== 'normal' && !isNaval ? ` · ${PACE_LABEL[pace].en}` : '';
+        // 行前預告 — the cost of the road, before the column steps off:
+        // expected campaign fatigue, and a winter/mountain warning when the
+        // leg crosses both (苦寒折兵+雪封風險).
+        const fatigueEst = isNaval ? 0 : dur * (pace === 'forced' ? 14 : pace === 'cautious' ? 4 : 8);
+        const fatTag = fatigueEst >= 16 ? `,預疲 +${fatigueEst}` : '';
+        const fatTagEn = fatigueEst >= 16 ? `, ~+${fatigueEst} fatigue` : '';
         get().notify(
-          `出兵${paceTag} · ${officer.name.zh} 領 ${troops.toLocaleString()} 兵 → ${target.name.zh}（${dur}季抵達）`,
-          `March${paceTagEn} · ${officer.name.en} leads ${troops.toLocaleString()} → ${target.name.en} (${dur} seasons)`,
+          `出兵${paceTag} · ${officer.name.zh} 領 ${troops.toLocaleString()} 兵 → ${target.name.zh}（${dur}季抵達${fatTag}）`,
+          `March${paceTagEn} · ${officer.name.en} leads ${troops.toLocaleString()} → ${target.name.en} (${dur} seasons${fatTagEn})`,
         );
+        if (!isNaval) {
+          const SEASON_ORDER = ['spring', 'summer', 'autumn', 'winter'] as const;
+          const si = SEASON_ORDER.indexOf(state.date.season);
+          const crossesWinter = Array.from({ length: dur }, (_, k) => SEASON_ORDER[(si + k) % 4]).includes('winter');
+          if (crossesWinter) {
+            const sp2 = cityPos(source);
+            const tp2 = cityPos(target);
+            let mountainLeg = false;
+            for (let i = 1; i <= 9 && !mountainLeg; i++) {
+              const tt = i / 10;
+              if (terrainMarchCost(sp2.x + (tp2.x - sp2.x) * tt, sp2.y + (tp2.y - sp2.y) * tt) >= 0.55) mountainLeg = true;
+            }
+            get().notify(
+              mountainLeg
+                ? `❄ 此程跨冬且翻山 — 苦寒折兵 3%/季,深山每季五成大雪封山(河冰可渡為其利)`
+                : `❄ 此程跨冬 — 苦寒折兵 3%/季(緩進減半;河冰可渡為其利)`,
+              mountainLeg
+                ? `Winter leg over mountains — 3%/season frost toll, 50%/season snowed-in risk in the passes (frozen rivers do open)`
+                : `Winter leg — 3%/season frost toll (halved at cautious pace; frozen rivers do open)`,
+              'warn',
+            );
+          }
+        }
         if (hostageSlain) {
           get().notify(
             `質子之殤 · ${hostageSlain.name.zh} 質於 ${target.name.zh},今興兵背盟,身死他鄉`,
@@ -2490,6 +2585,7 @@ export const useGameStore = create<GameStore>()(
         const recalled: MarchCommand = {
           ...cmd, targetCityId: cmd.cityId, targetX: undefined, targetY: undefined,
           troops, totalSeasons: returnDur, seasonsRemaining: returnDur, holding: false, returning: true,
+          pursueTargetId: undefined, fleeX: undefined, fleeY: undefined, waitSeasons: undefined,
         };
         const army = state.armies[officerId];
         set({
@@ -8170,6 +8266,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             seasonsPlayed: (state.campaignStats.seasonsPlayed ?? 0) + 1,
             fieldClashesWon: (state.campaignStats.fieldClashesWon ?? 0) + (result.playerFieldClashesWon ?? 0),
             enemyColumnsStarved: (state.campaignStats.enemyColumnsStarved ?? 0) + (result.enemyColumnsStarved ?? 0),
+            routsHunted: (state.campaignStats.routsHunted ?? 0) + (result.playerRoutsHunted ?? 0),
+            troopsAbsorbed: (state.campaignStats.troopsAbsorbed ?? 0) + (result.playerTroopsAbsorbed ?? 0),
           },
           lostItems: result.lostItems,
           diplomacy: (() => {

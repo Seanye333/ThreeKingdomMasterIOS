@@ -46,9 +46,13 @@ export interface Army {
   returning?: boolean;
   /** 潰走 — beaten in the field, fleeing to shelter (see MarchCommand.routed). */
   routed?: boolean;
-  /** 潰走起點 — the defeat site the flee route starts from. */
+  /** 途中錨點 — flight/pursuit leg start (see MarchCommand.fleeX). */
   fleeX?: number;
   fleeY?: number;
+  /** 追擊 — hunting this enemy rout (see MarchCommand.pursueTargetId). */
+  pursueTargetId?: EntityId;
+  /** 候期 — seasons still holding in place before advancing. */
+  waitSeasons?: number;
   /** 都督之旗 — opening-morale bonus a legion column carries (§4.3). */
   legionBanner?: number;
 }

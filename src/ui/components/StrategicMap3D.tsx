@@ -270,10 +270,13 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
       return;
     }
     if (officerId === selectedArmyId3D) { selectArmy(null); return; }
-    // Friendly column → rendezvous and merge; enemy → ride out and engage.
+    // Friendly column → rendezvous and merge; enemy ROUT → hound it down
+    // (掩殺 on contact); other enemy → ride out and engage.
     if (clicked.forceId === playerForceId) {
       if (mergeArmyInto(selectedArmyId3D, officerId)) selectArmy(null);
       else selectArmy(officerId);
+    } else if (clicked.routed) {
+      if (useGameStore.getState().pursueRout(selectedArmyId3D, officerId).ok) selectArmy(null);
     } else {
       if (startFieldBattle(selectedArmyId3D, officerId)) selectArmy(null);
     }

@@ -208,6 +208,66 @@ describe('冬季行軍 — cold, snowed passes, freezing siege lines', () => {
   });
 });
 
+describe('追擊與候期 — hounding routs and marking time', () => {
+  it('a pursuer catches the rout it was set on — hunt counted in the output', () => {
+    const { cities } = fixtures();
+    const lp = cityPos(cities['luoyang'] as never);
+    const ap = cityPos(cities['changan'] as never);
+    const road = terrainRoute(lp.x, lp.y, ap.x, ap.y);
+    const fleeAt = positionAlongRoute(road, 0.55);
+    const behind = positionAlongRoute(road, 0.45);
+    const out = resolveSeason(baseInput(cities, {
+      runner: mkOfficer('runner', 'foe'), hunter: mkOfficer('hunter', 'me'),
+    }, {
+      runner: {
+        type: 'march', cityId: 'changan', targetCityId: 'changan', officerId: 'runner',
+        troops: 600, routed: true, returning: true, fleeX: fleeAt.x, fleeY: fleeAt.y,
+        totalSeasons: 2, seasonsRemaining: 2, food: 50000,
+      },
+      hunter: {
+        type: 'march', cityId: 'luoyang', targetCityId: 'luoyang', officerId: 'hunter',
+        troops: 6000, pursueTargetId: 'runner', fleeX: behind.x, fleeY: behind.y,
+        targetX: fleeAt.x, targetY: fleeAt.y, totalSeasons: 1, seasonsRemaining: 1,
+      },
+    }, () => 0.0) as never);
+    const strike = out.report.entries.find((e) => e.battle?.routHunt);
+    expect(strike).toBeTruthy();
+    expect(out.playerRoutsHunted).toBe(1);
+    expect(out.playerTroopsAbsorbed).toBe(99); // 30% of 330 cut down
+  });
+
+  it('quarry gone → the chase ends: dig in on the spot, flag cleared', () => {
+    const { cities } = fixtures();
+    const lp = cityPos(cities['luoyang'] as never);
+    const ap = cityPos(cities['changan'] as never);
+    const mid = positionAlongRoute(terrainRoute(lp.x, lp.y, ap.x, ap.y), 0.5);
+    const out = resolveSeason(baseInput(cities, { hunter: mkOfficer('hunter', 'me') }, {
+      hunter: {
+        type: 'march', cityId: 'luoyang', targetCityId: 'luoyang', officerId: 'hunter',
+        troops: 6000, pursueTargetId: 'ghost', fleeX: mid.x, fleeY: mid.y,
+        targetX: mid.x + 30, targetY: mid.y, totalSeasons: 2, seasonsRemaining: 2,
+      },
+    }, () => 0.0) as never);
+    const kept = out.keptCommands?.['hunter'] as { pursueTargetId?: string; holding?: boolean } | undefined;
+    expect(kept?.pursueTargetId).toBeUndefined();
+    expect(kept?.holding).toBe(true);
+    expect(out.report.entries.some((e) => (e.textZh ?? '').includes('追擊已了'))).toBe(true);
+  });
+
+  it('候期 — a waiting column marks time: no advance, counter ticks down', () => {
+    const { cities } = fixtures();
+    const out = resolveSeason(baseInput(cities, { mover: mkOfficer('mover', 'me') }, {
+      mover: {
+        type: 'march', cityId: 'luoyang', targetCityId: 'chengdu', officerId: 'mover',
+        troops: 5000, totalSeasons: 3, seasonsRemaining: 3, waitSeasons: 2,
+      },
+    }, () => 0.0) as never);
+    const kept = out.keptCommands?.['mover'] as { seasonsRemaining?: number; waitSeasons?: number } | undefined;
+    expect(kept?.seasonsRemaining).toBe(3); // marked time — no headway
+    expect(kept?.waitSeasons).toBe(1);
+  });
+});
+
 describe('野戰繳獲 — a field victory strips the loser\'s baggage', () => {
   it('the victor takes grain (into its own train) and coin, named in the report', () => {
     const { cities } = fixtures();

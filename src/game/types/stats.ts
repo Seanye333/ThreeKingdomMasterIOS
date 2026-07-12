@@ -32,6 +32,10 @@ export interface CampaignStats {
   engagementsFought?: number;
   /** 斷糧 — enemy columns bled by a cut supply ribbon. */
   enemyColumnsStarved?: number;
+  /** 追亡逐北 — enemy routs the player's armies/garrisons ran down. */
+  routsHunted?: number;
+  /** 收降 — routed stragglers pressed into the player's service. */
+  troopsAbsorbed?: number;
   /** Total seasons played. */
   seasonsPlayed: number;
   /** Total battles fought. */

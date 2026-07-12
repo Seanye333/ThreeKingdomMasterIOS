@@ -190,6 +190,9 @@ export interface ResolutionOutput {
   /** 戰記 — player field-clash wins / enemy columns starved this season. */
   playerFieldClashesWon?: number;
   enemyColumnsStarved?: number;
+  /** 追亡逐北帳 — routs the player ran down / stragglers pressed into service. */
+  playerRoutsHunted?: number;
+  playerTroopsAbsorbed?: number;
   date: GameDate;
   cities: Record<EntityId, City>;
   officers: Record<EntityId, Officer>;
@@ -334,9 +337,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const src = cities[cmd.cityId];
     const dst = marchDestCoords(cmd, cities);
     if (!src || !dst) return null;
-    // 潰走 — a rout flees from its defeat site to shelter, not along the
-    // road it was issued (its source city may lie the other way entirely).
-    const sp = cmd.routed && cmd.fleeX != null && cmd.fleeY != null
+    // 途中錨點 — a rout flees from its defeat site, a pursuit chases from
+    // its own boots: an anchored march walks anchor→destination.
+    const sp = cmd.fleeX != null && cmd.fleeY != null
       ? { x: cmd.fleeX, y: cmd.fleeY }
       : cityPos(src);
     const route = terrainRoute(sp.x, sp.y, dst.x, dst.y);
@@ -434,6 +437,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   // 戰記 — player field-clash wins + enemy columns starved (returned for stats).
   let playerFieldClashesWon = 0;
   let enemyColumnsStarved = 0;
+  // 追亡逐北帳 — routs the player ran down + stragglers pressed into service.
+  let playerRoutsHunted = 0;
+  let playerTroopsAbsorbed = 0;
   const troopOverride: Record<EntityId, number> = {};
   // Player-involved clashes deferred to an interactive tactical battle (AI
   // 亲征) — the armies are left intact this season and the battle is fought
@@ -446,6 +452,47 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   // DAY order — a column broken on day 3 never makes its day 11 clash.
   // The day-flow playback shares this exact geometry, so the collision the
   // player watched at day 8 is the one resolved here.
+  // ── 追擊咬住 — a pursuing column re-aims at its quarry every season:
+  // anchor the leg at its own boots, aim one step AHEAD along the quarry's
+  // flight. Quarry gone (dead / reached shelter / rallied) → dig in where
+  // the chase ended and await orders.
+  for (const cmd of allMarches) {
+    if (!cmd.pursueTargetId) continue;
+    const me = officers[cmd.officerId];
+    const pos = armyPosition(cmd);
+    const quarry = allMarches.find((m) => m.officerId === cmd.pursueTargetId);
+    if (!quarry || !quarry.routed || !me?.forceId || !pos) {
+      cmd.pursueTargetId = undefined;
+      if (pos) {
+        cmd.holding = true;
+        cmd.targetX = pos.x;
+        cmd.targetY = pos.y;
+        cmd.seasonsRemaining = 1;
+        cmd.totalSeasons = Math.max(1, cmd.totalSeasons ?? 1);
+      }
+      if (me && me.forceId === input.playerForceId) {
+        entries.push({
+          cityId: null, kind: 'note',
+          text: `${me.name.en}'s chase is over — the column digs in where it stands and awaits orders.`,
+          textZh: `${me.name.zh}之追擊已了 — 就地紮營,聽候軍令。`,
+        });
+      }
+      continue;
+    }
+    const qNow = armyPosition(quarry);
+    if (!qNow) continue;
+    const qNext = armyPosition({ ...quarry, seasonsRemaining: Math.max(0, (quarry.seasonsRemaining ?? 1) - 1) }) ?? qNow;
+    cmd.fleeX = pos.x;
+    cmd.fleeY = pos.y;
+    cmd.targetX = qNext.x;
+    cmd.targetY = qNext.y;
+    const chaseDist = Math.hypot(qNext.x - pos.x, qNext.y - pos.y);
+    const chaseDur = chaseDist < 100 * WORLD_SCALE ? 1 : 2;
+    cmd.totalSeasons = chaseDur;
+    cmd.seasonsRemaining = chaseDur;
+    cmd.holding = false;
+  }
+
   const dayContacts = computeDayEncounters(allMarches, officers, cities, input.diplomacy);
   // 已親征之遭遇 — the player fought this pair mid-flow (真日級親征);
   // its verdict is already written back, so the commit must not re-roll it.
@@ -514,7 +561,11 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         const routCmdr = officers[routCmd.officerId];
         const hName = hunterCmdr?.name ?? { en: '?', zh: '？' };
         const rName = routCmdr?.name ?? { en: '?', zh: '？' };
-        if (input.playerForceId && hunterCmdr?.forceId === input.playerForceId) playerFieldClashesWon++;
+        if (input.playerForceId && hunterCmdr?.forceId === input.playerForceId) {
+          playerFieldClashesWon++;
+          playerRoutsHunted++;
+          playerTroopsAbsorbed += absorbed;
+        }
         const hStats = fieldStats(hunter);
         const rStats = fieldStats(routCmd);
         fieldBattleMarks.push({
@@ -911,7 +962,11 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         troopOverride[a.officerId] = remaining;
         a.troops = remaining;
       }
-      if (input.playerForceId && leader.forceId === input.playerForceId) playerFieldClashesWon++;
+      if (input.playerForceId && leader.forceId === input.playerForceId) {
+        playerFieldClashesWon++;
+        playerRoutsHunted++;
+        playerTroopsAbsorbed += absorbed;
+      }
       const rgZh = rearGuard ? `${rearGuard.name.zh}死戰斷後,` : '';
       const capZh = capturedNames.length > 0 ? `,擒${capturedNames.join('、')}` : '';
       entries.push({
@@ -1515,7 +1570,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     suppliedTroops[cmd.officerId] = troopsAfter;
     suppliedFood[cmd.officerId] = s.food;
     // 防壁 — a barricade in the column's path stalls it this season (no advance).
-    let advance = blockedOfficers.has(cmd.officerId) ? 0 : 1;
+    // 候期 — a column ordered to wait marks time in place (兩路合擊).
+    let advance = blockedOfficers.has(cmd.officerId) || (cmd.waitSeasons ?? 0) > 0 ? 0 : 1;
+    if ((cmd.waitSeasons ?? 0) > 0) cmd.waitSeasons = (cmd.waitSeasons ?? 0) - 1 || undefined;
     // 大雪封山 — a winter column deep in the mountains may be snowed in for
     // the season (the frozen rivers that OPEN in winter are the trade-off).
     if (advance === 1 && input.date.season === 'winter' && !cmd.routed) {
@@ -1610,6 +1667,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       fleeY: cmd.fleeY,
       evading: cmd.evading,
       fatigue: cmd.fatigue,
+      pursueTargetId: cmd.pursueTargetId,
+      waitSeasons: cmd.waitSeasons,
       legionBanner: cmd.legionBanner,
     };
   };
@@ -3683,6 +3742,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     struckCityIds: struckCityIdsOut.length > 0 ? struckCityIdsOut : undefined,
     playerFieldClashesWon: playerFieldClashesWon || undefined,
     enemyColumnsStarved: enemyColumnsStarved || undefined,
+    playerRoutsHunted: playerRoutsHunted || undefined,
+    playerTroopsAbsorbed: playerTroopsAbsorbed || undefined,
   };
 }
 

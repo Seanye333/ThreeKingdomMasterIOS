@@ -40,12 +40,13 @@ export interface MarchGeom {
   fleeY?: number;
 }
 
-/** 潰走之路 — a routed column flees from its defeat site to shelter, not
- *  along the source→target road; a normal column walks its issued route. */
+/** 途中錨點 — a rout flees from its defeat site, a pursuit chases from its
+ *  own boots: any march with a flee anchor walks anchor→destination instead
+ *  of the source-city road. */
 function marchRoute(cmd: MarchGeom, cities: CitiesLike): Array<{ x: number; y: number }> | null {
   const dst = marchDestCoords(cmd, cities);
   if (!dst) return null;
-  if (cmd.routed && cmd.fleeX != null && cmd.fleeY != null) {
+  if (cmd.fleeX != null && cmd.fleeY != null) {
     return terrainRoute(cmd.fleeX, cmd.fleeY, dst.x, dst.y);
   }
   const src = cities[cmd.cityId];
