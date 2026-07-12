@@ -321,6 +321,7 @@ import { fortMaxHpForLevel, FACILITY_DEFS, type FacilityKind } from '../types';
 import { awardBattleXp, grantXp, applyBreakthrough, canBreakthrough, breakthroughCost, breakthroughIronCost, defaultLatent, STAT_CAP } from '../systems/growth';
 import type { BreakthroughPath } from '../systems/growth';
 import { officerGrade, gradeRank, gradeMeta } from '../systems/officerGrade';
+import { combatBP } from '../systems/battlePower';
 import { tickBuildings } from '../systems/buildings';
 import { tickBuildingEvents } from '../systems/buildingEvents';
 import { evaluateCoalition } from '../systems/coalition';
@@ -1216,6 +1217,8 @@ interface GameStore extends GameState {
   performImperialRite: () => { ok: boolean; message: string };
   /** §8.5 祈雨 — in a drought season, pray for rain (politics-led). */
   prayForRain: () => { ok: boolean; success?: boolean; message: string };
+  /** 得將開卡 — show/clear the card-reveal flourish for an officer. */
+  setCardReveal: (officerId: EntityId | null) => void;
   /** 日流 — playback controls for the day-by-day turn flow. */
   beginDayFlow: () => void;
   setDayFlowFollow: (on: boolean) => void;
@@ -8457,6 +8460,25 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           })(),
         });
 
+        // 得將開卡 — a gold-or-better name that newly entered the player's
+        // service this season (歸化/薦才/來投/俘降…) gets the card-flip
+        // flourish. One per season — the strongest newcomer takes the stage.
+        {
+          const after = get();
+          if (after.playerForceId && !after.cardReveal && after.victoryStatus === 'playing') {
+            let best: { id: EntityId; bp: number } | null = null;
+            for (const o of Object.values(after.officers)) {
+              if (o.forceId !== after.playerForceId || o.status === 'dead') continue;
+              const prev = state.officers[o.id];
+              if (prev && prev.forceId === after.playerForceId) continue;
+              if (gradeRank(officerGrade(o).grade) < gradeRank('gold')) continue;
+              const bp = combatBP(o).bp;
+              if (!best || bp > best.bp) best = { id: o.id, bp };
+            }
+            if (best) set({ cardReveal: best.id });
+          }
+        }
+
         // 新時刻音效 — the season's dramatic beats get their stingers.
         {
           const zhAll = result.report.entries.map((e) => e.textZh ?? '').join('|');
@@ -8802,6 +8824,11 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
           updates.officers = { ...state.officers, [officerId]: recruited };
           delete nextRecruitState[officerId];
+          // 得將開卡 — a gold-or-better talent answering the call earns the
+          // full card-flip flourish on top of the plain popup.
+          if (gradeRank(officerGrade(recruited).grade) >= gradeRank('gold')) {
+            updates.cardReveal = officerId;
+          }
           updates.popupQueue = [...state.popupQueue, {
             key: 'officer-recruited',
             media: 'image',
@@ -10929,6 +10956,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (persist) { try { localStorage.setItem('tkm-flow-speed', String(speed)); } catch { /* headless */ } }
       },
       dayFlowSkip: () => set({ dayFlow: null }),
+      setCardReveal: (officerId) => set({ cardReveal: officerId }),
       engageEncounter: () => {
         const state = get();
         const df = state.dayFlow;
@@ -15737,6 +15765,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           spottedAmbushIds: loaded.spottedAmbushIds ?? [],
           streetEncounters: loaded.streetEncounters ?? {},
           pendingConquestPolicy: null,
+          cardReveal: null,
           dayFlow: null,
           dayFlowFollow: loaded.dayFlowFollow ?? false,
           foughtPairs: null,

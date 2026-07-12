@@ -11,6 +11,7 @@ import { honorificById } from '../../game/data/honorifics';
 import { OATH_BONDS, isFeudKind } from '../../game/data/bonds';
 import { OFFICER_RELATIONSHIPS } from '../../game/data/relationships';
 import { deriveTactics, TACTIC_COMBOS } from '../../game/data/officerAttributes';
+import { exportOfficerCardPNG } from './officerCardExport';
 import { useT, useLanguage, pickName } from '../i18n';
 
 /**
@@ -47,7 +48,9 @@ function frameStyle(grade: string): { wrap: React.CSSProperties; sheen: boolean;
   }
 }
 
-export function OfficerCardModal({ officer, onClose }: { officer: Officer; onClose: () => void }) {
+/** The frame + face alone (no modal shell) — reused by the modal, the
+ *  reveal flourish and the PNG exporter. */
+export function OfficerCardFace({ officer, onClose }: { officer: Officer; onClose?: () => void }) {
   const t = useT();
   const lang = useLanguage();
   const year = useGameStore((s) => s.date.year);
@@ -99,15 +102,7 @@ export function OfficerCardModal({ officer, onClose }: { officer: Officer; onClo
   const stars = (officer as { stars?: number }).stars ?? 0;
 
   return (
-    <Modal
-      onClose={onClose}
-      width="min(400px, 94vw)"
-      padding="0"
-      zIndex={1200}
-      ariaLabel={t('武將卡', 'Officer card')}
-      frameStyle={{ background: 'transparent', border: 'none', boxShadow: 'none', overflow: 'visible' }}
-      hideClose
-    >
+    <>
       <style>{`
         @keyframes tkmCardSheen { 0% { transform: translateX(-130%) skewX(-18deg); } 55% { transform: translateX(230%) skewX(-18deg); } 100% { transform: translateX(230%) skewX(-18deg); } }
         @keyframes tkmCardConic { to { transform: rotate(1turn); } }
@@ -266,13 +261,39 @@ export function OfficerCardModal({ officer, onClose }: { officer: Officer; onClo
             )}
           </div>
         </div>
-        {/* Close — kept inside the frame so the chromeless card stays clean. */}
+        {/* 存圖 — canvas-render the card and save it as a PNG keepsake. */}
         <button
-          onClick={onClose}
-          aria-label={t('關閉', 'Close')}
-          style={{ position: 'absolute', top: 6, right: 6, zIndex: 3, width: 26, height: 26, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(10,14,20,0.72)', color: '#cfd8e0', cursor: 'pointer', fontSize: '0.85rem', lineHeight: 1 }}
-        >×</button>
+          onClick={(e) => { e.stopPropagation(); void exportOfficerCardPNG(officer, lang); }}
+          aria-label={t('存圖', 'Save as image')}
+          title={t('存圖(PNG)', 'Save card as PNG')}
+          style={{ position: 'absolute', top: 6, right: onClose ? 38 : 6, zIndex: 3, width: 26, height: 26, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(10,14,20,0.72)', color: '#cfd8e0', cursor: 'pointer', fontSize: '0.85rem', lineHeight: 1 }}
+        >⤓</button>
+        {/* Close — kept inside the frame so the chromeless card stays clean. */}
+        {onClose && (
+          <button
+            onClick={onClose}
+            aria-label={t('關閉', 'Close')}
+            style={{ position: 'absolute', top: 6, right: 6, zIndex: 3, width: 26, height: 26, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(10,14,20,0.72)', color: '#cfd8e0', cursor: 'pointer', fontSize: '0.85rem', lineHeight: 1 }}
+          >×</button>
+        )}
       </div>
+    </>
+  );
+}
+
+export function OfficerCardModal({ officer, onClose }: { officer: Officer; onClose: () => void }) {
+  const t = useT();
+  return (
+    <Modal
+      onClose={onClose}
+      width="min(400px, 94vw)"
+      padding="0"
+      zIndex={1200}
+      ariaLabel={t('武將卡', 'Officer card')}
+      frameStyle={{ background: 'transparent', border: 'none', boxShadow: 'none', overflow: 'visible' }}
+      hideClose
+    >
+      <OfficerCardFace officer={officer} onClose={onClose} />
     </Modal>
   );
 }

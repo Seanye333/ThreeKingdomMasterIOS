@@ -12,7 +12,7 @@
 |---|---|---|---|
 | 速 | [速查總表 Quick Reference](#速查總表-quick-reference) | 一頁掃完所有關鍵常數 / 公式 / 成本 / 機率 | ✅ |
 | 1 | [城市・內政・經濟](#第一章-城市內政經濟) | citySize, economy, commands, civicEvents, market(行情/榷場/馬市/鐵市), buildings(含戰損修繕), cityCivic(民情街景/城中人物/晝夜/街頭際遇/官邸家眷), autoBuild, policyEffects, forging, specialties, specialtyEvents, tradeRoutes, convoy | ✅ |
-| 2 | [武將・成長・家族](#第二章-武將成長家族) | growth, officerGrade, gradeCombat, officerFate, traitEffects, personality, biography, posthumous, aging, officerGen, family, clans, retinues, wishes, rapport, friction, relationshipEffects, career, codex, peerage, honorifics | ✅ |
+| 2 | [武將・成長・家族](#第二章-武將成長家族) | growth, officerGrade, gradeCombat, officerFate, traitEffects, personality, biography, posthumous, aging, officerGen, family, clans, retinues, wishes, rapport, friction, relationshipEffects, career, codex, peerage, honorifics, battlePower(武將卡/開卡) | ✅ |
 | 3 | [人才・招攬・舌戰](#第三章-人才招攬舌戰) | commands(search), officerFate, recommendation, commonerTalent, appraisal(月旦評), scenicSites(三顧), captiveFate(處決後果/AI處置), aiRansom, debate, wordWar, persuasion(說客) | ✅ |
 | 4 | [軍事指揮・委任](#第四章-軍事指揮委任) | muster, legion(都督之斷·長圍), governor, governorEval, advisor, 在途指令(駐守/設伏/圍城/焚橋/燒鎖/補給/分兵/召回), rout(潰軍/掩殺收降/殿軍斷後) | ✅ |
 | 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, tacticalAi, combat, formations, stratagems, weather(區域天候), battlefieldTerrain, worldScars(戰場烙印), fieldworks(築壘), columnReinforcements(會戰), wallTier城郭分層, 入城三選, personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
@@ -44,6 +44,7 @@
 | 瓶頸→頓悟 | 滿級後溢出 XP 注頓悟槽(門檻 600),滿則抬一圍潛能+1 或 30% 習技 | growth |
 | 品階(6 檔) | 鐵→銅→銀→金→白金→鑽石;評分 = 最高圍×0.55 + 均值×0.45 + √威望;面板顯示距下階分數 | officerGrade |
 | 品階招牌 | 金「萬軍辟易」挫敵士氣 −4/−6/−8 · 白金「不動如山」潰陣折損 0.25→0.10 · 鑽石「萬人敵」單挑先手 +8 | gradeCombat |
+| 綜合戰力 BP(武將卡) | 五圍加權(武2.6/統2.2/智2.0/政1.2/魅1.4)+ 品階×120 + 等級×40 + 技×45 + 裝備效果×8 + √威望×10 + 星×80;純展示不入戰鬥 | battlePower |
 | 名將傲氣 | 金牌+ 位卑(階+爵×1.5 < (品階−2)×3)忠誠 −1/季,位極人臣 +1;全勢力對等 | resolution |
 | 揚威·失威 | 被罵死(威望−3·失威3季)/被俘(−2·失威2季);失威期招牌暫失,每季−1漸復 | store, gradeCombat |
 | 品階硬門檻 | 金牌+ 方可治大城/都、領軍團都督、居頂級官職(白金+ 為丞相等) | store, titles |
@@ -1170,6 +1171,15 @@
 - **奪號(revokeHonorific)**:可主動奪去名號(連帶站樁忠誠與戰力特效),代價是該將忠誠下挫(6 + 階×3)並結怨 —— 與爵位之削爵對稱。
 - **分三階**:tier1 常見 → tier3 顯赫,只能往上換(同階授號則挑最契合主題者)。每個名號 UI 標出主題與「宜授」之功(如伏波將軍宜授靖定水路者)。
 - AI 同樣賜名號(aiAppointments):每季擇一名最適格武將、授其**最契合主題**的名號。
+
+### 2.13 武將卡・綜合戰力・開卡演出(battlePower.ts / OfficerCardModal.tsx / CardRevealModal.tsx)
+
+把 1,600+ 張全身立繪搬上主舞台的**卡牌化呈現層** —— 純展示,不改任何戰鬥數值:
+
+- **綜合戰力 BP(`combatBP`)**:一張卡一個大數字,透明合成 —— 五圍加權(武 2.6 / 統 2.2 / 智 2.0 / 政 1.2 / 魅 1.4)+ 品階×120 + 等級×40 + 技能×45 + 裝備效果合計×8 + √威望×10 + 星級×80。滑鼠懸停 BP 可見逐項構成。**戰鬥永不讀取 BP**,可為易讀性隨意調權。
+- **武將卡(`OfficerCardFace` / `OfficerCardModal`)**:武將詳情右上「🎴 武將卡」開卡。全身立繪(`portraits/{id}-full.webp` → 方形頭像 → SVG 剪影三級回退)+ **品階邊框**(鐵→鑽石漸豪華:金+ 帶流光掃過,鑽石為旋轉七彩描邊)+ 五圍條 + 技能/裝備膠囊 + **緣分**(義結/宿怨/淵源,同勢力共存者亮綠「❦ 生效」、離散者灰「◌ 未聚」、宿怨紅「⚡」)+ **可成之計**(戰法組合湊齊進度 x/y 與倍率)。
+- **存圖(⤓,`officerCardExport.ts`)**:Canvas 重繪一張乾淨的 800×1240 PNG 下載留念/分享(不截 DOM,規避動畫邊框)。
+- **得將開卡(`CardRevealModal`,transient `cardReveal`)**:**金牌以上**新將入幕時全屏翻卡演出 —— 品階色卡背落下、點擊(或 0.9 秒後自動)翻面亮出武將卡,配勝利音效。兩個觸發:①訪賢/舌戰/厚禮**招攬成功**當場開卡;②季末結算掃描(歸化/薦才/來投/俘降等任何途徑),**每季至多一張**,取 BP 最高的新人;觀戰模式不觸發。Esc/點擊收起。
 
 ---
 

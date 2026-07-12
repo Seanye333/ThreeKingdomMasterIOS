@@ -10,6 +10,7 @@ import { MANDATE_LABEL } from '../../game/systems/mandate';
 import { CityPanel } from '../components/CityPanel';
 import { ActionToasts } from '../components/ActionToasts';
 import { CelebrationPopup } from '../components/CelebrationPopup';
+import { CardRevealModal } from '../components/CardRevealModal';
 import { RelationshipBrowserModal } from '../components/RelationshipBrowserModal';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { SettingsModal } from '../components/SettingsModal';
@@ -1104,6 +1105,8 @@ export function MapScreen() {
       <ActionToasts />
       {/* 慶典彈窗 — celebratory image/video on milestones (升城/遷都…) */}
       <CelebrationPopup />
+      {/* 得將開卡 — gold-or-better newcomers flip in as a trading card */}
+      <CardRevealModal />
       {/* Achievement toast — bottom-right when something just unlocked */}
       {recentAchievementUnlocks.length > 0 && (
         <div

@@ -279,6 +279,9 @@ export interface GameState {
   /** 持續集結 — active standing muster campaigns (player + AI 總動員), each
    *  re-issuing a wave toward its objective every season until it falls. */
   musters: Record<string, import('../systems/muster').MusterCampaign>;
+  /** 得將開卡 — transient: officer id whose card-reveal flourish should play
+   *  (a gold-or-better name newly under the player's banner). Not saved. */
+  cardReveal: EntityId | null;
   /** 日流 — turn playback: after 進行, the half-month plays out day by day
    *  (armies step cell-to-cell); pausable/speedable. Transient, not saved. */
   dayFlow: {
@@ -795,6 +798,7 @@ export const EMPTY_STATE: GameState = {
   scenicLooted: {},
   scenicVisits: {},
   musters: {},
+  cardReveal: null,
   dayFlow: null,
   dayFlowFollow: false,
   foughtPairs: null,
@@ -1207,6 +1211,7 @@ export function loadScenario(
     ),
     sites: buildInitialSites(),
     scenicLooted: {},
+    cardReveal: null,
     dayFlow: null,
   dayFlowFollow: false,
   foughtPairs: null,
