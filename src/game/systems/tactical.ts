@@ -319,6 +319,12 @@ export function forecastAttack(
     fromRear = (attacker.coord.col - target.coord.col) * tf < 0;
     flankMul = fromRear ? 1.25 : 1.0;
   }
+  // 槍陣如林 — mirror attackUnits: no cavalry flank/rear bonus on a braced spear line.
+  if (flankMul > 1.0 && attacker.unitType === 'cavalry' && target.unitType === 'spearmen'
+    && !isRouting(target) && !target.effects.some((e) => e.kind === 'disorder' || e.kind === 'confused')) {
+    fromRear = false;
+    flankMul = 1.0;
+  }
   const ELEV: Partial<Record<TerrainKind, number>> = { mountain: 2, watchtower: 2, hill: 1 };
   const heightMul = (ELEV[aTerr] ?? 0) > (ELEV[dTerr] ?? 0) ? 1.15 : (ELEV[aTerr] ?? 0) < (ELEV[dTerr] ?? 0) ? 0.92 : 1;
   const pincers = b.units.filter((u) => u.side === attacker.side && u.id !== attacker.id && u.troops > 0 && hexDistance(u.coord, target.coord) === 1).length;
@@ -753,6 +759,47 @@ export function moveUnit(
         damagePopups: [...(next.damagePopups ?? []), { id: `flood-${Date.now()}`, coord: to, text: '決堤!', color: '#3a9ad0', spawnedAt: Date.now() }],
         log: [...(next.log ?? []), { turn: next.turn, text: '決堤!漢水滔滔,下游盡成澤國 — 水淹七軍!', kind: 'event' as const }],
       };
+    }
+  }
+  // 槍林戒備 — cavalry that rides INTO the reach of a standing enemy
+  // spearman takes a thrust as it passes (once per spearman per turn).
+  // This is the POSITIONAL counter to shock cavalry weaving around a pike
+  // line — the §5.1 balance passes proved damage constants never bit,
+  // because cavalry's edge was mobility, not numbers. Now the mobility
+  // itself is taxed: every hex ridden past braced pikes costs blood.
+  if (unit.unitType === 'cavalry') {
+    const mover = next.units.find((u) => u.id === unitId);
+    if (mover && mover.troops > 0) {
+      let cds = next.stratagemCooldowns;
+      let units = next.units;
+      let struck = 0;
+      for (const sp of next.units) {
+        if (sp.side === unit.side || sp.unitType !== 'spearmen' || sp.troops <= 0 || isRouting(sp)) continue;
+        if (hexDistance(sp.coord, to) !== 1) continue;
+        const reactKey = `spear-react-${sp.id}`;
+        if ((cds[reactKey] ?? -1) >= next.turn) continue;
+        cds = { ...cds, [reactKey]: next.turn };
+        const cur = units.find((u) => u.id === unitId);
+        if (!cur) break;
+        // 亂刺難竟全功 — the thrust bleeds hard but never kills outright; it
+        // also BREAKS the rider's built-up charge (挫其鋒 — you don't carry
+        // momentum through a hedge of points).
+        const dealt = Math.min(Math.max(1, Math.floor(sp.troops * 0.12)), Math.max(0, cur.troops - 1));
+        if (dealt <= 0) continue;
+        units = units.map((u) => (u.id === unitId ? { ...u, troops: u.troops - dealt, morale: Math.max(0, u.morale - 4), charge: { from: to, dist: 0 } } : u));
+        struck += dealt;
+      }
+      if (struck > 0) {
+        next = {
+          ...next,
+          units,
+          stratagemCooldowns: cds,
+          damagePopups: [...(next.damagePopups ?? []), { id: `spear-react-${unitId}-${next.turn}`, coord: to, text: `−${struck}`, color: '#c8d8f0', spawnedAt: Date.now() }],
+          log: [...(next.log ?? []), { turn: next.turn, text: `槍林戒備!鐵騎掠陣,遭槍矛攢刺(−${struck})。`, textEn: `Braced pikes! The riders bleed ${struck} forcing past the spear wall.`, kind: 'event' as const }],
+        };
+      } else if (cds !== next.stratagemCooldowns) {
+        next = { ...next, stratagemCooldowns: cds };
+      }
     }
   }
   return next;
@@ -1422,6 +1469,16 @@ export function attackUnits(
   // 陣形方位 — the names finally mean their shapes (scaled by 陣勢): an all-round
   // 方圓/四象/偃月 seals its flanks; a long 長蛇/鋒矢/錐行 line is thin on the side;
   // an enveloping 鶴翼/雁行 attacker turns a flank harder. Folds into the §5.1 側背.
+  // 槍陣如林 — a standing spear hedge has no naked flank to a HORSEMAN: the
+  // points swing to meet the ride, so cavalry gets no flank/rear bonus on a
+  // braced (non-routing, ordered) spear unit. This is the positional counter
+  // the §5.1 balance passes called for — cavalry's edge vs spears was riding
+  // round the line, not out-fighting it.
+  if (flankMul > 1.0 && attacker.unitType === 'cavalry' && target.unitType === 'spearmen'
+    && !isRouting(target) && !target.effects.some((e) => e.kind === 'disorder' || e.kind === 'confused')) {
+    fromRear = false;
+    flankMul = 1.0;
+  }
   if (flankMul > 1.0) {
     const excess = flankMul - 1;
     let mod = 1.0;
