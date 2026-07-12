@@ -457,6 +457,33 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   // DAY order — a column broken on day 3 never makes its day 11 clash.
   // The day-flow playback shares this exact geometry, so the collision the
   // player watched at day 8 is the one resolved here.
+  // ── AI 逐北 — an idle-handed AI column (or a delegated legion column,
+  // 都督之斷) that finds an enemy ROUT within reach and outweighs it takes
+  // up the chase on its own — the player is no longer the only hunter.
+  {
+    const routsAfield = allMarches.filter((m) => m.routed);
+    if (routsAfield.length > 0) {
+      for (const cmd of allMarches) {
+        if (cmd.routed || cmd.holding || cmd.returning || cmd.besieging || cmd.pursueTargetId || cmd.evading) continue;
+        const me = officers[cmd.officerId];
+        if (!me?.forceId) continue;
+        const delegated = cmd.legionBanner != null;
+        if (me.forceId === input.playerForceId && !delegated) continue; // the player orders their own hunts
+        const pos = armyPosition(cmd);
+        if (!pos) continue;
+        for (const rt of routsAfield) {
+          const ro = officers[rt.officerId];
+          if (!ro?.forceId || !isHostilePermitted(input.diplomacy, me.forceId, ro.forceId)) continue;
+          if (cmd.troops < (troopOverride[rt.officerId] ?? rt.troops)) continue; // only sure kills
+          const rp = armyPosition(rt);
+          if (!rp || Math.hypot(rp.x - pos.x, rp.y - pos.y) > 80 * WORLD_SCALE) continue;
+          cmd.pursueTargetId = rt.officerId;
+          break;
+        }
+      }
+    }
+  }
+
   // ── 追擊咬住 — a pursuing column re-aims at its quarry every season:
   // anchor the leg at its own boots, aim one step AHEAD along the quarry's
   // flight. Quarry gone (dead / reached shelter / rallied) → dig in where

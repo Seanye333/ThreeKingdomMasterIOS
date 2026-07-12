@@ -121,7 +121,7 @@ export function MarchingArmies({ cities, pendingCommands, forces, officers, port
   const lang = useLanguage();
   const armies = useMemo(() => {
     return Object.values(pendingCommands)
-      .filter((cmd): cmd is { cityId: string; type: string; targetCityId: string; troops: number; officerId: string; seasonsRemaining?: number; totalSeasons?: number; targetX?: number; targetY?: number; holding?: boolean; ambush?: boolean; besieging?: string; routed?: boolean; fleeX?: number; fleeY?: number; evading?: boolean } =>
+      .filter((cmd): cmd is { cityId: string; type: string; targetCityId: string; troops: number; officerId: string; seasonsRemaining?: number; totalSeasons?: number; targetX?: number; targetY?: number; holding?: boolean; ambush?: boolean; besieging?: string; routed?: boolean; fleeX?: number; fleeY?: number; evading?: boolean; fatigue?: number; morale?: number } =>
         cmd.type === 'march' && !!cmd.cityId)
       .map((cmd) => {
         const from = cities[cmd.cityId];
@@ -178,6 +178,8 @@ export function MarchingArmies({ cities, pendingCommands, forces, officers, port
           besieging: !!cmd.besieging,
           routed: !!cmd.routed,
           evading: !!cmd.evading,
+          fatigue: cmd.fatigue,
+          morale: cmd.morale,
           ambushRevealed,
           cellTarget: cmd.targetX != null,
         };
@@ -192,7 +194,7 @@ export function MarchingArmies({ cities, pendingCommands, forces, officers, port
           commanderName={a.commanderName} targetName={a.targetName} troops={a.troops}
           seasonsRemaining={a.seasonsRemaining} totalSeasons={a.totalSeasons}
           landRoute={a.landRoute} weaponType={a.weaponType}
-          selected={a.selected} holding={a.holding} ambush={a.ambush} besieging={a.besieging} routed={a.routed} evading={a.evading} ambushRevealed={a.ambushRevealed} cellTarget={a.cellTarget}
+          selected={a.selected} holding={a.holding} ambush={a.ambush} besieging={a.besieging} routed={a.routed} evading={a.evading} fatigue={a.fatigue} morale={a.morale} ambushRevealed={a.ambushRevealed} cellTarget={a.cellTarget}
           ports={ports} onClick={onArmyClick ? () => onArmyClick(a.officerId) : undefined}
           onPressStart={onArmyPressStart ? (e) => onArmyPressStart(a.officerId, e) : undefined} />
       ))}
@@ -206,7 +208,7 @@ const UNIT_TAG: Record<WeaponType, string> = {
   sabre: '刀', sword: '劍', fan: '師', siege: '械', none: '步',
 };
 
-function MarchingArmy({ from, to, color, commanderName, targetName, troops, seasonsRemaining, totalSeasons, landRoute, weaponType, selected, holding, ambush, besieging, routed, evading, ambushRevealed, cellTarget, ports, onClick, onPressStart }: {
+function MarchingArmy({ from, to, color, commanderName, targetName, troops, seasonsRemaining, totalSeasons, landRoute, weaponType, selected, holding, ambush, besieging, routed, evading, fatigue, morale, ambushRevealed, cellTarget, ports, onClick, onPressStart }: {
   from: City; to: City; color: string;
   commanderName: string; targetName: string; troops: number;
   seasonsRemaining: number; totalSeasons: number;
@@ -218,6 +220,8 @@ function MarchingArmy({ from, to, color, commanderName, targetName, troops, seas
   besieging?: boolean;
   routed?: boolean;
   evading?: boolean;
+  fatigue?: number;
+  morale?: number;
   ambushRevealed?: boolean;
   cellTarget: boolean;
   ports: Record<string, import('../../../game/types').Port>;
@@ -358,6 +362,16 @@ function MarchingArmy({ from, to, color, commanderName, targetName, troops, seas
                   ? `${tHover('潰走中 — 無力再戰', 'ROUTING — no fight left')} → ${targetName || '—'}`
                   : `→ ${targetName || (cellTarget ? tHover('野地', 'field') : '—')}${totalSeasons > 1 ? ` · ${seasonsRemaining}/${totalSeasons} ${tHover('季', 'seasons')}` : ''}`}
             </div>
+            {((fatigue ?? 0) >= 24 || (morale != null && Math.abs(morale - 60) >= 8)) && (
+              <div style={{ display: 'flex', gap: 8 }}>
+                {(fatigue ?? 0) >= 24 && (
+                  <span style={{ color: (fatigue ?? 0) >= 64 ? '#ff9a8a' : '#e0b080' }}>{tHover('疲', 'Ftg ')}{fatigue}</span>
+                )}
+                {morale != null && Math.abs(morale - 60) >= 8 && (
+                  <span style={{ color: morale > 60 ? '#9ad6a8' : '#ff9a8a' }}>{tHover('氣', 'Mor ')}{morale}</span>
+                )}
+              </div>
+            )}
           </div>
         </Html>
       )}

@@ -948,7 +948,10 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
         if (!best || tgt.troops < best.target.troops) best = { target: tgt, from };
       }
       if (!best) continue;
-      // Throw the borderers' best uncommitted officers onto the target at once.
+      // Throw the borderers' best uncommitted officers onto the target at
+      // once — 候期對錶: the nearer columns WAIT so every prong arrives the
+      // same season (a true converging blow, not a drip-feed).
+      const prongs: Array<{ c: City; lead: Officer; dur: number }> = [];
       for (const c of best.from) {
         const lead = Object.values(officers)
           .filter((o) => o.forceId === forceId && o.locationCityId === c.id && !o.task
@@ -956,10 +959,15 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
           .sort((a, b) => (b.stats.leadership * 0.6 + b.stats.war * 0.4) - (a.stats.leadership * 0.6 + a.stats.war * 0.4))[0];
         if (!lead) continue;
         const dur = adjustMarchSeasons(marchDurationFor(c, best.target, surgeSeason), 'normal', marchSpeedMul([lead]));
+        prongs.push({ c, lead, dur });
+      }
+      const slowest = Math.max(0, ...prongs.map((p) => p.dur));
+      for (const { c, lead, dur } of prongs) {
         const surgeSend = Math.floor(c.troops * 0.65);
         pendingCommands[lead.id] = {
           type: 'march', cityId: c.id, officerId: lead.id, targetCityId: best.target.id,
           troops: surgeSend, seasonsRemaining: dur, totalSeasons: dur, carried: true,
+          waitSeasons: slowest - dur > 0 ? Math.min(3, slowest - dur) : undefined,
         };
         cities[c.id] = { ...cities[c.id], troops: Math.max(0, cities[c.id].troops - surgeSend) };
         officers[lead.id] = { ...officers[lead.id], task: 'march' };

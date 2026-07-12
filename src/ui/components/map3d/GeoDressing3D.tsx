@@ -300,8 +300,11 @@ export function FactionLabels3D({ cities, forces, officers }: {
 }
 
 /* ─── 行軍預覽 — glowing route while the march picker is open ─────── */
-export function MarchPreviewLine({ fromId, toId, cities }: {
+export function MarchPreviewLine({ fromId, toId, cities, winter }: {
   fromId: string; toId: string; cities: Record<string, City>;
+  /** 冬望 — when the leg would be walked in winter, deep-mountain cells
+   *  show snow-white (雪封風險路段:所見即所險). */
+  winter?: boolean;
 }) {
   const data = useMemo(() => {
     const from = cities[fromId];
@@ -344,12 +347,14 @@ export function MarchPreviewLine({ fromId, toId, cities }: {
         const [wx, wz] = pxToWorld(cc.x, cc.y);
         cells.push({
           x: wx, z: wz,
-          color: cost < 0.25 ? '#69d47e' : cost < 0.7 ? '#e8c15a' : '#ef7350',
+          // 冬季深山 → 雪封白:this stretch may snow the column in for a season.
+          color: winter && cost >= 0.55 ? '#dceef7'
+            : cost < 0.25 ? '#69d47e' : cost < 0.7 ? '#e8c15a' : '#ef7350',
         });
       }
     }
     return { pts, risky, cells };
-  }, [fromId, toId, cities]);
+  }, [fromId, toId, cities, winter]);
   const matRef = useRef<THREE.LineDashedMaterial>(null);
   useFrame(({ clock }) => {
     if (matRef.current) matRef.current.opacity = 0.75 + Math.sin(clock.elapsedTime * 3) * 0.2;

@@ -4,7 +4,19 @@
  * resolution → cancelCommand frees everyone. Exercises the path the unit tests
  * (which only cover the resolveInternalAffairs math) cannot reach.
  */
-import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterAll, vi } from 'vitest';
+
+// 定數行軍 — the store's endSeason runs the FULL world (AI wars, upset dice,
+// weather) on Math.random; a rare bad roll could sack the very city under
+// test. Pin a seeded LCG so this bookkeeping test is deterministic.
+beforeAll(() => {
+  let seed = 42;
+  vi.spyOn(Math, 'random').mockImplementation(() => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 2 ** 32;
+  });
+});
+afterAll(() => vi.restoreAllMocks());
 
 // The store's autosave touches localStorage during endSeason; vitest runs in a
 // `node` environment without it, so provide a minimal in-memory stub.

@@ -557,7 +557,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
       <FactionLabels3D cities={cities} forces={forces} officers={officers} />
       <SeaLabels />
       {marchPreview && (
-        <MarchPreviewLine fromId={marchPreview.fromId} toId={marchPreview.toId} cities={cities} />
+        <MarchPreviewLine fromId={marchPreview.fromId} toId={marchPreview.toId} cities={cities} winter={season === 'winter' || season === 'autumn'} />
       )}
 
       {/* In hex mode the road network is paved into the quilt itself. */}

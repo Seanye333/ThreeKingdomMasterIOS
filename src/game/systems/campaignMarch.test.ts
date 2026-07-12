@@ -294,6 +294,34 @@ describe('追擊與候期 — hounding routs and marking time', () => {
     expect(out.playerTroopsAbsorbed).toBe(99); // 30% of 330 cut down
   });
 
+  it('AI 逐北 — an AI column near an enemy rout takes up the chase unbidden', () => {
+    const { cities } = fixtures();
+    const lp = cityPos(cities['luoyang'] as never);
+    const ap = cityPos(cities['changan'] as never);
+    const road = terrainRoute(lp.x, lp.y, ap.x, ap.y);
+    const fleeAt = positionAlongRoute(road, 0.55);
+    const out = resolveSeason(baseInput(cities, {
+      runner: mkOfficer('runner', 'me'), hound: mkOfficer('hound', 'foe'),
+    }, {
+      // A player rout limping home…
+      runner: {
+        type: 'march', cityId: 'luoyang', targetCityId: 'luoyang', officerId: 'runner',
+        troops: 600, routed: true, returning: true, fleeX: fleeAt.x, fleeY: fleeAt.y,
+        totalSeasons: 2, seasonsRemaining: 2, food: 50000,
+      },
+      // …and an unrelated AI column loitering nearby (anchored leg) — it
+      // should smell blood and give chase on its own.
+      hound: {
+        type: 'march', cityId: 'changan', targetCityId: 'changan', officerId: 'hound',
+        troops: 6000, fleeX: fleeAt.x + 40, fleeY: fleeAt.y,
+        targetX: fleeAt.x + 50, targetY: fleeAt.y, totalSeasons: 2, seasonsRemaining: 2,
+      },
+    }, () => 0.5) as never);
+    const kept = out.keptCommands?.['hound'] as { pursueTargetId?: string } | undefined;
+    const hunted = out.report.entries.some((e) => e.battle?.routHunt);
+    expect(kept?.pursueTargetId === 'runner' || hunted).toBe(true);
+  });
+
   it('quarry gone → the chase ends: dig in on the spot, flag cleared', () => {
     const { cities } = fixtures();
     const lp = cityPos(cities['luoyang'] as never);
