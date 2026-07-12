@@ -2,6 +2,12 @@
  * refugees, watchman, festival dressing, street encounters) plus shared
  * primitives (shade / ChineseRoof3D) and the Season/Night contexts. Split
  * out of CityMapScreen3D.tsx (2026-07); pure mechanical move. */
+
+/** 城中查驗 — click-to-inspect payload + context, provided by the screen and
+ *  consumed by figures and buildings alike (moved here so both the screen and
+ *  Architecture3D can import it without a cycle). */
+export type InspectInfo = { title: string; body: string; color: string; commands?: import('../../../game/types').InternalAffairsType[] };
+export const InspectCtx = createContext<(info: InspectInfo) => void>(() => {});
 import { createContext, useContext, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
