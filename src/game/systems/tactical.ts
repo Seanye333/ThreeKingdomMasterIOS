@@ -45,6 +45,23 @@ export function counterMultiplier(a: UnitType, d: UnitType): number {
 }
 
 /**
+ * 白刃無矢 — the bow's edge over foot is a RANGED story. The flat counter
+ * matrix used to apply 弓剋槍 ×1.5 to MELEE blows too, so a spear block that
+ * finally closed the distance still lost the fistfight to bowmen — the last
+ * leg of the §5.1 arm-power skew (archers 88-97% over foot). At arm's length
+ * an archer line is just light infantry: its counter edge vanishes, and heavy
+ * foot gets its blade's worth against it.
+ */
+export function meleeAdjustedCounter(a: UnitType, d: UnitType, dist: number): number {
+  let m = counterMultiplier(a, d);
+  if (dist <= 1) {
+    if (a === 'archers' && (d === 'spearmen' || d === 'infantry')) m = Math.min(m, 0.8);
+    if (d === 'archers' && (a === 'spearmen' || a === 'infantry')) m = Math.max(m, 1.15);
+  }
+  return m;
+}
+
+/**
  * 兵裝相剋 — a finer layer than the 6-arm COUNTER_MATRIX: the officer's actual
  * weapon class (§5.9, derived from equipment) now bites in melee. Returns the
  * outgoing-damage multiplier for attacker-weapon vs defender-weapon/arm, plus a
@@ -304,7 +321,7 @@ export function forecastAttack(
   const To = officers[target.officerId];
   const aTerr = tileAt(b, attacker.coord)?.terrain ?? 'plain';
   const dTerr = tileAt(b, target.coord)?.terrain ?? 'plain';
-  const ctr = counterMultiplier(attacker.unitType, target.unitType);
+  const ctr = meleeAdjustedCounter(attacker.unitType, target.unitType, hexDistance(attacker.coord, target.coord));
   const aTerrMod = terrainDamageMod(attacker.unitType, aTerr);
   const shield = defenderTerrainShield(dTerr);
   const dist = hexDistance(attacker.coord, target.coord);
@@ -412,7 +429,7 @@ export function forecastAttack(
   // rear/braced/desperate factors mirror attackUnits' counter math.
   const targetCanReach = attackRange(target, To) >= dist;
   const noCounter = willKill || targetRouting || !targetCanReach;
-  const back = counterMultiplier(target.unitType, attacker.unitType) * (fromRear ? 0.4 : 1) * (braced ? 1.6 : 1) * (desperate ? 1.35 : 1);
+  const back = meleeAdjustedCounter(target.unitType, attacker.unitType, dist) * (fromRear ? 0.4 : 1) * (braced ? 1.6 : 1) * (desperate ? 1.35 : 1);
   return {
     dmgMin, dmgMax,
     counterMin: noCounter ? 0 : Math.max(0, Math.floor(p.counterMin * back)),
@@ -532,7 +549,7 @@ export function hexDirection(from: HexCoord, to: HexCoord): number {
 }
 
 /** Circular distance between two hex directions (0..3); 3 = directly opposed. */
-function dirGap(a: number, b: number): number {
+export function dirGap(a: number, b: number): number {
   const d = Math.abs(a - b) % 6;
   return Math.min(d, 6 - d);
 }
@@ -552,12 +569,12 @@ const MORALE_SHAKEN = 40;
 /** 殺傷烈度 — global lethality scalar on base damage. Lower = combat is more
  *  attrition than alpha-strike, so a unit survives the first blow to retaliate
  *  and counters/positioning/terrain/numbers matter (balance-sim tuned). */
-const COMBAT_LETHALITY = 0.45;
+export const COMBAT_LETHALITY = 0.45;
 /** 甲冑輕重 — per-arm durability (incoming-damage multiplier). 步/槍 are the
  *  armoured line: they soak volleys and charges and grind (lower = tougher).
  *  輕騎 is shock, not a shield wall — fast and hard-hitting but soft when caught.
  *  Gives the slow foot a reason to exist and reins in cavalry's dominance. */
-const ARM_ARMOR: Partial<Record<UnitType, number>> = {
+export const ARM_ARMOR: Partial<Record<UnitType, number>> = {
   infantry: 0.85, spearmen: 0.85, cavalry: 1.3,
 };
 
@@ -1335,7 +1352,7 @@ export function attackUnits(
   const attackerDemoralized = attacker.effects.some((e) => e.kind === 'demoralized');
   const attackerStarving = attacker.effects.some((e) => e.kind === 'starving');
 
-  const counter = counterMultiplier(attacker.unitType, target.unitType);
+  const counter = meleeAdjustedCounter(attacker.unitType, target.unitType, attackDist);
   const aTerrainTile = tileAt(b, attacker.coord);
   const aTerrainMod = aTerrainTile ? terrainDamageMod(attacker.unitType, aTerrainTile.terrain) : 1;
 

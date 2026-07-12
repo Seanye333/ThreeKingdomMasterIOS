@@ -258,6 +258,7 @@ export function bandRepositionStep(
 export function pickAiTarget(
   unit: TacticalUnit,
   candidates: TacticalUnit[],
+  friends?: TacticalUnit[],
 ): TacticalUnit | undefined {
   if (candidates.length === 0) return undefined;
   const score = (e: TacticalUnit): number => {
@@ -268,6 +269,13 @@ export function pickAiTarget(
     if (counter <= 0.8) s *= 1.8; // they counter us — avoid
     const woundedRatio = e.troops / Math.max(1, e.maxTroops);
     s *= 0.4 + woundedRatio; // weaker = juicier → focus fire
+    // 集火紀律 — converge where brothers already grapple: a foe pinned by
+    // friendly units is the one to pile onto (kills faster than spreading
+    // the line thin across three separate fights).
+    if (friends) {
+      const pinned = friends.filter((f) => f.id !== unit.id && f.troops > 0 && hexDistance(f.coord, e.coord) === 1).length;
+      if (pinned > 0) s *= Math.max(0.6, 1 - 0.2 * pinned);
+    }
     return s;
   };
   return [...candidates].sort((a, c) => score(a) - score(c))[0];
@@ -581,7 +589,10 @@ function aiActOnce(
     const friendsAlive = b.units.filter((u) => u.side === unit.side && u.troops > 0).length;
     const enemyStarving = enemies.some((e) => e.effects.some((x) => x.kind === 'starving'));
     const inRear = unit.side === 'attacker' ? unit.coord.col >= b.width - 3 : unit.coord.col <= 2;
-    if (friendsAlive >= 4 && !enemyStarving && !inRear) {
+    // 野戰無倉可焚 — only ride for the rear when there is actually something
+    // to burn there (a grain train, or a siege's depot line).
+    const raidWorthwhile = !b.field || enemies.some((e) => e.isSupply);
+    if (friendsAlive >= 4 && !enemyStarving && !inRear && raidWorthwhile) {
       const edgeCol = unit.side === 'attacker' ? b.width - 1 : 0;
       const avgRow = enemies.reduce((s, e) => s + e.coord.row, 0) / enemies.length;
       const targetRow = avgRow < b.height / 2 ? b.height - 1 : 0; // opposite corner
@@ -590,22 +601,80 @@ function aiActOnce(
     }
   }
 
+  // 以靜制動 — foot that cannot catch horsemen doesn't try. Chasing cavalry
+  // strings the line out and feeds units to the charge one at a time — the
+  // exact failure the §5.1 balance harness kept flagging (cav 65-67 arm
+  // power). While riders are the near threat and still out of arm's reach,
+  // spear/foot stand fast — and 立防 when the charge is imminent — so the
+  // horse must break itself on a standing wall, where 槍林戒備 / 拒馬 /
+  // counter-arm / halved-damage posture all favour the foot.
+  if ((unit.unitType === 'spearmen' || unit.unitType === 'infantry') && adjEnemies.length === 0) {
+    const dist = (e: TacticalUnit) => hexDistance(unit.coord, e.coord);
+    const riders = enemies.filter((e) => e.unitType === 'cavalry' && !isRouting(e));
+    const nearestRider = riders.length > 0 ? Math.min(...riders.map(dist)) : Infinity;
+    const nearestOther = enemies.filter((e) => e.unitType !== 'cavalry').map(dist)
+      .reduce((a, c) => Math.min(a, c), Infinity);
+    // Hold only while the cavalry IS the story, and no slower enemy actually
+    // needs marching on (a wall must not stand idle while archers shoot it
+    // apart). A DEFENDING line facing pure horse never advances at all — the
+    // horse must come to the spears; an attacking line advances until riders
+    // close to charge reach, then walls up.
+    const holdVsHorse = nearestOther === Infinity
+      ? (unit.side === 'defender' ? riders.length > 0 : nearestRider <= 5)
+      : (unit.side === 'defender' && nearestRider <= 5 && nearestRider <= nearestOther);
+    if (holdVsHorse) {
+      const friends = b.units.filter((u) => u.side === unit.side && u.id !== unit.id && u.troops > 0 && u.morale > 0);
+      // 支援 — a brother already grappling within 3: fall on his foe's flank
+      // rather than watch the wall be broken piecemeal (the 3-on-1 that made
+      // "hold in place" WORSE than chasing on the first pass of this fix).
+      const grappled = friends.find((f) =>
+        hexDistance(unit.coord, f.coord) <= 3 && enemies.some((e) => hexDistance(f.coord, e.coord) === 1));
+      if (grappled) {
+        const foe = enemies
+          .filter((e) => hexDistance(grappled.coord, e.coord) === 1)
+          .reduce((a, c) => (hexDistance(unit.coord, c.coord) < hexDistance(unit.coord, a.coord) ? c : a));
+        const step = bestStepToward(b, unit, foe.coord);
+        if (step) return { battle: moveUnit(b, unit.id, step), acted: true, signatures: [] };
+      }
+      // 相依為命 — a wall is only a wall shoulder-to-shoulder: a lone stand
+      // just invites the swarm. Close up on the nearest brother first.
+      const adjacentFriend = friends.some((f) => hexDistance(unit.coord, f.coord) === 1);
+      if (!adjacentFriend && friends.length > 0) {
+        const buddy = friends.reduce((a, c) => (hexDistance(unit.coord, c.coord) < hexDistance(unit.coord, a.coord) ? c : a));
+        const step = bestStepToward(b, unit, buddy.coord);
+        if (step) return { battle: moveUnit(b, unit.id, step), acted: true, signatures: [] };
+      }
+      // In line, riders bearing down — 立防 (halved damage, charge-proof).
+      // Threshold 6 = a horseman's full move + strike: cavalry charges home
+      // from 4-5 hexes out in a single turn, so "brace at 3" was always a
+      // turn too late — the wall must already be set when the charge starts.
+      const defending = unit.effects.some((e) => e.kind === 'defending');
+      if (!defending && nearestRider <= 6 && unit.ap >= 1) {
+        const r = applyStratagem(b, unit.id, 'defend', unit.coord, officers);
+        if (r.ok) return { battle: r.battle, acted: true, signatures: [] };
+      }
+      return hold;
+    }
+  }
+
   // Pursue a battlefield objective (commander only) before chasing kills.
   const objStep = objectiveStep(b, unit);
   if (objStep) return { battle: moveUnit(b, unit.id, objStep), acted: true, signatures: [] };
 
   // A defender already dug into advantageous ground (chokepoint / hill / gate /
-  // river-for-navy) stands fast rather than abandon the edge to chase — let the
-  // attacker assault into it.
-  if (unit.side === 'defender' && tileValueFor(unit, tileAt(b, unit.coord)?.terrain ?? 'plain') >= 1.2) {
+  // fieldworks / river-for-navy) stands fast rather than abandon the edge to
+  // chase — let the attacker assault into it. (1.15 so a unit's own 築壘
+  // qualifies: 1/0.85 ≈ 1.18 — diggers used to walk straight off their stakes.)
+  if (unit.side === 'defender' && tileValueFor(unit, tileAt(b, unit.coord)?.terrain ?? 'plain') >= 1.15) {
     return hold;
   }
 
   // Approach the best target via terrain-aware pathfinding, weighted toward
   // cohesion (advance as a body, not piecemeal) and escorting a pressed 軍師.
-  const target = pickAiTarget(unit, enemies);
+  const sideFriends = b.units.filter((u) => u.side === unit.side && u.id !== unit.id && u.troops > 0);
+  const target = pickAiTarget(unit, enemies, sideFriends);
   if (target) {
-    const friends = b.units.filter((u) => u.side === unit.side && u.id !== unit.id && u.troops > 0);
+    const friends = sideFriends;
     const guard = friends.find((f) => {
       const fo = officers[f.officerId];
       return fo && unitRole(fo, f.unitType) === 'strategist' &&
@@ -617,7 +686,21 @@ function aiActOnce(
       if (guard && hexDistance(c, guard.coord) <= 1) bdg += 0.3; // escort the 軍師
       return bdg;
     };
-    const step = bestStepToward(b, unit, target.coord, bonus);
+    let step = bestStepToward(b, unit, target.coord, bonus);
+    // 齊頭並進 — foot advancing into bowshot must not outrun the line: a lone
+    // spear block that arrives first is focus-shot then beaten at the wall
+    // (the piecemeal feed the §5.1 harness flagged vs archers, 88-96%). If the
+    // chosen step strands the unit with no brother within reach of danger,
+    // close on the nearest brother instead and come on as a body.
+    if (step && (unit.unitType === 'spearmen' || unit.unitType === 'infantry')) {
+      const steady = friends.filter((f) => f.morale > 0);
+      const nearestEnemyFrom = (c: HexCoord) => Math.min(...enemies.map((e) => hexDistance(c, e.coord)));
+      if (steady.length > 0 && nearestEnemyFrom(step) <= 5 && !steady.some((f) => hexDistance(step!, f.coord) <= 1)) {
+        const buddy = steady.reduce((a, c) => (hexDistance(unit.coord, c.coord) < hexDistance(unit.coord, a.coord) ? c : a));
+        const s2 = bestStepToward(b, unit, buddy.coord);
+        if (s2) step = s2;
+      }
+    }
     if (step) return { battle: moveUnit(b, unit.id, step), acted: true, signatures: [] };
   }
 

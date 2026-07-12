@@ -20,6 +20,7 @@ import type {
 import {
   battleStratagemSituation, hexDistance, hexNeighbours, isRouting,
   shipPowerMul, tileAt, unitAt, FATIGUE_PER_VOLLEY, type WindDirection,
+  COMBAT_LETHALITY, ARM_ARMOR, counterMultiplier, hexDirection, dirGap,
 } from './tactical';
 import { stratagemDamageMul } from './traitEffects';
 import { resolveDuel, canDuel, staticProwess } from './duel';
@@ -669,7 +670,11 @@ export function applyStratagem(
           ? { ...u, effects: u.effects.filter((e) => e.kind !== 'disorder') }
           : u)),
       };
-      const updated = setStatus(reformed, unit.id, { kind: 'defending', turnsLeft: 1 });
+      // turnsLeft 2, not 1 — effects tick at EVERY endTurn (both side flips),
+      // so a 1-turn status set on your own turn died at your own turn's end and
+      // 立防 never actually covered the enemy's blows. 2 = survives your flip,
+      // shields through the enemy turn, expires at their flip.
+      const updated = setStatus(reformed, unit.id, { kind: 'defending', turnsLeft: 2 });
       return finalize(updated, unitId, stratagem, 0);
     }
     case 'rally': {
@@ -701,15 +706,12 @@ export function applyStratagem(
       const target = unitAt(b, targetCoord);
       if (!target || target.side === unit.side)
         return { battle: b, ok: false, reason: 'invalid target' };
-      // Charge: +50% damage, spend all AP. Open ground spurs the charge home;
-      // forest/mountain bog it down (戰法情境).
-      const aWar = off?.stats.war ?? 50;
-      const dLead = officers[target.officerId]?.stats.leadership ?? 50;
+      // Charge: a shock blow through the REAL combat model (shockDamage — 烈度/
+      // 相剋/甲冑/立防/拒馬 all count), spend all AP. Open ground spurs the
+      // charge home; forest/mountain bog it down (戰法情境).
       const chgSit = battleStratagemSituation(b, unit.coord, targetCoord, stratagem);
       const chgTraitMul = off ? stratagemDamageMul(off, stratagem) : 1;
-      const damage = Math.floor(
-        (unit.troops * (aWar + 30) * 1.5) / (dLead + 50) * chgSit.mult * chgTraitMul,
-      );
+      const damage = shockDamage(b, unit, target, officers, 1.5 * chgSit.mult * chgTraitMul);
       const updated: TacticalBattle = {
         ...b,
         units: b.units.map((u) => {
@@ -734,7 +736,19 @@ export function applyStratagem(
         return { battle: b, ok: false, reason: 'invalid target' };
       // 戰法情境 — rain soaks the bowstrings, high ground extends the volley.
       const arrSit = battleStratagemSituation(b, unit.coord, targetCoord, stratagem);
-      const stratMul = arrSit.mult * (off ? stratagemDamageMul(off, stratagem) : 1);
+      // 矢雨亦入模型 — the volley used to strip a flat 12% of the TARGET no
+      // matter how battered the shooters were, and straight through 立防/甲冑
+      // (the second model-bypass behind the §5.1 arm-power skew: archers 88-96%
+      // over foot). Now it scales with the shooters' remaining strength, and a
+      // shielded (defending) or armoured target weathers it like any other blow.
+      const volleyStrength = unit.maxTroops > 0 ? unit.troops / unit.maxTroops : 1;
+      // Shields-up soaks arrows; armoured foot soaks a bit more. Light horse is
+      // NOT extra-punished here (fast, dispersed under arcing shot) — the bow's
+      // check on cavalry stays the melee/counter layer, not a volley tax.
+      const volleyGate = (u: TacticalUnit): number =>
+        (u.effects.some((e) => e.kind === 'defending') ? 0.55 : 1)
+        * Math.min(1, ARM_ARMOR[u.unitType] ?? 1);
+      const stratMul = arrSit.mult * (off ? stratagemDamageMul(off, stratagem) : 1) * volleyStrength;
       // 拋射覆蓋 — a volley falls over an area: the aimed hex takes the brunt,
       // every other enemy pressed up against it catches the spillover (半傷).
       // Arcing shots loft over walls/units, so no line-of-sight or cover applies.
@@ -747,12 +761,12 @@ export function applyStratagem(
         ...b,
         units: b.units.map((u) => {
           if (u.id === target.id) {
-            const dmg = Math.floor(u.troops * 0.12 * stratMul);
+            const dmg = Math.floor(u.troops * 0.12 * stratMul * volleyGate(u));
             popups.push({ id: `dmg-${Date.now()}-arr`, coord: u.coord, text: `-${dmg.toLocaleString()}`, color: '#88b7e8', spawnedAt: Date.now() });
             return { ...u, troops: Math.max(0, u.troops - dmg), morale: Math.max(0, u.morale - 3) };
           }
           if (splashIds.has(u.id)) {
-            const dmg = Math.floor(u.troops * 0.06 * stratMul);
+            const dmg = Math.floor(u.troops * 0.06 * stratMul * volleyGate(u));
             popups.push({ id: `dmg-${Date.now()}-arr-${u.id}`, coord: u.coord, text: `-${dmg.toLocaleString()}`, color: '#9cc0e8', spawnedAt: Date.now() + 1 });
             return { ...u, troops: Math.max(0, u.troops - dmg) };
           }
@@ -862,16 +876,13 @@ export function applyStratagem(
       const target = unitAt(b, targetCoord);
       if (!target || target.side === unit.side)
         return { battle: b, ok: false, reason: 'invalid target' };
-      // Move adjacent to target, deal 1.75× damage.
+      // Move adjacent to target, deal a 1.75× shock — through the real combat
+      // model (shockDamage), so a braced spear-wall breaks even Lü Bu's ride.
       const neighbours = hexNeighbours(target.coord);
       const landing = neighbours.find(
         (c) => tileAt(b, c) && !unitAt(b, c),
       );
-      const aWar = off?.stats.war ?? 80;
-      const dLead = officers[target.officerId]?.stats.leadership ?? 50;
-      const damage = Math.floor(
-        (unit.troops * (aWar + 30) * 1.75) / (dLead + 50),
-      );
+      const damage = shockDamage(b, unit, target, officers, 1.75);
       const next: TacticalBattle = {
         ...b,
         units: b.units.map((u) => {
@@ -912,17 +923,13 @@ export function applyStratagem(
       );
       if (adjEnemies.length === 0)
         return { battle: b, ok: false, reason: 'no adjacent enemies' };
-      const aWar = off?.stats.war ?? 80;
       const popups: DamagePopup[] = [];
       const next: TacticalBattle = {
         ...b,
         units: b.units.map((u) => {
           const enemy = adjEnemies.find((e) => e.id === u.id);
           if (enemy) {
-            const dLead = officers[u.officerId]?.stats.leadership ?? 50;
-            const dmg = Math.floor(
-              (unit.troops * (aWar + 30) * 0.6) / (dLead + 50),
-            );
+            const dmg = shockDamage(b, unit, u, officers, 0.6);
             popups.push({
               id: `dmg-${Date.now()}-veil-${u.id}`,
               coord: u.coord,
@@ -1081,6 +1088,13 @@ export function applyStratagem(
         return { battle: b, ok: false, reason: 'must reach the enemy rear' };
       const foes = b.units.filter((u) => u.side !== unit.side && u.troops > 0);
       if (foes.length === 0) return { battle: b, ok: false, reason: 'no enemy supply to burn' };
+      // 野戰無倉可焚 — in a pitched battle in the open there is no depot behind
+      // the enemy line unless they actually brought a grain train (糧車). Riding
+      // to an empty rear corner used to starve a whole army in hours — the
+      // single biggest hidden chunk of cavalry's AI-vs-AI dominance.
+      if (b.field && !foes.some((u) => u.isSupply)) {
+        return { battle: b, ok: false, reason: 'no enemy supply to burn' };
+      }
       let next = b;
       for (const e of foes) {
         next = setStatus(next, e.id, { kind: 'starving', turnsLeft: 5 });
@@ -1110,6 +1124,42 @@ function setStatus(
       return { ...u, effects: [...filtered, status] };
     }),
   };
+}
+
+/**
+ * 物理衝擊謀略傷害 — charge / gallop / dragon-veil used to compute raw
+ * `troops×(war+30)×mult/(lead+50)` and BYPASS the entire combat model: no
+ * 殺傷烈度 (×0.45), no 兵種相剋, no 甲冑, no 立防半傷, no 築壘拒馬. A 6000-man
+ * cavalry 突貫 one-shot any full unit through every defence — measured as the
+ * true root of cavalry's AI-vs-AI dominance (§5.1): three generations of
+ * constant tuning "didn't move the matrix" because these paths never read the
+ * constants at all. Now the shock family goes through the same core gates,
+ * and a single shock can rout but never annihilate (≤70% of current troops).
+ */
+function shockDamage(
+  b: TacticalBattle,
+  unit: TacticalUnit,
+  target: TacticalUnit,
+  officers: Record<EntityId, Officer>,
+  mult: number,
+): number {
+  const off = officers[unit.officerId];
+  const To = officers[target.officerId];
+  const aWar = off?.stats.war ?? 50;
+  const dLead = To?.stats.leadership ?? 50;
+  let dmg = (unit.troops * (aWar + 30) * mult * COMBAT_LETHALITY) / (dLead + 50);
+  dmg *= counterMultiplier(unit.unitType, target.unitType);
+  dmg *= ARM_ARMOR[target.unitType] ?? 1;
+  // 立防 halves the shock; 築壘 stakes blunt it; a braced spear-wall facing
+  // the ride breaks it (拒馬) — the postures finally count against the very
+  // blow they exist to stop.
+  if (target.effects.some((e) => e.kind === 'defending')) dmg *= 0.5;
+  if (tileAt(b, target.coord)?.terrain === 'fieldworks') dmg *= 0.6;
+  if (target.unitType === 'spearmen' && !isRouting(target) && typeof target.facing === 'number'
+      && dirGap(hexDirection(target.coord, unit.coord), target.facing) <= 1) {
+    dmg *= 0.5;
+  }
+  return Math.min(Math.floor(dmg), Math.floor(target.troops * 0.7));
 }
 
 function finalize(
