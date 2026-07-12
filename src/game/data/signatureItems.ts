@@ -6,12 +6,16 @@
  * Data-only module; the effect lives in gradeCombat.ts.
  */
 
+import { CANONICAL_ITEMS_PRIMARY } from './officers';
+
 export interface SignaturePair {
   officerId: string;
   itemId: string;
 }
 
-export const SIGNATURE_ITEMS: SignaturePair[] = [
+/** Hand-picked pairs — mostly SECOND items (horses, seized blades) beyond an
+ *  officer's canonical primary, plus the classic weapon pairings. */
+const MANUAL_PAIRS: SignaturePair[] = [
   // 蜀 — the oath brothers and their arms.
   { officerId: 'guan-yu', itemId: 'green-dragon' },      // 青龍偃月刀
   { officerId: 'guan-yu', itemId: 'red-hare' },          // 赤兔 — 曹操所贈,忠義同馳
@@ -46,6 +50,26 @@ export const SIGNATURE_ITEMS: SignaturePair[] = [
   { officerId: 'hist-goujian', itemId: 'zhanlu-jian' },  // 越王勾踐劍
   { officerId: 'hist-yang-youji', itemId: 'vermilion-bow' }, // 彤弓 — 百步穿楊
 ];
+
+/** 代主所負,非其本命 — canonical bearers who merely CARRY the treasure
+ *  (夏侯恩背青釭為曹操),excluded from auto-derived resonance. */
+const DERIVED_EXCLUDE = new Set(['xiahou-en']);
+
+/** The full resonance table: the hand-picked pairs plus every canonical
+ *  primary ownership (officers.ts CANONICAL_ITEMS_PRIMARY) — the game
+ *  already curates who历史ally owns what, so 本命 derives from it wholesale. */
+export const SIGNATURE_ITEMS: SignaturePair[] = (() => {
+  const out = [...MANUAL_PAIRS];
+  const seen = new Set(out.map((p) => `${p.officerId}|${p.itemId}`));
+  for (const [officerId, itemId] of Object.entries(CANONICAL_ITEMS_PRIMARY)) {
+    if (DERIVED_EXCLUDE.has(officerId)) continue;
+    const key = `${officerId}|${itemId}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ officerId, itemId });
+  }
+  return out;
+})();
 
 const KEYS = new Set(SIGNATURE_ITEMS.map((p) => `${p.officerId}|${p.itemId}`));
 

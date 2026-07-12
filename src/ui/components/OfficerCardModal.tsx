@@ -59,7 +59,12 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
   const year = useGameStore((s) => s.date.year);
   const forces = useGameStore((s) => s.forces);
   const officers = useGameStore((s) => s.officers);
+  const deeds = useGameStore((s) => s.deeds[officer.id]);
+  const duelHall = useGameStore((s) => s.duelHall);
   const [artFailed, setArtFailed] = useState(0); // 0 = try -full, 1 = try square, 2 = silhouette
+  // 戰績面 — the card's back: career numbers + famous bouts. A content swap
+  // inside the same frame (no nested 3D flip — the reveal modal already spins).
+  const [showBack, setShowBack] = useState(false);
 
   const grade = officerGrade(officer);
   const meta = gradeMeta(grade.grade);
@@ -116,6 +121,75 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
           <div aria-hidden style={{ position: 'absolute', inset: '-60%', background: 'conic-gradient(#8ee8ff, #b7a8ff, #eafcff, #7ec0e0, #d0f4ff, #8ee8ff)', animation: 'tkmCardConic 7s linear infinite' }} />
         )}
         <div style={{ position: 'relative', background: '#0c1118', borderRadius: 9, overflow: 'hidden' }}>
+          {showBack ? (
+            /* ── 戰績面 — the card's back: career deeds + famous bouts ── */
+            <div style={{ padding: '14px 14px 16px', display: 'flex', flexDirection: 'column', gap: 10, minHeight: 460 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: `1px solid ${meta.color}44`, paddingBottom: 6 }}>
+                <span style={{ fontSize: '1.1rem', color: '#f2e2b8', fontFamily: '"Ma Shan Zheng", "Songti SC", serif' }}>{pickName(officer.name, lang)}</span>
+                <span style={{ fontSize: '0.66rem', color: meta.color, letterSpacing: '0.2rem' }}>{t('生涯戰績', 'CAREER RECORD')}</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                {([
+                  { zh: '斬敵', en: 'Troops slain', v: (deeds?.killsTroops ?? 0).toLocaleString() },
+                  { zh: '會戰勝/敗', en: 'Battles W/L', v: `${deeds?.battlesWon ?? 0}/${deeds?.battlesLost ?? 0}` },
+                  { zh: '單挑勝', en: 'Duels won', v: deeds?.duelsWon ?? 0 },
+                  { zh: '舌戰勝', en: 'Debates won', v: deeds?.debatesWon ?? 0 },
+                  { zh: '罵倒', en: 'Debate routs', v: deeds?.debateRouts ?? 0 },
+                  { zh: '擒將', en: 'Captured', v: deeds?.captured ?? 0 },
+                  { zh: '拔城', en: 'Cities taken', v: deeds?.citiesTaken ?? 0 },
+                  { zh: '用間', en: 'Espionage', v: deeds?.espionageSuccess ?? 0 },
+                  { zh: '內政', en: 'Civic works', v: deeds?.civicWorks ?? 0 },
+                  { zh: '特訓', en: 'Trainings', v: deeds?.trainingsCompleted ?? 0 },
+                ] as Array<{ zh: string; en: string; v: number | string }>).map((r) => (
+                  <div key={r.zh} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 8px', background: '#131a23', border: '1px solid #232d38', borderRadius: 5, fontSize: '0.72rem' }}>
+                    <span style={{ color: '#7a8893' }}>{lang === 'en' ? r.en : r.zh}</span>
+                    <span style={{ color: '#e6c473', fontFamily: 'ui-monospace, monospace' }}>{r.v}</span>
+                  </div>
+                ))}
+              </div>
+              {(deeds?.titles?.length ?? 0) > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                  {deeds!.titles!.map((ti) => (
+                    <span key={ti} style={{ fontSize: '0.68rem', padding: '1px 7px', borderRadius: 9, background: 'rgba(230,196,115,0.12)', border: '1px solid #4a3f26', color: '#ffe9a8' }}>{ti}</span>
+                  ))}
+                </div>
+              )}
+              {(() => {
+                const bouts = duelHall.filter((r) => r.aId === officer.id || r.dId === officer.id).slice(0, 4);
+                if (bouts.length === 0) return null;
+                return (
+                  <div>
+                    <div style={{ fontSize: '0.62rem', color: '#7a8893', letterSpacing: '0.12rem', marginBottom: 3 }}>{t('名局', 'FAMOUS BOUTS')}</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                      {bouts.map((b) => {
+                        const otherId = b.aId === officer.id ? b.dId : b.aId;
+                        const other = officers[otherId];
+                        const won = b.kind === 'duel'
+                          ? (b.winner === 'attacker' ? b.aId === officer.id : b.winner === 'defender' ? b.dId === officer.id : false)
+                          : (b.winner === 'a' ? b.aId === officer.id : b.winner === 'd' ? b.dId === officer.id : false);
+                        const drew = b.winner === 'draw';
+                        const finish = b.kind === 'duel' ? (b.killed ? t('・斬', ' · slew') : '') : (b.routed ? t('・罵倒', ' · routed') : '');
+                        return (
+                          <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem' }}>
+                            <span style={{ color: '#9aa6b0' }}>
+                              {b.kind === 'duel' ? '⚔' : '💬'} vs {other ? pickName(other.name, lang) : otherId}
+                            </span>
+                            <span style={{ color: drew ? '#7a8893' : won ? '#8ac88a' : '#e0907a', fontFamily: 'ui-monospace, monospace' }}>
+                              {b.year}{t('年', '')} {drew ? t('平', 'draw') : won ? t('勝', 'won') : t('負', 'lost')}{won ? finish : ''}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+              <div style={{ marginTop: 'auto', textAlign: 'center', fontSize: '0.64rem', color: '#5a6672' }}>
+                {t('⟲ 返回卡面', '⟲ back to the card face')}
+              </div>
+            </div>
+          ) : (
+          <>
           {/* 立繪 — the full-body art, with the square portrait then the SVG
               silhouette as graceful fallbacks. */}
           <div style={{ position: 'relative', height: 330, background: 'radial-gradient(ellipse at 50% 22%, #24303e 0%, #0c1118 78%)' }}>
@@ -274,7 +348,16 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
               </div>
             )}
           </div>
+          </>
+          )}
         </div>
+        {/* ⟲ 戰績面 — flip between the face and the career-record back. */}
+        <button
+          onClick={(e) => { e.stopPropagation(); setShowBack((v) => !v); }}
+          aria-label={showBack ? t('返回卡面', 'Card face') : t('戰績面', 'Career record')}
+          title={showBack ? t('返回卡面', 'Back to the card face') : t('戰績面 — 生涯數字與名局', 'Career record — deeds & famous bouts')}
+          style={{ position: 'absolute', top: 6, right: onClose ? 70 : 38, zIndex: 3, width: 26, height: 26, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.25)', background: showBack ? 'rgba(230,196,115,0.25)' : 'rgba(10,14,20,0.72)', color: '#cfd8e0', cursor: 'pointer', fontSize: '0.85rem', lineHeight: 1 }}
+        >⟲</button>
         {/* 存圖 — canvas-render the card and save it as a PNG keepsake. */}
         <button
           onClick={(e) => { e.stopPropagation(); void exportOfficerCardPNG(officer, lang); }}

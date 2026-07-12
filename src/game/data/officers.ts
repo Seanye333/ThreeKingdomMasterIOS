@@ -1296,7 +1296,8 @@ const TALENT_POOL_TEMPLATES: OfficerTemplate[] = [
 
 // Canonical item ownership across all scenarios. Each item can have
 // only one bearer at a time; inheritance is resolved by who's alive.
-const CANONICAL_ITEMS_PRIMARY: Record<string, string> = {
+// Exported: signatureItems.ts derives 神兵共鳴 (本命) pairs from this map.
+export const CANONICAL_ITEMS_PRIMARY: Record<string, string> = {
   'lu-bu':       'sky-piercer',
   'guan-yu':     'green-dragon',
   'zhang-fei':   'snake-spear',
