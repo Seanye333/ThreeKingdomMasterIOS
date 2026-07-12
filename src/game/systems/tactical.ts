@@ -45,6 +45,23 @@ export function counterMultiplier(a: UnitType, d: UnitType): number {
 }
 
 /**
+ * 盾牆 — defending infantry standing shoulder-to-shoulder with another
+ * defending infantry lock shields: blows land 15% softer on each of them.
+ * The plain foot's identity — no counter-arm toys like the spear's 拒馬, just
+ * the cheapest line in the realm and the hardest to chew through when it digs
+ * in together. Applies to melee, shock stratagems and the forecast alike.
+ */
+export function shieldWallMul(b: TacticalBattle, target: TacticalUnit): number {
+  if (target.unitType !== 'infantry') return 1;
+  if (!target.effects.some((e) => e.kind === 'defending')) return 1;
+  const linked = b.units.some((u) => u.side === target.side && u.id !== target.id
+    && u.troops > 0 && u.unitType === 'infantry'
+    && u.effects.some((e) => e.kind === 'defending')
+    && hexDistance(u.coord, target.coord) === 1);
+  return linked ? 0.85 : 1;
+}
+
+/**
  * 白刃無矢 — the bow's edge over foot is a RANGED story. The flat counter
  * matrix used to apply 弓剋槍 ×1.5 to MELEE blows too, so a spear block that
  * finally closed the distance still lost the fistfight to bowmen — the last
@@ -421,7 +438,8 @@ export function forecastAttack(
     * freshMul * fatigueMul * armorMul
     * defenseMul * offenseMul * formCounterMul * eliteMul * weatherMul * ambushFcMul
     * weaponTerrainMul(aWeaponFc, aTerr)
-    * aGrowthMul * aSetMul * aTraitMul * dTraitDefMul;
+    * aGrowthMul * aSetMul * aTraitMul * dTraitDefMul
+    * shieldWallMul(b, target);
   const dmgMin = Math.max(0, Math.floor(p.min * fwd));
   const dmgMax = Math.max(0, Math.floor(p.max * fwd));
   const willKill = dmgMax >= target.troops;
@@ -1584,6 +1602,8 @@ export function attackUnits(
     aTraitMul * dTraitDefMul,
   );
   if (targetDefending) damage = Math.floor(damage / 2);
+  // 盾牆 — linked defending infantry soak a further 15% (see shieldWallMul).
+  damage = Math.floor(damage * shieldWallMul(b, target));
   if (attackerBurning) damage = Math.floor(damage * 0.9);
   if (attackerDemoralized) damage = Math.floor(damage * 0.8);
   if (attackerStarving) damage = Math.floor(damage * 0.85); // 糧盡兵疲

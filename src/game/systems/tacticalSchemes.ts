@@ -20,7 +20,7 @@ import type {
 import {
   battleStratagemSituation, hexDistance, hexNeighbours, isRouting,
   shipPowerMul, tileAt, unitAt, FATIGUE_PER_VOLLEY, type WindDirection,
-  COMBAT_LETHALITY, ARM_ARMOR, counterMultiplier, hexDirection, dirGap,
+  COMBAT_LETHALITY, ARM_ARMOR, counterMultiplier, hexDirection, dirGap, shieldWallMul,
 } from './tactical';
 import { stratagemDamageMul } from './traitEffects';
 import { resolveDuel, canDuel, staticProwess } from './duel';
@@ -742,12 +742,14 @@ export function applyStratagem(
       // over foot). Now it scales with the shooters' remaining strength, and a
       // shielded (defending) or armoured target weathers it like any other blow.
       const volleyStrength = unit.maxTroops > 0 ? unit.troops / unit.maxTroops : 1;
-      // Shields-up soaks arrows; armoured foot soaks a bit more. Light horse is
-      // NOT extra-punished here (fast, dispersed under arcing shot) — the bow's
-      // check on cavalry stays the melee/counter layer, not a volley tax.
+      // Shields-up soaks arrows; armoured foot soaks a bit more; and fast horse
+      // rides dispersed under arcing shot (騎散難覆 ×0.85) — the blanket volley
+      // is a FOOT-killer, while the bow's check on cavalry lives in aimed shots
+      // and melee, not the area barrage.
       const volleyGate = (u: TacticalUnit): number =>
         (u.effects.some((e) => e.kind === 'defending') ? 0.55 : 1)
-        * Math.min(1, ARM_ARMOR[u.unitType] ?? 1);
+        * Math.min(1, ARM_ARMOR[u.unitType] ?? 1)
+        * (u.unitType === 'cavalry' ? 0.85 : 1);
       const stratMul = arrSit.mult * (off ? stratagemDamageMul(off, stratagem) : 1) * volleyStrength;
       // 拋射覆蓋 — a volley falls over an area: the aimed hex takes the brunt,
       // every other enemy pressed up against it catches the spillover (半傷).
@@ -1154,6 +1156,7 @@ function shockDamage(
   // the ride breaks it (拒馬) — the postures finally count against the very
   // blow they exist to stop.
   if (target.effects.some((e) => e.kind === 'defending')) dmg *= 0.5;
+  dmg *= shieldWallMul(b, target); // 盾牆 — linked defending infantry
   if (tileAt(b, target.coord)?.terrain === 'fieldworks') dmg *= 0.6;
   if (target.unitType === 'spearmen' && !isRouting(target) && typeof target.facing === 'number'
       && dirGap(hexDirection(target.coord, unit.coord), target.facing) <= 1) {
