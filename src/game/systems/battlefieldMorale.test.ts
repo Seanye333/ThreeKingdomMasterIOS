@@ -94,7 +94,28 @@ describe('衝鋒蓄力 — charge momentum', () => {
   });
 
   it('a braced spearwall facing the charger ripostes harder (拒馬立防)', () => {
-    // Spear faces the charger (toward col 2) and is dug in (defending).
+    // FOOT charger — facing still matters against infantry (a spear line
+    // caught from behind counters weakly). Cavalry is covered below.
+    const mkSpear = (facing: number) => mkUnit({
+      id: 'D1', officerId: 'oD1', side: 'defender', coord: { col: 3, row: 4 },
+      unitType: 'spearmen', facing, effects: [{ kind: 'defending', turnsLeft: 1 }],
+    });
+    const run = (facing: number) => {
+      const foot = mkUnit({ id: 'A1', officerId: 'oA1', side: 'attacker', coord: { col: 0, row: 4 }, unitType: 'infantry' });
+      const spear = mkSpear(facing);
+      const b = mkBattle({ units: [foot, spear], tiles: mkTiles(14, 10) });
+      const omap = officerMap([foot, spear]);
+      let s = moveUnit(b, 'A1', { col: 1, row: 4 });
+      s = moveUnit(s, 'A1', { col: 2, row: 4 });
+      return attackUnits(s, 'A1', 'D1', omap, fixedRng(0.5)).units.find((u) => u.id === 'A1')!.troops;
+    };
+    // facing 3 (west, toward the charger) = braced; facing 0 (east, away) = not.
+    const bracedAttacker = run(3);
+    const looseAttacker = run(0);
+    expect(bracedAttacker).toBeLessThan(looseAttacker); // braced spears bleed the charger more
+  });
+
+  it('槍陣如林 — a HORSEMAN finds no weak side of an ordered spear line', () => {
     const mkSpear = (facing: number) => mkUnit({
       id: 'D1', officerId: 'oD1', side: 'defender', coord: { col: 3, row: 4 },
       unitType: 'spearmen', facing, effects: [{ kind: 'defending', turnsLeft: 1 }],
@@ -106,12 +127,11 @@ describe('衝鋒蓄力 — charge momentum', () => {
       const omap = officerMap([cav, spear]);
       let s = moveUnit(b, 'A1', { col: 1, row: 4 });
       s = moveUnit(s, 'A1', { col: 2, row: 4 });
-      return attackUnits(s, 'A1', 'D1', omap, fixedRng(0.5)).units.find((u) => u.id === 'A1')!.troops;
+      return attackUnits(s, 'A1', 'D1', omap, fixedRng(0.5)).units.find((u) => u.id === 'D1')!.troops;
     };
-    // facing 3 (west, toward the charger) = braced; facing 0 (east, away) = not.
-    const bracedAttacker = run(3);
-    const looseAttacker = run(0);
-    expect(bracedAttacker).toBeLessThan(looseAttacker); // braced spears bleed the charger more
+    // Facing toward or away — the pikes swing to meet the ride either way:
+    // cavalry gets no flank/rear bonus on a braced spear unit.
+    expect(run(3)).toBe(run(0));
   });
 });
 
