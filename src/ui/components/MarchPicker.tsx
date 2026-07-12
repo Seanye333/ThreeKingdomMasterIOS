@@ -15,6 +15,8 @@ import { cityPos } from '../../game/data/cityGeo';
 import { geoToPixel } from '../../game/data/geography';
 import { FACILITY_DEFS } from '../../game/types/fort';
 import { attackerArm } from '../../game/systems/combat';
+import { setBondPowerMul } from '../../game/systems/setBonds';
+import { loadDecks, saveDecks, MAX_DECKS, type LineupDeck } from './lineupDecks';
 import type { EntityId } from '../../game/types';
 import { OfficerHoverCard } from './OfficerHoverCard';
 import { OfficerStats } from './OfficerStats';
@@ -160,6 +162,33 @@ export function MarchPicker({ cityId, onClose }: Props) {
     const g = source?.troops ?? 0;
     return Math.min(g, Math.max(2000, Math.round((g * 0.6) / 500) * 500));
   });
+
+  // 出陣卡組 — saved lineup presets; applying filters to who's actually here.
+  const [decks, setDecks] = useState<LineupDeck[]>(loadDecks);
+  const applyDeck = (d: LineupDeck) => {
+    const availIds = new Set(officers.map((o) => o.id));
+    const present = d.ids.filter((id) => availIds.has(id));
+    if (present.length === 0) return;
+    setOfficerId(present[0]);
+    setAdditionalIds(present.slice(1, 1 + MAX_COMPANIONS));
+  };
+  const saveDeck = () => {
+    if (!officerId) return;
+    const name = `${officersMap[officerId]?.name.zh ?? '出陣'}隊`;
+    const next = [{ name, ids: [officerId, ...additionalIds] }, ...decks.filter((x) => x.name !== name)].slice(0, MAX_DECKS);
+    setDecks(next);
+    saveDecks(next);
+  };
+  const removeDeck = (name: string) => {
+    const next = decks.filter((x) => x.name !== name);
+    setDecks(next);
+    saveDecks(next);
+  };
+  // 成套羈絆 readout — the same math combat applies (setBonds.ts).
+  const lineupSynergy = useMemo(
+    () => setBondPowerMul([officerId, ...additionalIds].map((id) => (id ? officersMap[id] : null))),
+    [officerId, additionalIds, officersMap],
+  );
 
   const toggleAdditional = (id: EntityId) => {
     setAdditionalIds((prev) => {
@@ -485,6 +514,48 @@ export function MarchPicker({ cityId, onClose }: Props) {
           <h3 className={styles.sectionTitle}>
             {t('副將', 'Accompanying Officers')} — {additionalIds.length} / {MAX_COMPANIONS}
           </h3>
+          {/* 出陣卡組 — saved lineup presets + live 成套羈絆 readout. */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', margin: '0.2rem 0 0.5rem' }}>
+            {decks.map((d) => (
+              <span key={d.name} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, border: '1px solid #3c4f5e', borderRadius: 'var(--tkm-radius-xs)', padding: '0.1rem 0.45rem', fontSize: '0.72rem', background: 'rgba(126,192,224,0.06)' }}>
+                <button
+                  onClick={() => applyDeck(d)}
+                  title={t(`套用卡組(到場者入列):${d.ids.length} 人`, `Apply deck (${d.ids.length} names; absentees skipped)`)}
+                  style={{ background: 'none', border: 'none', color: '#9ed0ea', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit', padding: 0 }}
+                >🎴 {d.name}</button>
+                <button
+                  onClick={() => removeDeck(d.name)}
+                  aria-label={t('刪除卡組', 'Delete deck')}
+                  style={{ background: 'none', border: 'none', color: '#5f6c76', cursor: 'pointer', fontSize: '0.7rem', padding: 0 }}
+                >×</button>
+              </span>
+            ))}
+            {officerId && (
+              <button
+                onClick={saveDeck}
+                title={t('把當前主將+副將存為卡組(以主將命名)', 'Save the current lineup as a deck (named after the lead)')}
+                style={{ border: '1px dashed #3c4f5e', borderRadius: 'var(--tkm-radius-xs)', padding: '0.1rem 0.5rem', fontSize: '0.72rem', background: 'none', color: '#7a8893', cursor: 'pointer', fontFamily: 'inherit' }}
+              >{t('＋存卡組', '+ Save deck')}</button>
+            )}
+            {lineupSynergy.notes.map((n) => (
+              <span key={n.setId}
+                title={t('名將成套羈絆 — 同陣每多一人 +1% 戰力,全套再 +2%', 'Famous-set bond: +1% power per extra member, +2% when complete')}
+                style={{ fontSize: '0.7rem', padding: '0.05rem 0.45rem', borderRadius: 9, border: `1px solid ${n.full ? '#8a6a2a' : '#3f5c3f'}`, background: n.full ? 'rgba(230,196,115,0.14)' : 'rgba(138,200,138,0.1)', color: n.full ? '#ffe9a8' : '#a8d8a8' }}>
+                ❦ {lang === 'en' ? n.en : n.zh} {n.have}/{n.total}{n.full ? ' ✦' : ''}
+              </span>
+            ))}
+            {lineupSynergy.feudPairs > 0 && (
+              <span title={t('宿怨同軍 — 仇人同列,每對 −1% 戰力', 'Sworn enemies in one line: −1% per feuding pair')}
+                style={{ fontSize: '0.7rem', padding: '0.05rem 0.45rem', borderRadius: 9, border: '1px solid #6a3028', background: 'rgba(184,68,46,0.12)', color: '#e0907a' }}>
+                ⚡ {t('宿怨同軍', 'Feud')} ×{lineupSynergy.feudPairs}
+              </span>
+            )}
+            {lineupSynergy.mul !== 1 && (
+              <span style={{ fontSize: '0.7rem', color: lineupSynergy.mul > 1 ? '#8ac88a' : '#e0907a', fontFamily: 'ui-monospace, monospace' }}>
+                {t('羈絆', 'Bond')} ×{lineupSynergy.mul.toFixed(2)}
+              </span>
+            )}
+          </div>
           <div className={styles.officerGrid}>
             {officers
               .filter((o) => o.id !== officerId)

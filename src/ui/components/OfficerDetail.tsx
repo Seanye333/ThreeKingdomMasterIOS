@@ -39,6 +39,7 @@ import { xpProgress, learnableSkills, canBreakthrough, breakthroughCost, breakth
 import { canAppraise, GRADE_LABEL } from '../../game/systems/appraisal';
 import { officerGrade, officerLevel, nextGradeGap, gradeMeta } from '../../game/systems/officerGrade';
 import { MAX_STARS, officerStars, nextStarRequirement } from '../../game/systems/stars';
+import { skillLevelBadge } from '../../game/systems/skillMastery';
 import { gradeCombatBonus, itemMasteryMul } from '../../game/systems/gradeCombat';
 import { itemRarity, itemRarityMeta, liveItemById, refineCost, REFINE_MAX,
   BREAKTHROUGH_MAX, breakthroughCost as itemBreakthroughCost, socketsFor, GEMS, GEMS_BY_ID,
@@ -1183,6 +1184,12 @@ export function OfficerDetail({
                         }}
                     >
                       {lang === 'en' ? s.name.en : s.name.zh}
+                      {/* 技能等級 — 特訓精研出的 Ⅱ/Ⅲ 熟練徽記 (skillMastery.ts) */}
+                      {skillLevelBadge(officer, s.id) && (
+                        <span style={{ marginLeft: 3, color: '#ffd66e', fontWeight: 700 }} title={t('特訓精研 — 效果放大', 'Refined by special training')}>
+                          {skillLevelBadge(officer, s.id)}
+                        </span>
+                      )}
                       {lang === 'both' && <> <span style={{ fontSize: '0.72rem', color: '#7a8893', fontStyle: 'italic' }}>{s.name.en}</span></>}
                     </span>
                   );

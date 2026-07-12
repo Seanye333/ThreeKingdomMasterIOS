@@ -2,6 +2,8 @@ import type { Officer } from '../../game/types';
 import { officerGrade, officerLevel, gradeMeta } from '../../game/systems/officerGrade';
 import { combatBP } from '../../game/systems/battlePower';
 import { SKILLS_BY_ID } from '../../game/data/skills';
+import { OATH_BONDS, isFeudKind } from '../../game/data/bonds';
+import { OFFICER_RELATIONSHIPS } from '../../game/data/relationships';
 import { pickName, type Language } from '../i18n';
 
 /**
@@ -209,6 +211,47 @@ export async function exportOfficerCardPNG(officer: Officer, lang: Language): Pr
     }
     if (line) ctx.fillText(line, 16, y);
     y += 8;
+  }
+
+  // 緣分 — the bond lines, one wrapped block (mirrors the card face's strip).
+  {
+    const seen = new Set<string>();
+    const bondBits: string[] = [];
+    for (const r of OFFICER_RELATIONSHIPS) {
+      if (r.a !== officer.id && r.b !== officer.id) continue;
+      const other = r.a === officer.id ? r.b : r.a;
+      if (seen.has(other)) continue;
+      seen.add(other);
+      bondBits.push(`◌ ${pickName(r.note, lang)}`);
+    }
+    for (const b of OATH_BONDS) {
+      if (b.officerA !== officer.id && b.officerB !== officer.id) continue;
+      const other = b.officerA === officer.id ? b.officerB : b.officerA;
+      if (seen.has(other)) continue;
+      seen.add(other);
+      bondBits.push(`${isFeudKind(b.kind) ? '⚡' : '❦'} ${b.label}`);
+    }
+    if (bondBits.length > 0) {
+      y += 10;
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#7a8893';
+      ctx.font = '9px system-ui, sans-serif';
+      ctx.fillText(zh ? '緣　分' : 'BONDS', 16, y);
+      y += 16;
+      ctx.fillStyle = '#a8b8a8';
+      ctx.font = '11px system-ui, sans-serif';
+      let line = '';
+      for (const bit of bondBits.slice(0, 8)) {
+        const next = line ? `${line} · ${bit}` : bit;
+        if (ctx.measureText(next).width > W - 32 && line) {
+          ctx.fillText(line, 16, y);
+          y += 15;
+          line = bit;
+        } else line = next;
+        if (y > H - 40) break; // keep clear of the footer
+      }
+      if (line && y <= H - 40) ctx.fillText(line, 16, y);
+    }
   }
 
   // Footer — the game's mark, so shared cards say where they came from.

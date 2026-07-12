@@ -5,6 +5,7 @@ import { isMartyr, executionRenownCost } from '../../game/systems/captiveFate';
 import { playSfx } from '../../game/systems/sound';
 import type { EntityId } from '../../game/types';
 import { OfficerHoverCard } from './OfficerHoverCard';
+import { OfficerCardModal } from './OfficerCardModal';
 import { OfficerStats } from './OfficerStats';
 import { DebateModal } from './DebateModal';
 import { RecruitSuccessModal } from './RecruitSuccessModal';
@@ -31,6 +32,8 @@ export function CaptivesSection({ cityId }: Props) {
   // 舌戰 — the modal target + officers we've out-argued (one-shot edge).
   const [debating, setDebating] = useState<EntityId | null>(null);
   const [recruited, setRecruited] = useState<EntityId | null>(null);
+  // 🎴 — tapping a captive's head row opens their trading card (size them up).
+  const [cardId, setCardId] = useState<EntityId | null>(null);
   const [debateEdge, setDebateEdge] = useState<Set<EntityId>>(new Set());
   const bestDebater = useMemo(
     () => Object.values(officersMap)
@@ -91,8 +94,8 @@ export function CaptivesSection({ cityId }: Props) {
         {captives.map((o) => (
           <li key={o.id} className={styles.row}>
             <OfficerHoverCard officer={o}>
-              <div className={styles.head}>
-                {lang !== 'en' && <span className={styles.nameZh}>{o.name.zh}</span>}
+              <div className={styles.head} onClick={() => setCardId(o.id)} title={t('武將卡', 'Officer card')} style={{ cursor: 'pointer' }}>
+                {lang !== 'en' && <span className={styles.nameZh}>🎴 {o.name.zh}</span>}
                 {lang !== 'zh' && <span className={styles.nameEn}>{o.name.en}</span>}
                 <span className={styles.stats}>
                   <OfficerStats officer={o} keys={['war', 'intelligence', 'politics', 'charisma']} />
@@ -185,6 +188,9 @@ export function CaptivesSection({ cityId }: Props) {
       )}
       {recruited && officersMap[recruited] && (
         <RecruitSuccessModal officer={officersMap[recruited]} onClose={() => setRecruited(null)} />
+      )}
+      {cardId && officersMap[cardId] && (
+        <OfficerCardModal officer={officersMap[cardId]} onClose={() => setCardId(null)} />
       )}
     </section>
   );

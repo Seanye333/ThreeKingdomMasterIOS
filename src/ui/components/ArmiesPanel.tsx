@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useGameStore } from '../../game/state/store';
+import { OfficerCardModal } from './OfficerCardModal';
 import { Icon } from './Icon';
 import { useLanguage, pickName } from '../i18n';
 
@@ -34,6 +35,8 @@ export function ArmiesPanel() {
 
   // 手機收納 — folded to a chip by default; the list is a tap away.
   const [open, setOpen] = useState(!IS_MOBILE);
+  // 🎴 — tapping a commander's name opens their trading card.
+  const [cardId, setCardId] = useState<string | null>(null);
 
   const mine = Object.values(armies).filter((a) => a.forceId === playerForceId);
   if (mine.length === 0) return null;
@@ -272,7 +275,11 @@ export function ArmiesPanel() {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6 }}>
               <span style={{ color: '#ffe9a8', whiteSpace: 'nowrap' }}>
-                {cmdr?.name.zh ?? '？'}
+                <span
+                  onClick={cmdr ? (e) => { e.stopPropagation(); setCardId(cmdr.id); } : undefined}
+                  title={cmdr ? (lang === 'en' ? 'Officer card' : '武將卡') : undefined}
+                  style={cmdr ? { cursor: 'pointer', textDecoration: 'underline dotted rgba(255,233,168,0.4)', textUnderlineOffset: 2 } : undefined}
+                >{cmdr?.name.zh ?? '？'}</span>
                 <span style={{ color: '#7a8893', marginLeft: 4, fontSize: '0.7rem', fontFamily: 'ui-monospace, monospace' }}>{troopLabel}</span>
                 {a.food !== undefined && (() => {
                   const seasons = Math.floor(a.food / Math.max(1, a.troops * 0.25));
@@ -312,6 +319,9 @@ export function ArmiesPanel() {
           </div>
         );
       })}
+      {cardId && officers[cardId] && (
+        <OfficerCardModal officer={officers[cardId]} onClose={() => setCardId(null)} />
+      )}
     </div>
   );
 }
