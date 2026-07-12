@@ -33,6 +33,8 @@ export function EncyclopediaModal({ onClose }: Props) {
   const cities = useGameStore((s) => s.cities);
   const forces = useGameStore((s) => s.forces);
   const playerForceId = useGameStore((s) => s.playerForceId);
+  const setRewardsClaimed = useGameStore((s) => s.setRewardsClaimed);
+  const powerBoardPrev = useGameStore((s) => s.powerBoardPrev);
   const [section, setSection] = useState<Section>('officers');
   const [search, setSearch] = useState('');
   // 交叉引用 — clicking any officer chip opens their full detail (列傳 included)
@@ -229,18 +231,21 @@ export function EncyclopediaModal({ onClose }: Props) {
                     const p = codexSetProgress(codex, set.id);
                     const done = p.have === p.total;
                     const active = setFilter === set.id;
+                    // 成套之禮已賀 — this campaign's court has celebrated the set.
+                    const feted = (setRewardsClaimed ?? []).includes(set.id);
                     return (
                       <button key={set.id}
                         onClick={() => setSetFilter(active ? null : set.id)}
-                        title={set.en}
+                        title={feted ? `${set.en} — 成套之禮已領(金800·眾將忠誠+5);同陣出征另有羈絆之力` : set.en}
                         style={{
-                          border: `1px solid ${active ? '#f2dd9a' : done ? '#e6c473' : '#2b3845'}`,
-                          background: active ? 'rgba(212,168,74,0.28)' : done ? 'rgba(212,168,74,0.12)' : 'transparent',
+                          border: `1px solid ${active ? '#f2dd9a' : feted ? '#c8a24e' : done ? '#e6c473' : '#2b3845'}`,
+                          background: active ? 'rgba(212,168,74,0.28)' : feted ? 'rgba(212,168,74,0.18)' : done ? 'rgba(212,168,74,0.12)' : 'transparent',
                           padding: '0.3rem 0.7rem', fontSize: '0.78rem', cursor: 'pointer',
                           fontFamily: 'inherit', letterSpacing: '0.04rem',
                           color: done ? '#f2dd9a' : '#9aa6b0',
+                          boxShadow: feted ? '0 0 8px rgba(230,196,115,0.25)' : undefined,
                         }}>
-                        {done ? '✦ ' : ''}{set.zh} {p.have}/{p.total}
+                        {feted ? '🎁 ' : done ? '✦ ' : ''}{set.zh} {p.have}/{p.total}
                       </button>
                     );
                   })}
@@ -280,6 +285,22 @@ export function EncyclopediaModal({ onClose }: Props) {
                     borderLeft: r.rank <= 3 ? '3px solid #e6c473' : undefined,
                   }}>
                   <span style={{ width: 34, textAlign: 'center', fontSize: r.rank <= 3 ? '1rem' : '0.8rem', color: '#c9a64e', fontFamily: 'ui-monospace,monospace' }}>{medal(r.rank)}</span>
+                  {/* 風雲 — movement vs last season's board (top-50 snapshot). */}
+                  {(() => {
+                    const prev = (powerBoardPrev ?? {})[o.id];
+                    if (prev === undefined && r.rank <= 20 && Object.keys(powerBoardPrev ?? {}).length > 0) {
+                      return <span style={{ width: 34, fontSize: '0.62rem', color: '#e0907a', letterSpacing: '0.04rem' }}>NEW</span>;
+                    }
+                    if (prev !== undefined && prev !== r.rank) {
+                      const up = prev > r.rank;
+                      return (
+                        <span style={{ width: 34, fontSize: '0.68rem', color: up ? '#8ac88a' : '#e0907a', fontFamily: 'ui-monospace,monospace' }}>
+                          {up ? '↑' : '↓'}{Math.abs(prev - r.rank)}
+                        </span>
+                      );
+                    }
+                    return <span style={{ width: 34 }} />;
+                  })()}
                   <span style={{ flex: 1, color: isMine ? '#f2dd9a' : '#e6edf3' }}>
                     {o.name.zh}
                     {isMine && <span style={{ marginLeft: 6, fontSize: '0.65rem', color: '#c8a24e' }}>我方</span>}

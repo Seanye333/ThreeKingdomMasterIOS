@@ -15,6 +15,7 @@ export function CardRevealModal() {
   const t = useT();
   const lang = useLanguage();
   const cardReveal = useGameStore((s) => s.cardReveal);
+  const kind = useGameStore((s) => s.cardRevealKind);
   const officer = useGameStore((s) => (s.cardReveal ? s.officers[s.cardReveal] : undefined));
   const setCardReveal = useGameStore((s) => s.setCardReveal);
   const [flipped, setFlipped] = useState(false);
@@ -30,6 +31,9 @@ export function CardRevealModal() {
 
   if (!cardReveal || !officer) return null;
   const meta = gradeMeta(officerGrade(officer).grade);
+  // 覺醒 wears its own gold: title, glyph and glow all say "sixth star", not "new hire".
+  const awaken = kind === 'awaken';
+  const accent = awaken ? '#ffd66e' : meta.color;
 
   return (
     <div
@@ -45,8 +49,8 @@ export function CardRevealModal() {
       <style>{`
         @keyframes tkmRevealDrop { from { transform: translateY(-40px) scale(0.92); opacity: 0; } to { transform: none; opacity: 1; } }
       `}</style>
-      <div style={{ fontSize: '1.05rem', color: meta.color, letterSpacing: '0.3rem', textShadow: `0 0 14px ${meta.color}66`, fontFamily: '"Ma Shan Zheng", "Songti SC", serif' }}>
-        {t('名將來投', 'A NAME JOINS YOUR BANNER')}
+      <div style={{ fontSize: '1.05rem', color: accent, letterSpacing: '0.3rem', textShadow: `0 0 14px ${accent}66`, fontFamily: '"Ma Shan Zheng", "Songti SC", serif' }}>
+        {awaken ? t('★ 將星覺醒 ★', '★ THE STAR AWAKENS ★') : t('名將來投', 'A NAME JOINS YOUR BANNER')}
       </div>
       <div style={{ width: 'min(380px, 88vw)', perspective: 1100, animation: 'tkmRevealDrop 0.5s ease-out' }}>
         <div style={{ position: 'relative', transformStyle: 'preserve-3d', transition: 'transform 0.7s cubic-bezier(0.2, 0.7, 0.3, 1)', transform: flipped ? 'rotateY(0deg)' : 'rotateY(180deg)' }}>
@@ -57,18 +61,20 @@ export function CardRevealModal() {
           {/* Back — a rune card in the grade's colour. */}
           <div style={{
             position: 'absolute', inset: 0, backfaceVisibility: 'hidden', transform: 'rotateY(180deg)',
-            borderRadius: 12, border: `3px solid ${meta.color}`,
+            borderRadius: 12, border: `3px solid ${accent}`,
             background: 'radial-gradient(ellipse at 50% 34%, #1b2531 0%, #0a0e14 80%)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: `0 8px 40px rgba(0,0,0,0.7), 0 0 22px ${meta.color}44`,
+            boxShadow: `0 8px 40px rgba(0,0,0,0.7), 0 0 22px ${accent}44`,
           }}>
-            <span style={{ fontSize: '4.2rem', color: meta.color, opacity: 0.85, fontFamily: '"Ma Shan Zheng", "Songti SC", serif', textShadow: `0 0 24px ${meta.color}88` }}>將</span>
+            <span style={{ fontSize: '4.2rem', color: accent, opacity: 0.85, fontFamily: '"Ma Shan Zheng", "Songti SC", serif', textShadow: `0 0 24px ${accent}88` }}>{awaken ? '★' : '將'}</span>
           </div>
         </div>
       </div>
       <div style={{ fontSize: '0.78rem', color: '#8a96a2' }}>
         {flipped
-          ? `${pickName(officer.name, lang)} · ${pickName(meta.name, lang)}${lang === 'en' ? ' — tap to dismiss' : ' — 點擊收起'}`
+          ? (awaken
+            ? `${pickName(officer.name, lang)} · ${lang === 'en' ? 'six stars — best stat +2' : '六星圓滿·最強一圍 +2'}${lang === 'en' ? ' — tap to dismiss' : ' — 點擊收起'}`
+            : `${pickName(officer.name, lang)} · ${pickName(meta.name, lang)}${lang === 'en' ? ' — tap to dismiss' : ' — 點擊收起'}`)
           : (lang === 'en' ? 'Tap to reveal' : '點擊開卡')}
       </div>
     </div>

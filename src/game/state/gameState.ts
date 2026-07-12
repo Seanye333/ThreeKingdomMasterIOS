@@ -282,6 +282,11 @@ export interface GameState {
   /** 得將開卡 — transient: officer id whose card-reveal flourish should play
    *  (a gold-or-better name newly under the player's banner). Not saved. */
   cardReveal: EntityId | null;
+  /** 開卡緣由 — 'recruit' (得將) or 'awaken' (六星覺醒); styles the flourish. */
+  cardRevealKind: 'recruit' | 'awaken';
+  /** 武評前席 — last season's top-50 BP board (id → rank), for the ↑↓ arrows
+   *  and NEW badges on the 武評 tab. */
+  powerBoardPrev: Record<EntityId, number>;
   /** 成套之禮 — famous sets already celebrated this campaign (setBonds.ts);
    *  each set pays out once when it first stands complete under the player. */
   setRewardsClaimed: string[];
@@ -802,6 +807,8 @@ export const EMPTY_STATE: GameState = {
   scenicVisits: {},
   musters: {},
   cardReveal: null,
+  cardRevealKind: 'recruit',
+  powerBoardPrev: {},
   setRewardsClaimed: [],
   dayFlow: null,
   dayFlowFollow: false,
@@ -1216,6 +1223,8 @@ export function loadScenario(
     sites: buildInitialSites(),
     scenicLooted: {},
     cardReveal: null,
+    cardRevealKind: 'recruit',
+    powerBoardPrev: {},
     setRewardsClaimed: [],
     dayFlow: null,
   dayFlowFollow: false,

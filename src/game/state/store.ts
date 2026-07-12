@@ -8652,6 +8652,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // 武評前席 — snapshot this season's top-50 board so the 武評 tab can
+        // draw ↑↓ movement arrows and NEW badges against last season.
+        if (seasonBoundary) {
+          set({ powerBoardPrev: Object.fromEntries(topBoardIds(get().officers, 50)) });
+        }
+
         // 軍師點撥 — turn-report-driven one-shot tips for the new systems.
         {
           const hints = get();
@@ -11050,7 +11056,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (persist) { try { localStorage.setItem('tkm-flow-speed', String(speed)); } catch { /* headless */ } }
       },
       dayFlowSkip: () => set({ dayFlow: null }),
-      setCardReveal: (officerId) => set({ cardReveal: officerId }),
+      setCardReveal: (officerId) => set({ cardReveal: officerId, ...(officerId === null ? { cardRevealKind: 'recruit' as const } : {}) }),
       investStar: (officerId) => {
         const state = get();
         const o = state.officers[officerId];
@@ -11067,6 +11073,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         set({
           officers: { ...state.officers, [officerId]: upped },
           cities: { ...state.cities, [city.id]: { ...city, gold: city.gold - req.cost } },
+          // 將星覺醒 — the sixth star earns the full-screen card flourish.
+          ...(awakened ? { cardReveal: officerId, cardRevealKind: 'awaken' as const } : {}),
         });
         get().notify(
           awakened
@@ -15936,6 +15944,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           streetEncounters: loaded.streetEncounters ?? {},
           pendingConquestPolicy: null,
           cardReveal: null,
+          cardRevealKind: 'recruit' as const,
+          powerBoardPrev: loaded.powerBoardPrev ?? {},
           setRewardsClaimed: loaded.setRewardsClaimed ?? [],
           dayFlow: null,
           dayFlowFollow: loaded.dayFlowFollow ?? false,
