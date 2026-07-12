@@ -253,8 +253,8 @@ export function TitleScreen() {
     fontSize: '0.7rem', letterSpacing: '0.05rem', borderRadius: 'var(--tkm-radius-xs)',
   };
   const navPrimary = (enabled: boolean): CSSProperties => ({
-    borderColor: enabled ? '#e6c473' : 'rgba(255,255,255,0.08)',
-    color: enabled ? '#e6c473' : '#6a5238',
+    borderColor: enabled ? 'var(--tkm-text-h2)' : 'rgba(255,255,255,0.08)',
+    color: enabled ? 'var(--tkm-text-h2)' : '#6a5238',
     background: enabled ? 'rgba(230,196,115,0.14)' : 'transparent',
     fontWeight: 'bold',
     // A disabled primary shouldn't invite a click (was pointer + hover glow).
@@ -359,16 +359,17 @@ export function TitleScreen() {
             return (
               <div key={s.k} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <button
+                  aria-current={on ? 'step' : undefined}
                   onClick={() => {
                     // allow stepping back to a completed step
                     if (i <= STEPS.findIndex((x) => x.k === step)) setStep(s.k);
                   }}
                   style={{
                     padding: '0.3rem 0.9rem',
-                    border: `1px solid ${on ? '#e6c473' : done ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.07)'}`,
+                    border: `1px solid ${on ? 'var(--tkm-text-h2)' : done ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.07)'}`,
                     borderRadius: 999,
                     background: on ? 'rgba(230,196,115,0.12)' : 'transparent',
-                    color: on ? '#e6c473' : done ? '#a8b4be' : '#6a7682',
+                    color: on ? 'var(--tkm-text-h2)' : done ? '#a8b4be' : '#6a7682',
                     fontFamily: 'inherit', fontSize: '0.82rem', letterSpacing: '0.06rem',
                     cursor: i <= STEPS.findIndex((x) => x.k === step) ? 'pointer' : 'default',
                     transition: 'background 0.15s, border-color 0.15s, color 0.15s',
@@ -423,7 +424,7 @@ export function TitleScreen() {
                 <span style={{ color: '#e6edf3' }}>
                   {lang === 'en' ? dailyScenario.name.en : dailyScenario.name.zh} · {lang === 'en' ? dailyForce.name.en : dailyForce.name.zh}
                 </span>
-                <span style={{ color: '#7a8893', fontSize: '0.7rem' }}>
+                <span style={{ color: 'var(--tkm-text-muted)', fontSize: '0.7rem' }}>
                   {daily.modifiers.map((m) => (lang === 'en' ? m.en : m.zh)).join(' / ')}
                 </span>
                 {dailyResult && (
@@ -469,7 +470,7 @@ export function TitleScreen() {
                 {/* 補打日曆 — the last seven days, replayable; older days
                     show their result but the window has closed. */}
                 <div style={{ flexBasis: '100%', display: 'flex', gap: 4, alignItems: 'center', marginTop: 2 }}>
-                  <span style={{ fontSize: '0.7rem', color: '#7a8893' }}>{t('近七日', 'Last 7')}</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--tkm-text-muted)' }}>{t('近七日', 'Last 7')}</span>
                   {recent.map((d) => {
                     const r = allResults[d];
                     const isToday = d === todayStr;
@@ -482,7 +483,7 @@ export function TitleScreen() {
                           width: 26, height: 22, cursor: 'pointer', fontSize: '0.7rem',
                           fontFamily: 'ui-monospace, monospace',
                           background: r ? (r.victory ? 'rgba(212,168,74,0.3)' : 'rgba(184,68,46,0.25)') : 'transparent',
-                          border: `1px solid ${isToday ? '#ff9080' : r ? (r.victory ? '#e6c473' : '#8a4538') : '#26323e'}`,
+                          border: `1px solid ${isToday ? '#ff9080' : r ? (r.victory ? 'var(--tkm-text-h2)' : '#8a4538') : '#26323e'}`,
                           color: r ? (r.victory ? '#f2dd9a' : '#c08070') : '#5f6c76',
                         }}
                       >{Number(d.slice(8))}</button>
@@ -507,13 +508,13 @@ export function TitleScreen() {
                       if (first) { setScenarioId(first.id); setSelectedForceId(null); }
                     }}
                     onMouseEnter={(ev) => { if (!on) { ev.currentTarget.style.color = '#c9b58a'; ev.currentTarget.style.borderColor = 'rgba(230,196,115,0.35)'; } }}
-                    onMouseLeave={(ev) => { if (!on) { ev.currentTarget.style.color = '#7a8893'; ev.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; } }}
+                    onMouseLeave={(ev) => { if (!on) { ev.currentTarget.style.color = 'var(--tkm-text-muted)'; ev.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; } }}
                     style={{
                       padding: '0.4rem 0.95rem',
-                      border: `1px solid ${on ? '#e6c473' : 'rgba(255,255,255,0.08)'}`,
+                      border: `1px solid ${on ? 'var(--tkm-text-h2)' : 'rgba(255,255,255,0.08)'}`,
                       borderRadius: 999,
                       background: on ? 'rgba(230,196,115,0.12)' : 'transparent',
-                      color: on ? '#e6c473' : '#7a8893',
+                      color: on ? 'var(--tkm-text-h2)' : 'var(--tkm-text-muted)',
                       cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.85rem',
                       transition: 'background 0.15s, border-color 0.15s, color 0.15s',
                     }}
@@ -547,7 +548,7 @@ export function TitleScreen() {
               {/* Right — description + territory preview for the highlighted scenario */}
               <div style={{ flex: '1 1 0', minWidth: 0 }}>
                 <p className={styles.scenarioDesc} style={{ marginTop: 0 }}>{desc(scenario)}</p>
-                <div style={{ fontSize: '0.78rem', color: '#7a8893', marginBottom: '0.5rem' }}>
+                <div style={{ fontSize: '0.78rem', color: 'var(--tkm-text-muted)', marginBottom: '0.5rem' }}>
                   {startYear} AD · {scenario.forces.length} {t('勢力', 'forces')}
                 </div>
                 {/* 戰役封面 — optional cover above the territory map. Drop
@@ -680,7 +681,7 @@ export function TitleScreen() {
                       <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
                         <OfficerPortrait officer={selectedRuler} size={72} forceColor={selectedForce.color} year={startYear} />
                         <div>
-                          <div style={{ fontSize: '1.1rem', color: '#e6c473' }}>{lang === 'en' ? selectedForce.name.en : selectedForce.name.zh}</div>
+                          <div style={{ fontSize: '1.1rem', color: 'var(--tkm-text-h2)' }}>{lang === 'en' ? selectedForce.name.en : selectedForce.name.zh}</div>
                           <div style={{ fontSize: '0.85rem', color: '#a08c6a' }}>
                             {lang === 'en' ? selectedRuler.name.en : selectedRuler.name.zh}
                             {selectedRuler.courtesyName && (
@@ -692,21 +693,21 @@ export function TitleScreen() {
                       {/* ruler abilities */}
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: '0.3rem', margin: '0.8rem 0', textAlign: 'center', fontSize: '0.75rem' }}>
                         {([['統', 'LDR', selectedRuler.stats.leadership], ['武', 'WAR', selectedRuler.stats.war], ['智', 'INT', selectedRuler.stats.intelligence], ['政', 'POL', selectedRuler.stats.politics], ['魅', 'CHA', selectedRuler.stats.charisma]] as const).map(([zh, en, v]) => (
-                          <div key={zh}><div style={{ color: '#7a8893' }} title={t(zh, en)}>{lang === 'en' ? en : zh}</div><div style={{ color: '#e6c473', fontSize: '0.95rem' }}>{v}</div></div>
+                          <div key={zh}><div style={{ color: 'var(--tkm-text-muted)' }} title={t(zh, en)}>{lang === 'en' ? en : zh}</div><div style={{ color: 'var(--tkm-text-h2)', fontSize: '0.95rem' }}>{v}</div></div>
                         ))}
                       </div>
                       {/* force data */}
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.3rem 1rem', fontSize: '0.78rem', color: '#a08c6a', borderTop: '1px solid #1e2832', paddingTop: '0.6rem' }}>
-                        <div>{t('城池', 'Cities')}: <b style={{ color: '#e6c473' }}>{st.cities}</b></div>
-                        <div>{t('武將', 'Officers')}: <b style={{ color: '#e6c473' }}>{st.officers.length}</b></div>
-                        <div>{t('兵力', 'Troops')}: <b style={{ color: '#e6c473' }}>{st.troops.toLocaleString()}</b></div>
-                        <div>{t('資金', 'Gold')}: <b style={{ color: '#e6c473' }}>{st.gold.toLocaleString()}</b></div>
-                        <div>{t('兵糧', 'Food')}: <b style={{ color: '#e6c473' }}>{st.food.toLocaleString()}</b></div>
-                        <div>{t('勢力', 'Strength')}: <b style={{ color: '#e6c473' }}>{strength}</b></div>
+                        <div>{t('城池', 'Cities')}: <b style={{ color: 'var(--tkm-text-h2)' }}>{st.cities}</b></div>
+                        <div>{t('武將', 'Officers')}: <b style={{ color: 'var(--tkm-text-h2)' }}>{st.officers.length}</b></div>
+                        <div>{t('兵力', 'Troops')}: <b style={{ color: 'var(--tkm-text-h2)' }}>{st.troops.toLocaleString()}</b></div>
+                        <div>{t('資金', 'Gold')}: <b style={{ color: 'var(--tkm-text-h2)' }}>{st.gold.toLocaleString()}</b></div>
+                        <div>{t('兵糧', 'Food')}: <b style={{ color: 'var(--tkm-text-h2)' }}>{st.food.toLocaleString()}</b></div>
+                        <div>{t('勢力', 'Strength')}: <b style={{ color: 'var(--tkm-text-h2)' }}>{strength}</b></div>
                       </div>
                       {/* notable officers */}
                       <div style={{ marginTop: '0.7rem', borderTop: '1px solid #1e2832', paddingTop: '0.6rem' }}>
-                        <div style={{ fontSize: '0.7rem', color: '#7a8893', marginBottom: '0.4rem' }}>{t('主要武將', 'Notable Officers')}</div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--tkm-text-muted)', marginBottom: '0.4rem' }}>{t('主要武將', 'Notable Officers')}</div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                           {top.map((o) => (
                             <div key={o.id} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.75rem', color: '#a08c6a' }}>
@@ -745,8 +746,8 @@ export function TitleScreen() {
         {step === 'options' && (
           <section className={styles.scenarioCard} style={{ width: 'min(720px, 94vw)', maxWidth: 'none' }}>
             <div style={{ textAlign: 'center', marginBottom: '0.6rem' }}>
-              <div style={{ fontSize: '1.05rem', color: '#e6c473' }}>{lang === 'en' ? scenario.name.en : scenario.name.zh}</div>
-              <div style={{ fontSize: '0.74rem', color: '#7a8893' }}>{startYear} AD</div>
+              <div style={{ fontSize: '1.05rem', color: 'var(--tkm-text-h2)' }}>{lang === 'en' ? scenario.name.en : scenario.name.zh}</div>
+              <div style={{ fontSize: '0.74rem', color: 'var(--tkm-text-muted)' }}>{startYear} AD</div>
             </div>
             {selectedForce && selectedRuler && (() => {
               const st = forceStats(selectedForce.id);
@@ -754,12 +755,12 @@ export function TitleScreen() {
                 <div style={{ display: 'flex', gap: '0.9rem', alignItems: 'center', border: '1px solid var(--tkm-hairline, rgba(255,255,255,0.08))', borderRadius: 'var(--tkm-radius, 8px)', background: 'rgba(27,37,49,0.55)', padding: '0.7rem', marginBottom: '0.9rem' }}>
                   <OfficerPortrait officer={selectedRuler} size={64} forceColor={selectedForce.color} year={startYear} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '1rem', color: '#e6c473', display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                    <div style={{ fontSize: '1rem', color: 'var(--tkm-text-h2)', display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
                       <span style={{ width: 10, height: 10, borderRadius: '50%', background: selectedForce.color }} />
                       {lang === 'en' ? selectedForce.name.en : selectedForce.name.zh}
                       <span style={{ color: '#a08c6a', fontSize: '0.85rem' }}>{lang === 'en' ? selectedRuler.name.en : selectedRuler.name.zh}</span>
                     </div>
-                    <div style={{ fontSize: '0.73rem', color: '#7a8893', margin: '0.3rem 0' }}>
+                    <div style={{ fontSize: '0.73rem', color: 'var(--tkm-text-muted)', margin: '0.3rem 0' }}>
                       統{selectedRuler.stats.leadership} 武{selectedRuler.stats.war} 智{selectedRuler.stats.intelligence} 政{selectedRuler.stats.politics} 魅{selectedRuler.stats.charisma}
                     </div>
                     <div style={{ fontSize: '0.76rem', color: '#a08c6a' }}>
@@ -778,10 +779,11 @@ export function TitleScreen() {
               <>
                 <OptHeader>{t('初始治所', 'Starting capital')}</OptHeader>
                 <div style={optRowStyle}>
-                  <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--tkm-text-muted)', flex: 1 }}>
                     {t('政令外交所出之地(每季 +3 民忠)', 'Seat of edicts & diplomacy (+3 loyalty/season)')}
                   </span>
                   <select
+                aria-label={t('政令外交所出之地', 'Seat of edicts & diplomacy')}
                     value={capitalChoice ?? selectedForce.capitalCityId}
                     onChange={(e) => setCapitalChoice(e.target.value)}
                     style={optSelectStyle}
@@ -821,7 +823,7 @@ export function TitleScreen() {
             <button
               type="button"
               className={styles.officersButton}
-              style={{ width: '100%', marginTop: '0.6rem', textAlign: 'left', color: advancedOpen ? '#e6c473' : undefined }}
+              style={{ width: '100%', marginTop: '0.6rem', textAlign: 'left', color: advancedOpen ? 'var(--tkm-text-h2)' : undefined }}
               onClick={() => setAdvancedOpen((v) => !v)}
               aria-expanded={advancedOpen}
             >
@@ -832,7 +834,7 @@ export function TitleScreen() {
             {/* ── AI 強度 ── independent of difficulty (RoTK 思考 / Total War 戰役難度) */}
             <OptHeader>{t('AI 強度', 'AI strength')}</OptHeader>
             <div style={optRowStyle}>
-              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>
+              <span style={{ fontSize: '0.78rem', color: 'var(--tkm-text-muted)', flex: 1 }}>
                 {t('進取與戰術水平', 'Aggression & tactical skill')}
               </span>
               <div style={{ display: 'flex', gap: 4 }}>
@@ -854,8 +856,9 @@ export function TitleScreen() {
                   : t('凶猛:AI 積極擴張、戰術老練 —— 高度挑戰。', 'Fierce: the AI expands hard and fights sharply — tough.')}
             </p>
             <div style={optRowStyle}>
-              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('AI 起始兵力', 'AI starting troops')}</span>
+              <span style={{ fontSize: '0.78rem', color: 'var(--tkm-text-muted)', flex: 1 }}>{t('AI 起始兵力', 'AI starting troops')}</span>
               <select
+                aria-label={t('AI 起始兵力', 'AI starting troops')}
                 value={aiStartTroops}
                 onChange={(e) => setAiStartTroops(e.target.value as 'fewer' | 'even' | 'more')}
                 style={optSelectStyle}
@@ -866,8 +869,9 @@ export function TitleScreen() {
               </select>
             </div>
             <div style={optRowStyle}>
-              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('戰鬥難度', 'Battle difficulty')}</span>
+              <span style={{ fontSize: '0.78rem', color: 'var(--tkm-text-muted)', flex: 1 }}>{t('戰鬥難度', 'Battle difficulty')}</span>
               <select
+                aria-label={t('戰鬥難度', 'Battle difficulty')}
                 value={battleDifficulty ?? 'follow'}
                 onChange={(e) => setBattleDifficulty(e.target.value === 'follow' ? null : e.target.value as 'easy' | 'normal' | 'hard')}
                 style={optSelectStyle}
@@ -882,10 +886,11 @@ export function TitleScreen() {
             {/* ── 起始國力 ── player handicap (Total War 起始資源 / RoTK 上級補正) */}
             <OptHeader>{t('起始國力', 'Starting power')}</OptHeader>
             <div style={optRowStyle}>
-              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>
+              <span style={{ fontSize: '0.78rem', color: 'var(--tkm-text-muted)', flex: 1 }}>
                 {t('我方起始金錢/兵糧/兵力', 'Your starting gold / food / troops')}
               </span>
               <select
+                aria-label={t('我方起始金錢/兵糧/兵力', 'Your starting gold / food / troops')}
                 value={startHandicap}
                 onChange={(e) => setStartHandicap(e.target.value as 'weak' | 'even' | 'strong')}
                 style={optSelectStyle}
@@ -899,8 +904,9 @@ export function TitleScreen() {
             {/* ── 經濟 ── default tax preset + starting inflation headwind */}
             <OptHeader>{t('經濟', 'Economy')}</OptHeader>
             <div style={optRowStyle}>
-              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('起始稅率', 'Starting tax rate')}</span>
+              <span style={{ fontSize: '0.78rem', color: 'var(--tkm-text-muted)', flex: 1 }}>{t('起始稅率', 'Starting tax rate')}</span>
               <select
+                aria-label={t('起始稅率', 'Starting tax rate')}
                 value={startTaxRate}
                 onChange={(e) => setStartTaxRate(e.target.value as 'light' | 'normal' | 'heavy')}
                 style={optSelectStyle}
@@ -911,8 +917,9 @@ export function TitleScreen() {
               </select>
             </div>
             <div style={optRowStyle}>
-              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('起始通脹', 'Starting inflation')}</span>
+              <span style={{ fontSize: '0.78rem', color: 'var(--tkm-text-muted)', flex: 1 }}>{t('起始通脹', 'Starting inflation')}</span>
               <select
+                aria-label={t('起始通脹', 'Starting inflation')}
                 value={startInflation === 0 ? 'none' : startInflation <= 15 ? 'low' : 'high'}
                 onChange={(e) => setStartInflation(e.target.value === 'none' ? 0 : e.target.value === 'low' ? 15 : 35)}
                 style={optSelectStyle}
@@ -926,10 +933,11 @@ export function TitleScreen() {
             {/* ── 勝利條件 ── (Total War victory conditions) */}
             <OptHeader>{t('勝利條件', 'Victory condition')}</OptHeader>
             <div style={optRowStyle}>
-              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>
+              <span style={{ fontSize: '0.78rem', color: 'var(--tkm-text-muted)', flex: 1 }}>
                 {t('達成即獲勝', 'Reaching it wins the campaign')}
               </span>
               <select
+                aria-label={t('達成即獲勝', 'Reaching it wins the campaign')}
                 value={victoryGoal}
                 onChange={(e) => setVictoryGoal(e.target.value as 'free' | 'unify' | 'hegemon' | 'tripartite')}
                 style={optSelectStyle}
@@ -943,23 +951,23 @@ export function TitleScreen() {
 
             {/* ── 遊戲模式 ── */}
             <OptHeader>{t('遊戲模式', 'Game modes')}</OptHeader>
-            <label style={{ display: 'block', fontSize: '0.78rem', color: '#7a8893', cursor: 'pointer' }}>
+            <label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--tkm-text-muted)', cursor: 'pointer' }}>
               <input type="checkbox" checked={hotSeatMode} onChange={(e) => setHotSeatMode(e.target.checked)} style={{ marginRight: '0.4rem' }} />
               {t('輪流模式（多人共用鍵盤）', 'Hot-seat (players share keyboard)')}
             </label>
-            <label style={{ display: 'block', marginTop: '0.3rem', fontSize: '0.78rem', color: '#7a8893', cursor: 'pointer' }}>
+            <label style={{ display: 'block', marginTop: '0.3rem', fontSize: '0.78rem', color: 'var(--tkm-text-muted)', cursor: 'pointer' }}>
               <input type="checkbox" checked={careerMode} onChange={(e) => setCareerMode(e.target.checked)} style={{ marginRight: '0.4rem' }} />
               {t('一代記模式（選擇一位武將為主角）', 'Chronicle mode (pick one officer as your avatar)')}
             </label>
-            <label style={{ display: 'block', marginTop: '0.3rem', fontSize: '0.78rem', color: '#7a8893', cursor: 'pointer' }}>
+            <label style={{ display: 'block', marginTop: '0.3rem', fontSize: '0.78rem', color: 'var(--tkm-text-muted)', cursor: 'pointer' }}>
               <input type="checkbox" checked={romance} onChange={(e) => { setRomance(e.target.checked); setRomanceMode(e.target.checked); }} style={{ marginRight: '0.4rem' }} />
               {t('演義模式（歷史事件按時觸發）', 'Romance mode (historical events fire on schedule)')}
             </label>
-            <label style={{ display: 'block', marginTop: '0.3rem', fontSize: '0.78rem', color: '#7a8893', cursor: 'pointer' }}>
-              <input type="checkbox" checked={roguelike} onChange={(e) => { setRoguelike(e.target.checked); setRoguelikeMode(e.target.checked); }} style={{ marginRight: '0.4rem' }} disabled={!careerMode} />
+            <label style={{ display: 'block', marginTop: '0.3rem', fontSize: '0.78rem', color: careerMode ? 'var(--tkm-text-muted)' : '#4a5560', cursor: careerMode ? 'pointer' : 'not-allowed', opacity: careerMode ? 1 : 0.55 }}>
+              <input type="checkbox" checked={roguelike} onChange={(e) => { setRoguelike(e.target.checked); setRoguelikeMode(e.target.checked); }} style={{ marginRight: '0.4rem', cursor: 'inherit' }} disabled={!careerMode} />
               {t('Roguelike 模式（主角陣亡即遊戲結束；需開啟一代記）', 'Roguelike (chronicle officer death = game over; requires Chronicle mode)')}
             </label>
-            <label style={{ display: 'block', marginTop: '0.3rem', fontSize: '0.78rem', color: '#7a8893', cursor: 'pointer' }}>
+            <label style={{ display: 'block', marginTop: '0.3rem', fontSize: '0.78rem', color: 'var(--tkm-text-muted)', cursor: 'pointer' }}>
               <input type="checkbox" checked={ironman} onChange={(e) => setIronman(e.target.checked)} style={{ marginRight: '0.4rem' }} />
               {t('鐵人模式（禁止手動存檔，只保留每季自動存檔）', 'Ironman (no manual save — only the per-season autosave)')}
             </label>
@@ -967,8 +975,9 @@ export function TitleScreen() {
             {/* ── 生死規則 ── per-campaign life/death settings (also in the in-game 設定). */}
             <OptHeader>{t('生死規則', 'Life & death')}</OptHeader>
             <div style={optRowStyle}>
-              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('武將壽命', 'Officer lifespan')}</span>
+              <span style={{ fontSize: '0.78rem', color: 'var(--tkm-text-muted)', flex: 1 }}>{t('武將壽命', 'Officer lifespan')}</span>
               <select
+                aria-label={t('武將壽命', 'Officer lifespan')}
                 value={lifespanMode}
                 onChange={(e) => setLifespanMode(e.target.value as 'historical' | 'fictionalImmortal' | 'immortal')}
                 style={optSelectStyle}
@@ -979,8 +988,9 @@ export function TitleScreen() {
               </select>
             </div>
             <div style={optRowStyle}>
-              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('壽命長短', 'Lifespan length')}</span>
+              <span style={{ fontSize: '0.78rem', color: 'var(--tkm-text-muted)', flex: 1 }}>{t('壽命長短', 'Lifespan length')}</span>
               <select
+                aria-label={t('壽命長短', 'Lifespan length')}
                 value={lifespanLength}
                 onChange={(e) => setLifespanLength(e.target.value as 'short' | 'historical' | 'long')}
                 style={optSelectStyle}
@@ -990,15 +1000,15 @@ export function TitleScreen() {
                 <option value="long">{t('長壽（老死減半）', 'Long (live longer)')}</option>
               </select>
             </div>
-            <label style={{ display: 'block', marginTop: '0.3rem', fontSize: '0.78rem', color: '#7a8893', cursor: 'pointer' }}>
+            <label style={{ display: 'block', marginTop: '0.3rem', fontSize: '0.78rem', color: 'var(--tkm-text-muted)', cursor: 'pointer' }}>
               <input type="checkbox" checked={agingStatLock} onChange={(e) => setAgingStatLock(e.target.checked)} style={{ marginRight: '0.4rem' }} />
               {t('變老不影響屬性（五圍不隨年齡增減）', 'Aging does not affect stats (five stats frozen vs age)')}
             </label>
-            <label style={{ display: 'block', marginTop: '0.3rem', fontSize: '0.78rem', color: '#7a8893', cursor: 'pointer' }}>
+            <label style={{ display: 'block', marginTop: '0.3rem', fontSize: '0.78rem', color: 'var(--tkm-text-muted)', cursor: 'pointer' }}>
               <input type="checkbox" checked={noBattleDeath} onChange={(e) => setNoBattleDeath(e.target.checked)} style={{ marginRight: '0.4rem' }} />
               {t('不會戰死（改為負傷或被俘）', 'No battle death (wounded or captured instead)')}
             </label>
-            <label style={{ display: 'block', marginTop: '0.3rem', fontSize: '0.78rem', color: '#7a8893', cursor: 'pointer' }}>
+            <label style={{ display: 'block', marginTop: '0.3rem', fontSize: '0.78rem', color: 'var(--tkm-text-muted)', cursor: 'pointer' }}>
               <input type="checkbox" checked={reviveDeadOfficers} onChange={(e) => setReviveDeadOfficers(e.target.checked)} style={{ marginRight: '0.4rem' }} />
               {t('起死回生（已故武將或逐年復活，含開局前去世者）', 'Revive the dead (fallen officers may return over the years)')}
             </label>
@@ -1006,8 +1016,9 @@ export function TitleScreen() {
             {/* ── 世界規則 ── map/officer rules surfaced here (also in 設定). */}
             <OptHeader>{t('世界規則', 'World rules')}</OptHeader>
             <div style={optRowStyle}>
-              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('武將與名品出現位置', 'Talent & item placement')}</span>
+              <span style={{ fontSize: '0.78rem', color: 'var(--tkm-text-muted)', flex: 1 }}>{t('武將與名品出現位置', 'Talent & item placement')}</span>
               <select
+                aria-label={t('武將與名品出現位置', 'Talent & item placement')}
                 value={placementMode}
                 onChange={(e) => setPlacementMode(e.target.value as 'historical' | 'random')}
                 style={optSelectStyle}
@@ -1016,13 +1027,14 @@ export function TitleScreen() {
                 <option value="random">{t('虛構（隨機散落）', 'Fictional (scattered)')}</option>
               </select>
             </div>
-            <label style={{ display: 'block', marginTop: '0.3rem', fontSize: '0.78rem', color: '#7a8893', cursor: 'pointer' }}>
+            <label style={{ display: 'block', marginTop: '0.3rem', fontSize: '0.78rem', color: 'var(--tkm-text-muted)', cursor: 'pointer' }}>
               <input type="checkbox" checked={fogOfWar} onChange={(e) => setFogOfWar(e.target.checked)} style={{ marginRight: '0.4rem' }} />
               {t('戰霧（隱藏未偵察的城邑）', 'Fog of war (hide unscouted cities)')}
             </label>
             <div style={optRowStyle}>
-              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('在野登場（搜索難度）', 'Talent discovery')}</span>
+              <span style={{ fontSize: '0.78rem', color: 'var(--tkm-text-muted)', flex: 1 }}>{t('在野登場（搜索難度）', 'Talent discovery')}</span>
               <select
+                aria-label={t('在野登場', 'Talent discovery')}
                 value={talentDiscovery}
                 onChange={(e) => setTalentDiscovery(e.target.value as 'scarce' | 'normal' | 'plentiful')}
                 style={optSelectStyle}
@@ -1033,8 +1045,9 @@ export function TitleScreen() {
               </select>
             </div>
             <div style={optRowStyle}>
-              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('單挑頻率', 'Duel frequency')}</span>
+              <span style={{ fontSize: '0.78rem', color: 'var(--tkm-text-muted)', flex: 1 }}>{t('單挑頻率', 'Duel frequency')}</span>
               <select
+                aria-label={t('單挑頻率', 'Duel frequency')}
                 value={duelFrequency}
                 onChange={(e) => setDuelFrequency(e.target.value as 'rare' | 'normal' | 'frequent')}
                 style={optSelectStyle}
@@ -1045,8 +1058,9 @@ export function TitleScreen() {
               </select>
             </div>
             <div style={optRowStyle}>
-              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('天災頻率', 'Disaster frequency')}</span>
+              <span style={{ fontSize: '0.78rem', color: 'var(--tkm-text-muted)', flex: 1 }}>{t('天災頻率', 'Disaster frequency')}</span>
               <select
+                aria-label={t('天災頻率', 'Disaster frequency')}
                 value={disasterFrequency}
                 onChange={(e) => setDisasterFrequency(e.target.value as 'low' | 'normal' | 'high')}
                 style={optSelectStyle}
@@ -1057,8 +1071,9 @@ export function TitleScreen() {
               </select>
             </div>
             <div style={optRowStyle}>
-              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('新武將登場', 'New officers')}</span>
+              <span style={{ fontSize: '0.78rem', color: 'var(--tkm-text-muted)', flex: 1 }}>{t('新武將登場', 'New officers')}</span>
               <select
+                aria-label={t('新武將登場', 'New officers')}
                 value={newOfficers}
                 onChange={(e) => setNewOfficers(e.target.value as 'off' | 'rare' | 'normal' | 'common')}
                 style={optSelectStyle}
@@ -1073,8 +1088,9 @@ export function TitleScreen() {
               {t('虛構新秀隨年代陸續以在野身分登場,補充人才池(無史實卒年,故受「武將壽命」影響)。', 'Fictional newcomers appear over the years as free agents to refresh the talent pool (no historical death year, so they obey the lifespan settings).')}
             </p>
             <div style={optRowStyle}>
-              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('虛構人才庫（開局）', 'Fictional talent pool (start)')}</span>
+              <span style={{ fontSize: '0.78rem', color: 'var(--tkm-text-muted)', flex: 1 }}>{t('虛構人才庫（開局）', 'Fictional talent pool (start)')}</span>
               <select
+                aria-label={t('虛構人才庫', 'Fictional talent pool')}
                 value={fictionalPool}
                 onChange={(e) => setFictionalPool(e.target.value as 'off' | 'some' | 'many')}
                 style={optSelectStyle}
@@ -1088,8 +1104,9 @@ export function TitleScreen() {
             {/* ── 外交 ── opening relations between forces */}
             <OptHeader>{t('外交', 'Diplomacy')}</OptHeader>
             <div style={optRowStyle}>
-              <span style={{ fontSize: '0.78rem', color: '#7a8893', flex: 1 }}>{t('初始外交', 'Opening relations')}</span>
+              <span style={{ fontSize: '0.78rem', color: 'var(--tkm-text-muted)', flex: 1 }}>{t('初始外交', 'Opening relations')}</span>
               <select
+                aria-label={t('初始外交', 'Opening relations')}
                 value={initialDiplomacy}
                 onChange={(e) => setInitialDiplomacy(e.target.value as 'neutral' | 'warring' | 'coalitions')}
                 style={optSelectStyle}
@@ -1115,18 +1132,18 @@ export function TitleScreen() {
                 display: 'block', width: '100%', marginTop: '0.6rem',
                 background: enabledDynasties.length > 0 ? 'rgba(230,196,115,0.12)' : 'transparent',
                 border: '1px solid var(--tkm-hairline, rgba(255,255,255,0.08))', borderRadius: 'var(--tkm-radius-sm, 5px)',
-                color: enabledDynasties.length > 0 ? '#e6c473' : '#7a8893',
+                color: enabledDynasties.length > 0 ? 'var(--tkm-text-h2)' : 'var(--tkm-text-muted)',
                 padding: '0.4rem 0.7rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.8rem', textAlign: 'left',
               }}
             >
               {showDynasties ? '▾' : '▸'} {t('歷代名將', 'Historical Officers')}
               {enabledDynasties.length > 0 && (
-                <span style={{ float: 'right', color: '#e6c473' }}>{enabledDynasties.length} {t('朝', 'dyn.')}</span>
+                <span style={{ float: 'right', color: 'var(--tkm-text-h2)' }}>{enabledDynasties.length} {t('朝', 'dyn.')}</span>
               )}
             </button>
             {showDynasties && (
               <div style={{ marginTop: '0.4rem', padding: '0.6rem', border: '1px solid var(--tkm-hairline, rgba(255,255,255,0.08))', borderRadius: 'var(--tkm-radius-sm, 5px)', background: 'rgba(27,37,49,0.5)' }}>
-                <div style={{ fontSize: '0.7rem', color: '#7a8893', marginBottom: '0.4rem' }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--tkm-text-muted)', marginBottom: '0.4rem' }}>
                   {t(
                     '勾選後，對應朝代的名將以「未發現」狀態加入劇本，依出生地隱於各城，需「搜索人才」尋得。',
                     'Selected dynasties join as unsearched free agents at their hometown cities — use Search for Talent to discover them.',
@@ -1146,7 +1163,7 @@ export function TitleScreen() {
                           display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer',
                           padding: '0.2rem 0.4rem', background: on ? 'rgba(212,168,74,0.08)' : 'transparent',
                           border: `1px solid ${on ? '#364654' : 'transparent'}`, fontSize: '0.75rem',
-                          color: on ? '#e6c473' : '#a08c6a',
+                          color: on ? 'var(--tkm-text-h2)' : '#a08c6a',
                         }}
                       >
                         <input type="checkbox" checked={on} onChange={() => toggleDynasty(d.id)} />
@@ -1206,7 +1223,7 @@ export function TitleScreen() {
             scrollBody
             ariaLabel={t('一代記選角', 'Chronicle officer picker')}
           >
-            <p style={{ fontSize: '0.78rem', color: '#7a8893', margin: '0 0 0.6rem' }}>
+            <p style={{ fontSize: '0.78rem', color: 'var(--tkm-text-muted)', margin: '0 0 0.6rem' }}>
               {t('以一將之身歷經一代 — 點選頭像即開局。', 'Live one officer’s life — tap a portrait to begin.')}
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '0.45rem' }}>
@@ -1224,10 +1241,10 @@ export function TitleScreen() {
                 >
                   <OfficerPortrait officer={o} size={44} year={startYear} />
                   <span style={{ minWidth: 0 }}>
-                    <span style={{ display: 'block', fontSize: '0.84rem', color: '#e6c473', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <span style={{ display: 'block', fontSize: '0.84rem', color: 'var(--tkm-text-h2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {lang === 'en' ? o.name.en : o.name.zh}
                     </span>
-                    <span style={{ display: 'block', fontSize: '0.7rem', color: '#7a8893' }}>
+                    <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--tkm-text-muted)' }}>
                       {t('武', 'W')}{o.stats.war} · {t('智', 'I')}{o.stats.intelligence} · {t('政', 'P')}{o.stats.politics}
                     </span>
                   </span>
@@ -1250,7 +1267,7 @@ export function TitleScreen() {
             width="min(480px, 96vw)"
             ariaLabel={t('熱座人數', 'Hot-seat player count')}
           >
-            <p style={{ fontSize: '0.78rem', color: '#7a8893', margin: '0 0 0.6rem' }}>
+            <p style={{ fontSize: '0.78rem', color: 'var(--tkm-text-muted)', margin: '0 0 0.6rem' }}>
               {t('同機輪流執掌各自勢力;你選定的勢力為 P1。', 'Take turns on one device; your chosen force plays first.')}
             </p>
             {[2, 3, 4].filter((n) => n <= scenario.forces.length).map((n) => {
@@ -1263,8 +1280,8 @@ export function TitleScreen() {
                   style={{ width: '100%', marginTop: '0.35rem', textAlign: 'left' }}
                   onClick={() => launchHotSeat(hotSeatPick, n)}
                 >
-                  <b style={{ color: '#e6c473' }}>{n} {t('人', 'players')}</b>
-                  <span style={{ display: 'block', fontSize: '0.72rem', color: '#7a8893', marginTop: 2 }}>
+                  <b style={{ color: 'var(--tkm-text-h2)' }}>{n} {t('人', 'players')}</b>
+                  <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--tkm-text-muted)', marginTop: 2 }}>
                     {lineup.map((f, i) => `P${i + 1} ${lang === 'en' ? f.name.en : f.name.zh}`).join(' · ')}
                   </span>
                 </button>
@@ -1284,21 +1301,21 @@ export function TitleScreen() {
           ariaLabel={t('隨機劇本設定', 'Random scenario setup')}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '0.2rem' }}>
-            <span style={{ fontSize: '0.8rem', color: '#7a8893', flex: 1 }}>{t('勢力數量', 'Forces')}(2–10)</span>
+            <span style={{ fontSize: '0.8rem', color: 'var(--tkm-text-muted)', flex: 1 }}>{t('勢力數量', 'Forces')}(2–10)</span>
             <input
               type="number" min={2} max={10} value={randomCount}
               onChange={(e) => setRandomCount(Number(e.target.value))}
               aria-label={t('勢力數量', 'Number of forces')}
-              style={{ width: 72, background: '#101820', color: '#e6c473', border: '1px solid #364654', borderRadius: 4, padding: '0.3rem 0.4rem', fontFamily: 'inherit' }}
+              style={{ width: 72, background: '#101820', color: 'var(--tkm-text-h2)', border: '1px solid #364654', borderRadius: 4, padding: '0.3rem 0.4rem', fontFamily: 'inherit' }}
             />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '0.55rem' }}>
-            <span style={{ fontSize: '0.8rem', color: '#7a8893', flex: 1 }}>{t('起始年份', 'Year')}(100–280)</span>
+            <span style={{ fontSize: '0.8rem', color: 'var(--tkm-text-muted)', flex: 1 }}>{t('起始年份', 'Year')}(100–280)</span>
             <input
               type="number" min={100} max={280} value={randomYear}
               onChange={(e) => setRandomYear(Number(e.target.value))}
               aria-label={t('起始年份', 'Starting year')}
-              style={{ width: 72, background: '#101820', color: '#e6c473', border: '1px solid #364654', borderRadius: 4, padding: '0.3rem 0.4rem', fontFamily: 'inherit' }}
+              style={{ width: 72, background: '#101820', color: 'var(--tkm-text-h2)', border: '1px solid #364654', borderRadius: 4, padding: '0.3rem 0.4rem', fontFamily: 'inherit' }}
             />
           </div>
           <button
@@ -1359,7 +1376,7 @@ export function TitleScreen() {
         style={{
           position: 'fixed', top: 16, right: 16, width: 44, height: 44,
           background: 'rgba(20, 14, 8, 0.85)', border: '1px solid #e6c473',
-          color: '#e6c473', fontSize: '1.4rem', cursor: 'pointer',
+          color: 'var(--tkm-text-h2)', fontSize: '1.4rem', cursor: 'pointer',
           fontFamily: 'serif', boxShadow: '0 0 8px rgba(0,0,0,0.6)', zIndex: 50,
         }}
       >⚙</button>
@@ -1372,7 +1389,7 @@ function miniBtn(disabled: boolean): CSSProperties {
     background: 'rgba(255,255,255,0.04)',
     border: '1px solid var(--tkm-hairline, rgba(255,255,255,0.08))',
     borderRadius: 'var(--tkm-radius-sm, 5px)',
-    color: disabled ? '#6a5238' : '#e6c473',
+    color: disabled ? '#6a5238' : 'var(--tkm-text-h2)',
     padding: '0.15rem 0.5rem',
     cursor: disabled ? 'not-allowed' : 'pointer',
     fontFamily: 'inherit',
@@ -1401,15 +1418,20 @@ const optNoteStyle: CSSProperties = {
   fontSize: '0.7rem', color: '#6a7682', margin: '0.25rem 0 0', lineHeight: 1.3,
 };
 const optSelectStyle: CSSProperties = {
-  background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473',
+  background: '#080b0e', border: '1px solid #2b3845', color: 'var(--tkm-text-h2)',
   padding: '0.2rem 0.3rem', fontFamily: 'inherit', fontSize: '0.76rem',
 };
+const COARSE_POINTER = typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)')?.matches;
+
 function pillStyle(on: boolean): CSSProperties {
   return {
     background: on ? '#26323e' : 'transparent',
-    border: '1px solid ' + (on ? '#e6c473' : '#2b3845'),
-    color: on ? '#e6c473' : '#7a8893',
-    padding: '0.2rem 0.55rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.76rem',
+    border: '1px solid ' + (on ? 'var(--tkm-text-h2)' : '#2b3845'),
+    color: on ? 'var(--tkm-text-h2)' : 'var(--tkm-text-muted)',
+    // 指尖可及 — a real ≥44px hit box on touch devices.
+    padding: COARSE_POINTER ? '0.55rem 0.85rem' : '0.2rem 0.55rem',
+    minWidth: COARSE_POINTER ? 44 : undefined,
+    cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.76rem',
     borderRadius: 'var(--tkm-radius-sm)',
   };
 }
@@ -1419,10 +1441,14 @@ function pillStyle(on: boolean): CSSProperties {
 // Pass highlightForceId to spotlight one force's holdings.
 function MiniMap({ scenario, highlightForceId, labelCapitals, onSelectForce }: { scenario: Scenario; highlightForceId?: string | null; labelCapitals?: boolean; onSelectForce?: (fid: string) => void }) {
   const [hoverId, setHoverId] = useState<string | null>(null);
+  const lang = useLanguage();
   const colorOf = (fid: string | null) =>
     fid ? (scenario.forces.find((f) => f.id === fid)?.color ?? '#4a3a28') : '#4a3a28';
-  const forceName = (fid: string | null) =>
-    fid ? (scenario.forces.find((f) => f.id === fid)?.name.zh ?? '—') : '中立';
+  const forceName = (fid: string | null) => {
+    if (!fid) return lang === 'en' ? 'Neutral' : '中立';
+    const f = scenario.forces.find((x) => x.id === fid);
+    return f ? (lang === 'en' ? f.name.en : f.name.zh) : '—';
+  };
   const hc = hoverId ? scenario.cities.find((c) => c.id === hoverId) ?? null : null;
   return (
     <svg
@@ -1455,19 +1481,26 @@ function MiniMap({ scenario, highlightForceId, labelCapitals, onSelectForce }: {
         // Dot size scales with city stature (population), so the great cities read big.
         const baseR = c.population >= 200000 ? 8 : c.population >= 100000 ? 6.2 : c.population >= 40000 ? 4.8 : 3.6;
         return (
-          <circle
-            key={c.id}
-            cx={c.coords.x} cy={c.coords.y}
-            r={isHover ? baseR + 3 : hl ? baseR + 2 : baseR}
-            fill={colorOf(c.ownerForceId)}
-            stroke={isHover ? '#ffffff' : hl ? '#fff5e0' : '#10161e'}
-            strokeWidth={isHover ? 2 : hl ? 1.6 : 0.8}
-            opacity={dim && !isHover ? 0.4 : 1}
-            style={{ cursor: 'pointer' }}
-            onMouseEnter={() => setHoverId(c.id)}
-            onMouseLeave={() => setHoverId((p) => (p === c.id ? null : p))}
-            onClick={() => { if (onSelectForce && c.ownerForceId) onSelectForce(c.ownerForceId); }}
-          />
+          <g key={c.id}>
+            <circle
+              cx={c.coords.x} cy={c.coords.y}
+              r={isHover ? baseR + 3 : hl ? baseR + 2 : baseR}
+              fill={colorOf(c.ownerForceId)}
+              stroke={isHover ? '#ffffff' : hl ? '#fff5e0' : '#10161e'}
+              strokeWidth={isHover ? 2 : hl ? 1.6 : 0.8}
+              opacity={dim && !isHover ? 0.4 : 1}
+              pointerEvents="none"
+            />
+            {/* 指尖可及 — a fat invisible hit ring so an 8px dot is tappable. */}
+            <circle
+              cx={c.coords.x} cy={c.coords.y} r={baseR + 10}
+              fill="transparent"
+              style={{ cursor: 'pointer' }}
+              onMouseEnter={() => setHoverId(c.id)}
+              onMouseLeave={() => setHoverId((prev) => (prev === c.id ? null : prev))}
+              onClick={() => { if (onSelectForce && c.ownerForceId) onSelectForce(c.ownerForceId); }}
+            />
+          </g>
         );
       })}
       {/* Capital labels — each force's seat, in its own colour */}
@@ -1484,7 +1517,7 @@ function MiniMap({ scenario, highlightForceId, labelCapitals, onSelectForce }: {
             opacity={dim ? 0.4 : 1}
             style={{ paintOrder: 'stroke', fontWeight: 'bold', pointerEvents: 'none' }}
           >
-            {cap.name.zh}
+            {lang === 'en' ? cap.name.en : cap.name.zh}
           </text>
         );
       })}
@@ -1495,9 +1528,9 @@ function MiniMap({ scenario, highlightForceId, labelCapitals, onSelectForce }: {
         return (
           <g transform={`translate(${hc.coords.x}, ${hc.coords.y})`} pointerEvents="none">
             <rect x={tx} y={-36} width={192} height={50} rx={3} fill="#10161e" stroke={colorOf(hc.ownerForceId)} strokeWidth={1.5} />
-            <text x={tx + 11} y={-15} fontSize={18} fill="#e6c473" style={{ fontWeight: 'bold' }}>{hc.name.zh}</text>
+            <text x={tx + 11} y={-15} fontSize={18} fill="#e6c473" style={{ fontWeight: 'bold' }}>{lang === 'en' ? hc.name.en : hc.name.zh}</text>
             <text x={tx + 11} y={6} fontSize={14} fill="#a08c6a">
-              {forceName(hc.ownerForceId)} · {hc.troops.toLocaleString()}{hc.ownerForceId ? ' 兵' : ''}
+              {forceName(hc.ownerForceId)} · {hc.troops.toLocaleString()}{hc.ownerForceId ? (lang === 'en' ? ' troops' : ' 兵') : ''}
             </text>
           </g>
         );
