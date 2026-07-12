@@ -27,6 +27,12 @@ playwright-report
 *.log
 npm-debug.log*
 
+# Key-art source masters (originals kept locally, not the big PNGs in git — the
+# game loads the compressed .jpg beside them; re-exportable from the generator)
+public/popups/_src/
+public/duel-campaigns/_src/
+public/scenarios/_src/
+
 # Editor / OS
 .DS_Store
 .vscode/*
