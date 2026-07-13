@@ -15,6 +15,7 @@ import { OfficerStats } from './OfficerStats';
 import { OfficerDetail } from './OfficerDetail';
 import { Name } from './Name';
 import { CODEX_SETS, codexSetProgress, loadCodex } from '../../game/systems/codex';
+import { festivalPool, FESTIVAL_GOLD_COST } from '../../game/systems/festival';
 import { OfficerCardModal, OfficerCardFace } from './OfficerCardModal';
 import { officerGrade, gradeMeta } from '../../game/systems/officerGrade';
 import { bpLeaderboard } from '../../game/systems/powerBoard';
@@ -35,6 +36,10 @@ export function EncyclopediaModal({ onClose }: Props) {
   const playerForceId = useGameStore((s) => s.playerForceId);
   const setRewardsClaimed = useGameStore((s) => s.setRewardsClaimed);
   const powerBoardPrev = useGameStore((s) => s.powerBoardPrev);
+  const bounties = useGameStore((s) => s.bounties);
+  const year = useGameStore((s) => s.date.year);
+  const holdFestival = useGameStore((s) => s.holdTalentFestival);
+  const [festivalMsg, setFestivalMsg] = useState<string | null>(null);
   const [section, setSection] = useState<Section>('officers');
   const [search, setSearch] = useState('');
   // 交叉引用 — clicking any officer chip opens their full detail (列傳 included)
@@ -228,6 +233,24 @@ export function EncyclopediaModal({ onClose }: Props) {
                   <div style={{ fontSize: '0.72rem', color: '#7a8893' }}>
                     遇 {codex.seen.length} · 斬 {codex.slain.length}(跨戰役累積)
                   </div>
+                  {/* 🏮 求賢祭 — the collection hub's ceremonial pull. */}
+                  {playerForceId && (() => {
+                    const pool = festivalPool(officers);
+                    const oddsPct = Math.round(pool.odds.goldPlus * 100);
+                    return (
+                      <button
+                        onClick={() => { const r = holdFestival(); setFestivalMsg(r.message); }}
+                        disabled={pool.odds.total === 0}
+                        title={`花 ${FESTIVAL_GOLD_COST} 金於都城開祭,召一名隱世賢士現身(在野,仍須親自招攬)。池中 ${pool.odds.total} 人、金牌以上佔 ${oddsPct}%;連續 3 次未出金牌保底必出。每季一次。`}
+                        style={{
+                          border: '1px solid #8a6a2a', background: 'rgba(230,196,115,0.12)', color: '#ffd66e',
+                          padding: '0.2rem 0.7rem', borderRadius: 'var(--tkm-radius-xs)', cursor: 'pointer',
+                          fontFamily: 'inherit', fontSize: '0.75rem', letterSpacing: '0.06rem',
+                        }}
+                      >🏮 求賢祭 {FESTIVAL_GOLD_COST}金 · 金+率{oddsPct}%</button>
+                    );
+                  })()}
+                  {festivalMsg && <span style={{ fontSize: '0.72rem', color: '#c8a24e' }}>{festivalMsg}</span>}
                 </div>
                 <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: '0.8rem' }}>
                   {CODEX_SETS.map((set) => {
@@ -257,6 +280,7 @@ export function EncyclopediaModal({ onClose }: Props) {
                   {shown.map((o) => (
                     <CodexTile key={o.id} officer={o}
                       isSeen={seen.has(o.id)} isRec={recruited.has(o.id)} isSlain={slain.has(o.id)}
+                      peak={codex.peak[o.id]}
                       onOpen={() => setCardId(o.id)} />
                   ))}
                 </div>
@@ -340,6 +364,31 @@ export function EncyclopediaModal({ onClose }: Props) {
                 <div style={{ fontSize: '0.72rem', color: '#7a8893', marginBottom: '0.6rem' }}>
                   天下武評 — 以綜合戰力(BP)論英雄,純屬品評、不入戰鬥;點列可開武將卡。在世且已現世者入榜。
                 </div>
+                {/* 🎯 天下懸賞 — the court's active wanted notices. */}
+                {(bounties?.length ?? 0) > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: '0.7rem' }}>
+                    {bounties!.map((b) => {
+                      const o = officers[b.officerId];
+                      if (!o) return null;
+                      return (
+                        <span key={b.officerId}
+                          onClick={() => setCardId(b.officerId)}
+                          title={b.kind === 'capture'
+                            ? `生擒${o.name.zh}並收監於我城 — 賞金 ${b.gold}、威望 +${b.renown}(限至 ${b.expiresYear} 年)`
+                            : `招攬${o.name.zh}入幕 — 賞金 ${b.gold}、威望 +${b.renown}(限至 ${b.expiresYear} 年)`}
+                          style={{
+                            fontSize: '0.74rem', padding: '0.15rem 0.6rem', borderRadius: 9, cursor: 'pointer',
+                            border: `1px solid ${b.kind === 'capture' ? '#8a4030' : '#3f5c3f'}`,
+                            background: b.kind === 'capture' ? 'rgba(184,68,46,0.12)' : 'rgba(138,200,138,0.1)',
+                            color: b.kind === 'capture' ? '#e0907a' : '#a8d8a8',
+                            opacity: b.expiresYear < year ? 0.5 : 1,
+                          }}>
+                          {b.kind === 'capture' ? '🎯 擒' : '🤝 攬'} {o.name.zh} · {b.gold}金
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
                 {shownRows.map(row)}
                 {!q && mine.length > 0 && (
                   <>
@@ -511,12 +560,17 @@ export function EncyclopediaModal({ onClose }: Props) {
 
 /** 圖鑑小卡 — one album slot: 仕 full colour in a grade frame, 遇 greyed,
  *  未遇 a faint black silhouette with its name withheld. */
-function CodexTile({ officer, isSeen, isRec, isSlain, onOpen }: {
+function CodexTile({ officer, isSeen, isRec, isSlain, peak, onOpen }: {
   officer: Officer;
-  isSeen: boolean; isRec: boolean; isSlain: boolean; onOpen: () => void;
+  isSeen: boolean; isRec: boolean; isSlain: boolean;
+  /** 巔峰形態 — the best form you ever raised this officer to (cross-campaign). */
+  peak?: import('../../game/systems/codex').CodexPeak;
+  onOpen: () => void;
 }) {
   const [imgFailed, setImgFailed] = useState(false);
-  const frameColor = isRec ? gradeMeta(officerGrade(officer).grade).color : isSeen ? '#7a6244' : '#1c2630';
+  // 六星巔峰 — an officer once raised to six stars keeps a gold ring forever.
+  const peakGold = (peak?.stars ?? 0) >= 6;
+  const frameColor = peakGold ? '#ffd66e' : isRec ? gradeMeta(officerGrade(officer).grade).color : isSeen ? '#7a6244' : '#1c2630';
   return (
     <div
       onClick={isSeen ? onOpen : undefined}
@@ -550,6 +604,12 @@ function CodexTile({ officer, isSeen, isRec, isSlain, onOpen }: {
       <div style={{ padding: '0.2rem 0.3rem', textAlign: 'center', fontSize: '0.78rem', color: isRec ? '#f2dd9a' : isSeen ? '#aab6c0' : '#3d4a56', borderTop: `1px solid ${frameColor}` }}>
         {isSeen ? officer.name.zh : '???'}
         <span style={{ marginLeft: 4, fontSize: '0.66rem', color: '#5f6c76' }}>{isRec ? '仕' : isSeen ? '遇' : ''}</span>
+        {peak && isSeen && (
+          <div title={`巔峰形態 — 曾養至 戰力${peak.bp.toLocaleString()}${peak.stars > 0 ? ` · ${peak.stars}★` : ''}`}
+            style={{ fontSize: '0.6rem', color: peakGold ? '#ffd66e' : '#8a7a5a', fontFamily: 'ui-monospace,monospace' }}>
+            巔峰{peak.bp.toLocaleString()}{peak.stars > 0 ? `·${peak.stars}★` : ''}
+          </div>
+        )}
       </div>
     </div>
   );

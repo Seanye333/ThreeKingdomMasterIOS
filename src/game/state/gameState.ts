@@ -282,11 +282,17 @@ export interface GameState {
   /** 得將開卡 — transient: officer id whose card-reveal flourish should play
    *  (a gold-or-better name newly under the player's banner). Not saved. */
   cardReveal: EntityId | null;
-  /** 開卡緣由 — 'recruit' (得將) or 'awaken' (六星覺醒); styles the flourish. */
-  cardRevealKind: 'recruit' | 'awaken';
+  /** 開卡緣由 — 得將 / 六星覺醒 / 求賢祭現身; styles the flourish. */
+  cardRevealKind: 'recruit' | 'awaken' | 'festival';
   /** 武評前席 — last season's top-50 BP board (id → rank), for the ↑↓ arrows
    *  and NEW badges on the 武評 tab. */
   powerBoardPrev: Record<EntityId, number>;
+  /** 求賢祭 — the season key of the last festival held (one per season). */
+  festivalSeason: string | null;
+  /** 求賢祭保底 — consecutive reveals below gold; ≥3 forces a gold+ draw. */
+  festivalPity: number;
+  /** 天下懸賞榜 — active wanted notices (bounty.ts), re-rolled each spring. */
+  bounties: import('../systems/bounty').Bounty[];
   /** 成套之禮 — famous sets already celebrated this campaign (setBonds.ts);
    *  each set pays out once when it first stands complete under the player. */
   setRewardsClaimed: string[];
@@ -814,6 +820,9 @@ export const EMPTY_STATE: GameState = {
   cardReveal: null,
   cardRevealKind: 'recruit',
   powerBoardPrev: {},
+  festivalSeason: null,
+  festivalPity: 0,
+  bounties: [],
   setRewardsClaimed: [],
   dayFlow: null,
   dayFlowFollow: false,
@@ -1232,6 +1241,9 @@ export function loadScenario(
     cardReveal: null,
     cardRevealKind: 'recruit',
     powerBoardPrev: {},
+    festivalSeason: null,
+    festivalPity: 0,
+    bounties: [],
     setRewardsClaimed: [],
     dayFlow: null,
   dayFlowFollow: false,

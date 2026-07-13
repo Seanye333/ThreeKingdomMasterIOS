@@ -31,9 +31,10 @@ export function CardRevealModal() {
 
   if (!cardReveal || !officer) return null;
   const meta = gradeMeta(officerGrade(officer).grade);
-  // 覺醒 wears its own gold: title, glyph and glow all say "sixth star", not "new hire".
+  // 覺醒 wears gold, 求賢祭 wears jade; each flourish says what just happened.
   const awaken = kind === 'awaken';
-  const accent = awaken ? '#ffd66e' : meta.color;
+  const festival = kind === 'festival';
+  const accent = awaken ? '#ffd66e' : festival ? '#9ad6a8' : meta.color;
 
   return (
     <div
@@ -50,7 +51,7 @@ export function CardRevealModal() {
         @keyframes tkmRevealDrop { from { transform: translateY(-40px) scale(0.92); opacity: 0; } to { transform: none; opacity: 1; } }
       `}</style>
       <div style={{ fontSize: '1.05rem', color: accent, letterSpacing: '0.3rem', textShadow: `0 0 14px ${accent}66`, fontFamily: '"Ma Shan Zheng", "Songti SC", serif' }}>
-        {awaken ? t('★ 將星覺醒 ★', '★ THE STAR AWAKENS ★') : t('名將來投', 'A NAME JOINS YOUR BANNER')}
+        {awaken ? t('★ 將星覺醒 ★', '★ THE STAR AWAKENS ★') : festival ? t('🏮 求賢祭 · 賢士現身', '🏮 A HIDDEN TALENT STEPS FORWARD') : t('名將來投', 'A NAME JOINS YOUR BANNER')}
       </div>
       <div style={{ width: 'min(380px, 88vw)', perspective: 1100, animation: 'tkmRevealDrop 0.5s ease-out' }}>
         <div style={{ position: 'relative', transformStyle: 'preserve-3d', transition: 'transform 0.7s cubic-bezier(0.2, 0.7, 0.3, 1)', transform: flipped ? 'rotateY(0deg)' : 'rotateY(180deg)' }}>
@@ -66,7 +67,7 @@ export function CardRevealModal() {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: `0 8px 40px rgba(0,0,0,0.7), 0 0 22px ${accent}44`,
           }}>
-            <span style={{ fontSize: '4.2rem', color: accent, opacity: 0.85, fontFamily: '"Ma Shan Zheng", "Songti SC", serif', textShadow: `0 0 24px ${accent}88` }}>{awaken ? '★' : '將'}</span>
+            <span style={{ fontSize: '4.2rem', color: accent, opacity: 0.85, fontFamily: '"Ma Shan Zheng", "Songti SC", serif', textShadow: `0 0 24px ${accent}88` }}>{awaken ? '★' : festival ? '賢' : '將'}</span>
           </div>
         </div>
       </div>
@@ -74,6 +75,8 @@ export function CardRevealModal() {
         {flipped
           ? (awaken
             ? `${pickName(officer.name, lang)} · ${lang === 'en' ? 'six stars — best stat +2' : '六星圓滿·最強一圍 +2'}${lang === 'en' ? ' — tap to dismiss' : ' — 點擊收起'}`
+            : festival
+            ? `${pickName(officer.name, lang)} · ${lang === 'en' ? 'now a free agent — go recruit them' : '現於都城在野 — 往訪賢招之'}${lang === 'en' ? ' — tap to dismiss' : ' — 點擊收起'}`
             : `${pickName(officer.name, lang)} · ${pickName(meta.name, lang)}${lang === 'en' ? ' — tap to dismiss' : ' — 點擊收起'}`)
           : (lang === 'en' ? 'Tap to reveal' : '點擊開卡')}
       </div>

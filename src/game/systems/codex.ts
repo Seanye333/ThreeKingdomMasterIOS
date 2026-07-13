@@ -13,25 +13,48 @@ import type { EntityId } from '../types';
 
 const CODEX_KEY = 'tkm-codex-v1';
 
+/** 巔峰形態 — the strongest version of an officer YOU ever fielded, kept
+ *  forever: the album remembers the six-star 呂布 you once raised. */
+export interface CodexPeak { bp: number; stars: number; grade: string }
+
 export interface Codex {
   seen: string[];
   recruited: string[];
   slain: string[];
+  peak: Record<string, CodexPeak>;
 }
 
 export function loadCodex(): Codex {
   try {
     const raw = localStorage.getItem(CODEX_KEY);
-    if (!raw) return { seen: [], recruited: [], slain: [] };
+    if (!raw) return { seen: [], recruited: [], slain: [], peak: {} };
     const p = JSON.parse(raw) as Partial<Codex>;
     return {
       seen: Array.isArray(p.seen) ? p.seen : [],
       recruited: Array.isArray(p.recruited) ? p.recruited : [],
       slain: Array.isArray(p.slain) ? p.slain : [],
+      peak: p.peak && typeof p.peak === 'object' ? p.peak : {},
     };
   } catch {
-    return { seen: [], recruited: [], slain: [] };
+    return { seen: [], recruited: [], slain: [], peak: {} };
   }
+}
+
+/** Record the current forms of the player's officers; keeps each id's best BP. */
+export function codexRecordPeaks(entries: Array<{ id: string; bp: number; stars: number; grade: string }>): void {
+  if (entries.length === 0) return;
+  const c = loadCodex();
+  let changed = false;
+  const peak = { ...c.peak };
+  for (const e of entries) {
+    if (e.id.startsWith('commoner-')) continue;
+    const prev = peak[e.id];
+    if (!prev || e.bp > prev.bp) {
+      peak[e.id] = { bp: e.bp, stars: e.stars, grade: e.grade };
+      changed = true;
+    }
+  }
+  if (changed) save({ ...c, peak });
 }
 
 function save(c: Codex): void {

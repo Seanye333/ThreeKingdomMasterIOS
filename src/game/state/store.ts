@@ -327,6 +327,9 @@ import { applyStarUp, nextStarRequirement, planAiStarInvestments } from '../syst
 import { topBoardIds } from '../systems/powerBoard';
 import { pendingSetRewards, SET_REWARD_GOLD, SET_REWARD_LOYALTY } from '../systems/setBonds';
 import { dueMedals, grantMedals } from '../data/medals';
+import { festivalPool, festivalDraw, FESTIVAL_GOLD_COST } from '../systems/festival';
+import { rollBounties, fulfilledBounties } from '../systems/bounty';
+import { codexRecordPeaks } from '../systems/codex';
 import { tickBuildings } from '../systems/buildings';
 import { tickBuildingEvents } from '../systems/buildingEvents';
 import { evaluateCoalition } from '../systems/coalition';
@@ -1231,6 +1234,9 @@ interface GameStore extends GameState {
   setCardReveal: (officerId: EntityId | null) => void;
   /** 升星 — buy the officer's next 星級 (gold from their city; stars.ts). */
   investStar: (officerId: EntityId) => { ok: boolean; message: string };
+  /** 求賢祭 — once a season, pay gold at the capital to reveal one hidden
+   *  talent (moves to the capital as a free agent; recruit them yourself). */
+  holdTalentFestival: () => { ok: boolean; message: string };
   /** 日流 — playback controls for the day-by-day turn flow. */
   beginDayFlow: () => void;
   setDayFlowFollow: (on: boolean) => void;
@@ -8682,6 +8688,54 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // 天下懸賞 — settle fulfilled notices (gold to the capital, fame to the
+        // court), then re-roll the spring board.
+        if (seasonBoundary && state.playerForceId) {
+          const cur = get();
+          const done = fulfilledBounties(cur.bounties ?? [], cur.officers, cur.cities, cur.playerForceId);
+          let bountiesNext = (cur.bounties ?? []).filter((b) => !done.some((d) => d.officerId === b.officerId));
+          if (done.length > 0) {
+            const capId = cur.playerForceId ? cur.forces[cur.playerForceId]?.capitalCityId : null;
+            const cap = capId ? cur.cities[capId] : undefined;
+            const goldSum = done.reduce((s2, b) => s2 + b.gold, 0);
+            if (cap) {
+              set({ cities: { ...cur.cities, [cap.id]: { ...cap, gold: cap.gold + goldSum } } });
+            }
+            for (const b of done) {
+              const o = cur.officers[b.officerId];
+              get().notify(
+                `懸賞已結 — ${o?.name.zh ?? b.officerId}${b.kind === 'capture' ? '落網' : '來歸'}!賞金 ${b.gold}`,
+                `Bounty settled — ${o?.name.en ?? b.officerId} ${b.kind === 'capture' ? 'taken' : 'won over'}! +${b.gold} gold`,
+              );
+            }
+          }
+          if (get().date.season === 'spring' || bountiesNext.length !== (cur.bounties ?? []).length) {
+            if (get().date.season === 'spring') {
+              const rolled = rollBounties(get().officers, cur.playerForceId, get().date.year, Math.random, bountiesNext);
+              for (const b of rolled) {
+                if (!bountiesNext.some((x) => x.officerId === b.officerId)) {
+                  const o = get().officers[b.officerId];
+                  get().notify(
+                    `天下懸賞 — ${b.kind === 'capture' ? '擒' : '攬'}${o?.name.zh ?? b.officerId}:賞金 ${b.gold}(限至 ${b.expiresYear} 年)`,
+                    `Wanted — ${b.kind} ${o?.name.en ?? b.officerId}: ${b.gold} gold (by ${b.expiresYear})`,
+                  );
+                }
+              }
+              bountiesNext = rolled;
+            }
+            set({ bounties: bountiesNext });
+          }
+        }
+
+        // 巔峰入冊 — the album remembers the strongest form each of YOUR
+        // officers ever reached (BP/stars/grade), across campaigns.
+        if (seasonBoundary && state.playerForceId) {
+          const cur = get();
+          codexRecordPeaks(Object.values(cur.officers)
+            .filter((o) => o.forceId === cur.playerForceId && o.status !== 'dead')
+            .map((o) => ({ id: o.id, bp: combatBP(o).bp, stars: o.stars ?? 0, grade: officerGrade(o).grade })));
+        }
+
         // 武評前席 — snapshot this season's top-50 board so the 武評 tab can
         // draw ↑↓ movement arrows and NEW badges against last season.
         if (seasonBoundary) {
@@ -11087,6 +11141,37 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       },
       dayFlowSkip: () => set({ dayFlow: null }),
       setCardReveal: (officerId) => set({ cardReveal: officerId, ...(officerId === null ? { cardRevealKind: 'recruit' as const } : {}) }),
+      holdTalentFestival: () => {
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: '無主之師,無以聚賢。' };
+        const seasonKey = `${state.date.year}|${state.date.season}`;
+        if (state.festivalSeason === seasonKey) return { ok: false, message: '本季已辦過求賢祭。' };
+        const capId = state.forces[state.playerForceId]?.capitalCityId;
+        const cap = capId ? state.cities[capId] : undefined;
+        if (!cap || cap.ownerForceId !== state.playerForceId) return { ok: false, message: '須有都城作祭。' };
+        if (cap.gold < FESTIVAL_GOLD_COST) return { ok: false, message: `金不足(需 ${FESTIVAL_GOLD_COST})。` };
+        const pool = festivalPool(state.officers);
+        const drawn = festivalDraw(pool, state.festivalPity, Math.random);
+        if (!drawn) return { ok: false, message: '四海賢士已盡現於世 — 無人可召。' };
+        const isGoldPlus = pool.goldPlus.some((o) => o.id === drawn.id);
+        set({
+          officers: {
+            ...state.officers,
+            [drawn.id]: { ...drawn, status: 'idle', locationCityId: cap.id },
+          },
+          cities: { ...state.cities, [cap.id]: { ...cap, gold: cap.gold - FESTIVAL_GOLD_COST } },
+          festivalSeason: seasonKey,
+          festivalPity: isGoldPlus ? 0 : state.festivalPity + 1,
+          // 現身開卡 — the reveal IS the ceremony; recruiting is still on you.
+          cardReveal: drawn.id,
+          cardRevealKind: 'festival',
+        });
+        get().notify(
+          `求賢祭 — ${drawn.name.zh}現身${cap.name.zh}!(在野,可往訪賢)`,
+          `Talent festival — ${drawn.name.en} steps forward at ${cap.name.en} (free agent)`,
+        );
+        return { ok: true, message: `${drawn.name.zh}現身!` };
+      },
       investStar: (officerId) => {
         const state = get();
         const o = state.officers[officerId];
@@ -16030,6 +16115,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           cardReveal: null,
           cardRevealKind: 'recruit' as const,
           powerBoardPrev: loaded.powerBoardPrev ?? {},
+          festivalSeason: loaded.festivalSeason ?? null,
+          festivalPity: loaded.festivalPity ?? 0,
+          bounties: loaded.bounties ?? [],
           setRewardsClaimed: loaded.setRewardsClaimed ?? [],
           dayFlow: null,
           dayFlowFollow: loaded.dayFlowFollow ?? false,
