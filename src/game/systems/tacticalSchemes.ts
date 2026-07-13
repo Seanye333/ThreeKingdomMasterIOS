@@ -773,12 +773,12 @@ export function applyStratagem(
         ...b,
         units: b.units.map((u) => {
           if (u.id === target.id) {
-            const dmg = Math.floor(u.troops * 0.12 * stratMul * volleyGate(u));
+            const dmg = Math.floor(u.troops * 0.10 * stratMul * volleyGate(u)); // 12%→10% (§5.1 弓62收斂)
             popups.push({ id: `dmg-${Date.now()}-arr`, coord: u.coord, text: `-${dmg.toLocaleString()}`, color: '#88b7e8', spawnedAt: Date.now() });
             return { ...u, troops: Math.max(0, u.troops - dmg), morale: Math.max(0, u.morale - 3) };
           }
           if (splashIds.has(u.id)) {
-            const dmg = Math.floor(u.troops * 0.06 * stratMul * volleyGate(u));
+            const dmg = Math.floor(u.troops * 0.05 * stratMul * volleyGate(u));
             popups.push({ id: `dmg-${Date.now()}-arr-${u.id}`, coord: u.coord, text: `-${dmg.toLocaleString()}`, color: '#9cc0e8', spawnedAt: Date.now() + 1 });
             return { ...u, troops: Math.max(0, u.troops - dmg) };
           }
