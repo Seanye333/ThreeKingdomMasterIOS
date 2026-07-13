@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ComponentProps } from 'react';
 import { DuelGameModal, type DuelRoundFx } from '../DuelGameModal';
 import { pickName, useLanguage, useT } from '../../i18n';
-import { OfficerPortrait } from '../OfficerPortrait';
+import { OfficerCardFace } from '../OfficerCardModal';
 import { playSfx } from '../../../game/systems/sound';
 import { useGameStore } from '../../../game/state/store';
 import { isNotableBout, type BoutRecord } from '../../../game/systems/duelHall';
@@ -144,23 +144,36 @@ export function Duel3DStage(props: ComponentProps<typeof DuelGameModal>) {
       />
 
       {/* 對陣亮相 — portraits face off, then step aside for the bout. */}
-      {introUp && (
-        <div style={{
-          position: 'fixed', left: '50%', top: '30%', transform: 'translateX(-50%)',
-          zIndex: 133, pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: 22,
-          animation: 'tkm-fade-in 0.35s ease',
-        }}>
-          <div style={{ textAlign: 'center' }}>
-            <OfficerPortrait officer={attacker} size={96} />
-            <div style={{ marginTop: 4, color: '#ffe6b0', fontFamily: 'var(--tkm-font-body)', fontSize: '0.95rem', textShadow: '0 2px 6px #000' }}>{leftName}</div>
+      {introUp && (() => {
+        // VS 卡撞 — the two officers' trading cards slam in from the wings and
+        // square off (TCG-style), replacing the old flat portrait pair.
+        const s = (typeof window !== 'undefined' && window.innerWidth < 700) ? 0.38 : 0.54;
+        const cardBox: React.CSSProperties = { width: 380 * s, height: 640 * s, overflow: 'hidden', borderRadius: 8, boxShadow: '0 12px 40px rgba(0,0,0,0.8)' };
+        const inner: React.CSSProperties = { width: 380, transform: `scale(${s})`, transformOrigin: 'top left', pointerEvents: 'none' };
+        return (
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 133, pointerEvents: 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 18,
+          }}>
+            <style>{`
+              @keyframes tkmVsLeft { from { transform: translateX(-70vw) rotate(-8deg); opacity: 0; } 70% { transform: translateX(10px) rotate(1.5deg); } to { transform: none; opacity: 1; } }
+              @keyframes tkmVsRight { from { transform: translateX(70vw) rotate(8deg); opacity: 0; } 70% { transform: translateX(-10px) rotate(-1.5deg); } to { transform: none; opacity: 1; } }
+              @keyframes tkmVsFlash { 0%, 40% { opacity: 0; transform: scale(0.6); } 55% { opacity: 1; transform: scale(1.25); } 100% { opacity: 0.9; transform: scale(1); } }
+            `}</style>
+            <div style={{ ...cardBox, animation: 'tkmVsLeft 0.5s cubic-bezier(0.2, 0.8, 0.3, 1)' }}>
+              <div style={inner}><OfficerCardFace officer={attacker} /></div>
+            </div>
+            <div style={{
+              fontSize: '2.6rem', color: '#ffd0a0', fontFamily: 'var(--tkm-font-body)', fontWeight: 700,
+              textShadow: '0 0 22px rgba(224,132,106,0.9), 0 2px 6px #000',
+              animation: 'tkmVsFlash 0.9s ease-out',
+            }}>⚔</div>
+            <div style={{ ...cardBox, animation: 'tkmVsRight 0.5s cubic-bezier(0.2, 0.8, 0.3, 1)' }}>
+              <div style={inner}><OfficerCardFace officer={defender} /></div>
+            </div>
           </div>
-          <div style={{ fontSize: '2rem', color: '#e0846a', fontFamily: 'var(--tkm-font-body)', textShadow: '0 0 14px rgba(224,132,106,0.8)' }}>⚔</div>
-          <div style={{ textAlign: 'center' }}>
-            <OfficerPortrait officer={defender} size={96} />
-            <div style={{ marginTop: 4, color: '#ffe6b0', fontFamily: 'var(--tkm-font-body)', fontSize: '0.95rem', textShadow: '0 2px 6px #000' }}>{rightName}</div>
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* 宿敵 — the head-to-head going into the bout (kills the loop between the
           恩怨簿 and the arena: rivals who keep meeting see their tally). */}

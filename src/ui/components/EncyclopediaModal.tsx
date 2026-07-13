@@ -15,7 +15,7 @@ import { OfficerStats } from './OfficerStats';
 import { OfficerDetail } from './OfficerDetail';
 import { Name } from './Name';
 import { CODEX_SETS, codexSetProgress, loadCodex } from '../../game/systems/codex';
-import { OfficerCardModal } from './OfficerCardModal';
+import { OfficerCardModal, OfficerCardFace } from './OfficerCardModal';
 import { officerGrade, gradeMeta } from '../../game/systems/officerGrade';
 import { bpLeaderboard } from '../../game/systems/powerBoard';
 import { ITEM_CODEX_SETS, itemCodexSetProgress, loadItemCodex } from '../../game/systems/itemCodex';
@@ -41,6 +41,9 @@ export function EncyclopediaModal({ onClose }: Props) {
   // in a stacked modal; clicking a famous-set pill filters the codex grid to it.
   const [drillId, setDrillId] = useState<string | null>(null);
   const [cardId, setCardId] = useState<string | null>(null);
+  // ⚖ 雙卡對比 — pick two names on the 武評 board, see the cards side by side.
+  const [compareSel, setCompareSel] = useState<string[]>([]);
+  const [compareOpen, setCompareOpen] = useState(false);
   const [setFilter, setSetFilter] = useState<string | null>(null);
   const desc = useDesc();
   useEscapeKey(onClose);
@@ -314,6 +317,21 @@ export function EncyclopediaModal({ onClose }: Props) {
                   {(o.stars ?? 0) > 0 && <span style={{ fontSize: '0.7rem', color: '#ffd66e' }}>{'★'.repeat(o.stars ?? 0)}</span>}
                   <span style={{ fontSize: '0.72rem', color: g.color }}>{g.name.zh}</span>
                   <span style={{ width: 64, textAlign: 'right', fontSize: '0.85rem', color: '#ffe9a8', fontFamily: 'ui-monospace,monospace' }}>{r.bp.toLocaleString()}</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCompareSel((prev) => prev.includes(o.id)
+                        ? prev.filter((x) => x !== o.id)
+                        : [...prev.slice(-1), o.id]);
+                    }}
+                    title="⚖ 選兩人對比卡面"
+                    style={{
+                      background: compareSel.includes(o.id) ? 'rgba(230,196,115,0.25)' : 'transparent',
+                      border: `1px solid ${compareSel.includes(o.id) ? '#e6c473' : '#2b3845'}`,
+                      borderRadius: 'var(--tkm-radius-xs)', color: compareSel.includes(o.id) ? '#f2dd9a' : '#5f6c76',
+                      cursor: 'pointer', fontSize: '0.72rem', padding: '0 5px', fontFamily: 'inherit',
+                    }}
+                  >⚖</button>
                 </div>
               );
             };
@@ -328,6 +346,18 @@ export function EncyclopediaModal({ onClose }: Props) {
                     <div style={{ fontSize: '0.72rem', color: '#c8a24e', margin: '0.8rem 0 0.4rem', letterSpacing: '0.08rem' }}>我方名次</div>
                     {mine.map(row)}
                   </>
+                )}
+                {compareSel.length === 2 && (
+                  <button
+                    onClick={() => setCompareOpen(true)}
+                    style={{
+                      position: 'sticky', bottom: 8, left: '50%', transform: 'translateX(-50%)',
+                      display: 'block', margin: '0.6rem auto 0', padding: '0.4rem 1.4rem',
+                      background: 'rgba(230,196,115,0.2)', border: '1px solid #e6c473', borderRadius: 'var(--tkm-radius-sm)',
+                      color: '#f2dd9a', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.85rem', letterSpacing: '0.15rem',
+                      boxShadow: '0 2px 12px rgba(0,0,0,0.6)',
+                    }}
+                  >⚖ 對比 {officers[compareSel[0]]?.name.zh} × {officers[compareSel[1]]?.name.zh}</button>
                 )}
               </>
             );
@@ -447,6 +477,32 @@ export function EncyclopediaModal({ onClose }: Props) {
             // 緣分跳卡 — hop along bond lines, but only to names already met.
             onJump={(id) => { if (officers[id] && codex.seen.includes(id)) setCardId(id); }}
           />
+        )}
+        {/* ⚖ 雙卡對撞 — two full cards side by side (stacks on a narrow screen). */}
+        {compareOpen && compareSel.length === 2 && officers[compareSel[0]] && officers[compareSel[1]] && (
+          <div
+            onClick={() => setCompareOpen(false)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 1250, background: 'rgba(4,6,10,0.85)',
+              display: 'flex', alignItems: 'flex-start', justifyContent: 'center', gap: 16,
+              padding: '2rem 1rem', overflowY: 'auto', flexWrap: 'wrap',
+            }}
+          >
+            {compareSel.map((id) => (
+              <div key={id} onClick={(e) => e.stopPropagation()} style={{ width: 'min(380px, 92vw)' }}>
+                <OfficerCardFace officer={officers[id]} />
+              </div>
+            ))}
+            <button
+              onClick={() => setCompareOpen(false)}
+              aria-label="關閉對比"
+              style={{
+                position: 'fixed', top: 14, right: 16, width: 32, height: 32, borderRadius: '50%',
+                background: 'rgba(10,14,20,0.8)', border: '1px solid rgba(255,255,255,0.25)', color: '#cfd8e0',
+                cursor: 'pointer', fontSize: '1rem',
+              }}
+            >×</button>
+          </div>
         )}
       </div>
     </div>
