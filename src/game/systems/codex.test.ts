@@ -2,6 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CODEX_SETS, codexMarkRecruited, codexMarkSeen, codexMarkSlain, codexSetProgress, loadCodex } from './codex';
 import { OFFICER_IDS, TALENT_POOL_IDS } from '../data';
+import { HISTORICAL_OFFICER_TEMPLATES } from '../data/historicalOfficers';
 
 function stubStorage() {
   const map = new Map<string, string>();
@@ -43,7 +44,11 @@ describe('codex ledgers', () => {
 });
 
 describe('codex sets', () => {
-  const ROSTER = new Set<string>([...OFFICER_IDS, ...TALENT_POOL_IDS]);
+  // 歷代名將套 (凌煙閣/瓦崗/中興/楊家將) draw on the dynasty packs too.
+  const ROSTER = new Set<string>([
+    ...OFFICER_IDS, ...TALENT_POOL_IDS,
+    ...HISTORICAL_OFFICER_TEMPLATES.map((t) => t.id),
+  ]);
 
   it('every set member is a real recruitable officer', () => {
     // Would have caught the `yue-jin`→`le-jin` bug: a member that no roster

@@ -125,6 +125,16 @@ export const CODEX_SETS: Array<{ id: string; zh: string; en: string; members: st
   { id: 'two-qiao', zh: '江東二喬', en: 'The Two Qiao', members: ['da-qiao', 'xiao-qiao'] },
   // 絕代佳人 — the great beauties of the age (the canonical 四大美人 roster is cross-era; this is the TK set).
   { id: 'peerless-beauties', zh: '絕代佳人', en: 'Peerless Beauties', members: ['diaochan', 'da-qiao', 'xiao-qiao', 'lady-zhen', 'cai-yan'] },
+  // ─── 歷代名將套 — collectible only with the matching dynasty pack enabled ───
+  // 凌煙閣 — Taizong's gallery of merit (the eight the roster carries).
+  { id: 'lingyan-gallery', zh: '凌煙閣功臣', en: 'Lingyan Pavilion', members: ['hist-fang-xuanling', 'hist-du-ruhui', 'hist-wei-zheng', 'hist-li-jing', 'hist-hou-junji', 'hist-li-ji', 'hist-qin-qiong', 'hist-yuchi-gong'] },
+  // 瓦崗群雄 — the Wagang brotherhood of the Sui collapse.
+  { id: 'wagang-heroes', zh: '瓦崗群雄', en: 'Heroes of Wagang', members: ['hist-qin-qiong', 'hist-cheng-yaojin', 'hist-luo-cheng', 'hist-shan-xiongxin', 'hist-li-ji'] },
+  // 中興名將 — the marshals who held the Southern Song's line (劉光世 absent
+  // from the roster; 牛皋 of the 岳家軍 stands the fourth file).
+  { id: 'zhongxing-four', zh: '中興名將', en: 'Restoration Marshals', members: ['hist-yue-fei', 'hist-han-shizhong', 'hist-zhang-jun-song-prime', 'hist-niu-gao'] },
+  // 楊家將 — the Yang family wall of the north.
+  { id: 'yang-family', zh: '楊家將', en: 'The Yang Family', members: ['hist-yang-ye', 'hist-yang-yanzhao', 'hist-yang-zongbao', 'hist-mu-guiying', 'hist-she-taijun'] },
 ];
 
 /** How many of a set have ever carried your colors. */

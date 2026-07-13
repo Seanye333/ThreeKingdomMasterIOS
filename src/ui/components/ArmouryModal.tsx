@@ -9,7 +9,7 @@ import { OfficerStats } from './OfficerStats';
 import { Name } from './Name';
 import styles from './ArmouryModal.module.css';
 import { useT, useDesc } from '../i18n';
-import { ItemCardModal, ItemCardFace } from './ItemCard';
+import { ItemCardModal, ItemTile } from './ItemCard';
 
 interface Props {
   onClose: () => void;
@@ -224,10 +224,10 @@ export function ArmouryModal({ onClose }: Props) {
         </div>
 
         {wallView && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 10, overflowY: 'auto', padding: '0.6rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(108px, 1fr))', gap: 8, overflowY: 'auto', padding: '0.6rem' }}>
             {visibleItems.map((item) => (
               <div key={item.id} style={{ cursor: 'pointer' }} onClick={() => setItemCardId(item.id)}>
-                <ItemCardFace itemId={item.id} />
+                <ItemTile itemId={item.id} />
               </div>
             ))}
           </div>

@@ -133,4 +133,69 @@ describe('存檔遷移 — new map-batch fields', () => {
     st.getState().endSeason();
     expect(st.getState().date).toBeTruthy();
   });
+
+  it('round-trips the 2026-07 card-batch fields; an old save defaults them', () => {
+    const st = useGameStore;
+    const officerId = Object.keys(st.getState().officers)[0];
+    const o = st.getState().officers[officerId];
+    st.setState({
+      itemAwakenings: { 'green-dragon': ['edge', 'breaker'] },
+      destroyedItems: ['gu-ding'],
+      bounties: [{ officerId, kind: 'capture', gold: 1000, renown: 15, expiresYear: 200 }],
+      festivalSeason: '190|spring',
+      festivalPity: 2,
+      itemInscriptions: { 'green-dragon': { name: '冷豔鋸', motto: '刀下不斬無名' } },
+      setRewardsClaimed: ['five-tigers'],
+      powerBoardPrev: { [officerId]: 3 },
+      officers: {
+        ...st.getState().officers,
+        [officerId]: { ...o, stars: 4, skillLevels: { brave: 2 }, medals: ['medal-duelist'], marrowCleansed: true },
+      },
+    });
+    st.getState().saveSlot('compat-test', '卡牌批欄位');
+    const parsed = JSON.parse(localStorage.getItem(SLOT_KEY)!);
+    expect(parsed.itemAwakenings['green-dragon']).toEqual(['edge', 'breaker']);
+    expect(parsed.itemInscriptions['green-dragon'].name).toBe('冷豔鋸');
+    expect(parsed.officers[officerId].stars).toBe(4);
+    expect(parsed.officers[officerId].medals).toEqual(['medal-duelist']);
+
+    st.setState({ itemAwakenings: {}, destroyedItems: [], bounties: [], festivalPity: 0, itemInscriptions: {}, setRewardsClaimed: [], powerBoardPrev: {} });
+    expect(st.getState().loadSlot('compat-test')).toBe(true);
+    const s = st.getState();
+    expect(s.itemAwakenings['green-dragon']).toEqual(['edge', 'breaker']);
+    expect(s.destroyedItems).toEqual(['gu-ding']);
+    expect(s.bounties[0]?.gold).toBe(1000);
+    expect(s.festivalPity).toBe(2);
+    expect(s.setRewardsClaimed).toEqual(['five-tigers']);
+    expect(s.officers[officerId].skillLevels?.brave).toBe(2);
+    expect(s.officers[officerId].marrowCleansed).toBe(true);
+
+    // 舊檔 — strip every card-batch field; defaults land, a season resolves.
+    const old = JSON.parse(localStorage.getItem(SLOT_KEY)!);
+    delete old.itemAwakenings;
+    delete old.destroyedItems;
+    delete old.bounties;
+    delete old.festivalSeason;
+    delete old.festivalPity;
+    delete old.itemInscriptions;
+    delete old.setRewardsClaimed;
+    delete old.powerBoardPrev;
+    for (const oo of Object.values(old.officers ?? {}) as Array<Record<string, unknown>>) {
+      delete oo.stars;
+      delete oo.skillLevels;
+      delete oo.medals;
+      delete oo.marrowCleansed;
+    }
+    localStorage.setItem(SLOT_KEY, JSON.stringify(old));
+    expect(st.getState().loadSlot('compat-test')).toBe(true);
+    const s2 = st.getState();
+    expect(s2.itemAwakenings).toEqual({});
+    expect(s2.destroyedItems).toEqual([]);
+    expect(s2.bounties).toEqual([]);
+    expect(s2.festivalPity).toBe(0);
+    expect(s2.itemInscriptions).toEqual({});
+    expect(s2.setRewardsClaimed).toEqual([]);
+    st.getState().endSeason();
+    expect(st.getState().date).toBeTruthy();
+  });
 });

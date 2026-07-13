@@ -16317,6 +16317,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           itemBreakthroughs: loaded.itemBreakthroughs ?? {},
           itemGems: loaded.itemGems ?? {},
           gemStock: loaded.gemStock ?? {},
+          // 2026-07 卡牌批 — legacy saves predate the item-growth extensions.
+          itemLore: loaded.itemLore ?? {},
+          itemAwakenings: loaded.itemAwakenings ?? {},
+          destroyedItems: loaded.destroyedItems ?? [],
           // 家門聲望 — backfill from the loaded roster for legacy saves.
           clanStandings: loaded.clanStandings ?? deriveInitialClanStandings(loaded.officers ?? {}),
           // §7.1 縱橫 — legacy saves predate these; default empty.
@@ -16360,6 +16364,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         setRefineRegistry(fresh.itemRefinements);
         setBreakthroughRegistry(fresh.itemBreakthroughs);
         setGemRegistry(fresh.itemGems);
+        setLoreRegistry(fresh.itemLore);
+        setAwakeningRegistry(fresh.itemAwakenings);
         set(fresh);
         return true;
       },

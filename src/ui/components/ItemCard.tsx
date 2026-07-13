@@ -7,6 +7,7 @@ import {
 } from '../../game/data/items';
 import { ITEM_WEAPON_TYPE, classifyWeaponByName, WEAPON_TYPE_DEFS, type WeaponType } from '../../game/data/weaponTypes';
 import { SIGNATURE_ITEMS } from '../../game/data/signatureItems';
+import { exportItemCardPNG } from './officerCardExport';
 import { useT, useLanguage, pickName, useDesc } from '../i18n';
 
 /**
@@ -183,11 +184,53 @@ export function ItemCardFace({ itemId, onClose }: { itemId: string; onClose?: ()
           <div style={{ fontSize: '0.7rem', fontStyle: 'italic', color: '#7a8893', lineHeight: 1.6 }}>{desc(base)}</div>
         </div>
       </div>
+      {/* ⤓ 存圖 — the treasure as a PNG keepsake. */}
+      <button
+        onClick={(e) => { e.stopPropagation(); void exportItemCardPNG(itemId, lang, ins); }}
+        aria-label={t('存圖', 'Save as image')}
+        title={t('存圖(PNG)', 'Save card as PNG')}
+        style={{ position: 'absolute', top: 6, right: onClose ? 38 : 6, zIndex: 3, width: 26, height: 26, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(10,14,20,0.72)', color: '#cfd8e0', cursor: 'pointer', fontSize: '0.85rem', lineHeight: 1 }}
+      >⤓</button>
       {onClose && (
         <button onClick={onClose} aria-label={t('關閉', 'Close')}
           style={{ position: 'absolute', top: 6, right: 6, zIndex: 3, width: 26, height: 26, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(10,14,20,0.72)', color: '#cfd8e0', cursor: 'pointer', fontSize: '0.85rem', lineHeight: 1 }}
         >×</button>
       )}
+    </div>
+  );
+}
+
+/** 輕量小卡 — the card WALL's tile: sigil + name + growth marks only, so a
+ *  500-item grid stays cheap. Tap for the full ItemCardFace. */
+export function ItemTile({ itemId }: { itemId: string }) {
+  const lang = useLanguage();
+  const refinements = useGameStore((s) => s.itemRefinements);
+  const breakthroughs = useGameStore((s) => s.itemBreakthroughs);
+  const inscriptions = useGameStore((s) => s.itemInscriptions);
+  const base = ITEMS_BY_ID[itemId];
+  if (!base) return null;
+  const rarity = itemRarity(base);
+  const frame = RARITY_FRAME[rarity] ?? RARITY_FRAME.bronze;
+  const sigil = sigilFor(base);
+  const plus = refinements[itemId] ?? 0;
+  const stars = breakthroughs[itemId] ?? 0;
+  const lore = itemLoreLevel(itemId);
+  return (
+    <div style={{ border: `1px solid ${frame.color}`, borderRadius: 8, overflow: 'hidden', background: '#0d1218' }}>
+      <div style={{ position: 'relative', height: 74, background: 'radial-gradient(ellipse at 50% 35%, #202a36 0%, #0d1218 80%)', display: 'grid', placeItems: 'center' }}>
+        <div style={{ width: 54, height: 54 }}>
+          {sigil.kind === 'svg'
+            ? <WeaponSigil type={sigil.type} color={frame.color} />
+            : <div style={{ fontSize: '2.3rem', textAlign: 'center', lineHeight: '54px', color: frame.color, fontFamily: '"Ma Shan Zheng", "Songti SC", serif' }}>{sigil.char}</div>}
+        </div>
+        {lore >= 12 && <span style={{ position: 'absolute', top: 3, right: 5, fontSize: '0.58rem', color: '#e0a868' }}>{itemLoreTitle(lore)?.zh}</span>}
+      </div>
+      <div style={{ padding: '0.18rem 0.3rem', textAlign: 'center', fontSize: '0.72rem', color: frame.color, borderTop: `1px solid ${frame.color}55`, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {inscriptions?.[itemId]?.name ?? pickName(base.name, lang)}
+        {(plus > 0 || stars > 0) && (
+          <span style={{ marginLeft: 3, fontSize: '0.62rem', color: '#e6c473' }}>{plus > 0 ? `+${plus}` : ''}{stars > 0 ? '★'.repeat(stars) : ''}</span>
+        )}
+      </div>
     </div>
   );
 }

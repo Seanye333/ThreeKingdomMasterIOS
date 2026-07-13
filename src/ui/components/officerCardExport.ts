@@ -272,3 +272,121 @@ export async function exportOfficerCardPNG(officer: Officer, lang: Language): Pr
   setTimeout(() => URL.revokeObjectURL(url), 4000);
   return true;
 }
+
+// ─── 名品卡導出 — the item card as a 720×1040 PNG keepsake ───────────────
+import {
+  ITEMS_BY_ID, liveItemById, itemRarity, itemLoreLevel, itemLoreTitle,
+  itemAwakeningIds, AWAKENING_BY_ID,
+} from '../../game/data/items';
+
+const ITEM_W = 360;
+const ITEM_H = 520;
+
+const ITEM_FRAME: Record<string, string[]> = {
+  gold: ['#e6c473', '#8a6a2a', '#ffe9a8', '#a8842e'],
+  silver: ['#cfd8e0', '#6a7682', '#cfd8e0'],
+  bronze: ['#c8884e', '#6a4426', '#b87a3e'],
+};
+
+export async function exportItemCardPNG(
+  itemId: string,
+  lang: Language,
+  inscription?: { name?: string; motto?: string },
+): Promise<boolean> {
+  const base = ITEMS_BY_ID[itemId];
+  const live = liveItemById(itemId);
+  if (!base || !live) return false;
+  const zh = lang !== 'en';
+  const rarity = itemRarity(base);
+  const stops = ITEM_FRAME[rarity] ?? ITEM_FRAME.bronze;
+  const lore = itemLoreLevel(itemId);
+  const title = itemLoreTitle(lore);
+  const awakened = itemAwakeningIds(itemId).map((a) => AWAKENING_BY_ID[a]).filter(Boolean);
+
+  const canvas = document.createElement('canvas');
+  const dpr = 2;
+  canvas.width = ITEM_W * dpr;
+  canvas.height = ITEM_H * dpr;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return false;
+  ctx.scale(dpr, dpr);
+
+  const frame = ctx.createLinearGradient(0, 0, ITEM_W, ITEM_H);
+  stops.forEach((c, i) => frame.addColorStop(i / (stops.length - 1), c));
+  ctx.fillStyle = frame;
+  rr(ctx, 0, 0, ITEM_W, ITEM_H, 12);
+  ctx.fill();
+  ctx.fillStyle = '#0c1118';
+  rr(ctx, 3, 3, ITEM_W - 6, ITEM_H - 6, 9);
+  ctx.fill();
+
+  const accent = stops[0];
+  // 圖騰 — the kind's calligraphic seal, big and centred.
+  const glyph = base.kind === 'horse' ? '馬' : base.kind === 'book' ? '書' : base.kind === 'armor' ? '甲' : base.kind === 'weapon' ? '兵' : '寶';
+  const vig = ctx.createRadialGradient(ITEM_W / 2, 120, 20, ITEM_W / 2, 120, 240);
+  vig.addColorStop(0, '#232d3a');
+  vig.addColorStop(1, '#0c1118');
+  ctx.fillStyle = vig;
+  ctx.fillRect(3, 3, ITEM_W - 6, 230);
+  ctx.fillStyle = accent;
+  ctx.textAlign = 'center';
+  ctx.font = '110px "Ma Shan Zheng", "Songti SC", serif';
+  ctx.fillText(glyph, ITEM_W / 2, 160);
+
+  // 名牌 — inscription first, born name beneath.
+  ctx.font = '700 26px "Ma Shan Zheng", "Songti SC", serif';
+  ctx.fillStyle = '#f2e2b8';
+  ctx.fillText(inscription?.name ?? pickName(base.name, lang), ITEM_W / 2, 262);
+  if (inscription?.name) {
+    ctx.font = '12px system-ui, sans-serif';
+    ctx.fillStyle = '#7a8893';
+    ctx.fillText(`${zh ? '本名 ' : 'born '}${pickName(base.name, lang)} ✒`, ITEM_W / 2, 282);
+  }
+  if (title) {
+    ctx.font = '13px system-ui, sans-serif';
+    ctx.fillStyle = '#e0a868';
+    ctx.fillText(`〈${zh ? title.zh : title.en}〉 ${zh ? '威名' : 'renown'} ${lore}`, ITEM_W / 2, inscription?.name ? 302 : 284);
+  }
+
+  // 效果 — live numbers.
+  let y = 330;
+  ctx.textAlign = 'left';
+  for (const [k, v] of Object.entries(live.effects)) {
+    ctx.fillStyle = '#7a8893';
+    ctx.font = '12px system-ui, sans-serif';
+    ctx.fillText(k.slice(0, 3).toUpperCase(), 28, y);
+    ctx.fillStyle = '#9ed0ea';
+    ctx.font = '700 14px ui-monospace, monospace';
+    ctx.fillText(`+${v}`, 70, y);
+    y += 22;
+  }
+  // 覺醒詞條.
+  for (const p2 of awakened) {
+    ctx.fillStyle = '#ffd66e';
+    ctx.font = '13px system-ui, sans-serif';
+    ctx.fillText(`⚡ ${zh ? p2!.name.zh : p2!.name.en}`, 28, y);
+    y += 20;
+  }
+  if (inscription?.motto) {
+    ctx.fillStyle = '#e0c98a';
+    ctx.font = 'italic 13px system-ui, sans-serif';
+    ctx.fillText(`「${inscription.motto}」`, 28, y + 6);
+  }
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#5a6672';
+  ctx.font = '10px system-ui, sans-serif';
+  ctx.fillText(zh ? '三國名將錄 · Three Kingdom Masters' : 'Three Kingdom Masters', ITEM_W / 2, ITEM_H - 14);
+
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+  if (!blob) return false;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${itemId}-card.png`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  return true;
+}

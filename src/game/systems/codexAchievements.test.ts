@@ -3,6 +3,18 @@ import { checkCodexAchievements } from './achievements';
 import { CODEX_SETS } from './codex';
 import { createEmptyAchievementProgress } from '../types';
 
+import { OFFICER_IDS, TALENT_POOL_IDS } from '../data/officers';
+import { HISTORICAL_OFFICER_TEMPLATES } from '../data/historicalOfficers';
+
+describe('名將套名冊 — every set member is a real officer', () => {
+  it('CODEX_SETS members all resolve to roster ids', () => {
+    const ids = new Set([...OFFICER_IDS, ...TALENT_POOL_IDS, ...HISTORICAL_OFFICER_TEMPLATES.map((t) => t.id)]);
+    for (const set of CODEX_SETS) {
+      for (const m of set.members) expect(ids.has(m), `${set.id}:${m}`).toBe(true);
+    }
+  });
+});
+
 describe('圖鑑功業 — codex collection milestones', () => {
   it('nothing unlocks on an empty album', () => {
     const r = checkCodexAchievements(createEmptyAchievementProgress(), { recruited: [] });

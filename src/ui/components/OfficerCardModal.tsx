@@ -21,6 +21,7 @@ import { CARD_INDEX, CARD_TOTAL } from '../../game/data/cardIndex';
 import { MEDALS_BY_ID } from '../../game/data/medals';
 import { MedalBadge } from './MedalBadge';
 import { loadFrameSkin } from './cardFrames';
+import { headToHead } from '../../game/systems/rivalries';
 import { getBiography } from '../../game/data';
 import { exportOfficerCardPNG } from './officerCardExport';
 import { useT, useLanguage, pickName } from '../i18n';
@@ -70,6 +71,7 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
   const officers = useGameStore((s) => s.officers);
   const deeds = useGameStore((s) => s.deeds[officer.id]);
   const duelHall = useGameStore((s) => s.duelHall);
+  const rivalries = useGameStore((s) => s.rivalries);
   const [artFailed, setArtFailed] = useState(0); // 0 = try -full, 1 = try square, 2 = silhouette
   // 三面卡 — ⟲ cycles 正面(0) → 戰績面(1) → 列傳面(2). Content swaps inside
   // the same frame (no nested 3D flip — the reveal modal already spins).
@@ -243,6 +245,36 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
                   ))}
                 </div>
               )}
+              {/* 宿敵 — the standing feuds off the 恩怨簿, tallied head-to-head. */}
+              {(() => {
+                const recs = Object.values(rivalries ?? {})
+                  .filter((r) => r.aId === officer.id || r.bId === officer.id)
+                  .sort((a, b) => b.bouts - a.bouts)
+                  .slice(0, 2);
+                if (recs.length === 0) return null;
+                return (
+                  <div>
+                    <div style={{ fontSize: '0.62rem', color: '#7a8893', letterSpacing: '0.12rem', marginBottom: 3 }}>{t('宿　敵', 'RIVALS')}</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                      {recs.map((rec) => {
+                        const otherId = rec.aId === officer.id ? rec.bId : rec.aId;
+                        const other = officers[otherId];
+                        const h = headToHead(rec, officer.id);
+                        const blood = rec.killerId === officer.id;
+                        const slain = rec.victimId === officer.id;
+                        return (
+                          <div key={otherId} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem' }}>
+                            <span style={{ color: '#e0907a' }}>⚡ {other ? pickName(other.name, lang) : otherId}</span>
+                            <span style={{ color: blood ? '#8ac88a' : slain ? '#e0705a' : '#9aa6b0', fontFamily: 'ui-monospace, monospace' }}>
+                              {h.mine}–{h.theirs}{h.draws ? t(`·平${h.draws}`, ` · ${h.draws}d`) : ''}{blood ? t('・手刃', ' · slew') : slain ? t('・殞其手', ' · fell') : ''}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
               {(() => {
                 const bouts = duelHall.filter((r) => r.aId === officer.id || r.dId === officer.id).slice(0, 4);
                 if (bouts.length === 0) return null;
