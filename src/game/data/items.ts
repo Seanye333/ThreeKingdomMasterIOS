@@ -206,7 +206,22 @@ export const AWAKENING_PERKS: AwakeningPerk[] = [
   { id: 'edge', name: { zh: '鋒鏑淬血', en: 'Blooded Edge' }, descriptionZh: '刃口飲血自礪 — 武力 +3', description: 'The edge remembers blood — War +3.', effects: { war: 3 } },
   { id: 'command', name: { zh: '大將之風', en: 'Marshal\'s Bearing' }, descriptionZh: '執之者威儀自生 — 統率 +3', description: 'It lends its bearer presence — Leadership +3.', effects: { leadership: 3 } },
   { id: 'mind', name: { zh: '玄機內蘊', en: 'Hidden Subtlety' }, descriptionZh: '器中藏鋒,運籌自明 — 智力 +3', description: 'Subtlety folded into the steel — Intelligence +3.', effects: { intelligence: 3 } },
+  // 情境系 — no flat stats; each bites in ONE situation (wired at the combat
+  // layer via awakeningPerkCountFor): 破陣 amplifies shock stratagems, 拒守
+  // deepens the defending stance, 迅捷 lends single-combat wind.
+  { id: 'breaker', name: { zh: '破陣', en: 'Line-Breaker' }, descriptionZh: '衝擊謀略(突貫/馳突)傷害 +8%', description: 'Shock stratagems (charge/gallop) hit +8% harder.', effects: {} },
+  { id: 'bulwark', name: { zh: '拒守', en: 'Bulwark' }, descriptionZh: '持有者立防時再減傷 5%', description: 'While defending, the bearer takes a further −5%.', effects: {} },
+  { id: 'swift', name: { zh: '迅捷', en: 'Swift' }, descriptionZh: '單挑氣力 +5(車輪戰更持久)', description: '+5 duel stamina — the long wind of single combat.', effects: {} },
 ];
+
+/** How many of `perkId` the bearer's whole kit carries (stacks across items). */
+export function awakeningPerkCountFor(equipment: readonly string[], perkId: string): number {
+  let n = 0;
+  for (const itemId of equipment) {
+    for (const aid of itemAwakeningIds(itemId)) if (aid === perkId) n += 1;
+  }
+  return n;
+}
 export const AWAKENING_BY_ID: Record<string, AwakeningPerk> = Object.fromEntries(AWAKENING_PERKS.map((p) => [p.id, p]));
 
 let AWAKEN_REGISTRY: Record<string, string[]> = {};

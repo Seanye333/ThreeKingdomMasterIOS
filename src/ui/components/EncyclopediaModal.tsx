@@ -17,6 +17,7 @@ import { Name } from './Name';
 import { CODEX_SETS, codexSetProgress, loadCodex } from '../../game/systems/codex';
 import { festivalPool, FESTIVAL_GOLD_COST } from '../../game/systems/festival';
 import { FRAME_SKINS, loadFrameSkin, saveFrameSkin, unlockedFrameSkins } from './cardFrames';
+import { ItemCardModal } from './ItemCard';
 import { OfficerCardModal, OfficerCardFace } from './OfficerCardModal';
 import { officerGrade, gradeMeta } from '../../game/systems/officerGrade';
 import { bpLeaderboard } from '../../game/systems/powerBoard';
@@ -40,8 +41,10 @@ export function EncyclopediaModal({ onClose }: Props) {
   const bounties = useGameStore((s) => s.bounties);
   const year = useGameStore((s) => s.date.year);
   const holdFestival = useGameStore((s) => s.holdTalentFestival);
+  const festivalPity = useGameStore((s) => s.festivalPity);
   const [festivalMsg, setFestivalMsg] = useState<string | null>(null);
   const [frameSkinId, setFrameSkinId] = useState(() => loadFrameSkin().id);
+  const [itemCardId, setItemCardId] = useState<string | null>(null);
   const [section, setSection] = useState<Section>('officers');
   const [search, setSearch] = useState('');
   // 交叉引用 — clicking any officer chip opens their full detail (列傳 included)
@@ -249,7 +252,7 @@ export function EncyclopediaModal({ onClose }: Props) {
                           padding: '0.2rem 0.7rem', borderRadius: 'var(--tkm-radius-xs)', cursor: 'pointer',
                           fontFamily: 'inherit', fontSize: '0.75rem', letterSpacing: '0.06rem',
                         }}
-                      >🏮 求賢祭 {FESTIVAL_GOLD_COST}金 · 金+率{oddsPct}%</button>
+                      >🏮 求賢祭 {FESTIVAL_GOLD_COST}金 · 金+率{oddsPct}%{festivalPity > 0 ? ` · 保底${Math.min(festivalPity, 3)}/3` : ''}</button>
                     );
                   })()}
                   {festivalMsg && <span style={{ fontSize: '0.72rem', color: '#c8a24e' }}>{festivalMsg}</span>}
@@ -323,6 +326,13 @@ export function EncyclopediaModal({ onClose }: Props) {
                     borderLeft: r.rank <= 3 ? '3px solid #e6c473' : undefined,
                   }}>
                   <span style={{ width: 34, textAlign: 'center', fontSize: r.rank <= 3 ? '1rem' : '0.8rem', color: '#c9a64e', fontFamily: 'ui-monospace,monospace' }}>{medal(r.rank)}</span>
+                  {/* 加冕 — a portrait medallion; the realm's finest wears the crown. */}
+                  <span style={{ position: 'relative', width: 26, height: 26, flex: 'none' }}>
+                    <img src={`${import.meta.env.BASE_URL}portraits/${o.id}.webp`} alt="" loading="lazy"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                      style={{ width: 26, height: 26, borderRadius: '50%', objectFit: 'cover', border: `1.5px solid ${r.rank <= 3 ? '#e6c473' : '#3c4f5e'}` }} />
+                    {r.rank === 1 && <span style={{ position: 'absolute', top: -11, left: 5, fontSize: '0.72rem' }}>👑</span>}
+                  </span>
                   {/* 風雲 — movement vs last season's board (top-50 snapshot). */}
                   {(() => {
                     const prev = (powerBoardPrev ?? {})[o.id];
@@ -394,7 +404,7 @@ export function EncyclopediaModal({ onClose }: Props) {
                             color: b.kind === 'capture' ? '#e0907a' : '#a8d8a8',
                             opacity: b.expiresYear < year ? 0.5 : 1,
                           }}>
-                          {b.kind === 'capture' ? '🎯 擒' : '🤝 攬'} {o.name.zh} · {b.gold}金
+                          {b.kind === 'capture' ? '🎯 擒' : '🤝 攬'} {o.name.zh} · {b.gold}金{o.locationCityId && cities[o.locationCityId] ? ` · 現於${cities[o.locationCityId].name.zh}` : ''}
                         </span>
                       );
                     })}
@@ -451,7 +461,7 @@ export function EncyclopediaModal({ onClose }: Props) {
             return (
               <div key={it.id} style={card()}>
                 <div style={{ fontSize: '1rem', color: '#e6c473' }}>
-                  <Name pair={it.name} />
+                  <span style={{ cursor: 'pointer', textDecoration: 'underline dotted rgba(230,196,115,0.35)', textUnderlineOffset: 2 }} title="名品卡" onClick={() => setItemCardId(it.id)}><Name pair={it.name} /></span>
                   <span style={{ marginLeft: '0.4rem', fontFamily: 'ui-monospace,monospace', fontSize: '0.7rem', color: '#c9a64e' }}>· {it.kind}</span>
                   {carried && <span title="曾入我庫" style={{ marginLeft: '0.4rem', fontSize: '0.7rem', color: '#9ed8b8' }}>· 藏</span>}
                 </div>
@@ -538,6 +548,7 @@ export function EncyclopediaModal({ onClose }: Props) {
             onJump={(id) => { if (officers[id] && codex.seen.includes(id)) setCardId(id); }}
           />
         )}
+        {itemCardId && <ItemCardModal itemId={itemCardId} onClose={() => setItemCardId(null)} />}
         {/* ⚖ 雙卡對撞 — two full cards side by side (stacks on a narrow screen). */}
         {compareOpen && compareSel.length === 2 && officers[compareSel[0]] && officers[compareSel[1]] && (
           <div

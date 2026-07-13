@@ -9,6 +9,7 @@ import { OfficerStats } from './OfficerStats';
 import { Name } from './Name';
 import styles from './ArmouryModal.module.css';
 import { useT, useDesc } from '../i18n';
+import { ItemCardModal, ItemCardFace } from './ItemCard';
 
 interface Props {
   onClose: () => void;
@@ -86,6 +87,9 @@ export function ArmouryModal({ onClose }: Props) {
   const [insMotto, setInsMotto] = useState('');
   // 回爐二段確認 — first tap arms the smelt button for one item.
   const [smeltConfirmId, setSmeltConfirmId] = useState<string | null>(null);
+  // 🎴 名品卡 + 卡牆視圖.
+  const [itemCardId, setItemCardId] = useState<string | null>(null);
+  const [wallView, setWallView] = useState(false);
 
   const [filter, setFilter] = useState<KindFilter>('all');
   const [ownerFilter, setOwnerFilter] = useState<OwnerFilter>('all');
@@ -174,6 +178,12 @@ export function ArmouryModal({ onClose }: Props) {
 
         <div className={styles.filters}>
           <span className={styles.filterLabel}>Kind</span>
+          <button
+            className={`${styles.chip} ${wallView ? styles.chipActive : ''}`}
+            onClick={() => setWallView((v) => !v)}
+            style={{ marginRight: 8 }}
+            title={t('卡牆 — 名品以卡片陳列', 'Card wall view')}
+          >🎴 {t('卡牆', 'Wall')}</button>
           {(
             [
               ['all',      t('全部', 'All')],
@@ -213,7 +223,16 @@ export function ArmouryModal({ onClose }: Props) {
           ))}
         </div>
 
-        <ul className={styles.list}>
+        {wallView && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 10, overflowY: 'auto', padding: '0.6rem' }}>
+            {visibleItems.map((item) => (
+              <div key={item.id} style={{ cursor: 'pointer' }} onClick={() => setItemCardId(item.id)}>
+                <ItemCardFace itemId={item.id} />
+              </div>
+            ))}
+          </div>
+        )}
+        {!wallView && <ul className={styles.list}>
           {visibleItems.map((item) => {
             const holder = itemHolders[item.id];
             const holderForce = holder?.forceId ? forces[holder.forceId] : null;
@@ -229,7 +248,7 @@ export function ArmouryModal({ onClose }: Props) {
               >
                 <div className={styles.itemBlock}>
                   <div className={styles.itemNameRow}>
-                    <span className={styles.itemNameZh} style={{ color: tierColor }}><Name pair={item.name} /></span>
+                    <span className={styles.itemNameZh} style={{ color: tierColor, cursor: 'pointer', textDecoration: 'underline dotted rgba(230,196,115,0.35)', textUnderlineOffset: 2 }} title={t('名品卡', 'Item card')} onClick={() => setItemCardId(item.id)}><Name pair={item.name} /></span>
                     {itemInscriptions[item.id]?.name && (
                       <span title={itemInscriptions[item.id]?.motto ? `「${itemInscriptions[item.id]!.motto}」` : undefined}
                         style={{ fontSize: '0.74rem', color: '#c8a24e' }}>✒「{itemInscriptions[item.id]!.name}」</span>
@@ -440,7 +459,8 @@ export function ArmouryModal({ onClose }: Props) {
               </li>
             );
           })}
-        </ul>
+        </ul>}
+        {itemCardId && <ItemCardModal itemId={itemCardId} onClose={() => setItemCardId(null)} />}
       </div>
     </div>
   );

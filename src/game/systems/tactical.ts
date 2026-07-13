@@ -22,6 +22,7 @@ import { FORMATIONS_BY_ID } from '../data/formations';
 import { pickVoiceLine } from '../data/voiceLines';
 import { effectiveStats, tacticalDamageMul, tacticalDefenseMul, tacticalMoraleAura } from './traitEffects';
 import { gradeCombatBonus } from './gradeCombat';
+import { awakeningPerkCountFor } from '../data/items';
 import { growthPowerMul } from './growth';
 import { itemSetPowerMul } from '../data/itemSets';
 import { predictAttackDamage } from './damagePredict';
@@ -1601,7 +1602,12 @@ export function attackUnits(
     aMoraleMul * pursuitMul * chargeMul * weaponMul * weaponTerrainMul(aWeapon, aTerrainTile?.terrain ?? 'plain') * encircleMul * disorderMul * momentumMul * coverMul * armorMul *
     aTraitMul * dTraitDefMul,
   );
-  if (targetDefending) damage = Math.floor(damage / 2);
+  if (targetDefending) {
+    damage = Math.floor(damage / 2);
+    // 兵器覺醒·拒守 — the bearer's stance holds a touch firmer (≤2 picks bite).
+    const bulwark = To ? awakeningPerkCountFor(To.equipment, 'bulwark') : 0;
+    if (bulwark > 0) damage = Math.floor(damage * (1 - 0.05 * Math.min(2, bulwark)));
+  }
   // 盾牆 — linked defending infantry soak a further 15% (see shieldWallMul).
   damage = Math.floor(damage * shieldWallMul(b, target));
   if (attackerBurning) damage = Math.floor(damage * 0.9);

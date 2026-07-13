@@ -11267,6 +11267,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           `${o.name.zh}告老 — 衣缽盡傳${disciple.name.zh}(歷練+${xpGrant}${heirloomSkill ? '、承一技' : ''}${o.equipment.length > 0 ? '、名器盡付' : ''})`,
           `${o.name.en} retires — legacy passes to ${disciple.name.en}`,
         );
+        set({ popupQueue: [...get().popupQueue, {
+          key: 'retire-legacy', media: 'image' as const,
+          titleZh: '告老傳承', titleEn: 'The Torch Passes',
+          captionZh: `${o.name.zh}掛冠榮休 — 衣缽盡傳${disciple.name.zh}`,
+          captionEn: `${o.name.en} retires with honour — the legacy passes to ${disciple.name.en}`,
+        }] });
         return { ok: true, message: `衣缽傳${disciple.name.zh}。` };
       },
       inscribeItem: (itemId, name, motto) => {
@@ -11310,6 +11316,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           `${o.name.zh}洗髓伐毛 — ${worst === 'war' ? '武' : worst === 'leadership' ? '統' : worst === 'intelligence' ? '智' : worst === 'politics' ? '政' : '魅'}之潛能大開(+8,現值+2)`,
           `${o.name.en} reborn — weakest latent +8 (stat +2)`,
         );
+        set({ popupQueue: [...get().popupQueue, {
+          key: 'marrow-cleanse', media: 'image' as const,
+          titleZh: '洗髓伐毛', titleEn: 'Reborn',
+          captionZh: `${o.name.zh}經名醫洗髓 — 脫胎換骨,潛能大開`,
+          captionEn: `${o.name.en} is remade under a master physician's hands`,
+        }] });
         return { ok: true, message: '洗髓已成。' };
       },
       investStar: (officerId) => {

@@ -1,5 +1,5 @@
 import type { Officer } from '../types';
-import { liveItemById } from '../data/items';
+import { liveItemById, awakeningPerkCountFor } from '../data/items';
 import { SKILLS_BY_ID } from '../data/skills';
 import { effectivePrestigeEffects } from '../data/prestige';
 import { afflictionDelta } from './afflictions';
@@ -134,8 +134,10 @@ export function resolveDuel(input: DuelInput): DuelResult {
   // 氣力 — graded champions enter the bout with a deeper reserve (品階威儀).
   // 霸王色 — a fighter facing an aura-bearer opens with their reserve docked.
   const cows = (p: DuelPassiveId | null) => (p === 'overlord-aura' ? 10 : 0);
-  let aSt = 100 + gradeCombatBonus(input.attacker).duelStamina - cows(dPass);
-  let dSt = 100 + gradeCombatBonus(input.defender).duelStamina - cows(aPass);
+  // 兵器覺醒·迅捷 — a swift-awakened kit lends wind for the long bout (≤2 bite).
+  const swiftSt = (o: Officer) => Math.min(2, awakeningPerkCountFor(o.equipment, 'swift')) * 5;
+  let aSt = 100 + gradeCombatBonus(input.attacker).duelStamina + swiftSt(input.attacker) - cows(dPass);
+  let dSt = 100 + gradeCombatBonus(input.defender).duelStamina + swiftSt(input.defender) - cows(aPass);
   // 衝鋒對撞 — a mounted bout opens with a charge pass; the bested rider opens hurt.
   const charge = resolveChargePass(input.attacker, input.defender, rng);
   if (charge) { aSt -= charge.dmgToAttacker; dSt -= charge.dmgToDefender; }

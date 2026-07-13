@@ -19,6 +19,7 @@ import { MILITARY_RANKS_BY_ID } from '../../game/data/titles';
 import { OFFICER_DUEL_LINES } from '../../game/data/officerLines';
 import { CARD_INDEX, CARD_TOTAL } from '../../game/data/cardIndex';
 import { MEDALS_BY_ID } from '../../game/data/medals';
+import { MedalBadge } from './MedalBadge';
 import { loadFrameSkin } from './cardFrames';
 import { getBiography } from '../../game/data';
 import { exportOfficerCardPNG } from './officerCardExport';
@@ -148,6 +149,7 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
       <style>{`
         @keyframes tkmCardSheen { 0% { transform: translateX(-130%) skewX(-18deg); } 55% { transform: translateX(230%) skewX(-18deg); } 100% { transform: translateX(230%) skewX(-18deg); } }
         @keyframes tkmCardConic { to { transform: rotate(1turn); } }
+        @keyframes tkmStarTwinkle { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.55; transform: scale(0.88); } }
       `}</style>
       <div
         onMouseMove={canHover ? (e) => {
@@ -225,18 +227,12 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
                   </div>
                 ))}
               </div>
-              {/* 勳章牆 — deed-milestone medals, each minted a permanent +1. */}
+              {/* 勳章牆 — struck SVG medals, each minted a permanent +1. */}
               {(officer.medals?.length ?? 0) > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'flex-start' }}>
                   {officer.medals!.map((mid) => {
                     const m = MEDALS_BY_ID[mid];
-                    if (!m) return null;
-                    return (
-                      <span key={mid} title={lang === 'en' ? m.description : m.descriptionZh}
-                        style={{ fontSize: '0.68rem', padding: '1px 7px', borderRadius: 9, background: 'rgba(255,214,110,0.14)', border: '1px solid #8a6a2a', color: '#ffd66e' }}>
-                        🎖 {pickName(m.name, lang)}
-                      </span>
-                    );
+                    return m ? <MedalBadge key={mid} medal={m} /> : null;
                   })}
                 </div>
               )}
@@ -335,7 +331,13 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
             </div>
             {stars > 0 && (
               <div style={{ position: 'absolute', top: 40, left: 10, color: '#ffd66e', fontSize: '0.8rem', textShadow: '0 0 6px rgba(0,0,0,0.9)' }}>
-                {'★'.repeat(stars)}{'☆'.repeat(Math.max(0, 6 - stars))}
+                {Array.from({ length: 6 }, (_, si) => (
+                  <span key={si} style={si < stars
+                    ? { animation: `tkmStarTwinkle ${stars >= 6 ? 1.6 : 2.8}s ease-in-out ${si * 0.35}s infinite`, display: 'inline-block' }
+                    : { color: '#3d4a56' }}>
+                    {si < stars ? '★' : '☆'}
+                  </span>
+                ))}
               </div>
             )}
             {/* 武評朱印 — the realm board's seal, stamped in vermilion (gold-edged top ten). */}

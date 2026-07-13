@@ -22,6 +22,7 @@ import {
   shipPowerMul, tileAt, unitAt, FATIGUE_PER_VOLLEY, type WindDirection,
   COMBAT_LETHALITY, ARM_ARMOR, counterMultiplier, hexDirection, dirGap, shieldWallMul,
 } from './tactical';
+import { awakeningPerkCountFor } from '../data/items';
 import { stratagemDamageMul } from './traitEffects';
 import { resolveDuel, canDuel, staticProwess } from './duel';
 
@@ -1161,10 +1162,17 @@ function shockDamage(
   let dmg = (unit.troops * (aWar + 30) * mult * COMBAT_LETHALITY) / (dLead + 50);
   dmg *= counterMultiplier(unit.unitType, target.unitType);
   dmg *= ARM_ARMOR[target.unitType] ?? 1;
+  // 兵器覺醒·情境系 — 破陣 sharpens the shock; 拒守 blunts it (≤2 picks bite).
+  const breaker = off ? awakeningPerkCountFor(off.equipment, 'breaker') : 0;
+  if (breaker > 0) dmg *= 1 + 0.08 * Math.min(2, breaker);
   // 立防 halves the shock; 築壘 stakes blunt it; a braced spear-wall facing
   // the ride breaks it (拒馬) — the postures finally count against the very
   // blow they exist to stop.
-  if (target.effects.some((e) => e.kind === 'defending')) dmg *= 0.5;
+  if (target.effects.some((e) => e.kind === 'defending')) {
+    dmg *= 0.5;
+    const bulwark = To ? awakeningPerkCountFor(To.equipment, 'bulwark') : 0;
+    if (bulwark > 0) dmg *= 1 - 0.05 * Math.min(2, bulwark);
+  }
   dmg *= shieldWallMul(b, target); // 盾牆 — linked defending infantry
   if (tileAt(b, target.coord)?.terrain === 'fieldworks') dmg *= 0.6;
   let braced = false;

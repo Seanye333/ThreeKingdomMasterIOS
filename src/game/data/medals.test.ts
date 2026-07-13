@@ -45,7 +45,7 @@ describe('兵器覺醒 + 回爐 — item pipelines', () => {
     const base = liveItem(blade, 0, 0, [], 0, []);
     const awake = liveItem(blade, 0, 0, [], 0, ['edge', 'edge']);
     expect((awake.effects.war ?? 0) - (base.effects.war ?? 0)).toBe(6);
-    expect(AWAKENING_PERKS.length).toBe(3);
+    expect(AWAKENING_PERKS.length).toBe(6); // 3 flat-stat + 3 situational (破陣/拒守/迅捷)
   });
 
   it('威名 milestones unlock 0→3 picks', () => {

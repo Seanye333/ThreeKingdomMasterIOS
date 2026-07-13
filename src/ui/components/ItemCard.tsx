@@ -1,0 +1,210 @@
+import { useMemo } from 'react';
+import { useGameStore } from '../../game/state/store';
+import { Modal } from './Modal';
+import {
+  ITEMS_BY_ID, liveItemById, itemRarity, itemLoreLevel, itemLoreTitle,
+  itemAwakeningIds, AWAKENING_BY_ID, GEMS_BY_ID, type Item,
+} from '../../game/data/items';
+import { ITEM_WEAPON_TYPE, classifyWeaponByName, WEAPON_TYPE_DEFS, type WeaponType } from '../../game/data/weaponTypes';
+import { SIGNATURE_ITEMS } from '../../game/data/signatureItems';
+import { useT, useLanguage, pickName, useDesc } from '../i18n';
+
+/**
+ * 名品卡 — the officer card's sister: every treasure gets a card of its own.
+ * Procedural SVG sigils stand in for art (blade / spear / bow silhouettes;
+ * calligraphic glyphs for horses, books, armour, treasures), under a
+ * rarity-tiered frame, with the item's whole life on one face: live effects,
+ * 精煉/突破/寶石, the 威名 track and its next milestone, awakening perks,
+ * the inscription, the signature master and the current bearer.
+ */
+
+const RARITY_FRAME: Record<string, { border: string; glow: string; label: { zh: string; en: string }; color: string }> = {
+  gold: { border: 'linear-gradient(160deg, #e6c473, #8a6a2a 40%, #ffe9a8 60%, #a8842e)', glow: '0 0 18px rgba(230,196,115,0.35)', label: { zh: '神品', en: 'Legendary' }, color: '#e6c473' },
+  silver: { border: 'linear-gradient(160deg, #cfd8e0, #6a7682 50%, #cfd8e0)', glow: '0 0 10px rgba(207,216,224,0.2)', label: { zh: '逸品', en: 'Rare' }, color: '#cfd8e0' },
+  bronze: { border: 'linear-gradient(160deg, #c8884e, #6a4426 55%, #b87a3e)', glow: 'none', label: { zh: '良品', en: 'Fine' }, color: '#c8884e' },
+};
+
+/** 器形圖騰 — weapon silhouettes as inline SVG; others use a calligraphic seal. */
+function WeaponSigil({ type, color }: { type: WeaponType; color: string }) {
+  const stroke = { stroke: color, strokeWidth: 3.5, strokeLinecap: 'round' as const, fill: 'none' };
+  switch (type) {
+    case 'sabre':
+      return <svg viewBox="0 0 100 100" width="100%" height="100%"><path d="M30 82 C 26 60, 34 30, 62 14 C 56 34, 52 56, 44 76 Z" fill={color} opacity="0.9" /><path d="M28 84 L 22 92 M36 80 L 30 74" {...stroke} /></svg>;
+    case 'sword':
+      return <svg viewBox="0 0 100 100" width="100%" height="100%"><path d="M50 10 L 56 22 L 54 68 L 50 74 L 46 68 L 44 22 Z" fill={color} opacity="0.9" /><path d="M38 74 L 62 74 M50 74 L 50 88 M44 92 a6 6 0 0 0 12 0" {...stroke} /></svg>;
+    case 'spear':
+      return <svg viewBox="0 0 100 100" width="100%" height="100%"><path d="M50 6 L 58 22 L 50 34 L 42 22 Z" fill={color} opacity="0.9" /><path d="M50 34 L 50 92" {...stroke} /><path d="M44 40 L 56 40" {...stroke} /></svg>;
+    case 'halberd':
+      return <svg viewBox="0 0 100 100" width="100%" height="100%"><path d="M50 8 L 56 20 L 50 30 L 44 20 Z" fill={color} opacity="0.9" /><path d="M50 30 L 50 92" {...stroke} /><path d="M50 34 C 68 34, 74 48, 66 58 C 62 46, 56 42, 50 42 Z" fill={color} opacity="0.85" /></svg>;
+    case 'bow':
+      return <svg viewBox="0 0 100 100" width="100%" height="100%"><path d="M30 14 C 66 34, 66 66, 30 86" {...stroke} /><path d="M30 14 L 30 86" stroke={color} strokeWidth="1.5" /><path d="M30 50 L 78 50 M70 44 L 78 50 L 70 56" {...stroke} /></svg>;
+    case 'crossbow':
+      return <svg viewBox="0 0 100 100" width="100%" height="100%"><path d="M18 40 C 50 22, 50 22, 82 40" {...stroke} /><path d="M50 26 L 50 78" {...stroke} /><path d="M36 66 L 64 66" {...stroke} /></svg>;
+    case 'fan':
+      return <svg viewBox="0 0 100 100" width="100%" height="100%"><path d="M50 84 L 22 30 A 34 34 0 0 1 78 30 Z" fill={color} opacity="0.55" /><path d="M50 84 L 30 36 M50 84 L 50 26 M50 84 L 70 36" {...stroke} /></svg>;
+    default:
+      return <svg viewBox="0 0 100 100" width="100%" height="100%"><circle cx="50" cy="50" r="34" {...stroke} opacity="0.7" /><path d="M32 50 L 68 50 M50 32 L 50 68" {...stroke} /></svg>;
+  }
+}
+
+function sigilFor(item: Item): { kind: 'svg'; type: WeaponType } | { kind: 'glyph'; char: string } {
+  if (item.kind === 'weapon') {
+    const wt = ITEM_WEAPON_TYPE[item.id] ?? classifyWeaponByName(item.name) ?? 'sword';
+    if (wt !== 'none' && wt !== 'cavalry' && wt !== 'siege') return { kind: 'svg', type: wt };
+    return { kind: 'glyph', char: '兵' };
+  }
+  if (item.kind === 'horse') return { kind: 'glyph', char: '馬' };
+  if (item.kind === 'book') return { kind: 'glyph', char: '書' };
+  if (item.kind === 'armor') return { kind: 'glyph', char: '甲' };
+  return { kind: 'glyph', char: '寶' };
+}
+
+const LORE_MILESTONES = [12, 30, 60];
+
+export function ItemCardFace({ itemId, onClose }: { itemId: string; onClose?: () => void }) {
+  const t = useT();
+  const lang = useLanguage();
+  const desc = useDesc();
+  const officers = useGameStore((s) => s.officers);
+  const inscriptions = useGameStore((s) => s.itemInscriptions);
+  const refinements = useGameStore((s) => s.itemRefinements);
+  const breakthroughs = useGameStore((s) => s.itemBreakthroughs);
+  const gems = useGameStore((s) => s.itemGems);
+
+  const base = ITEMS_BY_ID[itemId];
+  const live = liveItemById(itemId);
+  const holder = useMemo(
+    () => Object.values(officers).find((o) => o.status !== 'dead' && o.equipment.includes(itemId)) ?? null,
+    [officers, itemId],
+  );
+  if (!base || !live) return null;
+
+  const rarity = itemRarity(base);
+  const frame = RARITY_FRAME[rarity] ?? RARITY_FRAME.bronze;
+  const lore = itemLoreLevel(itemId);
+  const loreTitle = itemLoreTitle(lore);
+  const nextMilestone = LORE_MILESTONES.find((m) => lore < m) ?? null;
+  const awakened = itemAwakeningIds(itemId).map((aid) => AWAKENING_BY_ID[aid]).filter(Boolean);
+  const socketed = (gems[itemId] ?? []).map((gid) => GEMS_BY_ID[gid]).filter(Boolean);
+  const plus = refinements[itemId] ?? 0;
+  const stars = breakthroughs[itemId] ?? 0;
+  const ins = inscriptions?.[itemId];
+  const masters = SIGNATURE_ITEMS.filter((p) => p.itemId === itemId).map((p) => officers[p.officerId]).filter(Boolean);
+  const sigil = sigilFor(base);
+  const wtDef = base.kind === 'weapon' ? WEAPON_TYPE_DEFS[ITEM_WEAPON_TYPE[base.id] ?? classifyWeaponByName(base.name) ?? 'sword'] : null;
+
+  return (
+    <div style={{ position: 'relative', padding: 3, borderRadius: 12, background: frame.border, boxShadow: `0 8px 40px rgba(0,0,0,0.7), ${frame.glow}`, overflow: 'hidden' }}>
+      <div style={{ position: 'relative', background: '#0c1118', borderRadius: 9, overflow: 'hidden' }}>
+        {/* 圖騰區 — the sigil over a smoky vignette. */}
+        <div style={{ position: 'relative', height: 190, background: 'radial-gradient(ellipse at 50% 30%, #232d3a 0%, #0c1118 78%)', display: 'grid', placeItems: 'center' }}>
+          <div style={{ width: 120, height: 120, opacity: 0.92 }}>
+            {sigil.kind === 'svg'
+              ? <WeaponSigil type={sigil.type} color={frame.color} />
+              : <div style={{ fontSize: '5.2rem', textAlign: 'center', lineHeight: '120px', color: frame.color, fontFamily: '"Ma Shan Zheng", "Songti SC", serif', textShadow: `0 0 26px ${frame.color}55` }}>{sigil.char}</div>}
+          </div>
+          {/* Top chrome — rarity + kind/class. */}
+          <div style={{ position: 'absolute', top: 8, left: 10, right: 10, display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ background: 'rgba(10,14,20,0.82)', border: `1px solid ${frame.color}`, color: frame.color, padding: '2px 8px', borderRadius: 6, fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08rem' }}>
+              {pickName(frame.label, lang)}
+            </span>
+            <span style={{ background: 'rgba(10,14,20,0.82)', border: '1px solid #3c4f5e', color: '#9aa6b0', padding: '2px 8px', borderRadius: 6, fontSize: '0.7rem' }}>
+              {base.kind}{wtDef ? ` · ${pickName({ zh: wtDef.zh, en: wtDef.en }, lang)}` : ''}
+            </span>
+          </div>
+          {/* 名牌 — inscribed name leads; the born name stands beneath it. */}
+          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '22px 12px 8px', background: 'linear-gradient(180deg, transparent, rgba(10,13,18,0.94) 62%)' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '1.25rem', color: '#f2e2b8', fontWeight: 700, fontFamily: '"Ma Shan Zheng", "Songti SC", serif' }}>
+                {ins?.name ? `${ins.name}` : pickName(base.name, lang)}
+              </span>
+              {ins?.name && <span style={{ fontSize: '0.72rem', color: '#7a8893' }}>{t('本名', 'born ')} {pickName(base.name, lang)} <span style={{ color: '#c8a24e' }}>✒</span></span>}
+              {plus > 0 && <span style={{ color: '#e6c473', fontSize: '0.85rem' }}>+{plus}</span>}
+              {stars > 0 && <span style={{ color: '#ff9f5a', fontSize: '0.8rem' }}>{'★'.repeat(stars)}</span>}
+              {loreTitle && <span style={{ color: '#e0a868', fontSize: '0.72rem' }}>〈{pickName(loreTitle, lang)}〉</span>}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ padding: '10px 12px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {/* 效果 — live numbers (精煉/突破/寶石/威名/覺醒全折入). */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+            {Object.entries(live.effects).map(([k, v]) => (
+              <span key={k} style={{ fontSize: '0.7rem', padding: '1px 8px', borderRadius: 9, background: 'rgba(126,192,224,0.08)', border: '1px solid #2c4454', color: '#9ed0ea', fontFamily: 'ui-monospace, monospace' }}>
+                {k.slice(0, 3).toUpperCase()} +{v}
+              </span>
+            ))}
+            {socketed.map((g, gi) => (
+              <span key={`g${gi}`} title={g!.name.zh} style={{ fontSize: '0.7rem', padding: '1px 8px', borderRadius: 9, border: `1px solid ${g!.color}88`, color: g!.color }}>◆ {pickName(g!.name, lang)}</span>
+            ))}
+          </div>
+
+          {/* 威名 — the battle-renown track toward the next milestone. */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.62rem', color: '#7a8893', letterSpacing: '0.1rem', marginBottom: 3 }}>
+              <span>{t('威名', 'RENOWN')} {lore}</span>
+              <span>{nextMilestone ? t(`距下檔 ${nextMilestone - lore} 戰`, `${nextMilestone - lore} battles to next`) : t('名器圓滿', 'fully storied')}</span>
+            </div>
+            <div style={{ height: 6, background: '#1a222c', borderRadius: 3, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${Math.min(100, (lore / 60) * 100)}%`, background: `linear-gradient(90deg, ${frame.color}66, ${frame.color})` }} />
+            </div>
+          </div>
+
+          {/* 覺醒詞條 */}
+          {awakened.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+              {awakened.map((p, pi) => (
+                <span key={pi} title={lang === 'en' ? p!.description : p!.descriptionZh}
+                  style={{ fontSize: '0.7rem', padding: '1px 8px', borderRadius: 9, background: 'rgba(255,214,110,0.12)', border: '1px solid #8a6a2a', color: '#ffd66e' }}>
+                  ⚡ {pickName(p!.name, lang)}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* 本命 + 現持 */}
+          {(masters.length > 0 || holder) && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, fontSize: '0.72rem' }}>
+              {masters.length > 0 && (
+                <span style={{ color: '#ffe9a8' }}>✦ {t('本命', 'Signature of')}:{masters.map((m) => pickName(m!.name, lang)).join('、')}</span>
+              )}
+              {holder && (
+                <span style={{ color: holder && masters.some((m) => m!.id === holder.id) ? '#8ac88a' : '#9aa6b0' }}>
+                  ⚔ {t('現持', 'Borne by')}:{pickName(holder.name, lang)}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* 銘文 + 出處 */}
+          {ins?.motto && (
+            <div style={{ borderLeft: `2px solid ${frame.color}66`, paddingLeft: 8, fontSize: '0.74rem', fontStyle: 'italic', color: '#e0c98a' }}>「{ins.motto}」</div>
+          )}
+          <div style={{ fontSize: '0.7rem', fontStyle: 'italic', color: '#7a8893', lineHeight: 1.6 }}>{desc(base)}</div>
+        </div>
+      </div>
+      {onClose && (
+        <button onClick={onClose} aria-label={t('關閉', 'Close')}
+          style={{ position: 'absolute', top: 6, right: 6, zIndex: 3, width: 26, height: 26, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(10,14,20,0.72)', color: '#cfd8e0', cursor: 'pointer', fontSize: '0.85rem', lineHeight: 1 }}
+        >×</button>
+      )}
+    </div>
+  );
+}
+
+export function ItemCardModal({ itemId, onClose }: { itemId: string; onClose: () => void }) {
+  const t = useT();
+  return (
+    <Modal
+      onClose={onClose}
+      width="min(360px, 94vw)"
+      padding="0"
+      zIndex={1210}
+      ariaLabel={t('名品卡', 'Item card')}
+      frameStyle={{ background: 'transparent', border: 'none', boxShadow: 'none', overflow: 'visible' }}
+      hideClose
+    >
+      <ItemCardFace itemId={itemId} onClose={onClose} />
+    </Modal>
+  );
+}

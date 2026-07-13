@@ -209,6 +209,7 @@ export function OfficerDetail({
   const [confirmCancelTraining, setConfirmCancelTraining] = useState(false);
   // 告老傳承/洗髓 — actions + 二段確認.
   const [confirmRetire, setConfirmRetire] = useState(false);
+  const [starBurst, setStarBurst] = useState(false);
   const retireOfficerFn = useGameStore((s) => s.retireOfficer);
   const marrowCleanseFn = useGameStore((s) => s.marrowCleanse);
   const officerAge = currentYear - officer.birthYear;
@@ -553,13 +554,20 @@ export function OfficerDetail({
                     `星級 ${s}/${MAX_STARS} — 每星微升品階威儀(戰力/單挑/舌戰);六星覺醒:最強一圍 +2`,
                     `Stars ${s}/${MAX_STARS} — each star amplifies the grade passive; the sixth awakens (+2 best stat)`)}>
                     <span style={{ fontSize: '0.72rem', color: '#7a8893', letterSpacing: '0.05rem' }}>{t('星級', 'Stars')} </span>
+                    {starBurst && (
+                      <span aria-hidden style={{ position: 'absolute', marginLeft: -6, marginTop: -10, fontSize: '1.2rem', pointerEvents: 'none', animation: 'tkmStarBurst 0.9s ease-out both' }}>✨</span>
+                    )}
                     <span style={{ fontSize: '0.9rem', color: '#ffd66e', letterSpacing: '0.1rem' }}>
                       {'★'.repeat(s)}<span style={{ color: '#3d4a56' }}>{'☆'.repeat(MAX_STARS - s)}</span>
                     </span>
                     {s >= MAX_STARS && <span style={{ marginLeft: 6, fontSize: '0.7rem', color: '#e6c473' }}>{t('覺醒', 'Awakened')}</span>}
                     {isMine && s < MAX_STARS && (
                       <button
-                        onClick={() => { setStarMsg(investStar(officer.id).message); }}
+                        onClick={() => {
+                          const r = investStar(officer.id);
+                          setStarMsg(r.message);
+                          if (r.ok) { setStarBurst(true); window.setTimeout(() => setStarBurst(false), 900); }
+                        }}
                         disabled={!canBuy}
                         title={req.ok
                           ? t(`升第 ${req.next} 星:金 ${req.cost}(取自所在城)`, `Buy star ${req.next}: ${req.cost} gold (from their city)`)
@@ -1365,6 +1373,25 @@ export function OfficerDetail({
                   </div>
                 );
               })()}
+              {/* 槽位一覽 — the five kit slots at a glance: filled solid, empty dashed. */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: '0.4rem' }}>
+                {([['weapon', '⚔', '武器'], ['armor', '🛡', '甲冑'], ['horse', '🐎', '坐騎'], ['book', '📜', '兵書'], ['treasure', '💎', '寶物']] as const).map(([slot, icon, zh]) => {
+                  const it = officer.equipment.map((id) => ITEMS_BY_ID[id]).find((x) => x?.kind === slot);
+                  return (
+                    <span key={slot}
+                      title={it ? it.name.zh : t(`${zh}空缺 — 宝物庫可配`, `${slot} empty — assign from the armoury`)}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 4, padding: '0.14rem 0.5rem',
+                        borderRadius: 'var(--tkm-radius-xs)', fontSize: '0.72rem',
+                        border: it ? '1px solid #3c4f5e' : '1px dashed #26323e',
+                        color: it ? '#b6c2cc' : '#4a545e',
+                        background: it ? 'rgba(126,192,224,0.06)' : 'transparent',
+                      }}>
+                      {icon} {it ? (lang === 'en' ? it.name.en : it.name.zh) : '—'}
+                    </span>
+                  );
+                })}
+              </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
                 {officer.equipment.map((id) => {
                   const item = liveItemById(id);

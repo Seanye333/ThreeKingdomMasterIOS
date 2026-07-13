@@ -5,6 +5,7 @@ import { itemRarity, itemRarityMeta, GEMS, GEMS_BY_ID, GEM_FUSION, GEM_FUSION_CO
 import { dismantleYield } from '../../game/systems/forging';
 import { useGameStore } from '../../game/state/store';
 import { playSfx } from '../../game/systems/sound';
+import { ItemCardFace } from './ItemCard';
 import type { EntityId } from '../../game/types';
 import { useDesc, useLanguage, useT } from '../i18n';
 import { Name } from './Name';
@@ -17,7 +18,7 @@ const SPARKS = Array.from({ length: 14 }, (_, i) => i);
 
 /** 鑄成 — the reveal when a weapon leaves the anvil: the name slams in over
  *  the forge's glow as embers fly up. Dismiss on click. */
-function ForgedReveal({ name, plus, onDone }: { name?: { zh: string; en: string }; plus?: number; onDone: () => void }) {
+function ForgedReveal({ name, plus, itemId, onDone }: { name?: { zh: string; en: string }; plus?: number; itemId?: string; onDone: () => void }) {
   const t = useT();
   useEffect(() => { playSfx('forge'); }, []);
   const reduced = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -56,6 +57,12 @@ function ForgedReveal({ name, plus, onDone }: { name?: { zh: string; en: string 
         {!!plus && plus > 0 && (
           <div style={{ fontSize: '0.95rem', color: '#ffd9a0', letterSpacing: '0.2rem', ...(reduced ? {} : { animation: 'tkmVictorySub 0.5s ease-out 0.5s both' }) }}>
             {t(`神品 +${plus}`, `Masterwork +${plus}`)}
+          </div>
+        )}
+        {/* 出爐名品卡 — the freshly-forged piece presented as its card. */}
+        {itemId && (
+          <div onClick={(e) => e.stopPropagation()} style={{ width: 'min(330px, 88vw)', marginTop: 6, ...(reduced ? {} : { animation: 'tkmVictorySub 0.55s ease-out 0.6s both' }) }}>
+            <ItemCardFace itemId={itemId} />
           </div>
         )}
         {!reduced && SPARKS.map((i) => (
@@ -100,7 +107,7 @@ export function ForgingModal({ onClose }: Props) {
     foundryCities[0]?.id ?? null,
   );
   // The just-forged weapon, shown in a brief reveal over the smithy.
-  const [forged, setForged] = useState<{ name: { zh: string; en: string }; plus: number } | null>(null);
+  const [forged, setForged] = useState<{ name: { zh: string; en: string }; plus: number; itemId?: string } | null>(null);
 
   const pickedCity = pickedCityId ? cities[pickedCityId] : null;
   // 主匠 — the most capable smith stationed here decides the forge's quality.
@@ -123,7 +130,7 @@ export function ForgingModal({ onClose }: Props) {
     if (!r.ok) { alert(r.reason); return; }
     const recipe = FORGE_RECIPES.find((x) => x.id === recipeId);
     const item = recipe ? ITEMS_BY_ID[recipe.resultItemId] : null;
-    if (item) setForged({ name: item.name, plus: r.plus ?? 0 });
+    if (item) setForged({ name: item.name, plus: r.plus ?? 0, itemId: item.id });
   };
 
   const handleDismantle = (itemId: string) => {
@@ -370,7 +377,7 @@ export function ForgingModal({ onClose }: Props) {
         </div>
       </div>
     </div>
-    {forged && <ForgedReveal name={forged.name} plus={forged.plus} onDone={() => setForged(null)} />}
+    {forged && <ForgedReveal name={forged.name} plus={forged.plus} itemId={forged.itemId} onDone={() => setForged(null)} />}
     </>
   );
 }
