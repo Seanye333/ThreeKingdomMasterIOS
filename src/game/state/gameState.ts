@@ -295,6 +295,10 @@ export interface GameState {
   bounties: import('../systems/bounty').Bounty[];
   /** 銘刻 — player-given names/mottoes engraved on storied items (lore ≥60). */
   itemInscriptions: Record<EntityId, { name?: string; motto?: string }>;
+  /** 史官年鑑 — the page awaiting the player's eyes (composed each spring). */
+  pendingChronicle: import('../systems/chronicle').YearChronicle | null;
+  /** 年鑑基線 — last spring's per-force city counts (rise/fall deltas). */
+  yearbookCounts: Record<EntityId, number>;
   /** 成套之禮 — famous sets already celebrated this campaign (setBonds.ts);
    *  each set pays out once when it first stands complete under the player. */
   setRewardsClaimed: string[];
@@ -826,6 +830,8 @@ export const EMPTY_STATE: GameState = {
   festivalPity: 0,
   bounties: [],
   itemInscriptions: {},
+  pendingChronicle: null,
+  yearbookCounts: {},
   setRewardsClaimed: [],
   dayFlow: null,
   dayFlowFollow: false,
@@ -1248,6 +1254,8 @@ export function loadScenario(
     festivalPity: 0,
     bounties: [],
     itemInscriptions: {},
+    pendingChronicle: null,
+    yearbookCounts: {},
     setRewardsClaimed: [],
     dayFlow: null,
   dayFlowFollow: false,

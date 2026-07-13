@@ -11,6 +11,7 @@ import { CityPanel } from '../components/CityPanel';
 import { ActionToasts } from '../components/ActionToasts';
 import { CelebrationPopup } from '../components/CelebrationPopup';
 import { CardRevealModal } from '../components/CardRevealModal';
+import { YearbookModal } from '../components/YearbookModal';
 import { RelationshipBrowserModal } from '../components/RelationshipBrowserModal';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { SettingsModal } from '../components/SettingsModal';
@@ -1107,6 +1108,8 @@ export function MapScreen() {
       <CelebrationPopup />
       {/* 得將開卡 — gold-or-better newcomers flip in as a trading card */}
       <CardRevealModal />
+      {/* 史官年鑑 — the historian's page for the year just closed (springs) */}
+      <YearbookModal />
       {/* Achievement toast — bottom-right when something just unlocked */}
       {recentAchievementUnlocks.length > 0 && (
         <div

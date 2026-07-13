@@ -327,6 +327,7 @@ import { applyStarUp, nextStarRequirement, planAiStarInvestments } from '../syst
 import { topBoardIds } from '../systems/powerBoard';
 import { pendingSetRewards, SET_REWARD_GOLD, SET_REWARD_LOYALTY } from '../systems/setBonds';
 import { dueMedals, grantMedals } from '../data/medals';
+import { composeYearChronicle } from '../systems/chronicle';
 import { festivalPool, festivalDraw, FESTIVAL_GOLD_COST } from '../systems/festival';
 import { rollBounties, fulfilledBounties } from '../systems/bounty';
 import { codexRecordPeaks } from '../systems/codex';
@@ -8787,6 +8788,30 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             .map((o) => ({ id: o.id, bp: combatBP(o).bp, stars: o.stars ?? 0, grade: officerGrade(o).grade })));
         }
 
+        // 史官年鑑 — the historian closes the year each spring: one page of
+        // 大勢/兵事/災異/武評, waiting in pendingChronicle for the player.
+        if (seasonBoundary && get().date.season === 'spring' && state.playerForceId
+            && get().victoryStatus === 'playing') {
+          const cur = get();
+          const closedYear = cur.date.year - 1;
+          const counts: Record<EntityId, number> = {};
+          for (const c of Object.values(cur.cities)) {
+            if (c.ownerForceId) counts[c.ownerForceId] = (counts[c.ownerForceId] ?? 0) + 1;
+          }
+          if (closedYear >= (cur.annals[0]?.year ?? closedYear)) {
+            set({
+              pendingChronicle: composeYearChronicle({
+                year: closedYear, annals: cur.annals, cities: cur.cities, forces: cur.forces,
+                officers: cur.officers, boardTop: topBoardIds(cur.officers, 3),
+                prevCounts: cur.yearbookCounts ?? {}, playerForceId: cur.playerForceId,
+              }),
+              yearbookCounts: counts,
+            });
+          } else {
+            set({ yearbookCounts: counts });
+          }
+        }
+
         // 武評前席 — snapshot this season's top-50 board so the 武評 tab can
         // draw ↑↓ movement arrows and NEW badges against last season.
         if (seasonBoundary) {
@@ -12270,6 +12295,17 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const loserIds = tb.units.filter((u) => u.side !== winner).map((u) => u.officerId);
         for (const id of loserIds) {
           bumpDeeds(id, { battlesLost: 1 });
+        }
+        // 戰意 — the ranks remember: victors ride a hot streak (勢如破竹, cap
+        // +5), the beaten sink (心灰意冷, floor −3). Only battles actually
+        // FOUGHT on the field (tactical) move it — paper resolutions don't.
+        for (const id of victorIds) {
+          const o = officers[id];
+          if (o) officers[id] = { ...o, streak: Math.min(5, Math.max(0, o.streak ?? 0) + 1) };
+        }
+        for (const id of loserIds) {
+          const o = officers[id];
+          if (o) officers[id] = { ...o, streak: Math.max(-3, Math.min(0, o.streak ?? 0) - 1) };
         }
         if (captured.length > 0) {
           // The winning commander gets credit for the captures.
@@ -16271,6 +16307,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           festivalPity: loaded.festivalPity ?? 0,
           bounties: loaded.bounties ?? [],
           itemInscriptions: loaded.itemInscriptions ?? {},
+          pendingChronicle: loaded.pendingChronicle ?? null,
+          yearbookCounts: loaded.yearbookCounts ?? {},
           setRewardsClaimed: loaded.setRewardsClaimed ?? [],
           dayFlow: null,
           dayFlowFollow: loaded.dayFlowFollow ?? false,

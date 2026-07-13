@@ -40,6 +40,13 @@ export function totalLevel(xp: number): number {
  * with 品階威儀 / 威名 / items; deliberately small so seasoning tilts a fight
  * without eclipsing raw stats.
  */
+/** 戰意 — the hot/cold streak from fought battles: 勢如破竹 lends fire
+ * (+0.6%/win, cap +3%), 心灰意冷 dulls the arm (−0.6%/loss, floor −1.8%). */
+export function streakPowerMul(o: Officer): number {
+  const s = Math.max(-3, Math.min(5, o.streak ?? 0));
+  return 1 + s * 0.006;
+}
+
 export function growthPowerMul(officer: Officer): number {
   return 1 + 0.006 * totalLevel(officer.xp ?? 0);
 }

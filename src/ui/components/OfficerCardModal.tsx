@@ -419,6 +419,15 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
                   </span>
                 )}
                 <span style={{ color: '#8ac88a' }}>Lv.{level}</span>
+                {/* 戰意 — the fought-battle streak, worn on the sleeve. */}
+                {(officer.streak ?? 0) >= 2 && (
+                  <span title={t(`勢如破竹 — 連勝 ${officer.streak},戰力 +${((officer.streak ?? 0) * 0.6).toFixed(1)}%`, `On a ${officer.streak}-win streak — power +${((officer.streak ?? 0) * 0.6).toFixed(1)}%`)}
+                    style={{ color: '#ff9a5a' }}>🔥{t(`連勝${officer.streak}`, `W${officer.streak}`)}</span>
+                )}
+                {(officer.streak ?? 0) <= -2 && (
+                  <span title={t('心灰意冷 — 連敗挫志,戰力受抑', 'Demoralised by defeats — power sapped')}
+                    style={{ color: '#8ab0c8' }}>❄{t('連敗', 'cold')}</span>
+                )}
                 {rankDef && <span style={{ color: '#b0a0c8' }}>{pickName(rankDef.name, lang)}</span>}
                 {peer && <span style={{ color: '#d8b060' }}>{t('爵·', '')}{pickName(peer.name, lang)}</span>}
                 {honorific && <span style={{ color: '#e0a868' }}>「{pickName(honorific.name, lang)}」</span>}

@@ -47,6 +47,9 @@ export interface Officer {
   medals?: string[];
   /** 洗髓 — the one-per-lifetime marrow cleanse has been performed. */
   marrowCleansed?: boolean;
+  /** 戰意 — hot/cold streak from FOUGHT battles (+5 勢如破竹 … −3 心灰意冷).
+   *  Gently scales combat contribution (streakPowerMul). */
+  streak?: number;
   /** Historical hometown — fixed at scenario load from the template. Doesn't
    *  change as the officer moves around. Used by UI + search bonuses. */
   hometownCityId?: EntityId;

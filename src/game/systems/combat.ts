@@ -24,7 +24,7 @@ import { sidePoolRelationshipBonus, rivalShowdownMultiplier, parentsOf, children
 import { effectivePrestigeEffects } from '../data/prestige';
 import { honorificEffects, honorificById } from '../data/honorifics';
 import { gradeAuraPowerMul, gradeAuraMorale, itemMasteryMul, enemyMoraleShock, holdsTheLine } from './gradeCombat';
-import { growthPowerMul, grantXp } from './growth';
+import { growthPowerMul, streakPowerMul, grantXp } from './growth';
 import { skillEffectMul } from './skillMastery';
 import { setBondPowerMul } from './setBonds';
 import { deriveWeaponType, type WeaponType } from '../data/weaponTypes';
@@ -588,7 +588,7 @@ export function resolveBattle(
     return (
       (o.stats.war + itemWar + bond + tb.war) * 0.6 +
       (o.stats.leadership + itemLead + bond + tb.leadership) * 0.4
-    ) * growthPowerMul(o);
+    ) * growthPowerMul(o) * streakPowerMul(o);
   };
 
   // ── 計策 Stratagem — auto-pick best applicable, roll for success ──

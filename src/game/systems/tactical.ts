@@ -23,7 +23,7 @@ import { pickVoiceLine } from '../data/voiceLines';
 import { effectiveStats, tacticalDamageMul, tacticalDefenseMul, tacticalMoraleAura } from './traitEffects';
 import { gradeCombatBonus } from './gradeCombat';
 import { awakeningPerkCountFor } from '../data/items';
-import { growthPowerMul } from './growth';
+import { growthPowerMul, streakPowerMul } from './growth';
 import { itemSetPowerMul } from '../data/itemSets';
 import { predictAttackDamage } from './damagePredict';
 import { stratagemSituation, type Situation } from './tacticSituation';
@@ -419,7 +419,7 @@ export function forecastAttack(
   // 歷練/神兵套/性格專長 — the last four attackUnits multipliers, mirrored so the
   // preview no longer under-reports a seasoned, geared or specialist officer
   // (each can swing the hit ±15–30%). Same context attackUnits builds.
-  const aGrowthMul = ao ? growthPowerMul(ao) : 1;
+  const aGrowthMul = ao ? growthPowerMul(ao) * streakPowerMul(ao) : 1;
   const aSetMul = ao ? itemSetPowerMul(ao) : 1;
   const aTraitCtxFc = {
     unitType: attacker.unitType, terrain: aTerr, isNight: b.timeOfDay === 'night',
@@ -1572,7 +1572,7 @@ export function attackUnits(
   const aGradeMul = ao ? gradeCombatBonus(ao).powerMul : 1;
   const dGradeResistMul = To ? 1 - gradeCombatBonus(To).damageResist : 1;
   // 歷練之威 — a seasoned attacker's unit hits a touch harder per growth level.
-  const aGrowthMul = ao ? growthPowerMul(ao) : 1;
+  const aGrowthMul = ao ? growthPowerMul(ao) * streakPowerMul(ao) : 1;
   // 神兵譜共鳴 — a full legendary set lends extra bite.
   const aSetMul = ao ? itemSetPowerMul(ao) : 1;
   // 性格專長 — unit-type / terrain / night / charge specialist traits (神槍/弩匠/
