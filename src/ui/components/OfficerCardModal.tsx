@@ -19,6 +19,7 @@ import { MILITARY_RANKS_BY_ID } from '../../game/data/titles';
 import { OFFICER_DUEL_LINES } from '../../game/data/officerLines';
 import { CARD_INDEX, CARD_TOTAL } from '../../game/data/cardIndex';
 import { MEDALS_BY_ID } from '../../game/data/medals';
+import { loadFrameSkin } from './cardFrames';
 import { getBiography } from '../../game/data';
 import { exportOfficerCardPNG } from './officerCardExport';
 import { useT, useLanguage, pickName } from '../i18n';
@@ -120,6 +121,8 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
 
   const artBase = `${import.meta.env.BASE_URL}portraits/${officer.id}`;
   const stars = officer.stars ?? 0;
+  const frameSkin = loadFrameSkin();
+  const inscriptions = useGameStore((s) => s.itemInscriptions);
   // 批A — the card's paper trail: 官爵 / 性格 / 本命指引 / 武評印 / 圖鑑編號 / 語錄.
   const boardRank = useGameStore((s) => s.powerBoardPrev?.[officer.id]);
   const peer = peerageById(officer.peerageId);
@@ -438,13 +441,14 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
                   if (!it) return null;
                   // 神兵共鳴 — the hero's own legend glows gold on the card.
                   const resonant = isSignaturePair(officer.id, id);
+                  const ins = inscriptions?.[id];
                   return (
                     <span key={id}
-                      title={resonant ? t('本命神兵 — 人器合一,效力 115%', 'Signature arm — resonates at 115% effect') : undefined}
+                      title={[ins?.motto ? `「${ins.motto}」` : null, resonant ? t('本命神兵 — 人器合一,效力 115%', 'Signature arm — resonates at 115% effect') : null].filter(Boolean).join(' · ') || undefined}
                       style={resonant
                         ? { fontSize: '0.68rem', padding: '1px 7px', borderRadius: 9, background: 'rgba(230,196,115,0.16)', border: '1px solid #8a6a2a', color: '#ffe9a8', boxShadow: '0 0 8px rgba(230,196,115,0.25)' }
                         : { fontSize: '0.68rem', padding: '1px 7px', borderRadius: 9, background: 'rgba(126,192,224,0.08)', border: '1px solid #2c4454', color: '#9ed0ea' }}>
-                      {resonant ? '✦' : '⚔'} {pickName(it.name, lang)}{resonant && <span style={{ marginLeft: 3, fontSize: '0.6rem', color: '#e6c473' }}>{t('本命', 'SIG')}</span>}
+                      {resonant ? '✦' : '⚔'} {ins?.name ?? pickName(it.name, lang)}{ins?.name && <span style={{ marginLeft: 3, fontSize: '0.58rem', color: '#c8a24e' }}>{t('銘', '✒')}</span>}{resonant && <span style={{ marginLeft: 3, fontSize: '0.6rem', color: '#e6c473' }}>{t('本命', 'SIG')}</span>}
                     </span>
                   );
                 })}
@@ -534,6 +538,13 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
           </>
           )}
         </div>
+        {/* 卡框皮膚 — an achievement-unlocked accent ring + corner glyphs. */}
+        {frameSkin.id !== 'default' && (
+          <div aria-hidden style={{ position: 'absolute', inset: 4, zIndex: 2, pointerEvents: 'none', border: `1px solid ${frameSkin.color}55`, borderRadius: 10 }}>
+            <span style={{ position: 'absolute', top: 26, left: 2, fontSize: '0.8rem', color: frameSkin.color, opacity: 0.5, fontFamily: '"Ma Shan Zheng", "Songti SC", serif' }}>{frameSkin.glyph}</span>
+            <span style={{ position: 'absolute', bottom: 2, right: 4, fontSize: '0.8rem', color: frameSkin.color, opacity: 0.5, fontFamily: '"Ma Shan Zheng", "Songti SC", serif' }}>{frameSkin.glyph}</span>
+          </div>
+        )}
         {/* 閃卡 — a holographic foil glare rides the pointer (gold+ frames). */}
         {fs.sheen && tilt && !showBack && (
           <div aria-hidden style={{

@@ -78,6 +78,12 @@ export function ArmouryModal({ onClose }: Props) {
   const destroyedItems = useGameStore((s) => s.destroyedItems);
   const awakenItemFn = useGameStore((s) => s.awakenItem);
   const smeltItemFn = useGameStore((s) => s.smeltItem);
+  const itemInscriptions = useGameStore((s) => s.itemInscriptions);
+  const inscribeItemFn = useGameStore((s) => s.inscribeItem);
+  // ✒ 銘刻 — inline editor state for the item being inscribed.
+  const [inscribingId, setInscribingId] = useState<string | null>(null);
+  const [insName, setInsName] = useState('');
+  const [insMotto, setInsMotto] = useState('');
   // 回爐二段確認 — first tap arms the smelt button for one item.
   const [smeltConfirmId, setSmeltConfirmId] = useState<string | null>(null);
 
@@ -224,6 +230,10 @@ export function ArmouryModal({ onClose }: Props) {
                 <div className={styles.itemBlock}>
                   <div className={styles.itemNameRow}>
                     <span className={styles.itemNameZh} style={{ color: tierColor }}><Name pair={item.name} /></span>
+                    {itemInscriptions[item.id]?.name && (
+                      <span title={itemInscriptions[item.id]?.motto ? `「${itemInscriptions[item.id]!.motto}」` : undefined}
+                        style={{ fontSize: '0.74rem', color: '#c8a24e' }}>✒「{itemInscriptions[item.id]!.name}」</span>
+                    )}
                     <span className={`${styles.kindTag} ${styles[`kindTag_${item.kind}`]}`}>
                       {item.kind}
                     </span>
@@ -342,6 +352,16 @@ export function ArmouryModal({ onClose }: Props) {
                                 >{armed ? t(`熔毀+${yieldIron}鐵?`, `Smelt +${yieldIron}?`) : '🔥'}</button>
                               );
                             })()}
+                            {(itemLore[item.id] ?? 0) >= 60 && (
+                              <button className={styles.actionBtn}
+                                title={t('銘刻 — 名器可由主人賜名題銘', 'Inscribe — a storied arm may bear a given name')}
+                                onClick={() => {
+                                  setInscribingId(inscribingId === item.id ? null : item.id);
+                                  setInsName(itemInscriptions[item.id]?.name ?? '');
+                                  setInsMotto(itemInscriptions[item.id]?.motto ?? '');
+                                }}
+                              >✒</button>
+                            )}
                           </div>
                         );
                       })()}
@@ -365,6 +385,20 @@ export function ArmouryModal({ onClose }: Props) {
                   )}
                 </div>
 
+                {inscribingId === item.id && (
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', padding: '0.3rem 0', fontSize: '0.74rem' }}>
+                    <input value={insName} onChange={(e) => setInsName(e.target.value)} maxLength={12}
+                      placeholder={t('賜名(如 冷豔鋸)', 'Given name')}
+                      style={{ background: '#10161e', border: '1px solid #4a3f26', color: '#ffe9a8', padding: '0.15rem 0.4rem', width: 130, fontFamily: 'inherit' }} />
+                    <input value={insMotto} onChange={(e) => setInsMotto(e.target.value)} maxLength={12}
+                      placeholder={t('題銘一句', 'Motto')}
+                      style={{ background: '#10161e', border: '1px solid #2c4454', color: '#9ed0ea', padding: '0.15rem 0.4rem', width: 170, fontFamily: 'inherit' }} />
+                    <button className={styles.actionBtn} onClick={() => {
+                      const r = inscribeItemFn(item.id, insName, insMotto);
+                      if (r.ok) setInscribingId(null); else alert(r.message);
+                    }}>{t('銘刻', 'Engrave')}</button>
+                  </div>
+                )}
                 {isAssigning && (() => {
                   const fitStat = bestFitStat(item);
                   const sortedForPick = [...ownOfficers].sort(

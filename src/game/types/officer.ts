@@ -45,6 +45,8 @@ export interface Officer {
   skillLevels?: Record<string, number>;
   /** 歷戰勳章 — deed-milestone medal ids (medals.ts); each minted a +1 stat. */
   medals?: string[];
+  /** 洗髓 — the one-per-lifetime marrow cleanse has been performed. */
+  marrowCleansed?: boolean;
   /** Historical hometown — fixed at scenario load from the template. Doesn't
    *  change as the officer moves around. Used by UI + search bonuses. */
   hometownCityId?: EntityId;

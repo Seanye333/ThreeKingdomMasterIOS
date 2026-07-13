@@ -50,8 +50,8 @@
  *   advisor-scheme ✅        軍師獻策(executeScheme 謀略獻策得售)
  *   — 第六章 單挑 —
  *   duel-slay-champion ✅     陣斬名將(slayOfficerInDuel 玩家方斬殺敵將)
- *   duel-rival-callout ⏳     宿敵搦戰(宿敵重逢陣前搦戰)
- *   duel-hall-legend ⏳       名局廊(精彩單挑入武鬥館)
+ *   duel-rival-callout ✅     宿敵結成(recordRivalry 交手≥3 結宿敵)
+ *   duel-hall-legend ✅       名局入館(recordBout 長局/舌戰入武鬥館)
  *   — 第七章 外交・謀略・天子 —
  *   founding-ceremony ✅      建國大典(holdFoundingCeremony 定國號稱制)
  *   welcome-emperor ✅        奉迎天子(welcomeEmperor 迎鑾入都)
@@ -62,7 +62,13 @@
  *   marriage-alliance ✅      秦晉之好(proposeMarriage 聯姻同盟)
  *   foreign-embassy ✅        遠使異域(dispatchEmbassy 絲路使團)
  *   righteous-banner ✅       清君側·勤王(raiseRighteousBanner 興義師)
- *   espionage-success ⏳      諜報得手(離間/縱火/暗殺;季結算,觸發暫缺)
+ *   espionage-success ✅      諜報得手(resolution 玩家細作成功;每季≤1)
+ *   — 第八章 事件・天命・異族・宗教 —
+ *   tribe-submits ✅          異族內附(subjugateTribe 征服異族來附)
+ *   tribe-raid ✅            異族入寇(inciteTribeRaid 以夷制夷嗾虜)
+ *   pacify-rebels ✅          招安民變(pacifyCultForce 招安黃巾/邪教)
+ *   heaven-omen ⏳           天命祥瑞(rollOmen;打隨機勢力,player gating 未定)
+ *   religious-revolt ⏳       宗教民變(rollReligiousRebellion;季結算,觸發暫缺)
  */
 export const KNOWN_POPUP_KEYS = [
   // 第一章 — 城市/內政/經濟
@@ -115,6 +121,12 @@ export const KNOWN_POPUP_KEYS = [
   'foreign-embassy',
   'righteous-banner',
   'espionage-success',
+  // 第八章 — 事件・天命・異族・宗教
+  'tribe-submits',
+  'tribe-raid',
+  'pacify-rebels',
+  'heaven-omen',
+  'religious-revolt',
 ] as const;
 
 /** Candidate image URLs for a key, tried in order (jpg first — best for the

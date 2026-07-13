@@ -207,6 +207,11 @@ export function OfficerDetail({
   const investStar = useGameStore((s) => s.investStar);
   // 退訂培訓的二段確認(取代 window.confirm)。
   const [confirmCancelTraining, setConfirmCancelTraining] = useState(false);
+  // 告老傳承/洗髓 — actions + 二段確認.
+  const [confirmRetire, setConfirmRetire] = useState(false);
+  const retireOfficerFn = useGameStore((s) => s.retireOfficer);
+  const marrowCleanseFn = useGameStore((s) => s.marrowCleanse);
+  const officerAge = currentYear - officer.birthYear;
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
@@ -568,6 +573,38 @@ export function OfficerDetail({
                       >{t(`升星 ${req.cost}金`, `Star up ${req.cost}g`)}</button>
                     )}
                     {starMsg && <span style={{ marginLeft: 6, fontSize: '0.7rem', color: '#c8a24e' }}>{starMsg}</span>}
+                    {/* 告老傳承 — an elder (60+) may pass the torch; 二段確認. */}
+                    {isMine && officerAge >= 60 && (officer.status === 'idle' || officer.status === 'active') && (
+                      <button
+                        onClick={() => {
+                          if (!confirmRetire) {
+                            setConfirmRetire(true);
+                            window.setTimeout(() => setConfirmRetire(false), 3000);
+                            return;
+                          }
+                          setConfirmRetire(false);
+                          setStarMsg(retireOfficerFn(officer.id).message);
+                        }}
+                        title={t('告老傳承 — 衣缽(歷練/一技/名器)盡傳同城最有潛質之後進,本人榮休', 'Retire with honour — full legacy passes to the most promising same-city junior')}
+                        style={{
+                          marginLeft: 8, padding: '0.05rem 0.5rem', fontSize: '0.72rem', cursor: 'pointer', fontFamily: 'inherit',
+                          background: confirmRetire ? 'rgba(184,68,46,0.25)' : 'rgba(122,136,147,0.1)',
+                          border: `1px solid ${confirmRetire ? '#b8442e' : '#3c4f5e'}`, borderRadius: 'var(--tkm-radius-xs)',
+                          color: confirmRetire ? '#e0907a' : '#aab6c0',
+                        }}
+                      >{confirmRetire ? t('確認告老?', 'Confirm retire?') : t('告老傳承', 'Retire')}</button>
+                    )}
+                    {/* 洗髓 — a physician's once-per-lifetime latent treatment. */}
+                    {isMine && !officer.marrowCleansed && (
+                      <button
+                        onClick={() => setStarMsg(marrowCleanseFn(officer.id).message)}
+                        title={t('洗髓伐毛 — 城中名醫(醫者/藥師)坐鎮,費金1500:最弱一圍潛能+8、現值+2(此生一次)', 'Marrow cleanse — needs a physician in the city, 1500 gold: weakest latent +8 (once per life)')}
+                        style={{
+                          marginLeft: 6, padding: '0.05rem 0.5rem', fontSize: '0.72rem', cursor: 'pointer', fontFamily: 'inherit',
+                          background: 'rgba(138,200,138,0.08)', border: '1px solid #3f5c3f', borderRadius: 'var(--tkm-radius-xs)', color: '#a8d8a8',
+                        }}
+                      >{t('洗髓', 'Cleanse')}</button>
+                    )}
                   </div>
                 );
               })()}

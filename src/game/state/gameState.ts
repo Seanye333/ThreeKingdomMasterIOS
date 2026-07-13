@@ -293,6 +293,8 @@ export interface GameState {
   festivalPity: number;
   /** 天下懸賞榜 — active wanted notices (bounty.ts), re-rolled each spring. */
   bounties: import('../systems/bounty').Bounty[];
+  /** 銘刻 — player-given names/mottoes engraved on storied items (lore ≥60). */
+  itemInscriptions: Record<EntityId, { name?: string; motto?: string }>;
   /** 成套之禮 — famous sets already celebrated this campaign (setBonds.ts);
    *  each set pays out once when it first stands complete under the player. */
   setRewardsClaimed: string[];
@@ -823,6 +825,7 @@ export const EMPTY_STATE: GameState = {
   festivalSeason: null,
   festivalPity: 0,
   bounties: [],
+  itemInscriptions: {},
   setRewardsClaimed: [],
   dayFlow: null,
   dayFlowFollow: false,
@@ -1244,6 +1247,7 @@ export function loadScenario(
     festivalSeason: null,
     festivalPity: 0,
     bounties: [],
+    itemInscriptions: {},
     setRewardsClaimed: [],
     dayFlow: null,
   dayFlowFollow: false,

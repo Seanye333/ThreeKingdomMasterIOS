@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useGameStore } from '../../game/state/store';
 import { checkEndings } from '../../game/systems/endings';
@@ -11,6 +11,19 @@ import { useT, useLanguage } from '../i18n';
 function EndingArtwork({ kind }: { kind: EndingKind }) {
   const w = 520;
   const h = 180;
+  // 結局 key-art — drop public/endings/<kind>.jpg to light up a painterly hero;
+  // if it's absent (or 404s) we fall back to the procedural ink vignette below.
+  const [imgFailed, setImgFailed] = useState(false);
+  if (!imgFailed) {
+    return (
+      <img
+        src={`${import.meta.env.BASE_URL}endings/${kind}.jpg`}
+        alt=""
+        onError={() => setImgFailed(true)}
+        style={{ width: '100%', aspectRatio: '16 / 9', objectFit: 'cover', display: 'block', borderRadius: 4 }}
+      />
+    );
+  }
   return (
     <svg viewBox={`0 0 ${w} ${h}`} width="100%" height="180" style={{ display: 'block' }}>
       <defs>

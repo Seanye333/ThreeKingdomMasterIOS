@@ -16,6 +16,7 @@ import { OfficerDetail } from './OfficerDetail';
 import { Name } from './Name';
 import { CODEX_SETS, codexSetProgress, loadCodex } from '../../game/systems/codex';
 import { festivalPool, FESTIVAL_GOLD_COST } from '../../game/systems/festival';
+import { FRAME_SKINS, loadFrameSkin, saveFrameSkin, unlockedFrameSkins } from './cardFrames';
 import { OfficerCardModal, OfficerCardFace } from './OfficerCardModal';
 import { officerGrade, gradeMeta } from '../../game/systems/officerGrade';
 import { bpLeaderboard } from '../../game/systems/powerBoard';
@@ -40,6 +41,7 @@ export function EncyclopediaModal({ onClose }: Props) {
   const year = useGameStore((s) => s.date.year);
   const holdFestival = useGameStore((s) => s.holdTalentFestival);
   const [festivalMsg, setFestivalMsg] = useState<string | null>(null);
+  const [frameSkinId, setFrameSkinId] = useState(() => loadFrameSkin().id);
   const [section, setSection] = useState<Section>('officers');
   const [search, setSearch] = useState('');
   // 交叉引用 — clicking any officer chip opens their full detail (列傳 included)
@@ -251,6 +253,15 @@ export function EncyclopediaModal({ onClose }: Props) {
                     );
                   })()}
                   {festivalMsg && <span style={{ fontSize: '0.72rem', color: '#c8a24e' }}>{festivalMsg}</span>}
+                  {/* 🎴 卡框皮膚 — achievement-unlocked cosmetic frames. */}
+                  <select
+                    value={frameSkinId}
+                    onChange={(e) => { saveFrameSkin(e.target.value); setFrameSkinId(e.target.value); }}
+                    title={`卡框皮膚(成就解鎖):${FRAME_SKINS.map((s2) => `${s2.zh}${s2.requires ? '·需成就' : ''}`).join(' / ')}`}
+                    style={{ background: '#10161e', border: '1px solid #2b3845', color: '#9aa6b0', fontSize: '0.72rem', fontFamily: 'inherit' }}
+                  >
+                    {unlockedFrameSkins().map((s2) => <option key={s2.id} value={s2.id}>🎴 {s2.zh}</option>)}
+                  </select>
                 </div>
                 <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: '0.8rem' }}>
                   {CODEX_SETS.map((set) => {

@@ -1237,6 +1237,13 @@ interface GameStore extends GameState {
   /** 求賢祭 — once a season, pay gold at the capital to reveal one hidden
    *  talent (moves to the capital as a free agent; recruit them yourself). */
   holdTalentFestival: () => { ok: boolean; message: string };
+  /** 告老傳承 — retire an elder (60+): full inheritance to the best same-city
+   *  disciple (XP, one skill, their gear), master steps down honoured. */
+  retireOfficer: (officerId: EntityId) => { ok: boolean; message: string };
+  /** 銘刻 — name/inscribe a storied (威名≥60) item held by your officer. */
+  inscribeItem: (itemId: EntityId, name: string, motto: string) => { ok: boolean; message: string };
+  /** 洗髓 — a physician's once-per-lifetime latent-cap treatment. */
+  marrowCleanse: (officerId: EntityId) => { ok: boolean; message: string };
   /** 日流 — playback controls for the day-by-day turn flow. */
   beginDayFlow: () => void;
   setDayFlowFollow: (on: boolean) => void;
@@ -8727,6 +8734,50 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // 切磋雙修 — two idle officers sharing a city may spar the season away
+        // (20%/city): both season their craft (XP), and a green hand pressed by
+        // a far stronger partner may steal a technique (偷師). All forces alike.
+        if (seasonBoundary) {
+          const cur = get();
+          const byCity = new Map<EntityId, Officer[]>();
+          for (const o of Object.values(cur.officers)) {
+            if (o.status !== 'idle' || !o.locationCityId || !o.forceId) continue;
+            const arr = byCity.get(o.locationCityId) ?? [];
+            arr.push(o);
+            byCity.set(o.locationCityId, arr);
+          }
+          const patches: Record<EntityId, Officer> = {};
+          let told = 0;
+          for (const [cityId, pool] of byCity) {
+            const sameForce = pool.filter((o) => o.forceId === pool[0].forceId);
+            if (sameForce.length < 2 || Math.random() >= 0.2) continue;
+            const [a, b] = sameForce.sort(() => Math.random() - 0.5).slice(0, 2);
+            let ga = grantXp(a, 12, Math.random).officer;
+            let gb = grantXp(b, 12, Math.random).officer;
+            // 偷師 — outmatched by 15+ war, the weaker gleans a technique (20%).
+            const [hi, lo] = ga.stats.war >= gb.stats.war ? [ga, gb] : [gb, ga];
+            let stole: string | null = null;
+            if (hi.stats.war - lo.stats.war >= 15 && Math.random() < 0.2) {
+              stole = hi.skills.find((sk) => !lo.skills.includes(sk)) ?? null;
+              if (stole) {
+                const loNext = { ...lo, skills: [...lo.skills, stole] };
+                if (loNext.id === ga.id) ga = loNext; else gb = loNext;
+              }
+            }
+            patches[ga.id] = ga;
+            patches[gb.id] = gb;
+            if (a.forceId === cur.playerForceId && told < 1) {
+              told += 1;
+              const cn = cur.cities[cityId]?.name.zh ?? '';
+              get().notify(
+                `${a.name.zh}與${b.name.zh}於${cn}切磋演武 — 兩人俱有所得${stole ? `,${lo.name.zh}偷師得技` : ''}`,
+                `${a.name.en} and ${b.name.en} spar at ${cn} — both sharpen${stole ? '; a technique gleaned' : ''}`,
+              );
+            }
+          }
+          if (Object.keys(patches).length > 0) set({ officers: { ...get().officers, ...patches } });
+        }
+
         // 巔峰入冊 — the album remembers the strongest form each of YOUR
         // officers ever reached (BP/stars/grade), across campaigns.
         if (seasonBoundary && state.playerForceId) {
@@ -11171,6 +11222,95 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           `Talent festival — ${drawn.name.en} steps forward at ${cap.name.en} (free agent)`,
         );
         return { ok: true, message: `${drawn.name.zh}現身!` };
+      },
+      retireOfficer: (officerId) => {
+        const state = get();
+        const o = state.officers[officerId];
+        if (!o || o.forceId !== state.playerForceId) return { ok: false, message: '非我麾下。' };
+        const age = state.date.year - o.birthYear;
+        if (age < 60) return { ok: false, message: '未及告老之年(60)。' };
+        if (o.status !== 'idle' && o.status !== 'active') return { ok: false, message: '此人現不得抽身。' };
+        if (state.playerForceId && state.forces[state.playerForceId]?.rulerOfficerId === officerId)
+          return { ok: false, message: '君主不可告老。' };
+        // 衣缽擇人 — the most promising young officer in the same city.
+        const latentSum = (x: Officer) => {
+          const l = x.latentStats ?? defaultLatent(x.stats);
+          return l.leadership + l.war + l.intelligence + l.politics + l.charisma;
+        };
+        const disciple = Object.values(state.officers)
+          .filter((d) => d.id !== officerId && d.forceId === state.playerForceId
+            && d.status !== 'dead' && d.status !== 'imprisoned'
+            && d.locationCityId === o.locationCityId && state.date.year - d.birthYear < 45)
+          .sort((a, b) => latentSum(b) - latentSum(a))[0];
+        if (!disciple) return { ok: false, message: '同城無可承衣缽之後進(45歲以下)。' };
+        // Inheritance: a rich XP grant, one of the master's skills, and the
+        // master's gear passes down whole (名器傳承, while both still live).
+        const xpGrant = Math.min(1500, 500 + Math.round((o.xp ?? 0) * 0.2));
+        const heirloomSkill = o.skills.find((sk) => !disciple.skills.includes(sk)) ?? null;
+        const g = grantXp(disciple, xpGrant, Math.random, undefined);
+        let heir = g.officer;
+        heir = {
+          ...heir,
+          skills: heirloomSkill ? [...heir.skills, heirloomSkill] : heir.skills,
+          equipment: [...heir.equipment, ...o.equipment],
+          loyalty: Math.min(100, heir.loyalty + 5),
+          mentorId: officerId,
+        };
+        set({
+          officers: {
+            ...state.officers,
+            [officerId]: { ...o, status: 'retired', task: null, equipment: [] },
+            [disciple.id]: heir,
+          },
+        });
+        get().notify(
+          `${o.name.zh}告老 — 衣缽盡傳${disciple.name.zh}(歷練+${xpGrant}${heirloomSkill ? '、承一技' : ''}${o.equipment.length > 0 ? '、名器盡付' : ''})`,
+          `${o.name.en} retires — legacy passes to ${disciple.name.en}`,
+        );
+        return { ok: true, message: `衣缽傳${disciple.name.zh}。` };
+      },
+      inscribeItem: (itemId, name, motto) => {
+        const state = get();
+        const base = ITEMS_BY_ID[itemId];
+        if (!base) return { ok: false, message: '無此器。' };
+        if (itemLoreLevel(itemId) < 60) return { ok: false, message: '威名未滿名器(60戰)。' };
+        const held = Object.values(state.officers).some(
+          (o) => o.forceId === state.playerForceId && o.status !== 'dead' && o.equipment.includes(itemId));
+        if (!held) return { ok: false, message: '非我將所持。' };
+        const clean = (x: string) => x.trim().slice(0, 12);
+        set({ itemInscriptions: { ...state.itemInscriptions, [itemId]: { name: clean(name) || undefined, motto: clean(motto) || undefined } } });
+        get().notify(`銘刻已成 —「${clean(name) || base.name.zh}」`, `Inscribed — "${clean(name) || base.name.en}"`);
+        return { ok: true, message: '銘刻已成。' };
+      },
+      marrowCleanse: (officerId) => {
+        const state = get();
+        const o = state.officers[officerId];
+        if (!o || o.forceId !== state.playerForceId) return { ok: false, message: '非我麾下。' };
+        if (o.marrowCleansed) return { ok: false, message: '此生已洗髓一次。' };
+        const city = o.locationCityId ? state.cities[o.locationCityId] : undefined;
+        if (!city || city.ownerForceId !== state.playerForceId) return { ok: false, message: '須居我城。' };
+        const physician = Object.values(state.officers).some((p) =>
+          p.id !== officerId && p.locationCityId === city.id && p.status !== 'dead'
+          && (p.traits ?? []).some((tr) => tr === 'physician' || tr === 'herbalist'));
+        if (!physician) return { ok: false, message: '城中無名醫(醫者/藥師)坐鎮。' };
+        const COST = 1500;
+        if (city.gold < COST) return { ok: false, message: `金不足(需 ${COST})。` };
+        // 洗髓 — the WEAKEST latent cap rises +8; the flesh follows a little.
+        const latent = { ...(o.latentStats ?? defaultLatent(o.stats)) };
+        const keys = ['leadership', 'war', 'intelligence', 'politics', 'charisma'] as const;
+        let worst: typeof keys[number] = 'leadership';
+        for (const k of keys) if (latent[k] < latent[worst]) worst = k;
+        latent[worst] = Math.min(150, latent[worst] + 8);
+        const stats = { ...o.stats, [worst]: Math.min(latent[worst], o.stats[worst] + 2) };
+        set({
+          officers: { ...state.officers, [officerId]: { ...o, latentStats: latent, stats, marrowCleansed: true } },
+          cities: { ...state.cities, [city.id]: { ...city, gold: city.gold - COST } },
+        });
+        get().notify(
+          `${o.name.zh}洗髓伐毛 — ${worst === 'war' ? '武' : worst === 'leadership' ? '統' : worst === 'intelligence' ? '智' : worst === 'politics' ? '政' : '魅'}之潛能大開(+8,現值+2)`,
+          `${o.name.en} reborn — weakest latent +8 (stat +2)`,
+        );
+        return { ok: true, message: '洗髓已成。' };
       },
       investStar: (officerId) => {
         const state = get();
@@ -16118,6 +16258,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           festivalSeason: loaded.festivalSeason ?? null,
           festivalPity: loaded.festivalPity ?? 0,
           bounties: loaded.bounties ?? [],
+          itemInscriptions: loaded.itemInscriptions ?? {},
           setRewardsClaimed: loaded.setRewardsClaimed ?? [],
           dayFlow: null,
           dayFlowFollow: loaded.dayFlowFollow ?? false,
