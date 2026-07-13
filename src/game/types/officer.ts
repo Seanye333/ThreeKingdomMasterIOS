@@ -43,6 +43,8 @@ export interface Officer {
   /** 技能等級 — mastery 1–3 per known skill (missing = 1; skillMastery.ts).
    *  Deepened by 特訓; amplifies the skill's numeric combat effects. */
   skillLevels?: Record<string, number>;
+  /** 歷戰勳章 — deed-milestone medal ids (medals.ts); each minted a +1 stat. */
+  medals?: string[];
   /** Historical hometown — fixed at scenario load from the template. Doesn't
    *  change as the officer moves around. Used by UI + search bonuses. */
   hometownCityId?: EntityId;

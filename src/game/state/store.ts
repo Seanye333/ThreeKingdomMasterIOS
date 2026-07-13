@@ -83,6 +83,7 @@ import { ESPIONAGE_DEFS_BY_KIND } from '../data/espionage';
 import { ITEMS_BY_ID, refineCost, REFINE_MAX, setRefineRegistry, itemRarity,
   BREAKTHROUGH_MAX, breakthroughCost as itemBreakthroughCost, socketsFor, GEMS_BY_ID,
   GEM_FUSION, GEM_FUSION_COST, setBreakthroughRegistry, setGemRegistry, setLoreRegistry, accrueWeaponLore,
+  setAwakeningRegistry, awakeningSlots, AWAKENING_BY_ID, smeltIronYield, itemLoreLevel,
   itemGrowthGoldSpent } from '../data/items';
 import { SKILLS_BY_ID } from '../data/skills';
 import { marchDurationFor } from '../data/cities';
@@ -325,6 +326,7 @@ import { combatBP } from '../systems/battlePower';
 import { applyStarUp, nextStarRequirement, planAiStarInvestments } from '../systems/stars';
 import { topBoardIds } from '../systems/powerBoard';
 import { pendingSetRewards, SET_REWARD_GOLD, SET_REWARD_LOYALTY } from '../systems/setBonds';
+import { dueMedals, grantMedals } from '../data/medals';
 import { tickBuildings } from '../systems/buildings';
 import { tickBuildingEvents } from '../systems/buildingEvents';
 import { evaluateCoalition } from '../systems/coalition';
@@ -1136,6 +1138,10 @@ interface GameStore extends GameState {
    *  holds it (its wielder's city, or the lost-item city). A foundry there
    *  discounts the cost. */
   refineItem: (itemId: EntityId) => { ok: boolean; reason?: string; cost?: number };
+  /** 兵器覺醒 — engrave an unlocked 威名-milestone perk into a held item. */
+  awakenItem: (itemId: EntityId, perkId: string) => { ok: boolean; reason?: string };
+  /** 重鑄分解 — smelt a held item back to iron; gone for the campaign. */
+  smeltItem: (itemId: EntityId) => { ok: boolean; reason?: string; iron?: number };
   /** 突破 — push a fully-refined item one ★ further, charged gold + iron from the
    *  holding city (needs a foundry). */
   breakthroughItem: (itemId: EntityId) => { ok: boolean; reason?: string; cost?: number; iron?: number };
@@ -1654,7 +1660,7 @@ export const useGameStore = create<GameStore>()(
       ...EMPTY_STATE,
 
       loadScenario: (scenario, playerForceId, difficulty, customOfficer, capitalOverride) => {
-        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); setLoreRegistry({}); // fresh game → drop any prior 精煉/名器 registry
+        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); setLoreRegistry({}); setAwakeningRegistry({}); // fresh game → drop any prior 精煉/名器 registry
         set((s) => loadScenario(s, scenario, playerForceId, difficulty, customOfficer, capitalOverride));
         get().seedAiGear();
       },
@@ -1663,7 +1669,7 @@ export const useGameStore = create<GameStore>()(
       // observe mode, so the AI runs every realm and the season tick
       // simulates history while you watch.
       observeScenario: (scenario, difficulty) => {
-        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); setLoreRegistry({});
+        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); setLoreRegistry({}); setAwakeningRegistry({});
         set((s) => ({
           ...loadScenario(s, scenario, scenario.forces[0].id, difficulty),
           playerForceId: null,
@@ -1680,7 +1686,7 @@ export const useGameStore = create<GameStore>()(
         if (!scenario) return;
         const hasForce = scenario.forces.some((f) => f.id === challenge.forceId);
         if (!hasForce) return;
-        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); setLoreRegistry({});
+        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); setLoreRegistry({}); setAwakeningRegistry({});
         set((s) => ({
           ...loadScenario(s, scenario, challenge.forceId, challenge.difficulty),
           activeChallenge: challenge.id,
@@ -8652,6 +8658,30 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // 歷戰勳章 — deed milestones mint their medals (+1 stat each) for every
+        // living officer, AI included; the player's newest laureates get a herald.
+        if (seasonBoundary) {
+          const cur = get();
+          const patches: Record<EntityId, Officer> = {};
+          let heralds = 0;
+          for (const o of Object.values(cur.officers)) {
+            if (o.status === 'dead') continue;
+            const due = dueMedals(o, cur.deeds[o.id]);
+            if (due.length === 0) continue;
+            patches[o.id] = grantMedals(o, due);
+            if (o.forceId === cur.playerForceId && heralds < 2) {
+              heralds += 1;
+              get().notify(
+                `${o.name.zh}獲勳「${due.map((m) => m.name.zh).join('」「')}」— ${due.map((m) => `${m.descriptionZh.split('—')[1]?.trim() ?? ''}`).join('、')}`,
+                `${o.name.en} earns ${due.map((m) => m.name.en).join(', ')}`,
+              );
+            }
+          }
+          if (Object.keys(patches).length > 0) {
+            set({ officers: { ...cur.officers, ...patches } });
+          }
+        }
+
         // 武評前席 — snapshot this season's top-50 board so the 武評 tab can
         // draw ↑↓ movement arrows and NEW badges against last season.
         if (seasonBoundary) {
@@ -13776,6 +13806,60 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         return { ok: true, cost };
       },
 
+      // 兵器覺醒 — spend an unlocked 威名 milestone pick on a perk, engraved
+      // into the blade for good (items.ts AWAKENING_PERKS).
+      awakenItem: (itemId, perkId) => {
+        const state = get();
+        const base = ITEMS_BY_ID[itemId];
+        if (!base || !AWAKENING_BY_ID[perkId]) return { ok: false, reason: 'no-item' };
+        const holder = Object.values(state.officers).find(
+          (o) => o.forceId === state.playerForceId && o.status !== 'dead' && o.equipment.includes(itemId),
+        );
+        if (!holder) return { ok: false, reason: 'not-held' };
+        const picked = state.itemAwakenings[itemId] ?? [];
+        const slots = awakeningSlots(itemLoreLevel(itemId));
+        if (picked.length >= slots) return { ok: false, reason: 'no-slot' };
+        const itemAwakenings = { ...state.itemAwakenings, [itemId]: [...picked, perkId] };
+        setAwakeningRegistry(itemAwakenings);
+        set({ itemAwakenings });
+        const perk = AWAKENING_BY_ID[perkId];
+        get().notify(
+          `${base.name.zh}覺醒 —「${perk.name.zh}」銘入器身(${holder.name.zh}佩之)`,
+          `${base.name.en} awakens — ${perk.name.en} engraved (borne by ${holder.name.en})`,
+        );
+        return { ok: true };
+      },
+
+      // 重鑄分解 — smelt a held item back to iron (yield by rarity + sunk
+      // 精煉/突破 metal). The blade is gone for the campaign (destroyedItems).
+      smeltItem: (itemId) => {
+        const state = get();
+        const base = ITEMS_BY_ID[itemId];
+        if (!base) return { ok: false, reason: 'no-item' };
+        const holder = Object.values(state.officers).find(
+          (o) => o.forceId === state.playerForceId && o.status !== 'dead' && o.equipment.includes(itemId),
+        );
+        if (!holder) return { ok: false, reason: 'not-held' };
+        const city = holder.locationCityId ? state.cities[holder.locationCityId] : undefined;
+        if (!city || city.ownerForceId !== state.playerForceId) return { ok: false, reason: 'no-city' };
+        const plus = state.itemRefinements[itemId] ?? 0;
+        const stars = state.itemBreakthroughs[itemId] ?? 0;
+        const yieldIron = smeltIronYield(base, plus, stars);
+        set({
+          officers: {
+            ...state.officers,
+            [holder.id]: { ...holder, equipment: holder.equipment.filter((e) => e !== itemId) },
+          },
+          cities: { ...state.cities, [city.id]: { ...city, iron: Math.min(IRON_CITY_CAP, (city.iron ?? 0) + yieldIron) } },
+          destroyedItems: [...(state.destroyedItems ?? []), itemId],
+        });
+        get().notify(
+          `${base.name.zh}回爐重鑄 — 得鐵 ${yieldIron}(${city.name.zh})`,
+          `${base.name.en} smelted down — +${yieldIron} iron (${city.name.en})`,
+        );
+        return { ok: true, iron: yieldIron };
+      },
+
       // 城邑 — locate the player city that holds an item (wielder's city, else its
       // lost-item pile). Shared by 突破 / 鑲嵌.
       breakthroughItem: (itemId) => {
@@ -16214,10 +16298,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // 精煉/突破/鑲嵌登記 — sync the denormalized registries the pure
         // item-effect read sites resolve through.
         if (!state.itemLore) state.itemLore = {}; // 名器威名 — pre-feature saves start unblooded
+        if (!state.itemAwakenings) state.itemAwakenings = {}; // 兵器覺醒 — pre-feature saves
+        if (!state.destroyedItems) state.destroyedItems = []; // 回爐 — pre-feature saves
         setRefineRegistry(state.itemRefinements);
         setBreakthroughRegistry(state.itemBreakthroughs);
         setGemRegistry(state.itemGems);
         setLoreRegistry(state.itemLore);
+        setAwakeningRegistry(state.itemAwakenings);
         const cityOwnerByCityId = Object.fromEntries(
           Object.values(state.cities ?? {}).map((c) => [c.id, c.ownerForceId]),
         );

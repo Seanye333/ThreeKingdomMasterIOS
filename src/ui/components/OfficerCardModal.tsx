@@ -18,6 +18,7 @@ import { peerageById } from '../../game/data/peerage';
 import { MILITARY_RANKS_BY_ID } from '../../game/data/titles';
 import { OFFICER_DUEL_LINES } from '../../game/data/officerLines';
 import { CARD_INDEX, CARD_TOTAL } from '../../game/data/cardIndex';
+import { MEDALS_BY_ID } from '../../game/data/medals';
 import { getBiography } from '../../game/data';
 import { exportOfficerCardPNG } from './officerCardExport';
 import { useT, useLanguage, pickName } from '../i18n';
@@ -221,6 +222,21 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
                   </div>
                 ))}
               </div>
+              {/* 勳章牆 — deed-milestone medals, each minted a permanent +1. */}
+              {(officer.medals?.length ?? 0) > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                  {officer.medals!.map((mid) => {
+                    const m = MEDALS_BY_ID[mid];
+                    if (!m) return null;
+                    return (
+                      <span key={mid} title={lang === 'en' ? m.description : m.descriptionZh}
+                        style={{ fontSize: '0.68rem', padding: '1px 7px', borderRadius: 9, background: 'rgba(255,214,110,0.14)', border: '1px solid #8a6a2a', color: '#ffd66e' }}>
+                        🎖 {pickName(m.name, lang)}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
               {(deeds?.titles?.length ?? 0) > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                   {deeds!.titles!.map((ti) => (

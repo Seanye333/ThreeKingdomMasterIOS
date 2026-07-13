@@ -396,6 +396,11 @@ export interface GameState {
   /** 名器威名 — per-item accumulated battle-renown (人器合一). Grows as the item is
    *  carried through battle; lifts its effects + eases 兵器駕馭. Absent/0 = unblooded. */
   itemLore: Record<EntityId, number>;
+  /** 兵器覺醒 — per-item chosen awakening perks (items.ts AWAKENING_PERKS),
+   *  unlocked one pick per 威名 milestone (12/30/60). */
+  itemAwakenings: Record<EntityId, string[]>;
+  /** 回爐 — items smelted back to iron this campaign; gone from circulation. */
+  destroyedItems: EntityId[];
   /** 寶石庫存 — gems on hand (from 熔毀 drops etc.); socketing spends these
    *  before buying with gold. Keyed by gem id → count. */
   gemStock: Record<EntityId, number>;
@@ -841,6 +846,8 @@ export const EMPTY_STATE: GameState = {
   itemBreakthroughs: {},
   itemGems: {},
   itemLore: {},
+  itemAwakenings: {},
+  destroyedItems: [],
   gemStock: {},
   knownRecipes: STARTER_RECIPE_IDS.slice(),
   itemHistory: [],
@@ -1262,6 +1269,8 @@ export function loadScenario(
   itemBreakthroughs: {},
   itemGems: {},
   itemLore: {},
+  itemAwakenings: {},
+  destroyedItems: [],
   gemStock: {},
     knownRecipes: STARTER_RECIPE_IDS.slice(),
     itemHistory: [],

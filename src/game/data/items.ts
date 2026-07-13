@@ -189,6 +189,46 @@ export function itemLoreTitle(renown: number): { zh: string; en: string } | null
 export function itemLoreAuraMul(renown: number): number {
   return 1 + Math.min(0.08, Math.max(0, renown) * 0.002);
 }
+
+// ─── 兵器覺醒 — at each 威名 milestone (飲血12/百戰30/名器60) the wielder picks
+// one of three awakening perks, a flat stat engraved into the blade itself.
+// Stored per-item like 精煉/寶石, resolved through liveItemById, so every read
+// site (combat, duel, BP, UI) gets it for free. Picks are permanent and may
+// repeat — a twice-blooded edge simply cuts deeper.
+export interface AwakeningPerk {
+  id: string;
+  name: { zh: string; en: string };
+  descriptionZh: string;
+  description: string;
+  effects: Partial<Item['effects']>;
+}
+export const AWAKENING_PERKS: AwakeningPerk[] = [
+  { id: 'edge', name: { zh: '鋒鏑淬血', en: 'Blooded Edge' }, descriptionZh: '刃口飲血自礪 — 武力 +3', description: 'The edge remembers blood — War +3.', effects: { war: 3 } },
+  { id: 'command', name: { zh: '大將之風', en: 'Marshal\'s Bearing' }, descriptionZh: '執之者威儀自生 — 統率 +3', description: 'It lends its bearer presence — Leadership +3.', effects: { leadership: 3 } },
+  { id: 'mind', name: { zh: '玄機內蘊', en: 'Hidden Subtlety' }, descriptionZh: '器中藏鋒,運籌自明 — 智力 +3', description: 'Subtlety folded into the steel — Intelligence +3.', effects: { intelligence: 3 } },
+];
+export const AWAKENING_BY_ID: Record<string, AwakeningPerk> = Object.fromEntries(AWAKENING_PERKS.map((p) => [p.id, p]));
+
+let AWAKEN_REGISTRY: Record<string, string[]> = {};
+export function setAwakeningRegistry(map: Record<string, string[]> | undefined): void {
+  AWAKEN_REGISTRY = map ?? {};
+}
+export function itemAwakeningIds(itemId: string): string[] {
+  return AWAKEN_REGISTRY[itemId] ?? [];
+}
+/** How many awakening picks this much 威名 has unlocked (0–3). */
+export function awakeningSlots(renown: number): number {
+  return renown >= 60 ? 3 : renown >= 30 ? 2 : renown >= 12 ? 1 : 0;
+}
+
+// ─── 重鑄分解 — smelting a blade back to iron. Rarity sets the base yield;
+// sunk 精煉/突破 metal comes back too. The item itself is gone for the
+// campaign (destroyedItems) — a hard trade, no infinite loops.
+export function smeltIronYield(item: Item, plus = 0, stars = 0): number {
+  const r = itemRarity(item);
+  const base = r === 'gold' ? 240 : r === 'silver' ? 120 : 60;
+  return base + plus * 25 + stars * 80;
+}
 /** Grant +1 威名 to every weapon / armour / mount in each equipment list (one list
  *  per officer-per-battle, so an officer in two battles seasons their gear twice).
  *  Returns a NEW lore map. Shared by the tactical (store) + strategic (endSeason) hooks. */
@@ -210,10 +250,23 @@ export function accrueWeaponLore(prior: Record<string, number>, equipmentLists: 
  * refine and breakthrough scale the base magnitudes; gems then add flat stats.
  * Rarity recomputes from the boosted magnitude (so growth can promote 品階).
  */
-export function liveItem(item: Item, plus: number, stars = 0, gemIds: string[] = [], lore = 0): Item {
-  if (!plus && !stars && gemIds.length === 0 && lore <= 0) return item;
+export function liveItem(item: Item, plus: number, stars = 0, gemIds: string[] = [], lore = 0, awakenIds: string[] = []): Item {
+  if (!plus && !stars && gemIds.length === 0 && lore <= 0 && awakenIds.length === 0) return item;
   let effects = refinedEffects(item, plus);
   if (stars) effects = breakthroughEffects(effects, stars);
+  // 兵器覺醒 — engraved perks are flat adds, folded before the lore aura so a
+  // storied blade's renown amplifies them like everything else.
+  if (awakenIds.length > 0) {
+    effects = { ...effects };
+    for (const aid of awakenIds) {
+      const perk = AWAKENING_BY_ID[aid];
+      if (!perk) continue;
+      for (const [k, v] of Object.entries(perk.effects) as Array<[keyof Item['effects'], number | undefined]>) {
+        if (!v) continue;
+        effects[k] = (effects[k] ?? 0) + v;
+      }
+    }
+  }
   if (gemIds.length > 0) {
     effects = { ...effects };
     for (const gid of gemIds) {
@@ -255,7 +308,7 @@ export function liveItem(item: Item, plus: number, stars = 0, gemIds: string[] =
 export function liveItemById(id: string): Item | null {
   const base = ITEMS_BY_ID[id];
   if (!base) return null;
-  return liveItem(base, itemRefineLevel(id), itemBreakthroughLevel(id), itemGemIds(id), itemLoreLevel(id));
+  return liveItem(base, itemRefineLevel(id), itemBreakthroughLevel(id), itemGemIds(id), itemLoreLevel(id), itemAwakeningIds(id));
 }
 
 /** Gold cost to take an item from `plus` → `plus+1` (escalates with rarity + level). */

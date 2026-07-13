@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import { ITEMS } from '../../game/data';
 import type { Item } from '../../game/data/items';
-import { ITEMS_BY_ID, REFINE_MAX, BREAKTHROUGH_MAX, breakthroughCost as itemBreakthroughCost, socketsFor, GEMS, GEMS_BY_ID } from '../../game/data/items';
+import { ITEMS_BY_ID, REFINE_MAX, BREAKTHROUGH_MAX, breakthroughCost as itemBreakthroughCost, socketsFor, GEMS, GEMS_BY_ID, AWAKENING_PERKS, AWAKENING_BY_ID, awakeningSlots, smeltIronYield } from '../../game/data/items';
 import { useGameStore } from '../../game/state/store';
 import type { EntityId, Officer } from '../../game/types';
 import { OfficerStats } from './OfficerStats';
@@ -73,6 +73,13 @@ export function ArmouryModal({ onClose }: Props) {
   const refineItemFn = useGameStore((s) => s.refineItem);
   const breakthroughItemFn = useGameStore((s) => s.breakthroughItem);
   const socketGemFn = useGameStore((s) => s.socketGem);
+  const itemLore = useGameStore((s) => s.itemLore);
+  const itemAwakenings = useGameStore((s) => s.itemAwakenings);
+  const destroyedItems = useGameStore((s) => s.destroyedItems);
+  const awakenItemFn = useGameStore((s) => s.awakenItem);
+  const smeltItemFn = useGameStore((s) => s.smeltItem);
+  // 回爐二段確認 — first tap arms the smelt button for one item.
+  const [smeltConfirmId, setSmeltConfirmId] = useState<string | null>(null);
 
   const [filter, setFilter] = useState<KindFilter>('all');
   const [ownerFilter, setOwnerFilter] = useState<OwnerFilter>('all');
@@ -81,6 +88,7 @@ export function ArmouryModal({ onClose }: Props) {
   const d = useDesc();
 
   const lostItemIds = useMemo(() => new Set(lostItems.map((l) => l.itemId)), [lostItems]);
+  const destroyedSet = useMemo(() => new Set(destroyedItems ?? []), [destroyedItems]);
 
   const itemHolders = useMemo(() => {
     const map: Record<string, Officer | null> = {};
@@ -111,7 +119,7 @@ export function ArmouryModal({ onClose }: Props) {
   );
 
   const visibleItems = useMemo(() => {
-    let list = filter === 'all' ? ITEMS : ITEMS.filter((i) => i.kind === filter);
+    let list = (filter === 'all' ? ITEMS : ITEMS.filter((i) => i.kind === filter)).filter((i) => !destroyedSet.has(i.id)); // 回爐者不復見
     if (ownerFilter !== 'all') {
       list = list.filter((item) => {
         const holder = itemHolders[item.id];
@@ -129,7 +137,7 @@ export function ArmouryModal({ onClose }: Props) {
     // Sort: legendary first, then rare, uncommon, common.
     const tierOrder = { legendary: 0, rare: 1, uncommon: 2, common: 3 };
     return [...list].sort((a, b) => tierOrder[rarityTier(a)] - tierOrder[rarityTier(b)]);
-  }, [filter, ownerFilter, itemHolders, lostItemIds, playerForceId]);
+  }, [filter, ownerFilter, itemHolders, lostItemIds, playerForceId, destroyedSet]);
 
   const handleAssign = (itemId: string, officerId: EntityId) => {
     assignItem(itemId, officerId);
@@ -293,6 +301,47 @@ export function ArmouryModal({ onClose }: Props) {
                                 {GEMS.map((g) => { const n = gemStock[g.id] ?? 0; return <option key={g.id} value={g.id}>{g.name.zh} ({n > 0 ? t(`庫${n}`, `${n}`) : `${g.cost}g`})</option>; })}
                               </select>
                             )}
+                            {(() => {
+                              // 兵器覺醒 — 威名里程碑解鎖的詞條(飲血12/百戰30/名器60,各一選)。
+                              const lore = itemLore[item.id] ?? 0;
+                              const picked = itemAwakenings[item.id] ?? [];
+                              const slots = awakeningSlots(lore);
+                              return (
+                                <>
+                                  {picked.map((aid, ai) => { const perk = AWAKENING_BY_ID[aid]; return perk ? (
+                                    <span key={ai} title={perk.descriptionZh} style={{ color: '#ffd66e', fontSize: '0.66rem', border: '1px solid #8a6a2a', borderRadius: 8, padding: '0 5px' }}>⚡{perk.name.zh}</span>
+                                  ) : null; })}
+                                  {picked.length < slots && (
+                                    <select value="" onChange={(e) => { if (e.target.value) { const r = awakenItemFn(item.id, e.target.value); if (!r.ok) alert(r.reason); } }}
+                                      title={t(`威名 ${lore} — 可銘 ${slots - picked.length} 條覺醒詞條`, `Renown ${lore} — ${slots - picked.length} awakening pick(s)`)}
+                                      style={{ background: '#1a1408', border: '1px solid #8a6a2a', color: '#ffd66e', fontSize: '0.66rem' }}>
+                                      <option value="">⚡{t('覺醒', 'Awaken')}</option>
+                                      {AWAKENING_PERKS.map((pk) => <option key={pk.id} value={pk.id}>{pk.name.zh} — {pk.descriptionZh.split('—')[1]?.trim()}</option>)}
+                                    </select>
+                                  )}
+                                  {picked.length >= slots && slots < 3 && lore > 0 && (
+                                    <span style={{ color: '#7a8893', fontSize: '0.62rem' }} title={t('繼續征戰累積威名,解鎖下一詞條(12/30/60戰)', 'Fight on — next pick unlocks at 12/30/60 battles')}>威名{lore}</span>
+                                  )}
+                                </>
+                              );
+                            })()}
+                            {(() => {
+                              // 重鑄分解 — 熔為鐵料;二段確認,一去不回。
+                              const armed = smeltConfirmId === item.id;
+                              const yieldIron = smeltIronYield(item, plus, stars);
+                              return (
+                                <button className={styles.actionBtnDanger}
+                                  onClick={() => {
+                                    if (!armed) { setSmeltConfirmId(item.id); window.setTimeout(() => setSmeltConfirmId((v) => (v === item.id ? null : v)), 3000); return; }
+                                    setSmeltConfirmId(null);
+                                    const r = smeltItemFn(item.id);
+                                    if (!r.ok) alert(r.reason);
+                                  }}
+                                  title={armed ? t(`再點一次確認 — 熔毀得鐵 ${yieldIron},本局不復存`, `Tap again — smelt for ${yieldIron} iron, gone this campaign`) : t(`回爐重鑄 — 熔為鐵 ${yieldIron}`, `Smelt for ${yieldIron} iron`)}
+                                  style={armed ? { background: 'rgba(184,68,46,0.3)', color: '#ffb0a0' } : undefined}
+                                >{armed ? t(`熔毀+${yieldIron}鐵?`, `Smelt +${yieldIron}?`) : '🔥'}</button>
+                              );
+                            })()}
                           </div>
                         );
                       })()}
