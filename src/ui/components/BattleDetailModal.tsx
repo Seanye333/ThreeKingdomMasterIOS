@@ -19,6 +19,13 @@ export function BattleDetailModal({ battle, onClose }: Props) {
   const cities = useGameStore((s) => s.cities);
 
   const city = cities[battle.cityId];
+  const playerForceId = useGameStore((s) => s.playerForceId);
+  const hasLiveBattle = useGameStore((s) => !!s.tacticalBattle);
+  const spectateFn = useGameStore((s) => s.spectateBattle);
+  // 演義重現 — an AI-vs-AI clash can be re-staged live (nothing writes back).
+  const canSpectate = !hasLiveBattle
+    && battle.attacker.forceId !== playerForceId
+    && battle.defender.forceId !== playerForceId;
   const lang = useLanguage();
   const t = useT();
 
@@ -34,6 +41,17 @@ export function BattleDetailModal({ battle, onClose }: Props) {
               </div>
             )}
           </div>
+          {canSpectate && (
+            <button
+              onClick={() => { if (spectateFn(battle)) onClose(); }}
+              title={t('演義重現 — 以 3D 會戰重演此役(雙方皆由 AI 演出,勝負不入史)', 'Dramatize — restage this clash live in 3D (pure theatre, nothing recorded)')}
+              style={{
+                marginLeft: 'auto', marginRight: 10, alignSelf: 'center',
+                background: 'rgba(212,168,74,0.14)', border: '1px solid #8a6a2a', borderRadius: 'var(--tkm-radius-xs)',
+                color: '#e8cf9a', padding: '0.25rem 0.7rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.78rem',
+              }}
+            >⏵ {t('演義重現', 'Dramatize')}</button>
+          )}
           <button className={styles.closeButton} onClick={onClose}>
             ×
           </button>

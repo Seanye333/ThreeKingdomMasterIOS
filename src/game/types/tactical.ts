@@ -422,6 +422,9 @@ export interface TacticalBattle {
    * loot are all discarded when it ends; nothing writes back to the campaign.
    */
   practice?: boolean;
+  /** 演義重現 — a SPECTATED dramatization of an AI-vs-AI report battle: both
+   *  sides play themselves, nothing writes back to the campaign. */
+  spectate?: boolean;
   /** The player (attacker) army id, for field-battle casualty writeback. */
   attackerArmyId?: EntityId;
   /** The enemy (defender) army id, for field-battle casualty writeback. */

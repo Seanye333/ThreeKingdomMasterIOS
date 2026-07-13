@@ -3370,6 +3370,7 @@ export function TacticalBattleScreen3D() {
   };
   useEffect(() => () => { recorderRef.current?.stop(); }, []);
   const applyResolution = useGameStore((s) => s.applyTacticalResolution);
+  const dismissSpectate = useGameStore((s) => s.dismissSpectate);
   const afflictOfficer = useGameStore((s) => s.afflictOfficer);
   const inflictDuelScar = useGameStore((s) => s.inflictDuelScar);
   const recordDeed = useGameStore((s) => s.recordDeed);
@@ -3563,7 +3564,7 @@ export function TacticalBattleScreen3D() {
   useEffect(() => {
     if (!battle || battle.winner) return;
     if (paused) return;  // 暫停 — freeze the AI's auto-advance
-    if (playerSide && (battle.activeSide !== playerSide || autoPilot)) {
+    if (battle.spectate || (playerSide && (battle.activeSide !== playerSide || autoPilot))) {
       const delay = Math.max(150, 700 / Math.max(1, battleSpeed));
       const id = setTimeout(() => {
         // 委託指揮做活 — handing a battle to the AI shouldn't waste the opening:
@@ -4148,6 +4149,11 @@ export function TacticalBattleScreen3D() {
             opacity: !myTurn ? 0.4 : 1,
           }}
         >{t('結束回合', 'End Turn')}</button>
+        {battle.spectate && (
+          <span style={{ marginLeft: 'auto', alignSelf: 'center', fontSize: '0.72rem', color: 'var(--tkm-hud-amber)', border: '1px solid var(--tkm-hud-dim)', borderRadius: 'var(--tkm-radius-xs)', padding: '0.15rem 0.6rem', letterSpacing: '0.08rem' }}>
+            👁 {t('演義重現 — 勝負不入史', 'Dramatization — nothing is recorded')}
+          </span>
+        )}
         {/* 觀戰 — drop back to the world map; the battle keeps playing as a
             diorama on the very ground it's fought over. Tap it to return. */}
         <button
@@ -4165,6 +4171,7 @@ export function TacticalBattleScreen3D() {
             (forfeiting / 棄城 has consequences). The 2D view is retired. */}
         <button
           onClick={() => {
+            if (battle.spectate) { dismissSpectate(); return; } // 演義重現 — nothing to settle
             if (battle.practice) { endDrill(); return; } // bank 練度/歷練 by result
             setConfirmDialog({
               title: { zh: '退出戰鬥', en: 'Leave Battle' },
@@ -4672,6 +4679,12 @@ export function TacticalBattleScreen3D() {
           battle={battle}
           playerSide={playerSide}
           onClose={() => {
+            // 演義重現 — pure theatre; the campaign never hears of it.
+            if (battle.spectate) {
+              dismissSpectate();
+              setShowResults(false);
+              return;
+            }
             // 演習 — a drill leaves no real casualties, but now banks 練度 +
             // 武將歷練 scaled by how the garrison fared (endPracticeDrill).
             if (battle.practice) {

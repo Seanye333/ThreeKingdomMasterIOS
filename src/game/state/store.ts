@@ -328,6 +328,7 @@ import { topBoardIds } from '../systems/powerBoard';
 import { pendingSetRewards, SET_REWARD_GOLD, SET_REWARD_LOYALTY } from '../systems/setBonds';
 import { dueMedals, grantMedals } from '../data/medals';
 import { composeYearChronicle } from '../systems/chronicle';
+import { attackerArm } from '../systems/combat';
 import { festivalPool, festivalDraw, FESTIVAL_GOLD_COST } from '../systems/festival';
 import { rollBounties, fulfilledBounties } from '../systems/bounty';
 import { codexRecordPeaks } from '../systems/codex';
@@ -1238,6 +1239,11 @@ interface GameStore extends GameState {
   /** 求賢祭 — once a season, pay gold at the capital to reveal one hidden
    *  talent (moves to the capital as a free agent; recruit them yourself). */
   holdTalentFestival: () => { ok: boolean; message: string };
+  /** 演義重現 — spectate an AI-vs-AI report battle as a live 3D dramatization
+   *  (both sides play themselves; nothing writes back to the campaign). */
+  spectateBattle: (detail: import('../types').BattleDetail) => boolean;
+  /** 演義收場 — dismiss a spectated battle without touching the campaign. */
+  dismissSpectate: () => void;
   /** 告老傳承 — retire an elder (60+): full inheritance to the best same-city
    *  disciple (XP, one skill, their gear), master steps down honoured. */
   retireOfficer: (officerId: EntityId) => { ok: boolean; message: string };
@@ -11248,6 +11254,34 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         );
         return { ok: true, message: `${drawn.name.zh}現身!` };
       },
+      spectateBattle: (detail) => {
+        const state = get();
+        if (state.tacticalBattle) return false; // one battle at a time
+        const mkSide = (side: import('../types').BattleSideDetail) => {
+          const ids = [side.commanderId, ...(side.companionIds ?? [])];
+          const roster = ids.map((id) => state.officers[id]).filter((o): o is Officer => !!o);
+          if (roster.length === 0) return null;
+          const arm = attackerArm(roster);
+          return roster.map((officer) => ({
+            officer,
+            troops: Math.max(300, Math.floor(Math.max(600, side.troops) / roster.length)),
+            unitType: arm,
+          }));
+        };
+        const attackers = mkSide(detail.attacker);
+        const defenders = mkSide(detail.defender);
+        if (!attackers || !defenders) return false;
+        const battle = setupTacticalBattle({
+          cityId: detail.cityId, width: 14, height: 10,
+          attackerForceId: detail.attacker.forceId ?? 'spectate-a',
+          defenderForceId: detail.defender.forceId ?? 'spectate-d',
+          attackers, defenders, field: true,
+        });
+        set({ tacticalBattle: { ...battle, spectate: true }, currentBattleSnapshots: [] });
+        return true;
+      },
+      dismissSpectate: () => set({ tacticalBattle: null, currentBattleSnapshots: [] }),
+
       retireOfficer: (officerId) => {
         const state = get();
         const o = state.officers[officerId];
