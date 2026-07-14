@@ -40,6 +40,7 @@ import { canAppraise, GRADE_LABEL } from '../../game/systems/appraisal';
 import { officerGrade, officerLevel, nextGradeGap, gradeMeta } from '../../game/systems/officerGrade';
 import { MAX_STARS, officerStars, nextStarRequirement, scrollStarCost } from '../../game/systems/stars';
 import { armProficiency, armProficiencyTier, armMasteryPerkOf, PROF_ARM_LABEL, profArmOf, type ProfArm } from '../../game/systems/armProficiency';
+import { activeMountBondSeasons, mountBondMul } from '../../game/systems/mountBond';
 import { inferUnitType } from '../../game/systems/tactical';
 import { skillLevelBadge } from '../../game/systems/skillMastery';
 import { gradeCombatBonus, itemMasteryMul } from '../../game/systems/gradeCombat';
@@ -671,6 +672,18 @@ export function OfficerDetail({
                         </span>
                       );
                     })}
+                  </div>
+                );
+              })()}
+              {(() => {
+                // 人馬合一 — the bond a rider has built with their current steed.
+                const bondSeasons = activeMountBondSeasons(officer);
+                if (bondSeasons <= 0) return null;
+                const pct = Math.round((mountBondMul(officer) - 1) * 100);
+                return (
+                  <div style={{ marginTop: 2, fontSize: '0.7rem', color: '#c9a24e' }}
+                    title={t(`人馬合一 — 與坐騎共歷 ${bondSeasons} 戰,騎乘戰力 +${pct}%(換騎歸零)`, `Rider's bond — ${bondSeasons} battles together, +${pct}% mounted (resets if you swap horses)`)}>
+                    🐎 {t('人馬合一', 'Bonded steed')} · +{pct}%
                   </div>
                 );
               })()}

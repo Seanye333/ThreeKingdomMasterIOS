@@ -25,6 +25,7 @@ import { effectivePrestigeEffects } from '../data/prestige';
 import { honorificEffects, honorificById } from '../data/honorifics';
 import { gradeAuraPowerMul, gradeAuraMorale, itemMasteryMul, enemyMoraleShock, holdsTheLine } from './gradeCombat';
 import { growthPowerMul, streakPowerMul, grantXp } from './growth';
+import { mountBondMul } from './mountBond';
 import { skillEffectMul } from './skillMastery';
 import { setBondPowerMul } from './setBonds';
 import { partySynergies } from './partySynergy';
@@ -594,7 +595,7 @@ export function resolveBattle(
     return (
       (o.stats.war + itemWar + bond + tb.war) * 0.6 +
       (o.stats.leadership + itemLead + bond + tb.leadership) * 0.4
-    ) * growthPowerMul(o) * streakPowerMul(o);
+    ) * growthPowerMul(o) * streakPowerMul(o) * mountBondMul(o);
   };
 
   // ── 計策 Stratagem — auto-pick best applicable, roll for success ──

@@ -241,6 +241,46 @@ export function canEvolveItem(itemId: string): { ok: boolean; reasonZh: string; 
   return { ok: true, reasonZh: '', reasonEn: '' };
 }
 
+// ─── 鍛造詞綴 — 天工偶得 ──────────────────────────────────────────────────────
+// A forged piece can leave the anvil bearing a random 詞綴 (affix): a flat bonus
+// tempered in by luck. A 神匠 (see forging.smithTier) draws a fine affix more
+// often. Stored per-item like 覺醒, folded through liveItem so every read site
+// gets it. Purely additive — a lucky forge is simply a better piece.
+export interface ForgeAffix {
+  id: string;
+  name: { zh: string; en: string };
+  effects: Partial<Item['effects']>;
+}
+export const FORGE_AFFIXES: ForgeAffix[] = [
+  { id: 'piercing', name: { zh: '破甲', en: 'Armor-Piercing' }, effects: { war: 3 } },
+  { id: 'swift', name: { zh: '疾風', en: 'Swift' }, effects: { leadership: 3 } },
+  { id: 'bloodthirsty', name: { zh: '嗜血', en: 'Bloodthirsty' }, effects: { war: 4 } },
+  { id: 'sturdy', name: { zh: '堅甲', en: 'Sturdy' }, effects: { leadership: 4 } },
+  { id: 'clever', name: { zh: '巧智', en: 'Clever' }, effects: { intelligence: 3 } },
+  { id: 'balanced', name: { zh: '中和', en: 'Balanced' }, effects: { war: 2, leadership: 2 } },
+];
+export const FORGE_AFFIXES_BY_ID: Record<string, ForgeAffix> = Object.fromEntries(FORGE_AFFIXES.map((a) => [a.id, a]));
+
+let AFFIX_REGISTRY: Record<string, string[]> = {};
+export function setAffixRegistry(map: Record<string, string[]> | undefined): void {
+  AFFIX_REGISTRY = map ?? {};
+}
+export function itemAffixIds(itemId: string): string[] {
+  return AFFIX_REGISTRY[itemId] ?? [];
+}
+/**
+ * Roll an affix for a fresh forge: base 22% chance, +12% for a 神匠. On a hit,
+ * a masterwork forge (神匠) leans toward the richer affixes. Returns an id or ''.
+ */
+export function rollForgeAffix(rng: () => number, masterSmith: boolean): string {
+  if (rng() >= (masterSmith ? 0.34 : 0.22)) return '';
+  // 神匠 draws from the fine end (嗜血/堅甲/破甲/疾風); others draw the full spread.
+  const pool = masterSmith
+    ? ['bloodthirsty', 'sturdy', 'piercing', 'swift']
+    : FORGE_AFFIXES.map((a) => a.id);
+  return pool[Math.floor(rng() * pool.length)] ?? pool[0];
+}
+
 // ─── 兵器覺醒 — at each 威名 milestone (飲血12/百戰30/名器60) the wielder picks
 // one of three awakening perks, a flat stat engraved into the blade itself.
 // Stored per-item like 精煉/寶石, resolved through liveItemById, so every read
@@ -316,8 +356,8 @@ export function accrueWeaponLore(prior: Record<string, number>, equipmentLists: 
  * refine and breakthrough scale the base magnitudes; gems then add flat stats.
  * Rarity recomputes from the boosted magnitude (so growth can promote 品階).
  */
-export function liveItem(item: Item, plus: number, stars = 0, gemIds: string[] = [], lore = 0, awakenIds: string[] = [], evolved = false, wear = 0): Item {
-  if (!plus && !stars && gemIds.length === 0 && lore <= 0 && awakenIds.length === 0 && !evolved && wear <= WEAR_BITE) return item;
+export function liveItem(item: Item, plus: number, stars = 0, gemIds: string[] = [], lore = 0, awakenIds: string[] = [], evolved = false, wear = 0, affixIds: string[] = []): Item {
+  if (!plus && !stars && gemIds.length === 0 && lore <= 0 && awakenIds.length === 0 && !evolved && wear <= WEAR_BITE && affixIds.length === 0) return item;
   let effects = refinedEffects(item, plus);
   if (stars) effects = breakthroughEffects(effects, stars);
   // 兵器覺醒 — engraved perks are flat adds, folded before the lore aura so a
@@ -328,6 +368,18 @@ export function liveItem(item: Item, plus: number, stars = 0, gemIds: string[] =
       const perk = AWAKENING_BY_ID[aid];
       if (!perk) continue;
       for (const [k, v] of Object.entries(perk.effects) as Array<[keyof Item['effects'], number | undefined]>) {
+        if (!v) continue;
+        effects[k] = (effects[k] ?? 0) + v;
+      }
+    }
+  }
+  // 鍛造詞綴 — forge-tempered affixes are flat adds, folded with the awakening perks.
+  if (affixIds.length > 0) {
+    effects = { ...effects };
+    for (const aid of affixIds) {
+      const affix = FORGE_AFFIXES_BY_ID[aid];
+      if (!affix) continue;
+      for (const [k, v] of Object.entries(affix.effects) as Array<[keyof Item['effects'], number | undefined]>) {
         if (!v) continue;
         effects[k] = (effects[k] ?? 0) + v;
       }
@@ -392,7 +444,7 @@ export function liveItem(item: Item, plus: number, stars = 0, gemIds: string[] =
 export function liveItemById(id: string): Item | null {
   const base = ITEMS_BY_ID[id];
   if (!base) return null;
-  return liveItem(base, itemRefineLevel(id), itemBreakthroughLevel(id), itemGemIds(id), itemLoreLevel(id), itemAwakeningIds(id), itemIsEvolved(id), itemWearLevel(id));
+  return liveItem(base, itemRefineLevel(id), itemBreakthroughLevel(id), itemGemIds(id), itemLoreLevel(id), itemAwakeningIds(id), itemIsEvolved(id), itemWearLevel(id), itemAffixIds(id));
 }
 
 /** Gold cost to take an item from `plus` → `plus+1` (escalates with rarity + level). */

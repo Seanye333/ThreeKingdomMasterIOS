@@ -86,6 +86,7 @@ import { ITEMS_BY_ID, refineCost, REFINE_MAX, setRefineRegistry, itemRarity,
   setAwakeningRegistry, awakeningSlots, AWAKENING_BY_ID, smeltIronYield, itemLoreLevel,
   setEvolvedRegistry, canEvolveItem,
   setWearRegistry, itemWearLevel, whetCost,
+  setAffixRegistry, rollForgeAffix, FORGE_AFFIXES_BY_ID,
   itemGrowthGoldSpent } from '../data/items';
 import { SKILLS_BY_ID } from '../data/skills';
 import { marchDurationFor } from '../data/cities';
@@ -334,6 +335,7 @@ import { attackerArm } from '../systems/combat';
 import { festivalPool, festivalDraw, FESTIVAL_GOLD_COST, festivalScrollReward } from '../systems/festival';
 import { rollFoil } from '../systems/cardFoil';
 import { accrueArmProficiency } from '../systems/armProficiency';
+import { accrueMountBond } from '../systems/mountBond';
 import { accrueItemProvenance } from '../systems/itemProvenance';
 import { rollBounties, fulfilledBounties } from '../systems/bounty';
 import { codexRecordPeaks } from '../systems/codex';
@@ -1136,7 +1138,7 @@ interface GameStore extends GameState {
   forgeItem: (
     cityId: EntityId,
     recipeId: EntityId,
-  ) => { ok: boolean; reason?: string; plus?: number; smith?: { zh: string; en: string }; smithTier?: SmithTier; bornLore?: number };
+  ) => { ok: boolean; reason?: string; plus?: number; smith?: { zh: string; en: string }; smithTier?: SmithTier; bornLore?: number; affixId?: string };
   /** 熔毀 — melt a lost item in a foundry city back into iron + gold. */
   dismantleItem: (
     cityId: EntityId,
@@ -1699,7 +1701,7 @@ export const useGameStore = create<GameStore>()(
       ...EMPTY_STATE,
 
       loadScenario: (scenario, playerForceId, difficulty, customOfficer, capitalOverride) => {
-        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); setLoreRegistry({}); setAwakeningRegistry({}); setEvolvedRegistry([]); setWearRegistry({}); // fresh game → drop any prior 精煉/名器 registry
+        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); setLoreRegistry({}); setAwakeningRegistry({}); setEvolvedRegistry([]); setWearRegistry({}); setAffixRegistry({}); // fresh game → drop any prior 精煉/名器 registry
         set((s) => loadScenario(s, scenario, playerForceId, difficulty, customOfficer, capitalOverride));
         get().seedAiGear();
       },
@@ -1708,7 +1710,7 @@ export const useGameStore = create<GameStore>()(
       // observe mode, so the AI runs every realm and the season tick
       // simulates history while you watch.
       observeScenario: (scenario, difficulty) => {
-        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); setLoreRegistry({}); setAwakeningRegistry({}); setEvolvedRegistry([]); setWearRegistry({});
+        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); setLoreRegistry({}); setAwakeningRegistry({}); setEvolvedRegistry([]); setWearRegistry({}); setAffixRegistry({});
         set((s) => ({
           ...loadScenario(s, scenario, scenario.forces[0].id, difficulty),
           playerForceId: null,
@@ -1725,7 +1727,7 @@ export const useGameStore = create<GameStore>()(
         if (!scenario) return;
         const hasForce = scenario.forces.some((f) => f.id === challenge.forceId);
         if (!hasForce) return;
-        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); setLoreRegistry({}); setAwakeningRegistry({}); setEvolvedRegistry([]); setWearRegistry({});
+        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); setLoreRegistry({}); setAwakeningRegistry({}); setEvolvedRegistry([]); setWearRegistry({}); setAffixRegistry({});
         set((s) => ({
           ...loadScenario(s, scenario, challenge.forceId, challenge.difficulty),
           activeChallenge: challenge.id,
@@ -12491,6 +12493,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           officers,
           tb.units.map((u) => ({ officerId: u.officerId, unit: u.unitType, won: winner != null && u.side === winner })),
         );
+        // 人馬合一 — every rider deepens the bond with their current steed (a new
+        // horse starts the count over). No-op for the horseless.
+        for (const u of tb.units) {
+          const o = officers[u.officerId];
+          if (o) officers[u.officerId] = accrueMountBond(o);
+        }
 
         // 名器譜系 — each named piece (神兵/寶器 rarity) borne into this battle adds
         // a chapter: its wielder joins the lineage, its battle-tally climbs, and a
@@ -14175,6 +14183,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           ? { ...state.itemLore, [recipe.resultItemId]: Math.max(state.itemLore[recipe.resultItemId] ?? 0, bornLore) }
           : state.itemLore;
         if (bornLore > 0) setLoreRegistry(itemLore);
+        // 天工偶得 — luck may temper a random 詞綴 into the fresh piece (神匠 leans fine).
+        const affixId = rollForgeAffix(Math.random, tier.tier === 3);
+        const itemAffixes = affixId
+          ? { ...state.itemAffixes, [recipe.resultItemId]: [...(state.itemAffixes[recipe.resultItemId] ?? []), affixId] }
+          : state.itemAffixes;
+        if (affixId) setAffixRegistry(itemAffixes);
         set({
           cities: {
             ...state.cities,
@@ -14187,6 +14201,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           lostItems: newLostItems,
           itemRefinements,
           ...(bornLore > 0 ? { itemLore } : {}),
+          ...(affixId ? { itemAffixes } : {}),
         });
         // 名器鑄成 — herald a top-grade (神兵) piece coming off the anvil.
         const forged = ITEMS_BY_ID[recipe.resultItemId];
@@ -14198,7 +14213,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             captionEn: `${forged.name.en} is forged at ${city.name.en}`,
           });
         }
-        return { ok: true, plus, smith: smith?.name, smithTier: tier, bornLore };
+        // 天工偶得 — announce a lucky affix.
+        if (affixId) {
+          const af = FORGE_AFFIXES_BY_ID[affixId];
+          get().notify(
+            `天工偶得 —「${forged?.name.zh}」附詞綴「${af.name.zh}」!`,
+            `A lucky forge — ${forged?.name.en} bears the ${af.name.en} affix!`,
+          );
+        }
+        return { ok: true, plus, smith: smith?.name, smithTier: tier, bornLore, affixId: affixId || undefined };
       },
 
       dismantleItem: (cityId, itemId) => {
@@ -16630,6 +16653,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           itemLore: loaded.itemLore ?? {},
           itemAwakenings: loaded.itemAwakenings ?? {},
           evolvedItems: loaded.evolvedItems ?? [],
+          itemAffixes: loaded.itemAffixes ?? {},
           itemProvenance: loaded.itemProvenance ?? {},
           itemWear: loaded.itemWear ?? {},
           destroyedItems: loaded.destroyedItems ?? [],
@@ -16680,6 +16704,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         setAwakeningRegistry(fresh.itemAwakenings);
         setEvolvedRegistry(fresh.evolvedItems);
         setWearRegistry(fresh.itemWear);
+        setAffixRegistry(fresh.itemAffixes);
         set(fresh);
         return true;
       },

@@ -59,6 +59,10 @@ export interface Officer {
    *  navy), earned by fighting on the field as that arm. Small power edge when
    *  leading a mastered arm. See armProficiency.ts. */
   armProficiency?: Record<string, number>;
+  /** 人馬合一 — the bond this officer has built with a specific mount, ridden
+   *  battle after battle. Switching horses resets it. A small power edge for a
+   *  rider on their trusted steed. See mountBond.ts. */
+  mountBond?: { itemId: EntityId; seasons: number };
   /** Historical hometown — fixed at scenario load from the template. Doesn't
    *  change as the officer moves around. Used by UI + search bonuses. */
   hometownCityId?: EntityId;

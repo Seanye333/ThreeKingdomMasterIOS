@@ -3,7 +3,7 @@ import { useGameStore } from '../../game/state/store';
 import { Modal } from './Modal';
 import {
   ITEMS_BY_ID, liveItemById, itemRarity, itemLoreLevel, itemLoreTitle,
-  itemAwakeningIds, AWAKENING_BY_ID, GEMS_BY_ID, itemIsEvolved, type Item,
+  itemAwakeningIds, AWAKENING_BY_ID, GEMS_BY_ID, itemIsEvolved, FORGE_AFFIXES_BY_ID, type Item,
 } from '../../game/data/items';
 import { ITEM_WEAPON_TYPE, classifyWeaponByName, WEAPON_TYPE_DEFS, type WeaponType } from '../../game/data/weaponTypes';
 import { SIGNATURE_ITEMS } from '../../game/data/signatureItems';
@@ -74,6 +74,7 @@ export function ItemCardFace({ itemId, onClose }: { itemId: string; onClose?: ()
   const provenance = useGameStore((s) => s.itemProvenance?.[itemId]);
   const evolved = itemIsEvolved(itemId);
   const wear = useGameStore((s) => s.itemWear?.[itemId] ?? 0);
+  const affixes = useGameStore((s) => s.itemAffixes?.[itemId] ?? []);
 
   const base = ITEMS_BY_ID[itemId];
   const live = liveItemById(itemId);
@@ -180,6 +181,22 @@ export function ItemCardFace({ itemId, onClose }: { itemId: string; onClose?: ()
                   ⚡ {pickName(p!.name, lang)}
                 </span>
               ))}
+            </div>
+          )}
+          {/* 鍛造詞綴 — forge-tempered affixes (天工偶得). */}
+          {affixes.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+              {affixes.map((aid, ai) => {
+                const af = FORGE_AFFIXES_BY_ID[aid];
+                if (!af) return null;
+                const eff = Object.entries(af.effects).map(([k, v]) => `${k === 'war' ? '武' : k === 'leadership' ? '統' : k === 'intelligence' ? '智' : k === 'politics' ? '政' : '魅'}+${v}`).join('·');
+                return (
+                  <span key={ai} title={`鍛造詞綴(天工偶得):${eff}`}
+                    style={{ fontSize: '0.7rem', padding: '1px 8px', borderRadius: 9, background: 'rgba(126,214,168,0.12)', border: '1px solid #3f7a5c', color: '#8fe3b0' }}>
+                    ✧ {lang === 'en' ? af.name.en : af.name.zh}
+                  </span>
+                );
+              })}
             </div>
           )}
 

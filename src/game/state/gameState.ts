@@ -421,6 +421,9 @@ export interface GameState {
   /** 器魂進化 — legendary items whose 器魂 has awakened (★5 + 名器 → ·神 form).
    *  Player-only, once per item; resolved through items.setEvolvedRegistry. */
   evolvedItems: EntityId[];
+  /** 鍛造詞綴 — random affixes a forged piece was born with (items.FORGE_AFFIXES).
+   *  Resolved through items.setAffixRegistry. */
+  itemAffixes: Record<EntityId, string[]>;
   /** 名器譜系 — a storied weapon's provenance: the chain of wielders who bore it
    *  into battle, plus a tally of battles fought and foes felled. Flavour only;
    *  shown on the item card. Keyed by item id. See itemProvenance.ts. */
@@ -885,6 +888,7 @@ export const EMPTY_STATE: GameState = {
   itemLore: {},
   itemAwakenings: {},
   evolvedItems: [],
+  itemAffixes: {},
   itemProvenance: {},
   itemWear: {},
   destroyedItems: [],
@@ -1319,6 +1323,7 @@ export function loadScenario(
   itemLore: {},
   itemAwakenings: {},
   evolvedItems: [],
+  itemAffixes: {},
   itemProvenance: {},
   itemWear: {},
   destroyedItems: [],
