@@ -336,6 +336,7 @@ import { festivalPool, festivalDraw, FESTIVAL_GOLD_COST, festivalScrollReward } 
 import { rollFoil } from '../systems/cardFoil';
 import { accrueArmProficiency } from '../systems/armProficiency';
 import { accrueMountBond } from '../systems/mountBond';
+import { isPhysician, medicalSkillOf, medicalCureBonus, medicalWoundBonus, accrueMedicalSkill } from '../systems/medicalSkill';
 import { accrueItemProvenance, heirloomTier } from '../systems/itemProvenance';
 import { rollBounties, fulfilledBounties } from '../systems/bounty';
 import { codexRecordPeaks } from '../systems/codex';
@@ -5438,33 +5439,48 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         }
         // 後遺 — tick down duel/debate afflictions (養傷 / 羞憤) each season.
         // 傷兵營 — a field hospital in the officer's city heals wounds faster.
+        // 名醫養成 — the best physician posted in each city, and their 醫術 lifts
+        // both the wound-recovery they grant AND the chance they mend a 宿疾.
+        const bestPhysicianByCity = new Map<EntityId, Officer>();
+        for (const p of Object.values(tickedOfficers)) {
+          if (!isPhysician(p) || !p.locationCityId || p.status === 'dead') continue;
+          const cur = bestPhysicianByCity.get(p.locationCityId);
+          if (!cur || medicalSkillOf(p) > medicalSkillOf(cur)) bestPhysicianByCity.set(p.locationCityId, p);
+        }
+        const curedPhysicianIds = new Set<EntityId>();
         for (const id of Object.keys(tickedOfficers)) {
           let ofc = tickedOfficers[id];
-          const heal = ofc.locationCityId
-            ? buildingBonuses(ofc.locationCityId, state.buildings).woundRecovery
-            : 0;
+          const physician = ofc.locationCityId ? bestPhysicianByCity.get(ofc.locationCityId) : undefined;
+          const treats = physician && physician.id !== ofc.id && physician.forceId === ofc.forceId ? physician : undefined;
+          const heal = (ofc.locationCityId ? buildingBonuses(ofc.locationCityId, state.buildings).woundRecovery : 0)
+            + medicalWoundBonus(treats); // 神醫 speeds 養傷 recovery beyond the hospital
           ofc = tickAfflictions(ofc, heal);
-          // 宿疾慢療 — two gentle second cure paths besides 洗髓's once-per-life:
-          // a 傷兵營's care (heal), AND a 名醫 (醫者/藥師) posted in the same city
-          // (名醫義診). Either may mend a lasting 宿疾 over time.
+          // 宿疾慢療 — cure paths besides 洗髓: a 傷兵營's care (heal), and a 名醫
+          // (名醫義診) whose skill widens the odds. Either may mend a 宿疾 over time.
           if (hasChronicAilment(ofc) && ofc.locationCityId) {
-            const physicianHere = Object.values(tickedOfficers).some((p) =>
-              p.id !== ofc.id && p.locationCityId === ofc.locationCityId && p.forceId === ofc.forceId
-              && p.status !== 'dead' && (p.traits ?? []).some((tr) => tr === 'physician' || tr === 'herbalist'));
-            const chance = (heal > 0 ? 0.06 + heal * 0.05 : 0) + (physicianHere ? 0.12 : 0);
-            if (chance > 0 && Math.random() < Math.min(0.30, chance)) {
+            const chance = (heal > 0 ? 0.06 + heal * 0.05 : 0) + (treats ? 0.12 + medicalCureBonus(treats) : 0);
+            if (chance > 0 && Math.random() < Math.min(0.40, chance)) {
               const ail = chronicAilmentOf(ofc);
               ofc = cureChronicAilments(ofc);
+              if (treats) curedPhysicianIds.add(treats.id);
               if (ofc.forceId === state.playerForceId && ail) {
                 result.report.entries.push({
                   cityId: ofc.locationCityId, kind: 'note',
-                  text: physicianHere ? `名醫義診 — ${ofc.name.zh} was cured of ${ail.labelEn}.` : `靜養痊癒 — ${ofc.name.zh} recovered from ${ail.labelEn}.`,
-                  textZh: physicianHere ? `城中名醫為${ofc.name.zh}診治,宿疾「${ail.labelZh}」竟得痊癒!` : `${ofc.name.zh}於傷兵營靜養日久,宿疾「${ail.labelZh}」竟得痊癒。`,
+                  text: treats ? `名醫義診 — ${ofc.name.zh} was cured of ${ail.labelEn}.` : `靜養痊癒 — ${ofc.name.zh} recovered from ${ail.labelEn}.`,
+                  textZh: treats ? `${treats.name.zh}為${ofc.name.zh}診治,宿疾「${ail.labelZh}」竟得痊癒!` : `${ofc.name.zh}於傷兵營靜養日久,宿疾「${ail.labelZh}」竟得痊癒。`,
                 });
               }
             }
           }
           if (ofc !== tickedOfficers[id]) tickedOfficers[id] = ofc;
+        }
+        // 醫術漸進 — every practising physician in an owned city deepens their
+        // craft each season (+2), faster if they mended a 宿疾 this season (+6).
+        for (const pid of Object.keys(tickedOfficers)) {
+          const p = tickedOfficers[pid];
+          if (!isPhysician(p) || !p.locationCityId || p.status === 'dead') continue;
+          const grown = accrueMedicalSkill(p, curedPhysicianIds.has(pid));
+          if (grown !== p) tickedOfficers[pid] = grown;
         }
         postOfficers = tickedOfficers;
 

@@ -63,6 +63,10 @@ export interface Officer {
    *  battle after battle. Switching horses resets it. A small power edge for a
    *  rider on their trusted steed. See mountBond.ts. */
   mountBond?: { itemId: EntityId; seasons: number };
+  /** 醫術 — a physician/herbalist's accumulated healing skill, 0–100. Grows
+   *  each season they practise (faster on a cure); raises wound recovery and
+   *  the chance to mend a lasting 宿疾. See medicalSkill.ts. */
+  medicalSkill?: number;
   /** Historical hometown — fixed at scenario load from the template. Doesn't
    *  change as the officer moves around. Used by UI + search bonuses. */
   hometownCityId?: EntityId;

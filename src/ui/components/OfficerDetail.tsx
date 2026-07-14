@@ -41,6 +41,7 @@ import { officerGrade, officerLevel, nextGradeGap, gradeMeta } from '../../game/
 import { MAX_STARS, officerStars, nextStarRequirement, scrollStarCost } from '../../game/systems/stars';
 import { armProficiency, armProficiencyTier, armMasteryPerkOf, PROF_ARM_LABEL, profArmOf, type ProfArm } from '../../game/systems/armProficiency';
 import { activeMountBondSeasons, mountBondMul } from '../../game/systems/mountBond';
+import { isPhysician, medicalSkillOf, medicalTier } from '../../game/systems/medicalSkill';
 import { inferUnitType } from '../../game/systems/tactical';
 import { skillLevelBadge } from '../../game/systems/skillMastery';
 import { gradeCombatBonus, itemMasteryMul } from '../../game/systems/gradeCombat';
@@ -684,6 +685,19 @@ export function OfficerDetail({
                   <div style={{ marginTop: 2, fontSize: '0.7rem', color: '#c9a24e' }}
                     title={t(`人馬合一 — 與坐騎共歷 ${bondSeasons} 戰,騎乘戰力 +${pct}%(換騎歸零)`, `Rider's bond — ${bondSeasons} battles together, +${pct}% mounted (resets if you swap horses)`)}>
                     🐎 {t('人馬合一', 'Bonded steed')} · +{pct}%
+                  </div>
+                );
+              })()}
+              {(() => {
+                // 醫術 — a physician's growing healing craft (name養成).
+                if (!isPhysician(officer)) return null;
+                const v = medicalSkillOf(officer);
+                const tier = medicalTier(v);
+                const col = tier.tier >= 3 ? '#ffd66e' : tier.tier >= 2 ? '#8fe3b0' : tier.tier >= 1 ? '#a8d8a8' : '#9aa6b0';
+                return (
+                  <div style={{ marginTop: 2, fontSize: '0.7rem', color: col }}
+                    title={t(`醫術 ${v}/100 · ${tier.zh} — 坐鎮之城養傷更快、更易癒宿疾;每季行醫漸精`, `Medical skill ${v}/100 · ${tier.en} — heals wounds faster & mends chronic ailments; grows with practice`)}>
+                    ⚕ {t('醫術', 'Medicine')} {v}·{lang === 'en' ? tier.en : tier.zh}
                   </div>
                 );
               })()}
