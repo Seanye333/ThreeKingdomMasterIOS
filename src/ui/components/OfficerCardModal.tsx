@@ -24,6 +24,7 @@ import { loadFrameSkin } from './cardFrames';
 import { unlockedAltArts } from './altArts';
 import { cardFaceMood } from './cardFaceMood';
 import { foilMeta } from '../../game/systems/cardFoil';
+import { RelationWebModal } from './RelationWebModal';
 import { headToHead } from '../../game/systems/rivalries';
 import { getBiography } from '../../game/data';
 import { exportOfficerCardPNG } from './officerCardExport';
@@ -144,6 +145,8 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
   const inscribeOfficer = useGameStore((s) => s.inscribeOfficer);
   const [editingColophon, setEditingColophon] = useState(false);
   const [colophonDraft, setColophonDraft] = useState('');
+  // 群英譜(B2) — the relationship-web overlay, opened from the BONDS heading.
+  const [showWeb, setShowWeb] = useState(false);
   const playerForce = playerForceId ? forces[playerForceId] : null;
   const collectorSeal = playerForce && officer.forceId === playerForceId ? playerForce.name.zh.slice(0, 2) : null;
   // 批A — the card's paper trail: 官爵 / 性格 / 本命指引 / 武評印 / 圖鑑編號 / 語錄.
@@ -621,7 +624,14 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
 
             {bonds.length > 0 && (
               <div>
-                <div style={{ fontSize: '0.62rem', color: '#7a8893', letterSpacing: '0.12rem', marginBottom: 3 }}>{t('緣分', 'BONDS')}</div>
+                <div style={{ fontSize: '0.62rem', color: '#7a8893', letterSpacing: '0.12rem', marginBottom: 3, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>{t('緣分', 'BONDS')}</span>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setShowWeb(true); }}
+                    title={t('群英譜 — 以連線圖遍覽其緣', 'Web of ties — see the bonds as a graph')}
+                    style={{ fontSize: '0.62rem', background: 'none', border: '1px solid #2b3d4e', borderRadius: 7, color: '#8fb0c8', cursor: 'pointer', padding: '0 6px', fontFamily: 'inherit' }}
+                  >🕸 {t('群英譜', 'Web')}</button>
+                </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                   {bonds.map((b) => {
                     const other = officers[b.otherId];
@@ -745,6 +755,8 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
           >×</button>
         )}
       </div>
+      {/* 群英譜(B2) — the relationship-web overlay. */}
+      {showWeb && <RelationWebModal initialFocalId={officer.id} onClose={() => setShowWeb(false)} />}
     </>
   );
 }
