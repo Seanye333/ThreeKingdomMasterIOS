@@ -21,6 +21,9 @@ import { CARD_INDEX, CARD_TOTAL } from '../../game/data/cardIndex';
 import { MEDALS_BY_ID } from '../../game/data/medals';
 import { MedalBadge } from './MedalBadge';
 import { loadFrameSkin } from './cardFrames';
+import { unlockedAltArts } from './altArts';
+import { cardFaceMood } from './cardFaceMood';
+import { foilMeta } from '../../game/systems/cardFoil';
 import { headToHead } from '../../game/systems/rivalries';
 import { getBiography } from '../../game/data';
 import { exportOfficerCardPNG } from './officerCardExport';
@@ -67,6 +70,7 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
   const t = useT();
   const lang = useLanguage();
   const year = useGameStore((s) => s.date.year);
+  const season = useGameStore((s) => s.date.season);
   const forces = useGameStore((s) => s.forces);
   const officers = useGameStore((s) => s.officers);
   const deeds = useGameStore((s) => s.deeds[officer.id]);
@@ -125,7 +129,23 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
   const artBase = `${import.meta.env.BASE_URL}portraits/${officer.id}`;
   const stars = officer.stars ?? 0;
   const frameSkin = loadFrameSkin();
+  // 名場面異畫(B1) — unlocked alternate faces; index 0 = the base art.
+  const unlockedAlts = useMemo(() => unlockedAltArts(officer.id), [officer.id]);
+  const [altIdx, setAltIdx] = useState(0);
+  const altArt = altIdx > 0 ? (unlockedAlts[altIdx - 1] ?? null) : null;
+  // 動態卡面(B6) — a mood layer read off the officer's present state + season.
+  const mood = cardFaceMood(officer, season);
+  // 開包閃度(B3) — the card's foil sheen, if it ever rolled one.
+  const fm = foilMeta(officer.foil);
   const inscriptions = useGameStore((s) => s.itemInscriptions);
+  // 鈐印題跋(B5) — the collector's seal (player's force) + a written colophon.
+  const playerForceId = useGameStore((s) => s.playerForceId);
+  const colophon = useGameStore((s) => s.officerColophons?.[officer.id]);
+  const inscribeOfficer = useGameStore((s) => s.inscribeOfficer);
+  const [editingColophon, setEditingColophon] = useState(false);
+  const [colophonDraft, setColophonDraft] = useState('');
+  const playerForce = playerForceId ? forces[playerForceId] : null;
+  const collectorSeal = playerForce && officer.forceId === playerForceId ? playerForce.name.zh.slice(0, 2) : null;
   // 批A — the card's paper trail: 官爵 / 性格 / 本命指引 / 武評印 / 圖鑑編號 / 語錄.
   const boardRank = useGameStore((s) => s.powerBoardPrev?.[officer.id]);
   const peer = peerageById(officer.peerageId);
@@ -313,7 +333,7 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
           <>
           {/* 立繪 — the full-body art, with the square portrait then the SVG
               silhouette as graceful fallbacks. */}
-          <div style={{ position: 'relative', height: 330, background: 'radial-gradient(ellipse at 50% 22%, #24303e 0%, #0c1118 78%)' }}>
+          <div style={{ position: 'relative', height: 330, background: altArt ? altArt.bg : 'radial-gradient(ellipse at 50% 22%, #24303e 0%, #0c1118 78%)' }}>
             {artFailed < 2 ? (
               <img
                 src={artFailed === 0 ? `${artBase}-full.webp` : `${artBase}.webp`}
@@ -339,6 +359,38 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
                 textShadow: '0 0 2px rgba(0,0,0,0.4)', letterSpacing: '0.2rem',
               }}>
                 {force.name.zh.slice(0, 2)}
+              </div>
+            )}
+            {/* 動態卡面(B6) — a translucent mood layer over the art. */}
+            {mood && (
+              <div aria-hidden style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: mood.overlay }} />
+            )}
+            {/* 開包閃度(B3) — a foil sheen sweeps a shiny card. */}
+            {fm && (
+              <div aria-hidden style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', mixBlendMode: 'screen' }}>
+                <div style={{ position: 'absolute', top: '-30%', bottom: '-30%', width: '55%', opacity: 0.5,
+                  background: `linear-gradient(115deg, transparent, ${fm.colors.join(', ')}, transparent)`,
+                  animation: 'tkmCardSheen 3.4s ease-in-out infinite' }} />
+              </div>
+            )}
+            {/* 名場面異畫(B1) — epithet banner + corner emblem when a face is on. */}
+            {altArt && (
+              <>
+                <div aria-hidden style={{ position: 'absolute', top: 42, right: 10, writingMode: 'vertical-rl', fontSize: '3rem', lineHeight: 1, color: altArt.accent, opacity: 0.22, fontFamily: '"Ma Shan Zheng", "Songti SC", serif', pointerEvents: 'none' }}>
+                  {altArt.glyph}
+                </div>
+                <div style={{ position: 'absolute', left: 0, right: 0, top: 44, textAlign: 'center', pointerEvents: 'none' }}>
+                  <span style={{ fontSize: '0.94rem', color: altArt.accent, fontFamily: '"Ma Shan Zheng", "Songti SC", serif', letterSpacing: '0.24rem', textShadow: '0 1px 6px rgba(0,0,0,0.85)' }}>
+                    {lang === 'en' ? altArt.en : altArt.zh}
+                  </span>
+                </div>
+              </>
+            )}
+            {/* 鑑藏印(B5) — a vermilion collector's seal: this card is in my hand. */}
+            {collectorSeal && (
+              <div aria-hidden title="鑑藏印"
+                style={{ position: 'absolute', right: 10, bottom: 92, width: 30, height: 44, border: '2px solid #b83a2e', borderRadius: 3, color: '#e0574a', display: 'flex', alignItems: 'center', justifyContent: 'center', writingMode: 'vertical-rl', fontSize: '0.72rem', letterSpacing: '0.05rem', fontFamily: '"Ma Shan Zheng", "Songti SC", serif', background: 'rgba(184,58,46,0.08)', opacity: 0.9, transform: 'rotate(-3deg)' }}>
+                {collectorSeal}藏
               </div>
             )}
             {/* 流光 sweep for gold+ frames. */}
@@ -441,7 +493,47 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
                 {rankDef && <span style={{ color: '#b0a0c8' }}>{pickName(rankDef.name, lang)}</span>}
                 {peer && <span style={{ color: '#d8b060' }}>{t('爵·', '')}{pickName(peer.name, lang)}</span>}
                 {honorific && <span style={{ color: '#e0a868' }}>「{pickName(honorific.name, lang)}」</span>}
+                {/* 動態卡面標(B6) — the current mood, worn small. */}
+                {mood && (
+                  <span title={t('動態卡面 — 隨現狀變化', 'Living card — reflects current state')}
+                    style={{ color: mood.accent }}>{mood.glyph} {lang === 'en' ? mood.en : mood.zh}</span>
+                )}
+                {/* 開包閃度標(B3) — the foil tier, worn as a shiny chip. */}
+                {fm && (
+                  <span title={t('開包閃度 — 開卡時擲得的收藏閃度', 'Foil tier — rolled at reveal')}
+                    style={{ color: '#20242c', fontWeight: 700, padding: '0 6px', borderRadius: 8, background: `linear-gradient(100deg, ${fm.colors.join(', ')})` }}>
+                    ✦{lang === 'en' ? fm.en : fm.zh}
+                  </span>
+                )}
               </div>
+              {/* 名場面異畫題句(B1) — the epithet couplet, on the active alt face. */}
+              {altArt && (
+                <div style={{ marginTop: 4, fontSize: '0.74rem', fontStyle: 'italic', color: altArt.accent, textShadow: '0 1px 6px rgba(0,0,0,0.85)' }}>
+                  「{lang === 'en' ? altArt.quoteEn : altArt.quoteZh}」
+                </div>
+              )}
+              {/* 異畫切換(B1) — cycle base ↔ unlocked famous-moment faces. */}
+              {unlockedAlts.length > 0 && (
+                <div style={{ display: 'flex', gap: 5, alignItems: 'center', marginTop: 5, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.62rem', color: '#7a8893', letterSpacing: '0.1rem' }}>{t('異畫', 'ALT')}</span>
+                  {[{ zh: '本畫', en: 'Base', accent: '#9aa6b0' }, ...unlockedAlts].map((a, i) => {
+                    const on = altIdx === i;
+                    const acc = i === 0 ? '#9aa6b0' : unlockedAlts[i - 1].accent;
+                    return (
+                      <button key={i}
+                        onClick={(e) => { e.stopPropagation(); setAltIdx(i); }}
+                        title={i === 0 ? t('本畫', 'Base art') : t(`名場面:${(a as { zh: string }).zh}`, `Famous moment: ${(a as { en: string }).en}`)}
+                        style={{
+                          fontSize: '0.64rem', padding: '0.05rem 0.4rem', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit',
+                          border: `1px solid ${on ? acc : '#3c4f5e'}`, background: on ? `${acc}22` : 'rgba(10,14,20,0.6)',
+                          color: on ? acc : '#8a94a0',
+                        }}>
+                        {i === 0 ? t('本畫', 'Base') : (lang === 'en' ? (a as { en: string }).en : (a as { zh: string }).zh)}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
@@ -587,6 +679,30 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
                 )}
               </div>
             )}
+            {/* 題跋(B5) — the collector's colophon: read it, or ✒ write your own. */}
+            <div style={{ borderTop: '1px solid #1e2832', paddingTop: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
+              {editingColophon ? (
+                <input
+                  autoFocus
+                  value={colophonDraft}
+                  maxLength={48}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => setColophonDraft(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { inscribeOfficer(officer.id, colophonDraft); setEditingColophon(false); } if (e.key === 'Escape') setEditingColophon(false); }}
+                  placeholder={t('題一句…(Enter 存,Esc 取消)', 'A colophon… (Enter to save)')}
+                  style={{ flex: 1, background: '#0c1118', border: '1px solid #3c4f5e', borderRadius: 4, color: '#d8c8a0', fontSize: '0.72rem', padding: '2px 6px', fontFamily: 'inherit' }}
+                />
+              ) : (
+                <span style={{ flex: 1, fontSize: '0.72rem', fontStyle: 'italic', color: colophon ? '#c8b48a' : '#4a545e', fontFamily: '"Ma Shan Zheng", "Songti SC", serif' }}>
+                  {colophon ? `題:${colophon}` : t('（未題跋）', '(no colophon)')}
+                </span>
+              )}
+              <button
+                onClick={(e) => { e.stopPropagation(); if (editingColophon) { inscribeOfficer(officer.id, colophonDraft); setEditingColophon(false); } else { setColophonDraft(colophon ?? ''); setEditingColophon(true); } }}
+                title={t('題跋 — 為此卡題一句收藏語', 'Write a collector\'s colophon')}
+                style={{ fontSize: '0.7rem', background: 'none', border: '1px solid #3c4f5e', borderRadius: 4, color: '#8a96a2', cursor: 'pointer', padding: '1px 7px', fontFamily: 'inherit' }}
+              >{editingColophon ? t('存', '✓') : '✒'}</button>
+            </div>
           </div>
           </>
           )}

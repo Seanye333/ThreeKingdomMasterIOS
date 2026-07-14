@@ -330,6 +330,7 @@ import { dueMedals, grantMedals } from '../data/medals';
 import { composeYearChronicle } from '../systems/chronicle';
 import { attackerArm } from '../systems/combat';
 import { festivalPool, festivalDraw, FESTIVAL_GOLD_COST, festivalScrollReward } from '../systems/festival';
+import { rollFoil } from '../systems/cardFoil';
 import { rollBounties, fulfilledBounties } from '../systems/bounty';
 import { codexRecordPeaks } from '../systems/codex';
 import { tickBuildings } from '../systems/buildings';
@@ -1234,6 +1235,8 @@ interface GameStore extends GameState {
   prayForRain: () => { ok: boolean; success?: boolean; message: string };
   /** 得將開卡 — show/clear the card-reveal flourish for an officer. */
   setCardReveal: (officerId: EntityId | null) => void;
+  /** 開包閃度 — roll & stamp a card's foil the first time it is pulled. */
+  assignFoil: (officerId: EntityId, opts?: { minGold?: boolean }) => void;
   /** 升星 — buy the officer's next 星級 (gold from their city; stars.ts). */
   investStar: (officerId: EntityId) => { ok: boolean; message: string };
   /** 殘卷煉星 — spend 名將殘卷 (not gold) to buy the next star; level-gated. */
@@ -1253,6 +1256,8 @@ interface GameStore extends GameState {
   retireOfficer: (officerId: EntityId) => { ok: boolean; message: string };
   /** 銘刻 — name/inscribe a storied (威名≥60) item held by your officer. */
   inscribeItem: (itemId: EntityId, name: string, motto: string) => { ok: boolean; message: string };
+  /** 題跋 — write (or clear, with empty text) a collector's colophon on a card. */
+  inscribeOfficer: (officerId: EntityId, text: string) => void;
   /** 洗髓 — a physician's once-per-lifetime latent-cap treatment. */
   marrowCleanse: (officerId: EntityId) => { ok: boolean; message: string };
   /** 日流 — playback controls for the day-by-day turn flow. */
@@ -11227,6 +11232,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       },
       dayFlowSkip: () => set({ dayFlow: null }),
       setCardReveal: (officerId) => set({ cardReveal: officerId, ...(officerId === null ? { cardRevealKind: 'recruit' as const } : {}) }),
+      assignFoil: (officerId, opts) => {
+        // 開包閃度 — roll once, the first time a card is revealed via a pull.
+        // 'plain' is a real result and locks the card so it never re-rolls.
+        const state = get();
+        const o = state.officers[officerId];
+        if (!o || o.foil) return; // already stamped (or gone) — foil is forever
+        const foil = rollFoil(Math.random, opts);
+        set({ officers: { ...state.officers, [officerId]: { ...o, foil } } });
+      },
       holdTalentFestival: () => {
         const state = get();
         if (!state.playerForceId) return { ok: false, message: '無主之師,無以聚賢。' };
@@ -11356,6 +11370,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         set({ itemInscriptions: { ...state.itemInscriptions, [itemId]: { name: clean(name) || undefined, motto: clean(motto) || undefined } } });
         get().notify(`銘刻已成 —「${clean(name) || base.name.zh}」`, `Inscribed — "${clean(name) || base.name.en}"`);
         return { ok: true, message: '銘刻已成。' };
+      },
+      inscribeOfficer: (officerId, text) => {
+        // 題跋 — a collector's colophon on an officer's card. Empty clears it.
+        const state = get();
+        const clean = text.trim().slice(0, 48);
+        const next = { ...state.officerColophons };
+        if (clean) next[officerId] = clean; else delete next[officerId];
+        set({ officerColophons: next });
       },
       marrowCleanse: (officerId) => {
         const state = get();
@@ -16402,6 +16424,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           generalScrolls: loaded.generalScrolls ?? 0,
           bounties: loaded.bounties ?? [],
           itemInscriptions: loaded.itemInscriptions ?? {},
+          officerColophons: loaded.officerColophons ?? {},
           pendingChronicle: loaded.pendingChronicle ?? null,
           yearbookCounts: loaded.yearbookCounts ?? {},
           setRewardsClaimed: loaded.setRewardsClaimed ?? [],

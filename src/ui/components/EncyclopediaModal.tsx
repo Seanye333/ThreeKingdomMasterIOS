@@ -17,6 +17,7 @@ import { Name } from './Name';
 import { CODEX_SETS, codexSetProgress, loadCodex, CODEX_MILESTONES, codexMilestoneReached, codexMilestoneClaimed } from '../../game/systems/codex';
 import { festivalPool, FESTIVAL_GOLD_COST } from '../../game/systems/festival';
 import { FRAME_SKINS, loadFrameSkin, saveFrameSkin, unlockedFrameSkins } from './cardFrames';
+import { CARD_BACKS, loadCardBack, saveCardBack, unlockedCardBacks } from './cardBacks';
 import { ItemCardModal } from './ItemCard';
 import { OfficerCardModal, OfficerCardFace } from './OfficerCardModal';
 import { officerGrade, gradeMeta } from '../../game/systems/officerGrade';
@@ -47,6 +48,7 @@ export function EncyclopediaModal({ onClose }: Props) {
   const claimMilestone = useGameStore((s) => s.claimCodexMilestone);
   const [festivalMsg, setFestivalMsg] = useState<string | null>(null);
   const [frameSkinId, setFrameSkinId] = useState(() => loadFrameSkin().id);
+  const [cardBackId, setCardBackId] = useState(() => loadCardBack().id);
   const [itemCardId, setItemCardId] = useState<string | null>(null);
   const [section, setSection] = useState<Section>('officers');
   const [search, setSearch] = useState('');
@@ -276,6 +278,15 @@ export function EncyclopediaModal({ onClose }: Props) {
                     style={{ background: '#10161e', border: '1px solid #2b3845', color: '#9aa6b0', fontSize: '0.72rem', fontFamily: 'inherit' }}
                   >
                     {unlockedFrameSkins().map((s2) => <option key={s2.id} value={s2.id}>🎴 {s2.zh}</option>)}
+                  </select>
+                  {/* 🂠 卡背收藏 — achievement-unlocked reveal card backs. */}
+                  <select
+                    value={cardBackId}
+                    onChange={(e) => { saveCardBack(e.target.value); setCardBackId(e.target.value); }}
+                    title={`卡背收藏(開卡翻面所現,成就解鎖):${CARD_BACKS.map((b) => `${b.zh}${b.requires ? '·需成就' : ''}`).join(' / ')}`}
+                    style={{ background: '#10161e', border: '1px solid #2b3845', color: '#9aa6b0', fontSize: '0.72rem', fontFamily: 'inherit' }}
+                  >
+                    {unlockedCardBacks().map((b) => <option key={b.id} value={b.id}>🂠 {b.zh}</option>)}
                   </select>
                 </div>
                 {/* 📖 圖鑑功勳 — coverage milestones (cross-campaign 遇-count); claim

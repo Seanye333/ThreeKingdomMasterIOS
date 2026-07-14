@@ -299,6 +299,9 @@ export interface GameState {
   bounties: import('../systems/bounty').Bounty[];
   /** 銘刻 — player-given names/mottoes engraved on storied items (lore ≥60). */
   itemInscriptions: Record<EntityId, { name?: string; motto?: string }>;
+  /** 題跋 — a collector's colophon the player writes onto an officer's card,
+   *  shown on the card + PNG export. Purely flavour. Keyed by officer id. */
+  officerColophons: Record<EntityId, string>;
   /** 史官年鑑 — the page awaiting the player's eyes (composed each spring). */
   pendingChronicle: import('../systems/chronicle').YearChronicle | null;
   /** 年鑑基線 — last spring's per-force city counts (rise/fall deltas). */
@@ -835,6 +838,7 @@ export const EMPTY_STATE: GameState = {
   generalScrolls: 0,
   bounties: [],
   itemInscriptions: {},
+  officerColophons: {},
   pendingChronicle: null,
   yearbookCounts: {},
   setRewardsClaimed: [],
@@ -1260,6 +1264,7 @@ export function loadScenario(
     generalScrolls: 0,
     bounties: [],
     itemInscriptions: {},
+    officerColophons: {},
     pendingChronicle: null,
     yearbookCounts: {},
     setRewardsClaimed: [],

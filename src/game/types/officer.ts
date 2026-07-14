@@ -50,6 +50,11 @@ export interface Officer {
   /** 戰意 — hot/cold streak from FOUGHT battles (+5 勢如破竹 … −3 心灰意冷).
    *  Gently scales combat contribution (streakPowerMul). */
   streak?: number;
+  /** 開包閃度 — a foil tier rolled once, the first time this card is revealed
+   *  through a pull (得將/求賢祭/覺醒). Pure collectible variance, no mechanics.
+   *  'plain' locks in a non-shiny result so it never re-rolls; missing = never
+   *  pulled. See cardFoil.ts. */
+  foil?: 'plain' | 'silver' | 'gold' | 'rainbow';
   /** Historical hometown — fixed at scenario load from the template. Doesn't
    *  change as the officer moves around. Used by UI + search bonuses. */
   hometownCityId?: EntityId;
