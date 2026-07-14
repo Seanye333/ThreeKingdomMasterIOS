@@ -26,6 +26,7 @@ import { honorificEffects, honorificById } from '../data/honorifics';
 import { gradeAuraPowerMul, gradeAuraMorale, itemMasteryMul, enemyMoraleShock, holdsTheLine } from './gradeCombat';
 import { growthPowerMul, streakPowerMul, grantXp } from './growth';
 import { mountBondMul } from './mountBond';
+import { isPhysician, medicalSkillOf } from './medicalSkill';
 import { skillEffectMul } from './skillMastery';
 import { setBondPowerMul } from './setBonds';
 import { partySynergies } from './partySynergy';
@@ -419,6 +420,17 @@ function effectsForOfficer(o: Officer, isWater = false): AggregatedSkillEffects 
     out.defenseMultiplier *= 1 + ((s.combat.defenseMultiplier ?? 1) - 1) * m;
   }
   return out;
+}
+
+/**
+ * 軍醫隨軍 — the casualty mitigation a physician marching with a side lends its
+ * wounded: 0 with no medic, 0.1 for a raw one, up to 0.4 for a 神醫 (medical
+ * skill 100). Cuts the wound rate and stabilises grave wounds a tier milder.
+ */
+export function sideSurgeonMitigation(pool: Officer[]): number {
+  let best = -1;
+  for (const o of pool) if (isPhysician(o)) best = Math.max(best, medicalSkillOf(o));
+  return best < 0 ? 0 : Math.min(0.4, 0.1 + (best / 100) * 0.3);
 }
 
 /** Aggregate combat effects from an entire side (commander + companions). */
@@ -1091,15 +1103,23 @@ export function resolveBattle(
   const losingSide = finalAttackerWins
     ? [defender.commander, ...(defender.companions ?? [])]
     : [attacker.commander, ...(attacker.companions ?? [])];
+  // 軍醫隨軍 — a physician marching with the beaten host tends the fallen: fewer
+  // wounds, and a grave one stabilised down a tier. Scales with their 醫術 (a
+  // raw medic already helps; a 神醫 halves the toll).
+  const surgeonMit = sideSurgeonMitigation(losingSide.filter((o): o is Officer => !!o));
   for (const o of losingSide) {
     if (!o) continue;
     if (captured.includes(o.id)) continue;
     if (duel?.loser.id === o.id) continue; // duel loser handled by duel record
-    if (rng() < 0.18) {
+    if (rng() < 0.18 * (1 - surgeonMit)) {
       // 傷勢分級 — most wounds are slight; a sixth are grave; a rare one is
       // near-mortal and lays the officer up for half a year (and may kill).
       const r = rng();
-      const severity = r < 0.62 ? 'minor' : r < 0.9 ? 'serious' : 'critical';
+      let severity: 'minor' | 'serious' | 'critical' = r < 0.62 ? 'minor' : r < 0.9 ? 'serious' : 'critical';
+      // 軍醫穩創 — a surgeon may stabilise a grave wound one tier milder.
+      if (surgeonMit > 0 && rng() < surgeonMit) {
+        severity = severity === 'critical' ? 'serious' : 'minor';
+      }
       const seasons = severity === 'minor' ? 1 + Math.floor(rng() * 2)   // 1-2
         : severity === 'serious' ? 3 + Math.floor(rng() * 2)             // 3-4
         : 5 + Math.floor(rng() * 2);                                     // 5-6
