@@ -447,6 +447,31 @@ export function liveItemById(id: string): Item | null {
   return liveItem(base, itemRefineLevel(id), itemBreakthroughLevel(id), itemGemIds(id), itemLoreLevel(id), itemAwakeningIds(id), itemIsEvolved(id), itemWearLevel(id), itemAffixIds(id));
 }
 
+// ─── 統御信物 — command tokens ──────────────────────────────────────────────
+/** Treasures whose bearer marshals the whole host to fight above itself. */
+export const COMMAND_TOKEN_IDS = new Set<string>([
+  'hufu-tiger-tally', 'shuaiyin-marshal-seal', 'bingfu-command-tally',
+  'jieyue-ceremonial-axe', 'lingqi-command-banner',
+]);
+
+export function isCommandToken(itemId: string): boolean {
+  return COMMAND_TOKEN_IDS.has(itemId);
+}
+
+/**
+ * 統御之威 — a side fielding officers who bear command tokens fights above its
+ * numbers: +4% power per token-bearer, capped at +8% (two tokens). Pure
+ * command aura, on top of the token's own hefty 統率. Symmetric — any side can
+ * carry one.
+ */
+export function commandTokenMultiplier(pool: Array<{ equipment: readonly string[] } | null | undefined>): number {
+  let bearers = 0;
+  for (const o of pool) {
+    if (o && o.equipment.some((id) => COMMAND_TOKEN_IDS.has(id))) bearers++;
+  }
+  return 1 + Math.min(0.08, 0.04 * bearers);
+}
+
 /** Gold cost to take an item from `plus` → `plus+1` (escalates with rarity + level). */
 export function refineCost(item: Item, plus: number): number {
   const r = itemRarity(item);
@@ -1683,6 +1708,39 @@ const FORGE_BATCH_10: Item[] = [
     grants: { policy: 'imperial-edict' },
     rarity: 'gold',
     forgeOnly: true,
+  },
+  // ── 統御信物 — command tokens: the tools of high command, worn as treasures.
+  //    Beyond a hefty 統率, a token's bearer marshals the whole host to fight a
+  //    touch above itself (commandTokenMul). See COMMAND_TOKEN_IDS. ──
+  {
+    id: 'hufu-tiger-tally', name: { en: 'Tiger Tally', zh: '虎符' }, kind: 'treasure',
+    description: 'The bronze tiger tally — split in two, it commands an army in the sovereign\'s name.',
+    descriptionZh: '銅鑄虎符,剖之為二,合之則三軍聽令。',
+    effects: { leadership: 8 }, rarity: 'gold', originCityId: 'luoyang',
+  },
+  {
+    id: 'shuaiyin-marshal-seal', name: { en: "Marshal's Seal", zh: '帥印' }, kind: 'treasure',
+    description: "The grand marshal's seal — whoever holds it holds the field.",
+    descriptionZh: '大將軍帥印,執之者號令全軍。',
+    effects: { leadership: 7, war: 2 }, rarity: 'gold', originCityId: 'ye',
+  },
+  {
+    id: 'bingfu-command-tally', name: { en: 'Command Tally', zh: '兵符' }, kind: 'treasure',
+    description: 'The command tally that musters and moves the standing host.',
+    descriptionZh: '調兵遣將之符,徵發部伍,如臂使指。',
+    effects: { leadership: 6, politics: 2 }, rarity: 'silver', originCityId: 'xuchang',
+  },
+  {
+    id: 'jieyue-ceremonial-axe', name: { en: 'Ceremonial Axe & Banner', zh: '節鉞' }, kind: 'treasure',
+    description: 'The axe and staff of delegated authority — power over life and death in the field.',
+    descriptionZh: '假節鉞者,得專征伐、賞罰由己。',
+    effects: { leadership: 7, charisma: 2 }, rarity: 'gold', originCityId: 'chengdu',
+  },
+  {
+    id: 'lingqi-command-banner', name: { en: 'Command Banner', zh: '令旗' }, kind: 'treasure',
+    description: 'The commander\'s signal banner — the host wheels and charges at its wave.',
+    descriptionZh: '主將令旗,一揮之間,萬眾進退。',
+    effects: { leadership: 6, war: 1 }, rarity: 'silver', originCityId: 'jianye',
   },
   {
     id: 'longwen-yudai',

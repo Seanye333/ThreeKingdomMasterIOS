@@ -3,7 +3,7 @@
 > 由 `scripts/gen-catalog.ts` 自動生成,請勿手改;重生成:`npm run docs:catalog`。
 > 可讀摘要見 [GUIDE.md](GUIDE.md) 附錄。
 
-## 名品 Items(1404)
+## 名品 Items(1409)
 
 | 名 | 類 | 出處城 | 加成 |
 |---|---|---|---|
@@ -1404,6 +1404,11 @@
 | 武經總要 Compendium of War | book | — | INT+6 LEA+5 |
 | 將苑 The General's Garden | book | — | INT+7 LEA+4 |
 | 九錫 Nine Bestowments | treasure | — | POL+8 CHA+6 |
+| 虎符 Tiger Tally | treasure | luoyang | LEA+8 |
+| 帥印 Marshal's Seal | treasure | ye | LEA+7 WAR+2 |
+| 兵符 Command Tally | treasure | xuchang | LEA+6 POL+2 |
+| 節鉞 Ceremonial Axe & Banner | treasure | chengdu | LEA+7 CHA+2 |
+| 令旗 Command Banner | treasure | jianye | LEA+6 WAR+1 |
 | 龍紋玉帶 Dragon Jade Belt | treasure | — | POL+6 CHA+6 |
 | 鎮國神璽 Realm-Anchoring Seal | treasure | — | POL+9 CHA+5 |
 | 孫子兵法 Sun Tzu's Art of War | book | wu |  |

@@ -7,6 +7,7 @@ import {
 } from '../../game/data/items';
 import { ITEM_WEAPON_TYPE, classifyWeaponByName, WEAPON_TYPE_DEFS, type WeaponType } from '../../game/data/weaponTypes';
 import { SIGNATURE_ITEMS } from '../../game/data/signatureItems';
+import { artForItem } from '../../game/systems/evolvedArts';
 import { exportItemCardPNG } from './officerCardExport';
 import { useT, useLanguage, pickName, useDesc } from '../i18n';
 
@@ -162,15 +163,24 @@ export function ItemCardFace({ itemId, onClose }: { itemId: string; onClose?: ()
               🔧 {t('耗損', 'Wear')} {wear}/100 · {t('宜保養', 'needs whetting')}
             </div>
           )}
-          {/* 器魂 — an awakened legendary wears its ·神 mark. */}
-          {evolved && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span title={t('器魂已醒 — ★5 名器進化為 ·神 終極形態,全效果再增', 'Spirit awakened — the ★5 storied form has ascended')}
-                style={{ fontSize: '0.72rem', padding: '1px 9px', borderRadius: 9, background: 'linear-gradient(100deg, #fff4c8, #e6c473, #a8842e)', color: '#20242c', fontWeight: 700, letterSpacing: '0.1rem' }}>
-                ☯ {t('器魂已醒', 'Ascended')}
-              </span>
-            </div>
-          )}
+          {/* 器魂 — an awakened legendary wears its ·神 mark + signature art (W9). */}
+          {evolved && (() => {
+            const art = artForItem(itemId);
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <span title={t('器魂已醒 — ★5 名器進化為 ·神 終極形態,全效果再增', 'Spirit awakened — the ★5 storied form has ascended')}
+                  style={{ fontSize: '0.72rem', padding: '1px 9px', borderRadius: 9, background: 'linear-gradient(100deg, #fff4c8, #e6c473, #a8842e)', color: '#20242c', fontWeight: 700, letterSpacing: '0.1rem' }}>
+                  ☯ {t('器魂已醒', 'Ascended')}
+                </span>
+                {art && (
+                  <span title={t(`器魂戰技「${art.zh}」— ${art.descZh}(單挑勇 +${art.duelBonus})`, `Signature art "${art.en}" — ${art.descEn} (duel +${art.duelBonus})`)}
+                    style={{ fontSize: '0.72rem', padding: '1px 8px', borderRadius: 9, background: 'rgba(200,120,220,0.14)', border: '1px solid #a06ed0', color: '#d6a8ea' }}>
+                    ⚔ {lang === 'en' ? art.en : art.zh}
+                  </span>
+                )}
+              </div>
+            );
+          })()}
 
           {/* 覺醒詞條 */}
           {awakened.length > 0 && (

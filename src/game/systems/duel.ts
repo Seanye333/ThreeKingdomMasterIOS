@@ -5,6 +5,7 @@ import { effectivePrestigeEffects } from '../data/prestige';
 import { afflictionDelta } from './afflictions';
 import { officerLevel } from './officerGrade';
 import { gradeCombatBonus, itemMasteryMul, duelFirstStrike } from './gradeCombat';
+import { evolvedArtDuelBonus } from './evolvedArts';
 import { skillEffectMul } from './skillMastery';
 import { deriveWeaponType, type WeaponType } from '../data/weaponTypes';
 
@@ -215,6 +216,8 @@ function prowessParts(o: Officer): { itemBonus: number; skillBonus: number; trai
     // 兵器駕馭 — a 神兵 only tells in worthy hands; 精煉 boosts read live here.
     if (it?.effects.war) itemBonus += it.effects.war * itemMasteryMul(o, it);
   }
+  // 器魂戰技 — an awakened weapon's signature art sharpens single combat (W9).
+  itemBonus += evolvedArtDuelBonus(o);
   let skillBonus = 0;
   for (const sid of o.skills) {
     const s = SKILLS_BY_ID[sid];
