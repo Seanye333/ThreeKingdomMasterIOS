@@ -1419,9 +1419,12 @@ export function OfficerDetail({
                   <div style={{ marginBottom: '0.5rem', display: 'flex', flexWrap: 'wrap', gap: '0.4rem', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.72rem', color: '#7a8893' }}>{t('神兵譜', 'Set')}</span>
                     {sets.map((s) => (
-                      <span key={s.id} title={t(`套裝共鳴 — 戰力 +${Math.round(s.powerBonus * 100)}%`, `Set resonance — power +${Math.round(s.powerBonus * 100)}%`)}
+                      <span key={s.id} title={s.setSkill
+                        ? t(`套裝共鳴 +${Math.round(s.powerBonus * 100)}% · 套裝技「${s.setSkill.zh}」— ${s.setSkill.descZh}`, `Set +${Math.round(s.powerBonus * 100)}% · Skill "${s.setSkill.en}" — ${s.setSkill.descEn}`)
+                        : t(`套裝共鳴 — 戰力 +${Math.round(s.powerBonus * 100)}%`, `Set resonance — power +${Math.round(s.powerBonus * 100)}%`)}
                         style={{ padding: '0.1rem 0.5rem', borderRadius: 'var(--tkm-radius-xs)', background: '#10161e', border: `1px solid ${s.color}`, color: s.color, fontSize: '0.78rem' }}>
                         {lang === 'en' ? s.name.en : s.name.zh} <span style={{ fontSize: '0.66rem', opacity: 0.85 }}>+{Math.round(s.powerBonus * 100)}%</span>
+                        {s.setSkill && <span style={{ fontSize: '0.64rem', marginLeft: 4, color: '#ffd66e' }}>✦{lang === 'en' ? s.setSkill.en : s.setSkill.zh}</span>}
                       </span>
                     ))}
                   </div>

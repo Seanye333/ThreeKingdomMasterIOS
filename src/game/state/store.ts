@@ -75,7 +75,7 @@ import {
   type DemandKind,
 } from '../systems/diplomacyPacts';
 import { FORGE_RECIPES_BY_ID } from '../data/forging';
-import { STARTER_RECIPE_IDS, forgeQualityPlus, discoverableRecipe, dismantleYield } from '../systems/forging';
+import { STARTER_RECIPE_IDS, forgeQualityPlus, discoverableRecipe, dismantleYield, smithTier, FORGE_MASTER_BORN_LORE, type SmithTier } from '../systems/forging';
 import { assignAiGear } from '../systems/aiGear';
 import { planAiForging } from '../systems/aiForge';
 import { EDICTS_BY_KIND, IMPERIAL_RANKS_BY_ID } from '../data/imperial';
@@ -85,6 +85,7 @@ import { ITEMS_BY_ID, refineCost, REFINE_MAX, setRefineRegistry, itemRarity,
   GEM_FUSION, GEM_FUSION_COST, setBreakthroughRegistry, setGemRegistry, setLoreRegistry, accrueWeaponLore,
   setAwakeningRegistry, awakeningSlots, AWAKENING_BY_ID, smeltIronYield, itemLoreLevel,
   setEvolvedRegistry, canEvolveItem,
+  setWearRegistry, itemWearLevel, whetCost,
   itemGrowthGoldSpent } from '../data/items';
 import { SKILLS_BY_ID } from '../data/skills';
 import { marchDurationFor } from '../data/cities';
@@ -1135,7 +1136,7 @@ interface GameStore extends GameState {
   forgeItem: (
     cityId: EntityId,
     recipeId: EntityId,
-  ) => { ok: boolean; reason?: string; plus?: number; smith?: { zh: string; en: string } };
+  ) => { ok: boolean; reason?: string; plus?: number; smith?: { zh: string; en: string }; smithTier?: SmithTier; bornLore?: number };
   /** 熔毀 — melt a lost item in a foundry city back into iron + gold. */
   dismantleItem: (
     cityId: EntityId,
@@ -1153,6 +1154,8 @@ interface GameStore extends GameState {
   smeltItem: (itemId: EntityId) => { ok: boolean; reason?: string; iron?: number };
   /** 器魂進化 — awaken a ★5 名器 神兵 into its ·神 final form (gold+iron). */
   evolveItem: (itemId: EntityId) => { ok: boolean; message: string };
+  /** 保養 — whet a worn 神兵 back to keen at a forge city (gold scales with wear). */
+  whetItem: (itemId: EntityId) => { ok: boolean; message: string };
   /** 突破 — push a fully-refined item one ★ further, charged gold + iron from the
    *  holding city (needs a foundry). */
   breakthroughItem: (itemId: EntityId) => { ok: boolean; reason?: string; cost?: number; iron?: number };
@@ -1696,7 +1699,7 @@ export const useGameStore = create<GameStore>()(
       ...EMPTY_STATE,
 
       loadScenario: (scenario, playerForceId, difficulty, customOfficer, capitalOverride) => {
-        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); setLoreRegistry({}); setAwakeningRegistry({}); setEvolvedRegistry([]); // fresh game → drop any prior 精煉/名器 registry
+        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); setLoreRegistry({}); setAwakeningRegistry({}); setEvolvedRegistry([]); setWearRegistry({}); // fresh game → drop any prior 精煉/名器 registry
         set((s) => loadScenario(s, scenario, playerForceId, difficulty, customOfficer, capitalOverride));
         get().seedAiGear();
       },
@@ -1705,7 +1708,7 @@ export const useGameStore = create<GameStore>()(
       // observe mode, so the AI runs every realm and the season tick
       // simulates history while you watch.
       observeScenario: (scenario, difficulty) => {
-        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); setLoreRegistry({}); setAwakeningRegistry({}); setEvolvedRegistry([]);
+        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); setLoreRegistry({}); setAwakeningRegistry({}); setEvolvedRegistry([]); setWearRegistry({});
         set((s) => ({
           ...loadScenario(s, scenario, scenario.forces[0].id, difficulty),
           playerForceId: null,
@@ -1722,7 +1725,7 @@ export const useGameStore = create<GameStore>()(
         if (!scenario) return;
         const hasForce = scenario.forces.some((f) => f.id === challenge.forceId);
         if (!hasForce) return;
-        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); setLoreRegistry({}); setAwakeningRegistry({}); setEvolvedRegistry([]);
+        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); setLoreRegistry({}); setAwakeningRegistry({}); setEvolvedRegistry([]); setWearRegistry({});
         set((s) => ({
           ...loadScenario(s, scenario, challenge.forceId, challenge.difficulty),
           activeChallenge: challenge.id,
@@ -12476,6 +12479,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // a chapter: its wielder joins the lineage, its battle-tally climbs, and a
         // victor's blade is credited a share of the foes felled.
         const provEntries: Array<{ itemId: string; ownerId: string; kills: number }> = [];
+        // 耗損 — a 神兵 dulls a touch each battle; whetted (保養) back at a forge.
+        const nextWear = { ...state.itemWear };
         for (const u of tb.units) {
           const o = officers[u.officerId];
           if (!o) continue;
@@ -12487,10 +12492,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             const r = itemRarity(base);
             if (r !== 'gold' && r !== 'silver') continue; // only storied pieces earn a scroll
             provEntries.push({ itemId, ownerId: u.officerId, kills: killShare });
+            if (r === 'gold') nextWear[itemId] = Math.min(100, (nextWear[itemId] ?? 0) + 1); // only 神兵 wear
           }
         }
         const nextProvenance = accrueItemProvenance(state.itemProvenance, provEntries);
-        set({ itemLore: nextItemLore, itemProvenance: nextProvenance });
+        setWearRegistry(nextWear);
+        set({ itemLore: nextItemLore, itemProvenance: nextProvenance, itemWear: nextWear });
 
         // Save replay (snapshot of final battle state only — turn-by-turn would
         // require more plumbing, so we record the end state.).
@@ -14122,10 +14129,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const forgeSpecialtyBonus = CITY_SPECIALTY[cityId] === 'iron'
           ? 0.1 + (city.specialtyDev ?? 0) * 0.05
           : 0;
+        // 名匠監造 — the presiding smith's calibre; a 神匠 tempers finer work AND
+        // seeds the piece with renown at the anvil.
+        const tier = smithTier(smith?.stats.intelligence ?? 0, (smith?.traits ?? []).includes('inventive'));
         const plus = forgeQualityPlus({
           smithIntelligence: smith?.stats.intelligence ?? 0,
           inventive: (smith?.traits ?? []).includes('inventive'),
           refineUpgradeChance: armsBB.refineUpgradeChance + forgeSpecialtyBonus,
+          masterSmith: tier.tier === 3,
         });
 
         // Consume gold, consume ingredients, place result in the lost-items pool of this city.
@@ -14141,6 +14152,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           ? { ...state.itemRefinements, [recipe.resultItemId]: Math.max(state.itemRefinements[recipe.resultItemId] ?? 0, plus) }
           : state.itemRefinements;
         if (plus > 0) setRefineRegistry(itemRefinements);
+        // 神匠開光 — a 神匠's piece leaves the anvil already whispering of legend.
+        const bornLore = tier.tier === 3 ? FORGE_MASTER_BORN_LORE : 0;
+        const itemLore = bornLore > 0
+          ? { ...state.itemLore, [recipe.resultItemId]: Math.max(state.itemLore[recipe.resultItemId] ?? 0, bornLore) }
+          : state.itemLore;
+        if (bornLore > 0) setLoreRegistry(itemLore);
         set({
           cities: {
             ...state.cities,
@@ -14152,6 +14169,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           },
           lostItems: newLostItems,
           itemRefinements,
+          ...(bornLore > 0 ? { itemLore } : {}),
         });
         // 名器鑄成 — herald a top-grade (神兵) piece coming off the anvil.
         const forged = ITEMS_BY_ID[recipe.resultItemId];
@@ -14163,7 +14181,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             captionEn: `${forged.name.en} is forged at ${city.name.en}`,
           });
         }
-        return { ok: true, plus, smith: smith?.name };
+        return { ok: true, plus, smith: smith?.name, smithTier: tier, bornLore };
       },
 
       dismantleItem: (cityId, itemId) => {
@@ -14310,6 +14328,31 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           `${base.name.en} awakens its spirit — now ${base.name.en} · Ascended (borne by ${holder.name.en})`,
         );
         return { ok: true, message: '器魂已醒。' };
+      },
+
+      // 保養 — whet a worn blade back to keen at a forge city (gold scales with
+      // the wear undone). Only bites once a piece is genuinely worn (WEAR_BITE).
+      whetItem: (itemId) => {
+        const state = get();
+        const base = ITEMS_BY_ID[itemId];
+        if (!base) return { ok: false, message: '無此器。' };
+        const wear = itemWearLevel(itemId);
+        if (wear <= 0) return { ok: false, message: '器未見損。' };
+        const holder = Object.values(state.officers).find(
+          (o) => o.forceId === state.playerForceId && o.status !== 'dead' && o.equipment.includes(itemId),
+        );
+        if (!holder) return { ok: false, message: '非我將所持。' };
+        const city = holder.locationCityId ? state.cities[holder.locationCityId] : null;
+        if (!city || city.ownerForceId !== state.playerForceId) return { ok: false, message: '須居於我城中。' };
+        const foundry = state.buildings.find((b) => b.cityId === city.id && b.id === 'foundry');
+        if (!foundry || foundry.level < 1) return { ok: false, message: '須有鐵工坊。' };
+        const cost = whetCost(wear);
+        if (city.gold < cost) return { ok: false, message: `金不足(需 ${cost})。` };
+        const itemWear = { ...state.itemWear }; delete itemWear[itemId];
+        setWearRegistry(itemWear);
+        set({ itemWear, cities: { ...state.cities, [city.id]: { ...city, gold: city.gold - cost } } });
+        get().notify(`${base.name.zh}保養如新(金 −${cost})`, `${base.name.en} whetted keen again (−${cost} gold)`);
+        return { ok: true, message: '保養已成。' };
       },
 
       // 重鑄分解 — smelt a held item back to iron (yield by rarity + sunk
@@ -16571,6 +16614,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           itemAwakenings: loaded.itemAwakenings ?? {},
           evolvedItems: loaded.evolvedItems ?? [],
           itemProvenance: loaded.itemProvenance ?? {},
+          itemWear: loaded.itemWear ?? {},
           destroyedItems: loaded.destroyedItems ?? [],
           // 家門聲望 — backfill from the loaded roster for legacy saves.
           clanStandings: loaded.clanStandings ?? deriveInitialClanStandings(loaded.officers ?? {}),
@@ -16618,6 +16662,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         setLoreRegistry(fresh.itemLore);
         setAwakeningRegistry(fresh.itemAwakenings);
         setEvolvedRegistry(fresh.evolvedItems);
+        setWearRegistry(fresh.itemWear);
         set(fresh);
         return true;
       },

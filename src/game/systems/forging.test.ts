@@ -6,6 +6,7 @@ import {
   forgeQualityPlus,
   discoverableRecipe,
   dismantleYield,
+  smithTier,
 } from './forging';
 
 describe('STARTER_RECIPE_IDS', () => {
@@ -56,6 +57,24 @@ describe('forgeQualityPlus', () => {
 
   it('神品暴擊 — a rare crit tempers a 4th grade beyond the +3 cap', () => {
     expect(forgeQualityPlus({ smithIntelligence: 95, inventive: true, refineUpgradeChance: 1, rng: alwaysLuck })).toBe(4);
+  });
+
+  it('名匠監造 — a 神匠 widens the masterwork odds', () => {
+    // A roll that misses the plain chance but lands inside a master smith's wider one.
+    const rng = () => 0.14; // > 0.06 base, < 0.06+0.10 master
+    expect(forgeQualityPlus({ smithIntelligence: 80, inventive: false, refineUpgradeChance: 0, rng })).toBe(1);
+    expect(forgeQualityPlus({ smithIntelligence: 80, inventive: false, refineUpgradeChance: 0, masterSmith: true, rng })).toBe(2);
+  });
+});
+
+describe('名匠監造 — smith tiers', () => {
+  it('grades the presiding smith by wit and 巧思', () => {
+    expect(smithTier(50, false).tier).toBe(0);   // 匠人
+    expect(smithTier(80, false).tier).toBe(1);   // 良匠
+    expect(smithTier(95, false).tier).toBe(2);   // 巧匠 (智≥92)
+    expect(smithTier(60, true).tier).toBe(2);    // 巧匠 (巧思)
+    expect(smithTier(92, true).tier).toBe(3);    // 神匠 (巧思 + 智≥90)
+    expect(smithTier(3, true).zh).toBe('巧匠');   // inventive alone caps at 2
   });
 });
 

@@ -19,6 +19,12 @@ export interface ItemSet {
   /** Which combat axis it buffs (default 'power'): 'guard' cuts own casualties,
    *  'naval' lifts power only in water battles, 'power' is raw field power. */
   effect?: ItemSetEffect;
+  /** 套裝技 — a named resonance-skill on a marquee set: a SECOND axis buff on top
+   *  of the primary one (e.g. 力 + 守), shown as a labelled perk. Optional. */
+  setSkill?: { zh: string; en: string; descZh: string; descEn: string };
+  /** The second axis's magnitude + axis (only meaningful with setSkill). */
+  bonus2?: number;
+  effect2?: ItemSetEffect;
   color: string;
 }
 
@@ -200,6 +206,35 @@ export const ITEM_SETS: ItemSet[] = [
   { id: 'wuzhao-stele',   name: { zh: '武曌稱帝', en: "Wu Zetian's Reign" },        members: ['wuzi-bei', 'wu-zetian-jin-ce', 'shang-guan-wan-er'], powerBonus: 0.12, color: '#c178c7' },
   { id: 'yanjin-liugu',   name: { zh: '顏筋柳骨', en: 'Yan Zhenqing the Loyal' },   members: ['ji-zhi-wen-gao', 'duo-bao-ta-bei', 'yan-zhenqing-yin'], powerBonus: 0.11, color: '#d4a84a' },
   { id: 'shifo-wangwei',  name: { zh: '詩佛王維', en: 'Wang Wei the Poet-Buddha' }, members: ['wang-chuan-tu', 'shan-ju-qiu-ming'],             powerBonus: 0.10, effect: 'civil', color: '#7ed6a0' },
+  // ── 套裝技 — marquee dual-axis resonances: a named skill buffs a SECOND axis
+  //    on top of the primary (力+文 / 力+守 / 力+文), assemblable across slots. ──
+  {
+    id: 'saint-chronicle',
+    name: { zh: '武聖春秋', en: 'The Saint and the Chronicle' },
+    members: ['green-dragon', 'spring-autumn'],
+    powerBonus: 0.08,
+    setSkill: { zh: '秉燭達旦', en: 'Reading by Candlelight', descZh: '刀不離手、書不釋卷 — 另增內政 +6%', descEn: 'Blade in hand, book by night — +6% civil' },
+    bonus2: 0.06, effect2: 'civil',
+    color: '#d4a84a',
+  },
+  {
+    id: 'qinggang-zhaoye',
+    name: { zh: '青釭照夜', en: 'Qinggang & Nightshade' },
+    members: ['qing-gang', 'zhaoye-yushizi'],
+    powerBonus: 0.09,
+    setSkill: { zh: '長坂救主', en: 'The Long Slope Rescue', descZh: '懷主血戰,劍馬合一 — 另減折損 7%', descEn: 'Guarding the heir through the storm — −7% own losses' },
+    bonus2: 0.07, effect2: 'guard',
+    color: '#cfd8e0',
+  },
+  {
+    id: 'yitian-seal',
+    name: { zh: '倚天問鼎', en: 'Blade & Imperial Seal' },
+    members: ['yitian', 'imperial-seal'],
+    powerBonus: 0.10,
+    setSkill: { zh: '挾天子以令諸侯', en: 'The Emperor in Hand', descZh: '劍指天下、璽握權柄 — 另增內政 +6%', descEn: 'Sword and seal both in one grip — +6% civil' },
+    bonus2: 0.06, effect2: 'civil',
+    color: '#e6c473',
+  },
 ];
 
 /** The sets an officer has fully assembled in their equipment. */
@@ -229,13 +264,18 @@ const CIVIL_CAP = 0.25;   // ≤ +25% internal-affairs output
 /** 套裝共鳴 — aggregate every full set an officer holds, by effect axis, capped. */
 export function itemSetBonuses(officer: Officer): ItemSetBonus {
   let power = 0, guard = 0, naval = 0, civil = 0;
-  for (const s of activeItemSets(officer)) {
-    switch (s.effect ?? 'power') {
-      case 'guard': guard += s.powerBonus; break;
-      case 'naval': naval += s.powerBonus; break;
-      case 'civil': civil += s.powerBonus; break;
-      default:      power += s.powerBonus; break;
+  const addAxis = (axis: ItemSetEffect, mag: number) => {
+    switch (axis) {
+      case 'guard': guard += mag; break;
+      case 'naval': naval += mag; break;
+      case 'civil': civil += mag; break;
+      default:      power += mag; break;
     }
+  };
+  for (const s of activeItemSets(officer)) {
+    addAxis(s.effect ?? 'power', s.powerBonus);
+    // 套裝技 — a marquee set's second resonance axis (e.g. also 守).
+    if (s.setSkill && s.bonus2) addAxis(s.effect2 ?? 'power', s.bonus2);
   }
   return {
     powerMul: 1 + Math.min(POWER_CAP, power),

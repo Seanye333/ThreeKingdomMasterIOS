@@ -36,6 +36,8 @@ export function forgeQualityPlus(input: {
   smithIntelligence: number;
   inventive: boolean;
   refineUpgradeChance: number;
+  /** 名匠監造 — a 神匠 (see smithTier tier 3) presides: a touch more masterwork luck. */
+  masterSmith?: boolean;
   rng?: () => number;
 }): number {
   const rng = input.rng ?? Math.random;
@@ -46,15 +48,33 @@ export function forgeQualityPlus(input: {
   // 巧思 — a born tinkerer never turns out a plain piece.
   if (input.inventive) plus = Math.max(plus, 1);
   // 神品 — a masterwork roll can temper one extra grade in.
-  const chance = (input.inventive ? 0.18 : 0.06) + input.refineUpgradeChance;
+  const chance = (input.inventive ? 0.18 : 0.06) + input.refineUpgradeChance + (input.masterSmith ? 0.10 : 0);
   if (rng() < chance) plus += 1;
   plus = Math.min(3, plus);
   // 神品暴擊 — a rare flash of inspiration at the anvil tempers a 4th grade in,
   // beyond the normal cap (capped at REFINE_MAX). The forge is no longer a sure
   // thing — every heat carries a small chance of an exceptional piece.
-  if (rng() < (input.inventive ? 0.07 : 0.04)) plus = Math.min(5, plus + 1);
+  if (rng() < ((input.inventive ? 0.07 : 0.04) + (input.masterSmith ? 0.05 : 0))) plus = Math.min(5, plus + 1);
   return plus;
 }
+
+/**
+ * 名匠監造 — the calibre of the smith presiding over a forge, read from their
+ * wit and 巧思. A 神匠 (inventive AND 智≥90) both tempers finer work (masterSmith
+ * bonus above) AND seeds the piece with a whisper of renown at the anvil
+ * (FORGE_MASTER_BORN_LORE) — a legend that begins before its first battle.
+ */
+export interface SmithTier { tier: 0 | 1 | 2 | 3; zh: string; en: string }
+
+export function smithTier(intelligence: number, inventive: boolean): SmithTier {
+  if (inventive && intelligence >= 90) return { tier: 3, zh: '神匠', en: 'Divine Artificer' };
+  if (inventive || intelligence >= 92) return { tier: 2, zh: '巧匠', en: 'Master Artisan' };
+  if (intelligence >= 75) return { tier: 1, zh: '良匠', en: 'Skilled Smith' };
+  return { tier: 0, zh: '匠人', en: 'Journeyman' };
+}
+
+/** 名器種子 — the renown a 神匠's masterwork is born carrying. */
+export const FORGE_MASTER_BORN_LORE = 8;
 
 /**
  * 研發圖譜 — pick one not-yet-known recipe that a foundry of the given level can

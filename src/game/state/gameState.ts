@@ -425,6 +425,9 @@ export interface GameState {
    *  into battle, plus a tally of battles fought and foes felled. Flavour only;
    *  shown on the item card. Keyed by item id. See itemProvenance.ts. */
   itemProvenance: Record<EntityId, { owners: EntityId[]; battles: number; kills: number }>;
+  /** 耗損 — per-item wear (神兵 only accrue it); past WEAR_BITE a blade bites
+   *  softer until 保養'd. Resolved through items.setWearRegistry. */
+  itemWear: Record<EntityId, number>;
   /** 回爐 — items smelted back to iron this campaign; gone from circulation. */
   destroyedItems: EntityId[];
   /** 寶石庫存 — gems on hand (from 熔毀 drops etc.); socketing spends these
@@ -883,6 +886,7 @@ export const EMPTY_STATE: GameState = {
   itemAwakenings: {},
   evolvedItems: [],
   itemProvenance: {},
+  itemWear: {},
   destroyedItems: [],
   gemStock: {},
   knownRecipes: STARTER_RECIPE_IDS.slice(),
@@ -1316,6 +1320,7 @@ export function loadScenario(
   itemAwakenings: {},
   evolvedItems: [],
   itemProvenance: {},
+  itemWear: {},
   destroyedItems: [],
   gemStock: {},
     knownRecipes: STARTER_RECIPE_IDS.slice(),

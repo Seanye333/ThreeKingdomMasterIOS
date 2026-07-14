@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import { ITEMS } from '../../game/data';
 import type { Item } from '../../game/data/items';
-import { ITEMS_BY_ID, REFINE_MAX, BREAKTHROUGH_MAX, breakthroughCost as itemBreakthroughCost, socketsFor, GEMS, GEMS_BY_ID, AWAKENING_PERKS, AWAKENING_BY_ID, awakeningSlots, smeltIronYield, canEvolveItem, itemIsEvolved } from '../../game/data/items';
+import { ITEMS_BY_ID, REFINE_MAX, BREAKTHROUGH_MAX, breakthroughCost as itemBreakthroughCost, socketsFor, GEMS, GEMS_BY_ID, AWAKENING_PERKS, AWAKENING_BY_ID, awakeningSlots, smeltIronYield, canEvolveItem, itemIsEvolved, whetCost } from '../../game/data/items';
 import { useGameStore } from '../../game/state/store';
 import type { EntityId, Officer } from '../../game/types';
 import { OfficerStats } from './OfficerStats';
@@ -76,6 +76,8 @@ export function ArmouryModal({ onClose }: Props) {
   const socketGemFn = useGameStore((s) => s.socketGem);
   const itemLore = useGameStore((s) => s.itemLore);
   const itemAwakenings = useGameStore((s) => s.itemAwakenings);
+  const itemWear = useGameStore((s) => s.itemWear);
+  const whetItemFn = useGameStore((s) => s.whetItem);
   const destroyedItems = useGameStore((s) => s.destroyedItems);
   const awakenItemFn = useGameStore((s) => s.awakenItem);
   const smeltItemFn = useGameStore((s) => s.smeltItem);
@@ -382,6 +384,13 @@ export function ArmouryModal({ onClose }: Props) {
                                 >{armed ? t(`熔毀+${yieldIron}鐵?`, `Smelt +${yieldIron}?`) : '🔥'}</button>
                               );
                             })()}
+                            {/* 保養 — whet a worn 神兵 (only shows once genuinely worn). */}
+                            {(itemWear[item.id] ?? 0) > 60 && (
+                              <button className={styles.actionBtn}
+                                title={t(`保養 — 磨損 ${itemWear[item.id]}/100,費 ${whetCost(itemWear[item.id] ?? 0)}金復原鋒銳`, `Whet — wear ${itemWear[item.id]}/100, ${whetCost(itemWear[item.id] ?? 0)}g to restore`)}
+                                onClick={() => { const r = whetItemFn(item.id); if (!r.ok) alert(r.message); }}
+                              >🔧</button>
+                            )}
                             {(itemLore[item.id] ?? 0) >= 60 && (
                               <button className={styles.actionBtn}
                                 title={t('銘刻 — 名器可由主人賜名題銘', 'Inscribe — a storied arm may bear a given name')}

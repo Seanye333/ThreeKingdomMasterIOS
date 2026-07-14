@@ -73,6 +73,7 @@ export function ItemCardFace({ itemId, onClose }: { itemId: string; onClose?: ()
   const gems = useGameStore((s) => s.itemGems);
   const provenance = useGameStore((s) => s.itemProvenance?.[itemId]);
   const evolved = itemIsEvolved(itemId);
+  const wear = useGameStore((s) => s.itemWear?.[itemId] ?? 0);
 
   const base = ITEMS_BY_ID[itemId];
   const live = liveItemById(itemId);
@@ -153,6 +154,13 @@ export function ItemCardFace({ itemId, onClose }: { itemId: string; onClose?: ()
             </div>
           </div>
 
+          {/* 耗損 — a well-used 神兵 shows wear once it's genuinely worn (>60). */}
+          {wear > 60 && (
+            <div style={{ fontSize: '0.68rem', color: '#c88a5a' }}
+              title={t(`耗損 ${wear}/100 — 效果暫減至多 6%,可於鐵坊城「保養」復原`, `Wear ${wear}/100 — effects dip up to 6%; whet it at a forge`)}>
+              🔧 {t('耗損', 'Wear')} {wear}/100 · {t('宜保養', 'needs whetting')}
+            </div>
+          )}
           {/* 器魂 — an awakened legendary wears its ·神 mark. */}
           {evolved && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

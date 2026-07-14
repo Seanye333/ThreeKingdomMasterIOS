@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import { FORGE_RECIPES, ITEMS_BY_ID } from '../../game/data';
 import { itemRarity, itemRarityMeta, GEMS, GEMS_BY_ID, GEM_FUSION, GEM_FUSION_COST } from '../../game/data/items';
-import { dismantleYield } from '../../game/systems/forging';
+import { dismantleYield, smithTier } from '../../game/systems/forging';
 import { useGameStore } from '../../game/state/store';
 import { playSfx } from '../../game/systems/sound';
 import { ItemCardFace } from './ItemCard';
@@ -220,14 +220,22 @@ export function ForgingModal({ onClose }: Props) {
               </div>
               {/* 主匠 — the resident smith decides how fine each piece comes out. */}
               <div style={{ fontSize: '0.74rem', color: '#7a8893', marginBottom: '0.5rem' }}>
-                {smith ? (
+                {smith ? (() => {
+                  const tier = smithTier(smith.stats.intelligence, (smith.traits ?? []).includes('inventive'));
+                  const tierCol = tier.tier >= 3 ? '#ffd66e' : tier.tier >= 2 ? '#8ee8ff' : tier.tier >= 1 ? '#a8d8a8' : '#9aa6b0';
+                  return (
                   <>
                     {lang === 'en' ? 'Master smith: ' : '主匠 · '}
                     <span style={{ color: '#e6c473' }}><Name pair={smith.name} /></span>
                     <span style={{ color: '#7a8893' }}> {lang === 'en' ? 'Int' : '智'}{smith.stats.intelligence}</span>
                     {(smith.traits ?? []).includes('inventive') && <span style={{ color: '#88b7e8' }}> · {lang === 'en' ? '✦ Inventive' : '✦ 巧思'}</span>}
+                    <span title={tier.tier >= 3 ? (lang === 'en' ? 'Divine Artificer — finer masterworks, and pieces born with renown' : '神匠 — 神品更易、開爐即帶名器種子威名') : ''}
+                      style={{ color: tierCol, marginLeft: 6, border: `1px solid ${tierCol}55`, borderRadius: 7, padding: '0 6px', fontSize: '0.7rem' }}>
+                      {tier.tier >= 3 ? '⚒ ' : ''}{lang === 'en' ? tier.en : `監造·${tier.zh}`}
+                    </span>
                   </>
-                ) : (
+                  );
+                })() : (
                   <span style={{ color: '#b8442e', fontStyle: 'italic' }}>{lang === 'en' ? 'No smith stationed — forged pieces come out plain.' : '無武將駐守 —— 鑄件平平。'}</span>
                 )}
               </div>

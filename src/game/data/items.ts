@@ -190,6 +190,31 @@ export function itemLoreAuraMul(renown: number): number {
   return 1 + Math.min(0.08, Math.max(0, renown) * 0.002);
 }
 
+// ─── 耗損保養 — a weapon's wear, and the whetstone that undoes it ────────────
+// A 神兵 carried through battle after battle dulls: past a threshold its edge
+// bites a touch softer until it is 保養'd (whetted) at a forge. Deliberately
+// gentle — nothing shows below WEAR_BITE (60 battles' worth), and the worst it
+// ever costs is −6% — so it's a whisper of upkeep on your finest arms, never a
+// tax on every piece. Stored per-item like 精煉/名器.
+export const WEAR_MAX = 100;
+export const WEAR_BITE = 60; // wear below this shows nothing
+let WEAR_REGISTRY: Record<string, number> = {};
+export function setWearRegistry(map: Record<string, number> | undefined): void {
+  WEAR_REGISTRY = map ?? {};
+}
+export function itemWearLevel(itemId: string): number {
+  const n = WEAR_REGISTRY[itemId] ?? 0;
+  return n < 0 ? 0 : n > WEAR_MAX ? WEAR_MAX : n;
+}
+/** Effect multiplier from wear — 1 until WEAR_BITE, then down to 0.94 at 100. */
+export function itemWearPenaltyMul(wear: number): number {
+  return wear <= WEAR_BITE ? 1 : 1 - Math.min(0.06, (wear - WEAR_BITE) * 0.0015);
+}
+/** Gold to 保養 (whet) a worn blade back to keen — scales with the wear undone. */
+export function whetCost(wear: number): number {
+  return Math.round(Math.max(0, Math.min(WEAR_MAX, wear)) * 8);
+}
+
 // ─── 器魂進化 — the legendary capstone above 突破★5 ──────────────────────────
 // A 神兵 (gold rarity) taken to full breakthrough (★5) AND storied renown (名器,
 // 60 battles) can 醒器魂 — awaken its spirit — evolving to a named final form:
@@ -291,8 +316,8 @@ export function accrueWeaponLore(prior: Record<string, number>, equipmentLists: 
  * refine and breakthrough scale the base magnitudes; gems then add flat stats.
  * Rarity recomputes from the boosted magnitude (so growth can promote 品階).
  */
-export function liveItem(item: Item, plus: number, stars = 0, gemIds: string[] = [], lore = 0, awakenIds: string[] = [], evolved = false): Item {
-  if (!plus && !stars && gemIds.length === 0 && lore <= 0 && awakenIds.length === 0 && !evolved) return item;
+export function liveItem(item: Item, plus: number, stars = 0, gemIds: string[] = [], lore = 0, awakenIds: string[] = [], evolved = false, wear = 0): Item {
+  if (!plus && !stars && gemIds.length === 0 && lore <= 0 && awakenIds.length === 0 && !evolved && wear <= WEAR_BITE) return item;
   let effects = refinedEffects(item, plus);
   if (stars) effects = breakthroughEffects(effects, stars);
   // 兵器覺醒 — engraved perks are flat adds, folded before the lore aura so a
@@ -342,6 +367,15 @@ export function liveItem(item: Item, plus: number, stars = 0, gemIds: string[] =
       }
     }
   }
+  // 耗損 — a worn blade bites softer (only past WEAR_BITE; capped −6%).
+  const wearMul = itemWearPenaltyMul(wear);
+  if (wearMul < 1) {
+    effects = { ...effects };
+    for (const [k, v] of Object.entries(effects) as Array<[keyof Item['effects'], number | undefined]>) {
+      if (!v) continue;
+      effects[k] = Math.sign(v) * Math.max(1, Math.round(Math.abs(v) * wearMul));
+    }
+  }
   // 器魂 — an awakened spirit surges every effect once more and renames the piece.
   if (evolved) {
     effects = { ...effects };
@@ -358,7 +392,7 @@ export function liveItem(item: Item, plus: number, stars = 0, gemIds: string[] =
 export function liveItemById(id: string): Item | null {
   const base = ITEMS_BY_ID[id];
   if (!base) return null;
-  return liveItem(base, itemRefineLevel(id), itemBreakthroughLevel(id), itemGemIds(id), itemLoreLevel(id), itemAwakeningIds(id), itemIsEvolved(id));
+  return liveItem(base, itemRefineLevel(id), itemBreakthroughLevel(id), itemGemIds(id), itemLoreLevel(id), itemAwakeningIds(id), itemIsEvolved(id), itemWearLevel(id));
 }
 
 /** Gold cost to take an item from `plus` → `plus+1` (escalates with rarity + level). */

@@ -2,6 +2,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import {
   liveItem, canEvolveItem, setEvolvedRegistry, itemIsEvolved,
   setBreakthroughRegistry, setLoreRegistry, ITEMS_BY_ID, EVOLVE_LORE_REQ, EVOLVE_EFFECT_BOOST,
+  itemWearPenaltyMul, whetCost, WEAR_BITE,
   type Item,
 } from './items';
 
@@ -18,6 +19,29 @@ describe('器魂進化 — evolved live item', () => {
     expect(evolved.name.en).toContain('Ascended');
     expect(evolved.effects.war).toBe(20 + Math.round(20 * EVOLVE_EFFECT_BOOST));
     expect(plain.effects.war).toBe(20);
+  });
+});
+
+describe('耗損保養 — wear', () => {
+  it('nothing bites below the threshold; past it, down to −6% at 100', () => {
+    expect(itemWearPenaltyMul(0)).toBe(1);
+    expect(itemWearPenaltyMul(WEAR_BITE)).toBe(1);
+    expect(itemWearPenaltyMul(80)).toBeCloseTo(1 - (80 - WEAR_BITE) * 0.0015, 5);
+    expect(itemWearPenaltyMul(100)).toBeCloseTo(0.94, 5); // capped at −6%
+    expect(itemWearPenaltyMul(1000)).toBeCloseTo(0.94, 5);
+  });
+
+  it('a worn blade in liveItem bites softer; a keen one is untouched', () => {
+    const item: Item = { id: 't', name: { zh: 'x', en: 'x' }, kind: 'weapon', effects: { war: 40 } } as Item;
+    expect(liveItem(item, 0, 0, [], 0, [], false, 0).effects.war).toBe(40); // keen
+    const worn = liveItem(item, 0, 0, [], 0, [], false, 100);
+    expect(worn.effects.war).toBe(Math.round(40 * 0.94));
+  });
+
+  it('whet cost scales with the wear undone', () => {
+    expect(whetCost(0)).toBe(0);
+    expect(whetCost(100)).toBe(800);
+    expect(whetCost(50)).toBe(400);
   });
 });
 
