@@ -22,7 +22,7 @@ import { FORMATIONS_BY_ID } from '../data/formations';
 import { pickVoiceLine } from '../data/voiceLines';
 import { effectiveStats, tacticalDamageMul, tacticalDefenseMul, tacticalMoraleAura } from './traitEffects';
 import { gradeCombatBonus } from './gradeCombat';
-import { awakeningPerkCountFor } from '../data/items';
+import { awakeningPerkCountFor, COMMAND_TOKEN_IDS } from '../data/items';
 import { growthPowerMul, streakPowerMul } from './growth';
 import { armProficiencyMul, armMasteryMul } from './armProficiency';
 import { mountBondMul } from './mountBond';
@@ -62,6 +62,27 @@ export function shieldWallMul(b: TacticalBattle, target: TacticalUnit): number {
     && u.effects.some((e) => e.kind === 'defending')
     && hexDistance(u.coord, target.coord) === 1);
   return linked ? 0.85 : 1;
+}
+
+/** 統御指揮 — how far a 統御信物-bearer's command aura reaches on the field. */
+export const COMMAND_AURA_RADIUS = 4;
+/**
+ * 統御之令 — a unit fighting within COMMAND_AURA_RADIUS of a friendly commander
+ * who bears a 統御信物 (虎符/帥印/兵符…) is directed with a firm hand: +6% power.
+ * The token's own unit qualifies (distance 0), so its whole neighbourhood is
+ * marshalled. Extends the strategic 統御 aura (commandTokenMultiplier) onto the
+ * tactical grid.
+ */
+export function commandAuraMul(b: TacticalBattle, unit: TacticalUnit, officers: Record<EntityId, Officer>): number {
+  for (const u of b.units) {
+    if (u.side !== unit.side || u.troops <= 0) continue;
+    const o = officers[u.officerId];
+    if (o && o.equipment.some((id) => COMMAND_TOKEN_IDS.has(id))
+        && hexDistance(u.coord, unit.coord) <= COMMAND_AURA_RADIUS) {
+      return 1.06;
+    }
+  }
+  return 1;
 }
 
 /**
@@ -421,7 +442,7 @@ export function forecastAttack(
   // 歷練/神兵套/性格專長 — the last four attackUnits multipliers, mirrored so the
   // preview no longer under-reports a seasoned, geared or specialist officer
   // (each can swing the hit ±15–30%). Same context attackUnits builds.
-  const aGrowthMul = ao ? growthPowerMul(ao) * streakPowerMul(ao) * armProficiencyMul(ao, attacker.unitType) * mountBondMul(ao) : 1;
+  const aGrowthMul = ao ? growthPowerMul(ao) * streakPowerMul(ao) * armProficiencyMul(ao, attacker.unitType) * mountBondMul(ao) * commandAuraMul(b, attacker, officers) : 1;
   const aSetMul = ao ? itemSetPowerMul(ao) : 1;
   const aTraitCtxFc = {
     unitType: attacker.unitType, terrain: aTerr, isNight: b.timeOfDay === 'night',
@@ -1574,7 +1595,7 @@ export function attackUnits(
   const aGradeMul = ao ? gradeCombatBonus(ao).powerMul : 1;
   const dGradeResistMul = To ? 1 - gradeCombatBonus(To).damageResist : 1;
   // 歷練之威 — a seasoned attacker's unit hits a touch harder per growth level.
-  const aGrowthMul = ao ? growthPowerMul(ao) * streakPowerMul(ao) * armProficiencyMul(ao, attacker.unitType) * mountBondMul(ao) : 1;
+  const aGrowthMul = ao ? growthPowerMul(ao) * streakPowerMul(ao) * armProficiencyMul(ao, attacker.unitType) * mountBondMul(ao) * commandAuraMul(b, attacker, officers) : 1;
   // 神兵譜共鳴 — a full legendary set lends extra bite.
   const aSetMul = ao ? itemSetPowerMul(ao) : 1;
   // 性格專長 — unit-type / terrain / night / charge specialist traits (神槍/弩匠/
