@@ -14,12 +14,13 @@ import { useGameStore } from '../../game/state/store';
 import { OfficerStats } from './OfficerStats';
 import { OfficerDetail } from './OfficerDetail';
 import { Name } from './Name';
-import { CODEX_SETS, codexSetProgress, loadCodex } from '../../game/systems/codex';
+import { CODEX_SETS, codexSetProgress, loadCodex, CODEX_MILESTONES, codexMilestoneReached, codexMilestoneClaimed } from '../../game/systems/codex';
 import { festivalPool, FESTIVAL_GOLD_COST } from '../../game/systems/festival';
 import { FRAME_SKINS, loadFrameSkin, saveFrameSkin, unlockedFrameSkins } from './cardFrames';
 import { ItemCardModal } from './ItemCard';
 import { OfficerCardModal, OfficerCardFace } from './OfficerCardModal';
 import { officerGrade, gradeMeta } from '../../game/systems/officerGrade';
+import { cardCondition } from '../../game/systems/battlePower';
 import { bpLeaderboard } from '../../game/systems/powerBoard';
 import { ITEM_CODEX_SETS, itemCodexSetProgress, loadItemCodex } from '../../game/systems/itemCodex';
 import { useEscapeKey } from '../hooks/useEscapeKey';
@@ -42,6 +43,8 @@ export function EncyclopediaModal({ onClose }: Props) {
   const year = useGameStore((s) => s.date.year);
   const holdFestival = useGameStore((s) => s.holdTalentFestival);
   const festivalPity = useGameStore((s) => s.festivalPity);
+  const generalScrolls = useGameStore((s) => s.generalScrolls);
+  const claimMilestone = useGameStore((s) => s.claimCodexMilestone);
   const [festivalMsg, setFestivalMsg] = useState<string | null>(null);
   const [frameSkinId, setFrameSkinId] = useState(() => loadFrameSkin().id);
   const [itemCardId, setItemCardId] = useState<string | null>(null);
@@ -59,7 +62,9 @@ export function EncyclopediaModal({ onClose }: Props) {
   useEscapeKey(onClose);
   // 武將圖鑑 — cross-campaign officer album (read once per open; the ledgers
   // only grow via play, not while browsing).
-  const codex = useMemo(() => loadCodex(), []);
+  // Re-read when 名將殘卷 changes — claiming a 圖鑑功勳 mints scrolls, so the
+  // milestone's claimed state refreshes on the same tick.
+  const codex = useMemo(() => loadCodex(), [generalScrolls]);
 
   // D1/D2 — cross-tab jumps and "who carries this item" lookup.
   const jumpTo = (sec: Section, name: string) => { setSection(sec); setSearch(name); };
@@ -256,6 +261,13 @@ export function EncyclopediaModal({ onClose }: Props) {
                     );
                   })()}
                   {festivalMsg && <span style={{ fontSize: '0.72rem', color: '#c8a24e' }}>{festivalMsg}</span>}
+                  {/* 📜 名將殘卷 — festival-dropped currency; spent on 殘卷煉星 (武將面板). */}
+                  {playerForceId && (
+                    <span
+                      title="名將殘卷 — 求賢祭現身即得(金牌名+2、故人再+2);於武將面板「煉星」不耗金升星。"
+                      style={{ fontSize: '0.72rem', color: '#a8c4ea', border: '1px solid #4a5f7a', background: 'rgba(126,160,224,0.1)', borderRadius: 'var(--tkm-radius-xs)', padding: '0.15rem 0.5rem' }}
+                    >📜 名將殘卷 {generalScrolls}</span>
+                  )}
                   {/* 🎴 卡框皮膚 — achievement-unlocked cosmetic frames. */}
                   <select
                     value={frameSkinId}
@@ -266,6 +278,33 @@ export function EncyclopediaModal({ onClose }: Props) {
                     {unlockedFrameSkins().map((s2) => <option key={s2.id} value={s2.id}>🎴 {s2.zh}</option>)}
                   </select>
                 </div>
+                {/* 📖 圖鑑功勳 — coverage milestones (cross-campaign 遇-count); claim
+                    a reached one into this campaign for scrolls + treasury gold. */}
+                {playerForceId && (
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.7rem' }}>
+                    <span style={{ fontSize: '0.72rem', color: '#7a8893' }}>圖鑑功勳 · 遇 {codex.seen.length}</span>
+                    {CODEX_MILESTONES.map((m) => {
+                      const reached = codexMilestoneReached(codex, m);
+                      const claimed = codexMilestoneClaimed(codex, m.id);
+                      const canClaim = reached && !claimed;
+                      return (
+                        <button key={m.id}
+                          onClick={canClaim ? () => { const r = claimMilestone(m.id); setFestivalMsg(r.message); } : undefined}
+                          disabled={!canClaim}
+                          title={`${m.zh} — 遇滿 ${m.need} 種:名將殘卷 +${m.scrolls}、都城金 +${m.gold}${claimed ? '(已領)' : reached ? '(可領)' : `(尚差 ${m.need - codex.seen.length})`}`}
+                          style={{
+                            fontSize: '0.7rem', padding: '0.1rem 0.5rem', borderRadius: 9, fontFamily: 'inherit',
+                            cursor: canClaim ? 'pointer' : 'default',
+                            border: `1px solid ${claimed ? '#3f5c3f' : canClaim ? '#8a6a2a' : '#2b3845'}`,
+                            background: claimed ? 'rgba(138,200,138,0.08)' : canClaim ? 'rgba(230,196,115,0.16)' : 'transparent',
+                            color: claimed ? '#8ac88a' : canClaim ? '#ffd66e' : '#5f6c76',
+                          }}>
+                          {claimed ? '✓ ' : canClaim ? '🎁 ' : ''}{m.zh} {codex.seen.length}/{m.need}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
                 <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: '0.8rem' }}>
                   {CODEX_SETS.map((set) => {
                     const p = codexSetProgress(codex, set.id);
@@ -622,6 +661,16 @@ function CodexTile({ officer, isSeen, isRec, isSlain, peak, onOpen }: {
         {isSlain && isSeen && (
           <span title="斬 — 死於我令" style={{ position: 'absolute', top: 3, right: 5, fontSize: '0.8rem', textShadow: '0 0 4px #000' }}>☠</span>
         )}
+        {/* 品相印 — the graded-slab appraisal, corner-stamped from the peak form. */}
+        {peak && isSeen && (() => {
+          const cond = cardCondition(peak.bp, peak.stars);
+          return (
+            <span title={`品相 ${cond.zh} — 依巔峰戰力與星級鑑定`}
+              style={{ position: 'absolute', top: 3, left: 4, fontSize: '0.56rem', color: cond.color, background: 'rgba(6,10,16,0.82)', border: `1px solid ${cond.color}66`, borderRadius: 3, padding: '0 3px', letterSpacing: '0.06rem' }}>
+              ◈{cond.zh}
+            </span>
+          );
+        })()}
       </div>
       <div style={{ padding: '0.2rem 0.3rem', textAlign: 'center', fontSize: '0.78rem', color: isRec ? '#f2dd9a' : isSeen ? '#aab6c0' : '#3d4a56', borderTop: `1px solid ${frameColor}` }}>
         {isSeen ? officer.name.zh : '???'}

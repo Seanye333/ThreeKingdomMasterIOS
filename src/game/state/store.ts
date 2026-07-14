@@ -186,7 +186,7 @@ import { isMinorRuler, pickRegent, regentAmbitionBoost, consortAmbitionBoost, or
 import { LADDER_STAGES, LADDER_TOP, overmightyMinister, ladderAdvanceChance, cabalCandidates, righteousReason } from '../systems/usurpation';
 import { commonerArrivalCity, generateCommonerOfficer, lordTalentDraw, commonerArrivalChance } from '../systems/commonerTalent';
 import { rollRecommendations } from '../systems/recommendation';
-import { codexMarkRecruited, codexMarkRecruitedMany, codexMarkSeen, codexMarkSlain, loadCodex } from '../systems/codex';
+import { codexMarkRecruited, codexMarkRecruitedMany, codexMarkSeen, codexMarkSlain, loadCodex, CODEX_MILESTONES, codexClaimMilestone } from '../systems/codex';
 import { itemCodexMarkCarried } from '../systems/itemCodex';
 import { recordDailyResult } from '../systems/dailyChallenge';
 import { SCHEME_DEFS, schemeOdds, schemeExposureChance, validateScheme, type SchemeId } from '../systems/schemes';
@@ -323,13 +323,13 @@ import { awardBattleXp, grantXp, applyBreakthrough, canBreakthrough, breakthroug
 import type { BreakthroughPath } from '../systems/growth';
 import { officerGrade, gradeRank, gradeMeta } from '../systems/officerGrade';
 import { combatBP } from '../systems/battlePower';
-import { applyStarUp, nextStarRequirement, planAiStarInvestments } from '../systems/stars';
+import { applyStarUp, nextStarRequirement, planAiStarInvestments, scrollStarCost } from '../systems/stars';
 import { topBoardIds } from '../systems/powerBoard';
 import { pendingSetRewards, SET_REWARD_GOLD, SET_REWARD_LOYALTY } from '../systems/setBonds';
 import { dueMedals, grantMedals } from '../data/medals';
 import { composeYearChronicle } from '../systems/chronicle';
 import { attackerArm } from '../systems/combat';
-import { festivalPool, festivalDraw, FESTIVAL_GOLD_COST } from '../systems/festival';
+import { festivalPool, festivalDraw, FESTIVAL_GOLD_COST, festivalScrollReward } from '../systems/festival';
 import { rollBounties, fulfilledBounties } from '../systems/bounty';
 import { codexRecordPeaks } from '../systems/codex';
 import { tickBuildings } from '../systems/buildings';
@@ -1236,6 +1236,10 @@ interface GameStore extends GameState {
   setCardReveal: (officerId: EntityId | null) => void;
   /** 升星 — buy the officer's next 星級 (gold from their city; stars.ts). */
   investStar: (officerId: EntityId) => { ok: boolean; message: string };
+  /** 殘卷煉星 — spend 名將殘卷 (not gold) to buy the next star; level-gated. */
+  forgeStar: (officerId: EntityId) => { ok: boolean; message: string };
+  /** 圖鑑功勳 — claim a reached codex-coverage milestone into this campaign. */
+  claimCodexMilestone: (milestoneId: string) => { ok: boolean; message: string };
   /** 求賢祭 — once a season, pay gold at the capital to reveal one hidden
    *  talent (moves to the capital as a free agent; recruit them yourself). */
   holdTalentFestival: () => { ok: boolean; message: string };
@@ -11236,6 +11240,11 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const drawn = festivalDraw(pool, state.festivalPity, Math.random);
         if (!drawn) return { ok: false, message: '四海賢士已盡現於世 — 無人可召。' };
         const isGoldPlus = pool.goldPlus.some((o) => o.id === drawn.id);
+        // 名將殘卷 — the reveal always drops fragments, more for a gold name and
+        // more still for a 故人 already in the codex (see festivalScrollReward).
+        const codex = loadCodex();
+        const known = codex.recruited.includes(drawn.id) || codex.seen.includes(drawn.id);
+        const scrollGain = festivalScrollReward(drawn, isGoldPlus, known);
         set({
           officers: {
             ...state.officers,
@@ -11244,15 +11253,16 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           cities: { ...state.cities, [cap.id]: { ...cap, gold: cap.gold - FESTIVAL_GOLD_COST } },
           festivalSeason: seasonKey,
           festivalPity: isGoldPlus ? 0 : state.festivalPity + 1,
+          generalScrolls: state.generalScrolls + scrollGain,
           // 現身開卡 — the reveal IS the ceremony; recruiting is still on you.
           cardReveal: drawn.id,
           cardRevealKind: 'festival',
         });
         get().notify(
-          `求賢祭 — ${drawn.name.zh}現身${cap.name.zh}!(在野,可往訪賢)`,
-          `Talent festival — ${drawn.name.en} steps forward at ${cap.name.en} (free agent)`,
+          `求賢祭 — ${drawn.name.zh}現身${cap.name.zh}!(在野,可往訪賢)得名將殘卷 ×${scrollGain}${known ? '(故人)' : ''}`,
+          `Talent festival — ${drawn.name.en} steps forward at ${cap.name.en} (free agent) · +${scrollGain} scrolls`,
         );
-        return { ok: true, message: `${drawn.name.zh}現身!` };
+        return { ok: true, message: `${drawn.name.zh}現身!(殘卷 +${scrollGain})` };
       },
       spectateBattle: (detail) => {
         const state = get();
@@ -11411,6 +11421,56 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             : `${o.name.en} rises to ${upped.stars}★ (−${req.cost} gold)`,
         );
         return { ok: true, message: awakened ? '覺醒!' : '升星成功。' };
+      },
+      forgeStar: (officerId) => {
+        // 殘卷煉星 — the gold-free ascension path: spend 名將殘卷 instead of gold.
+        // Same level gate as 升星, no city-treasury draw; scrolls are a personal
+        // hoard, not a city's coin.
+        const state = get();
+        const o = state.officers[officerId];
+        if (!o || o.forceId !== state.playerForceId) return { ok: false, message: '非我麾下之將。' };
+        if (o.status === 'dead' || o.status === 'imprisoned' || o.status === 'unsearched')
+          return { ok: false, message: '此人現不可授星。' };
+        const req = nextStarRequirement(o);
+        if (!req.ok) return { ok: false, message: req.reasonZh ?? '不可升星。' };
+        const cost = scrollStarCost(o.stars ?? 0);
+        if (state.generalScrolls < cost) return { ok: false, message: `名將殘卷不足(需 ${cost})。` };
+        const { officer: upped, awakened } = applyStarUp(o);
+        set({
+          officers: { ...state.officers, [officerId]: upped },
+          generalScrolls: state.generalScrolls - cost,
+          ...(awakened ? { cardReveal: officerId, cardRevealKind: 'awaken' as const } : {}),
+        });
+        get().notify(
+          awakened
+            ? `${o.name.zh}六星圓滿 — 將星覺醒!最強一圍 +2(殘卷 −${cost})`
+            : `${o.name.zh}殘卷煉星:${'★'.repeat(upped.stars ?? 0)}(殘卷 −${cost})`,
+          awakened
+            ? `${o.name.en} awakens at six stars — best stat +2 (−${cost} scrolls)`
+            : `${o.name.en} rises to ${upped.stars}★ (−${cost} scrolls)`,
+        );
+        return { ok: true, message: awakened ? '覺醒!' : '煉星成功。' };
+      },
+      claimCodexMilestone: (milestoneId) => {
+        // 圖鑑功勳 — pay a reached, unclaimed lifetime milestone into this campaign
+        // (scrolls + treasury). codexClaimMilestone owns the cross-campaign mark.
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: '無主之師。' };
+        const m = CODEX_MILESTONES.find((x) => x.id === milestoneId);
+        if (!m) return { ok: false, message: '無此功勳。' };
+        const capId = state.forces[state.playerForceId]?.capitalCityId;
+        const cap = capId ? state.cities[capId] : undefined;
+        if (!cap || cap.ownerForceId !== state.playerForceId) return { ok: false, message: '須有都城受賞。' };
+        if (!codexClaimMilestone(milestoneId)) return { ok: false, message: '未達或已領。' };
+        set({
+          generalScrolls: state.generalScrolls + m.scrolls,
+          cities: { ...state.cities, [cap.id]: { ...cap, gold: cap.gold + m.gold } },
+        });
+        get().notify(
+          `圖鑑功勳「${m.zh}」— 名將殘卷 +${m.scrolls}、都城金 +${m.gold}`,
+          `Codex milestone "${m.en}" — +${m.scrolls} scrolls, +${m.gold} gold`,
+        );
+        return { ok: true, message: `${m.zh}:殘卷 +${m.scrolls}、金 +${m.gold}` };
       },
       engageEncounter: () => {
         const state = get();
@@ -16339,6 +16399,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           powerBoardPrev: loaded.powerBoardPrev ?? {},
           festivalSeason: loaded.festivalSeason ?? null,
           festivalPity: loaded.festivalPity ?? 0,
+          generalScrolls: loaded.generalScrolls ?? 0,
           bounties: loaded.bounties ?? [],
           itemInscriptions: loaded.itemInscriptions ?? {},
           pendingChronicle: loaded.pendingChronicle ?? null,

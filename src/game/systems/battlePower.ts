@@ -42,3 +42,28 @@ export function combatBP(officer: Officer): { bp: number; parts: BattlePowerPart
   const bp = parts.stats + parts.grade + parts.level + parts.skills + parts.equipment + parts.renown + parts.stars;
   return { bp, parts };
 }
+
+export interface CardCondition { id: string; zh: string; en: string; color: string; }
+
+/**
+ * 品相 — a collector's condition grade stamped on a card, read off its (peak)
+ * 綜合戰力 and 星級. Purely a display flourish — like an antiquities appraisal
+ * seal — that turns raw BP into a legible tier. A fully-ascended card is a
+ * prized specimen however modest the numbers: a 6★ never reads below 極美品,
+ * a 4★ never below 上品.
+ */
+export function cardCondition(bp: number, stars = 0): CardCondition {
+  const DIVINE: CardCondition = { id: 'divine', zh: '神品', en: 'Divine', color: '#ffd66e' };
+  const GEM: CardCondition = { id: 'gem', zh: '極美品', en: 'Gem Mint', color: '#8fe3ff' };
+  const FINE: CardCondition = { id: 'fine', zh: '上品', en: 'Fine', color: '#a8d8a8' };
+  const GOOD: CardCondition = { id: 'good', zh: '佳品', en: 'Good', color: '#c9b98a' };
+  const FAIR: CardCondition = { id: 'fair', zh: '中品', en: 'Fair', color: '#9aa6b0' };
+  const RAW: CardCondition = { id: 'raw', zh: '待鑑', en: 'Ungraded', color: '#5f6c76' };
+  if (bp <= 0) return RAW;
+  let tier = bp >= 2200 ? DIVINE : bp >= 1700 ? GEM : bp >= 1300 ? FINE : bp >= 950 ? GOOD : FAIR;
+  const ORDER = ['fair', 'good', 'fine', 'gem', 'divine'];
+  const rank = (c: CardCondition) => ORDER.indexOf(c.id);
+  if (stars >= 6 && rank(tier) < rank(GEM)) tier = GEM;
+  else if (stars >= 4 && rank(tier) < rank(FINE)) tier = FINE;
+  return tier;
+}

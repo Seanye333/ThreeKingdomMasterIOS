@@ -20,6 +20,17 @@ export const STAR_GOLD_COST = [400, 700, 1100, 1600, 2200, 3000];
  *  the track rewards officers who have actually been fielded and drilled. */
 export const STAR_LEVEL_REQ = [2, 3, 4, 6, 8, 9];
 
+/** 名將殘卷 to 煉星 star n+1 (index by current stars) — the gold-free path:
+ *  scrolls drop from 求賢祭 reveals, so a patient collector can ascend an
+ *  officer without spending a coin (the growth-level gate still holds). Costs
+ *  escalate with STAR_GOLD_COST so a late star is a real hoard of fragments. */
+export const STAR_SCROLL_COST = [3, 5, 7, 10, 14, 20];
+
+export function scrollStarCost(stars: number): number {
+  const s = Math.max(0, Math.min(MAX_STARS - 1, stars));
+  return STAR_SCROLL_COST[s];
+}
+
 export function officerStars(o: Officer): number {
   return Math.max(0, Math.min(MAX_STARS, o.stars ?? 0));
 }

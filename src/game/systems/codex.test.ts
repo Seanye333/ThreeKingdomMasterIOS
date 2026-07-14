@@ -1,6 +1,6 @@
 /** 武將圖鑑 — locks the album ledgers and set progress. */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { CODEX_SETS, codexMarkRecruited, codexMarkSeen, codexMarkSlain, codexSetProgress, loadCodex } from './codex';
+import { CODEX_SETS, codexMarkRecruited, codexMarkSeen, codexMarkSlain, codexSetProgress, loadCodex, CODEX_MILESTONES, codexMilestoneReached, codexMilestoneClaimed, codexClaimMilestone } from './codex';
 import { OFFICER_IDS, TALENT_POOL_IDS } from '../data';
 import { HISTORICAL_OFFICER_TEMPLATES } from '../data/historicalOfficers';
 
@@ -65,5 +65,31 @@ describe('codex sets', () => {
     for (const s of CODEX_SETS) {
       expect(new Set(s.members).size).toBe(s.members.length);
     }
+  });
+});
+
+describe('圖鑑功勳 — coverage milestones', () => {
+  it('a milestone is reached once the seen-count crosses its bar, and claims once', () => {
+    const first = CODEX_MILESTONES[0]; // need 25
+    // Below the bar: not reached, cannot claim.
+    codexMarkSeen(['a', 'b', 'c']);
+    expect(codexMilestoneReached(loadCodex(), first)).toBe(false);
+    expect(codexClaimMilestone(first.id)).toBe(false);
+    // Cross the bar.
+    codexMarkSeen(Array.from({ length: first.need }, (_, i) => `seen-${i}`));
+    expect(codexMilestoneReached(loadCodex(), first)).toBe(true);
+    expect(codexMilestoneClaimed(loadCodex(), first.id)).toBe(false);
+    // First claim succeeds and sticks; a second is refused.
+    expect(codexClaimMilestone(first.id)).toBe(true);
+    expect(codexMilestoneClaimed(loadCodex(), first.id)).toBe(true);
+    expect(codexClaimMilestone(first.id)).toBe(false);
+  });
+
+  it('milestone bars strictly ascend and ids are unique', () => {
+    for (let i = 1; i < CODEX_MILESTONES.length; i++) {
+      expect(CODEX_MILESTONES[i].need).toBeGreaterThan(CODEX_MILESTONES[i - 1].need);
+    }
+    const ids = CODEX_MILESTONES.map((m) => m.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });

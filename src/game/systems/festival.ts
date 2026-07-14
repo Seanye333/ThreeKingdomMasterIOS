@@ -28,6 +28,16 @@ export function festivalPool(officers: Record<EntityId, Officer>): FestivalPool 
   return { all, goldPlus, odds: { goldPlus: all.length > 0 ? goldPlus.length / all.length : 0, total: all.length } };
 }
 
+/**
+ * 名將殘卷 dropped by a festival reveal. A gold-tier name yields more; a 故人
+ * — a name already recorded in the codex (seen or recruited in this or a past
+ * campaign) — yields a fragment of remembrance on top. So repeated festivals
+ * stay worthwhile even when they surface faces you already know.
+ */
+export function festivalScrollReward(_drawn: Officer, isGoldPlus: boolean, knownInCodex: boolean): number {
+  return 1 + (isGoldPlus ? 2 : 0) + (knownInCodex ? 2 : 0);
+}
+
 /** Draw the reveal: pity forces a gold+ pick when one exists. */
 export function festivalDraw(
   pool: FestivalPool,

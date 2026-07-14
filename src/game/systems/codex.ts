@@ -22,21 +22,25 @@ export interface Codex {
   recruited: string[];
   slain: string[];
   peak: Record<string, CodexPeak>;
+  /** 圖鑑功勳 — ids of completion milestones already claimed (cross-campaign,
+   *  once ever). See CODEX_MILESTONES / codexClaimMilestone. */
+  milestones: string[];
 }
 
 export function loadCodex(): Codex {
   try {
     const raw = localStorage.getItem(CODEX_KEY);
-    if (!raw) return { seen: [], recruited: [], slain: [], peak: {} };
+    if (!raw) return { seen: [], recruited: [], slain: [], peak: {}, milestones: [] };
     const p = JSON.parse(raw) as Partial<Codex>;
     return {
       seen: Array.isArray(p.seen) ? p.seen : [],
       recruited: Array.isArray(p.recruited) ? p.recruited : [],
       slain: Array.isArray(p.slain) ? p.slain : [],
       peak: p.peak && typeof p.peak === 'object' ? p.peak : {},
+      milestones: Array.isArray(p.milestones) ? p.milestones : [],
     };
   } catch {
-    return { seen: [], recruited: [], slain: [], peak: {} };
+    return { seen: [], recruited: [], slain: [], peak: {}, milestones: [] };
   }
 }
 
@@ -143,4 +147,50 @@ export function codexSetProgress(codex: Codex, setId: string): { have: number; t
   if (!def) return { have: 0, total: 0 };
   const rec = new Set(codex.recruited);
   return { have: def.members.filter((m) => rec.has(m)).length, total: def.members.length };
+}
+
+/* ─── 圖鑑功勳 — completion milestones ─── */
+export interface CodexMilestone {
+  id: string;
+  zh: string; en: string;
+  /** 遇 (seen) count required across all your campaigns. */
+  need: number;
+  /** Boons paid into the campaign you claim from. */
+  scrolls: number;
+  gold: number;
+}
+
+/**
+ * 圖鑑功勳 — reaching a coverage tier of the album (cross-campaign 遇-count) is
+ * a claimable, once-ever boon, paid into the campaign you claim it from: a
+ * hoard of 名將殘卷 (feeding the 殘卷煉星 track) plus a treasury grant. The
+ * historian rewards the completist, and the reward crosses lives — you claim
+ * a lifetime tier once, then it is spent.
+ */
+export const CODEX_MILESTONES: CodexMilestone[] = [
+  { id: 'cm-25', zh: '初識群英', en: 'First Acquaintance', need: 25, scrolls: 3, gold: 400 },
+  { id: 'cm-50', zh: '博覽將星', en: 'Widely Read', need: 50, scrolls: 5, gold: 800 },
+  { id: 'cm-100', zh: '海納百川', en: 'A Hundred Names', need: 100, scrolls: 8, gold: 1500 },
+  { id: 'cm-200', zh: '包羅萬象', en: 'Two Hundred Strong', need: 200, scrolls: 14, gold: 2600 },
+  { id: 'cm-300', zh: '圖鑑大成', en: 'The Great Album', need: 300, scrolls: 22, gold: 4000 },
+];
+
+export function codexMilestoneReached(codex: Codex, m: CodexMilestone): boolean {
+  return codex.seen.length >= m.need;
+}
+
+export function codexMilestoneClaimed(codex: Codex, id: string): boolean {
+  return codex.milestones.includes(id);
+}
+
+/** Mark a milestone claimed (cross-campaign). Returns false if already claimed
+ *  or not yet reached — the store still owns paying out the boon. */
+export function codexClaimMilestone(id: string): boolean {
+  const c = loadCodex();
+  const m = CODEX_MILESTONES.find((x) => x.id === id);
+  if (!m) return false;
+  if (c.milestones.includes(id)) return false;
+  if (!codexMilestoneReached(c, m)) return false;
+  save({ ...c, milestones: [...c.milestones, id] });
+  return true;
 }

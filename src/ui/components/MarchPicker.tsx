@@ -16,6 +16,7 @@ import { geoToPixel } from '../../game/data/geography';
 import { FACILITY_DEFS } from '../../game/types/fort';
 import { attackerArm } from '../../game/systems/combat';
 import { setBondPowerMul } from '../../game/systems/setBonds';
+import { partySynergies } from '../../game/systems/partySynergy';
 import { loadDecks, saveDecks, MAX_DECKS, type LineupDeck } from './lineupDecks';
 import type { EntityId } from '../../game/types';
 import { OfficerHoverCard } from './OfficerHoverCard';
@@ -187,6 +188,12 @@ export function MarchPicker({ cityId, onClose }: Props) {
   // 成套羈絆 readout — the same math combat applies (setBonds.ts).
   const lineupSynergy = useMemo(
     () => setBondPowerMul([officerId, ...additionalIds].map((id) => (id ? officersMap[id] : null))),
+    [officerId, additionalIds, officersMap],
+  );
+  // 出陣羈絆 readout — lineup archetypes (智勇相濟/諸兵種協同…), same math the
+  // auto-resolve applies (partySynergy.ts). Builds the "deck" into a mechanic.
+  const partySynergy = useMemo(
+    () => partySynergies([officerId, ...additionalIds].map((id) => (id ? officersMap[id] : null))),
     [officerId, additionalIds, officersMap],
   );
 
@@ -553,6 +560,20 @@ export function MarchPicker({ cityId, onClose }: Props) {
             {lineupSynergy.mul !== 1 && (
               <span style={{ fontSize: '0.7rem', color: lineupSynergy.mul > 1 ? '#8ac88a' : '#e0907a', fontFamily: 'ui-monospace, monospace' }}>
                 {t('羈絆', 'Bond')} ×{lineupSynergy.mul.toFixed(2)}
+              </span>
+            )}
+            {/* 出陣羈絆 — lineup archetypes (智勇相濟/諸兵種協同…), the "deck" made real. */}
+            {partySynergy.synergies.map((s) => (
+              <span key={s.id}
+                title={lang === 'en' ? s.descEn : s.descZh}
+                style={{ fontSize: '0.7rem', padding: '0.05rem 0.45rem', borderRadius: 9, border: '1px solid #4a5f7a', background: 'rgba(126,160,224,0.12)', color: '#a8c4ea' }}>
+                ⚔ {lang === 'en' ? s.en : s.zh}
+              </span>
+            ))}
+            {partySynergy.powerMul !== 1 && (
+              <span title={t('出陣羈絆 — 陣容原型加成,上限 +6%', 'Lineup archetypes — shape-of-party bonus, capped at +6%')}
+                style={{ fontSize: '0.7rem', color: '#a8c4ea', fontFamily: 'ui-monospace, monospace' }}>
+                {t('陣容', 'Lineup')} ×{partySynergy.powerMul.toFixed(2)}
               </span>
             )}
           </div>

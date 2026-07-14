@@ -4,7 +4,7 @@ import { useGameStore } from '../../game/state/store';
 import { Modal } from './Modal';
 import { OfficerPortrait } from './OfficerPortrait';
 import { officerGrade, officerLevel, gradeMeta } from '../../game/systems/officerGrade';
-import { combatBP } from '../../game/systems/battlePower';
+import { combatBP, cardCondition } from '../../game/systems/battlePower';
 import { liveItemById } from '../../game/data/items';
 import { SKILLS_BY_ID } from '../../game/data/skills';
 import { honorificById } from '../../game/data/honorifics';
@@ -359,6 +359,16 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
               >
                 <span style={{ display: 'block', fontSize: '0.56rem', color: '#7a8893', letterSpacing: '0.1rem' }}>{t('戰力', 'POWER')}</span>
                 <span style={{ fontSize: '1.05rem', color: '#ffe9a8', fontWeight: 700, fontFamily: 'ui-monospace, monospace' }}>{bp.toLocaleString()}</span>
+                {/* 品相 — collector's condition grade, appraised off BP + 星級. */}
+                {(() => {
+                  const cond = cardCondition(bp, stars);
+                  return (
+                    <span
+                      title={t('品相 — 依綜合戰力與星級鑑定的收藏品級(神品>極美品>上品>佳品>中品)', 'Condition grade — an appraisal from BP and stars')}
+                      style={{ display: 'block', marginTop: 2, fontSize: '0.62rem', color: cond.color, letterSpacing: '0.14rem', fontFamily: '"Ma Shan Zheng", "Songti SC", serif' }}
+                    >◈ {pickName({ zh: cond.zh, en: cond.en }, lang)}</span>
+                  );
+                })()}
               </span>
             </div>
             {stars > 0 && (

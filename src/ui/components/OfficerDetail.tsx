@@ -38,7 +38,7 @@ import { renownFromDeeds, fameTier, fameMedal } from '../../game/systems/fame';
 import { xpProgress, learnableSkills, canBreakthrough, breakthroughCost, breakthroughIronCost, BREAKTHROUGH_PATHS, MAX_BREAKTHROUGHS, breakthroughTitle, growthPowerMul, growthAptitude, aptitudeLabel, EPIPHANY_THRESHOLD } from '../../game/systems/growth';
 import { canAppraise, GRADE_LABEL } from '../../game/systems/appraisal';
 import { officerGrade, officerLevel, nextGradeGap, gradeMeta } from '../../game/systems/officerGrade';
-import { MAX_STARS, officerStars, nextStarRequirement } from '../../game/systems/stars';
+import { MAX_STARS, officerStars, nextStarRequirement, scrollStarCost } from '../../game/systems/stars';
 import { skillLevelBadge } from '../../game/systems/skillMastery';
 import { gradeCombatBonus, itemMasteryMul } from '../../game/systems/gradeCombat';
 import { itemRarity, itemRarityMeta, liveItemById, refineCost, REFINE_MAX,
@@ -205,6 +205,8 @@ export function OfficerDetail({
   // 星級 — feedback line for the star-up button (成功/緣由 both land here).
   const [starMsg, setStarMsg] = useState<string | null>(null);
   const investStar = useGameStore((s) => s.investStar);
+  const forgeStar = useGameStore((s) => s.forgeStar);
+  const generalScrolls = useGameStore((s) => s.generalScrolls);
   // 退訂培訓的二段確認(取代 window.confirm)。
   const [confirmCancelTraining, setConfirmCancelTraining] = useState(false);
   // 告老傳承/洗髓 — actions + 二段確認.
@@ -580,6 +582,30 @@ export function OfficerDetail({
                         }}
                       >{t(`升星 ${req.cost}金`, `Star up ${req.cost}g`)}</button>
                     )}
+                    {/* 殘卷煉星 — the gold-free path: spend 名將殘卷 from 求賢祭. */}
+                    {isMine && s < MAX_STARS && (() => {
+                      const scrollCost = scrollStarCost(s);
+                      const canForge = req.ok && generalScrolls >= scrollCost;
+                      return (
+                        <button
+                          onClick={() => {
+                            const r = forgeStar(officer.id);
+                            setStarMsg(r.message);
+                            if (r.ok) { setStarBurst(true); window.setTimeout(() => setStarBurst(false), 900); }
+                          }}
+                          disabled={!canForge}
+                          title={req.ok
+                            ? t(`殘卷煉星:名將殘卷 ${scrollCost}(現有 ${generalScrolls}) — 不耗金`, `Forge with scrolls: ${scrollCost} (have ${generalScrolls}) — no gold`)
+                            : (lang === 'en' ? req.reasonEn ?? '' : req.reasonZh ?? '')}
+                          style={{
+                            marginLeft: 6, padding: '0.05rem 0.5rem', fontSize: '0.72rem', cursor: canForge ? 'pointer' : 'default',
+                            background: canForge ? 'rgba(126,160,224,0.14)' : 'transparent',
+                            border: `1px solid ${canForge ? '#4a5f7a' : '#2b3845'}`, borderRadius: 'var(--tkm-radius-xs)',
+                            color: canForge ? '#a8c4ea' : '#5f6c76', fontFamily: 'inherit',
+                          }}
+                        >{t(`煉星 ${scrollCost}卷`, `Forge ${scrollCost}📜`)}</button>
+                      );
+                    })()}
                     {starMsg && <span style={{ marginLeft: 6, fontSize: '0.7rem', color: '#c8a24e' }}>{starMsg}</span>}
                     {/* 告老傳承 — an elder (60+) may pass the torch; 二段確認. */}
                     {isMine && officerAge >= 60 && (officer.status === 'idle' || officer.status === 'active') && (

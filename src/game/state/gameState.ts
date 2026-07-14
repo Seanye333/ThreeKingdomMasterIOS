@@ -291,6 +291,10 @@ export interface GameState {
   festivalSeason: string | null;
   /** 求賢祭保底 — consecutive reveals below gold; ≥3 forces a gold+ draw. */
   festivalPity: number;
+  /** 名將殘卷 — collection currency dropped by 求賢祭 reveals (more for gold-tier
+   *  names, and a 故人 bonus when the revealed name is already in the codex).
+   *  Spent to 煉星 (buy a star without gold, still level-gated). See stars.ts. */
+  generalScrolls: number;
   /** 天下懸賞榜 — active wanted notices (bounty.ts), re-rolled each spring. */
   bounties: import('../systems/bounty').Bounty[];
   /** 銘刻 — player-given names/mottoes engraved on storied items (lore ≥60). */
@@ -828,6 +832,7 @@ export const EMPTY_STATE: GameState = {
   powerBoardPrev: {},
   festivalSeason: null,
   festivalPity: 0,
+  generalScrolls: 0,
   bounties: [],
   itemInscriptions: {},
   pendingChronicle: null,
@@ -1252,6 +1257,7 @@ export function loadScenario(
     powerBoardPrev: {},
     festivalSeason: null,
     festivalPity: 0,
+    generalScrolls: 0,
     bounties: [],
     itemInscriptions: {},
     pendingChronicle: null,
