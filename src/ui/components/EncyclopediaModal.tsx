@@ -22,6 +22,7 @@ import { ItemCardModal } from './ItemCard';
 import { OfficerCardModal, OfficerCardFace } from './OfficerCardModal';
 import { officerGrade, gradeMeta } from '../../game/systems/officerGrade';
 import { cardCondition } from '../../game/systems/battlePower';
+import { loadCityCodex, CITY_ACHIEVEMENTS, CITY_ACHIEVEMENTS_BY_ID } from '../../game/systems/cityCodex';
 import { bpLeaderboard } from '../../game/systems/powerBoard';
 import { ITEM_CODEX_SETS, itemCodexSetProgress, loadItemCodex, ITEM_CODEX_MILESTONES, itemCodexMilestoneReached, itemCodexMilestoneClaimed } from '../../game/systems/itemCodex';
 import { useEscapeKey } from '../hooks/useEscapeKey';
@@ -31,7 +32,7 @@ interface Props {
   onClose: () => void;
 }
 
-type Section = 'officers' | 'codex' | 'ranking' | 'items' | 'skills' | 'traits' | 'events' | 'provinces';
+type Section = 'officers' | 'codex' | 'ranking' | 'items' | 'skills' | 'traits' | 'events' | 'provinces' | 'cities';
 
 export function EncyclopediaModal({ onClose }: Props) {
   const officers = useGameStore((s) => s.officers);
@@ -156,7 +157,7 @@ export function EncyclopediaModal({ onClose }: Props) {
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
         </header>
         <div style={{ display: 'flex', gap: '0.5rem', padding: '0.75rem 1.5rem', borderBottom: '1px solid #2b3845' }}>
-          {(['officers', 'codex', 'ranking', 'items', 'skills', 'traits', 'events', 'provinces'] as Section[]).map((s) => (
+          {(['officers', 'codex', 'ranking', 'items', 'skills', 'traits', 'events', 'provinces', 'cities'] as Section[]).map((s) => (
             <button
               key={s}
               onClick={() => setSection(s)}
@@ -176,7 +177,8 @@ export function EncyclopediaModal({ onClose }: Props) {
                 s === 'items' ? '名品' :
                 s === 'skills' ? '特技' :
                 s === 'traits' ? '性格' :
-                s === 'events' ? '史実' : '州郡'}
+                s === 'events' ? '史実' :
+                s === 'provinces' ? '州郡' : '名城'}
             </button>
           ))}
           <input
@@ -613,6 +615,41 @@ export function EncyclopediaModal({ onClose }: Props) {
               </div>
             </div>
           ))}
+          {/* 名城錄 — cross-campaign atlas of cities raised to greatness. */}
+          {section === 'cities' && (() => {
+            const codexC = loadCityCodex();
+            const recorded = Object.entries(codexC.earned).filter(([, ids]) => ids.length > 0);
+            const nameOfCity = (cid: string) => cities[cid]?.name.zh ?? cid;
+            return (
+              <>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: '0.8rem', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.72rem', color: '#7a8893' }}>名城錄 · {recorded.reduce((s, [, ids]) => s + ids.length, 0)} 譽(跨戰役)</span>
+                  {CITY_ACHIEVEMENTS.map((a) => {
+                    const cnt = recorded.filter(([, ids]) => ids.includes(a.id)).length;
+                    return (
+                      <span key={a.id} title={`${a.zh} — ${a.descZh}`}
+                        style={{ fontSize: '0.72rem', padding: '0.1rem 0.5rem', borderRadius: 9, border: `1px solid ${cnt > 0 ? '#8a6a2a' : '#2b3845'}`, color: cnt > 0 ? '#e6c473' : '#5f6c76' }}>
+                        {a.glyph} {a.zh} {cnt}
+                      </span>
+                    );
+                  })}
+                </div>
+                {recorded.length === 0 && (
+                  <div style={{ color: '#7a8893', fontStyle: 'italic', fontSize: '0.85rem' }}>尚無名城入錄 —— 將一城養至文教名城/百戰雄城/巨城…即載入此錄(跨戰役)。</div>
+                )}
+                {recorded.map(([cid, ids]) => (
+                  <div key={cid} style={card()}>
+                    <div style={{ fontSize: '1rem', color: '#e6c473' }}>{nameOfCity(cid)}</div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: '0.3rem' }}>
+                      {ids.map((aid) => { const a = CITY_ACHIEVEMENTS_BY_ID[aid]; return a ? (
+                        <span key={aid} title={a.descZh} style={{ fontSize: '0.74rem', padding: '0.05rem 0.5rem', borderRadius: 8, background: 'rgba(230,196,115,0.1)', border: '1px solid #8a6a2a', color: '#f2dd9a' }}>{a.glyph} {a.zh}</span>
+                      ) : null; })}
+                    </div>
+                  </div>
+                ))}
+              </>
+            );
+          })()}
         </div>
         {drillId && officers[drillId] && (
           <OfficerDetail officer={officers[drillId]} onClose={() => setDrillId(null)} />

@@ -340,6 +340,7 @@ import { isPhysician, medicalSkillOf, medicalCureBonus, medicalWoundBonus, accru
 import { accrueItemProvenance, heirloomTier } from '../systems/itemProvenance';
 import { rollBounties, fulfilledBounties } from '../systems/bounty';
 import { codexRecordPeaks } from '../systems/codex';
+import { cityCodexRecord, CITY_ACHIEVEMENTS_BY_ID } from '../systems/cityCodex';
 import { tickBuildings } from '../systems/buildings';
 import { tickBuildingEvents } from '../systems/buildingEvents';
 import { evaluateCoalition } from '../systems/coalition';
@@ -8864,6 +8865,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           codexRecordPeaks(Object.values(cur.officers)
             .filter((o) => o.forceId === cur.playerForceId && o.status !== 'dead')
             .map((o) => ({ id: o.id, bp: combatBP(o).bp, stars: o.stars ?? 0, grade: officerGrade(o).grade })));
+          // 名城入錄 — the atlas remembers every city you raise to greatness.
+          const freshCity = cityCodexRecord(Object.values(cur.cities).filter((c) => c.ownerForceId === cur.playerForceId));
+          for (const { cityId, achId } of freshCity.slice(0, 3)) {
+            const cn = cur.cities[cityId]?.name; const ach = CITY_ACHIEVEMENTS_BY_ID[achId];
+            if (cn && ach) get().notify(`名城入錄 —「${cn.zh}」得「${ach.zh}」之譽`, `${cn.en} earns the honour of ${ach.en}`);
+          }
         }
 
         // 史官年鑑 — the historian closes the year each spring: one page of
