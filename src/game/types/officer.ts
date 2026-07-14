@@ -55,6 +55,10 @@ export interface Officer {
    *  'plain' locks in a non-shiny result so it never re-rolls; missing = never
    *  pulled. See cardFoil.ts. */
   foil?: 'plain' | 'silver' | 'gold' | 'rainbow';
+  /** 兵種熟練 — 0–100 proficiency per arm (infantry/cavalry/archers/spearmen/
+   *  navy), earned by fighting on the field as that arm. Small power edge when
+   *  leading a mastered arm. See armProficiency.ts. */
+  armProficiency?: Record<string, number>;
   /** Historical hometown — fixed at scenario load from the template. Doesn't
    *  change as the officer moves around. Used by UI + search bonuses. */
   hometownCityId?: EntityId;

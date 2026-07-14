@@ -72,7 +72,7 @@ import { PROVINCES_BY_ID } from '../data/provinces';
 import { tickClans, clanGentryWeight } from './clans';
 import { tickStatecraft } from './statecraft';
 import { deriveCourtFactions, type FactionId } from './courtFactions';
-import { cliqueBackingBoost } from './relationshipEffects';
+import { cliqueBackingBoost, mentorsOf } from './relationshipEffects';
 
 export interface ResolutionInput {
   date: GameDate;
@@ -1894,7 +1894,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
             const o = officers[id];
             if (o) officers[id] = { ...o, task: null, status: 'idle' };
           }
-          cities[cityAtStart.id] = { ...cityAtStart, troops: Math.max(0, cityAtStart.troops - Math.floor(cityAtStart.troops * 0.15)) };
+          // 精兵老兵 — beating off the besiegers seasons the garrison (+老兵度).
+          cities[cityAtStart.id] = { ...cityAtStart, troops: Math.max(0, cityAtStart.troops - Math.floor(cityAtStart.troops * 0.15)), veterancy: Math.min(100, (cityAtStart.veterancy ?? 0) + 6) };
           entries.push({
             cityId: cityAtStart.id, kind: 'battle',
             text: `SORTIE — the garrison of ${cityAtStart.name.en} storms out and routs the besiegers!`,
@@ -1923,6 +1924,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
           troops: besiegerTroops,
           loyalty: Math.max(20, Math.floor(cur.loyalty * 0.6)),
           food: 0,
+          veterancy: 0, // 老兵度歸零 — a fresh garrison under the new banner
         };
         for (const o of Object.values(officers)) {
           if (o.locationCityId !== cmd.besieging || o.forceId !== former) continue;
@@ -2293,10 +2295,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     }
   }
 
-  // Phase 3f-quater — 師徒衣缽. Explicit 拜師 bonds resolve first: a disciple
-  // apprenticed to a specific master (and garrisoned with them) earns the richer
-  // bond XP toward the master's strongest suit, and may inherit their craft.
-  const bondTick = tickMentorBonds(officers, rng);
+  // Phase 3f-quater — 師徒衣缽. Explicit 拜師 bonds resolve first (richer XP +
+  // craft inheritance); then 名師高徒 — canonical historical master/student pairs
+  // serving together teach automatically at a middle strength.
+  const bondTick = tickMentorBonds(officers, rng, mentorsOf);
   Object.assign(officers, bondTick.officers);
   entries.push(...bondTick.entries);
   const bonded = bondTick.bonded;

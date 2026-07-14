@@ -28,6 +28,8 @@ import { growthPowerMul, streakPowerMul, grantXp } from './growth';
 import { skillEffectMul } from './skillMastery';
 import { setBondPowerMul } from './setBonds';
 import { partySynergies } from './partySynergy';
+import { armProficiencyMul } from './armProficiency';
+import { inferUnitType } from './tactical';
 import { deriveWeaponType, type WeaponType } from '../data/weaponTypes';
 import { weaponMatchupMul, weaponMasterySkill, pickAiFormation, formationCounterMul } from './tactical';
 import { arrivalFatigueMorale, fatigueMoraleMalus, armyMoraleOpening } from './marchPace';
@@ -804,6 +806,10 @@ export function resolveBattle(
   // the party, on top of the named-roster sets above (partySynergy.ts).
   const aPartyMul = partySynergies(attackerPool).powerMul;
   const dPartyMul = partySynergies(defenderPool).powerMul;
+  // 兵種熟練 — the marshal's practised hand with the arm they lead (earned on the
+  // field; a seasoned arm carries its edge into an auto-resolve too).
+  const aProfMul = armProficiencyMul(attacker.commander, inferUnitType(attacker.commander));
+  const dProfMul = defender.commander ? armProficiencyMul(defender.commander, inferUnitType(defender.commander)) : 1;
   // 名號各司其職 — situational honorific edge by battle type (水戰/攻城/守城/野戰).
   const aThemeMul = honorificThemeMul(attackerPool, { water, siege: isSiegeBattle, defending: false });
   const dThemeMul = honorificThemeMul(defenderPool, { water, siege: isSiegeBattle, defending: true });
@@ -839,7 +845,7 @@ export function resolveBattle(
   const aPower =
     aBlended * Math.sqrt(attacker.troops) * aSkillEffects.powerMultiplier * aElitePower *
     (stratEffect.attackerPowerMul ?? 1) * aPolicy.attackMul * aTraitMods.attackMul * aComboMul *
-    aRelBonus.powerMul * rivalMul * aTitlePowerMul * aCasusMul * aNavalMul * aGuardMul * aPrestigeMul * aSetBondMul * aPartyMul * aThemeMul * aGradeMul * aSetMul * aWeaponMul * aFormMul;
+    aRelBonus.powerMul * rivalMul * aTitlePowerMul * aCasusMul * aNavalMul * aGuardMul * aPrestigeMul * aSetBondMul * aPartyMul * aProfMul * aThemeMul * aGradeMul * aSetMul * aWeaponMul * aFormMul;
 
   const defenderIds = defenderPool.map((o) => o.id);
   const dBaseBlended =
@@ -865,8 +871,10 @@ export function resolveBattle(
   const wallMul = wallTier === 3 ? 1.40 : wallTier === 2 ? 1.18 : 1.0;
   const siegeEngine = ctx ? selectSiegeEngine(attacker, wallTier) : null;
   const siegeMul = siegeEngine?.defenseMultiplier ?? 1;
+  // 老兵度 — a seasoned garrison holds its wall harder (up to +12% defence).
+  const vetMul = 1 + Math.max(0, Math.min(100, ctx?.city?.veterancy ?? 0)) / 100 * 0.12;
   const defenseFactor =
-    (1 + cityDefense / 150) * dSkillEffects.defenseMultiplier * wallMul * siegeMul * dTraitMods.defenseMul;
+    (1 + cityDefense / 150) * dSkillEffects.defenseMultiplier * wallMul * siegeMul * dTraitMods.defenseMul * vetMul;
   const dPower =
     dBlended *
     Math.sqrt(defender.troops + 1) *
@@ -875,7 +883,7 @@ export function resolveBattle(
     dElitePower *
     (stratEffect.defenderPowerMul ?? 1) *
     dPolicy.attackMul * dTraitMods.attackMul * dComboMul * dRelBonus.powerMul * rivalMul *
-    dTitlePowerMul * dCasusMul * dNavalMul * dGuardMul * dPrestigeMul * dSetBondMul * dPartyMul * dThemeMul * dGradeMul * dSetMul * dWeaponMul / Math.max(0.5, dPolicy.defenseMul);
+    dTitlePowerMul * dCasusMul * dNavalMul * dGuardMul * dPrestigeMul * dSetBondMul * dPartyMul * dProfMul * dThemeMul * dGradeMul * dSetMul * dWeaponMul / Math.max(0.5, dPolicy.defenseMul);
 
   const total = aPower + dPower || 1;
   const aRatio = aPower / total;

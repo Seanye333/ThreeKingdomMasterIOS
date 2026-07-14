@@ -612,6 +612,9 @@ export function applyBreakthrough(
 /** XP a disciple earns each season their master teaches from the same city —
  *  richer than the passive MENTOR_XP, since the bond is deliberate. */
 const MENTOR_BOND_XP = 14;
+/** 名師高徒 — canonical (historical) master/student teaching, between the
+ *  deliberate 拜師 bond (14) and the generic 名將帶新兵 trickle (8). */
+const MENTOR_CANON_XP = 10;
 /** Per-season chance a disciple inherits one of the master's abilities. Low, so
  *  衣缽相傳 takes years of shared service rather than a season. */
 const MENTOR_INHERIT_CHANCE = 0.08;
@@ -665,16 +668,23 @@ function applyInheritance(pupil: Officer, inh: Inheritance): Officer {
 export function tickMentorBonds(
   officers: Record<EntityId, Officer>,
   rng: () => number = Math.random,
+  /** 名師高徒 — canonical 師徒 lookup (relationshipEffects.mentorsOf). When
+   *  given, a historical master serving alongside their historical student
+   *  teaches automatically — no explicit 拜師 needed — at a strength between
+   *  the deliberate bond and the generic 名將帶新兵 trickle. */
+  canonicalMentorsOf?: (id: EntityId) => EntityId[],
 ): { officers: Record<EntityId, Officer>; entries: ReportEntry[]; bonded: Set<EntityId> } {
   const out = { ...officers };
   const entries: ReportEntry[] = [];
   const bonded = new Set<EntityId>();
+  const inService = (m: Officer | undefined): m is Officer =>
+    !!m && m.status !== 'dead' && m.status !== 'imprisoned' && m.status !== 'unsearched' && m.status !== 'retired';
   for (const st of Object.values(out)) {
     if (!st.mentorId) continue;
     if (st.status !== 'idle' && st.status !== 'active') continue;
     const master = out[st.mentorId];
     if (!master) continue;
-    if (master.status === 'dead' || master.status === 'imprisoned' || master.status === 'unsearched' || master.status === 'retired') continue;
+    if (!inService(master)) continue;
     if (master.locationCityId == null || master.locationCityId !== st.locationCityId) continue;
     if (master.forceId == null || master.forceId !== st.forceId) continue;
     bonded.add(st.id);
@@ -695,6 +705,36 @@ export function tickMentorBonds(
       }
     }
     out[st.id] = pupil;
+  }
+  // 名師高徒 — canonical master/student pairs teach automatically when serving
+  // together (one canonical master per student; skip those already fed by an
+  // explicit bond above so there is no double-dip).
+  if (canonicalMentorsOf) {
+    for (const st of Object.values(out)) {
+      if (bonded.has(st.id)) continue;
+      if (st.status !== 'idle' && st.status !== 'active') continue;
+      if (st.forceId == null || st.locationCityId == null) continue;
+      const master = canonicalMentorsOf(st.id)
+        .map((mid) => out[mid])
+        .find((m) => inService(m) && m.forceId === st.forceId && m.locationCityId === st.locationCityId);
+      if (!master) continue;
+      bonded.add(st.id);
+      const r = grantXp(out[st.id], MENTOR_CANON_XP, rng, topStat(master));
+      let pupil = r.officer;
+      entries.push(...r.entries);
+      if (rng() < MENTOR_INHERIT_CHANCE / 2) {
+        const inh = pickInheritance(master, pupil, rng);
+        if (inh) {
+          pupil = applyInheritance(pupil, inh);
+          entries.push({
+            cityId: pupil.locationCityId, kind: 'talent',
+            text: `${pupil.name.en} studied under ${master.name.en} — learned ${inh.label.en}.`,
+            textZh: `${pupil.name.zh}從學於${master.name.zh},習得「${inh.label.zh}」。`,
+          });
+        }
+      }
+      out[st.id] = pupil;
+    }
   }
   return { officers: out, entries, bonded };
 }

@@ -939,6 +939,11 @@ function DevelopmentSection({ city, isPlayerCity }: { city: City; isPlayerCity: 
         working={working.commerce} note={city.commerce >= econCap ? atCapNote : undefined} />
       <Bar icon="shield" label="Defense" zh="守備" value={city.defense} cap={statCap} tone="#88b7e8"
         working={working.defense} note={city.defense >= statCap ? atCapNote : undefined} />
+      {/* 老兵度 — only a garrison that has held a siege shows one. */}
+      {(city.veterancy ?? 0) > 0 && (
+        <Bar icon="shield" label="Veterancy" zh="老兵" value={city.veterancy ?? 0} cap={100} tone="#c9a24e"
+          note={`守備 +${Math.round((city.veterancy ?? 0) * 0.12)}%`} />
+      )}
       <Bar icon="flag" label="Loyalty" zh="民忠" value={city.loyalty} cap={100} tone="#e08aa0"
         warn={city.loyalty < 45} working={working.loyalty} note={loyaltyNote} />
     </section>

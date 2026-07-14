@@ -104,4 +104,10 @@ export interface City {
    * provides siege/combat bonuses (箭樓/拒馬/烽火台 etc.).
    */
   buildSlots?: BuildSlot[];
+  /**
+   * 老兵度 — garrison veterancy 0–100. A city that repels sieges seasons its
+   * defenders (fewer losses, a stiffer hold, up to +12% defence); it resets to
+   * a raw levy when the city falls to a storm. See combat.resolveBattle.
+   */
+  veterancy?: number;
 }

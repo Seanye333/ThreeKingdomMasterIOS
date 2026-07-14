@@ -331,6 +331,7 @@ import { composeYearChronicle } from '../systems/chronicle';
 import { attackerArm } from '../systems/combat';
 import { festivalPool, festivalDraw, FESTIVAL_GOLD_COST, festivalScrollReward } from '../systems/festival';
 import { rollFoil } from '../systems/cardFoil';
+import { accrueArmProficiency } from '../systems/armProficiency';
 import { rollBounties, fulfilledBounties } from '../systems/bounty';
 import { codexRecordPeaks } from '../systems/codex';
 import { tickBuildings } from '../systems/buildings';
@@ -12437,6 +12438,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           participantIds.map((id) => officers[id]?.equipment ?? []),
         );
         setLoreRegistry(nextItemLore);
+
+        // 兵種熟練 — each officer grows more practised in the arm they fought as
+        // (winners a touch faster). Only FOUGHT battles move it, like 戰意.
+        officers = accrueArmProficiency(
+          officers,
+          tb.units.map((u) => ({ officerId: u.officerId, unit: u.unitType, won: winner != null && u.side === winner })),
+        );
         set({ itemLore: nextItemLore });
 
         // Save replay (snapshot of final battle state only — turn-by-turn would
@@ -12720,6 +12728,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               troops: survivingTroops,
               population: popLoss.survivors,
               loyalty: Math.max(20, Math.floor(target.loyalty * 0.5)),
+              // 老兵度歸零 — the stormed city is regarrisoned by raw levies.
+              veterancy: 0,
             };
             if (popLoss.refugees > 0 && formerOwner) {
               const haven = (cities[tb.cityId].adjacentCityIds ?? []).find(
@@ -12772,6 +12782,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               };
             }
           }
+        }
+
+        // 精兵老兵 — a garrison that repels a storm seasons its ranks (+老兵度,
+        // cap 100). Only a real siege hold counts (not a field clash).
+        if (winner === 'defender' && target && !tb.field && cities[tb.cityId]?.ownerForceId === target.ownerForceId) {
+          const cur = cities[tb.cityId].veterancy ?? 0;
+          cities[tb.cityId] = { ...cities[tb.cityId], veterancy: Math.min(100, cur + 8) };
         }
 
         // If a battle happened and the career officer participated, record it.

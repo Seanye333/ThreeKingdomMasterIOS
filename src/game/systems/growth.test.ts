@@ -198,6 +198,19 @@ describe('師徒衣缽 — explicit mentor bonds', () => {
     const { bonded } = tickMentorBonds({ master: farMaster, pupil }, () => 0.5);
     expect(bonded.has('pupil')).toBe(false);
   });
+  it('名師高徒 — a canonical master serving alongside their student teaches automatically', () => {
+    const master = { ...makeOfficer({ war: 80 }), id: 'sima-hui', mentorId: undefined } as Officer;
+    const student = { ...makeOfficer(), id: 'zhuge-liang', mentorId: undefined } as Officer;
+    // No explicit bond; canonical lookup wires the pair when co-located.
+    const canon = (id: string) => (id === 'zhuge-liang' ? ['sima-hui'] : []);
+    const { officers, bonded } = tickMentorBonds({ 'sima-hui': master, 'zhuge-liang': student }, () => 0.9, canon);
+    expect(bonded.has('zhuge-liang')).toBe(true);
+    expect(officers['zhuge-liang'].xp).toBeGreaterThan(0);
+    // An apart master teaches no one.
+    const apart = { ...student, locationCityId: 'elsewhere' } as Officer;
+    const r2 = tickMentorBonds({ 'sima-hui': master, 'zhuge-liang': apart }, () => 0.9, canon);
+    expect(r2.bonded.has('zhuge-liang')).toBe(false);
+  });
   it('繼承遺志 — a disciple is lifted when the master dies', () => {
     const { master, pupil } = bondPair();
     const { officers, entries } = inheritLegacyOnDeath(master, { master, pupil });

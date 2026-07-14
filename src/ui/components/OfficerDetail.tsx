@@ -39,6 +39,8 @@ import { xpProgress, learnableSkills, canBreakthrough, breakthroughCost, breakth
 import { canAppraise, GRADE_LABEL } from '../../game/systems/appraisal';
 import { officerGrade, officerLevel, nextGradeGap, gradeMeta } from '../../game/systems/officerGrade';
 import { MAX_STARS, officerStars, nextStarRequirement, scrollStarCost } from '../../game/systems/stars';
+import { armProficiency, armProficiencyTier, PROF_ARM_LABEL, profArmOf, type ProfArm } from '../../game/systems/armProficiency';
+import { inferUnitType } from '../../game/systems/tactical';
 import { skillLevelBadge } from '../../game/systems/skillMastery';
 import { gradeCombatBonus, itemMasteryMul } from '../../game/systems/gradeCombat';
 import { itemRarity, itemRarityMeta, liveItemById, refineCost, REFINE_MAX,
@@ -639,6 +641,32 @@ export function OfficerDetail({
                         }}
                       >{t('洗髓', 'Cleanse')}</button>
                     )}
+                  </div>
+                );
+              })()}
+              {(() => {
+                // 兵種熟練 — proficiency with each arm, earned on the field. Show
+                // the officer's primary arm plus any they've built up.
+                const primary = profArmOf(inferUnitType(officer));
+                const arms = (Object.keys(PROF_ARM_LABEL) as ProfArm[])
+                  .filter((a) => a === primary || armProficiency(officer, a) > 0);
+                if (arms.length === 0) return null;
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 2 }}>
+                    <span style={{ fontSize: '0.72rem', color: '#7a8893', letterSpacing: '0.05rem' }} title={t('兵種熟練 — 以此兵種出戰累積,率該兵種戰力微升(滿 +4%)', 'Arm proficiency — earned in the field; leading a mastered arm hits harder (up to +4%)')}>{t('兵種熟練', 'Arm')}</span>
+                    {arms.map((a) => {
+                      const v = armProficiency(officer, a);
+                      const tier = armProficiencyTier(v);
+                      const isPrimary = a === primary;
+                      const col = tier.tier >= 3 ? '#ffd66e' : tier.tier >= 2 ? '#8fd0ff' : tier.tier >= 1 ? '#a8d8a8' : '#7a8893';
+                      return (
+                        <span key={a}
+                          title={`${PROF_ARM_LABEL[a].zh} ${v}/100 · ${tier.zh}${isPrimary ? '(本兵種)' : ''}`}
+                          style={{ fontSize: '0.7rem', padding: '0.05rem 0.45rem', borderRadius: 8, border: `1px solid ${isPrimary ? col : '#2b3845'}`, background: isPrimary ? `${col}1a` : 'transparent', color: col }}>
+                          {PROF_ARM_LABEL[a].glyph} {v}·{lang === 'en' ? tier.en : tier.zh}
+                        </span>
+                      );
+                    })}
                   </div>
                 );
               })()}
