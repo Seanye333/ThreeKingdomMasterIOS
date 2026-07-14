@@ -5,6 +5,22 @@ import type {
   ReportEntry,
   Season,
 } from '../types';
+import { isPhysician, medicalSkillOf, MEDICAL_SKILL_MAX } from './medicalSkill';
+
+/**
+ * 醫者防疫 — the best physician posted in a city, and the outbreak-mitigation
+ * their 醫術 lends (0 with none, 0.1 for a raw medic, up to 0.35 for a 神醫).
+ * Damps both the plague's odds and its toll — a 神醫 in a plague-year capital is
+ * worth more than a 傷兵營.
+ */
+export function cityPhysician(cityId: EntityId, officers: Record<EntityId, Officer>): { doc: Officer; mit: number } | null {
+  let best: Officer | null = null;
+  for (const o of Object.values(officers)) {
+    if (o.locationCityId !== cityId || o.status === 'dead' || !isPhysician(o)) continue;
+    if (!best || medicalSkillOf(o) > medicalSkillOf(best)) best = o;
+  }
+  return best ? { doc: best, mit: Math.min(0.35, 0.1 + (medicalSkillOf(best) / MEDICAL_SKILL_MAX) * 0.25) } : null;
+}
 
 export interface EventsInput {
   season: Season;
@@ -211,14 +227,18 @@ export function rollEvents(input: EventsInput): EventsOutput {
       continue;
     }
 
-    // Plague: hits population & troops. Infirmaries quarantine and treat.
+    // Plague: hits population & troops. Infirmaries quarantine and treat, and a
+    // 名醫/神醫 posted here (醫者防疫) damps both the odds and the toll.
     const infirmary = worksLevel(c.id, 'infirmary');
+    const physician = cityPhysician(c.id, officers);
+    const pMit = physician?.mit ?? 0;
     if (
       cities[c.id].population > 50_000 &&
-      input.rng() < PLAGUE_CHANCE * dm * (1 - 0.25 * infirmary) * (plagueRisk.has(c.id) ? 3 : 1)
+      input.rng() < PLAGUE_CHANCE * dm * (1 - 0.25 * infirmary) * (1 - pMit) * (plagueRisk.has(c.id) ? 3 : 1)
     ) {
-      const popLost = Math.floor(cities[c.id].population * 0.1 * (1 - 0.25 * infirmary));
-      const troopLost = Math.floor(cities[c.id].troops * 0.05 * (1 - 0.25 * infirmary));
+      const tollMul = Math.max(0, 1 - 0.25 * infirmary - pMit);
+      const popLost = Math.floor(cities[c.id].population * 0.1 * tollMul);
+      const troopLost = Math.floor(cities[c.id].troops * 0.05 * tollMul);
       const relief = afterDisaster(cities[c.id], 'plague', 5);
       cities[c.id] = {
         ...cities[c.id],
@@ -227,11 +247,17 @@ export function rollEvents(input: EventsInput): EventsOutput {
         food: Math.max(0, cities[c.id].food - relief.foodSpent),
         loyalty: Math.max(0, cities[c.id].loyalty - relief.loyaltyLoss),
       };
+      // 懸壺濟世 — a physician who battles an epidemic grows in their craft (+8 醫術),
+      // a crucible worth many quiet seasons of practice.
+      if (physician) {
+        const grown = Math.min(MEDICAL_SKILL_MAX, medicalSkillOf(physician.doc) + 8);
+        officers = { ...officers, [physician.doc.id]: { ...officers[physician.doc.id], medicalSkill: grown } };
+      }
       entries.push({
         cityId: c.id,
         kind: 'plague',
-        text: `Plague at ${c.name.en}. −${popLost.toLocaleString()} population, −${troopLost.toLocaleString()} troops.`,
-        textZh: `${c.name.zh}瘟疫橫行，人口 −${popLost.toLocaleString()}，兵員 −${troopLost.toLocaleString()}。`,
+        text: `Plague at ${c.name.en}. −${popLost.toLocaleString()} population, −${troopLost.toLocaleString()} troops.${physician ? ` ${physician.doc.name.en} tends the sick.` : ''}`,
+        textZh: `${c.name.zh}瘟疫橫行，人口 −${popLost.toLocaleString()}，兵員 −${troopLost.toLocaleString()}。${physician ? `${physician.doc.name.zh}懸壺濟世,活人無數。` : ''}`,
       });
     }
   }
