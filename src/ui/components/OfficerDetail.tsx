@@ -39,7 +39,7 @@ import { xpProgress, learnableSkills, canBreakthrough, breakthroughCost, breakth
 import { canAppraise, GRADE_LABEL } from '../../game/systems/appraisal';
 import { officerGrade, officerLevel, nextGradeGap, gradeMeta } from '../../game/systems/officerGrade';
 import { MAX_STARS, officerStars, nextStarRequirement, scrollStarCost } from '../../game/systems/stars';
-import { armProficiency, armProficiencyTier, PROF_ARM_LABEL, profArmOf, type ProfArm } from '../../game/systems/armProficiency';
+import { armProficiency, armProficiencyTier, armMasteryPerkOf, PROF_ARM_LABEL, profArmOf, type ProfArm } from '../../game/systems/armProficiency';
 import { inferUnitType } from '../../game/systems/tactical';
 import { skillLevelBadge } from '../../game/systems/skillMastery';
 import { gradeCombatBonus, itemMasteryMul } from '../../game/systems/gradeCombat';
@@ -308,9 +308,11 @@ export function OfficerDetail({
               );
             })()}
             {(officer.afflictions ?? []).map((a) => (
-              <div key={a.kind} style={{ marginTop: '0.2rem', fontSize: '0.72rem', color: a.kind === 'wound' ? '#d88a6a' : '#c79ad6' }}>
+              <div key={a.kind} style={{ marginTop: '0.2rem', fontSize: '0.72rem', color: a.kind === 'wound' ? '#d88a6a' : a.kind === 'chronic' ? '#b8687a' : '#c79ad6' }}>
                 {a.kind === 'wound'
                   ? `🩹 ${t(`養傷中(武力 ${a.war}，${a.seasons} 季)`, `Recovering (WAR ${a.war}, ${a.seasons}s)`)}`
+                  : a.kind === 'chronic'
+                  ? `🩼 ${t(`宿疾「${a.labelZh}」(${[a.war ? `武${a.war}` : '', a.intelligence ? `智${a.intelligence}` : '', a.charisma ? `魅${a.charisma}` : ''].filter(Boolean).join('、')}) — 洗髓/名醫可癒`, `${a.labelEn} (${[a.war ? `WAR ${a.war}` : '', a.intelligence ? `INT ${a.intelligence}` : '', a.charisma ? `CHA ${a.charisma}` : ''].filter(Boolean).join(', ')}) — cured by 洗髓`)}`
                   : `😖 ${t(`羞憤難平(魅力 ${a.charisma}、智力 ${a.intelligence}，${a.seasons} 季)`, `Shamed (CHA ${a.charisma}/INT ${a.intelligence}, ${a.seasons}s)`)}`}
               </div>
             ))}
@@ -658,12 +660,14 @@ export function OfficerDetail({
                       const v = armProficiency(officer, a);
                       const tier = armProficiencyTier(v);
                       const isPrimary = a === primary;
+                      const perk = armMasteryPerkOf(officer, a);
                       const col = tier.tier >= 3 ? '#ffd66e' : tier.tier >= 2 ? '#8fd0ff' : tier.tier >= 1 ? '#a8d8a8' : '#7a8893';
                       return (
                         <span key={a}
-                          title={`${PROF_ARM_LABEL[a].zh} ${v}/100 · ${tier.zh}${isPrimary ? '(本兵種)' : ''}`}
+                          title={`${PROF_ARM_LABEL[a].zh} ${v}/100 · ${tier.zh}${isPrimary ? '(本兵種)' : ''}${perk ? ` · 專精「${perk.zh}」— ${perk.descZh}` : ''}`}
                           style={{ fontSize: '0.7rem', padding: '0.05rem 0.45rem', borderRadius: 8, border: `1px solid ${isPrimary ? col : '#2b3845'}`, background: isPrimary ? `${col}1a` : 'transparent', color: col }}>
                           {PROF_ARM_LABEL[a].glyph} {v}·{lang === 'en' ? tier.en : tier.zh}
+                          {perk && <span style={{ marginLeft: 3, color: '#ffd66e' }}>✦{lang === 'en' ? perk.en : perk.zh}</span>}
                         </span>
                       );
                     })}

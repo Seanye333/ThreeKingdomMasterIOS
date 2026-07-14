@@ -24,7 +24,7 @@ import { effectiveStats, tacticalDamageMul, tacticalDefenseMul, tacticalMoraleAu
 import { gradeCombatBonus } from './gradeCombat';
 import { awakeningPerkCountFor } from '../data/items';
 import { growthPowerMul, streakPowerMul } from './growth';
-import { armProficiencyMul } from './armProficiency';
+import { armProficiencyMul, armMasteryMul } from './armProficiency';
 import { itemSetPowerMul } from '../data/itemSets';
 import { predictAttackDamage } from './damagePredict';
 import { stratagemSituation, type Situation } from './tacticSituation';
@@ -1608,6 +1608,8 @@ export function attackUnits(
     // 兵器覺醒·拒守 — the bearer's stance holds a touch firmer (≤2 picks bite).
     const bulwark = To ? awakeningPerkCountFor(To.equipment, 'bulwark') : 0;
     if (bulwark > 0) damage = Math.floor(damage * (1 - 0.05 * Math.min(2, bulwark)));
+    // 陣列如鐵 — an infantry 宗師 holds the line stiffer (兵種專精 G1).
+    if (target.unitType === 'infantry') damage = Math.floor(damage * armMasteryMul(To, 'infantry'));
   }
   // 盾牆 — linked defending infantry soak a further 15% (see shieldWallMul).
   damage = Math.floor(damage * shieldWallMul(b, target));

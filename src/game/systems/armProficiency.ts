@@ -55,6 +55,45 @@ export function armProficiencyMul(o: Officer | undefined | null, unit: UnitType)
   return 1 + (armProficiency(o, profArmOf(unit)) / ARM_PROF_MAX) * 0.04;
 }
 
+/** 宗師 threshold — reaching it unlocks the arm's signature 專精 perk. */
+export const ARM_MASTERY_TIER = 80;
+
+/**
+ * 兵種專精 — the signature passive a 宗師 (proficiency ≥ 80) of each arm earns.
+ * Turns the熟練 curve from a flat +% into a質變: a grandmaster of horse charges
+ * unbroken, a grandmaster archer wastes no arrow, and so on. Each folds into an
+ * EXISTING combat lever via armMasteryMul, so the effect is real, not cosmetic.
+ */
+export const ARM_MASTERY_PERKS: Record<ProfArm, { zh: string; en: string; descZh: string; descEn: string }> = {
+  cavalry: { zh: '衝陣不亂', en: 'Unbroken Charge', descZh: '衝擊/突貫傷害 +12%', descEn: 'Charge & shock damage +12%' },
+  archers: { zh: '矢無虛發', en: 'Every Arrow Tells', descZh: '矢雨傷害 +12%', descEn: 'Volley damage +12%' },
+  spearmen: { zh: '拒馬如林', en: 'A Forest of Spears', descZh: '立防拒騎:受衝擊再減 15%', descEn: 'Braced vs a charge: −15% more' },
+  infantry: { zh: '陣列如鐵', en: 'Iron Ranks', descZh: '立防時受傷再減 10%', descEn: 'While defending: −10% damage taken' },
+  navy: { zh: '操舟若神', en: 'Master of the Waves', descZh: '水戰戰力 +10%', descEn: 'Naval power +10%' },
+};
+
+/** The 宗師 perk this officer holds for an arm, or null if not yet mastered. */
+export function armMasteryPerkOf(officer: Officer | undefined | null, arm: ProfArm): { zh: string; en: string; descZh: string; descEn: string } | null {
+  if (!officer) return null;
+  return armProficiency(officer, arm) >= ARM_MASTERY_TIER ? ARM_MASTERY_PERKS[arm] : null;
+}
+
+/**
+ * The situational multiplier a 宗師 perk grants at its combat lever (1 if the
+ * officer hasn't mastered that arm). >1 for offensive perks (charge/volley/
+ * naval), <1 for the defensive ones (applied to damage TAKEN).
+ */
+export function armMasteryMul(officer: Officer | undefined | null, arm: ProfArm): number {
+  if (!officer || armProficiency(officer, arm) < ARM_MASTERY_TIER) return 1;
+  switch (arm) {
+    case 'cavalry': return 1.12; // 衝陣不亂 — more shock
+    case 'archers': return 1.12; // 矢無虛發 — more volley
+    case 'navy': return 1.10;    // 操舟若神 — more naval power
+    case 'infantry': return 0.90; // 陣列如鐵 — less damage taken while defending
+    case 'spearmen': return 0.85; // 拒馬如林 — less damage taken when braced vs a charge
+  }
+}
+
 /**
  * Accrue proficiency for battle participants toward the arm they fought as.
  * Winners learn a touch faster. Returns a new officers map (changed only).

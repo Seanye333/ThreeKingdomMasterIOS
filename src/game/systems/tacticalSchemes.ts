@@ -23,6 +23,7 @@ import {
   COMBAT_LETHALITY, ARM_ARMOR, counterMultiplier, hexDirection, dirGap, shieldWallMul,
 } from './tactical';
 import { awakeningPerkCountFor } from '../data/items';
+import { armMasteryMul } from './armProficiency';
 import { stratagemDamageMul } from './traitEffects';
 import { resolveDuel, canDuel, staticProwess } from './duel';
 
@@ -712,7 +713,8 @@ export function applyStratagem(
       // charge home; forest/mountain bog it down (戰法情境).
       const chgSit = battleStratagemSituation(b, unit.coord, targetCoord, stratagem);
       const chgTraitMul = off ? stratagemDamageMul(off, stratagem) : 1;
-      const { dmg: damage, braced: chgBraced } = shockDamage(b, unit, target, officers, 1.5 * chgSit.mult * chgTraitMul);
+      // 衝陣不亂 — a 宗師 of horse drives the charge home harder (兵種專精).
+      const { dmg: damage, braced: chgBraced } = shockDamage(b, unit, target, officers, 1.5 * chgSit.mult * chgTraitMul * armMasteryMul(off, 'cavalry'));
       const updated: TacticalBattle = {
         ...b,
         units: b.units.map((u) => {
@@ -760,7 +762,8 @@ export function applyStratagem(
         (u.effects.some((e) => e.kind === 'defending') ? 0.55 : 1)
         * Math.min(1, ARM_ARMOR[u.unitType] ?? 1)
         * (u.unitType === 'cavalry' ? 0.85 : 1);
-      const stratMul = arrSit.mult * (off ? stratagemDamageMul(off, stratagem) : 1) * volleyStrength;
+      // 矢無虛發 — a 宗師 of the bow makes every arrow tell (兵種專精).
+      const stratMul = arrSit.mult * (off ? stratagemDamageMul(off, stratagem) : 1) * volleyStrength * armMasteryMul(off, 'archers');
       // 拋射覆蓋 — a volley falls over an area: the aimed hex takes the brunt,
       // every other enemy pressed up against it catches the spillover (半傷).
       // Arcing shots loft over walls/units, so no line-of-sight or cover applies.
@@ -1172,6 +1175,8 @@ function shockDamage(
     dmg *= 0.5;
     const bulwark = To ? awakeningPerkCountFor(To.equipment, 'bulwark') : 0;
     if (bulwark > 0) dmg *= 1 - 0.05 * Math.min(2, bulwark);
+    // 陣列如鐵 — an infantry 宗師 holds the line stiffer (兵種專精).
+    if (target.unitType === 'infantry') dmg *= armMasteryMul(To, 'infantry');
   }
   dmg *= shieldWallMul(b, target); // 盾牆 — linked defending infantry
   if (tileAt(b, target.coord)?.terrain === 'fieldworks') dmg *= 0.6;
@@ -1179,6 +1184,8 @@ function shockDamage(
   if (target.unitType === 'spearmen' && !isRouting(target) && typeof target.facing === 'number'
       && dirGap(hexDirection(target.coord, unit.coord), target.facing) <= 1) {
     dmg *= 0.5;
+    // 拒馬如林 — a spear 宗師's braced wall breaks the ride harder (兵種專精).
+    dmg *= armMasteryMul(To, 'spearmen');
     braced = true;
   }
   return { dmg: Math.min(Math.floor(dmg), Math.floor(target.troops * 0.7)), braced };

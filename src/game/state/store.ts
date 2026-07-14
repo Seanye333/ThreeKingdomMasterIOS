@@ -31,7 +31,7 @@ import { pushBoutRecord } from '../systems/duelHall';
 import { recordRivalryBout, pairKey as rivalPairKey, NEMESIS_THRESHOLD } from '../systems/rivalries';
 import { challengeStakes } from '../systems/duelChallenge';
 import { applyBout, seedRating } from '../systems/warRanking';
-import { tickAfflictions, withAffliction, type Affliction } from '../systems/afflictions';
+import { tickAfflictions, withAffliction, hasChronicAilment, rollChronicAilment, cureChronicAilments, type Affliction } from '../systems/afflictions';
 import { routConsequence, type RoutConsequence } from '../systems/wordWar';
 import { canAppraise, appraisalVerdict, appraisalRenownGain, discernment, isLegendaryCritic, legendaryVerdict, appraisalMisread, pickMonthlyAppraisal } from '../systems/appraisal';
 import { executionRenownCost, markSlainVendetta } from '../systems/captiveFate';
@@ -5396,12 +5396,27 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             }
             const left = o.woundedSeasons - dec;
             if (left <= 0) {
-              tickedOfficers[o.id] = { ...o, status: 'idle', woundedSeasons: undefined, woundSeverity: undefined };
-              result.report.entries.push({
-                cityId: o.locationCityId,
-                kind: 'note',
-                text: `傷癒復出 — ${o.name.zh} has recovered and returns to service.`,
-              });
+              // 宿疾 — a critical wound can leave a lasting scar (rarer with good
+              // physic). Curable later by 洗髓/名醫; folds into effective stats.
+              let healed: Officer = { ...o, status: 'idle', woundedSeasons: undefined, woundSeverity: undefined };
+              const chronicChance = o.woundSeverity === 'critical'
+                ? Math.min(0.4, (0.22 + Math.max(0, (result.date.year - o.birthYear) - 45) * 0.005) / recoveryMul)
+                : 0;
+              if (chronicChance > 0 && !hasChronicAilment(healed) && Math.random() < chronicChance) {
+                const ailment = rollChronicAilment(Math.random);
+                healed = withAffliction(healed, ailment);
+                result.report.entries.push({
+                  cityId: o.locationCityId, kind: 'note',
+                  text: `傷癒復出,然落下宿疾「${ailment.labelEn}」 — ${o.name.zh}.`,
+                  textZh: `${o.name.zh}傷癒復出,然創重難平,落下宿疾「${ailment.labelZh}」。`,
+                });
+              } else {
+                result.report.entries.push({
+                  cityId: o.locationCityId, kind: 'note',
+                  text: `傷癒復出 — ${o.name.zh} has recovered and returns to service.`,
+                });
+              }
+              tickedOfficers[o.id] = healed;
             } else {
               tickedOfficers[o.id] = { ...o, woundedSeasons: left };
               // First season after the wound, roll for retirement petition.
@@ -11409,8 +11424,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         for (const k of keys) if (latent[k] < latent[worst]) worst = k;
         latent[worst] = Math.min(150, latent[worst] + 8);
         const stats = { ...o.stats, [worst]: Math.min(latent[worst], o.stats[worst] + 2) };
+        // 伐毛 — the cleanse also purges any lasting 宿疾 (G3).
+        const cured = cureChronicAilments({ ...o, latentStats: latent, stats, marrowCleansed: true });
         set({
-          officers: { ...state.officers, [officerId]: { ...o, latentStats: latent, stats, marrowCleansed: true } },
+          officers: { ...state.officers, [officerId]: cured },
           cities: { ...state.cities, [city.id]: { ...city, gold: city.gold - COST } },
         });
         get().notify(

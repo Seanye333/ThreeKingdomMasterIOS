@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { accrueArmProficiency, armProficiency, armProficiencyMul, armProficiencyTier, profArmOf, ARM_PROF_MAX } from './armProficiency';
+import { accrueArmProficiency, armProficiency, armProficiencyMul, armProficiencyTier, profArmOf, ARM_PROF_MAX, armMasteryPerkOf, armMasteryMul, ARM_MASTERY_TIER } from './armProficiency';
 import type { Officer } from '../types';
 
 const mk = (over: Partial<Officer> = {}): Officer => ({
@@ -46,5 +46,20 @@ describe('兵種熟練 — arm proficiency', () => {
     expect(armProficiencyTier(20).zh).toBe('嫻熟');
     expect(armProficiencyTier(50).zh).toBe('精通');
     expect(armProficiencyTier(80).zh).toBe('宗師');
+  });
+
+  it('兵種專精 — 宗師 unlocks a signature perk with a real situational bite', () => {
+    const raw = mk({ armProficiency: { cavalry: 79 } });
+    const master = mk({ armProficiency: { cavalry: ARM_MASTERY_TIER } });
+    // Below the bar: no perk, no bite.
+    expect(armMasteryPerkOf(raw, 'cavalry')).toBeNull();
+    expect(armMasteryMul(raw, 'cavalry')).toBe(1);
+    // At 宗師: the perk unlocks and the lever moves.
+    expect(armMasteryPerkOf(master, 'cavalry')?.zh).toBe('衝陣不亂');
+    expect(armMasteryMul(master, 'cavalry')).toBeCloseTo(1.12, 5); // offensive perk >1
+    // Defensive perks read <1 (applied to damage taken); wrong arm stays neutral.
+    expect(armMasteryMul(mk({ armProficiency: { infantry: 90 } }), 'infantry')).toBeCloseTo(0.90, 5);
+    expect(armMasteryMul(mk({ armProficiency: { spearmen: 90 } }), 'spearmen')).toBeCloseTo(0.85, 5);
+    expect(armMasteryMul(master, 'archers')).toBe(1); // masters horse, not bow
   });
 });

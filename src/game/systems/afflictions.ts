@@ -10,16 +10,19 @@ import type { Officer } from '../types';
  * duel prowess and debate prowess alike) and tick down one season at a time.
  * The field is optional, so old saves load unchanged.
  */
-export type AfflictionKind = 'wound' | 'shame';
+export type AfflictionKind = 'wound' | 'shame' | 'chronic';
 
 export interface Affliction {
   kind: AfflictionKind;
-  /** Seasons remaining before it lifts. */
+  /** Seasons remaining before it lifts. 'chronic' never ticks (a large sentinel). */
   seasons: number;
   /** Stat penalties (stored as negative numbers). */
   war?: number;
   intelligence?: number;
   charisma?: number;
+  /** 宿疾 label (chronic only) — a named lasting ailment shown in the UI. */
+  labelZh?: string;
+  labelEn?: string;
 }
 
 export type AfflictableStat = 'war' | 'intelligence' | 'charisma';
@@ -51,8 +54,39 @@ export function withAffliction(o: Officer, aff: Affliction): Officer {
 export function tickAfflictions(o: Officer, woundHealBonus = 0): Officer {
   if (!o.afflictions?.length) return o;
   const next = o.afflictions
-    .map((a) => ({ ...a, seasons: a.seasons - 1 - (a.kind === 'wound' ? woundHealBonus : 0) }))
-    .filter((a) => a.seasons > 0);
+    // 宿疾 never lifts on its own — only 洗髓/名醫 can cure it.
+    .map((a) => (a.kind === 'chronic' ? a : { ...a, seasons: a.seasons - 1 - (a.kind === 'wound' ? woundHealBonus : 0) }))
+    .filter((a) => a.kind === 'chronic' || a.seasons > 0);
+  return { ...o, afflictions: next.length ? next : undefined };
+}
+
+// ─── 宿疾 — the lasting scars a grievous wound can leave ─────────────────────
+const CHRONIC_AILMENTS: Affliction[] = [
+  { kind: 'chronic', seasons: 9999, war: -4, labelZh: '箭瘡宿疾', labelEn: 'Old Arrow Wound' },
+  { kind: 'chronic', seasons: 9999, war: -3, labelZh: '折肱之痛', labelEn: 'A Crippled Arm' },
+  { kind: 'chronic', seasons: 9999, intelligence: -4, labelZh: '頭風之疾', labelEn: 'Chronic Migraines' },
+  { kind: 'chronic', seasons: 9999, war: -2, charisma: -2, labelZh: '毀容之傷', labelEn: 'A Disfiguring Scar' },
+];
+
+/** True if the officer carries a lasting 宿疾. */
+export function hasChronicAilment(o: Officer): boolean {
+  return (o.afflictions ?? []).some((a) => a.kind === 'chronic');
+}
+
+/** The officer's 宿疾, if any (for display). */
+export function chronicAilmentOf(o: Officer): Affliction | null {
+  return (o.afflictions ?? []).find((a) => a.kind === 'chronic') ?? null;
+}
+
+/** Pick a 宿疾 a critical wound left behind (deterministic on the rng roll). */
+export function rollChronicAilment(rng: () => number): Affliction {
+  return CHRONIC_AILMENTS[Math.floor(rng() * CHRONIC_AILMENTS.length)] ?? CHRONIC_AILMENTS[0];
+}
+
+/** Strip every 宿疾 (洗髓/名醫). Returns the officer with chronic afflictions cleared. */
+export function cureChronicAilments(o: Officer): Officer {
+  if (!o.afflictions?.length) return o;
+  const next = o.afflictions.filter((a) => a.kind !== 'chronic');
   return { ...o, afflictions: next.length ? next : undefined };
 }
 

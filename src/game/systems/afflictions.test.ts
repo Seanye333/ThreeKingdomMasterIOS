@@ -3,6 +3,7 @@ import { mkOfficer } from '../../test/factories';
 import {
   afflictionDelta, hasAffliction, withAffliction, tickAfflictions,
   duelWound, debateShame, isEmotional,
+  rollChronicAilment, cureChronicAilments, hasChronicAilment, chronicAilmentOf,
 } from './afflictions';
 import { staticProwess } from './duel';
 import { debateProwess } from './wordWar';
@@ -37,5 +38,28 @@ describe('afflictions', () => {
     const b = withAffliction(a, { kind: 'wound', seasons: 3, war: -6 });
     expect(b.afflictions?.filter((x) => x.kind === 'wound').length).toBe(1);
     expect(b.afflictions?.find((x) => x.kind === 'wound')?.seasons).toBe(3);
+  });
+});
+
+describe('宿疾 — chronic ailments from a grievous wound', () => {
+  it('never ticks away on its own, and folds into effective stats', () => {
+    const o = withAffliction(mkOfficer({ stats: { war: 90, leadership: 60, intelligence: 60, politics: 60, charisma: 60 } }), rollChronicAilment(() => 0));
+    expect(hasChronicAilment(o)).toBe(true);
+    const ail = chronicAilmentOf(o)!;
+    expect(ail.kind).toBe('chronic');
+    // The penalty is real (some stat is sapped).
+    expect((ail.war ?? 0) + (ail.intelligence ?? 0) + (ail.charisma ?? 0)).toBeLessThan(0);
+    // Ten seasons pass — a 宿疾 does not heal itself.
+    let ticked = o;
+    for (let i = 0; i < 10; i++) ticked = tickAfflictions(ticked);
+    expect(hasChronicAilment(ticked)).toBe(true);
+  });
+
+  it('洗髓/名醫 purges it — but leaves other afflictions alone', () => {
+    let o = withAffliction(mkOfficer({}), rollChronicAilment(() => 0.5));
+    o = withAffliction(o, { kind: 'wound', seasons: 2, war: -6 });
+    const cured = cureChronicAilments(o);
+    expect(hasChronicAilment(cured)).toBe(false);
+    expect(hasAffliction(cured, 'wound')).toBe(true); // short-lived wound untouched
   });
 });

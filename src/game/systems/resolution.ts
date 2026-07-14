@@ -41,7 +41,7 @@ import {
   specialtyControl, specialtyRealmEffects, allRoleEffects, embargoedRolesAgainst,
   type SpecialtyControl, type SpecialtyRealmEffects, type SpecialtyRole,
 } from '../data/specialties';
-import { buildingBonuses, schoolHeadmasterFocus } from './buildings';
+import { buildingBonuses, schoolHeadmasterFocus, SCHOOL_BUILDINGS } from './buildings';
 import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
 import { corruptionAccrualMultiplier } from './traitEffects';
 import { rollCivicEvents } from './civicEvents';
@@ -2331,6 +2331,29 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       const r = grantXp(officers[st.id] ?? st, MENTOR_XP, rng);
       officers[st.id] = r.officer;
       entries.push(...r.entries);
+    }
+  }
+
+  // Phase 3f-sexies — 校舍常設集訓. Beyond the on-demand 興学 command, a city
+  // that KEEPS a school (書院/太學/武學堂/演武場…) seasons every officer garrisoned
+  // there a little each season, hands-free — the school's mere presence is a
+  // standing benefit (scaled by its xpMul + tilted by the 山長's focus). Silent
+  // and small so it never dwarfs 興学/battle XP; symmetric across all forces.
+  const SCHOOL_TRICKLE_XP = 4;
+  for (const city of Object.values(cities)) {
+    if (!city.ownerForceId) continue;
+    const hasSchool = (input.buildings ?? []).some(
+      (bd) => bd.cityId === city.id && SCHOOL_BUILDINGS.has(bd.id) && (bd.level ?? 0) >= 1);
+    if (!hasSchool) continue;
+    const bb = buildingBonuses(city.id, input.buildings ?? [], {
+      statecraft: forces[city.ownerForceId]?.statecraft ?? null, officers,
+    });
+    const focus = schoolHeadmasterFocus(city.id, input.buildings ?? [], officers);
+    const gain = Math.max(1, Math.round(SCHOOL_TRICKLE_XP * bb.xpMul));
+    for (const o of Object.values(officers)) {
+      if (o.locationCityId !== city.id || o.forceId !== city.ownerForceId) continue;
+      if (o.status !== 'idle' && o.status !== 'active') continue;
+      officers[o.id] = grantXp(officers[o.id] ?? o, gain, rng, focus ?? undefined, { year: input.date.year }).officer;
     }
   }
 

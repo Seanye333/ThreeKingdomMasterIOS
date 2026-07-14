@@ -28,7 +28,7 @@ import { growthPowerMul, streakPowerMul, grantXp } from './growth';
 import { skillEffectMul } from './skillMastery';
 import { setBondPowerMul } from './setBonds';
 import { partySynergies } from './partySynergy';
-import { armProficiencyMul } from './armProficiency';
+import { armProficiencyMul, armMasteryMul } from './armProficiency';
 import { inferUnitType } from './tactical';
 import { deriveWeaponType, type WeaponType } from '../data/weaponTypes';
 import { weaponMatchupMul, weaponMasterySkill, pickAiFormation, formationCounterMul } from './tactical';
@@ -214,7 +214,10 @@ function isWaterBattle(ctx?: { city?: City }): boolean {
 function navalProwessMul(pool: Officer[], ctx?: { city?: City }): number {
   if (!isWaterBattle(ctx)) return 1;
   const navy = pool.filter((o) => o.skills.includes('navy-master')).length;
-  return navy === 0 ? 1 : 1 + Math.min(0.24, 0.08 * navy);
+  let mul = navy === 0 ? 1 : 1 + Math.min(0.24, 0.08 * navy);
+  // 操舟若神 — a naval 宗師 aboard lifts the whole fleet's power (兵種專精 G1).
+  if (pool.some((o) => armMasteryMul(o, 'navy') > 1)) mul *= 1.10;
+  return mul;
 }
 
 /**
