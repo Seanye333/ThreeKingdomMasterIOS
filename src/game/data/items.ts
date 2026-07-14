@@ -230,6 +230,21 @@ export function setEvolvedRegistry(ids: Iterable<string> | undefined): void {
 export function itemIsEvolved(itemId: string): boolean {
   return EVOLVED_REGISTRY.has(itemId);
 }
+/**
+ * 器魂共鳴 — a host fielding several 器魂-awakened (·神) arms resonates: the
+ * spirits answer one another. +3% power per awakened weapon beyond the first,
+ * capped +6% (three). Symmetric; a small reward for a legendary armoury.
+ */
+export function evolvedResonanceMul(pool: Array<{ equipment: readonly string[] } | null | undefined>): number {
+  let count = 0;
+  for (const o of pool) {
+    if (!o) continue;
+    for (const id of o.equipment) {
+      if (ITEMS_BY_ID[id]?.kind === 'weapon' && EVOLVED_REGISTRY.has(id)) count++;
+    }
+  }
+  return count >= 2 ? 1 + Math.min(0.06, 0.03 * (count - 1)) : 1;
+}
 /** Can this item awaken its 器魂 now? (gold rarity · ★5 · 名器 · not yet evolved) */
 export function canEvolveItem(itemId: string): { ok: boolean; reasonZh: string; reasonEn: string } {
   const base = ITEMS_BY_ID[itemId];
@@ -480,10 +495,28 @@ export const COMMAND_TOKEN_ARM: Record<string, 'cavalry' | 'infantry' | 'spearme
  */
 export function commandTokenMultiplier(pool: Array<{ equipment: readonly string[] } | null | undefined>): number {
   let bearers = 0;
+  const distinct = new Set<string>();
   for (const o of pool) {
-    if (o && o.equipment.some((id) => COMMAND_TOKEN_IDS.has(id))) bearers++;
+    if (!o) continue;
+    const held = o.equipment.find((id) => COMMAND_TOKEN_IDS.has(id));
+    if (held) { bearers++; distinct.add(held); }
   }
-  return 1 + Math.min(0.08, 0.04 * bearers);
+  let mul = 1 + Math.min(0.08, 0.04 * bearers);
+  // 六軍歸心 — three or more DIFFERENT tokens fielded by one host (the full staff
+  // of command assembled) resonate for a further +6%. A real assembly goal.
+  if (distinct.size >= 3) mul *= 1.06;
+  return mul;
+}
+
+/** True if a side fields the full 六軍歸心 command staff (≥3 distinct tokens). */
+export function hasFullCommandStaff(pool: Array<{ equipment: readonly string[] } | null | undefined>): boolean {
+  const distinct = new Set<string>();
+  for (const o of pool) {
+    if (!o) continue;
+    const held = o.equipment.find((id) => COMMAND_TOKEN_IDS.has(id));
+    if (held) distinct.add(held);
+  }
+  return distinct.size >= 3;
 }
 
 /** Gold cost to take an item from `plus` → `plus+1` (escalates with rarity + level). */

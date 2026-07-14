@@ -11,7 +11,7 @@ import type {
 import { buildingBonuses } from './buildings';
 import { conquestPopulationLoss } from './cityRuin';
 import { OATH_BONDS } from '../data/bonds';
-import { liveItemById, commandTokenMultiplier } from '../data/items';
+import { liveItemById, commandTokenMultiplier, evolvedResonanceMul } from '../data/items';
 import { OFFICER_RELATIONSHIPS } from '../data/relationships';
 import { SKILLS_BY_ID } from '../data/skills';
 import { getEliteTroop } from '../data/eliteTroops';
@@ -829,6 +829,9 @@ export function resolveBattle(
   // 統御信物 — a side bearing 虎符/帥印/兵符 marshals the host above its numbers.
   const aTokenMul = commandTokenMultiplier(attackerPool);
   const dTokenMul = commandTokenMultiplier(defenderPool);
+  // 器魂共鳴 — several awakened (·神) arms in one host resonate for extra power.
+  const aResonanceMul = evolvedResonanceMul(attackerPool);
+  const dResonanceMul = evolvedResonanceMul(defenderPool);
   // 名號各司其職 — situational honorific edge by battle type (水戰/攻城/守城/野戰).
   const aThemeMul = honorificThemeMul(attackerPool, { water, siege: isSiegeBattle, defending: false });
   const dThemeMul = honorificThemeMul(defenderPool, { water, siege: isSiegeBattle, defending: true });
@@ -864,7 +867,7 @@ export function resolveBattle(
   const aPower =
     aBlended * Math.sqrt(attacker.troops) * aSkillEffects.powerMultiplier * aElitePower *
     (stratEffect.attackerPowerMul ?? 1) * aPolicy.attackMul * aTraitMods.attackMul * aComboMul *
-    aRelBonus.powerMul * rivalMul * aTitlePowerMul * aCasusMul * aNavalMul * aGuardMul * aPrestigeMul * aSetBondMul * aPartyMul * aProfMul * aTokenMul * aThemeMul * aGradeMul * aSetMul * aWeaponMul * aFormMul;
+    aRelBonus.powerMul * rivalMul * aTitlePowerMul * aCasusMul * aNavalMul * aGuardMul * aPrestigeMul * aSetBondMul * aPartyMul * aProfMul * aTokenMul * aResonanceMul * aThemeMul * aGradeMul * aSetMul * aWeaponMul * aFormMul;
 
   const defenderIds = defenderPool.map((o) => o.id);
   const dBaseBlended =
@@ -902,7 +905,7 @@ export function resolveBattle(
     dElitePower *
     (stratEffect.defenderPowerMul ?? 1) *
     dPolicy.attackMul * dTraitMods.attackMul * dComboMul * dRelBonus.powerMul * rivalMul *
-    dTitlePowerMul * dCasusMul * dNavalMul * dGuardMul * dPrestigeMul * dSetBondMul * dPartyMul * dProfMul * dTokenMul * dThemeMul * dGradeMul * dSetMul * dWeaponMul / Math.max(0.5, dPolicy.defenseMul);
+    dTitlePowerMul * dCasusMul * dNavalMul * dGuardMul * dPrestigeMul * dSetBondMul * dPartyMul * dProfMul * dTokenMul * dResonanceMul * dThemeMul * dGradeMul * dSetMul * dWeaponMul / Math.max(0.5, dPolicy.defenseMul);
 
   const total = aPower + dPower || 1;
   const aRatio = aPower / total;
