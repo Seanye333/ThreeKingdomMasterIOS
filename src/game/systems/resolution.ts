@@ -24,7 +24,7 @@ import { advanceSeason } from '../state/gameState';
 import { processAging } from './aging';
 import { evaluateGovernors } from './governorEval';
 import { handleSearch, resolveInternalAffairs, type LostItemRef } from './commands';
-import { awardInternalAffairsXp, canBreakthrough, breakthroughCost, breakthroughIronCost, applyBreakthrough, defaultBreakthroughPath, grantXp, tickMentorBonds, specialTraining } from './growth';
+import { awardInternalAffairsXp, canBreakthrough, breakthroughCost, breakthroughIronCost, applyBreakthrough, defaultBreakthroughPath, grantXp, tickMentorBonds, specialTraining, defaultLatent } from './growth';
 import { trainSkillMastery } from './skillMastery';
 import { officerGrade, gradeRank, officerLevel } from './officerGrade';
 import { handleMarch } from './combat';
@@ -2361,6 +2361,30 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       if (o.locationCityId !== city.id || o.forceId !== city.ownerForceId) continue;
       if (o.status !== 'idle' && o.status !== 'active') continue;
       officers[o.id] = grantXp(officers[o.id] ?? o, gain, rng, focus ?? undefined, { year: input.date.year }).officer;
+    }
+    // 文舉育才 — a 文教興隆 city (文化≥30) cultivates a young mind: the youngest
+    // officer stationed here grows +1 in their weaker of 智/政 (capped at latent).
+    if ((city.culture ?? 0) >= 30 && rng() < 0.35) {
+      const pupils = Object.values(officers).filter((o) =>
+        o.locationCityId === city.id && o.forceId === city.ownerForceId
+        && (o.status === 'idle' || o.status === 'active')
+        && (input.date.year - o.birthYear) < 30);
+      const youngest = pupils.sort((a, b) => b.birthYear - a.birthYear)[0];
+      if (youngest) {
+        const cur = officers[youngest.id] ?? youngest;
+        const latent = cur.latentStats ?? defaultLatent(cur.stats);
+        const key = cur.stats.intelligence <= cur.stats.politics ? 'intelligence' : 'politics';
+        if (cur.stats[key] < latent[key]) {
+          officers[youngest.id] = { ...cur, stats: { ...cur.stats, [key]: cur.stats[key] + 1 } };
+          if (cur.forceId === input.playerForceId) {
+            entries.push({
+              cityId: city.id, kind: 'talent',
+              text: `文舉育才 — ${cur.name.en} studied at ${city.name.en}: ${key === 'intelligence' ? 'INT' : 'POL'} +1.`,
+              textZh: `文舉育才 — ${cur.name.zh}於${city.name.zh}文風薰陶,${key === 'intelligence' ? '智力' : '政治'} +1。`,
+            });
+          }
+        }
+      }
     }
   }
 
