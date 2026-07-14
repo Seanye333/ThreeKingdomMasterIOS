@@ -23,6 +23,9 @@ export interface Affliction {
   /** 宿疾 label (chronic only) — a named lasting ailment shown in the UI. */
   labelZh?: string;
   labelEn?: string;
+  /** 宿疾 id (chronic only) — identifies the kind (arm/leg/head/scar) so limb
+   *  maims can bar certain 單挑 moves. */
+  ailmentId?: string;
 }
 
 export type AfflictableStat = 'war' | 'intelligence' | 'charisma';
@@ -62,15 +65,20 @@ export function tickAfflictions(o: Officer, woundHealBonus = 0): Officer {
 
 // ─── 宿疾 — the lasting scars a grievous wound can leave ─────────────────────
 const CHRONIC_AILMENTS: Affliction[] = [
-  { kind: 'chronic', seasons: 9999, war: -4, labelZh: '箭瘡宿疾', labelEn: 'Old Arrow Wound' },
-  { kind: 'chronic', seasons: 9999, war: -3, labelZh: '折肱之痛', labelEn: 'A Crippled Arm' },
-  { kind: 'chronic', seasons: 9999, intelligence: -4, labelZh: '頭風之疾', labelEn: 'Chronic Migraines' },
-  { kind: 'chronic', seasons: 9999, war: -2, charisma: -2, labelZh: '毀容之傷', labelEn: 'A Disfiguring Scar' },
+  { kind: 'chronic', seasons: 9999, war: -4, ailmentId: 'arrow', labelZh: '箭瘡宿疾', labelEn: 'Old Arrow Wound' },
+  { kind: 'chronic', seasons: 9999, war: -3, ailmentId: 'arm', labelZh: '折肱之痛', labelEn: 'A Crippled Arm' },
+  { kind: 'chronic', seasons: 9999, intelligence: -4, ailmentId: 'head', labelZh: '頭風之疾', labelEn: 'Chronic Migraines' },
+  { kind: 'chronic', seasons: 9999, war: -2, charisma: -2, ailmentId: 'scar', labelZh: '毀容之傷', labelEn: 'A Disfiguring Scar' },
 ];
 
 /** True if the officer carries a lasting 宿疾. */
 export function hasChronicAilment(o: Officer): boolean {
   return (o.afflictions ?? []).some((a) => a.kind === 'chronic');
+}
+
+/** True if a limb-maiming 宿疾 (折肱) that should bar a heavy combo move. */
+export function chronicBarsArm(o: Officer): boolean {
+  return (o.afflictions ?? []).some((a) => a.kind === 'chronic' && a.ailmentId === 'arm');
 }
 
 /** The officer's 宿疾, if any (for display). */

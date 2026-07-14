@@ -31,7 +31,7 @@ import { pushBoutRecord } from '../systems/duelHall';
 import { recordRivalryBout, pairKey as rivalPairKey, NEMESIS_THRESHOLD } from '../systems/rivalries';
 import { challengeStakes } from '../systems/duelChallenge';
 import { applyBout, seedRating } from '../systems/warRanking';
-import { tickAfflictions, withAffliction, hasChronicAilment, rollChronicAilment, cureChronicAilments, type Affliction } from '../systems/afflictions';
+import { tickAfflictions, withAffliction, hasChronicAilment, rollChronicAilment, cureChronicAilments, chronicAilmentOf, type Affliction } from '../systems/afflictions';
 import { routConsequence, type RoutConsequence } from '../systems/wordWar';
 import { canAppraise, appraisalVerdict, appraisalRenownGain, discernment, isLegendaryCritic, legendaryVerdict, appraisalMisread, pickMonthlyAppraisal } from '../systems/appraisal';
 import { executionRenownCost, markSlainVendetta } from '../systems/captiveFate';
@@ -5439,12 +5439,25 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // 後遺 — tick down duel/debate afflictions (養傷 / 羞憤) each season.
         // 傷兵營 — a field hospital in the officer's city heals wounds faster.
         for (const id of Object.keys(tickedOfficers)) {
-          const ofc = tickedOfficers[id];
+          let ofc = tickedOfficers[id];
           const heal = ofc.locationCityId
             ? buildingBonuses(ofc.locationCityId, state.buildings).woundRecovery
             : 0;
-          const ticked = tickAfflictions(ofc, heal);
-          if (ticked !== tickedOfficers[id]) tickedOfficers[id] = ticked;
+          ofc = tickAfflictions(ofc, heal);
+          // 靜養 — a 傷兵營 may slowly mend a lasting 宿疾 (a gentle second cure path
+          // besides 洗髓's once-per-life). Chance scales with the hospital's care.
+          if (heal > 0 && hasChronicAilment(ofc) && Math.random() < Math.min(0.25, 0.06 + heal * 0.05)) {
+            const ail = chronicAilmentOf(ofc);
+            ofc = cureChronicAilments(ofc);
+            if (ofc.forceId === state.playerForceId && ail) {
+              result.report.entries.push({
+                cityId: ofc.locationCityId, kind: 'note',
+                text: `靜養痊癒 — ${ofc.name.zh} recovered from ${ail.labelEn}.`,
+                textZh: `${ofc.name.zh}於傷兵營靜養日久,宿疾「${ail.labelZh}」竟得痊癒。`,
+              });
+            }
+          }
+          if (ofc !== tickedOfficers[id]) tickedOfficers[id] = ofc;
         }
         postOfficers = tickedOfficers;
 

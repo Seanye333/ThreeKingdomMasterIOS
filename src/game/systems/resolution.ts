@@ -42,6 +42,7 @@ import {
   type SpecialtyControl, type SpecialtyRealmEffects, type SpecialtyRole,
 } from '../data/specialties';
 import { buildingBonuses, schoolHeadmasterFocus, SCHOOL_BUILDINGS } from './buildings';
+import { COMMAND_TOKEN_IDS } from '../data/items';
 import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
 import { corruptionAccrualMultiplier } from './traitEffects';
 import { rollCivicEvents } from './civicEvents';
@@ -2256,10 +2257,15 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const baseRecruitBonus = recruitBoost
       ? bonus.recruitBonus + (recruitBoost.multiplier - 1)
       : bonus.recruitBonus;
+    // 統帥坐鎮 — an officer bearing a 統御信物 (虎符/帥印/兵符…) stationed here
+    // lifts the recruit ceiling: high command musters more (up to +20%, 2 tokens).
+    const tokenBearers = Object.values(officers).filter((o) =>
+      o.locationCityId === city.id && o.forceId === city.ownerForceId
+      && o.equipment.some((id) => COMMAND_TOKEN_IDS.has(id))).length;
     const finalBonus = {
       ...bonus,
       recruitBonus: baseRecruitBonus + (cityBB.recruitMul - 1),
-      troopCapMul: cityBB.troopCapMul,
+      troopCapMul: cityBB.troopCapMul * (1 + Math.min(0.2, 0.1 * tokenBearers)),
     };
     // 協同施政 — assistants pour their season into the lead's command (paid
     // once at issue). They boost the effective stat and earn their own XP.

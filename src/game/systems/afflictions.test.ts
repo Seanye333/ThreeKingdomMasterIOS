@@ -3,7 +3,7 @@ import { mkOfficer } from '../../test/factories';
 import {
   afflictionDelta, hasAffliction, withAffliction, tickAfflictions,
   duelWound, debateShame, isEmotional,
-  rollChronicAilment, cureChronicAilments, hasChronicAilment, chronicAilmentOf,
+  rollChronicAilment, cureChronicAilments, hasChronicAilment, chronicAilmentOf, chronicBarsArm,
 } from './afflictions';
 import { staticProwess } from './duel';
 import { debateProwess } from './wordWar';
@@ -61,5 +61,19 @@ describe('宿疾 — chronic ailments from a grievous wound', () => {
     const cured = cureChronicAilments(o);
     expect(hasChronicAilment(cured)).toBe(false);
     expect(hasAffliction(cured, 'wound')).toBe(true); // short-lived wound untouched
+  });
+
+  it('每個宿疾都帶 id;折肱(arm)禁重擊,他疾不禁', () => {
+    // rollChronicAilment covers every ailment across the roll range, each with an id.
+    const ids = new Set<string>();
+    for (let r = 0; r < 1; r += 0.05) ids.add(rollChronicAilment(() => r).ailmentId!);
+    expect([...ids].every(Boolean)).toBe(true);
+    expect(ids.has('arm')).toBe(true);
+    // 折肱之痛 bars the heavy combo; a headache does not.
+    const arm = withAffliction(mkOfficer({}), { kind: 'chronic', seasons: 9999, war: -3, ailmentId: 'arm' });
+    const head = withAffliction(mkOfficer({}), { kind: 'chronic', seasons: 9999, intelligence: -4, ailmentId: 'head' });
+    expect(chronicBarsArm(arm)).toBe(true);
+    expect(chronicBarsArm(head)).toBe(false);
+    expect(chronicBarsArm(mkOfficer({}))).toBe(false);
   });
 });

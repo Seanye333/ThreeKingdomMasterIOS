@@ -2,7 +2,7 @@ import type { Officer } from '../types';
 import { liveItemById, awakeningPerkCountFor } from '../data/items';
 import { SKILLS_BY_ID } from '../data/skills';
 import { effectivePrestigeEffects } from '../data/prestige';
-import { afflictionDelta } from './afflictions';
+import { afflictionDelta, chronicBarsArm } from './afflictions';
 import { officerLevel } from './officerGrade';
 import { gradeCombatBonus, itemMasteryMul, duelFirstStrike } from './gradeCombat';
 import { evolvedArtDuelBonus } from './evolvedArts';
@@ -1143,7 +1143,8 @@ function scarProwessPenalty(o: Officer): number {
 /** A move a maimed fighter can no longer field (連擊 for an arm, 閃 for a leg). */
 function scarBarsMove(o: Officer, m: DuelMove): boolean {
   const scars = duelScars(o);
-  if (m === 'combo' && scars.includes('maimed-arm')) return true;
+  // 折肱之痛 — a battle-crippled arm bars the heavy combo, same as a duel maim.
+  if (m === 'combo' && (scars.includes('maimed-arm') || chronicBarsArm(o))) return true;
   if (m === 'dodge' && scars.includes('maimed-leg')) return true;
   return false;
 }
