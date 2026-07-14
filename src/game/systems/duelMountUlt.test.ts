@@ -156,3 +156,24 @@ describe('器魂加持 — an awakened blade hits harder (E2)', () => {
     items.setEvolvedRegistry([]);
   });
 });
+
+describe('器魂震魂 — an awakened finisher shatters the foe武魂 (F2)', () => {
+  it('drains the foe gauge even for a non-sunder ult; a plain finisher does not', async () => {
+    const items = await import('../data/items');
+    const WEAPON = Object.values(items.ITEMS_BY_ID).find((i) => i.kind === 'weapon')!.id;
+    // Generic fighters (no signature 'sunder' ult) so the drain is purely 器魂震魂.
+    const hero = mkOfficer({ id: 'nobody-a', stats: warStats(90), equipment: [WEAPON] });
+    const foe = mkOfficer({ id: 'nobody-b', stats: warStats(90) });
+
+    items.setEvolvedRegistry([]);
+    const plain = { ...initDuelBout(hero, foe), aSpirit: SPIRIT_MAX, dSpirit: 60 };
+    const plainRes = duelRound(plain, 'ultimate', 'guard', seededRng(6));
+    expect(plainRes.bout.dSpirit).toBeGreaterThan(0); // a plain power-ult leaves the gauge
+
+    items.setEvolvedRegistry([WEAPON]);
+    const evo = { ...initDuelBout(hero, foe), aSpirit: SPIRIT_MAX, dSpirit: 60 };
+    const evoRes = duelRound(evo, 'ultimate', 'guard', seededRng(6));
+    expect(evoRes.bout.dSpirit).toBe(0); // 震魂 — the awakened blade shatters it
+    items.setEvolvedRegistry([]);
+  });
+});
