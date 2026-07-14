@@ -8,6 +8,7 @@ import {
 import { ITEM_WEAPON_TYPE, classifyWeaponByName, WEAPON_TYPE_DEFS, type WeaponType } from '../../game/data/weaponTypes';
 import { SIGNATURE_ITEMS } from '../../game/data/signatureItems';
 import { artForItem } from '../../game/systems/evolvedArts';
+import { heirloomTier } from '../../game/systems/itemProvenance';
 import { exportItemCardPNG } from './officerCardExport';
 import { useT, useLanguage, pickName, useDesc } from '../i18n';
 
@@ -231,11 +232,18 @@ export function ItemCardFace({ itemId, onClose }: { itemId: string; onClose?: ()
             </div>
           )}
 
-          {/* 名器譜系 — the lineage of wielders + a battle tally. */}
+          {/* 名器譜系 — the lineage of wielders + a battle tally + heirloom title. */}
           {provenance && provenance.owners.length > 0 && (
             <div style={{ borderTop: '1px solid #1e2832', paddingTop: 6 }}>
-              <div style={{ fontSize: '0.62rem', color: '#7a8893', letterSpacing: '0.1rem', marginBottom: 2 }}>
-                {t('名器譜系', 'PROVENANCE')} · {t('歷', '')}{provenance.battles}{t('戰', ' battles')}{provenance.kills > 0 ? ` · ${t('殲', 'felled ')}${provenance.kills.toLocaleString()}` : ''}
+              <div style={{ fontSize: '0.62rem', color: '#7a8893', letterSpacing: '0.1rem', marginBottom: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span>{t('名器譜系', 'PROVENANCE')} · {t('歷', '')}{provenance.battles}{t('戰', ' battles')}{provenance.kills > 0 ? ` · ${t('殲', 'felled ')}${provenance.kills.toLocaleString()}` : ''}</span>
+                {(() => {
+                  const h = heirloomTier(provenance);
+                  if (h.tier === 0) return null;
+                  const col = h.tier >= 3 ? '#ffd66e' : h.tier >= 2 ? '#d6a8ea' : '#8fe3b0';
+                  return <span title={t('傳世名器 — 譜系綿長,躋身傳世(升階時威名遠播)', 'Heirloom — a long lineage earns a title')}
+                    style={{ color: col, border: `1px solid ${col}66`, borderRadius: 7, padding: '0 5px' }}>❖ {lang === 'en' ? h.en : h.zh}</span>;
+                })()}
               </div>
               <div style={{ fontSize: '0.74rem', color: '#c8b48a', lineHeight: 1.6 }}>
                 {provenance.owners.map((oid, oi) => (

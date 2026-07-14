@@ -336,7 +336,7 @@ import { festivalPool, festivalDraw, FESTIVAL_GOLD_COST, festivalScrollReward } 
 import { rollFoil } from '../systems/cardFoil';
 import { accrueArmProficiency } from '../systems/armProficiency';
 import { accrueMountBond } from '../systems/mountBond';
-import { accrueItemProvenance } from '../systems/itemProvenance';
+import { accrueItemProvenance, heirloomTier } from '../systems/itemProvenance';
 import { rollBounties, fulfilledBounties } from '../systems/bounty';
 import { codexRecordPeaks } from '../systems/codex';
 import { tickBuildings } from '../systems/buildings';
@@ -12534,8 +12534,21 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
         const nextProvenance = accrueItemProvenance(state.itemProvenance, provEntries);
+        // 傳世之威 — a lineage crossing into a new heirloom tier (名器譜系→傳世名器
+        // →神兵譜系) spreads its fame: a one-off 威名 surge (D5). Feeds the 名器光環.
+        let loreWithHeirloom = nextItemLore;
+        for (const e of provEntries) {
+          const before = heirloomTier(state.itemProvenance[e.itemId]).tier;
+          const after = heirloomTier(nextProvenance[e.itemId]);
+          if (after.tier > before) {
+            loreWithHeirloom = { ...loreWithHeirloom, [e.itemId]: (loreWithHeirloom[e.itemId] ?? 0) + 6 * (after.tier - before) };
+            const base = ITEMS_BY_ID[e.itemId];
+            if (base) get().notify(`傳世之威 —「${base.name.zh}」躋身「${after.zh}」,威名遠播`, `${base.name.en} rises to "${after.en}" — its fame spreads`);
+          }
+        }
+        if (loreWithHeirloom !== nextItemLore) setLoreRegistry(loreWithHeirloom);
         setWearRegistry(nextWear);
-        set({ itemLore: nextItemLore, itemProvenance: nextProvenance, itemWear: nextWear });
+        set({ itemLore: loreWithHeirloom, itemProvenance: nextProvenance, itemWear: nextWear });
 
         // Save replay (snapshot of final battle state only — turn-by-turn would
         // require more plumbing, so we record the end state.).

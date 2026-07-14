@@ -109,3 +109,28 @@ describe('必殺技 — signature ultimates', () => {
     expect(res.bout.aStamina).toBeGreaterThan(50);
   });
 });
+
+describe('器魂戰技 — an awakened weapon stokes 武魂 faster (D2)', () => {
+  it('sets the evolved-art flag and fills the spirit gauge quicker', async () => {
+    const items = await import('../data/items');
+    const WEAPON = Object.values(items.ITEMS_BY_ID).find((i) => i.kind === 'weapon')!.id;
+    const plainA = mkOfficer({ id: 'a', stats: warStats(88), equipment: [WEAPON] });
+    const foe = mkOfficer({ id: 'b', stats: warStats(88) });
+
+    // Baseline: weapon NOT evolved.
+    items.setEvolvedRegistry([]);
+    const plainBout = initDuelBout(plainA, foe);
+    expect(plainBout.aEvolvedArt).toBe(false);
+    const plainRes = duelRound(plainBout, 'cleave', 'slash', seededRng(9));
+
+    // Now awaken the same weapon — same officers, same moves, same seed.
+    items.setEvolvedRegistry([WEAPON]);
+    const evoBout = initDuelBout(plainA, foe);
+    expect(evoBout.aEvolvedArt).toBe(true);
+    const evoRes = duelRound(evoBout, 'cleave', 'slash', seededRng(9));
+
+    // The awakened blade banks more 武魂 from the same exchange.
+    expect(evoRes.bout.aSpirit).toBeGreaterThan(plainRes.bout.aSpirit);
+    items.setEvolvedRegistry([]);
+  });
+});

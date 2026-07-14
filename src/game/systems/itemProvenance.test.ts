@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { accrueItemProvenance, PROVENANCE_MAX_OWNERS } from './itemProvenance';
+import { accrueItemProvenance, PROVENANCE_MAX_OWNERS, heirloomTier } from './itemProvenance';
 
 describe('名器譜系 — item provenance', () => {
   it('appends a new wielder, counts battles, and tallies kills', () => {
@@ -27,5 +27,19 @@ describe('名器譜系 — item provenance', () => {
   it('no entries → the map is returned unchanged', () => {
     const prov = { x: { owners: ['a'], battles: 1, kills: 0 } };
     expect(accrueItemProvenance(prov, [])).toBe(prov);
+  });
+});
+
+describe('傳世名器 — heirloom tiers', () => {
+  const owners = (n: number) => Array.from({ length: n }, (_, i) => `o${i}`);
+  it('climbs by wielder-count OR kill-count', () => {
+    expect(heirloomTier(undefined).tier).toBe(0);
+    expect(heirloomTier({ owners: owners(1), battles: 1, kills: 0 }).tier).toBe(0);
+    expect(heirloomTier({ owners: owners(3), battles: 3, kills: 0 }).tier).toBe(1); // 名器譜系
+    expect(heirloomTier({ owners: owners(5), battles: 5, kills: 0 }).tier).toBe(2); // 傳世名器
+    expect(heirloomTier({ owners: owners(8), battles: 8, kills: 0 }).tier).toBe(3); // 神兵譜系
+    // Kills alone can promote a single-hand blade.
+    expect(heirloomTier({ owners: owners(1), battles: 40, kills: 200 }).tier).toBe(2);
+    expect(heirloomTier({ owners: owners(1), battles: 99, kills: 500 }).tier).toBe(3);
   });
 });

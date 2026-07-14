@@ -5,7 +5,7 @@ import { effectivePrestigeEffects } from '../data/prestige';
 import { afflictionDelta, chronicBarsArm } from './afflictions';
 import { officerLevel } from './officerGrade';
 import { gradeCombatBonus, itemMasteryMul, duelFirstStrike } from './gradeCombat';
-import { evolvedArtDuelBonus } from './evolvedArts';
+import { evolvedArtDuelBonus, evolvedWeaponArt } from './evolvedArts';
 import { skillEffectMul } from './skillMastery';
 import { deriveWeaponType, type WeaponType } from '../data/weaponTypes';
 
@@ -1409,6 +1409,8 @@ export interface DuelBout {
   dUltUsed: boolean;
   aArt: WeaponArt | null; // 兵器絕技 — a legendary weapon's signature edge
   dArt: WeaponArt | null;
+  aEvolvedArt: boolean; // 器魂戰技 — an awakened (·神) weapon stokes 武魂 faster
+  dEvolvedArt: boolean;
   aUlt: SignatureUlt | null; // 必殺技 — the named finisher unleashed at full 武魂
   dUlt: SignatureUlt | null;
   aMountSavior: boolean; // 的盧救主 — a wonder-horse that can spare one killing blow…
@@ -1481,6 +1483,7 @@ export function initDuelBout(
     aChain: [], dChain: [],
     aSpirit: 0, dSpirit: 0, aUltUsed: false, dUltUsed: false,
     aArt: weaponArtFor(attacker), dArt: weaponArtFor(defender),
+    aEvolvedArt: evolvedWeaponArt(attacker) != null, dEvolvedArt: evolvedWeaponArt(defender) != null,
     aUlt: signatureUlt(attacker), dUlt: signatureUlt(defender),
     aMountSavior: mountEdge(attacker) === 'savior', dMountSavior: mountEdge(defender) === 'savior',
     aMountSaved: false, dMountSaved: false,
@@ -1829,8 +1832,12 @@ export function duelRound(
 
   // ── 武魂 (spirit gauge) — both dealing and weathering blows stoke a fighter's
   // fury; fill the gauge to unleash a 必殺技. An ult spends the whole gauge.
-  b.aSpirit = Math.min(SPIRIT_MAX, b.aSpirit + Math.round(dmgToDefender * 0.5 + dmgToAttacker * 0.7));
-  b.dSpirit = Math.min(SPIRIT_MAX, b.dSpirit + Math.round(dmgToAttacker * 0.5 + dmgToDefender * 0.7));
+  // 器魂戰技 — an awakened (·神) weapon stokes its bearer's 武魂 +30% faster, so
+  // the 必殺技 comes sooner (D2). The spirit is willing when the blade is awake.
+  const aSpiritMul = b.aEvolvedArt ? 1.3 : 1;
+  const dSpiritMul = b.dEvolvedArt ? 1.3 : 1;
+  b.aSpirit = Math.min(SPIRIT_MAX, b.aSpirit + Math.round((dmgToDefender * 0.5 + dmgToAttacker * 0.7) * aSpiritMul));
+  b.dSpirit = Math.min(SPIRIT_MAX, b.dSpirit + Math.round((dmgToAttacker * 0.5 + dmgToDefender * 0.7) * dSpiritMul));
   let ultimate: DuelRoundResult['ultimate'];
   if (aMove === 'ultimate') { b.aSpirit = 0; b.aUltUsed = true; ultimate = 'attacker'; }
   if (dMove === 'ultimate') { b.dSpirit = 0; b.dUltUsed = true; ultimate = 'defender'; }
