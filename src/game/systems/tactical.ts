@@ -22,9 +22,9 @@ import { FORMATIONS_BY_ID } from '../data/formations';
 import { pickVoiceLine } from '../data/voiceLines';
 import { effectiveStats, tacticalDamageMul, tacticalDefenseMul, tacticalMoraleAura } from './traitEffects';
 import { gradeCombatBonus } from './gradeCombat';
-import { awakeningPerkCountFor, COMMAND_TOKEN_IDS } from '../data/items';
+import { awakeningPerkCountFor, COMMAND_TOKEN_ARM } from '../data/items';
 import { growthPowerMul, streakPowerMul } from './growth';
-import { armProficiencyMul, armMasteryMul } from './armProficiency';
+import { armProficiencyMul, armMasteryMul, profArmOf } from './armProficiency';
 import { mountBondMul } from './mountBond';
 import { itemSetPowerMul } from '../data/itemSets';
 import { predictAttackDamage } from './damagePredict';
@@ -68,21 +68,27 @@ export function shieldWallMul(b: TacticalBattle, target: TacticalUnit): number {
 export const COMMAND_AURA_RADIUS = 4;
 /**
  * 統御之令 — a unit fighting within COMMAND_AURA_RADIUS of a friendly commander
- * who bears a 統御信物 (虎符/帥印/兵符…) is directed with a firm hand: +6% power.
- * The token's own unit qualifies (distance 0), so its whole neighbourhood is
- * marshalled. Extends the strategic 統御 aura (commandTokenMultiplier) onto the
- * tactical grid.
+ * who bears a 統御信物 (虎符/帥印/兵符…) is directed with a firm hand. The base
+ * aura is +6%; a unit whose ARM matches the token's specialty (虎符→騎/帥印→步/
+ * 節鉞→槍/令旗→弓) gets +10%, while the even-handed 兵符 ('all') gives everyone
+ * +6%. The token's own unit qualifies (distance 0). Best matching bearer wins.
+ * Extends the strategic 統御 aura (commandTokenMultiplier) onto the tactical grid.
  */
 export function commandAuraMul(b: TacticalBattle, unit: TacticalUnit, officers: Record<EntityId, Officer>): number {
+  let best = 1;
   for (const u of b.units) {
     if (u.side !== unit.side || u.troops <= 0) continue;
+    if (hexDistance(u.coord, unit.coord) > COMMAND_AURA_RADIUS) continue;
     const o = officers[u.officerId];
-    if (o && o.equipment.some((id) => COMMAND_TOKEN_IDS.has(id))
-        && hexDistance(u.coord, unit.coord) <= COMMAND_AURA_RADIUS) {
-      return 1.06;
+    if (!o) continue;
+    for (const id of o.equipment) {
+      const arm = COMMAND_TOKEN_ARM[id];
+      if (!arm) continue;
+      const matches = arm === 'all' || arm === profArmOf(unit.unitType);
+      best = Math.max(best, matches && arm !== 'all' ? 1.10 : 1.06);
     }
   }
-  return 1;
+  return best;
 }
 
 /**

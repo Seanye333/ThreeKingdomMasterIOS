@@ -3,7 +3,7 @@ import { useGameStore } from '../../game/state/store';
 import { Modal } from './Modal';
 import {
   ITEMS_BY_ID, liveItemById, itemRarity, itemLoreLevel, itemLoreTitle,
-  itemAwakeningIds, AWAKENING_BY_ID, GEMS_BY_ID, itemIsEvolved, FORGE_AFFIXES_BY_ID, isCommandToken, type Item,
+  itemAwakeningIds, AWAKENING_BY_ID, GEMS_BY_ID, itemIsEvolved, FORGE_AFFIXES_BY_ID, isCommandToken, COMMAND_TOKEN_ARM, type Item,
 } from '../../game/data/items';
 import { ITEM_WEAPON_TYPE, classifyWeaponByName, WEAPON_TYPE_DEFS, type WeaponType } from '../../game/data/weaponTypes';
 import { SIGNATURE_ITEMS } from '../../game/data/signatureItems';
@@ -144,13 +144,17 @@ export function ItemCardFace({ itemId, onClose }: { itemId: string; onClose?: ()
             {socketed.map((g, gi) => (
               <span key={`g${gi}`} title={g!.name.zh} style={{ fontSize: '0.7rem', padding: '1px 8px', borderRadius: 9, border: `1px solid ${g!.color}88`, color: g!.color }}>◆ {pickName(g!.name, lang)}</span>
             ))}
-            {/* 統御信物 — the command aura + 坐鎮增兵 note (D1/W10). */}
-            {isCommandToken(itemId) && (
-              <span title={t('統御信物 — 己方全軍 +4%/人戰力(封頂+8%);持者駐城募兵上限 +10%/人(封頂+20%)', 'Command token — +4% army power per bearer; +10% recruit ceiling while stationed')}
-                style={{ fontSize: '0.7rem', padding: '1px 8px', borderRadius: 9, background: 'rgba(230,196,115,0.12)', border: '1px solid #8a6a2a', color: '#ffd66e' }}>
-                ⚑ {t('統御信物', 'Command Token')}
-              </span>
-            )}
+            {/* 統御信物 — the command aura + 坐鎮增兵 + arm-specialty note (D1/W10/F1). */}
+            {isCommandToken(itemId) && (() => {
+              const arm = COMMAND_TOKEN_ARM[itemId];
+              const armZh = arm === 'cavalry' ? '騎兵' : arm === 'infantry' ? '步兵' : arm === 'spearmen' ? '槍兵' : arm === 'archers' ? '弓兵' : '諸兵種';
+              return (
+                <span title={t(`統御信物 — 己方全軍 +4%/人(封頂+8%);駐城募兵上限 +10%/人;戰術半徑4內友軍 +6%,${armZh} +10%`, `Command token — +4% army power; +10% recruit ceiling; tactical aura +6% (its arm +10%)`)}
+                  style={{ fontSize: '0.7rem', padding: '1px 8px', borderRadius: 9, background: 'rgba(230,196,115,0.12)', border: '1px solid #8a6a2a', color: '#ffd66e' }}>
+                  ⚑ {t('統御信物', 'Command Token')} · {armZh}
+                </span>
+              );
+            })()}
           </div>
 
           {/* 威名 — the battle-renown track toward the next milestone. */}

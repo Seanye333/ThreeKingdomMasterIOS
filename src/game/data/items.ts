@@ -459,6 +459,20 @@ export function isCommandToken(itemId: string): boolean {
 }
 
 /**
+ * 兵科專屬 — each command token favours a fighting arm, so a marshal directs the
+ * host they were cut out to lead: 虎符 the horse, 帥印 the foot, 節鉞 the spears,
+ * 令旗 the bows; 兵符 (the muster tally) is even-handed ('all'). A unit of the
+ * matching arm within the aura gets the fuller bonus (tactical.commandAuraMul).
+ */
+export const COMMAND_TOKEN_ARM: Record<string, 'cavalry' | 'infantry' | 'spearmen' | 'archers' | 'all'> = {
+  'hufu-tiger-tally': 'cavalry',
+  'shuaiyin-marshal-seal': 'infantry',
+  'bingfu-command-tally': 'all',
+  'jieyue-ceremonial-axe': 'spearmen',
+  'lingqi-command-banner': 'archers',
+};
+
+/**
  * 統御之威 — a side fielding officers who bear command tokens fights above its
  * numbers: +4% power per token-bearer, capped at +8% (two tokens). Pure
  * command aura, on top of the token's own hefty 統率. Symmetric — any side can
