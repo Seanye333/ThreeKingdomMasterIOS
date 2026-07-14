@@ -110,4 +110,11 @@ export interface City {
    * a raw levy when the city falls to a storm. See combat.resolveBattle.
    */
   veterancy?: number;
+  /**
+   * 文教 — cultural renown 0–100. A city with schools under a learned governor
+   * accrues it season by season (decays slowly without schools). High 文教
+   * curbs corruption (教化息貪) and steadies loyalty (民安其教); at 60+ the city
+   * is a 文化名城. See resolution's civic tick.
+   */
+  culture?: number;
 }

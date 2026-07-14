@@ -43,6 +43,7 @@ import {
 } from '../data/specialties';
 import { buildingBonuses, schoolHeadmasterFocus, SCHOOL_BUILDINGS } from './buildings';
 import { COMMAND_TOKEN_IDS } from '../data/items';
+import { cultureGain, cultureGraftCurb, cultureLoyaltyLift } from './culture';
 import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
 import { corruptionAccrualMultiplier } from './traitEffects';
 import { rollCivicEvents } from './civicEvents';
@@ -2467,9 +2468,19 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     // A capable administrator SLOWS graft but can't eliminate it — the politics
     // offset is capped at 0.6, so a wealthy city left to coast still accrues a
     // slow drip even under a top official (it just takes much longer to bite).
+    // 文教 — a city with schools under a learned governor accrues cultural renown
+    // (decays slowly without schools). 教化息貪 curbs graft; 民安其教 steadies
+    // loyalty; 60+ is a 文化名城.
+    const hasSchoolHere = (input.buildings ?? []).some(
+      (bd) => bd.cityId === city.id && SCHOOL_BUILDINGS.has(bd.id) && (bd.level ?? 0) >= 1);
+    const bestIntellect = cityOfficers.reduce((m, o) => Math.max(m, o.stats.intelligence), 0);
+    const nextCulture = city.ownerForceId
+      ? Math.max(0, Math.min(100, (city.culture ?? 0) + cultureGain(hasSchoolHere, bestIntellect)))
+      : (city.culture ?? 0);
+    // 教化息貪 — an educated, well-schooled city resists graft (up to −35% accrual).
     const corruptionAccrual = city.ownerForceId
       ? Math.max(0, 0.6 + city.commerce / 120 - Math.min(0.6, bestPolitics / 130))
-        * corruptionAccrualMultiplier(cityOfficers)
+        * corruptionAccrualMultiplier(cityOfficers) * cultureGraftCurb(city.culture ?? 0)
       : 0;
     const nextCorruption = corruptionAccrual > 0
       ? Math.min(100, (city.corruption ?? 0) + corruptionAccrual)
@@ -2477,6 +2488,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     // 貪墨生怨 — entrenched graft (≥60) breeds public resentment: a small loyalty
     // bite on top of the gold it already skims, so it can't be ignored forever.
     const corruptionLoyaltyBite = nextCorruption >= 60 ? -1 : 0;
+    // 民安其教 — a 文化名城 (文教≥60) keeps its people content: a small loyalty lift.
+    const cultureLift = cultureLoyaltyLift(city.culture ?? 0);
     // 練度弛 — drill fades when the garrison isn't kept at it (about 2/season).
     const nextDrill = city.drill ? Math.max(0, city.drill - 2) : city.drill;
     const updated: City = {
@@ -2484,8 +2497,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       gold: city.gold + tick.goldIncome + territoryGold,
       food: Math.max(0, city.food + tick.foodIncome - tick.foodUpkeep),
       troops: troopsAfterDesertion + capitalGuard,
-      loyalty: Math.max(0, Math.min(100, city.loyalty + tick.loyaltyDelta + capitalLoyalty + corruptionLoyaltyBite)),
+      loyalty: Math.max(0, Math.min(100, city.loyalty + tick.loyaltyDelta + capitalLoyalty + corruptionLoyaltyBite + cultureLift)),
       corruption: city.ownerForceId ? nextCorruption : city.corruption,
+      culture: nextCulture,
       drill: nextDrill,
       population: Math.max(1000, city.population + tick.populationDelta),
       warhorses: tick.warhorseBreed > 0

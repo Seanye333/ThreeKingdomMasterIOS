@@ -944,6 +944,11 @@ function DevelopmentSection({ city, isPlayerCity }: { city: City; isPlayerCity: 
         <Bar icon="shield" label="Veterancy" zh="老兵" value={city.veterancy ?? 0} cap={100} tone="#c9a24e"
           note={`守備 +${Math.round((city.veterancy ?? 0) * 0.12)}%`} />
       )}
+      {/* 文教 — cultural renown; a 文化名城 at 60+ curbs graft & steadies loyalty. */}
+      {(city.culture ?? 0) > 0 && (
+        <Bar icon="flag" label="Culture" zh="文教" value={city.culture ?? 0} cap={100} tone="#a08fd0"
+          note={(city.culture ?? 0) >= 60 ? '文化名城 · 息貪安民' : `息貪 −${Math.round((city.culture ?? 0) / 100 * 35)}%`} />
+      )}
       <Bar icon="flag" label="Loyalty" zh="民忠" value={city.loyalty} cap={100} tone="#e08aa0"
         warn={city.loyalty < 45} working={working.loyalty} note={loyaltyNote} />
     </section>
