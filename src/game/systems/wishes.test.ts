@@ -72,3 +72,24 @@ describe('wish expiry', () => {
     expect(out.officers.a.loyalty).toBeLessThan(80);
   });
 });
+
+describe('老病告退 — a chronic-ailment veteran petitions to retire (E3)', () => {
+  it('a maimed officer raises a retire wish; a hale one does not', async () => {
+    const { rollWishes } = await import('./wishes');
+    const maimed = mkOfficer({ id: 'vet', forceId: 'F', status: 'idle', loyalty: 70, birthYear: 150 });
+    // Give them a lasting 宿疾.
+    maimed.afflictions = [{ kind: 'chronic', seasons: 9999, war: -3, ailmentId: 'arm', labelZh: '折肱之痛', labelEn: 'A Crippled Arm' }];
+    const hale = mkOfficer({ id: 'fit', forceId: 'F', status: 'idle', loyalty: 70, birthYear: 180 });
+    const ctx = {
+      officers: { vet: maimed, fit: hale }, cities: {}, playerForceId: 'F',
+      existing: [], date: { year: 200, season: 'spring' as const }, rng: () => 0, // pass every gate
+    };
+    const wishes = rollWishes(ctx);
+    const vetWish = wishes.find((w) => w.officerId === 'vet');
+    expect(vetWish?.kind).toBe('retire');
+    expect(vetWish?.text.zh).toContain('宿疾');
+    // The hale officer might still wish something, but never a chronic-retire.
+    const fitWish = wishes.find((w) => w.officerId === 'fit');
+    if (fitWish?.kind === 'retire') expect(fitWish.text.zh).not.toContain('宿疾');
+  });
+});

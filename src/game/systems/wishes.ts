@@ -9,6 +9,7 @@ import type {
 } from '../types';
 import { POLICY_DEFS, POLICY_PREREQ, type PolicyId } from '../data/officerAttributes';
 import { PEERAGES, PEERAGES_BY_ID } from '../data/peerage';
+import { hasChronicAilment, chronicAilmentOf } from './afflictions';
 
 /**
  * Officer wishes: a small chance each season that an active officer in the
@@ -172,6 +173,26 @@ function generateWish(o: Officer, ctx: WishContext): OfficerWish | null {
       issuedYear: ctx.date.year,
       issuedSeason: ctx.date.season,
       rejectPenalty: 10,
+      grantBonus: 8,
+      expiresAfterSeasons: 4,
+    };
+  }
+  // 老病告退 — an officer worn down by a lasting 宿疾 (much likelier past their
+  // prime) may lay down their arms. A chance to lose a maimed veteran unless you
+  // honour the plea — or cure them first (洗髓/名醫/傷兵營).
+  if (hasChronicAilment(o) && ctx.rng() < (age >= 50 ? 0.28 : 0.12)) {
+    const ail = chronicAilmentOf(o);
+    return {
+      id: `wish-retire-${o.id}-${ctx.date.year}-${ctx.date.season}`,
+      officerId: o.id,
+      kind: 'retire',
+      text: {
+        zh: `${o.name.zh}宿疾「${ail?.labelZh ?? '纏身'}」日重,力不從心,乞骸骨以歸養。`,
+        en: `${o.name.en}, worn by a lasting ${ail?.labelEn ?? 'infirmity'}, begs to retire.`,
+      },
+      issuedYear: ctx.date.year,
+      issuedSeason: ctx.date.season,
+      rejectPenalty: 12,
       grantBonus: 8,
       expiresAfterSeasons: 4,
     };

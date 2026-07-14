@@ -5444,17 +5444,24 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             ? buildingBonuses(ofc.locationCityId, state.buildings).woundRecovery
             : 0;
           ofc = tickAfflictions(ofc, heal);
-          // 靜養 — a 傷兵營 may slowly mend a lasting 宿疾 (a gentle second cure path
-          // besides 洗髓's once-per-life). Chance scales with the hospital's care.
-          if (heal > 0 && hasChronicAilment(ofc) && Math.random() < Math.min(0.25, 0.06 + heal * 0.05)) {
-            const ail = chronicAilmentOf(ofc);
-            ofc = cureChronicAilments(ofc);
-            if (ofc.forceId === state.playerForceId && ail) {
-              result.report.entries.push({
-                cityId: ofc.locationCityId, kind: 'note',
-                text: `靜養痊癒 — ${ofc.name.zh} recovered from ${ail.labelEn}.`,
-                textZh: `${ofc.name.zh}於傷兵營靜養日久,宿疾「${ail.labelZh}」竟得痊癒。`,
-              });
+          // 宿疾慢療 — two gentle second cure paths besides 洗髓's once-per-life:
+          // a 傷兵營's care (heal), AND a 名醫 (醫者/藥師) posted in the same city
+          // (名醫義診). Either may mend a lasting 宿疾 over time.
+          if (hasChronicAilment(ofc) && ofc.locationCityId) {
+            const physicianHere = Object.values(tickedOfficers).some((p) =>
+              p.id !== ofc.id && p.locationCityId === ofc.locationCityId && p.forceId === ofc.forceId
+              && p.status !== 'dead' && (p.traits ?? []).some((tr) => tr === 'physician' || tr === 'herbalist'));
+            const chance = (heal > 0 ? 0.06 + heal * 0.05 : 0) + (physicianHere ? 0.12 : 0);
+            if (chance > 0 && Math.random() < Math.min(0.30, chance)) {
+              const ail = chronicAilmentOf(ofc);
+              ofc = cureChronicAilments(ofc);
+              if (ofc.forceId === state.playerForceId && ail) {
+                result.report.entries.push({
+                  cityId: ofc.locationCityId, kind: 'note',
+                  text: physicianHere ? `名醫義診 — ${ofc.name.zh} was cured of ${ail.labelEn}.` : `靜養痊癒 — ${ofc.name.zh} recovered from ${ail.labelEn}.`,
+                  textZh: physicianHere ? `城中名醫為${ofc.name.zh}診治,宿疾「${ail.labelZh}」竟得痊癒!` : `${ofc.name.zh}於傷兵營靜養日久,宿疾「${ail.labelZh}」竟得痊癒。`,
+                });
+              }
             }
           }
           if (ofc !== tickedOfficers[id]) tickedOfficers[id] = ofc;
