@@ -1592,11 +1592,14 @@ export function duelRound(
     // named hero's signature (拖刀計/七進七出/無雙…) bends the blow — see ultStrike.
     if (aMove === 'ultimate') {
       const u = ultStrike(b.aUlt, dMove, b.aStatic, b.dStatic, rng);
-      dmgToDefender = u.dmg; b.dGuard = 0; aRecover += u.selfRecover; if (u.drainFoeSpirit) drainDSpirit = true;
+      // 器魂加持 — an awakened (·神) weapon lends the finisher a fifth more bite (E2).
+      dmgToDefender = b.aEvolvedArt ? Math.round(u.dmg * 1.2) : u.dmg;
+      b.dGuard = 0; aRecover += u.selfRecover; if (u.drainFoeSpirit) drainDSpirit = true;
     }
     if (dMove === 'ultimate') {
       const u = ultStrike(b.dUlt, aMove, b.dStatic, b.aStatic, rng);
-      dmgToAttacker = u.dmg; b.aGuard = 0; dRecover += u.selfRecover; if (u.drainFoeSpirit) drainASpirit = true;
+      dmgToAttacker = b.dEvolvedArt ? Math.round(u.dmg * 1.2) : u.dmg;
+      b.aGuard = 0; dRecover += u.selfRecover; if (u.drainFoeSpirit) drainASpirit = true;
     }
     roundWinner = dmgToDefender > dmgToAttacker ? 'attacker' : dmgToAttacker > dmgToDefender ? 'defender' : 'draw';
   } else if (isSpecialMove(aMove) || isSpecialMove(dMove)) {

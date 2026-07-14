@@ -134,3 +134,25 @@ describe('器魂戰技 — an awakened weapon stokes 武魂 faster (D2)', () => 
     items.setEvolvedRegistry([]);
   });
 });
+
+describe('器魂加持 — an awakened blade hits harder (E2)', () => {
+  it('the evolved finisher costs the foe more 氣力 than a plain one', async () => {
+    const items = await import('../data/items');
+    const WEAPON = Object.values(items.ITEMS_BY_ID).find((i) => i.kind === 'weapon')!.id;
+    const hero = mkOfficer({ id: 'a', stats: warStats(95), equipment: [WEAPON] });
+    const foe = mkOfficer({ id: 'b', stats: warStats(95) });
+
+    // Plain: full gauge, unleash the ult against a guard.
+    items.setEvolvedRegistry([]);
+    const plain = { ...initDuelBout(hero, foe), aSpirit: SPIRIT_MAX };
+    const plainRes = duelRound(plain, 'ultimate', 'guard', seededRng(4));
+
+    // Awakened: same everything, ×1.2 on the finisher.
+    items.setEvolvedRegistry([WEAPON]);
+    const evo = { ...initDuelBout(hero, foe), aSpirit: SPIRIT_MAX };
+    const evoRes = duelRound(evo, 'ultimate', 'guard', seededRng(4));
+
+    expect(evoRes.bout.dStamina).toBeLessThan(plainRes.bout.dStamina); // foe hurt more
+    items.setEvolvedRegistry([]);
+  });
+});
