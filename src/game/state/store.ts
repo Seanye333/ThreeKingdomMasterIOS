@@ -84,6 +84,7 @@ import { ITEMS_BY_ID, refineCost, REFINE_MAX, setRefineRegistry, itemRarity,
   BREAKTHROUGH_MAX, breakthroughCost as itemBreakthroughCost, socketsFor, GEMS_BY_ID,
   GEM_FUSION, GEM_FUSION_COST, setBreakthroughRegistry, setGemRegistry, setLoreRegistry, accrueWeaponLore,
   setAwakeningRegistry, awakeningSlots, AWAKENING_BY_ID, smeltIronYield, itemLoreLevel,
+  setEvolvedRegistry, canEvolveItem,
   itemGrowthGoldSpent } from '../data/items';
 import { SKILLS_BY_ID } from '../data/skills';
 import { marchDurationFor } from '../data/cities';
@@ -187,7 +188,7 @@ import { LADDER_STAGES, LADDER_TOP, overmightyMinister, ladderAdvanceChance, cab
 import { commonerArrivalCity, generateCommonerOfficer, lordTalentDraw, commonerArrivalChance } from '../systems/commonerTalent';
 import { rollRecommendations } from '../systems/recommendation';
 import { codexMarkRecruited, codexMarkRecruitedMany, codexMarkSeen, codexMarkSlain, loadCodex, CODEX_MILESTONES, codexClaimMilestone } from '../systems/codex';
-import { itemCodexMarkCarried } from '../systems/itemCodex';
+import { itemCodexMarkCarried, ITEM_CODEX_MILESTONES, itemCodexClaimMilestone } from '../systems/itemCodex';
 import { recordDailyResult } from '../systems/dailyChallenge';
 import { SCHEME_DEFS, schemeOdds, schemeExposureChance, validateScheme, type SchemeId } from '../systems/schemes';
 import { resolveAISchemes } from '../systems/aiSchemes';
@@ -332,6 +333,7 @@ import { attackerArm } from '../systems/combat';
 import { festivalPool, festivalDraw, FESTIVAL_GOLD_COST, festivalScrollReward } from '../systems/festival';
 import { rollFoil } from '../systems/cardFoil';
 import { accrueArmProficiency } from '../systems/armProficiency';
+import { accrueItemProvenance } from '../systems/itemProvenance';
 import { rollBounties, fulfilledBounties } from '../systems/bounty';
 import { codexRecordPeaks } from '../systems/codex';
 import { tickBuildings } from '../systems/buildings';
@@ -1149,6 +1151,8 @@ interface GameStore extends GameState {
   awakenItem: (itemId: EntityId, perkId: string) => { ok: boolean; reason?: string };
   /** 重鑄分解 — smelt a held item back to iron; gone for the campaign. */
   smeltItem: (itemId: EntityId) => { ok: boolean; reason?: string; iron?: number };
+  /** 器魂進化 — awaken a ★5 名器 神兵 into its ·神 final form (gold+iron). */
+  evolveItem: (itemId: EntityId) => { ok: boolean; message: string };
   /** 突破 — push a fully-refined item one ★ further, charged gold + iron from the
    *  holding city (needs a foundry). */
   breakthroughItem: (itemId: EntityId) => { ok: boolean; reason?: string; cost?: number; iron?: number };
@@ -1244,6 +1248,8 @@ interface GameStore extends GameState {
   forgeStar: (officerId: EntityId) => { ok: boolean; message: string };
   /** 圖鑑功勳 — claim a reached codex-coverage milestone into this campaign. */
   claimCodexMilestone: (milestoneId: string) => { ok: boolean; message: string };
+  /** 藏珍功勳 — claim a reached item-codex milestone into this campaign (iron+gold). */
+  claimItemCodexMilestone: (milestoneId: string) => { ok: boolean; message: string };
   /** 求賢祭 — once a season, pay gold at the capital to reveal one hidden
    *  talent (moves to the capital as a free agent; recruit them yourself). */
   holdTalentFestival: () => { ok: boolean; message: string };
@@ -1690,7 +1696,7 @@ export const useGameStore = create<GameStore>()(
       ...EMPTY_STATE,
 
       loadScenario: (scenario, playerForceId, difficulty, customOfficer, capitalOverride) => {
-        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); setLoreRegistry({}); setAwakeningRegistry({}); // fresh game → drop any prior 精煉/名器 registry
+        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); setLoreRegistry({}); setAwakeningRegistry({}); setEvolvedRegistry([]); // fresh game → drop any prior 精煉/名器 registry
         set((s) => loadScenario(s, scenario, playerForceId, difficulty, customOfficer, capitalOverride));
         get().seedAiGear();
       },
@@ -1699,7 +1705,7 @@ export const useGameStore = create<GameStore>()(
       // observe mode, so the AI runs every realm and the season tick
       // simulates history while you watch.
       observeScenario: (scenario, difficulty) => {
-        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); setLoreRegistry({}); setAwakeningRegistry({});
+        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); setLoreRegistry({}); setAwakeningRegistry({}); setEvolvedRegistry([]);
         set((s) => ({
           ...loadScenario(s, scenario, scenario.forces[0].id, difficulty),
           playerForceId: null,
@@ -1716,7 +1722,7 @@ export const useGameStore = create<GameStore>()(
         if (!scenario) return;
         const hasForce = scenario.forces.some((f) => f.id === challenge.forceId);
         if (!hasForce) return;
-        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); setLoreRegistry({}); setAwakeningRegistry({});
+        setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); setLoreRegistry({}); setAwakeningRegistry({}); setEvolvedRegistry([]);
         set((s) => ({
           ...loadScenario(s, scenario, challenge.forceId, challenge.difficulty),
           activeChallenge: challenge.id,
@@ -11495,6 +11501,26 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         );
         return { ok: true, message: `${m.zh}:殘卷 +${m.scrolls}、金 +${m.gold}` };
       },
+      claimItemCodexMilestone: (milestoneId) => {
+        // 藏珍功勳 — pay a reached, unclaimed item-collection milestone into this
+        // campaign (iron + treasury). itemCodexClaimMilestone owns the mark.
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: '無主之師。' };
+        const m = ITEM_CODEX_MILESTONES.find((x) => x.id === milestoneId);
+        if (!m) return { ok: false, message: '無此功勳。' };
+        const capId = state.forces[state.playerForceId]?.capitalCityId;
+        const cap = capId ? state.cities[capId] : undefined;
+        if (!cap || cap.ownerForceId !== state.playerForceId) return { ok: false, message: '須有都城受賞。' };
+        if (!itemCodexClaimMilestone(milestoneId)) return { ok: false, message: '未達或已領。' };
+        set({
+          cities: { ...state.cities, [cap.id]: { ...cap, gold: cap.gold + m.gold, iron: (cap.iron ?? 0) + m.iron } },
+        });
+        get().notify(
+          `藏珍功勳「${m.zh}」— 都城鐵 +${m.iron}、金 +${m.gold}`,
+          `Treasure milestone "${m.en}" — +${m.iron} iron, +${m.gold} gold`,
+        );
+        return { ok: true, message: `${m.zh}:鐵 +${m.iron}、金 +${m.gold}` };
+      },
       engageEncounter: () => {
         const state = get();
         const df = state.dayFlow;
@@ -12445,7 +12471,26 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           officers,
           tb.units.map((u) => ({ officerId: u.officerId, unit: u.unitType, won: winner != null && u.side === winner })),
         );
-        set({ itemLore: nextItemLore });
+
+        // 名器譜系 — each named piece (神兵/寶器 rarity) borne into this battle adds
+        // a chapter: its wielder joins the lineage, its battle-tally climbs, and a
+        // victor's blade is credited a share of the foes felled.
+        const provEntries: Array<{ itemId: string; ownerId: string; kills: number }> = [];
+        for (const u of tb.units) {
+          const o = officers[u.officerId];
+          if (!o) continue;
+          const won = winner != null && u.side === winner;
+          const killShare = won ? Math.floor(enemyLosses / Math.max(1, victorIds.length)) : 0;
+          for (const itemId of o.equipment) {
+            const base = ITEMS_BY_ID[itemId];
+            if (!base) continue;
+            const r = itemRarity(base);
+            if (r !== 'gold' && r !== 'silver') continue; // only storied pieces earn a scroll
+            provEntries.push({ itemId, ownerId: u.officerId, kills: killShare });
+          }
+        }
+        const nextProvenance = accrueItemProvenance(state.itemProvenance, provEntries);
+        set({ itemLore: nextItemLore, itemProvenance: nextProvenance });
 
         // Save replay (snapshot of final battle state only — turn-by-turn would
         // require more plumbing, so we record the end state.).
@@ -14234,6 +14279,37 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           `${base.name.en} awakens — ${perk.name.en} engraved (borne by ${holder.name.en})`,
         );
         return { ok: true };
+      },
+
+      // 器魂進化 — awaken a fully-mastered 神兵's spirit (★5 + 名器) into its ·神
+      // final form: every effect surges once more, its name earns a ·神 suffix.
+      // Player-only, once per item; costs a smith's hoard of gold + iron.
+      evolveItem: (itemId) => {
+        const state = get();
+        const base = ITEMS_BY_ID[itemId];
+        if (!base) return { ok: false, message: '無此器。' };
+        const gate = canEvolveItem(itemId);
+        if (!gate.ok) return { ok: false, message: gate.reasonZh };
+        const holder = Object.values(state.officers).find(
+          (o) => o.forceId === state.playerForceId && o.status !== 'dead' && o.equipment.includes(itemId),
+        );
+        if (!holder) return { ok: false, message: '非我將所持。' };
+        const city = holder.locationCityId ? state.cities[holder.locationCityId] : null;
+        if (!city || city.ownerForceId !== state.playerForceId) return { ok: false, message: '須居於我城中。' };
+        const GOLD = 3000, IRON = 400;
+        if (city.gold < GOLD) return { ok: false, message: `金不足(需 ${GOLD})。` };
+        if ((city.iron ?? 0) < IRON) return { ok: false, message: `鐵不足(需 ${IRON})。` };
+        const evolvedItems = [...state.evolvedItems, itemId];
+        setEvolvedRegistry(evolvedItems);
+        set({
+          evolvedItems,
+          cities: { ...state.cities, [city.id]: { ...city, gold: city.gold - GOLD, iron: (city.iron ?? 0) - IRON } },
+        });
+        get().notify(
+          `器魂初醒 —「${base.name.zh}·神」!(${holder.name.zh}佩之,金 −${GOLD}、鐵 −${IRON})`,
+          `${base.name.en} awakens its spirit — now ${base.name.en} · Ascended (borne by ${holder.name.en})`,
+        );
+        return { ok: true, message: '器魂已醒。' };
       },
 
       // 重鑄分解 — smelt a held item back to iron (yield by rarity + sunk
@@ -16493,6 +16569,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           // 2026-07 卡牌批 — legacy saves predate the item-growth extensions.
           itemLore: loaded.itemLore ?? {},
           itemAwakenings: loaded.itemAwakenings ?? {},
+          evolvedItems: loaded.evolvedItems ?? [],
+          itemProvenance: loaded.itemProvenance ?? {},
           destroyedItems: loaded.destroyedItems ?? [],
           // 家門聲望 — backfill from the loaded roster for legacy saves.
           clanStandings: loaded.clanStandings ?? deriveInitialClanStandings(loaded.officers ?? {}),
@@ -16539,6 +16617,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         setGemRegistry(fresh.itemGems);
         setLoreRegistry(fresh.itemLore);
         setAwakeningRegistry(fresh.itemAwakenings);
+        setEvolvedRegistry(fresh.evolvedItems);
         set(fresh);
         return true;
       },

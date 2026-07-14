@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import { ITEMS } from '../../game/data';
 import type { Item } from '../../game/data/items';
-import { ITEMS_BY_ID, REFINE_MAX, BREAKTHROUGH_MAX, breakthroughCost as itemBreakthroughCost, socketsFor, GEMS, GEMS_BY_ID, AWAKENING_PERKS, AWAKENING_BY_ID, awakeningSlots, smeltIronYield } from '../../game/data/items';
+import { ITEMS_BY_ID, REFINE_MAX, BREAKTHROUGH_MAX, breakthroughCost as itemBreakthroughCost, socketsFor, GEMS, GEMS_BY_ID, AWAKENING_PERKS, AWAKENING_BY_ID, awakeningSlots, smeltIronYield, canEvolveItem, itemIsEvolved } from '../../game/data/items';
 import { useGameStore } from '../../game/state/store';
 import type { EntityId, Officer } from '../../game/types';
 import { OfficerStats } from './OfficerStats';
@@ -79,6 +79,8 @@ export function ArmouryModal({ onClose }: Props) {
   const destroyedItems = useGameStore((s) => s.destroyedItems);
   const awakenItemFn = useGameStore((s) => s.awakenItem);
   const smeltItemFn = useGameStore((s) => s.smeltItem);
+  const evolveItemFn = useGameStore((s) => s.evolveItem);
+  const evolvedItems = useGameStore((s) => s.evolvedItems); // re-render when 器魂 awakens
   const itemInscriptions = useGameStore((s) => s.itemInscriptions);
   const inscribeItemFn = useGameStore((s) => s.inscribeItem);
   // ✒ 銘刻 — inline editor state for the item being inscribed.
@@ -323,6 +325,15 @@ export function ArmouryModal({ onClose }: Props) {
                             {plus < REFINE_MAX && <button className={styles.actionBtn} onClick={() => refineItemFn(item.id)}>{t('精煉', 'Refine')}</button>}
                             {plus >= REFINE_MAX && stars < BREAKTHROUGH_MAX && (
                               <button className={styles.actionBtn} disabled={!canBreak} title={!hasFoundry ? t('需鐵工坊', 'needs foundry') : `${bc.gold}g+${bc.iron}鐵`} onClick={() => { const r = breakthroughItemFn(item.id); if (!r.ok) alert(r.reason); }}>{t('突破★', 'Star')}</button>
+                            )}
+                            {/* 器魂進化 — the ★5 神兵 capstone. */}
+                            {stars >= BREAKTHROUGH_MAX && (evolvedItems.includes(item.id) || itemIsEvolved(item.id)
+                              ? <span title={t('器魂已醒 — ·神 終極形態', 'Spirit awakened — ·神 form')} style={{ color: '#ffd66e', fontSize: '0.66rem', border: '1px solid #8a6a2a', borderRadius: 8, padding: '0 5px' }}>☯{t('器魂', 'Ascended')}</span>
+                              : (() => { const g = canEvolveItem(item.id); return (
+                                <button className={styles.actionBtn} disabled={!g.ok}
+                                  title={g.ok ? t('醒器魂:3000金+400鐵 — 神兵進化為 ·神,全效果再增', 'Awaken spirit: 3000g+400 iron — ascend to ·神') : t(g.reasonZh, g.reasonEn)}
+                                  onClick={() => { const r = evolveItemFn(item.id); if (!r.ok) alert(r.message); }}>☯{t('器魂', 'Ascend')}</button>
+                              ); })()
                             )}
                             {gems.length < maxSockets && (
                               <select value="" onChange={(e) => { if (e.target.value) { const r = socketGemFn(item.id, e.target.value); if (!r.ok) alert(r.reason); } }} style={{ background: '#10161e', border: '1px solid #6a8fb0', color: '#9fb0bf', fontSize: '0.66rem' }}>

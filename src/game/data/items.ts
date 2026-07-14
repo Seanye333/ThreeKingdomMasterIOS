@@ -190,6 +190,32 @@ export function itemLoreAuraMul(renown: number): number {
   return 1 + Math.min(0.08, Math.max(0, renown) * 0.002);
 }
 
+// ─── 器魂進化 — the legendary capstone above 突破★5 ──────────────────────────
+// A 神兵 (gold rarity) taken to full breakthrough (★5) AND storied renown (名器,
+// 60 battles) can 醒器魂 — awaken its spirit — evolving to a named final form:
+// its title takes a ·神 suffix and every effect surges once more. A player-only,
+// once-per-item rite; the registry is a plain id-set (never AI-repointed).
+export const EVOLVE_LORE_REQ = 60;
+/** The extra surge an awakened 器魂 lends every effect. */
+export const EVOLVE_EFFECT_BOOST = 0.18;
+let EVOLVED_REGISTRY = new Set<string>();
+export function setEvolvedRegistry(ids: Iterable<string> | undefined): void {
+  EVOLVED_REGISTRY = new Set(ids ?? []);
+}
+export function itemIsEvolved(itemId: string): boolean {
+  return EVOLVED_REGISTRY.has(itemId);
+}
+/** Can this item awaken its 器魂 now? (gold rarity · ★5 · 名器 · not yet evolved) */
+export function canEvolveItem(itemId: string): { ok: boolean; reasonZh: string; reasonEn: string } {
+  const base = ITEMS_BY_ID[itemId];
+  if (!base) return { ok: false, reasonZh: '無此器', reasonEn: 'No such item' };
+  if (itemIsEvolved(itemId)) return { ok: false, reasonZh: '器魂已醒', reasonEn: 'Already awakened' };
+  if (itemRarity(base) !== 'gold') return { ok: false, reasonZh: '唯神兵可醒器魂', reasonEn: 'Only 神兵 (legendary) can awaken' };
+  if (itemBreakthroughLevel(itemId) < BREAKTHROUGH_MAX) return { ok: false, reasonZh: `需突破★${BREAKTHROUGH_MAX}`, reasonEn: `Needs ★${BREAKTHROUGH_MAX} breakthrough` };
+  if (itemLoreLevel(itemId) < EVOLVE_LORE_REQ) return { ok: false, reasonZh: `威名未至名器(${EVOLVE_LORE_REQ}戰)`, reasonEn: `Needs 名器 renown (${EVOLVE_LORE_REQ} battles)` };
+  return { ok: true, reasonZh: '', reasonEn: '' };
+}
+
 // ─── 兵器覺醒 — at each 威名 milestone (飲血12/百戰30/名器60) the wielder picks
 // one of three awakening perks, a flat stat engraved into the blade itself.
 // Stored per-item like 精煉/寶石, resolved through liveItemById, so every read
@@ -265,8 +291,8 @@ export function accrueWeaponLore(prior: Record<string, number>, equipmentLists: 
  * refine and breakthrough scale the base magnitudes; gems then add flat stats.
  * Rarity recomputes from the boosted magnitude (so growth can promote 品階).
  */
-export function liveItem(item: Item, plus: number, stars = 0, gemIds: string[] = [], lore = 0, awakenIds: string[] = []): Item {
-  if (!plus && !stars && gemIds.length === 0 && lore <= 0 && awakenIds.length === 0) return item;
+export function liveItem(item: Item, plus: number, stars = 0, gemIds: string[] = [], lore = 0, awakenIds: string[] = [], evolved = false): Item {
+  if (!plus && !stars && gemIds.length === 0 && lore <= 0 && awakenIds.length === 0 && !evolved) return item;
   let effects = refinedEffects(item, plus);
   if (stars) effects = breakthroughEffects(effects, stars);
   // 兵器覺醒 — engraved perks are flat adds, folded before the lore aura so a
@@ -316,6 +342,15 @@ export function liveItem(item: Item, plus: number, stars = 0, gemIds: string[] =
       }
     }
   }
+  // 器魂 — an awakened spirit surges every effect once more and renames the piece.
+  if (evolved) {
+    effects = { ...effects };
+    for (const [k, v] of Object.entries(effects) as Array<[keyof Item['effects'], number | undefined]>) {
+      if (!v) continue;
+      effects[k] = v + Math.sign(v) * Math.max(1, Math.round(Math.abs(v) * EVOLVE_EFFECT_BOOST));
+    }
+    return { ...item, effects, name: { zh: `${item.name.zh}·神`, en: `${item.name.en} · Ascended` } };
+  }
   return { ...item, effects };
 }
 
@@ -323,7 +358,7 @@ export function liveItem(item: Item, plus: number, stars = 0, gemIds: string[] =
 export function liveItemById(id: string): Item | null {
   const base = ITEMS_BY_ID[id];
   if (!base) return null;
-  return liveItem(base, itemRefineLevel(id), itemBreakthroughLevel(id), itemGemIds(id), itemLoreLevel(id), itemAwakeningIds(id));
+  return liveItem(base, itemRefineLevel(id), itemBreakthroughLevel(id), itemGemIds(id), itemLoreLevel(id), itemAwakeningIds(id), itemIsEvolved(id));
 }
 
 /** Gold cost to take an item from `plus` → `plus+1` (escalates with rarity + level). */

@@ -1,6 +1,6 @@
 /** 名品圖鑑 — locks the treasure ledger and set progress. */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ITEM_CODEX_SETS, itemCodexMarkCarried, itemCodexMarkCarriedMany, itemCodexSetProgress, loadItemCodex } from './itemCodex';
+import { ITEM_CODEX_SETS, itemCodexMarkCarried, itemCodexMarkCarriedMany, itemCodexSetProgress, loadItemCodex, ITEM_CODEX_MILESTONES, itemCodexMilestoneReached, itemCodexMilestoneClaimed, itemCodexClaimMilestone } from './itemCodex';
 import { ITEMS_BY_ID } from '../data';
 
 function stubStorage() {
@@ -48,5 +48,27 @@ describe('item codex sets', () => {
     for (const s of ITEM_CODEX_SETS) {
       expect(new Set(s.members).size).toBe(s.members.length);
     }
+  });
+});
+
+describe('藏珍功勳 — item collection milestones', () => {
+  it('a milestone unlocks at its carried-count bar and claims once', () => {
+    const first = ITEM_CODEX_MILESTONES[0]; // need 20
+    itemCodexMarkCarriedMany(Array.from({ length: 5 }, (_, i) => `it-${i}`));
+    expect(itemCodexMilestoneReached(loadItemCodex(), first)).toBe(false);
+    expect(itemCodexClaimMilestone(first.id)).toBe(false);
+    itemCodexMarkCarriedMany(Array.from({ length: first.need }, (_, i) => `carry-${i}`));
+    expect(itemCodexMilestoneReached(loadItemCodex(), first)).toBe(true);
+    expect(itemCodexClaimMilestone(first.id)).toBe(true);
+    expect(itemCodexMilestoneClaimed(loadItemCodex(), first.id)).toBe(true);
+    expect(itemCodexClaimMilestone(first.id)).toBe(false); // once only
+  });
+
+  it('milestone bars ascend and ids are unique', () => {
+    for (let i = 1; i < ITEM_CODEX_MILESTONES.length; i++) {
+      expect(ITEM_CODEX_MILESTONES[i].need).toBeGreaterThan(ITEM_CODEX_MILESTONES[i - 1].need);
+    }
+    const ids = ITEM_CODEX_MILESTONES.map((m) => m.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });

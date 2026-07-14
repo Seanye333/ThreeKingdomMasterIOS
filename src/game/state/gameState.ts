@@ -418,6 +418,13 @@ export interface GameState {
   /** 兵器覺醒 — per-item chosen awakening perks (items.ts AWAKENING_PERKS),
    *  unlocked one pick per 威名 milestone (12/30/60). */
   itemAwakenings: Record<EntityId, string[]>;
+  /** 器魂進化 — legendary items whose 器魂 has awakened (★5 + 名器 → ·神 form).
+   *  Player-only, once per item; resolved through items.setEvolvedRegistry. */
+  evolvedItems: EntityId[];
+  /** 名器譜系 — a storied weapon's provenance: the chain of wielders who bore it
+   *  into battle, plus a tally of battles fought and foes felled. Flavour only;
+   *  shown on the item card. Keyed by item id. See itemProvenance.ts. */
+  itemProvenance: Record<EntityId, { owners: EntityId[]; battles: number; kills: number }>;
   /** 回爐 — items smelted back to iron this campaign; gone from circulation. */
   destroyedItems: EntityId[];
   /** 寶石庫存 — gems on hand (from 熔毀 drops etc.); socketing spends these
@@ -874,6 +881,8 @@ export const EMPTY_STATE: GameState = {
   itemGems: {},
   itemLore: {},
   itemAwakenings: {},
+  evolvedItems: [],
+  itemProvenance: {},
   destroyedItems: [],
   gemStock: {},
   knownRecipes: STARTER_RECIPE_IDS.slice(),
@@ -1305,6 +1314,8 @@ export function loadScenario(
   itemGems: {},
   itemLore: {},
   itemAwakenings: {},
+  evolvedItems: [],
+  itemProvenance: {},
   destroyedItems: [],
   gemStock: {},
     knownRecipes: STARTER_RECIPE_IDS.slice(),

@@ -3,7 +3,7 @@ import { useGameStore } from '../../game/state/store';
 import { Modal } from './Modal';
 import {
   ITEMS_BY_ID, liveItemById, itemRarity, itemLoreLevel, itemLoreTitle,
-  itemAwakeningIds, AWAKENING_BY_ID, GEMS_BY_ID, type Item,
+  itemAwakeningIds, AWAKENING_BY_ID, GEMS_BY_ID, itemIsEvolved, type Item,
 } from '../../game/data/items';
 import { ITEM_WEAPON_TYPE, classifyWeaponByName, WEAPON_TYPE_DEFS, type WeaponType } from '../../game/data/weaponTypes';
 import { SIGNATURE_ITEMS } from '../../game/data/signatureItems';
@@ -71,6 +71,8 @@ export function ItemCardFace({ itemId, onClose }: { itemId: string; onClose?: ()
   const refinements = useGameStore((s) => s.itemRefinements);
   const breakthroughs = useGameStore((s) => s.itemBreakthroughs);
   const gems = useGameStore((s) => s.itemGems);
+  const provenance = useGameStore((s) => s.itemProvenance?.[itemId]);
+  const evolved = itemIsEvolved(itemId);
 
   const base = ITEMS_BY_ID[itemId];
   const live = liveItemById(itemId);
@@ -151,6 +153,16 @@ export function ItemCardFace({ itemId, onClose }: { itemId: string; onClose?: ()
             </div>
           </div>
 
+          {/* 器魂 — an awakened legendary wears its ·神 mark. */}
+          {evolved && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span title={t('器魂已醒 — ★5 名器進化為 ·神 終極形態,全效果再增', 'Spirit awakened — the ★5 storied form has ascended')}
+                style={{ fontSize: '0.72rem', padding: '1px 9px', borderRadius: 9, background: 'linear-gradient(100deg, #fff4c8, #e6c473, #a8842e)', color: '#20242c', fontWeight: 700, letterSpacing: '0.1rem' }}>
+                ☯ {t('器魂已醒', 'Ascended')}
+              </span>
+            </div>
+          )}
+
           {/* 覺醒詞條 */}
           {awakened.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
@@ -174,6 +186,23 @@ export function ItemCardFace({ itemId, onClose }: { itemId: string; onClose?: ()
                   ⚔ {t('現持', 'Borne by')}:{pickName(holder.name, lang)}
                 </span>
               )}
+            </div>
+          )}
+
+          {/* 名器譜系 — the lineage of wielders + a battle tally. */}
+          {provenance && provenance.owners.length > 0 && (
+            <div style={{ borderTop: '1px solid #1e2832', paddingTop: 6 }}>
+              <div style={{ fontSize: '0.62rem', color: '#7a8893', letterSpacing: '0.1rem', marginBottom: 2 }}>
+                {t('名器譜系', 'PROVENANCE')} · {t('歷', '')}{provenance.battles}{t('戰', ' battles')}{provenance.kills > 0 ? ` · ${t('殲', 'felled ')}${provenance.kills.toLocaleString()}` : ''}
+              </div>
+              <div style={{ fontSize: '0.74rem', color: '#c8b48a', lineHeight: 1.6 }}>
+                {provenance.owners.map((oid, oi) => (
+                  <span key={oi}>
+                    {oi > 0 && <span style={{ color: '#5f6c76' }}> → </span>}
+                    {officers[oid] ? pickName(officers[oid].name, lang) : oid}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
 

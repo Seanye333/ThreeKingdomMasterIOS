@@ -23,7 +23,7 @@ import { OfficerCardModal, OfficerCardFace } from './OfficerCardModal';
 import { officerGrade, gradeMeta } from '../../game/systems/officerGrade';
 import { cardCondition } from '../../game/systems/battlePower';
 import { bpLeaderboard } from '../../game/systems/powerBoard';
-import { ITEM_CODEX_SETS, itemCodexSetProgress, loadItemCodex } from '../../game/systems/itemCodex';
+import { ITEM_CODEX_SETS, itemCodexSetProgress, loadItemCodex, ITEM_CODEX_MILESTONES, itemCodexMilestoneReached, itemCodexMilestoneClaimed } from '../../game/systems/itemCodex';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useDesc } from '../i18n';
 
@@ -46,6 +46,7 @@ export function EncyclopediaModal({ onClose }: Props) {
   const festivalPity = useGameStore((s) => s.festivalPity);
   const generalScrolls = useGameStore((s) => s.generalScrolls);
   const claimMilestone = useGameStore((s) => s.claimCodexMilestone);
+  const claimItemMilestone = useGameStore((s) => s.claimItemCodexMilestone);
   const [festivalMsg, setFestivalMsg] = useState<string | null>(null);
   const [frameSkinId, setFrameSkinId] = useState(() => loadFrameSkin().id);
   const [cardBackId, setCardBackId] = useState(() => loadCardBack().id);
@@ -501,6 +502,32 @@ export function EncyclopediaModal({ onClose }: Props) {
               <div style={{ fontSize: '0.72rem', color: '#7a8893', alignSelf: 'center' }}>
                 藏 {itemCodex.carried.length}(跨戰役累積)
               </div>
+            </div>
+          )}
+          {/* 藏珍功勳 — item-collection milestones; claim into this campaign. */}
+          {section === 'items' && playerForceId && (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.8rem' }}>
+              <span style={{ fontSize: '0.72rem', color: '#7a8893' }}>藏珍功勳 · 藏 {itemCodex.carried.length}</span>
+              {ITEM_CODEX_MILESTONES.map((m) => {
+                const reached = itemCodexMilestoneReached(itemCodex, m);
+                const claimed = itemCodexMilestoneClaimed(itemCodex, m.id);
+                const canClaim = reached && !claimed;
+                return (
+                  <button key={m.id}
+                    onClick={canClaim ? () => { const r = claimItemMilestone(m.id); setFestivalMsg(r.message); } : undefined}
+                    disabled={!canClaim}
+                    title={`${m.zh} — 藏滿 ${m.need} 件:鐵 +${m.iron}、都城金 +${m.gold}${claimed ? '(已領)' : reached ? '(可領)' : `(尚差 ${m.need - itemCodex.carried.length})`}`}
+                    style={{
+                      fontSize: '0.7rem', padding: '0.1rem 0.5rem', borderRadius: 9, fontFamily: 'inherit',
+                      cursor: canClaim ? 'pointer' : 'default',
+                      border: `1px solid ${claimed ? '#3f5c3f' : canClaim ? '#8a6a2a' : '#2b3845'}`,
+                      background: claimed ? 'rgba(138,200,138,0.08)' : canClaim ? 'rgba(230,196,115,0.16)' : 'transparent',
+                      color: claimed ? '#8ac88a' : canClaim ? '#ffd66e' : '#5f6c76',
+                    }}>
+                    {claimed ? '✓ ' : canClaim ? '🎁 ' : ''}{m.zh} {itemCodex.carried.length}/{m.need}
+                  </button>
+                );
+              })}
             </div>
           )}
           {section === 'items' && (matches as typeof ITEMS).map((it) => {
