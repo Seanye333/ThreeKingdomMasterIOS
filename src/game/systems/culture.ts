@@ -25,6 +25,16 @@ export function cultureLoyaltyLift(culture: number): number {
   return culture >= CULTURE_FAMED ? 1 : 0;
 }
 
+/**
+ * 文教招賢 — a cultured city draws wandering scholars (士歸有德). The weight a
+ * city carries when a wandering talent picks where to surface: 1 for an
+ * untutored town, up to 5 for a full 文化名城. Fame of letters attracts men of
+ * letters.
+ */
+export function cultureTalentWeight(culture: number): number {
+  return 1 + Math.max(0, culture) / 25;
+}
+
 export interface CultureTier { tier: 0 | 1 | 2 | 3; zh: string; en: string }
 
 export function cultureTier(value: number): CultureTier {

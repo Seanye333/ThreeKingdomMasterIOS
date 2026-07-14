@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { cultureGain, cultureGraftCurb, cultureLoyaltyLift, cultureTier, CULTURE_FAMED } from './culture';
+import { cultureGain, cultureGraftCurb, cultureLoyaltyLift, cultureTier, cultureTalentWeight, CULTURE_FAMED } from './culture';
 
 describe('文教 — cultural renown', () => {
   it('grows with a school (scaled by the best mind), fades without one', () => {
@@ -25,5 +25,12 @@ describe('文教 — cultural renown', () => {
     expect(cultureTier(1).zh).toBe('初興文教');
     expect(cultureTier(30).zh).toBe('文教興隆');
     expect(cultureTier(60).zh).toBe('文化名城');
+  });
+
+  it('文教招賢 — a 文化名城 pulls wandering scholars far harder', () => {
+    expect(cultureTalentWeight(0)).toBeCloseTo(1, 5);       // untutored → base pull
+    expect(cultureTalentWeight(CULTURE_FAMED)).toBeCloseTo(3.4, 5); // 文化名城 ≈3.4×
+    expect(cultureTalentWeight(100)).toBeCloseTo(5, 5);     // full 文教 → 5×
+    expect(cultureTalentWeight(50)).toBeGreaterThan(cultureTalentWeight(10));
   });
 });

@@ -6,6 +6,7 @@ import type {
   Season,
 } from '../types';
 import { isPhysician, medicalSkillOf, MEDICAL_SKILL_MAX } from './medicalSkill';
+import { cultureTalentWeight } from './culture';
 
 /**
  * 醫者防疫 — the best physician posted in a city, and the outbreak-mitigation
@@ -272,8 +273,15 @@ export function rollEvents(input: EventsInput): EventsOutput {
     );
     if (unsearched.length > 0 && occupiedCities.length > 0) {
       const officer = unsearched[Math.floor(input.rng() * unsearched.length)];
-      const city =
-        occupiedCities[Math.floor(input.rng() * occupiedCities.length)];
+      // 文教招賢 — a wandering scholar is likelier to surface at a 文化名城
+      // (weighted by 文教); fame of letters draws men of letters.
+      const weights = occupiedCities.map((c) => cultureTalentWeight(c.culture ?? 0));
+      let roll = input.rng() * weights.reduce((a, b) => a + b, 0);
+      let city = occupiedCities[occupiedCities.length - 1];
+      for (let i = 0; i < occupiedCities.length; i++) {
+        roll -= weights[i];
+        if (roll <= 0) { city = occupiedCities[i]; break; }
+      }
       officers = {
         ...officers,
         [officer.id]: {
