@@ -473,6 +473,16 @@ export function isCommandToken(itemId: string): boolean {
   return COMMAND_TOKEN_IDS.has(itemId);
 }
 
+/** 戰場繳獲 — is this a storied enough piece (神兵/寶器/統御信物) that a victor
+ *  might strip it from a fallen foe? Common gear isn't worth the looting. */
+export function isBattleSpoil(itemId: string): boolean {
+  if (COMMAND_TOKEN_IDS.has(itemId)) return true;
+  const base = ITEMS_BY_ID[itemId];
+  if (!base) return false;
+  const r = itemRarity(base);
+  return r === 'gold' || r === 'silver';
+}
+
 /**
  * 兵科專屬 — each command token favours a fighting arm, so a marshal directs the
  * host they were cut out to lead: 虎符 the horse, 帥印 the foot, 節鉞 the spears,

@@ -86,7 +86,7 @@ import { ITEMS_BY_ID, refineCost, REFINE_MAX, setRefineRegistry, itemRarity,
   setAwakeningRegistry, awakeningSlots, AWAKENING_BY_ID, smeltIronYield, itemLoreLevel,
   setEvolvedRegistry, canEvolveItem,
   setWearRegistry, itemWearLevel, whetCost,
-  setAffixRegistry, rollForgeAffix, FORGE_AFFIXES_BY_ID,
+  setAffixRegistry, rollForgeAffix, FORGE_AFFIXES_BY_ID, isBattleSpoil,
   itemGrowthGoldSpent } from '../data/items';
 import { SKILLS_BY_ID } from '../data/skills';
 import { marchDurationFor } from '../data/cities';
@@ -12668,6 +12668,33 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // 戰場繳獲 — storming (or holding) the city, the victor strips the storied
+        // arms off the slain enemy: each 神兵/寶器/統御信物 on a fallen foe has a
+        // 40% chance to fall into the captured city's armory rather than perish
+        // with its bearer. (Captured officers keep their gear — you win it by
+        // winning them over.)
+        const spoilWinnerId = winner === 'attacker' ? tb.attackerForceId : winner === 'defender' ? tb.defenderForceId : null;
+        const spoilCityId = spoilWinnerId && cities[tb.cityId]?.ownerForceId === spoilWinnerId ? tb.cityId : null;
+        const battleSpoils: Array<{ itemId: EntityId; cityId: EntityId }> = [];
+        if (spoilCityId) {
+          for (const id of dead) {
+            if (unitSide[id] === winner) continue; // only the FALLEN ENEMY's arms
+            const o = officers[id];
+            if (!o || o.equipment.length === 0) continue;
+            const keep: string[] = [];
+            for (const itemId of o.equipment) {
+              if (isBattleSpoil(itemId) && Math.random() < 0.4) {
+                battleSpoils.push({ itemId, cityId: spoilCityId });
+                if (spoilWinnerId === state.playerForceId) {
+                  itemCodexMarkCarried(itemId);
+                  get().notify(`戰場繳獲 —「${ITEMS_BY_ID[itemId]?.name.zh}」自敵屍奪得,入${cities[spoilCityId]?.name.zh ?? ''}武庫!`, `Spoils of war — ${ITEMS_BY_ID[itemId]?.name.en} seized from the fallen enemy.`);
+                }
+              } else keep.push(itemId);
+            }
+            if (keep.length !== o.equipment.length) officers[id] = { ...officers[id], equipment: keep };
+          }
+        }
+
         // 馳援 — relief columns return home with their survivors (refunded
         // in full if the battle ended before they arrived). Their losses
         // belong to the relief city, not the besieged one.
@@ -13117,6 +13144,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         set({
           officers: titleGrant.officers,
           cities,
+          ...(battleSpoils.length > 0 ? { lostItems: [...state.lostItems, ...battleSpoils] } : {}),
           armies: nextArmies,
           pendingCommands: nextFieldPending,
           fieldBattleMarks: battleSiteMarks,

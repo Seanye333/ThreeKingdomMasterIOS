@@ -15,7 +15,7 @@
 | 2 | [武將・成長・家族](#第二章-武將成長家族) | growth, officerGrade, gradeCombat, officerFate, traitEffects, personality, biography, posthumous, aging, officerGen, family, clans, retinues, wishes, rapport, friction, relationshipEffects, career, codex, peerage, honorifics, battlePower(武將卡/開卡) | ✅ |
 | 3 | [人才・招攬・舌戰](#第三章-人才招攬舌戰) | commands(search), officerFate, recommendation, commonerTalent, appraisal(月旦評), scenicSites(三顧), captiveFate(處決後果/AI處置), aiRansom, debate, wordWar, persuasion(說客) | ✅ |
 | 4 | [軍事指揮・委任](#第四章-軍事指揮委任) | muster, legion(都督之斷·長圍), governor, governorEval, advisor, 在途指令(駐守/設伏/圍城/焚橋/燒鎖/補給/分兵/召回), rout(潰軍/掩殺收降/殿軍斷後) | ✅ |
-| 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, tacticalAi, combat, formations, stratagems, weather(區域天候), battlefieldTerrain, worldScars(戰場烙印), fieldworks(築壘), columnReinforcements(會戰), wallTier城郭分層, 入城三選, personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
+| 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, tacticalAi, combat, formations, stratagems, weather(區域天候), battlefieldTerrain, worldScars(戰場烙印), fieldworks(築壘), columnReinforcements(會戰), wallTier城郭分層, 入城三選, battleSpoils(戰場繳獲), personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
 | 6 | [單挑](#第六章-單挑) | duel(招式/必殺技/獨門被動/破綻/傷殘/挑落下馬/兵裝/坐騎/地形/性格/AI), gauntlet, duelSeries, duelScenarios(劇情+戰役), duelHall(名局廊), warRanking(武評榜), rivalries(宿敵/恩怨簿), duelChallenge(約戰), tactical(致師) | ✅ |
 | 7 | [外交・謀略・天子](#第七章-外交謀略天子) | diplomacy, diplomacyPacts(稱臣/索貢/會盟/援盟/調停/質子/借道), coalition, schemes, aiSchemes, ambition, espionage, expedition, foreignRealm, intrigue, courtFactions, factionEvents, emperor, imperialEffects, mandate, appointmentEffects, clans, statecraft | ✅ |
 | 8 | [事件・天命・異族・宗教](#第八章-事件天命異族宗教) | events(天災/地動/賑災), historicalEvents(抉擇鏈), behaviorEvents(勸進/眾叛), customEvents, factionEvents, religion(黃巾/招安/宣撫), tribes, tribesDiplomacy(和親/互市/質子/以夷制夷/入主建國/七擒), mandate(祥瑞/造讖/禳星), mandateRituals(郊祀/祈雨), annals(災異志) | ✅ |
@@ -421,6 +421,7 @@
 | 師老兵疲(§4.1) | 疲勞0–100:行軍+8/季(急行+14/緩進+4)、紮營−8、圍城營+4;戰力×(1−min(0.25,疲/400))、開戰士氣−min(15,疲/8);面板疲≥24亮徽記 |
 | 冬季行軍(§4.1) | 冬在途折兵3%/季(緩進減半);深山(行軍成本≥0.55)50%/季雪困原地;圍城營冬凍損4%/季;冬季河冰可渡為其取捨 |
 | 野戰繳獲(§4.1) | 野戰/攔截/拔寨勝方得 糧=敵折損×1.5、金=×0.04、馬=×0.015、鐵=×0.025(拔寨再×1.5);糧補隨軍糧(未帶糧歸源城)、金馬鐵歸源城(受城庫上限);出擊勝同繳入城 |
+| 戰場繳獲(§5.13) | 會戰勝方持城時,敵陣亡將的神兵/寶器/統御信物(金銀稀有或令符)各 40% 落地入城武庫(記為城的 lostItems);被俘之將裝備隨身不奪,唯陣亡者遺械可拾 |
 | 圍點打援(§4.1) | 圍城軍對撲向被圍城的敵援軍自動以逸待勞:伏擊底 0.45(同設伏,免掩蔽免手動);圍城即是餌 |
 | 陣擒(§4.1) | 野戰敗軍軍官每員 8% 被生擒(伏擊 15%;殿軍令同袍減半、本人必脫);主將被擒→殘軍星散不成潰;押往勝方源城入俘虜系統 |
 | 兵隨軍行(§4.1) | 出征即從源城帳冊帶兵(carried 標記),空城真空、調虎離山成立;散滅之卒涓滴歸鄉、罷兵退帳;舊檔在途行軍沿舊約定走完,混編合流宿主轉攜行 |
@@ -1855,6 +1856,10 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
 - **區域天候(weather.regionalTacticalWeather)**:開戰時戰場天候按**地點**對全域擲天修正 —— 北國(y<300)冬戰即使朝廷報晴也 45% 落雪、雨凍成雪;江南(y≥480)夏戰 35% 逢梅雨、雪多化冷雨;西陲(x<350)雨化風沙;秋日河域偶起晨霧。純函數、確定性雜湊(地點+年季旬),同一場仗永遠同一片天。冬征河北與夏征江東,自此是兩種仗。
 - **遠山如黛(2026-07)**:戰場地平線加第二重更高更遠的山脈剪影(大氣透視色:暮染赭、夜沉青),雪天遠嶺戴白;近丘遠山雙層視差,戰場坐進天地之間。
 - **入城三選(pendingConquestPolicy)**:玩家**親征破城**後彈出一令:**安民**(出榜施粥,民忠 +12)/**犒軍**(輕傷歸隊 = 攻方損失 15%,民忠 −3)/**搜捕**(城中舊臣各 40% 就擒,民忠 −8)。破城的第一道命令決定這座城怎麼記住你。
+
+### 5.13 戰場繳獲(2026-07)
+
+- **陣亡遺械落地(isBattleSpoil / battleSpoils)**:會戰結束、**勝方仍據守該城**時,清點敵軍**陣亡**(非被俘)之將 —— 其身上的**神兵利器**(金/銀稀有度)與**統御信物**(虎符/令箭等令符)各有 **40% 落地**,拾入這座城的**武庫**(記為城的 `lostItems`,可再賜下屬)。俘虜之將裝備隨身、不奪(§5.12 搜捕只擒人);唯戰死者的兵刃甲仗才是無主之物。玩家繳獲即時飄字並記入名品百科「曾持」——冷豔鋸易主、方天畫戟改姓,自此有據。銅鐵凡器散於亂軍不予撿拾(免灌爆武庫);敗方或無城可歸者不觸發。呂布授首,那桿戟該有新的主人。
 
 ---
 
