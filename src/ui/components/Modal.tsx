@@ -36,12 +36,20 @@ export interface ModalProps {
   children: ReactNode;
 }
 
+/** Elements that can hold keyboard focus, for the focus trap. */
+const FOCUSABLE_SEL =
+  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 /**
  * The shared modal shell. Renders the canonical ink-panel frame, a dimmed
  * backdrop, a header row (icon · title · badge … headerRight × close), and the
  * body. Open motion (fade + rise) lives in the CSS module, so every dialog that
  * adopts this gains the same entrance for free. Esc and backdrop-click close by
  * default; opt out per-modal when a flow must be dismissed deliberately.
+ *
+ * A11y: the frame is a focus-trapped dialog — on open we move focus inside
+ * (unless a child already autofocused), Tab/Shift-Tab cycle within, and on
+ * unmount focus returns to whatever was focused before (usually the trigger).
  */
 export function Modal({
   onClose,
@@ -82,6 +90,33 @@ export function Modal({
   // 弹窗開合 — a soft sting on open; whoosh on close (in requestClose).
   useEffect(() => { playSfx('open-modal'); }, []);
 
+  // Focus management — move focus into the dialog on open (unless a child
+  // already grabbed it via autoFocus), and return it to the trigger on close.
+  const frameRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const restoreTo = (typeof document !== 'undefined' ? document.activeElement : null) as HTMLElement | null;
+    const frame = frameRef.current;
+    if (frame && !frame.contains(document.activeElement)) frame.focus();
+    return () => {
+      if (restoreTo && typeof restoreTo.focus === 'function' && document.contains(restoreTo)) {
+        restoreTo.focus();
+      }
+    };
+  }, []);
+  // Trap Tab within the frame so keyboard focus can't wander behind the modal.
+  const onFrameKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'Tab') return;
+    const frame = frameRef.current;
+    if (!frame) return;
+    const items = Array.from(frame.querySelectorAll<HTMLElement>(FOCUSABLE_SEL))
+      .filter((el) => el.offsetParent !== null || el === document.activeElement);
+    if (items.length === 0) { e.preventDefault(); frame.focus(); return; }
+    const first = items[0], last = items[items.length - 1];
+    const active = document.activeElement;
+    if (e.shiftKey && (active === first || active === frame)) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
+  }, []);
+
   useEscapeKey(requestClose, closeOnEsc);
 
   const hasHeader = title != null || icon != null || headerRight != null || !hideClose;
@@ -119,12 +154,15 @@ export function Modal({
       role="presentation"
     >
       <div
+        ref={frameRef}
         className={frameClasses.join(' ')}
         style={{ width, maxHeight, ...(scrollBody ? null : { padding }), ...frameStyle }}
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={onFrameKeyDown}
         role="dialog"
         aria-modal="true"
         aria-label={ariaLabel}
+        tabIndex={-1}
       >
         {scrollBody ? (
           <>
