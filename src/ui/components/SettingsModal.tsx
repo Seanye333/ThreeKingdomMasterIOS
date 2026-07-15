@@ -191,6 +191,12 @@ export function SettingsModal({ onClose }: Props) {
               checked={uiPrefs.gore}
               onChange={(v) => updateUiPref({ gore: v })}
             />
+            <Toggle
+              label={t('閒置自動全屏地圖', 'Auto full-screen map')}
+              hint={t('數秒不操作即淡去頂欄/側欄,輕觸地圖喚回', 'Fade the bar & panel after a few idle seconds; tap the map to bring them back')}
+              checked={uiPrefs.autoHideChrome}
+              onChange={(v) => updateUiPref({ autoHideChrome: v })}
+            />
             <Row label={t('介面字號', 'Text size')} hint={t('縮放全介面文字', 'Scale all interface text')}>
               <div style={{ display: 'flex', gap: 4 }}>
                 {([['sm', t('小', 'S')], ['md', t('中', 'M')], ['lg', t('大', 'L')]] as Array<[UiScale, string]>).map(([s, lbl]) => (

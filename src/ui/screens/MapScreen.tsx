@@ -241,6 +241,42 @@ export function MapScreen() {
     mq.addEventListener('change', maybeHint);
     return () => { mq.removeEventListener('change', maybeHint); if (timer) window.clearTimeout(timer); };
   }, []);
+  // 閒置自動隱藏(A2) — like a video player: with the pref on, chrome fades a few
+  // idle seconds after the last interaction and any tap/move/key brings it back.
+  // `autoHidden` is TRANSIENT (never persisted) — it layers over the manual hide
+  // flags, so the player's own bar/panel choices survive the fade. Refreshed
+  // from prefs whenever the Settings modal closes (see its onClose below).
+  const [autoHideOn, setAutoHideOn] = useState(() => getStoredUiPrefs().autoHideChrome);
+  const [autoHidden, setAutoHidden] = useState(false);
+  useEffect(() => {
+    if (!autoHideOn) { setAutoHidden(false); return; }
+    let timer = 0;
+    const reset = () => {
+      setAutoHidden((prev) => (prev ? false : prev)); // no-op re-render when already shown
+      if (timer) window.clearTimeout(timer);
+      timer = window.setTimeout(() => setAutoHidden(true), 4000);
+    };
+    const opts: AddEventListenerOptions = { passive: true };
+    window.addEventListener('pointerdown', reset, opts);
+    window.addEventListener('pointermove', reset, opts);
+    window.addEventListener('wheel', reset, opts);
+    window.addEventListener('keydown', reset);
+    reset(); // start the clock
+    return () => {
+      if (timer) window.clearTimeout(timer);
+      window.removeEventListener('pointerdown', reset);
+      window.removeEventListener('pointermove', reset);
+      window.removeEventListener('wheel', reset);
+      window.removeEventListener('keydown', reset);
+    };
+  }, [autoHideOn]);
+  // Effective (visual) hide state = manual choice OR the idle auto-fade. Chrome
+  // keys off these; the floating handles hide entirely while auto-faded (a tap
+  // anywhere reveals), so they stay keyed on the manual flags + !autoHidden.
+  const navHidden = hideNav || autoHidden;
+  const dockHidden = hideDock || autoHidden;
+  const panelHidden = hidePanel || autoHidden;
+  const immersiveVisual = navHidden && panelHidden && (!IS_COARSE || dockHidden);
   const [showCampaignStats, setShowCampaignStats] = useState(false);
   const [showChronicle, setShowChronicle] = useState(false);
   const [showAnnals, setShowAnnals] = useState(false);
@@ -719,7 +755,7 @@ export function MapScreen() {
 
   return (
     <div className={styles.root}>
-      <div className={`${styles.topBarSlot} ${hideNav ? styles.topBarSlotHidden : ''}`}>
+      <div className={`${styles.topBarSlot} ${navHidden ? styles.topBarSlotHidden : ''}`}>
       <header className={styles.topBar}>
         <button className={styles.backButton} onClick={reset}>
           ← {t('標題', 'Title')}
@@ -950,7 +986,7 @@ export function MapScreen() {
       </header>
       </div>
 
-      <main className={`${styles.main} ${immersive ? styles.mainImmersive : ''}`}>
+      <main className={`${styles.main} ${immersiveVisual ? styles.mainImmersive : ''}`}>
         <div className={styles.mapWrap} style={{ position: 'relative' }}>
           {/* Free the strategic map's WebGL context while the fullscreen battle
               (单挑 / 舌战 / 会战) sits opaque on top of it. Two live three.js
@@ -970,8 +1006,9 @@ export function MapScreen() {
           <TutorialTasks />
           {/* 沉浸總開關 — lives in the map's top-right corner (tracks the map
               area, so it sits below the bar and left of the panel when they're
-              shown, and reaches the screen corner when they're not). */}
-          {!battleScreenUp && (
+              shown, and reaches the screen corner when they're not). Hidden
+              during the idle auto-fade — a tap anywhere brings everything back. */}
+          {!battleScreenUp && !autoHidden && (
             <button
               className={`${styles.masterToggle} ${immersive ? styles.masterToggleOn : ''}`}
               onClick={toggleImmersive}
@@ -983,14 +1020,14 @@ export function MapScreen() {
             >⛶</button>
           )}
           {/* 首次橫屏提示 — a one-shot nudge hanging under the ⛶ toggle. */}
-          {immersiveHint && !immersive && !battleScreenUp && (
+          {immersiveHint && !immersive && !battleScreenUp && !autoHidden && (
             <button
               className={styles.immersiveHint}
               onClick={() => { setImmersiveHint(false); toggleImmersive(); }}
             >{t('⛶ 點此全屏看地圖', '⛶ Tap for a full-screen map')}</button>
           )}
         </div>
-        <div className={`${styles.panelSlot} ${hidePanel ? styles.panelSlotHidden : ''}`}>
+        <div className={`${styles.panelSlot} ${panelHidden ? styles.panelSlotHidden : ''}`}>
           <CityPanel />
         </div>
       </main>
@@ -1047,7 +1084,7 @@ export function MapScreen() {
       {/* 拇指塢 — phone-only bottom dock: the five actions a thumb reaches
           for every turn. Desktop keeps the top bar it already has. Collapses on
           its own (hideDock) or with the master ⛶; a ▴ tab pulls it back. */}
-      {IS_COARSE && !observing && !battleScreenUp && !hideDock && (
+      {IS_COARSE && !observing && !battleScreenUp && !dockHidden && (
         <nav style={{
           position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 630,
           display: 'flex', alignItems: 'stretch', gap: 6,
@@ -1070,7 +1107,7 @@ export function MapScreen() {
         </nav>
       )}
       {/* 拇指塢復原把手 — a ▴ tab at the bottom edge when the dock is tucked. */}
-      {IS_COARSE && !observing && !battleScreenUp && hideDock && (
+      {IS_COARSE && !observing && !battleScreenUp && hideDock && !autoHidden && (
         <button
           className={styles.dockShowTab}
           onClick={() => applyHideDock(false)}
@@ -1081,7 +1118,7 @@ export function MapScreen() {
       {/* 沉浸邊緣把手 — independent of the master toggle: pull the top bar back
           down from the top edge, and slide the side panel in/out from the right
           edge, each on its own. Hidden while a full-screen battle is up. */}
-      {!battleScreenUp && hideNav && (
+      {!battleScreenUp && hideNav && !autoHidden && (
         <button
           className={styles.navShowTab}
           onClick={() => applyHideNav(false)}
@@ -1089,7 +1126,7 @@ export function MapScreen() {
           aria-label={t('顯示頂欄', 'Show top bar')}
         >▾</button>
       )}
-      {!battleScreenUp && (
+      {!battleScreenUp && !autoHidden && (
         <button
           className={styles.panelTab}
           onClick={() => applyHidePanel(!hidePanel)}
@@ -1122,7 +1159,7 @@ export function MapScreen() {
       {showCourt && <CourtModal onClose={() => setShowCourt(false)} />}
       {showWishes && <WishesModal onClose={() => setShowWishes(false)} />}
       {showCareer && <CareerModal onClose={() => setShowCareer(false)} />}
-      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      {showSettings && <SettingsModal onClose={() => { setShowSettings(false); setAutoHideOn(getStoredUiPrefs().autoHideChrome); }} />}
       <Suspense fallback={null}>
         {showHistory && (
           <BattleHistoryModal onClose={() => setShowHistory(false)} />
