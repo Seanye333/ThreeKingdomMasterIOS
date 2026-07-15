@@ -1426,7 +1426,8 @@ export function StrategicMap3D() {
           cheat-sheet so every gesture/shortcut is discoverable. */}
       {!IS_MOBILE && (
         <div style={{
-          position: 'absolute', top: 12, right: 12, zIndex: 10,
+          // top:52 — clear the ⛶ 沉浸 toggle that owns the very top-right corner.
+          position: 'absolute', top: 52, right: 12, zIndex: 10,
           display: 'flex', alignItems: 'center', gap: 6,
           background: 'rgba(20, 14, 8, 0.85)', color: '#a89070',
           border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
@@ -1445,7 +1446,7 @@ export function StrategicMap3D() {
       {/* 尋城 — search-and-fly. Desktop: input under the controls hint.
           Phones: a 🔍 button that expands on tap, below the hint chip so
           nothing sits over the season/weather strip. */}
-      <div style={{ position: 'absolute', top: IS_MOBILE ? 12 : 46, right: 12, zIndex: 11 }}>
+      <div style={{ position: 'absolute', top: IS_MOBILE ? 52 : 90, right: 12, zIndex: 11 }}>
         <CitySearchBox compact={IS_MOBILE} onJump={(cityId, px, py) => {
           setNavJump({ px, py, seq: Date.now() });
           selectCityOuter(cityId);

@@ -348,6 +348,43 @@
   border-color: #e6c473;
 }
 
+/* 首次橫屏提示氣泡 — 懸在 ⛶ 下方,點擊即進沉浸 */
+.immersiveHint {
+  position: absolute;
+  top: 50px;
+  right: 8px;
+  z-index: 30;
+  max-width: 60vw;
+  padding: 0.32rem 0.6rem;
+  background: rgba(212, 168, 74, 0.95);
+  color: #17120a;
+  border: 1px solid #e6c473;
+  border-radius: var(--tkm-radius, 8px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+  font-family: var(--tkm-font-body);
+  font-size: 0.78rem;
+  font-weight: bold;
+  white-space: nowrap;
+  cursor: pointer;
+  animation: tkm-immersive-hint-in 0.28s ease;
+}
+.immersiveHint::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  right: 12px;
+  width: 9px;
+  height: 9px;
+  background: inherit;
+  border-left: 1px solid #e6c473;
+  border-top: 1px solid #e6c473;
+  transform: rotate(45deg);
+}
+@keyframes tkm-immersive-hint-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* 邊緣把手 — 復原頂欄(頂緣中央)/ 收放側欄(右緣中央),各自獨立 */
 .navShowTab,
 .panelTab {

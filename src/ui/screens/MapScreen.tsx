@@ -220,6 +220,27 @@ export function MapScreen() {
     applyHidePanel(next);
     playSfx('click');
   };
+  // 首次橫屏一次性提示 — the immersive ⛶ is easy to miss, so on a phone the very
+  // first time we're in landscape we point it out once (localStorage-gated).
+  const [immersiveHint, setImmersiveHint] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !IS_COARSE) return;
+    try { if (localStorage.getItem('tkm-immersive-hinted')) return; } catch { return; }
+    const mq = window.matchMedia('(orientation: landscape)');
+    let timer = 0;
+    const maybeHint = () => {
+      if (!mq.matches) return;
+      const p = getStoredUiPrefs();
+      if (p.hideNav && p.hideSidePanel) return; // already living in immersive
+      setImmersiveHint(true);
+      try { localStorage.setItem('tkm-immersive-hinted', '1'); } catch { /* private mode */ }
+      timer = window.setTimeout(() => setImmersiveHint(false), 6000);
+      mq.removeEventListener('change', maybeHint);
+    };
+    maybeHint();
+    mq.addEventListener('change', maybeHint);
+    return () => { mq.removeEventListener('change', maybeHint); if (timer) window.clearTimeout(timer); };
+  }, []);
   const [showCampaignStats, setShowCampaignStats] = useState(false);
   const [showChronicle, setShowChronicle] = useState(false);
   const [showAnnals, setShowAnnals] = useState(false);
@@ -960,6 +981,13 @@ export function MapScreen() {
               aria-label={immersive ? t('退出沉浸', 'Exit immersive') : t('沉浸模式', 'Immersive mode')}
               aria-pressed={immersive}
             >⛶</button>
+          )}
+          {/* 首次橫屏提示 — a one-shot nudge hanging under the ⛶ toggle. */}
+          {immersiveHint && !immersive && !battleScreenUp && (
+            <button
+              className={styles.immersiveHint}
+              onClick={() => { setImmersiveHint(false); toggleImmersive(); }}
+            >{t('⛶ 點此全屏看地圖', '⛶ Tap for a full-screen map')}</button>
           )}
         </div>
         <div className={`${styles.panelSlot} ${hidePanel ? styles.panelSlotHidden : ''}`}>
