@@ -270,6 +270,49 @@ export function MapScreen() {
       window.removeEventListener('keydown', reset);
     };
   }, [autoHideOn]);
+  // 邊緣手勢(A3) — on a phone, a decisive swipe that STARTS in a thin screen-
+  // edge band toggles that edge's chrome, complementing the tap handles: a
+  // horizontal swipe from the right edge flips the side panel; a vertical swipe
+  // from the top edge flips the bar. (A toggle, not directional — from the very
+  // edge you only have room to swipe one way.) Gated to a 28px band so ordinary
+  // map panning in the interior is never hijacked; capture-phase + passive so
+  // the 3D canvas still gets every touch (we never preventDefault). Current
+  // state is read from persisted prefs so the flip is always correct. Real-
+  // device feel is the user's to tune — this is the wiring.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !IS_COARSE) return;
+    let sx = 0, sy = 0, st = 0, band: 'right' | 'top' | null = null;
+    const onStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) { band = null; return; }
+      const p = e.touches[0];
+      sx = p.clientX; sy = p.clientY; st = Date.now();
+      band = sx >= window.innerWidth - 28 ? 'right' : sy <= 28 ? 'top' : null;
+    };
+    const onEnd = (e: TouchEvent) => {
+      const b = band; band = null;
+      if (!b) return;
+      if (useGameStore.getState().tacticalBattle) return; // battle owns the screen
+      const p = e.changedTouches[0];
+      if (!p || Date.now() - st > 600) return;
+      const dx = p.clientX - sx, dy = p.clientY - sy;
+      const prefs = getStoredUiPrefs();
+      if (b === 'right' && Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy)) {
+        applyHidePanel(!prefs.hideSidePanel);
+        playSfx('click');
+      } else if (b === 'top' && Math.abs(dy) > 44 && Math.abs(dy) > Math.abs(dx)) {
+        applyHideNav(!prefs.hideNav);
+        playSfx('click');
+      }
+    };
+    const opts: AddEventListenerOptions = { passive: true, capture: true };
+    window.addEventListener('touchstart', onStart, opts);
+    window.addEventListener('touchend', onEnd, opts);
+    return () => {
+      window.removeEventListener('touchstart', onStart, opts);
+      window.removeEventListener('touchend', onEnd, opts);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // Effective (visual) hide state = manual choice OR the idle auto-fade. Chrome
   // keys off these; the floating handles hide entirely while auto-faded (a tap
   // anywhere reveals), so they stay keyed on the manual flags + !autoHidden.
