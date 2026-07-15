@@ -5160,6 +5160,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             mandate: nextMandate,
             date: result.date,
             rng: Math.random,
+            cities: postCities, // 善政招祥瑞 — well-governed realms draw auspicious omens
+
             // 靈台禳星 — the player's best Star Terrace may deflect an ill omen.
             playerLingtaiLevel: state.buildings.reduce(
               (best, b) =>

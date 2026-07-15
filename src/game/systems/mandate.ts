@@ -1,4 +1,21 @@
-import type { ReportEntry, EntityId, GameDate, Force } from '../types';
+import type { ReportEntry, EntityId, GameDate, Force, City } from '../types';
+
+/**
+ * 德政 — a force's civic virtue, read off how well it governs its cities: a
+ * 文化名城 (文教≥60) or a 政清人和 city (clean & content) each count, a merely
+ * cultured one counts a little. 善政招祥瑞 — Heaven favours the well-governed
+ * with auspicious omens. Capped so a sprawling realm can't run away with it.
+ */
+export function forceVirtue(forceId: EntityId, cities: Record<EntityId, City>): number {
+  let v = 0;
+  for (const c of Object.values(cities)) {
+    if (c.ownerForceId !== forceId) continue;
+    if ((c.culture ?? 0) >= 60) v += 2;               // 文化名城
+    else if ((c.culture ?? 0) >= 30) v += 1;          // 文教興隆
+    if ((c.corruption ?? 0) <= 2 && c.loyalty >= 90) v += 2; // 政清人和
+  }
+  return Math.min(12, v);
+}
 
 /**
  * 天命 — Heaven's Mandate. A 0–100 value per force representing cosmic
@@ -65,6 +82,8 @@ export function rollOmen(input: {
   mandate: MandateState;
   date: GameDate;
   rng: () => number;
+  /** 善政招祥瑞 — cities, so an auspicious omen can favour a well-governed realm. */
+  cities?: Record<EntityId, City>;
   /** §8.2-deep 靈台 — the player's best Star Terrace level (0–3). The 太史令
    *  may ritually deflect an ill omen off the player (20%/level). */
   playerLingtaiLevel?: number;
@@ -77,12 +96,15 @@ export function rollOmen(input: {
   const forces = Object.values(input.forces);
   if (forces.length === 0) return { mandate: input.mandate, entry: null };
 
-  // Pick a force — auspicious omens prefer mid-mandate, inauspicious prefer high.
-  // (Heaven raises up the humble, casts down the mighty.)
+  // Pick a force — auspicious omens prefer mid-mandate AND virtuous rule
+  // (善政招祥瑞); inauspicious prefer the high & mighty. Heaven raises the humble
+  // and the well-governed, and casts down the proud.
+  const cities = input.cities ?? {};
+  const auspiciousKey = (f: Force) => (input.mandate.byForce[f.id] ?? 50) - forceVirtue(f.id, cities) * 3;
   const sorted = [...forces].sort((a, b) => {
-    const ma = input.mandate.byForce[a.id] ?? 50;
     const mb = input.mandate.byForce[b.id] ?? 50;
-    return info.auspicious ? ma - mb : mb - ma;
+    const ma = input.mandate.byForce[a.id] ?? 50;
+    return info.auspicious ? auspiciousKey(a) - auspiciousKey(b) : mb - ma;
   });
   let target = sorted[Math.floor(input.rng() * Math.min(3, sorted.length))];
 
@@ -99,7 +121,9 @@ export function rollOmen(input: {
     target = other[Math.floor(input.rng() * Math.min(3, other.length))];
   }
 
-  const delta = info.auspicious ? 8 + Math.floor(input.rng() * 8) : -(6 + Math.floor(input.rng() * 8));
+  // 德配天命 — a virtuous realm draws a fuller blessing from an auspicious omen.
+  const virtueBonus = info.auspicious && forceVirtue(target.id, cities) >= 4 ? 4 : 0;
+  const delta = info.auspicious ? 8 + Math.floor(input.rng() * 8) + virtueBonus : -(6 + Math.floor(input.rng() * 8));
   const cur = input.mandate.byForce[target.id] ?? 50;
   const next: MandateState = {
     byForce: {
