@@ -242,3 +242,165 @@
     height: 100% !important;
   }
 }
+
+/* ══ 沉浸模式 ═══════════════════════════════════════════════════════════════
+   橫屏可獨立收起頂欄(hideNav)與側欄(hidePanel),只留全屏 3D 地圖。
+   收合走「容器塌陷」而非卸載組件:CityPanel/頂欄留在原地,外層槽把尺寸
+   收到 0、overflow 裁掉——地圖區(flex:1)自然補滿,R3F 的 ResizeObserver
+   會重繪畫布。浮動把手層級 520:蓋過地圖浮層(z≤20),讓位給彈窗(z600)。 */
+
+/* 頂欄槽 — 縱向塌陷,收起時地圖往上長 */
+.topBarSlot {
+  flex: 0 0 auto;
+  overflow: hidden;
+  max-height: 220px;
+  opacity: 1;
+  transition: max-height 0.28s ease, opacity 0.2s ease;
+}
+.topBarSlotHidden {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* 收起頂欄的小箭頭 — 貼在頂欄最右端 */
+.navHideChevron {
+  flex-shrink: 0;
+  align-self: center;
+  margin-left: 6px;
+  width: 26px;
+  height: 24px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--tkm-text-muted, #7a8893);
+  border: 1px solid var(--tkm-hairline, rgba(255, 255, 255, 0.08));
+  border-radius: var(--tkm-radius-sm, 5px);
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.navHideChevron:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--tkm-text-h2, #e6c473);
+  border-color: var(--tkm-text-h2, #e6c473);
+}
+
+/* 側欄槽 — 橫向塌陷,包住 CityPanel(自身固定 320px),裁切滑走 */
+.panelSlot {
+  position: relative;
+  flex: 0 0 auto;
+  width: 320px;
+  display: flex;
+  overflow: hidden;
+  opacity: 1;
+  transition: width 0.28s ease, opacity 0.2s ease;
+}
+.panelSlotHidden {
+  width: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* 全隱時,主區去內距讓地圖真正滿版 */
+.mainImmersive {
+  padding: 0;
+  gap: 0;
+}
+.mainImmersive .mapWrap {
+  border-radius: 0;
+  border-color: transparent;
+}
+
+/* 沉浸總開關 — 地圖右上角(absolute,隨地圖區移動) */
+.masterToggle {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 30;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16, 22, 30, 0.82);
+  color: #cdd8e2;
+  border: 1px solid rgba(212, 168, 74, 0.5);
+  border-radius: var(--tkm-radius, 8px);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  transition: background 0.15s, color 0.15s, transform 0.12s, border-color 0.15s;
+}
+.masterToggle:hover {
+  color: #f0d98a;
+  border-color: #d4a84a;
+}
+.masterToggle:active {
+  transform: scale(0.93);
+}
+.masterToggleOn {
+  background: rgba(212, 168, 74, 0.92);
+  color: #17120a;
+  border-color: #e6c473;
+}
+
+/* 邊緣把手 — 復原頂欄(頂緣中央)/ 收放側欄(右緣中央),各自獨立 */
+.navShowTab,
+.panelTab {
+  position: fixed;
+  z-index: 520;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16, 22, 30, 0.86);
+  color: #cdd8e2;
+  border: 1px solid rgba(212, 168, 74, 0.5);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+.navShowTab:hover,
+.panelTab:hover {
+  color: #f0d98a;
+  border-color: #d4a84a;
+}
+
+.navShowTab {
+  top: var(--tkm-safe-top, 0px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 76px;
+  height: 22px;
+  border-top: none;
+  border-radius: 0 0 var(--tkm-radius, 8px) var(--tkm-radius, 8px);
+}
+
+.panelTab {
+  top: 50%;
+  right: var(--tkm-safe-right, 0px);
+  transform: translateY(-50%);
+  width: 22px;
+  height: 76px;
+  border-right: none;
+  border-radius: var(--tkm-radius, 8px) 0 0 var(--tkm-radius, 8px);
+}
+
+/* 直向堆疊時側欄是滿寬的橫條 — 改為縱向塌陷(而非收寬度) */
+@media (max-width: 640px) {
+  .panelSlot {
+    width: 100%;
+    max-height: 3000px;
+    transition: max-height 0.28s ease, opacity 0.2s ease;
+  }
+  .panelSlotHidden {
+    width: 100%;
+    max-height: 0;
+  }
+}

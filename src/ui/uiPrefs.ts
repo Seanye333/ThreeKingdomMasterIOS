@@ -8,6 +8,9 @@
  *                   pulse, screen flash, toasts) for motion-sensitive players.
  *  - uiScale      : root font-size, scaling all rem-based text together.
  *  - gore         : hides the on-damage blood vignette for the squeamish.
+ *  - hideNav      : 沉浸模式 — collapse the top bar + bottom thumb dock so only
+ *                   the 3D map shows (great on a landscape phone). Remembered.
+ *  - hideSidePanel: 沉浸模式 — slide the city side panel away for a wider map.
  */
 
 export type UiScale = 'sm' | 'md' | 'lg';
@@ -16,9 +19,11 @@ export interface UiPrefs {
   reduceMotion: boolean;
   uiScale: UiScale;
   gore: boolean;
+  hideNav: boolean;
+  hideSidePanel: boolean;
 }
 
-const DEFAULTS: UiPrefs = { reduceMotion: false, uiScale: 'md', gore: true };
+const DEFAULTS: UiPrefs = { reduceMotion: false, uiScale: 'md', gore: true, hideNav: false, hideSidePanel: false };
 const SCALE_PX: Record<UiScale, string> = { sm: '14px', md: '16px', lg: '18px' };
 const STORAGE_KEY = 'tkm-ui-prefs';
 
@@ -32,6 +37,8 @@ export function getStoredUiPrefs(): UiPrefs {
       reduceMotion: typeof p.reduceMotion === 'boolean' ? p.reduceMotion : DEFAULTS.reduceMotion,
       uiScale: p.uiScale === 'sm' || p.uiScale === 'lg' ? p.uiScale : 'md',
       gore: typeof p.gore === 'boolean' ? p.gore : DEFAULTS.gore,
+      hideNav: typeof p.hideNav === 'boolean' ? p.hideNav : DEFAULTS.hideNav,
+      hideSidePanel: typeof p.hideSidePanel === 'boolean' ? p.hideSidePanel : DEFAULTS.hideSidePanel,
     };
   } catch {
     return { ...DEFAULTS };
@@ -49,6 +56,13 @@ export function applyUiPrefs(prefs: UiPrefs): void {
   } catch {
     /* localStorage may be unavailable */
   }
+}
+
+/** Merge a partial update into the stored prefs, persist, and return the result. */
+export function patchUiPrefs(patch: Partial<UiPrefs>): UiPrefs {
+  const next: UiPrefs = { ...getStoredUiPrefs(), ...patch };
+  applyUiPrefs(next);
+  return next;
 }
 
 /** Live read for non-React code (e.g. the WAAPI screen-shake) to honour the toggle. */

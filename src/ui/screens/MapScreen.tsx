@@ -80,6 +80,7 @@ import { ConquestPolicyModal } from '../components/ConquestPolicyModal';
 import { BattleAIDriver } from '../components/BattleAIDriver';
 import { HudMenu, type MenuEntry } from '../components/HudMenu';
 import { THEMES, getStoredTheme, applyTheme, type ThemeId } from '../theme';
+import { getStoredUiPrefs, patchUiPrefs } from '../uiPrefs';
 import { useT, useLanguage } from '../i18n';
 import { Modal } from '../components/Modal';
 import { OfficerPortrait } from '../components/OfficerPortrait';
@@ -195,6 +196,23 @@ export function MapScreen() {
     mq.addEventListener('change', on);
     return () => mq.removeEventListener('change', on);
   }, []);
+  // 沉浸模式 — collapse the top bar / bottom dock (hideNav) and the city side
+  // panel (hidePanel) so a landscape phone can go full-screen on the 3D map.
+  // Persisted in uiPrefs; a floating ⛶ master toggle + edge handles bring the
+  // chrome back. The R3F <Canvas> owns a ResizeObserver, so the map reflows to
+  // fill on its own when a slot collapses — no map-side resize wiring needed.
+  const [hideNav, setHideNav] = useState(() => getStoredUiPrefs().hideNav);
+  const [hidePanel, setHidePanel] = useState(() => getStoredUiPrefs().hideSidePanel);
+  const applyHideNav = (v: boolean) => { setHideNav(v); patchUiPrefs({ hideNav: v }); };
+  const applyHidePanel = (v: boolean) => { setHidePanel(v); patchUiPrefs({ hideSidePanel: v }); };
+  const immersive = hideNav && hidePanel;
+  // Master toggle: anything showing → hide it all; fully hidden → bring it back.
+  const toggleImmersive = () => {
+    const next = !hideNav || !hidePanel;
+    applyHideNav(next);
+    applyHidePanel(next);
+    playSfx('click');
+  };
   const [showCampaignStats, setShowCampaignStats] = useState(false);
   const [showChronicle, setShowChronicle] = useState(false);
   const [showAnnals, setShowAnnals] = useState(false);
@@ -673,6 +691,7 @@ export function MapScreen() {
 
   return (
     <div className={styles.root}>
+      <div className={`${styles.topBarSlot} ${hideNav ? styles.topBarSlotHidden : ''}`}>
       <header className={styles.topBar}>
         <button className={styles.backButton} onClick={reset}>
           ← {t('標題', 'Title')}
@@ -893,9 +912,17 @@ export function MapScreen() {
             </button>
           </>
         )}
+        {/* 收起頂欄 — tuck the bar (and phone dock) away for a taller map. */}
+        <button
+          className={styles.navHideChevron}
+          onClick={() => applyHideNav(true)}
+          title={t('收起頂欄 — 只看地圖(頂部把手可喚回)', 'Hide the top bar — pull it back from the top handle')}
+          aria-label={t('收起頂欄', 'Hide top bar')}
+        >▴</button>
       </header>
+      </div>
 
-      <main className={styles.main}>
+      <main className={`${styles.main} ${immersive ? styles.mainImmersive : ''}`}>
         <div className={styles.mapWrap} style={{ position: 'relative' }}>
           {/* Free the strategic map's WebGL context while the fullscreen battle
               (单挑 / 舌战 / 会战) sits opaque on top of it. Two live three.js
@@ -913,8 +940,24 @@ export function MapScreen() {
           {/* 新手五事 — anchored over the map's right edge (inside the
               positioned mapWrap) so it never covers the city panel's tabs. */}
           <TutorialTasks />
+          {/* 沉浸總開關 — lives in the map's top-right corner (tracks the map
+              area, so it sits below the bar and left of the panel when they're
+              shown, and reaches the screen corner when they're not). */}
+          {!battleScreenUp && (
+            <button
+              className={`${styles.masterToggle} ${immersive ? styles.masterToggleOn : ''}`}
+              onClick={toggleImmersive}
+              title={immersive
+                ? t('退出沉浸 — 顯示頂欄與側欄', 'Exit immersive — show the bar & panel')
+                : t('沉浸模式 — 隱藏介面,只看全屏地圖', 'Immersive — hide the UI for a full-screen map')}
+              aria-label={immersive ? t('退出沉浸', 'Exit immersive') : t('沉浸模式', 'Immersive mode')}
+              aria-pressed={immersive}
+            >⛶</button>
+          )}
         </div>
-        <CityPanel />
+        <div className={`${styles.panelSlot} ${hidePanel ? styles.panelSlotHidden : ''}`}>
+          <CityPanel />
+        </div>
       </main>
 
       {/* 季度過場 — washes a season card over the realm when 春→夏→秋→冬 turns,
@@ -968,7 +1011,7 @@ export function MapScreen() {
       )}
       {/* 拇指塢 — phone-only bottom dock: the five actions a thumb reaches
           for every turn. Desktop keeps the top bar it already has. */}
-      {IS_COARSE && !observing && !battleScreenUp && (
+      {IS_COARSE && !observing && !battleScreenUp && !hideNav && (
         <nav style={{
           position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 630,
           display: 'flex', alignItems: 'stretch', gap: 6,
@@ -982,6 +1025,26 @@ export function MapScreen() {
           <DockBtn icon="📋" label={t('待辦', 'To-Do')} onClick={() => setShowToDo(true)} />
           <DockBtn primary icon="▶" label={t(`下旬 ${monthNum}月${phaseInfo.zh}`, `Next`)} onClick={advanceTurn} />
         </nav>
+      )}
+      {/* 沉浸邊緣把手 — independent of the master toggle: pull the top bar back
+          down from the top edge, and slide the side panel in/out from the right
+          edge, each on its own. Hidden while a full-screen battle is up. */}
+      {!battleScreenUp && hideNav && (
+        <button
+          className={styles.navShowTab}
+          onClick={() => applyHideNav(false)}
+          title={t('顯示頂欄', 'Show the top bar')}
+          aria-label={t('顯示頂欄', 'Show top bar')}
+        >▾</button>
+      )}
+      {!battleScreenUp && (
+        <button
+          className={styles.panelTab}
+          onClick={() => applyHidePanel(!hidePanel)}
+          title={hidePanel ? t('拉出側欄', 'Show the side panel') : t('收起側欄', 'Hide the side panel')}
+          aria-label={hidePanel ? t('拉出側欄', 'Show side panel') : t('收起側欄', 'Hide side panel')}
+          aria-pressed={!hidePanel}
+        >{hidePanel ? '‹' : '›'}</button>
       )}
       {/* 日流播放時,季報壓後 — the report pops once the days finish walking. */}
       {!dayFlow && (
