@@ -392,6 +392,61 @@
   border-radius: var(--tkm-radius, 8px) 0 0 var(--tkm-radius, 8px);
 }
 
+/* 拇指塢收起把手 — 貼在塢的頂緣(nav 為 fixed,故此為其定位錨) */
+.dockHideTab {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 16px;
+  padding: 0;
+  background: rgba(14, 18, 22, 0.95);
+  color: #97a4ae;
+  border: 1px solid rgba(212, 168, 74, 0.5);
+  border-bottom: none;
+  border-radius: var(--tkm-radius, 8px) var(--tkm-radius, 8px) 0 0;
+  cursor: pointer;
+  font-size: 0.72rem;
+  line-height: 1;
+}
+.dockHideTab:hover {
+  color: #f0d98a;
+  border-color: #d4a84a;
+}
+
+/* 拇指塢復原把手 — 塢收起時貼底緣中央 */
+.dockShowTab {
+  position: fixed;
+  z-index: 520;
+  bottom: var(--tkm-safe-bottom, 0px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  height: 22px;
+  background: rgba(16, 22, 30, 0.86);
+  color: #cdd8e2;
+  border: 1px solid rgba(212, 168, 74, 0.5);
+  border-bottom: none;
+  border-radius: var(--tkm-radius, 8px) var(--tkm-radius, 8px) 0 0;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+.dockShowTab:hover {
+  color: #f0d98a;
+  border-color: #d4a84a;
+}
+
 /* 直向堆疊時側欄是滿寬的橫條 — 改為縱向塌陷(而非收寬度) */
 @media (max-width: 640px) {
   .panelSlot {

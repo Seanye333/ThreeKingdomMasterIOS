@@ -196,20 +196,27 @@ export function MapScreen() {
     mq.addEventListener('change', on);
     return () => mq.removeEventListener('change', on);
   }, []);
-  // 沉浸模式 — collapse the top bar / bottom dock (hideNav) and the city side
-  // panel (hidePanel) so a landscape phone can go full-screen on the 3D map.
-  // Persisted in uiPrefs; a floating ⛶ master toggle + edge handles bring the
-  // chrome back. The R3F <Canvas> owns a ResizeObserver, so the map reflows to
-  // fill on its own when a slot collapses — no map-side resize wiring needed.
+  // 沉浸模式 — three independently-collapsible chrome groups so a landscape
+  // phone can go full-screen on the 3D map: the top bar (hideNav), the phone
+  // bottom thumb dock (hideDock) and the city side panel (hidePanel). Each has
+  // its own edge handle; a floating ⛶ master toggle flips all three at once.
+  // Persisted in uiPrefs. The R3F <Canvas> owns a ResizeObserver, so the map
+  // reflows to fill on its own when a slot collapses — no map-side wiring.
   const [hideNav, setHideNav] = useState(() => getStoredUiPrefs().hideNav);
+  const [hideDock, setHideDock] = useState(() => getStoredUiPrefs().hideDock);
   const [hidePanel, setHidePanel] = useState(() => getStoredUiPrefs().hideSidePanel);
   const applyHideNav = (v: boolean) => { setHideNav(v); patchUiPrefs({ hideNav: v }); };
+  const applyHideDock = (v: boolean) => { setHideDock(v); patchUiPrefs({ hideDock: v }); };
   const applyHidePanel = (v: boolean) => { setHidePanel(v); patchUiPrefs({ hideSidePanel: v }); };
-  const immersive = hideNav && hidePanel;
+  // 全隱 = master is "on". The dock only exists on a coarse pointer, so it only
+  // counts toward the shown/hidden tally there.
+  const anyChromeShown = !hideNav || !hidePanel || (IS_COARSE && !hideDock);
+  const immersive = !anyChromeShown;
   // Master toggle: anything showing → hide it all; fully hidden → bring it back.
   const toggleImmersive = () => {
-    const next = !hideNav || !hidePanel;
+    const next = anyChromeShown;
     applyHideNav(next);
+    applyHideDock(next);
     applyHidePanel(next);
     playSfx('click');
   };
@@ -1010,8 +1017,9 @@ export function MapScreen() {
         </div>
       )}
       {/* 拇指塢 — phone-only bottom dock: the five actions a thumb reaches
-          for every turn. Desktop keeps the top bar it already has. */}
-      {IS_COARSE && !observing && !battleScreenUp && !hideNav && (
+          for every turn. Desktop keeps the top bar it already has. Collapses on
+          its own (hideDock) or with the master ⛶; a ▴ tab pulls it back. */}
+      {IS_COARSE && !observing && !battleScreenUp && !hideDock && (
         <nav style={{
           position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 630,
           display: 'flex', alignItems: 'stretch', gap: 6,
@@ -1019,12 +1027,28 @@ export function MapScreen() {
           background: 'linear-gradient(180deg, rgba(14,18,22,0.88), rgba(10,14,18,0.97))',
           borderTop: '1px solid var(--tkm-border-gold)', backdropFilter: 'blur(8px)',
         }}>
+          {/* 收起拇指塢 — a slim grip on the dock's top edge. */}
+          <button
+            className={styles.dockHideTab}
+            onClick={() => applyHideDock(true)}
+            title={t('收起底部快捷列', 'Hide the bottom dock')}
+            aria-label={t('收起底部快捷列', 'Hide bottom dock')}
+          >▾</button>
           <DockBtn icon="⚔" label={t('武將', 'Officers')} onClick={() => setShowOfficers(true)} />
           <DockBtn icon="🏯" label={t('郡縣', 'Cities')} onClick={() => setShowCityRoster(true)} />
           <DockBtn icon="⚡" label={t('委派', 'Assign')} onClick={runAutoAssign} badge={idleCount} />
           <DockBtn icon="📋" label={t('待辦', 'To-Do')} onClick={() => setShowToDo(true)} />
           <DockBtn primary icon="▶" label={t(`下旬 ${monthNum}月${phaseInfo.zh}`, `Next`)} onClick={advanceTurn} />
         </nav>
+      )}
+      {/* 拇指塢復原把手 — a ▴ tab at the bottom edge when the dock is tucked. */}
+      {IS_COARSE && !observing && !battleScreenUp && hideDock && (
+        <button
+          className={styles.dockShowTab}
+          onClick={() => applyHideDock(false)}
+          title={t('顯示底部快捷列', 'Show the bottom dock')}
+          aria-label={t('顯示底部快捷列', 'Show bottom dock')}
+        >▴</button>
       )}
       {/* 沉浸邊緣把手 — independent of the master toggle: pull the top bar back
           down from the top edge, and slide the side panel in/out from the right
