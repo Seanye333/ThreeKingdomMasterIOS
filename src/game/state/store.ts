@@ -336,7 +336,7 @@ import { festivalPool, festivalDraw, FESTIVAL_GOLD_COST, festivalScrollReward } 
 import { rollFoil } from '../systems/cardFoil';
 import { accrueArmProficiency } from '../systems/armProficiency';
 import { accrueMountBond } from '../systems/mountBond';
-import { isPhysician, medicalSkillOf, medicalCureBonus, medicalWoundBonus, accrueMedicalSkill } from '../systems/medicalSkill';
+import { isPhysician, medicalSkillOf, medicalCureBonus, medicalWoundBonus, accrueMedicalSkill, physicianReviveChance } from '../systems/medicalSkill';
 import { accrueItemProvenance, heirloomTier } from '../systems/itemProvenance';
 import { rollBounties, fulfilledBounties } from '../systems/bounty';
 import { codexRecordPeaks } from '../systems/codex';
@@ -12629,14 +12629,33 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // Apply officer fates. 不會戰死 — fallen officers are taken captive
         // instead of slain.
         const spareTheFallen = state.noBattleDeath ?? false;
+        // 神醫回天 — a physician marching on the fallen's side may snatch them
+        // back from death (a critically-wounded survivor, not a corpse). Scales
+        // with the best 醫術 still standing on that side (10% → 50% at 神醫).
+        const deadSet = new Set(dead); const capSet = new Set(captured);
+        const sideMedic: Record<string, number> = {};
+        const unitSide: Record<string, string> = {};
+        for (const u of tb.units) {
+          unitSide[u.officerId] = u.side;
+          const o = officers[u.officerId];
+          if (!o || deadSet.has(u.officerId) || capSet.has(u.officerId) || !isPhysician(o)) continue;
+          sideMedic[u.side] = Math.max(sideMedic[u.side] ?? -1, medicalSkillOf(o));
+        }
+        const revived: string[] = [];
         for (const id of dead) {
           const o = officers[id];
-          if (o) {
-            officers[id] = spareTheFallen
-              ? { ...o, status: 'imprisoned', forceId: null, task: null }
-              : { ...o, status: 'dead', forceId: null, task: null };
+          if (!o) continue;
+          const medic = sideMedic[unitSide[id]];
+          if (!spareTheFallen && medic !== undefined && Math.random() < physicianReviveChance(medic)) {
+            officers[id] = { ...o, status: 'wounded', woundedSeasons: 5, woundSeverity: 'critical' };
+            if (o.forceId === state.playerForceId) revived.push(o.name.zh);
+            continue;
           }
+          officers[id] = spareTheFallen
+            ? { ...o, status: 'imprisoned', forceId: null, task: null }
+            : { ...o, status: 'dead', forceId: null, task: null };
         }
+        for (const nm of revived) get().notify(`神醫回天 — ${nm}命懸一線,幸得軍醫救回,重傷未死!`, `${nm} was snatched from death by the army's physician — grievously wounded but alive.`);
         for (const id of captured) {
           const o = officers[id];
           if (o) {

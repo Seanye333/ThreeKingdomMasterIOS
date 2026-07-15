@@ -39,6 +39,15 @@ export function medicalWoundBonus(o: Officer | undefined | null): number {
   return isPhysician(o) ? Math.floor(medicalSkillOf(o!) / 50) : 0;
 }
 
+/**
+ * 神醫回天 — the chance a physician marching on a fallen officer's side snatches
+ * them back from death (a critically-wounded survivor, not a corpse): 10% for a
+ * raw medic, up to 50% for a 神醫 (medical skill 100).
+ */
+export function physicianReviveChance(medicalSkill: number): number {
+  return 0.1 + Math.max(0, Math.min(MEDICAL_SKILL_MAX, medicalSkill)) / 100 * 0.4;
+}
+
 /** Accrue a physician's 醫術: +2 each season practised, +6 more on a real cure. */
 export function accrueMedicalSkill(o: Officer, cured: boolean): Officer {
   if (!isPhysician(o)) return o;

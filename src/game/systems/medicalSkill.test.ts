@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   isPhysician, medicalSkillOf, medicalTier, medicalCureBonus, medicalWoundBonus,
-  accrueMedicalSkill, MEDICAL_SKILL_MAX,
+  accrueMedicalSkill, physicianReviveChance, MEDICAL_SKILL_MAX,
 } from './medicalSkill';
 import type { Officer } from '../types';
 
@@ -42,5 +42,12 @@ describe('名醫養成 — medical skill', () => {
     expect(medicalWoundBonus(shen)).toBe(2);
     expect(medicalWoundBonus(mk({ traits: ['physician'], medicalSkill: 60 }))).toBe(1);
     expect(medicalCureBonus(mk({ medicalSkill: 100 }))).toBe(0); // not a physician
+  });
+
+  it('神醫回天 — revive chance climbs 10% → 50% with 醫術', () => {
+    expect(physicianReviveChance(0)).toBeCloseTo(0.1, 5);
+    expect(physicianReviveChance(50)).toBeCloseTo(0.3, 5);
+    expect(physicianReviveChance(100)).toBeCloseTo(0.5, 5);
+    expect(physicianReviveChance(999)).toBeCloseTo(0.5, 5); // clamped
   });
 });
