@@ -34,7 +34,8 @@ export function ActionToasts() {
   if (stack.length === 0) return null;
   return (
     <div style={{
-      position: 'fixed', top: 64, left: '50%', transform: 'translateX(-50%)',
+      // Clear a notch / Dynamic Island without double-counting on flat displays.
+      position: 'fixed', top: 'max(64px, calc(8px + var(--tkm-safe-top)))', left: '50%', transform: 'translateX(-50%)',
       zIndex: 60, display: 'flex', flexDirection: 'column', gap: 6,
       alignItems: 'center', pointerEvents: 'none', maxWidth: '92vw',
     }}>

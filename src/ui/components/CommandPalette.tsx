@@ -50,7 +50,7 @@ export function CommandPalette({ commands, onClose }: { commands: PaletteCommand
   };
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'grid', placeItems: 'start center', zIndex: 950, padding: '12vh 1rem 1rem' }}>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'grid', placeItems: 'start center', zIndex: 950, padding: 'calc(12vh + var(--tkm-safe-top)) calc(1rem + var(--tkm-safe-right)) 1rem calc(1rem + var(--tkm-safe-left))' }}>
       <div onClick={(e) => e.stopPropagation()} style={{
         background: 'linear-gradient(160deg,#1b2531,#0e141b)', border: '1px solid rgba(255,255,255,0.1)',
         width: 'min(520px,100%)', maxHeight: '70vh', display: 'flex', flexDirection: 'column',
