@@ -340,7 +340,7 @@ import { isPhysician, medicalSkillOf, medicalCureBonus, medicalWoundBonus, accru
 import { accrueItemProvenance, heirloomTier } from '../systems/itemProvenance';
 import { rollBounties, fulfilledBounties } from '../systems/bounty';
 import { codexRecordPeaks } from '../systems/codex';
-import { cityCodexRecord, CITY_ACHIEVEMENTS_BY_ID } from '../systems/cityCodex';
+import { cityCodexRecord, CITY_ACHIEVEMENTS_BY_ID, CITY_CODEX_MILESTONES, cityCodexClaimMilestone } from '../systems/cityCodex';
 import { tickBuildings } from '../systems/buildings';
 import { tickBuildingEvents } from '../systems/buildingEvents';
 import { evaluateCoalition } from '../systems/coalition';
@@ -1257,6 +1257,8 @@ interface GameStore extends GameState {
   claimCodexMilestone: (milestoneId: string) => { ok: boolean; message: string };
   /** 藏珍功勳 — claim a reached item-codex milestone into this campaign (iron+gold). */
   claimItemCodexMilestone: (milestoneId: string) => { ok: boolean; message: string };
+  /** 名城功勳 — claim a reached city-codex milestone (capital gold + realm loyalty). */
+  claimCityCodexMilestone: (milestoneId: string) => { ok: boolean; message: string };
   /** 求賢祭 — once a season, pay gold at the capital to reveal one hidden
    *  talent (moves to the capital as a free agent; recruit them yourself). */
   holdTalentFestival: () => { ok: boolean; message: string };
@@ -11585,6 +11587,29 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           `Treasure milestone "${m.en}" — +${m.iron} iron, +${m.gold} gold`,
         );
         return { ok: true, message: `${m.zh}:鐵 +${m.iron}、金 +${m.gold}` };
+      },
+      claimCityCodexMilestone: (milestoneId) => {
+        // 名城功勳 — pay a reached, unclaimed city-collection milestone into this
+        // campaign: capital gold + a realm-wide loyalty lift.
+        const state = get();
+        if (!state.playerForceId) return { ok: false, message: '無主之師。' };
+        const m = CITY_CODEX_MILESTONES.find((x) => x.id === milestoneId);
+        if (!m) return { ok: false, message: '無此功勳。' };
+        const capId = state.forces[state.playerForceId]?.capitalCityId;
+        const cap = capId ? state.cities[capId] : undefined;
+        if (!cap || cap.ownerForceId !== state.playerForceId) return { ok: false, message: '須有都城受賞。' };
+        if (!cityCodexClaimMilestone(milestoneId)) return { ok: false, message: '未達或已領。' };
+        const cities = { ...state.cities };
+        for (const c of Object.values(cities)) {
+          if (c.ownerForceId !== state.playerForceId) continue;
+          cities[c.id] = { ...c, loyalty: Math.min(100, c.loyalty + m.loyalty), ...(c.id === cap.id ? { gold: c.gold + m.gold } : {}) };
+        }
+        set({ cities });
+        get().notify(
+          `名城功勳「${m.zh}」— 都城金 +${m.gold}、全境民忠 +${m.loyalty}`,
+          `City milestone "${m.en}" — +${m.gold} gold, +${m.loyalty} loyalty realm-wide`,
+        );
+        return { ok: true, message: `${m.zh}:金 +${m.gold}、全境民忠 +${m.loyalty}` };
       },
       engageEncounter: () => {
         const state = get();

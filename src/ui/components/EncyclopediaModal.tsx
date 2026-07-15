@@ -22,7 +22,7 @@ import { ItemCardModal } from './ItemCard';
 import { OfficerCardModal, OfficerCardFace } from './OfficerCardModal';
 import { officerGrade, gradeMeta } from '../../game/systems/officerGrade';
 import { cardCondition } from '../../game/systems/battlePower';
-import { loadCityCodex, CITY_ACHIEVEMENTS, CITY_ACHIEVEMENTS_BY_ID } from '../../game/systems/cityCodex';
+import { loadCityCodex, CITY_ACHIEVEMENTS, CITY_ACHIEVEMENTS_BY_ID, CITY_CODEX_MILESTONES, cityCodexMilestoneReached, cityCodexMilestoneClaimed, cityCodexCount } from '../../game/systems/cityCodex';
 import { bpLeaderboard } from '../../game/systems/powerBoard';
 import { ITEM_CODEX_SETS, itemCodexSetProgress, loadItemCodex, ITEM_CODEX_MILESTONES, itemCodexMilestoneReached, itemCodexMilestoneClaimed } from '../../game/systems/itemCodex';
 import { useEscapeKey } from '../hooks/useEscapeKey';
@@ -48,6 +48,7 @@ export function EncyclopediaModal({ onClose }: Props) {
   const generalScrolls = useGameStore((s) => s.generalScrolls);
   const claimMilestone = useGameStore((s) => s.claimCodexMilestone);
   const claimItemMilestone = useGameStore((s) => s.claimItemCodexMilestone);
+  const claimCityMilestone = useGameStore((s) => s.claimCityCodexMilestone);
   const [festivalMsg, setFestivalMsg] = useState<string | null>(null);
   const [frameSkinId, setFrameSkinId] = useState(() => loadFrameSkin().id);
   const [cardBackId, setCardBackId] = useState(() => loadCardBack().id);
@@ -622,6 +623,32 @@ export function EncyclopediaModal({ onClose }: Props) {
             const nameOfCity = (cid: string) => cities[cid]?.name.zh ?? cid;
             return (
               <>
+                {/* 名城功勳 — cross-campaign collection milestones (city-side). */}
+                {playerForceId && (
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.7rem' }}>
+                    <span style={{ fontSize: '0.72rem', color: '#7a8893' }}>名城功勳 · {cityCodexCount(codexC)} 譽</span>
+                    {CITY_CODEX_MILESTONES.map((m) => {
+                      const reached = cityCodexMilestoneReached(codexC, m);
+                      const claimed = cityCodexMilestoneClaimed(codexC, m.id);
+                      const canClaim = reached && !claimed;
+                      return (
+                        <button key={m.id}
+                          onClick={canClaim ? () => { const r = claimCityMilestone(m.id); setFestivalMsg(r.message); } : undefined}
+                          disabled={!canClaim}
+                          title={`${m.zh} — 集 ${m.need} 譽:都城金 +${m.gold}、全境民忠 +${m.loyalty}${claimed ? '(已領)' : reached ? '(可領)' : `(尚差 ${m.need - cityCodexCount(codexC)})`}`}
+                          style={{
+                            fontSize: '0.7rem', padding: '0.1rem 0.5rem', borderRadius: 9, fontFamily: 'inherit',
+                            cursor: canClaim ? 'pointer' : 'default',
+                            border: `1px solid ${claimed ? '#3f5c3f' : canClaim ? '#8a6a2a' : '#2b3845'}`,
+                            background: claimed ? 'rgba(138,200,138,0.08)' : canClaim ? 'rgba(230,196,115,0.16)' : 'transparent',
+                            color: claimed ? '#8ac88a' : canClaim ? '#ffd66e' : '#5f6c76',
+                          }}>
+                          {claimed ? '✓ ' : canClaim ? '🎁 ' : ''}{m.zh} {cityCodexCount(codexC)}/{m.need}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
                 <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: '0.8rem', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.72rem', color: '#7a8893' }}>名城錄 · {recorded.reduce((s, [, ids]) => s + ids.length, 0)} 譽(跨戰役)</span>
                   {CITY_ACHIEVEMENTS.map((a) => {

@@ -36,16 +36,21 @@ export const CITY_ACHIEVEMENTS_BY_ID: Record<string, CityAchievement> =
 /** cityId → set of achievement ids ever earned by that city (any campaign). */
 export interface CityCodex {
   earned: Record<string, string[]>;
+  /** 名城功勳 — collection milestones already claimed (cross-campaign, once). */
+  milestones: string[];
 }
 
 export function loadCityCodex(): CityCodex {
   try {
     const raw = localStorage.getItem(CITY_CODEX_KEY);
-    if (!raw) return { earned: {} };
+    if (!raw) return { earned: {}, milestones: [] };
     const p = JSON.parse(raw) as Partial<CityCodex>;
-    return { earned: p.earned && typeof p.earned === 'object' ? p.earned : {} };
+    return {
+      earned: p.earned && typeof p.earned === 'object' ? p.earned : {},
+      milestones: Array.isArray(p.milestones) ? p.milestones : [],
+    };
   } catch {
-    return { earned: {} };
+    return { earned: {}, milestones: [] };
   }
 }
 
@@ -75,11 +80,55 @@ export function cityCodexRecord(cities: City[]): Array<{ cityId: EntityId; achId
       }
     }
   }
-  if (fresh.length > 0) save({ earned });
+  if (fresh.length > 0) save({ ...codex, earned });
   return fresh;
 }
 
 /** Total distinct (city, achievement) pairs ever recorded — the collection size. */
 export function cityCodexCount(codex: CityCodex): number {
   return Object.values(codex.earned).reduce((sum, list) => sum + list.length, 0);
+}
+
+/* ─── 名城功勳 — collection milestones (city-side twin of 圖鑑功勳/藏珍功勳) ─── */
+export interface CityCodexMilestone {
+  id: string;
+  zh: string; en: string;
+  /** Distinct city-honour pairs required across all your campaigns. */
+  need: number;
+  /** Boons paid into the campaign you claim from. */
+  gold: number;
+  /** Realm-wide loyalty lift — the people honour a famed builder of cities. */
+  loyalty: number;
+}
+
+/**
+ * 名城功勳 — reaching a tier of the 名城錄 is a claimable, once-ever boon paid
+ * into the campaign you claim from: a treasury grant plus a realm-wide lift in
+ * the people's regard. The city-side mirror of 圖鑑功勳 / 藏珍功勳.
+ */
+export const CITY_CODEX_MILESTONES: CityCodexMilestone[] = [
+  { id: 'cm-5', zh: '一方之望', en: 'Regional Renown', need: 5, gold: 600, loyalty: 2 },
+  { id: 'cm-15', zh: '牧民有方', en: 'A Shepherd of Cities', need: 15, gold: 1400, loyalty: 3 },
+  { id: 'cm-30', zh: '德被四境', en: 'Virtue Across the Realm', need: 30, gold: 2600, loyalty: 4 },
+  { id: 'cm-50', zh: '萬世治功', en: 'A Governance for the Ages', need: 50, gold: 4000, loyalty: 6 },
+];
+
+export function cityCodexMilestoneReached(codex: CityCodex, m: CityCodexMilestone): boolean {
+  return cityCodexCount(codex) >= m.need;
+}
+
+export function cityCodexMilestoneClaimed(codex: CityCodex, id: string): boolean {
+  return codex.milestones.includes(id);
+}
+
+/** Mark a milestone claimed (cross-campaign). Returns false if already claimed
+ *  or not yet reached — the store owns paying out the boon. */
+export function cityCodexClaimMilestone(id: string): boolean {
+  const c = loadCityCodex();
+  const m = CITY_CODEX_MILESTONES.find((x) => x.id === id);
+  if (!m) return false;
+  if (c.milestones.includes(id)) return false;
+  if (!cityCodexMilestoneReached(c, m)) return false;
+  save({ ...c, milestones: [...c.milestones, id] });
+  return true;
 }

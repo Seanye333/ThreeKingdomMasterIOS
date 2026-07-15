@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   cityCodexRecord, loadCityCodex, cityAchievementsNow, cityCodexCount,
   CITY_ACHIEVEMENTS,
+  CITY_CODEX_MILESTONES, cityCodexMilestoneReached, cityCodexMilestoneClaimed, cityCodexClaimMilestone,
 } from './cityCodex';
 import type { City } from '../types';
 
@@ -49,5 +50,26 @@ describe('名城錄 — the atlas of great cities', () => {
     const ids = CITY_ACHIEVEMENTS.map((a) => a.id);
     expect(new Set(ids).size).toBe(ids.length);
     for (const a of CITY_ACHIEVEMENTS) expect(typeof a.test).toBe('function');
+  });
+
+  it('名城功勳 — milestones unlock at the honour count and claim once', () => {
+    const first = CITY_CODEX_MILESTONES[0]; // need 5
+    // Record 4 honours across cities — below the bar.
+    cityCodexRecord([
+      city({ id: 'a', culture: 70, veterancy: 90 }),         // 2
+      city({ id: 'b', population: 500_000, commerce: 200 }), // 2
+    ]);
+    expect(cityCodexCount(loadCityCodex())).toBe(4);
+    expect(cityCodexMilestoneReached(loadCityCodex(), first)).toBe(false);
+    expect(cityCodexClaimMilestone(first.id)).toBe(false);
+    // Cross the bar.
+    cityCodexRecord([city({ id: 'c', agriculture: 200 })]); // +1 → 5
+    expect(cityCodexMilestoneReached(loadCityCodex(), first)).toBe(true);
+    expect(cityCodexClaimMilestone(first.id)).toBe(true);
+    expect(cityCodexMilestoneClaimed(loadCityCodex(), first.id)).toBe(true);
+    expect(cityCodexClaimMilestone(first.id)).toBe(false); // once only
+    // Recording more honours must not wipe the claimed milestone.
+    cityCodexRecord([city({ id: 'd', culture: 60 })]);
+    expect(cityCodexMilestoneClaimed(loadCityCodex(), first.id)).toBe(true);
   });
 });
