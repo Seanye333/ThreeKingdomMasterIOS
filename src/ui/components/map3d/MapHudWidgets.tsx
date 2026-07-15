@@ -263,6 +263,7 @@ export function MapHelpPanel({ onClose }: { onClose: () => void }) {
         [t('輕點城市', 'tap a city'), t('選取 · 再點進城', 'select · tap again to enter')],
         [t('輕點空地', 'tap ground'), t('選軍時下令移動', 'move a selected column')],
         ['🔍 ＋－ ⌖ 🏯', t('尋城 / 縮放 / 復位 / 回都', 'search / zoom / recenter / capital')],
+        ['⛶', t('沉浸 — 收起介面只看地圖(▾▴‹ 各自喚回)', 'immersive — hide the UI; edge tabs bring it back')],
       ]
     : [
         [t('左鍵拖曳', 'left-drag'), t('平移地圖', 'pan the map')],
@@ -275,8 +276,11 @@ export function MapHelpPanel({ onClose }: { onClose: () => void }) {
         ['1-9 / 0', t('切換疊圖', 'toggle overlays')],
         ['Tab', t('巡視自己的城', 'cycle your cities')],
         ['Home', t('回都城', 'jump to capital')],
-        ['Esc', t('取消選取', 'clear selection')],
+        [t('空格', 'Space'), t('過旬結算', 'end the turn')],
+        ['/  ⌘K', t('命令臺', 'command palette')],
+        ['Esc', t('取消選取 / 逐層關閉', 'clear selection / close a layer')],
         ['＋－ ⌖ 🏯 🔍', t('縮放 / 復位 / 回都 / 尋城', 'zoom / recenter / capital / search')],
+        ['⛶', t('沉浸 — 收起介面只看地圖', 'immersive — hide the UI for a full-screen map')],
       ];
   return (
     <div onClick={onClose} style={{

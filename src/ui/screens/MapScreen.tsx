@@ -1044,14 +1044,18 @@ export function MapScreen() {
           padding: '0.3rem 0.7rem', color: '#f0d98a', fontFamily: 'var(--tkm-font-body)', fontSize: '0.85rem',
         }}>
           <span style={{ fontVariantNumeric: 'tabular-nums' }}>{t(`第 ${dayFlow.day + 1} 日 / ${dayFlow.total}`, `Day ${dayFlow.day + 1} / ${dayFlow.total}`)}</span>
-          <button onClick={dayFlowTogglePause} style={{ background: 'transparent', border: '1px solid #d4a84a', color: '#f0d98a', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', padding: '0.1rem 0.5rem', fontFamily: 'inherit' }}>
+          <button
+            onClick={dayFlowTogglePause}
+            aria-label={dayFlow.playing ? t('暫停日播', 'Pause') : t('繼續日播', 'Play')}
+            title={dayFlow.playing ? t('暫停日播', 'Pause') : t('繼續日播', 'Play')}
+            style={{ background: 'transparent', border: '1px solid #d4a84a', color: '#f0d98a', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', padding: '0.1rem 0.5rem', fontFamily: 'inherit', minHeight: IS_COARSE ? 40 : undefined, minWidth: IS_COARSE ? 40 : undefined }}>
             {dayFlow.playing ? '⏸' : '▶'}
           </button>
           {[1, 2, 4].map((sp) => (
-            <button key={sp} onClick={() => dayFlowSetSpeed(sp)} style={{
+            <button key={sp} onClick={() => dayFlowSetSpeed(sp)} aria-label={t(`${sp} 倍速`, `${sp}× speed`)} aria-pressed={dayFlow.speed === sp} style={{
               background: dayFlow.speed === sp ? 'rgba(212,168,74,0.25)' : 'transparent',
               border: `1px solid ${dayFlow.speed === sp ? '#d4a84a' : '#4a5568'}`,
-              color: dayFlow.speed === sp ? '#f0d98a' : '#97a4ae', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', padding: '0.1rem 0.4rem', fontFamily: 'inherit', fontSize: '0.78rem',
+              color: dayFlow.speed === sp ? '#f0d98a' : '#97a4ae', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', padding: '0.1rem 0.4rem', fontFamily: 'inherit', fontSize: '0.78rem', minHeight: IS_COARSE ? 40 : undefined, minWidth: IS_COARSE ? 34 : undefined,
             }}>{sp}×</button>
           ))}
           {engageable && (
@@ -1068,16 +1072,19 @@ export function MapScreen() {
           <button
             onClick={() => setDayFlowFollow(!dayFlowFollow)}
             title={t('跟拍 — 鏡頭隨主力縱隊行進', 'Follow — camera rides your lead column')}
+            aria-label={t('跟拍主力縱隊', 'Follow lead column')}
+            aria-pressed={dayFlowFollow}
             style={{
               background: dayFlowFollow ? 'rgba(212,168,74,0.25)' : 'transparent',
               border: `1px solid ${dayFlowFollow ? '#d4a84a' : '#4a5568'}`,
-              color: dayFlowFollow ? '#f0d98a' : '#97a4ae', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', padding: '0.1rem 0.45rem', fontFamily: 'inherit',
+              color: dayFlowFollow ? '#f0d98a' : '#97a4ae', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', padding: '0.1rem 0.45rem', fontFamily: 'inherit', minHeight: IS_COARSE ? 40 : undefined, minWidth: IS_COARSE ? 40 : undefined,
             }}
           >📍</button>
           <button
             onClick={() => { dayFlowSkip(); commitTurn(); }}
             title={t('跳過日播,直接結算本旬', 'Skip the days, resolve the turn now')}
-            style={{ background: 'transparent', border: '1px solid #4a5568', color: '#97a4ae', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', padding: '0.1rem 0.5rem', fontFamily: 'inherit' }}
+            aria-label={t('跳過日播,直接結算', 'Skip to turn resolution')}
+            style={{ background: 'transparent', border: '1px solid #4a5568', color: '#97a4ae', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', padding: '0.1rem 0.5rem', fontFamily: 'inherit', minHeight: IS_COARSE ? 40 : undefined, minWidth: IS_COARSE ? 40 : undefined }}
           >⏭</button>
         </div>
       )}

@@ -1587,6 +1587,17 @@ export function StrategicMap3D() {
               }}
               title={t('戰役回放 — 快進重現整局天下消長', "Campaign timelapse — fast-forward the whole campaign's territory changes")}
             >🎞 {t('回放', 'Replay')}</button>
+            {/* 操作說明 — the controls/shortcut cheat-sheet. Desktop also opens it
+                from the ? on the hint chip; this makes it reachable on phones. */}
+            <button
+              onClick={() => { setToolsOpen(false); setShowMapHelp(true); }}
+              style={{
+                background: '#241c12', color: '#c0a878',
+                border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)', padding: '0.3rem 0.55rem',
+                cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.76rem',
+              }}
+              title={t('操作說明 — 手勢與快捷鍵一覽', 'Controls — gestures & shortcuts')}
+            >❓ {t('操作', 'Help')}</button>
           </div>
         </div>
       </div>
