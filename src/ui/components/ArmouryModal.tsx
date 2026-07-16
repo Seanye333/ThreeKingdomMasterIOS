@@ -9,6 +9,7 @@ import { OfficerStats } from './OfficerStats';
 import { Name } from './Name';
 import styles from './ArmouryModal.module.css';
 import { useT, useDesc } from '../i18n';
+import { usePanelNotice } from './usePanelNotice';
 import { ItemCardModal, ItemTile } from './ItemCard';
 
 interface Props {
@@ -99,6 +100,7 @@ export function ArmouryModal({ onClose }: Props) {
   const [ownerFilter, setOwnerFilter] = useState<OwnerFilter>('all');
   const [assigningItemId, setAssigningItemId] = useState<string | null>(null);
   const t = useT();
+  const { notify, noticeUI } = usePanelNotice();
   const d = useDesc();
 
   const lostItemIds = useMemo(() => new Set(lostItems.map((l) => l.itemId)), [lostItems]);
@@ -326,7 +328,7 @@ export function ArmouryModal({ onClose }: Props) {
                             </span>
                             {plus < REFINE_MAX && <button className={styles.actionBtn} onClick={() => refineItemFn(item.id)}>{t('精煉', 'Refine')}</button>}
                             {plus >= REFINE_MAX && stars < BREAKTHROUGH_MAX && (
-                              <button className={styles.actionBtn} disabled={!canBreak} title={!hasFoundry ? t('需鐵工坊', 'needs foundry') : `${bc.gold}g+${bc.iron}鐵`} onClick={() => { const r = breakthroughItemFn(item.id); if (!r.ok) alert(r.reason); }}>{t('突破★', 'Star')}</button>
+                              <button className={styles.actionBtn} disabled={!canBreak} title={!hasFoundry ? t('需鐵工坊', 'needs foundry') : `${bc.gold}g+${bc.iron}鐵`} onClick={() => { const r = breakthroughItemFn(item.id); if (!r.ok) notify(r.reason); }}>{t('突破★', 'Star')}</button>
                             )}
                             {/* 器魂進化 — the ★5 神兵 capstone. */}
                             {stars >= BREAKTHROUGH_MAX && (evolvedItems.includes(item.id) || itemIsEvolved(item.id)
@@ -334,11 +336,11 @@ export function ArmouryModal({ onClose }: Props) {
                               : (() => { const g = canEvolveItem(item.id); return (
                                 <button className={styles.actionBtn} disabled={!g.ok}
                                   title={g.ok ? t('醒器魂:3000金+400鐵 — 神兵進化為 ·神,全效果再增', 'Awaken spirit: 3000g+400 iron — ascend to ·神') : t(g.reasonZh, g.reasonEn)}
-                                  onClick={() => { const r = evolveItemFn(item.id); if (!r.ok) alert(r.message); }}>☯{t('器魂', 'Ascend')}</button>
+                                  onClick={() => { const r = evolveItemFn(item.id); if (!r.ok) notify(r.message); }}>☯{t('器魂', 'Ascend')}</button>
                               ); })()
                             )}
                             {gems.length < maxSockets && (
-                              <select value="" onChange={(e) => { if (e.target.value) { const r = socketGemFn(item.id, e.target.value); if (!r.ok) alert(r.reason); } }} style={{ background: '#10161e', border: '1px solid #6a8fb0', color: '#9fb0bf', fontSize: '0.66rem' }}>
+                              <select value="" onChange={(e) => { if (e.target.value) { const r = socketGemFn(item.id, e.target.value); if (!r.ok) notify(r.reason); } }} style={{ background: '#10161e', border: '1px solid #6a8fb0', color: '#9fb0bf', fontSize: '0.66rem' }}>
                                 <option value="">💎</option>
                                 {GEMS.map((g) => { const n = gemStock[g.id] ?? 0; return <option key={g.id} value={g.id}>{g.name.zh} ({n > 0 ? t(`庫${n}`, `${n}`) : `${g.cost}g`})</option>; })}
                               </select>
@@ -354,7 +356,7 @@ export function ArmouryModal({ onClose }: Props) {
                                     <span key={ai} title={perk.descriptionZh} style={{ color: '#ffd66e', fontSize: '0.66rem', border: '1px solid #8a6a2a', borderRadius: 8, padding: '0 5px' }}>⚡{perk.name.zh}</span>
                                   ) : null; })}
                                   {picked.length < slots && (
-                                    <select value="" onChange={(e) => { if (e.target.value) { const r = awakenItemFn(item.id, e.target.value); if (!r.ok) alert(r.reason); } }}
+                                    <select value="" onChange={(e) => { if (e.target.value) { const r = awakenItemFn(item.id, e.target.value); if (!r.ok) notify(r.reason); } }}
                                       title={t(`威名 ${lore} — 可銘 ${slots - picked.length} 條覺醒詞條`, `Renown ${lore} — ${slots - picked.length} awakening pick(s)`)}
                                       style={{ background: '#1a1408', border: '1px solid #8a6a2a', color: '#ffd66e', fontSize: '0.66rem' }}>
                                       <option value="">⚡{t('覺醒', 'Awaken')}</option>
@@ -377,7 +379,7 @@ export function ArmouryModal({ onClose }: Props) {
                                     if (!armed) { setSmeltConfirmId(item.id); window.setTimeout(() => setSmeltConfirmId((v) => (v === item.id ? null : v)), 3000); return; }
                                     setSmeltConfirmId(null);
                                     const r = smeltItemFn(item.id);
-                                    if (!r.ok) alert(r.reason);
+                                    if (!r.ok) notify(r.reason);
                                   }}
                                   title={armed ? t(`再點一次確認 — 熔毀得鐵 ${yieldIron},本局不復存`, `Tap again — smelt for ${yieldIron} iron, gone this campaign`) : t(`回爐重鑄 — 熔為鐵 ${yieldIron}`, `Smelt for ${yieldIron} iron`)}
                                   style={armed ? { background: 'rgba(184,68,46,0.3)', color: '#ffb0a0' } : undefined}
@@ -388,7 +390,7 @@ export function ArmouryModal({ onClose }: Props) {
                             {(itemWear[item.id] ?? 0) > 60 && (
                               <button className={styles.actionBtn}
                                 title={t(`保養 — 磨損 ${itemWear[item.id]}/100,費 ${whetCost(itemWear[item.id] ?? 0)}金復原鋒銳`, `Whet — wear ${itemWear[item.id]}/100, ${whetCost(itemWear[item.id] ?? 0)}g to restore`)}
-                                onClick={() => { const r = whetItemFn(item.id); if (!r.ok) alert(r.message); }}
+                                onClick={() => { const r = whetItemFn(item.id); if (!r.ok) notify(r.message); }}
                               >🔧</button>
                             )}
                             {(itemLore[item.id] ?? 0) >= 60 && (
@@ -434,7 +436,7 @@ export function ArmouryModal({ onClose }: Props) {
                       style={{ background: '#10161e', border: '1px solid #2c4454', color: '#9ed0ea', padding: '0.15rem 0.4rem', width: 170, fontFamily: 'inherit' }} />
                     <button className={styles.actionBtn} onClick={() => {
                       const r = inscribeItemFn(item.id, insName, insMotto);
-                      if (r.ok) setInscribingId(null); else alert(r.message);
+                      if (r.ok) setInscribingId(null); else notify(r.message);
                     }}>{t('銘刻', 'Engrave')}</button>
                   </div>
                 )}
@@ -482,6 +484,7 @@ export function ArmouryModal({ onClose }: Props) {
         </ul>}
         {itemCardId && <ItemCardModal itemId={itemCardId} onClose={() => setItemCardId(null)} />}
       </div>
+      {noticeUI}
     </div>
   );
 }

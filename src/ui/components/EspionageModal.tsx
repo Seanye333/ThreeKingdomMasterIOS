@@ -7,6 +7,7 @@ import { OfficerStats } from './OfficerStats';
 import { Name } from './Name';
 import styles from './EspionageModal.module.css';
 import { useLanguage, useDesc } from '../i18n';
+import { usePanelNotice } from './usePanelNotice';
 
 interface Props {
   onClose: () => void;
@@ -32,6 +33,7 @@ export function EspionageModal({ onClose }: Props) {
   const spyBureauCityId = useGameStore((s) => s.spyBureauCityId);
   const designateSpyBureau = useGameStore((s) => s.designateSpyBureau);
   const lang = useLanguage();
+  const { notify, noticeUI } = usePanelNotice();
   const desc = useDesc();
   // Only the player's own embedded agents belong in the 潛伏 list (an enemy's
   // spy in your city also lives in this array — surfaced via 肅諜, not here).
@@ -144,7 +146,7 @@ export function EspionageModal({ onClose }: Props) {
       setPickedTargetCityId(null);
       setPickedTargetOfficerId(null);
     } else {
-      alert(r.reason ?? 'Failed');
+      notify(r.reason ?? (lang === 'en' ? 'Action failed' : '操作失敗'));
     }
   };
 
@@ -168,7 +170,7 @@ export function EspionageModal({ onClose }: Props) {
       setPickedTargetOfficerId2(null);
       setDeathAgent(false);
     } else {
-      alert(r.reason ?? 'Failed');
+      notify(r.reason ?? (lang === 'en' ? 'Action failed' : '操作失敗'));
     }
   };
 
@@ -244,7 +246,7 @@ export function EspionageModal({ onClose }: Props) {
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
                         <span>{(lang === 'en' ? agent?.name.en : agent?.name.zh) ?? '?'} → {(lang === 'en' ? city?.name.en : city?.name.zh) ?? '?'}</span>
                         <span style={{ display: 'flex', gap: 4 }}>
-                          <button className={styles.cancelBtn} style={{ color: '#e0a060' }} title={lang === 'en' ? 'Activate (one-shot strike from within; burns the spy)' : '眠龍出淵 — 內應作亂一擊(民心−30/焚糧半/亂兵),細作功成身退'} onClick={() => { const r = activateSpy(spy.id); if (!r.ok) alert(r.message); }}>⚡</button>
+                          <button className={styles.cancelBtn} style={{ color: '#e0a060' }} title={lang === 'en' ? 'Activate (one-shot strike from within; burns the spy)' : '眠龍出淵 — 內應作亂一擊(民心−30/焚糧半/亂兵),細作功成身退'} onClick={() => { const r = activateSpy(spy.id); if (!r.ok) notify(r.message); }}>⚡</button>
                           <button className={styles.cancelBtn} title={lang === 'en' ? 'Recall' : '召回'} onClick={() => recallSpy(spy.id)}>↩</button>
                         </span>
                       </div>
@@ -263,7 +265,7 @@ export function EspionageModal({ onClose }: Props) {
               <button
                 className={styles.confirmBtn}
                 style={{ width: '100%', marginBottom: 4 }}
-                onClick={() => { const r = counterIntelSweep(); alert(r.message); }}
+                onClick={() => { const r = counterIntelSweep(); notify(r.message); }}
                 title={lang === 'en' ? 'Sweep your realm for enemy spies; stiffens counter-intel for 4 seasons (300g)' : '肅諜清查 — 揪出敵潛伏細作,並令四境戒嚴 4 季(300金)'}
               >
                 {lang === 'en' ? 'Counter-Intel Sweep (300g)' : '肅諜清查（300金）'}
@@ -276,13 +278,13 @@ export function EspionageModal({ onClose }: Props) {
                       className={styles.cancelBtn}
                       style={{ color: '#88c060' }}
                       title={lang === 'en' ? 'Turn — they join you & bare their old realm' : '反間 — 策反入伙,盡洩故主虛實'}
-                      onClick={() => { const r = turnSpy(o.id, false); if (!r.ok) alert(r.message); }}
+                      onClick={() => { const r = turnSpy(o.id, false); if (!r.ok) notify(r.message); }}
                     >↺</button>
                     <button
                       className={styles.cancelBtn}
                       style={{ color: '#5a9bc8' }}
                       title={lang === 'en' ? 'Double agent — slip them back as your embedded spy' : '為間 — 潛回故主之側,為我常駐細作'}
-                      onClick={() => { const r = turnSpy(o.id, true); if (!r.ok) alert(r.message); }}
+                      onClick={() => { const r = turnSpy(o.id, true); if (!r.ok) notify(r.message); }}
                     >👁</button>
                   </span>
                 </div>
@@ -461,15 +463,16 @@ export function EspionageModal({ onClose }: Props) {
             {spyBureauCityId
               ? <>
                   <span style={{ color: '#e6c473' }}>{(lang === 'en' ? cities[spyBureauCityId]?.name.en : cities[spyBureauCityId]?.name.zh) ?? '—'}</span>
-                  <button className={styles.cancelBtn} onClick={() => { const r = designateSpyBureau(null); if (!r.ok && r.reason) alert(r.reason); }} title={lang === 'en' ? 'Dissolve the bureau' : '廢置校事府'}>×</button>
+                  <button className={styles.cancelBtn} onClick={() => { const r = designateSpyBureau(null); if (!r.ok && r.reason) notify(r.reason); }} title={lang === 'en' ? 'Dissolve the bureau' : '廢置校事府'}>×</button>
                 </>
-              : <select defaultValue="" onChange={(e) => { if (e.target.value) { const r = designateSpyBureau(e.target.value); if (!r.ok && r.reason) alert(r.reason); } }} style={{ background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473', fontSize: '0.68rem', borderRadius: 'var(--tkm-radius-xs)' }} title={lang === 'en' ? 'Seat the intelligence bureau: a free scouting op each season + stiffer counter-intel.' : '設校事府:每季自行一次免費刺探 + 強化反諜。'}>
+              : <select defaultValue="" onChange={(e) => { if (e.target.value) { const r = designateSpyBureau(e.target.value); if (!r.ok && r.reason) notify(r.reason); } }} style={{ background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473', fontSize: '0.68rem', borderRadius: 'var(--tkm-radius-xs)' }} title={lang === 'en' ? 'Seat the intelligence bureau: a free scouting op each season + stiffer counter-intel.' : '設校事府:每季自行一次免費刺探 + 強化反諜。'}>
                   <option value="">{lang === 'en' ? '— seat at —' : '— 設於 —'}</option>
                   {Object.values(cities).filter((c) => c.ownerForceId === playerForceId).slice(0, 40).map((c) => <option key={c.id} value={c.id}>{lang === 'en' ? c.name.en : c.name.zh}</option>)}
                 </select>}
           </div>
         )}
       </div>
+      {noticeUI}
     </div>
   );
 }

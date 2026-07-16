@@ -8,6 +8,7 @@ import { playSfx } from '../../game/systems/sound';
 import { ItemCardFace } from './ItemCard';
 import type { EntityId } from '../../game/types';
 import { useDesc, useLanguage, useT } from '../i18n';
+import { usePanelNotice } from './usePanelNotice';
 import { Name } from './Name';
 
 interface Props {
@@ -93,6 +94,7 @@ export function ForgingModal({ onClose }: Props) {
   const dismantleItem = useGameStore((s) => s.dismantleItem);
   const gemStock = useGameStore((s) => s.gemStock);
   const fuseGems = useGameStore((s) => s.fuseGems);
+  const { notify, noticeUI } = usePanelNotice();
   const desc = useDesc();
 
   // Find player cities with a foundry.
@@ -127,7 +129,7 @@ export function ForgingModal({ onClose }: Props) {
   const handle = (recipeId: string) => {
     if (!pickedCityId) return;
     const r = forgeItem(pickedCityId, recipeId);
-    if (!r.ok) { alert(r.reason); return; }
+    if (!r.ok) { notify(r.reason); return; }
     const recipe = FORGE_RECIPES.find((x) => x.id === recipeId);
     const item = recipe ? ITEMS_BY_ID[recipe.resultItemId] : null;
     if (item) setForged({ name: item.name, plus: r.plus ?? 0, itemId: item.id });
@@ -136,7 +138,7 @@ export function ForgingModal({ onClose }: Props) {
   const handleDismantle = (itemId: string) => {
     if (!pickedCityId) return;
     const r = dismantleItem(pickedCityId, itemId);
-    if (!r.ok) { alert(r.reason); return; }
+    if (!r.ok) { notify(r.reason); return; }
     playSfx('forge');
   };
 
@@ -367,7 +369,7 @@ export function ForgingModal({ onClose }: Props) {
                         </div>
                         {out && (
                           <button
-                            onClick={() => { const r = fuseGems(g.id); if (!r.ok) alert(r.reason); }}
+                            onClick={() => { const r = fuseGems(g.id); if (!r.ok) notify(r.reason); }}
                             disabled={!canFuse}
                             title={canFuse ? undefined : (lang === 'en' ? `Need ${GEM_FUSION_COST}` : `需 ${GEM_FUSION_COST} 顆`)}
                             style={{ background: '#10161e', border: `1px solid ${canFuse ? '#88b7e8' : '#2b3845'}`, color: canFuse ? '#88b7e8' : '#4a5662', padding: '0.2rem 0.6rem', fontFamily: 'inherit', cursor: canFuse ? 'pointer' : 'not-allowed', fontSize: '0.78rem' }}
@@ -386,6 +388,7 @@ export function ForgingModal({ onClose }: Props) {
       </div>
     </div>
     {forged && <ForgedReveal name={forged.name} plus={forged.plus} itemId={forged.itemId} onDone={() => setForged(null)} />}
+    {noticeUI}
     </>
   );
 }

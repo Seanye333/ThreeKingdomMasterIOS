@@ -4,6 +4,7 @@ import { useGameStore } from '../../game/state/store';
 import type { EdictKind, EntityId } from '../../game/types';
 import styles from './CourtModal.module.css';
 import { useLanguage, useDesc, pickName } from '../i18n';
+import { usePanelNotice } from './usePanelNotice';
 import { Name } from './Name';
 import { canPromoteToRank, nextImperialRank } from '../../game/systems/imperialEffects';
 import { canWelcomeEmperor, emperorCustodian } from '../../game/systems/emperor';
@@ -57,6 +58,7 @@ export function CourtModal({ onClose }: Props) {
   const [consortPick, setConsortPick] = useState('');
   const [eraInput, setEraInput] = useState('');
   const lang = useLanguage();
+  const { notify, noticeUI } = usePanelNotice();
   const desc = useDesc();
 
   const playerForce = playerForceId ? forces[playerForceId] : null;
@@ -92,9 +94,9 @@ export function CourtModal({ onClose }: Props) {
     const target = edictTargets[k];
     const r = issueEdict(k, target);
     if (r.ok) {
-      if (r.message) alert(r.message);
+      if (r.message) notify(r.message, true);
     } else {
-      alert(r.reason ?? 'Failed');
+      notify(r.reason ?? (lang === 'en' ? 'Action failed' : '操作失敗'));
     }
   };
 
@@ -174,7 +176,7 @@ export function CourtModal({ onClose }: Props) {
                   title={isEmperorPath ? '需頒「即位」詔令' : check.ok ? '' : (!check.ok ? check.reason : '')}
                   onClick={() => {
                     const r = promoteImperialRank(playerForceId, next);
-                    if (!r.ok) alert(r.reason ?? 'Failed');
+                    if (!r.ok) notify(r.reason ?? (lang === 'en' ? 'Action failed' : '操作失敗'));
                   }}
                   style={{
                     background: check.ok && !isEmperorPath ? '#1e2832' : '#10161e',
@@ -222,7 +224,7 @@ export function CourtModal({ onClose }: Props) {
                       style={{ background: 'transparent', border: `1px solid ${favoured ? '#e6c473' : '#2b3845'}`, color: favoured ? '#f2dd9a' : '#7a8893', cursor: 'pointer', fontSize: '0.7rem', padding: '0 0.2rem', borderRadius: 'var(--tkm-radius-xs)' }}
                     >{favoured ? '✓扶' : '扶'}</button>
                     <button
-                      onClick={() => { const r = purgeFaction(fid); if (r.message) alert(r.message); }}
+                      onClick={() => { const r = purgeFaction(fid); if (r.message) notify(r.message); }}
                       title={lang === 'en' ? 'Purge this faction (黨錮) — loyalty crashes, mandate −5, 500g; a proud officer may defect' : '黨錮此派 —— 忠誠驟降、天命 −5、500金;倨傲之臣或憤而出走'}
                       style={{ background: 'transparent', border: '1px solid #5a2d2d', color: '#e0707a', cursor: 'pointer', fontSize: '0.7rem', padding: '0 0.2rem', borderRadius: 'var(--tkm-radius-xs)' }}
                     >錮</button>
@@ -259,7 +261,7 @@ export function CourtModal({ onClose }: Props) {
                       <option value="">{lang === 'en' ? '— pick —' : '— 擇 —'}</option>
                       {myIdlerOfficers.slice(0, 40).map((o) => <option key={o.id} value={o.id}>{lang === 'en' ? o.name.en : o.name.zh}</option>)}
                     </select>
-                    <button disabled={!consortPick} onClick={() => { const r = elevateConsort(consortPick); if (!r.ok && r.reason) alert(r.reason); }} style={miniCourtBtn(!!consortPick)} title={lang === 'en' ? 'Raise this officer\'s kin as consort-kin (立后納妃): +loyalty to him & his house.' : '立其族為國舅(立后納妃):其人其族忠誠大漲。'}>
+                    <button disabled={!consortPick} onClick={() => { const r = elevateConsort(consortPick); if (!r.ok && r.reason) notify(r.reason); }} style={miniCourtBtn(!!consortPick)} title={lang === 'en' ? 'Raise this officer\'s kin as consort-kin (立后納妃): +loyalty to him & his house.' : '立其族為國舅(立后納妃):其人其族忠誠大漲。'}>
                       {lang === 'en' ? 'Elevate' : '立后納妃'}
                     </button>
                   </>}
@@ -268,10 +270,10 @@ export function CourtModal({ onClose }: Props) {
             {holdsEmperor && (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: myEunuch >= 60 ? '#e0707a' : '#aab6c0' }}>
                 {lang === 'en' ? '學官 Inner court:' : '學官:'} {Math.round(myEunuch)}/100
-                <button disabled={myEunuch < 30} onClick={() => { const r = sellOffices(); if (!r.ok && r.reason) alert(r.reason); }} style={miniCourtBtn(myEunuch >= 30)} title={lang === 'en' ? 'Sell offices for gold (民心 & 清流 suffer).' : '賣官鬻爵取金(損民心・清流)。'}>
+                <button disabled={myEunuch < 30} onClick={() => { const r = sellOffices(); if (!r.ok && r.reason) notify(r.reason); }} style={miniCourtBtn(myEunuch >= 30)} title={lang === 'en' ? 'Sell offices for gold (民心 & 清流 suffer).' : '賣官鬻爵取金(損民心・清流)。'}>
                   {lang === 'en' ? 'Sell offices' : '賣官'}
                 </button>
-                <button disabled={myEunuch <= 0} onClick={() => { const r = purgeEunuchs(); if (!r.ok && r.reason) alert(r.reason); }} style={miniCourtBtn(myEunuch > 0)} title={lang === 'en' ? 'Purge the inner court (清流 rally, palace reels).' : '盡誅學官(清流復振、宮廷動盪)。'}>
+                <button disabled={myEunuch <= 0} onClick={() => { const r = purgeEunuchs(); if (!r.ok && r.reason) notify(r.reason); }} style={miniCourtBtn(myEunuch > 0)} title={lang === 'en' ? 'Purge the inner court (清流 rally, palace reels).' : '盡誅學官(清流復振、宮廷動盪)。'}>
                   {lang === 'en' ? 'Purge' : '盡誅學官'}
                 </button>
               </span>
@@ -280,7 +282,7 @@ export function CourtModal({ onClose }: Props) {
             {isSovereign && (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginLeft: 'auto', color: '#aab6c0' }}>
                 <input value={eraInput} onChange={(e) => setEraInput(e.target.value)} placeholder={playerForce?.eraName ?? (lang === 'en' ? 'era' : '年號')} style={{ width: '5rem', background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473', fontSize: '0.68rem', borderRadius: 'var(--tkm-radius-xs)', padding: '0.1rem 0.3rem' }} />
-                <button onClick={() => { const r = declareNewEra(eraInput); if (r.ok) setEraInput(''); else if (r.reason) alert(r.reason); }} style={miniCourtBtn(true)} title={lang === 'en' ? 'Proclaim a new era (改元): mandate +4, on a cooldown.' : '改元頒朔:天命 +4,數年一次。'}>
+                <button onClick={() => { const r = declareNewEra(eraInput); if (r.ok) setEraInput(''); else if (r.reason) notify(r.reason); }} style={miniCourtBtn(true)} title={lang === 'en' ? 'Proclaim a new era (改元): mandate +4, on a cooldown.' : '改元頒朔:天命 +4,數年一次。'}>
                   {lang === 'en' ? 'New era 改元' : '改元'}
                 </button>
               </span>
@@ -301,7 +303,7 @@ export function CourtModal({ onClose }: Props) {
               {ladder && minister && st && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: ladder.stage >= 2 ? '#e0707a' : '#e6c473' }}>
                   <span>⚠ {lang === 'en' ? 'Usurpation' : '禪代之階'}: {lang === 'en' ? minister.name.en : minister.name.zh} — <b>{lang === 'en' ? st.en : st.zh}</b> ({ladder.stage + 1}/{LADDER_STAGES.length}) · {lang === 'en' ? `cabal ${ladder.cabal.length}` : `黨羽 ${ladder.cabal.length}`}</span>
-                  <button onClick={() => { const r = curbUsurper(); if (!r.ok && r.reason) alert(r.reason); }} style={miniCourtBtn(true)} title={lang === 'en' ? 'Scatter his cabal and knock him down a rung (翦除肘腋). Costs gold; a cornered minister may revolt.' : '翦除肘腋:散其黨羽、挫其一階(費金;狗急或跳牆)。'}>
+                  <button onClick={() => { const r = curbUsurper(); if (!r.ok && r.reason) notify(r.reason); }} style={miniCourtBtn(true)} title={lang === 'en' ? 'Scatter his cabal and knock him down a rung (翦除肘腋). Costs gold; a cornered minister may revolt.' : '翦除肘腋:散其黨羽、挫其一階(費金;狗急或跳牆)。'}>
                     {lang === 'en' ? 'Curb (翦除肘腋)' : '翦除肘腋'}
                   </button>
                 </div>
@@ -313,7 +315,7 @@ export function CourtModal({ onClose }: Props) {
                     const f = forces[tid];
                     if (!f) return null;
                     return (
-                      <button key={tid} onClick={() => { const r = raiseRighteousBanner(tid); if (!r.ok && r.reason) alert(r.reason); }} style={miniCourtBtn(true)} title={lang === 'en' ? cause.reasonEn : cause.reasonZh}>
+                      <button key={tid} onClick={() => { const r = raiseRighteousBanner(tid); if (!r.ok && r.reason) notify(r.reason); }} style={miniCourtBtn(true)} title={lang === 'en' ? cause.reasonEn : cause.reasonZh}>
                         {lang === 'en' ? `Denounce ${f.name.en}` : `討 ${f.name.zh}`}
                       </button>
                     );
@@ -327,7 +329,7 @@ export function CourtModal({ onClose }: Props) {
                     const o = allOfficers[oid];
                     if (!o || o.forceId != null) return null;
                     return (
-                      <button key={oid} onClick={() => { const r = shelterExile(oid); if (!r.ok && r.reason) alert(r.reason); }} style={miniCourtBtn(true)} title={lang === 'en' ? `Shelter ${o.name.en}, lord of the fallen ${ex.formerNameEn} (gain him + a few followers; 鳩占鵲巢 risk).` : `納${o.name.zh}(故${ex.formerNameZh}之主)來投:得其人與從者,然鳩占鵲巢有風險。`}>
+                      <button key={oid} onClick={() => { const r = shelterExile(oid); if (!r.ok && r.reason) notify(r.reason); }} style={miniCourtBtn(true)} title={lang === 'en' ? `Shelter ${o.name.en}, lord of the fallen ${ex.formerNameEn} (gain him + a few followers; 鳩占鵲巢 risk).` : `納${o.name.zh}(故${ex.formerNameZh}之主)來投:得其人與從者,然鳩占鵲巢有風險。`}>
                         {lang === 'en' ? `Shelter ${o.name.en}` : `納 ${o.name.zh}`}
                       </button>
                     );
@@ -347,7 +349,7 @@ export function CourtModal({ onClose }: Props) {
                     <option value="">{lang === 'en' ? '— cede a city —' : '— 割城 —'}</option>
                     {Object.values(allCities).filter((c) => c.ownerForceId === playerForceId && c.id !== playerForce?.capitalCityId).slice(0, 40).map((c) => <option key={c.id} value={c.id}>{lang === 'en' ? c.name.en : c.name.zh}</option>)}
                   </select>
-                  <button disabled={!reclaimCity} onClick={() => { const gid = Object.keys(guestGenerals ?? {})[0]; if (!gid) return; const r = sponsorReclaim(gid, reclaimCity); if (r.ok) setReclaimCity(''); else if (r.reason) alert(r.reason); }} style={miniCourtBtn(!!reclaimCity)} title={lang === 'en' ? 'Cede this city to install your (first) guest as a grateful vassal-ally (借兵復國 借荊州).' : '割此城,扶你的客將(首位)復立為感恩之藩屬盟友(借兵復國·借荊州)。'}>
+                  <button disabled={!reclaimCity} onClick={() => { const gid = Object.keys(guestGenerals ?? {})[0]; if (!gid) return; const r = sponsorReclaim(gid, reclaimCity); if (r.ok) setReclaimCity(''); else if (r.reason) notify(r.reason); }} style={miniCourtBtn(!!reclaimCity)} title={lang === 'en' ? 'Cede this city to install your (first) guest as a grateful vassal-ally (借兵復國 借荊州).' : '割此城,扶你的客將(首位)復立為感恩之藩屬盟友(借兵復國·借荊州)。'}>
                     {lang === 'en' ? 'Sponsor (借兵復國)' : '借兵復國'}
                   </button>
                 </div>
@@ -421,6 +423,7 @@ export function CourtModal({ onClose }: Props) {
             })}
           </div>
         )}
+        {noticeUI}
       </div>
     </div>
   );
