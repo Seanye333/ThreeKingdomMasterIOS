@@ -159,26 +159,6 @@ export function SettingsModal({ onClose }: Props) {
           </Section>
 
           <Section title={t('輔助', 'Accessibility')}>
-            <Row label={t('字體大小', 'Text size')} hint={t('整體縮放介面字級(重載生效)', 'Scales the whole UI text (reloads)')}>
-              <div style={{ display: 'flex', gap: 4 }}>
-                {([['16', t('標準', 'Std')], ['18', t('大', 'Large')], ['20', t('特大', 'XL')]] as Array<[string, string]>).map(([px, lbl]) => {
-                  const cur = (typeof window !== 'undefined' && localStorage.getItem('tkm-font-px')) || '16';
-                  const on = cur === px;
-                  return (
-                    <button
-                      key={px}
-                      onClick={() => { localStorage.setItem('tkm-font-px', px); window.location.reload(); }}
-                      style={{
-                        background: on ? '#26323e' : 'transparent',
-                        border: '1px solid ' + (on ? '#e6c473' : '#2b3845'),
-                        color: on ? '#e6c473' : '#7a8893',
-                        padding: '0.25rem 0.7rem', cursor: 'pointer', fontFamily: 'inherit',
-                      }}
-                    >{lbl}</button>
-                  );
-                })}
-              </div>
-            </Row>
             <Toggle
               label={t('減少動畫', 'Reduce motion')}
               hint={t('關閉畫面閃動、脈動警示與彈跳提示', 'Stop flashes, pulses & bouncing toasts')}
@@ -197,9 +177,23 @@ export function SettingsModal({ onClose }: Props) {
               checked={uiPrefs.autoHideChrome}
               onChange={(v) => updateUiPref({ autoHideChrome: v })}
             />
-            <Row label={t('介面字號', 'Text size')} hint={t('縮放全介面文字', 'Scale all interface text')}>
+            {(uiPrefs.hideNav || uiPrefs.hideDock || uiPrefs.hideSidePanel || uiPrefs.autoHideChrome) && (
+              <Row
+                label={t('重置介面收合', 'Reset layout')}
+                hint={t('把頂欄、側欄、底部快捷列全部顯示回來', 'Bring the top bar, side panel & bottom dock all back')}
+              >
+                <button
+                  onClick={() => updateUiPref({ hideNav: false, hideDock: false, hideSidePanel: false, autoHideChrome: false })}
+                  style={{
+                    background: 'transparent', border: '1px solid #e6c473', color: '#e6c473',
+                    padding: '0.3rem 0.8rem', cursor: 'pointer', fontFamily: 'inherit', borderRadius: 'var(--tkm-radius-sm)',
+                  }}
+                >{t('全部顯示', 'Show all')}</button>
+              </Row>
+            )}
+            <Row label={t('介面字號', 'Text size')} hint={t('縮放全介面文字(即時生效)', 'Scale all interface text (applies live)')}>
               <div style={{ display: 'flex', gap: 4 }}>
-                {([['sm', t('小', 'S')], ['md', t('中', 'M')], ['lg', t('大', 'L')]] as Array<[UiScale, string]>).map(([s, lbl]) => (
+                {([['sm', t('小', 'S')], ['md', t('中', 'M')], ['lg', t('大', 'L')], ['xl', t('特大', 'XL')]] as Array<[UiScale, string]>).map(([s, lbl]) => (
                   <button
                     key={s}
                     onClick={() => updateUiPref({ uiScale: s })}

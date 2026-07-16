@@ -16,7 +16,7 @@
  *                   away on their own; a tap on the map brings them back.
  */
 
-export type UiScale = 'sm' | 'md' | 'lg';
+export type UiScale = 'sm' | 'md' | 'lg' | 'xl';
 
 export interface UiPrefs {
   reduceMotion: boolean;
@@ -32,7 +32,7 @@ const DEFAULTS: UiPrefs = {
   reduceMotion: false, uiScale: 'md', gore: true,
   hideNav: false, hideDock: false, hideSidePanel: false, autoHideChrome: false,
 };
-const SCALE_PX: Record<UiScale, string> = { sm: '14px', md: '16px', lg: '18px' };
+const SCALE_PX: Record<UiScale, string> = { sm: '14px', md: '16px', lg: '18px', xl: '20px' };
 const STORAGE_KEY = 'tkm-ui-prefs';
 
 export function getStoredUiPrefs(): UiPrefs {
@@ -43,7 +43,7 @@ export function getStoredUiPrefs(): UiPrefs {
     const p = JSON.parse(raw) as Partial<UiPrefs>;
     return {
       reduceMotion: typeof p.reduceMotion === 'boolean' ? p.reduceMotion : DEFAULTS.reduceMotion,
-      uiScale: p.uiScale === 'sm' || p.uiScale === 'lg' ? p.uiScale : 'md',
+      uiScale: p.uiScale === 'sm' || p.uiScale === 'lg' || p.uiScale === 'xl' ? p.uiScale : 'md',
       gore: typeof p.gore === 'boolean' ? p.gore : DEFAULTS.gore,
       hideNav: typeof p.hideNav === 'boolean' ? p.hideNav : DEFAULTS.hideNav,
       hideDock: typeof p.hideDock === 'boolean' ? p.hideDock : DEFAULTS.hideDock,

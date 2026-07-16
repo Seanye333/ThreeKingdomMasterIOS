@@ -1209,7 +1209,14 @@ export function MapScreen() {
       {showCourt && <CourtModal onClose={() => setShowCourt(false)} />}
       {showWishes && <WishesModal onClose={() => setShowWishes(false)} />}
       {showCareer && <CareerModal onClose={() => setShowCareer(false)} />}
-      {showSettings && <SettingsModal onClose={() => { setShowSettings(false); setAutoHideOn(getStoredUiPrefs().autoHideChrome); }} />}
+      {showSettings && <SettingsModal onClose={() => {
+        setShowSettings(false);
+        // Sync any chrome/immersive prefs the Settings modal changed (e.g. the
+        // "reset layout" button, or the auto-hide toggle) back into local state.
+        const p = getStoredUiPrefs();
+        setHideNav(p.hideNav); setHideDock(p.hideDock); setHidePanel(p.hideSidePanel);
+        setAutoHideOn(p.autoHideChrome);
+      }} />}
       <Suspense fallback={null}>
         {showHistory && (
           <BattleHistoryModal onClose={() => setShowHistory(false)} />
