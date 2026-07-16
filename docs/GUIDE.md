@@ -16,7 +16,7 @@
 | 3 | [人才・招攬・舌戰](#第三章-人才招攬舌戰) | commands(search), officerFate, recommendation, commonerTalent, appraisal(月旦評), scenicSites(三顧), captiveFate(處決後果/AI處置), aiRansom, debate, wordWar, persuasion(說客) | ✅ |
 | 4 | [軍事指揮・委任](#第四章-軍事指揮委任) | muster, legion(都督之斷·長圍), governor, governorEval, advisor, 在途指令(駐守/設伏/圍城/焚橋/燒鎖/補給/分兵/召回), rout(潰軍/掩殺收降/殿軍斷後) | ✅ |
 | 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, tacticalAi, combat, formations, stratagems, weather(區域天候), battlefieldTerrain, worldScars(戰場烙印), fieldworks(築壘), columnReinforcements(會戰), wallTier城郭分層, 入城三選, battleSpoils(戰場繳獲), personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
-| 6 | [單挑](#第六章-單挑) | duel(招式/必殺技/獨門被動/破綻/傷殘/挑落下馬/**環境借勢/部位打擊/膽氣怯戰**/兵裝/坐騎/地形/性格/AI), gauntlet, duelSeries, duelScenarios(劇情+戰役), duelHall(名局廊), warRanking(武評榜), rivalries(宿敵/恩怨簿), duelChallenge(約戰), tactical(致師) | ✅ |
+| 6 | [單挑](#第六章-單挑) | duel(招式/必殺技/獨門被動/破綻/傷殘/挑落下馬/**環境借勢/部位打擊/膽氣怯戰**/兵裝/坐騎/地形/性格/AI), **martialArts(武學修為/流派/秘籍/頓悟)**, gauntlet, duelSeries, duelScenarios(劇情+戰役), duelHall(名局廊), warRanking(武評榜), rivalries(宿敵/恩怨簿), duelChallenge(約戰), tactical(致師) | ✅ |
 | 7 | [外交・謀略・天子](#第七章-外交謀略天子) | diplomacy, diplomacyPacts(稱臣/索貢/會盟/援盟/調停/質子/借道), coalition, schemes, aiSchemes, ambition, espionage, expedition, foreignRealm, intrigue, courtFactions, factionEvents, emperor, imperialEffects, mandate, appointmentEffects, clans, statecraft | ✅ |
 | 8 | [事件・天命・異族・宗教](#第八章-事件天命異族宗教) | events(天災/地動/賑災), historicalEvents(抉擇鏈), behaviorEvents(勸進/眾叛), customEvents, factionEvents, religion(黃巾/招安/宣撫), tribes, tribesDiplomacy(和親/互市/質子/以夷制夷/入主建國/七擒), mandate(祥瑞/造讖/禳星), mandateRituals(郊祀/祈雨), annals(災異志) | ✅ |
 | 9 | [元遊戲・收藏・分享](#第九章-元遊戲收藏分享) | achievements, deedTitles, dailyChallenge, leaderboard, mods, powerHistory, historyBook, romance, sound, voiceLines, dialogueRoll | ✅ |
@@ -394,6 +394,7 @@
 | 馬戰(§6.2b) | 騎名駒→開局衝鋒對撞(勇+先手+長兵+馬勢,重撞挑落下馬);馬上長兵+4·馬上難閃+chip;挑落下馬(架繳械)轉步戰失坐騎之利;自動戰先結衝鋒;3D 坐騎奔逸 |
 | 臨場三術(§6.2c) | 每局一次:**環境借勢**(依地形一式:揚沙/據橋斷喝落馬/撩泥/撩火自灼/借雨突襲,不致命+抬破綻)·**部位打擊**(擊械缴械/斬馬挑落,命中率隨勇差~0.82,落空自身破綻+18)·皆列「臨場借勢」排 |
 | 膽氣怯戰(§6.2c) | duelValor 由性格(忠勇↑怯懦/狡詐/野心↓)+武力+威名品階讀出;敗將**戰死/請降/落荒**三途 sigmoid(中心 v≈40:v80→~95%死·v15→~66%潰,忠義死節永不逃);互動單挑敵氣力≤24且膽氣不足或於補刀前潰(請降可斬/生擒招降、逃遁逸去);自動戰擊倒按膽氣改判 fate(普通武將仍多戰死~70%,整體殺傷率大致不變) |
+| 武學修煉(§6.10) | 與 level 分離的單挑成長線:8 流派 · 修為 0–100 六境(未入門→入門→精熟→大成→宗師→武神);每境生效 招式提前解鎖(+0/1/2/4/6/8 等效歷練)·修為入勇(+0/2/4/7/10/14)·蓄勢(大成+開局蓄氣);花心得修煉(每次+5,耗4~24 遞增);苦戰頓悟入心得;秘籍(五兵秘訣/越女劍經/養由基射訣)研讀化修為/心得 |
 | 鬥將生涯(§6.5) | duelCareerBonus:段位(神將+10/虎將+7/驍將+5/健將+3)+百戰(≥30+6/≥15+4/≥6+2)折進單挑固定勇;武評榜名宿實打強於武力,自成成長階梯(競技場🏅段位+X) |
 | 天下武道會(§6.5) | 比武大會單淘汰;奪魁→武評榜+80・威名+8(常升段→鬥將生涯)、亞軍+30/+3;陡升年度一次(lastTournamentYear),同年再辦僅練習+12 |
 | 致師(§6.7) | 戰前 turn1 遣強將陣前單挑:勝全軍士氣 +18·敗 −22·平 −5(較陣中 +10/−15 更烈),佔該方一次戰前部署;敵將亦自動致師 |
@@ -1973,6 +1974,19 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
 - 勝負受武器/馬匹/技能/威名/**品階**加成(staticProwess + 品階威儀,見 §2.2)。
 - **傷勢延續**:單挑/戰場負傷帶入後續(輕/重/瀕死,見 §2.4),瀕死將領再戰風險極高。
 
+### 6.10 武學修煉·流派·秘籍·頓悟(martialArts.ts)
+
+單挑機制極深,卻一直**沒有專屬的進階循環** —— 招式僅靠 **歷練 level**(通用等級)解鎖。此節補上一條**與 level 分離**的單挑成長線:
+
+- **武學流派**(MartialSchool = 8 兵器類):每將依所執兵器歸一流派 —— **劍術/斧法/雙劍/刀法(偃月)/槍法/戟法/重兵/弓道**。
+- **武學修為**(martialXiuwei 0–100,`o.martialXiuwei`):六境界 **未入門→入門→精熟→大成→宗師→武神**(門檻 0/15/35/60/82/96)。**每境界皆在每場單挑生效**:
+  - **招式提前解鎖**(moveUnlockDiscount):等效 +0/1/2/4/6/8 歷練 —— **高修為·低歷練** 之將照樣使得連擊/必殺(raw-but-trained),接 `isDuelMoveUnlocked`。
+  - **修為入勇**(prowess):+0/2/4/7/10/14 折進 `staticProwess`(互動與自動戰皆計)。
+  - **蓄勢**(openingGuard):大成+ 開局多蓄 1 氣、武神 2 氣,接 `initDuelBout`。
+- **武學心得**(martialInsight,`o.martialInsight`):競技場所得,**花心得升修為**(`trainMartialArts`:每次 +5 修為,耗 4/8/12/16/20/24 心得,隨境界漸貴)。UI 在 **武將詳情**(OfficerDetail)突破欄下:顯示 流派·境界·修為條·心得 + 「修煉」鈕(store `trainMartialArts`)。
+- **苦戰頓悟**(checkMartialEpiphany):所有互動單挑經 Duel3DStage 結束時,依 **勝負 / 勇差 / 是否險勝 / 名將宿敵 / 演武** 給玩家武將入心得;**苦戰**(勝過遠強之敵、一線險勝、力克宿敵/名將)有機率 **豁然頓悟** —— 額外 +5~8 心得並閃提示。心得↑→修為↑→單挑更強,閉環成立。
+- **武學秘籍**(接 §1.5 兵書 / §7.6 尋寶探秘 / 名城寶物):新增 **五兵秘訣**(修為+22·心得+8,金)、**越女劍經**、**養由基射訣**(各 修為+14·心得+5,銀)三本;沿用 `studyManual`(consumable 新增 `xiuwei`/`insight` 欄),研讀即化為修為/心得。可作游歷/探秘/名城掉落之獎。
+
 ---
 
 ## 第七章 外交・謀略・天子
@@ -2744,7 +2758,7 @@ flowchart TD
 
 | 類別 | 數量 |
 |---|---|
-| 名品 Items | 1409(weapon 363 / horse 56 / treasure 554 / book 400 / armor 36) |
+| 名品 Items | 1412(weapon 363 / horse 56 / treasure 554 / book 403 / armor 36) |
 | 政策 Policies | 161 |
 | 戰法 Tactics | 589 |
 | 技能 Skills | 30 |

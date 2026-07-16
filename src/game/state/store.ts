@@ -30,6 +30,7 @@ import { grantDeedTitles } from '../systems/deedTitles';
 import { pushBoutRecord } from '../systems/duelHall';
 import { recordRivalryBout, pairKey as rivalPairKey, NEMESIS_THRESHOLD } from '../systems/rivalries';
 import { challengeStakes } from '../systems/duelChallenge';
+import { trainMartialArts, MARTIAL_XIUWEI_MAX } from '../systems/martialArts';
 import { applyBout, seedRating } from '../systems/warRanking';
 import { tickAfflictions, withAffliction, hasChronicAilment, rollChronicAilment, cureChronicAilments, chronicAilmentOf, type Affliction } from '../systems/afflictions';
 import { routConsequence, type RoutConsequence } from '../systems/wordWar';
@@ -988,6 +989,10 @@ interface GameStore extends GameState {
   slayOfficerInDuel: (slayerId: EntityId, victimId: EntityId) => void;
   /** 傷殘 — a brutal single combat leaves a permanent maim (斷臂/目眇/跛足). */
   inflictDuelScar: (officerId: EntityId, scar: import('../systems/duel').DuelScar) => void;
+  /** 武學心得 — bank arena insight on an officer (苦戰頓悟 / 演武所得). */
+  awardMartialInsight: (officerId: EntityId, amount: number) => void;
+  /** 武學修煉 — spend banked 心得 to raise the officer's 修為 one step. */
+  trainMartialArts: (officerId: EntityId) => { ok: boolean; reason?: string; xiuwei?: number; gained?: number; tierUpZh?: string; tierUpEn?: string };
   /** 折服來投 — a foe bested (and spared) in a 約戰 comes over to the player's side. */
   recruitViaDuel: (officerId: EntityId) => boolean;
   /** 天下無雙 — crown the 比武大會 champion: a 武評榜 climb + 威名 for the field.
@@ -11971,6 +11976,23 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (have.includes(scar)) return; // a fighter bears each maim only once
         set({ officers: { ...state.officers, [officerId]: { ...o, duelScars: [...have, scar] } } });
       },
+      awardMartialInsight: (officerId, amount) => {
+        if (!(amount > 0)) return;
+        const state = get();
+        const o = state.officers[officerId];
+        if (!o || o.status === 'dead') return;
+        set({ officers: { ...state.officers, [officerId]: { ...o, martialInsight: Math.max(0, (o.martialInsight ?? 0) + Math.round(amount)) } } });
+      },
+      trainMartialArts: (officerId) => {
+        const state = get();
+        const o = state.officers[officerId];
+        if (!o) return { ok: false, reason: 'no-officer' };
+        if (o.forceId !== state.playerForceId) return { ok: false, reason: 'not-yours' };
+        const r = trainMartialArts(o);
+        if (!r) return { ok: false, reason: 'insufficient' }; // not enough 心得 or 修為 maxed
+        set({ officers: { ...state.officers, [officerId]: { ...o, martialXiuwei: r.xiuwei, martialInsight: r.insight } } });
+        return { ok: true, xiuwei: r.xiuwei, gained: r.gained, tierUpZh: r.tierUp?.zh, tierUpEn: r.tierUp?.en };
+      },
       awardTournamentChampion: (championId, finalistIds) => {
         const state = get();
         // 年度武道會 — the steep ladder climb is the year's championship prize; a
@@ -12162,6 +12184,17 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           const r = grantXp(officer, c.xp, Math.random, undefined, { year: state.date.year });
           officer = r.officer;
           notes.push(`歷練 +${c.xp}`, ...r.entries.map((e) => e.textZh ?? e.text));
+        }
+        // 武學秘籍 — a duel manual deepens 修為 / banks 心得 (§6.10).
+        if (c.xiuwei) {
+          const before = officer.martialXiuwei ?? 0;
+          const after = Math.min(MARTIAL_XIUWEI_MAX, before + c.xiuwei);
+          officer = { ...officer, martialXiuwei: after };
+          if (after > before) notes.push(`武學修為 +${after - before}`);
+        }
+        if (c.insight) {
+          officer = { ...officer, martialInsight: Math.max(0, (officer.martialInsight ?? 0) + c.insight) };
+          notes.push(`武學心得 +${c.insight}`);
         }
         set({ officers: { ...state.officers, [officerId]: officer } });
         return { ok: true, notes };

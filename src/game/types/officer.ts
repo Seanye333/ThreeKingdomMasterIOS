@@ -95,6 +95,13 @@ export interface Officer {
    *  Unlike 養傷 these never heal: they narrow the officer's duel move-pool and
    *  sap their prowess for good. See systems/duel.ts (duelScars). */
   duelScars?: import('../systems/duel').DuelScar[];
+  /** 武學修為 — mastery (0–100) of the officer's weapon 流派, a duel-only growth
+   *  track separate from 歷練 level. Deepened via 演武 修煉 (spending 心得) and
+   *  苦戰頓悟. High 修為 unlocks moves sooner + lends prowess/opening 氣. See
+   *  systems/martialArts.ts. */
+  martialXiuwei?: number;
+  /** 武學心得 — spendable insight earned in the arena; buys 修為. */
+  martialInsight?: number;
   task: CommandType | null;
   equipment: Equipment;
   /** Innate skill IDs (referencing SKILLS_BY_ID). 0–4 per officer. */

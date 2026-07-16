@@ -9,6 +9,8 @@ import { isNotableBout, type BoutRecord } from '../../../game/systems/duelHall';
 import { duelCommentary } from '../../../game/systems/combatCommentary';
 import { rivalryBetween, isNemesis, headToHead } from '../../../game/systems/rivalries';
 import { ratingOf, duelCareerBonus } from '../../../game/systems/warRanking';
+import { staticProwess } from '../../../game/systems/duel';
+import { checkMartialEpiphany } from '../../../game/systems/martialArts';
 import { DuelArena3D, type DuelArenaEvent } from './DuelArena3D';
 
 const SEASON_IDX = ['spring', 'summer', 'autumn', 'winter'];
@@ -85,6 +87,22 @@ export function Duel3DStage(props: ComponentProps<typeof DuelGameModal>) {
         recordDuelRating(attacker.id, defender.id, fx.winner === 'attacker' ? 'win' : fx.winner === 'defender' ? 'loss' : 'draw');
         // 恩怨簿 — accrue the head-to-head record (and close it if it ended in blood).
         recordRivalry(attacker.id, defender.id, fx.winner ?? 'draw', !!fx.killed);
+        // 苦戰頓悟 — the player's fighter deepens their 武學 from the bout. A win
+        // over a stronger arm / a famed rival / a long hard fight can spark a 頓悟.
+        const won = fx.winner === 'attacker';
+        const ep = checkMartialEpiphany({
+          won,
+          prowessGap: Math.round(staticProwess(defender) - staticProwess(attacker)),
+          notableFoe: swornRef.current || !!rivalryRef.current,
+          survivedThin: history.current.length >= 6,
+          spar: props.lethal === false,
+        }, Math.random);
+        useGameStore.getState().awardMartialInsight(attacker.id, ep.insight);
+        if (ep.epiphany) {
+          setToast(lang === 'en' ? ep.noteEn : ep.noteZh);
+          window.setTimeout(() => setToast(null), 2600);
+          playSfx('bell');
+        }
       }
     }
     onRound?.(fx); // preserve any host-supplied behaviour

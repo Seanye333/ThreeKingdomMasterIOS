@@ -8,6 +8,7 @@ import { gradeCombatBonus, itemMasteryMul, duelFirstStrike } from './gradeCombat
 import { evolvedArtDuelBonus, evolvedWeaponArt } from './evolvedArts';
 import { skillEffectMul } from './skillMastery';
 import { deriveWeaponType, type WeaponType } from '../data/weaponTypes';
+import { martialBonus } from './martialArts';
 
 /**
  * 兵裝相剋(接單挑) — the duellists' weapon classes clash (§5.9), where before a
@@ -185,8 +186,8 @@ export function resolveDuel(input: DuelInput): DuelResult {
   const aPass = duelPassive(input.attacker)?.id ?? null;
   const dPass = duelPassive(input.defender)?.id ?? null;
   const passStatic = (p: DuelPassiveId | null) => (p === 'matchless-might' ? 7 : p === 'immovable' ? 5 : 0);
-  const aStatic = a.total - a.diceRoll + duelWeaponEdge(input.attacker, input.defender) + passStatic(aPass) + (input.aCareer ?? 0);
-  const dStatic = d.total - d.diceRoll + duelWeaponEdge(input.defender, input.attacker) + passStatic(dPass) + (input.dCareer ?? 0);
+  const aStatic = a.total - a.diceRoll + duelWeaponEdge(input.attacker, input.defender) + passStatic(aPass) + martialBonus(input.attacker).prowess + (input.aCareer ?? 0);
+  const dStatic = d.total - d.diceRoll + duelWeaponEdge(input.defender, input.attacker) + passStatic(dPass) + martialBonus(input.defender).prowess + (input.dCareer ?? 0);
 
   // 氣力 — graded champions enter the bout with a deeper reserve (品階威儀).
   // 霸王色 — a fighter facing an aura-bearer opens with their reserve docked.
@@ -320,7 +321,7 @@ export function staticProwess(o: Officer): number {
   const p = prowessParts(o);
   // 養傷 — a lingering duel wound saps 武力 here too.
   // 傷殘 — permanent maims sap prowess for good (the dark mirror of growth).
-  return Math.round(o.stats.war + afflictionDelta(o, 'war') + p.itemBonus + p.skillBonus + p.traitBonus + effectivePrestigeEffects(o).duelBonus + gradeCombatBonus(o).duelBonus - scarProwessPenalty(o));
+  return Math.round(o.stats.war + afflictionDelta(o, 'war') + p.itemBonus + p.skillBonus + p.traitBonus + effectivePrestigeEffects(o).duelBonus + gradeCombatBonus(o).duelBonus + martialBonus(o).prowess - scarProwessPenalty(o));
 }
 
 function rollOne(o: Officer, rng: () => number): DuelRoll {
@@ -1391,7 +1392,9 @@ export function duelMoveUnlockLevel(m: DuelMove): number {
 export function isDuelMoveUnlocked(o: Officer, m: DuelMove): boolean {
   // 傷殘 — a maim bars a move outright (a 斷臂 can't flurry, a 跛足 can't dodge).
   if (scarBarsMove(o, m)) return false;
-  return officerLevel(o) >= duelMoveUnlockLevel(m);
+  // 武學修為 — a well-drilled duellist fields the flourish moves earlier than their
+  // 歷練 level alone would allow (a raw-but-trained fighter still has real craft).
+  return officerLevel(o) + martialBonus(o).moveUnlockDiscount >= duelMoveUnlockLevel(m);
 }
 const ALL_DUEL_MOVES: DuelMove[] = ['cleave', 'slash', 'sweep', 'guard', 'dodge', 'parry', 'power', 'taunt', 'thrust', 'combo', 'ultimate'];
 /** Every move an officer may field at their current level. */
@@ -1543,8 +1546,9 @@ export function initDuelBout(
     dStamina: Math.max(30, 100 - dStaminaPenalty) - cowsFoeStam(aPass),
     // 弓·先發制人 / 駿馬·先發 / 西涼鐵騎 open with a banked 氣; an aura-bearer's foe
     // opens a 氣 down.
-    aGuard: Math.max(0, (weaponIsRanged(aClass) ? 1 : 0) + aCharge + surge(aPass) - cowsFoeGuard(dPass)),
-    dGuard: Math.max(0, (weaponIsRanged(dClass) ? 1 : 0) + dCharge + surge(dPass) - cowsFoeGuard(aPass)),
+    // 武學·蓄勢 — a 大成+ master opens with the initiative already banked.
+    aGuard: Math.max(0, (weaponIsRanged(aClass) ? 1 : 0) + aCharge + surge(aPass) + martialBonus(attacker).openingGuard - cowsFoeGuard(dPass)),
+    dGuard: Math.max(0, (weaponIsRanged(dClass) ? 1 : 0) + dCharge + surge(dPass) + martialBonus(defender).openingGuard - cowsFoeGuard(aPass)),
     // 鬥將生涯 — recognised duellists fight above their stat line (段位 + 百戰).
     aStatic: staticProwess(attacker) + aCareer, dStatic: staticProwess(defender) + dCareer,
     // 目眇 — a half-blind fighter reads the foe far worse (drives the AI's 料敵).

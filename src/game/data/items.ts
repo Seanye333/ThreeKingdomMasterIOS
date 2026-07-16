@@ -33,6 +33,10 @@ export interface Item {
     xp?: number;
     latent?: { stat: 'leadership' | 'war' | 'intelligence' | 'politics' | 'charisma'; amount: number };
     skill?: string; // SKILLS id
+    /** 武學秘籍 — raises the officer's 武學修為 (duel mastery) by this much. */
+    xiuwei?: number;
+    /** 武學心得 — banks this much spendable duel insight. */
+    insight?: number;
   };
   /** 品階 — optional explicit rarity. When omitted, itemRarity() derives one
    *  from the item's effect magnitude so every item reads in the shared
@@ -13899,6 +13903,42 @@ export const ITEMS: Item[] = [
     descriptionZh: '縱橫策士辭令之集。研讀之,辯才魅力俱增,智資亦長。',
     effects: {},
     consumable: { xp: 150, latent: { stat: 'charisma', amount: 2 } },
+    rarity: 'silver',
+  },
+
+  // ── 武學秘籍 — duel manuals. Studying deepens the officer's 武學修為 (§6.10) and
+  // banks 心得. Rare finds — surface as 游历/尋寶探秘 rewards and 名城 treasures. ──
+  {
+    id: 'wuwu-mijue',
+    name: { en: 'Secret Art of the Five Weapons', zh: '五兵秘訣' },
+    kind: 'book',
+    originCityId: 'luoyang',
+    description: 'A duellist’s hand-copied treatise on the five arms. Poring over it deepens one’s mastery of single combat.',
+    descriptionZh: '鬥將手抄五兵之秘。研習之,武學修為大進,單挑之藝益精。',
+    effects: {},
+    consumable: { xiuwei: 22, insight: 8 },
+    rarity: 'gold',
+  },
+  {
+    id: 'jianjing-manual',
+    name: { en: 'The Sword Canon', zh: '越女劍經' },
+    kind: 'book',
+    originCityId: 'kuaiji',
+    description: 'The Yue Maiden’s lore on the sword — of spirit within and stillness without. Study sharpens a fighter’s edge.',
+    descriptionZh: '越女論劍:內固精神,外示安逸。研習之,劍術修為漸深。',
+    effects: {},
+    consumable: { xiuwei: 14, insight: 5 },
+    rarity: 'silver',
+  },
+  {
+    id: 'shesheng-shu',
+    name: { en: 'Yang Youji’s Archery Codex', zh: '養由基射訣' },
+    kind: 'book',
+    originCityId: 'wan',
+    description: 'The peerless archer’s notes on breath, stance and the hundred-pace shot. Study hones a marksman’s craft.',
+    descriptionZh: '神射養由基論氣、勢與百步穿楊之訣。研習之,弓道修為益進。',
+    effects: {},
+    consumable: { xiuwei: 14, insight: 5 },
     rarity: 'silver',
   },
 

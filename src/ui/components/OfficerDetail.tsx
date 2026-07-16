@@ -38,6 +38,8 @@ import { renownFromDeeds, fameTier, fameMedal } from '../../game/systems/fame';
 import { xpProgress, learnableSkills, canBreakthrough, breakthroughCost, breakthroughIronCost, BREAKTHROUGH_PATHS, MAX_BREAKTHROUGHS, breakthroughTitle, growthPowerMul, growthAptitude, aptitudeLabel, EPIPHANY_THRESHOLD } from '../../game/systems/growth';
 import { canAppraise, GRADE_LABEL } from '../../game/systems/appraisal';
 import { officerGrade, officerLevel, nextGradeGap, gradeMeta } from '../../game/systems/officerGrade';
+import { weaponClassFor } from '../../game/systems/duel';
+import { martialXiuwei, martialInsight, martialTier, martialTrainCost, martialSchoolName, MARTIAL_XIUWEI_MAX } from '../../game/systems/martialArts';
 import { MAX_STARS, officerStars, nextStarRequirement, scrollStarCost } from '../../game/systems/stars';
 import { armProficiency, armProficiencyTier, armMasteryPerkOf, PROF_ARM_LABEL, profArmOf, type ProfArm } from '../../game/systems/armProficiency';
 import { activeMountBondSeasons, mountBondMul } from '../../game/systems/mountBond';
@@ -186,6 +188,7 @@ export function OfficerDetail({
   const breakthroughOfficerFn = useGameStore((s) => s.breakthroughOfficer);
   const assignMentorFn = useGameStore((s) => s.assignMentor);
   const studyManualFn = useGameStore((s) => s.studyManual);
+  const trainMartialFn = useGameStore((s) => s.trainMartialArts);
   const issueCommandFn = useGameStore((s) => s.issueCommand);
   const appraiseOfficerFn = useGameStore((s) => s.appraiseOfficer);
   const activeTraining = pendingTrainings.find((tr) => tr.officerId === officer.id);
@@ -1052,6 +1055,49 @@ export function OfficerDetail({
                       {progressMsg && <span style={{ fontSize: '0.72rem', color: '#9ed8b8' }}>{progressMsg}</span>}
                     </div>
                   )}
+
+                  {/* 武學修煉 — a duel-only mastery track (§6.10): spend arena 心得
+                      to deepen 修為, unlocking moves sooner + lending prowess/氣. */}
+                  {isMine && (() => {
+                    const school = martialSchoolName(weaponClassFor(officer));
+                    const xw = martialXiuwei(officer);
+                    const tier = martialTier(officer);
+                    const insight = martialInsight(officer);
+                    const trainCost = martialTrainCost(xw);
+                    const maxed = xw >= MARTIAL_XIUWEI_MAX;
+                    const canTrain = !maxed && insight >= trainCost;
+                    return (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <span style={labelStyle}>{t('武學', 'Martial')}</span>
+                        <span style={{ fontSize: '0.8rem', color: '#e0b070' }} title={t('武學流派 · 修為境界', 'weapon school · mastery tier')}>
+                          {lang === 'en' ? school.en : school.zh} · {lang === 'en' ? tier.en : tier.zh}
+                        </span>
+                        <span title={t(`修為 ${xw}/${MARTIAL_XIUWEI_MAX}`, `mastery ${xw}/${MARTIAL_XIUWEI_MAX}`)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          <span style={{ width: 74, height: 7, background: '#10161e', border: '1px solid #3a2c14', borderRadius: 'var(--tkm-radius-xs)', overflow: 'hidden' }}>
+                            <span style={{ display: 'block', width: `${xw}%`, height: '100%', background: 'linear-gradient(90deg,#c98a3a,#f0c060)' }} />
+                          </span>
+                        </span>
+                        <span style={{ fontSize: '0.74rem', color: '#9aa7b3' }}>{t('心得', 'Insight')} <b style={{ color: '#cbe6ef' }}>{insight}</b></span>
+                        {maxed ? (
+                          <span style={{ fontSize: '0.72rem', color: '#7a8893' }}>{t('已臻武神', 'War-God — maxed')}</span>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              const r = trainMartialFn(officer.id);
+                              setProgressMsg(r.ok
+                                ? (r.tierUpZh ? t(`修為精進 — 臻「${r.tierUpZh}」!`, `Mastery deepens — reached ${r.tierUpEn}!`) : t(`修為 +${r.gained}`, `mastery +${r.gained}`))
+                                : t('心得不足', 'Not enough insight'));
+                            }}
+                            disabled={!canTrain}
+                            title={t(`演武修煉 · 耗 ${trainCost} 心得 → 修為 +5`, `Cultivate · ${trainCost} insight → +5 mastery`)}
+                            style={{ cursor: canTrain ? 'pointer' : 'not-allowed', padding: '0.1rem 0.5rem', borderRadius: 'var(--tkm-radius-xs)', background: canTrain ? 'linear-gradient(180deg,#4a3a1a,#2a2010)' : '#10161e', border: '1px solid #e0b070', color: canTrain ? '#f0d890' : '#6a7480', fontSize: '0.74rem' }}
+                          >
+                            {t(`修煉 (${trainCost})`, `Cultivate (${trainCost})`)}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* 可習之技 — skills this officer could still grow into */}
                   {pool.length > 0 && (
