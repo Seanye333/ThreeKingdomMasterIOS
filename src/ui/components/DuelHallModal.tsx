@@ -3,8 +3,8 @@ import { useGameStore } from '../../game/state/store';
 import type { BoutRecord } from '../../game/systems/duelHall';
 import { ladderBoard, ratingTier } from '../../game/systems/warRanking';
 import { NEMESIS_THRESHOLD, type RivalryRecord } from '../../game/systems/rivalries';
-import { resolveDuel, canDuel, staticProwess } from '../../game/systems/duel';
-import { resolveTeamDuel } from '../../game/systems/teamDuel';
+import { resolveDuel, canDuel, staticProwess, weaponClassFor } from '../../game/systems/duel';
+import { resolveTeamDuel, type TeamStation } from '../../game/systems/teamDuel';
 import { wagerMultiplier, wagerProfit } from '../../game/systems/wager';
 import { Modal } from './Modal';
 import { OfficerPortrait } from './OfficerPortrait';
@@ -44,6 +44,8 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
   // 團戰演武 — a practice N-vs-M champion melee (no consequences).
   const [meleePick, setMeleePick] = useState('');
   const [meleeResult, setMeleeResult] = useState<{ winner: 'a' | 'b' | 'draw'; log: string[] } | null>(null);
+  // 站位 — player-set van/rear per teammate (unset = default: bow rear, else van).
+  const [stations, setStations] = useState<Record<string, TeamStation>>({});
   const [replay, setReplay] = useState<BoutRecord | null>(null);
   // 賭坊 — bet on a duel between any two warriors; the house resolves it.
   const fighters = useMemo(
@@ -106,13 +108,16 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
       ? { text: t(`擊退挑戰者 ${cn} — 續守擂台!心得 +${r.insight}・${r.gold} 金`, `Turned away ${cn} — you hold! +${r.insight} insight, +${r.gold} gold`), win: true }
       : { text: t(`敗於 ${cn} 之手 — 痛失擂主!`, `${cn} beats you — the arena seat is lost!`), win: false });
   };
+  const stationOf = (o: { id: string }): TeamStation =>
+    stations[o.id] ?? (weaponClassFor(officers[o.id]) === 'bow' ? 'rear' : 'van');
   const runMelee = () => {
     const cap = officers[meleePick];
     if (!cap) return;
     const mine = [cap, ...myFighters.filter((o) => o.id !== cap.id).slice(0, 2)];
     const foes = foeFighters.slice(0, 3);
     if (!foes.length) { setMeleeResult({ winner: 'a', log: [t('無敵可戰。', 'No foes to face.')] }); return; }
-    const res = resolveTeamDuel(mine, foes);
+    // 站位 — my side fields the player's van/rear picks; the foe fields defaults.
+    const res = resolveTeamDuel(mine.map((o) => ({ officer: o, station: stationOf(o) })), foes);
     setMeleeResult({ winner: res.winner, log: res.log.map((l) => (lang === 'en' ? l.en : l.zh)) });
   };
 
@@ -257,14 +262,31 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
             if (!cap) return null;
             const mine = [cap, ...myFighters.filter((o) => o.id !== cap.id).slice(0, 2)];
             const foes = foeFighters.slice(0, 3);
-            const roster = (arr: typeof mine, color: string) => (
-              <div style={{ flex: 1 }}>{arr.map((o) => <div key={o.id} style={{ color, fontSize: '0.78rem' }}>{nm(o.id)} <span style={{ color: '#7a8893' }}>武{o.stats.war}·勇{staticProwess(o)}</span></div>)}</div>
+            // 站位 — my side's van/rear is a toggle chip: 前鋒 screens, 後衛 is
+            // screened (a rear archer shoots full; a rear melee arm only pokes).
+            const chip = (o: typeof mine[number]) => {
+              const st = stationOf(o);
+              return (
+                <button
+                  onClick={() => setStations((s) => ({ ...s, [o.id]: st === 'van' ? 'rear' : 'van' }))}
+                  title={t('點擊切換 前鋒/後衛 — 前鋒掩護後衛;後衛弓手全力放箭、近戰只掠陣', 'Toggle van/rear — the van screens; a rear archer shoots full, rear melee only pokes')}
+                  style={{ padding: '0 0.3rem', marginLeft: 4, borderRadius: 'var(--tkm-radius-xs)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.68rem', background: st === 'van' ? 'rgba(200,120,60,0.2)' : 'rgba(90,140,220,0.18)', border: `1px solid ${st === 'van' ? '#d08a4a' : '#6a9ade'}`, color: st === 'van' ? '#f0c48a' : '#aac8f0' }}
+                >{st === 'van' ? t('前鋒', 'Van') : t('後衛', 'Rear')}</button>
+              );
+            };
+            const roster = (arr: typeof mine, color: string, toggle: boolean) => (
+              <div style={{ flex: 1 }}>{arr.map((o) => (
+                <div key={o.id} style={{ color, fontSize: '0.78rem' }}>
+                  {nm(o.id)} <span style={{ color: '#7a8893' }}>武{o.stats.war}·勇{staticProwess(o)}</span>
+                  {toggle ? chip(o) : <span style={{ marginLeft: 4, color: '#7a8893', fontSize: '0.68rem' }}>{weaponClassFor(o) === 'bow' ? t('後衛', 'rear') : t('前鋒', 'van')}</span>}
+                </div>
+              ))}</div>
             );
             return (
               <div style={{ display: 'flex', gap: 10, background: '#10161e', border: '1px solid #26323e', borderRadius: 'var(--tkm-radius-sm)', padding: '0.5rem' }}>
-                {roster(mine, '#7fc7ff')}
+                {roster(mine, '#7fc7ff', true)}
                 <span style={{ alignSelf: 'center', color: '#e08a4a' }}>⚔</span>
-                {roster(foes, '#ff9a7a')}
+                {roster(foes, '#ff9a7a', false)}
               </div>
             );
           })()}

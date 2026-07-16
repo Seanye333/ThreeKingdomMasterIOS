@@ -117,6 +117,46 @@ export function trainMartialArts(o: Officer): MartialTrainResult | null {
   };
 }
 
+// ─── 宗師傳藝 — a grandmaster hands their craft down ──────────────────────────
+// A 宗師+ (tier ≥4) may spend 心得 to drill a junior directly: the pupil gains
+// 修為 without the arena grind. Same-school pupils learn faster, and a bonded
+// 師徒 pair (pupil.mentorId === master.id) faster still — but no pupil is taught
+// past the shadow of their teacher (capped short of the master's own 修為).
+
+export const TRANSMIT_COST = 6;      // 心得 the master spends per session
+export const TRANSMIT_BASE_GAIN = 8; // pupil 修為 gained (before bonuses)
+
+export function canTransmitArts(master: Officer, pupil: Officer): { ok: boolean; reason?: string } {
+  if (master.id === pupil.id) return { ok: false, reason: 'self' };
+  if (martialTier(master).tier < 4) return { ok: false, reason: 'not-grandmaster' };
+  if (martialInsight(master) < TRANSMIT_COST) return { ok: false, reason: 'no-insight' };
+  if (martialXiuwei(pupil) >= martialXiuwei(master) - 10) return { ok: false, reason: 'pupil-too-advanced' };
+  return { ok: true };
+}
+
+/** 修為 a session confers: base + 同門 (same weapon school) + 師徒 bond. */
+export function transmitGain(sameSchool: boolean, mentorPair: boolean): number {
+  return TRANSMIT_BASE_GAIN + (sameSchool ? 2 : 0) + (mentorPair ? 4 : 0);
+}
+
+export interface TransmitResult { pupilXiuwei: number; masterInsight: number; gained: number; tierUp: MartialTierInfo | null; }
+/** Apply one 傳藝 session (pure). Returns null if the gate fails. The pupil is
+ *  never taught past (master's 修為 − 5) — the art's edge stays the teacher's. */
+export function transmitArts(master: Officer, pupil: Officer, sameSchool: boolean, mentorPair: boolean): TransmitResult | null {
+  if (!canTransmitArts(master, pupil).ok) return null;
+  const before = martialXiuwei(pupil);
+  const beforeTier = tierOfXiuwei(before).tier;
+  const cap = Math.min(MARTIAL_XIUWEI_MAX, martialXiuwei(master) - 5);
+  const after = Math.min(cap, before + transmitGain(sameSchool, mentorPair));
+  const afterInfo = tierOfXiuwei(after);
+  return {
+    pupilXiuwei: after,
+    masterInsight: martialInsight(master) - TRANSMIT_COST,
+    gained: after - before,
+    tierUp: afterInfo.tier > beforeTier ? afterInfo : null,
+  };
+}
+
 // ─── 苦戰頓悟 — a hard-won bout deepens a fighter's craft ─────────────────────
 // A clean spar wins a little 心得; a bout hard-fought — a much stronger foe bested,
 // a win by a hair, or a famed rival felled — can spark a 頓悟 for a deeper draught.

@@ -4,6 +4,7 @@ import {
   martialXiuwei, martialInsight, martialTier, tierOfXiuwei, martialBonus,
   martialTrainCost, trainMartialArts, MARTIAL_TRAIN_STEP, MARTIAL_XIUWEI_MAX,
   checkMartialEpiphany, martialSchoolName, MARTIAL_SCHOOL,
+  canTransmitArts, transmitArts, transmitGain, TRANSMIT_COST, TRANSMIT_BASE_GAIN,
 } from './martialArts';
 import { staticProwess, isDuelMoveUnlocked, initDuelBout, weaponClassFor } from './duel';
 import { mkOfficer, seededRng } from '../../test/factories';
@@ -62,6 +63,32 @@ describe('修煉 — spend 心得 to raise 修為', () => {
   it('refuses when 心得 is short or 修為 maxed', () => {
     expect(trainMartialArts(mkOfficer({ martialXiuwei: 0, martialInsight: 1 }))).toBeNull();
     expect(trainMartialArts(mkOfficer({ martialXiuwei: 100, martialInsight: 999 }))).toBeNull();
+  });
+});
+
+describe('宗師傳藝 (transmitArts)', () => {
+  const master = mkOfficer({ id: 'master', stats: W(92), martialXiuwei: 85, martialInsight: 20 }); // 宗師
+  it('gates: only a 宗師+ with 心得 teaches, and never a near-peer', () => {
+    expect(canTransmitArts(master, mkOfficer({ id: 'p1', martialXiuwei: 10 })).ok).toBe(true);
+    expect(canTransmitArts(mkOfficer({ id: 'adept', martialXiuwei: 50, martialInsight: 20 }), mkOfficer({ id: 'p2' })).ok).toBe(false); // not grandmaster
+    expect(canTransmitArts(mkOfficer({ id: 'broke', martialXiuwei: 85, martialInsight: 2 }), mkOfficer({ id: 'p3' })).ok).toBe(false);   // no insight
+    expect(canTransmitArts(master, mkOfficer({ id: 'peer', martialXiuwei: 80 })).ok).toBe(false); // pupil too advanced
+    expect(canTransmitArts(master, master).ok).toBe(false); // self
+  });
+  it('a session moves 修為 to the pupil and 心得 off the master', () => {
+    const pupil = mkOfficer({ id: 'pupil', martialXiuwei: 10 });
+    const r = transmitArts(master, pupil, false, false)!;
+    expect(r.gained).toBe(TRANSMIT_BASE_GAIN);
+    expect(r.pupilXiuwei).toBe(10 + TRANSMIT_BASE_GAIN);
+    expect(r.masterInsight).toBe(20 - TRANSMIT_COST);
+  });
+  it('同門 and 師徒 learn faster; never taught past the teacher', () => {
+    expect(transmitGain(true, true)).toBe(TRANSMIT_BASE_GAIN + 6);
+    // cap: a pupil close to the ceiling only gains up to master − 5
+    const nearly = mkOfficer({ id: 'near', martialXiuwei: 74 });
+    const r = transmitArts(master, nearly, true, true)!; // 74 + 14 → capped at 80
+    expect(r.pupilXiuwei).toBe(85 - 5);
+    expect(r.gained).toBe(6);
   });
 });
 

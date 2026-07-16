@@ -47,6 +47,32 @@ describe('resolveTeamDuel', () => {
     expect(bloodied).toBeGreaterThan(20);
   });
 
+  it('站位 — the van screens the rear from melee until it falls', () => {
+    // one huge melee attacker vs a van screen + a weak rear fighter
+    const bruiser = mkOfficer({ id: 'bruiser', stats: W(99), traits: ['matchless'] });
+    const van = mkOfficer({ id: 'van', stats: W(70) });
+    const rear = mkOfficer({ id: 'rear', stats: W(55) });
+    const r = resolveTeamDuel([bruiser], [{ officer: van, station: 'van' }, { officer: rear, station: 'rear' }], seededRng(3));
+    const vanF = r.b.find((f) => f.id === 'van')!;
+    const rearF = r.b.find((f) => f.id === 'rear')!;
+    // the rear fighter is untouched (or barely) until the van goes down
+    if (vanF.downed && rearF.downed) {
+      expect(rearF.downedRound!).toBeGreaterThan(vanF.downedRound!);
+    } else if (!vanF.downed) {
+      expect(rearF.downed).toBe(false); // screen held the whole bout
+    }
+  });
+
+  it('站位 — an archer shoots over the screen from round one', () => {
+    const archer = mkOfficer({ id: 'huang-zhong', stats: W(93) }); // bow via WEAPON_CLASS_BY_OFFICER
+    const van = mkOfficer({ id: 'wall', stats: W(85) });
+    const rear = mkOfficer({ id: 'squish', stats: W(50) });
+    const r = resolveTeamDuel([archer], [{ officer: van, station: 'van' }, { officer: rear, station: 'rear' }], seededRng(6));
+    const rearF = r.b.find((f) => f.id === 'squish')!;
+    // the archer focuses the weakest (the rear) despite the screen — it takes hits
+    expect(rearF.stamina).toBeLessThan(100);
+  });
+
   it('teamDuelSlain lists only the truly killed (yielded/fled survive)', () => {
     const strong = [mkOfficer({ id: 'x', stats: W(99), traits: ['matchless'] })];
     const cravens = [mkOfficer({ id: 'c1', stats: W(55), traits: ['cowardly'] }), mkOfficer({ id: 'c2', stats: W(54), traits: ['cowardly'] })];

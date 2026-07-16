@@ -30,8 +30,8 @@ import { grantDeedTitles } from '../systems/deedTitles';
 import { pushBoutRecord } from '../systems/duelHall';
 import { recordRivalryBout, pairKey as rivalPairKey, NEMESIS_THRESHOLD } from '../systems/rivalries';
 import { challengeStakes } from '../systems/duelChallenge';
-import { trainMartialArts, MARTIAL_XIUWEI_MAX } from '../systems/martialArts';
-import { resolveDuel, canDuel, staticProwess } from '../systems/duel';
+import { trainMartialArts, MARTIAL_XIUWEI_MAX, transmitArts, canTransmitArts } from '../systems/martialArts';
+import { resolveDuel, canDuel, staticProwess, weaponClassFor } from '../systems/duel';
 import { pickArenaChampion, pickArenaChallenger, arenaTakeReward, arenaHoldStipend } from '../systems/arenaLadder';
 import { applyBout, seedRating } from '../systems/warRanking';
 import { tickAfflictions, withAffliction, hasChronicAilment, rollChronicAilment, cureChronicAilments, chronicAilmentOf, type Affliction } from '../systems/afflictions';
@@ -1001,6 +1001,8 @@ interface GameStore extends GameState {
   trainMartialArts: (officerId: EntityId) => { ok: boolean; reason?: string; xiuwei?: number; gained?: number; tierUpZh?: string; tierUpEn?: string };
   /** 修為直增 — raise an officer's 修為 directly (for AI fighters who never 修煉). */
   growMartialXiuwei: (officerId: EntityId, amount: number) => void;
+  /** 宗師傳藝 — a 宗師+ master spends 心得 to drill a same-city junior's 修為 (§6.10). */
+  transmitMartialArts: (masterId: EntityId, pupilId: EntityId) => { ok: boolean; reason?: string; gained?: number; tierUpZh?: string; tierUpEn?: string };
   /** 打擂 — challenge the standing arena champion (§6.11); win to take the 擂主 seat. */
   challengeArena: (challengerId: EntityId) => { ok: boolean; reason?: string; won?: boolean; championZh?: string; championEn?: string; insight?: number; gold?: number };
   /** 坐鎮擂台 — hold the seat one season against a fresh challenger (stipend / seat risk). */
@@ -12022,6 +12024,24 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // 修為直增 — for NON-player fighters (who never manually 修煉), so AI 鬥將
         // deepen their craft organically from the bouts they fight (§6.10).
         set({ officers: { ...state.officers, [officerId]: { ...o, martialXiuwei: Math.min(MARTIAL_XIUWEI_MAX, (o.martialXiuwei ?? 0) + amount) } } });
+      },
+      transmitMartialArts: (masterId, pupilId) => {
+        const state = get();
+        const master = state.officers[masterId];
+        const pupil = state.officers[pupilId];
+        if (!master || !pupil) return { ok: false, reason: 'no-officer' };
+        if (master.forceId !== state.playerForceId || pupil.forceId !== state.playerForceId) return { ok: false, reason: 'not-yours' };
+        if (!master.locationCityId || master.locationCityId !== pupil.locationCityId) return { ok: false, reason: 'not-together' };
+        const sameSchool = weaponClassFor(master) === weaponClassFor(pupil);
+        const mentorPair = pupil.mentorId === master.id;
+        const r = transmitArts(master, pupil, sameSchool, mentorPair);
+        if (!r) return { ok: false, reason: canTransmitArts(master, pupil).reason ?? 'blocked' };
+        set({ officers: {
+          ...state.officers,
+          [masterId]: { ...master, martialInsight: r.masterInsight },
+          [pupilId]: { ...pupil, martialXiuwei: r.pupilXiuwei },
+        } });
+        return { ok: true, gained: r.gained, tierUpZh: r.tierUp?.zh, tierUpEn: r.tierUp?.en };
       },
       trainMartialArts: (officerId) => {
         const state = get();

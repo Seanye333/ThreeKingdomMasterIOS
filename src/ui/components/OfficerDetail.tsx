@@ -39,7 +39,7 @@ import { xpProgress, learnableSkills, canBreakthrough, breakthroughCost, breakth
 import { canAppraise, GRADE_LABEL } from '../../game/systems/appraisal';
 import { officerGrade, officerLevel, nextGradeGap, gradeMeta } from '../../game/systems/officerGrade';
 import { weaponClassFor } from '../../game/systems/duel';
-import { martialXiuwei, martialInsight, martialTier, martialTrainCost, martialSchoolName, MARTIAL_XIUWEI_MAX } from '../../game/systems/martialArts';
+import { martialXiuwei, martialInsight, martialTier, martialTrainCost, martialSchoolName, MARTIAL_XIUWEI_MAX, canTransmitArts, TRANSMIT_COST } from '../../game/systems/martialArts';
 import { MAX_STARS, officerStars, nextStarRequirement, scrollStarCost } from '../../game/systems/stars';
 import { armProficiency, armProficiencyTier, armMasteryPerkOf, PROF_ARM_LABEL, profArmOf, type ProfArm } from '../../game/systems/armProficiency';
 import { activeMountBondSeasons, mountBondMul } from '../../game/systems/mountBond';
@@ -189,6 +189,7 @@ export function OfficerDetail({
   const assignMentorFn = useGameStore((s) => s.assignMentor);
   const studyManualFn = useGameStore((s) => s.studyManual);
   const trainMartialFn = useGameStore((s) => s.trainMartialArts);
+  const transmitMartialFn = useGameStore((s) => s.transmitMartialArts);
   const issueCommandFn = useGameStore((s) => s.issueCommand);
   const appraiseOfficerFn = useGameStore((s) => s.appraiseOfficer);
   const activeTraining = pendingTrainings.find((tr) => tr.officerId === officer.id);
@@ -1095,6 +1096,36 @@ export function OfficerDetail({
                             {t(`修煉 (${trainCost})`, `Cultivate (${trainCost})`)}
                           </button>
                         )}
+                        {/* 宗師傳藝 — a 宗師+ hands their craft down to a same-city junior
+                            (同門 & 師徒 learn faster; never taught past the teacher). */}
+                        {tier.tier >= 4 && (() => {
+                          const pupils = Object.values(allOfficers).filter((p) =>
+                            p.id !== officer.id && p.forceId === officer.forceId && p.status !== 'dead'
+                            && p.locationCityId === officer.locationCityId && canTransmitArts(officer, p).ok);
+                          if (!pupils.length) return null;
+                          return (
+                            <select
+                              defaultValue=""
+                              onChange={(e) => {
+                                const pid = e.target.value;
+                                if (!pid) return;
+                                e.target.value = '';
+                                const r = transmitMartialFn(officer.id, pid);
+                                const pn = allOfficers[pid];
+                                setProgressMsg(r.ok
+                                  ? t(`傳藝 ${pn ? pn.name.zh : ''} — 其修為 +${r.gained}${r.tierUpZh ? `,臻「${r.tierUpZh}」` : ''}`, `Taught ${pn ? pn.name.en : ''} — +${r.gained} mastery${r.tierUpEn ? `, now ${r.tierUpEn}` : ''}`)
+                                  : t('無法傳藝', 'Cannot teach'));
+                              }}
+                              title={t(`宗師傳藝 · 耗 ${TRANSMIT_COST} 心得,授同城弟子修為(同門/師徒更速)`, `Hand down the art · ${TRANSMIT_COST} insight; same-school / mentor pupils learn faster`)}
+                              style={{ padding: '0.1rem 0.3rem', borderRadius: 'var(--tkm-radius-xs)', background: '#10161e', border: '1px solid #8ec8a0', color: '#bfe6cf', fontSize: '0.72rem', fontFamily: 'inherit' }}
+                            >
+                              <option value="">{t('👐 傳藝…', '👐 Teach…')}</option>
+                              {pupils.slice(0, 12).map((p) => (
+                                <option key={p.id} value={p.id}>{lang === 'en' ? p.name.en : p.name.zh} · {martialXiuwei(p)}</option>
+                              ))}
+                            </select>
+                          );
+                        })()}
                       </div>
                     );
                   })()}

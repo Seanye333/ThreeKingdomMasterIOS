@@ -1,5 +1,5 @@
 import type { Officer } from '../types';
-import { staticProwess, duelDeathFate, type DuelFate } from './duel';
+import { staticProwess, duelDeathFate, weaponClassFor, type DuelFate } from './duel';
 import { areBonded } from './tactical';
 import { areSwornBrothers } from './relationshipEffects';
 import { gradeCombatBonus } from './gradeCombat';
@@ -17,12 +17,21 @@ import { gradeCombatBonus } from './gradeCombat';
 
 const MAX_TEAM_ROUNDS = 12;
 
+/** 站位 — 前鋒 (van) screens the 後衛 (rear). Melee can only reach the rear once
+ *  every van of that side is down; a 弓手 shoots over the screen from the start. */
+export type TeamStation = 'van' | 'rear';
+export interface TeamMember { officer: Officer; station?: TeamStation }
+
 export interface TeamFighter {
   id: string;
   officer: Officer;
   stamina: number;
   prowess: number;
   side: 'a' | 'b';
+  /** 站位 — van screens; rear is screened (and a rear melee arm pokes at ×0.55). */
+  station: TeamStation;
+  /** 弓手 — shoots over the enemy screen, and at full power from the rear. */
+  ranged: boolean;
   downed: boolean;
   /** Set once downed: 斬 (slain) / 請降 (yield) / 落荒 (flee), per 膽氣. */
   fate?: DuelFate;
@@ -43,15 +52,23 @@ function synergy(x: Officer, y: Officer): boolean {
   return areBonded(x.id, y.id) || areSwornBrothers(x.id, y.id);
 }
 
-export function resolveTeamDuel(sideA: Officer[], sideB: Officer[], rng: () => number = Math.random): TeamDuelResult {
-  const mk = (o: Officer, side: 'a' | 'b'): TeamFighter => ({
-    id: o.id, officer: o, side,
-    prowess: staticProwess(o),
-    stamina: 100 + gradeCombatBonus(o).duelStamina,
-    downed: false,
-  });
-  const A = sideA.map((o) => mk(o, 'a'));
-  const B = sideB.map((o) => mk(o, 'b'));
+export function resolveTeamDuel(sideA: Array<Officer | TeamMember>, sideB: Array<Officer | TeamMember>, rng: () => number = Math.random): TeamDuelResult {
+  const norm = (x: Officer | TeamMember): TeamMember => ('officer' in x ? x : { officer: x });
+  const mk = (m: TeamMember, side: 'a' | 'b'): TeamFighter => {
+    const o = m.officer;
+    const ranged = weaponClassFor(o) === 'bow';
+    return {
+      id: o.id, officer: o, side,
+      prowess: staticProwess(o),
+      stamina: 100 + gradeCombatBonus(o).duelStamina,
+      // Default stations: archers hang back, everyone else takes the van.
+      station: m.station ?? (ranged ? 'rear' : 'van'),
+      ranged,
+      downed: false,
+    };
+  };
+  const A = sideA.map((x) => mk(norm(x), 'a'));
+  const B = sideB.map((x) => mk(norm(x), 'b'));
   const log: { zh: string; en: string }[] = [];
   const alive = (arr: TeamFighter[]) => arr.filter((f) => !f.downed);
   const nm = (f: TeamFighter) => f.officer.name;
@@ -62,23 +79,32 @@ export function resolveTeamDuel(sideA: Officer[], sideB: Officer[], rng: () => n
     if (!av.length || !bv.length) break;
     rounds = r;
 
-    // Targeting — focus fire the enemy on the least 氣力 (finish the weakest first).
+    // 站位 — the van screens the rear: melee reaches the rear only once every
+    // van of that side is down; a 弓手 shoots over the screen from round one.
+    const screened = (foes: TeamFighter[]) => foes.some((f) => f.station === 'van');
+    const reachable = (atk: TeamFighter, foes: TeamFighter[]) =>
+      atk.ranged || !screened(foes) ? foes : foes.filter((f) => f.station === 'van');
+    // Targeting — focus fire the reachable enemy on the least 氣力.
     const pickTarget = (foes: TeamFighter[]) =>
       foes.reduce((m, f) => (f.stamina < m.stamina ? f : m), foes[0]);
     const incoming = new Map<string, { atk: TeamFighter; dmg: number }[]>();
-    const queue = (atk: TeamFighter, foes: TeamFighter[]) => {
+    const queue = (atk: TeamFighter, foesAll: TeamFighter[], ownSide: TeamFighter[]) => {
+      const foes = reachable(atk, foesAll);
       if (!foes.length) return;
       const tgt = pickTarget(foes);
       const edge = Math.max(-8, Math.min(16, (atk.prowess - tgt.prowess) * 0.25));
       let dmg = 12 + Math.floor(rng() * 10) + edge;
+      // 掠陣 — a rear MELEE arm only pokes past its own screen (×0.55) while that
+      // screen stands; once the van falls they step up and strike full.
+      if (!atk.ranged && atk.station === 'rear' && ownSide.some((f) => f.station === 'van')) dmg *= 0.55;
       const arr = incoming.get(tgt.id) ?? [];
       // 合擊 — a blow lands harder if a bonded ally is already pressing this foe.
       if (arr.some((x) => synergy(x.atk.officer, atk.officer))) dmg += 8;
       arr.push({ atk, dmg: Math.max(4, Math.round(dmg)) });
       incoming.set(tgt.id, arr);
     };
-    for (const atk of av) queue(atk, bv);
-    for (const atk of bv) queue(atk, av);
+    for (const atk of av) queue(atk, bv, av);
+    for (const atk of bv) queue(atk, av, bv);
 
     // Apply — 圍攻: a fighter turns aside only their single deadliest attacker (−40%);
     // every other blow lands clean. Being ganged is punishing.
