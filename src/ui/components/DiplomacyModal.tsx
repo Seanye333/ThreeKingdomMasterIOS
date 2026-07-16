@@ -15,6 +15,8 @@ import type {
 import { getRelation } from '../../game/types';
 import { MarriagePicker } from './MarriagePicker';
 import { HostagePicker } from './HostagePicker';
+import { Duel3DStage } from './duel/Duel3DStage';
+import { PEACE_DUEL_COST } from '../../game/systems/duelDiplomacy';
 import { Icon } from './Icon';
 import { Name } from './Name';
 import { useT } from '../i18n';
@@ -71,6 +73,10 @@ export function DiplomacyModal({ onClose }: Props) {
   const requestMediation = useGameStore((s) => s.requestMediation);
   // §7.1-deep 外交再深化
   const offerTribute = useGameStore((s) => s.offerTribute);
+  const proposePeaceDuel = useGameStore((s) => s.proposePeaceDuel);
+  const settlePeaceDuel = useGameStore((s) => s.settlePeaceDuel);
+  // 決鬥定和 — an accepted proposal fights ONE non-lethal championship bout.
+  const [peaceDuel, setPeaceDuel] = useState<{ forceId: EntityId; meId: EntityId; foeId: EntityId } | null>(null);
   const exactTribute = useGameStore((s) => s.exactTribute);
   const dissolveTribute = useGameStore((s) => s.dissolveTribute);
   const proposeDefensivePact = useGameStore((s) => s.proposeDefensivePact);
@@ -362,6 +368,22 @@ export function DiplomacyModal({ onClose }: Props) {
                     {t('不戰', 'NAP')} ({NAP_PROPOSAL_COST}{t('金', 'g')})
                   </button>
                   <button
+                    className={styles.napBtn}
+                    onClick={() => {
+                      const r = proposePeaceDuel(row.id);
+                      if (!r.ok) {
+                        setFeedback({ forceId: row.id, text: r.reason === 'no-gold' ? t(`需 ${PEACE_DUEL_COST} 金遣使下書。`, `Needs ${PEACE_DUEL_COST} gold for the envoy.`) : r.reason === 'foe-no-champion' ? t('彼國無將可出。', 'They have no champion to send.') : t('無法決鬥定和。', 'Cannot propose a duel of peace.'), accepted: false });
+                        return;
+                      }
+                      if (!r.accepted) { setFeedback({ forceId: row.id, text: r.message ?? '', accepted: false }); return; }
+                      setPeaceDuel({ forceId: row.id, meId: r.myChampionId!, foeId: r.foeChampionId! });
+                    }}
+                    disabled={row.relation.status !== 'neutral' || playerCapitalGold < PEACE_DUEL_COST}
+                    title={t('決鬥定和 — 兩國各出一將,點到為止,一戰息兵:無論勝負皆締互不侵犯;敗方納金、勝方得威。以戰止戰。', 'Duel of peace — each realm sends a champion for ONE non-lethal bout; either way both swear non-aggression, the loser pays an indemnity. War settled in an afternoon.')}
+                  >
+                    ⚔ {t('決鬥定和', 'Peace Duel')} ({PEACE_DUEL_COST}{t('金', 'g')})
+                  </button>
+                  <button
                     className={styles.tributeBtn}
                     onClick={() =>
                       handle(row.id, () => payTribute(row.id, 100))
@@ -650,6 +672,23 @@ export function DiplomacyModal({ onClose }: Props) {
           <HostagePicker
             targetForceId={hostageTarget}
             onClose={() => setHostageTarget(null)}
+          />
+        )}
+        {/* 決鬥定和 — the accepted challenge fights out here: ONE non-lethal bout
+            (點到為止), then the settlement binds either way (settlePeaceDuel). */}
+        {peaceDuel && officers[peaceDuel.meId] && officers[peaceDuel.foeId] && (
+          <Duel3DStage
+            attacker={officers[peaceDuel.meId]}
+            defender={officers[peaceDuel.foeId]}
+            lethal={false}
+            difficulty="veteran"
+            onComplete={(outcome) => {
+              const pd = peaceDuel;
+              setPeaceDuel(null);
+              const oc = outcome.winner === 'attacker' ? 'win' : outcome.winner === 'defender' ? 'loss' : 'draw';
+              const r = settlePeaceDuel(pd.forceId, pd.meId, pd.foeId, oc);
+              setFeedback({ forceId: pd.forceId, text: r.message, accepted: oc !== 'loss' });
+            }}
           />
         )}
       </div>

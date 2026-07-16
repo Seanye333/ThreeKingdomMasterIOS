@@ -33,6 +33,7 @@ import { challengeStakes } from '../systems/duelChallenge';
 import { trainMartialArts, MARTIAL_XIUWEI_MAX, transmitArts, canTransmitArts } from '../systems/martialArts';
 import { resolveDuel, canDuel, staticProwess, weaponClassFor } from '../systems/duel';
 import { pickArenaChampion, pickArenaChallenger, arenaTakeReward, arenaHoldStipend } from '../systems/arenaLadder';
+import { pickPeaceChampion, willAcceptPeaceDuel, peaceDuelStakes, PEACE_DUEL_COST } from '../systems/duelDiplomacy';
 import { applyBout, seedRating } from '../systems/warRanking';
 import { tickAfflictions, withAffliction, hasChronicAilment, rollChronicAilment, cureChronicAilments, chronicAilmentOf, type Affliction } from '../systems/afflictions';
 import { routConsequence, type RoutConsequence } from '../systems/wordWar';
@@ -982,6 +983,11 @@ interface GameStore extends GameState {
   recordAnnal: (entry: AnnalsEntry) => void;
   /** 代戰認輸金 — move a duel indemnity from the loser's realm to the winner's (§6.13). */
   settleDuelTribute: (loserForceId: EntityId, winnerForceId: EntityId, amount: number) => { moved: number };
+  /** 決鬥定和 — propose settling a quarrel by champions (以戰止戰). Spends the envoy
+   *  fee and rolls the foe's acceptance; on acceptance the host UI fights the bout. */
+  proposePeaceDuel: (targetForceId: EntityId) => { ok: boolean; reason?: string; accepted?: boolean; myChampionId?: EntityId; foeChampionId?: EntityId; message?: string };
+  /** 決鬥定和·締約 — bind the settled bout's terms: NAP both ways; loser pays. */
+  settlePeaceDuel: (targetForceId: EntityId, myChampionId: EntityId, foeChampionId: EntityId, outcome: import('../systems/duelDiplomacy').PeaceDuelOutcome) => { ok: boolean; message: string };
   /** 名局廊 — archive a notable duel/debate so it can be replayed from the hall. */
   recordBout: (rec: import('../systems/duelHall').BoutRecord) => void;
   /** 武評榜 — fold an interactive duel result into the ELO ladder (a from a's view). */
@@ -11882,6 +11888,76 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // Cap the running annals so an active career doesn't grow it unbounded.
         const next = [...(state.annals ?? []), entry].slice(-240);
         set({ annals: next });
+      },
+      proposePeaceDuel: (targetForceId) => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid || targetForceId === pid) return { ok: false, reason: 'no-target' };
+        const foeForce = state.forces[targetForceId];
+        const player = state.forces[pid];
+        if (!foeForce || !player) return { ok: false, reason: 'no-force' };
+        const rel = getRelation(state.diplomacy, pid, targetForceId);
+        if (rel.status !== 'neutral') return { ok: false, reason: 'no-quarrel' }; // a standing pact leaves nothing to settle
+        const capital = state.cities[player.capitalCityId];
+        if (!capital || capital.gold < PEACE_DUEL_COST) return { ok: false, reason: 'no-gold' };
+        const myChamp = pickPeaceChampion(state.officers, pid);
+        const foeChamp = pickPeaceChampion(state.officers, targetForceId);
+        if (!myChamp) return { ok: false, reason: 'no-champion' };
+        if (!foeChamp) return { ok: false, reason: 'foe-no-champion' };
+        // The envoy rides either way — the fee is spent on the proposal.
+        set({ cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - PEACE_DUEL_COST } } });
+        const accepted = willAcceptPeaceDuel(foeChamp, myChamp, state.grudges[targetForceId] ?? 0, Math.random);
+        if (!accepted) {
+          // Ducking a realm's challenge costs face — the refuser softens a touch.
+          const key = pairKey(pid, targetForceId);
+          const cur = getRelation(get().diplomacy, pid, targetForceId);
+          set({ diplomacy: { relations: { ...get().diplomacy.relations, [key]: { ...cur, score: Math.min(100, cur.score + 4) } } } });
+          return { ok: true, accepted: false, message: `${foeForce.name.zh}不敢應戰 — 為天下所笑,其氣稍沮。` };
+        }
+        return { ok: true, accepted: true, myChampionId: myChamp.id, foeChampionId: foeChamp.id };
+      },
+      settlePeaceDuel: (targetForceId, myChampionId, foeChampionId, outcome) => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid) return { ok: false, message: '' };
+        const foeForce = state.forces[targetForceId];
+        const myChamp = state.officers[myChampionId];
+        const foeChamp = state.officers[foeChampionId];
+        if (!foeForce || !myChamp || !foeChamp) return { ok: false, message: '' };
+        // 以戰止戰 — the pact binds either way; the bout decided who pays and how warmly.
+        const stakes = peaceDuelStakes(outcome, outcome === 'win' ? foeChamp : outcome === 'loss' ? myChamp : null);
+        const key = pairKey(pid, targetForceId);
+        const rel = getRelation(state.diplomacy, pid, targetForceId);
+        set({
+          diplomacy: { relations: { ...state.diplomacy.relations, [key]: {
+            ...rel, status: 'non-aggression',
+            score: Math.min(100, rel.score + stakes.scoreDelta),
+            expiresAt: addDiploSeasons(state.date, stakes.napSeasons),
+          } } },
+          grudges: { ...state.grudges, [targetForceId]: Math.max(0, (state.grudges[targetForceId] ?? 0) - stakes.grudgeEase) },
+        });
+        if (stakes.indemnity > 0) {
+          if (outcome === 'win') get().settleDuelTribute(targetForceId, pid, stakes.indemnity);
+          else get().settleDuelTribute(pid, targetForceId, stakes.indemnity);
+        }
+        // 名場面入史 — a realm settled by a single bout is chronicle material.
+        get().recordAnnal({
+          year: state.date.year, season: state.date.season, kind: 'event',
+          titleZh: '決鬥定和',
+          textZh: outcome === 'win'
+            ? `${myChamp.name.zh} 一騎定和 — 力克 ${foeForce.name.zh} 之 ${foeChamp.name.zh},兩國罷兵,敵納金 ${stakes.indemnity}。`
+            : outcome === 'loss'
+              ? `${myChamp.name.zh} 決鬥定和敗於 ${foeChamp.name.zh} — 兩國仍罷兵,我納金 ${stakes.indemnity}。`
+              : `${myChamp.name.zh} 與 ${foeChamp.name.zh} 決鬥定和戰平 — 兩國各守其境。`,
+          cityId: null,
+        });
+        const msg = outcome === 'win'
+          ? `一騎定和!${foeForce.name.zh}罷兵納金 ${stakes.indemnity},互不侵犯 ${stakes.napSeasons} 季。`
+          : outcome === 'loss'
+            ? `敗陣猶得和 — 兩國罷兵(納金 ${stakes.indemnity}),互不侵犯 ${stakes.napSeasons} 季。`
+            : `戰平 — 兩國各守其境,互不侵犯 ${stakes.napSeasons} 季。`;
+        get().notify(`決鬥定和 · ${msg}`, `Duel of peace — settled with ${foeForce.name.en}`);
+        return { ok: true, message: msg };
       },
       settleDuelTribute: (loserForceId, winnerForceId, amount) => {
         const state = get();
