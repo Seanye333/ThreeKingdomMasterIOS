@@ -2171,6 +2171,22 @@ export function applyAimedStrike(bout: DuelBout, side: 'attacker' | 'defender', 
   return { bout: b, ok: true, unhorsed: foe, dmgToFoe: stagger, textZh: '一斬斷馬 — 挑落敵將!', textEn: 'the mount is cut down — the rider falls!' };
 }
 
+// ─── 棄馬步戰 — dismount to fight on foot ─────────────────────────────────────
+// A rider may swing down and fight afoot (關羽下馬 style): they give up 馬上長兵
+// reach AND a 的盧救主 lifeline, but shed the 馬上難閃 penalty (full dodge again)
+// and can no longer be 挑落下馬. A real choice — worth it for a non-long-arm rider
+// (mounted is pure downside for them) or against a foe who threatens the unhorse.
+export function canDismount(bout: DuelBout, side: 'attacker' | 'defender'): boolean {
+  return side === 'attacker' ? bout.aMounted && !bout.aUnhorsed : bout.dMounted && !bout.dUnhorsed;
+}
+/** Dismount a side mid-bout. Pure; the caller tracks that it's a one-time choice. */
+export function dismountBout(bout: DuelBout, side: 'attacker' | 'defender'): DuelBout {
+  const b: DuelBout = { ...bout };
+  if (side === 'attacker') { b.aUnhorsed = true; b.aMountSavior = false; }
+  else { b.dUnhorsed = true; b.dMountSavior = false; }
+  return b;
+}
+
 // ─── 怯戰 — a cornered fighter may break before the killing blow ──────────────
 // The AI-controlled loser, driven low on 氣力 and short on 膽氣, may throw down
 // their arms (請降) or bolt (落荒而逃) rather than fight on to death. Called each

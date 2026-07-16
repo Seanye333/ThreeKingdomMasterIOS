@@ -459,6 +459,9 @@ export interface GameState {
   /** 天下武道會 — the year the realm's tournament last crowned a champion; the
    *  steep 武評榜 climb is a once-a-year prize (not farmable). 0 = never held. */
   lastTournamentYear: number;
+  /** 打擂・擂主 — the standing arena champion (§6.11). Undefined until first seeded
+   *  on a challenge. See systems/arenaLadder.ts. */
+  arenaChampion?: import('../systems/arenaLadder').ArenaChampion;
   /** 單挑戰役 — ids of duel scenarios the player has cleared (campaign progress). */
   clearedDuelScenarios: EntityId[];
   /** Per-turn snapshots of the CURRENT battle (transient, not persisted) —

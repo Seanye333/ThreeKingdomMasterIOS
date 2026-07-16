@@ -5,6 +5,7 @@ import {
   isDuelMoveUnlocked, duelMoveUnlockLevel, signatureUlt, mountEdge, duelPassive, duelScars, DUEL_SCAR_INFO,
   resolveChargePass, applyChargePass,
   applyDuelExploit, applyAimedStrike, checkDuelBreak, TERRAIN_EXPLOIT,
+  canDismount, dismountBout,
   type DuelMove, type DuelBout, type DuelDifficulty, type DuelTerrain, type UltKind, type DuelFate, type AimTarget,
 } from '../../game/systems/duel';
 import { OfficerPortrait } from './OfficerPortrait';
@@ -158,6 +159,7 @@ export function DuelGameModal({
   // their arms (請降) or bolts (落荒而逃), the bout ends with no kill.
   const [usedExploit, setUsedExploit] = useState(false);
   const [usedAimed, setUsedAimed] = useState(false);
+  const [dismounted, setDismounted] = useState(false);
   const [breakFate, setBreakFate] = useState<DuelFate | null>(null);
   // 雙人對戰 — in hot-seat, P1's committed attack waits for P2 to pick the defense.
   const [pendingAtk, setPendingAtk] = useState<DuelMove | null>(null);
@@ -227,6 +229,16 @@ export function DuelGameModal({
     fxKey.current += 1;
     setFx({ key: fxKey.current, hit: 'd', dmg: r.dmgToFoe, killed: false });
     onRound?.({ hit: 'd', killed: false, aMove: 'thrust', dMove: 'guard', over: false, unhorsed: r.unhorsed });
+  };
+
+  // 棄馬步戰 — swing down and fight afoot: shed 馬上難閃 & the 挑落 risk, at the cost
+  // of 馬上長兵 reach and any 的盧救主 lifeline. A one-time choice while still ahorse.
+  const doDismount = () => {
+    if (bout.over || dismounted || !canDismount(bout, 'attacker')) return;
+    setDismounted(true);
+    setBout(dismountBout(bout, 'attacker'));
+    setLog((l) => [`🥾 ${nm(me)} ${t('翻身下馬,步戰迎敵!', 'swings down to fight on foot!')}`, ...l].slice(0, 7));
+    playSfx('click');
   };
 
   // 部位打擊 — an aimed called shot once per bout: 擊械 (缴械) or 斬馬 (挑落下馬).
@@ -497,6 +509,14 @@ export function DuelGameModal({
         title={t(`環境借勢:${exploit.descZh},每局一次`, `Use the terrain: ${exploit.descEn}, once per bout`)}
         style={{ flex: 1.2, padding: '0.32rem 0.2rem', borderRadius: 'var(--tkm-radius-sm)', cursor: usedExploit ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: '0.78rem', background: usedExploit ? '#241c12' : 'rgba(20,28,38,0.96)', border: `1px solid ${usedExploit ? '#243240' : '#d08a4a'}`, color: usedExploit ? '#5a4a36' : '#f0c48a' }}
       >🌪 {t(exploit.zh, exploit.en)}</button>
+      {canDismount(bout, 'attacker') && !dismounted && (
+        <button
+          onClick={doDismount}
+          disabled={bout.over}
+          title={t('棄馬步戰:免挑落、閃避復原,捨馬上長兵與坐騎救主', 'Fight on foot: full dodge, no unhorse risk — but lose mounted reach & any wonder-horse rescue')}
+          style={{ flex: 1, padding: '0.32rem 0.2rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.78rem', background: 'rgba(20,28,38,0.96)', border: '1px solid #9ab06a', color: '#d6e8a8' }}
+        >🥾 {t('棄馬', 'Dismount')}</button>
+      )}
       <button
         onClick={() => doAimed('disarm')}
         disabled={usedAimed || bout.over}

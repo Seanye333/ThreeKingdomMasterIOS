@@ -31,6 +31,8 @@ import { pushBoutRecord } from '../systems/duelHall';
 import { recordRivalryBout, pairKey as rivalPairKey, NEMESIS_THRESHOLD } from '../systems/rivalries';
 import { challengeStakes } from '../systems/duelChallenge';
 import { trainMartialArts, MARTIAL_XIUWEI_MAX } from '../systems/martialArts';
+import { resolveDuel, canDuel, staticProwess } from '../systems/duel';
+import { pickArenaChampion, pickArenaChallenger, arenaTakeReward, arenaHoldStipend } from '../systems/arenaLadder';
 import { applyBout, seedRating } from '../systems/warRanking';
 import { tickAfflictions, withAffliction, hasChronicAilment, rollChronicAilment, cureChronicAilments, chronicAilmentOf, type Affliction } from '../systems/afflictions';
 import { routConsequence, type RoutConsequence } from '../systems/wordWar';
@@ -993,6 +995,10 @@ interface GameStore extends GameState {
   awardMartialInsight: (officerId: EntityId, amount: number) => void;
   /** 武學修煉 — spend banked 心得 to raise the officer's 修為 one step. */
   trainMartialArts: (officerId: EntityId) => { ok: boolean; reason?: string; xiuwei?: number; gained?: number; tierUpZh?: string; tierUpEn?: string };
+  /** 打擂 — challenge the standing arena champion (§6.11); win to take the 擂主 seat. */
+  challengeArena: (challengerId: EntityId) => { ok: boolean; reason?: string; won?: boolean; championZh?: string; championEn?: string; insight?: number; gold?: number };
+  /** 坐鎮擂台 — hold the seat one season against a fresh challenger (stipend / seat risk). */
+  holdArena: () => { ok: boolean; reason?: string; held?: boolean; challengerZh?: string; challengerEn?: string; insight?: number; gold?: number };
   /** 折服來投 — a foe bested (and spared) in a 約戰 comes over to the player's side. */
   recruitViaDuel: (officerId: EntityId) => boolean;
   /** 天下無雙 — crown the 比武大會 champion: a 武評榜 climb + 威名 for the field.
@@ -11992,6 +11998,64 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (!r) return { ok: false, reason: 'insufficient' }; // not enough 心得 or 修為 maxed
         set({ officers: { ...state.officers, [officerId]: { ...o, martialXiuwei: r.xiuwei, martialInsight: r.insight } } });
         return { ok: true, xiuwei: r.xiuwei, gained: r.gained, tierUpZh: r.tierUp?.zh, tierUpEn: r.tierUp?.en };
+      },
+      challengeArena: (challengerId) => {
+        const state = get();
+        const ch = state.officers[challengerId];
+        if (!ch) return { ok: false, reason: 'no-officer' };
+        if (ch.forceId !== state.playerForceId) return { ok: false, reason: 'not-yours' };
+        if (!canDuel(ch).ok) return { ok: false, reason: 'cannot-duel' };
+        // Seed / read the reigning 擂主 — the strongest arm in the land if empty.
+        const seatId = state.arenaChampion?.officerId;
+        let champ = seatId ? state.officers[seatId] : null;
+        if (!champ || champ.status === 'dead' || champ.status === 'imprisoned') champ = pickArenaChampion(state.officers, challengerId);
+        if (!champ) return { ok: false, reason: 'no-champion' };
+        if (champ.id === challengerId) return { ok: false, reason: 'already-champion' };
+        // 擂台為競技,點到為止 — a contest, not to the death (killedId ignored).
+        const res = resolveDuel({ attacker: ch, defender: champ });
+        const won = res.winner === 'attacker';
+        const capId = state.forces[state.playerForceId ?? '']?.capitalCityId;
+        const cap = capId ? state.cities[capId] : null;
+        if (won) {
+          const reward = arenaTakeReward(staticProwess(champ));
+          set({
+            arenaChampion: { officerId: challengerId, sinceYear: state.date.year, defenses: 0 },
+            ...(cap ? { cities: { ...state.cities, [cap.id]: { ...cap, gold: cap.gold + reward.gold } } } : {}),
+          });
+          get().awardMartialInsight(challengerId, reward.insight);
+          if (reward.renown) get().recordDeed(challengerId, { duelsWon: 1 });
+          return { ok: true, won: true, championZh: champ.name.zh, championEn: champ.name.en, insight: reward.insight, gold: reward.gold };
+        }
+        // Lost — the champion holds the seat (or claims it if it was unseated).
+        set({ arenaChampion: state.arenaChampion?.officerId === champ.id
+          ? { ...state.arenaChampion, defenses: state.arenaChampion.defenses + 1 }
+          : { officerId: champ.id, sinceYear: state.date.year, defenses: 0 } });
+        return { ok: true, won: false, championZh: champ.name.zh, championEn: champ.name.en };
+      },
+      holdArena: () => {
+        const state = get();
+        const seat = state.arenaChampion;
+        if (!seat) return { ok: false, reason: 'no-seat' };
+        const champ = state.officers[seat.officerId];
+        if (!champ || champ.forceId !== state.playerForceId) return { ok: false, reason: 'not-holding' };
+        const challenger = pickArenaChallenger(state.officers, champ.id, Math.random);
+        if (!challenger) return { ok: false, reason: 'no-challenger' };
+        const res = resolveDuel({ attacker: challenger, defender: champ });
+        const held = res.winner !== 'attacker'; // the champion (defender) keeps the seat unless bested
+        const capId = state.forces[state.playerForceId ?? '']?.capitalCityId;
+        const cap = capId ? state.cities[capId] : null;
+        if (held) {
+          const stip = arenaHoldStipend(seat.defenses);
+          set({
+            arenaChampion: { ...seat, defenses: seat.defenses + 1 },
+            ...(cap ? { cities: { ...state.cities, [cap.id]: { ...cap, gold: cap.gold + stip.gold } } } : {}),
+          });
+          get().awardMartialInsight(champ.id, stip.insight);
+          if (stip.renown) get().recordDeed(champ.id, { duelsWon: 1 });
+          return { ok: true, held: true, challengerZh: challenger.name.zh, challengerEn: challenger.name.en, insight: stip.insight, gold: stip.gold };
+        }
+        set({ arenaChampion: { officerId: challenger.id, sinceYear: state.date.year, defenses: 0 } });
+        return { ok: true, held: false, challengerZh: challenger.name.zh, challengerEn: challenger.name.en };
       },
       awardTournamentChampion: (championId, finalistIds) => {
         const state = get();

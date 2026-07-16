@@ -3,7 +3,8 @@ import { useGameStore } from '../../game/state/store';
 import type { BoutRecord } from '../../game/systems/duelHall';
 import { ladderBoard, ratingTier } from '../../game/systems/warRanking';
 import { NEMESIS_THRESHOLD, type RivalryRecord } from '../../game/systems/rivalries';
-import { resolveDuel, canDuel } from '../../game/systems/duel';
+import { resolveDuel, canDuel, staticProwess } from '../../game/systems/duel';
+import { resolveTeamDuel } from '../../game/systems/teamDuel';
 import { wagerMultiplier, wagerProfit } from '../../game/systems/wager';
 import { Modal } from './Modal';
 import { OfficerPortrait } from './OfficerPortrait';
@@ -28,11 +29,21 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
   const warRatings = useGameStore((s) => s.warRatings);
   const rivalries = useGameStore((s) => s.rivalries);
   const applyScenarioEffects = useGameStore((s) => s.applyScenarioEffects);
+  const playerForceId = useGameStore((s) => s.playerForceId);
+  const arenaChampion = useGameStore((s) => s.arenaChampion);
+  const challengeArenaFn = useGameStore((s) => s.challengeArena);
+  const holdArenaFn = useGameStore((s) => s.holdArena);
   const playerGold = useGameStore((s) => {
     const f = s.forces[s.playerForceId ?? ''];
     return f ? (s.cities[f.capitalCityId]?.gold ?? 0) : 0;
   });
-  const [tab, setTab] = useState<'ranks' | 'ladder' | 'feuds' | 'gallery' | 'bet'>('ranks');
+  const [tab, setTab] = useState<'ranks' | 'ladder' | 'arena' | 'melee' | 'feuds' | 'gallery' | 'bet'>('ranks');
+  // 打擂 — challenge / hold the standing arena champion.
+  const [arenaPick, setArenaPick] = useState('');
+  const [arenaMsg, setArenaMsg] = useState<{ text: string; win: boolean } | null>(null);
+  // 團戰演武 — a practice N-vs-M champion melee (no consequences).
+  const [meleePick, setMeleePick] = useState('');
+  const [meleeResult, setMeleeResult] = useState<{ winner: 'a' | 'b' | 'draw'; log: string[] } | null>(null);
   const [replay, setReplay] = useState<BoutRecord | null>(null);
   // 賭坊 — bet on a duel between any two warriors; the house resolves it.
   const fighters = useMemo(
@@ -71,6 +82,38 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
   const nm = (id: string) => {
     const o = officers[id];
     return o ? pickName(o.name, lang) : id;
+  };
+
+  const myFighters = useMemo(() => fighters.filter((o) => o.forceId === playerForceId), [fighters, playerForceId]);
+  const foeFighters = useMemo(() => fighters.filter((o) => o.forceId !== playerForceId), [fighters, playerForceId]);
+  const championOfficer = arenaChampion ? officers[arenaChampion.officerId] : null;
+  const iHoldArena = !!championOfficer && championOfficer.forceId === playerForceId;
+
+  const runArenaChallenge = () => {
+    if (!arenaPick) return;
+    const r = challengeArenaFn(arenaPick);
+    if (!r.ok) { setArenaMsg({ text: t('無法挑戰(選將/狀態)', 'Cannot challenge (pick/status)'), win: false }); return; }
+    const cn = lang === 'en' ? r.championEn : r.championZh;
+    setArenaMsg(r.won
+      ? { text: t(`力克 ${cn} — 榮登擂主!心得 +${r.insight}・${r.gold} 金`, `Bested ${cn} — you take the arena! +${r.insight} insight, +${r.gold} gold`), win: true }
+      : { text: t(`不敵 ${cn},擂主之位未動。`, `${cn} holds the arena — you fall short.`), win: false });
+  };
+  const runHold = () => {
+    const r = holdArenaFn();
+    if (!r.ok) { setArenaMsg({ text: t('無法坐鎮擂台', 'Cannot hold the arena'), win: false }); return; }
+    const cn = lang === 'en' ? r.challengerEn : r.challengerZh;
+    setArenaMsg(r.held
+      ? { text: t(`擊退挑戰者 ${cn} — 續守擂台!心得 +${r.insight}・${r.gold} 金`, `Turned away ${cn} — you hold! +${r.insight} insight, +${r.gold} gold`), win: true }
+      : { text: t(`敗於 ${cn} 之手 — 痛失擂主!`, `${cn} beats you — the arena seat is lost!`), win: false });
+  };
+  const runMelee = () => {
+    const cap = officers[meleePick];
+    if (!cap) return;
+    const mine = [cap, ...myFighters.filter((o) => o.id !== cap.id).slice(0, 2)];
+    const foes = foeFighters.slice(0, 3);
+    if (!foes.length) { setMeleeResult({ winner: 'a', log: [t('無敵可戰。', 'No foes to face.')] }); return; }
+    const res = resolveTeamDuel(mine, foes);
+    setMeleeResult({ winner: res.winner, log: res.log.map((l) => (lang === 'en' ? l.en : l.zh)) });
   };
 
   const { duelRanks, debateRanks } = useMemo(() => {
@@ -124,16 +167,16 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
   return (
     <Modal onClose={onClose} title={t('武鬥館', 'Hall of Bouts')} icon="🏆" width="min(560px, 100%)" scrollBody>
       <div style={{ display: 'flex', gap: 6, marginBottom: '0.9rem' }}>
-        {(['ranks', 'ladder', 'feuds', 'gallery', 'bet'] as const).map((m) => (
+        {(['ranks', 'ladder', 'arena', 'melee', 'feuds', 'gallery', 'bet'] as const).map((m) => (
           <button
             key={m}
             onClick={() => setTab(m)}
             style={{
-              flex: 1, padding: '0.4rem 0.2rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.78rem',
+              flex: 1, padding: '0.4rem 0.2rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.74rem',
               background: tab === m ? 'rgba(230,196,115,0.18)' : '#10161e',
               border: `1px solid ${tab === m ? '#e6c473' : '#26323e'}`, color: tab === m ? '#f2dd9a' : '#8a96a0',
             }}
-          >{m === 'ranks' ? t('戰績', 'Wins') : m === 'ladder' ? t('武評', 'Ladder') : m === 'feuds' ? `${t('恩怨', 'Feuds')}${feuds.length > 0 ? ` (${feuds.length})` : ''}` : m === 'bet' ? t('賭坊', 'Wagers') : `${t('名局', 'Replays')}${duelHall.length > 0 ? ` (${duelHall.length})` : ''}`}</button>
+          >{m === 'ranks' ? t('戰績', 'Wins') : m === 'ladder' ? t('武評', 'Ladder') : m === 'arena' ? t('擂台', 'Arena') : m === 'melee' ? t('團戰', 'Melee') : m === 'feuds' ? `${t('恩怨', 'Feuds')}${feuds.length > 0 ? ` (${feuds.length})` : ''}` : m === 'bet' ? t('賭坊', 'Wagers') : `${t('名局', 'Replays')}${duelHall.length > 0 ? ` (${duelHall.length})` : ''}`}</button>
         ))}
       </div>
 
@@ -158,6 +201,81 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
               );
             })}
           </div>
+        </>
+      )}
+
+      {tab === 'arena' && (
+        <>
+          <div style={{ fontSize: '0.72rem', color: '#aab6c0', lineHeight: 1.5, margin: '0 0 0.6rem 2px' }}>
+            {t('打擂 — 天下擂台,唯強者居之。力克擂主即取而代之(點到為止,不取生死);坐鎮擂台可拒退挑戰者,得威名・心得・金,守得越久賞越厚。', 'The Arena — held by the mightiest. Best the champion (a contest, not to the death) to take the seat; hold it against challengers for renown, insight and gold — the longer your reign, the richer the purse.')}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(230,196,115,0.08)', border: '1px solid #caa86a', borderRadius: 'var(--tkm-radius-sm)', padding: '0.5rem 0.6rem', marginBottom: '0.7rem' }}>
+            <span style={{ fontSize: '1.4rem' }}>🏛</span>
+            {championOfficer ? (
+              <>
+                <OfficerPortrait officer={championOfficer} size={34} year={useGameStore.getState().date.year} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ color: '#f2dd9a', fontSize: '0.9rem' }}>{t('擂主', 'Champion')} · {nm(championOfficer.id)}{iHoldArena ? t('(我方)', ' (yours)') : ''}</div>
+                  <div style={{ color: '#9aa7b3', fontSize: '0.72rem' }}>{t(`守擂 ${arenaChampion?.defenses ?? 0} 場 · 自 ${arenaChampion?.sinceYear ?? ''} 年`, `${arenaChampion?.defenses ?? 0} defenses · since ${arenaChampion?.sinceYear ?? ''}`)}</div>
+                </div>
+              </>
+            ) : (
+              <div style={{ flex: 1, color: '#c9b87a', fontSize: '0.85rem' }}>{t('擂主虛位 — 天下第一待爭!', 'The seat stands empty — the title awaits its first holder!')}</div>
+            )}
+          </div>
+          {iHoldArena ? (
+            <button onClick={runHold} style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.9rem', background: 'linear-gradient(180deg,#4a3a1a,#2a2010)', border: '1px solid #e6c473', color: '#f0d890' }}>
+              🛡 {t('坐鎮擂台一季 — 迎戰來犯', 'Hold the Arena — face this season\'s challenger')}
+            </button>
+          ) : (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <select value={arenaPick} onChange={(e) => setArenaPick(e.target.value)} style={{ flex: 1, padding: '0.4rem', background: '#10161e', border: '1px solid #26323e', color: '#e6edf3', borderRadius: 'var(--tkm-radius-sm)', fontFamily: 'inherit' }}>
+                <option value="">{t('— 遣將登台 —', '— send a fighter —')}</option>
+                {myFighters.map((o) => <option key={o.id} value={o.id}>{nm(o.id)} · 武 {o.stats.war}</option>)}
+              </select>
+              <button onClick={runArenaChallenge} disabled={!arenaPick} style={{ padding: '0.4rem 0.9rem', borderRadius: 'var(--tkm-radius-sm)', cursor: arenaPick ? 'pointer' : 'not-allowed', fontFamily: 'inherit', fontSize: '0.86rem', background: arenaPick ? 'linear-gradient(180deg,#5a2a20,#3a1810)' : '#10161e', border: '1px solid #e0846a', color: arenaPick ? '#ffe0d0' : '#6a7480', whiteSpace: 'nowrap' }}>⚔ {t('挑戰擂主', 'Challenge')}</button>
+            </div>
+          )}
+          {arenaMsg && <div style={{ marginTop: '0.7rem', padding: '0.5rem', borderRadius: 'var(--tkm-radius-sm)', background: arenaMsg.win ? 'rgba(60,120,60,0.18)' : 'rgba(120,60,60,0.16)', border: `1px solid ${arenaMsg.win ? '#6aae73' : '#c86a6a'}`, color: arenaMsg.win ? '#cfe8c8' : '#e8b0b0', fontSize: '0.82rem' }}>{arenaMsg.text}</div>}
+        </>
+      )}
+
+      {tab === 'melee' && (
+        <>
+          <div style={{ fontSize: '0.72rem', color: '#aab6c0', lineHeight: 1.5, margin: '0 0 0.6rem 2px' }}>
+            {t('團戰演武 — 真・多將混戰(圍攻/合擊/膽氣)。擇一主將,自動成隊:你方 主將+二將 對 敵陣三傑。演武而已,不取生死。', 'Team Melee (practice) — a real N-vs-M brawl (ganging / joint strikes / nerve). Pick a captain; teams auto-form: your captain + 2 vs three foes. A drill — no one dies.')}
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: '0.6rem' }}>
+            <select value={meleePick} onChange={(e) => { setMeleePick(e.target.value); setMeleeResult(null); }} style={{ flex: 1, padding: '0.4rem', background: '#10161e', border: '1px solid #26323e', color: '#e6edf3', borderRadius: 'var(--tkm-radius-sm)', fontFamily: 'inherit' }}>
+              <option value="">{t('— 擇一主將 —', '— pick a captain —')}</option>
+              {myFighters.map((o) => <option key={o.id} value={o.id}>{nm(o.id)} · 武 {o.stats.war}</option>)}
+            </select>
+            <button onClick={runMelee} disabled={!meleePick || foeFighters.length === 0} style={{ padding: '0.4rem 0.9rem', borderRadius: 'var(--tkm-radius-sm)', cursor: meleePick ? 'pointer' : 'not-allowed', fontFamily: 'inherit', fontSize: '0.86rem', background: meleePick ? 'linear-gradient(180deg,#3a2a5a,#201838)' : '#10161e', border: '1px solid #9a7ad0', color: meleePick ? '#cbb6ef' : '#6a7480', whiteSpace: 'nowrap' }}>⚔ {t('演武團戰', 'Melee')}</button>
+          </div>
+          {(() => {
+            const cap = officers[meleePick];
+            if (!cap) return null;
+            const mine = [cap, ...myFighters.filter((o) => o.id !== cap.id).slice(0, 2)];
+            const foes = foeFighters.slice(0, 3);
+            const roster = (arr: typeof mine, color: string) => (
+              <div style={{ flex: 1 }}>{arr.map((o) => <div key={o.id} style={{ color, fontSize: '0.78rem' }}>{nm(o.id)} <span style={{ color: '#7a8893' }}>武{o.stats.war}·勇{staticProwess(o)}</span></div>)}</div>
+            );
+            return (
+              <div style={{ display: 'flex', gap: 10, background: '#10161e', border: '1px solid #26323e', borderRadius: 'var(--tkm-radius-sm)', padding: '0.5rem' }}>
+                {roster(mine, '#7fc7ff')}
+                <span style={{ alignSelf: 'center', color: '#e08a4a' }}>⚔</span>
+                {roster(foes, '#ff9a7a')}
+              </div>
+            );
+          })()}
+          {meleeResult && (
+            <div style={{ marginTop: '0.7rem', padding: '0.5rem', borderRadius: 'var(--tkm-radius-sm)', background: 'rgba(20,28,38,0.9)', border: '1px solid #3a4a5a' }}>
+              <div style={{ color: meleeResult.winner === 'a' ? '#9ed68a' : meleeResult.winner === 'b' ? '#e8b0b0' : '#e6c473', fontSize: '0.9rem', marginBottom: '0.3rem' }}>
+                {meleeResult.winner === 'a' ? t('我方大勝!', 'Your side prevails!') : meleeResult.winner === 'b' ? t('我方落敗。', 'Your side is beaten.') : t('鏖戰平手。', 'A hard-fought draw.')}
+              </div>
+              {meleeResult.log.map((l, i) => <div key={i} style={{ color: '#aab6c0', fontSize: '0.74rem', lineHeight: 1.5 }}>{l}</div>)}
+            </div>
+          )}
         </>
       )}
 
