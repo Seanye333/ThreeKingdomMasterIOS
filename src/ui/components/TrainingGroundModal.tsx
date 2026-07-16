@@ -5,6 +5,7 @@ import { initDuelSeries, advanceDuelSeries, seriesOver, seriesWinner, type DuelS
 import { wagerMultiplier, wagerProfit } from '../../game/systems/wager';
 import { findRivalryChallenge } from '../../game/systems/rivalries';
 import { duelChallengeTargets, willAcceptChallenge, challengeResultLine, findIncomingChallenge, duelRecruitChance, duelTribute } from '../../game/systems/duelChallenge';
+import { duelWound } from '../../game/systems/afflictions';
 import { DUEL_SCENARIOS, DUEL_CAMPAIGNS, campaignSteps, duelScenarioOutcome, duelScenarioResultLine, type DuelScenario } from '../../game/systems/duelScenarios';
 import { renownFromDeeds, fameTier, rollChallenger } from '../../game/systems/fame';
 import { trainKey, trainsLeft, TRAIN_PER_SEASON } from '../../game/systems/sparLimit';
@@ -87,6 +88,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
   const recruitViaDuel = useGameStore((s) => s.recruitViaDuel);
   const adjustForceFavor = useGameStore((s) => s.adjustForceFavor);
   const settleDuelTribute = useGameStore((s) => s.settleDuelTribute);
+  const afflictOfficer = useGameStore((s) => s.afflictOfficer);
   const calloutTargets = useMemo(() => duelChallengeTargets(officers, playerForceId, { limit: 12 }), [officers, playerForceId]);
   const [calloutFoeId, setCalloutFoeId] = useState<string | null>(null);
   const [calloutDuel, setCalloutDuel] = useState(false);
@@ -267,6 +269,8 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
           // 傷殘 — the bested-but-living loser of this 生死之鬥 may be maimed for good.
           if (oc === 'win' && !slewFoe) { const s = rollDuelScar(); if (s) inflictDuelScar(foe.id, s); }
           else if (oc === 'loss' && !slewMe) { const s = rollDuelScar(); if (s) inflictDuelScar(a.id, s); }
+          // 慘勝負傷 (§6.13) — a hard-won 約戰 bloodies the victor too (they survived).
+          if (outcome.hardWon && oc !== 'draw') afflictOfficer(oc === 'win' ? a.id : foe.id, duelWound(false));
           // 折服來投 — a foe bested-and-spared may be so moved he comes over to you.
           const foeForce = foe.forceId; // captured before any recruit/slay below
           const wonOver = oc === 'win' && !slewFoe && Math.random() < duelRecruitChance(foe, a) && recruitViaDuel(foe.id);
@@ -318,9 +322,14 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
           // 折服來投 — the humbled challenger may be won over to your side.
           const foeForce = incoming.foe.forceId;
           const wonOver = oc === 'win' && !slewFoe && Math.random() < duelRecruitChance(incoming.foe, incoming.champ) && recruitViaDuel(incoming.foe.id);
+          // 慘勝負傷 (§6.13) — a hard-won answer bloodies the victor too.
+          if (outcome.hardWon && oc !== 'draw') afflictOfficer(oc === 'win' ? incoming.champ.id : incoming.foe.id, duelWound(false));
           // 約戰牽動外交 — beating their champion who came to taunt you sours relations.
+          let inTribute = 0;
           if (foeForce && incoming.champ.forceId && foeForce !== incoming.champ.forceId && !wonOver) {
             adjustForceFavor(incoming.champ.forceId, foeForce, slewFoe ? -14 : oc === 'win' ? -8 : oc === 'draw' ? 4 : 0);
+            // 代戰認輸金 (§6.13) — beating the challenger who came to your gate wins an indemnity.
+            if (oc === 'win') inTribute = settleDuelTribute(foeForce, incoming.champ.forceId, duelTribute(incoming.foe)).moved;
           }
           setResult({
             text: slewFoe ? t(`${pickName(incoming.champ.name, lang)} 接戰陣斬 ${pickName(incoming.foe.name, lang)}!`, `${pickName(incoming.champ.name, lang)} answers the call and cuts down ${pickName(incoming.foe.name, lang)}!`)
@@ -329,8 +338,11 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
               : oc === 'win' ? t(`${pickName(incoming.champ.name, lang)} 力克來犯之 ${pickName(incoming.foe.name, lang)}!`, `${pickName(incoming.champ.name, lang)} bests the challenger ${pickName(incoming.foe.name, lang)}!`)
               : oc === 'draw' ? t(`與 ${pickName(incoming.foe.name, lang)} 接戰平手,英雄相惜。`, `A draw with ${pickName(incoming.foe.name, lang)} — worthy foes.`)
               : t(`不敵來犯之 ${pickName(incoming.foe.name, lang)},失了威風。`, `Bested by ${pickName(incoming.foe.name, lang)} — a humbling day.`),
-            notes: slewFoe ? [t('力斬挑釁之敵將,威震天下。', 'A famous kill — your name rings through the realm.')]
-              : wonOver ? [t('英雄惜英雄 — 一場單挑,勝過千言招攬。', 'A hero honours a hero — one duel wins what a thousand words could not.')] : [],
+            notes: [
+              ...(slewFoe ? [t('力斬挑釁之敵將,威震天下。', 'A famous kill — your name rings through the realm.')]
+                : wonOver ? [t('英雄惜英雄 — 一場單挑,勝過千言招攬。', 'A hero honours a hero — one duel wins what a thousand words could not.')] : []),
+              ...(inTribute > 0 ? [t(`代戰認輸金 — 敵國納金 ${inTribute} 贖顏面。`, `Indemnity — the foe's realm pays ${inTribute} gold to redeem its face.`)] : []),
+            ],
           });
         }}
       />

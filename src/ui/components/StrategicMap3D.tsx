@@ -22,6 +22,7 @@ import { categoryOfTactic } from '../../game/data/officerAttributes';
 import { unitAt, canMove, canAttack, moveUnit, attackUnits, endTurn, hexDistance, forecastAttack, matchupLabel, battleStratagemSituation } from '../../game/systems/tactical';
 import { applyStratagem } from '../../game/systems/tacticalSchemes';
 import { canDuel } from '../../game/systems/duel';
+import { duelWound } from '../../game/systems/afflictions';
 import { personalTacticsForUnit } from '../../game/systems/personalTactics';
 import { Duel3DStage } from './duel/Duel3DStage';
 import { MarchPicker } from './MarchPicker';
@@ -2074,6 +2075,11 @@ export function StrategicMap3D() {
             // 車輪戰 — both surviving fighters open any next bout more winded.
             next = { ...next, units: next.units.map((u) => (u.officerId === me.id || u.officerId === foe.id) ? { ...u, duelFatigue: (u.duelFatigue ?? 0) + 24 } : u) };
             startBattleUpdate(next);
+            // 慘勝負傷 (§6.13) — a hard-won bout bloodies the victor too (養傷 downtime).
+            if (outcome.hardWon && outcome.winner !== 'draw') {
+              const victorId = outcome.winner === 'attacker' ? me.id : foe.id;
+              if (victorId !== killedId) useGameStore.getState().afflictOfficer(victorId, duelWound(false));
+            }
             // 生擒/招降 — a felled or surrendered foe may be taken; a fled one is gone.
             if ((killedId && killedId === foe.id) || foeBroke === 'yield') setCaptureChoice({ id: foe.id, name: foe.name });
           }}

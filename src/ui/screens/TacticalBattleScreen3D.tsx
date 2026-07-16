@@ -18,6 +18,7 @@ import { stratagemFxKind, tacticFxKind, tacticFxSpec, FX_DURATION, FX_IMPACT, ty
 import { categoryOfTactic } from '../../game/data/officerAttributes';
 import { attackUnits, canAttack, canMove, endTurn, hexDistance, moveUnit, resolveBattleEnd, unitAt, tileAt, hexNeighbours, forecastAttack, matchupLabel, battleStratagemSituation, defenderTerrainShield, terrainDamageMod, moveCost, findPath, moveUnitAlong, reachableHexes, isRouting, changeFormation, canChangeFormation, canFortify, fortifyTile, FIELDWORKS_AP_COST, pickAiFormation, formationCounterMul } from '../../game/systems/tactical';
 import { applyBattlePrep, applyStratagem, pickAiBattlePrep, pickDuelChampion, canIssuePreBattleDuel, applyPreBattleDuel, aiMaybePreBattleDuel } from '../../game/systems/tacticalSchemes';
+import { duelDread } from '../../game/systems/duelChallenge';
 import { aiTakeTurn, aiSkillForDifficulty } from '../../game/systems/tacticalAi';
 import { FORMATIONS } from '../../game/data/formations';
 import { canDuel, pickDuelTerrain, rollDuelScar } from '../../game/systems/duel';
@@ -4111,6 +4112,14 @@ export function TacticalBattleScreen3D() {
                   const me = officers[myChamp.officerId];
                   const foe = officers[foeChamp.officerId];
                   if (!me || !foe) return;
+                  // 威名威懾 (§6.13) — a dreaded champion riding out cows the enemy host
+                  // before a blow is struck (未戰先怯): a small morale sag by their fame.
+                  const dread = duelDread(me);
+                  if (dread > 0.05) {
+                    const drop = Math.round(dread * 16);
+                    start({ ...battle, units: battle.units.map((u) => (u.side === foeSide && u.troops > 0 ? { ...u, morale: Math.max(0, u.morale - drop) } : u)) });
+                    setPrepMsg(t(`${me.name.zh}威名震懾 — 敵軍未戰先怯(士氣 −${drop})`, `${me.name.en}'s fame cows the foe — enemy morale −${drop}`));
+                  }
                   setInteractiveDuel({ me, foe, meFatigue: myChamp.duelFatigue ?? 0, foeFatigue: foeChamp.duelFatigue ?? 0, reinforcements: [], terrain: pickDuelTerrain(), preBattle: true });
                 }}
                 style={{ background: 'rgba(70, 30, 24, 0.85)', border: '1px solid #e0846a', color: '#ffb098', fontSize: '0.7rem', padding: '2px 7px', cursor: 'pointer', fontFamily: 'inherit' }}

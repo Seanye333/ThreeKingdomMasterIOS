@@ -97,7 +97,23 @@ export function Duel3DStage(props: ComponentProps<typeof DuelGameModal>) {
           survivedThin: history.current.length >= 6,
           spar: props.lethal === false,
         }, Math.random);
-        useGameStore.getState().awardMartialInsight(attacker.id, ep.insight);
+        const st0 = useGameStore.getState();
+        st0.awardMartialInsight(attacker.id, ep.insight);
+        // 敵亦精進 — the foe learns from the bout too. A player-side foe banks 心得
+        // to spend; an AI 鬥將 deepens 修為 directly (they never 修煉 by hand), so
+        // rivals grow across a long game rather than staying stuck (§6.10).
+        const foeEp = checkMartialEpiphany({
+          won: fx.winner === 'defender',
+          prowessGap: Math.round(staticProwess(attacker) - staticProwess(defender)),
+          notableFoe: swornRef.current || !!rivalryRef.current,
+          survivedThin: history.current.length >= 6,
+          spar: props.lethal === false,
+        }, Math.random);
+        if (defender.forceId && defender.forceId !== st0.playerForceId) {
+          st0.growMartialXiuwei(defender.id, foeEp.epiphany ? 3 : 1);
+        } else {
+          st0.awardMartialInsight(defender.id, foeEp.insight);
+        }
         if (ep.epiphany) {
           setToast(lang === 'en' ? ep.noteEn : ep.noteZh);
           window.setTimeout(() => setToast(null), 2600);

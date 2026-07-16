@@ -999,6 +999,8 @@ interface GameStore extends GameState {
   awardMartialInsight: (officerId: EntityId, amount: number) => void;
   /** 武學修煉 — spend banked 心得 to raise the officer's 修為 one step. */
   trainMartialArts: (officerId: EntityId) => { ok: boolean; reason?: string; xiuwei?: number; gained?: number; tierUpZh?: string; tierUpEn?: string };
+  /** 修為直增 — raise an officer's 修為 directly (for AI fighters who never 修煉). */
+  growMartialXiuwei: (officerId: EntityId, amount: number) => void;
   /** 打擂 — challenge the standing arena champion (§6.11); win to take the 擂主 seat. */
   challengeArena: (challengerId: EntityId) => { ok: boolean; reason?: string; won?: boolean; championZh?: string; championEn?: string; insight?: number; gold?: number };
   /** 坐鎮擂台 — hold the seat one season against a fresh challenger (stipend / seat risk). */
@@ -12011,6 +12013,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const o = state.officers[officerId];
         if (!o || o.status === 'dead') return;
         set({ officers: { ...state.officers, [officerId]: { ...o, martialInsight: Math.max(0, (o.martialInsight ?? 0) + Math.round(amount)) } } });
+      },
+      growMartialXiuwei: (officerId, amount) => {
+        if (!(amount > 0)) return;
+        const state = get();
+        const o = state.officers[officerId];
+        if (!o || o.status === 'dead') return;
+        // 修為直增 — for NON-player fighters (who never manually 修煉), so AI 鬥將
+        // deepen their craft organically from the bouts they fight (§6.10).
+        set({ officers: { ...state.officers, [officerId]: { ...o, martialXiuwei: Math.min(MARTIAL_XIUWEI_MAX, (o.martialXiuwei ?? 0) + amount) } } });
       },
       trainMartialArts: (officerId) => {
         const state = get();
