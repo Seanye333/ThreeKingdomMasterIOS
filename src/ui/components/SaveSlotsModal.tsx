@@ -4,6 +4,7 @@ import { renameSlot } from '../../game/state/saveSlots';
 import { SCENARIOS } from '../../game/data/scenarios';
 import styles from './SaveSlotsModal.module.css';
 import { useT, useLanguage, pickName } from '../i18n';
+import { usePanelNotice } from './usePanelNotice';
 import { EmptyState } from './EmptyState';
 
 interface Props {
@@ -30,6 +31,7 @@ export function SaveSlotsModal({ onClose, mode }: Props) {
   const [renameLabel, setRenameLabel] = useState('');
   const t = useT();
   const lang = useLanguage();
+  const { notify, confirm: askConfirm, noticeUI } = usePanelNotice();
 
   // Build a scenario id → name map for nicer display
   const scenarioName = (id: string | null): string => {
@@ -54,13 +56,14 @@ export function SaveSlotsModal({ onClose, mode }: Props) {
   const doLoad = (id: string) => {
     const ok = loadSlot(id);
     if (ok) onClose();
-    else alert('Failed to load save.');
+    else notify(t('讀取存檔失敗', 'Failed to load save.'));
   };
 
   const doDelete = (id: string) => {
-    if (!confirm(t('永久刪除此存檔？', 'Delete this save permanently?'))) return;
-    deleteSlotAction(id);
-    setRefresh((n) => n + 1);
+    askConfirm(t('永久刪除此存檔？', 'Delete this save permanently?'), () => {
+      deleteSlotAction(id);
+      setRefresh((n) => n + 1);
+    });
   };
 
   const startRename = (id: string, current: string) => {
@@ -203,7 +206,7 @@ export function SaveSlotsModal({ onClose, mode }: Props) {
                     <button
                       className={styles.loadBtn}
                       onClick={() => {
-                        if (confirm(t(`覆蓋「${s.label}」？`, `Overwrite "${s.label}"?`))) doSave(s.id);
+                        askConfirm(t(`覆蓋「${s.label}」？`, `Overwrite "${s.label}"?`), () => doSave(s.id));
                       }}
                       title={t('用當前進度覆蓋此存檔', 'Overwrite this save with current state')}
                       style={{ background: '#364654' }}
@@ -223,6 +226,7 @@ export function SaveSlotsModal({ onClose, mode }: Props) {
           )}
         </div>
       </div>
+      {noticeUI}
     </div>
   );
 }

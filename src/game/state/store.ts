@@ -13032,6 +13032,11 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               `${careerOff.name.zh} 的一代記就此落幕 — 終為${st.status.zh}(品 ${st.rank})。\n` +
               `歷戰勝 ${d?.battlesWon ?? 0}・殲敵 ${(d?.killsTroops ?? 0).toLocaleString()}・拔城 ${d?.citiesTaken ?? 0}・單挑勝 ${d?.duelsWon ?? 0}。\n\n` +
               `${careerOff.name.en} has fallen — they died as ${st.status.en}. The campaign ends here. (Roguelike run #${ach.counters.careerRuns})`;
+            // FOLLOW-UP: the last native alert() in the app. Unlike the panel
+            // alerts (now usePanelNotice), this is store-layer and fires mid-
+            // reducer, so it wants a proper styled "一代記落幕" end-of-run card
+            // (store field + component) rather than a mechanical swap — left as
+            // a deliberate follow-up to avoid re-entrancy/test churn tonight.
             alert(epilogue);
             careerMode = null;
           }

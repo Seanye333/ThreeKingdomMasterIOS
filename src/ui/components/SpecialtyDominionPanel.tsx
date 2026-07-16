@@ -5,6 +5,7 @@ import {
   canEmbargo, embargoedRolesAgainst, ROLE_ZH, type SpecialtyRole,
 } from '../../game/data/specialties';
 import { useT } from '../i18n';
+import { usePanelNotice } from './usePanelNotice';
 
 const ROLES: SpecialtyRole[] = ['warhorse', 'iron', 'medicine', 'rations', 'lumber', 'coin', 'luxury'];
 
@@ -15,6 +16,7 @@ const ROLES: SpecialtyRole[] = ['warhorse', 'iron', 'medicine', 'rations', 'lumb
  */
 export function SpecialtyDominionPanel() {
   const t = useT();
+  const { notify, noticeUI } = usePanelNotice();
   const cities = useGameStore((s) => s.cities);
   const forces = useGameStore((s) => s.forces);
   const playerForceId = useGameStore((s) => s.playerForceId);
@@ -80,7 +82,7 @@ export function SpecialtyDominionPanel() {
                 return (
                   <button
                     key={f.id}
-                    onClick={() => { const res = setEmbargo(f.id, r, !on); if (!res.ok) alert(res.message); }}
+                    onClick={() => { const res = setEmbargo(f.id, r, !on); if (!res.ok) notify(res.message); }}
                     style={{
                       background: on ? 'rgba(224,112,122,0.18)' : 'transparent',
                       border: `1px solid ${on ? '#e0707a' : '#2b3845'}`,
@@ -98,6 +100,7 @@ export function SpecialtyDominionPanel() {
           ))}
         </div>
       )}
+      {noticeUI}
     </div>
   );
 }

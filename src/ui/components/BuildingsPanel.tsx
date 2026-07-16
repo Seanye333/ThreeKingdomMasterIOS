@@ -8,6 +8,7 @@ import { useGameStore } from '../../game/state/store';
 import { playSfx } from '../../game/systems/sound';
 import type { BuildingCategory, BuildingId, EntityId } from '../../game/types';
 import { useT, useLanguage, useDesc } from '../i18n';
+import { usePanelNotice } from './usePanelNotice';
 import { Modal } from './Modal';
 
 // Stable reference for the "no queue" case — avoids returning a fresh []
@@ -37,6 +38,7 @@ export function BuildingsPanel({ cityId }: Props) {
   const city = cities[cityId];
   const t = useT();
   const lang = useLanguage();
+  const { notify, noticeUI } = usePanelNotice();
   const desc = useDesc();
   // 營造圖冊 — the full building list lives in a popup so the city panel
   // stays short; inline we keep only the bonus summary + launcher.
@@ -123,7 +125,7 @@ export function BuildingsPanel({ cityId }: Props) {
                 </div>
                 {owned && (
                   <button
-                    onClick={() => { const r = developSpecialty(cityId); if (r.ok) playSfx('coin'); else alert(r.message); }}
+                    onClick={() => { const r = developSpecialty(cityId); if (r.ok) playSfx('coin'); else notify(r.message); }}
                     disabled={!canDev}
                     title={maxed ? t('名產已臻極盛', 'Specialty fully developed') : city.loyalty < 40 ? t('民心未附(需民忠 ≥ 40)', 'needs loyalty ≥ 40') : `${cost}g`}
                     style={{
@@ -313,6 +315,7 @@ export function BuildingsPanel({ cityId }: Props) {
           </div>
         </Modal>
       )}
+      {noticeUI}
     </div>
   );
 }

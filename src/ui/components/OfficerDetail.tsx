@@ -56,6 +56,7 @@ import { TACTIC_DESC } from './TacticsModal';
 import { POLICY_DESC } from './PoliciesModal';
 import styles from './OfficerDetail.module.css';
 import { useT, useLanguage } from '../i18n';
+import { usePanelNotice } from './usePanelNotice';
 
 type PortraitArchetype = 'warrior' | 'strategist' | 'civil' | 'ruler' | 'lady' | 'sage';
 
@@ -148,6 +149,7 @@ export function OfficerDetail({
   const lifespanLength = useGameStore((s) => s.lifespanLength);
   const t = useT();
   const lang = useLanguage();
+  const { notify, noticeUI } = usePanelNotice();
   const playerForceId = useGameStore((s) => s.playerForceId);
   const appointments = useGameStore((s) => s.appointments);
   const pendingTrainings = useGameStore((s) => s.pendingTrainings);
@@ -351,7 +353,7 @@ export function OfficerDetail({
               && (officer.status === 'idle' || officer.status === 'active')
               && (officer.loyalty < 40 || (officer.grievanceCount ?? 0) >= 2) && (() => {
               const disc = useGameStore.getState().disciplineOfficer;
-              const act = (a: 'placate' | 'reassign' | 'imprison' | 'execute') => { const r = disc(officer.id, a); if (r.message) alert(r.message); };
+              const act = (a: 'placate' | 'reassign' | 'imprison' | 'execute') => { const r = disc(officer.id, a); if (r.message) notify(r.message); };
               const btn: React.CSSProperties = { background: 'transparent', border: '1px solid #5a4326', color: '#d6a86a', cursor: 'pointer', fontSize: '0.68rem', padding: '0.1rem 0.4rem', borderRadius: 'var(--tkm-radius-xs)' };
               return (
                 <div style={{ marginTop: '0.35rem', display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -1557,7 +1559,7 @@ export function OfficerDetail({
                         const canBreak = hasFoundry && !!holdCity && holdCity.gold >= bc.gold && (holdCity.iron ?? 0) >= bc.iron;
                         return (
                           <button
-                            onClick={() => { if (!canBreak) return; const r = breakthroughItemFn(id); if (!r.ok) alert(gearReason(r.reason)); }}
+                            onClick={() => { if (!canBreak) return; const r = breakthroughItemFn(id); if (!r.ok) notify(gearReason(r.reason)); }}
                             disabled={!canBreak}
                             title={!hasFoundry
                               ? t('突破需鐵工坊', 'Breakthrough needs a foundry city')
@@ -1572,7 +1574,7 @@ export function OfficerDetail({
                       {isPlayerOfficer && gems.length < maxSockets && (
                         <select
                           value=""
-                          onChange={(e) => { if (e.target.value) { const r = socketGemFn(id, e.target.value); if (!r.ok) alert(gearReason(r.reason)); } }}
+                          onChange={(e) => { if (e.target.value) { const r = socketGemFn(id, e.target.value); if (!r.ok) notify(gearReason(r.reason)); } }}
                           title={t(`鑲嵌寶石（${gems.length}/${maxSockets} 孔）`, `Socket a gem (${gems.length}/${maxSockets})`)}
                           style={{
                             background: '#10161e', border: '1px solid #6a8fb0', borderRadius: 'var(--tkm-radius-xs)', color: '#9fb0bf',
@@ -1593,9 +1595,9 @@ export function OfficerDetail({
                             const r = studyManualFn(officer.id, id);
                             if (r.ok) {
                               const msg = (r.notes && r.notes.length) ? r.notes.join('\n') : t('研讀完畢', 'Studied.');
-                              window.alert(t(`${item.name.zh} 研讀:\n${msg}`, `Studied ${item.name.en}:\n${msg}`));
+                              notify(t(`${item.name.zh} 研讀:\n${msg}`, `Studied ${item.name.en}:\n${msg}`));
                             } else {
-                              window.alert(t('無法研讀此書', 'Cannot study this manual'));
+                              notify(t('無法研讀此書', 'Cannot study this manual'));
                             }
                           }}
                           title={t('研讀此兵書(一次性,讀後即毀)', 'Study this manual (one-time; consumed on use)')}
@@ -1609,7 +1611,7 @@ export function OfficerDetail({
                         <button
                           onClick={() => {
                             const r = resetItemGrowthFn(id);
-                            if (r.ok) window.alert(t(`已退養「${item.name.zh}」:寶石歸庫,退還 ${r.refund ?? 0} 金`, `Reset ${item.name.en}: gems returned, ${r.refund ?? 0}g refunded`));
+                            if (r.ok) notify(t(`已退養「${item.name.zh}」:寶石歸庫,退還 ${r.refund ?? 0} 金`, `Reset ${item.name.en}: gems returned, ${r.refund ?? 0}g refunded`));
                           }}
                           title={t('洗點退養 — 拆精煉/突破/鑲嵌:寶石歸庫、半數金退還(名器威名保留)', 'Respec — strip refine/breakthrough/gems: gems to stock, half gold refunded (名器 renown kept)')}
                           style={{
@@ -1649,6 +1651,7 @@ export function OfficerDetail({
         )}
         </div>
       </div>
+      {noticeUI}
     </div>
   );
 }
