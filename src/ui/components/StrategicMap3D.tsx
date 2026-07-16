@@ -1234,6 +1234,16 @@ export function StrategicMap3D() {
   // 快捷輪盤 — which DOM picker (march/recruit) the ring asked for.
   const [quickPick, setQuickPick] = useState<{ kind: 'march' | 'recruit' | 'muster'; cityId: string } | null>(null);
   const [dioArcs, setDioArcs] = useState<Array<{ id: number; from: HexCoord; to: HexCoord; kind: 'melee' | 'ranged'; spawnedAt: number }>>([]);
+  // 原地指揮提示 — a transient in-map notice replacing the jarring OS alert()
+  // the on-map duel/command flow used to fire (several were zh-only).
+  const [dioNotice, setDioNotice] = useState<string | null>(null);
+  const dioNoticeTimer = useRef(0);
+  const notifyDio = (msg: string) => {
+    setDioNotice(msg);
+    window.clearTimeout(dioNoticeTimer.current);
+    dioNoticeTimer.current = window.setTimeout(() => setDioNotice(null), 2600);
+  };
+  useEffect(() => () => window.clearTimeout(dioNoticeTimer.current), []);
   const dioSelectedId = worldBattle && dioPick && dioPick.bid === worldBattle.id
     && worldBattle.units.some((u) => u.id === dioPick.uid) ? dioPick.uid : null;
   const worldPlayerSide: 'attacker' | 'defender' | null = worldBattle
@@ -1276,7 +1286,7 @@ export function StrategicMap3D() {
           : r.battle;
         startBattleUpdate(next);
       } else if (r.reason) {
-        alert(r.reason);
+        notifyDio(r.reason);
       }
       setDioCast(null);
       return;
@@ -1286,15 +1296,15 @@ export function StrategicMap3D() {
     if (dioDuelArm && u && u.side !== pSide) {
       const sel0 = dioSelectedId ? b.units.find((x) => x.id === dioSelectedId) : null;
       if (!sel0) { setDioDuelArm(false); return; }
-      if (hexDistance(sel0.coord, u.coord) !== 1) { alert('須與敵將相鄰方可單挑'); return; }
+      if (hexDistance(sel0.coord, u.coord) !== 1) { notifyDio(t('須與敵將相鄰方可單挑', 'Must stand adjacent to the enemy commander to duel')); return; }
       const officers = useGameStore.getState().officers;
       const me = officers[sel0.officerId];
       const foe = officers[u.officerId];
       if (!me || !foe) return;
       const meCheck = canDuel(me);
       const foeCheck = canDuel(foe);
-      if (!meCheck.ok) { alert(`我將無法單挑: ${meCheck.reason}`); return; }
-      if (!foeCheck.ok) { alert(`敵將無法應戰: ${foeCheck.reason}`); return; }
+      if (!meCheck.ok) { notifyDio(`${t('我將無法單挑', 'Your commander cannot duel')}: ${meCheck.reason}`); return; }
+      if (!foeCheck.ok) { notifyDio(`${t('敵將無法應戰', 'Enemy commander cannot duel')}: ${foeCheck.reason}`); return; }
       startBattleUpdate({ ...b, units: b.units.map((unit) => unit.id === sel0.id ? { ...unit, ap: 0 } : unit) });
       // 三英戰呂布 — allies pressing the same foe may leap in mid-bout.
       const reinforcements = b.units
@@ -1606,6 +1616,16 @@ export function StrategicMap3D() {
       <ReplayRecorder />
       {showReplay && <ReplayPanel onClose={() => setShowReplay(false)} />}
       {showMapHelp && <MapHelpPanel onClose={() => setShowMapHelp(false)} />}
+      {/* 原地指揮提示 — transient notice for the on-map command/duel flow. */}
+      {dioNotice && (
+        <div style={{
+          position: 'absolute', bottom: 96, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 16, maxWidth: '80%', textAlign: 'center', pointerEvents: 'none',
+          background: 'rgba(46,26,20,0.95)', border: '1px solid #c07a4a', color: '#f0c4a4',
+          borderRadius: 'var(--tkm-radius)', padding: '0.45rem 0.85rem',
+          fontFamily: 'var(--tkm-font-body)', fontSize: '0.82rem', boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+        }}>{dioNotice}</div>
+      )}
 
       <div ref={mapCanvasWrapRef} style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
       {/* 戰鬥運鏡 — impact flash for big-map casts, remounted per cast */}
