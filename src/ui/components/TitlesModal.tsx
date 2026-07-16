@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { CIVIC_TITLES, CIVIC_TITLES_BY_ID, MILITARY_RANKS } from '../../game/data';
 import { useGameStore } from '../../game/state/store';
 import type { Appointment, CivicTitleId, EntityId, MilitaryRankId, Officer } from '../../game/types';
@@ -38,6 +38,18 @@ type Tab = 'civic' | 'military' | 'peerage' | 'honorific' | 'history';
 export function TitlesModal({ onClose }: Props) {
   useEscapeKey(onClose);
   const lang = useLanguage();
+  // 提示 / 抉擇 — in-panel styled feedback replacing jarring native alert()/
+  // confirm(). A global toast would sit *behind* this z-layered modal, so both
+  // live locally and render fixed above it.
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
+  const toastTimer = useRef(0);
+  const showToast = (msg: string, ok = false) => {
+    setToast({ msg, ok });
+    window.clearTimeout(toastTimer.current);
+    toastTimer.current = window.setTimeout(() => setToast(null), 2800);
+  };
+  useEffect(() => () => window.clearTimeout(toastTimer.current), []);
+  const [confirmBox, setConfirmBox] = useState<{ body: string; onYes: () => void } | null>(null);
   const officers = useGameStore((s) => s.officers);
   const cities = useGameStore((s) => s.cities);
   const playerForceId = useGameStore((s) => s.playerForceId);
@@ -126,6 +138,37 @@ export function TitlesModal({ onClose }: Props) {
   return (
     <div className={styles.backdrop} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        {/* 提示 toast — 綠=成功、赭=失敗;取代原生 alert() */}
+        {toast && (
+          <div style={{
+            position: 'fixed', bottom: 'calc(1.2rem + var(--tkm-safe-bottom))', left: '50%', transform: 'translateX(-50%)',
+            zIndex: 960, maxWidth: '86vw', pointerEvents: 'none', textAlign: 'center',
+            background: toast.ok ? 'rgba(20,40,26,0.96)' : 'rgba(46,26,20,0.96)',
+            border: `1px solid ${toast.ok ? '#5fae73' : '#c07a4a'}`,
+            color: toast.ok ? '#bfe6c8' : '#f0c4a4',
+            borderRadius: 'var(--tkm-radius)', padding: '0.5rem 0.9rem',
+            fontFamily: 'var(--tkm-font-body)', fontSize: '0.85rem', boxShadow: '0 4px 18px rgba(0,0,0,0.5)',
+          }}>{toast.msg}</div>
+        )}
+        {/* 抉擇 — 削爵/奪號等不可逆動作的確認框;取代原生 confirm() */}
+        {confirmBox && (
+          <div
+            onClick={(e) => { e.stopPropagation(); setConfirmBox(null); }}
+            style={{ position: 'fixed', inset: 0, zIndex: 965, background: 'rgba(6,4,2,0.62)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
+          >
+            <div onClick={(e) => e.stopPropagation()} style={{
+              width: 'min(400px, 92vw)', background: 'linear-gradient(180deg,#1e1710,#150f0a)',
+              border: '1px solid #7a5a30', borderRadius: 'var(--tkm-radius)', padding: '1rem 1.1rem',
+              color: '#e0cfa8', fontFamily: 'var(--tkm-font-body)', boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
+            }}>
+              <div style={{ fontSize: '0.9rem', lineHeight: 1.55, marginBottom: '0.9rem' }}>{confirmBox.body}</div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                <button onClick={() => setConfirmBox(null)} style={{ background: 'transparent', border: '1px solid #4a5568', color: '#97a4ae', borderRadius: 'var(--tkm-radius-sm)', padding: '0.35rem 0.9rem', cursor: 'pointer', fontFamily: 'inherit' }}>{lang === 'en' ? 'Cancel' : '取消'}</button>
+                <button onClick={() => { const yes = confirmBox.onYes; setConfirmBox(null); yes(); }} style={{ background: 'rgba(192,90,74,0.25)', border: '1px solid #c0504a', color: '#f0b0a0', borderRadius: 'var(--tkm-radius-sm)', padding: '0.35rem 0.9rem', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 'bold' }}>{lang === 'en' ? 'Confirm' : '確定'}</button>
+              </div>
+            </div>
+          </div>
+        )}
         <header className={styles.header}>
           <div>
             {lang !== 'en' && <div className={styles.titleZh}>任官</div>}
@@ -168,7 +211,7 @@ export function TitlesModal({ onClose }: Props) {
                   const r = promoteOfficer(o.id, top.id);
                   if (r.ok) promoted++;
                 }
-                alert(lang === 'en' ? `Auto-appoint: appointed ${appointed}, promoted ${promoted}.` : `一鍵任官:已任 ${appointed}、晉 ${promoted}。`);
+                showToast(lang === 'en' ? `Auto-appoint: appointed ${appointed}, promoted ${promoted}.` : `一鍵任官:已任 ${appointed}、晉 ${promoted}。`, true);
               }}
             >
               {lang === 'en' ? 'Auto-appoint' : '一鍵任官'}
@@ -229,13 +272,13 @@ export function TitlesModal({ onClose }: Props) {
                   {defRisk && <span style={{ color: '#e0707a' }}>{lang === 'en' ? '⚠ defection risk' : '⚠ 叛附之虞'}</span>}
                   <span style={{ marginLeft: 'auto', display: 'flex', gap: '0.3rem' }}>
                     {mine.length > 0 && !bound && (
-                      <button className={styles.tab} onClick={() => { const r = cultivateClan(clan.id); if (!r.ok && r.reason) alert(r.reason); }}>
+                      <button className={styles.tab} onClick={() => { const r = cultivateClan(clan.id); if (!r.ok && r.reason) showToast(r.reason); }}>
                         {lang === 'en' ? 'Marry (聯姻)' : '聯姻厚結'}
                       </button>
                     )}
                     {bound && <span style={{ color: '#caa53d' }}>{lang === 'en' ? 'bound' : '已聯姻'}</span>}
                     {rivalScions.length > 0 && (
-                      <button className={styles.tab} onClick={() => { const r = subvertClan(clan.id); if (!r.ok && r.reason) alert(r.reason); }}>
+                      <button className={styles.tab} onClick={() => { const r = subvertClan(clan.id); if (!r.ok && r.reason) showToast(r.reason); }}>
                         {lang === 'en' ? `Subvert (${rivalScions.length})` : `策反 (${rivalScions.length})`}
                       </button>
                     )}
@@ -304,7 +347,7 @@ export function TitlesModal({ onClose }: Props) {
                   style={{ marginLeft: 'auto', borderColor: ready ? '#caa53d' : undefined, color: ready ? '#e6c473' : '#5d6b76' }}
                   disabled={!ready}
                   title={lang === 'en' ? `Enact the signature decree of ${def.name.en} (needs mastery ≥ ${STATECRAFT_DECREE_THRESHOLD}).` : `行${def.name.zh}之國策大政(造詣須 ≥ ${STATECRAFT_DECREE_THRESHOLD})。`}
-                  onClick={() => { const r = enactStatecraftDecree(); if (!r.ok && r.reason) alert(r.reason); }}
+                  onClick={() => { const r = enactStatecraftDecree(); if (!r.ok && r.reason) showToast(r.reason); }}
                 >
                   📜 {lang === 'en' ? def.decree.en : def.decree.zh}
                 </button>
@@ -330,7 +373,7 @@ export function TitlesModal({ onClose }: Props) {
               className={styles.appointBtn}
               onClick={() => {
                 const r = holdFoundingCeremony(dynastyTitle, eraName);
-                alert(r.message);
+                showToast(r.message, r.ok);
                 if (r.ok) setShowCeremony(false);
               }}
             >
@@ -390,7 +433,7 @@ export function TitlesModal({ onClose }: Props) {
                   setPickingTitle(null);
                   setPrefectCityId(null);
                 } else {
-                  alert(r.reason ?? 'Failed');
+                  showToast(r.reason ?? (lang === 'en' ? 'Action failed' : '操作失敗'));
                 }
               }}
               onRevoke={(officerId) => revokeTitle(officerId)}
@@ -401,7 +444,7 @@ export function TitlesModal({ onClose }: Props) {
               ownOfficers={ownOfficers}
               onPromote={(officerId, rankId) => {
                 const r = promoteOfficer(officerId, rankId);
-                if (!r.ok) alert(r.reason ?? 'Failed');
+                if (!r.ok) showToast(r.reason ?? (lang === 'en' ? 'Action failed' : '操作失敗'));
               }}
             />
           )}
@@ -412,12 +455,13 @@ export function TitlesModal({ onClose }: Props) {
               sovereign={sovereign}
               onGrant={(officerId, peerageId) => {
                 const r = grantPeerage(officerId, peerageId);
-                if (!r.ok) alert(r.reason ?? 'Failed');
+                if (!r.ok) showToast(r.reason ?? (lang === 'en' ? 'Action failed' : '操作失敗'));
               }}
               onRevoke={(officerId) => {
                 const r = revokePeerage(officerId);
-                if (!r.ok) alert(r.reason ?? 'Failed');
+                if (!r.ok) showToast(r.reason ?? (lang === 'en' ? 'Action failed' : '操作失敗'));
               }}
+              requestConfirm={(body, onYes) => setConfirmBox({ body, onYes })}
             />
           )}
           {tab === 'honorific' && (
@@ -426,12 +470,13 @@ export function TitlesModal({ onClose }: Props) {
               deeds={deeds}
               onGrant={(officerId, honorificId) => {
                 const r = grantHonorific(officerId, honorificId);
-                if (!r.ok) alert(r.reason ?? 'Failed');
+                if (!r.ok) showToast(r.reason ?? (lang === 'en' ? 'Action failed' : '操作失敗'));
               }}
               onRevoke={(officerId) => {
                 const r = revokeHonorific(officerId);
-                if (!r.ok) alert(r.reason ?? 'Failed');
+                if (!r.ok) showToast(r.reason ?? (lang === 'en' ? 'Action failed' : '操作失敗'));
               }}
+              requestConfirm={(body, onYes) => setConfirmBox({ body, onYes })}
             />
           )}
           {tab === 'history' && (
@@ -730,12 +775,14 @@ function PeerageTab({
   sovereign,
   onGrant,
   onRevoke,
+  requestConfirm,
 }: {
   ownOfficers: Officer[];
   deeds: Record<EntityId, import('../../game/types').HeroicDeeds>;
   sovereign: boolean;
   onGrant: (officerId: EntityId, peerageId: import('../../game/types').PeerageId) => void;
   onRevoke: (officerId: EntityId) => void;
+  requestConfirm: (body: string, onYes: () => void) => void;
 }) {
   const lang = useLanguage();
   const [selectedId, setSelectedId] = useState<EntityId | null>(null);
@@ -811,9 +858,13 @@ function PeerageTab({
                 onClick={() => {
                   const peer = peerageById(selected.peerageId);
                   const name = peer ? (lang === 'en' ? peer.name.en : peer.name.zh) : '';
-                  if (confirm(lang === 'en'
-                    ? `Strip ${selected.name.en} of ${name}? Their loyalty will fall sharply.`
-                    : `削去${selected.name.zh}的${name}?其忠誠將大跌。`)) onRevoke(selected.id);
+                  const sel = selected;
+                  requestConfirm(
+                    lang === 'en'
+                      ? `Strip ${sel.name.en} of ${name}? Their loyalty will fall sharply.`
+                      : `削去${sel.name.zh}的${name}?其忠誠將大跌。`,
+                    () => onRevoke(sel.id),
+                  );
                 }}
                 style={{
                   marginLeft: '0.6rem', fontSize: '0.72rem', cursor: 'pointer',
@@ -867,11 +918,13 @@ function HonorificTab({
   deeds,
   onGrant,
   onRevoke,
+  requestConfirm,
 }: {
   ownOfficers: Officer[];
   deeds: Record<EntityId, import('../../game/types').HeroicDeeds>;
   onGrant: (officerId: EntityId, honorificId: string) => void;
   onRevoke: (officerId: EntityId) => void;
+  requestConfirm: (body: string, onYes: () => void) => void;
 }) {
   const lang = useLanguage();
   const [selectedId, setSelectedId] = useState<EntityId | null>(null);
@@ -942,9 +995,13 @@ function HonorificTab({
                 onClick={() => {
                   const hon = honorificById(selected.honorificId);
                   const name = hon ? (lang === 'en' ? hon.name.en : hon.name.zh) : '';
-                  if (confirm(lang === 'en'
-                    ? `Strip ${selected.name.en} of ${name}? Their loyalty will fall.`
-                    : `奪去${selected.name.zh}的${name}?其忠誠將下降。`)) onRevoke(selected.id);
+                  const sel = selected;
+                  requestConfirm(
+                    lang === 'en'
+                      ? `Strip ${sel.name.en} of ${name}? Their loyalty will fall.`
+                      : `奪去${sel.name.zh}的${name}?其忠誠將下降。`,
+                    () => onRevoke(sel.id),
+                  );
                 }}
                 style={{
                   marginLeft: '0.6rem', fontSize: '0.72rem', cursor: 'pointer',
