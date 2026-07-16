@@ -36,6 +36,12 @@ export interface DuelRoundFx {
   ult?: { side: 'attacker' | 'defender'; kind: UltKind };
   /** 挑落下馬 — set to the side just unhorsed by a parry-disarm. */
   unhorsed?: 'attacker' | 'defender';
+  /** 環境借勢 — a terrain gambit was played (the arena bursts terrain-keyed FX). */
+  exploit?: DuelTerrain;
+  /** 棄馬步戰 — a side stepped down voluntarily (steed walks off, no crash). */
+  dismount?: 'attacker' | 'defender';
+  /** 怯戰 — the bout ended bloodlessly: the loser 請降 (yield) or 落荒 (flee). */
+  fate?: DuelFate;
 }
 
 /** 必殺技 — the named finisher for the ult / a decisive 奮. Reads the engine's
@@ -228,7 +234,7 @@ export function DuelGameModal({
     playSfx(bout.terrain === 'fire' ? 'crash' : 'arrow');
     fxKey.current += 1;
     setFx({ key: fxKey.current, hit: 'd', dmg: r.dmgToFoe, killed: false });
-    onRound?.({ hit: 'd', killed: false, aMove: 'thrust', dMove: 'guard', over: false, unhorsed: r.unhorsed });
+    onRound?.({ hit: 'd', killed: false, aMove: 'thrust', dMove: 'guard', over: false, unhorsed: r.unhorsed, exploit: bout.terrain });
   };
 
   // 棄馬步戰 — swing down and fight afoot: shed 馬上難閃 & the 挑落 risk, at the cost
@@ -239,6 +245,8 @@ export function DuelGameModal({
     setBout(dismountBout(bout, 'attacker'));
     setLog((l) => [`🥾 ${nm(me)} ${t('翻身下馬,步戰迎敵!', 'swings down to fight on foot!')}`, ...l].slice(0, 7));
     playSfx('click');
+    // The arena walks the steed off calmly (no crash / spark).
+    onRound?.({ hit: 'a', killed: false, over: false, dismount: 'attacker' });
   };
 
   // 部位打擊 — an aimed called shot once per bout: 擊械 (缴械) or 斬馬 (挑落下馬).
@@ -409,7 +417,7 @@ export function DuelGameModal({
           : t(`${nm(defender)} 膽寒,撥馬落荒而逃!`, `${nm(defender)} loses his nerve and flees the field!`);
         setLog((l) => [`🏳 ${msg}`, ...l].slice(0, 7));
         playSfx(fate === 'yield' ? 'bell' : 'arrow');
-        onRound?.({ hit: 'd', killed: false, aMove: move, dMove: foeMove, over: true, winner: 'attacker' });
+        onRound?.({ hit: 'd', killed: false, aMove: move, dMove: foeMove, over: true, winner: 'attacker', fate });
       }
     }
   };

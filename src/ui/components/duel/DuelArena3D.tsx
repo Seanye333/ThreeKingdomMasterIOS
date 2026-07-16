@@ -609,6 +609,72 @@ function HitSpark({ position, killed, heavy }: { position: [number, number, numb
   );
 }
 
+/** 環境借勢 — the terrain itself bursts on the struck foe: a terrain-keyed column
+ *  flash, a floor shock-ring and a fan of rising motes (揚沙 dust / 斷喝 golden
+ *  shock / 撩泥 clods / 撩火 embers / 借雨 spray). Remount via `key` to replay. */
+const EXPLOIT_TINT: Record<DuelTerrain, { core: string; mote: string }> = {
+  plain:  { core: '#e8d8a8', mote: '#c8b080' },
+  bridge: { core: '#ffd27a', mote: '#caa86a' },
+  mud:    { core: '#8a6a3c', mote: '#9a7a4c' },
+  fire:   { core: '#ff7a2c', mote: '#ffb44a' },
+  rain:   { core: '#7ab4ff', mote: '#a8d0ff' },
+};
+const EXPLOIT_MOTES = 12;
+function ExploitBurst({ x, terrain }: { x: number; terrain: DuelTerrain }) {
+  const column = useRef<THREE.Mesh>(null);
+  const columnMat = useRef<THREE.MeshBasicMaterial>(null);
+  const ring = useRef<THREE.Mesh>(null);
+  const ringMat = useRef<THREE.MeshBasicMaterial>(null);
+  const motes = useRef<Group>(null);
+  const moteMat = useRef<THREE.MeshBasicMaterial>(null);
+  const start = useRef(0);
+  const pending = useRef(true);
+  const tint = EXPLOIT_TINT[terrain] ?? EXPLOIT_TINT.plain;
+  useFrame(({ clock }) => {
+    if (pending.current) { start.current = clock.elapsedTime; pending.current = false; }
+    const t = clock.elapsedTime - start.current;
+    const p = Math.min(1, t / 0.7);
+    const fade = 1 - p;
+    if (column.current) { column.current.scale.set(1 + p * 0.6, 0.2 + p * 1.6, 1 + p * 0.6); column.current.visible = p < 1; }
+    if (columnMat.current) columnMat.current.opacity = fade * 0.55;
+    if (ring.current) { const s = 0.3 + p * 2.6; ring.current.scale.set(s, s, s); ring.current.visible = p < 1; }
+    if (ringMat.current) ringMat.current.opacity = fade * 0.6;
+    if (motes.current) {
+      motes.current.scale.setScalar(0.3 + p * 2.0);
+      motes.current.position.y = 0.25 + p * 1.1;
+      motes.current.visible = p < 1;
+    }
+    if (moteMat.current) moteMat.current.opacity = fade * fade * 0.9;
+  });
+  const moteEls = useMemo(() => Array.from({ length: EXPLOIT_MOTES }, (_, i) => {
+    const a = (i / EXPLOIT_MOTES) * Math.PI * 2 + (i % 3) * 0.21;
+    const r = 0.14 + (i % 4) * 0.045;
+    const s = 0.035 + (i % 3) * 0.014;
+    return (
+      <mesh key={i} position={[Math.cos(a) * r, (i % 5) * 0.05, Math.sin(a) * r]}>
+        <boxGeometry args={[s, s, s]} />
+        <meshBasicMaterial ref={i === 0 ? moteMat : undefined} color={tint.mote} transparent opacity={0.9} depthWrite={false} blending={THREE.AdditiveBlending} />
+      </mesh>
+    );
+  }), [tint.mote]);
+  return (
+    <group position={[x, 0, 0]}>
+      {/* rising column flash */}
+      <mesh ref={column} position={[0, 0.7, 0]}>
+        <cylinderGeometry args={[0.26, 0.4, 1.4, 12, 1, true]} />
+        <meshBasicMaterial ref={columnMat} color={tint.core} transparent opacity={0.55} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
+      </mesh>
+      {/* expanding floor shock-ring */}
+      <mesh ref={ring} position={[0, 0.04, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.3, 0.42, 28]} />
+        <meshBasicMaterial ref={ringMat} color={tint.core} transparent opacity={0.6} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} />
+      </mesh>
+      {/* fan of rising motes */}
+      <group ref={motes}>{moteEls}</group>
+    </group>
+  );
+}
+
 // ─────────────────────────── 三國戰場舞台 (themed stage) ────────────────────
 
 function Torch({ position }: { position: [number, number, number] }) {
@@ -1039,7 +1105,7 @@ class ArenaErrorBoundary extends Component<{ children: ReactNode }, { failed: bo
 
 function Scene({
   left, right, leftName, rightName, leftClass, rightClass, shakeKey, big, timeScale, spark, killKey, killX,
-  look, terrain, blood, leftWounds, rightWounds, finisher, photo, leftMount, rightMount,
+  look, terrain, blood, leftWounds, rightWounds, finisher, photo, leftMount, rightMount, exploitFx, leftGone, rightGone,
 }: {
   left: FighterAction; right: FighterAction; leftName: string; rightName: string;
   leftClass: WeaponClass; rightClass: WeaponClass; shakeKey: number; big: boolean;
@@ -1047,6 +1113,10 @@ function Scene({
   look: TerrainLook; terrain: DuelTerrain; blood: { key: number; x: number; big: boolean } | null;
   leftWounds: number; rightWounds: number; finisher: { key: number; x: number; color: string } | null; photo: boolean;
   leftMount: { body: string } | null; rightMount: { body: string } | null;
+  /** 環境借勢 — terrain-gambit burst FX at the struck foe. */
+  exploitFx: { key: number; x: number; terrain: DuelTerrain } | null;
+  /** 落荒而逃 — a fled fighter has left the arena (stop rendering them). */
+  leftGone: boolean; rightGone: boolean;
 }) {
   const wet = look.weather === 'rain' || look.weather === 'mud';
   const onBridge = terrain === 'bridge';
@@ -1096,11 +1166,12 @@ function Scene({
       {leftMount && <WarHorse x={-2.15} faceRight body={leftMount.body} cloth={RED} />}
       {rightMount && <WarHorse x={2.15} faceRight={false} body={rightMount.body} cloth={BLUE} />}
 
-      <Fighter side="left" tunic={RED} action={left} name={leftName} weaponClass={leftClass} timeScale={timeScale} />
-      <Fighter side="right" tunic={BLUE} action={right} name={rightName} weaponClass={rightClass} timeScale={timeScale} />
+      {!leftGone && <Fighter side="left" tunic={RED} action={left} name={leftName} weaponClass={leftClass} timeScale={timeScale} />}
+      {!rightGone && <Fighter side="right" tunic={BLUE} action={right} name={rightName} weaponClass={rightClass} timeScale={timeScale} />}
       {spark && <HitSpark key={spark.key} position={[spark.x, 1.15, 0]} killed={spark.killed} heavy={spark.heavy} />}
       {blood && <BloodSpray key={`b${blood.key}`} position={[blood.x, 1.05, 0.1]} big={blood.big} />}
       {finisher && <FinisherArc key={`f${finisher.key}`} position={[finisher.x, 1.0, 0]} color={finisher.color} />}
+      {exploitFx && <ExploitBurst key={`e${exploitFx.key}`} x={exploitFx.x} terrain={exploitFx.terrain} />}
 
       <EffectComposer>
         <Bloom intensity={0.7} luminanceThreshold={0.65} luminanceSmoothing={0.25} mipmapBlur />
@@ -1144,6 +1215,10 @@ export function DuelArena3D({
   const [finisher, setFinisher] = useState<{ key: number; x: number; color: string } | null>(null);
   // 挑落下馬 — which side has been unhorsed (their steed bolts off the arena).
   const [unhorsedSides, setUnhorsedSides] = useState<{ left: boolean; right: boolean }>({ left: false, right: false });
+  // 環境借勢 — the terrain gambit's burst FX at the struck foe.
+  const [exploitFx, setExploitFx] = useState<{ key: number; x: number; terrain: DuelTerrain } | null>(null);
+  // 落荒而逃 — a broken fighter bolts; their side empties out of the arena.
+  const [goneSides, setGoneSides] = useState<{ left: boolean; right: boolean }>({ left: false, right: false });
   // 拍照模式 — freeze + free-orbit for a screenshot.
   const [photo, setPhoto] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -1154,11 +1229,21 @@ export function DuelArena3D({
     if (!event || event.key === lastKey.current) return;
     lastKey.current = event.key;
     const k = event.key;
-    const { hit, killed, aMove, dMove, over, winner, disarm, ult, unhorsed } = event;
+    const { hit, killed, aMove, dMove, over, winner, disarm, ult, unhorsed, exploit, dismount, fate } = event;
+    // 棄馬步戰 — a calm, voluntary step down: the steed walks off (no crash, no
+    // spark) and the bout carries on afoot. Handled apart from the strike flow.
+    if (dismount) {
+      if (dismount === 'attacker') setUnhorsedSides((s) => ({ ...s, left: true }));
+      else setUnhorsedSides((s) => ({ ...s, right: true }));
+      playSfx('whoosh');
+      return;
+    }
     // 挑落下馬 — the unhorsed rider's steed bolts off; mark the side so the arena
     // stops rendering their horse (and a knock jolts the camera).
     if (unhorsed === 'attacker') setUnhorsedSides((s) => ({ ...s, left: true }));
     if (unhorsed === 'defender') setUnhorsedSides((s) => ({ ...s, right: true }));
+    // 環境借勢 — the terrain bursts on the struck foe in its own colour.
+    if (exploit) setExploitFx({ key: event.key, x: hit === 'a' ? -0.95 : 0.95, terrain: exploit });
     // 必殺技分型 — each signature finisher sweeps its own colour-keyed crescent:
     // 拖刀計 blood-red, 七進七出 azure, 無雙/斷橋 violet, 百步穿楊 gold, 奮命 amber.
     const ULT_COLOR: Record<string, string> = {
@@ -1257,13 +1342,28 @@ export function DuelArena3D({
       return () => window.clearTimeout(tid);
     }
 
-    // On a points finish (no kill), strike a victory pose a beat later.
+    // On a points finish (no kill), strike a victory pose a beat later. 怯戰 —
+    // a broken loser 請降 (drops their guard, the victor flourishes) or 落荒而逃
+    // (bolts from the arena in a puff of dust, like the steed before them).
     if (over && winner && winner !== 'draw') {
-      const tid = window.setTimeout(() => {
+      const loserIsLeft = winner === 'defender';
+      const tids: number[] = [];
+      if (fate === 'flee') {
+        playSfx('whoosh');
+        tids.push(window.setTimeout(() => {
+          // a dust burst covers the exit; the fled side empties out.
+          setExploitFx({ key: k + 7, x: loserIsLeft ? -0.95 : 0.95, terrain: 'plain' });
+          setGoneSides((s) => (loserIsLeft ? { ...s, left: true } : { ...s, right: true }));
+        }, 700));
+      } else if (fate === 'yield') {
+        // 請降 — the beaten fighter stands down; a calm bell, no blood.
+        tids.push(window.setTimeout(() => playSfx('bell'), 300));
+      }
+      tids.push(window.setTimeout(() => {
         if (winner === 'attacker') setLeft(act('victory', k, k + 1));
         else setRight(act('victory', k + 1, k + 1));
-      }, 850);
-      return () => window.clearTimeout(tid);
+      }, 850));
+      return () => tids.forEach((tid) => window.clearTimeout(tid));
     }
   }, [event]);
 
@@ -1307,6 +1407,7 @@ export function DuelArena3D({
               shakeKey={shakeKey} big={big}
               look={look} terrain={terrain} blood={blood} leftWounds={leftWounds} rightWounds={rightWounds} finisher={finisher} photo={photo}
               leftMount={unhorsedSides.left ? null : leftMount} rightMount={unhorsedSides.right ? null : rightMount}
+              exploitFx={exploitFx} leftGone={goneSides.left} rightGone={goneSides.right}
             />
           </Suspense>
         </Canvas>
