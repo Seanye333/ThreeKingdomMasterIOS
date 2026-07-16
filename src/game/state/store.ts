@@ -981,6 +981,8 @@ interface GameStore extends GameState {
   recordDeed: (officerId: EntityId, patch: Partial<import('../types').HeroicDeeds>) => void;
   /** 名場面入史 — append one line to the running 事件簿 (§6.13): an epic duel, etc. */
   recordAnnal: (entry: AnnalsEntry) => void;
+  /** 成就觸發 — fire one achievement trigger (load → process → save → toast). */
+  fireAchievement: (trigger: import('../types/achievement').AchievementTrigger) => void;
   /** 代戰認輸金 — move a duel indemnity from the loser's realm to the winner's (§6.13). */
   settleDuelTribute: (loserForceId: EntityId, winnerForceId: EntityId, amount: number) => { moved: number };
   /** 決鬥定和 — propose settling a quarrel by champions (以戰止戰). Spends the envoy
@@ -8972,6 +8974,38 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // 打擂隨季 (§6.12) — the arena seat lives its own life: while an AI (or no
+        // one from your force) holds it, the realm's fighters keep contesting it
+        // between seasons; the player-held seat is only ever risked by choice
+        // (holdArena). A change of hands is chronicle material.
+        {
+          const cur = get();
+          const seat = cur.arenaChampion;
+          const holder = seat ? cur.officers[seat.officerId] : null;
+          const holderIsPlayers = !!holder && holder.forceId === cur.playerForceId;
+          if (seat && holder && holder.status !== 'dead' && holder.status !== 'imprisoned' && !holderIsPlayers && Math.random() < 0.45) {
+            const contender = pickArenaChallenger(cur.officers, holder.id, Math.random);
+            if (contender) {
+              const bout = resolveDuel({ attacker: contender, defender: holder });
+              if (bout.winner === 'attacker') {
+                set({ arenaChampion: { officerId: contender.id, sinceYear: cur.date.year, defenses: 0 } });
+                get().recordAnnal({
+                  year: cur.date.year, season: cur.date.season, kind: 'event',
+                  titleZh: '擂主易位',
+                  textZh: `${contender.name.zh} 登台力克 ${holder.name.zh} — 天下擂主易位!`,
+                  cityId: null,
+                });
+              } else {
+                set({ arenaChampion: { ...seat, defenses: seat.defenses + 1 } });
+              }
+            }
+          } else if (seat && (!holder || holder.status === 'dead' || holder.status === 'imprisoned')) {
+            // 擂主凋零 — a dead/captive champion's seat falls to the strongest arm.
+            const heir = pickArenaChampion(cur.officers);
+            set({ arenaChampion: heir ? { officerId: heir.id, sinceYear: cur.date.year, defenses: 0 } : undefined });
+          }
+        }
+
         // 自動存檔 — every season boundary writes one of three rolling
         // autosave slots, so a bad turn (or a crash) costs at most a season.
         if (seasonBoundary) {
@@ -11889,6 +11923,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const next = [...(state.annals ?? []), entry].slice(-240);
         set({ annals: next });
       },
+      fireAchievement: (trigger) => {
+        const ach = loadAchievementProgress();
+        const r = processTrigger(ach, trigger);
+        if (r.newlyUnlocked.length > 0) {
+          saveAchievementProgress(r.progress);
+          set({ recentAchievementUnlocks: [...get().recentAchievementUnlocks, ...r.newlyUnlocked] });
+        }
+      },
       proposePeaceDuel: (targetForceId) => {
         const state = get();
         const pid = state.playerForceId;
@@ -11940,6 +11982,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           if (outcome === 'win') get().settleDuelTribute(targetForceId, pid, stakes.indemnity);
           else get().settleDuelTribute(pid, targetForceId, stakes.indemnity);
         }
+        if (outcome === 'win') get().fireAchievement({ kind: 'peace-duel' }); // 一騎定和
         // 名場面入史 — a realm settled by a single bout is chronicle material.
         get().recordAnnal({
           year: state.date.year, season: state.date.season, kind: 'event',
@@ -12127,6 +12170,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const r = trainMartialArts(o);
         if (!r) return { ok: false, reason: 'insufficient' }; // not enough 心得 or 修為 maxed
         set({ officers: { ...state.officers, [officerId]: { ...o, martialXiuwei: r.xiuwei, martialInsight: r.insight } } });
+        if (r.xiuwei >= MARTIAL_XIUWEI_MAX) get().fireAchievement({ kind: 'war-god' }); // 武神 — mastery peaked
         return { ok: true, xiuwei: r.xiuwei, gained: r.gained, tierUpZh: r.tierUp?.zh, tierUpEn: r.tierUp?.en };
       },
       challengeArena: (challengerId) => {
@@ -12182,6 +12226,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           });
           get().awardMartialInsight(champ.id, stip.insight);
           if (stip.renown) get().recordDeed(champ.id, { duelsWon: 1 });
+          if (seat.defenses + 1 >= 3) get().fireAchievement({ kind: 'arena-reign' }); // 擂台不倒
           return { ok: true, held: true, challengerZh: challenger.name.zh, challengerEn: challenger.name.en, insight: stip.insight, gold: stip.gold };
         }
         set({ arenaChampion: { officerId: challenger.id, sinceYear: state.date.year, defenses: 0 } });
@@ -12385,6 +12430,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           const after = Math.min(MARTIAL_XIUWEI_MAX, before + c.xiuwei);
           officer = { ...officer, martialXiuwei: after };
           if (after > before) notes.push(`武學修為 +${after - before}`);
+          if (after >= MARTIAL_XIUWEI_MAX) get().fireAchievement({ kind: 'war-god' }); // 武神
         }
         if (c.insight) {
           officer = { ...officer, martialInsight: Math.max(0, (officer.martialInsight ?? 0) + c.insight) };

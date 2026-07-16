@@ -19,6 +19,7 @@ import { categoryOfTactic } from '../../game/data/officerAttributes';
 import { attackUnits, canAttack, canMove, endTurn, hexDistance, moveUnit, resolveBattleEnd, unitAt, tileAt, hexNeighbours, forecastAttack, matchupLabel, battleStratagemSituation, defenderTerrainShield, terrainDamageMod, moveCost, findPath, moveUnitAlong, reachableHexes, isRouting, changeFormation, canChangeFormation, canFortify, fortifyTile, FIELDWORKS_AP_COST, pickAiFormation, formationCounterMul } from '../../game/systems/tactical';
 import { applyBattlePrep, applyStratagem, pickAiBattlePrep, pickDuelChampion, canIssuePreBattleDuel, applyPreBattleDuel, aiMaybePreBattleDuel } from '../../game/systems/tacticalSchemes';
 import { duelDread } from '../../game/systems/duelChallenge';
+import { resolveTeamDuel } from '../../game/systems/teamDuel';
 import { aiTakeTurn, aiSkillForDifficulty } from '../../game/systems/tacticalAi';
 import { FORMATIONS } from '../../game/data/formations';
 import { canDuel, pickDuelTerrain, rollDuelScar } from '../../game/systems/duel';
@@ -3480,6 +3481,9 @@ export function TacticalBattleScreen3D() {
     return () => clearTimeout(id);
   }, []);
   const [interactiveDuel, setInteractiveDuel] = useState<{ me: Officer; foe: Officer; meFatigue: number; foeFatigue: number; reinforcements: Officer[]; terrain?: import('../../game/systems/duel').DuelTerrain; preBattle?: boolean } | null>(null);
+  // 團戰並擊 — when BOTH champions have adjacent supporters, offer a real N-vs-M
+  // melee (圍攻/合擊/膽氣, auto-resolved with consequences) instead of the 1v1.
+  const [meleePrompt, setMeleePrompt] = useState<{ me: Officer; foe: Officer; mine: Officer[]; foes: Officer[]; meFatigue: number; foeFatigue: number; terrain: import('../../game/systems/duel').DuelTerrain } | null>(null);
   // 敵將叫陣 — an aggressive enemy adjacent to one of your officers may challenge
   // you at the top of your turn; accept to duel, or refuse.
   const [challenge, setChallenge] = useState<{ me: Officer; foe: Officer; meFatigue: number; foeFatigue: number; reinforcements: Officer[] } | null>(null);
@@ -3844,8 +3848,20 @@ export function TacticalBattleScreen3D() {
         .filter((ru) => ru.side === playerSide && ru.troops > 0 && ru.ap > 0 && ru.officerId !== me.id
           && hexDistance(ru.coord, u.coord) === 1 && officers[ru.officerId] && canDuel(officers[ru.officerId]!).ok)
         .map((ru) => officers[ru.officerId]!).slice(0, 2);
+      const duelTerrain = pickDuelTerrain();
+      // 團戰並擊 (§6.11) — when the FOE also has champions at their side, the two
+      // knots of officers can crash together instead: offer the choice.
+      const foeAllies = battle.units
+        .filter((ru) => ru.side !== playerSide && ru.troops > 0 && ru.officerId !== foe.id
+          && hexDistance(ru.coord, u.coord) === 1 && officers[ru.officerId] && canDuel(officers[ru.officerId]!).ok)
+        .map((ru) => officers[ru.officerId]!).slice(0, 2);
+      if (reinforcements.length >= 1 && foeAllies.length >= 1) {
+        setMeleePrompt({ me, foe, mine: [me, ...reinforcements], foes: [foe, ...foeAllies], meFatigue: selectedUnit.duelFatigue ?? 0, foeFatigue: u.duelFatigue ?? 0, terrain: duelTerrain });
+        setActionMode({ kind: 'none' });
+        return;
+      }
       // 車輪戰 — each fighter opens winded by the bouts they've already fought.
-      setInteractiveDuel({ me, foe, meFatigue: selectedUnit.duelFatigue ?? 0, foeFatigue: u.duelFatigue ?? 0, reinforcements, terrain: pickDuelTerrain() });
+      setInteractiveDuel({ me, foe, meFatigue: selectedUnit.duelFatigue ?? 0, foeFatigue: u.duelFatigue ?? 0, reinforcements, terrain: duelTerrain });
       setActionMode({ kind: 'none' });
       return;
     }
@@ -4803,6 +4819,103 @@ export function TacticalBattleScreen3D() {
                 onClick={() => { start({ ...battle, forcedCaptures: [...(battle.forcedCaptures ?? []), captureChoice.id] }); setCaptureChoice(null); }}
                 style={{ flex: 1, padding: '0.6rem', background: 'linear-gradient(180deg,#2a4a2a,#16301a)', border: '1px solid #86f29a', color: '#d0ffd8', cursor: 'pointer', fontFamily: 'inherit', fontSize: '1.05rem', letterSpacing: '0.1rem' }}
               >🪢 {t('生擒', 'Capture')}</button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* 團戰並擊 (§6.11) — both champions have supporters at their side: choose a
+          classic 1v1 (allies wait to 援護) or crash the two knots together. */}
+      {meleePrompt && (
+        <Modal
+          onClose={() => setMeleePrompt(null)}
+          width="min(460px, 94vw)"
+          zIndex={1450}
+          ariaLabel={t('團戰並擊', 'Team melee')}
+        >
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '1.25rem', color: '#f2dd9a', marginBottom: '0.3rem' }}>
+              {t('兩陣群英相對!', 'Champions mass on both sides!')}
+            </div>
+            <div style={{ fontSize: '0.82rem', color: 'var(--tkm-hud-grey)', marginBottom: '0.8rem' }}>
+              {t(`我方 ${meleePrompt.mine.map((o) => o.name.zh).join('・')} ⚔ 敵陣 ${meleePrompt.foes.map((o) => o.name.zh).join('・')}`,
+                `${meleePrompt.mine.map((o) => o.name.en).join(', ')} vs ${meleePrompt.foes.map((o) => o.name.en).join(', ')}`)}
+            </div>
+            <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'center' }}>
+              <button
+                onClick={() => {
+                  const p = meleePrompt;
+                  setMeleePrompt(null);
+                  setInteractiveDuel({ me: p.me, foe: p.foe, meFatigue: p.meFatigue, foeFatigue: p.foeFatigue, reinforcements: p.mine.slice(1), terrain: p.terrain });
+                }}
+                title={t('經典一騎打 — 友將立於陣側,力戰不支時援護接力', 'A classic 1v1 — allies stand by to relieve you mid-bout')}
+                style={{ flex: 1, padding: '0.6rem', background: 'linear-gradient(180deg,#3a3020,#241c10)', border: '1px solid #e6c473', color: '#f0d890', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.95rem' }}
+              >⚔ {t('一騎打', '1v1 Duel')}</button>
+              <button
+                onClick={() => {
+                  const p = meleePrompt;
+                  setMeleePrompt(null);
+                  const b = useGameStore.getState().tacticalBattle;
+                  if (!b || !playerSide) return;
+                  // 團戰 — auto-resolved N-vs-M (圍攻/合擊/膽氣); consequences bind.
+                  const res = resolveTeamDuel(p.mine.map((o) => ({ officer: o })), p.foes.map((o) => ({ officer: o })), Math.random);
+                  const downed = [...res.a, ...res.b].filter((f) => f.downed);
+                  const downedIds = new Set(downed.map((f) => f.id));
+                  const partIds = new Set([...p.mine, ...p.foes].map((o) => o.id));
+                  const prevCas = b.casualties ?? { attacker: [], defender: [] };
+                  const cas = { attacker: [...prevCas.attacker], defender: [...prevCas.defender] };
+                  const forcedKills = [...(b.forcedKills ?? [])];
+                  const forcedCaptures = [...(b.forcedCaptures ?? [])];
+                  for (const f of downed) {
+                    const du = b.units.find((uu) => uu.officerId === f.id);
+                    if (du) cas[du.side].push(f.id);
+                    // 斬/擒/逃 — a slain foe falls for good, a yielded one is bound,
+                    // a fled one escapes the field; survivors of a knockout carry wounds.
+                    if (f.side === 'b') {
+                      if (f.fate === 'slain') forcedKills.push(f.id);
+                      else if (f.fate === 'yield') forcedCaptures.push(f.id);
+                    }
+                    if (f.fate !== 'slain') afflictOfficer(f.id, duelWound(true));
+                  }
+                  const winSide = res.winner === 'a' ? playerSide : res.winner === 'b' ? (playerSide === 'attacker' ? 'defender' : 'attacker') : null;
+                  const headZh = res.winner === 'a' ? `${p.me.name.zh} 率眾將團戰並擊 — 大破敵陣群英!`
+                    : res.winner === 'b' ? `團戰失利 — ${p.foe.name.zh} 等敵將勢盛!`
+                    : `${p.me.name.zh} 與 ${p.foe.name.zh} 兩陣群英鏖戰 — 各自收兵。`;
+                  const headEn = res.winner === 'a' ? `${p.me.name.en} leads the melee — the enemy champions are broken!`
+                    : res.winner === 'b' ? `The melee is lost — ${p.foe.name.en}'s knot prevails!`
+                    : `The champions fight to a standstill — both sides withdraw.`;
+                  start({
+                    ...b,
+                    units: b.units
+                      .filter((uu) => !downedIds.has(uu.officerId))
+                      .map((uu) => {
+                        let unit = uu;
+                        if (partIds.has(uu.officerId)) unit = { ...unit, ap: 0, duelFatigue: (unit.duelFatigue ?? 0) + 24 };
+                        if (winSide) unit = uu.side === winSide
+                          ? { ...unit, morale: Math.min(100, unit.morale + 12) }
+                          : { ...unit, morale: Math.max(0, unit.morale - 18) };
+                        return unit;
+                      }),
+                    casualties: cas,
+                    forcedKills, forcedCaptures,
+                    log: [
+                      ...(b.log ?? []),
+                      { turn: b.turn, text: headZh, textEn: headEn, kind: 'event' as const },
+                      ...res.log.map((l) => ({ turn: b.turn, text: l.zh, textEn: l.en, kind: 'event' as const })),
+                    ],
+                  });
+                  // 名聲/武學 — the captain banks the win; survivors hone their craft.
+                  const st = useGameStore.getState();
+                  if (res.winner === 'a') { recordDeed(p.me.id, { duelsWon: 1 }); st.fireAchievement({ kind: 'field-melee' }); } // 群英並擊
+                  for (const f of res.a) if (!f.downed) st.awardMartialInsight(f.id, 2);
+                  for (const f of res.b) if (!f.downed) st.growMartialXiuwei(f.id, 1);
+                  setSignatureBanner({ zh: headZh, en: headEn, key: Date.now() });
+                  setCine({ key: ++cineCount.current, weight: 3, color: 'var(--tkm-hud-amber)' });
+                  setTimeout(() => setSignatureBanner(null), 2400);
+                }}
+                title={t('團戰並擊 — 兩陣群將混戰(圍攻/合擊/膽氣),當場定勝負:被斬者亡、請降者被擒、落荒者逸,全軍士氣隨之', 'Crash the knots together — an N-vs-M melee (ganging / joint strikes / nerve), settled on the spot: the slain fall, the yielded are bound, the fled escape; army morale swings')}
+                style={{ flex: 1, padding: '0.6rem', background: 'linear-gradient(180deg,#5a2a20,#3a1810)', border: '1px solid #e0846a', color: '#ffe0d0', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.95rem' }}
+              >🔥 {t('團戰並擊', 'Team Melee')}</button>
             </div>
           </div>
         </Modal>

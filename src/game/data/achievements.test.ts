@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { ACHIEVEMENTS } from './achievements';
 import { EVENTS_BY_ID, HISTORICAL_EVENTS } from './events';
+import { processTrigger } from '../systems/achievements';
+import { createEmptyAchievementProgress } from '../types/achievement';
 
 describe('achievement catalog integrity', () => {
   it('achievement ids are unique', () => {
@@ -38,6 +40,23 @@ describe('achievement catalog integrity', () => {
     for (const a of ACHIEVEMENTS) {
       if (a.trigger.kind !== 'event-choice') continue;
       expect(choiceFlags.has(a.trigger.targetId ?? ''), `${a.id} → ${a.trigger.targetId}`).toBe(true);
+    }
+  });
+
+  it('duel-deepening instant feats unlock on their trigger (once)', () => {
+    // 一騎定和 / 武神 / 擂台不倒 / 群英並擊 — kind-only triggers, no targetId.
+    const CASES: Array<{ kind: 'peace-duel' | 'war-god' | 'arena-reign' | 'field-melee'; ach: string }> = [
+      { kind: 'peace-duel', ach: 'ach-peace-duel' },
+      { kind: 'war-god', ach: 'ach-war-god' },
+      { kind: 'arena-reign', ach: 'ach-arena-reign' },
+      { kind: 'field-melee', ach: 'ach-field-melee' },
+    ];
+    for (const c of CASES) {
+      const first = processTrigger(createEmptyAchievementProgress(), { kind: c.kind });
+      expect(first.newlyUnlocked, c.ach).toContain(c.ach);
+      // firing again on the same progress unlocks nothing new
+      const again = processTrigger(first.progress, { kind: c.kind });
+      expect(again.newlyUnlocked).toHaveLength(0);
     }
   });
 });

@@ -84,7 +84,8 @@ export function processTrigger(
          'fire-event', 'reach-ending', 'reach-imperial-rank', 'learn-skill',
          'starve-out-city', 'ambush-victory', 'burning-camps',
          'boom-stall', 'beacon-relay', 'bridge-burned', 'ally-battle',
-         'rout-annihilated', 'event-choice'] as const)
+         'rout-annihilated', 'event-choice',
+         'peace-duel', 'war-god', 'arena-reign', 'field-melee'] as const)
         .includes(ach.trigger.kind as never) &&
         ach.trigger.targetId === trigger.targetId) ||
       // Cumulative: counter ≥ threshold.

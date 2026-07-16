@@ -39,7 +39,12 @@ export type AchievementTriggerKind =
   // to `threshold`; 'codex-set' fires when the famous set `targetId`
   // completes ('any' = first completed set, 'all' = every set).
   | 'codex-collection'
-  | 'codex-set';
+  | 'codex-set'
+  // 2026-07 duel-deepening batch (instant, no targetId):
+  | 'peace-duel'    // 一騎定和 — won a 決鬥定和 (duel of peace)
+  | 'war-god'       // 武神 — an officer's 武學修為 reached 100
+  | 'arena-reign'   // 擂台不倒 — held the arena through 3 straight defenses
+  | 'field-melee';  // 群英並擊 — won a field team melee
 
 export interface AchievementTrigger {
   kind: AchievementTriggerKind;

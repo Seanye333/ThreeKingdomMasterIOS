@@ -4,6 +4,40 @@ import type { Achievement } from '../types';
  * Persistent cross-game achievements.
  */
 export const ACHIEVEMENTS: Achievement[] = [
+  // ─── 2026-07 duel-deepening feats ──────────────────────────────
+  {
+    id: 'ach-peace-duel',
+    name: { en: 'One Rider Ends the War', zh: '一騎定和' },
+    description: 'Win a duel of peace — a single bout settles a quarrel between realms.',
+    descriptionZh: '決鬥定和取勝 — 一將點到為止,兩國罷兵息戰。',
+    tier: 'gold',
+    trigger: { kind: 'peace-duel' },
+  },
+  {
+    id: 'ach-war-god',
+    name: { en: 'War-God', zh: '武神' },
+    description: 'Cultivate an officer\'s martial mastery to its very peak (修為 100).',
+    descriptionZh: '一將武學修為臻至圓滿(100)— 六境之巔,天下武神。',
+    tier: 'legendary',
+    trigger: { kind: 'war-god' },
+  },
+  {
+    id: 'ach-arena-reign',
+    name: { en: 'The Seat Unshaken', zh: '擂台不倒' },
+    description: 'Hold the standing arena through three straight defenses.',
+    descriptionZh: '坐鎮天下擂台,連退三度挑戰 — 擂主之名不動如山。',
+    tier: 'silver',
+    trigger: { kind: 'arena-reign' },
+  },
+  {
+    id: 'ach-field-melee',
+    name: { en: 'Champions in a Knot', zh: '群英並擊' },
+    description: 'Win a team melee of champions on the battlefield.',
+    descriptionZh: '戰陣之上團戰並擊 — 率眾將混戰而勝,敵陣群英盡折。',
+    tier: 'silver',
+    trigger: { kind: 'field-melee' },
+  },
+
   // ─── 2026-07 map feats ─────────────────────────────────────────
   {
     id: 'ach-starve-out',
