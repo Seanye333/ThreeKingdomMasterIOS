@@ -4,7 +4,7 @@ import { canDuel, staticProwess, rollDuelScar, type DuelDifficulty } from '../..
 import { initDuelSeries, advanceDuelSeries, seriesOver, seriesWinner, type DuelSeriesState } from '../../game/systems/duelSeries';
 import { wagerMultiplier, wagerProfit } from '../../game/systems/wager';
 import { findRivalryChallenge } from '../../game/systems/rivalries';
-import { duelChallengeTargets, willAcceptChallenge, challengeResultLine, findIncomingChallenge, duelRecruitChance } from '../../game/systems/duelChallenge';
+import { duelChallengeTargets, willAcceptChallenge, challengeResultLine, findIncomingChallenge, duelRecruitChance, duelTribute } from '../../game/systems/duelChallenge';
 import { DUEL_SCENARIOS, DUEL_CAMPAIGNS, campaignSteps, duelScenarioOutcome, duelScenarioResultLine, type DuelScenario } from '../../game/systems/duelScenarios';
 import { renownFromDeeds, fameTier, rollChallenger } from '../../game/systems/fame';
 import { trainKey, trainsLeft, TRAIN_PER_SEASON } from '../../game/systems/sparLimit';
@@ -86,6 +86,7 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
   const inflictDuelScar = useGameStore((s) => s.inflictDuelScar);
   const recruitViaDuel = useGameStore((s) => s.recruitViaDuel);
   const adjustForceFavor = useGameStore((s) => s.adjustForceFavor);
+  const settleDuelTribute = useGameStore((s) => s.settleDuelTribute);
   const calloutTargets = useMemo(() => duelChallengeTargets(officers, playerForceId, { limit: 12 }), [officers, playerForceId]);
   const [calloutFoeId, setCalloutFoeId] = useState<string | null>(null);
   const [calloutDuel, setCalloutDuel] = useState(false);
@@ -271,18 +272,25 @@ export function TrainingGroundModal({ onClose }: { onClose: () => void }) {
           const wonOver = oc === 'win' && !slewFoe && Math.random() < duelRecruitChance(foe, a) && recruitViaDuel(foe.id);
           // 約戰牽動外交 — folding their champion before the realm breeds a grudge
           // (a kill, deeper); an honourable draw breeds mutual respect.
+          let tribute = 0;
           if (foeForce && a.forceId && foeForce !== a.forceId && !wonOver) {
             adjustForceFavor(a.forceId, foeForce, slewFoe ? -14 : oc === 'win' ? -8 : oc === 'draw' ? 4 : 0);
+            // 代戰認輸金 (§6.13) — a bested champion's lord pays to redeem the realm's
+            // face; the win ripples to the strategic map's coffers.
+            if (oc === 'win') tribute = settleDuelTribute(foeForce, a.forceId, duelTribute(foe)).moved;
           }
           const line = challengeResultLine(oc, pickName(a.name, lang), pickName(foe.name, lang));
           setResult({ text: slewFoe ? t(`${pickName(a.name, lang)} 約戰陣斬 ${pickName(foe.name, lang)}!`, `${pickName(a.name, lang)} cuts down ${pickName(foe.name, lang)} in the called duel!`)
               : slewMe ? t(`${pickName(a.name, lang)} 約戰殞於 ${pickName(foe.name, lang)} 之手!`, `${pickName(a.name, lang)} falls to ${pickName(foe.name, lang)} in the called duel!`)
               : wonOver ? t(`${pickName(foe.name, lang)} 感佩 ${pickName(a.name, lang)} 之勇,棄暗投明來投!`, `${pickName(foe.name, lang)}, moved by ${pickName(a.name, lang)}'s valour, comes over to your side!`)
               : t(line.zh, line.en),
-            notes: slewFoe ? [t('陣斬敵將,威震天下 — 其親族銜恨。', 'A famous kill — and the slain foe\'s kin swear vengeance.')]
-              : wonOver ? [t('英雄惜英雄 — 一場單挑,勝過千言招攬。', 'A hero honours a hero — one duel wins what a thousand words could not.')]
-              : oc === 'win' ? [t('折服敵將,威名遠播 — 其忠誠動搖。', 'A humbling defeat for the foe — their loyalty wavers.')]
-              : [] });
+            notes: [
+              ...(slewFoe ? [t('陣斬敵將,威震天下 — 其親族銜恨。', 'A famous kill — and the slain foe\'s kin swear vengeance.')]
+                : wonOver ? [t('英雄惜英雄 — 一場單挑,勝過千言招攬。', 'A hero honours a hero — one duel wins what a thousand words could not.')]
+                : oc === 'win' ? [t('折服敵將,威名遠播 — 其忠誠動搖。', 'A humbling defeat for the foe — their loyalty wavers.')]
+                : []),
+              ...(tribute > 0 ? [t(`代戰認輸金 — 敵國納金 ${tribute} 贖顏面。`, `Indemnity — the foe's realm pays ${tribute} gold to redeem its face.`)] : []),
+            ] });
         }}
       />
     );

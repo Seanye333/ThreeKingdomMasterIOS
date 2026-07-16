@@ -16,7 +16,7 @@
 | 3 | [人才・招攬・舌戰](#第三章-人才招攬舌戰) | commands(search), officerFate, recommendation, commonerTalent, appraisal(月旦評), scenicSites(三顧), captiveFate(處決後果/AI處置), aiRansom, debate, wordWar, persuasion(說客) | ✅ |
 | 4 | [軍事指揮・委任](#第四章-軍事指揮委任) | muster, legion(都督之斷·長圍), governor, governorEval, advisor, 在途指令(駐守/設伏/圍城/焚橋/燒鎖/補給/分兵/召回), rout(潰軍/掩殺收降/殿軍斷後) | ✅ |
 | 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, tacticalAi, combat, formations, stratagems, weather(區域天候), battlefieldTerrain, worldScars(戰場烙印), fieldworks(築壘), columnReinforcements(會戰), wallTier城郭分層, 入城三選, battleSpoils(戰場繳獲), personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
-| 6 | [單挑](#第六章-單挑) | duel(招式/必殺技/獨門被動/破綻/傷殘/挑落下馬/**環境借勢/部位打擊/膽氣怯戰/棄馬步戰**/兵裝/坐騎/地形/性格/AI), **martialArts(武學修為/流派/秘籍/頓悟)**, **teamDuel(團戰圍攻/合擊)**, **arenaLadder(打擂擂台)**, gauntlet, duelSeries, duelScenarios(劇情+戰役), duelHall(名局廊), warRanking(武評榜), rivalries(宿敵/恩怨簿), duelChallenge(約戰), tactical(致師) | ✅ |
+| 6 | [單挑](#第六章-單挑) | duel(招式/必殺技/獨門被動/破綻/傷殘/挑落下馬/**環境借勢/部位打擊/膽氣怯戰/棄馬步戰**/兵裝/坐騎/地形/性格/AI), **martialArts(武學修為/流派/秘籍/頓悟)**, **teamDuel(團戰圍攻/合擊)**, **arenaLadder(打擂擂台)**, **涟漪大地圖(威名威懾/代戰認輸金/慘勝負傷/名場面入史)**, gauntlet, duelSeries, duelScenarios(劇情+戰役), duelHall(名局廊), warRanking(武評榜), rivalries(宿敵/恩怨簿), duelChallenge(約戰), tactical(致師) | ✅ |
 | 7 | [外交・謀略・天子](#第七章-外交謀略天子) | diplomacy, diplomacyPacts(稱臣/索貢/會盟/援盟/調停/質子/借道), coalition, schemes, aiSchemes, ambition, espionage, expedition, foreignRealm, intrigue, courtFactions, factionEvents, emperor, imperialEffects, mandate, appointmentEffects, clans, statecraft | ✅ |
 | 8 | [事件・天命・異族・宗教](#第八章-事件天命異族宗教) | events(天災/地動/賑災), historicalEvents(抉擇鏈), behaviorEvents(勸進/眾叛), customEvents, factionEvents, religion(黃巾/招安/宣撫), tribes, tribesDiplomacy(和親/互市/質子/以夷制夷/入主建國/七擒), mandate(祥瑞/造讖/禳星), mandateRituals(郊祀/祈雨), annals(災異志) | ✅ |
 | 9 | [元遊戲・收藏・分享](#第九章-元遊戲收藏分享) | achievements, deedTitles, dailyChallenge, leaderboard, mods, powerHistory, historyBook, romance, sound, voiceLines, dialogueRoll | ✅ |
@@ -398,6 +398,7 @@
 | 團戰單挑(§6.11) | 真·多將混戰(teamDuel):圍攻(一回合只架最凶一擊−40%,餘擊實中)·合擊(義兄弟夾攻+8)·集火最弱·膽氣判斬/降/逃;12 合按存活/總氣力定勝;武鬥館「團戰」演武(主將+2 對敵三傑,不取生死) |
 | 打擂擂台(§6.12) | 常駐擂主(arenaChampion 狀態,空缺以天下最強充任);challengeArena 挑戰(點到為止,勝取而代之→心得6~14+金250~600+威名)·holdArena 坐鎮守擂一季(俸賞隨連守遞增封頂,敗則失位);武鬥館「擂台」頁;心得接 §6.10 |
 | 棄馬步戰(§6.2b) | canDismount/dismountBout:騎者可下馬 — 免挑落+閃避復原(去馬上難閃),捨馬上長兵+的盧救主;交互一手 |
+| 涟漪大地圖(§6.13) | 威名威懾(duelDread 0~0.42:威名+無雙/虎吼/嗜血 令敵避戰,鬥將不避)·代戰認輸金(約戰折服→敵國納金 150+敗將勇×2 入我都)·慘勝負傷(勝方殘氣<45 或≥6合→勝方亦輕傷)·名場面自動入史(陣斬/了斷宿敵/≥12合/平手→annals) |
 | 鬥將生涯(§6.5) | duelCareerBonus:段位(神將+10/虎將+7/驍將+5/健將+3)+百戰(≥30+6/≥15+4/≥6+2)折進單挑固定勇;武評榜名宿實打強於武力,自成成長階梯(競技場🏅段位+X) |
 | 天下武道會(§6.5) | 比武大會單淘汰;奪魁→武評榜+80・威名+8(常升段→鬥將生涯)、亞軍+30/+3;陡升年度一次(lastTournamentYear),同年再辦僅練習+12 |
 | 致師(§6.7) | 戰前 turn1 遣強將陣前單挑:勝全軍士氣 +18·敗 −22·平 −5(較陣中 +10/−15 更烈),佔該方一次戰前部署;敵將亦自動致師 |
@@ -2010,6 +2011,15 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
 - **挑戰**(store `challengeArena`):遣將登台鬥現任擂主(resolveDuel,**點到為止不取生死**);勝則**取而代之**,得 **心得 6~14 + 金 250~600 + 威名(單挑勝 deed)**,厚薄隨被逐擂主之勇。
 - **坐鎮**(store `holdArena`):自居擂主時可**守擂一季**迎戰隨機強敵(pickArenaChallenger,天下十二驍銳中抽);守成得**俸賞**(心得/金隨連守遞增,封頂;每三守一威名),敗則**痛失擂主**。玩家觸發、不動賽季迴圈。
 - **入口**:武鬥館「擂台」頁 —— 顯示現任擂主/守擂數;非擂主可遣將挑戰、擂主可坐鎮迎戰。**接 §6.10**:賞的心得直入該將武學修為。
+
+### 6.13 涟漪大地圖(單挑撼動戰略層)
+
+單挑不止私鬥,其威名、勝負、傷亡當**涟漪及於大地圖**:
+
+- **威名威懾**(duelDread + willAcceptChallenge):彪炳戰績之將(威名 + 無雙/虎吼/嗜血/狂戰 等凶名,懾力 0~0.42)**未戰先懾敵** —— 敵將面之愈易**避戰**(怯者更甚,鬥將仍不避);避戰者失威名/忠誠(§6.7 refused stakes),故**名將不動刀而勝人之威**,敵自遠之。
+- **代戰認輸金**(duelTribute + store settleDuelTribute):**約戰**折服敵將(非收降),敵國之主**納金贖顏面** —— 認輸金 150 + 敗將勇×2,自敵都府庫轉入我都(封頂敵之所有)。單挑以一將之勝,撼敵國之府庫(接 §6.7 約戰、§7.1 外交好感)。
+- **慘勝負傷鏈**(DuelGameModal hardWon → afflictOfficer):苦戰之勝(勝方殘氣 <45 或 ≥6 合)**勝方亦帶輕傷**(養傷下野,見 §2.4)—— 一場慘勝非白得,連戰名將須惜身。
+- **名場面自動入史**(Duel3DStage → store recordAnnal):史詩對決(**陣斬名將 / 了斷宿敵 / ≥12 合鏖戰 / 大戰不分勝負**)**自動寫入事件簿**(§8.1 annals),日後可於史冊重溫 —— 你的單挑親手寫成本朝傳奇。
 
 ---
 

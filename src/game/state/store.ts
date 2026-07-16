@@ -978,6 +978,10 @@ interface GameStore extends GameState {
   /** 名聲榜 — accumulate heroic deeds (duel/debate wins, etc.) for an officer.
    *  Numeric fields add; others overwrite. Feeds renown in systems/fame.ts. */
   recordDeed: (officerId: EntityId, patch: Partial<import('../types').HeroicDeeds>) => void;
+  /** 名場面入史 — append one line to the running 事件簿 (§6.13): an epic duel, etc. */
+  recordAnnal: (entry: AnnalsEntry) => void;
+  /** 代戰認輸金 — move a duel indemnity from the loser's realm to the winner's (§6.13). */
+  settleDuelTribute: (loserForceId: EntityId, winnerForceId: EntityId, amount: number) => { moved: number };
   /** 名局廊 — archive a notable duel/debate so it can be replayed from the hall. */
   recordBout: (rec: import('../systems/duelHall').BoutRecord) => void;
   /** 武評榜 — fold an interactive duel result into the ELO ladder (a from a's view). */
@@ -11868,6 +11872,25 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         }
         set({ officers });
         return { ok: true, verdictZh: verdict.zh, verdictEn: verdict.en, appraiserName: appraiser.name, renownGain: gain.target, misread: !accurate, legendary: accurate && !!legendaryVerdict(target) };
+      },
+      recordAnnal: (entry) => {
+        const state = get();
+        // Cap the running annals so an active career doesn't grow it unbounded.
+        const next = [...(state.annals ?? []), entry].slice(-240);
+        set({ annals: next });
+      },
+      settleDuelTribute: (loserForceId, winnerForceId, amount) => {
+        const state = get();
+        const lf = state.forces[loserForceId];
+        const wf = state.forces[winnerForceId];
+        if (!lf || !wf || loserForceId === winnerForceId) return { moved: 0 };
+        const lc = state.cities[lf.capitalCityId];
+        const wc = state.cities[wf.capitalCityId];
+        if (!lc || !wc || lc.id === wc.id) return { moved: 0 };
+        const moved = Math.max(0, Math.min(Math.round(amount), lc.gold));
+        if (moved <= 0) return { moved: 0 };
+        set({ cities: { ...state.cities, [lc.id]: { ...lc, gold: lc.gold - moved }, [wc.id]: { ...wc, gold: wc.gold + moved } } });
+        return { moved };
       },
       recordDeed: (officerId, patch) => {
         const state = get();

@@ -48,11 +48,39 @@ export function willAcceptChallenge(target: Officer, challenger: Officer, rng: (
   if (persona === 'aggressive' || traits.includes('matchless') || traits.includes('duelist')) return true; // 鬥將不避戰
   const edge = staticProwess(target) - staticProwess(challenger); // >0 = target is stronger
   const timid = persona === 'cautious' || traits.includes('cowardly') || traits.includes('sickly') || traits.includes('cautious');
-  if (timid) return edge > 12 && rng() < 0.5; // a craven only fights a sure thing
-  // 量力而戰 — accept unless badly outmatched; pride (renown) stiffens the spine.
+  // 威名懾人 — a fearsome challenger's very name gives pause (a 未戰先怯 dread).
+  const dread = duelDread(challenger);
+  if (timid) return edge > 12 + dread * 40 && rng() < 0.5 - dread; // a craven only fights a sure thing — less so vs a terror
+  // 量力而戰 — accept unless badly outmatched; pride (renown) stiffens the spine,
+  // but a dreaded foe's record thins the ranks who'll ride out against them.
   const pride = Math.min(0.25, (target.renown ?? 0) / 400);
-  const base = 0.55 + Math.max(-0.45, Math.min(0.35, edge * 0.02)) + pride;
+  const base = 0.55 + Math.max(-0.45, Math.min(0.35, edge * 0.02)) + pride - dread;
   return rng() < base;
+}
+
+/**
+ * 威名威懾 (0..~0.4) — how much a champion's fearsome name makes a foe hesitate to
+ * face them. Read from 威名 (renown from 單挑勝 etc.) and terror-lending traits.
+ * A great duellist wins face without lifting a blade: foes duck, and are scorned.
+ */
+export function duelDread(challenger: Officer): number {
+  const traits = challenger.traits ?? [];
+  let d = Math.min(0.28, (challenger.renown ?? 0) / 500);
+  if (traits.includes('matchless')) d += 0.12;
+  if (traits.includes('tiger-roar')) d += 0.06;
+  if (traits.includes('bloodthirsty')) d += 0.06;
+  if (traits.includes('berserker')) d += 0.04;
+  return Math.min(0.42, d);
+}
+
+/**
+ * 代戰認輸金 — a settled 約戰 is single combat standing in for a clash of hosts; the
+ * beaten champion's lord pays an indemnity to redeem the realm's face rather than
+ * fight it out in the field. Scaled by the fallen champion's mettle. (§6.13 — the
+ * duel ripples to the strategic map's coffers.)
+ */
+export function duelTribute(beaten: Officer): number {
+  return Math.round(150 + Math.max(0, staticProwess(beaten)) * 2);
 }
 
 export type ChallengeOutcome = 'win' | 'loss' | 'draw' | 'refused';

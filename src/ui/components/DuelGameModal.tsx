@@ -73,7 +73,7 @@ export function DuelGameModal({
 }: {
   attacker: Officer;
   defender: Officer;
-  onComplete: (outcome: { winner: 'attacker' | 'defender' | 'draw'; killedId?: 'attacker' | 'defender'; attackerId?: string; fate?: DuelFate }) => void;
+  onComplete: (outcome: { winner: 'attacker' | 'defender' | 'draw'; killedId?: 'attacker' | 'defender'; attackerId?: string; fate?: DuelFate; hardWon?: boolean }) => void;
   /** 車輪戰 — starting-stamina penalties from bouts already fought this battle. */
   meFatigue?: number;
   foeFatigue?: number;
@@ -745,7 +745,12 @@ export function DuelGameModal({
           <div style={{ marginTop: '0.6rem', textAlign: 'center' }}>
             <div className={reduced ? undefined : 'tkm-victory-slam'} style={{ color: lethal && bout.killedId ? '#b8442e' : '#e6c473', fontSize: '1.15rem', letterSpacing: '0.07rem', marginBottom: '0.6rem', textShadow: lethal && bout.killedId ? '0 0 14px rgba(184,68,46,0.6)' : '0 0 12px rgba(212,168,74,0.45)' }}>{resultText}</div>
             <button
-              onClick={() => onComplete({ winner: bout.winner ?? 'draw', killedId: bout.killedId as 'attacker' | 'defender' | undefined, attackerId: me.id, fate: breakFate ?? undefined })}
+              onClick={() => {
+                // 慘勝 — a bloody or long-drawn win leaves the victor hurt too (§6.13).
+                const winStam = bout.winner === 'attacker' ? bout.aStamina : bout.winner === 'defender' ? bout.dStamina : 100;
+                const hardWon = !!bout.winner && bout.winner !== 'draw' && !breakFate && (winStam < 45 || bout.round >= 6);
+                onComplete({ winner: bout.winner ?? 'draw', killedId: bout.killedId as 'attacker' | 'defender' | undefined, attackerId: me.id, fate: breakFate ?? undefined, hardWon });
+              }}
               style={{ padding: '0.45rem 1.6rem', background: '#1e2832', border: '1px solid #e6c473', color: '#e6c473', cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.07rem' }}
             >
               {t('確定', 'Continue')}

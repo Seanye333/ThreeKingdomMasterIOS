@@ -103,6 +103,24 @@ export function Duel3DStage(props: ComponentProps<typeof DuelGameModal>) {
           window.setTimeout(() => setToast(null), 2600);
           playSfx('bell');
         }
+        // 名場面入史 (§6.13) — an epic bout (a kill, a marathon, a feud settled) is
+        // written into the running 事件簿 so it can be relived in the annals.
+        const rounds = history.current.length;
+        if (fx.killed || rounds >= 12) {
+          const st = useGameStore.getState();
+          const winName = fx.winner === 'attacker' ? leftName : fx.winner === 'defender' ? rightName : '';
+          const loseName = fx.winner === 'attacker' ? rightName : fx.winner === 'defender' ? leftName : '';
+          let titleZh = '陣前力克';
+          let textZh = `${winName} 大戰 ${rounds} 合力克 ${loseName},威名遠播。`;
+          if (fx.killed) {
+            titleZh = swornRef.current ? '了斷宿敵' : '陣斬名將';
+            textZh = `${winName} 於陣前 ${rounds} 合斬 ${loseName}${swornRef.current ? ',了斷多年恩怨' : ''}!`;
+          } else if (fx.winner === 'draw') {
+            titleZh = '棋逢敵手';
+            textZh = `${leftName} 與 ${rightName} 大戰 ${rounds} 合,不分勝負 — 一時傳為佳話。`;
+          }
+          st.recordAnnal({ year: st.date.year, season: st.date.season, kind: 'event', titleZh, textZh, cityId: null });
+        }
       }
     }
     onRound?.(fx); // preserve any host-supplied behaviour

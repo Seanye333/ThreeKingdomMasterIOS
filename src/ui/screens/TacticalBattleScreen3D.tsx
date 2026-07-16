@@ -4904,6 +4904,12 @@ export function TacticalBattleScreen3D() {
                 const scar = rollDuelScar();
                 if (scar) inflictDuelScar(woundedId, scar);
               }
+              // 慘勝 — a hard-won bout bloodies the VICTOR too: a light lingering
+              // wound (養傷 downtime), so a costly win isn't a free one (§6.13).
+              if (outcome.hardWon) {
+                const victorId = outcome.winner === 'attacker' ? me.id : foe.id;
+                afflictOfficer(victorId, duelWound(false));
+              }
               // 名聲榜 — the victor banks a 單挑 win toward their renown.
               recordDeed(outcome.winner === 'attacker' ? me.id : foe.id, { duelsWon: 1 });
             }
