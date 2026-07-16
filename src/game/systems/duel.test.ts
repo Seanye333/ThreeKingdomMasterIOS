@@ -39,20 +39,37 @@ describe('resolveDuel — multi-round bout', () => {
     expect(strongWins).toBeGreaterThan(22); // dominant, not necessarily perfect
   });
 
-  it('a knockout cuts the loser down (killedId set, stamina 0)', () => {
-    // Find a seed that yields a knockout for the strong attacker.
+  it('a knockout drops the loser to 0 — and either fells or (膽氣) spares them', () => {
+    // Find a seed that yields a knockout for the strong attacker. A knockout is
+    // now decisive but not always fatal: a low-膽氣 loser may 請降/落荒而逃 (fate),
+    // in which case no kill is recorded. Either way the loser is at 0 氣力.
     let found = false;
     for (let s = 0; s < 50 && !found; s++) {
       const r = resolveDuel({ attacker: strong, defender: weak, rng: seededRng(s * 7 + 3) });
       if (r.knockout) {
         found = true;
         expect(r.winner).not.toBe('draw');
-        expect(r.killedId).toBeTruthy();
+        expect(r.killedId || r.fate).toBeTruthy();      // felled OR spared, never nothing
+        expect(!!r.killedId && !!r.fate).toBe(false);    // …but not both
         const loserStamina = r.winner === 'attacker' ? r.defenderStamina : r.attackerStamina;
         expect(loserStamina).toBe(0);
       }
     }
     expect(found).toBe(true);
+  });
+
+  it('a brave loser is felled on a knockout, a craven is oft spared', () => {
+    const brave = mkOfficer({ id: 'brave-mook', stats: { war: 62, leadership: 50, intelligence: 50, politics: 50, charisma: 50 }, traits: ['martial-valor', 'ironhearted'] });
+    const craven = mkOfficer({ id: 'craven-mook', stats: { war: 62, leadership: 50, intelligence: 50, politics: 50, charisma: 50 }, traits: ['cowardly'] });
+    const sparedRate = (foe: ReturnType<typeof mkOfficer>) => {
+      let ko = 0, spared = 0;
+      for (let s = 0; s < 120; s++) {
+        const r = resolveDuel({ attacker: strong, defender: foe, rng: seededRng(s * 7 + 3) });
+        if (r.knockout && r.winner === 'attacker') { ko++; if (r.fate) spared++; }
+      }
+      return ko ? spared / ko : 0;
+    };
+    expect(sparedRate(craven)).toBeGreaterThan(sparedRate(brave));
   });
 
   it('evenly matched fighters can draw (both survive)', () => {

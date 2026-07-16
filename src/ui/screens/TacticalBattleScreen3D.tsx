@@ -4815,15 +4815,19 @@ export function TacticalBattleScreen3D() {
             const me = (outcome.attackerId && officers[outcome.attackerId]) || interactiveDuel.me;
             const killedId = outcome.killedId === 'defender' ? foe.id
               : outcome.killedId === 'attacker' ? me.id : null;
+            // 怯戰 — a foe who 請降 / 落荒而逃 is out of the fight: removed with no kill
+            // (yield → capturable below; flee → simply gone from the field).
+            const foeBroke = outcome.fate && outcome.winner === 'attacker' ? outcome.fate : null;
+            const removedId = killedId ?? (foeBroke ? foe.id : null);
             let next = battle;
-            if (killedId) {
-              const fallen = next.units.find((u) => u.officerId === killedId);
+            if (removedId) {
+              const fallen = next.units.find((u) => u.officerId === removedId);
               const prevCas = next.casualties ?? { attacker: [], defender: [] };
               next = {
                 ...next,
-                units: next.units.filter((u) => u.officerId !== killedId),
+                units: next.units.filter((u) => u.officerId !== removedId),
                 casualties: fallen
-                  ? { ...prevCas, [fallen.side]: [...prevCas[fallen.side], killedId] }
+                  ? { ...prevCas, [fallen.side]: [...prevCas[fallen.side], removedId] }
                   : prevCas,
               };
             }
@@ -4835,9 +4839,13 @@ export function TacticalBattleScreen3D() {
                 turn: next.turn,
                 text: outcome.winner === 'draw'
                   ? `${me.name.zh} 與 ${foe.name.zh} 大戰不分勝負 — 俱各帶傷。`
+                  : foeBroke === 'yield' ? `${foe.name.zh} 力盡棄械,陣前請降!`
+                  : foeBroke === 'flee' ? `${foe.name.zh} 膽寒,撥馬落荒而逃!`
                   : `${duelWinner.name.zh} 於陣前力克 ${duelLoser.name.zh}!`,
                 textEn: outcome.winner === 'draw'
                   ? `${me.name.en} and ${foe.name.en} fought to a draw — both wounded.`
+                  : foeBroke === 'yield' ? `${foe.name.en} throws down his arms and yields on the field!`
+                  : foeBroke === 'flee' ? `${foe.name.en} loses his nerve and flees the field!`
                   : `${duelWinner.name.en} bested ${duelLoser.name.en} in single combat!`,
                 kind: 'event',
               }],
@@ -4864,7 +4872,7 @@ export function TacticalBattleScreen3D() {
               // loses ~18% of its troops (on top of the side-wide morale hit),
               // which also makes the post-battle wound roll likelier.
               const loserId = outcome.winner === 'attacker' ? foe.id : me.id;
-              if (loserId !== killedId) {
+              if (loserId !== removedId) {
                 next = { ...next, units: next.units.map((u) => u.officerId === loserId ? { ...u, troops: Math.round(u.troops * 0.82) } : u) };
               }
               const wn = outcome.winner === 'attacker' ? me : foe;
@@ -4889,7 +4897,7 @@ export function TacticalBattleScreen3D() {
               if (foe.id !== killedId) afflictOfficer(foe.id, duelWound(false));
             } else {
               const woundedId = outcome.winner === 'attacker' ? foe.id : me.id;
-              if (woundedId !== killedId) {
+              if (woundedId !== removedId) {
                 afflictOfficer(woundedId, duelWound(true));
                 // 傷殘 — a brutal field duel may cripple the bested-but-living fighter
                 // for good (斷臂/目眇/跛足) — a permanent narrowing of their craft.
@@ -4900,8 +4908,8 @@ export function TacticalBattleScreen3D() {
               recordDeed(outcome.winner === 'attacker' ? me.id : foe.id, { duelsWon: 1 });
             }
             setInteractiveDuel(null);
-            // 斬/擒 — you cut the foe down; choose whether to take them alive.
-            if (killedId && killedId === foe.id) setCaptureChoice({ id: foe.id, name: foe.name });
+            // 斬/擒 — a felled or surrendered foe may be taken alive; a fled one is gone.
+            if ((killedId && killedId === foe.id) || foeBroke === 'yield') setCaptureChoice({ id: foe.id, name: foe.name });
           }}
         />
       )}

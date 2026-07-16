@@ -87,6 +87,9 @@ export interface DuelResult {
   winner: 'attacker' | 'defender' | 'draw';
   /** Set to the loser's officer id when the bout was decisive (a kill). */
   killedId?: string;
+  /** 膽氣 — set when a would-be-fatal defeat instead ended in 請降/落荒而逃 (no kill).
+   *  The loser is `winner`'s opposite; the caller may capture (yield) or let them go. */
+  fate?: DuelFate;
   /** Round-by-round exchanges of the bout. */
   rounds: DuelExchange[];
   /** Final 氣力 of each side (0 = cut down). */
@@ -114,6 +117,59 @@ export function canDuel(o: Officer): { ok: boolean; reason?: string } {
   if (o.stats.war < 50) return { ok: false, reason: 'war stat too low' };
   if (o.traits?.includes('frail')) return { ok: false, reason: 'too frail' };
   return { ok: true };
+}
+
+// ─── 膽氣 / 怯戰 — a beaten fighter need not always die ───────────────────────
+// A cornered warrior's nerve decides how the killing blow falls: a 忠勇之士 fights
+// to the death (斬), while a craven throws down their arms (請降 — capturable) or
+// bolts from the field (落荒而逃 — escapes, no kill). 膽氣 is read from temperament,
+// 武力 and standing — the brave die on their feet; the timid live to run.
+
+/** How a bested fighter meets defeat. */
+export type DuelFate = 'slain' | 'yield' | 'flee';
+
+const VALOR_TRAIT: Partial<Record<string, number>> = {
+  matchless: 24, 'martial-valor': 16, ironhearted: 16, 'stoic-brave': 16,
+  berserker: 15, duelist: 14, bloodthirsty: 12, vengeful: 11, gallant: 10,
+  reckless: 10, loyal: 9, wrathful: 8, 'iron-discipline': 8, veteran: 7,
+  'tiger-roar': 7, robust: 6, noble: 5, 'one-eyed': 5, filial: 4,
+  cautious: -8, ambitious: -8, cunning: -8, sickly: -10, frail: -20, cowardly: -34,
+};
+
+/** 膽氣 (0..100) — the nerve a fighter carries into a losing bout. Brave hearts
+ *  fight to the death; timid ones sue for quarter or flee. Driven by temperament,
+ *  raw 武力 (a mighty arm steadies the will) and prestige/grade standing. */
+export function duelValor(o: Officer): number {
+  let v = 44;
+  for (const t of o.traits ?? []) v += VALOR_TRAIT[t] ?? 0;
+  v += Math.round((o.stats.war - 70) * 0.35);           // a strong arm firms the nerve
+  v += Math.round(effectivePrestigeEffects(o).duelBonus * 0.5); // renown steels resolve
+  v += gradeCombatBonus(o).duelBonus > 0 ? 3 : 0;
+  return Math.max(4, Math.min(100, Math.round(v)));
+}
+
+const isCraven = (o: Officer): boolean => {
+  const t = o.traits ?? [];
+  return t.includes('cowardly') || t.includes('cunning') || t.includes('ambitious');
+};
+
+/** Decide how a loser who WOULD be cut down meets the blow. A high-膽氣 fighter
+ *  almost always dies fighting; a craven mostly breaks — and the truly loyal never
+ *  flee (they yield rather than run). Pure given the rng. */
+export function duelDeathFate(loser: Officer, rng: () => number = Math.random): DuelFate {
+  const v = duelValor(loser);
+  // P(fights to the death) rises with 膽氣 on a sigmoid centred at v≈40, so an
+  // ordinary fighter (~v44) still usually dies on a clean knockout (~70%) while a
+  // craven (~v15) mostly breaks (~66%) and a hero (~v80) practically always falls
+  // where he stands (~95%). Keeps auto-resolve lethality broadly intact.
+  const pSlain = 0.30 + 0.66 / (1 + Math.exp(-(v - 40) / 9));
+  if (rng() < pSlain) return 'slain';
+  // Broke. A craven (or the self-serving cunning/ambitious) is apt to bolt; a
+  // stout-but-outmatched fighter asks quarter. The dyed-in-the-wool loyal never run.
+  const t = loser.traits ?? [];
+  const steadfast = t.includes('loyal') || t.includes('ironhearted') || t.includes('martial-valor') || t.includes('matchless');
+  const pFlee = steadfast ? 0 : isCraven(loser) ? 0.62 : 0.32;
+  return rng() < pFlee ? 'flee' : 'yield';
 }
 
 export function resolveDuel(input: DuelInput): DuelResult {
@@ -181,11 +237,19 @@ export function resolveDuel(input: DuelInput): DuelResult {
   if (knockout) {
     // 的盧救主 — the loser's wonder-horse bears them clear; they survive, unhorsed.
     const loserSaved = knockout === 'attacker' ? dSavior : aSavior;
-    const killedId = loserSaved ? undefined : (knockout === 'attacker' ? input.defender.id : input.attacker.id);
+    let killedId = loserSaved ? undefined : (knockout === 'attacker' ? input.defender.id : input.attacker.id);
+    // 膽氣 — a beaten fighter's nerve decides the killing blow: the craven sue for
+    // quarter (請降) or bolt (落荒而逃) rather than die where they stand.
+    let fate: DuelFate | undefined;
+    if (killedId) {
+      const loser = knockout === 'attacker' ? input.defender : input.attacker;
+      const f = duelDeathFate(loser, rng);
+      if (f !== 'slain') { fate = f; killedId = undefined; }
+    }
     return {
       attackerRoll: a, defenderRoll: d,
       margin: knockout === 'attacker' ? aSt : dSt,
-      winner: knockout, killedId, rounds,
+      winner: knockout, killedId, fate, rounds,
       attackerStamina: aSt, defenderStamina: dSt, knockout: true,
     };
   }
@@ -194,16 +258,23 @@ export function resolveDuel(input: DuelInput): DuelResult {
   const margin = Math.abs(aSt - dSt);
   let winner: 'attacker' | 'defender' | 'draw' = 'draw';
   let killedId: string | undefined;
+  let fate: DuelFate | undefined;
   if (margin >= 15) {
     winner = aSt > dSt ? 'attacker' : 'defender';
     // A decisive stamina gap can be lethal, but reserve most kills for actual
     // knockouts — a points win shouldn't kill officers as freely as it did at 25.
     // 的盧救主 — even a decisive defeat spares the rider of a wonder-horse.
     const loserSaved = winner === 'attacker' ? dSavior : aSavior;
-    if (margin >= 40 && !loserSaved) killedId = winner === 'attacker' ? input.defender.id : input.attacker.id;
+    if (margin >= 40 && !loserSaved) {
+      killedId = winner === 'attacker' ? input.defender.id : input.attacker.id;
+      // 膽氣 — even a rout may end in surrender or flight rather than a corpse.
+      const loser = winner === 'attacker' ? input.defender : input.attacker;
+      const f = duelDeathFate(loser, rng);
+      if (f !== 'slain') { fate = f; killedId = undefined; }
+    }
   }
   return {
-    attackerRoll: a, defenderRoll: d, margin, winner, killedId, rounds,
+    attackerRoll: a, defenderRoll: d, margin, winner, killedId, fate, rounds,
     attackerStamina: aSt, defenderStamina: dSt, knockout: false,
   };
 }
@@ -1987,4 +2058,129 @@ export function aiDuelMove(bout: DuelBout, side: 'attacker' | 'defender', rng: (
   if (persona === 'cautious' && r > 0.82) return 'guard';
   if (persona === 'aggressive') return r < 0.30 ? 'slash' : r < 0.85 ? 'cleave' : 'sweep';
   return r < 0.45 ? 'slash' : r < 0.72 ? 'cleave' : 'sweep';
+}
+
+// ─── 環境借勢 — the ground itself is a weapon, once a bout ────────────────────
+// Beyond the passive tilt each 地形 already lends (see DUEL_TERRAIN_INFO), a
+// fighter may spend a beat to TURN the terrain on the foe: fling the brazier's
+// flames, roar the bridge-planks out from under them (張飛據橋), sling mud into
+// the eyes. A one-shot tactical burst — chip 氣力, open a 破綻, sometimes unhorse.
+
+export interface TerrainExploit { zh: string; en: string; descZh: string; descEn: string; }
+export const TERRAIN_EXPLOIT: Record<DuelTerrain, TerrainExploit> = {
+  plain:  { zh: '揚沙眯目', en: 'Kick Dust', descZh: '揚沙撲敵 — 傷氣力、露破綻', descEn: 'fling grit — chip stamina, open a flaw' },
+  bridge: { zh: '據橋斷喝', en: 'Bridge Roar', descZh: '斷喝震橋 — 敵失足重挫,騎者落馬', descEn: 'a thunderous roar staggers the foe — and unhorses a rider' },
+  mud:    { zh: '撩泥迷眼', en: 'Sling Mud', descZh: '撩泥迷眼 — 大開破綻、奪其氣', descEn: 'blind the foe — a wide flaw, a 氣 knocked loose' },
+  fire:   { zh: '撩火撲面', en: 'Hurl Flame', descZh: '撩火撲面 — 重傷敵,自身微灼', descEn: 'fling the flames — burns the foe, singes you a little' },
+  rain:   { zh: '借雨突襲', en: 'Rain Ambush', descZh: '藉雨幕突襲 — 一記奇襲重擊', descEn: 'strike from the rain-curtain — a heavy surprise blow' },
+};
+
+export interface DuelExploitResult { bout: DuelBout; dmgToFoe: number; dmgToSelf: number; unhorsed?: 'attacker' | 'defender'; textZh: string; textEn: string; }
+
+/** 環境借勢 — turn the terrain against the foe. Pure; the caller tracks the
+ *  once-per-bout limit (mirrors the 暗器/金瘡藥 items). `side` is the exploiter. */
+export function applyDuelExploit(bout: DuelBout, side: 'attacker' | 'defender', rng: () => number = Math.random): DuelExploitResult {
+  const b: DuelBout = { ...bout };
+  const foe = side === 'attacker' ? 'defender' : 'attacker';
+  const foeStam = () => (foe === 'attacker' ? b.aStamina : b.dStamina);
+  const setFoeStam = (v: number) => { if (foe === 'attacker') b.aStamina = v; else b.dStamina = v; };
+  const setSelfStam = (v: number) => { if (side === 'attacker') b.aStamina = v; else b.dStamina = v; };
+  const selfStam = () => (side === 'attacker' ? b.aStamina : b.dStamina);
+  const bumpFoeFlaw = (n: number) => { if (foe === 'attacker') b.aFlaw = Math.min(100, b.aFlaw + n); else b.dFlaw = Math.min(100, b.dFlaw + n); };
+  const dropFoeGuard = (n: number) => { if (foe === 'attacker') b.aGuard = Math.max(0, b.aGuard - n); else b.dGuard = Math.max(0, b.dGuard - n); };
+  const foeMounted = (foe === 'attacker' ? b.aMounted && !b.aUnhorsed : b.dMounted && !b.dUnhorsed);
+  const ex = TERRAIN_EXPLOIT[b.terrain];
+  let dmgToFoe = 0, dmgToSelf = 0;
+  let unhorsed: 'attacker' | 'defender' | undefined;
+  switch (b.terrain) {
+    case 'fire':
+      dmgToFoe = 14 + Math.round(rng() * 6); dmgToSelf = 4 + Math.round(rng() * 4);
+      bumpFoeFlaw(15);
+      break;
+    case 'bridge': {
+      dmgToFoe = 10 + Math.round(rng() * 6); dropFoeGuard(1); bumpFoeFlaw(28);
+      if (foeMounted) {
+        dmgToFoe += 8 + Math.round(rng() * 6);
+        if (foe === 'attacker') { b.aUnhorsed = true; b.aMountSavior = false; } else { b.dUnhorsed = true; b.dMountSavior = false; }
+        unhorsed = foe;
+      }
+      break;
+    }
+    case 'mud':
+      dmgToFoe = 8 + Math.round(rng() * 5); dropFoeGuard(1); bumpFoeFlaw(32);
+      break;
+    case 'rain':
+      dmgToFoe = 13 + Math.round(rng() * 6); bumpFoeFlaw(12);
+      break;
+    default: // plain — 揚沙眯目
+      dmgToFoe = 8 + Math.round(rng() * 5); bumpFoeFlaw(22);
+      break;
+  }
+  // Never lethal on its own — a setup, not a finisher (floors the foe at 1 氣力).
+  setFoeStam(Math.max(1, foeStam() - dmgToFoe));
+  if (dmgToSelf) setSelfStam(Math.max(1, selfStam() - dmgToSelf));
+  return { bout: b, dmgToFoe, dmgToSelf, unhorsed, textZh: ex.zh, textEn: ex.en };
+}
+
+// ─── 部位打擊 — a called shot trades certainty for a decisive effect ──────────
+// Rather than trade a blow, a fighter may AIM: 擊械 to knock the foe's weapon
+// aside (缴械), or 斬馬 to bring a rider down (挑落下馬). A gamble — a sharper arm
+// lands it more often; a whiff leaves the aimer open (破綻). One attempt per bout.
+
+export type AimTarget = 'disarm' | 'unhorse';
+export interface DuelAimedResult { bout: DuelBout; ok: boolean; disarm?: 'attacker' | 'defender'; unhorsed?: 'attacker' | 'defender'; dmgToFoe: number; textZh: string; textEn: string; }
+
+/** 部位打擊 — an aimed called shot. Pure; the caller tracks the once-per-bout
+ *  limit. `side` is the aimer; `target` picks the effect. */
+export function applyAimedStrike(bout: DuelBout, side: 'attacker' | 'defender', target: AimTarget, rng: () => number = Math.random): DuelAimedResult {
+  const b: DuelBout = { ...bout };
+  const foe = side === 'attacker' ? 'defender' : 'attacker';
+  const selfP = side === 'attacker' ? b.aStatic : b.dStatic;
+  const foeP = foe === 'attacker' ? b.aStatic : b.dStatic;
+  const foeMounted = (foe === 'attacker' ? b.aMounted && !b.aUnhorsed : b.dMounted && !b.dUnhorsed);
+  const setFoeStam = (d: number) => { if (foe === 'attacker') b.aStamina = Math.max(1, b.aStamina - d); else b.dStamina = Math.max(1, b.dStamina - d); };
+  const clearFoeGuard = () => { if (foe === 'attacker') b.aGuard = 0; else b.dGuard = 0; };
+  const bumpSelfFlaw = (n: number) => { if (side === 'attacker') b.aFlaw = Math.min(100, b.aFlaw + n); else b.dFlaw = Math.min(100, b.dFlaw + n); };
+  const bumpFoeFlaw = (n: number) => { if (foe === 'attacker') b.aFlaw = Math.min(100, b.aFlaw + n); else b.dFlaw = Math.min(100, b.dFlaw + n); };
+
+  // 斬馬 against a fighter already on foot is wasted breath — auto-miss.
+  if (target === 'unhorse' && !foeMounted) {
+    bumpSelfFlaw(16);
+    return { bout: b, ok: false, dmgToFoe: 0, textZh: '斬馬撲空 — 敵本無馬', textEn: 'the horse-cut finds no rider' };
+  }
+  const base = target === 'disarm' ? 0.42 : 0.40;
+  const chance = Math.max(0.2, Math.min(0.82, base + (selfP - foeP) * 0.004));
+  if (rng() >= chance) {
+    // Whiffed — overcommitted and wide open.
+    bumpSelfFlaw(18);
+    return { bout: b, ok: false, dmgToFoe: 0, textZh: target === 'disarm' ? '擊械落空,自身門戶大開' : '斬馬未中,收勢不及', textEn: target === 'disarm' ? 'the disarm misses — you are left open' : 'the horse-cut misses' };
+  }
+  const stagger = 10 + Math.round(rng() * 6);
+  setFoeStam(stagger);
+  bumpFoeFlaw(22);
+  if (target === 'disarm') {
+    clearFoeGuard();
+    return { bout: b, ok: true, disarm: foe, dmgToFoe: stagger, textZh: '一擊击械 — 敵兵器脫手!', textEn: 'a clean strike — the foe is disarmed!' };
+  }
+  // unhorse
+  if (foe === 'attacker') { b.aUnhorsed = true; b.aMountSavior = false; } else { b.dUnhorsed = true; b.dMountSavior = false; }
+  return { bout: b, ok: true, unhorsed: foe, dmgToFoe: stagger, textZh: '一斬斷馬 — 挑落敵將!', textEn: 'the mount is cut down — the rider falls!' };
+}
+
+// ─── 怯戰 — a cornered fighter may break before the killing blow ──────────────
+// The AI-controlled loser, driven low on 氣力 and short on 膽氣, may throw down
+// their arms (請降) or bolt (落荒而逃) rather than fight on to death. Called each
+// round by the interactive host for the foe; returns the break, or null to fight on.
+export function checkDuelBreak(bout: DuelBout, side: 'attacker' | 'defender', officer: Officer, rng: () => number = Math.random): DuelFate | null {
+  if (bout.over) return null;
+  const stam = side === 'attacker' ? bout.aStamina : bout.dStamina;
+  if (stam > 24) return null; // only a cornered fighter's nerve is tested
+  const v = duelValor(officer);
+  // The lower the 氣力 and the thinner the 膽氣, the likelier the break.
+  const pBreak = Math.max(0, Math.min(0.5, ((26 - stam) / 26) * (1 - v / 115)));
+  if (rng() >= pBreak) return null;
+  const fate = duelDeathFate(officer, rng);
+  // They didn't die — a 'slain' roll here just means they steel themselves to
+  // yield rather than run.
+  return fate === 'slain' ? 'yield' : fate;
 }

@@ -2026,15 +2026,19 @@ export function StrategicMap3D() {
             if (!b) return;
             const killedId = outcome.killedId === 'defender' ? foe.id
               : outcome.killedId === 'attacker' ? me.id : null;
+            // 怯戰 — a foe who 請降 / 落荒而逃 is out of the fight too: removed from
+            // the field with no kill (yield → capturable below; flee → simply gone).
+            const foeBroke = outcome.fate && outcome.winner === 'attacker' ? outcome.fate : null;
+            const removedId = killedId ?? (foeBroke ? foe.id : null);
             let next = b;
-            if (killedId) {
-              const fallen = next.units.find((u) => u.officerId === killedId);
+            if (removedId) {
+              const fallen = next.units.find((u) => u.officerId === removedId);
               const prevCas = next.casualties ?? { attacker: [], defender: [] };
               next = {
                 ...next,
-                units: next.units.filter((u) => u.officerId !== killedId),
+                units: next.units.filter((u) => u.officerId !== removedId),
                 casualties: fallen
-                  ? { ...prevCas, [fallen.side]: [...prevCas[fallen.side], killedId] }
+                  ? { ...prevCas, [fallen.side]: [...prevCas[fallen.side], removedId] }
                   : prevCas,
               };
             }
@@ -2046,9 +2050,13 @@ export function StrategicMap3D() {
                 turn: next.turn,
                 text: outcome.winner === 'draw'
                   ? `${me.name.zh} 與 ${foe.name.zh} 大戰不分勝負 — 俱各帶傷。`
+                  : foeBroke === 'yield' ? `${foe.name.zh} 力盡棄械,陣前請降!`
+                  : foeBroke === 'flee' ? `${foe.name.zh} 膽寒,撥馬落荒而逃!`
                   : `${duelWinner.name.zh} 於陣前力克 ${duelLoser.name.zh}!`,
                 textEn: outcome.winner === 'draw'
                   ? `${me.name.en} and ${foe.name.en} fought to a draw — both wounded.`
+                  : foeBroke === 'yield' ? `${foe.name.en} throws down his arms and yields on the field!`
+                  : foeBroke === 'flee' ? `${foe.name.en} loses his nerve and flees the field!`
                   : `${duelWinner.name.en} bested ${duelLoser.name.en} in single combat!`,
                 kind: 'event' as const,
               }],
@@ -2057,7 +2065,7 @@ export function StrategicMap3D() {
             // mauls both (~10%). Feeds the post-battle wound roll.
             if (outcome.winner !== 'draw') {
               const loserId = outcome.winner === 'attacker' ? foe.id : me.id;
-              if (loserId !== killedId) {
+              if (loserId !== removedId) {
                 next = { ...next, units: next.units.map((u) => u.officerId === loserId ? { ...u, troops: Math.round(u.troops * 0.82) } : u) };
               }
             } else {
@@ -2066,7 +2074,8 @@ export function StrategicMap3D() {
             // 車輪戰 — both surviving fighters open any next bout more winded.
             next = { ...next, units: next.units.map((u) => (u.officerId === me.id || u.officerId === foe.id) ? { ...u, duelFatigue: (u.duelFatigue ?? 0) + 24 } : u) };
             startBattleUpdate(next);
-            if (killedId && killedId === foe.id) setCaptureChoice({ id: foe.id, name: foe.name });
+            // 生擒/招降 — a felled or surrendered foe may be taken; a fled one is gone.
+            if ((killedId && killedId === foe.id) || foeBroke === 'yield') setCaptureChoice({ id: foe.id, name: foe.name });
           }}
         />
       )}

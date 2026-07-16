@@ -16,7 +16,7 @@
 | 3 | [人才・招攬・舌戰](#第三章-人才招攬舌戰) | commands(search), officerFate, recommendation, commonerTalent, appraisal(月旦評), scenicSites(三顧), captiveFate(處決後果/AI處置), aiRansom, debate, wordWar, persuasion(說客) | ✅ |
 | 4 | [軍事指揮・委任](#第四章-軍事指揮委任) | muster, legion(都督之斷·長圍), governor, governorEval, advisor, 在途指令(駐守/設伏/圍城/焚橋/燒鎖/補給/分兵/召回), rout(潰軍/掩殺收降/殿軍斷後) | ✅ |
 | 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, tacticalAi, combat, formations, stratagems, weather(區域天候), battlefieldTerrain, worldScars(戰場烙印), fieldworks(築壘), columnReinforcements(會戰), wallTier城郭分層, 入城三選, battleSpoils(戰場繳獲), personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
-| 6 | [單挑](#第六章-單挑) | duel(招式/必殺技/獨門被動/破綻/傷殘/挑落下馬/兵裝/坐騎/地形/性格/AI), gauntlet, duelSeries, duelScenarios(劇情+戰役), duelHall(名局廊), warRanking(武評榜), rivalries(宿敵/恩怨簿), duelChallenge(約戰), tactical(致師) | ✅ |
+| 6 | [單挑](#第六章-單挑) | duel(招式/必殺技/獨門被動/破綻/傷殘/挑落下馬/**環境借勢/部位打擊/膽氣怯戰**/兵裝/坐騎/地形/性格/AI), gauntlet, duelSeries, duelScenarios(劇情+戰役), duelHall(名局廊), warRanking(武評榜), rivalries(宿敵/恩怨簿), duelChallenge(約戰), tactical(致師) | ✅ |
 | 7 | [外交・謀略・天子](#第七章-外交謀略天子) | diplomacy, diplomacyPacts(稱臣/索貢/會盟/援盟/調停/質子/借道), coalition, schemes, aiSchemes, ambition, espionage, expedition, foreignRealm, intrigue, courtFactions, factionEvents, emperor, imperialEffects, mandate, appointmentEffects, clans, statecraft | ✅ |
 | 8 | [事件・天命・異族・宗教](#第八章-事件天命異族宗教) | events(天災/地動/賑災), historicalEvents(抉擇鏈), behaviorEvents(勸進/眾叛), customEvents, factionEvents, religion(黃巾/招安/宣撫), tribes, tribesDiplomacy(和親/互市/質子/以夷制夷/入主建國/七擒), mandate(祥瑞/造讖/禳星), mandateRituals(郊祀/祈雨), annals(災異志) | ✅ |
 | 9 | [元遊戲・收藏・分享](#第九章-元遊戲收藏分享) | achievements, deedTitles, dailyChallenge, leaderboard, mods, powerHistory, historyBook, romance, sound, voiceLines, dialogueRoll | ✅ |
@@ -392,6 +392,8 @@
 | 坐騎入單挑(§6.3) | 駿·先發(赤兔/絕影/烏騅/玉獅子…開局多1氣/自動戰+初速)·救·的盧救主(的盧/絕影/千里雪…整局一次化致命為負傷脫險,氣力保1) |
 | 進階深度(§6.2b) | 獨門被動(無雙×1.2·七進七出免死·霸王色懾敵·天下無敵+7·撼山難×0.85·死戰×1.25·神射+chip);破綻軸(攻空→破綻↑,被擊最高+50%);傷殘永久(斷臂/目眇/跛足,~22%,縮招式池);AI留必殺收尾+趁勝追擊 |
 | 馬戰(§6.2b) | 騎名駒→開局衝鋒對撞(勇+先手+長兵+馬勢,重撞挑落下馬);馬上長兵+4·馬上難閃+chip;挑落下馬(架繳械)轉步戰失坐騎之利;自動戰先結衝鋒;3D 坐騎奔逸 |
+| 臨場三術(§6.2c) | 每局一次:**環境借勢**(依地形一式:揚沙/據橋斷喝落馬/撩泥/撩火自灼/借雨突襲,不致命+抬破綻)·**部位打擊**(擊械缴械/斬馬挑落,命中率隨勇差~0.82,落空自身破綻+18)·皆列「臨場借勢」排 |
+| 膽氣怯戰(§6.2c) | duelValor 由性格(忠勇↑怯懦/狡詐/野心↓)+武力+威名品階讀出;敗將**戰死/請降/落荒**三途 sigmoid(中心 v≈40:v80→~95%死·v15→~66%潰,忠義死節永不逃);互動單挑敵氣力≤24且膽氣不足或於補刀前潰(請降可斬/生擒招降、逃遁逸去);自動戰擊倒按膽氣改判 fate(普通武將仍多戰死~70%,整體殺傷率大致不變) |
 | 鬥將生涯(§6.5) | duelCareerBonus:段位(神將+10/虎將+7/驍將+5/健將+3)+百戰(≥30+6/≥15+4/≥6+2)折進單挑固定勇;武評榜名宿實打強於武力,自成成長階梯(競技場🏅段位+X) |
 | 天下武道會(§6.5) | 比武大會單淘汰;奪魁→武評榜+80・威名+8(常升段→鬥將生涯)、亞軍+30/+3;陡升年度一次(lastTournamentYear),同年再辦僅練習+12 |
 | 致師(§6.7) | 戰前 turn1 遣強將陣前單挑:勝全軍士氣 +18·敗 −22·平 −5(較陣中 +10/−15 更烈),佔該方一次戰前部署;敵將亦自動致師 |
@@ -1902,6 +1904,22 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
 - **傷殘後遺**(duelScars,**永久**):生死之鬥/陣前單挑「不死而殘」(~22%)→ **斷臂**(不能連擊·勇−8)/ **目眇**(讀招大降·勇−6)/ **跛足**(不能閃·勇−5),縮窄招式池且永不癒(接約戰/劇情/戰場)。
 - **挑落下馬**(unhorsed):**架**繳械若對方仍在馬上 → 挑落下馬,重摔 + 失坐騎之利(的盧救主作廢)。
 - **AI 把握戰機**:老將/無雙 AI **留必殺收尾**(敵氣力低近滿釋放,否則不浪費),且**趁勝追擊**(敵殘時轉攻收尾);新手照舊亂放。
+
+### 6.2c 臨場三術·膽氣怯戰(環境借勢 / 部位打擊 / 請降落荒)
+
+回合之內再添一層抉擇 —— 每項每局一次(仿 暗器/金瘡藥 的一次性用度,列於「臨場借勢」排):
+
+- **環境借勢**(applyDuelExploit / TERRAIN_EXPLOIT):不只被動吃地形加成,更可花一手**把地形當武器**,依當前地形一式:
+  - 校場 **揚沙眯目**(傷氣力+開破綻)· 長坂橋 **據橋斷喝**(重挫敵、**騎者當場落馬**,呼應據水斷橋)· 泥濘 **撩泥迷眼**(大開破綻+奪其一氣)· 火海 **撩火撲面**(重傷敵、**自身微灼**)· 雨夜 **借雨突襲**(一記奇襲重擊)。
+  - 皆**不致命**(敵氣力保 1),為**布局**而非收尾;多會抬高敵破綻,銜接下一記猛攻。
+- **部位打擊**(applyAimedStrike,一記瞄準的**賭博**):
+  - **擊械**(disarm):賭一記缴械 —— 中則敵**兵器脫手·散盡蓄氣·大開破綻**;
+  - **斬馬**(unhorse):賭一記**挑落下馬**(僅對仍在馬上之敵有意義,徒手則撲空);
+  - 命中率隨**勇值差**升降(封頂 ~0.82);**落空則自身門戶大開**(破綻 +18),高風險高回報。
+- **膽氣・怯戰**(duelValor / duelDeathFate / checkDuelBreak):**敗將不必皆死**。膽氣由性格(忠勇↑·怯懦/狡詐/野心↓)+ 武力 + 威名品階讀出:
+  - **戰死 / 請降 / 落荒而逃** 三途,依膽氣而定 —— 勇者幾乎皆戰至死(sigmoid 中心 v≈40:v80→~95% 戰死),怯者多半潰(v15→~66% 潰),**忠義死節者永不逃**(潰亦請降不奔)。
+  - **互動單挑**:被逼入絕境(氣力 ≤24)且膽氣不足的**敵將**,可能在你補刀前**棄械請降 / 撥馬奔逃**,以無血之勝告終(戰場即移出戰列:請降→可**斬/生擒招降**、逃遁→逸去)。
+  - **自動戰(resolveDuel)**:擊倒/大勝本應斬殺時,亦按膽氣改判 —— 普通武將擊倒後多半仍戰死(~70%)、怯者常得生,**整體殺傷率大致不變**,只是給了怯懦者一線生機、給勇烈者以死明志。`fate` 隨結果回傳,各觸發路徑(陣前/約戰/大地圖)自動非致命降級。
 
 ### 6.3 兵裝・兵器絕技・坐騎
 

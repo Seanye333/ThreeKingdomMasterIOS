@@ -4,7 +4,8 @@ import {
   initDuelBout, duelRound, aiDuelMove, POWER_GUARD_COST, THRUST_COST, COMBO_COST, SPIRIT_MAX, staticProwess, weaponArtFor, duelPersona, ultReady, DUEL_TERRAIN_INFO,
   isDuelMoveUnlocked, duelMoveUnlockLevel, signatureUlt, mountEdge, duelPassive, duelScars, DUEL_SCAR_INFO,
   resolveChargePass, applyChargePass,
-  type DuelMove, type DuelBout, type DuelDifficulty, type DuelTerrain, type UltKind,
+  applyDuelExploit, applyAimedStrike, checkDuelBreak, TERRAIN_EXPLOIT,
+  type DuelMove, type DuelBout, type DuelDifficulty, type DuelTerrain, type UltKind, type DuelFate, type AimTarget,
 } from '../../game/systems/duel';
 import { OfficerPortrait } from './OfficerPortrait';
 import { playSfx, speakLine } from '../../game/systems/sound';
@@ -71,7 +72,7 @@ export function DuelGameModal({
 }: {
   attacker: Officer;
   defender: Officer;
-  onComplete: (outcome: { winner: 'attacker' | 'defender' | 'draw'; killedId?: 'attacker' | 'defender'; attackerId?: string }) => void;
+  onComplete: (outcome: { winner: 'attacker' | 'defender' | 'draw'; killedId?: 'attacker' | 'defender'; attackerId?: string; fate?: DuelFate }) => void;
   /** 車輪戰 — starting-stamina penalties from bouts already fought this battle. */
   meFatigue?: number;
   foeFatigue?: number;
@@ -152,6 +153,12 @@ export function DuelGameModal({
   // never kills) and 金瘡藥 (patch a wound). Each may be used once per bout.
   const [usedDart, setUsedDart] = useState(false);
   const [usedHeal, setUsedHeal] = useState(false);
+  // 臨場三術 — each a single deliberate gambit per bout: 環境借勢 (turn the terrain
+  // on the foe), 擊械/斬馬 (a called shot). 怯戰 — when a cornered foe throws down
+  // their arms (請降) or bolts (落荒而逃), the bout ends with no kill.
+  const [usedExploit, setUsedExploit] = useState(false);
+  const [usedAimed, setUsedAimed] = useState(false);
+  const [breakFate, setBreakFate] = useState<DuelFate | null>(null);
   // 雙人對戰 — in hot-seat, P1's committed attack waits for P2 to pick the defense.
   const [pendingAtk, setPendingAtk] = useState<DuelMove | null>(null);
   const taunt = (choice: Psych) => {
@@ -205,6 +212,34 @@ export function DuelGameModal({
     setBout((b) => ({ ...b, aStamina: Math.min(100, b.aStamina + heal) }));
     setLog((l) => [`${nm(me)} ${t('敷上金瘡藥', 'applies a wound-salve')} — +${heal} ${t('氣力', 'stamina')}`, ...l].slice(0, 7));
     playSfx('bell');
+  };
+
+  // 環境借勢 — turn the terrain on the foe once per bout: fling the fire, roar the
+  // bridge-planks loose (張飛據橋), sling mud. Chip 氣力 + open a 破綻, sometimes unhorse.
+  const doExploit = () => {
+    if (bout.over || usedExploit) return;
+    setUsedExploit(true);
+    const r = applyDuelExploit(bout, 'attacker', Math.random);
+    setBout(r.bout);
+    const self = r.dmgToSelf ? t(` (自身 −${r.dmgToSelf})`, ` (self −${r.dmgToSelf})`) : '';
+    setLog((l) => [`🌪 ${nm(me)}【${t(r.textZh, r.textEn)}】 — ${nm(defender)} −${r.dmgToFoe}${self}`, ...l].slice(0, 7));
+    playSfx(bout.terrain === 'fire' ? 'crash' : 'arrow');
+    fxKey.current += 1;
+    setFx({ key: fxKey.current, hit: 'd', dmg: r.dmgToFoe, killed: false });
+    onRound?.({ hit: 'd', killed: false, aMove: 'thrust', dMove: 'guard', over: false, unhorsed: r.unhorsed });
+  };
+
+  // 部位打擊 — an aimed called shot once per bout: 擊械 (缴械) or 斬馬 (挑落下馬).
+  // A gamble — a sharper arm lands it, a whiff leaves you open (破綻).
+  const doAimed = (target: AimTarget) => {
+    if (bout.over || usedAimed) return;
+    setUsedAimed(true);
+    const r = applyAimedStrike(bout, 'attacker', target, Math.random);
+    setBout(r.bout);
+    setLog((l) => [`🎯 ${nm(me)}【${t(r.textZh, r.textEn)}】`, ...l].slice(0, 7));
+    playSfx(r.ok ? 'crash' : 'click');
+    if (r.dmgToFoe > 0) { fxKey.current += 1; setFx({ key: fxKey.current, hit: 'd', dmg: r.dmgToFoe, killed: false }); }
+    onRound?.({ hit: r.ok ? 'd' : 'a', killed: false, aMove: 'thrust', dMove: 'parry', over: false, disarm: r.disarm, unhorsed: r.unhorsed });
   };
 
   // 援護 — a fresh ally leaps in to take over, body fresh, against a foe who
@@ -348,6 +383,23 @@ export function DuelGameModal({
         window.setTimeout(() => setSignature((s) => (s && s.key === sigKey.current ? null : s)), 1700);
       }
     }
+
+    // 怯戰 — a real (lethal) bout: a cornered, faint-hearted foe may break before
+    // the killing blow — throw down their arms (請降) or bolt (落荒而逃). Ends the
+    // bout as a bloodless win; the host may then capture/recruit or let them run.
+    if (lethal && !res.bout.over) {
+      const fate = checkDuelBreak(res.bout, 'defender', defender, Math.random);
+      if (fate) {
+        setBreakFate(fate);
+        setBout({ ...res.bout, over: true, winner: 'attacker', killedId: undefined });
+        const msg = fate === 'yield'
+          ? t(`${nm(defender)} 力盡棄械 — 請降!`, `${nm(defender)} throws down his arms — he yields!`)
+          : t(`${nm(defender)} 膽寒,撥馬落荒而逃!`, `${nm(defender)} loses his nerve and flees the field!`);
+        setLog((l) => [`🏳 ${msg}`, ...l].slice(0, 7));
+        playSfx(fate === 'yield' ? 'bell' : 'arrow');
+        onRound?.({ hit: 'd', killed: false, aMove: move, dMove: foeMove, over: true, winner: 'attacker' });
+      }
+    }
   };
 
   const bar = (val: number, color: string) => (
@@ -375,6 +427,8 @@ export function DuelGameModal({
 
   const resultText = !bout.over ? '' :
     bout.winner === 'draw' ? (lethal ? t('平手 — 各自負傷', 'Draw — both wounded') : t('平手 — 點到為止', 'A draw — well matched'))
+    : breakFate === 'yield' ? `${nm(defender)} ${t('力盡請降!', 'yields — beaten!')}`
+    : breakFate === 'flee' ? `${nm(defender)} ${t('落荒而逃!', 'flees the field!')}`
     : bout.winner === 'attacker'
       ? (lethal && bout.killedId ? `${nm(me)} ${t('斬', 'cut down')} ${nm(defender)}!` : `${nm(me)} ${t('佔上風', 'prevails')}`)
       : (lethal && bout.killedId ? `${nm(defender)} ${t('斬', 'cut down')} ${nm(me)}!` : `${nm(defender)} ${t('佔上風', 'prevails')}`);
@@ -429,6 +483,34 @@ export function DuelGameModal({
         title={t('金瘡藥:回復氣力,每局一次', 'Wound-salve: recover stamina, once per bout')}
         style={{ flex: 1, padding: '0.32rem 0.2rem', borderRadius: 'var(--tkm-radius-sm)', cursor: usedHeal ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: '0.8rem', background: usedHeal ? '#241c12' : 'rgba(20,28,38,0.96)', border: `1px solid ${usedHeal ? '#243240' : '#6aae73'}`, color: usedHeal ? '#5a4a36' : '#bfe6b8' }}
       >🧪 {t('療傷', 'Salve')}</button>
+    </div>
+  );
+  // 臨場三術 — a second row of once-per-bout gambits: 環境借勢 (terrain), plus the
+  // aimed called shots 擊械 (缴械) / 斬馬 (挑落下馬). Hidden in hot-seat (P1 only).
+  const foeMounted = mountEdge(defender) !== null && !bout.dUnhorsed;
+  const exploit = TERRAIN_EXPLOIT[bout.terrain];
+  const gambitRow = hotSeat ? null : (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+      <button
+        onClick={doExploit}
+        disabled={usedExploit || bout.over}
+        title={t(`環境借勢:${exploit.descZh},每局一次`, `Use the terrain: ${exploit.descEn}, once per bout`)}
+        style={{ flex: 1.2, padding: '0.32rem 0.2rem', borderRadius: 'var(--tkm-radius-sm)', cursor: usedExploit ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: '0.78rem', background: usedExploit ? '#241c12' : 'rgba(20,28,38,0.96)', border: `1px solid ${usedExploit ? '#243240' : '#d08a4a'}`, color: usedExploit ? '#5a4a36' : '#f0c48a' }}
+      >🌪 {t(exploit.zh, exploit.en)}</button>
+      <button
+        onClick={() => doAimed('disarm')}
+        disabled={usedAimed || bout.over}
+        title={t('擊械:賭一記缴械(勇高易中,落空露破綻),每局一次', 'Aim to disarm: a gamble (a sharper arm lands it; a whiff leaves you open), once per bout')}
+        style={{ flex: 1, padding: '0.32rem 0.2rem', borderRadius: 'var(--tkm-radius-sm)', cursor: usedAimed ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: '0.78rem', background: usedAimed ? '#241c12' : 'rgba(20,28,38,0.96)', border: `1px solid ${usedAimed ? '#243240' : '#c86a6a'}`, color: usedAimed ? '#5a4a36' : '#e8b0b0' }}
+      >🎯 {t('擊械', 'Disarm')}</button>
+      {foeMounted && (
+        <button
+          onClick={() => doAimed('unhorse')}
+          disabled={usedAimed || bout.over}
+          title={t('斬馬:賭一記挑落下馬,每局一次', 'Aim for the mount: a gamble to unhorse the rider, once per bout')}
+          style={{ flex: 1, padding: '0.32rem 0.2rem', borderRadius: 'var(--tkm-radius-sm)', cursor: usedAimed ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: '0.78rem', background: usedAimed ? '#241c12' : 'rgba(20,28,38,0.96)', border: `1px solid ${usedAimed ? '#243240' : '#c86a6a'}`, color: usedAimed ? '#5a4a36' : '#e8b0b0' }}
+        >🐴 {t('斬馬', 'Unhorse')}</button>
+      )}
     </div>
   );
   const groupLabel = (zh: string, en: string, kind: MoveKind) => (
@@ -626,6 +708,9 @@ export function DuelGameModal({
               <div>
                 {groupLabel('陣中用度', 'ITEMS', 'power')}
                 {itemRow}
+                <div style={{ height: 4 }} />
+                {groupLabel('臨場借勢', 'GAMBITS', 'power')}
+                {gambitRow}
               </div>
             )}
           </div>
@@ -640,7 +725,7 @@ export function DuelGameModal({
           <div style={{ marginTop: '0.6rem', textAlign: 'center' }}>
             <div className={reduced ? undefined : 'tkm-victory-slam'} style={{ color: lethal && bout.killedId ? '#b8442e' : '#e6c473', fontSize: '1.15rem', letterSpacing: '0.07rem', marginBottom: '0.6rem', textShadow: lethal && bout.killedId ? '0 0 14px rgba(184,68,46,0.6)' : '0 0 12px rgba(212,168,74,0.45)' }}>{resultText}</div>
             <button
-              onClick={() => onComplete({ winner: bout.winner ?? 'draw', killedId: bout.killedId as 'attacker' | 'defender' | undefined, attackerId: me.id })}
+              onClick={() => onComplete({ winner: bout.winner ?? 'draw', killedId: bout.killedId as 'attacker' | 'defender' | undefined, attackerId: me.id, fate: breakFate ?? undefined })}
               style={{ padding: '0.45rem 1.6rem', background: '#1e2832', border: '1px solid #e6c473', color: '#e6c473', cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.07rem' }}
             >
               {t('確定', 'Continue')}
@@ -689,6 +774,8 @@ export function DuelGameModal({
               <div style={{ height: 2 }} />
               {groupLabel('陣中', 'ITEMS', 'power')}
               {itemRow}
+              {groupLabel('借勢', 'GAMBIT', 'power')}
+              {gambitRow}
             </>}
           </div>
         </>
