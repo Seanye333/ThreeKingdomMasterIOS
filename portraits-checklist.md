@@ -2996,7 +2996,7 @@
 - [x] 阿魯渾薩里 (hist-aluhun-sali, 文) - hist-aluhun-sali.png
 - [x] 也速答兒 (hist-yesudaer, 武) - hist-yesudaer.png
 
-### 明 (120/124)
+### 明 (124/124)
 
 - [x] 朱元璋 (hist-zhu-yuanzhang, 文) - hist-zhu-yuanzhang.png
 - [x] 徐達 (hist-xu-da, 武) - hist-xu-da.png
@@ -3142,10 +3142,14 @@
   - hist-wang-chonggu.png
 - [x] 譚綸 (hist-tan-lun, 武)
   - hist-tan-lun.png
-- [ ] 王世懋 (hist-wang-shimao, 文)
-- [ ] 顧鼎臣 (hist-gu-dingchen, 文)
-- [ ] 葉向高 (hist-ye-xianggao, 文)
-- [ ] 王畿 (hist-wang-ji, 文)
+- [x] 王世懋 (hist-wang-shimao, 文)
+  - hist-wang-shimao.png
+- [x] 顧鼎臣 (hist-gu-dingchen, 文)
+  - hist-gu-dingchen.png
+- [x] 葉向高 (hist-ye-xianggao, 文)
+  - hist-ye-xianggao.png
+- [x] 王畿 (hist-wang-ji, 文)
+  - hist-wang-ji.png
 
 ### 清 (0/121)
 

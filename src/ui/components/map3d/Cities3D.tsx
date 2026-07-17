@@ -20,7 +20,7 @@ import { IS_MOBILE, PIXEL_TO_WORLD, MARKER_SCALE, pxToWorld } from './shared';
  *  - 邑 (hamlet) → wood palisade + 2 small huts, no central tower
  *  - 鎮 (town) → low brick wall + small 1-story pagoda
  *  - 城 (city) → brick wall + 2-story pagoda + 2 corner towers
- *  - 大城 (large) → tall wall + 3-story pagoda + 4 corner towers
+ *  - 都 (large) → tall wall + 3-story pagoda + 4 corner towers
  *  - 都 (capital) → grand wall + 5-story pagoda + 4 corner towers + side halls */
 /** 市坊 — a ring of suburb roofs that grows with the city's built structures,
  *  so a heavily-developed city visibly sprawls beyond its wall (RTK/TW). */

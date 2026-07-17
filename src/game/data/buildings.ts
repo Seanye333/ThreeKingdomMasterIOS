@@ -509,7 +509,7 @@ export const BUILDING_MIN_SIZE: Partial<Record<BuildingId, CitySize>> = {
   barbican:    'city',   // 甕城
   library:     'city',   // 藏書閣
   navalyard:   'city',   // 樓船署
-  // 大城 Large (16 萬) — capital-scale institutions.
+  // 都 Metropolis (16 萬) — capital-scale institutions.
   grandacademy: 'large', // 太學
   pricebureau:  'large', // 平準署
   beacon:       'large', // 烽燧

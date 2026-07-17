@@ -38,7 +38,7 @@ export interface City {
   ruined?: boolean;
   /**
    * 京師 — the Han emperor resides here (天子駐蹕). The city counts as top tier
-   * 都 regardless of population (許都 was a capital by virtue of the court, not
+   * 京 regardless of population (許都 was a capital by virtue of the court, not
    * its census). Maintained by loadScenario and the 奉迎天子 flow — it follows
    * the emperor when he moves. Default/omitted = false.
    */

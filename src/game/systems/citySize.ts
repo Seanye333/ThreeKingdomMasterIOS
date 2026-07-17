@@ -9,8 +9,11 @@
  *   邑 Hamlet      <  30,000
  *   鎮 Town        30k–80k
  *   城 City        80k–160k
- *   大城 Large     160k–280k
- *   都 Capital     280k+
+ *   都 Metropolis  160k–280k
+ *   京 Capital     280k+
+ *
+ * (Display names only — the tier ids 'large'/'capital' are save/data keys
+ * and stay as-is.)
  */
 import type { City, Force, EntityId } from '../types';
 
@@ -65,14 +68,14 @@ export const CITY_SIZES: CitySizeDef[] = [
   },
   {
     id: 'large', popMin: 160000,
-    name: { zh: '大城', en: 'Large City' },
+    name: { zh: '都', en: 'Metropolis' },
     statCap: 130, econCap: 250, loyaltyCap: 100, troopCap: 140000,
     goldMul: 1.35, foodMul: 1.30, buildingSlots: 35,
     color: '#d4a84a',
   },
   {
     id: 'capital', popMin: 280000,
-    name: { zh: '都', en: 'Capital' },
+    name: { zh: '京', en: 'Capital' },
     statCap: 160, econCap: 320, loyaltyCap: 100, troopCap: 250000,
     goldMul: 1.60, foodMul: 1.50, buildingSlots: 44,
     color: '#f0e0b0',
@@ -92,7 +95,7 @@ export const CAPITAL_LOYALTY_BONUS = 3;
 export const LOST_CAPITAL_LOYALTY_PENALTY = 8;
 
 /** Returns the city's current size tier (auto-derived from population).
- *  京師特例 — the city hosting the Han emperor (`imperialSeat`) is always 都:
+ *  京師特例 — the city hosting the Han emperor (`imperialSeat`) is always 京:
  *  許都 outranked its census because the court sat there. The rank travels
  *  with the emperor (奉迎天子), so losing him drops the city back to its
  *  population tier. */
@@ -115,7 +118,7 @@ export function cityEconCap(city: City): number {
   return citySize(city).econCap;
 }
 
-/** Rank of a size tier (0 = 邑 … 4 = 都). */
+/** Rank of a size tier (0 = 邑 … 4 = 京). */
 export function citySizeRank(id: CitySize): number {
   return CITY_SIZES.findIndex((s) => s.id === id);
 }
@@ -170,15 +173,15 @@ export function reassignLostCapitals(
  * 承載力 — how many people a city can feed and house. Set by farmland
  * (agriculture) plus civic works (安民坊/水利, via `growthAdd`). Population grows
  * toward this ceiling and stalls (then bleeds) once it overshoots — so reaching
- * 大城/都 is an investment in agriculture, not just patience.
+ * 都/京 is an investment in agriculture, not just patience.
  *
  * Caps are deliberately generous: a city with solid farms (農業 ~55+) clears the
- * 都 threshold (280k), and a maxed agricultural powerhouse can swell past 600k.
+ * 京 threshold (280k), and a maxed agricultural powerhouse can swell past 600k.
  */
 export function cityCarryingCapacity(city: City, growthAdd = 0): number {
   // 30k floor (a hamlet survives on little) + ~1,500 souls per point of 農業.
-  // Tuned to the size-tier table (都 = 280k) so the ceiling stays believable
-  // (RoTK-scale, not runaway): a heavily-developed city (農業 ~167) reaches 都,
+  // Tuned to the size-tier table (京 = 280k) so the ceiling stays believable
+  // (RoTK-scale, not runaway): a heavily-developed city (農業 ~167) reaches 京,
   // and even a maxed agricultural metropolis tops out well under a million.
   const base = 30000 + city.agriculture * 1500;
   // 安民坊/水利 lift the ceiling further (up to +30%).

@@ -1,5 +1,5 @@
 /**
- * 京師 — the emperor's city ranks as 都 regardless of census (許都), the seat
+ * 京師 — the emperor's city ranks as 京 regardless of census (許都), the seat
  * is derived from the scenario's era (洛陽 → 長安 192+ → 許都 196+, none on
  * non-Han boards), and the 都 rank travels with the emperor on 奉迎天子.
  */
@@ -27,7 +27,7 @@ import { citySize } from '../systems/citySize';
 const byId = (id: string) => SCENARIOS.find((s) => s.id === id)!;
 
 describe('京師 — emperor seat derivation on scenario load', () => {
-  it('200 官渡: the emperor sits at 許昌 and it ranks 都 despite its census', () => {
+  it('200 官渡: the emperor sits at 許昌 and it ranks 京 despite its census', () => {
     const scn = byId('scn-200-guandu');
     useGameStore.getState().loadScenario(scn, scn.forces[0].id, 'normal');
     const s = useGameStore.getState();

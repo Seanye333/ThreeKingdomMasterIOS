@@ -17,7 +17,7 @@
  *   capital-set ✅            遷都之喜
  *   city-upgrade-town ✅      升「鎮」
  *   city-upgrade-city ✅      升「城」
- *   city-upgrade-large ✅     升「大城」
+ *   city-upgrade-large ✅     升「都」
  *   city-upgrade-capital ✅   升「都」
  *   building-complete ✅      大興土木(城內建築竣工)
  *   wall-citadel ✅           堅城落成(城壁強化至 3 級)

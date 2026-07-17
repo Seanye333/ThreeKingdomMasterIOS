@@ -70,7 +70,7 @@ describe('§2.2 store actions', () => {
     expect((s().legions ?? []).length).toBe(n0 + 1); // now a 金牌 commander — allowed
   });
 
-  it('品階硬門檻: a 大城/都 needs a 金牌+ 太守', () => {
+  it('品階硬門檻: a 都/京 needs a 金牌+ 太守', () => {
     const city = myCity({ population: 320000 }); // → 都 tier
     const green = Object.values(s().officers).find((o) => o.forceId === pid())!.id;
     setOfficer(green, city, GREEN);

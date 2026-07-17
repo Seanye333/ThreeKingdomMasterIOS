@@ -2949,7 +2949,7 @@ export const useGameStore = create<GameStore>()(
         if (!force || !state.playerForceId) return { ok: false, reason: 'no force' };
         if (!canWelcomeEmperor(state.cities, state.emperorCityId ?? EMPEROR_HOME, state.playerForceId, force.capitalCityId))
           return { ok: false, reason: 'not the custodian (or already at your capital)' };
-        // 京師隨駕 — the 都 rank travels with the emperor: strip the old seat,
+        // 京師隨駕 — the 京 rank travels with the emperor: strip the old seat,
         // crown the new one (see citySize's imperialSeat override).
         const seatedCities = { ...state.cities };
         const oldSeat = state.emperorCityId ? seatedCities[state.emperorCityId] : null;
@@ -3559,10 +3559,10 @@ export const useGameStore = create<GameStore>()(
         const s = get();
         const city = s.cities[cityId];
         const gov = officerId ? s.officers[officerId] : null;
-        // 品階門檻 — a 大城/都 demands a 金牌+ 太守; lesser officers may govern smaller seats.
+        // 品階門檻 — a 都/京 demands a 金牌+ 太守; lesser officers may govern smaller seats.
         if (gov && city && citySizeRank(citySize(city).id) >= citySizeRank('large')
             && gradeRank(officerGrade(gov).grade) < gradeRank('gold')) {
-          s.notify(`品階不足 · ${gov.name.zh} 難當大城太守(須金牌+)`, `${gov.name.en} lacks the grade to govern a great city (needs Gold+)`, 'warn');
+          s.notify(`品階不足 · ${gov.name.zh} 難當都/京太守(須金牌+)`, `${gov.name.en} lacks the grade to govern a metropolis (needs Gold+)`, 'warn');
           return;
         }
         const next = { ...s.cityDelegations };
@@ -7996,7 +7996,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // the store just persists the returned slot/警戒/任期 maps below.
 
         // 升城慶典 — queue a celebratory popup for each player city that crossed
-        // UP a size tier this season (邑→鎮→城→大城→都).
+        // UP a size tier this season (邑→鎮→城→都→京).
         const sizePopups: import('../types').PopupEvent[] = [];
         for (const c of Object.values(postCities)) {
           if (c.ownerForceId !== state.playerForceId) continue;
@@ -17303,7 +17303,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (!state.itemAwakenings) state.itemAwakenings = {}; // 兵器覺醒 — pre-feature saves
         if (!state.destroyedItems) state.destroyedItems = []; // 回爐 — pre-feature saves
         // 京師 — pre-feature saves have emperorCityId but no imperialSeat flag on
-        // the city itself; stamp it so the 天子駐蹕 city ranks as 都 (citySize).
+        // the city itself; stamp it so the 天子駐蹕 city ranks as 京 (citySize).
         if (state.emperorCityId && state.cities?.[state.emperorCityId]
             && !state.cities[state.emperorCityId].imperialSeat) {
           state.cities[state.emperorCityId] = { ...state.cities[state.emperorCityId], imperialSeat: true };
