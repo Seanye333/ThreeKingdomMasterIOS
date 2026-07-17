@@ -4,7 +4,7 @@
 
 保存目录：`portraits-src/`
 
-总数：2209，源图文件：1539，已匹配角色：1558，未匹配角色：651
+总数：2209，源图文件：1607，已匹配角色：1626，未匹配角色：583
 
 说明：勾选代表 `portraits-src/` 里已经有对应源图。识别规则包括 `{id}.webp/.png/.jpg`、中文名图片、以及少量繁简姓名对应；同名历史人物可能共用同一张源图。
 
@@ -2516,7 +2516,7 @@
 - [x] 蘇綽 (hist-su-chuo, 文) - hist-su-chuo.png
 - [x] 杜弼 (hist-du-bi, 文) - hist-du-bi.png
 
-### 隋 (48/56)
+### 隋 (56/56)
 
 - [x] 楊素 (hist-yang-su, 武) - hist-yang-su.png
 - [x] 韓擒虎 (hist-han-qinhu, 武) - hist-han-qinhu.png
@@ -2566,534 +2566,534 @@
 - [x] 楊文思 (hist-yang-wensi, 文) - hist-yang-wensi.png
 - [x] 楊師道 (hist-yang-shidao, 文) - hist-yang-shidao.png
 - [x] 元寶藏 (hist-yuan-baozang, 武) - hist-yuan-baozang.png
-- [ ] 柳述 (hist-liu-shu, 文)
-- [ ] 蘇孝慈 (hist-su-xiaoci, 文)
-- [ ] 王頍 (hist-wang-kui, 文)
-- [ ] 楊雄 (hist-yang-xiong-sui, 武)
-- [ ] 段文振 (hist-duan-wenzhen, 武)
-- [ ] 元岩 (hist-yuan-yan, 文)
-- [ ] 周法尚 (hist-zhou-fashang, 武)
-- [ ] 賀若誼 (hist-heruo-yi, 武)
+- [x] 柳述 (hist-liu-shu, 文) - hist-liu-shu.png
+- [x] 蘇孝慈 (hist-su-xiaoci, 文) - hist-su-xiaoci.png
+- [x] 王頍 (hist-wang-kui, 文) - hist-wang-kui.png
+- [x] 楊雄 (hist-yang-xiong-sui, 武) - hist-yang-xiong-sui.png
+- [x] 段文振 (hist-duan-wenzhen, 武) - hist-duan-wenzhen.png
+- [x] 元岩 (hist-yuan-yan, 文) - hist-yuan-yan.png
+- [x] 周法尚 (hist-zhou-fashang, 武) - hist-zhou-fashang.png
+- [x] 賀若誼 (hist-heruo-yi, 武) - hist-heruo-yi.png
 
-### 唐 (0/130)
+### 唐 (130/130)
 
-- [ ] 李靖 (hist-li-jing, 武)
-- [ ] 李勣 (hist-li-ji, 武)
-- [ ] 秦瓊 (hist-qin-qiong, 武)
-- [ ] 尉遲恭 (hist-yuchi-gong, 武)
-- [ ] 程咬金 (hist-cheng-yaojin, 武)
-- [ ] 羅成 (hist-luo-cheng, 武)
-- [ ] 蘇定方 (hist-su-dingfang, 武)
-- [ ] 薛仁貴 (hist-xue-rengui, 武)
-- [ ] 郭子儀 (hist-guo-ziyi, 武)
-- [ ] 李光弼 (hist-li-guangbi, 武)
-- [ ] 高仙芝 (hist-gao-xianzhi, 武)
-- [ ] 哥舒翰 (hist-geshu-han, 武)
-- [ ] 房玄齡 (hist-fang-xuanling, 文)
-- [ ] 杜如晦 (hist-du-ruhui, 文)
-- [ ] 魏徵 (hist-wei-zheng, 文)
-- [ ] 狄仁傑 (hist-di-renjie, 文)
-- [ ] 長孫無忌 (hist-zhangsun-wuji, 文)
-- [ ] 婁師德 (hist-lou-shide, 文)
-- [ ] 王玄策 (hist-wang-xuance, 武)
-- [ ] 黑齒常之 (hist-heichi-changzhi, 武)
-- [ ] 封常清 (hist-feng-changqing, 武)
-- [ ] 李世民 (hist-tang-taizong, 武)
-- [ ] 武則天 (hist-wu-zetian, 文)
-- [ ] 玄奘 (hist-xuanzang, 文)
-- [ ] 鑒真 (hist-jianzhen, 文)
-- [ ] 顏真卿 (hist-yan-zhenqing, 文)
-- [ ] 平陽公主 (hist-princess-pingyang, 武)
-- [ ] 樊梨花 (hist-fan-lihua, 武)
-- [ ] 李淵 (hist-li-yuan, 武)
-- [ ] 李隆基 (hist-li-longji, 文)
-- [ ] 李白 (hist-li-bai, 文)
-- [ ] 杜甫 (hist-du-fu, 文)
-- [ ] 韓愈 (hist-han-yu, 文)
-- [ ] 白居易 (hist-bai-juyi, 文)
-- [ ] 安祿山 (hist-an-lushan, 武)
-- [ ] 史思明 (hist-shi-siming, 武)
-- [ ] 李林甫 (hist-li-linfu, 文)
-- [ ] 楊國忠 (hist-yang-guozhong, 文)
-- [ ] 楊貴妃 (hist-yang-guifei, 文)
-- [ ] 上官婉兒 (hist-shangguan-waner, 文)
-- [ ] 太平公主 (hist-taiping, 文)
-- [ ] 黃巢 (hist-huang-chao, 武)
-- [ ] 張仁愿 (hist-zhang-renyuan, 武)
-- [ ] 李建成 (hist-li-jiancheng, 武)
-- [ ] 侯君集 (hist-hou-junji, 武)
-- [ ] 姚崇 (hist-yao-chong, 文)
-- [ ] 宋璟 (hist-song-jing, 文)
-- [ ] 張九齡 (hist-zhang-jiuling, 文)
-- [ ] 王維 (hist-wang-wei, 文)
-- [ ] 孟浩然 (hist-meng-haoran, 文)
-- [ ] 李商隱 (hist-li-shangyin, 文)
-- [ ] 杜牧 (hist-du-mu, 文)
-- [ ] 李愬 (hist-li-su, 武)
-- [ ] 王勃 (hist-wang-bo, 文)
-- [ ] 駱賓王 (hist-luo-binwang, 文)
-- [ ] 陳子昂 (hist-chen-zi’ang, 文)
-- [ ] 賀知章 (hist-he-zhizhang, 文)
-- [ ] 高適 (hist-gao-shi, 文)
-- [ ] 岑參 (hist-cen-shen, 文)
-- [ ] 柳宗元 (hist-liu-zongyuan, 文)
-- [ ] 劉禹錫 (hist-liu-yuxi, 文)
-- [ ] 元稹 (hist-yuan-zhen, 文)
-- [ ] 朱泚 (hist-zhu-ci, 武)
-- [ ] 李治 (hist-tang-gaozong, 文)
-- [ ] 韋后 (hist-empress-wei, 文)
-- [ ] 楊炯 (hist-yang-jiong, 文)
-- [ ] 盧照鄰 (hist-lu-zhaolin, 文)
-- [ ] 仇士良 (hist-qiu-shiliang, 文)
-- [ ] 張巡 (hist-zhang-xun, 武)
-- [ ] 顏杲卿 (hist-yan-gaoqing, 文)
-- [ ] 段秀實 (hist-duan-xiushi, 武)
-- [ ] 馬燧 (hist-ma-sui, 武)
-- [ ] 渾瑊 (hist-hun-zhen, 武)
-- [ ] 李承乾 (hist-li-chengqian, 文)
-- [ ] 王仙芝 (hist-wang-xianzhi-tang, 武)
-- [ ] 李孝恭 (hist-li-xiaogong, 武)
-- [ ] 李道宗 (hist-li-daozong, 武)
-- [ ] 柴紹 (hist-chai-shao, 武)
-- [ ] 段志玄 (hist-duan-zhixuan, 武)
-- [ ] 殷開山 (hist-yin-kaishan, 武)
-- [ ] 仆固懷恩 (hist-pugu-huai’en, 武)
-- [ ] 杜佑 (hist-du-you, 文)
-- [ ] 韋皋 (hist-wei-gao, 武)
-- [ ] 陳玄禮 (hist-chen-xuanli, 武)
-- [ ] 田承嗣 (hist-tian-chengsi, 武)
-- [ ] 王昌齡 (hist-wang-changling, 文)
-- [ ] 王之渙 (hist-wang-zhihuan, 文)
-- [ ] 溫庭筠 (hist-wen-tingyun, 文)
-- [ ] 李德裕 (hist-li-deyu, 文)
-- [ ] 牛僧孺 (hist-niu-sengru, 文)
-- [ ] 田令孜 (hist-tian-lingzi, 文)
-- [ ] 高駢 (hist-gao-pian, 武)
-- [ ] 武三思 (hist-wu-sansi, 文)
-- [ ] 來俊臣 (hist-lai-junchen, 文)
-- [ ] 張柬之 (hist-zhang-jianzhi, 文)
-- [ ] 李泰 (hist-li-tai, 文)
-- [ ] 韋見素 (hist-wei-jiansu, 文)
-- [ ] 李吉甫 (hist-li-jifu, 文)
-- [ ] 元結 (hist-yuan-jie, 文)
-- [ ] 韋承慶 (hist-wei-chengqing, 文)
-- [ ] 李顯 (hist-li-xian, 文)
-- [ ] 李旦 (hist-li-dan, 文)
-- [ ] 王翰 (hist-wang-han, 文)
-- [ ] 上官儀 (hist-shangguan-yi, 文)
-- [ ] 張旭 (hist-zhang-xu, 文)
-- [ ] 楊復恭 (hist-yang-fugong, 文)
-- [ ] 王武俊 (hist-wang-wujun, 武)
-- [ ] 李抱真 (hist-li-baozhen, 武)
-- [ ] 渾鎬 (hist-hun-hao, 武)
-- [ ] 韋蟾 (hist-wei-chan, 文)
-- [ ] 柳公權 (hist-liu-gongquan, 文)
-- [ ] 哥舒曜 (hist-geshu-yao, 武)
-- [ ] 楊收 (hist-yang-shou, 文)
-- [ ] 韋元珪 (hist-wei-yuangui, 文)
-- [ ] 王智興 (hist-wang-zhixing, 武)
-- [ ] 李亨 (hist-li-heng, 文)
-- [ ] 李豫 (hist-li-kuo, 文)
-- [ ] 李適 (hist-li-shi, 文)
-- [ ] 李純 (hist-li-chun, 文)
-- [ ] 馬周 (hist-ma-zhou, 文)
-- [ ] 李泌 (hist-li-bi, 文)
-- [ ] 陸贄 (hist-lu-zhi-tang, 文)
-- [ ] 楊炎 (hist-yang-yan, 文)
-- [ ] 來濟 (hist-lai-ji, 文)
-- [ ] 蕭穎士 (hist-xiao-yingshi, 文)
-- [ ] 韓滉 (hist-han-huang, 文)
-- [ ] 韋陟 (hist-wei-zhi, 文)
-- [ ] 元載 (hist-yuan-zai, 文)
-- [ ] 常袞 (hist-chang-gun, 文)
-- [ ] 李揆 (hist-li-kui, 文)
+- [x] 李靖 (hist-li-jing, 武) - hist-li-jing.png
+- [x] 李勣 (hist-li-ji, 武) - hist-li-ji.png
+- [x] 秦瓊 (hist-qin-qiong, 武) - hist-qin-qiong.png
+- [x] 尉遲恭 (hist-yuchi-gong, 武) - hist-yuchi-gong.png
+- [x] 程咬金 (hist-cheng-yaojin, 武) - hist-cheng-yaojin.png
+- [x] 羅成 (hist-luo-cheng, 武) - hist-luo-cheng.png
+- [x] 蘇定方 (hist-su-dingfang, 武) - hist-su-dingfang.png
+- [x] 薛仁貴 (hist-xue-rengui, 武) - hist-xue-rengui.png
+- [x] 郭子儀 (hist-guo-ziyi, 武) - hist-guo-ziyi.png
+- [x] 李光弼 (hist-li-guangbi, 武) - hist-li-guangbi.png
+- [x] 高仙芝 (hist-gao-xianzhi, 武) - hist-gao-xianzhi.png
+- [x] 哥舒翰 (hist-geshu-han, 武) - hist-geshu-han.png
+- [x] 房玄齡 (hist-fang-xuanling, 文) - hist-fang-xuanling.png
+- [x] 杜如晦 (hist-du-ruhui, 文) - hist-du-ruhui.png
+- [x] 魏徵 (hist-wei-zheng, 文) - hist-wei-zheng.png
+- [x] 狄仁傑 (hist-di-renjie, 文) - hist-di-renjie.png
+- [x] 長孫無忌 (hist-zhangsun-wuji, 文) - hist-zhangsun-wuji.png
+- [x] 婁師德 (hist-lou-shide, 文) - hist-lou-shide.png
+- [x] 王玄策 (hist-wang-xuance, 武) - hist-wang-xuance.png
+- [x] 黑齒常之 (hist-heichi-changzhi, 武) - hist-heichi-changzhi.png
+- [x] 封常清 (hist-feng-changqing, 武) - hist-feng-changqing.png
+- [x] 李世民 (hist-tang-taizong, 武) - hist-tang-taizong.png
+- [x] 武則天 (hist-wu-zetian, 文) - hist-wu-zetian.png
+- [x] 玄奘 (hist-xuanzang, 文) - hist-xuanzang.png
+- [x] 鑒真 (hist-jianzhen, 文) - hist-jianzhen.png
+- [x] 顏真卿 (hist-yan-zhenqing, 文) - hist-yan-zhenqing.png
+- [x] 平陽公主 (hist-princess-pingyang, 武) - hist-princess-pingyang.png
+- [x] 樊梨花 (hist-fan-lihua, 武) - hist-fan-lihua.png
+- [x] 李淵 (hist-li-yuan, 武) - hist-li-yuan.png
+- [x] 李隆基 (hist-li-longji, 文) - hist-li-longji.png
+- [x] 李白 (hist-li-bai, 文) - hist-li-bai.png
+- [x] 杜甫 (hist-du-fu, 文) - hist-du-fu.png
+- [x] 韓愈 (hist-han-yu, 文) - hist-han-yu.png
+- [x] 白居易 (hist-bai-juyi, 文) - hist-bai-juyi.png
+- [x] 安祿山 (hist-an-lushan, 武) - hist-an-lushan.png
+- [x] 史思明 (hist-shi-siming, 武) - hist-shi-siming.png
+- [x] 李林甫 (hist-li-linfu, 文) - hist-li-linfu.png
+- [x] 楊國忠 (hist-yang-guozhong, 文) - hist-yang-guozhong.png
+- [x] 楊貴妃 (hist-yang-guifei, 文) - hist-yang-guifei.png
+- [x] 上官婉兒 (hist-shangguan-waner, 文) - hist-shangguan-waner.png
+- [x] 太平公主 (hist-taiping, 文) - hist-taiping.png
+- [x] 黃巢 (hist-huang-chao, 武) - hist-huang-chao.png
+- [x] 張仁愿 (hist-zhang-renyuan, 武) - hist-zhang-renyuan.png
+- [x] 李建成 (hist-li-jiancheng, 武) - hist-li-jiancheng.png
+- [x] 侯君集 (hist-hou-junji, 武) - hist-hou-junji.png
+- [x] 姚崇 (hist-yao-chong, 文) - hist-yao-chong.png
+- [x] 宋璟 (hist-song-jing, 文) - hist-song-jing.png
+- [x] 張九齡 (hist-zhang-jiuling, 文) - hist-zhang-jiuling.png
+- [x] 王維 (hist-wang-wei, 文) - hist-wang-wei.png
+- [x] 孟浩然 (hist-meng-haoran, 文) - hist-meng-haoran.png
+- [x] 李商隱 (hist-li-shangyin, 文) - hist-li-shangyin.png
+- [x] 杜牧 (hist-du-mu, 文) - hist-du-mu.png
+- [x] 李愬 (hist-li-su, 武) - hist-li-su.png
+- [x] 王勃 (hist-wang-bo, 文) - hist-wang-bo.png
+- [x] 駱賓王 (hist-luo-binwang, 文) - hist-luo-binwang.png
+- [x] 陳子昂 (hist-chen-zi’ang, 文) - hist-chen-zi’ang.png
+- [x] 賀知章 (hist-he-zhizhang, 文) - hist-he-zhizhang.png
+- [x] 高適 (hist-gao-shi, 文) - hist-gao-shi.png
+- [x] 岑參 (hist-cen-shen, 文) - hist-cen-shen.png
+- [x] 柳宗元 (hist-liu-zongyuan, 文) - hist-liu-zongyuan.png
+- [x] 劉禹錫 (hist-liu-yuxi, 文) - hist-liu-yuxi.png
+- [x] 元稹 (hist-yuan-zhen, 文) - hist-yuan-zhen.png
+- [x] 朱泚 (hist-zhu-ci, 武) - hist-zhu-ci.png
+- [x] 李治 (hist-tang-gaozong, 文) - hist-tang-gaozong.png
+- [x] 韋后 (hist-empress-wei, 文) - hist-empress-wei.png
+- [x] 楊炯 (hist-yang-jiong, 文) - hist-yang-jiong.png
+- [x] 盧照鄰 (hist-lu-zhaolin, 文) - hist-lu-zhaolin.png
+- [x] 仇士良 (hist-qiu-shiliang, 文) - hist-qiu-shiliang.png
+- [x] 張巡 (hist-zhang-xun, 武) - hist-zhang-xun.png
+- [x] 顏杲卿 (hist-yan-gaoqing, 文) - hist-yan-gaoqing.png
+- [x] 段秀實 (hist-duan-xiushi, 武) - hist-duan-xiushi.png
+- [x] 馬燧 (hist-ma-sui, 武) - hist-ma-sui.png
+- [x] 渾瑊 (hist-hun-zhen, 武) - hist-hun-zhen.png
+- [x] 李承乾 (hist-li-chengqian, 文) - hist-li-chengqian.png
+- [x] 王仙芝 (hist-wang-xianzhi-tang, 武) - hist-wang-xianzhi-tang.png
+- [x] 李孝恭 (hist-li-xiaogong, 武) - hist-li-xiaogong.png
+- [x] 李道宗 (hist-li-daozong, 武) - hist-li-daozong.png
+- [x] 柴紹 (hist-chai-shao, 武) - hist-chai-shao.png
+- [x] 段志玄 (hist-duan-zhixuan, 武) - hist-duan-zhixuan.png
+- [x] 殷開山 (hist-yin-kaishan, 武) - hist-yin-kaishan.png
+- [x] 仆固懷恩 (hist-pugu-huai’en, 武) - hist-pugu-huai’en.png
+- [x] 杜佑 (hist-du-you, 文) - hist-du-you.png
+- [x] 韋皋 (hist-wei-gao, 武) - hist-wei-gao.png
+- [x] 陳玄禮 (hist-chen-xuanli, 武) - hist-chen-xuanli.png
+- [x] 田承嗣 (hist-tian-chengsi, 武) - hist-tian-chengsi.png
+- [x] 王昌齡 (hist-wang-changling, 文) - hist-wang-changling.png
+- [x] 王之渙 (hist-wang-zhihuan, 文) - hist-wang-zhihuan.png
+- [x] 溫庭筠 (hist-wen-tingyun, 文) - hist-wen-tingyun.png
+- [x] 李德裕 (hist-li-deyu, 文) - hist-li-deyu.png
+- [x] 牛僧孺 (hist-niu-sengru, 文) - hist-niu-sengru.png
+- [x] 田令孜 (hist-tian-lingzi, 文) - hist-tian-lingzi.png
+- [x] 高駢 (hist-gao-pian, 武) - hist-gao-pian.png
+- [x] 武三思 (hist-wu-sansi, 文) - hist-wu-sansi.png
+- [x] 來俊臣 (hist-lai-junchen, 文) - hist-lai-junchen.png
+- [x] 張柬之 (hist-zhang-jianzhi, 文) - hist-zhang-jianzhi.png
+- [x] 李泰 (hist-li-tai, 文) - hist-li-tai.png
+- [x] 韋見素 (hist-wei-jiansu, 文) - hist-wei-jiansu.png
+- [x] 李吉甫 (hist-li-jifu, 文) - hist-li-jifu.png
+- [x] 元結 (hist-yuan-jie, 文) - hist-yuan-jie.png
+- [x] 韋承慶 (hist-wei-chengqing, 文) - hist-wei-chengqing.png
+- [x] 李顯 (hist-li-xian, 文) - hist-li-xian.png
+- [x] 李旦 (hist-li-dan, 文) - hist-li-dan.png
+- [x] 王翰 (hist-wang-han, 文) - hist-wang-han.png
+- [x] 上官儀 (hist-shangguan-yi, 文) - hist-shangguan-yi.png
+- [x] 張旭 (hist-zhang-xu, 文) - hist-zhang-xu.png
+- [x] 楊復恭 (hist-yang-fugong, 文) - hist-yang-fugong.png
+- [x] 王武俊 (hist-wang-wujun, 武) - hist-wang-wujun.png
+- [x] 李抱真 (hist-li-baozhen, 武) - hist-li-baozhen.png
+- [x] 渾鎬 (hist-hun-hao, 武) - hist-hun-hao.png
+- [x] 韋蟾 (hist-wei-chan, 文) - hist-wei-chan.png
+- [x] 柳公權 (hist-liu-gongquan, 文) - hist-liu-gongquan.png
+- [x] 哥舒曜 (hist-geshu-yao, 武) - hist-geshu-yao.png
+- [x] 楊收 (hist-yang-shou, 文) - hist-yang-shou.png
+- [x] 韋元珪 (hist-wei-yuangui, 文) - hist-wei-yuangui.png
+- [x] 王智興 (hist-wang-zhixing, 武) - hist-wang-zhixing.png
+- [x] 李亨 (hist-li-heng, 文) - hist-li-heng.png
+- [x] 李豫 (hist-li-kuo, 文) - hist-li-kuo.png
+- [x] 李適 (hist-li-shi, 文) - hist-li-shi.png
+- [x] 李純 (hist-li-chun, 文) - hist-li-chun.png
+- [x] 馬周 (hist-ma-zhou, 文) - hist-ma-zhou.png
+- [x] 李泌 (hist-li-bi, 文) - hist-li-bi.png
+- [x] 陸贄 (hist-lu-zhi-tang, 文) - hist-lu-zhi-tang.png
+- [x] 楊炎 (hist-yang-yan, 文) - hist-yang-yan.png
+- [x] 來濟 (hist-lai-ji, 文) - hist-lai-ji.png
+- [x] 蕭穎士 (hist-xiao-yingshi, 文) - hist-xiao-yingshi.png
+- [x] 韓滉 (hist-han-huang, 文) - hist-han-huang.png
+- [x] 韋陟 (hist-wei-zhi, 文) - hist-wei-zhi.png
+- [x] 元載 (hist-yuan-zai, 文) - hist-yuan-zai.png
+- [x] 常袞 (hist-chang-gun, 文) - hist-chang-gun.png
+- [x] 李揆 (hist-li-kui, 文) - hist-li-kui.png
 
-### 五代 (0/65)
+### 五代 (65/65)
 
-- [ ] 李存孝 (hist-li-cunxiao, 武)
-- [ ] 周德威 (hist-zhou-dewei, 武)
-- [ ] 王彥章 (hist-wang-yanzhang, 武)
-- [ ] 葛從周 (hist-ge-congzhou, 武)
-- [ ] 柴榮 (hist-chai-rong, 武)
-- [ ] 高懷德 (hist-gao-huaide, 武)
-- [ ] 李克用 (hist-li-keyong, 武)
-- [ ] 朱溫 (hist-zhu-wen, 武)
-- [ ] 李存勖 (hist-li-cunxu, 武)
-- [ ] 馮道 (hist-feng-dao, 文)
-- [ ] 石敬瑭 (hist-shi-jingtang, 武)
-- [ ] 楊師厚 (hist-yang-shihou, 武)
-- [ ] 錢鏐 (hist-qian-liu, 文)
-- [ ] 李嗣源 (hist-li-siyuan, 武)
-- [ ] 郭威 (hist-guo-wei, 武)
-- [ ] 劉知遠 (hist-liu-zhiyuan, 武)
-- [ ] 王建 (hist-wang-jian-shu, 武)
-- [ ] 楊行密 (hist-yang-xingmi, 武)
-- [ ] 孟知祥 (hist-meng-zhixiang, 武)
-- [ ] 李煜 (hist-li-yu, 文)
-- [ ] 馮延巳 (hist-feng-yansi, 文)
-- [ ] 馬殷 (hist-ma-yin, 武)
-- [ ] 高季興 (hist-gao-jixing, 武)
-- [ ] 王審知 (hist-wang-shenzhi, 文)
-- [ ] 孟昶 (hist-meng-chang, 文)
-- [ ] 桑維翰 (hist-sang-weihan, 文)
-- [ ] 朱友珪 (hist-zhu-yougui, 武)
-- [ ] 李存信 (hist-li-cunxin, 武)
-- [ ] 耶律阿保機 (hist-abaoji, 武)
-- [ ] 耶律德光 (hist-yelu-deguang, 武)
-- [ ] 蕭太后 (hist-xiao-taihou, 文)
-- [ ] 耶律休哥 (hist-yelu-xiuge, 武)
-- [ ] 韓延徽 (hist-han-yanhui, 文)
-- [ ] 李璟 (hist-li-jing-tangts, 文)
-- [ ] 劉龑 (hist-liu-yan, 武)
-- [ ] 楊隆演 (hist-yang-longyan, 文)
-- [ ] 范質 (hist-fan-zhi, 文)
-- [ ] 安重榮 (hist-an-zhongrong, 武)
-- [ ] 朱友貞 (hist-zhu-youzhen, 武)
-- [ ] 王延政 (hist-wang-yanzheng, 武)
-- [ ] 安從進 (hist-an-congjin, 武)
-- [ ] 耶律斜軫 (hist-yelu-xiezhen, 武)
-- [ ] 蕭撻凜 (hist-xiao-talin, 武)
-- [ ] 室昉 (hist-shi-fang, 文)
-- [ ] 楊光遠 (hist-yang-guangyuan, 武)
-- [ ] 李茂貞 (hist-li-maozhen, 武)
-- [ ] 趙在禮 (hist-zhao-zaili, 武)
-- [ ] 王處存 (hist-wang-chucun, 武)
-- [ ] 蘇逢吉 (hist-su-fengji, 文)
-- [ ] 王延翰 (hist-wang-yanhan, 文)
-- [ ] 馬希範 (hist-ma-xifan, 文)
-- [ ] 李繼遷 (hist-li-jiqian, 武)
-- [ ] 王晏球 (hist-wang-yanqiu, 武)
-- [ ] 杜重威 (hist-du-chongwei, 武)
-- [ ] 安重誨 (hist-an-zhonghui, 文)
-- [ ] 王處直 (hist-wang-chuzhi, 武)
-- [ ] 趙德鈞 (hist-zhao-dejun, 武)
-- [ ] 朱友謙 (hist-zhu-youqian, 武)
-- [ ] 王重榮 (hist-wang-chongrong, 武)
-- [ ] 王鎔 (hist-wang-rong-fd, 文)
-- [ ] 高保融 (hist-gao-baorong, 文)
-- [ ] 高從誨 (hist-gao-conghui, 文)
-- [ ] 王繼鵬 (hist-wang-jipeng, 武)
-- [ ] 朱友讓 (hist-zhu-yourang, 武)
-- [ ] 周匡時 (hist-zhou-kuangshi, 武)
+- [x] 李存孝 (hist-li-cunxiao, 武) - hist-li-cunxiao.png
+- [x] 周德威 (hist-zhou-dewei, 武) - hist-zhou-dewei.png
+- [x] 王彥章 (hist-wang-yanzhang, 武) - hist-wang-yanzhang.png
+- [x] 葛從周 (hist-ge-congzhou, 武) - hist-ge-congzhou.png
+- [x] 柴榮 (hist-chai-rong, 武) - hist-chai-rong.png
+- [x] 高懷德 (hist-gao-huaide, 武) - hist-gao-huaide.png
+- [x] 李克用 (hist-li-keyong, 武) - hist-li-keyong.png
+- [x] 朱溫 (hist-zhu-wen, 武) - hist-zhu-wen.png
+- [x] 李存勖 (hist-li-cunxu, 武) - hist-li-cunxu.png
+- [x] 馮道 (hist-feng-dao, 文) - hist-feng-dao.png
+- [x] 石敬瑭 (hist-shi-jingtang, 武) - hist-shi-jingtang.png
+- [x] 楊師厚 (hist-yang-shihou, 武) - hist-yang-shihou.png
+- [x] 錢鏐 (hist-qian-liu, 文) - hist-qian-liu.png
+- [x] 李嗣源 (hist-li-siyuan, 武) - hist-li-siyuan.png
+- [x] 郭威 (hist-guo-wei, 武) - hist-guo-wei.png
+- [x] 劉知遠 (hist-liu-zhiyuan, 武) - hist-liu-zhiyuan.png
+- [x] 王建 (hist-wang-jian-shu, 武) - hist-wang-jian-shu.png
+- [x] 楊行密 (hist-yang-xingmi, 武) - hist-yang-xingmi.png
+- [x] 孟知祥 (hist-meng-zhixiang, 武) - hist-meng-zhixiang.png
+- [x] 李煜 (hist-li-yu, 文) - hist-li-yu.png
+- [x] 馮延巳 (hist-feng-yansi, 文) - hist-feng-yansi.png
+- [x] 馬殷 (hist-ma-yin, 武) - hist-ma-yin.png
+- [x] 高季興 (hist-gao-jixing, 武) - hist-gao-jixing.png
+- [x] 王審知 (hist-wang-shenzhi, 文) - hist-wang-shenzhi.png
+- [x] 孟昶 (hist-meng-chang, 文) - hist-meng-chang.png
+- [x] 桑維翰 (hist-sang-weihan, 文) - hist-sang-weihan.png
+- [x] 朱友珪 (hist-zhu-yougui, 武) - hist-zhu-yougui.png
+- [x] 李存信 (hist-li-cunxin, 武) - hist-li-cunxin.png
+- [x] 耶律阿保機 (hist-abaoji, 武) - hist-abaoji.png
+- [x] 耶律德光 (hist-yelu-deguang, 武) - hist-yelu-deguang.png
+- [x] 蕭太后 (hist-xiao-taihou, 文) - hist-xiao-taihou.png
+- [x] 耶律休哥 (hist-yelu-xiuge, 武) - hist-yelu-xiuge.png
+- [x] 韓延徽 (hist-han-yanhui, 文) - hist-han-yanhui.png
+- [x] 李璟 (hist-li-jing-tangts, 文) - hist-li-jing-tangts.png
+- [x] 劉龑 (hist-liu-yan, 武) - hist-liu-yan.png
+- [x] 楊隆演 (hist-yang-longyan, 文) - hist-yang-longyan.png
+- [x] 范質 (hist-fan-zhi, 文) - hist-fan-zhi.png
+- [x] 安重榮 (hist-an-zhongrong, 武) - hist-an-zhongrong.png
+- [x] 朱友貞 (hist-zhu-youzhen, 武) - hist-zhu-youzhen.png
+- [x] 王延政 (hist-wang-yanzheng, 武) - hist-wang-yanzheng.png
+- [x] 安從進 (hist-an-congjin, 武) - hist-an-congjin.png
+- [x] 耶律斜軫 (hist-yelu-xiezhen, 武) - hist-yelu-xiezhen.png
+- [x] 蕭撻凜 (hist-xiao-talin, 武) - hist-xiao-talin.png
+- [x] 室昉 (hist-shi-fang, 文) - hist-shi-fang.png
+- [x] 楊光遠 (hist-yang-guangyuan, 武) - hist-yang-guangyuan.png
+- [x] 李茂貞 (hist-li-maozhen, 武) - hist-li-maozhen.png
+- [x] 趙在禮 (hist-zhao-zaili, 武) - hist-zhao-zaili.png
+- [x] 王處存 (hist-wang-chucun, 武) - hist-wang-chucun.png
+- [x] 蘇逢吉 (hist-su-fengji, 文) - hist-su-fengji.png
+- [x] 王延翰 (hist-wang-yanhan, 文) - hist-wang-yanhan.png
+- [x] 馬希範 (hist-ma-xifan, 文) - hist-ma-xifan.png
+- [x] 李繼遷 (hist-li-jiqian, 武) - hist-li-jiqian.png
+- [x] 王晏球 (hist-wang-yanqiu, 武) - hist-wang-yanqiu.png
+- [x] 杜重威 (hist-du-chongwei, 武) - hist-du-chongwei.png
+- [x] 安重誨 (hist-an-zhonghui, 文) - hist-an-zhonghui.png
+- [x] 王處直 (hist-wang-chuzhi, 武) - hist-wang-chuzhi.png
+- [x] 趙德鈞 (hist-zhao-dejun, 武) - hist-zhao-dejun.png
+- [x] 朱友謙 (hist-zhu-youqian, 武) - hist-zhu-youqian.png
+- [x] 王重榮 (hist-wang-chongrong, 武) - hist-wang-chongrong.png
+- [x] 王鎔 (hist-wang-rong-fd, 文) - hist-wang-rong-fd.png
+- [x] 高保融 (hist-gao-baorong, 文) - hist-gao-baorong.png
+- [x] 高從誨 (hist-gao-conghui, 文) - hist-gao-conghui.png
+- [x] 王繼鵬 (hist-wang-jipeng, 武) - hist-wang-jipeng.png
+- [x] 朱友讓 (hist-zhu-yourang, 武) - hist-zhu-yourang.png
+- [x] 周匡時 (hist-zhou-kuangshi, 武) - hist-zhou-kuangshi.png
 
-### 宋 (0/143)
+### 宋 (143/143)
 
-- [ ] 趙匡胤 (hist-zhao-kuangyin, 武)
-- [ ] 曹彬 (hist-cao-bin, 武)
-- [ ] 潘美 (hist-pan-mei, 武)
-- [ ] 楊業 (hist-yang-ye, 武)
-- [ ] 楊延昭 (hist-yang-yanzhao, 武)
-- [ ] 狄青 (hist-di-qing, 武)
-- [ ] 宗澤 (hist-zong-ze, 武)
-- [ ] 岳飛 (hist-yue-fei, 武)
-- [ ] 韓世忠 (hist-han-shizhong, 武)
-- [ ] 劉錡 (hist-liu-qi, 武)
-- [ ] 吳玠 (hist-wu-jie, 武)
-- [ ] 虞允文 (hist-yu-yunwen, 文)
-- [ ] 孟珙 (hist-meng-gong, 武)
-- [ ] 范仲淹 (hist-fan-zhongyan, 文)
-- [ ] 包拯 (hist-bao-zheng, 文)
-- [ ] 文天祥 (hist-wen-tianxiang, 文)
-- [ ] 寇準 (hist-kou-zhun, 文)
-- [ ] 韓琦 (hist-han-qi, 文)
-- [ ] 司馬光 (hist-sima-guang, 文)
-- [ ] 王安石 (hist-wang-anshi, 文)
-- [ ] 趙普 (hist-zhao-pu, 文)
-- [ ] 石守信 (hist-shi-shouxin, 武)
-- [ ] 趙光義 (hist-zhao-guangyi, 文)
-- [ ] 沈括 (hist-shen-kuo, 文)
-- [ ] 穆桂英 (hist-mu-guiying, 武)
-- [ ] 梁紅玉 (hist-liang-hongyu, 武)
-- [ ] 佘太君 (hist-she-taijun, 武)
-- [ ] 蘇軾 (hist-su-shi, 文)
-- [ ] 朱熹 (hist-zhu-xi, 文)
-- [ ] 陸游 (hist-lu-you, 文)
-- [ ] 辛棄疾 (hist-xin-qiji, 武)
-- [ ] 楊宗保 (hist-yang-zongbao, 武)
-- [ ] 楊文廣 (hist-yang-wenguang, 武)
-- [ ] 文彥博 (hist-wen-yanbo, 文)
-- [ ] 富弼 (hist-fu-bi, 文)
-- [ ] 歐陽修 (hist-ouyang-xiu, 文)
-- [ ] 趙佶 (hist-song-huizong, 文)
-- [ ] 種世衡 (hist-zhong-shiheng, 武)
-- [ ] 陸秀夫 (hist-lu-xiufu, 文)
-- [ ] 張世傑 (hist-zhang-shijie, 武)
-- [ ] 李綱 (hist-li-gang, 文)
-- [ ] 趙鼎 (hist-zhao-ding, 文)
-- [ ] 余玠 (hist-yu-jie, 武)
-- [ ] 王堅 (hist-wang-jian-song, 武)
-- [ ] 賈似道 (hist-jia-sidao, 文)
-- [ ] 米芾 (hist-mi-fu, 文)
-- [ ] 李清照 (hist-li-qingzhao, 文)
-- [ ] 柳永 (hist-liu-yong-song, 文)
-- [ ] 周敦頤 (hist-zhou-dunyi, 文)
-- [ ] 程顥 (hist-cheng-hao, 文)
-- [ ] 趙構 (hist-zhao-gou, 文)
-- [ ] 秦檜 (hist-qin-hui, 文)
-- [ ] 蔡京 (hist-cai-jing, 文)
-- [ ] 童貫 (hist-tong-guan, 文)
-- [ ] 程頤 (hist-cheng-yi, 文)
-- [ ] 張載 (hist-zhang-zai, 文)
-- [ ] 黃庭堅 (hist-huang-tingjian, 文)
-- [ ] 蘇轍 (hist-su-zhe, 文)
-- [ ] 王韶 (hist-wang-shao, 武)
-- [ ] 章惇 (hist-zhang-dun, 文)
-- [ ] 蘇洵 (hist-su-xun, 文)
-- [ ] 秦觀 (hist-qin-guan, 文)
-- [ ] 邵雍 (hist-shao-yong, 文)
-- [ ] 史彌遠 (hist-shi-miyuan, 文)
-- [ ] 韓侂胄 (hist-han-tuozhou, 文)
-- [ ] 張俊 (hist-zhang-jun, 武)
-- [ ] 牛皋 (hist-niu-gao, 武)
-- [ ] 李元昊 (hist-li-yuanhao, 武)
-- [ ] 李德明 (hist-li-deming, 武)
-- [ ] 沒藏訛龐 (hist-mocang-epang, 武)
-- [ ] 完顏阿骨打 (hist-aguda, 武)
-- [ ] 完顏宗翰 (hist-zonghan, 武)
-- [ ] 完顏宗弼 (hist-wuzhu, 武)
-- [ ] 完顏宗望 (hist-zongwang, 武)
-- [ ] 完顏亮 (hist-wanyan-liang, 武)
-- [ ] 楊萬里 (hist-yang-wanli, 文)
-- [ ] 范成大 (hist-fan-chengda, 文)
-- [ ] 王曾 (hist-wang-zeng, 文)
-- [ ] 王旦 (hist-wang-dan, 文)
-- [ ] 楊政 (hist-yang-zheng, 武)
-- [ ] 折德扆 (hist-zhe-deyi, 武)
-- [ ] 楊延平 (hist-yang-yanping, 武)
-- [ ] 楊延朗 (hist-yang-yanlang, 武)
-- [ ] 范純仁 (hist-fan-chunren, 文)
-- [ ] 張浚 (hist-zhang-jun-song-prime, 文)
-- [ ] 楊存中 (hist-yang-cunzhong, 武)
-- [ ] 葉適 (hist-ye-shi, 文)
-- [ ] 陳亮 (hist-chen-liang, 文)
-- [ ] 陸九淵 (hist-lu-jiuyuan, 文)
-- [ ] 高俅 (hist-gao-qiu, 武)
-- [ ] 晏殊 (hist-yan-shu, 文)
-- [ ] 周邦彥 (hist-zhou-bangyan, 文)
-- [ ] 任得敬 (hist-ren-dejing, 武)
-- [ ] 李仁孝 (hist-xixia-renzong, 文)
-- [ ] 完顏雍 (hist-wanyan-yong, 文)
-- [ ] 完顏婁室 (hist-wanyan-loushi, 武)
-- [ ] 完顏陳和尚 (hist-chenheshang, 武)
-- [ ] 蒲鮮萬奴 (hist-puxian-wannu, 武)
-- [ ] 段思平 (hist-duan-siping, 武)
-- [ ] 楊時 (hist-yang-shi, 文)
-- [ ] 呂祖謙 (hist-lu-zuqian, 文)
-- [ ] 真德秀 (hist-zhen-dexiu, 文)
-- [ ] 楊億 (hist-yang-yi, 文)
-- [ ] 趙抃 (hist-zhao-bian, 文)
-- [ ] 蘇舜欽 (hist-su-shunqin, 文)
-- [ ] 梅堯臣 (hist-mei-yaochen, 文)
-- [ ] 姜夔 (hist-jiang-kui, 文)
-- [ ] 吳文英 (hist-wu-wenying, 文)
-- [ ] 史浩 (hist-shi-hao, 文)
-- [ ] 王禹偁 (hist-wang-yucheng, 文)
-- [ ] 賀鑄 (hist-he-zhu, 文)
-- [ ] 種放 (hist-zhong-fang, 文)
-- [ ] 范純粹 (hist-fan-chuncui, 文)
-- [ ] 李清臣 (hist-li-qingchen, 文)
-- [ ] 楊延輝 (hist-yang-yanhui, 武)
-- [ ] 楊延定 (hist-yang-yanding, 武)
-- [ ] 楊延嗣 (hist-yang-yansi, 武)
-- [ ] 高瓊 (hist-gao-qiong, 武)
-- [ ] 韓彥直 (hist-han-yanzhi, 武)
-- [ ] 趙汝愚 (hist-zhao-ruyu, 文)
-- [ ] 留正 (hist-liu-zheng-song, 文)
-- [ ] 留夢炎 (hist-liu-mengyan, 文)
-- [ ] 陳康伯 (hist-chen-kangbo, 文)
-- [ ] 吳潛 (hist-wu-qian, 文)
-- [ ] 龐籍 (hist-pang-ji, 文)
-- [ ] 田況 (hist-tian-kuang, 武)
-- [ ] 陳堯佐 (hist-chen-yaozuo, 文)
-- [ ] 馬遠 (hist-ma-yuan-song, 文)
-- [ ] 梁師成 (hist-liang-shicheng, 文)
-- [ ] 呂夷簡 (hist-lu-yijian, 文)
-- [ ] 杜衍 (hist-du-yan, 文)
-- [ ] 王曙 (hist-wang-shu, 文)
-- [ ] 王應麟 (hist-wang-yinglin, 文)
-- [ ] 蘇頌 (hist-su-song, 文)
-- [ ] 文同 (hist-wen-tong, 文)
-- [ ] 葉夢得 (hist-ye-mengde, 文)
-- [ ] 江萬里 (hist-jiang-wanli, 文)
-- [ ] 韓忠彥 (hist-han-zhongyan, 文)
-- [ ] 蘇舜元 (hist-su-shunyuan, 文)
-- [ ] 范鎮 (hist-fan-zhen, 文)
-- [ ] 米友仁 (hist-mi-youren, 文)
-- [ ] 趙伯駒 (hist-zhao-boju, 文)
-- [ ] 蘇邁 (hist-su-mai, 文)
+- [x] 趙匡胤 (hist-zhao-kuangyin, 武) - hist-zhao-kuangyin.png
+- [x] 曹彬 (hist-cao-bin, 武) - hist-cao-bin.png
+- [x] 潘美 (hist-pan-mei, 武) - hist-pan-mei.png
+- [x] 楊業 (hist-yang-ye, 武) - hist-yang-ye.png
+- [x] 楊延昭 (hist-yang-yanzhao, 武) - hist-yang-yanzhao.png
+- [x] 狄青 (hist-di-qing, 武) - hist-di-qing.png
+- [x] 宗澤 (hist-zong-ze, 武) - hist-zong-ze.png
+- [x] 岳飛 (hist-yue-fei, 武) - hist-yue-fei.png
+- [x] 韓世忠 (hist-han-shizhong, 武) - hist-han-shizhong.png
+- [x] 劉錡 (hist-liu-qi, 武) - hist-liu-qi.png
+- [x] 吳玠 (hist-wu-jie, 武) - hist-wu-jie.png
+- [x] 虞允文 (hist-yu-yunwen, 文) - hist-yu-yunwen.png
+- [x] 孟珙 (hist-meng-gong, 武) — `hist-meng-gong.webp`
+- [x] 范仲淹 (hist-fan-zhongyan, 文) — `hist-fan-zhongyan.webp`
+- [x] 包拯 (hist-bao-zheng, 文) — `hist-bao-zheng.webp`
+- [x] 文天祥 (hist-wen-tianxiang, 文) — `hist-wen-tianxiang.webp`
+- [x] 寇準 (hist-kou-zhun, 文) — `hist-kou-zhun.webp`
+- [x] 韓琦 (hist-han-qi, 文) — `hist-han-qi.webp`
+- [x] 司馬光 (hist-sima-guang, 文) — `hist-sima-guang.webp`
+- [x] 王安石 (hist-wang-anshi, 文) — `hist-wang-anshi.webp`
+- [x] 趙普 (hist-zhao-pu, 文) — `hist-zhao-pu.webp`
+- [x] 石守信 (hist-shi-shouxin, 武) — `hist-shi-shouxin.webp`
+- [x] 趙光義 (hist-zhao-guangyi, 文) — `hist-zhao-guangyi.webp`
+- [x] 沈括 (hist-shen-kuo, 文) — `hist-shen-kuo.webp`
+- [x] 穆桂英 (hist-mu-guiying, 武) — `hist-mu-guiying.webp`
+- [x] 梁紅玉 (hist-liang-hongyu, 武) — `hist-liang-hongyu.webp`
+- [x] 佘太君 (hist-she-taijun, 武) — `hist-she-taijun.webp`
+- [x] 蘇軾 (hist-su-shi, 文) — `hist-su-shi.webp`
+- [x] 朱熹 (hist-zhu-xi, 文) — `hist-zhu-xi.webp`
+- [x] 陸游 (hist-lu-you, 文) — `hist-lu-you.webp`
+- [x] 辛棄疾 (hist-xin-qiji, 武) — `hist-xin-qiji.webp`
+- [x] 楊宗保 (hist-yang-zongbao, 武) — `hist-yang-zongbao.webp`
+- [x] 楊文廣 (hist-yang-wenguang, 武) - hist-yang-wenguang.png
+- [x] 文彥博 (hist-wen-yanbo, 文) - hist-wen-yanbo.png
+- [x] 富弼 (hist-fu-bi, 文) - hist-fu-bi.png
+- [x] 歐陽修 (hist-ouyang-xiu, 文) — `hist-ouyang-xiu.webp`
+- [x] 趙佶 (hist-song-huizong, 文) - hist-song-huizong.png
+- [x] 種世衡 (hist-zhong-shiheng, 武) - hist-zhong-shiheng.png
+- [x] 陸秀夫 (hist-lu-xiufu, 文) — `hist-lu-xiufu.webp`
+- [x] 張世傑 (hist-zhang-shijie, 武) — `hist-zhang-shijie.webp`
+- [x] 李綱 (hist-li-gang, 文) - hist-li-gang.png
+- [x] 趙鼎 (hist-zhao-ding, 文) — `hist-zhao-ding.webp`
+- [x] 余玠 (hist-yu-jie, 武) — `hist-yu-jie.webp`
+- [x] 王堅 (hist-wang-jian-song, 武) — `hist-wang-jian-song.webp`
+- [x] 賈似道 (hist-jia-sidao, 文) — `hist-jia-sidao.webp`
+- [x] 米芾 (hist-mi-fu, 文) — `hist-mi-fu.webp`
+- [x] 李清照 (hist-li-qingzhao, 文) — `hist-li-qingzhao.webp`
+- [x] 柳永 (hist-liu-yong-song, 文) — `hist-liu-yong-song.webp`
+- [x] 周敦頤 (hist-zhou-dunyi, 文) - hist-zhou-dunyi.png
+- [x] 程顥 (hist-cheng-hao, 文) - hist-cheng-hao.png
+- [x] 趙構 (hist-zhao-gou, 文) - hist-zhao-gou.png
+- [x] 秦檜 (hist-qin-hui, 文) — `hist-qin-hui.webp`
+- [x] 蔡京 (hist-cai-jing, 文) - hist-cai-jing.png
+- [x] 童貫 (hist-tong-guan, 文) - hist-tong-guan.png
+- [x] 程頤 (hist-cheng-yi, 文) — `hist-cheng-yi.webp`
+- [x] 張載 (hist-zhang-zai, 文) — `hist-zhang-zai.webp`
+- [x] 黃庭堅 (hist-huang-tingjian, 文) - hist-huang-tingjian.png
+- [x] 蘇轍 (hist-su-zhe, 文) - hist-su-zhe.png
+- [x] 王韶 (hist-wang-shao, 武) - hist-wang-shao.png
+- [x] 章惇 (hist-zhang-dun, 文) - hist-zhang-dun.png
+- [x] 蘇洵 (hist-su-xun, 文) - hist-su-xun.png
+- [x] 秦觀 (hist-qin-guan, 文) - hist-qin-guan.png
+- [x] 邵雍 (hist-shao-yong, 文) - hist-shao-yong.png
+- [x] 史彌遠 (hist-shi-miyuan, 文) — `hist-shi-miyuan.webp`
+- [x] 韓侂胄 (hist-han-tuozhou, 文) — `hist-han-tuozhou.webp`
+- [x] 張俊 (hist-zhang-jun, 武) — `hist-zhang-jun.webp`
+- [x] 牛皋 (hist-niu-gao, 武) — `hist-niu-gao.webp`
+- [x] 李元昊 (hist-li-yuanhao, 武) — `hist-li-yuanhao.webp`
+- [x] 李德明 (hist-li-deming, 武) - hist-li-deming.png
+- [x] 沒藏訛龐 (hist-mocang-epang, 武) - hist-mocang-epang.png
+- [x] 完顏阿骨打 (hist-aguda, 武) - hist-aguda.png
+- [x] 完顏宗翰 (hist-zonghan, 武) - hist-zonghan.png
+- [x] 完顏宗弼 (hist-wuzhu, 武) - hist-wuzhu.png
+- [x] 完顏宗望 (hist-zongwang, 武) - hist-zongwang.png
+- [x] 完顏亮 (hist-wanyan-liang, 武) - hist-wanyan-liang.png
+- [x] 楊萬里 (hist-yang-wanli, 文) - hist-yang-wanli.png
+- [x] 范成大 (hist-fan-chengda, 文) - hist-fan-chengda.png
+- [x] 王曾 (hist-wang-zeng, 文) - hist-wang-zeng.png
+- [x] 王旦 (hist-wang-dan, 文) - hist-wang-dan.png
+- [x] 楊政 (hist-yang-zheng, 武) - hist-yang-zheng.png
+- [x] 折德扆 (hist-zhe-deyi, 武) - hist-zhe-deyi.png
+- [x] 楊延平 (hist-yang-yanping, 武) - hist-yang-yanping.png
+- [x] 楊延朗 (hist-yang-yanlang, 武) - hist-yang-yanlang.png
+- [x] 范純仁 (hist-fan-chunren, 文) - hist-fan-chunren.png
+- [x] 張浚 (hist-zhang-jun-song-prime, 文) - hist-zhang-jun-song-prime.png
+- [x] 楊存中 (hist-yang-cunzhong, 武) - hist-yang-cunzhong.png
+- [x] 葉適 (hist-ye-shi, 文) - hist-ye-shi.png
+- [x] 陳亮 (hist-chen-liang, 文) - hist-chen-liang.png
+- [x] 陸九淵 (hist-lu-jiuyuan, 文) - hist-lu-jiuyuan.png
+- [x] 高俅 (hist-gao-qiu, 武) - hist-gao-qiu.png
+- [x] 晏殊 (hist-yan-shu, 文) - hist-yan-shu.png
+- [x] 周邦彥 (hist-zhou-bangyan, 文) - hist-zhou-bangyan.png
+- [x] 任得敬 (hist-ren-dejing, 武) - hist-ren-dejing.png
+- [x] 李仁孝 (hist-xixia-renzong, 文) - hist-xixia-renzong.png
+- [x] 完顏雍 (hist-wanyan-yong, 文) - hist-wanyan-yong.png
+- [x] 完顏婁室 (hist-wanyan-loushi, 武) - hist-wanyan-loushi.png
+- [x] 完顏陳和尚 (hist-chenheshang, 武) - hist-chenheshang.png
+- [x] 蒲鮮萬奴 (hist-puxian-wannu, 武) - hist-puxian-wannu.png
+- [x] 段思平 (hist-duan-siping, 武) - hist-duan-siping.png
+- [x] 楊時 (hist-yang-shi, 文) - hist-yang-shi.png
+- [x] 呂祖謙 (hist-lu-zuqian, 文) - hist-lu-zuqian.png
+- [x] 真德秀 (hist-zhen-dexiu, 文) - hist-zhen-dexiu.png
+- [x] 楊億 (hist-yang-yi, 文) - hist-yang-yi.png
+- [x] 趙抃 (hist-zhao-bian, 文) - hist-zhao-bian.png
+- [x] 蘇舜欽 (hist-su-shunqin, 文) - hist-su-shunqin.png
+- [x] 梅堯臣 (hist-mei-yaochen, 文) - hist-mei-yaochen.png
+- [x] 姜夔 (hist-jiang-kui, 文) - hist-jiang-kui.png
+- [x] 吳文英 (hist-wu-wenying, 文) - hist-wu-wenying.png
+- [x] 史浩 (hist-shi-hao, 文) - hist-shi-hao.png
+- [x] 王禹偁 (hist-wang-yucheng, 文) - hist-wang-yucheng.png
+- [x] 賀鑄 (hist-he-zhu, 文) - hist-he-zhu.png
+- [x] 種放 (hist-zhong-fang, 文) - hist-zhong-fang.png
+- [x] 范純粹 (hist-fan-chuncui, 文) - hist-fan-chuncui.png
+- [x] 李清臣 (hist-li-qingchen, 文) - hist-li-qingchen.png
+- [x] 楊延輝 (hist-yang-yanhui, 武) - hist-yang-yanhui.png
+- [x] 楊延定 (hist-yang-yanding, 武) - hist-yang-yanding.png
+- [x] 楊延嗣 (hist-yang-yansi, 武) - hist-yang-yansi.png
+- [x] 高瓊 (hist-gao-qiong, 武) - hist-gao-qiong.png
+- [x] 韓彥直 (hist-han-yanzhi, 武) - hist-han-yanzhi.png
+- [x] 趙汝愚 (hist-zhao-ruyu, 文) - hist-zhao-ruyu.png
+- [x] 留正 (hist-liu-zheng-song, 文) - hist-liu-zheng-song.png
+- [x] 留夢炎 (hist-liu-mengyan, 文) - hist-liu-mengyan.png
+- [x] 陳康伯 (hist-chen-kangbo, 文) - hist-chen-kangbo.png
+- [x] 吳潛 (hist-wu-qian, 文) - hist-wu-qian.png
+- [x] 龐籍 (hist-pang-ji, 文) - hist-pang-ji.png
+- [x] 田況 (hist-tian-kuang, 武) - hist-tian-kuang.png
+- [x] 陳堯佐 (hist-chen-yaozuo, 文) - hist-chen-yaozuo.png
+- [x] 馬遠 (hist-ma-yuan-song, 文) - hist-ma-yuan-song.png
+- [x] 梁師成 (hist-liang-shicheng, 文) - hist-liang-shicheng.png
+- [x] 呂夷簡 (hist-lu-yijian, 文) - hist-lu-yijian.png
+- [x] 杜衍 (hist-du-yan, 文) - hist-du-yan.png
+- [x] 王曙 (hist-wang-shu, 文) - hist-wang-shu.png
+- [x] 王應麟 (hist-wang-yinglin, 文) - hist-wang-yinglin.png
+- [x] 蘇頌 (hist-su-song, 文) - hist-su-song.png
+- [x] 文同 (hist-wen-tong, 文) - hist-wen-tong.png
+- [x] 葉夢得 (hist-ye-mengde, 文) - hist-ye-mengde.png
+- [x] 江萬里 (hist-jiang-wanli, 文) - hist-jiang-wanli.png
+- [x] 韓忠彥 (hist-han-zhongyan, 文) - hist-han-zhongyan.png
+- [x] 蘇舜元 (hist-su-shunyuan, 文) - hist-su-shunyuan.png
+- [x] 范鎮 (hist-fan-zhen, 文) - hist-fan-zhen.png
+- [x] 米友仁 (hist-mi-youren, 文) - hist-mi-youren.png
+- [x] 趙伯駒 (hist-zhao-boju, 文) - hist-zhao-boju.png
+- [x] 蘇邁 (hist-su-mai, 文) - hist-su-mai.png
 
-### 元 (0/71)
+### 元 (71/71)
 
-- [ ] 木華黎 (hist-muqali, 武)
-- [ ] 速不台 (hist-subutai, 武)
-- [ ] 哲別 (hist-jebe, 武)
-- [ ] 拖雷 (hist-tolui, 武)
-- [ ] 伯顏 (hist-bayan, 武)
-- [ ] 史天澤 (hist-shi-tianze, 武)
-- [ ] 成吉思汗 (hist-genghis, 武)
-- [ ] 忽必烈 (hist-kublai, 武)
-- [ ] 張弘範 (hist-zhang-hongfan, 武)
-- [ ] 阿術 (hist-aju, 武)
-- [ ] 劉整 (hist-liu-zheng, 武)
-- [ ] 窩闊台 (hist-ogedei, 武)
-- [ ] 蒙哥 (hist-mongke, 武)
-- [ ] 朮赤 (hist-jochi, 武)
-- [ ] 察合台 (hist-chagatai, 武)
-- [ ] 耶律楚材 (hist-yelu-chucai, 文)
-- [ ] 賽典赤瞻思丁 (hist-saidianchi, 文)
-- [ ] 王保保 (hist-wang-baobao, 武)
-- [ ] 陳友諒 (hist-chen-youliang, 武)
-- [ ] 張士誠 (hist-zhang-shicheng, 武)
-- [ ] 方國珍 (hist-fang-guozhen, 武)
-- [ ] 劉福通 (hist-liu-futong, 武)
-- [ ] 阿合馬 (hist-ahmad, 文)
-- [ ] 趙孟頫 (hist-zhao-mengfu, 文)
-- [ ] 郭守敬 (hist-guo-shoujing, 文)
-- [ ] 脫脫 (hist-toghto, 武)
-- [ ] 元順帝 (hist-yuan-shundi, 文)
-- [ ] 黃公望 (hist-huang-gongwang, 文)
-- [ ] 關漢卿 (hist-guan-hanqing, 文)
-- [ ] 馬致遠 (hist-ma-zhiyuan, 文)
-- [ ] 王實甫 (hist-wang-shifu, 文)
-- [ ] 倪瓚 (hist-ni-zan, 文)
-- [ ] 吳鎮 (hist-wu-zhen, 文)
-- [ ] 王蒙 (hist-wang-meng-yuan, 文)
-- [ ] 鄭光祖 (hist-zheng-guangzu, 文)
-- [ ] 白樸 (hist-bai-pu, 文)
-- [ ] 八思巴 (hist-phagpa, 文)
-- [ ] 海都 (hist-kaidu, 武)
-- [ ] 旭烈兀 (hist-hulagu, 武)
-- [ ] 拔都 (hist-batu, 武)
-- [ ] 桑哥 (hist-sangha, 文)
-- [ ] 札木合 (hist-jamuqa, 武)
-- [ ] 也速該 (hist-yesugei, 武)
-- [ ] 訶額侖 (hist-hoelun, 文)
-- [ ] 李孟 (hist-li-meng, 文)
-- [ ] 史天倪 (hist-shi-tianni, 武)
-- [ ] 范文虎 (hist-fan-wenhu, 武)
-- [ ] 韓林兒 (hist-han-liner, 文)
-- [ ] 廉希憲 (hist-lian-xixian, 文)
-- [ ] 月赤察兒 (hist-yuechicher, 武)
-- [ ] 答失八都魯 (hist-dashi-badulu, 武)
-- [ ] 商挺 (hist-shang-ting, 文)
-- [ ] 嚴實 (hist-yan-shi, 武)
-- [ ] 張柔 (hist-zhang-rou, 武)
-- [ ] 李壇 (hist-li-tan, 武)
-- [ ] 安童 (hist-antong, 文)
-- [ ] 也先帖木兒 (hist-yexien-temur, 武)
-- [ ] 玉昔帖木兒 (hist-yuxi-temur, 武)
-- [ ] 不忽木 (hist-buhumu, 文)
-- [ ] 鐵失 (hist-tieshi, 武)
-- [ ] 鐵木迭兒 (hist-tiemudieer, 文)
-- [ ] 阿沙不花 (hist-ashabuhua, 武)
-- [ ] 牙忽都 (hist-yahudu, 武)
-- [ ] 帖木兒不花 (hist-temur-buhua, 武)
-- [ ] 真金 (hist-zhen-jin, 文)
-- [ ] 燕鐵木兒 (hist-yan-tiemur, 武)
-- [ ] 史塔黑 (hist-shi-taihei, 武)
-- [ ] 朮赤台 (hist-zhuche-tai, 武)
-- [ ] 朱思本 (hist-zhu-siben, 文)
-- [ ] 阿魯渾薩里 (hist-aluhun-sali, 文)
-- [ ] 也速答兒 (hist-yesudaer, 武)
+- [x] 木華黎 (hist-muqali, 武) - hist-muqali.png
+- [x] 速不台 (hist-subutai, 武) - hist-subutai.png
+- [x] 哲別 (hist-jebe, 武) - hist-jebe.png
+- [x] 拖雷 (hist-tolui, 武) - hist-tolui.png
+- [x] 伯顏 (hist-bayan, 武) - hist-bayan.png
+- [x] 史天澤 (hist-shi-tianze, 武) - hist-shi-tianze.png
+- [x] 成吉思汗 (hist-genghis, 武) - hist-genghis.png
+- [x] 忽必烈 (hist-kublai, 武) - hist-kublai.png
+- [x] 張弘範 (hist-zhang-hongfan, 武) - hist-zhang-hongfan.png
+- [x] 阿術 (hist-aju, 武) - hist-aju.png
+- [x] 劉整 (hist-liu-zheng, 武) - hist-liu-zheng.png
+- [x] 窩闊台 (hist-ogedei, 武) - hist-ogedei.png
+- [x] 蒙哥 (hist-mongke, 武) - hist-mongke.png
+- [x] 朮赤 (hist-jochi, 武) - hist-jochi.png
+- [x] 察合台 (hist-chagatai, 武) - hist-chagatai.png
+- [x] 耶律楚材 (hist-yelu-chucai, 文) - hist-yelu-chucai.png
+- [x] 賽典赤瞻思丁 (hist-saidianchi, 文) - hist-saidianchi.png
+- [x] 王保保 (hist-wang-baobao, 武) - hist-wang-baobao.png
+- [x] 陳友諒 (hist-chen-youliang, 武) - hist-chen-youliang.png
+- [x] 張士誠 (hist-zhang-shicheng, 武) - hist-zhang-shicheng.png
+- [x] 方國珍 (hist-fang-guozhen, 武) - hist-fang-guozhen.png
+- [x] 劉福通 (hist-liu-futong, 武) - hist-liu-futong.png
+- [x] 阿合馬 (hist-ahmad, 文) - hist-ahmad.png
+- [x] 趙孟頫 (hist-zhao-mengfu, 文) - hist-zhao-mengfu.png
+- [x] 郭守敬 (hist-guo-shoujing, 文) - hist-guo-shoujing.png
+- [x] 脫脫 (hist-toghto, 武) - hist-toghto.png
+- [x] 元順帝 (hist-yuan-shundi, 文) - hist-yuan-shundi.png
+- [x] 黃公望 (hist-huang-gongwang, 文) - hist-huang-gongwang.png
+- [x] 關漢卿 (hist-guan-hanqing, 文) - hist-guan-hanqing.png
+- [x] 馬致遠 (hist-ma-zhiyuan, 文) - hist-ma-zhiyuan.png
+- [x] 王實甫 (hist-wang-shifu, 文) - hist-wang-shifu.png
+- [x] 倪瓚 (hist-ni-zan, 文) - hist-ni-zan.png
+- [x] 吳鎮 (hist-wu-zhen, 文) - hist-wu-zhen.png
+- [x] 王蒙 (hist-wang-meng-yuan, 文) - hist-wang-meng-yuan.png
+- [x] 鄭光祖 (hist-zheng-guangzu, 文) - hist-zheng-guangzu.png
+- [x] 白樸 (hist-bai-pu, 文) - hist-bai-pu.png
+- [x] 八思巴 (hist-phagpa, 文) - hist-phagpa.png
+- [x] 海都 (hist-kaidu, 武) - hist-kaidu.png
+- [x] 旭烈兀 (hist-hulagu, 武) - hist-hulagu.png
+- [x] 拔都 (hist-batu, 武) - hist-batu.png
+- [x] 桑哥 (hist-sangha, 文) - hist-sangha.png
+- [x] 札木合 (hist-jamuqa, 武) - hist-jamuqa.png
+- [x] 也速該 (hist-yesugei, 武) - hist-yesugei.png
+- [x] 訶額侖 (hist-hoelun, 文) - hist-hoelun.png
+- [x] 李孟 (hist-li-meng, 文) - hist-li-meng.png
+- [x] 史天倪 (hist-shi-tianni, 武) - hist-shi-tianni.png
+- [x] 范文虎 (hist-fan-wenhu, 武) - hist-fan-wenhu.png
+- [x] 韓林兒 (hist-han-liner, 文) - hist-han-liner.png
+- [x] 廉希憲 (hist-lian-xixian, 文) - hist-lian-xixian.png
+- [x] 月赤察兒 (hist-yuechicher, 武) - hist-yuechicher.png
+- [x] 答失八都魯 (hist-dashi-badulu, 武) - hist-dashi-badulu.png
+- [x] 商挺 (hist-shang-ting, 文) - hist-shang-ting.png
+- [x] 嚴實 (hist-yan-shi, 武) - hist-yan-shi.png
+- [x] 張柔 (hist-zhang-rou, 武) - hist-zhang-rou.png
+- [x] 李壇 (hist-li-tan, 武) - hist-li-tan.png
+- [x] 安童 (hist-antong, 文) - hist-antong.png
+- [x] 也先帖木兒 (hist-yexien-temur, 武) - hist-yexien-temur.png
+- [x] 玉昔帖木兒 (hist-yuxi-temur, 武) - hist-yuxi-temur.png
+- [x] 不忽木 (hist-buhumu, 文) - hist-buhumu.png
+- [x] 鐵失 (hist-tieshi, 武) - hist-tieshi.png
+- [x] 鐵木迭兒 (hist-tiemudieer, 文) - hist-tiemudieer.png
+- [x] 阿沙不花 (hist-ashabuhua, 武) - hist-ashabuhua.png
+- [x] 牙忽都 (hist-yahudu, 武) - hist-yahudu.png
+- [x] 帖木兒不花 (hist-temur-buhua, 武) - hist-temur-buhua.png
+- [x] 真金 (hist-zhen-jin, 文) - hist-zhen-jin.png
+- [x] 燕鐵木兒 (hist-yan-tiemur, 武) - hist-yan-tiemur.png
+- [x] 史塔黑 (hist-shi-taihei, 武) - hist-shi-taihei.png
+- [x] 朮赤台 (hist-zhuche-tai, 武) - hist-zhuche-tai.png
+- [x] 朱思本 (hist-zhu-siben, 文) - hist-zhu-siben.png
+- [x] 阿魯渾薩里 (hist-aluhun-sali, 文) - hist-aluhun-sali.png
+- [x] 也速答兒 (hist-yesudaer, 武) - hist-yesudaer.png
 
-### 明 (0/124)
+### 明 (96/124)
 
-- [ ] 朱元璋 (hist-zhu-yuanzhang, 文)
-- [ ] 徐達 (hist-xu-da, 武)
-- [ ] 常遇春 (hist-chang-yuchun, 武)
-- [ ] 李文忠 (hist-li-wenzhong, 武)
-- [ ] 馮勝 (hist-feng-sheng, 武)
-- [ ] 沐英 (hist-mu-ying, 武)
-- [ ] 戚繼光 (hist-qi-jiguang, 武)
-- [ ] 俞大猷 (hist-yu-dayou, 武)
-- [ ] 李成梁 (hist-li-chengliang, 武)
-- [ ] 袁崇煥 (hist-yuan-chonghuan, 文)
-- [ ] 盧象昇 (hist-lu-xiangsheng, 武)
-- [ ] 鄭成功 (hist-zheng-chenggong, 武)
-- [ ] 王守仁 (hist-wang-shouren, 文)
-- [ ] 于謙 (hist-yu-qian, 文)
-- [ ] 劉伯溫 (hist-liu-bowen, 文)
-- [ ] 張居正 (hist-zhang-juzheng, 文)
-- [ ] 海瑞 (hist-hai-rui, 文)
-- [ ] 孫承宗 (hist-sun-chengzong, 文)
-- [ ] 吳三桂 (hist-wu-sangui, 武)
-- [ ] 洪承疇 (hist-hong-chengchou, 文)
-- [ ] 朱棣 (hist-yongle, 武)
-- [ ] 鄭和 (hist-zheng-he, 文)
-- [ ] 秦良玉 (hist-qin-liangyu, 武)
-- [ ] 藍玉 (hist-lan-yu, 武)
-- [ ] 傅友德 (hist-fu-youde, 武)
-- [ ] 湯和 (hist-tang-he, 武)
-- [ ] 鄧愈 (hist-deng-yu-ming, 武)
-- [ ] 朱權 (hist-zhu-quan, 文)
-- [ ] 楊士奇 (hist-yang-shiqi, 文)
-- [ ] 楊榮 (hist-yang-rong, 文)
-- [ ] 楊溥 (hist-yang-pu, 文)
-- [ ] 解縉 (hist-xie-jin, 文)
-- [ ] 史可法 (hist-shi-kefa, 文)
-- [ ] 李自成 (hist-li-zicheng, 武)
-- [ ] 張獻忠 (hist-zhang-xianzhong, 武)
-- [ ] 馬皇后 (hist-ma-huanghou, 文)
-- [ ] 熊廷弼 (hist-xiong-tingbi, 武)
-- [ ] 朱允炆 (hist-zhu-yunwen, 文)
-- [ ] 姚廣孝 (hist-yao-guangxiao, 文)
-- [ ] 嚴嵩 (hist-yan-song, 文)
-- [ ] 徐階 (hist-xu-jie, 文)
-- [ ] 魏忠賢 (hist-wei-zhongxian, 文)
-- [ ] 李時珍 (hist-li-shizhen, 文)
-- [ ] 徐霞客 (hist-xu-xiake, 文)
-- [ ] 徐光啟 (hist-xu-guangqi, 文)
-- [ ] 宋應星 (hist-song-yingxing, 文)
-- [ ] 鄭芝龍 (hist-zheng-zhilong, 武)
-- [ ] 唐寅 (hist-tang-yin, 文)
-- [ ] 湯顯祖 (hist-tang-xianzu, 文)
-- [ ] 羅貫中 (hist-luo-guanzhong, 文)
-- [ ] 施耐庵 (hist-shi-nai’an, 文)
-- [ ] 吳承恩 (hist-wu-cheng’en, 文)
-- [ ] 馮夢龍 (hist-feng-menglong, 文)
-- [ ] 楊漣 (hist-yang-lian, 文)
-- [ ] 高攀龍 (hist-gao-panlong, 文)
-- [ ] 孫傳庭 (hist-sun-chuanting, 武)
-- [ ] 嚴世蕃 (hist-yan-shifan, 文)
-- [ ] 文徵明 (hist-wen-zhengming, 文)
-- [ ] 顧憲成 (hist-gu-xiancheng, 文)
-- [ ] 左光斗 (hist-zuo-guangdou, 文)
-- [ ] 毛文龍 (hist-mao-wenlong, 武)
-- [ ] 李定國 (hist-li-dingguo, 武)
-- [ ] 茅元儀 (hist-mao-yuanyi, 文)
-- [ ] 朱由崧 (hist-zhu-yousong, 文)
-- [ ] 朱由榔 (hist-zhu-youlang, 文)
-- [ ] 鄭克塽 (hist-zheng-keshuang, 文)
-- [ ] 高拱 (hist-gao-gong, 文)
-- [ ] 申時行 (hist-shen-shixing, 文)
-- [ ] 馮保 (hist-feng-bao, 文)
-- [ ] 鄒元標 (hist-zou-yuanbiao, 文)
-- [ ] 趙南星 (hist-zhao-nanxing, 文)
-- [ ] 朱聿鍵 (hist-zhu-yujian, 文)
-- [ ] 孫可望 (hist-sun-kewang, 武)
-- [ ] 黃道周 (hist-huang-daozhou, 文)
-- [ ] 楊嗣昌 (hist-yang-sichang, 文)
-- [ ] 鐵鉉 (hist-tie-xuan, 文)
-- [ ] 方孝孺 (hist-fang-xiaoru, 文)
-- [ ] 黃子澄 (hist-huang-zicheng, 文)
-- [ ] 齊泰 (hist-qi-tai, 文)
-- [ ] 楊一清 (hist-yang-yiqing, 文)
-- [ ] 王世貞 (hist-wang-shizhen, 文)
-- [ ] 楊慎 (hist-yang-shen, 文)
-- [ ] 仇英 (hist-qiu-ying, 文)
-- [ ] 祝枝山 (hist-zhu-zhishan, 文)
-- [ ] 朱常洵 (hist-zhu-changxun, 文)
-- [ ] 何騰蛟 (hist-he-tengjiao, 文)
-- [ ] 瞿式耜 (hist-qu-shisi, 文)
-- [ ] 蹇義 (hist-jian-yi, 文)
-- [ ] 夏元吉 (hist-xia-yuanji, 文)
-- [ ] 王驥 (hist-wang-ji-ming, 武)
-- [ ] 商輅 (hist-shang-lu, 文)
-- [ ] 李夢陽 (hist-li-mengyang, 文)
-- [ ] 嘉靖帝 (hist-jiajing, 文)
-- [ ] 萬曆帝 (hist-wanli, 文)
-- [ ] 崇禎帝 (hist-chongzhen, 文)
-- [ ] 朱常洛 (hist-zhu-changluo, 文)
+- [x] 朱元璋 (hist-zhu-yuanzhang, 文) - hist-zhu-yuanzhang.png
+- [x] 徐達 (hist-xu-da, 武) - hist-xu-da.png
+- [x] 常遇春 (hist-chang-yuchun, 武) - hist-chang-yuchun.png
+- [x] 李文忠 (hist-li-wenzhong, 武) - hist-li-wenzhong.png
+- [x] 馮勝 (hist-feng-sheng, 武) - hist-feng-sheng.png
+- [x] 沐英 (hist-mu-ying, 武) - hist-mu-ying.png
+- [x] 戚繼光 (hist-qi-jiguang, 武) - hist-qi-jiguang.png
+- [x] 俞大猷 (hist-yu-dayou, 武) - hist-yu-dayou.png
+- [x] 李成梁 (hist-li-chengliang, 武) - hist-li-chengliang.png
+- [x] 袁崇煥 (hist-yuan-chonghuan, 文) - hist-yuan-chonghuan.png
+- [x] 盧象昇 (hist-lu-xiangsheng, 武) - hist-lu-xiangsheng.png
+- [x] 鄭成功 (hist-zheng-chenggong, 武) - hist-zheng-chenggong.png
+- [x] 王守仁 (hist-wang-shouren, 文) - hist-wang-shouren.png
+- [x] 于謙 (hist-yu-qian, 文) - hist-yu-qian.png
+- [x] 劉伯溫 (hist-liu-bowen, 文) - hist-liu-bowen.png
+- [x] 張居正 (hist-zhang-juzheng, 文) - hist-zhang-juzheng.png
+- [x] 海瑞 (hist-hai-rui, 文) - hist-hai-rui.png
+- [x] 孫承宗 (hist-sun-chengzong, 文) - hist-sun-chengzong.png
+- [x] 吳三桂 (hist-wu-sangui, 武) - hist-wu-sangui.png
+- [x] 洪承疇 (hist-hong-chengchou, 文) - hist-hong-chengchou.png
+- [x] 朱棣 (hist-yongle, 武) - hist-yongle.png
+- [x] 鄭和 (hist-zheng-he, 文) - hist-zheng-he.png
+- [x] 秦良玉 (hist-qin-liangyu, 武) - hist-qin-liangyu.png
+- [x] 藍玉 (hist-lan-yu, 武) - hist-lan-yu.png
+- [x] 傅友德 (hist-fu-youde, 武) - hist-fu-youde.png
+- [x] 湯和 (hist-tang-he, 武) - hist-tang-he.png
+- [x] 鄧愈 (hist-deng-yu-ming, 武) - hist-deng-yu-ming.png
+- [x] 朱權 (hist-zhu-quan, 文) - hist-zhu-quan.png
+- [x] 楊士奇 (hist-yang-shiqi, 文) - hist-yang-shiqi.png
+- [x] 楊榮 (hist-yang-rong, 文) - hist-yang-rong.png
+- [x] 楊溥 (hist-yang-pu, 文) - hist-yang-pu.png
+- [x] 解縉 (hist-xie-jin, 文) - hist-xie-jin.png
+- [x] 史可法 (hist-shi-kefa, 文) - hist-shi-kefa.png
+- [x] 李自成 (hist-li-zicheng, 武) - hist-li-zicheng.png
+- [x] 張獻忠 (hist-zhang-xianzhong, 武) - hist-zhang-xianzhong.png
+- [x] 馬皇后 (hist-ma-huanghou, 文) - hist-ma-huanghou.png
+- [x] 熊廷弼 (hist-xiong-tingbi, 武) - hist-xiong-tingbi.png
+- [x] 朱允炆 (hist-zhu-yunwen, 文) - hist-zhu-yunwen.png
+- [x] 姚廣孝 (hist-yao-guangxiao, 文) - hist-yao-guangxiao.png
+- [x] 嚴嵩 (hist-yan-song, 文) - hist-yan-song.png
+- [x] 徐階 (hist-xu-jie, 文) - hist-xu-jie.png
+- [x] 魏忠賢 (hist-wei-zhongxian, 文) - hist-wei-zhongxian.png
+- [x] 李時珍 (hist-li-shizhen, 文) - hist-li-shizhen.png
+- [x] 徐霞客 (hist-xu-xiake, 文) - hist-xu-xiake.png
+- [x] 徐光啟 (hist-xu-guangqi, 文) - hist-xu-guangqi.png
+- [x] 宋應星 (hist-song-yingxing, 文) - hist-song-yingxing.png
+- [x] 鄭芝龍 (hist-zheng-zhilong, 武) - hist-zheng-zhilong.png
+- [x] 唐寅 (hist-tang-yin, 文) - hist-tang-yin.png
+- [x] 湯顯祖 (hist-tang-xianzu, 文) - hist-tang-xianzu.png
+- [x] 羅貫中 (hist-luo-guanzhong, 文) - hist-luo-guanzhong.png
+- [x] 施耐庵 (hist-shi-nai’an, 文) - hist-shi-nai’an.png
+- [x] 吳承恩 (hist-wu-cheng’en, 文) - hist-wu-cheng’en.png
+- [x] 馮夢龍 (hist-feng-menglong, 文) - hist-feng-menglong.png
+- [x] 楊漣 (hist-yang-lian, 文) - hist-yang-lian.png
+- [x] 高攀龍 (hist-gao-panlong, 文) - hist-gao-panlong.png
+- [x] 孫傳庭 (hist-sun-chuanting, 武) - hist-sun-chuanting.png
+- [x] 嚴世蕃 (hist-yan-shifan, 文) - hist-yan-shifan.png
+- [x] 文徵明 (hist-wen-zhengming, 文) - hist-wen-zhengming.png
+- [x] 顧憲成 (hist-gu-xiancheng, 文) - hist-gu-xiancheng.png
+- [x] 左光斗 (hist-zuo-guangdou, 文) - hist-zuo-guangdou.png
+- [x] 毛文龍 (hist-mao-wenlong, 武) - hist-mao-wenlong.png
+- [x] 李定國 (hist-li-dingguo, 武) - hist-li-dingguo.png
+- [x] 茅元儀 (hist-mao-yuanyi, 文) - hist-mao-yuanyi.png
+- [x] 朱由崧 (hist-zhu-yousong, 文) - hist-zhu-yousong.png
+- [x] 朱由榔 (hist-zhu-youlang, 文) - hist-zhu-youlang.png
+- [x] 鄭克塽 (hist-zheng-keshuang, 文) - hist-zheng-keshuang.png
+- [x] 高拱 (hist-gao-gong, 文) - hist-gao-gong.png
+- [x] 申時行 (hist-shen-shixing, 文) - hist-shen-shixing.png
+- [x] 馮保 (hist-feng-bao, 文) - hist-feng-bao.png
+- [x] 鄒元標 (hist-zou-yuanbiao, 文) - hist-zou-yuanbiao.png
+- [x] 趙南星 (hist-zhao-nanxing, 文) - hist-zhao-nanxing.png
+- [x] 朱聿鍵 (hist-zhu-yujian, 文) - hist-zhu-yujian.png
+- [x] 孫可望 (hist-sun-kewang, 武) - hist-sun-kewang.png
+- [x] 黃道周 (hist-huang-daozhou, 文) - hist-huang-daozhou.png
+- [x] 楊嗣昌 (hist-yang-sichang, 文) - hist-yang-sichang.png
+- [x] 鐵鉉 (hist-tie-xuan, 文) - hist-tie-xuan.png
+- [x] 方孝孺 (hist-fang-xiaoru, 文) - hist-fang-xiaoru.png
+- [x] 黃子澄 (hist-huang-zicheng, 文) - hist-huang-zicheng.png
+- [x] 齊泰 (hist-qi-tai, 文) - hist-qi-tai.png
+- [x] 楊一清 (hist-yang-yiqing, 文) - hist-yang-yiqing.png
+- [x] 王世貞 (hist-wang-shizhen, 文) - hist-wang-shizhen.png
+- [x] 楊慎 (hist-yang-shen, 文) - hist-yang-shen.png
+- [x] 仇英 (hist-qiu-ying, 文) - hist-qiu-ying.png
+- [x] 祝枝山 (hist-zhu-zhishan, 文) - hist-zhu-zhishan.png
+- [x] 朱常洵 (hist-zhu-changxun, 文) - hist-zhu-changxun.png
+- [x] 何騰蛟 (hist-he-tengjiao, 文) - hist-he-tengjiao.png
+- [x] 瞿式耜 (hist-qu-shisi, 文) - hist-qu-shisi.png
+- [x] 蹇義 (hist-jian-yi, 文) - hist-jian-yi.png
+- [x] 夏元吉 (hist-xia-yuanji, 文) - hist-xia-yuanji.png
+- [x] 王驥 (hist-wang-ji-ming, 武) - hist-wang-ji-ming.png
+- [x] 商輅 (hist-shang-lu, 文) - hist-shang-lu.png
+- [x] 李夢陽 (hist-li-mengyang, 文) - hist-li-mengyang.png
+- [x] 嘉靖帝 (hist-jiajing, 文) - hist-jiajing.png
+- [x] 萬曆帝 (hist-wanli, 文) - hist-wanli.png
+- [x] 崇禎帝 (hist-chongzhen, 文) - hist-chongzhen.png
+- [x] 朱常洛 (hist-zhu-changluo, 文) - hist-zhu-changluo.png
 - [ ] 朱由校 (hist-zhu-youxiao, 文)
 - [ ] 李攀龍 (hist-li-panlong, 文)
 - [ ] 何景明 (hist-he-jingming, 文)
