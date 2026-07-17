@@ -36,6 +36,13 @@ export interface City {
   /** Razed to ruins (焦土) — population/production gutted until 重建. A ruined
    *  city flies no banner, builds nothing, and yields almost no income. */
   ruined?: boolean;
+  /**
+   * 京師 — the Han emperor resides here (天子駐蹕). The city counts as top tier
+   * 都 regardless of population (許都 was a capital by virtue of the court, not
+   * its census). Maintained by loadScenario and the 奉迎天子 flow — it follows
+   * the emperor when he moves. Default/omitted = false.
+   */
+  imperialSeat?: boolean;
   /** 治水之功 — flood works raised by the 治水 command (officer labour, as
    *  opposed to the gold-built 堤防 levee). Stacks with the levee building level
    *  toward the flood-immunity cap (3) in events.ts. Default/omitted = 0. */

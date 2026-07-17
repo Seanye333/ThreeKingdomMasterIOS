@@ -286,6 +286,41 @@
   font-style: italic;
 }
 
+/* ─── 手機橫屏(矮屏)— 320px 側欄在 ~870pt 寬裡占 37%,收窄到 ~28% 並縮字,
+   讓 3D 地圖成為主角。斷點與 MapScreen 的手機橫屏緊湊化一致。 ─── */
+@media (max-height: 480px) {
+  .root {
+    width: 244px;
+    min-width: 244px;
+    font-size: 0.82rem;
+    /* 城格徽章(鎮/城/都)的 inline 字號經此變量縮放 */
+    --tkm-size-badge-fs: 1.1rem;
+  }
+  .panelTop {
+    padding: 0.55rem 0.7rem 0;
+  }
+  .header {
+    padding-bottom: 0.4rem;
+    margin-bottom: 0.55rem;
+  }
+  .nameZh {
+    font-size: 1.3rem;
+  }
+  .nameEn {
+    margin-bottom: 0.25rem;
+  }
+  .tab {
+    padding: 0.32rem 0.1rem;
+    letter-spacing: 0.06rem;
+  }
+  .section {
+    margin-bottom: 0.8rem;
+  }
+  .tabBody {
+    padding: 0.7rem 0.7rem;
+  }
+}
+
 /* ─── Mobile (≤640px) ─── */
 @media (max-width: 640px) {
   .root {

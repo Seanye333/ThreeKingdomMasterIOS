@@ -243,6 +243,37 @@
   }
 }
 
+/* 手機橫屏緊湊化 — 402pt 高的屏裡,桌面尺寸的頂欄+邊距+320px 側欄太霸道:
+   頂欄收薄、地圖區邊距減半、按鈕/字號微縮。側欄寬度在 CityPanel.module.css
+   同一斷點收窄。僅命中矮屏(手機橫屏);iPad/桌面不受影響。 */
+@media (max-height: 480px) {
+  .topBar {
+    padding: 0.28rem 0.7rem;
+    gap: 0.4rem;
+  }
+  .backButton,
+  .advanceButton {
+    padding: 0.26rem 0.6rem;
+    font-size: 0.78rem;
+  }
+  .forcesButton {
+    padding: 0.24rem 0.55rem;
+  }
+  .playerName {
+    font-size: 0.92rem;
+  }
+  .playerBlock {
+    padding: 0.1rem 0.45rem;
+  }
+  .main {
+    gap: 0.45rem;
+    padding: 0.45rem;
+  }
+  .mapWrap {
+    padding: 0;
+  }
+}
+
 /* ══ 沉浸模式 ═══════════════════════════════════════════════════════════════
    橫屏可獨立收起頂欄(hideNav)與側欄(hidePanel),只留全屏 3D 地圖。
    收合走「容器塌陷」而非卸載組件:CityPanel/頂欄留在原地,外層槽把尺寸

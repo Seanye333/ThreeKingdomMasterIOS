@@ -1003,6 +1003,23 @@ export interface CustomOfficerInit {
   affiliationForceId: EntityId | null;
 }
 
+/**
+ * 天子所在 — where the Han emperor sits when the scenario opens. Follows the
+ * historical court: 洛陽 until 董卓's abduction, 長安 under 李傕/郭汜 (192–195),
+ * 許都 after 曹操 received the emperor (196–219). Non-Han boards (戰國/楚漢/隋唐)
+ * have no Han emperor at all. A scenario may override via `emperorCityId`.
+ * Post-220 boards keep the legacy 洛陽 seat (the 禪讓 line handles the rest).
+ */
+function scenarioEmperorCity(scenario: Scenario): EntityId | null {
+  if (scenario.emperorCityId !== undefined) return scenario.emperorCityId;
+  if (/^scn-(ws|ch|st)-/.test(scenario.id)) return null; // 非漢世界
+  const y = scenario.startDate.year;
+  if (y >= 220) return 'luoyang';
+  if (y >= 196) return 'xuchang';
+  if (y >= 192) return 'changan';
+  return 'luoyang';
+}
+
 export function loadScenario(
   state: GameState,
   scenario: Scenario,
@@ -1162,6 +1179,13 @@ export function loadScenario(
         if (Math.random() < 0.4) rel(aiIds[i], aiIds[j], 65, 'non-aggression');
   }
 
+  // 京師 — mark the emperor's city so it ranks as 都 (see citySize) and the
+  // 挾天子 systems know where the court sits from turn one.
+  const emperorCityId = scenarioEmperorCity(scenario);
+  const seatedCities = emperorCityId
+    ? scaledCities.map((c) => (c.id === emperorCityId ? { ...c, imperialSeat: true } : c))
+    : scaledCities;
+
   return {
     ...state,
     date: {
@@ -1175,7 +1199,8 @@ export function loadScenario(
     selectedCityId: playerCapitalId,
     capitalMoveUsed: false, // 首次遷都免費 — fresh game grants one free 遷都
     refugees: 0, // 流民 — fresh game starts with no displaced pool
-    cities: indexById(scaledCities),
+    emperorCityId,
+    cities: indexById(seatedCities),
     forces: indexById(
       distinctForceColors(
         scenario.forces.map((f) => ({
@@ -1246,7 +1271,7 @@ export function loadScenario(
     governorEvalStreaks: {},
     governorReviewLast: {},
     legions: [],
-    emperorCityId: 'luoyang',
+    // emperorCityId set above from scenarioEmperorCity() — 洛陽/長安/許都 by era.
     dailyChallengeDate: null,
     powerHistory: [],
     recruitState: {},

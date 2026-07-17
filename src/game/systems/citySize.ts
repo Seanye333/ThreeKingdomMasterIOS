@@ -91,8 +91,13 @@ export const CAPITAL_LOYALTY_BONUS = 3;
  *  (治所) is taken and the court must relocate. */
 export const LOST_CAPITAL_LOYALTY_PENALTY = 8;
 
-/** Returns the city's current size tier (auto-derived from population). */
+/** Returns the city's current size tier (auto-derived from population).
+ *  京師特例 — the city hosting the Han emperor (`imperialSeat`) is always 都:
+ *  許都 outranked its census because the court sat there. The rank travels
+ *  with the emperor (奉迎天子), so losing him drops the city back to its
+ *  population tier. */
 export function citySize(city: City): CitySizeDef {
+  if (city.imperialSeat) return CITY_SIZES[CITY_SIZES.length - 1];
   let best = CITY_SIZES[0];
   for (const s of CITY_SIZES) {
     if (city.population >= s.popMin) best = s;

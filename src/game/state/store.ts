@@ -2949,7 +2949,15 @@ export const useGameStore = create<GameStore>()(
         if (!force || !state.playerForceId) return { ok: false, reason: 'no force' };
         if (!canWelcomeEmperor(state.cities, state.emperorCityId ?? EMPEROR_HOME, state.playerForceId, force.capitalCityId))
           return { ok: false, reason: 'not the custodian (or already at your capital)' };
+        // 京師隨駕 — the 都 rank travels with the emperor: strip the old seat,
+        // crown the new one (see citySize's imperialSeat override).
+        const seatedCities = { ...state.cities };
+        const oldSeat = state.emperorCityId ? seatedCities[state.emperorCityId] : null;
+        if (oldSeat?.imperialSeat) seatedCities[oldSeat.id] = { ...oldSeat, imperialSeat: false };
+        const newSeat = seatedCities[force.capitalCityId];
+        if (newSeat) seatedCities[newSeat.id] = { ...newSeat, imperialSeat: true };
         set({
+          cities: seatedCities,
           emperorCityId: force.capitalCityId,
           mandate: {
             ...state.mandate,
@@ -17294,6 +17302,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (!state.itemLore) state.itemLore = {}; // 名器威名 — pre-feature saves start unblooded
         if (!state.itemAwakenings) state.itemAwakenings = {}; // 兵器覺醒 — pre-feature saves
         if (!state.destroyedItems) state.destroyedItems = []; // 回爐 — pre-feature saves
+        // 京師 — pre-feature saves have emperorCityId but no imperialSeat flag on
+        // the city itself; stamp it so the 天子駐蹕 city ranks as 都 (citySize).
+        if (state.emperorCityId && state.cities?.[state.emperorCityId]
+            && !state.cities[state.emperorCityId].imperialSeat) {
+          state.cities[state.emperorCityId] = { ...state.cities[state.emperorCityId], imperialSeat: true };
+        }
         setRefineRegistry(state.itemRefinements);
         setBreakthroughRegistry(state.itemBreakthroughs);
         setGemRegistry(state.itemGems);

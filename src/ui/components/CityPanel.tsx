@@ -999,7 +999,8 @@ function CitySizeBadge({ city }: { city: import('../../game/types').City }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <span style={{
           fontFamily: 'var(--tkm-font-zh)',
-          fontSize: '1.4rem',
+          // 矮屏(手機橫屏)經 .root 上的 --tkm-size-badge-fs 縮小徽章
+          fontSize: 'var(--tkm-size-badge-fs, 1.4rem)',
           color: size.color,
           letterSpacing: '0.08rem',
           padding: '0.15rem 0.55rem',

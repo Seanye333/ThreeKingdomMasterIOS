@@ -2996,7 +2996,7 @@
 - [x] 阿魯渾薩里 (hist-aluhun-sali, 文) - hist-aluhun-sali.png
 - [x] 也速答兒 (hist-yesudaer, 武) - hist-yesudaer.png
 
-### 明 (96/124)
+### 明 (120/124)
 
 - [x] 朱元璋 (hist-zhu-yuanzhang, 文) - hist-zhu-yuanzhang.png
 - [x] 徐達 (hist-xu-da, 武) - hist-xu-da.png
@@ -3094,30 +3094,54 @@
 - [x] 萬曆帝 (hist-wanli, 文) - hist-wanli.png
 - [x] 崇禎帝 (hist-chongzhen, 文) - hist-chongzhen.png
 - [x] 朱常洛 (hist-zhu-changluo, 文) - hist-zhu-changluo.png
-- [ ] 朱由校 (hist-zhu-youxiao, 文)
-- [ ] 李攀龍 (hist-li-panlong, 文)
-- [ ] 何景明 (hist-he-jingming, 文)
-- [ ] 楊廷和 (hist-yang-tinghe, 文)
-- [ ] 仇鸞 (hist-qiu-luan, 武)
-- [ ] 翟鑾 (hist-zhai-luan, 文)
-- [ ] 邢侗 (hist-xing-tong, 文)
-- [ ] 李廷機 (hist-li-tingji, 文)
-- [ ] 王越 (hist-wang-yue, 武)
-- [ ] 韓雍 (hist-han-yong, 文)
-- [ ] 陳獻章 (hist-chen-xianzhang, 文)
-- [ ] 仇諤 (hist-qiu-e, 文)
-- [ ] 文嘉 (hist-wen-jia, 文)
-- [ ] 沈周 (hist-shen-zhou, 文)
-- [ ] 邊貢 (hist-bian-gong, 文)
-- [ ] 徐禎卿 (hist-xu-zhenqing, 文)
-- [ ] 康海 (hist-kang-hai, 文)
-- [ ] 王廷相 (hist-wang-tingxiang, 文)
-- [ ] 唐順之 (hist-tang-shunzhi, 文)
-- [ ] 茅坤 (hist-mao-kun, 文)
-- [ ] 歸有光 (hist-gui-youguang, 文)
-- [ ] 余子俊 (hist-yu-zijun, 武)
-- [ ] 王崇古 (hist-wang-chonggu, 文)
-- [ ] 譚綸 (hist-tan-lun, 武)
+- [x] 朱由校 (hist-zhu-youxiao, 文)
+  - hist-zhu-youxiao.png
+- [x] 李攀龍 (hist-li-panlong, 文)
+  - hist-li-panlong.png
+- [x] 何景明 (hist-he-jingming, 文)
+  - hist-he-jingming.png
+- [x] 楊廷和 (hist-yang-tinghe, 文)
+  - hist-yang-tinghe.png
+- [x] 仇鸞 (hist-qiu-luan, 武)
+  - hist-qiu-luan.png
+- [x] 翟鑾 (hist-zhai-luan, 文)
+  - hist-zhai-luan.png
+- [x] 邢侗 (hist-xing-tong, 文)
+  - hist-xing-tong.png
+- [x] 李廷機 (hist-li-tingji, 文)
+  - hist-li-tingji.png
+- [x] 王越 (hist-wang-yue, 武)
+  - hist-wang-yue.png
+- [x] 韓雍 (hist-han-yong, 文)
+  - hist-han-yong.png
+- [x] 陳獻章 (hist-chen-xianzhang, 文)
+  - hist-chen-xianzhang.png
+- [x] 仇諤 (hist-qiu-e, 文)
+  - hist-qiu-e.png
+- [x] 文嘉 (hist-wen-jia, 文)
+  - hist-wen-jia.png
+- [x] 沈周 (hist-shen-zhou, 文)
+  - hist-shen-zhou.png
+- [x] 邊貢 (hist-bian-gong, 文)
+  - hist-bian-gong.png
+- [x] 徐禎卿 (hist-xu-zhenqing, 文)
+  - hist-xu-zhenqing.png
+- [x] 康海 (hist-kang-hai, 文)
+  - hist-kang-hai.png
+- [x] 王廷相 (hist-wang-tingxiang, 文)
+  - hist-wang-tingxiang.png
+- [x] 唐順之 (hist-tang-shunzhi, 文)
+  - hist-tang-shunzhi.png
+- [x] 茅坤 (hist-mao-kun, 文)
+  - hist-mao-kun.png
+- [x] 歸有光 (hist-gui-youguang, 文)
+  - hist-gui-youguang.png
+- [x] 余子俊 (hist-yu-zijun, 武)
+  - hist-yu-zijun.png
+- [x] 王崇古 (hist-wang-chonggu, 文)
+  - hist-wang-chonggu.png
+- [x] 譚綸 (hist-tan-lun, 武)
+  - hist-tan-lun.png
 - [ ] 王世懋 (hist-wang-shimao, 文)
 - [ ] 顧鼎臣 (hist-gu-dingchen, 文)
 - [ ] 葉向高 (hist-ye-xianggao, 文)

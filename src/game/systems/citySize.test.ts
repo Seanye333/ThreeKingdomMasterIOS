@@ -54,6 +54,16 @@ describe('citySize tiers', () => {
     expect(cityMeetsSize(c, 'large')).toBe(true);
     expect(cityMeetsSize(c, 'capital')).toBe(false);
   });
+
+  it('京師 — the emperor\'s seat is 都 regardless of population (許都)', () => {
+    const xudu = mkCity({ population: 200000, imperialSeat: true }); // large by census
+    expect(citySize(xudu).id).toBe('capital');
+    expect(cityMeetsSize(xudu, 'capital')).toBe(true);
+    // The rank leaves with the emperor.
+    expect(citySize({ ...xudu, imperialSeat: false }).id).toBe('large');
+    // Even a hamlet hosting the court counts as 都 (the rank is the court's).
+    expect(citySize(mkCity({ population: 10000, imperialSeat: true })).id).toBe('capital');
+  });
 });
 
 describe('carrying capacity', () => {
