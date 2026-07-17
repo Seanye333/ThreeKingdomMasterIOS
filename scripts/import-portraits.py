@@ -97,40 +97,51 @@ def resolve(stem, index):
 
 
 def _detect_face(im):
-    """Largest face in the upper ~65% of the image, or None."""
+    """Largest face in the upper ~65% of the image, or None. Aggressive: small
+    minSize (catches the small head in a full-body 立繪) and a horizontally-flipped
+    pass so the profile cascade catches faces turned either way."""
     if cv2 is None:
         return None
     gray = cv2.equalizeHist(cv2.cvtColor(np.array(im), cv2.COLOR_RGB2GRAY))
     H, W = gray.shape
+    mins = int(W * 0.035)
     dets = []
     for cc in _CASC:
-        for d in cc.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5,
-                                     minSize=(int(W * 0.06), int(W * 0.06))):
+        for d in cc.detectMultiScale(gray, scaleFactor=1.08, minNeighbors=4,
+                                     minSize=(mins, mins)):
             dets.append(tuple(int(v) for v in d))
+    # profile cascade only fires for faces looking one way — flip to catch the other
+    for d in _CASC[-1].detectMultiScale(cv2.flip(gray, 1), scaleFactor=1.08,
+                                        minNeighbors=4, minSize=(mins, mins)):
+        x, y, fw, fh = (int(v) for v in d)
+        dets.append((W - x - fw, y, fw, fh))
     if not dets:
         return None
     up = [d for d in dets if (d[1] + d[3] / 2) < H * 0.65]
-    return max(up or dets, key=lambda d: d[2] * d[3])
+    # bigger is better, higher (smaller y) is better — keeps us off a torso/banner
+    return max(up or dets, key=lambda d: d[2] * d[3] - d[1] * W * 0.02)
 
 
 def square_crop(im):
     """A 512×512 square avatar. With OpenCV, centred on the detected face with
-    headroom (so full-body 立繪 still give a head-and-shoulders crop); otherwise
-    anchored near the top, where the head sits in these portraits."""
+    generous headroom (so the top of the head is always in frame — a full-body 立繪
+    still yields a head-and-shoulders crop, not a torso with the head sliced off);
+    otherwise anchored near the top, where the head sits in these portraits."""
     w, h = im.size
     f = _detect_face(im)
     if f is not None:
         fx, fy, fw, fh = f
         cx = fx + fw / 2
-        side = min(int(fh * 2.5), w, h)          # face ≈ 40% of the square height
-        top = int(fy - 0.55 * fh)                # headroom above the face
+        side = min(int(fh * 3.25), w, h)         # face ≈ 31% of the square height
+        top = int(fy - 1.15 * fh)                # headroom for a tall cap/helmet/冠
         left = max(0, min(int(cx - side / 2), w - side))
         top = max(0, min(top, h - side))
         box = (left, top, left + side, top + side)
-    elif h >= w:                                 # portrait → anchor at the top
-        side = w
-        top = min(int(h * 0.03), h - side)
-        box = (0, top, side, top + side)
+    elif h >= w:                                 # portrait → tight top-centre crop so
+        side = int(min(w, h * 0.66))             # the head fills more than a full-width
+        left = max(0, (w - side) // 2)           # square would (head sits top-centre)
+        top = min(int(h * 0.02), h - side)
+        box = (left, top, left + side, top + side)
     else:                                        # landscape → centre horizontally
         side = h
         left = (w - side) // 2
