@@ -166,12 +166,12 @@ A military strategist presenting a bold plan in a Han-dynasty war tent at night,
 A mounted Han-dynasty tiger-general cleaving down an enemy champion in single combat, the foe toppling from his horse, the victor reining in with bloodied blade held level, blood-red setting sun, swirling battlefield dust, the two armies frozen watching, somber and awe-striking triumph.
 ```
 
-### `duel-rival-callout` ⏳
+### `duel-rival-callout` ✅
 ```
 Between two facing armies, a lone champion rides out before the ranks and points his weapon to name his sworn rival on the opposing line, the two old adversaries locking eyes across the gap, banners snapping, killing intent and old grudge, tense standoff at dusk.
 ```
 
-### `duel-hall-legend` ⏳
+### `duel-hall-legend` ✅
 ```
 The candle-lit gallery of a Hall of Famous Bouts, scroll paintings freezing the finest single-combat duels in heroic poses, later visitors pausing in awe beneath them, elegant golden lamplight, dark lacquered beams, the enshrining of a timeless legendary bout.
 ```
@@ -225,7 +225,36 @@ An embassy caravan crossing the Silk Road toward a distant foreign realm: a came
 A righteous war proclaimed: a general raising a great banner of just cause atop an oath-swearing platform, reading a denunciation to massed troops below, white yak-tail standard and golden axe of command, indignant soldiers, dust and dawn light, a war of righteous rebuke, martial solemnity.
 ```
 
-### `espionage-success` ⏳
+### `espionage-success` ✅
 ```
 A covert operation succeeding under cover of night: a shadowy agent slipping through the dark to set a fire at an enemy camp, or in a lamplit chamber passing a forged discord-letter, glinting dagger in shadow, tense and clandestine, deep chiaroscuro, the intrigue of spies.
+```
+
+---
+
+## 第八章 · 事件/天命/異族/宗教
+
+### `tribe-submits` ✅
+```
+A frontier submission ceremony: a nomad tribal chieftain and his warriors kneeling to offer fealty — presenting horses, cattle and furs — before a Han general who receives their surrender, steppe banners lowered beside Han standards, a windswept border under golden light, the frontier pacified.
+```
+
+### `tribe-raid` ✅
+```
+Barbarian horse-archers sweeping in a dust-storm charge across a frontier, raiding a Han border town, beacon-fires blazing warning on the walls as garrison soldiers scramble to the battlements, cold steppe wind, banners snapping, fierce and menacing.
+```
+
+### `pacify-rebels` ✅
+```
+Yellow Turban peasant rebels laying down their arms and kneeling to accept amnesty, an imperial envoy holding a decree of pardon and reassurance, the Way-of-Great-Peace yellow banners furled, a vast crowd of ragged commoners under a somber dusk sky, a war-torn land finding peace.
+```
+
+### `heaven-omen` ⏳
+```
+An auspicious celestial omen over an imperial palace at night — a golden dragon (or a qilin, or five planets in alignment) manifesting in the starry sky above the sweeping rooftops, court officials gazing up in awe, radiant supernatural light and cosmic wonder, Heaven answering the realm.
+```
+
+### `religious-revolt` ⏳
+```
+A Yellow Turban uprising erupting: masses of peasants in yellow headscarves rising up with makeshift weapons and raised banners reading "蒼天已死", talisman-water and incense smoke, a Taoist cult leader exhorting the surging crowd, apocalyptic end-of-an-age fervor, dusty crimson light.
 ```

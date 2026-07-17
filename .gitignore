@@ -32,6 +32,7 @@ npm-debug.log*
 public/popups/_src/
 public/duel-campaigns/_src/
 public/scenarios/_src/
+public/endings/_src/
 
 # Editor / OS
 .DS_Store
