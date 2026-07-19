@@ -45,7 +45,7 @@ const MOVES: Array<{ id: DebateMove; zh: string; en: string; cost?: number; hint
 ];
 
 export function DebateGameModal({
-  me, foe, onComplete, staged = false, onRound, difficulty = 'veteran', topic,
+  me, foe, onComplete, staged = false, onRound, difficulty = 'veteran', topic, hotSeat = false,
 }: {
   me: Officer;
   foe: Officer;
@@ -59,6 +59,8 @@ export function DebateGameModal({
   /** 論題 — what the debate is about; apt arguments bite harder. Defaults from
    *  the matchup when unset. */
   topic?: DebateTopic;
+  /** 雙人同屏 — two players commit in turn (P1 the challenger, then P2). */
+  hotSeat?: boolean;
 }) {
   const t = useT();
   const lang = useLanguage();
@@ -88,11 +90,34 @@ export function DebateGameModal({
   // 流派 — the player only sees their own school's signature among the loaded args.
   const mySchool = schoolMoveFor(me);
   const myMoves = MOVES.filter((m) => !SCHOOL_MOVES.includes(m.id) || m.id === mySchool);
+  const foeSchool = schoolMoveFor(foe);
+  const foeMoves = MOVES.filter((m) => !SCHOOL_MOVES.includes(m.id) || m.id === foeSchool);
+  // 雙人同屏 — P1 (me) commits first, then P2 (foe) answers; each side gated by
+  // its OWN 氣勢 and school. In AI mode it's always P1 picking.
+  const [pendingA, setPendingA] = useState<DebateMove | null>(null);
+  const pickSide: 'a' | 'd' = hotSeat && pendingA !== null ? 'd' : 'a';
+
+  const activeMoves = pickSide === 'd' ? foeMoves : myMoves;
+  const activeMomentum = pickSide === 'd' ? bout.dMomentum : bout.aMomentum;
 
   const play = (move: DebateMove) => {
     if (bout.over) return;
+    if (hotSeat) {
+      if (pickSide === 'a') {
+        if (bout.aMomentum < debateMoveCost(move)) return;
+        setPendingA(move);
+        return;
+      }
+      if (bout.dMomentum < debateMoveCost(move)) return;
+      const aMove = pendingA!;
+      setPendingA(null);
+      resolveRound(aMove, move);
+      return;
+    }
     if (bout.aMomentum < debateMoveCost(move)) return; // not enough 氣勢 to spend
-    const foeMove = aiDebateMove(bout, 'd', Math.random);
+    resolveRound(move, aiDebateMove(bout, 'd', Math.random));
+  };
+  const resolveRound = (move: DebateMove, foeMove: DebateMove) => {
     const res = debateRound(bout, move, foeMove, Math.random);
     const who = res.roundWinner === 'a' ? nm(me) : res.roundWinner === 'd' ? nm(foe) : t('各執', 'Stalemate');
     const line = res.roundWinner === 'draw'
@@ -215,11 +240,17 @@ export function DebateGameModal({
           {side(foe, bout.dMomentum, '#c178c7', 'd', 'right')}
         </div>
         {audienceBar()}
+        {/* 雙人同屏 — whose turn to commit an argument. */}
+        {hotSeat && !bout.over && (
+          <div style={{ textAlign: 'center', marginBottom: '0.35rem', color: pickSide === 'a' ? '#8fdc9a' : '#d8a8dc', fontSize: '0.8rem', letterSpacing: '0.06rem' }}>
+            {pickSide === 'a' ? t(`▶ ${nm(me)} 出論(P1)`, `▶ ${nm(me)} to argue (P1)`) : t(`▶ ${nm(foe)} 應辯(P2)`, `▶ ${nm(foe)} to answer (P2)`)}
+          </div>
+        )}
         {!bout.over ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem' }}>
-            {myMoves.map((m) => {
+            {activeMoves.map((m) => {
               const cost = m.cost ?? 0;
-              const disabled = cost > bout.aMomentum;
+              const disabled = cost > activeMomentum;
               const apt = !disabled && topicFavors(bout.topic, m.id); // 切中要害
               return (
                 <button
@@ -322,11 +353,16 @@ export function DebateGameModal({
 
         {audienceBar()}
 
+        {hotSeat && !bout.over && (
+          <div style={{ textAlign: 'center', marginTop: '0.6rem', color: pickSide === 'a' ? '#8fdc9a' : '#d8a8dc', fontSize: '0.85rem', letterSpacing: '0.06rem' }}>
+            {pickSide === 'a' ? t(`▶ ${nm(me)} 出論(P1)`, `▶ ${nm(me)} to argue (P1)`) : t(`▶ ${nm(foe)} 應辯(P2)`, `▶ ${nm(foe)} to answer (P2)`)}
+          </div>
+        )}
         {!bout.over && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginTop: '1rem' }}>
-            {myMoves.map((m) => {
+            {activeMoves.map((m) => {
               const cost = m.cost ?? 0;
-              const disabled = cost > bout.aMomentum;
+              const disabled = cost > activeMomentum;
               const apt = !disabled && topicFavors(bout.topic, m.id); // 切中要害
               return (
                 <button

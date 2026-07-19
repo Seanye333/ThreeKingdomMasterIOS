@@ -3,6 +3,7 @@ import { useGameStore } from '../../game/state/store';
 import { debateProwess, type DebateDifficulty } from '../../game/systems/wordWar';
 import { moonBoard, moonScore, pickMoonLaurel, pickMoonChallenger, canOrate } from '../../game/systems/scholarRank';
 import { resolveTeamDebate, type TeamDebateResult } from '../../game/systems/teamDebate';
+import { TeamDebate3DStage } from './debate/TeamDebate3DStage';
 import { debateShame, isEmotional } from '../../game/systems/afflictions';
 import { DEBATE_SCENARIOS, scenarioOutcome, scenarioResultLine, type DebateScenario } from '../../game/systems/debateScenarios';
 import { trainKey, trainsLeft, TRAIN_PER_SEASON } from '../../game/systems/sparLimit';
@@ -38,6 +39,8 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
   const [mode, setMode] = useState<'spar' | 'story' | 'gauntlet' | 'moon' | 'team'>('spar');
   // 朝堂合辯 (§6.17) — the auto-resolved 2v2 hall melee's last result, for the log.
   const [teamResult, setTeamResult] = useState<TeamDebateResult | null>(null);
+  // 合辯同場 — the staged 3D playback of the resolved joint debate.
+  const [teamStage, setTeamStage] = useState<TeamDebateResult | null>(null);
   // 舌戰群儒 — a champion faces a line of opposing scholars, one after another.
   const [gauntlet, setGauntlet] = useState<{ championId: string; foeIds: string[]; idx: number; wins: number } | null>(null);
   // 月旦評 — an interactive bout for (or in defense of) the 魁首 laurel (§6.15).
@@ -87,6 +90,8 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
   const [aId, setAId] = useState<string | null>(null);
   const [bId, setBId] = useState<string | null>(null);
   const [difficulty, setDifficulty] = useState<DebateDifficulty>('veteran');
+  // 雙人同屏 — both spar seats played by hand (P1 argues, P2 answers).
+  const [hotSeatOn, setHotSeatOn] = useState(false);
   const [debating, setDebating] = useState(false);
   const [result, setResult] = useState<{ text: string; notes: string[] } | null>(null);
 
@@ -148,6 +153,11 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
     setGauntlet(null);
   }
 
+  // 合辯同場 — while the staged joint debate plays, show only the 3D hall.
+  if (teamStage) {
+    return <TeamDebate3DStage result={teamStage} onDone={() => setTeamStage(null)} />;
+  }
+
   // 月旦評 — the interactive bout for (or in defense of) the 魁首.
   if (moonBout) {
     const meO = officers[moonBout.meId];
@@ -194,6 +204,7 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
         me={a}
         foe={b}
         difficulty={difficulty}
+        hotSeat={hotSeatOn}
         onComplete={(outcome) => {
           setDebating(false);
           const draw = outcome.winner === 'draw';
@@ -326,6 +337,8 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
               recordTrainingUse('debate', [a.id, b.id]);
               const res = resolveTeamDebate([a, b], foePair);
               setTeamResult(res);
+              // 合辯同場 (§6.17) — stage the whole joint debate in the 3D hall.
+              setTeamStage(res);
               const won = res.winner === 'a';
               if (won) {
                 for (const v of res.a.filter((v) => !v.downed)) {
@@ -386,6 +399,11 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
                     ? t(`${moonLaurel.sinceYear}年在評 · 連折 ${moonLaurel.defenses} 辯`, `laurel since ${moonLaurel.sinceYear} · ${moonLaurel.defenses} defenses`)
                     : t('清議推重,虛位待辯', 'presumptive — the laurel awaits its first bout')}
                 </div>
+                {seatHolder.moonEpithet && (
+                  <div style={{ fontSize: '0.72rem', color: '#cbb8e8', fontStyle: 'italic', marginTop: 2 }}>
+                    「{lang === 'en' ? seatHolder.moonEpithet.en : seatHolder.moonEpithet.zh}」
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -499,8 +517,13 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
           <div style={{ fontSize: '1.4rem', color: '#7a8893' }}>VS</div>
           {slot(b, t('對手', 'Opponent'))}
         </div>
+        {/* 雙人同屏 — hand both seats to live players. */}
+        <label style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: '0.6rem', fontSize: '0.8rem', color: hotSeatOn ? '#d8ecff' : '#8a96a0', cursor: 'pointer' }}>
+          <input type="checkbox" checked={hotSeatOn} onChange={(e) => setHotSeatOn(e.target.checked)} />
+          {t('雙人同屏 — 甲方出論、乙方應辯,兩座皆親手打', 'Hot-seat — P1 argues, P2 answers; both seats played by hand')}
+        </label>
         {/* 難度 — how sharply the opposing officer reads & counters your arguments. */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: '0.8rem' }}>
+        <div style={{ display: 'flex', gap: 6, marginBottom: '0.8rem', opacity: hotSeatOn ? 0.5 : 1 }}>
           {([
             ['rookie', t('學徒', 'Novice')],
             ['veteran', t('名士', 'Adept')],

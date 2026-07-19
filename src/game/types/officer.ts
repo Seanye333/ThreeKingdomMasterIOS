@@ -108,6 +108,10 @@ export interface Officer {
   debateXiuwei?: number;
   /** 文辯心得 — spendable insight earned at the lectern; buys 修為. */
   debateInsight?: number;
+  /** 月旦品題 — the standing verdict the realm's critique pronounced on this
+   *  officer when they first took the 月旦評 laurel (§6.15). Once given it
+   *  keeps — 一語定品,終身隨之. */
+  moonEpithet?: { zh: string; en: string };
   task: CommandType | null;
   equipment: Equipment;
   /** Innate skill IDs (referencing SKILLS_BY_ID). 0–4 per officer. */

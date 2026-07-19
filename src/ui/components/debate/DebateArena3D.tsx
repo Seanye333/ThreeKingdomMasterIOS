@@ -264,12 +264,15 @@ function RealScholar({ action, tint, timeScale }: { action: ScholarAction; tint:
 // ─────────────────────────── one positioned scholar ────────────────────────
 
 function Scholar({
-  side, robe, action, name, timeScale,
-}: { side: 'left' | 'right'; robe: string; action: ScholarAction; name: string; timeScale: number }) {
-  const x = side === 'left' ? -0.95 : 0.95;
+  side, robe, action, name, timeScale, pos,
+}: { side: 'left' | 'right'; robe: string; action: ScholarAction; name: string; timeScale: number;
+  /** 合辯站位 — optional (x, z) override so several voices share the hall. */
+  pos?: [number, number] }) {
+  const x = pos ? pos[0] : side === 'left' ? -0.95 : 0.95;
+  const z = pos ? pos[1] : 0;
   const rotY = side === 'left' ? 0 : Math.PI;
   return (
-    <group position={[x, 0, 0]} rotation={[0, rotY, 0]}>
+    <group position={[x, 0, z]} rotation={[0, rotY, 0]}>
       {DEBATE_ASSETS_READY
         ? <RealScholar action={action} tint={robe} timeScale={timeScale} />
         : <ProceduralScholar robe={robe} action={action} />}
@@ -574,6 +577,21 @@ function dataUrlToBlob(url: string): Blob | null {
 
 export interface DebateArenaEvent extends DebateRoundFx { key: number }
 
+/** 合辯同場 — an extra voice beyond the principals, seated at a flank slot.
+ *  The host drives each one's animation/state; `gone` empties the seat. */
+export interface HallExtra {
+  name: string;
+  anim?: DebateAnim;
+  stamp?: number;
+  gone?: boolean;
+}
+/** Flank seats for joint-debate extras (index-keyed), mirrored on the right. */
+const HALL_SLOTS: Array<[number, number]> = [[-1.8, 0.9], [-1.8, -0.9]];
+function hallSlot(side: 'left' | 'right', i: number): [number, number] {
+  const [x, z] = HALL_SLOTS[Math.min(i, HALL_SLOTS.length - 1)];
+  return side === 'left' ? [x, z] : [-x, z];
+}
+
 /** Keeps a bad asset from crashing the whole game — the 3D hall just disappears
  *  and the debate plays on in the 2D staged panel. */
 class ArenaErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
@@ -585,7 +603,7 @@ class ArenaErrorBoundary extends Component<{ children: ReactNode }, { failed: bo
 
 function Scene({
   left, right, leftName, rightName, shakeKey, big, timeScale, ink, glyph, routKey, routX,
-  mood, leftHits, rightHits, flourish, photo,
+  mood, leftHits, rightHits, flourish, photo, leftExtras, rightExtras,
 }: {
   left: ScholarAction; right: ScholarAction; leftName: string; rightName: string;
   shakeKey: number; big: boolean; timeScale: number;
@@ -594,6 +612,8 @@ function Scene({
   routKey: number; routX: number;
   mood: HallMood; leftHits: number; rightHits: number;
   flourish: { key: number; x: number; color: string } | null; photo: boolean;
+  /** 合辯同場 — flanking voices beyond the principals (§6.17). */
+  leftExtras?: HallExtra[]; rightExtras?: HallExtra[];
 }) {
   return (
     <>
@@ -633,6 +653,15 @@ function Scene({
 
       <Scholar side="left" robe={ME} action={left} name={leftName} timeScale={timeScale} />
       <Scholar side="right" robe={FOE} action={right} name={rightName} timeScale={timeScale} />
+      {/* 合辯同場 — partner voices hold the flank seats and retire where they sit. */}
+      {(leftExtras ?? []).map((e, i) => !e.gone && (
+        <Scholar key={`le-${e.name}-${i}`} side="left" robe={ME} pos={hallSlot('left', i)}
+          action={{ anim: e.anim ?? 'idle', rot: i + 1, stamp: e.stamp ?? 0 }} name={e.name} timeScale={timeScale} />
+      ))}
+      {(rightExtras ?? []).map((e, i) => !e.gone && (
+        <Scholar key={`re-${e.name}-${i}`} side="right" robe={FOE} pos={hallSlot('right', i)}
+          action={{ anim: e.anim ?? 'idle', rot: i + 3, stamp: e.stamp ?? 0 }} name={e.name} timeScale={timeScale} />
+      ))}
       {ink && <InkBurst key={`ink-${ink.key}`} position={[ink.x, 1.2, 0]} big={ink.big} />}
       {glyph && <WordGlyph key={`glyph-${glyph.key}`} glyph={glyph.glyph} fromX={glyph.fromX} toX={glyph.toX} color={glyph.color} stamp={glyph.key} big={glyph.big} />}
       {flourish && <RoutFlourish key={`rf-${flourish.key}`} position={[flourish.x, 1.0, 0]} color={flourish.color} />}
@@ -650,10 +679,12 @@ function Scene({
  * with a monotonically increasing `key`) and it animates both minds accordingly.
  */
 export function DebateArena3D({
-  me, foe, leftName, rightName, event,
+  me, foe, leftName, rightName, event, leftExtras, rightExtras,
 }: {
   me: Officer; foe: Officer; leftName: string; rightName: string;
   event: DebateArenaEvent | null;
+  /** 合辯同場 (§6.17) — flanking partner voices; the host drives their state. */
+  leftExtras?: HallExtra[]; rightExtras?: HallExtra[];
 }) {
   // 風格 — each strategist's persona picks their 折服 (victory) flourish.
   const mePersona = useMemo(() => debatePersona(me), [me]);
@@ -808,6 +839,7 @@ export function DebateArena3D({
               timeScale={photo ? 0 : timeScale} ink={ink} glyph={glyph}
               shakeKey={shakeKey} big={big} routKey={routKey} routX={routX}
               mood={mood} leftHits={leftHits} rightHits={rightHits} flourish={flourish} photo={photo}
+              leftExtras={leftExtras} rightExtras={rightExtras}
             />
           </Suspense>
         </Canvas>

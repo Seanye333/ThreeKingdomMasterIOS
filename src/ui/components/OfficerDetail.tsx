@@ -305,6 +305,14 @@ export function OfficerDetail({
                 </div>
               );
             })()}
+            {/* 月旦品題 (§6.15) — the critique's standing verdict, kept for life. */}
+            {officer.moonEpithet && (
+              <div title={t('月旦品題 — 清議一語定品', "The Moon-Rank critique's verdict")} style={{
+                marginTop: '0.35rem', color: '#cbb8e8', fontSize: '0.82rem', fontStyle: 'italic', letterSpacing: '0.03rem',
+              }}>
+                🌙 「{lang === 'en' ? officer.moonEpithet.en : officer.moonEpithet.zh}」
+              </div>
+            )}
             {officer.retinueOfLordId && allOfficers[officer.retinueOfLordId] && officer.retinueOfLordId !== officer.id && (() => {
               const lord = allOfficers[officer.retinueOfLordId];
               const serving = lord.status !== 'dead' && lord.forceId === officer.forceId;

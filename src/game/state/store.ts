@@ -1052,6 +1052,9 @@ interface GameStore extends GameState {
   contestDemand: (fromForceId: EntityId) => { ok: boolean; reason?: string; myVoiceId?: EntityId; foeVoiceId?: EntityId };
   /** 舌戰抗辯 — settle the contested ultimatum: win → the demand is withdrawn. */
   settleDemandDebate: (fromForceId: EntityId, outcome: 'win' | 'loss' | 'draw') => { ok: boolean; message: string };
+  /** 月旦品題 (§6.15) — the critique pronounces its verdict on a new 魁首: a
+   *  standing epithet(「治世之能臣…」)stamped once and kept for life. */
+  stampMoonEpithet: (officerId: EntityId) => void;
   /** 月旦奪魁 — an interactive challenge unseated (or failed to unseat) the 魁首;
    *  the UI runs the bout, this settles seat/rewards/annal (§6.15). */
   seizeMoonLaurel: (challengerId: EntityId, won: boolean) => { ok: boolean; reason?: string; insight?: number; gold?: number };
@@ -9081,6 +9084,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                   textZh: `${contender.name.zh} 清議之上辯倒 ${holder.name.zh} — 月旦評魁首易主!`,
                   cityId: null,
                 });
+                get().stampMoonEpithet(contender.id); // 品題隨榜 — the new 魁首 gets their line
               } else {
                 set({ moonLaurel: { ...seat, defenses: seat.defenses + 1 } });
               }
@@ -12741,6 +12745,19 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         }
         return { ok: true, message: `兩造各執一詞 — ${coercer.name.zh} 之牒仍懸而未決。` };
       },
+      stampMoonEpithet: (officerId) => {
+        const state = get();
+        const o = state.officers[officerId];
+        if (!o || o.status === 'dead' || o.moonEpithet) return; // 一語定品,不再改評
+        const v = appraisalVerdict(o);
+        set({ officers: { ...state.officers, [officerId]: { ...o, moonEpithet: { zh: v.zh, en: v.en } } } });
+        get().recordAnnal({
+          year: state.date.year, season: state.date.season, kind: 'event',
+          titleZh: '月旦品題',
+          textZh: `清議品題 ${o.name.zh}:「${v.zh}」— 一語既出,士林傳誦。`,
+          cityId: null,
+        });
+      },
       seizeMoonLaurel: (challengerId, won) => {
         const state = get();
         const ch = state.officers[challengerId];
@@ -12774,6 +12791,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           textZh: `${ch.name.zh} 清議之上辯倒 ${holder.name.zh} — 月旦評魁首易主!`,
           cityId: null,
         });
+        get().stampMoonEpithet(challengerId); // 品題 — the critique pronounces on its new 魁首
         return { ok: true, insight: reward.insight, gold: reward.gold };
       },
       defendMoonLaurel: (held, challengerId) => {
@@ -12794,6 +12812,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           get().awardDebateInsight(holder.id, stip.insight);
           if (stip.renown) get().recordDeed(holder.id, { debatesWon: 1 });
           if (seat.defenses + 1 >= 3) get().fireAchievement({ kind: 'moon-reign' }); // 清議領袖
+          get().stampMoonEpithet(holder.id); // 品題 — a defended laurel earns its verdict too
           return { ok: true, insight: stip.insight, gold: stip.gold };
         }
         if (!challenger) return { ok: false, reason: 'no-challenger' };
