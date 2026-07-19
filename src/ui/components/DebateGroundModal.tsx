@@ -44,6 +44,10 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
   const moonLaurel = useGameStore((s) => s.moonLaurel);
   const seizeMoonLaurel = useGameStore((s) => s.seizeMoonLaurel);
   const defendMoonLaurel = useGameStore((s) => s.defendMoonLaurel);
+  // 月旦來辯 (§6.15 對稱) — a rival scholar's standing writ for your laurel.
+  const pendingMoonWrit = useGameStore((s) => s.pendingMoonWrit);
+  const duckMoonWrit = useGameStore((s) => s.duckMoonWrit);
+  const clearMoonWrit = useGameStore((s) => s.clearMoonWrit);
   const [moonBout, setMoonBout] = useState<{ meId: string; foeId: string; kind: 'seize' | 'defend' } | null>(null);
   // The reigning 魁首 (falls back to the keenest tongue when unseeded/fallen).
   const seatHolder = useMemo(() => {
@@ -383,6 +387,24 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
                     : t('清議推重,虛位待辯', 'presumptive — the laurel awaits its first bout')}
                 </div>
               </div>
+            </div>
+          )}
+          {/* 月旦來辯 — a rival's writ demands a bout; answer it or wear the scorn. */}
+          {holderIsMine && pendingMoonWrit && seatHolder && officers[pendingMoonWrit.challengerId] && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(224,132,106,0.1)', border: '1px solid #e0846a', borderRadius: 'var(--tkm-radius)', padding: '0.5rem 0.7rem', marginBottom: '0.7rem' }}>
+              <OfficerPortrait officer={officers[pendingMoonWrit.challengerId]} size={36} forceColor="#e0846a" year={year} />
+              <span style={{ flex: 1, color: '#ffd8c8', fontSize: '0.82rem', lineHeight: 1.5 }}>
+                {t(`${pickName(officers[pendingMoonWrit.challengerId].name, lang)} 下帖求辯魁首 — 應戰,或為清議所輕?`,
+                  `${pickName(officers[pendingMoonWrit.challengerId].name, lang)} sends a writ for the laurel — answer, or wear the scorn?`)}
+              </span>
+              <button
+                onClick={() => { setResult(null); clearMoonWrit(); setMoonBout({ meId: seatHolder.id, foeId: pendingMoonWrit.challengerId, kind: 'defend' }); }}
+                style={{ padding: '0.3rem 0.7rem', background: 'linear-gradient(180deg,#234a6e,#13283e)', border: '1px solid #88b7e8', borderRadius: 'var(--tkm-radius-sm)', color: '#d8ecff', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.8rem' }}
+              >{t('應戰', 'Answer')}</button>
+              <button
+                onClick={() => { const r = duckMoonWrit(); setResult(r.message ? { text: r.message, notes: [] } : null); }}
+                style={{ padding: '0.3rem 0.7rem', background: '#1e2832', border: '1px solid #5a4a44', borderRadius: 'var(--tkm-radius-sm)', color: '#b0a098', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.8rem' }}
+              >{t('避辯', 'Duck')}</button>
             </div>
           )}
           {!holderIsMine ? (

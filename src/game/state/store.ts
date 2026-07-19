@@ -37,6 +37,7 @@ import { pickArenaChampion, pickArenaChallenger, arenaTakeReward, arenaHoldStipe
 import { pickMoonLaurel, pickMoonChallenger, moonScore, moonTakeReward, moonHoldStipend } from '../systems/scholarRank';
 import { resolveWordWar } from '../systems/wordWar';
 import { pickCourtVoice, willAcceptParley, concordStakes, tributeStakes, persuadeStakes, canPersuadeCity, pickGateKeeper, CONCORD_COST, TRIBUNE_COST, PERSUADE_COST } from '../systems/debateDiplomacy';
+import { tickAIPersuasions, tickMoonWrit, PERSUASION_REFUSE_LOYALTY, MOON_WRIT_DUCK_RENOWN } from '../systems/aiParley';
 import { debateShame, isEmotional } from '../systems/afflictions';
 import { pickPeaceChampion, willAcceptPeaceDuel, peaceDuelStakes, PEACE_DUEL_COST } from '../systems/duelDiplomacy';
 import { applyBout, seedRating } from '../systems/warRanking';
@@ -1036,6 +1037,21 @@ interface GameStore extends GameState {
   /** 舌戰說降 — settle the bout at the wall: a 罵倒 opens the gates without a corpse;
    *  a points win bleeds the garrison; a loss shames the envoy. */
   settlePersuadeCity: (cityId: EntityId, envoyId: EntityId, defenderId: EntityId, outcome: import('../systems/debateDiplomacy').ParleyOutcome, routed: boolean) => { ok: boolean; message: string };
+  /** 說降來使 (§6.16 對稱) — turn the enemy envoy away unheard; the wall's pride
+   *  stings a little but no argument is risked. */
+  refusePersuasion: () => { ok: boolean; message?: string };
+  /** 說降來使 — settle the fought-out defense of your wall. `outcome` is from the
+   *  DEFENDER's (your) view; `envoyRouted` = the envoy 罵倒 your defender. */
+  settleIncomingPersuasion: (outcome: 'win' | 'loss' | 'draw', envoyRouted: boolean) => { ok: boolean; message: string };
+  /** 月旦來辯 (§6.15 對稱) — duck the rival's writ (文名受損), or clear it after
+   *  answering it with a real bout. */
+  duckMoonWrit: () => { ok: boolean; message?: string };
+  clearMoonWrit: () => void;
+  /** 索貢來牒·舌戰抗辯 — contest a standing ultimatum at the table instead of
+   *  yielding or defying: returns the two courts' voices for the interactive bout. */
+  contestDemand: (fromForceId: EntityId) => { ok: boolean; reason?: string; myVoiceId?: EntityId; foeVoiceId?: EntityId };
+  /** 舌戰抗辯 — settle the contested ultimatum: win → the demand is withdrawn. */
+  settleDemandDebate: (fromForceId: EntityId, outcome: 'win' | 'loss' | 'draw') => { ok: boolean; message: string };
   /** 月旦奪魁 — an interactive challenge unseated (or failed to unseat) the 魁首;
    *  the UI runs the bout, this settles seat/rewards/annal (§6.15). */
   seizeMoonLaurel: (challengerId: EntityId, won: boolean) => { ok: boolean; reason?: string; insight?: number; gold?: number };
@@ -9118,6 +9134,79 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // AI 舌戰說降來使 (§6.16 對稱) — an unanswered envoy at your wall argues
+        // it out unattended when the writ lapses; then a rival realm may send a
+        // fresh tongue to another weakly-held wall.
+        {
+          const cur = get();
+          const standing = (cur.pendingPersuasions ?? []).filter((p) => {
+            const city = cur.cities[p.cityId];
+            const envoy = cur.officers[p.envoyId];
+            const defender = cur.officers[p.defenderId];
+            return city && city.ownerForceId === cur.playerForceId && envoy && envoy.status !== 'dead' && defender && defender.status !== 'dead';
+          });
+          const lapsed = standing.find((p) => !isOnOrAfter(p.expiresAt, cur.date));
+          if (lapsed) {
+            // 置之不理 — the wall answers without you; the engine argues it out.
+            const envoy = cur.officers[lapsed.envoyId];
+            const defender = cur.officers[lapsed.defenderId];
+            set({ pendingPersuasions: [lapsed] }); // settle reads the head entry
+            const bout = resolveWordWar(envoy, defender, [], []);
+            const last = bout.rounds[bout.rounds.length - 1];
+            const margin = last ? Math.abs(last.attackerTotal - last.defenderTotal) : 0;
+            const outcome = bout.winnerSide === 'attacker' ? 'loss' : bout.winnerSide === 'defender' ? 'win' : 'draw';
+            get().settleIncomingPersuasion(outcome, bout.winnerSide === 'attacker' && margin >= 50);
+          } else if (standing.length !== (cur.pendingPersuasions ?? []).length) {
+            set({ pendingPersuasions: standing });
+          }
+          const cur2 = get();
+          const fresh = tickAIPersuasions({
+            forces: cur2.forces, cities: cur2.cities, officers: cur2.officers,
+            diplomacy: cur2.diplomacy, playerForceId: cur2.playerForceId,
+            existing: cur2.pendingPersuasions ?? [],
+            expiresAt: addDiploSeasons(cur2.date, 2),
+          });
+          if (fresh) {
+            set({ pendingPersuasions: [fresh] });
+            const from = cur2.forces[fresh.fromForceId];
+            const city = cur2.cities[fresh.cityId];
+            const envoy = cur2.officers[fresh.envoyId];
+            get().notify(
+              `說降來使 · ${from?.name.zh ?? ''}遣 ${envoy?.name.zh ?? ''} 至 ${city?.name.zh ?? ''} 城下`,
+              `${from?.name.en ?? 'A rival'} sends ${envoy?.name.en ?? 'an envoy'} to argue at ${city?.name.en ?? 'your wall'} — answer in the Diplomacy panel`,
+              'warn',
+            );
+          }
+        }
+
+        // 月旦來辯 (§6.15 對稱) — while your champion holds the laurel, rival
+        // scholars send writs; an ignored writ lapses into a public duck.
+        {
+          const cur = get();
+          const writ = cur.pendingMoonWrit;
+          const holderId = cur.moonLaurel?.officerId;
+          const holderIsMine = !!holderId && cur.officers[holderId]?.forceId === cur.playerForceId;
+          if (writ && (!holderIsMine || !cur.officers[writ.challengerId] || cur.officers[writ.challengerId].status === 'dead')) {
+            set({ pendingMoonWrit: undefined });
+          } else if (writ && !isOnOrAfter(writ.expiresAt, cur.date)) {
+            get().duckMoonWrit(); // 置帖不答,即為避辯
+          } else if (!writ && holderIsMine) {
+            const freshWrit = tickMoonWrit({
+              officers: cur.officers, holderId, playerForceId: cur.playerForceId,
+              existing: undefined, expiresAt: addDiploSeasons(cur.date, 2),
+            });
+            if (freshWrit) {
+              set({ pendingMoonWrit: freshWrit });
+              const ch = cur.officers[freshWrit.challengerId];
+              get().notify(
+                `月旦來辯 · ${ch?.name.zh ?? ''} 下帖求辯魁首`,
+                `${ch?.name.en ?? 'A rival scholar'} sends a writ for your Moon-Rank laurel — answer at the Debate Ground`,
+                'warn',
+              );
+            }
+          }
+        }
+
         // 自動存檔 — every season boundary writes one of three rolling
         // autosave slots, so a bad turn (or a crash) costs at most a season.
         if (seasonBoundary) {
@@ -12510,6 +12599,147 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         }
         get().notify(`舌戰說降 · ${msg}`, `The envoy's argument at ${city.name.en} is settled`);
         return { ok: true, message: msg };
+      },
+      refusePersuasion: () => {
+        const state = get();
+        const p = (state.pendingPersuasions ?? [])[0];
+        if (!p) return { ok: false };
+        const city = state.cities[p.cityId];
+        const envoy = state.officers[p.envoyId];
+        set({
+          pendingPersuasions: [],
+          ...(city ? { cities: { ...state.cities, [city.id]: { ...city, loyalty: Math.max(0, city.loyalty - PERSUASION_REFUSE_LOYALTY) } } } : {}),
+        });
+        const msg = `閉門不納 ${envoy?.name.zh ?? '敵使'} — 其城下之辱,民心稍沮(−${PERSUASION_REFUSE_LOYALTY})。`;
+        get().notify(`拒之門外 · ${city?.name.zh ?? ''}`, `The envoy is turned away from ${city?.name.en ?? 'your wall'}`);
+        return { ok: true, message: msg };
+      },
+      settleIncomingPersuasion: (outcome, envoyRouted) => {
+        const state = get();
+        const pid = state.playerForceId;
+        const p = (state.pendingPersuasions ?? [])[0];
+        if (!p || !pid) return { ok: false, message: '' };
+        const city = state.cities[p.cityId];
+        const envoy = state.officers[p.envoyId];
+        const defender = state.officers[p.defenderId];
+        const fromForce = state.forces[p.fromForceId];
+        if (!city || !envoy || !defender || !fromForce || city.ownerForceId !== pid) {
+          set({ pendingPersuasions: [] });
+          return { ok: false, message: '' };
+        }
+        const key = pairKey(pid, p.fromForceId);
+        const rel = getRelation(state.diplomacy, pid, p.fromForceId);
+        let msg = '';
+        if (outcome === 'loss' && envoyRouted) {
+          // 罵倒守將,開城而降 — the wall passes to the arguing realm; your bested
+          // defender is swept along (折服), your other officers withdraw to the capital.
+          const player = state.forces[pid];
+          const officers = { ...state.officers };
+          for (const o of Object.values(state.officers)) {
+            if (o.forceId === pid && o.locationCityId === p.cityId && o.id !== p.defenderId && player) {
+              officers[o.id] = { ...o, locationCityId: player.capitalCityId };
+            }
+          }
+          officers[p.defenderId] = { ...defender, forceId: p.fromForceId, loyalty: 55, task: null, locationCityId: p.cityId };
+          set({
+            pendingPersuasions: [],
+            cities: { ...state.cities, [p.cityId]: { ...city, ownerForceId: p.fromForceId, loyalty: Math.max(25, Math.min(55, city.loyalty)) } },
+            officers,
+            diplomacy: { relations: { ...state.diplomacy.relations, [key]: { ...rel, score: Math.max(-100, rel.score - 15) } } },
+          });
+          msg = `${envoy.name.zh} 城下雄辯,罵倒 ${defender.name.zh} — ${city.name.zh} 開城而降,${fromForce.name.zh} 不血刃得城!`;
+          get().recordAnnal({ year: state.date.year, season: state.date.season, kind: 'event', titleZh: '舌戰失城', textZh: msg, cityId: p.cityId });
+          get().notify(`舌戰失城 · ${city.name.zh}`, `${city.name.en} is argued open by ${fromForce.name.en}!`, 'warn');
+          return { ok: true, message: msg };
+        }
+        if (outcome === 'loss' || outcome === 'draw') {
+          const exodus = Math.round(city.troops * (outcome === 'loss' ? 0.25 : 0.1));
+          set({
+            pendingPersuasions: [],
+            cities: { ...state.cities, [p.cityId]: { ...city, troops: Math.max(200, city.troops - exodus), loyalty: Math.max(10, city.loyalty - (outcome === 'loss' ? 10 : 4)) } },
+            diplomacy: { relations: { ...state.diplomacy.relations, [key]: { ...rel, score: Math.max(-100, rel.score - (outcome === 'loss' ? 8 : 2)) } } },
+          });
+          msg = outcome === 'loss'
+            ? `${defender.name.zh} 城頭失辯 — ${city.name.zh} 軍心離散,${exodus} 卒宵遁,幸城門未開。`
+            : `${defender.name.zh} 與 ${envoy.name.zh} 城下相持 — 守卒亦有 ${exodus} 人心動宵遁。`;
+          get().notify(`城下之辯 · ${city.name.zh}`, `The argument at ${city.name.en} is settled`, 'warn');
+          return { ok: true, message: msg };
+        }
+        // Your defender carries the wall — the envoy retreats, shamed if thin-skinned.
+        set({
+          pendingPersuasions: [],
+          diplomacy: { relations: { ...state.diplomacy.relations, [key]: { ...rel, score: Math.max(-100, rel.score - 2) } } },
+        });
+        get().recordDeed(p.defenderId, { debatesWon: 1 });
+        if (isEmotional(envoy)) get().afflictOfficer(p.envoyId, debateShame());
+        msg = `${defender.name.zh} 據城雄辯,折 ${envoy.name.zh} 於城下 — ${city.name.zh} 守志愈堅!`;
+        get().notify(`守住了 · ${city.name.zh}`, `${defender.name.en} out-argues the envoy at ${city.name.en}`);
+        return { ok: true, message: msg };
+      },
+      duckMoonWrit: () => {
+        const state = get();
+        const writ = state.pendingMoonWrit;
+        if (!writ) return { ok: false };
+        const holderId = state.moonLaurel?.officerId;
+        const holder = holderId ? state.officers[holderId] : null;
+        const challenger = state.officers[writ.challengerId];
+        set({ pendingMoonWrit: undefined });
+        if (holder && challenger) {
+          // 避辯者為清議所輕 — the holder forfeits face; the scorned tongue gains it.
+          set({ officers: {
+            ...get().officers,
+            [holder.id]: { ...get().officers[holder.id], renown: Math.max(0, (get().officers[holder.id].renown ?? 0) - MOON_WRIT_DUCK_RENOWN) },
+            [challenger.id]: { ...get().officers[challenger.id], renown: (get().officers[challenger.id].renown ?? 0) + MOON_WRIT_DUCK_RENOWN },
+          } });
+          get().recordAnnal({
+            year: state.date.year, season: state.date.season, kind: 'event',
+            titleZh: '避辯之譏',
+            textZh: `${challenger.name.zh} 下帖求辯,${holder.name.zh} 執魁首而避戰 — 清議譏之。`,
+            cityId: null,
+          });
+          return { ok: true, message: `避而不辯 — ${holder.name.zh} 為清議所輕(文名 −${MOON_WRIT_DUCK_RENOWN})。` };
+        }
+        return { ok: true };
+      },
+      clearMoonWrit: () => set({ pendingMoonWrit: undefined }),
+      contestDemand: (fromForceId) => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid) return { ok: false, reason: 'no-force' };
+        const demand = (state.pendingDemands ?? []).find((d) => d.fromForceId === fromForceId);
+        if (!demand) return { ok: false, reason: 'no-demand' };
+        const myVoice = pickCourtVoice(state.officers, pid);
+        const foeVoice = pickCourtVoice(state.officers, fromForceId);
+        if (!myVoice) return { ok: false, reason: 'no-voice' };
+        if (!foeVoice) return { ok: false, reason: 'foe-no-voice' };
+        return { ok: true, myVoiceId: myVoice.id, foeVoiceId: foeVoice.id };
+      },
+      settleDemandDebate: (fromForceId, outcome) => {
+        const state = get();
+        const pid = state.playerForceId;
+        const coercer = state.forces[fromForceId];
+        if (!pid || !coercer) return { ok: false, message: '' };
+        const key = pairKey(pid, fromForceId);
+        const rel = getRelation(state.diplomacy, pid, fromForceId);
+        const myVoice = pickCourtVoice(state.officers, pid);
+        if (outcome === 'win') {
+          // 折其牒議 — the ultimatum is argued down and withdrawn, face intact.
+          set({
+            pendingDemands: (state.pendingDemands ?? []).filter((d) => d.fromForceId !== fromForceId),
+            diplomacy: { relations: { ...state.diplomacy.relations, [key]: { ...rel, score: Math.min(100, rel.score + 2) } } },
+          });
+          if (myVoice) get().recordDeed(myVoice.id, { debatesWon: 1 });
+          const msg = `${myVoice?.name.zh ?? '我使'} 據理折牒 — ${coercer.name.zh} 詞窮,收回成命。`;
+          get().notify(`折牒 · ${coercer.name.zh}`, `The ultimatum from ${coercer.name.en} is argued down`);
+          get().recordAnnal({ year: state.date.year, season: state.date.season, kind: 'event', titleZh: '據理折牒', textZh: msg, cityId: null });
+          return { ok: true, message: msg };
+        }
+        if (outcome === 'loss') {
+          // 理屈於人 — the demand stands, and the air is colder for the trying.
+          set({ diplomacy: { relations: { ...state.diplomacy.relations, [key]: { ...rel, score: Math.max(-100, rel.score - 6) } } } });
+          return { ok: true, message: `我使理屈詞窮 — ${coercer.name.zh} 之牒仍懸,其意愈驕。` };
+        }
+        return { ok: true, message: `兩造各執一詞 — ${coercer.name.zh} 之牒仍懸而未決。` };
       },
       seizeMoonLaurel: (challengerId, won) => {
         const state = get();
@@ -17432,6 +17662,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           foughtPairs: null,
           pacifyMissions: loaded.pacifyMissions ?? {},
           annals: loaded.annals ?? [],
+          arenaChampion: loaded.arenaChampion,
+          moonLaurel: loaded.moonLaurel,
+          pendingPersuasions: loaded.pendingPersuasions ?? [],
+          pendingMoonWrit: loaded.pendingMoonWrit,
           pendingEspionage: loaded.pendingEspionage ?? [],
           embeddedSpies: loaded.embeddedSpies ?? [],
           edictHistory: loaded.edictHistory ?? [],
@@ -17635,6 +17869,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         lastTournamentYear: state.lastTournamentYear,
         arenaChampion: state.arenaChampion,
         moonLaurel: state.moonLaurel,
+        pendingPersuasions: state.pendingPersuasions,
+        pendingMoonWrit: state.pendingMoonWrit,
         clearedDuelScenarios: state.clearedDuelScenarios,
         deeds: state.deeds,
         fogOfWar: state.fogOfWar,

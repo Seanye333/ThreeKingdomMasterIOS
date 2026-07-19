@@ -86,6 +86,15 @@ export function DiplomacyModal({ onClose }: Props) {
   const settlePersuadeCity = useGameStore((s) => s.settlePersuadeCity);
   const [parley, setParley] = useState<{ kind: 'concord' | 'tribute'; forceId: EntityId; meId: EntityId; foeId: EntityId } | null>(null);
   const [persuade, setPersuade] = useState<{ cityId: EntityId; envoyId: EntityId; defenderId: EntityId } | null>(null);
+  // §6.16 對稱 — the tables turned: contest an ultimatum by debate / answer an
+  // enemy envoy arguing at your own wall.
+  const contestDemand = useGameStore((s) => s.contestDemand);
+  const settleDemandDebate = useGameStore((s) => s.settleDemandDebate);
+  const pendingPersuasions = useGameStore((s) => s.pendingPersuasions);
+  const refusePersuasion = useGameStore((s) => s.refusePersuasion);
+  const settleIncomingPersuasion = useGameStore((s) => s.settleIncomingPersuasion);
+  const [demandDebate, setDemandDebate] = useState<{ forceId: EntityId; meId: EntityId; foeId: EntityId } | null>(null);
+  const [wallDefense, setWallDefense] = useState<{ envoyId: EntityId; defenderId: EntityId } | null>(null);
   const exactTribute = useGameStore((s) => s.exactTribute);
   const dissolveTribute = useGameStore((s) => s.dissolveTribute);
   const proposeDefensivePact = useGameStore((s) => s.proposeDefensivePact);
@@ -215,6 +224,56 @@ export function DiplomacyModal({ onClose }: Props) {
                     title={t('抗牒 — 寧戰不屈(即為開戰之釁)', 'Defy — refuse and accept war')}
                   >
                     {t('抗牒', 'Defy')}
+                  </button>
+                  <button
+                    className={styles.napBtn}
+                    onClick={() => {
+                      const r = contestDemand(d.fromForceId);
+                      if (!r.ok) { setFeedback({ forceId: d.fromForceId, text: t('無士可辯。', 'No voice to send.'), accepted: false }); return; }
+                      setDemandDebate({ forceId: d.fromForceId, meId: r.myVoiceId!, foeId: r.foeVoiceId! });
+                    }}
+                    title={t('舌戰抗辯 — 遣辯士據理折牒:辯勝則其收回成命、不失顏面;辯負則牒仍懸而彼意愈驕。', 'Contest by debate — out-argue their court and the ultimatum is withdrawn; lose and it stands, colder still.')}
+                  >
+                    💬 {t('舌戰抗辯', 'Contest')}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* 說降來使 (§6.16 對稱) — an enemy tongue stands at one of your walls. */}
+        {(pendingPersuasions ?? []).length > 0 && (
+          <div className={styles.callsToArms}>
+            <div className={styles.callsTitle}>{t('說降來使', 'Envoy at the Wall')}</div>
+            {(pendingPersuasions ?? []).map((p) => {
+              const from = forces[p.fromForceId];
+              const envoy = officers[p.envoyId];
+              const defender = officers[p.defenderId];
+              const city = cities[p.cityId];
+              if (!from || !envoy || !defender || !city) return null;
+              return (
+                <div key={p.cityId} className={styles.callRow}>
+                  <span className={styles.callText}>
+                    {t(`${from.name.zh} 遣 ${envoy.name.zh} 至 ${city.name.zh} 城下,欲說 ${defender.name.zh} 開城`,
+                      `${from.name.en} sends ${envoy.name.en} to argue ${city.name.en} open`)}
+                  </span>
+                  <button
+                    className={styles.allianceBtn}
+                    onClick={() => setWallDefense({ envoyId: p.envoyId, defenderId: p.defenderId })}
+                    title={t('應辯 — 守將城頭迎戰(被罵倒則開城失守!辯勝則折其來使)', 'Answer — your keeper debates at the wall (a rout LOSES the city; a win turns the envoy away)')}
+                  >
+                    💬 {t('應辯', 'Answer')}
+                  </button>
+                  <button
+                    className={styles.breakBtn}
+                    onClick={() => {
+                      const r = refusePersuasion();
+                      setFeedback({ forceId: p.fromForceId, text: r.message ?? '', accepted: false });
+                    }}
+                    title={t('拒之門外 — 不與之辯(民心稍沮,然無失城之險)', 'Turn the envoy away unheard (a little loyalty lost, no city at risk)')}
+                  >
+                    {t('拒之門外', 'Turn away')}
                   </button>
                 </div>
               );
@@ -777,6 +836,37 @@ export function DiplomacyModal({ onClose }: Props) {
               const oc = outcome.winner === 'me' ? 'win' : outcome.winner === 'foe' ? 'loss' : 'draw';
               const r = settleParley(p.kind, p.forceId, p.meId, p.foeId, oc, outcome.winner === 'me' && outcome.routed);
               setFeedback({ forceId: p.forceId, text: r.message, accepted: oc !== 'loss' });
+            }}
+          />
+        )}
+        {/* 舌戰抗辯 — contest a standing ultimatum at the table. */}
+        {demandDebate && officers[demandDebate.meId] && officers[demandDebate.foeId] && (
+          <Debate3DStage
+            me={officers[demandDebate.meId]}
+            foe={officers[demandDebate.foeId]}
+            difficulty="peerless"
+            onComplete={(outcome) => {
+              const dd = demandDebate;
+              setDemandDebate(null);
+              const oc = outcome.winner === 'me' ? 'win' : outcome.winner === 'foe' ? 'loss' : 'draw';
+              const r = settleDemandDebate(dd.forceId, oc);
+              setFeedback({ forceId: dd.forceId, text: r.message, accepted: oc === 'win' });
+            }}
+          />
+        )}
+        {/* 守城之辯 — your keeper answers the enemy envoy at your own wall. */}
+        {wallDefense && officers[wallDefense.defenderId] && officers[wallDefense.envoyId] && (
+          <Debate3DStage
+            me={officers[wallDefense.defenderId]}
+            foe={officers[wallDefense.envoyId]}
+            difficulty="peerless"
+            onComplete={(outcome) => {
+              setWallDefense(null);
+              const oc = outcome.winner === 'me' ? 'win' : outcome.winner === 'foe' ? 'loss' : 'draw';
+              const envoyRouted = outcome.winner === 'foe' && outcome.routed;
+              const p = (pendingPersuasions ?? [])[0];
+              const r = settleIncomingPersuasion(oc, envoyRouted);
+              if (p) setFeedback({ forceId: p.fromForceId, text: r.message, accepted: oc === 'win' });
             }}
           />
         )}

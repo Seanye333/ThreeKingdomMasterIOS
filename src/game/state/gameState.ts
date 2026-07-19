@@ -465,6 +465,11 @@ export interface GameState {
   /** 月旦評・魁首 — the standing laurel of the realm's critique of tongues (§6.15).
    *  Undefined until first seeded. See systems/scholarRank.ts. */
   moonLaurel?: import('../systems/scholarRank').MoonLaurel;
+  /** AI 舌戰說降來使 — an enemy tongue standing at one of your weak walls,
+   *  awaiting answer (§6.16 對稱). At most one at a time. */
+  pendingPersuasions: import('../systems/aiParley').PendingPersuasion[];
+  /** 月旦來辯 — a rival scholar's writ demanding a bout for your laurel (§6.15 對稱). */
+  pendingMoonWrit?: import('../systems/aiParley').PendingMoonWrit;
   /** 單挑戰役 — ids of duel scenarios the player has cleared (campaign progress). */
   clearedDuelScenarios: EntityId[];
   /** Per-turn snapshots of the CURRENT battle (transient, not persisted) —
@@ -800,6 +805,7 @@ export const EMPTY_STATE: GameState = {
   vassalDiscontent: {},
   pendingCallsToArms: [],
   pendingDemands: [],
+  pendingPersuasions: [],
   passageGrants: [],
   pendingPeaceOffers: [],
   rapport: {},
@@ -1239,6 +1245,7 @@ export function loadScenario(
     vassalDiscontent: {},
     pendingCallsToArms: [],
     pendingDemands: [],
+    pendingPersuasions: [],
     passageGrants: [],
     pendingPeaceOffers: [],
     rapport: {},
