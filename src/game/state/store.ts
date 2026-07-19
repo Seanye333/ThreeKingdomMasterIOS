@@ -36,6 +36,8 @@ import { resolveDuel, canDuel, staticProwess, weaponClassFor } from '../systems/
 import { pickArenaChampion, pickArenaChallenger, arenaTakeReward, arenaHoldStipend } from '../systems/arenaLadder';
 import { pickMoonLaurel, pickMoonChallenger, moonScore, moonTakeReward, moonHoldStipend } from '../systems/scholarRank';
 import { resolveWordWar } from '../systems/wordWar';
+import { pickCourtVoice, willAcceptParley, concordStakes, tributeStakes, persuadeStakes, canPersuadeCity, pickGateKeeper, CONCORD_COST, TRIBUNE_COST, PERSUADE_COST } from '../systems/debateDiplomacy';
+import { debateShame, isEmotional } from '../systems/afflictions';
 import { pickPeaceChampion, willAcceptPeaceDuel, peaceDuelStakes, PEACE_DUEL_COST } from '../systems/duelDiplomacy';
 import { applyBout, seedRating } from '../systems/warRanking';
 import { tickAfflictions, withAffliction, hasChronicAilment, rollChronicAilment, cureChronicAilments, chronicAilmentOf, type Affliction } from '../systems/afflictions';
@@ -1022,6 +1024,18 @@ interface GameStore extends GameState {
   growDebateXiuwei: (officerId: EntityId, amount: number) => void;
   /** 名士傳道 — a 名士+ scholar spends 心得 to lecture a same-city junior's 文辯修為. */
   transmitDebateArts: (masterId: EntityId, pupilId: EntityId) => { ok: boolean; reason?: string; gained?: number; tierUpZh?: string; tierUpEn?: string };
+  /** 折衝樽俎 (§6.16) — propose a war of words at the table: 'concord' (會盟修好,
+   *  either way a NAP; the bout decides who pays) or 'tribute' (責讓索貢). Returns
+   *  the matchup for the UI to fight out interactively. */
+  proposeParley: (kind: 'concord' | 'tribute', targetForceId: EntityId) => { ok: boolean; reason?: string; accepted?: boolean; myVoiceId?: EntityId; foeVoiceId?: EntityId; message?: string };
+  /** 折衝樽俎 — settle a fought-out parley (the UI reports the interactive outcome). */
+  settleParley: (kind: 'concord' | 'tribute', targetForceId: EntityId, myVoiceId: EntityId, foeVoiceId: EntityId, outcome: import('../systems/debateDiplomacy').ParleyOutcome, routed: boolean) => { ok: boolean; message: string };
+  /** 舌戰說降 — send a lone voice to a weakly-held enemy wall; returns the gate-
+   *  keeper matchup for the interactive bout (or the refusal). */
+  proposePersuadeCity: (cityId: EntityId, envoyId: EntityId) => { ok: boolean; reason?: string; accepted?: boolean; defenderId?: EntityId; message?: string };
+  /** 舌戰說降 — settle the bout at the wall: a 罵倒 opens the gates without a corpse;
+   *  a points win bleeds the garrison; a loss shames the envoy. */
+  settlePersuadeCity: (cityId: EntityId, envoyId: EntityId, defenderId: EntityId, outcome: import('../systems/debateDiplomacy').ParleyOutcome, routed: boolean) => { ok: boolean; message: string };
   /** 月旦奪魁 — an interactive challenge unseated (or failed to unseat) the 魁首;
    *  the UI runs the bout, this settles seat/rewards/annal (§6.15). */
   seizeMoonLaurel: (challengerId: EntityId, won: boolean) => { ok: boolean; reason?: string; insight?: number; gold?: number };
@@ -12273,6 +12287,187 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         set({ officers: { ...state.officers, [officerId]: { ...o, debateXiuwei: r.xiuwei, debateInsight: r.insight } } });
         if (r.xiuwei >= DEBATE_XIUWEI_MAX) get().fireAchievement({ kind: 'debate-sage' }); // 辯聖 — scholarship peaked
         return { ok: true, xiuwei: r.xiuwei, gained: r.gained, tierUpZh: r.tierUp?.zh, tierUpEn: r.tierUp?.en };
+      },
+      proposeParley: (kind, targetForceId) => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid || targetForceId === pid) return { ok: false, reason: 'no-target' };
+        const foeForce = state.forces[targetForceId];
+        const player = state.forces[pid];
+        if (!foeForce || !player) return { ok: false, reason: 'no-force' };
+        const rel = getRelation(state.diplomacy, pid, targetForceId);
+        if (kind === 'concord' && rel.status !== 'neutral') return { ok: false, reason: 'no-quarrel' }; // a standing pact leaves nothing to argue out
+        const cost = kind === 'concord' ? CONCORD_COST : TRIBUNE_COST;
+        const capital = state.cities[player.capitalCityId];
+        if (!capital || capital.gold < cost) return { ok: false, reason: 'no-gold' };
+        const myVoice = pickCourtVoice(state.officers, pid);
+        const foeVoice = pickCourtVoice(state.officers, targetForceId);
+        if (!myVoice) return { ok: false, reason: 'no-voice' };
+        if (!foeVoice) return { ok: false, reason: 'foe-no-voice' };
+        // The envoy rides either way — the fee is spent on the proposal.
+        set({ cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - cost } } });
+        const accepted = willAcceptParley(foeVoice, myVoice, rel.score, Math.random);
+        if (!accepted) {
+          if (kind === 'concord') {
+            // Refusing the table costs face — the refuser softens a touch.
+            const key = pairKey(pid, targetForceId);
+            const cur = getRelation(get().diplomacy, pid, targetForceId);
+            set({ diplomacy: { relations: { ...get().diplomacy.relations, [key]: { ...cur, score: Math.min(100, cur.score + 3) } } } });
+            return { ok: true, accepted: false, message: `${foeForce.name.zh}拒不赴會 — 為士林所議,其氣稍沮。` };
+          }
+          // A shrugged-off remonstrance just chills the air.
+          const key = pairKey(pid, targetForceId);
+          const cur = getRelation(get().diplomacy, pid, targetForceId);
+          set({ diplomacy: { relations: { ...get().diplomacy.relations, [key]: { ...cur, score: Math.max(-100, cur.score - 4) } } } });
+          return { ok: true, accepted: false, message: `${foeForce.name.zh}拒不聽責 — 置我書於不顧。` };
+        }
+        return { ok: true, accepted: true, myVoiceId: myVoice.id, foeVoiceId: foeVoice.id };
+      },
+      settleParley: (kind, targetForceId, myVoiceId, foeVoiceId, outcome, routed) => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid) return { ok: false, message: '' };
+        const foeForce = state.forces[targetForceId];
+        const myVoice = state.officers[myVoiceId];
+        const foeVoice = state.officers[foeVoiceId];
+        if (!foeForce || !myVoice || !foeVoice) return { ok: false, message: '' };
+        const key = pairKey(pid, targetForceId);
+        const rel = getRelation(state.diplomacy, pid, targetForceId);
+        let msg = '';
+        if (kind === 'concord') {
+          // 樽俎定和 — the pact binds either way; the bout decided who pays.
+          const stakes = concordStakes(outcome, outcome === 'win' ? foeVoice : outcome === 'loss' ? myVoice : null);
+          set({
+            diplomacy: { relations: { ...state.diplomacy.relations, [key]: {
+              ...rel, status: 'non-aggression',
+              score: Math.min(100, rel.score + stakes.scoreDelta),
+              expiresAt: addDiploSeasons(state.date, stakes.napSeasons),
+            } } },
+            grudges: { ...state.grudges, [targetForceId]: Math.max(0, (state.grudges[targetForceId] ?? 0) - stakes.grudgeEase) },
+          });
+          if (stakes.indemnity > 0) {
+            if (outcome === 'win') get().settleDuelTribute(targetForceId, pid, stakes.indemnity);
+            else get().settleDuelTribute(pid, targetForceId, stakes.indemnity);
+          }
+          msg = outcome === 'win'
+            ? `折衝樽俎!${foeForce.name.zh}罷兵納金 ${stakes.indemnity},互不侵犯 ${stakes.napSeasons} 季。`
+            : outcome === 'loss'
+              ? `辯負猶得和 — 兩國罷兵(我納金 ${stakes.indemnity}),互不侵犯 ${stakes.napSeasons} 季。`
+              : `各執一詞 — 兩國仍罷樽俎之爭,互不侵犯 ${stakes.napSeasons} 季。`;
+          get().recordAnnal({
+            year: state.date.year, season: state.date.season, kind: 'event',
+            titleZh: '折衝樽俎',
+            textZh: outcome === 'win'
+              ? `${myVoice.name.zh} 樽俎之間辯服 ${foeForce.name.zh} 之 ${foeVoice.name.zh} — 不戰而屈人之兵,兩國修好。`
+              : `${myVoice.name.zh} 與 ${foeVoice.name.zh} 折衝樽俎,兩國罷兵修好。`,
+            cityId: null,
+          });
+        } else {
+          // 責讓索貢 — a won lecture squeezes gold; either way the air chills.
+          const stakes = tributeStakes(outcome, routed, foeVoice);
+          set({
+            diplomacy: { relations: { ...state.diplomacy.relations, [key]: { ...rel, score: Math.max(-100, rel.score + stakes.scoreDelta) } } },
+            grudges: { ...state.grudges, [targetForceId]: Math.min(999, (state.grudges[targetForceId] ?? 0) + stakes.grudgeGrow) },
+          });
+          if (stakes.gold > 0) get().settleDuelTribute(targetForceId, pid, stakes.gold);
+          msg = outcome === 'win'
+            ? `${foeForce.name.zh}理屈詞窮,納貢 ${stakes.gold} 金${routed ? '(罵倒,倍益)' : ''} — 然積怨益深。`
+            : outcome === 'loss'
+              ? `${foeVoice.name.zh} 反唇相稽,我使者語塞而還 — 徒失顏面。`
+              : '各執一詞,不了了之。';
+          if (outcome === 'win') {
+            get().recordAnnal({
+              year: state.date.year, season: state.date.season, kind: 'event',
+              titleZh: '責讓索貢',
+              textZh: `${myVoice.name.zh} 銜命責讓 ${foeForce.name.zh},辯服其庭,得貢金 ${stakes.gold}。`,
+              cityId: null,
+            });
+          }
+        }
+        if (outcome === 'win') get().recordDeed(myVoiceId, { debatesWon: 1, ...(routed ? { debateRouts: 1 } : {}) });
+        if (outcome === 'loss' && isEmotional(myVoice)) get().afflictOfficer(myVoiceId, debateShame());
+        get().notify(`折衝樽俎 · ${msg}`, `Parley settled with ${foeForce.name.en}`);
+        return { ok: true, message: msg };
+      },
+      proposePersuadeCity: (cityId, envoyId) => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid) return { ok: false, reason: 'no-force' };
+        const city = state.cities[cityId];
+        const envoy = state.officers[envoyId];
+        if (!city || !city.ownerForceId || city.ownerForceId === pid) return { ok: false, reason: 'no-target' };
+        if (!envoy || envoy.forceId !== pid) return { ok: false, reason: 'no-envoy' };
+        const ownerForce = state.forces[city.ownerForceId];
+        if (!ownerForce) return { ok: false, reason: 'no-force' };
+        const gate = canPersuadeCity(city, ownerForce.capitalCityId === cityId);
+        if (!gate.ok) return { ok: false, reason: gate.reason };
+        const player = state.forces[pid];
+        const capital = player ? state.cities[player.capitalCityId] : null;
+        if (!capital || capital.gold < PERSUADE_COST) return { ok: false, reason: 'no-gold' };
+        const defender = pickGateKeeper(state.officers, cityId, city.ownerForceId);
+        if (!defender) return { ok: false, reason: 'no-defender' };
+        set({ cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold - PERSUADE_COST } } });
+        const rel = getRelation(state.diplomacy, pid, city.ownerForceId);
+        const accepted = willAcceptParley(defender, envoy, rel.score, Math.random);
+        if (!accepted) return { ok: true, accepted: false, message: `${city.name.zh}閉門不納 — 使者徒勞而返。` };
+        return { ok: true, accepted: true, defenderId: defender.id };
+      },
+      settlePersuadeCity: (cityId, envoyId, defenderId, outcome, routed) => {
+        const state = get();
+        const pid = state.playerForceId;
+        if (!pid) return { ok: false, message: '' };
+        const city = state.cities[cityId];
+        const envoy = state.officers[envoyId];
+        const defender = state.officers[defenderId];
+        if (!city || !city.ownerForceId || !envoy || !defender) return { ok: false, message: '' };
+        const oldOwnerId = city.ownerForceId;
+        const oldOwner = state.forces[oldOwnerId];
+        const stakes = persuadeStakes(outcome, routed);
+        // Relations with the wall's owner always shift.
+        const key = pairKey(pid, oldOwnerId);
+        const rel = getRelation(state.diplomacy, pid, oldOwnerId);
+        const relations = { ...state.diplomacy.relations, [key]: { ...rel, score: Math.max(-100, rel.score + stakes.scoreDelta) } };
+        let msg = '';
+        if (stakes.cityFalls) {
+          // 開城來降 — the wall changes hands without a corpse; the persuaded keeper
+          // comes over, and his old comrades in the city withdraw to their capital.
+          const officers = { ...state.officers };
+          for (const o of Object.values(state.officers)) {
+            if (o.forceId === oldOwnerId && o.locationCityId === cityId && o.id !== defenderId && oldOwner) {
+              officers[o.id] = { ...o, locationCityId: oldOwner.capitalCityId };
+            }
+          }
+          officers[defenderId] = { ...defender, forceId: pid, loyalty: 55, task: null, locationCityId: cityId };
+          set({
+            cities: { ...state.cities, [cityId]: { ...city, ownerForceId: pid, loyalty: Math.max(25, Math.min(55, city.loyalty)) } },
+            officers,
+            diplomacy: { relations },
+          });
+          msg = `${envoy.name.zh} 三寸之舌勝百萬之師 — ${defender.name.zh} 為之折服,${city.name.zh} 開城來降!`;
+          get().recordAnnal({
+            year: state.date.year, season: state.date.season, kind: 'event',
+            titleZh: '舌戰說降',
+            textZh: msg,
+            cityId,
+          });
+          get().recordDeed(envoyId, { debatesWon: 1, debateRouts: 1 });
+        } else if (outcome === 'win') {
+          const exodus = Math.round(city.troops * stakes.garrisonExodus);
+          set({
+            cities: { ...state.cities, [cityId]: { ...city, troops: Math.max(200, city.troops - exodus), loyalty: Math.max(10, city.loyalty - 10) } },
+            diplomacy: { relations },
+          });
+          msg = `${envoy.name.zh} 辯勝 ${defender.name.zh} — ${city.name.zh} 軍心離散,${exodus} 卒宵遁,然城門未開。`;
+          get().recordDeed(envoyId, { debatesWon: 1 });
+        } else {
+          set({ diplomacy: { relations } });
+          msg = outcome === 'loss'
+            ? `${defender.name.zh} 據理拒之,${envoy.name.zh} 語塞而返 — ${city.name.zh} 守志愈堅。`
+            : `${envoy.name.zh} 與 ${defender.name.zh} 城下相持,各執一詞;守卒亦有數十人心動宵遁。`;
+          if (outcome === 'loss' && isEmotional(envoy)) get().afflictOfficer(envoyId, debateShame());
+        }
+        get().notify(`舌戰說降 · ${msg}`, `The envoy's argument at ${city.name.en} is settled`);
+        return { ok: true, message: msg };
       },
       seizeMoonLaurel: (challengerId, won) => {
         const state = get();

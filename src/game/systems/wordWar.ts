@@ -236,6 +236,10 @@ export interface DebateBout {
   dRally: boolean;
   difficulty: DebateDifficulty; // AI skill tier for the foe (side 'd')
   topic?: DebateTopic; // 論題 — what the debate is about; rewards apt arguments
+  /** 引時事 (§6.16) — a side armed with a real chronicle entry cites it as
+   *  evidence: their 引 bites this much harder (default 1 = no ammo). */
+  aCiteMul?: number;
+  dCiteMul?: number;
   round: number;
   over: boolean;
   winner?: 'a' | 'd' | 'draw';
@@ -283,7 +287,7 @@ export function schoolMoveFor(o: Officer | DebatePersona): DebateMove {
 /** 流派招式 — moves that are only available to a matching school. */
 export const SCHOOL_MOVES: DebateMove[] = ['analogy', 'rebuke', 'deceive'];
 
-export function initDebate(me: Officer, foe: Officer, difficulty: DebateDifficulty = 'veteran', topic?: DebateTopic): DebateBout {
+export function initDebate(me: Officer, foe: Officer, difficulty: DebateDifficulty = 'veteran', topic?: DebateTopic, opts?: { aCiteMul?: number; dCiteMul?: number }): DebateBout {
   const aPersona = debatePersona(me);
   const dPersona = debatePersona(foe);
   // 文辯修為 — a drilled scholar opens sharper, steadier, with the 腹稿 banked (§6.14).
@@ -303,8 +307,32 @@ export function initDebate(me: Officer, foe: Officer, difficulty: DebateDifficul
     audience: 0, aRally: false, dRally: false,
     difficulty,
     topic: topic ?? defaultTopicFor(me, foe),
+    aCiteMul: opts?.aCiteMul, dCiteMul: opts?.dCiteMul,
     round: 0, over: false,
   };
+}
+
+// ─── 引時事 — the realm's own chronicle becomes debate ammunition ─────────────
+/**
+ * 引時事 (§6.16) — scan the running 事件簿 for a recent entry that touches the
+ * foe (their name, or their realm's) and arm the debater's 引 with it:「君不見
+ * ○○之事乎?」 A cite backed by a real, recent record bites deeper (×1.3).
+ * Returns the entry to quote, or null when history offers nothing.
+ */
+export const CITE_AMMO_MUL = 1.3;
+export const CITE_AMMO_LOOKBACK = 16;
+export function pickCiteAmmo(
+  annals: Array<{ titleZh: string; textZh: string }>,
+  needles: string[],
+): { titleZh: string; textZh: string } | null {
+  const clean = needles.filter((n) => n && n.length >= 2);
+  if (!clean.length) return null;
+  // Newest first — the freshest wound stings most.
+  for (let i = annals.length - 1, seen = 0; i >= 0 && seen < CITE_AMMO_LOOKBACK; i--, seen++) {
+    const a = annals[i];
+    if (clean.some((n) => a.textZh.includes(n) || a.titleZh.includes(n))) return { titleZh: a.titleZh, textZh: a.textZh };
+  }
+  return null;
 }
 
 // Each move's win set. The base ring (論>諷>駁>論) and 詰's relationships are
@@ -381,13 +409,16 @@ export function debateRound(
   const chainMul = (side: 'a' | 'd') => ((side === 'a' ? aChain : dChain) ? 1.3 : 1);
   // 切中要害 — an argument apt to the 論題 bites deeper.
   const topicMul = (move: DebateMove) => (topicFavors(b.topic, move) ? TOPIC_DMG_MUL : 1);
+  // 引時事 — a cite armed with a real chronicle entry bites deeper still (§6.16).
+  const citeMul = (move: DebateMove, side: 'a' | 'd') =>
+    move === 'cite' ? (side === 'a' ? b.aCiteMul ?? 1 : b.dCiteMul ?? 1) : 1;
   const dmgFrom = (move: DebateMove, winP: number, loseP: number): number => {
     const adv = Math.max(-6, Math.min(20, (winP - loseP) * 0.4));
     return Math.max(6, Math.round((DMG_BASE[move] ?? 18) + adv + rng() * 8));
   };
-  // The composure a landed argument costs: base × 連辯 chain × 論題 fit.
+  // The composure a landed argument costs: base × 連辯 chain × 論題 fit × 引時事.
   const land = (move: DebateMove, winP: number, loseP: number, side: 'a' | 'd') =>
-    Math.round(dmgFrom(move, winP, loseP) * chainMul(side) * topicMul(move));
+    Math.round(dmgFrom(move, winP, loseP) * chainMul(side) * topicMul(move) * citeMul(move, side));
 
   let roundWinner: 'a' | 'd' | 'draw' = 'draw';
   let dmgToA = 0, dmgToD = 0;

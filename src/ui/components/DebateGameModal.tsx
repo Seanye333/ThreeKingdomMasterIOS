@@ -2,9 +2,10 @@ import { useRef, useState } from 'react';
 import type { Officer } from '../../game/types';
 import {
   initDebate, debateRound, aiDebateMove, debateMoraleDeltas, PRESS_MOMENTUM_COST, debateMoveCost, schoolMoveFor, SCHOOL_MOVES,
-  topicFavors, TOPIC_LABEL,
+  topicFavors, TOPIC_LABEL, pickCiteAmmo, CITE_AMMO_MUL,
   type DebateMove, type DebateBout, type DebateDifficulty, type DebateTopic,
 } from '../../game/systems/wordWar';
+import { useGameStore } from '../../game/state/store';
 import { OfficerPortrait } from './OfficerPortrait';
 import { playSfx, speakLine } from '../../game/systems/sound';
 import { debateMoveLine, debateRoutLine } from '../../game/data/battleLines';
@@ -62,7 +63,21 @@ export function DebateGameModal({
   const t = useT();
   const lang = useLanguage();
   const reduced = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  const [bout, setBout] = useState<DebateBout>(() => initDebate(me, foe, difficulty, topic));
+  // 引時事 (§6.16) — arm each side's 引 with a recent chronicle entry touching the
+  // OTHER side (their name or their realm's):「君不見○○之事乎?」 Computed once.
+  const [ammo] = useState(() => {
+    const st = useGameStore.getState();
+    const annals = st.annals ?? [];
+    const forceNameOf = (o: Officer) => (o.forceId ? st.forces[o.forceId]?.name.zh : undefined);
+    return {
+      mine: pickCiteAmmo(annals, [foe.name.zh, forceNameOf(foe) ?? '']),
+      foes: pickCiteAmmo(annals, [me.name.zh, forceNameOf(me) ?? '']),
+    };
+  });
+  const [bout, setBout] = useState<DebateBout>(() => initDebate(me, foe, difficulty, topic, {
+    aCiteMul: ammo.mine ? CITE_AMMO_MUL : undefined,
+    dCiteMul: ammo.foes ? CITE_AMMO_MUL : undefined,
+  }));
   const [log, setLog] = useState<string[]>([]);
   // 佔理演出 — per-round retort feedback: who lost composure, by how much, with
   // a key so the glint / shake / float replay even on a repeat hit.
@@ -89,6 +104,12 @@ export function DebateGameModal({
       const who = res.rally === 'a' ? nm(me) : nm(foe);
       setLog((l) => [`📣 ${who} ${t('博得滿堂附和 — 下一論必中!', 'wins the hall — next argument lands clean!')}`, ...l].slice(0, 7));
       playSfx('shout');
+    }
+    // 引時事 — a cite backed by a real chronicle entry lands with the record read aloud.
+    if (res.roundWinner === 'a' && move === 'cite' && ammo.mine) {
+      setLog((l) => [`📜 ${nm(me)} ${t(`引「${ammo.mine!.titleZh}」為證 — 君不見此事乎!`, `cites the chronicle — "${ammo.mine!.titleZh}"!`)}`, ...l].slice(0, 7));
+    } else if (res.roundWinner === 'd' && foeMove === 'cite' && ammo.foes) {
+      setLog((l) => [`📜 ${nm(foe)} ${t(`引「${ammo.foes!.titleZh}」相詰,辭鋒逼人!`, `cites the chronicle — "${ammo.foes!.titleZh}"!`)}`, ...l].slice(0, 7));
     }
     // 連辯 — note a completed argument chain.
     if (res.chain) {

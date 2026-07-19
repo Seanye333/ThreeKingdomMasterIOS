@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { debateProwess, type DebateDifficulty } from '../../game/systems/wordWar';
 import { moonBoard, moonScore, pickMoonLaurel, pickMoonChallenger, canOrate } from '../../game/systems/scholarRank';
+import { resolveTeamDebate, type TeamDebateResult } from '../../game/systems/teamDebate';
 import { debateShame, isEmotional } from '../../game/systems/afflictions';
 import { DEBATE_SCENARIOS, scenarioOutcome, scenarioResultLine, type DebateScenario } from '../../game/systems/debateScenarios';
 import { trainKey, trainsLeft, TRAIN_PER_SEASON } from '../../game/systems/sparLimit';
@@ -34,7 +35,9 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
   const recordDeed = useGameStore((s) => s.recordDeed);
   const applyScenarioEffects = useGameStore((s) => s.applyScenarioEffects);
 
-  const [mode, setMode] = useState<'spar' | 'story' | 'gauntlet' | 'moon'>('spar');
+  const [mode, setMode] = useState<'spar' | 'story' | 'gauntlet' | 'moon' | 'team'>('spar');
+  // 朝堂合辯 (§6.17) — the auto-resolved 2v2 hall melee's last result, for the log.
+  const [teamResult, setTeamResult] = useState<TeamDebateResult | null>(null);
   // 舌戰群儒 — a champion faces a line of opposing scholars, one after another.
   const [gauntlet, setGauntlet] = useState<{ championId: string; foeIds: string[]; idx: number; wins: number } | null>(null);
   // 月旦評 — an interactive bout for (or in defense of) the 魁首 laurel (§6.15).
@@ -274,20 +277,90 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
 
   return (
     <Modal onClose={onClose} title={t('論辯場', 'Debate Ground')} icon="💬" width="min(560px, 100%)" scrollBody>
-      {/* 切磋 / 劇情 / 群儒 / 月旦 */}
+      {/* 切磋 / 劇情 / 群儒 / 月旦 / 合辯 */}
       <div style={{ display: 'flex', gap: 6, marginBottom: '0.8rem' }}>
-        {(['spar', 'story', 'gauntlet', 'moon'] as const).map((m) => (
+        {(['spar', 'story', 'gauntlet', 'moon', 'team'] as const).map((m) => (
           <button
             key={m}
-            onClick={() => { setMode(m); setResult(null); }}
+            onClick={() => { setMode(m); setResult(null); setTeamResult(null); }}
             style={{
               flex: 1, padding: '0.4rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'var(--tkm-font-body)', fontSize: '0.84rem',
               background: mode === m ? 'rgba(136,183,232,0.18)' : '#10161e',
               border: `1px solid ${mode === m ? '#88b7e8' : '#26323e'}`, color: mode === m ? '#d8ecff' : '#8a96a0',
             }}
-          >{m === 'spar' ? t('切磋', 'Spar') : m === 'story' ? t('劇情', 'Scenarios') : m === 'gauntlet' ? t('群儒', 'Gauntlet') : t('月旦', 'Moon-Rank')}</button>
+          >{m === 'spar' ? t('切磋', 'Spar') : m === 'story' ? t('劇情', 'Scenarios') : m === 'gauntlet' ? t('群儒', 'Gauntlet') : m === 'moon' ? t('月旦', 'Moon-Rank') : t('合辯', 'Joint')}</button>
         ))}
       </div>
+
+      {mode === 'team' && (() => {
+        // 朝堂合辯 — your two voices vs the two keenest hostile tongues.
+        const foePair = Object.values(officers)
+          .filter((o) => o.forceId !== playerForceId && canOrate(o) && o.forceId)
+          .sort((x, y) => debateProwess(y) - debateProwess(x))
+          .slice(0, 2);
+        const teamReady = !!(a && b && aId !== bId) && foePair.length >= 1 && debateLeftFor(aId) > 0 && debateLeftFor(bId) > 0;
+        return (<>
+          <div style={{ fontSize: '0.8rem', color: '#aab6c0', marginBottom: '0.8rem', lineHeight: 1.6 }}>
+            {t('朝堂合辯 — 遣主辯、副辯二人同赴殿上,與敵方二士並席而辯。同派合辯相得益彰;寡不敵眾者一回只擋最利一問。',
+              'A joint debate — send a lead and a second against the enemy\'s two keenest tongues. Like-schooled partners compound; an outnumbered voice parries only the sharpest thrust each round.')}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: '0.6rem' }}>
+            <span style={{ color: '#f2dd9a', fontSize: '0.86rem' }}>{a ? pickName(a.name, lang) : t('主辯?', 'Lead?')}</span>
+            <span style={{ color: '#8ec8a0', fontSize: '0.86rem' }}>{b ? `+ ${pickName(b.name, lang)}` : t('+ 副辯?', '+ Second?')}</span>
+            <span style={{ color: '#7a8893' }}>vs</span>
+            {foePair.map((f) => (
+              <span key={f.id} style={{ fontSize: '0.72rem', color: '#9aa6b0', background: '#10161e', border: '1px solid #26323e', borderRadius: 'var(--tkm-radius-sm)', padding: '0.1rem 0.4rem' }}>
+                {pickName(f.name, lang)} · {debateProwess(f)}
+              </span>
+            ))}
+          </div>
+          <button
+            disabled={!teamReady}
+            onClick={() => {
+              if (!a || !b || !teamReady) return;
+              setResult(null);
+              recordTrainingUse('debate', [a.id, b.id]);
+              const res = resolveTeamDebate([a, b], foePair);
+              setTeamResult(res);
+              const won = res.winner === 'a';
+              if (won) {
+                for (const v of res.a.filter((v) => !v.downed)) {
+                  grantOfficerXp(v.id, 24, ['intelligence', 'charisma']);
+                  recordDeed(v.id, { debatesWon: 1 });
+                }
+              }
+              // 羞憤 — an emotional voice argued down stews on it (both benches).
+              for (const v of [...res.a, ...res.b].filter((v) => v.downed)) {
+                if (isEmotional(v.officer)) afflictOfficer(v.id, debateShame());
+              }
+              setResult({
+                text: won
+                  ? t('我方合辯得理 — 滿殿折服!', 'Your pair carries the hall!')
+                  : res.winner === 'b'
+                    ? t('彼方伶牙俐齒,我方合辯失利。', 'Their pair out-argues yours.')
+                    : t('兩造各執一詞,殿上不了了之。', 'The hall adjourns undecided.'),
+                notes: [],
+              });
+            }}
+            style={{
+              width: '100%', padding: '0.6rem', marginBottom: '0.8rem',
+              background: teamReady ? 'linear-gradient(180deg,#234a6e,#13283e)' : '#1e2832',
+              border: `1px solid ${teamReady ? '#88b7e8' : '#2b3845'}`,
+              color: teamReady ? '#d8ecff' : '#5f6c76', cursor: teamReady ? 'pointer' : 'default',
+              fontFamily: 'var(--tkm-font-body)', fontSize: '1rem', letterSpacing: '0.1rem',
+            }}
+          >🏛 {foePair.length === 0 ? t('無對手可辯', 'No opponents present') : t('殿上合辯', 'Begin the Joint Debate')}</button>
+          {teamResult && (
+            <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid #3a4754', borderRadius: 'var(--tkm-radius)', padding: '0.5rem 0.7rem', marginBottom: '0.8rem' }}>
+              <div style={{ fontSize: '0.72rem', color: '#9aa6b0', marginBottom: 4 }}>{t(`合辯 ${teamResult.rounds} 回合`, `${teamResult.rounds} rounds`)}</div>
+              {teamResult.log.map((l, i) => (
+                <div key={i} style={{ fontSize: '0.78rem', color: '#cfe0ff', lineHeight: 1.6 }}>{lang === 'en' ? l.en : l.zh}</div>
+              ))}
+              {teamResult.log.length === 0 && <div style={{ fontSize: '0.78rem', color: '#7a8893' }}>{t('唇槍舌劍往還,無人語塞。', 'Barbs flew; no one was argued down.')}</div>}
+            </div>
+          )}
+        </>);
+      })()}
 
       {mode === 'moon' && (() => {
         const holderIsMine = !!seatHolder && seatHolder.forceId === playerForceId;
@@ -503,7 +576,7 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
           // 論辯冷卻 — a talked-out officer can't be fielded in 切磋 or 群儒
           // (deselect still works).
           const left = trainsLeft(debateUsage ?? {}, o.id, seasonKey);
-          const winded = (mode === 'spar' || mode === 'gauntlet' || mode === 'moon') && left <= 0 && !sel;
+          const winded = (mode === 'spar' || mode === 'gauntlet' || mode === 'moon' || mode === 'team') && left <= 0 && !sel;
           return (
             <button
               key={o.id}
@@ -524,7 +597,7 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
                   <OfficerStats officer={o} keys={['intelligence', 'charisma']} /> · {t('等', 'Lv')}{officerLevel(o)}
                 </span>
               </span>
-              {(mode === 'spar' || mode === 'gauntlet' || mode === 'moon') && (
+              {(mode === 'spar' || mode === 'gauntlet' || mode === 'moon' || mode === 'team') && (
                 <span style={{ fontSize: '0.7rem', color: winded ? '#7fa8d8' : '#7a8893', whiteSpace: 'nowrap' }}>
                   {winded ? t('歇', 'Rest') : `辯 ${left}/${TRAIN_PER_SEASON}`}
                 </span>

@@ -16,7 +16,9 @@ import { getRelation } from '../../game/types';
 import { MarriagePicker } from './MarriagePicker';
 import { HostagePicker } from './HostagePicker';
 import { Duel3DStage } from './duel/Duel3DStage';
+import { Debate3DStage } from './debate/Debate3DStage';
 import { PEACE_DUEL_COST } from '../../game/systems/duelDiplomacy';
+import { CONCORD_COST, TRIBUNE_COST, PERSUADE_COST, canPersuadeCity, pickCourtVoice } from '../../game/systems/debateDiplomacy';
 import { Icon } from './Icon';
 import { Name } from './Name';
 import { useT } from '../i18n';
@@ -77,6 +79,13 @@ export function DiplomacyModal({ onClose }: Props) {
   const settlePeaceDuel = useGameStore((s) => s.settlePeaceDuel);
   // 決鬥定和 — an accepted proposal fights ONE non-lethal championship bout.
   const [peaceDuel, setPeaceDuel] = useState<{ forceId: EntityId; meId: EntityId; foeId: EntityId } | null>(null);
+  // 折衝樽俎 (§6.16) — an accepted parley argues out at the table instead.
+  const proposeParley = useGameStore((s) => s.proposeParley);
+  const settleParley = useGameStore((s) => s.settleParley);
+  const proposePersuadeCity = useGameStore((s) => s.proposePersuadeCity);
+  const settlePersuadeCity = useGameStore((s) => s.settlePersuadeCity);
+  const [parley, setParley] = useState<{ kind: 'concord' | 'tribute'; forceId: EntityId; meId: EntityId; foeId: EntityId } | null>(null);
+  const [persuade, setPersuade] = useState<{ cityId: EntityId; envoyId: EntityId; defenderId: EntityId } | null>(null);
   const exactTribute = useGameStore((s) => s.exactTribute);
   const dissolveTribute = useGameStore((s) => s.dissolveTribute);
   const proposeDefensivePact = useGameStore((s) => s.proposeDefensivePact);
@@ -384,6 +393,70 @@ export function DiplomacyModal({ onClose }: Props) {
                     ⚔ {t('決鬥定和', 'Peace Duel')} ({PEACE_DUEL_COST}{t('金', 'g')})
                   </button>
                   <button
+                    className={styles.napBtn}
+                    onClick={() => {
+                      const r = proposeParley('concord', row.id);
+                      if (!r.ok) {
+                        setFeedback({ forceId: row.id, text: r.reason === 'no-gold' ? t(`需 ${CONCORD_COST} 金設樽俎之會。`, `Needs ${CONCORD_COST} gold for the banquet.`) : r.reason === 'foe-no-voice' ? t('彼國無士可辯。', 'They have no voice to send.') : t('無法折衝樽俎。', 'Cannot propose a parley.'), accepted: false });
+                        return;
+                      }
+                      if (!r.accepted) { setFeedback({ forceId: row.id, text: r.message ?? '', accepted: false }); return; }
+                      setParley({ kind: 'concord', forceId: row.id, meId: r.myVoiceId!, foeId: r.foeVoiceId! });
+                    }}
+                    disabled={row.relation.status !== 'neutral' || playerCapitalGold < CONCORD_COST}
+                    title={t('折衝樽俎 — 兩國各出一士,舌戰一場息兵:無論勝負皆締互不侵犯;辯負者納金。不戰而屈人之兵。', 'Parley of concord — each realm sends its keenest tongue for ONE debate; either way both swear non-aggression, the loser pays. War settled over the banquet table.')}
+                  >
+                    💬 {t('折衝定和', 'Concord Parley')} ({CONCORD_COST}{t('金', 'g')})
+                  </button>
+                  <button
+                    className={styles.tributeBtn}
+                    onClick={() => {
+                      const r = proposeParley('tribute', row.id);
+                      if (!r.ok) {
+                        setFeedback({ forceId: row.id, text: r.reason === 'no-gold' ? t(`需 ${TRIBUNE_COST} 金遣使齎書。`, `Needs ${TRIBUNE_COST} gold for the envoy.`) : t('無法責讓。', 'Cannot send the remonstrance.'), accepted: false });
+                        return;
+                      }
+                      if (!r.accepted) { setFeedback({ forceId: row.id, text: r.message ?? '', accepted: false }); return; }
+                      setParley({ kind: 'tribute', forceId: row.id, meId: r.myVoiceId!, foeId: r.foeVoiceId! });
+                    }}
+                    disabled={playerCapitalGold < TRIBUNE_COST}
+                    title={t('責讓索貢 — 遣辯士數其之罪,辯服其庭則納貢輸金;然無論成敗皆傷和氣、積其怨。', 'Remonstrance — send an envoy to read them their sins; out-argue their court and they pay tribute. Either way the air chills.')}
+                  >
+                    📜 {t('責讓索貢', 'Demand Tribute')} ({TRIBUNE_COST}{t('金', 'g')})
+                  </button>
+                  {/* 舌戰說降 — a weakly-held wall of theirs may be argued open. */}
+                  {(() => {
+                    const targets = Object.values(cities).filter((c) =>
+                      c.ownerForceId === row.id && canPersuadeCity(c, forces[row.id]?.capitalCityId === c.id).ok);
+                    if (!targets.length) return null;
+                    const envoy = playerForceId ? pickCourtVoice(officers, playerForceId) : null;
+                    return (
+                      <select
+                        defaultValue=""
+                        disabled={playerCapitalGold < PERSUADE_COST || !envoy}
+                        onChange={(e) => {
+                          const cid = e.target.value;
+                          if (!cid || !envoy) return;
+                          e.target.value = '';
+                          const r = proposePersuadeCity(cid, envoy.id);
+                          if (!r.ok) {
+                            setFeedback({ forceId: row.id, text: r.reason === 'no-gold' ? t(`需 ${PERSUADE_COST} 金遣使赴城。`, `Needs ${PERSUADE_COST} gold for the envoy.`) : t('此城不可說降。', 'That wall will not hear it.'), accepted: false });
+                            return;
+                          }
+                          if (!r.accepted) { setFeedback({ forceId: row.id, text: r.message ?? '', accepted: false }); return; }
+                          setPersuade({ cityId: cid, envoyId: envoy.id, defenderId: r.defenderId! });
+                        }}
+                        title={t(`舌戰說降 — 遣辯士至其弱城(守軍≤2500)城下論戰:罵倒守將則開城來降;辯勝亦令其軍心離散。耗 ${PERSUADE_COST} 金。`, `Persuade a weakly-held city (garrison ≤2500): rout its keeper in argument and the gates open without a corpse. ${PERSUADE_COST} gold.`)}
+                        style={{ padding: '0.2rem 0.3rem', borderRadius: 4, background: '#10161e', border: '1px solid #8ec8a0', color: '#bfe6cf', fontSize: '0.76rem', fontFamily: 'inherit' }}
+                      >
+                        <option value="">🏯 {t('舌戰說降…', 'Persuade a city…')} ({PERSUADE_COST}{t('金', 'g')})</option>
+                        {targets.map((c) => (
+                          <option key={c.id} value={c.id}>{t(c.name.zh, c.name.en)} · {t('守', 'grn')} {c.troops}</option>
+                        ))}
+                      </select>
+                    );
+                  })()}
+                  <button
                     className={styles.tributeBtn}
                     onClick={() =>
                       handle(row.id, () => payTribute(row.id, 100))
@@ -688,6 +761,38 @@ export function DiplomacyModal({ onClose }: Props) {
               const oc = outcome.winner === 'attacker' ? 'win' : outcome.winner === 'defender' ? 'loss' : 'draw';
               const r = settlePeaceDuel(pd.forceId, pd.meId, pd.foeId, oc);
               setFeedback({ forceId: pd.forceId, text: r.message, accepted: oc !== 'loss' });
+            }}
+          />
+        )}
+        {/* 折衝樽俎 — the accepted parley argues out here: ONE war of words at the
+            table, then settleParley applies the terms either way. */}
+        {parley && officers[parley.meId] && officers[parley.foeId] && (
+          <Debate3DStage
+            me={officers[parley.meId]}
+            foe={officers[parley.foeId]}
+            difficulty="peerless"
+            onComplete={(outcome) => {
+              const p = parley;
+              setParley(null);
+              const oc = outcome.winner === 'me' ? 'win' : outcome.winner === 'foe' ? 'loss' : 'draw';
+              const r = settleParley(p.kind, p.forceId, p.meId, p.foeId, oc, outcome.winner === 'me' && outcome.routed);
+              setFeedback({ forceId: p.forceId, text: r.message, accepted: oc !== 'loss' });
+            }}
+          />
+        )}
+        {/* 舌戰說降 — the envoy argues at the wall; a 罵倒 opens the gates. */}
+        {persuade && officers[persuade.envoyId] && officers[persuade.defenderId] && (
+          <Debate3DStage
+            me={officers[persuade.envoyId]}
+            foe={officers[persuade.defenderId]}
+            difficulty="peerless"
+            onComplete={(outcome) => {
+              const p = persuade;
+              setPersuade(null);
+              const oc = outcome.winner === 'me' ? 'win' : outcome.winner === 'foe' ? 'loss' : 'draw';
+              const owner = cities[p.cityId]?.ownerForceId;
+              const r = settlePersuadeCity(p.cityId, p.envoyId, p.defenderId, oc, outcome.winner === 'me' && outcome.routed);
+              if (owner) setFeedback({ forceId: owner, text: r.message, accepted: oc === 'win' });
             }}
           />
         )}
