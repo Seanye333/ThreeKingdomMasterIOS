@@ -3,7 +3,7 @@
 > 由 `scripts/gen-catalog.ts` 自動生成,請勿手改;重生成:`npm run docs:catalog`。
 > 可讀摘要見 [GUIDE.md](GUIDE.md) 附錄。
 
-## 名品 Items(1412)
+## 名品 Items(1415)
 
 | 名 | 類 | 出處城 | 加成 |
 |---|---|---|---|
@@ -1419,6 +1419,9 @@
 | 五兵秘訣 Secret Art of the Five Weapons | book | luoyang |  |
 | 越女劍經 The Sword Canon | book | kuaiji |  |
 | 養由基射訣 Yang Youji’s Archery Codex | book | wan |  |
+| 鬼谷子 The Guiguzi | book | luoyang |  |
+| 春秋公羊傳 The Gongyang Commentary | book | beihai |  |
+| 鹽鐵論 Discourses on Salt and Iron | book | changan |  |
 
 ## 政策 Policies(161)
 
