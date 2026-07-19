@@ -497,13 +497,16 @@ function RealFighter({ action, pack, weaponClass, tint, timeScale }: { action: F
 // ─────────────────────────── one positioned fighter ────────────────────────
 
 function Fighter({
-  side, tunic, action, name, weaponClass, timeScale,
-}: { side: 'left' | 'right'; tunic: string; action: FighterAction; name: string; weaponClass: WeaponClass; timeScale: number }) {
-  const x = side === 'left' ? -0.95 : 0.95;
+  side, tunic, action, name, weaponClass, timeScale, pos,
+}: { side: 'left' | 'right'; tunic: string; action: FighterAction; name: string; weaponClass: WeaponClass; timeScale: number;
+  /** 團戰站位 — optional (x, z) override so several fighters share the ring. */
+  pos?: [number, number] }) {
+  const x = pos ? pos[0] : side === 'left' ? -0.95 : 0.95;
+  const z = pos ? pos[1] : 0;
   // Procedural model is authored facing +X; the right fighter turns to face it.
   const rotY = side === 'left' ? 0 : Math.PI;
   return (
-    <group position={[x, 0, 0]} rotation={[0, rotY, 0]}>
+    <group position={[x, 0, z]} rotation={[0, rotY, 0]}>
       {DUEL_ASSETS_READY
         ? <RealFighter action={action} pack={packForClass(weaponClass)} weaponClass={weaponClass} tint={tunic} timeScale={timeScale} />
         : <ProceduralFighter tunic={tunic} action={action} weaponClass={weaponClass} />}
@@ -1094,6 +1097,22 @@ function PhotoControls() {
 
 export interface DuelArenaEvent extends DuelRoundFx { key: number }
 
+/** 團戰同場 — an extra fighter beyond the principals, staged at a flank slot.
+ *  The host drives each one's animation/state; `gone` empties the slot. */
+export interface ArenaExtra {
+  officer: Officer;
+  name: string;
+  anim?: DuelAnim;
+  stamp?: number;
+  gone?: boolean;
+}
+/** Flank slots for team extras (index-keyed), mirrored for the right side. */
+const EXTRA_SLOTS: Array<[number, number]> = [[-1.85, 0.95], [-1.85, -0.95], [-2.6, 0]];
+function extraSlot(side: 'left' | 'right', i: number): [number, number] {
+  const [x, z] = EXTRA_SLOTS[Math.min(i, EXTRA_SLOTS.length - 1)];
+  return side === 'left' ? [x, z] : [-x, z];
+}
+
 /** Keeps a bad asset (e.g. an FBX FBXLoader can't parse) from crashing the whole
  *  game — the 3D arena just disappears and the duel plays on in the 2D panel. */
 class ArenaErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
@@ -1106,6 +1125,7 @@ class ArenaErrorBoundary extends Component<{ children: ReactNode }, { failed: bo
 function Scene({
   left, right, leftName, rightName, leftClass, rightClass, shakeKey, big, timeScale, spark, killKey, killX,
   look, terrain, blood, leftWounds, rightWounds, finisher, photo, leftMount, rightMount, exploitFx, leftGone, rightGone,
+  leftExtras, rightExtras,
 }: {
   left: FighterAction; right: FighterAction; leftName: string; rightName: string;
   leftClass: WeaponClass; rightClass: WeaponClass; shakeKey: number; big: boolean;
@@ -1117,6 +1137,8 @@ function Scene({
   exploitFx: { key: number; x: number; terrain: DuelTerrain } | null;
   /** 落荒而逃 — a fled fighter has left the arena (stop rendering them). */
   leftGone: boolean; rightGone: boolean;
+  /** 團戰同場 — flanking teammates beyond the principals (§6.11). */
+  leftExtras?: ArenaExtra[]; rightExtras?: ArenaExtra[];
 }) {
   const wet = look.weather === 'rain' || look.weather === 'mud';
   const onBridge = terrain === 'bridge';
@@ -1168,6 +1190,17 @@ function Scene({
 
       {!leftGone && <Fighter side="left" tunic={RED} action={left} name={leftName} weaponClass={leftClass} timeScale={timeScale} />}
       {!rightGone && <Fighter side="right" tunic={BLUE} action={right} name={rightName} weaponClass={rightClass} timeScale={timeScale} />}
+      {/* 團戰同場 — teammates hold the flank slots and fall where they stand. */}
+      {(leftExtras ?? []).map((e, i) => !e.gone && (
+        <Fighter key={`le-${e.officer.id}`} side="left" tunic={RED} pos={extraSlot('left', i)}
+          action={{ anim: e.anim ?? 'idle', rot: i + 1, stamp: e.stamp ?? 0 }}
+          name={e.name} weaponClass={weaponClassFor(e.officer)} timeScale={timeScale} />
+      ))}
+      {(rightExtras ?? []).map((e, i) => !e.gone && (
+        <Fighter key={`re-${e.officer.id}`} side="right" tunic={BLUE} pos={extraSlot('right', i)}
+          action={{ anim: e.anim ?? 'idle', rot: i + 3, stamp: e.stamp ?? 0 }}
+          name={e.name} weaponClass={weaponClassFor(e.officer)} timeScale={timeScale} />
+      ))}
       {spark && <HitSpark key={spark.key} position={[spark.x, 1.15, 0]} killed={spark.killed} heavy={spark.heavy} />}
       {blood && <BloodSpray key={`b${blood.key}`} position={[blood.x, 1.05, 0.1]} big={blood.big} />}
       {finisher && <FinisherArc key={`f${finisher.key}`} position={[finisher.x, 1.0, 0]} color={finisher.color} />}
@@ -1186,10 +1219,13 @@ function Scene({
  * a monotonically increasing `key`) and it animates both fighters accordingly.
  */
 export function DuelArena3D({
-  attacker, defender, leftName, rightName, event, terrain = 'plain',
+  attacker, defender, leftName, rightName, event, terrain = 'plain', leftExtras, rightExtras,
 }: {
   attacker: Officer; defender: Officer; leftName: string; rightName: string;
   event: DuelArenaEvent | null; terrain?: DuelTerrain;
+  /** 團戰同場 (§6.11) — flanking teammates beyond the principals; the host drives
+   *  each one's anim/gone state (a downed teammate falls where they stand). */
+  leftExtras?: ArenaExtra[]; rightExtras?: ArenaExtra[];
 }) {
   // Each officer's 3D weapon (drives both the pack and the hand mesh).
   const leftClass = useMemo(() => weaponClassFor(attacker), [attacker]);
@@ -1408,6 +1444,7 @@ export function DuelArena3D({
               look={look} terrain={terrain} blood={blood} leftWounds={leftWounds} rightWounds={rightWounds} finisher={finisher} photo={photo}
               leftMount={unhorsedSides.left ? null : leftMount} rightMount={unhorsedSides.right ? null : rightMount}
               exploitFx={exploitFx} leftGone={goneSides.left} rightGone={goneSides.right}
+              leftExtras={leftExtras} rightExtras={rightExtras}
             />
           </Suspense>
         </Canvas>

@@ -4,7 +4,8 @@ import type { BoutRecord } from '../../game/systems/duelHall';
 import { ladderBoard, ratingTier } from '../../game/systems/warRanking';
 import { NEMESIS_THRESHOLD, type RivalryRecord } from '../../game/systems/rivalries';
 import { resolveDuel, canDuel, staticProwess, weaponClassFor } from '../../game/systems/duel';
-import { resolveTeamDuel, type TeamStation } from '../../game/systems/teamDuel';
+import { resolveTeamDuel, type TeamDuelResult, type TeamStation } from '../../game/systems/teamDuel';
+import { TeamDuel3DStage } from './duel/TeamDuel3DStage';
 import { wagerMultiplier, wagerProfit } from '../../game/systems/wager';
 import { Modal } from './Modal';
 import { OfficerPortrait } from './OfficerPortrait';
@@ -44,6 +45,8 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
   // 團戰演武 — a practice N-vs-M champion melee (no consequences).
   const [meleePick, setMeleePick] = useState('');
   const [meleeResult, setMeleeResult] = useState<{ winner: 'a' | 'b' | 'draw'; log: string[] } | null>(null);
+  // 團戰同場 — the staged 3D playback of the resolved melee (all fighters in-ring).
+  const [meleeStage, setMeleeStage] = useState<TeamDuelResult | null>(null);
   // 站位 — player-set van/rear per teammate (unset = default: bow rear, else van).
   const [stations, setStations] = useState<Record<string, TeamStation>>({});
   const [replay, setReplay] = useState<BoutRecord | null>(null);
@@ -119,6 +122,8 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
     // 站位 — my side fields the player's van/rear picks; the foe fields defaults.
     const res = resolveTeamDuel(mine.map((o) => ({ officer: o, station: stationOf(o) })), foes);
     setMeleeResult({ winner: res.winner, log: res.log.map((l) => (lang === 'en' ? l.en : l.zh)) });
+    // 團戰同場 (§6.11) — stage the whole melee in the 3D ring, everyone on stage.
+    setMeleeStage(res);
   };
 
   const { duelRanks, debateRanks } = useMemo(() => {
@@ -144,6 +149,10 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
 
   if (replay) {
     return <BoutReplay3D rec={replay} onClose={() => setReplay(null)} />;
+  }
+  // 團戰同場 — while the staged melee plays, show only the 3D ring.
+  if (meleeStage) {
+    return <TeamDuel3DStage result={meleeStage} onDone={() => setMeleeStage(null)} />;
   }
 
   const medal = (i: number) => (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`);

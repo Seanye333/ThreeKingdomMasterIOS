@@ -19,7 +19,8 @@ import { categoryOfTactic } from '../../game/data/officerAttributes';
 import { attackUnits, canAttack, canMove, endTurn, hexDistance, moveUnit, resolveBattleEnd, unitAt, tileAt, hexNeighbours, forecastAttack, matchupLabel, battleStratagemSituation, defenderTerrainShield, terrainDamageMod, moveCost, findPath, moveUnitAlong, reachableHexes, isRouting, changeFormation, canChangeFormation, canFortify, fortifyTile, FIELDWORKS_AP_COST, pickAiFormation, formationCounterMul } from '../../game/systems/tactical';
 import { applyBattlePrep, applyStratagem, pickAiBattlePrep, pickDuelChampion, canIssuePreBattleDuel, applyPreBattleDuel, aiMaybePreBattleDuel } from '../../game/systems/tacticalSchemes';
 import { duelDread } from '../../game/systems/duelChallenge';
-import { resolveTeamDuel } from '../../game/systems/teamDuel';
+import { resolveTeamDuel, type TeamDuelResult } from '../../game/systems/teamDuel';
+import { TeamDuel3DStage } from '../components/duel/TeamDuel3DStage';
 import { aiTakeTurn, aiSkillForDifficulty } from '../../game/systems/tacticalAi';
 import { FORMATIONS } from '../../game/data/formations';
 import { canDuel, pickDuelTerrain, rollDuelScar } from '../../game/systems/duel';
@@ -3484,6 +3485,9 @@ export function TacticalBattleScreen3D() {
   // 團戰並擊 — when BOTH champions have adjacent supporters, offer a real N-vs-M
   // melee (圍攻/合擊/膽氣, auto-resolved with consequences) instead of the 1v1.
   const [meleePrompt, setMeleePrompt] = useState<{ me: Officer; foe: Officer; mine: Officer[]; foes: Officer[]; meFatigue: number; foeFatigue: number; terrain: import('../../game/systems/duel').DuelTerrain } | null>(null);
+  // 團戰同場 (§6.11) — the staged 3D playback of a resolved field melee (visual
+  // only; the consequences were already bound when the melee resolved).
+  const [fieldMeleeStage, setFieldMeleeStage] = useState<TeamDuelResult | null>(null);
   // 敵將叫陣 — an aggressive enemy adjacent to one of your officers may challenge
   // you at the top of your turn; accept to duel, or refuse.
   const [challenge, setChallenge] = useState<{ me: Officer; foe: Officer; meFatigue: number; foeFatigue: number; reinforcements: Officer[] } | null>(null);
@@ -4912,6 +4916,8 @@ export function TacticalBattleScreen3D() {
                   setSignatureBanner({ zh: headZh, en: headEn, key: Date.now() });
                   setCine({ key: ++cineCount.current, weight: 3, color: 'var(--tkm-hud-amber)' });
                   setTimeout(() => setSignatureBanner(null), 2400);
+                  // 團戰同場 — replay the whole melee in the 3D ring, everyone on stage.
+                  setFieldMeleeStage(res);
                 }}
                 title={t('團戰並擊 — 兩陣群將混戰(圍攻/合擊/膽氣),當場定勝負:被斬者亡、請降者被擒、落荒者逸,全軍士氣隨之', 'Crash the knots together — an N-vs-M melee (ganging / joint strikes / nerve), settled on the spot: the slain fall, the yielded are bound, the fled escape; army morale swings')}
                 style={{ flex: 1, padding: '0.6rem', background: 'linear-gradient(180deg,#5a2a20,#3a1810)', border: '1px solid #e0846a', color: '#ffe0d0', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.95rem' }}
@@ -4919,6 +4925,11 @@ export function TacticalBattleScreen3D() {
             </div>
           </div>
         </Modal>
+      )}
+
+      {/* 團戰同場 — the resolved field melee replays with every champion in-ring. */}
+      {fieldMeleeStage && (
+        <TeamDuel3DStage result={fieldMeleeStage} onDone={() => setFieldMeleeStage(null)} />
       )}
 
       {interactiveDuel && (

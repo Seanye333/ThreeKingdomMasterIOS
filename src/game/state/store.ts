@@ -9076,6 +9076,48 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // 世間鬥將 (§6.13) — the 武評榜 lives beyond the player's bouts: between
+        // seasons, champions of OTHER realms test each other (較藝,點到為止 —
+        // face and rating, not blood). The ladder moves, AI arms deepen their
+        // 修為, and a marquee upset is chronicle material.
+        {
+          const cur = get();
+          if (Math.random() < 0.35) {
+            const pool = Object.values(cur.officers).filter((o) =>
+              o.forceId && o.forceId !== cur.playerForceId
+              && o.status !== 'dead' && o.status !== 'imprisoned' && o.status !== 'unsearched'
+              && o.stats.war >= 70 && canDuel(o).ok);
+            if (pool.length >= 2) {
+              const i = Math.floor(Math.random() * pool.length);
+              let j = Math.floor(Math.random() * (pool.length - 1));
+              if (j >= i) j++;
+              const A = pool[i], B = pool[j];
+              if (A.forceId !== B.forceId) { // champions of different realms cross paths
+                const res = resolveDuel({ attacker: A, defender: B });
+                const outcome = res.winner === 'attacker' ? 'win' : res.winner === 'defender' ? 'loss' : 'draw';
+                get().recordDuelRating(A.id, B.id, outcome);
+                // 敵亦精進 — both arms learn from a real test (§6.10).
+                get().growMartialXiuwei(A.id, outcome === 'win' ? 2 : 1);
+                get().growMartialXiuwei(B.id, outcome === 'loss' ? 1 : 2);
+                if (outcome !== 'draw') {
+                  const winner = outcome === 'win' ? A : B;
+                  const loser = outcome === 'win' ? B : A;
+                  get().recordDeed(winner.id, { duelsWon: 1 });
+                  // Only a marquee matchup (two famed arms) makes the chronicle.
+                  if (staticProwess(winner) >= 85 && staticProwess(loser) >= 85) {
+                    get().recordAnnal({
+                      year: cur.date.year, season: cur.date.season, kind: 'event',
+                      titleZh: '兩雄較藝',
+                      textZh: `${winner.name.zh} 與 ${loser.name.zh} 陣前較藝,${res.rounds.length} 合而 ${winner.name.zh} 稍勝 — 武評榜為之一動。`,
+                      cityId: null,
+                    });
+                  }
+                }
+              }
+            }
+          }
+        }
+
         // 自動存檔 — every season boundary writes one of three rolling
         // autosave slots, so a bad turn (or a crash) costs at most a season.
         if (seasonBoundary) {
