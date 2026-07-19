@@ -31,12 +31,13 @@ import { pushBoutRecord } from '../systems/duelHall';
 import { recordRivalryBout, pairKey as rivalPairKey, NEMESIS_THRESHOLD } from '../systems/rivalries';
 import { challengeStakes } from '../systems/duelChallenge';
 import { trainMartialArts, MARTIAL_XIUWEI_MAX, transmitArts, canTransmitArts } from '../systems/martialArts';
+import { trainDebateArts, DEBATE_XIUWEI_MAX, transmitScholarship, canTransmitScholarship } from '../systems/debateArts';
 import { resolveDuel, canDuel, staticProwess, weaponClassFor } from '../systems/duel';
 import { pickArenaChampion, pickArenaChallenger, arenaTakeReward, arenaHoldStipend } from '../systems/arenaLadder';
 import { pickPeaceChampion, willAcceptPeaceDuel, peaceDuelStakes, PEACE_DUEL_COST } from '../systems/duelDiplomacy';
 import { applyBout, seedRating } from '../systems/warRanking';
 import { tickAfflictions, withAffliction, hasChronicAilment, rollChronicAilment, cureChronicAilments, chronicAilmentOf, type Affliction } from '../systems/afflictions';
-import { routConsequence, type RoutConsequence } from '../systems/wordWar';
+import { routConsequence, debatePersona, type RoutConsequence } from '../systems/wordWar';
 import { canAppraise, appraisalVerdict, appraisalRenownGain, discernment, isLegendaryCritic, legendaryVerdict, appraisalMisread, pickMonthlyAppraisal } from '../systems/appraisal';
 import { executionRenownCost, markSlainVendetta } from '../systems/captiveFate';
 import { trainKey, recordTrain } from '../systems/sparLimit';
@@ -1011,6 +1012,14 @@ interface GameStore extends GameState {
   growMartialXiuwei: (officerId: EntityId, amount: number) => void;
   /** 宗師傳藝 — a 宗師+ master spends 心得 to drill a same-city junior's 修為 (§6.10). */
   transmitMartialArts: (masterId: EntityId, pupilId: EntityId) => { ok: boolean; reason?: string; gained?: number; tierUpZh?: string; tierUpEn?: string };
+  /** 文辯心得 — bank lectern insight on an officer (論戰頓悟 / 清談所得). */
+  awardDebateInsight: (officerId: EntityId, amount: number) => void;
+  /** 講席 — spend banked 文辯心得 to raise the officer's 文辯修為 one step (§6.14). */
+  trainDebateArts: (officerId: EntityId) => { ok: boolean; reason?: string; xiuwei?: number; gained?: number; tierUpZh?: string; tierUpEn?: string };
+  /** 文辯修為直增 — raise an officer's 文辯修為 directly (for AI debaters who never 講席). */
+  growDebateXiuwei: (officerId: EntityId, amount: number) => void;
+  /** 名士傳道 — a 名士+ scholar spends 心得 to lecture a same-city junior's 文辯修為. */
+  transmitDebateArts: (masterId: EntityId, pupilId: EntityId) => { ok: boolean; reason?: string; gained?: number; tierUpZh?: string; tierUpEn?: string };
   /** 打擂 — challenge the standing arena champion (§6.11); win to take the 擂主 seat. */
   challengeArena: (challengerId: EntityId) => { ok: boolean; reason?: string; won?: boolean; championZh?: string; championEn?: string; insight?: number; gold?: number };
   /** 坐鎮擂台 — hold the seat one season against a fresh challenger (stipend / seat risk). */
@@ -12181,6 +12190,51 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (r.xiuwei >= MARTIAL_XIUWEI_MAX) get().fireAchievement({ kind: 'war-god' }); // 武神 — mastery peaked
         return { ok: true, xiuwei: r.xiuwei, gained: r.gained, tierUpZh: r.tierUp?.zh, tierUpEn: r.tierUp?.en };
       },
+      awardDebateInsight: (officerId, amount) => {
+        if (!(amount > 0)) return;
+        const state = get();
+        const o = state.officers[officerId];
+        if (!o || o.status === 'dead') return;
+        set({ officers: { ...state.officers, [officerId]: { ...o, debateInsight: Math.max(0, (o.debateInsight ?? 0) + Math.round(amount)) } } });
+      },
+      growDebateXiuwei: (officerId, amount) => {
+        if (!(amount > 0)) return;
+        const state = get();
+        const o = state.officers[officerId];
+        if (!o || o.status === 'dead') return;
+        // 修為直增 — for NON-player debaters (who never manually 講席), so AI 名士
+        // deepen their learning organically from the bouts they argue (§6.14).
+        set({ officers: { ...state.officers, [officerId]: { ...o, debateXiuwei: Math.min(DEBATE_XIUWEI_MAX, (o.debateXiuwei ?? 0) + amount) } } });
+      },
+      transmitDebateArts: (masterId, pupilId) => {
+        const state = get();
+        const master = state.officers[masterId];
+        const pupil = state.officers[pupilId];
+        if (!master || !pupil) return { ok: false, reason: 'no-officer' };
+        if (master.forceId !== state.playerForceId || pupil.forceId !== state.playerForceId) return { ok: false, reason: 'not-yours' };
+        if (!master.locationCityId || master.locationCityId !== pupil.locationCityId) return { ok: false, reason: 'not-together' };
+        const sameSchool = debatePersona(master) === debatePersona(pupil);
+        const mentorPair = pupil.mentorId === master.id;
+        const r = transmitScholarship(master, pupil, sameSchool, mentorPair);
+        if (!r) return { ok: false, reason: canTransmitScholarship(master, pupil).reason ?? 'blocked' };
+        set({ officers: {
+          ...state.officers,
+          [masterId]: { ...master, debateInsight: r.masterInsight },
+          [pupilId]: { ...pupil, debateXiuwei: r.pupilXiuwei },
+        } });
+        return { ok: true, gained: r.gained, tierUpZh: r.tierUp?.zh, tierUpEn: r.tierUp?.en };
+      },
+      trainDebateArts: (officerId) => {
+        const state = get();
+        const o = state.officers[officerId];
+        if (!o) return { ok: false, reason: 'no-officer' };
+        if (o.forceId !== state.playerForceId) return { ok: false, reason: 'not-yours' };
+        const r = trainDebateArts(o);
+        if (!r) return { ok: false, reason: 'insufficient' }; // not enough 心得 or 修為 maxed
+        set({ officers: { ...state.officers, [officerId]: { ...o, debateXiuwei: r.xiuwei, debateInsight: r.insight } } });
+        if (r.xiuwei >= DEBATE_XIUWEI_MAX) get().fireAchievement({ kind: 'debate-sage' }); // 辯聖 — scholarship peaked
+        return { ok: true, xiuwei: r.xiuwei, gained: r.gained, tierUpZh: r.tierUp?.zh, tierUpEn: r.tierUp?.en };
+      },
       challengeArena: (challengerId) => {
         const state = get();
         const ch = state.officers[challengerId];
@@ -12443,6 +12497,18 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (c.insight) {
           officer = { ...officer, martialInsight: Math.max(0, (officer.martialInsight ?? 0) + c.insight) };
           notes.push(`武學心得 +${c.insight}`);
+        }
+        // 辯經 — a debate canon deepens 文辯修為 / banks 心得 (§6.14).
+        if (c.debateXiuwei) {
+          const before = officer.debateXiuwei ?? 0;
+          const after = Math.min(DEBATE_XIUWEI_MAX, before + c.debateXiuwei);
+          officer = { ...officer, debateXiuwei: after };
+          if (after > before) notes.push(`文辯修為 +${after - before}`);
+          if (after >= DEBATE_XIUWEI_MAX) get().fireAchievement({ kind: 'debate-sage' }); // 辯聖
+        }
+        if (c.debateInsight) {
+          officer = { ...officer, debateInsight: Math.max(0, (officer.debateInsight ?? 0) + c.debateInsight) };
+          notes.push(`文辯心得 +${c.debateInsight}`);
         }
         set({ officers: { ...state.officers, [officerId]: officer } });
         return { ok: true, notes };

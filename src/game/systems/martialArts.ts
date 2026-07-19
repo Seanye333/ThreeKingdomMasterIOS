@@ -89,6 +89,42 @@ export function martialBonus(o: Officer): MartialBonus {
   return TIER_BONUS[martialTier(o).tier];
 }
 
+// ─── 流派相剋 — the schools answer one another in a ring ─────────────────────
+// Every school has one it naturally masters (槍之疾先刀一步、重斧斷槍桿…), but
+// the counters are CRAFT, not luck: an untrained arm (未入門) doesn't know them.
+// From 入門 up, holding the favourable matchup lends a modest prowess edge that
+// deepens with 修為 — a 武神 dismantles the answered school almost on sight.
+const SCHOOL_BEATS: Record<MartialSchool, MartialSchool> = {
+  spear: 'glaive',        // 槍之疾,先刀一步
+  glaive: 'twinblade',    // 大刀沉猛,壓雙劍之輕
+  twinblade: 'bow',       // 雙劍疾進,近身則弓廢
+  bow: 'greatsword',      // 重兵遲緩,遠矢先至
+  greatsword: 'halberd',  // 大力破戟格
+  halberd: 'sword',       // 長兵制短
+  sword: 'axe',           // 輕靈避重斧
+  axe: 'spear',           // 重斧斷槍桿
+};
+/** Whether school x holds the favourable matchup over school y. */
+export function schoolBeats(x: MartialSchool, y: MartialSchool): boolean {
+  return SCHOOL_BEATS[x] === y;
+}
+/** 流派相剋 — prowess edge for knowing the answer to the foe's school: 0 for the
+ *  untrained, else 1 + tier (2 入門 .. 6 武神). Read with the OWN 修為 only —
+ *  the edge is your craft, not the foe's ignorance. */
+export function schoolCounterEdge(mine: MartialSchool, theirs: MartialSchool, myXiuwei: number): number {
+  if (!schoolBeats(mine, theirs)) return 0;
+  const tier = tierOfXiuwei(myXiuwei).tier;
+  return tier === 0 ? 0 : 1 + tier;
+}
+/** A one-line reading of the matchup, for the bout log / UI chip. */
+export function schoolCounterLine(mine: MartialSchool, theirs: MartialSchool): { zh: string; en: string } | null {
+  if (!schoolBeats(mine, theirs)) return null;
+  return {
+    zh: `${MARTIAL_SCHOOL[mine].zh}剋${MARTIAL_SCHOOL[theirs].zh} — 流派相剋佔了上風`,
+    en: `${MARTIAL_SCHOOL[mine].en} answers ${MARTIAL_SCHOOL[theirs].en} — the school matchup favours them`,
+  };
+}
+
 // ─── 修煉 — spend 心得 to raise 修為 ──────────────────────────────────────────
 export const MARTIAL_TRAIN_STEP = 5; // 修為 gained per 修煉 session
 

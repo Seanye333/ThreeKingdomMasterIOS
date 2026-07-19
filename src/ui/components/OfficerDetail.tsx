@@ -40,6 +40,8 @@ import { canAppraise, GRADE_LABEL } from '../../game/systems/appraisal';
 import { officerGrade, officerLevel, nextGradeGap, gradeMeta } from '../../game/systems/officerGrade';
 import { weaponClassFor } from '../../game/systems/duel';
 import { martialXiuwei, martialInsight, martialTier, martialTrainCost, martialSchoolName, MARTIAL_XIUWEI_MAX, canTransmitArts, TRANSMIT_COST } from '../../game/systems/martialArts';
+import { debateXiuwei, debateInsight, debateArtsTier, debateTrainCost, debateSchoolName, DEBATE_XIUWEI_MAX, canTransmitScholarship, DEBATE_TRANSMIT_COST } from '../../game/systems/debateArts';
+import { debatePersona } from '../../game/systems/wordWar';
 import { MAX_STARS, officerStars, nextStarRequirement, scrollStarCost } from '../../game/systems/stars';
 import { armProficiency, armProficiencyTier, armMasteryPerkOf, PROF_ARM_LABEL, profArmOf, type ProfArm } from '../../game/systems/armProficiency';
 import { activeMountBondSeasons, mountBondMul } from '../../game/systems/mountBond';
@@ -190,6 +192,8 @@ export function OfficerDetail({
   const studyManualFn = useGameStore((s) => s.studyManual);
   const trainMartialFn = useGameStore((s) => s.trainMartialArts);
   const transmitMartialFn = useGameStore((s) => s.transmitMartialArts);
+  const trainDebateFn = useGameStore((s) => s.trainDebateArts);
+  const transmitDebateFn = useGameStore((s) => s.transmitDebateArts);
   const issueCommandFn = useGameStore((s) => s.issueCommand);
   const appraiseOfficerFn = useGameStore((s) => s.appraiseOfficer);
   const activeTraining = pendingTrainings.find((tr) => tr.officerId === officer.id);
@@ -1122,6 +1126,79 @@ export function OfficerDetail({
                               <option value="">{t('👐 傳藝…', '👐 Teach…')}</option>
                               {pupils.slice(0, 12).map((p) => (
                                 <option key={p.id} value={p.id}>{lang === 'en' ? p.name.en : p.name.zh} · {martialXiuwei(p)}</option>
+                              ))}
+                            </select>
+                          );
+                        })()}
+                      </div>
+                    );
+                  })()}
+
+                  {/* 文辯修煉 — the debate mastery track (§6.14): spend lectern 心得
+                      to deepen 修為, lending 口才/開場氣勢/沉著 in every 舌戰. */}
+                  {isMine && (() => {
+                    const school = debateSchoolName(debatePersona(officer));
+                    const xw = debateXiuwei(officer);
+                    const tier = debateArtsTier(officer);
+                    const insight = debateInsight(officer);
+                    const trainCost = debateTrainCost(xw);
+                    const maxed = xw >= DEBATE_XIUWEI_MAX;
+                    const canTrain = !maxed && insight >= trainCost;
+                    return (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <span style={labelStyle}>{t('文辯', 'Debate')}</span>
+                        <span style={{ fontSize: '0.8rem', color: '#9fc4e8' }} title={t('文辯學派 · 修為境界', 'debating school · scholarship tier')}>
+                          {lang === 'en' ? school.en : school.zh} · {lang === 'en' ? tier.en : tier.zh}
+                        </span>
+                        <span title={t(`修為 ${xw}/${DEBATE_XIUWEI_MAX}`, `scholarship ${xw}/${DEBATE_XIUWEI_MAX}`)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          <span style={{ width: 74, height: 7, background: '#10161e', border: '1px solid #1e2c3a', borderRadius: 'var(--tkm-radius-xs)', overflow: 'hidden' }}>
+                            <span style={{ display: 'block', width: `${xw}%`, height: '100%', background: 'linear-gradient(90deg,#3a7ac9,#8fc9f0)' }} />
+                          </span>
+                        </span>
+                        <span style={{ fontSize: '0.74rem', color: '#9aa7b3' }}>{t('心得', 'Insight')} <b style={{ color: '#cbe6ef' }}>{insight}</b></span>
+                        {maxed ? (
+                          <span style={{ fontSize: '0.72rem', color: '#7a8893' }}>{t('已臻辯聖', 'Sage of Debate — maxed')}</span>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              const r = trainDebateFn(officer.id);
+                              setProgressMsg(r.ok
+                                ? (r.tierUpZh ? t(`文辯精進 — 臻「${r.tierUpZh}」!`, `Scholarship deepens — reached ${r.tierUpEn}!`) : t(`修為 +${r.gained}`, `scholarship +${r.gained}`))
+                                : t('心得不足', 'Not enough insight'));
+                            }}
+                            disabled={!canTrain}
+                            title={t(`講席修習 · 耗 ${trainCost} 心得 → 修為 +5`, `Lecture drill · ${trainCost} insight → +5 scholarship`)}
+                            style={{ cursor: canTrain ? 'pointer' : 'not-allowed', padding: '0.1rem 0.5rem', borderRadius: 'var(--tkm-radius-xs)', background: canTrain ? 'linear-gradient(180deg,#1a2c4a,#101a2a)' : '#10161e', border: '1px solid #7ab0e0', color: canTrain ? '#b8d8f0' : '#6a7480', fontSize: '0.74rem' }}
+                          >
+                            {t(`講席 (${trainCost})`, `Lecture (${trainCost})`)}
+                          </button>
+                        )}
+                        {/* 名士傳道 — a 名士+ lectures a same-city junior's 文辯
+                            (同派 & 師徒 learn faster; never taught past the teacher). */}
+                        {tier.tier >= 4 && (() => {
+                          const pupils = Object.values(allOfficers).filter((p) =>
+                            p.id !== officer.id && p.forceId === officer.forceId && p.status !== 'dead'
+                            && p.locationCityId === officer.locationCityId && canTransmitScholarship(officer, p).ok);
+                          if (!pupils.length) return null;
+                          return (
+                            <select
+                              defaultValue=""
+                              onChange={(e) => {
+                                const pid = e.target.value;
+                                if (!pid) return;
+                                e.target.value = '';
+                                const r = transmitDebateFn(officer.id, pid);
+                                const pn = allOfficers[pid];
+                                setProgressMsg(r.ok
+                                  ? t(`傳道 ${pn ? pn.name.zh : ''} — 其修為 +${r.gained}${r.tierUpZh ? `,臻「${r.tierUpZh}」` : ''}`, `Lectured ${pn ? pn.name.en : ''} — +${r.gained} scholarship${r.tierUpEn ? `, now ${r.tierUpEn}` : ''}`)
+                                  : t('無法傳道', 'Cannot lecture'));
+                              }}
+                              title={t(`名士傳道 · 耗 ${DEBATE_TRANSMIT_COST} 心得,授同城弟子修為(同派/師徒更速)`, `Hand down the learning · ${DEBATE_TRANSMIT_COST} insight; same-school / mentor pupils learn faster`)}
+                              style={{ padding: '0.1rem 0.3rem', borderRadius: 'var(--tkm-radius-xs)', background: '#10161e', border: '1px solid #8ec8a0', color: '#bfe6cf', fontSize: '0.72rem', fontFamily: 'inherit' }}
+                            >
+                              <option value="">{t('📜 傳道…', '📜 Lecture…')}</option>
+                              {pupils.slice(0, 12).map((p) => (
+                                <option key={p.id} value={p.id}>{lang === 'en' ? p.name.en : p.name.zh} · {debateXiuwei(p)}</option>
                               ))}
                             </select>
                           );

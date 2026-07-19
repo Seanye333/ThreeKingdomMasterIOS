@@ -37,6 +37,10 @@ export interface Item {
     xiuwei?: number;
     /** 武學心得 — banks this much spendable duel insight. */
     insight?: number;
+    /** 辯經 — raises the officer's 文辯修為 (debate scholarship) by this much. */
+    debateXiuwei?: number;
+    /** 文辯心得 — banks this much spendable debate insight. */
+    debateInsight?: number;
   };
   /** 品階 — optional explicit rarity. When omitted, itemRarity() derives one
    *  from the item's effect magnitude so every item reads in the shared
@@ -13939,6 +13943,42 @@ export const ITEMS: Item[] = [
     descriptionZh: '神射養由基論氣、勢與百步穿楊之訣。研習之,弓道修為益進。',
     effects: {},
     consumable: { xiuwei: 14, insight: 5 },
+    rarity: 'silver',
+  },
+
+  // ── 辯經 — debate canons. Studying deepens the officer's 文辯修為 (§6.14) and
+  // banks 心得. Rare finds — surface as 游历/尋寶探秘 rewards and 名城 treasures. ──
+  {
+    id: 'guiguzi-canon',
+    name: { en: 'The Guiguzi', zh: '鬼谷子' },
+    kind: 'book',
+    originCityId: 'luoyang',
+    description: 'The Zongheng masters’ hidden canon of opening and closing (捭闔). Study makes a tongue that turns kingdoms.',
+    descriptionZh: '縱橫家捭闔之祕典。研習之,文辯修為大進,一言可傾人國。',
+    effects: {},
+    consumable: { debateXiuwei: 22, debateInsight: 8 },
+    rarity: 'gold',
+  },
+  {
+    id: 'gongyang-zhuan',
+    name: { en: 'The Gongyang Commentary', zh: '春秋公羊傳' },
+    kind: 'book',
+    originCityId: 'beihai',
+    description: 'The great disputational commentary on the Annals. Study grounds an argument in the weight of the classics.',
+    descriptionZh: '春秋微言大義之辯疏。研習之,引經據典有本,辯理益深。',
+    effects: {},
+    consumable: { debateXiuwei: 14, debateInsight: 5 },
+    rarity: 'silver',
+  },
+  {
+    id: 'yantie-lun',
+    name: { en: 'Discourses on Salt and Iron', zh: '鹽鐵論' },
+    kind: 'book',
+    originCityId: 'changan',
+    description: 'The record of the great court debate of the Han — sixty scholars against the chancellor. Study teaches the cut and parry of the hall.',
+    descriptionZh: '漢廷鹽鐵大辯之實錄,賢良文學駁詰丞相之辭。研習之,朝堂攻防之道益精。',
+    effects: {},
+    consumable: { debateXiuwei: 14, debateInsight: 5 },
     rarity: 'silver',
   },
 

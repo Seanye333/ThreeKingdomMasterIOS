@@ -6,6 +6,8 @@ import { playSfx } from '../../../game/systems/sound';
 import { useGameStore } from '../../../game/state/store';
 import { isNotableBout, type BoutRecord } from '../../../game/systems/duelHall';
 import { debateCommentary } from '../../../game/systems/combatCommentary';
+import { checkDebateEpiphany } from '../../../game/systems/debateArts';
+import { debateProwess } from '../../../game/systems/wordWar';
 import { DebateArena3D, type DebateArenaEvent } from './DebateArena3D';
 
 const SEASON_IDX = ['spring', 'summer', 'autumn', 'winter'];
@@ -57,6 +59,36 @@ export function Debate3DStage(props: ComponentProps<typeof DebateGameModal>) {
           fx: history.current.map((h) => ({ ...h })),
         };
         if (isNotableBout(rec)) recordBout(rec);
+        // 論戰頓悟 — the player's debater deepens their 文辯 from the bout; a win
+        // over a keener tongue / a famed name / a marathon can spark a 頓悟 (§6.14).
+        const won = fx.winner === 'a';
+        const notable = (foe.renown ?? 0) >= 30 || debateProwess(foe) >= 90;
+        const ep = checkDebateEpiphany({
+          won,
+          prowessGap: Math.round(debateProwess(foe) - debateProwess(me)),
+          notableFoe: notable,
+          survivedThin: history.current.length >= 5,
+        }, Math.random);
+        const st0 = useGameStore.getState();
+        st0.awardDebateInsight(me.id, ep.insight);
+        // 敵亦精進 — the foe learns too: a player-side foe banks 心得 to spend; an
+        // AI 名士 deepens 修為 directly (they never 講席 by hand).
+        const foeEp = checkDebateEpiphany({
+          won: fx.winner === 'd',
+          prowessGap: Math.round(debateProwess(me) - debateProwess(foe)),
+          notableFoe: (me.renown ?? 0) >= 30 || debateProwess(me) >= 90,
+          survivedThin: history.current.length >= 5,
+        }, Math.random);
+        if (foe.forceId && foe.forceId !== st0.playerForceId) {
+          st0.growDebateXiuwei(foe.id, foeEp.epiphany ? 3 : 1);
+        } else {
+          st0.awardDebateInsight(foe.id, foeEp.insight);
+        }
+        if (ep.epiphany) {
+          setToast(lang === 'en' ? ep.noteEn : ep.noteZh);
+          window.setTimeout(() => setToast(null), 2600);
+          playSfx('bell');
+        }
       }
     }
     onRound?.(fx); // preserve any host-supplied behaviour

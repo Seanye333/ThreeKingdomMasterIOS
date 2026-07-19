@@ -8,7 +8,7 @@ import { gradeCombatBonus, itemMasteryMul, duelFirstStrike } from './gradeCombat
 import { evolvedArtDuelBonus, evolvedWeaponArt } from './evolvedArts';
 import { skillEffectMul } from './skillMastery';
 import { deriveWeaponType, type WeaponType } from '../data/weaponTypes';
-import { martialBonus } from './martialArts';
+import { martialBonus, martialXiuwei, schoolCounterEdge } from './martialArts';
 
 /**
  * 兵裝相剋(接單挑) — the duellists' weapon classes clash (§5.9), where before a
@@ -186,8 +186,11 @@ export function resolveDuel(input: DuelInput): DuelResult {
   const aPass = duelPassive(input.attacker)?.id ?? null;
   const dPass = duelPassive(input.defender)?.id ?? null;
   const passStatic = (p: DuelPassiveId | null) => (p === 'matchless-might' ? 7 : p === 'immovable' ? 5 : 0);
-  const aStatic = a.total - a.diceRoll + duelWeaponEdge(input.attacker, input.defender) + passStatic(aPass) + martialBonus(input.attacker).prowess + (input.aCareer ?? 0);
-  const dStatic = d.total - d.diceRoll + duelWeaponEdge(input.defender, input.attacker) + passStatic(dPass) + martialBonus(input.defender).prowess + (input.dCareer ?? 0);
+  // 流派相剋 — a trained school that answers the foe's fights above its line (§6.10).
+  const aCls = weaponClassFor(input.attacker);
+  const dCls = weaponClassFor(input.defender);
+  const aStatic = a.total - a.diceRoll + duelWeaponEdge(input.attacker, input.defender) + passStatic(aPass) + martialBonus(input.attacker).prowess + schoolCounterEdge(aCls, dCls, martialXiuwei(input.attacker)) + (input.aCareer ?? 0);
+  const dStatic = d.total - d.diceRoll + duelWeaponEdge(input.defender, input.attacker) + passStatic(dPass) + martialBonus(input.defender).prowess + schoolCounterEdge(dCls, aCls, martialXiuwei(input.defender)) + (input.dCareer ?? 0);
 
   // 氣力 — graded champions enter the bout with a deeper reserve (品階威儀).
   // 霸王色 — a fighter facing an aura-bearer opens with their reserve docked.
@@ -1550,7 +1553,9 @@ export function initDuelBout(
     aGuard: Math.max(0, (weaponIsRanged(aClass) ? 1 : 0) + aCharge + surge(aPass) + martialBonus(attacker).openingGuard - cowsFoeGuard(dPass)),
     dGuard: Math.max(0, (weaponIsRanged(dClass) ? 1 : 0) + dCharge + surge(dPass) + martialBonus(defender).openingGuard - cowsFoeGuard(aPass)),
     // 鬥將生涯 — recognised duellists fight above their stat line (段位 + 百戰).
-    aStatic: staticProwess(attacker) + aCareer, dStatic: staticProwess(defender) + dCareer,
+    // 流派相剋 — a trained school that answers the foe's adds its counter edge.
+    aStatic: staticProwess(attacker) + aCareer + schoolCounterEdge(aClass, dClass, martialXiuwei(attacker)),
+    dStatic: staticProwess(defender) + dCareer + schoolCounterEdge(dClass, aClass, martialXiuwei(defender)),
     // 目眇 — a half-blind fighter reads the foe far worse (drives the AI's 料敵).
     aInt: attacker.stats.intelligence - (duelScars(attacker).includes('maimed-eye') ? 25 : 0),
     dInt: defender.stats.intelligence - (duelScars(defender).includes('maimed-eye') ? 25 : 0),

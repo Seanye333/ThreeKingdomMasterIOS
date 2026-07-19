@@ -1,6 +1,7 @@
 import type { Officer } from '../types';
 import { afflictionDelta, isEmotional } from './afflictions';
 import { wordWarProwessMul } from './traitEffects';
+import { debateArtsBonus } from './debateArts';
 
 /**
  * 舌戰 — pre-battle war of words. Each side may field a strategist; the
@@ -70,8 +71,9 @@ export function resolveWordWar(
   const a = pickStrategist(attackerCommander, attackerCompanions);
   const d = pickStrategist(defenderCommander, defenderCompanions);
   // 口才 — rhetorical traits (雄辯/善說/寡言鋒/機智…) sharpen or blunt the tongue.
-  const aProwess = (a.stats.intelligence + a.stats.charisma * 0.5) * wordWarProwessMul(a);
-  const dProwess = (d.stats.intelligence + d.stats.charisma * 0.5) * wordWarProwessMul(d);
+  // 文辯修為 — a drilled scholar argues above the stat line here too (§6.14).
+  const aProwess = (a.stats.intelligence + a.stats.charisma * 0.5) * wordWarProwessMul(a) + debateArtsBonus(a).prowess;
+  const dProwess = (d.stats.intelligence + d.stats.charisma * 0.5) * wordWarProwessMul(d) + debateArtsBonus(d).prowess;
 
   const lines: WordWarLine[] = [];
   const rounds: WordWarRound[] = [];
@@ -264,11 +266,15 @@ export const SCHOOL_MOVES: DebateMove[] = ['analogy', 'rebuke', 'deceive'];
 export function initDebate(me: Officer, foe: Officer, difficulty: DebateDifficulty = 'veteran', topic?: DebateTopic): DebateBout {
   const aPersona = debatePersona(me);
   const dPersona = debatePersona(foe);
+  // 文辯修為 — a drilled scholar opens sharper, steadier, with the 腹稿 banked (§6.14).
+  const aArts = debateArtsBonus(me);
+  const dArts = debateArtsBonus(foe);
   return {
-    aComposure: 100, dComposure: 100, aMomentum: 0, dMomentum: 0,
+    aComposure: 100 + aArts.composure, dComposure: 100 + dArts.composure,
+    aMomentum: aArts.openingMomentum, dMomentum: dArts.openingMomentum,
     // 流派相剋 — the favourable school matchup lends a small 口才 edge.
-    aProwess: debateProwess(me) + personaEdge(aPersona, dPersona),
-    dProwess: debateProwess(foe) + personaEdge(dPersona, aPersona),
+    aProwess: debateProwess(me) + personaEdge(aPersona, dPersona) + aArts.prowess,
+    dProwess: debateProwess(foe) + personaEdge(dPersona, aPersona) + dArts.prowess,
     aPersona, dPersona,
     audience: 0, aRally: false, dRally: false,
     difficulty,

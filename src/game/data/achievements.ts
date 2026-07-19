@@ -30,6 +30,14 @@ export const ACHIEVEMENTS: Achievement[] = [
     trigger: { kind: 'arena-reign' },
   },
   {
+    id: 'ach-debate-sage',
+    name: { en: 'Sage of Debate', zh: '辯聖' },
+    description: 'Cultivate an officer\'s debate scholarship to its very peak (修為 100).',
+    descriptionZh: '一將文辯修為臻至圓滿(100)— 舌燦蓮花,天下辯聖。',
+    tier: 'legendary',
+    trigger: { kind: 'debate-sage' },
+  },
+  {
     id: 'ach-field-melee',
     name: { en: 'Champions in a Knot', zh: '群英並擊' },
     description: 'Win a team melee of champions on the battlefield.',

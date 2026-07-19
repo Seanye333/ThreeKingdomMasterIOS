@@ -102,6 +102,12 @@ export interface Officer {
   martialXiuwei?: number;
   /** 武學心得 — spendable insight earned in the arena; buys 修為. */
   martialInsight?: number;
+  /** 文辯修為 — scholarship (0–100) of the officer's debating 學派, the war of
+   *  words' mirror of 武學. Deepened via 講席 (spending 心得) and 論戰頓悟. High
+   *  修為 lends 口才/opening 氣勢/沉著 in every 舌戰. See systems/debateArts.ts. */
+  debateXiuwei?: number;
+  /** 文辯心得 — spendable insight earned at the lectern; buys 修為. */
+  debateInsight?: number;
   task: CommandType | null;
   equipment: Equipment;
   /** Innate skill IDs (referencing SKILLS_BY_ID). 0–4 per officer. */
