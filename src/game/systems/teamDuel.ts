@@ -225,3 +225,55 @@ export function teamStateResult(state: TeamDuelState): TeamDuelResult {
 export function teamDuelSlain(result: TeamDuelResult): string[] {
   return [...result.a, ...result.b].filter((f) => f.downed && f.fate === 'slain').map((f) => f.id);
 }
+
+// ─── 團戰名局廊 (§6.11) — melees, archived and replayable ────────────────────
+// The gallery keeps ids and outcomes only; the live roster rehydrates the
+// fighters at replay time, so an archived melee never pins a stale officer.
+
+/** Flatten a finished melee into the compact shape the 名局廊 persists. */
+export function meleeReplayFighters(result: TeamDuelResult): Array<{
+  id: string; side: 'a' | 'b'; station: TeamStation; downedRound?: number; fate?: DuelFate;
+}> {
+  return [...result.a, ...result.b].map((f) => ({
+    id: f.id, side: f.side, station: f.station,
+    ...(f.downedRound !== undefined ? { downedRound: f.downedRound } : {}),
+    ...(f.fate ? { fate: f.fate } : {}),
+  }));
+}
+
+/**
+ * Rebuild a playable {@link TeamDuelResult} from an archived melee. Fighters
+ * whose officers have since left the world are dropped; returns null if either
+ * side ends up empty (nothing left to stage).
+ */
+export function meleeResultFromRecord(
+  rec: {
+    winner: 'a' | 'b' | 'draw';
+    rounds: number;
+    fighters: Array<{ id: string; side: 'a' | 'b'; station: TeamStation; downedRound?: number; fate?: DuelFate }>;
+    log: { zh: string; en: string }[];
+  },
+  officers: Record<string, Officer>,
+): TeamDuelResult | null {
+  const build = (side: 'a' | 'b'): TeamFighter[] =>
+    rec.fighters.filter((f) => f.side === side).flatMap((f) => {
+      const o = officers[f.id];
+      if (!o) return [];
+      const ranged = weaponClassFor(o) === 'bow';
+      return [{
+        id: f.id, officer: o, side,
+        prowess: staticProwess(o),
+        // Replay is a re-enactment, not a re-simulation: 氣力 only needs to read
+        // "standing" vs "down" for the staging code.
+        stamina: f.downedRound !== undefined ? 0 : 100,
+        station: f.station, ranged,
+        downed: f.downedRound !== undefined,
+        ...(f.downedRound !== undefined ? { downedRound: f.downedRound } : {}),
+        ...(f.fate ? { fate: f.fate } : {}),
+      }];
+    });
+  const a = build('a');
+  const b = build('b');
+  if (!a.length || !b.length) return null;
+  return { winner: rec.winner, rounds: rec.rounds, a, b, log: rec.log };
+}

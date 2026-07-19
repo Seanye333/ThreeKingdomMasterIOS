@@ -222,10 +222,18 @@ export function composeBiography(input: {
     const won = (input.duelHall ?? []).filter((b) =>
       b.kind === 'duel'
         ? (b.winner === 'attacker' && b.aId === o.id) || (b.winner === 'defender' && b.dId === o.id)
-        : (b.winner === 'a' && b.aId === o.id) || (b.winner === 'd' && b.dId === o.id),
+        : b.kind === 'melee'
+          // 團戰 — the captain of the winning knot claims the day.
+          ? (b.winner === 'a' && b.aId === o.id) || (b.winner === 'b' && b.dId === o.id)
+          : (b.winner === 'a' && b.aId === o.id) || (b.winner === 'd' && b.dId === o.id),
     );
     if (won.length) {
-      const score = (b: BoutRecord) => ((b.kind === 'duel' ? b.killed : b.routed) ? 1000 : 0) + b.fx.length;
+      const decisive = (b: BoutRecord) =>
+        b.kind === 'duel' ? b.killed
+        : b.kind === 'melee' ? b.fighters.some((f) => f.fate === 'slain')
+        : b.routed;
+      const weight = (b: BoutRecord) => (b.kind === 'melee' ? b.rounds : b.fx.length);
+      const score = (b: BoutRecord) => (decisive(b) ? 1000 : 0) + weight(b);
       const best = won.reduce((a, b) => (score(b) > score(a) ? b : a));
       const loserId = best.aId === o.id ? best.dId : best.aId;
       const yr = best.year;
@@ -233,6 +241,9 @@ export function composeBiography(input: {
       if (best.kind === 'duel') {
         zh = best.killed ? `${yr}年陣前斬${onZh(loserId)}。` : `${yr}年陣前力克${onZh(loserId)}。`;
         en = best.killed ? `Slew ${onEn(loserId)} in single combat (${yr}).` : `Bested ${onEn(loserId)} in single combat (${yr}).`;
+      } else if (best.kind === 'melee') {
+        zh = `${yr}年率眾將團戰並擊,大破${onZh(loserId)}等敵陣群英。`;
+        en = `Led the champions' melee that broke ${onEn(loserId)}'s knot (${yr}).`;
       } else {
         zh = best.routed ? `${yr}年舌戰罵死${onZh(loserId)}。` : `${yr}年廷辯折服${onZh(loserId)}。`;
         en = best.routed ? `Routed ${onEn(loserId)} in debate (${yr}).` : `Out-argued ${onEn(loserId)} in debate (${yr}).`;

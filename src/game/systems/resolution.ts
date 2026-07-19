@@ -22,6 +22,7 @@ import { marchDurationFor } from '../data/cities';
 import { FACILITY_DEFS, type Fort } from '../types/fort';
 import { advanceSeason } from '../state/gameState';
 import { processAging } from './aging';
+import { legacyDropLine } from './legacyManual';
 import { evaluateGovernors } from './governorEval';
 import { handleSearch, resolveInternalAffairs, type LostItemRef } from './commands';
 import { awardInternalAffairsXp, canBreakthrough, breakthroughCost, breakthroughIronCost, applyBreakthrough, defaultBreakthroughPath, grantXp, tickMentorBonds, specialTraining, defaultLatent } from './growth';
@@ -3315,6 +3316,21 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     officers = aging.officers;
     forces = aging.forces;
     entries.push(...aging.entries);
+
+    // 遺譜傳世 (§6.10/§6.14) — a master's manuals come to rest in the city they
+    // died in, joining its 藏寶池 for whoever searches it next. 人亡而藝不絕.
+    for (const drop of aging.legacyDrops) {
+      if (!cities[drop.cityId]) continue;
+      lostItems = [...lostItems, { itemId: drop.itemId, cityId: drop.cityId }];
+      const master = officers[drop.officerId];
+      const line = legacyDropLine(drop, master?.name.zh ?? '', cities[drop.cityId].name.zh);
+      entries.push({
+        cityId: drop.cityId,
+        kind: 'note',
+        text: `${master?.name.en ?? 'A master'}'s ${drop.kind === 'martial' ? 'martial notes' : 'collected arguments'} are gathered in ${cities[drop.cityId].name.en} — seek them out.`,
+        textZh: line.textZh,
+      });
+    }
 
     // 考課 — annual review of every realm's 太守. Grade the seat's health,
     // reward/punish the prefect's loyalty. Runs once a year with aging.

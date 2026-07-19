@@ -47,7 +47,9 @@ export type AchievementTriggerKind =
   | 'field-melee'   // 群英並擊 — won a field team melee
   // 2026-07 debate-deepening batch (instant, no targetId):
   | 'debate-sage'   // 辯聖 — an officer's 文辯修為 reached 100
-  | 'moon-reign';   // 清議領袖 — held the 月旦評 laurel through 3 straight defenses
+  | 'moon-reign'    // 清議領袖 — held the 月旦評 laurel through 3 straight defenses
+  | 'persuade-city' // 三寸之舌 — argued an enemy city's gates open (§6.16)
+  | 'refute-demand';// 據理折牒 — argued a foreign ultimatum into withdrawal
 
 export interface AchievementTrigger {
   kind: AchievementTriggerKind;

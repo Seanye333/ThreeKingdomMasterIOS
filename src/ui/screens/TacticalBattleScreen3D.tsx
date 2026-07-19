@@ -4939,6 +4939,7 @@ export function TacticalBattleScreen3D() {
                   setSignatureBanner({ zh: headZh, en: headEn, key: Date.now() });
                   setCine({ key: ++cineCount.current, weight: 3, color: 'var(--tkm-hud-amber)' });
                   setTimeout(() => setSignatureBanner(null), 2400);
+                  st.recordMeleeBout(res); // 團戰名局廊 — archive the field melee
             })();
           }}
         />

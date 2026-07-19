@@ -46,6 +46,22 @@ export const ACHIEVEMENTS: Achievement[] = [
     trigger: { kind: 'moon-reign' },
   },
   {
+    id: 'ach-persuade-city',
+    name: { en: 'Three Inches of Tongue', zh: '三寸之舌' },
+    description: 'Argue an enemy city\'s gates open — a wall taken without a corpse.',
+    descriptionZh: '舌戰說降,罵倒守將而城門自開 — 三寸之舌,勝於百萬之師。',
+    tier: 'gold',
+    trigger: { kind: 'persuade-city' },
+  },
+  {
+    id: 'ach-refute-demand',
+    name: { en: 'The Writ Refuted', zh: '據理折牒' },
+    description: 'Out-argue a foreign court pressing an ultimatum — the demand is withdrawn.',
+    descriptionZh: '強鄰下牒索貢,遣辯士據理折之 — 其庭詞窮,收回成命。',
+    tier: 'silver',
+    trigger: { kind: 'refute-demand' },
+  },
+  {
     id: 'ach-field-melee',
     name: { en: 'Champions in a Knot', zh: '群英並擊' },
     description: 'Win a team melee of champions on the battlefield.',

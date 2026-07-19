@@ -310,13 +310,17 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
                         const other = officers[otherId];
                         const won = b.kind === 'duel'
                           ? (b.winner === 'attacker' ? b.aId === officer.id : b.winner === 'defender' ? b.dId === officer.id : false)
-                          : (b.winner === 'a' ? b.aId === officer.id : b.winner === 'd' ? b.dId === officer.id : false);
+                          : b.kind === 'melee'
+                            ? (b.winner === 'a' ? b.aId === officer.id : b.winner === 'b' ? b.dId === officer.id : false)
+                            : (b.winner === 'a' ? b.aId === officer.id : b.winner === 'd' ? b.dId === officer.id : false);
                         const drew = b.winner === 'draw';
-                        const finish = b.kind === 'duel' ? (b.killed ? t('・斬', ' · slew') : '') : (b.routed ? t('・罵倒', ' · routed') : '');
+                        const finish = b.kind === 'duel' ? (b.killed ? t('・斬', ' · slew') : '')
+                          : b.kind === 'melee' ? (b.fighters.some((f) => f.fate === 'slain') ? t('・團戰斬將', ' · melee kill') : t('・團戰', ' · melee'))
+                          : (b.routed ? t('・罵倒', ' · routed') : '');
                         return (
                           <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem' }}>
                             <span style={{ color: '#9aa6b0' }}>
-                              {b.kind === 'duel' ? '⚔' : '💬'} vs {other ? pickName(other.name, lang) : otherId}
+                              {b.kind === 'duel' ? '⚔' : b.kind === 'melee' ? '🔥' : '💬'} vs {other ? pickName(other.name, lang) : otherId}
                             </span>
                             <span style={{ color: drew ? '#7a8893' : won ? '#8ac88a' : '#e0907a', fontFamily: 'ui-monospace, monospace' }}>
                               {b.year}{t('年', '')} {drew ? t('平', 'draw') : won ? t('勝', 'won') : t('負', 'lost')}{won ? finish : ''}

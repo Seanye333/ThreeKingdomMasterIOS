@@ -27,14 +27,15 @@ import type {
 import { isHostilePermitted } from '../types';
 import { createDeeds } from '../types/deeds';
 import { grantDeedTitles } from '../systems/deedTitles';
-import { pushBoutRecord } from '../systems/duelHall';
+import { pushBoutRecord, isNotableBout, type BoutRecord } from '../systems/duelHall';
 import { recordRivalryBout, pairKey as rivalPairKey, NEMESIS_THRESHOLD } from '../systems/rivalries';
 import { challengeStakes } from '../systems/duelChallenge';
 import { trainMartialArts, MARTIAL_XIUWEI_MAX, transmitArts, canTransmitArts } from '../systems/martialArts';
 import { trainDebateArts, DEBATE_XIUWEI_MAX, transmitScholarship, canTransmitScholarship } from '../systems/debateArts';
 import { resolveDuel, canDuel, staticProwess, weaponClassFor } from '../systems/duel';
+import { meleeReplayFighters } from '../systems/teamDuel';
 import { pickArenaChampion, pickArenaChallenger, arenaTakeReward, arenaHoldStipend } from '../systems/arenaLadder';
-import { pickMoonLaurel, pickMoonChallenger, moonScore, moonTakeReward, moonHoldStipend, dualLuminaries, DUAL_LUMINARY_LOYALTY } from '../systems/scholarRank';
+import { pickMoonLaurel, pickMoonChallenger, moonScore, moonTakeReward, moonHoldStipend, dualLuminaries, DUAL_LUMINARY_LOYALTY, annualHonors, honorRenown } from '../systems/scholarRank';
 import { resolveWordWar } from '../systems/wordWar';
 import { pickCourtVoice, willAcceptParley, concordStakes, tributeStakes, persuadeStakes, canPersuadeCity, pickGateKeeper, CONCORD_COST, TRIBUNE_COST, PERSUADE_COST } from '../systems/debateDiplomacy';
 import { tickAIPersuasions, tickMoonWrit, PERSUASION_REFUSE_LOYALTY, MOON_WRIT_DUCK_RENOWN } from '../systems/aiParley';
@@ -1002,6 +1003,12 @@ interface GameStore extends GameState {
   recordDuelRating: (aId: EntityId, bId: EntityId, result: 'win' | 'loss' | 'draw') => void;
   /** 恩怨簿 — record a finished duel into the head-to-head history (forges 宿敵). */
   recordRivalry: (aId: EntityId, bId: EntityId, winner: 'attacker' | 'defender' | 'draw', killed: boolean) => void;
+  /** 文敵簿 (§6.15) — record a finished 舌戰 into the debate-rivalry ledger; a
+   *  pair who keep crossing words become 文敵 (and get writ priority). */
+  recordDebateRivalry: (aId: EntityId, bId: EntityId, winner: 'a' | 'd' | 'draw', routed: boolean) => void;
+  /** 團戰名局 (§6.11) — archive a finished champion melee into the 名局廊 so it
+   *  can be re-staged later (ids only; the live roster rehydrates it). */
+  recordMeleeBout: (result: import('../systems/teamDuel').TeamDuelResult) => void;
   /** 約戰 — apply a formal challenge's 威名/忠誠 stakes to challenger + target. */
   applyDuelChallengeStakes: (challengerId: EntityId, targetId: EntityId, outcome: import('../systems/duelChallenge').ChallengeOutcome) => void;
   /** 陣斬 — a non-battlefield duel (約戰/劇情) cuts an officer down for real: mark
@@ -9038,7 +9045,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // one from your force) holds it, the realm's fighters keep contesting it
         // between seasons; the player-held seat is only ever risked by choice
         // (holdArena). A change of hands is chronicle material.
-        {
+        if (seasonBoundary) {
           const cur = get();
           const seat = cur.arenaChampion;
           const holder = seat ? cur.officers[seat.officerId] : null;
@@ -9069,7 +9076,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // 月旦隨季 (§6.15) — the critique of tongues lives its own life too: while
         // an AI holds the 魁首, the realm's scholars keep contesting it between
         // seasons; a player-held laurel is only ever risked by choice (守評).
-        {
+        if (seasonBoundary) {
           const cur = get();
           const seat = cur.moonLaurel;
           const holder = seat ? cur.officers[seat.officerId] : null;
@@ -9102,7 +9109,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // seasons, champions of OTHER realms test each other (較藝,點到為止 —
         // face and rating, not blood). The ladder moves, AI arms deepen their
         // 修為, and a marquee upset is chronicle material.
-        {
+        if (seasonBoundary) {
           const cur = get();
           if (Math.random() < 0.35) {
             const pool = Object.values(cur.officers).filter((o) =>
@@ -9143,7 +9150,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // AI 舌戰說降來使 (§6.16 對稱) — an unanswered envoy at your wall argues
         // it out unattended when the writ lapses; then a rival realm may send a
         // fresh tongue to another weakly-held wall.
-        {
+        if (seasonBoundary) {
           const cur = get();
           const standing = (cur.pendingPersuasions ?? []).filter((p) => {
             const city = cur.cities[p.cityId];
@@ -9187,7 +9194,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
 
         // 月旦來辯 (§6.15 對稱) — while your champion holds the laurel, rival
         // scholars send writs; an ignored writ lapses into a public duck.
-        {
+        if (seasonBoundary) {
           const cur = get();
           const writ = cur.pendingMoonWrit;
           const holderId = cur.moonLaurel?.officerId;
@@ -9200,12 +9207,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             const freshWrit = tickMoonWrit({
               officers: cur.officers, holderId, playerForceId: cur.playerForceId,
               existing: undefined, expiresAt: addDiploSeasons(cur.date, 2),
+              debateRivalries: cur.debateRivalries ?? {}, // 文敵先至
             });
             if (freshWrit) {
               set({ pendingMoonWrit: freshWrit });
               const ch = cur.officers[freshWrit.challengerId];
               get().notify(
-                `月旦來辯 · ${ch?.name.zh ?? ''} 下帖求辯魁首`,
+                `月旦來辯 · ${ch?.name.zh ?? ''} ${freshWrit.feud ? '舊怨未了,再下戰帖' : '下帖求辯魁首'}`,
                 `${ch?.name.en ?? 'A rival scholar'} sends a writ for your Moon-Rank laurel — answer at the Debate Ground`,
                 'warn',
               );
@@ -9217,7 +9225,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // garrisoned beneath them: 文教 (學舍/太學/藏書樓) banks 文辯心得, 武備
         // (校場/講武堂) banks 武學心得. Any realm's cities — the schools teach
         // whoever sits in them. Capped per city so stacking stays modest.
-        {
+        if (seasonBoundary) {
           const cur = get();
           const wen: Record<string, number> = {};
           const wu: Record<string, number> = {};
@@ -9251,7 +9259,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // 出將入相 (§6.15) — a name high on BOTH the 武評榜 and the 月旦榜
         // steadies whichever city they garrison (a small loyalty aura), for any
         // realm: the talent commands respect, not the flag.
-        {
+        if (seasonBoundary) {
           const cur = get();
           const dual = dualLuminaries(cur.officers, cur.warRatings ?? {});
           if (dual.size > 0) {
@@ -9266,6 +9274,32 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             }
             if (touched) set({ cities });
           }
+        }
+
+        // 歲末雙榜 (§6.15) — at year's end the court publishes both boards' top
+        // three: the year's fiercest arms (武評榜) and keenest tongues (月旦榜).
+        // A place is a feather of 威名 and the roll goes into the annals — a
+        // yearly beat that keeps both ladders feeling like living institutions.
+        if (seasonBoundary && state.date.season === 'winter') {
+          const cur = get();
+          const honors = annualHonors(cur.officers, cur.warRatings ?? {}, cur.date.year);
+          const officers = { ...cur.officers };
+          const bump = (id: string, rank: number) => {
+            const o = officers[id];
+            if (o && o.status !== 'dead') officers[id] = { ...o, renown: (o.renown ?? 0) + honorRenown(rank) };
+          };
+          const nameOf = (id: string) => cur.officers[id]?.name.zh ?? id;
+          if (honors.arms.length) {
+            for (const h of honors.arms) bump(h.officerId, h.rank);
+            const line = honors.arms.map((h) => `${h.rank}. ${nameOf(h.officerId)}(${h.scoreZh})`).join('、');
+            get().recordAnnal({ year: cur.date.year, season: cur.date.season, kind: 'event', titleZh: '歲末武評', textZh: `是歲武評榜:${line} — 天下驍將,一時瑜亮。`, cityId: null });
+          }
+          if (honors.tongues.length) {
+            for (const h of honors.tongues) bump(h.officerId, h.rank);
+            const line = honors.tongues.map((h) => `${h.rank}. ${nameOf(h.officerId)}(${h.scoreZh})`).join('、');
+            get().recordAnnal({ year: cur.date.year, season: cur.date.season, kind: 'event', titleZh: '歲末月旦', textZh: `是歲月旦榜:${line} — 士林清望,天下所歸。`, cityId: null });
+          }
+          set({ officers });
         }
 
         // 自動存檔 — every season boundary writes one of three rolling
@@ -12309,6 +12343,47 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const u = applyBout(state.warRatings, a, b, result);
         set({ warRatings: { ...state.warRatings, [u.winnerId]: u.winnerRating, [u.loserId]: u.loserRating } });
       },
+      recordMeleeBout: (result) => {
+        const state = get();
+        const capA = result.a[0];
+        const capB = result.b[0];
+        if (!capA || !capB) return;
+        const SEASON_IDX = ['spring', 'summer', 'autumn', 'winter'];
+        const rec: BoutRecord = {
+          id: `melee-${capA.id}-${capB.id}-${Date.now()}`,
+          kind: 'melee',
+          aId: capA.id, dId: capB.id,
+          winner: result.winner,
+          rounds: result.rounds,
+          fighters: meleeReplayFighters(result),
+          log: result.log.map((l) => ({ ...l })),
+          year: state.date.year,
+          season: Math.max(0, SEASON_IDX.indexOf(state.date.season)),
+        };
+        if (isNotableBout(rec)) get().recordBout(rec);
+      },
+      recordDebateRivalry: (aId, bId, winner, routed) => {
+        if (aId === bId) return;
+        const state = get();
+        const SEASON_IDX = ['spring', 'summer', 'autumn', 'winter'];
+        const w = winner === 'a' ? 'a' : winner === 'd' ? 'b' : 'draw';
+        const key = rivalPairKey(aId, bId);
+        const before = (state.debateRivalries ?? {})[key]?.bouts ?? 0;
+        // 罵倒 closes a war of words the way a kill closes a duel: the routed
+        // party has nothing left to say to them.
+        const next = recordRivalryBout(state.debateRivalries ?? {}, aId, bId, w, routed, state.date.year, Math.max(0, SEASON_IDX.indexOf(state.date.season)));
+        set({ debateRivalries: next });
+        const nr = next[key];
+        if (!routed && before < NEMESIS_THRESHOLD && nr && nr.bouts >= NEMESIS_THRESHOLD && !nr.killerId) {
+          const a = state.officers[aId]; const b = state.officers[bId];
+          get().recordAnnal({
+            year: state.date.year, season: state.date.season, kind: 'event',
+            titleZh: '文敵結怨',
+            textZh: `${a?.name.zh ?? '一士'} 與 ${b?.name.zh ?? '一士'} 屢辯不下,遂成文敵 — 士林側目。`,
+            cityId: null,
+          });
+        }
+      },
       recordRivalry: (aId, bId, winner, killed) => {
         if (aId === bId) return;
         const state = get();
@@ -12643,6 +12718,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             cityId,
           });
           get().recordDeed(envoyId, { debatesWon: 1, debateRouts: 1 });
+          get().fireAchievement({ kind: 'persuade-city' }); // 三寸之舌 — a wall taken without a corpse
         } else if (outcome === 'win') {
           const exodus = Math.round(city.troops * stakes.garrisonExodus);
           set({
@@ -12790,6 +12866,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             diplomacy: { relations: { ...state.diplomacy.relations, [key]: { ...rel, score: Math.min(100, rel.score + 2) } } },
           });
           if (myVoice) get().recordDeed(myVoice.id, { debatesWon: 1 });
+          get().fireAchievement({ kind: 'refute-demand' }); // 據理折牒
           const msg = `${myVoice?.name.zh ?? '我使'} 據理折牒 — ${coercer.name.zh} 詞窮,收回成命。`;
           get().notify(`折牒 · ${coercer.name.zh}`, `The ultimatum from ${coercer.name.en} is argued down`);
           get().recordAnnal({ year: state.date.year, season: state.date.season, kind: 'event', titleZh: '據理折牒', textZh: msg, cityId: null });
@@ -17747,6 +17824,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           moonLaurel: loaded.moonLaurel,
           pendingPersuasions: loaded.pendingPersuasions ?? [],
           clearedDebateScenarios: loaded.clearedDebateScenarios ?? [],
+          debateRivalries: loaded.debateRivalries ?? {},
           pendingMoonWrit: loaded.pendingMoonWrit,
           pendingEspionage: loaded.pendingEspionage ?? [],
           embeddedSpies: loaded.embeddedSpies ?? [],
@@ -17948,6 +18026,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         duelHall: state.duelHall,
         warRatings: state.warRatings,
         rivalries: state.rivalries,
+        debateRivalries: state.debateRivalries,
         lastTournamentYear: state.lastTournamentYear,
         arenaChampion: state.arenaChampion,
         moonLaurel: state.moonLaurel,
@@ -18012,6 +18091,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (!state.duelHall) state.duelHall = [];
         if (!state.warRatings) state.warRatings = {};
         if (!state.rivalries) state.rivalries = {};
+        if (!state.debateRivalries) state.debateRivalries = {};
         if (state.lastTournamentYear == null) state.lastTournamentYear = 0;
         if (!state.clearedDuelScenarios) state.clearedDuelScenarios = [];
         if (!state.clearedDebateScenarios) state.clearedDebateScenarios = [];

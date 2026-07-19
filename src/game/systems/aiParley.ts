@@ -2,6 +2,7 @@ import type { Officer, City, Force, EntityId, GameDate } from '../types';
 import { getRelation, type DiplomaticState } from '../types';
 import { moonScore, canOrate, pickMoonChallenger } from './scholarRank';
 import { pickCourtVoice, canPersuadeCity, PERSUADE_MAX_GARRISON, pickGateKeeper } from './debateDiplomacy';
+import { rivalriesOf, type RivalryMap } from './rivalries';
 
 /**
  * AI 折衝樽俎 (§6.16 對稱) — the debate-diplomacy tables turned back on the
@@ -86,6 +87,8 @@ export interface PendingMoonWrit {
   challengerId: EntityId;
   /** Season the unanswered writ lapses — ducking it costs face. */
   expiresAt: GameDate;
+  /** 文敵 — set when the challenger is an old sparring partner of the holder. */
+  feud?: boolean;
 }
 
 export const MOON_WRIT_CHANCE = 0.3; // per season while the player holds the laurel
@@ -94,7 +97,9 @@ export const MOON_WRIT_DUCK_RENOWN = 3;
 
 /**
  * While the PLAYER's officer holds the 月旦評 laurel, a rival scholar may send
- * word demanding a bout. Returns the writ, or null. Pure.
+ * word demanding a bout. A standing 文敵 (a tongue the holder has crossed words
+ * with before, §6.15) writs ahead of a stranger — old arguments want finishing.
+ * Returns the writ, or null. Pure.
  */
 export function tickMoonWrit(input: {
   officers: Record<EntityId, Officer>;
@@ -102,14 +107,26 @@ export function tickMoonWrit(input: {
   playerForceId: EntityId | null | undefined;
   existing: PendingMoonWrit | undefined;
   expiresAt: GameDate;
+  /** 文敵簿 — the debate-rivalry ledger; a standing feud takes precedence. */
+  debateRivalries?: RivalryMap;
   rng?: () => number;
 }): PendingMoonWrit | null {
-  const { officers, holderId, playerForceId, existing, expiresAt } = input;
+  const { officers, holderId, playerForceId, existing, expiresAt, debateRivalries } = input;
   if (!holderId || !playerForceId || existing) return null;
   const holder = officers[holderId];
   if (!holder || holder.forceId !== playerForceId || !canOrate(holder)) return null;
   const rng = input.rng ?? Math.random;
   if (rng() >= MOON_WRIT_CHANCE) return null;
+
+  // 文敵先至 — an unfinished feud of words writs before any stranger does.
+  if (debateRivalries) {
+    const feuds = rivalriesOf(debateRivalries, holderId)
+      .filter((r) => !r.killerId) // a feud closed by a 罵倒 is spent
+      .map((r) => officers[r.aId === holderId ? r.bId : r.aId])
+      .filter((o): o is Officer => !!o && o.forceId !== playerForceId && !!o.forceId && canOrate(o));
+    if (feuds.length) return { challengerId: feuds[0].id, expiresAt, feud: true };
+  }
+
   const challenger = pickMoonChallenger(officers, holderId, rng);
   if (!challenger || challenger.forceId === playerForceId) return null; // a housemate spars, not writs
   return { challengerId: challenger.id, expiresAt };

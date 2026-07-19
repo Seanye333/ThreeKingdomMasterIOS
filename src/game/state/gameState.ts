@@ -456,6 +456,10 @@ export interface GameState {
   warRatings: Record<EntityId, number>;
   /** 恩怨簿 — head-to-head single-combat history per pair (forges 宿敵 in play). */
   rivalries: import('../systems/rivalries').RivalryMap;
+  /** 文敵簿 (§6.15) — the same ledger for the tongue: head-to-head 舌戰 history
+   *  per pair. Kept apart from `rivalries` so a war of words never drags a pair
+   *  into the auto-duel 宿敵 path — a feud of words stays a feud of words. */
+  debateRivalries: import('../systems/rivalries').RivalryMap;
   /** 天下武道會 — the year the realm's tournament last crowned a champion; the
    *  steep 武評榜 climb is a once-a-year prize (not farmable). 0 = never held. */
   lastTournamentYear: number;
@@ -913,6 +917,7 @@ export const EMPTY_STATE: GameState = {
   duelHall: [],
   warRatings: {},
   rivalries: {},
+  debateRivalries: {},
   lastTournamentYear: 0,
   clearedDuelScenarios: [],
   clearedDebateScenarios: [],
@@ -1375,6 +1380,7 @@ export function loadScenario(
     duelHall: [],
     warRatings: {},
     rivalries: {},
+    debateRivalries: {},
   lastTournamentYear: 0,
     clearedDuelScenarios: [],
     clearedDebateScenarios: [],

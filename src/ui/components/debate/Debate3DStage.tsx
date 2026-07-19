@@ -59,6 +59,9 @@ export function Debate3DStage(props: ComponentProps<typeof DebateGameModal>) {
           fx: history.current.map((h) => ({ ...h })),
         };
         if (isNotableBout(rec)) recordBout(rec);
+        // 文敵簿 (§6.15) — accrue the head-to-head war-of-words record (a 罵倒
+        // closes the feud the way a kill closes a duel rivalry).
+        useGameStore.getState().recordDebateRivalry(me.id, foe.id, fx.winner ?? 'draw', !!fx.routed);
         // 論戰頓悟 — the player's debater deepens their 文辯 from the bout; a win
         // over a keener tongue / a famed name / a marathon can spark a 頓悟 (§6.14).
         const won = fx.winner === 'a';

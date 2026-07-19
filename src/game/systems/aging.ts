@@ -14,6 +14,7 @@ import { TRAIT_DEFS_BY_ID } from '../data/personality';
 import { griefOnDeath } from './relationshipEffects';
 import { demotedPeerage, peerageById, peerageTier } from '../data/peerage';
 import type { FamilyRelation } from '../types/family';
+import { legacyManualDrops, type LegacyDrop } from './legacyManual';
 
 export interface AgingInput {
   year: number;
@@ -40,6 +41,8 @@ export interface AgingOutput {
   officers: Record<EntityId, Officer>;
   forces: Record<EntityId, Force>;
   entries: ReportEntry[];
+  /** 遺譜傳世 — manuals left behind by masters who died this year (§6.10/§6.14). */
+  legacyDrops: LegacyDrop[];
 }
 
 /**
@@ -63,6 +66,8 @@ export function processAging(input: AgingInput): AgingOutput {
   let officers = { ...input.officers };
   let forces = { ...input.forces };
   const entries: ReportEntry[] = [];
+  // 遺譜傳世 — manuals gathered where a master fell (see legacyManual.ts).
+  const legacyDrops: LegacyDrop[] = [];
 
   for (const officer of Object.values(officers)) {
     if (officer.status === 'dead' || officer.status === 'unsearched') continue;
@@ -160,6 +165,9 @@ export function processAging(input: AgingInput): AgingOutput {
     if (input.rng() >= chance) continue;
 
     // Officer dies — and their court, if they had one, grants the 諡號.
+    // 遺譜傳世 — a master's notes are gathered where they fell (before the
+    // dead officer's posting is cleared below).
+    legacyDrops.push(...legacyManualDrops(officer, officer.locationCityId));
     const posthumous = grantPosthumousName(officer);
     officers = {
       ...officers,
@@ -371,7 +379,7 @@ export function processAging(input: AgingInput): AgingOutput {
     }
   }
 
-  return { cities, officers, forces, entries };
+  return { cities, officers, forces, entries, legacyDrops };
 }
 
 export function deathChance(

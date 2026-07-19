@@ -30,6 +30,7 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
   const duelHall = useGameStore((s) => s.duelHall);
   const warRatings = useGameStore((s) => s.warRatings);
   const rivalries = useGameStore((s) => s.rivalries);
+  const debateRivalries = useGameStore((s) => s.debateRivalries);
   const applyScenarioEffects = useGameStore((s) => s.applyScenarioEffects);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const arenaChampion = useGameStore((s) => s.arenaChampion);
@@ -133,6 +134,7 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
     }
     const res = resolveTeamDuel(mySide, foeSide);
     setMeleeResult({ winner: res.winner, log: res.log.map((l) => (lang === 'en' ? l.en : l.zh)) });
+    useGameStore.getState().recordMeleeBout(res); // 團戰名局廊
     // 團戰同場 (§6.11) — stage the whole melee in the 3D ring, everyone on stage.
     setMeleeStage(res);
   };
@@ -157,6 +159,14 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
       .slice(0, 20),
     [rivalries, officers],
   );
+  // 文敵簿 (§6.15) — the same ledger for wars of words, kept apart from blades.
+  const wordFeuds = useMemo(
+    () => Object.values(debateRivalries ?? {})
+      .filter((r) => officers[r.aId] && officers[r.bId])
+      .sort((a, b) => b.bouts - a.bouts)
+      .slice(0, 20),
+    [debateRivalries, officers],
+  );
 
   if (replay) {
     return <BoutReplay3D rec={replay} onClose={() => setReplay(null)} />;
@@ -174,6 +184,7 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
         onComplete={(res) => {
           setMeleeLive(null);
           setMeleeResult({ winner: res.winner, log: res.log.map((l) => (lang === 'en' ? l.en : l.zh)) });
+          useGameStore.getState().recordMeleeBout(res); // 團戰名局廊
         }}
       />
     );
@@ -441,6 +452,44 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
               })}
             </div>
           )}
+
+          {/* 文敵簿 (§6.15) — feuds fought with the tongue, kept apart from blades. */}
+          {wordFeuds.length > 0 && (
+            <>
+              <div style={{ fontSize: '0.72rem', color: '#aab6c0', lineHeight: 1.5, margin: '0.9rem 0 0.5rem 2px' }}>
+                {t('文敵簿 — 舌戰亦結怨:反覆交鋒三次以上即成「文敵」,月旦來辯必先由文敵下帖;一方罵倒則此怨已了。', 'The book of word-feuds — three wars of words forge a 文敵, who writs for your Moon-Rank laurel ahead of any stranger. A rout settles it.')}
+              </div>
+              <div style={{ display: 'grid', gap: 5 }}>
+                {wordFeuds.map((r: RivalryRecord) => {
+                  const a = officers[r.aId], b = officers[r.bId];
+                  const sworn = r.bouts >= NEMESIS_THRESHOLD && !r.killerId;
+                  const routed = !!r.killerId;
+                  const border = routed ? '#6a6ab0' : sworn ? '#88b7e8' : '#26323e';
+                  return (
+                    <div key={`w|${r.aId}|${r.bId}`} style={{ display: 'flex', alignItems: 'center', gap: 8, background: sworn || routed ? 'rgba(60,80,140,0.14)' : '#10161e', border: `1px solid ${border}`, borderRadius: 'var(--tkm-radius-sm)', padding: '0.35rem 0.55rem' }}>
+                      {a && <OfficerPortrait officer={a} size={28} forceColor="#88b7e8" year={useGameStore.getState().date.year} />}
+                      <span style={{ flex: 1, minWidth: 0 }}>
+                        <span style={{ color: '#f2dd9a', fontSize: '0.86rem' }}>
+                          {nm(r.aId)} <span style={{ color: '#a8d0ff', fontWeight: 700 }}>{r.aWins}</span>
+                          <span style={{ color: '#7a8893' }}> – </span>
+                          <span style={{ color: '#a8d0ff', fontWeight: 700 }}>{r.bWins}</span> {nm(r.bId)}
+                          {r.draws > 0 && <span style={{ color: '#7a8893', fontSize: '0.72rem' }}> ・{t('各執', 'draw')}{r.draws}</span>}
+                        </span>
+                        <span style={{ display: 'block', fontSize: '0.66rem', color: '#8a96a0' }}>
+                          {routed
+                            ? <span style={{ color: '#a08ae0' }}>💬 {t('一辯了怨', 'Settled by a rout')} — {nm(r.killerId!)} {t('罵倒', 'routed')} {nm(r.victimId!)}</span>
+                            : sworn
+                              ? <span style={{ color: '#88b7e8' }}>📜 {t('文敵', 'Word-feud')} · {t('交鋒', 'argued')} {r.bouts} {t('場', '×')}</span>
+                              : <>{t('舊辯', 'Old debates')} · {t('交鋒', 'argued')} {r.bouts} {t('場', '×')}</>}
+                        </span>
+                      </span>
+                      {b && <OfficerPortrait officer={b} size={28} forceColor="#c178c7" year={useGameStore.getState().date.year} />}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </>
       )}
 
@@ -455,28 +504,33 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
           )}
           {duelHall.map((rec) => {
             const aWon = rec.kind === 'duel' ? rec.winner === 'attacker' : rec.winner === 'a';
-            const dWon = rec.kind === 'duel' ? rec.winner === 'defender' : rec.winner === 'd';
+            const dWon = rec.kind === 'duel' ? rec.winner === 'defender'
+              : rec.kind === 'melee' ? rec.winner === 'b' : rec.winner === 'd';
+            // 團戰名局 — a melee reads by its butcher's bill, not a single blow.
+            const meleeSlain = rec.kind === 'melee' && rec.fighters.some((f) => f.fate === 'slain');
             const flourish = rec.kind === 'duel'
               ? (rec.killed ? t('斬', 'slew') : aWon || dWon ? t('力克', 'bested') : t('戰平', 'drew'))
-              : (rec.routed ? t('罵倒', 'shouted down') : aWon || dWon ? t('辯勝', 'out-argued') : t('平手', 'drew'));
+              : rec.kind === 'melee'
+                ? (meleeSlain ? t('團戰斬將', 'cut down') : aWon || dWon ? t('團戰破陣', 'broke') : t('鏖戰不分', 'held'))
+                : (rec.routed ? t('罵倒', 'shouted down') : aWon || dWon ? t('辯勝', 'out-argued') : t('平手', 'drew'));
             const winnerName = aWon ? nm(rec.aId) : dWon ? nm(rec.dId) : null;
             const loserName = aWon ? nm(rec.dId) : dWon ? nm(rec.aId) : null;
             return (
               <button
                 key={rec.id}
                 onClick={() => setReplay(rec)}
-                style={{ textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, background: '#10161e', border: `1px solid ${rec.kind === 'duel' ? '#3a2c1c' : '#243240'}`, borderRadius: 'var(--tkm-radius-sm)', padding: '0.45rem 0.6rem', cursor: 'pointer', color: '#e6edf3', fontFamily: 'var(--tkm-font-body)' }}
+                style={{ textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, background: '#10161e', border: `1px solid ${rec.kind === 'duel' ? '#3a2c1c' : rec.kind === 'melee' ? '#3a2436' : '#243240'}`, borderRadius: 'var(--tkm-radius-sm)', padding: '0.45rem 0.6rem', cursor: 'pointer', color: '#e6edf3', fontFamily: 'var(--tkm-font-body)' }}
               >
-                <span style={{ fontSize: '1.1rem' }}>{rec.kind === 'duel' ? '⚔' : '💬'}</span>
+                <span style={{ fontSize: '1.1rem' }}>{rec.kind === 'duel' ? '⚔' : rec.kind === 'melee' ? '🔥' : '💬'}</span>
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ color: '#f2dd9a', fontSize: '0.86rem' }}>
                     {winnerName
                       ? <>{winnerName} <span style={{ color: '#caa86a' }}>{flourish}</span> {loserName}</>
                       : <>{nm(rec.aId)} <span style={{ color: '#7a8893' }}>{flourish}</span> {nm(rec.dId)}</>}
-                    {(rec.kind === 'duel' && rec.killed) || (rec.kind === 'debate' && rec.routed) ? <span style={{ color: '#e06a5a' }}> ★</span> : null}
+                    {(rec.kind === 'duel' && rec.killed) || (rec.kind === 'debate' && rec.routed) || meleeSlain ? <span style={{ color: '#e06a5a' }}> ★</span> : null}
                   </span>
                   <span style={{ display: 'block', fontSize: '0.68rem', color: '#7a8893' }}>
-                    {lang === 'en' ? SEASON_EN[rec.season] : SEASON_ZH[rec.season]}{lang === 'en' ? ` ${rec.year}` : ` ${rec.year}年`} · {rec.fx.length} {t('回合', 'rounds')}
+                    {lang === 'en' ? SEASON_EN[rec.season] : SEASON_ZH[rec.season]}{lang === 'en' ? ` ${rec.year}` : ` ${rec.year}年`} · {rec.kind === 'melee' ? rec.rounds : rec.fx.length} {t('回合', 'rounds')}{rec.kind === 'melee' ? ` · ${rec.fighters.length} ${t('將', 'champions')}` : ''}
                   </span>
                 </span>
                 <span style={{ color: '#9ed68a', fontSize: '0.8rem' }}>▶ {t('重演', 'Play')}</span>

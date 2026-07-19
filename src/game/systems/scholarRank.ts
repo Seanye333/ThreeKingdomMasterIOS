@@ -1,7 +1,7 @@
 import type { Officer } from '../types';
 import { debateProwess } from './wordWar';
 import { debateXiuwei } from './debateArts';
-import { ladderBoard } from './warRanking';
+import { ladderBoard, ratingTier } from './warRanking';
 
 /**
  * 月旦評 (§6.15) — the standing critique of the realm's tongues, after 許劭's
@@ -88,6 +88,33 @@ export const DUAL_LUMINARY_LOYALTY = 2; // per-season loyalty aura on their city
 export function dualLuminaries(officers: Record<string, Officer>, warRatings: Record<string, number>): Set<string> {
   const arms = new Set(ladderBoard(warRatings, officers).slice(0, DUAL_LUMINARY_TOP).map((r) => r.id));
   return new Set(moonBoard(officers, DUAL_LUMINARY_TOP).filter((r) => arms.has(r.officer.id)).map((r) => r.officer.id));
+}
+
+// ─── 歲末雙榜 — the year's honour roll of arms and tongues ────────────────────
+// At year's end the court publishes both boards' top names: the 武評榜 crowns
+// the year's fiercest arms, the 月旦榜 its keenest tongues. A place on either
+// roll is a real feather (a little 威名), and the whole thing is written into
+// the annals — a yearly beat that makes the two ladders feel like living
+// institutions rather than menu screens.
+
+export interface HonorEntry { officerId: string; rank: number; scoreZh: string; scoreEn: string; }
+export interface AnnualHonors { year: number; arms: HonorEntry[]; tongues: HonorEntry[]; }
+
+/** The year-end top-n of both boards (default 3), with a short tier gloss. */
+export function annualHonors(officers: Record<string, Officer>, warRatings: Record<string, number>, year: number, top = 3): AnnualHonors {
+  const arms = ladderBoard(warRatings, officers).slice(0, top).map((r, i) => {
+    const tier = ratingTier(r.rating);
+    return { officerId: r.id, rank: i + 1, scoreZh: `${tier.zh}·評 ${Math.round(r.rating)}`, scoreEn: `${tier.en} · ${Math.round(r.rating)}` };
+  });
+  const tongues = moonBoard(officers, top).map((r, i) => ({
+    officerId: r.officer.id, rank: i + 1, scoreZh: `清議 ${r.score}`, scoreEn: `score ${r.score}`,
+  }));
+  return { year, arms, tongues };
+}
+
+/** 褒賞 — the renown a year-end placing confers (1st/2nd/3rd). */
+export function honorRenown(rank: number): number {
+  return rank === 1 ? 3 : rank === 2 ? 2 : 1;
 }
 
 /** The season stipend for holding the laurel through a successful defense. */
