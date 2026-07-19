@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { debateProwess, type DebateDifficulty } from '../../game/systems/wordWar';
+import { moonBoard, moonScore, pickMoonLaurel, pickMoonChallenger, canOrate } from '../../game/systems/scholarRank';
 import { debateShame, isEmotional } from '../../game/systems/afflictions';
 import { DEBATE_SCENARIOS, scenarioOutcome, scenarioResultLine, type DebateScenario } from '../../game/systems/debateScenarios';
 import { trainKey, trainsLeft, TRAIN_PER_SEASON } from '../../game/systems/sparLimit';
@@ -33,9 +34,21 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
   const recordDeed = useGameStore((s) => s.recordDeed);
   const applyScenarioEffects = useGameStore((s) => s.applyScenarioEffects);
 
-  const [mode, setMode] = useState<'spar' | 'story' | 'gauntlet'>('spar');
+  const [mode, setMode] = useState<'spar' | 'story' | 'gauntlet' | 'moon'>('spar');
   // 舌戰群儒 — a champion faces a line of opposing scholars, one after another.
   const [gauntlet, setGauntlet] = useState<{ championId: string; foeIds: string[]; idx: number; wins: number } | null>(null);
+  // 月旦評 — an interactive bout for (or in defense of) the 魁首 laurel (§6.15).
+  const moonLaurel = useGameStore((s) => s.moonLaurel);
+  const seizeMoonLaurel = useGameStore((s) => s.seizeMoonLaurel);
+  const defendMoonLaurel = useGameStore((s) => s.defendMoonLaurel);
+  const [moonBout, setMoonBout] = useState<{ meId: string; foeId: string; kind: 'seize' | 'defend' } | null>(null);
+  // The reigning 魁首 (falls back to the keenest tongue when unseeded/fallen).
+  const seatHolder = useMemo(() => {
+    const seated = moonLaurel ? officers[moonLaurel.officerId] : null;
+    if (seated && canOrate(seated)) return seated;
+    return pickMoonLaurel(officers);
+  }, [officers, moonLaurel]);
+  const board = useMemo(() => moonBoard(officers, 10), [officers]);
   // 劇情舌戰 — scenarios whose opponent is present on the map and not yet ours.
   const scenarios = useMemo(
     () => DEBATE_SCENARIOS.filter((s) => {
@@ -82,7 +95,7 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
 
   const pick = (id: string) => {
     setResult(null);
-    if (mode === 'story' || mode === 'gauntlet') { setAId(aId === id ? null : id); return; } // pick one champion
+    if (mode === 'story' || mode === 'gauntlet' || mode === 'moon') { setAId(aId === id ? null : id); return; } // pick one champion
     if (aId === id) { setAId(null); return; }
     if (bId === id) { setBId(null); return; }
     if (!aId) setAId(id);
@@ -126,6 +139,44 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
       );
     }
     setGauntlet(null);
+  }
+
+  // 月旦評 — the interactive bout for (or in defense of) the 魁首.
+  if (moonBout) {
+    const meO = officers[moonBout.meId];
+    const foeO = officers[moonBout.foeId];
+    if (meO && foeO) {
+      return (
+        <Debate3DStage
+          me={meO}
+          foe={foeO}
+          difficulty="peerless"
+          onComplete={(outcome) => {
+            const won = outcome.winner === 'me';
+            setMoonBout(null);
+            if (moonBout.kind === 'seize') {
+              const r = seizeMoonLaurel(moonBout.meId, won);
+              if (won) grantOfficerXp(moonBout.meId, 30, ['intelligence', 'charisma']);
+              setResult({
+                text: won
+                  ? t(`${pickName(meO.name, lang)} 清議奪魁 — 月旦評魁首易主!`, `${pickName(meO.name, lang)} takes the Moon-Rank laurel!`)
+                  : t(`${pickName(foeO.name, lang)} 辯鋒不減,魁首之位穩如泰山。`, `${pickName(foeO.name, lang)} holds the laurel — the critique stands.`),
+                notes: won && r.ok ? [t(`文辯心得 +${r.insight} · 金 +${r.gold}`, `Insight +${r.insight} · Gold +${r.gold}`)] : [],
+              });
+            } else {
+              const r = defendMoonLaurel(won, moonBout.foeId);
+              setResult({
+                text: won
+                  ? t(`${pickName(meO.name, lang)} 坐鎮清議,又折一位來辯之士。`, `${pickName(meO.name, lang)} turns the challenger aside — the laurel holds.`)
+                  : t(`${pickName(foeO.name, lang)} 辯倒 ${pickName(meO.name, lang)} — 月旦評易主!`, `${pickName(foeO.name, lang)} out-argues ${pickName(meO.name, lang)} — the laurel passes!`),
+                notes: won && r.ok ? [t(`文辯心得 +${r.insight} · 金 +${r.gold}`, `Insight +${r.insight} · Gold +${r.gold}`)] : [],
+              });
+            }
+          }}
+        />
+      );
+    }
+    setMoonBout(null);
   }
 
   // While the debate plays, show only the 3D hall (it's fixed-position; rendering
@@ -223,9 +274,9 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
 
   return (
     <Modal onClose={onClose} title={t('論辯場', 'Debate Ground')} icon="💬" width="min(560px, 100%)" scrollBody>
-      {/* 切磋 / 劇情 / 群儒 */}
+      {/* 切磋 / 劇情 / 群儒 / 月旦 */}
       <div style={{ display: 'flex', gap: 6, marginBottom: '0.8rem' }}>
-        {(['spar', 'story', 'gauntlet'] as const).map((m) => (
+        {(['spar', 'story', 'gauntlet', 'moon'] as const).map((m) => (
           <button
             key={m}
             onClick={() => { setMode(m); setResult(null); }}
@@ -234,9 +285,74 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
               background: mode === m ? 'rgba(136,183,232,0.18)' : '#10161e',
               border: `1px solid ${mode === m ? '#88b7e8' : '#26323e'}`, color: mode === m ? '#d8ecff' : '#8a96a0',
             }}
-          >{m === 'spar' ? t('切磋', 'Spar') : m === 'story' ? t('劇情', 'Scenarios') : t('群儒', 'Gauntlet')}</button>
+          >{m === 'spar' ? t('切磋', 'Spar') : m === 'story' ? t('劇情', 'Scenarios') : m === 'gauntlet' ? t('群儒', 'Gauntlet') : t('月旦', 'Moon-Rank')}</button>
         ))}
       </div>
+
+      {mode === 'moon' && (() => {
+        const holderIsMine = !!seatHolder && seatHolder.forceId === playerForceId;
+        const challengerReady = !!a && !holderIsMine && !!seatHolder && a.id !== seatHolder.id && debateLeftFor(aId) > 0;
+        const defendReady = holderIsMine && !!seatHolder && debateLeftFor(seatHolder.id) > 0;
+        const nextChallenger = holderIsMine && seatHolder ? pickMoonChallenger(officers, seatHolder.id, Math.random) : null;
+        return (<>
+          <div style={{ fontSize: '0.8rem', color: '#aab6c0', marginBottom: '0.8rem', lineHeight: 1.6 }}>
+            {t('月旦評 — 天下名士清議排座次。辯倒在評魁首可奪其位;執魁首者聲名日隆,亦須應四方來辯。',
+              'The Moon-Rank critique ranks the realm\'s tongues. Out-argue the laurel holder to take the seat; holding it pays in fame — and draws challengers.')}
+          </div>
+          {seatHolder && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(230,196,115,0.08)', border: '1px solid #e6c473', borderRadius: 'var(--tkm-radius)', padding: '0.5rem 0.7rem', marginBottom: '0.7rem' }}>
+              <OfficerPortrait officer={seatHolder} size={44} forceColor="#e6c473" year={year} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ color: '#f2dd9a', fontSize: '0.92rem' }}>👑 {pickName(seatHolder.name, lang)} <span style={{ color: '#9aa6b0', fontSize: '0.72rem' }}>· {t('清議分', 'score')} {moonScore(seatHolder)}</span></div>
+                <div style={{ fontSize: '0.7rem', color: '#9aa6b0' }}>
+                  {moonLaurel && moonLaurel.officerId === seatHolder.id
+                    ? t(`${moonLaurel.sinceYear}年在評 · 連折 ${moonLaurel.defenses} 辯`, `laurel since ${moonLaurel.sinceYear} · ${moonLaurel.defenses} defenses`)
+                    : t('清議推重,虛位待辯', 'presumptive — the laurel awaits its first bout')}
+                </div>
+              </div>
+            </div>
+          )}
+          {!holderIsMine ? (
+            <button
+              disabled={!challengerReady}
+              onClick={() => { if (aId && seatHolder && challengerReady) { setResult(null); recordTrainingUse('debate', [aId]); setMoonBout({ meId: aId, foeId: seatHolder.id, kind: 'seize' }); } }}
+              style={{
+                width: '100%', padding: '0.6rem', marginBottom: '0.8rem',
+                background: challengerReady ? 'linear-gradient(180deg,#6e5a23,#3e3213)' : '#1e2832',
+                border: `1px solid ${challengerReady ? '#e6c473' : '#2b3845'}`,
+                color: challengerReady ? '#ffe8c0' : '#5f6c76', cursor: challengerReady ? 'pointer' : 'default',
+                fontFamily: 'var(--tkm-font-body)', fontSize: '1rem', letterSpacing: '0.1rem',
+              }}
+            >🌙 {a ? t(`遣 ${pickName(a.name, lang)} 挑戰月旦評`, `Send ${pickName(a.name, lang)} for the laurel`) : t('選一位說客', 'Pick a debater')}</button>
+          ) : (
+            <button
+              disabled={!defendReady || !nextChallenger}
+              onClick={() => { if (seatHolder && nextChallenger && defendReady) { setResult(null); recordTrainingUse('debate', [seatHolder.id]); setMoonBout({ meId: seatHolder.id, foeId: nextChallenger.id, kind: 'defend' }); } }}
+              style={{
+                width: '100%', padding: '0.6rem', marginBottom: '0.8rem',
+                background: defendReady ? 'linear-gradient(180deg,#234a6e,#13283e)' : '#1e2832',
+                border: `1px solid ${defendReady ? '#88b7e8' : '#2b3845'}`,
+                color: defendReady ? '#d8ecff' : '#5f6c76', cursor: defendReady && nextChallenger ? 'pointer' : 'default',
+                fontFamily: 'var(--tkm-font-body)', fontSize: '1rem', letterSpacing: '0.1rem',
+              }}
+            >🛡 {t('坐鎮清議,應四方來辯', 'Hold the laurel — answer a challenger')}</button>
+          )}
+          {/* 月旦榜 — the realm's ten keenest tongues. */}
+          <div style={{ display: 'grid', gap: 4, marginBottom: '0.8rem' }}>
+            {board.map((row, i) => (
+              <div key={row.officer.id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#10161e', border: `1px solid ${seatHolder?.id === row.officer.id ? '#e6c473' : '#26323e'}`, borderRadius: 'var(--tkm-radius-sm)', padding: '0.3rem 0.5rem' }}>
+                <span style={{ width: 20, textAlign: 'right', color: i < 3 ? '#e6c473' : '#7a8893', fontSize: '0.8rem' }}>{i + 1}</span>
+                <OfficerPortrait officer={row.officer} size={26} forceColor="#88b7e8" year={year} />
+                <span style={{ flex: 1, color: '#e6edf3', fontSize: '0.84rem' }}>
+                  {seatHolder?.id === row.officer.id ? '👑 ' : ''}{pickName(row.officer.name, lang)}
+                  {row.officer.forceId === playerForceId && <span style={{ color: '#8ec8a0', fontSize: '0.68rem' }}> · {t('我方', 'yours')}</span>}
+                </span>
+                <span style={{ color: '#9aa6b0', fontSize: '0.76rem' }}>{row.score}</span>
+              </div>
+            ))}
+          </div>
+        </>);
+      })()}
 
       {mode === 'gauntlet' && (<>
         <div style={{ fontSize: '0.8rem', color: '#aab6c0', marginBottom: '0.8rem', lineHeight: 1.6 }}>
@@ -379,7 +495,7 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
       )}
 
       <div style={{ fontSize: '0.68rem', color: '#7a8893', letterSpacing: '0.1rem', margin: '0.2rem 0 0.4rem' }}>
-        {mode === 'story' || mode === 'gauntlet' ? t('遣誰出馬', 'Choose your debater') : t('麾下武將', 'Your Officers')} ({roster.length})
+        {mode === 'story' || mode === 'gauntlet' || mode === 'moon' ? t('遣誰出馬', 'Choose your debater') : t('麾下武將', 'Your Officers')} ({roster.length})
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 6 }}>
         {roster.map((o) => {
@@ -387,7 +503,7 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
           // 論辯冷卻 — a talked-out officer can't be fielded in 切磋 or 群儒
           // (deselect still works).
           const left = trainsLeft(debateUsage ?? {}, o.id, seasonKey);
-          const winded = (mode === 'spar' || mode === 'gauntlet') && left <= 0 && !sel;
+          const winded = (mode === 'spar' || mode === 'gauntlet' || mode === 'moon') && left <= 0 && !sel;
           return (
             <button
               key={o.id}
@@ -408,7 +524,7 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
                   <OfficerStats officer={o} keys={['intelligence', 'charisma']} /> · {t('等', 'Lv')}{officerLevel(o)}
                 </span>
               </span>
-              {(mode === 'spar' || mode === 'gauntlet') && (
+              {(mode === 'spar' || mode === 'gauntlet' || mode === 'moon') && (
                 <span style={{ fontSize: '0.7rem', color: winded ? '#7fa8d8' : '#7a8893', whiteSpace: 'nowrap' }}>
                   {winded ? t('歇', 'Rest') : `辯 ${left}/${TRAIN_PER_SEASON}`}
                 </span>

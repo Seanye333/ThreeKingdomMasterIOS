@@ -89,6 +89,24 @@ export function Debate3DStage(props: ComponentProps<typeof DebateGameModal>) {
           window.setTimeout(() => setToast(null), 2600);
           playSfx('bell');
         }
+        // 名局入史 (§6.15) — an epic war of words (a 罵倒, or a marathon that went
+        // the distance) is written into the running 事件簿, like a duel's is.
+        const rounds = history.current.length;
+        if (fx.routed || rounds >= 5) {
+          const st = useGameStore.getState();
+          const winName = fx.winner === 'a' ? leftName : fx.winner === 'd' ? rightName : '';
+          const loseName = fx.winner === 'a' ? rightName : fx.winner === 'd' ? leftName : '';
+          let titleZh = '舌戰名局';
+          let textZh = `${winName} 與 ${loseName} 舌戰 ${rounds} 回合,終以辭鋒勝之 — 一時傳誦。`;
+          if (fx.routed) {
+            titleZh = '罵倒名士';
+            textZh = `${winName} 舌戰 ${rounds} 回合罵倒 ${loseName} — 滿座失色!`;
+          } else if (fx.winner === 'draw') {
+            titleZh = '舌戰不下';
+            textZh = `${leftName} 與 ${rightName} 舌戰 ${rounds} 回合,勝負不分 — 傳為佳話。`;
+          }
+          st.recordAnnal({ year: st.date.year, season: st.date.season, kind: 'event', titleZh, textZh, cityId: null });
+        }
       }
     }
     onRound?.(fx); // preserve any host-supplied behaviour

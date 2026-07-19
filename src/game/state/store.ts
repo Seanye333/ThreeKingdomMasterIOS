@@ -34,6 +34,8 @@ import { trainMartialArts, MARTIAL_XIUWEI_MAX, transmitArts, canTransmitArts } f
 import { trainDebateArts, DEBATE_XIUWEI_MAX, transmitScholarship, canTransmitScholarship } from '../systems/debateArts';
 import { resolveDuel, canDuel, staticProwess, weaponClassFor } from '../systems/duel';
 import { pickArenaChampion, pickArenaChallenger, arenaTakeReward, arenaHoldStipend } from '../systems/arenaLadder';
+import { pickMoonLaurel, pickMoonChallenger, moonScore, moonTakeReward, moonHoldStipend } from '../systems/scholarRank';
+import { resolveWordWar } from '../systems/wordWar';
 import { pickPeaceChampion, willAcceptPeaceDuel, peaceDuelStakes, PEACE_DUEL_COST } from '../systems/duelDiplomacy';
 import { applyBout, seedRating } from '../systems/warRanking';
 import { tickAfflictions, withAffliction, hasChronicAilment, rollChronicAilment, cureChronicAilments, chronicAilmentOf, type Affliction } from '../systems/afflictions';
@@ -1020,6 +1022,12 @@ interface GameStore extends GameState {
   growDebateXiuwei: (officerId: EntityId, amount: number) => void;
   /** 名士傳道 — a 名士+ scholar spends 心得 to lecture a same-city junior's 文辯修為. */
   transmitDebateArts: (masterId: EntityId, pupilId: EntityId) => { ok: boolean; reason?: string; gained?: number; tierUpZh?: string; tierUpEn?: string };
+  /** 月旦奪魁 — an interactive challenge unseated (or failed to unseat) the 魁首;
+   *  the UI runs the bout, this settles seat/rewards/annal (§6.15). */
+  seizeMoonLaurel: (challengerId: EntityId, won: boolean) => { ok: boolean; reason?: string; insight?: number; gold?: number };
+  /** 守評 — the player-held 魁首 answered a challenger: held → stipend, lost → the
+   *  laurel passes. The UI runs the interactive bout and reports the outcome. */
+  defendMoonLaurel: (held: boolean, challengerId: EntityId) => { ok: boolean; reason?: string; insight?: number; gold?: number };
   /** 打擂 — challenge the standing arena champion (§6.11); win to take the 擂主 seat. */
   challengeArena: (challengerId: EntityId) => { ok: boolean; reason?: string; won?: boolean; championZh?: string; championEn?: string; insight?: number; gold?: number };
   /** 坐鎮擂台 — hold the seat one season against a fresh challenger (stipend / seat risk). */
@@ -9023,6 +9031,37 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // 月旦隨季 (§6.15) — the critique of tongues lives its own life too: while
+        // an AI holds the 魁首, the realm's scholars keep contesting it between
+        // seasons; a player-held laurel is only ever risked by choice (守評).
+        {
+          const cur = get();
+          const seat = cur.moonLaurel;
+          const holder = seat ? cur.officers[seat.officerId] : null;
+          const holderIsPlayers = !!holder && holder.forceId === cur.playerForceId;
+          if (seat && holder && holder.status !== 'dead' && holder.status !== 'imprisoned' && !holderIsPlayers && Math.random() < 0.45) {
+            const contender = pickMoonChallenger(cur.officers, holder.id, Math.random);
+            if (contender) {
+              const bout = resolveWordWar(contender, holder, [], []);
+              if (bout.winnerSide === 'attacker') {
+                set({ moonLaurel: { officerId: contender.id, sinceYear: cur.date.year, defenses: 0 } });
+                get().recordAnnal({
+                  year: cur.date.year, season: cur.date.season, kind: 'event',
+                  titleZh: '月旦易評',
+                  textZh: `${contender.name.zh} 清議之上辯倒 ${holder.name.zh} — 月旦評魁首易主!`,
+                  cityId: null,
+                });
+              } else {
+                set({ moonLaurel: { ...seat, defenses: seat.defenses + 1 } });
+              }
+            }
+          } else if (seat && (!holder || holder.status === 'dead' || holder.status === 'imprisoned')) {
+            // 魁首凋零 — a dead/captive holder's laurel falls to the keenest tongue.
+            const heir = pickMoonLaurel(cur.officers);
+            set({ moonLaurel: heir ? { officerId: heir.id, sinceYear: cur.date.year, defenses: 0 } : undefined });
+          }
+        }
+
         // 自動存檔 — every season boundary writes one of three rolling
         // autosave slots, so a bad turn (or a crash) costs at most a season.
         if (seasonBoundary) {
@@ -12234,6 +12273,71 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         set({ officers: { ...state.officers, [officerId]: { ...o, debateXiuwei: r.xiuwei, debateInsight: r.insight } } });
         if (r.xiuwei >= DEBATE_XIUWEI_MAX) get().fireAchievement({ kind: 'debate-sage' }); // 辯聖 — scholarship peaked
         return { ok: true, xiuwei: r.xiuwei, gained: r.gained, tierUpZh: r.tierUp?.zh, tierUpEn: r.tierUp?.en };
+      },
+      seizeMoonLaurel: (challengerId, won) => {
+        const state = get();
+        const ch = state.officers[challengerId];
+        if (!ch) return { ok: false, reason: 'no-officer' };
+        if (ch.forceId !== state.playerForceId) return { ok: false, reason: 'not-yours' };
+        // Seed / read the reigning 魁首 — the keenest tongue in the land if empty.
+        const seatId = state.moonLaurel?.officerId;
+        let holder = seatId ? state.officers[seatId] : null;
+        if (!holder || holder.status === 'dead' || holder.status === 'imprisoned') holder = pickMoonLaurel(state.officers, challengerId);
+        if (!holder) return { ok: false, reason: 'no-holder' };
+        if (holder.id === challengerId) return { ok: false, reason: 'already-holder' };
+        if (!won) {
+          // The holder turned the challenge aside (or claims the empty laurel).
+          set({ moonLaurel: state.moonLaurel?.officerId === holder.id
+            ? { ...state.moonLaurel, defenses: state.moonLaurel.defenses + 1 }
+            : { officerId: holder.id, sinceYear: state.date.year, defenses: 0 } });
+          return { ok: true };
+        }
+        const reward = moonTakeReward(moonScore(holder));
+        const capId = state.forces[state.playerForceId ?? '']?.capitalCityId;
+        const cap = capId ? state.cities[capId] : null;
+        set({
+          moonLaurel: { officerId: challengerId, sinceYear: state.date.year, defenses: 0 },
+          ...(cap ? { cities: { ...state.cities, [cap.id]: { ...cap, gold: cap.gold + reward.gold } } } : {}),
+        });
+        get().awardDebateInsight(challengerId, reward.insight);
+        if (reward.renown) get().recordDeed(challengerId, { debatesWon: 1 });
+        get().recordAnnal({
+          year: state.date.year, season: state.date.season, kind: 'event',
+          titleZh: '月旦奪魁',
+          textZh: `${ch.name.zh} 清議之上辯倒 ${holder.name.zh} — 月旦評魁首易主!`,
+          cityId: null,
+        });
+        return { ok: true, insight: reward.insight, gold: reward.gold };
+      },
+      defendMoonLaurel: (held, challengerId) => {
+        const state = get();
+        const seat = state.moonLaurel;
+        if (!seat) return { ok: false, reason: 'no-seat' };
+        const holder = state.officers[seat.officerId];
+        if (!holder || holder.forceId !== state.playerForceId) return { ok: false, reason: 'not-holding' };
+        const challenger = state.officers[challengerId];
+        if (held) {
+          const stip = moonHoldStipend(seat.defenses);
+          const capId = state.forces[state.playerForceId ?? '']?.capitalCityId;
+          const cap = capId ? state.cities[capId] : null;
+          set({
+            moonLaurel: { ...seat, defenses: seat.defenses + 1 },
+            ...(cap ? { cities: { ...state.cities, [cap.id]: { ...cap, gold: cap.gold + stip.gold } } } : {}),
+          });
+          get().awardDebateInsight(holder.id, stip.insight);
+          if (stip.renown) get().recordDeed(holder.id, { debatesWon: 1 });
+          if (seat.defenses + 1 >= 3) get().fireAchievement({ kind: 'moon-reign' }); // 清議領袖
+          return { ok: true, insight: stip.insight, gold: stip.gold };
+        }
+        if (!challenger) return { ok: false, reason: 'no-challenger' };
+        set({ moonLaurel: { officerId: challengerId, sinceYear: state.date.year, defenses: 0 } });
+        get().recordAnnal({
+          year: state.date.year, season: state.date.season, kind: 'event',
+          titleZh: '月旦易評',
+          textZh: `${challenger.name.zh} 清議之上辯倒 ${holder.name.zh},月旦評魁首易主。`,
+          cityId: null,
+        });
+        return { ok: true };
       },
       challengeArena: (challengerId) => {
         const state = get();
@@ -17292,6 +17396,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         warRatings: state.warRatings,
         rivalries: state.rivalries,
         lastTournamentYear: state.lastTournamentYear,
+        arenaChampion: state.arenaChampion,
+        moonLaurel: state.moonLaurel,
         clearedDuelScenarios: state.clearedDuelScenarios,
         deeds: state.deeds,
         fogOfWar: state.fogOfWar,

@@ -38,6 +38,14 @@ export const ACHIEVEMENTS: Achievement[] = [
     trigger: { kind: 'debate-sage' },
   },
   {
+    id: 'ach-moon-reign',
+    name: { en: 'Voice of the Age', zh: '清議領袖' },
+    description: 'Hold the Moon-Rank laurel of the realm\'s critique through three straight defenses.',
+    descriptionZh: '執月旦評魁首,連折三度來辯 — 清議之領袖,士林之望。',
+    tier: 'silver',
+    trigger: { kind: 'moon-reign' },
+  },
+  {
     id: 'ach-field-melee',
     name: { en: 'Champions in a Knot', zh: '群英並擊' },
     description: 'Win a team melee of champions on the battlefield.',

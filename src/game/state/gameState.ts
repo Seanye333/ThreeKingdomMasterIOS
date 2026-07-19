@@ -462,6 +462,9 @@ export interface GameState {
   /** 打擂・擂主 — the standing arena champion (§6.11). Undefined until first seeded
    *  on a challenge. See systems/arenaLadder.ts. */
   arenaChampion?: import('../systems/arenaLadder').ArenaChampion;
+  /** 月旦評・魁首 — the standing laurel of the realm's critique of tongues (§6.15).
+   *  Undefined until first seeded. See systems/scholarRank.ts. */
+  moonLaurel?: import('../systems/scholarRank').MoonLaurel;
   /** 單挑戰役 — ids of duel scenarios the player has cleared (campaign progress). */
   clearedDuelScenarios: EntityId[];
   /** Per-turn snapshots of the CURRENT battle (transient, not persisted) —

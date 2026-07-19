@@ -200,6 +200,26 @@ export function routConsequence(loser: Officer, age: number, rng: () => number =
   return rng() < pDeath ? 'death' : 'shame';
 }
 
+// ─── 文名威懾 — a famous tongue cows the hall before a word is spoken ─────────
+/**
+ * 文名威懾 (0..~0.4) — how much a debater's famous name unsettles whoever must
+ * answer them. Read from 威名 (renown) and the rhetorical traits; the mirror of
+ * §6.13's duelDread. Consumed as 未辯先怯 (the foe opens with composure shaved)
+ * and by §6.16 折衝樽俎 (a dreaded envoy is harder to face at the table).
+ */
+export function debateDread(o: Officer): number {
+  const traits = new Set(o.traits ?? []);
+  let d = Math.min(0.28, (o.renown ?? 0) / 500);
+  if (traits.has('eloquent') || traits.has('persuasive')) d += 0.08;
+  if (traits.has('sharp-tongue')) d += 0.06;
+  if (traits.has('arrogant')) d += 0.04; // 盛氣凌人
+  return Math.min(0.4, d);
+}
+/** 未辯先怯 — the composure a foe opens short of, facing this debater's name. */
+export function dreadComposureDock(dread: number): number {
+  return Math.round(dread * 40); // 0..16
+}
+
 export interface DebateBout {
   aComposure: number;
   dComposure: number;
@@ -269,8 +289,12 @@ export function initDebate(me: Officer, foe: Officer, difficulty: DebateDifficul
   // 文辯修為 — a drilled scholar opens sharper, steadier, with the 腹稿 banked (§6.14).
   const aArts = debateArtsBonus(me);
   const dArts = debateArtsBonus(foe);
+  // 文名奪人 — a famous tongue's very name shaves the foe's opening 沉著 (§6.15).
+  const aDock = dreadComposureDock(debateDread(foe));
+  const dDock = dreadComposureDock(debateDread(me));
   return {
-    aComposure: 100 + aArts.composure, dComposure: 100 + dArts.composure,
+    aComposure: Math.max(60, 100 + aArts.composure - aDock),
+    dComposure: Math.max(60, 100 + dArts.composure - dDock),
     aMomentum: aArts.openingMomentum, dMomentum: dArts.openingMomentum,
     // 流派相剋 — the favourable school matchup lends a small 口才 edge.
     aProwess: debateProwess(me) + personaEdge(aPersona, dPersona) + aArts.prowess,
