@@ -52,96 +52,172 @@ function synergy(x: Officer, y: Officer): boolean {
   return areBonded(x.id, y.id) || areSwornBrothers(x.id, y.id);
 }
 
-export function resolveTeamDuel(sideA: Array<Officer | TeamMember>, sideB: Array<Officer | TeamMember>, rng: () => number = Math.random): TeamDuelResult {
-  const norm = (x: Officer | TeamMember): TeamMember => ('officer' in x ? x : { officer: x });
-  const mk = (m: TeamMember, side: 'a' | 'b'): TeamFighter => {
-    const o = m.officer;
-    const ranged = weaponClassFor(o) === 'bow';
-    return {
-      id: o.id, officer: o, side,
-      prowess: staticProwess(o),
-      stamina: 100 + gradeCombatBonus(o).duelStamina,
-      // Default stations: archers hang back, everyone else takes the van.
-      station: m.station ?? (ranged ? 'rear' : 'van'),
-      ranged,
-      downed: false,
-    };
+/** 親督軍令 (§6.11 互動) — the player's per-round orders for side A. */
+export interface TeamOrders {
+  /** 集火 — the enemy id side A's melee presses (unset/unreachable = default weakest). */
+  focusId?: string;
+  /** 死守 — an A fighter who fights defensively this round: their own blow lands
+   *  at half force, but they turn aside their TWO sharpest attackers (not one). */
+  guardId?: string;
+}
+
+const alive = (arr: TeamFighter[]) => arr.filter((f) => !f.downed);
+const nm = (f: TeamFighter) => f.officer.name;
+
+/** One melee round, mutating A/B in place. Returns the fighters downed this
+ *  round. `orders` (if any) steer side A — the engine's own instincts otherwise. */
+function runTeamRound(A: TeamFighter[], B: TeamFighter[], r: number, rng: () => number, log: { zh: string; en: string }[], orders?: TeamOrders): TeamFighter[] {
+  const av = alive(A), bv = alive(B);
+  // 站位 — the van screens the rear: melee reaches the rear only once every
+  // van of that side is down; a 弓手 shoots over the screen from round one.
+  const screened = (foes: TeamFighter[]) => foes.some((f) => f.station === 'van');
+  const reachable = (atk: TeamFighter, foes: TeamFighter[]) =>
+    atk.ranged || !screened(foes) ? foes : foes.filter((f) => f.station === 'van');
+  // Targeting — focus fire the reachable enemy on the least 氣力.
+  const pickTarget = (foes: TeamFighter[]) =>
+    foes.reduce((m, f) => (f.stamina < m.stamina ? f : m), foes[0]);
+  const incoming = new Map<string, { atk: TeamFighter; dmg: number }[]>();
+  const queue = (atk: TeamFighter, foesAll: TeamFighter[], ownSide: TeamFighter[]) => {
+    const foes = reachable(atk, foesAll);
+    if (!foes.length) return;
+    // 集火令 — side A presses the ordered foe when they can be reached.
+    const ordered = orders?.focusId && atk.side === 'a' ? foes.find((f) => f.id === orders.focusId) : undefined;
+    const tgt = ordered ?? pickTarget(foes);
+    const edge = Math.max(-8, Math.min(16, (atk.prowess - tgt.prowess) * 0.25));
+    let dmg = 12 + Math.floor(rng() * 10) + edge;
+    // 掠陣 — a rear MELEE arm only pokes past its own screen (×0.55) while that
+    // screen stands; once the van falls they step up and strike full.
+    if (!atk.ranged && atk.station === 'rear' && ownSide.some((f) => f.station === 'van')) dmg *= 0.55;
+    // 死守 — a guarding fighter spends the round on defense; their blow glances.
+    if (orders?.guardId === atk.id && atk.side === 'a') dmg *= 0.5;
+    const arr = incoming.get(tgt.id) ?? [];
+    // 合擊 — a blow lands harder if a bonded ally is already pressing this foe.
+    if (arr.some((x) => synergy(x.atk.officer, atk.officer))) dmg += 8;
+    arr.push({ atk, dmg: Math.max(4, Math.round(dmg)) });
+    incoming.set(tgt.id, arr);
   };
-  const A = sideA.map((x) => mk(norm(x), 'a'));
-  const B = sideB.map((x) => mk(norm(x), 'b'));
+  for (const atk of av) queue(atk, bv, av);
+  for (const atk of bv) queue(atk, av, bv);
+
+  // Apply — 圍攻: a fighter turns aside only their single deadliest attacker (−40%);
+  // every other blow lands clean. A 死守 order turns aside the two deadliest.
+  const applyTo = (arr: TeamFighter[]) => {
+    for (const d of arr) {
+      const inc = incoming.get(d.id);
+      if (!inc?.length) continue;
+      inc.sort((x, y) => y.dmg - x.dmg);
+      const parries = orders?.guardId === d.id && d.side === 'a' ? 2 : 1;
+      let total = 0;
+      inc.forEach((h, i) => { total += i < parries ? Math.round(h.dmg * 0.6) : h.dmg; });
+      d.stamina -= total;
+    }
+  };
+  applyTo(A); applyTo(B);
+
+  // Down anyone at 0 氣力 — their 膽氣 decides slain / yield / flee.
+  const downs: TeamFighter[] = [];
+  for (const f of [...A, ...B]) {
+    if (!f.downed && f.stamina <= 0) {
+      f.stamina = 0; f.downed = true; f.downedRound = r;
+      f.fate = duelDeathFate(f.officer, rng);
+      const verbZh = f.fate === 'slain' ? '被斬於陣中' : f.fate === 'yield' ? '力盡請降' : '落荒而逃';
+      const verbEn = f.fate === 'slain' ? 'is cut down in the melee' : f.fate === 'yield' ? 'is beaten and yields' : 'breaks and flees';
+      log.push({ zh: `第${r}合:${nm(f).zh} ${verbZh}!`, en: `R${r}: ${nm(f).en} ${verbEn}!` });
+      downs.push(f);
+    }
+  }
+  return downs;
+}
+
+function mkFighter(m: TeamMember, side: 'a' | 'b'): TeamFighter {
+  const o = m.officer;
+  const ranged = weaponClassFor(o) === 'bow';
+  return {
+    id: o.id, officer: o, side,
+    prowess: staticProwess(o),
+    stamina: 100 + gradeCombatBonus(o).duelStamina,
+    // Default stations: archers hang back, everyone else takes the van.
+    station: m.station ?? (ranged ? 'rear' : 'van'),
+    ranged,
+    downed: false,
+  };
+}
+const norm = (x: Officer | TeamMember): TeamMember => ('officer' in x ? x : { officer: x });
+
+/** Decide the melee from the current fighter arrays (empty side or points). */
+function teamVerdict(A: TeamFighter[], B: TeamFighter[]): 'a' | 'b' | 'draw' {
+  const aAlive = alive(A), bAlive = alive(B);
+  if (aAlive.length && !bAlive.length) return 'a';
+  if (bAlive.length && !aAlive.length) return 'b';
+  const aSt = aAlive.reduce((s, f) => s + f.stamina, 0);
+  const bSt = bAlive.reduce((s, f) => s + f.stamina, 0);
+  return Math.abs(aSt - bSt) < 20 ? 'draw' : aSt > bSt ? 'a' : 'b';
+}
+
+export function resolveTeamDuel(sideA: Array<Officer | TeamMember>, sideB: Array<Officer | TeamMember>, rng: () => number = Math.random): TeamDuelResult {
+  const A = sideA.map((x) => mkFighter(norm(x), 'a'));
+  const B = sideB.map((x) => mkFighter(norm(x), 'b'));
   const log: { zh: string; en: string }[] = [];
-  const alive = (arr: TeamFighter[]) => arr.filter((f) => !f.downed);
-  const nm = (f: TeamFighter) => f.officer.name;
 
   let rounds = 0;
   for (let r = 1; r <= MAX_TEAM_ROUNDS; r++) {
-    const av = alive(A), bv = alive(B);
-    if (!av.length || !bv.length) break;
+    if (!alive(A).length || !alive(B).length) break;
     rounds = r;
-
-    // 站位 — the van screens the rear: melee reaches the rear only once every
-    // van of that side is down; a 弓手 shoots over the screen from round one.
-    const screened = (foes: TeamFighter[]) => foes.some((f) => f.station === 'van');
-    const reachable = (atk: TeamFighter, foes: TeamFighter[]) =>
-      atk.ranged || !screened(foes) ? foes : foes.filter((f) => f.station === 'van');
-    // Targeting — focus fire the reachable enemy on the least 氣力.
-    const pickTarget = (foes: TeamFighter[]) =>
-      foes.reduce((m, f) => (f.stamina < m.stamina ? f : m), foes[0]);
-    const incoming = new Map<string, { atk: TeamFighter; dmg: number }[]>();
-    const queue = (atk: TeamFighter, foesAll: TeamFighter[], ownSide: TeamFighter[]) => {
-      const foes = reachable(atk, foesAll);
-      if (!foes.length) return;
-      const tgt = pickTarget(foes);
-      const edge = Math.max(-8, Math.min(16, (atk.prowess - tgt.prowess) * 0.25));
-      let dmg = 12 + Math.floor(rng() * 10) + edge;
-      // 掠陣 — a rear MELEE arm only pokes past its own screen (×0.55) while that
-      // screen stands; once the van falls they step up and strike full.
-      if (!atk.ranged && atk.station === 'rear' && ownSide.some((f) => f.station === 'van')) dmg *= 0.55;
-      const arr = incoming.get(tgt.id) ?? [];
-      // 合擊 — a blow lands harder if a bonded ally is already pressing this foe.
-      if (arr.some((x) => synergy(x.atk.officer, atk.officer))) dmg += 8;
-      arr.push({ atk, dmg: Math.max(4, Math.round(dmg)) });
-      incoming.set(tgt.id, arr);
-    };
-    for (const atk of av) queue(atk, bv, av);
-    for (const atk of bv) queue(atk, av, bv);
-
-    // Apply — 圍攻: a fighter turns aside only their single deadliest attacker (−40%);
-    // every other blow lands clean. Being ganged is punishing.
-    const applyTo = (arr: TeamFighter[]) => {
-      for (const d of arr) {
-        const inc = incoming.get(d.id);
-        if (!inc?.length) continue;
-        inc.sort((x, y) => y.dmg - x.dmg);
-        let total = 0;
-        inc.forEach((h, i) => { total += i === 0 ? Math.round(h.dmg * 0.6) : h.dmg; });
-        d.stamina -= total;
-      }
-    };
-    applyTo(A); applyTo(B);
-
-    // Down anyone at 0 氣力 — their 膽氣 decides slain / yield / flee.
-    for (const f of [...A, ...B]) {
-      if (!f.downed && f.stamina <= 0) {
-        f.stamina = 0; f.downed = true; f.downedRound = r;
-        f.fate = duelDeathFate(f.officer, rng);
-        const verbZh = f.fate === 'slain' ? '被斬於陣中' : f.fate === 'yield' ? '力盡請降' : '落荒而逃';
-        const verbEn = f.fate === 'slain' ? 'is cut down in the melee' : f.fate === 'yield' ? 'is beaten and yields' : 'breaks and flees';
-        log.push({ zh: `第${r}合:${nm(f).zh} ${verbZh}!`, en: `R${r}: ${nm(f).en} ${verbEn}!` });
-      }
-    }
+    runTeamRound(A, B, r, rng, log);
   }
+  return { winner: teamVerdict(A, B), rounds, a: A, b: B, log };
+}
 
-  const aAlive = alive(A), bAlive = alive(B);
-  let winner: 'a' | 'b' | 'draw';
-  if (aAlive.length && !bAlive.length) winner = 'a';
-  else if (bAlive.length && !aAlive.length) winner = 'b';
-  else {
-    const aSt = aAlive.reduce((s, f) => s + f.stamina, 0);
-    const bSt = bAlive.reduce((s, f) => s + f.stamina, 0);
-    winner = Math.abs(aSt - bSt) < 20 ? 'draw' : aSt > bSt ? 'a' : 'b';
-  }
-  return { winner, rounds, a: A, b: B, log };
+// ─── 親督團戰 (§6.11 互動) — the same melee, stepped a round at a time ────────
+// The player issues 集火/死守 orders each round and the engine runs ONE round;
+// the host animates the exchange, then asks for the next orders. Ends exactly
+// like resolveTeamDuel (empty side or points at MAX_TEAM_ROUNDS).
+
+export interface TeamDuelState {
+  a: TeamFighter[];
+  b: TeamFighter[];
+  round: number;
+  over: boolean;
+  winner?: 'a' | 'b' | 'draw';
+  log: { zh: string; en: string }[];
+}
+
+export function initTeamDuelState(sideA: Array<Officer | TeamMember>, sideB: Array<Officer | TeamMember>): TeamDuelState {
+  return {
+    a: sideA.map((x) => mkFighter(norm(x), 'a')),
+    b: sideB.map((x) => mkFighter(norm(x), 'b')),
+    round: 0, over: false, log: [],
+  };
+}
+
+export interface TeamStepResult {
+  state: TeamDuelState;
+  /** Fighters downed THIS round (for the host's kill/flee beats). */
+  downs: TeamFighter[];
+}
+
+/** Run one ordered round (mutates nothing — returns a fresh state). */
+export function stepTeamDuel(state: TeamDuelState, orders: TeamOrders, rng: () => number = Math.random): TeamStepResult {
+  if (state.over) return { state, downs: [] };
+  // Deep-ish copy the fighters so React state stays immutable for the host.
+  const A = state.a.map((f) => ({ ...f }));
+  const B = state.b.map((f) => ({ ...f }));
+  const log = [...state.log];
+  const r = state.round + 1;
+  const downs = runTeamRound(A, B, r, rng, log, orders);
+  const finished = !alive(A).length || !alive(B).length || r >= MAX_TEAM_ROUNDS;
+  const next: TeamDuelState = {
+    a: A, b: B, round: r, log,
+    over: finished,
+    winner: finished ? teamVerdict(A, B) : undefined,
+  };
+  return { state: next, downs };
+}
+
+/** Fold a finished stepped melee into the shared result shape (consequence code
+ *  downstream — 斬/擒/逃/士氣 — consumes TeamDuelResult either way). */
+export function teamStateResult(state: TeamDuelState): TeamDuelResult {
+  return { winner: state.winner ?? 'draw', rounds: state.round, a: state.a, b: state.b, log: state.log };
 }
 
 /** All fighters a team melee actually felled (fate 'slain') — the caller removes

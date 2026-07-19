@@ -4,8 +4,9 @@ import type { BoutRecord } from '../../game/systems/duelHall';
 import { ladderBoard, ratingTier } from '../../game/systems/warRanking';
 import { NEMESIS_THRESHOLD, type RivalryRecord } from '../../game/systems/rivalries';
 import { resolveDuel, canDuel, staticProwess, weaponClassFor } from '../../game/systems/duel';
-import { resolveTeamDuel, type TeamDuelResult, type TeamStation } from '../../game/systems/teamDuel';
+import { resolveTeamDuel, type TeamDuelResult, type TeamMember, type TeamStation } from '../../game/systems/teamDuel';
 import { TeamDuel3DStage } from './duel/TeamDuel3DStage';
+import { InteractiveTeamDuel3D } from './duel/InteractiveTeamDuel3D';
 import { wagerMultiplier, wagerProfit } from '../../game/systems/wager';
 import { Modal } from './Modal';
 import { OfficerPortrait } from './OfficerPortrait';
@@ -47,6 +48,9 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
   const [meleeResult, setMeleeResult] = useState<{ winner: 'a' | 'b' | 'draw'; log: string[] } | null>(null);
   // 團戰同場 — the staged 3D playback of the resolved melee (all fighters in-ring).
   const [meleeStage, setMeleeStage] = useState<TeamDuelResult | null>(null);
+  // 親督 (§6.11 互動) — command the practice melee round by round yourself.
+  const [liveCommand, setLiveCommand] = useState(true);
+  const [meleeLive, setMeleeLive] = useState<{ mine: TeamMember[]; foes: TeamMember[] } | null>(null);
   // 站位 — player-set van/rear per teammate (unset = default: bow rear, else van).
   const [stations, setStations] = useState<Record<string, TeamStation>>({});
   const [replay, setReplay] = useState<BoutRecord | null>(null);
@@ -120,7 +124,14 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
     const foes = foeFighters.slice(0, 3);
     if (!foes.length) { setMeleeResult({ winner: 'a', log: [t('無敵可戰。', 'No foes to face.')] }); return; }
     // 站位 — my side fields the player's van/rear picks; the foe fields defaults.
-    const res = resolveTeamDuel(mine.map((o) => ({ officer: o, station: stationOf(o) })), foes);
+    const mySide = mine.map((o) => ({ officer: o, station: stationOf(o) }));
+    const foeSide = foes.map((o) => ({ officer: o }));
+    if (liveCommand) {
+      // 親督 — the player commands it round by round in the 3D ring.
+      setMeleeLive({ mine: mySide, foes: foeSide });
+      return;
+    }
+    const res = resolveTeamDuel(mySide, foeSide);
     setMeleeResult({ winner: res.winner, log: res.log.map((l) => (lang === 'en' ? l.en : l.zh)) });
     // 團戰同場 (§6.11) — stage the whole melee in the 3D ring, everyone on stage.
     setMeleeStage(res);
@@ -153,6 +164,19 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
   // 團戰同場 — while the staged melee plays, show only the 3D ring.
   if (meleeStage) {
     return <TeamDuel3DStage result={meleeStage} onDone={() => setMeleeStage(null)} />;
+  }
+  // 親督團戰 — the player commands the practice melee live.
+  if (meleeLive) {
+    return (
+      <InteractiveTeamDuel3D
+        sideA={meleeLive.mine}
+        sideB={meleeLive.foes}
+        onComplete={(res) => {
+          setMeleeLive(null);
+          setMeleeResult({ winner: res.winner, log: res.log.map((l) => (lang === 'en' ? l.en : l.zh)) });
+        }}
+      />
+    );
   }
 
   const medal = (i: number) => (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`);
@@ -266,6 +290,11 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
             </select>
             <button onClick={runMelee} disabled={!meleePick || foeFighters.length === 0} style={{ padding: '0.4rem 0.9rem', borderRadius: 'var(--tkm-radius-sm)', cursor: meleePick ? 'pointer' : 'not-allowed', fontFamily: 'inherit', fontSize: '0.86rem', background: meleePick ? 'linear-gradient(180deg,#3a2a5a,#201838)' : '#10161e', border: '1px solid #9a7ad0', color: meleePick ? '#cbb6ef' : '#6a7480', whiteSpace: 'nowrap' }}>⚔ {t('演武團戰', 'Melee')}</button>
           </div>
+          {/* 親督 — command it round by round vs. hand it to the engine. */}
+          <label style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: '0.6rem', fontSize: '0.76rem', color: liveCommand ? '#ffd8c8' : '#8a96a0', cursor: 'pointer' }}>
+            <input type="checkbox" checked={liveCommand} onChange={(e) => setLiveCommand(e.target.checked)} />
+            {t('親自督戰 — 每合親下集火/死守之令(不勾則自動結算+上演)', 'Command it live — issue focus/guard orders each round (unchecked = auto-resolve + replay)')}
+          </label>
           {(() => {
             const cap = officers[meleePick];
             if (!cap) return null;

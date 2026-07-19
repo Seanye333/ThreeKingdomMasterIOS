@@ -1,6 +1,6 @@
 /** 批 B 真團戰 — N-vs-M champion melee (圍攻/合擊/膽氣). */
 import { describe, it, expect } from 'vitest';
-import { resolveTeamDuel, teamDuelSlain } from './teamDuel';
+import { resolveTeamDuel, teamDuelSlain, initTeamDuelState, stepTeamDuel, teamStateResult } from './teamDuel';
 import { mkOfficer, seededRng } from '../../test/factories';
 
 const W = (war: number) => ({ war, leadership: 60, intelligence: 55, politics: 50, charisma: 55 });
@@ -92,5 +92,42 @@ describe('resolveTeamDuel', () => {
     // cravens should be spared (yield/flee) at least sometimes, not always slain
     expect(everSpared).toBeGreaterThan(0);
     expect(everSlain + everSpared).toBeGreaterThan(0);
+  });
+});
+
+describe('親督團戰 (stepTeamDuel) — §6.11 互動', () => {
+  const S = (war: number) => ({ war, leadership: 60, intelligence: 50, politics: 40, charisma: 50 });
+  it('steps one round at a time and ends like the auto-resolver', () => {
+    const A = [mkOfficer({ id: 'a1', stats: S(90) }), mkOfficer({ id: 'a2', stats: S(85) })];
+    const B = [mkOfficer({ id: 'b1', stats: S(55) })];
+    let st = initTeamDuelState(A, B);
+    expect(st.round).toBe(0);
+    expect(st.over).toBe(false);
+    const rng = seededRng(7);
+    let guard = 0;
+    while (!st.over && guard++ < 20) st = stepTeamDuel(st, {}, rng).state;
+    expect(st.over).toBe(true);
+    expect(st.winner).toBe('a'); // two strong arms grind down one weak one
+    const res = teamStateResult(st);
+    expect(res.rounds).toBe(st.round);
+    expect(res.a.length + res.b.length).toBe(3);
+  });
+  it('死守 halves the guard\'s blow but parries the two sharpest', () => {
+    const A = [mkOfficer({ id: 'g', stats: S(70) })];
+    const B = [mkOfficer({ id: 'x', stats: S(80) }), mkOfficer({ id: 'y', stats: S(80) })];
+    // Same seed with vs without the guard order: the guarded lone fighter takes less.
+    const plain = stepTeamDuel(initTeamDuelState(A, B), {}, seededRng(3)).state;
+    const guarded = stepTeamDuel(initTeamDuelState(A, B), { guardId: 'g' }, seededRng(3)).state;
+    expect(guarded.a[0].stamina).toBeGreaterThan(plain.a[0].stamina);
+  });
+  it('集火 steers side A onto the ordered foe', () => {
+    const A = [mkOfficer({ id: 'a1', stats: S(90) }), mkOfficer({ id: 'a2', stats: S(90) })];
+    const B = [mkOfficer({ id: 'weak', stats: S(40) }), mkOfficer({ id: 'tank', stats: S(90) })];
+    // Default targeting hits the weakest; the order redirects onto the tank.
+    const ordered = stepTeamDuel(initTeamDuelState(A, B), { focusId: 'tank' }, seededRng(4)).state;
+    const free = stepTeamDuel(initTeamDuelState(A, B), {}, seededRng(4)).state;
+    const tankOrdered = ordered.b.find((f) => f.id === 'tank')!.stamina;
+    const tankFree = free.b.find((f) => f.id === 'tank')!.stamina;
+    expect(tankOrdered).toBeLessThan(tankFree);
   });
 });
