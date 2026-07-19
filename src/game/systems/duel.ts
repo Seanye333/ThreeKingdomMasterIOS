@@ -8,7 +8,7 @@ import { gradeCombatBonus, itemMasteryMul, duelFirstStrike } from './gradeCombat
 import { evolvedArtDuelBonus, evolvedWeaponArt } from './evolvedArts';
 import { skillEffectMul } from './skillMastery';
 import { deriveWeaponType, type WeaponType } from '../data/weaponTypes';
-import { martialBonus, martialXiuwei, schoolCounterEdge } from './martialArts';
+import { martialBonus, martialXiuwei, schoolCounterEdge, schoolSecretArt } from './martialArts';
 
 /**
  * 兵裝相剋(接單挑) — the duellists' weapon classes clash (§5.9), where before a
@@ -1562,7 +1562,10 @@ export function initDuelBout(
     aMoves: [], dMoves: [],
     aChain: [], dChain: [],
     aSpirit: 0, dSpirit: 0, aUltUsed: false, dUltUsed: false,
-    aArt: weaponArtFor(attacker), dArt: weaponArtFor(defender),
+    // 兵器絕技,無則流派絕學 — a famed weapon's art first; else a 大成+ arm
+    // carries their school's signature stroke (§6.10) even with a plain blade.
+    aArt: weaponArtFor(attacker) ?? schoolSecretArt(aClass, martialXiuwei(attacker)),
+    dArt: weaponArtFor(defender) ?? schoolSecretArt(dClass, martialXiuwei(defender)),
     aEvolvedArt: evolvedWeaponArt(attacker) != null, dEvolvedArt: evolvedWeaponArt(defender) != null,
     aUlt: signatureUlt(attacker), dUlt: signatureUlt(defender),
     aMountSavior: mountEdge(attacker) === 'savior', dMountSavior: mountEdge(defender) === 'savior',

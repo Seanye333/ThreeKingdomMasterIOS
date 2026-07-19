@@ -472,6 +472,8 @@ export interface GameState {
   pendingMoonWrit?: import('../systems/aiParley').PendingMoonWrit;
   /** 單挑戰役 — ids of duel scenarios the player has cleared (campaign progress). */
   clearedDuelScenarios: EntityId[];
+  /** 舌戰戰役 — ids of debate scenarios the player has cleared (§6.16 chains). */
+  clearedDebateScenarios: EntityId[];
   /** Per-turn snapshots of the CURRENT battle (transient, not persisted) —
    *  harvested into the replay when the battle resolves. */
   currentBattleSnapshots: import('../types').TacticalBattle[];
@@ -913,6 +915,7 @@ export const EMPTY_STATE: GameState = {
   rivalries: {},
   lastTournamentYear: 0,
   clearedDuelScenarios: [],
+  clearedDebateScenarios: [],
   currentBattleSnapshots: [],
   deeds: {},
   fogOfWar: false,
@@ -1374,6 +1377,7 @@ export function loadScenario(
     rivalries: {},
   lastTournamentYear: 0,
     clearedDuelScenarios: [],
+    clearedDebateScenarios: [],
   currentBattleSnapshots: [],
     deeds: {},
     fogOfWar: state.fogOfWar,

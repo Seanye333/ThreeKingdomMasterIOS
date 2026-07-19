@@ -1,6 +1,7 @@
 import type { Officer } from '../types';
 import { debateProwess } from './wordWar';
 import { debateXiuwei } from './debateArts';
+import { ladderBoard } from './warRanking';
 
 /**
  * 月旦評 (§6.15) — the standing critique of the realm's tongues, after 許劭's
@@ -73,6 +74,20 @@ export function moonTakeReward(holderScore: number): MoonReward {
     gold: Math.round(200 + scale * 200),  // 200..~480 金 (patrons and gifts follow the name)
     renown: 1,                            // a 舌戰勝 deed toward 文名
   };
+}
+
+// ─── 出將入相 — a name on BOTH boards of the age ─────────────────────────────
+// The 武評榜 crowns the realm's arms, the 月旦榜 its tongues; the rare officer
+// ranked high on BOTH carries the 出將入相 laurel — fit to lead in the field
+// and to stand at court. Their presence steadies whichever city they garrison
+// (a small loyalty aura each season), for any realm — the talent, not the flag.
+export const DUAL_LUMINARY_TOP = 8;
+export const DUAL_LUMINARY_LOYALTY = 2; // per-season loyalty aura on their city
+
+/** Officers ranked in the top slice of BOTH the 武評榜 and the 月旦榜. */
+export function dualLuminaries(officers: Record<string, Officer>, warRatings: Record<string, number>): Set<string> {
+  const arms = new Set(ladderBoard(warRatings, officers).slice(0, DUAL_LUMINARY_TOP).map((r) => r.id));
+  return new Set(moonBoard(officers, DUAL_LUMINARY_TOP).filter((r) => arms.has(r.officer.id)).map((r) => r.officer.id));
 }
 
 /** The season stipend for holding the laurel through a successful defense. */

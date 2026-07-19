@@ -129,7 +129,90 @@ export const DEBATE_SCENARIOS: DebateScenario[] = [
       { kind: 'afflict', targetId: 'mi-heng', textZh: '禰衡羞憤無地,拂衣而去。', textEn: 'Mi Heng, shamed beyond words, storms out.' },
     ],
   },
+  {
+    id: 'refute-zhang-zhao',
+    kind: 'sway-neutral',
+    titleZh: '舌戰群儒·折張昭', titleEn: 'Refute Zhang Zhao',
+    introZh: '過江第一關 — 江東首席重臣張昭當先發難,譏你寄人籬下、無尺寸之功。折服此老,群儒之口自破。',
+    introEn: 'The first hurdle across the river — Zhang Zhao, first among the southern court, mocks your record to your face. Break him, and the room breaks with him.',
+    topic: 'strategy',
+    opponentId: 'zhang-zhao',
+    winEffects: [
+      note('張昭語塞,滿堂群儒為之奪氣。', 'Zhang Zhao falls silent — the whole hall loses its nerve with him.'),
+      { kind: 'gold', amount: 200, textZh: '江東奉茶饋儀 200 金。', textEn: 'The southern court sends 200 gold with its respects.' },
+    ],
+    loseEffects: [
+      note('張昭冷笑拂袖 — 過江之議,無疾而終。', 'Zhang Zhao smirks and turns away — the mission dies in the antechamber.'),
+    ],
+  },
+  {
+    id: 'goad-zhou-yu',
+    kind: 'sway-neutral',
+    titleZh: '智激周瑜', titleEn: 'Goad Zhou Yu',
+    introZh: '都督周瑜主和不主戰。以「銅雀春深鎖二喬」一語相激,說動這位江東柱石與你並肩抗敵。',
+    introEn: "Zhou Yu leans toward peace. Goad the pillar of the south — 'the Bronze Bird Tower locks away the two Qiaos' — into taking the field at your side.",
+    topic: 'interest',
+    opponentId: 'zhou-yu',
+    winEffects: [
+      { kind: 'relationship', targetId: 'zhou-yu', amount: 2, textZh: '周瑜勃然而起:「吾與老賊勢不兩立!」', textEn: 'Zhou Yu springs up: "That old traitor and I cannot share a sky!"' },
+      { kind: 'gold', amount: 300, textZh: '聯軍軍資 300 金入庫。', textEn: '300 gold toward the allied war-chest.' },
+    ],
+    loseEffects: [
+      { kind: 'relationship', targetId: 'zhou-yu', amount: -1, textZh: '周瑜看破激將,反謔你一軍。', textEn: 'Zhou Yu sees through the goad — and returns it with interest.' },
+    ],
+  },
+  {
+    id: 'rebuke-chen-lin',
+    kind: 'shout-down',
+    titleZh: '檄文對罵·陳琳', titleEn: 'Answer Chen Lin\'s Screed',
+    introZh: '陳琳一紙檄文,罵你三代,天下傳誦。兩軍陣前與這支毒筆當面對質,罵回這口氣!',
+    introEn: 'Chen Lin\'s famous screed cursed three generations of your house. Face the poison pen before both armies and give the insult back.',
+    topic: 'honor',
+    opponentId: 'chen-lin',
+    winEffects: [
+      { kind: 'morale', amount: -10, textZh: '毒筆折於陣前,敵軍奪氣(−10)。', textEn: 'The poison pen is broken in the open — enemy morale dips (−10).' },
+    ],
+    loseEffects: [
+      { kind: 'morale', amount: -8, textZh: '陳琳出口成章,我軍反受其辱(−8)。', textEn: 'Chen Lin\'s tongue proves as sharp as his brush — your morale dips (−8).' },
+    ],
+    routEffects: [
+      { kind: 'afflict', targetId: 'chen-lin', textZh: '陳琳擲筆於地,慚憤而退。', textEn: 'Chen Lin casts down his brush and withdraws in shame.' },
+    ],
+  },
 ];
+
+// ─── 舌戰戰役 (§6.16) — scripted chains of famous debates, the 舌戰 mirror of
+// DUEL_CAMPAIGNS: clear a step to unlock the next; the strip renders ✓/▶/🔒.
+export interface DebateCampaign { id: string; titleZh: string; titleEn: string; steps: string[]; }
+export const DEBATE_CAMPAIGNS: DebateCampaign[] = [
+  {
+    id: 'crossing-the-river',
+    titleZh: '過江舌戰', titleEn: 'Crossing the River',
+    steps: ['refute-zhang-zhao', 'goad-zhou-yu', 'sway-neutral-lord'],
+  },
+  {
+    id: 'tongue-as-sword',
+    titleZh: '舌劍唇槍', titleEn: 'A Tongue Like a Sword',
+    steps: ['shout-down-mi-heng', 'rebuke-chen-lin', 'shout-down-wang-lang'],
+  },
+  {
+    id: 'silver-tongue',
+    titleZh: '三寸之舌', titleEn: 'Three Inches of Tongue',
+    steps: ['persuade-defect', 'persuade-zhang-liao'],
+  },
+];
+
+export interface DebateCampaignStep { id: string; scenario: DebateScenario | undefined; cleared: boolean; unlocked: boolean; }
+/** Resolve a campaign into per-step state given the cleared scenario ids. */
+export function debateCampaignSteps(campaign: DebateCampaign, cleared: ReadonlySet<string>): DebateCampaignStep[] {
+  let prevCleared = true; // the first step is always unlocked
+  return campaign.steps.map((id) => {
+    const isCleared = cleared.has(id);
+    const step: DebateCampaignStep = { id, scenario: DEBATE_SCENARIOS_BY_ID[id], cleared: isCleared, unlocked: prevCleared };
+    prevCleared = isCleared;
+    return step;
+  });
+}
 
 export const DEBATE_SCENARIOS_BY_ID: Record<string, DebateScenario> =
   Object.fromEntries(DEBATE_SCENARIOS.map((s) => [s.id, s]));

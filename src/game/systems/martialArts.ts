@@ -1,5 +1,5 @@
 import type { Officer } from '../types';
-import type { WeaponClass } from './duel';
+import type { WeaponClass, WeaponArt } from './duel';
 
 /**
  * 武學修煉 — a per-officer progression track for single combat, distinct from the
@@ -123,6 +123,28 @@ export function schoolCounterLine(mine: MartialSchool, theirs: MartialSchool): {
     zh: `${MARTIAL_SCHOOL[mine].zh}剋${MARTIAL_SCHOOL[theirs].zh} — 流派相剋佔了上風`,
     en: `${MARTIAL_SCHOOL[mine].en} answers ${MARTIAL_SCHOOL[theirs].en} — the school matchup favours them`,
   };
+}
+
+// ─── 流派絕學 — each school's signature art, earned at 大成 ───────────────────
+// A 大成+ (tier ≥3) fighter wields their school's 絕學 — mechanically a
+// WeaponArt (the same machinery as a legendary weapon's signature edge), so a
+// drilled arm carries a named art even with a plain blade in hand. A true 神兵's
+// own art still takes precedence (callers fall back to this when weaponArtFor
+// is null): the school teaches the stroke; the famed weapon perfects it.
+export const SCHOOL_SECRET_TIER = 3; // 大成
+const SCHOOL_SECRET_ART: Record<MartialSchool, WeaponArt> = {
+  spear:      { kind: 'pierce', zh: '回馬槍·破守', en: 'Turning Spear — Pierce',   weaponZh: '槍法絕學', weaponEn: 'Spearcraft Secret' },
+  glaive:     { kind: 'slash',  zh: '春秋·斬',     en: 'Spring-Autumn — Slash+',   weaponZh: '刀法絕學', weaponEn: 'Glaive Secret' },
+  sword:      { kind: 'slash',  zh: '青虹·斬',     en: 'Azure Rainbow — Slash+',   weaponZh: '劍術絕學', weaponEn: 'Swordplay Secret' },
+  axe:        { kind: 'cleave', zh: '開山·劈',     en: 'Mountain-Splitter — Cleave+', weaponZh: '斧法絕學', weaponEn: 'Axe Secret' },
+  twinblade:  { kind: 'slash',  zh: '雙飛·斬',     en: 'Twin Swallows — Slash+',   weaponZh: '雙劍絕學', weaponEn: 'Twin-Blade Secret' },
+  halberd:    { kind: 'power',  zh: '橫掃·奮擊',   en: 'Sweeping Halberd — Overpower+', weaponZh: '戟法絕學', weaponEn: 'Halberd Secret' },
+  greatsword: { kind: 'power',  zh: '裂石·奮擊',   en: 'Stone-Render — Overpower+', weaponZh: '重兵絕學', weaponEn: 'Great-Arm Secret' },
+  bow:        { kind: 'pierce', zh: '穿雲·破守',   en: 'Cloud-Piercer — Pierce',   weaponZh: '弓道絕學', weaponEn: 'Archery Secret' },
+};
+/** 流派絕學 — the school's signature art for a 大成+ arm (else null). */
+export function schoolSecretArt(cls: MartialSchool, xiuwei: number): WeaponArt | null {
+  return tierOfXiuwei(xiuwei).tier >= SCHOOL_SECRET_TIER ? SCHOOL_SECRET_ART[cls] : null;
 }
 
 // ─── 修煉 — spend 心得 to raise 修為 ──────────────────────────────────────────

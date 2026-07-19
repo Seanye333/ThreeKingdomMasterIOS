@@ -41,6 +41,7 @@ import { officerGrade, officerLevel, nextGradeGap, gradeMeta } from '../../game/
 import { weaponClassFor } from '../../game/systems/duel';
 import { martialXiuwei, martialInsight, martialTier, martialTrainCost, martialSchoolName, MARTIAL_XIUWEI_MAX, canTransmitArts, TRANSMIT_COST } from '../../game/systems/martialArts';
 import { debateXiuwei, debateInsight, debateArtsTier, debateTrainCost, debateSchoolName, DEBATE_XIUWEI_MAX, canTransmitScholarship, DEBATE_TRANSMIT_COST } from '../../game/systems/debateArts';
+import { dualLuminaries } from '../../game/systems/scholarRank';
 import { debatePersona } from '../../game/systems/wordWar';
 import { MAX_STARS, officerStars, nextStarRequirement, scrollStarCost } from '../../game/systems/stars';
 import { armProficiency, armProficiencyTier, armMasteryPerkOf, PROF_ARM_LABEL, profArmOf, type ProfArm } from '../../game/systems/armProficiency';
@@ -302,6 +303,20 @@ export function OfficerDetail({
                     </span>
                   )}
                   {lang === 'en' ? tier.en : tier.zh} · {t('名望', 'Renown')} {renown}
+                </div>
+              );
+            })()}
+            {/* 出將入相 (§6.15) — high on BOTH the 武評榜 and the 月旦榜. */}
+            {(() => {
+              const st = useGameStore.getState();
+              if (!dualLuminaries(st.officers, st.warRatings ?? {}).has(officer.id)) return null;
+              return (
+                <div title={t('武評榜、月旦榜雙榜有名 — 所鎮之城民心日附(每季 +2)', 'Ranked on BOTH the war ladder and the Moon-Rank — steadies their garrisoned city (+2 loyalty/season)')} style={{
+                  display: 'inline-block', marginTop: '0.3rem', marginLeft: '0.4rem', padding: '0.12rem 0.5rem',
+                  background: 'linear-gradient(180deg, #2a2a4a, #181830)', border: '1px solid #9a8ae8',
+                  color: '#cbc0f0', fontSize: '0.82rem', letterSpacing: '0.05rem', borderRadius: 'var(--tkm-radius-xs)',
+                }}>
+                  ⚜ {t('出將入相', 'General & Minister')}
                 </div>
               );
             })()}

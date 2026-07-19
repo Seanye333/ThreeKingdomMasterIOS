@@ -5,7 +5,7 @@ import { moonBoard, moonScore, pickMoonLaurel, pickMoonChallenger, canOrate } fr
 import { resolveTeamDebate, type TeamDebateResult } from '../../game/systems/teamDebate';
 import { TeamDebate3DStage } from './debate/TeamDebate3DStage';
 import { debateShame, isEmotional } from '../../game/systems/afflictions';
-import { DEBATE_SCENARIOS, scenarioOutcome, scenarioResultLine, type DebateScenario } from '../../game/systems/debateScenarios';
+import { DEBATE_SCENARIOS, DEBATE_CAMPAIGNS, debateCampaignSteps, scenarioOutcome, scenarioResultLine, type DebateScenario } from '../../game/systems/debateScenarios';
 import { trainKey, trainsLeft, TRAIN_PER_SEASON } from '../../game/systems/sparLimit';
 import { officerLevel } from '../../game/systems/officerGrade';
 import { Modal } from './Modal';
@@ -35,6 +35,9 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
   const afflictOfficer = useGameStore((s) => s.afflictOfficer);
   const recordDeed = useGameStore((s) => s.recordDeed);
   const applyScenarioEffects = useGameStore((s) => s.applyScenarioEffects);
+  // 舌戰戰役 — cleared chain steps (§6.16); a win unlocks the next debate.
+  const clearedDebate = useGameStore((s) => s.clearedDebateScenarios);
+  const markDebateScenarioCleared = useGameStore((s) => s.markDebateScenarioCleared);
 
   const [mode, setMode] = useState<'spar' | 'story' | 'gauntlet' | 'moon' | 'team'>('spar');
   // 朝堂合辯 (§6.17) — the auto-resolved 2v2 hall melee's last result, for the log.
@@ -259,6 +262,7 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
             if (won) {
               recordDeed(story.strategistId, { debatesWon: 1 });
               if (routed) recordDeed(story.strategistId, { debateRouts: 1 }); // 罵倒
+              markDebateScenarioCleared(sc.id); // 戰役 — a win unlocks the chain's next step
             }
             const head = scenarioResultLine(sc, { won, routed });
             setResult({
@@ -565,6 +569,35 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
       </>)}
 
       {mode === 'story' && (<>
+        {/* 舌戰戰役 — story chains; each cleared step unlocks the next (✓/▶/🔒). */}
+        {DEBATE_CAMPAIGNS.map((camp) => {
+          const steps = debateCampaignSteps(camp, new Set(clearedDebate ?? []));
+          const done = steps.filter((s) => s.cleared).length;
+          return (
+            <div key={camp.id} style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid #3a4754', borderRadius: 'var(--tkm-radius)', padding: '0.5rem 0.7rem', marginBottom: '0.6rem' }}>
+              <div style={{ fontSize: '0.78rem', color: '#88b7e8', marginBottom: 6 }}>📜 {lang === 'en' ? camp.titleEn : camp.titleZh} <span style={{ color: '#7a8893', fontSize: '0.7rem' }}>({done}/{steps.length})</span></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap' }}>
+                {steps.map((st, i) => {
+                  const sc = st.scenario;
+                  const present = !!(sc && officers[sc.opponentId] && officers[sc.opponentId].status !== 'dead' && officers[sc.opponentId].status !== 'unsearched');
+                  const icon = st.cleared ? '✓' : st.unlocked ? '▶' : '🔒';
+                  const col = st.cleared ? '#6aae73' : st.unlocked ? '#88b7e8' : '#5f6c76';
+                  return (
+                    <span key={st.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                      <button
+                        disabled={!st.unlocked || !present}
+                        onClick={() => { if (sc && present) { setScenario(sc); setResult(null); } }}
+                        title={sc ? (lang === 'en' ? sc.titleEn : sc.titleZh) : st.id}
+                        style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '0.16rem 0.4rem', borderRadius: 'var(--tkm-radius-sm)', cursor: st.unlocked && present ? 'pointer' : 'default', background: scenario?.id === st.id ? 'rgba(136,183,232,0.2)' : '#10161e', border: `1px solid ${col}`, color: col, fontFamily: 'inherit', fontSize: '0.68rem', whiteSpace: 'nowrap' }}
+                      >{icon} {sc ? (lang === 'en' ? sc.titleEn : sc.titleZh) : st.id}</button>
+                      {i < steps.length - 1 && <span style={{ color: '#5f6c76', fontSize: '0.7rem' }}>›</span>}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
         <div style={{ display: 'grid', gap: 6, marginBottom: '0.8rem' }}>
           {scenarios.map((sc) => {
             const sel = scenario?.id === sc.id;

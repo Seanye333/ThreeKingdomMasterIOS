@@ -34,7 +34,7 @@ import { trainMartialArts, MARTIAL_XIUWEI_MAX, transmitArts, canTransmitArts } f
 import { trainDebateArts, DEBATE_XIUWEI_MAX, transmitScholarship, canTransmitScholarship } from '../systems/debateArts';
 import { resolveDuel, canDuel, staticProwess, weaponClassFor } from '../systems/duel';
 import { pickArenaChampion, pickArenaChallenger, arenaTakeReward, arenaHoldStipend } from '../systems/arenaLadder';
-import { pickMoonLaurel, pickMoonChallenger, moonScore, moonTakeReward, moonHoldStipend } from '../systems/scholarRank';
+import { pickMoonLaurel, pickMoonChallenger, moonScore, moonTakeReward, moonHoldStipend, dualLuminaries, DUAL_LUMINARY_LOYALTY } from '../systems/scholarRank';
 import { resolveWordWar } from '../systems/wordWar';
 import { pickCourtVoice, willAcceptParley, concordStakes, tributeStakes, persuadeStakes, canPersuadeCity, pickGateKeeper, CONCORD_COST, TRIBUNE_COST, PERSUADE_COST } from '../systems/debateDiplomacy';
 import { tickAIPersuasions, tickMoonWrit, PERSUASION_REFUSE_LOYALTY, MOON_WRIT_DUCK_RENOWN } from '../systems/aiParley';
@@ -1075,6 +1075,8 @@ interface GameStore extends GameState {
   adjustForceFavor: (forceA: EntityId, forceB: EntityId, delta: number) => void;
   /** 單挑戰役 — mark a duel scenario cleared (campaign progress). */
   markDuelScenarioCleared: (scenarioId: EntityId) => void;
+  /** 舌戰戰役 — mark a debate scenario cleared (unlocks the chain's next step). */
+  markDebateScenarioCleared: (scenarioId: EntityId) => void;
   /** 劇情舌戰 — apply a scripted scenario's outcome effects to live state
    *  (gold to the capital, recruiting a won-over officer, shaming a routed one).
    *  Relationship/morale/note effects are display-only. */
@@ -9211,6 +9213,61 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // 學宮養士 (§6.10/§6.14) — seats of learning drip 心得 into whoever is
+        // garrisoned beneath them: 文教 (學舍/太學/藏書樓) banks 文辯心得, 武備
+        // (校場/講武堂) banks 武學心得. Any realm's cities — the schools teach
+        // whoever sits in them. Capped per city so stacking stays modest.
+        {
+          const cur = get();
+          const wen: Record<string, number> = {};
+          const wu: Record<string, number> = {};
+          for (const b of cur.buildings) {
+            if (b.level <= 0) continue;
+            const add = (m: Record<string, number>, n: number) => { m[b.cityId] = Math.min(3, (m[b.cityId] ?? 0) + n); };
+            if (b.id === 'academy' || b.id === 'library') add(wen, 1);
+            else if (b.id === 'grandacademy') add(wen, 2);
+            else if (b.id === 'drillground') add(wu, 1);
+            else if (b.id === 'warschool') add(wu, 2);
+          }
+          if (Object.keys(wen).length > 0 || Object.keys(wu).length > 0) {
+            const officers = { ...cur.officers };
+            let touched = false;
+            for (const o of Object.values(cur.officers)) {
+              if (!o.locationCityId || o.status === 'dead' || o.status === 'imprisoned' || o.status === 'unsearched') continue;
+              const w1 = wen[o.locationCityId] ?? 0;
+              const w2 = wu[o.locationCityId] ?? 0;
+              if (!w1 && !w2) continue;
+              officers[o.id] = {
+                ...o,
+                ...(w1 ? { debateInsight: (o.debateInsight ?? 0) + w1 } : {}),
+                ...(w2 ? { martialInsight: (o.martialInsight ?? 0) + w2 } : {}),
+              };
+              touched = true;
+            }
+            if (touched) set({ officers });
+          }
+        }
+
+        // 出將入相 (§6.15) — a name high on BOTH the 武評榜 and the 月旦榜
+        // steadies whichever city they garrison (a small loyalty aura), for any
+        // realm: the talent commands respect, not the flag.
+        {
+          const cur = get();
+          const dual = dualLuminaries(cur.officers, cur.warRatings ?? {});
+          if (dual.size > 0) {
+            const cities = { ...cur.cities };
+            let touched = false;
+            for (const id of dual) {
+              const o = cur.officers[id];
+              const city = o?.locationCityId ? cities[o.locationCityId] : null;
+              if (!city || city.loyalty >= 100) continue;
+              cities[city.id] = { ...city, loyalty: Math.min(100, city.loyalty + DUAL_LUMINARY_LOYALTY) };
+              touched = true;
+            }
+            if (touched) set({ cities });
+          }
+        }
+
         // 自動存檔 — every season boundary writes one of three rolling
         // autosave slots, so a bad turn (or a crash) costs at most a season.
         if (seasonBoundary) {
@@ -12931,6 +12988,11 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const cur = get().clearedDuelScenarios ?? [];
         if (cur.includes(scenarioId)) return;
         set({ clearedDuelScenarios: [...cur, scenarioId] });
+      },
+      markDebateScenarioCleared: (scenarioId) => {
+        const cur = get().clearedDebateScenarios ?? [];
+        if (cur.includes(scenarioId)) return;
+        set({ clearedDebateScenarios: [...cur, scenarioId] });
       },
       applyScenarioEffects: (effects) => {
         const state = get();
@@ -17684,6 +17746,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           arenaChampion: loaded.arenaChampion,
           moonLaurel: loaded.moonLaurel,
           pendingPersuasions: loaded.pendingPersuasions ?? [],
+          clearedDebateScenarios: loaded.clearedDebateScenarios ?? [],
           pendingMoonWrit: loaded.pendingMoonWrit,
           pendingEspionage: loaded.pendingEspionage ?? [],
           embeddedSpies: loaded.embeddedSpies ?? [],
@@ -17891,6 +17954,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         pendingPersuasions: state.pendingPersuasions,
         pendingMoonWrit: state.pendingMoonWrit,
         clearedDuelScenarios: state.clearedDuelScenarios,
+        clearedDebateScenarios: state.clearedDebateScenarios,
         deeds: state.deeds,
         fogOfWar: state.fogOfWar,
         espionageReveals: state.espionageReveals,
@@ -17950,6 +18014,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (!state.rivalries) state.rivalries = {};
         if (state.lastTournamentYear == null) state.lastTournamentYear = 0;
         if (!state.clearedDuelScenarios) state.clearedDuelScenarios = [];
+        if (!state.clearedDebateScenarios) state.clearedDebateScenarios = [];
         if (!state.customEvents) state.customEvents = [];
         if (!state.recentPrestige) state.recentPrestige = [];
         if (!state.recentBonds) state.recentBonds = [];
