@@ -1165,6 +1165,17 @@ function decideCommand(
       (e.ownerForceId === null || isHostilePermitted(diplomacy, forceId, e.ownerForceId));
   });
 
+  // 0. 米珠薪桂 — when the granaries are empty AND the merchants are sitting on
+  // a third of the city's grain, ploughing more fields is next year's answer to
+  // this year's famine. Break the warehouses first. (Soak: without this the AI
+  // let chronically-starving cities peg at the hoarding ceiling forever, because
+  // the food-crisis branch below always won the season.)
+  if ((city.hoardedGrain ?? 0) >= 30 && city.food < city.troops * 1.2
+      && canAfford(city, 'curb-hoarding')) {
+    const o = bestForCommand(officersHere, 'politics', 'curb-hoarding', prefectId);
+    if (o) return internalDecision('curb-hoarding', city, o);
+  }
+
   // 1. Food crisis — develop agriculture
   if (city.food < city.troops * 0.6) {
     const o = bestForCommand(officersHere, 'politics', 'develop-agriculture', prefectId);
@@ -1207,6 +1218,24 @@ function decideCommand(
       const r = bestForCommand(officersHere, 'charisma', 'relief', prefectId);
       if (r) return internalDecision('relief', city, r);
     }
+  }
+
+  // 3.7 民政三患 (§1.11–§1.14) — the civic rot a realm that never governs will
+  // otherwise accumulate forever. Ordered by what actually bites first: a
+  // cornered grain market starves the city, a gutted register starves the
+  // treasury, and an unheard docket bleeds loyalty. Deliberately BELOW the
+  // loyalty/food/troop crises — an AI at war still fights first.
+  if ((city.hoardedGrain ?? 0) >= 18 && canAfford(city, 'curb-hoarding')) {
+    const o = bestForCommand(officersHere, 'politics', 'curb-hoarding', prefectId);
+    if (o) return internalDecision('curb-hoarding', city, o);
+  }
+  if ((city.hiddenHouseholds ?? 0) >= 22 && canAfford(city, 'household-audit')) {
+    const o = bestForCommand(officersHere, 'politics', 'household-audit', prefectId);
+    if (o) return internalDecision('household-audit', city, o);
+  }
+  if ((city.caseload ?? 0) >= 45 && canAfford(city, 'adjudicate')) {
+    const o = bestForCommand(officersHere, 'politics', 'adjudicate', prefectId);
+    if (o) return internalDecision('adjudicate', city, o);
   }
 
   // 3.5 Field interception — a hostile column is bearing down on this city

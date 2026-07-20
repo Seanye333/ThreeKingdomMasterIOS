@@ -32,8 +32,18 @@ describe('隱戶消長', () => {
     expect(hiddenDrift({ ...base, corvee: 'heavy' })).toBeGreaterThan(base.current);
   });
 
-  it('resting them brings people back', () => {
-    expect(hiddenDrift(base)).toBeLessThan(base.current);
+  it('resting them brings people back — when somebody is actually governing', () => {
+    expect(hiddenDrift({ ...base, bestPolitics: 75 })).toBeLessThan(base.current);
+  });
+
+  it('an unattended city leaks even at rest — nobody is counting', () => {
+    expect(hiddenDrift({ ...base, bestPolitics: 0 })).toBeGreaterThan(base.current);
+  });
+
+  it('大邑難稽 — a metropolis leaks faster than a market town under the same官', () => {
+    const town = hiddenDrift({ ...base, bestPolitics: 70, population: 60_000 });
+    const metropolis = hiddenDrift({ ...base, bestPolitics: 70, population: 700_000 });
+    expect(metropolis).toBeGreaterThan(town);
   });
 
   it('峻法 pushes people to hide; 寬刑 pulls them back', () => {

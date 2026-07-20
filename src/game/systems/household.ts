@@ -92,11 +92,23 @@ export function hiddenDrift(args: {
   /** Best 政治 among officers stationed here (0 if unattended). */
   bestPolitics: number;
   loyalty: number;
+  /** Heads to count. A great commandery leaks by its own size. */
+  population?: number;
 }): number {
+  // 大邑難稽 — commendation never stops; what varies is whether anyone can keep
+  // up with it. A market town's clerks know every household by name; a 60-万
+  // commandery's do not, which is why great cities leak under good governors.
+  const scale = 0.7 + Math.min(1.2, (args.population ?? 150_000) / 500_000);
   const law = args.lawSeverity === 'strict' ? 0.5 : args.lawSeverity === 'lenient' ? -0.3 : 0;
-  const audit = args.bestPolitics / 90;             // a present官 keeps the rolls honest
   const content = args.loyalty >= 70 ? -0.3 : args.loyalty < 40 ? 0.4 : 0;
-  const drift = corveeEffects(args.corvee).hidingPressure + law + content - audit;
+  // 稽而後得 — the recovery term scales with how much there IS to find: an
+  // administrator sitting on a badly-kept register turns up whole villages,
+  // one sitting on an honest register turns up nothing. This is what gives the
+  // meter an equilibrium instead of pinning it to a bound.
+  // (The first soak run had every AI city welded to the 2% floor precisely
+  // because the old flat term always outran a flat pressure.)
+  const audit = (args.bestPolitics / 90) * Math.min(2, args.current / 12);
+  const drift = scale + corveeEffects(args.corvee).hidingPressure + law + content - audit;
   const next = args.current + drift;
   return Math.max(HIDDEN_FLOOR, Math.min(HIDDEN_CEILING, Math.round(next * 10) / 10));
 }

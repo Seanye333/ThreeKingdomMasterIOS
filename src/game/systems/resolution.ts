@@ -2599,6 +2599,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
           lawSeverity: severity,
           bestPolitics: bestPolitics,
           loyalty: city.loyalty,
+          population: city.population,
         })
       : (city.hiddenHouseholds ?? 0);
     // 囤積居奇 (§1.14) — dear grain plus a weak code plus a bought magistrate is
