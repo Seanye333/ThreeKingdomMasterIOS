@@ -19,6 +19,7 @@ import { categoryOfTactic } from '../../game/data/officerAttributes';
 import { attackUnits, canAttack, canMove, endTurn, hexDistance, moveUnit, resolveBattleEnd, unitAt, tileAt, hexNeighbours, forecastAttack, matchupLabel, battleStratagemSituation, defenderTerrainShield, terrainDamageMod, moveCost, findPath, moveUnitAlong, reachableHexes, isRouting, changeFormation, canChangeFormation, canFortify, fortifyTile, FIELDWORKS_AP_COST, pickAiFormation, formationCounterMul } from '../../game/systems/tactical';
 import { applyBattlePrep, applyStratagem, pickAiBattlePrep, pickDuelChampion, canIssuePreBattleDuel, applyPreBattleDuel, aiMaybePreBattleDuel } from '../../game/systems/tacticalSchemes';
 import { duelDread } from '../../game/systems/duelChallenge';
+import { realmEthos, ethosDreadBonus } from '../../game/systems/realmEthos';
 import { type TeamDuelResult } from '../../game/systems/teamDuel';
 import { TeamDuel3DStage } from '../components/duel/TeamDuel3DStage';
 import { InteractiveTeamDuel3D } from '../components/duel/InteractiveTeamDuel3D';
@@ -4138,7 +4139,9 @@ export function TacticalBattleScreen3D() {
                   if (!me || !foe) return;
                   // 威名威懾 (§6.13) — a dreaded champion riding out cows the enemy host
                   // before a blow is struck (未戰先怯): a small morale sag by their fame.
-                  const dread = duelDread(me);
+                  // 武風懾人 (§6.18) — his whole court's martial repute rides with him.
+                  const st0 = useGameStore.getState();
+                  const dread = duelDread(me, ethosDreadBonus(realmEthos(st0.officers, st0.deeds ?? {}, me.forceId)));
                   if (dread > 0.05) {
                     const drop = Math.round(dread * 16);
                     start({ ...battle, units: battle.units.map((u) => (u.side === foeSide && u.troops > 0 ? { ...u, morale: Math.max(0, u.morale - drop) } : u)) });

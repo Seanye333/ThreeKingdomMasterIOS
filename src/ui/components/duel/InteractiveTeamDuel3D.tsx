@@ -4,6 +4,7 @@ import {
   initTeamDuelState, stepTeamDuel, teamStateResult,
   type TeamDuelResult, type TeamDuelState, type TeamFighter, type TeamMember,
 } from '../../../game/systems/teamDuel';
+import { useGameStore } from '../../../game/state/store';
 import { pickName, useLanguage, useT } from '../../i18n';
 import { DuelArena3D, type ArenaExtra, type DuelArenaEvent } from './DuelArena3D';
 
@@ -54,7 +55,8 @@ export function InteractiveTeamDuel3D({ sideA, sideB, onComplete }: {
     if (st.over) return;
     const capABefore = capA.id;
     const capBBefore = capB.id;
-    const { state: next, downs } = stepTeamDuel(st, { focusId, guardId });
+    // 同門合擊 — the realm's 師承譜系 rides along into every round.
+    const { state: next, downs } = stepTeamDuel(st, { focusId, guardId }, Math.random, useGameStore.getState().lineage ?? []);
     // Stale orders die with their targets.
     if (focusId && next.b.find((f) => f.id === focusId)?.downed) setFocusId(undefined);
     if (guardId && next.a.find((f) => f.id === guardId)?.downed) setGuardId(undefined);

@@ -109,6 +109,11 @@ export interface Officer {
   /** 改換門庭 — an explicitly chosen 武學流派, overriding the one derived from
    *  the officer's weapon. Set only by a deliberate school change. */
   martialSchool?: import('../systems/duel').WeaponClass;
+  /** 衣缽傳人 (§6.18) — the pupil this master has named to carry their craft on.
+   *  On the master's death the heir is lifted toward 70% of the master's 修為
+   *  in that art. Set by a living 宗師 (martial) / 名士 (debate). */
+  martialHeirId?: EntityId;
+  debateHeirId?: EntityId;
   /** 文辯修為 — scholarship (0–100) of the officer's debating 學派, the war of
    *  words' mirror of 武學. Deepened via 講席 (spending 心得) and 論戰頓悟. High
    *  修為 lends 口才/opening 氣勢/沉著 in every 舌戰. See systems/debateArts.ts. */

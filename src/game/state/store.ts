@@ -30,11 +30,13 @@ import { grantDeedTitles } from '../systems/deedTitles';
 import { pushBoutRecord, isNotableBout, type BoutRecord } from '../systems/duelHall';
 import { recordRivalryBout, pairKey as rivalPairKey, NEMESIS_THRESHOLD } from '../systems/rivalries';
 import { challengeStakes } from '../systems/duelChallenge';
-import { trainMartialArts, MARTIAL_XIUWEI_MAX, transmitArts, canTransmitArts, insightMoveCost, schoolSwitchCost, schoolSwitchXiuwei } from '../systems/martialArts';
-import { trainDebateArts, DEBATE_XIUWEI_MAX, transmitScholarship, canTransmitScholarship } from '../systems/debateArts';
+import { trainMartialArts, MARTIAL_XIUWEI_MAX, transmitArts, canTransmitArts, insightMoveCost, schoolSwitchCost, schoolSwitchXiuwei, martialTier } from '../systems/martialArts';
+import { trainDebateArts, DEBATE_XIUWEI_MAX, transmitScholarship, canTransmitScholarship, debateArtsTier } from '../systems/debateArts';
 import { resolveDuel, canDuel, staticProwess, weaponClassFor, isDuelMoveUnlocked, duelMoveUnlockLevel, scarBarsMove } from '../systems/duel';
 import { meleeReplayFighters } from '../systems/teamDuel';
 import { pickArenaChampion, pickArenaChallenger, arenaTakeReward, arenaHoldStipend } from '../systems/arenaLadder';
+import { realmEthos, ethosSchoolBonus, ethosLoyaltyAura } from '../systems/realmEthos';
+import { recordTeaching } from '../systems/lineage';
 import { pickMoonLaurel, pickMoonChallenger, moonScore, moonTakeReward, moonHoldStipend, dualLuminaries, DUAL_LUMINARY_LOYALTY, annualHonors, honorRenown } from '../systems/scholarRank';
 import { resolveWordWar } from '../systems/wordWar';
 import { pickCourtVoice, willAcceptParley, concordStakes, tributeStakes, persuadeStakes, canPersuadeCity, pickGateKeeper, CONCORD_COST, TRIBUNE_COST, PERSUADE_COST } from '../systems/debateDiplomacy';
@@ -1024,6 +1026,9 @@ interface GameStore extends GameState {
   growMartialXiuwei: (officerId: EntityId, amount: number) => void;
   /** 宗師傳藝 — a 宗師+ master spends 心得 to drill a same-city junior's 修為 (§6.10). */
   transmitMartialArts: (masterId: EntityId, pupilId: EntityId) => { ok: boolean; reason?: string; gained?: number; tierUpZh?: string; tierUpEn?: string };
+  /** 衣缽傳人 (§6.18) — a 宗師/名士 names the pupil who carries their craft on
+   *  (pass null to unname). The heir inherits on the master's death. */
+  nameArtHeir: (masterId: EntityId, heirId: EntityId | null, art: 'martial' | 'debate') => { ok: boolean; reason?: string };
   /** 悟招 (§6.10) — spend 武學心得 to grasp a duel move ahead of its 歷練 gate. */
   learnDuelMove: (officerId: EntityId, move: import('../systems/duel').DuelMove) => { ok: boolean; reason?: string; cost?: number };
   /** 改換門庭 (§6.10) — spend 心得 to abandon a 流派 for another; 修為 keeps 60%. */
@@ -9156,6 +9161,43 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // AI 傳習 (§6.18) — the realms cultivate their own. Each season one AI
+        // master (宗師/名士) drills a junior of the same court, exactly as the
+        // player's 傳藝/傳道 does — so lineages, 同門 bonds and deep benches grow
+        // across the whole map instead of only in your house.
+        if (seasonBoundary && Math.random() < 0.4) {
+          const cur = get();
+          const teach = (art: 'martial' | 'debate') => {
+            const tierOf = (o: Officer) => (art === 'martial' ? martialTier(o).tier : debateArtsTier(o).tier);
+            const xwOf = (o: Officer) => (art === 'martial' ? (o.martialXiuwei ?? 0) : (o.debateXiuwei ?? 0));
+            const usable = (o: Officer) => o.forceId && o.forceId !== cur.playerForceId
+              && o.status !== 'dead' && o.status !== 'imprisoned' && o.status !== 'unsearched' && !!o.locationCityId;
+            const masters = Object.values(cur.officers).filter((o) => usable(o) && tierOf(o) >= 4);
+            if (!masters.length) return false;
+            const master = masters[Math.floor(Math.random() * masters.length)];
+            // 同城同袍 — a master drills whoever shares their posting.
+            const pupils = Object.values(cur.officers).filter((o) =>
+              usable(o) && o.id !== master.id && o.forceId === master.forceId
+              && o.locationCityId === master.locationCityId
+              && xwOf(o) < xwOf(master) - 10);
+            if (!pupils.length) return false;
+            const pupil = pupils[Math.floor(Math.random() * pupils.length)];
+            const gained = Math.min(8, Math.max(0, xwOf(master) - 5 - xwOf(pupil)));
+            if (gained <= 0) return false;
+            const next = xwOf(pupil) + gained;
+            set({
+              officers: { ...get().officers, [pupil.id]: {
+                ...get().officers[pupil.id],
+                ...(art === 'martial' ? { martialXiuwei: next } : { debateXiuwei: next }),
+              } },
+              lineage: recordTeaching(get().lineage ?? [], { masterId: master.id, pupilId: pupil.id, art, year: cur.date.year }),
+            });
+            return true;
+          };
+          // One teaching a season, martial or literary — whichever the coin falls.
+          if (!teach(Math.random() < 0.5 ? 'martial' : 'debate')) teach(Math.random() < 0.5 ? 'debate' : 'martial');
+        }
+
         // 世間論辯 (§6.15) — the 月旦榜 lives beyond the player's bouts too: between
         // seasons, the realms' famous tongues hold 清談 with one another. The
         // board moves on its own, AI scholars deepen their 文辯修為, and a
@@ -9289,10 +9331,20 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           if (Object.keys(wen).length > 0 || Object.keys(wu).length > 0) {
             const officers = { ...cur.officers };
             let touched = false;
+            // 國風助學 (§6.18) — a realm's character speeds the schools that match
+            // it. Cached per force so a big roster doesn't recompute per officer.
+            const ethosCache = new Map<string, { martial: number; literary: number }>();
+            const ethosFor = (fid: string | null | undefined) => {
+              if (!fid) return { martial: 0, literary: 0 };
+              let e = ethosCache.get(fid);
+              if (!e) { e = ethosSchoolBonus(realmEthos(cur.officers, cur.deeds ?? {}, fid)); ethosCache.set(fid, e); }
+              return e;
+            };
             for (const o of Object.values(cur.officers)) {
               if (!o.locationCityId || o.status === 'dead' || o.status === 'imprisoned' || o.status === 'unsearched') continue;
-              const w1 = wen[o.locationCityId] ?? 0;
-              const w2 = wu[o.locationCityId] ?? 0;
+              const bonus = ethosFor(o.forceId);
+              const w1 = (wen[o.locationCityId] ?? 0) > 0 ? (wen[o.locationCityId] ?? 0) + bonus.literary : 0;
+              const w2 = (wu[o.locationCityId] ?? 0) > 0 ? (wu[o.locationCityId] ?? 0) + bonus.martial : 0;
               if (!w1 && !w2) continue;
               officers[o.id] = {
                 ...o,
@@ -9319,6 +9371,29 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               const city = o?.locationCityId ? cities[o.locationCityId] : null;
               if (!city || city.loyalty >= 100) continue;
               cities[city.id] = { ...city, loyalty: Math.min(100, city.loyalty + DUAL_LUMINARY_LOYALTY) };
+              touched = true;
+            }
+            if (touched) set({ cities });
+          }
+        }
+
+        // 崇文安民 (§6.18) — a realm whose court honours letters keeps its cities
+        // that little bit calmer, everywhere at once. The martial mirror of this
+        // is 武風懾人 (ethosDreadBonus), felt at the duelling ground instead.
+        if (seasonBoundary) {
+          const cur = get();
+          const byForce = new Map<string, number>();
+          for (const f of Object.values(cur.forces)) {
+            const aura = ethosLoyaltyAura(realmEthos(cur.officers, cur.deeds ?? {}, f.id));
+            if (aura > 0) byForce.set(f.id, aura);
+          }
+          if (byForce.size > 0) {
+            const cities = { ...cur.cities };
+            let touched = false;
+            for (const c of Object.values(cur.cities)) {
+              const aura = c.ownerForceId ? byForce.get(c.ownerForceId) : undefined;
+              if (!aura || c.loyalty >= 100) continue;
+              cities[c.id] = { ...c, loyalty: Math.min(100, c.loyalty + aura) };
               touched = true;
             }
             if (touched) set({ cities });
@@ -12541,12 +12616,35 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const mentorPair = pupil.mentorId === master.id;
         const r = transmitArts(master, pupil, sameSchool, mentorPair);
         if (!r) return { ok: false, reason: canTransmitArts(master, pupil).reason ?? 'blocked' };
-        set({ officers: {
-          ...state.officers,
-          [masterId]: { ...master, martialInsight: r.masterInsight },
-          [pupilId]: { ...pupil, martialXiuwei: r.pupilXiuwei },
-        } });
+        set({
+          officers: {
+            ...state.officers,
+            [masterId]: { ...master, martialInsight: r.masterInsight },
+            [pupilId]: { ...pupil, martialXiuwei: r.pupilXiuwei },
+          },
+          // 師承譜系 (§6.18) — the teaching leaves a record, not just a stat bump.
+          lineage: recordTeaching(state.lineage ?? [], { masterId, pupilId, art: 'martial', year: state.date.year }),
+        });
         return { ok: true, gained: r.gained, tierUpZh: r.tierUp?.zh, tierUpEn: r.tierUp?.en };
+      },
+      nameArtHeir: (masterId, heirId, art) => {
+        const state = get();
+        const master = state.officers[masterId];
+        if (!master) return { ok: false, reason: 'no-officer' };
+        if (master.forceId !== state.playerForceId) return { ok: false, reason: 'not-yours' };
+        // Only a master of the craft has a 衣缽 worth passing on.
+        const tier = art === 'martial' ? martialTier(master).tier : debateArtsTier(master).tier;
+        if (tier < 4) return { ok: false, reason: 'not-master' };
+        if (heirId) {
+          const heir = state.officers[heirId];
+          if (!heir || heir.id === masterId) return { ok: false, reason: 'no-heir' };
+          if (heir.forceId !== state.playerForceId) return { ok: false, reason: 'not-yours' };
+        }
+        const key = art === 'martial' ? 'martialHeirId' : 'debateHeirId';
+        const next = { ...master } as Officer & Record<string, unknown>;
+        if (heirId) next[key] = heirId; else delete next[key];
+        set({ officers: { ...state.officers, [masterId]: next as Officer } });
+        return { ok: true };
       },
       learnDuelMove: (officerId, move) => {
         const state = get();
@@ -12626,11 +12724,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const mentorPair = pupil.mentorId === master.id;
         const r = transmitScholarship(master, pupil, sameSchool, mentorPair);
         if (!r) return { ok: false, reason: canTransmitScholarship(master, pupil).reason ?? 'blocked' };
-        set({ officers: {
-          ...state.officers,
-          [masterId]: { ...master, debateInsight: r.masterInsight },
-          [pupilId]: { ...pupil, debateXiuwei: r.pupilXiuwei },
-        } });
+        set({
+          officers: {
+            ...state.officers,
+            [masterId]: { ...master, debateInsight: r.masterInsight },
+            [pupilId]: { ...pupil, debateXiuwei: r.pupilXiuwei },
+          },
+          lineage: recordTeaching(state.lineage ?? [], { masterId, pupilId, art: 'debate', year: state.date.year }),
+        });
         return { ok: true, gained: r.gained, tierUpZh: r.tierUp?.zh, tierUpEn: r.tierUp?.en };
       },
       trainDebateArts: (officerId) => {
@@ -17966,6 +18067,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           pendingPersuasions: loaded.pendingPersuasions ?? [],
           clearedDebateScenarios: loaded.clearedDebateScenarios ?? [],
           debateRivalries: loaded.debateRivalries ?? {},
+          lineage: loaded.lineage ?? [],
           lastSalonYear: loaded.lastSalonYear ?? 0,
           pendingMoonWrit: loaded.pendingMoonWrit,
           pendingEspionage: loaded.pendingEspionage ?? [],
@@ -18169,6 +18271,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         warRatings: state.warRatings,
         rivalries: state.rivalries,
         debateRivalries: state.debateRivalries,
+        lineage: state.lineage,
         lastTournamentYear: state.lastTournamentYear,
         lastSalonYear: state.lastSalonYear,
         arenaChampion: state.arenaChampion,
@@ -18235,6 +18338,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (!state.warRatings) state.warRatings = {};
         if (!state.rivalries) state.rivalries = {};
         if (!state.debateRivalries) state.debateRivalries = {};
+        if (!state.lineage) state.lineage = [];
         if (state.lastTournamentYear == null) state.lastTournamentYear = 0;
         if (state.lastSalonYear == null) state.lastSalonYear = 0;
         if (!state.clearedDuelScenarios) state.clearedDuelScenarios = [];

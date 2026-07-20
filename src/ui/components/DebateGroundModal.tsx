@@ -349,7 +349,7 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
               if (!a || !b || !teamReady) return;
               setResult(null);
               recordTrainingUse('debate', [a.id, b.id]);
-              const res = resolveTeamDebate([a, b], foePair);
+              const res = resolveTeamDebate([a, b], foePair, Math.random, useGameStore.getState().lineage ?? []);
               setTeamResult(res);
               // 合辯同場 (§6.17) — stage the whole joint debate in the 3D hall.
               setTeamStage(res);

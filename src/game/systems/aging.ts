@@ -15,6 +15,7 @@ import { griefOnDeath } from './relationshipEffects';
 import { demotedPeerage, peerageById, peerageTier } from '../data/peerage';
 import type { FamilyRelation } from '../types/family';
 import { legacyManualDrops, type LegacyDrop } from './legacyManual';
+import { inheritedXiuwei } from './lineage';
 
 export interface AgingInput {
   year: number;
@@ -43,6 +44,8 @@ export interface AgingOutput {
   entries: ReportEntry[];
   /** 遺譜傳世 — manuals left behind by masters who died this year (§6.10/§6.14). */
   legacyDrops: LegacyDrop[];
+  /** 衣缽傳承 — heirs who inherited a dead master's craft this year (§6.18). */
+  artInheritances: Array<{ masterId: EntityId; heirId: EntityId; art: 'martial' | 'debate' }>;
 }
 
 /**
@@ -68,6 +71,8 @@ export function processAging(input: AgingInput): AgingOutput {
   const entries: ReportEntry[] = [];
   // 遺譜傳世 — manuals gathered where a master fell (see legacyManual.ts).
   const legacyDrops: LegacyDrop[] = [];
+  // 衣缽傳人 — a named heir takes up the craft the moment the master falls.
+  const artInheritances: AgingOutput['artInheritances'] = [];
 
   for (const officer of Object.values(officers)) {
     if (officer.status === 'dead' || officer.status === 'unsearched') continue;
@@ -168,6 +173,25 @@ export function processAging(input: AgingInput): AgingOutput {
     // 遺譜傳世 — a master's notes are gathered where they fell (before the
     // dead officer's posting is cleared below).
     legacyDrops.push(...legacyManualDrops(officer, officer.locationCityId));
+    // 衣缽傳人 (§6.18) — a named heir is lifted toward the master's mastery. An
+    // apprenticeship carries further than the書 a stranger might find (遺譜).
+    for (const art of ['martial', 'debate'] as const) {
+      const heirId = art === 'martial' ? officer.martialHeirId : officer.debateHeirId;
+      const heir = heirId ? officers[heirId] : undefined;
+      if (!heir || heir.status === 'dead') continue;
+      const masterXw = (art === 'martial' ? officer.martialXiuwei : officer.debateXiuwei) ?? 0;
+      const heirXw = (art === 'martial' ? heir.martialXiuwei : heir.debateXiuwei) ?? 0;
+      const next = inheritedXiuwei(heirXw, masterXw);
+      if (next <= heirXw) continue;
+      officers = { ...officers, [heir.id]: { ...heir, ...(art === 'martial' ? { martialXiuwei: next } : { debateXiuwei: next }) } };
+      artInheritances.push({ masterId: officer.id, heirId: heir.id, art });
+      entries.push({
+        cityId: heir.locationCityId,
+        kind: 'note',
+        text: `${heir.name.en} inherits ${officer.name.en}'s ${art === 'martial' ? 'martial craft' : 'learning'} — the lineage holds.`,
+        textZh: `${heir.name.zh} 承 ${officer.name.zh} 之衣缽,${art === 'martial' ? '武學' : '文辯'}修為驟進 — 薪火相傳。`,
+      });
+    }
     const posthumous = grantPosthumousName(officer);
     officers = {
       ...officers,
@@ -379,7 +403,7 @@ export function processAging(input: AgingInput): AgingOutput {
     }
   }
 
-  return { cities, officers, forces, entries, legacyDrops };
+  return { cities, officers, forces, entries, legacyDrops, artInheritances };
 }
 
 export function deathChance(

@@ -2,6 +2,7 @@ import type { Officer } from '../types';
 import { staticProwess, duelDeathFate, weaponClassFor, type DuelFate } from './duel';
 import { areBonded } from './tactical';
 import { areSwornBrothers } from './relationshipEffects';
+import { lineageBond, type LineageLedger } from './lineage';
 import { gradeCombatBonus } from './gradeCombat';
 
 /**
@@ -47,9 +48,12 @@ export interface TeamDuelResult {
   log: { zh: string; en: string }[];
 }
 
-/** 合擊 — sworn brothers / bonded pairs strike as one when they gang a foe. */
-function synergy(x: Officer, y: Officer): boolean {
-  return areBonded(x.id, y.id) || areSwornBrothers(x.id, y.id);
+/** 合擊 — sworn brothers, bonded pairs, and 同門/師徒 of one school strike as
+ *  one when they gang a foe. The lineage ledger is passed in (empty = the
+ *  original bonded/sworn reading), so this stays pure. */
+function synergy(x: Officer, y: Officer, lineage: LineageLedger): boolean {
+  return areBonded(x.id, y.id) || areSwornBrothers(x.id, y.id)
+    || lineageBond(lineage, x.id, y.id, 'martial') !== null;
 }
 
 /** 親督軍令 (§6.11 互動) — the player's per-round orders for side A. */
@@ -66,7 +70,7 @@ const nm = (f: TeamFighter) => f.officer.name;
 
 /** One melee round, mutating A/B in place. Returns the fighters downed this
  *  round. `orders` (if any) steer side A — the engine's own instincts otherwise. */
-function runTeamRound(A: TeamFighter[], B: TeamFighter[], r: number, rng: () => number, log: { zh: string; en: string }[], orders?: TeamOrders): TeamFighter[] {
+function runTeamRound(A: TeamFighter[], B: TeamFighter[], r: number, rng: () => number, log: { zh: string; en: string }[], orders?: TeamOrders, lineage: LineageLedger = []): TeamFighter[] {
   const av = alive(A), bv = alive(B);
   // 站位 — the van screens the rear: melee reaches the rear only once every
   // van of that side is down; a 弓手 shoots over the screen from round one.
@@ -92,7 +96,7 @@ function runTeamRound(A: TeamFighter[], B: TeamFighter[], r: number, rng: () => 
     if (orders?.guardId === atk.id && atk.side === 'a') dmg *= 0.5;
     const arr = incoming.get(tgt.id) ?? [];
     // 合擊 — a blow lands harder if a bonded ally is already pressing this foe.
-    if (arr.some((x) => synergy(x.atk.officer, atk.officer))) dmg += 8;
+    if (arr.some((x) => synergy(x.atk.officer, atk.officer, lineage))) dmg += 8;
     arr.push({ atk, dmg: Math.max(4, Math.round(dmg)) });
     incoming.set(tgt.id, arr);
   };
@@ -154,7 +158,7 @@ function teamVerdict(A: TeamFighter[], B: TeamFighter[]): 'a' | 'b' | 'draw' {
   return Math.abs(aSt - bSt) < 20 ? 'draw' : aSt > bSt ? 'a' : 'b';
 }
 
-export function resolveTeamDuel(sideA: Array<Officer | TeamMember>, sideB: Array<Officer | TeamMember>, rng: () => number = Math.random): TeamDuelResult {
+export function resolveTeamDuel(sideA: Array<Officer | TeamMember>, sideB: Array<Officer | TeamMember>, rng: () => number = Math.random, lineage: LineageLedger = []): TeamDuelResult {
   const A = sideA.map((x) => mkFighter(norm(x), 'a'));
   const B = sideB.map((x) => mkFighter(norm(x), 'b'));
   const log: { zh: string; en: string }[] = [];
@@ -163,7 +167,7 @@ export function resolveTeamDuel(sideA: Array<Officer | TeamMember>, sideB: Array
   for (let r = 1; r <= MAX_TEAM_ROUNDS; r++) {
     if (!alive(A).length || !alive(B).length) break;
     rounds = r;
-    runTeamRound(A, B, r, rng, log);
+    runTeamRound(A, B, r, rng, log, undefined, lineage);
   }
   return { winner: teamVerdict(A, B), rounds, a: A, b: B, log };
 }
@@ -197,14 +201,14 @@ export interface TeamStepResult {
 }
 
 /** Run one ordered round (mutates nothing — returns a fresh state). */
-export function stepTeamDuel(state: TeamDuelState, orders: TeamOrders, rng: () => number = Math.random): TeamStepResult {
+export function stepTeamDuel(state: TeamDuelState, orders: TeamOrders, rng: () => number = Math.random, lineage: LineageLedger = []): TeamStepResult {
   if (state.over) return { state, downs: [] };
   // Deep-ish copy the fighters so React state stays immutable for the host.
   const A = state.a.map((f) => ({ ...f }));
   const B = state.b.map((f) => ({ ...f }));
   const log = [...state.log];
   const r = state.round + 1;
-  const downs = runTeamRound(A, B, r, rng, log, orders);
+  const downs = runTeamRound(A, B, r, rng, log, orders, lineage);
   const finished = !alive(A).length || !alive(B).length || r >= MAX_TEAM_ROUNDS;
   const next: TeamDuelState = {
     a: A, b: B, round: r, log,

@@ -456,6 +456,9 @@ export interface GameState {
   warRatings: Record<EntityId, number>;
   /** 恩怨簿 — head-to-head single-combat history per pair (forges 宿敵 in play). */
   rivalries: import('../systems/rivalries').RivalryMap;
+  /** 師承譜系 (§6.18) — who taught whom, per art. Left behind by 傳藝/傳道 so a
+   *  master's craft becomes a visible lineage; drives 同門 bonds. */
+  lineage: import('../systems/lineage').LineageLedger;
   /** 文敵簿 (§6.15) — the same ledger for the tongue: head-to-head 舌戰 history
    *  per pair. Kept apart from `rivalries` so a war of words never drags a pair
    *  into the auto-duel 宿敵 path — a feud of words stays a feud of words. */
@@ -921,6 +924,7 @@ export const EMPTY_STATE: GameState = {
   warRatings: {},
   rivalries: {},
   debateRivalries: {},
+  lineage: [],
   lastTournamentYear: 0,
   lastSalonYear: 0,
   clearedDuelScenarios: [],
@@ -1385,6 +1389,7 @@ export function loadScenario(
     warRatings: {},
     rivalries: {},
     debateRivalries: {},
+    lineage: [],
   lastTournamentYear: 0,
     lastSalonYear: 0,
     clearedDuelScenarios: [],

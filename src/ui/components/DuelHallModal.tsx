@@ -132,7 +132,7 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
       setMeleeLive({ mine: mySide, foes: foeSide });
       return;
     }
-    const res = resolveTeamDuel(mySide, foeSide);
+    const res = resolveTeamDuel(mySide, foeSide, Math.random, useGameStore.getState().lineage ?? []);
     setMeleeResult({ winner: res.winner, log: res.log.map((l) => (lang === 'en' ? l.en : l.zh)) });
     useGameStore.getState().recordMeleeBout(res); // 團戰名局廊
     // 團戰同場 (§6.11) — stage the whole melee in the 3D ring, everyone on stage.

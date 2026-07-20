@@ -42,14 +42,15 @@ export function duelChallengeTargets(
  * Everyone else weighs their own prowess against the challenger's (you don't ride
  * out to lose) with a dash of pride — a renowned name can't easily refuse.
  */
-export function willAcceptChallenge(target: Officer, challenger: Officer, rng: () => number = Math.random): boolean {
+export function willAcceptChallenge(target: Officer, challenger: Officer, rng: () => number = Math.random, ethosBonus = 0): boolean {
   const persona = duelPersona(target);
   const traits = target.traits ?? [];
   if (persona === 'aggressive' || traits.includes('matchless') || traits.includes('duelist')) return true; // 鬥將不避戰
   const edge = staticProwess(target) - staticProwess(challenger); // >0 = target is stronger
   const timid = persona === 'cautious' || traits.includes('cowardly') || traits.includes('sickly') || traits.includes('cautious');
-  // 威名懾人 — a fearsome challenger's very name gives pause (a 未戰先怯 dread).
-  const dread = duelDread(challenger);
+  // 威名懾人 — a fearsome challenger's very name gives pause (a 未戰先怯 dread),
+  // deepened when they ride out of a realm famed for arms (§6.18).
+  const dread = duelDread(challenger, ethosBonus);
   if (timid) return edge > 12 + dread * 40 && rng() < 0.5 - dread; // a craven only fights a sure thing — less so vs a terror
   // 量力而戰 — accept unless badly outmatched; pride (renown) stiffens the spine,
   // but a dreaded foe's record thins the ranks who'll ride out against them.
@@ -63,14 +64,18 @@ export function willAcceptChallenge(target: Officer, challenger: Officer, rng: (
  * face them. Read from 威名 (renown from 單挑勝 etc.) and terror-lending traits.
  * A great duellist wins face without lifting a blade: foes duck, and are scorned.
  */
-export function duelDread(challenger: Officer): number {
+export function duelDread(challenger: Officer, ethosBonus = 0): number {
   const traits = challenger.traits ?? [];
   let d = Math.min(0.28, (challenger.renown ?? 0) / 500);
   if (traits.includes('matchless')) d += 0.12;
   if (traits.includes('tiger-roar')) d += 0.06;
   if (traits.includes('bloodthirsty')) d += 0.06;
   if (traits.includes('berserker')) d += 0.04;
-  return Math.min(0.42, d);
+  // 武風懾人 (§6.18) — a champion out of a realm famed for arms trades on his
+  // whole court's reputation as well as his own. The PERSONAL dread caps where
+  // it always did (0.42), so omitting the bonus reproduces the original reading
+  // exactly; the realm's repute stacks on top, to a hard ceiling of 0.5.
+  return Math.min(0.5, Math.min(0.42, d) + ethosBonus);
 }
 
 /**

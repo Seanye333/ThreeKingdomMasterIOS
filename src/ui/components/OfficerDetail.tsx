@@ -43,6 +43,7 @@ import { martialXiuwei, martialInsight, martialTier, martialTrainCost, martialSc
 import { isDuelMoveUnlocked, duelMoveUnlockLevel, scarBarsMove, type DuelMove, type WeaponClass } from '../../game/systems/duel';
 import { debateXiuwei, debateInsight, debateArtsTier, debateTrainCost, debateSchoolName, DEBATE_XIUWEI_MAX, canTransmitScholarship, DEBATE_TRANSMIT_COST } from '../../game/systems/debateArts';
 import { dualLuminaries } from '../../game/systems/scholarRank';
+import { mastersOf, pupilsOf } from '../../game/systems/lineage';
 import { debatePersona } from '../../game/systems/wordWar';
 import { MAX_STARS, officerStars, nextStarRequirement, scrollStarCost } from '../../game/systems/stars';
 import { armProficiency, armProficiencyTier, armMasteryPerkOf, PROF_ARM_LABEL, profArmOf, type ProfArm } from '../../game/systems/armProficiency';
@@ -202,6 +203,8 @@ export function OfficerDetail({
   const trainDebateFn = useGameStore((s) => s.trainDebateArts);
   const learnDuelMoveFn = useGameStore((s) => s.learnDuelMove);
   const switchSchoolFn = useGameStore((s) => s.switchMartialSchool);
+  const nameArtHeirFn = useGameStore((s) => s.nameArtHeir);
+  const lineageLedger = useGameStore((s) => s.lineage);
   const transmitDebateFn = useGameStore((s) => s.transmitDebateArts);
   const issueCommandFn = useGameStore((s) => s.issueCommand);
   const appraiseOfficerFn = useGameStore((s) => s.appraiseOfficer);
@@ -1220,6 +1223,62 @@ export function OfficerDetail({
                             <option key={c} value={c}>{lang === 'en' ? MARTIAL_SCHOOL[c].en : MARTIAL_SCHOOL[c].zh}</option>
                           ))}
                         </select>
+                      </div>
+                    );
+                  })()}
+
+                  {/* 師承譜系 + 衣缽傳人 (§6.18) — who taught them, whom they taught,
+                      and who carries the craft on when they fall. */}
+                  {isMine && (() => {
+                    const ledger = lineageLedger ?? [];
+                    const mTier = martialTier(officer).tier;
+                    const dTier = debateArtsTier(officer).tier;
+                    const masters = [...new Set(mastersOf(ledger, officer.id))].map((id) => allOfficers[id]).filter(Boolean);
+                    const pupils = [...new Set(pupilsOf(ledger, officer.id))].map((id) => allOfficers[id]).filter(Boolean);
+                    const canName = mTier >= 4 || dTier >= 4;
+                    if (!masters.length && !pupils.length && !canName) return null;
+                    const heirPool = Object.values(allOfficers).filter((p) =>
+                      p.id !== officer.id && p.forceId === officer.forceId && p.status !== 'dead');
+                    const heirRow = (art: 'martial' | 'debate', tier: number, heirId: string | undefined, labelZh: string, labelEn: string) => {
+                      if (tier < 4) return null;
+                      const heir = heirId ? allOfficers[heirId] : null;
+                      return (
+                        <select
+                          key={art}
+                          value={heirId ?? ''}
+                          onChange={(e) => {
+                            const r = nameArtHeirFn(officer.id, e.target.value || null, art);
+                            setProgressMsg(r.ok
+                              ? (e.target.value
+                                  ? t(`已定 ${allOfficers[e.target.value]?.name.zh ?? ''} 為${labelZh}衣缽傳人`, `Named heir to their ${labelEn}`)
+                                  : t('已撤衣缽之命', 'Heir unnamed'))
+                              : t('無法指定傳人', 'Cannot name an heir'));
+                          }}
+                          title={t(`衣缽傳人 — 身故時傳人${labelZh}修為躍升至師之七成(遠勝路人拾得遺譜)`, `Named heir — on your death they are lifted toward 70% of your mastery`)}
+                          style={{ padding: '0.1rem 0.3rem', borderRadius: 'var(--tkm-radius-xs)', background: '#10161e', border: `1px solid ${heir ? '#c8a86a' : '#3a4754'}`, color: heir ? '#f0d890' : '#8a96a0', fontSize: '0.72rem', fontFamily: 'inherit' }}
+                        >
+                          <option value="">{t(`🎋 ${labelZh}衣缽…`, `🎋 ${labelEn} heir…`)}</option>
+                          {heirPool.map((p) => (
+                            <option key={p.id} value={p.id}>{lang === 'en' ? p.name.en : p.name.zh}</option>
+                          ))}
+                        </select>
+                      );
+                    };
+                    return (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <span style={labelStyle}>{t('師承', 'Lineage')}</span>
+                        {masters.length > 0 && (
+                          <span style={{ fontSize: '0.76rem', color: '#c8b8e8' }} title={t('師事於', 'studied under')}>
+                            🎓 {t('師事', 'under')} {masters.map((m) => (lang === 'en' ? m!.name.en : m!.name.zh)).join('、')}
+                          </span>
+                        )}
+                        {pupils.length > 0 && (
+                          <span style={{ fontSize: '0.76rem', color: '#8ec8a0' }} title={t('門下弟子', 'their students')}>
+                            👥 {t('門下', 'taught')} {pupils.length}
+                          </span>
+                        )}
+                        {heirRow('martial', mTier, officer.martialHeirId, '武學', 'martial')}
+                        {heirRow('debate', dTier, officer.debateHeirId, '文辯', 'debate')}
                       </div>
                     );
                   })()}

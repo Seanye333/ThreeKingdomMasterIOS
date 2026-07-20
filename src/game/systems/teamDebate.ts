@@ -3,6 +3,7 @@ import { debateProwess, debatePersona, type DebatePersona } from './wordWar';
 import { debateArtsBonus } from './debateArts';
 import { areBonded } from './tactical';
 import { areSwornBrothers } from './relationshipEffects';
+import { lineageBond, type LineageLedger } from './lineage';
 
 /**
  * 朝堂合辯 (§6.17) — a real N-vs-M war of words, beyond the 群儒 relay (where the
@@ -39,12 +40,14 @@ export interface TeamDebateResult {
 /** 流派相剋 — the persona ring (智者→奸雄→猛士→智者) lends a small edge. */
 const PERSONA_BEATS: Record<DebatePersona, DebatePersona> = { sage: 'sly', sly: 'fierce', fierce: 'sage' };
 
-/** 同派合辯 — bonded pairs / same-school partners compound their arguments. */
-function synergy(x: Officer, y: Officer): boolean {
-  return areBonded(x.id, y.id) || areSwornBrothers(x.id, y.id) || debatePersona(x) === debatePersona(y);
+/** 同派合辯 — bonded pairs, same-school partners, and 同門/師徒 of one teacher
+ *  compound their arguments. The lineage ledger is passed in, keeping this pure. */
+function synergy(x: Officer, y: Officer, lineage: LineageLedger): boolean {
+  return areBonded(x.id, y.id) || areSwornBrothers(x.id, y.id) || debatePersona(x) === debatePersona(y)
+    || lineageBond(lineage, x.id, y.id, 'debate') !== null;
 }
 
-export function resolveTeamDebate(sideA: Officer[], sideB: Officer[], rng: () => number = Math.random): TeamDebateResult {
+export function resolveTeamDebate(sideA: Officer[], sideB: Officer[], rng: () => number = Math.random, lineage: LineageLedger = []): TeamDebateResult {
   const mk = (o: Officer, side: 'a' | 'b'): TeamVoice => ({
     id: o.id, officer: o, side,
     prowess: debateProwess(o) + debateArtsBonus(o).prowess,
@@ -77,7 +80,7 @@ export function resolveTeamDebate(sideA: Officer[], sideB: Officer[], rng: () =>
       if (PERSONA_BEATS[atk.persona] === tgt.persona) dmg += 4;
       const arr = incoming.get(tgt.id) ?? [];
       // 同派合辯 — an argument lands harder on a foe a partner is already pressing.
-      if (arr.some((x) => synergy(x.atk.officer, atk.officer))) dmg += 6;
+      if (arr.some((x) => synergy(x.atk.officer, atk.officer, lineage))) dmg += 6;
       arr.push({ atk, dmg: Math.max(4, Math.round(dmg)) });
       incoming.set(tgt.id, arr);
     };
