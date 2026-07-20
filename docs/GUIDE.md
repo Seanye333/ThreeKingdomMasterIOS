@@ -19,7 +19,7 @@
 | 6 | [單挑](#第六章-單挑) | duel(招式/必殺技/獨門被動/破綻/傷殘/挑落下馬/**環境借勢/部位打擊/膽氣怯戰/棄馬步戰**/兵裝/坐騎/地形/性格/AI), **martialArts(武學修為/流派/流派相剋/秘籍/頓悟)**, **teamDuel(團戰圍攻/合擊/3D 同場)**, **arenaLadder(打擂擂台)**, **涟漪大地圖(威名威懾/代戰認輸金/慘勝負傷/名場面入史/世間鬥將)**, **debateArts(文辯修為/學派/辯經/傳道)**, **scholarRank(月旦評/文名威懾)**, **debateDiplomacy(折衝樽俎/責讓索貢/舌戰說降)**, **teamDebate(朝堂合辯)**, **引時事入辯(annals 彈藥)**, **realmEthos(尚武崇文之風)**, **lineage(師承譜系/同門/衣缽傳人)**, gauntlet, duelSeries, duelScenarios(劇情+戰役), duelHall(名局廊), warRanking(武評榜), rivalries(宿敵/恩怨簿), duelChallenge(約戰), tactical(致師) | ✅ |
 | 7 | [外交・謀略・天子](#第七章-外交謀略天子) | diplomacy, diplomacyPacts(稱臣/索貢/會盟/援盟/調停/質子/借道), coalition, schemes, aiSchemes, ambition, espionage, expedition, foreignRealm, intrigue, courtFactions, factionEvents, emperor, imperialEffects, mandate, appointmentEffects, clans, statecraft | ✅ |
 | 8 | [事件・天命・異族・宗教](#第八章-事件天命異族宗教) | events(天災/地動/賑災), historicalEvents(抉擇鏈), behaviorEvents(勸進/眾叛), customEvents, factionEvents, religion(黃巾/招安/宣撫), tribes, tribesDiplomacy(和親/互市/質子/以夷制夷/入主建國/七擒), mandate(祥瑞/造讖/禳星), mandateRituals(郊祀/祈雨), annals(災異志) | ✅ |
-| 9 | [元遊戲・收藏・分享](#第九章-元遊戲收藏分享) | achievements, deedTitles, dailyChallenge, **shareCode(開局挑戰碼)**, leaderboard, mods, powerHistory, historyBook, romance, sound, voiceLines, dialogueRoll | ✅ |
+| 9 | [元遊戲・收藏・分享](#第九章-元遊戲收藏分享) | achievements, deedTitles, dailyChallenge, **shareCode(開局挑戰碼)**, **legacy(遺澤·跨局傳承)**, leaderboard, mods, powerHistory, historyBook, romance, sound, voiceLines, dialogueRoll | ✅ |
 | 10 | [AI](#第十章-ai) | ai, aiBuild, aiCourt, aiAppointments, aiSchemes, aiRansom, aiWishesFlavor | ✅ |
 | 11 | [核心流程・勝敗・培訓・其他模式](#第十一章-核心流程勝敗培訓其他模式) | resolution, endings, training, succession, objectives, hotSeat, spectator, heroMode, customOfficer, eventEditor, randomScenario, dynasties, strategicMap3D(兵鋒層/晝夜/水影/飛鏡/回放/設伏/斥候偵騎/兵站/攔江鎖/長圍/焚橋/烽燧鏈/糧道總覽/焦土/城等視覺) | ✅ |
 | 圖 | [流程圖 Flowcharts](#流程圖-flowcharts) | 核心循環視覺化:結算順序 / 戰鬥管線 / 招攬升級 / 培訓 / 金收公式 / 單挑回合 / 稱帝之路 | ✅ |
@@ -2759,6 +2759,10 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
 - **氛圍與旁白(flavor 層)**:戰場語音(voiceLines.ts —— 出陣/斬將/危殆台詞)、季度隨機對話事件(dialogues.ts / dialogueRoll,多為趣味、少數有實際效果)、派系事件(factionEvents.ts)、AI 朝廷請願旁白(aiWishesFlavor.ts —— 每季 0~2 條,且晉升/賞賜會真的調動軍階與忠誠)。
 - **慶典彈窗(CelebrationPopup + popups/assets.ts)**:遇高光時刻彈一張電影感 key art(或 `.mp4` 短片),點/逾時(5.2s)進佇列下一張;缺圖則退化為樣式卡片,故無素材也不崩。已接線觸發涵蓋第一~四章:升城/遷都/建築/堅城/招攬(原有 8 鍵),加上**天災**(旱蝗/水患/瘟疫)、**轉生突破**、**晉牌封賞**(金牌+品階)、**及冠出仕**、**府內結親**、**名將辭世**、**封爵**、**拜名號將軍**、**月旦評**(上品)、**全軍集結**、**委任太守**、**州牧晉升**、**考課殿最**。資產約定 `public/popups/<key>.jpg|png|mp4`(16:9,~1400px);全鍵表見 `public/popups/README.md`。高頻事件(品階/辭世/誕生)限名將/世子且每季封頂,以免刷屏。
 - **其餘可選 key-art 槽位(皆有缺圖 fallback)**:① **標題大背景** `public/title-hero.jpg`(壓暗墊於標題屏後);② **戰役封面** `public/scenarios/<scenarioId>.jpg`(選戰役頁顯於 MiniMap 上方,缺圖只顯 minimap;全 86 戰役清單+prompt 見該目錄 README/PROMPTS);③ **戰果配圖** `public/battle/<key>.jpg`(戰術戰結算橫幅背景,key = 野戰/攻城 × 勝/敗:`field-victory`/`field-defeat`/`siege-victory`/`siege-defeat`,缺圖只剩文字橫幅;見 `public/battle/README.md`)。
+- **遺澤 legacy.ts(2026-07)**:第一個**真正跨戰役影響下一局**的機制(圖鑑與勳功只是紀錄,不改變下一局)。
+  一局終焉(**無論勝敗**)即入帳:遺澤 = 終局城數×2.5(頂60)+ 持續年數(頂25)+ 結局(統一60/霸業35/鼎立25/敗亡5/其餘15)+ 本局勳功×2(頂20)。**敗亡也有 5 分**——體面的覆滅仍是一局;而**開局即棄的局幾乎不入帳**,故不能靠重開刷分。每局只入帳一次(`legacyBanked` 旗標,結局檢查每季都跑)。
+  下一局開篇前於標題屏「遺澤」欄消費,**一世至多備 3 事**:家貲(20,首都 +1500 金)· 積穀(20,+12000 糧)· 宿衛之士(30,首都練度 40)· 舊籍猶存(35,全境隱戶歸零、獄無滯訟)· 傳家寶刃(45,首都武庫多一件無主名兵)· 舊部相隨(60,天下最強在野即刻來投,忠誠 95)。
+  刻意做得**小**:要的是兩局之間的連續感,不是讓第一年變得無趣。存於 localStorage(`tkm-legacy-v1`),與圖鑑/勳功同級,不隨存檔刪除而消失;讀檔容錯(壞資料退回空帳、負數與非法 id 一律清洗)。
 - **開局挑戰碼 shareCode.ts(2026-07)**:把「劇本 + 勢力 + 全部 20 條規則設定」壓成一串可貼進聊天的短碼,格式 `TKM1.<劇本>.<勢力>.<規則>.<校驗>`(如 `TKM1.YELLOW-TURBAN.LIU-BEI.0.T1`)。選項頁底部可**複製**當前開局碼,或**貼上**朋友的碼一鍵套用(套用後會顯示「劇本·勢力·與預設之差異」再由玩家按開始)。
   設計約定:① 規則以**固定順序**各佔一位 36 進位;新規則**只能追加**在尾端,舊碼因此永遠可讀(缺位 = 該欄今日之預設)。② 尾端連續預設值直接截掉,所以純預設開局的碼很短。③ 兩位校驗碼 —— 被聊天軟體截斷或改寫的碼會**被拒絕**,而不是靜默載入成別的開局。④ 欄位以 `.` 分隔而非 `-`,因為劇本與勢力 id 本身含有 `-`。⑤ 數值型欄位(起始通脹)取最近的合法檔位。
   這是第一個「把你的開局交到別人手上」的機制:同題競速、朋友復現你那場十一年苦守,都從這串字開始。

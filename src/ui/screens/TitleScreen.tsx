@@ -6,6 +6,10 @@ import { dailySeedString, dailyShareString, loadDailyResults, recentChallengeDay
 const SCENARIOS = (() => { try { return allScenarios(); } catch { return BUILTIN_SCENARIOS; } })();
 import { useGameStore } from '../../game/state/store';
 import { encodeStartCode, decodeStartCode, describeRules, type StartRules } from '../../game/systems/shareCode';
+import {
+  LEGACY_BOONS, BOONS_BY_ID, MAX_ARMED, armBoon, disarmBoon, loadLegacy, saveLegacy,
+  type LegacyLedger, type LegacyBoonId,
+} from '../../game/systems/legacy';
 import type { Difficulty } from '../../game/state/gameState';
 import type { Scenario } from '../../game/types';
 import { CustomOfficerCreator } from '../components/CustomOfficerCreator';
@@ -207,6 +211,9 @@ export function TitleScreen() {
   // ── 開局挑戰碼 ── the current start, packed into something you can paste
   // into a message; and the reverse, so a pasted code re-creates it exactly.
   const [codeInput, setCodeInput] = useState('');
+  // 遺澤 (§9) — the cross-campaign ledger, read once on mount.
+  const [legacy, setLegacy] = useState<LegacyLedger>(() => loadLegacy());
+  const [legacyNote, setLegacyNote] = useState<string | null>(null);
   const [codeNote, setCodeNote] = useState<string | null>(null);
   const currentRules: StartRules = {
     difficulty, aiStrength, startHandicap, victoryGoal, startTaxRate, startInflation,
@@ -1251,6 +1258,53 @@ export function TitleScreen() {
             </>)}
 
             </>)}
+
+            {/* ── 遺澤 (§9) ── what earlier campaigns left this one. */}
+            {legacy.earned > 0 && (
+              <div style={{ marginTop: '1rem', padding: '0.5rem 0.6rem', border: '1px solid #3a3020', borderRadius: 'var(--tkm-radius-sm)', background: '#141009' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: '0.35rem' }}>
+                  <span style={{ fontSize: '0.82rem', color: '#e6c473' }}>{t('遺澤', 'Legacy')}</span>
+                  <span style={{ fontSize: '0.76rem', color: '#9fb0bd' }}>
+                    {t(`可用 ${legacy.points} · 歷世所積 ${legacy.earned} · 已歷 ${legacy.runs} 局`,
+                       `${legacy.points} to spend · ${legacy.earned} earned across ${legacy.runs} campaigns`)}
+                  </span>
+                  <span style={{ fontSize: '0.7rem', color: '#6a5238', flex: 1, textAlign: 'right' }}>
+                    {t(`一世至多備 ${MAX_ARMED} 事`, `up to ${MAX_ARMED} per campaign`)}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                  {LEGACY_BOONS.map((b) => {
+                    const on = legacy.armed.includes(b.id);
+                    const afford = on || (legacy.points >= b.cost && legacy.armed.length < MAX_ARMED);
+                    return (
+                      <button
+                        key={b.id}
+                        type="button"
+                        title={lang === 'en' ? b.descEn : b.descZh}
+                        onClick={() => {
+                          const next = on ? disarmBoon(legacy, b.id) : armBoon(legacy, b.id);
+                          if (on) { saveLegacy(next as LegacyLedger); setLegacy(next as LegacyLedger); return; }
+                          const r = next as { ok: boolean; ledger: LegacyLedger; reasonZh?: string };
+                          if (!r.ok) { setLegacyNote(r.reasonZh ?? ''); return; }
+                          saveLegacy(r.ledger); setLegacy(r.ledger); setLegacyNote(null);
+                        }}
+                        style={{
+                          ...pillStyle(on),
+                          opacity: afford ? 1 : 0.45,
+                          fontSize: '0.74rem',
+                        }}
+                      >{lang === 'en' ? b.name.en : b.name.zh}<span style={{ opacity: 0.7 }}> {b.cost}</span></button>
+                    );
+                  })}
+                </div>
+                <p style={{ ...optNoteStyle, marginTop: '0.35rem' }}>
+                  {legacyNote ?? (legacy.armed.length > 0
+                    ? t(`本局已備:${legacy.armed.map((id) => BOONS_BY_ID[id as LegacyBoonId]?.name.zh).join('、')}`,
+                        `Armed: ${legacy.armed.map((id) => BOONS_BY_ID[id as LegacyBoonId]?.name.en).join(', ')}`)
+                    : t('上一局的積累,可換這一局開篇的一點餘裕。', 'What the last campaign banked can buy this one a little room.'))}
+                </p>
+              </div>
+            )}
 
             {/* ── 開局挑戰碼 ── hand this string to someone and they get YOUR start. */}
             <div style={{ marginTop: '1rem', padding: '0.5rem 0.6rem', border: '1px solid #3a3020', borderRadius: 'var(--tkm-radius-sm)', background: '#141009' }}>

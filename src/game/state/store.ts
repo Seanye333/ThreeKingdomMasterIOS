@@ -393,6 +393,7 @@ import { tickFamily, addSpouse, addParentChild, aiArrangeMarriages } from '../sy
 import { clanOf, CLANS_BY_ID, CLANS } from '../data/clans';
 import { rollWishes, applyWishGrant, applyWishReject, expireWishes, maybeWoundedRetireWish, decayGrievances } from '../systems/wishes';
 import { checkEndings } from '../systems/endings';
+import { bankRun, legacyEarned, loadLegacy, saveLegacy } from '../systems/legacy';
 import { generateRandomScenario } from '../systems/randomScenario';
 import { rollWeather, describeWeather, marchSpeedMultiplier, seasonWeatherOutlook } from '../systems/weather';
 import { rollPlagueOutbreak, rollIntrigue } from '../systems/intrigue';
@@ -1875,7 +1876,49 @@ export const useGameStore = create<GameStore>()(
 
       loadScenario: (scenario, playerForceId, difficulty, customOfficer, capitalOverride) => {
         setRefineRegistry({}); setBreakthroughRegistry({}); setGemRegistry({}); setLoreRegistry({}); setAwakeningRegistry({}); setEvolvedRegistry([]); setWearRegistry({}); setAffixRegistry({}); // fresh game → drop any prior 精煉/名器 registry
+        // 遺澤 (§9) — read the armed boons BEFORE the ledger is cleared; the city
+        // ones are applied inside loadScenario, the two that need live officers
+        // and items are applied here, once the realm exists.
+        const armed = new Set(loadLegacy().armed);
         set((s) => loadScenario(s, scenario, playerForceId, difficulty, customOfficer, capitalOverride));
+        if (armed.size > 0) {
+          const st = get();
+          const capital = st.forces[playerForceId]?.capitalCityId;
+          if (armed.has('old-retainer') && capital) {
+            // 舊部相隨 — the ablest free agent in the world remembers your house.
+            const candidate = Object.values(st.officers)
+              .filter((o) => !o.forceId && o.status !== 'dead')
+              .sort((a, b) =>
+                (b.stats.war + b.stats.leadership + b.stats.intelligence + b.stats.politics + b.stats.charisma)
+                - (a.stats.war + a.stats.leadership + a.stats.intelligence + a.stats.politics + a.stats.charisma))[0];
+            if (candidate) {
+              set({
+                officers: {
+                  ...st.officers,
+                  [candidate.id]: {
+                    ...candidate, forceId: playerForceId, status: 'idle',
+                    locationCityId: capital, loyalty: 95,
+                  },
+                },
+              });
+            }
+          }
+          if (armed.has('heirloom-blade') && capital) {
+            const st2 = get();
+            // A named blade nobody is carrying, waiting in the capital armoury.
+            const taken = new Set(Object.values(st2.officers).flatMap((o) => o.equipment ?? []));
+            const blade = Object.values(ITEMS_BY_ID).find((it) => {
+              const i = it as { id: string; kind?: string; rarity?: string };
+              return i.kind === 'weapon' && (i.rarity === 'silver' || i.rarity === 'gold') && !taken.has(i.id);
+            }) as { id: string } | undefined;
+            if (blade) {
+              set({ lostItems: [...st2.lostItems, { itemId: blade.id, cityId: capital }] });
+            }
+          }
+          // Spent — the ledger keeps the points already deducted.
+          const led = loadLegacy();
+          saveLegacy({ ...led, armed: [] });
+        }
         get().seedAiGear();
       },
 
@@ -6398,6 +6441,27 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (ending && ending.kind !== 'defeat' && !state.endingsAchieved.includes(ending.kind)) {
           endVS = 'victory';
           endingsAchieved = [...state.endingsAchieved, ending.kind];
+        }
+        // 遺澤 (§9) — a finished campaign banks something for the next one,
+        // however it ended. Banked ONCE per campaign: the guard is the ledger's
+        // own armed list plus a run flag, so an ending that keeps re-firing
+        // (the check runs every season) can't farm points.
+        if (ending && !state.legacyBanked) {
+          const mine = Object.values(postCities).filter((c) => c.ownerForceId === state.playerForceId);
+          const gained = legacyEarned({
+            cities: mine.length,
+            years: result.date.year - (state.campaignStartYear ?? result.date.year),
+            ending: ending.kind,
+            achievements: state.recentAchievementUnlocks.length,
+          });
+          saveLegacy(bankRun(loadLegacy(), gained));
+          set({ legacyBanked: true });
+          result.report.entries.unshift({
+            cityId: null,
+            kind: 'note',
+            text: `Your house leaves ${gained} legacy to the age that follows.`,
+            textZh: `此局終焉 —— 遺澤 ${gained} 傳於後世(下局開篇可用)。`,
+          });
         }
 
         // Scenario objective check.

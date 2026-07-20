@@ -35,6 +35,7 @@ import type { Relation } from '../types/diplomacy';
 import { generateFictionalOfficer } from '../systems/officerGen';
 import type { MonthPhase } from '../types';
 import { createInitialTribeState } from '../systems/tribes';
+import { loadLegacy } from '../systems/legacy';
 import { emptyTribeDiplomacy } from '../systems/tribesDiplomacy';
 import { rollWeather, type Weather } from '../systems/weather';
 import { createInitialMandate, type MandateState } from '../systems/mandate';
@@ -499,6 +500,11 @@ export interface GameState {
   lawCode: Record<EntityId, import('../systems/law').LawSeverity>;
   /** 徭役 (§1.12) — per-force corvée level (息役/薄役/重役). Absent ⇒ '息役'. */
   corvee: Record<EntityId, import('../systems/household').CorveeLevel>;
+  /** 遺澤 (§9) — this campaign's legacy has already been banked (so an ending
+   *  that keeps re-firing each season cannot farm points). */
+  legacyBanked?: boolean;
+  /** The year this campaign opened — legacy scores the span you sustained. */
+  campaignStartYear?: number;
   /** 大工 (§1.15) — great public works under way and finished. */
   grandProjects: import('../systems/grandProjects').GrandProject[];
   /** 文集 (§1.13) — poems composed in this campaign, newest last. */
@@ -1235,8 +1241,28 @@ export function loadScenario(
     ? scaledCities.map((c) => (c.id === emperorCityId ? { ...c, imperialSeat: true } : c))
     : scaledCities;
 
+  // 遺澤 (§9) — boons banked by an earlier campaign and armed before this one.
+  // Applied to the capital / realm at the moment of founding; the ledger is
+  // cleared by the caller (store.loadScenario) so a boon is spent once.
+  const legacyArmed = new Set(loadLegacy().armed);
+  const capitalId = scenario.forces.find((f) => f.id === playerForceId)?.capitalCityId;
+  const boonCities = seatedCities.map((c) => {
+    let out = c;
+    if (capitalId && c.id === capitalId) {
+      if (legacyArmed.has('family-silver')) out = { ...out, gold: out.gold + 1500 };
+      if (legacyArmed.has('granary-store')) out = { ...out, food: out.food + 12_000 };
+      if (legacyArmed.has('drilled-guard')) out = { ...out, drill: Math.max(out.drill ?? 0, 40) };
+    }
+    if (legacyArmed.has('kept-registers') && c.ownerForceId === playerForceId) {
+      out = { ...out, hiddenHouseholds: 0, caseload: 0 };
+    }
+    return out;
+  });
+
   return {
     ...state,
+    legacyBanked: false,
+    campaignStartYear: scenario.startDate.year,
     date: {
       ...scenario.startDate,
       month: scenario.startDate.month ?? firstMonthOfSeason(scenario.startDate.season),
@@ -1249,7 +1275,7 @@ export function loadScenario(
     capitalMoveUsed: false, // 首次遷都免費 — fresh game grants one free 遷都
     refugees: 0, // 流民 — fresh game starts with no displaced pool
     emperorCityId,
-    cities: indexById(seatedCities),
+    cities: indexById(boonCities),
     forces: indexById(
       distinctForceColors(
         scenario.forces.map((f) => ({
