@@ -12,6 +12,7 @@ import { cityStatCap, cityEconCap, citySize, CITY_SIZES, type CitySize } from '.
 import { internalAffairsMultiplier } from './traitEffects';
 import { adjudicateClear } from './law';
 import { householdAudit } from './household';
+import { crackdownResult } from './hoarding';
 import { pairKey } from '../types/diplomacy';
 import type { WeatherKind } from './weather';
 
@@ -180,6 +181,14 @@ export const COMMAND_DEFS: Record<CommandType, CommandDef> = {
     description:
       '括戶檢地 — Walk the villages with the tax registers in hand and drag the households the great houses have been sheltering (隱戶) back onto the books. A permanent widening of this city\'s tax base, scaling with Politics — and a standing grievance with the clans whose tenants you just took.',
   },
+  'curb-hoarding': {
+    type: 'curb-hoarding',
+    label: { en: 'Curb Hoarding', zh: '抑兼併' },
+    stat: 'politics',
+    goldCost: 180,
+    description:
+      '抑兼併 — Break open the private warehouses where the merchant houses have cornered the city\'s grain (囤積). Grain floods back into the public granary and the people are grateful; trade takes fright (commerce falls) and the great houses behind those merchants remember it. A harsh legal code (峻法) gives the magistrate the authority to do it properly.',
+  },
   'flood-control': {
     type: 'flood-control',
     label: { en: 'Flood Control', zh: '治水' },
@@ -247,6 +256,7 @@ export interface CommandResult {
     drill: number;
     caseload: number;
     hiddenHouseholds: number;
+    hoardedGrain: number;
   }>;
   message: string;
   messageZh: string;
@@ -268,6 +278,8 @@ export function resolveInternalAffairs(
   rapport?: Record<string, number>,
   /** 聽訟之所 — this city has a 牢城/安民坊 to hold court in (§1.11, 決獄). */
   hasCourt?: boolean,
+  /** 律令 — the realm's legal code (§1.11); 抑兼併 leans on it for authority. */
+  lawSeverity?: string,
 ): CommandResult {
   const def = COMMAND_DEFS[type];
   // Trait multiplier (diligent +20%, lazy −20%, specialist +20% for matching
@@ -521,6 +533,31 @@ export function resolveInternalAffairs(
         delta: { hiddenHouseholds: -audit.recovered, loyalty: -2 },
         message: `${officer.name.en} 括戶: recovered ${audit.households.toLocaleString()} households onto the registers (hidden ${hidden.toFixed(1)}% → ${(hidden - audit.recovered).toFixed(1)}%). The clans are displeased.`,
         messageZh: `${officer.name.zh}括戶檢地:括出隱戶 ${audit.households.toLocaleString()} 口入籍(隱戶 ${hidden.toFixed(1)}% → ${(hidden - audit.recovered).toFixed(1)}%),稅基大廣;然豪右側目,門第不悅。`,
+      };
+    }
+    case 'curb-hoarding': {
+      // 抑兼併 (§1.14) — how much comes out of the warehouses scales with the
+      // magistrate and with the authority his code gives him.
+      const hoarded = city.hoardedGrain ?? 0;
+      if (hoarded < 5) {
+        return {
+          success: false,
+          delta: {},
+          message: `${officer.name.en} 抑兼併: the granaries here are honest — nothing cornered worth breaking open.`,
+          messageZh: `${officer.name.zh}抑兼併:市易如常,無囤可抑。`,
+        };
+      }
+      const res = crackdownResult({ hoarded, cityFood: city.food, politics: statValue, lawSeverity });
+      return {
+        success: true,
+        delta: {
+          hoardedGrain: -res.cleared,
+          food: res.foodRecovered,
+          loyalty: Math.min(100 - city.loyalty, res.loyaltyGain),
+          commerce: -res.commerceLoss,
+        },
+        message: `${officer.name.en} 抑兼併: opened the warehouses — ${res.foodRecovered} food to the public granary, Loyalty +${res.loyaltyGain}, Commerce −${res.commerceLoss}.`,
+        messageZh: `${officer.name.zh}抑兼併:破豪商之囤 —— 入公廩糧 ${res.foodRecovered},民忠 +${res.loyaltyGain},然商賈斂跡(商業 −${res.commerceLoss})。`,
       };
     }
     case 'military-farming': {

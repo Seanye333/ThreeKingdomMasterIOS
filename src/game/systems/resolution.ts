@@ -46,7 +46,8 @@ import { buildingBonuses, schoolHeadmasterFocus, SCHOOL_BUILDINGS, COURT_BUILDIN
 import { COMMAND_TOKEN_IDS } from '../data/items';
 import { cultureGain, cultureGraftCurb, cultureLoyaltyLift } from './culture';
 import { lawEffects, caseloadTick, caseloadPenalty, wrongfulConvictionChance, aiLawCode } from './law';
-import { corveeEffects, hiddenDrift, registryYieldMul } from './household';
+import { corveeEffects, hiddenDrift, registryYieldMul, aiCorvee } from './household';
+import { hoardEffects, hoardTick, hoardingPressure } from './hoarding';
 import { clanOf } from '../data/clans';
 import { shrineEffects } from './culturalWorks';
 import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
@@ -2286,7 +2287,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       .filter((a): a is Officer => !!a);
     const hasCourtForCmd = (input.buildings ?? []).some(
       (bd) => bd.cityId === city.id && COURT_BUILDINGS.has(bd.id) && (bd.level ?? 0) >= 1);
-    const result = resolveInternalAffairs(cmd.type, officer, city, rng, finalBonus, input.weather?.kind, assistants, input.rapport, hasCourtForCmd);
+    const cmdLaw = city.ownerForceId
+      ? (input.lawCode?.[city.ownerForceId] ?? aiLawCode(input.forces[city.ownerForceId]?.personality))
+      : undefined;
+    const result = resolveInternalAffairs(cmd.type, officer, city, rng, finalBonus, input.weather?.kind, assistants, input.rapport, hasCourtForCmd, cmdLaw);
     cities[city.id] = applyDelta(city, result.delta);
     // 括戶則門第怨 (§1.12) — the households you just put back on the registers
     // were tilling somebody's fields. Great-clan scions serving in this city
@@ -2572,7 +2576,12 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     // and a harsh code drive them off the registers; a resident administrator and
     // a contented city draw them back. What is off the books is very largely off
     // the tax rolls too (registryYieldMul, applied to this city's income below).
-    const corvee = city.ownerForceId ? input.corvee?.[city.ownerForceId] : undefined;
+    // 各國自有其役 — an AI lord levies by temperament, so realms build (and
+    // bleed) at genuinely different rates instead of all resting forever.
+    const corvee = city.ownerForceId
+      ? (input.corvee?.[city.ownerForceId]
+         ?? aiCorvee(input.forces[city.ownerForceId]?.personality))
+      : undefined;
     const corveeEff = corveeEffects(corvee);
     const nextHidden = city.ownerForceId
       ? hiddenDrift({
@@ -2583,8 +2592,24 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
           loyalty: city.loyalty,
         })
       : (city.hiddenHouseholds ?? 0);
+    // 囤積居奇 (§1.14) — dear grain plus a weak code plus a bought magistrate is
+    // how a city's granaries end up in private warehouses. A 常平倉 is the
+    // structural answer; 抑兼併 is the violent one.
+    const granaryStab = buildingBonuses(city.id, input.buildings ?? [], {
+      statecraft: city.ownerForceId ? forces[city.ownerForceId]?.statecraft ?? null : null,
+    }).priceStability;
+    const priceLevel: 'cheap' | 'fair' | 'dear' =
+      city.food < Math.max(1, city.troops * 2) ? 'dear'
+        : city.food > city.troops * 8 ? 'cheap' : 'fair';
+    const nextHoard = city.ownerForceId
+      ? hoardTick(city.hoardedGrain ?? 0, hoardingPressure({
+          priceLevel, stability: granaryStab, lawSeverity: severity,
+          corruption: city.corruption ?? 0, loyalty: city.loyalty,
+        }))
+      : (city.hoardedGrain ?? 0);
+    const hoardEff = hoardEffects(nextHoard);
     const docket = caseloadPenalty(nextCaseload);
-    let lawLoyalty = (city.ownerForceId ? law.loyaltyDelta + corveeEff.loyaltyDelta + (shrineEff?.loyaltyPerSeason ?? 0) : 0) + docket.loyaltyDelta;
+    let lawLoyalty = (city.ownerForceId ? law.loyaltyDelta + corveeEff.loyaltyDelta + (shrineEff?.loyaltyPerSeason ?? 0) + hoardEff.loyaltyDelta : 0) + docket.loyaltyDelta;
     if (city.ownerForceId && rng() < wrongfulConvictionChance({
       caseload: nextCaseload, severity, judgePolitics: bestPolitics,
     })) {
@@ -2608,7 +2633,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       // 編戶與稅基 (§1.12) — 隱戶不入版籍,其田租賦皆歸豪右;重役又誤農時。
       gold: city.gold + Math.round(tick.goldIncome * law.taxYieldMul * registryYieldMul(nextHidden)) + territoryGold,
       food: Math.max(0, city.food
-        + Math.round(tick.foodIncome * corveeEff.farmMul * registryYieldMul(nextHidden))
+        + Math.round(tick.foodIncome * corveeEff.farmMul * registryYieldMul(nextHidden) * hoardEff.foodMul)
         - tick.foodUpkeep),
       troops: troopsAfterDesertion + capitalGuard,
       loyalty: Math.max(0, Math.min(100, city.loyalty + tick.loyaltyDelta + capitalLoyalty + corruptionLoyaltyBite + cultureLift + lawLoyalty)),
@@ -2616,6 +2641,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       culture: nextCulture,
       caseload: nextCaseload,
       hiddenHouseholds: nextHidden,
+      hoardedGrain: nextHoard,
       drill: nextDrill,
       population: Math.max(1000, city.population + tick.populationDelta),
       warhorses: tick.warhorseBreed > 0
@@ -4036,6 +4062,7 @@ function applyDelta(
     drill: number;
     caseload: number;
     hiddenHouseholds: number;
+    hoardedGrain: number;
   }>,
 ): City {
   // Per-command logic already clamps to the city-tier cap (cityEconCap for
@@ -4057,6 +4084,9 @@ function applyDelta(
     hiddenHouseholds: delta.hiddenHouseholds !== undefined
       ? clamp((city.hiddenHouseholds ?? 0) + delta.hiddenHouseholds, 0, 45)
       : city.hiddenHouseholds,
+    hoardedGrain: delta.hoardedGrain !== undefined
+      ? clamp((city.hoardedGrain ?? 0) + delta.hoardedGrain, 0, 40)
+      : city.hoardedGrain,
     floodWorks: delta.floodWorks ?? city.floodWorks,
     wallTier: delta.wallTier ?? city.wallTier,
     corruption: delta.corruption !== undefined

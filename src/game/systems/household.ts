@@ -148,3 +148,24 @@ export function householdAudit(args: {
     clanAnger: Math.round(recovered * 1.8),
   };
 }
+
+// ─── AI ───────────────────────────────────────────────────────────────
+
+/**
+ * 各國自有其役 — the corvée an AI lord levies. A conqueror drives his people
+ * to build (and bleeds them for it); a cautious or scholarly lord lets them
+ * rest. So the map's realms build their academies and ramparts at genuinely
+ * different rates, and the tyrant's register quietly rots.
+ */
+export function aiCorvee(personality: string | undefined): CorveeLevel {
+  switch (personality) {
+    case 'tyrant':
+    case 'expansionist':
+      return 'heavy';
+    case 'aggressive':
+    case 'opportunist':
+      return 'light';
+    default:
+      return 'none';
+  }
+}

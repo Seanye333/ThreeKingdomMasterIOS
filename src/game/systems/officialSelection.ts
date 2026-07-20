@@ -148,3 +148,24 @@ export function selectionLoyaltyDrift(eff: SelectionEffects, o: Officer): number
   if (isCommoner(o)) return eff.commonerLoyalty;
   return 0;
 }
+
+/**
+ * 各國自有其選 — the system an AI realm settles into. A court already thick
+ * with great-clan scions institutionalises them (九品); a lord of humble
+ * origin or scholarly bent reaches for merit; the rest keep to 察舉.
+ *
+ * Read from the roster rather than stored, so it tracks a realm as its court
+ * changes hands over decades.
+ */
+export function aiSelection(args: {
+  personality?: string;
+  officers: Officer[];
+  cityCount: number;
+}): SelectionSystem {
+  const serving = args.officers.length;
+  if (serving === 0) return 'chaju';
+  const aristocratShare = args.officers.filter(isAristocrat).length / serving;
+  if (args.cityCount >= 5 && aristocratShare >= 0.5) return 'jiupin';
+  if (args.personality === 'scholar' && aristocratShare < 0.3) return 'keju';
+  return 'chaju';
+}

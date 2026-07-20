@@ -9,6 +9,7 @@ import { buildingBonuses } from '../../game/systems/buildings';
 import { tickCityEconomy } from '../../game/systems/economy';
 import { caseloadTier } from '../../game/systems/law';
 import { hiddenTier, registryYieldMul } from '../../game/systems/household';
+import { hoardTier } from '../../game/systems/hoarding';
 import type { City, EntityId, Officer } from '../../game/types';
 import { lazy, Suspense } from 'react';
 // 啟動提速 — the city 3D scene (≈175KB) loads when a city is first entered.
@@ -912,7 +913,7 @@ function DevelopmentSection({ city, isPlayerCity }: { city: City; isPlayerCity: 
   const allPending = useGameStore((s) => s.pendingCommands);
   // Which dev stats have an order queued in this city this tick.
   const working = useMemo(() => {
-    const w = { agriculture: false, commerce: false, defense: false, loyalty: false, caseload: false, hiddenHouseholds: false };
+    const w = { agriculture: false, commerce: false, defense: false, loyalty: false, caseload: false, hiddenHouseholds: false, hoardedGrain: false };
     if (!isPlayerCity) return w;
     for (const c of Object.values(allPending)) {
       if (c.cityId !== city.id) continue;
@@ -922,6 +923,7 @@ function DevelopmentSection({ city, isPlayerCity }: { city: City; isPlayerCity: 
       else if (c.type === 'improve-loyalty' || c.type === 'relief' || c.type === 'anti-corruption') w.loyalty = true;
       else if (c.type === 'adjudicate') { w.caseload = true; w.loyalty = true; }
       else if (c.type === 'household-audit') w.hiddenHouseholds = true;
+      else if (c.type === 'curb-hoarding') { w.hoardedGrain = true; w.loyalty = true; }
       else if (c.type === 'military-farming') w.agriculture = true;
     }
     return w;
@@ -952,6 +954,14 @@ function DevelopmentSection({ city, isPlayerCity }: { city: City; isPlayerCity: 
       {(city.culture ?? 0) > 0 && (
         <Bar icon="flag" label="Culture" zh="文教" value={city.culture ?? 0} cap={100} tone="#a08fd0"
           note={(city.culture ?? 0) >= 60 ? '文化名城 · 息貪安民' : `息貪 −${Math.round((city.culture ?? 0) / 100 * 35)}%`} />
+      )}
+      {/* 囤積 (§1.14) — grain that exists but cannot be bought. */}
+      {(city.hoardedGrain ?? 0) >= 8 && (
+        <Bar icon="grain" label="Hoarded" zh="囤積" value={Math.round(city.hoardedGrain ?? 0)} cap={40} tone="#c08a5a"
+          warn={(city.hoardedGrain ?? 0) >= 20}
+          working={working.hoardedGrain}
+          note={t(`${hoardTier(city.hoardedGrain ?? 0).zh} · 遣吏「抑兼併」或建常平倉`,
+                  `${hoardTier(city.hoardedGrain ?? 0).en} · assign 抑兼併 or build an ever-normal granary`)} />
       )}
       {/* 隱戶 (§1.12) — what the registers cannot see, the treasury cannot tax. */}
       {(city.hiddenHouseholds ?? 0) >= 6 && (

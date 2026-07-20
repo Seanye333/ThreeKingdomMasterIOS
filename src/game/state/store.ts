@@ -205,7 +205,7 @@ import { rollRecommendations } from '../systems/recommendation';
 import {
   POEM_GOLD_COST, canBuildShrine, composePoem, poemEffects, poemQuality, shrineCost, shrineEffects,
 } from '../systems/culturalWorks';
-import { effectiveSelection, rectifierOf, selectionAvailable, selectionLoyaltyDrift, SELECTION_NAMES, type SelectionSystem } from '../systems/officialSelection';
+import { effectiveSelection, rectifierOf, selectionAvailable, selectionLoyaltyDrift, aiSelection, SELECTION_NAMES, type SelectionSystem } from '../systems/officialSelection';
 import { codexMarkRecruited, codexMarkRecruitedMany, codexMarkSeen, codexMarkSlain, loadCodex, CODEX_MILESTONES, codexClaimMilestone } from '../systems/codex';
 import { itemCodexMarkCarried, ITEM_CODEX_MILESTONES, itemCodexClaimMilestone } from '../systems/itemCodex';
 import { recordDailyResult } from '../systems/dailyChallenge';
@@ -7043,7 +7043,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             // 選官之制 (§3.6) — 九品 shuts the humble out; 開科 throws the doors open.
             const selOfficers = Object.values(officersWithMarchTask)
               .filter((o) => o.forceId === fid && (o.status === 'idle' || o.status === 'active'));
-            const selEff = effectiveSelection(state.selectionSystem?.[fid], rectifierOf(selOfficers));
+            const selEff = effectiveSelection(
+              state.selectionSystem?.[fid]
+                ?? aiSelection({
+                  personality: state.forces[fid]?.personality,
+                  officers: selOfficers,
+                  cityCount,
+                }),
+              rectifierOf(selOfficers));
             if (Math.random() >= commonerArrivalChance(draw) * selEff.commonerMul) continue;
             const arrivalCity = commonerArrivalCity(postCities, fid, Math.random);
             if (!arrivalCity) continue;
@@ -7075,7 +7082,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             // quiets the private recommendation in favour of the examination hall.
             const courtOfficers = Object.values(officersWithMarchTask)
               .filter((o) => o.forceId === force.id && (o.status === 'idle' || o.status === 'active'));
-            const selEffRec = effectiveSelection(state.selectionSystem?.[force.id], rectifierOf(courtOfficers));
+            const selEffRec = effectiveSelection(
+              state.selectionSystem?.[force.id]
+                ?? aiSelection({
+                  personality: force.personality,
+                  officers: courtOfficers,
+                  cityCount: Object.values(postCities).filter((c) => c.ownerForceId === force.id).length,
+                }),
+              rectifierOf(courtOfficers));
             // 上品無寒門 — the system's standing verdict on who belongs. Under
             // 九品 the great houses are flattered and the humble-born quietly
             // resent it; 開科取士 reverses both signs. 察舉 drifts nobody.

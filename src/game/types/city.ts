@@ -63,6 +63,13 @@ export interface City {
    */
   hiddenHouseholds?: number;
   /**
+   * 囤積 (§1.14) — percent of this city's grain cornered by the merchant houses
+   * and sitting in private warehouses (0–40). Grows when grain is dear and the
+   * code is weak; killed by a 常平倉 and by 抑兼併. Worsens market quotes, holds
+   * back the public granary, and bleeds loyalty. Default/omitted = 0.
+   */
+  hoardedGrain?: number;
+  /**
    * 訟獄積案 (§1.11) — unheard court cases piling up (0–100). Arrives with the
    * population and the realm's legal code; worked down by whoever administers
    * the city (政治), by a 牢城/安民坊 to hold court in, by the 決獄 command, and
