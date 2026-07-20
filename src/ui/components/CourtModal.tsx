@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react';
 import { EDICTS, IMPERIAL_RANKS, IMPERIAL_RANKS_BY_ID } from '../../game/data';
 import { useGameStore } from '../../game/state/store';
+import {
+  SELECTION_NAMES, SELECTION_SYSTEMS, selectionEffects, rectifierOf, rectifierIsUpright,
+} from '../../game/systems/officialSelection';
 import type { EdictKind, EntityId } from '../../game/types';
 import styles from './CourtModal.module.css';
 import { useLanguage, useDesc, pickName } from '../i18n';
@@ -45,6 +48,9 @@ export function CourtModal({ onClose }: Props) {
   const sellOffices = useGameStore((s) => s.sellOffices);
   const purgeEunuchs = useGameStore((s) => s.purgeEunuchs);
   const declareNewEra = useGameStore((s) => s.declareNewEra);
+  // §3.6 選官之制
+  const selection = useGameStore((s) => (playerForceId ? s.selectionSystem?.[playerForceId] : undefined) ?? 'chaju');
+  const setSelectionSystem = useGameStore((s) => s.setSelectionSystem);
   // §7.5-deep 禪代之階
   const usurpLadder = useGameStore((s) => s.usurpLadder);
   const exiledLords = useGameStore((s) => s.exiledLords);
@@ -71,6 +77,14 @@ export function CourtModal({ onClose }: Props) {
     () => Object.values(allOfficers).filter((o) => o.forceId === playerForceId && o.status !== 'dead' && o.status !== 'imprisoned' && o.id !== playerForce?.rulerOfficerId),
     [allOfficers, playerForceId, playerForce?.rulerOfficerId],
   );
+  // 中正 — under 九品, whoever grades the realm's candidates (and whether he is
+  // the sort of man who grades honestly).
+  const rectifier = useMemo(
+    () => rectifierOf(Object.values(allOfficers).filter(
+      (o) => o.forceId === playerForceId && (o.status === 'idle' || o.status === 'active'))),
+    [allOfficers, playerForceId],
+  );
+  const rectifierUpright = rectifierIsUpright(rectifier);
   const currentRank = playerForce?.imperialRank ?? 'commoner';
   const currentRankDef = IMPERIAL_RANKS_BY_ID[currentRank];
 
@@ -278,6 +292,29 @@ export function CourtModal({ onClose }: Props) {
                 </button>
               </span>
             )}
+            {/* 選官之制 (§3.6) — 察舉 / 九品中正 / 開科取士 */}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#aab6c0' }}>
+              {lang === 'en' ? '選官 Selection:' : '選官:'}
+              {SELECTION_SYSTEMS.map((sys) => (
+                <button
+                  key={sys}
+                  onClick={() => { const r = setSelectionSystem(sys); notify(r.message, r.ok); }}
+                  style={{
+                    ...miniCourtBtn(true),
+                    borderColor: selection === sys ? '#e6c473' : '#2b3845',
+                    color: selection === sys ? '#f2dd9a' : '#97a4ae',
+                  }}
+                  title={lang === 'en' ? selectionEffects(sys).badgeEn : `${SELECTION_NAMES[sys].motto} — ${selectionEffects(sys).badgeZh}`}
+                >{lang === 'en' ? SELECTION_NAMES[sys].en : SELECTION_NAMES[sys].zh}</button>
+              ))}
+              {selection === 'jiupin' && (
+                <span style={{ color: rectifierUpright ? '#7ed68a' : '#8a7a5a', fontSize: '0.68rem' }}>
+                  {lang === 'en'
+                    ? `Rectifier: ${rectifier?.name.en ?? '—'}${rectifierUpright ? ' (upright)' : ''}`
+                    : `中正:${rectifier?.name.zh ?? '—'}${rectifierUpright ? '(公正)' : ''}`}
+                </span>
+              )}
+            </span>
             {/* 改元 */}
             {isSovereign && (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginLeft: 'auto', color: '#aab6c0' }}>

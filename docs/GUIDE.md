@@ -13,7 +13,7 @@
 | 速 | [速查總表 Quick Reference](#速查總表-quick-reference) | 一頁掃完所有關鍵常數 / 公式 / 成本 / 機率 | ✅ |
 | 1 | [城市・內政・經濟](#第一章-城市內政經濟) | citySize, economy, commands, civicEvents, market(行情/榷場/馬市/鐵市), buildings(含戰損修繕), cityCivic(民情街景/城中人物/晝夜/街頭際遇/官邸家眷), autoBuild, policyEffects, **law(律令寬嚴/訟獄積案/決獄/冤獄/大赦)**, **household(隱戶/徭役/括戶)**, forging, specialties, specialtyEvents, tradeRoutes, convoy | ✅ |
 | 2 | [武將・成長・家族](#第二章-武將成長家族) | growth, officerGrade, gradeCombat, officerFate, traitEffects, personality, biography, posthumous, aging, officerGen, family, clans, retinues, wishes, rapport, friction, relationshipEffects, career, codex, peerage, honorifics, battlePower(武將卡/開卡) | ✅ |
-| 3 | [人才・招攬・舌戰](#第三章-人才招攬舌戰) | commands(search), officerFate, recommendation, commonerTalent, appraisal(月旦評), scenicSites(三顧), captiveFate(處決後果/AI處置), aiRansom, debate, wordWar, persuasion(說客) | ✅ |
+| 3 | [人才・招攬・舌戰](#第三章-人才招攬舌戰) | commands(search), officerFate, recommendation, commonerTalent, appraisal(月旦評), **officialSelection(察舉/九品中正/開科取士/中正官)**, scenicSites(三顧), captiveFate(處決後果/AI處置), aiRansom, debate, wordWar, persuasion(說客) | ✅ |
 | 4 | [軍事指揮・委任](#第四章-軍事指揮委任) | muster, legion(都督之斷·長圍), governor, governorEval, advisor, 在途指令(駐守/設伏/圍城/焚橋/燒鎖/補給/分兵/召回), rout(潰軍/掩殺收降/殿軍斷後) | ✅ |
 | 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, tacticalAi, combat, formations, stratagems, weather(區域天候), battlefieldTerrain, worldScars(戰場烙印), fieldworks(築壘), columnReinforcements(會戰), wallTier城郭分層, 入城三選, battleSpoils(戰場繳獲), **navalWarfare(水軍熟練/暈船/艦隊編成/淺灘擱淺/搶灘登陸)**, personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
 | 6 | [單挑](#第六章-單挑) | duel(招式/必殺技/獨門被動/破綻/傷殘/挑落下馬/**環境借勢/部位打擊/膽氣怯戰/棄馬步戰**/兵裝/坐騎/地形/性格/AI), **martialArts(武學修為/流派/流派相剋/秘籍/頓悟)**, **teamDuel(團戰圍攻/合擊/3D 同場)**, **arenaLadder(打擂擂台)**, **涟漪大地圖(威名威懾/代戰認輸金/慘勝負傷/名場面入史/世間鬥將)**, **debateArts(文辯修為/學派/辯經/傳道)**, **scholarRank(月旦評/文名威懾)**, **debateDiplomacy(折衝樽俎/責讓索貢/舌戰說降)**, **teamDebate(朝堂合辯)**, **引時事入辯(annals 彈藥)**, **realmEthos(尚武崇文之風)**, **lineage(師承譜系/同門/衣缽傳人)**, gauntlet, duelSeries, duelScenarios(劇情+戰役), duelHall(名局廊), warRanking(武評榜), rivalries(宿敵/恩怨簿), duelChallenge(約戰), tactical(致師) | ✅ |
@@ -242,6 +242,8 @@
 | 遠邦之怒(§7.7B) | 敵意0–100:勁敵執你封號+6/關係<15+4/斷路+2,常駐·封號·關係≥60 −8;≥55 觸邊釁襲城,襲後−25 |
 | 絹馬互市(§7.7C) | 西域+大宛商路可切 通商↔買馬;買馬每季輸戰馬=單程季×14(都護府×1.5,封頂6000)抬騎兵上限 |
 | 異域歸化(§7.7D) | 關係≥70 每季 5%+(關係−70)/400:遣歸化武將(異姓·按區補正)或文物之利(+金/+民心) |
+
+| 選官之制(§3.6) | 察舉 基準 / 九品中正 舉薦×1.9·眼力+0.3·寒門×0.4·世家將+1忠·寒門−1(中正公正則封鎖減半)/ 開科取士 寒門×2.4且才質+0.25·舉薦×0.7·世家將−1·寒門+2;九品需5城+政治≥60之臣,開科需太學 |
 
 ### 外交・縱橫(§7.1)
 
@@ -1455,6 +1457,27 @@
   - **揚名(`appraisalRenownGain`)**:準評一出即成名 —— 被評者得**名望**(名士越著名、品第越高則越多,3~24),名士自身亦得**識人之名**(約四成)。定評永久記於武將詳情。
   - **知遇之恩**:**準確且上品**地品評一名**在野**者 → 記`recognizedByForceId`,你方招攬/勸降該人 **+0.15**(`officerFate`,士為知己者死);品評**自家**上品武將 → 其**忠誠 +4**(受知遇)。
 - **月旦評(公開評議)**:每季,你**最敏銳的名士(智 ≥85)** 自動公開品評當世**最強之未評在野才**(`pickMonthlyAppraisal`)—— 揚名 + 上品者結**知遇**(傾心來投),季報通報。有許劭/司馬徽坐鎮,你的朝堂便成**招賢磁石**。
+
+---
+
+### 3.6 選官之制(officialSelection.ts,2026-07)
+
+漢代取士靠**察舉**——郡中大姓推薦「有德之士」,而有德之士絕大多數出自郡中大姓。陳群的**九品中正**把這件事制度化:中正官為所有候選人定品,兩代之內就成了「上品無寒門,下品無勢族」。真正打破門閥的科舉還要幾百年,但一個建了太學、又敢不理會世家臉色的雄主,可以提早去搆它——並且付出代價。
+
+三制是**取捨**,不是升級樹(朝廷面板切換):
+
+| 制 | 舉薦頻率 | 品評眼力 | 寒門來投 | 寒門才質 | 世家將忠誠/季 | 寒門將忠誠/季 |
+|---|---|---|---|---|---|---|
+| **察舉**(舉孝廉) | ×1.0 | — | ×1.0 | — | 0 | 0 |
+| **九品中正**(上品無寒門) | **×1.9** | **+0.3** | **×0.4** | −0.15 | **+1** | **−1** |
+| **開科取士**(唯才是舉) | ×0.7 | — | **×2.4** | **+0.25** | **−1** | **+2** |
+
+- **中正官(rectifierOf)**:採九品時,國中**政治最高**之臣自動出任中正;若其人帶 廉潔/守節/法家/嚴峻 之性,則「中正得人」—— 寒門封鎖減半(×0.4→×0.7)、寒門將不再掉忠誠。曹魏有陳群,別家多半是某人的表兄。
+- **採行條件**:九品需 **5 城**且朝中有政治 ≥60 之臣;開科需國中已建**太學**。察舉隨時可用。
+- **接線**:`rollRecommendations` 新增 chanceMul/discernBonus 兩參(缺省 1/0 = 舊行為)· 寒門來投走 `commonerArrivalChance × commonerMul`、`generateCommonerOfficer` 的 quality 吃 commonerQuality · 每季(seasonBoundary 內)依出身漂移忠誠。
+- **與 §7.8 門閥、§1.12 括戶 的連動**:開科取士 + 括戶 = 兩面得罪世家,忠誠雙殺,直通 §7.5 謀反前兆;九品中正 + 門第優遇 = 世家鐵桶江山,但十年後你的名將全姓那幾個姓,而寒門奇才在別人帳下。
+
+存檔:`selectionSystem` 入持久化,缺欄視同察舉(舊檔完全舊行為)。
 
 ---
 

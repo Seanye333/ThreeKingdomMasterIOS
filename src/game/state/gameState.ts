@@ -499,6 +499,9 @@ export interface GameState {
   lawCode: Record<EntityId, import('../systems/law').LawSeverity>;
   /** 徭役 (§1.12) — per-force corvée level (息役/薄役/重役). Absent ⇒ '息役'. */
   corvee: Record<EntityId, import('../systems/household').CorveeLevel>;
+  /** 選官之制 (§3.6) — per-force recruitment system (察舉/九品中正/開科取士).
+   *  Absent ⇒ '察舉', the Han baseline every old save keeps. */
+  selectionSystem: Record<EntityId, import('../systems/officialSelection').SelectionSystem>;
   /** 大赦 — the game year each force last proclaimed a general amnesty
    *  (§1.11); a pardon means nothing if proclaimed every other season. */
   lastAmnestyYear: Record<EntityId, number>;
@@ -943,6 +946,7 @@ export const EMPTY_STATE: GameState = {
   taxPolicy: {},
   lawCode: {},
   corvee: {},
+  selectionSystem: {},
   lastAmnestyYear: {},
   credibility: {},
   grudges: {},
@@ -1414,6 +1418,7 @@ export function loadScenario(
       : {},
     lawCode: {},
     corvee: {},
+    selectionSystem: {},
     lastAmnestyYear: {},
     credibility: state.credibility ?? {},
     grudges: state.grudges ?? {},

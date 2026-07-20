@@ -27,6 +27,12 @@ export function rollRecommendations(ctx: {
   /** The force whose court is recommending (player or AI). */
   forceId: EntityId | null;
   rng: () => number;
+  /** 選官之制 (§3.6) — multiplier on the per-officer roll (九品 opens the
+   *  floodgates, 開科 quiets the private pipeline). Default 1. */
+  chanceMul?: number;
+  /** 選官之制 — added discernment 0–1 when picking from the open pool (a graded
+   *  system names better men than a dinner-party recommendation). Default 0. */
+  discernBonus?: number;
 }): Recommendation[] {
   if (!ctx.forceId) return [];
   const all = Object.values(ctx.officers);
@@ -46,7 +52,7 @@ export function rollRecommendations(ctx: {
   // from a narrow top slice, a dull one from the whole field.
   const ranked = [...unsearched].sort((a, b) => statSum(b) - statSum(a));
   for (const rec of recommenders) {
-    if (ctx.rng() >= 0.06) continue; // ~6% per qualified officer per season
+    if (ctx.rng() >= 0.06 * (ctx.chanceMul ?? 1)) continue; // ~6% per qualified officer per season
     // 1) someone they're tied to, 2) a fellow townsman, 3) one they've heard of.
     const tied = relationsOf(rec.id)
       .map((r) => (r.a === rec.id ? r.b : r.a))
@@ -57,7 +63,7 @@ export function rollRecommendations(ctx: {
     }
     if (!target) {
       // 識人之明 — 智 60 → whole pool; 智 100 → top ~15%. 荀彧薦郭嘉,庸者薦庸者.
-      const discern = Math.max(0, Math.min(1, (rec.stats.intelligence - 60) / 40));
+      const discern = Math.max(0, Math.min(1, (rec.stats.intelligence - 60) / 40 + (ctx.discernBonus ?? 0)));
       const topFrac = 0.15 + (1 - discern) * 0.85;
       const cut = Math.max(1, Math.floor(ranked.length * topFrac));
       target = ranked[Math.floor(ctx.rng() * cut)] ?? null;

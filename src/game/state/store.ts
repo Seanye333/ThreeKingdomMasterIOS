@@ -202,6 +202,7 @@ import { isMinorRuler, pickRegent, regentAmbitionBoost, consortAmbitionBoost, or
 import { LADDER_STAGES, LADDER_TOP, overmightyMinister, ladderAdvanceChance, cabalCandidates, righteousReason } from '../systems/usurpation';
 import { commonerArrivalCity, generateCommonerOfficer, lordTalentDraw, commonerArrivalChance } from '../systems/commonerTalent';
 import { rollRecommendations } from '../systems/recommendation';
+import { effectiveSelection, rectifierOf, selectionAvailable, selectionLoyaltyDrift, SELECTION_NAMES, type SelectionSystem } from '../systems/officialSelection';
 import { codexMarkRecruited, codexMarkRecruitedMany, codexMarkSeen, codexMarkSlain, loadCodex, CODEX_MILESTONES, codexClaimMilestone } from '../systems/codex';
 import { itemCodexMarkCarried, ITEM_CODEX_MILESTONES, itemCodexClaimMilestone } from '../systems/itemCodex';
 import { recordDailyResult } from '../systems/dailyChallenge';
@@ -1211,6 +1212,9 @@ export interface GameStore extends GameState {
   /** 律令 (§1.11) — set the realm's legal code (寬刑/平律/峻法). Takes effect at
    *  the next season tick: loyalty drift, graft, tax yield and docket growth. */
   setLawCode: (severity: import('../systems/law').LawSeverity) => void;
+  /** 選官之制 (§3.6) — adopt a recruitment system (察舉/九品中正/開科取士).
+   *  Refused when the realm can't support it (太學/中正/疆土). */
+  setSelectionSystem: (sys: SelectionSystem) => { ok: boolean; message: string };
   /** 徭役 (§1.12) — set the realm's corvée level (息役/薄役/重役): public works
    *  rise faster, paid for in loyalty, harvest, and households fleeing the
    *  registers into the shelter of the great houses. */
@@ -7026,7 +7030,11 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               rulerCharisma: ruler?.stats.charisma ?? 50,
               rulerRenown: ruler?.renown,
             });
-            if (Math.random() >= commonerArrivalChance(draw)) continue;
+            // 選官之制 (§3.6) — 九品 shuts the humble out; 開科 throws the doors open.
+            const selOfficers = Object.values(officersWithMarchTask)
+              .filter((o) => o.forceId === fid && (o.status === 'idle' || o.status === 'active'));
+            const selEff = effectiveSelection(state.selectionSystem?.[fid], rectifierOf(selOfficers));
+            if (Math.random() >= commonerArrivalChance(draw) * selEff.commonerMul) continue;
             const arrivalCity = commonerArrivalCity(postCities, fid, Math.random);
             if (!arrivalCity) continue;
             const newcomer = generateCommonerOfficer({
@@ -7035,7 +7043,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               cityId: arrivalCity.id,
               takenIds: new Set(Object.keys(officersWithMarchTask)),
               rng: Math.random,
-              quality: draw,
+              quality: Math.max(0, Math.min(1, draw + selEff.commonerQuality)),
             });
             officersWithMarchTask[newcomer.id] = newcomer;
             const grand = draw >= 0.6;
@@ -7053,7 +7061,26 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           // so the player no longer holds an exclusive talent pipeline.
           for (const force of Object.values(state.forces)) {
             const isPlayer = force.id === state.playerForceId;
-            for (const r of rollRecommendations({ officers: officersWithMarchTask, forceId: force.id, rng: Math.random })) {
+            // 選官之制 — 九品中正 is a pipeline (×1.9, better graded); 開科取士
+            // quiets the private recommendation in favour of the examination hall.
+            const courtOfficers = Object.values(officersWithMarchTask)
+              .filter((o) => o.forceId === force.id && (o.status === 'idle' || o.status === 'active'));
+            const selEffRec = effectiveSelection(state.selectionSystem?.[force.id], rectifierOf(courtOfficers));
+            // 上品無寒門 — the system's standing verdict on who belongs. Under
+            // 九品 the great houses are flattered and the humble-born quietly
+            // resent it; 開科取士 reverses both signs. 察舉 drifts nobody.
+            for (const o of courtOfficers) {
+              const drift = selectionLoyaltyDrift(selEffRec, o);
+              if (drift === 0) continue;
+              const cur = officersWithMarchTask[o.id] ?? o;
+              officersWithMarchTask[o.id] = {
+                ...cur, loyalty: Math.max(0, Math.min(100, cur.loyalty + drift)),
+              };
+            }
+            for (const r of rollRecommendations({
+              officers: officersWithMarchTask, forceId: force.id, rng: Math.random,
+              chanceMul: selEffRec.recommendMul, discernBonus: selEffRec.discernBonus,
+            })) {
               const rec = officersWithMarchTask[r.recommenderId];
               const found = officersWithMarchTask[r.revealedId];
               if (!rec || !found) continue;
@@ -15088,6 +15115,24 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         return { lawCode: { ...s.lawCode, [fid]: severity } };
       }),
 
+      setSelectionSystem: (sys) => {
+        const s = get();
+        const fid = s.playerForceId;
+        if (!fid) return { ok: false, message: '無主之人,何官可選。' };
+        const own = Object.values(s.officers).filter(
+          (o) => o.forceId === fid && (o.status === 'idle' || o.status === 'active'));
+        const avail = selectionAvailable(sys, {
+          cityCount: Object.values(s.cities).filter((c) => c.ownerForceId === fid).length,
+          hasRectifier: !!rectifierOf(own),
+          hasGrandAcademy: s.buildings.some(
+            (b) => b.id === 'grandacademy' && b.level >= 1
+              && s.cities[b.cityId]?.ownerForceId === fid),
+        });
+        if (!avail.ok) return { ok: false, message: avail.reasonZh ?? avail.reasonEn ?? '不可行。' };
+        set({ selectionSystem: { ...s.selectionSystem, [fid]: sys } });
+        return { ok: true, message: `選官之制已改為${SELECTION_NAMES[sys].zh}(${SELECTION_NAMES[sys].motto})。` };
+      },
+
       setCorvee: (level) => set((s) => {
         const fid = s.playerForceId;
         if (!fid) return {};
@@ -18034,6 +18079,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         moonLaurel: state.moonLaurel,
         lawCode: state.lawCode,
         corvee: state.corvee,
+        selectionSystem: state.selectionSystem,
         lastAmnestyYear: state.lastAmnestyYear,
         pendingPersuasions: state.pendingPersuasions,
         pendingMoonWrit: state.pendingMoonWrit,
