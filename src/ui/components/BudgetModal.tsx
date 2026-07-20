@@ -1,13 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useGameStore } from '../../game/state/store';
-import { LAW_NAMES, LAW_SEVERITIES, lawEffects, type LawSeverity } from '../../game/systems/law';
-import {
-  CORVEE_LEVELS, CORVEE_NAMES, corveeEffects, hiddenTier, registryYieldMul, type CorveeLevel,
-} from '../../game/systems/household';
+import { LAW_NAMES, type LawSeverity } from '../../game/systems/law';
+import { CORVEE_NAMES, registryYieldMul, type CorveeLevel } from '../../game/systems/household';
 import { usePanelNotice } from './usePanelNotice';
-import {
-  GRAND_PROJECTS, PROJECTS_BY_ID, projectEta, projectSeasonProgress, type GrandProjectId,
-} from '../../game/systems/grandProjects';
 import { realmBudget, TAX_EFFECT } from '../../game/systems/economy';
 import type { TaxRate } from '../../game/types';
 import { useT } from '../i18n';
@@ -37,17 +32,8 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
   const setTaxPolicy = useGameStore((s) => s.setTaxPolicy);
   // 律令・大赦 (§1.11)
   const law: LawSeverity = useGameStore((s) => (playerForceId ? s.lawCode?.[playerForceId] : undefined) ?? 'standard');
-  const setLawCode = useGameStore((s) => s.setLawCode);
-  const proclaimAmnesty = useGameStore((s) => s.proclaimAmnesty);
   const corvee: CorveeLevel = useGameStore((s) => (playerForceId ? s.corvee?.[playerForceId] : undefined) ?? 'none');
-  // §1.15 大工
-  const grandProjects = useGameStore((s) => s.grandProjects ?? []);
-  const startGrandProject = useGameStore((s) => s.startGrandProject);
-  const abandonGrandProject = useGameStore((s) => s.abandonGrandProject);
-  const [projectPick, setProjectPick] = useState('');
-  const [projectCity, setProjectCity] = useState('');
-  const setCorvee = useGameStore((s) => s.setCorvee);
-  const { notify, noticeUI } = usePanelNotice();
+  const { noticeUI } = usePanelNotice();
   const inflation = useGameStore((s) => s.inflation ?? 0);
   const mintCoin = useGameStore((s) => s.mintCoin);
   const solicitDonations = useGameStore((s) => s.solicitDonations);
@@ -108,19 +94,7 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
     { zh: '兵糧', en: 'Upkeep', v: -foodLines.upkeep },
   ].filter((r) => r.v !== 0);
 
-  // 平均積案 — how full the realm's courts are, for the 大赦 blurb.
   const ownCityList = Object.values(cities).filter((c) => c.ownerForceId === playerForceId);
-  const meanCaseload = ownCityList.length > 0
-    ? ownCityList.reduce((a, c) => a + (c.caseload ?? 0), 0) / ownCityList.length
-    : 0;
-  const activeProject = grandProjects.find((p) => p.forceId === playerForceId && !p.done) ?? null;
-  const doneProjectIds = new Set(grandProjects.filter((p) => p.forceId === playerForceId && p.done).map((p) => p.id));
-  const projectProgress = activeProject
-    ? projectSeasonProgress({
-        corvee,
-        hiddenPercent: cities[activeProject.cityId]?.hiddenHouseholds ?? 0,
-      })
-    : projectSeasonProgress({ corvee });
   const meanHidden = ownCityList.length > 0
     ? ownCityList.reduce((a, c) => a + (c.hiddenHouseholds ?? 0), 0) / ownCityList.length
     : 0;
@@ -217,143 +191,20 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
           </div>
         )}
 
-        {/* 律令 (§1.11) — 寬刑/平律/峻法, and 大赦天下. */}
+        {/* 國政 — the institutions themselves moved to their own panel (§1.11–§1.15);
+            the treasury keeps only what is money. This line is the signpost. */}
         {playerForceId && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-            <span style={{ color: '#7a8893', fontSize: '0.78rem' }}>{t('律令', 'Legal code')}</span>
-            <div style={{ display: 'flex', gap: 3 }}>
-              {LAW_SEVERITIES.map((sev) => (
-                <button
-                  key={sev}
-                  onClick={() => setLawCode(sev)}
-                  title={LAW_NAMES[sev].motto}
-                  style={{
-                    background: law === sev ? '#26323e' : 'transparent',
-                    border: `1px solid ${law === sev ? '#e6c473' : '#2b3845'}`,
-                    color: law === sev ? '#f2dd9a' : '#7a8893',
-                    padding: '0.2rem 0.6rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer',
-                    fontFamily: 'inherit', fontSize: '0.78rem',
-                  }}
-                >{t(LAW_NAMES[sev].zh, LAW_NAMES[sev].en)}</button>
-              ))}
-            </div>
-            <span style={{ color: law === 'strict' ? '#e0a070' : law === 'lenient' ? '#9ad6a8' : '#5f6c76', fontSize: '0.72rem' }}>
-              {t(lawEffects(law).badgeZh, lawEffects(law).badgeEn)}
+            <span style={{ color: '#7a8893', fontSize: '0.78rem' }}>{t('國政', 'Statecraft')}</span>
+            <span style={{ color: '#9fb0bd', fontSize: '0.76rem' }}>
+              {t(`${LAW_NAMES[law].zh} · ${CORVEE_NAMES[corvee].zh}`, `${LAW_NAMES[law].en} · ${CORVEE_NAMES[corvee].en}`)}
             </span>
-          </div>
-        )}
-        {/* 徭役 (§1.12) — 息役/薄役/重役. */}
-        {playerForceId && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-            <span style={{ color: '#7a8893', fontSize: '0.78rem' }}>{t('徭役', 'Corvée')}</span>
-            <div style={{ display: 'flex', gap: 3 }}>
-              {CORVEE_LEVELS.map((lv) => (
-                <button
-                  key={lv}
-                  onClick={() => setCorvee(lv)}
-                  style={{
-                    background: corvee === lv ? '#26323e' : 'transparent',
-                    border: `1px solid ${corvee === lv ? '#e6c473' : '#2b3845'}`,
-                    color: corvee === lv ? '#f2dd9a' : '#7a8893',
-                    padding: '0.2rem 0.6rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer',
-                    fontFamily: 'inherit', fontSize: '0.78rem',
-                  }}
-                >{t(CORVEE_NAMES[lv].zh, CORVEE_NAMES[lv].en)}</button>
-              ))}
-            </div>
-            <span style={{ color: corvee === 'heavy' ? '#e0a070' : corvee === 'none' ? '#9ad6a8' : '#5f6c76', fontSize: '0.72rem' }}>
-              {t(corveeEffects(corvee).badgeZh, corveeEffects(corvee).badgeEn)}
+            <span style={{ color: '#5f6c76', fontSize: '0.72rem', flex: 1 }}>
+              {meanHidden >= 6
+                ? t(`全境隱戶約 ${meanHidden.toFixed(1)}%,租賦僅收 ${(registryYieldMul(meanHidden) * 100).toFixed(0)}% — 律令/徭役/選官/大工見「內政 ▸ 國政」`,
+                     `~${meanHidden.toFixed(1)}% of the realm is off the books (yield ${(registryYieldMul(meanHidden) * 100).toFixed(0)}%) — see Domestic ▸ Statecraft`)
+                : t('律令 · 徭役 · 選官 · 大工 — 見「內政 ▸ 國政」', 'Legal code · corvée · selection · great works — see Domestic ▸ Statecraft')}
             </span>
-          </div>
-        )}
-        {/* 編戶 — how much of the realm has slipped off the tax registers. */}
-        {playerForceId && meanHidden >= 6 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-            <span style={{ color: '#7a8893', fontSize: '0.78rem' }}>{t('編戶', 'Registers')}</span>
-            <span style={{ color: meanHidden >= 18 ? '#e0a070' : '#9fb0bd', fontSize: '0.78rem' }}>
-              {t(`${hiddenTier(meanHidden).zh} · 全境隱戶約 ${meanHidden.toFixed(1)}%`,
-                 `${hiddenTier(meanHidden).en} · ~${meanHidden.toFixed(1)}% off the books`)}
-            </span>
-            <span style={{ color: '#5f6c76', fontSize: '0.72rem' }}>
-              {t(`租賦僅收 ${(registryYieldMul(meanHidden) * 100).toFixed(0)}% — 遣能吏「括戶」`,
-                 `Only ${(registryYieldMul(meanHidden) * 100).toFixed(0)}% of yield is taxed — assign 括戶`)}
-            </span>
-          </div>
-        )}
-        {playerForceId && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-            <button
-              onClick={() => { const r = proclaimAmnesty(); notify(r.message, r.ok); }}
-              style={{
-                background: 'transparent', border: '1px solid #2b3845', color: '#9fb0bd',
-                padding: '0.2rem 0.6rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer',
-                fontFamily: 'inherit', fontSize: '0.78rem',
-              }}
-            >{t('大赦天下', 'General Amnesty')}</button>
-            <span style={{ color: '#5f6c76', fontSize: '0.72rem' }}>
-              {t(`全境獄訟一空 · 民忠大進 · 盜賊復起(平均積案 ${Math.round(meanCaseload)})`,
-                 `Empties every docket, loyalty surges, banditry follows (mean docket ${Math.round(meanCaseload)})`)}
-            </span>
-          </div>
-        )}
-
-        {/* 大工 (§1.15) — the realm's one great work. */}
-        {playerForceId && (
-          <div style={{
-            marginBottom: '0.5rem', padding: '0.4rem 0.6rem',
-            border: '1px solid #3a3020', borderRadius: 'var(--tkm-radius-sm)', background: '#141009',
-          }}>
-            {activeProject ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <span style={{ color: '#e6c473', fontSize: '0.8rem' }}>
-                  🏗 {t(PROJECTS_BY_ID[activeProject.id].name.zh, PROJECTS_BY_ID[activeProject.id].name.en)}
-                </span>
-                <span style={{ color: '#9fb0bd', fontSize: '0.75rem' }}>
-                  {t(`於${cities[activeProject.cityId]?.name.zh ?? '?'} · 尚需約 ${projectEta(activeProject.seasonsLeft, projectProgress)} 季`,
-                     `at ${cities[activeProject.cityId]?.name.en ?? '?'} · ~${projectEta(activeProject.seasonsLeft, projectProgress)} seasons left`)}
-                </span>
-                <span style={{ color: '#8a7a5a', fontSize: '0.7rem', flex: 1 }}>
-                  {t(`役夫進度 ×${projectProgress}(重役加快、隱戶拖慢)`,
-                     `labour rate ×${projectProgress} (heavy corvée speeds it, hidden households slow it)`)}
-                </span>
-                <button type="button" onClick={() => { const r = abandonGrandProject(); notify(r.message, r.ok); }}
-                  style={{ background: 'transparent', border: '1px solid #6a3a30', color: '#c08070', padding: '0.15rem 0.5rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.72rem' }}
-                >{t('罷役', 'Abandon')}</button>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                <span style={{ color: '#7a8893', fontSize: '0.78rem' }}>{t('大工', 'Great work')}</span>
-                <select value={projectPick} onChange={(e) => setProjectPick(e.target.value)}
-                  style={{ background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473', fontSize: '0.72rem', borderRadius: 'var(--tkm-radius-xs)' }}>
-                  <option value="">{t('— 擇工 —', '— pick —')}</option>
-                  {GRAND_PROJECTS.filter((d) => !doneProjectIds.has(d.id)).map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {t(`${d.name.zh}(${d.goldCost}金 · ${d.baseSeasons}季)`, `${d.name.en} (${d.goldCost}g · ${d.baseSeasons}s)`)}
-                    </option>
-                  ))}
-                </select>
-                <select value={projectCity} onChange={(e) => setProjectCity(e.target.value)}
-                  style={{ background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473', fontSize: '0.72rem', borderRadius: 'var(--tkm-radius-xs)' }}>
-                  <option value="">{t('— 擇地 —', '— where —')}</option>
-                  {ownCityList.map((c) => (
-                    <option key={c.id} value={c.id}>{t(`${c.name.zh}(金${c.gold})`, `${c.name.en} (${c.gold}g)`)}</option>
-                  ))}
-                </select>
-                <button type="button" disabled={!projectPick || !projectCity}
-                  onClick={() => {
-                    const r = startGrandProject(projectPick as GrandProjectId, projectCity);
-                    notify(r.message, r.ok);
-                    if (r.ok) { setProjectPick(''); setProjectCity(''); }
-                  }}
-                  style={{ background: 'transparent', border: '1px solid #2b3845', color: !projectPick || !projectCity ? '#4a5568' : '#9fb0bd', padding: '0.15rem 0.55rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.72rem' }}
-                >{t('興工', 'Begin')}</button>
-                <span style={{ color: '#5f6c76', fontSize: '0.7rem', flex: 1 }}>
-                  {projectPick
-                    ? t(PROJECTS_BY_ID[projectPick as GrandProjectId].effectZh, PROJECTS_BY_ID[projectPick as GrandProjectId].effectEn)
-                    : t('一國一大工 —— 數年之功,永世之利', 'One great work at a time — years of labour, a lasting good')}
-                </span>
-              </div>
-            )}
           </div>
         )}
 

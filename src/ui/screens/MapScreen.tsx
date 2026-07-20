@@ -109,6 +109,7 @@ const SchemesModal = lazy(() => import('../components/SchemesModal').then(m => (
 const PowerGraphModal = lazy(() => import('../components/PowerGraphModal').then(m => ({ default: m.PowerGraphModal })));
 const CityRosterModal = lazy(() => import('../components/CityRosterModal').then(m => ({ default: m.CityRosterModal })));
 const BudgetModal = lazy(() => import('../components/BudgetModal').then(m => ({ default: m.BudgetModal })));
+const StatecraftModal = lazy(() => import('../components/StatecraftModal').then(m => ({ default: m.StatecraftModal })));
 const ToDoModal = lazy(() => import('../components/ToDoModal').then(m => ({ default: m.ToDoModal })));
 const CommandPalette = lazy(() => import('../components/CommandPalette').then(m => ({ default: m.CommandPalette })));
 const ForceCompareModal = lazy(() => import('../components/ForceCompareModal').then(m => ({ default: m.ForceCompareModal })));
@@ -340,6 +341,7 @@ export function MapScreen() {
   const [showPowerGraph, setShowPowerGraph] = useState(false);
   const [showCityRoster, setShowCityRoster] = useState(false);
   const [showBudget, setShowBudget] = useState(false);
+  const [showStatecraft, setShowStatecraft] = useState(false);
   const [showToDo, setShowToDo] = useState(false);
   const [showPalette, setShowPalette] = useState(false);
   const [showCompare, setShowCompare] = useState(false);
@@ -657,6 +659,7 @@ export function MapScreen() {
       { id: 'provinces', zh: '州域 — 各州控勢', en: 'Provinces', hint: g.rec, run: () => setShowProvinces(true) },
       { id: 'convoys', zh: '輜重 — 運輸一覽', en: 'Convoys', hint: g.rec, run: () => setShowConvoys(true) },
       { id: 'budget', zh: '度支簿', en: 'Treasury', hint: g.rec, run: () => setShowBudget(true) },
+      { id: 'statecraft', zh: '國政 — 律令/徭役/選官/大工', en: 'Statecraft — code, corvée, selection, works', hint: g.rec, run: () => setShowStatecraft(true) },
       { id: 'power', zh: '天下大勢', en: 'Balance of power', hint: g.rec, run: () => setShowPowerGraph(true) },
       { id: 'compare', zh: '較量 — 勢力對比', en: 'Compare forces', hint: g.rec, run: () => setShowCompare(true) },
       { id: 'rumors', zh: '市井流言', en: 'Rumors', hint: g.rec, run: () => setShowRumors(true) },
@@ -717,6 +720,7 @@ export function MapScreen() {
         { label: t('州域', 'Provinces'), onClick: () => setShowProvinces(true), title: t('各州控勢與州牧', 'Provincial control & governors') },
         { label: t('輜重', 'Convoys'),   onClick: () => setShowConvoys(true), title: t('在途運輸與常運糧道一覽', 'Columns on the road & standing routes') },
         { label: t('度支', 'Treasury'),  onClick: () => setShowBudget(true), title: t('全國收支簿 — 稅入/俸祿/軍費', 'Realm budget — income & upkeep') },
+        { label: t('國政', 'Statecraft'), onClick: () => setShowStatecraft(true), title: t('律令・徭役・選官・大工 — 制度與全境民政帳', 'Legal code, corvée, selection of officials, great works') },
         { label: t('賑災', 'Relief'),    onClick: () => setShowRelief(true), badge: pendingReliefCount, title: t('開倉賑濟受災城池', 'Open granaries for stricken cities') },
         { label: t('待辦', 'To-Do'),     onClick: () => setShowToDo(true), title: t('本旬該辦之事的提醒清單', 'Reminders for this turn') },
       ],
@@ -1258,6 +1262,12 @@ export function MapScreen() {
         {showPowerGraph && <PowerGraphModal onClose={() => setShowPowerGraph(false)} />}
         {showCityRoster && <CityRosterModal onClose={() => setShowCityRoster(false)} />}
         {showBudget && <BudgetModal onClose={() => setShowBudget(false)} />}
+        {showStatecraft && (
+          <StatecraftModal
+            onClose={() => setShowStatecraft(false)}
+            onSelectCity={(id) => selectCityFromHud(id)}
+          />
+        )}
         {showToDo && <ToDoModal onClose={() => setShowToDo(false)} onOpenLetters={() => setShowWishes(true)}
           onOpenFeature={(id) => {
             // 探索建議 — the To-Do nudges route into the real feature panels.
