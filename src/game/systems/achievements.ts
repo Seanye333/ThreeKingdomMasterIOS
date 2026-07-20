@@ -86,7 +86,9 @@ export function processTrigger(
          'boom-stall', 'beacon-relay', 'bridge-burned', 'ally-battle',
          'rout-annihilated', 'event-choice',
          'peace-duel', 'war-god', 'arena-reign', 'field-melee',
-         'debate-sage', 'moon-reign', 'persuade-city', 'refute-demand'] as const)
+         'debate-sage', 'moon-reign', 'persuade-city', 'refute-demand',
+         'clear-docket', 'amnesty', 'registers-whole', 'break-hoard',
+         'open-exam', 'immortal-verse', 'shrine-raised', 'sea-lord'] as const)
         .includes(ach.trigger.kind as never) &&
         ach.trigger.targetId === trigger.targetId) ||
       // Cumulative: counter ≥ threshold.

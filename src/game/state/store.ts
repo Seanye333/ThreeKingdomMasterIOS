@@ -8898,6 +8898,27 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               achS = r.progress; newly.push(...r.newlyUnlocked);
             }
           }
+          // 民政功業(指令觸發)— fired by resolution's civic commands this season.
+          for (const kind of result.civicAchievements ?? []) {
+            const r = processTrigger(achS, { kind: kind as import('../types/achievement').AchievementTriggerKind });
+            achS = r.progress; newly.push(...r.newlyUnlocked);
+          }
+          // 民政功業 (§1.11–§1.14) — checked against the realm's own books at
+          // season commit: a great city with an empty docket, and a realm whose
+          // registers are honest again.
+          if (seasonBoundary && state.playerForceId) {
+            const mine = Object.values(get().cities).filter((c) => c.ownerForceId === state.playerForceId);
+            if (mine.some((c) => c.population >= 200_000 && (c.caseload ?? 0) <= 0.5)) {
+              const r = processTrigger(achS, { kind: 'clear-docket' });
+              achS = r.progress; newly.push(...r.newlyUnlocked);
+            }
+            // 編戶齊民 — a realm of real size whose hidden share is near the floor.
+            if (mine.length >= 5
+              && mine.reduce((a, c) => a + (c.hiddenHouseholds ?? 0), 0) / mine.length <= 4) {
+              const r = processTrigger(achS, { kind: 'registers-whole' });
+              achS = r.progress; newly.push(...r.newlyUnlocked);
+            }
+          }
           // 圖鑑功業 — collection milestones against the cross-campaign codex
           // (this season's recruits/naturalizations already marked above).
           {
@@ -15179,6 +15200,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             [o.id]: { ...o, renown: (o.renown ?? 0) + eff.renownGain },
           },
         });
+        if (quality >= 88) get().fireAchievement({ kind: 'immortal-verse' });
         if (eff.memorable) {
           get().recordAnnal?.({
             year: s.date.year, season: s.date.season, kind: 'event',
@@ -15223,6 +15245,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           cities: { ...s.cities, [cityId]: { ...city, gold: city.gold - cost } },
           officers,
         });
+        get().fireAchievement({ kind: 'shrine-raised' });
         get().recordAnnal?.({
           year: s.date.year, season: s.date.season, kind: 'rite', cityId,
           titleZh: `${city.name.zh}立${o.name.zh}祠`,
@@ -15249,6 +15272,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         });
         if (!avail.ok) return { ok: false, message: avail.reasonZh ?? avail.reasonEn ?? '不可行。' };
         set({ selectionSystem: { ...s.selectionSystem, [fid]: sys } });
+        if (sys === 'keju') get().fireAchievement({ kind: 'open-exam' });
         return { ok: true, message: `選官之制已改為${SELECTION_NAMES[sys].zh}(${SELECTION_NAMES[sys].motto})。` };
       },
 
@@ -15301,6 +15325,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           titleZh: '大赦天下',
           textZh: `${s.forces[fid]?.name.zh ?? '主公'}大赦天下,獄訟一空,萬民稱慶;然縱囚歸鄉,道路復有剽掠者。`,
         });
+        get().fireAchievement({ kind: 'amnesty' });
         return {
           ok: true,
           message: `大赦天下 — 費 ${eff.goldCost} 金,全境獄訟一空,民忠 +${eff.loyaltyGain}。惟盜賊復起,威望稍損。`,

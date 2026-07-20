@@ -294,6 +294,38 @@ export function adviseTips(input: AdvisorInput): AdvisorTip[] {
     });
   }
 
+  // ⑦b 民政三患 (§1.11–§1.14) — the advisor names the civic rot the player is
+  // most likely to be ignoring, worst city first, and hands them the command.
+  {
+    const worstDocket = [...own].sort((a, b) => (b.caseload ?? 0) - (a.caseload ?? 0))[0];
+    if (worstDocket && (worstDocket.caseload ?? 0) >= 45) {
+      tips.push(cmdTip(input, worstDocket, 'adjudicate', {
+        id: `docket-${worstDocket.id}`,
+        zh: `${worstDocket.name.zh}獄訟積${Math.round(worstDocket.caseload ?? 0)},民有冤滯 — 宜遣能吏決獄,遲則生變。`,
+        en: `${worstDocket.name.en}'s docket stands at ${Math.round(worstDocket.caseload ?? 0)} — send an able hand to hear the cases.`,
+        priority: 58 + Math.round((worstDocket.caseload ?? 0) / 5),
+      }));
+    }
+    const worstHidden = [...own].sort((a, b) => (b.hiddenHouseholds ?? 0) - (a.hiddenHouseholds ?? 0))[0];
+    if (worstHidden && (worstHidden.hiddenHouseholds ?? 0) >= 20) {
+      tips.push(cmdTip(input, worstHidden, 'household-audit', {
+        id: `hidden-${worstHidden.id}`,
+        zh: `${worstHidden.name.zh}蔭戶已${(worstHidden.hiddenHouseholds ?? 0).toFixed(0)}%,租賦大削 — 宜括戶檢地(然豪右必怨)。`,
+        en: `${worstHidden.name.en} has ${(worstHidden.hiddenHouseholds ?? 0).toFixed(0)}% of its people off the registers — audit them back on.`,
+        priority: 56 + Math.round((worstHidden.hiddenHouseholds ?? 0) / 5),
+      }));
+    }
+    const worstHoard = [...own].sort((a, b) => (b.hoardedGrain ?? 0) - (a.hoardedGrain ?? 0))[0];
+    if (worstHoard && (worstHoard.hoardedGrain ?? 0) >= 18) {
+      tips.push(cmdTip(input, worstHoard, 'curb-hoarding', {
+        id: `hoard-${worstHoard.id}`,
+        zh: `${worstHoard.name.zh}豪商囤糧${Math.round(worstHoard.hoardedGrain ?? 0)}%,米價騰貴 — 宜抑兼併,或築常平倉以平之。`,
+        en: `Merchants have cornered ${Math.round(worstHoard.hoardedGrain ?? 0)}% of ${worstHoard.name.en}'s grain — break the warehouses open.`,
+        priority: 57 + Math.round((worstHoard.hoardedGrain ?? 0) / 5),
+      }));
+    }
+  }
+
   // ⑧ 敵城空虛 — a weak neighbour invites ambition (informational).
   const strongest = Math.max(0, ...own.map((c) => c.troops));
   for (const city of own) {

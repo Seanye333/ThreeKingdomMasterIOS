@@ -49,7 +49,16 @@ export type AchievementTriggerKind =
   | 'debate-sage'   // 辯聖 — an officer's 文辯修為 reached 100
   | 'moon-reign'    // 清議領袖 — held the 月旦評 laurel through 3 straight defenses
   | 'persuade-city' // 三寸之舌 — argued an enemy city's gates open (§6.16)
-  | 'refute-demand';// 據理折牒 — argued a foreign ultimatum into withdrawal
+  | 'refute-demand'  // 據理折牒 — argued a foreign ultimatum into withdrawal
+  // 2026-07 civic batch (§1.11–§1.14, §3.6) — instant, no targetId:
+  | 'clear-docket'   // 訟簡刑清 — a great city's docket worked down to nothing
+  | 'amnesty'        // 大赦天下 — proclaimed a general pardon
+  | 'registers-whole'// 編戶齊民 — the realm's registers restored to near-honest
+  | 'break-hoard'    // 平準抑兼 — broke open a cornered grain market
+  | 'open-exam'      // 唯才是舉 — adopted 開科取士
+  | 'immortal-verse' // 千古絕唱 — composed a poem of the first rank
+  | 'shrine-raised'  // 立祠祭故 — raised a shrine to a fallen officer
+  | 'sea-lord';      // 樓船水師 — fought and won a river battle as a master fleet
 
 export interface AchievementTrigger {
   kind: AchievementTriggerKind;

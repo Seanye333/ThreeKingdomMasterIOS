@@ -45,9 +45,9 @@ import {
 import { buildingBonuses, schoolHeadmasterFocus, SCHOOL_BUILDINGS, COURT_BUILDINGS } from './buildings';
 import { COMMAND_TOKEN_IDS } from '../data/items';
 import { cultureGain, cultureGraftCurb, cultureLoyaltyLift } from './culture';
-import { lawEffects, caseloadTick, caseloadPenalty, wrongfulConvictionChance, aiLawCode } from './law';
+import { lawEffects, caseloadTick, caseloadPenalty, wrongfulConvictionChance, aiLawCode, CASELOAD_HEAVY } from './law';
 import { corveeEffects, hiddenDrift, registryYieldMul, aiCorvee } from './household';
-import { hoardEffects, hoardTick, hoardingPressure } from './hoarding';
+import { hoardEffects, hoardTick, hoardingPressure, HOARD_SEVERE } from './hoarding';
 import { clanOf } from '../data/clans';
 import { shrineEffects } from './culturalWorks';
 import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
@@ -203,6 +203,9 @@ export interface ResolutionInput {
 }
 
 export interface ResolutionOutput {
+  /** 民政功業 (§1.11–§1.14) — instant achievement kinds earned by the player's
+   *  civic commands this season; the store fires them (it owns the ledger). */
+  civicAchievements?: string[];
   /** 戰記 — player field-clash wins / enemy columns starved this season. */
   playerFieldClashesWon?: number;
   enemyColumnsStarved?: number;
@@ -461,6 +464,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   let enemyColumnsStarved = 0;
   // 追亡逐北帳 — routs the player ran down + stragglers pressed into service.
   let playerRoutsHunted = 0;
+  // 民政功業 — instant achievement kinds the player's civic commands earned.
+  const civicAchievements: string[] = [];
   let playerTroopsAbsorbed = 0;
   const troopOverride: Record<EntityId, number> = {};
   // Player-involved clashes deferred to an interactive tactical battle (AI
@@ -2292,6 +2297,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       : undefined;
     const result = resolveInternalAffairs(cmd.type, officer, city, rng, finalBonus, input.weather?.kind, assistants, input.rapport, hasCourtForCmd, cmdLaw);
     cities[city.id] = applyDelta(city, result.delta);
+    // 平準抑兼 (§1.14) — a market broken open is worth recording.
+    if (cmd.type === 'curb-hoarding' && result.success && city.ownerForceId === input.playerForceId) {
+      civicAchievements.push('break-hoard');
+    }
     // 括戶則門第怨 (§1.12) — the households you just put back on the registers
     // were tilling somebody's fields. Great-clan scions serving in this city
     // take it personally; men of humble birth do not care at all.
@@ -2654,6 +2663,33 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         ? Math.min(MEDICINE_CITY_CAP, (city.medicine ?? 0) + tick.medicineGather)
         : city.medicine,
     };
+    // 民政警訊 (§1.11–§1.14) — report a civic problem the season it CROSSES a
+    // threshold, not every season after (the player would learn to ignore it).
+    // Only the player's own cities, and only the upward crossing.
+    if (city.ownerForceId === input.playerForceId) {
+      const crossed = (before: number, after: number, at: number) => before < at && after >= at;
+      if (crossed(city.caseload ?? 0, nextCaseload, CASELOAD_HEAVY)) {
+        entries.push({
+          kind: 'note', cityId: city.id,
+          text: `${city.name.en}: the docket has outgrown the court — grievances go unheard.`,
+          textZh: `${city.name.zh}:獄訟積壓已逾半(${Math.round(nextCaseload)}),民有冤滯 —— 宜遣能吏決獄。`,
+        });
+      }
+      if (crossed(city.hiddenHouseholds ?? 0, nextHidden, 18)) {
+        entries.push({
+          kind: 'note', cityId: city.id,
+          text: `${city.name.en}: households are vanishing from the registers into the great houses.`,
+          textZh: `${city.name.zh}:蔭戶眾多(${nextHidden.toFixed(1)}%),賦稅日削 —— 宜括戶檢地,或輕徭薄賦。`,
+        });
+      }
+      if (crossed(city.hoardedGrain ?? 0, nextHoard, HOARD_SEVERE)) {
+        entries.push({
+          kind: 'note', cityId: city.id,
+          text: `${city.name.en}: the merchant houses have cornered the grain.`,
+          textZh: `${city.name.zh}:豪商囤積居奇(${Math.round(nextHoard)}%),米價騰貴 —— 宜抑兼併,或建常平倉。`,
+        });
+      }
+    }
     cities[city.id] = updated;
     // 天候災異 — an extreme season can tip a city past a soft harvest cut into
     // outright catastrophe: a drought spawns 蝗災/流民, prolonged rain bursts the
@@ -4041,6 +4077,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     playerFieldClashesWon: playerFieldClashesWon || undefined,
     enemyColumnsStarved: enemyColumnsStarved || undefined,
     playerRoutsHunted: playerRoutsHunted || undefined,
+    civicAchievements: civicAchievements.length > 0 ? civicAchievements : undefined,
     playerTroopsAbsorbed: playerTroopsAbsorbed || undefined,
   };
 }
