@@ -4,6 +4,7 @@ import { useGameStore } from '../../game/state/store';
 import { MANDATE_LABEL } from '../../game/systems/mandate';
 import { SUBURBAN_RITE_GOLD, SUBURBAN_RITE_FOOD, RAIN_RITE_GOLD } from '../../game/systems/mandateRituals';
 import { isCultForce, CULT_PACIFY_GOLD, PACIFY_MISSION_COST } from '../../game/systems/religion';
+import { POEM_GOLD_COST, shrineCost } from '../../game/systems/culturalWorks';
 import { useT, useLanguage, pickName } from '../i18n';
 
 /** §8.5 祭天禮 + §8.4-deep 安民 — the court's ritual & pacification desk:
@@ -27,12 +28,20 @@ export function RitesModal({ onClose }: { onClose: () => void }) {
   const prayForRain = useGameStore((s) => s.prayForRain);
   const pacifyCultForce = useGameStore((s) => s.pacifyCultForce);
   const dispatchPacifyMission = useGameStore((s) => s.dispatchPacifyMission);
+  const composePoemAt = useGameStore((s) => s.composePoemAt);
+  const buildShrine = useGameStore((s) => s.buildShrine);
+  const poems = useGameStore((s) => s.poems ?? []);
+  const shrines = useGameStore((s) => s.shrines ?? []);
 
   const [msg, setMsg] = useState<string | null>(null);
   const [cultId, setCultId] = useState('');
   const [envoyId, setEnvoyId] = useState('');
   const [pacifierId, setPacifierId] = useState('');
   const [pacifyCityId, setPacifyCityId] = useState('');
+  // §1.13 文華
+  const [poetId, setPoetId] = useState('');
+  const [honoredId, setHonoredId] = useState('');
+  const [shrineCityId, setShrineCityId] = useState('');
 
   const cults = useMemo(
     () => Object.values(forces).filter((f) =>
@@ -44,6 +53,24 @@ export function RitesModal({ onClose }: { onClose: () => void }) {
       .filter((o) => o.forceId === playerForceId && o.status === 'idle' && !pacifyMissions[o.id])
       .sort((a, b) => b.stats.charisma - a.stats.charisma),
     [officers, playerForceId, pacifyMissions],
+  );
+  // 文士 — idle officers of letters, best brush first.
+  const poets = useMemo(
+    () => Object.values(officers)
+      .filter((o) => o.forceId === playerForceId && o.status === 'idle'
+        && (o.stats.intelligence >= 65 || o.stats.charisma >= 65))
+      .sort((a, b) => (b.stats.intelligence + b.stats.charisma) - (a.stats.intelligence + a.stats.charisma))
+      .slice(0, 30),
+    [officers, playerForceId],
+  );
+  // 故將 — the honoured dead who once served this realm and have no shrine yet.
+  const honorable = useMemo(
+    () => Object.values(officers)
+      .filter((o) => o.status === 'dead' && o.forceId === playerForceId
+        && !shrines.some((sh) => sh.officerId === o.id))
+      .sort((a, b) => (b.renown ?? 0) - (a.renown ?? 0))
+      .slice(0, 30),
+    [officers, playerForceId, shrines],
   );
   const ownCities = useMemo(
     () => Object.values(cities).filter((c) => c.ownerForceId === playerForceId),
@@ -178,6 +205,79 @@ export function RitesModal({ onClose }: { onClose: () => void }) {
               {Object.entries(pacifyMissions).map(([oid, m]) => (
                 <div key={oid}>
                   {pickName(officers[oid]?.name ?? { zh: oid, en: oid }, lang)} → {pickName(cities[m.cityId]?.name ?? { zh: m.cityId, en: m.cityId }, lang)}({t(`餘 ${m.seasonsLeft} 季`, `${m.seasonsLeft} season(s) left`)})
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* §1.13 文華 — 題詠 */}
+        <div style={sect}>
+          <div style={{ fontSize: '0.95rem', color: '#c0a8e0', marginBottom: 4 }}>📜 {t('題詠', 'Compose a Poem')}</div>
+          <div style={{ fontSize: '0.75rem', color: '#97a4ae', marginBottom: 6 }}>
+            {t(`使文士登臨賦詩 — 佳作長城中文教、安民心、揚其名,傳世之作入事件簿。費金 ${POEM_GOLD_COST}。近名勝、文教興隆之城,詩必更佳。`,
+               `Have a man of letters compose. A good poem raises the city's culture and loyalty and his own renown; an enduring one enters the annals. ${POEM_GOLD_COST}g.`)}
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <select value={poetId} onChange={(e) => setPoetId(e.target.value)} style={sel}>
+              <option value="">{t('文士…', 'Poet…')}</option>
+              {poets.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {pickName(o.name, lang)}(智{o.stats.intelligence}·魅{o.stats.charisma})
+                </option>
+              ))}
+            </select>
+            <button
+              style={{ ...btn, borderColor: '#c0a8e0', color: '#dcc8f0', opacity: !poetId ? 0.45 : 1 }}
+              disabled={!poetId}
+              onClick={() => { const r = composePoemAt(poetId); setMsg(r.message); if (r.ok) setPoetId(''); }}
+            >{t('賦詩', 'Compose')}</button>
+          </div>
+          {poems.length > 0 && (
+            <div style={{ fontSize: '0.72rem', color: '#b0a0c8', marginTop: 8, lineHeight: 1.6 }}>
+              {poems.slice(-2).reverse().map((p) => (
+                <div key={p.id} style={{ marginBottom: 4 }}>
+                  《{p.titleZh}》— {pickName(officers[p.authorId]?.name ?? { zh: '?', en: '?' }, lang)}
+                  <div style={{ color: '#8a98a4' }}>{p.linesZh.join(' / ')}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* §1.13 文華 — 立祠 */}
+        <div style={sect}>
+          <div style={{ fontSize: '0.95rem', color: '#d0b090', marginBottom: 4 }}>⛩ {t('立祠', 'Raise a Shrine')}</div>
+          <div style={{ fontSize: '0.75rem', color: '#97a4ae', marginBottom: 6 }}>
+            {t('為身故之臣立祠 — 歲時祭饗,其城每季民忠/文教長,其族在朝者感懷而忠。一城一祠,費金隨其威望。',
+               'Honour a fallen officer. The city gains loyalty and culture every season, and his living kin serve you more willingly. One shrine per city; cost scales with his renown.')}
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <select value={honoredId} onChange={(e) => setHonoredId(e.target.value)} style={sel}>
+              <option value="">{t('故將…', 'The fallen…')}</option>
+              {honorable.map((o) => (
+                <option key={o.id} value={o.id}>{pickName(o.name, lang)}(威望{Math.round(o.renown ?? 0)}·{shrineCost(o.renown ?? 0)}金)</option>
+              ))}
+            </select>
+            <select value={shrineCityId} onChange={(e) => setShrineCityId(e.target.value)} style={sel}>
+              <option value="">{t('立於…', 'At…')}</option>
+              {ownCities.filter((c) => !shrines.some((sh) => sh.cityId === c.id)).map((c) => (
+                <option key={c.id} value={c.id}>{pickName(c.name, lang)}(金{c.gold})</option>
+              ))}
+            </select>
+            <button
+              style={{ ...btn, borderColor: '#d0b090', color: '#f0d0b0', opacity: !honoredId || !shrineCityId ? 0.45 : 1 }}
+              disabled={!honoredId || !shrineCityId}
+              onClick={() => { const r = buildShrine(honoredId, shrineCityId); setMsg(r.message); if (r.ok) { setHonoredId(''); setShrineCityId(''); } }}
+            >{t('立祠', 'Raise')}</button>
+          </div>
+          {shrines.length > 0 && (
+            <div style={{ fontSize: '0.72rem', color: '#c0a080', marginTop: 6 }}>
+              {shrines.map((sh) => (
+                <div key={sh.id}>
+                  {pickName(cities[sh.cityId]?.name ?? { zh: sh.cityId, en: sh.cityId }, lang)} ·
+                  {pickName(officers[sh.officerId]?.name ?? { zh: '?', en: '?' }, lang)}
+                  {t(`祠(${sh.year} 年立)`, ` shrine (est. ${sh.year})`)}
                 </div>
               ))}
             </div>

@@ -499,6 +499,10 @@ export interface GameState {
   lawCode: Record<EntityId, import('../systems/law').LawSeverity>;
   /** 徭役 (§1.12) — per-force corvée level (息役/薄役/重役). Absent ⇒ '息役'. */
   corvee: Record<EntityId, import('../systems/household').CorveeLevel>;
+  /** 文集 (§1.13) — poems composed in this campaign, newest last. */
+  poems: import('../systems/culturalWorks').Poem[];
+  /** 祠廟 (§1.13) — shrines raised to the honoured dead (one per city). */
+  shrines: import('../systems/culturalWorks').Shrine[];
   /** 選官之制 (§3.6) — per-force recruitment system (察舉/九品中正/開科取士).
    *  Absent ⇒ '察舉', the Han baseline every old save keeps. */
   selectionSystem: Record<EntityId, import('../systems/officialSelection').SelectionSystem>;
@@ -946,6 +950,8 @@ export const EMPTY_STATE: GameState = {
   taxPolicy: {},
   lawCode: {},
   corvee: {},
+  poems: [],
+  shrines: [],
   selectionSystem: {},
   lastAmnestyYear: {},
   credibility: {},
@@ -1418,6 +1424,8 @@ export function loadScenario(
       : {},
     lawCode: {},
     corvee: {},
+    poems: [],
+    shrines: [],
     selectionSystem: {},
     lastAmnestyYear: {},
     credibility: state.credibility ?? {},

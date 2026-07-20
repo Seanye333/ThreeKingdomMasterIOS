@@ -48,6 +48,7 @@ import { cultureGain, cultureGraftCurb, cultureLoyaltyLift } from './culture';
 import { lawEffects, caseloadTick, caseloadPenalty, wrongfulConvictionChance, aiLawCode } from './law';
 import { corveeEffects, hiddenDrift, registryYieldMul } from './household';
 import { clanOf } from '../data/clans';
+import { shrineEffects } from './culturalWorks';
 import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
 import { corruptionAccrualMultiplier } from './traitEffects';
 import { rollCivicEvents } from './civicEvents';
@@ -143,6 +144,8 @@ export interface ResolutionInput {
   lawCode?: Record<EntityId, import('./law').LawSeverity>;
   /** 徭役 — per-force corvée level (§1.12); missing entries resolve to '息役'. */
   corvee?: Record<EntityId, import('./household').CorveeLevel>;
+  /** 祠廟 (§1.13) — standing shrines; the city that keeps one keeps faith. */
+  shrines?: ReadonlyArray<import('./culturalWorks').Shrine>;
   /** 通商條約 — force ids the player has trade treaties with (mutual income). */
   tradePartners?: EntityId[];
   /** 通貨膨脹 — the player's inflation level (0–100); saps player tax income. */
@@ -2517,9 +2520,14 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     // loyalty; 60+ is a 文化名城.
     const hasSchoolHere = (input.buildings ?? []).some(
       (bd) => bd.cityId === city.id && SCHOOL_BUILDINGS.has(bd.id) && (bd.level ?? 0) >= 1);
+    // 祠廟 (§1.13) — 歲時祭饗,民懷其德: a standing shrine is a small permanent
+    // civic good, and the counterweight to razing your way across the map.
+    const shrine = (input.shrines ?? []).find((sh) => sh.cityId === city.id);
+    const shrineEff = shrine ? shrineEffects(shrine.renown) : null;
     const bestIntellect = cityOfficers.reduce((m, o) => Math.max(m, o.stats.intelligence), 0);
     const nextCulture = city.ownerForceId
-      ? Math.max(0, Math.min(100, (city.culture ?? 0) + cultureGain(hasSchoolHere, bestIntellect)))
+      ? Math.max(0, Math.min(100, (city.culture ?? 0) + cultureGain(hasSchoolHere, bestIntellect)
+          + (shrineEff?.culturePerSeason ?? 0)))
       : (city.culture ?? 0);
     // 律令 (§1.11) — the realm's legal code colours everything civic here: how
     // fast graft accrues, how fast the docket fills, and the standing loyalty
@@ -2576,7 +2584,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         })
       : (city.hiddenHouseholds ?? 0);
     const docket = caseloadPenalty(nextCaseload);
-    let lawLoyalty = (city.ownerForceId ? law.loyaltyDelta + corveeEff.loyaltyDelta : 0) + docket.loyaltyDelta;
+    let lawLoyalty = (city.ownerForceId ? law.loyaltyDelta + corveeEff.loyaltyDelta + (shrineEff?.loyaltyPerSeason ?? 0) : 0) + docket.loyaltyDelta;
     if (city.ownerForceId && rng() < wrongfulConvictionChance({
       caseload: nextCaseload, severity, judgePolitics: bestPolitics,
     })) {

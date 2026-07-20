@@ -202,6 +202,9 @@ import { isMinorRuler, pickRegent, regentAmbitionBoost, consortAmbitionBoost, or
 import { LADDER_STAGES, LADDER_TOP, overmightyMinister, ladderAdvanceChance, cabalCandidates, righteousReason } from '../systems/usurpation';
 import { commonerArrivalCity, generateCommonerOfficer, lordTalentDraw, commonerArrivalChance } from '../systems/commonerTalent';
 import { rollRecommendations } from '../systems/recommendation';
+import {
+  POEM_GOLD_COST, canBuildShrine, composePoem, poemEffects, poemQuality, shrineCost, shrineEffects,
+} from '../systems/culturalWorks';
 import { effectiveSelection, rectifierOf, selectionAvailable, selectionLoyaltyDrift, SELECTION_NAMES, type SelectionSystem } from '../systems/officialSelection';
 import { codexMarkRecruited, codexMarkRecruitedMany, codexMarkSeen, codexMarkSlain, loadCodex, CODEX_MILESTONES, codexClaimMilestone } from '../systems/codex';
 import { itemCodexMarkCarried, ITEM_CODEX_MILESTONES, itemCodexClaimMilestone } from '../systems/itemCodex';
@@ -334,7 +337,7 @@ import { canPlayerAttackPort, migratePorts, navalReachableCityIds } from '../dat
 import { canPlayerAttackFort, migrateForts } from '../data/forts';
 import { canPlayerSeizeSite, migrateSites } from '../data/sites';
 import { tickWildSites } from '../systems/sites';
-import { SCENIC_BY_ID, canVisitScenic, rollHermitRecruit } from '../data/scenicSites';
+import { SCENIC_BY_ID, SCENIC_SITES, canVisitScenic, rollHermitRecruit } from '../data/scenicSites';
 import { razedCity, rebuiltCity, rebuildCost, conquestPopulationLoss } from '../systems/cityRuin';
 import { buildSpecialtyTradeRoutes, tickSpecialtyTrade, specialtyEntrepotIncome } from '../systems/tradeRoutes';
 import { fortMaxHpForLevel, FACILITY_DEFS, type FacilityKind } from '../types';
@@ -1212,6 +1215,12 @@ export interface GameStore extends GameState {
   /** 律令 (§1.11) — set the realm's legal code (寬刑/平律/峻法). Takes effect at
    *  the next season tick: loyalty drift, graft, tax yield and docket growth. */
   setLawCode: (severity: import('../systems/law').LawSeverity) => void;
+  /** 題詠 (§1.13) — an officer of letters composes at his city. Costs gold and
+   *  the officer's season; the poem enters the realm's 文集. */
+  composePoemAt: (officerId: EntityId, occasion?: import('../systems/culturalWorks').PoemOccasion)
+    => { ok: boolean; message: string; poem?: import('../systems/culturalWorks').Poem };
+  /** 立祠 (§1.13) — raise a shrine to an officer who has died (one per city). */
+  buildShrine: (officerId: EntityId, cityId: EntityId) => { ok: boolean; message: string };
   /** 選官之制 (§3.6) — adopt a recruitment system (察舉/九品中正/開科取士).
    *  Refused when the realm can't support it (太學/中正/疆土). */
   setSelectionSystem: (sys: SelectionSystem) => { ok: boolean; message: string };
@@ -4378,6 +4387,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           officers: planned.officers,
           lawCode: state.lawCode,
           corvee: state.corvee,
+          shrines: state.shrines,
           buildings: state.buildings,
           forces: forcesAfterCourt,
           pendingCommands: planned.pendingCommands,
@@ -15115,6 +15125,101 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         return { lawCode: { ...s.lawCode, [fid]: severity } };
       }),
 
+      // ── 文華 §1.13 題詠與立祠 ──
+      composePoemAt: (officerId, occasion) => {
+        const s = get();
+        const o = s.officers[officerId];
+        if (!o || o.forceId !== s.playerForceId) return { ok: false, message: '非我臣屬。' };
+        if (o.status !== 'idle') return { ok: false, message: `${o.name.zh}正有職事在身。` };
+        const city = o.locationCityId ? s.cities[o.locationCityId] : null;
+        if (!city) return { ok: false, message: '其人不在城中。' };
+        if (city.gold < POEM_GOLD_COST) return { ok: false, message: `需 ${POEM_GOLD_COST} 金備筆墨酒饌(此城 ${city.gold})。` };
+        // 名勝之地 — a city with a famous site is worth writing about; so is a
+        // city of letters. Both lift what an ordinary talent can produce here.
+        const scenic = SCENIC_SITES.some((site) => (site.guards ?? []).includes(city.id));
+        const occ = occasion ?? (scenic ? 'scenic' : 'banquet');
+        const quality = poemQuality({
+          author: o, occasion: occ,
+          occasionWeight: scenic ? 1 : 0,
+          culture: city.culture ?? 0,
+          rng: Math.random,
+        });
+        const poem = composePoem({
+          author: o, cityId: city.id, cityNameZh: city.name.zh,
+          year: s.date.year, season: s.date.season, occasion: occ, quality, rng: Math.random,
+        });
+        const eff = poemEffects(quality);
+        set({
+          poems: [...(s.poems ?? []), poem].slice(-200),
+          cities: {
+            ...s.cities,
+            [city.id]: {
+              ...city,
+              gold: city.gold - POEM_GOLD_COST,
+              culture: Math.min(100, (city.culture ?? 0) + eff.cultureGain),
+              loyalty: Math.min(100, city.loyalty + eff.loyaltyGain),
+            },
+          },
+          officers: {
+            ...s.officers,
+            [o.id]: { ...o, renown: (o.renown ?? 0) + eff.renownGain },
+          },
+        });
+        if (eff.memorable) {
+          get().recordAnnal?.({
+            year: s.date.year, season: s.date.season, kind: 'event',
+            cityId: city.id,
+            titleZh: `${o.name.zh}${poem.titleZh}`,
+            textZh: `${poem.linesZh.join(';')}。—— ${eff.tierZh},傳於士林。`,
+          });
+        }
+        return {
+          ok: true,
+          message: `《${poem.titleZh}》— ${eff.tierZh}(文教 +${eff.cultureGain}、民忠 +${eff.loyaltyGain}、威望 +${eff.renownGain})`,
+          poem,
+        };
+      },
+
+      buildShrine: (officerId, cityId) => {
+        const s = get();
+        const o = s.officers[officerId];
+        const city = s.cities[cityId];
+        if (!o || !city) return { ok: false, message: '無此人或無此城。' };
+        if (o.status !== 'dead') return { ok: false, message: `${o.name.zh}尚在人世,立祠不祥。` };
+        if (city.ownerForceId !== s.playerForceId) return { ok: false, message: '非我屬城。' };
+        const guard = canBuildShrine(s.shrines ?? [], cityId, officerId);
+        if (!guard.ok) return { ok: false, message: guard.reasonZh ?? '不可立祠。' };
+        const cost = shrineCost(o.renown ?? 0);
+        if (city.gold < cost) return { ok: false, message: `立祠需 ${cost} 金(此城 ${city.gold})。` };
+        const eff = shrineEffects(o.renown ?? 0);
+        // 其族感懷 — kin of the honoured man serve more willingly.
+        const kinClan = clanOf(o);
+        const officers = { ...s.officers };
+        if (kinClan) {
+          for (const other of Object.values(officers)) {
+            if (other.forceId !== s.playerForceId || other.status === 'dead') continue;
+            if (clanOf(other) !== kinClan) continue;
+            officers[other.id] = { ...other, loyalty: Math.min(100, other.loyalty + eff.clanLoyalty) };
+          }
+        }
+        set({
+          shrines: [...(s.shrines ?? []), {
+            id: `shrine-${officerId}`, officerId, cityId, year: s.date.year, renown: o.renown ?? 0,
+          }],
+          cities: { ...s.cities, [cityId]: { ...city, gold: city.gold - cost } },
+          officers,
+        });
+        get().recordAnnal?.({
+          year: s.date.year, season: s.date.season, kind: 'rite', cityId,
+          titleZh: `${city.name.zh}立${o.name.zh}祠`,
+          textZh: `為故將${o.name.zh}立祠於${city.name.zh},歲時祭饗,民懷其德。`,
+        });
+        return {
+          ok: true,
+          message: `${o.name.zh}祠成於${city.name.zh}(費 ${cost} 金)—— 每季民忠 +${eff.loyaltyPerSeason}、文教 +${eff.culturePerSeason}${kinClan ? `,其族忠誠 +${eff.clanLoyalty}` : ''}。`,
+        };
+      },
+
       setSelectionSystem: (sys) => {
         const s = get();
         const fid = s.playerForceId;
@@ -18079,6 +18184,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         moonLaurel: state.moonLaurel,
         lawCode: state.lawCode,
         corvee: state.corvee,
+        poems: state.poems,
+        shrines: state.shrines,
         selectionSystem: state.selectionSystem,
         lastAmnestyYear: state.lastAmnestyYear,
         pendingPersuasions: state.pendingPersuasions,
