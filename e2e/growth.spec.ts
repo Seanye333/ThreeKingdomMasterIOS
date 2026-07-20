@@ -60,6 +60,14 @@ test('city panel shows the 特訓 command', async ({ page }) => {
   await page.locator('canvas').first().click().catch(() => {});
   await page.keyboard.press('Tab');
 
+  // 特訓 lives on the 軍務 tab of the (now tabbed) city sidebar — open it first.
+  // Before the tabbed rewrite the command menu was one long list; this spec was
+  // silently red from then until 2026-07-20.
+  // Scope to the sidebar's own tab strip: the top bar ALSO has a 軍務 menu.
+  const milTab = page.locator('nav button', { hasText: /^軍務/ }).first();
+  await expect(milTab).toBeVisible({ timeout: 15_000 });
+  await milTab.click();
+
   // The 特訓 command button must render in the city's order menu.
   await expect(page.getByText('特訓', { exact: false }).first()).toBeVisible({ timeout: 10_000 });
 

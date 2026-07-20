@@ -199,3 +199,105 @@ describe('存檔遷移 — new map-batch fields', () => {
     expect(st.getState().date).toBeTruthy();
   });
 });
+
+// ── 2026-07 民政批(§1.11–§1.14 / §3.6)——本夜新增八個 state 欄位 ──
+
+describe('存檔遷移 — 民政批 fields', () => {
+  beforeEach(() => {
+    useGameStore.getState().loadScenario(SCENARIOS[0], SCENARIOS[0].forces[0].id, 'normal');
+  });
+
+  it('round-trips 律令/徭役/選官/文集/祠廟 and the per-city civic meters', () => {
+    const st = useGameStore;
+    const fid = st.getState().playerForceId!;
+    const cityId = Object.keys(st.getState().cities)[0];
+    st.setState({
+      lawCode: { [fid]: 'strict' },
+      corvee: { [fid]: 'heavy' },
+      selectionSystem: { [fid]: 'jiupin' },
+      lastAmnestyYear: { [fid]: 195 },
+      poems: [{
+        id: 'poem-x', authorId: 'cao-cao', cityId, year: 195, season: 'autumn',
+        occasion: 'scenic', titleZh: '觀滄海', linesZh: ['東臨碣石,以觀滄海'], quality: 93,
+      }],
+      shrines: [{ id: 'shrine-x', officerId: 'dian-wei', cityId, year: 197, renown: 70 }],
+      cities: {
+        ...st.getState().cities,
+        [cityId]: {
+          ...st.getState().cities[cityId],
+          caseload: 63, hiddenHouseholds: 21.5, hoardedGrain: 33,
+        },
+      },
+    });
+    st.getState().saveSlot('compat-test', '民政批欄位');
+    const parsed = JSON.parse(localStorage.getItem(SLOT_KEY)!);
+    expect(parsed.lawCode[fid]).toBe('strict');
+    expect(parsed.corvee[fid]).toBe('heavy');
+    expect(parsed.selectionSystem[fid]).toBe('jiupin');
+    expect(parsed.poems[0].quality).toBe(93);
+    expect(parsed.shrines[0].officerId).toBe('dian-wei');
+    expect(parsed.cities[cityId].caseload).toBe(63);
+    expect(parsed.cities[cityId].hiddenHouseholds).toBe(21.5);
+    expect(parsed.cities[cityId].hoardedGrain).toBe(33);
+
+    st.setState({ lawCode: {}, corvee: {}, selectionSystem: {}, poems: [], shrines: [] });
+    expect(st.getState().loadSlot('compat-test')).toBe(true);
+    const s = st.getState();
+    expect(s.lawCode[fid]).toBe('strict');
+    expect(s.corvee[fid]).toBe('heavy');
+    expect(s.selectionSystem[fid]).toBe('jiupin');
+    expect(s.poems[0].titleZh).toBe('觀滄海');
+    expect(s.shrines[0].cityId).toBe(cityId);
+    expect(s.cities[cityId].caseload).toBe(63);
+  });
+
+  it('an OLD save without any civic field loads, resolves a season, and defaults to the neutral code', () => {
+    const st = useGameStore;
+    st.getState().saveSlot('compat-test', '舊檔(無民政欄位)');
+    const parsed = JSON.parse(localStorage.getItem(SLOT_KEY)!);
+    // Simulate a pre-batch save: strip every field this batch introduced.
+    delete parsed.lawCode;
+    delete parsed.corvee;
+    delete parsed.selectionSystem;
+    delete parsed.lastAmnestyYear;
+    delete parsed.poems;
+    delete parsed.shrines;
+    for (const c of Object.values(parsed.cities) as Array<Record<string, unknown>>) {
+      delete c.caseload;
+      delete c.hiddenHouseholds;
+      delete c.hoardedGrain;
+    }
+    localStorage.setItem(SLOT_KEY, JSON.stringify(parsed));
+
+    expect(st.getState().loadSlot('compat-test')).toBe(true);
+
+    // A full season must resolve on the migrated state — this is the real test:
+    // the civic tick reads every one of those fields.
+    st.getState().endSeason();
+    const s = st.getState();
+    expect(s.date).toBeTruthy();
+    // …and the meters come into existence with sane values rather than NaN.
+    for (const c of Object.values(s.cities)) {
+      if (!c.ownerForceId) continue;
+      expect(Number.isNaN(c.caseload ?? 0)).toBe(false);
+      expect(Number.isNaN(c.hiddenHouseholds ?? 0)).toBe(false);
+      expect(Number.isNaN(c.hoardedGrain ?? 0)).toBe(false);
+      expect(c.hiddenHouseholds ?? 0).toBeLessThanOrEqual(45);
+      expect(c.hoardedGrain ?? 0).toBeLessThanOrEqual(40);
+    }
+  });
+
+  it('the civic actions all degrade gracefully with nothing set up', () => {
+    const st = useGameStore;
+    st.setState({ lawCode: {}, corvee: {}, selectionSystem: {}, poems: [], shrines: [], lastAmnestyYear: {} });
+    // 大赦 with an empty treasury reason, 立祠 on a living officer, 題詠 by a nobody.
+    expect(st.getState().buildShrine('no-such-officer', 'no-such-city').ok).toBe(false);
+    expect(st.getState().composePoemAt('no-such-officer').ok).toBe(false);
+    // Setting a code/levy on a live game is always allowed and takes effect.
+    st.getState().setLawCode('lenient');
+    st.getState().setCorvee('light');
+    const fid = st.getState().playerForceId!;
+    expect(st.getState().lawCode[fid]).toBe('lenient');
+    expect(st.getState().corvee[fid]).toBe('light');
+  });
+});

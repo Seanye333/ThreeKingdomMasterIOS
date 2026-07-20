@@ -24,10 +24,14 @@ test('treasury shows the Specialty Dominion panel', async ({ page }) => {
   // In the realm — the top bar mounts.
   await expect(page.getByText('武將', { exact: false }).first()).toBeVisible({ timeout: 30_000 });
 
-  // Open the 記錄 (Records) menu → 度支 (Treasury), then assert the new 名產版圖
-  // (Specialty Dominion) panel is present inside the ledger.
-  await page.getByRole('button', { name: '記錄', exact: false }).first().click();
-  await page.getByText('度支', { exact: false }).first().click();
+  // Open the 內政 (Domestic) menu → 度支 (Treasury), then assert the new 名產版圖
+  // (Specialty Dominion) panel is present inside the ledger. (The ledger moved
+  // from 記錄 to 內政 when the top bar was re-cut by intent — this spec was
+  // silently red until 2026-07-20.)
+  await page.getByRole('button', { name: '內政', exact: false }).first().click();
+  // Exact match on the menu BUTTON — a loose text match also hits the trigger's
+  // own tooltip ("內政 — 郡縣、輜重、度支、賑災"), which cannot be clicked.
+  await page.getByRole('button', { name: '度支', exact: true }).first().click();
   await expect(page.getByText('名產版圖', { exact: false })).toBeVisible({ timeout: 10_000 });
 
   expect(errors, `uncaught page errors: ${errors.join(' | ')}`).toHaveLength(0);
