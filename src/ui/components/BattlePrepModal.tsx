@@ -7,6 +7,7 @@ import { regionalTacticalWeather } from '../../game/systems/weather';
 import {
   navalContextFor, drillTier, seasickness, fleetSize, DRILL_TIER_NAMES,
 } from '../../game/systems/navalWarfare';
+import { TERRAIN_GLYPH } from '../screens/battle3d/terrainLabels';
 import { cityPos } from '../../game/data/cityGeo';
 import { isRiverside } from '../../game/data/geography';
 import { useGameStore } from '../../game/state/store';
@@ -428,15 +429,11 @@ export function BattlePrepModal({
             for (const k of Object.values(namedMap.terrainOverrides)) {
               counts[k] = (counts[k] ?? 0) + 1;
             }
-            const labelZh: Record<string, string> = {
-              plain: '平原', forest: '森林', mountain: '山', river: '河',
-              road: '道', hill: '高地', marsh: '沼', chokepoint: '隘',
-              bridge: '橋', gate: '城門', watchtower: '瞭望',
-            };
+            const labelZh = TERRAIN_GLYPH;
             const colorBy: Record<string, string> = {
               plain: '#4a5e30', forest: '#2a4220', mountain: '#5a4838',
               river: '#2c5882', road: '#7a6038', hill: '#7a6238',
-              marsh: '#3a4838', chokepoint: '#364654', bridge: '#8a6840',
+              marsh: '#3a4838', shallows: '#5a86a0', reeds: '#5e7a4a', chokepoint: '#364654', bridge: '#8a6840',
               gate: '#4a2820', watchtower: '#7a8893',
             };
             const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
@@ -461,7 +458,7 @@ export function BattlePrepModal({
                       display: 'inline-block', width: 6, height: 6,
                       background: colorBy[k] ?? '#364654',
                     }} />
-                    {labelZh[k] ?? k} × {n}
+                    {labelZh[k as keyof typeof labelZh] ?? k} × {n}
                   </span>
                 ))}
               </div>

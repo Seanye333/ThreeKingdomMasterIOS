@@ -9,6 +9,7 @@ import {
 import { ToneMappingMode } from 'postprocessing';
 import * as THREE from 'three';
 import { RENDER_HI } from '../renderQuality';
+import { TERRAIN_LABEL } from './battle3d/terrainLabels';
 import { OfficerPortrait } from '../components/OfficerPortrait';
 import { useGameStore } from '../../game/state/store';
 import { playSfx, playFxSfx, startBattleAmbience, stopBattleAmbience, playMusic, stopMusic, type MusicTrack } from '../../game/systems/sound';
@@ -4555,14 +4556,8 @@ export function TacticalBattleScreen3D() {
           // defence shield, move cost, and (with one of yours selected)
           // how the ground bends that unit's blows.
           const tl = tileAt(battle, hovered);
-          const TER_ZH: Record<string, [string, string]> = {
-            plain: ['平原', 'Plain'], forest: ['森林', 'Forest'], mountain: ['山地', 'Mountain'],
-            river: ['大河', 'River'], road: ['道路', 'Road'], ice: ['冰面', 'Ice'],
-            hill: ['高地', 'Hill'], marsh: ['沼澤', 'Marsh'], desert: ['沙磧', 'Desert'],
-            chokepoint: ['隘口', 'Defile'], bridge: ['橋樑', 'Bridge'], gate: ['城門', 'Gate'],
-            wall: ['城牆', 'Wall'], watchtower: ['瞭望台', 'Watchtower'], fieldworks: ['築壘', 'Fieldworks'],
-          };
-          const ter = tl ? (TER_ZH[tl.terrain] ?? [tl.terrain, tl.terrain]) : null;
+          const terLabel = tl ? TERRAIN_LABEL[tl.terrain] : null;
+          const ter: [string, string] | null = terLabel ? [terLabel.zh, terLabel.en] : null;
           const shield = tl ? defenderTerrainShield(tl.terrain) : 1;
           const cost = moveCost(battle, hovered);
           const atkMod = tl && mine ? terrainDamageMod(selectedUnit!.unitType, tl.terrain) : 1;
