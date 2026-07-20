@@ -1229,7 +1229,9 @@ function decideCommand(
     const o = bestForCommand(officersHere, 'politics', 'curb-hoarding', prefectId);
     if (o) return internalDecision('curb-hoarding', city, o);
   }
-  if ((city.hiddenHouseholds ?? 0) >= 22 && canAfford(city, 'household-audit')) {
+  // 括戶 threshold sits BELOW the player-facing warning (18): a 60-year soak
+  // showed AI realms plateau around 11% hidden, so a 22 gate was dead code.
+  if ((city.hiddenHouseholds ?? 0) >= 16 && canAfford(city, 'household-audit')) {
     const o = bestForCommand(officersHere, 'politics', 'household-audit', prefectId);
     if (o) return internalDecision('household-audit', city, o);
   }
