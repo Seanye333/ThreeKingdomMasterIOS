@@ -44,12 +44,16 @@ export function planConvoy(opts: {
   naval?: boolean;
   woodenOx?: boolean;
   cautious?: boolean;
+  /** 大工 (§1.15) — realm-wide convoy-loss multiplier from finished works
+   *  (運渠 ×0.7, 馳道 ×0.8, both ×0.56). Default 1. */
+  worksLossMul?: number;
 }): { seasons: number; keepFrac: number } {
   const base = Math.max(1, opts.baseSeasons);
   let lossFrac = Math.min(0.4, 0.06 * (base - 1));
   if (opts.season === 'winter') lossFrac += 0.04;
   if (opts.naval) lossFrac *= 0.5;
   if (opts.woodenOx) lossFrac *= 0.5;
+  lossFrac *= Math.max(0, Math.min(1, opts.worksLossMul ?? 1));
   lossFrac = Math.max(0, Math.min(0.5, lossFrac));
   let seasons = base;
   if (opts.naval) seasons = Math.round(seasons * 0.7);

@@ -1,10 +1,13 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { LAW_NAMES, LAW_SEVERITIES, lawEffects, type LawSeverity } from '../../game/systems/law';
 import {
   CORVEE_LEVELS, CORVEE_NAMES, corveeEffects, hiddenTier, registryYieldMul, type CorveeLevel,
 } from '../../game/systems/household';
 import { usePanelNotice } from './usePanelNotice';
+import {
+  GRAND_PROJECTS, PROJECTS_BY_ID, projectEta, projectSeasonProgress, type GrandProjectId,
+} from '../../game/systems/grandProjects';
 import { realmBudget, TAX_EFFECT } from '../../game/systems/economy';
 import type { TaxRate } from '../../game/types';
 import { useT } from '../i18n';
@@ -37,6 +40,12 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
   const setLawCode = useGameStore((s) => s.setLawCode);
   const proclaimAmnesty = useGameStore((s) => s.proclaimAmnesty);
   const corvee: CorveeLevel = useGameStore((s) => (playerForceId ? s.corvee?.[playerForceId] : undefined) ?? 'none');
+  // §1.15 大工
+  const grandProjects = useGameStore((s) => s.grandProjects ?? []);
+  const startGrandProject = useGameStore((s) => s.startGrandProject);
+  const abandonGrandProject = useGameStore((s) => s.abandonGrandProject);
+  const [projectPick, setProjectPick] = useState('');
+  const [projectCity, setProjectCity] = useState('');
   const setCorvee = useGameStore((s) => s.setCorvee);
   const { notify, noticeUI } = usePanelNotice();
   const inflation = useGameStore((s) => s.inflation ?? 0);
@@ -104,6 +113,14 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
   const meanCaseload = ownCityList.length > 0
     ? ownCityList.reduce((a, c) => a + (c.caseload ?? 0), 0) / ownCityList.length
     : 0;
+  const activeProject = grandProjects.find((p) => p.forceId === playerForceId && !p.done) ?? null;
+  const doneProjectIds = new Set(grandProjects.filter((p) => p.forceId === playerForceId && p.done).map((p) => p.id));
+  const projectProgress = activeProject
+    ? projectSeasonProgress({
+        corvee,
+        hiddenPercent: cities[activeProject.cityId]?.hiddenHouseholds ?? 0,
+      })
+    : projectSeasonProgress({ corvee });
   const meanHidden = ownCityList.length > 0
     ? ownCityList.reduce((a, c) => a + (c.hiddenHouseholds ?? 0), 0) / ownCityList.length
     : 0;
@@ -277,6 +294,66 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
               {t(`全境獄訟一空 · 民忠大進 · 盜賊復起(平均積案 ${Math.round(meanCaseload)})`,
                  `Empties every docket, loyalty surges, banditry follows (mean docket ${Math.round(meanCaseload)})`)}
             </span>
+          </div>
+        )}
+
+        {/* 大工 (§1.15) — the realm's one great work. */}
+        {playerForceId && (
+          <div style={{
+            marginBottom: '0.5rem', padding: '0.4rem 0.6rem',
+            border: '1px solid #3a3020', borderRadius: 'var(--tkm-radius-sm)', background: '#141009',
+          }}>
+            {activeProject ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <span style={{ color: '#e6c473', fontSize: '0.8rem' }}>
+                  🏗 {t(PROJECTS_BY_ID[activeProject.id].name.zh, PROJECTS_BY_ID[activeProject.id].name.en)}
+                </span>
+                <span style={{ color: '#9fb0bd', fontSize: '0.75rem' }}>
+                  {t(`於${cities[activeProject.cityId]?.name.zh ?? '?'} · 尚需約 ${projectEta(activeProject.seasonsLeft, projectProgress)} 季`,
+                     `at ${cities[activeProject.cityId]?.name.en ?? '?'} · ~${projectEta(activeProject.seasonsLeft, projectProgress)} seasons left`)}
+                </span>
+                <span style={{ color: '#8a7a5a', fontSize: '0.7rem', flex: 1 }}>
+                  {t(`役夫進度 ×${projectProgress}(重役加快、隱戶拖慢)`,
+                     `labour rate ×${projectProgress} (heavy corvée speeds it, hidden households slow it)`)}
+                </span>
+                <button type="button" onClick={() => { const r = abandonGrandProject(); notify(r.message, r.ok); }}
+                  style={{ background: 'transparent', border: '1px solid #6a3a30', color: '#c08070', padding: '0.15rem 0.5rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.72rem' }}
+                >{t('罷役', 'Abandon')}</button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <span style={{ color: '#7a8893', fontSize: '0.78rem' }}>{t('大工', 'Great work')}</span>
+                <select value={projectPick} onChange={(e) => setProjectPick(e.target.value)}
+                  style={{ background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473', fontSize: '0.72rem', borderRadius: 'var(--tkm-radius-xs)' }}>
+                  <option value="">{t('— 擇工 —', '— pick —')}</option>
+                  {GRAND_PROJECTS.filter((d) => !doneProjectIds.has(d.id)).map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {t(`${d.name.zh}(${d.goldCost}金 · ${d.baseSeasons}季)`, `${d.name.en} (${d.goldCost}g · ${d.baseSeasons}s)`)}
+                    </option>
+                  ))}
+                </select>
+                <select value={projectCity} onChange={(e) => setProjectCity(e.target.value)}
+                  style={{ background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473', fontSize: '0.72rem', borderRadius: 'var(--tkm-radius-xs)' }}>
+                  <option value="">{t('— 擇地 —', '— where —')}</option>
+                  {ownCityList.map((c) => (
+                    <option key={c.id} value={c.id}>{t(`${c.name.zh}(金${c.gold})`, `${c.name.en} (${c.gold}g)`)}</option>
+                  ))}
+                </select>
+                <button type="button" disabled={!projectPick || !projectCity}
+                  onClick={() => {
+                    const r = startGrandProject(projectPick as GrandProjectId, projectCity);
+                    notify(r.message, r.ok);
+                    if (r.ok) { setProjectPick(''); setProjectCity(''); }
+                  }}
+                  style={{ background: 'transparent', border: '1px solid #2b3845', color: !projectPick || !projectCity ? '#4a5568' : '#9fb0bd', padding: '0.15rem 0.55rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.72rem' }}
+                >{t('興工', 'Begin')}</button>
+                <span style={{ color: '#5f6c76', fontSize: '0.7rem', flex: 1 }}>
+                  {projectPick
+                    ? t(PROJECTS_BY_ID[projectPick as GrandProjectId].effectZh, PROJECTS_BY_ID[projectPick as GrandProjectId].effectEn)
+                    : t('一國一大工 —— 數年之功,永世之利', 'One great work at a time — years of labour, a lasting good')}
+                </span>
+              </div>
+            )}
           </div>
         )}
 

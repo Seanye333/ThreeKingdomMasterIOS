@@ -11,7 +11,7 @@
 | # | 章節 | 涵蓋系統 | 狀態 |
 |---|---|---|---|
 | 速 | [速查總表 Quick Reference](#速查總表-quick-reference) | 一頁掃完所有關鍵常數 / 公式 / 成本 / 機率 | ✅ |
-| 1 | [城市・內政・經濟](#第一章-城市內政經濟) | citySize, economy, commands, civicEvents, market(行情/榷場/馬市/鐵市), buildings(含戰損修繕), cityCivic(民情街景/城中人物/晝夜/街頭際遇/官邸家眷), autoBuild, policyEffects, **law(律令寬嚴/訟獄積案/決獄/冤獄/大赦)**, **household(隱戶/徭役/括戶)**, **culturalWorks(題詠/文集/立祠)**, **hoarding(囤積居奇/抑兼併)**, forging, specialties, specialtyEvents, tradeRoutes, convoy | ✅ |
+| 1 | [城市・內政・經濟](#第一章-城市內政經濟) | citySize, economy, commands, civicEvents, market(行情/榷場/馬市/鐵市), buildings(含戰損修繕), cityCivic(民情街景/城中人物/晝夜/街頭際遇/官邸家眷), autoBuild, policyEffects, **law(律令寬嚴/訟獄積案/決獄/冤獄/大赦)**, **household(隱戶/徭役/括戶)**, **culturalWorks(題詠/文集/立祠)**, **hoarding(囤積居奇/抑兼併)**, **grandProjects(大堰/運渠/長城/馳道)**, forging, specialties, specialtyEvents, tradeRoutes, convoy | ✅ |
 | 2 | [武將・成長・家族](#第二章-武將成長家族) | growth, officerGrade, gradeCombat, officerFate, traitEffects, personality, biography, posthumous, aging, officerGen, family, clans, retinues, wishes, rapport, friction, relationshipEffects, career, codex, peerage, honorifics, battlePower(武將卡/開卡) | ✅ |
 | 3 | [人才・招攬・舌戰](#第三章-人才招攬舌戰) | commands(search), officerFate, recommendation, commonerTalent, appraisal(月旦評), **officialSelection(察舉/九品中正/開科取士/中正官)**, scenicSites(三顧), captiveFate(處決後果/AI處置), aiRansom, debate, wordWar, persuasion(說客) | ✅ |
 | 4 | [軍事指揮・委任](#第四章-軍事指揮委任) | muster, legion(都督之斷·長圍), governor, governorEval, advisor, 在途指令(駐守/設伏/圍城/焚橋/燒鎖/補給/分兵/召回), rout(潰軍/掩殺收降/殿軍斷後) | ✅ |
@@ -185,6 +185,8 @@
 
 | 囤積居奇(§1.14) | 壓力=糧價(貴.55/平.20/賤.05)+律令(峻−.18/寬+.12)+貪腐/100×.25+民心(<40 +.10/≥75 −.08)−常平倉×0.9;≥0.5 每季+4~10、<0.25 每季−3;報價×(1−囤%×1.2/100)、入廩糧×(1−囤%×.5/100)、囤≥8/20 民忠−1/−2 |
 | 抑兼併(§1.14) | 180金;清 (6+政治/8)×律令威權(1.25/1.0/0.75) 個百分點 → 糧入公廩、民忠+清幅/2(頂8)、商業−清幅/3、豪右銜恨 |
+
+| 大工(§1.15) | 大堰3200/12季 · 運渠3800/14季 · 長城4200/16季 · 馳道2800/10季;役夫進度=徭役(1.0/1.4/2.2)×(1−隱戶%×0.8/100,頂−35%);一國一工,工地易主即廢 |
 
 ### 內政命令成本(金)
 
@@ -1074,6 +1076,28 @@
 - **選官**按朝中成分:**世家佔比 ≥50% 且 ≥5 城 → 自動九品中正**(門閥自我制度化);儒者性格且世家佔比 <30% → **開科取士**;其餘察舉。此值**由名冊推導、不入存檔**,所以一國十年間朝中換了人,制度也會跟著漂移。
 
 存檔:`City.hoardedGrain` 缺欄視同 0(舊檔第一季才開始累積)。
+
+---
+
+### 1.15 大工:多年工程(grandProjects.ts,2026-07)
+
+都江堰修了許多年,然後養了蜀地八百年;鄭國渠本是拖垮秦國民力的陰謀,最後餵飽了滅六國的那支軍隊。**大工是一場賭注:你賭自己在它完工的那天還站著。**
+
+這也正是 §1.12 **重役存在的理由** —— 重役毀你的民心、你的收成、你的版籍,而它是戰火燒到之前把大工建起來的唯一辦法。
+
+| 大工 | 金 | 息役工期 | 民心/季 | 工成之利 |
+|---|---|---|---|---|
+| **大堰**(都江堰) | 3200 | 12 季 | −1 | 本城與所有鄰城 **農業 +30、治水 +3**(近乎免疫水患) |
+| **運渠**(漕運) | 3800 | 14 季 | −1 | 本城與鄰城 **商業 +25**;全境**輜重折損 ×0.7** |
+| **長城** | 4200 | 16 季 | −2 | 本城與鄰城 **守備 +25**;異族寇邊 ×0.55 |
+| **馳道** | 2800 | 10 季 | −1 | 全境**行軍疲勞 ×0.75、輜重折損 ×0.8**(無城市加成,全在國力) |
+
+- **役夫進度** = 徭役(息役 1.0 / 薄役 1.4 / **重役 2.2**)×(1 − 隱戶%×0.8/100,最多 −35%)。**看不見的人徵不到役** —— §1.12 的環從另一頭合上:版籍爛掉的國家連工都修得慢。
+- **一國一大工**:同時只能興一項,已成之工不再重築。**工地城池易主則大工作廢**(已費之金不返)。
+- 每季扣工地城民心;運渠與馳道疊乘於輜重折損(兩者皆成 = ×0.56)。
+- 入口在**度支簿**(與律令/徭役同一欄);興工與工成皆入事件簿。
+
+存檔:`grandProjects` 入持久化;推進區塊在 store.endSeason 內、**已加 `seasonBoundary` 閘**(endSeason 每旬呼叫,無閘會三倍速並三倍扣民心)。
 
 ---
 

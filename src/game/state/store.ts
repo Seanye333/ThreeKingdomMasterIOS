@@ -205,6 +205,9 @@ import { rollRecommendations } from '../systems/recommendation';
 import {
   POEM_GOLD_COST, canBuildShrine, composePoem, poemEffects, poemQuality, shrineCost, shrineEffects,
 } from '../systems/culturalWorks';
+import {
+  PROJECTS_BY_ID, canStartProject, projectCityGrants, projectEta, projectRealmEffects, projectSeasonProgress,
+} from '../systems/grandProjects';
 import { effectiveSelection, rectifierOf, selectionAvailable, selectionLoyaltyDrift, aiSelection, SELECTION_NAMES, type SelectionSystem } from '../systems/officialSelection';
 import { codexMarkRecruited, codexMarkRecruitedMany, codexMarkSeen, codexMarkSlain, loadCodex, CODEX_MILESTONES, codexClaimMilestone } from '../systems/codex';
 import { itemCodexMarkCarried, ITEM_CODEX_MILESTONES, itemCodexClaimMilestone } from '../systems/itemCodex';
@@ -1215,6 +1218,13 @@ export interface GameStore extends GameState {
   /** 律令 (§1.11) — set the realm's legal code (寬刑/平律/峻法). Takes effect at
    *  the next season tick: loyalty drift, graft, tax yield and docket growth. */
   setLawCode: (severity: import('../systems/law').LawSeverity) => void;
+  /** 大工 (§1.15) — begin a great public work at one of your cities. One realm,
+   *  one work: it eats gold up front and loyalty every season, and only heavy
+   *  corvée (§1.12) makes the calendar bearable. */
+  startGrandProject: (id: import('../systems/grandProjects').GrandProjectId, cityId: EntityId)
+    => { ok: boolean; message: string };
+  /** 罷役 — abandon the work in progress. The gold is spent and gone. */
+  abandonGrandProject: () => { ok: boolean; message: string };
   /** 題詠 (§1.13) — an officer of letters composes at his city. Costs gold and
    *  the officer's season; the poem enters the realm's 文集. */
   composePoemAt: (officerId: EntityId, occasion?: import('../systems/culturalWorks').PoemOccasion)
@@ -3269,7 +3279,13 @@ export const useGameStore = create<GameStore>()(
         // and gentler on the cargo than an overland haul.
         const naval = !from.adjacentCityIds.includes(to.id) && navalReachableCityIds(fromCityId, state.ports).has(to.id);
         const baseSeasons = Math.max(1, marchDurationFor(from, to, state.date.season));
-        const plan = planConvoy({ baseSeasons, season: state.date.season, officer, naval, woodenOx, cautious });
+        const plan = planConvoy({
+          baseSeasons, season: state.date.season, officer, naval, woodenOx, cautious,
+          // 漕運之利 — a finished 運渠/馳道 keeps more grain on the road (§1.15).
+          worksLossMul: state.playerForceId
+            ? projectRealmEffects(state.grandProjects ?? [], state.playerForceId).convoyLossMul
+            : 1,
+        });
         const keep = plan.keepFrac;
         const arriveFood = Math.floor(shipFood * keep);
         const arriveGold = Math.floor(shipGold * keep);
@@ -6470,6 +6486,74 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               });
             }
           }
+        }
+
+        // ── 大工 §1.15 — advance the realm's great work, and pay for it ──
+        // Guarded by seasonBoundary: endSeason runs every 旬 (3× a season), and
+        // an unguarded block here would treble the pace and the loyalty bill.
+        if (seasonBoundary && (state.grandProjects ?? []).length > 0) {
+          const nextProjects = [...state.grandProjects];
+          for (let i = 0; i < nextProjects.length; i++) {
+            const proj = nextProjects[i];
+            if (proj.done) continue;
+            const host = postCities[proj.cityId];
+            const def = PROJECTS_BY_ID[proj.id];
+            // 城失則工廢 — a work whose host city has changed hands is abandoned.
+            if (!host || host.ownerForceId !== proj.forceId) {
+              nextProjects.splice(i, 1); i--;
+              if (proj.forceId === state.playerForceId) {
+                result.report.entries.push({
+                  cityId: proj.cityId, kind: 'note',
+                  text: `${def.name.en}: the host city is lost — the work is abandoned.`,
+                  textZh: `${def.name.zh}:工地易主,大工遂廢。`,
+                });
+              }
+              continue;
+            }
+            const progress = projectSeasonProgress({
+              corvee: state.corvee?.[proj.forceId],
+              hiddenPercent: host.hiddenHouseholds ?? 0,
+            });
+            const left = Math.max(0, Math.round((proj.seasonsLeft - progress) * 100) / 100);
+            // 民力有時而窮 — the levy is paid in the host city's patience.
+            postCities[proj.cityId] = {
+              ...host,
+              loyalty: Math.max(0, Math.min(100, host.loyalty + def.loyaltyPerSeason)),
+            };
+            if (left > 0) {
+              nextProjects[i] = { ...proj, seasonsLeft: left };
+              continue;
+            }
+            // ── 工成 ──
+            nextProjects[i] = { ...proj, seasonsLeft: 0, done: true };
+            const grants = projectCityGrants(proj.id);
+            const apply = (c: typeof host, g: { agriculture?: number; commerce?: number; defense?: number; floodWorks?: number }) => ({
+              ...c,
+              agriculture: Math.min(400, c.agriculture + (g.agriculture ?? 0)),
+              commerce: Math.min(400, c.commerce + (g.commerce ?? 0)),
+              defense: Math.min(200, c.defense + (g.defense ?? 0)),
+              floodWorks: (c.floodWorks ?? 0) + (g.floodWorks ?? 0),
+            });
+            postCities[proj.cityId] = apply(postCities[proj.cityId], grants.self);
+            for (const adjId of host.adjacentCityIds ?? []) {
+              const adj = postCities[adjId];
+              if (!adj || adj.ownerForceId !== proj.forceId) continue;
+              postCities[adjId] = apply(adj, grants.neighbour);
+            }
+            if (proj.forceId === state.playerForceId) {
+              result.report.entries.unshift({
+                cityId: proj.cityId, kind: 'command-success',
+                text: `${def.name.en} is complete at ${host.name.en} — ${def.effectEn}`,
+                textZh: `${def.name.zh}成於${host.name.zh} —— ${def.effectZh}`,
+              });
+              get().recordAnnal?.({
+                year: result.date.year, season: result.date.season, kind: 'rite', cityId: proj.cityId,
+                titleZh: `${def.name.zh}成`,
+                textZh: `起${proj.startedYear}年,至是歲工竣。${def.flavourZh}`,
+              });
+            }
+          }
+          set({ grandProjects: nextProjects });
         }
 
         // Port ship-build queue tick — decrement seasonsLeft, complete on 0
@@ -15161,6 +15245,49 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       }),
 
       // ── 文華 §1.13 題詠與立祠 ──
+      // ── 大工 §1.15 ──
+      startGrandProject: (id, cityId) => {
+        const s = get();
+        const fid = s.playerForceId;
+        const city = s.cities[cityId];
+        const def = PROJECTS_BY_ID[id];
+        if (!fid || !city || !def) return { ok: false, message: '無此工或無此城。' };
+        if (city.ownerForceId !== fid) return { ok: false, message: '非我屬城。' };
+        const guard = canStartProject(s.grandProjects ?? [], fid, id);
+        if (!guard.ok) return { ok: false, message: guard.reasonZh ?? '不可興工。' };
+        if (city.gold < def.goldCost) {
+          return { ok: false, message: `${def.name.zh}需 ${def.goldCost} 金(此城 ${city.gold})。` };
+        }
+        set({
+          cities: { ...s.cities, [cityId]: { ...city, gold: city.gold - def.goldCost } },
+          grandProjects: [...(s.grandProjects ?? []), {
+            id, cityId, forceId: fid, seasonsLeft: def.baseSeasons, startedYear: s.date.year,
+          }],
+        });
+        get().recordAnnal?.({
+          year: s.date.year, season: s.date.season, kind: 'event', cityId,
+          titleZh: `興${def.name.zh}於${city.name.zh}`,
+          textZh: `${def.flavourZh}徵發役夫,期以歲月。`,
+        });
+        const prog = projectSeasonProgress({
+          corvee: s.corvee?.[fid], hiddenPercent: city.hiddenHouseholds ?? 0,
+        });
+        return {
+          ok: true,
+          message: `${def.name.zh}興工於${city.name.zh}(費 ${def.goldCost} 金)——` +
+            `以今之徭役,約 ${projectEta(def.baseSeasons, prog)} 季可成。`,
+        };
+      },
+
+      abandonGrandProject: () => {
+        const s = get();
+        const fid = s.playerForceId;
+        const cur = (s.grandProjects ?? []).find((p) => p.forceId === fid && !p.done);
+        if (!cur) return { ok: false, message: '國中無大工在興。' };
+        set({ grandProjects: (s.grandProjects ?? []).filter((p) => p !== cur) });
+        return { ok: true, message: `${PROJECTS_BY_ID[cur.id].name.zh}罷役 —— 已費之金不復返,民得少息。` };
+      },
+
       composePoemAt: (officerId, occasion) => {
         const s = get();
         const o = s.officers[officerId];
@@ -18223,6 +18350,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         moonLaurel: state.moonLaurel,
         lawCode: state.lawCode,
         corvee: state.corvee,
+        grandProjects: state.grandProjects,
         poems: state.poems,
         shrines: state.shrines,
         selectionSystem: state.selectionSystem,

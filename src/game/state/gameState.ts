@@ -499,6 +499,8 @@ export interface GameState {
   lawCode: Record<EntityId, import('../systems/law').LawSeverity>;
   /** 徭役 (§1.12) — per-force corvée level (息役/薄役/重役). Absent ⇒ '息役'. */
   corvee: Record<EntityId, import('../systems/household').CorveeLevel>;
+  /** 大工 (§1.15) — great public works under way and finished. */
+  grandProjects: import('../systems/grandProjects').GrandProject[];
   /** 文集 (§1.13) — poems composed in this campaign, newest last. */
   poems: import('../systems/culturalWorks').Poem[];
   /** 祠廟 (§1.13) — shrines raised to the honoured dead (one per city). */
@@ -950,6 +952,7 @@ export const EMPTY_STATE: GameState = {
   taxPolicy: {},
   lawCode: {},
   corvee: {},
+  grandProjects: [],
   poems: [],
   shrines: [],
   selectionSystem: {},
@@ -1424,6 +1427,7 @@ export function loadScenario(
       : {},
     lawCode: {},
     corvee: {},
+    grandProjects: [],
     poems: [],
     shrines: [],
     selectionSystem: {},
