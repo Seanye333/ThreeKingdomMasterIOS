@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { LAW_NAMES, LAW_SEVERITIES, lawEffects, type LawSeverity } from '../../game/systems/law';
+import {
+  CORVEE_LEVELS, CORVEE_NAMES, corveeEffects, hiddenTier, registryYieldMul, type CorveeLevel,
+} from '../../game/systems/household';
 import { usePanelNotice } from './usePanelNotice';
 import { realmBudget, TAX_EFFECT } from '../../game/systems/economy';
 import type { TaxRate } from '../../game/types';
@@ -33,6 +36,8 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
   const law: LawSeverity = useGameStore((s) => (playerForceId ? s.lawCode?.[playerForceId] : undefined) ?? 'standard');
   const setLawCode = useGameStore((s) => s.setLawCode);
   const proclaimAmnesty = useGameStore((s) => s.proclaimAmnesty);
+  const corvee: CorveeLevel = useGameStore((s) => (playerForceId ? s.corvee?.[playerForceId] : undefined) ?? 'none');
+  const setCorvee = useGameStore((s) => s.setCorvee);
   const { notify, noticeUI } = usePanelNotice();
   const inflation = useGameStore((s) => s.inflation ?? 0);
   const mintCoin = useGameStore((s) => s.mintCoin);
@@ -98,6 +103,9 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
   const ownCityList = Object.values(cities).filter((c) => c.ownerForceId === playerForceId);
   const meanCaseload = ownCityList.length > 0
     ? ownCityList.reduce((a, c) => a + (c.caseload ?? 0), 0) / ownCityList.length
+    : 0;
+  const meanHidden = ownCityList.length > 0
+    ? ownCityList.reduce((a, c) => a + (c.hiddenHouseholds ?? 0), 0) / ownCityList.length
     : 0;
 
   const card = { background: '#141c25', border: '1px solid #243240', padding: '0.5rem 0.6rem', borderRadius: 'var(--tkm-radius-sm)' } as const;
@@ -214,6 +222,44 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
             </div>
             <span style={{ color: law === 'strict' ? '#e0a070' : law === 'lenient' ? '#9ad6a8' : '#5f6c76', fontSize: '0.72rem' }}>
               {t(lawEffects(law).badgeZh, lawEffects(law).badgeEn)}
+            </span>
+          </div>
+        )}
+        {/* 徭役 (§1.12) — 息役/薄役/重役. */}
+        {playerForceId && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+            <span style={{ color: '#7a8893', fontSize: '0.78rem' }}>{t('徭役', 'Corvée')}</span>
+            <div style={{ display: 'flex', gap: 3 }}>
+              {CORVEE_LEVELS.map((lv) => (
+                <button
+                  key={lv}
+                  onClick={() => setCorvee(lv)}
+                  style={{
+                    background: corvee === lv ? '#26323e' : 'transparent',
+                    border: `1px solid ${corvee === lv ? '#e6c473' : '#2b3845'}`,
+                    color: corvee === lv ? '#f2dd9a' : '#7a8893',
+                    padding: '0.2rem 0.6rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer',
+                    fontFamily: 'inherit', fontSize: '0.78rem',
+                  }}
+                >{t(CORVEE_NAMES[lv].zh, CORVEE_NAMES[lv].en)}</button>
+              ))}
+            </div>
+            <span style={{ color: corvee === 'heavy' ? '#e0a070' : corvee === 'none' ? '#9ad6a8' : '#5f6c76', fontSize: '0.72rem' }}>
+              {t(corveeEffects(corvee).badgeZh, corveeEffects(corvee).badgeEn)}
+            </span>
+          </div>
+        )}
+        {/* 編戶 — how much of the realm has slipped off the tax registers. */}
+        {playerForceId && meanHidden >= 6 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+            <span style={{ color: '#7a8893', fontSize: '0.78rem' }}>{t('編戶', 'Registers')}</span>
+            <span style={{ color: meanHidden >= 18 ? '#e0a070' : '#9fb0bd', fontSize: '0.78rem' }}>
+              {t(`${hiddenTier(meanHidden).zh} · 全境隱戶約 ${meanHidden.toFixed(1)}%`,
+                 `${hiddenTier(meanHidden).en} · ~${meanHidden.toFixed(1)}% off the books`)}
+            </span>
+            <span style={{ color: '#5f6c76', fontSize: '0.72rem' }}>
+              {t(`租賦僅收 ${(registryYieldMul(meanHidden) * 100).toFixed(0)}% — 遣能吏「括戶」`,
+                 `Only ${(registryYieldMul(meanHidden) * 100).toFixed(0)}% of yield is taxed — assign 括戶`)}
             </span>
           </div>
         )}

@@ -55,6 +55,14 @@ export interface City {
    */
   corruption?: number;
   /**
+   * 隱戶 (§1.12) — percent of this city's population sheltered off the tax
+   * registers by the great houses (2–45). Grows under heavy corvée and a harsh
+   * code, shrinks under light levies and a resident administrator; 括戶 claws it
+   * back by hand. Suppresses gold/food income (registryYieldMul).
+   * Default/omitted = 0, treated as the 2% floor on first tick.
+   */
+  hiddenHouseholds?: number;
+  /**
    * 訟獄積案 (§1.11) — unheard court cases piling up (0–100). Arrives with the
    * population and the realm's legal code; worked down by whoever administers
    * the city (政治), by a 牢城/安民坊 to hold court in, by the 決獄 command, and

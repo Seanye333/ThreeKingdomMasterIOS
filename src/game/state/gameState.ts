@@ -497,6 +497,8 @@ export interface GameState {
   /** 律令 (§1.11) — per-force legal code (寬刑/平律/峻法). Absent ⇒ '平律', so
    *  old saves and every AI force keep the historical neutral behaviour. */
   lawCode: Record<EntityId, import('../systems/law').LawSeverity>;
+  /** 徭役 (§1.12) — per-force corvée level (息役/薄役/重役). Absent ⇒ '息役'. */
+  corvee: Record<EntityId, import('../systems/household').CorveeLevel>;
   /** 大赦 — the game year each force last proclaimed a general amnesty
    *  (§1.11); a pardon means nothing if proclaimed every other season. */
   lastAmnestyYear: Record<EntityId, number>;
@@ -940,6 +942,7 @@ export const EMPTY_STATE: GameState = {
   fogOfWar: false,
   taxPolicy: {},
   lawCode: {},
+  corvee: {},
   lastAmnestyYear: {},
   credibility: {},
   grudges: {},
@@ -1410,6 +1413,7 @@ export function loadScenario(
       ? { [playerForceId]: state.startTaxRate }
       : {},
     lawCode: {},
+    corvee: {},
     lastAmnestyYear: {},
     credibility: state.credibility ?? {},
     grudges: state.grudges ?? {},

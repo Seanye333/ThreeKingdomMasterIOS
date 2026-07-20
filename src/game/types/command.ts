@@ -18,6 +18,7 @@ export type InternalAffairsType =
   | 'promote-learning'    // 興学 — XP burst to stationed officers (教化)
   | 'anti-corruption'     // 巡查肅貪 — claw back graft → city gold + loyalty
   | 'adjudicate'          // 決獄 — hear the backlog of court cases (§1.11)
+  | 'household-audit'     // 括戶 — drag sheltered households back onto the registers (§1.12)
   | 'flood-control'       // 治水 — raise flood works (stacks with levee) + irrigation
   | 'military-farming'    // 屯田 — soldiers till state land: food without drawing population
   | 'drill-troops'        // 練兵 — drill the garrison: raise the city's 練度 (drill) → defense

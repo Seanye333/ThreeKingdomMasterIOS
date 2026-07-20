@@ -8,6 +8,7 @@ import { citySize, nextTierPop, cityCarryingCapacity } from '../../game/systems/
 import { buildingBonuses } from '../../game/systems/buildings';
 import { tickCityEconomy } from '../../game/systems/economy';
 import { caseloadTier } from '../../game/systems/law';
+import { hiddenTier, registryYieldMul } from '../../game/systems/household';
 import type { City, EntityId, Officer } from '../../game/types';
 import { lazy, Suspense } from 'react';
 // 啟動提速 — the city 3D scene (≈175KB) loads when a city is first entered.
@@ -911,7 +912,7 @@ function DevelopmentSection({ city, isPlayerCity }: { city: City; isPlayerCity: 
   const allPending = useGameStore((s) => s.pendingCommands);
   // Which dev stats have an order queued in this city this tick.
   const working = useMemo(() => {
-    const w = { agriculture: false, commerce: false, defense: false, loyalty: false, caseload: false };
+    const w = { agriculture: false, commerce: false, defense: false, loyalty: false, caseload: false, hiddenHouseholds: false };
     if (!isPlayerCity) return w;
     for (const c of Object.values(allPending)) {
       if (c.cityId !== city.id) continue;
@@ -920,6 +921,7 @@ function DevelopmentSection({ city, isPlayerCity }: { city: City; isPlayerCity: 
       else if (c.type === 'build-defense' || c.type === 'major-defense' || c.type === 'upgrade-wall' || c.type === 'drill-troops') w.defense = true;
       else if (c.type === 'improve-loyalty' || c.type === 'relief' || c.type === 'anti-corruption') w.loyalty = true;
       else if (c.type === 'adjudicate') { w.caseload = true; w.loyalty = true; }
+      else if (c.type === 'household-audit') w.hiddenHouseholds = true;
       else if (c.type === 'military-farming') w.agriculture = true;
     }
     return w;
@@ -950,6 +952,14 @@ function DevelopmentSection({ city, isPlayerCity }: { city: City; isPlayerCity: 
       {(city.culture ?? 0) > 0 && (
         <Bar icon="flag" label="Culture" zh="文教" value={city.culture ?? 0} cap={100} tone="#a08fd0"
           note={(city.culture ?? 0) >= 60 ? '文化名城 · 息貪安民' : `息貪 −${Math.round((city.culture ?? 0) / 100 * 35)}%`} />
+      )}
+      {/* 隱戶 (§1.12) — what the registers cannot see, the treasury cannot tax. */}
+      {(city.hiddenHouseholds ?? 0) >= 6 && (
+        <Bar icon="city" label="Off-books" zh="隱戶" value={Math.round(city.hiddenHouseholds ?? 0)} cap={45} tone="#8a9a7a"
+          warn={(city.hiddenHouseholds ?? 0) >= 18}
+          working={working.hiddenHouseholds}
+          note={t(`${hiddenTier(city.hiddenHouseholds ?? 0).zh} · 租賦僅收 ${(registryYieldMul(city.hiddenHouseholds ?? 0) * 100).toFixed(0)}%`,
+                  `${hiddenTier(city.hiddenHouseholds ?? 0).en} · only ${(registryYieldMul(city.hiddenHouseholds ?? 0) * 100).toFixed(0)}% taxed`)} />
       )}
       {/* 訟獄積案 (§1.11) — an unheard docket bleeds loyalty and breeds 冤獄. */}
       {(city.caseload ?? 0) >= 10 && (

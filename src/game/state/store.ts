@@ -1211,6 +1211,10 @@ export interface GameStore extends GameState {
   /** 律令 (§1.11) — set the realm's legal code (寬刑/平律/峻法). Takes effect at
    *  the next season tick: loyalty drift, graft, tax yield and docket growth. */
   setLawCode: (severity: import('../systems/law').LawSeverity) => void;
+  /** 徭役 (§1.12) — set the realm's corvée level (息役/薄役/重役): public works
+   *  rise faster, paid for in loyalty, harvest, and households fleeing the
+   *  registers into the shelter of the great houses. */
+  setCorvee: (level: import('../systems/household').CorveeLevel) => void;
   /** 大赦天下 (§1.11) — empty every court in the realm: loyalty everywhere and
    *  the docket wiped, paid for in gold, in the throne's dignity, and in the
    *  men you just let out. Refused if one was proclaimed too recently. */
@@ -4369,6 +4373,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           cities: planned.cities,
           officers: planned.officers,
           lawCode: state.lawCode,
+          corvee: state.corvee,
           buildings: state.buildings,
           forces: forcesAfterCourt,
           pendingCommands: planned.pendingCommands,
@@ -4999,7 +5004,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (aiBuild.entries.length > 0) result.report.entries.push(...aiBuild.entries);
 
         // Buildings tick (player + AI projects both progress).
-        const bld = tickBuildings({ buildings: aiBuild.buildings, cities: postCities });
+        const bld = tickBuildings({ buildings: aiBuild.buildings, cities: postCities, corvee: state.corvee });
         if (bld.entries.length > 0) result.report.entries.push(...bld.entries);
         // 城建興廢 — seasonal building mishaps (火災/坍塌) and boons (名匠).
         const bldEvt = tickBuildingEvents({
@@ -15083,6 +15088,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         return { lawCode: { ...s.lawCode, [fid]: severity } };
       }),
 
+      setCorvee: (level) => set((s) => {
+        const fid = s.playerForceId;
+        if (!fid) return {};
+        return { corvee: { ...s.corvee, [fid]: level } };
+      }),
+
       proclaimAmnesty: () => {
         const s = get();
         const fid = s.playerForceId;
@@ -18022,6 +18033,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         arenaChampion: state.arenaChampion,
         moonLaurel: state.moonLaurel,
         lawCode: state.lawCode,
+        corvee: state.corvee,
         lastAmnestyYear: state.lastAmnestyYear,
         pendingPersuasions: state.pendingPersuasions,
         pendingMoonWrit: state.pendingMoonWrit,

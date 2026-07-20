@@ -953,6 +953,7 @@ const INTERNAL_AFFAIRS_FAVORED: Record<InternalAffairsType, keyof OfficerStats> 
   'develop-commerce': 'politics',
   'build-defense': 'politics',
   adjudicate: 'politics',
+  'household-audit': 'politics',
   'recruit-troops': 'charisma',
   'improve-loyalty': 'charisma',
   relief: 'charisma',

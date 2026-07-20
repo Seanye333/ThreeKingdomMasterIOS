@@ -46,6 +46,8 @@ import { buildingBonuses, schoolHeadmasterFocus, SCHOOL_BUILDINGS, COURT_BUILDIN
 import { COMMAND_TOKEN_IDS } from '../data/items';
 import { cultureGain, cultureGraftCurb, cultureLoyaltyLift } from './culture';
 import { lawEffects, caseloadTick, caseloadPenalty, wrongfulConvictionChance, aiLawCode } from './law';
+import { corveeEffects, hiddenDrift, registryYieldMul } from './household';
+import { clanOf } from '../data/clans';
 import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
 import { corruptionAccrualMultiplier } from './traitEffects';
 import { rollCivicEvents } from './civicEvents';
@@ -139,6 +141,8 @@ export interface ResolutionInput {
   taxPolicy?: Record<EntityId, import('../types').TaxRate>;
   /** 律令 — per-force legal code (§1.11); missing entries resolve to '平律'. */
   lawCode?: Record<EntityId, import('./law').LawSeverity>;
+  /** 徭役 — per-force corvée level (§1.12); missing entries resolve to '息役'. */
+  corvee?: Record<EntityId, import('./household').CorveeLevel>;
   /** 通商條約 — force ids the player has trade treaties with (mutual income). */
   tradePartners?: EntityId[];
   /** 通貨膨脹 — the player's inflation level (0–100); saps player tax income. */
@@ -2281,6 +2285,16 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       (bd) => bd.cityId === city.id && COURT_BUILDINGS.has(bd.id) && (bd.level ?? 0) >= 1);
     const result = resolveInternalAffairs(cmd.type, officer, city, rng, finalBonus, input.weather?.kind, assistants, input.rapport, hasCourtForCmd);
     cities[city.id] = applyDelta(city, result.delta);
+    // 括戶則門第怨 (§1.12) — the households you just put back on the registers
+    // were tilling somebody's fields. Great-clan scions serving in this city
+    // take it personally; men of humble birth do not care at all.
+    if (cmd.type === 'household-audit' && result.success) {
+      for (const o of Object.values(officers)) {
+        if (o.locationCityId !== city.id || o.forceId !== city.ownerForceId) continue;
+        if (!clanOf(o)) continue;
+        officers[o.id] = { ...o, loyalty: Math.max(0, o.loyalty - 4) };
+      }
+    }
     const assistNote = assistants.length
       ? { text: ` (協同 ${assistants.map((a) => a.name.en).join(', ')})`, zh: `(協同 ${assistants.map((a) => a.name.zh).join('、')})` }
       : { text: '', zh: '' };
@@ -2546,8 +2560,23 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
           hasCourt: hasCourtHere,
         })
       : (city.caseload ?? 0);
+    // 隱戶 (§1.12) — households commended away to the great houses. Heavy levies
+    // and a harsh code drive them off the registers; a resident administrator and
+    // a contented city draw them back. What is off the books is very largely off
+    // the tax rolls too (registryYieldMul, applied to this city's income below).
+    const corvee = city.ownerForceId ? input.corvee?.[city.ownerForceId] : undefined;
+    const corveeEff = corveeEffects(corvee);
+    const nextHidden = city.ownerForceId
+      ? hiddenDrift({
+          current: city.hiddenHouseholds ?? 0,
+          corvee,
+          lawSeverity: severity,
+          bestPolitics: bestPolitics,
+          loyalty: city.loyalty,
+        })
+      : (city.hiddenHouseholds ?? 0);
     const docket = caseloadPenalty(nextCaseload);
-    let lawLoyalty = (city.ownerForceId ? law.loyaltyDelta : 0) + docket.loyaltyDelta;
+    let lawLoyalty = (city.ownerForceId ? law.loyaltyDelta + corveeEff.loyaltyDelta : 0) + docket.loyaltyDelta;
     if (city.ownerForceId && rng() < wrongfulConvictionChance({
       caseload: nextCaseload, severity, judgePolitics: bestPolitics,
     })) {
@@ -2568,13 +2597,17 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const updated: City = {
       ...city,
       // 律令與稅入 (§1.11) — 寬刑之下賦稅有漏,峻法之下錙銖必入。
-      gold: city.gold + Math.round(tick.goldIncome * law.taxYieldMul) + territoryGold,
-      food: Math.max(0, city.food + tick.foodIncome - tick.foodUpkeep),
+      // 編戶與稅基 (§1.12) — 隱戶不入版籍,其田租賦皆歸豪右;重役又誤農時。
+      gold: city.gold + Math.round(tick.goldIncome * law.taxYieldMul * registryYieldMul(nextHidden)) + territoryGold,
+      food: Math.max(0, city.food
+        + Math.round(tick.foodIncome * corveeEff.farmMul * registryYieldMul(nextHidden))
+        - tick.foodUpkeep),
       troops: troopsAfterDesertion + capitalGuard,
       loyalty: Math.max(0, Math.min(100, city.loyalty + tick.loyaltyDelta + capitalLoyalty + corruptionLoyaltyBite + cultureLift + lawLoyalty)),
       corruption: city.ownerForceId ? nextCorruption : city.corruption,
       culture: nextCulture,
       caseload: nextCaseload,
+      hiddenHouseholds: nextHidden,
       drill: nextDrill,
       population: Math.max(1000, city.population + tick.populationDelta),
       warhorses: tick.warhorseBreed > 0
@@ -3994,6 +4027,7 @@ function applyDelta(
     corruption: number;
     drill: number;
     caseload: number;
+    hiddenHouseholds: number;
   }>,
 ): City {
   // Per-command logic already clamps to the city-tier cap (cityEconCap for
@@ -4012,6 +4046,9 @@ function applyDelta(
     caseload: delta.caseload !== undefined
       ? clamp((city.caseload ?? 0) + delta.caseload, 0, 100)
       : city.caseload,
+    hiddenHouseholds: delta.hiddenHouseholds !== undefined
+      ? clamp((city.hiddenHouseholds ?? 0) + delta.hiddenHouseholds, 0, 45)
+      : city.hiddenHouseholds,
     floodWorks: delta.floodWorks ?? city.floodWorks,
     wallTier: delta.wallTier ?? city.wallTier,
     corruption: delta.corruption !== undefined

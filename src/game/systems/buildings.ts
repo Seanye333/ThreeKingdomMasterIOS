@@ -8,6 +8,7 @@ import type {
   TradeRoute,
 } from '../types';
 import { BUILDING_DEFS_BY_ID, BUILDING_CATEGORY, buildingGroupSynergy, statecraftCategoryMul } from '../data/buildings';
+import { corveeEffects } from './household';
 import { cityAffinity } from '../data/specialties';
 import { PROVINCE_BY_CITY } from '../data/provinces';
 
@@ -18,6 +19,10 @@ import { PROVINCE_BY_CITY } from '../data/provinces';
 export interface BuildingTickContext {
   buildings: Building[];
   cities: Record<EntityId, City>;
+  /** 徭役 (§1.12) — per-force corvée level; drafted labour speeds public works
+   *  in every city of that realm (and is paid for in loyalty and harvest, see
+   *  the civic tick). Missing ⇒ '息役' (no levy, no speed-up). */
+  corvee?: Record<EntityId, import('./household').CorveeLevel>;
 }
 
 export interface BuildingTickOutput {
@@ -33,7 +38,10 @@ export function tickBuildings(ctx: BuildingTickContext): BuildingTickOutput {
     if (b.level >= def.maxLevel) return b;
     // 將作監 — a works bureau speeds buildings actively under construction in its
     // city (the base +1/season is unchanged so existing pacing is preserved).
-    const speed = b.progress > 0 ? buildingBonuses(b.cityId, ctx.buildings).buildSpeed : 0;
+    // 徭役興工 — drafted hands on top of the works-bureau bonus.
+    const owner = ctx.cities[b.cityId]?.ownerForceId;
+    const levy = owner ? corveeEffects(ctx.corvee?.[owner]).buildSpeed : 0;
+    const speed = b.progress > 0 ? buildingBonuses(b.cityId, ctx.buildings).buildSpeed + levy : 0;
     const nextProgress = b.progress + 1 + speed;
     if (nextProgress >= def.seasonsPerLevel) {
       const city = ctx.cities[b.cityId];

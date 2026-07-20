@@ -11,6 +11,7 @@ import { itemSetBonuses } from '../data/itemSets';
 import { cityStatCap, cityEconCap, citySize, CITY_SIZES, type CitySize } from './citySize';
 import { internalAffairsMultiplier } from './traitEffects';
 import { adjudicateClear } from './law';
+import { householdAudit } from './household';
 import { pairKey } from '../types/diplomacy';
 import type { WeatherKind } from './weather';
 
@@ -171,6 +172,14 @@ export const COMMAND_DEFS: Record<CommandType, CommandDef> = {
     description:
       '決獄 — Sit in court for a season and work through the backlog of unheard cases (訟獄積案). Clears cases in proportion to Politics (a gaol or civic hall to hold court in helps), and the relief shows in public faith. A city whose docket is never heard bleeds loyalty and, under a harsh code, condemns innocent men.',
   },
+  'household-audit': {
+    type: 'household-audit',
+    label: { en: 'Audit Registers', zh: '括戶' },
+    stat: 'politics',
+    goldCost: 200,
+    description:
+      '括戶檢地 — Walk the villages with the tax registers in hand and drag the households the great houses have been sheltering (隱戶) back onto the books. A permanent widening of this city\'s tax base, scaling with Politics — and a standing grievance with the clans whose tenants you just took.',
+  },
   'flood-control': {
     type: 'flood-control',
     label: { en: 'Flood Control', zh: '治水' },
@@ -237,6 +246,7 @@ export interface CommandResult {
     corruption: number;
     drill: number;
     caseload: number;
+    hiddenHouseholds: number;
   }>;
   message: string;
   messageZh: string;
@@ -490,6 +500,27 @@ export function resolveInternalAffairs(
         delta: { caseload: -cleared, loyalty: loyaltyGain },
         message: `${officer.name.en} 決獄: heard ${cleared} cases (backlog ${Math.round(docket)} → ${Math.round(docket - cleared)}), Loyalty +${loyaltyGain}.`,
         messageZh: `${officer.name.zh}決獄:平反聽斷,積案 ${Math.round(docket)} → ${Math.round(docket - cleared)},民忠 +${loyaltyGain}。`,
+      };
+    }
+    case 'household-audit': {
+      // 括戶 (§1.12) — what an official recovers scales with his 政治 and with how
+      // much there is to find. The households come back permanently; the great
+      // houses remember (clan standing is docked by the store).
+      const hidden = city.hiddenHouseholds ?? 0;
+      const audit = householdAudit({ hiddenPercent: hidden, politics: statValue, population: city.population });
+      if (audit.recovered <= 0) {
+        return {
+          success: false,
+          delta: {},
+          message: `${officer.name.en} 括戶: the registers here are already honest — nothing to recover.`,
+          messageZh: `${officer.name.zh}括戶:此城編戶齊民,無隱可括。`,
+        };
+      }
+      return {
+        success: true,
+        delta: { hiddenHouseholds: -audit.recovered, loyalty: -2 },
+        message: `${officer.name.en} 括戶: recovered ${audit.households.toLocaleString()} households onto the registers (hidden ${hidden.toFixed(1)}% → ${(hidden - audit.recovered).toFixed(1)}%). The clans are displeased.`,
+        messageZh: `${officer.name.zh}括戶檢地:括出隱戶 ${audit.households.toLocaleString()} 口入籍(隱戶 ${hidden.toFixed(1)}% → ${(hidden - audit.recovered).toFixed(1)}%),稅基大廣;然豪右側目,門第不悅。`,
       };
     }
     case 'military-farming': {
