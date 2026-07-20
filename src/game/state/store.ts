@@ -4941,6 +4941,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             playerForceId: state.playerForceId,
             firedEventIds: state.firedEventIds,
             mandateByForce: state.mandate.byForce,
+            lawCode: state.lawCode,
+            corvee: state.corvee,
             rng: Math.random,
           }) ??
           (state.customEvents.length > 0

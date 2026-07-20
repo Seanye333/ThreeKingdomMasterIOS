@@ -158,3 +158,63 @@ describe('§8.5 天命 beats — 勸進 & 眾叛親離', () => {
     expect(penance?.effects.some((e) => e.kind === 'mandate-ruler' && e.delta > 0)).toBe(true);
   });
 });
+
+// ── 2026-07 民政抉擇(§1.11–§1.15)──
+
+const civicCity = (id: string, over: Partial<City>): City =>
+  ({ id, ownerForceId: 'p', gold: 1000, loyalty: 70, ...over } as unknown as City);
+
+const fourCities = (over: Partial<City>) => ({
+  c1: civicCity('c1', over), c2: civicCity('c2', over),
+  c3: civicCity('c3', over), c4: civicCity('c4', over),
+});
+
+describe('民政抉擇事件', () => {
+  it('刑名之議 fires on a choked docket and offers three roads', () => {
+    const ev = rollBehaviorEvent(ctx({ cities: fourCities({ caseload: 60 }) }));
+    expect(ev?.id).toBe('behavior-law-debate');
+    expect(ev?.choices?.map((c) => c.id)).toEqual(['strict', 'lenient', 'judges']);
+    expect(ev?.effects).toEqual([]);          // all consequence rides on the choice
+  });
+
+  it('刑名之議 stays quiet while the courts keep up', () => {
+    expect(rollBehaviorEvent(ctx({ cities: fourCities({ caseload: 10 }) }))).toBeNull();
+  });
+
+  it('豪右抗命 fires when the registers have been swallowed, and the audit costs a clan lord', () => {
+    const ev = rollBehaviorEvent(ctx({
+      cities: fourCities({ hiddenHouseholds: 30 }),
+      officers: { r: ruler('r', 'p'), a: idleOfficer('a', 'p', 80) },
+    }));
+    expect(ev?.id).toBe('behavior-gentry-defiance');
+    const audit = ev?.choices?.find((c) => c.id === 'audit');
+    expect(audit?.effects.some((e) => e.kind === 'officer-loyalty' && e.delta < 0)).toBe(true);
+  });
+
+  it('米貴如珠 fires on ONE cornered city, not a realm average', () => {
+    const cities = { ...fourCities({ hoardedGrain: 0 }) };
+    cities.c3 = civicCity('c3', { hoardedGrain: 35 });
+    const ev = rollBehaviorEvent(ctx({ cities }));
+    expect(ev?.id).toBe('behavior-grain-corner');
+    // Letting them profit pays well and costs loyalty everywhere.
+    const tax = ev?.choices?.find((c) => c.id === 'tax');
+    expect(tax?.effects.some((e) => e.kind === 'force-gold' && e.delta > 0)).toBe(true);
+    expect(tax?.effects.filter((e) => e.kind === 'city-loyalty').length).toBe(4);
+  });
+
+  it('民力已竭 needs BOTH heavy corvée and a resentful realm', () => {
+    const worn = fourCities({ loyalty: 40 });
+    expect(rollBehaviorEvent(ctx({ cities: worn }))).toBeNull();                       // no levy
+    expect(rollBehaviorEvent(ctx({ cities: fourCities({ loyalty: 80 }), corvee: { p: 'heavy' } })))
+      .toBeNull();                                                                     // levy but content
+    const ev = rollBehaviorEvent(ctx({ cities: worn, corvee: { p: 'heavy' } }));
+    expect(ev?.id).toBe('behavior-corvee-strain');
+    expect(ev?.choices?.map((c) => c.id)).toEqual(['rest', 'press', 'pay']);
+  });
+
+  it('each civic beat fires at most once per campaign', () => {
+    const cities = fourCities({ caseload: 60 });
+    expect(rollBehaviorEvent(ctx({ cities, firedEventIds: ['behavior-law-debate'] })))
+      .not.toMatchObject({ id: 'behavior-law-debate' });
+  });
+});

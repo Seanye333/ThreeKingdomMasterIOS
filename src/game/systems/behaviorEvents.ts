@@ -22,6 +22,10 @@ export interface BehaviorEventContext {
   firedEventIds: EntityId[];
   /** §8.5 — per-force 天命 (0–100); drives the 勸進/眾叛親離 beats. */
   mandateByForce?: Record<EntityId, number>;
+  /** §1.11 律令 — the realm's legal code; the 峻法/寬刑 beats read it. */
+  lawCode?: Record<EntityId, string>;
+  /** §1.12 徭役 — the realm's corvée level; the 民力 beat reads it. */
+  corvee?: Record<EntityId, string>;
   rng?: () => number;
 }
 
@@ -75,7 +79,179 @@ export function rollBehaviorEvent(ctx: BehaviorEventContext): HistoricalEvent | 
     .filter((o) => o.forceId === playerForceId && o.id !== rulerId && o.status !== 'dead' && o.status !== 'imprisoned')
     .sort((a, b) => b.loyalty - a.loyalty);
 
+  // §1.11–§1.14 民政 — the four civic meters, realm-wide, for the beats below.
+  const meanOf = (pick: (c: City) => number) =>
+    cities.length ? cities.reduce((a, c) => a + pick(c), 0) / cities.length : 0;
+  const meanDocket = meanOf((c) => c.caseload ?? 0);
+  const meanHidden = meanOf((c) => c.hiddenHouseholds ?? 0);
+  const worstHoard = cities.reduce((m, c) => Math.max(m, c.hoardedGrain ?? 0), 0);
+  const law = ctx.lawCode?.[playerForceId] ?? 'standard';
+  const levy = ctx.corvee?.[playerForceId] ?? 'none';
+
   const candidates: Candidate[] = [
+    // §1.11 刑名之議 — with the courts choked, the court itself argues about law.
+    {
+      id: 'behavior-law-debate',
+      build: () => {
+        if (meanDocket < 45 || cities.length < 4) return null;
+        const jurist = [...loyalOfficers].sort((a, b) => b.stats.politics - a.stats.politics)[0] ?? null;
+        const choices: EventChoice[] = [
+          {
+            id: 'strict',
+            label: { zh: '明正典刑,寧嚴勿縱', en: 'Sharpen the code — better harsh than lax' },
+            effects: [
+              ...cityLoyaltyAll(-3),
+              ...(jurist ? [{ kind: 'officer-loyalty' as const, officerId: jurist.id, delta: 8 }] : []),
+              { kind: 'flag', key: 'law-debate-strict' },
+            ],
+          },
+          {
+            id: 'lenient',
+            label: { zh: '約法省刑,與民更始', en: 'Cut the code back — begin again with the people' },
+            effects: [...cityLoyaltyAll(5), { kind: 'flag', key: 'law-debate-lenient' }],
+          },
+          {
+            id: 'judges',
+            label: { zh: '不改其法,但增廷尉', en: 'Leave the law; appoint more magistrates' },
+            effects: [
+              { kind: 'force-gold', forceId: playerForceId, delta: -800 },
+              ...cityLoyaltyAll(2),
+            ],
+          },
+        ];
+        return event(
+          'behavior-law-debate', rulerId,
+          { zh: '刑名之議', en: 'The Argument Over Law' },
+          {
+            zh: `獄訟山積,案牘盈庭。堂上爭論不休 —— 一曰「亂世當用重典,不嚴無以立威」;一曰「秦以嚴亡,漢以寬興,願主公省刑薄賦」。${law === 'strict' ? '(今行峻法)' : law === 'lenient' ? '(今行寬刑)' : ''}`,
+            en: 'The dockets are choked and the hall is loud. One side: "In a broken age only a harsh code commands respect." The other: "Qin fell by severity and Han rose by mercy — lighten the law, my lord."',
+          },
+          'somber',
+          choices,
+        );
+      },
+    },
+
+    // §1.12 豪右抗命 — the great houses have swallowed the registers and say so.
+    {
+      id: 'behavior-gentry-defiance',
+      build: () => {
+        if (meanHidden < 22 || cities.length < 4) return null;
+        const clanLord = [...loyalOfficers].sort((a, b) => b.stats.charisma - a.stats.charisma)[0] ?? null;
+        const choices: EventChoice[] = [
+          {
+            id: 'audit',
+            label: { zh: '嚴詔括戶,敢隱者論罪', en: 'Order a full audit — concealment is a crime' },
+            effects: [
+              ...cityLoyaltyAll(-2),
+              ...(clanLord ? [{ kind: 'officer-loyalty' as const, officerId: clanLord.id, delta: -12 }] : []),
+              { kind: 'flag', key: 'gentry-audit' },
+            ],
+          },
+          {
+            id: 'bargain',
+            label: { zh: '與之約:輸粟則免其罪', en: 'Bargain: grain for amnesty' },
+            effects: [
+              { kind: 'force-gold', forceId: playerForceId, delta: 1200 },
+              ...cityLoyaltyAll(-1),
+            ],
+          },
+          {
+            id: 'ignore',
+            label: { zh: '姑置不問,先安其心', en: 'Let it lie — their goodwill is worth more' },
+            effects: clanLord ? [{ kind: 'officer-loyalty', officerId: clanLord.id, delta: 8 }] : [],
+          },
+        ];
+        return event(
+          'behavior-gentry-defiance', rulerId,
+          { zh: '豪右抗命', en: 'The Great Houses Refuse' },
+          {
+            zh: '郡中大姓蔭附日眾,版籍所載十不存七。遣吏檢括,其家僮部曲閉門拒之,曰:「此皆吾家舊佃,非國之編戶也。」',
+            en: 'The commandery\'s great families have taken in so many households that the registers show barely a third of the people. Sent to count them, your clerks found the gates barred: "These are our tenants of old — not the state\'s households."',
+          },
+          'ominous',
+          choices,
+        );
+      },
+    },
+
+    // §1.14 米貴如珠 — a cornered grain market reaches the throne.
+    {
+      id: 'behavior-grain-corner',
+      build: () => {
+        if (worstHoard < 28) return null;
+        const choices: EventChoice[] = [
+          {
+            id: 'break',
+            label: { zh: '發兵啟倉,平糶於市', en: 'Send troops, open the warehouses, sell at the fair price' },
+            effects: [...cityLoyaltyAll(5), { kind: 'force-gold', forceId: playerForceId, delta: -600 }],
+          },
+          {
+            id: 'buy',
+            label: { zh: '官出金購之,轉輸軍中', en: 'Buy the hoard at their price — the army needs it' },
+            effects: [
+              { kind: 'force-gold', forceId: playerForceId, delta: -2500 },
+              { kind: 'force-troops-multiplier', forceId: playerForceId, multiplier: 1.05 },
+              ...cityLoyaltyAll(-2),
+            ],
+          },
+          {
+            id: 'tax',
+            label: { zh: '許其自便,但徵其利', en: 'Let them profit — and tax the profit' },
+            effects: [{ kind: 'force-gold', forceId: playerForceId, delta: 1800 }, ...cityLoyaltyAll(-5)],
+          },
+        ];
+        return event(
+          'behavior-grain-corner', rulerId,
+          { zh: '米貴如珠', en: 'Grain Worth Its Weight' },
+          {
+            zh: '市中米價一日三漲,而諸家倉廩皆滿。饑民聚於倉門,吏不能禁。或曰:「此輩非商,乃國之蠹也。」',
+            en: 'Grain rises three times in a day while every private granary stands full. The hungry gather at the warehouse gates and the clerks cannot move them. Someone says: "These are not merchants. They are worms in the state\'s timber."',
+          },
+          'ominous',
+          choices,
+        );
+      },
+    },
+
+    // §1.12/§1.15 民力已竭 — heavy corvée, and the countryside says enough.
+    {
+      id: 'behavior-corvee-strain',
+      build: () => {
+        if (levy !== 'heavy' || avgLoyalty > 55) return null;
+        const choices: EventChoice[] = [
+          {
+            id: 'rest',
+            label: { zh: '罷役還農,與民休息', en: 'Send the levies home to their fields' },
+            effects: [...cityLoyaltyAll(8), { kind: 'flag', key: 'corvee-rested' }],
+          },
+          {
+            id: 'press',
+            label: { zh: '功成在即,不可半途', en: 'The work is nearly done — press on' },
+            effects: [...cityLoyaltyAll(-4), { kind: 'flag', key: 'corvee-pressed' }],
+          },
+          {
+            id: 'pay',
+            label: { zh: '出府庫錢,雇役代徵', en: 'Pay the labourers out of the treasury instead' },
+            effects: [
+              { kind: 'force-gold', forceId: playerForceId, delta: -2200 },
+              ...cityLoyaltyAll(4),
+            ],
+          },
+        ];
+        return event(
+          'behavior-corvee-strain', rulerId,
+          { zh: '民力已竭', en: 'The People Are Spent' },
+          {
+            zh: '役夫死者相枕於道,田疇多荒。父老詣府叩首:「非敢惰也 —— 丁壯盡在工上,田中唯老弱婦人耳。」',
+            en: 'The dead labourers lie along the road and the fields stand half-worked. The village elders kneel at the gate: "We are not idle, my lord. Every able man is on the works; only the old and the women are left to the fields."',
+          },
+          'somber',
+          choices,
+        );
+      },
+    },
+
     // §8.5 勸進 — at 天命所歸 the court presses the throne on you.
     {
       id: 'behavior-mandate-urge',
