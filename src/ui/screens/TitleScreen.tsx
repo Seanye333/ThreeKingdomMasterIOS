@@ -5,6 +5,7 @@ import { dailySeedString, dailyShareString, loadDailyResults, recentChallengeDay
 // Built-ins + installed mod scenarios, resolved once at module load.
 const SCENARIOS = (() => { try { return allScenarios(); } catch { return BUILTIN_SCENARIOS; } })();
 import { useGameStore } from '../../game/state/store';
+import { encodeStartCode, decodeStartCode, describeRules, type StartRules } from '../../game/systems/shareCode';
 import type { Difficulty } from '../../game/state/gameState';
 import type { Scenario } from '../../game/types';
 import { CustomOfficerCreator } from '../components/CustomOfficerCreator';
@@ -202,6 +203,54 @@ export function TitleScreen() {
   const selectedRuler = selectedForce
     ? scenario.officers.find((o) => o.id === selectedForce.rulerOfficerId) ?? null
     : null;
+
+  // ── 開局挑戰碼 ── the current start, packed into something you can paste
+  // into a message; and the reverse, so a pasted code re-creates it exactly.
+  const [codeInput, setCodeInput] = useState('');
+  const [codeNote, setCodeNote] = useState<string | null>(null);
+  const currentRules: StartRules = {
+    difficulty, aiStrength, startHandicap, victoryGoal, startTaxRate, startInflation,
+    aiStartTroops, battleDifficulty, lifespanMode, lifespanLength, agingStatLock,
+    noBattleDeath, reviveDeadOfficers, talentDiscovery, duelFrequency, disasterFrequency,
+    ironman, newOfficers, fictionalPool, initialDiplomacy,
+  };
+  const currentStartCode = encodeStartCode({
+    scenarioId, forceId: selectedForceId ?? '?', rules: currentRules,
+  });
+  const applyStartCode = (raw: string): string => {
+    const r = decodeStartCode(raw);
+    if (!r.ok || !r.code) return (lang === 'en' ? r.errorEn : r.errorZh) ?? '?';
+    const sc = SCENARIOS.find((x) => x.id === r.code!.scenarioId);
+    if (!sc) return t('此開局碼指向未知劇本。', 'That code names a scenario this build does not have.');
+    const force = sc.forces.find((f) => f.id === r.code!.forceId);
+    if (!force) return t('此開局碼指向該劇本中不存在的勢力。', 'That code names a force absent from the scenario.');
+    const ru = r.code.rules;
+    setScenarioId(sc.id);
+    setSelectedForceId(force.id);
+    setDifficulty(ru.difficulty);
+    setAiStrength(ru.aiStrength);
+    setStartHandicap(ru.startHandicap);
+    setVictoryGoal(ru.victoryGoal);
+    setStartTaxRate(ru.startTaxRate);
+    setStartInflation(ru.startInflation);
+    setAiStartTroops(ru.aiStartTroops);
+    setBattleDifficulty(ru.battleDifficulty);
+    setLifespanMode(ru.lifespanMode);
+    setLifespanLength(ru.lifespanLength);
+    setAgingStatLock(ru.agingStatLock);
+    setNoBattleDeath(ru.noBattleDeath);
+    setReviveDeadOfficers(ru.reviveDeadOfficers);
+    setTalentDiscovery(ru.talentDiscovery);
+    setDuelFrequency(ru.duelFrequency);
+    setDisasterFrequency(ru.disasterFrequency);
+    setIronman(ru.ironman);
+    setNewOfficers(ru.newOfficers);
+    setFictionalPool(ru.fictionalPool);
+    setInitialDiplomacy(ru.initialDiplomacy);
+    const d = describeRules(ru);
+    return t(`已套用:${sc.name.zh} · ${force.name.zh} · ${d.zh}`,
+             `Applied: ${sc.name.en} · ${force.name.en} · ${d.en}`);
+  };
 
   // Launch with the chosen force. Hot-seat and chronicle mode detour through
   // styled pickers (no more native prompt() with a typed-in number).
@@ -1202,6 +1251,33 @@ export function TitleScreen() {
             </>)}
 
             </>)}
+
+            {/* ── 開局挑戰碼 ── hand this string to someone and they get YOUR start. */}
+            <div style={{ marginTop: '1rem', padding: '0.5rem 0.6rem', border: '1px solid #3a3020', borderRadius: 'var(--tkm-radius-sm)', background: '#141009' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--tkm-text-muted)' }}>{t('開局碼', 'Start code')}</span>
+                <code style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.72rem', color: '#e6c473', wordBreak: 'break-all', flex: 1 }}>
+                  {currentStartCode}
+                </code>
+                <button type="button" style={pillStyle(false)} onClick={() => {
+                  navigator.clipboard?.writeText(currentStartCode);
+                  setCodeNote(t('已複製 — 送給朋友,他就從你這個開局起手。', 'Copied — send it and they start exactly where you did.'));
+                }}>{t('複製', 'Copy')}</button>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: '0.4rem', flexWrap: 'wrap' }}>
+                <input
+                  value={codeInput}
+                  onChange={(e) => setCodeInput(e.target.value)}
+                  placeholder={t('貼上朋友的開局碼…', 'Paste a start code…')}
+                  aria-label={t('開局碼', 'Start code')}
+                  style={{ flex: 1, minWidth: '10rem', background: '#080b0e', border: '1px solid #2b3845', color: '#e6c473', fontFamily: 'ui-monospace, monospace', fontSize: '0.72rem', borderRadius: 'var(--tkm-radius-xs)', padding: '0.25rem 0.4rem' }}
+                />
+                <button type="button" style={pillStyle(false)} onClick={() => setCodeNote(applyStartCode(codeInput))}>
+                  {t('套用', 'Apply')}
+                </button>
+              </div>
+              {codeNote && <p style={{ ...optNoteStyle, marginTop: '0.35rem' }}>{codeNote}</p>}
+            </div>
 
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
               <button className={styles.officersButton} style={{ flex: 1 }} onClick={() => setStep('force')}>
