@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { debateProwess, type DebateDifficulty } from '../../game/systems/wordWar';
 import { moonBoard, moonScore, pickMoonLaurel, pickMoonChallenger, canOrate } from '../../game/systems/scholarRank';
-import { resolveTeamDebate, type TeamDebateResult } from '../../game/systems/teamDebate';
+import { resolveTeamDebate, teamDebateDowned, type TeamDebateResult } from '../../game/systems/teamDebate';
 import { debateRecruitChance } from '../../game/systems/debateDiplomacy';
 import { TeamDebate3DStage } from './debate/TeamDebate3DStage';
 import { debateShame, isEmotional } from '../../game/systems/afflictions';
@@ -361,8 +361,9 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
                 }
               }
               // 羞憤 — an emotional voice argued down stews on it (both benches).
-              for (const v of [...res.a, ...res.b].filter((v) => v.downed)) {
-                if (isEmotional(v.officer)) afflictOfficer(v.id, debateShame());
+              const silenced = new Set(teamDebateDowned(res));
+              for (const v of [...res.a, ...res.b]) {
+                if (silenced.has(v.id) && isEmotional(v.officer)) afflictOfficer(v.id, debateShame());
               }
               setResult({
                 text: won

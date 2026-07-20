@@ -3,6 +3,7 @@ import { useGameStore } from '../../game/state/store';
 import type { BoutRecord } from '../../game/systems/duelHall';
 import { ladderBoard, ratingTier } from '../../game/systems/warRanking';
 import { NEMESIS_THRESHOLD, type RivalryRecord } from '../../game/systems/rivalries';
+import { greatSchools, schoolOf } from '../../game/systems/lineage';
 import { resolveDuel, canDuel, staticProwess, weaponClassFor } from '../../game/systems/duel';
 import { resolveTeamDuel, type TeamDuelResult, type TeamMember, type TeamStation } from '../../game/systems/teamDuel';
 import { TeamDuel3DStage } from './duel/TeamDuel3DStage';
@@ -31,6 +32,7 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
   const warRatings = useGameStore((s) => s.warRatings);
   const rivalries = useGameStore((s) => s.rivalries);
   const debateRivalries = useGameStore((s) => s.debateRivalries);
+  const lineage = useGameStore((s) => s.lineage);
   const applyScenarioEffects = useGameStore((s) => s.applyScenarioEffects);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const arenaChampion = useGameStore((s) => s.arenaChampion);
@@ -40,7 +42,7 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
     const f = s.forces[s.playerForceId ?? ''];
     return f ? (s.cities[f.capitalCityId]?.gold ?? 0) : 0;
   });
-  const [tab, setTab] = useState<'ranks' | 'ladder' | 'arena' | 'melee' | 'feuds' | 'gallery' | 'bet'>('ranks');
+  const [tab, setTab] = useState<'ranks' | 'ladder' | 'arena' | 'melee' | 'feuds' | 'schools' | 'gallery' | 'bet'>('ranks');
   // 打擂 — challenge / hold the standing arena champion.
   const [arenaPick, setArenaPick] = useState('');
   const [arenaMsg, setArenaMsg] = useState<{ text: string; win: boolean } | null>(null);
@@ -159,6 +161,8 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
       .slice(0, 20),
     [rivalries, officers],
   );
+  // 名門 (§6.18) — the realm's schools, ranked by surviving students.
+  const schools = useMemo(() => greatSchools(lineage ?? [], officers, 12), [lineage, officers]);
   // 文敵簿 (§6.15) — the same ledger for wars of words, kept apart from blades.
   const wordFeuds = useMemo(
     () => Object.values(debateRivalries ?? {})
@@ -216,7 +220,7 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
   return (
     <Modal onClose={onClose} title={t('武鬥館', 'Hall of Bouts')} icon="🏆" width="min(560px, 100%)" scrollBody>
       <div style={{ display: 'flex', gap: 6, marginBottom: '0.9rem' }}>
-        {(['ranks', 'ladder', 'arena', 'melee', 'feuds', 'gallery', 'bet'] as const).map((m) => (
+        {(['ranks', 'ladder', 'arena', 'melee', 'feuds', 'schools', 'gallery', 'bet'] as const).map((m) => (
           <button
             key={m}
             onClick={() => setTab(m)}
@@ -225,7 +229,7 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
               background: tab === m ? 'rgba(230,196,115,0.18)' : '#10161e',
               border: `1px solid ${tab === m ? '#e6c473' : '#26323e'}`, color: tab === m ? '#f2dd9a' : '#8a96a0',
             }}
-          >{m === 'ranks' ? t('戰績', 'Wins') : m === 'ladder' ? t('武評', 'Ladder') : m === 'arena' ? t('擂台', 'Arena') : m === 'melee' ? t('團戰', 'Melee') : m === 'feuds' ? `${t('恩怨', 'Feuds')}${feuds.length > 0 ? ` (${feuds.length})` : ''}` : m === 'bet' ? t('賭坊', 'Wagers') : `${t('名局', 'Replays')}${duelHall.length > 0 ? ` (${duelHall.length})` : ''}`}</button>
+          >{m === 'ranks' ? t('戰績', 'Wins') : m === 'ladder' ? t('武評', 'Ladder') : m === 'arena' ? t('擂台', 'Arena') : m === 'melee' ? t('團戰', 'Melee') : m === 'feuds' ? `${t('恩怨', 'Feuds')}${feuds.length > 0 ? ` (${feuds.length})` : ''}` : m === 'schools' ? `${t('名門', 'Schools')}${schools.length > 0 ? ` (${schools.length})` : ''}` : m === 'bet' ? t('賭坊', 'Wagers') : `${t('名局', 'Replays')}${duelHall.length > 0 ? ` (${duelHall.length})` : ''}`}</button>
         ))}
       </div>
 
@@ -406,6 +410,53 @@ export function DuelHallModal({ onClose }: { onClose: () => void }) {
           )}
           {betResult && (
             <div style={{ background: 'rgba(0,0,0,0.3)', border: `1px solid ${betResult.win ? '#6aae73' : '#a05050'}`, borderRadius: 'var(--tkm-radius)', padding: '0.6rem 0.8rem', color: betResult.win ? '#9ed68a' : '#e0a0a0' }}>{betResult.text}</div>
+          )}
+        </>
+      )}
+
+      {tab === 'schools' && (
+        <>
+          <div style={{ fontSize: '0.72rem', color: '#aab6c0', lineHeight: 1.5, margin: '0 0 0.6rem 2px' }}>
+            {t('名門 — 凡經傳藝/傳道者皆入譜系。同拜一師者為「同門」,團戰合擊、合辯並論皆視同結拜;師歿而門下猶在,故一門之盛不隨其師而絕。',
+              'The realm\'s schools — every teaching enters the lineage. Fellow students of one master fight and argue as sworn brothers do; a school outlives the master who founded it.')}
+          </div>
+          {schools.length === 0 ? (
+            <EmptyState
+              icon="🎓"
+              title={t('尚無師承。', 'No lineages yet.')}
+              hint={t('宗師(武學修為 ≥82)可於武將詳情「傳藝」,名士(文辯修為 ≥82)可「傳道」— 授業即成譜系。', 'A 宗師 can 傳藝 and a 名士 can 傳道 from the officer detail panel — teaching founds a lineage.')}
+            />
+          ) : (
+            <div style={{ display: 'grid', gap: 6 }}>
+              {schools.map((row) => {
+                const { master, pupils } = schoolOf(lineage ?? [], row.masterId, officers, row.art);
+                const martial = row.art === 'martial';
+                const border = martial ? '#e0b070' : '#88b7e8';
+                const heirId = master ? (martial ? master.martialHeirId : master.debateHeirId) : undefined;
+                return (
+                  <div key={`${row.masterId}|${row.art}`} style={{ background: '#10161e', border: `1px solid ${border}`, borderRadius: 'var(--tkm-radius-sm)', padding: '0.45rem 0.6rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {master && <OfficerPortrait officer={master} size={30} forceColor={border} year={useGameStore.getState().date.year} />}
+                      <span style={{ flex: 1, minWidth: 0 }}>
+                        <span style={{ color: '#f2dd9a', fontSize: '0.88rem' }}>
+                          {martial ? '⚔' : '📜'} {nm(row.masterId)}
+                          <span style={{ color: '#8a96a0', fontSize: '0.72rem' }}> {martial ? t('武學一門', 'martial school') : t('文辯一門', 'school of letters')}</span>
+                          {master?.status === 'dead' && <span style={{ color: '#9a8a7a', fontSize: '0.7rem' }}> · {t('師已歿,門下猶存', 'master gone, school stands')}</span>}
+                        </span>
+                        <span style={{ display: 'block', fontSize: '0.7rem', color: '#9aa6b0', marginTop: 2 }}>
+                          {t('門下', 'Students')} {row.pupils} — {pupils.map((p) => pickName(p.name, lang)).join('、') || t('(皆已不在)', '(none left)')}
+                        </span>
+                        {heirId && officers[heirId] && (
+                          <span style={{ display: 'block', fontSize: '0.7rem', color: '#c8a86a', marginTop: 1 }}>
+                            🎋 {t('衣缽傳人', 'Named heir')} — {nm(heirId)}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </>
       )}

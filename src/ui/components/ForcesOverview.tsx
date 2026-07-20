@@ -3,6 +3,7 @@ import { useGameStore } from '../../game/state/store';
 import type { City, EntityId, Officer } from '../../game/types';
 import { AnimatedNumber } from './AnimatedNumber';
 import { OfficerStats } from './OfficerStats';
+import { realmEthos, ethosLine, type RealmEthos } from '../../game/systems/realmEthos';
 import { useT, useLanguage } from '../i18n';
 import styles from './ForcesOverview.module.css';
 
@@ -24,6 +25,8 @@ interface ForceSummary {
   topOfficers: Officer[];
   rulerOfficerId: EntityId;
   capitalCityId: EntityId;
+  /** 國風 (§6.18) — the realm's character, derived from its roster. */
+  ethos: RealmEthos;
 }
 
 export function ForcesOverview({ onClose }: Props) {
@@ -33,6 +36,7 @@ export function ForcesOverview({ onClose }: Props) {
   const lang = useLanguage();
   const officers = useGameStore((s) => s.officers);
   const playerForceId = useGameStore((s) => s.playerForceId);
+  const deeds = useGameStore((s) => s.deeds);
 
   const summaries = useMemo<ForceSummary[]>(() => {
     const out: ForceSummary[] = [];
@@ -63,6 +67,7 @@ export function ForcesOverview({ onClose }: Props) {
           .slice(0, 3),
         rulerOfficerId: force.rulerOfficerId,
         capitalCityId: force.capitalCityId,
+        ethos: realmEthos(officers, deeds ?? {}, force.id),
       });
     }
     out.sort((a, b) => {
@@ -71,7 +76,7 @@ export function ForcesOverview({ onClose }: Props) {
       return b.troops - a.troops;
     });
     return out;
-  }, [forces, cities, officers, playerForceId]);
+  }, [forces, cities, officers, playerForceId, deeds]);
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
@@ -112,6 +117,33 @@ export function ForcesOverview({ onClose }: Props) {
                   <Stat label={t('將', 'Officers')} num={f.officerCount} />
                 </div>
               </div>
+              {/* 國風 (§6.18) — the realm's character, and how pronounced it is.
+                  Shown for every realm, so a rival's bent is readable too. */}
+              {f.ethos.lean !== 'undistinguished' && (
+                <div
+                  title={t(
+                    `${ethosLine(f.ethos).zh} 由該國武將的修為與戰績推導。尚武者鬥將懾人、學堂重武備;崇文者全境民心日附、學堂重文教;各自吸引同類之才。`,
+                    `${ethosLine(f.ethos).en} Derived from the roster's cultivation and record. A martial realm cows challengers and drills harder; a literary one steadies its cities. Each draws its own kind.`,
+                  )}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 4,
+                    padding: '0.1rem 0.5rem', borderRadius: 4, fontSize: '0.72rem',
+                    background: f.ethos.lean === 'martial' ? 'rgba(224,132,106,0.14)'
+                      : f.ethos.lean === 'literary' ? 'rgba(136,183,232,0.14)' : 'rgba(154,138,232,0.14)',
+                    border: `1px solid ${f.ethos.lean === 'martial' ? '#e0846a' : f.ethos.lean === 'literary' ? '#88b7e8' : '#9a8ae8'}`,
+                    color: f.ethos.lean === 'martial' ? '#ffc8b8' : f.ethos.lean === 'literary' ? '#cfe4ff' : '#d8cff5',
+                  }}
+                >
+                  {f.ethos.lean === 'martial' ? '⚔' : f.ethos.lean === 'literary' ? '📜' : '⚖'}
+                  {lang === 'en' ? f.ethos.en : f.ethos.zh}
+                  <span style={{ opacity: 0.75 }}>
+                    {t(`武${f.ethos.martial}・文${f.ethos.literary}`, `${f.ethos.martial}/${f.ethos.literary}`)}
+                  </span>
+                  <span style={{ opacity: 0.6 }}>
+                    {f.ethos.strength >= 0.7 ? t('蔚然成風', 'deep') : f.ethos.strength >= 0.4 ? t('漸成風氣', 'taking hold') : t('初見端倪', 'faint')}
+                  </span>
+                </div>
+              )}
               {f.topOfficers.length > 0 && (
                 <div className={styles.topOfficers}>
                   {f.topOfficers.map((o) => (

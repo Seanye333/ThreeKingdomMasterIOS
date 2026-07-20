@@ -10,7 +10,7 @@ import { duelCommentary } from '../../../game/systems/combatCommentary';
 import { rivalryBetween, isNemesis, headToHead } from '../../../game/systems/rivalries';
 import { ratingOf, duelCareerBonus } from '../../../game/systems/warRanking';
 import { staticProwess } from '../../../game/systems/duel';
-import { checkMartialEpiphany, readFoe, martialSchoolName } from '../../../game/systems/martialArts';
+import { checkMartialEpiphany, readFoe, schoolCounterLine } from '../../../game/systems/martialArts';
 import { weaponClassFor } from '../../../game/systems/duel';
 import { DuelArena3D, type DuelArenaEvent } from './DuelArena3D';
 
@@ -262,9 +262,16 @@ export function Duel3DStage(props: ComponentProps<typeof DuelGameModal>) {
             : <div style={{ color: '#7a8893' }}>{t('深淺莫測', 'depth unclear')}</div>}
           {foeRead.counter && foeRead.counter !== 'even' && (
             <div style={{ color: foeRead.counter === 'favourable' ? '#8ec88a' : '#e0846a' }}>
-              {foeRead.counter === 'favourable'
-                ? t(`${martialSchoolName(weaponClassFor(attacker)).zh}剋其派 — 佔上風`, 'Your school answers theirs')
-                : t('其派剋我 — 須慎', 'Their school answers yours — careful')}
+              {(() => {
+                // 相剋一語 — the shared phrasing from martialArts, so the banner and
+                // the bout log describe the matchup the same way.
+                const mine = weaponClassFor(attacker), theirs = weaponClassFor(defender);
+                const line = foeRead.counter === 'favourable' ? schoolCounterLine(mine, theirs) : schoolCounterLine(theirs, mine);
+                if (!line) return null;
+                return foeRead.counter === 'favourable'
+                  ? (lang === 'en' ? line.en : line.zh)
+                  : t(`${line.zh} — 須慎`, `${line.en} — careful`);
+              })()}
             </div>
           )}
           {foeRead.hasSecret && <div style={{ color: '#f0d890' }}>⚡ {t('身懷流派絕學', 'carries a school secret')}</div>}
