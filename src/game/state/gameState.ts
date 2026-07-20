@@ -494,6 +494,12 @@ export interface GameState {
   /** 稅率 — per-force taxation (gold↔loyalty trade-off). Absent ⇒ 'normal',
    *  so existing saves and every AI force keep historical behaviour. */
   taxPolicy: Record<EntityId, import('../types').TaxRate>;
+  /** 律令 (§1.11) — per-force legal code (寬刑/平律/峻法). Absent ⇒ '平律', so
+   *  old saves and every AI force keep the historical neutral behaviour. */
+  lawCode: Record<EntityId, import('../systems/law').LawSeverity>;
+  /** 大赦 — the game year each force last proclaimed a general amnesty
+   *  (§1.11); a pardon means nothing if proclaimed every other season. */
+  lastAmnestyYear: Record<EntityId, number>;
   /** 信譽 — a force's reputation for keeping its word (0–100, absent ⇒ 100).
    *  Breaking an alliance burns it; honoured pacts slowly rebuild it. Low
    *  credibility makes others wary of the player's future proposals. */
@@ -933,6 +939,8 @@ export const EMPTY_STATE: GameState = {
   deeds: {},
   fogOfWar: false,
   taxPolicy: {},
+  lawCode: {},
+  lastAmnestyYear: {},
   credibility: {},
   grudges: {},
   tradePartners: [],
@@ -1401,6 +1409,8 @@ export function loadScenario(
     taxPolicy: (state.startTaxRate && state.startTaxRate !== 'normal')
       ? { [playerForceId]: state.startTaxRate }
       : {},
+    lawCode: {},
+    lastAmnestyYear: {},
     credibility: state.credibility ?? {},
     grudges: state.grudges ?? {},
     tradePartners: state.tradePartners ?? [],

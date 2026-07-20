@@ -7,6 +7,7 @@ import { POLICY_DEFS } from '../../game/data/officerAttributes';
 import { citySize, nextTierPop, cityCarryingCapacity } from '../../game/systems/citySize';
 import { buildingBonuses } from '../../game/systems/buildings';
 import { tickCityEconomy } from '../../game/systems/economy';
+import { caseloadTier } from '../../game/systems/law';
 import type { City, EntityId, Officer } from '../../game/types';
 import { lazy, Suspense } from 'react';
 // 啟動提速 — the city 3D scene (≈175KB) loads when a city is first entered.
@@ -910,7 +911,7 @@ function DevelopmentSection({ city, isPlayerCity }: { city: City; isPlayerCity: 
   const allPending = useGameStore((s) => s.pendingCommands);
   // Which dev stats have an order queued in this city this tick.
   const working = useMemo(() => {
-    const w = { agriculture: false, commerce: false, defense: false, loyalty: false };
+    const w = { agriculture: false, commerce: false, defense: false, loyalty: false, caseload: false };
     if (!isPlayerCity) return w;
     for (const c of Object.values(allPending)) {
       if (c.cityId !== city.id) continue;
@@ -918,6 +919,7 @@ function DevelopmentSection({ city, isPlayerCity }: { city: City; isPlayerCity: 
       else if (c.type === 'develop-commerce' || c.type === 'major-commerce') w.commerce = true;
       else if (c.type === 'build-defense' || c.type === 'major-defense' || c.type === 'upgrade-wall' || c.type === 'drill-troops') w.defense = true;
       else if (c.type === 'improve-loyalty' || c.type === 'relief' || c.type === 'anti-corruption') w.loyalty = true;
+      else if (c.type === 'adjudicate') { w.caseload = true; w.loyalty = true; }
       else if (c.type === 'military-farming') w.agriculture = true;
     }
     return w;
@@ -948,6 +950,13 @@ function DevelopmentSection({ city, isPlayerCity }: { city: City; isPlayerCity: 
       {(city.culture ?? 0) > 0 && (
         <Bar icon="flag" label="Culture" zh="文教" value={city.culture ?? 0} cap={100} tone="#a08fd0"
           note={(city.culture ?? 0) >= 60 ? '文化名城 · 息貪安民' : `息貪 −${Math.round((city.culture ?? 0) / 100 * 35)}%`} />
+      )}
+      {/* 訟獄積案 (§1.11) — an unheard docket bleeds loyalty and breeds 冤獄. */}
+      {(city.caseload ?? 0) >= 10 && (
+        <Bar icon="scroll" label="Docket" zh="獄訟" value={Math.round(city.caseload ?? 0)} cap={100} tone="#b08a6a"
+          warn={(city.caseload ?? 0) >= 55}
+          working={working.caseload}
+          note={t(`${caseloadTier(city.caseload ?? 0).zh} · 遣能吏「決獄」`, `${caseloadTier(city.caseload ?? 0).en} · assign 決獄`)} />
       )}
       <Bar icon="flag" label="Loyalty" zh="民忠" value={city.loyalty} cap={100} tone="#e08aa0"
         warn={city.loyalty < 45} working={working.loyalty} note={loyaltyNote} />

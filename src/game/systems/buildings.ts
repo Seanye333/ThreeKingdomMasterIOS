@@ -57,6 +57,11 @@ export function tickBuildings(ctx: BuildingTickContext): BuildingTickOutput {
 /** Schools whose xpMul a 山長 (headmaster) can amplify. */
 export const SCHOOL_BUILDINGS = new Set<BuildingId>(['academy', 'grandacademy', 'drillground', 'recruithall', 'warschool', 'library']);
 
+/** 聽訟之所 (§1.11) — buildings that give a magistrate somewhere to hold court,
+ *  so the docket (City.caseload) is worked down faster: the gaol that holds the
+ *  accused and the civic hall that registers the households they quarrel over. */
+export const COURT_BUILDINGS = new Set<BuildingId>(['prison', 'civicoffice']);
+
 /** 山長之偏 — the stat the city's school headmasters tilt 講學 toward (the top
  *  stat of the strongest assigned headmaster), or null if none is assigned. So a
  *  武學堂 under a fierce general trains 武, a 書院 under a sage trains 智. */

@@ -42,9 +42,10 @@ import {
   specialtyControl, specialtyRealmEffects, allRoleEffects, embargoedRolesAgainst,
   type SpecialtyControl, type SpecialtyRealmEffects, type SpecialtyRole,
 } from '../data/specialties';
-import { buildingBonuses, schoolHeadmasterFocus, SCHOOL_BUILDINGS } from './buildings';
+import { buildingBonuses, schoolHeadmasterFocus, SCHOOL_BUILDINGS, COURT_BUILDINGS } from './buildings';
 import { COMMAND_TOKEN_IDS } from '../data/items';
 import { cultureGain, cultureGraftCurb, cultureLoyaltyLift } from './culture';
+import { lawEffects, caseloadTick, caseloadPenalty, wrongfulConvictionChance, aiLawCode } from './law';
 import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
 import { corruptionAccrualMultiplier } from './traitEffects';
 import { rollCivicEvents } from './civicEvents';
@@ -136,6 +137,8 @@ export interface ResolutionInput {
   buildings?: import('../types').Building[];
   /** 稅率 — per-force taxation; missing entries resolve to 'normal'. */
   taxPolicy?: Record<EntityId, import('../types').TaxRate>;
+  /** 律令 — per-force legal code (§1.11); missing entries resolve to '平律'. */
+  lawCode?: Record<EntityId, import('./law').LawSeverity>;
   /** 通商條約 — force ids the player has trade treaties with (mutual income). */
   tradePartners?: EntityId[];
   /** 通貨膨脹 — the player's inflation level (0–100); saps player tax income. */
@@ -2274,7 +2277,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const assistants = (cmd.assistantOfficerIds ?? [])
       .map((aid) => officers[aid])
       .filter((a): a is Officer => !!a);
-    const result = resolveInternalAffairs(cmd.type, officer, city, rng, finalBonus, input.weather?.kind, assistants, input.rapport);
+    const hasCourtForCmd = (input.buildings ?? []).some(
+      (bd) => bd.cityId === city.id && COURT_BUILDINGS.has(bd.id) && (bd.level ?? 0) >= 1);
+    const result = resolveInternalAffairs(cmd.type, officer, city, rng, finalBonus, input.weather?.kind, assistants, input.rapport, hasCourtForCmd);
     cities[city.id] = applyDelta(city, result.delta);
     const assistNote = assistants.length
       ? { text: ` (協同 ${assistants.map((a) => a.name.en).join(', ')})`, zh: `(協同 ${assistants.map((a) => a.name.zh).join('、')})` }
@@ -2502,10 +2507,21 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const nextCulture = city.ownerForceId
       ? Math.max(0, Math.min(100, (city.culture ?? 0) + cultureGain(hasSchoolHere, bestIntellect)))
       : (city.culture ?? 0);
+    // 律令 (§1.11) — the realm's legal code colours everything civic here: how
+    // fast graft accrues, how fast the docket fills, and the standing loyalty
+    // drift of living under 寬刑 or 峻法.
+    // 各國自有其法 — the player's code is whatever they set; an AI lord governs
+    // by temperament (暴君用峻法, 儒者用寬刑), so the map isn't uniformly neutral.
+    const severity = city.ownerForceId
+      ? (input.lawCode?.[city.ownerForceId]
+         ?? aiLawCode(input.forces[city.ownerForceId]?.personality))
+      : undefined;
+    const law = lawEffects(severity);
     // 教化息貪 — an educated, well-schooled city resists graft (up to −35% accrual).
     const corruptionAccrual = city.ownerForceId
       ? Math.max(0, 0.6 + city.commerce / 120 - Math.min(0.6, bestPolitics / 130))
         * corruptionAccrualMultiplier(cityOfficers) * cultureGraftCurb(city.culture ?? 0)
+        * law.corruptionMul
       : 0;
     const nextCorruption = corruptionAccrual > 0
       ? Math.min(100, (city.corruption ?? 0) + corruptionAccrual)
@@ -2515,16 +2531,50 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const corruptionLoyaltyBite = nextCorruption >= 60 ? -1 : 0;
     // 民安其教 — a 文化名城 (文教≥60) keeps its people content: a small loyalty lift.
     const cultureLift = cultureLoyaltyLift(city.culture ?? 0);
+    // 訟獄積案 (§1.11) — cases arrive with the population and the code's reach;
+    // whoever holds the city hears them (政治), a civic hall gives them a court.
+    // An unheard docket is a standing grievance, and under 峻法 a full docket
+    // with a careless judge is how 冤獄 happens.
+    const hasCourtHere = (input.buildings ?? []).some(
+      (bd) => bd.cityId === city.id && COURT_BUILDINGS.has(bd.id) && (bd.level ?? 0) >= 1);
+    const nextCaseload = city.ownerForceId
+      ? caseloadTick({
+          current: city.caseload ?? 0,
+          population: city.population,
+          severity,
+          judgePolitics: bestPolitics,
+          hasCourt: hasCourtHere,
+        })
+      : (city.caseload ?? 0);
+    const docket = caseloadPenalty(nextCaseload);
+    let lawLoyalty = (city.ownerForceId ? law.loyaltyDelta : 0) + docket.loyaltyDelta;
+    if (city.ownerForceId && rng() < wrongfulConvictionChance({
+      caseload: nextCaseload, severity, judgePolitics: bestPolitics,
+    })) {
+      // 冤獄 — a judgment that should never have been passed. The city hears of
+      // it, and remembers.
+      lawLoyalty -= 5;
+      if (city.ownerForceId === input.playerForceId) {
+        entries.push({
+          kind: 'note',
+          cityId: city.id,
+          text: `${city.name.en}: a wrongful conviction — the city is bitter (loyalty −5).`,
+          textZh: `${city.name.zh}:獄有冤死,市人切齒(民忠 −5)。獄訟積壓${Math.round(nextCaseload)},宜遣能吏決獄。`,
+        });
+      }
+    }
     // 練度弛 — drill fades when the garrison isn't kept at it (about 2/season).
     const nextDrill = city.drill ? Math.max(0, city.drill - 2) : city.drill;
     const updated: City = {
       ...city,
-      gold: city.gold + tick.goldIncome + territoryGold,
+      // 律令與稅入 (§1.11) — 寬刑之下賦稅有漏,峻法之下錙銖必入。
+      gold: city.gold + Math.round(tick.goldIncome * law.taxYieldMul) + territoryGold,
       food: Math.max(0, city.food + tick.foodIncome - tick.foodUpkeep),
       troops: troopsAfterDesertion + capitalGuard,
-      loyalty: Math.max(0, Math.min(100, city.loyalty + tick.loyaltyDelta + capitalLoyalty + corruptionLoyaltyBite + cultureLift)),
+      loyalty: Math.max(0, Math.min(100, city.loyalty + tick.loyaltyDelta + capitalLoyalty + corruptionLoyaltyBite + cultureLift + lawLoyalty)),
       corruption: city.ownerForceId ? nextCorruption : city.corruption,
       culture: nextCulture,
+      caseload: nextCaseload,
       drill: nextDrill,
       population: Math.max(1000, city.population + tick.populationDelta),
       warhorses: tick.warhorseBreed > 0
@@ -3943,6 +3993,7 @@ function applyDelta(
     wallTier: 1 | 2 | 3;
     corruption: number;
     drill: number;
+    caseload: number;
   }>,
 ): City {
   // Per-command logic already clamps to the city-tier cap (cityEconCap for
@@ -3958,6 +4009,9 @@ function applyDelta(
     loyalty: clamp(city.loyalty + (delta.loyalty ?? 0), 0, 100),
     food: Math.max(0, city.food + (delta.food ?? 0)),
     gold: Math.max(0, city.gold + (delta.gold ?? 0)),
+    caseload: delta.caseload !== undefined
+      ? clamp((city.caseload ?? 0) + delta.caseload, 0, 100)
+      : city.caseload,
     floodWorks: delta.floodWorks ?? city.floodWorks,
     wallTier: delta.wallTier ?? city.wallTier,
     corruption: delta.corruption !== undefined

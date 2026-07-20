@@ -55,6 +55,14 @@ export interface City {
    */
   corruption?: number;
   /**
+   * 訟獄積案 (§1.11) — unheard court cases piling up (0–100). Arrives with the
+   * population and the realm's legal code; worked down by whoever administers
+   * the city (政治), by a 牢城/安民坊 to hold court in, by the 決獄 command, and
+   * wiped by a 大赦. A heavy docket bleeds loyalty and, under 峻法, produces
+   * 冤獄. Default/omitted = 0 (訟簡刑清).
+   */
+  caseload?: number;
+  /**
    * 練度 — the garrison's drill/training level (0–100). Raised by the 練兵
    * command and by 演習 sparring drills; decays slowly each season. Lifts the
    * city's defensive fighting power when besieged (well-drilled defenders hold

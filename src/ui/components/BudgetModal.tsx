@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 import { useGameStore } from '../../game/state/store';
+import { LAW_NAMES, LAW_SEVERITIES, lawEffects, type LawSeverity } from '../../game/systems/law';
+import { usePanelNotice } from './usePanelNotice';
 import { realmBudget, TAX_EFFECT } from '../../game/systems/economy';
 import type { TaxRate } from '../../game/types';
 import { useT } from '../i18n';
@@ -27,6 +29,11 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
   const selectCity = useGameStore((s) => s.selectCity);
   const tax: TaxRate = useGameStore((s) => (playerForceId ? s.taxPolicy[playerForceId] : undefined) ?? 'normal');
   const setTaxPolicy = useGameStore((s) => s.setTaxPolicy);
+  // 律令・大赦 (§1.11)
+  const law: LawSeverity = useGameStore((s) => (playerForceId ? s.lawCode?.[playerForceId] : undefined) ?? 'standard');
+  const setLawCode = useGameStore((s) => s.setLawCode);
+  const proclaimAmnesty = useGameStore((s) => s.proclaimAmnesty);
+  const { notify, noticeUI } = usePanelNotice();
   const inflation = useGameStore((s) => s.inflation ?? 0);
   const mintCoin = useGameStore((s) => s.mintCoin);
   const solicitDonations = useGameStore((s) => s.solicitDonations);
@@ -86,6 +93,12 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
     { zh: '官署常俸', en: 'Offices', v: foodLines.office },
     { zh: '兵糧', en: 'Upkeep', v: -foodLines.upkeep },
   ].filter((r) => r.v !== 0);
+
+  // 平均積案 — how full the realm's courts are, for the 大赦 blurb.
+  const ownCityList = Object.values(cities).filter((c) => c.ownerForceId === playerForceId);
+  const meanCaseload = ownCityList.length > 0
+    ? ownCityList.reduce((a, c) => a + (c.caseload ?? 0), 0) / ownCityList.length
+    : 0;
 
   const card = { background: '#141c25', border: '1px solid #243240', padding: '0.5rem 0.6rem', borderRadius: 'var(--tkm-radius-sm)' } as const;
   const labelStyle = { color: '#7a8893', fontSize: '0.72rem' } as const;
@@ -179,6 +192,48 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
           </div>
         )}
 
+        {/* 律令 (§1.11) — 寬刑/平律/峻法, and 大赦天下. */}
+        {playerForceId && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+            <span style={{ color: '#7a8893', fontSize: '0.78rem' }}>{t('律令', 'Legal code')}</span>
+            <div style={{ display: 'flex', gap: 3 }}>
+              {LAW_SEVERITIES.map((sev) => (
+                <button
+                  key={sev}
+                  onClick={() => setLawCode(sev)}
+                  title={LAW_NAMES[sev].motto}
+                  style={{
+                    background: law === sev ? '#26323e' : 'transparent',
+                    border: `1px solid ${law === sev ? '#e6c473' : '#2b3845'}`,
+                    color: law === sev ? '#f2dd9a' : '#7a8893',
+                    padding: '0.2rem 0.6rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer',
+                    fontFamily: 'inherit', fontSize: '0.78rem',
+                  }}
+                >{t(LAW_NAMES[sev].zh, LAW_NAMES[sev].en)}</button>
+              ))}
+            </div>
+            <span style={{ color: law === 'strict' ? '#e0a070' : law === 'lenient' ? '#9ad6a8' : '#5f6c76', fontSize: '0.72rem' }}>
+              {t(lawEffects(law).badgeZh, lawEffects(law).badgeEn)}
+            </span>
+          </div>
+        )}
+        {playerForceId && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => { const r = proclaimAmnesty(); notify(r.message, r.ok); }}
+              style={{
+                background: 'transparent', border: '1px solid #2b3845', color: '#9fb0bd',
+                padding: '0.2rem 0.6rem', borderRadius: 'var(--tkm-radius-sm)', cursor: 'pointer',
+                fontFamily: 'inherit', fontSize: '0.78rem',
+              }}
+            >{t('大赦天下', 'General Amnesty')}</button>
+            <span style={{ color: '#5f6c76', fontSize: '0.72rem' }}>
+              {t(`全境獄訟一空 · 民忠大進 · 盜賊復起(平均積案 ${Math.round(meanCaseload)})`,
+                 `Empties every docket, loyalty surges, banditry follows (mean docket ${Math.round(meanCaseload)})`)}
+            </span>
+          </div>
+        )}
+
         {/* 應急 — one-off fundraising levers: 鑄錢 (inflation) and 勸募 (loyalty). */}
         {playerForceId && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.5rem', flexWrap: 'wrap' }}>
@@ -254,6 +309,7 @@ export function BudgetModal({ onClose }: { onClose: () => void }) {
         {rows.length === 0 && (
           <EmptyState compact icon="🏯" title={t('尚無城池。', 'No cities yet.')} />
         )}
+      {noticeUI}
     </Modal>
   );
 }

@@ -10,6 +10,7 @@ import { ITEMS_BY_ID } from '../data/items';
 import { itemSetBonuses } from '../data/itemSets';
 import { cityStatCap, cityEconCap, citySize, CITY_SIZES, type CitySize } from './citySize';
 import { internalAffairsMultiplier } from './traitEffects';
+import { adjudicateClear } from './law';
 import { pairKey } from '../types/diplomacy';
 import type { WeatherKind } from './weather';
 
@@ -162,6 +163,14 @@ export const COMMAND_DEFS: Record<CommandType, CommandDef> = {
     description:
       '巡查肅貪 — Audit the clerks and claw back embezzled funds. Recovers gold (scaling with the city’s commerce — the richer the city, the more graft) and restores public faith (loyalty), unaffected by the 撫民 near-cap taper.',
   },
+  adjudicate: {
+    type: 'adjudicate',
+    label: { en: 'Hear Cases', zh: '決獄' },
+    stat: 'politics',
+    goldCost: 120,
+    description:
+      '決獄 — Sit in court for a season and work through the backlog of unheard cases (訟獄積案). Clears cases in proportion to Politics (a gaol or civic hall to hold court in helps), and the relief shows in public faith. A city whose docket is never heard bleeds loyalty and, under a harsh code, condemns innocent men.',
+  },
   'flood-control': {
     type: 'flood-control',
     label: { en: 'Flood Control', zh: '治水' },
@@ -227,6 +236,7 @@ export interface CommandResult {
     wallTier: 1 | 2 | 3;
     corruption: number;
     drill: number;
+    caseload: number;
   }>;
   message: string;
   messageZh: string;
@@ -246,6 +256,8 @@ export function resolveInternalAffairs(
   assistants?: Officer[],
   /** Pairwise officer rapport (好感) — scales each assistant's協同 by 搭檔情誼. */
   rapport?: Record<string, number>,
+  /** 聽訟之所 — this city has a 牢城/安民坊 to hold court in (§1.11, 決獄). */
+  hasCourt?: boolean,
 ): CommandResult {
   const def = COMMAND_DEFS[type];
   // Trait multiplier (diligent +20%, lazy −20%, specialist +20% for matching
@@ -455,6 +467,29 @@ export function resolveInternalAffairs(
         delta: { gold: recovered, loyalty: loyaltyGain, corruption: -cleared },
         message: `${officer.name.en} 巡查肅貪: clawed back ${recovered}g of graft${graft > 0 ? ` (corruption −${cleared})` : ''}, Loyalty +${loyaltyGain} (now ${city.loyalty + loyaltyGain}).`,
         messageZh: `${officer.name.zh}巡查肅貪:追贓 ${recovered} 金${graftNote},民心大快,民忠 +${loyaltyGain} (現 ${city.loyalty + loyaltyGain})。`,
+      };
+    }
+    case 'adjudicate': {
+      // 決獄 (§1.11) — a season spent hearing the docket. What an official can
+      // dispose of scales with 政治 and whether the city has a court to sit in;
+      // the relief of a heard grievance shows up as public faith. Clearing an
+      // empty docket is honest work with little to show for it.
+      const docket = city.caseload ?? 0;
+      const cleared = Math.min(docket, adjudicateClear(statValue, !!hasCourt));
+      const loyaltyGain = Math.min(100 - city.loyalty, Math.round(cleared / 6));
+      if (docket <= 0) {
+        return {
+          success: true,
+          delta: { loyalty: Math.min(100 - city.loyalty, 1) },
+          message: `${officer.name.en} 決獄: the docket was already clear — a quiet season on the bench.`,
+          messageZh: `${officer.name.zh}決獄:獄無滯訟,終日無事而還。`,
+        };
+      }
+      return {
+        success: true,
+        delta: { caseload: -cleared, loyalty: loyaltyGain },
+        message: `${officer.name.en} 決獄: heard ${cleared} cases (backlog ${Math.round(docket)} → ${Math.round(docket - cleared)}), Loyalty +${loyaltyGain}.`,
+        messageZh: `${officer.name.zh}決獄:平反聽斷,積案 ${Math.round(docket)} → ${Math.round(docket - cleared)},民忠 +${loyaltyGain}。`,
       };
     }
     case 'military-farming': {

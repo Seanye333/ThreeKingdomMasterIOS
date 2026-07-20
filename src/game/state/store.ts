@@ -322,6 +322,7 @@ function playerImperialSanction(state: {
 import { inferUnitType, pickAiFormation } from '../systems/tactical';
 import { setupTacticalBattle, planSiegeRelief, planColumnReinforcements, rollTimeOfDay } from '../systems/tacticalSetup';
 import { navalContextFor } from '../systems/navalWarfare';
+import { amnestyEffect, AMNESTY_COOLDOWN_SEASONS } from '../systems/law';
 import { applyOpeningScheme, applyAiBattlePreps, applyBattlePrep } from '../systems/tacticalSchemes';
 import { regionalTacticalWeather } from '../systems/weather';
 import { pickAutoStratagem } from '../data/stratagems2';
@@ -1207,6 +1208,13 @@ export interface GameStore extends GameState {
   setFogOfWar: (on: boolean) => void;
   /** 定稅 — set a force's tax rate (defaults apply to the player's force). */
   setTaxPolicy: (forceId: EntityId, rate: import('../types').TaxRate) => void;
+  /** 律令 (§1.11) — set the realm's legal code (寬刑/平律/峻法). Takes effect at
+   *  the next season tick: loyalty drift, graft, tax yield and docket growth. */
+  setLawCode: (severity: import('../systems/law').LawSeverity) => void;
+  /** 大赦天下 (§1.11) — empty every court in the realm: loyalty everywhere and
+   *  the docket wiped, paid for in gold, in the throne's dignity, and in the
+   *  men you just let out. Refused if one was proclaimed too recently. */
+  proclaimAmnesty: () => { ok: boolean; message: string };
   saveCommandTemplate: (label: string) => void;
   applyCommandTemplate: (id: EntityId) => void;
   deleteCommandTemplate: (id: EntityId) => void;
@@ -4360,6 +4368,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           foughtPairs: state.foughtPairs ?? undefined,
           cities: planned.cities,
           officers: planned.officers,
+          lawCode: state.lawCode,
           buildings: state.buildings,
           forces: forcesAfterCourt,
           pendingCommands: planned.pendingCommands,
@@ -15067,6 +15076,62 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       setFogOfWar: (on) => set({ fogOfWar: on }),
       setTaxPolicy: (forceId, rate) => set((s) => ({ taxPolicy: { ...s.taxPolicy, [forceId]: rate } })),
 
+      // ── 律法・刑獄 (§1.11) ──
+      setLawCode: (severity) => set((s) => {
+        const fid = s.playerForceId;
+        if (!fid) return {};
+        return { lawCode: { ...s.lawCode, [fid]: severity } };
+      }),
+
+      proclaimAmnesty: () => {
+        const s = get();
+        const fid = s.playerForceId;
+        if (!fid) return { ok: false, message: '無主之人,何赦之有。' };
+        const last = s.lastAmnestyYear?.[fid];
+        // 屢赦則無威 — seasons, not years, is the unit the cooldown is written in.
+        if (last !== undefined && (s.date.year - last) * 4 < AMNESTY_COOLDOWN_SEASONS) {
+          return { ok: false, message: `前赦未遠(${last} 年),屢赦則法不立。` };
+        }
+        const own = Object.values(s.cities).filter((c) => c.ownerForceId === fid);
+        if (own.length === 0) return { ok: false, message: '尚無城池,無獄可赦。' };
+        const meanCaseload = own.reduce((a, c) => a + (c.caseload ?? 0), 0) / own.length;
+        const eff = amnestyEffect({ cityCount: own.length, meanCaseload });
+        const treasury = own.reduce((a, c) => a + c.gold, 0);
+        if (treasury < eff.goldCost) {
+          return { ok: false, message: `大赦需 ${eff.goldCost} 金(現庫 ${treasury})。` };
+        }
+        // Draw the cost from the richest cities first, then wipe every docket.
+        let owed = eff.goldCost;
+        const nextCities = { ...s.cities };
+        for (const c of [...own].sort((a, b) => b.gold - a.gold)) {
+          const take = Math.min(owed, nextCities[c.id].gold);
+          nextCities[c.id] = { ...nextCities[c.id], gold: nextCities[c.id].gold - take };
+          owed -= take;
+          if (owed <= 0) break;
+        }
+        for (const c of own) {
+          nextCities[c.id] = {
+            ...nextCities[c.id],
+            caseload: 0,
+            loyalty: Math.min(100, nextCities[c.id].loyalty + eff.loyaltyGain),
+          };
+        }
+        set({
+          cities: nextCities,
+          lastAmnestyYear: { ...(s.lastAmnestyYear ?? {}), [fid]: s.date.year },
+        });
+        get().recordAnnal?.({
+          year: s.date.year, season: s.date.season,
+          kind: 'rite',
+          titleZh: '大赦天下',
+          textZh: `${s.forces[fid]?.name.zh ?? '主公'}大赦天下,獄訟一空,萬民稱慶;然縱囚歸鄉,道路復有剽掠者。`,
+        });
+        return {
+          ok: true,
+          message: `大赦天下 — 費 ${eff.goldCost} 金,全境獄訟一空,民忠 +${eff.loyaltyGain}。惟盜賊復起,威望稍損。`,
+        };
+      },
+
       saveCommandTemplate: (label) => {
         const state = get();
         // Snapshot current pending commands as a template.
@@ -17956,6 +18021,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         lastSalonYear: state.lastSalonYear,
         arenaChampion: state.arenaChampion,
         moonLaurel: state.moonLaurel,
+        lawCode: state.lawCode,
+        lastAmnestyYear: state.lastAmnestyYear,
         pendingPersuasions: state.pendingPersuasions,
         pendingMoonWrit: state.pendingMoonWrit,
         clearedDuelScenarios: state.clearedDuelScenarios,
