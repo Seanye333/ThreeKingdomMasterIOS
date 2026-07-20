@@ -206,7 +206,7 @@ import {
   POEM_GOLD_COST, canBuildShrine, composePoem, poemEffects, poemQuality, shrineCost, shrineEffects,
 } from '../systems/culturalWorks';
 import {
-  PROJECTS_BY_ID, canStartProject, projectCityGrants, projectEta, projectRealmEffects, projectSeasonProgress,
+  PROJECTS_BY_ID, aiProjectChoice, canStartProject, projectCityGrants, projectEta, projectRealmEffects, projectSeasonProgress,
 } from '../systems/grandProjects';
 import { effectiveSelection, rectifierOf, selectionAvailable, selectionLoyaltyDrift, aiSelection, SELECTION_NAMES, type SelectionSystem } from '../systems/officialSelection';
 import { codexMarkRecruited, codexMarkRecruitedMany, codexMarkSeen, codexMarkSlain, loadCodex, CODEX_MILESTONES, codexClaimMilestone } from '../systems/codex';
@@ -6488,11 +6488,44 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // 諸侯亦興大工 — AI realms begin works of their own (rare, by temperament),
+        // so the map's powers visibly diverge over a long campaign.
+        if (seasonBoundary) {
+          const projectsNow = [...(get().grandProjects ?? [])];
+          let started = false;
+          for (const force of Object.values(state.forces)) {
+            if (force.id === state.playerForceId) continue;
+            const owned = Object.values(postCities).filter((c) => c.ownerForceId === force.id);
+            const choice = aiProjectChoice({
+              personality: force.personality,
+              cities: owned,
+              own: projectsNow,
+              forceId: force.id,
+              rng: Math.random,
+            });
+            if (!choice) continue;
+            const host = postCities[choice.cityId];
+            const def = PROJECTS_BY_ID[choice.id];
+            postCities[choice.cityId] = { ...host, gold: Math.max(0, host.gold - def.goldCost) };
+            projectsNow.push({
+              id: choice.id, cityId: choice.cityId, forceId: force.id,
+              seasonsLeft: def.baseSeasons, startedYear: result.date.year,
+            });
+            started = true;
+          }
+          if (started) set({ grandProjects: projectsNow });
+        }
+
         // ── 大工 §1.15 — advance the realm's great work, and pay for it ──
         // Guarded by seasonBoundary: endSeason runs every 旬 (3× a season), and
         // an unguarded block here would treble the pace and the loyalty bill.
-        if (seasonBoundary && (state.grandProjects ?? []).length > 0) {
-          const nextProjects = [...state.grandProjects];
+        // NOTE: read via get(), not the `state` snapshot taken at the top of
+        // endSeason — the AI-start block just above may have added a project
+        // this same tick, and deriving from the stale array would silently drop
+        // it on the set() below. (Caught by the soak: an AI work vanished the
+        // season a player work was also in progress.)
+        if (seasonBoundary && (get().grandProjects ?? []).length > 0) {
+          const nextProjects = [...(get().grandProjects ?? [])];
           for (let i = 0; i < nextProjects.length; i++) {
             const proj = nextProjects[i];
             if (proj.done) continue;

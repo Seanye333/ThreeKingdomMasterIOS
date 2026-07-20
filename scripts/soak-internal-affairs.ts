@@ -118,3 +118,13 @@ console.log(`  corruption  : mean ${r(mean(finalCorr), 1)}, p90 ${pct(finalCorr,
 console.log(`  cities at corruption 100 (pegged): ${finalCorr.filter((c) => c >= 100).length}`);
 console.log(`  any NaN city stat: ${finalCs.some((c) => [c.gold, c.food, c.troops, c.corruption ?? 0, c.drill ?? 0].some(Number.isNaN))}`);
 console.log('');
+
+// ── 大工 §1.15 — did any realm actually raise one over the run? ──
+const projects = store.getState().grandProjects ?? [];
+console.log('=== 大工 ===');
+console.log(`  started: ${projects.length}, finished: ${projects.filter((p) => p.done).length}`);
+for (const p of projects.slice(0, 6)) {
+  const city = store.getState().cities[p.cityId];
+  console.log(`  ${p.id} @ ${city?.name.zh ?? p.cityId} (${p.startedYear}) ${p.done ? '成' : `餘 ${p.seasonsLeft}`}`);
+}
+console.log('');

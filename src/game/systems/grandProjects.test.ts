@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   GRAND_PROJECTS, PROJECTS_BY_ID, projectSeasonProgress, projectEta,
-  canStartProject, projectRealmEffects, projectCityGrants, type GrandProject,
+  canStartProject, projectRealmEffects, projectCityGrants, aiProjectChoice, type GrandProject,
 } from './grandProjects';
 
 const proj = (over: Partial<GrandProject> = {}): GrandProject => ({
@@ -92,5 +92,49 @@ describe('工成之利', () => {
 
   it('the road grants no city stats — its whole value is realm-wide', () => {
     expect(projectCityGrants('imperial-road')).toEqual({ self: {}, neighbour: {} });
+  });
+});
+
+describe('諸侯亦興大工', () => {
+  const cities = Array.from({ length: 8 }, (_, i) =>
+    ({ id: `c${i}`, gold: 9000, population: 200_000, ownerForceId: 'wei' }));
+
+  it('never starts a second work, however rich', () => {
+    expect(aiProjectChoice({
+      cities, own: [proj({ forceId: 'wei' })], forceId: 'wei', rng: () => 0,
+    })).toBeNull();
+  });
+
+  it('a small realm has no spare hands', () => {
+    expect(aiProjectChoice({
+      cities: cities.slice(0, 4), own: [], forceId: 'wei', rng: () => 0,
+    })).toBeNull();
+  });
+
+  it('is rare — a high roll declines', () => {
+    expect(aiProjectChoice({ cities, own: [], forceId: 'wei', rng: () => 0.9 })).toBeNull();
+  });
+
+  it('never spends the last coin', () => {
+    const poor = cities.map((c) => ({ ...c, gold: 3000 }));
+    expect(aiProjectChoice({ cities: poor, own: [], forceId: 'wei', rng: () => 0 })).toBeNull();
+  });
+
+  it('picks by temperament and builds where the treasury is', () => {
+    const rich = [...cities];
+    rich[5] = { ...rich[5], gold: 50_000 };
+    const conqueror = aiProjectChoice({ personality: 'aggressive', cities: rich, own: [], forceId: 'wei', rng: () => 0 });
+    const turtle = aiProjectChoice({ personality: 'cautious', cities: rich, own: [], forceId: 'wei', rng: () => 0 });
+    expect(conqueror?.id).toBe('imperial-road');
+    expect(turtle?.id).toBe('long-wall');
+    expect(conqueror?.cityId).toBe('c5');
+  });
+
+  it('moves on to its next choice once a work stands', () => {
+    const after = aiProjectChoice({
+      personality: 'aggressive', cities, forceId: 'wei', rng: () => 0,
+      own: [proj({ forceId: 'wei', id: 'imperial-road', done: true })],
+    });
+    expect(after?.id).toBe('long-wall');
   });
 });

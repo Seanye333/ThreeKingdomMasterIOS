@@ -169,3 +169,42 @@ export function projectCityGrants(id: GrandProjectId): {
       return { self: {}, neighbour: {} };
   }
 }
+
+// ─── AI ───────────────────────────────────────────────────────────────
+
+/**
+ * 諸侯亦興大工 — an AI realm that is rich, wide and not desperate will begin a
+ * great work of its own, chosen by temperament: a conqueror lays a road, a
+ * cautious lord walls his frontier, a builder dams his river. Rare on purpose
+ * (a realm raises one in a decade, not one a year), and it makes the map's
+ * powers visibly diverge over a long campaign.
+ *
+ * Returns the project to begin and where, or null.
+ */
+export function aiProjectChoice(args: {
+  personality?: string;
+  /** Cities the force holds, richest first is not required. */
+  cities: ReadonlyArray<{ id: EntityId; gold: number; population: number; ownerForceId: string | null }>;
+  /** Works this force already has under way or finished. */
+  own: ReadonlyArray<GrandProject>;
+  forceId: EntityId;
+  rng: () => number;
+}): { id: GrandProjectId; cityId: EntityId } | null {
+  if (args.own.some((p) => p.forceId === args.forceId && !p.done)) return null;
+  if (args.cities.length < 6) return null;                 // a small realm has no spare hands
+  if (args.rng() > 0.05) return null;                      // ~once a decade at a season tick
+  const order: GrandProjectId[] =
+    args.personality === 'aggressive' || args.personality === 'expansionist' || args.personality === 'tyrant'
+      ? ['imperial-road', 'long-wall', 'great-weir', 'grand-canal']
+      : args.personality === 'cautious' || args.personality === 'defensive'
+        ? ['long-wall', 'great-weir', 'grand-canal', 'imperial-road']
+        : ['great-weir', 'grand-canal', 'imperial-road', 'long-wall'];
+  const doneIds = new Set(args.own.filter((p) => p.forceId === args.forceId && p.done).map((p) => p.id));
+  const pick = order.find((id) => !doneIds.has(id));
+  if (!pick) return null;
+  const def = PROJECTS_BY_ID[pick];
+  // Build it where the treasury actually is.
+  const host = [...args.cities].sort((a, b) => b.gold - a.gold)[0];
+  if (!host || host.gold < def.goldCost * 1.6) return null;  // never spend the last coin
+  return { id: pick, cityId: host.id };
+}
