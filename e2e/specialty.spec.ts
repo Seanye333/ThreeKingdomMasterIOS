@@ -31,7 +31,11 @@ test('treasury shows the Specialty Dominion panel', async ({ page }) => {
   await page.getByRole('button', { name: '內政', exact: false }).first().click();
   // Exact match on the menu BUTTON — a loose text match also hits the trigger's
   // own tooltip ("內政 — 郡縣、輜重、度支、賑災"), which cannot be clicked.
-  await page.getByRole('button', { name: '度支', exact: true }).first().click();
+  // Wait for the dropdown to settle before clicking: the menu animates open and
+  // gained an entry (國政) in 2026-07, which made a blind click flaky.
+  const ledger = page.getByRole('button', { name: '度支', exact: true }).first();
+  await expect(ledger).toBeVisible({ timeout: 10_000 });
+  await ledger.click();
   await expect(page.getByText('名產版圖', { exact: false })).toBeVisible({ timeout: 10_000 });
 
   expect(errors, `uncaught page errors: ${errors.join(' | ')}`).toHaveLength(0);
