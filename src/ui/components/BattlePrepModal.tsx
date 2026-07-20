@@ -4,6 +4,7 @@ import { FORMATIONS, NAMED_MAPS_BY_CITY, NAMED_MAPS_BY_ID } from '../../game/dat
 import { inferUnitType } from '../../game/systems/tactical';
 import { setupTacticalBattle, planSiegeRelief, planColumnReinforcements, rollTimeOfDay } from '../../game/systems/tacticalSetup';
 import { regionalTacticalWeather } from '../../game/systems/weather';
+import { navalContextFor } from '../../game/systems/navalWarfare';
 import { cityPos } from '../../game/data/cityGeo';
 import { isRiverside } from '../../game/data/geography';
 import { useGameStore } from '../../game/state/store';
@@ -282,6 +283,26 @@ export function BattlePrepModal({
       })(),
       siegeWorks,
       reinforcements: [...relief.reinforcements, ...columnJoin.reinforcements],
+      // 水戰 (§5.14) — storming a river city is a fleet action: each side brings
+      // its own seamanship (a northern host is sick on the deck) and whatever
+      // hulls its harbours here have ready.
+      ...(() => {
+        const st = useGameStore.getState();
+        const cityList = Object.values(cities);
+        const portList = Object.values(st.ports);
+        const a = navalContextFor({
+          forceId: source.ownerForceId, cityId: target.id,
+          cities: cityList, ports: portList, officers: attackers.map((x) => x.officer),
+        });
+        const d = navalContextFor({
+          forceId: target.ownerForceId, cityId: target.id,
+          cities: cityList, ports: portList, officers: defenderEntries.map((x) => x.officer),
+        });
+        return {
+          attackerNavalDrill: a.drill, defenderNavalDrill: d.drill,
+          attackerFleet: a.fleet, defenderFleet: d.fleet,
+        };
+      })(),
     });
     battle.reliefPlans = relief.plans;
     if (columnJoin.columnPlans.length > 0) battle.columnPlans = columnJoin.columnPlans;

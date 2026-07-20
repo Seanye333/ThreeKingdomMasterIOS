@@ -33,6 +33,7 @@ import { geoToPixel, WORLD_SCALE } from '../data/geography';
 import { FACILITY_DEFS, type Fort } from '../types/fort';
 import { NAMED_MAPS_BY_CITY, NAMED_MAPS_BY_ID } from '../data/namedMaps';
 import { generateTerrain, type TerrainHint } from './battlefieldTerrain';
+import { assignFleetShipClasses, seasickness } from './navalWarfare';
 import { pickVoiceLine } from '../data/voiceLines';
 
 export interface SetupParams {
@@ -85,6 +86,15 @@ export interface SetupParams {
   /** 疲勞(守方) — same for the defender's units (a worn enemy column you
    *  bring to battle opens shaken; 師老兵疲 made visible in person). */
   defenderFatigue?: number;
+  /** 水軍熟練度 0–100 per side (§5.14, see navalWarfare.navalDrill). Only read
+   *  on naval boards. Absent → 50 (the neutral line), i.e. old behaviour. */
+  attackerNavalDrill?: number;
+  defenderNavalDrill?: number;
+  /** 艦隊 — hulls actually docked at each side's ports near this battle. Handed
+   *  out heaviest-first; contingents beyond the fleet improvise from troop
+   *  count as before. */
+  attackerFleet?: Partial<Record<import('../types/naval').ShipClass, number>>;
+  defenderFleet?: Partial<Record<import('../types/naval').ShipClass, number>>;
 }
 
 // (Legacy TERRAIN_RNG_SEED removed — terrain generation now lives in
@@ -347,7 +357,21 @@ export function setupTacticalBattle(p: SetupParams): TacticalBattle {
       }
       return Math.max(0, Math.min(height - 1, wantRow)); // pathological map — give up gracefully
     };
-    return pool.slice(0, frontRankCapacity * 2).map((entry, i) => {
+    // 艦隊編成 — hand out the hulls docked at this side's ports, heaviest to
+    // the largest command; anything the fleet can't cover is improvised from
+    // troop count (the pre-port behaviour).
+    const roster = pool.slice(0, frontRankCapacity * 2);
+    const hulls = isNaval
+      ? assignFleetShipClasses(
+          roster.map((e, i) => ({ troops: e.troops, isCommander: i === 0 })),
+          side === 'attacker' ? p.attackerFleet : p.defenderFleet,
+          assignShipClass,
+        )
+      : [];
+    // 暈船 — a crew that has never stood on a deck opens the battle shaken.
+    const drill = (side === 'attacker' ? p.attackerNavalDrill : p.defenderNavalDrill) ?? 50;
+    const sick = isNaval ? seasickness(drill) : null;
+    return roster.map((entry, i) => {
       const isBackRank = i >= frontRankCapacity;
       const rankIndex = isBackRank ? i - frontRankCapacity : i;
       // Interleave around the vertical center: 0, +1, -1, +2, -2, ...
@@ -357,8 +381,9 @@ export function setupTacticalBattle(p: SetupParams): TacticalBattle {
       // officer's land specialty.
       const unitType = isNaval ? 'navy' : (entry.unitType ?? inferUnitType(entry.officer));
       const isCommander = i === 0;
-      const shipClass = isNaval ? assignShipClass(entry.troops, isCommander) : undefined;
-      const maxAp = unitType === 'cavalry' ? 4 : unitType === 'siege' ? 2 : 3;
+      const shipClass = isNaval ? (hulls[i] ?? assignShipClass(entry.troops, isCommander)) : undefined;
+      const maxAp = Math.max(1,
+        (unitType === 'cavalry' ? 4 : unitType === 'siege' ? 2 : 3) - (sick?.apPenalty ?? 0));
       const uCol = isBackRank ? backCol : frontCol;
       const coord = { col: uCol, row: settleRow(uCol, Math.max(0, Math.min(height - 1, row))) };
       // 朝向 — units open facing the enemy edge (attacker rightward, defender left).
@@ -376,8 +401,9 @@ export function setupTacticalBattle(p: SetupParams): TacticalBattle {
         maxAp,
         // 疲勞 / 都督之旗 — a forced-marched attacker opens below full morale; a
         // legion banner offsets it (negative fatigue) but can't exceed full.
-        morale: Math.min(100, Math.max(40,
-          100 - (side === 'attacker' ? (p.attackerFatigue ?? 0) : (p.defenderFatigue ?? 0)))),
+        morale: Math.min(100, Math.max(30,
+          100 - (side === 'attacker' ? (p.attackerFatigue ?? 0) : (p.defenderFatigue ?? 0))
+          + (sick?.moraleDelta ?? 0))),
         isCommander,
         effects: [],
         unitType,
@@ -400,6 +426,17 @@ export function setupTacticalBattle(p: SetupParams): TacticalBattle {
   // (zh-first display, English variant kept for en players).
   if (namedMap?.introZh || namedMap?.introEn) {
     log.push({ turn: 1, text: namedMap.introZh ?? namedMap.introEn ?? '', textEn: namedMap.introEn ?? namedMap.introZh, kind: 'event' });
+  }
+  // 不習水戰 — call it out on turn 1, so the player understands why their
+  // northern host is fighting at two-thirds strength on the river.
+  if (isNaval) {
+    for (const side of ['attacker', 'defender'] as const) {
+      const d = (side === 'attacker' ? p.attackerNavalDrill : p.defenderNavalDrill) ?? 50;
+      const s = seasickness(d);
+      if (s.noteZh) {
+        log.push({ turn: 1, text: `${side === 'attacker' ? '攻方' : '守方'}${s.noteZh}。`, textEn: s.noteEn, kind: 'event' });
+      }
+    }
   }
   for (const u of units) {
     const voice = pickVoiceLine(u.officerId, 'spawn', Math.random);
@@ -767,6 +804,10 @@ export function setupTacticalBattle(p: SetupParams): TacticalBattle {
     log,
     cityStructures: cityStructures.length > 0 ? cityStructures : undefined,
     naval: isNaval || undefined,
+    // 水軍熟練度 — snapshotted so 暈船 stays stable for the whole engagement.
+    navalDrill: isNaval
+      ? { attacker: p.attackerNavalDrill ?? 50, defender: p.defenderNavalDrill ?? 50 }
+      : undefined,
     wallHp,
     field: p.field || undefined,
     // The board's window into the strategic map — lets every view (this battle,

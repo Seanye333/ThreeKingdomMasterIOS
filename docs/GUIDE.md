@@ -15,7 +15,7 @@
 | 2 | [武將・成長・家族](#第二章-武將成長家族) | growth, officerGrade, gradeCombat, officerFate, traitEffects, personality, biography, posthumous, aging, officerGen, family, clans, retinues, wishes, rapport, friction, relationshipEffects, career, codex, peerage, honorifics, battlePower(武將卡/開卡) | ✅ |
 | 3 | [人才・招攬・舌戰](#第三章-人才招攬舌戰) | commands(search), officerFate, recommendation, commonerTalent, appraisal(月旦評), scenicSites(三顧), captiveFate(處決後果/AI處置), aiRansom, debate, wordWar, persuasion(說客) | ✅ |
 | 4 | [軍事指揮・委任](#第四章-軍事指揮委任) | muster, legion(都督之斷·長圍), governor, governorEval, advisor, 在途指令(駐守/設伏/圍城/焚橋/燒鎖/補給/分兵/召回), rout(潰軍/掩殺收降/殿軍斷後) | ✅ |
-| 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, tacticalAi, combat, formations, stratagems, weather(區域天候), battlefieldTerrain, worldScars(戰場烙印), fieldworks(築壘), columnReinforcements(會戰), wallTier城郭分層, 入城三選, battleSpoils(戰場繳獲), personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
+| 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, tacticalAi, combat, formations, stratagems, weather(區域天候), battlefieldTerrain, worldScars(戰場烙印), fieldworks(築壘), columnReinforcements(會戰), wallTier城郭分層, 入城三選, battleSpoils(戰場繳獲), **navalWarfare(水軍熟練/暈船/艦隊編成/淺灘擱淺/搶灘登陸)**, personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
 | 6 | [單挑](#第六章-單挑) | duel(招式/必殺技/獨門被動/破綻/傷殘/挑落下馬/**環境借勢/部位打擊/膽氣怯戰/棄馬步戰**/兵裝/坐騎/地形/性格/AI), **martialArts(武學修為/流派/流派相剋/秘籍/頓悟)**, **teamDuel(團戰圍攻/合擊/3D 同場)**, **arenaLadder(打擂擂台)**, **涟漪大地圖(威名威懾/代戰認輸金/慘勝負傷/名場面入史/世間鬥將)**, **debateArts(文辯修為/學派/辯經/傳道)**, **scholarRank(月旦評/文名威懾)**, **debateDiplomacy(折衝樽俎/責讓索貢/舌戰說降)**, **teamDebate(朝堂合辯)**, **引時事入辯(annals 彈藥)**, **realmEthos(尚武崇文之風)**, **lineage(師承譜系/同門/衣缽傳人)**, gauntlet, duelSeries, duelScenarios(劇情+戰役), duelHall(名局廊), warRanking(武評榜), rivalries(宿敵/恩怨簿), duelChallenge(約戰), tactical(致師) | ✅ |
 | 7 | [外交・謀略・天子](#第七章-外交謀略天子) | diplomacy, diplomacyPacts(稱臣/索貢/會盟/援盟/調停/質子/借道), coalition, schemes, aiSchemes, ambition, espionage, expedition, foreignRealm, intrigue, courtFactions, factionEvents, emperor, imperialEffects, mandate, appointmentEffects, clans, statecraft | ✅ |
 | 8 | [事件・天命・異族・宗教](#第八章-事件天命異族宗教) | events(天災/地動/賑災), historicalEvents(抉擇鏈), behaviorEvents(勸進/眾叛), customEvents, factionEvents, religion(黃巾/招安/宣撫), tribes, tribesDiplomacy(和親/互市/質子/以夷制夷/入主建國/七擒), mandate(祥瑞/造讖/禳星), mandateRituals(郊祀/祈雨), annals(災異志) | ✅ |
@@ -388,6 +388,9 @@
 | 衝鋒蓄力(§5.1) | 本回合淨衝距≥2 且敵原距≥2:每格 騎+9%(封頂+32)/步+4.5%(封頂+15);正面朝向衝者的槍兵自動立防(不必據守)→衝勢×0.7且反擊×1.6 |
 | 將旗統率(§5.1) | 主將旗下半徑 R=2+統率/40 每回合 +3 士氣;半徑外又無鄰友軍=孤軍 −6 士氣 |
 | 陣前單挑(§5.1) | 相鄰敵將可挑將(沿用演武場勝負);車輪戰 每戰每場 −5 武力(封頂−20);敗將部曲奪氣/被挑落即潰走;委託指揮時自動裁決 |
+| 水軍熟練度(§5.14) | 熟練 = 6 + 水鄉城佔比×52 + 最佳船塢×7 + 港數×3(頂9) + 水軍都督府12 + 舟戰主將14(0–100);五階 不習水戰<25/略習<45/訓練<65/慣戰<85/樓船水師≥85 |
+| 暈船(§5.14) | 水戰戰力 ×(0.72+熟練/100×0.5);熟練<40 開局士氣 −(40−熟練)×0.45(最多−18);<18 每船 −1 AP;**連環船視同熟練 50**(舟穩暈消,但成火船標靶) |
+| 艦隊・淺灘・搶灘(§5.14) | 港中實有船按「主將優先→兵多者」由重到輕發下,發完回落兵數推定;淺灘:樓船/大翼/海鶻 擱淺 ×0.55 且移動+2(走舸鬥艦無礙);蘆葦易燃 0.72(高於森林 0.5,燒盡化淺灘);船上部隊登陸 = 陷亂 2 回合(熟練≥65 為 1)+士氣 −10/−4 |
 | 必殺技・個性化(§6.2) | 武魂滿放必殺(整局一次,不可擋);名將具名式:拖刀計(對手防禦+50%)·七進七出/錦帆銀槍/江東霸王(×1.2+回12氣)·無雙/據水斷橋(清空敵武魂)·百步穿楊系/弓手(×1.25) |
 | 坐騎入單挑(§6.3) | 駿·先發(赤兔/絕影/烏騅/玉獅子…開局多1氣/自動戰+初速)·救·的盧救主(的盧/絕影/千里雪…整局一次化致命為負傷脫險,氣力保1) |
 | 進階深度(§6.2b) | 獨門被動(無雙×1.2·七進七出免死·霸王色懾敵·天下無敵+7·撼山難×0.85·死戰×1.25·神射+chip);破綻軸(攻空→破綻↑,被擊最高+50%);傷殘永久(斷臂/目眇/跛足,~22%,縮招式池);AI留必殺收尾+趁勝追擊 |
@@ -1875,6 +1878,19 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
 ### 5.13 戰場繳獲(2026-07)
 
 - **陣亡遺械落地(isBattleSpoil / battleSpoils)**:會戰結束、**勝方仍據守該城**時,清點敵軍**陣亡**(非被俘)之將 —— 其身上的**神兵利器**(金/銀稀有度)與**統御信物**(虎符/令箭等令符)各有 **40% 落地**,拾入這座城的**武庫**(記為城的 `lostItems`,可再賜下屬)。俘虜之將裝備隨身、不奪(§5.12 搜捕只擒人);唯戰死者的兵刃甲仗才是無主之物。玩家繳獲即時飄字並記入名品百科「曾持」——冷豔鋸易主、方天畫戟改姓,自此有據。銅鐵凡器散於亂軍不予撿拾(免灌爆武庫);敗方或無城可歸者不觸發。呂布授首,那桿戟該有新的主人。
+
+### 5.14 水戰深化(navalWarfare.ts,2026-07)
+
+戰術層本來就會打水戰(水城開戰即**全員上船**、按兵數配船級、撞角/接舷/火船/連環俱備),缺的是**赤壁之所以是赤壁的那件事**:北軍站不住甲板。四件事補齊:
+
+- **水軍熟練度(navalDrill,0–100)**:一勢力的「會不會水戰」由**全境**推導 —— 水鄉/濕地/有港之城佔比(×52,最重)+ 最佳船塢等級(×7)+ 港口數(每港 3,封頂 9)+ 水軍都督府政策(+12)+ 主將帶「舟戰」戰法(+14),基礎 6。純內陸無港之軍落在 **8–12**;江東滿港名將壓陣可達 **95+**。分五階:不習水戰(<25)/略習舟楫(<45)/訓練有素(<65)/慣戰江湖(<85)/樓船水師(≥85)。
+- **暈船(seasickness)**:水戰開場即結算 —— 戰力 ×(0.72 + 熟練/100×0.5)= **0.72~1.22**;熟練 <40 者**開局士氣扣**(40−熟練)×0.45(最多 −18);熟練 <18 者**每船少 1 AP**。戰鬥日誌首回合直說「攻方北軍不習水戰,舟中暈眩」,不讓玩家莫名其妙地輸。
+  **連環是解藥也是死穴**:被(或自願)`chained` 的船視同熟練 50 —— 舟穩人立,暈船全消;而連環船隊正是火船的最佳標靶(AI 亦優先燒連環目標)。龐統獻連環、周瑜縱火,兩件事在同一條規則裡咬合。
+- **艦隊編成(assignFleetShipClasses)**:戰場船級不再只按兵數猜 —— **該城所轄港口塢中實有的船**按「主將優先、其次兵多者」由重到輕發下(樓船→大翼→海鶻→艨艟→戈船→鬥艦→運船→走舸),艦隊發完的部隊才回落舊的兵數推定。**在對的港口造樓船,戰場上就真有樓船**。
+- **淺灘與蘆葦(新地形 shallows / reeds)**:水戰棋盤的江渚不再是一片均質水面 —— 靠岸兩側生**淺灘**(深吃水的樓船/大翼/海鶻**擱淺**:戰力 ×0.55、移動 +2 才能挪回主槽;走舸鬥艦掠淺無礙)與**蘆葦蕩**(易燃度 **0.72,高於森林**,是火能燒過江面的唯一理由;燒盡化為淺灘)。中央深槽保持通暢,重艦想發威就得走中路挨打。
+- **搶灘登陸(landingShock)**:船上部隊踏上陸地格 = **陷亂** 2 回合(熟練 ≥65 只 1 回合)+ 士氣 −10/−4;橋樑(既成渡口)與淺灘蘆葦(仍在水上)不算登陸。半渡而擊之,現在對水軍也成立。
+
+接線:`tacticalSetup` 開局配船/扣士氣/扣 AP、`tactical.attackUnits` 吃暈船與擱淺、`tactical.moveUnit` 吃搶灘、`battlefieldTerrain` 生成淺灘蘆葦、火攻蔓延表加蘆葦、`store.navalSideContext` 與 `BattlePrepModal` 兩處開戰入口喂熟練度與艦隊。**存檔**:`TacticalBattle.navalDrill` 隨戰局快照,舊檔缺欄視同 50(即舊行為)。
 
 ---
 

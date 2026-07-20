@@ -321,6 +321,7 @@ function playerImperialSanction(state: {
 }
 import { inferUnitType, pickAiFormation } from '../systems/tactical';
 import { setupTacticalBattle, planSiegeRelief, planColumnReinforcements, rollTimeOfDay } from '../systems/tacticalSetup';
+import { navalContextFor } from '../systems/navalWarfare';
 import { applyOpeningScheme, applyAiBattlePreps, applyBattlePrep } from '../systems/tacticalSchemes';
 import { regionalTacticalWeather } from '../systems/weather';
 import { pickAutoStratagem } from '../data/stratagems2';
@@ -1522,6 +1523,31 @@ export interface GameStore extends GameState {
 }
 
 /**
+ * 水戰接線 (§5.14) — what a force brings to a river fight: its seamanship
+ * (水軍熟練度) and the hulls actually docked at its ports near the battle.
+ *
+ * Seamanship reads the whole realm (riverine holdings, shipyards, the naval
+ * academy a present officer has studied, an admiral on the day), so 曹操's host
+ * really does arrive at the Yangtze unable to stand on a deck. The fleet is
+ * drawn from ports the force owns that are linked to the contested city — build
+ * 樓船 at the right harbour and they show up in the line.
+ */
+function navalSideContext(
+  s: GameState,
+  forceId: EntityId | null,
+  officers: Officer[],
+  cityId: EntityId,
+): { drill: number; fleet: Partial<Record<ShipClass, number>> } {
+  return navalContextFor({
+    forceId,
+    cityId,
+    cities: Object.values(s.cities),
+    ports: Object.values(s.ports),
+    officers,
+  });
+}
+
+/**
  * Build an interactive field-battle (亲征野战) TacticalBattle between a player
  * army and an enemy army, themed to the clash terrain and with no city walls.
  * Returns null if the engagement is not valid. Shared by the player-initiated
@@ -1586,11 +1612,19 @@ function buildFieldBattle(
     excludeArmyIds: [pArmy.id, eArmy.id],
     diplomacy: s.diplomacy,
   });
+  // 水戰 — a clash astride a river is fought from the decks; each side brings
+  // its own seamanship and whatever hulls its harbours have ready.
+  const aNaval = navalSideContext(s, pArmy.forceId, attackers.map((a) => a.officer), nominalCity);
+  const dNaval = navalSideContext(s, eArmy.forceId, defenders.map((d) => d.officer), nominalCity);
   let battle = setupTacticalBattle({
     cityId: nominalCity,
     width: 18,
     height: 12,
     worldScars: s.worldScars,
+    attackerNavalDrill: aNaval.drill,
+    defenderNavalDrill: dNaval.drill,
+    attackerFleet: aNaval.fleet,
+    defenderFleet: dNaval.fleet,
     attackerForceId: pArmy.forceId,
     defenderForceId: eArmy.forceId,
     attackers,
@@ -13323,6 +13357,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           reinforcements: [...relief.reinforcements, ...columnJoin.reinforcements],
           // 師老兵疲 — a long-campaigning besieger reaches your walls weary.
           attackerFatigue: fatigueMoraleMalus(item.fatigue),
+          // 水戰 — an assault on a river city is fought hull to hull.
+          ...(() => {
+            const a = navalSideContext(state, offs[0].forceId, attackers.map((x) => x.officer), tgt.id);
+            const d = navalSideContext(state, state.playerForceId, defenders.map((x) => x.officer), tgt.id);
+            return {
+              attackerNavalDrill: a.drill, defenderNavalDrill: d.drill,
+              attackerFleet: a.fleet, defenderFleet: d.fleet,
+            };
+          })(),
         });
         // 廟算 — the AI besieger lays its own pre-battle prep (地道/伏兵/夜襲/火計…).
         battle = applyAiBattlePreps(battle, state.playerForceId, state.officers);

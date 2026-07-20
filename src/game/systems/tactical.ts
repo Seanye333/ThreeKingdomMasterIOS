@@ -17,6 +17,7 @@ import type {
   Weather,
 } from '../types';
 import { SHIP_CLASSES_BY_ID } from '../data/ships';
+import { groundingMul, isGrounded, landingShock, seasickness } from './navalWarfare';
 import { deriveWeaponType, type WeaponType } from '../data/weaponTypes';
 import { FORMATIONS_BY_ID } from '../data/formations';
 import { pickVoiceLine } from '../data/voiceLines';
@@ -289,7 +290,7 @@ export function pickAiFormation(
 const TERRAIN_DAMAGE_MOD: Record<UnitType, Partial<Record<TerrainKind, number>>> = {
   cavalry: { forest: 0.6, mountain: 0.4, river: 0.5, road: 1.2, plain: 1.1, hill: 1.3, marsh: 0.4, chokepoint: 0.7, bridge: 0.8 },
   archers: { forest: 1.1, mountain: 1.15, hill: 1.25, watchtower: 1.25 },
-  navy: { river: 1.6, plain: 0.4, mountain: 0.2, forest: 0.5, road: 0.6, bridge: 1.0 },
+  navy: { river: 1.6, shallows: 1.15, reeds: 0.9, plain: 0.4, mountain: 0.2, forest: 0.5, road: 0.6, bridge: 1.0 },
   siege: { mountain: 0.5, forest: 0.7, river: 0.5, gate: 1.4, hill: 1.1 },
   spearmen: { chokepoint: 1.25 },
   infantry: { chokepoint: 1.1, hill: 1.1 },
@@ -686,6 +687,8 @@ export const TERRAIN_MOVE_COST: Record<TerrainKind, number> = {
   river: 3,
   hill: 2,
   marsh: 3,       // boggy ground
+  shallows: 2,    // 淺灘 — wadeable: cheaper than the channel, still slow going
+  reeds: 3,       // 蘆葦蕩 — poling a hull through standing reeds is hard work
   desert: 2,      // 沙磧 — loose sand drags on foot
   chokepoint: 1,  // narrow but flat
   bridge: 1,      // crosses river cheaply
@@ -746,6 +749,10 @@ export function movementCost(b: TacticalBattle, unit: TacticalUnit, to: HexCoord
   // attackers still have to break them down.
   if (base >= 99 && unit.side === 'defender' && tileAt(b, to)?.terrain === 'gate') base = 2;
   if (base >= 99) return base;
+  // 擱淺 — a deep hull aground on a sand bar has to be warped back into the
+  // channel before it goes anywhere (§5.14).
+  const here = tileAt(b, unit.coord)?.terrain;
+  if (here && isGrounded(unit.shipClass, here)) base += 2;
   const foes = engagedFoes(b, unit);
   if (foes.length === 0) return base;
   const stillEngaged = foes.some((e) => hexDistance(e.coord, to) === 1);
@@ -786,14 +793,27 @@ export function moveUnit(
   // 半渡之亂 — fording a river breaks the ranks; the unit lands disordered (a
   // bridge is a built crossing, so it doesn't). Ships are at home on the water.
   const forded = tileAt(b, to)?.terrain === 'river' && unit.unitType !== 'navy';
+  // 搶灘登陸 (§5.14) — a crew that runs its hull onto the bank and wades ashore
+  // arrives in no ranks at all; drilled marines re-form in a turn, green ones
+  // in two. Bridges (built landings) are exempt.
+  const landing = landingShock({
+    fromTerrain: tileAt(b, unit.coord)?.terrain ?? 'plain',
+    toTerrain: tileAt(b, to)?.terrain ?? 'plain',
+    isShip: !!unit.shipClass,
+    drill: b.navalDrill?.[unit.side],
+  });
   let next: TacticalBattle = {
     ...b,
     units: b.units.map((u) => {
       if (u.id === unitId) {
-        const effects = forded && !u.effects.some((e) => e.kind === 'disorder')
-          ? [...u.effects, { kind: 'disorder' as const, turnsLeft: 1 }]
+        const disorderTurns = landing.disorderTurns || (forded ? 1 : 0);
+        const effects = disorderTurns > 0 && !u.effects.some((e) => e.kind === 'disorder')
+          ? [...u.effects, { kind: 'disorder' as const, turnsLeft: disorderTurns }]
           : u.effects;
-        return { ...u, coord: to, ap: u.ap - cost, facing: stepDir, charge: nextCharge, effects };
+        return {
+          ...u, coord: to, ap: u.ap - cost, facing: stepDir, charge: nextCharge, effects,
+          morale: Math.max(0, u.morale + landing.moraleDelta),
+        };
       }
       // Hidden enemy of the moving unit, now adjacent? Reveal.
       if (u.hidden && u.side !== unit.side &&
@@ -1497,8 +1517,19 @@ export function attackUnits(
     if (chargeMul > 1 && tileAt(b, target.coord)?.terrain === 'fieldworks') chargeMul = 1.0;
   }
 
-  // Naval: a bigger hull (樓船/大翼) hits harder than a 走舸 skiff.
-  const shipMul = shipPowerMul(attacker.shipClass);
+  // Naval: a bigger hull (樓船/大翼) hits harder than a 走舸 skiff — unless it
+  // has run aground in the shoals, and unless the crew can't stand on the deck
+  // at all (暈船, §5.14). Chained hulls stop rocking, so the sickness lifts.
+  let shipMul = shipPowerMul(attacker.shipClass);
+  if (attacker.shipClass) {
+    const aTerrain = tileAt(b, attacker.coord)?.terrain;
+    if (aTerrain) shipMul *= groundingMul(attacker.shipClass, aTerrain);
+    const drill = b.navalDrill?.[attacker.side];
+    if (typeof drill === 'number') {
+      const chained = attacker.effects.some((e) => e.kind === 'chained');
+      shipMul *= seasickness(drill, chained).powerMul;
+    }
+  }
 
   // 夾擊 — pincer bonus: every *other* friendly unit also pressing the target
   // adds +12% (a surrounded foe can't guard every side), capped at +36%.
@@ -2267,7 +2298,9 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
       return { ...u, troops: Math.max(0, u.troops - loss), morale: Math.max(0, u.morale - (u.isSupply ? 8 : 4)), effects };
     });
     // Spread downwind into flammable neighbours.
-    const FLAMMABLE: Record<string, number> = { forest: 0.5, bridge: 0.45, fieldworks: 0.5, plain: 0.22, road: 0.12, marsh: 0.05 };
+    // 蘆葦蕩最易燃 — dry reed banks catch faster than a pine wood and carry the
+    // fire clean across the water, which is the only way a river burns at all.
+    const FLAMMABLE: Record<string, number> = { reeds: 0.72, forest: 0.5, bridge: 0.45, fieldworks: 0.5, plain: 0.22, road: 0.12, marsh: 0.05 };
     const wd2 = WIND_DELTA[b.windDirection ?? 'calm'];
     const sparked: Array<{ coord: HexCoord; turnsLeft: number }> = [];
     if (b.weather !== 'rain') {
@@ -2298,7 +2331,13 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
     const expiring = nextGroundFires.filter((f) => f.turnsLeft - tickAmount <= 0);
     for (const f of expiring) {
       const t = nextTiles.find((x) => x.coord.col === f.coord.col && x.coord.row === f.coord.row);
-      if (t?.terrain === 'forest') {
+      if (t?.terrain === 'reeds') {
+        // 蘆葦燒盡 — the reed bank burns down to open shoal water in one night.
+        nextTiles = nextTiles.map((x) =>
+          x.coord.col === f.coord.col && x.coord.row === f.coord.row
+            ? { ...x, terrain: 'shallows' as TerrainKind }
+            : x);
+      } else if (t?.terrain === 'forest') {
         nextTiles = nextTiles.map((x) =>
           x.coord.col === f.coord.col && x.coord.row === f.coord.row
             ? { ...x, terrain: 'plain' as TerrainKind }

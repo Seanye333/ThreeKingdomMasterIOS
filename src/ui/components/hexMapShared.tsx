@@ -144,6 +144,8 @@ export const TERRAIN_FILL_URL: Record<TerrainKind, string> = {
   road:     'url(#tkmRoadGrad)',
   hill:       'url(#tkmHillGrad)',
   marsh:      'url(#tkmMarshGrad)',
+  shallows:   'url(#tkmRiverGrad)',  // 淺灘 — river tone; the shoal art rides on top
+  reeds:      'url(#tkmMarshGrad)',  // 蘆葦蕩 — marsh tone under the reed art
   desert:     'url(#tkmHillGrad)',   // tawny ≈ sand on the 2D map (3D uses a sand colour)
   chokepoint: 'url(#tkmChokepointGrad)',
   bridge:     'url(#tkmBridgeGrad)',

@@ -299,8 +299,16 @@ export function generateTerrain(
           if (row === midRow) terrain = 'bridge';
         }
         if (terrain === 'river') {
-          if (r < 0.06) terrain = 'marsh';        // shoals / reed banks
-          else if (r < 0.10) terrain = 'plain';   // a small islet
+          // 江渚 — the fringe of a river is never open channel: sand bars that
+          // ground a tower-ship (淺灘) and reed banks that hide a fleet and
+          // carry fire across the water (蘆葦蕩). Both crowd the banks, so the
+          // deep channel down the middle stays clear for the heavy hulls.
+          const edgeness = 1 - Math.abs(row - midRow) / Math.max(1, midRow);  // 1 mid → 0 bank
+          const bank = 1 - edgeness;
+          if (r < 0.05 + bank * 0.16) terrain = 'shallows';
+          else if (r < 0.09 + bank * 0.26) terrain = 'reeds';
+          else if (r < 0.11 + bank * 0.28) terrain = 'marsh';
+          else if (r < 0.13 + bank * 0.29) terrain = 'plain';   // a small islet
         }
         tiles.push({ coord: { col, row }, terrain });
       }

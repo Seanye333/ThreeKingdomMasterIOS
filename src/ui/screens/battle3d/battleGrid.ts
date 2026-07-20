@@ -28,6 +28,8 @@ export const TERRAIN_HEIGHT: Record<TerrainKind, number> = {
   mountain:  0.18,
   hill:       0.16,
   marsh:      -0.05,
+  shallows:   -0.04,  // 淺灘 — water, but you can see the bottom
+  reeds:      -0.02,  // 蘆葦蕩 — reed banks standing out of the shallows
   desert:     0.09,   // flat open sand
   chokepoint: 0.04,
   bridge:     0.06,
@@ -45,6 +47,8 @@ export const TERRAIN_COLOR: Record<TerrainKind, string> = {
   mountain: '#5a4838',
   hill:       '#6a5a3a',  // tawny earth
   marsh:      '#3a4838',  // boggy green
+  shallows:   '#5a86a0',  // 淺灘 — pale silty water over a sand bar
+  reeds:      '#5e7a4a',  // 蘆葦蕩 — green reed thicket on the water
   desert:     '#c9b079',  // sand / gobi
   chokepoint: '#5a4530',  // narrow defile (darker road)
   bridge:     '#8a6840',  // timber
