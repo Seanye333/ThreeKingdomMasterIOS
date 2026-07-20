@@ -463,6 +463,9 @@ export interface GameState {
   /** 天下武道會 — the year the realm's tournament last crowned a champion; the
    *  steep 武評榜 climb is a once-a-year prize (not farmable). 0 = never held. */
   lastTournamentYear: number;
+  /** 清談大會 — the year the realm's debate salon last crowned a 文魁; the steep
+   *  文名 climb is a once-a-year prize (§6.15). 0 = never held. */
+  lastSalonYear: number;
   /** 打擂・擂主 — the standing arena champion (§6.11). Undefined until first seeded
    *  on a challenge. See systems/arenaLadder.ts. */
   arenaChampion?: import('../systems/arenaLadder').ArenaChampion;
@@ -919,6 +922,7 @@ export const EMPTY_STATE: GameState = {
   rivalries: {},
   debateRivalries: {},
   lastTournamentYear: 0,
+  lastSalonYear: 0,
   clearedDuelScenarios: [],
   clearedDebateScenarios: [],
   currentBattleSnapshots: [],
@@ -1382,6 +1386,7 @@ export function loadScenario(
     rivalries: {},
     debateRivalries: {},
   lastTournamentYear: 0,
+    lastSalonYear: 0,
     clearedDuelScenarios: [],
     clearedDebateScenarios: [],
   currentBattleSnapshots: [],

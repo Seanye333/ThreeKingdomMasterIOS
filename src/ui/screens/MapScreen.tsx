@@ -127,6 +127,7 @@ const GovernorsModal = lazy(() => import('../components/GovernorsModal').then(m 
 const FormationsModal = lazy(() => import('../components/FormationsModal').then(m => ({ default: m.FormationsModal })));
 const TrainingGroundModal = lazy(() => import('../components/TrainingGroundModal').then(m => ({ default: m.TrainingGroundModal })));
 const TournamentModal = lazy(() => import('../components/TournamentModal').then(m => ({ default: m.TournamentModal })));
+const SalonModal = lazy(() => import('../components/SalonModal').then(m => ({ default: m.SalonModal })));
 const DebateGroundModal = lazy(() => import('../components/DebateGroundModal').then(m => ({ default: m.DebateGroundModal })));
 const PersuasionModal = lazy(() => import('../components/PersuasionModal').then(m => ({ default: m.PersuasionModal })));
 const DuelHallModal = lazy(() => import('../components/DuelHallModal').then(m => ({ default: m.DuelHallModal })));
@@ -164,6 +165,7 @@ export function MapScreen() {
   const [showPersuasion, setShowPersuasion] = useState(false);
   const [showDuelHall, setShowDuelHall] = useState(false);
   const [showTournament, setShowTournament] = useState(false);
+  const [showSalon, setShowSalon] = useState(false);
   const [theme, setTheme] = useState<ThemeId>(getStoredTheme());
   const handleSetTheme = (id: ThemeId) => {
     setTheme(id);
@@ -693,6 +695,7 @@ export function MapScreen() {
       { id: 'debate-ground', zh: '論辯場', en: 'Debate ground', hint: g.mil, run: () => setShowDebateGround(true) },
       { id: 'persuasion', zh: '說客', en: 'Persuader-envoy', hint: g.diplo, run: () => setShowPersuasion(true) },
       { id: 'tournament', zh: '比武大會', en: 'Martial tournament', hint: g.mil, run: () => setShowTournament(true) },
+      { id: 'salon', zh: '清談大會', en: 'Debate salon', hint: g.mil, run: () => setShowSalon(true) },
       { id: 'duel-hall', zh: '武鬥館', en: 'Hall of bouts', hint: g.mil, run: () => setShowDuelHall(true) },
       { id: 'armoury', zh: '寶物', en: 'Armoury', hint: g.craft, run: () => setShowArmoury(true) },
       { id: 'forge', zh: '鍛造', en: 'Forge', hint: g.craft, run: () => setShowForge(true) },
@@ -732,6 +735,7 @@ export function MapScreen() {
         { label: t('演武', 'Sparring'),   onClick: () => setShowTraining(true), title: t('武將切磋練級,不傷和氣', 'Sparring bouts — XP, no blood') },
         { label: t('比武', 'Tournament'), onClick: () => setShowTournament(true), title: t('比武大會 — 奪魁揚名', 'Martial tournament') },
         { label: t('論辯', 'Debate'),     onClick: () => setShowDebateGround(true), title: t('舌戰論辯 — 以智服人', 'Debate hall — win with wits') },
+        { label: t('清談', 'Salon'),      onClick: () => setShowSalon(true), title: t('清談大會 — 奪文魁之名', 'Debate salon — contest the year\'s title') },
         { label: t('武鬥館', 'Hall'),     onClick: () => setShowDuelHall(true), title: t('3D 單挑武鬥館', '3D duel hall') },
         { header: t('武備', 'Smithy') },
         { label: t('寶物', 'Armoury'),    onClick: () => setShowArmoury(true), title: t('寶物庫 — 授予/回收裝備', 'Armoury — grant & reclaim gear') },
@@ -1230,6 +1234,7 @@ export function MapScreen() {
         {showPersuasion && <PersuasionModal onClose={() => setShowPersuasion(false)} />}
         {showDuelHall && <DuelHallModal onClose={() => setShowDuelHall(false)} />}
         {showTournament && <TournamentModal onClose={() => setShowTournament(false)} />}
+        {showSalon && <SalonModal onClose={() => setShowSalon(false)} />}
         {showEspionage && <EspionageModal onClose={() => setShowEspionage(false)} />}
         {showDeeds && <DeedsModal onClose={() => setShowDeeds(false)} />}
         {showHallOfFame && <HallOfFameModal onClose={() => setShowHallOfFame(false)} />}
@@ -1262,6 +1267,7 @@ export function MapScreen() {
             else if (id === 'annals') setShowAnnals(true);
             else if (id === 'forge') setShowForge(true);
             else if (id === 'tournament') setShowTournament(true);
+            else if (id === 'salon') setShowSalon(true);
             else if (id === 'debate-ground') setShowDebateGround(true);
           }} />}
         {showPalette && <CommandPalette commands={paletteCommands} onClose={() => setShowPalette(false)} />}

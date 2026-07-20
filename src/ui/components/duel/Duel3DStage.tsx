@@ -10,7 +10,8 @@ import { duelCommentary } from '../../../game/systems/combatCommentary';
 import { rivalryBetween, isNemesis, headToHead } from '../../../game/systems/rivalries';
 import { ratingOf, duelCareerBonus } from '../../../game/systems/warRanking';
 import { staticProwess } from '../../../game/systems/duel';
-import { checkMartialEpiphany } from '../../../game/systems/martialArts';
+import { checkMartialEpiphany, readFoe, martialSchoolName } from '../../../game/systems/martialArts';
+import { weaponClassFor } from '../../../game/systems/duel';
 import { DuelArena3D, type DuelArenaEvent } from './DuelArena3D';
 
 const SEASON_IDX = ['spring', 'summer', 'autumn', 'winter'];
@@ -59,6 +60,10 @@ export function Duel3DStage(props: ComponentProps<typeof DuelGameModal>) {
     const foe = duelCareerBonus(foeRat, st.deeds?.[defender.id]?.duelsWon ?? 0);
     return { me, foe };
   })());
+
+  // 臨陣觀敵 (§6.10) — what your fighter can read off the arm across from them
+  // before the first blow. Depth scales with their 智力 + own 修為.
+  const foeRead = useRef(readFoe(attacker, defender, weaponClassFor(attacker), weaponClassFor(defender))).current;
 
   const emit = (fx: DuelRoundFx) => { keyRef.current += 1; setEvent({ ...fx, key: keyRef.current }); };
 
@@ -242,6 +247,27 @@ export function Duel3DStage(props: ComponentProps<typeof DuelGameModal>) {
         <div style={{ position: 'fixed', left: '50%', top: rivalryRef.current ? 50 : 28, transform: 'translateX(-50%)', zIndex: 130, pointerEvents: 'none', display: 'flex', gap: 10, fontFamily: 'var(--tkm-font-body)', fontSize: '0.66rem', color: '#c9b87a', textShadow: '0 1px 3px #000', whiteSpace: 'nowrap' }}>
           {careerRef.current.me.prowess > 0 && <span>🏅 {leftName} {lang === 'en' ? careerRef.current.me.tierEn : careerRef.current.me.tierZh} +{careerRef.current.me.prowess}</span>}
           {careerRef.current.foe.prowess > 0 && <span>{rightName} {lang === 'en' ? careerRef.current.foe.tierEn : careerRef.current.foe.tierZh} +{careerRef.current.foe.prowess} 🏅</span>}
+        </div>
+      )}
+
+      {/* 臨陣觀敵 — the pre-bout read on the foe; only as deep as your eye is sharp. */}
+      {!ended && (
+        <div style={{ position: 'fixed', right: 14, top: 74, zIndex: 130, pointerEvents: 'none', maxWidth: '46vw', background: 'rgba(20,28,38,0.86)', border: '1px solid #4a5a3a', borderRadius: 'var(--tkm-radius-sm)', padding: '0.28rem 0.6rem', fontFamily: 'var(--tkm-font-body)', fontSize: '0.7rem', color: '#c8d8b0', textShadow: '0 1px 3px #000', lineHeight: 1.6 }}>
+          <div style={{ color: '#9ab88a', letterSpacing: '0.06rem' }}>
+            👁 {t('觀敵', 'Read')} — {rightName}
+          </div>
+          <div>{t('流派', 'School')} {lang === 'en' ? foeRead.school.en : foeRead.school.zh}</div>
+          {foeRead.tier
+            ? <div>{t('修為', 'Mastery')} {lang === 'en' ? foeRead.tier.en : foeRead.tier.zh}</div>
+            : <div style={{ color: '#7a8893' }}>{t('深淺莫測', 'depth unclear')}</div>}
+          {foeRead.counter && foeRead.counter !== 'even' && (
+            <div style={{ color: foeRead.counter === 'favourable' ? '#8ec88a' : '#e0846a' }}>
+              {foeRead.counter === 'favourable'
+                ? t(`${martialSchoolName(weaponClassFor(attacker)).zh}剋其派 — 佔上風`, 'Your school answers theirs')
+                : t('其派剋我 — 須慎', 'Their school answers yours — careful')}
+            </div>
+          )}
+          {foeRead.hasSecret && <div style={{ color: '#f0d890' }}>⚡ {t('身懷流派絕學', 'carries a school secret')}</div>}
         </div>
       )}
 

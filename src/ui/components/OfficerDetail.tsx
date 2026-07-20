@@ -39,7 +39,8 @@ import { xpProgress, learnableSkills, canBreakthrough, breakthroughCost, breakth
 import { canAppraise, GRADE_LABEL } from '../../game/systems/appraisal';
 import { officerGrade, officerLevel, nextGradeGap, gradeMeta } from '../../game/systems/officerGrade';
 import { weaponClassFor } from '../../game/systems/duel';
-import { martialXiuwei, martialInsight, martialTier, martialTrainCost, martialSchoolName, MARTIAL_XIUWEI_MAX, canTransmitArts, TRANSMIT_COST } from '../../game/systems/martialArts';
+import { martialXiuwei, martialInsight, martialTier, martialTrainCost, martialSchoolName, MARTIAL_XIUWEI_MAX, canTransmitArts, TRANSMIT_COST, insightMoveCost, schoolSwitchCost, schoolSwitchXiuwei, MARTIAL_SCHOOL } from '../../game/systems/martialArts';
+import { isDuelMoveUnlocked, duelMoveUnlockLevel, scarBarsMove, type DuelMove, type WeaponClass } from '../../game/systems/duel';
 import { debateXiuwei, debateInsight, debateArtsTier, debateTrainCost, debateSchoolName, DEBATE_XIUWEI_MAX, canTransmitScholarship, DEBATE_TRANSMIT_COST } from '../../game/systems/debateArts';
 import { dualLuminaries } from '../../game/systems/scholarRank';
 import { debatePersona } from '../../game/systems/wordWar';
@@ -139,6 +140,11 @@ interface Props {
   officersOverride?: Record<string, Officer>;
 }
 
+/** 悟招 — the flourish moves 心得 can buy, labelled for the picker. */
+const DUEL_MOVE_LABEL: Partial<Record<DuelMove, string>> = {
+  taunt: '挑釁', thrust: '突刺', combo: '連擊', ultimate: '必殺',
+};
+
 export function OfficerDetail({
   officer,
   onClose,
@@ -194,6 +200,8 @@ export function OfficerDetail({
   const trainMartialFn = useGameStore((s) => s.trainMartialArts);
   const transmitMartialFn = useGameStore((s) => s.transmitMartialArts);
   const trainDebateFn = useGameStore((s) => s.trainDebateArts);
+  const learnDuelMoveFn = useGameStore((s) => s.learnDuelMove);
+  const switchSchoolFn = useGameStore((s) => s.switchMartialSchool);
   const transmitDebateFn = useGameStore((s) => s.transmitDebateArts);
   const issueCommandFn = useGameStore((s) => s.issueCommand);
   const appraiseOfficerFn = useGameStore((s) => s.appraiseOfficer);
@@ -1153,6 +1161,65 @@ export function OfficerDetail({
                             </select>
                           );
                         })()}
+                      </div>
+                    );
+                  })()}
+
+                  {/* 心得出路 (§6.10) — once 修為 caps, 心得 still buys something:
+                      a move ahead of your 歷練 (悟招), or a whole new school. */}
+                  {isMine && (() => {
+                    const insight = martialInsight(officer);
+                    const LEARNABLE: DuelMove[] = ['taunt', 'thrust', 'combo', 'ultimate'];
+                    const learnable = LEARNABLE.filter((m) => !isDuelMoveUnlocked(officer, m) && !scarBarsMove(officer, m));
+                    const cls = weaponClassFor(officer);
+                    const xw = martialXiuwei(officer);
+                    const switchCost = schoolSwitchCost(xw);
+                    const schools = (Object.keys(MARTIAL_SCHOOL) as WeaponClass[]).filter((c) => c !== cls);
+                    if (!learnable.length && insight < switchCost) return null;
+                    return (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <span style={labelStyle}>{t('心得', 'Insight')}</span>
+                        {learnable.length > 0 && (
+                          <select
+                            defaultValue=""
+                            onChange={(e) => {
+                              const mv = e.target.value as DuelMove;
+                              if (!mv) return;
+                              e.target.value = '';
+                              const r = learnDuelMoveFn(officer.id, mv);
+                              setProgressMsg(r.ok
+                                ? t(`悟得新招 — 耗心得 ${r.cost}`, `Move grasped — ${r.cost} insight spent`)
+                                : t('心得不足,尚難悟此招', 'Not enough insight for that move yet'));
+                            }}
+                            title={t('悟招 — 耗心得提前參透招式,不待歷練漸長', 'Grasp a move outright with insight, ahead of the level that would grant it')}
+                            style={{ padding: '0.1rem 0.3rem', borderRadius: 'var(--tkm-radius-xs)', background: '#10161e', border: '1px solid #e0b070', color: '#f0d890', fontSize: '0.72rem', fontFamily: 'inherit' }}
+                          >
+                            <option value="">{t('💡 悟招…', '💡 Grasp a move…')}</option>
+                            {learnable.map((m) => (
+                              <option key={m} value={m}>{DUEL_MOVE_LABEL[m]} · {insightMoveCost(duelMoveUnlockLevel(m))}</option>
+                            ))}
+                          </select>
+                        )}
+                        <select
+                          defaultValue=""
+                          disabled={insight < switchCost}
+                          onChange={(e) => {
+                            const sc = e.target.value as WeaponClass;
+                            if (!sc) return;
+                            e.target.value = '';
+                            const r = switchSchoolFn(officer.id, sc);
+                            setProgressMsg(r.ok
+                              ? t(`改投「${MARTIAL_SCHOOL[sc].zh}」門下 — 耗心得 ${r.cost},修為存 ${r.xiuwei}`, `Switched to ${MARTIAL_SCHOOL[sc].en} — ${r.cost} insight, ${r.xiuwei} mastery carried over`)
+                              : t('心得不足,難改門庭', 'Not enough insight to change schools'));
+                          }}
+                          title={t(`改換門庭 — 耗 ${switchCost} 心得改投他派;舊藝存六成(修為 ${xw}→${schoolSwitchXiuwei(xw)}),已悟之招盡失`, `Change schools — ${switchCost} insight; 60% of mastery carries (${xw}→${schoolSwitchXiuwei(xw)}), grasped moves are lost`)}
+                          style={{ padding: '0.1rem 0.3rem', borderRadius: 'var(--tkm-radius-xs)', background: '#10161e', border: `1px solid ${insight >= switchCost ? '#9a8ae8' : '#3a3a4a'}`, color: insight >= switchCost ? '#cbc0f0' : '#6a7480', fontSize: '0.72rem', fontFamily: 'inherit' }}
+                        >
+                          <option value="">{t(`🔀 改換門庭 (${switchCost})…`, `🔀 Change school (${switchCost})…`)}</option>
+                          {schools.map((c) => (
+                            <option key={c} value={c}>{lang === 'en' ? MARTIAL_SCHOOL[c].en : MARTIAL_SCHOOL[c].zh}</option>
+                          ))}
+                        </select>
                       </div>
                     );
                   })()}

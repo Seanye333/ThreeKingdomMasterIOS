@@ -215,6 +215,67 @@ export function transmitArts(master: Officer, pupil: Officer, sameSchool: boolea
   };
 }
 
+// ─── 臨陣觀敵 — reading the opponent before the first blow ───────────────────
+// 知己知彼: what your fighter can tell about the arm across from them. A dull
+// eye sees only the weapon; a sharp one reads the school, the depth of training,
+// and whether they're carrying a signature art. Gated on the READER's 智力 (and
+// their own 修為 — a master recognises a master), so scouting is a real use for
+// a clever duellist rather than free omniscience.
+
+export interface FoeRead {
+  /** Always legible — the weapon is in their hands. */
+  school: SchoolInfo;
+  /** 修為境界 — legible to a moderately sharp eye. */
+  tier?: MartialTierInfo;
+  /** 絕學 — whether they carry a signature art; only a keen eye spots it. */
+  hasSecret?: boolean;
+  /** 相剋 — how the schools sit, once the reader can name the foe's school. */
+  counter?: 'favourable' | 'unfavourable' | 'even';
+  /** How much the reader actually made out (drives the UI's hedging). */
+  depth: 'glance' | 'read' | 'full';
+}
+
+/** 觀敵之明 — how deeply `reader` can read `foe` before the bout. Pure. */
+export function readFoe(reader: Officer, foe: Officer, readerClass: MartialSchool, foeClass: MartialSchool): FoeRead {
+  // A sharp mind reads form; a deep art recognises another (智 + 自身修為).
+  const acuity = reader.stats.intelligence + tierOfXiuwei(martialXiuwei(reader)).tier * 6;
+  const school = MARTIAL_SCHOOL[foeClass];
+  if (acuity < 60) return { school, depth: 'glance' };
+  const counter: FoeRead['counter'] = schoolBeats(readerClass, foeClass) ? 'favourable'
+    : schoolBeats(foeClass, readerClass) ? 'unfavourable' : 'even';
+  const tier = tierOfXiuwei(martialXiuwei(foe));
+  if (acuity < 85) return { school, tier, counter, depth: 'read' };
+  return {
+    school, tier, counter,
+    hasSecret: schoolSecretArt(foeClass, martialXiuwei(foe)) !== null,
+    depth: 'full',
+  };
+}
+
+// ─── 心得出路 — what 心得 buys once 修為 has nowhere left to climb ────────────
+// 修為 caps at 100, at which point banked 心得 would be dead weight. Two sinks
+// keep it live for the whole game, and both are meaningful choices rather than
+// filler: buy a move ahead of your 歷練 (悟招), or tear up your school and
+// begin another (改換門庭) at a real cost in mastery.
+
+/** 悟招 — 心得 to grasp a move ahead of the level that would grant it. Dearer
+ *  the later the move sits on the ladder. */
+export function insightMoveCost(unlockLevel: number): number {
+  return Math.max(4, unlockLevel * 3);
+}
+
+/** 改換門庭 — 心得 to abandon a school for another. A master pays more: the
+ *  deeper the craft, the more there is to unlearn. */
+export function schoolSwitchCost(xiuwei: number): number {
+  return 20 + tierOfXiuwei(xiuwei).tier * 10; // 20 / 30 / 40 / 50 / 60 / 70
+}
+/** 改換門庭 — the 修為 that survives the change. Muscle memory carries some of
+ *  the way, but a new school starts you well short of where you stood. */
+export const SCHOOL_SWITCH_KEEP = 0.6;
+export function schoolSwitchXiuwei(xiuwei: number): number {
+  return Math.floor(xiuwei * SCHOOL_SWITCH_KEEP);
+}
+
 // ─── 苦戰頓悟 — a hard-won bout deepens a fighter's craft ─────────────────────
 // A clean spar wins a little 心得; a bout hard-fought — a much stronger foe bested,
 // a win by a hair, or a famed rival felled — can spark a 頓悟 for a deeper draught.

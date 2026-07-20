@@ -30,9 +30,9 @@ import { grantDeedTitles } from '../systems/deedTitles';
 import { pushBoutRecord, isNotableBout, type BoutRecord } from '../systems/duelHall';
 import { recordRivalryBout, pairKey as rivalPairKey, NEMESIS_THRESHOLD } from '../systems/rivalries';
 import { challengeStakes } from '../systems/duelChallenge';
-import { trainMartialArts, MARTIAL_XIUWEI_MAX, transmitArts, canTransmitArts } from '../systems/martialArts';
+import { trainMartialArts, MARTIAL_XIUWEI_MAX, transmitArts, canTransmitArts, insightMoveCost, schoolSwitchCost, schoolSwitchXiuwei } from '../systems/martialArts';
 import { trainDebateArts, DEBATE_XIUWEI_MAX, transmitScholarship, canTransmitScholarship } from '../systems/debateArts';
-import { resolveDuel, canDuel, staticProwess, weaponClassFor } from '../systems/duel';
+import { resolveDuel, canDuel, staticProwess, weaponClassFor, isDuelMoveUnlocked, duelMoveUnlockLevel, scarBarsMove } from '../systems/duel';
 import { meleeReplayFighters } from '../systems/teamDuel';
 import { pickArenaChampion, pickArenaChallenger, arenaTakeReward, arenaHoldStipend } from '../systems/arenaLadder';
 import { pickMoonLaurel, pickMoonChallenger, moonScore, moonTakeReward, moonHoldStipend, dualLuminaries, DUAL_LUMINARY_LOYALTY, annualHonors, honorRenown } from '../systems/scholarRank';
@@ -1024,6 +1024,10 @@ interface GameStore extends GameState {
   growMartialXiuwei: (officerId: EntityId, amount: number) => void;
   /** 宗師傳藝 — a 宗師+ master spends 心得 to drill a same-city junior's 修為 (§6.10). */
   transmitMartialArts: (masterId: EntityId, pupilId: EntityId) => { ok: boolean; reason?: string; gained?: number; tierUpZh?: string; tierUpEn?: string };
+  /** 悟招 (§6.10) — spend 武學心得 to grasp a duel move ahead of its 歷練 gate. */
+  learnDuelMove: (officerId: EntityId, move: import('../systems/duel').DuelMove) => { ok: boolean; reason?: string; cost?: number };
+  /** 改換門庭 (§6.10) — spend 心得 to abandon a 流派 for another; 修為 keeps 60%. */
+  switchMartialSchool: (officerId: EntityId, school: import('../systems/duel').WeaponClass) => { ok: boolean; reason?: string; cost?: number; xiuwei?: number };
   /** 文辯心得 — bank lectern insight on an officer (論戰頓悟 / 清談所得). */
   awardDebateInsight: (officerId: EntityId, amount: number) => void;
   /** 講席 — spend banked 文辯心得 to raise the officer's 文辯修為 one step (§6.14). */
@@ -1074,9 +1078,14 @@ interface GameStore extends GameState {
   holdArena: () => { ok: boolean; reason?: string; held?: boolean; challengerZh?: string; challengerEn?: string; insight?: number; gold?: number };
   /** 折服來投 — a foe bested (and spared) in a 約戰 comes over to the player's side. */
   recruitViaDuel: (officerId: EntityId) => boolean;
+  /** 辯服來投 (§6.16) — a foe out-argued in a war of words crosses over. */
+  recruitViaDebate: (officerId: EntityId) => boolean;
   /** 天下無雙 — crown the 比武大會 champion: a 武評榜 climb + 威名 for the field.
    *  The steep climb is a once-a-year prize; returns false if already held this year. */
   awardTournamentChampion: (championId: EntityId, finalistIds: EntityId[]) => boolean;
+  /** 清談大會 (§6.15) — crown the year's 文魁: a steep 文名 climb + 文辯心得 for
+   *  the victor, lesser for the finalists. Returns false if already held this year. */
+  awardSalonChampion: (championId: EntityId, finalistIds: EntityId[]) => boolean;
   /** 約戰牽動外交 — shift the 好感 between two forces (e.g. a humbling 約戰 breeds
    *  a grudge; an honourable draw breeds mutual respect). Clamped −100..100. */
   adjustForceFavor: (forceA: EntityId, forceB: EntityId, delta: number) => void;
@@ -9147,6 +9156,46 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
+        // 世間論辯 (§6.15) — the 月旦榜 lives beyond the player's bouts too: between
+        // seasons, the realms' famous tongues hold 清談 with one another. The
+        // board moves on its own, AI scholars deepen their 文辯修為, and a
+        // meeting of two great names is chronicle material. Mirrors 世間鬥將.
+        if (seasonBoundary) {
+          const cur = get();
+          if (Math.random() < 0.3) {
+            const pool = Object.values(cur.officers).filter((o) =>
+              o.forceId && o.forceId !== cur.playerForceId
+              && o.status !== 'dead' && o.status !== 'imprisoned' && o.status !== 'unsearched'
+              && moonScore(o) >= 70);
+            if (pool.length >= 2) {
+              const i = Math.floor(Math.random() * pool.length);
+              let j = Math.floor(Math.random() * (pool.length - 1));
+              if (j >= i) j++;
+              const A = pool[i], B = pool[j];
+              if (A.forceId !== B.forceId) { // tongues of different courts cross
+                const bout = resolveWordWar(A, B, [], []);
+                const winner = bout.winnerSide === 'attacker' ? A : bout.winnerSide === 'defender' ? B : null;
+                const loser = winner ? (winner.id === A.id ? B : A) : null;
+                // 清談亦長學 — both sharpen; the one who carried it more so.
+                get().growDebateXiuwei(A.id, winner?.id === A.id ? 2 : 1);
+                get().growDebateXiuwei(B.id, winner?.id === B.id ? 2 : 1);
+                if (winner && loser) {
+                  get().recordDeed(winner.id, { debatesWon: 1 });
+                  // Only a meeting of two renowned names makes the chronicle.
+                  if (moonScore(winner) >= 85 && moonScore(loser) >= 85) {
+                    get().recordAnnal({
+                      year: cur.date.year, season: cur.date.season, kind: 'event',
+                      titleZh: '兩賢清談',
+                      textZh: `${winner.name.zh} 與 ${loser.name.zh} 清談竟日,${winner.name.zh} 辭鋒稍勝 — 月旦榜為之一動。`,
+                      cityId: null,
+                    });
+                  }
+                }
+              }
+            }
+          }
+        }
+
         // AI 舌戰說降來使 (§6.16 對稱) — an unanswered envoy at your wall argues
         // it out unattended when the writ lapses; then a rival realm may send a
         // fresh tongue to another weakly-held wall.
@@ -12499,6 +12548,46 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         } });
         return { ok: true, gained: r.gained, tierUpZh: r.tierUp?.zh, tierUpEn: r.tierUp?.en };
       },
+      learnDuelMove: (officerId, move) => {
+        const state = get();
+        const o = state.officers[officerId];
+        if (!o) return { ok: false, reason: 'no-officer' };
+        if (o.forceId !== state.playerForceId) return { ok: false, reason: 'not-yours' };
+        if (isDuelMoveUnlocked(o, move)) return { ok: false, reason: 'already' };
+        // 傷殘 outranks study — no amount of insight regrows an arm.
+        if (scarBarsMove(o, move)) return { ok: false, reason: 'maimed' };
+        const cost = insightMoveCost(duelMoveUnlockLevel(move));
+        const have = Math.max(0, o.martialInsight ?? 0);
+        if (have < cost) return { ok: false, reason: 'insufficient' };
+        set({ officers: { ...state.officers, [officerId]: {
+          ...o,
+          martialInsight: have - cost,
+          duelMovesLearned: [...(o.duelMovesLearned ?? []), move],
+        } } });
+        return { ok: true, cost };
+      },
+      switchMartialSchool: (officerId, school) => {
+        const state = get();
+        const o = state.officers[officerId];
+        if (!o) return { ok: false, reason: 'no-officer' };
+        if (o.forceId !== state.playerForceId) return { ok: false, reason: 'not-yours' };
+        if (weaponClassFor(o) === school) return { ok: false, reason: 'same-school' };
+        const xw = Math.max(0, Math.min(MARTIAL_XIUWEI_MAX, o.martialXiuwei ?? 0));
+        const cost = schoolSwitchCost(xw);
+        const have = Math.max(0, o.martialInsight ?? 0);
+        if (have < cost) return { ok: false, reason: 'insufficient' };
+        // 改換門庭 — the new art starts short of where the old one stood, and the
+        // moves bought under the old school do not carry across.
+        const kept = schoolSwitchXiuwei(xw);
+        set({ officers: { ...state.officers, [officerId]: {
+          ...o,
+          martialSchool: school,
+          martialInsight: have - cost,
+          martialXiuwei: kept,
+          duelMovesLearned: [],
+        } } });
+        return { ok: true, cost, xiuwei: kept };
+      },
       trainMartialArts: (officerId) => {
         const state = get();
         const o = state.officers[officerId];
@@ -13037,6 +13126,36 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         set({ warRatings: ratings, officers, lastTournamentYear: state.date.year });
         return annual;
       },
+      awardSalonChampion: (championId, finalistIds) => {
+        const state = get();
+        // 年度清談大會 — the steep 文名 climb is the year's prize; a second salon
+        // the same year is mere 清談 (a little insight, no standing).
+        const annual = state.lastSalonYear !== state.date.year;
+        const officers = { ...state.officers };
+        const bump = (id: EntityId, ren: number, insight: number) => {
+          const o = officers[id];
+          if (!o) return;
+          officers[id] = {
+            ...o,
+            renown: Math.max(0, (o.renown ?? 0) + ren),
+            debateInsight: Math.max(0, (o.debateInsight ?? 0) + insight),
+          };
+        };
+        // 文魁 — the salon's victor's name carries through the realm's courts.
+        bump(championId, annual ? 8 : 2, annual ? 10 : 2);
+        if (annual) for (const id of finalistIds) if (id !== championId) bump(id, 3, 4);
+        set({ officers, lastSalonYear: state.date.year });
+        if (annual) {
+          const champ = state.officers[championId];
+          get().recordAnnal({
+            year: state.date.year, season: state.date.season, kind: 'event',
+            titleZh: '清談大會',
+            textZh: `是歲清談大會,${champ?.name.zh ?? '一士'} 舌折群賢,獨冠士林 — 天下稱為文魁。`,
+            cityId: null,
+          });
+        }
+        return annual;
+      },
       adjustForceFavor: (forceA, forceB, delta) => {
         if (!forceA || !forceB || forceA === forceB || !delta) return;
         const state = get();
@@ -13059,6 +13178,28 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             [officerId]: { ...o, forceId: pid, status: 'idle', task: null, locationCityId: capId, loyalty: Math.max(55, Math.min(70, o.loyalty + 20)) },
           },
         });
+        return true;
+      },
+      recruitViaDebate: (officerId) => {
+        const state = get();
+        const o = state.officers[officerId];
+        const pid = state.playerForceId;
+        if (!o || !pid || o.status === 'dead' || o.forceId === pid) return false;
+        // 辯服來投 — convinced rather than cowed; he rides in of his own accord.
+        const capId = state.forces[pid]?.capitalCityId ?? o.locationCityId;
+        set({
+          officers: {
+            ...state.officers,
+            [officerId]: { ...o, forceId: pid, status: 'idle', task: null, locationCityId: capId, loyalty: Math.max(58, Math.min(72, o.loyalty + 22)) },
+          },
+        });
+        get().recordAnnal({
+          year: state.date.year, season: state.date.season, kind: 'event',
+          titleZh: '辯服來投',
+          textZh: `${o.name.zh} 為言辭所折,幡然來投 — 不戰而得一士。`,
+          cityId: capId ?? null,
+        });
+        get().notify(`辯服來投 · ${o.name.zh}`, `${o.name.en} is won over by argument and joins you`);
         return true;
       },
       markDuelScenarioCleared: (scenarioId) => {
@@ -17825,6 +17966,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           pendingPersuasions: loaded.pendingPersuasions ?? [],
           clearedDebateScenarios: loaded.clearedDebateScenarios ?? [],
           debateRivalries: loaded.debateRivalries ?? {},
+          lastSalonYear: loaded.lastSalonYear ?? 0,
           pendingMoonWrit: loaded.pendingMoonWrit,
           pendingEspionage: loaded.pendingEspionage ?? [],
           embeddedSpies: loaded.embeddedSpies ?? [],
@@ -18028,6 +18170,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         rivalries: state.rivalries,
         debateRivalries: state.debateRivalries,
         lastTournamentYear: state.lastTournamentYear,
+        lastSalonYear: state.lastSalonYear,
         arenaChampion: state.arenaChampion,
         moonLaurel: state.moonLaurel,
         pendingPersuasions: state.pendingPersuasions,
@@ -18093,6 +18236,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (!state.rivalries) state.rivalries = {};
         if (!state.debateRivalries) state.debateRivalries = {};
         if (state.lastTournamentYear == null) state.lastTournamentYear = 0;
+        if (state.lastSalonYear == null) state.lastSalonYear = 0;
         if (!state.clearedDuelScenarios) state.clearedDuelScenarios = [];
         if (!state.clearedDebateScenarios) state.clearedDebateScenarios = [];
         if (!state.customEvents) state.customEvents = [];

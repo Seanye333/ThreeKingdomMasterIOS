@@ -93,6 +93,30 @@ export function tributeStakes(outcome: ParleyOutcome, routed: boolean, foeVoice:
   return { gold: 0, scoreDelta: -2, grudgeGrow: 2 };
 }
 
+// ─── 辯服來投 — to out-argue a man may win his mind, not just the point ──────
+// The 舌戰 mirror of §6.7's 折服來投: a foe argued to a standstill (and spared
+// the humiliation of a public rout) may find he agrees with you. Where the duel
+// version trades on awe of a mightier arm, this one trades on being OUT-THOUGHT
+// — so it reads the gap in 清議分, and a principled or loyal soul never turns.
+
+/**
+ * The chance a bested foe crosses over after a war of words. Driven by how
+ * shaky their loyalty already is, how thoroughly they were out-argued, and
+ * their temperament. 0 for the unswervingly loyal. Capped at 0.45.
+ */
+export function debateRecruitChance(foe: Officer, persuader: Officer): number {
+  const traits = foe.traits ?? [];
+  if (traits.includes('loyal') || traits.includes('principled')) return 0; // 死忠不二
+  const base = foe.loyalty <= 25 ? 0.30 : foe.loyalty <= 45 ? 0.18 : foe.loyalty <= 65 ? 0.09 : 0.03;
+  const gap = moonScore(persuader) - moonScore(foe);
+  const convinced = gap >= 25 ? 1.4 : gap >= 10 ? 1.15 : 1.0; // out-thought, not merely out-shouted
+  // 士為知己者死 — an ambitious or calculating mind weighs the better offer;
+  // a stubborn one digs in however neatly the argument lands.
+  const open = traits.includes('ambitious') || traits.includes('cunning') ? 1.5
+    : traits.includes('stubborn') || traits.includes('arrogant') ? 0.6 : 1;
+  return Math.min(0.45, base * convinced * open);
+}
+
 /** 說降門檻 — only a weakly-held, non-capital wall will even hear the argument. */
 export const PERSUADE_MAX_GARRISON = 2500;
 export function canPersuadeCity(city: City, isCapital: boolean): { ok: boolean; reason?: string } {

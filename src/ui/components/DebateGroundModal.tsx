@@ -3,6 +3,7 @@ import { useGameStore } from '../../game/state/store';
 import { debateProwess, type DebateDifficulty } from '../../game/systems/wordWar';
 import { moonBoard, moonScore, pickMoonLaurel, pickMoonChallenger, canOrate } from '../../game/systems/scholarRank';
 import { resolveTeamDebate, type TeamDebateResult } from '../../game/systems/teamDebate';
+import { debateRecruitChance } from '../../game/systems/debateDiplomacy';
 import { TeamDebate3DStage } from './debate/TeamDebate3DStage';
 import { debateShame, isEmotional } from '../../game/systems/afflictions';
 import { DEBATE_SCENARIOS, DEBATE_CAMPAIGNS, debateCampaignSteps, scenarioOutcome, scenarioResultLine, type DebateScenario } from '../../game/systems/debateScenarios';
@@ -37,6 +38,7 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
   const applyScenarioEffects = useGameStore((s) => s.applyScenarioEffects);
   // 舌戰戰役 — cleared chain steps (§6.16); a win unlocks the next debate.
   const clearedDebate = useGameStore((s) => s.clearedDebateScenarios);
+  const recruitViaDebate = useGameStore((s) => s.recruitViaDebate);
   const markDebateScenarioCleared = useGameStore((s) => s.markDebateScenarioCleared);
 
   const [mode, setMode] = useState<'spar' | 'story' | 'gauntlet' | 'moon' | 'team'>('spar');
@@ -135,8 +137,13 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
             // 舌戰增知力 — each scholar bested sharpens the champion's mind.
             const xp = won ? grantOfficerXp(gauntlet.championId, 30, ['intelligence', 'charisma']) : null;
             if (won) recordDeed(gauntlet.championId, { debatesWon: 1, ...(outcome.routed ? { debateRouts: 1 } : {}) });
+            // 辯服來投 (§6.16) — a scholar out-argued (not merely shouted down)
+            // may decide you had the right of it and cross over.
+            const wonOver = won && !outcome.routed && foe.forceId !== playerForceId
+              && Math.random() < debateRecruitChance(foe, champ) && recruitViaDebate(foe.id);
             const last = gauntlet.idx >= gauntlet.foeIds.length - 1;
             if (won && !last) {
+              if (wonOver) setResult({ text: t(`${pickName(foe.name, lang)} 為之折服,願來投效!`, `${pickName(foe.name, lang)} is won over and joins you!`), notes: [] });
               setGauntlet({ ...gauntlet, idx: gauntlet.idx + 1, wins: gauntlet.wins + 1 });
             } else {
               const wins = gauntlet.wins + (won ? 1 : 0);
@@ -146,7 +153,10 @@ export function DebateGroundModal({ onClose }: { onClose: () => void }) {
                 text: cleared
                   ? t(`${pickName(champ.name, lang)} 舌戰群儒 — 連折 ${wins} 人,全勝!`, `${pickName(champ.name, lang)} out-talks them all — ${wins} routed, a clean sweep!`)
                   : t(`${pickName(champ.name, lang)} 連折 ${wins} 人,終遇強手。`, `${pickName(champ.name, lang)} bested ${wins} before meeting their match.`),
-                notes: xp?.notes ?? [],
+                notes: [
+                  ...(wonOver ? [t(`${pickName(foe.name, lang)} 為之折服,願來投效!`, `${pickName(foe.name, lang)} is won over and joins you!`)] : []),
+                  ...(xp?.notes ?? []),
+                ],
               });
             }
           }}

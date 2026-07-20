@@ -100,8 +100,15 @@ export interface Officer {
    *  苦戰頓悟. High 修為 unlocks moves sooner + lends prowess/opening 氣. See
    *  systems/martialArts.ts. */
   martialXiuwei?: number;
-  /** 武學心得 — spendable insight earned in the arena; buys 修為. */
+  /** 武學心得 — spendable insight earned in the arena; buys 修為, and once 修為
+   *  caps, 悟招 / 改換門庭 (see systems/martialArts.ts). */
   martialInsight?: number;
+  /** 悟招 — duel moves grasped by spending 心得 ahead of the 歷練 that would
+   *  grant them. Additive to the level/修為 gate, never subtractive. */
+  duelMovesLearned?: import('../systems/duel').DuelMove[];
+  /** 改換門庭 — an explicitly chosen 武學流派, overriding the one derived from
+   *  the officer's weapon. Set only by a deliberate school change. */
+  martialSchool?: import('../systems/duel').WeaponClass;
   /** 文辯修為 — scholarship (0–100) of the officer's debating 學派, the war of
    *  words' mirror of 武學. Deepened via 講席 (spending 心得) and 論戰頓悟. High
    *  修為 lends 口才/opening 氣勢/沉著 in every 舌戰. See systems/debateArts.ts. */

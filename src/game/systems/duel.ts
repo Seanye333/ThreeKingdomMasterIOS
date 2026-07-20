@@ -1216,7 +1216,7 @@ function scarProwessPenalty(o: Officer): number {
   return p;
 }
 /** A move a maimed fighter can no longer field (連擊 for an arm, 閃 for a leg). */
-function scarBarsMove(o: Officer, m: DuelMove): boolean {
+export function scarBarsMove(o: Officer, m: DuelMove): boolean {
   const scars = duelScars(o);
   // 折肱之痛 — a battle-crippled arm bars the heavy combo, same as a duel maim.
   if (m === 'combo' && (scars.includes('maimed-arm') || chronicBarsArm(o))) return true;
@@ -1331,6 +1331,9 @@ const WEAPON_CLASS_BY_OFFICER: Record<string, WeaponClass> = {
 /** The officer's 3D duel weapon: legendary item → signature → war-based default. */
 export function weaponClassFor(o: Officer): WeaponClass {
   for (const id of o.equipment) { const c = WEAPON_CLASS_BY_ITEM[id]; if (c) return c; }
+  // 改換門庭 — a deliberately chosen school overrides both the famous-officer
+  // table and the weapon in hand (§6.10).
+  if (o.martialSchool) return o.martialSchool;
   if (WEAPON_CLASS_BY_OFFICER[o.id]) return WEAPON_CLASS_BY_OFFICER[o.id];
   // Default: heavy bruisers swing a greatsword; everyone else a sword & shield.
   if (o.stats.war >= 92 && o.stats.intelligence < 60) return 'greatsword';
@@ -1394,7 +1397,10 @@ export function duelMoveUnlockLevel(m: DuelMove): number {
  *  level — still unlocks moves by prowess rather than being stuck at Lv.1. */
 export function isDuelMoveUnlocked(o: Officer, m: DuelMove): boolean {
   // 傷殘 — a maim bars a move outright (a 斷臂 can't flurry, a 跛足 can't dodge).
+  // A maim outranks 悟招: no amount of study restores an arm.
   if (scarBarsMove(o, m)) return false;
+  // 悟招 — a move bought outright with 心得 is theirs regardless of level (§6.10).
+  if (o.duelMovesLearned?.includes(m)) return true;
   // 武學修為 — a well-drilled duellist fields the flourish moves earlier than their
   // 歷練 level alone would allow (a raw-but-trained fighter still has real craft).
   return officerLevel(o) + martialBonus(o).moveUnlockDiscount >= duelMoveUnlockLevel(m);
