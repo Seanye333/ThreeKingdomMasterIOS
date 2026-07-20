@@ -4,7 +4,9 @@ import { FORMATIONS, NAMED_MAPS_BY_CITY, NAMED_MAPS_BY_ID } from '../../game/dat
 import { inferUnitType } from '../../game/systems/tactical';
 import { setupTacticalBattle, planSiegeRelief, planColumnReinforcements, rollTimeOfDay } from '../../game/systems/tacticalSetup';
 import { regionalTacticalWeather } from '../../game/systems/weather';
-import { navalContextFor } from '../../game/systems/navalWarfare';
+import {
+  navalContextFor, drillTier, seasickness, fleetSize, DRILL_TIER_NAMES,
+} from '../../game/systems/navalWarfare';
 import { cityPos } from '../../game/data/cityGeo';
 import { isRiverside } from '../../game/data/geography';
 import { useGameStore } from '../../game/state/store';
@@ -135,6 +137,24 @@ export function BattlePrepModal({
         .filter((o): o is Officer => !!o),
     [commanderId, companionIds, officers],
   );
+
+  // 水戰預告 — what this force will actually be on the water, read the same way
+  // the battle itself reads it (navalContextFor), so the preview cannot drift
+  // from the fight.
+  const ports = useGameStore((s) => s.ports);
+  const navalPreview = useMemo(() => {
+    const ctx = navalContextFor({
+      forceId: source?.ownerForceId ?? null, cityId: targetCityId,
+      cities: Object.values(cities), ports: Object.values(ports),
+      officers: ourOfficers,
+    });
+    return {
+      drill: ctx.drill,
+      tier: drillTier(ctx.drill),
+      sick: seasickness(ctx.drill),
+      hulls: fleetSize(ctx.fleet),
+    };
+  }, [source?.ownerForceId, targetCityId, cities, ports, ourOfficers]);
 
   const defenders = useMemo(
     () =>
@@ -345,6 +365,28 @@ export function BattlePrepModal({
               <div className={styles.ctxValue}>{namedMap?.timeOfDay ?? 'day'}</div>
             </div>
           </div>
+
+          {/* 水戰 (§5.14) — attacking a river city is a fleet action; say so BEFORE
+              the player commits, not in the battle log afterwards. */}
+          {target?.terrain === 'water' && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap',
+              padding: '0.5rem 0.75rem', marginTop: '0.5rem', fontSize: '0.78rem',
+              background: 'rgba(20,32,44,0.6)', border: '1px solid #35566e',
+            }}>
+              <span style={{ color: '#7aaed0', letterSpacing: '0.05rem' }}>{lang === 'en' ? 'River battle' : '水戰'}</span>
+              <span style={{ color: navalPreview.tier === 'landlubber' ? '#e0707a' : navalPreview.tier === 'master' ? '#7ed68a' : '#c8d4dc' }}>
+                {lang === 'en'
+                  ? `Your seamanship: ${DRILL_TIER_NAMES[navalPreview.tier].en} (${navalPreview.drill})`
+                  : `我軍水軍:${DRILL_TIER_NAMES[navalPreview.tier].zh}(${navalPreview.drill})`}
+              </span>
+              <span style={{ color: '#8a98a4', fontSize: '0.72rem' }}>
+                {lang === 'en'
+                  ? `power ×${navalPreview.sick.powerMul}${navalPreview.sick.moraleDelta ? `, opening morale ${navalPreview.sick.moraleDelta}` : ''}${navalPreview.sick.apPenalty ? ', −1 AP' : ''}${navalPreview.hulls ? ` · ${navalPreview.hulls} hull(s) in port` : ''}`
+                  : `戰力 ×${navalPreview.sick.powerMul}${navalPreview.sick.moraleDelta ? `、開局士氣 ${navalPreview.sick.moraleDelta}` : ''}${navalPreview.sick.apPenalty ? '、每船 −1 AP' : ''}${navalPreview.hulls ? ` · 港中戰船 ${navalPreview.hulls} 艘` : ''}`}
+              </span>
+            </div>
+          )}
 
           {/* 攻城方略 — how the siege is prosecuted. */}
           <div style={{

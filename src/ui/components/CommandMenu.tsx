@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { COMMAND_DEFS, meetsMinSize } from '../../game/systems/commands';
+import { CIVIL_ORDER, MIL_ORDER, MAJOR_CIVIL, MAJOR_MIL, MIL_TYPES } from './commandMenuOrder';
 import { citySize, CITY_SIZES_BY_ID } from '../../game/systems/citySize';
 import type { GovernorStance } from '../../game/systems/governor';
 import type { EntityId, InternalAffairsType } from '../../game/types';
@@ -25,31 +26,6 @@ interface Props {
 const EMPTY_DELEGATIONS: Record<string, string> = {};
 
 // 文政 — civil administration (內政 tab).
-const CIVIL_ORDER: InternalAffairsType[] = [
-  'develop-agriculture',
-  'develop-commerce',
-  'improve-loyalty',
-  'relief',
-  'anti-corruption',
-  'promote-learning',
-  'flood-control',
-  'search',
-  'encourage-migration',
-];
-// 軍備 — troops & defence orders (軍務 tab).
-const MIL_ORDER: InternalAffairsType[] = [
-  'recruit-troops',
-  'drill-troops',
-  'special-training',
-  'military-farming',
-  'build-defense',
-  'garrison',
-];
-// 大型工程 — unlocked once the city reaches a higher tier; split the same way.
-const MAJOR_CIVIL: InternalAffairsType[] = ['major-agriculture', 'major-commerce'];
-const MAJOR_MIL: InternalAffairsType[] = ['major-defense', 'upgrade-wall'];
-// march + every 軍備/城防 order — used to split pending-command rows per tab.
-const MIL_TYPES = new Set<string>([...MIL_ORDER, ...MAJOR_MIL, 'march']);
 
 type ModalState =
   | { kind: 'closed' }
