@@ -503,6 +503,11 @@ export interface GameState {
   /** 糴政 (§1.16) — per-force grain-trade policy (通糴/平糴/閉糴). Absent ⇒ '平糴',
    *  so old saves keep grain moving inside the realm and no further. */
   grainPolicy: Record<EntityId, import('../systems/grainTrade').GrainPolicy>;
+  /** 錢法 (§1.17) — per-force coin standard (五銖/大錢/穀帛為市). Absent ⇒ 五銖錢. */
+  coinStandard: Record<EntityId, import('../systems/coinage').CoinStandard>;
+  /** 通脹 (§1.17) — every realm's own inflation (0–100). The player's entry is
+   *  mirrored into the legacy scalar `inflation` so old readers keep working. */
+  inflationByForce: Record<EntityId, number>;
   /** 遺澤 (§9) — this campaign's legacy has already been banked (so an ending
    *  that keeps re-firing each season cannot farm points). */
   legacyBanked?: boolean;
@@ -962,6 +967,8 @@ export const EMPTY_STATE: GameState = {
   lawCode: {},
   corvee: {},
   grainPolicy: {},
+  coinStandard: {},
+  inflationByForce: {},
   grandProjects: [],
   poems: [],
   shrines: [],
@@ -1458,6 +1465,8 @@ export function loadScenario(
     lawCode: {},
     corvee: {},
     grainPolicy: {},
+    coinStandard: {},
+    inflationByForce: {},
     grandProjects: [],
     poems: [],
     shrines: [],

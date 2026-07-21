@@ -110,6 +110,7 @@ import { cityPos, CITY_GEO_OVERRIDES } from '../data/cityGeo';
 import { provisionNeeded, convoyCapacity, planConvoy } from '../systems/convoy';
 import { citySize, citySizeRank, cityMeetsSize, reassignLostCapitals, LOST_CAPITAL_LOYALTY_PENALTY } from '../systems/citySize';
 import { buildingBonuses, SCHOOL_BUILDINGS } from '../systems/buildings';
+import { coinEffects, inflationDrift, aiCoinStandard, type CoinStandard } from '../systems/coinage';
 import { BUILDING_CATEGORY, BUILDING_PREREQ, BUILDING_MIN_SIZE } from '../data/buildings';
 import {
   cityAffinity, CITY_SPECIALTY, citySpecialty, ROLE_ZH,
@@ -1241,6 +1242,8 @@ export interface GameStore extends GameState {
   setCorvee: (level: import('../systems/household').CorveeLevel) => void;
   /** 糴政 (§1.16) — set the realm's grain-trade policy (通糴/平糴/閉糴). */
   setGrainPolicy: (policy: import('../systems/grainTrade').GrainPolicy) => void;
+  /** 錢法 (§1.17) — set the realm's coin standard (五銖/大錢/穀帛為市). */
+  setCoinStandard: (standard: import('../systems/coinage').CoinStandard) => void;
   /** 大赦天下 (§1.11) — empty every court in the realm: loyalty everywhere and
    *  the docket wiped, paid for in gold, in the throne's dignity, and in the
    *  men you just let out. Refused if one was proclaimed too recently. */
@@ -4449,6 +4452,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           lawCode: state.lawCode,
           corvee: state.corvee,
           grainPolicy: state.grainPolicy,
+          coinStandard: state.coinStandard,
+          inflationByForce: state.inflationByForce,
           shrines: state.shrines,
           buildings: state.buildings,
           forces: forcesAfterCourt,
@@ -7085,6 +7090,31 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           ? [...state.recentPromotions, ...promotionCeremonies]
           : state.recentPromotions;
 
+        // 錢法・通脹 (§1.17) — drift every realm's own inflation by the standard
+        // it runs. An AI lord with an empty war chest turns to the mint (or
+        // retreats to grain and silk) by temperament; a realm at the Han
+        // standard simply lets an old spike bleed off.
+        const nextInflationByForce: Record<string, number> = {};
+        if (seasonBoundary) {
+          for (const f of Object.values(state.forces)) {
+            const capId = f.capitalCityId;
+            const relief = buildingBonuses(capId ?? '', state.buildings).inflationRelief
+              + (f.id === state.playerForceId ? (realmOf(state.playerForceId)?.inflationRelief ?? 0) : 0);
+            const owned = Object.values(postCities).filter((c) => c.ownerForceId === f.id);
+            const treasury = owned.reduce((sum, c) => sum + c.gold, 0);
+            const standard: CoinStandard = state.coinStandard?.[f.id]
+              ?? (f.id === state.playerForceId
+                ? 'wuzhu'
+                : aiCoinStandard(f.personality, owned.length > 0 && treasury < owned.length * 400));
+            nextInflationByForce[f.id] = inflationDrift({
+              current: state.inflationByForce?.[f.id]
+                ?? (f.id === state.playerForceId ? (state.inflation ?? 0) : 0),
+              standard,
+              relief,
+            });
+          }
+        }
+
         // 一代記 — auto-record chronicle milestones: prestige attained and
         // career rank promotions for the player's chronicle hero.
         let careerModeAfterSeason = state.careerMode;
@@ -8711,10 +8741,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           // 通脹漸消 — inflation eases each season as coin re-stabilises; a 平準署
           // at the capital quickens it, and a 銅 (copper) realm's sound coinage
           // steadies prices further (specialtyRealmEffects.inflationRelief).
+          // 錢法 (§1.17) — every realm now keeps its own number, drifting by the
+          // standard it runs. The player's entry is mirrored into the legacy
+          // scalar so every existing reader keeps working.
+          inflationByForce: seasonBoundary ? nextInflationByForce : state.inflationByForce,
           inflation: seasonBoundary
-            ? Math.max(0, (state.inflation ?? 0) - 3
-                - buildingBonuses(state.forces[state.playerForceId ?? '']?.capitalCityId ?? '', state.buildings).inflationRelief
-                - (realmOf(state.playerForceId)?.inflationRelief ?? 0))
+            ? (nextInflationByForce[state.playerForceId ?? ''] ?? state.inflation ?? 0)
             : state.inflation,
           // 度支沿革 — snapshot the player's total treasury gold each season so
           // the 度支簿 can chart whether the realm is bleeding or building.
@@ -10547,12 +10579,16 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // 丹陽銅冶 — a 銅 (copper) realm mints richer coin (mintMul) and, with sound
         // metal, debases less (a touch less inflation per mint).
         const mintRealm = forceSpecialtyRealm(state.cities, state.playerForceId, state.embargoes);
-        const windfall = Math.round((1000 + Math.floor(capital.commerce * 30)) * mintRealm.mintMul);
-        const inflationJump = Math.round(18 / Math.max(1, mintRealm.mintMul));
+        // 錢法 (§1.17) — 大錢 mints far richer coin per debasement; 穀帛為市
+        // means there is barely a currency left to mint.
+        const mintCoinEff = coinEffects(state.coinStandard?.[state.playerForceId]);
+        const windfall = Math.round((1000 + Math.floor(capital.commerce * 30)) * mintRealm.mintMul * mintCoinEff.mintYieldMul);
+        const inflationJump = Math.round(18 / Math.max(1, mintRealm.mintMul) * mintCoinEff.mintInflationMul);
         const nextInflation = Math.min(100, (state.inflation ?? 0) + inflationJump);
         set({
           cities: { ...state.cities, [capital.id]: { ...capital, gold: capital.gold + windfall } },
           inflation: nextInflation,
+          inflationByForce: { ...state.inflationByForce, [state.playerForceId]: nextInflation },
         });
         get().notify(
           `鑄錢 · ${capital.name.zh} 入金 ${windfall.toLocaleString()}（通脹 ${nextInflation}）`,
@@ -15518,6 +15554,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         return { grainPolicy: { ...s.grainPolicy, [fid]: policy } };
       }),
 
+      // 錢法 (§1.17) — 五銖錢 / 大錢 / 穀帛為市.
+      setCoinStandard: (standard) => set((s) => {
+        const fid = s.playerForceId;
+        if (!fid) return {};
+        return { coinStandard: { ...s.coinStandard, [fid]: standard } };
+      }),
+
       proclaimAmnesty: () => {
         const s = get();
         const fid = s.playerForceId;
@@ -18460,6 +18503,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         lawCode: state.lawCode,
         corvee: state.corvee,
         grainPolicy: state.grainPolicy,
+        coinStandard: state.coinStandard,
+        inflationByForce: state.inflationByForce,
         grandProjects: state.grandProjects,
         poems: state.poems,
         shrines: state.shrines,

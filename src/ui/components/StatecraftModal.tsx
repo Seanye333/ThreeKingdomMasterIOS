@@ -15,6 +15,9 @@ import {
 } from '../../game/systems/grainTrade';
 import { buildingBonuses } from '../../game/systems/buildings';
 import {
+  COIN_STANDARDS, COIN_NAMES, coinEffects, inflationTier, type CoinStandard,
+} from '../../game/systems/coinage';
+import {
   SELECTION_NAMES, SELECTION_SYSTEMS, selectionEffects, rectifierOf, rectifierIsUpright,
   type SelectionSystem,
 } from '../../game/systems/officialSelection';
@@ -48,6 +51,9 @@ export function StatecraftModal({ onClose, onSelectCity }: { onClose: () => void
   const grainPolicy: GrainPolicy = useGameStore((s) => (playerForceId ? s.grainPolicy?.[playerForceId] : undefined) ?? 'guided');
   const setGrainPolicy = useGameStore((s) => s.setGrainPolicy);
   const season = useGameStore((s) => s.date.season);
+  const coinStandard: CoinStandard = useGameStore((s) => (playerForceId ? s.coinStandard?.[playerForceId] : undefined) ?? 'wuzhu');
+  const setCoinStandard = useGameStore((s) => s.setCoinStandard);
+  const inflation = useGameStore((s) => (playerForceId ? s.inflationByForce?.[playerForceId] : undefined) ?? s.inflation ?? 0);
   const forces = useGameStore((s) => s.forces);
   const selection: SelectionSystem = useGameStore((s) => (playerForceId ? s.selectionSystem?.[playerForceId] : undefined) ?? 'chaju');
   const setSelectionSystem = useGameStore((s) => s.setSelectionSystem);
@@ -198,6 +204,25 @@ export function StatecraftModal({ onClose, onSelectCity }: { onClose: () => void
             )}
           </div>
         )}
+      </div>
+
+      {/* 錢法 §1.17 */}
+      <div style={sect}>
+        <div style={head}>💰 {t('錢法・物價', 'Coinage')}</div>
+        <div style={row}>
+          {COIN_STANDARDS.map((cs) => (
+            <button key={cs} style={pill(coinStandard === cs)} onClick={() => setCoinStandard(cs)}
+              title={COIN_NAMES[cs].motto}>
+              {t(COIN_NAMES[cs].zh, COIN_NAMES[cs].en)}
+            </button>
+          ))}
+          <span style={{ ...note, marginTop: 0, marginLeft: 'auto',
+            color: inflation >= 40 ? '#d08a5a' : '#8a98a4' }}>
+            {t(`通脹 ${inflation.toFixed(0)} · ${inflationTier(inflation).zh}`,
+               `Inflation ${inflation.toFixed(0)} · ${inflationTier(inflation).en}`)}
+          </span>
+        </div>
+        <div style={note}>{t(coinEffects(coinStandard).badgeZh, coinEffects(coinStandard).badgeEn)}</div>
       </div>
 
       {/* 選官 §3.6 */}

@@ -32,6 +32,7 @@
  */
 import type { City, EntityId, Season } from '../types';
 import { foodRate } from './market';
+import { priceMultiplier } from './coinage';
 
 export type GrainPolicy = 'open' | 'guided' | 'closed';
 
@@ -56,16 +57,20 @@ export const MAX_FLOWS_PER_SEASON = 14;
 /** Most of its treasury a city will hand the grain merchants in one season. */
 export const BUYER_PURSE_SHARE = 0.6;
 
-/** Gold per 100 石 at this city, this season — §1.5's rate, inverted. */
+/**
+ * Gold per 100 石 at this city, this season — §1.5's rate, inverted, then
+ * marked up by whatever the realm's coin is actually worth (§1.17).
+ */
 export function grainPrice(
   city: City,
   season: Season,
-  ctx: { stability?: number; hoardMul?: number } = {},
+  ctx: { stability?: number; hoardMul?: number; inflation?: number } = {},
 ): number {
   // A hoard takes the good stuff off the market: fewer 石 per gold → dearer.
   const rate = foodRate(city, season, { stability: ctx.stability })
     * Math.max(0.3, ctx.hoardMul ?? 1);
-  return Math.round((100 / Math.max(0.5, rate)) * 100) / 100;
+  const price = (100 / Math.max(0.5, rate)) * priceMultiplier(ctx.inflation ?? 0);
+  return Math.round(price * 100) / 100;
 }
 
 export interface GrainPolicyEffects {

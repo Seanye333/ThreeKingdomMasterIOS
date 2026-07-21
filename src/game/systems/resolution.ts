@@ -52,6 +52,7 @@ import {
   grainPrice, planGrainFlows, grainPolicyEffects, aiGrainPolicy, grainFlowNote,
   evernormalOperation, type GrainNode,
 } from './grainTrade';
+import { coinEffects } from './coinage';
 import { clanOf } from '../data/clans';
 import { shrineEffects } from './culturalWorks';
 import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
@@ -151,6 +152,11 @@ export interface ResolutionInput {
   corvee?: Record<EntityId, import('./household').CorveeLevel>;
   /** 糴政 — per-force grain-trade policy (§1.16); missing resolve by temperament. */
   grainPolicy?: Record<EntityId, import('./grainTrade').GrainPolicy>;
+  /** 錢法 — per-force coin standard (§1.17); missing resolve to 五銖錢. */
+  coinStandard?: Record<EntityId, import('./coinage').CoinStandard>;
+  /** 通脹 — every realm's own inflation (§1.17). Falls back to `inflation` for
+   *  the player and 0 for everyone else, so old saves behave as before. */
+  inflationByForce?: Record<EntityId, number>;
   /** 祠廟 (§1.13) — standing shrines; the city that keeps one keeps faith. */
   shrines?: ReadonlyArray<import('./culturalWorks').Shrine>;
   /** 通商條約 — force ids the player has trade treaties with (mutual income). */
@@ -2496,12 +2502,20 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const cityOfficers = Object.values(officers).filter(
       (o) => o.locationCityId === city.id && o.status !== 'dead' && o.status !== 'unsearched',
     );
+    // 錢法・物價 (§1.17) — this city's realm keeps its own inflation, and runs
+    // its own coin standard: 大錢 fills the treasury now at the cost of prices
+    // and commerce, 穀帛為市 shrinks the economy but stops the rot.
+    const cityInflation = city.ownerForceId
+      ? (input.inflationByForce?.[city.ownerForceId]
+         ?? (city.ownerForceId === input.playerForceId ? (input.inflation ?? 0) : 0))
+      : 0;
+    const coin = coinEffects(city.ownerForceId ? input.coinStandard?.[city.ownerForceId] : undefined);
     const tick = tickCityEconomy(
       city,
       input.date.season,
       cityOfficers,
       city.ownerForceId ? (input.taxPolicy?.[city.ownerForceId] ?? 'normal') : 'normal',
-      city.ownerForceId === input.playerForceId ? (input.inflation ?? 0) : 0,
+      cityInflation,
       input.weather?.kind ?? 'clear',
       input.buildings,
       city.ownerForceId ? (forces[city.ownerForceId]?.statecraft ?? null) : null,
@@ -2647,7 +2661,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       ...city,
       // 律令與稅入 (§1.11) — 寬刑之下賦稅有漏,峻法之下錙銖必入。
       // 編戶與稅基 (§1.12) — 隱戶不入版籍,其田租賦皆歸豪右;重役又誤農時。
-      gold: city.gold + Math.round(tick.goldIncome * law.taxYieldMul * registryYieldMul(nextHidden)) + territoryGold,
+      gold: city.gold + Math.round(tick.goldIncome * law.taxYieldMul * registryYieldMul(nextHidden) * coin.goldYieldMul) + territoryGold,
       food: Math.max(0, city.food
         + Math.round(tick.foodIncome * corveeEff.farmMul * registryYieldMul(nextHidden) * hoardEff.foodMul)
         - tick.foodUpkeep),
@@ -3839,6 +3853,11 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   // takes a duty at its capital. 閉糴 stops all of it dead.
   if (seasonBoundary) {
     const grainPlayerFid = input.playerForceId;
+    // 錢輕則物重 — a debased realm's grain is dearer everywhere in it, which the
+    // caravans and the granaries both react to.
+    const grainInflationOf = (fid: EntityId | null) => (fid
+      ? (input.inflationByForce?.[fid] ?? (fid === input.playerForceId ? (input.inflation ?? 0) : 0))
+      : 0);
     const grainNodes: GrainNode[] = [];
     for (const c0 of Object.values(cities)) {
       if (!c0.ownerForceId || c0.ruined) continue;
@@ -3852,6 +3871,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         const preOp = grainPrice(c, input.date.season, {
           stability: stab,
           hoardMul: hoardEffects(c.hoardedGrain ?? 0).marketRateMul,
+          inflation: grainInflationOf(c.ownerForceId),
         });
         const op = evernormalOperation({
           price: preOp, stability: stab, food: c.food, troops: c.troops, gold: c.gold,
@@ -3881,6 +3901,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         price: grainPrice(c, input.date.season, {
           stability: stab,
           hoardMul: hoardEffects(c.hoardedGrain ?? 0).marketRateMul,
+          inflation: grainInflationOf(c.ownerForceId),
         }),
         food: c.food, troops: c.troops, commerce: c.commerce,
         loyalty: c.loyalty, gold: c.gold,
@@ -3931,7 +3952,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     // them away, on every city of the realm.
     for (const c of Object.values(cities)) {
       if (!c.ownerForceId) continue;
-      const d = grainPolicyEffects(grainPolicyOf(c.ownerForceId)).commerceDelta;
+      const d = grainPolicyEffects(grainPolicyOf(c.ownerForceId)).commerceDelta
+        + coinEffects(input.coinStandard?.[c.ownerForceId]).commerceDelta;
       if (d === 0) continue;
       cities[c.id] = { ...cities[c.id], commerce: Math.max(0, Math.min(100, cities[c.id].commerce + d)) };
     }

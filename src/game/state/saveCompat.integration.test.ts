@@ -287,6 +287,50 @@ describe('存檔遷移 — 民政批 fields', () => {
     }
   });
 
+  it('round-trips the 米市/錢法 fields; an old save defaults to 平糴 + 五銖錢', () => {
+    const st = useGameStore;
+    const fid = st.getState().playerForceId!;
+    st.getState().setGrainPolicy('open');
+    st.getState().setCoinStandard('daqian');
+    st.setState({ inflationByForce: { [fid]: 42 } });
+    st.getState().saveSlot('compat-test', '米市錢法欄位');
+    const parsed = JSON.parse(localStorage.getItem(SLOT_KEY)!);
+    expect(parsed.grainPolicy[fid]).toBe('open');
+    expect(parsed.coinStandard[fid]).toBe('daqian');
+    expect(parsed.inflationByForce[fid]).toBe(42);
+
+    st.setState({ grainPolicy: {}, coinStandard: {}, inflationByForce: {} });
+    expect(st.getState().loadSlot('compat-test')).toBe(true);
+    expect(st.getState().grainPolicy[fid]).toBe('open');
+    expect(st.getState().coinStandard[fid]).toBe('daqian');
+    expect(st.getState().inflationByForce[fid]).toBe(42);
+
+    // Strip them as a pre-batch save would be, and a full season still resolves.
+    st.getState().saveSlot('compat-test', '舊檔(無米市欄位)');
+    const old = JSON.parse(localStorage.getItem(SLOT_KEY)!);
+    delete old.grainPolicy;
+    delete old.coinStandard;
+    delete old.inflationByForce;
+    localStorage.setItem(SLOT_KEY, JSON.stringify(old));
+    st.setState({ grainPolicy: {}, coinStandard: {}, inflationByForce: {} });
+    expect(st.getState().loadSlot('compat-test')).toBe(true);
+    expect(st.getState().grainPolicy).toEqual({});
+    expect(st.getState().coinStandard).toEqual({});
+    st.getState().endSeason();
+    const s = st.getState();
+    expect(s.date).toBeTruthy();
+    for (const c of Object.values(s.cities)) {
+      expect(Number.isNaN(c.gold)).toBe(false);
+      expect(Number.isNaN(c.food)).toBe(false);
+      expect(c.food).toBeGreaterThanOrEqual(0);
+    }
+    // Inflation exists for every realm after one season, and stays in range.
+    for (const v of Object.values(st.getState().inflationByForce)) {
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThanOrEqual(100);
+    }
+  });
+
   it('the civic actions all degrade gracefully with nothing set up', () => {
     const st = useGameStore;
     st.setState({ lawCode: {}, corvee: {}, selectionSystem: {}, poems: [], shrines: [], lastAmnestyYear: {} });
