@@ -218,3 +218,93 @@ describe('民政抉擇事件', () => {
       .not.toMatchObject({ id: 'behavior-law-debate' });
   });
 });
+
+/** Every behavioural beat that predates the 2026-07-21 institution batch.
+ *  Suppressing them isolates one new candidate at a time — candidates are
+ *  evaluated in order and only the first eligible one fires. */
+const OLDER_BEATS = [
+  'behavior-law-debate', 'behavior-gentry-defiance', 'behavior-grain-corner',
+  'behavior-corvee-strain', 'behavior-mandate-urge', 'behavior-mandate-collapse',
+  'behavior-treasury', 'behavior-heavy-tax', 'behavior-treasury-empty',
+  'behavior-popular', 'behavior-restless', 'behavior-idle-talent',
+];
+
+describe('制度抉擇事件 (§1.16–§4.11)', () => {
+  const bigCities = (over: Partial<City> = {}) => Object.fromEntries(
+    ['c1', 'c2', 'c3', 'c4'].map((id) => [id, {
+      id, ownerForceId: 'p', gold: 300, loyalty: 70, troops: 9000, commerce: 40,
+      name: { zh: id, en: id }, armaments: 40, wounded: 0,
+      ...over,
+    } as unknown as City]),
+  );
+
+  const only = (over: Partial<BehaviorEventContext>, alsoFired: string[] = []) =>
+    ctx({ firedEventIds: [...OLDER_BEATS, ...alsoFired], ...over });
+
+  it('大錢之議 only when the treasury actually bites', () => {
+    const rich = only({ cities: bigCities({ gold: 9000 }), coinStandard: { p: 'wuzhu' } });
+    expect(rollBehaviorEvent(rich)?.id).not.toBe('behavior-debase-coin');
+    const broke = only({ cities: bigCities({ gold: 100 }), coinStandard: { p: 'wuzhu' } });
+    const fired = rollBehaviorEvent(broke);
+    expect(fired?.id).toBe('behavior-debase-coin');
+    // Three real answers, and the historical one is the trap.
+    expect(fired?.choices?.map((c) => c.id)).toEqual(['debase', 'refuse', 'grain-cloth']);
+  });
+
+  it('…and never while the realm is already on 大錢 or 穀帛', () => {
+    expect(rollBehaviorEvent(only({
+      cities: bigCities({ gold: 100 }), coinStandard: { p: 'daqian' },
+    }))?.id).not.toBe('behavior-debase-coin');
+  });
+
+  it('欠餉 needs a PAID army and a thin treasury', () => {
+    const levied = only({ cities: bigCities({ gold: 100 }), serviceSystem: { p: 'levy' } });
+    expect(rollBehaviorEvent(levied)?.id).not.toBe('behavior-wage-arrears');
+    const hired = only({
+      cities: bigCities({ gold: 100 }), serviceSystem: { p: 'paid' },
+      coinStandard: { p: 'daqian' },   // keep the debasement beat out of the way
+    });
+    expect(rollBehaviorEvent(hired)?.id).toBe('behavior-wage-arrears');
+  });
+
+  it('商賈請榷 needs a real merchant city and the 平糴 default', () => {
+    const quiet = only({ cities: bigCities({ gold: 9000, commerce: 20 }) });
+    expect(rollBehaviorEvent(quiet)?.id).not.toBe('behavior-merchant-petition');
+    const busy = only({ cities: bigCities({ gold: 9000, commerce: 80 }) });
+    expect(rollBehaviorEvent(busy)?.id).toBe('behavior-merchant-petition');
+    // …and not once the roads are already open or shut.
+    expect(rollBehaviorEvent(only({
+      cities: bigCities({ gold: 9000, commerce: 80 }), grainPolicy: { p: 'open' },
+    }))?.id).not.toBe('behavior-merchant-petition');
+  });
+
+  it('傷卒滿營 needs wounded actually in the camps', () => {
+    expect(rollBehaviorEvent(only({ cities: bigCities({ gold: 9000, commerce: 20 }) }))?.id)
+      .not.toBe('behavior-wounded-overflow');
+    expect(rollBehaviorEvent(only({
+      cities: bigCities({ gold: 9000, commerce: 20, wounded: 3000 }),
+    }))?.id).toBe('behavior-wounded-overflow');
+  });
+
+  it('甲兵不修 needs a real army and an empty armoury', () => {
+    expect(rollBehaviorEvent(only({ cities: bigCities({ gold: 9000, commerce: 20, armaments: 60 }) }))?.id)
+      .not.toBe('behavior-arms-shortage');
+    expect(rollBehaviorEvent(only({
+      cities: bigCities({ gold: 9000, commerce: 20, armaments: 2 }),
+    }))?.id).toBe('behavior-arms-shortage');
+  });
+
+  it('every new beat fires at most once per campaign', () => {
+    const ids = [
+      'behavior-debase-coin', 'behavior-wage-arrears', 'behavior-merchant-petition',
+      'behavior-wounded-overflow', 'behavior-arms-shortage',
+    ];
+    const c = ctx({
+      cities: bigCities({ gold: 100, commerce: 80, wounded: 4000, armaments: 2 }),
+      serviceSystem: { p: 'paid' },
+      firedEventIds: [...OLDER_BEATS, ...ids],
+    });
+    const fired = rollBehaviorEvent(c);
+    expect(fired && ids.includes(fired.id)).toBeFalsy();
+  });
+});

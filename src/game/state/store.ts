@@ -5019,6 +5019,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             mandateByForce: state.mandate.byForce,
             lawCode: state.lawCode,
             corvee: state.corvee,
+            grainPolicy: state.grainPolicy,
+            coinStandard: state.coinStandard,
+            serviceSystem: state.serviceSystem,
             rng: Math.random,
           }) ??
           (state.customEvents.length > 0

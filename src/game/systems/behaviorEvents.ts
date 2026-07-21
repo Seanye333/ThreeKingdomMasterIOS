@@ -26,6 +26,10 @@ export interface BehaviorEventContext {
   lawCode?: Record<EntityId, string>;
   /** §1.12 徭役 — the realm's corvée level; the 民力 beat reads it. */
   corvee?: Record<EntityId, string>;
+  /** §1.16 糴政 / §1.17 錢法 / §4.8 兵制 — the 2026-07-21 institutions. */
+  grainPolicy?: Record<EntityId, string>;
+  coinStandard?: Record<EntityId, string>;
+  serviceSystem?: Record<EntityId, string>;
   rng?: () => number;
 }
 
@@ -87,6 +91,15 @@ export function rollBehaviorEvent(ctx: BehaviorEventContext): HistoricalEvent | 
   const worstHoard = cities.reduce((m, c) => Math.max(m, c.hoardedGrain ?? 0), 0);
   const law = ctx.lawCode?.[playerForceId] ?? 'standard';
   const levy = ctx.corvee?.[playerForceId] ?? 'none';
+  // §1.16–§4.12 — the institution batch's own state, for the beats below.
+  const grainPol = ctx.grainPolicy?.[playerForceId] ?? 'guided';
+  const coin = ctx.coinStandard?.[playerForceId] ?? 'wuzhu';
+  const service = ctx.serviceSystem?.[playerForceId] ?? 'levy';
+  const meanArms = meanOf((c) => c.armaments ?? 0);
+  const totalWounded = cities.reduce((a, c) => a + (c.wounded ?? 0), 0);
+  // `?? 0` is load-bearing: a City without troops makes the thresholds NaN, and
+  // `x < NaN` is false — which would fire these beats on turn one.
+  const totalTroops = cities.reduce((a, c) => a + (c.troops ?? 0), 0);
 
   const candidates: Candidate[] = [
     // §1.11 刑名之議 — with the courts choked, the court itself argues about law.
@@ -532,6 +545,247 @@ export function rollBehaviorEvent(ctx: BehaviorEventContext): HistoricalEvent | 
           {
             zh: '帳下賢才雲集,卻多投閒置散。有人嘆曰:「明珠暗投,豈不惜哉?」',
             en: 'Able men crowd your halls, yet many sit unused. One sighs: "Bright pearls cast into the dark — what a waste."',
+          },
+          'somber',
+          choices,
+        );
+      },
+    },
+
+    // §1.17 大錢之議 — the treasury is empty and someone knows a way to fill it.
+    {
+      id: 'behavior-debase-coin',
+      build: () => {
+        if (coin !== 'wuzhu' || cities.length < 3) return null;
+        if (!(totalGold >= 0) || totalGold > cities.length * 700) return null;   // only when it bites
+        const treasurer = [...loyalOfficers].sort((a, b) => b.stats.intelligence - a.stats.intelligence)[0] ?? null;
+        const choices: EventChoice[] = [
+          {
+            id: 'debase',
+            label: { zh: '鑄大錢,一當五百', en: 'Mint the big cash — one for five hundred' },
+            effects: [
+              { kind: 'force-gold', forceId: playerForceId, delta: 2600 },
+              ...cityLoyaltyAll(-3),
+              { kind: 'flag', key: 'coin-debased' },
+            ],
+          },
+          {
+            id: 'refuse',
+            label: { zh: '錢法不可輕改', en: 'The coinage is not a thing to play with' },
+            effects: [
+              ...cityLoyaltyAll(3),
+              ...(treasurer ? [{ kind: 'officer-loyalty' as const, officerId: treasurer.id, delta: 5 }] : []),
+              { kind: 'flag', key: 'coin-kept-sound' },
+            ],
+          },
+          {
+            id: 'grain-cloth',
+            label: { zh: '罷錢不用,以穀帛為市', en: 'Abolish coin — let them trade in grain and silk' },
+            effects: [
+              { kind: 'force-gold', forceId: playerForceId, delta: -400 },
+              ...cityLoyaltyAll(1),
+              { kind: 'flag', key: 'coin-grain-cloth' },
+            ],
+          },
+        ];
+        return event(
+          'behavior-debase-coin', rulerId,
+          { zh: '大錢之議', en: 'The Debasement Proposal' },
+          {
+            zh: '府庫已竭,而軍食方急。有司獻議:「銅一而值五百,一鑄則帑實。」老吏在旁不語,良久乃曰:「董卓鑄小錢,穀一斛數十萬 —— 主公不記得了麼?」',
+            en: 'The treasury is dry and the army wants feeding. An official proposes: "One measure of copper, struck at five hundred — one minting fills the coffers." An old clerk says nothing for a long moment, then: "Dong Zhuo struck small cash. Grain went to hundreds of thousands a picul. Does my lord not remember?"',
+          },
+          'somber',
+          choices,
+        );
+      },
+    },
+
+    // §4.8 欠餉之變 — a hired army that has not been paid.
+    {
+      id: 'behavior-wage-arrears',
+      build: () => {
+        if (service !== 'paid' || cities.length < 3) return null;
+        const wageBill = Math.round((totalTroops / 1000) * 14);
+        if (totalGold > wageBill * 3) return null;
+        const captain = [...loyalOfficers].sort((a, b) => b.stats.war - a.stats.war)[0] ?? null;
+        const choices: EventChoice[] = [
+          {
+            id: 'pay-all',
+            label: { zh: '傾府庫發餉,一錢不欠', en: 'Empty the treasury — not one coin short' },
+            effects: [
+              { kind: 'force-gold', forceId: playerForceId, delta: -Math.min(totalGold, wageBill * 2) },
+              ...(captain ? [{ kind: 'officer-loyalty' as const, officerId: captain.id, delta: 10 }] : []),
+              ...cityLoyaltyAll(2),
+              { kind: 'flag', key: 'wages-paid-in-full' },
+            ],
+          },
+          {
+            id: 'promise-plunder',
+            label: { zh: '許以破城之財', en: 'Promise them the sack of the next city' },
+            effects: [
+              ...(captain ? [{ kind: 'officer-loyalty' as const, officerId: captain.id, delta: 4 }] : []),
+              ...cityLoyaltyAll(-4),
+              { kind: 'flag', key: 'wages-promised-plunder' },
+            ],
+          },
+          {
+            id: 'disband',
+            label: { zh: '汰其冗卒,還之於農', en: 'Discharge the surplus back to the fields' },
+            effects: [
+              ...cities.map((c) => ({ kind: 'city-troops-multiplier' as const, cityId: c.id, multiplier: 0.88 })),
+              ...cityLoyaltyAll(3),
+              { kind: 'flag', key: 'wages-disbanded' },
+            ],
+          },
+        ];
+        return event(
+          'behavior-wage-arrears', rulerId,
+          { zh: '欠餉', en: 'Arrears' },
+          {
+            zh: `募兵之制,月月要錢。今府庫將盡而餉期又至,營中已有怨聲:「重賞之下所聚,無賞則散 —— 我等非世兵,不食主公之田。」`,
+            en: 'A paid army wants paying, every season. The treasury is nearly out and the day has come round again. The camps are muttering: "We came for the pay. We are not hereditary soldiers; we till none of your fields."',
+          },
+          'somber',
+          choices,
+        );
+      },
+    },
+
+    // §1.16 商賈請榷 — the merchant houses ask for the roads to be opened.
+    {
+      id: 'behavior-merchant-petition',
+      build: () => {
+        if (grainPol !== 'guided' || cities.length < 4) return null;
+        const merchantCity = [...cities].sort((a, b) => (b.commerce ?? 0) - (a.commerce ?? 0))[0];
+        if (!merchantCity || (merchantCity.commerce ?? 0) < 60) return null;
+        const choices: EventChoice[] = [
+          {
+            id: 'open',
+            label: { zh: '開關通糴,抽其商稅', en: 'Open the roads and tax the trade' },
+            effects: [
+              { kind: 'force-gold', forceId: playerForceId, delta: 900 },
+              { kind: 'city-loyalty', cityId: merchantCity.id, delta: 5 },
+              { kind: 'flag', key: 'grain-roads-opened' },
+            ],
+          },
+          {
+            id: 'monopoly',
+            label: { zh: '官榷其利,不假商賈', en: 'The state takes the trade itself' },
+            effects: [
+              { kind: 'force-gold', forceId: playerForceId, delta: 1500 },
+              { kind: 'city-loyalty', cityId: merchantCity.id, delta: -6 },
+              { kind: 'flag', key: 'grain-monopolised' },
+            ],
+          },
+          {
+            id: 'refuse',
+            label: { zh: '寸粟不出境', en: 'Not a grain leaves the realm' },
+            effects: [
+              ...cityLoyaltyAll(1),
+              { kind: 'city-loyalty', cityId: merchantCity.id, delta: -3 },
+              { kind: 'flag', key: 'grain-roads-shut' },
+            ],
+          },
+        ];
+        return event(
+          'behavior-merchant-petition', rulerId,
+          { zh: '商賈請榷', en: 'The Merchants Petition' },
+          {
+            zh: `${merchantCity.name.zh}大賈聯名上書:「鄰境米貴而我倉滿,願得通關之符,轉輸有無 —— 所獲,願以什一輸官。」座中有駁之者:「今日輸粟與鄰,明年鄰以我粟養兵攻我。」`,
+            en: `The great merchants of ${merchantCity.name.en} petition together: "Grain is dear across the border and our granaries are full. Grant us passes, and we will hand the state a tenth of what we make." Someone objects: "Sell them grain today and next year they feed the army that comes for us."`,
+          },
+          'somber',
+          choices,
+        );
+      },
+    },
+
+    // §4.11 傷卒滿營 — the infirmaries are overflowing.
+    {
+      id: 'behavior-wounded-overflow',
+      build: () => {
+        if (totalWounded <= 0 || totalWounded < Math.max(2000, totalTroops * 0.06)) return null;
+        const physician = [...loyalOfficers].sort((a, b) => b.stats.intelligence - a.stats.intelligence)[0] ?? null;
+        const choices: EventChoice[] = [
+          {
+            id: 'buy-medicine',
+            label: { zh: '出金購藥,活一人是一人', en: 'Buy medicine — every man saved is a man' },
+            effects: [
+              { kind: 'force-gold', forceId: playerForceId, delta: -1200 },
+              ...cityLoyaltyAll(4),
+              ...(physician ? [{ kind: 'officer-loyalty' as const, officerId: physician.id, delta: 6 }] : []),
+              { kind: 'flag', key: 'wounded-tended' },
+            ],
+          },
+          {
+            id: 'discharge',
+            label: { zh: '悉數遣還鄉里', en: 'Send them all home' },
+            effects: [...cityLoyaltyAll(-2), { kind: 'flag', key: 'wounded-discharged' }],
+          },
+          {
+            id: 'ignore',
+            label: { zh: '軍中無暇顧此', en: 'The army has no time for this' },
+            effects: [
+              ...cityLoyaltyAll(-5),
+              ...(physician ? [{ kind: 'officer-loyalty' as const, officerId: physician.id, delta: -8 }] : []),
+              { kind: 'flag', key: 'wounded-abandoned' },
+            ],
+          },
+        ];
+        return event(
+          'behavior-wounded-overflow', rulerId,
+          { zh: '傷卒滿營', en: 'The Infirmaries Overflow' },
+          {
+            zh: `傷者相枕於營，醫少藥竭。掌醫者叩首曰:「藥不足十之一,活與不活,今日全在主公一言。」`,
+            en: 'The wounded lie head to foot in the camps; there are few physicians and no medicine. The surgeon kneels: "We have a tenth of what we need. Who lives and who does not is your word today, my lord."',
+          },
+          'somber',
+          choices,
+        );
+      },
+    },
+
+    // §1.18 甲兵不修 — an ill-armed realm, told plainly.
+    {
+      id: 'behavior-arms-shortage',
+      build: () => {
+        if (meanArms >= 12 || cities.length < 4 || totalTroops < 20000) return null;
+        const quartermaster = [...loyalOfficers].sort((a, b) => b.stats.politics - a.stats.politics)[0] ?? null;
+        const choices: EventChoice[] = [
+          {
+            id: 'workshops',
+            label: { zh: '大開工官,傾金鑄兵', en: 'Open the workshops — pour coin into arms' },
+            effects: [
+              { kind: 'force-gold', forceId: playerForceId, delta: -1600 },
+              ...cities.slice(0, 4).map((c) => ({ kind: 'city-defense' as const, cityId: c.id, delta: 6 })),
+              { kind: 'flag', key: 'arms-workshops-opened' },
+            ],
+          },
+          {
+            id: 'levy-smiths',
+            label: { zh: '括民間之鐵,徵匠戶入官', en: 'Requisition private iron; conscript the smiths' },
+            effects: [
+              ...cityLoyaltyAll(-4),
+              ...cities.slice(0, 6).map((c) => ({ kind: 'city-defense' as const, cityId: c.id, delta: 5 })),
+              { kind: 'flag', key: 'arms-smiths-levied' },
+            ],
+          },
+          {
+            id: 'wait',
+            label: { zh: '兵在人不在器', en: 'Battles are won by men, not gear' },
+            effects: [
+              ...(quartermaster ? [{ kind: 'officer-loyalty' as const, officerId: quartermaster.id, delta: -6 }] : []),
+              { kind: 'flag', key: 'arms-shortage-ignored' },
+            ],
+          },
+        ];
+        return event(
+          'behavior-arms-shortage', rulerId,
+          { zh: '甲兵不修', en: 'Ill Armed' },
+          {
+            zh: '校閱之日,三軍列陣 —— 而甲者不能十之三,矛戟半朽。主簿低聲曰:「無甲不成軍。此非兵少,是器不足。」',
+            en: 'At the review the army forms up — and fewer than a third are in armour; half the spears are rotten at the socket. The clerk says quietly: "Men without arms are a crowd. This is not a shortage of soldiers."',
           },
           'somber',
           choices,
