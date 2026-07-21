@@ -10,6 +10,7 @@ import type {
 } from '../types';
 import { buildingBonuses } from './buildings';
 import { armamentEffects } from './workshops';
+import { splitCasualties } from './veterans';
 import { conquestPopulationLoss } from './cityRuin';
 import { OATH_BONDS } from '../data/bonds';
 import { liveItemById, commandTokenMultiplier, evolvedResonanceMul } from '../data/items';
@@ -1675,6 +1676,17 @@ export function handleMarch(
     0,
     target.troops - result.defenderLosses,
   );
+  // 傷兵 (§4.11) — a garrison that keeps its walls carries its wounded off the
+  // parapet; one that is stormed leaves them where they fell. Folded in wherever
+  // the defender survives below, so the abstract siege feeds the infirmary the
+  // same way the tactical one does.
+  const defenderWounded = result.cityFalls
+    ? 0
+    : splitCasualties(result.defenderLosses, {
+        heldField: !result.attackerWins,
+        hasHospital: (ctx.buildings ?? []).some(
+          (b) => b.cityId === target.id && (b.id === 'fieldhospital' || b.id === 'infirmary') && (b.level ?? 0) >= 1),
+      }).wounded;
 
   // ── R3 — Comradeship after fighting together ──
   // After a victorious battle, the commander has a chance to forge a
@@ -1943,7 +1955,10 @@ export function handleMarch(
       ...cities[source.id],
       troops: cities[source.id].troops + attackerSurvivors,
     };
-    cities[target.id] = { ...target, troops: defenderSurvivors };
+    cities[target.id] = {
+      ...target, troops: defenderSurvivors,
+      wounded: (target.wounded ?? 0) + defenderWounded,
+    };
     officers[commander.id] = { ...commander, task: null };
     finalizeCompanions(source.id);
     entries.push({
@@ -1956,7 +1971,10 @@ export function handleMarch(
     // Repulsed. Enough survivors with somewhere to run become a ROUT — a
     // fleeing column on the map (huntable, shedding) instead of an instant
     // teleport home. Too few, or nowhere to run: the old instant return.
-    cities[target.id] = { ...target, troops: defenderSurvivors };
+    cities[target.id] = {
+      ...target, troops: defenderSurvivors,
+      wounded: (target.wounded ?? 0) + defenderWounded,
+    };
     const tpR = cityPos(target);
     // Only a still-fit commander can hold a rout together (dead/captured/
     // wounded in the battle above → the men scatter home the old way).

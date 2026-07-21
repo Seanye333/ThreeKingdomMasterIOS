@@ -449,7 +449,7 @@ export function resolveInternalAffairs(
         delta: {
           troops: fromPop, population: -popDrawn, loyalty: loyaltyHit ? -loyaltyHit : 0,
           // 甲胄隨人 — the new men are issued out of the armoury.
-          armaments: -Math.min(city.armaments ?? 0, Math.round(fromPop / 400 * 10) / 10),
+          armaments: -Math.min(city.armaments ?? 0, Math.round(fromPop / 900 * 10) / 10),
           // 新兵稀釋 (§4.12) — quality is a ratio, not a property of the city.
           drill: diluteDelta({
             current: city.drill ?? 0, existing: city.troops, added: fromPop,

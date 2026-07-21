@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import {
   armamentEffects, armamentTier, armamentCapacity, armamentsTick, armWorksResult,
-  ARM_CEILING, IRON_PER_ARM_POINT,
+  ARM_CEILING, IRON_PER_ARM_POINT, ARM_NEUTRAL,
 } from './workshops';
 
 describe('軍器之效', () => {
-  it('50 is the neutral point', () => {
-    const e = armamentEffects(50);
+  it('the ordinary city\'s fill is the neutral point', () => {
+    const e = armamentEffects(ARM_NEUTRAL);
     expect(e.defenseMul).toBe(1);
     expect(e.recruitMul).toBe(1);
     expect(e.drillDelta).toBe(0);
@@ -14,16 +14,18 @@ describe('軍器之效', () => {
 
   it('無甲不成軍 — an empty armoury guts recruiting and the walls', () => {
     const e = armamentEffects(0);
-    expect(e.recruitMul).toBeLessThan(0.8);
+    expect(e.recruitMul).toBeLessThan(0.86);
     expect(e.defenseMul).toBeLessThan(0.9);
     expect(e.drillDelta).toBeLessThan(0);
   });
 
-  it('a full armoury helps, but less than an empty one hurts', () => {
+  it('a full armoury helps, but an empty one hurts more — and takes longer', () => {
     const full = armamentEffects(100);
     const empty = armamentEffects(0);
     expect(full.recruitMul).toBeGreaterThan(1);
     expect(full.recruitMul - 1).toBeLessThan(1 - empty.recruitMul);
+    // The bonus saturates at ARM_NEUTRAL + ARM_SPAN, the penalty at 0.
+    expect(armamentEffects(ARM_NEUTRAL + 40)).toEqual(armamentEffects(100));
   });
 
   it('clamps and defaults', () => {
@@ -33,8 +35,8 @@ describe('軍器之效', () => {
 
   it('tiers read from 無甲不成軍 to 甲堅兵利', () => {
     expect(armamentTier(0).zh).toBe('無甲不成軍');
-    expect(armamentTier(40).zh).toBe('器械不齊');
-    expect(armamentTier(60).zh).toBe('軍器足用');
+    expect(armamentTier(20).zh).toBe('器械不齊');
+    expect(armamentTier(40).zh).toBe('軍器足用');
     expect(armamentTier(90).zh).toBe('甲堅兵利');
   });
 });
@@ -48,9 +50,23 @@ describe('工官之力', () => {
       .toBeLessThanOrEqual(ARM_CEILING);
   });
 
-  it('no iron, no arms — the workshops idle and gear wears out', () => {
-    const t = armamentsTick({ current: 50, iron: 0, troops: 9000, arsenalLevel: 3 });
+  it('郡國鐵官 — local smiths work with no stockpile at all', () => {
+    // The 20-year soak caught the opposite: with iron as a hard gate, every city
+    // that does not smelt sat at 0 forever while paying the 無甲 penalty.
+    const t = armamentsTick({ current: 10, iron: 0, troops: 9000, arsenalLevel: 1, population: 200000 });
     expect(t.ironUsed).toBe(0);
+    expect(t.armaments).toBeGreaterThan(10);
+  });
+
+  it('…but a stockpile of iron builds far faster than smiths alone', () => {
+    const bare = armamentsTick({ current: 10, iron: 0, troops: 9000, arsenalLevel: 3, population: 200000 });
+    const stocked = armamentsTick({ current: 10, iron: 9000, troops: 9000, arsenalLevel: 3, population: 200000 });
+    expect(stocked.armaments).toBeGreaterThan(bare.armaments);
+    expect(stocked.ironUsed).toBeGreaterThan(0);
+  });
+
+  it('a huge garrison still outpaces a bare workshop', () => {
+    const t = armamentsTick({ current: 50, iron: 0, troops: 200000, population: 50000 });
     expect(t.armaments).toBeLessThan(50);
   });
 

@@ -62,7 +62,7 @@ const cmdTally: Record<string, number> = {
 const warns = { corruption: 0 };
 
 console.log(`\n=== Soak: ${scenario.name?.zh ?? scenario.id} · ${YEARS}y (${SEASONS} seasons), observe mode ===\n`);
-console.log('year  cities  corr(mean/p90/max)   docket(mean/max)  hidden(mean/max)  hoard(mean/max)   Σtroops    Σgold');
+console.log('year  cities  corr(mean/p90/max)   docket(mean/max)  hidden(mean/max)  hoard(mean/max)   Σtroops    Σgold   arms(mean/max)  wound  infl');
 
 for (let s = 1; s <= SEASONS; s++) {
   store.getState().endSeason();
@@ -85,6 +85,10 @@ for (let s = 1; s <= SEASONS; s++) {
     const hoard = cs.map((c) => c.hoardedGrain ?? 0);
     const Σt = cs.reduce((a, c) => a + c.troops, 0);
     const Σg = cs.reduce((a, c) => a + c.gold, 0);
+    // 2026-07-21 batch: 軍器 (§1.18) · 傷兵 (§4.11) · 通脹 (§1.17).
+    const arms = cs.map((c) => c.armaments ?? 0);
+    const Σw = cs.reduce((a, c) => a + (c.wounded ?? 0), 0);
+    const infl = Object.values(store.getState().inflationByForce ?? {});
     const yr = s / 4;
     if (yr % 5 === 0 || yr === 1) {
       console.log(
@@ -93,7 +97,9 @@ for (let s = 1; s <= SEASONS; s++) {
         `         ${String(r(mean(docket))).padStart(4)}/${String(r(Math.max(0, ...docket))).padStart(4)}` +
         `        ${String(r(mean(hidden), 1)).padStart(5)}/${String(r(Math.max(0, ...hidden), 1)).padStart(5)}` +
         `      ${String(r(mean(hoard), 1)).padStart(5)}/${String(r(Math.max(0, ...hoard), 1)).padStart(5)}` +
-        `   ${String(Math.round(Σt)).padStart(8)}  ${String(Math.round(Σg)).padStart(8)}`,
+        `   ${String(Math.round(Σt)).padStart(8)}  ${String(Math.round(Σg)).padStart(8)}` +
+        `   ${String(r(mean(arms), 1)).padStart(5)}/${String(r(Math.max(0, ...arms), 1)).padStart(5)}` +
+        `  ${String(Math.round(Σw)).padStart(5)}  ${String(r(mean(infl.length ? infl : [0]), 1)).padStart(4)}`,
       );
     }
   }

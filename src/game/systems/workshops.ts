@@ -23,10 +23,29 @@
  */
 
 export const ARM_CEILING = 100;
-/** Iron consumed per point of 軍器 raised. */
+/** Iron consumed per point of 軍器 raised beyond what local smiths manage. */
 export const IRON_PER_ARM_POINT = 14;
-/** Below this the season report says something about it. */
-export const ARM_LOW = 30;
+/**
+ * 郡國鐵官 — what a commandery's own smiths turn out from scrap, charcoal and
+ * whatever the countryside yields, with no stockpiled 鐵 at all. Without this
+ * the whole system is inert: only four cities on the map smelt iron, so every
+ * other armoury would sit at zero for the entire campaign while quietly costing
+ * its garrison 22% of its recruits. (Caught by the 20-year soak.)
+ */
+export const LOCAL_SMITH_BASE = 0.9;
+/** Below this the garrison is visibly ill-equipped (drill slips, report warns). */
+export const ARM_LOW = 12;
+/**
+ * The fill an ordinary, un-invested city settles at — a commandery with no
+ * armoury, its own smiths, and a garrison it keeps topping up. Effects are
+ * measured FROM here, so the common case is neutral and both directions are
+ * earned. (A 25-year soak put the map-wide mean at ~5–10 with the neutral point
+ * set at 50, which silently taxed every realm on the board instead of being a
+ * decision anyone made.)
+ */
+export const ARM_NEUTRAL = 20;
+/** Fill above/below neutral that saturates the effect. */
+export const ARM_SPAN = 40;
 
 export interface ArmamentEffects {
   /** Multiplier on the city's effective defence in a siege. */
@@ -41,28 +60,32 @@ export interface ArmamentEffects {
 
 export function armamentEffects(armaments: number | undefined): ArmamentEffects {
   const a = Math.max(0, Math.min(ARM_CEILING, armaments ?? 0));
-  // 50 is the neutral point: everything above is a bonus, below a penalty.
-  const t = (a - 50) / 50; // −1 … +1
+  // Measured from the fill an ordinary city actually sits at, not from 50.
+  // Asymmetric on purpose: an armoury emptied to nothing is a real crisis
+  // (full penalty at 0), while the bonus takes a long, deliberate climb.
+  const t = a >= ARM_NEUTRAL
+    ? Math.min(1, (a - ARM_NEUTRAL) / ARM_SPAN)
+    : Math.max(-1, (a - ARM_NEUTRAL) / ARM_NEUTRAL);
   const defenseMul = 1 + t * (t >= 0 ? 0.08 : 0.12);
-  const recruitMul = 1 + t * (t >= 0 ? 0.12 : 0.22);
-  const drillDelta = a >= 75 ? 1 : a < ARM_LOW ? -1 : 0;
+  const recruitMul = 1 + t * (t >= 0 ? 0.12 : 0.16);
+  const drillDelta = a >= 50 ? 1 : a < ARM_LOW ? -1 : 0;
   return {
     defenseMul: Math.round(defenseMul * 1000) / 1000,
     recruitMul: Math.round(recruitMul * 1000) / 1000,
     drillDelta,
-    badgeZh: a >= 75 ? '甲堅兵利 — 守城 +8%,徵兵 +12%,練度漸長'
-      : a < ARM_LOW ? '無甲不成軍 — 守城 −12%,徵兵 −22%,練度漸弛'
+    badgeZh: a >= 50 ? '甲堅兵利 — 守城 +8%,徵兵 +12%,練度漸長'
+      : a < ARM_LOW ? '無甲不成軍 — 守城 −12%,徵兵 −16%,練度漸弛'
         : '軍器堪用',
-    badgeEn: a >= 75 ? 'Well armed — defence +8%, recruits +12%, drill climbs'
-      : a < ARM_LOW ? 'Ill armed — defence −12%, recruits −22%, drill slips'
+    badgeEn: a >= 50 ? 'Well armed — defence +8%, recruits +12%, drill climbs'
+      : a < ARM_LOW ? 'Ill armed — defence −12%, recruits −16%, drill slips'
         : 'Adequately armed',
   };
 }
 
 export function armamentTier(armaments: number | undefined): { zh: string; en: string } {
   const a = armaments ?? 0;
-  if (a >= 80) return { zh: '甲堅兵利', en: 'Well Armed' };
-  if (a >= 50) return { zh: '軍器足用', en: 'Adequate' };
+  if (a >= 55) return { zh: '甲堅兵利', en: 'Well Armed' };
+  if (a >= 28) return { zh: '軍器足用', en: 'Adequate' };
   if (a >= ARM_LOW) return { zh: '器械不齊', en: 'Short of Arms' };
   return { zh: '無甲不成軍', en: 'Ill Armed' };
 }
@@ -113,17 +136,22 @@ export function armamentsTick(args: {
   // 匠戶之力 — how many points of gear the workshops can turn out at all.
   const hands = 1.4 + (args.arsenalLevel ?? 0) * 1.6
     + (args.corvee === 'heavy' ? 1.2 : args.corvee === 'light' ? 0.5 : 0);
-  // 甲胄之耗 — a garrison to keep armed, and iron that rusts.
-  const wear = 0.6 + args.troops / 9000;
+  // 甲胄之耗 — upkeep and rust, not consumption: a standing armoury does not
+  // evaporate under a big garrison, it just needs more looking after.
+  const wear = 0.35 + args.troops / 25000;
   const room = Math.max(0, capacity - current);
   const wanted = Math.min(hands, room + wear);
+  // 郡國鐵官 — local smiths work without a stockpile; only the output ABOVE
+  // that draws on the yard's 鐵.
+  const localSmiths = LOCAL_SMITH_BASE + Math.min(0.8, (args.population ?? 0) / 300000);
+  const free = Math.min(wanted, localSmiths);
   const ironHave = Math.max(0, args.iron ?? 0);
-  const affordable = ironHave / IRON_PER_ARM_POINT;
-  const made = Math.max(0, Math.min(wanted, affordable));
+  const fromIron = Math.min(Math.max(0, wanted - free), ironHave / IRON_PER_ARM_POINT);
+  const made = Math.max(0, free + fromIron);
   const next = Math.max(0, Math.min(ARM_CEILING, current + made - wear));
   return {
     armaments: Math.round(next * 10) / 10,
-    ironUsed: Math.round(made * IRON_PER_ARM_POINT),
+    ironUsed: Math.round(fromIron * IRON_PER_ARM_POINT),
   };
 }
 
