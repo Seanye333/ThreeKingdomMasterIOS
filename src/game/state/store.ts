@@ -1239,6 +1239,8 @@ export interface GameStore extends GameState {
    *  rise faster, paid for in loyalty, harvest, and households fleeing the
    *  registers into the shelter of the great houses. */
   setCorvee: (level: import('../systems/household').CorveeLevel) => void;
+  /** 糴政 (§1.16) — set the realm's grain-trade policy (通糴/平糴/閉糴). */
+  setGrainPolicy: (policy: import('../systems/grainTrade').GrainPolicy) => void;
   /** 大赦天下 (§1.11) — empty every court in the realm: loyalty everywhere and
    *  the docket wiped, paid for in gold, in the throne's dignity, and in the
    *  men you just let out. Refused if one was proclaimed too recently. */
@@ -4446,6 +4448,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           officers: planned.officers,
           lawCode: state.lawCode,
           corvee: state.corvee,
+          grainPolicy: state.grainPolicy,
           shrines: state.shrines,
           buildings: state.buildings,
           forces: forcesAfterCourt,
@@ -15508,6 +15511,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         return { corvee: { ...s.corvee, [fid]: level } };
       }),
 
+      // 糴政 (§1.16) — 通糴 / 平糴 / 閉糴. Takes effect at the next season boundary.
+      setGrainPolicy: (policy) => set((s) => {
+        const fid = s.playerForceId;
+        if (!fid) return {};
+        return { grainPolicy: { ...s.grainPolicy, [fid]: policy } };
+      }),
+
       proclaimAmnesty: () => {
         const s = get();
         const fid = s.playerForceId;
@@ -18449,6 +18459,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         moonLaurel: state.moonLaurel,
         lawCode: state.lawCode,
         corvee: state.corvee,
+        grainPolicy: state.grainPolicy,
         grandProjects: state.grandProjects,
         poems: state.poems,
         shrines: state.shrines,

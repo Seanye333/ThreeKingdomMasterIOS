@@ -500,6 +500,9 @@ export interface GameState {
   lawCode: Record<EntityId, import('../systems/law').LawSeverity>;
   /** 徭役 (§1.12) — per-force corvée level (息役/薄役/重役). Absent ⇒ '息役'. */
   corvee: Record<EntityId, import('../systems/household').CorveeLevel>;
+  /** 糴政 (§1.16) — per-force grain-trade policy (通糴/平糴/閉糴). Absent ⇒ '平糴',
+   *  so old saves keep grain moving inside the realm and no further. */
+  grainPolicy: Record<EntityId, import('../systems/grainTrade').GrainPolicy>;
   /** 遺澤 (§9) — this campaign's legacy has already been banked (so an ending
    *  that keeps re-firing each season cannot farm points). */
   legacyBanked?: boolean;
@@ -958,6 +961,7 @@ export const EMPTY_STATE: GameState = {
   taxPolicy: {},
   lawCode: {},
   corvee: {},
+  grainPolicy: {},
   grandProjects: [],
   poems: [],
   shrines: [],
@@ -1453,6 +1457,7 @@ export function loadScenario(
       : {},
     lawCode: {},
     corvee: {},
+    grainPolicy: {},
     grandProjects: [],
     poems: [],
     shrines: [],

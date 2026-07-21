@@ -10,7 +10,7 @@ import type {
   SeasonReport,
 } from '../types';
 import { OATH_BONDS, type OathBond } from '../data/bonds';
-import { isHostilePermitted } from '../types';
+import { isHostilePermitted, getRelation } from '../types';
 import { generateTerritories, terrainRoute, positionAlongRoute, marchDestCoords, type Territory } from '../data/territories';
 import { hexAt as paintHexAt } from '../data/geography';
 import { stampPaintAlongRoute, stampPaintDisc, seasonStampOf, isSupplyConnected, type HexPaint } from './hexPaint';
@@ -48,6 +48,10 @@ import { cultureGain, cultureGraftCurb, cultureLoyaltyLift } from './culture';
 import { lawEffects, caseloadTick, caseloadPenalty, wrongfulConvictionChance, aiLawCode, CASELOAD_HEAVY } from './law';
 import { corveeEffects, hiddenDrift, registryYieldMul, aiCorvee } from './household';
 import { hoardEffects, hoardTick, hoardingPressure, HOARD_SEVERE } from './hoarding';
+import {
+  grainPrice, planGrainFlows, grainPolicyEffects, aiGrainPolicy, grainFlowNote,
+  type GrainNode,
+} from './grainTrade';
 import { clanOf } from '../data/clans';
 import { shrineEffects } from './culturalWorks';
 import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
@@ -145,6 +149,8 @@ export interface ResolutionInput {
   lawCode?: Record<EntityId, import('./law').LawSeverity>;
   /** 徭役 — per-force corvée level (§1.12); missing entries resolve to '息役'. */
   corvee?: Record<EntityId, import('./household').CorveeLevel>;
+  /** 糴政 — per-force grain-trade policy (§1.16); missing resolve by temperament. */
+  grainPolicy?: Record<EntityId, import('./grainTrade').GrainPolicy>;
   /** 祠廟 (§1.13) — standing shrines; the city that keeps one keeps faith. */
   shrines?: ReadonlyArray<import('./culturalWorks').Shrine>;
   /** 通商條約 — force ids the player has trade treaties with (mutual income). */
@@ -3823,6 +3829,81 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         const cargoZh = [shipFood > 0 ? `${Math.floor(shipFood * keep).toLocaleString()} 糧` : '', shipHorses > 0 ? `${Math.floor(shipHorses * keep).toLocaleString()} 馬` : '', shipIron > 0 ? `${Math.floor(shipIron * keep).toLocaleString()} 鐵` : ''].filter(Boolean).join('、');
         entries.push({ cityId: r.toCityId, kind: 'income', text: `Standing route ships ${cargoZh} toward ${dst.name.en}.`, textZh: `常運糧道發 ${cargoZh} 往 ${dst.name.zh}。` });
       }
+    }
+  }
+
+  // 8a-0. 米市流通 (§1.16) — merchants, not orders. Where two neighbouring
+  // cities' grain prices diverge past the threshold and both realms allow the
+  // road, caravans move grain from the glut to the dearth on their own. The
+  // merchant's cut comes out of the spread; the realm that opened the road
+  // takes a duty at its capital. 閉糴 stops all of it dead.
+  if (seasonBoundary) {
+    const grainPlayerFid = input.playerForceId;
+    const grainNodes: GrainNode[] = [];
+    for (const c of Object.values(cities)) {
+      if (!c.ownerForceId || c.ruined) continue;
+      const stab = buildingBonuses(c.id, input.buildings ?? [], {
+        statecraft: forces[c.ownerForceId]?.statecraft ?? null,
+      }).priceStability;
+      grainNodes.push({
+        cityId: c.id,
+        ownerForceId: c.ownerForceId,
+        price: grainPrice(c, input.date.season, {
+          stability: stab,
+          hoardMul: hoardEffects(c.hoardedGrain ?? 0).marketRateMul,
+        }),
+        food: c.food, troops: c.troops, commerce: c.commerce,
+        loyalty: c.loyalty, gold: c.gold,
+        depot: (input.buildings ?? []).some(
+          (bd) => bd.cityId === c.id && bd.id === 'supplydepot' && (bd.level ?? 0) >= 1),
+      });
+    }
+    const grainPolicyOf = (fid: EntityId | null) => (fid
+      ? (input.grainPolicy?.[fid] ?? aiGrainPolicy(forces[fid]?.personality))
+      : 'guided');
+    const { flows: grainFlows, duties: grainDuties } = planGrainFlows({
+      nodes: grainNodes,
+      neighborsOf: (id) => cities[id]?.adjacentCityIds ?? [],
+      policyOf: grainPolicyOf,
+      // 兵戈之間無商旅 — an actively hostile neighbour's roads are shut.
+      canTrade: (a, b) => !!a && !!b && (a === b || getRelation(input.diplomacy, a, b).score >= -20),
+    });
+    for (const f of grainFlows) {
+      const src = cities[f.fromCityId];
+      const dst = cities[f.toCityId];
+      if (!src || !dst) continue;
+      cities[f.fromCityId] = { ...src, food: Math.max(0, src.food - f.food), gold: src.gold + f.sellerGold };
+      cities[f.toCityId] = { ...dst, food: dst.food + f.food, gold: Math.max(0, dst.gold - f.buyerGold) };
+      if (grainPlayerFid && (f.fromForceId === grainPlayerFid || f.toForceId === grainPlayerFid)) {
+        const note = grainFlowNote(f, src.name, dst.name);
+        entries.push({
+          cityId: f.toForceId === grainPlayerFid ? f.toCityId : f.fromCityId,
+          kind: 'income', text: note.en, textZh: note.zh,
+        });
+      }
+    }
+    // 商稅 — the customs share lands in the realm's own capital.
+    for (const [fid, duty] of Object.entries(grainDuties)) {
+      if (duty <= 0) continue;
+      const capId = forces[fid]?.capitalCityId;
+      const cap = capId ? cities[capId] : undefined;
+      if (!cap || cap.ownerForceId !== fid) continue;
+      cities[cap.id] = { ...cap, gold: cap.gold + duty };
+      if (fid === grainPlayerFid) {
+        entries.push({
+          cityId: cap.id, kind: 'income',
+          text: `Grain duties bring ${duty} gold into the treasury.`,
+          textZh: `米市商稅入庫 ${duty} 金。`,
+        });
+      }
+    }
+    // 糴政之效 — an open road brings merchants (commerce), a shut one drives
+    // them away, on every city of the realm.
+    for (const c of Object.values(cities)) {
+      if (!c.ownerForceId) continue;
+      const d = grainPolicyEffects(grainPolicyOf(c.ownerForceId)).commerceDelta;
+      if (d === 0) continue;
+      cities[c.id] = { ...cities[c.id], commerce: Math.max(0, Math.min(100, cities[c.id].commerce + d)) };
     }
   }
 

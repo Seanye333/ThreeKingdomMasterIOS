@@ -8,7 +8,12 @@ import { LAW_NAMES, LAW_SEVERITIES, lawEffects, caseloadTier, type LawSeverity }
 import {
   CORVEE_LEVELS, CORVEE_NAMES, corveeEffects, hiddenTier, registryYieldMul, type CorveeLevel,
 } from '../../game/systems/household';
-import { hoardTier } from '../../game/systems/hoarding';
+import { hoardTier, hoardEffects } from '../../game/systems/hoarding';
+import {
+  GRAIN_POLICIES, GRAIN_POLICY_NAMES, grainPolicyEffects, grainPrice, priceTier,
+  PRICE_GAP_TRIGGER, type GrainPolicy,
+} from '../../game/systems/grainTrade';
+import { buildingBonuses } from '../../game/systems/buildings';
 import {
   SELECTION_NAMES, SELECTION_SYSTEMS, selectionEffects, rectifierOf, rectifierIsUpright,
   type SelectionSystem,
@@ -40,6 +45,10 @@ export function StatecraftModal({ onClose, onSelectCity }: { onClose: () => void
   const setLawCode = useGameStore((s) => s.setLawCode);
   const corvee: CorveeLevel = useGameStore((s) => (playerForceId ? s.corvee?.[playerForceId] : undefined) ?? 'none');
   const setCorvee = useGameStore((s) => s.setCorvee);
+  const grainPolicy: GrainPolicy = useGameStore((s) => (playerForceId ? s.grainPolicy?.[playerForceId] : undefined) ?? 'guided');
+  const setGrainPolicy = useGameStore((s) => s.setGrainPolicy);
+  const season = useGameStore((s) => s.date.season);
+  const forces = useGameStore((s) => s.forces);
   const selection: SelectionSystem = useGameStore((s) => (playerForceId ? s.selectionSystem?.[playerForceId] : undefined) ?? 'chaju');
   const setSelectionSystem = useGameStore((s) => s.setSelectionSystem);
   const proclaimAmnesty = useGameStore((s) => s.proclaimAmnesty);
@@ -70,6 +79,28 @@ export function StatecraftModal({ onClose, onSelectCity }: { onClose: () => void
     corvee,
     hiddenPercent: active ? cities[active.cityId]?.hiddenHouseholds ?? 0 : 0,
   });
+
+  // 米價 — the dearest and cheapest city in the realm, and whether the gap is
+  // wide enough that merchants will bridge it for you next season.
+  const grainExtremes = useMemo(() => {
+    if (own.length < 2) return null;
+    const priced = own.map((c) => ({
+      city: c,
+      price: grainPrice(c, season, {
+        stability: buildingBonuses(c.id, buildings, {
+          statecraft: playerForceId ? forces[playerForceId]?.statecraft ?? null : null,
+        }).priceStability,
+        hoardMul: hoardEffects(c.hoardedGrain ?? 0).marketRateMul,
+      }),
+    })).sort((a, b) => b.price - a.price);
+    const dear = priced[0];
+    const cheap = priced[priced.length - 1];
+    return {
+      dear, cheap,
+      dearTier: priceTier(dear.price), cheapTier: priceTier(cheap.price),
+      gap: dear.price / Math.max(0.5, cheap.price),
+    };
+  }, [own, season, buildings, forces, playerForceId]);
 
   const mean = (pick: (c: (typeof own)[number]) => number) =>
     own.length ? own.reduce((a, c) => a + pick(c), 0) / own.length : 0;
@@ -139,6 +170,34 @@ export function StatecraftModal({ onClose, onSelectCity }: { onClose: () => void
           ))}
         </div>
         <div style={note}>{t(corveeEffects(corvee).badgeZh, corveeEffects(corvee).badgeEn)}</div>
+      </div>
+
+      {/* 糴政 §1.16 */}
+      <div style={sect}>
+        <div style={head}>🐫 {t('糴政・米市', 'Grain trade')}</div>
+        <div style={row}>
+          {GRAIN_POLICIES.map((p) => (
+            <button key={p} style={pill(grainPolicy === p)} onClick={() => setGrainPolicy(p)}
+              title={GRAIN_POLICY_NAMES[p].motto}>
+              {t(GRAIN_POLICY_NAMES[p].zh, GRAIN_POLICY_NAMES[p].en)}
+            </button>
+          ))}
+        </div>
+        <div style={note}>
+          {t(grainPolicyEffects(grainPolicy).badgeZh, grainPolicyEffects(grainPolicy).badgeEn)}
+        </div>
+        {grainExtremes && (
+          <div style={note}>
+            {t(
+              `米價:${pickName(grainExtremes.dear.city.name, lang)} ${grainExtremes.dear.price.toFixed(1)} 金/百石(${grainExtremes.dearTier.zh})`
+                + ` · ${pickName(grainExtremes.cheap.city.name, lang)} ${grainExtremes.cheap.price.toFixed(1)}(${grainExtremes.cheapTier.zh})`
+                + (grainExtremes.gap >= PRICE_GAP_TRIGGER ? ' · 商旅將自行轉輸' : ' · 境內價平,商旅無利可圖'),
+              `Grain: ${pickName(grainExtremes.dear.city.name, lang)} ${grainExtremes.dear.price.toFixed(1)}g/100`
+                + ` · ${pickName(grainExtremes.cheap.city.name, lang)} ${grainExtremes.cheap.price.toFixed(1)}g/100`
+                + (grainExtremes.gap >= PRICE_GAP_TRIGGER ? ' · caravans will move on their own' : ' · prices level, no caravans'),
+            )}
+          </div>
+        )}
       </div>
 
       {/* 選官 §3.6 */}
