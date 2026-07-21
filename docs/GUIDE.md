@@ -6,7 +6,7 @@
 
 ---
 
-## 目錄(所有遊戲內容地圖,87 個系統)
+## 目錄(所有遊戲內容地圖,88 個系統)
 
 | # | 章節 | 涵蓋系統 | 狀態 |
 |---|---|---|---|
@@ -15,7 +15,7 @@
 | 2 | [武將・成長・家族](#第二章-武將成長家族) | growth, officerGrade, gradeCombat, officerFate, traitEffects, personality, biography, posthumous, aging, officerGen, family, clans, retinues, wishes, rapport, friction, relationshipEffects, career, codex, peerage, honorifics, battlePower(武將卡/開卡) | ✅ |
 | 3 | [人才・招攬・舌戰](#第三章-人才招攬舌戰) | commands(search), officerFate, recommendation, commonerTalent, appraisal(月旦評), **publicOpinion(鄉論清議)**, **patronage(門生故吏/舉主)**, **officialSelection(察舉/九品中正/開科取士/中正官)**, scenicSites(三顧), captiveFate(處決後果/AI處置), aiRansom, debate, wordWar, persuasion(說客) | ✅ |
 | 4 | [軍事指揮・委任](#第四章-軍事指揮委任) | **conscription(兵制:更卒/世兵/募兵/軍餉)**, **campaignLedger(糧秣簿)**, **militaryLaw(軍功簿/行賞/軍法四等)**, **veterans(傷兵/療傷/廢疾還籍)**, muster, legion(都督之斷·長圍), governor, governorEval, advisor, 在途指令(駐守/設伏/圍城/焚橋/燒鎖/補給/分兵/召回), rout(潰軍/掩殺收降/殿軍斷後) | ✅ |
-| 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, tacticalAi, combat, formations, stratagems, weather(區域天候), battlefieldTerrain, worldScars(戰場烙印), fieldworks(築壘), columnReinforcements(會戰), wallTier城郭分層, 入城三選, battleSpoils(戰場繳獲), **campDisease(軍中疫疾/頓兵/不習水土)**, **siegeWorks(攻城器械營造/焚其攻具)**, **navalWarfare(水軍熟練/暈船/艦隊編成/淺灘擱淺/搶灘登陸)**, personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
+| 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, tacticalAi, combat, formations, stratagems, weather(區域天候), battlefieldTerrain, worldScars(戰場烙印), fieldworks(築壘), columnReinforcements(會戰), wallTier城郭分層, 入城三選, battleSpoils(戰場繳獲), **campDisease(軍中疫疾/頓兵/不習水土)**, **siegeWorks(攻城器械營造/焚其攻具)**, **nightRaid(夜襲劫營)**, **navalWarfare(水軍熟練/暈船/艦隊編成/淺灘擱淺/搶灘登陸)**, personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
 | 6 | [單挑](#第六章-單挑) | duel(招式/必殺技/獨門被動/破綻/傷殘/挑落下馬/**環境借勢/部位打擊/膽氣怯戰/棄馬步戰**/兵裝/坐騎/地形/性格/AI), **martialArts(武學修為/流派/流派相剋/秘籍/頓悟)**, **teamDuel(團戰圍攻/合擊/3D 同場)**, **arenaLadder(打擂擂台)**, **涟漪大地圖(威名威懾/代戰認輸金/慘勝負傷/名場面入史/世間鬥將)**, **debateArts(文辯修為/學派/辯經/傳道)**, **scholarRank(月旦評/文名威懾)**, **debateDiplomacy(折衝樽俎/責讓索貢/舌戰說降)**, **teamDebate(朝堂合辯)**, **引時事入辯(annals 彈藥)**, **realmEthos(尚武崇文之風)**, **lineage(師承譜系/同門/衣缽傳人)**, gauntlet, duelSeries, duelScenarios(劇情+戰役), duelHall(名局廊), warRanking(武評榜), rivalries(宿敵/恩怨簿), duelChallenge(約戰), tactical(致師) | ✅ |
 | 7 | [外交・謀略・天子](#第七章-外交謀略天子) | diplomacy, diplomacyPacts(稱臣/索貢/會盟/援盟/調停/質子/借道), coalition, schemes, aiSchemes, ambition, espionage, expedition, foreignRealm, intrigue, courtFactions, factionEvents, emperor, imperialEffects, mandate, appointmentEffects, clans, statecraft | ✅ |
 | 8 | [事件・天命・異族・宗教](#第八章-事件天命異族宗教) | events(天災/地動/賑災), historicalEvents(抉擇鏈), behaviorEvents(勸進/眾叛), customEvents, factionEvents, religion(黃巾/招安/宣撫), **refugees(流民之政:招撫/安置/閉關)**, tribes, tribesDiplomacy(和親/互市/質子/以夷制夷/入主建國/七擒), mandate(祥瑞/造讖/禳星), mandateRituals(郊祀/祈雨), annals(災異志) | ✅ |
@@ -210,6 +210,7 @@
 | 門生故吏(§3.8) | 舉主忠≤45 → 門生 −1/季、≥80 → +0.5/季(同朝才算);舉主割據時同城門生 忠<60 即隨行(一般同情者 <45),忠義者不隨 |
 | 軍中疫疾(§5.15) | 機率=min(.26,(頓兵季−2)×.045)×季節(夏1.5/冬1.1/春.9/秋.8)×兵多(≤×1.6)×卑濕1.4×不習水土1.35×缺糧1.3×(1−良醫≤.7),頂 .40;損 14%(有藥 6%)、疲勞+8;拔營歸零 |
 | 攻城器械(§5.16) | 造/季=min(2,兵/12000)×(0.4+max(0,智−55)/90)×木材地1.5,上限12;守方防禦 ×(1−0.38(1−e^(−n/4.5)));焚:機率 .18+max(0,守智−60)/220(雨雪×.5,頂.6),燒 30%+;park≥6 每季自損1 |
+| 夜襲劫營(§5.17) | 出擊:最強者武≥75 或 智≥78 且 ≥300 人(駐軍12%,頂3000),每季40%嘗試;摸營=.2+min(.3,(頓兵−1)×.07)+min(.18,敵疲/400)+(我智−60)/260+(我武−70)/400+雨雪.1−(敵智−65)/250;得手:敵損5%+、器械−60%、糧−30%、疲+12、氣−14;失手折六成 |
 | 療傷(§4.11) | 歸伍=min(.82, .34+醫院級×.09+min(.12,智力/700)+藥足×.14);死=max(.03,.20−照護×.8);餘六成廢疾還籍;藥材 0.4/傷兵 |
 
 ### 內政命令成本(金)
@@ -2323,6 +2324,18 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
 - **拔營即棄**:器械是這一營的東西,跟著 `MarchCommand.siegeEngines` 走。
 - **這才讓長圍成為一個「選擇」而非「等待」**:你每多站一季,就多造幾具器械、多損一批病卒(§5.15)、多吃一季糧(§4.9)。問題是哪條曲線先贏。
 - 入口:軍隊面板 ⚒N 徽章(懸停顯示「器械如林/攻具略備/始造攻具」);季報報「守軍縱火焚其攻具 —— 器械毀 N 具」。存檔欄 `MarchCommand.siegeEngines` / `Army.siegeEngines`,舊檔缺欄 = 0。
+
+
+### 5.17 夜襲劫營(nightRaid.ts,2026-07)
+
+**突圍**本來就在,但它要求守軍**多出圍城軍三成** —— 也就是幾乎不會發生。被圍的將領實際上一再做的是另一件事:**趁夜遣數百人出城燒營**。甘寧百騎劫魏營、張遼八百破十萬、曹操夜襲烏巢 —— 沒有一個人是想打贏一場會戰,他們想燒掉的是**這場圍城賴以成立的東西**。
+
+- **誰肯夜出**:城中最強的一位**武 ≥75 或 智 ≥78**,且湊得出 **≥300 人**(取駐軍 12%,上限 3000)。每季 40% 會嘗試。
+- **乘其不備**(能否摸進營):`0.2 + min(0.3, (頓兵季−1)×0.07) + min(0.18, 敵疲勞/400) + max(0,我智−60)/260 + max(0,我武−70)/400 + 雨雪 0.1 − max(0, 敵智−65)/250`,夾 0.02~0.85。
+  —— **頓兵之日是主導項**:§5.15 讓久頓生疫,這裡讓久頓生懈。同一個數字,兩種死法。
+- **得手**:敵損 `5% + max(0,我武−60)/500`、**攻城器械燒掉六成**(§5.16)、**糧秣焚三成**、疲勞 +12、士氣 −14;我方僅折兩成。
+- **失手**:「有備而待」,劫營之兵**折六成**(其中傷者可回傷兵營,§4.11)。
+- **它贏的從來不是圍城本身,是圍城的裝備** —— 天亮之後敵軍還在,只是沒有東西可以攻城了。
 
 ---
 

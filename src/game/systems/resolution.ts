@@ -65,6 +65,7 @@ import { localEsteem, esteemEffects } from './publicOpinion';
 import { patronDrift } from './patronage';
 import { rollCampPlague } from './campDisease';
 import { engineBuildRate, burnEngines, enginePartyTier } from './siegeWorks';
+import { resolveNightRaid, willRaid } from './nightRaid';
 
 /** 卑濕之地 — siege lines on this ground breed 軍中疫疾 (§5.15). */
 const WET_SIEGE_GROUND = new Set(['river', 'lake', 'sea', 'marsh']);
@@ -2033,7 +2034,59 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
           });
           continue;
         }
-        {
+              // ② 夜襲劫營 (§5.17) — the garrison cannot win a battle, so it does not
+      // try to. A bold or clever officer takes a few hundred men over the ditch
+      // in the dark to burn what the siege is made of. 甘寧百騎劫魏營.
+      {
+        const wallOfficers = Object.values(officers).filter(
+          (o) => o.locationCityId === cityAtStart.id && o.forceId === cityAtStart.ownerForceId
+            && (o.status === 'idle' || o.status === 'active'));
+        const raidLeader = wallOfficers.reduce<Officer | null>(
+          (best, o) => (!best || (o.stats.war + o.stats.intelligence) > (best.stats.war + best.stats.intelligence) ? o : best), null);
+        const party = Math.min(Math.floor(cityAtStart.troops * 0.12), 3000);
+        const campOfficers = [officers[cmd.officerId], ...(cmd.additionalOfficerIds ?? []).map((id) => officers[id])]
+          .filter((o): o is Officer => !!o);
+        const raidIn = {
+          raiders: party,
+          raiderWar: raidLeader?.stats.war ?? 0,
+          raiderIntellect: raidLeader?.stats.intelligence ?? 0,
+          campTroops: besiegerTroops,
+          campFatigue: cmd.fatigue,
+          campSeasons: cmd.campSeasons,
+          campIntellect: campOfficers.reduce((m, o) => Math.max(m, o.stats.intelligence), 0),
+          covered: input.weather?.kind === 'rain' || input.weather?.kind === 'snow',
+        };
+        if (raidLeader && willRaid(raidIn) && rngS() < 0.4) {
+          const raid = resolveNightRaid(raidIn, cmd.siegeEngines ?? 0, rngS);
+          const raidSplit = splitCasualties(raid.raiderLosses, { heldField: raid.success });
+          cities[cityAtStart.id] = {
+            ...cities[cityAtStart.id],
+            troops: Math.max(0, cities[cityAtStart.id].troops - raid.raiderLosses),
+            wounded: (cities[cityAtStart.id].wounded ?? 0) + raidSplit.wounded,
+          };
+          if (raid.success) {
+            troopOverride[cmd.officerId] = Math.max(0, besiegerTroops - raid.campLosses);
+            cmd.troops = troopOverride[cmd.officerId];
+            cmd.siegeEngines = Math.max(0, (cmd.siegeEngines ?? 0) - raid.enginesBurned);
+            cmd.fatigue = Math.min(100, (cmd.fatigue ?? 0) + raid.fatigue);
+            cmd.morale = Math.max(0, (cmd.morale ?? 50) + raid.morale);
+            cmd.food = Math.floor((cmd.food ?? 0) * (1 - raid.foodBurnedFrac));
+            entries.push({
+              cityId: cityAtStart.id, kind: 'battle',
+              text: `NIGHT RAID — ${raidLeader.name.en} fires the camp before ${cityAtStart.name.en}: ${raid.campLosses.toLocaleString()} besiegers dead, ${raid.enginesBurned} engines burned, a third of the grain gone.`,
+              textZh: `夜襲劫營!${raidLeader.name.zh}率 ${party.toLocaleString()} 人夜出焚圍營 —— 敵損 ${raid.campLosses.toLocaleString()} 卒、器械毀 ${raid.enginesBurned} 具、糧秣焚三成。`,
+            });
+          } else {
+            entries.push({
+              cityId: cityAtStart.id, kind: 'battle',
+              text: `${raidLeader.name.en}'s night sortie from ${cityAtStart.name.en} found the watch awake and was cut down at the ditch.`,
+              textZh: `${raidLeader.name.zh}夜出劫營,敵有備而待 —— 折 ${raid.raiderLosses.toLocaleString()} 卒而還。`,
+            });
+          }
+          continue;
+        }
+      }
+{
           const sallyLost = Math.floor(cityAtStart.troops * 0.2);
           const split = splitCasualties(sallyLost, { heldField: true });
           cities[cityAtStart.id] = {
