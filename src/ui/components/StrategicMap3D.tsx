@@ -1506,7 +1506,7 @@ export function StrategicMap3D() {
         display: 'flex', flexDirection: 'column', gap: 7,
       }}>
         {([
-          [t('資源疊圖', 'Resource overlays'), ['gold', 'food', 'troops', 'loyalty'] as OverlayMode[]],
+          [t('資源疊圖', 'Resource overlays'), ['gold', 'food', 'troops', 'loyalty', 'grain'] as OverlayMode[]],
           [t('政情疊圖', 'Realm overlays'), ['province', 'specialty', 'diplomacy'] as OverlayMode[]],
           [t('軍情疊圖', 'War overlays'), ['supply', 'threat', 'intent'] as OverlayMode[]],
         ] as Array<[string, OverlayMode[]]>).map(([head, ids]) => (
@@ -1517,12 +1517,15 @@ export function StrategicMap3D() {
                 const opt = OVERLAY_OPTIONS.find((o) => o.id === id)!;
                 // 1-9 follow OVERLAY_OPTIONS order (sans 'none'); 兵鋒 rides on 0.
                 const numbered = OVERLAY_OPTIONS.filter((o) => o.id !== 'none');
-                const hotkey = id === 'intent' ? '0' : String(numbered.findIndex((o) => o.id === id) + 1);
+                // 1–9 index `numbered`; 兵鋒 rides on 0; anything past the number
+                // row is click-only and says so rather than showing a dead key.
+                const slot = numbered.findIndex((o) => o.id === id) + 1;
+                const hotkey = id === 'intent' ? '0' : slot >= 1 && slot <= 9 ? String(slot) : '';
                 return (
                   <button
                     key={id}
                     onClick={() => setOverlayMode((cur) => (cur === id ? 'none' : id))}
-                    title={t(`快捷鍵 ${hotkey}`, `Hotkey ${hotkey}`)}
+                    title={hotkey ? t(`快捷鍵 ${hotkey}`, `Hotkey ${hotkey}`) : t('點選切換(無快捷鍵)', 'Click to toggle (no hotkey)')}
                     style={{
                       background: overlayMode === id ? '#d4a84a' : 'transparent',
                       color: overlayMode === id ? '#1a1410' : '#a89070',

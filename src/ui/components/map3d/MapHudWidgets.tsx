@@ -193,11 +193,14 @@ export const OVERLAY_OPTIONS: Array<{ id: OverlayMode; zh: string; en: string }>
   { id: 'loyalty',  zh: '民忠', en: 'LOYALTY' },
   { id: 'province', zh: '州郡', en: 'PROVINCE' },
   { id: 'specialty', zh: '名產', en: 'GOODS' },
-  { id: 'grain',    zh: '米價', en: 'GRAIN' },
   { id: 'supply',   zh: '糧道', en: 'SUPPLY' },
   { id: 'diplomacy', zh: '邦交', en: 'TIES' },
   { id: 'threat',   zh: '威脅', en: 'THREAT' },
   { id: 'intent',   zh: '兵鋒', en: 'INTENT' },
+  // 米價 sits AFTER 兵鋒 on purpose: the 1–9 hotkeys index this list, so
+  // inserting anywhere earlier silently pushes 威脅 off the number row.
+  // 兵鋒 owns '0'; this one is click-only (and says so in its tooltip).
+  { id: 'grain',    zh: '米價', en: 'GRAIN' },
 ];
 
 export const WEATHER_ZH: Record<WeatherKind, string> = {
