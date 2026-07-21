@@ -66,6 +66,7 @@ import { patronDrift } from './patronage';
 import { rollCampPlague } from './campDisease';
 import { engineBuildRate, burnEngines, enginePartyTier } from './siegeWorks';
 import { resolveNightRaid, willRaid } from './nightRaid';
+import { dilute, RECOVERED_QUALITY } from './reorganization';
 
 /** 卑濕之地 — siege lines on this ground breed 軍中疫疾 (§5.15). */
 const WET_SIEGE_GROUND = new Set(['river', 'lake', 'sea', 'marsh']);
@@ -2934,9 +2935,19 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     // 練度弛 — drill fades when the garrison isn't kept at it (about 2/season).
     // 甲堅則習 (§1.18) — a well-stocked armoury slows the slide (men drill with
     // gear that fits); an empty one hurries it.
-    const nextDrill = city.drill
+    // 傷癒歸伍 (§4.12) — men back from the infirmary have already been shot at,
+    // so they raise the garrison's average rather than diluting it.
+    const drillAfterWear = city.drill
       ? Math.max(0, Math.min(100, city.drill - 2 + armsEff.drillDelta + serviceEff.drillDelta))
       : city.drill;
+    const nextDrill = care.recovered > 0
+      ? dilute({
+          current: drillAfterWear ?? 0,
+          existing: Math.max(0, troopsAfterDesertion),
+          added: care.recovered,
+          addedQuality: RECOVERED_QUALITY,
+        })
+      : drillAfterWear;
     const updated: City = {
       ...city,
       // 律令與稅入 (§1.11) — 寬刑之下賦稅有漏,峻法之下錙銖必入。
@@ -4602,6 +4613,7 @@ function applyDelta(
     hoardedGrain: number;
     armaments: number;
     iron: number;
+    veterancy: number;
   }>,
 ): City {
   // Per-command logic already clamps to the city-tier cap (cityEconCap for
@@ -4623,6 +4635,9 @@ function applyDelta(
     armaments: delta.armaments !== undefined
       ? clamp((city.armaments ?? 0) + delta.armaments, 0, 100)
       : city.armaments,
+    veterancy: delta.veterancy !== undefined
+      ? clamp((city.veterancy ?? 0) + delta.veterancy, 0, 100)
+      : city.veterancy,
     iron: delta.iron !== undefined
       ? Math.max(0, (city.iron ?? 0) + delta.iron)
       : city.iron,

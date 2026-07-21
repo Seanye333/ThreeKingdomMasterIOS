@@ -15,6 +15,7 @@ import { householdAudit } from './household';
 import { crackdownResult } from './hoarding';
 import { armWorksResult, armamentEffects } from './workshops';
 import { serviceEffects, type ServiceSystem } from './conscription';
+import { diluteDelta, CONSCRIPT_QUALITY } from './reorganization';
 import { pairKey } from '../types/diplomacy';
 import type { WeatherKind } from './weather';
 
@@ -269,6 +270,7 @@ export interface CommandResult {
     hoardedGrain: number;
     armaments: number;
     iron: number;
+    veterancy: number;
   }>;
   message: string;
   messageZh: string;
@@ -448,6 +450,15 @@ export function resolveInternalAffairs(
           troops: fromPop, population: -popDrawn, loyalty: loyaltyHit ? -loyaltyHit : 0,
           // 甲胄隨人 — the new men are issued out of the armoury.
           armaments: -Math.min(city.armaments ?? 0, Math.round(fromPop / 400 * 10) / 10),
+          // 新兵稀釋 (§4.12) — quality is a ratio, not a property of the city.
+          drill: diluteDelta({
+            current: city.drill ?? 0, existing: city.troops, added: fromPop,
+            addedQuality: CONSCRIPT_QUALITY,
+          }),
+          veterancy: diluteDelta({
+            current: city.veterancy ?? 0, existing: city.troops, added: fromPop,
+            addedQuality: CONSCRIPT_QUALITY,
+          }),
         },
         message: `${officer.name.en} recruited ${fromPop} troops (${size.name.zh} cap ${sizeMax}/turn; population −${popDrawn}, loyalty −${loyaltyHit}).`,
         messageZh: `${officer.name.zh}徵兵 ${fromPop} 卒 (${size.name.zh}每季上限 ${sizeMax};民減 ${popDrawn},民忠 −${loyaltyHit})。`,
