@@ -331,6 +331,86 @@ describe('存檔遷移 — 民政批 fields', () => {
     }
   });
 
+  it('round-trips the 2026-07-21 institution batch; an old save defaults every field', () => {
+    const st = useGameStore;
+    const fid = st.getState().playerForceId!;
+    const cityId = Object.keys(st.getState().cities)[0];
+    const officerId = Object.keys(st.getState().officers)[0];
+    st.getState().setServiceSystem('paid');
+    st.getState().setRefugeePolicy('welcome');
+    st.setState({
+      cities: {
+        ...st.getState().cities,
+        [cityId]: { ...st.getState().cities[cityId], armaments: 44, wounded: 1200 },
+      },
+      officers: {
+        ...st.getState().officers,
+        [officerId]: {
+          ...st.getState().officers[officerId],
+          meritRewarded: 17, faultPunished: 6, patronId: 'some-patron',
+        },
+      },
+    });
+    st.getState().saveSlot('compat-test', '制度批欄位');
+    const parsed = JSON.parse(localStorage.getItem(SLOT_KEY)!);
+    expect(parsed.serviceSystem[fid]).toBe('paid');
+    expect(parsed.refugeePolicy[fid]).toBe('welcome');
+    expect(parsed.cities[cityId].armaments).toBe(44);
+    expect(parsed.cities[cityId].wounded).toBe(1200);
+    expect(parsed.officers[officerId].meritRewarded).toBe(17);
+    expect(parsed.officers[officerId].patronId).toBe('some-patron');
+
+    st.setState({ serviceSystem: {}, refugeePolicy: {} });
+    expect(st.getState().loadSlot('compat-test')).toBe(true);
+    expect(st.getState().serviceSystem[fid]).toBe('paid');
+    expect(st.getState().refugeePolicy[fid]).toBe('welcome');
+    expect(st.getState().cities[cityId].armaments).toBe(44);
+    expect(st.getState().officers[officerId].faultPunished).toBe(6);
+
+    // Now the pre-batch shape: none of these fields exist at all.
+    st.getState().saveSlot('compat-test', '舊檔(無制度欄位)');
+    const old = JSON.parse(localStorage.getItem(SLOT_KEY)!);
+    delete old.serviceSystem;
+    delete old.refugeePolicy;
+    delete old.grainPolicy;
+    delete old.coinStandard;
+    delete old.inflationByForce;
+    for (const c of Object.values(old.cities) as Array<Record<string, unknown>>) {
+      delete c.armaments;
+      delete c.wounded;
+    }
+    for (const o of Object.values(old.officers) as Array<Record<string, unknown>>) {
+      delete o.meritRewarded;
+      delete o.faultPunished;
+      delete o.patronId;
+    }
+    for (const cmd of Object.values(old.pendingCommands ?? {}) as Array<Record<string, unknown>>) {
+      delete cmd.campSeasons;
+      delete cmd.siegeEngines;
+    }
+    localStorage.setItem(SLOT_KEY, JSON.stringify(old));
+    st.setState({ serviceSystem: {}, refugeePolicy: {}, grainPolicy: {}, coinStandard: {}, inflationByForce: {} });
+    expect(st.getState().loadSlot('compat-test')).toBe(true);
+
+    // Two full seasons on the migrated state — every new tick reads these.
+    st.getState().endSeason();
+    st.getState().endSeason();
+    const s = st.getState();
+    expect(s.date).toBeTruthy();
+    for (const c of Object.values(s.cities)) {
+      expect(Number.isNaN(c.armaments ?? 0)).toBe(false);
+      expect(Number.isNaN(c.wounded ?? 0)).toBe(false);
+      expect(c.armaments ?? 0).toBeGreaterThanOrEqual(0);
+      expect(c.armaments ?? 0).toBeLessThanOrEqual(100);
+      expect(c.wounded ?? 0).toBeGreaterThanOrEqual(0);
+      expect(c.troops).toBeGreaterThanOrEqual(0);
+      expect(Number.isNaN(c.gold)).toBe(false);
+    }
+    // 軍功簿 actions degrade gracefully on officers with no ledger at all.
+    expect(st.getState().rewardMerit('no-such-officer').ok).toBe(false);
+    expect(st.getState().punishOfficer('no-such-officer', 'flog').ok).toBe(false);
+  });
+
   it('the civic actions all degrade gracefully with nothing set up', () => {
     const st = useGameStore;
     st.setState({ lawCode: {}, corvee: {}, selectionSystem: {}, poems: [], shrines: [], lastAmnestyYear: {} });
