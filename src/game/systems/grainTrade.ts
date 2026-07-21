@@ -268,6 +268,76 @@ export function planGrainFlows(args: {
   return { flows, duties };
 }
 
+/* ─── 常平倉 — 豐則糴之,歉則糶之 ─────────────────────────────────────────── */
+
+/**
+ * The ever-normal granary, actually operating.
+ *
+ * 耿壽昌 建常平倉於邊郡: buy grain when it is cheap and store it, sell it back
+ * when it is dear. Until now the building only *damped* the price curve as a
+ * passive modifier; this is the granary doing the thing it was built to do —
+ * spending the city's own gold in a glut and recovering it in a dearth, and
+ * incidentally keeping its own stores near a war-worthy level without a single
+ * order from you.
+ *
+ * The point is that it is slow and self-financing: over years a granary city
+ * accumulates both grain and coin, and its people never see the spike. The
+ * price it pays is that its treasury is partly committed to grain at all times.
+ */
+/** Below this (gold/100 石) the granary buys. */
+export const EVERNORMAL_BUY_UNDER = 8.5;
+/** At or above this the granary sells. */
+export const EVERNORMAL_SELL_OVER = 12.5;
+/** Share of the city treasury the granary will commit in one season. */
+export const EVERNORMAL_PURSE = 0.25;
+
+export interface EvernormalOp {
+  /** 石 bought into the public granary (0 if none). */
+  bought: number;
+  /** 石 released onto the market. */
+  sold: number;
+  /** Signed gold change for the city (negative when buying). */
+  goldDelta: number;
+  /** 民賴以安 — loyalty lift for selling into a dearth. */
+  loyaltyDelta: number;
+}
+
+const NO_OP: EvernormalOp = { bought: 0, sold: 0, goldDelta: 0, loyaltyDelta: 0 };
+
+export function evernormalOperation(args: {
+  /** Gold per 100 石 here this season. */
+  price: number;
+  /** 常平倉/平準署 weight, 0–0.6. 0 = no granary, no operation. */
+  stability: number;
+  food: number;
+  troops: number;
+  gold: number;
+}): EvernormalOp {
+  const stab = Math.max(0, Math.min(0.6, args.stability));
+  if (stab <= 0) return NO_OP;
+  // The granary's own working capacity scales with how big it is.
+  const capacity = Math.round(1500 * (stab / 0.3));
+  const target = Math.max(1200, args.troops * 6);
+  if (args.price <= EVERNORMAL_BUY_UNDER && args.food < target) {
+    const affordable = Math.floor((args.gold * EVERNORMAL_PURSE) / Math.max(0.5, args.price) * 100);
+    const bought = Math.max(0, Math.min(capacity, target - args.food, affordable));
+    if (bought < 100) return NO_OP;
+    return { bought, sold: 0, goldDelta: -Math.round((bought / 100) * args.price), loyaltyDelta: 0 };
+  }
+  if (args.price >= EVERNORMAL_SELL_OVER) {
+    const floor = Math.max(600, args.troops * 4);
+    const sold = Math.max(0, Math.min(capacity, args.food - floor));
+    if (sold < 100) return NO_OP;
+    return {
+      bought: 0, sold,
+      goldDelta: Math.round((sold / 100) * args.price),
+      // 平其價,民賴以安 — the whole reason the state ran granaries.
+      loyaltyDelta: sold >= capacity * 0.5 ? 2 : 1,
+    };
+  }
+  return NO_OP;
+}
+
 /** Season-report line for a caravan the player can see. */
 export function grainFlowNote(
   flow: GrainFlow,

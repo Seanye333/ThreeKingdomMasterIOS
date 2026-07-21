@@ -50,7 +50,7 @@ import { corveeEffects, hiddenDrift, registryYieldMul, aiCorvee } from './househ
 import { hoardEffects, hoardTick, hoardingPressure, HOARD_SEVERE } from './hoarding';
 import {
   grainPrice, planGrainFlows, grainPolicyEffects, aiGrainPolicy, grainFlowNote,
-  type GrainNode,
+  evernormalOperation, type GrainNode,
 } from './grainTrade';
 import { clanOf } from '../data/clans';
 import { shrineEffects } from './culturalWorks';
@@ -3840,11 +3840,41 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   if (seasonBoundary) {
     const grainPlayerFid = input.playerForceId;
     const grainNodes: GrainNode[] = [];
-    for (const c of Object.values(cities)) {
-      if (!c.ownerForceId || c.ruined) continue;
-      const stab = buildingBonuses(c.id, input.buildings ?? [], {
-        statecraft: forces[c.ownerForceId]?.statecraft ?? null,
+    for (const c0 of Object.values(cities)) {
+      if (!c0.ownerForceId || c0.ruined) continue;
+      const stab = buildingBonuses(c0.id, input.buildings ?? [], {
+        statecraft: forces[c0.ownerForceId]?.statecraft ?? null,
       }).priceStability;
+      // 常平倉:豐則糴之,歉則糶之 — the granary trades before the caravans do,
+      // so the price the merchants find already reflects the state's hand.
+      let c = c0;
+      if (stab > 0) {
+        const preOp = grainPrice(c, input.date.season, {
+          stability: stab,
+          hoardMul: hoardEffects(c.hoardedGrain ?? 0).marketRateMul,
+        });
+        const op = evernormalOperation({
+          price: preOp, stability: stab, food: c.food, troops: c.troops, gold: c.gold,
+        });
+        if (op.bought > 0 || op.sold > 0) {
+          c = {
+            ...c,
+            food: c.food + op.bought - op.sold,
+            gold: Math.max(0, c.gold + op.goldDelta),
+            loyalty: Math.max(0, Math.min(100, c.loyalty + op.loyaltyDelta)),
+          };
+          cities[c.id] = c;
+          if (c.ownerForceId === grainPlayerFid) {
+            entries.push(op.bought > 0
+              ? { cityId: c.id, kind: 'income',
+                  text: `Ever-normal granary buys ${op.bought} grain cheap (−${-op.goldDelta}g).`,
+                  textZh: `常平倉乘賤糴入 ${op.bought} 石(費金 ${-op.goldDelta})。` }
+              : { cityId: c.id, kind: 'income',
+                  text: `Ever-normal granary releases ${op.sold} grain into a dear market (+${op.goldDelta}g).`,
+                  textZh: `常平倉平糶 ${op.sold} 石以平其價(得金 ${op.goldDelta},民心 +${op.loyaltyDelta})。` });
+          }
+        }
+      }
       grainNodes.push({
         cityId: c.id,
         ownerForceId: c.ownerForceId,

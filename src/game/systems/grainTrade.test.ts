@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   grainPrice, grainPolicyEffects, aiGrainPolicy, planGrainFlows, priceTier,
-  PRICE_GAP_TRIGGER, MERCHANT_MARGIN, BUYER_PURSE_SHARE,
+  PRICE_GAP_TRIGGER, MERCHANT_MARGIN, BUYER_PURSE_SHARE, evernormalOperation, EVERNORMAL_PURSE,
   type GrainNode,
 } from './grainTrade';
 import type { City } from '../types';
@@ -67,6 +67,56 @@ describe('糴政', () => {
     expect(aiGrainPolicy('merchant')).toBe('open');
     expect(aiGrainPolicy('tyrant')).toBe('closed');
     expect(aiGrainPolicy('unknown-kind')).toBe('guided');
+  });
+});
+
+describe('常平倉 — 豐則糴之,歉則糶之', () => {
+  const g = { stability: 0.3, food: 4000, troops: 1000, gold: 20000 };
+
+  it('does nothing at all without a granary', () => {
+    expect(evernormalOperation({ ...g, stability: 0, price: 5 }).bought).toBe(0);
+    expect(evernormalOperation({ ...g, stability: 0, price: 20 }).sold).toBe(0);
+  });
+
+  it('buys into the glut', () => {
+    const op = evernormalOperation({ ...g, price: 6 });
+    expect(op.bought).toBeGreaterThan(0);
+    expect(op.goldDelta).toBeLessThan(0);
+  });
+
+  it('sells into the dearth, and the people feel it', () => {
+    const op = evernormalOperation({ ...g, food: 20000, price: 16 });
+    expect(op.sold).toBeGreaterThan(0);
+    expect(op.goldDelta).toBeGreaterThan(0);
+    expect(op.loyaltyDelta).toBeGreaterThan(0);
+  });
+
+  it('sits still at a fair price', () => {
+    const op = evernormalOperation({ ...g, price: 10 });
+    expect(op.bought).toBe(0);
+    expect(op.sold).toBe(0);
+  });
+
+  it('never sells the garrison\'s own reserve', () => {
+    const op = evernormalOperation({ ...g, food: 3000, troops: 1000, price: 18 });
+    expect(op.sold).toBeLessThanOrEqual(3000 - 4000 > 0 ? 3000 - 4000 : 0);
+  });
+
+  it('never spends more than its purse', () => {
+    const op = evernormalOperation({ ...g, gold: 400, price: 6 });
+    expect(-op.goldDelta).toBeLessThanOrEqual(400 * EVERNORMAL_PURSE + 1);
+  });
+
+  it('a bigger granary works a bigger book', () => {
+    const small = evernormalOperation({ ...g, food: 40000, price: 16, stability: 0.15 });
+    const big = evernormalOperation({ ...g, food: 40000, price: 16, stability: 0.6 });
+    expect(big.sold).toBeGreaterThan(small.sold);
+  });
+
+  it('buys toward a war-worthy stock and stops', () => {
+    const full = evernormalOperation({ ...g, food: 6000, troops: 1000, price: 6 });
+    // target = troops×6 = 6000 → already there.
+    expect(full.bought).toBe(0);
   });
 });
 
