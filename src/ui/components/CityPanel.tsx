@@ -12,6 +12,7 @@ import { hiddenTier, registryYieldMul } from '../../game/systems/household';
 import { hoardTier } from '../../game/systems/hoarding';
 import { armamentTier, armamentEffects } from '../../game/systems/workshops';
 import { woundedTier } from '../../game/systems/veterans';
+import { localEsteem, esteemTier, esteemEffects } from '../../game/systems/publicOpinion';
 import type { City, EntityId, Officer } from '../../game/types';
 import { lazy, Suspense } from 'react';
 // 啟動提速 — the city 3D scene (≈175KB) loads when a city is first entered.
@@ -909,6 +910,10 @@ function CityMiniMapText({ builtCount, wallTier }: { builtCount: number; wallTie
  * and a "▸ 施政中" marker on whichever stat an officer is working this tick.
  */
 function DevelopmentSection({ city, isPlayerCity }: { city: City; isPlayerCity: boolean }) {
+  // 鄉論 (§3.7) is derived from how the city is governed, so the panel needs the
+  // resident officers and the realm's code to read it.
+  const allOfficersForEsteem = useGameStore((s) => s.officers);
+  const playerLawCode = useGameStore((s) => (city.ownerForceId ? s.lawCode?.[city.ownerForceId] : undefined));
   const t = useT();
   const econCap = cityEconCap(city);
   const statCap = citySize(city).statCap;
@@ -959,6 +964,22 @@ function DevelopmentSection({ city, isPlayerCity }: { city: City; isPlayerCity: 
           note={(city.culture ?? 0) >= 60 ? '文化名城 · 息貪安民' : `息貪 −${Math.round((city.culture ?? 0) / 100 * 35)}%`} />
       )}
       {/* 囤積 (§1.14) — grain that exists but cannot be bought. */}
+      {/* 鄉論 §3.7 — derived, not stored: the sum of how the city is governed. */}
+      {city.ownerForceId && (() => {
+        const esteem = localEsteem({
+          city,
+          residents: Object.values(allOfficersForEsteem).filter(
+            (o) => o.locationCityId === city.id && o.forceId === city.ownerForceId),
+          lawSeverity: city.ownerForceId ? playerLawCode : undefined,
+        });
+        return (
+          <Bar icon="scroll" label="Esteem" zh="鄉論" value={Math.round(esteem)} cap={100} tone="#9ab0c8"
+            warn={esteem < 30}
+            note={t(`${esteemTier(esteem).zh} · ${esteemEffects(esteem).badgeZh}`,
+                    `${esteemTier(esteem).en} · ${esteemEffects(esteem).badgeEn}`)} />
+        );
+      })()}
+
       {/* 傷兵 §4.11 — only while there are any. */}
       {(city.wounded ?? 0) > 0 && (
         <Bar icon="shield" label="Wounded" zh="傷兵" value={Math.round(city.wounded ?? 0)}

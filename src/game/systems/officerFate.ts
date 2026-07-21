@@ -83,6 +83,8 @@ export const FREE_AGENT_COST = 100;
 export type PersuasionApproach = 'righteous' | 'riches' | 'feeling';
 
 export interface RecruitInput {
+  /** 鄉論 (§3.7) — the standing of the district doing the asking (−0.1…+0.1). */
+  esteemBonus?: number;
   officer: Officer;
   city: City;
   recruiterForce: Force;
@@ -217,6 +219,9 @@ export function estimateRecruitChance(input: Omit<RecruitInput, 'rng'>): number 
   chance += reputationBonus(recruiterReputation);
   chance += prestigeRecruitBonus(recruiterRuler);
   chance += input.stanceModifier ?? 0;
+  // 鄉論 (§3.7) — a district the gentry think well of makes taking service here
+  // an honour rather than a comedown; a despised one makes it neither.
+  chance += input.esteemBonus ?? 0;
   // 良禽擇木 — even a captive weighs the captor's character by their 主義.
   chance += doctrineRecruitFit(officer, recruiterRuler, recruiterForce, recruiterReputation?.citiesOwned ?? 0).delta;
   // 舊部歸心 — a captured former retainer is far easier to win back.
@@ -299,6 +304,8 @@ export interface FreeAgentRecruitInput {
   recommendedBonus?: number;
   /** 名品禮聘 — a treasured gift sways them (caller validates the item). */
   giftBonus?: number;
+  /** 鄉論 (§3.7) — the standing of the district doing the asking (−0.1…+0.1). */
+  esteemBonus?: number;
   rng?: () => number;
 }
 
@@ -326,6 +333,8 @@ export function attemptFreeAgentRecruit(
   // R1 — relationship-based: personal enemy refuses, sworn brother / family eager
   chance += recruitRefusalPenalty(officer.id, recruiterRuler.id);
   chance += recruitKinshipBonus(officer.id, recruiterRuler.id, family ?? []);
+  // 鄉論 (§3.7) — 士人樂仕於清議所稱之邦.
+  chance += input.esteemBonus ?? 0;
   // 舊部歸心 — a scattered retainer rejoins their original lord eagerly.
   if (officer.retinueOfLordId && officer.retinueOfLordId === recruiterRuler.id) chance += 0.35;
   // 良禽擇木 — the prospect's 主義 weighs the lord's character.

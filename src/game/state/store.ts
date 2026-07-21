@@ -111,6 +111,7 @@ import { provisionNeeded, convoyCapacity, planConvoy } from '../systems/convoy';
 import { citySize, citySizeRank, cityMeetsSize, reassignLostCapitals, LOST_CAPITAL_LOYALTY_PENALTY } from '../systems/citySize';
 import { buildingBonuses, SCHOOL_BUILDINGS } from '../systems/buildings';
 import { coinEffects, inflationDrift, aiCoinStandard, type CoinStandard } from '../systems/coinage';
+import { localEsteem, esteemEffects } from '../systems/publicOpinion';
 import { splitCasualties } from '../systems/veterans';
 import {
   outstandingMerit, outstandingFault, rewardQuote,
@@ -1889,6 +1890,19 @@ function predictPlayerArrivals(state: GameState) {
   }
   out.sort((a, b) => a.day - b.day);
   return out;
+}
+
+
+/** 鄉論 (§3.7) — the standing of a district, as the recruiting code sees it. */
+function esteemBonusAt(state: GameState, cityId: EntityId): number {
+  const city = state.cities[cityId];
+  if (!city) return 0;
+  return esteemEffects(localEsteem({
+    city,
+    residents: Object.values(state.officers).filter(
+      (o) => o.locationCityId === cityId && o.forceId === city.ownerForceId),
+    lawSeverity: city.ownerForceId ? state.lawCode?.[city.ownerForceId] : undefined,
+  })).recruitBonus;
 }
 
 export const useGameStore = create<GameStore>()(
@@ -9536,6 +9550,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           bestRapportWithCaptors: bestRapportWith(state, officerId),
           debateWon,
           giftBonus,
+          esteemBonus: esteemBonusAt(state, cityId),
           stanceModifier:
             stanceRecruitModifier(state.officers, force.id, force.recruitmentStance) +
             statecraftRecruitBonus(force.statecraft, force.statecraftMastery) +
@@ -9661,6 +9676,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           persistenceBonus,
           recommendedBonus: officer.recommended ? 0.15 : 0, // 舉薦作保
           giftBonus,
+          esteemBonus: esteemBonusAt(state, cityId),
         });
 
         const updates: Partial<GameState> = {};

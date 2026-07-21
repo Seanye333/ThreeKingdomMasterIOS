@@ -61,6 +61,7 @@ import { serviceEffects, payGarrison, aiServiceSystem } from './conscription';
 import { outstandingMerit, meritResentment, rewardQuote, meritScore } from './militaryLaw';
 import { recoverWounded, splitCasualties } from './veterans';
 import { marshalAmbitionBoost } from './legion';
+import { localEsteem, esteemEffects } from './publicOpinion';
 import { clanOf } from '../data/clans';
 import { shrineEffects } from './culturalWorks';
 import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
@@ -2202,7 +2203,20 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     if (!officer || !city) continue;
     if (officer.status !== 'idle') continue;
     if (cmd.type === 'search') {
-      const result = handleSearch({ officer, city, officers, lostItems, rng, year: input.date.year, successMul: input.searchSuccessMul });
+      // 鄉論 (§3.7) — 訪賢 in a district the gentry respect turns up people; in
+      // one they despise, the worthy simply keep their doors shut.
+      const searchEsteem = localEsteem({
+        city,
+        residents: Object.values(officers).filter(
+          (o) => o.locationCityId === city.id && o.forceId === city.ownerForceId),
+        lawSeverity: city.ownerForceId
+          ? (input.lawCode?.[city.ownerForceId] ?? aiLawCode(input.forces[city.ownerForceId]?.personality))
+          : undefined,
+      });
+      const result = handleSearch({
+        officer, city, officers, lostItems, rng, year: input.date.year,
+        successMul: (input.searchSuccessMul ?? 1) * esteemEffects(searchEsteem).searchMul,
+      });
       officers = result.officers;
       lostItems = result.lostItems;
       entries.push(result.entry);
