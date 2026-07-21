@@ -2084,6 +2084,33 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
             cmd.fatigue = Math.min(100, (cmd.fatigue ?? 0) + raid.fatigue);
             cmd.morale = Math.max(0, (cmd.morale ?? 50) + raid.morale);
             cmd.food = Math.floor((cmd.food ?? 0) * (1 - raid.foodBurnedFrac));
+            // 這一段跑在 keptCommands 快照之後 — keptCommands took `{ ...cmd }`
+            // by value up in the holding loop, so mutating `cmd` here alone
+            // would let the whole raid evaporate at the season boundary.
+            const kept = keptCommands[cmd.officerId];
+            if (kept && kept.type === 'march') {
+              keptCommands[cmd.officerId] = {
+                ...kept,
+                troops: cmd.troops,
+                siegeEngines: cmd.siegeEngines,
+                fatigue: cmd.fatigue,
+                morale: cmd.morale,
+                food: cmd.food,
+              };
+            }
+            suppliedTroops[cmd.officerId] = cmd.troops;
+            // deriveArmy also ran before this (line ~1877), so the Army layer
+            // the map draws next season needs the same correction.
+            const derived = outArmies[cmd.officerId];
+            if (derived) {
+              outArmies[cmd.officerId] = {
+                ...derived,
+                troops: cmd.troops,
+                siegeEngines: cmd.siegeEngines,
+                fatigue: cmd.fatigue,
+                food: cmd.food,
+              };
+            }
             entries.push({
               cityId: cityAtStart.id, kind: 'battle',
               text: `NIGHT RAID — ${raidLeader.name.en} fires the camp before ${cityAtStart.name.en}: ${raid.campLosses.toLocaleString()} besiegers dead, ${raid.enginesBurned} engines burned, a third of the grain gone.`,
