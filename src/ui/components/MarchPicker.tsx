@@ -4,6 +4,7 @@ import { COMMAND_DEFS } from '../../game/systems/commands';
 import { navalReachableCityIds } from '../../game/data/ports';
 import { passageTargets } from '../../game/systems/diplomacyPacts';
 import { marchDurationFor } from '../../game/data/cities';
+import { marchLedger } from '../../game/systems/campaignLedger';
 import { marchSpeedMul, adjustMarchSeasons, MARCH_PACES, PACE_LABEL, type MarchPace } from '../../game/systems/marchPace';
 import { playSfx } from '../../game/systems/sound';
 import { generateTerritories, terrainRoute } from '../../game/data/territories';
@@ -268,6 +269,14 @@ export function MarchPicker({ cityId, onClose }: Props) {
     return count > 0 ? { count, dmg } : null;
   }, [source, target, forts]);
   const maxTroops = source.troops;
+  // 糧秣簿 (§4.9) — what the journey needs, what the city can spare, and how
+  // long the garrison left behind can eat once you have taken the grain.
+  const ledger = marchLedger({
+    troops,
+    seasonsPlanned: target ? marchDurationFor(source, target, season) : 1,
+    cityFood: source.food,
+    cityTroops: source.troops,
+  });
   const canAfford = source.gold >= def.goldCost;
   const valid =
     !!targetId &&
@@ -635,6 +644,25 @@ export function MarchPicker({ cityId, onClose }: Props) {
               {t('全部', 'ALL')}
             </button>
           </div>
+          {/* 糧秣簿 §4.9 — say it before you commit, not four seasons later. */}
+          {troops > 0 && (
+            <div
+              data-testid="march-ledger"
+              style={{
+                marginTop: 6, fontSize: '0.72rem', lineHeight: 1.5,
+                color: ledger.verdict === 'short' ? '#d86a5a'
+                  : ledger.verdict === 'tight' ? '#d0a85a' : '#8a98a4',
+              }}
+            >
+              🌾 {t(ledger.noteZh, ledger.noteEn)}
+              {ledger.drawn > 0 && (
+                <span style={{ color: '#7a8893' }}>
+                  {' '}· {t(`自 ${source.name.zh} 支糧 ${ledger.drawn.toLocaleString()} 石`,
+                            `drawing ${ledger.drawn.toLocaleString()} from ${source.name.en}`)}
+                </span>
+              )}
+            </div>
+          )}
         </section>
 
         {targetId && fortWarning && (

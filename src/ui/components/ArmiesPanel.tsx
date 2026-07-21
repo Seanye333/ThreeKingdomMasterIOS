@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { OfficerCardModal } from './OfficerCardModal';
 import { Icon } from './Icon';
+import { armyEndurance, enduranceTag } from '../../game/systems/campaignLedger';
 import { useLanguage, pickName } from '../i18n';
 
 const IS_MOBILE = typeof window !== 'undefined'
@@ -282,10 +283,13 @@ export function ArmiesPanel() {
                 >{cmdr?.name.zh ?? '？'}</span>
                 <span style={{ color: '#7a8893', marginLeft: 4, fontSize: '0.7rem', fontFamily: 'ui-monospace, monospace' }}>{troopLabel}</span>
                 {a.food !== undefined && (() => {
-                  const seasons = Math.floor(a.food / Math.max(1, a.troops * 0.25));
+                  // §4.9 — one ration model for the whole game: the panel, the
+                  // dispatch ledger and the season tick all read the same fn.
+                  const seasons = armyEndurance(a.food, a.troops);
+                  const tag = enduranceTag(a.food, a.troops);
                   return (
-                    <span style={{ marginLeft: 4, fontSize: '0.58rem', color: seasons <= 1 ? '#e0707a' : seasons <= 3 ? '#e0a070' : '#8a9a6a', display: 'inline-flex', alignItems: 'center', gap: 2 }} title={lang === 'en' ? `Provisions ${a.food.toLocaleString()} — ${seasons} season(s)` : `隨軍糧 ${a.food.toLocaleString()} — 足 ${seasons} 季`}>
-                      <Icon name="grain" size={10} />{seasons}
+                    <span style={{ marginLeft: 4, fontSize: '0.58rem', color: tag.urgent ? '#e0707a' : seasons <= 3 ? '#e0a070' : '#8a9a6a', display: 'inline-flex', alignItems: 'center', gap: 2 }} title={lang === 'en' ? `Provisions ${a.food.toLocaleString()} — ${tag.en}` : `隨軍糧 ${a.food.toLocaleString()} — ${tag.zh}`}>
+                      <Icon name="grain" size={10} />{Number.isFinite(seasons) ? seasons : '∞'}
                     </span>
                   );
                 })()}
