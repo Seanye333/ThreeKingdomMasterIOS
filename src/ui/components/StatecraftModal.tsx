@@ -18,6 +18,9 @@ import {
   COIN_STANDARDS, COIN_NAMES, coinEffects, inflationTier, type CoinStandard,
 } from '../../game/systems/coinage';
 import {
+  buildRelayNetwork, RELAY_BUILDINGS,
+} from '../../game/systems/postalRelay';
+import {
   SELECTION_NAMES, SELECTION_SYSTEMS, selectionEffects, rectifierOf, rectifierIsUpright,
   type SelectionSystem,
 } from '../../game/systems/officialSelection';
@@ -107,6 +110,24 @@ export function StatecraftModal({ onClose, onSelectCity }: { onClose: () => void
       gap: dear.price / Math.max(0.5, cheap.price),
     };
   }, [own, season, buildings, forces, playerForceId]);
+
+  // 驛傳 (§1.19) — which of your cities the court's riders actually reach.
+  const relay = useMemo(() => {
+    const capitalCityId = playerForceId ? forces[playerForceId]?.capitalCityId : undefined;
+    const relayCityIds = new Set(
+      buildings.filter((b) => RELAY_BUILDINGS.has(b.id) && b.level >= 1).map((b) => b.cityId));
+    const net = buildRelayNetwork({
+      nodes: Object.values(cities).map((c) => ({
+        cityId: c.id, owned: c.ownerForceId === playerForceId && !c.ruined,
+        hasRelay: relayCityIds.has(c.id),
+      })),
+      neighborsOf: (id) => cities[id]?.adjacentCityIds ?? [],
+      capitalCityId,
+    });
+    const cut = own.filter((c) => !net.get(c.id)?.connected);
+    const far = own.filter((c) => { const r = net.get(c.id); return r?.connected && r.hops > 4; });
+    return { net, cut, far, stations: relayCityIds.size };
+  }, [cities, buildings, own, forces, playerForceId]);
 
   const mean = (pick: (c: (typeof own)[number]) => number) =>
     own.length ? own.reduce((a, c) => a + pick(c), 0) / own.length : 0;
@@ -223,6 +244,36 @@ export function StatecraftModal({ onClose, onSelectCity }: { onClose: () => void
           </span>
         </div>
         <div style={note}>{t(coinEffects(coinStandard).badgeZh, coinEffects(coinStandard).badgeEn)}</div>
+      </div>
+
+      {/* 驛傳 §1.19 */}
+      <div style={sect}>
+        <div style={head}>🐎 {t('驛傳・政令所及', 'Relay network')}</div>
+        <div style={note} data-testid="relay-summary">
+          {t(`驛置 ${relay.stations} 所 · 政令通達 ${own.length - relay.cut.length}/${own.length} 城`,
+             `${relay.stations} stations · writ reaches ${own.length - relay.cut.length}/${own.length} cities`)}
+        </div>
+        {relay.cut.length > 0 ? (
+          <div style={{ ...note, color: '#d08a5a' }}>
+            {t(`斷驛 ${relay.cut.length} 城:`, `Cut off (${relay.cut.length}): `)}
+            {relay.cut.slice(0, 6).map((c) => (
+              <button key={c.id} style={{ background: 'none', border: 'none', color: '#d08a5a',
+                cursor: onSelectCity ? 'pointer' : 'default', font: 'inherit', padding: '0 3px' }}
+                onClick={() => onSelectCity?.(c.id)}>{pickName(c.name, lang)}</button>
+            ))}
+            {relay.cut.length > 6 && <span>…</span>}
+            <div>{t('沿途築驛站/驛傳續上驛路,否則貪腐 +35%、民心 −1/季、隱戶漸增。',
+                    'Build relay stations along the road, or graft +35%, loyalty −1/season, households slip away.')}</div>
+          </div>
+        ) : (
+          <div style={note}>{t('四方無阻,王命所至。', 'The writ reaches every province.')}</div>
+        )}
+        {relay.far.length > 0 && (
+          <div style={note}>
+            {t(`驛路迢遙 ${relay.far.length} 城(貪腐 +10%)`, `${relay.far.length} distant cities (graft +10%)`)}
+            {' · '}{relay.far.slice(0, 4).map((c) => pickName(c.name, lang)).join('、')}
+          </div>
+        )}
       </div>
 
       {/* 選官 §3.6 */}

@@ -54,6 +54,9 @@ import {
 } from './grainTrade';
 import { coinEffects } from './coinage';
 import { armamentsTick, armamentEffects } from './workshops';
+import {
+  buildRelayNetwork, relayEffects, RELAY_BUILDINGS, type RelayReach,
+} from './postalRelay';
 import { clanOf } from '../data/clans';
 import { shrineEffects } from './culturalWorks';
 import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
@@ -2362,6 +2365,33 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   entries.push(...bondTick.entries);
   const bonded = bondTick.bonded;
 
+  // 驛傳網絡 (§1.19) — before the civic tick, work out how far each realm's writ
+  // actually reaches. Dispatches ride out from the capital with a fixed range;
+  // a 驛站/驛傳 remounts the rider. A province with no chain of stations to it is
+  // owned but not governed, and the civic multipliers below say so.
+  const relayReach = new Map<EntityId, RelayReach>();
+  {
+    const relayCityIds = new Set(
+      (input.buildings ?? [])
+        .filter((bd) => RELAY_BUILDINGS.has(bd.id) && (bd.level ?? 0) >= 1)
+        .map((bd) => bd.cityId));
+    for (const force of Object.values(forces)) {
+      const net = buildRelayNetwork({
+        nodes: Object.values(cities).map((c) => ({
+          cityId: c.id,
+          owned: c.ownerForceId === force.id && !c.ruined,
+          hasRelay: relayCityIds.has(c.id),
+        })),
+        neighborsOf: (id) => cities[id]?.adjacentCityIds ?? [],
+        capitalCityId: force.capitalCityId,
+      });
+      for (const [cid, reach] of net) {
+        if (cities[cid]?.ownerForceId !== force.id) continue;
+        relayReach.set(cid, reach);
+      }
+    }
+  }
+
   // Phase 3f-ter — 名將帶新兵. A 金牌+ officer stationed in a city seasons the
   // junior officers garrisoned with them: a small XP trickle to those clearly
   // below the mentor's 歷練. Turns 品階 into a legacy/teaching loop (all forces).
@@ -2577,10 +2607,13 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       : undefined;
     const law = lawEffects(severity);
     // 教化息貪 — an educated, well-schooled city resists graft (up to −35% accrual).
+    // 政令所及 (§1.19) — a province the court's riders cannot reach governs
+    // itself, and governs itself badly.
+    const relay = relayEffects(relayReach.get(city.id));
     const corruptionAccrual = city.ownerForceId
       ? Math.max(0, 0.6 + city.commerce / 120 - Math.min(0.6, bestPolitics / 130))
         * corruptionAccrualMultiplier(cityOfficers) * cultureGraftCurb(city.culture ?? 0)
-        * law.corruptionMul
+        * law.corruptionMul * relay.corruptionMul
       : 0;
     const nextCorruption = corruptionAccrual > 0
       ? Math.min(100, (city.corruption ?? 0) + corruptionAccrual)
@@ -2616,7 +2649,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
          ?? aiCorvee(input.forces[city.ownerForceId]?.personality))
       : undefined;
     const corveeEff = corveeEffects(corvee);
-    const nextHidden = city.ownerForceId
+    const nextHiddenBase = city.ownerForceId
       ? hiddenDrift({
           current: city.hiddenHouseholds ?? 0,
           corvee,
@@ -2626,6 +2659,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
           population: city.population,
         })
       : (city.hiddenHouseholds ?? 0);
+    // 斷驛則版籍爛 — nobody rides out to check the registers.
+    const nextHidden = city.ownerForceId
+      ? Math.max(2, Math.min(45, nextHiddenBase + relay.hiddenDelta))
+      : nextHiddenBase;
     // 囤積居奇 (§1.14) — dear grain plus a weak code plus a bought magistrate is
     // how a city's granaries end up in private warehouses. A 常平倉 is the
     // structural answer; 抑兼併 is the violent one.
@@ -2692,7 +2729,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         + Math.round(tick.foodIncome * corveeEff.farmMul * registryYieldMul(nextHidden) * hoardEff.foodMul)
         - tick.foodUpkeep),
       troops: troopsAfterDesertion + capitalGuard,
-      loyalty: Math.max(0, Math.min(100, city.loyalty + tick.loyaltyDelta + capitalLoyalty + corruptionLoyaltyBite + cultureLift + lawLoyalty)),
+      loyalty: Math.max(0, Math.min(100, city.loyalty + tick.loyaltyDelta + capitalLoyalty + corruptionLoyaltyBite + cultureLift + lawLoyalty + relay.loyaltyDelta)),
       corruption: city.ownerForceId ? nextCorruption : city.corruption,
       culture: nextCulture,
       caseload: nextCaseload,
