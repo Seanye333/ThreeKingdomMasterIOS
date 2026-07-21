@@ -20,6 +20,8 @@ interface Props {
 export function OfficerPicker({ cityId, commandType, onClose }: Props) {
   const def = COMMAND_DEFS[commandType];
   const issueCommand = useGameStore((s) => s.issueCommand);
+  // 兵制 (§4.8) — the 徵兵 preview must match what the levy will actually yield.
+  const playerServiceSystem = useGameStore((s) => (s.playerForceId ? s.serviceSystem?.[s.playerForceId] : undefined));
   const city = useGameStore((s) => s.cities[cityId]);
   const officersMap = useGameStore((s) => s.officers);
   const rapport = useGameStore((s) => s.rapport);
@@ -175,7 +177,7 @@ export function OfficerPicker({ cityId, commandType, onClose }: Props) {
                 ? previewCommandGain(commandType, o, city, {
                     internalMultiplier: apptBonus.internalMultiplier,
                     recruitBonus: apptBonus.recruitBonus,
-                  })
+                  }, playerServiceSystem)
                 : null;
               const recommended = fit >= 1.15;
               const liability = fit <= 0.85;

@@ -1244,6 +1244,8 @@ export interface GameStore extends GameState {
   setGrainPolicy: (policy: import('../systems/grainTrade').GrainPolicy) => void;
   /** 錢法 (§1.17) — set the realm's coin standard (五銖/大錢/穀帛為市). */
   setCoinStandard: (standard: import('../systems/coinage').CoinStandard) => void;
+  /** 兵制 (§4.8) — set the realm's service system (更卒/世兵/募兵). */
+  setServiceSystem: (system: import('../systems/conscription').ServiceSystem) => void;
   /** 大赦天下 (§1.11) — empty every court in the realm: loyalty everywhere and
    *  the docket wiped, paid for in gold, in the throne's dignity, and in the
    *  men you just let out. Refused if one was proclaimed too recently. */
@@ -4454,6 +4456,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           grainPolicy: state.grainPolicy,
           coinStandard: state.coinStandard,
           inflationByForce: state.inflationByForce,
+          serviceSystem: state.serviceSystem,
           shrines: state.shrines,
           buildings: state.buildings,
           forces: forcesAfterCourt,
@@ -15561,6 +15564,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         return { coinStandard: { ...s.coinStandard, [fid]: standard } };
       }),
 
+      // 兵制 (§4.8) — 更卒 / 世兵 / 募兵. Takes effect from the next season.
+      setServiceSystem: (system) => set((s) => {
+        const fid = s.playerForceId;
+        if (!fid) return {};
+        return { serviceSystem: { ...s.serviceSystem, [fid]: system } };
+      }),
+
       proclaimAmnesty: () => {
         const s = get();
         const fid = s.playerForceId;
@@ -18505,6 +18515,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         grainPolicy: state.grainPolicy,
         coinStandard: state.coinStandard,
         inflationByForce: state.inflationByForce,
+        serviceSystem: state.serviceSystem,
         grandProjects: state.grandProjects,
         poems: state.poems,
         shrines: state.shrines,

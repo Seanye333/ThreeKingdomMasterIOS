@@ -21,6 +21,9 @@ import {
   buildRelayNetwork, RELAY_BUILDINGS,
 } from '../../game/systems/postalRelay';
 import {
+  SERVICE_SYSTEMS, SERVICE_NAMES, serviceEffects, seasonPay, type ServiceSystem,
+} from '../../game/systems/conscription';
+import {
   SELECTION_NAMES, SELECTION_SYSTEMS, selectionEffects, rectifierOf, rectifierIsUpright,
   type SelectionSystem,
 } from '../../game/systems/officialSelection';
@@ -57,6 +60,8 @@ export function StatecraftModal({ onClose, onSelectCity }: { onClose: () => void
   const coinStandard: CoinStandard = useGameStore((s) => (playerForceId ? s.coinStandard?.[playerForceId] : undefined) ?? 'wuzhu');
   const setCoinStandard = useGameStore((s) => s.setCoinStandard);
   const inflation = useGameStore((s) => (playerForceId ? s.inflationByForce?.[playerForceId] : undefined) ?? s.inflation ?? 0);
+  const service: ServiceSystem = useGameStore((s) => (playerForceId ? s.serviceSystem?.[playerForceId] : undefined) ?? 'levy');
+  const setServiceSystem = useGameStore((s) => s.setServiceSystem);
   const forces = useGameStore((s) => s.forces);
   const selection: SelectionSystem = useGameStore((s) => (playerForceId ? s.selectionSystem?.[playerForceId] : undefined) ?? 'chaju');
   const setSelectionSystem = useGameStore((s) => s.setSelectionSystem);
@@ -128,6 +133,9 @@ export function StatecraftModal({ onClose, onSelectCity }: { onClose: () => void
     const far = own.filter((c) => { const r = net.get(c.id); return r?.connected && r.hops > 4; });
     return { net, cut, far, stations: relayCityIds.size };
   }, [cities, buildings, own, forces, playerForceId]);
+
+  const totalTroops = own.reduce((sum, c) => sum + c.troops, 0);
+  const wageBill = own.reduce((sum, c) => sum + seasonPay(c.troops, service), 0);
 
   const mean = (pick: (c: (typeof own)[number]) => number) =>
     own.length ? own.reduce((a, c) => a + pick(c), 0) / own.length : 0;
@@ -244,6 +252,26 @@ export function StatecraftModal({ onClose, onSelectCity }: { onClose: () => void
           </span>
         </div>
         <div style={note}>{t(coinEffects(coinStandard).badgeZh, coinEffects(coinStandard).badgeEn)}</div>
+      </div>
+
+      {/* 兵制 §4.8 */}
+      <div style={sect}>
+        <div style={head}>🛡 {t('兵制', 'Service system')}</div>
+        <div style={row}>
+          {SERVICE_SYSTEMS.map((sv) => (
+            <button key={sv} style={pill(service === sv)} onClick={() => setServiceSystem(sv)}
+              title={SERVICE_NAMES[sv].motto}>
+              {t(SERVICE_NAMES[sv].zh, SERVICE_NAMES[sv].en)}
+            </button>
+          ))}
+          {serviceEffects(service).payPerThousand > 0 && (
+            <span style={{ ...note, marginTop: 0, marginLeft: 'auto' }}>
+              {t(`全境兵 ${totalTroops.toLocaleString()} · 軍餉 ${wageBill.toLocaleString()} 金/季`,
+                 `${totalTroops.toLocaleString()} troops · wages ${wageBill.toLocaleString()}g/season`)}
+            </span>
+          )}
+        </div>
+        <div style={note}>{t(serviceEffects(service).badgeZh, serviceEffects(service).badgeEn)}</div>
       </div>
 
       {/* 驛傳 §1.19 */}

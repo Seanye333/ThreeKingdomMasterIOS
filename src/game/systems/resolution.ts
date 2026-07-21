@@ -57,6 +57,7 @@ import { armamentsTick, armamentEffects } from './workshops';
 import {
   buildRelayNetwork, relayEffects, RELAY_BUILDINGS, type RelayReach,
 } from './postalRelay';
+import { serviceEffects, payGarrison, aiServiceSystem } from './conscription';
 import { clanOf } from '../data/clans';
 import { shrineEffects } from './culturalWorks';
 import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
@@ -158,6 +159,8 @@ export interface ResolutionInput {
   grainPolicy?: Record<EntityId, import('./grainTrade').GrainPolicy>;
   /** 錢法 — per-force coin standard (§1.17); missing resolve to 五銖錢. */
   coinStandard?: Record<EntityId, import('./coinage').CoinStandard>;
+  /** 兵制 — per-force service system (§4.8); missing resolve by temperament. */
+  serviceSystem?: Record<EntityId, import('./conscription').ServiceSystem>;
   /** 通脹 — every realm's own inflation (§1.17). Falls back to `inflation` for
    *  the player and 0 for everyone else, so old saves behave as before. */
   inflationByForce?: Record<EntityId, number>;
@@ -2314,7 +2317,12 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     // 武庫/工官 — 督造軍器 works faster where there is a real armoury (§1.18).
     const arsenalHere = (input.buildings ?? []).find(
       (bd) => bd.cityId === city.id && bd.id === 'arsenal')?.level ?? 0;
-    const result = resolveInternalAffairs(cmd.type, officer, city, rng, finalBonus, input.weather?.kind, assistants, input.rapport, hasCourtForCmd, cmdLaw, arsenalHere);
+    // 兵制 (§4.8) — 徵兵 behaves differently under 更卒 / 世兵 / 募兵.
+    const cmdService = city.ownerForceId
+      ? (input.serviceSystem?.[city.ownerForceId]
+         ?? (city.ownerForceId === input.playerForceId ? 'levy' : undefined))
+      : undefined;
+    const result = resolveInternalAffairs(cmd.type, officer, city, rng, finalBonus, input.weather?.kind, assistants, input.rapport, hasCourtForCmd, cmdLaw, arsenalHere, cmdService);
     cities[city.id] = applyDelta(city, result.delta);
     // 平準抑兼 (§1.14) — a market broken open is worth recording.
     if (cmd.type === 'curb-hoarding' && result.success && city.ownerForceId === input.playerForceId) {
@@ -2544,6 +2552,27 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
          ?? (city.ownerForceId === input.playerForceId ? (input.inflation ?? 0) : 0))
       : 0;
     const coin = coinEffects(city.ownerForceId ? input.coinStandard?.[city.ownerForceId] : undefined);
+    // 兵制 (§4.8) — who the soldiers are decides what they eat, how hard they
+    // drill, whether they must be paid, and how fast they leave when they aren't.
+    // 各國自有其兵 — an AI lord picks by temperament and by what is in his coffers.
+    const serviceOwned = city.ownerForceId
+      ? Object.values(cities).filter((c) => c.ownerForceId === city.ownerForceId)
+      : [];
+    const service = city.ownerForceId
+      ? (input.serviceSystem?.[city.ownerForceId]
+         ?? (city.ownerForceId === input.playerForceId
+           ? 'levy'
+           : aiServiceSystem(
+               forces[city.ownerForceId]?.personality,
+               serviceOwned.length
+                 ? serviceOwned.reduce((sum, c) => sum + c.gold, 0) / serviceOwned.length
+                 : 0)))
+      : undefined;
+    const serviceEff = serviceEffects(service);
+    // 軍餉 — the wage bill lands on the city that keeps the men.
+    const wages = city.ownerForceId
+      ? payGarrison({ troops: city.troops, gold: city.gold, system: service })
+      : { paid: 0, arrears: 0, deserted: 0, loyaltyDelta: 0 };
     const tick = tickCityEconomy(
       city,
       input.date.season,
@@ -2568,6 +2597,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     // enough, 民忠 ≥ 40), capped by the city's troop ceiling. Makes the capital
     // genuinely harder to storm and gives 選都/守都 strategic weight.
     const troopsAfterDesertion = Math.max(0, city.troops - tick.desertion);
+    // 世兵不走,募兵先走 — the same empty granary empties a hired army faster.
+    const serviceStarveExtra = tick.desertion > 0
+      ? Math.min(troopsAfterDesertion, Math.round(tick.desertion * (serviceEff.desertionMul - 1)))
+      : 0;
     let capitalGuard = 0;
     if (isCapital && city.loyalty >= 40) {
       const cap = citySize(city).troopCap;
@@ -2718,18 +2751,18 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     // 甲堅則習 (§1.18) — a well-stocked armoury slows the slide (men drill with
     // gear that fits); an empty one hurries it.
     const nextDrill = city.drill
-      ? Math.max(0, Math.min(100, city.drill - 2 + armsEff.drillDelta))
+      ? Math.max(0, Math.min(100, city.drill - 2 + armsEff.drillDelta + serviceEff.drillDelta))
       : city.drill;
     const updated: City = {
       ...city,
       // 律令與稅入 (§1.11) — 寬刑之下賦稅有漏,峻法之下錙銖必入。
       // 編戶與稅基 (§1.12) — 隱戶不入版籍,其田租賦皆歸豪右;重役又誤農時。
-      gold: city.gold + Math.round(tick.goldIncome * law.taxYieldMul * registryYieldMul(nextHidden) * coin.goldYieldMul) + territoryGold,
+      gold: Math.max(0, city.gold + Math.round(tick.goldIncome * law.taxYieldMul * registryYieldMul(nextHidden) * coin.goldYieldMul) + territoryGold - wages.paid),
       food: Math.max(0, city.food
         + Math.round(tick.foodIncome * corveeEff.farmMul * registryYieldMul(nextHidden) * hoardEff.foodMul)
-        - tick.foodUpkeep),
-      troops: troopsAfterDesertion + capitalGuard,
-      loyalty: Math.max(0, Math.min(100, city.loyalty + tick.loyaltyDelta + capitalLoyalty + corruptionLoyaltyBite + cultureLift + lawLoyalty + relay.loyaltyDelta)),
+        - Math.round(tick.foodUpkeep * serviceEff.foodUpkeepMul)),
+      troops: Math.max(0, troopsAfterDesertion + capitalGuard - wages.deserted - serviceStarveExtra),
+      loyalty: Math.max(0, Math.min(100, city.loyalty + tick.loyaltyDelta + capitalLoyalty + corruptionLoyaltyBite + cultureLift + lawLoyalty + relay.loyaltyDelta + wages.loyaltyDelta)),
       corruption: city.ownerForceId ? nextCorruption : city.corruption,
       culture: nextCulture,
       caseload: nextCaseload,
@@ -2750,6 +2783,13 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     // 民政警訊 (§1.11–§1.14) — report a civic problem the season it CROSSES a
     // threshold, not every season after (the player would learn to ignore it).
     // Only the player's own cities, and only the upward crossing.
+    if (city.ownerForceId === input.playerForceId && wages.arrears > 0) {
+      entries.push({
+        cityId: city.id, kind: 'desertion',
+        text: `${city.name.en}: ${wages.arrears} gold of wages unpaid — ${wages.deserted} of the hired men walked away.`,
+        textZh: `${city.name.zh}:欠餉 ${wages.arrears} 金 —— 募兵去者 ${wages.deserted} 人。重賞之下所聚,無賞則散。`,
+      });
+    }
     if (city.ownerForceId === input.playerForceId) {
       const crossed = (before: number, after: number, at: number) => before < at && after >= at;
       if (crossed(city.caseload ?? 0, nextCaseload, CASELOAD_HEAVY)) {

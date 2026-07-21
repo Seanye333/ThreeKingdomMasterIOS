@@ -3156,6 +3156,8 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
     }
     return a;
   }, [pendingCommands, cityId]);
+  // 兵制 (§4.8) — the 徵兵 preview must match what the levy will actually yield.
+  const playerServiceSystem = useGameStore((s) => (s.playerForceId ? s.serviceSystem?.[s.playerForceId] : undefined));
   // Best-officer施政預覽 per command, computed once (memoised) rather than
   // re-scanning idleOfficers for every button on every render of the card.
   const previewByCmd = useMemo(() => {
@@ -3172,7 +3174,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
       out[ct] = best ? previewCommandGain(ct, best, city, {
         internalMultiplier: apptBonus.internalMultiplier,
         recruitBonus: apptBonus.recruitBonus,
-      }) : null;
+      }, playerServiceSystem) : null;
     }
     return out;
   }, [idleOfficers, apptBonus, city]);

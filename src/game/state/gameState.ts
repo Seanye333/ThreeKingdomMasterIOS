@@ -505,6 +505,8 @@ export interface GameState {
   grainPolicy: Record<EntityId, import('../systems/grainTrade').GrainPolicy>;
   /** 錢法 (§1.17) — per-force coin standard (五銖/大錢/穀帛為市). Absent ⇒ 五銖錢. */
   coinStandard: Record<EntityId, import('../systems/coinage').CoinStandard>;
+  /** 兵制 (§4.8) — per-force service system (更卒/世兵/募兵). Absent ⇒ 更卒. */
+  serviceSystem: Record<EntityId, import('../systems/conscription').ServiceSystem>;
   /** 通脹 (§1.17) — every realm's own inflation (0–100). The player's entry is
    *  mirrored into the legacy scalar `inflation` so old readers keep working. */
   inflationByForce: Record<EntityId, number>;
@@ -969,6 +971,7 @@ export const EMPTY_STATE: GameState = {
   grainPolicy: {},
   coinStandard: {},
   inflationByForce: {},
+  serviceSystem: {},
   grandProjects: [],
   poems: [],
   shrines: [],
@@ -1467,6 +1470,7 @@ export function loadScenario(
     grainPolicy: {},
     coinStandard: {},
     inflationByForce: {},
+    serviceSystem: {},
     grandProjects: [],
     poems: [],
     shrines: [],

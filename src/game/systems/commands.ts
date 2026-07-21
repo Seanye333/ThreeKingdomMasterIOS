@@ -14,6 +14,7 @@ import { adjudicateClear } from './law';
 import { householdAudit } from './household';
 import { crackdownResult } from './hoarding';
 import { armWorksResult, armamentEffects } from './workshops';
+import { serviceEffects, type ServiceSystem } from './conscription';
 import { pairKey } from '../types/diplomacy';
 import type { WeatherKind } from './weather';
 
@@ -293,6 +294,8 @@ export function resolveInternalAffairs(
   lawSeverity?: string,
   /** 武庫/工官 level in this city (§1.18); 督造軍器 works faster with one. */
   arsenalLevel?: number,
+  /** 兵制 (§4.8) — the realm's service system; decides how 徵兵 behaves. */
+  service?: ServiceSystem,
 ): CommandResult {
   const def = COMMAND_DEFS[type];
   // Trait multiplier (diligent +20%, lazy −20%, specialist +20% for matching
@@ -426,15 +429,18 @@ export function resolveInternalAffairs(
       // 無甲不成軍 (§1.18) — men without arms are a mob. The city's armoury
       // scales what a levy actually produces: an empty one costs you a fifth.
       const armsMul = armamentEffects(city.armaments).recruitMul;
-      const fromPop = Math.round(Math.min(max, sizeMax, Math.floor(city.population / 60)) * armsMul);
+      // 兵制 (§4.8) — a hired army finds men the levy never could; a hereditary
+      // caste is a closed pool; and each draws on the countryside differently.
+      const svc = serviceEffects(service);
+      const fromPop = Math.round(Math.min(max, sizeMax, Math.floor(city.population / 60)) * armsMul * svc.recruitMul);
       // Each soldier costs ~1.4 civilians — keeps the (unchanged) population from
       // being gutted as armies grow larger, so big garrisons are sustainable.
-      const popDrawn = Math.round(fromPop * 1.4);
+      const popDrawn = Math.round(fromPop * 1.4 * svc.popDrawMul);
       // 民怨 — conscription pulls men from the fields and breeds resentment, the
       // harder you levy relative to the populace the worse. Sustained recruiting
       // must be balanced with 撫民 or the city turns restive.
       const loyaltyHit = fromPop > 0
-        ? Math.min(8, 1 + Math.round((popDrawn / Math.max(1, city.population)) * 250))
+        ? Math.round(Math.min(8, 1 + Math.round((popDrawn / Math.max(1, city.population)) * 250)) * svc.loyaltyHitMul)
         : 0;
       return {
         success: fromPop > 0,
@@ -831,6 +837,8 @@ export function previewCommandGain(
   officer: Officer,
   city: City,
   bonus?: { internalMultiplier?: number; recruitBonus?: number; troopCapMul?: number },
+  /** 兵制 (§4.8) — shown so the 徵兵 preview matches what the levy will yield. */
+  service?: ServiceSystem,
 ): { zh: string; en: string; delta: number } | null {
   const def = COMMAND_DEFS[type];
   const traitMul = internalAffairsMultiplier(officer, type);
@@ -870,9 +878,10 @@ export function previewCommandGain(
       const max = Math.floor(statValue * 50) + 800;
       const sizeMax = Math.floor((size.troopCap * (bonus?.troopCapMul ?? 1)) / 8) + Math.floor(city.warhorses ?? 0);
       const previewArms = armamentEffects(city.armaments).recruitMul;
+      const previewSvc = serviceEffects(service).recruitMul;
       return {
         zh: '兵', en: 'Troops',
-        delta: Math.max(0, Math.round(Math.min(max, sizeMax, Math.floor(city.population / 60)) * previewArms)),
+        delta: Math.max(0, Math.round(Math.min(max, sizeMax, Math.floor(city.population / 60)) * previewArms * previewSvc)),
       };
     }
     default:
