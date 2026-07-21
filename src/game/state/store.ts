@@ -8819,6 +8819,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           // standard it runs. The player's entry is mirrored into the legacy
           // scalar so every existing reader keeps working.
           inflationByForce: seasonBoundary ? nextInflationByForce : state.inflationByForce,
+          // 米市商旅 (§1.16) — transient: the map draws last season's caravans.
+          lastGrainFlows: result.grainFlows ?? [],
           inflation: seasonBoundary
             ? (nextInflationByForce[state.playerForceId ?? ''] ?? state.inflation ?? 0)
             : state.inflation,

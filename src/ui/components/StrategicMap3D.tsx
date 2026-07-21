@@ -55,7 +55,7 @@ import { Forts3D, Ports3D } from './map3d/Strongholds3D';
 import { SkyDome, DriftingClouds, CloudShadows, CitySmoke3D, Birds3D, EventMarks3D, TradeShips3D, DuskCityLights, Caravans3D, EMPTY_THREATS, FOG_OVERLAY, EMPTY_REVEALS } from './map3d/AtmosphereTrade3D';
 import { Tribes3D, WildSites3D, ScenicSites3D } from './map3d/WildSites3D';
 import { TerritoryGroundLayer, MapTerrain } from './map3d/Terrain3D';
-import { Roads, Convoys, Envoys, CityDefenseRing, BattleIgnitionCard, overlayForCity } from './map3d/Traffic3D';
+import { Roads, Convoys, Envoys, CityDefenseRing, BattleIgnitionCard, overlayForCity, GrainCaravans } from './map3d/Traffic3D';
 import { GreatWall3D, ProvinceBorders3D, ProvinceLabels3D, FactionLabels3D, MarchPreviewLine, Bridges3D, PostStations3D, Landmarks3D, UniqueLandmarks3D, MarchRangeRings, SeaLabels, HeadingTracker } from './map3d/GeoDressing3D';
 import { BattleFocusFly, EventFocusFly, ReplayRecorder, ReplayPanel } from './map3d/Flights3D';
 export { warmStrategicAssets } from './map3d/Terrain3D';
@@ -217,6 +217,8 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
   const marchPreview = useGameStore((s) => s.marchPreview);
   const weatherPreset = WEATHER_PRESETS[weather.kind];
   const season = useGameStore((s) => s.date.season) as Season;
+  // 米市商旅 (§1.16) — last season's caravans, drawn under the 米價 overlay.
+  const grainFlows = useGameStore((s) => s.lastGrainFlows);
   const seasonPreset = SEASON_PRESETS[season];
   // 晝夜隨旬 — the month rolls 上旬→day, 中旬→dusk, 下旬→a moonlit night, so
   // time visibly passes as each third of the month resolves.
@@ -518,6 +520,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
       })()}
       <Convoys cities={cities} convoys={convoysState} forces={forces} />
       <Envoys cities={cities} expeditions={expeditionsState} forces={forces} />
+      {overlayMode === 'grain' && <GrainCaravans flows={grainFlows} />}
       {overlayMode === 'supply' && <SupplyLines3D />}
       {/* 糧道總覽 — the supply overlay also lights EVERY long-range column's
           corridor at once (cut ones flag red), not just the selected army:

@@ -514,6 +514,11 @@ export interface GameState {
    * Set by endSeason when the career officer dies; the UI shows it once and
    * clears it. (Replaces the app's last native alert().)
    */
+  /**
+   * 米市商旅 (§1.16) — the caravans that ran last season, so the map can draw
+   * them. Transient (not persisted): they are redrawn from each resolution.
+   */
+  lastGrainFlows: Array<{ fromCityId: EntityId; toCityId: EntityId; food: number; crossBorder: boolean }>;
   careerEpilogue: {
     nameZh: string; nameEn: string;
     statusZh: string; statusEn: string;
@@ -987,6 +992,7 @@ export const EMPTY_STATE: GameState = {
   inflationByForce: {},
   serviceSystem: {},
   refugeePolicy: {},
+  lastGrainFlows: [],
   careerEpilogue: null,
   grandProjects: [],
   poems: [],
@@ -1488,6 +1494,7 @@ export function loadScenario(
     inflationByForce: {},
     serviceSystem: {},
     refugeePolicy: {},
+    lastGrainFlows: [],
     careerEpilogue: null,
     grandProjects: [],
     poems: [],

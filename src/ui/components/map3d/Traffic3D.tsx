@@ -493,3 +493,55 @@ export function overlayForCity(
     : `${v}`;
   return { color: `rgb(${r},${g},${b})`, label };
 }
+
+
+/* ─── 米市商旅 (§1.16) — the caravans the price gap put on the road ─────── */
+
+/**
+ * Grain moving by itself. Distinct from {@link Convoys}: those are *your* carts
+ * on *your* order, drawn as a token walking a route over several seasons. These
+ * are private merchants who ran last season and are already gone — so they are
+ * drawn as a faint dotted thread along the road, thicker for a bigger haul,
+ * amber inside the realm and pale gold where it crossed a border.
+ *
+ * Only shown under the 米價 overlay: the thread and the price colour are the
+ * same story (grain flows toward red), and elsewhere it would just be clutter.
+ */
+export function GrainCaravans({ flows }: {
+  flows: ReadonlyArray<{ fromCityId: string; toCityId: string; food: number; crossBorder: boolean }>;
+}) {
+  const cities = useGameStore((st) => st.cities);
+  const lines = useMemo(() => {
+    const out: Array<{ key: string; pts: [number, number, number][]; color: string; width: number }> = [];
+    for (const f of flows) {
+      const from = cities[f.fromCityId];
+      const to = cities[f.toCityId];
+      if (!from || !to) continue;
+      const [fx, fy] = cityPixel(from.id, from.coords.x, from.coords.y);
+      const [tx, ty] = cityPixel(to.id, to.coords.x, to.coords.y);
+      const route = terrainRoute(fx, fy, tx, ty);
+      const pts = route.map((p) => {
+        const [wx, wz] = pxToWorld(p.x, p.y);
+        return [wx, sampleTerrainHeight(p.x, p.y) + 0.6, wz] as [number, number, number];
+      });
+      if (pts.length < 2) continue;
+      out.push({
+        key: `${f.fromCityId}->${f.toCityId}`,
+        pts,
+        color: f.crossBorder ? '#e8d08a' : '#c8a05a',
+        width: Math.max(0.8, Math.min(3, f.food / 900)),
+      });
+    }
+    return out;
+  }, [flows, cities]);
+
+  if (lines.length === 0) return null;
+  return (
+    <>
+      {lines.map((l) => (
+        <Line key={l.key} points={l.pts} color={l.color} lineWidth={l.width}
+          transparent opacity={0.55} dashed dashSize={2.2} gapSize={2.0} />
+      ))}
+    </>
+  );
+}

@@ -245,6 +245,10 @@ export interface ResolutionOutput {
   /** 民政功業 (§1.11–§1.14) — instant achievement kinds earned by the player's
    *  civic commands this season; the store fires them (it owns the ledger). */
   civicAchievements?: string[];
+  /** 米市商旅 (§1.16) — this season's caravans, for the map to draw. */
+  grainFlows?: Array<{
+    fromCityId: EntityId; toCityId: EntityId; food: number; crossBorder: boolean;
+  }>;
   /** 戰記 — player field-clash wins / enemy columns starved this season. */
   playerFieldClashesWon?: number;
   enemyColumnsStarved?: number;
@@ -507,6 +511,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   let playerRoutsHunted = 0;
   // 民政功業 — instant achievement kinds the player's civic commands earned.
   const civicAchievements: string[] = [];
+  let grainFlowsOut: ResolutionOutput['grainFlows'];
   let playerTroopsAbsorbed = 0;
   const troopOverride: Record<EntityId, number> = {};
   // Player-involved clashes deferred to an interactive tactical battle (AI
@@ -4373,6 +4378,9 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       // 兵戈之間無商旅 — an actively hostile neighbour's roads are shut.
       canTrade: (a, b) => !!a && !!b && (a === b || getRelation(input.diplomacy, a, b).score >= -20),
     });
+    grainFlowsOut = grainFlows.map((f) => ({
+      fromCityId: f.fromCityId, toCityId: f.toCityId, food: f.food, crossBorder: f.crossBorder,
+    }));
     for (const f of grainFlows) {
       const src = cities[f.fromCityId];
       const dst = cities[f.toCityId];
@@ -4670,6 +4678,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     enemyColumnsStarved: enemyColumnsStarved || undefined,
     playerRoutsHunted: playerRoutsHunted || undefined,
     civicAchievements: civicAchievements.length > 0 ? civicAchievements : undefined,
+    grainFlows: grainFlowsOut && grainFlowsOut.length > 0 ? grainFlowsOut : undefined,
     playerTroopsAbsorbed: playerTroopsAbsorbed || undefined,
   };
 }
