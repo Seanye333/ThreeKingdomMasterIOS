@@ -1768,6 +1768,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         }, rng);
         const before = cmd.siegeEngines ?? 0;
         cmd.siegeEngines = Math.max(0, Math.round(((before + built) - loss.burned) * 10) / 10);
+        if (before < 9 && (cmd.siegeEngines ?? 0) >= 9
+            && officers[cmd.officerId]?.forceId === input.playerForceId) {
+          civicAchievements.push('siege-park');
+        }
         if (loss.notable && officers[cmd.officerId]?.forceId === input.playerForceId) {
           entries.push({
             cityId: besieged.id, kind: 'battle',
@@ -2068,6 +2072,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
             wounded: (cities[cityAtStart.id].wounded ?? 0) + raidSplit.wounded,
           };
           if (raid.success) {
+            if (cityAtStart.ownerForceId === input.playerForceId) civicAchievements.push('night-raid');
             troopOverride[cmd.officerId] = Math.max(0, besiegerTroops - raid.campLosses);
             cmd.troops = troopOverride[cmd.officerId];
             cmd.siegeEngines = Math.max(0, (cmd.siegeEngines ?? 0) - raid.enginesBurned);
@@ -2562,9 +2567,17 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         neighborsOf: (id) => cities[id]?.adjacentCityIds ?? [],
         capitalCityId: force.capitalCityId,
       });
+      let owned = 0;
+      let cut = 0;
       for (const [cid, reach] of net) {
         if (cities[cid]?.ownerForceId !== force.id) continue;
         relayReach.set(cid, reach);
+        owned++;
+        if (!reach.connected) cut++;
+      }
+      // 政令通達 — ten cities or more and not one of them off the network.
+      if (force.id === input.playerForceId && owned >= 10 && cut === 0) {
+        civicAchievements.push('writ-complete');
       }
     }
   }
@@ -2980,6 +2993,11 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     // 民政警訊 (§1.11–§1.14) — report a civic problem the season it CROSSES a
     // threshold, not every season after (the player would learn to ignore it).
     // Only the player's own cities, and only the upward crossing.
+    // 制度批成就 (§1.18/§4.11) — instant, checked where the numbers move.
+    if (city.ownerForceId === input.playerForceId) {
+      if ((city.armaments ?? 0) < 55 && armsTick.armaments >= 55) civicAchievements.push('well-armed');
+      if (care.recovered >= 300) civicAchievements.push('wounded-home');
+    }
     if (city.ownerForceId === input.playerForceId && (care.recovered > 0 || care.died > 0)) {
       entries.push({
         cityId: city.id, kind: 'income',
@@ -4361,6 +4379,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       if (!src || !dst) continue;
       cities[f.fromCityId] = { ...src, food: Math.max(0, src.food - f.food), gold: src.gold + f.sellerGold };
       cities[f.toCityId] = { ...dst, food: dst.food + f.food, gold: Math.max(0, dst.gold - f.buyerGold) };
+      if (f.crossBorder && grainPlayerFid
+          && (f.fromForceId === grainPlayerFid || f.toForceId === grainPlayerFid)) {
+        civicAchievements.push('grain-caravan');
+      }
       if (grainPlayerFid && (f.fromForceId === grainPlayerFid || f.toForceId === grainPlayerFid)) {
         const note = grainFlowNote(f, src.name, dst.name);
         entries.push({

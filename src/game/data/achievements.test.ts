@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { ACHIEVEMENTS } from './achievements';
 import { EVENTS_BY_ID, HISTORICAL_EVENTS } from './events';
+import { BEHAVIOR_CHOICE_FLAGS } from '../systems/behaviorEvents';
 import { processTrigger } from '../systems/achievements';
 import { createEmptyAchievementProgress } from '../types/achievement';
 
@@ -32,11 +33,14 @@ describe('achievement catalog integrity', () => {
     // reference. Choice-achievements must point at a flag some player-pickable
     // choice actually sets (top-level effects don't count — those apply
     // without the player choosing).
-    const choiceFlags = new Set(
-      HISTORICAL_EVENTS.flatMap((e) => (e.choices ?? []).flatMap((c) => c.effects))
+    const choiceFlags = new Set([
+      ...HISTORICAL_EVENTS.flatMap((e) => (e.choices ?? []).flatMap((c) => c.effects))
         .filter((f) => f.kind === 'flag')
         .map((f) => (f as { key: string }).key),
-    );
+      // 動態事件 are built at runtime, so they cannot be walked like scripted
+      // history — behaviorEvents declares the flags its choices can set.
+      ...BEHAVIOR_CHOICE_FLAGS,
+    ]);
     for (const a of ACHIEVEMENTS) {
       if (a.trigger.kind !== 'event-choice') continue;
       expect(choiceFlags.has(a.trigger.targetId ?? ''), `${a.id} → ${a.trigger.targetId}`).toBe(true);

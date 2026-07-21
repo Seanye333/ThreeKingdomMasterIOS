@@ -58,7 +58,15 @@ export type AchievementTriggerKind =
   | 'open-exam'      // 唯才是舉 — adopted 開科取士
   | 'immortal-verse' // 千古絕唱 — composed a poem of the first rank
   | 'shrine-raised'  // 立祠祭故 — raised a shrine to a fallen officer
-  | 'sea-lord';      // 樓船水師 — fought and won a river battle as a master fleet
+  | 'sea-lord'       // 樓船水師 — fought and won a river battle as a master fleet
+  // 2026-07-21 institution batch (instant, no targetId):
+  | 'well-armed'     // 甲堅兵利 — a city's armoury reached 甲堅兵利
+  | 'grain-caravan'  // 通商惠工 — merchants moved grain across your border
+  | 'wounded-home'   // 傷卒歸伍 — 1,000 wounded returned to the ranks in one campaign
+  | 'siege-park'     // 器械如林 — massed a full siege park before a city
+  | 'night-raid'     // 百騎劫營 — a night sortie fired a besieger's camp
+  | 'writ-complete'  // 政令通達 — every city of a realm of 10+ on the relay network
+  | 'merit-cleared'; // 賞不逾時 — settled every officer's merit ledger at once
 
 export interface AchievementTrigger {
   kind: AchievementTriggerKind;

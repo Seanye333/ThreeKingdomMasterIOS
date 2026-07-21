@@ -15699,6 +15699,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             },
           },
         });
+        // 賞不逾時 — if nobody in the whole corps is owed anything now, that is
+        // an achievement in itself (and a rarer one than it sounds).
+        const after = get();
+        const stillOwed = Object.values(after.officers).some(
+          (x) => x.forceId === fid && x.status !== 'dead' && x.status !== 'unsearched'
+            && outstandingMerit(x, after.deeds[x.id]) >= 1);
+        if (!stillOwed) get().fireAchievement({ kind: 'merit-cleared' });
         return {
           ok: true,
           message: `行賞 ${o.name.zh} —— 費金 ${quote.gold.toLocaleString()},忠誠 +${quote.loyalty}。賞不逾時,士乃用命。`,

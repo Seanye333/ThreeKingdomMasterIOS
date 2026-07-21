@@ -33,6 +33,23 @@ export interface BehaviorEventContext {
   rng?: () => number;
 }
 
+/**
+ * Flags the *player-pickable* choices in this file can set. Behavioural events
+ * are built at runtime, so the achievement-integrity test cannot walk them the
+ * way it walks scripted history — this list is what it checks against. Add a
+ * key here whenever a choice sets one, or a choice-achievement pointing at it
+ * will read as a dead reference.
+ */
+export const BEHAVIOR_CHOICE_FLAGS: readonly string[] = [
+  'law-debate-strict', 'law-debate-lenient',
+  'gentry-audit', 'corvee-pressed', 'corvee-rested', 'urged-enthrone',
+  'coin-debased', 'coin-kept-sound', 'coin-grain-cloth',
+  'wages-paid-in-full', 'wages-promised-plunder', 'wages-disbanded',
+  'grain-roads-opened', 'grain-monopolised', 'grain-roads-shut',
+  'wounded-tended', 'wounded-discharged', 'wounded-abandoned',
+  'arms-workshops-opened', 'arms-smiths-levied', 'arms-shortage-ignored',
+];
+
 const statAvg = (o: Officer): number =>
   (o.stats.leadership + o.stats.war + o.stats.intelligence + o.stats.politics + o.stats.charisma) / 5;
 

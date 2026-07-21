@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { rollBehaviorEvent, type BehaviorEventContext } from './behaviorEvents';
+import { rollBehaviorEvent, BEHAVIOR_CHOICE_FLAGS, type BehaviorEventContext } from './behaviorEvents';
 import type { City, Force, Officer, TaxRate } from '../types';
 
 const ruler = (id: string, forceId: string): Officer => ({
@@ -306,5 +306,40 @@ describe('制度抉擇事件 (§1.16–§4.11)', () => {
     });
     const fired = rollBehaviorEvent(c);
     expect(fired && ids.includes(fired.id)).toBeFalsy();
+  });
+});
+
+describe('BEHAVIOR_CHOICE_FLAGS', () => {
+  it('lists every flag a player-pickable choice in this file can set', () => {
+    // Build every candidate under maximally-permissive conditions and collect
+    // the flags their choices set, so the declared list cannot silently drift
+    // from the code (a stale list = a dead achievement reference).
+    const seen = new Set<string>();
+    const wide = () => ctx({
+      cities: Object.fromEntries(['c1', 'c2', 'c3', 'c4', 'c5'].map((id) => [id, {
+        id, ownerForceId: 'p', gold: 100, loyalty: 20, troops: 9000, commerce: 80,
+        name: { zh: id, en: id }, armaments: 1, wounded: 5000,
+        caseload: 90, hiddenHouseholds: 40, hoardedGrain: 35, culture: 0,
+      } as unknown as City])),
+      officers: { r: ruler('r', 'p'), a: idleOfficer('a', 'p', 85) },
+      taxPolicy: { p: 'heavy' as TaxRate },
+      corvee: { p: 'heavy' },
+      serviceSystem: { p: 'paid' },
+      mandateByForce: { p: 10 },
+    });
+    // Fire them one at a time by marking each previous winner as already fired.
+    const firedSoFar: string[] = [];
+    for (let i = 0; i < 40; i++) {
+      const ev = rollBehaviorEvent(ctx({ ...wide(), firedEventIds: firedSoFar }));
+      if (!ev) break;
+      firedSoFar.push(ev.id);
+      for (const c of ev.choices ?? []) {
+        for (const eff of c.effects) if (eff.kind === 'flag') seen.add(eff.key);
+      }
+    }
+    expect(seen.size).toBeGreaterThan(0);
+    for (const key of seen) {
+      expect(BEHAVIOR_CHOICE_FLAGS, `flag "${key}" is set by a choice but undeclared`).toContain(key);
+    }
   });
 });
