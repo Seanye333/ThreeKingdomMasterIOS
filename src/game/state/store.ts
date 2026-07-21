@@ -111,6 +111,10 @@ import { provisionNeeded, convoyCapacity, planConvoy } from '../systems/convoy';
 import { citySize, citySizeRank, cityMeetsSize, reassignLostCapitals, LOST_CAPITAL_LOYALTY_PENALTY } from '../systems/citySize';
 import { buildingBonuses, SCHOOL_BUILDINGS } from '../systems/buildings';
 import { coinEffects, inflationDrift, aiCoinStandard, type CoinStandard } from '../systems/coinage';
+import {
+  outstandingMerit, outstandingFault, rewardQuote,
+  meritScore as martialMeritScore, PUNISHMENTS,
+} from '../systems/militaryLaw';
 import { BUILDING_CATEGORY, BUILDING_PREREQ, BUILDING_MIN_SIZE } from '../data/buildings';
 import {
   cityAffinity, CITY_SPECIALTY, citySpecialty, ROLE_ZH,
@@ -1250,6 +1254,11 @@ export interface GameStore extends GameState {
    *  the docket wiped, paid for in gold, in the throne's dignity, and in the
    *  men you just let out. Refused if one was proclaimed too recently. */
   proclaimAmnesty: () => { ok: boolean; message: string };
+  /** 行賞 (§4.10) — settle an officer's outstanding merit out of the capital. */
+  rewardMerit: (officerId: EntityId) => { ok: boolean; message: string };
+  /** 軍法處置 (§4.10) — answer for an officer's defeats. */
+  punishOfficer: (officerId: EntityId, punishment: import('../systems/militaryLaw').PunishmentId)
+    => { ok: boolean; message: string };
   saveCommandTemplate: (label: string) => void;
   applyCommandTemplate: (id: EntityId) => void;
   deleteCommandTemplate: (id: EntityId) => void;
@@ -4457,6 +4466,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           coinStandard: state.coinStandard,
           inflationByForce: state.inflationByForce,
           serviceSystem: state.serviceSystem,
+          deeds: state.deeds,
           shrines: state.shrines,
           buildings: state.buildings,
           forces: forcesAfterCourt,
@@ -15570,6 +15580,80 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (!fid) return {};
         return { serviceSystem: { ...s.serviceSystem, [fid]: system } };
       }),
+
+      // 行賞 (§4.10) — 賞不逾時. Pays out of the capital's treasury; an unpaid
+      // ledger is what erodes a great officer's loyalty every season.
+      rewardMerit: (officerId) => {
+        const s0 = get();
+        const fid = s0.playerForceId;
+        const o = s0.officers[officerId];
+        if (!fid || !o || o.forceId !== fid) return { ok: false, message: '此人不在麾下。' };
+        const owed = outstandingMerit(o, s0.deeds[officerId]);
+        if (owed <= 0) return { ok: false, message: `${o.name.zh}功賞已清,無所復賞。` };
+        const quote = rewardQuote(owed);
+        const capId = s0.forces[fid]?.capitalCityId;
+        const cap = capId ? s0.cities[capId] : undefined;
+        if (!cap || cap.gold < quote.gold) {
+          return { ok: false, message: `府庫不足 —— 行賞需 ${quote.gold.toLocaleString()} 金。` };
+        }
+        set({
+          cities: { ...s0.cities, [cap.id]: { ...cap, gold: cap.gold - quote.gold } },
+          officers: {
+            ...s0.officers,
+            [officerId]: {
+              ...o,
+              meritRewarded: martialMeritScore(s0.deeds[officerId]),
+              loyalty: Math.max(0, Math.min(100, o.loyalty + quote.loyalty)),
+              xp: (o.xp ?? 0) + quote.xp,
+            },
+          },
+        });
+        return {
+          ok: true,
+          message: `行賞 ${o.name.zh} —— 費金 ${quote.gold.toLocaleString()},忠誠 +${quote.loyalty}。賞不逾時,士乃用命。`,
+        };
+      },
+
+      // 軍法處置 (§4.10) — 罰不遷列. Heavier penalties convince the rest of the
+      // corps and risk losing the man entirely.
+      punishOfficer: (officerId, punishment) => {
+        const s0 = get();
+        const fid = s0.playerForceId;
+        const o = s0.officers[officerId];
+        if (!fid || !o || o.forceId !== fid) return { ok: false, message: '此人不在麾下。' };
+        const fault = outstandingFault(o, s0.deeds[officerId]);
+        if (fault <= 0) return { ok: false, message: `${o.name.zh}無過可罰。` };
+        const p = PUNISHMENTS[punishment];
+        if (!p) return { ok: false, message: '無此軍法。' };
+        const officersNext = { ...s0.officers };
+        if (punishment === 'execute') {
+          officersNext[officerId] = { ...o, status: 'dead', forceId: null, task: null };
+        } else {
+          const cleared = p.clears === Infinity ? fault : Math.min(fault, p.clears);
+          officersNext[officerId] = {
+            ...o,
+            faultPunished: (o.faultPunished ?? 0) + cleared,
+            loyalty: Math.max(0, Math.min(100, o.loyalty + p.loyaltySelf)),
+            ...(p.disgrace > 0 ? { disgrace: (o.disgrace ?? 0) + p.disgrace } : {}),
+          };
+        }
+        // 一人受罰,全軍知法 — everyone else's discipline (and faith) firms up.
+        if (p.loyaltyOthers !== 0) {
+          for (const other of Object.values(s0.officers)) {
+            if (other.id === officerId || other.forceId !== fid) continue;
+            if (other.status === 'dead' || other.status === 'unsearched') continue;
+            officersNext[other.id] = {
+              ...officersNext[other.id],
+              loyalty: Math.max(0, Math.min(100, officersNext[other.id].loyalty + p.loyaltyOthers)),
+            };
+          }
+        }
+        set({ officers: officersNext });
+        const zh = punishment === 'execute'
+          ? `${p.zh}${o.name.zh} —— 斬一人以警百人,三軍肅然(眾將忠誠 +${p.loyaltyOthers})。`
+          : `${p.zh}${o.name.zh} —— 其忠誠 ${p.loyaltySelf}${p.loyaltyOthers ? `,眾將 +${p.loyaltyOthers}` : ''}。`;
+        return { ok: true, message: zh };
+      },
 
       proclaimAmnesty: () => {
         const s = get();

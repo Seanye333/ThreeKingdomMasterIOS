@@ -40,6 +40,10 @@ import { canAppraise, GRADE_LABEL } from '../../game/systems/appraisal';
 import { officerGrade, officerLevel, nextGradeGap, gradeMeta } from '../../game/systems/officerGrade';
 import { weaponClassFor } from '../../game/systems/duel';
 import { martialXiuwei, martialInsight, martialTier, martialTrainCost, martialSchoolName, MARTIAL_XIUWEI_MAX, canTransmitArts, TRANSMIT_COST, insightMoveCost, schoolSwitchCost, schoolSwitchXiuwei, MARTIAL_SCHOOL } from '../../game/systems/martialArts';
+import {
+  outstandingMerit, outstandingFault, rewardQuote, fittingPunishments, PUNISHMENTS,
+  type PunishmentId,
+} from '../../game/systems/militaryLaw';
 import { isDuelMoveUnlocked, duelMoveUnlockLevel, scarBarsMove, type DuelMove, type WeaponClass } from '../../game/systems/duel';
 import { debateXiuwei, debateInsight, debateArtsTier, debateTrainCost, debateSchoolName, DEBATE_XIUWEI_MAX, canTransmitScholarship, DEBATE_TRANSMIT_COST } from '../../game/systems/debateArts';
 import { dualLuminaries } from '../../game/systems/scholarRank';
@@ -200,6 +204,10 @@ export function OfficerDetail({
   const studyManualFn = useGameStore((s) => s.studyManual);
   const trainMartialFn = useGameStore((s) => s.trainMartialArts);
   const transmitMartialFn = useGameStore((s) => s.transmitMartialArts);
+  // 軍功簿 (§4.10)
+  const allDeeds = useGameStore((s) => s.deeds);
+  const rewardMeritFn = useGameStore((s) => s.rewardMerit);
+  const punishOfficerFn = useGameStore((s) => s.punishOfficer);
   const trainDebateFn = useGameStore((s) => s.trainDebateArts);
   const learnDuelMoveFn = useGameStore((s) => s.learnDuelMove);
   const switchSchoolFn = useGameStore((s) => s.switchMartialSchool);
@@ -1164,6 +1172,58 @@ export function OfficerDetail({
                             </select>
                           );
                         })()}
+                      </div>
+                    );
+                  })()}
+
+                  {/* 軍功簿 (§4.10) — 賞不逾時, 罰不遷列. What he has earned and not
+                      been paid erodes his loyalty every season; what he has lost
+                      and not answered for teaches everyone that losing is free. */}
+                  {isMine && (() => {
+                    const d = allDeeds[officer.id];
+                    const owed = outstandingMerit(officer, d);
+                    const fault = outstandingFault(officer, d);
+                    if (owed <= 0 && fault <= 0) return null;
+                    const quote = rewardQuote(owed);
+                    const fits = fittingPunishments(fault);
+                    return (
+                      <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '0.72rem', color: owed >= 12 ? '#d0a85a' : '#8a98a4' }}>
+                          {t(`軍功簿:未賞 ${owed}${fault > 0 ? ` · 未罰 ${fault}` : ''}`,
+                             `Merit roll: ${owed} unpaid${fault > 0 ? ` · ${fault} unanswered` : ''}`)}
+                          {owed >= 12 && t('(功高不賞則怨)', ' (unpaid merit breeds resentment)')}
+                        </span>
+                        {owed > 0 && (
+                          <button
+                            onClick={() => { const r = rewardMeritFn(officer.id); setProgressMsg(r.message); }}
+                            title={t(`行賞 · 費金 ${quote.gold.toLocaleString()} → 忠誠 +${quote.loyalty}`,
+                                     `Reward · ${quote.gold.toLocaleString()} gold → loyalty +${quote.loyalty}`)}
+                            style={{ cursor: 'pointer', padding: '0.1rem 0.5rem', borderRadius: 'var(--tkm-radius-xs)', background: 'linear-gradient(180deg,#4a3a1a,#2a2010)', border: '1px solid #e0b070', color: '#f0d890', fontSize: '0.74rem' }}
+                          >
+                            {t(`🎖 行賞 (${quote.gold.toLocaleString()})`, `🎖 Reward (${quote.gold.toLocaleString()})`)}
+                          </button>
+                        )}
+                        {fits.length > 0 && (
+                          <select
+                            defaultValue=""
+                            onChange={(e) => {
+                              const pid = e.target.value as PunishmentId;
+                              if (!pid) return;
+                              e.target.value = '';
+                              const r = punishOfficerFn(officer.id, pid);
+                              setProgressMsg(r.message);
+                            }}
+                            title={t('軍法處置 —— 罰不遷列', 'Military law — answer for the defeats')}
+                            style={{ padding: '0.1rem 0.3rem', borderRadius: 'var(--tkm-radius-xs)', background: '#10161e', border: '1px solid #c08a8a', color: '#e6bcbc', fontSize: '0.72rem', fontFamily: 'inherit' }}
+                          >
+                            <option value="">{t('⚖ 軍法…', '⚖ Discipline…')}</option>
+                            {fits.map((pid) => (
+                              <option key={pid} value={pid}>
+                                {lang === 'en' ? PUNISHMENTS[pid].en : PUNISHMENTS[pid].zh}
+                              </option>
+                            ))}
+                          </select>
+                        )}
                       </div>
                     );
                   })()}

@@ -190,6 +190,12 @@ export interface Officer {
    *  officer's 品階招牌 (萬軍辟易/不動如山/萬人敵) is suppressed — their aura is
    *  shaken until they win it back. Ticks down each season. Default/omitted = 0. */
   disgrace?: number;
+  /** 軍功已賞 (§4.10) — merit points already paid out to this officer. What his
+   *  deeds are worth MINUS this is what he is still owed; an open ledger erodes
+   *  his loyalty every season (賞不逾時). Default/omitted = 0. */
+  meritRewarded?: number;
+  /** 軍過已罰 (§4.10) — fault points already answered for. Default/omitted = 0. */
+  faultPunished?: number;
   /** 爵位 — held peerage id (封爵), the highest layer of 官爵 above 軍階/官職.
    *  Yields 食邑 income + loyalty + prestige; great fiefs feed 野心. Default/
    *  omitted = no peerage. See data/peerage.ts. */

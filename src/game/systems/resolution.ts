@@ -58,6 +58,7 @@ import {
   buildRelayNetwork, relayEffects, RELAY_BUILDINGS, type RelayReach,
 } from './postalRelay';
 import { serviceEffects, payGarrison, aiServiceSystem } from './conscription';
+import { outstandingMerit, meritResentment, rewardQuote, meritScore } from './militaryLaw';
 import { clanOf } from '../data/clans';
 import { shrineEffects } from './culturalWorks';
 import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
@@ -161,6 +162,8 @@ export interface ResolutionInput {
   coinStandard?: Record<EntityId, import('./coinage').CoinStandard>;
   /** 兵制 — per-force service system (§4.8); missing resolve by temperament. */
   serviceSystem?: Record<EntityId, import('./conscription').ServiceSystem>;
+  /** 武功簿 — the deeds ledger as it stands (§4.10 reads merit from it). */
+  deeds?: Record<EntityId, import('../types').HeroicDeeds>;
   /** 通脹 — every realm's own inflation (§1.17). Falls back to `inflation` for
    *  the player and 0 for everyone else, so old saves behave as before. */
   inflationByForce?: Record<EntityId, number>;
@@ -350,6 +353,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   const bumpDeed = (officerId: EntityId, patch: Partial<import('../types').HeroicDeeds>) => {
     deedDeltas.push({ officerId, patch });
   };
+  /** 軍功 (§4.10) reads the ledger as it stood at the start of the turn. */
+  const deedsOf = (officerId: EntityId) => input.deeds?.[officerId];
 
   // 1. Process commands. Marches first, then internal affairs.
   // Multi-season march: if seasonsRemaining > 1, the army is still on the
@@ -3224,6 +3229,33 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       ).loyaltyDriftPerSeason;
     }
   }
+  // 賞不逾時 (§4.10) — an AI lord settles his best-owed officer's account each
+  // season if the capital can find the gold. Keeps the mechanic symmetric
+  // without asking the AI to model gratitude: it simply pays its bills.
+  if (seasonBoundary) {
+    for (const force of Object.values(forces)) {
+      if (force.id === input.playerForceId) continue;
+      const cap = force.capitalCityId ? cities[force.capitalCityId] : undefined;
+      if (!cap || cap.ownerForceId !== force.id) continue;
+      let best: Officer | null = null;
+      let bestOwed = 0;
+      for (const o of Object.values(officers)) {
+        if (o.forceId !== force.id || o.status === 'dead' || o.status === 'unsearched') continue;
+        const owed = outstandingMerit(o, deedsOf(o.id));
+        if (owed > bestOwed) { bestOwed = owed; best = o; }
+      }
+      if (!best || bestOwed < 6) continue;
+      const quote = rewardQuote(bestOwed);
+      if (cap.gold < quote.gold) continue;
+      cities[cap.id] = { ...cap, gold: cap.gold - quote.gold };
+      officers[best.id] = {
+        ...officers[best.id],
+        meritRewarded: meritScore(deedsOf(best.id)),
+        loyalty: Math.max(0, Math.min(100, officers[best.id].loyalty + quote.loyalty)),
+      };
+    }
+  }
+
   for (const o of Object.values(officers)) {
     let next: Officer = o.task ? { ...o, task: null } : o;
     // 失威漸復 — disgrace fades one season at a time (gated on the season boundary,
@@ -3241,6 +3273,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       else if (owned < avgCities - 1) drift = -1;
       else if (owned === 0) drift = -3;
       drift += censorBonusByForce[o.forceId] ?? 0;
+      // 功高不賞則怨 (§4.10) — an officer whose ledger has been left open long
+      // enough loses faith by degrees. Applies to every force; AI lords settle
+      // their books below, so in practice this is a bill the player must pay.
+      if (seasonBoundary) drift += meritResentment(outstandingMerit(o, deedsOf(o.id)));
       // 食邑加俸 — an enfeoffed noble's standing loyalty bonus.
       if (o.peerageId) drift += peerageEffects(o).loyaltyBonus;
       // 名號將軍 — a conferred honorific's standing loyalty bonus.
