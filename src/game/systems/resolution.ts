@@ -63,6 +63,10 @@ import { recoverWounded, splitCasualties } from './veterans';
 import { marshalAmbitionBoost } from './legion';
 import { localEsteem, esteemEffects } from './publicOpinion';
 import { patronDrift } from './patronage';
+import { rollCampPlague } from './campDisease';
+
+/** 卑濕之地 — siege lines on this ground breed 軍中疫疾 (§5.15). */
+const WET_SIEGE_GROUND = new Set(['river', 'lake', 'sea', 'marsh']);
 import { clanOf } from '../data/clans';
 import { shrineEffects } from './culturalWorks';
 import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
@@ -1673,6 +1677,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     // 軍心 drifts back toward steady.
     cmd.fatigue = accrueFatigue(cmd.fatigue, { pace: cmd.pace, holding: false });
     cmd.morale = driftMorale(cmd.morale);
+    // 拔營則疫氣散 (§5.15) — a column on the move is not a standing camp.
+    cmd.campSeasons = 0;
     suppliedTroops[cmd.officerId] = troopsAfter;
     suppliedFood[cmd.officerId] = s.food;
     // 防壁 — a barricade in the column's path stalls it this season (no advance).
@@ -1734,6 +1740,39 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     // 軍心 drifts back toward steady.
     cmd.fatigue = accrueFatigue(cmd.fatigue, { holding: true, besieging: !!cmd.besieging });
     cmd.morale = driftMorale(cmd.morale);
+    // 軍中疫疾 (§5.15) — 曹公至赤壁…於是大疫. A camp that stands still long enough,
+    // in the wrong season and the wrong country, dissolves without a battle.
+    if (input.seasonBoundary ?? true) {
+      cmd.campSeasons = (cmd.campSeasons ?? 0) + 1;
+      const cmdrP = officers[cmd.officerId];
+      const homeCap = cmdrP?.forceId ? cities[forces[cmdrP.forceId]?.capitalCityId ?? '']?.coords : undefined;
+      const siteCity = cmd.besieging ? cities[cmd.besieging] : undefined;
+      const column = [cmdrP, ...(cmd.additionalOfficerIds ?? []).map((id) => officers[id])]
+        .filter((o): o is Officer => !!o);
+      const plague = rollCampPlague({
+        seasonsInField: cmd.campSeasons,
+        troops: heldTroops,
+        season: input.date.season,
+        // 卑濕之地 — a river/marsh siege line is the classic ground for it.
+        wetGround: !!siteCity && WET_SIEGE_GROUND.has(battleGroundAt(siteCity.coords.x, siteCity.coords.y)),
+        // 不習水土 — far from the climate these men were raised in.
+        alienClimate: !!homeCap && !!siteCity && Math.abs(homeCap.y - siteCity.coords.y) > 120,
+        physicianIntellect: column.reduce((m, o) => Math.max(m, o.stats.intelligence), 0),
+        medicine: siteCity ? 0 : 0,
+        starving: s.starved,
+      }, rng);
+      if (plague.struck) {
+        heldTroops = Math.max(0, heldTroops - plague.lost);
+        cmd.fatigue = Math.min(100, (cmd.fatigue ?? 0) + plague.fatigue);
+        const where = siteCity?.name ?? cities[cmd.targetCityId ?? '']?.name;
+        entries.push({
+          cityId: cmd.besieging ?? cmd.cityId,
+          kind: 'desertion',
+          text: `Sickness sweeps ${cmdrP?.name.en ?? 'the'} camp${where ? ` before ${where.en}` : ''} — ${plague.lost.toLocaleString()} men lost without a battle.`,
+          textZh: `${cmdrP?.name.zh ?? '軍'}營大疫${where ? `(頓兵${where.zh}下)` : ''} —— 未戰而損 ${plague.lost.toLocaleString()} 卒。`,
+        });
+      }
+    }
     suppliedTroops[cmd.officerId] = heldTroops;
     suppliedFood[cmd.officerId] = s.food;
     keptCommands[cmd.officerId] = { ...cmd, troops: heldTroops, food: s.food };

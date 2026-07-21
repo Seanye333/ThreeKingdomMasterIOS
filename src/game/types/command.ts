@@ -103,6 +103,9 @@ export interface MarchCommand extends CommandBase {
    *  marching wears it up, camping rests it off, a siege camp grinds it up.
    *  Saps field power (×0.75 at 100) and opening morale (−15 at 100). */
   fatigue?: number;
+  /** 頓兵之日 (§5.15) — seasons this column has stood in the field without
+   *  moving. Drives 軍中疫疾; reset when it marches again. Default 0. */
+  campSeasons?: number;
   /** 軍心 — map-level morale 0..100 (60 = steady; marchPace.driftMorale).
    *  Set from home drill at muster, +8 per field win, −10/−20 when the
    *  realm loses a city/its capital; feeds field power & battle openings. */

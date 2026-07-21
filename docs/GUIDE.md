@@ -6,7 +6,7 @@
 
 ---
 
-## 目錄(所有遊戲內容地圖,85 個系統)
+## 目錄(所有遊戲內容地圖,86 個系統)
 
 | # | 章節 | 涵蓋系統 | 狀態 |
 |---|---|---|---|
@@ -15,7 +15,7 @@
 | 2 | [武將・成長・家族](#第二章-武將成長家族) | growth, officerGrade, gradeCombat, officerFate, traitEffects, personality, biography, posthumous, aging, officerGen, family, clans, retinues, wishes, rapport, friction, relationshipEffects, career, codex, peerage, honorifics, battlePower(武將卡/開卡) | ✅ |
 | 3 | [人才・招攬・舌戰](#第三章-人才招攬舌戰) | commands(search), officerFate, recommendation, commonerTalent, appraisal(月旦評), **publicOpinion(鄉論清議)**, **patronage(門生故吏/舉主)**, **officialSelection(察舉/九品中正/開科取士/中正官)**, scenicSites(三顧), captiveFate(處決後果/AI處置), aiRansom, debate, wordWar, persuasion(說客) | ✅ |
 | 4 | [軍事指揮・委任](#第四章-軍事指揮委任) | **conscription(兵制:更卒/世兵/募兵/軍餉)**, **campaignLedger(糧秣簿)**, **militaryLaw(軍功簿/行賞/軍法四等)**, **veterans(傷兵/療傷/廢疾還籍)**, muster, legion(都督之斷·長圍), governor, governorEval, advisor, 在途指令(駐守/設伏/圍城/焚橋/燒鎖/補給/分兵/召回), rout(潰軍/掩殺收降/殿軍斷後) | ✅ |
-| 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, tacticalAi, combat, formations, stratagems, weather(區域天候), battlefieldTerrain, worldScars(戰場烙印), fieldworks(築壘), columnReinforcements(會戰), wallTier城郭分層, 入城三選, battleSpoils(戰場繳獲), **navalWarfare(水軍熟練/暈船/艦隊編成/淺灘擱淺/搶灘登陸)**, personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
+| 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, tacticalAi, combat, formations, stratagems, weather(區域天候), battlefieldTerrain, worldScars(戰場烙印), fieldworks(築壘), columnReinforcements(會戰), wallTier城郭分層, 入城三選, battleSpoils(戰場繳獲), **campDisease(軍中疫疾/頓兵/不習水土)**, **navalWarfare(水軍熟練/暈船/艦隊編成/淺灘擱淺/搶灘登陸)**, personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
 | 6 | [單挑](#第六章-單挑) | duel(招式/必殺技/獨門被動/破綻/傷殘/挑落下馬/**環境借勢/部位打擊/膽氣怯戰/棄馬步戰**/兵裝/坐騎/地形/性格/AI), **martialArts(武學修為/流派/流派相剋/秘籍/頓悟)**, **teamDuel(團戰圍攻/合擊/3D 同場)**, **arenaLadder(打擂擂台)**, **涟漪大地圖(威名威懾/代戰認輸金/慘勝負傷/名場面入史/世間鬥將)**, **debateArts(文辯修為/學派/辯經/傳道)**, **scholarRank(月旦評/文名威懾)**, **debateDiplomacy(折衝樽俎/責讓索貢/舌戰說降)**, **teamDebate(朝堂合辯)**, **引時事入辯(annals 彈藥)**, **realmEthos(尚武崇文之風)**, **lineage(師承譜系/同門/衣缽傳人)**, gauntlet, duelSeries, duelScenarios(劇情+戰役), duelHall(名局廊), warRanking(武評榜), rivalries(宿敵/恩怨簿), duelChallenge(約戰), tactical(致師) | ✅ |
 | 7 | [外交・謀略・天子](#第七章-外交謀略天子) | diplomacy, diplomacyPacts(稱臣/索貢/會盟/援盟/調停/質子/借道), coalition, schemes, aiSchemes, ambition, espionage, expedition, foreignRealm, intrigue, courtFactions, factionEvents, emperor, imperialEffects, mandate, appointmentEffects, clans, statecraft | ✅ |
 | 8 | [事件・天命・異族・宗教](#第八章-事件天命異族宗教) | events(天災/地動/賑災), historicalEvents(抉擇鏈), behaviorEvents(勸進/眾叛), customEvents, factionEvents, religion(黃巾/招安/宣撫), **refugees(流民之政:招撫/安置/閉關)**, tribes, tribesDiplomacy(和親/互市/質子/以夷制夷/入主建國/七擒), mandate(祥瑞/造讖/禳星), mandateRituals(郊祀/祈雨), annals(災異志) | ✅ |
@@ -208,6 +208,7 @@
 | 鄉論(§3.7) | 34+(民心−50)×.28+min(18,文教×.22)−min(16,貪腐×.16)−min(10,積案×.1)+律令(峻−6/寬+2)+名士 min(14,(智魅均−60)×.35);無存檔欄 |
 | 鄉論之效(§3.7) | 訪賢 ×(1+t×0.35)、招攬 +t×0.1、察舉品第 +t×6(t=(鄉論−50)/50) |
 | 門生故吏(§3.8) | 舉主忠≤45 → 門生 −1/季、≥80 → +0.5/季(同朝才算);舉主割據時同城門生 忠<60 即隨行(一般同情者 <45),忠義者不隨 |
+| 軍中疫疾(§5.15) | 機率=min(.26,(頓兵季−2)×.045)×季節(夏1.5/冬1.1/春.9/秋.8)×兵多(≤×1.6)×卑濕1.4×不習水土1.35×缺糧1.3×(1−良醫≤.7),頂 .40;損 14%(有藥 6%)、疲勞+8;拔營歸零 |
 | 療傷(§4.11) | 歸伍=min(.82, .34+醫院級×.09+min(.12,智力/700)+藥足×.14);死=max(.03,.20−照護×.8);餘六成廢疾還籍;藥材 0.4/傷兵 |
 
 ### 內政命令成本(金)
@@ -2290,6 +2291,21 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
 **出陣前預告**:攻打水城時,`BattlePrepModal` 直接顯示「我軍水軍:不習水戰(11)· 戰力 ×0.78、開局士氣 −13、每船 −1 AP · 港中戰船 3 艘」—— 用的是與戰鬥完全同一條 `navalContextFor`,預覽不會與實戰脫節。
 
 接線:`tacticalSetup` 開局配船/扣士氣/扣 AP、`tactical.attackUnits` 吃暈船與擱淺、`tactical.moveUnit` 吃搶灘、`battlefieldTerrain` 生成淺灘蘆葦、火攻蔓延表加蘆葦、`store.navalSideContext` 與 `BattlePrepModal` 兩處開戰入口喂熟練度與艦隊。**存檔**:`TacticalBattle.navalDrill` 隨戰局快照,舊檔缺欄視同 50(即舊行為)。
+
+
+### 5.15 軍中疫疾(campDisease.ts,2026-07)
+
+> 公至赤壁,與備戰不利,於是大疫,吏士多死者,乃引軍還。
+
+這個時代最有名的一場戰役是被**疫病**決定的,而史書裡到處是同一句話:一支軍隊在一個地方待得太久、在錯的季節、在錯的水土,於是**沒打就散了**。
+
+遊戲本來就算圍城營的飢、寒與疲,唯獨沒算那個殺人最多的東西 —— **幾萬人的常駐營區沒有排水**。
+
+- **頓兵之日**(`campSeasons`):**拔營即歸零**,只有**停在原地**才累積;前兩季為寬限期。
+- **每季染疫機率** = `min(0.26, (頓兵季−2)×0.045)` × 季節(夏 **1.5** / 冬 1.1 / 春 0.9 / 秋 0.8)× 兵多(超過 2 萬起算,至多 ×1.6)× **卑濕之地 1.4**(河/湖/海/沼旁圍城)× **不習水土 1.35**(離本國首都南北 >120)× 缺糧 1.3,再乘 **良醫在軍**(最高智力與隨軍藥材,至多 −70%),上限 **0.40**。
+- **疫作**:未治損 **14%**,有藥材(需兵×5%)損 **6%**,疲勞 +8;**藥材無論救不救得回都會消耗**。季報直說「未戰而損 N 卒」。
+- **赤壁條件**齊備時(夏、臨江、北軍南下、久頓不戰)風險大幅疊乘 —— 這正是那一戰的模型。
+- **對策**是史書上的那幾條:**別頓兵**、避開盛夏、帶一個智力高的人隨軍、隨軍備藥材、或者速戰。
 
 ---
 
