@@ -8820,7 +8820,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           // scalar so every existing reader keeps working.
           inflationByForce: seasonBoundary ? nextInflationByForce : state.inflationByForce,
           // 米市商旅 (§1.16) — transient: the map draws last season's caravans.
-          lastGrainFlows: result.grainFlows ?? [],
+          // endSeason runs nine times per season, and resolveSeason only plans
+          // caravans at the boundary — so KEEP the last set on the other eight
+          // ticks, or the map would blink them away one tick after they appear.
+          lastGrainFlows: seasonBoundary ? (result.grainFlows ?? []) : state.lastGrainFlows,
           inflation: seasonBoundary
             ? (nextInflationByForce[state.playerForceId ?? ''] ?? state.inflation ?? 0)
             : state.inflation,
