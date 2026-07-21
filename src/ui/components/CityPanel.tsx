@@ -11,6 +11,7 @@ import { caseloadTier } from '../../game/systems/law';
 import { hiddenTier, registryYieldMul } from '../../game/systems/household';
 import { hoardTier } from '../../game/systems/hoarding';
 import { armamentTier, armamentEffects } from '../../game/systems/workshops';
+import { woundedTier } from '../../game/systems/veterans';
 import type { City, EntityId, Officer } from '../../game/types';
 import { lazy, Suspense } from 'react';
 // 啟動提速 — the city 3D scene (≈175KB) loads when a city is first entered.
@@ -958,6 +959,15 @@ function DevelopmentSection({ city, isPlayerCity }: { city: City; isPlayerCity: 
           note={(city.culture ?? 0) >= 60 ? '文化名城 · 息貪安民' : `息貪 −${Math.round((city.culture ?? 0) / 100 * 35)}%`} />
       )}
       {/* 囤積 (§1.14) — grain that exists but cannot be bought. */}
+      {/* 傷兵 §4.11 — only while there are any. */}
+      {(city.wounded ?? 0) > 0 && (
+        <Bar icon="shield" label="Wounded" zh="傷兵" value={Math.round(city.wounded ?? 0)}
+          cap={Math.max(1, Math.round((city.wounded ?? 0) * 1.4))} tone="#c07a7a"
+          warn={(city.wounded ?? 0) >= city.troops * 0.08}
+          note={t(`${woundedTier(city.wounded ?? 0, city.troops).zh} · 醫館/傷兵營、藥材與坐鎮智將決定幾人歸伍`,
+                  `${woundedTier(city.wounded ?? 0, city.troops).en} · an infirmary, medicine and a physician decide how many return`)} />
+      )}
+
       {/* 軍器 §1.18 — only worth surfacing where there is a garrison to arm. */}
       {city.troops >= 1000 && (
         <Bar icon="war" label="Armaments" zh="軍器" value={Math.round(city.armaments ?? 0)} cap={100} tone="#8fa6c0"

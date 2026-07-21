@@ -111,6 +111,7 @@ import { provisionNeeded, convoyCapacity, planConvoy } from '../systems/convoy';
 import { citySize, citySizeRank, cityMeetsSize, reassignLostCapitals, LOST_CAPITAL_LOYALTY_PENALTY } from '../systems/citySize';
 import { buildingBonuses, SCHOOL_BUILDINGS } from '../systems/buildings';
 import { coinEffects, inflationDrift, aiCoinStandard, type CoinStandard } from '../systems/coinage';
+import { splitCasualties } from '../systems/veterans';
 import {
   outstandingMerit, outstandingFault, rewardQuote,
   meritScore as martialMeritScore, PUNISHMENTS,
@@ -14058,9 +14059,19 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (target && !tb.field) {
           // Defender losses are taken from target city — minus what the
           // relief columns bled (those came out of their home garrisons).
+          // 傷兵 (§4.11) — a garrison that held its walls carries its own wounded
+          // off the parapet; one that lost the city leaves them where they fell.
+          const garrisonLost = Math.max(0, tb.defenderLosses - reliefLosses - columnDefLosses);
+          const heldWalls = winner === 'defender';
+          const woundedSplit = splitCasualties(garrisonLost, {
+            heldField: heldWalls,
+            hasHospital: state.buildings.some(
+              (b) => b.cityId === tb.cityId && (b.id === 'fieldhospital' || b.id === 'infirmary') && b.level >= 1),
+          });
           cities[tb.cityId] = {
             ...target,
-            troops: Math.max(0, target.troops - Math.max(0, tb.defenderLosses - reliefLosses - columnDefLosses)),
+            troops: Math.max(0, target.troops - garrisonLost),
+            wounded: heldWalls ? (target.wounded ?? 0) + woundedSplit.wounded : (target.wounded ?? 0),
           };
         }
 

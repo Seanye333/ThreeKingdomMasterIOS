@@ -59,6 +59,7 @@ import {
 } from './postalRelay';
 import { serviceEffects, payGarrison, aiServiceSystem } from './conscription';
 import { outstandingMerit, meritResentment, rewardQuote, meritScore } from './militaryLaw';
+import { recoverWounded, splitCasualties } from './veterans';
 import { clanOf } from '../data/clans';
 import { shrineEffects } from './culturalWorks';
 import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
@@ -1946,7 +1947,15 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
           });
           continue;
         }
-        cities[cityAtStart.id] = { ...cityAtStart, troops: Math.max(0, cityAtStart.troops - Math.floor(cityAtStart.troops * 0.2)) };
+        {
+          const sallyLost = Math.floor(cityAtStart.troops * 0.2);
+          const split = splitCasualties(sallyLost, { heldField: true });
+          cities[cityAtStart.id] = {
+            ...cityAtStart,
+            troops: Math.max(0, cityAtStart.troops - sallyLost),
+            wounded: (cityAtStart.wounded ?? 0) + split.wounded,
+          };
+        }
         entries.push({
           cityId: cityAtStart.id, kind: 'battle',
           text: `The garrison of ${cityAtStart.name.en} sallied and was thrown back.`,
@@ -2735,6 +2744,17 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         })
       : { armaments: city.armaments ?? 0, ironUsed: 0 };
     const armsEff = armamentEffects(armsTick.armaments);
+    // 傷兵營 (§4.11) — work the infirmary. The building has existed since the
+    // first build and healed only officers; now it does what it is named for.
+    const hospitalLevel = (input.buildings ?? []).find(
+      (bd) => bd.cityId === city.id && (bd.id === 'fieldhospital' || bd.id === 'infirmary'))?.level ?? 0;
+    const care = recoverWounded({
+      wounded: city.wounded ?? 0,
+      hospitalLevel: hospitalLevel * ((input.buildings ?? []).some(
+        (bd) => bd.cityId === city.id && bd.id === 'fieldhospital') ? 2 : 1),
+      physicianIntellect: bestIntellect,
+      medicine: city.medicine ?? 0,
+    });
     const docket = caseloadPenalty(nextCaseload);
     let lawLoyalty = (city.ownerForceId ? law.loyaltyDelta + corveeEff.loyaltyDelta + (shrineEff?.loyaltyPerSeason ?? 0) + hoardEff.loyaltyDelta : 0) + docket.loyaltyDelta;
     if (city.ownerForceId && rng() < wrongfulConvictionChance({
@@ -2766,7 +2786,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       food: Math.max(0, city.food
         + Math.round(tick.foodIncome * corveeEff.farmMul * registryYieldMul(nextHidden) * hoardEff.foodMul)
         - Math.round(tick.foodUpkeep * serviceEff.foodUpkeepMul)),
-      troops: Math.max(0, troopsAfterDesertion + capitalGuard - wages.deserted - serviceStarveExtra),
+      troops: Math.max(0, troopsAfterDesertion + capitalGuard - wages.deserted - serviceStarveExtra + care.recovered),
       loyalty: Math.max(0, Math.min(100, city.loyalty + tick.loyaltyDelta + capitalLoyalty + corruptionLoyaltyBite + cultureLift + lawLoyalty + relay.loyaltyDelta + wages.loyaltyDelta)),
       corruption: city.ownerForceId ? nextCorruption : city.corruption,
       culture: nextCulture,
@@ -2775,19 +2795,26 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       hoardedGrain: nextHoard,
       drill: nextDrill,
       armaments: armsTick.armaments,
-      population: Math.max(1000, city.population + tick.populationDelta),
+      wounded: care.remaining,
+      population: Math.max(1000, city.population + tick.populationDelta + care.invalided),
       warhorses: tick.warhorseBreed > 0
         ? Math.min(WARHORSE_CITY_CAP, (city.warhorses ?? 0) + tick.warhorseBreed)
         : city.warhorses,
       // 冶鐵入庫,匠戶取之 — smelted this season, minus what the workshops drew.
       iron: Math.max(0, Math.min(IRON_CITY_CAP, (city.iron ?? 0) + tick.ironSmelt) - armsTick.ironUsed),
-      medicine: tick.medicineGather > 0
-        ? Math.min(MEDICINE_CITY_CAP, (city.medicine ?? 0) + tick.medicineGather)
-        : city.medicine,
+      // 藥材 — gathered this season, minus what the infirmary spent.
+      medicine: Math.max(0, Math.min(MEDICINE_CITY_CAP, (city.medicine ?? 0) + tick.medicineGather) - care.medicineUsed),
     };
     // 民政警訊 (§1.11–§1.14) — report a civic problem the season it CROSSES a
     // threshold, not every season after (the player would learn to ignore it).
     // Only the player's own cities, and only the upward crossing.
+    if (city.ownerForceId === input.playerForceId && (care.recovered > 0 || care.died > 0)) {
+      entries.push({
+        cityId: city.id, kind: 'income',
+        text: `${city.name.en}: ${care.recovered} wounded return to the ranks (${care.invalided} invalided, ${care.died} died of wounds).`,
+        textZh: `${city.name.zh}:傷卒愈而歸伍 ${care.recovered} 人(廢疾還籍 ${care.invalided},死於創 ${care.died})。`,
+      });
+    }
     if (city.ownerForceId === input.playerForceId && wages.arrears > 0) {
       entries.push({
         cityId: city.id, kind: 'desertion',

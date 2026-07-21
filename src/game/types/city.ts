@@ -149,6 +149,14 @@ export interface City {
    */
   veterancy?: number;
   /**
+   * 傷兵 (§4.11) — wounded from this city's garrison, under care rather than
+   * dead. Each season some walk back into the ranks, some are invalided into
+   * the population, and some die of their wounds — the proportions decided by
+   * a 醫館/傷兵營, a physician stationed here, and 藥材 in the stores.
+   * Default/omitted = 0.
+   */
+  wounded?: number;
+  /**
    * 文教 — cultural renown 0–100. A city with schools under a learned governor
    * accrues it season by season (decays slowly without schools). High 文教
    * curbs corruption (教化息貪) and steadies loyalty (民安其教); at 60+ the city
