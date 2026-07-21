@@ -44,6 +44,7 @@ import {
   outstandingMerit, outstandingFault, rewardQuote, fittingPunishments, PUNISHMENTS,
   type PunishmentId,
 } from '../../game/systems/militaryLaw';
+import { patronageReach } from '../../game/systems/patronage';
 import { isDuelMoveUnlocked, duelMoveUnlockLevel, scarBarsMove, type DuelMove, type WeaponClass } from '../../game/systems/duel';
 import { debateXiuwei, debateInsight, debateArtsTier, debateTrainCost, debateSchoolName, DEBATE_XIUWEI_MAX, canTransmitScholarship, DEBATE_TRANSMIT_COST } from '../../game/systems/debateArts';
 import { dualLuminaries } from '../../game/systems/scholarRank';
@@ -1172,6 +1173,32 @@ export function OfficerDetail({
                             </select>
                           );
                         })()}
+                      </div>
+                    );
+                  })()}
+
+                  {/* 門生故吏 (§3.8) — 舉主 and the men he named. */}
+                  {(() => {
+                    const patron = officer.patronId ? allOfficers[officer.patronId] : undefined;
+                    const reach = patronageReach(officer.id, allOfficers);
+                    if (!patron && reach.clients === 0) return null;
+                    return (
+                      <div style={{ marginTop: 6, fontSize: '0.72rem', color: '#8a98a4', lineHeight: 1.5 }}>
+                        {patron && t(
+                          `舉主:${patron.name.zh}${patron.forceId === officer.forceId
+                            ? (patron.loyalty <= 45 ? '(其心已離 — 主辱臣憂,忠誠每季 −1)'
+                              : patron.loyalty >= 80 ? '(其心甚安 — 忠誠每季 +0.5)' : '')
+                            : '(已去他邦)'}`,
+                          `Patron: ${patron.name.en}${patron.forceId === officer.forceId
+                            ? (patron.loyalty <= 45 ? ' (disaffected — client loyalty −1/season)'
+                              : patron.loyalty >= 80 ? ' (content — client loyalty +0.5/season)' : '')
+                            : ' (gone elsewhere)'}`,
+                        )}
+                        {patron && reach.clients > 0 && ' · '}
+                        {reach.clients > 0 && t(
+                          `${reach.zh} —— 所舉 ${reach.clients} 人(在朝 ${reach.sameForce})`,
+                          `${reach.en} — ${reach.clients} named (${reach.sameForce} still serving)`,
+                        )}
                       </div>
                     );
                   })()}

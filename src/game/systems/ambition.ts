@@ -1,5 +1,6 @@
 import type { City, EntityId, Force, Officer } from '../types';
 import { buildingBonuses } from './buildings';
+import { followsPatron } from './patronage';
 import { getLordRapport, isConfidant } from './rapport';
 import { peerageEffects } from '../data/peerage';
 
@@ -267,6 +268,22 @@ export function resolveAmbitions(ctx: AmbitionContext): AmbitionEvent[] {
     // 權臣 (high 權勢) pulls a larger clique (§7.5 ③).
     const pullCap = power >= 1.2 ? 3 : 2;
     let pulled = 0;
+    // 故吏相隨 (§3.8) — the men he put forward go first, and at a loyalty that
+    // would never have moved them on their own. 門生故吏遍天下 is a description
+    // of a military asset, not a compliment.
+    for (const client of Object.values(officers)) {
+      if (pulled >= pullCap) break;
+      if (client.patronId !== o.id || client.forceId !== force.id) continue;
+      if (!followsPatron({
+        client,
+        sameCity: client.locationCityId === homeId,
+        steadfast: hasTrait(client, 'loyal'),
+      })) continue;
+      officers[client.id] = {
+        ...client, forceId: newForceId, loyalty: Math.max(70, client.loyalty), task: null,
+      };
+      pulled++;
+    }
     for (const other of Object.values(officers)) {
       if (pulled >= pullCap) break;
       if (other.id === o.id) continue;

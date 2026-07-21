@@ -7395,6 +7395,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                 ...found, status: 'idle', forceId: null, loyalty: 0,
                 locationCityId: r.cityId ?? found.locationCityId,
                 recommended: true, // 舉薦作保 — easier to recruit while flagged.
+                // 舉主 (§3.8) — the tie outlives the recommendation itself.
+                patronId: rec.id,
               };
               // The player gets the courtship prompt; an AI's recommendation is
               // surfaced quietly (it reports when 群雄競聘 lands the recruit).
@@ -7468,6 +7470,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               recruiterReputation: { citiesOwned: aiCities }, family: state.family, free: true, rng: Math.random,
             });
             if (r.ok && r.recruitedOfficer) {
+              // 門生故吏 — clear the courtship flag, keep the 舉主 tie.
               officersWithMarchTask[prospect.id] = { ...r.recruitedOfficer, recommended: undefined };
               result.report.entries.push({
                 cityId: pCity.id,

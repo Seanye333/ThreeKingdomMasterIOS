@@ -62,6 +62,7 @@ import { outstandingMerit, meritResentment, rewardQuote, meritScore } from './mi
 import { recoverWounded, splitCasualties } from './veterans';
 import { marshalAmbitionBoost } from './legion';
 import { localEsteem, esteemEffects } from './publicOpinion';
+import { patronDrift } from './patronage';
 import { clanOf } from '../data/clans';
 import { shrineEffects } from './culturalWorks';
 import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
@@ -3344,6 +3345,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       // enough loses faith by degrees. Applies to every force; AI lords settle
       // their books below, so in practice this is a bill the player must pay.
       if (seasonBoundary) drift += meritResentment(outstandingMerit(o, deedsOf(o.id)));
+      // 主辱臣憂 (§3.8) — a client's faith tracks the man who put him forward.
+      if (seasonBoundary && o.patronId) {
+        drift += patronDrift({ patron: officers[o.patronId], client: o });
+      }
       // 食邑加俸 — an enfeoffed noble's standing loyalty bonus.
       if (o.peerageId) drift += peerageEffects(o).loyaltyBonus;
       // 名號將軍 — a conferred honorific's standing loyalty bonus.
