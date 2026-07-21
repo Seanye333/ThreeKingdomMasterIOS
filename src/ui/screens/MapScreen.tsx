@@ -10,6 +10,7 @@ import { MANDATE_LABEL } from '../../game/systems/mandate';
 import { CityPanel } from '../components/CityPanel';
 import { ActionToasts } from '../components/ActionToasts';
 import { CelebrationPopup } from '../components/CelebrationPopup';
+import { CareerEpilogueModal } from '../components/CareerEpilogueModal';
 import { CardRevealModal } from '../components/CardRevealModal';
 import { YearbookModal } from '../components/YearbookModal';
 import { RelationshipBrowserModal } from '../components/RelationshipBrowserModal';
@@ -1331,6 +1332,8 @@ export function MapScreen() {
       <ActionToasts />
       {/* 慶典彈窗 — celebratory image/video on milestones (升城/遷都…) */}
       <CelebrationPopup />
+      {/* 一代記落幕 — the roguelike career epilogue (was the app's last alert()) */}
+      <CareerEpilogueModal />
       {/* 得將開卡 — gold-or-better newcomers flip in as a trading card */}
       <CardRevealModal />
       {/* 史官年鑑 — the historian's page for the year just closed (springs) */}

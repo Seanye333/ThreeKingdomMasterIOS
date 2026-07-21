@@ -1257,6 +1257,8 @@ export interface GameStore extends GameState {
   setServiceSystem: (system: import('../systems/conscription').ServiceSystem) => void;
   /** 流民之政 (§8.6) — set the realm's policy on the displaced. */
   setRefugeePolicy: (policy: import('../systems/refugees').RefugeePolicy) => void;
+  /** 一代記落幕 — dismiss the career-run epilogue card. */
+  dismissCareerEpilogue: () => void;
   /** 大赦天下 (§1.11) — empty every court in the realm: loyalty everywhere and
    *  the docket wiped, paid for in gold, in the throne's dignity, and in the
    *  men you just let out. Refused if one was proclaimed too recently. */
@@ -14405,6 +14407,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           : state.careerMode;
 
         // Roguelike — career officer death.
+        let careerEpilogueOut: GameState['careerEpilogue'] = state.careerEpilogue ?? null;
         if (state.roguelikeMode && state.careerMode) {
           const careerOff = officers[state.careerMode.officerId];
           if (careerOff?.status === 'dead') {
@@ -14419,12 +14422,19 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               `${careerOff.name.zh} 的一代記就此落幕 — 終為${st.status.zh}(品 ${st.rank})。\n` +
               `歷戰勝 ${d?.battlesWon ?? 0}・殲敵 ${(d?.killsTroops ?? 0).toLocaleString()}・拔城 ${d?.citiesTaken ?? 0}・單挑勝 ${d?.duelsWon ?? 0}。\n\n` +
               `${careerOff.name.en} has fallen — they died as ${st.status.en}. The campaign ends here. (Roguelike run #${ach.counters.careerRuns})`;
-            // FOLLOW-UP: the last native alert() in the app. Unlike the panel
-            // alerts (now usePanelNotice), this is store-layer and fires mid-
-            // reducer, so it wants a proper styled "一代記落幕" end-of-run card
-            // (store field + component) rather than a mechanical swap — left as
-            // a deliberate follow-up to avoid re-entrancy/test churn tonight.
-            alert(epilogue);
+            // 一代記落幕 — the app's last native alert() is now a styled card.
+            // Written as state here (this runs mid-reducer) and rendered once by
+            // CareerEpilogueModal, which clears it on dismiss.
+            void epilogue;
+            careerEpilogueOut = {
+              nameZh: careerOff.name.zh, nameEn: careerOff.name.en,
+              statusZh: st.status.zh, statusEn: st.status.en, rank: st.rank,
+              battlesWon: d?.battlesWon ?? 0,
+              kills: d?.killsTroops ?? 0,
+              cities: d?.citiesTaken ?? 0,
+              duels: d?.duelsWon ?? 0,
+              runNumber: ach.counters.careerRuns,
+            };
             careerMode = null;
           }
         }
@@ -14550,6 +14560,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           deeds: titleGrant.deeds,
           battleReplays: replays,
           careerMode,
+          careerEpilogue: careerEpilogueOut,
           campaignStats: newStats,
           recentAchievementUnlocks: [...state.recentAchievementUnlocks, ...newlyAch],
           recentDeedTitles: [...state.recentDeedTitles, ...titleGrant.grants],
@@ -15655,6 +15666,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (!fid) return {};
         return { refugeePolicy: { ...s.refugeePolicy, [fid]: policy } };
       }),
+
+      dismissCareerEpilogue: () => set({ careerEpilogue: null }),
 
       // 行賞 (§4.10) — 賞不逾時. Pays out of the capital's treasury; an unpaid
       // ledger is what erodes a great officer's loyalty every season.

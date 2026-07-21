@@ -509,6 +509,18 @@ export interface GameState {
   serviceSystem: Record<EntityId, import('../systems/conscription').ServiceSystem>;
   /** 流民之政 (§8.6) — per-force policy on the displaced. Absent ⇒ 安置. */
   refugeePolicy: Record<EntityId, import('../systems/refugees').RefugeePolicy>;
+  /**
+   * 一代記落幕 — the closing card for a roguelike career run that just ended.
+   * Set by endSeason when the career officer dies; the UI shows it once and
+   * clears it. (Replaces the app's last native alert().)
+   */
+  careerEpilogue: {
+    nameZh: string; nameEn: string;
+    statusZh: string; statusEn: string;
+    rank: number;
+    battlesWon: number; kills: number; cities: number; duels: number;
+    runNumber: number;
+  } | null;
   /** 通脹 (§1.17) — every realm's own inflation (0–100). The player's entry is
    *  mirrored into the legacy scalar `inflation` so old readers keep working. */
   inflationByForce: Record<EntityId, number>;
@@ -975,6 +987,7 @@ export const EMPTY_STATE: GameState = {
   inflationByForce: {},
   serviceSystem: {},
   refugeePolicy: {},
+  careerEpilogue: null,
   grandProjects: [],
   poems: [],
   shrines: [],
@@ -1475,6 +1488,7 @@ export function loadScenario(
     inflationByForce: {},
     serviceSystem: {},
     refugeePolicy: {},
+    careerEpilogue: null,
     grandProjects: [],
     poems: [],
     shrines: [],
