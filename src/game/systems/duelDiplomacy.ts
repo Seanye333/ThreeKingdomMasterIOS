@@ -61,3 +61,76 @@ export function peaceDuelStakes(outcome: PeaceDuelOutcome, beatenChampion: Offic
     default:     return { napSeasons: 4, indemnity: 0, scoreDelta: 8, grudgeEase: 6 };
   }
 }
+
+/* ─── AI 對稱:諸國亦以一騎定和 ────────────────────────────────────────── */
+
+/**
+ * 決鬥定和 was, until now, a thing only the player could propose — so the
+ * institution existed in exactly one court on a map of forty. This is the other
+ * thirty-nine: two AI realms, cold toward each other, each with a champion
+ * worth sending, may settle their quarrel the same way. It costs the player
+ * nothing and changes the map they are playing on, which is the point — the
+ * world should be doing the things the world can do.
+ *
+ * Deliberately rare and deliberately conditional: a realm that is winning has
+ * no reason to accept an afternoon's fencing instead of a province.
+ */
+
+/** Relation score below which two realms are quarrelling enough to bother. */
+export const AI_PEACE_DUEL_RELATION = -15;
+/** Per-season chance a qualifying AI pair even proposes it. */
+export const AI_PEACE_DUEL_CHANCE = 0.06;
+
+export interface AiPeaceDuelBid {
+  proposerId: string;
+  targetId: string;
+  proposerChampionId: string;
+  targetChampionId: string;
+}
+
+/**
+ * Which AI pair, if any, tries it this season. `pairs` is every ordered pair
+ * already filtered to "at odds, neither is the player"; the caller supplies
+ * relation and relative strength so this stays pure and cheap.
+ */
+export function pickAiPeaceDuel(args: {
+  pairs: Array<{
+    proposerId: string;
+    targetId: string;
+    relation: number;
+    /** Proposer cities ÷ target cities — the weak sue for terms, not the strong. */
+    strengthRatio: number;
+  }>;
+  officers: Record<string, Officer>;
+  rng: () => number;
+}): AiPeaceDuelBid | null {
+  for (const pair of args.pairs) {
+    if (pair.relation > AI_PEACE_DUEL_RELATION) continue;
+    // 弱者求和 — a realm that is ahead settles nothing by a duel.
+    if (pair.strengthRatio > 0.9) continue;
+    if (args.rng() >= AI_PEACE_DUEL_CHANCE) continue;
+    const mine = pickPeaceChampion(args.officers, pair.proposerId);
+    const theirs = pickPeaceChampion(args.officers, pair.targetId);
+    if (!mine || !theirs) continue;
+    if (!willAcceptPeaceDuel(theirs, mine, Math.abs(pair.relation), args.rng)) continue;
+    return {
+      proposerId: pair.proposerId,
+      targetId: pair.targetId,
+      proposerChampionId: mine.id,
+      targetChampionId: theirs.id,
+    };
+  }
+  return null;
+}
+
+/** Who wins an AI-vs-AI bout: prowess with a little room for the upset. */
+export function resolveAiPeaceDuel(
+  proposerChampion: Officer,
+  targetChampion: Officer,
+  rng: () => number,
+): PeaceDuelOutcome {
+  const edge = staticProwess(proposerChampion) - staticProwess(targetChampion);
+  const roll = rng() * 100 - 50 + edge;
+  if (Math.abs(roll) < 6) return 'draw';
+  return roll > 0 ? 'win' : 'loss';
+}

@@ -1,6 +1,10 @@
 /** 批 H 決鬥定和 — 以戰止戰: champions, acceptance, and the binding terms. */
 import { describe, it, expect } from 'vitest';
-import { pickPeaceChampion, willAcceptPeaceDuel, peaceDuelStakes, PEACE_DUEL_COST } from './duelDiplomacy';
+import {
+  pickPeaceChampion, willAcceptPeaceDuel, peaceDuelStakes, PEACE_DUEL_COST,
+  pickAiPeaceDuel, resolveAiPeaceDuel,
+} from './duelDiplomacy';
+import type { Officer } from '../types';
 import { duelTribute } from './duelChallenge';
 import { mkOfficer, seededRng } from '../../test/factories';
 
@@ -71,5 +75,49 @@ describe('peaceDuelStakes — the pact binds either way', () => {
   });
   it('the envoy fee is a real cost', () => {
     expect(PEACE_DUEL_COST).toBeGreaterThan(0);
+  });
+});
+
+describe('AI 對稱 — 諸國亦以一騎定和', () => {
+  const champ = (id: string, war: number): Officer =>
+    mkOfficer({ id, stats: W(war), forceId: id.slice(0, 2) });
+
+  const officers = {
+    aa1: champ('aa1', 90),
+    bb1: champ('bb1', 85),
+  };
+
+  const pair = (over: Partial<{ relation: number; strengthRatio: number }> = {}) => ([{
+    proposerId: 'aa', targetId: 'bb', relation: -40, strengthRatio: 0.5, ...over,
+  }]);
+
+  it('two realms on good terms have nothing to settle', () => {
+    expect(pickAiPeaceDuel({ pairs: pair({ relation: 20 }), officers, rng: () => 0 })).toBeNull();
+  });
+
+  it('弱者求和 — the realm that is ahead settles nothing by fencing', () => {
+    expect(pickAiPeaceDuel({ pairs: pair({ strengthRatio: 2 }), officers, rng: () => 0 })).toBeNull();
+  });
+
+  it('a quarrelling weaker realm with a champion tries it', () => {
+    const bid = pickAiPeaceDuel({ pairs: pair(), officers, rng: () => 0 });
+    expect(bid?.proposerId).toBe('aa');
+    expect(bid?.proposerChampionId).toBe('aa1');
+    expect(bid?.targetChampionId).toBe('bb1');
+  });
+
+  it('it stays rare — an unlucky roll simply passes', () => {
+    expect(pickAiPeaceDuel({ pairs: pair(), officers, rng: () => 0.99 })).toBeNull();
+  });
+
+  it('a realm with nobody able to fight cannot send a champion', () => {
+    expect(pickAiPeaceDuel({ pairs: pair(), officers: { aa1: officers.aa1 }, rng: () => 0 })).toBeNull();
+  });
+
+  it('the bout resolves to one of three outcomes and favours prowess', () => {
+    const out = resolveAiPeaceDuel(officers.aa1, officers.bb1, () => 0.5);
+    expect(['win', 'loss', 'draw']).toContain(out);
+    // A vastly stronger champion wins on a middling roll.
+    expect(resolveAiPeaceDuel(champ('x', 100), champ('y', 20), () => 0.5)).toBe('win');
   });
 });

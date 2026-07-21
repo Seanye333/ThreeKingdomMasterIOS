@@ -10,7 +10,7 @@ import type {
   SeasonReport,
 } from '../types';
 import { OATH_BONDS, type OathBond } from '../data/bonds';
-import { isHostilePermitted, getRelation } from '../types';
+import { isHostilePermitted, getRelation, pairKey } from '../types';
 import { generateTerritories, terrainRoute, positionAlongRoute, marchDestCoords, type Territory } from '../data/territories';
 import { hexAt as paintHexAt } from '../data/geography';
 import { stampPaintAlongRoute, stampPaintDisc, seasonStampOf, isSupplyConnected, type HexPaint } from './hexPaint';
@@ -67,6 +67,8 @@ import { rollCampPlague } from './campDisease';
 import { engineBuildRate, burnEngines, enginePartyTier } from './siegeWorks';
 import { resolveNightRaid, willRaid } from './nightRaid';
 import { dilute, RECOVERED_QUALITY } from './reorganization';
+import { pickAiPeaceDuel, resolveAiPeaceDuel, peaceDuelStakes } from './duelDiplomacy';
+import { addSeasons } from './diplomacy';
 
 /** 卑濕之地 — siege lines on this ground breed 軍中疫疾 (§5.15). */
 const WET_SIEGE_GROUND = new Set(['river', 'lake', 'sea', 'marsh']);
@@ -3930,6 +3932,63 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     });
     finalDiplomacy = coalition.diplomacy;
     entries.push(...coalition.entries);
+
+    // 諸國亦以一騎定和 (§6.13 對稱) — 決鬥定和 used to exist in exactly one court
+    // on a map of forty. Two AI realms at odds, the weaker with a champion worth
+    // sending, may settle their quarrel the same way the player can. Costs the
+    // player nothing and changes the map they are playing on.
+    const cityCount: Record<EntityId, number> = {};
+    for (const c of Object.values(cities)) {
+      if (c.ownerForceId) cityCount[c.ownerForceId] = (cityCount[c.ownerForceId] ?? 0) + 1;
+    }
+    const aiIds = Object.keys(forces).filter(
+      (fid) => fid !== input.playerForceId && (cityCount[fid] ?? 0) > 0);
+    const pairs: Array<{ proposerId: EntityId; targetId: EntityId; relation: number; strengthRatio: number }> = [];
+    for (const a of aiIds) {
+      for (const b of aiIds) {
+        if (a === b) continue;
+        pairs.push({
+          proposerId: a, targetId: b,
+          relation: getRelation(finalDiplomacy, a, b).score,
+          strengthRatio: (cityCount[a] ?? 0) / Math.max(1, cityCount[b] ?? 0),
+        });
+      }
+    }
+    const bid = pickAiPeaceDuel({ pairs, officers, rng });
+    if (bid) {
+      const mine = officers[bid.proposerChampionId];
+      const theirs = officers[bid.targetChampionId];
+      const outcome = resolveAiPeaceDuel(mine, theirs, rng);
+      const stakes = peaceDuelStakes(outcome, outcome === 'win' ? theirs : outcome === 'loss' ? mine : null);
+      const key = pairKey(bid.proposerId, bid.targetId);
+      const before = getRelation(finalDiplomacy, bid.proposerId, bid.targetId);
+      finalDiplomacy = {
+        ...finalDiplomacy,
+        relations: {
+          ...finalDiplomacy.relations,
+          [key]: {
+            ...before,
+            forceA: bid.proposerId < bid.targetId ? bid.proposerId : bid.targetId,
+            forceB: bid.proposerId < bid.targetId ? bid.targetId : bid.proposerId,
+            score: Math.max(-100, Math.min(100, before.score + stakes.scoreDelta)),
+            status: 'non-aggression',
+            expiresAt: addSeasons(input.date, stakes.napSeasons),
+          },
+        },
+      };
+      const winner = outcome === 'win' ? mine : outcome === 'loss' ? theirs : null;
+      const fa = forces[bid.proposerId]?.name;
+      const fb = forces[bid.targetId]?.name;
+      entries.push({
+        cityId: null, kind: 'note',
+        text: winner
+          ? `${fa?.en} and ${fb?.en} settle their quarrel by champions — ${winner.name.en} takes the bout; ${stakes.napSeasons} seasons of peace sworn.`
+          : `${fa?.en} and ${fb?.en} settle their quarrel by champions — the bout is drawn; ${stakes.napSeasons} seasons of peace sworn.`,
+        textZh: winner
+          ? `${fa?.zh}與${fb?.zh}以一騎定和 —— ${winner.name.zh}勝其陣,結盟${stakes.napSeasons}季不相攻。`
+          : `${fa?.zh}與${fb?.zh}以一騎定和 —— 兩雄不分,結盟${stakes.napSeasons}季不相攻。`,
+      });
+    }
   }
 
   // 7. Advance date.
