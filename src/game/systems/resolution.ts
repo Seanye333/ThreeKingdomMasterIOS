@@ -53,7 +53,7 @@ import {
   evernormalOperation, type GrainNode,
 } from './grainTrade';
 import { coinEffects } from './coinage';
-import { armamentsTick, armamentEffects } from './workshops';
+import { armamentsTick, armamentEffects, ARM_LOW } from './workshops';
 import {
   buildRelayNetwork, relayEffects, RELAY_BUILDINGS, type RelayReach,
 } from './postalRelay';
@@ -2584,6 +2584,18 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       if (force.id === input.playerForceId && owned >= 10 && cut === 0) {
         civicAchievements.push('writ-complete');
       }
+      // 斷驛之報 — a standing condition, so a per-season line would be noise:
+      // remind once a year (spring), naming the worst of it.
+      if (force.id === input.playerForceId && cut > 0 && input.date.season === 'spring') {
+        const cutNames = Object.values(cities)
+          .filter((c) => c.ownerForceId === force.id && !relayReach.get(c.id)?.connected)
+          .slice(0, 3);
+        entries.push({
+          cityId: cutNames[0]?.id ?? null, kind: 'note',
+          text: `The writ reaches ${owned - cut}/${owned} of your cities. Cut off: ${cutNames.map((c) => c.name.en).join(', ')}${cut > 3 ? '…' : ''}.`,
+          textZh: `政令通達 ${owned - cut}/${owned} 城。斷驛者:${cutNames.map((c) => c.name.zh).join('、')}${cut > 3 ? '…' : ''} —— 沿途築驛站可續上驛路。`,
+        });
+      }
     }
   }
 
@@ -3038,6 +3050,23 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
           kind: 'note', cityId: city.id,
           text: `${city.name.en}: the merchant houses have cornered the grain.`,
           textZh: `${city.name.zh}:豪商囤積居奇(${Math.round(nextHoard)}%),米價騰貴 —— 宜抑兼併,或建常平倉。`,
+        });
+      }
+      // 制度警訊 (§1.18/§4.11/§1.19) — same rule as the civic ones: report the
+      // season a meter CROSSES, never every season after, or the player learns
+      // to scroll past it. Downward crossings only for 軍器 (it falls, not rises).
+      if ((city.armaments ?? 0) >= ARM_LOW && armsTick.armaments < ARM_LOW && city.troops >= 2000) {
+        entries.push({
+          kind: 'note', cityId: city.id,
+          text: `${city.name.en}: the armoury is bare — new levies here will arrive half-equipped.`,
+          textZh: `${city.name.zh}:武庫將空(軍器 ${armsTick.armaments.toFixed(0)}),無甲不成軍 —— 宜遣吏督造軍器,或先屯鐵。`,
+        });
+      }
+      if (crossed((city.wounded ?? 0) / Math.max(1, city.troops), care.remaining / Math.max(1, city.troops), 0.08)) {
+        entries.push({
+          kind: 'note', cityId: city.id,
+          text: `${city.name.en}: the infirmaries are filling — medicine and a physician would bring these men back.`,
+          textZh: `${city.name.zh}:傷卒滿營(${Math.round(care.remaining).toLocaleString()} 人),藥石不繼 —— 宜屯藥材、建醫館、留智將坐鎮。`,
         });
       }
     }

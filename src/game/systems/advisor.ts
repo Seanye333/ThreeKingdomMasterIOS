@@ -326,6 +326,39 @@ export function adviseTips(input: AdvisorInput): AdvisorTip[] {
     }
   }
 
+  // ⑦c 制度之患 (§1.18/§4.11/§4.10) — the 2026-07-21 institutions have their own
+  // slow rots, and each has one obvious hand to play. Same shape as 民政三患:
+  // name the worst city and hand over the command.
+  {
+    const armed = own.filter((c) => c.troops >= 2000);
+    // Gated on iron actually in the yard — 督造軍器 fails outright without it,
+    // and every city on the map opens at 0 armaments, so an ungated tip would
+    // shout at the player on turn one about something they cannot act on.
+    const worstArms = [...armed]
+      .filter((c) => (c.iron ?? 0) >= 300)
+      .sort((a, b) => (a.armaments ?? 0) - (b.armaments ?? 0))[0];
+    if (worstArms && (worstArms.armaments ?? 0) < 12) {
+      tips.push(cmdTip(input, worstArms, 'arm-works', {
+        id: `arms-${worstArms.id}`,
+        zh: `${worstArms.name.zh}武庫將空(軍器 ${(worstArms.armaments ?? 0).toFixed(0)}),徵兵所得皆徒手之卒 — 宜督造軍器(庫中須有鐵)。`,
+        en: `${worstArms.name.en}'s armoury is bare (${(worstArms.armaments ?? 0).toFixed(0)}) — levies raised here arrive unarmed. Set the workshops to it.`,
+        priority: 50 + Math.round((12 - (worstArms.armaments ?? 0))),
+      }));
+    }
+    // 傷卒滿營 — no command fixes it; the advisor says what does.
+    const worstWounded = [...own].sort(
+      (a, b) => (b.wounded ?? 0) / Math.max(1, b.troops) - (a.wounded ?? 0) / Math.max(1, a.troops))[0];
+    if (worstWounded && (worstWounded.wounded ?? 0) >= Math.max(600, worstWounded.troops * 0.08)) {
+      tips.push({
+        id: `wounded-${worstWounded.id}`,
+        zh: `${worstWounded.name.zh}傷卒 ${Math.round(worstWounded.wounded ?? 0).toLocaleString()} 人待療 — 屯藥材、建醫館、留一智將坐鎮,大半可歸伍。`,
+        en: `${worstWounded.name.en} has ${Math.round(worstWounded.wounded ?? 0).toLocaleString()} wounded under care — medicine, an infirmary and a physician bring most of them back.`,
+        priority: 54,
+        action: { kind: 'none' },
+      });
+    }
+  }
+
   // ⑧ 敵城空虛 — a weak neighbour invites ambition (informational).
   const strongest = Math.max(0, ...own.map((c) => c.troops));
   for (const city of own) {
