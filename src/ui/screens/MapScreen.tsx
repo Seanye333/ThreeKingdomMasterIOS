@@ -1280,6 +1280,10 @@ export function MapScreen() {
             else if (id === 'tournament') setShowTournament(true);
             else if (id === 'salon') setShowSalon(true);
             else if (id === 'debate-ground') setShowDebateGround(true);
+            // 制度批 (§1.16/§1.17/§4.8/§1.19) — all four live in 國政.
+            else if (id === 'grain-market' || id === 'coinage' || id === 'service' || id === 'relay') {
+              setShowStatecraft(true);
+            }
           }} />}
         {showPalette && <CommandPalette commands={paletteCommands} onClose={() => setShowPalette(false)} />}
         {showCompare && <ForceCompareModal onClose={() => setShowCompare(false)} />}

@@ -68,6 +68,7 @@ export function StatecraftModal({ onClose, onSelectCity }: { onClose: () => void
   const refugeePolicy: RefugeePolicy = useGameStore((s) => (playerForceId ? s.refugeePolicy?.[playerForceId] : undefined) ?? 'settle');
   const setRefugeePolicy = useGameStore((s) => s.setRefugeePolicy);
   const refugeePool = useGameStore((s) => s.refugees ?? 0);
+  const treasuryHistory = useGameStore((s) => s.treasuryHistory ?? []);
   const forces = useGameStore((s) => s.forces);
   const selection: SelectionSystem = useGameStore((s) => (playerForceId ? s.selectionSystem?.[playerForceId] : undefined) ?? 'chaju');
   const setSelectionSystem = useGameStore((s) => s.setSelectionSystem);
@@ -139,6 +140,10 @@ export function StatecraftModal({ onClose, onSelectCity }: { onClose: () => void
     const far = own.filter((c) => { const r = net.get(c.id); return r?.connected && r.hops > 4; });
     return { net, cut, far, stations: relayCityIds.size };
   }, [cities, buildings, own, forces, playerForceId]);
+
+  const treasuryTrend = treasuryHistory.length >= 2
+    ? treasuryHistory[treasuryHistory.length - 1] - treasuryHistory[0]
+    : 0;
 
   const totalTroops = own.reduce((sum, c) => sum + c.troops, 0);
   const wageBill = own.reduce((sum, c) => sum + seasonPay(c.troops, service), 0);
@@ -423,6 +428,26 @@ export function StatecraftModal({ onClose, onSelectCity }: { onClose: () => void
           {t(`城 ${own.length} · 平均 積案 ${mean((c) => c.caseload ?? 0).toFixed(0)} · 隱戶 ${mean((c) => c.hiddenHouseholds ?? 0).toFixed(1)}%(租賦收 ${(registryYieldMul(mean((c) => c.hiddenHouseholds ?? 0)) * 100).toFixed(0)}%)· 囤積 ${mean((c) => c.hoardedGrain ?? 0).toFixed(1)}% · 文教 ${mean((c) => c.culture ?? 0).toFixed(0)} · 祠 ${shrines.length} · 詩 ${poems.length}`,
              `${own.length} cities · mean docket ${mean((c) => c.caseload ?? 0).toFixed(0)} · off-books ${mean((c) => c.hiddenHouseholds ?? 0).toFixed(1)}% (yield ${(registryYieldMul(mean((c) => c.hiddenHouseholds ?? 0)) * 100).toFixed(0)}%) · hoard ${mean((c) => c.hoardedGrain ?? 0).toFixed(1)}% · culture ${mean((c) => c.culture ?? 0).toFixed(0)} · ${shrines.length} shrines · ${poems.length} poems`)}
         </div>
+        {/* 度支沿革 — the realm's treasury over the last eight seasons. Reads the
+            snapshot store.endSeason already keeps; no new state. */}
+        {treasuryHistory.length >= 2 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '2px 0 8px' }}>
+            <Sparkline values={treasuryHistory} />
+            <span style={{ ...note, marginTop: 0 }}>
+              {t(`府庫沿革 ${treasuryHistory.length} 季 · 今 ${treasuryHistory[treasuryHistory.length - 1].toLocaleString()} 金`
+                 + `(${treasuryTrend >= 0 ? '+' : ''}${treasuryTrend.toLocaleString()})`,
+                 `Treasury, last ${treasuryHistory.length} seasons · now ${treasuryHistory[treasuryHistory.length - 1].toLocaleString()}g`
+                 + ` (${treasuryTrend >= 0 ? '+' : ''}${treasuryTrend.toLocaleString()})`)}
+            </span>
+          </div>
+        )}
+        {/* 2026-07-21 制度批的全境計量 */}
+        <div style={{ ...note, marginTop: 0, marginBottom: 6 }}>
+          {t(`軍器 平均 ${mean((c) => c.armaments ?? 0).toFixed(0)}/100 · 傷兵 ${own.reduce((a, c) => a + (c.wounded ?? 0), 0).toLocaleString()} 人在營`
+             + ` · 練度 平均 ${mean((c) => c.drill ?? 0).toFixed(0)}`,
+             `Armaments ${mean((c) => c.armaments ?? 0).toFixed(0)}/100 · ${own.reduce((a, c) => a + (c.wounded ?? 0), 0).toLocaleString()} wounded under care`
+             + ` · drill ${mean((c) => c.drill ?? 0).toFixed(0)}`)}
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(4rem,1fr) repeat(4, minmax(3.4rem, auto))', gap: '2px 8px', fontSize: '0.72rem' }}>
           <span style={{ color: '#7a8893' }}>{t('城', 'City')}</span>
           <span style={{ color: '#7a8893' }}>{t('獄訟', 'Docket')}</span>
@@ -473,5 +498,30 @@ function Row(props: {
       {cell(props.hoard, props.hoard >= 20, props.lang === 'en' ? props.hoardTierName.en : props.hoardTierName.zh)}
       {cell(props.culture, false, '')}
     </>
+  );
+}
+
+
+/**
+ * 度支沿革 — an eight-point treasury sparkline. Tiny, unlabelled and honest:
+ * the shape is the message (are you building or bleeding?), and the exact
+ * figure sits beside it in words.
+ */
+function Sparkline({ values, width = 108, height = 26 }: { values: number[]; width?: number; height?: number }) {
+  if (values.length < 2) return null;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = Math.max(1, max - min);
+  const pts = values.map((v, i) => {
+    const x = (i / (values.length - 1)) * (width - 2) + 1;
+    const y = height - 1 - ((v - min) / span) * (height - 3);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  const rising = values[values.length - 1] >= values[0];
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden
+      style={{ flex: '0 0 auto', display: 'block' }}>
+      <polyline points={pts} fill="none" stroke={rising ? '#8fbf87' : '#c08a5a'} strokeWidth="1.4" />
+    </svg>
   );
 }

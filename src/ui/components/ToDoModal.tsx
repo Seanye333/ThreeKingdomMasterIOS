@@ -42,6 +42,12 @@ const DISCOVER_FEATURES: Array<{ id: string; icon: string; zh: string; en: strin
   { id: 'forge',        icon: '⚒', zh: '鍛造 — 神兵自鑄',          en: 'Forge', subZh: '鐵與火,養一把名器' },
   { id: 'tournament',   icon: '🏆', zh: '比武大會 — 群英校技',      en: 'Tournament', subZh: '擂台之上見真章' },
   { id: 'debate-ground',icon: '💬', zh: '論辯場 — 舌戰練膽',        en: 'Debate', subZh: '不戰而屈人之口' },
+  // 2026-07-21 制度批 — four realm-wide levers that are easy to never notice,
+  // because nothing forces you to open the panel. Each is a real decision.
+  { id: 'grain-market', icon: '🐫', zh: '糴政 — 通糴 / 平糴 / 閉糴',  en: 'Grain trade', subZh: '商賈會自己把糧運到貴的地方' },
+  { id: 'coinage',      icon: '💰', zh: '錢法 — 五銖 / 大錢 / 穀帛',  en: 'Coinage', subZh: '鑄大錢今日府庫滿,明年米貴如珠' },
+  { id: 'service',      icon: '🛡', zh: '兵制 — 更卒 / 世兵 / 募兵',  en: 'Service system', subZh: '募兵最能拉人,但每季要發餉' },
+  { id: 'relay',        icon: '🐎', zh: '驛傳 — 政令所及',            en: 'Relay network', subZh: '文書到不了的省,是你擁有而非治理' },
 ];
 const SEEN_KEY = 'tkm-seen-features';
 const seenFeatures = (): Set<string> => {
