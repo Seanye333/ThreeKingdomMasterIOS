@@ -18,7 +18,7 @@
 | 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, tacticalAi, combat, formations, stratagems, weather(區域天候), battlefieldTerrain, worldScars(戰場烙印), fieldworks(築壘), columnReinforcements(會戰), wallTier城郭分層, 入城三選, battleSpoils(戰場繳獲), **navalWarfare(水軍熟練/暈船/艦隊編成/淺灘擱淺/搶灘登陸)**, personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
 | 6 | [單挑](#第六章-單挑) | duel(招式/必殺技/獨門被動/破綻/傷殘/挑落下馬/**環境借勢/部位打擊/膽氣怯戰/棄馬步戰**/兵裝/坐騎/地形/性格/AI), **martialArts(武學修為/流派/流派相剋/秘籍/頓悟)**, **teamDuel(團戰圍攻/合擊/3D 同場)**, **arenaLadder(打擂擂台)**, **涟漪大地圖(威名威懾/代戰認輸金/慘勝負傷/名場面入史/世間鬥將)**, **debateArts(文辯修為/學派/辯經/傳道)**, **scholarRank(月旦評/文名威懾)**, **debateDiplomacy(折衝樽俎/責讓索貢/舌戰說降)**, **teamDebate(朝堂合辯)**, **引時事入辯(annals 彈藥)**, **realmEthos(尚武崇文之風)**, **lineage(師承譜系/同門/衣缽傳人)**, gauntlet, duelSeries, duelScenarios(劇情+戰役), duelHall(名局廊), warRanking(武評榜), rivalries(宿敵/恩怨簿), duelChallenge(約戰), tactical(致師) | ✅ |
 | 7 | [外交・謀略・天子](#第七章-外交謀略天子) | diplomacy, diplomacyPacts(稱臣/索貢/會盟/援盟/調停/質子/借道), coalition, schemes, aiSchemes, ambition, espionage, expedition, foreignRealm, intrigue, courtFactions, factionEvents, emperor, imperialEffects, mandate, appointmentEffects, clans, statecraft | ✅ |
-| 8 | [事件・天命・異族・宗教](#第八章-事件天命異族宗教) | events(天災/地動/賑災), historicalEvents(抉擇鏈), behaviorEvents(勸進/眾叛), customEvents, factionEvents, religion(黃巾/招安/宣撫), tribes, tribesDiplomacy(和親/互市/質子/以夷制夷/入主建國/七擒), mandate(祥瑞/造讖/禳星), mandateRituals(郊祀/祈雨), annals(災異志) | ✅ |
+| 8 | [事件・天命・異族・宗教](#第八章-事件天命異族宗教) | events(天災/地動/賑災), historicalEvents(抉擇鏈), behaviorEvents(勸進/眾叛), customEvents, factionEvents, religion(黃巾/招安/宣撫), **refugees(流民之政:招撫/安置/閉關)**, tribes, tribesDiplomacy(和親/互市/質子/以夷制夷/入主建國/七擒), mandate(祥瑞/造讖/禳星), mandateRituals(郊祀/祈雨), annals(災異志) | ✅ |
 | 9 | [元遊戲・收藏・分享](#第九章-元遊戲收藏分享) | achievements, deedTitles, dailyChallenge, **shareCode(開局挑戰碼)**, **legacy(遺澤·跨局傳承)**, leaderboard, mods, powerHistory, historyBook, romance, sound, voiceLines, dialogueRoll | ✅ |
 | 10 | [AI](#第十章-ai) | ai, aiBuild, aiCourt, aiAppointments, aiSchemes, aiRansom, aiWishesFlavor | ✅ |
 | 11 | [核心流程・勝敗・培訓・其他模式](#第十一章-核心流程勝敗培訓其他模式) | resolution, endings, training, succession, objectives, hotSeat, spectator, heroMode, customOfficer, eventEditor, randomScenario, dynasties, strategicMap3D(兵鋒層/晝夜/水影/飛鏡/回放/設伏/斥候偵騎/兵站/攔江鎖/長圍/焚橋/烽燧鏈/糧道總覽/焦土/城等視覺) | ✅ |
@@ -204,6 +204,7 @@
 | 軍法(§4.10) | 申飭 清3·自−1 / 杖責 清6·自−6·眾+2·失威1 / 降職 清12·自−12·眾+3·失威2·15%他去 / 斬首 全清·眾+5 |
 | 傷兵(§4.11) | 守住陣地者傷佔戰損 30%(+12% 守成/+8% 有醫館,頂 55%);城破一方無傷兵 |
 | 都督之權(§4.3b) | 違令:忠<58 且智≥72 → 換成自己的方略(武≥統 蠶食/否則 固守);擁兵自重:兵佔比≥25% 且忠<70 → 留兵 (70−忠)/200(頂35%);權臣坐大:佔比≥30% 且忠<60 → 謀反權重 +≤0.06 |
+| 流民之政(§8.6) | 招撫 納入×2·收容城民心−2/季·疫病高風險 / 安置 ×1 / 閉關 ×0·全境民心+0.5/季 |
 | 療傷(§4.11) | 歸伍=min(.82, .34+醫院級×.09+min(.12,智力/700)+藥足×.14);死=max(.03,.20−照護×.8);餘六成廢疾還籍;藥材 0.4/傷兵 |
 
 ### 內政命令成本(金)
@@ -2937,6 +2938,21 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
   - **群臣勸進**(天命≥90 + 城≥8):受之(金−2000、群臣+5忠、天命+6、旗標 urged-enthrone)或三讓(天命+3、民忠+3);
   - **眾叛親離**(天命<12):下罪己詔(天命+10、民忠+4、金−500)或諱而不宣(最搖擺之臣 −15 忠)。
 - 天災賑濟 +2、開倉之德亦入天命(見 8.2)—— 天命至此可攻可守,不再純靠天擲。
+
+
+### 8.6 流民之政:招撫・安置・閉關(refugees.ts,2026-07)
+
+流民池本來就在跑 —— 饑荒、戰亂、苛政把人趕上路,他們每季流向民心高、稅輕、還有餘容的城。那是**物理**。這一節是**政治**,而這個時代對此毫不含糊:招撫流民造就了曹操的屯田與劉備的班底,也把饑荒、疫病與盜匪一併搬進了原本沒有的城裡。
+
+| 流民之政 | 納入 | 收容之城 | 全境 |
+|---|---|---|---|
+| **招撫**(流民歸之如市) | **×2** | 民心 **−2/季**、**疫病風險大增**(該城當季併入 §8.2 的高風險名單) | — |
+| **安置**(量力而納,預設) | ×1 | — | — |
+| **閉關**(閉門不納) | **×0** | — | 民心 **+0.5/季**(鄉里稱便);流民盡歸鄰國,勞力與人望俱失 |
+
+- **與 §4.8 募兵的暗接**:流民是募兵最現成的兵源。行招撫的國家人口漲得快,行閉關的國家把這批人送給鄰居 —— 你少的那些人,可能明年就穿著別人的號衣回來。
+- **AI 亦有其政**:仁厚/縱橫之主招撫,暴虐/守成之主閉關,其餘安置。
+- 入口:**國政面板 ▸ 流民之政**(附當前天下流民口數)。存檔欄 `refugeePolicy`,舊檔缺欄 = 安置(即舊行為)。
 
 ---
 

@@ -507,6 +507,8 @@ export interface GameState {
   coinStandard: Record<EntityId, import('../systems/coinage').CoinStandard>;
   /** 兵制 (§4.8) — per-force service system (更卒/世兵/募兵). Absent ⇒ 更卒. */
   serviceSystem: Record<EntityId, import('../systems/conscription').ServiceSystem>;
+  /** 流民之政 (§8.6) — per-force policy on the displaced. Absent ⇒ 安置. */
+  refugeePolicy: Record<EntityId, import('../systems/refugees').RefugeePolicy>;
   /** 通脹 (§1.17) — every realm's own inflation (0–100). The player's entry is
    *  mirrored into the legacy scalar `inflation` so old readers keep working. */
   inflationByForce: Record<EntityId, number>;
@@ -972,6 +974,7 @@ export const EMPTY_STATE: GameState = {
   coinStandard: {},
   inflationByForce: {},
   serviceSystem: {},
+  refugeePolicy: {},
   grandProjects: [],
   poems: [],
   shrines: [],
@@ -1471,6 +1474,7 @@ export function loadScenario(
     coinStandard: {},
     inflationByForce: {},
     serviceSystem: {},
+    refugeePolicy: {},
     grandProjects: [],
     poems: [],
     shrines: [],

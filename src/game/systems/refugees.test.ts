@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { City } from '../types';
-import { settleRefugees } from './refugees';
+import { settleRefugees, refugeePolicyEffects, aiRefugeePolicy } from './refugees';
 
 function mkCity(over: Partial<City> = {}): City {
   return {
@@ -94,5 +94,33 @@ describe('settleRefugees', () => {
     const light = r.settled.find((s) => s.cityId === 'light')?.count ?? 0;
     const heavy = r.settled.find((s) => s.cityId === 'heavy')?.count ?? 0;
     expect(light).toBeGreaterThan(heavy);
+  });
+});
+
+describe('流民之政 (§8.6)', () => {
+  it('招撫 doubles the intake and charges for it', () => {
+    const w = refugeePolicyEffects('welcome');
+    expect(w.intakeMul).toBe(2);
+    expect(w.loyaltyDelta).toBeLessThan(0);
+    expect(w.plagueRisk).toBeGreaterThan(0);
+  });
+
+  it('閉關 takes none and pleases the locals', () => {
+    const e = refugeePolicyEffects('expel');
+    expect(e.intakeMul).toBe(0);
+    expect(e.realmLoyaltyDelta).toBeGreaterThan(0);
+  });
+
+  it('安置 is the neutral default', () => {
+    const s = refugeePolicyEffects(undefined);
+    expect(s.intakeMul).toBe(1);
+    expect(s.loyaltyDelta).toBe(0);
+    expect(s.realmLoyaltyDelta).toBe(0);
+  });
+
+  it('AI lords choose by temperament', () => {
+    expect(aiRefugeePolicy('benevolent')).toBe('welcome');
+    expect(aiRefugeePolicy('tyrant')).toBe('expel');
+    expect(aiRefugeePolicy('balanced')).toBe('settle');
   });
 });

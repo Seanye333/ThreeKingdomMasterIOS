@@ -24,6 +24,9 @@ import {
   SERVICE_SYSTEMS, SERVICE_NAMES, serviceEffects, seasonPay, type ServiceSystem,
 } from '../../game/systems/conscription';
 import {
+  REFUGEE_POLICIES, REFUGEE_POLICY_NAMES, refugeePolicyEffects, type RefugeePolicy,
+} from '../../game/systems/refugees';
+import {
   SELECTION_NAMES, SELECTION_SYSTEMS, selectionEffects, rectifierOf, rectifierIsUpright,
   type SelectionSystem,
 } from '../../game/systems/officialSelection';
@@ -62,6 +65,9 @@ export function StatecraftModal({ onClose, onSelectCity }: { onClose: () => void
   const inflation = useGameStore((s) => (playerForceId ? s.inflationByForce?.[playerForceId] : undefined) ?? s.inflation ?? 0);
   const service: ServiceSystem = useGameStore((s) => (playerForceId ? s.serviceSystem?.[playerForceId] : undefined) ?? 'levy');
   const setServiceSystem = useGameStore((s) => s.setServiceSystem);
+  const refugeePolicy: RefugeePolicy = useGameStore((s) => (playerForceId ? s.refugeePolicy?.[playerForceId] : undefined) ?? 'settle');
+  const setRefugeePolicy = useGameStore((s) => s.setRefugeePolicy);
+  const refugeePool = useGameStore((s) => s.refugees ?? 0);
   const forces = useGameStore((s) => s.forces);
   const selection: SelectionSystem = useGameStore((s) => (playerForceId ? s.selectionSystem?.[playerForceId] : undefined) ?? 'chaju');
   const setSelectionSystem = useGameStore((s) => s.setSelectionSystem);
@@ -272,6 +278,24 @@ export function StatecraftModal({ onClose, onSelectCity }: { onClose: () => void
           )}
         </div>
         <div style={note}>{t(serviceEffects(service).badgeZh, serviceEffects(service).badgeEn)}</div>
+      </div>
+
+      {/* 流民之政 §8.6 */}
+      <div style={sect}>
+        <div style={head}>🚶 {t('流民之政', 'The displaced')}</div>
+        <div style={row}>
+          {REFUGEE_POLICIES.map((rp) => (
+            <button key={rp} style={pill(refugeePolicy === rp)} onClick={() => setRefugeePolicy(rp)}
+              title={REFUGEE_POLICY_NAMES[rp].motto}>
+              {t(REFUGEE_POLICY_NAMES[rp].zh, REFUGEE_POLICY_NAMES[rp].en)}
+            </button>
+          ))}
+          <span style={{ ...note, marginTop: 0, marginLeft: 'auto' }}>
+            {t(`天下流民 ${Math.round(refugeePool).toLocaleString()} 口`,
+               `${Math.round(refugeePool).toLocaleString()} displaced abroad`)}
+          </span>
+        </div>
+        <div style={note}>{t(refugeePolicyEffects(refugeePolicy).badgeZh, refugeePolicyEffects(refugeePolicy).badgeEn)}</div>
       </div>
 
       {/* 驛傳 §1.19 */}

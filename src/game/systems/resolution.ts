@@ -66,7 +66,7 @@ import { shrineEffects } from './culturalWorks';
 import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
 import { corruptionAccrualMultiplier } from './traitEffects';
 import { rollCivicEvents } from './civicEvents';
-import { settleRefugees, REFUGEE_SHED_FRAC } from './refugees';
+import { settleRefugees, REFUGEE_SHED_FRAC, refugeePolicyEffects, aiRefugeePolicy } from './refugees';
 import { stepConvoys, resolveConvoyRaids, resolveRaidStrike, provisionNeeded, consumeRations, type Convoy, type ConvoyRaid } from './convoy';
 import {
   forcedMarchAttrition, cautiousAttritionMul, paceExposureMul,
@@ -164,6 +164,8 @@ export interface ResolutionInput {
   coinStandard?: Record<EntityId, import('./coinage').CoinStandard>;
   /** 兵制 — per-force service system (§4.8); missing resolve by temperament. */
   serviceSystem?: Record<EntityId, import('./conscription').ServiceSystem>;
+  /** 流民之政 — per-force refugee policy (§8.6); missing resolve by temperament. */
+  refugeePolicy?: Record<EntityId, import('./refugees').RefugeePolicy>;
   /** 武功簿 — the deeds ledger as it stands (§4.10 reads merit from it). */
   deeds?: Record<EntityId, import('../types').HeroicDeeds>;
   /** 軍團 — the player's legions (§4.3b: an over-mighty marshal is a risk). */
@@ -2660,6 +2662,13 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     // 政令所及 (§1.19) — a province the court's riders cannot reach governs
     // itself, and governs itself badly.
     const relay = relayEffects(relayReach.get(city.id));
+    // 閉關之政 (§8.6) — the townsfolk approve of a gate that stays shut.
+    const refugeeRealmLoyalty = city.ownerForceId
+      ? refugeePolicyEffects(
+          input.refugeePolicy?.[city.ownerForceId]
+          ?? (city.ownerForceId === input.playerForceId ? 'settle' : aiRefugeePolicy(forces[city.ownerForceId]?.personality)),
+        ).realmLoyaltyDelta
+      : 0;
     const corruptionAccrual = city.ownerForceId
       ? Math.max(0, 0.6 + city.commerce / 120 - Math.min(0.6, bestPolitics / 130))
         * corruptionAccrualMultiplier(cityOfficers) * cultureGraftCurb(city.culture ?? 0)
@@ -2790,7 +2799,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         + Math.round(tick.foodIncome * corveeEff.farmMul * registryYieldMul(nextHidden) * hoardEff.foodMul)
         - Math.round(tick.foodUpkeep * serviceEff.foodUpkeepMul)),
       troops: Math.max(0, troopsAfterDesertion + capitalGuard - wages.deserted - serviceStarveExtra + care.recovered),
-      loyalty: Math.max(0, Math.min(100, city.loyalty + tick.loyaltyDelta + capitalLoyalty + corruptionLoyaltyBite + cultureLift + lawLoyalty + relay.loyaltyDelta + wages.loyaltyDelta)),
+      loyalty: Math.max(0, Math.min(100, city.loyalty + tick.loyaltyDelta + capitalLoyalty + corruptionLoyaltyBite + cultureLift + lawLoyalty + relay.loyaltyDelta + wages.loyaltyDelta + refugeeRealmLoyalty)),
       corruption: city.ownerForceId ? nextCorruption : city.corruption,
       culture: nextCulture,
       caseload: nextCaseload,
@@ -2996,22 +3005,36 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     entries.push(...civic.entries);
   }
 
+  // 流民入城之城 — surfaced so §8.2's plague roll can weigh a crowded town.
+  const refugeeCrowdedCityIds: EntityId[] = [];
   // 流民安置 — fold this season's shed people into the pool, then let welcoming
   // cities (high 民忠 / 輕稅 / 有餘容) resettle a share of it. Season-bounded.
   if (seasonBoundary) {
     refugeePool += refugeesShed;
     if (refugeePool > 0) {
+      // 流民之政 (§8.6) — 招撫 doubles the intake and pays for it in order and
+      // disease; 閉關 takes none at all. AI lords choose by temperament.
+      const refugeePolicyOf = (fid: EntityId) =>
+        input.refugeePolicy?.[fid]
+        ?? (fid === input.playerForceId ? 'settle' : aiRefugeePolicy(forces[fid]?.personality));
       const flow = settleRefugees({
         pool: refugeePool,
         cities,
         buildings: input.buildings ?? [],
         taxPolicy: input.taxPolicy,
+        policyOf: refugeePolicyOf,
       });
       cities = flow.cities;
       refugeePool = flow.pool;
       for (const s of flow.settled) {
         const c = cities[s.cityId];
         if (!c) continue;
+        // 流民入城,亂與疫隨之 — the price of an open gate, paid where it opened.
+        const eff = refugeePolicyEffects(c.ownerForceId ? refugeePolicyOf(c.ownerForceId) : undefined);
+        if (eff.loyaltyDelta !== 0) {
+          cities[s.cityId] = { ...c, loyalty: Math.max(0, Math.min(100, c.loyalty + eff.loyaltyDelta)) };
+        }
+        if (eff.plagueRisk > 0) refugeeCrowdedCityIds.push(s.cityId);
         entries.push({
           cityId: s.cityId,
           kind: 'income',
@@ -3637,7 +3660,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       rng,
       disasterMul: input.disasterMul,
       playerForceId: input.playerForceId,
-      plagueRiskCityIds: input.plagueRiskCityIds,
+      // 流民入城,疫癘隨之 (§8.6) — a town that just took in a wave of the
+      // displaced under 招撫 carries the same raised plague weight as one that
+      // was struck last season.
+      plagueRiskCityIds: [...(input.plagueRiskCityIds ?? []), ...refugeeCrowdedCityIds],
     });
     cities = eventResult.cities;
     officers = eventResult.officers;

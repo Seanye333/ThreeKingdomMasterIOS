@@ -1254,6 +1254,8 @@ export interface GameStore extends GameState {
   setCoinStandard: (standard: import('../systems/coinage').CoinStandard) => void;
   /** 兵制 (§4.8) — set the realm's service system (更卒/世兵/募兵). */
   setServiceSystem: (system: import('../systems/conscription').ServiceSystem) => void;
+  /** 流民之政 (§8.6) — set the realm's policy on the displaced. */
+  setRefugeePolicy: (policy: import('../systems/refugees').RefugeePolicy) => void;
   /** 大赦天下 (§1.11) — empty every court in the realm: loyalty everywhere and
    *  the docket wiped, paid for in gold, in the throne's dignity, and in the
    *  men you just let out. Refused if one was proclaimed too recently. */
@@ -4502,6 +4504,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           coinStandard: state.coinStandard,
           inflationByForce: state.inflationByForce,
           serviceSystem: state.serviceSystem,
+          refugeePolicy: state.refugeePolicy,
           deeds: state.deeds,
           shrines: state.shrines,
           buildings: state.buildings,
@@ -15627,6 +15630,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         return { serviceSystem: { ...s.serviceSystem, [fid]: system } };
       }),
 
+      // 流民之政 (§8.6) — 招撫 / 安置 / 閉關.
+      setRefugeePolicy: (policy) => set((s) => {
+        const fid = s.playerForceId;
+        if (!fid) return {};
+        return { refugeePolicy: { ...s.refugeePolicy, [fid]: policy } };
+      }),
+
       // 行賞 (§4.10) — 賞不逾時. Pays out of the capital's treasury; an unpaid
       // ledger is what erodes a great officer's loyalty every season.
       rewardMerit: (officerId) => {
@@ -18646,6 +18656,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         coinStandard: state.coinStandard,
         inflationByForce: state.inflationByForce,
         serviceSystem: state.serviceSystem,
+        refugeePolicy: state.refugeePolicy,
         grandProjects: state.grandProjects,
         poems: state.poems,
         shrines: state.shrines,
