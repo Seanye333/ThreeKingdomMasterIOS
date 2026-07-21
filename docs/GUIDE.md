@@ -6,7 +6,7 @@
 
 ---
 
-## 目錄(所有遊戲內容地圖,86 個系統)
+## 目錄(所有遊戲內容地圖,87 個系統)
 
 | # | 章節 | 涵蓋系統 | 狀態 |
 |---|---|---|---|
@@ -15,7 +15,7 @@
 | 2 | [武將・成長・家族](#第二章-武將成長家族) | growth, officerGrade, gradeCombat, officerFate, traitEffects, personality, biography, posthumous, aging, officerGen, family, clans, retinues, wishes, rapport, friction, relationshipEffects, career, codex, peerage, honorifics, battlePower(武將卡/開卡) | ✅ |
 | 3 | [人才・招攬・舌戰](#第三章-人才招攬舌戰) | commands(search), officerFate, recommendation, commonerTalent, appraisal(月旦評), **publicOpinion(鄉論清議)**, **patronage(門生故吏/舉主)**, **officialSelection(察舉/九品中正/開科取士/中正官)**, scenicSites(三顧), captiveFate(處決後果/AI處置), aiRansom, debate, wordWar, persuasion(說客) | ✅ |
 | 4 | [軍事指揮・委任](#第四章-軍事指揮委任) | **conscription(兵制:更卒/世兵/募兵/軍餉)**, **campaignLedger(糧秣簿)**, **militaryLaw(軍功簿/行賞/軍法四等)**, **veterans(傷兵/療傷/廢疾還籍)**, muster, legion(都督之斷·長圍), governor, governorEval, advisor, 在途指令(駐守/設伏/圍城/焚橋/燒鎖/補給/分兵/召回), rout(潰軍/掩殺收降/殿軍斷後) | ✅ |
-| 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, tacticalAi, combat, formations, stratagems, weather(區域天候), battlefieldTerrain, worldScars(戰場烙印), fieldworks(築壘), columnReinforcements(會戰), wallTier城郭分層, 入城三選, battleSpoils(戰場繳獲), **campDisease(軍中疫疾/頓兵/不習水土)**, **navalWarfare(水軍熟練/暈船/艦隊編成/淺灘擱淺/搶灘登陸)**, personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
+| 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, tacticalAi, combat, formations, stratagems, weather(區域天候), battlefieldTerrain, worldScars(戰場烙印), fieldworks(築壘), columnReinforcements(會戰), wallTier城郭分層, 入城三選, battleSpoils(戰場繳獲), **campDisease(軍中疫疾/頓兵/不習水土)**, **siegeWorks(攻城器械營造/焚其攻具)**, **navalWarfare(水軍熟練/暈船/艦隊編成/淺灘擱淺/搶灘登陸)**, personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
 | 6 | [單挑](#第六章-單挑) | duel(招式/必殺技/獨門被動/破綻/傷殘/挑落下馬/**環境借勢/部位打擊/膽氣怯戰/棄馬步戰**/兵裝/坐騎/地形/性格/AI), **martialArts(武學修為/流派/流派相剋/秘籍/頓悟)**, **teamDuel(團戰圍攻/合擊/3D 同場)**, **arenaLadder(打擂擂台)**, **涟漪大地圖(威名威懾/代戰認輸金/慘勝負傷/名場面入史/世間鬥將)**, **debateArts(文辯修為/學派/辯經/傳道)**, **scholarRank(月旦評/文名威懾)**, **debateDiplomacy(折衝樽俎/責讓索貢/舌戰說降)**, **teamDebate(朝堂合辯)**, **引時事入辯(annals 彈藥)**, **realmEthos(尚武崇文之風)**, **lineage(師承譜系/同門/衣缽傳人)**, gauntlet, duelSeries, duelScenarios(劇情+戰役), duelHall(名局廊), warRanking(武評榜), rivalries(宿敵/恩怨簿), duelChallenge(約戰), tactical(致師) | ✅ |
 | 7 | [外交・謀略・天子](#第七章-外交謀略天子) | diplomacy, diplomacyPacts(稱臣/索貢/會盟/援盟/調停/質子/借道), coalition, schemes, aiSchemes, ambition, espionage, expedition, foreignRealm, intrigue, courtFactions, factionEvents, emperor, imperialEffects, mandate, appointmentEffects, clans, statecraft | ✅ |
 | 8 | [事件・天命・異族・宗教](#第八章-事件天命異族宗教) | events(天災/地動/賑災), historicalEvents(抉擇鏈), behaviorEvents(勸進/眾叛), customEvents, factionEvents, religion(黃巾/招安/宣撫), **refugees(流民之政:招撫/安置/閉關)**, tribes, tribesDiplomacy(和親/互市/質子/以夷制夷/入主建國/七擒), mandate(祥瑞/造讖/禳星), mandateRituals(郊祀/祈雨), annals(災異志) | ✅ |
@@ -209,6 +209,7 @@
 | 鄉論之效(§3.7) | 訪賢 ×(1+t×0.35)、招攬 +t×0.1、察舉品第 +t×6(t=(鄉論−50)/50) |
 | 門生故吏(§3.8) | 舉主忠≤45 → 門生 −1/季、≥80 → +0.5/季(同朝才算);舉主割據時同城門生 忠<60 即隨行(一般同情者 <45),忠義者不隨 |
 | 軍中疫疾(§5.15) | 機率=min(.26,(頓兵季−2)×.045)×季節(夏1.5/冬1.1/春.9/秋.8)×兵多(≤×1.6)×卑濕1.4×不習水土1.35×缺糧1.3×(1−良醫≤.7),頂 .40;損 14%(有藥 6%)、疲勞+8;拔營歸零 |
+| 攻城器械(§5.16) | 造/季=min(2,兵/12000)×(0.4+max(0,智−55)/90)×木材地1.5,上限12;守方防禦 ×(1−0.38(1−e^(−n/4.5)));焚:機率 .18+max(0,守智−60)/220(雨雪×.5,頂.6),燒 30%+;park≥6 每季自損1 |
 | 療傷(§4.11) | 歸伍=min(.82, .34+醫院級×.09+min(.12,智力/700)+藥足×.14);死=max(.03,.20−照護×.8);餘六成廢疾還籍;藥材 0.4/傷兵 |
 
 ### 內政命令成本(金)
@@ -2306,6 +2307,22 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
 - **疫作**:未治損 **14%**,有藥材(需兵×5%)損 **6%**,疲勞 +8;**藥材無論救不救得回都會消耗**。季報直說「未戰而損 N 卒」。
 - **赤壁條件**齊備時(夏、臨江、北軍南下、久頓不戰)風險大幅疊乘 —— 這正是那一戰的模型。
 - **對策**是史書上的那幾條:**別頓兵**、避開盛夏、帶一個智力高的人隨軍、隨軍備藥材、或者速戰。
+
+
+### 5.16 攻城器械營造(siegeWorks.ts,2026-07)
+
+攻城器(siegeEngines.ts)本來就在:帶對武將、帶對裝備,一輛衝車就憑空出現 —— 而且**永久、免費、燒不掉**。那恰恰是史料裡講個沒完、而遊戲跳過的那半場圍城。
+
+> 亮率數萬人攻陳倉,昭以火箭逆射其雲梯,梯然,梯上人皆燒死…以繩連石磨壓其衝車,衝車折。
+
+現在:**頓兵城下的營,一季一季地造自己的器械park**;守軍則整場圍城都在想辦法**燒掉它**。
+
+- **營造**(每季):`min(2, 兵/12000)` × `(0.4 + max(0, 最高智力−55)/90)` × **木材之地 ×1.5**,park 上限 **12 具**。
+- **器械之利**:守方防禦係數 ×`1 − 0.38×(1 − e^(−n/4.5))` —— 遞減,**前幾具最有用**,且**永遠打不到牆不存在**(地板 0.62)。與既有的「隨身器械」加成**相乘**。
+- **焚其攻具**:守軍每季有 `0.18 + max(0, 守方最高智力−60)/220`(雨雪 ×0.5,上限 0.6)的機率放成一把火 —— 一次燒掉 park 的 **30%+**(智力越高燒越多);沒放成也有**自然損耗**(park ≥6 具時每季 −1)。守軍已無兵則燒不動。
+- **拔營即棄**:器械是這一營的東西,跟著 `MarchCommand.siegeEngines` 走。
+- **這才讓長圍成為一個「選擇」而非「等待」**:你每多站一季,就多造幾具器械、多損一批病卒(§5.15)、多吃一季糧(§4.9)。問題是哪條曲線先贏。
+- 入口:軍隊面板 ⚒N 徽章(懸停顯示「器械如林/攻具略備/始造攻具」);季報報「守軍縱火焚其攻具 —— 器械毀 N 具」。存檔欄 `MarchCommand.siegeEngines` / `Army.siegeEngines`,舊檔缺欄 = 0。
 
 ---
 

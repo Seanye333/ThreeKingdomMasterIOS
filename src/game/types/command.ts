@@ -106,6 +106,10 @@ export interface MarchCommand extends CommandBase {
   /** 頓兵之日 (§5.15) — seasons this column has stood in the field without
    *  moving. Drives 軍中疫疾; reset when it marches again. Default 0. */
   campSeasons?: number;
+  /** 攻城器械 (§5.16) — engines this siege camp has built and still has
+   *  standing. Built each season it invests a city, burned by the garrison.
+   *  Makes the assault easier in proportion. Default 0. */
+  siegeEngines?: number;
   /** 軍心 — map-level morale 0..100 (60 = steady; marchPace.driftMorale).
    *  Set from home drill at muster, +8 per field win, −10/−20 when the
    *  realm loses a city/its capital; feeds field power & battle openings. */

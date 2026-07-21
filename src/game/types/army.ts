@@ -42,6 +42,8 @@ export interface Army {
   evading?: boolean;
   /** 師老兵疲 — cumulative campaign fatigue 0..100 (see MarchCommand.fatigue). */
   fatigue?: number;
+  /** 攻城器械 (§5.16) — engines standing in this camp's siege park. */
+  siegeEngines?: number;
   /** 軍心 — map-level morale 0..100 (see MarchCommand.morale). */
   morale?: number;
   /** 召回 — streaming home to its source (rendered/labelled as a return). */

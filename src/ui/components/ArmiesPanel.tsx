@@ -3,6 +3,7 @@ import { useGameStore } from '../../game/state/store';
 import { OfficerCardModal } from './OfficerCardModal';
 import { Icon } from './Icon';
 import { armyEndurance, enduranceTag } from '../../game/systems/campaignLedger';
+import { enginePartyTier } from '../../game/systems/siegeWorks';
 import { useLanguage, pickName } from '../i18n';
 
 const IS_MOBILE = typeof window !== 'undefined'
@@ -293,6 +294,14 @@ export function ArmiesPanel() {
                     </span>
                   );
                 })()}
+                {(a.siegeEngines ?? 0) >= 1 && (
+                  <span
+                    style={{ marginLeft: 4, fontSize: '0.58rem', color: '#c0a070' }}
+                    title={lang === 'en'
+                      ? `Siege park: ${enginePartyTier(a.siegeEngines ?? 0).en} (${a.siegeEngines})`
+                      : `攻城器械:${enginePartyTier(a.siegeEngines ?? 0).zh}(${a.siegeEngines} 具)`}
+                  >⚒{Math.floor(a.siegeEngines ?? 0)}</span>
+                )}
                 {(a.fatigue ?? 0) >= 24 && (
                   <span
                     style={{ marginLeft: 4, fontSize: '0.58rem', color: (a.fatigue ?? 0) >= 64 ? '#e0707a' : '#e0a070' }}

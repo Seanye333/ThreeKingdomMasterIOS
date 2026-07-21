@@ -39,6 +39,7 @@ import { arrivalFatigueMorale, fatigueMoraleMalus, armyMoraleOpening } from './m
 import { ROUT_MIN_TROOPS, nearestShelterCity } from './rout';
 import { itemSetBonuses } from '../data/itemSets';
 import { selectSiegeEngine } from '../data/siegeEngines';
+import { enginePartyMul } from './siegeWorks';
 import {
   STRATAGEM_DEFS,
   pickAutoStratagem,
@@ -529,6 +530,9 @@ export interface BattleContext {
   /** 疲勞 — points the attacker's opening morale is docked by (a forced-marched
    *  column arrives weary, 以逸待勞). Default 0. */
   attackerMoraleMod?: number;
+  /** 攻城器械 (§5.16) — engines standing in the besieger's park. Multiplies
+   *  down the defender's factor on top of the single-engine bonus. Default 0. */
+  siegeEngines?: number;
   /** 軍師獻策 — a player-chosen scheme to deploy instead of the auto-pick. Only
    *  honoured if its INT gate + conditions are met, else falls back to auto. */
   forcedStratagem?: string;
@@ -893,7 +897,9 @@ export function resolveBattle(
   const wallTier = ctx?.city?.wallTier ?? 1;
   const wallMul = wallTier === 3 ? 1.40 : wallTier === 2 ? 1.18 : 1.0;
   const siegeEngine = ctx ? selectSiegeEngine(attacker, wallTier) : null;
-  const siegeMul = siegeEngine?.defenseMultiplier ?? 1;
+  // 器械如林 (§5.16) — a built-up siege park compounds with whatever single
+  // engine the officers' gear already provides.
+  const siegeMul = (siegeEngine?.defenseMultiplier ?? 1) * enginePartyMul(ctx?.siegeEngines ?? 0);
   // 老兵度 — a seasoned garrison holds its wall harder (up to +12% defence).
   const vetMul = 1 + Math.max(0, Math.min(100, ctx?.city?.veterancy ?? 0)) / 100 * 0.12;
   const defenseFactor =
@@ -1508,6 +1514,8 @@ export function handleMarch(
       attackerMoraleMod: arrivalFatigueMorale(cmd.pace) + fatigueMoraleMalus(cmd.fatigue) - armyMoraleOpening(cmd.morale) - (cmd.legionBanner ?? 0),
       // 軍師獻策 — a scheme the player chose for this assault (if any).
       forcedStratagem: cmd.forcedStratagem,
+      // 攻城器械 (§5.16) — the park this camp built while it sat there.
+      siegeEngines: cmd.siegeEngines ?? 0,
     },
   );
   // Account for the prestrike in the casualty report.

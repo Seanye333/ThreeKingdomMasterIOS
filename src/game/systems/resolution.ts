@@ -64,6 +64,7 @@ import { marshalAmbitionBoost } from './legion';
 import { localEsteem, esteemEffects } from './publicOpinion';
 import { patronDrift } from './patronage';
 import { rollCampPlague } from './campDisease';
+import { engineBuildRate, burnEngines, enginePartyTier } from './siegeWorks';
 
 /** 卑濕之地 — siege lines on this ground breed 軍中疫疾 (§5.15). */
 const WET_SIEGE_GROUND = new Set(['river', 'lake', 'sea', 'marsh']);
@@ -1740,6 +1741,44 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     // 軍心 drifts back toward steady.
     cmd.fatigue = accrueFatigue(cmd.fatigue, { holding: true, besieging: !!cmd.besieging });
     cmd.morale = driftMorale(cmd.morale);
+    // 攻城器械 (§5.16) — a camp before a city builds its park, and the garrison
+    // spends the whole siege trying to burn it. 郝昭守陳倉.
+    if ((input.seasonBoundary ?? true) && cmd.besieging) {
+      const besieged = cities[cmd.besieging];
+      const engineers = [officers[cmd.officerId], ...(cmd.additionalOfficerIds ?? []).map((id) => officers[id])]
+        .filter((o): o is Officer => !!o);
+      if (besieged) {
+        const built = engineBuildRate({
+          standing: cmd.siegeEngines ?? 0,
+          engineerIntellect: engineers.reduce((m, o) => Math.max(m, o.stats.intelligence), 0),
+          troops: heldTroops,
+          timberRich: CITY_SPECIALTY[cmd.cityId] === 'timber',
+        });
+        const wallOfficers = Object.values(officers).filter(
+          (o) => o.locationCityId === besieged.id && o.forceId === besieged.ownerForceId);
+        const loss = burnEngines({
+          standing: (cmd.siegeEngines ?? 0) + built,
+          defenderIntellect: wallOfficers.reduce((m, o) => Math.max(m, o.stats.intelligence), 0),
+          defenderTroops: besieged.troops,
+          wet: input.weather?.kind === 'rain' || input.weather?.kind === 'snow',
+        }, rng);
+        const before = cmd.siegeEngines ?? 0;
+        cmd.siegeEngines = Math.max(0, Math.round(((before + built) - loss.burned) * 10) / 10);
+        if (loss.notable && officers[cmd.officerId]?.forceId === input.playerForceId) {
+          entries.push({
+            cityId: besieged.id, kind: 'battle',
+            text: `${besieged.name.en}'s garrison fires the siege park — ${loss.burned} engines burn.`,
+            textZh: `${besieged.name.zh}守軍縱火焚其攻具 —— 器械毀 ${loss.burned} 具(現存 ${cmd.siegeEngines})。`,
+          });
+        } else if (built > 0 && before < 1 && (cmd.siegeEngines ?? 0) >= 1 && officers[cmd.officerId]?.forceId === input.playerForceId) {
+          entries.push({
+            cityId: besieged.id, kind: 'march',
+            text: `${enginePartyTier(cmd.siegeEngines ?? 0).en} before ${besieged.name.en}.`,
+            textZh: `圍${besieged.name.zh}之營${enginePartyTier(cmd.siegeEngines ?? 0).zh}。`,
+          });
+        }
+      }
+    }
     // 軍中疫疾 (§5.15) — 曹公至赤壁…於是大疫. A camp that stands still long enough,
     // in the wrong season and the wrong country, dissolves without a battle.
     if (input.seasonBoundary ?? true) {
@@ -1814,6 +1853,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       fleeY: cmd.fleeY,
       evading: cmd.evading,
       fatigue: cmd.fatigue,
+      siegeEngines: cmd.siegeEngines,
       morale: cmd.morale,
       pursueTargetId: cmd.pursueTargetId,
       waitSeasons: cmd.waitSeasons,
