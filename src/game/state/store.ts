@@ -201,7 +201,10 @@ import { canPromoteToRank } from '../systems/imperialEffects';
 import { COMMAND_DEFS } from '../systems/commands';
 import { planMassMuster, musterStrain, MUSTER_GATHER_SEASONS, MUSTER_CAMPAIGN_SEASONS, type MusterOptions } from '../systems/muster';
 import { planGovernorCommand, governorMisruleEffect } from '../systems/governor';
-import { planLegionOrders, planLegionLogistics, legionBannerBonus, MIN_GARRISON as MIN_LEGION_GARRISON, type Legion } from '../systems/legion';
+import {
+  planLegionOrders, planLegionLogistics, legionBannerBonus, marshalCompliance,
+  MIN_GARRISON as MIN_LEGION_GARRISON, type Legion,
+} from '../systems/legion';
 import { buyQuote, sellQuote, borderTariff, buyHorses, sellHorses, WARHORSE_CITY_CAP, buyIron, sellIron, IRON_CITY_CAP, MEDICINE_CITY_CAP, IRON_FORGE_COST, FORGE_IRON_DISCOUNT } from '../systems/market';
 import { EDICT_DISCOUNT, EMPEROR_HOME, MANDATE_PER_SEASON, RESENTMENT_PER_SEASON, canWelcomeEmperor, emperorCustodian } from '../systems/emperor';
 import { isMinorRuler, pickRegent, regentAmbitionBoost, consortAmbitionBoost, orthodoxyScore, isProclaimed } from '../systems/imperialCourt';
@@ -4302,12 +4305,33 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               ...cur2.pendingTrainings.map((t) => t.officerId),
             ]);
             const pid = pidL;
+            // 都督之權 (§4.3b) — 將在外,君命有所不受. A discontented, capable
+            // marshal holding a large share of the army may quietly pursue his
+            // own directive, and keeps men back "for the front's security".
+            const marshal = cur2.officers[legion.commanderId];
+            const legionTroops = legion.cityIds.reduce((sum, cid) => sum + (cur2.cities[cid]?.troops ?? 0), 0);
+            const realmTroops = Object.values(cur2.cities)
+              .reduce((sum, c) => (c.ownerForceId === pid ? sum + c.troops : sum), 0);
+            const standing = {
+              troopShare: realmTroops > 0 ? legionTroops / realmTroops : 0,
+              loyalty: marshal?.loyalty ?? 100,
+              intelligence: marshal?.stats.intelligence ?? 0,
+              war: marshal?.stats.war ?? 0,
+              leadership: marshal?.stats.leadership ?? 0,
+            };
+            const compliance = marshalCompliance(legion.directive.kind, standing);
+            const effectiveLegion: Legion = compliance.obeys
+              ? legion
+              : {
+                  ...legion,
+                  directive: compliance.effective === 'consume' ? { kind: 'consume' } : { kind: 'defend' },
+                };
             const { orders, summary } = planLegionOrders({
               cities: cur2.cities,
               officers: cur2.officers,
               busyOfficerIds: busy,
               playerForceId: pid,
-              legion,
+              legion: effectiveLegion,
               // 方略擇敵 — only cities we may actually attack count as targets.
               isEnemyCity: (c) => !!c.ownerForceId && c.ownerForceId !== pid && isHostilePermitted(cur2.diplomacy, pid, c.ownerForceId),
               threatenedCityIds,
@@ -4318,7 +4342,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             let did = 0;
             for (const o of orders) {
               if (o.kind === 'march') {
-                if (get().issueMarch(o.cityId, o.toCityId, o.officerId, o.troops, undefined, 'normal', true).ok) {
+                // 擁兵自重 — what he keeps at home never leaves the walls.
+                const sent = Math.max(1, Math.round(o.troops * (1 - compliance.holdback)));
+                if (get().issueMarch(o.cityId, o.toCityId, o.officerId, sent, undefined, 'normal', true).ok) {
                   did++;
                   if (banner > 0) {
                     const st = get();
@@ -4366,10 +4392,18 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               const tgt = summary.targetCityId ? get().cities[summary.targetCityId]?.name : undefined;
               const tgtZh = tgt ? `→${tgt.zh}` : '';
               const tgtEn = tgt ? ` → ${tgt.en}` : '';
+              const holdZh = compliance.holdback > 0
+                ? `,留兵 ${Math.round(compliance.holdback * 100)}%` : '';
+              const holdEn = compliance.holdback > 0
+                ? `, holding back ${Math.round(compliance.holdback * 100)}%` : '';
               get().notify(
-                `${legion.name}〔${DIR[summary.directive]}${tgtZh}〕:${summary.marched} 路發兵(${summary.troopsSent.toLocaleString()})、${summary.recruited} 城補軍`,
-                `${legion.name} [${DIR_EN[summary.directive]}${tgtEn}]: ${summary.marched} columns (${summary.troopsSent.toLocaleString()}), ${summary.recruited} reinforced`,
+                `${legion.name}〔${DIR[summary.directive]}${tgtZh}〕:${summary.marched} 路發兵(${summary.troopsSent.toLocaleString()})、${summary.recruited} 城補軍${holdZh}`,
+                `${legion.name} [${DIR_EN[summary.directive]}${tgtEn}]: ${summary.marched} columns (${summary.troopsSent.toLocaleString()}), ${summary.recruited} reinforced${holdEn}`,
               );
+            }
+            // 違令 — say it plainly, whether or not the legion moved this season.
+            if (!compliance.obeys && compliance.noteZh) {
+              get().notify(`${legion.name}:${compliance.noteZh}`, `${legion.name}: ${compliance.noteEn}`);
             }
           }
         }
@@ -4464,6 +4498,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           lawCode: state.lawCode,
           corvee: state.corvee,
           grainPolicy: state.grainPolicy,
+          legions: state.legions,
           coinStandard: state.coinStandard,
           inflationByForce: state.inflationByForce,
           serviceSystem: state.serviceSystem,

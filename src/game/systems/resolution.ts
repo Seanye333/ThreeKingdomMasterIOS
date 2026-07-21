@@ -60,6 +60,7 @@ import {
 import { serviceEffects, payGarrison, aiServiceSystem } from './conscription';
 import { outstandingMerit, meritResentment, rewardQuote, meritScore } from './militaryLaw';
 import { recoverWounded, splitCasualties } from './veterans';
+import { marshalAmbitionBoost } from './legion';
 import { clanOf } from '../data/clans';
 import { shrineEffects } from './culturalWorks';
 import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
@@ -165,6 +166,8 @@ export interface ResolutionInput {
   serviceSystem?: Record<EntityId, import('./conscription').ServiceSystem>;
   /** 武功簿 — the deeds ledger as it stands (§4.10 reads merit from it). */
   deeds?: Record<EntityId, import('../types').HeroicDeeds>;
+  /** 軍團 — the player's legions (§4.3b: an over-mighty marshal is a risk). */
+  legions?: ReadonlyArray<import('./legion').Legion>;
   /** 通脹 — every realm's own inflation (§1.17). Falls back to `inflation` for
    *  the player and 0 for everyone else, so old saves behave as before. */
   inflationByForce?: Record<EntityId, number>;
@@ -3490,6 +3493,26 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         if (!o.forceId || o.loyalty >= 35) continue;
         const boost = cliqueBackingBoost(o.id, byForce.get(o.forceId) ?? [], input.rapport, input.runtimeBonds);
         if (boost > 0) factionBoost[o.id] = Math.min(0.11, (factionBoost[o.id] ?? 0) + boost);
+      }
+    }
+    // 權臣坐大 (§4.3b) — a marshal holding a large share of the army on a distant
+    // front carries extra weight in the betrayal roll. The legion panel shows
+    // the same number, so this is never a surprise.
+    if (input.legions && input.playerForceId) {
+      const realmTroops = Object.values(cities)
+        .reduce((sum, c) => (c.ownerForceId === input.playerForceId ? sum + c.troops : sum), 0);
+      for (const lg of input.legions) {
+        const marshal = officers[lg.commanderId];
+        if (!marshal || marshal.forceId !== input.playerForceId) continue;
+        const legionTroops = lg.cityIds.reduce((sum, cid) => sum + (cities[cid]?.troops ?? 0), 0);
+        const boost = marshalAmbitionBoost({
+          troopShare: realmTroops > 0 ? legionTroops / realmTroops : 0,
+          loyalty: marshal.loyalty,
+          intelligence: marshal.stats.intelligence,
+          war: marshal.stats.war,
+          leadership: marshal.stats.leadership,
+        });
+        if (boost > 0) factionBoost[marshal.id] = Math.min(0.13, (factionBoost[marshal.id] ?? 0) + boost);
       }
     }
     const ambitionEvents = resolveAmbitions({

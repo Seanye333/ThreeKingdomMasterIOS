@@ -265,3 +265,82 @@ export function planLegionLogistics(
   if (gold < marchCost && food === 0) return null;
   return { fromCityId: donor.id, toCityId: needy.id, gold, food };
 }
+
+/* ─── 都督之權 (§4.3b) — 違令 · 擁兵自重 ────────────────────────────────── */
+
+/**
+ * A legion marshal is not a subroutine. He holds a real share of your army, on
+ * a front you cannot see, on the strength of a directive you wrote a year ago.
+ * Historically that arrangement produced two things with great regularity: a
+ * commander who quietly did what he thought best instead, and a commander who
+ * decided he no longer needed you.
+ *
+ * Both keys off the same two numbers — how loyal he is, and how much of the
+ * realm's army is standing next to him. Deterministic (no rng): a marshal you
+ * have kept content and not over-mighty always obeys, and you can always see it
+ * coming in the legion panel.
+ */
+export interface MarshalStanding {
+  /** This legion's troops as a share of the whole realm's (0–1). */
+  troopShare: number;
+  loyalty: number;
+  intelligence: number;
+  /** Aggressive marshals substitute 蠶食; cautious ones substitute 固守. */
+  war: number;
+  leadership: number;
+}
+
+export interface MarshalCompliance {
+  /** False when he is quietly running his own campaign. */
+  obeys: boolean;
+  /** The directive he is actually pursuing (equal to yours when he obeys). */
+  effective: LegionDirective['kind'];
+  /** 擁兵自重 — share of each column's strength he keeps at home (0–0.35). */
+  holdback: number;
+  noteZh?: string;
+  noteEn?: string;
+}
+
+/** Loyalty at or above which a marshal always does as he is told. */
+export const MARSHAL_TRUST = 58;
+/** Troop share past which a discontented marshal starts sitting on his army. */
+export const MARSHAL_OVERMIGHTY = 0.25;
+
+export function marshalCompliance(
+  directive: LegionDirective['kind'],
+  standing: MarshalStanding,
+): MarshalCompliance {
+  const { loyalty, intelligence, troopShare } = standing;
+  // 擁兵自重 — the discontented over-mighty marshal keeps men back "for the
+  // front's security". Grows with disaffection, capped so it is never a rout.
+  const holdback = troopShare >= MARSHAL_OVERMIGHTY && loyalty < 70
+    ? Math.max(0, Math.min(0.35, (70 - loyalty) / 200))
+    : 0;
+  // 違令 — only a marshal with the wit to have his own plan substitutes one.
+  if (loyalty >= MARSHAL_TRUST || intelligence < 72) {
+    return { obeys: true, effective: directive, holdback };
+  }
+  const prefers: LegionDirective['kind'] = standing.war >= standing.leadership ? 'consume' : 'defend';
+  if (prefers === directive) return { obeys: true, effective: directive, holdback };
+  return {
+    obeys: false,
+    effective: prefers,
+    holdback,
+    noteZh: prefers === 'consume'
+      ? '都督不奉方略,自行蠶食敵境 —— 將在外,君命有所不受。'
+      : '都督不奉方略,按兵固守 —— 將在外,君命有所不受。',
+    noteEn: prefers === 'consume'
+      ? 'The marshal has set your directive aside and is eating into enemy ground on his own account.'
+      : 'The marshal has set your directive aside and is sitting tight.',
+  };
+}
+
+/**
+ * 權臣坐大 — the extra betrayal weight a marshal carries simply for holding a
+ * large part of the army far from the capital. Feeds §7.5's ambition roll as a
+ * factionBoost-style bonus; 0 for a loyal or modest command.
+ */
+export function marshalAmbitionBoost(standing: MarshalStanding): number {
+  if (standing.troopShare < 0.3 || standing.loyalty >= 60) return 0;
+  return Math.min(0.06, (standing.troopShare - 0.2) * (60 - standing.loyalty) / 400);
+}

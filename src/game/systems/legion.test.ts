@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import type { City, EntityId, Officer } from '../types';
 import { mkOfficer } from '../../test/factories';
-import { planLegionOrders, legionBannerBonus, planLegionLogistics, type Legion } from './legion';
+import { planLegionOrders, legionBannerBonus, planLegionLogistics, marshalCompliance, marshalAmbitionBoost, type Legion } from './legion';
 
 const mkCity = (over: Partial<City> & { id: string }): City =>
   ({
@@ -147,5 +147,54 @@ describe('都督之旗 / 軍團內調度', () => {
     // A marshal with no head for administration coordinates nothing.
     const dull = { a: mkOfficer({ id: 'a', stats: { politics: 40 } as never }) };
     expect(planLegionLogistics(legion(), cities, dull)).toBeNull();
+  });
+});
+
+describe('都督之權 — 違令與擁兵自重', () => {
+  const base = { troopShare: 0.2, loyalty: 90, intelligence: 90, war: 80, leadership: 70 };
+
+  it('a loyal marshal always does as he is told', () => {
+    const c = marshalCompliance('conquer', base);
+    expect(c.obeys).toBe(true);
+    expect(c.effective).toBe('conquer');
+    expect(c.holdback).toBe(0);
+  });
+
+  it('a discontented dullard obeys — he has no plan of his own', () => {
+    const c = marshalCompliance('conquer', { ...base, loyalty: 30, intelligence: 50 });
+    expect(c.obeys).toBe(true);
+    expect(c.effective).toBe('conquer');
+  });
+
+  it('a discontented strategist substitutes his own directive', () => {
+    const aggressive = marshalCompliance('defend', { ...base, loyalty: 40, war: 95, leadership: 60 });
+    expect(aggressive.obeys).toBe(false);
+    expect(aggressive.effective).toBe('consume');
+    expect(aggressive.noteZh).toContain('君命有所不受');
+
+    const cautious = marshalCompliance('conquer', { ...base, loyalty: 40, war: 50, leadership: 95 });
+    expect(cautious.obeys).toBe(false);
+    expect(cautious.effective).toBe('defend');
+  });
+
+  it('a marshal already doing what he prefers is not "disobeying"', () => {
+    const c = marshalCompliance('consume', { ...base, loyalty: 40, war: 95, leadership: 60 });
+    expect(c.obeys).toBe(true);
+  });
+
+  it('擁兵自重 — an over-mighty malcontent keeps men back, capped', () => {
+    expect(marshalCompliance('defend', { ...base, troopShare: 0.1, loyalty: 30 }).holdback).toBe(0);
+    const held = marshalCompliance('defend', { ...base, troopShare: 0.4, loyalty: 30 }).holdback;
+    expect(held).toBeGreaterThan(0);
+    expect(held).toBeLessThanOrEqual(0.35);
+    expect(marshalCompliance('defend', { ...base, troopShare: 0.6, loyalty: 0 }).holdback).toBeLessThanOrEqual(0.35);
+  });
+
+  it('權臣坐大 — only a big, disaffected command carries extra betrayal weight', () => {
+    expect(marshalAmbitionBoost({ ...base, troopShare: 0.5 })).toBe(0);            // loyal
+    expect(marshalAmbitionBoost({ ...base, troopShare: 0.1, loyalty: 20 })).toBe(0); // small
+    const boost = marshalAmbitionBoost({ ...base, troopShare: 0.5, loyalty: 20 });
+    expect(boost).toBeGreaterThan(0);
+    expect(boost).toBeLessThanOrEqual(0.06);
   });
 });
