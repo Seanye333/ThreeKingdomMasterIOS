@@ -6,7 +6,9 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { Line } from '@react-three/drei';
 import * as THREE from 'three';
 import { useGameStore } from '../../../game/state/store';
-import type { City } from '../../../game/types';
+import type { City, Season } from '../../../game/types';
+import { grainPrice } from '../../../game/systems/grainTrade';
+import { hoardEffects } from '../../../game/systems/hoarding';
 import { positionAlongRoute, terrainRoute } from '../../../game/data/territories';
 import { geoToPixel, MAP_W as PX_W, MAP_H as PX_H } from '../../../game/data/geography';
 import { cityPixel } from '../../../game/data/cityGeo';
@@ -440,6 +442,8 @@ export function overlayForCity(
   city: City,
   mode: OverlayMode,
   maxes: { gold: number; food: number; troops: number },
+  /** 米價 (§1.16) needs the season — grain is dear in winter and cheap after harvest. */
+  season: Season = 'spring',
 ): { color: string; label: string } | null {
   if (mode === 'none' || mode === 'supply' || mode === 'diplomacy' || mode === 'threat') return null; // these draw their own
   if (mode === 'specialty') {
@@ -449,6 +453,19 @@ export function overlayForCity(
     const cls = specialtyClass(city.id);
     const color = cls === 'war' ? '#b8442e' : cls === 'food' ? '#6aae5a' : cls === 'craft' ? '#d4a84a' : cls === 'physic' ? '#4aa8a0' : '#8a7a4a';
     return { color, label: sp.glyph };
+  }
+  if (mode === 'grain') {
+    // 米價 (§1.16) — where grain is dear, caravans are already on the road and a
+    // siege will bite far sooner. Green = 穀賤傷農, red = 米珠薪桂.
+    const price = grainPrice(city, season, {
+      hoardMul: hoardEffects(city.hoardedGrain ?? 0).marketRateMul,
+    });
+    // 6 (cheap) … 18 (dear) covers the realistic band.
+    const t = Math.max(0, Math.min(1, (price - 6) / 12));
+    const r = Math.floor(70 + 165 * t);
+    const g = Math.floor(180 - 130 * t);
+    const b = Math.floor(70 - 30 * t);
+    return { color: `rgb(${r},${g},${b})`, label: price.toFixed(0) };
   }
   if (mode === 'province') {
     const pid = PROVINCE_BY_CITY[city.id];

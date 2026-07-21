@@ -193,6 +193,7 @@ export const OVERLAY_OPTIONS: Array<{ id: OverlayMode; zh: string; en: string }>
   { id: 'loyalty',  zh: '民忠', en: 'LOYALTY' },
   { id: 'province', zh: '州郡', en: 'PROVINCE' },
   { id: 'specialty', zh: '名產', en: 'GOODS' },
+  { id: 'grain',    zh: '米價', en: 'GRAIN' },
   { id: 'supply',   zh: '糧道', en: 'SUPPLY' },
   { id: 'diplomacy', zh: '邦交', en: 'TIES' },
   { id: 'threat',   zh: '威脅', en: 'THREAT' },

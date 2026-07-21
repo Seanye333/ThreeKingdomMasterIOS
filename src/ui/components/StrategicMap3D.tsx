@@ -643,7 +643,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
               isOwn={!!playerForceId && city.ownerForceId === playerForceId}
               overlay={fog && city.ownerForceId !== playerForceId && !fog.visibleCityIds.has(city.id)
                 ? (overlayMode === 'none' ? null : FOG_OVERLAY)
-                : overlayMode === 'threat' ? (threatOverlays[city.id] ?? null) : overlayForCity(city, overlayMode, maxes)}
+                : overlayMode === 'threat' ? (threatOverlays[city.id] ?? null) : overlayForCity(city, overlayMode, maxes, season)}
               onClick={() => {
                 // RTS-style: with an army selected, clicking a city re-routes
                 // the column there (the 2D map used to own this interaction).

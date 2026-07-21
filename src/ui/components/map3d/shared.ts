@@ -437,7 +437,7 @@ export function cityElevation(wx: number, wz: number): number {
 export const ARMY_TOKEN_SCALE = 0.7 * MARKER_SCALE;
 
 /* ─── 疊圖模式 + 季節標籤 — shared by the main map and the split modules ── */
-export type OverlayMode = 'none' | 'gold' | 'food' | 'troops' | 'loyalty' | 'province' | 'supply' | 'diplomacy' | 'threat' | 'specialty' | 'intent';
+export type OverlayMode = 'none' | 'gold' | 'food' | 'troops' | 'loyalty' | 'province' | 'supply' | 'diplomacy' | 'threat' | 'specialty' | 'intent' | 'grain';
 export const SEASON_ZH: Record<import('../../../game/types').Season, string> = {
   spring: '春', summer: '夏', autumn: '秋', winter: '冬',
 };
