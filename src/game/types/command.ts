@@ -20,6 +20,7 @@ export type InternalAffairsType =
   | 'adjudicate'          // 決獄 — hear the backlog of court cases (§1.11)
   | 'household-audit'     // 括戶 — drag sheltered households back onto the registers (§1.12)
   | 'curb-hoarding'       // 抑兼併 — break open the hoarders' warehouses (§1.14)
+  | 'arm-works'           // 督造軍器 — turn iron into the city's armaments (§1.18)
   | 'flood-control'       // 治水 — raise flood works (stacks with levee) + irrigation
   | 'military-farming'    // 屯田 — soldiers till state land: food without drawing population
   | 'drill-troops'        // 練兵 — drill the garrison: raise the city's 練度 (drill) → defense

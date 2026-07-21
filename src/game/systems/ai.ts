@@ -1239,6 +1239,15 @@ function decideCommand(
     const o = bestForCommand(officersHere, 'politics', 'adjudicate', prefectId);
     if (o) return internalDecision('adjudicate', city, o);
   }
+  // 3.8 督造軍器 (§1.18) — a garrison town with iron in the yard and a bare
+  // armoury arms itself. Gated on real iron so the AI never burns a season on a
+  // command that would return "庫中無鐵"; and on a garrison worth arming, so
+  // sleepy interior towns keep developing instead.
+  if ((city.armaments ?? 0) < 45 && (city.iron ?? 0) >= 400 && city.troops >= 2500
+      && canAfford(city, 'arm-works')) {
+    const o = bestForCommand(officersHere, 'politics', 'arm-works', prefectId);
+    if (o) return internalDecision('arm-works', city, o);
+  }
 
   // 3.5 Field interception — a hostile column is bearing down on this city
   // (or threatening it from nearby open ground). Rather than wait behind the

@@ -9,6 +9,7 @@ import type {
   Skill,
 } from '../types';
 import { buildingBonuses } from './buildings';
+import { armamentEffects } from './workshops';
 import { conquestPopulationLoss } from './cityRuin';
 import { OATH_BONDS } from '../data/bonds';
 import { liveItemById, commandTokenMultiplier, evolvedResonanceMul } from '../data/items';
@@ -1425,8 +1426,12 @@ export function handleMarch(
   // the abstract siege too (not just the tactical battle): they shell the
   // besieger, muster extra garrison, and stiffen the wall.
   const fortAid = siegeFacilityAid(ctx.forts, target.ownerForceId, target.id);
+  // 軍器 (§1.18) — a city whose armoury is bare defends its walls with what it
+  // can find; a full one issues mail and crossbows to every man on the parapet.
+  const armsDefenseMul = armamentEffects(target.armaments).defenseMul;
   const effectiveDefense =
-    (target.defense + defenseBonusFromPolicy + slotEffects.defenseBonus + siegeMods.defenseBonus + buildingDefenseAdd + fortAid.defenseAdd) * worksDefenseMul;
+    (target.defense + defenseBonusFromPolicy + slotEffects.defenseBonus + siegeMods.defenseBonus + buildingDefenseAdd + fortAid.defenseAdd)
+    * worksDefenseMul * armsDefenseMul;
   const defenderTroops = Math.max(1, Math.floor((target.troops + siegeMods.garrisonBonus + fortAid.garrison) * worksTroopsMul));
 
   // Inherent ground advantage for the defender (passes/mountains/forest/marsh),

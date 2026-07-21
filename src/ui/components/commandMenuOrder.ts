@@ -18,6 +18,7 @@ export const CIVIL_ORDER: InternalAffairsType[] = [
   'adjudicate',
   'household-audit',
   'curb-hoarding',
+  'arm-works',
   'promote-learning',
   'flood-control',
   'search',

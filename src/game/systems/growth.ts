@@ -955,6 +955,7 @@ const INTERNAL_AFFAIRS_FAVORED: Record<InternalAffairsType, keyof OfficerStats> 
   adjudicate: 'politics',
   'household-audit': 'politics',
   'curb-hoarding': 'politics',
+  'arm-works': 'politics',
   'recruit-troops': 'charisma',
   'improve-loyalty': 'charisma',
   relief: 'charisma',

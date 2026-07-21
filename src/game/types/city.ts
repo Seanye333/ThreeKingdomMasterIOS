@@ -103,6 +103,14 @@ export interface City {
    */
   iron?: number;
   /**
+   * 軍器 (§1.18) — how well this city's armoury can equip the men who muster
+   * here (0–100). Worked up from 鐵 by the 匠戶 at the 武庫/工官, drawn down by
+   * a growing garrison and by wear. Drives 徵兵 yield, siege defence and the
+   * garrison's drill drift. Default/omitted = 0, which reads as 無甲不成軍 on
+   * the first tick and climbs from there.
+   */
+  armaments?: number;
+  /**
    * 藥材 — medicine stockpiled here. Gathered each season by herb-country cities
    * (漢中/陰平/武都, the `herb` specialty), scaled by 民政 buildings + development.
    * A strategic good spent automatically each season to heal the realm's wounded

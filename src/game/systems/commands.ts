@@ -13,6 +13,7 @@ import { internalAffairsMultiplier } from './traitEffects';
 import { adjudicateClear } from './law';
 import { householdAudit } from './household';
 import { crackdownResult } from './hoarding';
+import { armWorksResult, armamentEffects } from './workshops';
 import { pairKey } from '../types/diplomacy';
 import type { WeatherKind } from './weather';
 
@@ -189,6 +190,14 @@ export const COMMAND_DEFS: Record<CommandType, CommandDef> = {
     description:
       '抑兼併 — Break open the private warehouses where the merchant houses have cornered the city\'s grain (囤積). Grain floods back into the public granary and the people are grateful; trade takes fright (commerce falls) and the great houses behind those merchants remember it. A harsh legal code (峻法) gives the magistrate the authority to do it properly.',
   },
+  'arm-works': {
+    type: 'arm-works',
+    label: { en: 'Arm the Garrison', zh: '督造軍器' },
+    stat: 'politics',
+    goldCost: 260,
+    description:
+      '督造軍器 — Put the city\'s workshops on a war footing: charcoal, hands and overtime turn the iron in the yard into helmets, mail and spearheads (軍器). Coin buys the labour; 鐵 is the hard constraint. A stocked armoury recruits better, drills better and holds its walls; an empty one is 無甲不成軍.',
+  },
   'flood-control': {
     type: 'flood-control',
     label: { en: 'Flood Control', zh: '治水' },
@@ -257,6 +266,8 @@ export interface CommandResult {
     caseload: number;
     hiddenHouseholds: number;
     hoardedGrain: number;
+    armaments: number;
+    iron: number;
   }>;
   message: string;
   messageZh: string;
@@ -280,6 +291,8 @@ export function resolveInternalAffairs(
   hasCourt?: boolean,
   /** 律令 — the realm's legal code (§1.11); 抑兼併 leans on it for authority. */
   lawSeverity?: string,
+  /** 武庫/工官 level in this city (§1.18); 督造軍器 works faster with one. */
+  arsenalLevel?: number,
 ): CommandResult {
   const def = COMMAND_DEFS[type];
   // Trait multiplier (diligent +20%, lazy −20%, specialist +20% for matching
@@ -410,7 +423,10 @@ export function resolveInternalAffairs(
       // 兵營/馬廄/武庫/糧倉署/驛站 raise the per-season ceiling (troopCapMul).
       // 馬政 — a standing warhorse herd lets a frontier muster cavalry beyond its size.
       const sizeMax = Math.floor((size.troopCap * (bonus?.troopCapMul ?? 1)) / 8) + Math.floor(city.warhorses ?? 0);
-      const fromPop = Math.min(max, sizeMax, Math.floor(city.population / 60));
+      // 無甲不成軍 (§1.18) — men without arms are a mob. The city's armoury
+      // scales what a levy actually produces: an empty one costs you a fifth.
+      const armsMul = armamentEffects(city.armaments).recruitMul;
+      const fromPop = Math.round(Math.min(max, sizeMax, Math.floor(city.population / 60)) * armsMul);
       // Each soldier costs ~1.4 civilians — keeps the (unchanged) population from
       // being gutted as armies grow larger, so big garrisons are sustainable.
       const popDrawn = Math.round(fromPop * 1.4);
@@ -422,7 +438,11 @@ export function resolveInternalAffairs(
         : 0;
       return {
         success: fromPop > 0,
-        delta: { troops: fromPop, population: -popDrawn, loyalty: loyaltyHit ? -loyaltyHit : 0 },
+        delta: {
+          troops: fromPop, population: -popDrawn, loyalty: loyaltyHit ? -loyaltyHit : 0,
+          // 甲胄隨人 — the new men are issued out of the armoury.
+          armaments: -Math.min(city.armaments ?? 0, Math.round(fromPop / 400 * 10) / 10),
+        },
         message: `${officer.name.en} recruited ${fromPop} troops (${size.name.zh} cap ${sizeMax}/turn; population −${popDrawn}, loyalty −${loyaltyHit}).`,
         messageZh: `${officer.name.zh}徵兵 ${fromPop} 卒 (${size.name.zh}每季上限 ${sizeMax};民減 ${popDrawn},民忠 −${loyaltyHit})。`,
       };
@@ -558,6 +578,30 @@ export function resolveInternalAffairs(
         },
         message: `${officer.name.en} 抑兼併: opened the warehouses — ${res.foodRecovered} food to the public granary, Loyalty +${res.loyaltyGain}, Commerce −${res.commerceLoss}.`,
         messageZh: `${officer.name.zh}抑兼併:破豪商之囤 —— 入公廩糧 ${res.foodRecovered},民忠 +${res.loyaltyGain},然商賈斂跡(商業 −${res.commerceLoss})。`,
+      };
+    }
+    case 'arm-works': {
+      // 督造軍器 (§1.18) — coin buys the hands; 鐵 is the hard constraint.
+      const arms = city.armaments ?? 0;
+      const ore = city.iron ?? 0;
+      const arsenalLv = arsenalLevel ?? 0;
+      const made = armWorksResult({ armaments: arms, iron: ore, politics: statValue, arsenalLevel: arsenalLv });
+      if (made.gained < 0.5) {
+        const why = ore < 20
+          ? { en: 'no iron in the yard', zh: '庫中無鐵,巧婦難為' }
+          : { en: 'the armoury is already full', zh: '武庫已盈,無所復造' };
+        return {
+          success: false,
+          delta: {},
+          message: `${officer.name.en} 督造軍器: ${why.en}.`,
+          messageZh: `${officer.name.zh}督造軍器:${why.zh}。`,
+        };
+      }
+      return {
+        success: true,
+        delta: { armaments: made.gained, iron: -made.ironUsed },
+        message: `${officer.name.en} 督造軍器: the workshops turn out arms — armaments +${made.gained} (iron −${made.ironUsed}).`,
+        messageZh: `${officer.name.zh}督造軍器:百工並作,甲胄戈矛充於武庫 —— 軍器 +${made.gained}(耗鐵 ${made.ironUsed})。`,
       };
     }
     case 'military-farming': {
@@ -825,7 +869,11 @@ export function previewCommandGain(
       const size = citySize(city);
       const max = Math.floor(statValue * 50) + 800;
       const sizeMax = Math.floor((size.troopCap * (bonus?.troopCapMul ?? 1)) / 8) + Math.floor(city.warhorses ?? 0);
-      return { zh: '兵', en: 'Troops', delta: Math.max(0, Math.min(max, sizeMax, Math.floor(city.population / 60))) };
+      const previewArms = armamentEffects(city.armaments).recruitMul;
+      return {
+        zh: '兵', en: 'Troops',
+        delta: Math.max(0, Math.round(Math.min(max, sizeMax, Math.floor(city.population / 60)) * previewArms)),
+      };
     }
     default:
       return null;

@@ -10,6 +10,7 @@ import { tickCityEconomy } from '../../game/systems/economy';
 import { caseloadTier } from '../../game/systems/law';
 import { hiddenTier, registryYieldMul } from '../../game/systems/household';
 import { hoardTier } from '../../game/systems/hoarding';
+import { armamentTier, armamentEffects } from '../../game/systems/workshops';
 import type { City, EntityId, Officer } from '../../game/types';
 import { lazy, Suspense } from 'react';
 // 啟動提速 — the city 3D scene (≈175KB) loads when a city is first entered.
@@ -913,7 +914,7 @@ function DevelopmentSection({ city, isPlayerCity }: { city: City; isPlayerCity: 
   const allPending = useGameStore((s) => s.pendingCommands);
   // Which dev stats have an order queued in this city this tick.
   const working = useMemo(() => {
-    const w = { agriculture: false, commerce: false, defense: false, loyalty: false, caseload: false, hiddenHouseholds: false, hoardedGrain: false };
+    const w = { agriculture: false, commerce: false, defense: false, loyalty: false, caseload: false, hiddenHouseholds: false, hoardedGrain: false, armaments: false };
     if (!isPlayerCity) return w;
     for (const c of Object.values(allPending)) {
       if (c.cityId !== city.id) continue;
@@ -924,6 +925,7 @@ function DevelopmentSection({ city, isPlayerCity }: { city: City; isPlayerCity: 
       else if (c.type === 'adjudicate') { w.caseload = true; w.loyalty = true; }
       else if (c.type === 'household-audit') w.hiddenHouseholds = true;
       else if (c.type === 'curb-hoarding') { w.hoardedGrain = true; w.loyalty = true; }
+      else if (c.type === 'arm-works') { w.armaments = true; }
       else if (c.type === 'military-farming') w.agriculture = true;
     }
     return w;
@@ -956,6 +958,14 @@ function DevelopmentSection({ city, isPlayerCity }: { city: City; isPlayerCity: 
           note={(city.culture ?? 0) >= 60 ? '文化名城 · 息貪安民' : `息貪 −${Math.round((city.culture ?? 0) / 100 * 35)}%`} />
       )}
       {/* 囤積 (§1.14) — grain that exists but cannot be bought. */}
+      {/* 軍器 §1.18 — only worth surfacing where there is a garrison to arm. */}
+      {city.troops >= 1000 && (
+        <Bar icon="war" label="Armaments" zh="軍器" value={Math.round(city.armaments ?? 0)} cap={100} tone="#8fa6c0"
+          warn={(city.armaments ?? 0) < 30}
+          working={working.armaments}
+          note={t(`${armamentTier(city.armaments).zh} · ${armamentEffects(city.armaments).badgeZh}`,
+                  `${armamentTier(city.armaments).en} · ${armamentEffects(city.armaments).badgeEn}`)} />
+      )}
       {(city.hoardedGrain ?? 0) >= 8 && (
         <Bar icon="grain" label="Hoarded" zh="囤積" value={Math.round(city.hoardedGrain ?? 0)} cap={40} tone="#c08a5a"
           warn={(city.hoardedGrain ?? 0) >= 20}

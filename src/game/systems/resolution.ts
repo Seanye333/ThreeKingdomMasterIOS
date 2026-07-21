@@ -39,7 +39,7 @@ import { tickCityEconomy, tradeTreatyGrants } from './economy';
 import { rollWeatherDisaster } from './weather';
 import { WARHORSE_CITY_CAP, IRON_CITY_CAP, MEDICINE_CITY_CAP } from './market';
 import {
-  specialtyControl, specialtyRealmEffects, allRoleEffects, embargoedRolesAgainst,
+  specialtyControl, specialtyRealmEffects, allRoleEffects, embargoedRolesAgainst, CITY_SPECIALTY,
   type SpecialtyControl, type SpecialtyRealmEffects, type SpecialtyRole,
 } from '../data/specialties';
 import { buildingBonuses, schoolHeadmasterFocus, SCHOOL_BUILDINGS, COURT_BUILDINGS } from './buildings';
@@ -53,6 +53,7 @@ import {
   evernormalOperation, type GrainNode,
 } from './grainTrade';
 import { coinEffects } from './coinage';
+import { armamentsTick, armamentEffects } from './workshops';
 import { clanOf } from '../data/clans';
 import { shrineEffects } from './culturalWorks';
 import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
@@ -2307,7 +2308,10 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const cmdLaw = city.ownerForceId
       ? (input.lawCode?.[city.ownerForceId] ?? aiLawCode(input.forces[city.ownerForceId]?.personality))
       : undefined;
-    const result = resolveInternalAffairs(cmd.type, officer, city, rng, finalBonus, input.weather?.kind, assistants, input.rapport, hasCourtForCmd, cmdLaw);
+    // 武庫/工官 — 督造軍器 works faster where there is a real armoury (§1.18).
+    const arsenalHere = (input.buildings ?? []).find(
+      (bd) => bd.cityId === city.id && bd.id === 'arsenal')?.level ?? 0;
+    const result = resolveInternalAffairs(cmd.type, officer, city, rng, finalBonus, input.weather?.kind, assistants, input.rapport, hasCourtForCmd, cmdLaw, arsenalHere);
     cities[city.id] = applyDelta(city, result.delta);
     // 平準抑兼 (§1.14) — a market broken open is worth recording.
     if (cmd.type === 'curb-hoarding' && result.success && city.ownerForceId === input.playerForceId) {
@@ -2638,6 +2642,24 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         }))
       : (city.hoardedGrain ?? 0);
     const hoardEff = hoardEffects(nextHoard);
+    // 軍器 (§1.18) — the 匠戶 work the yard's iron into arms all season, and the
+    // garrison wears them out. An iron province with a real 武庫 arms itself;
+    // a city with neither slides toward 無甲不成軍.
+    const armsArsenal = (input.buildings ?? []).find(
+      (bd) => bd.cityId === city.id && bd.id === 'arsenal')?.level ?? 0;
+    const armsTick = city.ownerForceId
+      ? armamentsTick({
+          current: city.armaments ?? 0,
+          iron: city.iron ?? 0,
+          troops: city.troops,
+          population: city.population,
+          arsenalLevel: armsArsenal,
+          ironProducer: CITY_SPECIALTY[city.id] === 'iron',
+          corvee,
+          politics: bestPolitics,
+        })
+      : { armaments: city.armaments ?? 0, ironUsed: 0 };
+    const armsEff = armamentEffects(armsTick.armaments);
     const docket = caseloadPenalty(nextCaseload);
     let lawLoyalty = (city.ownerForceId ? law.loyaltyDelta + corveeEff.loyaltyDelta + (shrineEff?.loyaltyPerSeason ?? 0) + hoardEff.loyaltyDelta : 0) + docket.loyaltyDelta;
     if (city.ownerForceId && rng() < wrongfulConvictionChance({
@@ -2656,7 +2678,11 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       }
     }
     // 練度弛 — drill fades when the garrison isn't kept at it (about 2/season).
-    const nextDrill = city.drill ? Math.max(0, city.drill - 2) : city.drill;
+    // 甲堅則習 (§1.18) — a well-stocked armoury slows the slide (men drill with
+    // gear that fits); an empty one hurries it.
+    const nextDrill = city.drill
+      ? Math.max(0, Math.min(100, city.drill - 2 + armsEff.drillDelta))
+      : city.drill;
     const updated: City = {
       ...city,
       // 律令與稅入 (§1.11) — 寬刑之下賦稅有漏,峻法之下錙銖必入。
@@ -2673,13 +2699,13 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       hiddenHouseholds: nextHidden,
       hoardedGrain: nextHoard,
       drill: nextDrill,
+      armaments: armsTick.armaments,
       population: Math.max(1000, city.population + tick.populationDelta),
       warhorses: tick.warhorseBreed > 0
         ? Math.min(WARHORSE_CITY_CAP, (city.warhorses ?? 0) + tick.warhorseBreed)
         : city.warhorses,
-      iron: tick.ironSmelt > 0
-        ? Math.min(IRON_CITY_CAP, (city.iron ?? 0) + tick.ironSmelt)
-        : city.iron,
+      // 冶鐵入庫,匠戶取之 — smelted this season, minus what the workshops drew.
+      iron: Math.max(0, Math.min(IRON_CITY_CAP, (city.iron ?? 0) + tick.ironSmelt) - armsTick.ironUsed),
       medicine: tick.medicineGather > 0
         ? Math.min(MEDICINE_CITY_CAP, (city.medicine ?? 0) + tick.medicineGather)
         : city.medicine,
@@ -4234,6 +4260,8 @@ function applyDelta(
     caseload: number;
     hiddenHouseholds: number;
     hoardedGrain: number;
+    armaments: number;
+    iron: number;
   }>,
 ): City {
   // Per-command logic already clamps to the city-tier cap (cityEconCap for
@@ -4252,6 +4280,12 @@ function applyDelta(
     caseload: delta.caseload !== undefined
       ? clamp((city.caseload ?? 0) + delta.caseload, 0, 100)
       : city.caseload,
+    armaments: delta.armaments !== undefined
+      ? clamp((city.armaments ?? 0) + delta.armaments, 0, 100)
+      : city.armaments,
+    iron: delta.iron !== undefined
+      ? Math.max(0, (city.iron ?? 0) + delta.iron)
+      : city.iron,
     hiddenHouseholds: delta.hiddenHouseholds !== undefined
       ? clamp((city.hiddenHouseholds ?? 0) + delta.hiddenHouseholds, 0, 45)
       : city.hiddenHouseholds,
