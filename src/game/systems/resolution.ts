@@ -2768,10 +2768,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
                  : 0)))
       : undefined;
     const serviceEff = serviceEffects(service);
-    // 軍餉 — the wage bill lands on the city that keeps the men.
-    const wages = city.ownerForceId
-      ? payGarrison({ troops: city.troops, gold: city.gold, system: service })
-      : { paid: 0, arrears: 0, deserted: 0, loyaltyDelta: 0 };
+
     const tick = tickCityEconomy(
       city,
       input.date.season,
@@ -2936,6 +2933,15 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         })
       : { armaments: city.armaments ?? 0, ironUsed: 0 };
     const armsEff = armamentEffects(armsTick.armaments);
+    // 軍餉 (§4.8) — paid on the season's OWN books: this season's revenue has
+    // landed by payday, so a city that earned enough is not in arrears just
+    // because its chest happened to be empty on the first of the month.
+    const seasonGross = city.gold
+      + Math.round(tick.goldIncome * law.taxYieldMul * registryYieldMul(nextHidden) * coin.goldYieldMul)
+      + territoryGold;
+    const wages = city.ownerForceId
+      ? payGarrison({ troops: city.troops, gold: seasonGross, system: service })
+      : { paid: 0, arrears: 0, deserted: 0, loyaltyDelta: 0 };
     // 傷兵營 (§4.11) — work the infirmary. The building has existed since the
     // first build and healed only officers; now it does what it is named for.
     const hospitalLevel = (input.buildings ?? []).find(
@@ -2984,7 +2990,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       ...city,
       // 律令與稅入 (§1.11) — 寬刑之下賦稅有漏,峻法之下錙銖必入。
       // 編戶與稅基 (§1.12) — 隱戶不入版籍,其田租賦皆歸豪右;重役又誤農時。
-      gold: Math.max(0, city.gold + Math.round(tick.goldIncome * law.taxYieldMul * registryYieldMul(nextHidden) * coin.goldYieldMul) + territoryGold - wages.paid),
+      gold: Math.max(0, seasonGross - wages.paid),
       food: Math.max(0, city.food
         + Math.round(tick.foodIncome * corveeEff.farmMul * registryYieldMul(nextHidden) * hoardEff.foodMul)
         - Math.round(tick.foodUpkeep * serviceEff.foodUpkeepMul)),

@@ -81,7 +81,13 @@ describe('制度批整合 — the meters actually move', () => {
       st.setState({
         cities: {
           ...st.getState().cities,
-          [target.id]: { ...st.getState().cities[target.id], gold: 0, troops: 40_000, food: 400_000 },
+          // Wages are paid out of the season's OWN books (revenue lands by
+          // payday), so a genuinely unpayable bill needs a huge garrison on a
+          // city that earns almost nothing.
+          [target.id]: {
+            ...st.getState().cities[target.id],
+            gold: 0, troops: 200_000, food: 900_000, commerce: 0, agriculture: 0,
+          },
         },
       });
       seasons(1);
