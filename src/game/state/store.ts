@@ -9200,6 +9200,19 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             const r = processTrigger(achS, { kind: kind as import('../types/achievement').AchievementTriggerKind });
             achS = r.progress; newly.push(...r.newlyUnlocked);
           }
+          // 名場面 (§5.15/§5.17) — a plague or a fired siege camp is a beat the
+          // player should hear and see, not just read. At most one per season
+          // (the report still carries the rest) so a bad season doesn't spam.
+          const moment = (result.moments ?? [])[0];
+          if (moment) {
+            playSfx(moment.kind === 'night-raid' ? 'fire' : 'dirge');
+            get().pushPopup({
+              key: moment.kind === 'night-raid' ? 'night-raid' : 'camp-plague',
+              media: 'image',
+              titleZh: moment.titleZh, titleEn: moment.titleEn,
+              captionZh: moment.captionZh, captionEn: moment.captionEn,
+            });
+          }
           // 民政功業 (§1.11–§1.14) — checked against the realm's own books at
           // season commit: a great city with an empty docket, and a realm whose
           // registers are honest again.

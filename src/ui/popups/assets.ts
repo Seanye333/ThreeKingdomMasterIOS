@@ -26,6 +26,7 @@
  *   disaster-plague ✅        瘟疫
  *   disaster-locust ✅        蝗災(engine 以 famine 出;與 drought 按年輪替出圖)
  *   disaster-quake ✅         地動(§8.2 地震,山城多發)
+ *   camp-plague ✅            軍中大疫(§5.15,玩家軍頓兵折損 ≥1500)
  *   specialty-discovered ✅   特產名物開發(名產作坊臻極盛)
  *   forge-masterpiece ✅      名器鑄成(神兵/gold 級;另 ForgingModal 內也有 ForgedReveal)
  *   — 第二章 武將/成長/家族 —
@@ -52,6 +53,7 @@
  *   duel-slay-champion ✅     陣斬名將(slayOfficerInDuel 玩家方斬殺敵將)
  *   duel-rival-callout ✅     宿敵結成(recordRivalry 交手≥3 結宿敵)
  *   duel-hall-legend ✅       名局入館(recordBout 長局/舌戰入武鬥館)
+ *   night-raid ✅             夜襲劫營(§5.17,玩家守軍夜襲得手)
  *   — 第七章 外交・謀略・天子 —
  *   founding-ceremony ✅      建國大典(holdFoundingCeremony 定國號稱制)
  *   welcome-emperor ✅        奉迎天子(welcomeEmperor 迎鑾入都)
@@ -84,6 +86,7 @@ export const KNOWN_POPUP_KEYS = [
   'disaster-plague',
   'disaster-locust',
   'disaster-quake',
+  'camp-plague',        // 軍中大疫(§5.15 頓兵之疫,赤壁之敗)
   'specialty-discovered',
   'forge-masterpiece',
   // 第二章 — 武將/成長/家族
@@ -110,6 +113,7 @@ export const KNOWN_POPUP_KEYS = [
   'duel-slay-champion',
   'duel-rival-callout',
   'duel-hall-legend',
+  'night-raid',         // 夜襲劫營(§5.17 甘寧百騎劫魏營)
   // 第七章 — 外交・謀略・天子
   'founding-ceremony',
   'welcome-emperor',

@@ -245,6 +245,11 @@ export interface ResolutionOutput {
   /** 民政功業 (§1.11–§1.14) — instant achievement kinds earned by the player's
    *  civic commands this season; the store fires them (it owns the ledger). */
   civicAchievements?: string[];
+  /** 名場面 — dramatic beats the player should see/hear (plague, night raid). */
+  moments?: Array<{
+    kind: 'plague' | 'night-raid';
+    titleZh: string; titleEn: string; captionZh: string; captionEn: string;
+  }>;
   /** 米市商旅 (§1.16) — this season's caravans, for the map to draw. */
   grainFlows?: Array<{
     fromCityId: EntityId; toCityId: EntityId; food: number; crossBorder: boolean;
@@ -511,6 +516,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   let playerRoutsHunted = 0;
   // 民政功業 — instant achievement kinds the player's civic commands earned.
   const civicAchievements: string[] = [];
+  const moments: NonNullable<ResolutionOutput['moments']> = [];
   let grainFlowsOut: ResolutionOutput['grainFlows'];
   let playerTroopsAbsorbed = 0;
   const troopOverride: Record<EntityId, number> = {};
@@ -1823,6 +1829,15 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
           text: `Sickness sweeps ${cmdrP?.name.en ?? 'the'} camp${where ? ` before ${where.en}` : ''} — ${plague.lost.toLocaleString()} men lost without a battle.`,
           textZh: `${cmdrP?.name.zh ?? '軍'}營大疫${where ? `(頓兵${where.zh}下)` : ''} —— 未戰而損 ${plague.lost.toLocaleString()} 卒。`,
         });
+        // 名場面 — a large loss to disease in a player column is the 赤壁 beat.
+        if (cmdrP?.forceId === input.playerForceId && plague.lost >= 1500) {
+          moments.push({
+            kind: 'plague',
+            titleZh: '軍中大疫', titleEn: 'Plague in the Camp',
+            captionZh: `${cmdrP.name.zh}營大疫,未戰而損 ${plague.lost.toLocaleString()} 卒${where ? `(${where.zh}下)` : ''}`,
+            captionEn: `Disease sweeps ${cmdrP.name.en}'s camp — ${plague.lost.toLocaleString()} lost without a battle`,
+          });
+        }
       }
     }
     suppliedTroops[cmd.officerId] = heldTroops;
@@ -2077,7 +2092,16 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
             wounded: (cities[cityAtStart.id].wounded ?? 0) + raidSplit.wounded,
           };
           if (raid.success) {
-            if (cityAtStart.ownerForceId === input.playerForceId) civicAchievements.push('night-raid');
+            if (cityAtStart.ownerForceId === input.playerForceId) {
+              civicAchievements.push('night-raid');
+              // 名場面 — the defender's night sortie fired the besieger's camp.
+              moments.push({
+                kind: 'night-raid',
+                titleZh: '夜襲劫營', titleEn: 'The Camp Ablaze',
+                captionZh: `${raidLeader.name.zh}夜出焚圍營 —— 敵損 ${raid.campLosses.toLocaleString()}、器械毀 ${raid.enginesBurned} 具`,
+                captionEn: `${raidLeader.name.en} fires the siege camp — ${raid.campLosses.toLocaleString()} dead, ${raid.enginesBurned} engines burned`,
+              });
+            }
             troopOverride[cmd.officerId] = Math.max(0, besiegerTroops - raid.campLosses);
             cmd.troops = troopOverride[cmd.officerId];
             cmd.siegeEngines = Math.max(0, (cmd.siegeEngines ?? 0) - raid.enginesBurned);
@@ -4740,6 +4764,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     enemyColumnsStarved: enemyColumnsStarved || undefined,
     playerRoutsHunted: playerRoutsHunted || undefined,
     civicAchievements: civicAchievements.length > 0 ? civicAchievements : undefined,
+    moments: moments.length > 0 ? moments : undefined,
     grainFlows: grainFlowsOut && grainFlowsOut.length > 0 ? grainFlowsOut : undefined,
     playerTroopsAbsorbed: playerTroopsAbsorbed || undefined,
   };
