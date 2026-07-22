@@ -45,7 +45,7 @@ function rawEnding(ctx: EndingContext): EndingResult | null {
   const playerCities = Object.values(ctx.cities).filter(
     (c) => c.ownerForceId === ctx.playerForceId,
   );
-  if (playerCities.length === 0) return defeat();
+  if (playerCities.length === 0) return defeat(ctx);
   if (playerCities.length === totalCities) {
     // 王道 vs 霸道 — did you win the realm's heart, or only its land?
     const avgLoy = playerCities.reduce((s, c) => s + c.loyalty, 0) / playerCities.length;
@@ -211,9 +211,72 @@ function emperor(): EndingResult {
   };
 }
 
-function defeat(): EndingResult {
+/**
+ * 敗亡 — one EndingKind, but the manner of the fall is not one story. We read
+ * the player-ruler's fate at the moment the last city is lost and pick a
+ * matching elegy, so losing gets the same narrative care as the six victories:
+ *   • 身死亂軍 (ruler dead) → 社稷為墟
+ *   • 為敵所擒 (ruler imprisoned) → 階下之囚
+ *   • 大勢已去而奉璽出降 (ruler alive, late era) → 奉璽出降(樂不思蜀式)
+ *   • 提殘騎亡命 (ruler alive, early era) → 流亡天涯
+ *   • 無主可考 → the plain collapse (fallback).
+ */
+function defeat(ctx: EndingContext): EndingResult {
+  const ruler = playerForceRuler(ctx);
+  const base = { kind: 'defeat' as const };
+
+  if (ruler?.status === 'dead') {
+    return {
+      ...base,
+      titleZh: '社稷為墟',
+      titleEn: 'The Altars Fall',
+      textZh:
+        '孤城既破,君主身死亂軍之中。 宗廟傾覆,社稷為墟,舊部星散,或降或亡。 亂世如爐,又銷一雄 —— 青史寥寥數字,不及當年金戈鐵馬。',
+      textEn:
+        'The last city breaks, and the lord falls amid the routed host. The ancestral temples topple, the altars of state lie in ruin; the old retainers scatter — some surrender, some perish. The age of chaos is a furnace, and it has melted down another hero. The chronicles spare you a few cold words, nothing of the clash of arms.',
+    };
+  }
+
+  if (ruler?.status === 'imprisoned') {
+    return {
+      ...base,
+      titleZh: '階下之囚',
+      titleEn: 'Prisoner of the Victor',
+      textZh:
+        '城陷之日,君主為敵所擒,檻車一輛,囚送敵都。 昔日號令三軍,今日仰人鼻息。 或如亡國之君日夕以淚洗面,或如劉禪佯狂求活 —— 生死榮辱,已不由己。',
+      textEn:
+        "On the day the city falls, the lord is taken alive — a single prison cart bears him to the conqueror's capital. Once you commanded three armies; now you live at another's sufferance. Perhaps, like the last ruler of a fallen house, you wash your face nightly with tears; perhaps, like Liu Shan, you play the fool to keep breathing. Life and death, honor and shame — none of it is yours to choose now.",
+    };
+  }
+
+  // Ruler still alive but landless. A late-era collapse reads as a formal
+  // surrender (奉璽出降); an early one, as flight into the wilderness.
+  if (ruler && ctx.date.year >= 263) {
+    return {
+      ...base,
+      titleZh: '奉璽出降',
+      titleEn: 'The Seal Surrendered',
+      textZh:
+        '大勢已去,君主自縛出降,雙手奉上國璽。 敵酋受之,或封侯以安其心,或遷宗室於異鄉。 「此間樂,不思蜀」—— 苟全性命於亂世,亦是一種收場。 只是那面旗,再不會升起了。',
+      textEn:
+        'The tide has turned past saving. The lord binds his own hands and comes out to surrender, offering up the state seal in both palms. The victor takes it — enfeoffing you a marquis to set your heart at ease, or removing your kin to some distant town. "This place is pleasant; I do not miss Shu" — to keep one\'s life through a broken age is also an ending, of a kind. Only that banner will never rise again.',
+    };
+  }
+
+  if (ruler) {
+    return {
+      ...base,
+      titleZh: '流亡天涯',
+      titleEn: 'Cast Adrift',
+      textZh:
+        '城池盡失,君主提殘部數騎,亡命關山。 或依附故舊,寄人籬下;或散作編氓,湮沒無聞。 昔劉備數失城郭而終成帝業 —— 然天下,終究只有一個劉備。',
+      textEn:
+        "Every city lost, the lord flees over the passes with a handful of riders. Perhaps you attach yourself to old friends and live under another's roof; perhaps you dissolve into the common registers and vanish without a trace. Liu Bei too lost his cities time and again and yet founded an empire in the end — but the realm, after all, held only one Liu Bei.",
+    };
+  }
+
   return {
-    kind: 'defeat',
+    ...base,
     titleZh: '败亡',
     titleEn: 'Defeated',
     textZh: '势力倾覆,部下星散。 历史从未记得失败者的姓名。',
