@@ -3368,6 +3368,46 @@ export const BIOGRAPHIES: Record<string, OfficerBiography> = {
  * Procedural fallback bio for officers we haven't hand-written. Looks at their
  * highest stat and assembles a plausible one-liner.
  */
+// 列傳金句補充 —— 侦查发现三国列传的 quote 字段只有 7 条,近 800 篇列传无名言
+// 金句。给一线名将补上史实/演义名言(图鉴与列传显示 bio.quote)。用集中的补充
+// 表 + 合并循环,避免逐条改动上百行的长列传条目;只对「已有 bio 且尚无 quote」
+// 的人补,绝不覆盖既有 7 条。含 6 位女性(貂蝉/甄姬/蔡文姬/孙尚香/黄月英),
+// 让女性角色的图鉴也有灵魂。
+const SUPPLEMENTAL_QUOTES: Record<string, { zh: string; en: string }> = {
+  'sima-yi':    { zh: '亮志大而不见机,多谋而少决,好兵而无权。', en: 'Liang is grand in ambition but blind to opportunity, full of schemes yet slow to decide, fond of arms yet without the means.' },
+  'zhou-yu':    { zh: '丈夫处世,遇知己之主,外托君臣之义,内结骨肉之恩。', en: 'When a man of parts meets a lord who truly knows him, they are bound outwardly as sovereign and subject, inwardly as kin.' },
+  'lu-su':      { zh: '汉室不可复兴,曹操不可卒除 —— 为将军计,惟鼎足江东,以观天下之衅。', en: 'The Han cannot be revived, nor Cao Cao removed at a stroke. Your best course is to hold Jiangdong as one leg of the tripod and watch for the realm\'s fractures.' },
+  'lu-meng':    { zh: '士别三日,即更刮目相待。', en: 'Part from a man three days, and you must look at him with fresh eyes.' },
+  'lu-xun':     { zh: '英雄棋跱,豺狼窥望;克敌宁乱,非众不济。', en: 'Heroes ranged like chesspieces, wolves watching all around — to defeat the foe and quiet the chaos takes more than one man\'s strength.' },
+  'gan-ning':   { zh: '虽有十万之众,不足惧也 —— 锦帆甘兴霸在此!', en: 'Were they a hundred thousand, still no cause for fear — Gan Xingba of the Brocade Sails stands here!' },
+  'zhang-zhao': { zh: '主公承父兄之业,当先保江东,以观天下之变。', en: 'My lord inherits the work of his father and brother — first secure Jiangdong, then watch how the realm turns.' },
+  'zhao-yun':   { zh: '国贼是曹操,非孙权也 —— 愿以天下为重,勿因私忿而伐吴。', en: 'The traitor to the state is Cao Cao, not Sun Quan. Put the realm first; march not on Wu for private grief.' },
+  'zhang-fei':  { zh: '我乃燕人张翼德也!谁敢与我决一死战?', en: 'I am Zhang Yide of Yan! Who dares fight me to the death?' },
+  'huang-zhong':{ zh: '老夫一臂之力,尚开二石之弓,斩万人之将!', en: 'This old arm still draws a two-picul bow and cuts down commanders of ten thousand!' },
+  'ma-chao':    { zh: '父母昆弟并见诛灭,此仇不共戴天。', en: 'My parents and brothers were slaughtered to the last — a hatred with which I cannot share the same sky.' },
+  'wei-yan':    { zh: '若曹操举天下而来,请为大王拒之;偏将十万之众至,请为大王吞之。', en: 'Should Cao Cao come with all the realm, I will hold him off for you; should a lesser general bring a hundred thousand, I will swallow them whole.' },
+  'xu-shu':     { zh: '某纵在曹营,终身不为设一谋。', en: 'Though I sit in Cao\'s camp, I will not devise a single stratagem for him as long as I live.' },
+  'xun-you':    { zh: '公达外愚内智,外怯内勇,外弱内强。', en: 'Gongda seems dull but is wise within, timid without but bold within, frail in seeming but strong at heart.' },
+  'jia-xu':     { zh: '离之而已 —— 一纸涂抹,可破十万雄兵。', en: 'Simply divide them — a few smeared lines on paper can break an army of a hundred thousand.' },
+  'cao-ren':    { zh: '吾受国厚恩,当死守于此,岂能弃城而走!', en: 'I owe the state a deep debt — I will die holding this place. How could I abandon the city and flee?' },
+  'zhong-hui':  { zh: '事成,则得天下;不成,退保蜀汉,亦不失为刘备。', en: 'If it succeeds, the realm is mine; if not, I withdraw to hold Shu — no worse off than Liu Bei.' },
+  'zhang-he':   { zh: '郃识变数,善处营陈,料战势地形,无不如计。', en: 'Zhang He reads the shifting odds, sets his camps well, and judges terrain and momentum — nothing falls outside his reckoning.' },
+  'xu-huang':   { zh: '徐将军可谓有周亚夫之风矣!', en: '"General Xu has the bearing of Zhou Yafu himself!" — so Cao Cao praised his march.' },
+  'yu-jin':     { zh: '临难毋苟免 —— 惜乎三十年名节,毁于一朝之降。', en: 'In peril, seek no escape by any means — yet alas, thirty years of honor undone by a single surrender.' },
+  'huang-gai':  { zh: '某愿行诈降之计,以火破曹 —— 纵受鞭笞,亦所甘心。', en: 'Let me feign surrender and break Cao Cao with fire — I will bear the whip gladly for it.' },
+  'zhou-tai':   { zh: '身被数十创,肤如刻画 —— 皆为主公挡也。', en: 'Scores of wounds, my skin like carved lines — every one of them taken for my lord.' },
+  'fa-zheng':   { zh: '法孝直若在,必能制主上,令不东行。', en: '"Had Fa Xiaozhi lived, he could have curbed our lord and stopped this eastern march." — Zhuge Liang, mourning Yiling.' },
+  'diaochan':   { zh: '妾若能报国家,虽万死不辞。', en: 'If I can repay the state, I would not shrink from ten thousand deaths.' },
+  'lady-zhen':  { zh: '蒲生我池中,其叶何离离 —— 莫以豪贤故,弃捐素所爱。', en: 'Cattails in my pond, their leaves so lush — do not, for the great and worthy, cast off the one you once loved. (from "Tang-shang xing")' },
+  'cai-wenji':  { zh: '人生几何时,怀忧终年岁 —— 胡笳一曲,肝肠寸断。', en: 'How brief this life, yet care fills all its years — one air upon the nomad reed-pipe, and the heart breaks inch by inch.' },
+  'lady-sun':   { zh: '侍婢数百,居常带刀 —— 江东儿女,未必逊于男儿。', en: 'Hundreds of maids about her, a blade always at her side — the daughters of Jiangdong yield nothing to its sons.' },
+  'lady-huang': { zh: '莫道妇人无巧思,木牛流马我能陈。', en: 'Say not a woman has no cunning — the wooden ox and gliding horse, I too can lay them out.' },
+};
+for (const [id, q] of Object.entries(SUPPLEMENTAL_QUOTES)) {
+  const bio = BIOGRAPHIES[id];
+  if (bio && !bio.quote) bio.quote = q;
+}
+
 export function deriveBiography(stats: {
   leadership: number;
   war: number;
