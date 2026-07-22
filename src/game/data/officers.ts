@@ -46,6 +46,24 @@ interface OfficerTemplate {
   };
 }
 
+// 三國名冊的女性 —— OfficerTemplate 沒有 female 欄位(不同於 historical 模板),
+// 過去 802 名三國武將 female:true = 0,於是婚配/繼承/立繪/性別顯示(family.ts
+// 的異性配對與母親判定、succession 繼承序、OfficerPortrait/OfficerAvatar 立繪、
+// OfficerDetail 的「女/男」、生育的「千金/麟兒」)全把她們當男性。用 id 集合在
+// 物化 Officer 時統一打標,避免逐條改 40 個模板。historical 女性各自帶 t.female,
+// id 不在此集合,不受影響。
+const THREE_KINGDOMS_FEMALE_IDS = new Set<string>([
+  'diaochan', 'cai-wenji', 'cai-yan', 'lady-sun', 'da-qiao', 'xiao-qiao',
+  'lady-bian', 'lady-bian-younger', 'lady-gan', 'lady-mi', 'zhu-rong', 'zhurong',
+  'lady-cai', 'empress-guo', 'empress-mao', 'bao-sanniang', 'lady-ding',
+  'empress-pan', 'lady-zhen', 'empress-mu', 'lady-fan', 'empress-bian',
+  'lady-xiahou', 'lady-zou', 'lady-xu', 'lady-huang', 'he-hou', 'dong-taihou',
+  'wang-yuanji', 'tang-ji', 'xing-cai', 'wang-yi', 'sun-luban', 'sun-luyu',
+  'lady-wu', 'empress-zhang', 'lady-yan', 'lady-cao', 'guan-yinping', 'xiahou-hui',
+]);
+const stampFemale = (o: Officer): Officer =>
+  THREE_KINGDOMS_FEMALE_IDS.has(o.id) && !o.female ? { ...o, female: true } : o;
+
 // ── Officers placed in scenarios (active or referenced explicitly) ─────
 const OFFICER_TEMPLATES: OfficerTemplate[] = [
   // Cao Cao force — high command
@@ -2799,7 +2817,7 @@ export function buildInitialOfficers(
     };
   });
 
-  return [...assigned, ...talents];
+  return [...assigned, ...talents].map(stampFemale);
 }
 
 export const OFFICER_IDS = OFFICER_TEMPLATES.map((t) => t.id);
@@ -2911,5 +2929,5 @@ export function buildHistoricalOfficers(enabledDynasties: ReadonlyArray<Dynasty>
       dynasty: 'three-kingdoms',
     };
   });
-  return [...historical, ...threeKingdoms];
+  return [...historical, ...threeKingdoms].map(stampFemale);
 }
