@@ -121,7 +121,7 @@ export function MarchingArmies({ cities, pendingCommands, forces, officers, port
   const lang = useLanguage();
   const armies = useMemo(() => {
     return Object.values(pendingCommands)
-      .filter((cmd): cmd is { cityId: string; type: string; targetCityId: string; troops: number; officerId: string; seasonsRemaining?: number; totalSeasons?: number; targetX?: number; targetY?: number; holding?: boolean; ambush?: boolean; besieging?: string; routed?: boolean; fleeX?: number; fleeY?: number; evading?: boolean; fatigue?: number; morale?: number; waitSeasons?: number } =>
+      .filter((cmd): cmd is { cityId: string; type: string; targetCityId: string; troops: number; officerId: string; seasonsRemaining?: number; totalSeasons?: number; targetX?: number; targetY?: number; holding?: boolean; ambush?: boolean; besieging?: string; routed?: boolean; fleeX?: number; fleeY?: number; evading?: boolean; fatigue?: number; morale?: number; waitSeasons?: number; siegeEngines?: number; campSeasons?: number } =>
         cmd.type === 'march' && !!cmd.cityId)
       .map((cmd) => {
         const from = cities[cmd.cityId];
@@ -180,6 +180,9 @@ export function MarchingArmies({ cities, pendingCommands, forces, officers, port
           evading: !!cmd.evading,
           fatigue: cmd.fatigue,
           morale: cmd.morale,
+          // §5.16/§5.15 — the siege park it has built and how long it has stood.
+          siegeEngines: cmd.siegeEngines ?? 0,
+          campSeasons: cmd.campSeasons ?? 0,
           waiting: (cmd.waitSeasons ?? 0) > 0,
           ambushRevealed,
           cellTarget: cmd.targetX != null,
@@ -195,7 +198,7 @@ export function MarchingArmies({ cities, pendingCommands, forces, officers, port
           commanderName={a.commanderName} targetName={a.targetName} troops={a.troops}
           seasonsRemaining={a.seasonsRemaining} totalSeasons={a.totalSeasons}
           landRoute={a.landRoute} weaponType={a.weaponType}
-          selected={a.selected} holding={a.holding} ambush={a.ambush} besieging={a.besieging} routed={a.routed} evading={a.evading} fatigue={a.fatigue} morale={a.morale} waiting={a.waiting} ambushRevealed={a.ambushRevealed} cellTarget={a.cellTarget}
+          selected={a.selected} holding={a.holding} ambush={a.ambush} besieging={a.besieging} routed={a.routed} evading={a.evading} fatigue={a.fatigue} morale={a.morale} siegeEngines={a.siegeEngines} campSeasons={a.campSeasons} waiting={a.waiting} ambushRevealed={a.ambushRevealed} cellTarget={a.cellTarget}
           ports={ports} onClick={onArmyClick ? () => onArmyClick(a.officerId) : undefined}
           onPressStart={onArmyPressStart ? (e) => onArmyPressStart(a.officerId, e) : undefined} />
       ))}
@@ -209,12 +212,16 @@ const UNIT_TAG: Record<WeaponType, string> = {
   sabre: '刀', sword: '劍', fan: '師', siege: '械', none: '步',
 };
 
-function MarchingArmy({ from, to, color, commanderName, targetName, troops, seasonsRemaining, totalSeasons, landRoute, weaponType, selected, holding, ambush, besieging, routed, evading, fatigue, morale, waiting, ambushRevealed, cellTarget, ports, onClick, onPressStart }: {
+function MarchingArmy({ from, to, color, commanderName, targetName, troops, seasonsRemaining, totalSeasons, landRoute, weaponType, selected, holding, ambush, besieging, routed, evading, fatigue, morale, siegeEngines, campSeasons, waiting, ambushRevealed, cellTarget, ports, onClick, onPressStart }: {
   from: City; to: City; color: string;
   commanderName: string; targetName: string; troops: number;
   seasonsRemaining: number; totalSeasons: number;
   landRoute: Array<{ x: number; y: number }>;
   weaponType: WeaponType;
+  /** §5.16 攻城器械 — engines standing in this camp's siege park. */
+  siegeEngines?: number;
+  /** §5.15 頓兵之日 — seasons the camp has stood still (disease risk). */
+  campSeasons?: number;
   selected: boolean;
   holding: boolean;
   ambush?: boolean;
@@ -382,6 +389,9 @@ function MarchingArmy({ from, to, color, commanderName, targetName, troops, seas
       {holding ? (
         <>
           <FieldCamp color={color} troops={troops} />
+          {/* §5.16/§5.15 — a siege camp shows its engine park and, once it has
+              stood too long, a haze of campfire smoke (the disease-risk tell). */}
+          {besieging && <SiegeWorks3D engines={siegeEngines ?? 0} campSeasons={campSeasons ?? 0} />}
           <MarchBanner color={color} />
         </>
       ) : naval ? (
@@ -433,6 +443,26 @@ function MarchingArmy({ from, to, color, commanderName, targetName, troops, seas
                 borderRadius: 'var(--tkm-radius-xs)',
                 fontSize: '9px', fontWeight: 700,
               }}>圍</span>
+            )}
+            {/* §5.16 攻城器械 — a built-up siege park makes the wall bite sooner. */}
+            {besieging && (siegeEngines ?? 0) >= 1 && (
+              <span title={tHover(`攻城器械 ${Math.floor(siegeEngines ?? 0)} 具`, `Siege park: ${Math.floor(siegeEngines ?? 0)}`)} style={{
+                display: 'inline-block', marginLeft: 3, padding: '0 3px',
+                background: '#2a1c0a', color: '#e0b070',
+                borderRadius: 'var(--tkm-radius-xs)',
+                fontSize: '9px', fontWeight: 700,
+              }}>⚒{Math.floor(siegeEngines ?? 0)}</span>
+            )}
+            {/* §5.15 頓兵之日 — a camp sitting past the grace period is a disease
+                risk; the badge warns before the plague strikes. */}
+            {besieging && (campSeasons ?? 0) >= 3 && (
+              <span title={tHover('頓兵日久 — 營中將生疫疾', 'Camped too long — sickness looms')} style={{
+                display: 'inline-block', marginLeft: 3, padding: '0 3px',
+                background: (campSeasons ?? 0) >= 5 ? '#3a0e12' : '#2a1e0a',
+                color: (campSeasons ?? 0) >= 5 ? '#ff9a8a' : '#d8c070',
+                borderRadius: 'var(--tkm-radius-xs)',
+                fontSize: '9px', fontWeight: 700,
+              }}>頓{campSeasons}</span>
             )}
             {routed && (
               <span style={{
@@ -530,6 +560,69 @@ function FieldCamp({ color, troops = 0 }: { color: string; troops?: number }) {
         <planeGeometry args={[0.15, 0.1]} />
         <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.25} side={THREE.DoubleSide} />
       </mesh>
+    </group>
+  );
+}
+
+/**
+ * 攻城器械與頓兵之疫 (§5.16/§5.15) — the siege half of a besieging camp.
+ *
+ * Draws the engine park as a ring of little ladder/tower silhouettes just
+ * outside the palisade (count follows City-side siegeEngines, capped so it
+ * stays legible), and — once the camp has sat past the grace period — a rising
+ * haze of campfire smoke that thickens with 頓兵之日. The smoke IS the disease
+ * signal: a camp you can see smoking has been standing long enough to sicken.
+ */
+function SiegeWorks3D({ engines, campSeasons }: { engines: number; campSeasons: number }) {
+  const smokeRef = useRef<THREE.Group>(null);
+  // Smoke only once the camp is a real disease risk (past the 2-season grace),
+  // thickening toward the ceiling. 0 at 2 seasons, full by ~7.
+  const smokeN = Math.max(0, Math.min(6, campSeasons - 2));
+  useFrame(({ clock }) => {
+    if (!smokeRef.current) return;
+    for (let i = 0; i < smokeRef.current.children.length; i++) {
+      const m = smokeRef.current.children[i] as THREE.Mesh;
+      const t = (clock.elapsedTime * 0.35 + i / Math.max(1, smokeN)) % 1;
+      m.position.set(0.02 * Math.sin(i * 2), 0.12 + t * 0.5, 0.02 * Math.cos(i * 2));
+      m.scale.setScalar(0.06 + t * 0.16);
+      // Redder, heavier haze the longer it has stood.
+      (m.material as THREE.MeshBasicMaterial).opacity = (0.06 + campSeasons * 0.012) * (1 - t);
+    }
+  });
+  // Engine silhouettes ring the camp; more of them for a bigger park.
+  const engN = Math.max(0, Math.min(8, Math.round(engines / 1.5)));
+  return (
+    <group>
+      {Array.from({ length: engN }, (_, i) => {
+        const ang = (i / Math.max(1, engN)) * Math.PI * 2;
+        const r = 0.46;
+        const x = Math.cos(ang) * r;
+        const z = Math.sin(ang) * r;
+        return (
+          <group key={i} position={[x, 0, z]} rotation={[0, -ang + Math.PI / 2, 0]}>
+            {/* 雲梯/樓車 — a slanted timber frame, dark against the ground. */}
+            <mesh position={[0, 0.11, 0]} rotation={[0.5, 0, 0]}>
+              <boxGeometry args={[0.05, 0.22, 0.03]} />
+              <meshStandardMaterial color="#5a3f22" roughness={0.9} />
+            </mesh>
+            <mesh position={[0, 0.02, 0.02]}>
+              <boxGeometry args={[0.09, 0.03, 0.09]} />
+              <meshStandardMaterial color="#4a3a24" roughness={0.9} />
+            </mesh>
+          </group>
+        );
+      })}
+      {smokeN > 0 && (
+        <group ref={smokeRef} position={[0, 0, 0]}>
+          {Array.from({ length: Math.ceil(smokeN) }, (_, i) => (
+            <mesh key={i}>
+              <sphereGeometry args={[1, 6, 6]} />
+              <meshBasicMaterial color={campSeasons >= 5 ? '#8a7060' : '#a89888'}
+                transparent opacity={0.12} depthWrite={false} />
+            </mesh>
+          ))}
+        </group>
+      )}
     </group>
   );
 }
