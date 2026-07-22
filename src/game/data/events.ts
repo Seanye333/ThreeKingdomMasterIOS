@@ -655,7 +655,12 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     description:
       'Zhuge Liang presents his memorial to the second emperor and marches north. Six campaigns will follow; none will reach Chang\'an. But the cause is kept alive in the marching.',
     descriptionZh: "諸葛亮上《出師表》於後主,揮師北伐。其後六出祁山,終未達長安,然漢室之志在征伐中延續不息。",
-    effects: [{ kind: 'flag', key: 'northern-campaigns-begun' }],
+    effects: [
+      // 鞠躬盡瘁 — 傾國北伐動員,漢室正統之志再燃
+      { kind: 'mandate-ruler', rulerOfficerId: 'liu-shan', delta: 8 },
+      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'liu-shan', multiplier: 1.06 },
+      { kind: 'flag', key: 'northern-campaigns-begun' },
+    ],
   },
   {
     id: 'evt-zhuge-liang-dies',
@@ -999,6 +1004,9 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       'Atop the Seven-Star Altar at Nanping Hill, Zhuge Liang prays for three days and three nights. On the third the south-east wind rises against all season. Zhou Yu\'s fire ships scream into the chained fleet at Red Cliffs.',
     descriptionZh: "諸葛亮於南屏山七星壇祈禱三日三夜。第三日,逆季而起的東南風大作。周瑜的火船向赤壁連環艦隊呼嘯而去。",
     effects: [
+      // 東南風大作,火船焚連環艦 —— 曹軍水寨大損,江東天命高漲
+      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'cao-cao', multiplier: 0.88 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'sun-quan', delta: 6 },
       { kind: 'flag', key: 'east-wind-borrowed' },
     ],
   },
@@ -1210,7 +1218,11 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     description:
       'Cao Cao, sharing warm wine with Liu Bei, declares: "The only heroes of this age are you and I." Liu Bei, startled, drops his chopsticks as thunder cracks — and masks his ambition a while longer.',
     descriptionZh: "曹操與劉備青梅煮酒,曰:「今天下英雄,唯使君與操耳。」劉備驚而失箸,賴雷聲掩飾,韜光養晦又得些時日。",
-    effects: [{ kind: 'flag', key: 'heroes-over-wine' }],
+    effects: [
+      // 「天下英雄,唯使君與操耳」—— 曹操親口認證的英雄,天命暗長
+      { kind: 'mandate-ruler', rulerOfficerId: 'liu-bei', delta: 5 },
+      { kind: 'flag', key: 'heroes-over-wine' },
+    ],
   },
   {
     id: 'evt-bowang-slope-fire',
@@ -1221,7 +1233,196 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     description:
       'In his first command, Zhuge Liang lures Xiahou Dun\'s army into the narrow defile at Bowang and sets the brush ablaze. The doubters among Liu Bei\'s generals fall silent.',
     descriptionZh: "諸葛亮初掌兵權,誘夏侯惇之軍入博望狹道,縱火焚之。劉備帳下原本不服的諸將,自此噤聲。",
-    effects: [{ kind: 'flag', key: 'bowang-fire' }],
+    effects: [
+      // 諸葛初掌兵權,誘夏侯惇入狹道縱火 —— 曹軍受挫,帳下不服諸將自此噤聲
+      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'cao-cao', multiplier: 0.92 },
+      { kind: 'officer-loyalty', officerId: 'zhuge-liang', delta: 10 },
+      { kind: 'flag', key: 'bowang-fire' },
+    ],
+  },
+  // ─────────── 名場面補遺(2026-07):填補侦查發現的叙事空洞 ───────────
+  {
+    id: 'evt-shangfangyu-rain',
+    name: { en: 'Heaven Sends Rain at Shangfang Valley', zh: '上方谷天火' },
+    yearMin: 234,
+    yearMax: 234,
+    season: 'summer',
+    requires: [
+      { kind: 'officer-active', officerId: 'zhuge-liang' },
+      { kind: 'officer-active', officerId: 'sima-yi' },
+    ],
+    description:
+      'Zhuge Liang lures Sima Yi and his sons into Shangfang Valley and looses fire from every slope. Sima Yi clasps his sons and weeps, certain of death — when a sudden downpour drowns the flames and lets the Wei men escape. Kongming sighs: "Man may plan, but Heaven decides."',
+    descriptionZh:
+      "諸葛亮誘司馬懿父子入上方谷,火砲地雷齊發,谷中烈焰沖天。司馬懿抱二子相泣,自分必死——忽天降大雨,火盡熄滅,魏軍得脫。孔明登高長嘆:「謀事在人,成事在天。不可強也!」",
+    effects: [
+      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'cao-rui', multiplier: 0.9 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'liu-shan', delta: 5 },
+      { kind: 'flag', key: 'shangfangyu-rain' },
+    ],
+  },
+  {
+    id: 'evt-changban-bridge',
+    name: { en: 'Zhang Fei Roars at Changban Bridge', zh: '當陽橋斷喝' },
+    yearMin: 208,
+    yearMax: 208,
+    season: 'autumn',
+    requires: [{ kind: 'officer-active', officerId: 'zhang-fei' }],
+    description:
+      "Alone at Changban Bridge, Zhang Fei rounds his eyes and thunders: 'I am Zhang Yide of Yan! Who dares fight me to the death?' Cao Cao's van recoils; Xiahou Jie tumbles dead from his horse in fright, and the whole army dares not cross.",
+    descriptionZh:
+      "長坂坡後,張飛獨據當陽橋頭,倒豎虎鬚,環眼圓睜,厲聲大喝:「我乃燕人張翼德也!誰敢與我決一死戰?」聲如巨雷,曹軍為之股慄,夏侯傑驚墜馬下而亡,大軍反卷,不敢近前。",
+    effects: [
+      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'cao-cao', multiplier: 0.95 },
+      { kind: 'officer-loyalty', officerId: 'zhang-fei', delta: 8 },
+      { kind: 'flag', key: 'changban-bridge' },
+    ],
+  },
+  {
+    id: 'evt-eight-arrays',
+    name: { en: 'The Stone Sentinel Maze', zh: '八陣圖困陸遜' },
+    yearMin: 222,
+    yearMax: 223,
+    requires: [
+      { kind: 'officer-active', officerId: 'zhuge-liang' },
+      { kind: 'officer-active', officerId: 'lu-xun' },
+    ],
+    description:
+      "Pursuing the broken army of Shu to Fish-Belly Meadow, Lu Xun stumbles into a maze of piled stones — killing airs rising to heaven — and cannot find his way out. Only Zhuge Liang's father-in-law, leading him through the Gate of Life, sets him free. 'Kongming is truly a sleeping dragon,' Lu Xun sighs, and withdraws.",
+    descriptionZh:
+      "陸遜火燒連營,追蜀軍至魚腹浦,忽見亂石排列,殺氣沖天,困於八陣圖中,四面無門。賴諸葛亮岳父黃承彥引出生門,方得脫。陸遜嘆曰:「孔明真臥龍也,吾不能及!」遂斂兵而退,不復西進。",
+    effects: [
+      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'sun-quan', multiplier: 0.93 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'liu-shan', delta: 4 },
+      { kind: 'flag', key: 'eight-arrays' },
+    ],
+  },
+  {
+    id: 'evt-panhe-zhaoyun',
+    name: { en: 'A Young General at Panhe', zh: '磐河趙雲初陣' },
+    yearMin: 191,
+    yearMax: 193,
+    requires: [
+      { kind: 'officer-active', officerId: 'zhao-yun' },
+      { kind: 'officer-alive', officerId: 'gongsun-zan' },
+    ],
+    description:
+      "By Panhe Bridge, Gongsun Zan is pressed to the brink by Wen Chou. In the nick a young general gallops out, spears rider after rider, and plucks his lord from the midst of ten thousand — Zhao Zilong of Changshan, entering the age.",
+    descriptionZh:
+      "磐河橋畔,公孫瓚為河北名將文醜所迫,幾至墜馬。危殆之際,一少年將軍挺槍飛馬而出,於萬軍中連挑數將,救瓚而還——常山趙子龍,自此登場,名動河北。",
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'zhao-yun', delta: 10 },
+      { kind: 'flag', key: 'panhe-zhaoyun' },
+    ],
+  },
+  {
+    id: 'evt-ruxu-standoff',
+    name: { en: 'Would That I Had a Son Like Sun', zh: '生子當如孫仲謀' },
+    yearMin: 213,
+    yearMax: 213,
+    season: 'spring',
+    requires: [
+      { kind: 'officer-active', officerId: 'cao-cao' },
+      { kind: 'officer-active', officerId: 'sun-quan' },
+    ],
+    description:
+      "After a month\'s standoff at Ruxu, Cao Cao beholds the taut order of Sun Quan\'s ships and ranks and sighs in admiration: 'Would that I had a son like Sun Zhongmou! Liu Biao\'s boys were pigs and dogs beside him.' He gathers his army and turns north.",
+    descriptionZh:
+      "濡須口相拒月餘,曹操見孫權舟船器仗、軍伍整肅,望之慨然嘆曰:「生子當如孫仲謀!若劉景升兒子,豚犬耳。」遂斂軍北還,不復強攻。",
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'sun-quan', delta: 7 },
+      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'sun-quan', multiplier: 1.03 },
+      { kind: 'flag', key: 'ruxu-standoff' },
+    ],
+  },
+  {
+    id: 'evt-chencang-haozhao',
+    name: { en: 'Hao Zhao Holds Chencang', zh: '陳倉郝昭拒諸葛' },
+    yearMin: 228,
+    yearMax: 229,
+    requires: [
+      { kind: 'officer-active', officerId: 'zhuge-liang' },
+      { kind: 'officer-active', officerId: 'hao-zhao' },
+    ],
+    description:
+      "Zhuge Liang besieges Chencang, held by Hao Zhao with barely a thousand men. Scaling ladders, ram-carts and tunnels — every siege art in turn — are met by fire-arrows, millstones and a second inner wall. After twenty-odd days the Shu grain runs out and the army withdraws; Kongming laments how hard a resolute wall is to take.",
+    descriptionZh:
+      "諸葛亮出散關,以數萬眾圍陳倉,郝昭以千餘人拒守。雲梯、衝車、地道百計並施,郝昭以火箭、石磨、內重牆一一化解。相拒二十餘日,蜀軍糧盡而退。孔明始知堅城之難拔,一夫當關之可畏。",
+    effects: [
+      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'liu-shan', multiplier: 0.95 },
+      { kind: 'officer-loyalty', officerId: 'hao-zhao', delta: 12 },
+      { kind: 'flag', key: 'chencang-siege' },
+    ],
+  },
+  {
+    id: 'evt-xuzhou-massacre',
+    name: { en: 'The Sack of Xuzhou', zh: '曹操屠徐州・陶謙三讓' },
+    yearMin: 193,
+    yearMax: 194,
+    requires: [
+      { kind: 'officer-active', officerId: 'cao-cao' },
+      { kind: 'officer-alive', officerId: 'tao-qian' },
+    ],
+    description:
+      "When his father is killed by Tao Qian\'s officers, Cao Cao raises an army of vengeance; where it passes, the slaughter is such that the Si River ceases to flow. Terrified, Tao Qian thrice offers Xuzhou to Liu Bei. Cao Cao\'s name for cruelty spreads far, and the people of Xuzhou hate him to the bone.",
+    descriptionZh:
+      "曹嵩為陶謙部將所殺,曹操起兵復仇,所過多所殘戮,坑殺男女數萬於泗水,水為之不流。陶謙惶懼,三讓徐州於劉備。曹操暴虐之名遠播,徐州士民恨之入骨,此仁暴之判,亦天下向背之始。",
+    effects: [
+      { kind: 'city-loyalty', cityId: 'pengcheng', delta: -15 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: -6 },
+      { kind: 'flag', key: 'xuzhou-massacre' },
+    ],
+  },
+  // ─────────── 三分建號:魏蜀吳的稱制時刻(2026-07 補) ───────────
+  {
+    id: 'evt-cao-pi-usurps-han',
+    name: { en: 'Cao Pi Accepts the Abdication', zh: '曹丕受禪代漢' },
+    yearMin: 220,
+    yearMax: 221,
+    requires: [{ kind: 'officer-active', officerId: 'cao-pi' }],
+    description:
+      "Emperor Xian of Han abdicates to Cao Pi, King of Wei. Thrice declining, Cao Pi at last ascends the altar, proclaims the great state of Wei, and names the era Huangchu. Four hundred years of Han come to an end. 'Now I understand,' Cao Pi murmurs, 'the affair of Shun and Yu.'",
+    descriptionZh:
+      "漢獻帝禪位於魏王曹丕。曹丕三讓而後受之,登壇告天,國號大魏,改元黃初。四百年漢祚,至此而終。曹丕顧謂左右曰:「舜禹之事,吾知之矣。」魏承漢統,天命一新。",
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'cao-pi', delta: 12 },
+      { kind: 'flag', key: 'han-abdicated' },
+    ],
+  },
+  {
+    id: 'evt-liu-bei-hanzhong-king',
+    name: { en: 'King of Hanzhong, and the Five Tiger Generals', zh: '漢中王・五虎封號' },
+    yearMin: 219,
+    yearMax: 220,
+    requires: [{ kind: 'officer-active', officerId: 'liu-bei' }],
+    description:
+      "Liu Bei takes the title King of Hanzhong upon an altar at Mianyang, and names Guan Yu, Zhang Fei, Zhao Yun, Ma Chao and Huang Zhong his Five Tiger Generals. Hearing he ranks beside Huang Zhong, Guan Yu bristles and refuses the seal — until Fei Shi recalls him to the greater cause. The house of Shu is at its zenith.",
+    descriptionZh:
+      "劉備進位漢中王,築壇於沔陽,封關羽、張飛、趙雲、馬超、黃忠為五虎上將。關羽初聞與老將黃忠同列,忿而不受印;賴費詩曉以大義,方拜綬。西蜀氣象,於此為盛。",
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'liu-bei', delta: 8 },
+      { kind: 'officer-loyalty', officerId: 'guan-yu', delta: 5 },
+      { kind: 'officer-loyalty', officerId: 'zhang-fei', delta: 5 },
+      { kind: 'officer-loyalty', officerId: 'zhao-yun', delta: 5 },
+      { kind: 'officer-loyalty', officerId: 'ma-chao', delta: 5 },
+      { kind: 'officer-loyalty', officerId: 'huang-zhong', delta: 5 },
+      { kind: 'flag', key: 'hanzhong-king' },
+    ],
+  },
+  {
+    id: 'evt-sun-quan-emperor',
+    name: { en: 'Sun Quan Proclaims the State of Wu', zh: '孫權稱帝建吳' },
+    yearMin: 229,
+    yearMax: 229,
+    requires: [{ kind: 'officer-active', officerId: 'sun-quan' }],
+    description:
+      "Sun Quan ascends the imperial throne at Wuchang, proclaims the state of Wu, and names the era Huanglong. He honours his father and brother posthumously and grants a general amnesty. Now Wei, Shu and Wu each have their emperor — the tripartite realm is fixed at last.",
+    descriptionZh:
+      "孫權即皇帝位於武昌,國號吳,改元黃龍。追尊父兄,大赦天下。至此魏、蜀、吳三帝並立,天下三分之勢,終成定局。江東基業,五十年而成帝統。",
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'sun-quan', delta: 10 },
+      { kind: 'flag', key: 'wu-founded' },
+    ],
   },
   {
     id: 'evt-huarong-path',
