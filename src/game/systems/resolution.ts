@@ -2064,7 +2064,11 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
               // ② 夜襲劫營 (§5.17) — the garrison cannot win a battle, so it does not
       // try to. A bold or clever officer takes a few hundred men over the ditch
       // in the dark to burn what the siege is made of. 甘寧百騎劫魏營.
-      {
+      // 一季一劫 — a per-season beat, not a per-旬 one: endSeason runs nine times
+      // a season, and an ungated raid (and its popup) would fire up to nine
+      // times over. 突圍 above is deliberately per-旬 (fast siege drain); this
+      // is not. [[civic-systems-2026-07-20]] 每旬 trap.
+      if (input.seasonBoundary ?? true) {
         const wallOfficers = Object.values(officers).filter(
           (o) => o.locationCityId === cityAtStart.id && o.forceId === cityAtStart.ownerForceId
             && (o.status === 'idle' || o.status === 'active'));
