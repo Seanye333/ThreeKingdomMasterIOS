@@ -10,6 +10,47 @@ export interface OfficerLines { taunt: Array<{ zh: string; en: string }>; ult: A
 const L = (zh: string, en: string) => ({ zh, en });
 
 export const OFFICER_DUEL_LINES: Record<string, OfficerLines> = {
+  // ─── 2026-07 補:侦查發現的未覆蓋名將,此前回落到 battleLines.ts 的 persona 通用詞 ───
+  'yan-liang': {
+    taunt: [L('河北顏良在此,誰敢一戰?', 'Yan Liang of Hebei stands here — who dares fight?'), L('連斬曹將,爾等何足道哉!', 'I have felled Cao\'s generals — you are beneath notice!')],
+    ult: [L('大刀一舉,取爾首級!', 'My great blade rises — your head is forfeit!'), L('河北上將,名不虛傳!', 'A champion of Hebei — the name is well earned!')],
+  },
+  'wen-chou': {
+    taunt: [L('河北文醜,誰與爭鋒?', 'Wen Chou of Hebei — who contends with me?'), L('顏良之仇,今日必報!', "Today I avenge Yan Liang!")],
+    ult: [L('槍出如龍,爾命休矣!', 'My spear strikes like a dragon — your life ends!'), L('延津渡口,血染徵袍!', 'At Yanjin ford my war-robe runs red!')],
+  },
+  'hua-xiong': {
+    taunt: [L('都督華雄在此,鼠輩退避!', 'Commander Hua Xiong is here — scatter, vermin!'), L('十八路諸侯,無人敢當!', 'Eighteen lords, and not one dares face me!')],
+    ult: [L('關西刀法,一刀兩斷!', 'The blade-art of Guanxi cleaves you in two!'), L('汜水關前,人頭滾滾!', 'At Sishui Pass the heads roll!')],
+  },
+  'ji-ling': {
+    taunt: [L('淮南上將紀靈,取爾狗命!', 'Ji Ling of Huainan comes for your worthless life!'), L('三尖兩刃,誰人能擋?', 'My three-pointed blade — who can withstand it?')],
+    ult: [L('五十斤大刀,力劈華山!', 'My fifty-catty blade could split a mountain!'), L('關雲長又如何,某亦不懼!', 'Even Guan Yu — I do not fear him!')],
+  },
+  'zhang-ren': {
+    taunt: [L('蜀中張任,豈容爾等犯境!', 'Zhang Ren of Shu — you dare cross our borders?'), L('落鳳坡下,亂箭已備!', 'At Fallen Phoenix Slope, the arrows are already nocked!')],
+    ult: [L('一弩穿心,萬箭齊發!', 'One bolt through the heart — loose every arrow!'), L('忠臣不事二主,死戰到底!', 'A loyal minister serves one lord only — I fight to the death!')],
+  },
+  'wei-yan': {
+    taunt: [L('大將魏延在此,誰敢來戰?', 'General Wei Yan stands here — who dares come?'), L('子午奇謀,惜乎不用!', 'My Ziwu Valley gambit — a pity it was never used!')],
+    ult: [L('反骨又如何,看我大刀!', 'Traitor\'s bones or not — face my blade!'), L('長沙魏延,取上將首級!', 'Wei Yan of Changsha takes a champion\'s head!')],
+  },
+  'guan-xing': {
+    taunt: [L('關興在此,為父報仇!', 'Guan Xing is here — to avenge my father!'), L('虎父無犬子,看我手段!', 'No tiger sires a dog — witness my skill!')],
+    ult: [L('青龍刀在,父仇必報!', 'The Green Dragon blade endures — my father is avenged!'), L('夷陵陣前,斬將奪旗!', 'Before Yiling I cut down foes and seize their banners!')],
+  },
+  'ding-feng': {
+    taunt: [L('江東丁奉,老當益壯!', 'Ding Feng of the south — old, and fiercer for it!'), L('雪中短兵,取爾性命!', 'Short blades in the snow — your life is mine!')],
+    ult: [L('奮短兵,破強敵!', 'Short steel unleashed — the strong foe falls!'), L('三代元勳,豈是虛名?', 'Elder of three reigns — no empty title!')],
+  },
+  'liao-hua': {
+    taunt: [L('廖化雖老,尚能提刀!', 'Old as I am, I can still lift my blade!'), L('蜀中先鋒,豈容小覷!', 'The vanguard of Shu — do not make light of me!')],
+    ult: [L('一生征戰,老而彌堅!', 'A lifetime at war — the harder for the years!'), L('隨丞相北伐,死而後已!', 'I marched north with the Chancellor — until my last breath!')],
+  },
+  'wang-shuang': {
+    taunt: [L('魏將王雙,誰敢攖鋒?', 'Wang Shuang of Wei — who braves my edge?'), L('流星錘下,無人生還!', 'None survive my meteor hammer!')],
+    ult: [L('大刀流星,連斬蜀將!', 'Blade and hammer — I fell the men of Shu one by one!'), L('陳倉道上,取爾首級!', 'On the Chencang road, your head is mine!')],
+  },
   'lu-bu': {
     taunt: [L('天下英雄,誰敢與我一戰?', 'Heroes of the realm — who dares face me?'), L('量你也不過如此!', 'You are nothing before me!')],
     ult: [L('方天畫戟,取你首級!', 'My Sky Piercer takes your head!'), L('人中呂布,馬中赤兔!', 'Lü Bu among men, Red Hare among horses!')],
