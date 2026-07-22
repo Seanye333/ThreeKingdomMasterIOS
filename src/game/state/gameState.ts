@@ -44,6 +44,7 @@ import { STARTER_RECIPE_IDS } from '../systems/forging';
 import { buildInitialPorts } from '../data/ports';
 import { buildInitialForts } from '../data/forts';
 import { distinctForceColors } from '../data/forceColors';
+import { rulerProfileFor } from '../data/rulerProfiles';
 import { buildInitialSites } from '../data/sites';
 import { FAMILY_LINEAGE } from '../data/familyLineage';
 import { deriveInitialClanStandings } from '../systems/clans';
@@ -1315,6 +1316,10 @@ export function loadScenario(
     forces: indexById(
       distinctForceColors(
         scenario.forces.map((f) => ({
+          // 君主本性譜 back-fill: personality/statecraft/門第政策 default from
+          // the ruler's profile, but any value the scenario set explicitly wins
+          // (spread order: profile first, force second).
+          ...rulerProfileFor(f.rulerOfficerId),
           ...f,
           isPlayer: f.id === playerForceId,
           // Apply the player's chosen starting capital, if any.
