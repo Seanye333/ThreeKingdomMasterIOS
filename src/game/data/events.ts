@@ -1606,6 +1606,86 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       { kind: 'flag', key: 'wu-founded' },
     ],
   },
+  // ─────────── 經典橋段補遺(2026-07 第四批):討董與河北 ───────────
+  {
+    id: 'evt-coalition-formed',
+    name: { en: 'The Coalition Against Dong Zhuo', zh: '十八路諸侯討董' },
+    yearMin: 190,
+    yearMax: 190,
+    requires: [
+      { kind: 'officer-active', officerId: 'dong-zhuo' },
+      { kind: 'officer-active', officerId: 'yuan-shao' },
+      { kind: 'flag-unset', key: 'coalition-dissolved' },
+    ],
+    description:
+      "Cao Cao forges an edict and speeds it to every march. Eighteen lords of the east answer, gathering at Suanzao to smear their lips with blood and swear to destroy Dong Zhuo. Yuan Shao is raised to alliance-chief and given the axe of command. Banners blot out the fields — yet each lord harbours his own designs, and the seed of the coalition's collapse is sown on the very day of the oath.",
+    descriptionZh:
+      "曹操矯詔,馳報各鎮。關東諸侯十八路響應,會盟於酸棗,歃血為誓,共討董卓。眾推袁紹為盟主,拜將授鉞。旌旗蔽野,聲勢震天 —— 然各懷異心,離散之機,已伏於會盟之日。",
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'dong-zhuo', delta: -4 },
+      { kind: 'flag', key: 'coalition-formed' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-sanying-lubu',
+    name: { en: 'Three Heroes Battle Lü Bu', zh: '三英戰呂布' },
+    yearMin: 190,
+    yearMax: 191,
+    requires: [
+      { kind: 'officer-active', officerId: 'lu-bu' },
+      { kind: 'officer-active', officerId: 'liu-bei' },
+      { kind: 'officer-active', officerId: 'guan-yu' },
+    ],
+    description:
+      "Before Hulao Pass, Lü Bu cuts down champion after champion of the coalition; none can stand against him. Zhang Fei charges with his spear — fifty bouts, no decision; Guan Yu joins with his blade — thirty more; then Liu Bei draws his twin swords into the fray. The three ring the Marquis of Wen, who can no longer parry, and breaks for the pass. From that day the realm knows the valour of the Peach Garden.",
+    descriptionZh:
+      "虎牢關前,呂布連斬諸侯上將,無人能敵。張飛挺矛直取,鬥五十合不分;關羽舞刀夾攻,又三十合;劉備掣雙股劍助戰。三英環戰溫侯,呂布遮攔不住,望關而走。天下由是知桃園之勇。",
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'dong-zhuo', delta: -3 },
+      { kind: 'officer-loyalty', officerId: 'zhang-fei', delta: 5 },
+      { kind: 'flag', key: 'sanying-lubu' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-jieqiao-battle',
+    name: { en: 'The Battle of Jieqiao', zh: '界橋之戰' },
+    yearMin: 191,
+    yearMax: 193,
+    requires: [
+      { kind: 'officer-active', officerId: 'gongsun-zan' },
+      { kind: 'officer-active', officerId: 'yuan-shao' },
+    ],
+    description:
+      "Gongsun Zan's White Horse Volunteers range unchecked across Hebei until they meet Yuan Shao at Jieqiao. Yuan's general Ju Yi hides eight hundred strong crossbows beneath shields; when the white riders close, a thousand bolts loose at once, the Volunteers shatter, and their commander Yan Gang falls. Here a young Zhao Yun still rides under Gongsun — but the north, from this day, passes to Yuan.",
+    descriptionZh:
+      "公孫瓚以白馬義從縱橫河北,與袁紹戰於界橋。紹將麴義以八百強弩伏於盾下,待白馬軍近,千弩俱發,義從大潰,斬其大將嚴綱。趙雲於此陣中猶隨公孫;而河北之勢,自此歸於袁氏。",
+    effects: [
+      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'gongsun-zan', multiplier: 0.9 },
+      { kind: 'officer-loyalty', officerId: 'ju-yi', delta: 6 },
+      { kind: 'flag', key: 'jieqiao-battle' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-sunjian-death',
+    name: { en: 'Sun Jian Falls at Mount Xian', zh: '孫堅跨江隕峴山' },
+    yearMin: 191,
+    yearMax: 193,
+    requires: [{ kind: 'officer-active', officerId: 'sun-jian' }],
+    description:
+      "Sun Jian crosses the river to strike Liu Biao and besieges Xiangyang. Liu Biao's general Huang Zu is routed and flees; Sun Jian, pressing the pursuit, rides alone into the hills of Mount Xian. Huang Zu's men lie hidden in the bamboo, and a hail of arrows splits his skull. The lord of the Southland dies at thirty-seven, undone by his own daring. His eldest son Sun Ce bears the coffin home, and swears to avenge his father.",
+    descriptionZh:
+      "孫堅跨江擊劉表,圍襄陽。表將黃祖敗走,堅乘勝追之,單馬入峴山。祖伏軍於竹林間,亂箭齊發,堅腦裂而亡,年三十七。江東之主,竟殞於一時之勇。長子孫策扶柩歸葬,誓報父仇 —— 江東基業,自此由孫策肇之。",
+    effects: [
+      { kind: 'officer-status', officerId: 'sun-jian', status: 'dead' },
+      { kind: 'officer-loyalty', officerId: 'sun-ce', delta: 10 },
+      { kind: 'flag', key: 'sunjian-death' },
+    ],
+    mood: 'somber',
+  },
+
   // ─────────── 經典橋段補遺(2026-07 第三批):開局與奸雄 ───────────
   {
     id: 'evt-caocao-blade',
