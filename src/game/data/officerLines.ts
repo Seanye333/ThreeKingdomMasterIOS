@@ -51,6 +51,43 @@ export const OFFICER_DUEL_LINES: Record<string, OfficerLines> = {
     taunt: [L('魏將王雙,誰敢攖鋒?', 'Wang Shuang of Wei — who braves my edge?'), L('流星錘下,無人生還!', 'None survive my meteor hammer!')],
     ult: [L('大刀流星,連斬蜀將!', 'Blade and hammer — I fell the men of Shu one by one!'), L('陳倉道上,取爾首級!', 'On the Chencang road, your head is mine!')],
   },
+  // ─── 2026-07 補·二批:三國二線名將 ───
+  'li-dian': {
+    taunt: [L('山陽李曼成在此!', 'Li Mancheng of Shanyang stands here!'), L('國事為重,豈計私怨!', 'The state comes first — I do not reckon private grudges!')],
+    ult: [L('看我一擊!', 'Take this!'), L('逍遙津畔,共破孫權!', 'At Xiaoyao Ford, together we broke Sun Quan!')],
+  },
+  'yu-jin': {
+    taunt: [L('五子良將于文則!', 'Yu Wenze, one of the Five Elite Generals!'), L('軍法如山,休得放肆!', 'Military law is a mountain — mind yourself!')],
+    ult: [L('看我一戟!', 'Feel my halberd!'), L('節鉞在手,令行禁止!', 'The axe of command in hand — my orders are absolute!')],
+  },
+  'cao-ren': {
+    taunt: [L('大將軍曹子孝在此!', 'The Grand General Cao Zixiao stands here!'), L('天人將軍,豈懼汝乎!', 'The general of Heaven-sent might — should I fear you?')],
+    ult: [L('看我死守!', 'Behold how I hold to the death!'), L('樊城不破,誓不退兵!', 'Until Fancheng falls, I swear I will not withdraw!')],
+  },
+  'cao-hong': {
+    taunt: [L('曹洪在此,誰敢近前!', 'Cao Hong is here — who dares come near!'), L('天下可無洪,不可無公!', 'The world can do without Hong, but not without my lord!')],
+    ult: [L('看我一刀!', 'Take my blade!'), L('拼命護主,殺!', 'My life for my lord — kill!')],
+  },
+  'pan-zhang': {
+    taunt: [L('東吳潘璋在此!', 'Pan Zhang of Wu stands here!'), L('擒殺關公,某之功也!', 'The taking of Lord Guan — that was my doing!')],
+    ult: [L('青龍刀在我手!', 'The Green Dragon Blade is mine now!'), L('看我一擊!', 'Take this!')],
+  },
+  'guan-ping': {
+    taunt: [L('關平在此,護我父帥!', 'Guan Ping stands here, guarding my father!'), L('休傷我父!', 'Lay not a hand on my father!')],
+    ult: [L('看我一刀!', 'Take my blade!'), L('父子同心,其利斷金!', 'Father and son of one heart — sharp enough to cut through gold!')],
+  },
+  'wang-ping': {
+    taunt: [L('無當飛軍王子均!', 'Wang Zijun of the Wudang Flying Corps!'), L('當道下寨,以逸待勞!', 'Camp astride the road — rested, I await the weary!')],
+    ult: [L('看我一擊!', 'Take this!'), L('興勢拒曹爽,固若金湯!', 'At Xingshi I held off Cao Shuang — firm as iron and boiling moat!')],
+  },
+  'jiang-qin': {
+    taunt: [L('江東蔣欽在此!', 'Jiang Qin of Jiangdong stands here!'), L('看我水戰之能!', 'Behold my mastery of the water!')],
+    ult: [L('一槍挑落!', 'One thrust to unhorse you!'), L('江表虎臣,非虛得也!', 'A tiger-vassal of the Yangtze — the name is no idle one!')],
+  },
+  'zhu-ran': {
+    taunt: [L('東吳朱然在此!', 'Zhu Ran of Wu stands here!'), L('曾斷雲長歸路!', 'It was I who cut off Lord Guan\'s road home!')],
+    ult: [L('看我一擊!', 'Take this!'), L('江陵城下,魏軍膽寒!', 'Beneath the walls of Jiangling, the Wei host quails!')],
+  },
   'lu-bu': {
     taunt: [L('天下英雄,誰敢與我一戰?', 'Heroes of the realm — who dares face me?'), L('量你也不過如此!', 'You are nothing before me!')],
     ult: [L('方天畫戟,取你首級!', 'My Sky Piercer takes your head!'), L('人中呂布,馬中赤兔!', 'Lü Bu among men, Red Hare among horses!')],
