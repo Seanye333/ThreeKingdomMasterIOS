@@ -678,6 +678,107 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
   },
 
+  // ─────────── 後三國補遺(2026-07):234–262 姜維北伐與淮南三叛,原本 46 年僅 ~15 事件 ───────────
+  {
+    id: 'evt-xingshi-battle',
+    name: { en: 'Wang Ping Holds the Xingshi Passes', zh: '興勢之戰' },
+    yearMin: 244,
+    yearMax: 244,
+    requires: [{ kind: 'officer-active', officerId: 'wang-ping' }],
+    description:
+      "Cao Shuang leads over a hundred thousand men against Shu; Wang Ping holds the heights at Xingshi and will not be drawn. The Wei supply lines fail, oxen and horses die by the road, and Guanzhong is drained. Cao Shuang retreats in disarray, and Shu's northern frontier is preserved.",
+    descriptionZh:
+      "曹爽率十餘萬眾伐蜀,王平拒守興勢,據險固守,堅壁不出。魏軍糧道艱難,牛馬多死於谷中,關中為之虛耗。爽狼狽引還,蜀漢北疆賴以保全,而曹爽威望大損,埋下高平陵之禍。",
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'liu-shan', delta: 4 },
+      { kind: 'officer-loyalty', officerId: 'wang-ping', delta: 8 },
+      { kind: 'flag', key: 'xingshi-battle' },
+    ],
+  },
+  {
+    id: 'evt-feiyi-assassinated',
+    name: { en: 'Fei Yi Struck Down at the New Year Feast', zh: '費禕遇刺' },
+    yearMin: 253,
+    yearMax: 253,
+    season: 'spring',
+    requires: [{ kind: 'officer-active', officerId: 'fei-yi' }],
+    description:
+      "At the New Year's great assembly, the Wei defector Guo Xun, having feigned surrender, stabs the Grand General Fei Yi dead at the banquet. The pillar of Shu is felled at a stroke; thereafter Jiang Wei directs affairs, and the northern campaigns lose all restraint.",
+    descriptionZh:
+      "歲首大會,魏降人郭循詐降,於席間刺殺大將軍費禕。蜀漢柱石驟折於杯酒之間。自此姜維主政,北伐再無節制之人,國力益耗。溫和守成之政,隨費禕之血而終。",
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'liu-shan', delta: -5 },
+      { kind: 'flag', key: 'feiyi-assassinated' },
+    ],
+  },
+  {
+    id: 'evt-taoxi-victory',
+    name: { en: 'Jiang Wei Triumphs at Taoxi', zh: '洮西大捷' },
+    yearMin: 255,
+    yearMax: 255,
+    requires: [{ kind: 'officer-active', officerId: 'jiang-wei' }],
+    description:
+      "Jiang Wei shatters Wang Jing's Wei army west of the Tao River; the dead number in the tens of thousands and the survivors flee to Didao. It is the high-water mark of the later campaigns — the closest Shu comes, after Zhuge Liang, to breaking into Yong province.",
+    descriptionZh:
+      "姜維大破魏雍州刺史王經於洮西,魏軍死者數萬,積屍蔽野,殘部退保狄道。此乃諸葛亮之後蜀漢北伐最盛之一役,幾入雍涼。姜維威名一時無兩,而蜀之元氣,亦於此連年征伐中暗耗。",
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'liu-shan', delta: 5 },
+      { kind: 'officer-loyalty', officerId: 'jiang-wei', delta: 8 },
+      { kind: 'flag', key: 'taoxi-victory' },
+    ],
+  },
+  {
+    id: 'evt-duangu-defeat',
+    name: { en: 'Rout at Duangu', zh: '段谷之敗' },
+    yearMin: 256,
+    yearMax: 256,
+    requires: [
+      { kind: 'officer-active', officerId: 'jiang-wei' },
+      { kind: 'officer-active', officerId: 'deng-ai' },
+    ],
+    description:
+      "The year after Taoxi, Jiang Wei meets Deng Ai at Duangu and is broken; his soldiers scatter and the losses are grievous. He memorialises to demote himself, as Zhuge Liang once did after Jieting. Year upon year of war has worn Shu thin, and the people begin to murmur.",
+    descriptionZh:
+      "洮西之捷次年,姜維與鄧艾戰於段谷,蜀軍大敗,士卒星散,死傷甚眾。維上疏自貶為後將軍,行大將軍事,一如諸葛亮街亭之後。連年征伐,國力漸疲,蜀人始怨,鄧艾之名亦自此而顯。",
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'liu-shan', delta: -4 },
+      { kind: 'officer-loyalty', officerId: 'jiang-wei', delta: -6 },
+      { kind: 'flag', key: 'duangu-defeat' },
+    ],
+  },
+  {
+    id: 'evt-zhuge-dan-shouchun',
+    name: { en: 'Zhuge Dan Rises at Shouchun', zh: '諸葛誕壽春之叛' },
+    yearMin: 257,
+    yearMax: 258,
+    requires: [{ kind: 'officer-active', officerId: 'zhuge-dan' }],
+    description:
+      "Zhuge Dan holds Shouchun in revolt against Sima Zhao, leaguing with Wu, over a hundred thousand strong. Sima Zhao, the puppet emperor in tow, encircles the city and waits. When it falls and Zhuge Dan dies, the last of the three Huainan rebellions is spent — and the power of the Sima can no longer be checked.",
+    descriptionZh:
+      "諸葛誕據壽春反司馬昭,連結東吳,眾十餘萬。司馬昭挾天子親征,圍而不攻,曠日持久。城破,誕死,部曲數百人皆不降而戮,呼曰「為諸葛公死,不恨!」淮南三叛至此皆平,司馬氏之勢,遂不可制。",
+    effects: [
+      { kind: 'city-loyalty', cityId: 'shouchun', delta: -12 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'liu-shan', delta: 3 },
+      { kind: 'flag', key: 'zhuge-dan-revolt' },
+    ],
+  },
+  {
+    id: 'evt-tazhong-farming',
+    name: { en: 'Jiang Wei Retreats to Farm at Tazhong', zh: '沓中屯田避禍' },
+    yearMin: 262,
+    yearMax: 262,
+    requires: [{ kind: 'officer-active', officerId: 'jiang-wei' }],
+    description:
+      "His campaigns fruitless and the eunuch Huang Hao scheming to unseat him, Jiang Wei dares not return to Chengdu. He begs leave to farm soldiers at Tazhong, keeping his army far from the capital. Lord and general are estranged, the frontier held while the heartland lies empty — the omens of a falling state.",
+    descriptionZh:
+      "姜維北伐無功,宦官黃皓弄權,陰欲廢維。維懼禍,求屯田沓中以避之,擁兵在外,不敢還成都。蜀漢君臣離心,將帥屯於邊陲,國都空虛,亡國之兆,至此已昭然。次年,鄧艾鍾會兩路伐蜀。",
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'liu-shan', delta: -3 },
+      { kind: 'officer-loyalty', officerId: 'jiang-wei', delta: -4 },
+      { kind: 'flag', key: 'tazhong-farming' },
+    ],
+  },
+
   // ─────────── Special officer events ───────────────────────────────
   {
     id: 'evt-diaochan-intrigue',
