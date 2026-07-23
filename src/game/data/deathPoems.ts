@@ -275,6 +275,48 @@ export const DEATH_POEMS: Record<string, DeathPoem> = {
     zh: '才高一世，謀逆成都——姜維之計未成，鍾會之首已落，可笑可歎！',
     en: "Talent above my age, and treason at Chengdu — Jiang Wei's scheme unfinished, Zhong Hui's head already fallen; how laughable, how lamentable.",
   },
+
+  // ─── 歷代二線名將絕命詩·補(2026-07) ───
+  'hist-qu-yuan': {
+    zh: '寧赴湘流，葬於江魚之腹中，安能以皓皓之白，蒙世俗之塵埃乎！',
+    en: 'Better to leap into the Xiang and be buried in the bellies of its fish, than to let my spotless white be sullied by the dust of the vulgar world!',
+  },
+  'hist-shang-yang': {
+    zh: '嗟乎，為法之敝，一至此哉！',
+    en: 'Alas — that the very laws I made should undo me, that it should come to this!',
+  },
+  'hist-han-fei': {
+    zh: '智術之士，終不見容於當世——《說難》《孤憤》，竟以身殉。',
+    en: 'The man of wisdom and method finds, in the end, no place in his own age — I wrote "The Difficulties of Persuasion" and "Solitary Indignation," and now die by them.',
+  },
+  'hist-ran-min': {
+    zh: '天下大亂，爾曹夷狄禽獸之類猶稱帝，何況我中土英雄乎！',
+    en: 'The realm is in chaos — even beasts and barbarians like you dare style yourselves emperor; how much more a hero of the Central Land!',
+  },
+  'hist-fang-xiaoru': {
+    zh: '死即死耳，詔不可草——滅我十族，又何懼哉！',
+    en: 'If I must die, then I die — but the edict I will not draft. Exterminate my ten kindreds, then; what is that to me!',
+  },
+  'hist-shi-kefa': {
+    zh: '我史督師也！城存與存，城亡與亡，頭可斷，身不可屈！',
+    en: 'I am Grand Marshal Shi! While the city stands I stand, when it falls I fall — my head you may take, but my body will not bend!',
+  },
+  'hist-lu-xiufu': {
+    zh: '國事至此，陛下當為國死——臣不敢負陛下,亦不敢負大宋。',
+    en: 'The affairs of state have come to this; Your Majesty must die for the realm — I dare not fail you, nor dare I fail the great Song. (bearing the boy emperor into the sea at Yashan)',
+  },
+  'hist-zheng-chenggong': {
+    zh: '吾有何面目見先帝於地下也！——遂抓面而逝。',
+    en: 'With what face can I meet the late Emperor below! — and clawing at his own face, he died.',
+  },
+  'hist-yan-zhenqing': {
+    zh: '吾年且八十，官太師，守吾兄弟之節，死而後已，豈受汝輩誘脅耶！',
+    en: 'I am near eighty, and Grand Preceptor; I keep the honour of my brothers to the death — do you think I would be lured or cowed by the likes of you!',
+  },
+  'hist-zhang-xun': {
+    zh: '臣雖為鬼，誓與賊為厲以殺賊——睢陽雖陷，吾志不屈！',
+    en: 'Though I become a ghost, I swear to haunt and slay the rebels still — Suiyang may fall, but my will does not bend!',
+  },
 };
 
 export function getDeathPoem(officerId: string): DeathPoem | null {
