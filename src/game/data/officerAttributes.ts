@@ -458,9 +458,26 @@ export type TacticId =
   // 罕見名場面 (10)
   | 'sun-ce-mirror' | 'cao-rui-vase' | 'liu-shan-stupid' | 'da-qiao-marriage'
   | 'dong-zhuo-fat' | 'lu-zhi-master' | 'cai-yong-lute' | 'mi-heng-drum'
-  | 'zhang-jiao-yellow' | 'zhang-lu-rice';
+  | 'zhang-jiao-yellow' | 'zhang-lu-rice'
+  // 二線名將專屬戰法補遺 (12,2026-07)
+  | 'yanliang-blade' | 'wenchou-spear' | 'zhangren-net' | 'guanxing-avenge'
+  | 'zhangbao-valor' | 'liaohua-vanguard' | 'wangshuang-meteor' | 'xuhuang-march'
+  | 'dingfeng-snow' | 'lingtong-guard' | 'caoren-hold' | 'jiling-triblade';
 
 export const TACTIC_DEFS: Record<TacticId, { zh: string; en: string }> = {
+  // 二線名將專屬戰法補遺 (2026-07)
+  'yanliang-blade':   { zh: '顏良快刀', en: "Yan Liang's Swift Blade" },
+  'wenchou-spear':    { zh: '文醜追鋒', en: "Wen Chou's Pursuit" },
+  'zhangren-net':     { zh: '落鳳伏弩', en: "Zhang Ren's Ambush Bolts" },
+  'guanxing-avenge':  { zh: '興復父讎', en: "Guan Xing's Vengeance" },
+  'zhangbao-valor':   { zh: '張苞驍銳', en: "Zhang Bao's Valor" },
+  'liaohua-vanguard': { zh: '蜀中先鋒', en: 'Liao Hua the Vanguard' },
+  'wangshuang-meteor':{ zh: '流星追擊', en: "Wang Shuang's Meteor" },
+  'xuhuang-march':    { zh: '長驅直入', en: "Xu Huang's Relentless March" },
+  'dingfeng-snow':    { zh: '雪中短兵', en: "Ding Feng's Snow Assault" },
+  'lingtong-guard':   { zh: '凌統護主', en: "Ling Tong's Guard" },
+  'caoren-hold':      { zh: '曹仁死守', en: "Cao Ren's Steadfast Hold" },
+  'jiling-triblade':  { zh: '三尖兩刃', en: "Ji Ling's Three-Point Blade" },
   charge:        { zh: '突擊', en: 'Charge' },
   volley:        { zh: '斉射', en: 'Volley' },
   'fire-attack': { zh: '火計', en: 'Fire' },
@@ -975,12 +992,12 @@ export const OFFICER_TACTICS: Record<string, TacticId[]> = {
   'ma-su':          ['attack-heart', 'ruse', 'attack-plans'],
   'liu-shan':       ['liu-shan-stupid'],
   'guan-ping':      ['charge', 'volley', 'rouse'],
-  'guan-xing':      ['charge', 'volley'],
-  'zhang-bao':      ['charge', 'rouse'],
+  'guan-xing':      ['guanxing-avenge', 'charge', 'volley'],
+  'zhang-bao':      ['zhangbao-valor', 'charge', 'rouse'],
   'lady-huang':     ['huang-yueying', 'catapult', 'zhuge-bow'],
   'lady-sun':       ['sun-shangxiang', 'charge', 'volley'],
   'ma-liang':       ['attack-plans', 'protect-people', 'court-debate'],
-  'liao-hua':       ['charge', 'rouse', 'volley'],
+  'liao-hua':       ['liaohua-vanguard', 'charge', 'rouse', 'volley'],
   'jiang-wan':      ['attack-plans', 'court-debate', 'seek-talent'],
   'fei-yi':         ['court-debate', 'tongue-war', 'attack-plans'],
   'dong-yun':       ['court-debate', 'attack-plans'],
@@ -1003,14 +1020,14 @@ export const OFFICER_TACTICS: Record<string, TacticId[]> = {
   'zhang-liao':     ['zhang-liao-xiaoyao', 'charge', 'ambush', 'rouse', 'volley'],
   'dian-wei':       ['dianwei-double-axe', 'twin-axe', 'charge', 'rouse'],
   'xu-chu':         ['xuchu-iron-fist', 'iron-sand-palm', 'charge', 'rouse'],
-  'cao-ren':        ['rouse', 'volley', 'charge', 'iron-wall'],
+  'cao-ren':        ['caoren-hold', 'rouse', 'volley', 'charge', 'iron-wall'],
   'cao-hong':       ['charge', 'rouse'],
   'cao-zhang':      ['charge', 'rouse', 'twin-axe'],
   'cao-pi':         ['seek-talent', 'court-debate', 'faction-manipulate'],
   'cao-zhi':        ['cao-zhi-poem', 'court-debate'],
   'cao-rui':        ['cao-rui-vase', 'court-debate', 'faction-manipulate'],
   'hao-zhao':       ['volley', 'catapult', 'iron-wall', 'last-stand'],
-  'xu-huang':       ['charge', 'ambush', 'attack-plans'],
+  'xu-huang':       ['xuhuang-march', 'charge', 'ambush', 'attack-plans'],
   'zhang-he':       ['charge', 'ambush', 'volley'],
   'pang-de':        ['charge', 'volley', 'self-injury'],
   'yu-jin':         ['charge', 'rouse'],
@@ -1051,7 +1068,7 @@ export const OFFICER_TACTICS: Record<string, TacticId[]> = {
   'huang-gai':      ['self-injury', 'fire-attack', 'charge', 'rouse'],
   'cheng-pu':       ['charge', 'rouse', 'attack-plans'],
   'han-dang':       ['charge', 'volley'],
-  'ling-tong':      ['charge', 'rouse'],
+  'ling-tong':      ['lingtong-guard', 'charge', 'rouse'],
   'zhou-tai':       ['charge', 'last-stand', 'iron-shirt'],
   'da-qiao':        ['da-qiao-marriage', 'court-debate'],
   'xiao-qiao':      ['da-qiao-marriage'],
@@ -1062,7 +1079,7 @@ export const OFFICER_TACTICS: Record<string, TacticId[]> = {
   'taishi-ci':      ['taishi-ci-vs-sunce', 'charge', 'volley', 'rouse'],
   'jiang-qin':      ['charge', 'volley'],
   'zhu-ran':        ['charge', 'ambush', 'rouse'],
-  'ding-feng':      ['charge', 'volley', 'iron-shirt'],
+  'ding-feng':      ['dingfeng-snow', 'charge', 'volley', 'iron-shirt'],
   'pan-zhang':      ['charge', 'ambush'],
   'zhu-zhi':        ['charge', 'rouse'],
   'zhu-huan':       ['charge', 'attack-plans'],
@@ -1092,8 +1109,8 @@ export const OFFICER_TACTICS: Record<string, TacticId[]> = {
   'tian-feng':      ['ruse', 'pitfall', 'attack-plans'],
   'ju-shou':        ['ruse', 'rouse', 'attack-plans'],
   'shen-pei':       ['volley', 'catapult', 'iron-wall'],
-  'wen-chou':       ['charge', 'twin-spear'],
-  'yan-liang':      ['charge', 'long-halberd'],
+  'wen-chou':       ['wenchou-spear', 'charge', 'twin-spear'],
+  'yan-liang':      ['yanliang-blade', 'charge', 'long-halberd'],
   'gao-shun':       ['charge', 'iron-wall', 'last-stand'],
   'chen-gong':      ['ruse', 'pitfall', 'attack-plans'],
   // ─── Yuan clan & their advisors ──
@@ -1106,7 +1123,8 @@ export const OFFICER_TACTICS: Record<string, TacticId[]> = {
   'ma-teng':        ['charge', 'rouse', 'thousand-ride'],
   'ma-dai':         ['charge', 'ambush'],
   // ─── Early warlords (pre-coalition) ──
-  'ji-ling':        ['charge', 'long-halberd'],
+  'ji-ling':        ['jiling-triblade', 'charge', 'long-halberd'],
+  'wang-shuang':    ['wangshuang-meteor', 'charge', 'rouse'],
   'li-ru':          ['ruse', 'attack-plans', 'pitfall'],
   'liu-yan':        ['protect-people', 'court-debate'],
   'tao-qian':       ['protect-people', 'court-debate'],
@@ -1124,7 +1142,7 @@ export const OFFICER_TACTICS: Record<string, TacticId[]> = {
   'wu-jing':        ['charge'],
   'zhou-fang':      ['ruse', 'pitfall', 'ambush'],      // 周魴 cut hair & defected
   // ─── Shu cont'd & Nanman ──
-  'zhang-ren':      ['volley', 'ambush', 'pitfall'],    // killed Pang Tong at Luofeng
+  'zhang-ren':      ['zhangren-net', 'volley', 'ambush', 'pitfall'],    // killed Pang Tong at Luofeng
   'yan-yan':        ['charge', 'iron-wall', 'last-stand'],
   'wu-yi':          ['charge', 'attack-plans'],
   'wang-ping':      ['charge', 'ambush', 'iron-wall'],
@@ -1311,6 +1329,20 @@ export function categoryOfTactic(id: string): TacticCategory {
  * These override the category default in tacticBonus().
  */
 export const TACTIC_SIGNATURE: Partial<Record<string, TacticBonus>> = {
+  // ── 二線名將專屬 (2026-07):讓共用通用戰法的名將上陣有自己的招 ──
+  'yanliang-blade':   { war: 12, leadership: 6, intelligence: 0, politics: 0, charisma: 0 },
+  'wenchou-spear':    { war: 11, leadership: 5, intelligence: 0, politics: 0, charisma: 0 },
+  'zhangren-net':     { war: 6,  leadership: 8, intelligence: 10, politics: 0, charisma: 0 },
+  'guanxing-avenge':  { war: 10, leadership: 6, intelligence: 0, politics: 0, charisma: 4 },
+  'zhangbao-valor':   { war: 10, leadership: 5, intelligence: 0, politics: 0, charisma: 0 },
+  'liaohua-vanguard': { war: 7,  leadership: 8, intelligence: 0, politics: 3, charisma: 0 },
+  'wangshuang-meteor':{ war: 11, leadership: 5, intelligence: 0, politics: 0, charisma: 0 },
+  'xuhuang-march':    { war: 8,  leadership: 12, intelligence: 0, politics: 0, charisma: 0 },
+  'dingfeng-snow':    { war: 10, leadership: 7, intelligence: 0, politics: 0, charisma: 0 },
+  'lingtong-guard':   { war: 9,  leadership: 8, intelligence: 0, politics: 0, charisma: 0 },
+  'caoren-hold':      { war: 6,  leadership: 12, intelligence: 0, politics: 3, charisma: 0 },
+  'jiling-triblade':  { war: 10, leadership: 5, intelligence: 0, politics: 0, charisma: 0 },
+
   // ── 諸葛 ──
   'seven-grab':      { war: 5, leadership: 10, intelligence: 8, politics: 5, charisma: 10 },
   'borrow-wind':     { war: 0, leadership: 5, intelligence: 20, politics: 0, charisma: 0 },

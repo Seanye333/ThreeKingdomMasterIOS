@@ -1610,7 +1610,7 @@
 | 交州安撫 Jiao Pacification | 撫夷 |
 | 遼東緩衝 Liaodong Buffer | 撫夷 |
 
-## 戰法 Tactics(589)
+## 戰法 Tactics(601)
 
 戰法依**類別**決定底層效果、射程與冷卻;**名戰(★)**享更強的射程/冷卻/威力。
 持有的戰法越多,全戰法威力越高(熟練度);集齊特定組合再觸發額外戰力加成。
@@ -1645,10 +1645,22 @@
 | 熟練 Adept | 4 – 7 | ×1.03 |
 | 初窺 Novice | 0 – 3 | ×1 |
 
-#### 全戰法一覽(589)
+#### 全戰法一覽(601)
 
 | 戰法 | 類別 | ★ | 底層戰法 | 射程 | 冷卻 |
 |---|---|---|---|---|---|
+| 顏良快刀 Yan Liang's Swift Blade | 近戰 | ★ | charge | 1 | 2 |
+| 文醜追鋒 Wen Chou's Pursuit | 近戰 | ★ | charge | 1 | 2 |
+| 落鳳伏弩 Zhang Ren's Ambush Bolts | 謀略 | ★ | rally | 2 | 2 |
+| 興復父讎 Guan Xing's Vengeance | 謀略 | ★ | rally | 2 | 2 |
+| 張苞驍銳 Zhang Bao's Valor | 近戰 | ★ | charge | 1 | 2 |
+| 蜀中先鋒 Liao Hua the Vanguard | 近戰 | ★ | charge | 1 | 2 |
+| 流星追擊 Wang Shuang's Meteor | 謀略 | ★ | rally | 2 | 2 |
+| 長驅直入 Xu Huang's Relentless March | 謀略 | ★ | rally | 2 | 2 |
+| 雪中短兵 Ding Feng's Snow Assault | 謀略 | ★ | rally | 2 | 2 |
+| 凌統護主 Ling Tong's Guard | 近戰 | ★ | charge | 1 | 2 |
+| 曹仁死守 Cao Ren's Steadfast Hold | 謀略 | ★ | rally | 2 | 2 |
+| 三尖兩刃 Ji Ling's Three-Point Blade | 近戰 | ★ | charge | 1 | 2 |
 | 突擊 Charge | 近戰 |  | charge | 1 | 2 |
 | 斉射 Volley | 遠射 |  | rain-of-arrows | 4 | 1 |
 | 火計 Fire | 玄術 |  | fire-attack | 3 | 0 |

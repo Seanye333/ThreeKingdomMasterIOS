@@ -3456,7 +3456,7 @@ flowchart TD
 > 以下摘要由 `scripts/gen-catalog.ts` 從 `src/game/data/` 直接抽取,確保與遊戲一致。完整全量見 [docs/CATALOG.md](CATALOG.md)。重新生成:`npm run docs:catalog`。
 
 <!-- CATALOG:START -->
-> 完整全量(全部 1273 名品逐條 / 全 589 戰法 / 全部政策科技節點)見 **[docs/CATALOG.md](CATALOG.md)**;此處為可讀摘要,但政策與戰法的**效果數字皆為全量**。
+> 完整全量(全部 1273 名品逐條 / 全 601 戰法 / 全部政策科技節點)見 **[docs/CATALOG.md](CATALOG.md)**;此處為可讀摘要,但政策與戰法的**效果數字皆為全量**。2026-07 補入 **12 條二線名將專屬戰法**(顏良快刀/文醜追鋒/落鳳伏弩/興復父讎/張苞驍銳/蜀中先鋒/流星追擊/長驅直入/雪中短兵/凌統護主/曹仁死守/三尖兩刃),讓原本只共用通用戰法(charge/volley/ambush…)的名將,上陣時有自己的簽名招式(`TACTIC_SIGNATURE` 加成 + `OFFICER_TACTICS` 分配,officerAttributes.ts)。
 
 ### 內容總量
 
@@ -3464,7 +3464,7 @@ flowchart TD
 |---|---|
 | 名品 Items | 1415(weapon 363 / horse 56 / treasure 554 / book 406 / armor 36) |
 | 政策 Policies | 161 |
-| 戰法 Tactics | 589 |
+| 戰法 Tactics | 601 |
 | 技能 Skills | 30 |
 | 威名 Prestige | 8 |
 | 官職 Civic Titles | 28 |
@@ -3594,7 +3594,7 @@ flowchart TD
 | 牧苑 State Stud Farm | 兵質 +10% | 馬政 |
 | 演武 Military Drill | 演武 兵質 +5% | — |
 
-### 戰法 Tactics — 機制總覽(589 條,逐條表見 CATALOG)
+### 戰法 Tactics — 機制總覽(601 條,逐條表見 CATALOG)
 
 戰法依**類別**決定底層效果、射程與冷卻;**名戰(★)**享更強的射程/冷卻/威力。
 持有的戰法越多,全戰法威力越高(熟練度);集齊特定組合再觸發額外戰力加成。
