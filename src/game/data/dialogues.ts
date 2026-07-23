@@ -14,7 +14,7 @@ export const DIALOGUE_EVENTS: DialogueEvent[] = [
     speaker: { zh: '白髮老卒', en: 'A White-Haired Veteran' },
     text: { zh: '老卒撫刀而言:「某隨先主征戰三十年,今老矣,願為後輩講一講當年血戰。」', en: 'An old soldier strokes his blade: "Thirty years I marched with our late lord. I am old now — let me tell the young ones of the great battles."' },
     choices: [
-      { label: { zh: '設宴聽其講古', en: 'Feast him, hear his tales' }, effects: [{ kind: 'gold', delta: -30 }, { kind: 'unrest', delta: -3 }], outcome: { zh: '滿營將士圍坐而聽,軍心一振。', en: 'The whole camp gathers to listen — morale lifts.' } },
+      { label: { zh: '設宴聽其講古', en: 'Feast him, hear his tales' }, effects: [{ kind: 'gold', delta: -30 }, { kind: 'none' }], outcome: { zh: '滿營將士圍坐而聽,軍心一振。', en: 'The whole camp gathers to listen — morale lifts.' } },
       { label: { zh: '厚賜遣歸鄉里', en: 'Reward him, send him home' }, effects: [{ kind: 'gold', delta: -50 }], outcome: { zh: '老卒垂淚拜謝,鄉里傳為美談。', en: 'He bows in tears; the countryside sings your praise.' } },
     ],
   },
@@ -33,8 +33,8 @@ export const DIALOGUE_EVENTS: DialogueEvent[] = [
     speaker: { zh: '狂士', en: 'A Wild Scholar' },
     text: { zh: '一狂生披髮登堂,長揖不拜:「聞明公求賢若渴,某有安天下之策,肯聽否?」', en: 'A dishevelled scholar strides in, bowing but not kneeling: "They say you thirst for talent. I hold a plan to settle the realm — will you hear it?"' },
     choices: [
-      { label: { zh: '虛心請教', en: 'Hear him out with respect' }, effects: [{ kind: 'unrest', delta: -4 }], outcome: { zh: '其言雖狂,頗有可採,士人聞之爭來。', en: 'Mad as he sounds, there is worth in it; scholars come flocking.' } },
-      { label: { zh: '斥其無禮', en: 'Rebuke his insolence' }, effects: [{ kind: 'unrest', delta: 2 }], outcome: { zh: '狂士拂袖而去,士林頗有微詞。', en: 'He storms off; the literati grumble.' } },
+      { label: { zh: '虛心請教', en: 'Hear him out with respect' }, effects: [{ kind: 'none' }], outcome: { zh: '其言雖狂,頗有可採,士人聞之爭來。', en: 'Mad as he sounds, there is worth in it; scholars come flocking.' } },
+      { label: { zh: '斥其無禮', en: 'Rebuke his insolence' }, effects: [{ kind: 'none' }], outcome: { zh: '狂士拂袖而去,士林頗有微詞。', en: 'He storms off; the literati grumble.' } },
     ],
   },
   {
@@ -42,8 +42,8 @@ export const DIALOGUE_EVENTS: DialogueEvent[] = [
     speaker: { zh: '田間老農', en: 'An Old Farmer' },
     text: { zh: '老農捧一株九穗之禾:「今歲風調雨順,田生嘉禾,一莖九穗,實為祥瑞!」', en: 'A farmer holds up a nine-eared stalk: "A kindly year — the fields bore an auspicious grain, nine ears on one stalk!"' },
     choices: [
-      { label: { zh: '賞其勤,勸農桑', en: 'Reward him, promote farming' }, effects: [{ kind: 'gold', delta: -20 }, { kind: 'food', delta: 200 }], outcome: { zh: '農人爭相力田,倉廩漸實。', en: 'The peasants vie to till; the granaries swell.' } },
-      { label: { zh: '獻嘉禾以彰德政', en: 'Present it as a sign of good rule' }, effects: [{ kind: 'unrest', delta: -4 }], outcome: { zh: '民以為天佑明主,人心大悅。', en: 'The people take it as Heaven\'s favour — hearts gladden.' } },
+      { label: { zh: '賞其勤,勸農桑', en: 'Reward him, promote farming' }, effects: [{ kind: 'gold', delta: -20 }, { kind: 'none' }], outcome: { zh: '農人爭相力田,倉廩漸實。', en: 'The peasants vie to till; the granaries swell.' } },
+      { label: { zh: '獻嘉禾以彰德政', en: 'Present it as a sign of good rule' }, effects: [{ kind: 'none' }], outcome: { zh: '民以為天佑明主,人心大悅。', en: 'The people take it as Heaven\'s favour — hearts gladden.' } },
     ],
   },
   {
@@ -51,9 +51,9 @@ export const DIALOGUE_EVENTS: DialogueEvent[] = [
     speaker: { zh: '市井小兒', en: 'Children in the Street' },
     text: { zh: '市井忽傳一童謠,語涉興亡,街巷傳唱,人心浮動。', en: 'A children\'s rhyme spreads through the streets, hinting at rise and ruin; the people grow restive.' },
     choices: [
-      { label: { zh: '查禁妖言', en: 'Ban the seditious song' }, effects: [{ kind: 'unrest', delta: -3 }, { kind: 'gold', delta: -20 }], outcome: { zh: '童謠漸息,然亦有畏禁而不敢言者。', en: 'The rhyme fades — though some now hold their tongues in fear.' } },
+      { label: { zh: '查禁妖言', en: 'Ban the seditious song' }, effects: [{ kind: 'none' }, { kind: 'gold', delta: -20 }], outcome: { zh: '童謠漸息,然亦有畏禁而不敢言者。', en: 'The rhyme fades — though some now hold their tongues in fear.' } },
       { label: { zh: '順其自然', en: 'Let it run its course' }, effects: [{ kind: 'none' }], outcome: { zh: '童謠傳數日而自止。', en: 'The song passes of itself in a few days.' } },
-      { label: { zh: '借謠以安民心', en: 'Turn the rhyme to your favour' }, effects: [{ kind: 'unrest', delta: -3 }], outcome: { zh: '巧為附會,反收攬眾之效。', en: 'Cleverly spun, it becomes a rallying cry instead.' } },
+      { label: { zh: '借謠以安民心', en: 'Turn the rhyme to your favour' }, effects: [{ kind: 'none' }], outcome: { zh: '巧為附會,反收攬眾之效。', en: 'Cleverly spun, it becomes a rallying cry instead.' } },
     ],
   },
   {
@@ -61,8 +61,8 @@ export const DIALOGUE_EVENTS: DialogueEvent[] = [
     speaker: { zh: '倉官', en: 'The Granary Officer' },
     text: { zh: '倉官惶恐來報:「府庫鼠患猖獗,囓壞糧秣不少,乞明公裁處。」', en: 'The granary officer reports anxiously: "Rats have overrun the stores and gnawed away much grain — I beg your judgment."' },
     choices: [
-      { label: { zh: '增貓犬,修倉廩', en: 'Add cats and mend the stores' }, effects: [{ kind: 'gold', delta: -30 }, { kind: 'food', delta: 100 }], outcome: { zh: '鼠患漸除,倉儲得保。', en: 'The rats dwindle; the stores are secured.' } },
-      { label: { zh: '罰倉官失職', en: 'Punish the officer' }, effects: [{ kind: 'food', delta: -80 }], outcome: { zh: '倉官受責,然損耗已成。', en: 'The officer is chastised, but the loss is done.' } },
+      { label: { zh: '增貓犬,修倉廩', en: 'Add cats and mend the stores' }, effects: [{ kind: 'gold', delta: -30 }, { kind: 'none' }], outcome: { zh: '鼠患漸除,倉儲得保。', en: 'The rats dwindle; the stores are secured.' } },
+      { label: { zh: '罰倉官失職', en: 'Punish the officer' }, effects: [{ kind: 'none' }], outcome: { zh: '倉官受責,然損耗已成。', en: 'The officer is chastised, but the loss is done.' } },
     ],
   },
   {
@@ -88,7 +88,7 @@ export const DIALOGUE_EVENTS: DialogueEvent[] = [
     speaker: { zh: '醫者', en: 'A Physician' },
     text: { zh: '一遊方醫者進言:「觀近日天時乖戾,恐有疫氣將行,宜早為之備。」', en: 'A travelling physician warns: "The season\'s airs are ill-tempered — a pestilence may be coming. Best prepare early."' },
     choices: [
-      { label: { zh: '施藥,掘井,清溝渠', en: 'Distribute medicine, dig wells, clear drains' }, effects: [{ kind: 'gold', delta: -50 }, { kind: 'unrest', delta: -3 }], outcome: { zh: '疫氣未起而備已周,民賴以安。', en: 'The plague never takes hold; the people rest easy.' } },
+      { label: { zh: '施藥,掘井,清溝渠', en: 'Distribute medicine, dig wells, clear drains' }, effects: [{ kind: 'gold', delta: -50 }, { kind: 'none' }], outcome: { zh: '疫氣未起而備已周,民賴以安。', en: 'The plague never takes hold; the people rest easy.' } },
       { label: { zh: '斥為妄言', en: 'Dismiss it as nonsense' }, effects: [{ kind: 'none' }], outcome: { zh: '醫者搖首而去,但願其言不驗。', en: 'The physician leaves, shaking his head — one hopes he was wrong.' } },
     ],
   },
@@ -97,7 +97,7 @@ export const DIALOGUE_EVENTS: DialogueEvent[] = [
     speaker: { zh: '藏書老儒', en: 'An Old Bibliophile' },
     text: { zh: '一老儒抱一卷殘書:「此乃先賢遺篇,兵農之要盡在其中,惜乎蟲蠹過半。」', en: 'An old scholar clutches a tattered scroll: "A lost work of the sages — the essence of war and husbandry is here, though the worms have had half of it."' },
     choices: [
-      { label: { zh: '延儒補校,傳之後世', en: 'Have it restored and copied' }, effects: [{ kind: 'gold', delta: -40 }, { kind: 'unrest', delta: -2 }], outcome: { zh: '殘篇補全,藏之府庫,士林稱頌。', en: 'The gaps are filled and the work preserved — the scholars applaud.' } },
+      { label: { zh: '延儒補校,傳之後世', en: 'Have it restored and copied' }, effects: [{ kind: 'gold', delta: -40 }, { kind: 'none' }], outcome: { zh: '殘篇補全,藏之府庫,士林稱頌。', en: 'The gaps are filled and the work preserved — the scholars applaud.' } },
       { label: { zh: '厚酬購其書', en: 'Buy the scroll outright' }, effects: [{ kind: 'gold', delta: -60 }], outcome: { zh: '古卷入藏,老儒得酬而喜。', en: 'The scroll is yours; the old man departs content.' } },
     ],
   },
