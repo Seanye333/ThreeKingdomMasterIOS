@@ -1854,6 +1854,70 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
 
   // ─────────── 武將個人時刻(2026-07):名士與忠勇的專屬名場面 ───────────
   {
+    id: 'evt-taishici-beihai',
+    name: { en: 'Taishi Ci Breaks the Siege of Beihai', zh: '太史慈北海解圍' },
+    yearMin: 193,
+    yearMax: 196,
+    requires: [
+      { kind: 'officer-active', officerId: 'taishi-ci' },
+      { kind: 'officer-active', officerId: 'kong-rong' },
+    ],
+    description:
+      "The Yellow Turban Guan Hai besieges Kong Rong at Beihai. To repay Kong Rong's kindness to his mother, Taishi Ci rides out alone — for days feigning archery practice to lull the besiegers, then bursting through at a gallop to beg aid of Liu Bei at Pingyuan. 'So Kong Rong of Beihai knows there is a Liu Bei in the world!' Liu Bei marvels, and sends troops to lift the siege. A man of his word, worth a thousand in gold.",
+    descriptionZh:
+      "黃巾管亥圍北海，孔融困守。太史慈為報孔融養母之恩，單騎突圍：連日詐作射獵以懈敵備，一朝疾馳而過，求救於平原劉備。備驚曰：「孔北海乃復知天下有劉備耶!」即發兵解圍。信義之士，一諾千金。",
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'taishi-ci', delta: 8 },
+      { kind: 'flag', key: 'taishici-beihai' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-yuji-curse',
+    name: { en: 'Yu Ji Haunts Sun Ce', zh: '于吉顯聖' },
+    yearMin: 200,
+    yearMax: 200,
+    requires: [
+      { kind: 'officer-active', officerId: 'sun-ce' },
+      { kind: 'officer-active', officerId: 'yu-ji' },
+    ],
+    description:
+      "The Daoist Yu Ji roams Jiangdong, dispensing charm-water and healing the sick; the people revere him like a god. Enraged that he deludes the crowds, Sun Ce has him beheaded. Thereafter Sun Ce sees Yu Ji standing in every mirror, following at his shoulder — until, terror-struck, his old wound splits and he dies crying out before the glass. 'He who slew the god,' say the people of the south, 'the god has slain.'",
+    descriptionZh:
+      "于吉道人往來江東，普施符水，治病救人，士民敬之如神。孫策怒其惑眾，斬之。自此策每見于吉立於鏡中、隨於左右，驚怖不安。舊創迸裂，臨鏡大叫而絕。江東皆言：殺神者，神殺之。",
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'sun-ce', delta: -3 },
+      { kind: 'flag', key: 'yuji-curse' },
+    ],
+    mood: 'mystic',
+  },
+  {
+    id: 'evt-guanlu-divine',
+    name: { en: "Guan Lu's Divinations", zh: '管輅神卜' },
+    yearMin: 208,
+    yearMax: 245,
+    requires: [{ kind: 'officer-active', officerId: 'guan-lu' }],
+    description:
+      "Guan Lu of Pingyuan, master of milfoil and wind-angle divination, casts for Cao Cao on the fates of Wu and Shu — and hits each mark uncannily. He foretells the very days of death of Deng Yang and He Yan, and all comes true. Knowing his own span short, he says: 'My brow has no lord-bone, my eyes no guarding light — this is no long-lived face,' and dies young. His name for divination stands first in the age.",
+    descriptionZh:
+      "平原管輅，精於卜筮風角。嘗為曹操卜東吳、西蜀之事，皆奇中。又預言鄧颺、何晏死期，一一應驗。輅自知壽短，曰：「吾額無主骨，眼無守精，非長壽之相。」果早卒。神卜之名，冠絕一時。",
+    effects: [{ kind: 'flag', key: 'guanlu-divine' }],
+    mood: 'mystic',
+  },
+  {
+    id: 'evt-wangcan-memory',
+    name: { en: 'Wang Can Forgets Nothing', zh: '王粲過目不忘' },
+    yearMin: 200,
+    yearMax: 217,
+    requires: [{ kind: 'officer-active', officerId: 'wang-can' }],
+    description:
+      "Wang Can's gift is total recall. Walking with a companion, he reads a roadside stele; asked whether he can recite it, he turns his back and renders it without a single error. Watching a game of weiqi, when the board is upset, he restores every stone to its place, not one misplaced. Foremost of the Seven Masters of Jian'an, the literary lodestar of his day.",
+    descriptionZh:
+      "王粲才高，過目不忘。嘗與人共行，讀道邊碑文，人問能誦否，粲背碑而誦，不失一字。又觀人弈棋，局亂，粲為復之，不誤一道。建安七子之冠冕，一時文宗。",
+    effects: [{ kind: 'flag', key: 'wangcan-memory' }],
+    mood: 'auspicious',
+  },
+  {
     id: 'evt-miheng-drums',
     name: { en: 'Mi Heng Drums Naked Before Cao', zh: '禰衡擊鼓罵曹' },
     yearMin: 196,
