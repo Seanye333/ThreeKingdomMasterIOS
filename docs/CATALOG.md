@@ -1610,7 +1610,7 @@
 | 交州安撫 Jiao Pacification | 撫夷 |
 | 遼東緩衝 Liaodong Buffer | 撫夷 |
 
-## 戰法 Tactics(601)
+## 戰法 Tactics(609)
 
 戰法依**類別**決定底層效果、射程與冷卻;**名戰(★)**享更強的射程/冷卻/威力。
 持有的戰法越多,全戰法威力越高(熟練度);集齊特定組合再觸發額外戰力加成。
@@ -1645,7 +1645,7 @@
 | 熟練 Adept | 4 – 7 | ×1.03 |
 | 初窺 Novice | 0 – 3 | ×1 |
 
-#### 全戰法一覽(601)
+#### 全戰法一覽(609)
 
 | 戰法 | 類別 | ★ | 底層戰法 | 射程 | 冷卻 |
 |---|---|---|---|---|---|
@@ -1661,6 +1661,14 @@
 | 凌統護主 Ling Tong's Guard | 近戰 | ★ | charge | 1 | 2 |
 | 曹仁死守 Cao Ren's Steadfast Hold | 謀略 | ★ | rally | 2 | 2 |
 | 三尖兩刃 Ji Ling's Three-Point Blade | 近戰 | ★ | charge | 1 | 2 |
+| 霸王之力 Overlord's Might | 謀略 | ★ | rally | 2 | 2 |
+| 長平坑降 Bai Qi at Changping | 謀略 | ★ | rally | 2 | 2 |
+| 背水列陣 Backs to the River | 謀略 | ★ | rally | 2 | 2 |
+| 直搗黃龍 Strike for Huanglong | 謀略 | ★ | rally | 2 | 2 |
+| 十三太保 The Thirteenth Taibao | 謀略 | ★ | rally | 2 | 2 |
+| 封狼居胥 Feng Langjuxu | 謀略 | ★ | rally | 2 | 2 |
+| 三箭定天山 Three Arrows at Tianshan | 謀略 | ★ | rally | 2 | 2 |
+| 單鞭奪槊 Seizing the Lance | 謀略 | ★ | rally | 2 | 2 |
 | 突擊 Charge | 近戰 |  | charge | 1 | 2 |
 | 斉射 Volley | 遠射 |  | rain-of-arrows | 4 | 1 |
 | 火計 Fire | 玄術 |  | fire-attack | 3 | 0 |

@@ -2395,6 +2395,8 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
 - **奮命一擊 / 虎癡裸衣 / 江東猛虎…**(power):武力 ≥90 或無雙的通用/具名重擊。
 - **名將台詞**(officerLines.ts,2026-07 由 128→138 位):3D 單挑中名將以**自己的**挑釁+必殺台詞開口(未收錄者回落 battleLines.ts 的 persona 通用詞;台詞亦作卡面 flavor,見 §2.13)。補入有單挑戲份卻此前無專屬台詞的顏良、文醜、華雄、紀靈、張任、魏延、關興、丁奉、廖化、王雙 10 位。
 
+- **武將專屬戰法**(`TACTIC_SIGNATURE` 加成 + `OFFICER_TACTICS` 分配,officerAttributes.ts,2026-07):讓原本共用通用戰法(charge/volley/ambush…)的名將,上陣時有自己的簽名招式。**三國補 12 條**:顏良快刀/文醜追鋒/落鳳伏弩(張任)/興復父讎(關興)/張苞驍銳/蜀中先鋒(廖化)/流星追擊(王雙)/長驅直入(徐晃)/雪中短兵(丁奉)/凌統護主/曹仁死守/三尖兩刃(紀靈);**歷代猛將補 8 條**:項羽霸王之力/白起長平坑降/韓信背水列陣/岳飛直搗黃龍/李存孝十三太保/霍去病封狼居胥/薛仁貴三箭定天山/尉遲恭單鞭奪槊。戰法總數 589→609(`TacticId` 為嚴格聯合、`TACTIC_DEFS` 為 `Record<TacticId>` 強制全覆蓋,加一戰法需四處聯動:聯合型/名字/加成/分配)。
+
 ### 6.2b 進階機制·深度(獨門被動 / 破綻 / 傷殘 / 馬戰)
 
 廣之外更要深 —— 讓頭部名將真打得不一樣,讓單挑更有層次與後果:
@@ -3460,7 +3462,7 @@ flowchart TD
 > 以下摘要由 `scripts/gen-catalog.ts` 從 `src/game/data/` 直接抽取,確保與遊戲一致。完整全量見 [docs/CATALOG.md](CATALOG.md)。重新生成:`npm run docs:catalog`。
 
 <!-- CATALOG:START -->
-> 完整全量(全部 1273 名品逐條 / 全 601 戰法 / 全部政策科技節點)見 **[docs/CATALOG.md](CATALOG.md)**;此處為可讀摘要,但政策與戰法的**效果數字皆為全量**。2026-07 補入 **12 條二線名將專屬戰法**(顏良快刀/文醜追鋒/落鳳伏弩/興復父讎/張苞驍銳/蜀中先鋒/流星追擊/長驅直入/雪中短兵/凌統護主/曹仁死守/三尖兩刃),讓原本只共用通用戰法(charge/volley/ambush…)的名將,上陣時有自己的簽名招式(`TACTIC_SIGNATURE` 加成 + `OFFICER_TACTICS` 分配,officerAttributes.ts)。
+> 完整全量(全部 1273 名品逐條 / 全 589 戰法 / 全部政策科技節點)見 **[docs/CATALOG.md](CATALOG.md)**;此處為可讀摘要,但政策與戰法的**效果數字皆為全量**。
 
 ### 內容總量
 
@@ -3468,7 +3470,7 @@ flowchart TD
 |---|---|
 | 名品 Items | 1415(weapon 363 / horse 56 / treasure 554 / book 406 / armor 36) |
 | 政策 Policies | 161 |
-| 戰法 Tactics | 601 |
+| 戰法 Tactics | 609 |
 | 技能 Skills | 30 |
 | 威名 Prestige | 8 |
 | 官職 Civic Titles | 28 |
@@ -3598,7 +3600,7 @@ flowchart TD
 | 牧苑 State Stud Farm | 兵質 +10% | 馬政 |
 | 演武 Military Drill | 演武 兵質 +5% | — |
 
-### 戰法 Tactics — 機制總覽(601 條,逐條表見 CATALOG)
+### 戰法 Tactics — 機制總覽(609 條,逐條表見 CATALOG)
 
 戰法依**類別**決定底層效果、射程與冷卻;**名戰(★)**享更強的射程/冷卻/威力。
 持有的戰法越多,全戰法威力越高(熟練度);集齊特定組合再觸發額外戰力加成。

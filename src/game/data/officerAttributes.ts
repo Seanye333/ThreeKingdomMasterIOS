@@ -462,7 +462,10 @@ export type TacticId =
   // 二線名將專屬戰法補遺 (12,2026-07)
   | 'yanliang-blade' | 'wenchou-spear' | 'zhangren-net' | 'guanxing-avenge'
   | 'zhangbao-valor' | 'liaohua-vanguard' | 'wangshuang-meteor' | 'xuhuang-march'
-  | 'dingfeng-snow' | 'lingtong-guard' | 'caoren-hold' | 'jiling-triblade';
+  | 'dingfeng-snow' | 'lingtong-guard' | 'caoren-hold' | 'jiling-triblade'
+  // 歷代猛將專屬戰法 (8,2026-07)
+  | 'xiangyu-bawang' | 'baiqi-changping' | 'hanxin-beishui' | 'yuefei-yaojin'
+  | 'licunxiao-shibao' | 'huoqubing-fenglang' | 'xuerengui-sanjian' | 'yuchigong-duoshuo';
 
 export const TACTIC_DEFS: Record<TacticId, { zh: string; en: string }> = {
   // 二線名將專屬戰法補遺 (2026-07)
@@ -478,6 +481,15 @@ export const TACTIC_DEFS: Record<TacticId, { zh: string; en: string }> = {
   'lingtong-guard':   { zh: '凌統護主', en: "Ling Tong's Guard" },
   'caoren-hold':      { zh: '曹仁死守', en: "Cao Ren's Steadfast Hold" },
   'jiling-triblade':  { zh: '三尖兩刃', en: "Ji Ling's Three-Point Blade" },
+  // 歷代猛將專屬戰法 (2026-07)
+  'xiangyu-bawang':    { zh: '霸王之力', en: "Overlord's Might" },
+  'baiqi-changping':   { zh: '長平坑降', en: 'Bai Qi at Changping' },
+  'hanxin-beishui':    { zh: '背水列陣', en: 'Backs to the River' },
+  'yuefei-yaojin':     { zh: '直搗黃龍', en: 'Strike for Huanglong' },
+  'licunxiao-shibao':  { zh: '十三太保', en: 'The Thirteenth Taibao' },
+  'huoqubing-fenglang':{ zh: '封狼居胥', en: 'Feng Langjuxu' },
+  'xuerengui-sanjian': { zh: '三箭定天山', en: 'Three Arrows at Tianshan' },
+  'yuchigong-duoshuo': { zh: '單鞭奪槊', en: 'Seizing the Lance' },
   charge:        { zh: '突擊', en: 'Charge' },
   volley:        { zh: '斉射', en: 'Volley' },
   'fire-attack': { zh: '火計', en: 'Fire' },
@@ -1125,6 +1137,15 @@ export const OFFICER_TACTICS: Record<string, TacticId[]> = {
   // ─── Early warlords (pre-coalition) ──
   'ji-ling':        ['jiling-triblade', 'charge', 'long-halberd'],
   'wang-shuang':    ['wangshuang-meteor', 'charge', 'rouse'],
+  // ─── 歷代猛將專屬戰法分配 (2026-07) ───
+  'hist-xiang-yu':   ['xiangyu-bawang', 'charge', 'rouse', 'ambush'],
+  'hist-bai-qi':     ['baiqi-changping', 'ambush', 'pitfall', 'attack-plans'],
+  'hist-han-xin':    ['hanxin-beishui', 'attack-plans', 'ambush', 'ruse', 'pitfall'],
+  'hist-yue-fei':    ['yuefei-yaojin', 'charge', 'rouse', 'iron-wall'],
+  'hist-li-cunxiao': ['licunxiao-shibao', 'charge', 'rouse'],
+  'hist-huo-qubing': ['huoqubing-fenglang', 'charge', 'ambush', 'volley'],
+  'hist-xue-rengui': ['xuerengui-sanjian', 'volley', 'charge', 'fire-arrow'],
+  'hist-yuchi-gong': ['yuchigong-duoshuo', 'charge', 'rouse'],
   'li-ru':          ['ruse', 'attack-plans', 'pitfall'],
   'liu-yan':        ['protect-people', 'court-debate'],
   'tao-qian':       ['protect-people', 'court-debate'],
@@ -1342,6 +1363,15 @@ export const TACTIC_SIGNATURE: Partial<Record<string, TacticBonus>> = {
   'lingtong-guard':   { war: 9,  leadership: 8, intelligence: 0, politics: 0, charisma: 0 },
   'caoren-hold':      { war: 6,  leadership: 12, intelligence: 0, politics: 3, charisma: 0 },
   'jiling-triblade':  { war: 10, leadership: 5, intelligence: 0, politics: 0, charisma: 0 },
+  // ── 歷代猛將專屬 (2026-07) ──
+  'xiangyu-bawang':    { war: 15, leadership: 6,  intelligence: 0,  politics: 0, charisma: 3 },
+  'baiqi-changping':   { war: 10, leadership: 12, intelligence: 6,  politics: 0, charisma: 0 },
+  'hanxin-beishui':    { war: 8,  leadership: 12, intelligence: 12, politics: 0, charisma: 0 },
+  'yuefei-yaojin':     { war: 12, leadership: 12, intelligence: 0,  politics: 0, charisma: 4 },
+  'licunxiao-shibao':  { war: 14, leadership: 5,  intelligence: 0,  politics: 0, charisma: 0 },
+  'huoqubing-fenglang':{ war: 12, leadership: 10, intelligence: 0,  politics: 0, charisma: 0 },
+  'xuerengui-sanjian': { war: 12, leadership: 8,  intelligence: 0,  politics: 0, charisma: 0 },
+  'yuchigong-duoshuo': { war: 12, leadership: 6,  intelligence: 0,  politics: 0, charisma: 0 },
 
   // ── 諸葛 ──
   'seven-grab':      { war: 5, leadership: 10, intelligence: 8, politics: 5, charisma: 10 },
