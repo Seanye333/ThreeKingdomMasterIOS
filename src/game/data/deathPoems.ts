@@ -225,6 +225,56 @@ export const DEATH_POEMS: Record<string, DeathPoem> = {
     zh: '橫始與漢王俱南面稱孤，今漢王為天子，而橫乃為亡虜北面事之，其恥固已甚矣。',
     en: 'Once Tian Heng and the King of Han both faced south and styled themselves lord; now the King of Han is Son of Heaven, and Tian Heng, a beaten captive, must face north and serve him — the shame is already too great to bear.',
   },
+
+  // ─── 三國名將絕命詩·補齊二批（2026-07） ───
+  'gan-ning': {
+    zh: '錦帆已收，百騎成塵——江東多少事，都付東流水。',
+    en: 'The brocade sails are furled, my hundred riders turned to dust — how many deeds of the Southland, all given to the eastward water.',
+  },
+  'zhang-he': {
+    zh: '歸師勿追，吾言不用——木門道上，萬弩加身，悔何及哉！',
+    en: '"Do not pursue a returning army" — my words went unheeded. On Wooden Gate Road a storm of bolts finds me; too late now for regret.',
+  },
+  'yu-jin': {
+    zh: '臨難失節，三十年名譽毀於一旦——羞見故人於地下矣。',
+    en: 'I failed in the hour of peril. Thirty years of good name, undone in a day — I am ashamed to meet old comrades below.',
+  },
+  'zhang-zhao': {
+    zh: '內事不決，昭之責也——輔孫氏三世，白首江東，惜未見天下一統。',
+    en: '"For matters within, ask Zhao" — that was my charge. Three generations I served the Sun; grey-haired in Jiangdong, I grieve only that I never saw the realm made one.',
+  },
+  'zhou-tai': {
+    zh: '一身數十創，皆為主公擋也——幼平死，無憾於孫郎。',
+    en: 'Scores of wounds upon this body, every one taken for my lord — Youping dies without regret toward Lord Sun.',
+  },
+  'xu-huang': {
+    zh: '治軍一生，長驅直入——公明雖死，軍法不可廢也。',
+    en: 'A lifetime of disciplined command, of relentless marching — though Gongming dies, the law of the army must not.',
+  },
+  'yan-liang': {
+    zh: '河北上將，竟死於紅臉長髯之手——恨未及通名，而首已離身！',
+    en: 'A champion of Hebei, felled by that red-faced, long-bearded man — I rue only that before I could give my name, my head was already parted from me.',
+  },
+  'wen-chou': {
+    zh: '顏良之仇未報，文醜又蹈其轍——延津渡口，魂斷刀下。',
+    en: 'Yan Liang unavenged, and Wen Chou follows his very track — at Yanjin ford my soul is cut away beneath the blade.',
+  },
+  'hua-tuo': {
+    zh: '青囊一書，付之一炬——神醫已矣，天下蒼生，復何仰乎！',
+    en: 'The Blue-Bag Book, given to the flames — the divine physician is no more; on what shall the people of the world now rely?',
+  },
+  'diaochan': {
+    zh: '妾一弱女，以身許國——鳳儀亭上了卻連環，此生足矣。',
+    en: 'A weak woman, I gave my body to the state — upon the Phoenix Pavilion I closed the Chain Stratagem; this life has been enough.',
+  },
+  'sima-zhao': {
+    zh: '司馬昭之心，路人皆知——惜乎未及南面，先歸黃泉，帝業留與子孫。',
+    en: 'The heart of Sima Zhao, known to every passer-by — yet I grieve that I go to the Yellow Springs before I face south; the imperial work I leave to my sons.',
+  },
+  'zhong-hui': {
+    zh: '才高一世，謀逆成都——姜維之計未成，鍾會之首已落，可笑可歎！',
+    en: "Talent above my age, and treason at Chengdu — Jiang Wei's scheme unfinished, Zhong Hui's head already fallen; how laughable, how lamentable.",
+  },
 };
 
 export function getDeathPoem(officerId: string): DeathPoem | null {
