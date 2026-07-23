@@ -1606,6 +1606,122 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       { kind: 'flag', key: 'wu-founded' },
     ],
   },
+  // ─────────── 經典橋段補遺(2026-07 第三批):開局與奸雄 ───────────
+  {
+    id: 'evt-caocao-blade',
+    name: { en: 'Cao Cao Offers the Blade', zh: '孟德獻刀' },
+    yearMin: 189,
+    yearMax: 190,
+    requires: [
+      { kind: 'officer-active', officerId: 'cao-cao' },
+      { kind: 'officer-active', officerId: 'dong-zhuo' },
+    ],
+    description:
+      "Feigning devotion, Cao Cao borrows Wang Yun's Seven-Star blade to kill Dong Zhuo. As the tyrant dozes, Cao draws — but Dong glimpses him in the mirror, and Cao must turn the strike into the gift of the blade. The plot fails; Cao flees east on a fast horse, spends his fortune, forges an imperial edict, and the lords of the east begin to gather to him.",
+    descriptionZh:
+      "王允假意獻媚董卓，曹操借得七星寶刀，欲刺之。卓臥榻假寐，操拔刀在手，卓從衣鏡中窺見，操急跪改為獻刀。事敗，操飛馬東逃。散盡家財，矯詔起兵——關東群雄由是而集，討董之勢成矣。",
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: 3 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'dong-zhuo', delta: -3 },
+      { kind: 'flag', key: 'caocao-blade' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-chen-gong-release',
+    name: { en: 'Chen Gong Frees and Forsakes Cao', zh: '陳宮捉放曹' },
+    yearMin: 189,
+    yearMax: 190,
+    requires: [
+      { kind: 'officer-active', officerId: 'cao-cao' },
+      { kind: 'officer-active', officerId: 'chen-gong' },
+    ],
+    description:
+      "Fleeing the failed assassination, Cao Cao is caught at Zhongmou by the magistrate Chen Gong. Honouring his stand against the tyrant, Chen quits his post to flee with him. But at Lü Boshe's house Cao, suspecting a trap, slaughters the whole household — then kills Boshe himself, returning with wine: 'Better I wrong the world than the world wrong me.' Seeing such cruelty, Chen Gong slips away in the night.",
+    descriptionZh:
+      "曹操行刺事敗，逃至中牟，為縣令陳宮所擒。宮敬其為國除賊之義，棄官同逃。途經呂伯奢家，操疑其謀己，盡殺其家，又殺沽酒而歸之伯奢，曰：「寧教我負天下人，休教天下人負我。」宮見其忍，夜半棄之而去 —— 是為日後白門樓之伏筆。",
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'chen-gong', delta: 5 },
+      { kind: 'flag', key: 'chen-gong-release' },
+    ],
+    mood: 'somber',
+  },
+  {
+    id: 'evt-changsha-huangzhong',
+    name: { en: 'The Duel at Changsha', zh: '戰長沙義釋黃忠' },
+    yearMin: 208,
+    yearMax: 210,
+    requires: [
+      { kind: 'officer-active', officerId: 'guan-yu' },
+      { kind: 'officer-active', officerId: 'huang-zhong' },
+    ],
+    description:
+      "Guan Yu battles the veteran Huang Zhong at Changsha. When Huang's horse stumbles, Guan Yu spares him rather than strike a fallen man; the next day Huang, in gratitude, looses only empty shots. Governor Han Xuan, suspecting treason, moves to behead him — but Wei Yan cuts Han Xuan down and yields Changsha to Liu Bei. Old Huang Zhong and fierce Wei Yan enter Shu together.",
+    descriptionZh:
+      "關羽攻長沙，與老將黃忠大戰百合不分。忠馬失前蹄，羽念其義，不殺而縱之。次日忠感其恩，虛拽弓弦，止射盔纓。太守韓玄疑忠通敵，欲斬之。魏延奮起殺玄，開城獻長沙以降劉備。老將黃忠、猛將魏延，自此歸於西蜀。",
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'liu-bei', delta: 4 },
+      { kind: 'officer-loyalty', officerId: 'huang-zhong', delta: 8 },
+      { kind: 'flag', key: 'changsha-huangzhong' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-puyang-fire',
+    name: { en: 'Fire at Puyang', zh: '濮陽之戰' },
+    yearMin: 194,
+    yearMax: 194,
+    requires: [
+      { kind: 'officer-active', officerId: 'lu-bu' },
+      { kind: 'officer-active', officerId: 'cao-cao' },
+    ],
+    description:
+      "Lü Bu holds Puyang and grinds against Cao Cao. Lured by Chen Gong's ruse into the city by night, Cao finds the four gates ablaze and ambushers pouring out. In the flames he blunders into Lü Bu himself, who cracks him on the helm with his halberd — 'Where is Cao Cao?' — and Cao points ahead at another to escape, his hair and beard singed off. Dian Wei fights him free; Cao all but dies at Puyang.",
+    descriptionZh:
+      "呂布據濮陽，與曹操相持。操中陳宮之計，夜入濮陽，四門火起，伏兵盡出。操於火中撞見呂布，布以戟擊操盔，問「曹操何在」，操反指前騎紿之，乃得脫，鬚髮盡燒。典韋拼死殺入救主，操幾殞於濮陽。呂布之勇，一時無兩。",
+    effects: [
+      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'cao-cao', multiplier: 0.9 },
+      { kind: 'flag', key: 'puyang-fire' },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-jiping-poison',
+    name: { en: "Ji Ping's Poison", zh: '吉平下毒' },
+    yearMin: 199,
+    yearMax: 200,
+    requires: [
+      { kind: 'officer-active', officerId: 'ji-ping' },
+      { kind: 'officer-active', officerId: 'cao-cao' },
+    ],
+    description:
+      "The Girdle Edict sworn, the physician Ji Ping conspires with Dong Cheng to poison Cao Cao. Cao feigns illness and summons him; Ji Ping mixes the poison in — but Cao, forewarned, seizes and tortures him. Cursing to the last, Ji Ping dashes his head on the steps and bites off a finger to seal his oath. Five households, Dong Cheng's among them, are exterminated. The edict's plot drowns Xuchang in blood.",
+    descriptionZh:
+      "衣帶詔既成，太醫吉平與董承同謀，欲以毒藥弒曹操。操詐病召平進藥，平下毒於中，操覺，執而拷之。平怒罵不絕，觸階而死，斷指以明志。董承等五家，盡皆族滅。衣帶詔之謀，血染許都 —— 漢室最後一次由內傾曹之舉，就此煙消。",
+    effects: [
+      { kind: 'officer-status', officerId: 'ji-ping', status: 'dead' },
+      { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: -3 },
+      { kind: 'flag', key: 'jiping-poison' },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-caocao-dream',
+    name: { en: 'Murder in a Dream', zh: '曹操夢中殺人' },
+    yearMin: 200,
+    yearMax: 215,
+    requires: [{ kind: 'officer-active', officerId: 'cao-cao' }],
+    description:
+      "Fearing assassination, Cao Cao pretends: 'In my dreams I kill — when I sleep, none of you come near.' One day, dozing, his blanket slips; an attendant picks it up to cover him, and Cao springs up, cuts him down, and lies back to sleep. Rising later, he feigns shock and grief. At the burial Yang Xiu points and sighs: 'It is not the Chancellor who dreamed — it is you, my lord, who dream.'",
+    descriptionZh:
+      "曹操恐人暗中謀害，詐言於眾：「吾夢中好殺人，凡吾睡著，汝等切勿近前。」一日晝寢，落被於地，一近侍拾而覆之，操躍起拔劍斬之，復上床睡。半晌方起，佯驚問左右何人殺吾近侍。楊修知其詐，臨葬指而歎曰：「丞相非在夢中，君乃在夢中耳！」",
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: -2 },
+      { kind: 'flag', key: 'caocao-dream' },
+    ],
+    mood: 'ominous',
+  },
+
   // ─────────── 經典橋段補遺(2026-07 第二批):演義名場面 ───────────
   {
     id: 'evt-maleap-tanxi',
