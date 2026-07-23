@@ -167,6 +167,64 @@ export const DEATH_POEMS: Record<string, DeathPoem> = {
     zh: '榻上一策，已定天下三分——惜乎未見九州同軌，先歸黃壤。',
     en: 'One plan upon the couch already foretold the realm split three ways — I grieve only that I go to the yellow earth before I see the Nine Provinces made one.',
   },
+
+  // ─── 歷代名將絕命詩（2026-07）：跨界名冊的歷史名人臨終之言，史實出處 ───
+  'hist-xiang-yu': {
+    zh: '天之亡我，我何渡為！縱江東父兄憐而王我，我何面目見之？',
+    en: 'Heaven destroys me — why should I cross the river? Even if the elders of the east took pity and made me king, with what face could I meet them?',
+  },
+  'hist-yue-fei': {
+    zh: '天日昭昭，天日昭昭！',
+    en: 'The sun in heaven sees all — the sun in heaven sees all!',
+  },
+  'hist-wen-tianxiang': {
+    zh: '孔曰成仁，孟曰取義；惟其義盡，所以仁至。讀聖賢書，所學何事？而今而後，庶幾無愧！',
+    en: 'Confucius spoke of fulfilling benevolence, Mencius of choosing righteousness. Only when righteousness is spent is benevolence complete. The books of the sages — what were they for? From this day on, I may be without shame.',
+  },
+  'hist-yu-qian': {
+    zh: '千錘萬鑿出深山，烈火焚燒若等閒；粉骨碎身渾不怕，要留清白在人間。',
+    en: 'A thousand hammers, ten thousand chisels, out of the deep mountain; the raging fire it treats as nothing. Ground to powder, shattered bone — it fears them not; only to leave its purity in the world of men.',
+  },
+  'hist-han-xin': {
+    zh: '吾悔不用蒯通之計，乃為兒女子所詐，豈非天哉！',
+    en: 'I regret I did not heed Kuai Tong. To be tricked at the last by a mere woman — is this not Heaven\'s doing?',
+  },
+  'hist-li-si': {
+    zh: '吾欲與若復牽黃犬，俱出上蔡東門逐狡兔，豈可得乎！',
+    en: 'I had wished, with you, to lead the yellow dog once more out the east gate of Shangcai to chase the cunning hare — but how can that ever be now?',
+  },
+  'hist-bai-qi': {
+    zh: '我固當死。長平之戰，趙卒降者數十萬，我詐而盡坑之，是足以死。',
+    en: 'I deserve to die. At Changping, hundreds of thousands of Zhao soldiers surrendered, and by deceit I buried them all alive. That alone is enough to die for.',
+  },
+  'hist-jing-ke': {
+    zh: '事所以不成者，以欲生劫之，必得約契以報太子也。',
+    en: 'The reason it failed: I meant to take him alive, to force a pledge and so repay the Crown Prince.',
+  },
+  'hist-lu-you': {
+    zh: '死去元知萬事空，但悲不見九州同。王師北定中原日，家祭無忘告乃翁。',
+    en: 'Dying, I know well that all things come to nothing — I grieve only that I never saw the Nine Provinces made one. On the day the royal army settles the Central Plain in the north, forget not, at the family rites, to tell your old father.',
+  },
+  'hist-tan-sitong': {
+    zh: '有心殺賊，無力回天。死得其所，快哉快哉！',
+    en: 'A heart to slay the traitors, but no power to turn back Heaven. I die where I ought to — what joy, what joy!',
+  },
+  'hist-yuan-chonghuan': {
+    zh: '一生事業總成空，半世功名在夢中。死後不愁無勇將，忠魂依舊守遼東。',
+    en: 'A lifetime\'s work all comes to nothing, half a life of honour but a dream. In death I do not fear the lack of brave generals — my loyal ghost will guard Liaodong still.',
+  },
+  'hist-tan-daoji': {
+    zh: '乃復壞汝萬里長城！',
+    en: 'So you would tear down your own Great Wall of ten thousand li!',
+  },
+  'hist-meng-tian': {
+    zh: '起臨洮屬之遼東，城塹萬餘里，此其中不能無絕地脈哉？此乃恬之罪也。',
+    en: 'From Lintao to Liaodong I raised walls and moats over ten thousand li — in all that, could I not have severed the veins of the earth? That is Meng Tian\'s crime.',
+  },
+  'hist-tian-heng': {
+    zh: '橫始與漢王俱南面稱孤，今漢王為天子，而橫乃為亡虜北面事之，其恥固已甚矣。',
+    en: 'Once Tian Heng and the King of Han both faced south and styled themselves lord; now the King of Han is Son of Heaven, and Tian Heng, a beaten captive, must face north and serve him — the shame is already too great to bear.',
+  },
 };
 
 export function getDeathPoem(officerId: string): DeathPoem | null {
