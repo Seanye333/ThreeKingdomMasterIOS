@@ -1606,6 +1606,65 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       { kind: 'flag', key: 'wu-founded' },
     ],
   },
+  // ─────────── 武將個人時刻(2026-07):名士與忠勇的專屬名場面 ───────────
+  {
+    id: 'evt-miheng-drums',
+    name: { en: 'Mi Heng Drums Naked Before Cao', zh: '禰衡擊鼓罵曹' },
+    yearMin: 196,
+    yearMax: 198,
+    requires: [
+      { kind: 'officer-active', officerId: 'mi-heng' },
+      { kind: 'officer-active', officerId: 'cao-cao' },
+    ],
+    description:
+      "Proud and razor-tongued, Mi Heng is summoned as a mere drummer to shame him. At the great assembly he strips bare and drums — the beat grave and defiant — and turns the humiliation back on Cao Cao. Cao dares not kill so famous a scholar; he packs him off to Liu Biao, and thence to Huang Zu, who does the deed. The madness of a famous man is its own scene of the age.",
+    descriptionZh:
+      "禰衡恃才傲物,曹操召為鼓吏以辱之。衡於大會之上裸身擊鼓,音節悲壯,反辱曹操。操怒而不殺 —— 恐傷天下士望 —— 遣之劉表,復轉黃祖,終為黃祖所殺。名士之狂,亦亂世一景。",
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: -3 },
+      { kind: 'flag', key: 'miheng-drums' },
+    ],
+    mood: 'somber',
+  },
+  {
+    id: 'evt-zhoutai-guard',
+    name: { en: 'Zhou Tai, Scarred for His Lord', zh: '周泰九死護主' },
+    yearMin: 213,
+    yearMax: 217,
+    requires: [
+      { kind: 'officer-active', officerId: 'zhou-tai' },
+      { kind: 'officer-active', officerId: 'sun-quan' },
+    ],
+    description:
+      "Surrounded at Ruxu, Sun Quan is cut off by the Wei host. Again and again Zhou Tai charges back into the ring to haul his lord free, until his skin is a map of scars. Sun Quan grips his arm and weeps, bids him bare his wounds, and for each scar pours a cup of wine — then gives him the blue silk parasol. The army is moved to fury.",
+    descriptionZh:
+      "濡須之戰,孫權為魏軍所圍。周泰數番殺入重圍,救權而出,身被數十創,膚如刻畫。權執其臂而泣,命脫衣示創,每一創賜一觴酒,又賜以青羅傘蓋。將士感奮,人思效死。",
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'zhou-tai', delta: 12 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'sun-quan', delta: 3 },
+      { kind: 'flag', key: 'zhoutai-guard' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-kongrong-death',
+    name: { en: 'The Death of Kong Rong', zh: '孔融滿門受戮' },
+    yearMin: 208,
+    yearMax: 208,
+    requires: [
+      { kind: 'officer-active', officerId: 'kong-rong' },
+      { kind: 'officer-active', officerId: 'cao-cao' },
+    ],
+    description:
+      "Kong Rong, descendant of Confucius, needles Cao Cao again and again and champions the failing Han. His anger banked high, Cao charges him with 'unfilial conduct' and 'slander of the court,' and puts his whole household to death. The scholar-gentry shudder — and Cao Cao's grip grows only tighter.",
+    descriptionZh:
+      "孔融孔門之後,屢以言辭譏刺曹操,又力主尊崇漢室。操積怒既久,遂以「不孝」「謗訕朝廷」之罪,收融下獄,滿門處死。融死之日,天下士林寒心;然曹操之威,亦自此愈重 —— 名士之骨,終不敵權臣之刀。",
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: -4 },
+      { kind: 'flag', key: 'kongrong-death' },
+    ],
+    mood: 'ominous',
+  },
   {
     id: 'evt-huarong-path',
     name: { en: 'Mercy on the Huarong Path', zh: '華容道義釋曹操' },
