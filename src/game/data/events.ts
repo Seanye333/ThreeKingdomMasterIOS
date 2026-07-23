@@ -507,6 +507,45 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
   },
   {
+    // 官渡的袁紹視角:曹操已有 evt-wuchao(劫烏巢 vs 按兵)的抉擇,袁紹一方
+    // 此前無選擇 —— 補上田豐之諫,讓袁紹之主也走一次「持重 vs 傾國」的分岔。
+    id: 'evt-guandu-tianfeng',
+    name: { en: "Tian Feng's Remonstrance", zh: '田豐諫止南征' },
+    yearMin: 199,
+    yearMax: 200,
+    requires: [
+      { kind: 'officer-active', officerId: 'yuan-shao' },
+      { kind: 'officer-active', officerId: 'tian-feng' },
+      { kind: 'flag-unset', key: 'guandu-tianfeng-resolved' },
+    ],
+    description:
+      "On the eve of the southern march, Tian Feng urges patience: hold the rich north, harry Cao Cao with raids, let time wear him down. Guo Tu calls it cowardice. To heed Tian Feng keeps the north's full strength — to jail him is the road history took, straight to Guandu.",
+    descriptionZh: "南征在即,田豐力諫:河北富庶,宜持重固守,分遣奇兵擾曹,曠日持久則操自敝。郭圖等斥為怯懦沮眾。納其言,則保全河北全力;逆其言而囚之,便是官渡慘敗之路 —— 而歷史,走的正是後者。",
+    effects: [{ kind: 'flag', key: 'guandu-tianfeng-resolved' }],
+    chooserRulerId: 'yuan-shao',
+    mood: 'somber',
+    choices: [
+      {
+        // choice[0] 必須是史實線(AI 與非當事玩家自動走此) —— 袁紹囚田豐、傾國南下
+        id: 'jail',
+        label: { zh: '怒而囚之,傾國南下(史實)', en: 'Jail him — march south in force' },
+        effects: [
+          { kind: 'mandate-ruler', rulerOfficerId: 'yuan-shao', delta: -3 },
+          { kind: 'officer-loyalty', officerId: 'tian-feng', delta: -10 },
+          { kind: 'flag', key: 'guandu-tianfeng-jailed' },
+        ],
+      },
+      {
+        id: 'heed',
+        label: { zh: '納諫持重,緩圖曹操(逆史)', en: 'Heed him — bide your time' },
+        effects: [
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'yuan-shao', multiplier: 1.1 },
+          { kind: 'flag', key: 'guandu-tianfeng-heeded' },
+        ],
+      },
+    ],
+  },
+  {
     id: 'evt-sun-ce-assassinated',
     name: { en: 'Sun Ce Assassinated', zh: '孫策死於刺客' },
     yearMin: 200,
@@ -609,21 +648,63 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       { kind: 'officer-loyalty', officerId: 'cao-pi', delta: 20 },
     ],
   },
+  /* ─── 夷陵 — 連營抉擇,一陣東南風定成敗 (chooser: 劉備) ─────────── */
   {
     id: 'evt-battle-of-yiling',
-    name: { en: 'The Battle of Yiling', zh: '夷陵之戰' },
+    name: { en: 'The Camps at Yiling', zh: '夷陵連營' },
     yearMin: 222,
     yearMax: 223,
     requires: [
       { kind: 'force-alive', forceId: 'force-liu-bei' },
       { kind: 'force-alive', forceId: 'force-sun-quan' },
+      { kind: 'officer-active', officerId: 'liu-bei' },
+      { kind: 'flag-unset', key: 'yiling-resolved' },
     ],
     description:
-      'Liu Bei marches east to avenge Guan Yu. Lu Xun, fresh-faced and underestimated, lets him exhaust himself, then burns his camps across seven hundred li. The Shu host is annihilated.',
-    descriptionZh: "劉備東征為關羽復仇。陸遜年少氣盛卻深諳兵法,坐視蜀軍疲憊,而後火燒連營七百里。蜀軍幾乎全軍覆沒。",
-    effects: [
-      { kind: 'force-troops-multiplier', forceId: 'force-liu-bei', multiplier: 0.5 },
+      "Liu Bei marches east to avenge Guan Yu. As high summer bears down, he pulls the army off the boats and into the forest shade — seven hundred li of camps, dry wood upon dry wood. Ma Liang urges caution. Across the line, the young Lu Xun waits for a south-east wind.",
+    descriptionZh: "劉備東征為關羽復仇。時值盛暑,乃舍舟就岸,移營林間避暑,連營七百里,盡結於茂林之中。馬良諫其危,劉備不以為意。對岸陸遜年少,只靜待一陣東南風。",
+    effects: [{ kind: 'flag', key: 'yiling-resolved' }],
+    chooserRulerId: 'liu-bei',
+    mood: 'martial',
+    choices: [
+      {
+        id: 'lianying',
+        label: { zh: '依林結營避暑(史實)', en: 'Camp in the forest shade' },
+        effects: [
+          { kind: 'force-troops-multiplier', forceId: 'force-liu-bei', multiplier: 0.5 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-quan', delta: 8 },
+          { kind: 'flag', key: 'yiling-lianying' },
+        ],
+      },
+      {
+        id: 'cautious',
+        label: { zh: '納馬良之諫,依險謹慎結寨', en: 'Heed Ma Liang — fortify with care' },
+        effects: [
+          { kind: 'force-troops-multiplier', forceId: 'force-liu-bei', multiplier: 0.85 },
+          { kind: 'force-troops-multiplier', forceId: 'force-sun-quan', multiplier: 0.95 },
+          { kind: 'flag', key: 'yiling-cautious' },
+        ],
+      },
     ],
+  },
+  {
+    id: 'evt-yiling-fire',
+    name: { en: 'Seven Hundred Li Ablaze', zh: '火燒連營七百里' },
+    yearMin: 222,
+    yearMax: 223,
+    requires: [
+      { kind: 'flag-set', key: 'yiling-lianying' },
+      { kind: 'officer-active', officerId: 'lu-xun' },
+    ],
+    description:
+      "The south-east wind rises at dusk. Lu Xun's men strike into the forest camps with torches, and the fire runs the whole length of the line. The Shu host breaks and scatters; Liu Bei flees by night to Baidicheng. A young scholar-general has undone an emperor.",
+    descriptionZh: "黃昏東南風起,陸遜命士卒各持茅草火種,突入連營縱火。火乘風勢,七百里營寨一時俱焚,蜀軍崩潰。劉備連夜奔白帝城。一介書生拜將,竟燒盡帝王之師,自此名震天下。",
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'lu-xun', delta: 10 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'sun-quan', delta: 5 },
+      { kind: 'flag', key: 'yiling-fire' },
+    ],
+    mood: 'ominous',
   },
   {
     id: 'evt-liu-bei-dies',
