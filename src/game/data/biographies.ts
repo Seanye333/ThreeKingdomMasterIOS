@@ -3402,6 +3402,21 @@ const SUPPLEMENTAL_QUOTES: Record<string, { zh: string; en: string }> = {
   'cai-wenji':  { zh: '人生几何时,怀忧终年岁 —— 胡笳一曲,肝肠寸断。', en: 'How brief this life, yet care fills all its years — one air upon the nomad reed-pipe, and the heart breaks inch by inch.' },
   'lady-sun':   { zh: '侍婢数百,居常带刀 —— 江东儿女,未必逊于男儿。', en: 'Hundreds of maids about her, a blade always at her side — the daughters of Jiangdong yield nothing to its sons.' },
   'lady-huang': { zh: '莫道妇人无巧思,木牛流马我能陈。', en: 'Say not a woman has no cunning — the wooden ox and gliding horse, I too can lay them out.' },
+  // 二線名將金句補·二批 (2026-07)
+  'zhang-liao':  { zh: '賊至乃發,何遽也——八百破十萬,威震逍遙。', en: 'Strike only when the enemy comes — why the haste? Eight hundred broke a hundred thousand, and shook Xiaoyao Ford.' },
+  'taishi-ci':   { zh: '信、義,慈所以立身也;大丈夫一諾,死生不易。', en: 'Good faith and righteousness — by these Ci stands in the world; a true man\'s single word does not change for life or death.' },
+  'deng-ai':     { zh: '艾……艾……鳳兮鳳兮,故是一鳳。', en: '"Ai... Ai..." — Phoenix, O phoenix; yet still it is but one phoenix.' },
+  'jiang-wei':   { zh: '良田百頃,不在一畝;但有遠志,不在當歸。', en: 'A hundred acres of good field turn not on a single mu; a man of far ambition is not for coming home.' },
+  'hua-tuo':     { zh: '此可先服麻沸散,刳破腹背,抽割積聚——病若在腸,則斷腸湔洗。', en: 'First take the numbing draught; then I cut open belly and back and excise the mass — if the ill lies in the gut, I sever it and wash it clean.' },
+  'pang-de':     { zh: '良將不怯死以苟免,烈士不毀節以求生。', en: 'A good general does not flinch from death to save himself; a man of honour does not break his integrity to live.' },
+  'chen-gong':   { zh: '請出就戮,以明軍法——但求老母妻子,望明公裁之。', en: 'Let me go out to the execution, that military law be made plain — I ask only that you weigh the fate of my old mother and my wife.' },
+  'ma-liang':    { zh: '馬氏五常,白眉最良。', en: 'Of the five Ma brothers, all styled Chang, the White-Browed is the finest.' },
+  'jiang-wan':   { zh: '吾實不如前人,然天下未定,不敢不勉。', en: 'I am truly not the equal of those before me; yet the realm is unsettled, and I dare not fail to strive.' },
+  'fei-yi':      { zh: '天下之事,當以緩急權之——輕重之間,不可不慎。', en: 'The affairs of the realm must be weighed by their urgency — between the light and the grave, one cannot but be careful.' },
+  'deng-zhi':    { zh: '臣此來,亦欲為吳,不獨為蜀也。', en: 'I have come, in truth, for Wu\'s sake as much as for Shu\'s.' },
+  'xun-yu':      { zh: '本志乃匡朝寧國,秉忠貞之誠,守退讓之實。', en: 'My first purpose was to right the court and steady the state — holding to loyal sincerity, keeping to the substance of deference.' },
+  'guo-jia':     { zh: '袁公徒欲效周公之下士,而不知用人之機。', en: 'Lord Yuan would ape the Duke of Zhou in courting the lowly, yet knows nothing of the art of using men.' },
+  'sun-ce':      { zh: '天下大亂,方今正好縱橫——安能鬱鬱久居人下!', en: 'The realm is in great disorder — now is precisely the time to strike across it. How could I linger, stifled, long beneath another?' },
 };
 for (const [id, q] of Object.entries(SUPPLEMENTAL_QUOTES)) {
   const bio = BIOGRAPHIES[id];
