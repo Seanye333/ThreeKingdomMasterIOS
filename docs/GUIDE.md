@@ -3096,7 +3096,7 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
 - **每日挑戰 dailyChallenge.ts**:日期種子全網同題(困難+迷霧+隨機第三條),最佳成績本地存,🏆 全球排行榜(leaderboard.ts,需 Vercel KV;未開通則本地)。
 - **Mod 數據包 mods.ts**:JSON 加武將/事件/劇本(重畫城池歸屬),id 自動隔離。
 - **音效・BGM sound.ts**:全程 Web Audio 合成,零素材;環境音(風/鳥/蟲/鼓)。
-- **氛圍與旁白(flavor 層)**:戰場語音(voiceLines.ts —— 出陣/斬將/危殆台詞)、季度隨機對話事件(dialogues.ts / dialogueRoll,多為趣味、少數有實際效果)、派系事件(factionEvents.ts)、AI 朝廷請願旁白(aiWishesFlavor.ts —— 每季 0~2 條,且晉升/賞賜會真的調動軍階與忠誠)。
+- **氛圍與旁白(flavor 層)**:戰場語音(voiceLines.ts —— 出陣/斬將/危殆台詞;2026-07 由 20→28 人,補陸遜/姜維/龐德/張郃/鄧艾/魏延/夏侯淵/徐晃)、季度隨機對話事件(dialogues.ts / dialogueRoll,多為趣味、少數有實際效果)、派系事件(factionEvents.ts)、AI 朝廷請願旁白(aiWishesFlavor.ts —— 每季 0~2 條,且晉升/賞賜會真的調動軍階與忠誠)。
 - **慶典彈窗(CelebrationPopup + popups/assets.ts)**:遇高光時刻彈一張電影感 key art(或 `.mp4` 短片),點/逾時(5.2s)進佇列下一張;缺圖則退化為樣式卡片,故無素材也不崩。已接線觸發涵蓋第一~四章:升城/遷都/建築/堅城/招攬(原有 8 鍵),加上**天災**(旱蝗/水患/瘟疫)、**轉生突破**、**晉牌封賞**(金牌+品階)、**及冠出仕**、**府內結親**、**名將辭世**、**封爵**、**拜名號將軍**、**月旦評**(上品)、**全軍集結**、**委任太守**、**州牧晉升**、**考課殿最**。資產約定 `public/popups/<key>.jpg|png|mp4`(16:9,~1400px);全鍵表見 `public/popups/README.md`。高頻事件(品階/辭世/誕生)限名將/世子且每季封頂,以免刷屏。
 - **其餘可選 key-art 槽位(皆有缺圖 fallback)**:① **標題大背景** `public/title-hero.jpg`(壓暗墊於標題屏後);② **戰役封面** `public/scenarios/<scenarioId>.jpg`(選戰役頁顯於 MiniMap 上方,缺圖只顯 minimap;全 86 戰役清單+prompt 見該目錄 README/PROMPTS);③ **戰果配圖** `public/battle/<key>.jpg`(戰術戰結算橫幅背景,key = 野戰/攻城 × 勝/敗:`field-victory`/`field-defeat`/`siege-victory`/`siege-defeat`,缺圖只剩文字橫幅;見 `public/battle/README.md`)。
 - **遺澤 legacy.ts(2026-07)**:第一個**真正跨戰役影響下一局**的機制(圖鑑與勳功只是紀錄,不改變下一局)。

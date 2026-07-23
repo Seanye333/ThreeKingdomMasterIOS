@@ -37,6 +37,73 @@ export interface VoiceLineSet {
 }
 
 export const VOICE_LINES: Record<string, VoiceLineSet> = {
+  // ─── 2026-07 補:侦查發現的未覆蓋知名戰將 ───
+  'lu-xun': {
+    spawn: ['書生拜將，亦能焚爾連營！'],
+    attack: ['受我一擊！', '看火！'],
+    critical: ['火燒七百里！'],
+    kill: ['天時已至！'],
+    lowHp: ['勝敗乃兵家常事...'],
+    duel: ['莫欺我年少！'],
+    stratagem: ['火起，風助我也！'],
+  },
+  'jiang-wei': {
+    spawn: ['繼丞相之志，誓復中原！'],
+    attack: ['看槍！', '受死！'],
+    critical: ['武侯所授，此一擊！'],
+    kill: ['魏賊授首！'],
+    lowHp: ['吾計不成，乃天命也...'],
+    duel: ['天水姜伯約在此！'],
+    stratagem: ['以奇制勝！'],
+  },
+  'pang-de': {
+    spawn: ['抬櫬而來，有死無還！'],
+    attack: ['接我一刀！'],
+    critical: ['決死一擊！'],
+    kill: ['擋我者死！'],
+    lowHp: ['寧死不降！'],
+    duel: ['關某也休想教我退半步！'],
+  },
+  'zhang-he': {
+    spawn: ['河間張郃，善能巧變！'],
+    attack: ['看招！', '哼！'],
+    critical: ['一擊制敵，防不勝防！'],
+    kill: ['爾之破綻，早在我目中！'],
+    lowHp: ['退而復整，再與爾戰！'],
+    duel: ['用兵如神，豈在力哉？'],
+  },
+  'deng-ai': {
+    spawn: ['偷渡陰平，直取成都！'],
+    attack: ['受我一擊！'],
+    critical: ['出其不意，攻其不備！'],
+    kill: ['蜀將，授首！'],
+    lowHp: ['吾忠心可昭日月...'],
+    duel: ['姜維，來戰！'],
+  },
+  'wei-yan': {
+    spawn: ['大將魏延在此，誰敢來戰？'],
+    attack: ['看我大刀！'],
+    critical: ['子午奇謀，一擊斃命！'],
+    kill: ['擋者披靡！'],
+    lowHp: ['誰敢殺我？！'],
+    duel: ['長沙魏延，會你一會！'],
+  },
+  'xiahou-yuan': {
+    spawn: ['妙才在此，虎步關右！'],
+    attack: ['受我一箭！', '看招！'],
+    critical: ['神速一擊！'],
+    kill: ['三日五百，六日一千！'],
+    lowHp: ['悔不聽張郃之言...'],
+    duel: ['會你一會！'],
+  },
+  'xu-huang': {
+    spawn: ['徐公明在此！'],
+    attack: ['長驅直入！'],
+    critical: ['大斧一劈，勢不可當！'],
+    kill: ['軍法無情！'],
+    lowHp: ['整軍，再戰！'],
+    duel: ['試我大斧！'],
+  },
   'lu-bu': {
     spawn: ['天下無双!', '人中之呂布，馬中之赤兎!'],
     attack: ['哼!', '休得阻擋!', '我之方天畫戟，接招!'],
