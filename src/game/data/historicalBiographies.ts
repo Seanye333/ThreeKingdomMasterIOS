@@ -5113,6 +5113,25 @@ const SUPPLEMENTAL_HIST_QUOTES: Record<string, { zh: string; en: string }> = {
   'hist-hua-mulan':     { zh: '萬里赴戎機,關山度若飛 —— 將軍百戰死,壯士十年歸。', en: 'Ten thousand li she rode to the war, over passes and peaks as if in flight — generals die in a hundred battles, the brave return after ten years.' },
   'hist-zuo-zongtang':  { zh: '身無半畝,心憂天下;讀破萬卷,神交古人。', en: 'Not half an acre to my name, yet my heart grieves for the realm; ten thousand books read through, my spirit communes with the ancients.' },
   'hist-yue-yi':        { zh: '古之君子,交絕不出惡聲;忠臣去國,不潔其名。', en: 'The gentlemen of old, when a friendship ended, spoke no ill; the loyal minister who leaves his state does not clear his own name at its cost.' },
+  // 歷代二線名將金句補·三 (2026-07)
+  'hist-lian-po':      { zh: '我為趙將,有攻城野戰之大功;而藺相如徒以口舌為勞,位居我上。', en: 'I am a general of Zhao, with the great merit of storming cities and open battle; yet Lin Xiangru, whose toil was but words, is set above me.' },
+  'hist-lin-xiangru':  { zh: '先國家之急,而後私讎也。', en: "I put the state's urgent needs first, and private quarrels after." },
+  'hist-wu-qi':        { zh: '在德不在險——若君不修德,舟中之人盡為敵國也。', en: 'It lies in virtue, not in ramparts — if a ruler cultivates no virtue, the very men in his own boat become his enemies.' },
+  'hist-wu-zixu':      { zh: '抉吾眼懸吳東門之上,以觀越寇之入滅吳!', en: 'Pluck out my eyes and hang them over the eastern gate of Wu, that I may watch the Yue invaders enter and destroy it!' },
+  'hist-guan-zhong':   { zh: '倉廩實而知禮節,衣食足而知榮辱。', en: 'When the granaries are full, men know propriety; when food and clothing suffice, they know honour and shame.' },
+  'hist-cao-gui':      { zh: '肉食者鄙,未能遠謀——夫戰,勇氣也,一鼓作氣。', en: 'The meat-eaters are shortsighted, unfit for far counsel — as for battle, it is a matter of spirit: the first drum rouses courage.' },
+  'hist-li-mu':        { zh: '將在外,君令有所不受——匈奴小入,佯北不勝,而後大破之。', en: 'A general in the field need not obey every royal order — when the Xiongnu made small raids, I feigned defeat, then broke them utterly.' },
+  'hist-wang-jian':    { zh: '為大王將,有功終不得封侯,故及時請園池為子孫業耳。', en: "As Your Majesty's general, merit will never win me a marquisate — so I ask in good time for gardens and ponds, as a legacy for my sons." },
+  'hist-xie-an':       { zh: '小兒輩遂已破賊。', en: 'The young ones have gone and broken the foe. (said, unmoved over his chessboard)' },
+  'hist-chen-qingzhi': { zh: '名師大將莫自牢,千兵萬馬避白袍。', en: 'Let famed hosts and great generals not think themselves secure — a thousand troops, ten thousand horse, all give way before the White Robe.' },
+  'hist-wang-meng':    { zh: '捫蝨而談天下大勢,旁若無人。', en: 'Picking lice from his robe, he discoursed on the fate of the realm as though no one else were there.' },
+  'hist-huan-wen':     { zh: '既不能流芳後世,不足復遺臭萬載邪!', en: 'If a man cannot leave his fragrance to later ages, is it not enough at least to leave a stench for ten thousand years?' },
+  'hist-liu-kun':      { zh: '枕戈待旦,志梟逆虜,常恐祖生先吾著鞭。', en: 'I sleep on my spear awaiting dawn, bent on beheading the rebels — ever fearing that Zu Ti will crack the whip before me.' },
+  'hist-tian-ji':      { zh: '以君下駟對彼上駟,取君上駟對彼中駟——一敗而再勝。', en: 'Match your worst horse against his best, then your best against his second — one loss, and two wins.' },
+  'hist-zhao-she':     { zh: '其道遠險狹,譬猶兩鼠鬥於穴中,將勇者勝。', en: 'The road is far, steep and narrow — it is like two rats fighting in a hole: the braver general wins.' },
+  'hist-pang-juan':    { zh: '遂成豎子之名!', en: "So I have made that wretch's name! (at Maling, reading the tree)" },
+  'hist-xie-xuan':     { zh: '請君少卻,令晉兵得渡,以決勝負。', en: 'Draw back a little, I pray, and let the Jin troops cross — that the matter may be decided. (at the Fei River)' },
+  'hist-fan-li':       { zh: '飛鳥盡,良弓藏;狡兔死,走狗烹。越王長頸鳥喙,可與共患難,不可與共樂。', en: 'When the birds are gone, the good bow is stored; when the hare is dead, the hound is cooked. The King of Yue, long-necked and hawk-beaked, one may share hardship with, but not ease.' },
 };
 for (const [id, q] of Object.entries(SUPPLEMENTAL_HIST_QUOTES)) {
   const bio = HISTORICAL_BIOGRAPHIES[id];
