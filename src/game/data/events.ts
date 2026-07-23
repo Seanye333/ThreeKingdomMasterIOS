@@ -1606,6 +1606,136 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       { kind: 'flag', key: 'wu-founded' },
     ],
   },
+  // ─────────── 經典橋段補遺(2026-07 第二批):演義名場面 ───────────
+  {
+    id: 'evt-maleap-tanxi',
+    name: { en: 'The Leap Across Tan Creek', zh: '馬躍檀溪' },
+    yearMin: 201,
+    yearMax: 207,
+    requires: [
+      { kind: 'officer-active', officerId: 'liu-bei' },
+      { kind: 'officer-alive', officerId: 'liu-biao' },
+    ],
+    description:
+      "At a banquet in Xiangyang, Cai Mao lays a trap for Liu Bei. Sensing it, Liu Bei rides west alone — Tan Creek before him, pursuers behind. He spurs his horse into the water; Dilu heaves up from the current and clears three zhang in a single bound to the far bank. 'Dilu, today is deadly — do your utmost!'",
+    descriptionZh:
+      "劉備赴襄陽宴,蔡瑁欲害之。備覺,匹馬西走,前臨檀溪,後有追兵。備縱馬入溪,的盧馬忽從水中湧身而起,一躍三丈,飛上西岸。備回顧追者,嘆曰:「的盧,今日危矣,可努力!」天不亡備,王業之基,竟繫於一馬一躍。",
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'liu-bei', delta: 3 },
+      { kind: 'flag', key: 'maleap-tanxi' },
+    ],
+    mood: 'auspicious',
+  },
+  {
+    id: 'evt-zhang-song-map',
+    name: { en: 'Zhang Song Offers the Map of Shu', zh: '張松獻西川地圖' },
+    yearMin: 211,
+    yearMax: 213,
+    requires: [
+      { kind: 'officer-active', officerId: 'zhang-song' },
+      { kind: 'officer-active', officerId: 'liu-bei' },
+    ],
+    description:
+      "Zhang Song carries a map of Yi province to Xuchang to offer Cao Cao. Cao, put off by his ugliness and stung by his sharp tongue, has him beaten and driven out. Enraged, Zhang Song turns to Jing province, where Liu Bei greets him at the outskirts with every courtesy. Moved, he hands Liu Bei the full geography of the forty-one commanderies of Shu — the groundwork for the taking of Yi.",
+    descriptionZh:
+      "張松懷西川地圖入許都,欲獻曹操。操見其貌陋而慢之,松又恃才頂撞,遭杖責逐出。松憤而轉道荊州,劉備郊迎三十里,禮敬備至,款留三日。松感其誠,遂獻西川四十一州地理圖本,備言蜀中虛實 —— 劉備取蜀之基,自此而定。",
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'liu-bei', delta: 5 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: -3 },
+      { kind: 'flag', key: 'zhang-song-map' },
+    ],
+    mood: 'somber',
+  },
+  {
+    id: 'evt-zhou-yu-dies',
+    name: { en: 'Why Did Heaven Make Liang?', zh: '周瑜歸天' },
+    yearMin: 210,
+    yearMax: 211,
+    requires: [{ kind: 'officer-active', officerId: 'zhou-yu' }],
+    description:
+      "Matched wits with Kongming once too often, Zhou Yu can never quite win. His old arrow-wound splits open and he lies dying at Baqiu. He memorialises to name Lu Su his successor, then cries to heaven: 'Since Heaven made Yu, why also Liang!' — and dies at thirty-six. The south loses its Grand Commander; Sun Quan mourns in white.",
+    descriptionZh:
+      "周瑜屢與孔明鬥智,終不能勝。舊創迸裂,臥病巴丘。臨終上疏薦魯肅自代,仰天連叫:「既生瑜,何生亮!」數聲而亡,年僅三十六。江東痛失大都督,孫權素服舉哀,親迎其喪。美周郎一去,東吳再無此等文武兼資之帥。",
+    effects: [
+      { kind: 'officer-status', officerId: 'zhou-yu', status: 'dead' },
+      { kind: 'mandate-ruler', rulerOfficerId: 'sun-quan', delta: -3 },
+      { kind: 'flag', key: 'zhou-yu-dead' },
+    ],
+    mood: 'somber',
+  },
+  {
+    id: 'evt-gefa-daishou',
+    name: { en: 'Hair for a Head', zh: '割髮代首' },
+    yearMin: 198,
+    yearMax: 200,
+    requires: [{ kind: 'officer-active', officerId: 'cao-cao' }],
+    description:
+      "Cao Cao orders death for any man whose horse tramples the standing wheat. A startled dove flushes; his own mount bolts into the field and flattens a swathe. He calls the clerk to sentence him. 'The law does not touch the exalted,' says the clerk. 'A law-maker who breaks his own law — how shall he command men?' Cao draws his sword, cuts off his hair in place of his head, and passes it down the ranks. The army goes still with awe.",
+    descriptionZh:
+      "曹操行軍,下令踐踏麥田者斬。忽田中驚起一鳩,操馬躍入麥中,踏壞一片。操呼主簿議己罪,主簿曰:「法不加於尊。」操曰:「制法而自犯,何以服眾?」乃拔劍割髮,以髮代首,傳示三軍。於是軍中肅然,秋毫無犯 —— 治軍之嚴,亦收攬眾之效。",
+    effects: [
+      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'cao-cao', multiplier: 1.03 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: 3 },
+      { kind: 'flag', key: 'gefa-daishou' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-hengshuo-poetry',
+    name: { en: 'The Spear-Song at Red Cliffs', zh: '橫槊賦詩' },
+    yearMin: 208,
+    yearMax: 208,
+    season: 'winter',
+    requires: [{ kind: 'officer-active', officerId: 'cao-cao' }],
+    description:
+      "On the eve of Red Cliffs, Cao Cao feasts his officers aboard ship under a bright moon. He takes up his spear at the prow and sings: 'Wine before song — how brief a life... the moon is bright, the stars are few, the crows fly south.' He boasts he will break Wu by morning. When Liu Fu calls the words ill-omened, Cao runs him through in a fury. Pride at its zenith — and in that cup and spear, the seed of ruin already sown.",
+    descriptionZh:
+      "赤壁對峙,曹操大宴諸將於船上。時值月明,操取槊立於船頭,慷慨而歌:「對酒當歌,人生幾何……月明星稀,烏鵲南飛。」揚言旦夕破吳。揚州刺史劉馥諫其言不吉,操怒,以槊刺殺之。志得意滿之際,敗亡之機,已伏於杯酒橫槊之間。",
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: 3 },
+      { kind: 'flag', key: 'hengshuo-poetry' },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-mumen-zhanghe',
+    name: { en: 'The Ambush at Wooden Gate', zh: '木門道射張郃' },
+    yearMin: 231,
+    yearMax: 231,
+    requires: [
+      { kind: 'officer-active', officerId: 'zhuge-liang' },
+      { kind: 'officer-active', officerId: 'zhang-he' },
+    ],
+    description:
+      "Zhuge Liang withdraws, and Zhang He gives chase. But Kongming has set an ambush at Wooden Gate Road, where two cliffs press close over dense woods. As Zhang He rides in, a clapper sounds and a storm of crossbow bolts falls; he and his officers die in the defile. Wei loses the one general who could still spar with Kongming — and Sima Yi rues that he did not heed Zhang He's counsel.",
+    descriptionZh:
+      "諸葛亮退軍,張郃率兵急追。亮預設伏於木門道,兩崖夾峙,林木深密。郃追至,一聲梆子響,萬弩齊發,郃與部將皆中箭死於道中,右膝中箭而亡。魏失一員能與孔明周旋之宿將,司馬懿追悔不聽郃「歸師勿追」之諫。",
+    effects: [
+      { kind: 'officer-status', officerId: 'zhang-he', status: 'dead' },
+      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'cao-rui', multiplier: 0.96 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'liu-shan', delta: 4 },
+      { kind: 'flag', key: 'mumen-zhanghe' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-longshang-harvest',
+    name: { en: 'The Gods Reap the Wheat', zh: '隴上裝神割麥' },
+    yearMin: 231,
+    yearMax: 231,
+    season: 'summer',
+    requires: [{ kind: 'officer-active', officerId: 'zhuge-liang' }],
+    description:
+      "Out of Qishan and short of grain, Zhuge Liang plays the god: three teams of men on four-wheeled carts, got up as spirits amid drifting incense, ghostly and unreal. The Wei troops recoil, afraid to close. In the gap Kongming reaps the whole of the Longshang wheat and hauls it back to Lucheng to feed his army. 'These are the spirits of the Six-Jia and Six-Ding!' cries Sima Yi in alarm.",
+    descriptionZh:
+      "諸葛亮出祁山,缺糧,乃扮天神:分三隊各推四輪車,車上作法之狀,焚香朦朧,如神如鬼。魏軍望之驚疑,不敢近前。亮乘隙盡割隴上小麥,運回滷城,以充軍糧。司馬懿驚曰:「此乃六丁六甲之神也!」奇謀不獨在陣前,亦在敵之疑懼之間。",
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'liu-shan', delta: 3 },
+      { kind: 'flag', key: 'longshang-harvest' },
+    ],
+    mood: 'mystic',
+  },
+
   // ─────────── 武將個人時刻(2026-07):名士與忠勇的專屬名場面 ───────────
   {
     id: 'evt-miheng-drums',
