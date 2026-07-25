@@ -3694,4 +3694,1738 @@ export const SCENARIO_OBJECTIVES: Record<string, ScenarioObjective[]> = {
       },
     },
   ],
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Warring States. These boards reuse the Three Kingdoms map and its
+  // calendar (all start in year 178), so deadlines are given in game years,
+  // not the historical ones. City stand-ins: Chang'an = Xianyang,
+  // Ye = Handan, Linzi = Qi's capital, Ji = Yan's, Xuchang = Xinzheng,
+  // Chenliu = Daliang, Jiangling = Ying.
+  // ───────────────────────────────────────────────────────────────────────
+
+  // The seven powers
+  'scn-ws-seven': [
+    {
+      id: 'obj-ws7-qin',
+      forceId: 'qin',
+      primary: {
+        title: { zh: '橫掃六合', en: 'Sweep Up the Six' },
+        description: 'Bring all under one banner — from behind the Hangu Pass, one province at a time.',
+        descriptionZh: "混一天下 —— 據函谷之險,遠交而近攻,蠶食諸侯。",
+        goal: { kind: 'unify-realm' },
+      },
+      secondary: [
+        {
+          title: { zh: '東出函谷', en: 'East Through Hangu' },
+          description: 'Take Luoyang and Chenliu by 200.',
+          descriptionZh: "於200年前東取洛陽、陳留 —— 先取韓魏,則天下之樞在我。",
+          goal: { kind: 'hold-cities', cityIds: ['luoyang', 'chenliu'], byYear: 200 },
+        },
+      ],
+    },
+    {
+      id: 'obj-ws7-chu',
+      forceId: 'chu',
+      primary: {
+        title: { zh: '地方五千里', en: 'Five Thousand Li of Land' },
+        description: "Take Chang'an by 205 — the largest state has never once used its size.",
+        descriptionZh: "於205年前西取長安 —— 楚地五千里,帶甲百萬,從未真正用出來過。",
+        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 205 },
+      },
+      secondary: [
+        {
+          title: { zh: '合縱抗秦', en: 'The Vertical Alliance' },
+          description: 'Destroy the Qin force.',
+          descriptionZh: "擊滅秦國 —— 楚雖三戶,亡秦必楚。",
+          goal: { kind: 'defeat-force', forceId: 'qin' },
+        },
+      ],
+    },
+    {
+      id: 'obj-ws7-qi',
+      forceId: 'qi',
+      primary: {
+        title: { zh: '東帝之業', en: 'Emperor of the East' },
+        description: 'Declare yourself emperor — Qin took the western title; take the eastern one.',
+        descriptionZh: "稱帝建號 —— 秦為西帝,齊為東帝,本是說好的。",
+        goal: { kind: 'declare-emperor' },
+      },
+      secondary: [
+        {
+          title: { zh: '稷下之盛', en: 'The Jixia Academy' },
+          description: 'Still hold Linzi and Beihai in 200.',
+          descriptionZh: "至200年仍保臨淄、北海 —— 稷下學宮,天下文樞。",
+          goal: { kind: 'hold-cities', cityIds: ['linzi', 'beihai'], byYear: 200 },
+        },
+      ],
+    },
+    {
+      id: 'obj-ws7-yan',
+      forceId: 'yan',
+      primary: {
+        title: { zh: '黃金台', en: 'The Terrace of Gold' },
+        description: 'Take Linzi by 198 — twenty-eight years of humiliation, repaid in one campaign.',
+        descriptionZh: "於198年前攻取臨淄 —— 築黃金台以求士,雪二十八年之恥。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi'], byYear: 198 },
+      },
+    },
+    {
+      id: 'obj-ws7-zhao',
+      forceId: 'zhao',
+      primary: {
+        title: { zh: '胡服騎射', en: 'Nomad Dress, Mounted Archery' },
+        description: 'Take Taiyuan, Yanmen and Yunzhong by 195, then strike at Qin.',
+        descriptionZh: "於195年前據太原、雁門、雲中 —— 胡服騎射,北取樓煩林胡之地。",
+        goal: { kind: 'hold-cities', cityIds: ['taiyuan', 'yanmen', 'yunzhong'], byYear: 195 },
+      },
+      secondary: [
+        {
+          title: { zh: '自雲中襲秦', en: 'Down on Qin from Yunzhong' },
+          description: "Take Chang'an by 205 — Wuling's own plan: ride south out of the steppe.",
+          descriptionZh: "於205年前攻取長安 —— 武靈王的舊策:自雲中南襲咸陽。",
+          goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 205 },
+        },
+      ],
+    },
+    {
+      id: 'obj-ws7-wei',
+      forceId: 'wei',
+      primary: {
+        title: { zh: '重整武卒', en: 'Rebuild the Wu Zu' },
+        description: 'Hold Chenliu, Luoyang and Puyang by 198 — the first hegemon, fallen to a buffer state.',
+        descriptionZh: "於198年前據陳留、洛陽、濮陽 —— 戰國首霸,如今夾在秦齊之間。",
+        goal: { kind: 'hold-cities', cityIds: ['chenliu', 'luoyang', 'puyang'], byYear: 198 },
+      },
+    },
+    {
+      id: 'obj-ws7-han',
+      forceId: 'han',
+      primary: {
+        title: { zh: '勁弩勁韓', en: 'The Crossbows of Han' },
+        description: 'Still hold Luoyang and Xuchang in 200 — smallest of the seven, first to be eaten.',
+        descriptionZh: "至200年仍保洛陽、許昌 —— 七雄之末,秦之近攻首當其衝。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang'], byYear: 200 },
+      },
+      secondary: [
+        {
+          title: { zh: '存韓', en: 'Han Survives' },
+          description: 'Survive to 210.',
+          descriptionZh: "存續至210年 —— 韓非入秦而死,他要保的就是這件事。",
+          goal: { kind: 'survive-until', year: 210 },
+        },
+      ],
+    },
+  ],
+
+  // Marquis Wen of Wei, the first hegemon
+  'scn-ws-weiwen': [
+    {
+      id: 'obj-wswen-wei',
+      forceId: 'wei',
+      primary: {
+        title: { zh: '盡取西河', en: 'Take the West of the River' },
+        description: "Take Chang'an and Tongguan by 195 — Wu Qi held this line against Qin for decades.",
+        descriptionZh: "於195年前西取長安、潼關 —— 吳起守西河,秦兵不敢東向。",
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'tongguan'], byYear: 195 },
+      },
+      secondary: [
+        {
+          title: { zh: '首霸中原', en: 'First Hegemon' },
+          description: 'Hold Chenliu, Luoyang and Ye by 198.',
+          descriptionZh: "於198年前據陳留、洛陽、鄴城 —— 用李悝變法,魏最先強。",
+          goal: { kind: 'hold-cities', cityIds: ['chenliu', 'luoyang', 'ye'], byYear: 198 },
+        },
+      ],
+    },
+    {
+      id: 'obj-wswen-qin',
+      forceId: 'qin',
+      primary: {
+        title: { zh: '收復河西', en: 'Win Back the West Bank' },
+        description: "Still hold Chang'an in 195 — before Shang Yang, Qin is the weak one.",
+        descriptionZh: "至195年仍守長安 —— 商鞅未至,此時的秦是弱國。",
+        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 195 },
+      },
+      secondary: [
+        {
+          title: { zh: '終有天下', en: 'The Long Game' },
+          description: 'Bring all under one banner.',
+          descriptionZh: "混一天下。",
+          goal: { kind: 'unify-realm' },
+        },
+      ],
+    },
+    {
+      id: 'obj-wswen-zhao',
+      forceId: 'zhao',
+      primary: {
+        title: { zh: '三晉之分', en: 'The Three Jin Divide' },
+        description: 'Take Ye and Shangdang by 198.',
+        descriptionZh: "於198年前據鄴城、上黨 —— 三家分晉,魏最強而趙不甘。",
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'shangdang'], byYear: 198 },
+      },
+    },
+    {
+      id: 'obj-wswen-chu',
+      forceId: 'chu',
+      primary: {
+        title: { zh: '吳起變法', en: "Wu Qi's Reforms" },
+        description: 'Take Wancheng and Xuchang by 200 — Wu Qi went south after Wei drove him out.',
+        descriptionZh: "於200年前北取宛城、許昌 —— 吳起去魏入楚,楚亦可強。",
+        goal: { kind: 'hold-cities', cityIds: ['wancheng', 'xuchang'], byYear: 200 },
+      },
+    },
+  ],
+
+  // Shang Yang's reforms
+  'scn-ws-shangyang': [
+    {
+      id: 'obj-wssy-qin',
+      forceId: 'qin',
+      primary: {
+        title: { zh: '徙木立信', en: 'The Pole at the South Gate' },
+        description: 'Take Tongguan, Luoyang and Chenliu by 200 — law before conquest, then conquest.',
+        descriptionZh: "於200年前東取潼關、洛陽、陳留 —— 先立法,後出兵。",
+        goal: { kind: 'hold-cities', cityIds: ['tongguan', 'luoyang', 'chenliu'], byYear: 200 },
+      },
+      secondary: [
+        {
+          title: { zh: '席捲天下', en: 'Roll Up the Realm' },
+          description: 'Bring all under one banner.',
+          descriptionZh: "混一天下 —— 有席捲天下、包舉宇內之意。",
+          goal: { kind: 'unify-realm' },
+        },
+      ],
+    },
+    {
+      id: 'obj-wssy-wei',
+      forceId: 'wei',
+      primary: {
+        title: { zh: '悔不殺鞅', en: 'We Should Have Killed Him' },
+        description: 'Destroy the Qin force by 205 — you had Shang Yang in your court and let him go west.',
+        descriptionZh: "於205年前擊滅秦國 —— 公叔痤說「不用則殺之」,你沒有聽。",
+        goal: { kind: 'defeat-force', forceId: 'qin', byYear: 205 },
+      },
+      secondary: [
+        {
+          title: { zh: '保有河西', en: 'Keep the West Bank' },
+          description: 'Still hold Chenliu and Luoyang in 198.',
+          descriptionZh: "至198年仍保陳留、洛陽。",
+          goal: { kind: 'hold-cities', cityIds: ['chenliu', 'luoyang'], byYear: 198 },
+        },
+      ],
+    },
+    {
+      id: 'obj-wssy-chu',
+      forceId: 'chu',
+      primary: {
+        title: { zh: '合縱長', en: 'Lead the Vertical Alliance' },
+        description: "Take Chang'an by 208.",
+        descriptionZh: "於208年前攻取長安 —— 六國合縱,楚為縱長。",
+        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 208 },
+      },
+    },
+    {
+      id: 'obj-wssy-qi',
+      forceId: 'qi',
+      primary: {
+        title: { zh: '東方之強', en: 'The Strength of the East' },
+        description: 'Hold Linzi, Pengcheng and Xiapi by 200.',
+        descriptionZh: "於200年前據臨淄、彭城、下邳 —— 秦強於西,齊當強於東。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'pengcheng', 'xiapi'], byYear: 200 },
+      },
+    },
+  ],
+
+  // Surround Wei to rescue Zhao
+  'scn-ws-guiling': [
+    {
+      id: 'obj-wsgl-qi',
+      forceId: 'qi',
+      primary: {
+        title: { zh: '圍魏救趙', en: 'Surround Wei to Rescue Zhao' },
+        description: "Take Chenliu by 195 — strike the capital, not the siege.",
+        descriptionZh: "於195年前攻取陳留 —— 批亢擣虛,不救邯鄲而攻大梁。",
+        goal: { kind: 'hold-cities', cityIds: ['chenliu'], byYear: 195 },
+      },
+      secondary: [
+        {
+          title: { zh: '減灶誘敵', en: 'Fewer Cooking Fires Each Day' },
+          description: 'Destroy the Wei force by 202 — Sun Bin owes Pang Juan a death.',
+          descriptionZh: "於202年前擊滅魏國 —— 孫臏與龐涓之間,還有一筆帳。",
+          goal: { kind: 'defeat-force', forceId: 'wei', byYear: 202 },
+        },
+      ],
+    },
+    {
+      id: 'obj-wsgl-wei',
+      forceId: 'wei',
+      primary: {
+        title: { zh: '拔邯鄲', en: 'Storm Handan' },
+        description: 'Take Ye by 195 and still hold Chenliu — take Zhao before Qi reaches your capital.',
+        descriptionZh: "於195年前攻下鄴城,且陳留不失 —— 要在齊軍抵達大梁之前拿下邯鄲。",
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'chenliu'], byYear: 195 },
+      },
+    },
+    {
+      id: 'obj-wsgl-zhao',
+      forceId: 'zhao',
+      primary: {
+        title: { zh: '邯鄲不陷', en: 'Handan Holds' },
+        description: 'Still hold Ye in 196.',
+        descriptionZh: "至196年仍據鄴城 —— 齊之救兵未必來得及,先守住再說。",
+        goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 196 },
+      },
+    },
+    {
+      id: 'obj-wsgl-qin',
+      forceId: 'qin',
+      primary: {
+        title: { zh: '坐觀三晉', en: 'Watch the Three Jin Bleed' },
+        description: 'Take Luoyang and Tongguan by 202 — let Wei and Qi wear each other out.',
+        descriptionZh: "於202年前東取洛陽、潼關 —— 三晉相攻,秦收其利。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'tongguan'], byYear: 202 },
+      },
+    },
+  ],
+
+  // Five states attack Qin at Hangu
+  'scn-ws-hangu': [
+    {
+      id: 'obj-wshg-qin',
+      forceId: 'qin',
+      primary: {
+        title: { zh: '函谷不開', en: 'The Pass Does Not Open' },
+        description: 'Still hold Hanguguan and Tongguan in 198 — one pass, five armies.',
+        descriptionZh: "至198年仍守函谷關、潼關 —— 五國之師百萬,叩關而攻。",
+        goal: { kind: 'hold-cities', cityIds: ['hanguguan', 'tongguan'], byYear: 198 },
+      },
+      secondary: [
+        {
+          title: { zh: '連橫破縱', en: 'Break the Alliance' },
+          description: 'Destroy the Chu force — the vertical alliance dies when Chu leaves it.',
+          descriptionZh: "擊滅楚國 —— 縱長既去,合縱自散。",
+          goal: { kind: 'defeat-force', forceId: 'chu' },
+        },
+      ],
+    },
+    {
+      id: 'obj-wshg-chu',
+      forceId: 'chu',
+      primary: {
+        title: { zh: '叩關而攻', en: 'Beat on the Gate' },
+        description: "Take Hanguguan and Chang'an by 200.",
+        descriptionZh: "於200年前破函谷關、入長安 —— 合縱之師,唯一一次真正打到關下。",
+        goal: { kind: 'hold-cities', cityIds: ['hanguguan', 'changan'], byYear: 200 },
+      },
+    },
+    {
+      id: 'obj-wshg-zhao',
+      forceId: 'zhao',
+      primary: {
+        title: { zh: '趙師西向', en: 'Zhao Marches West' },
+        description: "Take Tongguan and Chang'an by 202.",
+        descriptionZh: "於202年前取潼關、長安。",
+        goal: { kind: 'hold-cities', cityIds: ['tongguan', 'changan'], byYear: 202 },
+      },
+    },
+    {
+      id: 'obj-wshg-wei',
+      forceId: 'wei',
+      primary: {
+        title: { zh: '五國之一', en: 'One of the Five' },
+        description: 'Take Luoyang and Tongguan by 200.',
+        descriptionZh: "於200年前取洛陽、潼關。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'tongguan'], byYear: 200 },
+      },
+    },
+    {
+      id: 'obj-wshg-qi',
+      forceId: 'qi',
+      primary: {
+        title: { zh: '不與西事', en: 'Stay Out of the West' },
+        description: 'Hold Linzi, Pengcheng and Langya by 200 — let the others break themselves on the pass.',
+        descriptionZh: "於200年前據臨淄、彭城、琅琊 —— 遠交近攻,齊之所以最後亡。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'pengcheng', 'langya'], byYear: 200 },
+      },
+    },
+  ],
+
+  // The battle of Yique
+  'scn-ws-yique': [
+    {
+      id: 'obj-wsyq-qin',
+      forceId: 'qin',
+      primary: {
+        title: { zh: '伊闕斬首', en: 'The Slaughter at Yique' },
+        description: 'Take Luoyang and Xuchang by 195 — Bai Qi against two armies that will not fight together.',
+        descriptionZh: "於195年前取洛陽、許昌 —— 白起以寡擊眾,韓魏各自為戰。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang'], byYear: 195 },
+      },
+      secondary: [
+        {
+          title: { zh: '滅韓', en: 'End Han' },
+          description: 'Destroy the Han force by 205.',
+          descriptionZh: "於205年前滅韓 —— 近攻之始。",
+          goal: { kind: 'defeat-force', forceId: 'han', byYear: 205 },
+        },
+      ],
+    },
+    {
+      id: 'obj-wsyq-han',
+      forceId: 'han',
+      primary: {
+        title: { zh: '韓魏合軍', en: 'Han and Wei Must Fight as One' },
+        description: 'Still hold Luoyang and Xuchang in 198 — the defeat came from each waiting for the other.',
+        descriptionZh: "至198年仍保洛陽、許昌 —— 伊闕之敗,敗在兩軍互相觀望。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang'], byYear: 198 },
+      },
+    },
+    {
+      id: 'obj-wsyq-wei',
+      forceId: 'wei',
+      primary: {
+        title: { zh: '不作壁上觀', en: 'Do Not Stand and Watch' },
+        description: 'Still hold Chenliu and Puyang in 198, and hold Luoyang too.',
+        descriptionZh: "至198年仍保陳留、濮陽,並據洛陽 —— 這一次不要讓韓軍獨當秦鋒。",
+        goal: { kind: 'hold-cities', cityIds: ['chenliu', 'puyang', 'luoyang'], byYear: 198 },
+      },
+    },
+    {
+      id: 'obj-wsyq-zhao',
+      forceId: 'zhao',
+      primary: {
+        title: { zh: '趙不可獨存', en: 'Zhao Cannot Stand Alone Either' },
+        description: 'Take Shangdang and Luoyang by 202.',
+        descriptionZh: "於202年前取上黨、洛陽 —— 韓魏若亡,趙即當秦鋒。",
+        goal: { kind: 'hold-cities', cityIds: ['shangdang', 'luoyang'], byYear: 202 },
+      },
+    },
+  ],
+
+  // The Yan-Ying campaign
+  'scn-ws-yanying': [
+    {
+      id: 'obj-wsyy-qin',
+      forceId: 'qin',
+      primary: {
+        title: { zh: '水灌鄢城', en: 'Flood Yan' },
+        description: 'Take Xiangyang and Jiangling by 196 — Bai Qi dammed the river and drowned a city.',
+        descriptionZh: "於196年前取襄陽、江陵 —— 白起決夷水以灌鄢城,再拔郢都。",
+        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling'], byYear: 196 },
+      },
+      secondary: [
+        {
+          title: { zh: '燒夷陵', en: 'Burn Yiling' },
+          description: 'Hold Yiling by 198 — the tombs of the Chu kings.',
+          descriptionZh: "於198年前據夷陵 —— 燒楚先王之墓,楚人自此不能復振。",
+          goal: { kind: 'hold-cities', cityIds: ['yiling'], byYear: 198 },
+        },
+      ],
+    },
+    {
+      id: 'obj-wsyy-chu',
+      forceId: 'chu',
+      primary: {
+        title: { zh: '郢都不失', en: 'Ying Shall Not Fall' },
+        description: 'Still hold Jiangling and Yiling in 198 — after this, Chu never came back west.',
+        descriptionZh: "至198年仍保江陵、夷陵 —— 郢都一失,楚就再也沒有回到過西邊。",
+        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'yiling'], byYear: 198 },
+      },
+      secondary: [
+        {
+          title: { zh: '亡秦必楚', en: 'Chu Will Be the End of Qin' },
+          description: 'Destroy the Qin force.',
+          descriptionZh: "擊滅秦國 —— 楚雖三戶,亡秦必楚。",
+          goal: { kind: 'defeat-force', forceId: 'qin' },
+        },
+      ],
+    },
+    {
+      id: 'obj-wsyy-qi',
+      forceId: 'qi',
+      primary: {
+        title: { zh: '秦楚相攻', en: 'Let Qin and Chu Fight' },
+        description: 'Hold Linzi and Pengcheng by 198.',
+        descriptionZh: "於198年前據臨淄、彭城。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'pengcheng'], byYear: 198 },
+      },
+    },
+    {
+      id: 'obj-wsyy-zhao',
+      forceId: 'zhao',
+      primary: {
+        title: { zh: '北方獨強', en: 'The Last Strong State in the North' },
+        description: 'Hold Ye, Taiyuan and Shangdang by 198.',
+        descriptionZh: "於198年前據鄴城、太原、上黨 —— 楚既弱,能抗秦者唯趙。",
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'taiyuan', 'shangdang'], byYear: 198 },
+      },
+    },
+  ],
+
+  // The battle of Yuyu
+  'scn-ws-yuyu': [
+    {
+      id: 'obj-wsyu-zhao',
+      forceId: 'zhao',
+      primary: {
+        title: { zh: '狹路相逢勇者勝', en: 'In a Narrow Road, the Brave Win' },
+        description: 'Hold Shangdang and Taiyuan by 195 — Zhao She marched thirty li out and then ran.',
+        descriptionZh: "於195年前據上黨、太原 —— 趙奢去邯鄲三十里而止,再一日一夜疾趨。",
+        goal: { kind: 'hold-cities', cityIds: ['shangdang', 'taiyuan'], byYear: 195 },
+      },
+      secondary: [
+        {
+          title: { zh: '再破秦軍', en: 'Beat Qin Again' },
+          description: 'Destroy the Qin force by 208 — Yuyu is the only field defeat Qin took in this era.',
+          descriptionZh: "於208年前擊滅秦國 —— 閼與是這個時代秦唯一一次野戰大敗。",
+          goal: { kind: 'defeat-force', forceId: 'qin', byYear: 208 },
+        },
+      ],
+    },
+    {
+      id: 'obj-wsyu-qin',
+      forceId: 'qin',
+      primary: {
+        title: { zh: '取閼與', en: 'Take Yuyu' },
+        description: 'Take Shangdang by 196 — a road too narrow for the loser to retreat.',
+        descriptionZh: "於196年前攻取上黨 —— 其道遠險狹,譬之猶兩鼠鬥於穴中。",
+        goal: { kind: 'hold-cities', cityIds: ['shangdang'], byYear: 196 },
+      },
+    },
+    {
+      id: 'obj-wsyu-wei',
+      forceId: 'wei',
+      primary: {
+        title: { zh: '援趙', en: 'Reinforce Zhao' },
+        description: 'Hold Luoyang and Chenliu by 198.',
+        descriptionZh: "於198年前據洛陽、陳留 —— 趙若敗,魏即當其鋒。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'chenliu'], byYear: 198 },
+      },
+    },
+    {
+      id: 'obj-wsyu-han',
+      forceId: 'han',
+      primary: {
+        title: { zh: '上黨之歸', en: 'Where Shangdang Goes' },
+        description: 'Take Shangdang by 200 — whoever holds it decides the next war.',
+        descriptionZh: "於200年前取上黨 —— 上黨歸誰,下一場大戰就在哪裡打。",
+        goal: { kind: 'hold-cities', cityIds: ['shangdang'], byYear: 200 },
+      },
+    },
+  ],
+
+  // King Min of Qi takes the imperial title
+  'scn-ws-qimin': [
+    {
+      id: 'obj-wsqm-qi',
+      forceId: 'qi',
+      primary: {
+        title: { zh: '南面稱帝', en: 'Emperor of the East' },
+        description: 'Declare yourself emperor and take Shouchun by 198 — Qi at its height swallowed Song.',
+        descriptionZh: "稱帝建號並於198年前取壽春 —— 齊之極盛,滅宋而稱東帝。",
+        goal: { kind: 'declare-emperor' },
+      },
+      secondary: [
+        {
+          title: { zh: '滅宋取淮', en: 'Swallow Song' },
+          description: 'Hold Pengcheng, Xiapi and Shouchun by 198.',
+          descriptionZh: "於198年前據彭城、下邳、壽春 —— 得宋地則齊愈驕,諸侯愈懼。",
+          goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'xiapi', 'shouchun'], byYear: 198 },
+        },
+      ],
+    },
+    {
+      id: 'obj-wsqm-qin',
+      forceId: 'qin',
+      primary: {
+        title: { zh: '去帝號以孤齊', en: 'Drop the Title, Isolate Qi' },
+        description: 'Destroy the Qi force by 208 — Qin gave up the western title so Qi would stand alone.',
+        descriptionZh: "於208年前擊滅齊國 —— 秦自去帝號,正為使齊獨當眾怒。",
+        goal: { kind: 'defeat-force', forceId: 'qi', byYear: 208 },
+      },
+    },
+    {
+      id: 'obj-wsqm-yan',
+      forceId: 'yan',
+      primary: {
+        title: { zh: '待時而動', en: 'Wait, Then Strike' },
+        description: 'Take Linzi by 200 — Yan has been preparing this for twenty-eight years.',
+        descriptionZh: "於200年前攻取臨淄 —— 燕昭王等這一天等了二十八年。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi'], byYear: 200 },
+      },
+    },
+    {
+      id: 'obj-wsqm-chu',
+      forceId: 'chu',
+      primary: {
+        title: { zh: '淮北之爭', en: 'The Fight for Huaibei' },
+        description: 'Hold Shouchun and Pengcheng by 200.',
+        descriptionZh: "於200年前據壽春、彭城 —— 宋地之利,楚亦欲得。",
+        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'pengcheng'], byYear: 200 },
+      },
+    },
+  ],
+
+  // Yue Yi's campaign against Qi
+  'scn-ws-yueyi': [
+    {
+      id: 'obj-wsyi-yan',
+      forceId: 'yan',
+      primary: {
+        title: { zh: '下齊七十餘城', en: 'Seventy Cities in Six Months' },
+        description: 'Take Linzi, Beihai and Langya by 196 — five states marched; only Yue Yi kept going.',
+        descriptionZh: "於196年前取臨淄、北海、琅琊 —— 五國之師既還,獨樂毅引燕軍深入。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'beihai', 'langya'], byYear: 196 },
+      },
+      secondary: [
+        {
+          title: { zh: '滅齊', en: 'End Qi' },
+          description: 'Destroy the Qi force by 202 — two cities held out for five years in history.',
+          descriptionZh: "於202年前滅齊 —— 史書上,莒與即墨守了五年,燕功敗垂成。",
+          goal: { kind: 'defeat-force', forceId: 'qi', byYear: 202 },
+        },
+      ],
+    },
+    {
+      id: 'obj-wsyi-qi',
+      forceId: 'qi',
+      primary: {
+        title: { zh: '莒與即墨', en: 'Ju and Jimo' },
+        description: 'Survive to 200, then retake Linzi — two cities are enough to come back from.',
+        descriptionZh: "存續至200年,再復臨淄 —— 只剩兩城,也還能復國。",
+        goal: { kind: 'survive-until', year: 200 },
+      },
+      secondary: [
+        {
+          title: { zh: '復齊七十城', en: 'Retake the Seventy' },
+          description: 'Hold Linzi and Beihai by 205.',
+          descriptionZh: "於205年前收復臨淄、北海。",
+          goal: { kind: 'hold-cities', cityIds: ['linzi', 'beihai'], byYear: 205 },
+        },
+      ],
+    },
+    {
+      id: 'obj-wsyi-qin',
+      forceId: 'qin',
+      primary: {
+        title: { zh: '東方兩敗', en: 'Both Eastern Powers Bleed' },
+        description: 'Take Luoyang, Chenliu and Shangdang by 200.',
+        descriptionZh: "於200年前取洛陽、陳留、上黨 —— 燕齊相殘,秦得從容東出。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'chenliu', 'shangdang'], byYear: 200 },
+      },
+    },
+    {
+      id: 'obj-wsyi-zhao',
+      forceId: 'zhao',
+      primary: {
+        title: { zh: '受樂毅', en: 'Shelter Yue Yi' },
+        description: 'Hold Ye, Shangdang and Taiyuan by 200 — Yue Yi ended his life in Zhao.',
+        descriptionZh: "於200年前據鄴城、上黨、太原 —— 樂毅最後奔趙,趙封之於觀津。",
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'shangdang', 'taiyuan'], byYear: 200 },
+      },
+    },
+  ],
+
+  // The battle of Changping
+  'scn-ws-changping': [
+    {
+      id: 'obj-wscp-qin',
+      forceId: 'qin',
+      primary: {
+        title: { zh: '長平坑降', en: 'The Pit at Changping' },
+        description: 'Take Shangdang and Ye by 198 — swap the general in secret, cut the supply road, then wait.',
+        descriptionZh: "於198年前取上黨、鄴城 —— 陰使武安君為將,絕其糧道,然後圍之。",
+        goal: { kind: 'hold-cities', cityIds: ['shangdang', 'ye'], byYear: 198 },
+      },
+      secondary: [
+        {
+          title: { zh: '滅趙', en: 'End Zhao' },
+          description: 'Destroy the Zhao force by 205.',
+          descriptionZh: "於205年前滅趙 —— 趙卒四十萬既坑,邯鄲可下。",
+          goal: { kind: 'defeat-force', forceId: 'zhao', byYear: 205 },
+        },
+      ],
+    },
+    {
+      id: 'obj-wscp-zhao',
+      forceId: 'zhao',
+      primary: {
+        title: { zh: '毋易廉頗', en: 'Do Not Replace Lian Po' },
+        description: 'Still hold Shangdang and Ye in 200 — Lian Po held the line; the swap lost the war.',
+        descriptionZh: "至200年仍保上黨、鄴城 —— 廉頗堅壁不出,換上趙括才是敗因。",
+        goal: { kind: 'hold-cities', cityIds: ['shangdang', 'ye'], byYear: 200 },
+      },
+      secondary: [
+        {
+          title: { zh: '趙不亡', en: 'Zhao Survives' },
+          description: 'Survive to 210.',
+          descriptionZh: "存續至210年 —— 四十萬人的性命,換一個活下去的趙國。",
+          goal: { kind: 'survive-until', year: 210 },
+        },
+      ],
+    },
+    {
+      id: 'obj-wscp-wei',
+      forceId: 'wei',
+      primary: {
+        title: { zh: '救趙與否', en: 'Whether to Save Zhao' },
+        description: 'Hold Chenliu and Luoyang by 198, and take Shangdang — Zhao falling means Wei is next.',
+        descriptionZh: "於198年前據陳留、洛陽並取上黨 —— 趙亡則魏為秦之鄰。",
+        goal: { kind: 'hold-cities', cityIds: ['chenliu', 'luoyang', 'shangdang'], byYear: 198 },
+      },
+    },
+    {
+      id: 'obj-wscp-chu',
+      forceId: 'chu',
+      primary: {
+        title: { zh: '北救之師', en: 'The Army from the South' },
+        description: 'Take Xuchang and Luoyang by 200.',
+        descriptionZh: "於200年前北取許昌、洛陽 —— 春申君將兵救趙,楚亦不能坐視。",
+        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'luoyang'], byYear: 200 },
+      },
+    },
+  ],
+
+  // The siege of Handan
+  'scn-ws-handan': [
+    {
+      id: 'obj-wshd-qin',
+      forceId: 'qin',
+      primary: {
+        title: { zh: '圍邯鄲', en: 'Besiege Handan' },
+        description: 'Take Ye by 197 — Bai Qi refused this campaign and was ordered to die for it.',
+        descriptionZh: "於197年前攻下鄴城 —— 武安君稱病不行,終賜劍杜郵。",
+        goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 197 },
+      },
+      secondary: [
+        {
+          title: { zh: '滅趙', en: 'End Zhao' },
+          description: 'Destroy the Zhao force by 205.',
+          descriptionZh: "於205年前滅趙。",
+          goal: { kind: 'defeat-force', forceId: 'zhao', byYear: 205 },
+        },
+      ],
+    },
+    {
+      id: 'obj-wshd-zhao',
+      forceId: 'zhao',
+      primary: {
+        title: { zh: '邯鄲三年', en: 'Three Years Under Siege' },
+        description: 'Still hold Ye in 200 — after Changping, with the city eating its own dead.',
+        descriptionZh: "至200年仍守鄴城 —— 長平之後,城中析骨而炊,易子而食。",
+        goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 200 },
+      },
+      secondary: [
+        {
+          title: { zh: '反攻', en: 'Push Them Back' },
+          description: 'Take Shangdang and Taiyuan by 205.',
+          descriptionZh: "於205年前收復上黨、太原 —— 圍解之後,失地當復。",
+          goal: { kind: 'hold-cities', cityIds: ['shangdang', 'taiyuan'], byYear: 205 },
+        },
+      ],
+    },
+    {
+      id: 'obj-wshd-wei',
+      forceId: 'wei',
+      primary: {
+        title: { zh: '竊符救趙', en: 'Steal the Tally, Save Zhao' },
+        description: 'Take Ye by 198 while holding Chenliu — Lord Xinling killed his own general for the seal.',
+        descriptionZh: "於198年前援取鄴城且陳留不失 —— 信陵君椎殺晉鄙,奪符而後救趙。",
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'chenliu'], byYear: 198 },
+      },
+    },
+    {
+      id: 'obj-wshd-chu',
+      forceId: 'chu',
+      primary: {
+        title: { zh: '毛遂自薦', en: 'Mao Sui Recommends Himself' },
+        description: 'Take Luoyang and Xuchang by 200 — Chu agreed to the alliance under a sword.',
+        descriptionZh: "於200年前北取洛陽、許昌 —— 毛遂按劍而前,楚王乃許合縱。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang'], byYear: 200 },
+      },
+    },
+  ],
+
+  // Tian Dan restores Qi
+  'scn-ws-tiandan': [
+    {
+      id: 'obj-wstd-qi',
+      forceId: 'qi',
+      primary: {
+        title: { zh: '火牛陣', en: 'The Fire Oxen' },
+        description: 'Retake Linzi and Beihai by 196 — a thousand oxen, blades on their horns, reeds alight on their tails.',
+        descriptionZh: "於196年前收復臨淄、北海 —— 牛千餘,束兵刃於角,灌脂束葦於尾而燒之。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'beihai'], byYear: 196 },
+      },
+      secondary: [
+        {
+          title: { zh: '復七十餘城', en: 'All Seventy Back' },
+          description: 'Destroy the Yan force by 205.',
+          descriptionZh: "於205年前逐燕出境 —— 七十餘城,一城不留。",
+          goal: { kind: 'defeat-force', forceId: 'yan', byYear: 205 },
+        },
+      ],
+    },
+    {
+      id: 'obj-wstd-yan',
+      forceId: 'yan',
+      primary: {
+        title: { zh: '毋易樂毅', en: 'Do Not Recall Yue Yi' },
+        description: 'Still hold Linzi and Langya in 200 — the reversal began with a change of general.',
+        descriptionZh: "至200年仍保臨淄、琅琊 —— 敗局起於騎劫代將。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'langya'], byYear: 200 },
+      },
+    },
+    {
+      id: 'obj-wstd-qin',
+      forceId: 'qin',
+      primary: {
+        title: { zh: '遠交近攻', en: 'Befriend the Far, Attack the Near' },
+        description: 'Take Luoyang, Xuchang and Shangdang by 200.',
+        descriptionZh: "於200年前取洛陽、許昌、上黨 —— 范雎之策,自韓魏始。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang', 'shangdang'], byYear: 200 },
+      },
+    },
+    {
+      id: 'obj-wstd-zhao',
+      forceId: 'zhao',
+      primary: {
+        title: { zh: '燕齊兩弊', en: 'Both Neighbours Exhausted' },
+        description: 'Hold Ye, Taiyuan and Shangdang by 198.',
+        descriptionZh: "於198年前據鄴城、太原、上黨。",
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'taiyuan', 'shangdang'], byYear: 198 },
+      },
+    },
+  ],
+
+  // Qin swallows the six states
+  'scn-ws-qin-unify': [
+    {
+      id: 'obj-wsqu-qin',
+      forceId: 'qin',
+      primary: {
+        title: { zh: '六王畢,四海一', en: 'Six Kings Ended, the Realm One' },
+        description: 'Bring all under one banner — ten years, six states, in order.',
+        descriptionZh: "混一天下 —— 十年之間,韓趙魏楚燕齊,以次而滅。",
+        goal: { kind: 'unify-realm' },
+      },
+      secondary: [
+        {
+          title: { zh: '先滅韓趙', en: 'Han and Zhao First' },
+          description: 'Destroy the Han force by 195.',
+          descriptionZh: "於195年前滅韓 —— 六國之滅,自韓始。",
+          goal: { kind: 'defeat-force', forceId: 'han', byYear: 195 },
+        },
+      ],
+    },
+    {
+      id: 'obj-wsqu-chu',
+      forceId: 'chu',
+      primary: {
+        title: { zh: '非六十萬不可', en: 'It Will Take Six Hundred Thousand' },
+        description: "Destroy the Qin force by 208 — Xiang Yan broke Li Xin's twenty legions before Wang Jian came.",
+        descriptionZh: "於208年前擊滅秦國 —— 項燕破李信二十萬,直到王翦以六十萬來。",
+        goal: { kind: 'defeat-force', forceId: 'qin', byYear: 208 },
+      },
+      secondary: [
+        {
+          title: { zh: '守郢壽春', en: 'Hold the Southern Capitals' },
+          description: 'Still hold Jiangling and Shouchun in 200.',
+          descriptionZh: "至200年仍保江陵、壽春。",
+          goal: { kind: 'hold-cities', cityIds: ['jiangling', 'shouchun'], byYear: 200 },
+        },
+      ],
+    },
+    {
+      id: 'obj-wsqu-zhao',
+      forceId: 'zhao',
+      primary: {
+        title: { zh: '李牧在,趙不亡', en: 'While Li Mu Lives' },
+        description: 'Still hold Ye and Taiyuan in 202 — Zhao fell to a bribe, not to an army.',
+        descriptionZh: "至202年仍保鄴城、太原 —— 趙不是敗於秦軍,是敗於一筆賄賂。",
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'taiyuan'], byYear: 202 },
+      },
+    },
+    {
+      id: 'obj-wsqu-qi',
+      forceId: 'qi',
+      primary: {
+        title: { zh: '不助五國者亡', en: 'The Last to Fall, and the Easiest' },
+        description: 'Survive to 212 — Qi surrendered without a battle after watching five states die.',
+        descriptionZh: "存續至212年 —— 齊坐視五國之亡,最後不戰而降。",
+        goal: { kind: 'survive-until', year: 212 },
+      },
+      secondary: [
+        {
+          title: { zh: '西向抗秦', en: 'Fight, This Time' },
+          description: 'Take Pengcheng, Chenliu and Luoyang by 205.',
+          descriptionZh: "於205年前西取彭城、陳留、洛陽 —— 這一次不要等到最後。",
+          goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'chenliu', 'luoyang'], byYear: 205 },
+        },
+      ],
+    },
+    {
+      id: 'obj-wsqu-wei',
+      forceId: 'wei',
+      primary: {
+        title: { zh: '大梁不灌', en: 'Do Not Let Them Flood Daliang' },
+        description: 'Still hold Chenliu and Puyang in 200 — Wang Ben turned the Yellow River onto the city.',
+        descriptionZh: "至200年仍保陳留、濮陽 —— 王賁引河溝灌大梁,三月城壞。",
+        goal: { kind: 'hold-cities', cityIds: ['chenliu', 'puyang'], byYear: 200 },
+      },
+    },
+    {
+      id: 'obj-wsqu-yan',
+      forceId: 'yan',
+      primary: {
+        title: { zh: '風蕭蕭兮易水寒', en: 'The Wind is Cold on the Yi River' },
+        description: "Take Chang'an by 205 — a dagger in a map roll was the other plan.",
+        descriptionZh: "於205年前攻取長安 —— 圖窮匕見是另一條路,這條路要用兵。",
+        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 205 },
+      },
+    },
+    {
+      id: 'obj-wsqu-han',
+      forceId: 'han',
+      primary: {
+        title: { zh: '存韓', en: 'Preserve Han' },
+        description: 'Survive to 200 — Han is first on the list.',
+        descriptionZh: "存續至200年 —— 名單上的第一個就是你。",
+        goal: { kind: 'survive-until', year: 200 },
+      },
+    },
+  ],
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Chu-Han. Same map and calendar caveat as the Warring States boards.
+  // Chang'an = Xianyang, Pengcheng = Western Chu's capital, Guandu/Hulao =
+  // the Xingyang-Chenggao line, Ye = Handan/Julu, Linzi = Qi.
+  // ───────────────────────────────────────────────────────────────────────
+
+  // The rising at Dazexiang
+  'scn-ch-daze': [
+    {
+      id: 'obj-chdz-zhangchu',
+      forceId: 'zhangchu',
+      primary: {
+        title: { zh: '王侯將相寧有種乎', en: 'Are Kings and Nobles Born to It?' },
+        description: 'Take Luoyang by 190 — six hundred conscripts late for a garrison, and the law says death either way.',
+        descriptionZh: "於190年前攻取洛陽 —— 失期當斬,舉大計亦死,等死,死國可乎?",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 190 },
+      },
+      secondary: [
+        {
+          title: { zh: '入關滅秦', en: 'Through the Pass, End Qin' },
+          description: "Take Chang'an by 196 — the first rising rarely gets there.",
+          descriptionZh: "於196年前攻取長安 —— 首義者多半到不了咸陽。",
+          goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 196 },
+        },
+      ],
+    },
+    {
+      id: 'obj-chdz-qin',
+      forceId: 'qin',
+      primary: {
+        title: { zh: '關東群盜', en: '"Merely Bandits, Your Majesty"' },
+        description: 'Destroy the Zhangchu force by 192 — the court insisted there was no rebellion at all.',
+        descriptionZh: "於192年前平定張楚 —— 朝廷上下都說那不過是群盜,不足憂。",
+        goal: { kind: 'defeat-force', forceId: 'zhangchu', byYear: 192 },
+      },
+      secondary: [
+        {
+          title: { zh: '二世而不亡', en: 'Not Dead in the Second Generation' },
+          description: 'Survive to 205 — the empire that was to last ten thousand generations.',
+          descriptionZh: "存續至205年 —— 那個號稱傳之萬世的帝國。",
+          goal: { kind: 'survive-until', year: 205 },
+        },
+      ],
+    },
+    {
+      id: 'obj-chdz-chu',
+      forceId: 'chu',
+      primary: {
+        title: { zh: '楚雖三戶', en: 'Though Chu Has But Three Households' },
+        description: "Take Pengcheng and Chang'an by 196 — Xiang Liang raises the old Chu banner in Kuaiji.",
+        descriptionZh: "於196年前取彭城、長安 —— 項梁起於會稽,立楚後以從民望。",
+        goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'changan'], byYear: 196 },
+      },
+    },
+    {
+      id: 'obj-chdz-qi',
+      forceId: 'qi',
+      primary: {
+        title: { zh: '田氏復齊', en: 'The Tian Clan Restores Qi' },
+        description: 'Hold Linzi, Beihai and Langya by 192, then take Pengcheng.',
+        descriptionZh: "於192年前據臨淄、北海、琅琊 —— 田氏自立,齊地復國。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'beihai', 'langya'], byYear: 192 },
+      },
+    },
+  ],
+
+  // The battle of Julu
+  'scn-ch-julu': [
+    {
+      id: 'obj-chjl-chu',
+      forceId: 'chu',
+      primary: {
+        title: { zh: '破釜沉舟', en: 'Break the Cauldrons, Sink the Boats' },
+        description: 'Take Ye by 192 — three days of rations, no way back across the river.',
+        descriptionZh: "於192年前攻取鉅鹿(鄴) —— 皆沉船,破釜甑,持三日糧,以示士卒必死。",
+        goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 192 },
+      },
+      secondary: [
+        {
+          title: { zh: '諸侯膝行', en: 'The Lords Came in on Their Knees' },
+          description: 'Destroy the Qin force by 198.',
+          descriptionZh: "於198年前滅秦 —— 召見諸侯將,無不膝行而前,莫敢仰視。",
+          goal: { kind: 'defeat-force', forceId: 'qin', byYear: 198 },
+        },
+      ],
+    },
+    {
+      id: 'obj-chjl-qin',
+      forceId: 'qin',
+      primary: {
+        title: { zh: '章邯不降', en: 'Zhang Han Does Not Surrender' },
+        description: "Still hold Chang'an and Luoyang in 198 — the last army Qin had, and a court that would not back it.",
+        descriptionZh: "至198年仍保長安、洛陽 —— 秦最後一支軍隊,和一個不肯支持它的朝廷。",
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'luoyang'], byYear: 198 },
+      },
+      secondary: [
+        {
+          title: { zh: '先破鉅鹿', en: 'Take Julu First' },
+          description: 'Take Ye by 192.',
+          descriptionZh: "於192年前攻下鉅鹿(鄴)。",
+          goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 192 },
+        },
+      ],
+    },
+    {
+      id: 'obj-chjl-zhao',
+      forceId: 'zhao',
+      primary: {
+        title: { zh: '鉅鹿之圍', en: 'Under Siege at Julu' },
+        description: 'Still hold Ye in 194 — ten allied armies watched from behind their walls.',
+        descriptionZh: "至194年仍守鉅鹿(鄴) —— 諸侯軍十餘壁,無一人敢縱兵。",
+        goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 194 },
+      },
+    },
+    {
+      id: 'obj-chjl-wei',
+      forceId: 'wei',
+      primary: {
+        title: { zh: '魏地復國', en: 'Wei Restored' },
+        description: 'Hold Puyang and take Luoyang by 196.',
+        descriptionZh: "於196年前守濮陽並取洛陽 —— 魏豹得一城而稱王,總要再取一城。",
+        goal: { kind: 'hold-cities', cityIds: ['puyang', 'luoyang'], byYear: 196 },
+      },
+    },
+    {
+      id: 'obj-chjl-qi',
+      forceId: 'qi',
+      primary: {
+        title: { zh: '齊不救趙', en: 'Qi Does Not Ride to Julu' },
+        description: 'Hold Linzi, Beihai and Langya by 194 — Qi sat out the decisive battle of the age.',
+        descriptionZh: "於194年前據臨淄、北海、琅琊 —— 這個時代的決戰,齊沒有參加。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'beihai', 'langya'], byYear: 194 },
+      },
+    },
+  ],
+
+  // Chu and Han contend
+  'scn-ch-chuhan': [
+    {
+      id: 'obj-chch-han',
+      forceId: 'han',
+      primary: {
+        title: { zh: '還定三秦', en: 'Take Back the Three Qin' },
+        description: "Take Chang'an by 192, then Pengcheng — burn the plank roads, then walk out by Chencang.",
+        descriptionZh: "於192年前攻取長安 —— 明修棧道,暗度陳倉。",
+        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 192 },
+      },
+      secondary: [
+        {
+          title: { zh: '垓下之圍', en: 'The Ring at Gaixia' },
+          description: 'Destroy the Chu force by 200.',
+          descriptionZh: "於200年前擊滅西楚 —— 四面楚歌,十面埋伏。",
+          goal: { kind: 'defeat-force', forceId: 'chu', byYear: 200 },
+        },
+      ],
+    },
+    {
+      id: 'obj-chch-chu',
+      forceId: 'chu',
+      primary: {
+        title: { zh: '力拔山兮', en: 'My Strength Uprooted Mountains' },
+        description: 'Destroy the Han force by 198 — you win every battle; that has never been the problem.',
+        descriptionZh: "於198年前擊滅漢 —— 你每戰必勝,問題從來不在戰場上。",
+        goal: { kind: 'defeat-force', forceId: 'han', byYear: 198 },
+      },
+      secondary: [
+        {
+          title: { zh: '守成皋滎陽', en: 'Hold the Chenggao Line' },
+          description: 'Still hold Guandu and Hulao in 196.',
+          descriptionZh: "至196年仍守滎陽、成皋(官渡、虎牢) —— 楚漢相持之地。",
+          goal: { kind: 'hold-cities', cityIds: ['guandu', 'hulao'], byYear: 196 },
+        },
+      ],
+    },
+    {
+      id: 'obj-chch-yong',
+      forceId: 'yong',
+      primary: {
+        title: { zh: '三秦拒漢', en: 'The Three Qin Hold the Passes' },
+        description: "Still hold Chang'an and Chencang in 194 — you were Qin's last general; hold what Xiang Yu gave you.",
+        descriptionZh: "至194年仍保長安、陳倉 —— 你是秦最後的大將,守住項羽分給你的地方。",
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'chencang'], byYear: 194 },
+      },
+    },
+    {
+      id: 'obj-chch-qi',
+      forceId: 'qi',
+      primary: {
+        title: { zh: '齊地自立', en: 'Qi Stands Alone' },
+        description: 'Hold Linzi and Beihai by 194 — Tian Rong refused Xiang Yu\'s partition and paid for it.',
+        descriptionZh: "於194年前據臨淄、北海 —— 田榮不受項羽之封,遂反。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'beihai'], byYear: 194 },
+      },
+    },
+    {
+      id: 'obj-chch-zhao',
+      forceId: 'zhao',
+      primary: {
+        title: { zh: '刎頸之交既絕', en: 'The Friendship That Broke' },
+        description: 'Hold Ye and Changshan by 194 — Chen Yu and Zhang Er swore to die for each other, once.',
+        descriptionZh: "於194年前據鄴城、常山 —— 陳餘與張耳,曾是刎頸之交。",
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'changshan'], byYear: 194 },
+      },
+    },
+    {
+      id: 'obj-chch-wei',
+      forceId: 'wei',
+      primary: {
+        title: { zh: '首鼠兩端', en: 'Hedging Between Two Kings' },
+        description: 'Still hold Luoyang and Puyang in 196 — Wei Bao changed sides once too often.',
+        descriptionZh: "至196年仍保洛陽、濮陽 —— 魏豹反覆於楚漢之間,終為韓信所擒。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'puyang'], byYear: 196 },
+      },
+    },
+    {
+      id: 'obj-chch-jiujiang',
+      forceId: 'jiujiang',
+      primary: {
+        title: { zh: '黥布反楚', en: 'The Tattooed King Turns' },
+        description: 'Hold Shouchun and Hefei by 194, then take Pengcheng.',
+        descriptionZh: "於194年前據壽春、合肥 —— 英布叛楚歸漢,淮南遂為戰場。",
+        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'hefei'], byYear: 194 },
+      },
+      secondary: [
+        {
+          title: { zh: '自取天下', en: 'Or Take It All Yourself' },
+          description: 'Declare yourself emperor.',
+          descriptionZh: "稱帝建號 —— 為人臣者,終不免鳥盡弓藏。",
+          goal: { kind: 'declare-emperor' },
+        },
+      ],
+    },
+  ],
+
+  // Retaking the Three Qin
+  'scn-ch-sanqin': [
+    {
+      id: 'obj-chsq-han',
+      forceId: 'han',
+      primary: {
+        title: { zh: '暗度陳倉', en: 'Out by Chencang' },
+        description: "Take Chencang and Chang'an by 191 — the burnt roads were the point.",
+        descriptionZh: "於191年前取陳倉、長安 —— 燒絕棧道以示無還心,正是為了這一天。",
+        goal: { kind: 'hold-cities', cityIds: ['chencang', 'changan'], byYear: 191 },
+      },
+      secondary: [
+        {
+          title: { zh: '東出函谷', en: 'East Through Hangu' },
+          description: 'Take Luoyang and Hanguguan by 195.',
+          descriptionZh: "於195年前東出函谷關、取洛陽。",
+          goal: { kind: 'hold-cities', cityIds: ['hanguguan', 'luoyang'], byYear: 195 },
+        },
+      ],
+    },
+    {
+      id: 'obj-chsq-yong',
+      forceId: 'yong',
+      primary: {
+        title: { zh: '塞漢中於巴蜀', en: 'Keep Them Bottled in Shu' },
+        description: "Still hold Chang'an and Chencang in 194 — that is the whole reason you were given this land.",
+        descriptionZh: "至194年仍保長安、陳倉 —— 項羽封你三秦,就是要你堵住漢中。",
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'chencang'], byYear: 194 },
+      },
+    },
+    {
+      id: 'obj-chsq-chu',
+      forceId: 'chu',
+      primary: {
+        title: { zh: '北擊齊而已', en: 'Qi First, As Always' },
+        description: 'Hold Pengcheng and take Linzi by 194 — Xiang Yu marched north while Han came out of the west.',
+        descriptionZh: "於194年前守彭城並取臨淄 —— 項羽北擊齊之時,漢已出關。",
+        goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'linzi'], byYear: 194 },
+      },
+      secondary: [
+        {
+          title: { zh: '擊滅漢王', en: 'Destroy the King of Han' },
+          description: 'Destroy the Han force.',
+          descriptionZh: "擊滅漢王。",
+          goal: { kind: 'defeat-force', forceId: 'han' },
+        },
+      ],
+    },
+    {
+      id: 'obj-chsq-qi',
+      forceId: 'qi',
+      primary: {
+        title: { zh: '牽制項羽', en: 'Pin Xiang Yu Down' },
+        description: 'Still hold Linzi and Beihai in 195 — every month Qi holds is a month Han grows.',
+        descriptionZh: "至195年仍保臨淄、北海 —— 齊多守一月,漢便多長一分。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'beihai'], byYear: 195 },
+      },
+    },
+    {
+      id: 'obj-chsq-jiujiang',
+      forceId: 'jiujiang',
+      primary: {
+        title: { zh: '按兵不動', en: 'Send No Troops' },
+        description: 'Hold Shouchun and Hefei by 194 — Ying Bu answered neither call, and both kings noticed.',
+        descriptionZh: "於194年前據壽春、合肥 —— 英布稱病不出,楚漢都記下了這一筆。",
+        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'hefei'], byYear: 194 },
+      },
+    },
+  ],
+
+  // The battle of Pengcheng
+  'scn-ch-pengcheng': [
+    {
+      id: 'obj-chpc-chu',
+      forceId: 'chu',
+      primary: {
+        title: { zh: '三萬破五十六萬', en: 'Thirty Thousand Against Half a Million' },
+        description: 'Retake Pengcheng by 192 and destroy the Han army — the fastest reversal in the record.',
+        descriptionZh: "於192年前收復彭城 —— 以三萬精騎,晨擊漢軍五十六萬,半日而破之。",
+        goal: { kind: 'hold-cities', cityIds: ['pengcheng'], byYear: 192 },
+      },
+      secondary: [
+        {
+          title: { zh: '追亡逐北', en: 'Run Them Down' },
+          description: 'Destroy the Han force by 198.',
+          descriptionZh: "於198年前擊滅漢 —— 睢水為之不流。",
+          goal: { kind: 'defeat-force', forceId: 'han', byYear: 198 },
+        },
+      ],
+    },
+    {
+      id: 'obj-chpc-han',
+      forceId: 'han',
+      primary: {
+        title: { zh: '守住彭城', en: 'Keep Pengcheng This Time' },
+        description: 'Still hold Pengcheng in 194 — five armies, one banquet, and a cavalry charge at dawn.',
+        descriptionZh: "至194年仍守彭城 —— 五諸侯兵五十六萬,入城即置酒高會,天亮時全完了。",
+        goal: { kind: 'hold-cities', cityIds: ['pengcheng'], byYear: 194 },
+      },
+      secondary: [
+        {
+          title: { zh: '退保滎陽', en: 'Fall Back on Xingyang' },
+          description: 'Still hold Guandu and Hulao in 196 — the line Han held for two years.',
+          descriptionZh: "至196年仍保滎陽、成皋(官渡、虎牢) —— 漢就是在這裡撐了兩年。",
+          goal: { kind: 'hold-cities', cityIds: ['guandu', 'hulao'], byYear: 196 },
+        },
+      ],
+    },
+    {
+      id: 'obj-chpc-yong',
+      forceId: 'yong',
+      primary: {
+        title: { zh: '廢丘之圍', en: 'The Siege of Feiqiu' },
+        description: "Still hold Chang'an in 194.",
+        descriptionZh: "至194年仍守長安 —— 章邯困守廢丘十月,終自刎。",
+        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 194 },
+      },
+    },
+    {
+      id: 'obj-chpc-qi',
+      forceId: 'qi',
+      primary: {
+        title: { zh: '齊地未平', en: 'Qi Is Not Yet Pacified' },
+        description: 'Still hold Linzi and Beihai in 195.',
+        descriptionZh: "至195年仍保臨淄、北海 —— 項羽陷在齊地,劉邦才能襲彭城。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'beihai'], byYear: 195 },
+      },
+    },
+    {
+      id: 'obj-chpc-jiujiang',
+      forceId: 'jiujiang',
+      primary: {
+        title: { zh: '淮南之王', en: 'King of Huainan' },
+        description: 'Hold Shouchun, Hefei and Lujiang by 194.',
+        descriptionZh: "於194年前據壽春、合肥、廬江。",
+        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'hefei', 'lujiang'], byYear: 194 },
+      },
+    },
+  ],
+
+  // The battle of Jingxing
+  'scn-ch-jingxing': [
+    {
+      id: 'obj-chjx-han',
+      forceId: 'han',
+      primary: {
+        title: { zh: '背水一戰', en: 'With the River at Our Backs' },
+        description: 'Take Ye and Changshan by 192 — put the men where they cannot run, and they will fight.',
+        descriptionZh: "於192年前取鄴城、常山 —— 陷之死地而後生,置之亡地而後存。",
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'changshan'], byYear: 192 },
+      },
+      secondary: [
+        {
+          title: { zh: '再定燕齊', en: 'Then Yan and Qi' },
+          description: 'Take Linzi and Ji by 196 — the northern half of the war, won by one man.',
+          descriptionZh: "於196年前取臨淄、薊 —— 北方半壁,韓信一人下之。",
+          goal: { kind: 'hold-cities', cityIds: ['linzi', 'ji'], byYear: 196 },
+        },
+      ],
+    },
+    {
+      id: 'obj-chjx-zhao',
+      forceId: 'zhao',
+      primary: {
+        title: { zh: '用李左車之策', en: "Take Li Zuoche's Advice" },
+        description: 'Still hold Ye and Changshan in 194 — cut the supply train in the gorge; the plan was on the table.',
+        descriptionZh: "至194年仍保鄴城、常山 —— 李左車請以奇兵絕其輜重,陳餘不聽。",
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'changshan'], byYear: 194 },
+      },
+    },
+    {
+      id: 'obj-chjx-chu',
+      forceId: 'chu',
+      primary: {
+        title: { zh: '正面相持', en: 'Hold the Front Yourself' },
+        description: 'Still hold Guandu and Hulao in 196, and take Pengcheng back if lost.',
+        descriptionZh: "至196年仍守滎陽、成皋(官渡、虎牢) —— 你在正面壓住劉邦,北方卻在丟。",
+        goal: { kind: 'hold-cities', cityIds: ['guandu', 'hulao'], byYear: 196 },
+      },
+      secondary: [
+        {
+          title: { zh: '救趙救齊', en: 'Save the North' },
+          description: 'Take Ye and Linzi by 198.',
+          descriptionZh: "於198年前取鄴城、臨淄 —— 韓信一路下去,楚之側翼全空。",
+          goal: { kind: 'hold-cities', cityIds: ['ye', 'linzi'], byYear: 198 },
+        },
+      ],
+    },
+    {
+      id: 'obj-chjx-qi',
+      forceId: 'qi',
+      primary: {
+        title: { zh: '齊之最後', en: "Qi's Last Years" },
+        description: 'Still hold Linzi and Beihai in 196 — Han Xin is coming east after Zhao.',
+        descriptionZh: "至196年仍保臨淄、北海 —— 破趙之後,韓信就要東來。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'beihai'], byYear: 196 },
+      },
+    },
+    {
+      id: 'obj-chjx-yong',
+      forceId: 'yong',
+      primary: {
+        title: { zh: '關中殘局', en: 'What Is Left of Guanzhong' },
+        description: "Still hold Chang'an in 194.",
+        descriptionZh: "至194年仍守長安。",
+        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 194 },
+      },
+    },
+  ],
+
+  // The battle of Weishui
+  'scn-ch-weishui': [
+    {
+      id: 'obj-chws-han',
+      forceId: 'han',
+      primary: {
+        title: { zh: '囊沙壅水', en: 'Sandbags in the River' },
+        description: 'Take Linzi and Beihai by 192 — dam the Wei upstream, let half of them cross, then open it.',
+        descriptionZh: "於192年前取臨淄、北海 —— 夜作萬餘囊,壅濰水上流,半渡而決之。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'beihai'], byYear: 192 },
+      },
+      secondary: [
+        {
+          title: { zh: '請為假王', en: 'Ask to Be Made King' },
+          description: 'Declare yourself emperor — Han Xin asked for a provisional crown; it was the beginning of the end for him.',
+          descriptionZh: "稱帝建號 —— 韓信請為假齊王,那封信是他後來一切禍事的開端。",
+          goal: { kind: 'declare-emperor' },
+        },
+      ],
+    },
+    {
+      id: 'obj-chws-qi',
+      forceId: 'qi',
+      primary: {
+        title: { zh: '酈生已說降', en: 'We Had Already Surrendered' },
+        description: 'Still hold Linzi and Beihai in 195 — Qi had agreed terms when Han Xin attacked anyway.',
+        descriptionZh: "至195年仍保臨淄、北海 —— 酈食其已說降齊,韓信仍然襲之,酈生被烹。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'beihai'], byYear: 195 },
+      },
+      secondary: [
+        {
+          title: { zh: '三分天下', en: 'A Third Way' },
+          description: 'Survive to 205 — Kuai Tong argued Qi could be the third of three.',
+          descriptionZh: "存續至205年 —— 蒯通說三分天下鼎足而立,那也是一條路。",
+          goal: { kind: 'survive-until', year: 205 },
+        },
+      ],
+    },
+    {
+      id: 'obj-chws-chu',
+      forceId: 'chu',
+      primary: {
+        title: { zh: '救齊之師', en: 'The Army Sent to Save Qi' },
+        description: 'Hold Linzi by 194 and Guandu through 196 — Long Ju took twenty legions east and lost them all.',
+        descriptionZh: "於194年前取臨淄、196年前仍守滎陽 —— 龍且將二十萬東救,全軍覆沒。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi'], byYear: 194 },
+      },
+      secondary: [
+        {
+          title: { zh: '守住正面', en: 'Hold the Front' },
+          description: 'Still hold Guandu and Hulao in 196.',
+          descriptionZh: "至196年仍守滎陽、成皋(官渡、虎牢)。",
+          goal: { kind: 'hold-cities', cityIds: ['guandu', 'hulao'], byYear: 196 },
+        },
+      ],
+    },
+  ],
+
+  // The battle of Gaixia
+  'scn-ch-gaixia': [
+    {
+      id: 'obj-chgx-han',
+      forceId: 'han',
+      primary: {
+        title: { zh: '四面楚歌', en: 'Songs of Chu on Every Side' },
+        description: 'Destroy the Chu force by 192 — thirty legions, ten ambushes, and a night of homesick singing.',
+        descriptionZh: "於192年前擊滅西楚 —— 十面埋伏,夜聞四面皆楚歌。",
+        goal: { kind: 'defeat-force', forceId: 'chu', byYear: 192 },
+      },
+      secondary: [
+        {
+          title: { zh: '取彭城', en: 'Take Pengcheng' },
+          description: 'Hold Pengcheng and Xiapi by 193.',
+          descriptionZh: "於193年前取彭城、下邳 —— 西楚之都。",
+          goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'xiapi'], byYear: 193 },
+        },
+      ],
+    },
+    {
+      id: 'obj-chgx-chu',
+      forceId: 'chu',
+      primary: {
+        title: { zh: '不肯過江東', en: 'He Would Not Cross the River' },
+        description: 'Survive to 195 and hold Pengcheng — Jiangdong had eight thousand sons left to give.',
+        descriptionZh: "存續至195年並保有彭城 —— 江東子弟多才俊,捲土重來未可知。",
+        goal: { kind: 'survive-until', year: 195 },
+      },
+      secondary: [
+        {
+          title: { zh: '收復失地', en: 'Win It Back' },
+          description: "Take Chang'an and Luoyang by 200.",
+          descriptionZh: "於200年前克復長安、洛陽 —— 天亡我,非戰之罪?那就再戰一次。",
+          goal: { kind: 'hold-cities', cityIds: ['changan', 'luoyang'], byYear: 200 },
+        },
+      ],
+    },
+  ],
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Sui-Tang. Chang'an = the Tang capital, Luoyang = Wang Shichong's Zheng,
+  // Ye = Dou Jiande's Xia, Taiyuan = the Li clan's base, Hulao = the pass where
+  // one battle settled two kingdoms.
+  // ───────────────────────────────────────────────────────────────────────
+
+  // The end of Sui: the warlords contend
+  'scn-st-suiend': [
+    {
+      id: 'obj-stse-tang',
+      forceId: 'tang',
+      primary: {
+        title: { zh: '太原起兵', en: 'The Rising at Taiyuan' },
+        description: "Hold Chang'an and take Luoyang by 195 — enter the pass first, hold it, then take the plain.",
+        descriptionZh: "於195年前據長安並取洛陽 —— 先入關中,據險自固,再東出爭天下。",
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'luoyang'], byYear: 195 },
+      },
+      secondary: [
+        {
+          title: { zh: '混一宇內', en: 'Unify the Realm' },
+          description: 'Bring all under one banner.',
+          descriptionZh: "混一天下。",
+          goal: { kind: 'unify-realm' },
+        },
+      ],
+    },
+    {
+      id: 'obj-stse-wagang',
+      forceId: 'wagang',
+      primary: {
+        title: { zh: '據洛口倉', en: 'Take the Granaries' },
+        description: 'Take Luoyang by 194 — open the granaries and the hungry will come to you.',
+        descriptionZh: "於194年前攻取洛陽 —— 開洛口倉恣民就食,饑者自來。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 194 },
+      },
+      secondary: [
+        {
+          title: { zh: '西入關中', en: 'Then Guanzhong' },
+          description: "Take Chang'an by 200 — Li Mi argued against this road, and lost the empire on it.",
+          descriptionZh: "於200年前西取長安 —— 李密不肯先入關,天下遂歸李氏。",
+          goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 200 },
+        },
+      ],
+    },
+    {
+      id: 'obj-stse-zheng',
+      forceId: 'zheng',
+      primary: {
+        title: { zh: '據洛稱鄭', en: 'Zheng at Luoyang' },
+        description: 'Still hold Luoyang in 196, and take Xuchang.',
+        descriptionZh: "至196年仍據洛陽並取許昌 —— 王世充守洛陽,四面皆敵。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang'], byYear: 196 },
+      },
+    },
+    {
+      id: 'obj-stse-xia',
+      forceId: 'xia',
+      primary: {
+        title: { zh: '河北夏王', en: 'The Xia King of Hebei' },
+        description: 'Hold Ye and take Luoyang by 197 — the most popular ruler of the age, and the least lucky.',
+        descriptionZh: "於197年前守鄴城並取洛陽 —— 竇建德最得民心,也最不走運。",
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'luoyang'], byYear: 197 },
+      },
+    },
+    {
+      id: 'obj-stse-xiqin',
+      forceId: 'xiqin',
+      primary: {
+        title: { zh: '西秦入關', en: 'Xiqin Through the Pass' },
+        description: "Take Chang'an by 194 — Xue Ju was one battle from taking the capital.",
+        descriptionZh: "於194年前攻取長安 —— 薛舉離長安只差一戰。",
+        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 194 },
+      },
+    },
+    {
+      id: 'obj-stse-dingyang',
+      forceId: 'dingyang',
+      primary: {
+        title: { zh: '南下并州', en: 'South into Bing' },
+        description: 'Take Taiyuan by 194 — with Turkic horse behind you, the Li clan heartland is open.',
+        descriptionZh: "於194年前攻取太原 —— 借突厥之騎,直搗李氏根本。",
+        goal: { kind: 'hold-cities', cityIds: ['taiyuan'], byYear: 194 },
+      },
+    },
+    {
+      id: 'obj-stse-wu',
+      forceId: 'wu',
+      primary: {
+        title: { zh: '江淮自立', en: 'The Jianghuai Host' },
+        description: 'Hold Jianye, Shouchun and Hefei by 196.',
+        descriptionZh: "於196年前據建業、壽春、合肥 —— 杜伏威領江淮群盜,自成一方。",
+        goal: { kind: 'hold-cities', cityIds: ['jianye', 'shouchun', 'hefei'], byYear: 196 },
+      },
+    },
+  ],
+
+  // Qianshuiyuan
+  'scn-st-qianshui': [
+    {
+      id: 'obj-stqs-tang',
+      forceId: 'tang',
+      primary: {
+        title: { zh: '再戰淺水原', en: 'Qianshuiyuan, the Second Time' },
+        description: "Take Tianshui and Anding by 193 — Li Shimin lost here once, then waited out their grain.",
+        descriptionZh: "於193年前取天水、安定 —— 淺水原初戰唐敗,再戰堅壁不出,待其糧盡。",
+        goal: { kind: 'hold-cities', cityIds: ['tianshui', 'anding'], byYear: 193 },
+      },
+      secondary: [
+        {
+          title: { zh: '平定隴右', en: 'Settle Longyou' },
+          description: 'Destroy the Xiqin force by 197.',
+          descriptionZh: "於197年前滅西秦 —— 隴右既平,關中乃安。",
+          goal: { kind: 'defeat-force', forceId: 'xiqin', byYear: 197 },
+        },
+      ],
+    },
+    {
+      id: 'obj-stqs-xiqin',
+      forceId: 'xiqin',
+      primary: {
+        title: { zh: '直取長安', en: "Straight for Chang'an" },
+        description: "Take Chang'an by 193 — press on now; Xue Ju's death is what saved the Tang.",
+        descriptionZh: "於193年前攻取長安 —— 薛舉暴卒才救了唐,趁現在就打。",
+        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 193 },
+      },
+    },
+    {
+      id: 'obj-stqs-zheng',
+      forceId: 'zheng',
+      primary: {
+        title: { zh: '西向爭關', en: 'West While Tang Is Busy' },
+        description: "Hold Luoyang and take Tongguan by 196.",
+        descriptionZh: "於196年前守洛陽並取潼關 —— 唐師在隴右,關東可乘。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'tongguan'], byYear: 196 },
+      },
+    },
+    {
+      id: 'obj-stqs-xia',
+      forceId: 'xia',
+      primary: {
+        title: { zh: '併吞河北', en: 'All of Hebei' },
+        description: 'Hold Ye, Pengcheng and Linzi by 196.',
+        descriptionZh: "於196年前據鄴城、彭城、臨淄。",
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'pengcheng', 'linzi'], byYear: 196 },
+      },
+    },
+  ],
+
+  // Bobi
+  'scn-st-bobi': [
+    {
+      id: 'obj-stbb-tang',
+      forceId: 'tang',
+      primary: {
+        title: { zh: '柏壁堅壁', en: 'Wait Them Out at Bobi' },
+        description: 'Retake Taiyuan and Shangdang by 194 — hold the line until their supply fails, then chase them for three days.',
+        descriptionZh: "於194年前收復太原、上黨 —— 堅壁不戰以老其師,糧盡而追,一日八戰。",
+        goal: { kind: 'hold-cities', cityIds: ['taiyuan', 'shangdang'], byYear: 194 },
+      },
+      secondary: [
+        {
+          title: { zh: '滅定楊', en: 'End Dingyang' },
+          description: 'Destroy the Dingyang force by 197.',
+          descriptionZh: "於197年前滅劉武周 —— 河東既復,唐之根本乃固。",
+          goal: { kind: 'defeat-force', forceId: 'dingyang', byYear: 197 },
+        },
+      ],
+    },
+    {
+      id: 'obj-stbb-dingyang',
+      forceId: 'dingyang',
+      primary: {
+        title: { zh: '宋金剛南下', en: "Song Jin'gang Drives South" },
+        description: "Hold Taiyuan and take Chang'an by 196 — you have taken the Li clan's home ground; do not stop.",
+        descriptionZh: "於196年前守太原並取長安 —— 已奪李氏根本之地,不可頓兵。",
+        goal: { kind: 'hold-cities', cityIds: ['taiyuan', 'changan'], byYear: 196 },
+      },
+    },
+    {
+      id: 'obj-stbb-zheng',
+      forceId: 'zheng',
+      primary: {
+        title: { zh: '洛陽自守', en: 'Luoyang Holds' },
+        description: 'Still hold Luoyang in 196 and take Xuchang.',
+        descriptionZh: "至196年仍守洛陽並取許昌。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang'], byYear: 196 },
+      },
+    },
+    {
+      id: 'obj-stbb-xia',
+      forceId: 'xia',
+      primary: {
+        title: { zh: '趁虛而西', en: 'West While They Fight in Hedong' },
+        description: 'Hold Ye and take Luoyang by 197.',
+        descriptionZh: "於197年前守鄴城並取洛陽。",
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'luoyang'], byYear: 197 },
+      },
+    },
+  ],
+
+  // Hulao: one battle, two kingdoms
+  'scn-st-hulao': [
+    {
+      id: 'obj-sthl-tang',
+      forceId: 'tang',
+      primary: {
+        title: { zh: '一戰擒兩王', en: 'Two Kings in One Battle' },
+        description: 'Take Luoyang and Ye by 194 — besiege one, ambush the other at the pass with three thousand horse.',
+        descriptionZh: "於194年前取洛陽、鄴城 —— 圍洛陽而不撤,以三千五百騎據虎牢待竇建德。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'ye'], byYear: 194 },
+      },
+      secondary: [
+        {
+          title: { zh: '混一宇內', en: 'Unify the Realm' },
+          description: 'Bring all under one banner.',
+          descriptionZh: "混一天下 —— 虎牢一戰之後,天下大勢已定。",
+          goal: { kind: 'unify-realm' },
+        },
+      ],
+    },
+    {
+      id: 'obj-sthl-zheng',
+      forceId: 'zheng',
+      primary: {
+        title: { zh: '守洛待援', en: 'Hold Until Xia Arrives' },
+        description: 'Still hold Luoyang in 195 — the city was down to eating clay when help came.',
+        descriptionZh: "至195年仍守洛陽 —— 城中糧盡,以土屑為餅,夏王之援終於未到。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 195 },
+      },
+    },
+    {
+      id: 'obj-sthl-xia',
+      forceId: 'xia',
+      primary: {
+        title: { zh: '毋赴虎牢', en: 'Do Not Go to Hulao' },
+        description: 'Take Luoyang by 195 while still holding Ye — Ling Jing advised crossing north instead; you refused.',
+        descriptionZh: "於195年前取洛陽且鄴城不失 —— 凌敬勸你北渡黃河取山西,你沒有聽。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'ye'], byYear: 195 },
+      },
+      secondary: [
+        {
+          title: { zh: '夏國不亡', en: 'Xia Endures' },
+          description: 'Survive to 205.',
+          descriptionZh: "存續至205年 —— 虎牢被擒之後,河北再無夏王。",
+          goal: { kind: 'survive-until', year: 205 },
+        },
+      ],
+    },
+  ],
+
+  // The An Lushan rebellion
+  'scn-st-anshi': [
+    {
+      id: 'obj-stas-tang',
+      forceId: 'tang',
+      primary: {
+        title: { zh: '兩京克復', en: 'Retake Both Capitals' },
+        description: 'Retake Luoyang by 194 — and never order the Tongguan army out of its fortifications again.',
+        descriptionZh: "於194年前收復洛陽 —— 並且不要再逼潼關守軍出戰。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 194 },
+      },
+      secondary: [
+        {
+          title: { zh: '河北盡復', en: 'All of Hebei Back' },
+          description: 'Destroy the Yan force by 200.',
+          descriptionZh: "於200年前平定大燕 —— 河北諸鎮,一個不留。",
+          goal: { kind: 'defeat-force', forceId: 'yan', byYear: 200 },
+        },
+      ],
+    },
+    {
+      id: 'obj-stas-yan',
+      forceId: 'yan',
+      primary: {
+        title: { zh: '漁陽鼙鼓', en: 'The War Drums of Yuyang' },
+        description: "Take Chang'an by 193 — the pass falls when the court forces its garrison into the open.",
+        descriptionZh: "於193年前攻取長安 —— 漁陽鼙鼓動地來,潼關一破,九重城闕煙塵生。",
+        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 193 },
+      },
+      secondary: [
+        {
+          title: { zh: '大燕不亡', en: 'Yan Endures' },
+          description: 'Survive to 205 — the rebellion outlived An Lushan by seven years; make it last longer.',
+          descriptionZh: "存續至205年 —— 安祿山死後亂事仍延七年,這一次要更久。",
+          goal: { kind: 'survive-until', year: 205 },
+        },
+      ],
+    },
+  ],
 };
