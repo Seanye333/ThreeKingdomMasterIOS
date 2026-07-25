@@ -1533,6 +1533,109 @@ export const DIALOGUE_EVENTS: DialogueEvent[] = [
     ],
     conditions: { minYear: 200 },
   },
+
+  // ─── 2026-07 補:異族風俗(邊塞諸族的羈縻・征討・互市・以夷制夷)───
+  // 南蠻/羌/烏桓/鮮卑/山越/氐/匈奴/東夷各具其俗,對之或撫或討或用其銳。
+  // 接 tribes.ts 諸族;兩則以 recruit 收異族猛將(requiresOfficerActive 錨定其尚存)。
+  {
+    id: 'dlg-tribe-nanman-envoy',
+    speakerOfficerId: 'meng-huo',
+    speaker: { zh: '南蠻使者', en: 'A Nanman Envoy' },
+    text: { zh: '南中蠻王遣使,獻犀甲、象牙、丹漆:「我王身被犀甲,坐驅猛獸,聚眾數萬。漢家若以兵相加,山林瘴癘,未見其利。不若通好互市,各安其境。」', en: 'The Man king of the south sends gifts — rhino-hide armour, ivory, cinnabar-lacquer: "My king wears rhino-hide, drives wild beasts to battle, and musters tens of thousands. Should the Han bring arms, the jungle\'s miasma promises no gain. Better to trade in peace, each secure in his own land."' },
+    choices: [
+      { label: { zh: '攻心為上,以德懷之', en: 'Win the heart first — draw them with virtue' }, effects: [{ kind: 'set-flag', flag: 'nanman-hearts-and-minds' }], outcome: { zh: '厚遣其使,示以恩信,南人稍有向化之意。', en: 'The envoy is sent back laden with kindness; the southern folk warm, a little, toward you.' } },
+      { label: { zh: '開關互市,通有無', en: 'Open the passes to trade' }, effects: [{ kind: 'gold', delta: 50 }], outcome: { zh: '蜀錦易犀象,關市之利兩得其便。', en: 'Shu-brocade for rhino and ivory — the border market profits both sides.' } },
+      { label: { zh: '陳兵示威,責其入貢', en: 'Show force, demand tribute' }, effects: [{ kind: 'gold', delta: 30 }, { kind: 'set-flag', flag: 'nanman-cowed' }], outcome: { zh: '蠻使懾服納貢,然山寨之間,怨言已生。', en: 'The envoy submits and pays — yet among the hill-forts, grievance stirs.' } },
+    ],
+  },
+  {
+    id: 'dlg-tribe-nanman-submit',
+    speakerOfficerId: 'meng-huo',
+    speaker: { zh: '南蠻之王', en: 'The King of the Nanman' },
+    text: { zh: '蠻王歷經擒縱,終釋兵頓首:「公,天威也,南人不復反矣!某願率洞主部曲,世為漢家藩籬,永不背叛。」左右皆疑其詐,亦或真心。', en: 'Captured and freed time upon time, the Man king lays down his arms and bows his head at last: "My lord — this is Heaven\'s might; the southern folk will rebel no more! I would lead my cave-chiefs and clansmen to be the Han\'s frontier hedge, forever loyal." Some suspect a ruse; some, true surrender.' },
+    choices: [
+      { label: { zh: '納其降,收南人之心', en: 'Accept the surrender — win the southern hearts' }, effects: [{ kind: 'recruit', officerId: 'meng-huo' }, { kind: 'set-flag', flag: 'nanman-pacified' }], outcome: { zh: '孟獲率眾內附,南中自此不設漢官而自安,兵資皆給。', en: 'Meng Huo brings his people in; thereafter the south holds itself at peace, and yields troops and stores.' } },
+      { label: { zh: '受降而留質,以防其變', en: 'Accept, but hold a hostage against betrayal' }, effects: [{ kind: 'gold', delta: -30 }, { kind: 'set-flag', flag: 'nanman-hostage' }], outcome: { zh: '納質羈縻,南中粗定,然蠻王心終未盡安。', en: 'A hostage taken and the south loosely bound; it settles — though the Man king\'s heart is never wholly eased.' } },
+    ],
+    conditions: { requiresOfficerActive: 'meng-huo' },
+  },
+  {
+    id: 'dlg-tribe-qiang-restive',
+    speaker: { zh: '涼州邊吏', en: 'A Liangzhou Border Officer' },
+    text: { zh: '邊吏急報:燒當、參狼諸羌種落,叛服無常。羌人尚勇力,重血親復仇,一人有怨,舉種相鬥。今守將貪暴,羌怨已深,恐復為邊患。', en: 'A border officer reports in haste: the Shaodang and Canlang Qiang tribes turn loyal and rebel by whim. The Qiang prize strength and honour blood-vengeance — one man\'s grievance sets a whole tribe to war. The garrison chief is greedy and cruel; Qiang resentment runs deep, and the frontier may burn again."' },
+    choices: [
+      { label: { zh: '罷貪吏,厚撫羈縻', en: 'Dismiss the corrupt officer, soothe and bind them' }, effects: [{ kind: 'gold', delta: -50 }, { kind: 'set-flag', flag: 'qiang-appeased' }], outcome: { zh: '易良吏、除苛政,羌人感悅,邊境粗安。', en: 'A better officer, the harsh levies lifted — the Qiang are moved, and the frontier quiets.' } },
+      { label: { zh: '徙其種落於內地,分而弱之', en: 'Resettle the tribes inland, divide and weaken them' }, effects: [{ kind: 'set-flag', flag: 'qiang-resettled' }], outcome: { zh: '徙羌實邊,勢雖分而怨益積,埋亂之種。', en: 'The Qiang are moved to fill the marches; their strength splits, but grievance banks up — seeds of revolt.' } },
+      { label: { zh: '發兵征討,以威定之', en: 'March out to crush them by force' }, effects: [{ kind: 'gold', delta: -40 }, { kind: 'set-flag', flag: 'qiang-campaign' }], outcome: { zh: '兵鋒所至,羌暫遁入山,然野火燒不盡,春風吹又生。', en: 'The Qiang flee to the hills before your spears — yet wildfire never wholly dies; spring wind revives it.' } },
+    ],
+  },
+  {
+    id: 'dlg-tribe-wuhuan-cavalry',
+    speaker: { zh: '幽州從事', en: 'A Youzhou Adjutant' },
+    text: { zh: '幽州從事進言:「烏桓突騎,天下名騎也,控弦數萬,蹋頓最雄。若能收其銳為我所用,則北疆之兵甲於中國;若縱之南牧,則邊郡無寧日。」', en: 'A Youzhou adjutant advises: "The Wuhuan shock-cavalry are the finest horse under Heaven — tens of thousands of bows, and Tadun the mightiest. Win their edge to your use, and the northern host will lead the realm; loose them to raid south, and the border knows no peace."' },
+    choices: [
+      { label: { zh: '厚結其大人,收突騎為用', en: 'Court their chiefs, take the shock-horse into service' }, effects: [{ kind: 'gold', delta: -60 }, { kind: 'set-flag', flag: 'wuhuan-cavalry-won' }], outcome: { zh: '烏桓突騎歸麾,北兵稱雄,敵騎為之奪氣。', en: 'The Wuhuan horse come under your banner; your northern arm reigns, and rival cavalry lose their nerve.' } },
+      { label: { zh: '出塞掩襲,效白狼山故事', en: 'Strike beyond the passes — the White Wolf Mountain gambit' }, effects: [{ kind: 'gold', delta: -50 }, { kind: 'set-flag', flag: 'wuhuan-broken' }], outcome: { zh: '輕騎卒至,臨陣斬其單于,烏桓遂衰,降者二十餘萬。', en: 'Light horse fall on them by surprise; their khan is cut down mid-field, the Wuhuan broken, and two hundred thousand submit.' } },
+    ],
+  },
+  {
+    id: 'dlg-tribe-xianbei-khan',
+    speaker: { zh: '護烏桓校尉', en: 'The Protector-Colonel' },
+    text: { zh: '校尉奏:鮮卑控弦十萬,分東、中、西三部,大人各擁強兵。昔檀石槐盡有匈奴故地,今軻比能復欲併諸部而一之。此虜若合,則塞下危矣。', en: 'The colonel reports: the Xianbei field a hundred thousand bows in three divisions — east, centre, west — each chief with a strong host. Once Tanshihuai held all the old Xiongnu lands; now Kebineng seeks to fuse the divisions into one. Should these barbarians unite, the marches are in peril."' },
+    choices: [
+      { label: { zh: '離間諸部,勿使其合', en: 'Sow division among the chiefs — keep them apart' }, effects: [{ kind: 'gold', delta: -40 }, { kind: 'set-flag', flag: 'xianbei-divided' }], outcome: { zh: '賂結諸大人,使相猜貳,鮮卑終不能一。', en: 'Bribes and pacts set the chiefs at odds; the Xianbei never quite become one.' } },
+      { label: { zh: '通關和市,羈縻懷柔', en: 'Open the border market, bind them with goodwill' }, effects: [{ kind: 'gold', delta: 40 }], outcome: { zh: '和市既通,虜得繒帛,暫緩其鋒,邊亦獲利。', en: 'With the market open the barbarians gain silk; their edge dulls awhile, and the border profits too.' } },
+      { label: { zh: '築塞列亭,嚴為之備', en: 'Raise forts and beacon-posts, guard hard' }, effects: [{ kind: 'gold', delta: -50 }, { kind: 'set-flag', flag: 'xianbei-walled-out' }], outcome: { zh: '烽燧相望,虜至無所掠而還,邊民得耕。', en: 'Beacon to beacon in sight; raiders come, find nothing, and turn back — the border folk may till.' } },
+    ],
+  },
+  {
+    id: 'dlg-tribe-shanyue-hills',
+    speaker: { zh: '江東將領', en: 'A Southland Commander' },
+    text: { zh: '將領請命:「山越阻險不賓,依阻山林,出為寇盜、入為民,強宗驍帥擁眾自守。若討而定之,可得精兵——出山之越,悍勇冠於諸軍;然用兵艱難,曠日持久。」', en: 'A commander asks leave: "The Shan Yue hold the crags unbowed — sheltering in the wooded heights, raiders abroad and farmers at home, their strong clans and bold chiefs standing apart. Subdue them and you gain crack troops: Yue who come down from the hills outmatch any in valour — though the fighting is hard and long."' },
+    choices: [
+      { label: { zh: '討定山越,強者為兵、弱者補戶', en: 'Subdue them — the strong to arms, the rest to the rolls' }, effects: [{ kind: 'gold', delta: -50 }, { kind: 'set-flag', flag: 'shanyue-pacified' }], outcome: { zh: '越人出山,得勁卒數萬,江東之兵益強。', en: 'The Yue come down; tens of thousands of hardened soldiers swell the Southland\'s ranks.' } },
+      { label: { zh: '羈縻其帥,通市易鹽鐵', en: 'Bind their chiefs, trade salt and iron' }, effects: [{ kind: 'gold', delta: 30 }], outcome: { zh: '不勞師而通貨,山越暫安,亦有出而附者。', en: 'Trade without a campaign; the Yue quiet awhile, and some come down to join.' } },
+    ],
+  },
+  {
+    id: 'dlg-tribe-di-frontier',
+    speaker: { zh: '雍州刺史', en: 'The Yongzhou Inspector' },
+    text: { zh: '刺史議:武都、陰平之氐,半耕半牧,散居山谷,種落繁多。氐人怯於野戰而長於守險,若善撫之,可為屏藩;若逼之過急,則據險為亂。', en: 'The inspector deliberates: the Di of Wudu and Yinping half-till, half-herd, scattered through the valleys in many tribes. The Di are timid in open battle but stubborn behind cliffs; treat them well and they screen your border — press them too hard and they hold the heights in revolt."' },
+    choices: [
+      { label: { zh: '撫而用之,使為西邊屏藩', en: 'Win them over as a western screen' }, effects: [{ kind: 'set-flag', flag: 'di-buffer' }], outcome: { zh: '氐帥受爵,守險為我藩籬,西陲賴以粗安。', en: 'The Di chiefs take rank and hold the passes as your hedge; the western march rests easier.' } },
+      { label: { zh: '徙氐實關中,以充戶口', en: 'Resettle the Di into Guanzhong to fill the rolls' }, effects: [{ kind: 'gold', delta: 20 }, { kind: 'set-flag', flag: 'di-resettled' }], outcome: { zh: '徙氐數萬實關中,倉廩戶口俱增,然雜處之患,亦伏於此。', en: 'Tens of thousands of Di fill Guanzhong; granaries and households grow — though the trouble of mixed peoples is planted here too.' } },
+    ],
+  },
+  {
+    id: 'dlg-tribe-xiongnu-parts',
+    speaker: { zh: '并州別駕', en: 'A Bingzhou Aide' },
+    text: { zh: '別駕陳策:南匈奴內附,居於并州,單于呼廚泉,左賢王劉豹,眾且十萬。單于久居京師為質,其國分為五部,各立部帥,而以漢人監之——此馭虜之上策也。', en: 'An aide sets out a plan: the Southern Xiongnu have submitted and dwell in Bingzhou — the Chanyu Huchuquan, the Worthy King of the Left Liu Bao, near a hundred thousand strong. Keep the Chanyu long in the capital as hostage, split the nation into five divisions each under its own commander, and set Han overseers upon them — this is the master-stratagem for handling barbarians."' },
+    choices: [
+      { label: { zh: '分五部,立帥而監之', en: 'Split them into five, appoint commanders and overseers' }, effects: [{ kind: 'set-flag', flag: 'xiongnu-five-parts' }], outcome: { zh: '匈奴分而勢弱,終漢世不能為大患。', en: 'Divided, the Xiongnu weaken; through the age they never grow into a great menace.' } },
+      { label: { zh: '和親賜繒,以安其眾', en: 'Wed and gift them silk to settle the horde' }, effects: [{ kind: 'gold', delta: -60 }, { kind: 'set-flag', flag: 'xiongnu-heqin' }], outcome: { zh: '和親既定,單于納款,北邊暫得寧息。', en: 'The marriage sealed and the Chanyu appeased, the northern border wins a spell of rest.' } },
+      { label: { zh: '出金贖歸沒胡之漢女', en: 'Pay gold to ransom home the Han women taken by the Hu' }, effects: [{ kind: 'gold', delta: -80 }, { kind: 'set-flag', flag: 'xiongnu-ransom' }], outcome: { zh: '重金贖歸文姬之屬,士林感泣,傳為仁德。', en: 'At heavy cost you ransom home the likes of Lady Cai; the literati weep, and call it benevolence.' } },
+    ],
+  },
+  {
+    id: 'dlg-tribe-dongyi-envoy',
+    speaker: { zh: '東夷使者', en: 'An Eastern Envoy' },
+    text: { zh: '玄菟之外,高句麗、扶餘遣使來朝,獻貂皮、良弓、果下馬。二國介居遼東之東,時通時叛。使者言辭恭順,然邊將密報:高句麗數寇遼東,恐非誠服。', en: 'From beyond Xuantu, Goguryeo and Buyeo send envoys to court, bearing sable pelts, fine bows, and dwarf horses. The two states lie east of Liaodong, now friendly, now in revolt. The envoys\' words are humble — yet a border general warns in secret: Goguryeo has raided Liaodong more than once; this may be no true submission."' },
+    choices: [
+      { label: { zh: '納貢通好,厚賜其使', en: 'Accept the tribute, reward the envoys richly' }, effects: [{ kind: 'gold', delta: -30 }, { kind: 'set-flag', flag: 'dongyi-friendly' }], outcome: { zh: '東夷歲貢貂馬,遼東之市頗獲其利。', en: 'The eastern peoples render sable and horses yearly; the Liaodong market profits well.' } },
+      { label: { zh: '陳兵遼東,以備其詐', en: 'Mass troops in Liaodong against their treachery' }, effects: [{ kind: 'gold', delta: -40 }, { kind: 'set-flag', flag: 'dongyi-guarded' }], outcome: { zh: '嚴兵設備,高句麗不敢輕動,邊塞肅然。', en: 'With troops arrayed and ready, Goguryeo dares not stir; the frontier stands stern.' } },
+    ],
+  },
+  {
+    id: 'dlg-tribe-wuxi-shamoke',
+    speakerOfficerId: 'shamoke',
+    speaker: { zh: '五溪蠻王', en: 'The King of the Five Streams' },
+    text: { zh: '五溪蠻王沙摩柯,滿臉虯髯,腰懸鐵蒺藜骨朵,昂然來見:「聞公起兵討賊,某素慕漢家恩信。願率五溪之眾,為公前驅,萬死不辭!」', en: 'Shamoke, King of the Five Streams — bristling-bearded, an iron mace at his waist — strides in proudly: "I hear you raise arms against the traitors, and I have long honoured the Han\'s good faith. Let me lead the men of the Five Streams as your vanguard — I\'ll not shrink from ten thousand deaths!"' },
+    choices: [
+      { label: { zh: '納其誠,收五溪之眾為前部', en: 'Take his faith — make the Five Streams your van' }, effects: [{ kind: 'recruit', officerId: 'shamoke' }, { kind: 'set-flag', flag: 'wuxi-allied' }], outcome: { zh: '沙摩柯率蠻兵來歸,山地之戰,悍不畏死,敵為之膽寒。', en: 'Shamoke brings his Man warriors over; in the hill-fighting they scorn death, and the foe\'s courage fails.' } },
+      { label: { zh: '厚賜結盟,而不使深入', en: 'Reward and ally — but keep them at arm\'s length' }, effects: [{ kind: 'gold', delta: -50 }, { kind: 'set-flag', flag: 'wuxi-ally-loose' }], outcome: { zh: '結為外援,蠻王雖悅,然終隔一層。', en: 'Bound as an outer ally, the Man king is pleased — yet a distance remains.' } },
+    ],
+    conditions: { requiresOfficerActive: 'shamoke' },
+  },
 ];
 
 /** Lookup by id for branching follow-ups. */
