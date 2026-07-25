@@ -1415,6 +1415,124 @@ export const DIALOGUE_EVENTS: DialogueEvent[] = [
     ],
     conditions: { requiresOfficerInService: 'lu-su' },
   },
+
+  // ─── 2026-07 補:讖緯・天象・童謠(隨國勢觸發的祥瑞/災異/謠讖)───
+  // 天人感應是漢季政治的底色 —— 星變主兵喪、祥瑞徵天命、童謠洩人心。
+  // 多為觀賞+set-flag,少數可禳祭(gold)。有史實年限者以 minYear/maxYear 錨定。
+  {
+    id: 'dlg-omen-mars-heart',
+    speaker: { zh: '太史令', en: 'The Grand Astrologer' },
+    text: { zh: '太史令夜觀天象,惶恐入奏:「熒惑守心,此至凶之兆也!主大喪,或有大臣當之。願主公修德禳災,以答天譴。」', en: 'The Grand Astrologer reports in dread: "Mars lingers in the Heart mansion — a most dire sign! It portends a great death, perhaps of a high minister. Cultivate virtue and avert the calamity, my lord, to answer Heaven\'s reproach."' },
+    choices: [
+      { label: { zh: '大赦天下,修德禳之', en: 'Proclaim amnesty, cultivate virtue to avert it' }, effects: [{ kind: 'gold', delta: -60 }, { kind: 'set-flag', flag: 'omen-mars-averted' }], outcome: { zh: '詔下大赦,民感其德,人心稍安。', en: 'Amnesty is decreed; the people take heart, and the unease eases.' } },
+      { label: { zh: '古有移禍之說,卻之不祥', en: 'Some would shift the doom onto another — you refuse' }, effects: [{ kind: 'set-flag', flag: 'omen-mars-refused' }], outcome: { zh: '主公曰:「移禍於下,吾不忍也。」左右肅然。', en: '"To cast the doom onto those below — this I cannot bear." All fall silent in awe.' } },
+      { label: { zh: '天道玄遠,秘而不宣', en: 'Heaven\'s ways are remote — keep it quiet' }, effects: [{ kind: 'none' }], outcome: { zh: '事秘不聞於外,然帳中人皆惴惴。', en: 'The matter is hushed — yet dread lingers in the tent.' } },
+    ],
+  },
+  {
+    id: 'dlg-omen-comet-taiwei',
+    speaker: { zh: '太史令', en: 'The Grand Astrologer' },
+    text: { zh: '太史令奏:「有長星孛于太微,掃帝座之側。彗之為言,除舊布新也。天下恐將有兵革之變,願早為之備。」', en: 'The Astrologer reports: "A long comet sweeps the Grand Tenuity, brushing the imperial seat. A comet speaks of sweeping out the old for the new — arms and upheaval may come. Prepare early, my lord."' },
+    choices: [
+      { label: { zh: '整軍經武,以待其變', en: 'Ready the army against the coming change' }, effects: [{ kind: 'gold', delta: -50 }, { kind: 'set-flag', flag: 'omen-comet-armed' }], outcome: { zh: '繕甲厲兵,三軍戒嚴,人謂主公有先見。', en: 'Armour is mended and blades honed; men call their lord far-sighted.' } },
+      { label: { zh: '謂彗主除舊,正應吾興', en: 'Read the broom-star as sweeping the old — it heralds YOUR rise' }, effects: [{ kind: 'set-flag', flag: 'omen-comet-mandate' }], outcome: { zh: '主公笑曰:「除舊布新,豈非為吾乎?」眾心為之一壯。', en: '"Sweep out the old for the new — is that not for me?" The host\'s spirit lifts.' } },
+    ],
+  },
+  {
+    id: 'dlg-omen-white-rainbow',
+    speaker: { zh: '郡中父老', en: 'Village Elders' },
+    text: { zh: '郡中傳:白虹貫日,經天而不散。古謂「白虹貫日,人主有憂」,又雲刺客之兆。市井洶洶,人心不安。', en: 'From the county: a white rainbow pierced the sun and hung unbroken across the sky. The old saying runs — "a white rainbow through the sun, the sovereign has cause for grief," and some name it an assassin\'s omen. The streets churn with unease.' },
+    choices: [
+      { label: { zh: '嚴宿衛,防不測', en: 'Tighten the guard against the unforeseen' }, effects: [{ kind: 'gold', delta: -30 }, { kind: 'set-flag', flag: 'omen-guard-doubled' }], outcome: { zh: '增衛倍嚴,主公寢食俱安。', en: 'The watch is doubled; the lord sleeps and dines at ease.' } },
+      { label: { zh: '出榜安民,言天象無常', en: 'Post notices to calm the folk — omens are fickle' }, effects: [{ kind: 'set-flag', flag: 'omen-rainbow-calmed' }], outcome: { zh: '榜諭既出,訛言漸息。', en: 'Once the notices go up, the rumours fade.' } },
+    ],
+  },
+  {
+    id: 'dlg-omen-eclipse',
+    speaker: { zh: '太史令', en: 'The Grand Astrologer' },
+    text: { zh: '白晝忽晦,日有食之,雞棲犬吠,百姓驚駭伏地。太史令奏:「日者,君象也;日食,陰侵陽也。宜避正殿、減膳、責躬以答之。」', en: 'Day turns to dusk; the sun is eaten, fowl roost and dogs bark, and the people fall prostrate in terror. The Astrologer says: "The sun is the image of the sovereign; its eclipse is the shadow encroaching on the light. Quit the main hall, reduce your table, and take the blame upon yourself."' },
+    choices: [
+      { label: { zh: '避殿減膳,下詔責躬', en: 'Quit the hall, reduce fare, issue a self-reproaching edict' }, effects: [{ kind: 'set-flag', flag: 'omen-eclipse-humbled' }], outcome: { zh: '主公謙抑答天,朝野稱其能畏天命。', en: 'The lord humbles himself before Heaven; court and country praise his awe of the Mandate.' } },
+      { label: { zh: '厚賚太史,令詳察災異', en: 'Reward the Astrologer, bid him watch the skies closely' }, effects: [{ kind: 'gold', delta: -20 }, { kind: 'none' }], outcome: { zh: '太史夜夜候台,災祥皆有所稽。', en: 'The Astrologer keeps his tower nightly; every sign is set on record.' } },
+    ],
+  },
+  {
+    id: 'dlg-omen-five-planets',
+    speaker: { zh: '太史令', en: 'The Grand Astrologer' },
+    text: { zh: '太史令大喜而奏:「五星如連珠,聚於東井之分!昔漢高入關,五星聚東井,遂有天下。此受命之君當興之兆也,大吉!」', en: 'The Astrologer reports in joy: "The five planets align like a strung pearl, gathered in the Eastern Well! When Han\'s founder entered the passes, so they gathered — and he won the realm. This heralds the rise of one who holds the Mandate. Most auspicious!"' },
+    choices: [
+      { label: { zh: '告於宗廟,昭天命所歸', en: 'Announce it at the ancestral shrine — the Mandate falls to you' }, effects: [{ kind: 'set-flag', flag: 'omen-five-planets-mandate' }], outcome: { zh: '祭告宗廟,將士益信主公有天命,士氣大振。', en: 'Proclaimed at the shrine; the host believes ever more in their lord\'s Mandate, and spirits soar.' } },
+      { label: { zh: '謙抑不居,曰未敢當', en: 'Demur — you dare not claim it' }, effects: [{ kind: 'gold', delta: 40 }, { kind: 'none' }], outcome: { zh: '主公愈謙,士人愈以為有德,爭來歸附。', en: 'The more the lord demurs, the more the literati deem him virtuous — and flock to serve.' } },
+    ],
+  },
+  {
+    id: 'dlg-omen-yellow-dragon',
+    speaker: { zh: '地方奏報', en: 'A Provincial Report' },
+    text: { zh: '有司奏:某水之濱,黃龍見焉,長數十丈,吏民聚觀。黃者,土德之色;龍者,君德之象。群下皆稱祥瑞,請以聞。', en: 'An official reports: on the banks of a certain river a yellow dragon appeared, tens of yards long, and officials and folk gathered to watch. Yellow is the hue of the Earth-virtue; the dragon, the image of the sovereign. All hail it a portent of grace and beg to record it.' },
+    choices: [
+      { label: { zh: '改元以應祥瑞', en: 'Change the reign-title to answer the portent' }, effects: [{ kind: 'set-flag', flag: 'omen-yellow-dragon' }], outcome: { zh: '改元詔下,遠近傳為天佑明主。', en: 'A new era is proclaimed; far and near it is told that Heaven favours the enlightened lord.' } },
+      { label: { zh: '賞獻瑞者,勒石紀之', en: 'Reward the reporter, cut the wonder in stone' }, effects: [{ kind: 'gold', delta: -40 }], outcome: { zh: '立碑紀瑞,觀者如堵,皆頌盛德。', en: 'A stele records the omen; onlookers throng, all extolling the lord\'s virtue.' } },
+    ],
+  },
+  {
+    id: 'dlg-omen-qilin-phoenix',
+    speaker: { zh: '苑囿之吏', en: 'A Keeper of the Parks' },
+    text: { zh: '苑吏來報:鳳凰集於高梧,麒麟遊於郊藪,不畏人。古者聖王在上,則麟鳳至。此太平之象,王道之應也。', en: 'A park-keeper reports: a phoenix has settled in the tall parasol-tree, and a qilin roams the outer marsh, unafraid of men. The ancients held that when a sage rules above, qilin and phoenix come. This is the image of Great Peace, the response to kingly rule.' },
+    choices: [
+      { label: { zh: '布告天下,與民同慶', en: 'Proclaim it realm-wide, rejoice with the people' }, effects: [{ kind: 'gold', delta: -30 }, { kind: 'set-flag', flag: 'omen-auspice-peace' }], outcome: { zh: '普天同慶,民歌王道之盛。', en: 'The realm rejoices as one; the folk sing the glory of kingly rule.' } },
+      { label: { zh: '戒左右勿以瑞自滿', en: 'Warn your court not to grow complacent on omens' }, effects: [{ kind: 'set-flag', flag: 'omen-humble-in-fortune' }], outcome: { zh: '主公曰:「瑞不足恃,惟德可久。」聞者斂容。', en: '"Omens are no ground to stand on; only virtue endures." All grow solemn.' } },
+    ],
+  },
+  {
+    id: 'dlg-omen-sweet-dew',
+    speaker: { zh: '郎官', en: 'A Court Attendant' },
+    text: { zh: '郎官奏:昨夜甘露降於宮樹,凝如珠玉,味甘如飴。古稱「天下和平則甘露降」,誠聖德所感也。', en: 'An attendant reports: last night sweet dew fell on the palace trees, congealed like pearls, sweet as malt-sugar. The ancients said, "when the realm is at peace, sweet dew descends" — surely the response to sagely virtue.' },
+    choices: [
+      { label: { zh: '集群臣於露下,賦詩紀瑞', en: 'Gather the court beneath it, compose verse to mark the wonder' }, effects: [{ kind: 'gold', delta: -20 }, { kind: 'set-flag', flag: 'omen-sweet-dew' }], outcome: { zh: '君臣賦詩,傳為一時文采風流之盛。', en: 'Lord and ministers compose together — remembered as a flowering of letters.' } },
+      { label: { zh: '賜露於老病,以廣德澤', en: 'Share the dew with the aged and ailing, to spread the grace' }, effects: [{ kind: 'set-flag', flag: 'omen-dew-shared' }], outcome: { zh: '分賜孤老,民益感主公之仁。', en: 'Given to the old and orphaned; the people feel their lord\'s benevolence all the more.' } },
+    ],
+  },
+  {
+    id: 'dlg-omen-stone-script',
+    speaker: { zh: '獻瑞之人', en: 'A Bringer of Portents' },
+    text: { zh: '有人自山中得一異石,剖之有文,隱隱成字,似讖非讖。或雲此石應天命,主公當有非常之位。事涉圖讖,虛實難明。', en: 'A man brings a strange stone from the mountains; split open, faint markings form what seem to be words — a prophecy, or near one. Some say the stone answers the Mandate, that their lord is destined for an extraordinary throne. It touches on prophecy-lore; truth and fraud are hard to tell apart.' },
+    choices: [
+      { label: { zh: '納之,以為天命之符', en: 'Accept it as a token of the Mandate' }, effects: [{ kind: 'set-flag', flag: 'portent-stone-embraced' }], outcome: { zh: '圖讖流布,附者益眾,然識者頗以為妄。', en: 'The prophecy spreads and adherents multiply — though the discerning call it a fabrication.' } },
+      { label: { zh: '斥圖讖惑眾,焚石不用', en: 'Denounce prophecy-mongering — burn the stone' }, effects: [{ kind: 'set-flag', flag: 'portent-stone-rejected' }], outcome: { zh: '主公惡妖妄,士林稱其明達不惑。', en: 'The lord loathes such delusion; the literati praise his clear, unclouded mind.' } },
+      { label: { zh: '厚賞獻者而秘其石', en: 'Reward the bringer, but lock the stone away' }, effects: [{ kind: 'gold', delta: -30 }, { kind: 'none' }], outcome: { zh: '石藏於府,其事不彰,亦不復傳。', en: 'The stone is stored away; the matter neither shines nor spreads.' } },
+    ],
+  },
+  {
+    id: 'dlg-ballad-dongzhuo',
+    speaker: { zh: '市井童謠', en: 'A Children\'s Street-Rhyme' },
+    text: { zh: '市井忽傳一謠:「千里草,何青青;十日卜,不得生。」童子連臂而歌,不知所自。識者驚曰:此隱「董卓」二字,乃亡卓之讖也!', en: 'A rhyme sweeps the streets: "Thousand-league grass, how green, how green; ten-day divined, it shall not live." Children sing it arm in arm, none knows whence. The learned start: hidden in it is the name "Dong Zhuo" — a prophecy of his fall!' },
+    choices: [
+      { label: { zh: '默察其應,靜待其變', en: 'Watch quietly for its fulfilment' }, effects: [{ kind: 'set-flag', flag: 'ballad-dongzhuo-heard' }], outcome: { zh: '主公密識之,以觀天下之變。', en: 'The lord marks it in secret, watching how the realm will turn.' } },
+      { label: { zh: '嘆天意假童口而洩', en: 'Marvel that Heaven leaks its will through children\'s mouths' }, effects: [{ kind: 'none' }], outcome: { zh: '主公喟然:「人心即天心,謠讖非無因也。」', en: '"The heart of the people is the heart of Heaven; such rhymes are not without cause."' } },
+    ],
+    conditions: { minYear: 189, maxYear: 193 },
+  },
+  {
+    id: 'dlg-ballad-beimang',
+    speaker: { zh: '洛下童謠', en: 'A Rhyme of the Capital' },
+    text: { zh: '洛陽童謠曰:「帝非帝,王非王,千乘萬騎上北邙。」語涉乘輿播越、社稷傾危,聞者股栗。京師人情洶洶,若大亂之將至。', en: 'A rhyme of Luoyang runs: "Emperor no emperor, king no king; a thousand chariots, ten thousand horse, up to Beimang they ring." It speaks of the throne cast adrift and the altars in peril; hearers tremble. The capital seethes as if great chaos nears.' },
+    choices: [
+      { label: { zh: '勒兵自守,以備非常', en: 'Marshal troops to guard against upheaval' }, effects: [{ kind: 'gold', delta: -40 }, { kind: 'set-flag', flag: 'ballad-beimang-braced' }], outcome: { zh: '嚴兵以待,亂起而我獨全。', en: 'Troops stand ready; when chaos breaks, you alone are whole.' } },
+      { label: { zh: '遣使問安,窺伺京師之變', en: 'Send envoys to pay respects — and spy the capital\'s turmoil' }, effects: [{ kind: 'set-flag', flag: 'ballad-beimang-watched' }], outcome: { zh: '使者往還,京師虛實盡入掌握。', en: 'Envoys come and go; the capital\'s strength and weakness fall into your grasp.' } },
+    ],
+    conditions: { minYear: 188, maxYear: 191 },
+  },
+  {
+    id: 'dlg-prophecy-dangtu',
+    speaker: { zh: '方士', en: 'An Occultist' },
+    text: { zh: '一方士進讖曰:「代漢者,當塗高也。」附耳而言:塗者路也,當塗而高者,闕也——魏之象也。此漢祚將終、代興有人之兆,願明公深察。', en: 'An occultist offers a prophecy: "He who succeeds the Han is the one high upon the road." Leaning close, he glosses it: the "road" is a path, and what stands high beside the road is a watchtower — a gate-tower, the image of Wei. It signals the Han\'s ending and a successor\'s rise. Weigh it deeply, my lord.' },
+    choices: [
+      { label: { zh: '若合於己,則以自壯', en: 'If it fits you, take heart from it' }, effects: [{ kind: 'set-flag', flag: 'prophecy-dangtu-claimed' }], outcome: { zh: '主公引以自負,左右鹹謂天命有歸。', en: 'The lord takes it to himself; his court agrees the Mandate has found its home.' } },
+      { label: { zh: '斥讖緯為妄,不足為據', en: 'Dismiss prophecy-lore as delusion, no ground to stand on' }, effects: [{ kind: 'none' }], outcome: { zh: '主公曰:「天命在德不在讖。」士人韙之。', en: '"The Mandate rests in virtue, not in prophecy." The literati approve.' } },
+      { label: { zh: '厚遣方士,勿使惑眾', en: 'Send the occultist off with gifts — lest he stir the crowds' }, effects: [{ kind: 'gold', delta: -30 }, { kind: 'set-flag', flag: 'prophecy-dangtu-hushed' }], outcome: { zh: '方士得賞而去,讖語不復張揚。', en: 'Rewarded, the occultist departs; the prophecy is voiced no more.' } },
+    ],
+    conditions: { minYear: 200 },
+  },
 ];
 
 /** Lookup by id for branching follow-ups. */
