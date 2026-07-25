@@ -1636,6 +1636,108 @@ export const DIALOGUE_EVENTS: DialogueEvent[] = [
     ],
     conditions: { requiresOfficerActive: 'shamoke' },
   },
+
+  // ─── 2026-07 補:檄文・表文・書信(漢季文章即政治,呈文待決)───
+  // 三國以文采名世 —— 一紙檄可奪人氣、一篇表可明心跡、一封書可定去就。
+  // 各為「幕僚/作者呈文,由你裁決是否頒行/採納」;史實有據者以 minYear 錨定。
+  {
+    id: 'dlg-doc-denounce-xi',
+    speaker: { zh: '記室主簿', en: 'The Chief Secretary' },
+    text: { zh: '主簿捧一檄文入奏:「某為明公草討賊之檄,歷數其罪,辭極峻切,可傳檄州郡,使天下知曲直所在。檄曰:『其罪貫盈,人神共憤,興義兵以誅暴亂……』」', en: 'The secretary presents a proclamation: "I have drafted your war-manifesto, my lord — every crime of the traitor set forth in the sharpest words. Circulate it to the provinces, that the realm may know where right lies. It reads: \'His crimes brim over, gods and men alike enraged; we raise a righteous host to smite the tyrant...\'"' },
+    choices: [
+      { label: { zh: '傳檄天下,壯我聲勢', en: 'Circulate it — swell our momentum' }, effects: [{ kind: 'set-flag', flag: 'proclaimed-denunciation' }], outcome: { zh: '檄文所至,州郡震動,響應者眾,敵為之奪氣。', en: 'Where the manifesto reaches, provinces stir and many answer; the foe\'s spirit sinks.' } },
+      { label: { zh: '削其峻辭,務存忠厚', en: 'Blunt its harshest words — keep it magnanimous' }, effects: [{ kind: 'set-flag', flag: 'proclamation-tempered' }], outcome: { zh: '檄辭雖緩,而識者益服明公之有度。', en: 'Softer in tone — yet the discerning admire your measure all the more.' } },
+      { label: { zh: '兵未動而檄先發,非計也', en: 'To proclaim before the army moves is folly — hold it' }, effects: [{ kind: 'none' }], outcome: { zh: '藏檄不發,俟時而動,敵不知我所圖。', en: 'The manifesto is withheld to await the hour; the foe cannot read your design.' } },
+    ],
+    conditions: { minYear: 190 },
+  },
+  {
+    id: 'dlg-doc-seek-talent',
+    speaker: { zh: '幕府長史', en: 'The Chancellery Chief' },
+    text: { zh: '長史進言:「今天下未定,正求賢之急時。或謂『士有偏短,不可廢也』——若必廉士而後可用,則齊桓其何以霸世?請下令:唯才是舉,吾得而用之。」', en: 'The chancellery chief advises: "The realm is unsettled — the very hour to hunt for talent. Some men have flaws, yet must not be cast aside; if only the spotless could serve, how would Duke Huan of Qi have won his primacy? Let the order go out: promote by talent alone, and I shall find and use them."' },
+    choices: [
+      { label: { zh: '下令唯才是舉', en: 'Decree: promote by talent alone' }, effects: [{ kind: 'gold', delta: -30 }, { kind: 'set-flag', flag: 'edict-talent-only' }], outcome: { zh: '令出,四方之士,負販屠沽,有一藝者爭來歸,幕府為之充。', en: 'The order goes out; men of every station with a single gift come flocking, and the chancellery fills.' } },
+      { label: { zh: '才德並重,不廢行檢', en: 'Weigh talent and virtue both — do not drop character' }, effects: [{ kind: 'set-flag', flag: 'edict-talent-and-virtue' }], outcome: { zh: '兼取才行,雖失狂狷之士,而朝多端方之人。', en: 'Talent and conduct together — a few wild geniuses slip past, but the court fills with upright men.' } },
+    ],
+    conditions: { minYear: 200 },
+  },
+  {
+    id: 'dlg-doc-northern-memorial',
+    speaker: { zh: '丞相', en: 'The Chancellor' },
+    text: { zh: '丞相夜草一表,泣而奏曰:「臣本布衣,躬耕於南野,先帝三顧,託臣以討賊興復之任。今南方已定,兵甲已足,當獎率三軍,北定中原……臣鞠躬盡瘁,死而後已!」', en: 'By night the Chancellor drafts a memorial and presents it in tears: "Your servant was a commoner, tilling the southern fields, until the late sovereign called on me thrice and charged me to smite the traitors and restore the house. The south is pacified, the arms are ready — now I would lead the three armies to settle the heartland... I will bend to the task and give my all, till death and no sooner."' },
+    choices: [
+      { label: { zh: '允其出師,託以專征', en: 'Grant the campaign — entrust him full command' }, effects: [{ kind: 'set-flag', flag: 'northern-expedition-sanctioned' }], outcome: { zh: '詔許出師,丞相拜表而行,舉國屬望。', en: 'The campaign is sanctioned; the Chancellor bows over his memorial and marches, the whole realm\'s hope upon him.' } },
+      { label: { zh: '慮國力未充,乞其緩圖', en: 'Fear the realm too weak — beg him to wait' }, effects: [{ kind: 'gold', delta: 40 }, { kind: 'set-flag', flag: 'northern-expedition-deferred' }], outcome: { zh: '丞相含淚受命,退而益務農桑、講武訓卒。', en: 'The Chancellor takes the word in tears, and turns instead to husbandry and the drilling of troops.' } },
+    ],
+    conditions: { minYear: 226 },
+  },
+  {
+    id: 'dlg-doc-urge-throne',
+    speaker: { zh: '群臣', en: 'The Assembled Ministers' },
+    text: { zh: '群臣連署上勸進表:「今漢祚衰微,天命有歸,明公功蓋寰宇,德被生民,四海鹹思推戴。願上應天命,下順民心,早正大位,以繫天下之望!」', en: 'The ministers submit a joint memorial urging you to the throne: "The Han\'s fortune wanes and the Mandate has found its home. Your merit shadows the world, your virtue clothes the people, and all within the seas long to raise you up. Answer Heaven above and the people below — take the great seat, and anchor the realm\'s hope!"' },
+    choices: [
+      { label: { zh: '三辭三讓,以合古禮', en: 'Thrice decline, thrice yield — as ancient rite demands' }, effects: [{ kind: 'set-flag', flag: 'throne-thrice-declined' }], outcome: { zh: '再三謙讓而後受,群臣愈以為謙德,天下無間言。', en: 'You decline again and again before accepting; the ministers deem it humble virtue, and none in the realm objects.' } },
+      { label: { zh: '受之,以繫人望', en: 'Accept — to hold the people\'s hope' }, effects: [{ kind: 'set-flag', flag: 'throne-accepted' }], outcome: { zh: '受群臣之請,正位號令,人心翕然而定。', en: 'You accept their plea and take the seat; hearts settle as one.' } },
+      { label: { zh: '斥其非時,天下未一', en: 'Rebuke them — the hour is wrong, the realm not yet one' }, effects: [{ kind: 'set-flag', flag: 'throne-refused-untimely' }], outcome: { zh: '主公曰:「天下未定,遽正位號,是速謗也。」士林韙其明。', en: '"To take the title before the realm is settled only courts reproach." The literati praise his clarity.' } },
+    ],
+    conditions: { minYear: 210 },
+  },
+  {
+    id: 'dlg-doc-self-vindication',
+    speaker: { zh: '主公自述', en: 'The Lord\'s Own Words' },
+    text: { zh: '外間頗有謗議,謂主公懷不臣之心。主公乃作一令自明本志:「設使國家無有孤,不知當幾人稱帝,幾人稱王……然欲孤釋兵權,誠恐一旦解職,為人所禍也。」左右問:當頒之否?', en: 'Slander spreads that the lord harbours designs on the throne. He composes an edict to declare his true intent: "Were it not for me, who knows how many would style themselves emperor, how many king?... Yet to lay down my command — I fear that once disarmed, I should fall to another\'s malice." His aides ask: shall it be published?' },
+    choices: [
+      { label: { zh: '頒令自明,以釋群疑', en: 'Publish it — to dispel the doubts' }, effects: [{ kind: 'set-flag', flag: 'edict-self-vindication' }], outcome: { zh: '令出,誠意剖白,謗者稍息,而知者益測其深。', en: 'The edict lays the heart bare; slander quiets — though the shrewd probe deeper still.' } },
+      { label: { zh: '身正不畏影斜,置之不辯', en: 'A straight body fears no crooked shadow — leave it unanswered' }, effects: [{ kind: 'none' }], outcome: { zh: '不辯而謗自止者半,疑者自疑,主公坦然。', en: 'Half the slander dies unanswered; the doubters go on doubting, and the lord is untroubled.' } },
+    ],
+    conditions: { minYear: 205 },
+  },
+  {
+    id: 'dlg-doc-admonish-son',
+    speaker: { zh: '主公家書', en: 'A Family Letter' },
+    text: { zh: '主公燈下作書誡子弟,反覆斟酌其辭:「夫君子之行,靜以修身,儉以養德。非淡泊無以明志,非寧靜無以致遠……年與時馳,意與日去,遂成枯落,悲守窮廬,將復何及!」', en: 'By lamplight the lord writes to admonish his sons, weighing each phrase: "The conduct of a gentleman: stillness to cultivate the self, thrift to nourish virtue. Without detachment there is no clarity of purpose; without serenity, no reaching afar... The years race with the seasons, the will ebbs with the days — and one withers at last, grieving in a bare hut. What use is it then?"' },
+    choices: [
+      { label: { zh: '手書付子弟,誡以立身', en: 'Send it to the sons, charge them how to stand in the world' }, effects: [{ kind: 'set-flag', flag: 'letter-admonish-heir' }], outcome: { zh: '子弟拜書而藏之,家法謹嚴,後多成材。', en: 'The sons receive the letter and keep it close; the family discipline is strict, and many come to worth.' } },
+      { label: { zh: '別附田宅之產以安其後', en: 'Enclose land and estate to secure their future' }, effects: [{ kind: 'gold', delta: -50 }, { kind: 'set-flag', flag: 'letter-with-legacy' }], outcome: { zh: '既誡之以德,復厚之以產,子弟感而知勉。', en: 'Charged in virtue and endowed besides, the sons are moved to diligence.' } },
+    ],
+  },
+  {
+    id: 'dlg-doc-surrender-table',
+    speaker: { zh: '敵國使者', en: 'An Envoy of the Foe' },
+    text: { zh: '敵國勢窮,遣使奉降表來:「臣某昧死上言:天兵所臨,如泰山壓卵。臣自知罪重,願舉城歸命,奉土地、獻圖籍,惟乞保全宗族性命。」使者伏地待命。', en: 'His cause spent, the enemy sends an envoy bearing a memorial of surrender: "Your servant, risking death, submits: your heavenly host bears down as Mount Tai upon an egg. Knowing my guilt is grave, I would yield my city, hand over its lands and its registers, and beg only that my clan\'s lives be spared." The envoy lies prostrate, awaiting your word.' },
+    choices: [
+      { label: { zh: '納其降,示以寬大', en: 'Accept the surrender — show magnanimity' }, effects: [{ kind: 'gold', delta: 60 }, { kind: 'set-flag', flag: 'surrender-accepted-mercy' }], outcome: { zh: '受降不戮,遠近聞之,望風款附者相繼。', en: 'Surrender taken without slaughter; hearing of it, far and near come over unbidden.' } },
+      { label: { zh: '責其反覆,納降而奪其權', en: 'Rebuke his fickleness — accept, but strip his power' }, effects: [{ kind: 'gold', delta: 40 }, { kind: 'set-flag', flag: 'surrender-accepted-defanged' }], outcome: { zh: '受其降而削其兵,雖得其地,亦失其心。', en: 'The surrender taken and his troops cut away; you gain the ground, but not the heart.' } },
+    ],
+  },
+  {
+    id: 'dlg-doc-rally-loyalists',
+    speaker: { zh: '義士', en: 'A Loyalist' },
+    text: { zh: '一義士齎血書夜至:「國賊挾天子以令諸侯,王室危如累卵!某齎密詔,遍告忠義,願明公倡義移檄,糾合州郡,共扶漢室,誅此國賊!」', en: 'A loyalist arrives by night with a blood-written appeal: "The traitor holds the Son of Heaven hostage to command the lords; the royal house teeters like stacked eggs! I bear a secret edict to rally the loyal and just. Raise the righteous cause, my lord — send round the call, gather the provinces, and together prop up the Han and slay this traitor!"' },
+    choices: [
+      { label: { zh: '移檄州郡,倡義勤王', en: 'Send the call round — raise the cause, succour the throne' }, effects: [{ kind: 'gold', delta: -40 }, { kind: 'set-flag', flag: 'loyalist-banner-raised' }], outcome: { zh: '檄告四方,忠義響應,勤王之師漸集。', en: 'The call goes to every quarter; the loyal answer, and a host to save the throne begins to gather.' } },
+      { label: { zh: '受詔而未敢輕動,徐圖之', en: 'Take the edict, but move with care — bide the time' }, effects: [{ kind: 'set-flag', flag: 'loyalist-edict-held' }], outcome: { zh: '藏詔待時,不欲以孤軍犯難,識者以為持重。', en: 'The edict kept and the hour awaited — unwilling to risk a lone army; the wise call it prudence.' } },
+    ],
+  },
+  {
+    id: 'dlg-doc-deathbed-memorial',
+    speaker: { zh: '老臣', en: 'An Aged Minister' },
+    text: { zh: '一老臣病篤,強起草遺表,字字血誠:「臣家有桑八百株,薄田十五頃,子孫衣食自有餘饒。臣死之日,不使內有餘帛,外有贏財,以負陛下……」聞者無不流涕。', en: 'An aged minister, gravely ill, forces himself up to draft a final memorial, every word wrung from the heart: "Your servant\'s house holds eight hundred mulberry trees and fifteen qing of poor land — enough and to spare for my heirs\' food and clothing. On the day I die, let there be no surplus silk within, no hoarded wealth without, that I not fail Your Majesty..." None who hear can keep from tears.' },
+    choices: [
+      { label: { zh: '厚恤其家,以旌清節', en: 'Provide richly for his house — to honour his pure integrity' }, effects: [{ kind: 'gold', delta: -60 }, { kind: 'set-flag', flag: 'minister-honored-death' }], outcome: { zh: '優詔褒恤,天下聞之,皆以廉直相勉。', en: 'A gracious edict of honour and relief; hearing of it, the realm spurs itself to honesty.' } },
+      { label: { zh: '如其遺言,不加厚葬', en: 'Honour his wish — no lavish burial' }, effects: [{ kind: 'set-flag', flag: 'minister-frugal-rites' }], outcome: { zh: '從其薄葬之志,士論益高其風。', en: 'His wish for a frugal burial is kept; opinion esteems his character all the higher.' } },
+    ],
+  },
+  {
+    id: 'dlg-doc-remonstrance',
+    speaker: { zh: '諫臣', en: 'A Remonstrating Minister' },
+    text: { zh: '一諫臣抗疏切諫:「臣聞良藥苦口利於病,忠言逆耳利於行。近者土木頻興,賦役日重,民有菜色而府藏虛。願陛下罷不急之役,輕徭薄賦,以固邦本。臣冒死以聞!」', en: 'A minister submits a blunt remonstrance: "I have heard that bitter medicine cures the illness, and unwelcome counsel mends the conduct. Of late the building never ceases and the levies grow by the day; the people wear the pallor of famine while the treasury lies empty. Halt the needless works, lighten the corvée and the taxes, and make firm the root of the state. I risk death to say it!"' },
+    choices: [
+      { label: { zh: '納諫罷役,輕徭薄賦', en: 'Heed him — halt the works, lighten the burdens' }, effects: [{ kind: 'set-flag', flag: 'remonstrance-heeded' }], outcome: { zh: '詔罷諸役,民力少蘇,諫臣拜謝,朝野稱明。', en: 'The works are halted by edict; the people\'s strength revives a little. The minister bows in thanks, and all praise your wisdom.' } },
+      { label: { zh: '嘉其直,賜金而未盡從', en: 'Praise his candour, reward him gold — but do not fully act' }, effects: [{ kind: 'gold', delta: -30 }, { kind: 'none' }], outcome: { zh: '優容直臣而工役未罷,諫者退而長歎。', en: 'The blunt minister is indulged, yet the works go on; he withdraws with a long sigh.' } },
+      { label: { zh: '怒其訕上,黜之', en: 'Bristle at the affront — demote him' }, effects: [{ kind: 'set-flag', flag: 'remonstrance-punished' }], outcome: { zh: '黜直臣,自是諫路漸塞,左右唯唯而已。', en: 'The honest minister is cast down; thereafter the road of counsel narrows, and aides only murmur assent.' } },
+    ],
+  },
 ];
 
 /** Lookup by id for branching follow-ups. */
