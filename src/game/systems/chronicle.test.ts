@@ -50,5 +50,70 @@ describe('史官年鑑 — the yearly page composes from real ledgers', () => {
       boardTop: new Map(), prevCounts: {}, playerForceId: 'me',
     });
     expect(page.paragraphs.join('')).toContain('臥薪嘗膽');
+    expect(page.paragraphs.join('')).not.toContain('論曰'); // nothing to judge yet
+  });
+});
+
+/**
+ * 論曰 — the verdict reads the realm as it actually stands. These pin the
+ * band boundaries so a governance change is visible in the historian's
+ * wording rather than silently rounding to the same sentence.
+ */
+describe('史官的褒貶 — 論曰 judges from the live ledgers', () => {
+  const town = (id: string, loyalty: number): City =>
+    ({ id, ownerForceId: 'me', loyalty } as City);
+  const page = (over: Partial<Parameters<typeof composeYearChronicle>[0]> = {}) =>
+    composeYearChronicle({
+      year: 200, annals: [], cities: { a: town('a', 90) }, forces: {}, officers: {},
+      boardTop: new Map(), prevCounts: {}, playerForceId: 'me', ...over,
+    }).paragraphs.join('\n');
+
+  it('praises a well-governed realm and condemns a starved one', () => {
+    expect(page({ cities: { a: town('a', 92) } })).toContain('道不拾遺');
+    expect(page({ cities: { a: town('a', 20) } })).toContain('民不聊生');
+  });
+
+  it('reports whether the officers mean to stay', () => {
+    const loyal = { x: { ...officer('x'), loyalty: 95 } as Officer };
+    const restless = { x: { ...officer('x'), loyalty: 40 } as Officer };
+    const mine = (o: Officer) => ({ ...o, forceId: 'me' });
+    expect(page({ officers: { x: mine(loyal.x) } })).toContain('皆願效死');
+    expect(page({ officers: { x: mine(restless.x) } })).toContain('離心已見');
+  });
+
+  it('counts the talent still lying in the fields', () => {
+    const genius = (id: string): Officer => ({
+      ...officer(id), forceId: null, stats: { leadership: 70, war: 95, intelligence: 70, politics: 70, charisma: 70 },
+    } as Officer);
+    const free = Object.fromEntries(Array.from({ length: 9 }, (_, i) => [`g${i}`, genius(`g${i}`)]));
+    expect(page({ officers: free })).toContain('未見旌招');
+    expect(page({ officers: {} })).toContain('略已收攬');
+  });
+
+  it('calls out a year spent entirely at war', () => {
+    const wars = Array.from({ length: 6 }, (_, i) => ({
+      year: 200, season: 'summer' as const, kind: 'event' as const,
+      titleZh: `克某城${i}`, textZh: '克之',
+    }));
+    expect(page({ annals: wars })).toContain('窮兵者未有能久者也');
+    expect(page({ annals: [] })).toContain('國用日饒');
+  });
+
+  it('measures a claimed throne against the ground actually held', () => {
+    const forces = { me: { id: 'me', name: { zh: '我', en: 'Me' }, imperialRank: 'emperor' } as Force };
+    // One city of five — the title outruns the realm.
+    const thin = {
+      a: town('a', 90),
+      b: { id: 'b', ownerForceId: 'other' } as City, c: { id: 'c', ownerForceId: 'other' } as City,
+      d: { id: 'd', ownerForceId: 'other' } as City, e: { id: 'e', ownerForceId: 'other' } as City,
+    };
+    expect(page({ forces, cities: thin })).toContain('輿地未半');
+    expect(page({ forces, cities: { a: town('a', 90), b: town('b', 90) } })).toContain('名實相副');
+  });
+
+  it('judges a disaster year by whether relief reached the towns', () => {
+    const woe = [{ year: 200, season: 'autumn' as const, kind: 'disaster' as const, titleZh: '大水', textZh: '河溢' }];
+    expect(page({ annals: woe, cities: { a: town('a', 80) } })).toContain('民不甚困');
+    expect(page({ annals: woe, cities: { a: town('a', 25) } })).toContain('賑貸不繼');
   });
 });

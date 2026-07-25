@@ -4,8 +4,10 @@ import { useT } from '../i18n';
 
 /**
  * 史官年鑑 — the historian's page for the year just closed, presented each
- * spring as a parchment leaf: 大勢 / 兵事 / 災異 / 武評 and a closing word to
- * the lord. Dismiss to file it away (ChronicleModal keeps the raw scroll).
+ * spring as a parchment leaf: 大勢 / 兵事 / 災異 / 武評, a closing word to the
+ * lord, and then 論曰 — his own verdict on how you govern. The verdict is set
+ * apart from the record above it, because it is opinion and the rest is not.
+ * Dismiss to file it away (ChronicleModal keeps the raw scroll).
  */
 export function YearbookModal() {
   const t = useT();
@@ -41,9 +43,28 @@ export function YearbookModal() {
           <div style={{ width: 60, height: 2, background: 'linear-gradient(90deg, transparent, #8a6a2a, transparent)', margin: '0.6rem auto 0' }} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.92rem', lineHeight: 2 }}>
-          {chronicle.paragraphs.map((p, i) => (
-            <p key={i} style={{ margin: 0, textIndent: '2em' }}>{p}</p>
-          ))}
+          {chronicle.paragraphs.map((p, i) => {
+            // 論曰 — the verdict is the historian's own, and reads as such.
+            const isVerdict = p.startsWith('論曰');
+            return (
+              <p
+                key={i}
+                style={{
+                  margin: 0,
+                  textIndent: '2em',
+                  ...(isVerdict
+                    ? {
+                        marginTop: '0.4rem', paddingTop: '0.85rem',
+                        borderTop: '1px solid rgba(138,106,42,0.45)',
+                        color: '#e8cf9a', fontStyle: 'italic',
+                      }
+                    : null),
+                }}
+              >
+                {p}
+              </p>
+            );
+          })}
         </div>
         <div style={{ textAlign: 'center', marginTop: '1.1rem' }}>
           <button
