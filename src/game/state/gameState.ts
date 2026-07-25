@@ -45,6 +45,7 @@ import { buildInitialPorts } from '../data/ports';
 import { buildInitialForts } from '../data/forts';
 import { distinctForceColors } from '../data/forceColors';
 import { rulerProfileFor } from '../data/rulerProfiles';
+import { SCENARIO_PROLOGUES } from '../data/scenarioPrologues';
 import { buildInitialSites } from '../data/sites';
 import { FAMILY_LINEAGE } from '../data/familyLineage';
 import { deriveInitialClanStandings } from '../systems/clans';
@@ -390,6 +391,9 @@ export interface GameState {
   hotSeatActiveIndex: number;
   /** Tutorial mode: which step is currently shown (null = off). */
   tutorialStep: number | null;
+  /** 序章 — true right after a scenario with a prologue is loaded, until the
+   *  opening page is dismissed. Absent in saves written before prologues. */
+  prologueOpen?: boolean;
   /** Background music track name (null = ambience only). */
   musicTrack: string | null;
   /** UI language: 'zh' shows only Chinese, 'en' shows only English, 'both'
@@ -954,6 +958,7 @@ export const EMPTY_STATE: GameState = {
   hotSeatPlayers: [],
   hotSeatActiveIndex: 0,
   tutorialStep: null,
+  prologueOpen: false,
   musicTrack: null,
   language: 'zh',
   placementMode: 'historical',
@@ -1460,6 +1465,8 @@ export function loadScenario(
     hotSeatPlayers: state.hotSeatPlayers,
     hotSeatActiveIndex: 0,
     tutorialStep: null,
+    // 序章 — open the campaign on its opening page when this board has one.
+    prologueOpen: SCENARIO_PROLOGUES[scenario.id] !== undefined,
     musicTrack: state.musicTrack,
     lostItems: computeLostItems(officers, scaledCities, state.placementMode),
     itemRefinements: {},

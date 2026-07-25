@@ -23,6 +23,17 @@ test('start a campaign and resolve a season tick', async ({ page }) => {
   // Step 3: launch.
   await page.getByText('▶ 開始遊戲', { exact: false }).click();
 
+  // 序章 — boards that carry an opening page show it first; dismiss it so the
+  // rest of the journey has a clear screen. (Scenarios without one skip this.)
+  const prologue = page.getByRole('dialog', { name: '序章' });
+  // isVisible() is instantaneous — wait for the mount first, and swallow the
+  // timeout so boards without a prologue simply fall through.
+  await prologue.waitFor({ state: 'visible', timeout: 30_000 }).catch(() => {});
+  if (await prologue.isVisible()) {
+    await prologue.getByRole('button', { name: '入局' }).click();
+    await expect(prologue).toBeHidden({ timeout: 10_000 });
+  }
+
   // The realm: top bar appears (officers menu) and the WebGL canvas mounts.
   await expect(page.getByText('武將', { exact: false }).first()).toBeVisible({ timeout: 30_000 });
   await expect(page.locator('canvas').first()).toBeVisible({ timeout: 30_000 });

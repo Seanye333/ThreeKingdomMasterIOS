@@ -31,6 +31,7 @@ import { CourtModal } from '../components/CourtModal';
 import { DiplomacyModal } from '../components/DiplomacyModal';
 import { EndingsModal } from '../components/EndingsModal';
 import { EventModal } from '../components/EventModal';
+import { PrologueModal } from '../components/PrologueModal';
 import { ForcesOverview } from '../components/ForcesOverview';
 import { OfficersTab } from '../components/OfficersTab';
 import { SaveSlotsModal } from '../components/SaveSlotsModal';
@@ -401,6 +402,7 @@ export function MapScreen() {
   const setSoundEnabled = useGameStore((s) => s.setSoundEnabled);
   const wishes = useGameStore((s) => s.officerWishes);
   const victoryStatus = useGameStore((s) => s.victoryStatus);
+  const prologueOpen = useGameStore((s) => s.prologueOpen);
   const setTutorialStep = useGameStore((s) => s.setTutorialStep);
   const hotSeatPlayers = useGameStore((s) => s.hotSeatPlayers);
   const hotSeatActiveIndex = useGameStore((s) => s.hotSeatActiveIndex);
@@ -1513,7 +1515,10 @@ export function MapScreen() {
           onClose={() => setShowSave(null)}
         />
       )}
-      {!dayFlow && <EventModal />}
+      {/* 序章 — the campaign's opening page, ahead of anything else that
+          might pop on turn one. */}
+      <PrologueModal />
+      {!dayFlow && !prologueOpen && <EventModal />}
       <VictoryModal />
       {(victoryStatus === 'victory' || showEnding) && (
         <EndingsModal onClose={() => setShowEnding(false)} />

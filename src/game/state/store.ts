@@ -1573,6 +1573,8 @@ export interface GameStore extends GameState {
   grantWish: (wishId: EntityId) => void;
   rejectWish: (wishId: EntityId) => void;
   setTutorialStep: (step: number | null) => void;
+  /** 序章 — dismiss the campaign's opening page. */
+  closePrologue: () => void;
   setHotSeatPlayers: (players: Array<{ forceId: EntityId; label: string }>) => void;
   cycleHotSeat: () => void;
   buildShip: (
@@ -1970,6 +1972,7 @@ export const useGameStore = create<GameStore>()(
           playerForceId: null,
           victoryStatus: 'observing' as const,
           tutorialStep: null,
+          prologueOpen: false, // 演義模擬器 — nobody's house to address
         }));
         get().seedAiGear();
       },
@@ -18421,6 +18424,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       },
 
       setTutorialStep: (step) => set({ tutorialStep: step }),
+
+      closePrologue: () => set({ prologueOpen: false }),
 
       setHotSeatPlayers: (players) =>
         set({ hotSeatPlayers: players, hotSeatActiveIndex: 0 }),
