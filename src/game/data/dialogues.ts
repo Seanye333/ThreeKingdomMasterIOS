@@ -1219,6 +1219,202 @@ export const DIALOGUE_EVENTS: DialogueEvent[] = [
     ],
     conditions: { requiresFlag: 'scholar-sent-off' },
   },
+
+  // ─── 2026-07 補:麾下名將情境進言 ───
+  // 只在該將真正效力於你麾下時觸發(requiresOfficerInService),說話者即其本人立繪。
+  // 抉擇多牽動「該將忠誠」——你的班底在對你說話,而非泛化路人。
+  {
+    id: 'dlg-guanyu-sortie',
+    speakerOfficerId: 'guan-yu',
+    text: { zh: '關羽按劍出班,丹鳳目微張:「主公,敵酋屢屢遣使耀武,某不才,願提一軍取其首級,以獻於帳下!」', en: 'Guan Yu steps forth, hand on his blade: "My lord, the enemy chief sends heralds to flaunt his strength. Grant me one column — I will take his head and lay it before your tent."' },
+    choices: [
+      { label: { zh: '壯其志,准其出戰', en: 'Honour his spirit — let him march' }, effects: [{ kind: 'loyalty', officerId: 'guan-yu', delta: 4 }, { kind: 'set-flag', flag: 'guanyu-sortie' }], outcome: { zh: '雲長橫刀上馬,三軍望其背影而奮。', en: 'Yunchang mounts, blade level; the host takes heart at his back.' }, followupEventId: 'dlg-guanyu-triumph' },
+      { label: { zh: '嘉其勇,然令持重', en: 'Praise his valour, but bid him hold' }, effects: [{ kind: 'loyalty', officerId: 'guan-yu', delta: -2 }], outcome: { zh: '關羽默然還班,似有不甘,然亦服令。', en: 'He returns to rank in silence — reluctant, yet obedient.' } },
+    ],
+    conditions: { requiresOfficerInService: 'guan-yu' },
+  },
+  {
+    // followup — 由「准其出戰」排入,次季自動觸發。
+    id: 'dlg-guanyu-triumph',
+    speakerOfficerId: 'guan-yu',
+    text: { zh: '關羽提一血囊還營,擲於階下:「幸不辱命。然某見敵陣尚整,驕之則敗,願主公毋以一勝而輕之。」', en: 'Guan Yu returns and casts a blood-sack at the steps: "I did not fail you. Yet their lines held firm — one win breeds folly. Do not think them light, my lord."' },
+    choices: [
+      { label: { zh: '納其言,重賞三軍', en: 'Heed him, reward the host richly' }, effects: [{ kind: 'gold', delta: -60 }, { kind: 'loyalty', officerId: 'guan-yu', delta: 3 }], outcome: { zh: '賞行而戒溢,將士既喜且警。', en: 'Rewards flow but pride is checked; the men are glad yet wary.' } },
+      { label: { zh: '大宴以彰武功', en: 'Feast lavishly to trumpet the triumph' }, effects: [{ kind: 'gold', delta: -40 }, { kind: 'set-flag', flag: 'army-boastful' }], outcome: { zh: '軍中歡騰,然關羽獨蹙眉不語。', en: 'The camp roars — but Guan Yu alone frowns, and says nothing.' } },
+    ],
+  },
+  {
+    id: 'dlg-zhangfei-vanguard',
+    speakerOfficerId: 'zhang-fei',
+    text: { zh: '張飛環眼圓睜,聲若巨雷:「哥哥!整日按兵不動,鳥都要生蛆了!前部先鋒,俺老張去也,誰敢攔我?」', en: 'Zhang Fei glares, voice like thunder: "Brother! Sitting idle till the birds rot! Give me the vanguard — old Zhang goes first, and who dares block me?"' },
+    choices: [
+      { label: { zh: '許其為先鋒,誡勿嗜酒', en: 'Grant the van — but warn off the wine' }, effects: [{ kind: 'loyalty', officerId: 'zhang-fei', delta: 3 }, { kind: 'set-flag', flag: 'zhangfei-warned' }], outcome: { zh: '張飛拍胸領命,誓不飲於陣前。', en: 'He slaps his chest and swears off drink before battle.' } },
+      { label: { zh: '斥其粗魯,令歸帳', en: 'Rebuke his rashness, send him back' }, effects: [{ kind: 'loyalty', officerId: 'zhang-fei', delta: -4 }], outcome: { zh: '翼德忿忿而退,是夜帳中隱有酒氣。', en: 'Yide storms off; that night, wine hangs in his tent.' } },
+    ],
+    conditions: { requiresOfficerInService: 'zhang-fei' },
+  },
+  {
+    id: 'dlg-zhaoyun-remonstrate',
+    speakerOfficerId: 'zhao-yun',
+    text: { zh: '趙雲肅然進諫:「主公,霸業以民為本。今若奪田宅以賞將士,恐失黎庶之心。雲以為,天下未定,不宜先享其成。」', en: 'Zhao Yun counsels gravely: "My lord, hegemony rests on the people. To seize their fields for the soldiers is to lose the commons\' hearts. The realm is unsettled — this is no hour to feast on the spoils."' },
+    choices: [
+      { label: { zh: '從子龍之諫,還田於民', en: 'Heed Zilong — return the land' }, effects: [{ kind: 'loyalty', officerId: 'zhao-yun', delta: 4 }, { kind: 'set-flag', flag: 'zhaoyun-heeded' }], outcome: { zh: '民聞之而悅,皆稱主公有仁君之風。', en: 'The people rejoice, calling you a lord of benevolence.' } },
+      { label: { zh: '嘉其言而未能盡從', en: 'Praise the words, but not fully act' }, effects: [{ kind: 'none' }], outcome: { zh: '趙雲長揖而退,神色間微有憾焉。', en: 'Zhao Yun bows and withdraws, a shade of regret in his face.' } },
+    ],
+    conditions: { requiresOfficerInService: 'zhao-yun' },
+  },
+  {
+    id: 'dlg-zhouyu-qin',
+    speakerOfficerId: 'zhou-yu',
+    text: { zh: '周瑜撫琴一曲,弦斷而笑:「主公可知?曲有誤,周郎顧。今天下三分之勢已萌,願為主公審音辨勢,擇一可圖之敵。」', en: 'Zhou Yu plays; a string snaps and he smiles: "A flawed note, and Zhou Lang turns his head. The realm bends toward threefold division — let me read the tune of it, and mark you a foe worth taking."' },
+    choices: [
+      { label: { zh: '請其定聯弱攻強之策', en: 'Bid him plan: ally the weak, strike the strong' }, effects: [{ kind: 'loyalty', officerId: 'zhou-yu', delta: 3 }, { kind: 'set-flag', flag: 'zhouyu-grand-plan' }], outcome: { zh: '公瑾撫掌而定方略,江東為之一振。', en: 'Gongjin claps and sets the design; the Southland stirs.' } },
+      { label: { zh: '笑其自負,未置可否', en: 'Smile at his conceit, commit to nothing' }, effects: [{ kind: 'loyalty', officerId: 'zhou-yu', delta: -3 }], outcome: { zh: '周瑜斂容,曰:「既生瑜……」語未竟而止。', en: 'Zhou Yu\'s face cools: "That Heaven bore Yu..." — he stops mid-phrase.' } },
+    ],
+    conditions: { requiresOfficerInService: 'zhou-yu' },
+  },
+  {
+    id: 'dlg-simayi-bide',
+    speakerOfficerId: 'sima-yi',
+    text: { zh: '司馬懿俯身低語:「主公,鷙鳥將擊,必斂其翼;猛獸將搏,必伏其形。今銳氣正盛之敵,不可爭鋒,宜示弱以驕之,待其懈而後動。」', en: 'Sima Yi murmurs low: "My lord — the hawk folds its wings before the strike, the beast crouches before the pounce. Do not clash with a foe at his sharpest; feign weakness, let his pride swell, then move when he slackens."' },
+    choices: [
+      { label: { zh: '善其謀,深自韜晦', en: 'Approve — bide and conceal' }, effects: [{ kind: 'loyalty', officerId: 'sima-yi', delta: 3 }, { kind: 'set-flag', flag: 'simayi-biding' }], outcome: { zh: '仲達頷首而退,鋒芒盡斂於袖。', en: 'Zhongda nods and withdraws, every edge tucked in his sleeve.' } },
+      { label: { zh: '疑其懷貳,加意提防', en: 'Suspect his heart — watch him closer' }, effects: [{ kind: 'loyalty', officerId: 'sima-yi', delta: -2 }, { kind: 'set-flag', flag: 'simayi-watched' }], outcome: { zh: '司馬懿察主公之疑,益發恭謹,而心事愈深。', en: 'Sensing your doubt, he grows yet more deferent — and his mind, deeper still.' } },
+    ],
+    conditions: { requiresOfficerInService: 'sima-yi' },
+  },
+  {
+    id: 'dlg-jiaxu-coldcounsel',
+    speakerOfficerId: 'jia-xu',
+    text: { zh: '賈詡屏退左右,徐徐言曰:「明公,鄰邦二雄相攻,兩敗俱傷,此天賜之機也。詡有一計,可使其鬥而不能解——然此計傷天和,明公用否?」', en: 'Jia Xu clears the room and speaks slow: "My lord — two rival powers grind on each other, both bleeding. Heaven hands you the hour. I hold a stratagem to lock them in a fight none can break — though it wounds the harmony of Heaven. Will you use it?"' },
+    choices: [
+      { label: { zh: '用其計,坐收漁利', en: 'Use it — reap while they bleed' }, effects: [{ kind: 'loyalty', officerId: 'jia-xu', delta: 2 }, { kind: 'set-flag', flag: 'jiaxu-scheme' }], outcome: { zh: '文和微微一笑,不復多言,自去行事。', en: 'Wenhe smiles thinly, says no more, and goes to his work.' }, followupEventId: 'dlg-jiaxu-fruit' },
+      { label: { zh: '斥其陰狠,不忍為之', en: 'Reject it — too ruthless to bear' }, effects: [{ kind: 'none' }], outcome: { zh: '賈詡拱手曰:「明公仁厚,詡失言。」退而自晦。', en: '"My lord is kind; I misspoke." He bows and dims himself again.' } },
+    ],
+    conditions: { requiresOfficerInService: 'jia-xu' },
+  },
+  {
+    id: 'dlg-jiaxu-fruit',
+    speakerOfficerId: 'jia-xu',
+    text: { zh: '數旬之後,賈詡復來:「明公,二敵果已成仇,鏖兵不解。今其一遣使乞盟於我,願割地相結——受之則得地,拒之則彼疑我而益鬥。」', en: 'Weeks on, Jia Xu returns: "As foretold, the two are locked in blood-feud. One now sues us for alliance, offering land — take it and gain ground; refuse, and their suspicion drives them deeper into war."' },
+    choices: [
+      { label: { zh: '受其盟,納其地', en: 'Take the pact and the land' }, effects: [{ kind: 'gold', delta: 80 }, { kind: 'loyalty', officerId: 'jia-xu', delta: 2 }], outcome: { zh: '不費一卒而拓境,群下服文和之算。', en: 'Ground won without a spear; all bow to Wenhe\'s reckoning.' } },
+      { label: { zh: '拒其盟,俾其相鬥愈烈', en: 'Refuse — let them tear on' }, effects: [{ kind: 'set-flag', flag: 'jiaxu-let-bleed' }], outcome: { zh: '二敵猜貳日深,兵連禍結,無暇他顧。', en: 'The two rot in mutual doubt, war upon war, blind to all else.' } },
+    ],
+  },
+  {
+    id: 'dlg-guojia-sickstrat',
+    speakerOfficerId: 'guo-jia',
+    text: { zh: '郭嘉抱病強起,面色蒼白而目光炯炯:「主公,嘉觀敵有十敗,主公有十勝。彼外寬內忌,用人而疑之;主公唯才是任,此德勝也。急擊之,可一戰而定!」', en: 'Guo Jia rises though ill, pale but bright-eyed: "My lord — the foe has ten defeats, you ten victories. He is lax without, jealous within, trusting none he uses; you employ by merit alone. Strike now — one battle settles it!"' },
+    choices: [
+      { label: { zh: '從奉孝之策,急擊之', en: 'Follow Fengxiao — strike at once' }, effects: [{ kind: 'loyalty', officerId: 'guo-jia', delta: 4 }, { kind: 'set-flag', flag: 'guojia-tenwins' }], outcome: { zh: '郭嘉扶病定謀,聞者無不奮激。', en: 'Guo Jia lays the plan through his sickness; none who hear are unmoved.' } },
+      { label: { zh: '憐其病,勸其先自將養', en: 'Pity his illness — bid him rest first' }, effects: [{ kind: 'loyalty', officerId: 'guo-jia', delta: 2 }, { kind: 'gold', delta: -30 }], outcome: { zh: '奉孝感主公之恩,曰:「嘉之壽,願盡與主公。」', en: 'Moved, Fengxiao says: "What years I have, I give wholly to my lord."' } },
+    ],
+    conditions: { requiresOfficerInService: 'guo-jia' },
+  },
+  {
+    id: 'dlg-lubu-demand',
+    speakerOfficerId: 'lu-bu',
+    text: { zh: '呂布按戟昂立,睥睨帳中:「某手中方天畫戟,天下誰能當之?區區封賞,何薄如此?主公若欲某效死,當有以厚我!」', en: 'Lu Bu stands over his halberd, sneering round the tent: "This Sky-Piercer of mine — who under Heaven withstands it? Yet my reward is this thin? If my lord wants me to die for him, reward me richly!"' },
+    choices: [
+      { label: { zh: '厚賜金帛,以安其心', en: 'Shower gold to settle him' }, effects: [{ kind: 'gold', delta: -100 }, { kind: 'loyalty', officerId: 'lu-bu', delta: 6 }], outcome: { zh: '呂布大悅,然左右竊議:「養虎終為患。」', en: 'Lu Bu is delighted — yet aides whisper: "A fed tiger is still a tiger."' } },
+      { label: { zh: '正色責其貪功', en: 'Sternly rebuke his greed' }, effects: [{ kind: 'loyalty', officerId: 'lu-bu', delta: -8 }, { kind: 'set-flag', flag: 'lubu-slighted' }], outcome: { zh: '溫侯拂袖冷笑,自此心懷怏怏。', en: 'The Marquis snorts and turns away, sullen from that hour.' } },
+    ],
+    conditions: { requiresOfficerInService: 'lu-bu' },
+  },
+  {
+    id: 'dlg-huangzhong-oldwar',
+    speakerOfficerId: 'huang-zhong',
+    text: { zh: '黃忠開三石之弓,箭無虛發,朗聲曰:「主公勿以某年老。廉頗雖老,尚能一飯斗米;某雖白首,取敵將首級,猶探囊耳!請為前部。」', en: 'Huang Zhong draws a three-stone bow, every shaft true: "Count me not old, my lord. Aged Lian Po still ate a peck at a sitting; white-haired as I am, taking an enemy general\'s head is like reaching into a bag. Grant me the van."' },
+    choices: [
+      { label: { zh: '壯其老而彌堅,許之', en: 'Honour the old lion — grant it' }, effects: [{ kind: 'loyalty', officerId: 'huang-zhong', delta: 4 }, { kind: 'set-flag', flag: 'huangzhong-van' }], outcome: { zh: '老將軍披甲上馬,英姿不減當年。', en: 'The old general armours up and mounts, his mettle undimmed.' } },
+      { label: { zh: '恤其年高,令居後鎮', en: 'Spare his years — post him to the rear' }, effects: [{ kind: 'loyalty', officerId: 'huang-zhong', delta: -3 }], outcome: { zh: '黃忠悵然:「大丈夫當死於疆場,豈老於牖下?」', en: 'Huang Zhong sighs: "A true man should die on the field — not wither by a window."' } },
+    ],
+    conditions: { requiresOfficerInService: 'huang-zhong' },
+  },
+  {
+    id: 'dlg-jiangwei-legacy',
+    speakerOfficerId: 'jiang-wei',
+    text: { zh: '姜維捧武侯遺書,泣而請曰:「丞相以興復之志託維,今中原可圖。維雖不才,願繼承相志,提兵北向,鞠躬盡瘁,死而後已!」', en: 'Jiang Wei holds the late Chancellor\'s testament and weeps: "The Prime Minister entrusted me the will to restore the Han. The heartland lies open. Unworthy though I am, I would carry on his charge — march north, and give my utmost till death."' },
+    choices: [
+      { label: { zh: '成其志,發兵北伐', en: 'Fulfil the charge — march north' }, effects: [{ kind: 'loyalty', officerId: 'jiang-wei', delta: 5 }, { kind: 'set-flag', flag: 'jiangwei-northern' }], outcome: { zh: '姜維誓師出隴,三軍縞素,如見武侯。', en: 'Jiang Wei musters at Long; the host in mourning-white, as if the Chancellor watched.' } },
+      { label: { zh: '慮國力未充,勸其緩圖', en: 'Fear the realm too weak — bid him wait' }, effects: [{ kind: 'loyalty', officerId: 'jiang-wei', delta: -2 }, { kind: 'set-flag', flag: 'jiangwei-restrained' }], outcome: { zh: '伯約含淚受命,然中夜常撫劍北望。', en: 'Boyue takes the order in tears — yet at midnight oft grips his sword, gazing north.' } },
+    ],
+    conditions: { requiresOfficerInService: 'jiang-wei' },
+  },
+  {
+    id: 'dlg-luxun-prudence',
+    speakerOfficerId: 'lu-xun',
+    text: { zh: '陸遜年少而持重,從容進言:「主公,敵勢雖張,然勞師遠來,利在速戰;我宜堅壁挫其銳,待其糧盡氣衰,一舉可破。願主公假我以歲月,勿迫於一時。」', en: 'Young but steady, Lu Xun advises calmly: "My lord, the foe swells, yet marched far and weary — his gain lies in a quick fight. Wall up and blunt his edge; when his grain fails and spirit sags, one stroke breaks him. Grant me time, and do not press for a single day\'s result."' },
+    choices: [
+      { label: { zh: '委以全權,任其持重', en: 'Grant full command — let him hold' }, effects: [{ kind: 'loyalty', officerId: 'lu-xun', delta: 4 }, { kind: 'set-flag', flag: 'luxun-command' }], outcome: { zh: '諸將初輕其年少,久之乃服其沉毅。', en: 'The captains scorned his youth at first — in time they bow to his depth.' } },
+      { label: { zh: '疑其怯戰,促令速決', en: 'Doubt his nerve — press for a quick decision' }, effects: [{ kind: 'loyalty', officerId: 'lu-xun', delta: -3 }], outcome: { zh: '陸遜默受其責,然堅執己見,不肯浪戰。', en: 'Lu Xun takes the reproach in silence — yet holds his ground, refusing a reckless fight.' } },
+    ],
+    conditions: { requiresOfficerInService: 'lu-xun' },
+  },
+  {
+    id: 'dlg-xuchu-nightwatch',
+    speakerOfficerId: 'xu-chu',
+    text: { zh: '許褚裸衣按刀,守於帳外,入而言曰:「主公,近日營中夜有異動,恐有刺客。褚願親宿帳前,雖萬人不能近主公一步!」', en: 'Xu Chu, stripped to the waist and gripping his blade, keeps the tent-door, then enters: "My lord, the camp stirs strangely by night — I fear assassins. Let me sleep before your tent; though ten thousand come, none shall step within a pace of you!"' },
+    choices: [
+      { label: { zh: '嘉其忠,命其宿衛', en: 'Honour his loyalty — post him to the guard' }, effects: [{ kind: 'loyalty', officerId: 'xu-chu', delta: 3 }, { kind: 'set-flag', flag: 'xuchu-guard' }], outcome: { zh: '虎痴徹夜按刀而立,主公得安寢。', en: 'The Tiger-Fool stands sword in hand all night; you sleep sound.' } },
+      { label: { zh: '笑其多慮,遣之歸歇', en: 'Laugh off his worry — send him to rest' }, effects: [{ kind: 'none' }], outcome: { zh: '許褚不肯遠去,竟臥於帳側階前。', en: 'Xu Chu will not go far — he lies down on the steps beside the tent.' } },
+    ],
+    conditions: { requiresOfficerInService: 'xu-chu' },
+  },
+  {
+    id: 'dlg-zhangliao-charge',
+    speakerOfficerId: 'zhang-liao',
+    text: { zh: '張遼按劍請纓:「主公,敵眾我寡,然彼新集,陣腳未固。遼願選死士八百,乘夜陷其陣,先挫其鋒,則我軍雖少可守。此逍遙津故智也!」', en: 'Zhang Liao asks leave, hand on hilt: "My lord — they are many, we few, but freshly gathered and their ranks unset. Let me pick eight hundred braves and break their line by night; blunt their edge, and our small host can hold. This was the trick of Xiaoyao Ford!"' },
+    choices: [
+      { label: { zh: '壯其膽,選死士予之', en: 'Honour his daring — give him the braves' }, effects: [{ kind: 'loyalty', officerId: 'zhang-liao', delta: 4 }, { kind: 'set-flag', flag: 'zhangliao-raid' }], outcome: { zh: '張遼夜銜枚陷陣,敵驚呼「遼來!」而潰。', en: 'Zhang Liao charges by night; the foe cries "Liao comes!" and breaks.' } },
+      { label: { zh: '慮其行險,令固守待援', en: 'Fear the risk — bid him hold for relief' }, effects: [{ kind: 'loyalty', officerId: 'zhang-liao', delta: -1 }], outcome: { zh: '文遠斂鋒堅守,然每念未得逞其志。', en: 'Wenyuan sheathes his edge and holds — though he broods on the chance untaken.' } },
+    ],
+    conditions: { requiresOfficerInService: 'zhang-liao' },
+  },
+  {
+    id: 'dlg-dianwei-guard',
+    speakerOfficerId: 'dian-wei',
+    text: { zh: '典韋持雙戟立於轅門,聲如洪鐘:「主公放心飲宴,俺典韋在此,便是天塌下來,也替主公頂著!」', en: 'Dian Wei stands at the gate with twin halberds, voice booming: "Feast easy, my lord — with Dian Wei here, though the sky fall, I\'ll hold it up for you!"' },
+    choices: [
+      { label: { zh: '賜酒以勞其忠', en: 'Grant him wine for his loyalty' }, effects: [{ kind: 'gold', delta: -20 }, { kind: 'loyalty', officerId: 'dian-wei', delta: 3 }], outcome: { zh: '典韋痛飲而不亂,終夜按戟不倒。', en: 'Dian Wei drinks deep yet steady, halberds unwavering till dawn.' } },
+      { label: { zh: '誡其勿因宴而弛備', en: 'Warn him not to slacken for the feast' }, effects: [{ kind: 'loyalty', officerId: 'dian-wei', delta: 1 }, { kind: 'set-flag', flag: 'dianwei-vigilant' }], outcome: { zh: '典韋領命,益發戒嚴,滴酒不沾。', en: 'He takes heed, tightens the watch, and touches not a drop.' } },
+    ],
+    conditions: { requiresOfficerInService: 'dian-wei' },
+  },
+
+  // ─── 2026-07 補:麾下重臣薦賢(荐賢入仕,exercise recruit effect)───
+  // 只在薦主效力於你時觸發;所薦之才若尚未歸你,則應召入仕(recruit)。
+  {
+    id: 'dlg-xushu-recommend',
+    speakerOfficerId: 'xu-shu',
+    text: { zh: '徐庶臨行回馬,鄭重進言:「庶此去,身在曹營,然有一言相告:南陽有臥龍諸葛孔明,經天緯地之才,勝庶十倍。主公若得之,何愁大業不成?宜親往求之。」', en: 'Xu Shu wheels his horse back and speaks in earnest: "I go — my body to Cao\'s camp — yet one word before I part: in Nanyang dwells the Crouching Dragon, Zhuge Kongming, whose gift to weave Heaven and Earth is ten times mine. Win him, my lord, and what great work could fail? Go to him yourself."' },
+    choices: [
+      { label: { zh: '納其薦,三顧茅廬', en: 'Heed the counsel — visit the thatched hut thrice' }, effects: [{ kind: 'recruit', officerId: 'zhuge-liang' }, { kind: 'set-flag', flag: 'sought-crouching-dragon' }], outcome: { zh: '主公枉駕三顧,臥龍感其誠,遂出隆中。', en: 'Thrice you call in person; moved by your sincerity, the Dragon leaves Longzhong.' } },
+      { label: { zh: '謝其意,未遑往聘', en: 'Thank him — but do not yet go' }, effects: [{ kind: 'loyalty', officerId: 'xu-shu', delta: -2 }], outcome: { zh: '徐庶嘆息而去,惜明主失此大賢。', en: 'Xu Shu sighs as he leaves, grieving that a worthy lord let such a sage slip.' } },
+    ],
+    conditions: { requiresOfficerInService: 'xu-shu' },
+  },
+  {
+    id: 'dlg-xunyu-recommend',
+    speakerOfficerId: 'xun-yu',
+    text: { zh: '荀彧薦士曰:「明公欲成霸業,不可無奇謀之士。潁川郭嘉,才策謀略,世之奇士,雖行止不謹,然算無遺策。彧敢以身家保之,願明公用焉。」', en: 'Xun Yu recommends: "To forge hegemony, my lord, you cannot lack a mind for wild stratagem. Guo Jia of Yingchuan — a rare talent of the age; loose in conduct, yet flawless in reckoning. I stake my house upon him. Employ him, I beg."' },
+    choices: [
+      { label: { zh: '用文若之薦,徵郭嘉', en: 'Take Wenruo\'s word — summon Guo Jia' }, effects: [{ kind: 'recruit', officerId: 'guo-jia' }, { kind: 'loyalty', officerId: 'xun-yu', delta: 2 }], outcome: { zh: '郭嘉應召而至,一席暢談,主公大喜曰:「使孤成大業者,必此人也!」', en: 'Guo Jia answers the call; after one long talk you cry: "The man to make my great work — surely this is he!"' } },
+      { label: { zh: '嫌其不羈,姑置之', en: 'Balk at his looseness — set it aside' }, effects: [{ kind: 'none' }], outcome: { zh: '荀彧默然,惜奇才之見遺。', en: 'Xun Yu falls silent, mourning a rare talent passed over.' } },
+    ],
+    conditions: { requiresOfficerInService: 'xun-yu' },
+  },
+  {
+    id: 'dlg-lusu-recommend',
+    speakerOfficerId: 'lu-su',
+    text: { zh: '魯肅引一貌陋之士入見:「主公,此鳳雛龐士元也,與臥龍齊名,得一可安天下。其貌雖不揚,然腹有良謀,願主公勿以貌取人。」', en: 'Lu Su leads in a homely-looking man: "My lord — this is Pang Shiyuan, the Fledgling Phoenix, ranked with the Crouching Dragon; win either and the realm may be settled. Plain of face, but his belly holds fine schemes. Judge him not by his looks."' },
+    choices: [
+      { label: { zh: '不以貌取,即拜為軍師', en: 'Look past the face — appoint him strategist' }, effects: [{ kind: 'recruit', officerId: 'pang-tong' }, { kind: 'loyalty', officerId: 'lu-su', delta: 2 }], outcome: { zh: '龐統試以百里之政,半日剖決,積案一空,眾始服之。', en: 'Given a county to test, Pang Tong clears its backlog by noon; all are won over.' } },
+      { label: { zh: '見其貌陋,禮貌而疏', en: 'Put off by his looks — polite but cool' }, effects: [{ kind: 'loyalty', officerId: 'lu-su', delta: -2 }], outcome: { zh: '龐統拂衣而去,魯肅頓足歎主公之失。', en: 'Pang Tong strides off; Lu Su stamps his foot at his lord\'s loss.' } },
+    ],
+    conditions: { requiresOfficerInService: 'lu-su' },
+  },
 ];
 
 /** Lookup by id for branching follow-ups. */

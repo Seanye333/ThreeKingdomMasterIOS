@@ -37,7 +37,14 @@ export interface DialogueEvent {
   conditions?: {
     minYear?: number;
     maxYear?: number;
+    /** Officer must be alive & free anywhere in the world (not necessarily yours). */
     requiresOfficerActive?: EntityId;
+    /**
+     * Officer must be serving YOU right now (forceId === player, not dead/gaoled/
+     * retired). Use this for 麾下名將親自進言 — the scene only makes sense when that
+     * general is actually in your court.
+     */
+    requiresOfficerInService?: EntityId;
     requiresFlag?: string;
   };
 }

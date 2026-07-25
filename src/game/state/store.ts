@@ -5305,6 +5305,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               year: result.date.year,
               officers: postOfficers,
               eventFlags: postFlags,
+              playerForceId: state.playerForceId,
               rng: Math.random,
             });
           }
@@ -15905,6 +15906,23 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           } else if (eff.kind === 'set-flag') {
             if (eventFlags === state.eventFlags) eventFlags = { ...eventFlags };
             eventFlags[eff.flag] = true;
+          } else if (eff.kind === 'recruit') {
+            // 登門獻策 / 慕名來投 — a talent actually enters your service.
+            // Mirror the capture-defection convention (line ~13405): assign to the
+            // player force, park at the capital, floor loyalty. No-op if the officer
+            // is already yours, dead, or gaoled.
+            const o = officers[eff.officerId];
+            if (o && state.playerForceId && o.forceId !== state.playerForceId
+                && o.status !== 'dead' && o.status !== 'imprisoned') {
+              officers[eff.officerId] = {
+                ...o,
+                forceId: state.playerForceId,
+                status: 'idle',
+                task: null,
+                locationCityId: playerCapital ?? o.locationCityId,
+                loyalty: Math.max(o.loyalty, 60),
+              };
+            }
           }
           // Other effects: noop here, just flavor.
         }

@@ -7,6 +7,8 @@ export interface DialogueRollContext {
   year: number;
   officers: Record<EntityId, Officer>;
   eventFlags: Record<string, boolean>;
+  /** Whose court is this? Gates `requiresOfficerInService`. */
+  playerForceId: EntityId | null;
   rng: () => number;
 }
 
@@ -14,9 +16,12 @@ export interface DialogueRollContext {
  * Roll for a dialogue event this season. Returns one if rolled, else null.
  * Filters by year ranges and officer-alive / flag conditions.
  */
-export function rollDialogue(ctx: DialogueRollContext): DialogueEvent | null {
+export function rollDialogue(
+  ctx: DialogueRollContext,
+  events: readonly DialogueEvent[] = DIALOGUE_EVENTS,
+): DialogueEvent | null {
   if (ctx.rng() > DIALOGUE_CHANCE_PER_SEASON) return null;
-  const eligible = DIALOGUE_EVENTS.filter((d) => {
+  const eligible = events.filter((d) => {
     const c = d.conditions;
     if (!c) return true;
     if (c.minYear !== undefined && ctx.year < c.minYear) return false;
@@ -24,6 +29,12 @@ export function rollDialogue(ctx: DialogueRollContext): DialogueEvent | null {
     if (c.requiresOfficerActive) {
       const o = ctx.officers[c.requiresOfficerActive];
       if (!o || o.status === 'dead' || o.status === 'imprisoned') return false;
+    }
+    if (c.requiresOfficerInService) {
+      const o = ctx.officers[c.requiresOfficerInService];
+      if (!o) return false;
+      if (!ctx.playerForceId || o.forceId !== ctx.playerForceId) return false;
+      if (o.status === 'dead' || o.status === 'imprisoned' || o.status === 'retired' || o.status === 'unsearched') return false;
     }
     if (c.requiresFlag && !ctx.eventFlags[c.requiresFlag]) return false;
     return true;
