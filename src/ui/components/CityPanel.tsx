@@ -35,6 +35,7 @@ import { OfficerStats } from './OfficerStats';
 import { OfficerHoverCard } from './OfficerHoverCard';
 import { OfficerPortrait } from './OfficerPortrait';
 import { TERRAIN_DEFS } from '../../game/data/cities';
+import { cityLore } from '../../game/data/cityLore';
 import { PROVINCE_BY_CITY, PROVINCES_BY_ID } from '../../game/data';
 import { rebuildCost } from '../../game/systems/cityRuin';
 import styles from './CityPanel.module.css';
@@ -278,6 +279,31 @@ export function CityPanel() {
               the player sees at a glance what's built. Reliable tap target on
               mobile (the re-click-to-enter gesture only works with a mouse). */}
           <CityMiniMap city={city} onClick={enterCity} />
+
+          {/* 地方風物志 — a short gazetteer note for the historically resonant
+              cities (山川形勝 + 掌故). Read-only flavour; renders only when the
+              city carries an entry in cityLore.ts. */}
+          {(() => {
+            const lore = cityLore(city.id);
+            if (!lore) return null;
+            return (
+              <div style={{
+                margin: '0.6rem 0',
+                padding: '0.6rem 0.8rem',
+                borderLeft: '2px solid #b48a3a',
+                background: 'linear-gradient(90deg, rgba(180,138,58,0.10), transparent)',
+                fontStyle: 'italic',
+                lineHeight: 1.7,
+              }}>
+                <div style={{ fontSize: '0.62rem', letterSpacing: '0.14rem', color: '#b48a3a', fontStyle: 'normal', marginBottom: '0.3rem' }}>
+                  {t('風物志', 'Gazetteer')}
+                </div>
+                {lang !== 'en' && <div style={{ fontSize: '0.82rem', color: '#cbb488' }}>{lore.zh}</div>}
+                {lang === 'both' && <div style={{ height: '0.3rem' }} />}
+                {lang !== 'zh' && <div style={{ fontSize: lang === 'both' ? '0.74rem' : '0.82rem', color: lang === 'both' ? '#8a94a0' : '#cbb488' }}>{lore.en}</div>}
+              </div>
+            );
+          })()}
 
           <ResourcesSection city={city} cityOfficers={officers} isPlayerCity={isPlayerCity} />
 
