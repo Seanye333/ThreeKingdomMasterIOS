@@ -1,8 +1,8 @@
 /** 武將心願 — locks the wish grant/reject effects + grievance dynamics. */
 import { describe, it, expect } from 'vitest';
-import { applyWishGrant, applyWishReject, decayGrievances, expireWishes } from './wishes';
+import { applyWishGrant, applyWishReject, composeInfoLetters, decayGrievances, expireWishes } from './wishes';
 import { mkOfficer } from '../../test/factories';
-import type { OfficerWish } from '../types';
+import type { City, GameDate, OfficerWish } from '../types';
 
 const wish = (over: Partial<OfficerWish> & { officerId: string; kind: OfficerWish['kind'] }): OfficerWish => ({
   id: `w-${over.officerId}`,
@@ -91,5 +91,73 @@ describe('老病告退 — a chronic-ailment veteran petitions to retire (E3)', 
     // The hale officer might still wish something, but never a chronic-retire.
     const fitWish = wishes.find((w) => w.officerId === 'fit');
     if (fitWish?.kind === 'retire') expect(fitWish.text.zh).not.toContain('宿疾');
+  });
+});
+
+/**
+ * 上書 — the letter pool used to be three conditional lines plus a generic
+ * greeting, so most letters read "sends a courtly letter of greeting" no
+ * matter who wrote them or from where. These pin the pool to the posting.
+ */
+describe('上書 — letters report the posting the officer actually holds', () => {
+  const date: GameDate = { year: 200, season: 'spring', phase: 'early' } as GameDate;
+  const city = (over: Partial<City>): City => ({
+    id: 'c', name: { zh: '許昌', en: 'Xuchang' },
+    population: 100_000, gold: 1000, food: 20_000, troops: 5000,
+    agriculture: 50, commerce: 50, defense: 50, loyalty: 70,
+    ownerForceId: 'F', coords: { x: 0, y: 0 }, adjacentCityIds: [],
+    ...over,
+  } as City);
+  const at = (c: City, o = mkOfficer({ id: 'a', forceId: 'F', status: 'idle' })) =>
+    composeInfoLetters({ ...o, locationCityId: 'c' }, { cities: { c }, date })
+      .map((r) => r.zh).join('\n');
+
+  it('reads the granary both ways', () => {
+    expect(at(city({ food: 1000, troops: 5000 }))).toContain('存糧不足');
+    expect(at(city({ food: 100_000, troops: 5000 }))).toContain('倉廩皆盈');
+  });
+
+  it('notices graft, sheltered households and crumbling walls', () => {
+    expect(at(city({ corruption: 60 }))).toContain('出入之數不相應');
+    expect(at(city({ hiddenHouseholds: 30 }))).toContain('版籍所載不及其半');
+    expect(at(city({ defense: 10 }))).toContain('城堞頹圮');
+  });
+
+  it('reports the imbalance between fields and markets', () => {
+    expect(at(city({ commerce: 90, agriculture: 20 }))).toContain('末富而本貧');
+    expect(at(city({ agriculture: 90, commerce: 20 }))).toContain('物賤傷農');
+  });
+
+  it('writes to the season', () => {
+    const c = city({});
+    const inSeason = (s: GameDate['season']) =>
+      composeInfoLetters({ ...mkOfficer({ id: 'a', forceId: 'F' }), locationCityId: 'c' },
+        { cities: { c }, date: { ...date, season: s } }).map((r) => r.zh).join('\n');
+    expect(inSeason('spring')).toContain('春耕方始');
+    expect(inSeason('summer')).toContain('夏雨連旬');
+    expect(inSeason('autumn')).toContain('秋熟已登');
+    expect(inSeason('winter')).toContain('歲暮苦寒');
+  });
+
+  it('lets the man himself speak — age, wounds, and idle hands', () => {
+    const old = mkOfficer({ id: 'a', forceId: 'F', status: 'idle', birthYear: 130 });
+    expect(at(city({}), old)).toContain('齒髮衰矣');
+    const hurt = mkOfficer({ id: 'a', forceId: 'F', status: 'wounded' });
+    expect(at(city({}), hurt)).toContain('創處未合');
+    const warrior = mkOfficer({
+      id: 'a', forceId: 'F', status: 'idle',
+      stats: { leadership: 80, war: 95, intelligence: 50, politics: 40, charisma: 60 },
+    });
+    expect(at(city({}), warrior)).toContain('髀肉復生');
+  });
+
+  it('falls back on the bare greeting only when nothing else applies', () => {
+    const nobody = mkOfficer({
+      id: 'a', forceId: 'F', status: 'idle', birthYear: 180, loyalty: 80,
+      stats: { leadership: 60, war: 60, intelligence: 60, politics: 60, charisma: 60 },
+    });
+    const letters = composeInfoLetters({ ...nobody, locationCityId: null }, { cities: {}, date });
+    expect(letters).toHaveLength(1);
+    expect(letters[0].zh).toContain('上書問安');
   });
 });

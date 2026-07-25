@@ -351,35 +351,7 @@ function generateWish(o: Officer, ctx: WishContext): OfficerWish | null {
     };
   }
   if (kind === 'info') {
-    // 上書: a flavor letter — reports on local conditions.
-    const city = o.locationCityId ? ctx.cities[o.locationCityId] : undefined;
-    const reports: Array<{ zh: string; en: string }> = [];
-    if (city) {
-      if (city.food < city.troops * 0.8) {
-        reports.push({
-          zh: `${o.name.zh}上書：${city.name.zh}存糧不足，恐生變。`,
-          en: `${o.name.en} reports low grain reserves in ${city.name.en}.`,
-        });
-      }
-      if (city.loyalty < 50) {
-        reports.push({
-          zh: `${o.name.zh}上書：${city.name.zh}民心浮動，宜安撫。`,
-          en: `${o.name.en} reports stirring discontent in ${city.name.en}.`,
-        });
-      }
-      if (city.troops > 10000) {
-        reports.push({
-          zh: `${o.name.zh}上書：${city.name.zh}兵備整肅，可堪一戰。`,
-          en: `${o.name.en} reports ${city.name.en} stands battle-ready.`,
-        });
-      }
-    }
-    if (reports.length === 0) {
-      reports.push({
-        zh: `${o.name.zh}上書問安。`,
-        en: `${o.name.en} sends a courtly letter of greeting.`,
-      });
-    }
+    const reports = composeInfoLetters(o, ctx);
     const r = reports[Math.floor(ctx.rng() * reports.length)];
     return {
       id: `wish-${o.id}-${ctx.date.year}-${ctx.date.season}`,
@@ -454,6 +426,182 @@ function generateWish(o: Officer, ctx: WishContext): OfficerWish | null {
     grantBonus: 12,
   };
 }
+
+/**
+ * 上書 — the letters an officer could plausibly write from the post he
+ * actually holds.
+ *
+ * Every line is gated on something true about THIS officer in THIS city this
+ * season — the granary count, the graft in the clerks' books, the silted
+ * ditches, his own age or unhealed wound — so a letter is never generic
+ * filler. A lord reading two in a row should be able to tell the two
+ * postings apart. The 問安 greeting is the last-resort fallback, not the
+ * usual case it used to be.
+ *
+ * Exported so the pool can be tested directly: `generateWish` only ever
+ * shows one of these at random.
+ */
+export function composeInfoLetters(
+  o: Officer,
+  ctx: Pick<WishContext, 'cities' | 'date'>,
+): Array<{ zh: string; en: string }> {
+  {
+    const city = o.locationCityId ? ctx.cities[o.locationCityId] : undefined;
+    const reports: Array<{ zh: string; en: string }> = [];
+    const zh = o.name.zh, en = o.name.en;
+    if (city) {
+      const cz = city.name.zh, ce = city.name.en;
+      // ── 城務 — the ledger of the place he sits in.
+      if (city.food < city.troops * 0.8) {
+        reports.push({
+          zh: `${zh}上書：${cz}存糧不足，恐生變。`,
+          en: `${en} reports low grain reserves in ${ce}.`,
+        });
+      }
+      if (city.food > city.troops * 4) {
+        reports.push({
+          zh: `${zh}上書：${cz}倉廩皆盈，陳陳相因，宜及時轉輸他郡。`,
+          en: `${en} writes that the granaries of ${ce} are full to the rafters, old grain under new — it should be moved on while it keeps.`,
+        });
+      }
+      if (city.loyalty < 50) {
+        reports.push({
+          zh: `${zh}上書：${cz}民心浮動，宜安撫。`,
+          en: `${en} reports stirring discontent in ${ce}.`,
+        });
+      }
+      if (city.loyalty >= 90) {
+        reports.push({
+          zh: `${zh}上書：${cz}道不拾遺，市井無囂，父老以為數十年未有之安。`,
+          en: `${en} writes that nothing dropped in the streets of ${ce} is picked up and the markets are quiet; the elders say there has been no such peace in decades.`,
+        });
+      }
+      if (city.troops > 10000) {
+        reports.push({
+          zh: `${zh}上書：${cz}兵備整肅，可堪一戰。`,
+          en: `${en} reports ${ce} stands battle-ready.`,
+        });
+      }
+      if (city.troops < 3000) {
+        reports.push({
+          zh: `${zh}上書：${cz}城大而兵寡，設有緩急，恐不能守。`,
+          en: `${en} writes that ${ce} is a large city with a thin garrison; should anything happen suddenly, he doubts it can be held.`,
+        });
+      }
+      if ((city.corruption ?? 0) >= 40) {
+        reports.push({
+          zh: `${zh}上書：${cz}吏胥舞文，出入之數不相應，乞遣人按之。`,
+          en: `${en} writes that the clerks of ${ce} are cooking the books — receipts and disbursements do not match — and asks that an auditor be sent.`,
+        });
+      }
+      if ((city.hiddenHouseholds ?? 0) >= 20) {
+        reports.push({
+          zh: `${zh}上書：${cz}豪右蔭戶，版籍所載不及其半，賦役皆出於貧民。`,
+          en: `${en} writes that the great houses of ${ce} are sheltering households off the registers — the rolls show under half the true number, and the levies all fall on the poor.`,
+        });
+      }
+      if (city.defense < 30) {
+        reports.push({
+          zh: `${zh}上書：${cz}城堞頹圮，壕塹淤淺，乞給工料修之。`,
+          en: `${en} writes that the battlements of ${ce} are crumbling and the ditches silted shallow, and asks for materials and labour to repair them.`,
+        });
+      }
+      if (city.commerce > city.agriculture * 1.6) {
+        reports.push({
+          zh: `${zh}上書：${cz}市易日盛而田疇日荒，末富而本貧，非長久之計。`,
+          en: `${en} writes that trade in ${ce} grows daily while the fields go to weeds — wealth in the branch and poverty at the root, which cannot last.`,
+        });
+      }
+      if (city.agriculture > city.commerce * 1.6) {
+        reports.push({
+          zh: `${zh}上書：${cz}稼穡雖修而商旅不至，錢貨不流，物賤傷農。`,
+          en: `${en} writes that ${ce} farms well but no merchants come; coin does not circulate, and prices so low they hurt the farmers.`,
+        });
+      }
+      if (city.ruined) {
+        reports.push({
+          zh: `${zh}上書：${cz}焦土之餘，井邑無煙，白骨蔽野，非旬月可復。`,
+          en: `${en} writes from the ashes of ${ce}: no smoke from the wards, bones in the open fields, and no restoring it in a month or two.`,
+        });
+      }
+      if (city.imperialSeat) {
+        reports.push({
+          zh: `${zh}上書：乘輿駐蹕${cz}，百官環列，一舉一動皆在眾目，願主公慎之。`,
+          en: `${en} writes that with the imperial carriage resting at ${ce} and the whole court around it, every move is watched — and asks his lord to be careful.`,
+        });
+      }
+      // ── 時令 — what the season is doing to the land.
+      if (ctx.date.season === 'spring') {
+        reports.push({
+          zh: `${zh}上書：春耕方始，${cz}民力已竭於徭役，乞緩一時之征。`,
+          en: `${en} writes that the spring ploughing has begun and the people of ${ce} are already spent on corvée, and asks that this season's levy be eased.`,
+        });
+      } else if (ctx.date.season === 'summer') {
+        reports.push({
+          zh: `${zh}上書：夏雨連旬，${cz}河水暴漲，堤防當先葺。`,
+          en: `${en} writes that ten days of summer rain have the rivers at ${ce} running high, and the dykes should be seen to first.`,
+        });
+      } else if (ctx.date.season === 'autumn') {
+        reports.push({
+          zh: `${zh}上書：秋熟已登，${cz}倉稟稍實，然野有遺秉，宜遣吏督之。`,
+          en: `${en} writes that the autumn harvest is in and the granaries of ${ce} a little fuller, but sheaves are being left in the fields and an officer should be sent to see to it.`,
+        });
+      } else {
+        reports.push({
+          zh: `${zh}上書：歲暮苦寒，${cz}戍卒衣薄，乞給襦絮。`,
+          en: `${en} writes that the year ends bitter cold and the garrison at ${ce} is thinly clothed, and asks for padded coats.`,
+        });
+      }
+    }
+    // ── 其人 — and something about the man holding the pen.
+    const age = ctx.date.year - (o.birthYear ?? ctx.date.year - 30);
+    if (age >= 60) {
+      reports.push({
+        zh: `${zh}上書：臣年已${age}，齒髮衰矣，猶思一效鞍馬之力，恐後無日。`,
+        en: `${en} writes that he is ${age} now, his teeth and hair going, and would still like one more turn in the saddle before there is no time left.`,
+      });
+    }
+    if (o.status === 'wounded') {
+      reports.push({
+        zh: `${zh}上書：臣創處未合，未能趨事，然軍中之務，不敢一日忘。`,
+        en: `${en} writes that his wound has not closed and he cannot yet attend to duty — but that he has not forgotten the army's business for a single day.`,
+      });
+    }
+    if (o.loyalty < 60) {
+      reports.push({
+        zh: `${zh}上書：臣以疏遠之身，久居閒任，未知進退所安，惟主公裁之。`,
+        en: `${en} writes as an outsider long kept in an idle post, uncertain where he stands, and leaves the matter to his lord.`,
+      });
+    }
+    const s = o.stats;
+    if (s.intelligence >= 85 && s.war < 60) {
+      reports.push({
+        zh: `${zh}上書：兵者凶器，聖人不得已而用之。願主公先論廟算，後議出師。`,
+        en: `${en} writes that arms are inauspicious things which the wise use only when they must, and asks that the reckoning be done in council before the marching order is given.`,
+      });
+    }
+    if (s.war >= 85 && (o.status === 'idle')) {
+      reports.push({
+        zh: `${zh}上書：閒居日久，髀肉復生，願得一軍效命行間。`,
+        en: `${en} writes that the flesh has grown back on his thighs from too much sitting, and asks for a command and a road to take it down.`,
+      });
+    }
+    if (s.politics >= 85) {
+      reports.push({
+        zh: `${zh}上書：治國之要，在於安民；安民之本，在於足食。願主公省繇役而勸農桑。`,
+        en: `${en} writes that governing turns on keeping the people settled, and keeping them settled turns on feeding them: lighten the corvée and encourage the fields.`,
+      });
+    }
+    if (reports.length === 0) {
+      reports.push({
+        zh: `${zh}上書問安。`,
+        en: `${en} sends a courtly letter of greeting.`,
+      });
+    }
+    return reports;
+  }
+}
+
 
 /**
  * Apply the answer to a wish: grants give the loyalty bonus and resolve the
