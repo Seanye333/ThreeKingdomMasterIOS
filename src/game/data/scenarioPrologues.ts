@@ -814,4 +814,319 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       en: 'Jin came against Wu on six roads at once: Wang Jun and Tang Bin down the river from Ba-Shu, Du Yu out of Jiangling, Wang Rong towards Wuchang, Hu Fen at Xiakou, Wang Hun by Hengjiang, Sima Zhou towards Tuzhong.\n\nThe Wu had strung iron chains across the narrows and set iron spikes over ten feet long under the water to hole the hulls. Wang Jun built great rafts, bound straw men on them, and sent them ahead; the spikes came away in the rafts. He made torches ten fathoms long and dozens of spans around, soaked them in hemp oil, and set them at his bows; where a chain barred the way, the torch was lit against it, and in moments the iron ran and parted, and the ships passed without hindrance.\n\nIn the third month Wang Jun\'s fleet came up to Shitou. Sun Hao had himself bound, brought his coffin, and surrendered at the gate of the camp.\n\nFrom the rising of the Yellow Turbans to this day: ninety-six years.',
     },
   },
+
+  // ── 假想 · 岔路口 ─────────────────────────────────────────────────
+  // Each of these boards turns on one moment that went the other way.
+  'scn-gathering-of-heroes': {
+    intro: {
+      zh: '沒有這一年。\n\n董卓還在,呂布還在,孫堅的兒子已經長大而孫堅未死,袁紹與袁術都還沒有輸,劉備已經有了地盤,曹操已經有了天子,公孫瓚的白馬義從還在,馬騰韓遂還在關中,劉焉還在益州。\n\n史書把他們錯開了二十年,好讓每個人依次退場。這一局把他們全部放在同一張棋盤上。',
+      en: 'This year never happened.\n\nDong Zhuo is still here. So is Lü Bu. Sun Jian\'s sons are grown and Sun Jian is not dead. Neither Yuan has lost yet. Liu Bei already holds land and Cao Cao already holds the emperor. The White Horse Volunteers still ride, Ma Teng and Han Sui still hold Guanzhong, Liu Yan still holds Shu.\n\nHistory spread them across twenty years so that each could leave the stage in turn. This board puts every one of them on it at once.',
+    },
+  },
+
+  'scn-whatif-guanyu-jing': {
+    intro: {
+      zh: '岔路在江陵的城門。\n\n史書上,呂蒙白衣渡江,糜芳、傅士仁不戰而降,關羽腹背受敵,走麥城,父子俱歿。荊州一失,隆中對的兩路北伐就永遠只剩一路。\n\n這一局,那扇門沒有開。關羽守住了荊州,蜀漢同時據有荊益 —— 諸葛亮在隆中畫的那張圖,完整地擺在你面前。',
+      en: 'The fork is at the gate of Jiangling.\n\nIn the histories Lü Meng crossed in white, Mi Fang and Fu Shiren surrendered without a fight, Guan Yu was caught front and rear, fled to Maicheng, and died there with his son. With Jing gone, the two-road northern campaign of the Longzhong plan was permanently reduced to one road.\n\nOn this board that gate stayed shut. Guan Yu held Jing province, and Shu holds Jing and Yi together — the map Zhuge Liang drew in that thatched hut, intact and in front of you.',
+    },
+  },
+
+  'scn-whatif-zhuge-lives': {
+    intro: {
+      zh: '岔路在五丈原的病榻。\n\n史書上,他五十四歲死於軍中,姜維扶著蜀漢又走了三十年,終究是「臣等正欲死戰,陛下何故先降」。\n\n這一局他活到八十。屯田仍在,渭南的營壘仍在,那個一日不能不理事的人還在案前。時間 —— 他一生最缺的東西 —— 這次給夠了。',
+      en: 'The fork is a sickbed on the Wuzhang plain.\n\nIn the histories he died in camp at fifty-four. Jiang Wei carried Shu another thirty years, and it ended with a prince crying "we were ready to fight to the death — why has Your Majesty surrendered first?"\n\nOn this board he lives to eighty. The farming colonies are still there, the works along the Wei are still there, and the man who could not leave a day\'s business undone is still at his desk. Time — the one thing he never had enough of — has been granted.',
+    },
+  },
+
+  'scn-whatif-cao-wins-chibi': {
+    intro: {
+      zh: '岔路在一場東南風。\n\n史書上,黃蓋詐降,火船順風而下,操軍船艦一時盡燒,延及岸上營落,人馬燒溺死者甚眾。曹操北還,天下遂成三分。\n\n這一局風沒有轉。周瑜死於亂軍,孫權下落不明,江東只剩殘部;劉備連荊州都還沒摸到就已無處可去。曹操的船隊仍在江上,順流東下。',
+      en: 'The fork is a southeast wind.\n\nIn the histories Huang Gai feigned surrender, the fireships ran down on the wind, Cao Cao\'s fleet burned in a single hour and the fire spread to the camps ashore, and men and horses died burning and drowning in great numbers. Cao Cao went north, and the realm settled into three.\n\nOn this board the wind never turned. Zhou Yu died in the rout, Sun Quan is unaccounted for, and Wu is a remnant. Liu Bei had not yet so much as touched Jing province and has nowhere left to go. Cao Cao\'s fleet is still on the river, still coming east.',
+    },
+  },
+
+  'scn-whatif-women': {
+    intro: {
+      zh: '這一局沒有岔路,只有一個一直沒被問出口的問題:如果她們有兵呢?\n\n貂蟬傾覆了一個權臣而史書不記其姓;孫尚香房中侍婢百餘皆親執刀,劉備每入心常凜然;黃月英造木牛流馬而只留下一個「醜」字的傳說;祝融是南中唯一在陣上勝過蜀將的人;蔡琰沒入胡中十二年,歸來默寫四百餘篇無一誤字;卞夫人在曹操凶問傳來時按住了整個曹家。\n\n她們每一個都做過需要兵權才做得成的事,而沒有一個拿到過兵權。',
+      en: 'There is no fork here — only a question nobody got round to asking: what if they had armies?\n\nDiaochan brought down a tyrant and the histories do not record her surname. Lady Sun kept a hundred armed maids in her chambers, and Liu Bei never entered them without a chill. Huang Yueying built the wooden oxen and is remembered by a legend about her looks. Zhu Rong is the only commander at Nanzhong who beat a Shu general in the field. Cai Yan spent twelve years among the Xiongnu and came back able to write out four hundred texts from memory without an error. Lady Bian held the House of Cao together the day they thought Cao Cao was dead.\n\nEvery one of them did something that ought to have required an army. Not one of them was ever given one.',
+    },
+  },
+
+  'scn-whatif-yuan-guandu': {
+    intro: {
+      zh: '岔路在烏巢的糧囤。\n\n史書上,許攸家人犯法被收,許攸夜奔曹操,烏巢一炬,十萬之眾一夕而潰。袁紹渡河北走,兩年後嘔血而死。\n\n這一局審配沒有動許攸的家人。烏巢沒有燒。曹操退保許都,兵不滿萬;而河北的四州之地、十萬帶甲,一寸未損。',
+      en: 'The fork is a grain dump at Wuchao.\n\nIn the histories Shen Pei arrested Xu You\'s family for corruption, Xu You rode to Cao Cao that night, one torch went into Wuchao, and a hundred thousand men came apart before morning. Yuan Shao fled north across the river and died of a haemorrhage two years later.\n\nOn this board Shen Pei left the family alone. Wuchao did not burn. Cao Cao has fallen back on Xuchang with under ten thousand men, and the four northern provinces and their hundred thousand soldiers are untouched.',
+    },
+  },
+
+  'scn-whatif-lubu-xuzhou': {
+    intro: {
+      zh: '岔路在下邳的城樓。\n\n史書上,陳宮獻了計而呂布不敢用,侯成叛,曹操決沂泗灌城,白門樓上一段對話之後,「縊殺布」。\n\n這一局他採了陳宮的計 —— 騎兵在外,步軍守城,互為表裡。徐州守住了。一個從來沒有輸過陣、卻從來守不住地的人,第一次真正握住了一塊地方。',
+      en: 'The fork is the tower over the Xiapi gate.\n\nIn the histories Chen Gong offered the plan and Lü Bu dared not use it; Hou Cheng betrayed him; Cao Cao turned the rivers onto the city; and after a short conversation on the White Gate Tower, "Bu was strangled."\n\nOn this board he took the plan — cavalry outside the lines, infantry on the walls, each covering the other. Xuzhou held. A man who never lost a battle and never once kept what he took is holding ground for the first time.',
+    },
+  },
+
+  'scn-whatif-machao-guanzhong': {
+    intro: {
+      zh: '岔路在一封塗改過的信。\n\n史書上,曹操與韓遂陣前敘舊而不談軍事,又故意送去一封多處點竄的書信,馬超疑韓遂,關中十部自相離散,一戰而潰。\n\n這一局那封信沒有寄出。十部聯軍仍是十萬之眾,馬超盡得關中,涼州羌胡皆從 —— 曹操說過的那句「馬兒不死,吾無葬地也」,現在要當真了。',
+      en: 'The fork is a letter with crossings-out in it.\n\nIn the histories Cao Cao chatted with Han Sui about old times and never mentioned the war, then deliberately sent a letter full of alterations. Ma Chao suspected Han Sui, the ten companies of Guanzhong came apart on their own, and one battle finished them.\n\nOn this board that letter was never sent. The coalition is still a hundred thousand strong, Ma Chao holds all of Guanzhong, and the Qiang of Liang ride with him. Cao Cao once said that while that boy lived he would have no place to be buried. It is now worth taking literally.',
+    },
+  },
+
+  'scn-whatif-sunce-lives': {
+    intro: {
+      zh: '岔路在丹徒的獵場。\n\n史書上,孫策單騎逐鹿,遇許貢門客三人,面頰中箭,創甚,夜卒,年二十六。臨終呼張昭等曰:「中國方亂,夫以吳越之眾,三江之固,足以觀成敗。」又謂孫權:「舉江東之眾,決機於兩陣之間,與天下爭衡,卿不如我;舉賢任能,各盡其心,以保江東,我不如卿。」\n\n這一局那三個人沒有等到他。而他正在做的事,是襲許都。',
+      en: 'The fork is a hunting ground at Dantu.\n\nIn the histories Sun Ce rode ahead of his escort after a deer, met three retainers of Xu Gong, took an arrow in the face, and died that night at twenty-six. At the end he told Zhang Zhao: "The heartland is in chaos. With the men of Wu and Yue and the security of the three rivers, we can afford to watch and see who wins." And to Sun Quan: "In leading Jiangdong\'s armies and deciding matters between two battle lines, contending with the realm — you are not my equal. In raising up worthy men and getting the best from each of them, to keep Jiangdong safe — I am not yours."\n\nOn this board those three men never found him. And the thing he was working on is a raid on Xuchang.',
+    },
+  },
+
+  'scn-whatif-dong-lives': {
+    intro: {
+      zh: '岔路在未央殿的掖門。\n\n史書上,王允與呂布謀,李肅執戟刺之不入,呂布持矛叫「有詔討賊」,董卓死,夷三族。市人以其屍置臍中燃燈,光明達曙。\n\n這一局那一戟刺中了,而刺的人不是呂布 —— 或者說,連環之計根本沒有做成。董卓仍在長安,郿塢的糧穀足支三十年,關東諸侯依然彼此提防。',
+      en: 'The fork is a side gate of the Weiyang palace.\n\nIn the histories Wang Yun and Lü Bu laid the plot; Li Su\'s halberd would not go through the armour; Lü Bu levelled his spear and cried "there is an edict to punish the traitor"; and Dong Zhuo died, and his clan with him. The market people set a wick in his navel, and it burned till dawn.\n\nOn this board the blade turned — or rather, the chained stratagem never came together at all. Dong Zhuo is still in Chang\'an, Meiwu holds thirty years of grain, and the eastern lords still trust each other less than they fear him.',
+    },
+  },
+
+  'scn-whatif-yuanshu-empire': {
+    intro: {
+      zh: '岔路在壽春的糧倉。\n\n史書上,袁術僭號之後奢淫肆欲,士卒凍餒,江淮空盡,人民相食。眾叛親離,欲往青州依袁譚,道死;臨終問廚下,尚有麥屑三十斛。時盛暑,欲得蜜漿,又無蜜。坐櫬床上,嘆息良久,乃大吒曰:「袁術至於此乎!」\n\n這一局他沒有把淮南吃空。帝號立住了,壽春的倉是滿的,而許都那位天子從此有了一個同行。',
+      en: 'The fork is the granary at Shouchun.\n\nIn the histories Yuan Shu took the title and then gave himself to luxury while his soldiers froze and starved; Huainan was eaten bare and people ate each other. Deserted by everyone, he set out for Qing province to shelter with Yuan Tan and died on the road. At the end he asked the kitchen what was left: thirty bushels of barley chaff. It was high summer and he wanted honey water, and there was no honey. He sat up on the couch, sighed for a long while, and then cried out: "Has it come to this for Yuan Shu?"\n\nOn this board he did not eat Huainan bare. The title held, the granaries are full, and the emperor at Xuchang now has a colleague.',
+    },
+  },
+
+  'scn-whatif-guojia-lives': {
+    intro: {
+      zh: '岔路在柳城的歸途。\n\n史書上,郭嘉隨軍北征烏桓,水土不服,道病卒,年三十八。次年赤壁大敗,曹操嘆曰:「郭奉孝在,不使孤至此。」\n\n這一局他回來了。荊州剛下,水軍新編,連環的船已經扎好 —— 而帳中多了一個從不隨眾附和的人。',
+      en: 'The fork is the road home from Liucheng.\n\nIn the histories Guo Jia went north against the Wuhuan, could not take the climate, and died of illness on the road at thirty-eight. The next year came Chibi, and Cao Cao said: "Had Fengxiao been here, I would not have come to this."\n\nOn this board he came back. Jing province has just fallen, the fleet is newly organised, the ships are already chained — and there is one man in the tent who has never once agreed with the room.',
+    },
+  },
+
+  'scn-whatif-zhouyu-lives': {
+    intro: {
+      zh: '岔路在巴丘的病榻。\n\n史書上,周瑜取蜀之議方定,還江陵治行裝,道於巴丘病卒,年三十六。他上書孫權:「乞與奮威俱進取蜀,得蜀而并張魯,因留奮威固守其地,好與馬超結援。瑜還與將軍據襄陽以蹙操,北方可圖也。」\n\n那份規劃就此作廢,魯肅接任,吳蜀由爭為盟。這一局他沒有死在巴丘 —— 二分天下之策,要開始執行了。',
+      en: 'The fork is a sickbed at Baqiu.\n\nIn the histories the plan for taking Shu had just been approved; Zhou Yu went back to Jiangling to prepare, fell ill on the road at Baqiu, and died at thirty-six. His memorial had read: "Let me and the General Who Rouses Might advance on Shu together. Taking Shu we absorb Zhang Lu, and leave the General Who Rouses Might to hold that ground and make common cause with Ma Chao. I shall come back and hold Xiangyang with you to squeeze Cao Cao, and the north can be planned for."\n\nThat plan lapsed, Lu Su succeeded him, and Wu and Shu became allies instead of rivals. On this board he did not die at Baqiu — and the two-way partition of the realm is about to be attempted.',
+    },
+  },
+
+  'scn-whatif-pangtong-lives': {
+    intro: {
+      zh: '岔路在雒城下的一支流矢。\n\n史書上,龐統率眾攻城,為流矢所中,卒,年三十六。臥龍鳳雛得一可安天下,而劉備得二,一個死在入蜀的路上,另一個從此再沒離開過案牘。\n\n這一局那支箭偏了。鳳雛坐鎮成都,臥龍便能專心北伐 —— 諸葛亮一生「政事無巨細,咸決於亮」的重擔,這回有人分。',
+      en: 'The fork is a stray arrow under the walls of Luocheng.\n\nIn the histories Pang Tong led the assault, was struck, and died at thirty-six. It was said that either the Sleeping Dragon or the Fledgling Phoenix would be enough to settle the realm. Liu Bei had both — and one died on the road into Shu, and the other never again got out from behind a desk.\n\nOn this board the arrow missed. With the Phoenix holding Chengdu the Dragon can give the north his whole attention — the burden of a man through whose hands every matter great and small had to pass is, this once, shared.',
+    },
+  },
+
+  'scn-whatif-guanyu-north': {
+    intro: {
+      zh: '岔路在漢水的洪峰之後。\n\n史書上,關羽水淹七軍,威震華夏,曹操議徙都以避 —— 然後司馬懿的一封信送到江東,呂蒙的船隊換上了白衣。\n\n這一局那封信沒起作用,或者江東沒有動。樊城已破,許都在望,而曹操還在洛陽。',
+      en: 'The fork is the week after the Han River crested.\n\nIn the histories Guan Yu drowned the seven armies, his fame shook the realm, and Cao Cao discussed moving the capital out of reach — and then one letter from Sima Yi went to Jiangdong, and Lü Meng\'s crews put on white.\n\nOn this board that letter did not work, or Jiangdong did not move. Fan has fallen, Xuchang is in sight, and Cao Cao is still at Luoyang.',
+    },
+  },
+
+  'scn-whatif-gaopingling': {
+    intro: {
+      zh: '岔路在高平陵的那一夜。\n\n史書上,曹爽在城外想了一夜,把刀扔在地上:「我不失作富家翁。」桓範哭道:「曹子丹佳人,生汝兄弟,犢耳!」數日之後,夷三族。\n\n這一局他沒有扔那把刀 —— 或者說,他先動了手。天子在他手裡,大司農印在他手裡,四方之兵可以召。司馬懿有的只是洛陽一城和一支臨時湊起來的隊伍。',
+      en: 'The fork is that night outside the Gaoping Tombs.\n\nIn the histories Cao Shuang thought about it until dawn and threw his sword down: "I can still be a rich gentleman." Huan Fan wept: "Cao Zhen was a fine man, and he fathered you — calves!" Within days their clans were destroyed.\n\nOn this board he did not throw the sword down — or rather, he moved first. He has the emperor, he has the Grand Agriculturalist\'s seal, and he can call up the provincial armies. Sima Yi has the city of Luoyang and whatever he could scrape together that morning.',
+    },
+  },
+
+  'scn-whatif-luxun-lives': {
+    intro: {
+      zh: '岔路在武昌的一封詔書。\n\n史書上,孫權立太子和與魯王霸,兩宮並立,群臣分黨。陸遜屢次上疏切諫,孫權遣中使責問,「遜憤恚致卒」,年六十三。此後吳國二十年,顧命之臣接連死於內鬥,江防從內部爛掉。\n\n這一局那些詔書沒有發出。二宮之爭止於朝堂,陸遜還在。',
+      en: 'The fork is an edict sent from Wuchang.\n\nIn the histories Sun Quan set up both a Crown Prince and a Prince of Lu, the two households stood level, and the court split into parties. Lu Xun remonstrated again and again; Sun Quan sent messengers to reprimand him; and "in indignation Lu Xun died," aged sixty-three. For twenty years afterwards Wu\'s designated ministers killed one another in turn, and the river defence rotted from the inside.\n\nOn this board those messengers never rode. The quarrel of the two households stayed in the council chamber, and Lu Xun is still alive.',
+    },
+  },
+
+  // ── 戰國 ─────────────────────────────────────────────────────────
+  // These boards borrow the Three Kingdoms map and calendar. The intro of
+  // each says which city stands in for which, so nobody has to guess.
+  'scn-ws-seven': {
+    intro: {
+      zh: '周室東遷之後五百年,天子只剩一個名分。三家分晉,田氏代齊,禮樂征伐自諸侯出。\n\n秦據關中而有巴蜀,楚地五千里,齊有稷下之盛,趙胡服騎射,魏首霸而衰,燕築黃金台,韓當秦之衝。合縱連橫,朝秦暮楚,一士之辯可傾一國。\n\n【輿圖代換】長安=咸陽,鄴=邯鄲,臨淄=齊都,薊=燕都,陳留=大梁,許昌=新鄭,江陵=郢,上黨=長平所在,函谷關即函谷關。',
+      en: 'Five hundred years after the Zhou moved east, the Son of Heaven is a title and nothing more. Three houses have partitioned Jin, the Tian clan has replaced the rulers of Qi, and rites and campaigns alike now issue from the feudal lords.\n\nQin holds Guanzhong and Ba-Shu. Chu is five thousand li across. Qi has the Jixia academy. Zhao rides in nomad dress. Wei was the first hegemon and is fading. Yan has built its Terrace of Gold. Han stands directly in Qin\'s path. Alliances form vertically and horizontally, men serve Qin at dawn and Chu at dusk, and one persuader\'s argument can overturn a state.\n\n[Map] Chang\'an = Xianyang, Ye = Handan, Linzi = the Qi capital, Ji = the Yan capital, Chenliu = Daliang, Xuchang = Xinzheng, Jiangling = Ying, Shangdang = the Changping ground, and the Hangu Pass is itself.',
+    },
+  },
+
+  'scn-ws-weiwen': {
+    intro: {
+      zh: '魏文侯用李悝變法、西門豹治鄴、吳起守西河 —— 戰國第一個真正意義上的強國。\n\n吳起在西河,秦兵不敢東向;李悝盡地力之教,作《法經》;樂羊伐中山三年而拔之。魏之武卒,衣三屬之甲,操十二石之弩,負矢五十個,置戈其上,冠胄帶劍,贏三日之糧,日中而趨百里。\n\n這是霸業的開端,也是它最好的一年 —— 此後魏惠王遷都大梁,失商鞅、失孫臏、失范雎,一步步把天下讓給了秦。',
+      en: 'Marquis Wen of Wei employed Li Kui\'s reforms, Ximen Bao to govern Ye, and Wu Qi to hold the west of the river — the first state of the Warring States to be genuinely strong.\n\nWith Wu Qi on the west bank, Qin dared not face east. Li Kui taught the full use of the soil and wrote the Canon of Law. Yue Yang took three years over Zhongshan and took it. The Wei heavy infantry wore three-piece armour, spanned a twelve-picul crossbow, carried fifty bolts and a halberd besides, went helmeted and belted with a sword and three days\' rations, and covered a hundred li between dawn and noon.\n\nThis is the beginning of the hegemony, and its best year. After this King Hui moves the capital to Daliang, loses Shang Yang, loses Sun Bin, loses Fan Ju, and hands the realm to Qin one man at a time.',
+    },
+  },
+
+  'scn-ws-shangyang': {
+    intro: {
+      zh: '秦孝公下求賢令:「賓客群臣有能出奇計強秦者,吾且尊官,與之分土。」衛鞅自魏入秦。\n\n變法之令既具,未布,恐民之不信,乃立三丈之木於國都市南門,募民有能徙置北門者予十金。民怪之,莫敢徙。復曰「能徙者予五十金」。有一人徙之,輒予五十金,以明不欺。卒下令。\n\n行之十年,秦民大悅,道不拾遺,山無盜賊,家給人足,民勇於公戰,怯於私鬥,鄉邑大治。\n\n【輿圖代換】同「戰國七雄」一本。',
+      en: 'Duke Xiao of Qin issued a call for talent: "If any guest or officer can produce an extraordinary plan to make Qin strong, I shall give him high office and share territory with him." Wei Yang came to Qin from Wei.\n\nThe reform edicts were drafted but not yet published, for fear the people would not believe them. So a pole thirty feet long was set up at the south gate of the market, and it was announced that whoever moved it to the north gate would be given ten pieces of gold. The people thought it strange and nobody touched it. The offer was raised to fifty. One man moved it and was given fifty on the spot, to show that the state did not deceive. Then the edicts went out.\n\nTen years on, the people of Qin were content: nothing dropped on the road was picked up, there were no bandits in the hills, every household had enough, men were brave in the state\'s wars and reluctant in private quarrels, and the districts were well governed.\n\n[Map] As in the Seven Powers board.',
+    },
+  },
+
+  'scn-ws-guiling': {
+    intro: {
+      zh: '魏伐趙,圍邯鄲。趙求救於齊,齊威王使田忌將,孫臏為師,居輜車中,坐為計謀。\n\n田忌欲引兵之趙。孫臏曰:「夫解雜亂紛糾者不控卷,救鬥者不搏撠,批亢擣虛,形格勢禁,則自為解耳。今梁趙相攻,輕兵銳卒必竭於外,老弱罷於內。君不若引兵疾走大梁,據其街路,衝其方虛,彼必釋趙而自救。是我一舉解趙之圍而收弊於魏也。」\n\n田忌從之。魏果去邯鄲,與齊戰於桂陵,大破梁軍。',
+      en: 'Wei invaded Zhao and besieged Handan. Zhao appealed to Qi, and King Wei of Qi sent Tian Ji in command with Sun Bin as strategist, riding in a covered cart and directing from his seat.\n\nTian Ji wanted to march to Zhao. Sun Bin said: "To untangle a knot you do not tug at the loops; to break up a brawl you do not join in the grappling. Strike where it is vital and thrust at what is empty, so that the shape of things forbids him to continue, and the knot unties itself. Liang and Zhao are locked together, so his light troops and picked men are all spent abroad and only the old and weak are left at home. Better to march hard on Daliang, hold its streets, and thrust at the emptiness there. He will let Zhao go to save himself — and with one move we raise the siege of Zhao and take Wei at a disadvantage."\n\nTian Ji did so. Wei duly left Handan, met Qi at Guiling, and was broken.',
+    },
+  },
+
+  'scn-ws-hangu': {
+    intro: {
+      zh: '五國合縱攻秦,兵至函谷關。\n\n秦地被山帶河,四塞以為固,自崤函以東,諸侯之地不敵秦之一半;然而合縱之師動輒百萬,叩關而攻。秦人開關延敵,九國之師逡巡而不敢進。\n\n蘇秦曰:「山東之建國莫強於趙,秦之所害於天下者莫如趙。然而秦不敢舉兵伐趙者,何也?畏韓魏之議其後也。」合縱之難,不在秦強,而在六國各自為謀。',
+      en: 'Five states allied to attack Qin, and their armies came up to the Hangu Pass.\n\nQin is girdled by mountains and rivers and closed on four sides; east of Xiao and Han, the lands of all the lords together are not half of Qin — and yet the vertical alliance can field a million men to beat on the gate. Qin opened the pass and invited them in, and the armies of the nine states milled about and dared not enter.\n\nSu Qin said: "Of the states east of the mountains none is stronger than Zhao, and none Qin fears more. Yet Qin dares not march on Zhao — why? Because it fears Han and Wei talking behind its back." The difficulty of the alliance is not Qin\'s strength; it is that the six states each plan for themselves.',
+    },
+  },
+
+  'scn-ws-yique': {
+    intro: {
+      zh: '秦昭襄王十四年,白起為左更,攻韓魏於伊闕。\n\n韓魏合軍二十四萬,而各懷觀望:韓恃魏之銳,魏恃韓之堅,皆不肯先用其眾。白起以少擊眾,先以疑兵當韓陣,而潛以精銳襲魏軍。魏軍既敗,韓軍自潰。\n\n斬首二十四萬,虜其將公孫喜,拔五城。白起遷為國尉。此人一生殺人以百萬計,而未嘗一敗。',
+      en: 'Bai Qi, then a Zuogeng, attacked Han and Wei at Yique.\n\nThe two armies together numbered two hundred and forty thousand, and each waited on the other: Han counted on Wei\'s keenness and Wei on Han\'s solidity, and neither would commit first. Bai Qi, with the smaller force, held the Han line with a feint and sent his best men secretly against the Wei. When the Wei broke, the Han collapsed of themselves.\n\nTwo hundred and forty thousand heads were taken, their general captured, and five cities fell. Bai Qi was promoted Commandant of the State. Over his life the men he killed are counted in the millions, and he never lost.',
+    },
+  },
+
+  'scn-ws-yanying': {
+    intro: {
+      zh: '秦昭襄王二十八年,白起攻楚,拔鄢、鄧五城。\n\n鄢城堅守,白起乃引西山長谷水,決堤灌城,城東北角潰,城中人隨水流,死於城東者數十萬,城東皆臭,因名其陂為臭池。\n\n次年拔郢,燒夷陵,即楚先王之墓。楚頃襄王東北保於陳城。屈原聞郢都陷落,自沉汨羅。\n\n楚自此不振,而秦置南郡 —— 這是秦第一次真正把手伸進長江。',
+      en: 'Bai Qi attacked Chu and took Yan, Deng, and five other cities.\n\nYan held out, so he led the water of a long valley in the western hills, breached the dyke and flooded the city. The northeast corner gave way and the people were carried out with the water; several hundred thousand died east of the wall, and the stench there gave the pool its name.\n\nThe next year he took Ying and burned Yiling, where the kings of Chu were buried. King Qingxiang fled northeast to Chen. Hearing that Ying had fallen, Qu Yuan drowned himself in the Miluo.\n\nChu never recovered, and Qin established the Nan commandery — the first time Qin\'s hand actually reached the Yangzi.',
+    },
+  },
+
+  'scn-ws-yuyu': {
+    intro: {
+      zh: '秦伐韓,軍於閼與。趙王問廉頗:「可救不?」對曰:「道遠險狹,難救。」問樂乘,亦如之。問趙奢,奢曰:「其道遠險狹,譬之猶兩鼠鬥於穴中,將勇者勝。」\n\n王乃令趙奢將。去邯鄲三十里而止,軍中不得以軍事諫者死。秦間來入,趙奢善食而遣之。間以報秦將,秦將大喜曰:「夫去國三十里而軍不行,乃增壘,閼與非趙地也。」\n\n趙奢既已遣秦間,卷甲而趨之,二日一夜至,令善射者去閼與五十里而軍。許歷請以軍事諫,曰:「先據北山上者勝。」趙奢許諾,即發萬人趨之。秦兵後至,爭山不得上,趙奢縱兵擊之,大破秦軍。',
+      en: 'Qin invaded Han and camped at Yuyu. The King of Zhao asked Lian Po: "Can it be relieved?" — "The road is long, difficult and narrow. It cannot." He asked Yue Cheng, and got the same. He asked Zhao She, who said: "The road is long, difficult and narrow. It is like two rats fighting in a hole. The braver commander wins."\n\nSo Zhao She was given the command. He halted thirty li from Handan and made it a capital offence to offer advice on military affairs. A Qin spy came into the camp; Zhao She fed him well and sent him off. The spy reported, and the Qin commander was delighted: "Thirty li from his own capital and the army has stopped and is building works. Yuyu is not Zhao\'s ground."\n\nHaving seen the spy off, Zhao She rolled up his armour and went at speed, arriving in two days and a night, and posted archers fifty li from Yuyu. Xu Li asked leave to speak on military affairs: "Whoever takes the northern height first will win." Zhao She agreed and sent ten thousand men up it. The Qin arrived later, could not fight their way onto the hill, and Zhao She came down on them and broke them.',
+    },
+  },
+
+  'scn-ws-qimin': {
+    intro: {
+      zh: '齊湣王滅宋,拓地千餘里,南割楚之淮北,西侵三晉,欲以并周室為天子。與秦昭王約:秦為西帝,齊為東帝。\n\n蘇代自燕來,說湣王曰:「今秦稱西帝而天下安之,則王稱東帝而天下不之罪;秦稱之而天下惡之,王勿稱以收天下,此大資也。」齊乃去帝復為王,秦亦去帝位。\n\n然而滅宋之後,齊愈驕,而諸侯愈懼。燕昭王等這一天,已經等了二十八年。',
+      en: 'King Min of Qi destroyed Song, extending his territory a thousand li, cut off Chu\'s land north of the Huai, encroached on the three Jin states, and meant to absorb the Zhou house and become Son of Heaven. He agreed with King Zhao of Qin that Qin should be Emperor of the West and Qi Emperor of the East.\n\nSu Dai came from Yan and told him: "If Qin takes the western title and the realm accepts it, then your taking the eastern title will not be held against you. If Qin takes it and the realm detests it, then decline yours and gather the realm to you — that is the greater asset." So Qi gave up the title and returned to being a king, and Qin gave it up as well.\n\nBut after Song, Qi grew prouder and the other states grew more frightened. King Zhao of Yan had been waiting twenty-eight years for this.',
+    },
+  },
+
+  'scn-ws-yueyi': {
+    intro: {
+      zh: '燕昭王即位,卑身厚幣以招賢者,築宮而師郭隗。於是士爭趨燕:樂毅自魏往,鄒衍自齊往,劇辛自趙往。\n\n二十八年,燕國殷富,士卒樂佚輕戰。乃以樂毅為上將軍,與秦楚三晉合謀以伐齊。齊兵敗,湣王出亡於外。樂毅獨追至臨淄,盡取齊寶財物祭器輸之燕。\n\n燕軍五歲,下齊七十餘城,皆為郡縣以屬燕,唯獨莒、即墨未服。',
+      en: 'King Zhao of Yan came to the throne, humbled himself and spent lavishly to attract able men, and built a palace for Guo Wei and treated him as his teacher. So the talented flocked to Yan: Yue Yi from Wei, Zou Yan from Qi, Ju Xin from Zhao.\n\nAfter twenty-eight years Yan was rich and its soldiers were comfortable and eager for war. Yue Yi was made Senior General, and with Qin, Chu and the three Jin states he moved against Qi. The Qi army broke and King Min fled the country. Yue Yi alone pressed on to Linzi and sent the whole treasury and ritual vessels of Qi back to Yan.\n\nIn five years the Yan army took more than seventy cities of Qi and made them commanderies of Yan. Only Ju and Jimo did not submit.',
+    },
+  },
+
+  'scn-ws-changping': {
+    intro: {
+      zh: '秦攻韓上黨,上黨降趙。秦怒,使王齕攻趙,趙使廉頗將。廉頗堅壁不出,秦數挑戰,趙兵不出。\n\n秦相應侯使人行千金於趙為反間,曰:「秦之所惡,獨畏馬服君趙奢之子趙括為將耳。」趙王遂以括代廉頗。藺相如曰:「王以名使括,若膠柱而鼓瑟耳。括徒能讀其父書傳,不知合變也。」王不聽。\n\n括母上書言於王曰:「括不可使將。」王曰:「何以?」對曰:「始妾事其父,時為將,身所奉飯飲而進食者以十數,所友者以百數……今括一旦為將,東向而朝,軍吏無敢仰視之者,王所賜金帛,歸藏於家……父子異心,願王勿遣。」\n\n秦聞括為將,乃陰使白起為上將軍。趙括出擊,秦軍佯敗而走,張二奇兵以劫之。趙軍分而為二,糧道絕。四十六日,士卒相食。括出銳卒自搏戰,秦軍射殺之。卒四十萬人降,白起盡坑之。',
+      en: 'Qin attacked Han\'s Shangdang, and Shangdang surrendered to Zhao instead. Qin, enraged, sent Wang He against Zhao, and Zhao sent Lian Po. Lian Po held his walls and would not come out; Qin offered battle repeatedly and the Zhao would not take it.\n\nThe Qin chancellor spent a thousand pieces of gold in Zhao on a rumour: "The one thing Qin dreads is that Zhao Kuo, son of the Lord of Mafu, should be given the command." So the King of Zhao replaced Lian Po with Zhao Kuo. Lin Xiangru said: "To employ Zhao Kuo on his reputation is to glue down the bridges of a zither and then play it. He can recite his father\'s books; he does not understand adapting to circumstances." The king did not listen.\n\nZhao Kuo\'s mother memorialised: "Kuo must not be given the command." — "Why?" — "When I served his father, he was a general; the men he served food to with his own hands were counted in dozens and his friends in hundreds… Now Kuo is made a general in a single day, sits facing east to receive his officers, and not one of them dares look up at him; and the gold and silk Your Majesty gives him he takes home and stores… Father and son are not of one mind. I beg you not to send him."\n\nHearing Zhao Kuo had the command, Qin secretly made Bai Qi supreme commander. Zhao Kuo attacked; the Qin feigned defeat and fell back, and two flying columns cut him off. The Zhao army was split in two and its supply road severed. For forty-six days the soldiers ate one another. Zhao Kuo led his best men out to fight in person and was shot down. Four hundred thousand surrendered, and Bai Qi buried them all.',
+    },
+  },
+
+  'scn-ws-handan': {
+    intro: {
+      zh: '長平之後,秦圍邯鄲。趙以平原君為使,求救於楚,得毛遂自薦而定合縱;又使人請救於魏,魏王使晉鄙將十萬眾救趙,秦王使人告魏王曰:「吾攻趙旦暮且下,而諸侯敢救者,已拔趙,必移兵先擊之。」魏王恐,使人止晉鄙,留軍壁鄴,名為救趙,實持兩端。\n\n信陵君乃用侯嬴之謀,竊符矯詔,椎殺晉鄙,選兵八萬人進兵擊秦軍。秦軍解去,邯鄲得全。\n\n城中易子而食,析骨而炊,守了近三年。',
+      en: 'After Changping, Qin besieged Handan. Zhao sent the Lord of Pingyuan to appeal to Chu, where Mao Sui recommended himself and secured the alliance; and sent to Wei, where the king dispatched Jin Bi with a hundred thousand men. Then the King of Qin sent word to the King of Wei: "Zhao will fall to me within days, and any lord who dares relieve it will be the first I turn on once Zhao is taken." The King of Wei took fright, halted Jin Bi and had him entrench at Ye — nominally relieving Zhao, in fact hedging.\n\nSo the Lord of Xinling took Hou Ying\'s advice, stole the tally, forged the order, had Jin Bi beaten to death, picked eighty thousand men and attacked the Qin. The Qin lifted the siege, and Handan was saved.\n\nInside, they had exchanged children to eat and split bones for fuel. The siege had lasted nearly three years.',
+    },
+  },
+
+  'scn-ws-tiandan': {
+    intro: {
+      zh: '燕下齊七十餘城,唯莒、即墨不下。田單守即墨,聞燕昭王卒,惠王立,與樂毅有隙,乃縱反間曰:「樂毅與燕新王有隙,欲連兵且留齊,南面而王齊。」燕王使騎劫代樂毅。\n\n田單乃收城中得千餘牛,為絳繒衣,畫以五彩龍文,束兵刃於其角,而灌脂束葦於尾,燒其端。鑿城數十穴,夜縱牛,壯士五千人隨其後。牛尾熱,怒而奔燕軍,燕軍夜大驚。牛尾炬火光明炫燿,燕軍視之皆龍文,所觸盡死傷。\n\n齊人追亡逐北,所過城邑皆畔燕而歸田單,七十餘城盡復為齊。',
+      en: 'Yan had taken more than seventy cities of Qi; only Ju and Jimo held out. Tian Dan held Jimo, and hearing that King Zhao of Yan had died and his successor was at odds with Yue Yi, he put a rumour about: "Yue Yi has fallen out with the new king and means to keep his army in Qi and rule it as king himself." The King of Yan replaced Yue Yi with Qi Jie.\n\nTian Dan then collected a thousand-odd oxen from the city, dressed them in crimson silk painted with five-coloured dragons, bound blades to their horns and greased reeds to their tails, and set the ends alight. He opened dozens of holes in the wall and loosed the oxen by night with five thousand picked men behind them. The heat maddened the beasts and they charged the Yan lines. In the dark the Yan were appalled; by the torchlight on the tails every animal looked like a dragon, and what they touched died.\n\nThe Qi ran the fugitives down, and every town they passed turned from Yan back to Tian Dan. All seventy-odd cities became Qi again.',
+    },
+  },
+
+  'scn-ws-qin-unify': {
+    intro: {
+      zh: '秦王政親政,李斯、尉繚為謀,遠交近攻,間諸侯之君臣。\n\n十七年滅韓,十九年滅趙,二十二年滅魏,二十四年滅楚,二十五年滅燕,二十六年滅齊。十年之間,六王畢,四海一。\n\n李牧在則趙不亡,秦以千金行反間於趙,趙王使趙蔥代之,李牧不受命,趙人捕而殺之,三月後邯鄲陷。滅趙者非秦兵,是一筆賄賂。\n\n王翦伐楚,曰非六十萬人不可;李信曰二十萬足矣。秦王以李信為輕銳,使之,大敗。乃復請王翦,傾國之兵與之。',
+      en: 'The King of Qin took personal rule, with Li Si and Wei Liao to plan for him: befriend the far and attack the near, and set the lords against their own ministers.\n\nHan fell in his seventeenth year, Zhao in his nineteenth, Wei in his twenty-second, Chu in his twenty-fourth, Yan in his twenty-fifth, Qi in his twenty-sixth. In ten years the six kings ended and the realm was one.\n\nWhile Li Mu lived Zhao could not fall, so Qin spent a thousand pieces of gold on a rumour; the King of Zhao sent Zhao Cong to replace him; Li Mu refused the order and his own people seized and killed him. Handan fell three months later. What destroyed Zhao was not the Qin army but a bribe.\n\nWang Jian said the conquest of Chu would take six hundred thousand men. Li Xin said two hundred thousand would do. The king thought Li Xin bold and keen and sent him, and he was badly beaten. Then he went back to Wang Jian and gave him the strength of the whole state.',
+    },
+  },
+
+  // ── 楚漢 ─────────────────────────────────────────────────────────
+  'scn-ch-daze': {
+    intro: {
+      zh: '二世元年七月,發閭左適戍漁陽九百人,屯大澤鄉。陳勝、吳廣皆次當行,為屯長。會天大雨,道不通,度已失期。失期,法皆斬。\n\n陳勝、吳廣乃謀曰:「今亡亦死,舉大計亦死,等死,死國可乎?」\n\n乃行卜。卜者知其指意,曰:「足下事皆成,有功。然足下卜之鬼乎!」陳勝、吳廣喜,念鬼,曰:「此教我先威眾耳。」乃丹書帛曰「陳勝王」,置人所罾魚腹中。卒買魚烹食,得魚腹中書,固以怪之矣。又間令吳廣之次所旁叢祠中,夜篝火,狐鳴呼曰:「大楚興,陳勝王!」\n\n【輿圖代換】長安=咸陽,彭城=西楚都,陳留一帶=陳,臨淄=齊,鄴=邯鄲/鉅鹿,官渡+虎牢=滎陽成皋一線。',
+      en: 'Nine hundred conscripts were sent to garrison Yuyang and halted at Dazexiang. Chen Sheng and Wu Guang were among them, each in charge of a section. Then came heavy rain, the roads were impassable, and they reckoned they had already missed their date. Missing the date meant death for all of them under the law.\n\nSo Chen Sheng and Wu Guang talked it over: "To desert is death and to raise a great enterprise is death. If we must die either way, may we not die for a country?"\n\nThey consulted a diviner, who understood what they were asking and said: "All of your undertakings will succeed. But have you consulted the spirits about it?" They were pleased, and thought about the spirits, and said: "He is telling us to overawe the crowd first." So they wrote "Chen Sheng shall be king" in cinnabar on silk and put it inside a netted fish. A soldier bought the fish, cooked it, found the writing, and naturally thought it very strange. And Wu Guang went secretly by night to a shrine near the camp, lit a fire in a basket, and cried out in a fox\'s voice: "Great Chu shall rise! Chen Sheng shall be king!"\n\n[Map] Chang\'an = Xianyang, Pengcheng = the Western Chu capital, Linzi = Qi, Ye = Handan and Julu, Guandu with Hulao = the Xingyang-Chenggao line.',
+    },
+  },
+
+  'scn-ch-julu': {
+    intro: {
+      zh: '章邯已破陳勝,殺項梁,乃渡河擊趙,大破之,圍鉅鹿。楚懷王以宋義為上將軍,項羽為次將,救趙。\n\n宋義行至安陽,留四十六日不進。項羽曰:「今歲饑民貧,士卒食芋菽,軍無見糧,乃飲酒高會,不引兵渡河因趙食,與趙并力攻秦,乃曰『承其敝』。夫以秦之彊,攻新造之趙,其勢必舉趙。趙舉而秦彊,何敝之承!」晨朝上將軍宋義,即其帳中斬宋義頭。\n\n乃悉引兵渡河,皆沉船,破釜甑,燒廬舍,持三日糧,以示士卒必死,無一還心。於是至則圍王離,與秦軍遇,九戰,絕其甬道,大破之。\n\n當是時,楚兵冠諸侯。諸侯軍救鉅鹿下者十餘壁,莫敢縱兵。及楚擊秦,諸將皆從壁上觀。楚戰士無不一以當十,呼聲動天,諸侯軍無不人人惴恐。於是已破秦軍,項羽召見諸侯將,入轅門,無不膝行而前,莫敢仰視。',
+      en: 'Zhang Han had broken Chen Sheng and killed Xiang Liang; he crossed the river against Zhao, shattered it, and besieged Julu. King Huai of Chu made Song Yi supreme commander and Xiang Yu his second, to relieve Zhao.\n\nSong Yi got as far as Anyang and stopped there for forty-six days. Xiang Yu said: "The harvest has failed and the people are poor; the men are eating taro and beans and the army has no visible grain — and he holds drinking parties instead of crossing the river to feed off Zhao and join them against Qin. He talks of \"taking them at a disadvantage.\" Qin is strong and Zhao is newly established; Qin will certainly take Zhao. And with Zhao taken Qin is stronger still. What disadvantage is there to take?" At the morning audience he cut off Song Yi\'s head in his own tent.\n\nThen he took the whole army across, sank the boats, broke the cauldrons and steamers, burned the huts, and issued three days\' rations, to show the men they would die there and none would be coming back. Arriving, he shut in Wang Li, met the Qin army, fought nine engagements, cut their walled supply road, and destroyed them.\n\nIn that hour the Chu soldiers outmatched every army of the lords. Ten and more allied camps sat below Julu and not one dared loose its troops. When Chu struck, they all watched from behind their palisades. Not a Chu soldier who was not the match of ten, and their shouting shook the sky, and there was not a man in the allied camps who was not terrified. And when the Qin army was broken and Xiang Yu summoned the allied generals, they came in at the gate of his camp on their knees, and none dared look up.',
+    },
+  },
+
+  'scn-ch-chuhan': {
+    intro: {
+      zh: '項羽既定天下,自立為西楚霸王,分封諸侯十八王。徙劉邦為漢王,王巴、蜀、漢中,都南鄭 —— 巴蜀道險,秦之遷人皆居蜀,這是流放。\n\n漢王之國,張良送至褒中,勸燒絕所過棧道,以備諸侯盜兵,亦示項羽無東意。\n\n蕭何薦韓信,拜為大將軍。信問:「大王自料勇悍仁彊孰與項王?」漢王默然良久,曰:「不如也。」信曰:「惟信亦為大王不如也。然臣嘗事之,請言項王之為人也……項王喑噁叱咤,千人皆廢,然不能任屬賢將,此特匹夫之勇耳。項王見人恭敬慈愛,言語嘔嘔,人有疾病,涕泣分食飲,至使人有功當封爵者,印刓敝,忍不能予,此所謂婦人之仁也。」',
+      en: 'Having settled the realm, Xiang Yu made himself Hegemon-King of Western Chu and invested eighteen kings. Liu Bang he transferred to be King of Han over Ba, Shu and Hanzhong, with his capital at Nanzheng — the Shu roads are difficult and Qin sent its exiles there. It was banishment.\n\nZhang Liang escorted the King of Han as far as Baozhong and advised him to burn the plank roads behind him, both against pursuit and to show Xiang Yu he had no thought of coming east.\n\nXiao He recommended Han Xin, who was made supreme commander. Han Xin asked: "How does Your Majesty judge yourself against the King of Chu in courage, ferocity, benevolence and strength?" The King of Han was silent a long while. "I am not his equal." — "Neither, in my judgement, are you. But I served him, and let me tell you what sort of man he is… When Xiang Yu roars, a thousand men fall back; but he cannot delegate to able generals, so it is the courage of one man. He is courteous and kind to those he meets, gentle in speech, and when a man is ill he weeps and shares his own food with him — yet when a man has earned a fief, he turns the seal over in his hand until its corners wear smooth and cannot bring himself to hand it across. That is a woman\'s kindness."',
+    },
+  },
+
+  'scn-ch-sanqin': {
+    intro: {
+      zh: '漢元年八月,漢王用韓信之計,從故道還,襲雍王章邯。邯迎擊漢陳倉,雍兵敗,還走;止戰好畤,又復敗,走廢丘。\n\n漢王遂定雍地,東至咸陽,引兵圍雍王廢丘,而遣諸將略定隴西、北地、上郡。\n\n燒絕的棧道是給項羽看的。真正的路一直在陳倉。',
+      en: 'The King of Han took Han Xin\'s advice, came back by the old road, and struck at Zhang Han, King of Yong. Zhang Han met him at Chencang, was beaten and fell back; he stood again at Haozhi, was beaten again, and fled to Feiqiu.\n\nThe King of Han settled the Yong lands, reached Xianyang in the east, left troops to invest Feiqiu, and sent his generals to take Longxi, Beidi and Shang commandery.\n\nThe burnt plank roads were for Xiang Yu to look at. The real road was always Chencang.',
+    },
+  },
+
+  'scn-ch-pengcheng': {
+    intro: {
+      zh: '漢二年,漢王劫五諸侯兵,凡五十六萬人,東伐楚。至彭城,收其貨寶美人,日置酒高會。\n\n項王聞之,令諸將擊齊,而自以精兵三萬人南從魯出胡陵,至蕭,晨擊漢軍而東,至彭城,日中,大破漢軍。漢軍皆走,相隨入穀、泗水,殺漢卒十餘萬人。漢卒皆南走山,楚又追擊至靈壁東睢水上。漢軍卻,為楚所擠,多殺,漢卒十餘萬人皆入睢水,睢水為之不流。\n\n圍漢王三匝。於是大風從西北而起,折木發屋,揚沙石,窈冥晝晦,逢迎楚軍。楚軍大亂,壞散,而漢王乃得與數十騎遁去。',
+      en: 'The King of Han gathered the armies of five lords — five hundred and sixty thousand men — and marched east against Chu. Reaching Pengcheng, he took its treasure and its women and held banquets every day.\n\nHearing of it, Xiang Yu ordered his generals to continue against Qi and himself took thirty thousand picked men south from Lu by way of Huling, reached Xiao, struck the Han army at dawn and drove east, and by midday at Pengcheng had broken it utterly. The Han fled and were pushed into the Gu and Si rivers, and a hundred thousand were killed. They ran south into the hills and Chu pursued them to the Sui River east of Lingbi. The Han fell back, were crowded together by the Chu and cut down in numbers, and a hundred thousand more went into the Sui, and the Sui would not flow.\n\nThey ringed the King of Han three deep. Then a great wind came out of the northwest, snapping trees and stripping roofs and driving sand and stones, and the day went black, and it blew straight into the faces of the Chu. Their ranks broke apart in the confusion, and the King of Han got away with a few dozen horsemen.',
+    },
+  },
+
+  'scn-ch-jingxing': {
+    intro: {
+      zh: '韓信、張耳以兵數萬,東下井陘擊趙。趙王、成安君陳餘聚兵井陘口,號稱二十萬。\n\n廣武君李左車說成安君曰:「井陘之道,車不得方軌,騎不得成列,行數百里,其勢糧食必在其後。願足下假臣奇兵三萬人,從間道絕其輜重;足下深溝高壘,堅營勿與戰。彼前不得鬥,退不得還,野無所掠,不至十日,而兩將之頭可致於麾下。」成安君儒者也,常稱義兵不用詐謀奇計,不聽。\n\n韓信使人間視,知其不用,乃夜半傳發,選輕騎二千人,人持一赤幟,從間道萆山而望趙軍,誡曰:「趙見我走,必空壁逐我,若疾入趙壁,拔趙幟,立漢赤幟。」\n\n乃使萬人先行,出,背水陣。趙軍望見而大笑。',
+      en: 'Han Xin and Zhang Er took some tens of thousands east through the Jingxing defile against Zhao. The King of Zhao and Chen Yu massed at the mouth of the pass, calling it two hundred thousand.\n\nLi Zuoche advised Chen Yu: "The Jingxing road will not take two carts abreast nor cavalry in line, and after a march of several hundred li their supply must be strung out behind. Give me thirty thousand men on a flanking road and I shall cut their baggage off; you dig deep, build high, hold your camp and refuse battle. Unable to fight in front or withdraw behind, with nothing to forage in open country, in under ten days I shall lay both their heads before you." Chen Yu was a scholar and was fond of saying that a righteous army does not use deception or unorthodox schemes, and he refused.\n\nHan Xin sent scouts, learned the plan had been rejected, and moved at midnight. He picked two thousand light horse, each with a red banner, sent them by a hidden path to lie in the hills overlooking the Zhao camp, and told them: "When Zhao sees us run they will empty their works to chase us. Ride hard into the camp, pull down the Zhao banners and set up the red banners of Han."\n\nThen he sent ten thousand men out ahead to form up with the river at their backs. The Zhao looked at it and laughed out loud.',
+    },
+  },
+
+  'scn-ch-weishui': {
+    intro: {
+      zh: '漢遣酈食其說齊,齊王田廣以為然,乃罷歷下守戰備,與酈生日縱酒。韓信引兵東,未渡平原,聞酈食其已說下齊,欲止。范陽辯士蒯通說信曰:「將軍受詔擊齊,而漢獨發間使下齊,寧有詔止將軍乎?何以得毋行也!」\n\n信然之,遂渡河襲齊。齊王以酈生賣己,乃烹之。\n\n楚使龍且將兵二十萬救齊。或說龍且曰:「漢兵遠鬥窮戰,其鋒不可當。齊、楚自居其地戰,兵易敗散。不如深壁,令齊王使其信臣招所亡城,城聞其王在,楚來救,必反漢。」龍且曰:「吾平生知韓信為人,易與耳……今若此,成安君之為人也。」\n\n遂戰。信夜令人為萬餘囊,滿盛沙,壅水上流,引軍半渡,擊龍且,佯不勝,還走。龍且果喜曰:「固知信怯也。」遂追。信使人決壅囊,水大至,龍且軍太半不得渡,即急擊,殺龍且。',
+      en: 'Han sent Li Yiji to talk Qi over, and King Tian Guang agreed, stood down the defences at Lixia, and spent his days drinking with the envoy. Han Xin, marching east, heard before he had crossed at Pingyuan that Qi had already come over, and thought to stop. The persuader Kuai Tong told him: "You were ordered to attack Qi, and Han has separately sent an envoy to talk it down — but was there an order stopping you? How can you not go on?"\n\nHan Xin agreed, crossed, and fell on Qi. The King of Qi, believing Li Yiji had sold him, boiled him alive.\n\nChu sent Long Ju with two hundred thousand to save Qi. Someone advised him: "The Han troops are far from home and fight desperately; their edge cannot be met. Qi and Chu are fighting on their own ground, where armies come apart easily. Better to dig in, and let the King of Qi send trusted men to call back the cities he has lost — hearing their king is alive and that Chu has come to help, they will turn against Han." Long Ju said: "I have known Han Xin all my life. He is easily handled… Do that, and I am no better than Chen Yu."\n\nSo he gave battle. By night Han Xin had over ten thousand bags filled with sand and dammed the river upstream, took his army half across, attacked Long Ju, pretended to fail and ran. Long Ju was delighted: "I always knew Han Xin was a coward." He pursued. Han Xin had the bags cut open, the water came down in a wall, and over half of Long Ju\'s army could not cross — and he struck at once, and killed him.',
+    },
+  },
+
+  'scn-ch-gaixia': {
+    intro: {
+      zh: '項王軍壁垓下,兵少食盡,漢軍及諸侯兵圍之數重。夜聞漢軍四面皆楚歌,項王乃大驚曰:「漢皆已得楚乎?是何楚人之多也!」\n\n項王則夜起,飲帳中。有美人名虞,常幸從;駿馬名騅,常騎之。於是項王乃悲歌慷慨,自為詩曰:「力拔山兮氣蓋世,時不利兮騅不逝。騅不逝兮可奈何,虞兮虞兮奈若何!」歌數闋,美人和之。項王泣數行下,左右皆泣,莫能仰視。\n\n於是項王乃上馬騎,麾下壯士騎從者八百餘人,直夜潰圍南出,馳走。\n\n至烏江,亭長檥船待,曰:「江東雖小,地方千里,眾數十萬人,亦足王也。願大王急渡。」項王笑曰:「天之亡我,我何渡為!且籍與江東子弟八千人渡江而西,今無一人還,縱江東父兄憐而王我,我何面目見之?」',
+      en: 'Xiang Yu\'s army was walled in at Gaixia, few in number and out of food, ringed several deep by the Han and their allies. In the night he heard Chu songs coming from every side of the Han camp, and was appalled: "Have they taken all of Chu already? How can there be so many men of Chu over there?"\n\nHe rose in the night and drank in his tent. He had a lady named Yu who always accompanied him, and a fine horse named Zhui that he always rode. So he sang, bitterly and grandly, a poem of his own: "My strength uprooted mountains, my spirit overshadowed the age — the times are against me and Zhui will not run. Zhui will not run, and what is to be done? Yu, my Yu, what is to become of you?" He sang it several times over and the lady sang with him. Tears ran down his face, and his attendants wept, and none of them could look up.\n\nThen he mounted, and with eight hundred and more of his best riders behind him broke out southward through the lines in the dark and rode.\n\nAt the Wu River the village head had a boat waiting: "Jiangdong is small, but a thousand li across with several hundred thousand people — enough to be a king in. Cross quickly, my lord." Xiang Yu laughed: "Heaven is destroying me. What should I cross for? Besides, I took eight thousand sons of Jiangdong west across this river, and not one has come back. Even if their fathers and brothers pitied me and made me king, with what face would I meet them?"',
+    },
+  },
+
+  // ── 隋唐 ─────────────────────────────────────────────────────────
+  'scn-st-suiend': {
+    intro: {
+      zh: '隋大業末,三征高麗,開運河,築東都,天下死於役而家傷於財。群盜蜂起,竇建德於河北,李密據瓦崗,杜伏威在江淮,薛舉起隴西,劉武周連突厥,王世充守洛陽。\n\n太原留守李淵父子起兵,西入關中 —— 這是所有人裡走得最穩的一步:先取長安,據險自固,再東出爭天下。\n\n【輿圖代換】長安=唐都,洛陽=王世充之鄭,鄴=竇建德之夏,太原=李氏根本,虎牢=虎牢,天水安定=薛舉隴西,建業壽春=杜伏威江淮。',
+      en: 'At the end of the Sui: three invasions of Koguryo, the Grand Canal, the eastern capital — the realm died in the corvée and its households were ruined paying for it. Bandit armies rose everywhere. Dou Jiande in Hebei, Li Mi with the Wagang bands, Du Fuwei in the Jianghuai, Xue Ju in Longxi, Liu Wuzhou allied to the Turks, Wang Shichong holding Luoyang.\n\nThe garrison commander of Taiyuan, Li Yuan, rose with his sons and went west into Guanzhong — the steadiest move anyone made: take Chang\'an first, secure the passes, and only then come east to contend for the realm.\n\n[Map] Chang\'an = the Tang capital, Luoyang = Wang Shichong\'s Zheng, Ye = Dou Jiande\'s Xia, Taiyuan = the Li clan\'s base, Hulao is itself, Tianshui and Anding = Xue Ju\'s Longxi, Jianye and Shouchun = Du Fuwei\'s Jianghuai.',
+    },
+  },
+
+  'scn-st-qianshui': {
+    intro: {
+      zh: '薛舉據隴西,兵鋒直指長安。淺水原初戰,李世民病臥軍中,劉文靜等出戰大敗,士卒死者十五六。\n\n薛舉將乘勝取長安,會薛舉病卒,子薛仁杲立。李世民再至,堅壁不出六十餘日,待其糧盡兵散,一戰而破之。\n\n這一戰教會他一件事:不急。他後來每一次大勝 —— 柏壁、虎牢 —— 用的都是同一招。',
+      en: 'Xue Ju held Longxi and his spearhead pointed straight at Chang\'an. At the first battle of Qianshuiyuan, Li Shimin lay ill in camp; Liu Wenjing and the others gave battle and were badly beaten, with more than half the men lost.\n\nXue Ju was about to take Chang\'an on the momentum of it when he died of illness, and his son succeeded him. Li Shimin came back, held his works for over sixty days until their grain failed and their army scattered, and broke them in one action.\n\nThat battle taught him one thing: do not hurry. Every great victory he wins afterwards — Bobi, Hulao — is the same move.',
+    },
+  },
+
+  'scn-st-bobi': {
+    intro: {
+      zh: '劉武周連突厥南下,宋金剛取太原、晉州,李元吉棄并州而走,唐之根本之地一夕而失。朝議欲棄河東以守關西。\n\n李世民上表:「太原王業所基,國之根本;河東殷實,京邑所資。若舉而棄之,臣竊憤恨。願假精兵三萬,必能平殄武周,克復汾晉。」\n\n乃屯柏壁,堅壁不戰,相持數月。宋金剛糧盡北走,世民追之,一日八戰,晝夜二百餘里,不解甲者三日。',
+      en: 'Liu Wuzhou came south with Turkic support; Song Jin\'gang took Taiyuan and Jinzhou; Li Yuanji abandoned Bing province and fled, and the Li clan\'s home ground was lost in a night. The court discussed giving up Hedong and holding the west.\n\nLi Shimin memorialised: "Taiyuan is the foundation of the dynasty and the root of the state; Hedong is rich and supplies the capital. To pick it up and throw it away — I confess I cannot bear it. Give me thirty thousand good troops and I shall destroy Liu Wuzhou and take back Fen and Jin."\n\nHe camped at Bobi and refused battle for months. When Song Jin\'gang\'s grain failed and he went north, Li Shimin followed: eight actions in one day, two hundred li through a day and a night, and three days without taking his armour off.',
+    },
+  },
+
+  'scn-st-hulao': {
+    intro: {
+      zh: '李世民圍王世充於洛陽,竇建德率十萬眾來救。諸將皆言腹背受敵,請退保新安。\n\n世民曰:「世充兵疲食盡,上下離心,不煩力攻,可以坐克。建德新破海公,將驕卒惰,吾據武牢,扼其咽喉。彼若冒險爭鋒,取之甚易;若狐疑不戰,旬月之間,世充自潰。」\n\n乃留兵圍洛陽,自以三千五百人東據虎牢。相持二十餘日,建德列陣二十里,自辰至午,士卒饑倦,皆坐列,又爭飲水。世民曰:「可擊矣。」\n\n一戰擒建德,王世充舉洛陽降。一戰而定兩國。',
+      en: 'Li Shimin was besieging Wang Shichong in Luoyang when Dou Jiande came to relieve him with a hundred thousand men. His officers all said they would be caught front and rear and asked to fall back on Xin\'an.\n\nHe answered: "Wang Shichong\'s troops are worn out and his food is gone, and his people are divided; he need not be stormed, he can be had by sitting still. Dou Jiande has just beaten Duke Hai, so his officers are proud and his men slack. I shall hold Hulao and have him by the throat. If he risks a battle for it, he is easily taken; if he hesitates and does not fight, then within a month Wang Shichong collapses of himself."\n\nHe left the siege in place and went east to Hulao with three thousand five hundred men. They faced each other twenty days. Dou Jiande drew up a line twenty li long from the hour of the dragon to noon, until his men were hungry and tired and sat down in their ranks and began quarrelling over the water. Li Shimin said: "Now."\n\nOne battle took Dou Jiande alive, and Wang Shichong handed over Luoyang. One battle settled two kingdoms.',
+    },
+  },
+
+  'scn-st-anshi': {
+    intro: {
+      zh: '天寶十四載十一月,安祿山以誅楊國忠為名,發所部兵及同羅、奚、契丹、室韋凡十五萬眾,反於范陽。\n\n海內久承平,百姓累世不識兵革,猝聞範陽兵起,遠近震駭。河北皆祿山統內,所過州縣,望風瓦解,守令或開門出迎,或棄城竄匿,或為所擒戮,無敢拒之者。\n\n哥舒翰守潼關,以為賊遠來,利在速戰,王師堅守以弊之,不可輕出。楊國忠疑其圖己,言於帝,遣中使趣戰,項背相望。翰不得已,撫膺慟哭,引兵出關。\n\n潼關既失,長安不守。',
+      en: 'An Lushan rose at Fanyang on the pretext of punishing Yang Guozhong, with a hundred and fifty thousand men of his own commands and of the Tongluo, Xi, Khitan and Shiwei.\n\nThe empire had been long at peace and its people had not seen war in generations; when word came that Fanyang had risen, near and far alike were appalled. All of Hebei was under An Lushan\'s own command, and the prefectures along his road fell apart at the sight of him — magistrates opened their gates to welcome him, or abandoned their towns and hid, or were taken and killed, and not one resisted.\n\nGeshu Han held the Tong Pass, judging that the rebels had come far and needed a quick decision, so that the imperial army should hold and wear them out and on no account come out. Yang Guozhong suspected the army was meant for him, spoke to the emperor, and messengers were sent to press for battle, one on the heels of another. Geshu Han, with no choice left, beat his breast and wept, and led his army out of the pass.\n\nWith the Tong Pass gone, Chang\'an could not be held.',
+    },
+  },
 };
