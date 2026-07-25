@@ -251,26 +251,6 @@ export const DIALOGUE_EVENTS: DialogueEvent[] = [
       },
     ],
   },
-  {
-    id: 'dlg-wandering-monk',
-    speaker: { zh: '行脚僧', en: 'Wandering Monk' },
-    text: {
-      zh: '老僧一夜之宿，求宿。',
-      en: 'An old monk seeks shelter for the night.',
-    },
-    choices: [
-      {
-        label: { zh: '迎入', en: 'Welcome him' },
-        effects: [{ kind: 'none' }],
-        outcome: { zh: '夜,僧禅，講解。心,清明。', en: 'In the night, the monk speaks of Zen. Your heart is at peace.' },
-      },
-      {
-        label: { zh: '追払', en: 'Turn him away' },
-        effects: [{ kind: 'none' }],
-        outcome: { zh: '僧黙去。', en: 'The monk leaves in silence.' },
-      },
-    ],
-  },
 
   // ─── Phase 34 expansion ─────────────────────────────────────
   {
@@ -402,20 +382,6 @@ export const DIALOGUE_EVENTS: DialogueEvent[] = [
     ],
   },
   {
-    id: 'dlg-locust-swarm',
-    speaker: { zh: '農吏', en: 'Field Officer' },
-    text: {
-      zh: '南方蝗害之報。 至急,対策，要。',
-      en: 'A locust plague hits the southern fields. Urgent action needed.',
-    },
-    choices: [
-      { label: { zh: '兵，派遣', en: 'Send troops to control it' }, effects: [{ kind: 'gold', delta: -250 }],
-        outcome: { zh: '蝗害,沈静化。', en: 'The plague is contained.' } },
-      { label: { zh: '放任', en: 'Do nothing' }, effects: [{ kind: 'none' }],
-        outcome: { zh: '田畑荒。', en: 'Fields lie ruined.' } },
-    ],
-  },
-  {
     id: 'dlg-foreign-scholar',
     speaker: { zh: '異国之学者', en: 'Foreign Scholar' },
     text: {
@@ -455,20 +421,6 @@ export const DIALOGUE_EVENTS: DialogueEvent[] = [
         outcome: { zh: '若君，見,人質。', en: 'You find him — and now hold a hostage.' } },
       { label: { zh: '關涉不', en: 'Stay out of it' }, effects: [{ kind: 'none' }],
         outcome: { zh: '何事。', en: 'Nothing comes of it.' } },
-    ],
-  },
-  {
-    id: 'dlg-old-soldier',
-    speaker: { zh: '老兵', en: 'Old Soldier' },
-    text: {
-      zh: '老兵宮殿之門現身,「最後之出陣，願」申出。',
-      en: 'An old veteran arrives at the palace gates, asking for one last campaign.',
-    },
-    choices: [
-      { label: { zh: '叶', en: 'Grant his request' }, effects: [{ kind: 'none' }],
-        outcome: { zh: '老兵涙感謝。', en: 'The veteran weeps in gratitude.' } },
-      { label: { zh: '年金，与', en: 'Pension him off' }, effects: [{ kind: 'gold', delta: -100 }],
-        outcome: { zh: '老兵,静故郷。', en: 'The veteran returns home, at peace.' } },
     ],
   },
   {
@@ -541,20 +493,6 @@ export const DIALOGUE_EVENTS: DialogueEvent[] = [
         outcome: { zh: '世代交代,円滑進。', en: 'A smooth transition.' } },
       { label: { zh: '辞退，不准', en: 'Refuse the retirement' }, effects: [{ kind: 'none' }],
         outcome: { zh: '老臣,数年仕。', en: 'The old minister serves a few more years.' } },
-    ],
-  },
-  {
-    id: 'dlg-foreign-tribute',
-    speaker: { zh: '外国使節', en: 'Foreign Envoy' },
-    text: {
-      zh: '遠国使節,珍奇物産，貢物作為持参了。',
-      en: 'An envoy from a distant land arrives with rare goods as tribute.',
-    },
-    choices: [
-      { label: { zh: '厚遇', en: 'Welcome him warmly' }, effects: [{ kind: 'gold', delta: -100 }],
-        outcome: { zh: '友好關係築。 名声広。', en: 'A friendship begins. Your fame spreads.' } },
-      { label: { zh: '簡素', en: 'Receive him plainly' }, effects: [{ kind: 'none' }],
-        outcome: { zh: '使節失望去。', en: 'The envoy leaves disappointed.' } },
     ],
   },
   {
@@ -979,7 +917,7 @@ export const DIALOGUE_EVENTS: DialogueEvent[] = [
     ],
   },
   {
-    id: 'dlg-master-smith',
+    id: 'dlg-swordsmith',
     speaker: { zh: '鑄劍師', en: 'Master Smith' },
     text: {
       zh: '一鑄劍名匠來投,言能鍛百煉之鋼,願為君造利兵,然非重金不可。',
