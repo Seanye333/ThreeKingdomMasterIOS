@@ -27,6 +27,14 @@ import { useGameStore } from './store';
 import { SCENARIOS } from '../data/scenarios';
 
 const TURNS = 48;
+/**
+ * 長程 — 48 turns only reaches 179 AD with seven forces still standing and two
+ * sieges ever seen: the whole late game (consolidation, succession, mass
+ * defection, the imperial court, 承平之亂) is never touched by the short soak.
+ * Ten years of turns gets there. Kept as a separate case so its cost is visible
+ * and the fast one still guards every commit.
+ */
+const LONG_TURNS = 240;
 
 function assertInvariants(turn: number): void {
   const s = useGameStore.getState();
@@ -39,6 +47,17 @@ function assertInvariants(turn: number): void {
     expect(c.population, `t${turn} ${c.id} population > 0`).toBeGreaterThan(0);
     expect(c.loyalty, `t${turn} ${c.id} loyalty ≥ 0`).toBeGreaterThanOrEqual(0);
     expect(c.loyalty, `t${turn} ${c.id} loyalty ≤ 100`).toBeLessThanOrEqual(100);
+    // 府庫不為負 — every unclamped subtraction in the store sits behind an
+    // affordability check, so this is a real contract rather than a hope.
+    expect(c.gold, `t${turn} ${c.id} gold ≥ 0`).toBeGreaterThanOrEqual(0);
+    expect(Number.isFinite(c.population), `t${turn} ${c.id} population finite`).toBe(true);
+    if (c.corruption != null) {
+      expect(c.corruption, `t${turn} ${c.id} corruption ≥ 0`).toBeGreaterThanOrEqual(0);
+      expect(c.corruption, `t${turn} ${c.id} corruption ≤ 100`).toBeLessThanOrEqual(100);
+    }
+    if (c.ownerForceId) {
+      expect(s.forces[c.ownerForceId], `t${turn} ${c.id} owned by a live force`).toBeTruthy();
+    }
   }
   // ── Armies ──
   for (const a of Object.values(s.armies)) {
@@ -65,10 +84,62 @@ function assertInvariants(turn: number): void {
       expect(a.fatigue, `t${turn} army ${a.id} fatigue ≤ 100`).toBeLessThanOrEqual(100);
     }
   }
+  // ── Armies, cross-referenced ──
+  // 一將一營 — a commander leads at most one column. A duplicate here is the
+  // exact shape of the 2026-07-26 siege bug (a column counted twice because the
+  // invest conversion mutated a shared command object), and nothing asserted it.
+  const byCommander = new Map<string, string>();
+  for (const a of Object.values(s.armies)) {
+    const prev = byCommander.get(a.commanderId);
+    expect(prev, `t${turn} 一將一營 — ${a.commanderId} leads both ${prev} and ${a.id}`).toBeUndefined();
+    byCommander.set(a.commanderId, a.id);
+    // 統帥須在世 — a column led by a corpse keeps marching and fighting.
+    const cmdr = s.officers[a.commanderId];
+    expect(cmdr, `t${turn} army ${a.id} commander ${a.commanderId} exists`).toBeTruthy();
+    expect(cmdr?.status, `t${turn} army ${a.id} commander alive`).not.toBe('dead');
+    expect(s.forces[a.forceId], `t${turn} army ${a.id} belongs to a live force`).toBeTruthy();
+    // 歸師不圍城 — a column streaming home is not also investing a city.
+    if (a.returning) {
+      expect(a.besieging ?? null, `t${turn} army ${a.id} returning ⇒ not besieging`).toBeNull();
+    }
+    // 追擊之的須存在 — a hunter chasing a vanished army never gives up.
+    if (a.pursueTargetId) {
+      expect(s.armies[a.pursueTargetId], `t${turn} army ${a.id} pursues a real army`).toBeTruthy();
+    }
+  }
+
   // ── Officers ──
   for (const o of Object.values(s.officers)) {
     expect(['active', 'idle', 'imprisoned', 'dead', 'unsearched', 'wounded', 'retired'],
       `t${turn} officer ${o.id} status valid`).toContain(o.status);
+    // 忠誠有界 — checked nowhere before, though a dozen systems nudge it.
+    expect(Number.isFinite(o.loyalty), `t${turn} officer ${o.id} loyalty finite`).toBe(true);
+    expect(o.loyalty, `t${turn} officer ${o.id} loyalty ≥ 0`).toBeGreaterThanOrEqual(0);
+    expect(o.loyalty, `t${turn} officer ${o.id} loyalty ≤ 100`).toBeLessThanOrEqual(100);
+    // 五圍為數 — a NaN stat poisons every multiplier downstream in silence.
+    for (const [k, v] of Object.entries(o.stats)) {
+      expect(Number.isFinite(v), `t${turn} officer ${o.id} stat ${k} finite`).toBe(true);
+    }
+    // 死者不仕 — the contract every death path writes (forceId: null).
+    if (o.status === 'dead') {
+      expect(o.forceId ?? null, `t${turn} dead officer ${o.id} serves nobody`).toBeNull();
+    } else if (o.forceId) {
+      expect(s.forces[o.forceId], `t${turn} officer ${o.id} serves a live force`).toBeTruthy();
+    }
+  }
+
+  // ── Forces ──
+  for (const f of Object.values(s.forces)) {
+    const ruler = s.officers[f.rulerOfficerId];
+    if (!ruler) continue;
+    // 君不可為屍 — succession runs every season, and a late-tick sweep promotes
+    // a survivor after it. The one case left alone is a force whose ENTIRE
+    // roster is dead or captive: there is genuinely nobody to raise, and that
+    // is a realm out of people rather than a bookkeeping slip.
+    const hasSomeone = Object.values(s.officers).some(
+      (o) => o.forceId === f.id && o.status !== 'dead' && o.status !== 'imprisoned');
+    if (!hasSomeone) continue;
+    expect(ruler.status, `t${turn} force ${f.id} ruled by a corpse (${ruler.id})`).not.toBe('dead');
   }
   // ── World scars / paint keys parse as "col,row" ──
   for (const k of Object.keys(s.worldScars ?? {})) {
@@ -110,4 +181,43 @@ describe('長跑浸泡 — 48 旬被動戰役', () => {
       new Set(Object.values(st.getState().cities).map((c) => c.ownerForceId).filter(Boolean)).size);
     expect(true).toBe(true);
   }, 120_000);
+
+  /**
+   * 長程浸泡 — ten years, to reach the states the short soak never sees:
+   * forces being swallowed, rulers dying and being succeeded, the court filling
+   * up, and (if the AI gets there) a realm consolidating toward one banner.
+   * Late-game systems are otherwise exercised only by their own unit tests,
+   * which cannot produce the cross-system states that break invariants.
+   */
+  it('grinds 240 turns of the late game without breaking an invariant', () => {
+    const st = useGameStore;
+    st.getState().loadScenario(SCENARIOS[0], SCENARIOS[0].forces[0].id, 'normal');
+
+    let ended = 0;
+    for (let t = 1; t <= LONG_TURNS; t++) {
+      const before = st.getState().victoryStatus;
+      st.getState().endSeason();
+      assertInvariants(t);
+      // Victory/defeat latches the campaign; note where it happened and play
+      // on through 承平之亂 so the post-victory pressure is exercised too.
+      const after = st.getState().victoryStatus;
+      if (before === 'playing' && after !== 'playing') {
+        ended = t;
+        st.getState().continueAfterVictory();
+        assertInvariants(t);
+      }
+    }
+
+    const s = st.getState();
+    const forcesLeft = new Set(
+      Object.values(s.cities).map((c) => c.ownerForceId).filter(Boolean)).size;
+    const dead = Object.values(s.officers).filter((o) => o.status === 'dead').length;
+    console.log(`soak-long: ${LONG_TURNS} turns · final`, s.date,
+      `· forces left: ${forcesLeft} · officers dead: ${dead}`,
+      ended ? `· campaign latched at t${ended}` : '· never latched');
+    // 長程仍須有人在場 — a world that quietly empties itself would pass every
+    // per-entity invariant above while being completely broken.
+    expect(forcesLeft, 'someone must still hold the map').toBeGreaterThan(0);
+    expect(Object.keys(s.cities).length, 'cities must not vanish').toBeGreaterThan(0);
+  }, 300_000);
 });
