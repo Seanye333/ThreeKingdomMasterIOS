@@ -3601,6 +3601,8 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
           )}
           <button
             onClick={() => setShowOverlays(!showOverlays)}
+            aria-pressed={showOverlays}
+            aria-label={t('戰術疊加', 'Tactical overlay')}
             style={{
               background: showOverlays ? 'rgba(212, 168, 74, 0.2)' : 'transparent',
               border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
@@ -3612,10 +3614,15 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
           >
             {showOverlays ? '✓' : ''} 戰術疊加
           </button>
-          <button onClick={beginClose} style={{
-            background: 'transparent', border: 'none', color: '#d4a84a',
-            fontSize: '1.5rem', cursor: 'pointer', padding: '0 0.5rem',
-          }}>×</button>
+          <button
+            onClick={beginClose}
+            aria-label={t('離開城內', 'Leave the city')}
+            title={t('離開城內', 'Leave the city')}
+            style={{
+              background: 'transparent', border: 'none', color: '#d4a84a',
+              fontSize: '1.5rem', cursor: 'pointer', padding: '0 0.5rem',
+            }}
+          >×</button>
         </div>
       </header>
 
@@ -3747,7 +3754,11 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
                   ? `${COMPASS_EN[selectedSlot]} Gate`
                   : `${COMPASS_ZH[selectedSlot]}面 · 第 ${selectedSlot + 1} 號位`}
               </div>
-              <button onClick={() => setSelectedSlot(null)} style={{
+              <button
+                onClick={() => setSelectedSlot(null)}
+                aria-label={t('關閉城防面板', 'Close defence panel')}
+                title={t('關閉城防面板', 'Close defence panel')}
+                style={{
                 background: 'transparent', border: 'none', color: '#8a7050', cursor: 'pointer',
               }}>×</button>
             </div>
@@ -3889,7 +3900,11 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
                 <div style={{ color: '#d4a84a', letterSpacing: '0.07rem' }}>
                   {existing ? '城内設施' : '營建新設施'}
                 </div>
-                <button onClick={() => setSelectedPlot(null)} style={{
+                <button
+                onClick={() => setSelectedPlot(null)}
+                aria-label={t('關閉地塊面板', 'Close plot panel')}
+                title={t('關閉地塊面板', 'Close plot panel')}
+                style={{
                   background: 'transparent', border: 'none', color: '#8a7050', cursor: 'pointer',
                 }}>×</button>
               </div>
@@ -4087,7 +4102,11 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: inspect.color, fontSize: '1rem', letterSpacing: '0.07rem' }}>{inspect.title}</span>
-              <button onClick={() => setInspect(null)} style={{
+              <button
+                onClick={() => setInspect(null)}
+                aria-label={t('關閉詳情', 'Close details')}
+                title={t('關閉詳情', 'Close details')}
+                style={{
                 background: 'transparent', border: 'none', color: '#8a7050', cursor: 'pointer', fontSize: '0.9rem',
               }}>×</button>
             </div>

@@ -1473,7 +1473,11 @@ export function StrategicMap3D() {
           fontFamily: 'var(--tkm-font-body)', fontSize: '0.72rem',
         }}>
           <span style={{ pointerEvents: 'none' }}>{t('左拖平移 · 右拖旋轉 · 滾輪縮放 · 雙擊飛近', 'left-drag pan · right-drag rotate · scroll zoom · double-click fly')}</span>
-          <button onClick={() => setShowMapHelp(true)} title={t('操作說明', 'Controls')} style={{
+          <button
+            onClick={() => setShowMapHelp(true)}
+            aria-label={t('操作說明', 'Controls')}
+            title={t('操作說明', 'Controls')}
+            style={{
             width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
             background: 'transparent', color: '#d4a84a', border: '1px solid #6a5230',
             cursor: 'pointer', fontSize: 11, lineHeight: 1, padding: 0, fontWeight: 'bold',
@@ -1549,6 +1553,11 @@ export function StrategicMap3D() {
                   <button
                     key={id}
                     onClick={() => setOverlayMode((cur) => (cur === id ? 'none' : id))}
+                    // The row is a set of mutually exclusive layers; without
+                    // this a screen reader hears eleven identical buttons and
+                    // no indication of which one is currently drawn.
+                    aria-pressed={overlayMode === id}
+                    aria-label={t(`${opt.zh}疊圖`, `${opt.en} overlay`)}
                     title={hotkey ? t(`快捷鍵 ${hotkey}`, `Hotkey ${hotkey}`) : t('點選切換(無快捷鍵)', 'Click to toggle (no hotkey)')}
                     style={{
                       background: overlayMode === id ? '#d4a84a' : 'transparent',
@@ -1586,6 +1595,8 @@ export function StrategicMap3D() {
             >{mapStyle === 'hex' ? t('🗺 畫卷地圖', 'Scroll Map') : t('⬡ 棋盤地圖', 'Hex Map')}</button>
             <button
               onClick={() => setFogOfWar(!fogOfWar)}
+              aria-pressed={fogOfWar}
+              aria-label={t('戰爭迷霧', 'Fog of war')}
               style={{
                 background: fogOfWar ? 'rgba(120, 130, 150, 0.22)' : '#241c12',
                 color: fogOfWar ? '#b8c4d8' : '#a89070',
