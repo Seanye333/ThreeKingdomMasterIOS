@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useRef, useContext } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { EffectComposer, Bloom } from '@react-three/postprocessing';
-import { OrbitControls, Html, Instances, Instance } from '@react-three/drei';
+import { ScenePostFx, seasonGrade } from '../components/ScenePostFx';
+import { OrbitControls, Html, Instances, Instance, SoftShadows } from '@react-three/drei';
 import * as THREE from 'three';
 import { RENDER_HI } from '../renderQuality';
 import { useGLRecovery } from '../hooks/useGLRecovery';
@@ -2259,6 +2259,8 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
         >
           {/* Shed the post stack if the frame rate stays down. */}
           {!gfxDegraded && <FrameRateWatch onDegrade={() => setGfxDegraded(true)} />}
+          {/* 柔影 — eaves and walls cast a shadow that softens with distance. */}
+          {RENDER_HI && !IS_MOBILE && !gfxDegraded && <SoftShadows size={18} samples={12} focus={0.85} />}
           {/* Swoop down into the city on entry; rise back up on exit. Distinct
               keys so the exit dive mounts fresh (a reused instance would keep
               its finished state and never animate). The close itself is owned
@@ -2330,11 +2332,21 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
             minDistance={6}
             maxDistance={citySpan * 2.4}
           />
-          {/* Lanterns, braziers and water all catch a soft glow. */}
-          {RENDER_HI && !gfxDegraded && (
-            <EffectComposer>
-              <Bloom luminanceThreshold={0.85} intensity={0.35} mipmapBlur />
-            </EffectComposer>
+          {/* 後處理 — the shared stack (see ScenePostFx). Lanterns, braziers and
+              water catch a soft glow; AO darkens the eaves, alleys and the
+              ground under every wall, which is what a city of close-packed
+              buildings was missing most. */}
+          {!gfxDegraded && (
+            <ScenePostFx
+              mobile={IS_MOBILE}
+              ao={{ radius: 1.4, intensity: 2.0 }}
+              bloom={{
+                threshold: phase === 'lower' ? 0.55 : 0.85,
+                intensity: phase === 'lower' ? 0.7 : 0.35,
+              }}
+              grade={seasonGrade(season, phase === 'lower')}
+              vignette={{ offset: 0.3, darkness: 0.5 }}
+            />
           )}
         </Canvas>
 

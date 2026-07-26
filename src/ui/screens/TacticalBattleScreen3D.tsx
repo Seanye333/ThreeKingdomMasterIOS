@@ -2,11 +2,7 @@ import { Suspense, useContext, useEffect, useLayoutEffect, useMemo, useRef, useS
 import { STRATAGEM_RANGE } from '../../game/data/stratagemRanges';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Html, OrbitControls, Stars, SoftShadows, Sparkles } from '@react-three/drei';
-import {
-  EffectComposer, Bloom, N8AO, ToneMapping, Vignette, SMAA,
-  HueSaturation, BrightnessContrast, DepthOfField,
-} from '@react-three/postprocessing';
-import { ToneMappingMode } from 'postprocessing';
+import { ScenePostFx } from '../components/ScenePostFx';
 import * as THREE from 'three';
 import { RENDER_HI } from '../renderQuality';
 import { useGLRecovery } from '../hooks/useGLRecovery';
@@ -3321,32 +3317,17 @@ export function TacticalBattleScreen3D() {
                 精緻 tier only — the 流暢 tier renders straight to screen with the
                 renderer's own AgX tone mapping (set on the Canvas gl above). */}
             {RENDER_HI && !fxDegraded && <AdaptiveFx onDegrade={() => setFxDegraded(true)} />}
-            {RENDER_HI && !fxDegraded && (
-            <EffectComposer enableNormalPass multisampling={0}>
-              <N8AO
-                aoRadius={1.2}
-                intensity={2.4}
-                distanceFalloff={1.0}
-                quality="performance"
-                halfRes
+            {!fxDegraded && (
+              <ScenePostFx
+                mobile={IS_MOBILE}
+                ao={{ radius: 1.2, intensity: 2.4 }}
+                bloom={{ threshold: 0.7, intensity: 0.6 }}
+                dof={duelFocus
+                  ? { target: [duelFocus[0], 1.0, duelFocus[1]], focalLength: 0.04, bokehScale: 5 }
+                  : null}
+                grade={{ saturation: 0.12, contrast: 0.12 }}
+                vignette={{ offset: 0.25, darkness: 0.62 }}
               />
-              <Bloom luminanceThreshold={0.7} intensity={0.6} mipmapBlur />
-              {duelFocus ? (
-                <DepthOfField
-                  target={[duelFocus[0], 1.0, duelFocus[1]]}
-                  focalLength={0.04}
-                  bokehScale={5}
-                  height={480}
-                />
-              ) : (
-                <></>
-              )}
-              <HueSaturation saturation={0.12} />
-              <BrightnessContrast brightness={0.0} contrast={0.12} />
-              <Vignette eskil={false} offset={0.25} darkness={0.62} />
-              <ToneMapping mode={ToneMappingMode.AGX} />
-              <SMAA />
-            </EffectComposer>
             )}
           </Suspense>
         </Canvas>

@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { Html, Line, OrbitControls } from '@react-three/drei';
-import { EffectComposer, Bloom } from '@react-three/postprocessing';
+import { Html, Line, OrbitControls, SoftShadows } from '@react-three/drei';
+import { ScenePostFx, seasonGrade } from './ScenePostFx';
 import { RENDER_HI } from '../renderQuality';
 import { setMapFocusHandler, requestMapFocus } from './mapFocusBus';
 import { hasEscapeLayers } from '../hooks/useEscapeKey';
@@ -1695,6 +1695,10 @@ export function StrategicMap3D() {
         // Recover from WebGL context loss instead of going black forever.
         onCreated={({ gl }) => attachGLRecovery(gl)}
       >
+        {/* 柔影 — PCSS: a wall's shadow is crisp at its foot and softens as it
+            runs out across the fields. Heavy enough to want the same !mobile
+            gate as AO. */}
+        {RENDER_HI && !IS_MOBILE && !gfxDegraded && <SoftShadows size={24} samples={12} focus={0.8} />}
         <BattleCinematics trigger={cine} />
         {/* Shed the expensive layers if the frame rate stays down, rather
             than riding it into a context loss. */}
@@ -1764,19 +1768,24 @@ export function StrategicMap3D() {
           {/* Cinematic arc when a city changes hands (capture / loss). */}
           <EventFocusFly controlsRef={controlsRef} onSettled={setOrbitTarget} />
           <MiniNavRig controlsRef={controlsRef} onView={setNavView} jump={navJump} />
-          {/* Gentle bloom — beacons, fires and water shimmer get a halo; on a
-              moonlit lower-phase NIGHT it opens up so the city lamps, beacon
-              chains and ember fields truly glow (萬家燈火). High tier only, and
-              the first thing dropped when the frame rate goes: a full-screen
-              post pass costs more than everything it lights up. */}
-          {RENDER_HI && !gfxDegraded && (
-            <EffectComposer>
-              <Bloom
-                luminanceThreshold={tod === 'night' ? 0.5 : 0.85}
-                intensity={tod === 'night' ? 0.9 : 0.35}
-                mipmapBlur
-              />
-            </EffectComposer>
+          {/* 後處理 — the shared stack (see ScenePostFx). Bloom opens up on a
+              moonlit lower-phase NIGHT so city lamps, beacon chains and ember
+              fields truly glow (萬家燈火); AO seats the cities and peaks on the
+              ground instead of letting them float; the seasonal grade tints
+              the whole frame with the year. Dropped whole the moment
+              FrameRateWatch degrades — a full-screen post pass costs more than
+              everything it lights up. */}
+          {!gfxDegraded && (
+            <ScenePostFx
+              mobile={IS_MOBILE}
+              ao={{ radius: 2.6, intensity: 1.6 }}
+              bloom={{
+                threshold: tod === 'night' ? 0.5 : 0.85,
+                intensity: tod === 'night' ? 0.9 : 0.35,
+              }}
+              grade={seasonGrade(season, tod === 'night')}
+              vignette={{ offset: 0.32, darkness: 0.42 }}
+            />
           )}
         </Suspense>
       </Canvas>
