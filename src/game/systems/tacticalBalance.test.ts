@@ -9,8 +9,15 @@ import type { Officer, UnitType } from '../types';
  * arm triangle stays healthy. The cavalry case (2026-07) burned three
  * generations of constant tuning because the shock/volley stratagems bypassed
  * the combat model entirely — this guard makes the NEXT regression scream in
- * CI instead of hiding in play-feel. Seeded LCG → fully deterministic, but the
- * bands carry slack so honest rebalancing doesn't trip it.
+ * CI instead of hiding in play-feel. The bands carry slack so honest
+ * rebalancing doesn't trip it.
+ *
+ * The "seeded" part was a lie until 2026-07-26: `endTurn` rolled 戰場異象 and
+ * 天有不測風雲 off bare `Math.random()`, so every run re-rolled the weather —
+ * and rain nerfs bows, which drifted the cavalry-vs-archer band enough to fail
+ * CI at random (same code, ~1 run in 3). `endTurn` now takes the rng and
+ * `aiTakeTurn` threads it through; the first test below locks that down, since
+ * a guard that quietly stops being reproducible is worse than no guard.
  */
 
 function lcg(seed: number): () => number {
@@ -66,6 +73,18 @@ function winRate(arm: UnitType, foe: UnitType, n = 12): number {
 }
 
 describe('§5.1 兵種三角基線 — seeded regression guard', () => {
+  it('當真是 seeded — the same seeds must give the same answer, every time', () => {
+    // Runs the whole 24-battle matrix three times over. Any unseeded roll that
+    // reaches the winner (weather, omens, a stray Math.random in a new
+    // mechanic) shows up here as a wobble, instead of as a band failing at
+    // random weeks later.
+    const a = winRate('cavalry', 'archers');
+    const b = winRate('cavalry', 'archers');
+    const c = winRate('cavalry', 'archers');
+    expect(b).toBe(a);
+    expect(c).toBe(a);
+  });
+
   it('槍剋騎 — the spear-wall turns the horse (≥50%)', () => {
     expect(winRate('spearmen', 'cavalry')).toBeGreaterThanOrEqual(0.5);
   });

@@ -831,5 +831,6 @@ export function aiTakeTurn(
     }
     if (!acted) break;
   }
-  return { battle: endTurn(cur, officers), signatures };
+  // Thread the harness rng through so an AI-vs-AI run is genuinely reproducible.
+  return { battle: endTurn(cur, officers, rng), signatures };
 }
