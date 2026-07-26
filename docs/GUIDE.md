@@ -3367,6 +3367,16 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
   - 內容多取史料原文(陳琳諫何進「倒持干戈」、荀彧覆曹操「先退者勢屈」、魯肅廊下問孫權、陸遜按劍「僕雖書生」、桓範哭曹爽「犢耳」、鄧艾以氈自裹推轉而下、王濬燒鐵鎖「須臾融液斷絕」)。改朝換代 27 本的 intro 末尾直接列出**城池代換**(長安=咸陽/唐都、鄴=邯鄲鉅鹿、臨淄=齊都、陳留=大梁、江陵=郢、官渡+虎牢=滎陽成皋一線),玩家不必猜。
   - e2e `prologue.spec.ts` 守住這條路徑。**兩個坑**:smoke 的預設劇本正是 184(有序章),backdrop 會擋住結算鈕,smoke 也得走這一頁;`locator.isVisible()` **不等待**,得先 `waitFor` 再判。PrologueModal 不走 React.lazy(headless 下永不 resolve)。
 
+#### 11.4.1 熱座雙人的兩個洞(hotseat.ts,2026-07-26)
+
+熱座**本來就有**:標題畫面可選人數、`hotSeatPlayers`/`hotSeatActiveIndex` 記座次、`cycleHotSeat` 把 `playerForceId` 移到下一張椅子、MapScreen 在最後一席才 `endSeason`。那個設計是對的,而且刻意讓 `playerForceId` 保持**單數** —— 它全庫被引用約 2,250 次,幾乎每一次的意思都是「正在看這個畫面的人」,改成複數等於每一處都要重新定義。
+
+缺的是這個選擇的後果:
+
+- **AI 代打等待中的玩家(嚴重)**:`planAITurn` 只收到 `playerForceId`,也就是**當前座位**;其餘人類勢力一律被當成 AI 的。P2 還沒坐下,他的城已經被下了建設令、軍隊已經出征、金庫已經花掉。現在 `AIPlanInput.humanForceIds` 帶入全部座位,`isHumanForce` 取代 ai.ts 裡七處 `=== playerForceId` 比較。
+- **換手時整張地圖是攤開的**:裝置遞過去,下一個人正好看見上一個人的軍隊要去哪。新增 `HotseatHandoff` 全屏卡(不透明,底下不渲染),並把 `hotseatHandoff` 併入 MapScreen 的輸入封鎖條件。
+- **被消滅的玩家卡住輪次**:`cycleHotSeat` 是對座位表取模,死掉的席位會永遠再輪回來。`pruneSeats` 於結算後剔除已無城池的座位,現任玩家儘量留在原椅。
+
 ### 11.5 大地圖呈現與資訊層(3D,`StrategicMap3D.tsx`)
 
 大地圖的呈現與資訊層,讓「天下大勢」一眼可讀:

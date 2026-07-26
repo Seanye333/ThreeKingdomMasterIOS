@@ -89,6 +89,7 @@ import { OfficerPortrait } from '../components/OfficerPortrait';
 import { COMMAND_DEFS } from '../../game/systems/commands';
 import type { City, InternalAffairsType, Officer } from '../../game/types';
 import styles from './MapScreen.module.css';
+import { HotseatHandoff } from '../components/HotseatHandoff';
 
 // Code-split heavy / rarely-opened modals. They are loaded on demand the
 // first time the user opens them, keeping the initial bundle smaller.
@@ -316,7 +317,7 @@ export function MapScreen() {
       window.removeEventListener('touchstart', onStart, opts);
       window.removeEventListener('touchend', onEnd, opts);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
   // Effective (visual) hide state = manual choice OR the idle auto-fade. Chrome
   // keys off these; the floating handles hide entirely while auto-faded (a tap
@@ -611,11 +612,11 @@ export function MapScreen() {
       const el = e.target as HTMLElement | null;
       const typing = !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
       const s = useGameStore.getState();
-      const blocked = !!s.lastReport || s.cityMapOpen || !!s.tacticalBattle || s.victoryStatus !== 'playing';
+      const blocked = !!s.lastReport || s.cityMapOpen || !!s.tacticalBattle || s.victoryStatus !== 'playing' || !!s.hotseatHandoff;
       // 鬆綁 — the palette stays reachable while a report/event modal is up
       // (it opens VIEW panels, which are safe under either); only a battle,
       // the city interior or a finished campaign truly own the keyboard.
-      const paletteBlocked = s.cityMapOpen || !!s.tacticalBattle || s.victoryStatus !== 'playing';
+      const paletteBlocked = s.cityMapOpen || !!s.tacticalBattle || s.victoryStatus !== 'playing' || !!s.hotseatHandoff;
       // 命令臺 — / or ⌘K/Ctrl-K opens the command palette.
       if (!typing && !paletteBlocked && (e.key === '/' || ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')))) {
         e.preventDefault();
@@ -1517,6 +1518,7 @@ export function MapScreen() {
       )}
       {/* 序章 — the campaign's opening page, ahead of anything else that
           might pop on turn one. */}
+      <HotseatHandoff />
       <PrologueModal />
       {!dayFlow && !prologueOpen && <EventModal />}
       <VictoryModal />

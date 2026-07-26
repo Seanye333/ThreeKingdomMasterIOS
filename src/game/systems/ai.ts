@@ -61,12 +61,17 @@ import { personalityAttackMul, personalityDiplomacyAppetite } from './rulerPerso
 import { officerGrade, gradeRank } from './officerGrade';
 import { attackDeterrence, recruitPreferenceScore, runtimeSwornPair, runtimeFeudPair } from './relationshipEffects';
 import { addFriction } from './friction';
+import { isHumanForce } from './hotseat';
 
 export interface AIPlanInput {
   cities: Record<EntityId, City>;
   officers: Record<EntityId, Officer>;
   forces: Record<EntityId, Force>;
   playerForceId: EntityId | null;
+  /** 熱座 — every human-run force, not merely the one at the keyboard. The AI
+   *  must skip all of them, or a waiting player's realm is governed (and their
+   *  treasury spent) before they ever sit down. Omitted = ordinary solo play. */
+  humanForceIds?: EntityId[];
   pendingCommands: Record<EntityId, Command>;
   pendingTrainings: PendingTraining[];
   buildings: Building[];
@@ -159,6 +164,11 @@ export interface AIPlanOutput {
  * Mutates copies and returns the merged result so resolveSeason can run
  * over the combined player + AI pendingCommands.
  */
+/** Human-run? In hotseat this is several forces, not just the current seat. */
+function isHuman(input: AIPlanInput, forceId: EntityId | null | undefined): boolean {
+  return isHumanForce(forceId, input.humanForceIds ? { forceIds: input.humanForceIds, index: 0 } : null, input.playerForceId);
+}
+
 export function planAITurn(input: AIPlanInput): AIPlanOutput {
   const rng = input.rng ?? Math.random;
   const difficulty = input.difficulty ?? 'normal';
@@ -177,7 +187,7 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
   const citiesByForce = new Map<EntityId, City[]>();
   for (const city of Object.values(cities)) {
     if (!city.ownerForceId) continue;
-    if (city.ownerForceId === input.playerForceId) continue;
+    if (isHuman(input, city.ownerForceId)) continue;
     const arr = citiesByForce.get(city.ownerForceId) ?? [];
     arr.push(city);
     citiesByForce.set(city.ownerForceId, arr);
@@ -391,12 +401,12 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
     const season = input.date.season;
     for (const seller of Object.values(cities)) {
       const sid = seller.ownerForceId;
-      if (!sid || sid === input.playerForceId) continue;
+      if (!sid || isHuman(input, sid)) continue;
       const sNow = cities[seller.id];
       if (sNow.food <= sNow.troops * 7) continue; // only a real glut spares grain
       for (const nid of sNow.adjacentCityIds) {
         const buyer = cities[nid];
-        if (!buyer || !buyer.ownerForceId || buyer.ownerForceId === sid || buyer.ownerForceId === input.playerForceId) continue;
+        if (!buyer || !buyer.ownerForceId || buyer.ownerForceId === sid || isHuman(input, buyer.ownerForceId)) continue;
         const rel = getRelation(diplomacy, sid, buyer.ownerForceId);
         if (rel.status !== 'allied' && rel.status !== 'non-aggression') continue;
         if (buyer.food >= buyer.troops * 2) continue; // buyer not actually short
@@ -420,12 +430,12 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
     const season = input.date.season;
     for (const buyer of Object.values(cities)) {
       const bid = buyer.ownerForceId;
-      if (!bid || bid === input.playerForceId) continue;
+      if (!bid || isHuman(input, bid)) continue;
       const bNow = cities[buyer.id];
       if (bNow.food >= bNow.troops * 1.5 || bNow.gold < 300) continue; // not desperate, or broke
       for (const nid of bNow.adjacentCityIds) {
         const seller = cities[nid];
-        if (!seller || !seller.ownerForceId || seller.ownerForceId === bid || seller.ownerForceId === input.playerForceId) continue;
+        if (!seller || !seller.ownerForceId || seller.ownerForceId === bid || isHuman(input, seller.ownerForceId)) continue;
         const rel = getRelation(diplomacy, bid, seller.ownerForceId);
         if (rel.status !== 'allied' && rel.status !== 'non-aggression') continue;
         const spare = seller.food - seller.troops * 3;
@@ -702,7 +712,7 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
   if (input.playerForceId) {
     const discordChance = 0.05 * aiAggressionMul * (difficulty === 'hard' ? 1.5 : difficulty === 'easy' ? 0.4 : 1);
     const hasSchemer = Object.values(officers).some(
-      (o) => o.forceId && o.forceId !== input.playerForceId && o.status !== 'dead' &&
+      (o) => o.forceId && !isHuman(input, o.forceId) && o.status !== 'dead' &&
         o.status !== 'imprisoned' && o.stats.intelligence >= 80,
     );
     if (hasSchemer && rng() < discordChance) {

@@ -198,6 +198,7 @@ import { clanGentryWeight } from '../systems/clans';
 import { rollBehaviorEvent } from '../systems/behaviorEvents';
 import { rollRemonstrance } from '../systems/remonstrance';
 import { trackService } from '../systems/formerLord';
+import { pruneSeats } from '../systems/hotseat';
 import { rollAIWishFlavor } from '../systems/aiWishesFlavor';
 import { appointmentBonusFor, pruneStaleAppointments, traitRefusal, isOnCooldown } from '../systems/appointmentEffects';
 import { canPromoteToRank } from '../systems/imperialEffects';
@@ -806,6 +807,8 @@ export interface GameStore extends GameState {
   dismissBattleTheater: () => void;
   /** 承平之亂 — play on after a victory ending instead of stopping there. */
   continueAfterVictory: () => void;
+  /** 換手完成 — the next player has sat down; reveal the board. */
+  hotseatReady: () => void;
   recruitOfficer: (
     officerId: EntityId,
     cityId: EntityId,
@@ -4487,6 +4490,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           officers: officersAfterCourt,
           forces: forcesAfterCourt,
           playerForceId: state.playerForceId,
+          // 熱座 — every seated human, not just the one at the keyboard, or the
+          // AI would govern a waiting player's realm before they sat down.
+          // 熱座 — every seated human, not merely the one at the keyboard.
+          // Without this the AI governs the waiting players' realms: their
+          // cities take AI build orders and their armies march, all before
+          // they have so much as sat down.
+          humanForceIds: state.hotSeatPlayers.map((p) => p.forceId),
           pendingCommands: state.pendingCommands,
           pendingTrainings: state.pendingTrainings,
           buildings: state.buildings,
@@ -6551,6 +6561,26 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           date: result.date,
           victoryGoal: state.victoryGoal ?? 'free',
         });
+        // 熱座 — a conquered player leaves the table; the rotation must not
+        // stall on an empty chair (cycleHotSeat is a modulo over the list, so a
+        // dead seat would keep coming back round forever).
+        let hotSeatPlayers = state.hotSeatPlayers;
+        let hotSeatActiveIndex = state.hotSeatActiveIndex;
+        if (hotSeatPlayers.length > 1) {
+          const live = new Set(
+            Object.values(postCities).map((c) => c.ownerForceId).filter((f): f is EntityId => !!f),
+          );
+          const pruned = pruneSeats(
+            { forceIds: hotSeatPlayers.map((p) => p.forceId), index: hotSeatActiveIndex },
+            live,
+          );
+          if (pruned.forceIds.length !== hotSeatPlayers.length) {
+            const keep = new Set(pruned.forceIds);
+            hotSeatPlayers = hotSeatPlayers.filter((p) => keep.has(p.forceId));
+            hotSeatActiveIndex = Math.min(pruned.index, Math.max(0, hotSeatPlayers.length - 1));
+          }
+        }
+
         let endVS = victoryStatus;
         let endingsAchieved = state.endingsAchieved;
         if (ending && ending.kind !== 'defeat' && !state.endingsAchieved.includes(ending.kind)) {
@@ -8873,6 +8903,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           taxPolicy: planned.taxPolicy,
           selectedCityId: stillOwned ? state.selectedCityId : fallback,
           victoryStatus: endVS,
+          hotSeatPlayers,
+          hotSeatActiveIndex,
           battleHistory: [...state.battleHistory, ...newBattles],
           pendingBattleTheaters: [
             ...state.pendingBattleTheaters,
@@ -9562,6 +9594,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       dismissReport: () => set(() => ({ lastReport: null })),
       pushPopup: (event) => set((s) => ({ popupQueue: [...s.popupQueue, event] })),
       dismissPopup: () => set((s) => ({ popupQueue: s.popupQueue.slice(1) })),
+
+      hotseatReady: () => set({ hotseatHandoff: false }),
 
       continueAfterVictory: () => {
         // Back to 'playing' so the map takes input again; the flag both stops
@@ -18476,6 +18510,11 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         set({
           hotSeatActiveIndex: next,
           playerForceId: player.forceId,
+          // 換手 — cover the board until the next player has sat down. Handing
+          // a phone across an open map shows them exactly where the last
+          // player's armies are going.
+          hotseatHandoff: true,
+          selectedCityId: null,
         });
       },
 

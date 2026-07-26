@@ -125,6 +125,9 @@ export interface GameState {
    *  back to 'playing' and ambition among your own commanders is stoked, since
    *  a unified realm with a standing army is the danger the histories describe. */
   postVictory?: boolean;
+  /** 熱座 — true while the handoff card covers the board between seats. The
+   *  seating itself lives in `hotSeatPlayers` / `hotSeatActiveIndex`. */
+  hotseatHandoff?: boolean;
   difficulty: Difficulty;
   /** Active Hero Mode challenge id (英雄模式), or null in free play. When set,
    *  the season-end check scores it pass/fail and ends the game accordingly. */
@@ -869,6 +872,7 @@ export const EMPTY_STATE: GameState = {
   cityEventMarks: [],
   victoryStatus: 'playing',
   postVictory: false,
+  hotseatHandoff: false,
   difficulty: 'normal',
   activeChallenge: null,
   challengeRecords: {},
@@ -1353,6 +1357,7 @@ export function loadScenario(
   cityEventMarks: [],
     victoryStatus: 'playing',
     postVictory: false,
+    hotseatHandoff: false,
     activeChallenge: null,
     // Challenge records are meta-progression — carry across games.
     challengeRecords: state.challengeRecords ?? {},
