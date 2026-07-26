@@ -2,6 +2,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Html, Line, OrbitControls, SoftShadows } from '@react-three/drei';
 import { ScenePostFx, seasonGrade } from './ScenePostFx';
+import { SkyEnvironment } from './SkyEnvironment';
 import { RENDER_HI } from '../renderQuality';
 import { setMapFocusHandler, requestMapFocus } from './mapFocusBus';
 import { hasEscapeLayers } from '../hooks/useEscapeKey';
@@ -332,6 +333,17 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
         celestialColor={todP.celestialColor}
         moon={todP.celestial === 'moon'}
         stars={todP.stars}
+      />
+      {/* 天光 — the same three sky colours, turned into an environment map so
+          every PBR surface has something to reflect: river and sea catch the
+          sky, bronze and lacquer catch the sun, and a night board goes cool
+          on every reflective face. Ground bounce follows the season. */}
+      <SkyEnvironment
+        top={todP.skyTop}
+        horizon={todP.horizon ?? seasonPreset.fogColor}
+        sun={todP.celestialColor}
+        ground={seasonPreset.hemiGround}
+        intensity={tod === 'night' ? 0.3 : 0.45}
       />
 
       {/* Per-season lighting, dimmed and recoloured by time of day */}

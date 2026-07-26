@@ -3,6 +3,7 @@ import { STRATAGEM_RANGE } from '../../game/data/stratagemRanges';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Html, OrbitControls, Stars, SoftShadows, Sparkles } from '@react-three/drei';
 import { ScenePostFx } from '../components/ScenePostFx';
+import { SkyEnvironment } from '../components/SkyEnvironment';
 import * as THREE from 'three';
 import { RENDER_HI } from '../renderQuality';
 import { useGLRecovery } from '../hooks/useGLRecovery';
@@ -2044,6 +2045,16 @@ export function BattleScene({
       {!embedded && (
         <>
           <fog attach="fog" args={[lighting.fog[0], fogNear, fogFar]} />
+          {/* 天光 — sky-derived IBL. On a battlefield this is what finally
+              separates lacquered armour, bronze blades and wet mud: they were
+              all reflecting nothing before. */}
+          <SkyEnvironment
+            top={lighting.sky[0]}
+            horizon={lighting.sky[1]}
+            sun={lighting.sun.color}
+            ground="#4a4030"
+            intensity={battle.timeOfDay === 'night' ? 0.3 : 0.45}
+          />
           <BattleSurround width={battle.width} height={battle.height} timeOfDay={battle.timeOfDay} weather={battle.weather} />
           {lighting.showStars && <Stars radius={80} depth={50} count={2500} factor={3} fade speed={0.5} />}
           <SkyBody position={lighting.sun.position} color={lighting.sun.color} night={lighting.showStars} />

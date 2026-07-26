@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect, useRef, useContext } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { ScenePostFx, seasonGrade } from '../components/ScenePostFx';
+import { SkyEnvironment } from '../components/SkyEnvironment';
 import { OrbitControls, Html, Instances, Instance, SoftShadows } from '@react-three/drei';
 import * as THREE from 'three';
 import { RENDER_HI } from '../renderQuality';
@@ -1144,6 +1145,15 @@ function CityScene({
       <SeasonalDrift season={season} />
       <WeatherFX kind={weatherKind} width={preview.width} height={preview.height} />
      <InspectCtx.Provider value={onInspect}>
+      {/* 天光 — sky-derived IBL so tile, timber and bronze in the city have
+          something to reflect (see SkyEnvironment). */}
+      <SkyEnvironment
+        top={light.ambientColor}
+        horizon={light.fog}
+        sun={light.sun}
+        ground="#5a4a34"
+        intensity={light.nightGlow >= 0.9 ? 0.3 : 0.45}
+      />
       <ambientLight intensity={light.ambient * 0.7} color={light.ambientColor} />
       {/* Sky/ground hemisphere fill for richer ambient colour grading */}
       <hemisphereLight args={[light.ambientColor, '#6a5a3e', 0.45]} />
