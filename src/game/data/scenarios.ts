@@ -8647,3 +8647,20 @@ export function allScenarios(): Scenario[] {
     return SCENARIOS;
   }
 }
+
+/**
+ * 漢季之盤 — is this board the Later Han (i.e. the Three Kingdoms era proper)?
+ *
+ * The Warring States / Chu-Han / Sui-Tang boards reuse the Three Kingdoms map
+ * AND its calendar — they all open in game year 178 — so anything that keys
+ * era-specific content off `date.year` will mis-fire on them. That is exactly
+ * how Yellow Turban sects ended up rising against Xiang Yu on the Chu-Han
+ * board, at one point holding ten cities.
+ *
+ * Keyed off the id prefix because that is what actually distinguishes them:
+ * `scn-ws-*` Warring States, `scn-ch-*` Chu-Han, `scn-st-*` Sui-Tang.
+ */
+export function isLaterHanBoard(scenarioId: string | null | undefined): boolean {
+  if (!scenarioId) return true;          // unknown board → assume the default era
+  return !/^scn-(ws|ch|st)-/.test(scenarioId);
+}

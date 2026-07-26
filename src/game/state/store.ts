@@ -382,6 +382,7 @@ import { applyAutoBuild } from '../systems/autoBuild';
 import { planAIBuildOrders, planAIFacilities, planAIPerimeterDefense, planAIFortAssaults, planAISiteSeizures, planAIFrontierExploits } from '../systems/aiBuild';
 import { SCENARIO_OBJECTIVES } from '../data/objectives';
 import { SCENARIOS } from '../data';
+import { isLaterHanBoard } from '../data/scenarios';
 import { PROVINCES_BY_ID } from '../data/provinces';
 import { planProvinceLevy } from '../systems/provinceGovernor';
 import { findChallenge, evaluateChallenge, challengeStars } from '../data/challenges';
@@ -2255,7 +2256,7 @@ export const useGameStore = create<GameStore>()(
         set({ worldScars: scars });
         playSfx('fire');
         {
-          let achB = loadAchievementProgress();
+          const achB = loadAchievementProgress();
           const r = processTrigger(achB, { kind: 'bridge-burned' });
           if (r.newlyUnlocked.length > 0) {
             saveAchievementProgress(r.progress);
@@ -3598,7 +3599,7 @@ export const useGameStore = create<GameStore>()(
         // §7.7 ② 遠使團 — an optional 副使 riding along must be a free officer in
         // the same city; he is taken off the rosters alongside the envoy.
         const deputyId = opts?.companionId;
-        let deputy = deputyId ? state.officers[deputyId] : undefined;
+        const deputy = deputyId ? state.officers[deputyId] : undefined;
         if (deputyId) {
           if (!deputy || deputy.forceId !== pid || deputy.locationCityId !== fromCityId || deputy.id === officerId) {
             return { ok: false, seasons: 0, reason: 'deputy unavailable' };
@@ -5909,6 +5910,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             officers: postOfficers,
             date: result.date,
             rng: Math.random,
+            // 漢季之盤 — the Warring States / Chu-Han / Sui-Tang boards share
+            // this calendar, so risings there must not take a Han sect banner.
+            sectsAvailable: isLaterHanBoard(state.scenarioId),
           });
           postCities = religion.cities;
           postForces = religion.forces;
@@ -14185,7 +14189,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             const a = state.armies[pl.armyId];
             return a && a.forceId !== tb.attackerForceId && a.forceId !== tb.defenderForceId;
           })) {
-          let achA = loadAchievementProgress();
+          const achA = loadAchievementProgress();
           const rA = processTrigger(achA, { kind: 'ally-battle' });
           if (rA.newlyUnlocked.length > 0) {
             saveAchievementProgress(rA.progress);
@@ -15878,8 +15882,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const choice = dlg.choices[choiceIdx];
         if (!choice) return;
         // Apply effects.
-        let officers = { ...state.officers };
-        let cities = { ...state.cities };
+        const officers = { ...state.officers };
+        const cities = { ...state.cities };
         let eventFlags = state.eventFlags;
         const playerCapital = state.playerForceId
           ? state.forces[state.playerForceId]?.capitalCityId

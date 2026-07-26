@@ -6,6 +6,7 @@ import {
   isCultForce,
   cultPacifyChance,
   resolveCultPacify,
+  rollReligiousRebellion,
   rollYellowTurbanRising,
   YELLOW_TURBAN_FLAG,
 } from './religion';
@@ -154,5 +155,60 @@ describe('§8.4-deep 黃巾總爆發', () => {
     };
     expect(rollYellowTurbanRising({ ...base, date: { year: 190, season: 'spring' }, eventFlags: {} }).flagSet).toBe(false);
     expect(rollYellowTurbanRising({ ...base, date: { year: 184, season: 'spring' }, eventFlags: { [YELLOW_TURBAN_FLAG]: true } }).flagSet).toBe(false);
+  });
+});
+
+/**
+ * 時代錯置 — the Warring States / Chu-Han / Sui-Tang boards reuse the Three
+ * Kingdoms map and calendar (all open in game year 178), so a year-based sect
+ * test dressed every rising on them as a Later Han sect. On the Chu-Han board
+ * a "Yellow Heaven" force had grown to ten cities — Yellow Turbans rebelling
+ * against Xiang Yu.
+ */
+describe('教派的時代門控', () => {
+  const board = () => {
+    const cities: Record<string, unknown> = {};
+    for (let i = 0; i < 6; i++) {
+      cities[`c${i}`] = {
+        id: `c${i}`, name: { zh: `城${i}`, en: `City${i}` },
+        ownerForceId: 'lord', loyalty: 4, population: 90_000, troops: 300,
+        food: 500, gold: 100, agriculture: 40, commerce: 40, defense: 20,
+        terrain: 'plain', coords: { x: i * 40, y: i * 30 }, adjacentCityIds: [],
+      };
+    }
+    return cities;
+  };
+  const run = (sectsAvailable: boolean | undefined) => rollReligiousRebellion({
+    cities: board() as never,
+    forces: { lord: { id: 'lord', name: { zh: '主', en: 'Lord' } } } as never,
+    officers: {} as never,
+    date: { year: 178, season: 'spring', month: 1, phase: 'upper' } as never,
+    rng: () => 0.01,           // pass the 6% gate, pick the first ripe city
+    sectsAvailable,
+  });
+
+  it('an off-era board raises a sect-less host, not the Yellow Heaven', () => {
+    const out = run(false);
+    const cult = Object.keys(out.forces).find((f) => f.startsWith('cult-'));
+    expect(cult, 'a rising should still happen').toBeDefined();
+    expect(cult).toContain('folk');
+    expect(cult).not.toContain('huangtian');
+    expect(cult).not.toContain('taiping');
+    const text = out.entries.map((e) => e.textZh ?? '').join();
+    expect(text).not.toContain('黃天');
+    expect(text).not.toContain('太平道');
+    // Wording follows the banner: a sect-less host gathers the starving, and
+    // must not be described as gathering 信眾.
+    expect(text).not.toContain('信眾');
+    expect(text).toContain('流民');
+  });
+
+  it('a Later Han board still raises the historical sects', () => {
+    for (const flag of [true, undefined]) {
+      const out = run(flag);
+      const cult = Object.keys(out.forces).find((f) => f.startsWith('cult-'));
+      expect(cult, `flag=${flag}`).toBeDefined();
+      expect(cult, `flag=${flag} should be a Han sect`).not.toContain('folk');
+    }
   });
 });

@@ -18,12 +18,23 @@ import { buildingBonuses } from './buildings';
  * neutral (no diplomacy, just defends).
  */
 
-export type CultKind = 'wudou' | 'taiping' | 'huangtian';
+/**
+ * 教派 — which banner a rising takes up.
+ *
+ * The first three are Later Han sects and belong to the Three Kingdoms era.
+ * `folk` is the era-neutral fallback: the Warring States / Chu-Han / Sui-Tang
+ * boards reuse the Three Kingdoms map AND its calendar (they all open in game
+ * year 178), so a year-based test would dress every rising on those boards as
+ * the Way of Great Peace — Yellow Turbans rising against Xiang Yu. A displaced
+ * host with no sect behind it fits any century.
+ */
+export type CultKind = 'wudou' | 'taiping' | 'huangtian' | 'folk';
 
 export const CULT_LABEL: Record<CultKind, { en: string; zh: string; color: string }> = {
   wudou:     { en: 'Way of Five Pecks',   zh: '五斗米道', color: '#d4a84a' },
   taiping:   { en: 'Way of Great Peace',  zh: '太平道',   color: '#88b7e8' },
   huangtian: { en: 'Yellow Heaven',       zh: '黃天教',   color: '#e8c060' },
+  folk:      { en: 'Displaced Host',      zh: '流民軍',   color: '#a08a6a' },
 };
 
 export interface ReligionInput {
@@ -37,6 +48,10 @@ export interface ReligionInput {
   /** §8.4-deep 宣撫 — standing missions (officerId → posting); a posted
    *  envoy stiffens his city against the contagion. */
   pacifyMissions?: Record<EntityId, PacifyMission>;
+  /** False on boards outside the Later Han (Warring States / Chu-Han /
+   *  Sui-Tang), which reuse this map and calendar. Risings there take no
+   *  sect banner. Defaults to true. */
+  sectsAvailable?: boolean;
 }
 
 export interface ReligionOutput {
@@ -123,11 +138,16 @@ export function spreadCultUnrest(input: ReligionInput): ReligionOutput {
       troops: Math.max(1_500, Math.floor(target.troops * 0.55)),
       population: Math.max(15_000, Math.floor(target.population * 0.9)),
     };
+    const folkHost = label.zh === '流民軍';
     entries.push({
       cityId: target.id,
       kind: 'rebellion',
-      text: `The faith spreads — ${target.name.zh} rises and joins the ${label.zh}（${label.en}）.`,
-      textZh: `信眾蔓延 — ${target.name.zh}響應${label.zh}，舉城而附。`,
+      text: folkHost
+        ? `The unrest spreads — ${target.name.zh} throws in with the displaced host.`
+        : `The faith spreads — ${target.name.zh} rises and joins the ${label.zh}（${label.en}）.`,
+      textZh: folkHost
+        ? `饑荒蔓延 — ${target.name.zh}響應流民軍,舉城而附。`
+        : `信眾蔓延 — ${target.name.zh}響應${label.zh}，舉城而附。`,
     });
   }
 
@@ -150,9 +170,12 @@ export function rollReligiousRebellion(input: ReligionInput): ReligionOutput {
 
   const target = ripe[Math.floor(input.rng() * ripe.length)];
 
-  // Pick cult flavor based on location heuristic.
+  // Pick cult flavour by place, then by era. `sectsAvailable === false` means
+  // this board is not the Later Han (see CultKind) — a rising there is hungry
+  // people, not a sect.
   let cult: CultKind;
-  if (target.terrain === 'mountain' || target.name.zh.includes('漢中')) cult = 'wudou';
+  if (input.sectsAvailable === false) cult = 'folk';
+  else if (target.terrain === 'mountain' || target.name.zh.includes('漢中')) cult = 'wudou';
   else if (input.date.year < 195) cult = 'huangtian';
   else cult = 'taiping';
 
@@ -161,8 +184,12 @@ export function rollReligiousRebellion(input: ReligionInput): ReligionOutput {
   const leaderId = `cult-leader-${forceId}`;
 
   // Spawn synthesized cult leader officer.
-  const leaderNameZh = cult === 'wudou' ? '師君' : cult === 'huangtian' ? '黃天大師' : '太平道師';
-  const leaderNameEn = cult === 'wudou' ? 'Shijun' : cult === 'huangtian' ? 'Yellow-Heaven Master' : 'Great-Peace Master';
+  const leaderNameZh = cult === 'wudou' ? '師君'
+    : cult === 'huangtian' ? '黃天大師'
+      : cult === 'folk' ? '流民渠帥' : '太平道師';
+  const leaderNameEn = cult === 'wudou' ? 'Shijun'
+    : cult === 'huangtian' ? 'Yellow-Heaven Master'
+      : cult === 'folk' ? 'Host-Chief' : 'Great-Peace Master';
   officers[leaderId] = {
     id: leaderId,
     name: { en: leaderNameEn, zh: leaderNameZh },
@@ -197,11 +224,19 @@ export function rollReligiousRebellion(input: ReligionInput): ReligionOutput {
     population: Math.max(20_000, Math.floor(target.population * 0.85)),
   };
 
+  // A sect gathers 信眾; a displaced host gathers the starving. Same
+  // mechanism, and the wording has to follow the banner or a Chu-Han board
+  // reads like a Later Han one.
+  const host = cities[target.id].troops.toLocaleString();
   entries.push({
     cityId: target.id,
     kind: 'rebellion',
-    text: `${label.zh}起義 — ${target.name.zh} falls to the ${label.zh}（${label.en}）movement. The faithful rally; ${cities[target.id].troops.toLocaleString()} soldiers under arms.`,
-    textZh: `${label.zh}起義 — ${target.name.zh}為${label.zh}所據，信眾雲集，揭竿者${cities[target.id].troops.toLocaleString()}人。`,
+    text: cult === 'folk'
+      ? `Rising — ${target.name.zh} falls to a host of the displaced. The starving rally; ${host} under arms.`
+      : `${label.zh}起義 — ${target.name.zh} falls to the ${label.zh}（${label.en}）movement. The faithful rally; ${host} soldiers under arms.`,
+    textZh: cult === 'folk'
+      ? `流民作亂 — ${target.name.zh}為饑民所據，聚眾${host}人,揭竿而起。`
+      : `${label.zh}起義 — ${target.name.zh}為${label.zh}所據，信眾雲集，揭竿者${host}人。`,
   });
 
   return { cities, forces, officers, entries };
