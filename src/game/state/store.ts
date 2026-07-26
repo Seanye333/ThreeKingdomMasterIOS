@@ -8823,6 +8823,77 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           if (adds.length > 0) nextAnnals = [...nextAnnals, ...adds].slice(-500);
         }
 
+        /* 死者不仕 — the contract every well-behaved death path writes
+         * (`forceId: null`). Several omit it (hostage execution, wound death,
+         * assassination, 密謀, 政治婚姻), and a corpse that keeps its house is
+         * counted as a serving officer by any roster tally that forgets to
+         * filter on status — and, until the guard added to resolution's
+         * deriveArmy, could go on leading a column.
+         *
+         * Swept on the FINAL composed roster rather than on an earlier snapshot:
+         * succession, aging and this season's events all kill people after the
+         * mid-tick phases, so anything earlier misses the late deaths (the long
+         * soak caught exactly that at t216). */
+        const rosterFinal = (Object.keys(naturalizedArrivals).length > 0 || Object.keys(clanOfficerPatches).length > 0 || Object.keys(statecraftPatches).length > 0 || Object.keys(courtPatches).length > 0)
+          ? { ...officersWithMarchTask, ...naturalizedArrivals, ...clanOfficerPatches, ...statecraftPatches, ...courtPatches }
+          : { ...officersWithMarchTask };
+        for (const o of Object.values(rosterFinal)) {
+          if (o.status === 'dead' && (o.forceId || o.task)) {
+            rosterFinal[o.id] = { ...o, forceId: null, task: null };
+          }
+        }
+
+        /* 君不可為屍 — `applySuccession` runs mid-tick, but rulers go on dying
+         * after it: battles late in the resolution pass, aging, this season's
+         * events, and 死諫. A force left with a corpse at its head still lends
+         * that corpse's charisma to recruitment, its personality to the AI and
+         * its renown to deterrence, for a whole visible season.
+         *
+         * A last-resort promotion here, on the final roster. `findCandidates`
+         * already falls back to "any living officer of the force", so the only
+         * case this cannot fix is a force with NO living officers at all — which
+         * is a realm that has genuinely run out of people, not a bookkeeping
+         * slip, and is left alone deliberately. */
+        for (const f of Object.values(postForces)) {
+          const r = rosterFinal[f.rulerOfficerId];
+          if (r && r.status !== 'dead') continue;
+          const heir = Object.values(rosterFinal)
+            .filter((o) => o.forceId === f.id && o.status !== 'dead' && o.status !== 'imprisoned')
+            .sort((a, b) => (b.loyalty + b.stats.politics) - (a.loyalty + a.stats.politics))[0];
+          if (!heir) continue;
+          postForces = { ...postForces, [f.id]: { ...f, rulerOfficerId: heir.id } };
+          result.report.entries.push({
+            cityId: null,
+            kind: 'succession',
+            text: `${heir.name.en} takes up the ${f.name.en} banner — the seat could not be left empty.`,
+            textZh: `${f.name.zh}主上新喪,${heir.name.zh}倉促繼立 —— 大位不可一日虛懸。`,
+          });
+        }
+
+        /* 軍籍淨化 — the armies map is derived inside resolution, but people go on
+         * dying AFTER that: battles late in the pass, succession, aging, and this
+         * season's events. So a column can be born with a live commander and be
+         * committed with a corpse at its head, and next season's derive would
+         * silently drop it — leaving one visible season of a ghost army that
+         * still marches, still fights, still shows on the map.
+         *
+         * Swept here because this is the one seam every army reaches state
+         * through. Three contradictions are settled:
+         *   · commander dead or gone     → the column no longer exists
+         *   · troops at or below zero    → likewise (it melted away)
+         *   · dug in AND evading         → camped wins; `evading` is documented
+         *     "cleared on hold", and hold conversions live in several files.
+         * Each was found by the long soak once an invariant existed to see it. */
+        const armiesFinal: Record<EntityId, import('../types').Army> = { ...(result.armies ?? {}) };
+        for (const a of Object.values(armiesFinal)) {
+          const cmdr = rosterFinal[a.commanderId];
+          if (!cmdr || cmdr.status === 'dead' || a.troops <= 0) {
+            delete armiesFinal[a.id];
+            continue;
+          }
+          if (a.holding && a.evading) armiesFinal[a.id] = { ...a, evading: undefined };
+        }
+
         set({
           date: result.date,
           cities: postCities,
@@ -8833,9 +8904,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           popupQueue: [...state.popupQueue, ...sizePopups, ...wallPopups, ...buildPopups, ...officerPopups.slice(0, 3), ...livePopups],
           // §7.7-deep ④ 歸化武將 + §7.8 察舉薦才/舉族叛附 + §7.9 興學養士/拂袖 +
           // §7.4 學官亂政 — fold this season's roster changes in.
-          officers: (Object.keys(naturalizedArrivals).length > 0 || Object.keys(clanOfficerPatches).length > 0 || Object.keys(statecraftPatches).length > 0 || Object.keys(courtPatches).length > 0)
-            ? { ...officersWithMarchTask, ...naturalizedArrivals, ...clanOfficerPatches, ...statecraftPatches, ...courtPatches }
-            : officersWithMarchTask,
+          officers: rosterFinal,
           marriageAlliances: allianceTick.alliances,
           tributePacts: nextTributePacts,
           defensivePacts: nextDefensivePacts,
@@ -8980,7 +9049,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             : (result.worldScars ?? state.worldScars ?? {}),
           // 斥候情報 — spotted-ambush marks survive only while the ambush does.
           spottedAmbushIds: (state.spottedAmbushIds ?? []).filter((id) => !!(result.armies ?? {})[id]?.ambush),
-          armies: result.armies ?? {},
+          armies: armiesFinal,
           convoys: result.convoys ?? {},
           raids: result.raids ?? {},
           expeditions: result.expeditions ?? {},

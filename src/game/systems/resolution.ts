@@ -1880,7 +1880,19 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const src = cities[cmd.cityId];
     const dst = marchDestCoords(cmd, cities);
     const cmdr = officers[cmd.officerId];
+    /* 統帥須在世、部伍須有人 — this guard used to test only `cmdr?.forceId`,
+     * which lets a CORPSE lead a column: most death paths null `forceId` but
+     * several do not (hostage execution, wound death, 暗殺, 密謀, 政治婚姻…), and
+     * a dead officer who kept his house sails straight through. The long soak
+     * found both shapes — an army whose commander was 'dead', and an army at 0
+     * troops still on the map.
+     *
+     * Guarding here rather than at the ~7 death sites is deliberate: this is the
+     * single seam every army is born through, so a death path added tomorrow
+     * cannot reintroduce either ghost. */
     if (!src || !dst || !cmdr?.forceId) return;
+    if (cmdr.status === 'dead') return;
+    if ((suppliedTroops[cmd.officerId] ?? cmd.troops) <= 0) return;
     const total = Math.max(1, cmd.totalSeasons ?? 1);
     const progress = Math.min(0.95, Math.max(0.05, (total - remainingNext) / total));
     const pos = armyPosition({ ...cmd, seasonsRemaining: remainingNext });
@@ -4768,6 +4780,27 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     }
   }
 
+
+  /* 追擊之的須存在 — the chase validation above tests the quarry against the
+   * march list as it stood at the START of this pass, so a quarry that reached
+   * shelter or was wiped out MID-pass leaves its hunter pointing at a ghost.
+   * That is not cosmetic: a set `pursueTargetId` makes the hunter skip
+   * re-targeting next season (see the pursuit-eligibility guard above), so it
+   * wastes a season chasing nothing, and anything drawing a chase line renders
+   * garbage. MarchCommand.pursueTargetId is documented to end "when the quarry
+   * dies or reaches shelter" — a quarry absent from the derived armies has done
+   * exactly one of those. Found by the soak fuzzer once an invariant existed
+   * for it (7 runs in 30).
+   */
+  for (const a of Object.values(outArmies)) {
+    if (a.pursueTargetId && !outArmies[a.pursueTargetId]) {
+      delete (a as { pursueTargetId?: EntityId }).pursueTargetId;
+      const kc = keptCommands[a.commanderId];
+      if (kc && 'pursueTargetId' in kc) {
+        (kc as { pursueTargetId?: EntityId }).pursueTargetId = undefined;
+      }
+    }
+  }
   return {
     date: nextDate,
     cities,

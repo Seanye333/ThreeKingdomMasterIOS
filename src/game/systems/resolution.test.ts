@@ -209,3 +209,27 @@ describe('紮營即不復避戰', () => {
     }
   });
 });
+
+/**
+ * 派生接縫的三道守衛 — deriveArmy is the single place every army is born, and
+ * the long soak proved each of these three is load-bearing:
+ *   · a dead commander still leading a column (most death paths null `forceId`,
+ *     several do not, and the old guard only tested `forceId`)
+ *   · a column at 0 troops still on the map
+ * Guarding at the seam rather than at the ~7 death sites means a death path
+ * added later cannot reintroduce either ghost.
+ */
+describe('deriveArmy 的守衛', () => {
+  it('refuses a corpse and an empty column, not merely a house-less officer', async () => {
+    const src = await import('node:fs').then((fs) =>
+      fs.readFileSync(new URL('./resolution.ts', import.meta.url), 'utf8'));
+    // Anchor on the unique write that IS the derivation, then read backwards —
+    // `const cmdr = officers[cmd.officerId]` appears more than once in a
+    // 4,800-line pass, and the first hit is not this function.
+    const write = src.indexOf('outArmies[cmd.officerId] = {');
+    expect(write, 'deriveArmy write not found').toBeGreaterThan(0);
+    const guard = src.slice(Math.max(0, write - 1600), write);
+    expect(/cmdr\.status === 'dead'/.test(guard), 'must refuse a dead commander').toBe(true);
+    expect(/<= 0\) return/.test(guard), 'must refuse an empty column').toBe(true);
+  });
+});
