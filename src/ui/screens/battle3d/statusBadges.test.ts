@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { STATUS_BADGE, plateBadges, derivedBadges, FATIGUE_BADGE_AT, VALIANT_ROUTS } from './statusBadges';
+import { STATUS_BADGE, plateBadges, derivedBadges, FATIGUE_BADGE_AT, VALIANT_ROUTS, terrainBadge } from './statusBadges';
 import type { TacticalStatus } from '../../../game/types';
 
 /**
@@ -119,5 +119,38 @@ describe('derivedBadges — state that lives outside `effects`', () => {
     });
     expect(out.map((b) => b.zh)).toEqual(['衝鋒勢', '矢盡', '驍勇', '疲憊']);
     expect(new Set(out.map((b) => b.glyph)).size).toBe(4);
+  });
+});
+
+/**
+ * 地利 — high ground is a real per-arm mechanic (archers on a hill ×1.25,
+ * cavalry ×1.30, defender ×0.9). The badge is fed the engine's own numbers, so
+ * these tests are about WHEN it speaks, not about the values themselves.
+ */
+describe('terrainBadge', () => {
+  const T = ['丘陵', 'Hill'] as const;
+  it('flags a commanding position', () => {
+    const b = terrainBadge(1.25, 0.9, ...T)!;
+    expect(b.zh).toBe('得地利');
+    expect(b.tipZh).toContain('攻 ×1.25');
+    expect(b.tipZh).toContain('受擊 ×0.90');
+  });
+
+  it('flags ground that is bad for this arm', () => {
+    // Cavalry in a marsh: ×0.4.
+    const b = terrainBadge(0.4, 1.0, '沼澤', 'Marsh')!;
+    expect(b.zh).toBe('地形不利');
+    expect(b.tipZh).toContain('×0.40');
+  });
+
+  it('stays quiet on ordinary ground', () => {
+    expect(terrainBadge(1.0, 1.0, '平原', 'Plain')).toBeNull();
+    // A trivial edge isn't worth a glyph.
+    expect(terrainBadge(1.05, 0.98, '道路', 'Road')).toBeNull();
+  });
+
+  it('speaks when only one side of the ledger is strong', () => {
+    expect(terrainBadge(1.0, 0.85, ...T)?.zh).toBe('得地利');   // defence only
+    expect(terrainBadge(1.3, 1.0, ...T)?.zh).toBe('得地利');    // attack only
   });
 });

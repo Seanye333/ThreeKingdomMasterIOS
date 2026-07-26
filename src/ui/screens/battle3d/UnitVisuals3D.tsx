@@ -15,7 +15,7 @@ import { SelectionRing3D } from '../../components/SelectionRing3D';
 import { useT } from '../../i18n';
 import { hexWorld } from './battleGrid';
 import { facingRotationY } from './facing';
-import { plateBadges, derivedBadges, FATIGUE_BADGE_AT } from './statusBadges';
+import { plateBadges, derivedBadges, FATIGUE_BADGE_AT, type StatusBadge } from './statusBadges';
 import { EmbeddedSceneCtx, IS_MOBILE, UNIT_GLYPH } from './shared';
 
 /** Subtler grain for armour plate so it catches light without looking pitted. */
@@ -630,7 +630,7 @@ function WarriorFigure({
 }
 
 export function UnitMesh({
-  unit, terrainH, isPlayer, selected, onClick, isWounded, lunge, formation, showArcs,
+  unit, terrainH, isPlayer, selected, onClick, isWounded, lunge, formation, showArcs, ground,
 }: {
   unit: TacticalUnit;
   terrainH: number;
@@ -645,6 +645,9 @@ export function UnitMesh({
   /** 向背 — draw the front/flank/rear arcs under this unit. 'full' for the
    *  selected unit, 'dim' while merely hovered. */
   showArcs?: 'full' | 'dim' | false;
+  /** 地利 — terrain edge badge, computed by the host from the engine's own
+   *  terrainDamageMod / defenderTerrainShield so it can't drift. */
+  ground?: StatusBadge | null;
 }) {
   const t = useT();
   const [tx, tz] = hexWorld(unit.coord.col, unit.coord.row);
@@ -938,7 +941,7 @@ export function UnitMesh({
                 trap you set), and reading a line used to mean clicking
                 through it unit by unit. Worst-first, capped at three so a
                 narrow plate keeps the one that matters. */}
-            {[...plateBadges(unit.effects), ...derivedBadges(unit)].map((b) => (
+            {[...plateBadges(unit.effects), ...derivedBadges(unit), ...(ground ? [ground] : [])].map((b) => (
               <span
                 key={b.glyph}
                 style={{ color: b.color, marginLeft: 3 }}

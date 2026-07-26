@@ -179,3 +179,45 @@ export function derivedBadges(u: DerivedUnitState): StatusBadge[] {
   }
   return out;
 }
+
+/* ─── 地利 ───────────────────────────────────────────────────────────
+ * High ground is already a real, per-unit-type mechanic — archers on a hill
+ * hit at ×1.25, cavalry charge off one at ×1.30, and a defender on it takes
+ * ×0.9 — but on the board it was only legible through the forecast card, which
+ * needs a unit selected AND an enemy hovered. A unit that had seized the
+ * commanding ground looked no different from one in a ditch.
+ *
+ * The numbers come from the engine's own functions rather than a copy, so this
+ * badge can never promise a bonus the combat model doesn't apply.
+ */
+
+/** Show the badge once the edge is worth a glance. */
+const TERRAIN_BADGE_MIN = 1.10;
+
+export function terrainBadge(
+  attackMul: number,
+  defShield: number,
+  terrainZh: string,
+  terrainEn: string,
+): StatusBadge | null {
+  const strongAttack = attackMul >= TERRAIN_BADGE_MIN;
+  const strongDefence = defShield <= 0.92;
+  const weakAttack = attackMul <= 0.7;
+  if (weakAttack) {
+    return {
+      glyph: '陷', color: '#c07a5a', zh: '地形不利', en: 'Bad ground',
+      tipZh: `${terrainZh} — 此地不利本部,攻擊 ×${attackMul.toFixed(2)}`,
+      tipEn: `${terrainEn} — poor ground for this arm, attacks ×${attackMul.toFixed(2)}`,
+    };
+  }
+  if (!strongAttack && !strongDefence) return null;
+  const bits: string[] = [];
+  const bitsEn: string[] = [];
+  if (strongAttack) { bits.push(`攻 ×${attackMul.toFixed(2)}`); bitsEn.push(`attack ×${attackMul.toFixed(2)}`); }
+  if (strongDefence) { bits.push(`受擊 ×${defShield.toFixed(2)}`); bitsEn.push(`damage taken ×${defShield.toFixed(2)}`); }
+  return {
+    glyph: '地', color: '#8ad8a0', zh: '得地利', en: 'Good ground',
+    tipZh: `${terrainZh} — ${bits.join('、')}`,
+    tipEn: `${terrainEn} — ${bitsEn.join(', ')}`,
+  };
+}

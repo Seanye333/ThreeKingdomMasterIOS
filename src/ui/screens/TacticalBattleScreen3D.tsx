@@ -133,7 +133,7 @@ import { HudButton, HudChip } from '../components/HudControls';
 import { hexWorld, HEX_R, HEX_COL_STEP, HEX_ROW_STEP, TERRAIN_HEIGHT, TERRAIN_COLOR } from './battle3d/battleGrid';
 import { EmbeddedSceneCtx, IS_MOBILE, UNIT_GLYPH } from './battle3d/shared';
 import { hitArc, ARC_MUL, ARC_LABEL } from './battle3d/facing';
-import { STATUS_BADGE } from './battle3d/statusBadges';
+import { STATUS_BADGE, terrainBadge } from './battle3d/statusBadges';
 export { EmbeddedSceneCtx };
 import { AdaptiveFx, UnitMesh } from './battle3d/UnitVisuals3D';
 export { hexWorld, HEX_R, HEX_COL_STEP, HEX_ROW_STEP, TERRAIN_HEIGHT, TERRAIN_COLOR };
@@ -2270,6 +2270,18 @@ export function BattleScene({
             showArcs={selectedId === u.id ? 'full'
               : (hovered && hovered.col === u.coord.col && hovered.row === u.coord.row) ? 'dim'
                 : false}
+            // 地利 — computed here from the engine's own terrain functions, so
+            // the badge can never promise an edge the combat model withholds.
+            ground={(() => {
+              const tl = tileAt(battle, u.coord);
+              if (!tl) return null;
+              const L = TERRAIN_LABEL[tl.terrain];
+              return terrainBadge(
+                terrainDamageMod(u.unitType, tl.terrain),
+                defenderTerrainShield(tl.terrain),
+                L?.zh ?? tl.terrain, L?.en ?? tl.terrain,
+              );
+            })()}
           />
         );
       })}
