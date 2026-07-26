@@ -3,9 +3,10 @@
  * lay of its land, the deeds it is remembered for, the flavour of the place in
  * the age of the Three Kingdoms.
  *
- * Purely display flavour (shown read-only in the City panel's 總覽 tab); NOT part
- * of the City runtime type or the save format. Only a subset of the 128 cities
- * carry an entry — the historically resonant ones. Add freely, keyed by city id.
+ * Purely display flavour (the City panel's 總覽 tab reads the whole note; the
+ * world map's hover card takes just the opening line via `cityLoreBrief`);
+ * NOT part of the City runtime type or the save format. All 128 cities carry
+ * an entry — see cityLore.test.ts, which fails if one goes missing.
  */
 export interface CityLore {
   zh: string;
@@ -540,4 +541,25 @@ export const CITY_LORE: Record<string, CityLore> = {
 /** Lookup a city's gazetteer note, or null if it carries none. */
 export function cityLore(cityId: string): CityLore | null {
   return CITY_LORE[cityId] ?? null;
+}
+
+/**
+ * The opening line of a city's note, for places too small to take the whole
+ * thing — the world map's hover card, above all.
+ *
+ * Cuts at the first full stop so the fragment is always a complete thought
+ * (these notes open with the lay of the land and only then get to the
+ * anecdote, so the first sentence is the part that says *where you are*).
+ * Falls back to a hard character cap for the rare note whose first sentence
+ * runs long, and returns null when the city has no entry.
+ */
+export function cityLoreBrief(cityId: string, lang: 'zh' | 'en', maxChars = 64): string | null {
+  const note = CITY_LORE[cityId];
+  if (!note) return null;
+  const text = lang === 'en' ? note.en : note.zh;
+  // 。for the Chinese notes, ". " for the English ones (a bare "." would cut
+  // inside abbreviations and decimals).
+  const stop = lang === 'en' ? text.indexOf('. ') : text.indexOf('。');
+  const first = stop > 0 ? text.slice(0, stop + 1) : text;
+  return first.length > maxChars ? `${first.slice(0, maxChars).trimEnd()}…` : first;
 }

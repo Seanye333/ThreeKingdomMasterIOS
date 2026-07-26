@@ -44,6 +44,7 @@ import { ScenicPanel } from './ScenicPanel';
 import { BuildStockadePicker } from './BuildStockadePicker';
 import { useT, useLanguage, pickName } from '../i18n';
 import { IS_MOBILE, PIXEL_TO_WORLD, MAP_W, MAP_D, EMPTY_HEX_PAINT, EMPTY_TERRITORY_OWNERSHIP, pxToWorld, isLandPx, sampleTerrainHeight, cityElevation, SEASON_ZH, SEASON_EN, GfxDegradedCtx, useGfxDegraded, type OverlayMode } from './map3d/shared';
+import { cityLoreBrief } from '../../game/data/cityLore';
 import { useGLRecovery } from '../hooks/useGLRecovery';
 import { FrameRateWatch } from './FrameRateWatch';
 import { computeBeaconAlerts, QueuedBattles3D, DayEncounterMarks3D, FieldBattleMarks3D, FieldClashMelee3D, IgnitionDust3D, BeaconAlerts3D, SiegeRings3D, BurningCities3D, DepartureFlourish3D, ConquestFlourish3D, LossFlourish3D, EspionageAgents3D } from './map3d/WorldMarks3D';
@@ -832,6 +833,24 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
               {fogged
                 ? <div style={{ color: '#9a8a66' }}>{t('情報不足', 'No intel')}</div>
                 : <div>{t('兵 ', 'Troops ')}{fmt(c.troops)} · {t('糧 ', 'Food ')}{fmt(c.food)}</div>}
+              {/* 風物志 — the opening line of the gazetteer note. Geography and
+                  old stories, not intelligence, so it shows through the fog:
+                  everyone knows what Chibi is, even if they cannot see who
+                  garrisons it. Turns the fogged card from a bare "no intel"
+                  into a reason to care about the place. */}
+              {(() => {
+                const brief = cityLoreBrief(c.id, lang === 'en' ? 'en' : 'zh');
+                if (!brief) return null;
+                return (
+                  <div style={{
+                    marginTop: 3, paddingTop: 3, borderTop: '1px solid #3a2f1c',
+                    color: '#a2906c', fontSize: '10px', fontStyle: 'italic',
+                    whiteSpace: 'normal', maxWidth: 210, lineHeight: 1.45,
+                  }}>
+                    {brief}
+                  </div>
+                );
+              })()}
             </div>
           </Html>
         );
