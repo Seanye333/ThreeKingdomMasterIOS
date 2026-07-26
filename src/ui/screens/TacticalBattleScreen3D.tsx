@@ -15,7 +15,7 @@ import type { EntityId, FormationId, HexCoord, Officer, StratagemId, TacticalBat
 import type { DefenseBuildingId } from '../../game/data/defenseBuildings';
 import { stratagemFxKind, tacticFxKind, tacticFxSpec, FX_DURATION, FX_IMPACT, type StratagemFxInstance, type StratagemFxKind } from '../../game/data/stratagemFx';
 import { categoryOfTactic } from '../../game/data/officerAttributes';
-import { attackUnits, canAttack, canMove, endTurn, hexDistance, moveUnit, resolveBattleEnd, unitAt, tileAt, hexNeighbours, forecastAttack, matchupLabel, battleStratagemSituation, defenderTerrainShield, terrainDamageMod, moveCost, findPath, moveUnitAlong, reachableHexes, isRouting, changeFormation, canChangeFormation, canFortify, fortifyTile, FIELDWORKS_AP_COST, pickAiFormation, formationCounterMul } from '../../game/systems/tactical';
+import { attackUnits, canAttack, canMove, endTurn, hexDistance, moveUnit, resolveBattleEnd, unitAt, tileAt, hexNeighbours, forecastAttack, matchupLabel, battleStratagemSituation, defenderTerrainShield, terrainDamageMod, moveCost, findPath, moveUnitAlong, reachableHexes, isRouting, changeFormation, canChangeFormation, canFortify, fortifyTile, FIELDWORKS_AP_COST, pickAiFormation, formationCounterMul, breakGate, repairWall, scaleWall, batterTargets, repairTargets, scaleTargets, WALL_REPAIR_PER_ACTION } from '../../game/systems/tactical';
 import { applyBattlePrep, applyStratagem, pickAiBattlePrep, pickDuelChampion, canIssuePreBattleDuel, applyPreBattleDuel, aiMaybePreBattleDuel } from '../../game/systems/tacticalSchemes';
 import { duelDread } from '../../game/systems/duelChallenge';
 import { realmEthos, ethosDreadBonus } from '../../game/systems/realmEthos';
@@ -58,6 +58,10 @@ type ActionMode =
   | { kind: 'move' }
   | { kind: 'attack' }
   | { kind: 'duel' }
+  /* 攻城 — pick which stretch of masonry to batter / scale / shore up. Only
+     entered when more than one adjacent hex qualifies; a lone target acts at
+     once, since making the player click twice for a forced choice is noise. */
+  | { kind: 'siege'; act: 'batter' | 'scale' | 'repair' }
   | { kind: 'stratagem'; id: StratagemId; tacticId?: string };
 
 
@@ -134,6 +138,10 @@ import { hexWorld, HEX_R, HEX_COL_STEP, HEX_ROW_STEP, TERRAIN_HEIGHT, TERRAIN_CO
 import { EmbeddedSceneCtx, IS_MOBILE, UNIT_GLYPH } from './battle3d/shared';
 import { hitArc, ARC_MUL, ARC_LABEL } from './battle3d/facing';
 import { STATUS_BADGE, terrainBadge } from './battle3d/statusBadges';
+import {
+  wallFraction, wallState, WALL_STATE_LABEL, fortMaxHp, wallKey, weakestWall,
+  hitsToBreach, repairsOutpace,
+} from './battle3d/wallDamage';
 export { EmbeddedSceneCtx };
 import { AdaptiveFx, UnitMesh } from './battle3d/UnitVisuals3D';
 export { hexWorld, HEX_R, HEX_COL_STEP, HEX_ROW_STEP, TERRAIN_HEIGHT, TERRAIN_COLOR };
@@ -564,7 +572,26 @@ export function TownHouse({ coord }: { coord: HexCoord }) {
   );
 }
 
-export function CityWall({ coord, bannerColor, rotY = 0 }: { coord: HexCoord; bannerColor: string; rotY?: number }) {
+/**
+ * 崩落 — which merlons have been knocked off a battered wall.
+ *
+ * Deterministic per hex and per merlon, so a wall doesn't reshuffle its damage
+ * every frame: each merlon gets a stable 0..1 threshold from its coordinates
+ * and falls once the wall has taken more damage than that. Spreading the
+ * thresholds (rather than knocking them out in index order) keeps neighbouring
+ * wall hexes from crumbling in the same visible pattern.
+ */
+function merlonGone(coord: HexCoord, i: number, damage: number): boolean {
+  const h = ((coord.col * 73856093) ^ (coord.row * 19349663) ^ (i * 83492791)) >>> 0;
+  return damage > 0.15 + ((h % 100) / 100) * 0.8;
+}
+
+/** Soot and bare stone as masonry is beaten down. */
+function batteredStone(base: string, damage: number): string {
+  return new THREE.Color(base).lerp(new THREE.Color('#3b3230'), damage * 0.55).getStyle();
+}
+
+export function CityWall({ coord, bannerColor, rotY = 0, damage = 0 }: { coord: HexCoord; bannerColor: string; rotY?: number; damage?: number }) {
   const [x, z] = hexWorld(coord.col, coord.row);
   const pennantRef = useRef<THREE.Mesh>(null);
   useFrame(({ clock }) => {
@@ -572,68 +599,124 @@ export function CityWall({ coord, bannerColor, rotY = 0 }: { coord: HexCoord; ba
       pennantRef.current.rotation.y = Math.sin(clock.elapsedTime * 1.8) * 0.3;
     }
   });
+  // The body slumps a little as it is beaten down, so a failing wall reads as
+  // lower than a sound one even from a shallow camera angle.
+  const bodyH = 1.4 - damage * 0.22;
+  const stone = batteredStone('#6a5540', damage);
+  const merlonStone = batteredStone('#7a6550', damage);
   return (
     <group position={[x, 0, z]} rotation={[0, rotY, 0]}>
       {/* Wall body — thick stone block */}
-      <mesh position={[0, 0.7, 0]} castShadow receiveShadow>
-        <boxGeometry args={[1.6, 1.4, 1.6]} />
-        <meshStandardMaterial color="#6a5540" roughness={0.92} />
+      <mesh position={[0, bodyH / 2, 0]} castShadow receiveShadow>
+        <boxGeometry args={[1.6, bodyH, 1.6]} />
+        <meshStandardMaterial color={stone} roughness={0.92} />
       </mesh>
-      {/* Tiled coping along the wall-walk */}
-      <mesh position={[0, 1.42, 0]} castShadow>
-        <boxGeometry args={[1.68, 0.1, 1.68]} />
-        <meshStandardMaterial color="#39444f" roughness={0.7} />
-      </mesh>
-      {/* Crenellations on top edge */}
-      {[-0.6, -0.2, 0.2, 0.6].map((px, i) => (
-        <mesh key={i} position={[px, 1.5, 0.6]} castShadow>
+      {/* Tiled coping along the wall-walk — shears off once the wall is failing. */}
+      {damage < 0.75 && (
+        <mesh position={[0, bodyH + 0.02, 0]} castShadow>
+          <boxGeometry args={[1.68, 0.1, 1.68]} />
+          <meshStandardMaterial color={batteredStone('#39444f', damage)} roughness={0.7} />
+        </mesh>
+      )}
+      {/* Crenellations on top edge — knocked out one by one under bombardment. */}
+      {[-0.6, -0.2, 0.2, 0.6].map((px, i) => !merlonGone(coord, i, damage) && (
+        <mesh key={i} position={[px, bodyH + 0.1, 0.6]} castShadow>
           <boxGeometry args={[0.3, 0.25, 0.3]} />
-          <meshStandardMaterial color="#7a6550" roughness={0.92} />
+          <meshStandardMaterial color={merlonStone} roughness={0.92} />
         </mesh>
       ))}
-      {[-0.6, -0.2, 0.2, 0.6].map((px, i) => (
-        <mesh key={`b${i}`} position={[px, 1.5, -0.6]} castShadow>
+      {[-0.6, -0.2, 0.2, 0.6].map((px, i) => !merlonGone(coord, i + 4, damage) && (
+        <mesh key={`b${i}`} position={[px, bodyH + 0.1, -0.6]} castShadow>
           <boxGeometry args={[0.3, 0.25, 0.3]} />
-          <meshStandardMaterial color="#7a6550" roughness={0.92} />
+          <meshStandardMaterial color={merlonStone} roughness={0.92} />
         </mesh>
       ))}
-      {/* Banner pole + flag */}
-      <mesh position={[0.6, 2.1, 0]} castShadow>
-        <cylinderGeometry args={[0.04, 0.04, 1.2, 6]} />
-        <meshStandardMaterial color="#1a1410" />
-      </mesh>
-      <mesh ref={pennantRef} position={[0.85, 2.5, 0]} castShadow>
-        <planeGeometry args={[0.5, 0.3]} />
-        <meshStandardMaterial color={bannerColor} side={THREE.DoubleSide} />
-      </mesh>
+      {/* Rubble piling at the foot of a wall that has taken real punishment. */}
+      {damage > 0.35 && [0, 1, 2, 3].map((i) => {
+        const h = ((coord.col * 40503) ^ (coord.row * 12289) ^ (i * 6151)) >>> 0;
+        const s = 0.1 + ((h >> 3) % 9) / 60;
+        return (
+          <mesh
+            key={`rub${i}`}
+            position={[-0.9 + ((h % 7) / 7) * 0.5, s * 0.5, -0.7 + ((h >> 6) % 15) / 10]}
+            rotation={[0, ((h >> 9) % 12) / 2, 0]}
+            castShadow
+          >
+            <boxGeometry args={[s, s, s * 0.8]} />
+            <meshStandardMaterial color={merlonStone} roughness={0.95} />
+          </mesh>
+        );
+      })}
+      {/* Banner pole + flag — the colours come down when the wall is about to go. */}
+      {damage < 0.8 && (
+        <>
+          <mesh position={[0.6, bodyH + 0.7, 0]} castShadow>
+            <cylinderGeometry args={[0.04, 0.04, 1.2, 6]} />
+            <meshStandardMaterial color="#1a1410" />
+          </mesh>
+          <mesh ref={pennantRef} position={[0.85, bodyH + 1.1, 0]} castShadow>
+            <planeGeometry args={[0.5, 0.3]} />
+            <meshStandardMaterial color={bannerColor} side={THREE.DoubleSide} />
+          </mesh>
+        </>
+      )}
     </group>
   );
 }
 
 /** A grand gatehouse for the centre of a besieged wall — a two-storey tower
  *  with red columns, a swept double-eave roof and a fluttering banner. */
-export function WallGate3D({ coord, bannerColor, rotY = 0 }: { coord: HexCoord; bannerColor: string; rotY?: number }) {
+export function WallGate3D({ coord, bannerColor, rotY = 0, damage = 0 }: { coord: HexCoord; bannerColor: string; rotY?: number; damage?: number }) {
   const [x, z] = hexWorld(coord.col, coord.row);
   const pennant = useRef<THREE.Mesh>(null);
   useFrame(({ clock }) => {
     if (pennant.current) pennant.current.rotation.y = Math.sin(clock.elapsedTime * 1.8) * 0.3;
   });
+  const stone = batteredStone('#6a5540', damage);
+  // The ram works on the door, so that is where the damage has to read: the
+  // leaves splinter, then buckle inward off their hinges.
+  const doorSag = damage * 0.34;
   return (
     <group position={[x, 0, z]} rotation={[0, rotY, 0]}>
       {/* Gate base + tiled coping */}
       <mesh position={[0, 0.85, 0]} castShadow receiveShadow>
         <boxGeometry args={[1.6, 1.7, 1.6]} />
-        <meshStandardMaterial color="#6a5540" roughness={0.92} />
+        <meshStandardMaterial color={stone} roughness={0.92} />
       </mesh>
       <mesh position={[0, 1.74, 0]} castShadow>
         <boxGeometry args={[1.68, 0.1, 1.68]} />
-        <meshStandardMaterial color="#39444f" roughness={0.7} />
+        <meshStandardMaterial color={batteredStone('#39444f', damage)} roughness={0.7} />
       </mesh>
-      {/* Wooden gate door facing the attackers (-x) */}
-      <mesh position={[-0.82, 0.62, 0]} castShadow>
-        <boxGeometry args={[0.04, 1.1, 0.7]} />
-        <meshStandardMaterial color="#4a2f1a" roughness={0.8} />
-      </mesh>
+      {/* Wooden gate door facing the attackers (-x) — splits into two buckling
+          leaves as the ram works on it, and hangs open when it is nearly through. */}
+      <group position={[-0.82, 0.62, 0]} rotation={[doorSag * 0.5, 0, 0]}>
+        {[-0.18, 0.18].map((dz, i) => (
+          <mesh
+            key={i}
+            position={[i === 0 ? -doorSag * 0.12 : doorSag * 0.1, 0, dz * (1 + doorSag)]}
+            rotation={[0, (i === 0 ? -1 : 1) * doorSag * 0.8, 0]}
+            castShadow
+          >
+            <boxGeometry args={[0.04, 1.1 - doorSag * 0.18, 0.34]} />
+            <meshStandardMaterial color={batteredStone('#4a2f1a', damage * 0.7)} roughness={0.8} />
+          </mesh>
+        ))}
+      </group>
+      {/* Splintered timber at the threshold once the ram has bitten. */}
+      {damage > 0.4 && [0, 1, 2].map((i) => {
+        const h = ((coord.col * 27644437) ^ (coord.row * 3860031) ^ (i * 40503)) >>> 0;
+        return (
+          <mesh
+            key={`spl${i}`}
+            position={[-0.95 - ((h % 5) / 20), 0.06, -0.4 + ((h >> 4) % 9) / 10]}
+            rotation={[0, ((h >> 8) % 12) / 2, Math.PI / 2.2]}
+            castShadow
+          >
+            <boxGeometry args={[0.05, 0.34, 0.05]} />
+            <meshStandardMaterial color="#3a2412" roughness={0.9} />
+          </mesh>
+        );
+      })}
       {/* Upper storey + red columns */}
       <mesh position={[0, 2.2, 0]} castShadow receiveShadow>
         <boxGeometry args={[1.45, 0.8, 1.15]} />
@@ -1761,17 +1844,68 @@ function ChainLink({ a, c }: { a: HexCoord; c: HexCoord }) {
 /** 攻城 — garrison silhouettes man the battlements, and assault ladders lean
  *  against any wall an attacker has reached. A first-pass siege dressing. */
 function SiegeOverlay({ battle, playerSide }: { battle: TacticalBattle; playerSide: 'attacker' | 'defender' | null }) {
+  const t9n = useT();
   const wallTiles = battle.tiles.filter((t) => t.terrain === 'wall' || t.terrain === 'gate');
   if (wallTiles.length === 0) return null;
   const defColor = playerSide === 'defender' ? '#3a7dd9' : '#b8442e';
   const attackers = battle.units.filter((u) => u.side === 'attacker' && u.troops > 0);
+  /* 城防 — the weakest hex is the one both sides are playing for: the attacker
+     concentrates on it, the defender spends an action shoring it up. */
+  const weakest = weakestWall(battle);
   return (
     <>
       {wallTiles.map((t) => {
         const [x, z] = hexWorld(t.coord.col, t.coord.row);
         const adj = attackers.find((a) => hexDistance(a.coord, t.coord) === 1);
+        const hp = battle.wallHp?.[wallKey(t.coord)];
+        const frac = wallFraction(hp, t.terrain);
+        const state = wallState(hp, t.terrain);
+        const label = WALL_STATE_LABEL[state];
+        const isWeakest = !!weakest
+          && weakest.coord.col === t.coord.col && weakest.coord.row === t.coord.row;
         return (
           <group key={`siege-${t.coord.col},${t.coord.row}`} position={[x, 0, z]} raycast={() => null}>
+            {/* 城防狀態 — only once the masonry has actually been hit, so an
+                untouched curtain wall isn't papered over with plates. The
+                engine tracks this per hex and nothing used to show it: a wall
+                at 40 HP looked exactly like one at 1000. */}
+            {hp !== undefined && state !== 'intact' && (
+              <Html
+                position={[0, t.terrain === 'gate' ? 4.1 : 2.6, 0]}
+                center
+                distanceFactor={9}
+                zIndexRange={[9, 0]}
+                style={{ pointerEvents: 'none' }}
+              >
+                <div style={{
+                  background: 'rgba(20, 14, 8, 0.86)',
+                  border: `1.5px solid ${label.color}`,
+                  borderRadius: 'var(--tkm-radius-xs)',
+                  padding: '2px 5px',
+                  minWidth: 62,
+                  fontFamily: 'var(--tkm-font-body)',
+                  fontSize: '11px',
+                  color: '#f0e0b0',
+                  textAlign: 'center',
+                  whiteSpace: 'nowrap',
+                  boxShadow: isWeakest ? `0 0 12px ${label.color}` : 'none',
+                }}>
+                  <div style={{ color: label.color, fontWeight: 'bold' }}>
+                    {t9n(t.terrain === 'gate' ? '城門' : '城牆', t.terrain === 'gate' ? 'Gate' : 'Wall')}
+                    {' '}{t9n(label.zh, label.en)}
+                  </div>
+                  <div style={{
+                    height: 4, marginTop: 2, background: 'rgba(0,0,0,0.55)',
+                    borderRadius: 2, overflow: 'hidden',
+                  }}>
+                    <div style={{ width: `${Math.round(frac * 100)}%`, height: '100%', background: label.color }} />
+                  </div>
+                  <div style={{ fontSize: '9px', opacity: 0.75, marginTop: 1 }}>
+                    {Math.max(0, Math.round(hp)).toLocaleString()} / {fortMaxHp(t.terrain).toLocaleString()}
+                  </div>
+                </div>
+              </Html>
+            )}
             {/* Defenders on the rampart (walls only — gate is the breach). */}
             {t.terrain === 'wall' && [-0.42, 0.42].map((dx, i) => (
               <group key={i} position={[dx, 1.55, 0]}>
@@ -2015,6 +2149,15 @@ export function BattleScene({
           m.set(`${u.coord.col},${u.coord.row}`, 'attack');
         }
       }
+    } else if (actionMode.kind === 'siege') {
+      // 攻城 — light up the masonry this unit can actually work on. Repairs are
+      // friendly work, so they get the move tint rather than the attack red.
+      const legal = actionMode.act === 'batter' ? batterTargets(battle, selectedUnit.id)
+        : actionMode.act === 'scale' ? scaleTargets(battle, selectedUnit.id)
+        : repairTargets(battle, selectedUnit.id);
+      for (const c of legal) {
+        m.set(`${c.col},${c.row}`, actionMode.act === 'repair' ? 'move' : 'attack');
+      }
     } else if (actionMode.kind === 'stratagem') {
       // 計謀預覽 — tint the castable range; ring the hovered cell's splash.
       const def = STRATAGEM_RANGE[actionMode.id];
@@ -2188,11 +2331,13 @@ export function BattleScene({
         };
         const pieces = wallTiles
           .filter((t) => !structureCoords.has(`${t.coord.col},${t.coord.row}`))
-          .map((t) => (
-            t.terrain === 'gate'
-              ? <WallGate3D key={`gate-${t.coord.col},${t.coord.row}`} coord={t.coord} bannerColor={wallBanner} rotY={rotFor(t)} />
-              : <CityWall key={`wall-${t.coord.col},${t.coord.row}`} coord={t.coord} bannerColor={wallBanner} rotY={rotFor(t)} />
-          ));
+          .map((t) => {
+            // 0 = sound, 1 = about to breach. Untracked hexes read as sound.
+            const dmg = 1 - wallFraction(battle.wallHp?.[wallKey(t.coord)], t.terrain);
+            return t.terrain === 'gate'
+              ? <WallGate3D key={`gate-${t.coord.col},${t.coord.row}`} coord={t.coord} bannerColor={wallBanner} rotY={rotFor(t)} damage={dmg} />
+              : <CityWall key={`wall-${t.coord.col},${t.coord.row}`} coord={t.coord} bannerColor={wallBanner} rotY={rotFor(t)} damage={dmg} />;
+          });
         // Interior streets — sprinkle homes on plain ground inside the walls.
         const houses = tiles
           .filter((t) => t.terrain === 'plain'
@@ -2845,6 +2990,21 @@ export function TacticalBattleScreen3D() {
           return;
         }
       }
+    }
+    // 攻城 — a stretch of masonry was picked out of several legal ones.
+    if (actionMode.kind === 'siege') {
+      const { act } = actionMode;
+      const legal = act === 'batter' ? batterTargets(battle, selectedUnit.id)
+        : act === 'scale' ? scaleTargets(battle, selectedUnit.id)
+        : repairTargets(battle, selectedUnit.id);
+      if (legal.some((h) => h.col === c.col && h.row === c.row)) {
+        playSfx(act === 'batter' ? 'crash' : act === 'scale' ? 'march' : 'thud');
+        start(act === 'batter' ? breakGate(battle, selectedUnit.id, c)
+          : act === 'scale' ? scaleWall(battle, selectedUnit.id, c)
+          : repairWall(battle, selectedUnit.id, c));
+        setActionMode({ kind: 'none' });
+      }
+      return;
     }
     if (actionMode.kind === 'attack' && u && u.side !== playerSide && canAttack(battle, selectedUnit, u)) {
       const kind: 'melee' | 'ranged' = selectedUnit.unitType === 'archers' || selectedUnit.unitType === 'siege' ? 'ranged' : 'melee';
@@ -3629,6 +3789,37 @@ export function TacticalBattleScreen3D() {
                   {atkMod > 1 ? '⤴' : '⤵'} {t(`我軍在此出擊 ×${atkMod.toFixed(2)}`, `attacking from here ×${atkMod.toFixed(2)}`)}
                 </div>
               )}
+              {/* 攻城預判 — a besieged wall is a race between the ram and the
+                  garrison's repairs, and the engine runs it in full. Say how
+                  many more assaults this contingent needs, and warn when 搶修
+                  is undoing the battering faster than it lands. */}
+              {tl && (tl.terrain === 'wall' || tl.terrain === 'gate') && (() => {
+                const hp = battle.wallHp?.[wallKey(hovered)];
+                if (hp === undefined) return null;
+                const st = wallState(hp, tl.terrain);
+                const L = WALL_STATE_LABEL[st];
+                const siege = mine && selectedUnit!.unitType === 'siege'
+                  && hexDistance(selectedUnit!.coord, hovered) === 1
+                  ? selectedUnit! : null;
+                return (
+                  <>
+                    <div style={{ color: L.color }}>
+                      🧱 {t(`城防 ${L.zh}`, `Fortification ${L.en}`)}
+                      {' '}{Math.max(0, Math.round(hp)).toLocaleString()}/{fortMaxHp(tl.terrain).toLocaleString()}
+                    </div>
+                    {siege && (
+                      <div style={{ color: 'var(--tkm-hud-gold)' }}>
+                        🔨 {t(`再攻 ${hitsToBreach(hp, siege.troops)} 次可破`, `${hitsToBreach(hp, siege.troops)} more assaults to breach`)}
+                      </div>
+                    )}
+                    {siege && repairsOutpace(siege.troops) && (
+                      <div style={{ color: 'var(--tkm-hud-ember)' }}>
+                        ⚠ {t('守軍搶修快過此部鑿擊 — 需再調攻城械或改雲梯登城', 'Repairs out-pace this engine — bring another or scale the wall')}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           );
         })()}
@@ -3643,6 +3834,14 @@ export function TacticalBattleScreen3D() {
             attack: { color: 'var(--tkm-hud-red)', text: t('點擊紅色敵軍攻擊', 'Click a red enemy to attack') },
             duel: { color: 'var(--tkm-hud-gold)', text: t('點擊相鄰敵將一騎打', 'Click an adjacent enemy to duel') },
             stratagem: { color: '#c19a3b', text: t('點擊目標施放計略', 'Click a target to cast stratagem') },
+            siege: {
+              color: 'var(--tkm-hud-ember)',
+              text: actionMode.kind === 'siege' && actionMode.act === 'repair'
+                ? t('點擊要搶修的城防', 'Click the fortification to repair')
+                : actionMode.kind === 'siege' && actionMode.act === 'scale'
+                  ? t('點擊要攀登的城牆', 'Click the wall to scale')
+                  : t('點擊要鑿擊的城牆或城門', 'Click the wall or gate to batter'),
+            },
           }[actionMode.kind];
           // 戰法情境預覽 — while a stratagem is armed, read out how the current
           // weather/terrain bends it, before you've even picked a target.
@@ -4327,6 +4526,68 @@ function UnitPanel3D({
             onClick={() => { playSfx('click'); startBattle(fortifyTile(battle, unit.id)); setActionMode({ kind: 'none' }); }}
           >⛏ {t('築壘', 'Entrench')} <span style={{ float: 'right', color: 'var(--tkm-hud-dim)' }}>{FIELDWORKS_AP_COST} AP</span></button>
         )}
+        {/* 攻城三動作 — battering, scaling and repairing were all implemented in
+            the engine but only ever called from the AI, so a besieging player
+            could not open a wall at all and a defending one could not shore one
+            up. Each appears only where the engine says it would do something. */}
+        {(() => {
+          const rows: Array<{
+            act: 'batter' | 'scale' | 'repair';
+            targets: HexCoord[];
+            glyph: string; zh: string; en: string; tipZh: string; tipEn: string; color: string;
+            run: (c: HexCoord) => TacticalBattle;
+            sfx: Parameters<typeof playSfx>[0];
+          }> = [
+            {
+              act: 'batter', targets: batterTargets(battle, unit.id),
+              glyph: '🔨', zh: '破城', en: 'Batter', color: 'var(--tkm-hud-ember)',
+              tipZh: '以攻城械鑿擊相鄰城牆或城門 — 城牆 1000、城門 700,每擊約 兵數×0.15+120,歸零則成缺口。',
+              tipEn: 'Batter an adjacent wall or gate — wall 1000 HP, gate 700, roughly troops×0.15+120 per assault; it breaches at zero.',
+              run: (c) => breakGate(battle, unit.id, c), sfx: 'crash',
+            },
+            {
+              act: 'scale', targets: scaleTargets(battle, unit.id),
+              glyph: '🪜', zh: '雲梯登城', en: 'Scale', color: 'var(--tkm-hud-gold)',
+              tipZh: '踏雲梯翻越城牆,直落牆內 — 須有我方攻城械貼著同一段牆,且牆內有空格可落腳。耗盡行動。',
+              tipEn: 'Storm over the rampart and drop inside — needs a friendly siege engine braced on that same wall and a free hex behind it. Costs all AP.',
+              run: (c) => scaleWall(battle, unit.id, c), sfx: 'march',
+            },
+            {
+              act: 'repair', targets: repairTargets(battle, unit.id),
+              glyph: '🧱', zh: '搶修城防', en: 'Repair', color: 'var(--tkm-hud-mint)',
+              tipZh: `搶修相鄰受損城防 +${WALL_REPAIR_PER_ACTION} — 若快過敵軍鑿擊,城牆便永不告破。耗盡行動。`,
+              tipEn: `Shore up an adjacent damaged fortification by ${WALL_REPAIR_PER_ACTION} — out-pace the battering and the wall never falls. Costs all AP.`,
+              run: (c) => repairWall(battle, unit.id, c), sfx: 'thud',
+            },
+          ];
+          return rows.filter((r) => r.targets.length > 0).map((r) => {
+            const armed = actionMode.kind === 'siege' && actionMode.act === r.act;
+            return (
+              <button
+                key={r.act}
+                style={{ ...btnBase, ...(armed ? btnActive : {}), opacity: apDisabled ? 0.4 : 1 }}
+                disabled={apDisabled}
+                title={t(r.tipZh, r.tipEn)}
+                onClick={() => {
+                  if (armed) { setActionMode({ kind: 'none' }); return; }
+                  // One legal stretch of wall is not a choice — just do it.
+                  if (r.targets.length === 1) {
+                    playSfx(r.sfx);
+                    startBattle(r.run(r.targets[0]));
+                    setActionMode({ kind: 'none' });
+                    return;
+                  }
+                  playSfx('click');
+                  setActionMode({ kind: 'siege', act: r.act });
+                }}
+              >{r.glyph} {t(r.zh, r.en)}{' '}
+                <span style={{ float: 'right', color: r.color }}>
+                  {r.targets.length > 1 ? t(`${r.targets.length} 處`, `${r.targets.length} spots`) : t('1 AP', '1 AP')}
+                </span>
+              </button>
+            );
+          });
+        })()}
       </div>
 
       {availableStratagems.length > 0 && (
