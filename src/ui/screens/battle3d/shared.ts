@@ -10,3 +10,11 @@ export const EmbeddedSceneCtx = createContext(false);
  *  post-processing pass so phones keep a playable framerate. */
 export const IS_MOBILE = typeof window !== 'undefined'
   && (window.matchMedia?.('(pointer: coarse)')?.matches || window.innerWidth < 700);
+
+/** 兵種字 — one character per unit type, for nameplates and panels. Lives here
+ *  rather than beside the unit components so those files export only
+ *  components (react-refresh/only-export-components). */
+export const UNIT_GLYPH: Record<import('../../../game/types').UnitType, string> = {
+  infantry: '歩', spearmen: '槍', cavalry: '騎',
+  archers: '弓', siege: '攻', navy: '水',
+};

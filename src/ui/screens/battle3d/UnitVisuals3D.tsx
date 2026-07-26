@@ -8,24 +8,20 @@ import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { SURFACE } from '../../materials';
-import type { HexCoord, TacticalUnit, UnitType } from '../../../game/types';
+import type { HexCoord, TacticalUnit } from '../../../game/types';
 import { eliteUnitOf } from '../../../game/systems/tactical';
 import { groundNormalTexture } from '../battleTextures';
 import { SelectionRing3D } from '../../components/SelectionRing3D';
 import { useT } from '../../i18n';
 import { hexWorld } from './battleGrid';
 import { facingRotationY } from './facing';
-import { plateBadges } from './statusBadges';
-import { EmbeddedSceneCtx, IS_MOBILE } from './shared';
+import { plateBadges, derivedBadges, FATIGUE_BADGE_AT } from './statusBadges';
+import { EmbeddedSceneCtx, IS_MOBILE, UNIT_GLYPH } from './shared';
 
 /** Subtler grain for armour plate so it catches light without looking pitted. */
 const ARMOR_NORMAL_SCALE = new THREE.Vector2(0.35, 0.35);
 const armorNormal = groundNormalTexture();
 
-export const UNIT_GLYPH: Record<UnitType, string> = {
-  infantry: '歩', spearmen: '槍', cavalry: '騎',
-  archers: '弓', siege: '攻', navy: '水',
-};
 
 /* ─── Per-unit-type mount (horse / cart / boat) under the rider ──── */
 function UnitMount({ unit, onClick }: { unit: TacticalUnit; onClick: () => void }) {
@@ -281,7 +277,7 @@ function UnitRetinue({ troops, color, unitType, formation }: { troops: number; c
       const h1 = Math.abs(Math.sin(i * 12.9898 + 1.3));
       const h2 = Math.abs(Math.sin(i * 78.233 + 0.7));
       const jx = (h1 - 0.5) * 0.07, jz = (h2 - 0.5) * 0.07;
-      let x = 0, z = 0;
+      let x: number, z: number;
       if (shape === 'wedge') {
         // rows of 1,2,3… — the point faces the enemy (forward = -z? host sits behind hero at -z, point toward hero)
         let row = 0, acc = 0;
@@ -654,6 +650,13 @@ export function UnitMesh({
   const [tx, tz] = hexWorld(unit.coord.col, unit.coord.row);
   const color = isPlayer ? '#3a7dd9' : '#b8442e';
   const embedded = useContext(EmbeddedSceneCtx);
+  // 騎乘高度 — declared before the frame loop, which reads it (a mounted
+  // rider's blood spray and banners sit higher than a footman's).
+  const yLift =
+    unit.unitType === 'cavalry' ? 0.30 :
+    unit.unitType === 'siege'   ? 0.32 :
+    unit.unitType === 'navy'    ? 0.18 :
+    0;
   // Animated position — lerps to target hex when unit moves
   const groupRef = useRef<THREE.Group>(null);
   const prevTarget = useRef<{ x: number; z: number }>({ x: tx, z: tz });
@@ -690,9 +693,13 @@ export function UnitMesh({
     // Idle bob + selected hover
     const moving = Math.abs(tgt.x - tx) > 0.01 || Math.abs(tgt.z - tz) > 0.01;
     const bobBase = terrainH + 0.02;
-    tgt.y = bobBase
+    // 師老兵疲 — a spent column stands lower and its idle breathing slows, so
+    // a worn unit reads as worn before you check the number (freshMul costs it
+    // up to −30% damage).
+    const spent = (unit.fatigue ?? 0) >= FATIGUE_BADGE_AT ? 1 : 0;
+    tgt.y = bobBase - spent * 0.05
       + (selected ? Math.sin(clock.elapsedTime * 3) * 0.05 : 0)
-      + (moving ? Math.abs(Math.sin(clock.elapsedTime * 10)) * 0.08 : 0);  // walking bounce
+      + (moving ? Math.abs(Math.sin(clock.elapsedTime * (spent ? 7 : 10))) * (spent ? 0.05 : 0.08) : 0);
     prevTarget.current = { x: tx, z: tz };
     // 行軍揚塵 — kick up dust while on the move; it lingers ~0.4s after halting.
     if (moving) lastMoveAt.current = clock.elapsedTime;
@@ -769,6 +776,24 @@ export function UnitMesh({
       tgt.z += (dz / len) * lungeT * reach;
       // Cavalry dips forward as it tramples through.
       if (unit.unitType === 'cavalry') tgt.y -= lungeT * 0.12;
+      if (lungeT > 0) {
+        // 轉身接戰 — a unit turns onto whatever it is striking. Until now it
+        // lunged sideways while still facing its old bearing, which read as a
+        // shove rather than a blow. Blends toward the target and settles back
+        // to `facing` as the strike ends.
+        const want = Math.atan2(dx, -dz);
+        let d = want - g.rotation.y;
+        while (d > Math.PI) d -= Math.PI * 2;
+        while (d < -Math.PI) d += Math.PI * 2;
+        g.rotation.y += d * lungeT;
+        // 揮擊 — the whole body leans into the swing and twists with it, so a
+        // melee hit has a motion of its own instead of only the target's
+        // flinch. Spears jab (little lean, hard twist); blades and hooves
+        // commit forward.
+        const jab = unit.unitType === 'spearmen';
+        g.rotation.x += lungeT * (jab ? 0.10 : 0.20);
+        g.rotation.z += Math.sin(lungeT * Math.PI) * (jab ? 0.16 : 0.10);
+      }
     }
     // 陣亡 — once wiped out, the husk topples, sinks and fades before it's
     // pruned, instead of blinking out of existence.
@@ -789,11 +814,6 @@ export function UnitMesh({
     }
   });
   // Mount lifts the rider/driver/sailor above the ground feature
-  const yLift =
-    unit.unitType === 'cavalry' ? 0.30 :
-    unit.unitType === 'siege'   ? 0.32 :
-    unit.unitType === 'navy'    ? 0.18 :
-    0;
 
   return (
     <group ref={groupRef} position={[tx, terrainH + 0.02, tz]}>
@@ -918,7 +938,7 @@ export function UnitMesh({
                 trap you set), and reading a line used to mean clicking
                 through it unit by unit. Worst-first, capped at three so a
                 narrow plate keeps the one that matters. */}
-            {plateBadges(unit.effects).map((b) => (
+            {[...plateBadges(unit.effects), ...derivedBadges(unit)].map((b) => (
               <span
                 key={b.glyph}
                 style={{ color: b.color, marginLeft: 3 }}

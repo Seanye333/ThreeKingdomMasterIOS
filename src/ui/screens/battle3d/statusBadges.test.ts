@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { STATUS_BADGE, plateBadges } from './statusBadges';
+import { STATUS_BADGE, plateBadges, derivedBadges, FATIGUE_BADGE_AT, VALIANT_ROUTS } from './statusBadges';
 import type { TacticalStatus } from '../../../game/types';
 
 /**
@@ -62,5 +62,62 @@ describe('plateBadges — what fits on a nameplate', () => {
   it('never repeats a badge when a status is somehow doubled', () => {
     const out = plateBadges([eff('burning'), eff('burning')]);
     expect(out.length).toBe(1);
+  });
+});
+
+describe('derivedBadges — state that lives outside `effects`', () => {
+  it('flags charge momentum only where a charge can actually land', () => {
+    const cav = { unitType: 'cavalry', charge: { dist: 3 } };
+    expect(derivedBadges(cav)[0].zh).toBe('衝鋒勢');
+    // One hex is not a charge (the engine wants dist ≥ 2).
+    expect(derivedBadges({ unitType: 'cavalry', charge: { dist: 1 } })).toEqual([]);
+    // Siege and navy get no charge bonus, so they must not claim one.
+    expect(derivedBadges({ unitType: 'siege', charge: { dist: 4 } })).toEqual([]);
+    expect(derivedBadges({ unitType: 'navy', charge: { dist: 4 } })).toEqual([]);
+  });
+
+  it('flags an empty quiver, and only for units that carry one', () => {
+    expect(derivedBadges({ unitType: 'archers', ammo: 0, maxAmmo: 3 })[0].zh).toBe('矢盡');
+    expect(derivedBadges({ unitType: 'archers', ammo: 2, maxAmmo: 3 })).toEqual([]);
+    // Infantry have no maxAmmo at all — never show the badge.
+    expect(derivedBadges({ unitType: 'infantry' })).toEqual([]);
+  });
+
+  it('flags fatigue at the threshold and quotes the real penalty', () => {
+    expect(derivedBadges({ unitType: 'infantry', fatigue: FATIGUE_BADGE_AT - 1 })).toEqual([]);
+    const spent = derivedBadges({ unitType: 'infantry', fatigue: 333 })[0];
+    expect(spent.zh).toBe('疲憊');
+    // freshMul caps the loss at 30%, so the tip must not promise more.
+    expect(spent.tipZh).toContain('30%');
+  });
+
+  /**
+   * `kills` counts enemy UNITS routed (+1 per rout), NOT men — it tops out in
+   * the low tens. A men-scaled threshold would never fire, which is exactly
+   * the bug the first version of this badge shipped with.
+   */
+  it('honours a unit by routs, or by felling more men than it fields', () => {
+    expect(derivedBadges({ unitType: 'infantry', kills: VALIANT_ROUTS })[0].zh).toBe('驍勇');
+    expect(derivedBadges({ unitType: 'infantry', kills: VALIANT_ROUTS - 1 })).toEqual([]);
+    // Out-fought on troops alone, without routing anything.
+    const heavy = derivedBadges({ unitType: 'infantry', damageDealt: 6000, maxTroops: 5000 });
+    expect(heavy[0].zh).toBe('驍勇');
+    expect(heavy[0].tipZh).toContain('逾本部之數');
+    // Below both bars.
+    expect(derivedBadges({ unitType: 'infantry', damageDealt: 100, maxTroops: 5000 })).toEqual([]);
+  });
+
+  it('never scales the rout count against troop numbers', () => {
+    // 3 routs is a lot; 3 men-worth of damage is nothing. The badge must fire
+    // on the former and not depend on maxTroops to do it.
+    expect(derivedBadges({ unitType: 'infantry', kills: 3 }).length).toBe(1);
+  });
+
+  it('can show several at once without collision', () => {
+    const out = derivedBadges({
+      unitType: 'archers', charge: { dist: 2 }, ammo: 0, maxAmmo: 2, fatigue: 300, kills: 2,
+    });
+    expect(out.map((b) => b.zh)).toEqual(['衝鋒勢', '矢盡', '驍勇', '疲憊']);
+    expect(new Set(out.map((b) => b.glyph)).size).toBe(4);
   });
 });
