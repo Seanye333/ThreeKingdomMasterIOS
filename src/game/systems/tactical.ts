@@ -1063,7 +1063,15 @@ function processRout(b: TacticalBattle): TacticalBattle {
 }
 
 /** Max HP a fortification repairs back toward, by kind. */
-const FORT_MAX_HP: Record<string, number> = { wall: 1000, gate: 700 };
+/**
+ * Full strength of a tracked fortification hex. Exported because the 3D scene
+ * reads it to draw how far a wall has been battered down — a copy in the view
+ * layer would silently drift from what `breakGate` actually requires.
+ */
+export const FORT_MAX_HP: Record<string, number> = { wall: 1000, gate: 700 };
+
+/** How much of that a garrison action restores (see `repairWall`). */
+export const WALL_REPAIR_PER_ACTION = 180;
 
 /**
  * 搶修城防 — a defender adjacent to a battered (but standing) wall or gate
@@ -1080,7 +1088,7 @@ export function repairWall(b: TacticalBattle, unitId: EntityId, coord: HexCoord)
   const cur = b.wallHp?.[key];
   const max = FORT_MAX_HP[tile.terrain] ?? 1000;
   if (cur === undefined || cur >= max) return b;
-  const next = Math.min(max, cur + 180);
+  const next = Math.min(max, cur + WALL_REPAIR_PER_ACTION);
   return {
     ...b,
     wallHp: { ...b.wallHp, [key]: next },
@@ -1191,6 +1199,61 @@ export function scaleWall(b: TacticalBattle, unitId: EntityId, wallCoord: HexCoo
     units: b.units.map((u) => (u.id === unitId ? { ...u, coord: landing, ap: 0 } : u)),
     log: [...(b.log ?? []), { turn: b.turn, text: '雲梯架起，士卒踏牆而入！', kind: 'event' }],
   };
+}
+
+/* ─── 攻城動作:何處可施 ─────────────────────────────────────────────
+ * `breakGate` / `repairWall` / `scaleWall` each answer "is this legal?" by
+ * returning the battle unchanged, which is all an AI needs — it can just try.
+ * A player needs to be told *before* clicking, so these list the hexes where
+ * the action would actually do something.
+ *
+ * They restate the same preconditions, so `tacticalSiegeActions.test.ts` pins
+ * the pair together: a coord in the list must change the battle, and one that
+ * isn't must leave it untouched. Drift between the two fails the suite.
+ */
+
+/** Wall/gate hexes this siege contingent can batter this turn. */
+export function batterTargets(b: TacticalBattle, unitId: EntityId): HexCoord[] {
+  const unit = b.units.find((u) => u.id === unitId);
+  if (!unit || unit.unitType !== 'siege' || unit.ap <= 0) return [];
+  return hexNeighbours(unit.coord).filter((c) => {
+    const t = tileAt(b, c);
+    return !!t && (t.terrain === 'gate' || t.terrain === 'wall');
+  });
+}
+
+/** Battered fortifications this garrison unit can shore back up. */
+export function repairTargets(b: TacticalBattle, unitId: EntityId): HexCoord[] {
+  const unit = b.units.find((u) => u.id === unitId);
+  if (!unit || unit.side !== 'defender' || unit.ap <= 0) return [];
+  return hexNeighbours(unit.coord).filter((c) => {
+    const t = tileAt(b, c);
+    if (!t || (t.terrain !== 'wall' && t.terrain !== 'gate')) return false;
+    const hp = b.wallHp?.[`${c.col},${c.row}`];
+    return hp !== undefined && hp < (FORT_MAX_HP[t.terrain] ?? 1000);
+  });
+}
+
+/** Walls this foot unit can storm by ladder — needs a friendly engine braced
+ *  on the same hex and somewhere to land on the far side. */
+export function scaleTargets(b: TacticalBattle, unitId: EntityId): HexCoord[] {
+  const unit = b.units.find((u) => u.id === unitId);
+  if (!unit || unit.ap <= 0 || unit.unitType === 'siege') return [];
+  return hexNeighbours(unit.coord).filter((wallCoord) => {
+    const tile = tileAt(b, wallCoord);
+    if (!tile || tile.terrain !== 'wall') return false;
+    const hasLadder = b.units.some(
+      (u) => u.side === unit.side && u.unitType === 'siege' && u.troops > 0 &&
+        hexDistance(u.coord, wallCoord) === 1,
+    );
+    if (!hasLadder) return false;
+    return hexNeighbours(wallCoord).some((c) => {
+      const t = tileAt(b, c);
+      if (!t || TERRAIN_MOVE_COST[t.terrain] >= 99) return false;
+      if (unitAt(b, c)) return false;
+      return unit.side === 'attacker' ? c.col > wallCoord.col : c.col < wallCoord.col;
+    });
+  });
 }
 
 /**
@@ -1741,14 +1804,17 @@ export function attackUnits(
     log.push({ turn: b.turn, text: `${To?.name.zh ?? '守軍'}長槍立防 — ${ao?.name.zh ?? '騎軍'}衝勢盡折,人馬交摧!`, kind: 'event' });
   } else if (chargeMul > 1.05) {
     log.push({ turn: b.turn, text: `${ao?.name.zh ?? '騎軍'}蓄勢突陣,衝鋒陷陣!`, kind: 'event' });
+  // 甕中捉鱉 must be tested BEFORE the plain pursuit line: both want
+  // `targetRouting && newTroops === 0`, so with the general case first the
+  // encircled variant was dead code and never once printed.
+  } else if (encircled && targetRouting && newTroops === 0) {
+    log.push({ turn: b.turn, text: `${To?.name.zh ?? '敵軍'}走投無路,聚而殲之 — 甕中捉鱉!`, kind: 'event' });
   } else if (targetRouting && newTroops === 0) {
     log.push({ turn: b.turn, text: `${To?.name.zh ?? '潰軍'}奔逃之際被銜尾掩殺 — 全軍覆沒!`, kind: 'event' });
   } else if (feigning) {
     log.push({ turn: b.turn, text: `${To?.name.zh ?? '敵軍'}詐敗回馬 — ${ao?.name.zh ?? '追兵'}中伏陣腳大亂!`, kind: 'event' });
   } else if (desperate && newTroops > 0) {
     log.push({ turn: b.turn, text: `${To?.name.zh ?? '敵軍'}四面被圍,困獸猶鬥 — 拼死反撲!`, kind: 'event' });
-  } else if (encircled && targetRouting && newTroops === 0) {
-    log.push({ turn: b.turn, text: `${To?.name.zh ?? '敵軍'}走投無路,聚而殲之 — 甕中捉鱉!`, kind: 'event' });
   }
   // 腹背受敵 — the target is truly surrounded (pressed on three sides, or struck
   // in the rear while also flanked). A presentation beat; the pincer/rear damage
@@ -1925,7 +1991,7 @@ export function formationStrength(
   const holdFrac = holding / sideUnits.length;
   if (holdFrac < 0.34) return 0; // 大陣已亂 — the formation has come apart
   const cmd = sideUnits.find((u) => u.isCommander);
-  let integrity = holdFrac * (cmd ? 1 : 0.6); // 失帥則陣亂
+  const integrity = holdFrac * (cmd ? 1 : 0.6); // 失帥則陣亂
   // 陣法精通 — a master tactician's formation bites far harder than a novice's.
   const gate = FORMATIONS_BY_ID[formation]?.minIntelligence ?? 0;
   const cmdInt = cmd && officers?.[cmd.officerId] ? effectiveStats(officers[cmd.officerId]).intelligence : 60;
@@ -2055,7 +2121,17 @@ function weatherDamageMul(w: Weather, unitType: UnitType): number {
 
 // ─── Turn end ────────────────────────────────────────────────────────
 
-export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>): TacticalBattle {
+/**
+ * End of turn — rally, attrition, omens and the shifting sky.
+ *
+ * `rng` exists because two mechanics in here (戰場異象 and 天有不測風雲) rolled
+ * bare `Math.random()`, which quietly made every AI-vs-AI harness
+ * non-reproducible: tacticalBalance.test.ts calls itself a "seeded regression
+ * guard" and was in fact re-rolling the weather every turn — and rain nerfs
+ * bows, so the cavalry-vs-archer band drifted enough to fail CI at random.
+ * Defaults to Math.random, so live play is unchanged.
+ */
+export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>, rng: () => number = Math.random): TacticalBattle {
   // Prune expired damage popups — every battle event appends to the array and
   // nothing ever removed them, so a long battle accumulated hundreds of dead
   // popup nodes (and the embedded diorama showed them frozen mid-air).
@@ -2105,7 +2181,7 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
     const enemyFormation = u.side === 'attacker' ? b.defenderFormation : b.attackerFormation;
     if (enemyFormation === 'eight-trigrams' || enemyFormation === 'ten-ambush') {
       const adjEnemy = b.units.some((e) => e.side !== u.side && e.troops > 0 && hexDistance(e.coord, u.coord) === 1);
-      if (adjEnemy && (enemyFormation === 'eight-trigrams' || Math.random() < 0.20)) apPenalty += 1;
+      if (adjEnemy && (enemyFormation === 'eight-trigrams' || rng() < 0.20)) apPenalty += 1;
     }
     const ap = Math.max(1, u.maxAp - apPenalty);
     // 天候撼軍 — heavy snow chills the ranks (軍士畏寒): a cold camp loses heart
@@ -2263,7 +2339,7 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
       if (adjUnit.unitType === 'navy') chance *= 1.5; // fire leaps hull to hull
       // Strong wind alignment bonus when picked unit is downwind.
       if (scored[0].score > 0 && b.windDirection !== 'calm') chance *= 1.3;
-      if (Math.random() < chance) {
+      if (rng() < chance) {
         tickedUnits = tickedUnits.map((u) =>
           u.id === adjUnit.id
             ? { ...u, effects: [...u.effects, { kind: 'burning', turnsLeft: 2 }] }
@@ -2314,7 +2390,7 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
           const align = wd2.col * (n.col - f.coord.col) + wd2.row * (n.row - f.coord.row);
           if (b.windDirection !== 'calm') chance *= align > 0 ? 1.8 : 0.5;
           if (b.weather === 'wind') chance *= 1.4;
-          if (Math.random() < chance) {
+          if (rng() < chance) {
             // 火頭遞弱 — the spreading front can't burn longer than the ember
             // that lit it, so fire weakens the further it creeps from its
             // source (downwind it carries; against the wind it soon dies).
@@ -2443,25 +2519,25 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
 
   // 戰場異象 — an occasional dramatic event shakes the field after it's joined.
   const eventLog: NonNullable<TacticalBattle['log']> = [];
-  if (b.turn >= 3 && Math.random() < 0.09) {
-    const roll = Math.random();
+  if (b.turn >= 3 && rng() < 0.09) {
+    const roll = rng();
     const sideZh = (s: 'attacker' | 'defender') => (s === 'attacker' ? '攻方' : '守方');
     if (roll < 0.34) {
       const live = tickedUnits.filter((u) => u.troops > 0);
       if (live.length) {
-        const v = live[Math.floor(Math.random() * live.length)];
+        const v = live[Math.floor(rng() * live.length)];
         const dmg = Math.floor(v.maxTroops * 0.08);
         tickedUnits = tickedUnits.map((u) => u.id === v.id
           ? { ...u, troops: Math.max(0, u.troops - dmg), morale: Math.max(0, u.morale - 12) } : u);
         eventLog.push({ turn: b.turn + 1, text: '☄ 流星墜營,軍心惶惶!', kind: 'event' });
       }
     } else if (roll < 0.67) {
-      const side: 'attacker' | 'defender' = Math.random() < 0.5 ? 'attacker' : 'defender';
+      const side: 'attacker' | 'defender' = rng() < 0.5 ? 'attacker' : 'defender';
       tickedUnits = tickedUnits.map((u) => u.side === side && u.troops > 0
         ? { ...u, troops: Math.max(0, u.troops - Math.floor(u.maxTroops * 0.04)), morale: Math.max(0, u.morale - 6) } : u);
       eventLog.push({ turn: b.turn + 1, text: `🦠 軍中疫疾橫行,${sideZh(side)}減員失士!`, kind: 'event' });
     } else {
-      const side: 'attacker' | 'defender' = Math.random() < 0.5 ? 'attacker' : 'defender';
+      const side: 'attacker' | 'defender' = rng() < 0.5 ? 'attacker' : 'defender';
       tickedUnits = tickedUnits.map((u) => u.side === side && u.troops > 0
         ? { ...u, morale: Math.min(100, u.morale + 15) } : u);
       eventLog.push({ turn: b.turn + 1, text: `🎺 ${sideZh(side)}得天時鼓舞,士氣大振!`, kind: 'event' });
@@ -2745,7 +2821,7 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
   // 天有不測風雲 — the weather can turn mid-battle (affects next turn:
   // rain douses fires and bows, wind feeds the flames).
   let nextWeather = b.weather;
-  const wroll = Math.random();
+  const wroll = rng();
   if (b.weather === 'clear' && wroll < 0.05) nextWeather = 'rain';
   else if (b.weather === 'clear' && wroll < 0.09) nextWeather = 'wind';
   else if (b.weather === 'rain' && wroll < 0.18) nextWeather = 'clear';
@@ -2762,10 +2838,10 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
   let nextWind = b.windDirection ?? 'calm';
   const hasWind = nextWind !== 'calm';
   const veerChance = b.naval ? 0.15 : (b.weather === 'wind' && hasWind ? 0.07 : 0);
-  if (veerChance > 0 && Math.random() < veerChance) {
+  if (veerChance > 0 && rng() < veerChance) {
     const dirs: WindDirection[] = ['north', 'south', 'east', 'west'];
     const turned = dirs.filter((d) => d !== nextWind);
-    nextWind = turned[Math.floor(Math.random() * turned.length)];
+    nextWind = turned[Math.floor(rng() * turned.length)];
   }
   const windTurnZh = nextWind === 'east' ? '東' : nextWind === 'west' ? '西' : nextWind === 'south' ? '南' : '北';
   const windLog: NonNullable<TacticalBattle['log']> = nextWind !== (b.windDirection ?? 'calm')
@@ -2811,7 +2887,7 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>)
           const int = officers[sc.officerId]?.stats.intelligence ?? 50;
           const reach = Math.max(1, (2 + Math.floor((int - 60) / 20)) * nightMul);
           if (hexDistance(sc.coord, f.coord) > reach) continue;
-          if (Math.random() < Math.max(0, Math.min(0.7, (int - 65) / 70)) * nightMul) { reveal.add(f.id); break; }
+          if (rng() < Math.max(0, Math.min(0.7, (int - 65) / 70)) * nightMul) { reveal.add(f.id); break; }
         }
       }
       if (reveal.size > 0) {
