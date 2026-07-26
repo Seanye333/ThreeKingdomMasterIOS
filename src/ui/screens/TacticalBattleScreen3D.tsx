@@ -9,6 +9,7 @@ import {
 import { ToneMappingMode } from 'postprocessing';
 import * as THREE from 'three';
 import { RENDER_HI } from '../renderQuality';
+import { useGLRecovery } from '../hooks/useGLRecovery';
 import { TERRAIN_LABEL } from './battle3d/terrainLabels';
 import { OfficerPortrait } from '../components/OfficerPortrait';
 import { useGameStore } from '../../game/state/store';
@@ -3508,6 +3509,9 @@ export function TacticalBattleScreen3D() {
   const [signatureBanner, setSignatureBanner] = useState<{ zh: string; en: string; key: number } | null>(null);
   // FPS 自適應 — once the frame rate stays low, shed the post stack for good.
   const [fxDegraded, setFxDegraded] = useState(false);
+  // WebGL 上下文丟失恢復 — see useGLRecovery; without it a dropped context
+  // leaves the battle permanently black.
+  const { glEpoch, attachGLRecovery } = useGLRecovery('TacticalBattleScreen3D');
   // Stratagem FX particles
   const [stratagemFx, setStratagemFx] = useState<StratagemFxInstance[]>([]);
   // 戰鬥運鏡 — impact event driving screen-shake / flash / zoom-punch.
@@ -4247,6 +4251,13 @@ export function TacticalBattleScreen3D() {
           />
         )}
         <Canvas
+          // Remounts with a fresh GL context if the old one is lost and never
+          // restored. This scene is the heaviest of the three AND runs while
+          // the strategic map's context is still alive, so it is the most
+          // likely to be dropped under memory pressure — and a black battle
+          // screen mid-engagement is unrecoverable without it.
+          key={glEpoch}
+          onCreated={({ gl }) => attachGLRecovery(gl)}
           // Phones: cap the pixel ratio (a DPR-3 phone otherwise renders at 2×
           // = ~4× the fragments) and drop shadow maps — both are pure GPU-memory
           // wins that keep the battle scene from tipping the tab into an

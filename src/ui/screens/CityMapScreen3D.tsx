@@ -4,6 +4,8 @@ import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { OrbitControls, Html, Instances, Instance } from '@react-three/drei';
 import * as THREE from 'three';
 import { RENDER_HI } from '../renderQuality';
+import { useGLRecovery } from '../hooks/useGLRecovery';
+import { FrameRateWatch } from '../components/FrameRateWatch';
 import { SelectionRing3D } from '../components/SelectionRing3D';
 import { useGameStore } from '../../game/state/store';
 import {
@@ -443,6 +445,7 @@ function Barracks3D({ x, z, bannerColor }: { x: number; z: number; bannerColor: 
 /** 酒樓 — a two-storey tavern under a hanging 「酒」 banner: the haunt of
  *  wanderers and unsung talent. The seat of 人材探訪. */
 function Tavern3D({ x, z }: { x: number; z: number }) {
+  const t = useT();
   return (
     <group position={[x, 0, z]}>
       <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
@@ -459,7 +462,7 @@ function Tavern3D({ x, z }: { x: number; z: number }) {
         <meshStandardMaterial color="#2a2018" />
       </mesh>
       <Html position={[0.62, 1.35, 0.4]} center distanceFactor={9} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
-        <div style={{ background: '#9a2a2a', border: '1px solid #f0d0a0', color: '#f5e8c8', fontFamily: 'var(--tkm-font-body)', fontSize: '13px', padding: '2px 5px', writingMode: 'vertical-rl' }}>酒</div>
+        <div style={{ background: '#9a2a2a', border: '1px solid #f0d0a0', color: '#f5e8c8', fontFamily: 'var(--tkm-font-body)', fontSize: '13px', padding: '2px 5px', writingMode: 'vertical-rl' }}>{t('酒', 'INN')}</div>
       </Html>
     </group>
   );
@@ -1054,6 +1057,7 @@ function SmallBoat3D({ x, z, seed }: { x: number; z: number; seed: number }) {
 
 /** A multi-eave pagoda (塔) — the city's vertical landmark. */
 function Pagoda3D({ x, z }: { x: number; z: number }) {
+  const t = useT();
   const tiers = 5;
   const topY = 0.4 + tiers * 0.78;
   return (
@@ -1094,7 +1098,7 @@ function Pagoda3D({ x, z }: { x: number; z: number }) {
       </mesh>
       <Html position={[0, topY + 0.7, 0]} center distanceFactor={11} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
         <div style={{ background: 'rgba(20,14,8,0.8)', border: '1px solid #c19a3b', padding: '0 5px', fontFamily: 'var(--tkm-font-body)', fontSize: '10px', color: '#e0c060', borderRadius: 'var(--tkm-radius-xs)', whiteSpace: 'nowrap' }}>
-          寶塔
+          {t('寶塔', 'Pagoda')}
         </div>
       </Html>
     </group>
@@ -1157,6 +1161,7 @@ function Paifang3D({ x, z }: { x: number; z: number }) {
 
 /** A 鼓樓 drum tower — stone arch base, a great red drum, double-eave roof. */
 function DrumTower3D({ x, z }: { x: number; z: number }) {
+  const t = useT();
   return (
     <group position={[x, 0, z]}>
       {/* Stone base with an arched passage */}
@@ -1193,7 +1198,7 @@ function DrumTower3D({ x, z }: { x: number; z: number }) {
       <group position={[0, 2.45, 0]}><ChineseRoof3D size={0.95} color="#2f3a48" ornament /></group>
       <Html position={[0, 3.0, 0]} center distanceFactor={11} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
         <div style={{ background: 'rgba(20,14,8,0.8)', border: '1px solid #c19a3b', padding: '0 5px', fontFamily: 'var(--tkm-font-body)', fontSize: '10px', color: '#e0c060', borderRadius: 'var(--tkm-radius-xs)', whiteSpace: 'nowrap' }}>
-          鼓樓
+          {t('鼓樓', 'Drum Tower')}
         </div>
       </Html>
     </group>
@@ -1203,6 +1208,7 @@ function DrumTower3D({ x, z }: { x: number; z: number }) {
 /** A 鐘樓 bell tower — open upper storey with a great bronze bell slung from a
  *  beam, mirroring the drum tower (晨鐘暮鼓). */
 function BellTower3D({ x, z }: { x: number; z: number }) {
+  const t = useT();
   return (
     <group position={[x, 0, z]}>
       {/* Stone arch base */}
@@ -1239,7 +1245,7 @@ function BellTower3D({ x, z }: { x: number; z: number }) {
       <group position={[0, 2.6, 0]}><ChineseRoof3D size={0.95} color="#2f3a48" ornament /></group>
       <Html position={[0, 3.15, 0]} center distanceFactor={11} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
         <div style={{ background: 'rgba(20,14,8,0.8)', border: '1px solid #c19a3b', padding: '0 5px', fontFamily: 'var(--tkm-font-body)', fontSize: '10px', color: '#e0c060', borderRadius: 'var(--tkm-radius-xs)', whiteSpace: 'nowrap' }}>
-          鐘樓
+          {t('鐘樓', 'Bell Tower')}
         </div>
       </Html>
     </group>
@@ -1329,6 +1335,7 @@ function Garden3D({ x, z }: { x: number; z: number }) {
 /** A 屯田 farm plot — tilled rows of crops (green sprouts → gold harvest →
  *  bare winter soil), a scarecrow and a farmhand. */
 function Farmland3D({ x, z, lush = 0.5 }: { x: number; z: number; lush?: number }) {
+  const t = useT();
   const season = useContext(SeasonCtx);
   const crop = season === 'winter' ? '#cdd6dc' : season === 'autumn' ? '#cba63a' : season === 'summer' ? '#9aa83a' : '#6a9a4a';
   const soil = season === 'winter' ? '#6f6a60' : '#5a4530';
@@ -1367,7 +1374,7 @@ function Farmland3D({ x, z, lush = 0.5 }: { x: number; z: number; lush?: number 
       <Villager3D x={-1.15} z={0.95} seed={88} />
       <Html position={[0, 1.2, 0]} center distanceFactor={11} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
         <div style={{ background: 'rgba(20,14,8,0.78)', border: '1px solid #7a8a3a', padding: '0 5px', fontFamily: 'var(--tkm-font-body)', fontSize: '10px', color: '#bcd07a', borderRadius: 'var(--tkm-radius-xs)', whiteSpace: 'nowrap' }}>
-          屯田
+          {t('屯田', 'Farmland')}
         </div>
       </Html>
     </group>
@@ -1521,6 +1528,7 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, g
   onEncounterClick: () => void;
   household: { lordZh: string; spouses: string[]; kids: Array<{ nameZh: string; age: number; heir: boolean; female: boolean; comingSoon: boolean }> } | null;
 }) {
+  const t = useT();
   const inspect = useContext(InspectCtx);
   // The market grows with commerce — a sleepy 2-stall corner at low trade,
   // a packed bazaar when business booms.
@@ -1832,18 +1840,18 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, g
       {/* 駐軍旌旗 — a rank of banners by the drill ground, taller for a big garrison. */}
       {!ruined && <GarrisonBanners3D x={landmarks.barracks.x} z={landmarks.barracks.z} troops={troops} color={bannerColor} />}
       {/* 施政中 — work-in-progress at the landmark whose order is queued. */}
-      {activity.farm && <CommandActivity3D x={landmarks.farm.x} z={landmarks.farm.z + 1.6} color="#bcd07a" label="勸課農桑" />}
-      {activity.market && market[0] && <CommandActivity3D x={market[0].x} z={market[0].z + 1.5} color="#d4a84a" label="興商理財" />}
-      {activity.barracks && <CommandActivity3D x={landmarks.barracks.x} z={landmarks.barracks.z + 1.6} color="#c08858" label="操演徵募" soldier />}
-      {activity.hall && <CommandActivity3D x={hall.x} z={hall.z + 2.6} color="#f0d98a" label="撫民理政" />}
-      {activity.tavern && <CommandActivity3D x={landmarks.tavern.x} z={landmarks.tavern.z + 1.3} color="#d98a6a" label="探訪賢才" />}
-      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '寶塔 · 瞭望', body: landmarkInfo.pagodaBody, color: '#e0c060' }); }}>
+      {activity.farm && <CommandActivity3D x={landmarks.farm.x} z={landmarks.farm.z + 1.6} color="#bcd07a" label={t('勸課農桑', 'Farming')} />}
+      {activity.market && market[0] && <CommandActivity3D x={market[0].x} z={market[0].z + 1.5} color="#d4a84a" label={t('興商理財', 'Trade')} />}
+      {activity.barracks && <CommandActivity3D x={landmarks.barracks.x} z={landmarks.barracks.z + 1.6} color="#c08858" label={t('操演徵募', 'Drilling')} soldier />}
+      {activity.hall && <CommandActivity3D x={hall.x} z={hall.z + 2.6} color="#f0d98a" label={t('撫民理政', 'Governing')} />}
+      {activity.tavern && <CommandActivity3D x={landmarks.tavern.x} z={landmarks.tavern.z + 1.3} color="#d98a6a" label={t('探訪賢才', 'Recruiting')} />}
+      <group onClick={(e) => { e.stopPropagation(); inspect({ title: t('寶塔 · 瞭望', 'Pagoda · Lookout'), body: landmarkInfo.pagodaBody, color: '#e0c060' }); }}>
         <Pagoda3D x={landmarks.pagoda.x} z={landmarks.pagoda.z} />
       </group>
-      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '鼓樓 · 報時', body: landmarkInfo.timeBody, color: '#e0c060' }); }}>
+      <group onClick={(e) => { e.stopPropagation(); inspect({ title: t('鼓樓 · 報時', 'Drum Tower · Watches'), body: landmarkInfo.timeBody, color: '#e0c060' }); }}>
         <DrumTower3D x={landmarks.drum.x} z={landmarks.drum.z} />
       </group>
-      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '鐘樓 · 報時', body: landmarkInfo.timeBody, color: '#e0c060' }); }}>
+      <group onClick={(e) => { e.stopPropagation(); inspect({ title: t('鐘樓 · 報時', 'Bell Tower · Watches'), body: landmarkInfo.timeBody, color: '#e0c060' }); }}>
         <BellTower3D x={landmarks.bell.x} z={landmarks.bell.z} />
       </group>
       <group onClick={(e) => { e.stopPropagation(); inspect({ title: '園林 · 雅集', body: landmarkInfo.gardenBody, color: '#9ac06a' }); }}>
@@ -1913,7 +1921,7 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, g
           onClick={() => inspect({
             title: `官邸 · ${household.lordZh}家眷`,
             body: [
-              household.spouses.length > 0 ? `妻室:${household.spouses.join('、')}` : '',
+              household.spouses.length > 0 ? t(`妻室:${household.spouses.join('、')}`, `Spouses: ${household.spouses.join(', ')}`) : '',
               ...household.kids.map((k) =>
                 `${k.female ? '女' : '子'} ${k.nameZh} · ${k.age}歲${k.heir ? ' · 世子' : ''}${k.comingSoon ? '(將於14歲出仕)' : ''}`),
               household.kids.length === 0 ? '膝下尚虛 — 子嗣未降。' : '',
@@ -2505,6 +2513,7 @@ function CityScene({
   /** 家眷 — the lord's household at the capital (spouse + underage heirs). */
   household: { lordZh: string; spouses: string[]; kids: Array<{ nameZh: string; age: number; heir: boolean; female: boolean; comingSoon: boolean }> } | null;
 }) {
+  const t = useT();
   // Defence slots now ride the outer hinterland ring (directional defence),
   // not the city-wall hexes — so they no longer occupy any grid hex here.
 
@@ -2644,7 +2653,7 @@ function CityScene({
               <CityGate3D x={gx} z={gz} bannerColor={bannerColor} />
             </group>
             {/* 築城修壁中 — scaffolding + work crew when a defence order is queued. */}
-            {activity.wall && <CommandActivity3D x={gx} z={gz - 1.4} color="#9aa6b0" label="築城修壁" build />}
+            {activity.wall && <CommandActivity3D x={gx} z={gz - 1.4} color="#9aa6b0" label={t('築城修壁', 'Fortifying')} build />}
             {/* Stone bridge crossing the moat out from the gate */}
             <StoneBridge3D x={gx} z={gz + 2.1} />
             {/* Water gate + wharf on the east wall */}
@@ -2787,6 +2796,8 @@ function MarketTradeRow({ city, season, cityId, tradeFood, onTraded }: {
   tradeFood: (cityId: EntityId, kind: 'buy' | 'sell', amount: number) => { ok: boolean; got: number };
   onTraded: (msg: string) => void;
 }) {
+  const t = useT();
+  const lang = useLanguage();
   const buildings = useGameStore((s) => s.buildings);
   const allCities = useGameStore((s) => s.cities);
   const forces = useGameStore((s) => s.forces);
@@ -2824,10 +2835,10 @@ function MarketTradeRow({ city, season, cityId, tradeFood, onTraded }: {
   return (
     <div style={{ marginTop: 8, borderTop: '1px solid #3a2d20', paddingTop: 6, fontSize: '0.72rem', color: '#c0a878' }}>
       <div style={{ marginBottom: 5 }}>
-        <span style={{ color: '#8a7858' }}>市易</span> 糧價 <strong style={{ color: '#d4a84a' }}>{rate.toFixed(1)}</strong> 糧/金
+        <span style={{ color: '#8a7858' }}>{t('市易', 'Market')}</span> {t('糧價', 'Grain')} <strong style={{ color: '#d4a84a' }}>{rate.toFixed(1)}</strong> {t('糧/金', 'per gold')}
         <span style={{ marginLeft: 6, color: levelTag.c }}>{levelTag.t}</span>
-        <span style={{ marginLeft: 6, color: '#8a7050' }}>來季 {nextArrow}</span>
-        <span style={{ marginLeft: 8, color: '#8a7050' }}>庫 金{city.gold.toLocaleString()} · 糧{city.food.toLocaleString()}</span>
+        <span style={{ marginLeft: 6, color: '#8a7050' }}>{t('來季', 'Next')} {nextArrow}</span>
+        <span style={{ marginLeft: 8, color: '#8a7050' }}>{t('庫', 'Held')} {t('金', 'G')}{city.gold.toLocaleString()} · {t('糧', 'F')}{city.food.toLocaleString()}</span>
       </div>
       {outlook.warnings.length > 0 && (
         <div style={{ marginBottom: 5, color: '#e0a060', fontSize: '0.68rem' }}>
@@ -2835,19 +2846,23 @@ function MarketTradeRow({ city, season, cityId, tradeFood, onTraded }: {
         </div>
       )}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center' }}>
-        <span style={{ color: '#9ac06a', marginRight: 2 }}>買糧</span>
-        {[500, 2000].map((g) => btn(`${g}金→${buyQuote(city, season, g, mkt).toLocaleString()}糧`, city.gold < g, () => {
+        <span style={{ color: '#9ac06a', marginRight: 2 }}>{t('買糧', 'Buy')}</span>
+        {[500, 2000].map((g) => btn(`${g}${t('金', 'G')}→${buyQuote(city, season, g, mkt).toLocaleString()}${t('糧', 'F')}`, city.gold < g, () => {
           const r = tradeFood(cityId, 'buy', g);
           if (r.ok) playSfx('coin');
-          onTraded(r.ok ? `市易:${g} 金易得 ${r.got.toLocaleString()} 糧。` : '府庫金不足。');
+          onTraded(r.ok
+            ? t(`市易:${g} 金易得 ${r.got.toLocaleString()} 糧。`, `Market: ${g} gold bought ${r.got.toLocaleString()} grain.`)
+            : t('府庫金不足。', 'Not enough gold in the treasury.'));
         }, `b${g}`))}
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center', marginTop: 4 }}>
-        <span style={{ color: '#e0c060', marginRight: 2 }}>賣糧</span>
-        {[1000, 5000].map((f) => btn(`${f.toLocaleString()}糧→${sellQuote(city, season, f, mkt).toLocaleString()}金`, city.food < f, () => {
+        <span style={{ color: '#e0c060', marginRight: 2 }}>{t('賣糧', 'Sell')}</span>
+        {[1000, 5000].map((f) => btn(`${f.toLocaleString()}${t('糧', 'F')}→${sellQuote(city, season, f, mkt).toLocaleString()}${t('金', 'G')}`, city.food < f, () => {
           const r = tradeFood(cityId, 'sell', f);
           if (r.ok) playSfx('coin');
-          onTraded(r.ok ? `市易:${f.toLocaleString()} 糧易得 ${r.got.toLocaleString()} 金。` : '存糧不足。');
+          onTraded(r.ok
+            ? t(`市易:${f.toLocaleString()} 糧易得 ${r.got.toLocaleString()} 金。`, `Market: ${f.toLocaleString()} grain fetched ${r.got.toLocaleString()} gold.`)
+            : t('存糧不足。', 'Not enough grain in store.'));
         }, `s${f}`))}
       </div>
       {(() => {
@@ -2861,20 +2876,24 @@ function MarketTradeRow({ city, season, cityId, tradeFood, onTraded }: {
         return (
           <div style={{ marginTop: 7, borderTop: '1px dashed #3a2d20', paddingTop: 6 }}>
             <div style={{ color: '#c8a258', marginBottom: 4 }}>
-              馬市 <span style={{ color: '#7a6a4a', fontSize: '0.66rem' }}>· 戰馬 {held.toLocaleString()} {producer ? '· 產馬之地(價賤)' : '· 非產地(價貴)'}</span>
+              {t('馬市', 'Horse Market')} <span style={{ color: '#7a6a4a', fontSize: '0.66rem' }}>· {t('戰馬', 'Warhorses')} {held.toLocaleString()} {producer ? t('· 產馬之地(價賤)', '· breeding region (cheap)') : t('· 非產地(價貴)', '· imported (dear)')}</span>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center' }}>
-              {btn(`糴 ${buyGold}金→${buyGet.toLocaleString()}馬`, city.gold < buyGold || buyGet <= 0, () => {
+              {btn(`${t('糴', 'Buy')} ${buyGold}${t('金', 'G')}→${buyGet.toLocaleString()}${t('馬', 'H')}`, city.gold < buyGold || buyGet <= 0, () => {
                 const r = tradeHorses(cityId, 'buy', buyGold);
                 if (r.ok) playSfx('coin');
-                onTraded(r.ok ? `馬市:${buyGold} 金購得 ${r.got.toLocaleString()} 戰馬。` : '無法購馬。');
+                onTraded(r.ok
+                  ? t(`馬市:${buyGold} 金購得 ${r.got.toLocaleString()} 戰馬。`, `Horse market: ${buyGold} gold bought ${r.got.toLocaleString()} warhorses.`)
+                  : t('無法購馬。', 'Cannot buy horses.'));
               }, 'hb')}
-              {btn(`糶 ${sellH}馬→${sellGet.toLocaleString()}金`, held < sellH || sellGet <= 0, () => {
+              {btn(`${t('糶', 'Sell')} ${sellH}${t('馬', 'H')}→${sellGet.toLocaleString()}${t('金', 'G')}`, held < sellH || sellGet <= 0, () => {
                 const r = tradeHorses(cityId, 'sell', sellH);
                 if (r.ok) playSfx('coin');
-                onTraded(r.ok ? `馬市:${sellH} 戰馬售得 ${r.got.toLocaleString()} 金。` : '戰馬不足。');
+                onTraded(r.ok
+                  ? t(`馬市:${sellH} 戰馬售得 ${r.got.toLocaleString()} 金。`, `Horse market: ${sellH} warhorses fetched ${r.got.toLocaleString()} gold.`)
+                  : t('戰馬不足。', 'Not enough warhorses.'));
               }, 'hs')}
-              <span style={{ color: '#7a6a4a', fontSize: '0.64rem' }}>馬充軍備,提升募兵上限</span>
+              <span style={{ color: '#7a6a4a', fontSize: '0.64rem' }}>{t('馬充軍備,提升募兵上限', 'Horses raise your recruitment ceiling')}</span>
             </div>
           </div>
         );
@@ -2889,49 +2908,57 @@ function MarketTradeRow({ city, season, cityId, tradeFood, onTraded }: {
         return (
           <div style={{ marginTop: 7, borderTop: '1px dashed #3a2d20', paddingTop: 6 }}>
             <div style={{ color: '#c8a258', marginBottom: 4 }}>
-              鐵市 <span style={{ color: '#7a6a4a', fontSize: '0.66rem' }}>· 鐵 {held.toLocaleString()} {producer ? '· 冶鐵之饒(價賤)' : '· 非產地(價貴)'}</span>
+              {t('鐵市', 'Iron Market')} <span style={{ color: '#7a6a4a', fontSize: '0.66rem' }}>· {t('鐵', 'Iron')} {held.toLocaleString()} {producer ? t('· 冶鐵之饒(價賤)', '· smelting region (cheap)') : t('· 非產地(價貴)', '· imported (dear)')}</span>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center' }}>
-              {btn(`糴 ${buyGold}金→${buyGet.toLocaleString()}鐵`, city.gold < buyGold || buyGet <= 0, () => {
+              {btn(`${t('糴', 'Buy')} ${buyGold}${t('金', 'G')}→${buyGet.toLocaleString()}${t('鐵', 'I')}`, city.gold < buyGold || buyGet <= 0, () => {
                 const r = tradeIron(cityId, 'buy', buyGold);
                 if (r.ok) playSfx('coin');
-                onTraded(r.ok ? `鐵市:${buyGold} 金購得 ${r.got.toLocaleString()} 鐵。` : '無法購鐵。');
+                onTraded(r.ok
+                  ? t(`鐵市:${buyGold} 金購得 ${r.got.toLocaleString()} 鐵。`, `Iron market: ${buyGold} gold bought ${r.got.toLocaleString()} iron.`)
+                  : t('無法購鐵。', 'Cannot buy iron.'));
               }, 'ib')}
-              {btn(`糶 ${sellI}鐵→${sellGet.toLocaleString()}金`, held < sellI || sellGet <= 0, () => {
+              {btn(`${t('糶', 'Sell')} ${sellI}${t('鐵', 'I')}→${sellGet.toLocaleString()}${t('金', 'G')}`, held < sellI || sellGet <= 0, () => {
                 const r = tradeIron(cityId, 'sell', sellI);
                 if (r.ok) playSfx('coin');
-                onTraded(r.ok ? `鐵市:${sellI} 鐵售得 ${r.got.toLocaleString()} 金。` : '存鐵不足。');
+                onTraded(r.ok
+                  ? t(`鐵市:${sellI} 鐵售得 ${r.got.toLocaleString()} 金。`, `Iron market: ${sellI} iron fetched ${r.got.toLocaleString()} gold.`)
+                  : t('存鐵不足。', 'Not enough iron in store.'));
               }, 'is')}
-              <span style={{ color: '#7a6a4a', fontSize: '0.64rem' }}>鐵料自給,鍛造打折</span>
+              <span style={{ color: '#7a6a4a', fontSize: '0.64rem' }}>{t('鐵料自給,鍛造打折', 'Home-smelted iron discounts forging')}</span>
             </div>
           </div>
         );
       })()}
       {borderPartners.length > 0 && (
         <div style={{ marginTop: 7, borderTop: '1px dashed #3a2d20', paddingTop: 6 }}>
-          <div style={{ color: '#c8a258', marginBottom: 4 }}>榷場 <span style={{ color: '#7a6a4a', fontSize: '0.66rem' }}>· 與通好鄰邦互市(關稅 {(tariff * 100).toFixed(0)}%)</span></div>
+          <div style={{ color: '#c8a258', marginBottom: 4 }}>{t('榷場', 'Border Market')} <span style={{ color: '#7a6a4a', fontSize: '0.66rem' }}>· {t(`與通好鄰邦互市(關稅 ${(tariff * 100).toFixed(0)}%)`, `trade with friendly neighbours (tariff ${(tariff * 100).toFixed(0)}%)`)}</span></div>
           {borderPartners.map((n) => {
             const nMkt = { stability: buildingBonuses(n.id, buildings).priceStability };
             const nRate = foodRate(n, season, nMkt);
-            const fname = forces[n.ownerForceId!]?.name?.zh ?? '鄰邦';
+            const fname = pickName(forces[n.ownerForceId!]?.name, lang) || t('鄰邦', 'neighbour');
             const buyGold = 1000, sellFood = 2000;
             const buyGet = Math.floor(buyQuote(n, season, buyGold, nMkt) * (1 - tariff));
             const sellGet = Math.floor(sellQuote(n, season, sellFood, nMkt) * (1 - tariff));
             return (
               <div key={n.id} style={{ marginBottom: 4 }}>
                 <div style={{ color: '#a89878', fontSize: '0.68rem', marginBottom: 2 }}>
-                  {fname}·{n.name.zh} <span style={{ color: nRate > 11 ? '#9ac06a' : nRate < 9 ? '#e07a5a' : '#8a7858' }}>糧價 {nRate.toFixed(1)}</span>
+                  {fname}·{pickName(n.name, lang)} <span style={{ color: nRate > 11 ? '#9ac06a' : nRate < 9 ? '#e07a5a' : '#8a7858' }}>{t('糧價', 'Grain')} {nRate.toFixed(1)}</span>
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-                  {btn(`糴 ${buyGold}金→${buyGet.toLocaleString()}糧`, city.gold < buyGold || buyGet <= 0, () => {
+                  {btn(`${t('糴', 'Buy')} ${buyGold}${t('金', 'G')}→${buyGet.toLocaleString()}${t('糧', 'F')}`, city.gold < buyGold || buyGet <= 0, () => {
                     const r = borderTrade(cityId, n.id, 'buy', buyGold);
                     if (r.ok) playSfx('coin');
-                    onTraded(r.ok ? `榷場:${buyGold} 金糴得 ${r.got.toLocaleString()} 糧。` : `榷場交易未成(${r.reason ?? '失敗'})。`);
+                    onTraded(r.ok
+                      ? t(`榷場:${buyGold} 金糴得 ${r.got.toLocaleString()} 糧。`, `Border market: ${buyGold} gold bought ${r.got.toLocaleString()} grain.`)
+                      : t(`榷場交易未成(${r.reason ?? '失敗'})。`, `Border trade failed (${r.reason ?? 'refused'}).`));
                   }, `qb${n.id}`)}
-                  {btn(`糶 ${sellFood.toLocaleString()}糧→${sellGet.toLocaleString()}金`, city.food < sellFood || sellGet <= 0, () => {
+                  {btn(`${t('糶', 'Sell')} ${sellFood.toLocaleString()}${t('糧', 'F')}→${sellGet.toLocaleString()}${t('金', 'G')}`, city.food < sellFood || sellGet <= 0, () => {
                     const r = borderTrade(cityId, n.id, 'sell', sellFood);
                     if (r.ok) playSfx('coin');
-                    onTraded(r.ok ? `榷場:${sellFood.toLocaleString()} 糧糶得 ${r.got.toLocaleString()} 金。` : `榷場交易未成(${r.reason ?? '失敗'})。`);
+                    onTraded(r.ok
+                      ? t(`榷場:${sellFood.toLocaleString()} 糧糶得 ${r.got.toLocaleString()} 金。`, `Border market: ${sellFood.toLocaleString()} grain fetched ${r.got.toLocaleString()} gold.`)
+                      : t(`榷場交易未成(${r.reason ?? '失敗'})。`, `Border trade failed (${r.reason ?? 'refused'}).`));
                   }, `qs${n.id}`)}
                 </div>
               </div>
@@ -2961,6 +2988,9 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
   cityId: EntityId;
   onClose: () => void;
 }) {
+  // WebGL 上下文丟失恢復 + FPS 自適應 — same two guards the world map carries.
+  const { glEpoch, attachGLRecovery } = useGLRecovery('CityMapScreen3D');
+  const [gfxDegraded, setGfxDegraded] = useState(false);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const forces = useGameStore((s) => s.forces);
   const allCities = useGameStore((s) => s.cities);
@@ -3543,7 +3573,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
           <span style={{ fontSize: '0.7rem', color: '#8a7050', marginLeft: '0.8rem' }}>
             {builtCount}/8 防禦
             {total.defenseBonus > 0 && ` · +${total.defenseBonus} 守備`}
-            {total.rangedPrestrike > 0 && ` · 預射 ${total.rangedPrestrike}`}
+            {total.rangedPrestrike > 0 && t(` · 預射 ${total.rangedPrestrike}`, ` · Volley ${total.rangedPrestrike}`)}
           </span>
         </div>
         <div style={{ display: 'flex', gap: '0.4rem' }}>
@@ -3553,7 +3583,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
                 const r = autoAssignIdle();
                 playSfx(r.assigned > 0 ? 'bell' : 'pluck');
                 setAssignMsg(r.assigned > 0
-                  ? `一鍵委派:${r.assigned} 員領命${r.goldSpent > 0 ? `,耗 ${r.goldSpent} 金` : ''}。`
+                  ? t(`一鍵委派:${r.assigned} 員領命${r.goldSpent > 0 ? `,耗 ${r.goldSpent} 金` : ''}。`, `Auto-assign: ${r.assigned} took post${r.goldSpent > 0 ? `, ${r.goldSpent} gold spent` : ''}.`)
                   : '無閒置武將可委派(或城已委任太守自理)。');
                 window.setTimeout(() => setAssignMsg(null), 3200);
               }}
@@ -3601,11 +3631,17 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
       {/* 3D canvas */}
       <div style={{ flex: 1, position: 'relative' }}>
         <Canvas
+          // Remounts with a fresh GL context if the old one is lost and never
+          // restored — otherwise the city goes black until the app restarts.
+          key={glEpoch}
+          onCreated={({ gl }) => attachGLRecovery(gl)}
           camera={{ position: [centerX, camHeight * 2.6, centerZ + camOffset * 0.18], fov: 50 }}
           shadows={RENDER_HI}
           dpr={RENDER_HI ? [1, 2] : [1, 1.5]}
           style={{ background: light.sky }}
         >
+          {/* Shed the post stack if the frame rate stays down. */}
+          {!gfxDegraded && <FrameRateWatch onDegrade={() => setGfxDegraded(true)} />}
           {/* Swoop down into the city on entry; rise back up on exit. Distinct
               keys so the exit dive mounts fresh (a reused instance would keep
               its finished state and never animate). The close itself is owned
@@ -3678,7 +3714,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
             maxDistance={citySpan * 2.4}
           />
           {/* Lanterns, braziers and water all catch a soft glow. */}
-          {RENDER_HI && (
+          {RENDER_HI && !gfxDegraded && (
             <EffectComposer>
               <Bloom luminanceThreshold={0.85} intensity={0.35} mipmapBlur />
             </EffectComposer>
@@ -3781,12 +3817,12 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
                     fontFamily: 'inherit', cursor: 'pointer',
                   }}
                 >
-                  拆除
+                  {t('拆除', 'Demolish')}
                 </button>
               </div>
             ) : (
               <div>
-                <div style={{ color: '#8a7050', marginBottom: '0.4rem' }}>選擇建築:</div>
+                <div style={{ color: '#8a7050', marginBottom: '0.4rem' }}>{t('選擇建築:', 'Choose a building:')}</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                   {ALL_BUILDINGS.map((id) => {
                     const def = DEFENSE_BUILDINGS[id];
@@ -3858,9 +3894,9 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
                 }}>×</button>
               </div>
               <div style={{ color: '#8a7050', fontSize: '0.7rem', marginBottom: '0.5rem' }}>
-                💰 城内存金 <span style={{ color: '#e0c060' }}>{city.gold}</span>
+                💰 {t('城内存金', 'Treasury')} <span style={{ color: '#e0c060' }}>{city.gold}</span>
                 <span style={{ float: 'right' }}>
-                  建設位 <span style={{ color: atSlotCap ? '#b8442e' : '#e0c060' }}>{slotsUsed}/{slotsCap}</span>
+                  {t('建設位', 'Plots')} <span style={{ color: atSlotCap ? '#b8442e' : '#e0c060' }}>{slotsUsed}/{slotsCap}</span>
                 </span>
               </div>
 
@@ -3873,8 +3909,8 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
                   <div>
                     <div style={{ color: vis?.color ?? '#d4a84a', marginBottom: '0.3rem' }}>
                       {vis?.nameZh ?? existing.id} lv{existing.level}
-                      {building && <span style={{ color: '#e0c060', marginLeft: 6 }}>· 建造中</span>}
-                      {upgrading && <span style={{ color: '#e0c060', marginLeft: 6 }}>· 升級中</span>}
+                      {building && <span style={{ color: '#e0c060', marginLeft: 6 }}>{t('· 建造中', '· building')}</span>}
+                      {upgrading && <span style={{ color: '#e0c060', marginLeft: 6 }}>{t('· 升級中', '· upgrading')}</span>}
                     </div>
                     <div style={{ color: '#8a7050', fontSize: '0.72rem', marginBottom: '0.5rem' }}>
                       {def?.descriptionZh}
@@ -3886,7 +3922,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
                       return (
                         <div style={{ color: pct > 0 ? '#8fce8f' : '#8a7050', fontSize: '0.7rem', marginBottom: '0.5rem' }}>
                           {BUILDING_CATEGORY_LABEL[cat].zh}群 ×{cnt}
-                          {pct > 0 ? ` → 同類效果 +${pct}%` : '(同類建築相鄰增益,多蓋更強)'}
+                          {pct > 0 ? t(` → 同類效果 +${pct}%`, ` → same-type effect +${pct}%`) : t('(同類建築相鄰增益,多蓋更強)', '(same-type buildings boost each other when adjacent)')}
                         </div>
                       );
                     })()}
@@ -3905,20 +3941,20 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
                       </button>
                     )}
                     {def && existing.level >= def.maxLevel && (
-                      <div style={{ color: '#8a7050', textAlign: 'center', fontSize: '0.72rem' }}>已達最高等級</div>
+                      <div style={{ color: '#8a7050', textAlign: 'center', fontSize: '0.72rem' }}>{t('已達最高等級', 'Max level reached')}</div>
                     )}
                   </div>
                 );
               })() : (
                 <div>
-                  <div style={{ color: '#8a7050', marginBottom: '0.4rem' }}>選擇建築 → 蓋在此地基:</div>
+                  <div style={{ color: '#8a7050', marginBottom: '0.4rem' }}>{t('選擇建築 → 蓋在此地基:', 'Pick a building for this plot:')}</div>
                   {atSlotCap && (
                     <div style={{ color: '#b8442e', textAlign: 'center', fontSize: '0.72rem' }}>
                       建設位已滿 ({slotsUsed}/{slotsCap}) — 城市升級可增加建設位
                     </div>
                   )}
                   {!atSlotCap && buildable.length === 0 && (
-                    <div style={{ color: '#8a7050', textAlign: 'center', fontSize: '0.72rem' }}>所有設施已建齊</div>
+                    <div style={{ color: '#8a7050', textAlign: 'center', fontSize: '0.72rem' }}>{t('所有設施已建齊', 'Every facility is built')}</div>
                   )}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.28rem' }}>
                     {!atSlotCap && buildable.map((def) => {
@@ -3953,7 +3989,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
                         >
                           <div>
                             {vis?.glyph} {vis?.nameZh ?? def.id}
-                            {affine && <span style={{ color: '#e0c060', marginLeft: 4 }}>◆地利</span>}
+                            {affine && <span style={{ color: '#e0c060', marginLeft: 4 }}>{t('◆地利', '◆Terrain')}</span>}
                             <span style={{ float: 'right', opacity: 0.8 }}>{cost}g · {def.seasonsPerLevel}季</span>
                           </div>
                           {prereqLocked ? (
@@ -3968,7 +4004,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
                             const after = groupPct((catCountCity[cat] ?? 0) + 1);
                             return (
                               <div style={{ fontSize: '0.7rem', color: '#7f9f6f', marginTop: 1 }}>
-                                {BUILDING_CATEGORY_LABEL[cat].zh}群{after > 0 ? ` → 同類 +${after}%` : ''}
+                                {t(`${BUILDING_CATEGORY_LABEL[cat].zh}群`, `${BUILDING_CATEGORY_LABEL[cat].en} cluster`)}{after > 0 ? t(` → 同類 +${after}%`, ` → same-type +${after}%`) : ''}
                                 {affine ? ' · 地利 +10%/造價 −15%' : ''}
                               </div>
                             );
@@ -3997,7 +4033,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
             color: '#8a7050', fontFamily: 'var(--tkm-font-body)',
             fontSize: '0.7rem', letterSpacing: '0.05rem',
           }}>
-            點金色八角位 → 城外防禦 · 點地基(金框) → 城内營建
+            {t('點金色八角位 → 城外防禦 · 點地基(金框) → 城内營建', 'Gold octagons → outer defences · gold-framed plots → city works')}
           </div>
         )}
 
@@ -4034,7 +4070,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
                 <button
                   onClick={() => { resolveStreetEncounter(cityId, K, false); setEncounterOpen(false); }}
                   style={{ flex: 1, padding: '0.35rem', background: '#1a1410', border: '1px solid #4a3a28', color: '#8a7050', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.78rem' }}
-                >婉拒(此季不再遇)</button>
+                >{t('婉拒(此季不再遇)', "Decline (won't recur this season)")}</button>
               </div>
             </div>
           );
@@ -4076,7 +4112,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
                     {metric.zh} <strong style={{ color: inspect.color }}>{metric.v}{learningOnly ? ' 員' : ''}</strong>
                     {metric.max != null && <span style={{ color: '#8a7050' }}> / {metric.max}</span>}
                     {!cmds.includes('develop-agriculture') && !cmds.includes('develop-commerce') && !learningOnly && (
-                      <span style={{ marginLeft: 10, color: '#8a7050' }}>兵 {city.troops.toLocaleString()} · 民忠 {city.loyalty}</span>
+                      <span style={{ marginLeft: 10, color: '#8a7050' }}>{t('兵', 'Troops')} {city.troops.toLocaleString()} · {t('民忠', 'Loyalty')} {city.loyalty}</span>
                     )}
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
@@ -4111,13 +4147,13 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
                   {cmds.includes('improve-loyalty') && (
                     <div style={{ marginTop: 8, borderTop: '1px solid #3a2d20', paddingTop: 6, fontSize: '0.72rem', color: '#c0a878' }}>
                       <div style={{ marginBottom: 5 }}>
-                        <span style={{ color: '#8a7858' }}>本城度支</span>{'  '}
-                        季金 <strong style={{ color: '#e8c860' }}>+{cityEcon.goldIncome.toLocaleString()}</strong>
-                        <span style={{ marginLeft: 8 }}>季糧 <strong style={{ color: (cityEcon.foodIncome - cityEcon.foodUpkeep) >= 0 ? '#9ac06a' : '#d4774a' }}>{(cityEcon.foodIncome - cityEcon.foodUpkeep) >= 0 ? '+' : ''}{(cityEcon.foodIncome - cityEcon.foodUpkeep).toLocaleString()}</strong></span>
-                        <span style={{ marginLeft: 8 }}>人口 <strong style={{ color: cityEcon.populationDelta >= 0 ? '#88b7e8' : '#d4774a' }}>{cityEcon.populationDelta >= 0 ? '+' : ''}{cityEcon.populationDelta.toLocaleString()}</strong>/季</span>
+                        <span style={{ color: '#8a7858' }}>{t('本城度支', 'City budget')}</span>{'  '}
+                        {t('季金', 'Gold/season')} <strong style={{ color: '#e8c860' }}>+{cityEcon.goldIncome.toLocaleString()}</strong>
+                        <span style={{ marginLeft: 8 }}>{t('季糧', 'Food/season')} <strong style={{ color: (cityEcon.foodIncome - cityEcon.foodUpkeep) >= 0 ? '#9ac06a' : '#d4774a' }}>{(cityEcon.foodIncome - cityEcon.foodUpkeep) >= 0 ? '+' : ''}{(cityEcon.foodIncome - cityEcon.foodUpkeep).toLocaleString()}</strong></span>
+                        <span style={{ marginLeft: 8 }}>{t('人口', 'Population')} <strong style={{ color: cityEcon.populationDelta >= 0 ? '#88b7e8' : '#d4774a' }}>{cityEcon.populationDelta >= 0 ? '+' : ''}{cityEcon.populationDelta.toLocaleString()}</strong>{t('/季', '/season')}</span>
                       </div>
                       {isCapital ? (
-                        <div style={{ color: '#e8c860' }}>★ 本城為治所 — 政令所出,每季 +3 民忠、禁軍宿衛。</div>
+                        <div style={{ color: '#e8c860' }}>{t('★ 本城為治所 — 政令所出,每季 +3 民忠、禁軍宿衛。', '★ Seat of government — decrees issue from here: +3 loyalty a season, guarded by the standing guard.')}</div>
                       ) : (
                         <button
                           onClick={() => {
@@ -4128,7 +4164,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
                             setInspect(null);
                           }}
                           style={{ background: '#2a1f14', border: '1px solid #e0c060', color: '#f0d98a', padding: '0.28rem 0.6rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.74rem' }}
-                        >遷都至此 <span style={{ color: '#8a7050' }}>{capitalMoveUsed ? '800g' : '首遷免費'}</span></button>
+                        >{t('遷都至此', 'Move capital here')} <span style={{ color: '#8a7050' }}>{capitalMoveUsed ? '800g' : t('首遷免費', 'first move free')}</span></button>
                       )}
                     </div>
                   )}
@@ -4162,11 +4198,11 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
           color: '#b8a274', fontFamily: 'var(--tkm-font-body)',
           fontSize: '0.66rem', lineHeight: 1.55, textAlign: 'right',
         }}>
-          <div style={{ color: '#8a7858', fontSize: '0.7rem', letterSpacing: '0.05rem', marginBottom: 2 }}>城景 · 實況</div>
-          <div>市集 <span style={{ color: '#d4a84a' }}>商業 {city.commerce}/{econCap}</span></div>
-          <div>屯田 <span style={{ color: '#9ac06a' }}>農業 {city.agriculture}/{econCap}</span></div>
-          <div>行人 <span style={{ color: '#88b7e8' }}>人口 {city.population.toLocaleString()}</span></div>
-          <div>張燈 <span style={{ color: '#e0884a' }}>民忠 {city.loyalty}/{size.loyaltyCap}</span></div>
+          <div style={{ color: '#8a7858', fontSize: '0.7rem', letterSpacing: '0.05rem', marginBottom: 2 }}>{t('城景 · 實況', 'City · Live')}</div>
+          <div>{t('市集', 'Market')} <span style={{ color: '#d4a84a' }}>{t('商業', 'Commerce')} {city.commerce}/{econCap}</span></div>
+          <div>{t('屯田', 'Farmland')} <span style={{ color: '#9ac06a' }}>{t('農業', 'Agriculture')} {city.agriculture}/{econCap}</span></div>
+          <div>{t('行人', 'Populace')} <span style={{ color: '#88b7e8' }}>{t('人口', 'Population')} {city.population.toLocaleString()}</span></div>
+          <div>{t('張燈', 'Lanterns')} <span style={{ color: '#e0884a' }}>{t('民忠', 'Loyalty')} {city.loyalty}/{size.loyaltyCap}</span></div>
         </div>
       </div>
     </div>

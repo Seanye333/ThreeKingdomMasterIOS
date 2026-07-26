@@ -228,21 +228,12 @@ function UnitWeapon({ unit, yLift }: { unit: TacticalUnit; yLift: number }) {
 
 
 /* ─── FPS 自適應 — sustained sub-26fps drops the cinematic post stack for
- *  the rest of the battle (one-way: no oscillating on/off flicker). ─── */
-export function AdaptiveFx({ onDegrade }: { onDegrade: () => void }) {
-  const acc = useRef({ t: 0, n: 0, bad: 0 });
-  useFrame((_, delta) => {
-    const a = acc.current;
-    a.t += delta; a.n++;
-    if (a.t >= 1) {
-      const fps = a.n / a.t;
-      a.bad = fps < 26 ? a.bad + 1 : 0;
-      a.t = 0; a.n = 0;
-      if (a.bad >= 3) onDegrade();
-    }
-  });
-  return null;
-}
+ *  the rest of the battle (one-way: no oscillating on/off flicker).
+ *
+ *  The watchdog itself now lives in components/FrameRateWatch so the world
+ *  map and the city scene can use the same one; this alias keeps the battle
+ *  screen's existing import working. ─── */
+export { FrameRateWatch as AdaptiveFx } from '../../components/FrameRateWatch';
 
 /* ─── A unit standing on a hex ─────────────────────────────────────── */
 /* ─── 千軍萬馬 — a small block of rank-and-file behind the hero figure so a

@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { startCampaign as enterRealm } from './helpers';
 
 /**
  * 武文諸面板 — a runtime smoke pass over everything §6.10–§6.18 added to the UI.
@@ -14,16 +15,10 @@ import { test, expect, type Page } from '@playwright/test';
  * timeouts fail loudly rather than hanging the suite.
  */
 
-/** Title wizard → a live realm. Shared by every case below. */
+/** Title wizard → a live realm, with the map actually up. Shared by every
+ *  case below; the walk itself (including the 序章 page) lives in helpers. */
 async function startCampaign(page: Page): Promise<void> {
-  await page.goto('/');
-  const next1 = page.getByText('下一步：選擇勢力', { exact: false });
-  await expect(next1).toBeVisible({ timeout: 20_000 });
-  await next1.click();
-  await expect(page.getByText('君主選擇', { exact: false })).toBeVisible();
-  await page.locator('ul li button').first().click();
-  await page.getByText('下一步：開局設定', { exact: false }).click();
-  await page.getByText('▶ 開始遊戲', { exact: false }).click();
+  await enterRealm(page);
   await expect(page.locator('canvas').first()).toBeVisible({ timeout: 30_000 });
 }
 

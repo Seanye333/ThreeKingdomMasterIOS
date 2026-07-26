@@ -13,12 +13,13 @@ import { useGameStore } from '../../../game/state/store';
 import { GEO_LABELS } from '../../../game/data/mapLabels';
 import type { City, Season } from '../../../game/types';
 import { useLanguage, pickName } from '../../i18n';
-import { IS_MOBILE, MAP_W, MAP_D, PIXEL_TO_WORLD, GEO_LAT_MAX, GEO_LAT_SPAN, RIVERS, LAKES, pxToWorld, sampleTerrain, sampleTerrainHeight, cityElevation } from './shared';
+import { IS_MOBILE, MAP_W, MAP_D, PIXEL_TO_WORLD, GEO_LAT_MAX, GEO_LAT_SPAN, RIVERS, LAKES, pxToWorld, sampleTerrain, sampleTerrainHeight, cityElevation, useGfxDegraded } from './shared';
 
 /* ─── Ocean plane sitting just below sea-level terrain ─────────── */
 /** Living water — a low-subdivision plane whose vertices roll in layered
  *  swells, so the sea shimmers and undulates instead of sitting glassy-flat. */
 export function Ocean({ night = false }: { night?: boolean }) {
+  const degraded = useGfxDegraded();
   const ref = useRef<THREE.Mesh>(null);
   const geom = useMemo(() => new THREE.PlaneGeometry(MAP_W * 1.1, MAP_D * 1.1, 24, 24), []);
   const orig = useMemo(() => Float32Array.from(geom.attributes.position.array), [geom]);
@@ -46,8 +47,10 @@ export function Ocean({ night = false }: { night?: boolean }) {
   // to true, but the per-frame 512² render-to-texture + blur pass is exactly
   // the kind of sustained GPU-memory pressure that makes iOS WKWebView drop
   // the WebGL context (→ black map) after a long session. The mirror is a
-  // desktop-only luxury.
-  if (RENDER_HI && !IS_MOBILE) {
+  // desktop-only luxury — and even there it is the most expensive single
+  // layer on the map, so it is also the first to go once the frame rate
+  // slips (degraded), falling back to the same cheap shimmer.
+  if (RENDER_HI && !IS_MOBILE && !degraded) {
     return (
       <mesh ref={ref} geometry={geom} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.18, 0]}>
         <MeshReflectorMaterial

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { startCampaign } from './helpers';
 
 /**
  * 2026-07-21 制度批 — the four new realm-level levers (糴政 / 錢法 / 兵制 /
@@ -10,12 +11,7 @@ test('the new institutions all set, and their consequences read back', async ({ 
   const errors: string[] = [];
   page.on('pageerror', (err) => errors.push(err.message));
 
-  await page.goto('/');
-  await page.getByText('下一步：選擇勢力', { exact: false }).click();
-  await expect(page.getByText('君主選擇', { exact: false })).toBeVisible();
-  await page.locator('ul li button').first().click();
-  await page.getByText('下一步：開局設定', { exact: false }).click();
-  await page.getByText('▶ 開始遊戲', { exact: false }).click();
+  await startCampaign(page);
   await expect(page.getByText('武將', { exact: false }).first()).toBeVisible({ timeout: 30_000 });
 
   await page.getByRole('button', { name: '內政', exact: false }).first().click();

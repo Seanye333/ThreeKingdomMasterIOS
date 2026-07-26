@@ -1,5 +1,6 @@
 /* Shared module-level constants + pure helpers for the strategic 3D map.
  * Extracted verbatim from StrategicMap3D.tsx (pure mechanical split). */
+import { createContext, useContext } from 'react';
 import * as THREE from 'three';
 import { geoToPixel, MAP_W as PX_W, MAP_H as PX_H, WORLD_SCALE } from '../../../game/data/geography';
 
@@ -7,6 +8,21 @@ import { geoToPixel, MAP_W as PX_W, MAP_H as PX_H, WORLD_SCALE } from '../../../
  *  post-processing pass so phones keep a playable framerate. */
 export const IS_MOBILE = typeof window !== 'undefined'
   && (window.matchMedia?.('(pointer: coarse)')?.matches || window.innerWidth < 700);
+
+/**
+ * 自適應降級 — set once FrameRateWatch trips on this scene.
+ *
+ * renderQuality's auto/low/high is decided at module load and cannot know
+ * that THIS save has three hundred columns in the field, or that the phone
+ * has thermally throttled after twenty minutes. Layers that cost real GPU
+ * time (planar water reflection, cloud shadows, weather particles, bloom)
+ * read this and step down, so the map keeps moving instead of sliding toward
+ * the context loss that used to black it out.
+ *
+ * One-way for the life of the scene — see FrameRateWatch.
+ */
+export const GfxDegradedCtx = createContext(false);
+export const useGfxDegraded = (): boolean => useContext(GfxDegradedCtx);
 
 /* ─── Pixel↔world mapping ──────────────────────────────────────────
  * StrategicMap.tsx uses (0..1000, 0..720) pixel coords for cities.

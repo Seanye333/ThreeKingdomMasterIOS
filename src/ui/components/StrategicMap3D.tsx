@@ -43,7 +43,9 @@ import { SitePanel } from './SitePanel';
 import { ScenicPanel } from './ScenicPanel';
 import { BuildStockadePicker } from './BuildStockadePicker';
 import { useT, useLanguage, pickName } from '../i18n';
-import { IS_MOBILE, PIXEL_TO_WORLD, MAP_W, MAP_D, EMPTY_HEX_PAINT, EMPTY_TERRITORY_OWNERSHIP, pxToWorld, isLandPx, sampleTerrainHeight, cityElevation, SEASON_ZH, SEASON_EN, type OverlayMode } from './map3d/shared';
+import { IS_MOBILE, PIXEL_TO_WORLD, MAP_W, MAP_D, EMPTY_HEX_PAINT, EMPTY_TERRITORY_OWNERSHIP, pxToWorld, isLandPx, sampleTerrainHeight, cityElevation, SEASON_ZH, SEASON_EN, GfxDegradedCtx, useGfxDegraded, type OverlayMode } from './map3d/shared';
+import { useGLRecovery } from '../hooks/useGLRecovery';
+import { FrameRateWatch } from './FrameRateWatch';
 import { computeBeaconAlerts, QueuedBattles3D, DayEncounterMarks3D, FieldBattleMarks3D, FieldClashMelee3D, IgnitionDust3D, BeaconAlerts3D, SiegeRings3D, BurningCities3D, DepartureFlourish3D, ConquestFlourish3D, LossFlourish3D, EspionageAgents3D } from './map3d/WorldMarks3D';
 import { Ocean, Lakes3D, RiverRibbons, SnowBlanket, Forest3D, Farmland3D, Villages3D, GeoLabels3D, TradeRouteLines3D, RainParticles, SnowParticles } from './map3d/NatureLayers3D';
 import { MarchingArmies } from './map3d/Armies3D';
@@ -216,6 +218,8 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
   const weather = useGameStore((s) => s.weather);
   const marchPreview = useGameStore((s) => s.marchPreview);
   const weatherPreset = WEATHER_PRESETS[weather.kind];
+  // 自適應降級 — set by FrameRateWatch on the host; the heavy dressing reads it.
+  const degraded = useGfxDegraded();
   const season = useGameStore((s) => s.date.season) as Season;
   // 米市商旅 (§1.16) — last season's caravans, drawn under the 米價 overlay.
   const grainFlows = useGameStore((s) => s.lastGrainFlows);
@@ -349,9 +353,10 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
       <directionalLight position={[-4, 5, -10]} intensity={0.45} color={seasonPreset.fillColor} />
       <hemisphereLight args={[seasonPreset.hemiSky, seasonPreset.hemiGround, seasonPreset.hemiIntensity]} />
 
-      {/* Weather particles (rain / snow) */}
-      {weatherPreset.particles === 'rain' && <RainParticles bounds={particleBounds} />}
-      {weatherPreset.particles === 'snow' && <SnowParticles bounds={particleBounds} />}
+      {/* Weather particles (rain / snow) — thinned rather than cut when
+          degraded: the weather is readable game state, not just dressing. */}
+      {weatherPreset.particles === 'rain' && <RainParticles bounds={particleBounds} count={degraded ? 700 : 2000} />}
+      {weatherPreset.particles === 'snow' && <SnowParticles bounds={particleBounds} count={degraded ? 500 : 1500} />}
 
       {/* 雙擊空地飛鏡 — double-clicking bare ground (when not placing a march)
           flies + zooms the camera to that spot. Cities keep their own click
@@ -406,8 +411,9 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
       <Villages3D />
       <GreatWall3D />
       <DriftingClouds />
-      {/* 雲影掠地 — the clouds above cast drifting shade on the lowlands. */}
-      {!IS_MOBILE && <CloudShadows />}
+      {/* 雲影掠地 — the clouds above cast drifting shade on the lowlands.
+          Pure dressing, so it goes as soon as the frame rate does. */}
+      {!IS_MOBILE && !degraded && <CloudShadows />}
       {tod === 'day' && <Birds3D />}
       <CitySmoke3D cities={cities} />
       <Caravans3D cities={cities} />
@@ -866,11 +872,10 @@ export function StrategicMap3D() {
   // map. If no restore arrives within a short grace window we bump this epoch
   // to fully remount the <Canvas> with a brand-new GL context — the cached
   // terrain/normal/water textures simply re-upload into the fresh renderer.
-  const [glEpoch, setGlEpoch] = useState(0);
-  const glRestoreTimer = useRef<number | null>(null);
-  useEffect(() => () => {
-    if (glRestoreTimer.current != null) window.clearTimeout(glRestoreTimer.current);
-  }, []);
+  const { glEpoch, attachGLRecovery } = useGLRecovery('StrategicMap3D');
+
+  // 自適應降級 — the runtime half of render quality. See GfxDegradedCtx.
+  const [gfxDegraded, setGfxDegraded] = useState(false);
 
   // 鏡頭按鈕橋接 — an in-Canvas rig (MapCamApi) publishes imperative zoom /
   // recenter / flyTo helpers here, so the DOM corner buttons (which live
@@ -1657,34 +1662,16 @@ export function StrategicMap3D() {
         camera={{ position: [0, MAP_D * 0.9, MAP_D * 0.7], fov: 45, near: 0.5, far: 400 * WORLD_SCALE }}
         // preserveDrawingBuffer lets the 📷 button read the frame back.
         gl={{ antialias: RENDER_HI, preserveDrawingBuffer: true }}
-        onCreated={({ gl }) => {
-          // Recover from WebGL context loss instead of going black forever.
-          const canvas = gl.domElement;
-          const onLost = (e: Event) => {
-            e.preventDefault();                 // ask the browser to attempt a restore
-            if (glRestoreTimer.current != null) return;
-            // Grace period: a transient loss (tab switch, brief pressure) is
-            // restored by the browser + three.js on its own. If it isn't, the
-            // context is dead for good — hard-remount with a fresh one.
-            glRestoreTimer.current = window.setTimeout(() => {
-              glRestoreTimer.current = null;
-              console.warn('[StrategicMap3D] WebGL context not restored — remounting canvas');
-              setGlEpoch((n) => n + 1);
-            }, 1800);
-          };
-          const onRestored = () => {
-            if (glRestoreTimer.current != null) {
-              window.clearTimeout(glRestoreTimer.current);
-              glRestoreTimer.current = null;
-            }
-          };
-          canvas.addEventListener('webglcontextlost', onLost as EventListener, false);
-          canvas.addEventListener('webglcontextrestored', onRestored as EventListener, false);
-        }}
+        // Recover from WebGL context loss instead of going black forever.
+        onCreated={({ gl }) => attachGLRecovery(gl)}
       >
         <BattleCinematics trigger={cine} />
+        {/* Shed the expensive layers if the frame rate stays down, rather
+            than riding it into a context loss. */}
+        {!gfxDegraded && <FrameRateWatch onDegrade={() => setGfxDegraded(true)} />}
         <Suspense fallback={null}>
           <ZoomLODTracker onChange={setZoomLod} />
+          <GfxDegradedCtx.Provider value={gfxDegraded}>
           <ZoomLODCtx.Provider value={zoomLod}>
           <MapScene
             overlayMode={overlayMode}
@@ -1721,6 +1708,7 @@ export function StrategicMap3D() {
             }}
           />
           </ZoomLODCtx.Provider>
+          </GfxDegradedCtx.Provider>
           <OrbitControls
             ref={controlsRef as React.Ref<never>}
             target={orbitTarget}
@@ -1748,8 +1736,10 @@ export function StrategicMap3D() {
           <MiniNavRig controlsRef={controlsRef} onView={setNavView} jump={navJump} />
           {/* Gentle bloom — beacons, fires and water shimmer get a halo; on a
               moonlit lower-phase NIGHT it opens up so the city lamps, beacon
-              chains and ember fields truly glow (萬家燈火). High tier only. */}
-          {RENDER_HI && (
+              chains and ember fields truly glow (萬家燈火). High tier only, and
+              the first thing dropped when the frame rate goes: a full-screen
+              post pass costs more than everything it lights up. */}
+          {RENDER_HI && !gfxDegraded && (
             <EffectComposer>
               <Bloom
                 luminanceThreshold={tod === 'night' ? 0.5 : 0.85}

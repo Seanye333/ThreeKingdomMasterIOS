@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { startCampaign } from './helpers';
 
 /**
  * 武將成長 UI — confirm the new growth controls mount in a real browser without
@@ -10,17 +11,7 @@ test('officer sheet shows the new growth UI (aptitude / mentor / training)', asy
   const errors: string[] = [];
   page.on('pageerror', (err) => errors.push(err.message));
 
-  await page.goto('/');
-
-  // Title wizard → scenario → force → start (mirrors the smoke journey; partial
-  // text so the full-width colon in the labels doesn't matter).
-  const next1 = page.getByText('選擇勢力', { exact: false });
-  await expect(next1).toBeVisible({ timeout: 20_000 });
-  await next1.click();
-  await expect(page.getByText('君主選擇', { exact: false })).toBeVisible();
-  await page.locator('ul li button').first().click();
-  await page.getByText('開局設定', { exact: false }).click();
-  await page.getByText('開始遊戲', { exact: false }).click();
+  await startCampaign(page);
 
   // In the realm — the top bar mounts.
   await expect(page.getByText('武將', { exact: false }).first()).toBeVisible({ timeout: 30_000 });
@@ -48,12 +39,7 @@ test('city panel shows the 特訓 command', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (err) => errors.push(err.message));
 
-  await page.goto('/');
-  await page.getByText('選擇勢力', { exact: false }).click();
-  await expect(page.getByText('君主選擇', { exact: false })).toBeVisible();
-  await page.locator('ul li button').first().click();
-  await page.getByText('開局設定', { exact: false }).click();
-  await page.getByText('開始遊戲', { exact: false }).click();
+  await startCampaign(page);
   await expect(page.getByText('武將', { exact: false }).first()).toBeVisible({ timeout: 30_000 });
 
   // Select the capital → the CityPanel (with its command menu) opens.
