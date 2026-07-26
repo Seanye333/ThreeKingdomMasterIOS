@@ -10,7 +10,9 @@ export type InspectInfo = { title: string; body: string; color: string; commands
 export const InspectCtx = createContext<(info: InspectInfo) => void>(() => {});
 import { createContext, useContext, useRef } from 'react';
 import * as THREE from 'three';
+import { SURFACE } from '../../materials';
 import { useFrame } from '@react-three/fiber';
+import { useT } from '../../i18n';
 import { Html } from '@react-three/drei';
 
 export type SeasonKey = 'spring' | 'summer' | 'autumn' | 'winter';
@@ -50,23 +52,23 @@ export function ChineseRoof3D({ size, color, ornament = false, beasts = false }:
       {/* Overhanging eave slab — the shadow line */}
       <mesh position={[0, 0.03, 0]} castShadow receiveShadow>
         <boxGeometry args={[eave, 0.1, eave]} />
-        <meshStandardMaterial color={shade(color, 0.85)} roughness={0.66} metalness={0.12} />
+        <meshStandardMaterial color={shade(color, 0.85)} {...SURFACE.tile} />
       </mesh>
       {/* Hip roof body */}
       <mesh position={[0, roofH / 2 + 0.08, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
         <coneGeometry args={[eave * 0.72, roofH, 4]} />
-        <meshStandardMaterial color={color} roughness={0.62} metalness={0.16} />
+        <meshStandardMaterial color={color} {...SURFACE.tile} />
       </mesh>
       {/* Main ridge beam */}
       <mesh position={[0, roofH + 0.05, 0]} castShadow>
         <boxGeometry args={[eave * 0.5, 0.09, 0.12]} />
-        <meshStandardMaterial color={ridgeC} roughness={0.55} />
+        <meshStandardMaterial color={ridgeC} {...SURFACE.tile} />
       </mesh>
       {/* Upturned corner tips */}
       {[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz], i) => (
         <mesh key={i} position={[sx * eave * 0.45, 0.13, sz * eave * 0.45]} rotation={[sz * 0.5, 0, -sx * 0.5]} castShadow>
           <coneGeometry args={[0.08, 0.24, 4]} />
-          <meshStandardMaterial color={ridgeC} roughness={0.6} />
+          <meshStandardMaterial color={ridgeC} {...SURFACE.tile} />
         </mesh>
       ))}
       {/* Hip ridges (戗脊) running apex→corners on grand roofs — the tiled look */}
@@ -204,6 +206,7 @@ export function Residence3D({ x, z, household, onClick }: {
   household: { spouses: string[]; kids: Array<{ nameZh: string; age: number; female: boolean }> };
   onClick: () => void;
 }) {
+  const t = useT();
   return (
     <group
       position={[x, 0, z]}
@@ -255,7 +258,7 @@ export function Residence3D({ x, z, household, onClick }: {
           fontSize: 10, fontWeight: 'bold', whiteSpace: 'nowrap',
           color: '#f0d8e0', background: 'rgba(22,16,10,0.78)',
           border: '1px solid #b06a80', borderRadius: 4, padding: '0 5px',
-        }}>官邸</div>
+        }}>{t('官邸', 'Residence')}</div>
       </Html>
     </group>
   );
