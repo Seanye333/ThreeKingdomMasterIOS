@@ -15,7 +15,7 @@
 | 2 | [武將・成長・家族](#第二章-武將成長家族) | growth, officerGrade, gradeCombat, officerFate, traitEffects, personality, biography, posthumous, aging, officerGen, family, clans, retinues, wishes, rapport, friction, relationshipEffects, career, codex, peerage, honorifics, battlePower(武將卡/開卡) | ✅ |
 | 3 | [人才・招攬・舌戰](#第三章-人才招攬舌戰) | commands(search), officerFate, recommendation, commonerTalent, appraisal(月旦評), **publicOpinion(鄉論清議)**, **patronage(門生故吏/舉主)**, **officialSelection(察舉/九品中正/開科取士/中正官)**, scenicSites(三顧), captiveFate(處決後果/AI處置), aiRansom, debate, wordWar, persuasion(說客) | ✅ |
 | 4 | [軍事指揮・委任](#第四章-軍事指揮委任) | **conscription(兵制:更卒/世兵/募兵/軍餉)**, **campaignLedger(糧秣簿)**, **militaryLaw(軍功簿/行賞/軍法四等)**, **veterans(傷兵/療傷/廢疾還籍)**, **reorganization(新兵稀釋/傷癒歸伍)**, muster, legion(都督之斷·長圍), governor, governorEval, advisor, 在途指令(駐守/設伏/圍城/焚橋/燒鎖/補給/分兵/召回), rout(潰軍/掩殺收降/殿軍斷後) | ✅ |
-| 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, tacticalAi, combat, formations, stratagems, weather(區域天候), battlefieldTerrain, worldScars(戰場烙印), fieldworks(築壘), columnReinforcements(會戰), wallTier城郭分層, 入城三選, battleSpoils(戰場繳獲), **campDisease(軍中疫疾/頓兵/不習水土)**, **siegeWorks(攻城器械營造/焚其攻具)**, **nightRaid(夜襲劫營)**, **navalWarfare(水軍熟練/暈船/艦隊編成/淺灘擱淺/搶灘登陸)**, personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
+| 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, tacticalAi, combat, formations, stratagems, weather(區域天候), battlefieldTerrain, worldScars(戰場烙印), fieldworks(築壘), columnReinforcements(會戰), wallTier城郭分層, 攻城動作(破城/搶修/雲梯), 入城三選, battleSpoils(戰場繳獲), **campDisease(軍中疫疾/頓兵/不習水土)**, **siegeWorks(攻城器械營造/焚其攻具)**, **nightRaid(夜襲劫營)**, **navalWarfare(水軍熟練/暈船/艦隊編成/淺灘擱淺/搶灘登陸)**, personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
 | 6 | [單挑](#第六章-單挑) | duel(招式/必殺技/獨門被動/破綻/傷殘/挑落下馬/**環境借勢/部位打擊/膽氣怯戰/棄馬步戰**/兵裝/坐騎/地形/性格/AI), **martialArts(武學修為/流派/流派相剋/秘籍/頓悟)**, **teamDuel(團戰圍攻/合擊/3D 同場)**, **arenaLadder(打擂擂台)**, **涟漪大地圖(威名威懾/代戰認輸金/慘勝負傷/名場面入史/世間鬥將)**, **debateArts(文辯修為/學派/辯經/傳道)**, **scholarRank(月旦評/文名威懾)**, **debateDiplomacy(折衝樽俎/責讓索貢/舌戰說降)**, **teamDebate(朝堂合辯)**, **引時事入辯(annals 彈藥)**, **realmEthos(尚武崇文之風)**, **lineage(師承譜系/同門/衣缽傳人)**, gauntlet, duelSeries, duelScenarios(劇情+戰役), duelHall(名局廊), warRanking(武評榜), rivalries(宿敵/恩怨簿), duelChallenge(約戰), tactical(致師) | ✅ |
 | 7 | [外交・謀略・天子](#第七章-外交謀略天子) | diplomacy, diplomacyPacts(稱臣/索貢/會盟/援盟/調停/質子/借道), coalition, schemes, aiSchemes, ambition, espionage, expedition, foreignRealm, intrigue, courtFactions, factionEvents, emperor, imperialEffects, mandate, appointmentEffects, clans, statecraft | ✅ |
 | 8 | [事件・天命・異族・宗教](#第八章-事件天命異族宗教) | events(天災/地動/賑災), historicalEvents(抉擇鏈), behaviorEvents(勸進/眾叛), customEvents, factionEvents, religion(黃巾/招安/宣撫), **refugees(流民之政:招撫/安置/閉關)**, tribes, tribesDiplomacy(和親/互市/質子/以夷制夷/入主建國/七擒), mandate(祥瑞/造讖/禳星), mandateRituals(郊祀/祈雨), annals(災異志) | ✅ |
@@ -466,6 +466,7 @@
 | 設伏(§4.1) | 紮營+掩蔽地(行軍成本≥0.3)可設伏:敵圖上**不可見**(遭遇預告亦不洩);伏擊底 0.45(明營 0.3)+識破減半;親征遇伏=伏方免費帶「伏兵」戰前準備;AI 分遣隊亦會設伏 |
 | 攻城戰損(§1.6) | 攻城結算逐建築擲損:陷城 20% / 守住 8%(火攻 +12%);損毀建築**零加成**,修繕費 = 40%×造價×等級 |
 | 城郭分層(§5.12) | wallTier 2 攻城戰場多一道**內城牆**(門 HP600/牆 800);tier 3 西面再加**護城河**(唯門前橋可渡);所建即所戰 |
+| 攻城三動作(§5.1.2) | 牆 HP1000/門 700;鑿擊 兵數×0.15+120(限攻城械·相鄰·1AP);搶修 +180(限守方·耗盡AP);雲梯登城須我方攻城械貼同段牆且牆內有空格(耗盡AP)。歸零成缺口。玩家入口 2026-07-26 才補上 —— 此前三者**只有 AI 會用** |
 | 區域天候(§5.12) | 戰場天候按**開戰地點**修正:北國冬戰 45% 落雪、江南夏戰 35% 逢雨、西陲雨化風沙、秋日河域偶起霧;確定性雜湊,同地同旬同天 |
 | 入城三選(§5.12) | 親征破城後一令:安民(民忠+12)/犒軍(傷兵歸隊=攻方損失15%,民忠−3)/搜捕(舊臣各40%就擒,民忠−8) |
 | 斥候偵騎(§4.1) | 行軍縱隊逐日偵查:主將智驅動偵查半徑與識破率(急行軍×0.5/緩進×1.5);揭破的敵伏標 ⚠伏、入預告、接戰識破≥50% |
@@ -2079,7 +2080,22 @@ e2e `statecraft.spec.ts` 走一遍真瀏覽器:開面板 → 四塊皆在 → �
 - **AI 行為紀律(tacticalAi)**:①**以靜制動** —— 守方步兵對純騎不追擊(馬來就我),攻方步兵騎近 5 格內止步結陣;②**相依為命** —— 落單者先靠攏最近友軍成牆;③**支援** —— 3 格內有兄弟接戰即撲其敵側;④**立防迎騎** —— 騎兵一回合觸及半徑(6 格)內即立防(原 3 格永遠慢一拍);⑤**齊頭並進** —— 步兵入敵射程圈(5 格)不脫離戰線冒進(原先逐一送頭給弓陣);另 集火紀律(優先圍毆已被友軍咬住者)與 築壘不棄(守好地閾 1.2→1.15,含自築工事)。
 - **收官打磨(同日批一)**:①**盾牆**(shieldWallMul)—— 立防的**步兵**與相鄰立防步兵互相 −15% 受擊(近戰/衝擊/預報三處同步)—— 平凡步卒的身份:最便宜、結陣後最難啃;②**騎散難覆** —— 矢雨對騎兵 ×0.85(快馬散開,覆蓋射不實;弓制騎交給直射與白刃層)。收官矩陣(120 場):**步43/槍50/騎47/弓63**,槍剋騎 63%、騎弓 52/51 相持、弓剋步 73/79(×1.5 剋制的正常體現)。
 - **AI 之魂(批二)**:①**騎兵游擊** —— 已出手的騎兵不賴在槍叢裡挨戳,剩餘 AP 脫離接觸、下回合再衝(能補刀者例外);②**列陣於後** —— 弓手站位不只看距離帶,更找**自家近戰單位作屏**(貼牆 +分、成為我側最前沿 −分),純弓軍無屏則照舊;③**敗軍止損** —— 一方兵力跌破敵 30% 時,非主將單位全體奔己方邊緣**離場**(retreatUnit,九成兵力算存活歸建)—— 敗仗不再打到最後一卒,帥旗猶立、軍魂得還。
-- **平衡基線鎖**(tacticalBalance.test.ts):seeded 迷你矩陣迴歸測試 —— 斷言 槍剋騎≥50%、騎對步≤65/70%、弓剋槍 35-92%、騎弓 25-75%、鏡像先手≤85%;任何再把謀略傷害搬出模型的改動會即刻炸測試,懸案不再重演。
+- **平衡基線鎖**(tacticalBalance.test.ts):seeded 迷你矩陣迴歸測試 —— 斷言 槍剋騎≥50%、騎對步≤65/70%、弓剋槍 35-92%、騎弓 25-75%、鏡像先手≤85%;任何再把謀略傷害搬出模型的改動會即刻炸測試,懸案不再重演。**(2026-07-26 訂正:這把鎖此前並非真 seeded —— `endTurn` 的戰場異象與天有不測風雲走裸 `Math.random()`,每回合重擲天候,而雨壓弓,騎弓那條帶因此隨機漂到閾值外,同一份程式碼約每三次全套跑就炸一次。`endTurn` 現收 rng 參數、`aiTakeTurn` 穿透傳入,並加一條「同種子必同結果」的測試把它釘死。`resolveBattleEnd` 的俘獲/繳獲仍用裸隨機,但不決定勝負。)**
+
+#### 5.1.2 攻城:三個動作只有 AI 會用(2026-07-26)
+
+沿 §5.1.1 的方法(比對引擎欄位在畫面層的使用次數)往下挖,`wallHp` 引擎 11 處、UI **0 處**。追下去發現的不只是沒顯示,而是**整套攻城互動玩家碰不到**:
+
+- **`breakGate`(破城)、`repairWall`(搶修)、`scaleWall`(雲梯登城)三個函式,全庫只有 `tacticalAi.ts` 呼叫。** 玩家攻城時無法鑿牆破門,守城時無法搶修 —— 而 AI 兩邊都會做。戰場的 `attack` 模式要求該格有敵**單位**,牆格沒有單位,所以點牆毫無反應,連失敗提示都沒有。
+- 現接上玩家入口:選中單位時,動作列按引擎判定**只在真能施展處**浮出 **🔨破城 / 🪜雲梯登城 / 🧱搶修城防**(同 `築壘` 的樣式)。相鄰只有一段牆可施時直接執行(強迫選擇不該讓人多點一次),多段則進入攻城指定模式、可施的牆格高亮(搶修用友方綠、鑿擊用敵方紅)。
+- 判定寫成引擎側的 `batterTargets`/`repairTargets`/`scaleTargets`,不在 UI 複製規則。`tacticalSiegeActions.test.ts` **成對釘住**:清單列出的格子執行後必須真的改變戰局,沒列的必須原封不動 —— 兩邊漂移就炸測試(否則玩家會拿到一個按了沒反應的按鈕,或被擋掉一個其實合法的動作)。
+
+**城防數值**:牆 HP 1000、門 700(`FORT_MAX_HP`,已 export 給畫面讀);攻城械每擊 `兵數×0.15+120`(`siegeAssaultPower`);守軍搶修 **+180/次**(`WALL_REPAIR_PER_ACTION`,耗盡行動);歸零才成缺口。這是一場**鑿 vs 修的競速**,而兩邊原本都看不到數字。
+
+- **城防上棋盤**(`battle3d/wallDamage.ts`):受損的牆/門浮出狀態條(完好/受損/殘破/將傾 + HP 數字),完好者不顯示以免糊版面;最弱一段帶輝光 —— 攻方知道該集中哪裡,守方知道該修哪格。
+- **牆體本身會壞**:垛口隨損毀逐個崩落(以座標雜湊決定次序,故不會逐幀重排、相鄰牆段也不會壞成同一個樣)、牆身熏黑塌陷、腳下堆瓦礫、將傾時旗幟落下;城門則是門扇裂開外撇、門檻散落斷木。
+- **攻城預判**:攻城械選中並指著牆時,懸浮卡報「再攻 N 次可破」(呼叫引擎的 `siegeAssaultPower`,不複製公式);若守軍搶修快過本部鑿擊則警告「需再調攻城械或改雲梯登城」—— 這是真會發生的僵局,小型攻城械每擊不足 180。
+- **順手修死分支**:攻擊戰報的「甕中捉鱉」(圍殲潰兵)寫了但**一次也沒印過** —— 它排在「銜尾掩殺」後面,而兩者搶同一個條件 `targetRouting && newTroops === 0`,通用那條永遠先中。已把較特殊的圍殲提前。
 
 ### 5.2 陣形(formations.ts,24 種)
 
