@@ -73,3 +73,32 @@ export function pruneSeats(
 export function seatNumber(cfg: HotseatConfig): number {
   return cfg.index + 1;
 }
+
+/**
+ * 對局雙方皆為真人 — a tactical battle between two seated players.
+ *
+ * The battle screen decides whose orders it takes from `playerForceId`, and
+ * `BattleAIDriver` fires whenever the active side is not that force. In a
+ * hotseat game those two facts combine badly: the moment the turn passes to the
+ * other human, the AI treats it as an enemy turn and plays it for them. Same
+ * shape as the strategic-layer bug — the computer governing a player who is
+ * simply waiting — and the same fix: ask whether the force is HUMAN, not
+ * whether it is the one at the keyboard.
+ */
+export function isPvpBattle(
+  attackerForceId: EntityId | null | undefined,
+  defenderForceId: EntityId | null | undefined,
+  seatForceIds: readonly EntityId[] | undefined,
+): boolean {
+  if (!attackerForceId || !defenderForceId || !seatForceIds || seatForceIds.length < 2) return false;
+  return seatForceIds.includes(attackerForceId) && seatForceIds.includes(defenderForceId);
+}
+
+/** Which seated force holds a given side of a PvP battle. */
+export function forceOfSide(
+  side: 'attacker' | 'defender',
+  attackerForceId: EntityId | null | undefined,
+  defenderForceId: EntityId | null | undefined,
+): EntityId | null {
+  return (side === 'attacker' ? attackerForceId : defenderForceId) ?? null;
+}

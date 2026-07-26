@@ -10,6 +10,7 @@ import { TacticalBattleScreen3D } from './TacticalBattleScreen3D';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { useDesc } from '../i18n';
 import styles from './TacticalBattleScreen.module.css';
+import { isPvpBattle, forceOfSide } from '../../game/systems/hotseat';
 
 /**
  * Battle host — a thin shell around the 3D battle screen (the 2D SVG view has
@@ -43,6 +44,25 @@ export function TacticalBattleScreen() {
   // doesn't re-fire on each re-render after the cinematic.
   const wordWarChecked = useRef(false);
   const desc = useDesc();
+
+  /* 熱座對戰 — with both sides seated by people, the keyboard has to follow the
+   * turn. `playerForceId` means "whoever is looking at this screen" everywhere
+   * else in the app, so the cleanest thing is to keep that true here too: when
+   * the active side changes, move it to that side's force and raise the handoff
+   * card. The battle screen then needs no notion of two players at all — it
+   * keeps taking orders from whoever `playerForceId` says is present. */
+  // The array itself, not a mapped copy — a selector that allocates on every
+  // call defeats the store's reference check.
+  const seats = useGameStore((s) => s.hotSeatPlayers);
+  const setStore = useGameStore.setState;
+  const pvp = isPvpBattle(battle?.attackerForceId, battle?.defenderForceId, seats.map((p) => p.forceId));
+  const activeSide = battle?.activeSide ?? null;
+  useEffect(() => {
+    if (!pvp || !battle || !activeSide || battle.winner) return;
+    const holder = forceOfSide(activeSide, battle.attackerForceId, battle.defenderForceId);
+    if (!holder || holder === playerForceId) return;
+    setStore({ playerForceId: holder, hotseatHandoff: true });
+  }, [pvp, activeSide, battle, playerForceId, setStore]);
 
   // Identify which side the player is on.
   const playerSide: 'attacker' | 'defender' | null = useMemo(() => {

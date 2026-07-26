@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { aiTakeTurn, aiSkillForDifficulty } from '../../game/systems/tacticalAi';
 import { useGameStore } from '../../game/state/store';
 import { SIGNATURE_FLAVOR } from '../screens/TacticalBattleScreen3D';
+import { isPvpBattle } from '../../game/systems/hotseat';
 
 /**
  * 無頭 AI 驅動 — advances the AI's battle turns when NO battle screen is
@@ -21,9 +22,18 @@ export function BattleAIDriver({ active }: { active: boolean }) {
   const aiStrength = useGameStore((s) => s.aiStrength ?? 3);
   const pushBattleFx = useGameStore((s) => s.pushBattleFx);
   const battleDiff = battleDifficulty ?? difficulty;
+  // Select the array itself, not a mapped copy: a selector that builds a new
+  // array every call defeats the store's reference check and re-renders on
+  // every state change anywhere.
+  const seats = useGameStore((s) => s.hotSeatPlayers);
 
   useEffect(() => {
     if (!active || !battle || battle.winner) return;
+    // 熱座對戰 — both sides seated by people. Standing down is the whole point:
+    // otherwise the moment the turn passes to the other player the AI plays it
+    // for them, which is the tactical-layer twin of the strategic bug where the
+    // computer governed a waiting player's realm.
+    if (isPvpBattle(battle.attackerForceId, battle.defenderForceId, seats.map((p) => p.forceId))) return;
     const playerSide = battle.attackerForceId === playerForceId ? 'attacker'
       : battle.defenderForceId === playerForceId ? 'defender' : null;
     if (!playerSide || battle.activeSide === playerSide) return;
@@ -52,7 +62,7 @@ export function BattleAIDriver({ active }: { active: boolean }) {
       start(next);
     }, delay);
     return () => clearTimeout(id);
-  }, [active, battle, officers, playerForceId, start, battleSpeed, battleDiff, aiStrength, pushBattleFx]);
+  }, [active, battle, officers, playerForceId, start, battleSpeed, battleDiff, aiStrength, pushBattleFx, seats]);
 
   return null;
 }

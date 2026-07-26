@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isHotseat, isHumanForce, pruneSeats, seatNumber } from './hotseat';
+import { isHotseat, isHumanForce, pruneSeats, seatNumber, isPvpBattle, forceOfSide } from './hotseat';
 import type { HotseatConfig } from './hotseat';
 
 /**
@@ -70,5 +70,30 @@ describe('seatNumber', () => {
   it('counts chairs the way people do', () => {
     expect(seatNumber(cfg(['A', 'B'], 0))).toBe(1);
     expect(seatNumber(cfg(['A', 'B'], 1))).toBe(2);
+  });
+});
+
+describe('isPvpBattle / forceOfSide — a battle between two seated players', () => {
+  it('is true only when BOTH sides are seated', () => {
+    expect(isPvpBattle('A', 'B', ['A', 'B'])).toBe(true);
+    expect(isPvpBattle('A', 'C', ['A', 'B'])).toBe(false);
+    expect(isPvpBattle('C', 'D', ['A', 'B'])).toBe(false);
+  });
+
+  it('is false in an ordinary solo game, whatever the sides', () => {
+    expect(isPvpBattle('A', 'B', ['A'])).toBe(false);
+    expect(isPvpBattle('A', 'B', [])).toBe(false);
+    expect(isPvpBattle('A', 'B', undefined)).toBe(false);
+  });
+
+  it('tolerates a battle with a side missing', () => {
+    expect(isPvpBattle(null, 'B', ['A', 'B'])).toBe(false);
+    expect(isPvpBattle('A', undefined, ['A', 'B'])).toBe(false);
+  });
+
+  it('names the force holding each side', () => {
+    expect(forceOfSide('attacker', 'A', 'B')).toBe('A');
+    expect(forceOfSide('defender', 'A', 'B')).toBe('B');
+    expect(forceOfSide('defender', 'A', null)).toBeNull();
   });
 });

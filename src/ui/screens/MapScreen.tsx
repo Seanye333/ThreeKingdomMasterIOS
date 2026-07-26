@@ -1518,7 +1518,6 @@ export function MapScreen() {
       )}
       {/* 序章 — the campaign's opening page, ahead of anything else that
           might pop on turn one. */}
-      <HotseatHandoff />
       <PrologueModal />
       {!dayFlow && !prologueOpen && <EventModal />}
       <VictoryModal />
@@ -1531,6 +1530,10 @@ export function MapScreen() {
           own driver. */}
       <BattleAIDriver active={!!tacticalBattle && !battleScreenUp} />
       {battleScreenUp && <TacticalBattleScreen />}
+      {/* 換手 — rendered LAST so it covers the battle screen too: a hotseat
+          PvP battle passes the device between turns just as the map does, and
+          a handoff card the battlefield paints over is no cover at all. */}
+      <HotseatHandoff />
       {/* 入城三選 — surfaces once the stormed city's battle screen closes. */}
       {!tacticalBattle && <ConquestPolicyModal />}
     </div>
