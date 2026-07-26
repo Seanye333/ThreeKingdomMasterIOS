@@ -1484,7 +1484,22 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     .filter((c) => c.targetX != null)
     .map(withTroops)
     .map((c) => ({ ...c, holding: true }));
-  const heldRaw = [...explicitlyHeld, ...arrivedCells, ...investedCamps];
+  // 一將一營 — a column may appear only ONCE here. The invest conversion above
+  // sets `targetX` on the SHARED command object, so a column that converted
+  // also satisfies the `targetX != null` filter that built arrivedCells — it
+  // lands in this list twice. Both copies then sit on the same spot, the
+  // field-merge pass below clusters them, and `absorbed.add(sub.officerId)`
+  // adds the column's OWN id; the `!absorbed.has(officerId)` filter that
+  // follows therefore drops BOTH copies and the siege camp vanishes on the
+  // very turn it was pitched. Dedupe by officer, last writer wins, so the
+  // invested camp (which carries `besieging`) is the one that survives.
+  const heldRaw = (() => {
+    const byOfficer = new Map<EntityId, (typeof explicitlyHeld)[number]>();
+    for (const c of [...explicitlyHeld, ...arrivedCells, ...investedCamps]) {
+      byOfficer.set(c.officerId, c);
+    }
+    return [...byOfficer.values()];
+  })();
   const inTransit = moving.filter((c) => (c.seasonsRemaining ?? 1) > 1).map(withTroops);
 
   // ── Field army merge ────────────────────────────────────────────
@@ -1527,6 +1542,8 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     const companions = [...(host.additionalOfficerIds ?? [])];
     for (const mi of ordered.slice(1)) {
       const sub = heldRaw[mi];
+      // A column can never absorb itself — see the dedupe note on heldRaw.
+      if (sub.officerId === host.officerId) continue;
       troops += sub.troops;
       companions.push(sub.officerId, ...(sub.additionalOfficerIds ?? []));
       absorbed.add(sub.officerId);
