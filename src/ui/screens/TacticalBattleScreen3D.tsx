@@ -2729,6 +2729,45 @@ export function TacticalBattleScreen3D() {
     return [cx, 0, cz];
   }, [battle]);
 
+  // 敵將叫陣 — once per turn, a brave/strong enemy next to one of your duel-capable
+  // officers may call you out. Accepting opens the bout (no AP cost — it's their
+  // initiative); the foe carries any 車輪戰 fatigue.
+  useEffect(() => {
+    // `battle` can be null on this render. This guard used to sit in an
+    // early return ABOVE the hook, so on those renders the hook was skipped
+    // entirely and the hook ORDER changed between renders
+    // (react-hooks/rules-of-hooks). CityMapScreen3D hit the same trap and
+    // was fixed by hoisting; do the same here rather than bailing early.
+    if (!battle) return;
+    const myTurn = playerSide && battle.activeSide === playerSide && !battle.winner;
+    if (!myTurn || interactiveDuel || challenge || !playerSide) return;
+    if (autoPilot) return; // 委託指揮 — duels auto-resolve; don't interrupt with a prompt
+    if (challengeTurn.current === battle.turn) return;
+    challengeTurn.current = battle.turn;
+    for (const e of battle.units) {
+      if (e.side === playerSide || e.troops <= 0) continue;
+      const foe = officers[e.officerId];
+      if (!foe || !canDuel(foe).ok) continue;
+      const seeksDuels = foe.traits?.some((tr) => tr === 'martial-valor' || tr === 'reckless' || tr === 'matchless' || tr === 'wrathful');
+      const aggro = (seeksDuels ? 0.34 : 0) + Math.max(0, (foe.stats.war - 80) / 100);
+      if (Math.random() > Math.min(0.6, 0.12 + aggro)) continue;
+      const meUnit = battle.units.find((u) => u.side === playerSide && u.troops > 0
+        && hexDistance(u.coord, e.coord) === 1
+        && officers[u.officerId] && canDuel(officers[u.officerId]!).ok);
+      if (!meUnit) continue;
+      const reinforcements = battle.units
+        .filter((ru) => ru.side === playerSide && ru.troops > 0 && ru.ap > 0 && ru.officerId !== meUnit.officerId
+          && hexDistance(ru.coord, e.coord) === 1 && officers[ru.officerId] && canDuel(officers[ru.officerId]!).ok)
+        .map((ru) => officers[ru.officerId]!).slice(0, 2);
+      setChallenge({
+        me: officers[meUnit.officerId]!, foe,
+        meFatigue: meUnit.duelFatigue ?? 0, foeFatigue: e.duelFatigue ?? 0, reinforcements,
+      });
+      break;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [battle, playerSide, interactiveDuel, challenge, autoPilot, officers]);
+
   if (!battle) return null;
 
   const selectedUnit = selectedId ? battle.units.find((u) => u.id === selectedId) : null;
@@ -2770,37 +2809,6 @@ export function TacticalBattleScreen3D() {
     setTimeout(() => setDuelClashKey((k) => k + 1), 180);
   };
 
-  // 敵將叫陣 — once per turn, a brave/strong enemy next to one of your duel-capable
-  // officers may call you out. Accepting opens the bout (no AP cost — it's their
-  // initiative); the foe carries any 車輪戰 fatigue.
-  useEffect(() => {
-    if (!myTurn || interactiveDuel || challenge || !playerSide) return;
-    if (autoPilot) return; // 委託指揮 — duels auto-resolve; don't interrupt with a prompt
-    if (challengeTurn.current === battle.turn) return;
-    challengeTurn.current = battle.turn;
-    for (const e of battle.units) {
-      if (e.side === playerSide || e.troops <= 0) continue;
-      const foe = officers[e.officerId];
-      if (!foe || !canDuel(foe).ok) continue;
-      const seeksDuels = foe.traits?.some((tr) => tr === 'martial-valor' || tr === 'reckless' || tr === 'matchless' || tr === 'wrathful');
-      const aggro = (seeksDuels ? 0.34 : 0) + Math.max(0, (foe.stats.war - 80) / 100);
-      if (Math.random() > Math.min(0.6, 0.12 + aggro)) continue;
-      const meUnit = battle.units.find((u) => u.side === playerSide && u.troops > 0
-        && hexDistance(u.coord, e.coord) === 1
-        && officers[u.officerId] && canDuel(officers[u.officerId]!).ok);
-      if (!meUnit) continue;
-      const reinforcements = battle.units
-        .filter((ru) => ru.side === playerSide && ru.troops > 0 && ru.ap > 0 && ru.officerId !== meUnit.officerId
-          && hexDistance(ru.coord, e.coord) === 1 && officers[ru.officerId] && canDuel(officers[ru.officerId]!).ok)
-        .map((ru) => officers[ru.officerId]!).slice(0, 2);
-      setChallenge({
-        me: officers[meUnit.officerId]!, foe,
-        meFatigue: meUnit.duelFatigue ?? 0, foeFatigue: e.duelFatigue ?? 0, reinforcements,
-      });
-      break;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [myTurn, battle.turn]);
 
   const onTileClick = (c: HexCoord) => {
     if (!myTurn) return;
