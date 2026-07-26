@@ -12,7 +12,7 @@
 |---|---|---|---|
 | 速 | [速查總表 Quick Reference](#速查總表-quick-reference) | 一頁掃完所有關鍵常數 / 公式 / 成本 / 機率 | ✅ |
 | 1 | [城市・內政・經濟](#第一章-城市內政經濟) | citySize, economy, commands, civicEvents, market(行情/榷場/馬市/鐵市), buildings(含戰損修繕), cityCivic(民情街景/城中人物/晝夜/街頭際遇/官邸家眷), autoBuild, policyEffects, **law(律令寬嚴/訟獄積案/決獄/冤獄/大赦)**, **household(隱戶/徭役/括戶)**, **culturalWorks(題詠/文集/立祠)**, **hoarding(囤積居奇/抑兼併)**, **grandProjects(大堰/運渠/長城/馳道)**, **grainTrade(米價/糴政/商旅轉輸)**, **coinage(錢法/物價/通脹)**, **workshops(工官/軍器/督造)**, **postalRelay(驛傳網絡/政令所及)**, forging, specialties, specialtyEvents, tradeRoutes, convoy | ✅ |
-| 2 | [武將・成長・家族](#第二章-武將成長家族) | growth, officerGrade, gradeCombat, officerFate, traitEffects, personality, biography, posthumous, aging, officerGen, family, clans, retinues, wishes, rapport, friction, relationshipEffects, career, codex, peerage, honorifics, battlePower(武將卡/開卡) | ✅ |
+| 2 | [武將・成長・家族](#第二章-武將成長家族) | growth, officerGrade, gradeCombat, officerFate, traitEffects, personality, biography, posthumous, aging, officerGen, family, clans, retinues, **formerLord(故主之義)**, wishes, rapport, friction, relationshipEffects, career, codex, peerage, honorifics, battlePower(武將卡/開卡) | ✅, **formerLord(故主之義)** |
 | 3 | [人才・招攬・舌戰](#第三章-人才招攬舌戰) | commands(search), officerFate, recommendation, commonerTalent, appraisal(月旦評), **publicOpinion(鄉論清議)**, **patronage(門生故吏/舉主)**, **officialSelection(察舉/九品中正/開科取士/中正官)**, scenicSites(三顧), captiveFate(處決後果/AI處置), aiRansom, debate, wordWar, persuasion(說客) | ✅ |
 | 4 | [軍事指揮・委任](#第四章-軍事指揮委任) | **conscription(兵制:更卒/世兵/募兵/軍餉)**, **campaignLedger(糧秣簿)**, **militaryLaw(軍功簿/行賞/軍法四等)**, **veterans(傷兵/療傷/廢疾還籍)**, **reorganization(新兵稀釋/傷癒歸伍)**, muster, legion(都督之斷·長圍), governor, governorEval, advisor, 在途指令(駐守/設伏/圍城/焚橋/燒鎖/補給/分兵/召回), rout(潰軍/掩殺收降/殿軍斷後) | ✅ |
 | 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, tacticalAi, combat, formations, stratagems, weather(區域天候), battlefieldTerrain, worldScars(戰場烙印), fieldworks(築壘), columnReinforcements(會戰), wallTier城郭分層, 攻城動作(破城/搶修/雲梯), 入城三選, battleSpoils(戰場繳獲), **campDisease(軍中疫疾/頓兵/不習水土)**, **siegeWorks(攻城器械營造/焚其攻具)**, **nightRaid(夜襲劫營)**, **navalWarfare(水軍熟練/暈船/艦隊編成/淺灘擱淺/搶灘登陸)**, personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
@@ -1490,6 +1490,16 @@ e2e `statecraft.spec.ts` 走一遍真瀏覽器:開面板 → 四塊皆在 → �
   - **故主殞落**:故主身故時,在世舊部**忠誠 −18**(`griefOnDeath` 部曲喪志;與義兄弟/家族哀慟不重複計)。
   - **舊部歸心**:若故主(或其勢力)親自招攬流落在野的舊部,招募成功率 **+0.35**(`officerFate`)—— 重整旗鼓、再聚班底。
   - 詳情頁顯示「舊部 · 某之故將」標(故主在上時綴 ✦)。
+
+### 2.9b 故主之義 —— 降將記得他先前替誰打仗(formerLord.ts,2026-07-26)
+
+`retinueOfLordId` 早就把**開局部曲**寫得很好(故主在世時忠誠有下限、故主殞落時哀慟、故主召喚時「舊部歸心」極易回頭),但**那個欄位只在劇本開局寫一次**。於是遠遠更常見的那種人 —— 你早上俘來、談降,中午就能派他去打自己的舊都 —— 身上**毫無記憶**,一點也不猶豫。
+
+- **記錄方式**:不在各入夥點掛鉤,而是**季度 tick 比對 `forceId` 變化**(`trackService`)。武將換家的門太多(招降、策反、大規模叛附、劇本事件、異族歸附、質子交換…),逐一補丁等於邀請下一個新增的門漏掉;用 diff 則**日後新增的路徑自動涵蓋**。延遲一季無妨 —— 顧慮只在你派他出征時才有意義,而那本來就是下一季的決定。
+- **只有離開真實勢力才留下東西**:原本無主之人首次出仕,不欠任何人。
+- **顧慮強度** = 新鮮度 × 疏離度:`qualmSeasons` 自 12 季遞減歸零;忠誠 50 為全額、**≥90 完全消失**。時間久了、待遇好了,于禁、黃權也就打得下去 —— 史書讀起來正是如此。
+- **效果**:進攻**故主勢力**之城時,攻方戰力 ×(1 − 顧慮 × 0.18);全隊取加權平均(一人遲疑拖慢全軍,不會腰斬),**主帥的顧慮加倍計**(那是他的隊伍)。**只作用於進攻方** —— 守著自己屋頂對上舊旗號是另一種心情,史書不記為遲疑。
+- 再次換家會**重新滿檔**。
 
 ### 2.10 武將心願(wishes.ts)
 

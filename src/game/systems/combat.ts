@@ -55,6 +55,7 @@ import { appointmentBonusFor } from './appointmentEffects';
 import { aggregateSlotEffects } from '../data/defenseBuildings';
 import type { Weather } from './weather';
 import { fireAttackMultiplier } from './weather';
+import { formerLordQualmsMul } from './formerLord';
 
 /**
  * 甲冑防護 — sum the (live) defensive weight of every armor piece worn across a
@@ -820,6 +821,11 @@ export function resolveBattle(
   // 威名 — a side led by famous names hits harder.
   const aPrestigeMul = prestigeCombatMultiplier(attackerPool);
   const dPrestigeMul = prestigeCombatMultiplier(defenderPool);
+  // 故主之義 — a man marching on the house he served last cannot draw on it
+  // with a whole heart. Attacker-side only: defending the roof over your head
+  // against your old colours is a different feeling, and the histories do not
+  // record it as hesitation.
+  const aQualmMul = formerLordQualmsMul(attackerPool, ctx?.city?.ownerForceId, attacker.commander);
   // 名將成套 — a famous roster fielded together fights as the legend demands
   // (五虎同陣 +力); sworn enemies pressed into one line grate (−).
   const aSetBondMul = setBondPowerMul(attackerPool).mul;
@@ -873,7 +879,7 @@ export function resolveBattle(
   const aPower =
     aBlended * Math.sqrt(attacker.troops) * aSkillEffects.powerMultiplier * aElitePower *
     (stratEffect.attackerPowerMul ?? 1) * aPolicy.attackMul * aTraitMods.attackMul * aComboMul *
-    aRelBonus.powerMul * rivalMul * aTitlePowerMul * aCasusMul * aNavalMul * aGuardMul * aPrestigeMul * aSetBondMul * aPartyMul * aProfMul * aTokenMul * aResonanceMul * aThemeMul * aGradeMul * aSetMul * aWeaponMul * aFormMul;
+    aRelBonus.powerMul * rivalMul * aTitlePowerMul * aCasusMul * aNavalMul * aGuardMul * aPrestigeMul * aSetBondMul * aPartyMul * aProfMul * aTokenMul * aResonanceMul * aThemeMul * aGradeMul * aSetMul * aWeaponMul * aFormMul * aQualmMul;
 
   const defenderIds = defenderPool.map((o) => o.id);
   const dBaseBlended =

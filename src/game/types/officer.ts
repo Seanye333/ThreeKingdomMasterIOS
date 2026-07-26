@@ -203,6 +203,18 @@ export interface Officer {
   /** 復仇 — which force killed each of this officer's close relatives
    *  (relativeOfficerId → killerForceId). Read by the `vengeful` trait for a
    *  combat bonus vs that force. Additive/optional — safe for old saves. */
+  /** 故主之義 (§formerLord.ts) — whoever this man served LAST, and how much of
+   *  the reluctance is left. `retinueOfLordId` covers the ORIGINAL retainer and
+   *  is written once at scenario start; these cover the far commoner case of a
+   *  man who changed houses mid-campaign, and are maintained by a season-tick
+   *  diff (`trackService`) rather than by the many join paths themselves.
+   *  `servingForceId` is that diff's shadow copy of `forceId` — engine
+   *  bookkeeping, not a gameplay field. */
+  servingForceId?: EntityId;
+  formerForceId?: EntityId;
+  formerLordId?: EntityId;
+  /** Seasons of reluctance remaining; counts down each season toward 0. */
+  qualmSeasons?: number;
   killedRelativesBy?: Record<EntityId, EntityId>;
   /** 為兄弟復仇 — which force slew each fallen sworn brother (義兄弟Id → killerForceId).
    *  Grants a combat bonus vs that force (no trait required). Optional/safe. */

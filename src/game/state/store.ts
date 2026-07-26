@@ -197,6 +197,7 @@ import { deriveCourtFactions, tickCourtPatronage, FACTION_LABEL } from '../syste
 import { clanGentryWeight } from '../systems/clans';
 import { rollBehaviorEvent } from '../systems/behaviorEvents';
 import { rollRemonstrance } from '../systems/remonstrance';
+import { trackService } from '../systems/formerLord';
 import { rollAIWishFlavor } from '../systems/aiWishesFlavor';
 import { appointmentBonusFor, pruneStaleAppointments, traitRefusal, isOnCooldown } from '../systems/appointmentEffects';
 import { canPromoteToRank } from '../systems/imperialEffects';
@@ -5277,6 +5278,11 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             text: `A ${o.shipClass} has been completed at ${city.name.en}.`,
           });
         }
+
+        // 故主之義 — record any house changes since last season and cool the
+        // standing qualms by one. Runs as a diff rather than as hooks at the
+        // (many) join paths, so a path added later is covered for free.
+        postOfficers = trackService(postOfficers, postForces);
 
         // Succession — replace dead rulers with heirs / top officers.
         const succession = applySuccession({
