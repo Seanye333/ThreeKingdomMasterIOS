@@ -1713,7 +1713,12 @@ function buildFieldBattle(
       : pickAiFormation(attackers.map((a) => a.unitType), attackers[0]?.officer.stats.intelligence ?? 60,
           { fireWeather, counter: eArmy.holding ? 'ten-ambush' : pickAiFormation(defenders.map((d) => d.unitType), defenders[0]?.officer.stats.intelligence ?? 60, { defensive: true, fireWeather }) }),
     defenderFormation: eArmy.holding ? 'ten-ambush'
-      : pickAiFormation(defenders.map((d) => d.unitType), defenders[0]?.officer.stats.intelligence ?? 60, { defensive: true, fireWeather }),
+      // 十面埋伏 — a defender with woods to hide in and the wit to use them may
+      // lay up even without digging in. There is no `forest` category at world
+      // scale (terrainTypeAt returns mountain/water/plain), but the board
+      // generator grows woods on broken ground, so mountain is the proxy.
+      : pickAiFormation(defenders.map((d) => d.unitType), defenders[0]?.officer.stats.intelligence ?? 60,
+          { defensive: true, fireWeather, wooded: terrainTypeAt(midX, midY) === 'mountain' }),
     weather: tacticalWeather as 'clear' | 'rain' | 'wind' | 'fog' | 'snow',
     timeOfDay: rollTimeOfDay(),
     windDirection: s.weather?.wind ?? 'calm',
@@ -12411,11 +12416,28 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // turn by turn. Capped; reset whenever a different battle starts.
         const prev = s.tacticalBattle;
         let snaps = s.currentBattleSnapshots;
-        if (!prev || prev.id !== battle.id) snaps = [];
+        const isNew = !prev || prev.id !== battle.id;
+        if (isNew) snaps = [];
         else if (battle.turn > prev.turn) {
           snaps = [...snaps, { ...prev, damagePopups: [], log: (prev.log ?? []).slice(-20) }].slice(-60);
         }
-        return { tacticalBattle: battle, currentBattleSnapshots: snaps };
+        // 因緣入陣 — stamp the runtime ties among THIS board's officers so
+        // 連携合擊 counts oaths the player actually swore, not just the eleven
+        // canonical pairs. Done here rather than in setupTacticalBattle because
+        // this action is the one seam every entry point goes through (five
+        // setup call sites, one of them in a modal) — and only on a new battle,
+        // since this setter also runs on every turn commit.
+        let next = battle;
+        if (isNew) {
+          const onBoard = new Set(battle.units.map((u) => u.officerId));
+          const both = (a: EntityId, bb: EntityId) => onBoard.has(a) && onBoard.has(bb);
+          const oathBonds = (s.runtimeBonds ?? []).filter((bd) => both(bd.officerA, bd.officerB));
+          const familyTies = (s.family ?? []).filter((f) => both(f.officerA, f.officerB));
+          if (oathBonds.length > 0 || familyTies.length > 0) {
+            next = { ...battle, oathBonds, familyTies };
+          }
+        }
+        return { tacticalBattle: next, currentBattleSnapshots: snaps };
       }),
 
       setMarchPreview: (preview) => set({ marchPreview: preview }),

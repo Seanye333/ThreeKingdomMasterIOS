@@ -13,6 +13,7 @@ import {
   FORT_MAX_HP, hexDistance, hexNeighbours, tileAt, canMove, moveUnit, attackUnits, forecastAttack, endTurn, isRouting, changeFormation, canChangeFormation, pickAiFormation, formationCounterMul, canFortify, fortifyTile, retreatUnit, counterMultiplier, repairWall, breakGate, scaleWall, attackRange, hasLineOfSight, WIND_DELTA, TERRAIN_MOVE_COST, terrainAffinity, tileValueFor, bestStepToward } from './tactical';
 import { applyStratagem, canChallengeDuel, challengeDuel } from './tacticalSchemes';
 import { SIGNATURE_OVERRIDES } from './personalTactics';
+import { surrenderCheck, callSurrender } from './tacticalSurrender';
 
 /**
  * N1 — AI stratagem heuristic. Returns the battle after using a stratagem,
@@ -405,6 +406,23 @@ function aiActOnce(
   if (enemies.length === 0) return hold;
   const role = unitRole(off, unit.unitType);
   const fragile = role === 'ranged' || role === 'strategist';
+
+  // 陣前招降 — call on a broken enemy before spending the action on killing it.
+  // Reciprocity: the player got this action, so the AI uses it on the player's
+  // shaken units too. Gated on decent odds so the AI doesn't burn an activation
+  // shouting at a man who will plainly refuse (a refusal also steels him).
+  {
+    let best: { id: EntityId; chance: number } | null = null;
+    for (const e of enemies) {
+      const chk = surrenderCheck(b, unit, e, officers);
+      if (!chk.ok) continue;
+      if (!best || chk.chance > best.chance) best = { id: e.id, chance: chk.chance };
+    }
+    if (best && best.chance >= 0.30) {
+      const res = callSurrender(b, unit.id, best.id, officers, rng);
+      if (res.battle !== b) return { battle: res.battle, acted: true, signatures: [] };
+    }
+  }
 
   // Reach for a stratagem first (skill-gated). Ranged units lob arrows here;
   // casters unleash fire / confusion / lightning.

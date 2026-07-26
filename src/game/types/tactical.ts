@@ -384,14 +384,33 @@ export interface TacticalBattle {
   damagePopups?: DamagePopup[];
   /** Battle log entries (voice lines, milestones). `text` is the zh-first
    *  display string; `textEn` is an optional English variant (the log is
-   *  zh-first, so most entries omit it and show `text` in either language). */
+   *  zh-first, so most entries omit it and show `text` in either language).
+   *
+   *  `blow` is the per-attack play-by-play (see tacticalNarration). It is a
+   *  separate kind from `event` for two reasons: the drawer lets the player
+   *  mute it back down to the dramatic beats, and the ticker pops only
+   *  voice/arrival — so narrating every blow must not steal the ticker. */
   log?: Array<{
     turn: number;
     text: string;
     textEn?: string;
     speaker?: EntityId;
-    kind: 'voice' | 'event' | 'arrival';
+    kind: 'voice' | 'event' | 'arrival' | 'blow';
   }>;
+  /** 因緣 — the runtime ties (結拜 oaths, marriages, adoptions) among the
+   *  officers actually on this board, stamped when the battle begins. The
+   *  battlefield 連携合擊 used to consult a hard-coded list of eleven canonical
+   *  pairs only, so an oath the player swore in-game counted in a duel but not
+   *  in a battle. Filtered to this board's officers so a save doesn't carry the
+   *  whole realm's relationship graph inside a transient battle. */
+  oathBonds?: import('../data/bonds').OathBond[];
+  familyTies?: import('./family').FamilyRelation[];
+  /** 陣前招降 — unit ids that have already been called on (one call each, so a
+   *  refusal can't simply be re-rolled), and the officers who yielded and to
+   *  whom. A yielded officer becomes that side's prisoner only if it still
+   *  holds the field at the end — see resolveBattleEnd. */
+  surrenderCalls?: EntityId[];
+  surrendered?: Array<{ officerId: EntityId; toSide: 'attacker' | 'defender' }>;
   /** Captured officer IDs after victory. */
   capturedOfficerIds?: EntityId[];
   /** Loot computed at end (gold, items). */

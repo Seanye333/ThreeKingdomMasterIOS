@@ -30,6 +30,10 @@ import { mountBondMul } from './mountBond';
 import { itemSetPowerMul } from '../data/itemSets';
 import { predictAttackDamage } from './damagePredict';
 import { stratagemSituation, type Situation } from './tacticSituation';
+import { describeBlow } from './tacticalNarration';
+import { swornDepth, runtimeFeudPair, areFamily } from './relationshipEffects';
+import type { OathBond } from '../data/bonds';
+import type { FamilyRelation } from '../types/family';
 
 /**
  * Unit-type counter matrix. counterBonus[attacker][defender] = multiplier on
@@ -199,6 +203,59 @@ export function areBonded(a: string, b: string): boolean {
   return COMBO_BONDS.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
 }
 
+/**
+ * 連携合擊 — how much harder two officers pressing the same foe hit together.
+ *
+ * The list above is eleven canonical pairs, hard-coded. That meant an oath the
+ * player swore in-game (結拜), a marriage they arranged, a son they raised —
+ * none of it counted on the battlefield, while `teamDuel` and the duel modal
+ * both already widened `areBonded` with `areSwornBrothers`. This closes that
+ * gap at the single site that computes the bonus.
+ *
+ * Order matters:
+ *  - A feud is checked FIRST. Two officers who hate each other do not
+ *    coordinate, whatever else ties them — that is the point of a feud.
+ *  - Canonical pairs keep their full 1.30 so no existing balance moves.
+ *  - Sworn ties scale with 義結深化 depth (義交 → 金蘭 → 生死之交).
+ *  - Family (static lineage + runtime marriages/adoptions) is a lesser tie.
+ */
+export const COMBO_MUL = {
+  canonical: 1.30,
+  sworn: [1.15, 1.25, 1.35] as const, // depth 1 / 2 / 3
+  family: 1.18,
+} as const;
+
+export function comboBondMul(
+  a: EntityId,
+  b: EntityId,
+  bonds: OathBond[] = [],
+  family: FamilyRelation[] = [],
+): number {
+  if (runtimeFeudPair(a, b, bonds)) return 1.0;
+  if (areBonded(a, b)) return COMBO_MUL.canonical;
+  const depth = swornDepth(a, b, bonds);
+  if (depth > 0) return COMBO_MUL.sworn[Math.min(3, Math.max(1, depth)) - 1];
+  if (areFamily(a, b, family)) return COMBO_MUL.family;
+  return 1.0;
+}
+
+/** The tie's name, for the battle log. Mirrors `comboBondMul`'s order. */
+export function comboBondLabel(
+  a: EntityId,
+  b: EntityId,
+  bonds: OathBond[] = [],
+  family: FamilyRelation[] = [],
+): { zh: string; en: string } | null {
+  if (runtimeFeudPair(a, b, bonds)) return null;
+  if (areBonded(a, b)) return { zh: '生死與共', en: 'brothers in arms' };
+  const depth = swornDepth(a, b, bonds);
+  if (depth >= 3) return { zh: '生死之交', en: 'sworn unto death' };
+  if (depth === 2) return { zh: '義結金蘭', en: 'sworn brothers' };
+  if (depth === 1) return { zh: '義交', en: 'sworn friends' };
+  if (areFamily(a, b, family)) return { zh: '骨肉同陣', en: 'kin fighting side by side' };
+  return null;
+}
+
 /** 精銳/異族 — famous elite corps & tribal hosts led by specific officers. The
  *  unit fights above its weight: atkMul to blows dealt, defMul to blows taken
  *  (<1 = hardier). */
@@ -251,7 +308,7 @@ export function formationCounterMul(atk: string, def: string): number {
 export function pickAiFormation(
   arms: UnitType[],
   commanderInt: number,
-  opts?: { defensive?: boolean; counter?: FormationId; fireWeather?: boolean },
+  opts?: { defensive?: boolean; counter?: FormationId; fireWeather?: boolean; wooded?: boolean },
 ): FormationId {
   const usable = (f: FormationId) => (FORMATIONS_BY_ID[f]?.minIntelligence ?? 0) <= commanderInt;
   const n = (t: UnitType) => arms.filter((a) => a === t).length;
@@ -267,6 +324,16 @@ export function pickAiFormation(
     cands.push('spread-out');
     if (arc > 0) cands.push('crescent-withdraw');
   }
+  // 十面埋伏 — lay an ambush when the ground actually offers cover. This was in
+  // NO candidate list at all, so the AI could never choose one, and 120 observed
+  // battles sprang 伏兵 zero times on any board. It has to be pushed ahead of the
+  // 因軍制宜 defaults below: `cands.find(usable)` takes the first match, and the
+  // defensive block's 魚鱗 would otherwise always win. Gated on woods to hide in
+  // and a defender's stance (an attacker marching on has laid up nowhere); the
+  // wits requirement is the formation's OWN minIntelligence of 95, applied by
+  // `usable` below — a second, lower threshold here would read as if a merely
+  // capable commander could set one, which is not what the data says.
+  if (opts?.wooded && opts?.defensive) cands.push('ten-ambush');
   // 看破敵陣 — lead with a category that beats the enemy's (攻破守·守克機動·機動繞攻).
   if (opts?.counter) {
     const ec = FORMATION_CAT[opts.counter];
@@ -1602,13 +1669,18 @@ export function attackUnits(
   ).length;
   const pincerMul = 1 + Math.min(0.28, 0.10 * pincers);
 
-  // 合擊 — a sworn brother pressing the same foe lands a combined blow (+30%).
-  const comboAlly = b.units.find(
-    (u) => u.side === attacker.side && u.id !== attacker.id && u.troops > 0
-      && hexDistance(u.coord, target.coord) === 1
-      && areBonded(attacker.officerId, u.officerId),
-  );
-  const comboMul = comboAlly ? 1.3 : 1.0;
+  // 合擊 — an officer BOUND to this one, pressing the same foe, lands a combined
+  // blow. The tie may be a canonical pair, an oath the player swore in-game, or
+  // blood; a feud cancels it. When several allies are in contact the closest
+  // tie wins (see comboBondMul).
+  let comboAlly: TacticalUnit | undefined;
+  let comboMul = 1.0;
+  for (const u of b.units) {
+    if (u.side !== attacker.side || u.id === attacker.id || u.troops <= 0) continue;
+    if (hexDistance(u.coord, target.coord) !== 1) continue;
+    const mul = comboBondMul(attacker.officerId, u.officerId, b.oathBonds, b.familyTies);
+    if (mul > comboMul) { comboMul = mul; comboAlly = u; }
+  }
 
   // 背刺/側擊 — a blow that lands outside the foe's front arc catches it
   // unguarded. With real 朝向, the rear arc (directly behind) is +25% and it can
@@ -1797,7 +1869,14 @@ export function attackUnits(
   // Voice lines.
   const log = b.log ? [...b.log] : [];
   if (comboAlly && ao) {
-    log.push({ turn: b.turn, text: `${ao.name.zh} × ${officers[comboAlly.officerId]?.name.zh ?? '友軍'} 合擊!`, kind: 'event' });
+    const tie = comboBondLabel(ao.id, comboAlly.officerId, b.oathBonds, b.familyTies);
+    const mate = officers[comboAlly.officerId]?.name.zh ?? '友軍';
+    log.push({
+      turn: b.turn,
+      text: `${ao.name.zh} × ${mate} 合擊${tie ? ` — ${tie.zh},如左右手!` : '!'}`,
+      textEn: `${ao.name.en} and ${officers[comboAlly.officerId]?.name.en ?? 'an ally'} strike as one${tie ? ` — ${tie.en}.` : '!'}`,
+      kind: 'event',
+    });
   }
   // 衝鋒陷陣 / 拒馬立防 / 追擊掩殺 — battle-flavour beats for the new edges.
   if (braced) {
@@ -1821,6 +1900,43 @@ export function attackUnits(
   // bonuses above already carry the mechanics.
   if (newTroops > 0 && (pincers >= 2 || (fromRear && pincers >= 1))) {
     log.push({ turn: b.turn, text: `${To?.name.zh ?? '敵軍'}腹背受敵 — 陷入重圍!`, kind: 'event' });
+  }
+  // 逐擊戰報 — the play-by-play. Everything above (相剋/地利/朝向/夾擊/精銳/疲勞/
+  // 擱淺/天候) was folded into one damage number and would otherwise vanish; the
+  // beats before this only fire on *exceptional* blows, and the only voice an
+  // ordinary blow has is `pickVoiceLine`, which covers 39 of ~2,218 officers.
+  // Tagged 'blow' so the drawer can mute it and the ticker (voice/arrival only)
+  // is untouched. See tacticalNarration.
+  const blowLine = describeBlow({
+    attackerName: ao?.name.zh ?? '我軍',
+    attackerNameEn: ao?.name.en ?? 'Our host',
+    targetName: To?.name.zh ?? '敵軍',
+    targetNameEn: To?.name.en ?? 'the foe',
+    attackerType: attacker.unitType,
+    targetType: target.unitType,
+    damage,
+    targetTroopsBefore: target.troops,
+    targetMaxTroops: target.maxTroops,
+    isRanged,
+    counterMult: counter,
+    attackerTerrain: aTerrainTile?.terrain ?? 'plain',
+    targetTerrain: dTerrainTile?.terrain ?? 'plain',
+    fromRear,
+    flankMul,
+    pincers,
+    eliteZh: ELITE_UNITS[attacker.officerId]?.zh,
+    ambush: ambushBonus > 1,
+    grounded: isGrounded(attacker.shipClass, aTerrainTile?.terrain ?? 'plain'),
+    isNight: b.timeOfDay === 'night',
+    weather: b.weather,
+    attackerFatigue: attacker.fatigue ?? 0,
+    counterDamage,
+    ammoEmptied: isRanged && attacker.maxAmmo !== undefined && (attacker.ammo ?? 0) === 1,
+    // Verb rotation only — deliberately NOT a draw from `rng`, which would
+    // advance the combat random stream once per blow. See describeBlow.
+  }, damage + b.turn + attacker.coord.col);
+  if (blowLine) {
+    log.push({ turn: b.turn, text: blowLine.zh, textEn: blowLine.en, kind: 'blow' });
   }
   if (isCrit && martialSkill && ao) {
     const SKILL_ZH: Record<string, string> = {
@@ -3072,6 +3188,16 @@ export function resolveBattleEnd(
       if (rng() < (cmdCha / 130) * pursuitCapMul) captured.push(id);
       else dead.push(id);
     }
+  }
+
+  // 陣前歸降 — officers who threw down their arms mid-battle (see
+  // tacticalSurrender). They are not casualties, so neither loop above sees
+  // them; they are prisoners of the side they yielded to, and only if that side
+  // still holds the field. Lose the day and your captives walk home.
+  for (const s of battle.surrendered ?? []) {
+    if (!winner || s.toSide !== winner) continue;
+    if (captured.includes(s.officerId) || dead.includes(s.officerId)) continue;
+    captured.push(s.officerId);
   }
 
   // Loot: 10–25% of loser's troop value as gold-equivalent, swollen by pursuit.

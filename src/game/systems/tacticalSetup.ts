@@ -24,7 +24,7 @@ import type {
   Weather,
 } from '../types';
 import {
-  assignShipClass, hexDirection, inferUnitType,
+  assignShipClass, hexDirection, hexDistance, inferUnitType,
   type WindDirection,
 } from './tactical';
 import { cityPos } from '../data/cityGeo';
@@ -539,20 +539,59 @@ export function setupTacticalBattle(p: SetupParams): TacticalBattle {
     }
   }
 
-  // Ambush setup: units of a side using the ten-ambush formation that
-  // begin on forest tiles start hidden. Revealed when an enemy moves
-  // adjacent, or when the hidden unit itself attacks.
+  // 十面埋伏 — a side using the ambush formation LAYS UP IN THE WOODS.
+  //
+  // This used to be "a unit that happens to be deployed onto a forest tile
+  // starts hidden", which in practice meant never: deployment lines are laid
+  // out by rank, not by cover, so 120 observed AI battles sprang zero ambushes.
+  // A formation named 十面埋伏 that puts nobody in ambush is a label. Now the
+  // wing walks into the nearest cover before the first turn.
+  //
+  // Bounded on purpose: only half the contingent goes to ground (an ambush
+  // wing, not a vanishing army), the commander stays with the visible line, and
+  // the cover has to be close enough that they could plausibly have marched
+  // there — no teleporting across the field into the enemy's rear.
   const ambushSides = new Set<'attacker' | 'defender'>();
   if (p.attackerFormation === 'ten-ambush') ambushSides.add('attacker');
   if (p.defenderFormation === 'ten-ambush') ambushSides.add('defender');
+  const AMBUSH_SEEK = 4;
+  const hiddenIds = new Set<EntityId>();
+  const moved = new Map<EntityId, HexCoord>();
+  if (ambushSides.size > 0) {
+    const taken = new Set(units.map((u) => `${u.coord.col},${u.coord.row}`));
+    const woods = tiles.filter((t) => t.terrain === 'forest');
+    for (const side of ambushSides) {
+      const mine = units.filter((u) => u.side === side && !u.isCommander);
+      const quota = Math.max(1, Math.floor(units.filter((u) => u.side === side).length / 2));
+      let laid = 0;
+      for (const u of mine) {
+        if (laid >= quota) break;
+        const here = tiles.find((t) => t.coord.col === u.coord.col && t.coord.row === u.coord.row);
+        if (here?.terrain === 'forest') { hiddenIds.add(u.id); laid++; continue; }
+        let best: HexCoord | null = null;
+        let bestD = AMBUSH_SEEK + 1;
+        for (const w of woods) {
+          const k = `${w.coord.col},${w.coord.row}`;
+          if (taken.has(k)) continue;
+          const d = hexDistance(u.coord, w.coord);
+          if (d < bestD) { bestD = d; best = w.coord; }
+        }
+        if (!best) continue;
+        taken.delete(`${u.coord.col},${u.coord.row}`);
+        taken.add(`${best.col},${best.row}`);
+        moved.set(u.id, best);
+        hiddenIds.add(u.id);
+        laid++;
+      }
+    }
+  }
   // Defender prep advantage: starts the fight with +10 morale (they had
   // time to dig in, brief troops, post lookouts).
   const finalUnits = units.map((u) => {
     let next: TacticalUnit = u;
-    if (ambushSides.has(u.side)) {
-      const tile = tiles.find((t) => t.coord.col === u.coord.col && t.coord.row === u.coord.row);
-      if (tile?.terrain === 'forest') next = { ...next, hidden: true };
-    }
+    const to = moved.get(u.id);
+    if (to) next = { ...next, coord: to };
+    if (hiddenIds.has(u.id)) next = { ...next, hidden: true };
     if (u.side === 'defender') {
       next = { ...next, morale: Math.min(100, next.morale + 10) };
     }

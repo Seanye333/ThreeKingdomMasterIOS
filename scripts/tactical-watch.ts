@@ -33,12 +33,18 @@ function lcg(seed: number): () => number {
 }
 
 let oc = 0;
+/**
+ * Loyalty is spread rather than pinned at 100 on purpose. 陣前招降 refuses
+ * outright at loyalty ≥ 95, so a harness where every officer is perfectly loyal
+ * would report the mechanic as dead when it is merely never eligible — the same
+ * false negative the single-arm columns produced for 雲梯 (see below).
+ */
 function mkOfficer(war: number, lead: number, int: number): Officer {
   const id = `tw${oc++}`;
   return {
     id, name: { zh: id, en: id }, birthYear: 160,
     stats: { leadership: lead, war, intelligence: int, politics: 55, charisma: 65 },
-    loyalty: 100, locationCityId: null, forceId: null, status: 'active',
+    loyalty: 55 + (oc * 13) % 45, locationCityId: null, forceId: null, status: 'active',
     task: null, equipment: [], skills: [], rank: 'soldier',
   } as Officer;
 }
@@ -60,6 +66,8 @@ const PHRASES: Array<[string, RegExp, 'common' | 'rare']> = [
   ['計略', /計|謀|火攻|亂/, 'common'],
   ['衝鋒', /衝鋒|蓄勢|突陣/, 'common'],
   ['單挑', /搦戰|單挑|挑落|一騎/, 'rare'],
+  ['招降', /招降/, 'rare'],
+  ['逐擊戰報', /斬 [\d,]+/, 'common'],
   ['車輪戰', /車輪戰/, 'rare'],
   ['築壘', /築壘|工事|鹿砦/, 'rare'],
   ['破城', /攻城槌|投石|城門告破|城牆崩塌/, 'rare'],
@@ -108,7 +116,15 @@ for (let n = 0; n < BATTLES; n++) {
     return { officer: o, troops: 6000, unitType };
   });
 
-  const dForm = pickAiFormation([dArm, dArm, dArm], 66, { defensive: true });
+  // Wooded ground AND a defender sharp enough to use it, on every third board.
+  // Both are needed for 十面埋伏 to be picked at all; a harness that pins the
+  // commander at int 66 reports 伏兵 = 0 forever and looks like a finding.
+  // 十面埋伏 is gated on the formation's own minIntelligence of 95, so a
+  // harness with ordinary commanders would report 伏兵 = 0 as if the mechanic
+  // were dead. Every third board fields a defender sharp enough for it.
+  const woodedBoard = n % 3 === 1;
+  const dInt = woodedBoard ? 96 : 66;
+  const dForm = pickAiFormation([dArm, dArm, dArm], dInt, { defensive: true, wooded: woodedBoard });
   const aForm = pickAiFormation([aArm, aArm, aArm], 66, { counter: dForm });
   let b: TacticalBattle = setupTacticalBattle({
     cityId: walled ? `tw-town-${n}` : `tw-field-${n}`,
