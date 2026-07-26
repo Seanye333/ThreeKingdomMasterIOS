@@ -16,7 +16,7 @@
 | 3 | [人才・招攬・舌戰](#第三章-人才招攬舌戰) | commands(search), officerFate, recommendation, commonerTalent, appraisal(月旦評), **publicOpinion(鄉論清議)**, **patronage(門生故吏/舉主)**, **officialSelection(察舉/九品中正/開科取士/中正官)**, scenicSites(三顧), captiveFate(處決後果/AI處置), aiRansom, debate, wordWar, persuasion(說客) | ✅ |
 | 4 | [軍事指揮・委任](#第四章-軍事指揮委任) | **conscription(兵制:更卒/世兵/募兵/軍餉)**, **campaignLedger(糧秣簿)**, **militaryLaw(軍功簿/行賞/軍法四等)**, **veterans(傷兵/療傷/廢疾還籍)**, **reorganization(新兵稀釋/傷癒歸伍)**, muster, legion(都督之斷·長圍), governor, governorEval, advisor, 在途指令(駐守/設伏/圍城/焚橋/燒鎖/補給/分兵/召回), rout(潰軍/掩殺收降/殿軍斷後) | ✅ |
 | 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, tacticalAi, combat, formations, stratagems, weather(區域天候), battlefieldTerrain, worldScars(戰場烙印), fieldworks(築壘), columnReinforcements(會戰), wallTier城郭分層, 攻城動作(破城/搶修/雲梯), 入城三選, battleSpoils(戰場繳獲), **campDisease(軍中疫疾/頓兵/不習水土)**, **siegeWorks(攻城器械營造/焚其攻具)**, **nightRaid(夜襲劫營)**, **navalWarfare(水軍熟練/暈船/艦隊編成/淺灘擱淺/搶灘登陸)**, personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
-| 6 | [單挑](#第六章-單挑) | duel(招式/必殺技/獨門被動/破綻/傷殘/挑落下馬/**環境借勢/部位打擊/膽氣怯戰/棄馬步戰**/兵裝/坐騎/地形/性格/AI), **martialArts(武學修為/流派/流派相剋/秘籍/頓悟)**, **teamDuel(團戰圍攻/合擊/3D 同場)**, **arenaLadder(打擂擂台)**, **涟漪大地圖(威名威懾/代戰認輸金/慘勝負傷/名場面入史/世間鬥將)**, **debateArts(文辯修為/學派/辯經/傳道)**, **scholarRank(月旦評/文名威懾)**, **debateDiplomacy(折衝樽俎/責讓索貢/舌戰說降)**, **teamDebate(朝堂合辯)**, **引時事入辯(annals 彈藥)**, **realmEthos(尚武崇文之風)**, **lineage(師承譜系/同門/衣缽傳人)**, gauntlet, duelSeries, duelScenarios(劇情+戰役), duelHall(名局廊), warRanking(武評榜), rivalries(宿敵/恩怨簿), duelChallenge(約戰), tactical(致師) | ✅ |
+| 6 | [單挑](#第六章-單挑) | duel(招式/必殺技/獨門被動/破綻/傷殘/挑落下馬/**環境借勢/部位打擊/膽氣怯戰/棄馬步戰**/兵裝/坐騎/地形/性格/AI), **martialArts(武學修為/流派/流派相剋/秘籍/頓悟)**, **teamDuel(團戰圍攻/合擊/3D 同場)**, **gauntlet(車輪戰·輪番)**, **arenaLadder(打擂擂台)**, **涟漪大地圖(威名威懾/代戰認輸金/慘勝負傷/名場面入史/世間鬥將)**, **debateArts(文辯修為/學派/辯經/傳道)**, **scholarRank(月旦評/文名威懾)**, **debateDiplomacy(折衝樽俎/責讓索貢/舌戰說降)**, **teamDebate(朝堂合辯)**, **引時事入辯(annals 彈藥)**, **realmEthos(尚武崇文之風)**, **lineage(師承譜系/同門/衣缽傳人)**, gauntlet, duelSeries, duelScenarios(劇情+戰役), duelHall(名局廊), warRanking(武評榜), rivalries(宿敵/恩怨簿), duelChallenge(約戰), tactical(致師) | ✅ |
 | 7 | [外交・謀略・天子](#第七章-外交謀略天子) | diplomacy, diplomacyPacts(稱臣/索貢/會盟/援盟/調停/質子/借道), coalition, schemes, aiSchemes, ambition, espionage, expedition, foreignRealm, intrigue, courtFactions, factionEvents, emperor, imperialEffects, mandate, appointmentEffects, clans, statecraft | ✅ |
 | 8 | [事件・天命・異族・宗教](#第八章-事件天命異族宗教) | events(天災/地動/賑災), historicalEvents(抉擇鏈), behaviorEvents(勸進/眾叛), customEvents, factionEvents, religion(黃巾/招安/宣撫), **refugees(流民之政:招撫/安置/閉關)**, tribes, tribesDiplomacy(和親/互市/質子/以夷制夷/入主建國/七擒), mandate(祥瑞/造讖/禳星), mandateRituals(郊祀/祈雨), annals(災異志) | ✅ |
 | 9 | [元遊戲・收藏・分享](#第九章-元遊戲收藏分享) | achievements, deedTitles, dailyChallenge, **shareCode(開局挑戰碼)**, **legacy(遺澤·跨局傳承)**, leaderboard, mods, powerHistory, historyBook, romance, sound, voiceLines, dialogueRoll | ✅ |
@@ -2553,6 +2553,20 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
 - **親督團戰**(§6.11 互動,initTeamDuelState/stepTeamDuel + InteractiveTeamDuel3D):團戰不再只能自動結算 —— **你逐合下軍令**:**集火**(近戰全隊優先攻所指之敵,射程可及時)與**死守**(該將本合出手減半、但可**架開兩記**最凶之擊而非一記),按「擂鼓進擊」走一合,全員 3D 同台實時倒下/離場。**戰場「團戰並擊」現即親督實打**(後果經同一 TeamDuelResult 管線:斬亡/降擒/逃逸/士氣±,與自動版完全一致);武鬥館團戰頁**預設親督**,可勾選切回 自動結算+上演。
 - **團戰名局廊**(BoutRecord kind `melee`):打完的團戰(親督/演武/戰場並擊三路皆然)**存入名局廊**可重演 —— 記錄只存**將領 id + 站位 + 第幾合倒下 + 斬/降/逃**,重演時由當下名冊還原(故存檔極小,也不會釘住一份過期的武將快照);與戰諸將若已凋零殆盡則此局不可復現。廊中以 🔥 標記,顯示回合數與參戰將數。
 - **3D 團戰同場**(TeamDuel3DStage + DuelArena3D ArenaExtra):團戰不再只有文字戰報 —— **全員同台上演**:兩陣主將居中對打,餘將立**側翼位**(每側至多三席)按拍互擊;引擎判倒之將**在其倒地之合當場倒下**(逃/降者塵霧離場),主將倒下則**次將挺身補位**居中續戰;收場勝方亮勝姿+戰報收束。純演出(勝負與後果在 resolveTeamDuel 早已定案):武鬥館「團戰」演武與戰場「團戰並擊」皆自動上演。
+
+### 6.11b 車輪戰 —— 輪番,而非混戰(gauntlet.ts / tacticalGauntlet.ts)
+
+§6.11 團戰是**同時**混戰;車輪戰是**輪番**。兩者是同一個念頭的兩種形狀,玩起來完全不同:
+
+- **團戰**:三人同時上。武神被淹沒,但他也能砍到三個人,且「圍攻」讓他每合只架得開最凶的一擊。
+- **車輪戰**:三人一個接一個。你的人各自**單獨**面對他(所以先上的多半要敗),但他**中間不回氣**,前兩人耗掉的氣力全數留給第三人 —— 你是在用前兩人的血,替王牌買一個被削弱的對手。
+
+`gauntlet.ts`(氣力不回、逐場疲勞 −8 武力封頂 −30、`orderForGauntlet` 由弱漸強)寫好也測過,但**是 `src/game` 裡唯一沒有任何生產檔案匯入的系統模組** —— 整個模式進不去。現接上戰場:
+
+- **入口**:選中我方一將,若其相鄰敵將**同時被我方兩人以上貼住**,動作列浮出 ⚔⚔ 車輪戰(相鄰只有一個合格敵將時直接開打,多個才進指定模式並高亮)。上限三人,自動由弱漸強排序。
+- **代價**:**參戰者全員耗盡行動,勝負皆然** —— 賭輸了就是三個單位一回合白費。實際交手者累加 `duelFatigue`(與 §6.11 共用),故車輪戰之後那名敵將在後續回合仍是虛的。
+- **後果**:敵將力盡被破 → 其部 −30% 兵、士氣歸零(潰),我方全軍 +10 士氣;他若連戰不落 → 反而 +12 士氣、我方 −6(萬夫莫敵之勢,三軍側目)。**不殺武將** —— 與陣前挑將同一慣例,戰場單挑只掉兵與士氣,取人性命只在玩家對俘虜的明示裁決(forcedKills)。
+- 戰報逐場報出「氣力 X → Y」,那道遞減曲線就是這個模式的全部戲劇性。
 
 ### 6.12 打擂・常駐擂台(arenaLadder.ts)
 

@@ -62,6 +62,8 @@ type ActionMode =
      entered when more than one adjacent hex qualifies; a lone target acts at
      once, since making the player click twice for a forced choice is noise. */
   | { kind: 'siege'; act: 'batter' | 'scale' | 'repair' }
+  /* 車輪戰 — pick which enemy the rush goes at, when more than one qualifies. */
+  | { kind: 'gauntlet' }
   | { kind: 'stratagem'; id: StratagemId; tacticId?: string };
 
 
@@ -138,6 +140,7 @@ import { hexWorld, HEX_R, HEX_COL_STEP, HEX_ROW_STEP, TERRAIN_HEIGHT, TERRAIN_CO
 import { EmbeddedSceneCtx, IS_MOBILE, UNIT_GLYPH } from './battle3d/shared';
 import { hitArc, ARC_MUL, ARC_LABEL } from './battle3d/facing';
 import { STATUS_BADGE, terrainBadge } from './battle3d/statusBadges';
+import { canGauntlet, gauntletChallengers, battleGauntlet } from '../../game/systems/tacticalGauntlet';
 import {
   wallFraction, wallState, WALL_STATE_LABEL, fortMaxHp, wallKey, weakestWall,
   hitsToBreach, repairsOutpace,
@@ -2149,6 +2152,13 @@ export function BattleScene({
           m.set(`${u.coord.col},${u.coord.row}`, 'attack');
         }
       }
+    } else if (actionMode.kind === 'gauntlet') {
+      for (const c of hexNeighbours(selectedUnit.coord)) {
+        const e = unitAt(battle, c);
+        if (e && e.side !== selectedUnit.side && canGauntlet(battle, e.id, officers)) {
+          m.set(`${c.col},${c.row}`, 'attack');
+        }
+      }
     } else if (actionMode.kind === 'siege') {
       // 攻城 — light up the masonry this unit can actually work on. Repairs are
       // friendly work, so they get the move tint rather than the attack red.
@@ -2990,6 +3000,16 @@ export function TacticalBattleScreen3D() {
           return;
         }
       }
+    }
+    // 車輪戰 — the enemy to gang up on was picked out of several.
+    if (actionMode.kind === 'gauntlet') {
+      if (u && u.side !== selectedUnit.side && canGauntlet(battle, u.id, officers)
+          && hexDistance(selectedUnit.coord, u.coord) === 1) {
+        playSfx('sword');
+        start(battleGauntlet(battle, u.id, officers, Math.random));
+        setActionMode({ kind: 'none' });
+      }
+      return;
     }
     // 攻城 — a stretch of masonry was picked out of several legal ones.
     if (actionMode.kind === 'siege') {
@@ -3834,6 +3854,10 @@ export function TacticalBattleScreen3D() {
             attack: { color: 'var(--tkm-hud-red)', text: t('點擊紅色敵軍攻擊', 'Click a red enemy to attack') },
             duel: { color: 'var(--tkm-hud-gold)', text: t('點擊相鄰敵將一騎打', 'Click an adjacent enemy to duel') },
             stratagem: { color: '#c19a3b', text: t('點擊目標施放計略', 'Click a target to cast stratagem') },
+            gauntlet: {
+              color: 'var(--tkm-hud-gold)',
+              text: t('點擊要圍攻的敵將 — 眾人輪番上陣', 'Click the enemy to gang up on — your officers go at him in turn'),
+            },
             siege: {
               color: 'var(--tkm-hud-ember)',
               text: actionMode.kind === 'siege' && actionMode.act === 'repair'
@@ -4374,6 +4398,8 @@ function UnitPanel3D({
   const lang = useLanguage();
   const desc = useDesc();
   const startBattle = useGameStore((s) => s.startTacticalBattle);
+  // 車輪戰 needs the whole roster to judge who may join the rush.
+  const officers = useGameStore((s) => s.officers);
   // Show the officer's FULL 戰法 pool (was silently capped at 8); the list
   // scrolls if it's long, so nothing is hidden.
   const personalTactics = personalTacticsForUnit(officer, unit, 16);
@@ -4587,6 +4613,47 @@ function UnitPanel3D({
               </button>
             );
           });
+        })()}
+        {/* 車輪戰 — champions at one man IN TURN, as distinct from §6.11 團戰
+            (all at once, which the battle already offers). The queue logic
+            lived in gauntlet.ts and was the only system module nothing in the
+            game imported. Offered when two or more of your officers are
+            pressed against the same enemy. */}
+        {(() => {
+          const rushable = hexNeighbours(unit.coord)
+            .map((c) => unitAt(battle, c))
+            .filter((e): e is TacticalUnit => !!e && e.side !== unit.side
+              && canGauntlet(battle, e.id, officers));
+          if (rushable.length === 0) return null;
+          const armed = actionMode.kind === 'gauntlet';
+          const queueOf = (e: TacticalUnit) => gauntletChallengers(battle, e.id, officers);
+          const go = (e: TacticalUnit) => {
+            playSfx('sword');
+            startBattle(battleGauntlet(battle, e.id, officers, Math.random));
+            setActionMode({ kind: 'none' });
+          };
+          return (
+            <button
+              style={{ ...btnBase, ...(armed ? btnActive : {}), opacity: apDisabled ? 0.4 : 1 }}
+              disabled={apDisabled}
+              title={t(
+                `${queueOf(rushable[0]).length} 員**輪番**搦戰同一敵將,中間不容其回氣 —— 由弱漸強,前者耗掉的氣力留給後者。與「團戰並擊」(眾人同時圍毆)不同:此處各將單獨面對他,先上者多半要敗,但敗得不白費。參戰者全員耗盡行動,勝負皆然。`,
+                `Your officers take one enemy IN TURN, giving him no time to recover — weakest first, so each bout banks wind off him for the next. Unlike 團戰 (all at once), each of yours faces him alone: the early ones will likely lose, but not for nothing. Everyone who commits spends their whole action, win or lose.`,
+              )}
+              onClick={() => {
+                if (armed) { setActionMode({ kind: 'none' }); return; }
+                if (rushable.length === 1) { go(rushable[0]); return; }
+                playSfx('click');
+                setActionMode({ kind: 'gauntlet' });
+              }}
+            >⚔⚔ {t('車輪戰', 'Gauntlet')}{' '}
+              <span style={{ float: 'right', color: 'var(--tkm-hud-gold)' }}>
+                {rushable.length > 1
+                  ? t(`${rushable.length} 敵`, `${rushable.length} foes`)
+                  : t(`${queueOf(rushable[0]).length} 員齊上`, `${queueOf(rushable[0]).length} join`)}
+              </span>
+            </button>
+          );
         })()}
       </div>
 
