@@ -1,6 +1,6 @@
 /** 塗色 — RTK-XIV hex painting: stamp, disc, TTL prune. */
 import { describe, expect, it } from 'vitest';
-import { hexCenter, hexAt } from '../data/geography';
+import { hexCenter } from '../data/geography';
 import {
   isSupplyConnected,
   stampPaintAlongRoute,

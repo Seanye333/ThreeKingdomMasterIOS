@@ -78,6 +78,23 @@ export function TribePanel({ tribeId, onClose }: Props) {
       .sort((a, b) => b.officer.stats.war - a.officer.stats.war);
   }, [tribe, cities, officersMap, playerForceId]);
 
+  /* 這兩個 useMemo 原本在 `if (!tribe) return null` 之後 — a render with no
+   * tribe called two fewer hooks than the one before it. Hoisted above the
+   * guard rather than making the forty-odd lines between them null-safe; they
+   * only ever needed the tribe, the cities and the forces. */
+  // 以夷制夷 target candidates — rival forces holding this tribe's frontier.
+  const inciteTargets = useMemo(() => {
+    if (!tribe) return [];
+    const owners = new Set(
+      tribe.raidableCityIds.map((id) => cities[id]?.ownerForceId).filter((f): f is string => !!f && f !== playerForceId),
+    );
+    return [...owners].map((id) => forces[id]).filter(Boolean);
+  }, [tribe, cities, forces, playerForceId]);
+  const clashCandidates = useMemo(
+    () => (tribe ? TRIBES.filter((other) => other.id !== tribe.id && tribesShareFrontier(tribe, other)) : []),
+    [tribe],
+  );
+
   if (!tribe) return null;
   const reach = playerForceId
     ? canCampaignTribe(tribe, cities, playerForceId)
@@ -107,17 +124,6 @@ export function TribePanel({ tribeId, onClose }: Props) {
   const submitted = !!diplo.submitted[tribe.id];
   const founded = !!diplo.foundedStates[tribe.id];
   const captures = tribe.id === 'nanban' ? (diplo.mengHuoCaptures ?? 0) : 0;
-  // 以夷制夷 target candidates — rival forces holding this tribe's frontier.
-  const inciteTargets = useMemo(() => {
-    const owners = new Set(
-      tribe.raidableCityIds.map((id) => cities[id]?.ownerForceId).filter((f): f is string => !!f && f !== playerForceId),
-    );
-    return [...owners].map((id) => forces[id]).filter(Boolean);
-  }, [tribe, cities, forces, playerForceId]);
-  const clashCandidates = useMemo(
-    () => TRIBES.filter((other) => other.id !== tribe.id && tribesShareFrontier(tribe, other)),
-    [tribe],
-  );
   const smallBtn = (enabled: boolean, color: string): React.CSSProperties => ({
     background: 'transparent', color: enabled ? color : '#97a4ae',
     border: `1px solid ${enabled ? color : '#364654'}`,
@@ -190,12 +196,12 @@ export function TribePanel({ tribeId, onClose }: Props) {
             <>
               <span style={{ color: '#7a8893' }}>{t('盟約', 'Pacts')}</span>
               <span style={{ fontSize: '0.76rem', color: '#9ec8b0' }}>
-                {submitted && <span>🤝 {t('傾心臣服(七擒之義)', 'Fully submitted')}　</span>}
-                {founded && <span style={{ color: '#ff9a70' }}>👑 {t('已據漢城立國!', 'Founded a state on Han soil!')}　</span>}
-                {marriageLeft > 0 && <span>💍 {t(`和親(餘 ${marriageLeft} 年)`, `Marriage (${marriageLeft}y left)`)}　</span>}
-                {pact.marketOpen && <span>🏪 {t('互市通商', 'Market open')}　</span>}
-                {pact.hostageOfficerId && <span>🧒 {t('質子在朝', 'Hostage at court')}　</span>}
-                {incite && <span style={{ color: '#e8b070' }}>🗡 {t(`受唆使寇${forces[incite.targetForceId]?.name.zh ?? '?'}(餘 ${incite.seasonsLeft} 季)`, 'Incited')}　</span>}
+                {submitted && <span>🤝 {t('傾心臣服(七擒之義)', 'Fully submitted')}\u3000</span>}
+                {founded && <span style={{ color: '#ff9a70' }}>👑 {t('已據漢城立國!', 'Founded a state on Han soil!')}\u3000</span>}
+                {marriageLeft > 0 && <span>💍 {t(`和親(餘 ${marriageLeft} 年)`, `Marriage (${marriageLeft}y left)`)}\u3000</span>}
+                {pact.marketOpen && <span>🏪 {t('互市通商', 'Market open')}\u3000</span>}
+                {pact.hostageOfficerId && <span>🧒 {t('質子在朝', 'Hostage at court')}\u3000</span>}
+                {incite && <span style={{ color: '#e8b070' }}>🗡 {t(`受唆使寇${forces[incite.targetForceId]?.name.zh ?? '?'}(餘 ${incite.seasonsLeft} 季)`, 'Incited')}\u3000</span>}
                 {captures > 0 && !submitted && <span>⛓ {t(`七擒進度 ${captures}/${MENG_HUO_SUBMIT_CAPTURES}`, `Captures ${captures}/${MENG_HUO_SUBMIT_CAPTURES}`)}</span>}
               </span>
             </>

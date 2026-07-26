@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { resolveBattle, type BattleSide } from './combat';
 import { endTurn } from './tactical';
 import { aiTakeTurn } from './tacticalAi';
-import { mkOfficer, mkUnit, mkBattle, mkTiles, officerMap, seededRng } from '../../test/factories';
+import { mkOfficer, mkUnit, mkBattle, mkTiles, seededRng } from '../../test/factories';
 import type { Officer, City } from '../types';
 
 function withRandom<T>(v: number, fn: () => T): T {

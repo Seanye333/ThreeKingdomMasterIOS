@@ -1508,7 +1508,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       { kind: 'officer-active', officerId: 'sun-quan' },
     ],
     description:
-      "After a month\'s standoff at Ruxu, Cao Cao beholds the taut order of Sun Quan\'s ships and ranks and sighs in admiration: 'Would that I had a son like Sun Zhongmou! Liu Biao\'s boys were pigs and dogs beside him.' He gathers his army and turns north.",
+      "After a month's standoff at Ruxu, Cao Cao beholds the taut order of Sun Quan's ships and ranks and sighs in admiration: 'Would that I had a son like Sun Zhongmou! Liu Biao's boys were pigs and dogs beside him.' He gathers his army and turns north.",
     descriptionZh:
       "濡須口相拒月餘,曹操見孫權舟船器仗、軍伍整肅,望之慨然嘆曰:「生子當如孫仲謀!若劉景升兒子,豚犬耳。」遂斂軍北還,不復強攻。",
     effects: [
@@ -1546,7 +1546,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       { kind: 'officer-alive', officerId: 'tao-qian' },
     ],
     description:
-      "When his father is killed by Tao Qian\'s officers, Cao Cao raises an army of vengeance; where it passes, the slaughter is such that the Si River ceases to flow. Terrified, Tao Qian thrice offers Xuzhou to Liu Bei. Cao Cao\'s name for cruelty spreads far, and the people of Xuzhou hate him to the bone.",
+      "When his father is killed by Tao Qian's officers, Cao Cao raises an army of vengeance; where it passes, the slaughter is such that the Si River ceases to flow. Terrified, Tao Qian thrice offers Xuzhou to Liu Bei. Cao Cao's name for cruelty spreads far, and the people of Xuzhou hate him to the bone.",
     descriptionZh:
       "曹嵩為陶謙部將所殺,曹操起兵復仇,所過多所殘戮,坑殺男女數萬於泗水,水為之不流。陶謙惶懼,三讓徐州於劉備。曹操暴虐之名遠播,徐州士民恨之入骨,此仁暴之判,亦天下向背之始。",
     effects: [

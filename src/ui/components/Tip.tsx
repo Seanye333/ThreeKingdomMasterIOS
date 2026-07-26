@@ -31,11 +31,16 @@ export function Tip({ text, placement = 'bottom', children }: TipProps) {
   };
   const hide = () => setPos(null);
 
-  if (!text) return <>{children}</>;
-
   // 觸屏長按 — coarse pointers have no hover: press-and-hold 350ms shows the
   // bubble, releasing (or tapping elsewhere) hides it. Desktop keeps hover.
+  //
+  // Declared BEFORE the text guard below: a tip with no text used to return
+  // early right here, so that render called one fewer hook than the render
+  // before it — and a Tip's text is exactly the sort of thing that arrives a
+  // beat late.
   const holdTimer = useRef<number | null>(null);
+  if (!text) return <>{children}</>;
+
   const onTouchStart = () => {
     holdTimer.current = window.setTimeout(show, 350);
   };

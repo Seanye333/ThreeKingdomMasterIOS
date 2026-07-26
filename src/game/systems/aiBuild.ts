@@ -202,7 +202,7 @@ export function planAIFacilities(ctx: AIFacilityContext): AIFacilityOutput {
           const g = battleGroundAt(bx, by);
           if (g === 'river' || g === 'sea' || g === 'lake') {
             fLon = cityLon + Math.cos(a) * r; fLat = cityLat + Math.sin(a) * r;
-            angle = a; found = true; break;
+            found = true; break;
           }
         }
       }

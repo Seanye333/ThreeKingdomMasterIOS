@@ -206,13 +206,18 @@ export function MarchPicker({ cityId, onClose }: Props) {
     });
   };
 
-  if (!source) return null;
+  /* 早退必須在所有 hook 之後 — this component used to `return null` here, with
+   * six hooks below it (two useMemo, a useEffect, useT, useLanguage). On the
+   * render where `source` is missing React saw a shorter hook list than on the
+   * render before, which is the exact hook-order violation already fixed by
+   * hand twice this month elsewhere. The guard now sits just above the JSX; the
+   * few derived values in between simply tolerate a missing source. */
   const target = targetId ? cities[targetId] : null;
   const targetForce = target?.ownerForceId
     ? forces[target.ownerForceId]
     : null;
   const isHostile =
-    !!target && target.ownerForceId !== source.ownerForceId;
+    !!target && !!source && target.ownerForceId !== source.ownerForceId;
   const officer = officerId ? officersMap[officerId] : null;
   // 戰前敵情 — what we can read of the target's garrison and its captain.
   const enemyIntel = useMemo(() => {
@@ -312,6 +317,8 @@ export function MarchPicker({ cityId, onClose }: Props) {
   const adjustTroops = (delta: number) => {
     setTroops((t) => Math.max(0, Math.min(maxTroops, t + delta)));
   };
+
+  if (!source) return null;
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
