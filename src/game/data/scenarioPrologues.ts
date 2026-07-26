@@ -829,12 +829,52 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       zh: '岔路在江陵的城門。\n\n史書上,呂蒙白衣渡江,糜芳、傅士仁不戰而降,關羽腹背受敵,走麥城,父子俱歿。荊州一失,隆中對的兩路北伐就永遠只剩一路。\n\n這一局,那扇門沒有開。關羽守住了荊州,蜀漢同時據有荊益 —— 諸葛亮在隆中畫的那張圖,完整地擺在你面前。',
       en: 'The fork is at the gate of Jiangling.\n\nIn the histories Lü Meng crossed in white, Mi Fang and Fu Shiren surrendered without a fight, Guan Yu was caught front and rear, fled to Maicheng, and died there with his son. With Jing gone, the two-road northern campaign of the Longzhong plan was permanently reduced to one road.\n\nOn this board that gate stayed shut. Guan Yu held Jing province, and Shu holds Jing and Yi together — the map Zhuge Liang drew in that thatched hut, intact and in front of you.',
     },
+    forces: {
+      cao: {
+        zh: '荊州沒有丟。你父親留下的北方完好無缺,但南邊那道口子沒堵上 —— 關羽仍在江陵,漢水一漲他就能北望許都。你比曹操年輕,也比他少一分僥倖。',
+        en: 'Jing did not fall. The north your father left you is whole, but the gap in the south never closed: Guan Yu still holds Jiangling, and one high water on the Han puts him within sight of Xu. You are younger than Cao Cao was — and you have had less luck.',
+      },
+      'liu-bei': {
+        zh: '荊州守住了,隆中對還活著。兩路北伐不再是紙上談兵 —— 但你已經六十開外,關羽也不年輕,而曹丕的中原比你當年見過的更完整。',
+        en: 'Jing held, so the Longzhong plan is still alive: the two-pronged northern march is no longer a thing on paper. But you are past sixty, Guan Yu is not young either, and Cao Pi\'s central plain is more whole than anything you ever faced.',
+      },
+      sun: {
+        zh: '你沒能拿回荊州。江東只剩下江東,而上游握在盟友手裡 —— 盟友是好聽的說法,實情是你的咽喉不在自己手上。',
+        en: 'You never got Jing back. Jiangdong is only Jiangdong now, and the upper river is in an ally\'s hand — which is the polite way of saying your throat is not your own.',
+      },
+      'shi-xie': {
+        zh: '交州偏遠,亂世反倒是福分。你已經八十歲了,想的是把這片安土完整交出去 —— 交給誰,是你最後一個決定。',
+        en: 'Jiao is remote, and in a broken age that is a blessing. You are eighty. What you want is to hand this quiet corner on intact — and to whom is the last decision you will make.',
+      },
+      nanman: {
+        zh: '漢人的荊州之爭與你無關,但他們打得越久,南中就越自在。趁著北面無暇南顧,把寨子連成一片。',
+        en: 'The Han quarrel over Jing is none of yours, and the longer they fight the freer Nanzhong is. While no one up north can spare a glance southward, link the stockades into something that will hold.',
+      },
+      xianbei: {
+        zh: '軻比能第一次把散落的部落攏在一起。塞南諸郡守備空虛,而中原正忙著彼此 —— 這樣的窗口不會開很久。',
+        en: 'Kebineng has gathered the scattered tribes for the first time. The commanderies inside the passes are thinly held and the central plain is busy with itself. A window like this does not stay open.',
+      },
+    },
   },
 
   'scn-whatif-zhuge-lives': {
     intro: {
       zh: '岔路在五丈原的病榻。\n\n史書上,他五十四歲死於軍中,姜維扶著蜀漢又走了三十年,終究是「臣等正欲死戰,陛下何故先降」。\n\n這一局他活到八十。屯田仍在,渭南的營壘仍在,那個一日不能不理事的人還在案前。時間 —— 他一生最缺的東西 —— 這次給夠了。',
       en: 'The fork is a sickbed on the Wuzhang plain.\n\nIn the histories he died in camp at fifty-four. Jiang Wei carried Shu another thirty years, and it ended with a prince crying "we were ready to fight to the death — why has Your Majesty surrendered first?"\n\nOn this board he lives to eighty. The farming colonies are still there, the works along the Wei are still there, and the man who could not leave a day\'s business undone is still at his desk. Time — the one thing he never had enough of — has been granted.',
+    },
+    forces: {
+      cao: {
+        zh: '諸葛亮沒有死在五丈原。他把多活的每一年都用來種地、造弩、練兵 —— 你面對的不是一次北伐,是一個永遠不會鬆手的鄰居。',
+        en: 'Zhuge Liang did not die at Wuzhang. Every year he was given past that he spent on farms, crossbows and drill. What faces you is not one northern campaign; it is a neighbour who will never let go.',
+      },
+      'liu-bei': {
+        zh: '相父還在。國事有人扛,你只需要不添亂 —— 但這也意味著,只要他還在,你就永遠學不會自己扛。',
+        en: 'The Prime Minister still stands. The state has someone to carry it and you need only stay out of the way — which also means that while he lives you will never learn to carry it yourself.',
+      },
+      sun: {
+        zh: '蜀漢沒有垮,盟約還在,北伐年年有人替你牽制曹魏。這對江東是好事 —— 直到有一天他們真的贏了。',
+        en: 'Shu did not collapse; the alliance holds, and every year someone else pins Wei down for you. Good for Jiangdong — right up until the day they actually win.',
+      },
     },
   },
 
@@ -843,12 +883,72 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       zh: '岔路在一場東南風。\n\n史書上,黃蓋詐降,火船順風而下,操軍船艦一時盡燒,延及岸上營落,人馬燒溺死者甚眾。曹操北還,天下遂成三分。\n\n這一局風沒有轉。周瑜死於亂軍,孫權下落不明,江東只剩殘部;劉備連荊州都還沒摸到就已無處可去。曹操的船隊仍在江上,順流東下。',
       en: 'The fork is a southeast wind.\n\nIn the histories Huang Gai feigned surrender, the fireships ran down on the wind, Cao Cao\'s fleet burned in a single hour and the fire spread to the camps ashore, and men and horses died burning and drowning in great numbers. Cao Cao went north, and the realm settled into three.\n\nOn this board the wind never turned. Zhou Yu died in the rout, Sun Quan is unaccounted for, and Wu is a remnant. Liu Bei had not yet so much as touched Jing province and has nowhere left to go. Cao Cao\'s fleet is still on the river, still coming east.',
     },
+    forces: {
+      cao: {
+        zh: '東風沒有來。江東水軍在赤壁化為焦木,孫權北面稱臣的表章還在路上。天下十有其八 —— 剩下的那兩分,都在山裡。',
+        en: 'The east wind never came. The Jiangdong fleet burned to charcoal at Chibi and Sun Quan\'s letter of submission is still on the road. Eight parts of the realm in ten are yours; the other two are in the mountains.',
+      },
+      'liu-bei': {
+        zh: '你又跑了。這一次連荊州的立錐之地都沒有,身邊只剩諸葛亮、關張,和一座孤城。你這輩子輸過很多次,但沒有一次像現在這樣沒有下一步。',
+        en: 'You ran again. This time there is not even a foothold in Jing — only Zhuge Liang, your brothers, and one lone city. You have lost many times in your life, but never before with no next move.',
+      },
+      sun: {
+        zh: '兄長戰死,父兄兩代的基業一夜燒完。你這個年紀本不該坐這個位子 —— 但江東除了你,已經沒有姓孫的了。',
+        en: 'Your brother fell and two generations of your family\'s work burned in a night. You are too young for this seat. But there is no other Sun left in Jiangdong.',
+      },
+      'liu-zhang': {
+        zh: '蜀道還在,曹操暫時進不來。你父親留下的益州完好無損,而你這輩子最擅長的事就是等 —— 問題是這次還等得到誰。',
+        en: 'The Shu roads still hold and Cao Cao cannot come in yet. The Yi province your father left is untouched, and waiting is the thing you have always been best at. The question is who is left to wait for.',
+      },
+      'zhang-lu': {
+        zh: '漢中還是漢中,教眾還是教眾。北面是曹操,南面是劉璋 —— 兩邊都想要這條路,而你只想要五斗米。',
+        en: 'Hanzhong is still Hanzhong and the faithful are still the faithful. Cao Cao to the north, Liu Zhang to the south; both want the road, and all you ever wanted was the five pecks of rice.',
+      },
+      'ma-teng': {
+        zh: '關中諸將名義上還奉朝廷,實際上誰也不聽誰。曹操騰出手來只是時間問題,而你已經老了。',
+        en: 'The generals of Guanzhong still nominally serve the court and in practice obey nobody. Cao Cao freeing his hands is only a matter of time, and you are old.',
+      },
+      'shi-xie': {
+        zh: '交州離赤壁很遠,遠到消息傳來時已成舊聞。天下要定了,你要考慮的是向誰稱臣。',
+        en: 'Jiao is far from Chibi — far enough that the news arrived stale. The realm is about to settle, and what you must decide is whose vassal to be.',
+      },
+    },
   },
 
   'scn-whatif-women': {
     intro: {
       zh: '這一局沒有岔路,只有一個一直沒被問出口的問題:如果她們有兵呢?\n\n貂蟬傾覆了一個權臣而史書不記其姓;孫尚香房中侍婢百餘皆親執刀,劉備每入心常凜然;黃月英造木牛流馬而只留下一個「醜」字的傳說;祝融是南中唯一在陣上勝過蜀將的人;蔡琰沒入胡中十二年,歸來默寫四百餘篇無一誤字;卞夫人在曹操凶問傳來時按住了整個曹家。\n\n她們每一個都做過需要兵權才做得成的事,而沒有一個拿到過兵權。',
       en: 'There is no fork here — only a question nobody got round to asking: what if they had armies?\n\nDiaochan brought down a tyrant and the histories do not record her surname. Lady Sun kept a hundred armed maids in her chambers, and Liu Bei never entered them without a chill. Huang Yueying built the wooden oxen and is remembered by a legend about her looks. Zhu Rong is the only commander at Nanzhong who beat a Shu general in the field. Cai Yan spent twelve years among the Xiongnu and came back able to write out four hundred texts from memory without an error. Lady Bian held the House of Cao together the day they thought Cao Cao was dead.\n\nEvery one of them did something that ought to have required an army. Not one of them was ever given one.',
+    },
+    forces: {
+      'diaochan-han': {
+        zh: '你曾經是別人棋盤上最鋒利的一枚子。現在棋盤是你的了 —— 而所有人都還當你是那枚子,這是你最大的本錢。',
+        en: 'You were once the sharpest piece on someone else\'s board. The board is yours now — and everyone still treats you as the piece, which is your greatest asset.',
+      },
+      'lady-sun': {
+        zh: '兄長的妹妹、劉備的夫人 —— 兩邊都用這兩個身分算計過你。這一次你自己領兵,身分只剩一個。',
+        en: 'Your brother\'s sister, Liu Bei\'s wife — both sides have used those two titles to reckon with you. This time you lead your own troops, and there is only one title left.',
+      },
+      yueying: {
+        zh: '世人只記得你是誰的妻子,不記得那些連弩、木牛、水碓是誰畫的圖。現在沒有人可以署別人的名了。',
+        en: 'The world remembers whose wife you were and not who drew the repeating crossbow, the wooden ox, the water-driven trip hammer. There is nobody left to put another name on the work.',
+      },
+      'zhurong-nan': {
+        zh: '南中的女子本就上馬能戰。你不需要向誰證明什麼 —— 你只需要那些北來的人明白,這片山是有主的。',
+        en: 'Women of Nanzhong have always fought from the saddle; you have nothing to prove to anyone. You need only make the northerners understand that these mountains have an owner.',
+      },
+      'caiyan-ye': {
+        zh: '你被擄去十二年,回來時父親的藏書已散盡,你憑記憶默寫了四百篇。能記住一個崩塌的天下的人,也許能重建它。',
+        en: 'Twelve years taken, and when you came back your father\'s library was gone; you wrote out four hundred pieces from memory. Someone who can hold a collapsed world in her head might be able to rebuild one.',
+      },
+      qiao: {
+        zh: '姐妹兩人,一個嫁了孫策,一個嫁了周瑜,兩個都死得早。江東的人習慣把你們當作故事的註腳 —— 現在故事是你們寫。',
+        en: 'Two sisters: one married Sun Ce, one married Zhou Yu, and both men died young. Jiangdong is used to treating you as a footnote to their story. The story is yours to write now.',
+      },
+      'bian-liang': {
+        zh: '你出身倡家,一路走到魏國太后。這一生你看盡了男人如何爭奪、如何猜忌、如何敗亡 —— 沒有人比你更懂這個位子怎麼坐。',
+        en: 'Born into an entertainer\'s household, you rose to be dowager of Wei. You have watched men contend, suspect one another and fall, your whole life. Nobody understands this seat better than you do.',
+      },
     },
   },
 
@@ -857,12 +957,84 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       zh: '岔路在烏巢的糧囤。\n\n史書上,許攸家人犯法被收,許攸夜奔曹操,烏巢一炬,十萬之眾一夕而潰。袁紹渡河北走,兩年後嘔血而死。\n\n這一局審配沒有動許攸的家人。烏巢沒有燒。曹操退保許都,兵不滿萬;而河北的四州之地、十萬帶甲,一寸未損。',
       en: 'The fork is a grain dump at Wuchao.\n\nIn the histories Shen Pei arrested Xu You\'s family for corruption, Xu You rode to Cao Cao that night, one torch went into Wuchao, and a hundred thousand men came apart before morning. Yuan Shao fled north across the river and died of a haemorrhage two years later.\n\nOn this board Shen Pei left the family alone. Wuchao did not burn. Cao Cao has fallen back on Xuchang with under ten thousand men, and the four northern provinces and their hundred thousand soldiers are untouched.',
     },
+    forces: {
+      cao: {
+        zh: '官渡輸了。烏巢沒燒成,許都在夜裡失守,你帶著殘部退到最後幾座城。你這一生賭過很多次,只有這次沒有下一把。',
+        en: 'Guandu was lost. Wuchao never burned, Xu fell in the night, and you came away with a remnant and a handful of cities. You have gambled all your life; this is the first time there is no next hand.',
+      },
+      'yuan-shao': {
+        zh: '你贏了。四世三公之後,終於名副其實 —— 而現在最危險的不是曹操,是你三個兒子看著這片天下的眼神。',
+        en: 'You won. Four generations of ministers behind you, and at last the name fits the man. The danger now is not Cao Cao; it is the way your three sons look at what you have taken.',
+      },
+      sun: {
+        zh: '兄長還在,江東正壯。北面袁紹方勝,曹操將亡 —— 中原空出來的位置,不會等太久。',
+        en: 'Your brother lives and Jiangdong is growing. Yuan Shao has just won in the north and Cao Cao is finished. The space opening in the central plain will not wait long.',
+      },
+      'liu-bei': {
+        zh: '你又一次寄人籬下。袁紹待你不薄,但你很清楚:贏家的帳下,從來不是織席販履之徒的容身處。',
+        en: 'Once more you are somebody\'s guest. Yuan Shao has treated you well, but you know how this goes: a winner\'s camp is no place for a mat-weaver\'s son.',
+      },
+      'liu-biao': {
+        zh: '荊州承平二十年,你把它守得很好。北面剛換了主人,而你已經六十多歲,兩個兒子誰也扛不住這樣的鄰居。',
+        en: 'Twenty years of peace in Jing, and you kept it well. The north has just changed hands; you are past sixty, and neither of your sons could stand up to a neighbour like that.',
+      },
+      'liu-zhang': {
+        zh: '袁紹贏了誰輸了誰,益州都聽不太清。蜀道依舊難行 —— 這是你唯一的長處,也是你唯一的策略。',
+        en: 'Whether Yuan Shao won or Cao Cao lost, it all arrives faint in Yi. The Shu roads are still hard: your only strength, and your only policy.',
+      },
+      'ma-teng': {
+        zh: '關中還是那個關中,只是要應付的人換了姓。你和韓遂之間的舊帳,遲早要在新主人面前算一次。',
+        en: 'Guanzhong is still Guanzhong; only the surname of the man to be handled has changed. The old account between you and Han Sui will have to be settled in front of the new master sooner or later.',
+      },
+      wuhuan: {
+        zh: '蹋頓與袁氏交好多年。中原的勝者是你的親家 —— 這意味著馬匹和糧食,也意味著遲早要替他去死。',
+        en: 'Tadun has been close to the Yuan for years. The winner in the central plain is kin by marriage: that means horses and grain, and it means dying for him eventually.',
+      },
+    },
   },
 
   'scn-whatif-lubu-xuzhou': {
     intro: {
       zh: '岔路在下邳的城樓。\n\n史書上,陳宮獻了計而呂布不敢用,侯成叛,曹操決沂泗灌城,白門樓上一段對話之後,「縊殺布」。\n\n這一局他採了陳宮的計 —— 騎兵在外,步軍守城,互為表裡。徐州守住了。一個從來沒有輸過陣、卻從來守不住地的人,第一次真正握住了一塊地方。',
       en: 'The fork is the tower over the Xiapi gate.\n\nIn the histories Chen Gong offered the plan and Lü Bu dared not use it; Hou Cheng betrayed him; Cao Cao turned the rivers onto the city; and after a short conversation on the White Gate Tower, "Bu was strangled."\n\nOn this board he took the plan — cavalry outside the lines, infantry on the walls, each covering the other. Xuzhou held. A man who never lost a battle and never once kept what he took is holding ground for the first time.',
+    },
+    forces: {
+      cao: {
+        zh: '下邳沒有淹成。呂布還在徐州,而你東邊的門戶因此始終開著 —— 你比誰都清楚,那個人不會安分。',
+        en: 'Xiapi never flooded. Lü Bu still holds Xu, and so your eastern door has never shut. Nobody knows better than you that the man will not sit still.',
+      },
+      lubu: {
+        zh: '這一次你守住了。徐州是你的,陳宮還在,赤兔還在 —— 缺的仍是那件從沒學會的事:讓人願意替你賣命。',
+        en: 'This time you held. Xu is yours, Chen Gong is with you, Red Hare is under you. What is still missing is the one thing you never learned: making men want to die for you.',
+      },
+      'yuan-shao': {
+        zh: '河北四州在手,公孫瓚將亡。你唯一該擔心的是,南邊那兩個小人物 —— 曹操和呂布 —— 有一個會活下來。',
+        en: 'Four provinces of Hebei in hand and Gongsun Zan nearly finished. The only thing worth worrying about is that one of those two small men in the south — Cao Cao or Lü Bu — will survive.',
+      },
+      'yuan-shu': {
+        zh: '玉璽在你手裡,而稱帝的話還沒說出口。說出口,天下共討;不說,這方印就只是一塊石頭。',
+        en: 'The seal is in your hands and the word has not yet been said. Say it and the realm marches on you; leave it unsaid and the seal is a piece of stone.',
+      },
+      sun: {
+        zh: '江東初定,父仇未報。北面袁術還占著你父親的舊部,南面山越未平 —— 你只有二十出頭,時間站在你這邊。',
+        en: 'Jiangdong is barely settled and your father is unavenged. Yuan Shu still holds his old troops in the north and the Shanyue are unpacified in the south. You are barely past twenty; time is on your side.',
+      },
+      'liu-biao': {
+        zh: '坐擁荊襄,帶甲十萬,而你這一生只想守成。北面亂得越久,你這個選擇看起來就越像智慧。',
+        en: 'Jing and Xiang beneath you, a hundred thousand under arms, and all you have ever wanted is to keep what you have. The longer the north burns, the more your choice looks like wisdom.',
+      },
+      'liu-zhang': {
+        zh: '父親留下的基業還在。你既無野心也無威望,益州的世族比你更像主人 —— 這一點所有人都看得出來。',
+        en: 'Your father\'s inheritance is intact. You have neither ambition nor authority, and the great families of Yi look more like the masters here than you do. Everyone can see it.',
+      },
+      gongsun: {
+        zh: '白馬義從還在,但易京的糧越吃越少。袁紹一年比一年近,而你已經不再出城迎戰了。',
+        en: 'The White Horse riders are still yours, but the granaries at Yijing are thinning. Yuan Shao is closer every year, and you no longer ride out to meet him.',
+      },
+      'ma-teng': {
+        zh: '西涼的馬還是天下最好的。朝廷遠在關東,你在關中既是朝廷的將軍,也是自己的主人。',
+        en: 'The horses of Liang are still the best under heaven. The court is far away in the east; in Guanzhong you are its general and your own master at once.',
+      },
     },
   },
 
@@ -891,6 +1063,44 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
     intro: {
       zh: '岔路在壽春的糧倉。\n\n史書上,袁術僭號之後奢淫肆欲,士卒凍餒,江淮空盡,人民相食。眾叛親離,欲往青州依袁譚,道死;臨終問廚下,尚有麥屑三十斛。時盛暑,欲得蜜漿,又無蜜。坐櫬床上,嘆息良久,乃大吒曰:「袁術至於此乎!」\n\n這一局他沒有把淮南吃空。帝號立住了,壽春的倉是滿的,而許都那位天子從此有了一個同行。',
       en: 'The fork is the granary at Shouchun.\n\nIn the histories Yuan Shu took the title and then gave himself to luxury while his soldiers froze and starved; Huainan was eaten bare and people ate each other. Deserted by everyone, he set out for Qing province to shelter with Yuan Tan and died on the road. At the end he asked the kitchen what was left: thirty bushels of barley chaff. It was high summer and he wanted honey water, and there was no honey. He sat up on the couch, sighed for a long while, and then cried out: "Has it come to this for Yuan Shu?"\n\nOn this board he did not eat Huainan bare. The title held, the granaries are full, and the emperor at Xuchang now has a colleague.',
+    },
+    forces: {
+      'yuan-shu': {
+        zh: '仲家皇帝坐穩了。玉璽、年號、宮室都齊了 —— 缺的是人心,而那樣東西買不到,也搶不來。',
+        en: 'The Zhongjia emperor sits secure. Seal, reign name, palace, all in place. What is missing is the hearts of men, and that cannot be bought or taken.',
+      },
+      cao: {
+        zh: '你手裡有天子,他手裡有玉璽。這場仗名義上是討逆,實際上是兩個挾天命的人只能活一個。',
+        en: 'You hold the Son of Heaven; he holds the seal. Nominally this is a punitive campaign. Actually it is two men each claiming the mandate, and only one may live.',
+      },
+      lubu: {
+        zh: '徐州剩下兩座城。你替誰打都可以,問題是誰付得起 —— 這句話你說出口的時候,自己也知道難聽。',
+        en: 'Two cities left in Xu. You will fight for anyone; the question is who can pay. You know how that sounds even as you say it.',
+      },
+      'yuan-shao': {
+        zh: '族弟稱了帝。汝南袁氏的名聲被他一個人敗光,而天下人分不清哪個是你。',
+        en: 'Your cousin has taken the title. He has spent the Yuan name down to nothing by himself, and the realm cannot tell which of you is which.',
+      },
+      sun: {
+        zh: '你替袁術打了幾年仗,現在他成了皇帝。玉璽本來是你父親的 —— 這筆帳,你記得很清楚。',
+        en: 'You fought for Yuan Shu for years and now he is an emperor. The seal was your father\'s to begin with. You remember the account precisely.',
+      },
+      'liu-biao': {
+        zh: '袁術僭號,天下側目。荊州緊挨著淮南,你這次很難再作壁上觀。',
+        en: 'Yuan Shu has usurped the style and the realm has turned to look. Jing borders Huainan; this time it will be hard to stay out of it.',
+      },
+      'liu-zhang': {
+        zh: '中原出了個皇帝,益州照舊。你父親教過你:蜀中之主要學會的第一件事,是聽不見。',
+        en: 'There is an emperor in the central plain; Yi carries on. Your father taught you that the first thing a lord of Shu must learn is how not to hear.',
+      },
+      gongsun: {
+        zh: '南邊的僭號與你無關,你眼前只有袁紹。易京的牆一年比一年高,人一年比一年少。',
+        en: 'The usurpation in the south is nothing to you; there is only Yuan Shao in front of you. The walls of Yijing rise a little every year and the men behind them thin.',
+      },
+      'ma-teng': {
+        zh: '朝廷有兩個了,你依然只認一個 —— 誰給糧,你就認誰。這話不能明說,但關中人人都懂。',
+        en: 'There are two courts now, and you still recognise only one: whoever sends grain. It cannot be said aloud, but everyone in Guanzhong understands it.',
+      },
     },
   },
 
@@ -1043,12 +1253,52 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       zh: '二世元年七月,發閭左適戍漁陽九百人,屯大澤鄉。陳勝、吳廣皆次當行,為屯長。會天大雨,道不通,度已失期。失期,法皆斬。\n\n陳勝、吳廣乃謀曰:「今亡亦死,舉大計亦死,等死,死國可乎?」\n\n乃行卜。卜者知其指意,曰:「足下事皆成,有功。然足下卜之鬼乎!」陳勝、吳廣喜,念鬼,曰:「此教我先威眾耳。」乃丹書帛曰「陳勝王」,置人所罾魚腹中。卒買魚烹食,得魚腹中書,固以怪之矣。又間令吳廣之次所旁叢祠中,夜篝火,狐鳴呼曰:「大楚興,陳勝王!」\n\n【輿圖代換】長安=咸陽,彭城=西楚都,陳留一帶=陳,臨淄=齊,鄴=邯鄲/鉅鹿,官渡+虎牢=滎陽成皋一線。',
       en: 'Nine hundred conscripts were sent to garrison Yuyang and halted at Dazexiang. Chen Sheng and Wu Guang were among them, each in charge of a section. Then came heavy rain, the roads were impassable, and they reckoned they had already missed their date. Missing the date meant death for all of them under the law.\n\nSo Chen Sheng and Wu Guang talked it over: "To desert is death and to raise a great enterprise is death. If we must die either way, may we not die for a country?"\n\nThey consulted a diviner, who understood what they were asking and said: "All of your undertakings will succeed. But have you consulted the spirits about it?" They were pleased, and thought about the spirits, and said: "He is telling us to overawe the crowd first." So they wrote "Chen Sheng shall be king" in cinnabar on silk and put it inside a netted fish. A soldier bought the fish, cooked it, found the writing, and naturally thought it very strange. And Wu Guang went secretly by night to a shrine near the camp, lit a fire in a basket, and cried out in a fox\'s voice: "Great Chu shall rise! Chen Sheng shall be king!"\n\n[Map] Chang\'an = Xianyang, Pengcheng = the Western Chu capital, Linzi = Qi, Ye = Handan and Julu, Guandu with Hulao = the Xingyang-Chenggao line.',
     },
+    forces: {
+      qin: {
+        zh: '六國已滅,天下一統,而戍卒在大澤鄉喊出了那句話。你是二世皇帝,身邊只有趙高告訴你四海昇平。',
+        en: 'The six states are gone and the realm is one — and then conscripts at Dazexiang said the thing out loud. You are the Second Emperor, and the only man near you is Zhao Gao, telling you all is well.',
+      },
+      zhangchu: {
+        zh: '失期當斬,反亦死。你不過是個屯長,喊出「王侯將相寧有種乎」時並沒想到有人會跟 —— 現在跟的人太多了。',
+        en: 'Late is death, and rebellion is death. You were a squad leader; when you asked whether kings and nobles are born to it you did not expect anyone to follow. Too many are following now.',
+      },
+      chu: {
+        zh: '楚雖三戶,亡秦必楚。你藏了半輩子,等的就是有人先動 —— 陳勝動了,現在輪到項氏。',
+        en: 'Though but three households remain, it is Chu that will end Qin. You have hidden half your life waiting for someone else to move first. Chen Sheng moved. Now it is the turn of the Xiang.',
+      },
+      qi: {
+        zh: '田氏是齊國宗室。復國不需要理由,只需要時機 —— 而秦的郡兵這一年第一次不夠用了。',
+        en: 'The Tian are the royal house of Qi. Restoration needs no reason, only a moment — and this year, for the first time, Qin\'s garrisons are not enough.',
+      },
+    },
   },
 
   'scn-ch-julu': {
     intro: {
       zh: '章邯已破陳勝,殺項梁,乃渡河擊趙,大破之,圍鉅鹿。楚懷王以宋義為上將軍,項羽為次將,救趙。\n\n宋義行至安陽,留四十六日不進。項羽曰:「今歲饑民貧,士卒食芋菽,軍無見糧,乃飲酒高會,不引兵渡河因趙食,與趙并力攻秦,乃曰『承其敝』。夫以秦之彊,攻新造之趙,其勢必舉趙。趙舉而秦彊,何敝之承!」晨朝上將軍宋義,即其帳中斬宋義頭。\n\n乃悉引兵渡河,皆沉船,破釜甑,燒廬舍,持三日糧,以示士卒必死,無一還心。於是至則圍王離,與秦軍遇,九戰,絕其甬道,大破之。\n\n當是時,楚兵冠諸侯。諸侯軍救鉅鹿下者十餘壁,莫敢縱兵。及楚擊秦,諸將皆從壁上觀。楚戰士無不一以當十,呼聲動天,諸侯軍無不人人惴恐。於是已破秦軍,項羽召見諸侯將,入轅門,無不膝行而前,莫敢仰視。',
-      en: 'Zhang Han had broken Chen Sheng and killed Xiang Liang; he crossed the river against Zhao, shattered it, and besieged Julu. King Huai of Chu made Song Yi supreme commander and Xiang Yu his second, to relieve Zhao.\n\nSong Yi got as far as Anyang and stopped there for forty-six days. Xiang Yu said: "The harvest has failed and the people are poor; the men are eating taro and beans and the army has no visible grain — and he holds drinking parties instead of crossing the river to feed off Zhao and join them against Qin. He talks of \"taking them at a disadvantage.\" Qin is strong and Zhao is newly established; Qin will certainly take Zhao. And with Zhao taken Qin is stronger still. What disadvantage is there to take?" At the morning audience he cut off Song Yi\'s head in his own tent.\n\nThen he took the whole army across, sank the boats, broke the cauldrons and steamers, burned the huts, and issued three days\' rations, to show the men they would die there and none would be coming back. Arriving, he shut in Wang Li, met the Qin army, fought nine engagements, cut their walled supply road, and destroyed them.\n\nIn that hour the Chu soldiers outmatched every army of the lords. Ten and more allied camps sat below Julu and not one dared loose its troops. When Chu struck, they all watched from behind their palisades. Not a Chu soldier who was not the match of ten, and their shouting shook the sky, and there was not a man in the allied camps who was not terrified. And when the Qin army was broken and Xiang Yu summoned the allied generals, they came in at the gate of his camp on their knees, and none dared look up.',
+      en: 'Zhang Han had broken Chen Sheng and killed Xiang Liang; he crossed the river against Zhao, shattered it, and besieged Julu. King Huai of Chu made Song Yi supreme commander and Xiang Yu his second, to relieve Zhao.\n\nSong Yi got as far as Anyang and stopped there for forty-six days. Xiang Yu said: "The harvest has failed and the people are poor; the men are eating taro and beans and the army has no visible grain — and he holds drinking parties instead of crossing the river to feed off Zhao and join them against Qin. He talks of "taking them at a disadvantage." Qin is strong and Zhao is newly established; Qin will certainly take Zhao. And with Zhao taken Qin is stronger still. What disadvantage is there to take?" At the morning audience he cut off Song Yi\'s head in his own tent.\n\nThen he took the whole army across, sank the boats, broke the cauldrons and steamers, burned the huts, and issued three days\' rations, to show the men they would die there and none would be coming back. Arriving, he shut in Wang Li, met the Qin army, fought nine engagements, cut their walled supply road, and destroyed them.\n\nIn that hour the Chu soldiers outmatched every army of the lords. Ten and more allied camps sat below Julu and not one dared loose its troops. When Chu struck, they all watched from behind their palisades. Not a Chu soldier who was not the match of ten, and their shouting shook the sky, and there was not a man in the allied camps who was not terrified. And when the Qin army was broken and Xiang Yu summoned the allied generals, they came in at the gate of his camp on their knees, and none dared look up.',
+    },
+    forces: {
+      qin: {
+        zh: '你是刑徒軍的統帥,靠一群囚犯打贏了陳勝、項梁。現在鉅鹿城下,你要面對的是項梁的侄子,和一支沒有退路的軍隊。',
+        en: 'You command an army of convicts and with it you beat Chen Sheng and Xiang Liang. Now, before Julu, you face Xiang Liang\'s nephew — and an army with nowhere to retreat to.',
+      },
+      chu: {
+        zh: '叔父死了。你渡河之後鑿沉船隻、砸破鍋灶、燒掉營帳,只帶三日之糧 —— 諸侯在壁上看著,他們會看見什麼,今天決定。',
+        en: 'Your uncle is dead. You crossed the river, sank the boats, smashed the cauldrons, burned the huts, and carry three days\' rations. The other lords are watching from their walls. What they see is decided today.',
+      },
+      zhao: {
+        zh: '鉅鹿被圍,城中糧盡。諸侯的兵就在壁壘之外,沒有一支敢動 —— 你能做的只有守住,再守一天。',
+        en: 'Julu is invested and the granaries are empty. The allied armies are just outside their own palisades and not one of them will move. All you can do is hold, and hold one day longer.',
+      },
+      qi: {
+        zh: '齊地初復,你不願把子弟送去替趙國死。這個算盤打得很精 —— 精到後來的人都記得。',
+        en: 'Qi has only just been restored and you will not send your sons to die for Zhao. It is a shrewd calculation — shrewd enough that everyone afterwards remembered it.',
+      },
+      wei: {
+        zh: '魏國只剩一座城。你這個魏王是別人立的,能不能活到明年,取決於鉅鹿城下誰贏。',
+        en: 'One city is all that is left of Wei. Someone else made you king, and whether you see next year depends on who wins under the walls of Julu.',
+      },
     },
   },
 
@@ -1057,12 +1307,72 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       zh: '項羽既定天下,自立為西楚霸王,分封諸侯十八王。徙劉邦為漢王,王巴、蜀、漢中,都南鄭 —— 巴蜀道險,秦之遷人皆居蜀,這是流放。\n\n漢王之國,張良送至褒中,勸燒絕所過棧道,以備諸侯盜兵,亦示項羽無東意。\n\n蕭何薦韓信,拜為大將軍。信問:「大王自料勇悍仁彊孰與項王?」漢王默然良久,曰:「不如也。」信曰:「惟信亦為大王不如也。然臣嘗事之,請言項王之為人也……項王喑噁叱咤,千人皆廢,然不能任屬賢將,此特匹夫之勇耳。項王見人恭敬慈愛,言語嘔嘔,人有疾病,涕泣分食飲,至使人有功當封爵者,印刓敝,忍不能予,此所謂婦人之仁也。」',
       en: 'Having settled the realm, Xiang Yu made himself Hegemon-King of Western Chu and invested eighteen kings. Liu Bang he transferred to be King of Han over Ba, Shu and Hanzhong, with his capital at Nanzheng — the Shu roads are difficult and Qin sent its exiles there. It was banishment.\n\nZhang Liang escorted the King of Han as far as Baozhong and advised him to burn the plank roads behind him, both against pursuit and to show Xiang Yu he had no thought of coming east.\n\nXiao He recommended Han Xin, who was made supreme commander. Han Xin asked: "How does Your Majesty judge yourself against the King of Chu in courage, ferocity, benevolence and strength?" The King of Han was silent a long while. "I am not his equal." — "Neither, in my judgement, are you. But I served him, and let me tell you what sort of man he is… When Xiang Yu roars, a thousand men fall back; but he cannot delegate to able generals, so it is the courage of one man. He is courteous and kind to those he meets, gentle in speech, and when a man is ill he weeps and shares his own food with him — yet when a man has earned a fief, he turns the seal over in his hand until its corners wear smooth and cannot bring himself to hand it across. That is a woman\'s kindness."',
     },
+    forces: {
+      chu: {
+        zh: '你分封了十八路諸侯,自號西楚霸王。分封的時候你以為天下就此安定 —— 而漢中那個人,你連提防都懶得。',
+        en: 'You parcelled the realm among eighteen lords and styled yourself Hegemon-King of Western Chu. You thought that settled it. The man you sent to Hanzhong was not even worth guarding against.',
+      },
+      han: {
+        zh: '巴蜀漢中,是流放。你燒了棧道向天下表明無意東歸 —— 現在韓信說,可以走陳倉。',
+        en: 'Ba, Shu and Hanzhong: an exile. You burned the plank roads to show the realm you would not come back east. Now Han Xin says there is a way through Chencang.',
+      },
+      yong: {
+        zh: '你降了項羽,他讓你替他看住漢中那個人。秦人恨你 —— 二十萬子弟死在新安,是你帶去的。',
+        en: 'You surrendered to Xiang Yu and he set you to watch the man in Hanzhong. The people of Qin hate you: two hundred thousand of their sons died at Xin\'an, and you led them there.',
+      },
+      qi: {
+        zh: '項羽分封時把齊地拆成三份,沒有你的名字。你反了 —— 這是他霸業上的第一道裂縫。',
+        en: 'When Xiang Yu divided the realm he cut Qi into three and your name was on none of them. You revolted. It is the first crack in his hegemony.',
+      },
+      zhao: {
+        zh: '你和張耳曾是刎頸之交,現在是死敵。趙國在你手裡,而井陘口那條路太窄了。',
+        en: 'You and Zhang Er once swore to die for one another; now you are mortal enemies. Zhao is yours — and the road through Jingxing is very narrow.',
+      },
+      wei: {
+        zh: '你在漢楚之間反覆過一次,以後還會再反覆。西魏是塊夾在中間的地,而夾在中間的人沒有第三條路。',
+        en: 'You have already switched between Han and Chu once, and you will again. Western Wei is caught in the middle, and men caught in the middle have no third road.',
+      },
+      jiujiang: {
+        zh: '你是項羽最能打的部將,現在他要你出兵,你稱病不去。這一步走出去,就回不了頭了。',
+        en: 'You are Xiang Yu\'s hardest-hitting general, and when he called for your troops you pleaded illness. Take that step and there is no walking it back.',
+      },
+    },
   },
 
   'scn-ch-sanqin': {
     intro: {
       zh: '漢元年八月,漢王用韓信之計,從故道還,襲雍王章邯。邯迎擊漢陳倉,雍兵敗,還走;止戰好畤,又復敗,走廢丘。\n\n漢王遂定雍地,東至咸陽,引兵圍雍王廢丘,而遣諸將略定隴西、北地、上郡。\n\n燒絕的棧道是給項羽看的。真正的路一直在陳倉。',
       en: 'The King of Han took Han Xin\'s advice, came back by the old road, and struck at Zhang Han, King of Yong. Zhang Han met him at Chencang, was beaten and fell back; he stood again at Haozhi, was beaten again, and fled to Feiqiu.\n\nThe King of Han settled the Yong lands, reached Xianyang in the east, left troops to invest Feiqiu, and sent his generals to take Longxi, Beidi and Shang commandery.\n\nThe burnt plank roads were for Xiang Yu to look at. The real road was always Chencang.',
+    },
+    forces: {
+      chu: {
+        zh: '齊地在反,你親自去打。西邊那條被燒斷的棧道,你一次都沒回頭看過。',
+        en: 'Qi is in revolt and you have gone to deal with it yourself. Not once have you looked back at the burnt plank road in the west.',
+      },
+      han: {
+        zh: '明修棧道,暗度陳倉。三秦的兵都盯著棧道,而韓信的前鋒已經出了故道 —— 這一刻之後,你不再是漢中王。',
+        en: 'Repair the plank roads in plain sight; cross at Chencang in the dark. The Three Qin are watching the roadworks while Han Xin\'s van is already through the old pass. After this moment you are no longer merely King of Hanzhong.',
+      },
+      yong: {
+        zh: '你守著關中的門。棧道還沒修好,你以為還有半年 —— 陳倉的急報是今天早上到的。',
+        en: 'You hold the gate of Guanzhong. The plank road is far from finished and you reckoned on half a year. The dispatch from Chencang came in this morning.',
+      },
+      qi: {
+        zh: '項羽的主力在你這裡。你未必打得贏,但只要拖住他,西邊那個人就有時間。',
+        en: 'Xiang Yu\'s main force is here, on you. You may not beat him, but every day you hold him is a day for the man in the west.',
+      },
+      zhao: {
+        zh: '中原打成一團,趙國暫時安穩。你和張耳的舊怨還沒了結,而他現在替漢王做事。',
+        en: 'The central plain is a tangle and Zhao is quiet for now. Your feud with Zhang Er is unfinished, and he serves the King of Han these days.',
+      },
+      wei: {
+        zh: '漢王出關了。你在河東,兩邊都夠得著你 —— 這一次要押得比上一次準。',
+        en: 'The King of Han is out of the passes. You are in Hedong, within reach of both. This time the bet had better be the right one.',
+      },
+      jiujiang: {
+        zh: '你按兵不動。項羽記仇,漢王在拉攏 —— 九江這塊地方,遲早要選。',
+        en: 'You have kept your troops at home. Xiang Yu does not forget, and the King of Han is courting you. Jiujiang will have to choose eventually.',
+      },
     },
   },
 
@@ -1071,12 +1381,68 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       zh: '漢二年,漢王劫五諸侯兵,凡五十六萬人,東伐楚。至彭城,收其貨寶美人,日置酒高會。\n\n項王聞之,令諸將擊齊,而自以精兵三萬人南從魯出胡陵,至蕭,晨擊漢軍而東,至彭城,日中,大破漢軍。漢軍皆走,相隨入穀、泗水,殺漢卒十餘萬人。漢卒皆南走山,楚又追擊至靈壁東睢水上。漢軍卻,為楚所擠,多殺,漢卒十餘萬人皆入睢水,睢水為之不流。\n\n圍漢王三匝。於是大風從西北而起,折木發屋,揚沙石,窈冥晝晦,逢迎楚軍。楚軍大亂,壞散,而漢王乃得與數十騎遁去。',
       en: 'The King of Han gathered the armies of five lords — five hundred and sixty thousand men — and marched east against Chu. Reaching Pengcheng, he took its treasure and its women and held banquets every day.\n\nHearing of it, Xiang Yu ordered his generals to continue against Qi and himself took thirty thousand picked men south from Lu by way of Huling, reached Xiao, struck the Han army at dawn and drove east, and by midday at Pengcheng had broken it utterly. The Han fled and were pushed into the Gu and Si rivers, and a hundred thousand were killed. They ran south into the hills and Chu pursued them to the Sui River east of Lingbi. The Han fell back, were crowded together by the Chu and cut down in numbers, and a hundred thousand more went into the Sui, and the Sui would not flow.\n\nThey ringed the King of Han three deep. Then a great wind came out of the northwest, snapping trees and stripping roofs and driving sand and stones, and the day went black, and it blew straight into the faces of the Chu. Their ranks broke apart in the confusion, and the King of Han got away with a few dozen horsemen.',
     },
+    forces: {
+      chu: {
+        zh: '彭城丟了。五十六萬諸侯聯軍占了你的都城,而你手上只有三萬騎 —— 從齊地南下,晨襲。',
+        en: 'Pengcheng has fallen. Five hundred and sixty thousand allied troops hold your capital and you have thirty thousand horse. Come down from Qi and strike at dawn.',
+      },
+      han: {
+        zh: '你進了彭城,收了項羽的府庫美人,日日置酒。五十六萬人,沒有一個在放哨。',
+        en: 'You are inside Pengcheng, you have taken Xiang Yu\'s treasury and his women, and you drink every day. Five hundred and sixty thousand men, and not one of them on watch.',
+      },
+      yong: {
+        zh: '漢王東進,你已經敗了。廢丘還在守,水已經淹到城下。',
+        en: 'The King of Han has gone east; you are already beaten. Feiqiu still holds, and the floodwater is at the wall.',
+      },
+      qi: {
+        zh: '楚軍主力被你拖在齊地,而彭城空了。這筆帳算得漂亮 —— 只是項羽回身極快。',
+        en: 'You pinned Chu\'s main force in Qi and Pengcheng emptied. A beautiful piece of arithmetic — except that Xiang Yu turns very fast.',
+      },
+      zhao: {
+        zh: '諸侯都去了彭城,你沒去。等消息傳回來,你會慶幸這個決定。',
+        en: 'Every lord went to Pengcheng; you did not. When the news comes back you will be glad of it.',
+      },
+      wei: {
+        zh: '你跟著漢王進了彭城。分贓的時候你在,潰散的時候你也會在。',
+        en: 'You went into Pengcheng with the King of Han. You were there for the division of spoils and you will be there for the rout.',
+      },
+      jiujiang: {
+        zh: '項羽召你出兵,你又沒去。彭城若敗,他第一個要算的就是你。',
+        en: 'Xiang Yu summoned your troops and again you did not come. If Pengcheng falls, you are the first name on his list.',
+      },
+    },
   },
 
   'scn-ch-jingxing': {
     intro: {
       zh: '韓信、張耳以兵數萬,東下井陘擊趙。趙王、成安君陳餘聚兵井陘口,號稱二十萬。\n\n廣武君李左車說成安君曰:「井陘之道,車不得方軌,騎不得成列,行數百里,其勢糧食必在其後。願足下假臣奇兵三萬人,從間道絕其輜重;足下深溝高壘,堅營勿與戰。彼前不得鬥,退不得還,野無所掠,不至十日,而兩將之頭可致於麾下。」成安君儒者也,常稱義兵不用詐謀奇計,不聽。\n\n韓信使人間視,知其不用,乃夜半傳發,選輕騎二千人,人持一赤幟,從間道萆山而望趙軍,誡曰:「趙見我走,必空壁逐我,若疾入趙壁,拔趙幟,立漢赤幟。」\n\n乃使萬人先行,出,背水陣。趙軍望見而大笑。',
       en: 'Han Xin and Zhang Er took some tens of thousands east through the Jingxing defile against Zhao. The King of Zhao and Chen Yu massed at the mouth of the pass, calling it two hundred thousand.\n\nLi Zuoche advised Chen Yu: "The Jingxing road will not take two carts abreast nor cavalry in line, and after a march of several hundred li their supply must be strung out behind. Give me thirty thousand men on a flanking road and I shall cut their baggage off; you dig deep, build high, hold your camp and refuse battle. Unable to fight in front or withdraw behind, with nothing to forage in open country, in under ten days I shall lay both their heads before you." Chen Yu was a scholar and was fond of saying that a righteous army does not use deception or unorthodox schemes, and he refused.\n\nHan Xin sent scouts, learned the plan had been rejected, and moved at midnight. He picked two thousand light horse, each with a red banner, sent them by a hidden path to lie in the hills overlooking the Zhao camp, and told them: "When Zhao sees us run they will empty their works to chase us. Ride hard into the camp, pull down the Zhao banners and set up the red banners of Han."\n\nThen he sent ten thousand men out ahead to form up with the river at their backs. The Zhao looked at it and laughed out loud.',
+    },
+    forces: {
+      chu: {
+        zh: '韓信北上了。你抽不出兵去救趙,只能指望陳餘的二十萬守得住那條窄道。',
+        en: 'Han Xin has gone north. You cannot spare troops for Zhao and must hope Chen Yu\'s two hundred thousand can hold that narrow road.',
+      },
+      han: {
+        zh: '三萬新兵,對二十萬。韓信要你信他一次:背水列陣,置之死地。',
+        en: 'Thirty thousand raw troops against two hundred thousand. Han Xin asks you to trust him once: form up with the river at your back, and leave the men no ground to live on.',
+      },
+      yong: {
+        zh: '關中已定,你只是史書上的一個註腳了。',
+        en: 'Guanzhong is settled. You are a footnote now.',
+      },
+      qi: {
+        zh: '趙國要完了。下一個就是齊 —— 你比誰都清楚,卻誰也不肯信。',
+        en: 'Zhao is finished. Qi is next, and you know it better than anyone — and nobody will believe you.',
+      },
+      zhao: {
+        zh: '李左車說,派奇兵斷其糧道,不出十日韓信可擒。你說,義兵不用詐謀。',
+        en: 'Li Zuoche says: send a flying column to cut their supply and Han Xin is taken within ten days. You said a righteous army does not stoop to trickery.',
+      },
+      jiujiang: {
+        zh: '你已經投了漢。項羽的舊部裡,只剩你還有兵。',
+        en: 'You have gone over to Han. Of Xiang Yu\'s old commanders you are the only one who still has an army.',
+      },
     },
   },
 
@@ -1085,12 +1451,36 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       zh: '漢遣酈食其說齊,齊王田廣以為然,乃罷歷下守戰備,與酈生日縱酒。韓信引兵東,未渡平原,聞酈食其已說下齊,欲止。范陽辯士蒯通說信曰:「將軍受詔擊齊,而漢獨發間使下齊,寧有詔止將軍乎?何以得毋行也!」\n\n信然之,遂渡河襲齊。齊王以酈生賣己,乃烹之。\n\n楚使龍且將兵二十萬救齊。或說龍且曰:「漢兵遠鬥窮戰,其鋒不可當。齊、楚自居其地戰,兵易敗散。不如深壁,令齊王使其信臣招所亡城,城聞其王在,楚來救,必反漢。」龍且曰:「吾平生知韓信為人,易與耳……今若此,成安君之為人也。」\n\n遂戰。信夜令人為萬餘囊,滿盛沙,壅水上流,引軍半渡,擊龍且,佯不勝,還走。龍且果喜曰:「固知信怯也。」遂追。信使人決壅囊,水大至,龍且軍太半不得渡,即急擊,殺龍且。',
       en: 'Han sent Li Yiji to talk Qi over, and King Tian Guang agreed, stood down the defences at Lixia, and spent his days drinking with the envoy. Han Xin, marching east, heard before he had crossed at Pingyuan that Qi had already come over, and thought to stop. The persuader Kuai Tong told him: "You were ordered to attack Qi, and Han has separately sent an envoy to talk it down — but was there an order stopping you? How can you not go on?"\n\nHan Xin agreed, crossed, and fell on Qi. The King of Qi, believing Li Yiji had sold him, boiled him alive.\n\nChu sent Long Ju with two hundred thousand to save Qi. Someone advised him: "The Han troops are far from home and fight desperately; their edge cannot be met. Qi and Chu are fighting on their own ground, where armies come apart easily. Better to dig in, and let the King of Qi send trusted men to call back the cities he has lost — hearing their king is alive and that Chu has come to help, they will turn against Han." Long Ju said: "I have known Han Xin all my life. He is easily handled… Do that, and I am no better than Chen Yu."\n\nSo he gave battle. By night Han Xin had over ten thousand bags filled with sand and dammed the river upstream, took his army half across, attacked Long Ju, pretended to fail and ran. Long Ju was delighted: "I always knew Han Xin was a coward." He pursued. Han Xin had the bags cut open, the water came down in a wall, and over half of Long Ju\'s army could not cross — and he struck at once, and killed him.',
     },
+    forces: {
+      chu: {
+        zh: '龍且帶著二十萬去救齊。你在滎陽和漢王對峙,分不出身 —— 而濰水那邊,韓信在上游築壩。',
+        en: 'Long Ju has gone with two hundred thousand to relieve Qi. You are locked with the King of Han at Xingyang and cannot get free — and upstream on the Wei, Han Xin is damming the river.',
+      },
+      han: {
+        zh: '韓信在齊地已經勢不可擋。你需要他的勝利,也開始害怕他的勝利。',
+        en: 'Han Xin is unstoppable in Qi. You need his victories, and you have begun to be afraid of them.',
+      },
+      qi: {
+        zh: '酈食其已經說降了你,漢軍卻仍然渡河。你把說客烹了 —— 然後發現自己既失了盟友,也失了齊國。',
+        en: 'Li Yiji had already talked you into surrender, and the Han army crossed anyway. You boiled the envoy — and then found you had lost both the ally and Qi.',
+      },
+    },
   },
 
   'scn-ch-gaixia': {
     intro: {
       zh: '項王軍壁垓下,兵少食盡,漢軍及諸侯兵圍之數重。夜聞漢軍四面皆楚歌,項王乃大驚曰:「漢皆已得楚乎?是何楚人之多也!」\n\n項王則夜起,飲帳中。有美人名虞,常幸從;駿馬名騅,常騎之。於是項王乃悲歌慷慨,自為詩曰:「力拔山兮氣蓋世,時不利兮騅不逝。騅不逝兮可奈何,虞兮虞兮奈若何!」歌數闋,美人和之。項王泣數行下,左右皆泣,莫能仰視。\n\n於是項王乃上馬騎,麾下壯士騎從者八百餘人,直夜潰圍南出,馳走。\n\n至烏江,亭長檥船待,曰:「江東雖小,地方千里,眾數十萬人,亦足王也。願大王急渡。」項王笑曰:「天之亡我,我何渡為!且籍與江東子弟八千人渡江而西,今無一人還,縱江東父兄憐而王我,我何面目見之?」',
       en: 'Xiang Yu\'s army was walled in at Gaixia, few in number and out of food, ringed several deep by the Han and their allies. In the night he heard Chu songs coming from every side of the Han camp, and was appalled: "Have they taken all of Chu already? How can there be so many men of Chu over there?"\n\nHe rose in the night and drank in his tent. He had a lady named Yu who always accompanied him, and a fine horse named Zhui that he always rode. So he sang, bitterly and grandly, a poem of his own: "My strength uprooted mountains, my spirit overshadowed the age — the times are against me and Zhui will not run. Zhui will not run, and what is to be done? Yu, my Yu, what is to become of you?" He sang it several times over and the lady sang with him. Tears ran down his face, and his attendants wept, and none of them could look up.\n\nThen he mounted, and with eight hundred and more of his best riders behind him broke out southward through the lines in the dark and rode.\n\nAt the Wu River the village head had a boat waiting: "Jiangdong is small, but a thousand li across with several hundred thousand people — enough to be a king in. Cross quickly, my lord." Xiang Yu laughed: "Heaven is destroying me. What should I cross for? Besides, I took eight thousand sons of Jiangdong west across this river, and not one has come back. Even if their fathers and brothers pitied me and made me king, with what face would I meet them?"',
+    },
+    forces: {
+      chu: {
+        zh: '四面楚歌。八千子弟渡江而西,如今無一人隨你 —— 只剩虞姬,和一匹不肯走的馬。',
+        en: 'Chu songs on every side. Eight thousand sons of Jiangdong crossed the river with you and not one is left — only Yu, and a horse that will not leave.',
+      },
+      han: {
+        zh: '韓信、彭越、英布都到了。四十萬圍十萬,這一仗你不會輸 —— 你唯一要想的是,贏了之後這三個人怎麼辦。',
+        en: 'Han Xin, Peng Yue and Ying Bu have all come. Four hundred thousand around one hundred thousand: you will not lose this. The only thing left to think about is what to do with those three afterwards.',
+      },
     },
   },
 

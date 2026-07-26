@@ -2596,7 +2596,7 @@ export const useGameStore = create<GameStore>()(
         const assistZh = assistIds.length ? `(協同 ${assistants.map((a) => a.name.zh).join('、')})` : '';
         const assistEn = assistIds.length ? ` (+${assistIds.length} assisting)` : '';
         get().notify(
-          `委派 · ${officer.name.zh}　${def.label.zh}（${city.name.zh}）${assistZh}`,
+          `委派 · ${officer.name.zh}\u3000${def.label.zh}（${city.name.zh}）${assistZh}`,
           `Dispatched · ${officer.name.en} — ${def.label.en} (${city.name.en})${assistEn}`,
         );
         return { ok: true };
@@ -3051,7 +3051,7 @@ export const useGameStore = create<GameStore>()(
         }
         const seasonNow = state.date.season as 'spring' | 'summer' | 'autumn' | 'winter';
         const marks = [...(state.casusBelliMarks ?? [])];
-        let message = '';
+        let message: string;
         let citiesOut = cities;
         const deterrences = [...(state.deterrences ?? [])];
         let mandateOut = state.mandate; // §7.2-2 假詔討賊 may lift the player's 天命
@@ -13008,7 +13008,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (!foeForce || !myVoice || !foeVoice) return { ok: false, message: '' };
         const key = pairKey(pid, targetForceId);
         const rel = getRelation(state.diplomacy, pid, targetForceId);
-        let msg = '';
+        let msg: string;
         if (kind === 'concord') {
           // 樽俎定和 — the pact binds either way; the bout decided who pays.
           const stakes = concordStakes(outcome, outcome === 'win' ? foeVoice : outcome === 'loss' ? myVoice : null);
@@ -13102,7 +13102,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const key = pairKey(pid, oldOwnerId);
         const rel = getRelation(state.diplomacy, pid, oldOwnerId);
         const relations = { ...state.diplomacy.relations, [key]: { ...rel, score: Math.max(-100, rel.score + stakes.scoreDelta) } };
-        let msg = '';
+        let msg: string;
         if (stakes.cityFalls) {
           // 開城來降 — the wall changes hands without a corpse; the persuaded keeper
           // comes over, and his old comrades in the city withdraw to their capital.
@@ -13174,7 +13174,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         }
         const key = pairKey(pid, p.fromForceId);
         const rel = getRelation(state.diplomacy, pid, p.fromForceId);
-        let msg = '';
+        let msg: string;
         if (outcome === 'loss' && envoyRouted) {
           // 罵倒守將,開城而降 — the wall passes to the arguing realm; your bested
           // defender is swept along (折服), your other officers withdraw to the capital.
