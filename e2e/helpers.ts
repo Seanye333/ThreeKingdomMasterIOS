@@ -42,3 +42,46 @@ export async function dismissPrologue(page: Page): Promise<void> {
     await expect(prologue).toBeHidden({ timeout: 10_000 });
   }
 }
+
+/**
+ * 過旬 — advance one half-month and clear whatever the tick puts on screen.
+ *
+ * Ticking twice in a row does not work naively: the season report drops a
+ * backdrop that swallows the next click on the end-turn button, Escape does not
+ * close it (it has an explicit 繼續 button), and one tick can queue several
+ * overlays behind it (report → event → popups). Clicking through them is slow
+ * and open-ended — a spec that only wants to reach turn five spent three
+ * minutes in the queue and timed out.
+ *
+ * So the queue is cleared through the store. Specs that are ABOUT those
+ * overlays should click them properly; specs that merely need the clock to move
+ * want this.
+ */
+export async function advanceTurn(page: Page): Promise<void> {
+  const endBtn = page.locator('button', { hasText: /[上下]旬|End/ }).last();
+  await endBtn.click();
+  // A tick can open the 日流 day-by-day animation; the clock does not settle
+  // until it finishes, and clicking again mid-flow does nothing useful.
+  for (let i = 0; i < 30; i++) {
+    const busy = await page.evaluate(() => {
+      const s = (window as unknown as { __tkm?: { getState: () => { dayFlow?: unknown } } })
+        .__tkm?.getState();
+      return !!s?.dayFlow;
+    }).catch(() => false);
+    if (!busy) break;
+    await page.waitForTimeout(500);
+  }
+  await page.waitForTimeout(1_200);
+  await clearOverlays(page);
+}
+
+/** Drop the report/event/popup queue straight through the store. */
+export async function clearOverlays(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const st = (window as unknown as {
+      __tkm?: { setState: (p: Record<string, unknown>) => void };
+    }).__tkm;
+    st?.setState({ lastReport: null, popupQueue: [], pendingEvent: null, pendingBattleTheaters: [] });
+  });
+  await page.waitForTimeout(300);
+}
