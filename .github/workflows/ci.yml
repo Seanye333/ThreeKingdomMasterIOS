@@ -1,0 +1,79 @@
+name: CI
+
+# Everything below is what has been run by hand on every batch so far. Once it
+# lives here, a push that breaks typecheck or a test says so on its own.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: typecheck · test · build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The repo carries ~470 MB of art under public/. A shallow clone
+          # keeps the checkout from dominating the run.
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # `tsc -b`, not `--noEmit`: the build fails on unused imports that
+      # --noEmit lets through, and that difference has bitten this repo before.
+      - name: Typecheck
+        run: npx tsc -b
+
+      - name: Unit tests
+        run: npx vitest run --reporter=dot
+
+      - name: Build
+        run: npm run build
+
+      # Lint is advisory for now — the tree carries a known backlog
+      # (~300 findings, mostly react-hooks and react-refresh). Failing the
+      # build on it today would just mean a permanently red CI, so it reports
+      # and moves on. Flip continue-on-error off once the backlog is cleared.
+      - name: Lint (advisory)
+        continue-on-error: true
+        run: npx eslint . --max-warnings=-1
+
+  e2e:
+    name: e2e (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Build
+        run: npm run build
+      # The suite drives three WebGL scenes; SwiftShader covers headless.
+      - name: Run e2e
+        run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
