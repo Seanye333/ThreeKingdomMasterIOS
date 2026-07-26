@@ -2,6 +2,7 @@ import { useRef, useContext } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Html, Instances, Instance } from '@react-three/drei';
 import * as THREE from 'three';
+import { surfaceRelief } from '../../materials';
 import { RENDER_HI } from '../../renderQuality';
 import { useT } from '../../i18n';
 import { shade, ChineseRoof3D, SeasonCtx, NightCtx } from './Folk3D';
@@ -96,12 +97,12 @@ export function Dwelling({ x, z, seed }: { x: number; z: number; seed: number })
       {/* Stone plinth */}
       <mesh position={[0, 0.06, 0]} receiveShadow castShadow>
         <boxGeometry args={[w + 0.18, 0.12, w + 0.18]} />
-        <meshStandardMaterial color="#8d8270" roughness={0.96} />
+        <meshStandardMaterial color="#8d8270" {...surfaceRelief('stone', 2)} />
       </mesh>
       {/* Plastered walls */}
       <mesh position={[0, bodyH / 2 + 0.12, 0]} castShadow receiveShadow>
         <boxGeometry args={[w, bodyH, w]} />
-        <meshStandardMaterial color={wall} roughness={0.9} />
+        <meshStandardMaterial color={wall} {...surfaceRelief('masonry', 2)} />
       </mesh>
       {/* Timber corner posts */}
       {[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz], i) => (
@@ -134,7 +135,7 @@ export function Dwelling({ x, z, seed }: { x: number; z: number; seed: number })
         <>
           <mesh position={[0, bodyH + 0.42, 0]} castShadow receiveShadow>
             <boxGeometry args={[w * 0.78, 0.42, w * 0.78]} />
-            <meshStandardMaterial color={wall} roughness={0.9} />
+            <meshStandardMaterial color={wall} {...surfaceRelief('masonry', 2)} />
           </mesh>
           <mesh position={[0, bodyH + 0.42, w * 0.39 + 0.01]}>
             <boxGeometry args={[0.13, 0.13, 0.04]} />

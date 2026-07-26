@@ -7,6 +7,7 @@ import { useContext, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
+import { surfaceRelief } from '../../materials';
 import type { BuildingId } from '../../../game/types';
 import { BUILDING_DEFS_BY_ID, BUILDING_CATEGORY, BUILDING_CATEGORY_LABEL } from '../../../game/data/buildings';
 import { SelectionRing3D } from '../../components/SelectionRing3D';
@@ -282,7 +283,7 @@ export function WallSegment3D({ x, z, tier = 1 }: { x: number; z: number; tier?:
     <group position={[x, 0, z]}>
       <mesh position={[0, h / 2, 0]} castShadow receiveShadow>
         <boxGeometry args={[thick, h, 1.5]} />
-        <meshStandardMaterial color={stone} roughness={0.92} />
+        <meshStandardMaterial color={stone} {...surfaceRelief('masonry', 4)} />
       </mesh>
       {[-0.5, 0, 0.5].map((px, i) => (
         <mesh key={i} position={[px, h + 0.1, 0]} castShadow>

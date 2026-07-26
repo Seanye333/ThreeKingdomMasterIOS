@@ -10,7 +10,7 @@ export type InspectInfo = { title: string; body: string; color: string; commands
 export const InspectCtx = createContext<(info: InspectInfo) => void>(() => {});
 import { createContext, useContext, useRef } from 'react';
 import * as THREE from 'three';
-import { SURFACE } from '../../materials';
+import { SURFACE, surfaceRelief } from '../../materials';
 import { useFrame } from '@react-three/fiber';
 import { useT } from '../../i18n';
 import { Html } from '@react-three/drei';
@@ -52,12 +52,12 @@ export function ChineseRoof3D({ size, color, ornament = false, beasts = false }:
       {/* Overhanging eave slab — the shadow line */}
       <mesh position={[0, 0.03, 0]} castShadow receiveShadow>
         <boxGeometry args={[eave, 0.1, eave]} />
-        <meshStandardMaterial color={shade(color, 0.85)} {...SURFACE.tile} />
+        <meshStandardMaterial color={shade(color, 0.85)} {...surfaceRelief('tile', 2)} />
       </mesh>
       {/* Hip roof body */}
       <mesh position={[0, roofH / 2 + 0.08, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
         <coneGeometry args={[eave * 0.72, roofH, 4]} />
-        <meshStandardMaterial color={color} {...SURFACE.tile} />
+        <meshStandardMaterial color={color} {...surfaceRelief('tile', 3)} />
       </mesh>
       {/* Main ridge beam */}
       <mesh position={[0, roofH + 0.05, 0]} castShadow>

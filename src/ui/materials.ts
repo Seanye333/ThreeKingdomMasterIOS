@@ -1,3 +1,6 @@
+import * as THREE from 'three';
+import { tileNormal, brickNormal, woodNormal, clothNormal, earthNormal, tiled } from './textures/proceduralMaps';
+
 /**
  * 材質譜 — one table of PBR surface parameters, so the same substance reads
  * the same way in all three scenes.
@@ -59,3 +62,54 @@ export const SURFACE = {
 } as const satisfies Record<string, Surface>;
 
 export type SurfaceKind = keyof typeof SURFACE;
+
+/* ─── 表面起伏 — optional procedural relief ─────────────────────────── */
+
+/** Which generated normal map (if any) suits each surface. */
+const RELIEF: Partial<Record<SurfaceKind, () => THREE.DataTexture>> = {
+  tile: tileNormal,
+  masonry: brickNormal,
+  stone: brickNormal,
+  timber: woodNormal,
+  cloth: clothNormal,
+  earth: earthNormal,
+};
+
+/**
+ * 起伏強度 — one dial for the whole game.
+ *
+ * Relief tuned on a photo-scanned surface looks like crumpled foil on a
+ * 200-triangle roof, so this starts low. Drop it to 0 to turn every
+ * procedural normal map off at once without touching a call site.
+ */
+export const RELIEF_STRENGTH = 0.35;
+
+type ReliefProps = Surface & { normalMap?: THREE.Texture; normalScale?: THREE.Vector2 };
+// Whole-props cache: surfaceRelief is called from render, so it must not
+// allocate a Vector2 (or anything else) per frame.
+const reliefCache = new Map<string, ReliefProps>();
+
+/**
+ * Material props for a surface, with procedural relief where one applies.
+ *
+ * `repeat` is how many times the pattern tiles across the mesh's UV — a city
+ * wall wants a dozen brick courses, a single roof slab wants two or three.
+ *
+ * Usage:  <meshStandardMaterial color={c} {...surfaceRelief('masonry', 6)} />
+ */
+export function surfaceRelief(kind: SurfaceKind, repeat = 2): ReliefProps {
+  const base = SURFACE[kind];
+  const make = RELIEF[kind];
+  if (!make || RELIEF_STRENGTH <= 0) return base;
+  const key = `${kind}:${repeat}`;
+  let props = reliefCache.get(key);
+  if (!props) {
+    props = {
+      ...base,
+      normalMap: tiled(make(), repeat),
+      normalScale: new THREE.Vector2(RELIEF_STRENGTH, RELIEF_STRENGTH),
+    };
+    reliefCache.set(key, props);
+  }
+  return props;
+}
