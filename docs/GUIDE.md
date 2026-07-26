@@ -3318,6 +3318,12 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
   - e2e `glRecovery.spec.ts` 用 `WEBGL_lose_context` 真的打掉上下文且不恢復,斷言警告出現、canvas 重掛、UI 仍可互動。
 - **無障礙(2026-07-25)**:純符號鈕補 `aria-label`(城內的離開城內/關閉城防面板/關閉地塊面板/關閉詳情、大地圖的操作說明「?」);**切換鈕補 `aria-pressed`** —— 大地圖 11 檔疊圖是一組互斥圖層,此前螢幕閱讀器聽到的是十一顆一模一樣的按鈕且無從得知現在畫的是哪層,戰爭迷霧與城內戰術疊加同理。`HUD_TONES`/`HudButton`/`HudChip` 提到 `components/HudControls.tsx` 三圖共用(HudButton 傳了 `active` 就自動報 `aria-pressed`)。大地圖疊圖鈕**刻意保留實心金底**的單選視覺,不為統一而換掉更準的表達。
 - **檔案結構(2026-07-25)**:大地圖 2165 主檔 + `map3d/` 18 模組;城內 2945 + `city3d/` 3 模組(新增 **Scenery3D** 1461 行:民居/市集/府衙/園林/水岸/塔樓等約 40 個葉節點景物);戰場 4392 + `battle3d/` 5 模組(新增 **StratagemFx3D** 966 行:`StratagemFXNode` 一個元件就 948 行的計略粒子演出)。進城這條路徑此前**零 e2e 覆蓋**,同批補上 `cityScene.spec.ts`。
+- **畫面管線(2026-07-26)**:三張 3D 圖此前只有戰場長出了完整的現代管線,大地圖與城內僅有一顆 Bloom。現統一於 `components/ScenePostFx.tsx`:
+  - **N8AO 環境光遮蔽**(大地圖 radius 2.6 / 城內 1.4 / 戰場 1.2)—— 單項提升最明顯,城池、山峰、屋簷、牆根終於坐在地上而非浮著;**AgX 色調映射 / SMAA / 暗角** 補齊另兩張圖;**PCSS 柔影**(drei SoftShadows)加到大地圖與城內。
+  - **四時之色**(`seasonGrade`):春青/夏濃/秋金/冬冷/夜藍的整體分級,作為資料而非烘進燈光。
+  - **天光 IBL**(`components/SkyEnvironment.tsx`):全專案此前 `envMap` 一處都沒有,而三圖共 584 個 `meshStandardMaterial` 都是 PBR —— 沒有環境可反射,metalness/roughness 幾乎白給,金屬會讀成扁平深色塑膠。此元件拿場景**自己已有的**天空顏色(top/horizon/sun + 地面反照)搭環境球、過 PMREM 交給 `scene.environment`,**零素材、不需 HDRI**,成本是掛載與換色各一次離屏渲染而非每幀。三圖各接自己的色,夜間 intensity 降至 0.3。
+  - **材質譜**(`ui/materials.ts`):琉璃瓦/夯土磚/木構/布帛/青銅/鐵/皮革/石/土/水/草木各給 roughness+metalness+envMapIntensity。**刻意不一次掃完 584 處**(材質靠眼睛收斂,而 headless SwiftShader 連城內場景都渲染不出來,盲改在結構上就無法驗證),目前只套用於 `ChineseRoof3D`。
+  - **成本門控**:`RENDER_HI` 單獨不夠(現代 iPhone 也判 high),AO/DoF/柔影另疊 `!IS_MOBILE`;整棧在 FrameRateWatch 降級時整個卸掉。**大地圖刻意不加景深** —— 它是資訊場景,把遠處城名糊掉是拿可讀性換氛圍。
 
 ---
 
