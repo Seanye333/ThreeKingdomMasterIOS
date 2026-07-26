@@ -5,13 +5,13 @@ import { useGameStore } from '../../game/state/store';
 import { pickVoiceLine } from '../../game/data/voiceLines';
 import { getDeathPoem } from '../../game/data/deathPoems';
 import type { TacticalBattle } from '../../game/types';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { OfficerStats } from './OfficerStats';
 import styles from './BattleResultsModal.module.css';
 import { OfficerPortrait } from './OfficerPortrait';
 import { Seal } from './Seal';
 import { AnimatedNumber } from './AnimatedNumber';
-import { useLanguage, pickName } from '../i18n';
+import { useLanguage, pickName, useT } from '../i18n';
 
 interface Props {
   battle: TacticalBattle;
@@ -20,6 +20,7 @@ interface Props {
 }
 
 export function BattleResultsModal({ battle, playerSide, onClose }: Props) {
+  const t = useT();
   useEscapeKey(onClose);
   const officers = useGameStore((s) => s.officers);
   const currentYear = useGameStore((s) => s.date.year);
@@ -33,7 +34,10 @@ export function BattleResultsModal({ battle, playerSide, onClose }: Props) {
     const id = window.setTimeout(() => setRevealed(true), 500);
     return () => window.clearTimeout(id);
   }, [reduced]);
-  const resolution = resolveBattleEnd(battle, officers);
+  // Seeded off the battle itself (see resolveBattleEnd), so this is stable
+  // across the reveal timer's re-render and matches what the confirm button
+  // will actually apply. Memoised anyway — it walks the whole roster.
+  const resolution = useMemo(() => resolveBattleEnd(battle, officers), [battle, officers]);
   const won = resolution.winner === playerSide;
   const isDraw = !resolution.winner;
   const winnerZh = won ? '勝利' : resolution.winner ? '敗北' : '引分';
@@ -234,7 +238,7 @@ export function BattleResultsModal({ battle, playerSide, onClose }: Props) {
                       <span className={styles.officerName}>{pickName(o.name, lang)}</span>
                     </div>
                     <span className={styles.officerStat}>
-                      <OfficerStats officer={o} keys={['war', 'leadership']} /> → 捕虜
+                      <OfficerStats officer={o} keys={['war', 'leadership']} /> → {t('捕虜', 'captured')}
                     </span>
                   </div>
                 );

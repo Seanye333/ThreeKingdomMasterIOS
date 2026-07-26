@@ -9,7 +9,8 @@ import type {
   EntityId, Officer, TacticalBattle, TacticalUnit, HexCoord, TerrainKind,
   UnitType, StratagemId,
 } from '../types';
-import { hexDistance, hexNeighbours, tileAt, canMove, moveUnit, attackUnits, forecastAttack, endTurn, isRouting, changeFormation, canChangeFormation, pickAiFormation, formationCounterMul, canFortify, fortifyTile, retreatUnit, counterMultiplier, repairWall, breakGate, scaleWall, attackRange, hasLineOfSight, WIND_DELTA, TERRAIN_MOVE_COST, terrainAffinity, tileValueFor, bestStepToward } from './tactical';
+import {
+  FORT_MAX_HP, hexDistance, hexNeighbours, tileAt, canMove, moveUnit, attackUnits, forecastAttack, endTurn, isRouting, changeFormation, canChangeFormation, pickAiFormation, formationCounterMul, canFortify, fortifyTile, retreatUnit, counterMultiplier, repairWall, breakGate, scaleWall, attackRange, hasLineOfSight, WIND_DELTA, TERRAIN_MOVE_COST, terrainAffinity, tileValueFor, bestStepToward } from './tactical';
 import { applyStratagem, canChallengeDuel, challengeDuel } from './tacticalSchemes';
 import { SIGNATURE_OVERRIDES } from './personalTactics';
 
@@ -585,19 +586,60 @@ function aiActOnce(
         const step = bestStepToward(b, unit, alley);
         if (step) return { battle: moveUnit(b, unit.id, step), acted: true, signatures: [] };
       }
-      // 搶修城防 — quiet stretch of wall + battered masonry next door →
-      // shore it up before the next assault.
-      if (skill >= 0.4 && !enemies.some((e) => hexDistance(e.coord, unit.coord) <= 3)) {
-        const damaged = hexNeighbours(unit.coord).find((c) => {
-          const t = tileAt(b, c);
-          if (!t || (t.terrain !== 'wall' && t.terrain !== 'gate')) return false;
-          const hp = b.wallHp?.[`${c.col},${c.row}`];
-          const max = t.terrain === 'gate' ? 700 : 1000;
-          return hp !== undefined && hp < max;
-        });
+      /* 搶修城防 — battered masonry next door and nobody in your face → shore
+       * it up before the next assault.
+       *
+       * The guard used to be "no enemy within 3 hexes", which made this dead
+       * code: a wall is only battered because a siege engine is standing
+       * against it, and a defender beside that same wall is then 2 hexes from
+       * the engine at most. So the two halves of the condition — damage to
+       * repair, and quiet to repair in — could essentially never both hold.
+       * 60 observed AI sieges produced zero repairs (scripts/tactical-watch).
+       *
+       * "Not in contact" is the sense that was meant: a unit with no enemy
+       * ADJACENT can put its back into the stonework; one being hacked at
+       * cannot.
+       *
+       * Relaxing the guard alone changed nothing, though — a probe showed the
+       * branch entered 635 times with a damaged wall NEVER adjacent. The
+       * garrison held its posts while an engine chewed through masonry two
+       * hexes away, and nobody went to it. Both halves were needed: the guard
+       * below, and 赴缺 after it. A capability nobody can reach is the same as
+       * a missing one. */
+      const isBattered = (c: HexCoord): boolean => {
+        const t = tileAt(b, c);
+        if (!t || (t.terrain !== 'wall' && t.terrain !== 'gate')) return false;
+        const hp = b.wallHp?.[`${c.col},${c.row}`];
+        const max = t.terrain === 'gate' ? FORT_MAX_HP.gate : FORT_MAX_HP.wall;
+        return hp !== undefined && hp < max;
+      };
+      const notInContact = !enemies.some((e) => hexDistance(e.coord, unit.coord) <= 1);
+      if (skill >= 0.4 && notInContact) {
+        const damaged = hexNeighbours(unit.coord).find(isBattered);
         if (damaged) {
           const repaired = repairWall(b, unit.id, damaged);
           if (repaired !== b) return { battle: repaired, acted: true, signatures: [] };
+        }
+      }
+      /* 赴缺 — nobody is on the failing stretch, so send the nearest free
+       * defender to it. Walks to the WEAKEST wall (that is where the breach
+       * opens), and only from close by, so the garrison does not abandon the
+       * far side of the town to chase masonry. */
+      if (skill >= 0.5 && notInContact && !hexNeighbours(unit.coord).some(isBattered)) {
+        const weakest = forts
+          .map((t) => t.coord)
+          .filter(isBattered)
+          .map((c) => ({ c, hp: b.wallHp?.[`${c.col},${c.row}`] ?? Infinity, d: hexDistance(unit.coord, c) }))
+          .filter((x) => x.d <= 4)
+          .sort((a, c) => a.hp - c.hp || a.d - c.d)[0];
+        if (weakest) {
+          const iAmNearest = !b.units.some((u) =>
+            u.side === 'defender' && u.troops > 0 && u.id !== unit.id && u.ap > 0 &&
+            hexDistance(u.coord, weakest.c) < weakest.d);
+          if (iAmNearest) {
+            const step = bestStepToward(b, unit, weakest.c);
+            if (step) return { battle: moveUnit(b, unit.id, step), acted: true, signatures: [] };
+          }
         }
       }
       // 夜襲器械 — a hard-hitting garrison unit sorties (through its own

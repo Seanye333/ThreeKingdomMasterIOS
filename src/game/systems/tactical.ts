@@ -2987,9 +2987,35 @@ export interface BattleResolution {
   lootGold: number;
 }
 
+/** Deterministic per-battle rng — see resolveBattleEnd. */
+function battleOutcomeRng(battle: TacticalBattle): () => number {
+  const key = `${battle.id}|${battle.turn}|${battle.attackerLosses ?? 0}|${battle.defenderLosses ?? 0}|${battle.winner ?? ''}`;
+  let h = 2166136261;
+  for (let i = 0; i < key.length; i++) h = Math.imul(h ^ key.charCodeAt(i), 16777619);
+  let sd = h >>> 0;
+  return () => { sd = (sd * 1664525 + 1013904223) >>> 0; return sd / 0xffffffff; };
+}
+
+/**
+ * Settle a finished battle: who was captured, who died, what was carried off.
+ *
+ * `rng` defaults to a hash of the battle's OWN final state rather than to
+ * Math.random, which makes this a pure function of the battle — and it has to
+ * be. BattleResultsModal calls it unmemoized during render to show the player
+ * their spoils, then the confirm button calls it AGAIN to apply them. With bare
+ * randomness those were different draws: the modal re-rolled its captive list
+ * on every re-render (it has a 500ms reveal timer, so at least one), and the
+ * officers actually taken were a third draw nobody ever saw. What you saw was
+ * not what you got.
+ *
+ * Seeded off `id`/`turn`/losses, all fixed by the time the battle is over, so
+ * the modal can render as often as it likes and the apply path lands on exactly
+ * the roll that was shown.
+ */
 export function resolveBattleEnd(
   battle: TacticalBattle,
   officers: Record<EntityId, Officer>,
+  rng: () => number = battleOutcomeRng(battle),
 ): BattleResolution {
   const surviving = battle.units;
   const winner = battle.winner ?? null;
@@ -3034,7 +3060,7 @@ export function resolveBattleEnd(
       // Capture chance based on attacker's charisma (commander) + pursuit.
       const acc = surviving.find((u) => u.side === 'attacker' && u.isCommander);
       const cmdCha = acc ? (officers[acc.officerId]?.stats.charisma ?? 60) : 60;
-      if (Math.random() < (cmdCha / 130) * pursuitCapMul) captured.push(id);
+      if (rng() < (cmdCha / 130) * pursuitCapMul) captured.push(id);
       else dead.push(id);
     }
   } else if (winner === 'defender') {
@@ -3043,7 +3069,7 @@ export function resolveBattleEnd(
       if (forcedKill.has(id)) { dead.push(id); continue; }
       const dc = surviving.find((u) => u.side === 'defender' && u.isCommander);
       const cmdCha = dc ? (officers[dc.officerId]?.stats.charisma ?? 60) : 60;
-      if (Math.random() < (cmdCha / 130) * pursuitCapMul) captured.push(id);
+      if (rng() < (cmdCha / 130) * pursuitCapMul) captured.push(id);
       else dead.push(id);
     }
   }
@@ -3052,7 +3078,7 @@ export function resolveBattleEnd(
   const lootGold = winner
     ? Math.floor(
         ((winner === 'attacker' ? battle.defenderLosses : battle.attackerLosses) *
-          (0.1 + Math.random() * 0.15) * pursuitLootMul) /
+          (0.1 + rng() * 0.15) * pursuitLootMul) /
           10,
       )
     : 0;
