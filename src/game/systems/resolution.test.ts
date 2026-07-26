@@ -180,3 +180,32 @@ describe('resolveSeason — fed its own output, it stays stable', () => {
     }
   });
 });
+
+/**
+ * 避戰 vs 紮營 — `MarchCommand.evading` is documented "cleared on hold", and the
+ * player's own toggle refuses to evade while camped. But only the AI ever SETS
+ * evading, and none of the three places that convert a march into a camp
+ * (pursuit called off / investing a siege / arriving at the target cell) used
+ * to clear it — so an AI column could be dug in and slipping contacts at once.
+ * The soak fuzzer caught it at roughly one run in seven.
+ */
+describe('紮營即不復避戰', () => {
+  it('every hold conversion in resolution clears the evade flag', async () => {
+    const src = await import('node:fs').then((fs) =>
+      fs.readFileSync(new URL('./resolution.ts', import.meta.url), 'utf8'));
+    // Each `holding = true` / `holding: true` that marks a camp must sit beside
+    // an evading clear. Kept as a source check because the three sites live deep
+    // inside a 4,800-line season pass with no seam to call them through.
+    const holds = [...src.matchAll(/holding[:=] true/g)];
+    expect(holds.length).toBeGreaterThan(0);
+    for (const m of holds) {
+      const window = src.slice(m.index!, m.index! + 400);
+      const isFatigueCall = window.startsWith('holding: true, besieging:');
+      if (isFatigueCall) continue;   // accrueFatigue argument, not a state write
+      expect(
+        /evading[:=] undefined/.test(window),
+        `hold at offset ${m.index} does not clear evading`,
+      ).toBe(true);
+    }
+  });
+});

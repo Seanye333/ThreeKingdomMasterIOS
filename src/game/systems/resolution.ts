@@ -576,6 +576,12 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       cmd.pursueTargetId = undefined;
       if (pos) {
         cmd.holding = true;
+        // 紮營即不復避戰 — MarchCommand.evading is documented "cleared on hold",
+        // and the player's own toggle refuses to evade while camped. Only the
+        // AI sets evading (ai.ts), and none of the three hold conversions used
+        // to clear it, so an AI column could sit in camp AND be slipping
+        // contacts at the same time.
+        cmd.evading = undefined;
         cmd.targetX = pos.x;
         cmd.targetY = pos.y;
         cmd.seasonsRemaining = 1;
@@ -1424,6 +1430,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         if (isLand(tx, ty, 0)) { cx = tx; cy = ty; break; }
       }
       orig.holding = true;
+      orig.evading = undefined;   // camped ⇒ not evading (see above)
       orig.besieging = tgt.id;
       orig.targetX = cx; orig.targetY = cy;
       orig.seasonsRemaining = 1;
@@ -1486,7 +1493,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   const arrivedCells = arriving
     .filter((c) => c.targetX != null)
     .map(withTroops)
-    .map((c) => ({ ...c, holding: true }));
+    .map((c) => ({ ...c, holding: true, evading: undefined }));
   // 一將一營 — a column may appear only ONCE here. The invest conversion above
   // sets `targetX` on the SHARED command object, so a column that converted
   // also satisfies the `targetX != null` filter that built arrivedCells — it
