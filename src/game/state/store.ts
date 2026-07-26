@@ -196,6 +196,7 @@ import { rollGarrisonMutiny } from '../systems/ambition';
 import { deriveCourtFactions, tickCourtPatronage, FACTION_LABEL } from '../systems/courtFactions';
 import { clanGentryWeight } from '../systems/clans';
 import { rollBehaviorEvent } from '../systems/behaviorEvents';
+import { rollRemonstrance } from '../systems/remonstrance';
 import { rollAIWishFlavor } from '../systems/aiWishesFlavor';
 import { appointmentBonusFor, pruneStaleAppointments, traitRefusal, isOnCooldown } from '../systems/appointmentEffects';
 import { canPromoteToRank } from '../systems/imperialEffects';
@@ -5010,6 +5011,21 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // season if none scripted fired, and fire deterministically.
         const eventCheck =
           findFiringEvent(eventCtx) ??
+          // 死諫 — the realm's one objection to your own ascent. Ahead of the
+          // ordinary behavioural beats: if a man is about to die over 九錫,
+          // that outranks a note about the armoury.
+          rollRemonstrance({
+            date: result.date,
+            cities: postCities,
+            officers: postOfficers,
+            forces: postForces,
+            playerForceId: state.playerForceId,
+            firedEventIds: state.firedEventIds,
+            eventFlags: state.eventFlags,
+            emperorHeldByForceId: emperorCustodian(postCities, state.emperorCityId ?? null),
+            lawCode: state.lawCode,
+            rng: Math.random,
+          }) ??
           // 動態事件 — emergent beats from how the player governs (treasury,
           // taxation, idle talent). Behind scripted history, ahead of custom.
           rollBehaviorEvent({

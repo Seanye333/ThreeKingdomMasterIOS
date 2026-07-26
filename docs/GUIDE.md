@@ -18,7 +18,7 @@
 | 5 | [戰術戰鬥](#第五章-戰術戰鬥) | tactical, tacticalAi, combat, formations, stratagems, weather(區域天候), battlefieldTerrain, worldScars(戰場烙印), fieldworks(築壘), columnReinforcements(會戰), wallTier城郭分層, 攻城動作(破城/搶修/雲梯), 入城三選, battleSpoils(戰場繳獲), **campDisease(軍中疫疾/頓兵/不習水土)**, **siegeWorks(攻城器械營造/焚其攻具)**, **nightRaid(夜襲劫營)**, **navalWarfare(水軍熟練/暈船/艦隊編成/淺灘擱淺/搶灘登陸)**, personalTactics, weaponTypes, namedMaps, damagePredict, battleRecap, fogOfWar | ✅ |
 | 6 | [單挑](#第六章-單挑) | duel(招式/必殺技/獨門被動/破綻/傷殘/挑落下馬/**環境借勢/部位打擊/膽氣怯戰/棄馬步戰**/兵裝/坐騎/地形/性格/AI), **martialArts(武學修為/流派/流派相剋/秘籍/頓悟)**, **teamDuel(團戰圍攻/合擊/3D 同場)**, **gauntlet(車輪戰·輪番)**, **arenaLadder(打擂擂台)**, **涟漪大地圖(威名威懾/代戰認輸金/慘勝負傷/名場面入史/世間鬥將)**, **debateArts(文辯修為/學派/辯經/傳道)**, **scholarRank(月旦評/文名威懾)**, **debateDiplomacy(折衝樽俎/責讓索貢/舌戰說降)**, **teamDebate(朝堂合辯)**, **引時事入辯(annals 彈藥)**, **realmEthos(尚武崇文之風)**, **lineage(師承譜系/同門/衣缽傳人)**, gauntlet, duelSeries, duelScenarios(劇情+戰役), duelHall(名局廊), warRanking(武評榜), rivalries(宿敵/恩怨簿), duelChallenge(約戰), tactical(致師) | ✅ |
 | 7 | [外交・謀略・天子](#第七章-外交謀略天子) | diplomacy, diplomacyPacts(稱臣/索貢/會盟/援盟/調停/質子/借道), coalition, schemes, aiSchemes, ambition, espionage, expedition, foreignRealm, intrigue, courtFactions, factionEvents, emperor, imperialEffects, mandate, appointmentEffects, clans, statecraft | ✅ |
-| 8 | [事件・天命・異族・宗教](#第八章-事件天命異族宗教) | events(天災/地動/賑災), historicalEvents(抉擇鏈), behaviorEvents(勸進/眾叛), customEvents, factionEvents, religion(黃巾/招安/宣撫), **refugees(流民之政:招撫/安置/閉關)**, tribes, tribesDiplomacy(和親/互市/質子/以夷制夷/入主建國/七擒), mandate(祥瑞/造讖/禳星), mandateRituals(郊祀/祈雨), annals(災異志) | ✅ |
+| 8 | [事件・天命・異族・宗教](#第八章-事件天命異族宗教) | events(天災/地動/賑災), historicalEvents(抉擇鏈), behaviorEvents(勸進/眾叛), **remonstrance(死諫)**, customEvents, factionEvents, religion(黃巾/招安/宣撫), **refugees(流民之政:招撫/安置/閉關)**, tribes, tribesDiplomacy(和親/互市/質子/以夷制夷/入主建國/七擒), mandate(祥瑞/造讖/禳星), mandateRituals(郊祀/祈雨), annals(災異志) | ✅ |
 | 9 | [元遊戲・收藏・分享](#第九章-元遊戲收藏分享) | achievements, deedTitles, dailyChallenge, **shareCode(開局挑戰碼)**, **legacy(遺澤·跨局傳承)**, leaderboard, mods, powerHistory, historyBook, romance, sound, voiceLines, dialogueRoll | ✅ |
 | 10 | [AI](#第十章-ai) | ai, aiBuild, aiCourt, aiAppointments, aiSchemes, aiRansom, aiWishesFlavor | ✅ |
 | 11 | [核心流程・勝敗・培訓・其他模式](#第十一章-核心流程勝敗培訓其他模式) | resolution, endings, training, succession, objectives, hotSeat, spectator, heroMode, customOfficer, eventEditor, randomScenario, dynasties, strategicMap3D(兵鋒層/晝夜/水影/飛鏡/回放/設伏/斥候偵騎/兵站/攔江鎖/長圍/焚橋/烽燧鏈/糧道總覽/焦土/城等視覺) | ✅ |
@@ -3064,6 +3064,17 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
   - **修復**:過五關斬六將自始要求 `guan-yu-with-cao` 旗標,但全庫無人設它——事件從未觸發過。新增**土山約三事**(199–200,下邳入曹手後,曹操抉擇:許三事(史實,關羽暫入曹營)或縱兵攻山(關羽殞,天命−3))開鏈;**白馬斬顏良**(誅顏良文醜、曹/袁天命±2)插在陣列中間吃同季優先;五關事件補上 `officer-join-ruler` 歸隊效果——關羽真的會回到劉備麾下。
   - **文姬歸漢改線**:改用劇本實際接線的 `cai-wenji`(200+ 開局她已在曹營許昌),加 `officer-unaffiliated` 門檻——人已歸漢就不再觸發贖人。
   - **第二批七則**:太史慈酣鬥小霸王(孫策抉擇:親解其縛收之(史實)或義而縱之)、郭嘉遺計定遼東(207–208,奉孝歿、天命+2、+300金)、武鄉侯罵死王朗(227–229,王朗陣前氣絕)、木牛流馬(231–234,成都+6000糧)、死諸葛嚇走活仲達(承新旗標 `wuzhang-star-falls`)、司馬昭之心(260,甘露之變,曹髦弒於南闕)、諸葛恪之敗(253–254,承新旗標 `sun-quan-gone`)。孔明/孫權死亡事件各補一枚旗標供後續事件掛接。
+
+#### 8.1.1 死諫(remonstrance.ts,2026-07-26)
+
+§2.10 的**上書**是交易 —— 部下向你**要**東西,你准或駁。死諫是它的反面:一個什麼都不要的人,擋在你**已經做成**的事情前面,拿命當論據。
+
+之所以需要它,是因為那幾個時刻**遊戲本來完全不會為難你**:受九錫,你自家武將忠誠反而 **+5**,舉朝擁戴,無人反對。荀彧就是那個反對。
+
+- **三種夠格讓人去死的僭越**(皆由既有 state 偵測,不新增旗標):**九錫加身**(`eventFlags['nine-bestowments-<force>']` 且尚未稱帝)、**僭號稱帝**(己方 `imperialRank==='emperor'` 而漢天子仍在**他人**手中 —— 天子已亡則無號可僭,天子在你手中則屬挾天子另議)、**苛政**(本勢力律法 `strict` **且**治下民忠均值 < 45 —— 嚴刑本身是政策不是罪,嚴到**顯然失效**才有人拿命講)。
+- **誰出面**:本勢力中忠誠 ≥80 且(政治 ≥68 或帶 `loyal` 性格)者裡最有份量的一個。門檻卡在「忠到寧死不走」—— 忠誠不足者不會死諫,他只會離開。**已經殺過諫臣的朝廷,會湊不出下一個人來諫** —— 事件根本不觸發,那本身就是前一次拒諫的後果。
+- **兩個答案**(後果全掛抉擇,收到奏摺本身零效果):**納其言**收回成命 → 天命 +6~10、該臣忠 +12、同道 +6、治下民忠 +4,但這一局所圖盡棄;**不納** → 該臣**自盡**、天命 −6~10、同道各 −10、民忠 −3,事情照辦。天命增減嚴格對稱。
+- 掛在季度事件鏈上、**排在動態行為事件之前**(有人要為九錫死了,這件事壓得過一則軍械庫的簡報),但在腳本史實事件之後。
 
 ### 8.2 天災・防災・賑災(events.ts,建築見 1.6)
 
