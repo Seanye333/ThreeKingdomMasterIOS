@@ -133,6 +133,7 @@ import { HudButton, HudChip } from '../components/HudControls';
 import { hexWorld, HEX_R, HEX_COL_STEP, HEX_ROW_STEP, TERRAIN_HEIGHT, TERRAIN_COLOR } from './battle3d/battleGrid';
 import { EmbeddedSceneCtx, IS_MOBILE } from './battle3d/shared';
 import { hitArc, ARC_MUL, ARC_LABEL } from './battle3d/facing';
+import { STATUS_BADGE } from './battle3d/statusBadges';
 export { EmbeddedSceneCtx };
 import { AdaptiveFx, UnitMesh, UNIT_GLYPH } from './battle3d/UnitVisuals3D';
 export { hexWorld, HEX_R, HEX_COL_STEP, HEX_ROW_STEP, TERRAIN_HEIGHT, TERRAIN_COLOR };
@@ -4264,21 +4265,17 @@ function UnitPanel3D({
       {unit.effects.length > 0 && (
         <div style={{ display: 'flex', gap: '0.2rem', flexWrap: 'wrap', marginTop: '0.4rem' }}>
           {unit.effects.map((e, i) => {
-            const EFF_ZH: Record<string, string> = {
-              burning: '燃燒', confused: '混亂', defending: '據守', chained: '連環',
-              revealed: '現形', demoralized: '沮喪', starving: '糧盡', disorder: '陷亂', 'feign-rout': '詐敗',
-            };
-            const col = e.kind === 'burning' ? '#ff7050'
-              : e.kind === 'confused' || e.kind === 'disorder' ? '#c19a3b'
-              : e.kind === 'starving' ? '#d8b24a'
-              : e.kind === 'demoralized' ? '#c89090'
-              : e.kind === 'feign-rout' ? '#c178c7'
-              : '#88b7e8';
+            // Shared with the board nameplate (see battle3d/statusBadges) so
+            // the two can't drift apart on name or colour.
+            const badge = STATUS_BADGE[e.kind];
+            const col = badge?.color ?? '#88b7e8';
             return (
               <span key={i} style={{
                 fontSize: '0.7rem', padding: '1px 5px',
                 border: `1px solid ${col}`, color: col, borderRadius: 'var(--tkm-radius-xs)',
-              }}>{t(EFF_ZH[e.kind] ?? e.kind, e.kind)} {e.turnsLeft}t</span>
+              }}
+              title={badge ? t(badge.tipZh, badge.tipEn) : undefined}
+              >{t(badge?.zh ?? e.kind, badge?.en ?? e.kind)} {e.turnsLeft}t</span>
             );
           })}
         </div>

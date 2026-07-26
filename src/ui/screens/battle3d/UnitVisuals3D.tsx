@@ -15,6 +15,7 @@ import { SelectionRing3D } from '../../components/SelectionRing3D';
 import { useT } from '../../i18n';
 import { hexWorld } from './battleGrid';
 import { facingRotationY } from './facing';
+import { plateBadges } from './statusBadges';
 import { EmbeddedSceneCtx, IS_MOBILE } from './shared';
 
 /** Subtler grain for armour plate so it catches light without looking pitted. */
@@ -911,12 +912,19 @@ export function UnitMesh({
             {unit.isCommander && <span style={{ color: '#d4a84a' }}>主 </span>}
             {UNIT_GLYPH[unit.unitType]} {unit.troops.toLocaleString()}
             {isWounded && <span style={{ color: '#b8442e', marginLeft: 3 }}>傷</span>}
-            {unit.effects.some((e) => e.kind === 'burning') && (
-              <span style={{ color: '#f55a20', marginLeft: 3 }}>🔥</span>
-            )}
-            {unit.effects.some((e) => e.kind === 'starving') && (
-              <span style={{ color: '#caa45a', marginLeft: 3 }} title={t('糧盡兵疲', 'Out of supply')}>糧</span>
-            )}
+            {/* 狀態徽記 — all nine statuses now read on the board, not only
+                burning and starving. Several of them change the numbers
+                (陷亂 hits weaker and is hit harder; 據守 shields; 詐敗 is a
+                trap you set), and reading a line used to mean clicking
+                through it unit by unit. Worst-first, capped at three so a
+                narrow plate keeps the one that matters. */}
+            {plateBadges(unit.effects).map((b) => (
+              <span
+                key={b.glyph}
+                style={{ color: b.color, marginLeft: 3 }}
+                title={t(`${b.zh} — ${b.tipZh}`, `${b.en} — ${b.tipEn}`)}
+              >{b.glyph}</span>
+            ))}
           </div>
           {/* 精銳/異族 — elite-corps banner under the name. */}
           {eliteUnitOf(unit.officerId) && (
