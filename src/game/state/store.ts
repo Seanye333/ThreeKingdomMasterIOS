@@ -804,6 +804,8 @@ export interface GameStore extends GameState {
   /** Dismiss the front popup (advance the queue). */
   dismissPopup: () => void;
   dismissBattleTheater: () => void;
+  /** 承平之亂 — play on after a victory ending instead of stopping there. */
+  continueAfterVictory: () => void;
   recruitOfficer: (
     officerId: EntityId,
     cityId: EntityId,
@@ -4536,6 +4538,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           runtimeBonds: planned.runtimeBonds,
           rapport: planned.rapport ?? state.rapport,
           lordRapport: state.lordRapport,
+          // 承平之亂 — stoke ambition once the campaign plays on past victory.
+          postVictory: state.postVictory,
           lostItems: state.lostItems,
           territoryOwnership: state.territoryOwnership ?? {},
           hexPaint: state.hexPaint ?? {},
@@ -9558,6 +9562,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       dismissReport: () => set(() => ({ lastReport: null })),
       pushPopup: (event) => set((s) => ({ popupQueue: [...s.popupQueue, event] })),
       dismissPopup: () => set((s) => ({ popupQueue: s.popupQueue.slice(1) })),
+
+      continueAfterVictory: () => {
+        // Back to 'playing' so the map takes input again; the flag both stops
+        // the endings card re-latching and turns on §afterVictory pressure.
+        // The ending itself stays in `endingsAchieved`, so it is recorded as
+        // won and cannot be scored twice.
+        set({ victoryStatus: 'playing', postVictory: true });
+      },
 
       dismissBattleTheater: () => {
         const state = get();

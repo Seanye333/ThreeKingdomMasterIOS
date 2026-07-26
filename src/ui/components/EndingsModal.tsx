@@ -178,7 +178,14 @@ interface Props {
 }
 
 export function EndingsModal({ onClose }: Props) {
-  useEscapeKey(onClose);
+  const victoryStatus = useGameStore((s) => s.victoryStatus);
+  const continueAfterVictory = useGameStore((s) => s.continueAfterVictory);
+  // 承平之亂 — while the campaign is WON the card is rendered off
+  // `victoryStatus`, so plain onClose cannot dismiss it (and the map stays
+  // input-blocked). Playing on has to go through the store.
+  const playOn = victoryStatus === 'victory';
+  const dismiss = playOn ? continueAfterVictory : onClose;
+  useEscapeKey(dismiss);
   const cities = useGameStore((s) => s.cities);
   const officers = useGameStore((s) => s.officers);
   const forces = useGameStore((s) => s.forces);
@@ -284,8 +291,19 @@ export function EndingsModal({ onClose }: Props) {
           </p>
         )}
         <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+          {playOn && ending.kind !== 'defeat' && (
+            <p style={{
+              color: '#9fb0bd', fontSize: '0.82rem', lineHeight: 1.7,
+              maxWidth: 460, margin: '0 auto 1.1rem',
+            }}>
+              {t(
+                '天下既定,而甲兵未解。史書上,王朝的第一場叛亂多半來自替它打下江山的人 —— 續行,則諸將之心自此需你日日稱量。',
+                'The realm is settled; the army is not disbanded. In the histories a dynasty\'s first revolt usually comes from the men who won it. Play on, and your own commanders become the thing you must weigh.',
+              )}
+            </p>
+          )}
           <button
-            onClick={onClose}
+            onClick={dismiss}
             style={{
               background: 'linear-gradient(180deg, #364654, #26323e)',
               border: '1px solid #e6c473',
@@ -296,7 +314,9 @@ export function EndingsModal({ onClose }: Props) {
               cursor: 'pointer',
             }}
           >
-            {t('續行', 'Continue')}
+            {playOn && ending.kind !== 'defeat'
+              ? t('續行天下 — 承平之亂', 'Play on — the peace to come')
+              : t('續行', 'Continue')}
           </button>
         </div>
       </div>

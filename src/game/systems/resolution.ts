@@ -95,6 +95,7 @@ import { honorificEffects } from '../data/honorifics';
 import { rollEvents } from './events';
 import { generateFictionalOfficer } from './officerGen';
 import { resolveAmbitions } from './ambition';
+import { postVictoryAmbitionBoost } from './afterVictory';
 import {
   provinceGovernorEffect, provinceWarlordismDelta, seceProvince, planAIProvinceGovernors,
   seededRng, WARLORDISM_WARN, WARLORDISM_CAP,
@@ -120,6 +121,8 @@ export interface ResolutionInput {
   /** 君臣好感 — per-officer regard for their lord; feeds ambition (心腹 never
    *  turns; resentment emboldens) and 策反 resistance. */
   lordRapport?: Record<EntityId, number>;
+  /** 承平之亂 — the campaign is being played on past a victory ending. */
+  postVictory?: boolean;
   lostItems: LostItemRef[];
   /** Phase 3c — current per-territory owner overrides (null/missing
    *  means inherit from parent city). */
@@ -3797,6 +3800,21 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     // Fold in the 門閥 over-mighty-clan push (stacks with court-faction weight).
     for (const [id, boost] of Object.entries(clanFactionBoost)) {
       factionBoost[id] = Math.min(0.09, (factionBoost[id] ?? 0) + boost);
+    }
+    // 承平之亂 — a campaign played on past its victory. With the realm whole
+    // and the army idle, ambition turns inward; no new engine, just a heavier
+    // thumb on the betrayal odds §7.5 already rolls.
+    if (input.postVictory) {
+      const peaceBoost = postVictoryAmbitionBoost({
+        officers,
+        cities,
+        forces,
+        playerForceId: input.playerForceId,
+        lordRapport: input.lordRapport,
+      });
+      for (const [id, boost] of Object.entries(peaceBoost)) {
+        factionBoost[id] = Math.min(0.12, (factionBoost[id] ?? 0) + boost);
+      }
     }
     // 朋黨 — a discontented general's clique of high-rapport allies emboldens him;
     // feuds isolate. Only the ambition-relevant (low-loyalty) set is scored.

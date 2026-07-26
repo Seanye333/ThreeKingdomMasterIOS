@@ -21,7 +21,7 @@
 | 8 | [事件・天命・異族・宗教](#第八章-事件天命異族宗教) | events(天災/地動/賑災), historicalEvents(抉擇鏈), behaviorEvents(勸進/眾叛), **remonstrance(死諫)**, customEvents, factionEvents, religion(黃巾/招安/宣撫), **refugees(流民之政:招撫/安置/閉關)**, tribes, tribesDiplomacy(和親/互市/質子/以夷制夷/入主建國/七擒), mandate(祥瑞/造讖/禳星), mandateRituals(郊祀/祈雨), annals(災異志) | ✅ |
 | 9 | [元遊戲・收藏・分享](#第九章-元遊戲收藏分享) | achievements, deedTitles, dailyChallenge, **shareCode(開局挑戰碼)**, **legacy(遺澤·跨局傳承)**, leaderboard, mods, powerHistory, historyBook, romance, sound, voiceLines, dialogueRoll | ✅ |
 | 10 | [AI](#第十章-ai) | ai, aiBuild, aiCourt, aiAppointments, aiSchemes, aiRansom, aiWishesFlavor | ✅ |
-| 11 | [核心流程・勝敗・培訓・其他模式](#第十一章-核心流程勝敗培訓其他模式) | resolution, endings, training, succession, objectives, hotSeat, spectator, heroMode, customOfficer, eventEditor, randomScenario, dynasties, strategicMap3D(兵鋒層/晝夜/水影/飛鏡/回放/設伏/斥候偵騎/兵站/攔江鎖/長圍/焚橋/烽燧鏈/糧道總覽/焦土/城等視覺) | ✅ |
+| 11 | [核心流程・勝敗・培訓・其他模式](#第十一章-核心流程勝敗培訓其他模式) | resolution, endings, **afterVictory(承平之亂)**, training, succession, objectives, hotSeat, spectator, heroMode, customOfficer, eventEditor, randomScenario, dynasties, strategicMap3D(兵鋒層/晝夜/水影/飛鏡/回放/設伏/斥候偵騎/兵站/攔江鎖/長圍/焚橋/烽燧鏈/糧道總覽/焦土/城等視覺) | ✅ |
 | 圖 | [流程圖 Flowcharts](#流程圖-flowcharts) | 核心循環視覺化:結算順序 / 戰鬥管線 / 招攬升級 / 培訓 / 金收公式 / 單挑回合 / 稱帝之路 | ✅ |
 
 ---
@@ -3331,6 +3331,17 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
 - **書院培訓**:需城內書院。費用 = 200 + 50×已有政策數(忠義者 ×0.8);戰法基礎 300。時長 = 政策層級(1~3 季)。**書院容量**:lv1 同時 5 人 / lv2 10 人 / lv3 不限(且 lv3 瞬成)。
 - **師徒傳授**:同城武將傳授其已通政策,**無需書院、免費**,但 +1 季較慢。
 - 政策/戰法分三級(policyTier / tacticTier),級越高越貴越久。
+
+### 11.3 承平之亂 —— 贏了之後續行(afterVictory.ts,2026-07-26)
+
+此前**勝利是一堵牆**:`checkEndings` 把 `victoryStatus` 翻成 `'victory'`,結局卡浮出,而 MapScreen 是**依 `victoryStatus` 渲染**那張卡的 —— 於是卡上的「續行」鈕按了關不掉(它只清 `showEnding`),同時所有輸入路徑都被 `victoryStatus !== 'playing'` 擋住。遊戲在最有意思的那一刻停住:你什麼都拿到了,而替你打下來的那些人還站在那裡。
+
+- **續行**:結局卡在**勝利**結局(非敗亡)時改顯「續行天下 — 承平之亂」,經 `continueAfterVictory()` 把 `victoryStatus` 放回 `'playing'` 並記 `postVictory`。該結局仍留在 `endingsAchieved` 裡 —— **算你贏過,且不會被重複計分**;也因為 store 的判定是 `!endingsAchieved.includes(kind)`,同一種結局不會再次鎖住畫面(換一種更高的結局則會,那是新的一場勝利)。
+- **不是空沙盒**:續行若無壓力就只是散步。壓力**不新造引擎** —— §7.5 的野心/權臣/兵變/禪代全都在跑,`postVictoryAmbitionBoost` 只是把一個數折進 resolution 早就在組的 `factionBoost`(每人背叛加成表),同一套擲骰、同一批事件、同一份戰報,只是拇指更重。
+
+  > 外無強敵,則內生嫌隙。
+
+- **壓力怎麼算**:`peaceDepth` = 我方城池佔比,**超過 85% 才開始起作用**並在全據時滿檔 —— 所以續行一場**霸業/三分**結局幾乎不受影響(地圖上還有對手可以指向),續行**統一**才吃滿。每人加成再乘上「手握重兵」(統率+武力均值超過 60 的程度)、「君臣之間」(好感越低越敢)與不滿度;封頂 0.055、與既有加成合計封頂 0.12。**君主、`loyal` 性格、好感 ≥80 的心腹一律豁免** —— 承平不會把心腹變成軍閥。
 
 ### 11.4 其他模式與工具
 

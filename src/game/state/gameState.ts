@@ -118,6 +118,13 @@ export interface GameState {
    *  report is dismissed. Replaced wholesale each tick. */
   cityEventMarks: Array<{ cityId: EntityId; kind: import('../types').ReportEntryKind; text: string }>;
   victoryStatus: VictoryStatus;
+  /** 承平之亂 (§afterVictory.ts) — the player chose to play on after winning.
+   *  Victory otherwise ends the campaign outright: MapScreen renders the endings
+   *  card while `victoryStatus === 'victory'`, so the card cannot be dismissed,
+   *  and every input path is gated on 'playing'. With this set the status goes
+   *  back to 'playing' and ambition among your own commanders is stoked, since
+   *  a unified realm with a standing army is the danger the histories describe. */
+  postVictory?: boolean;
   difficulty: Difficulty;
   /** Active Hero Mode challenge id (英雄模式), or null in free play. When set,
    *  the season-end check scores it pass/fail and ends the game accordingly. */
@@ -861,6 +868,7 @@ export const EMPTY_STATE: GameState = {
   popupQueue: [],
   cityEventMarks: [],
   victoryStatus: 'playing',
+  postVictory: false,
   difficulty: 'normal',
   activeChallenge: null,
   challengeRecords: {},
@@ -1344,6 +1352,7 @@ export function loadScenario(
     popupQueue: [],
   cityEventMarks: [],
     victoryStatus: 'playing',
+    postVictory: false,
     activeChallenge: null,
     // Challenge records are meta-progression — carry across games.
     challengeRecords: state.challengeRecords ?? {},
