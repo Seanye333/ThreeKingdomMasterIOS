@@ -7,6 +7,7 @@ import { useContext, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
+import { SURFACE } from '../../materials';
 import type { HexCoord, TacticalUnit, UnitType } from '../../../game/types';
 import { eliteUnitOf } from '../../../game/systems/tactical';
 import { groundNormalTexture } from '../battleTextures';
@@ -153,7 +154,7 @@ function UnitWeapon({ unit, yLift }: { unit: TacticalUnit; yLift: number }) {
         {/* Spearhead — broad leaf blade */}
         <mesh position={[-0.34, 1.66 + yLift, 0]} castShadow>
           <coneGeometry args={[0.075, 0.26, 6]} />
-          <meshStandardMaterial color="#c4ccd4" metalness={0.7} roughness={0.3} />
+          <meshStandardMaterial color="#c4ccd4" {...SURFACE.iron} />
         </mesh>
       </>
     );
@@ -185,7 +186,7 @@ function UnitWeapon({ unit, yLift }: { unit: TacticalUnit; yLift: number }) {
         {/* Sword blade — angled across body */}
         <mesh position={[-0.36, 0.50 + yLift, 0]} rotation={[0, 0, -0.4]} castShadow>
           <boxGeometry args={[0.05, 0.54, 0.014]} />
-          <meshStandardMaterial color="#cdd2d8" metalness={0.65} roughness={0.3} />
+          <meshStandardMaterial color="#cdd2d8" {...SURFACE.iron} />
         </mesh>
         {/* Crossguard */}
         <mesh position={[-0.30, 0.27 + yLift, 0]} rotation={[0, 0, -0.4]} castShadow>
@@ -199,7 +200,7 @@ function UnitWeapon({ unit, yLift }: { unit: TacticalUnit; yLift: number }) {
         </mesh>
         <mesh position={[0.34, 0.45 + yLift, 0.05]} rotation={[0, 0, Math.PI / 2]} castShadow>
           <sphereGeometry args={[0.06, 8, 8]} />
-          <meshStandardMaterial color="#d4a84a" metalness={0.6} roughness={0.35} />
+          <meshStandardMaterial color="#d4a84a" {...SURFACE.bronze} />
         </mesh>
       </>
     );
@@ -214,7 +215,7 @@ function UnitWeapon({ unit, yLift }: { unit: TacticalUnit; yLift: number }) {
         </mesh>
         <mesh position={[0, 0.74, 0]} castShadow>
           <coneGeometry args={[0.05, 0.20, 6]} />
-          <meshStandardMaterial color="#c4ccd4" metalness={0.7} roughness={0.3} />
+          <meshStandardMaterial color="#c4ccd4" {...SURFACE.iron} />
         </mesh>
         <mesh position={[0.07, 0.5, 0]} rotation={[0, 0, 0.5]} castShadow>
           <planeGeometry args={[0.16, 0.1]} />
